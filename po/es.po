@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2020-10-02 21:27-0300\n"
+"PO-Revision-Date: 2021-03-13 19:49-0300\n"
 "Last-Translator: Roberto Augusto Pungartnik <rpungartnik@gmail.com>\n"
 "Language-Team: Spanish\n"
 "Language: es\n"
@@ -20,26 +20,20 @@ msgid "Security"
 msgstr "Seguridad"
 
 #: dlls/aclui/aclui.rc:32
-#, fuzzy
-#| msgid "&User name:"
 msgid "&Group or user names:"
-msgstr "&Usuario:"
+msgstr "Nombre del &Grupo o usuarios:"
 
 #: dlls/aclui/aclui.rc:38
-#, fuzzy
-#| msgid "Yellow"
 msgid "Allow"
-msgstr "Amarillo"
+msgstr "Permitir"
 
 #: dlls/aclui/aclui.rc:39
 msgid "Deny"
-msgstr ""
+msgstr "Negar"
 
 #: dlls/aclui/aclui.rc:47
-#, fuzzy
-#| msgid "Permission denied"
 msgid "Permissions for %1"
-msgstr "Acceso denegado"
+msgstr "Permissos para %1"
 
 #: dlls/appwiz.cpl/appwiz.rc:58
 msgid "Install/Uninstall"
@@ -2592,16 +2586,12 @@ msgstr ""
 "Ha finalizado el Asistente de Exportación de Certificados correctamente."
 
 #: dlls/cryptui/cryptui.rc:456 dlls/cryptui/cryptui.rc:179
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select Certificate"
-msgstr "Seleccionar Almacenamiento para el Certificado"
+msgstr "Seleccionar Certificado"
 
 #: dlls/cryptui/cryptui.rc:459
-#, fuzzy
-#| msgid "Select the certificate store you want to use:"
 msgid "Select a certificate you want to use"
-msgstr "Seleccione el almacenamiento de certificado que quiera usar:"
+msgstr "Seleccione el certificado que quiera usar"
 
 #: dlls/cryptui/cryptui.rc:30 dlls/cryptui/cryptui.rc:93
 msgid "Certificate"
@@ -3147,10 +3137,8 @@ msgid "Location"
 msgstr "Ubicación"
 
 #: dlls/cryptui/cryptui.rc:180
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select a certificate"
-msgstr "Seleccionar Almacenamiento para el Certificado"
+msgstr "Seleccionar a un certificado"
 
 #: dlls/cryptui/cryptui.rc:181 programs/winefile/winefile.rc:101
 #: programs/winhlp32/winhlp32.rc:110 programs/winhlp32/winhlp32.rc:85
@@ -3730,7 +3718,7 @@ msgstr "Alta"
 
 #: dlls/joy.cpl/joy.rc:37
 msgid "Joysticks"
-msgstr ""
+msgstr "Comando de juego"
 
 #: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:212
 msgid "&Disable"
@@ -3756,7 +3744,7 @@ msgstr ""
 
 #: dlls/joy.cpl/joy.rc:51
 msgid "Test Joystick"
-msgstr ""
+msgstr "Probar comando de juegos"
 
 #: dlls/joy.cpl/joy.rc:55
 msgid "Buttons"
@@ -3764,7 +3752,7 @@ msgstr "Botones"
 
 #: dlls/joy.cpl/joy.rc:64
 msgid "Test Force Feedback"
-msgstr ""
+msgstr "Probar Force Feedback"
 
 #: dlls/joy.cpl/joy.rc:68
 msgid "Available Effects"
@@ -3963,10 +3951,8 @@ msgid "URI to be decoded is incorrect"
 msgstr "URI a decodificar es incorrecta"
 
 #: dlls/jscript/jscript.rc:69
-#, fuzzy
-#| msgid "Enumeration value out of range.\n"
 msgid "Number of fraction digits is out of range"
-msgstr "Valor de la enumeración fuera de rango.\n"
+msgstr "Número de dígitos de fracciones fuera de rango"
 
 #: dlls/jscript/jscript.rc:70
 #, fuzzy
@@ -6977,10 +6963,8 @@ msgid "Not implemented.\n"
 msgstr "No implementado.\n"
 
 #: dlls/kernel32/winerror.mc:3788
-#, fuzzy
-#| msgid "RPC call failed.\n"
 msgid "Call failed.\n"
-msgstr "La llamada RPC ha fallado.\n"
+msgstr "La llamada ha fallado.\n"
 
 #: dlls/kernel32/winerror.mc:3760
 #, fuzzy
@@ -6993,10 +6977,8 @@ msgid "Invalid call.\n"
 msgstr "Llamada inválida.\n"
 
 #: dlls/kernel32/winerror.mc:3781
-#, fuzzy
-#| msgid "Help not available."
 msgid "Resource is not currently available.\n"
-msgstr "Ayuda no disponible."
+msgstr "El recurso no esta disponible actualmente.\n"
 
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
@@ -7070,28 +7052,20 @@ msgid "Media Foundation platform is not initialized.\n"
 msgstr "Plataforma no soportada por la instalación.\n"
 
 #: dlls/mferror/mferror.mc:39
-#, fuzzy
-#| msgid "Byte count too small.\n"
 msgid "Buffer is too small.\n"
-msgstr "Número de bytes demasiado pequeño.\n"
+msgstr "Búfer demasiado pequeño.\n"
 
 #: dlls/mferror/mferror.mc:46
-#, fuzzy
-#| msgid "Invalid query syntax.\n"
 msgid "Invalid request.\n"
-msgstr "Sintaxis inválida de la consulta.\n"
+msgstr "Solicitación inválida.\n"
 
 #: dlls/mferror/mferror.mc:53
-#, fuzzy
-#| msgid "Invalid segment number.\n"
 msgid "Invalid stream number.\n"
-msgstr "Número de segmento inválido.\n"
+msgstr "Número de stream inválido.\n"
 
 #: dlls/mferror/mferror.mc:60
-#, fuzzy
-#| msgid "Invalid data type.\n"
 msgid "Invalid media type.\n"
-msgstr "Tipo de datos inválido.\n"
+msgstr "Tipo de medio inválido.\n"
 
 #: dlls/mferror/mferror.mc:67
 #, fuzzy
@@ -7116,16 +7090,12 @@ msgid "No more types in the list of suggested media types.\n"
 msgstr ""
 
 #: dlls/mferror/mferror.mc:95
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported service.\n"
-msgstr "Tipo no soportado.\n"
+msgstr "Servicio no soportado.\n"
 
 #: dlls/mferror/mferror.mc:102
-#, fuzzy
-#| msgid "Unexpected network error.\n"
 msgid "Unexpected error.\n"
-msgstr "Error de red inesperado.\n"
+msgstr "Error inesperado.\n"
 
 #: dlls/mferror/mferror.mc:116
 msgid "Invalid type.\n"
@@ -7142,10 +7112,8 @@ msgid "Invalid timestamp.\n"
 msgstr "Tiempo incorrecto.\n"
 
 #: dlls/mferror/mferror.mc:144
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported scheme.\n"
-msgstr "Tipo no soportado.\n"
+msgstr "Esquema no soportado.\n"
 
 #: dlls/mferror/mferror.mc:151
 #, fuzzy
@@ -7168,20 +7136,16 @@ msgid "No duration set for the sample.\n"
 msgstr ""
 
 #: dlls/mferror/mferror.mc:179
-#, fuzzy
-#| msgid "Invalid data.\n"
 msgid "Invalid stream data.\n"
-msgstr "Datos inválidos.\n"
+msgstr "Datos de stream inválidos.\n"
 
 #: dlls/mferror/mferror.mc:186
 msgid "Realtime support is not available.\n"
 msgstr "Soporte en tiempo real no disponible.\n"
 
 #: dlls/mferror/mferror.mc:193
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported rate.\n"
-msgstr "Tipo no soportado.\n"
+msgstr "Velocidad no soportada.\n"
 
 #: dlls/mferror/mferror.mc:200
 #, fuzzy
@@ -7258,10 +7222,8 @@ msgid "Sample is not writable.\n"
 msgstr "El directorio temporal no es escribible.\n"
 
 #: dlls/mferror/mferror.mc:312
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "Key is invalid.\n"
-msgstr "Ruta inválida.\n"
+msgstr "Clave inválida.\n"
 
 #: dlls/mferror/mferror.mc:319
 #, fuzzy
@@ -7276,22 +7238,16 @@ msgid "Unsupported caption.\n"
 msgstr "Tipo no soportado.\n"
 
 #: dlls/mferror/mferror.mc:333
-#, fuzzy
-#| msgid "Invalid workstation.\n"
 msgid "Invalid position.\n"
-msgstr "Estación de trabajo inválida.\n"
+msgstr "Posición inválida.\n"
 
 #: dlls/mferror/mferror.mc:340
-#, fuzzy
-#| msgid "File not found.\n"
 msgid "Attribute is not found.\n"
-msgstr "Archivo no encontrado.\n"
+msgstr "Atributo no encontrado.\n"
 
 #: dlls/mferror/mferror.mc:347
-#, fuzzy
-#| msgid "Hook type not allowed.\n"
 msgid "Property type is not allowed.\n"
-msgstr "Tipo del gancho no permitido.\n"
+msgstr "Tipo de propiedad no permitido.\n"
 
 #: dlls/mferror/mferror.mc:354
 #, fuzzy
@@ -7300,16 +7256,14 @@ msgid "Property type is not supported.\n"
 msgstr "Operación no soportada.\n"
 
 #: dlls/mferror/mferror.mc:361
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is empty.\n"
-msgstr "El directorio no esta vacío.\n"
+msgstr "Propiedad esta vacía.\n"
 
 #: dlls/mferror/mferror.mc:368
-#, fuzzy
-#| msgid "Directory is not empty.\n"
 msgid "Property is not empty.\n"
-msgstr "El directorio no esta vacío.\n"
+msgstr ""
+"Propiedad no esta vacía.\n"
+"\n"
 
 #: dlls/mferror/mferror.mc:375
 #, fuzzy
@@ -7787,10 +7741,8 @@ msgid "New Folder"
 msgstr "Nueva carpeta"
 
 #: dlls/msi/msi.rc:91
-#, fuzzy
-#| msgid "No registry log space.\n"
 msgid "Allocating registry space"
-msgstr "No queda espacio de bitácora en el registro.\n"
+msgstr "Asignar espacio de registro"
 
 #: dlls/msi/msi.rc:92
 #, fuzzy
@@ -7855,10 +7807,8 @@ msgid "Installing ODBC components"
 msgstr "No pudo aplicarse la transformación en la instalación.\n"
 
 #: dlls/msi/msi.rc:106
-#, fuzzy
-#| msgid "Installer service failed.\n"
 msgid "Installing new services"
-msgstr "El servicio de instalación ha fallado.\n"
+msgstr "Instalando nuevos servicios"
 
 #: dlls/msi/msi.rc:107
 #, fuzzy
@@ -7943,10 +7893,8 @@ msgid "Registering MIME info"
 msgstr "Editor del registro"
 
 #: dlls/msi/msi.rc:124
-#, fuzzy
-#| msgid "Registry is corrupt.\n"
 msgid "Registering product"
-msgstr "El registro está corrompido.\n"
+msgstr "Registrando producto"
 
 #: dlls/msi/msi.rc:125
 msgid "Registering program identifiers"
@@ -7959,10 +7907,8 @@ msgid "Registering type libraries"
 msgstr "Librerías de Tipos"
 
 #: dlls/msi/msi.rc:127
-#, fuzzy
-#| msgid "Resource in use.\n"
 msgid "Registering user"
-msgstr "Recursos es uso.\n"
+msgstr "Registrando usuario"
 
 #: dlls/msi/msi.rc:128
 msgid "Removing duplicated files"
@@ -8015,16 +7961,12 @@ msgid "Unregistering modules"
 msgstr ""
 
 #: dlls/msi/msi.rc:140
-#, fuzzy
-#| msgid "Initializing; "
 msgid "Initializing ODBC directories"
-msgstr "Inicializando; "
+msgstr "Iniciando carpetas ODBC"
 
 #: dlls/msi/msi.rc:141
-#, fuzzy
-#| msgid "Starting Wordpad failed"
 msgid "Starting services"
-msgstr "Fallo iniciando Wordpad"
+msgstr "Iniciando servicios"
 
 #: dlls/msi/msi.rc:142
 msgid "Stopping services"
@@ -8077,10 +8019,8 @@ msgid "Writing INI files values"
 msgstr ""
 
 #: dlls/msi/msi.rc:155
-#, fuzzy
-#| msgid "Warning: system library"
 msgid "Writing system registry values"
-msgstr "Advertencia: librería del sistema"
+msgstr "Escribindo valores de lo registro de sistema"
 
 #: dlls/msi/msi.rc:161
 msgid "Free space: [1]"
@@ -8786,10 +8726,8 @@ msgid "Off"
 msgstr "Desactivado"
 
 #: dlls/oledb32/version.rc:56
-#, fuzzy
-#| msgid "video"
 msgid "Provider"
-msgstr "vídeo"
+msgstr "Provedor"
 
 #: dlls/oledb32/version.rc:59
 msgid "Select the data you want to connect to:"
@@ -8810,28 +8748,20 @@ msgid "1. Specify the source of data:"
 msgstr ""
 
 #: dlls/oledb32/version.rc:71
-#, fuzzy
-#| msgid "Please enter your name"
 msgid "Use &data source name"
-msgstr "Por favor, introduzca su nombre"
+msgstr "Utilice el nombre de la fuente de &datos"
 
 #: dlls/oledb32/version.rc:74
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Use c&onnection string"
-msgstr "Conexión LAN"
+msgstr "Utilice datos de C&onexión"
 
 #: dlls/oledb32/version.rc:75
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "&Connection string:"
-msgstr "Conexión LAN"
+msgstr "Dados de &Conexión:"
 
 #: dlls/oledb32/version.rc:77
-#, fuzzy
-#| msgid "&Add..."
 msgid "B&uild..."
-msgstr "&Añadir..."
+msgstr "Constr&uir..."
 
 #: dlls/oledb32/version.rc:78
 msgid "2. Enter information to log on to the server"
@@ -8846,10 +8776,8 @@ msgid "&Blank password"
 msgstr "Página en &blanco"
 
 #: dlls/oledb32/version.rc:84
-#, fuzzy
-#| msgid "Wrong password.\n"
 msgid "Allow &saving password"
-msgstr "Contraseña incorrecta.\n"
+msgstr "Permitir guardar contra&seña"
 
 #: dlls/oledb32/version.rc:85
 msgid "3. Enter the &initial catalog to use:"
@@ -8864,36 +8792,28 @@ msgid "Advanced"
 msgstr "Avanzado"
 
 #: dlls/oledb32/version.rc:95
-#, fuzzy
-#| msgid "Network share"
 msgid "Network settings"
-msgstr "Compartidos de red"
+msgstr "Ajustes de red"
 
 #: dlls/oledb32/version.rc:96
-#, fuzzy
-#| msgid "Bad impersonation level.\n"
 msgid "&Impersonation level:"
-msgstr "Nivel de personificación incorrecto.\n"
+msgstr "Nivel de personificación :"
 
 #: dlls/oledb32/version.rc:98
 msgid "P&rotection level:"
 msgstr ""
 
 #: dlls/oledb32/version.rc:101
-#, fuzzy
-#| msgid "Disconnected"
 msgid "Connect:"
-msgstr "Desconectado"
+msgstr "Conectado:"
 
 #: dlls/oledb32/version.rc:103
 msgid "seconds."
 msgstr "segundos."
 
 #: dlls/oledb32/version.rc:104
-#, fuzzy
-#| msgid "Success"
 msgid "A&ccess:"
-msgstr "Éxito"
+msgstr "A&cceso:"
 
 #: dlls/oledb32/version.rc:110
 msgid "All"
@@ -8916,10 +8836,8 @@ msgid "Data Link Error"
 msgstr "Propiedades"
 
 #: dlls/oledb32/version.rc:50
-#, fuzzy
-#| msgid "Please select a file."
 msgid "Please select a provider."
-msgstr "Seleccione un fichero por favor."
+msgstr "Seleccione un provedor por favor."
 
 #: dlls/oledb32/version.rc:51
 msgid ""
@@ -8942,10 +8860,8 @@ msgid "Read"
 msgstr "Leer"
 
 #: dlls/oledb32/version.rc:42
-#, fuzzy
-#| msgid "Readme:"
 msgid "ReadWrite"
-msgstr "Léeme:"
+msgstr "LerEscribir"
 
 #: dlls/oledb32/version.rc:43
 msgid "Share Deny None"
@@ -8964,10 +8880,8 @@ msgid "Share Exclusive"
 msgstr ""
 
 #: dlls/oledb32/version.rc:47
-#, fuzzy
-#| msgid "I/O Writes"
 msgid "Write"
-msgstr "Escrituras E/S"
+msgstr "Escribiendo"
 
 #: dlls/oledlg/oledlg.rc:55
 msgid "Insert Object"
@@ -9070,10 +8984,8 @@ msgid "Add Control"
 msgstr "Añadir control"
 
 #: dlls/oledlg/oledlg.rc:35
-#, fuzzy
-#| msgid "&Font..."
 msgid "&Convert..."
-msgstr "&Fuente..."
+msgstr "&Convertir..."
 
 #: dlls/oledlg/oledlg.rc:36
 msgid "%1 %2 &Object"
@@ -9717,10 +9629,8 @@ msgid "Creation date:"
 msgstr "Fecha de creación:"
 
 #: dlls/shell32/shell32.rc:369 dlls/shell32/shell32.rc:406
-#, fuzzy
-#| msgid "&Attributes:"
 msgid "Attributes:"
-msgstr "A&tributos:"
+msgstr "Atributos:"
 
 #: dlls/shell32/shell32.rc:371 dlls/shell32/shell32.rc:408
 #: programs/winefile/winefile.rc:173
@@ -9741,16 +9651,12 @@ msgid "&Change..."
 msgstr "&Cambiar..."
 
 #: dlls/shell32/shell32.rc:400
-#, fuzzy
-#| msgid "Modified"
 msgid "Last modified:"
-msgstr "Modificado"
+msgstr "Último cambio:"
 
 #: dlls/shell32/shell32.rc:402
-#, fuzzy
-#| msgid "Last Change:"
 msgid "Last accessed:"
-msgstr "Último cambio:"
+msgstr "Último accedido:"
 
 #: dlls/shell32/shell32.rc:138 dlls/shell32/shell32.rc:142
 #: programs/winefile/winefile.rc:107
@@ -10174,10 +10080,8 @@ msgid " sec"
 msgstr " seg"
 
 #: dlls/twain_32/twain.rc:29
-#, fuzzy
-#| msgid "New Folder"
 msgid "Select Source"
-msgstr "Nueva carpeta"
+msgstr "Seleccionar Fuente"
 
 #: dlls/tzres/tzres.rc:90
 msgid "China Standard Time"
@@ -10260,16 +10164,12 @@ msgid "Iran Daylight Time"
 msgstr "Horario de Verano en Irán"
 
 #: dlls/tzres/tzres.rc:204
-#, fuzzy
-#| msgid "Haiti Standard Time"
 msgid "Saint Pierre Standard Time"
-msgstr "Horario Estándar en Haití"
+msgstr "Horario Estándar en Saint Pierre"
 
 #: dlls/tzres/tzres.rc:205
-#, fuzzy
-#| msgid "Haiti Daylight Time"
 msgid "Saint Pierre Daylight Time"
-msgstr "Horario de Verano en Haití"
+msgstr "Horario de Verano en Saint Pierre"
 
 #: dlls/tzres/tzres.rc:170
 msgid "Namibia Standard Time"
@@ -10312,16 +10212,12 @@ msgid "Central Asia Daylight Time"
 msgstr "Horario de Verano Asia Central"
 
 #: dlls/tzres/tzres.rc:146
-#, fuzzy
-#| msgid "Korea Standard Time"
 msgid "Lord Howe Standard Time"
-msgstr "Horario Estándar en Corea"
+msgstr "Horario Estándar en Lord Howe"
 
 #: dlls/tzres/tzres.rc:147
-#, fuzzy
-#| msgid "Korea Daylight Time"
 msgid "Lord Howe Daylight Time"
-msgstr "Horario de Verano en Corea"
+msgstr "Horario de Verano en Lord Howe"
 
 #: dlls/tzres/tzres.rc:40
 msgid "Arabic Standard Time"
@@ -10372,16 +10268,12 @@ msgid "Azerbaijan Daylight Time"
 msgstr "Horario de Verano en Azerbaiyán"
 
 #: dlls/tzres/tzres.rc:150
-#, fuzzy
-#| msgid "Magadan Standard Time"
 msgid "Magallanes Standard Time"
-msgstr "Horario Estándar en Magadán"
+msgstr "Horario Estándar en Magallanes"
 
 #: dlls/tzres/tzres.rc:151
-#, fuzzy
-#| msgid "Magadan Daylight Time"
 msgid "Magallanes Daylight Time"
-msgstr "Horario de Verano en Magadán"
+msgstr "Horario de Verano en Magallanes"
 
 #: dlls/tzres/tzres.rc:206
 msgid "Samoa Standard Time"
@@ -10432,16 +10324,12 @@ msgid "Line Islands Daylight Time"
 msgstr "Horario de Verano en Islas de la Línea"
 
 #: dlls/tzres/tzres.rc:92
-#, fuzzy
-#| msgid "China Standard Time"
 msgid "Cuba Standard Time"
-msgstr "Horario Estándar en China"
+msgstr "Horario Estándar en Cuba"
 
 #: dlls/tzres/tzres.rc:93
-#, fuzzy
-#| msgid "China Daylight Time"
 msgid "Cuba Daylight Time"
-msgstr "Horario de Verano en China"
+msgstr "Horario de Verano en Cuba"
 
 #: dlls/tzres/tzres.rc:136
 msgid "Jordan Standard Time"
@@ -10640,16 +10528,12 @@ msgid "US Eastern Daylight Time"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:182
-#, fuzzy
-#| msgid "Korea Standard Time"
 msgid "North Korea Standard Time"
-msgstr "Horario Estándar en Corea"
+msgstr "Horario Estándar en Corea del Norte"
 
 #: dlls/tzres/tzres.rc:183
-#, fuzzy
-#| msgid "Korea Daylight Time"
 msgid "North Korea Daylight Time"
-msgstr "Horario de Verano en Corea"
+msgstr "Horario de Verano en Corea del Norte"
 
 #: dlls/tzres/tzres.rc:220
 msgid "Tasmania Standard Time"
@@ -10740,16 +10624,12 @@ msgid "Arabian Daylight Time"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:222
-#, fuzzy
-#| msgid "Haiti Standard Time"
 msgid "Tocantins Standard Time"
-msgstr "Horario Estándar en Haití"
+msgstr "Horario Estándar en Tocantins"
 
 #: dlls/tzres/tzres.rc:223
-#, fuzzy
-#| msgid "Haiti Daylight Time"
 msgid "Tocantins Daylight Time"
-msgstr "Horario de Verano en Haití"
+msgstr "Horario de Verano en Tocantins"
 
 #: dlls/tzres/tzres.rc:196
 msgid "Russian Standard Time"
@@ -10760,16 +10640,12 @@ msgid "Russian Daylight Time"
 msgstr "Horario de Verano en Rusia"
 
 #: dlls/tzres/tzres.rc:48
-#, fuzzy
-#| msgid "Central Standard Time"
 msgid "Aus Central W. Standard Time"
-msgstr "Horario Estándar  Central"
+msgstr "Horario Estándar Occidental Australiana"
 
 #: dlls/tzres/tzres.rc:49
-#, fuzzy
-#| msgid "Central Daylight Time"
 msgid "Aus Central W. Daylight Time"
-msgstr "Horario de Verano Central"
+msgstr "Horario de Verano Occidental Australiana"
 
 #: dlls/tzres/tzres.rc:194
 msgid "Romance Standard Time"
@@ -10988,16 +10864,12 @@ msgid "Egypt Daylight Time"
 msgstr "Horario de Verano en Egipto"
 
 #: dlls/tzres/tzres.rc:106
-#, fuzzy
-#| msgid "Mountain Standard Time (Mexico)"
 msgid "Eastern Standard Time (Mexico)"
-msgstr "Horario Estándar de Montaña(México)"
+msgstr "Horario Estándar del Oeste(México)"
 
 #: dlls/tzres/tzres.rc:107
-#, fuzzy
-#| msgid "Mountain Daylight Time (Mexico)"
 msgid "Eastern Daylight Time (Mexico)"
-msgstr "Horario de Verano de Montaña(México)"
+msgstr "Horario de Verano del Oeste(México)"
 
 #: dlls/tzres/tzres.rc:154
 msgid "Mauritius Standard Time"
@@ -11108,16 +10980,12 @@ msgid "Security Warning"
 msgstr "Advertencia de Seguridad"
 
 #: dlls/urlmon/urlmon.rc:35
-#, fuzzy
-#| msgid "Do you want to continue anyway?"
 msgid "Do you want to install this software?"
-msgstr "¿Quieres continuar igualmente?"
+msgstr "¿Quieres instalar este programa?"
 
 #: dlls/urlmon/urlmon.rc:39
-#, fuzzy
-#| msgid "Install/Uninstall"
 msgid "Don't install"
-msgstr "Instalar/Desinstalar"
+msgstr "No Instale"
 
 #: dlls/urlmon/urlmon.rc:43
 msgid ""
@@ -11126,10 +10994,8 @@ msgid ""
 msgstr ""
 
 #: dlls/urlmon/urlmon.rc:51
-#, fuzzy
-#| msgid "Installation transform failed to apply.\n"
 msgid "Installation of component failed: %08x"
-msgstr "No pudo aplicarse la transformación en la instalación.\n"
+msgstr "FAlló la instalación del componente: %08x"
 
 #: dlls/urlmon/urlmon.rc:52
 msgid "Install (%d)"
@@ -11255,10 +11121,8 @@ msgid "Object variable not set"
 msgstr "(valor no definido)"
 
 #: dlls/vbscript/vbscript.rc:44
-#, fuzzy
-#| msgid "Invalid user buffer.\n"
 msgid "Invalid use of Null"
-msgstr "Búfer del usuario inválido.\n"
+msgstr "Uso inválido de Null"
 
 #: dlls/vbscript/vbscript.rc:45
 msgid "Can't create necessary temporary file"
@@ -11293,10 +11157,8 @@ msgid "Object doesn't support current locale setting"
 msgstr "El objeto no acepta esta acción"
 
 #: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
-#, fuzzy
-#| msgid "Element not found.\n"
 msgid "Named argument not found"
-msgstr "El elemento no se ha encontrado.\n"
+msgstr "Argumento con nombre no encontrado"
 
 #: dlls/vbscript/vbscript.rc:55
 msgid "Wrong number of arguments or invalid property assignment"
@@ -11339,10 +11201,8 @@ msgid "Hide %@"
 msgstr "Ocultar %@"
 
 #: dlls/winemac.drv/winemac.rc:35
-#, fuzzy
-#| msgid "Other"
 msgid "Hide Others"
-msgstr "Otro"
+msgstr "Esconder Otros"
 
 #: dlls/winemac.drv/winemac.rc:36
 msgid "Show All"
@@ -11440,16 +11300,12 @@ msgid "Security Protocol"
 msgstr "Protocolo de Seguridad"
 
 #: dlls/wininet/wininet.rc:38
-#, fuzzy
-#| msgid "Signature"
 msgid "Signature Type"
-msgstr "Firma"
+msgstr "Tipo de Firma"
 
 #: dlls/wininet/wininet.rc:39
-#, fuzzy
-#| msgid "Encrypting File System"
 msgid "Encryption Type"
-msgstr "Cifrando Sistema de Ficheros"
+msgstr "Tipo de cifrado"
 
 #: dlls/wininet/wininet.rc:40
 msgid "Privacy Strength"
@@ -11460,20 +11316,16 @@ msgid "bits"
 msgstr "bits"
 
 #: dlls/wininet/winineterror.mc:26
-#, fuzzy
-#| msgid "Service request timeout.\n"
 msgid "The request has timed out.\n"
-msgstr "Se agotó el tiempo de espera de la petición al servicio.\n"
+msgstr "Se agotó el tiempo de espera de la petición.\n"
 
 #: dlls/wininet/winineterror.mc:31
 msgid "An internal error has occurred.\n"
 msgstr "Ha ocurrido un error interno.\n"
 
 #: dlls/wininet/winineterror.mc:36
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "The URL is invalid.\n"
-msgstr "Ruta inválida.\n"
+msgstr "URL inválida.\n"
 
 #: dlls/wininet/winineterror.mc:41
 msgid "The URL scheme could not be recognized or is not supported.\n"
@@ -11504,10 +11356,8 @@ msgid "The requested item could not be located.\n"
 msgstr "El perfil no ha podido ser añadido.\n"
 
 #: dlls/wininet/winineterror.mc:66
-#, fuzzy
-#| msgid "Can't connect to the LDAP server"
 msgid "The attempt to connect to the server failed.\n"
-msgstr "No se ha podido conectar al servidor LDAP"
+msgstr "No se ha podido conectar al servidor.\n"
 
 #: dlls/wininet/winineterror.mc:71
 msgid "The connection with the server has been terminated.\n"
@@ -12102,10 +11952,6 @@ msgid "An error occurred with the specified port."
 msgstr "Ha ocurrido un error con el puerto especificado."
 
 #: dlls/winmm/winmm.rc:133
-#, fuzzy
-#| msgid ""
-#| "All multimedia timers are being used by other applications. Quit one of "
-#| "these applications; then, try again."
 msgid ""
 "All multimedia timers are being used by other applications. Quit one of "
 "these applications, and then try again."
@@ -12150,16 +11996,12 @@ msgstr ""
 "espacio en disco o de que permanece conectado a la red."
 
 #: dlls/winmm/winmm.rc:136
-#, fuzzy
-#| msgid "Wine Gecko Installer"
 msgid "Wine Sound Mapper"
-msgstr "Instalador Wine Gecko"
+msgstr "Mapeador de Sonido Wine"
 
 #: dlls/winmm/winmm.rc:137
-#, fuzzy
-#| msgid "column"
 msgid "Volume"
-msgstr "columna"
+msgstr "Volumen"
 
 #: dlls/winmm/winmm.rc:138
 msgid "Master Volume"
@@ -12242,10 +12084,8 @@ msgid "Confidentiality Required"
 msgstr "Confidencialidad requerida"
 
 #: dlls/wldap32/wldap32.rc:46
-#, fuzzy
-#| msgid "Shutdown in progress.\n"
 msgid "SASL Bind in Progress"
-msgstr "El sistema se está apagando.\n"
+msgstr "SASL Enlace en progreso"
 
 #: dlls/wldap32/wldap32.rc:48
 msgid "No Such Attribute"
@@ -12540,10 +12380,6 @@ msgstr ""
 "el procedimiento que realizo la llamada.\n"
 
 #: programs/cmd/cmd.rc:44
-#, fuzzy
-#| msgid ""
-#| "CD <dir> is the short version of CHDIR. It changes the current\n"
-#| "default directory.\n"
 msgid ""
 "CD <directory> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
@@ -12552,8 +12388,6 @@ msgstr ""
 "el directorio actual.\n"
 
 #: programs/cmd/cmd.rc:47
-#, fuzzy
-#| msgid "CHDIR <dir> changes the current default directory.\n"
 msgid "CHDIR <directory> changes the current default directory.\n"
 msgstr "CHDIR <directorio> cambia el directorio actual.\n"
 
@@ -12818,19 +12652,16 @@ msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <archivo> renombra un archivo.\n"
 
 #: programs/cmd/cmd.rc:181
-#, fuzzy
-#| msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
 msgstr ""
-"RD <directorio> es la versión corta de RMDIR. Este comando borra un\n"
-"subdirectorio.\n"
+"RD <directorio> es la versión corta de RMDIR. Este comando borra una "
+"carpeta.\n"
 
 #: programs/cmd/cmd.rc:183
-#, fuzzy
 msgid "RMDIR <directory> deletes a directory.\n"
 msgstr ""
-"RMDIR <directorio> es la versión corta de RMDIR. Este comando borra un\n"
-"subdirectorio.\n"
+"RMDIR <directorio> borra una carpeta.\n"
+"\n"
 
 #: programs/cmd/cmd.rc:229
 msgid ""
@@ -12978,10 +12809,6 @@ msgstr ""
 "los parámetros de entorno anteriores son restaurados.\n"
 
 #: programs/cmd/cmd.rc:275
-#, fuzzy
-#| msgid ""
-#| "PUSHD <directoryname> saves the current directory onto a\n"
-#| "stack, and then changes the current directory to the supplied one.\n"
 msgid ""
 "PUSHD <directory> saves the current directory onto a stack, and then\n"
 "changes the current directory to the supplied one.\n"
@@ -13404,16 +13231,12 @@ msgid "Command history"
 msgstr "Historial de comandos"
 
 #: programs/conhost/conhost.rc:60
-#, fuzzy
-#| msgid "Buffer zone"
 msgid "&Buffer size:"
-msgstr "Zona de búfer"
+msgstr "Talla del &Búfer:"
 
 #: programs/conhost/conhost.rc:63
-#, fuzzy
-#| msgid "&Remove doubles"
 msgid "&Remove duplicates"
-msgstr "&Eliminar duplicados"
+msgstr "Elimina&r duplicados"
 
 #: programs/conhost/conhost.rc:65
 msgid "Popup menu"
@@ -13428,22 +13251,16 @@ msgid "S&hift"
 msgstr "S&hift"
 
 #: programs/conhost/conhost.rc:69
-#, fuzzy
-#| msgid "&Close console"
 msgid "Console"
-msgstr "&Cerrar consola"
+msgstr "Consola"
 
 #: programs/conhost/conhost.rc:70
-#, fuzzy
-#| msgid "Quick edit"
 msgid "&Quick Edit mode"
-msgstr "Edición rápida"
+msgstr "Modo Edición rápida"
 
 #: programs/conhost/conhost.rc:71
-#, fuzzy
-#| msgid "&Expert mode"
 msgid "&Insert mode"
-msgstr "Modo &Experto"
+msgstr "Modo de &Inserción"
 
 #: programs/conhost/conhost.rc:79
 msgid "&Font"
@@ -13544,14 +13361,12 @@ msgid "Configuration error"
 msgstr "Error de configuración"
 
 #: programs/conhost/conhost.rc:46
-#, fuzzy
-#| msgid "Screen buffer size must be greater or equal to the window's one"
 msgid ""
 "The size of the screen buffer must be greater than or equal to the size of "
 "the window."
 msgstr ""
 "El tamaño del búfer de la pantalla debe ser mayor o igual que el de la "
-"ventana"
+"ventana."
 
 #: programs/conhost/conhost.rc:41
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
@@ -13608,10 +13423,8 @@ msgid "Error: Invalid option '%c'.\n"
 msgstr "Error: Opción '%c' inválida.\n"
 
 #: programs/hostname/hostname.rc:32
-#, fuzzy
-#| msgid "Error: Could not find process \"%1\".\n"
 msgid "Error: Could not get hostname: %u.\n"
-msgstr "Error: No se pudo encontrar el proceso \"%1\".\n"
+msgstr "Error: No se pudo obtener el nomebre de host: %u.\n"
 
 #: programs/hostname/hostname.rc:33
 msgid ""
@@ -13690,10 +13503,8 @@ msgid "IPv6 address"
 msgstr "Dirección IPv6"
 
 #: programs/msinfo32/msinfo32.rc:28
-#, fuzzy
-#| msgid "System Configuration"
 msgid "System Information"
-msgstr "Configuración del Sistema"
+msgstr "Información del Sistema"
 
 #: programs/net/net.rc:30
 msgid ""
@@ -13827,38 +13638,28 @@ msgid "The following services are running:\n"
 msgstr "Los siguientes servicios están en ejecución:\n"
 
 #: programs/netstat/netstat.rc:30
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Active Connections"
-msgstr "Conexión LAN"
+msgstr "Conexiones Activas"
 
 #: programs/netstat/netstat.rc:31
 msgid "Proto"
 msgstr ""
 
 #: programs/netstat/netstat.rc:32
-#, fuzzy
-#| msgid "Email Address"
 msgid "Local Address"
-msgstr "Dirección de Email"
+msgstr "Dirección Local"
 
 #: programs/netstat/netstat.rc:33
-#, fuzzy
-#| msgid "Street Address"
 msgid "Foreign Address"
-msgstr "Dirección de la Calle"
+msgstr "Dirección Externa"
 
 #: programs/netstat/netstat.rc:34
-#, fuzzy
-#| msgid "Status"
 msgid "State"
 msgstr "Estado"
 
 #: programs/netstat/netstat.rc:35
-#, fuzzy
-#| msgid "Interfaces"
 msgid "Interface Statistics"
-msgstr "Interfaces"
+msgstr "Estadísticas de la Interfaz"
 
 #: programs/netstat/netstat.rc:36
 msgid "Sent"
@@ -13874,29 +13675,23 @@ msgstr "Bytes"
 
 #: programs/netstat/netstat.rc:39
 msgid "Unicast packets"
-msgstr ""
+msgstr "Paquetes Unicast"
 
 #: programs/netstat/netstat.rc:40
 msgid "Non-unicast packets"
-msgstr ""
+msgstr "Paquetes Non-Unicast"
 
 #: programs/netstat/netstat.rc:41
-#, fuzzy
-#| msgid "Disclaimer"
 msgid "Discards"
-msgstr "Descargo de Responsabilidad"
+msgstr "Descartes"
 
 #: programs/netstat/netstat.rc:42
-#, fuzzy
-#| msgid "Error"
 msgid "Errors"
-msgstr "Error"
+msgstr "Errores"
 
 #: programs/netstat/netstat.rc:43
-#, fuzzy
-#| msgid "Unknown port.\n"
 msgid "Unknown protocols"
-msgstr "Puerto desconocido.\n"
+msgstr "Protocolos desconocidos"
 
 #: programs/netstat/netstat.rc:44
 msgid "TCP Statistics for IPv4"
@@ -13925,22 +13720,16 @@ msgid "Reset Connections"
 msgstr "Conexión LAN"
 
 #: programs/netstat/netstat.rc:49
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Current Connections"
-msgstr "Conexión LAN"
+msgstr "Conexiones Actuales"
 
 #: programs/netstat/netstat.rc:50
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Received"
-msgstr "Segmento cerrado.\n"
+msgstr "Segmentos Recibidos"
 
 #: programs/netstat/netstat.rc:51
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Segments Sent"
-msgstr "Segmento cerrado.\n"
+msgstr "Segmentos Enviados"
 
 #: programs/netstat/netstat.rc:52
 msgid "Segments Retransmitted"
@@ -13951,16 +13740,12 @@ msgid "UDP Statistics for IPv4"
 msgstr "Estadisticas UDP para IPv4"
 
 #: programs/netstat/netstat.rc:54
-#, fuzzy
-#| msgid "Segment locked.\n"
 msgid "Datagrams Received"
-msgstr "Segmento cerrado.\n"
+msgstr "Datagrams Recibidos"
 
 #: programs/netstat/netstat.rc:55
-#, fuzzy
-#| msgid "Local Port"
 msgid "No Ports"
-msgstr "Puerto local"
+msgstr "Sin Puertas"
 
 #: programs/netstat/netstat.rc:56
 #, fuzzy
@@ -13970,7 +13755,7 @@ msgstr "Error de decodificación"
 
 #: programs/netstat/netstat.rc:57
 msgid "Datagrams Sent"
-msgstr ""
+msgstr "Datagramas Enviados"
 
 #: programs/notepad/notepad.rc:30
 msgid "&New\tCtrl+N"
@@ -14800,38 +14585,27 @@ msgid "The operation completed successfully\n"
 msgstr "La operación finalizó con éxito\n"
 
 #: programs/reg/reg.rc:40
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "reg: Invalid key name\n"
-msgstr "Error: nombre de clave inválido\n"
+msgstr "reg: Nombre de clave inválido\n"
 
 #: programs/reg/reg.rc:41
-#, fuzzy
-#| msgid "Error: Invalid command line parameters\n"
 msgid "reg: Invalid command line parameters\n"
-msgstr "Error: parámetros de línea de comandos inválidos\n"
+msgstr "reg: Parámetros de línea de comandos inválidos\n"
 
 #: programs/reg/reg.rc:42
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "reg: Unable to access remote machine\n"
-msgstr "Error: No se puede agregar claves al equipo remoto\n"
+msgstr "reg: No se puede acceder al equipo remoto\n"
 
 #: programs/reg/reg.rc:43
-#, fuzzy
-#| msgid ""
-#| "Error: The system was unable to find the specified registry key or value\n"
 msgid ""
 "reg: The system was unable to find the specified registry key or value\n"
 msgstr ""
-"Error: El sistema no pudo encontrar la clave o el valor del Registro "
+"reg: El sistema no pudo encontrar la clave o el valor del Registro "
 "especificado\n"
 
 #: programs/reg/reg.rc:44
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "reg: Unsupported registry data type [%1]\n"
-msgstr "Tipo no soportado.\n"
+msgstr "reg: Tipo de datos de registro no soportado[%1]\n"
 
 #: programs/reg/reg.rc:45
 msgid "reg: The option [/d] must be followed by a valid integer\n"
@@ -14860,22 +14634,16 @@ msgid "(Default)"
 msgstr "(Por defecto)"
 
 #: programs/reg/reg.rc:54
-#, fuzzy
-#| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
-msgstr "¿Está seguro que desea eliminar estos valores?"
+msgstr "¿Está seguro que desea eliminar el valor de registro '%1'?"
 
 #: programs/reg/reg.rc:55
-#, fuzzy
-#| msgid "Are you sure you want to delete value '%s'?"
 msgid "Are you sure you want to delete all registry values in '%1'?"
-msgstr "¿Seguro que desea eliminar el valor '%s'?"
+msgstr "¿Seguro que desea eliminar all registry values en '%1'?"
 
 #: programs/reg/reg.rc:56
-#, fuzzy
-#| msgid "Are you sure you want to delete '%1'?"
 msgid "Are you sure you want to delete the registry key '%1'?"
-msgstr "¿Seguro que desea eliminar '%1'?"
+msgstr "¿Seguro que desea eliminar la clave de registro '%1'?"
 
 #: programs/reg/reg.rc:57
 msgid "reg: The option [/d] must be followed by a valid string\n"
@@ -14898,16 +14666,12 @@ msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr ""
 
 #: programs/reg/reg.rc:61
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "reg: Invalid syntax. "
-msgstr "Error: nombre de clave inválido\n"
+msgstr "reg: Sintaxis inválida. "
 
 #: programs/reg/reg.rc:62
-#, fuzzy
-#| msgid "Error: Invalid option '%c'.\n"
 msgid "reg: Invalid option [%1]. "
-msgstr "Error: Opción '%c' inválida.\n"
+msgstr "reg: Opción inválida[%1]. "
 
 #: programs/reg/reg.rc:63
 msgid "Type \"REG /?\" for help.\n"
@@ -14926,38 +14690,28 @@ msgid "REG IMPORT file.reg\n"
 msgstr "REG IMPORT archivo.reg\n"
 
 #: programs/reg/reg.rc:67
-#, fuzzy
-#| msgid "No command was specified."
 msgid "reg: The file '%1' was not found.\n"
-msgstr "No se ha especificado un comando."
+msgstr "reg: No se encontró el archivo '%1'.\n"
 
 #: programs/reg/reg.rc:68
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "reg: Unable to open the registry key '%1'.\n"
-msgstr "Error: No se puede agregar claves al equipo remoto\n"
+msgstr "reg: No se puede abrir la clave de registro '%1'.\n"
 
 #: programs/reg/reg.rc:69
 msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr ""
 
 #: programs/reg/reg.rc:70
-#, fuzzy
-#| msgid "REG QUERY key_name [/v value_name | /ve] [/s]\n"
 msgid "REG EXPORT key_name file.reg [/y]\n"
-msgstr "REG QUERY nombre_clave [/v nombre_valor | /ve] [/s]\n"
+msgstr "REG EXPORT nombre_clave archivo.reg [/y]\n"
 
 #: programs/reg/reg.rc:71
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "reg: Invalid system key [%1]\n"
-msgstr "Error: nombre de clave inválido\n"
+msgstr "reg: Nombre de clave inválido[%1]\n"
 
 #: programs/reg/reg.rc:72
-#, fuzzy
-#| msgid "The specified file already exists. Do you want to replace it?"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
-msgstr "El archivo ya existe. ¿Desea reemplazarlo?"
+msgstr "El archivo '%1' ya existe. ¿Desea reemplazarlo?"
 
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
@@ -15041,10 +14795,8 @@ msgid "Expand"
 msgstr "Expandir"
 
 #: programs/regedit/regedit.rc:134 programs/regedit/regedit.rc:233
-#, fuzzy
-#| msgid "Modify Binary Data..."
 msgid "Modify &Binary Data..."
-msgstr "Modificar datos binarios..."
+msgstr "Modificar datos &Binarios..."
 
 #: programs/regedit/regedit.rc:267
 msgid "Export registry"
@@ -15145,15 +14897,11 @@ msgid "Contains commands for accessing frequently used keys"
 msgstr "Contiene comandos para acceder a claves usadas frecuentemente"
 
 #: programs/regedit/regedit.rc:163
-#, fuzzy
-#| msgid ""
-#| "Contains commands for displaying help and information about registry "
-#| "editor"
 msgid ""
 "Contains commands for displaying Help and information about Registry Editor"
 msgstr ""
-"Contiene comandos para mostrar ayuda e información sobre el editor de "
-"registro"
+"Contiene comandos para mostrar ayuda e información sobre el Editor de "
+"Registro"
 
 #: programs/regedit/regedit.rc:164
 msgid "Contains commands for creating new keys or values"
@@ -15192,22 +14940,16 @@ msgid "(unknown %d)"
 msgstr "(%d desconocido)"
 
 #: programs/regedit/regedit.rc:247
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to modify the selected registry value."
-msgstr "Error: No se puede agregar claves al equipo remoto\n"
+msgstr "No se puede modificar el valor del registro seleccionado."
 
 #: programs/regedit/regedit.rc:248
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to create a new registry key."
-msgstr "Error: No se puede agregar claves al equipo remoto\n"
+msgstr "No se puede crear una nueva clave de registro."
 
 #: programs/regedit/regedit.rc:249
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to create a new registry value."
-msgstr "Error: No se puede agregar claves al equipo remoto\n"
+msgstr "No se puede crear un nuevo registro."
 
 #: programs/regedit/regedit.rc:250
 msgid ""
@@ -15222,22 +14964,16 @@ msgid ""
 msgstr ""
 
 #: programs/regedit/regedit.rc:252
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to delete the selected registry key."
-msgstr "Error: No se puede agregar claves al equipo remoto\n"
+msgstr "No se puede borrar la clave de registro seleccionada."
 
 #: programs/regedit/regedit.rc:253
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to rename the selected registry key."
-msgstr "Error: No se puede agregar claves al equipo remoto\n"
+msgstr "No se puede cambiar el nombre de la clave de registro seleccionada."
 
 #: programs/regedit/regedit.rc:254
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to rename the selected registry value."
-msgstr "Error: No se puede agregar claves al equipo remoto\n"
+msgstr "No se puede cambiar el nombre del valor seleccionado."
 
 #: programs/regedit/regedit.rc:255
 msgid ""
@@ -15245,13 +14981,10 @@ msgid ""
 msgstr ""
 
 #: programs/regedit/regedit.rc:256
-#, fuzzy
-#| msgid ""
-#| "Error: The system was unable to find the specified registry key or value\n"
 msgid "Unable to import %1. The specified file is not a valid registry file."
 msgstr ""
-"Error: El sistema no pudo encontrar la clave o el valor del Registro "
-"especificado\n"
+"No se puede importar %1. El archivo especificado no es un archivo de "
+"registro válido."
 
 #: programs/regedit/regedit.rc:408
 msgid ""
@@ -15293,10 +15026,8 @@ msgid "Type \"regedit /?\" for help.\n"
 msgstr ""
 
 #: programs/regedit/regedit.rc:411
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: No filename was specified.\n"
-msgstr "No se ha especificado un comando."
+msgstr "regedit: No se ha especificado un nombre de archivo.\n"
 
 #: programs/regedit/regedit.rc:412
 msgid "regedit: No registry key was specified for removal.\n"
@@ -15307,26 +15038,20 @@ msgid "regedit: The file '%1' was not found.\n"
 msgstr ""
 
 #: programs/regedit/regedit.rc:414
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to open the file '%1'.\n"
-msgstr "Error: No se puede agregar claves al equipo remoto\n"
+msgstr "regedit: No se puede abrir el archivo '%1'.\n"
 
 #: programs/regedit/regedit.rc:415
-#, fuzzy
-#| msgid "Invalid handle operation.\n"
 msgid "regedit: Unhandled action.\n"
-msgstr "Operación de descriptor inválida.\n"
+msgstr "regedit: Acción no controlada.\n"
 
 #: programs/regedit/regedit.rc:416
 msgid "regedit: Out of memory! (%1!S!, line %2!u!)\n"
 msgstr ""
 
 #: programs/regedit/regedit.rc:417
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "regedit: Invalid hexadecimal value.\n"
-msgstr "Error: nombre de clave inválido\n"
+msgstr "regedit: Valor hexadecimal no válido.\n"
 
 #: programs/regedit/regedit.rc:418
 msgid ""
@@ -15339,51 +15064,37 @@ msgid "regedit: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr ""
 
 #: programs/regedit/regedit.rc:420
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "regedit: Unsupported registry data type [0x%1!x!]\n"
-msgstr "Tipo no soportado.\n"
+msgstr "regedit: Tipo de datos de registro no soportado [0x%1!x!]\n"
 
 #: programs/regedit/regedit.rc:421
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unexpected end of line in '%1'.\n"
-msgstr "Error: No se puede agregar claves al equipo remoto\n"
+msgstr "regedit: Final de de línea inesperado en'%1'.\n"
 
 #: programs/regedit/regedit.rc:422
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: The line '%1' was not recognized.\n"
-msgstr "No se ha especificado un comando."
+msgstr "regedit: La linea '%1' no fue reconocida.\n"
 
 #: programs/regedit/regedit.rc:423
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to add the registry value '%1' to '%2'.\n"
-msgstr "Error: No se puede agregar claves al equipo remoto\n"
+msgstr "regedit: No se puede agregar el valor de registro '%1' en '%2'.\n"
 
 #: programs/regedit/regedit.rc:424
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to open the registry key '%1'.\n"
-msgstr "Error: No se puede agregar claves al equipo remoto\n"
+msgstr "regedit: Incapaz de abrir la clave de registro '%1'.\n"
 
 #: programs/regedit/regedit.rc:425
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid ""
 "regedit: Unsupported registry data type [0x%1!x!] encountered in '%2'.\n"
-msgstr "Tipo no soportado.\n"
+msgstr "regedit: Tipo de datos de registro no soportado [0x%1!x!] en '%2'.\n"
 
 #: programs/regedit/regedit.rc:426
 msgid "regedit: The registry value '%1' will be exported as binary data.\n"
 msgstr ""
 
 #: programs/regedit/regedit.rc:427
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "regedit: Invalid system key [%1]\n"
-msgstr "Error: nombre de clave inválido\n"
+msgstr "regedit: nombre de clave inválido [%1]\n"
 
 #: programs/regedit/regedit.rc:428
 #, fuzzy
@@ -15396,20 +15107,14 @@ msgstr ""
 "especificado\n"
 
 #: programs/regedit/regedit.rc:429
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "regedit: Unable to delete the registry key '%1'.\n"
-msgstr "Error: No se puede agregar claves al equipo remoto\n"
+msgstr "regedit: No se puede borrar la clave de registro '%1'.\n"
 
 #: programs/regedit/regedit.rc:431
-#, fuzzy
-#| msgid "No command was specified."
 msgid "regedit: The line contains invalid syntax.\n"
-msgstr "No se ha especificado un comando."
+msgstr "regedit: La linea contiene uan sintaxis no válida.\n"
 
 #: programs/regedit/regedit.rc:187
-#, fuzzy
-#| msgid "Quits the registry editor"
 msgid "Quits the Registry Editor"
 msgstr "Sale del editor de registro"
 
@@ -15426,8 +15131,6 @@ msgid "Shows or hides the status bar"
 msgstr "Muestra u oculta la barra de estado"
 
 #: programs/regedit/regedit.rc:191
-#, fuzzy
-#| msgid "Change position of split between two panes"
 msgid "Changes the position of the split between two panes"
 msgstr "Cambia la posición del separador entre dos paneles"
 
@@ -15473,10 +15176,8 @@ msgid "Adds a new binary value"
 msgstr "Añade un nuevo valor binario"
 
 #: programs/regedit/regedit.rc:174
-#, fuzzy
-#| msgid "Adds a new binary value"
 msgid "Adds a new 32-bit value"
-msgstr "Añade un nuevo valor binario"
+msgstr "Añade un nuevo valor 32-bits"
 
 #: programs/regedit/regedit.rc:177
 msgid "Imports a text file into the registry"
@@ -15491,10 +15192,8 @@ msgid "Prints all or part of the registry"
 msgstr "Imprime todo o parte del registro"
 
 #: programs/regedit/regedit.rc:181
-#, fuzzy
-#| msgid "Registry Editor"
 msgid "Opens Registry Editor Help"
-msgstr "Editor del registro"
+msgstr "Abre la ayuda del editor de registro"
 
 #: programs/regedit/regedit.rc:182
 msgid "Displays program information, version number and copyright"
@@ -15502,38 +15201,28 @@ msgstr ""
 "Muestra información del programa, número de versión y derechos de autor"
 
 #: programs/regedit/regedit.rc:206
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to query the registry value '%1'."
-msgstr "Error: No se puede agregar claves al equipo remoto\n"
+msgstr "Incapaz de consultar el valor del registro '%1'."
 
 #: programs/regedit/regedit.rc:207
-#, fuzzy
-#| msgid "Can't edit keys of this type (%u)"
 msgid "Unable to edit registry keys of this type (%1!u!)."
-msgstr "No se pueden editar claves de este tipo (%u)"
+msgstr "No se pueden editar claves de este tipo (%1!u!)."
 
 #: programs/regedit/regedit.rc:208
-#, fuzzy
-#| msgid "Value is too big (%u)"
 msgid "The value is too big (%1!u!)."
-msgstr "El valor es demasiado grande (%u)"
+msgstr "El valor es demasiado grande (%1!u!)."
 
 #: programs/regedit/regedit.rc:209
 msgid "Confirm Value Delete"
 msgstr "Confirmar eliminación de valor"
 
 #: programs/regedit/regedit.rc:210
-#, fuzzy
-#| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the selected registry value?"
-msgstr "¿Está seguro que desea eliminar estos valores?"
+msgstr "¿Está seguro que desea eliminar los valores seleccionados?"
 
 #: programs/regedit/regedit.rc:216
-#, fuzzy
-#| msgid "Search string '%s' not found"
 msgid "Search complete. The string '%1' was not found."
-msgstr "Cadena de búsqueda '%s' no encontrada"
+msgstr "Búsqueda completa: Cadena de búsqueda '%1' no encontrada."
 
 #: programs/regedit/regedit.rc:211
 msgid "Are you sure you want to delete these values?"
@@ -15548,55 +15237,42 @@ msgid "New Value #%d"
 msgstr "Nuevo valor #%d"
 
 #: programs/regedit/regedit.rc:205
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Unable to query the registry key '%1'."
-msgstr "Error: No se puede agregar claves al equipo remoto\n"
+msgstr "Incapaz de consultar la clave de registro '%1'."
 
 #: programs/regedit/regedit.rc:170
-#, fuzzy
-#| msgid "Modifies the value's data"
 msgid "Modifies the value's data in binary form"
-msgstr "Modifica los datos del valor"
+msgstr "Modifica los datos del valor en binario"
 
 #: programs/regedit/regedit.rc:175
 msgid "Adds a new multi-string value"
 msgstr "Añade un nuevo valor de cadena múltiple"
 
 #: programs/regedit/regedit.rc:198
-#, fuzzy
-#| msgid "Exports selected branch of the registry to a text file"
 msgid "Exports the selected branch of the registry to a text file"
 msgstr "Exporta la rama seleccionada del registro a un archivo de texto"
 
 #: programs/regedit/regedit.rc:176
-#, fuzzy
-#| msgid "Adds a new string value"
 msgid "Adds a new expandable string value"
-msgstr "Añade un nuevo valor de cadena"
+msgstr "Añade un nuevo valor de cadena ampliable"
 
 #: programs/regedit/regedit.rc:212
-#, fuzzy
-#| msgid "Confirm Value Delete"
 msgid "Confirm Key Delete"
-msgstr "Confirmar eliminación de valor"
+msgstr "Confirmar eliminación de clave"
 
 #: programs/regedit/regedit.rc:213
-#, fuzzy
-#| msgid "Are you sure you want to delete '%1'?"
 msgid ""
 "Are you sure you want to delete this registry key and all of its subkeys?"
-msgstr "¿Seguro que desea eliminar '%1'?"
+msgstr ""
+"¿Seguro que desea eliminar esta clave de registro y todas sus subclaves?"
 
 #: programs/regedit/regedit.rc:199
 msgid "Expands or collapses the selected node"
 msgstr ""
 
 #: programs/regedit/regedit.rc:231
-#, fuzzy
-#| msgid "C&ollate"
 msgid "Collapse"
-msgstr "I&ntercalar"
+msgstr "Colapsar"
 
 #: programs/regsvr32/regsvr32.rc:32
 msgid ""
@@ -15627,10 +15303,8 @@ msgid ""
 msgstr ""
 
 #: programs/regsvr32/regsvr32.rc:42
-#, fuzzy
-#| msgid "Failed to open '%1'\n"
 msgid "regsvr32: Failed to load DLL '%1'\n"
-msgstr "No se pudo abrir '%1'\n"
+msgstr "regsvr32: No se pudo cargar DLL '%1'\n"
 
 #: programs/regsvr32/regsvr32.rc:43
 msgid "regsvr32: '%1!S!' not implemented in DLL '%2'\n"
@@ -16576,10 +16250,8 @@ msgid ""
 msgstr ""
 
 #: programs/uninstaller/uninstaller.rc:33
-#, fuzzy
-#| msgid "Error: Invalid option '%c'.\n"
 msgid "uninstaller: Invalid option [%1]\n"
-msgstr "Error: Opción '%c' inválida.\n"
+msgstr "desinstalador: Opción inválida [%1]\n"
 
 #: programs/uninstaller/uninstaller.rc:35
 msgid ""
@@ -16794,16 +16466,10 @@ msgid "Select Drive Letter"
 msgstr "Seleccionar letra de la unidad"
 
 #: programs/winecfg/winecfg.rc:231
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Drive configuration"
-msgstr "Configuración de Wine"
+msgstr "Configuración de Unidades"
 
 #: programs/winecfg/winecfg.rc:232
-#, fuzzy
-#| msgid ""
-#| "Failed to connect to the mount manager, the drive configuration cannot be "
-#| "edited."
 msgid ""
 "Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
@@ -16812,10 +16478,8 @@ msgstr ""
 "se ha podido editar."
 
 #: programs/winecfg/winecfg.rc:235
-#, fuzzy
-#| msgid "&Add..."
 msgid "A&dd..."
-msgstr "&Añadir..."
+msgstr "Aña&dir..."
 
 #: programs/winecfg/winecfg.rc:239
 msgid "&Path:"
@@ -16874,14 +16538,12 @@ msgid "&Test Sound"
 msgstr "Probar &sonido"
 
 #: programs/winecfg/winecfg.rc:275 programs/winecfg/winecfg.rc:89
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Speaker configuration"
-msgstr "Configuración de Wine"
+msgstr "Configuración de Altavoces"
 
 #: programs/winecfg/winecfg.rc:278
 msgid "Speakers:"
-msgstr ""
+msgstr "Altavoces:"
 
 #: programs/winecfg/winecfg.rc:286
 msgid "Appearance"
@@ -17000,18 +16662,16 @@ msgid "5.1 Surround"
 msgstr ""
 
 #: programs/winecfg/winecfg.rc:91
-#, fuzzy
-#| msgid "graphic"
 msgid "Quadraphonic"
-msgstr "gráfico"
+msgstr "Cuadrafónico"
 
 #: programs/winecfg/winecfg.rc:92
 msgid "Stereo"
-msgstr ""
+msgstr "Estéreo"
 
 #: programs/winecfg/winecfg.rc:93
 msgid "Mono"
-msgstr ""
+msgstr "Mono"
 
 #: programs/winecfg/winecfg.rc:53
 msgid ""
@@ -17097,12 +16757,6 @@ msgid "System drive"
 msgstr "Unidad del sistema"
 
 #: programs/winecfg/winecfg.rc:75
-#, fuzzy
-#| msgid ""
-#| "Are you sure you want to delete drive C?\n"
-#| "\n"
-#| "Most Windows applications expect drive C to exist, and will die messily "
-#| "if it doesn't. If you proceed remember to recreate it!"
 msgid ""
 "Are you sure you want to delete drive C?\n"
 "\n"
@@ -17120,10 +16774,8 @@ msgid "Letter"
 msgstr "Unidad"
 
 #: programs/winecfg/winecfg.rc:77
-#, fuzzy
-#| msgid "New Folder"
 msgid "Target folder"
-msgstr "Nueva carpeta"
+msgstr "Carpeta de destino"
 
 #: programs/winecfg/winecfg.rc:78
 msgid ""
@@ -17501,10 +17153,8 @@ msgid "Access date"
 msgstr "Fecha de acceso"
 
 #: programs/winefile/winefile.rc:110
-#, fuzzy
-#| msgid "Certification Path"
 msgid "Modification date"
-msgstr "Trayectoria de Certificación"
+msgstr "Fecha de modificación"
 
 #: programs/winefile/winefile.rc:111
 msgid "Index/Inode"
@@ -17531,10 +17181,8 @@ msgid "&Beginner"
 msgstr "&Principiante"
 
 #: programs/winemine/winemine.rc:45
-#, fuzzy
-#| msgid "Interface"
 msgid "&Intermediate"
-msgstr "Interfaz"
+msgstr "&Intermedia"
 
 #: programs/winemine/winemine.rc:46
 msgid "&Expert"
@@ -17565,20 +17213,16 @@ msgid "Beginner"
 msgstr "Principiante"
 
 #: programs/winemine/winemine.rc:65
-#, fuzzy
-#| msgid "Interface"
 msgid "Intermediate"
-msgstr "Interfaz"
+msgstr "Intermedia"
 
 #: programs/winemine/winemine.rc:66
 msgid "Expert"
 msgstr "Experto"
 
 #: programs/winemine/winemine.rc:74 programs/winemine/winemine.rc:33
-#, fuzzy
-#| msgid "Result"
 msgid "Reset Results"
-msgstr "Resultado"
+msgstr "Restabelecer Resultados"
 
 #: programs/winemine/winemine.rc:80
 msgid "Congratulations!"
@@ -17713,10 +17357,8 @@ msgid "Help topics: "
 msgstr "Temas de ayuda: "
 
 #: programs/wmic/wmic.rc:28
-#, fuzzy
-#| msgid "Error: Invalid command line parameters\n"
 msgid "Error: Command line not supported\n"
-msgstr "Error: parámetros de línea de comandos inválidos\n"
+msgstr "Error: parámetros de línea de comandos no soportados\n"
 
 #: programs/wmic/wmic.rc:29
 #, fuzzy
@@ -17809,8 +17451,6 @@ msgid "F&ormat"
 msgstr "F&ormato"
 
 #: programs/wordpad/wordpad.rc:85
-#, fuzzy
-#| msgid "&List"
 msgid "&Lists"
 msgstr "&Lista"
 
@@ -17819,10 +17459,8 @@ msgid "&Bullet points"
 msgstr "&Viñetas"
 
 #: programs/wordpad/wordpad.rc:88
-#, fuzzy
-#| msgid "CRL Number"
 msgid "Numbers"
-msgstr "Número CRL"
+msgstr "Números"
 
 #: programs/wordpad/wordpad.rc:89
 msgid "Letters - lower case"
@@ -17984,8 +17622,6 @@ msgid "Text documents (*.txt)"
 msgstr "Documentos de texto (*.txt)"
 
 #: programs/wordpad/wordpad.rc:149
-#, fuzzy
-#| msgid "Unicode text document (*.txt)"
 msgid "Unicode text documents (*.txt)"
 msgstr "Documentos de texto Unicode (*.txt)"
 
