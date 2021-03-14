@@ -1299,6 +1299,7 @@ static void test_Win32_OperatingSystem( IWbemServices *services )
     check_property( obj, L"CurrentTimeZone", VT_I2, CIM_SINT16 );
     check_property( obj, L"Manufacturer", VT_BSTR, CIM_STRING );
     check_property( obj, L"OSType", VT_I4, CIM_UINT16 );
+    check_property( obj, L"ProductType", VT_I4, CIM_UINT32 );
     check_property( obj, L"ServicePackMajorVersion", VT_I4, CIM_UINT16 );
     check_property( obj, L"ServicePackMinorVersion", VT_I4, CIM_UINT16 );
     check_property( obj, L"SuiteMask", VT_I4, CIM_UINT32 );

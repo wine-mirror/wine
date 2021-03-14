@@ -247,6 +247,7 @@ static const struct column col_operatingsystem[] =
     { L"OSProductSuite",          CIM_UINT32 },
     { L"OSType",                  CIM_UINT16 },
     { L"Primary",                 CIM_BOOLEAN },
+    { L"ProductType",             CIM_UINT32 },
     { L"SerialNumber",            CIM_STRING|COL_FLAG_DYNAMIC },
     { L"ServicePackMajorVersion", CIM_UINT16 },
     { L"ServicePackMinorVersion", CIM_UINT16 },
@@ -659,6 +660,7 @@ struct record_operatingsystem
     UINT32       osproductsuite;
     UINT16       ostype;
     int          primary;
+    UINT32       producttype;
     const WCHAR *serialnumber;
     UINT16       servicepackmajor;
     UINT16       servicepackminor;
@@ -3574,6 +3576,7 @@ static enum fill_status fill_operatingsystem( struct table *table, const struct 
     rec->osproductsuite         = 2461140; /* Windows XP Professional  */
     rec->ostype                 = 18;      /* WINNT */
     rec->primary                = -1;
+    rec->producttype            = 1;
     rec->serialnumber           = get_osserialnumber();
     rec->servicepackmajor       = ver.wServicePackMajor;
     rec->servicepackminor       = ver.wServicePackMinor;
