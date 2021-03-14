@@ -1809,7 +1809,7 @@ static MonoAssembly* CDECL mono_assembly_preload_hook_fn(MonoAssemblyName *aname
         TRACE("skipping Windows GAC search due to override setting\n");
 
 done:
-    if (cultureW) HeapFree(GetProcessHeap(), 0, cultureW);
+    HeapFree(GetProcessHeap(), 0, cultureW);
     mono_free(stringname);
 
     return result;
