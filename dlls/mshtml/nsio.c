@@ -2182,7 +2182,7 @@ static nsresult NSAPI nsCacheInfoChannel_GetCacheTokenCachedCharset(nsICacheInfo
 static nsresult NSAPI nsCacheInfoChannel_SetCacheTokenCachedCharset(nsICacheInfoChannel *iface, const nsACString *p)
 {
     nsChannel *This = impl_from_nsICacheInfoChannel(iface);
-    FIXME("(%p)->(%p)\n", This, debugstr_nsacstr(p));
+    FIXME("(%p)->(%s)\n", This, debugstr_nsacstr(p));
     return E_NOTIMPL;
 }
 
