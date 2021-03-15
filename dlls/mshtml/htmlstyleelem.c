@@ -198,10 +198,11 @@ static HRESULT WINAPI HTMLStyleElement_get_styleSheet(IHTMLStyleElement *iface, 
         assert(nsres == NS_OK);
 
         if(ss) {
-            This->style_sheet = HTMLStyleSheet_Create(ss);
+            HRESULT hres = create_style_sheet(ss, dispex_compat_mode(&This->element.node.event_target.dispex),
+                                              &This->style_sheet);
             nsIDOMStyleSheet_Release(ss);
-            if(!This->style_sheet)
-                return E_OUTOFMEMORY;
+            if(FAILED(hres))
+                return hres;
         }
     }
 

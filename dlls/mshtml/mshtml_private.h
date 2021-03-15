@@ -1019,7 +1019,7 @@ HRESULT get_readystate_string(READYSTATE,BSTR*) DECLSPEC_HIDDEN;
 
 HRESULT HTMLSelectionObject_Create(HTMLDocumentNode*,nsISelection*,IHTMLSelectionObject**) DECLSPEC_HIDDEN;
 HRESULT HTMLTxtRange_Create(HTMLDocumentNode*,nsIDOMRange*,IHTMLTxtRange**) DECLSPEC_HIDDEN;
-IHTMLStyleSheet *HTMLStyleSheet_Create(nsIDOMStyleSheet*) DECLSPEC_HIDDEN;
+HRESULT create_style_sheet(nsIDOMStyleSheet*,compat_mode_t,IHTMLStyleSheet**) DECLSPEC_HIDDEN;
 IHTMLStyleSheetsCollection *HTMLStyleSheetsCollection_Create(nsIDOMStyleSheetList*) DECLSPEC_HIDDEN;
 HRESULT HTMLDOMRange_Create(nsIDOMRange*,IHTMLDOMRange**) DECLSPEC_HIDDEN;
 HRESULT create_markup_pointer(IMarkupPointer**) DECLSPEC_HIDDEN;

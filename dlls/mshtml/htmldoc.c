@@ -1733,8 +1733,8 @@ static HRESULT WINAPI HTMLDocument_createStyleSheet(IHTMLDocument2 *iface, BSTR 
 
     if(bstrHref && *bstrHref) {
         FIXME("semi-stub for href %s\n", debugstr_w(bstrHref));
-        *ppnewStyleSheet = HTMLStyleSheet_Create(NULL);
-        return S_OK;
+        return create_style_sheet(NULL, dispex_compat_mode(&This->doc_node->node.event_target.dispex),
+                                  ppnewStyleSheet);
     }
 
     hres = create_element(This->doc_node, L"style", &elem);

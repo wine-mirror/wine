@@ -517,7 +517,9 @@ static HRESULT WINAPI HTMLStyleSheetsCollection_item(IHTMLStyleSheetsCollection 
     switch(V_VT(pvarIndex)) {
     case VT_I4: {
         nsIDOMStyleSheet *nsstylesheet;
+        IHTMLStyleSheet *stylesheet;
         nsresult nsres;
+        HRESULT hres;
 
         TRACE("index=%d\n", V_I4(pvarIndex));
 
@@ -528,9 +530,12 @@ static HRESULT WINAPI HTMLStyleSheetsCollection_item(IHTMLStyleSheetsCollection 
             return E_INVALIDARG;
         }
 
-        V_VT(pvarResult) = VT_DISPATCH;
-        V_DISPATCH(pvarResult) = (IDispatch*)HTMLStyleSheet_Create(nsstylesheet);
+        hres = create_style_sheet(nsstylesheet, dispex_compat_mode(&This->dispex), &stylesheet);
+        if(FAILED(hres))
+            return hres;
 
+        V_VT(pvarResult) = VT_DISPATCH;
+        V_DISPATCH(pvarResult) = (IDispatch*)stylesheet;
         return S_OK;
     }
 
@@ -938,23 +943,28 @@ static dispex_static_data_t HTMLStyleSheet_dispex = {
     HTMLStyleSheet_iface_tids
 };
 
-IHTMLStyleSheet *HTMLStyleSheet_Create(nsIDOMStyleSheet *nsstylesheet)
+HRESULT create_style_sheet(nsIDOMStyleSheet *nsstylesheet, compat_mode_t compat_mode, IHTMLStyleSheet **ret)
 {
-    HTMLStyleSheet *ret = heap_alloc(sizeof(HTMLStyleSheet));
+    HTMLStyleSheet *style_sheet;
     nsresult nsres;
 
-    ret->IHTMLStyleSheet_iface.lpVtbl = &HTMLStyleSheetVtbl;
-    ret->ref = 1;
-    ret->nsstylesheet = NULL;
+    if(!(style_sheet = heap_alloc(sizeof(HTMLStyleSheet))))
+        return E_OUTOFMEMORY;
 
-    init_dispex(&ret->dispex, (IUnknown*)&ret->IHTMLStyleSheet_iface, &HTMLStyleSheet_dispex);
+    style_sheet->IHTMLStyleSheet_iface.lpVtbl = &HTMLStyleSheetVtbl;
+    style_sheet->ref = 1;
+    style_sheet->nsstylesheet = NULL;
+
+    init_dispex_with_compat_mode(&style_sheet->dispex, (IUnknown*)&style_sheet->IHTMLStyleSheet_iface,
+                                 &HTMLStyleSheet_dispex, compat_mode);
 
     if(nsstylesheet) {
         nsres = nsIDOMStyleSheet_QueryInterface(nsstylesheet, &IID_nsIDOMCSSStyleSheet,
-                (void**)&ret->nsstylesheet);
+                (void**)&style_sheet->nsstylesheet);
         if(NS_FAILED(nsres))
             ERR("Could not get nsICSSStyleSheet interface: %08x\n", nsres);
     }
 
-    return &ret->IHTMLStyleSheet_iface;
+    *ret = &style_sheet->IHTMLStyleSheet_iface;
+    return S_OK;
 }
