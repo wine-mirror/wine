@@ -2330,7 +2330,7 @@ static dispex_static_data_t HTMLNamespaceCollection_dispex = {
     HTMLNamespaceCollection_iface_tids
 };
 
-HRESULT create_namespace_collection(IHTMLNamespaceCollection **ret)
+HRESULT create_namespace_collection(compat_mode_t compat_mode, IHTMLNamespaceCollection **ret)
 {
     HTMLNamespaceCollection *namespaces;
 
@@ -2339,7 +2339,8 @@ HRESULT create_namespace_collection(IHTMLNamespaceCollection **ret)
 
     namespaces->IHTMLNamespaceCollection_iface.lpVtbl = &HTMLNamespaceCollectionVtbl;
     namespaces->ref = 1;
-    init_dispex(&namespaces->dispex, (IUnknown*)&namespaces->IHTMLNamespaceCollection_iface, &HTMLNamespaceCollection_dispex);
+    init_dispex_with_compat_mode(&namespaces->dispex, (IUnknown*)&namespaces->IHTMLNamespaceCollection_iface,
+                                 &HTMLNamespaceCollection_dispex, compat_mode);
     *ret = &namespaces->IHTMLNamespaceCollection_iface;
     return S_OK;
 }

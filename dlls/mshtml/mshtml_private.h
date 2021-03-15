@@ -915,7 +915,7 @@ HRESULT create_navigator(compat_mode_t,IOmNavigator**) DECLSPEC_HIDDEN;
 HRESULT create_html_screen(compat_mode_t,IHTMLScreen**) DECLSPEC_HIDDEN;
 HRESULT create_performance(compat_mode_t,IHTMLPerformance**) DECLSPEC_HIDDEN;
 HRESULT create_history(HTMLInnerWindow*,OmHistory**) DECLSPEC_HIDDEN;
-HRESULT create_namespace_collection(IHTMLNamespaceCollection**) DECLSPEC_HIDDEN;
+HRESULT create_namespace_collection(compat_mode_t,IHTMLNamespaceCollection**) DECLSPEC_HIDDEN;
 HRESULT create_dom_implementation(HTMLDocumentNode*,IHTMLDOMImplementation**) DECLSPEC_HIDDEN;
 void detach_dom_implementation(IHTMLDOMImplementation*) DECLSPEC_HIDDEN;
 
