@@ -375,28 +375,14 @@ DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxGetPropertyBits( ITextHost *i
     struct host *host = impl_from_ITextHost( iface );
     DWORD style;
     DWORD dwBits = 0;
+    DWORD dwScrollBar;
 
-    if (host->editor)
-    {
-        style = host->editor->styleFlags;
-        if (host->editor->mode & TM_RICHTEXT)
-            dwBits |= TXTBIT_RICHTEXT;
-        if (host->editor->bWordWrap)
-            dwBits |= TXTBIT_WORDWRAP;
-        if (style & ECO_AUTOWORDSELECTION)
-            dwBits |= TXTBIT_AUTOWORDSEL;
-    }
-    else
-    {
-        DWORD dwScrollBar;
+    style = GetWindowLongW( host->window, GWL_STYLE );
+    ITextHostImpl_TxGetScrollBars(iface, &dwScrollBar);
 
-        style = GetWindowLongW( host->window, GWL_STYLE );
-        ITextHostImpl_TxGetScrollBars(iface, &dwScrollBar);
-
-        dwBits |= TXTBIT_RICHTEXT|TXTBIT_AUTOWORDSEL;
-        if (!(dwScrollBar & ES_AUTOHSCROLL))
-            dwBits |= TXTBIT_WORDWRAP;
-    }
+    dwBits |= TXTBIT_RICHTEXT|TXTBIT_AUTOWORDSEL;
+    if (!(dwScrollBar & ES_AUTOHSCROLL))
+        dwBits |= TXTBIT_WORDWRAP;
 
     /* Bits that correspond to window styles. */
     if (style & ES_MULTILINE)
