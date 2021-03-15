@@ -2398,7 +2398,7 @@ static HRESULT WINAPI HTMLWindow7_get_performance(IHTMLWindow7 *iface, VARIANT *
     if(!This->performance_initialized) {
         IHTMLPerformance *performance;
 
-        hres = create_performance(&performance);
+        hres = create_performance(dispex_compat_mode(&This->event_target.dispex), &performance);
         if(FAILED(hres))
             return hres;
 

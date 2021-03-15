@@ -2172,7 +2172,7 @@ static dispex_static_data_t HTMLPerformance_dispex = {
     HTMLPerformance_iface_tids
 };
 
-HRESULT create_performance(IHTMLPerformance **ret)
+HRESULT create_performance(compat_mode_t compat_mode, IHTMLPerformance **ret)
 {
     HTMLPerformance *performance;
 
@@ -2183,8 +2183,8 @@ HRESULT create_performance(IHTMLPerformance **ret)
     performance->IHTMLPerformance_iface.lpVtbl = &HTMLPerformanceVtbl;
     performance->ref = 1;
 
-    init_dispex(&performance->dispex, (IUnknown*)&performance->IHTMLPerformance_iface,
-                &HTMLPerformance_dispex);
+    init_dispex_with_compat_mode(&performance->dispex, (IUnknown*)&performance->IHTMLPerformance_iface,
+                                 &HTMLPerformance_dispex, compat_mode);
 
     *ret = &performance->IHTMLPerformance_iface;
     return S_OK;
