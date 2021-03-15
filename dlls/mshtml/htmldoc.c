@@ -1647,6 +1647,7 @@ static HRESULT WINAPI HTMLDocument_get_styleSheets(IHTMLDocument2 *iface,
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
     nsIDOMStyleSheetList *nsstylelist;
     nsresult nsres;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -1660,13 +1661,13 @@ static HRESULT WINAPI HTMLDocument_get_styleSheets(IHTMLDocument2 *iface,
     nsres = nsIDOMHTMLDocument_GetStyleSheets(This->doc_node->nsdoc, &nsstylelist);
     if(NS_FAILED(nsres)) {
         ERR("GetStyleSheets failed: %08x\n", nsres);
-        return E_FAIL;
+        return map_nsresult(nsres);
     }
 
-    *p = HTMLStyleSheetsCollection_Create(nsstylelist);
+    hres = create_style_sheet_collection(nsstylelist,
+                                         dispex_compat_mode(&This->doc_node->node.event_target.dispex), p);
     nsIDOMStyleSheetList_Release(nsstylelist);
-
-    return S_OK;
+    return hres;
 }
 
 static HRESULT WINAPI HTMLDocument_put_onbeforeupdate(IHTMLDocument2 *iface, VARIANT v)

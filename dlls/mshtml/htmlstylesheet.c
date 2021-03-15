@@ -573,21 +573,26 @@ static dispex_static_data_t HTMLStyleSheetsCollection_dispex = {
     HTMLStyleSheetsCollection_iface_tids
 };
 
-IHTMLStyleSheetsCollection *HTMLStyleSheetsCollection_Create(nsIDOMStyleSheetList *nslist)
+HRESULT create_style_sheet_collection(nsIDOMStyleSheetList *nslist, compat_mode_t compat_mode,
+                                      IHTMLStyleSheetsCollection **ret)
 {
-    HTMLStyleSheetsCollection *ret = heap_alloc(sizeof(HTMLStyleSheetsCollection));
+    HTMLStyleSheetsCollection *collection;
 
-    ret->IHTMLStyleSheetsCollection_iface.lpVtbl = &HTMLStyleSheetsCollectionVtbl;
-    ret->ref = 1;
+    if(!(collection = heap_alloc(sizeof(HTMLStyleSheetsCollection))))
+        return E_OUTOFMEMORY;
+
+    collection->IHTMLStyleSheetsCollection_iface.lpVtbl = &HTMLStyleSheetsCollectionVtbl;
+    collection->ref = 1;
 
     if(nslist)
         nsIDOMStyleSheetList_AddRef(nslist);
-    ret->nslist = nslist;
+    collection->nslist = nslist;
 
-    init_dispex(&ret->dispex, (IUnknown*)&ret->IHTMLStyleSheetsCollection_iface,
-            &HTMLStyleSheetsCollection_dispex);
+    init_dispex_with_compat_mode(&collection->dispex, (IUnknown*)&collection->IHTMLStyleSheetsCollection_iface,
+                                 &HTMLStyleSheetsCollection_dispex, compat_mode);
 
-    return &ret->IHTMLStyleSheetsCollection_iface;
+    *ret = &collection->IHTMLStyleSheetsCollection_iface;
+    return S_OK;
 }
 
 static inline HTMLStyleSheet *impl_from_IHTMLStyleSheet(IHTMLStyleSheet *iface)
