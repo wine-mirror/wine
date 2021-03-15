@@ -2403,7 +2403,6 @@ struct wined3d_shader * __cdecl wined3d_device_get_domain_shader(const struct wi
 struct wined3d_shader_resource_view * __cdecl wined3d_device_get_ds_resource_view(const struct wined3d_device *device,
         unsigned int idx);
 struct wined3d_sampler * __cdecl wined3d_device_get_ds_sampler(const struct wined3d_device *device, unsigned int idx);
-enum wined3d_feature_level __cdecl wined3d_device_get_feature_level(const struct wined3d_device *device);
 void __cdecl wined3d_device_get_gamma_ramp(const struct wined3d_device *device,
         UINT swapchain_idx, struct wined3d_gamma_ramp *ramp);
 struct wined3d_shader * __cdecl wined3d_device_get_geometry_shader(const struct wined3d_device *device);
@@ -2748,6 +2747,7 @@ ULONG __cdecl wined3d_shader_resource_view_incref(struct wined3d_shader_resource
 
 HRESULT __cdecl wined3d_state_create(struct wined3d_device *device, struct wined3d_state **state);
 void __cdecl wined3d_state_destroy(struct wined3d_state *state);
+enum wined3d_feature_level __cdecl wined3d_state_get_feature_level(const struct wined3d_state *state);
 
 void __cdecl wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
         struct wined3d_stateblock *device_state);

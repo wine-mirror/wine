@@ -1891,6 +1891,7 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
     TRACE("device %p, state %p.\n", device, state);
 
     device->cs->c.state = state;
+    wined3d_cs_emit_set_feature_level(device->cs, state->feature_level);
 
     for (i = 0; i < WINED3D_MAX_RENDER_TARGETS; ++i)
     {
@@ -4690,7 +4691,7 @@ static bool resources_format_compatible(const struct wined3d_resource *src_resou
         return true;
     if (src_resource->format->typeless_id && src_resource->format->typeless_id == dst_resource->format->typeless_id)
         return true;
-    if (src_resource->device->feature_level < WINED3D_FEATURE_LEVEL_10_1)
+    if (src_resource->device->cs->c.state->feature_level < WINED3D_FEATURE_LEVEL_10_1)
         return false;
     if ((src_resource->format_flags & WINED3DFMT_FLAG_BLOCKS)
             && (dst_resource->format_flags & WINED3DFMT_FLAG_CAST_TO_BLOCK))
@@ -5801,13 +5802,6 @@ struct wined3d * CDECL wined3d_device_get_wined3d(const struct wined3d_device *d
     return device->wined3d;
 }
 
-enum wined3d_feature_level CDECL wined3d_device_get_feature_level(const struct wined3d_device *device)
-{
-    TRACE("device %p.\n", device);
-
-    return device->feature_level;
-}
-
 void CDECL wined3d_device_set_gamma_ramp(const struct wined3d_device *device,
         UINT swapchain_idx, DWORD flags, const struct wined3d_gamma_ramp *ramp)
 {
@@ -6011,13 +6005,14 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
     struct wined3d_adapter *adapter = wined3d->adapters[adapter_idx];
     const struct wined3d_fragment_pipe_ops *fragment_pipeline;
     const struct wined3d_vertex_pipe_ops *vertex_pipeline;
+    enum wined3d_feature_level feature_level;
     unsigned int i;
     HRESULT hr;
 
-    if (!wined3d_select_feature_level(adapter, levels, level_count, &device->feature_level))
+    if (!wined3d_select_feature_level(adapter, levels, level_count, &feature_level))
         return E_FAIL;
 
-    TRACE("Device feature level %s.\n", wined3d_debug_feature_level(device->feature_level));
+    TRACE("Device feature level %s.\n", wined3d_debug_feature_level(feature_level));
 
     device->ref = 1;
     device->wined3d = wined3d;
@@ -6063,7 +6058,7 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
 
     device->max_frame_latency = 3;
 
-    if (!(device->cs = wined3d_cs_create(device)))
+    if (!(device->cs = wined3d_cs_create(device, feature_level)))
     {
         WARN("Failed to create command stream.\n");
         hr = E_FAIL;

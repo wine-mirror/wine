@@ -1870,10 +1870,12 @@ static void state_init_default(struct wined3d_state *state, const struct wined3d
         state->streams[i].frequency = 1;
 }
 
-void state_init(struct wined3d_state *state, const struct wined3d_d3d_info *d3d_info, DWORD flags)
+void state_init(struct wined3d_state *state, const struct wined3d_d3d_info *d3d_info,
+        uint32_t flags, enum wined3d_feature_level feature_level)
 {
     unsigned int i;
 
+    state->feature_level = feature_level;
     state->flags = flags;
 
     for (i = 0; i < LIGHTMAP_SIZE; i++)
@@ -1893,10 +1895,17 @@ HRESULT CDECL wined3d_state_create(struct wined3d_device *device, struct wined3d
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
-    state_init(object, &device->adapter->d3d_info, WINED3D_STATE_INIT_DEFAULT);
+    state_init(object, &device->adapter->d3d_info, WINED3D_STATE_INIT_DEFAULT, device->cs->c.state->feature_level);
 
     *state = object;
     return S_OK;
+}
+
+enum wined3d_feature_level CDECL wined3d_state_get_feature_level(const struct wined3d_state *state)
+{
+    TRACE("state %p.\n", state);
+
+    return state->feature_level;
 }
 
 void CDECL wined3d_state_destroy(struct wined3d_state *state)

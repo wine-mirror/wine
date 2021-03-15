@@ -3349,7 +3349,7 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, struct wined3d
         WARN("Wrong shader type %s.\n", debug_shader_type(reg_maps->shader_version.type));
         return WINED3DERR_INVALIDCALL;
     }
-    if (version->major > shader_max_version_from_feature_level(device->feature_level))
+    if (version->major > shader_max_version_from_feature_level(device->cs->c.state->feature_level))
     {
         WARN("Shader version %u not supported by this device.\n", version->major);
         return WINED3DERR_INVALIDCALL;
@@ -3661,7 +3661,7 @@ static HRESULT shader_init(struct wined3d_shader *shader, struct wined3d_device 
         memcpy(shader->byte_code, desc->byte_code, desc->byte_code_size);
         shader->byte_code_size = desc->byte_code_size;
 
-        max_version = shader_max_version_from_feature_level(device->feature_level);
+        max_version = shader_max_version_from_feature_level(device->cs->c.state->feature_level);
         if (FAILED(hr = shader_extract_from_dxbc(shader, max_version, &format)))
             goto fail;
 

@@ -6475,7 +6475,8 @@ static void CDECL device_parent_wined3d_device_created(struct wined3d_device_par
     device->wined3d_device = wined3d_device;
     device->immediate_context.wined3d_context = wined3d_device_get_immediate_context(wined3d_device);
 
-    device->feature_level = d3d_feature_level_from_wined3d(wined3d_device_get_feature_level(wined3d_device));
+    wined3d_state = wined3d_device_get_state(device->wined3d_device);
+    device->feature_level = d3d_feature_level_from_wined3d(wined3d_state_get_feature_level(wined3d_state));
 
     if (FAILED(hr = d3d11_device_CreateDeviceContextState(&device->ID3D11Device2_iface, 0, &device->feature_level,
             1, D3D11_SDK_VERSION, device->d3d11_only ? &IID_ID3D11Device2 : &IID_ID3D10Device1, NULL,
@@ -6486,7 +6487,6 @@ static void CDECL device_parent_wined3d_device_created(struct wined3d_device_par
     }
 
     device->state = impl_from_ID3DDeviceContextState(state);
-    wined3d_state = wined3d_device_get_state(device->wined3d_device);
     if (!d3d_device_context_state_add_entry(device->state, device, wined3d_state))
         ERR("Failed to add entry for wined3d state %p, device %p.\n", wined3d_state, device);
 

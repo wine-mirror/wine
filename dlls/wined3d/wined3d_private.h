@@ -3657,7 +3657,8 @@ struct wined3d_light_state
 
 struct wined3d_state
 {
-    DWORD flags;
+    enum wined3d_feature_level feature_level;
+    uint32_t flags;
     struct wined3d_fb_state fb;
 
     struct wined3d_vertex_declaration *vertex_declaration;
@@ -3711,15 +3712,17 @@ struct wined3d_state
 };
 
 void state_cleanup(struct wined3d_state *state) DECLSPEC_HIDDEN;
-void state_init(struct wined3d_state *state, const struct wined3d_d3d_info *d3d_info, uint32_t flags) DECLSPEC_HIDDEN;
+void state_init(struct wined3d_state *state, const struct wined3d_d3d_info *d3d_info,
+        uint32_t flags, enum wined3d_feature_level feature_level) DECLSPEC_HIDDEN;
 void state_unbind_resources(struct wined3d_state *state) DECLSPEC_HIDDEN;
 
 static inline void wined3d_state_reset(struct wined3d_state *state, const struct wined3d_d3d_info *d3d_info)
 {
+    enum wined3d_feature_level feature_level = state->feature_level;
     uint32_t flags = state->flags;
 
     memset(state, 0, sizeof(*state));
-    state_init(state, d3d_info, flags);
+    state_init(state, d3d_info, flags, feature_level);
 }
 
 static inline bool wined3d_state_uses_depth_buffer(const struct wined3d_state *state)
@@ -3786,8 +3789,6 @@ struct wined3d_device
     unsigned char           surface_alignment; /* Line Alignment of surfaces                      */
 
     WORD padding2 : 16;
-
-    enum wined3d_feature_level feature_level;
 
     /* Internal use fields  */
     struct wined3d_device_creation_parameters create_parms;
@@ -4715,7 +4716,8 @@ struct wined3d_cs
     LONG pending_presents;
 };
 
-struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device) DECLSPEC_HIDDEN;
+struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device,
+        enum wined3d_feature_level feature_level) DECLSPEC_HIDDEN;
 void wined3d_cs_destroy(struct wined3d_cs *cs) DECLSPEC_HIDDEN;
 void wined3d_cs_destroy_object(struct wined3d_cs *cs,
         void (*callback)(void *object), void *object) DECLSPEC_HIDDEN;
@@ -4756,6 +4758,7 @@ void wined3d_cs_emit_set_color_key(struct wined3d_cs *cs, struct wined3d_texture
         WORD flags, const struct wined3d_color_key *color_key) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_depth_stencil_view(struct wined3d_cs *cs,
         struct wined3d_rendertarget_view *view) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_set_feature_level(struct wined3d_cs *cs, enum wined3d_feature_level level) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_index_buffer(struct wined3d_cs *cs, struct wined3d_buffer *buffer,
         enum wined3d_format_id format_id, unsigned int offset) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_light(struct wined3d_cs *cs, const struct wined3d_light_info *light) DECLSPEC_HIDDEN;

@@ -62,6 +62,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_MATERIAL,
     WINED3D_CS_OP_SET_LIGHT,
     WINED3D_CS_OP_SET_LIGHT_ENABLE,
+    WINED3D_CS_OP_SET_FEATURE_LEVEL,
     WINED3D_CS_OP_PUSH_CONSTANTS,
     WINED3D_CS_OP_RESET_STATE,
     WINED3D_CS_OP_CALLBACK,
@@ -340,6 +341,12 @@ struct wined3d_cs_set_light_enable
     BOOL enable;
 };
 
+struct wined3d_cs_set_feature_level
+{
+    enum wined3d_cs_op opcode;
+    enum wined3d_feature_level level;
+};
+
 struct wined3d_cs_push_constants
 {
     enum wined3d_cs_op opcode;
@@ -506,6 +513,7 @@ static const char *debug_cs_op(enum wined3d_cs_op op)
         WINED3D_TO_STR(WINED3D_CS_OP_SET_MATERIAL);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_LIGHT);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_LIGHT_ENABLE);
+        WINED3D_TO_STR(WINED3D_CS_OP_SET_FEATURE_LEVEL);
         WINED3D_TO_STR(WINED3D_CS_OP_PUSH_CONSTANTS);
         WINED3D_TO_STR(WINED3D_CS_OP_RESET_STATE);
         WINED3D_TO_STR(WINED3D_CS_OP_CALLBACK);
@@ -2002,6 +2010,24 @@ void wined3d_cs_emit_set_light_enable(struct wined3d_cs *cs, unsigned int idx, B
     wined3d_device_context_submit(&cs->c, WINED3D_CS_QUEUE_DEFAULT);
 }
 
+static void wined3d_cs_exec_set_feature_level(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_set_feature_level *op = data;
+
+    cs->state.feature_level = op->level;
+}
+
+void wined3d_cs_emit_set_feature_level(struct wined3d_cs *cs, enum wined3d_feature_level level)
+{
+    struct wined3d_cs_set_feature_level *op;
+
+    op = wined3d_device_context_require_space(&cs->c, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op->opcode = WINED3D_CS_OP_SET_FEATURE_LEVEL;
+    op->level = level;
+
+    wined3d_device_context_submit(&cs->c, WINED3D_CS_QUEUE_DEFAULT);
+}
+
 static const struct
 {
     size_t offset;
@@ -2662,6 +2688,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_MATERIAL                */ wined3d_cs_exec_set_material,
     /* WINED3D_CS_OP_SET_LIGHT                   */ wined3d_cs_exec_set_light,
     /* WINED3D_CS_OP_SET_LIGHT_ENABLE            */ wined3d_cs_exec_set_light_enable,
+    /* WINED3D_CS_OP_SET_FEATURE_LEVEL           */ wined3d_cs_exec_set_feature_level,
     /* WINED3D_CS_OP_PUSH_CONSTANTS              */ wined3d_cs_exec_push_constants,
     /* WINED3D_CS_OP_RESET_STATE                 */ wined3d_cs_exec_reset_state,
     /* WINED3D_CS_OP_CALLBACK                    */ wined3d_cs_exec_callback,
@@ -2981,7 +3008,7 @@ static DWORD WINAPI wined3d_cs_run(void *ctx)
     FreeLibraryAndExitThread(wined3d_module, 0);
 }
 
-struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
+struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device, enum wined3d_feature_level feature_level)
 {
     const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
     struct wined3d_cs *cs;
@@ -2989,17 +3016,18 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device)
     if (!(cs = heap_alloc_zero(sizeof(*cs))))
         return NULL;
 
-    if (FAILED(wined3d_state_create(device, &cs->c.state)))
+    if (!(cs->c.state = heap_alloc_zero(sizeof(*cs->c.state))))
     {
         heap_free(cs);
         return NULL;
     }
+    state_init(cs->c.state, &device->adapter->d3d_info, WINED3D_STATE_INIT_DEFAULT, feature_level);
 
     cs->c.ops = &wined3d_cs_st_ops;
     cs->c.device = device;
     cs->serialize_commands = TRACE_ON(d3d_sync) || wined3d_settings.cs_multithreaded & WINED3D_CSMT_SERIALIZE;
 
-    state_init(&cs->state, d3d_info, WINED3D_STATE_NO_REF | WINED3D_STATE_INIT_DEFAULT);
+    state_init(&cs->state, d3d_info, WINED3D_STATE_NO_REF | WINED3D_STATE_INIT_DEFAULT, cs->c.state->feature_level);
 
     cs->data_size = WINED3D_INITIAL_CS_SIZE;
     if (!(cs->data = heap_alloc(cs->data_size)))
