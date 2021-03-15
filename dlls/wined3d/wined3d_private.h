@@ -3710,6 +3710,18 @@ struct wined3d_state
     struct wined3d_rasterizer_state *rasterizer_state;
 };
 
+void state_cleanup(struct wined3d_state *state) DECLSPEC_HIDDEN;
+void state_init(struct wined3d_state *state, const struct wined3d_d3d_info *d3d_info, uint32_t flags) DECLSPEC_HIDDEN;
+void state_unbind_resources(struct wined3d_state *state) DECLSPEC_HIDDEN;
+
+static inline void wined3d_state_reset(struct wined3d_state *state, const struct wined3d_d3d_info *d3d_info)
+{
+    uint32_t flags = state->flags;
+
+    memset(state, 0, sizeof(*state));
+    state_init(state, d3d_info, flags);
+}
+
 static inline bool wined3d_state_uses_depth_buffer(const struct wined3d_state *state)
 {
     if (!state->depth_stencil_state)
@@ -4638,10 +4650,6 @@ struct wined3d_light_info *wined3d_light_state_get_light(const struct wined3d_li
         unsigned int idx) DECLSPEC_HIDDEN;
 HRESULT wined3d_light_state_set_light(struct wined3d_light_state *state, DWORD light_idx,
         const struct wined3d_light *params, struct wined3d_light_info **light_info) DECLSPEC_HIDDEN;
-
-void state_cleanup(struct wined3d_state *state) DECLSPEC_HIDDEN;
-void state_init(struct wined3d_state *state, const struct wined3d_d3d_info *d3d_info, DWORD flags) DECLSPEC_HIDDEN;
-void state_unbind_resources(struct wined3d_state *state) DECLSPEC_HIDDEN;
 
 enum wined3d_cs_queue_id
 {

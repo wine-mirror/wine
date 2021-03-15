@@ -1251,8 +1251,7 @@ void wined3d_device_uninit_3d(struct wined3d_device *device)
     heap_free(device->swapchains);
     device->swapchains = NULL;
 
-    memset(state, 0, sizeof(*state));
-    state_init(state, &device->adapter->d3d_info, WINED3D_STATE_INIT_DEFAULT);
+    wined3d_state_reset(state, &device->adapter->d3d_info);
 }
 
 /* Enables thread safety in the wined3d device and its resources. Called by DirectDraw
@@ -5754,8 +5753,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
         device->adapter->adapter_ops->adapter_uninit_3d(device);
 
-        memset(state, 0, sizeof(*state));
-        state_init(state, &device->adapter->d3d_info, WINED3D_STATE_INIT_DEFAULT);
+        wined3d_state_reset(state, &device->adapter->d3d_info);
 
         device_init_swapchain_state(device, swapchain);
         if (wined3d_settings.logo)

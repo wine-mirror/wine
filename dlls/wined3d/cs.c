@@ -2079,11 +2079,8 @@ static void wined3d_cs_mt_push_constants(struct wined3d_device_context *context,
 
 static void wined3d_cs_exec_reset_state(struct wined3d_cs *cs, const void *data)
 {
-    struct wined3d_adapter *adapter = cs->c.device->adapter;
-
     state_cleanup(&cs->state);
-    memset(&cs->state, 0, sizeof(cs->state));
-    state_init(&cs->state, &adapter->d3d_info, WINED3D_STATE_NO_REF | WINED3D_STATE_INIT_DEFAULT);
+    wined3d_state_reset(&cs->state, &cs->c.device->adapter->d3d_info);
 }
 
 void wined3d_cs_emit_reset_state(struct wined3d_cs *cs)
