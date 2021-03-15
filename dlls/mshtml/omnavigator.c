@@ -2099,8 +2099,8 @@ static HRESULT WINAPI HTMLPerformance_get_navigation(IHTMLPerformance *iface,
 
         navigation->IHTMLPerformanceNavigation_iface.lpVtbl = &HTMLPerformanceNavigationVtbl;
         navigation->ref = 1;
-        init_dispex(&navigation->dispex, (IUnknown*)&navigation->IHTMLPerformanceNavigation_iface,
-                    &HTMLPerformanceNavigation_dispex);
+        init_dispex_with_compat_mode(&navigation->dispex, (IUnknown*)&navigation->IHTMLPerformanceNavigation_iface,
+                                     &HTMLPerformanceNavigation_dispex, dispex_compat_mode(&This->dispex));
 
         This->navigation = &navigation->IHTMLPerformanceNavigation_iface;
     }
@@ -2124,8 +2124,8 @@ static HRESULT WINAPI HTMLPerformance_get_timing(IHTMLPerformance *iface, IHTMLP
 
         timing->IHTMLPerformanceTiming_iface.lpVtbl = &HTMLPerformanceTimingVtbl;
         timing->ref = 1;
-        init_dispex(&timing->dispex, (IUnknown*)&timing->IHTMLPerformanceTiming_iface,
-                    &HTMLPerformanceTiming_dispex);
+        init_dispex_with_compat_mode(&timing->dispex, (IUnknown*)&timing->IHTMLPerformanceTiming_iface,
+                                     &HTMLPerformanceTiming_dispex, dispex_compat_mode(&This->dispex));
 
         This->timing = &timing->IHTMLPerformanceTiming_iface;
     }
