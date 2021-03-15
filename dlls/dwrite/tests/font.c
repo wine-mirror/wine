@@ -7822,10 +7822,31 @@ static void test_HasCharacter(void)
     ok(ref == 0, "factory not released, %u\n", ref);
 }
 
+static BOOL has_main_axis_values(const DWRITE_FONT_AXIS_VALUE *values, unsigned int count)
+{
+    BOOL has_wght = FALSE, has_wdth = FALSE, has_ital = FALSE, has_slnt = FALSE;
+    unsigned int i;
+
+    for (i = 0; i < count; ++i)
+    {
+        if (values[i].axisTag == DWRITE_FONT_AXIS_TAG_WEIGHT)
+            has_wght = TRUE;
+        else if (values[i].axisTag == DWRITE_FONT_AXIS_TAG_WIDTH)
+            has_wdth = TRUE;
+        else if (values[i].axisTag == DWRITE_FONT_AXIS_TAG_ITALIC)
+            has_ital = TRUE;
+        else if (values[i].axisTag == DWRITE_FONT_AXIS_TAG_SLANT)
+            has_slnt = TRUE;
+    }
+
+    return has_wght && has_wdth && has_ital && has_slnt;
+}
+
 static void test_CreateFontFaceReference(void)
 {
     IDWriteFontFaceReference *ref, *ref1, *ref3;
     IDWriteFontFace3 *fontface, *fontface1;
+    DWRITE_FONT_AXIS_VALUE axis_values[16];
     IDWriteFontCollection1 *collection;
     IDWriteFontFile *file, *file1;
     IDWriteFactory3 *factory;
@@ -7978,7 +7999,15 @@ todo_wine
                     (void **)&ref2)))
             {
                 UINT32 axis_count = IDWriteFontFaceReference1_GetFontAxisValueCount(ref2);
-                ok(axis_count > 0, "Unexpected axis value count.\n");
+            todo_wine
+                ok(axis_count >= 4, "Unexpected axis value count.\n");
+
+                hr = IDWriteFontFaceReference1_GetFontAxisValues(ref2, axis_values, ARRAY_SIZE(axis_values));
+                ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+            todo_wine
+                ok(has_main_axis_values(axis_values, axis_count), "Unexpected axis returned.\n");
+
                 IDWriteFontFaceReference1_Release(ref2);
             }
 
@@ -9394,9 +9423,11 @@ static void test_AnalyzeContainerType(void)
 static void test_fontsetbuilder(void)
 {
     IDWriteFontFaceReference *ref, *ref2, *ref3;
+    IDWriteFontFaceReference1 *ref1;
     IDWriteFontCollection1 *collection;
     IDWriteFontSetBuilder1 *builder1;
     IDWriteFontSetBuilder *builder;
+    DWRITE_FONT_AXIS_VALUE axis_values[4];
     IDWriteFactory3 *factory;
     UINT32 count, i, refcount;
     IDWriteFontSet *fontset;
@@ -9435,6 +9466,39 @@ static void test_fontsetbuilder(void)
         /* No attempt to eliminate duplicates. */
         count = IDWriteFontSet_GetFontCount(fontset);
         ok(count == 2, "Unexpected font count %u.\n", count);
+
+        hr = IDWriteFontSet_GetFontFaceReference(fontset, 0, &ref);
+        ok(hr == S_OK, "Unexpected hr %#x.\n",hr);
+
+        hr = IDWriteFontFaceReference_QueryInterface(ref, &IID_IDWriteFontFaceReference1, (void **)&ref1);
+        ok(hr == S_OK, "Unexpected hr %#x.\n",hr);
+
+        count = IDWriteFontFaceReference1_GetFontAxisValueCount(ref1);
+    todo_wine
+        ok(count == 4, "Unexpected axis count %u.\n", count);
+
+    if (count == 4)
+    {
+        hr = IDWriteFontFaceReference1_GetFontAxisValues(ref1, axis_values, ARRAY_SIZE(axis_values));
+        ok(hr == S_OK, "Unexpected hr %#x.\n",hr);
+
+        ok(axis_values[0].axisTag == DWRITE_FONT_AXIS_TAG_WEIGHT, "Unexpected tag[0] %s.\n",
+                wine_dbgstr_an((char *)&axis_values[0].axisTag, 4));
+        ok(axis_values[0].value == 500.0f, "Unexpected value[0] %f.\n", axis_values[0].value);
+        ok(axis_values[1].axisTag == DWRITE_FONT_AXIS_TAG_WIDTH, "Unexpected tag[1] %s.\n",
+                wine_dbgstr_an((char *)&axis_values[1].axisTag, 4));
+        ok(axis_values[1].value == 100.0f, "Unexpected value[1] %f.\n", axis_values[1].value);
+        ok(axis_values[2].axisTag == DWRITE_FONT_AXIS_TAG_ITALIC, "Unexpected tag[2] %s.\n",
+                wine_dbgstr_an((char *)&axis_values[2].axisTag, 4));
+        ok(axis_values[2].value == 0.0f, "Unexpected value[2] %f.\n", axis_values[2].value);
+        ok(axis_values[3].axisTag == DWRITE_FONT_AXIS_TAG_SLANT, "Unexpected tag[3] %s.\n",
+                wine_dbgstr_an((char *)&axis_values[3].axisTag, 4));
+        ok(axis_values[3].value == 0.0f, "Unexpected value[3] %f.\n", axis_values[3].value);
+    }
+
+        IDWriteFontFaceReference1_Release(ref1);
+
+        IDWriteFontFaceReference_Release(ref);
 
         IDWriteFontSet_Release(fontset);
 
