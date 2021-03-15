@@ -753,10 +753,14 @@ tmp = "test".toLowerCase(3);
 ok(tmp === "test", "''.toLowerCase(3) = " + tmp);
 tmp = "tEsT".toLowerCase();
 ok(tmp === "test", "''.toLowerCase() = " + tmp);
+tmp = "tEsT".toLocaleLowerCase();
+ok(tmp === "test", "''.toLocaleLowerCase() = " + tmp);
 tmp = "tEsT".toLowerCase(3);
 ok(tmp === "test", "''.toLowerCase(3) = " + tmp);
 tmp = ("tE" + String.fromCharCode(0) + "sT").toLowerCase();
 ok(tmp === "te" + String.fromCharCode(0) + "st", "''.toLowerCase() = " + tmp);
+ok(String.prototype.toLocaleLowerCase != String.prototype.toLowerCase,
+   "String.prototype.toLocaleLowerCase == String.prototype.toLowerCase");
 
 tmp = "".toUpperCase();
 ok(tmp === "", "''.toUpperCase() = " + tmp);
@@ -768,8 +772,12 @@ tmp = "tEsT".toUpperCase();
 ok(tmp === "TEST", "''.toUpperCase() = " + tmp);
 tmp = "tEsT".toUpperCase(3);
 ok(tmp === "TEST", "''.toUpperCase(3) = " + tmp);
+tmp = "tEsT".toLocaleUpperCase(3);
+ok(tmp === "TEST", "''.toLocaleUpperCase(3) = " + tmp);
 tmp = ("tE" + String.fromCharCode(0) + "sT").toUpperCase();
 ok(tmp === "TE" + String.fromCharCode(0) + "ST", "''.toUpperCase() = " + tmp);
+ok(String.prototype.toLocaleUpperCase != String.prototype.toUpperCase,
+   "String.prototype.toLocaleUpperCase == String.prototype.toUpperCase");
 
 tmp = "".anchor();
 ok(tmp === "<A NAME=\"undefined\"></A>", "''.anchor() = " + tmp);

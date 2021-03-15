@@ -1363,45 +1363,11 @@ static HRESULT String_sup(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsign
     return do_attributeless_tag_format(ctx, jsthis, r, L"SUP");
 }
 
-static HRESULT String_toLowerCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
-{
-    jsstr_t *str;
-    HRESULT  hres;
-
-    TRACE("\n");
-
-    hres = get_string_val(ctx, jsthis, &str);
-    if(FAILED(hres))
-        return hres;
-
-    if(r) {
-        unsigned len = jsstr_length(str);
-        jsstr_t *ret;
-        WCHAR *buf;
-
-        ret = jsstr_alloc_buf(len, &buf);
-        if(!ret) {
-            jsstr_release(str);
-            return E_OUTOFMEMORY;
-        }
-
-        jsstr_flush(str, buf);
-        for (; len--; buf++) *buf = towlower(*buf);
-
-        *r = jsval_string(ret);
-    }
-    jsstr_release(str);
-    return S_OK;
-}
-
-static HRESULT String_toUpperCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
+static HRESULT to_upper_case(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
 {
     jsstr_t *str;
     HRESULT hres;
 
-    TRACE("\n");
 
     hres = get_string_val(ctx, jsthis, &str);
     if(FAILED(hres))
@@ -1427,18 +1393,62 @@ static HRESULT String_toUpperCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     return S_OK;
 }
 
+static HRESULT to_lower_case(script_ctx_t *ctx, vdisp_t *jsthis, jsval_t *r)
+{
+    jsstr_t *str;
+    HRESULT hres;
+
+
+    hres = get_string_val(ctx, jsthis, &str);
+    if(FAILED(hres))
+        return hres;
+
+    if(r) {
+        unsigned len = jsstr_length(str);
+        jsstr_t *ret;
+        WCHAR *buf;
+
+        ret = jsstr_alloc_buf(len, &buf);
+        if(!ret) {
+            jsstr_release(str);
+            return E_OUTOFMEMORY;
+        }
+
+        jsstr_flush(str, buf);
+        for (; len--; buf++) *buf = towlower(*buf);
+
+        *r = jsval_string(ret);
+    }
+    jsstr_release(str);
+    return S_OK;
+}
+
+static HRESULT String_toLowerCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    TRACE("\n");
+    return to_lower_case(ctx, jsthis, r);
+}
+
+static HRESULT String_toUpperCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    TRACE("\n");
+    return to_upper_case(ctx, jsthis, r);
+}
+
 static HRESULT String_toLocaleLowerCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return to_lower_case(ctx, jsthis, r);
 }
 
 static HRESULT String_toLocaleUpperCase(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+    return to_upper_case(ctx, jsthis, r);
 }
 
 static HRESULT String_trim(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc,
