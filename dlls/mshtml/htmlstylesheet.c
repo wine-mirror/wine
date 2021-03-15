@@ -207,29 +207,32 @@ static dispex_static_data_t HTMLStyleSheetRule_dispex = {
     HTMLStyleSheetRule_iface_tids
 };
 
-static IHTMLStyleSheetRule *HTMLStyleSheetRule_Create(nsIDOMCSSRule *nsstylesheetrule)
+static HRESULT create_style_sheet_rule(nsIDOMCSSRule *nsstylesheetrule, compat_mode_t compat_mode,
+                                       IHTMLStyleSheetRule **ret)
 {
-    HTMLStyleSheetRule *ret;
+    HTMLStyleSheetRule *rule;
     nsresult nsres;
 
-    if(!(ret = heap_alloc(sizeof(*ret))))
-        return NULL;
+    if(!(rule = heap_alloc(sizeof(*rule))))
+        return E_OUTOFMEMORY;
 
-    ret->IHTMLStyleSheetRule_iface.lpVtbl = &HTMLStyleSheetRuleVtbl;
-    ret->ref = 1;
-    ret->nsstylesheetrule = NULL;
+    rule->IHTMLStyleSheetRule_iface.lpVtbl = &HTMLStyleSheetRuleVtbl;
+    rule->ref = 1;
+    rule->nsstylesheetrule = NULL;
 
-    init_dispex(&ret->dispex, (IUnknown *)&ret->IHTMLStyleSheetRule_iface, &HTMLStyleSheetRule_dispex);
+    init_dispex_with_compat_mode(&rule->dispex, (IUnknown *)&rule->IHTMLStyleSheetRule_iface, &HTMLStyleSheetRule_dispex,
+                                 compat_mode);
 
     if (nsstylesheetrule)
     {
         nsres = nsIDOMCSSRule_QueryInterface(nsstylesheetrule, &IID_nsIDOMCSSRule,
-                (void **)&ret->nsstylesheetrule);
+                (void **)&rule->nsstylesheetrule);
         if (NS_FAILED(nsres))
             ERR("Could not get nsIDOMCSSRule interface: %08x\n", nsres);
     }
 
-    return &ret->IHTMLStyleSheetRule_iface;
+    *ret = &rule->IHTMLStyleSheetRule_iface;
+    return S_OK;
 }
 
 static inline HTMLStyleSheetRulesCollection *impl_from_IHTMLStyleSheetRulesCollection(IHTMLStyleSheetRulesCollection *iface)
@@ -339,13 +342,13 @@ static HRESULT WINAPI HTMLStyleSheetRulesCollection_get_length(IHTMLStyleSheetRu
 }
 
 static HRESULT WINAPI HTMLStyleSheetRulesCollection_item(IHTMLStyleSheetRulesCollection *iface,
-        LONG index, IHTMLStyleSheetRule **ppHTMLStyleSheetRule)
+        LONG index, IHTMLStyleSheetRule **p)
 {
     HTMLStyleSheetRulesCollection *This = impl_from_IHTMLStyleSheetRulesCollection(iface);
     nsIDOMCSSRule *nsstylesheetrule;
     nsresult nsres;
 
-    TRACE("(%p)->(%d %p)\n", This, index, ppHTMLStyleSheetRule);
+    TRACE("(%p)->(%d %p)\n", This, index, p);
 
     nsres = nsIDOMCSSRuleList_Item(This->nslist, index, &nsstylesheetrule);
     if(NS_FAILED(nsres))
@@ -353,8 +356,7 @@ static HRESULT WINAPI HTMLStyleSheetRulesCollection_item(IHTMLStyleSheetRulesCol
     if(!nsstylesheetrule)
         return E_INVALIDARG;
 
-    *ppHTMLStyleSheetRule = HTMLStyleSheetRule_Create(nsstylesheetrule);
-    return *ppHTMLStyleSheetRule ? S_OK : E_OUTOFMEMORY;
+    return create_style_sheet_rule(nsstylesheetrule, dispex_compat_mode(&This->dispex), p);
 }
 
 static const IHTMLStyleSheetRulesCollectionVtbl HTMLStyleSheetRulesCollectionVtbl = {
