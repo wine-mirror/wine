@@ -54,7 +54,7 @@ typedef struct {
     } u;
 } exprval_t;
 
-static const size_t stack_size = 0x4000;
+static const size_t stack_size = 0x40000;
 
 static HRESULT stack_push(script_ctx_t *ctx, jsval_t v)
 {
