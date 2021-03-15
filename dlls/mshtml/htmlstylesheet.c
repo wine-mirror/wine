@@ -381,21 +381,26 @@ static dispex_static_data_t HTMLStyleSheetRulesCollection_dispex = {
     HTMLStyleSheetRulesCollection_iface_tids
 };
 
-static IHTMLStyleSheetRulesCollection *HTMLStyleSheetRulesCollection_Create(nsIDOMCSSRuleList *nslist)
+static HRESULT create_style_sheet_rules_collection(nsIDOMCSSRuleList *nslist, compat_mode_t compat_mode,
+                                                   IHTMLStyleSheetRulesCollection **ret)
 {
-    HTMLStyleSheetRulesCollection *ret;
+    HTMLStyleSheetRulesCollection *collection;
 
-    ret = heap_alloc(sizeof(*ret));
-    ret->IHTMLStyleSheetRulesCollection_iface.lpVtbl = &HTMLStyleSheetRulesCollectionVtbl;
-    ret->ref = 1;
-    ret->nslist = nslist;
+    if(!(collection = heap_alloc(sizeof(*collection))))
+        return E_OUTOFMEMORY;
 
-    init_dispex(&ret->dispex, (IUnknown*)&ret->IHTMLStyleSheetRulesCollection_iface, &HTMLStyleSheetRulesCollection_dispex);
+    collection->IHTMLStyleSheetRulesCollection_iface.lpVtbl = &HTMLStyleSheetRulesCollectionVtbl;
+    collection->ref = 1;
+    collection->nslist = nslist;
+
+    init_dispex_with_compat_mode(&collection->dispex, (IUnknown*)&collection->IHTMLStyleSheetRulesCollection_iface,
+                                 &HTMLStyleSheetRulesCollection_dispex, compat_mode);
 
     if(nslist)
         nsIDOMCSSRuleList_AddRef(nslist);
 
-    return &ret->IHTMLStyleSheetRulesCollection_iface;
+    *ret = &collection->IHTMLStyleSheetRulesCollection_iface;
+    return S_OK;
 }
 
 static inline HTMLStyleSheetsCollection *impl_from_IHTMLStyleSheetsCollection(IHTMLStyleSheetsCollection *iface)
@@ -896,6 +901,7 @@ static HRESULT WINAPI HTMLStyleSheet_get_rules(IHTMLStyleSheet *iface,
     HTMLStyleSheet *This = impl_from_IHTMLStyleSheet(iface);
     nsIDOMCSSRuleList *nslist = NULL;
     nsresult nsres;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -905,8 +911,9 @@ static HRESULT WINAPI HTMLStyleSheet_get_rules(IHTMLStyleSheet *iface,
         return E_FAIL;
     }
 
-    *p = HTMLStyleSheetRulesCollection_Create(nslist);
-    return S_OK;
+    hres = create_style_sheet_rules_collection(nslist, dispex_compat_mode(&This->dispex), p);
+    nsIDOMCSSRuleList_Release(nslist);
+    return hres;
 }
 
 static const IHTMLStyleSheetVtbl HTMLStyleSheetVtbl = {
