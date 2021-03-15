@@ -2745,7 +2745,8 @@ void __cdecl wined3d_shader_resource_view_generate_mipmaps(struct wined3d_shader
 void * __cdecl wined3d_shader_resource_view_get_parent(const struct wined3d_shader_resource_view *view);
 ULONG __cdecl wined3d_shader_resource_view_incref(struct wined3d_shader_resource_view *view);
 
-HRESULT __cdecl wined3d_state_create(struct wined3d_device *device, struct wined3d_state **state);
+HRESULT __cdecl wined3d_state_create(struct wined3d_device *device,
+        const enum wined3d_feature_level *levels, unsigned int level_count, struct wined3d_state **state);
 void __cdecl wined3d_state_destroy(struct wined3d_state *state);
 enum wined3d_feature_level __cdecl wined3d_state_get_feature_level(const struct wined3d_state *state);
 

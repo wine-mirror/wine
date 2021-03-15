@@ -5976,27 +5976,6 @@ static int wined3d_depth_stencil_state_compare(const void *key, const struct win
     return memcmp(&state->desc, key, sizeof(state->desc));
 }
 
-static BOOL wined3d_select_feature_level(const struct wined3d_adapter *adapter,
-        const enum wined3d_feature_level *levels, unsigned int level_count,
-        enum wined3d_feature_level *selected_level)
-{
-    const struct wined3d_d3d_info *d3d_info = &adapter->d3d_info;
-    unsigned int i;
-
-    for (i = 0; i < level_count; ++i)
-    {
-        if (levels[i] && d3d_info->feature_level >= levels[i])
-        {
-            *selected_level = levels[i];
-            return TRUE;
-        }
-    }
-
-    FIXME_(winediag)("None of the requested D3D feature levels is supported on this GPU "
-            "with the current shader backend.\n");
-    return FALSE;
-}
-
 HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined3d,
         unsigned int adapter_idx, enum wined3d_device_type device_type, HWND focus_window, unsigned int flags,
         BYTE surface_alignment, const enum wined3d_feature_level *levels, unsigned int level_count,
@@ -6005,14 +5984,8 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
     struct wined3d_adapter *adapter = wined3d->adapters[adapter_idx];
     const struct wined3d_fragment_pipe_ops *fragment_pipeline;
     const struct wined3d_vertex_pipe_ops *vertex_pipeline;
-    enum wined3d_feature_level feature_level;
     unsigned int i;
     HRESULT hr;
-
-    if (!wined3d_select_feature_level(adapter, levels, level_count, &feature_level))
-        return E_FAIL;
-
-    TRACE("Device feature level %s.\n", wined3d_debug_feature_level(feature_level));
 
     device->ref = 1;
     device->wined3d = wined3d;
@@ -6058,7 +6031,7 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
 
     device->max_frame_latency = 3;
 
-    if (!(device->cs = wined3d_cs_create(device, feature_level)))
+    if (!(device->cs = wined3d_cs_create(device, levels, level_count)))
     {
         WARN("Failed to create command stream.\n");
         hr = E_FAIL;

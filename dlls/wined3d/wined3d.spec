@@ -245,7 +245,7 @@
 @ cdecl wined3d_shader_resource_view_get_parent(ptr)
 @ cdecl wined3d_shader_resource_view_incref(ptr)
 
-@ cdecl wined3d_state_create(ptr ptr)
+@ cdecl wined3d_state_create(ptr ptr long ptr)
 @ cdecl wined3d_state_destroy(ptr)
 @ cdecl wined3d_state_get_feature_level(ptr)
 

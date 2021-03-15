@@ -4717,7 +4717,7 @@ struct wined3d_cs
 };
 
 struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device,
-        enum wined3d_feature_level feature_level) DECLSPEC_HIDDEN;
+        const enum wined3d_feature_level *levels, unsigned int level_count) DECLSPEC_HIDDEN;
 void wined3d_cs_destroy(struct wined3d_cs *cs) DECLSPEC_HIDDEN;
 void wined3d_cs_destroy_object(struct wined3d_cs *cs,
         void (*callback)(void *object), void *object) DECLSPEC_HIDDEN;

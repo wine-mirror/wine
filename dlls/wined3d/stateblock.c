@@ -27,6 +27,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static const DWORD pixel_states_render[] =
 {
@@ -1887,15 +1888,43 @@ void state_init(struct wined3d_state *state, const struct wined3d_d3d_info *d3d_
         state_init_default(state, d3d_info);
 }
 
-HRESULT CDECL wined3d_state_create(struct wined3d_device *device, struct wined3d_state **state)
+static bool wined3d_select_feature_level(const struct wined3d_adapter *adapter,
+        const enum wined3d_feature_level *levels, unsigned int level_count,
+        enum wined3d_feature_level *selected_level)
 {
+    const struct wined3d_d3d_info *d3d_info = &adapter->d3d_info;
+    unsigned int i;
+
+    for (i = 0; i < level_count; ++i)
+    {
+        if (levels[i] && d3d_info->feature_level >= levels[i])
+        {
+            *selected_level = levels[i];
+            return true;
+        }
+    }
+
+    FIXME_(winediag)("None of the requested D3D feature levels is supported on this GPU "
+            "with the current shader backend.\n");
+    return false;
+}
+
+HRESULT CDECL wined3d_state_create(struct wined3d_device *device,
+        const enum wined3d_feature_level *levels, unsigned int level_count, struct wined3d_state **state)
+{
+    enum wined3d_feature_level feature_level;
     struct wined3d_state *object;
 
-    TRACE("device %p, state %p.\n", device, state);
+    TRACE("device %p, levels %p, level_count %u, state %p.\n", device, levels, level_count, state);
+
+    if (!wined3d_select_feature_level(device->adapter, levels, level_count, &feature_level))
+        return E_FAIL;
+
+    TRACE("Selected feature level %s.\n", wined3d_debug_feature_level(feature_level));
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
-    state_init(object, &device->adapter->d3d_info, WINED3D_STATE_INIT_DEFAULT, device->cs->c.state->feature_level);
+    state_init(object, &device->adapter->d3d_info, WINED3D_STATE_INIT_DEFAULT, feature_level);
 
     *state = object;
     return S_OK;

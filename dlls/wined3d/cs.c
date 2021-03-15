@@ -3008,7 +3008,8 @@ static DWORD WINAPI wined3d_cs_run(void *ctx)
     FreeLibraryAndExitThread(wined3d_module, 0);
 }
 
-struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device, enum wined3d_feature_level feature_level)
+struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device,
+        const enum wined3d_feature_level *levels, unsigned int level_count)
 {
     const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
     struct wined3d_cs *cs;
@@ -3016,12 +3017,11 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device, enum wined3d
     if (!(cs = heap_alloc_zero(sizeof(*cs))))
         return NULL;
 
-    if (!(cs->c.state = heap_alloc_zero(sizeof(*cs->c.state))))
+    if (FAILED(wined3d_state_create(device, levels, level_count, &cs->c.state)))
     {
         heap_free(cs);
         return NULL;
     }
-    state_init(cs->c.state, &device->adapter->d3d_info, WINED3D_STATE_INIT_DEFAULT, feature_level);
 
     cs->c.ops = &wined3d_cs_st_ops;
     cs->c.device = device;
