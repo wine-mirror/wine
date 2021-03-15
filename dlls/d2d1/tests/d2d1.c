@@ -9566,6 +9566,54 @@ static void test_colour_space(BOOL d3d11)
     }
 }
 
+static void test_geometry_group(BOOL d3d11)
+{
+    ID2D1Factory *factory;
+    ID2D1GeometryGroup *group;
+    ID2D1Geometry *geometries[2];
+    D2D1_RECT_F rect;
+    HRESULT hr;
+    D2D1_MATRIX_3X2_F matrix;
+    BOOL match;
+
+    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
+    ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
+
+    set_rect(&rect, -1.0f, -1.0f, 1.0f, 1.0f);
+    hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, (ID2D1RectangleGeometry **)&geometries[0]);
+    ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
+
+    set_rect(&rect, -2.0f, -2.0f, 0.0f, 2.0f);
+    hr = ID2D1Factory_CreateRectangleGeometry(factory, &rect, (ID2D1RectangleGeometry **)&geometries[1]);
+    ok(SUCCEEDED(hr), "Failed to create geometry, hr %#x.\n", hr);
+
+    hr = ID2D1Factory_CreateGeometryGroup(factory, D2D1_FILL_MODE_ALTERNATE, geometries, 2, &group);
+    ok(SUCCEEDED(hr), "Failed to create geometry group, hr %#x.\n", hr);
+
+    set_rect(&rect, 0.0f, 0.0f, 0.0f, 0.0f);
+    hr = ID2D1GeometryGroup_GetBounds(group, NULL, &rect);
+    ok(SUCCEEDED(hr), "Failed to get geometry group bounds, hr %#x.\n", hr);
+    match = compare_rect(&rect, -2.0f, -2.0f, 1.0f, 2.0f, 0);
+    ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    set_matrix_identity(&matrix);
+    translate_matrix(&matrix, 80.0f, 640.0f);
+    scale_matrix(&matrix, 2.0f, 0.5f);
+    hr = ID2D1GeometryGroup_GetBounds(group, &matrix, &rect);
+    ok(SUCCEEDED(hr), "Failed to get geometry group bounds, hr %#x.\n", hr);
+    match = compare_rect(&rect, 76.0f, 639.0f, 82.0f, 641.0f, 0);
+    ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    ID2D1GeometryGroup_Release(group);
+
+    ID2D1Geometry_Release(geometries[0]);
+    ID2D1Geometry_Release(geometries[1]);
+
+    ID2D1Factory_Release(factory);
+}
+
 START_TEST(d2d1)
 {
     HMODULE d2d1_dll = GetModuleHandleA("d2d1.dll");
@@ -9625,6 +9673,7 @@ START_TEST(d2d1)
     queue_test(test_wic_bitmap_format);
     queue_d3d10_test(test_math);
     queue_d3d10_test(test_colour_space);
+    queue_test(test_geometry_group);
 
     run_queued_tests();
 }
