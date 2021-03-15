@@ -10018,6 +10018,7 @@ static void test_family_font_set(void)
     unsigned int count, refcount;
     IDWriteFontSet1 *fontset, *fontset2;
     IDWriteLocalizedStrings *values;
+    IDWriteFontResource *resource;
     WCHAR buffW[64];
     BOOL exists;
     HRESULT hr;
@@ -10069,6 +10070,13 @@ static void test_family_font_set(void)
             ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
             IDWriteLocalizedStrings_Release(values);
         }
+
+        hr = IDWriteFontSet1_CreateFontResource(fontset, 100, &resource);
+        ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+        hr = IDWriteFontSet1_CreateFontResource(fontset, 0, &resource);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        IDWriteFontResource_Release(resource);
 
         IDWriteFontSet1_Release(fontset2);
         IDWriteFontSet1_Release(fontset);

@@ -7467,9 +7467,17 @@ static HRESULT WINAPI dwritefontset1_GetFontFaceReference(IDWriteFontSet3 *iface
 
 static HRESULT WINAPI dwritefontset1_CreateFontResource(IDWriteFontSet3 *iface, UINT32 index, IDWriteFontResource **resource)
 {
-    FIXME("%p, %u, %p.\n", iface, index, resource);
+    struct dwrite_fontset *set = impl_from_IDWriteFontSet3(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p.\n", iface, index, resource);
+
+    *resource = NULL;
+
+    if (index >= set->count)
+        return E_INVALIDARG;
+
+    return IDWriteFactory7_CreateFontResource(set->factory, set->entries[index]->file,
+            set->entries[index]->face_index, resource);
 }
 
 static HRESULT WINAPI dwritefontset1_CreateFontFace(IDWriteFontSet3 *iface, UINT32 index, IDWriteFontFace5 **fontface)
