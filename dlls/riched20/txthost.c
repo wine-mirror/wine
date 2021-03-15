@@ -41,12 +41,33 @@ struct host
     HWND window;
     BOOL emulate_10;
     PARAFORMAT2 para_fmt;
+    DWORD props;
 };
 
 static const ITextHostVtbl textHostVtbl;
 
 static BOOL listbox_registered;
 static BOOL combobox_registered;
+
+static void host_init_props( struct host *host )
+{
+    DWORD style, scrollbar;
+
+    host->props = TXTBIT_RICHTEXT | TXTBIT_AUTOWORDSEL | TXTBIT_ALLOWBEEP;
+
+    style = GetWindowLongW( host->window, GWL_STYLE );
+
+    if (style & ES_MULTILINE)     host->props |= TXTBIT_MULTILINE;
+    if (style & ES_READONLY)      host->props |= TXTBIT_READONLY;
+    if (style & ES_PASSWORD)      host->props |= TXTBIT_USEPASSWORD;
+    if (!(style & ES_NOHIDESEL))  host->props |= TXTBIT_HIDESELECTION;
+    if (style & ES_SAVESEL)       host->props |= TXTBIT_SAVESELECTION;
+    if (style & ES_VERTICAL)      host->props |= TXTBIT_VERTICAL;
+    if (style & ES_NOOLEDRAGDROP) host->props |= TXTBIT_DISABLEDRAG;
+
+    ITextHost_TxGetScrollBars( &host->ITextHost_iface, &scrollbar );
+    if (!(scrollbar & ES_AUTOHSCROLL)) host->props |= TXTBIT_WORDWRAP;
+}
 
 struct host *host_create( HWND hwnd, CREATESTRUCTW *cs, BOOL emulate_10 )
 {
@@ -68,6 +89,7 @@ struct host *host_create( HWND hwnd, CREATESTRUCTW *cs, BOOL emulate_10 )
     if (cs->style & ES_CENTER)
         texthost->para_fmt.wAlignment = PFA_CENTER;
     texthost->editor = NULL;
+    host_init_props( texthost );
 
     return texthost;
 }
@@ -373,53 +395,8 @@ DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetPropertyBits,12)
 DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxGetPropertyBits( ITextHost *iface, DWORD mask, DWORD *bits )
 {
     struct host *host = impl_from_ITextHost( iface );
-    DWORD style;
-    DWORD dwBits = 0;
-    DWORD dwScrollBar;
 
-    style = GetWindowLongW( host->window, GWL_STYLE );
-    ITextHostImpl_TxGetScrollBars(iface, &dwScrollBar);
-
-    dwBits |= TXTBIT_RICHTEXT|TXTBIT_AUTOWORDSEL;
-    if (!(dwScrollBar & ES_AUTOHSCROLL))
-        dwBits |= TXTBIT_WORDWRAP;
-
-    /* Bits that correspond to window styles. */
-    if (style & ES_MULTILINE)
-        dwBits |= TXTBIT_MULTILINE;
-    if (style & ES_READONLY)
-        dwBits |= TXTBIT_READONLY;
-    if (style & ES_PASSWORD)
-        dwBits |= TXTBIT_USEPASSWORD;
-    if (!(style & ES_NOHIDESEL))
-        dwBits |= TXTBIT_HIDESELECTION;
-    if (style & ES_SAVESEL)
-        dwBits |= TXTBIT_SAVESELECTION;
-    if (style & ES_VERTICAL)
-        dwBits |= TXTBIT_VERTICAL;
-    if (style & ES_NOOLEDRAGDROP)
-        dwBits |= TXTBIT_DISABLEDRAG;
-
-    dwBits |= TXTBIT_ALLOWBEEP;
-
-    /* The following bits are always FALSE because they are probably only
-     * needed for ITextServices_OnTxPropertyBitsChange:
-     *   TXTBIT_VIEWINSETCHANGE
-     *   TXTBIT_BACKSTYLECHANGE
-     *   TXTBIT_MAXLENGTHCHANGE
-     *   TXTBIT_CHARFORMATCHANGE
-     *   TXTBIT_PARAFORMATCHANGE
-     *   TXTBIT_SHOWACCELERATOR
-     *   TXTBIT_EXTENTCHANGE
-     *   TXTBIT_SELBARCHANGE
-     *   TXTBIT_SCROLLBARCHANGE
-     *   TXTBIT_CLIENTRECTCHANGE
-     *
-     * Documented by MSDN as not supported:
-     *   TXTBIT_USECURRENTBKG
-     */
-
-    *bits = dwBits & mask;
+    *bits = host->props & mask;
     return S_OK;
 }
 
