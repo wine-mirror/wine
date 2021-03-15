@@ -129,14 +129,14 @@ static char * get_file_version(char * file_name)
                             pFixedVersionInfo->dwFileVersionLS >> 16,
                             pFixedVersionInfo->dwFileVersionLS & 0xffff);
                 } else
-                    sprintf(version, "version not available");
+                    sprintf(version, "version not found");
             } else
-                sprintf(version, "unknown");
+                sprintf(version, "version error %u", GetLastError());
             heap_free(data);
         } else
-            sprintf(version, "failed");
+            sprintf(version, "version error %u", ERROR_OUTOFMEMORY);
     } else
-        sprintf(version, "version not available");
+        sprintf(version, "version not present");
 
     return version;
 }
