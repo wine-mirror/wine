@@ -827,16 +827,49 @@ static HRESULT WINAPI dwritefontface_GetGlyphRunOutline(IDWriteFontFace5 *iface,
     UINT16 const *glyphs, FLOAT const* advances, DWRITE_GLYPH_OFFSET const *offsets,
     UINT32 count, BOOL is_sideways, BOOL is_rtl, IDWriteGeometrySink *sink)
 {
+    D2D1_POINT_2F *origins, baseline_origin = { 0 };
+    DWRITE_GLYPH_RUN run;
+    unsigned int i;
+    HRESULT hr;
+
     TRACE("%p, %.8e, %p, %p, %p, %u, %d, %d, %p.\n", iface, emSize, glyphs, advances, offsets,
         count, is_sideways, is_rtl, sink);
 
     if (!glyphs || !sink)
         return E_INVALIDARG;
 
-    if (is_sideways)
-        FIXME("sideways mode is not supported.\n");
+    if (!count)
+        return S_OK;
 
-    return freetype_get_glyphrun_outline(iface, emSize, glyphs, advances, offsets, count, is_rtl, sink);
+    run.fontFace = (IDWriteFontFace *)iface;
+    run.fontEmSize = emSize;
+    run.glyphCount = count;
+    run.glyphIndices = glyphs;
+    run.glyphAdvances = advances;
+    run.glyphOffsets = offsets;
+    run.isSideways = is_sideways;
+    run.bidiLevel = is_rtl ? 1 : 0;
+
+    if (!(origins = heap_alloc(sizeof(*origins) * count)))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = compute_glyph_origins(&run, DWRITE_MEASURING_MODE_NATURAL, baseline_origin, NULL, origins)))
+    {
+        heap_free(origins);
+        return hr;
+    }
+
+    ID2D1SimplifiedGeometrySink_SetFillMode(sink, D2D1_FILL_MODE_WINDING);
+
+    for (i = 0; i < count; ++i)
+    {
+        if (FAILED(hr = freetype_get_glyph_outline(iface, emSize, glyphs[i], origins[i], sink)))
+            WARN("Failed to get glyph outline for glyph %u.\n", glyphs[i]);
+    }
+
+    heap_free(origins);
+
+    return S_OK;
 }
 
 static DWRITE_RENDERING_MODE fontface_renderingmode_from_measuringmode(DWRITE_MEASURING_MODE measuring,

@@ -464,19 +464,13 @@ static void embolden_glyph(FT_Glyph glyph, FLOAT emsize)
     embolden_glyph_outline(&outline_glyph->outline, emsize);
 }
 
-HRESULT freetype_get_glyphrun_outline(IDWriteFontFace5 *fontface, float emSize, UINT16 const *glyphs,
-        float const *advances, DWRITE_GLYPH_OFFSET const *offsets, unsigned int count, BOOL is_rtl,
-        IDWriteGeometrySink *sink)
+HRESULT freetype_get_glyph_outline(IDWriteFontFace5 *fontface, float emSize, UINT16 glyph,
+        D2D1_POINT_2F origin, IDWriteGeometrySink *sink)
 {
     FTC_ScalerRec scaler;
     USHORT simulations;
     HRESULT hr = S_OK;
     FT_Size size;
-
-    if (!count)
-        return S_OK;
-
-    ID2D1SimplifiedGeometrySink_SetFillMode(sink, D2D1_FILL_MODE_WINDING);
 
     simulations = IDWriteFontFace5_GetSimulations(fontface);
 
@@ -490,56 +484,22 @@ HRESULT freetype_get_glyphrun_outline(IDWriteFontFace5 *fontface, float emSize, 
     EnterCriticalSection(&freetype_cs);
     if (pFTC_Manager_LookupSize(cache_manager, &scaler, &size) == 0)
     {
-        D2D1_POINT_2F origin;
-        unsigned int i;
-
-        origin.x = origin.y = 0.0f;
-        for (i = 0; i < count; ++i)
+        if (pFT_Load_Glyph(size->face, glyph, FT_LOAD_NO_BITMAP) == 0)
         {
-            if (pFT_Load_Glyph(size->face, glyphs[i], FT_LOAD_NO_BITMAP) == 0)
-            {
-                FLOAT ft_advance = size->face->glyph->metrics.horiAdvance >> 6;
-                FT_Outline *outline = &size->face->glyph->outline;
-                D2D1_POINT_2F glyph_origin;
-                FT_Matrix m;
+            FT_Outline *outline = &size->face->glyph->outline;
+            FT_Matrix m;
 
-                if (simulations & DWRITE_FONT_SIMULATIONS_BOLD)
-                    embolden_glyph_outline(outline, emSize);
+            if (simulations & DWRITE_FONT_SIMULATIONS_BOLD)
+                embolden_glyph_outline(outline, emSize);
 
-                m.xx = 1 << 16;
-                m.xy = simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE ? (1 << 16) / 3 : 0;
-                m.yx = 0;
-                m.yy = -(1 << 16); /* flip Y axis */
+            m.xx = 1 << 16;
+            m.xy = simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE ? (1 << 16) / 3 : 0;
+            m.yx = 0;
+            m.yy = -(1 << 16); /* flip Y axis */
 
-                pFT_Outline_Transform(outline, &m);
+            pFT_Outline_Transform(outline, &m);
 
-                glyph_origin = origin;
-
-                if (is_rtl)
-                {
-                    glyph_origin.x -= ft_advance;
-
-                    if (offsets)
-                    {
-                        glyph_origin.x -= offsets[i].advanceOffset;
-                        glyph_origin.y -= offsets[i].ascenderOffset;
-                    }
-
-                    origin.x -= advances ? advances[i] : ft_advance;
-                }
-                else
-                {
-                    if (offsets)
-                    {
-                        glyph_origin.x += offsets[i].advanceOffset;
-                        glyph_origin.y -= offsets[i].ascenderOffset;
-                    }
-
-                    origin.x += advances ? advances[i] : ft_advance;
-                }
-
-                decompose_outline(outline, glyph_origin, sink);
-            }
+            decompose_outline(outline, origin, sink);
         }
     }
     else
@@ -837,9 +797,8 @@ HRESULT freetype_get_design_glyph_metrics(struct dwrite_fontface *fontface, UINT
     return E_NOTIMPL;
 }
 
-HRESULT freetype_get_glyphrun_outline(IDWriteFontFace5 *fontface, float emSize, UINT16 const *glyphs,
-        float const *advances, DWRITE_GLYPH_OFFSET const *offsets, unsigned int count, BOOL is_rtl,
-        IDWriteGeometrySink *sink)
+HRESULT freetype_get_glyph_outline(IDWriteFontFace5 *fontface, float emSize, UINT16 glyph,
+        D2D1_POINT_2F origin, IDWriteGeometrySink *sink)
 {
     return E_NOTIMPL;
 }
