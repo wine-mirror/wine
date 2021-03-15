@@ -1570,6 +1570,7 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
     if (pFile->type == INCL_SYSTEM && pFile->use_msvcrt)
     {
         if (!strcmp( pFile->name, "stdarg.h" )) return NULL;
+        if (!strcmp( pFile->name, "x86intrin.h" )) return NULL;
         fprintf( stderr, "%s:%d: error: system header %s cannot be used with msvcrt\n",
                  pFile->included_by->file->name, pFile->included_line, pFile->name );
         exit(1);

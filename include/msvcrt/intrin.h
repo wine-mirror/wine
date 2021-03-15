@@ -7,6 +7,10 @@
 #ifndef _INC_INTRIN
 #define _INC_INTRIN
 
+#if defined(__i386__) || defined(__x86_64__)
+# include <x86intrin.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

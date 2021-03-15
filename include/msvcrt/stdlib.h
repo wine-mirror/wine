@@ -164,15 +164,23 @@ _ACRTIMP char*         __cdecl _itoa(int,char*,int);
 _ACRTIMP errno_t       __cdecl _itoa_s(int,char*,size_t,int);
 _ACRTIMP char*         __cdecl _ltoa(__msvcrt_long,char*,int);
 _ACRTIMP errno_t       __cdecl _ltoa_s(__msvcrt_long, char*, size_t, int);
+#ifndef _lrotl
 _ACRTIMP __msvcrt_ulong __cdecl _lrotl(__msvcrt_ulong,int);
+#endif
+#ifndef _lrotr
 _ACRTIMP __msvcrt_ulong __cdecl _lrotr(__msvcrt_ulong,int);
+#endif
 _ACRTIMP void          __cdecl _makepath(char*,const char*,const char*,const char*,const char*);
 _ACRTIMP int           __cdecl _makepath_s(char*,size_t,const char*,const char*,const char*,const char*);
 _ACRTIMP size_t        __cdecl _mbstrlen(const char*);
 _ACRTIMP _onexit_t     __cdecl _onexit(_onexit_t);
 _ACRTIMP int           __cdecl _putenv(const char*);
+#ifndef _rotl
 _ACRTIMP unsigned int  __cdecl _rotl(unsigned int,int);
+#endif
+#ifndef _rotr
 _ACRTIMP unsigned int  __cdecl _rotr(unsigned int,int);
+#endif
 _ACRTIMP void          __cdecl _searchenv(const char*,const char*,char*);
 _ACRTIMP int           __cdecl _set_error_mode(int);
 _ACRTIMP void          __cdecl _seterrormode(int);
