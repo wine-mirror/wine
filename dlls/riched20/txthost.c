@@ -753,6 +753,32 @@ static BOOL create_windowed_editor( HWND hwnd, CREATESTRUCTW *create, BOOL emula
     return TRUE;
 }
 
+static HRESULT get_lineA( ITextServices *text_srv, WPARAM wparam, LPARAM lparam, LRESULT *res )
+{
+    LRESULT len = USHRT_MAX;
+    WORD sizeA;
+    HRESULT hr;
+    WCHAR *buf;
+
+    *res = 0;
+    sizeA = *(WORD *)lparam;
+    *(WORD *)lparam = 0;
+    if (!sizeA) return S_OK;
+    buf = heap_alloc( len * sizeof(WCHAR) );
+    if (!buf) return E_OUTOFMEMORY;
+    *(WORD *)buf = len;
+    hr = ITextServices_TxSendMessage( text_srv, EM_GETLINE, wparam, (LPARAM)buf, &len );
+    if (hr == S_OK && len)
+    {
+        len = WideCharToMultiByte( CP_ACP, 0, buf, len, (char *)lparam, sizeA, NULL, NULL );
+        if (!len && GetLastError() == ERROR_INSUFFICIENT_BUFFER) len = sizeA;
+        if (len < sizeA) ((char *)lparam)[len] = '\0';
+        *res = len;
+    }
+    heap_free( buf );
+    return hr;
+}
+
 static HRESULT get_text_rangeA( struct host *host, TEXTRANGEA *rangeA, LRESULT *res )
 {
     TEXTRANGEW range;
@@ -871,6 +897,11 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         }
         break;
     }
+    case EM_GETLINE:
+        if (unicode) hr = ITextServices_TxSendMessage( host->text_srv, msg, wparam, lparam, &res );
+        else hr = get_lineA( host->text_srv, wparam, lparam, &res );
+        break;
+
     case WM_GETTEXT:
     {
         GETTEXTEX params;

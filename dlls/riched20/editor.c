@@ -4030,11 +4030,9 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     const unsigned int nMaxChars = *(WORD *) lParam;
     unsigned int nCharsLeft = nMaxChars;
     char *dest = (char *) lParam;
-    BOOL wroteNull = FALSE;
     ME_Cursor start, end;
 
-    TRACE("EM_GETLINE: row=%d, nMaxChars=%d (%s)\n", (int) wParam, nMaxChars,
-          unicode ? "Unicode" : "Ansi");
+    TRACE( "EM_GETLINE: row=%d, nMaxChars=%d\n", (int)wParam, nMaxChars );
 
     row = row_from_row_number( editor, wParam );
     if (row == NULL) return 0;
@@ -4052,30 +4050,18 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       str = get_text( run, ofs );
       nCopy = min( nCharsLeft, len );
 
-      if (unicode)
-        memcpy(dest, str, nCopy * sizeof(WCHAR));
-      else
-        nCopy = WideCharToMultiByte(CP_ACP, 0, str, nCopy, dest,
-                                    nCharsLeft, NULL, NULL);
-      dest += nCopy * (unicode ? sizeof(WCHAR) : 1);
+      memcpy(dest, str, nCopy * sizeof(WCHAR));
+      dest += nCopy * sizeof(WCHAR);
       nCharsLeft -= nCopy;
       if (run == end.run) break;
       run = row_next_run( row, run );
     }
 
     /* append line termination, space allowing */
-    if (nCharsLeft > 0)
-    {
-      if (unicode)
-        *((WCHAR *)dest) = '\0';
-      else
-        *dest = '\0';
-      nCharsLeft--;
-      wroteNull = TRUE;
-    }
+    if (nCharsLeft > 0) *((WCHAR *)dest) = '\0';
 
     TRACE("EM_GETLINE: got %u characters\n", nMaxChars - nCharsLeft);
-    return nMaxChars - nCharsLeft - (wroteNull ? 1 : 0);
+    return nMaxChars - nCharsLeft;
   }
   case EM_GETLINECOUNT:
   {
