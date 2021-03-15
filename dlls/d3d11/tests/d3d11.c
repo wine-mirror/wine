@@ -6779,6 +6779,7 @@ static void test_device_context_state(void)
     ID3DDeviceContextState *context_state, *previous_context_state, *tmp_context_state, *context_state2;
     UINT ib_offset, vb_offset, vb_stride, so_offset, offset, stride, sample_mask, stencil_ref, count;
     ID3D11Buffer *cb, *srvb, *uavb, *ib, *vb, *sob, *tmp_cb, *tmp_ib, *tmp_vb, *tmp_sob;
+    D3D_FEATURE_LEVEL feature_level, selected_feature_level;
     ID3D11UnorderedAccessView *tmp_uav, *uav, *ps_uav;
     ID3D11Device *d3d11_device, *d3d11_device2;
     ID3D11SamplerState *sampler, *tmp_sampler;
@@ -6800,7 +6801,6 @@ static void test_device_context_state(void)
     ID3D11Predicate *tmp_pred, *pred;
     ID3D11DomainShader *tmp_ds, *ds;
     D3D11_SAMPLER_DESC sampler_desc;
-    D3D_FEATURE_LEVEL feature_level;
     D3D11_QUERY_DESC predicate_desc;
     ID3D11Device1 *device, *device2;
     ID3D11InputLayout *il, *tmp_il;
@@ -6860,17 +6860,41 @@ static void test_device_context_state(void)
     ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
 
     feature_level = min(feature_level, D3D_FEATURE_LEVEL_11_1);
-    hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level, 1, D3D11_SDK_VERSION,
-            &IID_ID3D11Device1, NULL, &context_state);
-    ok(SUCCEEDED(hr), "Failed to create device context state, hr %#x.\n", hr);
-    if (FAILED(hr))
-    {
-        ID3D11SamplerState_Release(sampler);
-        ID3D11Device1_Release(device);
-        return;
-    }
+
+    hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level,
+            1, D3D11_SDK_VERSION, &IID_ID3D11Device1, NULL, NULL);
+    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+
+    selected_feature_level = 0xc0de0000;
+    hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level, 1,
+            D3D11_SDK_VERSION, &IID_ID3D11Device1, &selected_feature_level, NULL);
+    ok(hr == S_FALSE, "Got unexpected hr %#x.\n", hr);
+    ok(selected_feature_level == feature_level, "Got unexpected feature level %#x, expected %#x.\n",
+            selected_feature_level, feature_level);
+
+    selected_feature_level = 0xc0de0000;
+    context_state = (void *)0xc0de0001;
+    hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level, 0,
+            D3D11_SDK_VERSION, &IID_ID3D11Device1, &selected_feature_level, &context_state);
+    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(!selected_feature_level, "Got unexpected feature level %#x.\n", selected_feature_level);
+    todo_wine ok(!context_state, "Got unexpected context state %p.\n", context_state);
+    if (SUCCEEDED(hr))
+        ID3DDeviceContextState_Release(context_state);
+
+    hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level,
+            0, D3D11_SDK_VERSION, &IID_ID3D11Device1, NULL, NULL);
+    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    hr = ID3D11Device1_CreateDeviceContextState(device, 0, NULL,
+            0, D3D11_SDK_VERSION, &IID_ID3D11Device1, NULL, NULL);
+    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level,
+            1, D3D11_SDK_VERSION, &IID_ID3D11Device1, NULL, &context_state);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     refcount = get_refcount(context_state);
-    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
 
     context_type = ID3D11DeviceContext1_GetType(context);
     ok(context_type == D3D11_DEVICE_CONTEXT_IMMEDIATE, "Unexpected context type %u.\n", context_type);
