@@ -957,7 +957,7 @@ extract_test_proc (HMODULE hModule, LPCSTR lpszType, LPSTR lpszName, LONG_PTR lP
         }
         else if (is_native_dll(dll))
         {
-            xprintf ("    %s=load error Configured as native\n", dllname);
+            xprintf ("    %s=dll is native\n", dllname);
             nr_native_dlls++;
             run = FALSE;
         }
