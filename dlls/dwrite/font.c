@@ -1265,7 +1265,7 @@ static HRESULT WINAPI dwritefontface2_GetRecommendedRenderingMode(IDWriteFontFac
     TRACE("%p, %.8e, %.8e, %.8e, %p, %d, %d, %d, %p, %p, %p.\n", iface, emSize, dpiX, dpiY, m, is_sideways, threshold,
         measuringmode, params, renderingmode, gridfitmode);
 
-    if (m)
+    if (m && memcmp(m, &identity, sizeof(*m)))
         FIXME("transform not supported %s\n", debugstr_matrix(m));
 
     if (is_sideways)
@@ -1452,7 +1452,7 @@ static HRESULT WINAPI dwritefontface3_GetRecommendedRenderingMode(IDWriteFontFac
     TRACE("%p, %.8e, %.8e, %.8e, %p, %d, %d, %d, %p, %p, %p.\n", iface, emSize, dpiX, dpiY, m, is_sideways, threshold,
         measuring_mode, params, rendering_mode, gridfit_mode);
 
-    if (m)
+    if (m && memcmp(m, &identity, sizeof(*m)))
         FIXME("transform not supported %s\n", debugstr_matrix(m));
 
     if (is_sideways)

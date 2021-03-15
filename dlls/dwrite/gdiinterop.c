@@ -369,7 +369,7 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
     }
 
     hr = IDWriteFontFace3_GetRecommendedRenderingMode(fontface, run->fontEmSize, target->ppdip * 96.0f,
-            target->ppdip * 96.0f, NULL /* FIXME */, run->isSideways, DWRITE_OUTLINE_THRESHOLD_ALIASED, measuring_mode,
+            target->ppdip * 96.0f, &target->m, run->isSideways, DWRITE_OUTLINE_THRESHOLD_ALIASED, measuring_mode,
             params, &rendermode, &gridfitmode);
     IDWriteFontFace3_Release(fontface);
     if (FAILED(hr))
