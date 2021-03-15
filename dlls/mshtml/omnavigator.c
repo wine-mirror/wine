@@ -1453,20 +1453,21 @@ static dispex_static_data_t OmNavigator_dispex = {
     OmNavigator_iface_tids
 };
 
-IOmNavigator *OmNavigator_Create(void)
+HRESULT create_navigator(compat_mode_t compat_mode, IOmNavigator **navigator)
 {
     OmNavigator *ret;
 
     ret = heap_alloc_zero(sizeof(*ret));
     if(!ret)
-        return NULL;
+        return E_OUTOFMEMORY;
 
     ret->IOmNavigator_iface.lpVtbl = &OmNavigatorVtbl;
     ret->ref = 1;
 
-    init_dispex(&ret->dispex, (IUnknown*)&ret->IOmNavigator_iface, &OmNavigator_dispex);
+    init_dispex_with_compat_mode(&ret->dispex, (IUnknown*)&ret->IOmNavigator_iface, &OmNavigator_dispex, compat_mode);
 
-    return &ret->IOmNavigator_iface;
+    *navigator = &ret->IOmNavigator_iface;
+    return S_OK;
 }
 
 typedef struct {

@@ -415,3 +415,13 @@ async_test("animation", function() {
     document.body.appendChild(div);
     div.className = "testAnimation";
 });
+
+sync_test("navigator", function() {
+    ok(typeof(window.navigator) === "object",
+       "typeof(window.navigator) = " + typeof(window.navigator));
+
+    var v = window.navigator;
+    ok(v === window.navigator, "v != window.navigator");
+    v.testProp = true;
+    ok(window.navigator.testProp, "window.navigator.testProp = " + window.navigator.testProp);
+});

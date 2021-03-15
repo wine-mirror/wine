@@ -294,6 +294,8 @@ static void release_inner_window(HTMLInnerWindow *This)
         IOmHistory_Release(&This->history->IOmHistory_iface);
     }
 
+    if(This->navigator)
+        IOmNavigator_Release(This->navigator);
     if(This->session_storage)
         IHTMLStorage_Release(This->session_storage);
     if(This->local_storage)
@@ -918,11 +920,19 @@ static HRESULT WINAPI HTMLWindow2_get_opener(IHTMLWindow2 *iface, VARIANT *p)
 static HRESULT WINAPI HTMLWindow2_get_navigator(IHTMLWindow2 *iface, IOmNavigator **p)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
+    HTMLInnerWindow *window = This->inner_window;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = OmNavigator_Create();
-    return *p ? S_OK : E_OUTOFMEMORY;
+    if(!window->navigator) {
+        HRESULT hres;
+        hres = create_navigator(dispex_compat_mode(&window->event_target.dispex), &window->navigator);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    IOmNavigator_AddRef(*p = window->navigator);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow2_put_name(IHTMLWindow2 *iface, BSTR v)

@@ -535,6 +535,7 @@ struct HTMLInnerWindow {
     HTMLXMLHttpRequestFactory *xhr_factory;
     IHTMLScreen *screen;
     OmHistory *history;
+    IOmNavigator *navigator;
     IHTMLStorage *session_storage;
     IHTMLStorage *local_storage;
 
@@ -910,7 +911,7 @@ HRESULT HTMLOptionElementFactory_Create(HTMLInnerWindow*,HTMLOptionElementFactor
 HRESULT HTMLImageElementFactory_Create(HTMLInnerWindow*,HTMLImageElementFactory**) DECLSPEC_HIDDEN;
 HRESULT HTMLXMLHttpRequestFactory_Create(HTMLInnerWindow*,HTMLXMLHttpRequestFactory**) DECLSPEC_HIDDEN;
 HRESULT HTMLLocation_Create(HTMLInnerWindow*,HTMLLocation**) DECLSPEC_HIDDEN;
-IOmNavigator *OmNavigator_Create(void) DECLSPEC_HIDDEN;
+HRESULT create_navigator(compat_mode_t,IOmNavigator**) DECLSPEC_HIDDEN;
 HRESULT create_html_screen(compat_mode_t,IHTMLScreen**) DECLSPEC_HIDDEN;
 HRESULT create_performance(IHTMLPerformance**) DECLSPEC_HIDDEN;
 HRESULT create_history(HTMLInnerWindow*,OmHistory**) DECLSPEC_HIDDEN;
