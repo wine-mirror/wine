@@ -6876,19 +6876,17 @@ static void test_device_context_state(void)
     context_state = (void *)0xc0de0001;
     hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level, 0,
             D3D11_SDK_VERSION, &IID_ID3D11Device1, &selected_feature_level, &context_state);
-    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(!selected_feature_level, "Got unexpected feature level %#x.\n", selected_feature_level);
-    todo_wine ok(!context_state, "Got unexpected context state %p.\n", context_state);
-    if (SUCCEEDED(hr))
-        ID3DDeviceContextState_Release(context_state);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(!selected_feature_level, "Got unexpected feature level %#x.\n", selected_feature_level);
+    ok(!context_state, "Got unexpected context state %p.\n", context_state);
 
     hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level,
             0, D3D11_SDK_VERSION, &IID_ID3D11Device1, NULL, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
     hr = ID3D11Device1_CreateDeviceContextState(device, 0, NULL,
             0, D3D11_SDK_VERSION, &IID_ID3D11Device1, NULL, NULL);
-    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
     hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level,
             1, D3D11_SDK_VERSION, &IID_ID3D11Device1, NULL, &context_state);

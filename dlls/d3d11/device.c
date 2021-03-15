@@ -4061,15 +4061,20 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateRasterizerState1(ID3D11Devic
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDeviceContextState(ID3D11Device2 *iface, UINT flags,
-        const D3D_FEATURE_LEVEL *feature_levels, UINT feature_levels_count, UINT sdk_version,
+        const D3D_FEATURE_LEVEL *feature_levels, UINT feature_level_count, UINT sdk_version,
         REFIID emulated_interface, D3D_FEATURE_LEVEL *chosen_feature_level, ID3DDeviceContextState **state)
 {
     struct d3d_device *device = impl_from_ID3D11Device2(iface);
     struct d3d_device_context_state *state_impl;
+    HRESULT hr = E_INVALIDARG;
 
     FIXME("iface %p, flags %#x, feature_levels %p, feature_level_count %u, sdk_version %u, "
-            "emulated_interface %s, chosen_feature_level %p, state %p semi-stub!\n", iface, flags, feature_levels,
-            feature_levels_count, sdk_version, debugstr_guid(emulated_interface), chosen_feature_level, state);
+            "emulated_interface %s, chosen_feature_level %p, state %p semi-stub!\n",
+            iface, flags, feature_levels, feature_level_count, sdk_version,
+            debugstr_guid(emulated_interface), chosen_feature_level, state);
+
+    if (!feature_level_count)
+        goto fail;
 
     if (chosen_feature_level)
        FIXME("Device context state feature level not implemented yet.\n");
@@ -4078,8 +4083,8 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDeviceContextState(ID3D11Dev
     {
         if (!(state_impl = heap_alloc_zero(sizeof(*state_impl))))
         {
-            *state = NULL;
-            return E_OUTOFMEMORY;
+            hr = E_OUTOFMEMORY;
+            goto fail;
         }
 
         d3d_device_context_state_init(state_impl, device, emulated_interface);
@@ -4089,6 +4094,13 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDeviceContextState(ID3D11Dev
     device->d3d11_only = FALSE;
     if (chosen_feature_level) *chosen_feature_level = ID3D11Device2_GetFeatureLevel(iface);
     return state ? S_OK : S_FALSE;
+
+fail:
+    if (chosen_feature_level)
+        *chosen_feature_level = 0;
+    if (state)
+        *state = NULL;
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_OpenSharedResource1(ID3D11Device2 *iface, HANDLE handle,
