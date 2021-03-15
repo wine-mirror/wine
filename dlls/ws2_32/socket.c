@@ -7484,6 +7484,7 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
             if (!af) af = supported_protocols[i].iAddressFamily;
             if (!type) type = supported_protocols[i].iSocketType;
             if (!protocol) protocol = supported_protocols[i].iProtocol;
+            break;
         }
     }
 
