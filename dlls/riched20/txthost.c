@@ -1002,14 +1002,11 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
     }
     case EM_SETREADONLY:
     {
-        DWORD style;
+        DWORD op = wparam ? ECOOP_OR : ECOOP_AND;
+        DWORD mask = wparam ? ECO_READONLY : ~ECO_READONLY;
 
-        res = ME_HandleMessage( editor, msg, wparam, lparam, unicode, &hr );
-        style = GetWindowLongW( hwnd, GWL_STYLE );
-        style &= ~ES_READONLY;
-        if (wparam) style |= ES_READONLY;
-        SetWindowLongW( hwnd, GWL_STYLE, style );
-        return res;
+        SendMessageW( hwnd, EM_SETOPTIONS, op, mask );
+        return 1;
     }
     case WM_SETTEXT:
     {

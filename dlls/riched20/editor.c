@@ -3779,14 +3779,6 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     
     return 0;
   }
-  case EM_SETREADONLY:
-  {
-    if (wParam)
-      editor->styleFlags |= ES_READONLY;
-    else
-      editor->styleFlags &= ~ES_READONLY;
-    return 1;
-  }
   case EM_SETEVENTMASK:
   {
     DWORD nOldMask = editor->nEventMask;
