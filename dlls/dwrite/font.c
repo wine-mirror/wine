@@ -4022,7 +4022,7 @@ static HRESULT init_font_data(const struct fontface_desc *desc, struct dwrite_fo
     return S_OK;
 }
 
-static HRESULT init_font_data_from_font(const struct dwrite_font_data *src, DWRITE_FONT_SIMULATIONS sim,
+static HRESULT init_font_data_from_font(const struct dwrite_font_data *src, DWRITE_FONT_SIMULATIONS simulations,
         const WCHAR *facenameW, struct dwrite_font_data **ret)
 {
     struct dwrite_font_data *data;
@@ -4035,10 +4035,10 @@ static HRESULT init_font_data_from_font(const struct dwrite_font_data *src, DWRI
 
     *data = *src;
     data->refcount = 1;
-    data->simulations |= sim;
-    if (sim == DWRITE_FONT_SIMULATIONS_BOLD)
+    data->simulations |= simulations;
+    if (simulations & DWRITE_FONT_SIMULATIONS_BOLD)
         data->weight = DWRITE_FONT_WEIGHT_BOLD;
-    else if (sim == DWRITE_FONT_SIMULATIONS_OBLIQUE)
+    if (simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE)
         data->style = DWRITE_FONT_STYLE_OBLIQUE;
     memset(data->info_strings, 0, sizeof(data->info_strings));
     data->names = NULL;
