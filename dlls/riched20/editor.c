@@ -2132,22 +2132,11 @@ static int ME_GetTextEx(ME_TextEditor *editor, GETTEXTEX *ex, LPARAM pText)
     }
 }
 
-static int ME_GetTextRange(ME_TextEditor *editor, WCHAR *strText,
-                           const ME_Cursor *start, int nLen, BOOL unicode)
+static int get_text_range( ME_TextEditor *editor, WCHAR *buffer,
+                           const ME_Cursor *start, int len )
 {
-    if (!strText) return 0;
-    if (unicode) {
-      return ME_GetTextW(editor, strText, INT_MAX, start, nLen, FALSE, FALSE);
-    } else {
-      int nChars;
-      WCHAR *p = heap_alloc((nLen+1) * sizeof(*p));
-      if (!p) return 0;
-      nChars = ME_GetTextW(editor, p, nLen, start, nLen, FALSE, FALSE);
-      WideCharToMultiByte(CP_ACP, 0, p, nChars+1, (char *)strText,
-                          nLen+1, NULL, NULL);
-      heap_free(p);
-      return nChars;
-    }
+    if (!buffer) return 0;
+    return ME_GetTextW( editor, buffer, INT_MAX, start, len, FALSE, FALSE );
 }
 
 int set_selection( ME_TextEditor *editor, int to, int from )
@@ -3991,8 +3980,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   {
     int nFrom, nTo, nStartCur = ME_GetSelectionOfs(editor, &nFrom, &nTo);
     ME_Cursor *from = &editor->pCursors[nStartCur];
-    return ME_GetTextRange(editor, (WCHAR *)lParam, from,
-                           nTo - nFrom, unicode);
+    return get_text_range( editor, (WCHAR *)lParam, from, nTo - nFrom );
   }
   case EM_GETSCROLLPOS:
   {
@@ -4021,7 +4009,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     if (nStart >= nEnd) return 0;
 
     cursor_from_char_ofs( editor, nStart, &start );
-    return ME_GetTextRange( editor, rng->lpstrText, &start, nEnd - nStart, TRUE );
+    return get_text_range( editor, rng->lpstrText, &start, nEnd - nStart );
   }
   case EM_GETLINE:
   {

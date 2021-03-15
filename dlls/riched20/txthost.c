@@ -902,6 +902,20 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         else hr = get_lineA( host->text_srv, wparam, lparam, &res );
         break;
 
+    case EM_GETSELTEXT:
+    {
+        TEXTRANGEA range;
+
+        if (unicode) hr = ITextServices_TxSendMessage( host->text_srv, msg, wparam, lparam, &res );
+        else
+        {
+            ITextServices_TxSendMessage( host->text_srv, EM_EXGETSEL, 0, (LPARAM)&range.chrg, &res );
+            range.lpstrText = (char *)lparam;
+            range.lpstrText[0] = '\0';
+            hr = get_text_rangeA( host, &range, &res );
+        }
+        break;
+    }
     case WM_GETTEXT:
     {
         GETTEXTEX params;

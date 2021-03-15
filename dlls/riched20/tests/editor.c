@@ -1828,8 +1828,8 @@ static void test_EM_GETSELTEXT(void)
         SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"abcdef\x8e\xf0ghijk");
         SendMessageA(hwndRichEdit, EM_SETSEL, 4, 8);
         result = SendMessageA(hwndRichEdit, EM_GETSELTEXT, 0, (LPARAM)buffer);
-        todo_wine ok(result == 5, "EM_GETSELTEXT returned %ld\n", result);
-        todo_wine ok(!strcmp("ef\x8e\xf0g", buffer), "EM_GETSELTEXT filled %s\n", buffer);
+        ok(result == 5, "EM_GETSELTEXT returned %ld\n", result);
+        ok(!strcmp("ef\x8e\xf0g", buffer), "EM_GETSELTEXT filled %s\n", buffer);
     }
 
     DestroyWindow(hwndRichEdit);
