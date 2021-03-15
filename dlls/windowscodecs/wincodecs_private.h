@@ -153,6 +153,7 @@ extern HRESULT TiffEncoder_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDE
 extern HRESULT IcnsEncoder_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;
 extern HRESULT TgaDecoder_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;
 extern HRESULT DdsDecoder_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;
+extern HRESULT DdsEncoder_CreateInstance(REFIID iid, void** ppv) DECLSPEC_HIDDEN;
 
 extern HRESULT BitmapImpl_Create(UINT uiWidth, UINT uiHeight,
     UINT stride, UINT datasize, void *view, UINT offset,
