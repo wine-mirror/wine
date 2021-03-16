@@ -876,7 +876,7 @@ static func_disp_t *create_func_disp(DispatchEx *obj, func_info_t *info)
         return NULL;
 
     ret->IUnknown_iface.lpVtbl = &FunctionUnkVtbl;
-    init_dispex(&ret->dispex, &ret->IUnknown_iface,  &function_dispex);
+    init_dispex_with_compat_mode(&ret->dispex, &ret->IUnknown_iface,  &function_dispex, dispex_compat_mode(obj));
     ret->ref = 1;
     ret->obj = obj;
     ret->info = info;
