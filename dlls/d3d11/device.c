@@ -2844,7 +2844,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_SwapDeviceContextState(ID3
     struct d3d_device_context_state *state_impl, *prev_impl;
     struct wined3d_state *wined3d_state;
 
-    FIXME("iface %p, state %p, prev %p semi-stub!\n", iface, state, prev);
+    TRACE("iface %p, state %p, prev %p.\n", iface, state, prev);
 
     if (!state)
     {
