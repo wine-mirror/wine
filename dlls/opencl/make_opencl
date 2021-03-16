@@ -59,7 +59,7 @@ sub generate_pe_thunk($$)
     my $trace_call_arg = "";
     my $trace_arg = "";
 
-    my $ret = get_func_proto( "%s WINAPI wine_%s(%s)", $name, $func_ref );
+    my $ret = get_func_proto( "%s WINAPI %s(%s)", $name, $func_ref );
     foreach my $arg (@{$func_ref->[1]})
     {
         my $ptype = get_arg_type( $arg );
@@ -198,7 +198,7 @@ sub generate_spec_entry($$)
         }
     }
     $args = substr($args,1,-1);
-    return "@ stdcall $_($args) wine_$_";
+    return "@ stdcall $_($args)";
 }
 
 my %core_functions;

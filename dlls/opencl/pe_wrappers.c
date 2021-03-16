@@ -26,8 +26,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(opencl);
 
 const struct opencl_funcs *opencl_funcs = NULL;
 
-cl_int WINAPI wine_clGetPlatformInfo(cl_platform_id platform, cl_platform_info param_name,
-                                     SIZE_T param_value_size, void * param_value, size_t * param_value_size_ret)
+cl_int WINAPI clGetPlatformInfo( cl_platform_id platform, cl_platform_info param_name,
+        SIZE_T param_value_size, void * param_value, size_t * param_value_size_ret )
 {
     cl_int ret;
     TRACE("(%p, 0x%x, %ld, %p, %p)\n", platform, param_name, param_value_size, param_value, param_value_size_ret);
@@ -62,8 +62,8 @@ cl_int WINAPI wine_clGetPlatformInfo(cl_platform_id platform, cl_platform_info p
 }
 
 
-cl_int WINAPI wine_clGetDeviceInfo(cl_device_id device, cl_device_info param_name,
-                                   SIZE_T param_value_size, void * param_value, size_t * param_value_size_ret)
+cl_int WINAPI clGetDeviceInfo( cl_device_id device, cl_device_info param_name,
+        SIZE_T param_value_size, void * param_value, size_t * param_value_size_ret )
 {
     cl_int ret;
     TRACE("(%p, 0x%x, %ld, %p, %p)\n",device, param_name, param_value_size, param_value, param_value_size_ret);
@@ -105,7 +105,7 @@ cl_int WINAPI wine_clGetDeviceInfo(cl_device_id device, cl_device_info param_nam
 }
 
 
-void * WINAPI wine_clGetExtensionFunctionAddress(const char * func_name)
+void * WINAPI clGetExtensionFunctionAddress( const char *func_name )
 {
     void * ret = 0;
     TRACE("(%s)\n",func_name);
