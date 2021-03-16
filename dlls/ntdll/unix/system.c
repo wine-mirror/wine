@@ -2036,6 +2036,22 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
 }
 
 
+static void read_dev_urandom( void *buf, ULONG len )
+{
+    int fd = open( "/dev/urandom", O_RDONLY );
+    if (fd != -1)
+    {
+        int ret;
+        do
+        {
+            ret = read( fd, buf, len );
+        }
+        while (ret == -1 && errno == EINTR);
+        close( fd );
+    }
+    else WARN( "can't open /dev/urandom\n" );
+}
+
 /******************************************************************************
  *              NtQuerySystemInformation  (NTDLL.@)
  */
@@ -2525,19 +2541,10 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
                     ret = getrandom( info, len, 0 );
                 }
                 while (ret == -1 && errno == EINTR);
+
+                if (ret == -1 && errno == ENOSYS) read_dev_urandom( info, len );
 #else
-                int fd = open( "/dev/urandom", O_RDONLY );
-                if (fd != -1)
-                {
-                    int ret;
-                    do
-                    {
-                        ret = read( fd, info, len );
-                    }
-                    while (ret == -1 && errno == EINTR);
-                    close( fd );
-                }
-                else WARN( "can't open /dev/urandom\n" );
+                read_dev_urandom( info, len );
 #endif
             }
         }
