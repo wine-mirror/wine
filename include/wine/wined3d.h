@@ -2558,6 +2558,8 @@ void __cdecl wined3d_device_context_set_rasterizer_state(struct wined3d_device_c
         struct wined3d_rasterizer_state *rasterizer_state);
 void __cdecl wined3d_device_context_set_shader(struct wined3d_device_context *context,
         enum wined3d_shader_type type, struct wined3d_shader *shader);
+void __cdecl wined3d_device_context_set_viewports(struct wined3d_device_context *context, unsigned int viewport_count,
+        const struct wined3d_viewport *viewports);
 
 HRESULT __cdecl wined3d_output_find_closest_matching_mode(const struct wined3d_output *output,
         struct wined3d_display_mode *mode);

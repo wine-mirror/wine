@@ -1681,7 +1681,6 @@ void CDECL wined3d_device_set_base_vertex_index(struct wined3d_device *device, I
 void CDECL wined3d_device_set_viewports(struct wined3d_device *device, unsigned int viewport_count,
         const struct wined3d_viewport *viewports)
 {
-    struct wined3d_state *state = device->cs->c.state;
     unsigned int i;
 
     TRACE("device %p, viewport_count %u, viewports %p.\n", device, viewport_count, viewports);
@@ -1692,13 +1691,7 @@ void CDECL wined3d_device_set_viewports(struct wined3d_device *device, unsigned 
                 viewports[i].width, viewports[i].height, viewports[i].min_z, viewports[i].max_z);
     }
 
-    if (viewport_count)
-        memcpy(state->viewports, viewports, viewport_count * sizeof(*viewports));
-    else
-        memset(state->viewports, 0, sizeof(state->viewports));
-    state->viewport_count = viewport_count;
-
-    wined3d_device_context_emit_set_viewports(&device->cs->c, viewport_count, viewports);
+    wined3d_device_context_set_viewports(&device->cs->c, viewport_count, viewports);
 }
 
 void CDECL wined3d_device_get_viewports(const struct wined3d_device *device, unsigned int *viewport_count,
@@ -2155,6 +2148,29 @@ void CDECL wined3d_device_context_set_rasterizer_state(struct wined3d_device_con
     wined3d_device_context_emit_set_rasterizer_state(context, rasterizer_state);
     if (prev)
         wined3d_rasterizer_state_decref(prev);
+}
+
+void CDECL wined3d_device_context_set_viewports(struct wined3d_device_context *context, unsigned int viewport_count,
+        const struct wined3d_viewport *viewports)
+{
+    struct wined3d_state *state = context->state;
+    unsigned int i;
+
+    TRACE("context %p, viewport_count %u, viewports %p.\n", context, viewport_count, viewports);
+
+    for (i = 0; i < viewport_count; ++i)
+    {
+        TRACE("%u: x %.8e, y %.8e, w %.8e, h %.8e, min_z %.8e, max_z %.8e.\n",  i, viewports[i].x, viewports[i].y,
+                viewports[i].width, viewports[i].height, viewports[i].min_z, viewports[i].max_z);
+    }
+
+    if (viewport_count)
+        memcpy(state->viewports, viewports, viewport_count * sizeof(*viewports));
+    else
+        memset(state->viewports, 0, sizeof(state->viewports));
+    state->viewport_count = viewport_count;
+
+    wined3d_device_context_emit_set_viewports(context, viewport_count, viewports);
 }
 
 void CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struct wined3d_shader *shader)
