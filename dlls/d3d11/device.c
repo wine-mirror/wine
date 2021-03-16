@@ -62,6 +62,11 @@ static inline BOOL d3d_device_is_d3d10_active(struct d3d_device *device)
                 || IsEqualGUID(&device->state->emulated_interface, &IID_ID3D10Device1);
 }
 
+static D3D_FEATURE_LEVEL d3d_feature_level_from_wined3d(enum wined3d_feature_level level)
+{
+    return (D3D_FEATURE_LEVEL)level;
+}
+
 /* ID3DDeviceContextState methods */
 
 static inline struct d3d_device_context_state *impl_from_ID3DDeviceContextState(ID3DDeviceContextState *iface)
@@ -296,7 +301,7 @@ static struct wined3d_state *d3d_device_context_state_get_wined3d_state(struct d
         return entry->wined3d_state;
 
     if (FAILED(wined3d_state_create(device->wined3d_device,
-            (enum wined3d_feature_level *)&device->feature_level, 1, &wined3d_state)))
+            (enum wined3d_feature_level *)&state->feature_level, 1, &wined3d_state)))
         return NULL;
 
     if (!d3d_device_context_state_add_entry(state, device, wined3d_state))
@@ -308,14 +313,15 @@ static struct wined3d_state *d3d_device_context_state_get_wined3d_state(struct d
     return wined3d_state;
 }
 
-static void d3d_device_context_state_init(struct d3d_device_context_state *state, struct d3d_device *device,
-        REFIID emulated_interface)
+static void d3d_device_context_state_init(struct d3d_device_context_state *state,
+        struct d3d_device *device, D3D_FEATURE_LEVEL feature_level, REFIID emulated_interface)
 {
     state->ID3DDeviceContextState_iface.lpVtbl = &d3d_device_context_state_vtbl;
     state->refcount = state->private_refcount = 0;
 
     wined3d_private_store_init(&state->private_store);
 
+    state->feature_level = feature_level;
     state->emulated_interface = *emulated_interface;
     wined3d_device_incref(state->wined3d_device = device->wined3d_device);
     state->device = &device->ID3D11Device2_iface;
@@ -3651,7 +3657,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFormatSupport(ID3D11Device2 *
     *format_support = 0;
 
     wined3d_mutex_lock();
-    feature_level = device->feature_level;
+    feature_level = device->state->feature_level;
     wined3d = wined3d_device_get_wined3d(device->wined3d_device);
     wined3d_device_get_creation_parameters(device->wined3d_device, &params);
     wined3d_adapter = wined3d_get_adapter(wined3d, params.adapter_idx);
@@ -3984,7 +3990,7 @@ static D3D_FEATURE_LEVEL STDMETHODCALLTYPE d3d11_device_GetFeatureLevel(ID3D11De
 
     TRACE("iface %p.\n", iface);
 
-    return device->feature_level;
+    return device->state->feature_level;
 }
 
 static UINT STDMETHODCALLTYPE d3d11_device_GetCreationFlags(ID3D11Device2 *iface)
@@ -4067,6 +4073,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDeviceContextState(ID3D11Dev
 {
     struct d3d_device *device = impl_from_ID3D11Device2(iface);
     struct d3d_device_context_state *state_impl;
+    D3D_FEATURE_LEVEL feature_level;
     HRESULT hr = E_INVALIDARG;
 
     FIXME("iface %p, flags %#x, feature_levels %p, feature_level_count %u, sdk_version %u, "
@@ -4088,7 +4095,9 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDeviceContextState(ID3D11Dev
             goto fail;
         }
 
-        d3d_device_context_state_init(state_impl, device, emulated_interface);
+        feature_level = d3d_feature_level_from_wined3d(wined3d_state_get_feature_level(
+                wined3d_device_get_state(device->wined3d_device)));
+        d3d_device_context_state_init(state_impl, device, feature_level, emulated_interface);
         *state = &state_impl->ID3DDeviceContextState_iface;
     }
 
@@ -6218,7 +6227,7 @@ static D3D10_FEATURE_LEVEL1 STDMETHODCALLTYPE d3d10_device_GetFeatureLevel(ID3D1
 
     TRACE("iface %p.\n", iface);
 
-    return d3d10_feature_level1_from_d3d_feature_level(device->feature_level);
+    return d3d10_feature_level1_from_d3d_feature_level(device->state->feature_level);
 }
 
 static const struct ID3D10Device1Vtbl d3d10_device1_vtbl =
@@ -6457,16 +6466,12 @@ static inline struct d3d_device *device_from_wined3d_device_parent(struct wined3
     return CONTAINING_RECORD(device_parent, struct d3d_device, device_parent);
 }
 
-static D3D_FEATURE_LEVEL d3d_feature_level_from_wined3d(enum wined3d_feature_level level)
-{
-    return (D3D_FEATURE_LEVEL)level;
-}
-
 static void CDECL device_parent_wined3d_device_created(struct wined3d_device_parent *device_parent,
         struct wined3d_device *wined3d_device)
 {
     struct d3d_device *device = device_from_wined3d_device_parent(device_parent);
     struct wined3d_state *wined3d_state;
+    D3D_FEATURE_LEVEL feature_level;
     ID3DDeviceContextState *state;
     HRESULT hr;
 
@@ -6477,11 +6482,10 @@ static void CDECL device_parent_wined3d_device_created(struct wined3d_device_par
     device->immediate_context.wined3d_context = wined3d_device_get_immediate_context(wined3d_device);
 
     wined3d_state = wined3d_device_get_state(device->wined3d_device);
-    device->feature_level = d3d_feature_level_from_wined3d(wined3d_state_get_feature_level(wined3d_state));
+    feature_level = d3d_feature_level_from_wined3d(wined3d_state_get_feature_level(wined3d_state));
 
-    if (FAILED(hr = d3d11_device_CreateDeviceContextState(&device->ID3D11Device2_iface, 0, &device->feature_level,
-            1, D3D11_SDK_VERSION, device->d3d11_only ? &IID_ID3D11Device2 : &IID_ID3D10Device1, NULL,
-            &state)))
+    if (FAILED(hr = d3d11_device_CreateDeviceContextState(&device->ID3D11Device2_iface, 0, &feature_level, 1,
+            D3D11_SDK_VERSION, device->d3d11_only ? &IID_ID3D11Device2 : &IID_ID3D10Device1, NULL, &state)))
     {
         ERR("Failed to create the initial device context state, hr %#x.\n", hr);
         return;

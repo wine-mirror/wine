@@ -987,7 +987,7 @@ HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DE
     DWORD flags = 0;
     HRESULT hr;
 
-    if (!validate_texture2d_desc(desc, device->feature_level))
+    if (!validate_texture2d_desc(desc, device->state->feature_level))
     {
         WARN("Failed to validate texture desc.\n");
         return E_INVALIDARG;

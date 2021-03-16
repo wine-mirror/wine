@@ -443,7 +443,7 @@ static HRESULT d3d_buffer_init(struct d3d_buffer *buffer, struct d3d_device *dev
     buffer->refcount = 1;
     buffer->desc = *desc;
 
-    if (!validate_buffer_desc(&buffer->desc, device->feature_level))
+    if (!validate_buffer_desc(&buffer->desc, device->state->feature_level))
         return E_INVALIDARG;
 
     wined3d_desc.byte_width = buffer->desc.ByteWidth;

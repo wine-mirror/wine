@@ -1120,24 +1120,24 @@ static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader,
         WARN("Invalid rasterizer stream %u.\n", rasterizer_stream);
         return E_INVALIDARG;
     }
-    if (device->feature_level < D3D_FEATURE_LEVEL_11_0)
+    if (device->state->feature_level < D3D_FEATURE_LEVEL_11_0)
     {
         if (rasterizer_stream)
         {
             WARN("Invalid rasterizer stream %u for feature level %#x.\n",
-                    rasterizer_stream, device->feature_level);
+                    rasterizer_stream, device->state->feature_level);
             return E_INVALIDARG;
         }
         if (buffer_stride_count && buffer_stride_count != 1)
         {
             WARN("Invalid buffer stride count %u for feature level %#x.\n",
-                    buffer_stride_count, device->feature_level);
+                    buffer_stride_count, device->state->feature_level);
             return E_INVALIDARG;
         }
     }
 
     if (FAILED(hr = validate_stream_output_entries(so_entries, so_entry_count,
-            buffer_strides, buffer_stride_count, device->feature_level)))
+            buffer_strides, buffer_stride_count, device->state->feature_level)))
         return hr;
 
     desc.byte_code = byte_code;

@@ -529,6 +529,7 @@ struct d3d_device_context_state
     LONG refcount, private_refcount;
 
     struct wined3d_private_store private_store;
+    D3D_FEATURE_LEVEL feature_level;
     GUID emulated_interface;
 
     struct d3d_device_context_state_entry *entries;
@@ -562,7 +563,6 @@ struct d3d_device
     IUnknown *outer_unk;
     LONG refcount;
 
-    D3D_FEATURE_LEVEL feature_level;
     BOOL d3d11_only;
 
     struct d3d_device_context_state *state;
