@@ -270,8 +270,8 @@ static void draw_space( ME_Context *c, ME_Run *run, int x, int y,
 
     SetRect( &rect, x, ymin, x + run->nWidth, ymin + cy );
 
-    if (c->editor->bHideSelection || (!c->editor->bHaveFocus &&
-                !(c->editor->styleFlags & ES_NOHIDESEL))) selected = FALSE;
+    if (c->editor->bHideSelection || (!c->editor->bHaveFocus && (c->editor->props & TXTBIT_HIDESELECTION)))
+        selected = FALSE;
     if (c->editor->bEmulateVersion10)
     {
         old_style_selected = selected;
@@ -366,7 +366,7 @@ static void draw_text_with_style( ME_Context *c, ME_Run *run, int x, int y,
   int yOffset = 0;
   BOOL selected = (nSelFrom < run->len && nSelTo >= 0
                    && nSelFrom < nSelTo && !c->editor->bHideSelection &&
-                   (c->editor->bHaveFocus || (c->editor->styleFlags & ES_NOHIDESEL)));
+                   (c->editor->bHaveFocus || !(c->editor->props & TXTBIT_HIDESELECTION)));
   BOOL old_style_selected = FALSE;
   RECT sel_rect;
   HRGN clip = NULL, sel_rgn = NULL;

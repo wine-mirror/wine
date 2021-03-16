@@ -347,6 +347,8 @@ DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_OnTxPropertyBitsChange( ITextServic
         }
     }
 
+    if ((mask & TXTBIT_HIDESELECTION) && !services->editor->bHaveFocus) ME_InvalidateSelection( services->editor );
+
     return S_OK;
 }
 

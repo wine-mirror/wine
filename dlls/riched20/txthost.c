@@ -60,7 +60,7 @@ static void host_init_props( struct host *host )
     if (style & WS_VSCROLL) host->scrollbars |= ES_AUTOVSCROLL;
     if ((style & WS_HSCROLL) && !host->emulate_10) host->scrollbars |= ES_AUTOHSCROLL;
 
-    host->props = TXTBIT_RICHTEXT | TXTBIT_AUTOWORDSEL | TXTBIT_ALLOWBEEP;
+    host->props = TXTBIT_RICHTEXT | TXTBIT_ALLOWBEEP;
     if (style & ES_MULTILINE)     host->props |= TXTBIT_MULTILINE;
     if (style & ES_READONLY)      host->props |= TXTBIT_READONLY;
     if (style & ES_PASSWORD)      host->props |= TXTBIT_USEPASSWORD;
@@ -765,9 +765,11 @@ static HRESULT get_text_rangeA( struct host *host, TEXTRANGEA *rangeA, LRESULT *
 static HRESULT set_options( struct host *host, DWORD op, DWORD value, LRESULT *res )
 {
     DWORD style, old_options, new_options, change, props_mask = 0;
-    const DWORD mask = ECO_AUTOVSCROLL | ECO_AUTOHSCROLL | ECO_NOHIDESEL | ECO_READONLY | ECO_WANTRETURN |
-        ECO_SELECTIONBAR | ECO_VERTICAL;
-    const DWORD host_mask = ECO_AUTOVSCROLL | ECO_AUTOHSCROLL | ECO_READONLY;
+    DWORD mask = ECO_AUTOWORDSELECTION | ECO_AUTOVSCROLL | ECO_AUTOHSCROLL | ECO_NOHIDESEL | ECO_READONLY |
+        ECO_WANTRETURN | ECO_SAVESEL | ECO_SELECTIONBAR | ECO_VERTICAL;
+    const DWORD host_mask = ECO_AUTOWORDSELECTION | ECO_AUTOVSCROLL | ECO_AUTOHSCROLL | ECO_NOHIDESEL | ECO_READONLY |
+        ECO_SAVESEL | ECO_VERTICAL;
+
     HRESULT hr = S_OK;
 
     new_options = old_options = SendMessageW( host->window, EM_GETOPTIONS, 0, 0 );
@@ -790,6 +792,11 @@ static HRESULT set_options( struct host *host, DWORD op, DWORD value, LRESULT *r
 
     change = (new_options ^ old_options);
 
+    if (change & ECO_AUTOWORDSELECTION)
+    {
+        host->props ^= TXTBIT_AUTOWORDSEL;
+        props_mask |= TXTBIT_AUTOWORDSEL;
+    }
     if (change & ECO_AUTOVSCROLL)
     {
         host->scrollbars ^= WS_VSCROLL;
@@ -800,10 +807,25 @@ static HRESULT set_options( struct host *host, DWORD op, DWORD value, LRESULT *r
         host->scrollbars ^= WS_HSCROLL;
         props_mask |= TXTBIT_SCROLLBARCHANGE;
     }
+    if (change & ECO_NOHIDESEL)
+    {
+        host->props ^= TXTBIT_HIDESELECTION;
+        props_mask |= TXTBIT_HIDESELECTION;
+    }
     if (change & ECO_READONLY)
     {
         host->props ^= TXTBIT_READONLY;
         props_mask |= TXTBIT_READONLY;
+    }
+    if (change & ECO_SAVESEL)
+    {
+        host->props ^= TXTBIT_SAVESELECTION;
+        props_mask |= TXTBIT_SAVESELECTION;
+    }
+    if (change & ECO_VERTICAL)
+    {
+        host->props ^= TXTBIT_VERTICAL;
+        props_mask |= TXTBIT_VERTICAL;
     }
 
     if (props_mask)
@@ -813,6 +835,7 @@ static HRESULT set_options( struct host *host, DWORD op, DWORD value, LRESULT *r
     hr = ITextServices_TxSendMessage( host->text_srv, EM_SETOPTIONS, op, value, res );
     *res = (*res & ~host_mask) | (new_options & host_mask);
 
+    mask &= ~ECO_AUTOWORDSELECTION; /* doesn't correspond to a window style */
     style = GetWindowLongW( host->window, GWL_STYLE );
     style = (style & ~mask) | (*res & mask);
     SetWindowLongW( host->window, GWL_STYLE, style );
@@ -926,6 +949,10 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
     case EM_GETOPTIONS:
         hr = ITextServices_TxSendMessage( host->text_srv, EM_GETOPTIONS, 0, 0, &res );
         if (host->props & TXTBIT_READONLY) res |= ECO_READONLY;
+        if (!(host->props & TXTBIT_HIDESELECTION)) res |= ECO_NOHIDESEL;
+        if (host->props & TXTBIT_SAVESELECTION) res |= ECO_SAVESEL;
+        if (host->props & TXTBIT_AUTOWORDSEL) res |= ECO_AUTOWORDSELECTION;
+        if (host->props & TXTBIT_VERTICAL) res |= ECO_VERTICAL;
         if (host->scrollbars & ES_AUTOHSCROLL) res |= ECO_AUTOHSCROLL;
         if (host->scrollbars & ES_AUTOVSCROLL) res |= ECO_AUTOVSCROLL;
         break;
