@@ -1698,7 +1698,7 @@ void CDECL wined3d_device_set_viewports(struct wined3d_device *device, unsigned 
         memset(state->viewports, 0, sizeof(state->viewports));
     state->viewport_count = viewport_count;
 
-    wined3d_cs_emit_set_viewports(device->cs, viewport_count, viewports);
+    wined3d_device_context_emit_set_viewports(&device->cs->c, viewport_count, viewports);
 }
 
 void CDECL wined3d_device_get_viewports(const struct wined3d_device *device, unsigned int *viewport_count,
@@ -1983,7 +1983,7 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
 
     wined3d_cs_emit_set_material(device->cs, &state->material);
 
-    wined3d_cs_emit_set_viewports(device->cs, state->viewport_count, state->viewports);
+    wined3d_device_context_emit_set_viewports(context, state->viewport_count, state->viewports);
     wined3d_cs_emit_set_scissor_rects(device->cs, state->scissor_rect_count, state->scissor_rects);
 
     for (i = 0; i < LIGHTMAP_SIZE; ++i)
@@ -5191,7 +5191,7 @@ HRESULT CDECL wined3d_device_set_rendertarget_view(struct wined3d_device *device
         state->viewports[0].min_z = 0.0f;
         state->viewports[0].max_z = 1.0f;
         state->viewport_count = 1;
-        wined3d_cs_emit_set_viewports(device->cs, 1, state->viewports);
+        wined3d_device_context_emit_set_viewports(&device->cs->c, 1, state->viewports);
 
         SetRect(&state->scissor_rects[0], 0, 0, view->width, view->height);
         state->scissor_rect_count = 1;

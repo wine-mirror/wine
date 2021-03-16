@@ -1147,18 +1147,18 @@ static void wined3d_cs_exec_set_viewports(struct wined3d_cs *cs, const void *dat
     device_invalidate_state(cs->c.device, STATE_VIEWPORT);
 }
 
-void wined3d_cs_emit_set_viewports(struct wined3d_cs *cs, unsigned int viewport_count,
+void wined3d_device_context_emit_set_viewports(struct wined3d_device_context *context, unsigned int viewport_count,
         const struct wined3d_viewport *viewports)
 {
     struct wined3d_cs_set_viewports *op;
 
-    op = wined3d_device_context_require_space(&cs->c, FIELD_OFFSET(struct wined3d_cs_set_viewports, viewports[viewport_count]),
-            WINED3D_CS_QUEUE_DEFAULT);
+    op = wined3d_device_context_require_space(context,
+            FIELD_OFFSET(struct wined3d_cs_set_viewports,viewports[viewport_count]), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_SET_VIEWPORTS;
     memcpy(op->viewports, viewports, viewport_count * sizeof(*viewports));
     op->viewport_count = viewport_count;
 
-    wined3d_device_context_submit(&cs->c, WINED3D_CS_QUEUE_DEFAULT);
+    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
 static void wined3d_cs_exec_set_scissor_rects(struct wined3d_cs *cs, const void *data)
