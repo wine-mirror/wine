@@ -2137,7 +2137,8 @@ static HRESULT WINAPI HTMLWindow6_get_sessionStorage(IHTMLWindow6 *iface, IHTMLS
     if(!This->inner_window->session_storage) {
         HRESULT hres;
 
-        hres = create_storage(&This->inner_window->session_storage);
+        hres = create_html_storage(dispex_compat_mode(&This->inner_window->event_target.dispex),
+                                   &This->inner_window->session_storage);
         if(FAILED(hres))
             return hres;
     }
@@ -2156,7 +2157,8 @@ static HRESULT WINAPI HTMLWindow6_get_localStorage(IHTMLWindow6 *iface, IHTMLSto
     if(!This->inner_window->local_storage) {
         HRESULT hres;
 
-        hres = create_storage(&This->inner_window->local_storage);
+        hres = create_html_storage(dispex_compat_mode(&This->inner_window->event_target.dispex),
+                                   &This->inner_window->local_storage);
         if(FAILED(hres))
             return hres;
     }

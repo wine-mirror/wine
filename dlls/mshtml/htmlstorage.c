@@ -197,7 +197,7 @@ static dispex_static_data_t HTMLStorage_dispex = {
     HTMLStorage_iface_tids
 };
 
-HRESULT create_storage(IHTMLStorage **p)
+HRESULT create_html_storage(compat_mode_t compat_mode, IHTMLStorage **p)
 {
     HTMLStorage *storage;
 
@@ -207,7 +207,7 @@ HRESULT create_storage(IHTMLStorage **p)
 
     storage->IHTMLStorage_iface.lpVtbl = &HTMLStorageVtbl;
     storage->ref = 1;
-    init_dispex(&storage->dispex, (IUnknown*)&storage->IHTMLStorage_iface, &HTMLStorage_dispex);
+    init_dispex_with_compat_mode(&storage->dispex, (IUnknown*)&storage->IHTMLStorage_iface, &HTMLStorage_dispex, compat_mode);
 
     *p = &storage->IHTMLStorage_iface;
     return S_OK;
