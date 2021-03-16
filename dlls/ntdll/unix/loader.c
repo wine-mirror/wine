@@ -613,6 +613,7 @@ static NTSTATUS map_so_dll( const IMAGE_NT_HEADERS *nt_descr, HMODULE module )
     dos->e_ss       = 0x0000;
     dos->e_sp       = 0x00b8;
     dos->e_lfanew   = sizeof(*dos) + sizeof(builtin_signature);
+    memcpy( dos + 1, builtin_signature, sizeof(builtin_signature) );
 
     *nt = *nt_descr;
 
