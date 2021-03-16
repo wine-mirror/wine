@@ -2364,31 +2364,111 @@ static NTSTATUS get_mapping_info( HANDLE handle, ACCESS_MASK access, unsigned in
 
 
 /***********************************************************************
+ *             virtual_map_image
+ *
+ * Map a PE image section into memory.
+ */
+static NTSTATUS virtual_map_image( HANDLE mapping, ACCESS_MASK access, void **addr_ptr, SIZE_T *size_ptr,
+                                   unsigned short zero_bits_64, HANDLE shared_file, ULONG alloc_type,
+                                   pe_image_info_t *image_info, WCHAR *filename, BOOL is_builtin )
+{
+    unsigned int vprot = SEC_IMAGE | SEC_FILE | VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY;
+    int unix_fd = -1, needs_close;
+    int shared_fd = -1, shared_needs_close = 0;
+    SIZE_T size = image_info->map_size;
+    struct file_view *view;
+    NTSTATUS status;
+    struct stat st;
+    sigset_t sigset;
+    void *base;
+
+    if ((status = server_get_unix_fd( mapping, 0, &unix_fd, &needs_close, NULL, NULL )))
+        return status;
+
+    if (shared_file && ((status = server_get_unix_fd( shared_file, FILE_READ_DATA|FILE_WRITE_DATA,
+                                                      &shared_fd, &shared_needs_close, NULL, NULL ))))
+    {
+        if (needs_close) close( unix_fd );
+        return status;
+    }
+
+    status = STATUS_INVALID_PARAMETER;
+    server_enter_uninterrupted_section( &virtual_mutex, &sigset );
+
+    if (is_builtin) /* check for already loaded builtin */
+    {
+        fstat( unix_fd, &st );
+        if ((base = find_builtin_module( &st )))
+        {
+            *addr_ptr = base;
+            *size_ptr = size;
+            status = STATUS_SUCCESS;
+            goto done;
+        }
+    }
+
+    base = wine_server_get_ptr( image_info->base );
+    if ((ULONG_PTR)base != image_info->base) base = NULL;
+
+    if ((char *)base >= (char *)address_space_start)  /* make sure the DOS area remains free */
+        status = map_view( &view, base, size, alloc_type & MEM_TOP_DOWN, vprot, zero_bits_64 );
+
+    if (status) status = map_view( &view, NULL, size, alloc_type & MEM_TOP_DOWN, vprot, zero_bits_64 );
+    if (status) goto done;
+
+    status = map_image_into_view( view, filename, unix_fd, base, image_info->header_size,
+                                  image_info->image_flags, shared_fd, needs_close );
+    if (status == STATUS_SUCCESS)
+    {
+        SERVER_START_REQ( map_view )
+        {
+            req->mapping = wine_server_obj_handle( mapping );
+            req->access  = access;
+            req->base    = wine_server_client_ptr( view->base );
+            req->size    = size;
+            status = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+    }
+    if (status >= 0)
+    {
+        if (is_builtin) add_builtin_module( view->base, NULL, &st );
+        *addr_ptr = view->base;
+        *size_ptr = size;
+        VIRTUAL_DEBUG_DUMP_VIEW( view );
+    }
+    else delete_view( view );
+
+done:
+    server_leave_uninterrupted_section( &virtual_mutex, &sigset );
+    if (needs_close) close( unix_fd );
+    if (shared_needs_close) close( shared_fd );
+    return status;
+}
+
+
+/***********************************************************************
  *             virtual_map_section
  *
  * Map a file section into memory.
  */
 static NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsigned short zero_bits_64,
                                      SIZE_T commit_size, const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr,
-                                     ULONG alloc_type, ULONG protect, BOOL is_builtin )
+                                     ULONG alloc_type, ULONG protect )
 {
     NTSTATUS res;
     mem_size_t full_size;
     ACCESS_MASK access;
     SIZE_T size;
-    struct stat st;
     pe_image_info_t *image_info = NULL;
     WCHAR *filename;
     void *base;
     int unix_handle = -1, needs_close;
-    int shared_fd = -1, shared_needs_close = 0;
     unsigned int vprot, sec_flags;
     struct file_view *view;
     HANDLE shared_file;
     LARGE_INTEGER offset;
     sigset_t sigset;
-
-    offset.QuadPart = offset_ptr ? offset_ptr->QuadPart : 0;
 
     switch(protect)
     {
@@ -2414,92 +2494,50 @@ static NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsigned sh
 
     res = get_mapping_info( handle, access, &sec_flags, &full_size, &shared_file, &image_info );
     if (res) return res;
-    filename = (WCHAR *)(image_info + 1);
 
-    if ((res = server_get_unix_fd( handle, 0, &unix_handle, &needs_close, NULL, NULL )))
+    if (image_info)
     {
+        filename = (WCHAR *)(image_info + 1);
+        res = virtual_map_image( handle, access, addr_ptr, size_ptr, zero_bits_64, shared_file,
+                                 alloc_type, image_info, filename, FALSE );
         if (shared_file) NtClose( shared_file );
         free( image_info );
         return res;
     }
 
-    if (shared_file && ((res = server_get_unix_fd( shared_file, FILE_READ_DATA|FILE_WRITE_DATA,
-                                                   &shared_fd, &shared_needs_close, NULL, NULL ))))
+    base = *addr_ptr;
+    offset.QuadPart = offset_ptr ? offset_ptr->QuadPart : 0;
+    if (offset.QuadPart >= full_size) return STATUS_INVALID_PARAMETER;
+    if (*size_ptr)
     {
-        NtClose( shared_file );
-        if (needs_close) close( unix_handle );
-        free( image_info );
-        return res;
-    }
-
-    res = STATUS_INVALID_PARAMETER;
-    server_enter_uninterrupted_section( &virtual_mutex, &sigset );
-
-    if (is_builtin) /* check for already loaded builtin */
-    {
-        fstat( unix_handle, &st );
-        if ((base = find_builtin_module( &st )))
-        {
-            *addr_ptr = base;
-            *size_ptr = image_info->map_size;
-            res = STATUS_SUCCESS;
-            goto done;
-        }
-    }
-
-    if (sec_flags & SEC_IMAGE)
-    {
-        base = wine_server_get_ptr( image_info->base );
-        if ((ULONG_PTR)base != image_info->base) base = NULL;
-        size = image_info->map_size;
-        vprot = SEC_IMAGE | SEC_FILE | VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY;
-
-        if ((char *)base >= (char *)address_space_start)  /* make sure the DOS area remains free */
-            res = map_view( &view, base, size, alloc_type & MEM_TOP_DOWN, vprot, zero_bits_64 );
-
-        if (res) res = map_view( &view, NULL, size, alloc_type & MEM_TOP_DOWN, vprot, zero_bits_64 );
-        if (res) goto done;
-
-        res = map_image_into_view( view, filename, unix_handle, base, image_info->header_size,
-                                   image_info->image_flags, shared_fd, needs_close );
+        size = *size_ptr;
+        if (size > full_size - offset.QuadPart) return STATUS_INVALID_VIEW_SIZE;
     }
     else
     {
-        base = *addr_ptr;
-        if (offset.QuadPart >= full_size) goto done;
-        if (*size_ptr)
+        size = full_size - offset.QuadPart;
+        if (size != full_size - offset.QuadPart)  /* truncated */
         {
-            size = *size_ptr;
-            if (size > full_size - offset.QuadPart)
-            {
-                res = STATUS_INVALID_VIEW_SIZE;
-                goto done;
-            }
+            WARN( "Files larger than 4Gb (%s) not supported on this platform\n",
+                  wine_dbgstr_longlong(full_size) );
+            return STATUS_INVALID_PARAMETER;
         }
-        else
-        {
-            size = full_size - offset.QuadPart;
-            if (size != full_size - offset.QuadPart)  /* truncated */
-            {
-                WARN( "Files larger than 4Gb (%s) not supported on this platform\n",
-                      wine_dbgstr_longlong(full_size) );
-                goto done;
-            }
-        }
-        if (!(size = ROUND_SIZE( 0, size ))) goto done;  /* wrap-around */
-
-        get_vprot_flags( protect, &vprot, FALSE );
-        vprot |= sec_flags;
-        if (!(sec_flags & SEC_RESERVE)) vprot |= VPROT_COMMITTED;
-        res = map_view( &view, base, size, alloc_type & MEM_TOP_DOWN, vprot, zero_bits_64 );
-        if (res) goto done;
-
-        TRACE( "handle=%p size=%lx offset=%x%08x\n", handle, size, offset.u.HighPart, offset.u.LowPart );
-        res = map_file_into_view( view, unix_handle, 0, size, offset.QuadPart, vprot, needs_close );
-        if (res) ERR( "mapping %p %lx %x%08x failed\n",
-                      view->base, size, offset.u.HighPart, offset.u.LowPart );
     }
+    if (!(size = ROUND_SIZE( 0, size ))) return STATUS_INVALID_PARAMETER;  /* wrap-around */
 
+    get_vprot_flags( protect, &vprot, FALSE );
+    vprot |= sec_flags;
+    if (!(sec_flags & SEC_RESERVE)) vprot |= VPROT_COMMITTED;
+
+    if ((res = server_get_unix_fd( handle, 0, &unix_handle, &needs_close, NULL, NULL ))) return res;
+
+    server_enter_uninterrupted_section( &virtual_mutex, &sigset );
+
+    res = map_view( &view, base, size, alloc_type & MEM_TOP_DOWN, vprot, zero_bits_64 );
+    if (res) goto done;
+
+    TRACE( "handle=%p size=%lx offset=%x%08x\n", handle, size, offset.u.HighPart, offset.u.LowPart );
+    res = map_file_into_view( view, unix_handle, 0, size, offset.QuadPart, vprot, needs_close );
     if (res == STATUS_SUCCESS)
     {
         SERVER_START_REQ( map_view )
@@ -2513,10 +2551,10 @@ static NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsigned sh
         }
         SERVER_END_REQ;
     }
+    else ERR( "mapping %p %lx %x%08x failed\n", view->base, size, offset.u.HighPart, offset.u.LowPart );
 
     if (res >= 0)
     {
-        if (is_builtin) add_builtin_module( view->base, NULL, &st );
         *addr_ptr = view->base;
         *size_ptr = size;
         VIRTUAL_DEBUG_DUMP_VIEW( view );
@@ -2526,9 +2564,6 @@ static NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsigned sh
 done:
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
     if (needs_close) close( unix_handle );
-    if (shared_needs_close) close( shared_fd );
-    if (shared_file) NtClose( shared_file );
-    free( image_info );
     return res;
 }
 
@@ -2666,10 +2701,27 @@ void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info )
  */
 NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module )
 {
+    mem_size_t full_size;
+    unsigned int sec_flags;
+    HANDLE shared_file;
+    pe_image_info_t *image_info = NULL;
+    ACCESS_MASK access = SECTION_MAP_READ | SECTION_MAP_EXECUTE;
     SIZE_T size = 0;
+    NTSTATUS status;
+    WCHAR *filename;
+
+    if ((status = get_mapping_info( mapping, access, &sec_flags, &full_size, &shared_file, &image_info )))
+        return status;
+
+    if (!image_info) return STATUS_INVALID_PARAMETER;
 
     *module = NULL;
-    return virtual_map_section( mapping, module, 0, 0, NULL, &size, 0, PAGE_EXECUTE_READ, TRUE );
+    filename = (WCHAR *)(image_info + 1);
+    status = virtual_map_image( mapping, SECTION_MAP_READ | SECTION_MAP_EXECUTE,
+                                module, &size, 0, shared_file, 0, image_info, filename, TRUE );
+    if (shared_file) NtClose( shared_file );
+    free( image_info );
+    return status;
 }
 
 
@@ -4265,7 +4317,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     }
 
     return virtual_map_section( handle, addr_ptr, zero_bits_64, commit_size,
-                                offset_ptr, size_ptr, alloc_type, protect, FALSE );
+                                offset_ptr, size_ptr, alloc_type, protect );
 }
 
 
