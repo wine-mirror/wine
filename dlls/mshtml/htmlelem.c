@@ -230,7 +230,7 @@ static inline HTMLFiltersCollection *impl_from_IHTMLFiltersCollection(IHTMLFilte
     return CONTAINING_RECORD(iface, HTMLFiltersCollection, IHTMLFiltersCollection_iface);
 }
 
-static IHTMLFiltersCollection *HTMLFiltersCollection_Create(void);
+static HRESULT create_filters_collection(compat_mode_t compat_mode, IHTMLFiltersCollection **ret);
 
 static inline HTMLElement *impl_from_IHTMLElement(IHTMLElement *iface)
 {
@@ -2011,18 +2011,16 @@ static HRESULT WINAPI HTMLElement_click(IHTMLElement *iface)
     return S_OK;
 }
 
-static HRESULT WINAPI HTMLElement_get_filters(IHTMLElement *iface,
-                                              IHTMLFiltersCollection **p)
+static HRESULT WINAPI HTMLElement_get_filters(IHTMLElement *iface, IHTMLFiltersCollection **p)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
+
     TRACE("(%p)->(%p)\n", This, p);
 
     if(!p)
         return E_POINTER;
 
-    *p = HTMLFiltersCollection_Create();
-
-    return S_OK;
+    return create_filters_collection(dispex_compat_mode(&This->node.event_target.dispex), p);
 }
 
 static HRESULT WINAPI HTMLElement_put_ondragstart(IHTMLElement *iface, VARIANT v)
@@ -6606,17 +6604,21 @@ static dispex_static_data_t HTMLFiltersCollection_dispex = {
     HTMLFiltersCollection_iface_tids
 };
 
-static IHTMLFiltersCollection *HTMLFiltersCollection_Create(void)
+static HRESULT create_filters_collection(compat_mode_t compat_mode, IHTMLFiltersCollection **ret)
 {
-    HTMLFiltersCollection *ret = heap_alloc(sizeof(HTMLFiltersCollection));
+    HTMLFiltersCollection *collection;
 
-    ret->IHTMLFiltersCollection_iface.lpVtbl = &HTMLFiltersCollectionVtbl;
-    ret->ref = 1;
+    if(!(collection = heap_alloc(sizeof(HTMLFiltersCollection))))
+        return E_OUTOFMEMORY;
 
-    init_dispex(&ret->dispex, (IUnknown*)&ret->IHTMLFiltersCollection_iface,
-            &HTMLFiltersCollection_dispex);
+    collection->IHTMLFiltersCollection_iface.lpVtbl = &HTMLFiltersCollectionVtbl;
+    collection->ref = 1;
 
-    return &ret->IHTMLFiltersCollection_iface;
+    init_dispex_with_compat_mode(&collection->dispex, (IUnknown*)&collection->IHTMLFiltersCollection_iface,
+                                 &HTMLFiltersCollection_dispex, compat_mode);
+
+    *ret = &collection->IHTMLFiltersCollection_iface;
+    return S_OK;
 }
 
 /* interface IHTMLAttributeCollection */
