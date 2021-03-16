@@ -6484,7 +6484,7 @@ BOOL opentype_has_kerning_pairs(struct dwrite_fontface *fontface)
             count = GET_BE_WORD(header->table_count);
             offset = sizeof(*header);
 
-            /* Freetype limits table count this way. */
+            /* FreeType limits table count this way. */
             count = min(count, 32);
 
             /* Check for presence of format 0 subtable with horizontal coverage. */
