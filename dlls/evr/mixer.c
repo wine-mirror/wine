@@ -899,7 +899,7 @@ static HRESULT WINAPI video_mixer_transform_GetInputCurrentType(IMFTransform *if
             hr = MF_E_TRANSFORM_TYPE_NOT_SET;
         else
         {
-            *type = (IMFMediaType *)stream->media_type;
+            *type = stream->media_type;
             IMFMediaType_AddRef(*type);
         }
     }
@@ -925,7 +925,7 @@ static HRESULT WINAPI video_mixer_transform_GetOutputCurrentType(IMFTransform *i
         hr = MF_E_TRANSFORM_TYPE_NOT_SET;
     else
     {
-        *type = (IMFMediaType *)mixer->output.media_type;
+        *type = mixer->output.media_type;
         IMFMediaType_AddRef(*type);
     }
 
