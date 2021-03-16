@@ -4073,39 +4073,62 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDeviceContextState(ID3D11Dev
 {
     struct d3d_device *device = impl_from_ID3D11Device2(iface);
     struct d3d_device_context_state *state_impl;
+    struct wined3d_state *wined3d_state;
     D3D_FEATURE_LEVEL feature_level;
     HRESULT hr = E_INVALIDARG;
 
-    FIXME("iface %p, flags %#x, feature_levels %p, feature_level_count %u, sdk_version %u, "
-            "emulated_interface %s, chosen_feature_level %p, state %p semi-stub!\n",
-            iface, flags, feature_levels, feature_level_count, sdk_version,
-            debugstr_guid(emulated_interface), chosen_feature_level, state);
+    TRACE("iface %p, flags %#x, feature_levels %p, feature_level_count %u, "
+            "sdk_version %u, emulated_interface %s, chosen_feature_level %p, state %p.\n",
+            iface, flags, feature_levels, feature_level_count,
+            sdk_version, debugstr_guid(emulated_interface), chosen_feature_level, state);
+
+    if (flags)
+        FIXME("Ignoring flags %#x.\n", flags);
+
+    wined3d_mutex_lock();
 
     if (!feature_level_count)
         goto fail;
 
+    if (FAILED(hr = wined3d_state_create(device->wined3d_device,
+            (const enum wined3d_feature_level *)feature_levels, feature_level_count, &wined3d_state)))
+        goto fail;
+    feature_level = d3d_feature_level_from_wined3d(wined3d_state_get_feature_level(wined3d_state));
+
     if (chosen_feature_level)
-       FIXME("Device context state feature level not implemented yet.\n");
+        *chosen_feature_level = feature_level;
 
-    if (state)
+    if (!state)
     {
-        if (!(state_impl = heap_alloc_zero(sizeof(*state_impl))))
-        {
-            hr = E_OUTOFMEMORY;
-            goto fail;
-        }
-
-        feature_level = d3d_feature_level_from_wined3d(wined3d_state_get_feature_level(
-                wined3d_device_get_state(device->wined3d_device)));
-        d3d_device_context_state_init(state_impl, device, feature_level, emulated_interface);
-        *state = &state_impl->ID3DDeviceContextState_iface;
+        wined3d_state_destroy(wined3d_state);
+        wined3d_mutex_unlock();
+        return S_FALSE;
     }
 
+    if (!(state_impl = heap_alloc_zero(sizeof(*state_impl))))
+    {
+        wined3d_state_destroy(wined3d_state);
+        hr = E_OUTOFMEMORY;
+        goto fail;
+    }
+
+    d3d_device_context_state_init(state_impl, device, feature_level, emulated_interface);
+    if (!d3d_device_context_state_add_entry(state_impl, device, wined3d_state))
+    {
+        wined3d_state_destroy(wined3d_state);
+        ID3DDeviceContextState_Release(&state_impl->ID3DDeviceContextState_iface);
+        hr = E_FAIL;
+        goto fail;
+    }
+
+    *state = &state_impl->ID3DDeviceContextState_iface;
     device->d3d11_only = FALSE;
-    if (chosen_feature_level) *chosen_feature_level = ID3D11Device2_GetFeatureLevel(iface);
-    return state ? S_OK : S_FALSE;
+    wined3d_mutex_unlock();
+
+    return S_OK;
 
 fail:
+    wined3d_mutex_unlock();
     if (chosen_feature_level)
         *chosen_feature_level = 0;
     if (state)
@@ -6470,10 +6493,9 @@ static void CDECL device_parent_wined3d_device_created(struct wined3d_device_par
         struct wined3d_device *wined3d_device)
 {
     struct d3d_device *device = device_from_wined3d_device_parent(device_parent);
+    struct d3d_device_context_state *state;
     struct wined3d_state *wined3d_state;
     D3D_FEATURE_LEVEL feature_level;
-    ID3DDeviceContextState *state;
-    HRESULT hr;
 
     TRACE("device_parent %p, wined3d_device %p.\n", device_parent, wined3d_device);
 
@@ -6484,19 +6506,21 @@ static void CDECL device_parent_wined3d_device_created(struct wined3d_device_par
     wined3d_state = wined3d_device_get_state(device->wined3d_device);
     feature_level = d3d_feature_level_from_wined3d(wined3d_state_get_feature_level(wined3d_state));
 
-    if (FAILED(hr = d3d11_device_CreateDeviceContextState(&device->ID3D11Device2_iface, 0, &feature_level, 1,
-            D3D11_SDK_VERSION, device->d3d11_only ? &IID_ID3D11Device2 : &IID_ID3D10Device1, NULL, &state)))
+    if (!(state = heap_alloc_zero(sizeof(*state))))
     {
-        ERR("Failed to create the initial device context state, hr %#x.\n", hr);
+        ERR("Failed to create the initial device context state.\n");
         return;
     }
 
-    device->state = impl_from_ID3DDeviceContextState(state);
-    if (!d3d_device_context_state_add_entry(device->state, device, wined3d_state))
+    d3d_device_context_state_init(state, device, feature_level,
+            device->d3d11_only ? &IID_ID3D11Device2 : &IID_ID3D10Device1);
+
+    device->state = state;
+    if (!d3d_device_context_state_add_entry(state, device, wined3d_state))
         ERR("Failed to add entry for wined3d state %p, device %p.\n", wined3d_state, device);
 
-    d3d_device_context_state_private_addref(device->state);
-    ID3DDeviceContextState_Release(state);
+    d3d_device_context_state_private_addref(state);
+    ID3DDeviceContextState_Release(&state->ID3DDeviceContextState_iface);
 }
 
 static void CDECL device_parent_mode_changed(struct wined3d_device_parent *device_parent)
