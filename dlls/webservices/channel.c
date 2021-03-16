@@ -971,6 +971,7 @@ static HRESULT connect_channel_tcp( struct channel *channel )
 {
     struct sockaddr_storage storage;
     struct sockaddr *addr = (struct sockaddr *)&storage;
+    BOOL nodelay = FALSE;
     int addr_len;
     WS_URL_SCHEME_TYPE scheme;
     WCHAR *host;
@@ -1002,6 +1003,8 @@ static HRESULT connect_channel_tcp( struct channel *channel )
         return HRESULT_FROM_WIN32( WSAGetLastError() );
     }
 
+    prop_get( channel->prop, channel->prop_count, WS_CHANNEL_PROPERTY_NO_DELAY, &nodelay, sizeof(nodelay) );
+    setsockopt( channel->u.tcp.socket, IPPROTO_TCP, TCP_NODELAY, (const char *)&nodelay, sizeof(nodelay) );
     return S_OK;
 }
 
@@ -2410,7 +2413,12 @@ HRESULT channel_accept_tcp( SOCKET socket, HANDLE wait, HANDLE cancel, WS_CHANNE
         return E_INVALIDARG;
     }
 
-    hr = sock_accept( socket, wait, cancel, &channel->u.tcp.socket );
+    if ((hr = sock_accept( socket, wait, cancel, &channel->u.tcp.socket )) == S_OK)
+    {
+        BOOL nodelay = FALSE;
+        prop_get( channel->prop, channel->prop_count, WS_CHANNEL_PROPERTY_NO_DELAY, &nodelay, sizeof(nodelay) );
+        setsockopt( channel->u.tcp.socket, IPPROTO_TCP, TCP_NODELAY, (const char *)&nodelay, sizeof(nodelay) );
+    }
 
     LeaveCriticalSection( &channel->cs );
     return hr;
