@@ -735,9 +735,12 @@ get_subtests (const char *tempdir, struct wine_test *test, LPSTR res_name)
     }
     heap_free (cmd);
 
-    if (status == -2)
+    if (status)
     {
-        report (R_ERROR, "Cannot run %s error %u", test->exename, err);
+        if (status == -2)
+            report (R_ERROR, "Cannot run %s error %u", test->exename, err);
+        else
+            err = status;
         CloseHandle( subfile );
         goto quit;
     }
