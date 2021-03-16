@@ -775,12 +775,59 @@ static HRESULT get_text_rangeA( struct host *host, TEXTRANGEA *rangeA, LRESULT *
     return hr;
 }
 
+static HRESULT set_options( struct host *host, DWORD op, DWORD value, LRESULT *res )
+{
+    DWORD style, old_options, new_options, change, props_mask = 0;
+    const DWORD mask = ECO_AUTOVSCROLL | ECO_AUTOHSCROLL | ECO_NOHIDESEL | ECO_READONLY | ECO_WANTRETURN |
+        ECO_SELECTIONBAR | ECO_VERTICAL;
+    const DWORD host_mask = ECO_READONLY;
+    HRESULT hr = S_OK;
+
+    new_options = old_options = SendMessageW( host->window, EM_GETOPTIONS, 0, 0 );
+
+    switch (op)
+    {
+    case ECOOP_SET:
+        new_options = value;
+        break;
+    case ECOOP_OR:
+        new_options |= value;
+        break;
+    case ECOOP_AND:
+        new_options &= value;
+        break;
+    case ECOOP_XOR:
+        new_options ^= value;
+    }
+    new_options &= mask;
+
+    change = (new_options ^ old_options);
+
+    if (change & ECO_READONLY)
+    {
+        host->props ^= TXTBIT_READONLY;
+        props_mask |= TXTBIT_READONLY;
+    }
+
+    if (props_mask)
+        ITextServices_OnTxPropertyBitsChange( host->text_srv, props_mask, host->props & props_mask );
+
+    /* Handle the rest in the editor for now */
+    hr = ITextServices_TxSendMessage( host->text_srv, EM_SETOPTIONS, op, value, res );
+    *res = (*res & ~host_mask) | (new_options & host_mask);
+
+    style = GetWindowLongW( host->window, GWL_STYLE );
+    style = (style & ~mask) | (*res & mask);
+    SetWindowLongW( host->window, GWL_STYLE, style );
+    return hr;
+}
+
 static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
                                        LPARAM lparam, BOOL unicode )
 {
     struct host *host;
     ME_TextEditor *editor;
-    HRESULT hr;
+    HRESULT hr = S_OK;
     LRESULT res = 0;
 
     TRACE( "enter hwnd %p msg %04x (%s) %lx %lx, unicode %d\n",
@@ -879,6 +926,11 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         }
         break;
     }
+    case EM_GETOPTIONS:
+        hr = ITextServices_TxSendMessage( host->text_srv, EM_GETOPTIONS, 0, 0, &res );
+        if (host->props & TXTBIT_READONLY) res |= ECO_READONLY;
+        break;
+
     case WM_GETTEXT:
     {
         GETTEXTEX params;
@@ -965,18 +1017,9 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         break;
     }
     case EM_SETOPTIONS:
-    {
-        DWORD style;
-        const DWORD mask = ECO_VERTICAL | ECO_AUTOHSCROLL | ECO_AUTOVSCROLL |
-            ECO_NOHIDESEL | ECO_READONLY | ECO_WANTRETURN |
-            ECO_SELECTIONBAR;
+        hr = set_options( host, wparam, lparam, &res );
+        break;
 
-        res = ME_HandleMessage( editor, msg, wparam, lparam, unicode, &hr );
-        style = GetWindowLongW( hwnd, GWL_STYLE );
-        style = (style & ~mask) | (res & mask);
-        SetWindowLongW( hwnd, GWL_STYLE, style );
-        return res;
-    }
     case EM_SETREADONLY:
     {
         DWORD op = wparam ? ECOOP_OR : ECOOP_AND;

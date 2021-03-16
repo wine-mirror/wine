@@ -2279,10 +2279,9 @@ static BOOL paste_special(ME_TextEditor *editor, UINT cf, REPASTESPECIAL *ps, BO
     IDataObject *data;
 
     /* Protect read-only edit control from modification */
-    if (editor->styleFlags & ES_READONLY)
+    if (editor->props & TXTBIT_READONLY)
     {
-        if (!check_only)
-            MessageBeep(MB_ICONERROR);
+        if (!check_only) MessageBeep(MB_ICONERROR);
         return FALSE;
     }
 
@@ -2354,7 +2353,7 @@ HRESULT editor_copy_or_cut( ME_TextEditor *editor, BOOL cut, ME_Cursor *start, i
 {
     HRESULT hr;
 
-    if (cut && (editor->styleFlags & ES_READONLY))
+    if (cut && (editor->props & TXTBIT_READONLY))
     {
         return E_ACCESSDENIED;
     }
@@ -2469,7 +2468,7 @@ static BOOL handle_enter(ME_TextEditor *editor)
         int from, to;
         ME_Style *style, *eop_style;
 
-        if (editor->styleFlags & ES_READONLY)
+        if (editor->props & TXTBIT_READONLY)
         {
             MessageBeep(MB_ICONERROR);
             return TRUE;
@@ -2631,7 +2630,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
     case VK_DELETE:
       editor->nUDArrowX = -1;
       /* FIXME backspace and delete aren't the same, they act different wrt paragraph style of the merged paragraph */
-      if (editor->styleFlags & ES_READONLY)
+      if (editor->props & TXTBIT_READONLY)
         return FALSE;
       if (ME_IsSelection(editor))
       {
@@ -2738,7 +2737,7 @@ static LRESULT handle_wm_char( ME_TextEditor *editor, WCHAR wstr, LPARAM flags )
   if (editor->bMouseCaptured)
     return 0;
 
-  if (editor->styleFlags & ES_READONLY)
+  if (editor->props & TXTBIT_READONLY)
   {
     MessageBeep(MB_ICONERROR);
     return 0; /* FIXME really 0 ? */
@@ -3035,7 +3034,6 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
 {
   ME_TextEditor *ed = heap_alloc(sizeof(*ed));
   int i;
-  DWORD props;
   LONG selbarwidth;
 
   ed->hWnd = NULL;
@@ -3047,13 +3045,10 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->styleFlags = 0;
   ed->exStyleFlags = 0;
   ed->total_rows = 0;
-  ITextHost_TxGetPropertyBits(texthost,
-                              (TXTBIT_RICHTEXT|TXTBIT_MULTILINE|
-                               TXTBIT_READONLY|TXTBIT_USEPASSWORD|
-                               TXTBIT_HIDESELECTION|TXTBIT_SAVESELECTION|
-                               TXTBIT_AUTOWORDSEL|TXTBIT_VERTICAL|
-                               TXTBIT_WORDWRAP|TXTBIT_DISABLEDRAG),
-                              &props);
+  ITextHost_TxGetPropertyBits( texthost, TXTBIT_RICHTEXT | TXTBIT_MULTILINE | TXTBIT_READONLY |
+                               TXTBIT_USEPASSWORD | TXTBIT_HIDESELECTION | TXTBIT_SAVESELECTION |
+                               TXTBIT_AUTOWORDSEL | TXTBIT_VERTICAL | TXTBIT_WORDWRAP | TXTBIT_DISABLEDRAG,
+                               &ed->props );
   ITextHost_TxGetScrollBars(texthost, &ed->styleFlags);
   ed->styleFlags &= (WS_VSCROLL|WS_HSCROLL|ES_AUTOVSCROLL|
                      ES_AUTOHSCROLL|ES_DISABLENOSCROLL);
@@ -3094,7 +3089,7 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->pfnWordBreak = NULL;
   ed->lpOleCallback = NULL;
   ed->mode = TM_MULTILEVELUNDO | TM_MULTICODEPAGE;
-  ed->mode |= (props & TXTBIT_RICHTEXT) ? TM_RICHTEXT : TM_PLAINTEXT;
+  ed->mode |= (ed->props & TXTBIT_RICHTEXT) ? TM_RICHTEXT : TM_PLAINTEXT;
   ed->AutoURLDetect_bEnable = FALSE;
   ed->bHaveFocus = FALSE;
   ed->bDialogMode = FALSE;
@@ -3122,26 +3117,24 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->nSelectionType = stPosition;
 
   ed->cPasswordMask = 0;
-  if (props & TXTBIT_USEPASSWORD)
+  if (ed->props & TXTBIT_USEPASSWORD)
     ITextHost_TxGetPasswordChar(texthost, &ed->cPasswordMask);
 
-  if (props & TXTBIT_AUTOWORDSEL)
+  if (ed->props & TXTBIT_AUTOWORDSEL)
     ed->styleFlags |= ECO_AUTOWORDSELECTION;
-  if (props & TXTBIT_MULTILINE) {
+  if (ed->props & TXTBIT_MULTILINE) {
     ed->styleFlags |= ES_MULTILINE;
-    ed->bWordWrap = (props & TXTBIT_WORDWRAP) != 0;
+    ed->bWordWrap = (ed->props & TXTBIT_WORDWRAP) != 0;
   } else {
     ed->bWordWrap = FALSE;
   }
-  if (props & TXTBIT_READONLY)
-    ed->styleFlags |= ES_READONLY;
-  if (!(props & TXTBIT_HIDESELECTION))
+  if (!(ed->props & TXTBIT_HIDESELECTION))
     ed->styleFlags |= ES_NOHIDESEL;
-  if (props & TXTBIT_SAVESELECTION)
+  if (ed->props & TXTBIT_SAVESELECTION)
     ed->styleFlags |= ES_SAVESEL;
-  if (props & TXTBIT_VERTICAL)
+  if (ed->props & TXTBIT_VERTICAL)
     ed->styleFlags |= ES_VERTICAL;
-  if (props & TXTBIT_DISABLEDRAG)
+  if (ed->props & TXTBIT_DISABLEDRAG)
     ed->styleFlags |= ES_NOOLEDRAGDROP;
 
   ed->notified_cr.cpMin = ed->notified_cr.cpMax = 0;
@@ -3502,7 +3495,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   {
     /* these flags are equivalent to the ES_* counterparts */
     DWORD mask = ECO_VERTICAL | ECO_AUTOHSCROLL | ECO_AUTOVSCROLL |
-                 ECO_NOHIDESEL | ECO_READONLY | ECO_WANTRETURN | ECO_SELECTIONBAR;
+                 ECO_NOHIDESEL | ECO_WANTRETURN | ECO_SELECTIONBAR;
     DWORD settings = editor->styleFlags & mask;
 
     return settings;
@@ -3554,7 +3547,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
      * ECO_AUTOWORDSELECTION that doesn't have an ES_* counterpart,
      * but is still stored in editor->styleFlags. */
     const DWORD mask = ECO_VERTICAL | ECO_AUTOHSCROLL | ECO_AUTOVSCROLL |
-                       ECO_NOHIDESEL | ECO_READONLY | ECO_WANTRETURN |
+                       ECO_NOHIDESEL | ECO_WANTRETURN |
                        ECO_SELECTIONBAR | ECO_AUTOWORDSELECTION;
     DWORD settings = mask & editor->styleFlags;
     DWORD oldSettings = settings;
