@@ -1369,14 +1369,20 @@ void wined3d_shader_resource_view_vk_generate_mipmap(struct wined3d_shader_resou
         }
         else
         {
+            region.srcSubresource.mipLevel = ++vk_src_range.baseMipLevel;
+            region.dstSubresource.mipLevel = ++vk_dst_range.baseMipLevel;
+
             wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
                     VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
                     VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT,
                     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                    texture_vk->vk_image, &vk_src_range);
+            wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
+                    VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+                    vk_access_mask_from_bind_flags(texture_vk->t.resource.bind_flags),
+                    VK_ACCESS_TRANSFER_WRITE_BIT,
+                    texture_vk->layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                     texture_vk->vk_image, &vk_dst_range);
-
-            region.srcSubresource.mipLevel = ++vk_src_range.baseMipLevel;
-            region.dstSubresource.mipLevel = ++vk_dst_range.baseMipLevel;
         }
     }
 
