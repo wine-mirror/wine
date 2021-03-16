@@ -38,10 +38,10 @@ struct host
     LONG ref;
     ITextServices *text_srv;
     ME_TextEditor *editor; /* to be removed */
-    HWND window;
+    HWND window, parent;
     BOOL emulate_10;
     PARAFORMAT2 para_fmt;
-    DWORD props, scrollbars;
+    DWORD props, scrollbars, event_mask;
 };
 
 static const ITextHostVtbl textHostVtbl;
@@ -82,6 +82,7 @@ struct host *host_create( HWND hwnd, CREATESTRUCTW *cs, BOOL emulate_10 )
     texthost->ITextHost_iface.lpVtbl = &textHostVtbl;
     texthost->ref = 1;
     texthost->window = hwnd;
+    texthost->parent = cs->hwndParent;
     texthost->emulate_10 = emulate_10;
     memset( &texthost->para_fmt, 0, sizeof(texthost->para_fmt) );
     texthost->para_fmt.cbSize = sizeof(texthost->para_fmt);
@@ -93,6 +94,7 @@ struct host *host_create( HWND hwnd, CREATESTRUCTW *cs, BOOL emulate_10 )
         texthost->para_fmt.wAlignment = PFA_CENTER;
     texthost->editor = NULL;
     host_init_props( texthost );
+    texthost->event_mask = 0;
 
     return texthost;
 }
@@ -842,6 +844,26 @@ static HRESULT set_options( struct host *host, DWORD op, DWORD value, LRESULT *r
     return hr;
 }
 
+static LRESULT send_msg_filter( struct host *host, UINT msg, WPARAM *wparam, LPARAM *lparam )
+{
+    MSGFILTER msgf;
+    LRESULT res;
+
+    if (!host->parent) return 0;
+    msgf.nmhdr.hwndFrom = host->window;
+    msgf.nmhdr.idFrom = GetWindowLongW( host->window, GWLP_ID );
+    msgf.nmhdr.code = EN_MSGFILTER;
+    msgf.msg = msg;
+    msgf.wParam = *wparam;
+    msgf.lParam = *lparam;
+    if ((res = SendMessageW( host->parent, WM_NOTIFY, msgf.nmhdr.idFrom, (LPARAM)&msgf )))
+        return res;
+    *wparam = msgf.wParam;
+    *lparam = msgf.lParam;
+
+    return 0;
+}
+
 static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
                                        LPARAM lparam, BOOL unicode )
 {
@@ -864,6 +886,15 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
             return create_windowed_editor( hwnd, pcs, FALSE );
         }
         else return DefWindowProcW( hwnd, msg, wparam, lparam );
+    }
+
+    if ((((host->event_mask & ENM_KEYEVENTS) && msg >= WM_KEYFIRST && msg <= WM_KEYLAST) ||
+         ((host->event_mask & ENM_MOUSEEVENTS) && msg >= WM_MOUSEFIRST && msg <= WM_MOUSELAST)) &&
+        send_msg_filter( host, msg, &wparam, &lparam ))
+    {
+        TRACE( "exit (filtered) hwnd %p msg %04x (%s) %lx %lx -> %lu\n",
+               hwnd, msg, get_msg_name(msg), wparam, lparam, res );
+        return res;
     }
 
     editor = host->editor;
@@ -1042,6 +1073,11 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         res = len;
         break;
     }
+    case EM_SETEVENTMASK:
+        host->event_mask = lparam;
+        hr = ITextServices_TxSendMessage( host->text_srv, msg, wparam, lparam, &res );
+        break;
+
     case EM_SETOPTIONS:
         hr = set_options( host, wparam, lparam, &res );
         break;

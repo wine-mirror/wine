@@ -2384,28 +2384,6 @@ static BOOL copy_or_cut( ME_TextEditor *editor, BOOL cut )
     return SUCCEEDED( hr );
 }
 
-/* helper to send a msg filter notification */
-static BOOL
-ME_FilterEvent(ME_TextEditor *editor, UINT msg, WPARAM* wParam, LPARAM* lParam)
-{
-    MSGFILTER msgf;
-
-    if (!editor->hWnd || !editor->hwndParent) return FALSE;
-    msgf.nmhdr.hwndFrom = editor->hWnd;
-    msgf.nmhdr.idFrom = GetWindowLongW(editor->hWnd, GWLP_ID);
-    msgf.nmhdr.code = EN_MSGFILTER;
-    msgf.msg = msg;
-    msgf.wParam = *wParam;
-    msgf.lParam = *lParam;
-    if (SendMessageW(editor->hwndParent, WM_NOTIFY, msgf.nmhdr.idFrom, (LPARAM)&msgf))
-        return FALSE;
-    *wParam = msgf.wParam;
-    *lParam = msgf.lParam;
-    msgf.wParam = *wParam;
-
-    return TRUE;
-}
-
 static void ME_UpdateSelectionLinkAttribute(ME_TextEditor *editor)
 {
   ME_Paragraph *start_para, *end_para;
@@ -4132,9 +4110,6 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case WM_LBUTTONDOWN:
   {
     ME_CommitUndo(editor); /* End coalesced undos for typed characters */
-    if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
-        !ME_FilterEvent(editor, msg, &wParam, &lParam))
-      return 0;
     ITextHost_TxSetFocus(editor->texthost);
     ME_LButtonDown(editor, (short)LOWORD(lParam), (short)HIWORD(lParam),
                    ME_CalculateClickCount(editor, msg, wParam, lParam));
@@ -4145,9 +4120,6 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     break;
   }
   case WM_MOUSEMOVE:
-    if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
-        !ME_FilterEvent(editor, msg, &wParam, &lParam))
-      return 0;
     if (editor->bMouseCaptured)
       ME_MouseMove(editor, (short)LOWORD(lParam), (short)HIWORD(lParam));
     else
@@ -4163,9 +4135,6 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     }
     if (editor->nSelectionType == stDocument)
       editor->nSelectionType = stPosition;
-    if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
-        !ME_FilterEvent(editor, msg, &wParam, &lParam))
-      return 0;
     else
     {
       ME_SetCursor(editor);
@@ -4176,9 +4145,6 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case WM_RBUTTONDOWN:
   case WM_RBUTTONDBLCLK:
     ME_CommitUndo(editor); /* End coalesced undos for typed characters */
-    if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
-        !ME_FilterEvent(editor, msg, &wParam, &lParam))
-      return 0;
     ME_LinkNotify(editor, msg, wParam, lParam);
     goto do_default;
   case WM_CONTEXTMENU:
@@ -4206,22 +4172,11 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case WM_COMMAND:
     TRACE("editor wnd command = %d\n", LOWORD(wParam));
     return 0;
-  case WM_KEYUP:
-    if ((editor->nEventMask & ENM_KEYEVENTS) &&
-        !ME_FilterEvent(editor, msg, &wParam, &lParam))
-      return 0;
-    goto do_default;
   case WM_KEYDOWN:
-    if ((editor->nEventMask & ENM_KEYEVENTS) &&
-        !ME_FilterEvent(editor, msg, &wParam, &lParam))
-      return 0;
     if (ME_KeyDown(editor, LOWORD(wParam)))
       return 0;
     goto do_default;
   case WM_CHAR:
-    if ((editor->nEventMask & ENM_KEYEVENTS) &&
-        !ME_FilterEvent(editor, msg, &wParam, &lParam))
-      return 0;
     return handle_wm_char( editor, wParam, lParam );
   case WM_UNICHAR:
     if (unicode)
@@ -4328,16 +4283,8 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case WM_MOUSEWHEEL:
   {
-    int delta;
-    BOOL ctrl_is_down;
-
-    if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
-        !ME_FilterEvent(editor, msg, &wParam, &lParam))
-      return 0;
-
-    ctrl_is_down = GetKeyState(VK_CONTROL) & 0x8000;
-
-    delta = GET_WHEEL_DELTA_WPARAM(wParam);
+    int delta = GET_WHEEL_DELTA_WPARAM( wParam );
+    BOOL ctrl_is_down = GetKeyState( VK_CONTROL ) & 0x8000;
 
     /* if scrolling changes direction, ignore left overs */
     if ((delta < 0 && editor->wheel_remain < 0) ||
