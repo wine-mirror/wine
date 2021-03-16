@@ -83,6 +83,18 @@ struct reserved_area
 
 static struct list reserved_areas = LIST_INIT(reserved_areas);
 
+struct builtin_module
+{
+    struct list entry;
+    dev_t       dev;
+    ino_t       ino;
+    void       *handle;
+    void       *module;
+    void       *unix_handle;
+};
+
+static struct list builtin_modules = LIST_INIT( builtin_modules );
+
 struct file_view
 {
     struct wine_rb_entry entry;  /* entry in global view tree */
@@ -546,6 +558,116 @@ static void mmap_init( const struct preload_info *preload_info )
 
 #endif
 }
+
+/***********************************************************************
+ *           add_builtin_module
+ */
+static void add_builtin_module( void *module, void *handle, const struct stat *st )
+{
+    struct builtin_module *builtin;
+
+    if (!(builtin = malloc( sizeof(*builtin) ))) return;
+    builtin->handle = handle;
+    builtin->module = module;
+    builtin->unix_handle = NULL;
+    if (st)
+    {
+        builtin->dev = st->st_dev;
+        builtin->ino = st->st_ino;
+    }
+    else
+    {
+        builtin->dev = 0;
+        builtin->ino = 0;
+    }
+    list_add_tail( &builtin_modules, &builtin->entry );
+}
+
+
+/***********************************************************************
+ *           remove_builtin_module
+ */
+static NTSTATUS remove_builtin_module( void *module )
+{
+    struct builtin_module *builtin;
+
+    LIST_FOR_EACH_ENTRY( builtin, &builtin_modules, struct builtin_module, entry )
+    {
+        if (builtin->module != module) continue;
+        list_remove( &builtin->entry );
+        if (builtin->handle) dlclose( builtin->handle );
+        if (builtin->unix_handle) dlclose( builtin->unix_handle );
+        free( builtin );
+        return STATUS_SUCCESS;
+    }
+    return STATUS_INVALID_PARAMETER;
+}
+
+
+/***********************************************************************
+ *           find_builtin_module
+ */
+static void *find_builtin_module( const struct stat *st )
+{
+    struct builtin_module *builtin;
+
+    LIST_FOR_EACH_ENTRY( builtin, &builtin_modules, struct builtin_module, entry )
+        if (builtin->dev == st->st_dev && builtin->ino == st->st_ino) return builtin->module;
+    return NULL;
+}
+
+
+/***********************************************************************
+ *           get_builtin_so_handle
+ */
+void *get_builtin_so_handle( void *module )
+{
+    sigset_t sigset;
+    void *ret = NULL;
+    struct builtin_module *builtin;
+
+    server_enter_uninterrupted_section( &virtual_mutex, &sigset );
+    LIST_FOR_EACH_ENTRY( builtin, &builtin_modules, struct builtin_module, entry )
+    {
+        if (builtin->module != module) continue;
+        ret = builtin->handle;
+        break;
+    }
+    server_leave_uninterrupted_section( &virtual_mutex, &sigset );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           set_builtin_unix_handle
+ */
+NTSTATUS set_builtin_unix_handle( void *module, void *handle )
+{
+    sigset_t sigset;
+    NTSTATUS status = STATUS_DLL_NOT_FOUND;
+    struct builtin_module *builtin;
+
+    server_enter_uninterrupted_section( &virtual_mutex, &sigset );
+    LIST_FOR_EACH_ENTRY( builtin, &builtin_modules, struct builtin_module, entry )
+    {
+        if (builtin->module == module)
+        {
+            if (builtin->unix_handle == handle) status = STATUS_IMAGE_ALREADY_LOADED;
+            else if (builtin->unix_handle) status = STATUS_OBJECT_NAME_COLLISION;
+            else status = STATUS_SUCCESS;
+            break;
+        }
+        if (builtin->unix_handle == handle)
+        {
+            status = STATUS_DUPLICATE_NAME;
+            break;
+        }
+    }
+    if (!status) builtin->unix_handle = handle;
+    server_leave_uninterrupted_section( &virtual_mutex, &sigset );
+    return status;
+}
+
 
 /***********************************************************************
  *           free_ranges_lower_bound
@@ -2248,12 +2370,13 @@ static NTSTATUS get_mapping_info( HANDLE handle, ACCESS_MASK access, unsigned in
  */
 static NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsigned short zero_bits_64,
                                      SIZE_T commit_size, const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr,
-                                     ULONG alloc_type, ULONG protect )
+                                     ULONG alloc_type, ULONG protect, BOOL is_builtin )
 {
     NTSTATUS res;
     mem_size_t full_size;
     ACCESS_MASK access;
     SIZE_T size;
+    struct stat st;
     pe_image_info_t *image_info = NULL;
     WCHAR *filename;
     void *base;
@@ -2311,6 +2434,18 @@ static NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsigned sh
 
     res = STATUS_INVALID_PARAMETER;
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
+
+    if (is_builtin) /* check for already loaded builtin */
+    {
+        fstat( unix_handle, &st );
+        if ((base = find_builtin_module( &st )))
+        {
+            *addr_ptr = base;
+            *size_ptr = image_info->map_size;
+            res = STATUS_SUCCESS;
+            goto done;
+        }
+    }
 
     if (sec_flags & SEC_IMAGE)
     {
@@ -2381,6 +2516,7 @@ static NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsigned sh
 
     if (res >= 0)
     {
+        if (is_builtin) add_builtin_module( view->base, NULL, &st );
         *addr_ptr = view->base;
         *size_ptr = size;
         VIRTUAL_DEBUG_DUMP_VIEW( view );
@@ -2526,9 +2662,22 @@ void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info )
 
 
 /***********************************************************************
+ *           virtual_map_builtin_module
+ */
+NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module )
+{
+    SIZE_T size = 0;
+
+    *module = NULL;
+    return virtual_map_section( mapping, module, 0, 0, NULL, &size, 0, PAGE_EXECUTE_READ, TRUE );
+}
+
+
+/***********************************************************************
  *           virtual_create_builtin_view
  */
-NTSTATUS virtual_create_builtin_view( void *module, const UNICODE_STRING *nt_name, pe_image_info_t *info )
+NTSTATUS virtual_create_builtin_view( void *module, const UNICODE_STRING *nt_name,
+                                      pe_image_info_t *info, void *so_handle )
 {
     NTSTATUS status;
     sigset_t sigset;
@@ -2573,6 +2722,7 @@ NTSTATUS virtual_create_builtin_view( void *module, const UNICODE_STRING *nt_nam
 
         if (status >= 0)
         {
+            add_builtin_module( view->base, so_handle, NULL );
             VIRTUAL_DEBUG_DUMP_VIEW( view );
             if (is_beyond_limit( base, size, working_set_limit )) working_set_limit = address_space_limit;
         }
@@ -4115,7 +4265,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     }
 
     return virtual_map_section( handle, addr_ptr, zero_bits_64, commit_size,
-                                offset_ptr, size_ptr, alloc_type, protect );
+                                offset_ptr, size_ptr, alloc_type, protect, FALSE );
 }
 
 
@@ -4152,7 +4302,11 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
             status = wine_server_call( req );
         }
         SERVER_END_REQ;
-        if (!status) delete_view( view );
+        if (!status)
+        {
+            if (view->protect & SEC_IMAGE) remove_builtin_module( view->base );
+            delete_view( view );
+        }
         else FIXME( "failed to unmap %p %x\n", view->base, status );
     }
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );

@@ -2323,7 +2323,7 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
         image_info.u.s.WineBuiltin = 1;
         if ((status = build_module( load_path, &win_name, &module, &image_info, NULL, flags, &wm )))
         {
-            if (module) unix_funcs->unload_builtin_dll( module );
+            if (module) NtUnmapViewOfSection( NtCurrentProcess(), module );
             return status;
         }
         TRACE_(loaddll)( "Loaded %s at %p: builtin\n", debugstr_us(nt_name), module );
@@ -2360,7 +2360,7 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, UNICODE_STRING *nt_name,
     TRACE( "loading %s\n", debugstr_us(nt_name) );
     status = build_module( load_path, nt_name, &module, &image_info, NULL, flags, pwm );
     if (!status) (*pwm)->unix_entry = unix_entry;
-    else if (module) unix_funcs->unload_builtin_dll( module );
+    else if (module) NtUnmapViewOfSection( NtCurrentProcess(), module );
     return status;
 }
 
@@ -3245,7 +3245,6 @@ static void free_modref( WINE_MODREF *wm )
 
     free_tls_slot( &wm->ldr );
     RtlReleaseActivationContext( wm->ldr.ActivationContext );
-    unix_funcs->unload_builtin_dll( wm->ldr.DllBase );
     NtUnmapViewOfSection( NtCurrentProcess(), wm->ldr.DllBase );
     if (cached_modref == wm) cached_modref = NULL;
     RtlFreeUnicodeString( &wm->ldr.FullDllName );
