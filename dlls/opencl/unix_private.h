@@ -21,6 +21,20 @@
 
 #include "opencl_private.h"
 
+#define CL_SILENCE_DEPRECATION
+#if defined(HAVE_CL_CL_H)
+#define CL_USE_DEPRECATED_OPENCL_1_0_APIS
+#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
+#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
+#define CL_USE_DEPRECATED_OPENCL_2_0_APIS
+#define CL_TARGET_OPENCL_VERSION 220
+#include <CL/cl.h>
+#elif defined(HAVE_OPENCL_OPENCL_H)
+#include <OpenCL/opencl.h>
+#endif
+
+#include "unixlib.h"
+
 cl_int WINAPI wrap_clBuildProgram( cl_program program, cl_uint num_devices,
         const cl_device_id *device_list, const char *options,
         void (WINAPI *pfn_notify)(cl_program program, void *user_data),

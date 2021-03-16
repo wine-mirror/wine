@@ -1,7 +1,8 @@
 /* Automatically generated from OpenCL registry files; DO NOT EDIT! */
 
-#include "config.h"
 #include "opencl_private.h"
+#include "opencl_types.h"
+#include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(opencl);
 
@@ -13,7 +14,7 @@ cl_int WINAPI wine_clBuildProgram( cl_program program, cl_uint num_devices, cons
 
 cl_mem WINAPI wine_clCreateBuffer( cl_context context, cl_mem_flags flags, size_t size, void* host_ptr, cl_int* errcode_ret )
 {
-    TRACE( "(%p, %s, %zu, %p, %p)\n", context, wine_dbgstr_longlong(flags), size, host_ptr, errcode_ret );
+    TRACE( "(%p, %s, %Iu, %p, %p)\n", context, wine_dbgstr_longlong(flags), size, host_ptr, errcode_ret );
     return opencl_funcs->pclCreateBuffer( context, flags, size, host_ptr, errcode_ret );
 }
 
@@ -37,13 +38,13 @@ cl_context WINAPI wine_clCreateContextFromType( const cl_context_properties* pro
 
 cl_mem WINAPI wine_clCreateImage2D( cl_context context, cl_mem_flags flags, const cl_image_format* image_format, size_t image_width, size_t image_height, size_t image_row_pitch, void* host_ptr, cl_int* errcode_ret )
 {
-    TRACE( "(%p, %s, %p, %zu, %zu, %zu, %p, %p)\n", context, wine_dbgstr_longlong(flags), image_format, image_width, image_height, image_row_pitch, host_ptr, errcode_ret );
+    TRACE( "(%p, %s, %p, %Iu, %Iu, %Iu, %p, %p)\n", context, wine_dbgstr_longlong(flags), image_format, image_width, image_height, image_row_pitch, host_ptr, errcode_ret );
     return opencl_funcs->pclCreateImage2D( context, flags, image_format, image_width, image_height, image_row_pitch, host_ptr, errcode_ret );
 }
 
 cl_mem WINAPI wine_clCreateImage3D( cl_context context, cl_mem_flags flags, const cl_image_format* image_format, size_t image_width, size_t image_height, size_t image_depth, size_t image_row_pitch, size_t image_slice_pitch, void* host_ptr, cl_int* errcode_ret )
 {
-    TRACE( "(%p, %s, %p, %zu, %zu, %zu, %zu, %zu, %p, %p)\n", context, wine_dbgstr_longlong(flags), image_format, image_width, image_height, image_depth, image_row_pitch, image_slice_pitch, host_ptr, errcode_ret );
+    TRACE( "(%p, %s, %p, %Iu, %Iu, %Iu, %Iu, %Iu, %p, %p)\n", context, wine_dbgstr_longlong(flags), image_format, image_width, image_height, image_depth, image_row_pitch, image_slice_pitch, host_ptr, errcode_ret );
     return opencl_funcs->pclCreateImage3D( context, flags, image_format, image_width, image_height, image_depth, image_row_pitch, image_slice_pitch, host_ptr, errcode_ret );
 }
 
@@ -85,13 +86,13 @@ cl_int WINAPI wine_clEnqueueBarrier( cl_command_queue command_queue )
 
 cl_int WINAPI wine_clEnqueueCopyBuffer( cl_command_queue command_queue, cl_mem src_buffer, cl_mem dst_buffer, size_t src_offset, size_t dst_offset, size_t size, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
 {
-    TRACE( "(%p, %p, %p, %zu, %zu, %zu, %u, %p, %p)\n", command_queue, src_buffer, dst_buffer, src_offset, dst_offset, size, num_events_in_wait_list, event_wait_list, event );
+    TRACE( "(%p, %p, %p, %Iu, %Iu, %Iu, %u, %p, %p)\n", command_queue, src_buffer, dst_buffer, src_offset, dst_offset, size, num_events_in_wait_list, event_wait_list, event );
     return opencl_funcs->pclEnqueueCopyBuffer( command_queue, src_buffer, dst_buffer, src_offset, dst_offset, size, num_events_in_wait_list, event_wait_list, event );
 }
 
 cl_int WINAPI wine_clEnqueueCopyBufferToImage( cl_command_queue command_queue, cl_mem src_buffer, cl_mem dst_image, size_t src_offset, const size_t* dst_origin, const size_t* region, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
 {
-    TRACE( "(%p, %p, %p, %zu, %p, %p, %u, %p, %p)\n", command_queue, src_buffer, dst_image, src_offset, dst_origin, region, num_events_in_wait_list, event_wait_list, event );
+    TRACE( "(%p, %p, %p, %Iu, %p, %p, %u, %p, %p)\n", command_queue, src_buffer, dst_image, src_offset, dst_origin, region, num_events_in_wait_list, event_wait_list, event );
     return opencl_funcs->pclEnqueueCopyBufferToImage( command_queue, src_buffer, dst_image, src_offset, dst_origin, region, num_events_in_wait_list, event_wait_list, event );
 }
 
@@ -103,13 +104,13 @@ cl_int WINAPI wine_clEnqueueCopyImage( cl_command_queue command_queue, cl_mem sr
 
 cl_int WINAPI wine_clEnqueueCopyImageToBuffer( cl_command_queue command_queue, cl_mem src_image, cl_mem dst_buffer, const size_t* src_origin, const size_t* region, size_t dst_offset, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
 {
-    TRACE( "(%p, %p, %p, %p, %p, %zu, %u, %p, %p)\n", command_queue, src_image, dst_buffer, src_origin, region, dst_offset, num_events_in_wait_list, event_wait_list, event );
+    TRACE( "(%p, %p, %p, %p, %p, %Iu, %u, %p, %p)\n", command_queue, src_image, dst_buffer, src_origin, region, dst_offset, num_events_in_wait_list, event_wait_list, event );
     return opencl_funcs->pclEnqueueCopyImageToBuffer( command_queue, src_image, dst_buffer, src_origin, region, dst_offset, num_events_in_wait_list, event_wait_list, event );
 }
 
 void* WINAPI wine_clEnqueueMapBuffer( cl_command_queue command_queue, cl_mem buffer, cl_bool blocking_map, cl_map_flags map_flags, size_t offset, size_t size, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event, cl_int* errcode_ret )
 {
-    TRACE( "(%p, %p, %u, %s, %zu, %zu, %u, %p, %p, %p)\n", command_queue, buffer, blocking_map, wine_dbgstr_longlong(map_flags), offset, size, num_events_in_wait_list, event_wait_list, event, errcode_ret );
+    TRACE( "(%p, %p, %u, %s, %Iu, %Iu, %u, %p, %p, %p)\n", command_queue, buffer, blocking_map, wine_dbgstr_longlong(map_flags), offset, size, num_events_in_wait_list, event_wait_list, event, errcode_ret );
     return opencl_funcs->pclEnqueueMapBuffer( command_queue, buffer, blocking_map, map_flags, offset, size, num_events_in_wait_list, event_wait_list, event, errcode_ret );
 }
 
@@ -133,19 +134,19 @@ cl_int WINAPI wine_clEnqueueNDRangeKernel( cl_command_queue command_queue, cl_ke
 
 cl_int WINAPI wine_clEnqueueNativeKernel( cl_command_queue command_queue, void (WINAPI* user_func)(void*), void* args, size_t cb_args, cl_uint num_mem_objects, const cl_mem* mem_list, const void** args_mem_loc, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
 {
-    TRACE( "(%p, %p, %p, %zu, %u, %p, %p, %u, %p, %p)\n", command_queue, user_func, args, cb_args, num_mem_objects, mem_list, args_mem_loc, num_events_in_wait_list, event_wait_list, event );
+    TRACE( "(%p, %p, %p, %Iu, %u, %p, %p, %u, %p, %p)\n", command_queue, user_func, args, cb_args, num_mem_objects, mem_list, args_mem_loc, num_events_in_wait_list, event_wait_list, event );
     return opencl_funcs->pclEnqueueNativeKernel( command_queue, user_func, args, cb_args, num_mem_objects, mem_list, args_mem_loc, num_events_in_wait_list, event_wait_list, event );
 }
 
 cl_int WINAPI wine_clEnqueueReadBuffer( cl_command_queue command_queue, cl_mem buffer, cl_bool blocking_read, size_t offset, size_t size, void* ptr, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
 {
-    TRACE( "(%p, %p, %u, %zu, %zu, %p, %u, %p, %p)\n", command_queue, buffer, blocking_read, offset, size, ptr, num_events_in_wait_list, event_wait_list, event );
+    TRACE( "(%p, %p, %u, %Iu, %Iu, %p, %u, %p, %p)\n", command_queue, buffer, blocking_read, offset, size, ptr, num_events_in_wait_list, event_wait_list, event );
     return opencl_funcs->pclEnqueueReadBuffer( command_queue, buffer, blocking_read, offset, size, ptr, num_events_in_wait_list, event_wait_list, event );
 }
 
 cl_int WINAPI wine_clEnqueueReadImage( cl_command_queue command_queue, cl_mem image, cl_bool blocking_read, const size_t* origin, const size_t* region, size_t row_pitch, size_t slice_pitch, void* ptr, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
 {
-    TRACE( "(%p, %p, %u, %p, %p, %zu, %zu, %p, %u, %p, %p)\n", command_queue, image, blocking_read, origin, region, row_pitch, slice_pitch, ptr, num_events_in_wait_list, event_wait_list, event );
+    TRACE( "(%p, %p, %u, %p, %p, %Iu, %Iu, %p, %u, %p, %p)\n", command_queue, image, blocking_read, origin, region, row_pitch, slice_pitch, ptr, num_events_in_wait_list, event_wait_list, event );
     return opencl_funcs->pclEnqueueReadImage( command_queue, image, blocking_read, origin, region, row_pitch, slice_pitch, ptr, num_events_in_wait_list, event_wait_list, event );
 }
 
@@ -169,13 +170,13 @@ cl_int WINAPI wine_clEnqueueWaitForEvents( cl_command_queue command_queue, cl_ui
 
 cl_int WINAPI wine_clEnqueueWriteBuffer( cl_command_queue command_queue, cl_mem buffer, cl_bool blocking_write, size_t offset, size_t size, const void* ptr, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
 {
-    TRACE( "(%p, %p, %u, %zu, %zu, %p, %u, %p, %p)\n", command_queue, buffer, blocking_write, offset, size, ptr, num_events_in_wait_list, event_wait_list, event );
+    TRACE( "(%p, %p, %u, %Iu, %Iu, %p, %u, %p, %p)\n", command_queue, buffer, blocking_write, offset, size, ptr, num_events_in_wait_list, event_wait_list, event );
     return opencl_funcs->pclEnqueueWriteBuffer( command_queue, buffer, blocking_write, offset, size, ptr, num_events_in_wait_list, event_wait_list, event );
 }
 
 cl_int WINAPI wine_clEnqueueWriteImage( cl_command_queue command_queue, cl_mem image, cl_bool blocking_write, const size_t* origin, const size_t* region, size_t input_row_pitch, size_t input_slice_pitch, const void* ptr, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
 {
-    TRACE( "(%p, %p, %u, %p, %p, %zu, %zu, %p, %u, %p, %p)\n", command_queue, image, blocking_write, origin, region, input_row_pitch, input_slice_pitch, ptr, num_events_in_wait_list, event_wait_list, event );
+    TRACE( "(%p, %p, %u, %p, %p, %Iu, %Iu, %p, %u, %p, %p)\n", command_queue, image, blocking_write, origin, region, input_row_pitch, input_slice_pitch, ptr, num_events_in_wait_list, event_wait_list, event );
     return opencl_funcs->pclEnqueueWriteImage( command_queue, image, blocking_write, origin, region, input_row_pitch, input_slice_pitch, ptr, num_events_in_wait_list, event_wait_list, event );
 }
 
@@ -193,13 +194,13 @@ cl_int WINAPI wine_clFlush( cl_command_queue command_queue )
 
 cl_int WINAPI wine_clGetCommandQueueInfo( cl_command_queue command_queue, cl_command_queue_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
 {
-    TRACE( "(%p, %u, %zu, %p, %p)\n", command_queue, param_name, param_value_size, param_value, param_value_size_ret );
+    TRACE( "(%p, %u, %Iu, %p, %p)\n", command_queue, param_name, param_value_size, param_value, param_value_size_ret );
     return opencl_funcs->pclGetCommandQueueInfo( command_queue, param_name, param_value_size, param_value, param_value_size_ret );
 }
 
 cl_int WINAPI wine_clGetContextInfo( cl_context context, cl_context_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
 {
-    TRACE( "(%p, %u, %zu, %p, %p)\n", context, param_name, param_value_size, param_value, param_value_size_ret );
+    TRACE( "(%p, %u, %Iu, %p, %p)\n", context, param_name, param_value_size, param_value, param_value_size_ret );
     return opencl_funcs->pclGetContextInfo( context, param_name, param_value_size, param_value, param_value_size_ret );
 }
 
@@ -211,37 +212,37 @@ cl_int WINAPI wine_clGetDeviceIDs( cl_platform_id platform, cl_device_type devic
 
 cl_int WINAPI wine_clGetEventInfo( cl_event event, cl_event_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
 {
-    TRACE( "(%p, %u, %zu, %p, %p)\n", event, param_name, param_value_size, param_value, param_value_size_ret );
+    TRACE( "(%p, %u, %Iu, %p, %p)\n", event, param_name, param_value_size, param_value, param_value_size_ret );
     return opencl_funcs->pclGetEventInfo( event, param_name, param_value_size, param_value, param_value_size_ret );
 }
 
 cl_int WINAPI wine_clGetEventProfilingInfo( cl_event event, cl_profiling_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
 {
-    TRACE( "(%p, %u, %zu, %p, %p)\n", event, param_name, param_value_size, param_value, param_value_size_ret );
+    TRACE( "(%p, %u, %Iu, %p, %p)\n", event, param_name, param_value_size, param_value, param_value_size_ret );
     return opencl_funcs->pclGetEventProfilingInfo( event, param_name, param_value_size, param_value, param_value_size_ret );
 }
 
 cl_int WINAPI wine_clGetImageInfo( cl_mem image, cl_image_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
 {
-    TRACE( "(%p, %u, %zu, %p, %p)\n", image, param_name, param_value_size, param_value, param_value_size_ret );
+    TRACE( "(%p, %u, %Iu, %p, %p)\n", image, param_name, param_value_size, param_value, param_value_size_ret );
     return opencl_funcs->pclGetImageInfo( image, param_name, param_value_size, param_value, param_value_size_ret );
 }
 
 cl_int WINAPI wine_clGetKernelInfo( cl_kernel kernel, cl_kernel_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
 {
-    TRACE( "(%p, %u, %zu, %p, %p)\n", kernel, param_name, param_value_size, param_value, param_value_size_ret );
+    TRACE( "(%p, %u, %Iu, %p, %p)\n", kernel, param_name, param_value_size, param_value, param_value_size_ret );
     return opencl_funcs->pclGetKernelInfo( kernel, param_name, param_value_size, param_value, param_value_size_ret );
 }
 
 cl_int WINAPI wine_clGetKernelWorkGroupInfo( cl_kernel kernel, cl_device_id device, cl_kernel_work_group_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
 {
-    TRACE( "(%p, %p, %u, %zu, %p, %p)\n", kernel, device, param_name, param_value_size, param_value, param_value_size_ret );
+    TRACE( "(%p, %p, %u, %Iu, %p, %p)\n", kernel, device, param_name, param_value_size, param_value, param_value_size_ret );
     return opencl_funcs->pclGetKernelWorkGroupInfo( kernel, device, param_name, param_value_size, param_value, param_value_size_ret );
 }
 
 cl_int WINAPI wine_clGetMemObjectInfo( cl_mem memobj, cl_mem_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
 {
-    TRACE( "(%p, %u, %zu, %p, %p)\n", memobj, param_name, param_value_size, param_value, param_value_size_ret );
+    TRACE( "(%p, %u, %Iu, %p, %p)\n", memobj, param_name, param_value_size, param_value, param_value_size_ret );
     return opencl_funcs->pclGetMemObjectInfo( memobj, param_name, param_value_size, param_value, param_value_size_ret );
 }
 
@@ -253,19 +254,19 @@ cl_int WINAPI wine_clGetPlatformIDs( cl_uint num_entries, cl_platform_id* platfo
 
 cl_int WINAPI wine_clGetProgramBuildInfo( cl_program program, cl_device_id device, cl_program_build_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
 {
-    TRACE( "(%p, %p, %u, %zu, %p, %p)\n", program, device, param_name, param_value_size, param_value, param_value_size_ret );
+    TRACE( "(%p, %p, %u, %Iu, %p, %p)\n", program, device, param_name, param_value_size, param_value, param_value_size_ret );
     return opencl_funcs->pclGetProgramBuildInfo( program, device, param_name, param_value_size, param_value, param_value_size_ret );
 }
 
 cl_int WINAPI wine_clGetProgramInfo( cl_program program, cl_program_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
 {
-    TRACE( "(%p, %u, %zu, %p, %p)\n", program, param_name, param_value_size, param_value, param_value_size_ret );
+    TRACE( "(%p, %u, %Iu, %p, %p)\n", program, param_name, param_value_size, param_value, param_value_size_ret );
     return opencl_funcs->pclGetProgramInfo( program, param_name, param_value_size, param_value, param_value_size_ret );
 }
 
 cl_int WINAPI wine_clGetSamplerInfo( cl_sampler sampler, cl_sampler_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
 {
-    TRACE( "(%p, %u, %zu, %p, %p)\n", sampler, param_name, param_value_size, param_value, param_value_size_ret );
+    TRACE( "(%p, %u, %Iu, %p, %p)\n", sampler, param_name, param_value_size, param_value, param_value_size_ret );
     return opencl_funcs->pclGetSamplerInfo( sampler, param_name, param_value_size, param_value, param_value_size_ret );
 }
 
@@ -367,7 +368,7 @@ cl_int WINAPI wine_clSetCommandQueueProperty( cl_command_queue command_queue, cl
 
 cl_int WINAPI wine_clSetKernelArg( cl_kernel kernel, cl_uint arg_index, size_t arg_size, const void* arg_value )
 {
-    TRACE( "(%p, %u, %zu, %p)\n", kernel, arg_index, arg_size, arg_value );
+    TRACE( "(%p, %u, %Iu, %p)\n", kernel, arg_index, arg_size, arg_value );
     return opencl_funcs->pclSetKernelArg( kernel, arg_index, arg_size, arg_value );
 }
 

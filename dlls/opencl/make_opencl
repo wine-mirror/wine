@@ -21,6 +21,7 @@ use XML::LibXML;
 # Files to generate
 my $spec_file = "opencl.spec";
 my $pe_file = "pe_thunks.c";
+my $types_file = "opencl_types.h";
 my $unix_file = "unix_thunks.c";
 my $unixheader_file = "unixlib.h";
 
@@ -42,8 +43,8 @@ my %arg_types =
         "int16_t"        => [ "long",   "%d" ],
         "int32_t"        => [ "long",   "%d" ],
         "int64_t"        => [ "int64",  "wine_dbgstr_longlong(%s)" ],
-        "intptr_t"       => [ "long",   "%ld" ],
-        "size_t"         => [ "long",   "%zu" ],
+        "intptr_t"       => [ "long",   "%Id" ],
+        "size_t"         => [ "long",   "%Iu" ],
         "uint8_t"        => [ "long",   "%u" ],
         "uint16_t"       => [ "long",   "%u" ],
         "uint32_t"       => [ "long",   "%u" ],
@@ -237,12 +238,27 @@ sub needs_unix_wrapper($)
     return defined $funcs{$name};
 }
 
+sub generate_struct($)
+{
+    my $type = shift;
+    my $name = $type->{name};
+    my $ret = "typedef struct _$name\n{\n";
+    foreach my $member ($type->findnodes("./member"))
+    {
+        ($member = $member->textContent()) =~ s/ +/ /g;
+        $ret .= "    $member;\n";
+    }
+    $ret .= "} $name;\n";
+    return $ret;
+}
+
 sub parse_file($)
 {
     my $file = shift;
     my $xml = XML::LibXML->load_xml( location => $file );
     my %functions;
     my %enums;
+    my %types;
 
     # save all functions
     foreach my $command ($xml->findnodes("/registry/commands/command"))
@@ -257,20 +273,25 @@ sub parse_file($)
     # save all enums
     foreach my $enum ($xml->findnodes("/registry/enums/enum"))
     {
-        $enums{$enum->{name}} = $enum->{value};
+        if (defined $enum->{value})
+        {
+            $enums{$enum->{name}} = $enum->{value};
+        }
+        else
+        {
+            $enums{$enum->{name}} = "(1 << " . $enum->{bitpos} . ")";
+        }
     }
 
     # save all types
     foreach my $type ($xml->findnodes("/registry/types/type"))
     {
-        my $name = @{$type->findnodes("./name")}[0];
-        next unless $name;
-        $name = $name->textContent;
-        push @cl_types, $name unless $cl_types{$name};
-        $cl_types{$name} = $type;
-
-        if ($type->{category} eq "define" and not defined($arg_types{$name}))
+        if ($type->{category} eq "define")
         {
+            my $name = @{$type->findnodes("./name")}[0];
+            $name = $name->textContent;
+            $types{$name} = $type;
+
             my $basetype = @{$type->findnodes("./type")}[0];
             if ($type->textContent() =~ /[[*]/)
             {
@@ -285,6 +306,11 @@ sub parse_file($)
                 die "No conversion for type $name\n"
             }
         }
+        elsif ($type->{category} eq "struct")
+        {
+            my $name = $type->{name};
+            $types{$name} = $type;
+        }
     }
 
     # generate core functions
@@ -298,6 +324,12 @@ sub parse_file($)
         foreach my $enum ($feature->findnodes("./require/enum"))
         {
             $cl_enums{$enum->{name}} = $enums{$enum->{name}};
+        }
+        foreach my $type ($feature->findnodes("./require/type"))
+        {
+            next unless $types{$type->{name}};
+            push @cl_types, $type->{name} unless $cl_types{$type->{name}};
+            $cl_types{$type->{name}} = $types{$type->{name}};
         }
     }
 }
@@ -319,8 +351,9 @@ open(PE, ">$pe_file") or die "cannot create $pe_file";
 
 print PE "/* Automatically generated from OpenCL registry files; DO NOT EDIT! */\n\n";
 
-print PE "#include \"config.h\"\n";
-print PE "#include \"opencl_private.h\"\n\n";
+print PE "#include \"opencl_private.h\"\n";
+print PE "#include \"opencl_types.h\"\n";
+print PE "#include \"unixlib.h\"\n\n";
 
 print PE "WINE_DEFAULT_DEBUG_CHANNEL(opencl);\n" if $gen_traces;
 
@@ -377,3 +410,38 @@ print UNIXHEADER "};\n\n";
 print UNIXHEADER "extern const struct opencl_funcs *opencl_funcs;\n";
 
 close(UNIXHEADER);
+
+# generate the Win32 type definitions
+open(TYPES, ">$types_file") or die "cannot create $types_file";
+
+print TYPES <<END
+/* Automatically generated from OpenCL registry files; DO NOT EDIT! */
+
+typedef int32_t cl_int DECLSPEC_ALIGN(4);
+typedef uint32_t cl_uint DECLSPEC_ALIGN(4);
+typedef uint64_t cl_ulong DECLSPEC_ALIGN(8);
+
+END
+;
+
+foreach (@cl_types)
+{
+    my $type = $cl_types{$_};
+    if ($type->{category} eq "define")
+    {
+        print TYPES $type->textContent() . "\n";
+    }
+    elsif ($type->{category} eq "struct")
+    {
+        print TYPES generate_struct( $type );
+    }
+}
+
+print TYPES "\n";
+
+foreach (sort keys %cl_enums)
+{
+    printf TYPES "#define %s %s\n", $_, $cl_enums{$_};
+}
+
+close(TYPES);

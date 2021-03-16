@@ -20,6 +20,7 @@
 #define __WINE_OPENCL_PRIVATE_H
 
 #include <stdarg.h>
+#include <stdint.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -28,19 +29,5 @@
 #include "winternl.h"
 
 #include "wine/debug.h"
-
-#define CL_SILENCE_DEPRECATION
-#if defined(HAVE_CL_CL_H)
-#define CL_USE_DEPRECATED_OPENCL_1_0_APIS
-#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
-#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
-#define CL_USE_DEPRECATED_OPENCL_2_0_APIS
-#define CL_TARGET_OPENCL_VERSION 220
-#include <CL/cl.h>
-#elif defined(HAVE_OPENCL_OPENCL_H)
-#include <OpenCL/opencl.h>
-#endif
-
-#include "unixlib.h"
 
 #endif
