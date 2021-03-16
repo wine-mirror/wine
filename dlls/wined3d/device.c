@@ -1858,7 +1858,7 @@ void CDECL wined3d_device_set_scissor_rects(struct wined3d_device *device, unsig
         memset(state->scissor_rects, 0, sizeof(state->scissor_rects));
     state->scissor_rect_count = rect_count;
 
-    wined3d_cs_emit_set_scissor_rects(device->cs, rect_count, rects);
+    wined3d_device_context_emit_set_scissor_rects(&device->cs->c, rect_count, rects);
 }
 
 void CDECL wined3d_device_get_scissor_rects(const struct wined3d_device *device, unsigned int *rect_count, RECT *rects)
@@ -1977,7 +1977,7 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
     wined3d_cs_emit_set_material(device->cs, &state->material);
 
     wined3d_device_context_emit_set_viewports(context, state->viewport_count, state->viewports);
-    wined3d_cs_emit_set_scissor_rects(device->cs, state->scissor_rect_count, state->scissor_rects);
+    wined3d_device_context_emit_set_scissor_rects(context, state->scissor_rect_count, state->scissor_rects);
 
     for (i = 0; i < LIGHTMAP_SIZE; ++i)
     {
@@ -5211,7 +5211,7 @@ HRESULT CDECL wined3d_device_set_rendertarget_view(struct wined3d_device *device
 
         SetRect(&state->scissor_rects[0], 0, 0, view->width, view->height);
         state->scissor_rect_count = 1;
-        wined3d_cs_emit_set_scissor_rects(device->cs, 1, state->scissor_rects);
+        wined3d_device_context_emit_set_scissor_rects(&device->cs->c, 1, state->scissor_rects);
     }
 
     prev = state->fb.render_targets[view_idx];
