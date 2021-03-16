@@ -1592,6 +1592,7 @@ static struct unix_funcs unix_funcs =
     load_builtin_dll,
     init_builtin_dll,
     unwind_builtin_dll,
+    get_load_order,
     __wine_dbg_get_channel_flags,
     __wine_dbg_strdup,
     __wine_dbg_output,

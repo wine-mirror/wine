@@ -25,8 +25,19 @@
 
 struct _DISPATCHER_CONTEXT;
 
+enum loadorder
+{
+    LO_INVALID,
+    LO_DISABLED,
+    LO_NATIVE,
+    LO_BUILTIN,
+    LO_NATIVE_BUILTIN,  /* native then builtin */
+    LO_BUILTIN_NATIVE,  /* builtin then native */
+    LO_DEFAULT          /* nothing specified, use default strategy */
+};
+
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 116
+#define NTDLL_UNIXLIB_VERSION 117
 
 struct unix_funcs
 {
@@ -79,6 +90,7 @@ struct unix_funcs
     void          (CDECL *init_builtin_dll)( void *module );
     NTSTATUS      (CDECL *unwind_builtin_dll)( ULONG type, struct _DISPATCHER_CONTEXT *dispatch,
                                                CONTEXT *context );
+    enum loadorder (CDECL *get_load_order)( const WCHAR *app_name, const UNICODE_STRING *nt_name );
 
     /* debugging functions */
     unsigned char (CDECL *dbg_get_channel_flags)( struct __wine_debug_channel *channel );

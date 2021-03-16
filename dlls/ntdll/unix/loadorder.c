@@ -19,6 +19,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,7 +32,7 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
-#include "ntdll_misc.h"
+#include "unix_private.h"
 
 #include "wine/debug.h"
 
@@ -36,23 +40,22 @@ WINE_DEFAULT_DEBUG_CHANNEL(module);
 
 #define LOADORDER_ALLOC_CLUSTER	32	/* Allocate with 32 entries at a time */
 
-typedef struct module_loadorder
+struct module_loadorder
 {
     const WCHAR        *modulename;
     enum loadorder      loadorder;
-} module_loadorder_t;
+};
 
-struct loadorder_list
+static struct
 {
     int                 count;
     int                 alloc;
-    module_loadorder_t *order;
-};
+    struct module_loadorder *order;
+} env_list;
 
-static const WCHAR separatorsW[] = L", \t";
+static const WCHAR separatorsW[] = {',',' ','\t',0};
 
 static BOOL init_done;
-static struct loadorder_list env_list;
 
 
 /***************************************************************************
@@ -61,9 +64,10 @@ static struct loadorder_list env_list;
  * Sorting and comparing function used in sort and search of loadorder
  * entries.
  */
-static int __cdecl cmp_sort_func(const void *s1, const void *s2)
+static int cmp_sort_func(const void *s1, const void *s2)
 {
-    return wcsicmp(((const module_loadorder_t *)s1)->modulename, ((const module_loadorder_t *)s2)->modulename);
+    return wcsicmp( ((const struct module_loadorder *)s1)->modulename,
+                    ((const struct module_loadorder *)s2)->modulename );
 }
 
 
@@ -72,9 +76,9 @@ static int __cdecl cmp_sort_func(const void *s1, const void *s2)
  *
  * Return the base name of a file name (i.e. remove the path components).
  */
-static const WCHAR *get_basename( const WCHAR *name )
+static WCHAR *get_basename( WCHAR *name )
 {
-    const WCHAR *ptr;
+    WCHAR *ptr;
 
     if (name[0] && name[1] == ':') name += 2;  /* strip drive specification */
     if ((ptr = wcsrchr( name, '\\' ))) name = ptr + 1;
@@ -89,9 +93,10 @@ static const WCHAR *get_basename( const WCHAR *name )
  */
 static inline void remove_dll_ext( WCHAR *name )
 {
+    static const WCHAR dllW[] = {'.','d','l','l',0};
     WCHAR *p = wcsrchr( name, '.' );
 
-    if (p && !wcsicmp( p, L".dll" )) *p = 0;
+    if (p && !wcsicmp( p, dllW )) *p = 0;
 }
 
 
@@ -152,16 +157,16 @@ static enum loadorder parse_load_order( const WCHAR *order )
  *
  * Adds an entry in the list of environment overrides.
  */
-static void add_load_order( const module_loadorder_t *plo )
+static void add_load_order( const struct module_loadorder *lo )
 {
     int i;
 
     for(i = 0; i < env_list.count; i++)
     {
-        if(!cmp_sort_func(plo, &env_list.order[i] ))
+        if (!cmp_sort_func( lo, &env_list.order[i] ))
         {
             /* replace existing option */
-            env_list.order[i].loadorder = plo->loadorder;
+            env_list.order[i].loadorder = lo->loadorder;
             return;
         }
     }
@@ -170,20 +175,10 @@ static void add_load_order( const module_loadorder_t *plo )
     {
         /* No space in current array, make it larger */
         env_list.alloc += LOADORDER_ALLOC_CLUSTER;
-        if (env_list.order)
-            env_list.order = RtlReAllocateHeap(GetProcessHeap(), 0, env_list.order,
-                                               env_list.alloc * sizeof(module_loadorder_t));
-        else
-            env_list.order = RtlAllocateHeap(GetProcessHeap(), 0,
-                                             env_list.alloc * sizeof(module_loadorder_t));
-        if(!env_list.order)
-        {
-            MESSAGE("Virtual memory exhausted\n");
-            NtTerminateProcess( GetCurrentProcess(), 1 );
-        }
+        env_list.order = realloc( env_list.order, env_list.alloc * sizeof(*lo) );
     }
-    env_list.order[i].loadorder  = plo->loadorder;
-    env_list.order[i].modulename = plo->modulename;
+    env_list.order[i].loadorder  = lo->loadorder;
+    env_list.order[i].modulename = lo->modulename;
     env_list.count++;
 }
 
@@ -195,7 +190,7 @@ static void add_load_order( const module_loadorder_t *plo )
  */
 static void add_load_order_set( WCHAR *entry )
 {
-    module_loadorder_t ldo;
+    struct module_loadorder ldo;
     WCHAR *end = wcschr( entry, '=' );
 
     if (!end) return;
@@ -224,26 +219,13 @@ static void add_load_order_set( WCHAR *entry )
 static void init_load_order(void)
 {
     WCHAR *entry, *next, *order;
-    SIZE_T len = 1024;
-    NTSTATUS status;
+    const char *overrides = getenv( "WINEDLLOVERRIDES" );
 
     init_done = TRUE;
 
-    for (;;)
-    {
-        order = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-        status = RtlQueryEnvironmentVariable( NULL, L"WINEDLLOVERRIDES", wcslen(L"WINEDLLOVERRIDES"),
-                                              order, len - 1, &len );
-        if (!status)
-        {
-            order[len] = 0;
-            break;
-        }
-        RtlFreeHeap( GetProcessHeap(), 0, order );
-        if (status != STATUS_BUFFER_TOO_SMALL) return;
-    }
-
-    entry = order;
+    if (!overrides) return;
+    order = entry = malloc( (strlen(overrides) + 1) * sizeof(WCHAR) );
+    ntdll_umbstowcs( overrides, strlen(overrides) + 1, order, strlen(overrides) + 1 );
     while (*entry)
     {
         while (*entry == ';') entry++;
@@ -270,7 +252,7 @@ static void init_load_order(void)
  */
 static inline enum loadorder get_env_load_order( const WCHAR *module )
 {
-    module_loadorder_t tmp, *res;
+    struct module_loadorder tmp, *res;
 
     tmp.modulename = module;
     /* some bsearch implementations (Solaris) are buggy when the number of items is 0 */
@@ -292,22 +274,8 @@ static HANDLE get_standard_key(void)
 
     if (std_key == (HANDLE)-1)
     {
-        OBJECT_ATTRIBUTES attr;
-        UNICODE_STRING nameW;
-        HANDLE root;
-
-        RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
-        attr.Length = sizeof(attr);
-        attr.RootDirectory = root;
-        attr.ObjectName = &nameW;
-        attr.Attributes = 0;
-        attr.SecurityDescriptor = NULL;
-        attr.SecurityQualityOfService = NULL;
-        RtlInitUnicodeString( &nameW, L"Software\\Wine\\DllOverrides" );
-
         /* @@ Wine registry key: HKCU\Software\Wine\DllOverrides */
-        if (NtOpenKey( &std_key, KEY_ALL_ACCESS, &attr )) std_key = 0;
-        NtClose( root );
+        if (open_hkcu_key( "Software\\Wine\\DllOverrides", &std_key )) std_key = 0;
     }
     return std_key;
 }
@@ -320,35 +288,28 @@ static HANDLE get_standard_key(void)
  */
 static HANDLE get_app_key( const WCHAR *app_name )
 {
+    static const WCHAR dlloverridesW[] = {'\\','D','l','l','O','v','e','r','r','i','d','e','s',0};
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     HANDLE root;
-    WCHAR *str;
     static HANDLE app_key = (HANDLE)-1;
 
     if (app_key != (HANDLE)-1) return app_key;
 
-    str = RtlAllocateHeap( GetProcessHeap(), 0,
-                           sizeof(L"Software\\Wine\\AppDefaults\\") + sizeof(L"\\DllOverrides") +
-                           wcslen(app_name) * sizeof(WCHAR) );
-    if (!str) return 0;
-    wcscpy( str, L"Software\\Wine\\AppDefaults\\" );
-    wcscat( str, app_name );
-    wcscat( str, L"\\DllOverrides" );
+    if (!open_hkcu_key( "Software\\Wine\\AppDefaults", &root ))
+    {
+        ULONG len = wcslen( app_name ) + ARRAY_SIZE(dlloverridesW);
+        nameW.Length = (len - 1) * sizeof(WCHAR);
+        nameW.Buffer = malloc( len * sizeof(WCHAR) );
+        wcscpy( nameW.Buffer, app_name );
+        wcscat( nameW.Buffer, dlloverridesW );
+        InitializeObjectAttributes( &attr, &nameW, 0, root, NULL );
 
-    RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = root;
-    attr.ObjectName = &nameW;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &nameW, str );
-
-    /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe\DllOverrides */
-    if (NtOpenKey( &app_key, KEY_ALL_ACCESS, &attr )) app_key = 0;
-    NtClose( root );
-    RtlFreeHeap( GetProcessHeap(), 0, str );
+        /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe\DllOverrides */
+        if (NtOpenKey( &app_key, KEY_ALL_ACCESS, &attr )) app_key = 0;
+        NtClose( root );
+        free( nameW.Buffer );
+    }
     return app_key;
 }
 
@@ -358,13 +319,14 @@ static HANDLE get_app_key( const WCHAR *app_name )
  *
  * Load the registry loadorder value for a given module.
  */
-static enum loadorder get_registry_value( HANDLE hkey, const WCHAR *module )
+static enum loadorder get_registry_value( HANDLE hkey, WCHAR *module )
 {
     UNICODE_STRING valueW;
     char buffer[80];
     DWORD count;
 
-    RtlInitUnicodeString( &valueW, module );
+    valueW.Length = wcslen( module ) * sizeof(WCHAR);
+    valueW.Buffer = module;
 
     if (!NtQueryValueKey( hkey, &valueW, KeyValuePartialInformation,
                                  buffer, sizeof(buffer), &count ))
@@ -384,7 +346,7 @@ static enum loadorder get_registry_value( HANDLE hkey, const WCHAR *module )
  * 2. The per-application DllOverrides key
  * 3. The standard DllOverrides key
  */
-static enum loadorder get_load_order_value( HANDLE std_key, HANDLE app_key, const WCHAR *module )
+static enum loadorder get_load_order_value( HANDLE std_key, HANDLE app_key, WCHAR *module )
 {
     enum loadorder ret;
 
@@ -416,8 +378,11 @@ static enum loadorder get_load_order_value( HANDLE std_key, HANDLE app_key, cons
  * Return the loadorder of a module.
  * The system directory and '.dll' extension is stripped from the path.
  */
-enum loadorder get_load_order( const WCHAR *app_name, const UNICODE_STRING *nt_name )
+enum loadorder CDECL get_load_order( const WCHAR *app_name, const UNICODE_STRING *nt_name )
 {
+    static const WCHAR prefixW[] = {'\\','?','?','\\'};
+    static const WCHAR system_dir[] = {'C',':','\\','w','i','n','d','o','w','s',
+                                       '\\','s','y','s','t','e','m','3','2'};
     enum loadorder ret = LO_INVALID;
     HANDLE std_key, app_key = 0;
     const WCHAR *path = nt_name->Buffer;
@@ -427,24 +392,24 @@ enum loadorder get_load_order( const WCHAR *app_name, const UNICODE_STRING *nt_n
     if (!init_done) init_load_order();
     std_key = get_standard_key();
     if (app_name) app_key = get_app_key( app_name );
-    if (!wcsncmp( path, L"\\??\\", 4 )) path += 4;
+    if (!wcsncmp( path, prefixW, 4 )) path += 4;
 
     TRACE("looking for %s\n", debugstr_w(path));
 
     /* Strip path information if the module resides in the system directory
      */
-    if (!wcsnicmp( system_dir, path, wcslen( system_dir )))
+    if (!wcsnicmp( system_dir, path, ARRAY_SIZE( system_dir )))
     {
-        const WCHAR *p = path + wcslen( system_dir );
+        const WCHAR *p = path + ARRAY_SIZE( system_dir );
         while (*p == '\\' || *p == '/') p++;
         if (!wcschr( p, '\\' ) && !wcschr( p, '/' )) path = p;
     }
 
     if (!(len = wcslen(path))) return ret;
-    if (!(module = RtlAllocateHeap( GetProcessHeap(), 0, (len + 2) * sizeof(WCHAR) ))) return ret;
-    wcscpy( module+1, path );  /* reserve module[0] for the wildcard char */
+    if (!(module = malloc( (len + 2) * sizeof(WCHAR) ))) return ret;
+    wcscpy( module + 1, path );  /* reserve module[0] for the wildcard char */
     remove_dll_ext( module + 1 );
-    basename = (WCHAR *)get_basename( module+1 );
+    basename = get_basename( module + 1 );
 
     /* first explicit module name */
     if ((ret = get_load_order_value( std_key, app_key, module+1 )) != LO_INVALID)
@@ -472,6 +437,6 @@ enum loadorder get_load_order( const WCHAR *app_name, const UNICODE_STRING *nt_n
     TRACE( "got hardcoded %s for %s\n", debugstr_loadorder(ret), debugstr_w(path) );
 
  done:
-    RtlFreeHeap( GetProcessHeap(), 0, module );
+    free( module );
     return ret;
 }

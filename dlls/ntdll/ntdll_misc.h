@@ -90,19 +90,6 @@ extern int CDECL NTDLL__vsnwprintf( WCHAR *str, SIZE_T len, const WCHAR *format,
 
 /* load order */
 
-enum loadorder
-{
-    LO_INVALID,
-    LO_DISABLED,
-    LO_NATIVE,
-    LO_BUILTIN,
-    LO_NATIVE_BUILTIN,  /* native then builtin */
-    LO_BUILTIN_NATIVE,  /* builtin then native */
-    LO_DEFAULT          /* nothing specified, use default strategy */
-};
-
-extern enum loadorder get_load_order( const WCHAR *app_name, const UNICODE_STRING *nt_name ) DECLSPEC_HIDDEN;
-
 #ifndef _WIN64
 static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiBatchCount; }
 #endif

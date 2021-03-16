@@ -20,7 +20,6 @@ C_SRCS = \
 	heap.c \
 	large_int.c \
 	loader.c \
-	loadorder.c \
 	locale.c \
 	misc.c \
 	nt.c \
@@ -48,6 +47,7 @@ C_SRCS = \
 	unix/env.c \
 	unix/file.c \
 	unix/loader.c \
+	unix/loadorder.c \
 	unix/process.c \
 	unix/registry.c \
 	unix/security.c \

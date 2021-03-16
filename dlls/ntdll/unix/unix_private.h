@@ -382,6 +382,8 @@ static inline void context_init_xstate( CONTEXT *context, void *xstate_buffer )
 }
 #endif
 
+extern enum loadorder CDECL get_load_order( const WCHAR *app_name, const UNICODE_STRING *nt_name ) DECLSPEC_HIDDEN;
+
 static inline size_t ntdll_wcslen( const WCHAR *str )
 {
     const WCHAR *s = str;
@@ -434,6 +436,20 @@ static inline WCHAR *ntdll_wcspbrk( const WCHAR *str, const WCHAR *accept )
     return NULL;
 }
 
+static inline SIZE_T ntdll_wcsspn( const WCHAR *str, const WCHAR *accept )
+{
+    const WCHAR *ptr;
+    for (ptr = str; *ptr; ptr++) if (!ntdll_wcschr( accept, *ptr )) break;
+    return ptr - str;
+}
+
+static inline SIZE_T ntdll_wcscspn( const WCHAR *str, const WCHAR *reject )
+{
+    const WCHAR *ptr;
+    for (ptr = str; *ptr; ptr++) if (ntdll_wcschr( reject, *ptr )) break;
+    return ptr - str;
+}
+
 static inline WCHAR ntdll_towupper( WCHAR ch )
 {
     return ch + uctable[uctable[uctable[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0x0f)];
@@ -478,6 +494,8 @@ static inline int ntdll_wcsnicmp( const WCHAR *str1, const WCHAR *str2, int n )
 #define wcschr(str,ch)     ntdll_wcschr(str,ch)
 #define wcsrchr(str,ch)    ntdll_wcsrchr(str,ch)
 #define wcspbrk(str,ac)    ntdll_wcspbrk(str,ac)
+#define wcsspn(str,ac)     ntdll_wcsspn(str,ac)
+#define wcscspn(str,rej)   ntdll_wcscspn(str,rej)
 #define wcsicmp(s1, s2)    ntdll_wcsicmp(s1,s2)
 #define wcsnicmp(s1, s2,n) ntdll_wcsnicmp(s1,s2,n)
 #define wcsupr(str)        ntdll_wcsupr(str)
