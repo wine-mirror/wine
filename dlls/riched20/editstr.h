@@ -386,6 +386,7 @@ typedef struct tagME_TextEditor
   DWORD styleFlags;
   DWORD exStyleFlags;
   DWORD props;
+  DWORD scrollbars;
   int nCursors;
   SIZE sizeWindow;
   int nTotalLength, nLastTotalLength;

@@ -1070,24 +1070,24 @@ void ME_ScrollAbs(ME_TextEditor *editor, int x, int y)
   if (editor->hWnd)
   {
     LONG winStyle = GetWindowLongW(editor->hWnd, GWL_STYLE);
-    if (editor->styleFlags & WS_HSCROLL)
+    if (editor->scrollbars & WS_HSCROLL)
     {
       bScrollBarIsVisible = (winStyle & WS_HSCROLL) != 0;
       bScrollBarWillBeVisible = (editor->nTotalWidth > editor->sizeWindow.cx
-                                 && (editor->styleFlags & WS_HSCROLL))
-                                || (editor->styleFlags & ES_DISABLENOSCROLL);
+                                 && (editor->scrollbars & WS_HSCROLL))
+                                || (editor->scrollbars & ES_DISABLENOSCROLL);
       if (bScrollBarIsVisible != bScrollBarWillBeVisible)
         ITextHost_TxShowScrollBar(editor->texthost, SB_HORZ,
                                   bScrollBarWillBeVisible);
     }
 
-    if (editor->styleFlags & WS_VSCROLL)
+    if (editor->scrollbars & WS_VSCROLL)
     {
       bScrollBarIsVisible = (winStyle & WS_VSCROLL) != 0;
       bScrollBarWillBeVisible = (editor->nTotalLength > editor->sizeWindow.cy
-                                 && (editor->styleFlags & WS_VSCROLL)
+                                 && (editor->scrollbars & WS_VSCROLL)
                                  && (editor->styleFlags & ES_MULTILINE))
-                                || (editor->styleFlags & ES_DISABLENOSCROLL);
+                                || (editor->scrollbars & ES_DISABLENOSCROLL);
       if (bScrollBarIsVisible != bScrollBarWillBeVisible)
         ITextHost_TxShowScrollBar(editor->texthost, SB_VERT,
                                   bScrollBarWillBeVisible);
@@ -1152,7 +1152,7 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
   si.cbSize = sizeof(si);
   si.fMask = SIF_PAGE | SIF_RANGE | SIF_POS;
   si.nMin = 0;
-  if (editor->styleFlags & ES_DISABLENOSCROLL)
+  if (editor->scrollbars & ES_DISABLENOSCROLL)
     si.fMask |= SIF_DISABLENOSCROLL;
 
   /* Update horizontal scrollbar */
@@ -1177,7 +1177,7 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     editor->horz_si.nMax = si.nMax;
     editor->horz_si.nPage = si.nPage;
     if ((bScrollBarWillBeVisible || bScrollBarWasVisible) &&
-        editor->styleFlags & WS_HSCROLL)
+        editor->scrollbars & WS_HSCROLL)
     {
       if (si.nMax > 0xFFFF)
       {
@@ -1196,11 +1196,11 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     }
   }
 
-  if (editor->styleFlags & WS_HSCROLL)
+  if (editor->scrollbars & WS_HSCROLL)
   {
     if (si.fMask & SIF_DISABLENOSCROLL) {
       bScrollBarWillBeVisible = TRUE;
-    } else if (!(editor->styleFlags & WS_HSCROLL)) {
+    } else if (!(editor->scrollbars & WS_HSCROLL)) {
       bScrollBarWillBeVisible = FALSE;
     }
 
@@ -1232,7 +1232,7 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     editor->vert_si.nMax = si.nMax;
     editor->vert_si.nPage = si.nPage;
     if ((bScrollBarWillBeVisible || bScrollBarWasVisible) &&
-        editor->styleFlags & WS_VSCROLL)
+        editor->scrollbars & WS_VSCROLL)
     {
       if (si.nMax > 0xFFFF)
       {
@@ -1251,11 +1251,11 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     }
   }
 
-  if (editor->styleFlags & WS_VSCROLL)
+  if (editor->scrollbars & WS_VSCROLL)
   {
     if (si.fMask & SIF_DISABLENOSCROLL) {
       bScrollBarWillBeVisible = TRUE;
-    } else if (!(editor->styleFlags & WS_VSCROLL)) {
+    } else if (!(editor->scrollbars & WS_VSCROLL)) {
       bScrollBarWillBeVisible = FALSE;
     }
 
@@ -1273,7 +1273,7 @@ void editor_ensure_visible( ME_TextEditor *editor, ME_Cursor *cursor )
   int x, y, yheight;
 
 
-  if (editor->styleFlags & ES_AUTOHSCROLL)
+  if (editor->scrollbars & ES_AUTOHSCROLL)
   {
     x = run->pt.x + ME_PointFromChar( editor, run, cursor->nOffset, TRUE );
     if (x > editor->horz_si.nPos + editor->sizeWindow.cx)
@@ -1281,7 +1281,7 @@ void editor_ensure_visible( ME_TextEditor *editor, ME_Cursor *cursor )
     else if (x > editor->horz_si.nPos)
       x = editor->horz_si.nPos;
 
-    if (~editor->styleFlags & ES_AUTOVSCROLL)
+    if (~editor->scrollbars & ES_AUTOVSCROLL)
     {
       ME_HScrollAbs(editor, x);
       return;
@@ -1289,7 +1289,7 @@ void editor_ensure_visible( ME_TextEditor *editor, ME_Cursor *cursor )
   }
   else
   {
-    if (~editor->styleFlags & ES_AUTOVSCROLL) return;
+    if (~editor->scrollbars & ES_AUTOVSCROLL) return;
     x = editor->horz_si.nPos;
   }
 

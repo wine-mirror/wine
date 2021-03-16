@@ -3049,9 +3049,7 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
                                TXTBIT_USEPASSWORD | TXTBIT_HIDESELECTION | TXTBIT_SAVESELECTION |
                                TXTBIT_AUTOWORDSEL | TXTBIT_VERTICAL | TXTBIT_WORDWRAP | TXTBIT_DISABLEDRAG,
                                &ed->props );
-  ITextHost_TxGetScrollBars(texthost, &ed->styleFlags);
-  ed->styleFlags &= (WS_VSCROLL|WS_HSCROLL|ES_AUTOVSCROLL|
-                     ES_AUTOHSCROLL|ES_DISABLENOSCROLL);
+  ITextHost_TxGetScrollBars( texthost, &ed->scrollbars );
   ed->pBuffer = ME_MakeText();
   ed->nZoomNumerator = ed->nZoomDenominator = 0;
   ed->nAvailWidth = 0; /* wrap to client area */
@@ -3307,21 +3305,21 @@ static LRESULT ME_WmCreate(ME_TextEditor *editor, LPARAM lParam, BOOL unicode)
 
   ME_SetDefaultFormatRect(editor);
 
-  max = (editor->styleFlags & ES_DISABLENOSCROLL) ? 1 : 0;
-  if (~editor->styleFlags & ES_DISABLENOSCROLL || editor->styleFlags & WS_VSCROLL)
+  max = (editor->scrollbars & ES_DISABLENOSCROLL) ? 1 : 0;
+  if (~editor->scrollbars & ES_DISABLENOSCROLL || editor->scrollbars & WS_VSCROLL)
     ITextHost_TxSetScrollRange(editor->texthost, SB_VERT, 0, max, TRUE);
 
-  if (~editor->styleFlags & ES_DISABLENOSCROLL || editor->styleFlags & WS_HSCROLL)
+  if (~editor->scrollbars & ES_DISABLENOSCROLL || editor->scrollbars & WS_HSCROLL)
     ITextHost_TxSetScrollRange(editor->texthost, SB_HORZ, 0, max, TRUE);
 
-  if (editor->styleFlags & ES_DISABLENOSCROLL)
+  if (editor->scrollbars & ES_DISABLENOSCROLL)
   {
-    if (editor->styleFlags & WS_VSCROLL)
+    if (editor->scrollbars & WS_VSCROLL)
     {
       ITextHost_TxEnableScrollBar(editor->texthost, SB_VERT, ESB_DISABLE_BOTH);
       ITextHost_TxShowScrollBar(editor->texthost, SB_VERT, TRUE);
     }
-    if (editor->styleFlags & WS_HSCROLL)
+    if (editor->scrollbars & WS_HSCROLL)
     {
       ITextHost_TxEnableScrollBar(editor->texthost, SB_HORZ, ESB_DISABLE_BOTH);
       ITextHost_TxShowScrollBar(editor->texthost, SB_HORZ, TRUE);
@@ -3494,7 +3492,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case EM_GETOPTIONS:
   {
     /* these flags are equivalent to the ES_* counterparts */
-    DWORD mask = ECO_VERTICAL | ECO_AUTOHSCROLL | ECO_AUTOVSCROLL |
+    DWORD mask = ECO_VERTICAL |
                  ECO_NOHIDESEL | ECO_WANTRETURN | ECO_SELECTIONBAR;
     DWORD settings = editor->styleFlags & mask;
 
@@ -3546,7 +3544,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     /* these flags are equivalent to ES_* counterparts, except for
      * ECO_AUTOWORDSELECTION that doesn't have an ES_* counterpart,
      * but is still stored in editor->styleFlags. */
-    const DWORD mask = ECO_VERTICAL | ECO_AUTOHSCROLL | ECO_AUTOVSCROLL |
+    const DWORD mask = ECO_VERTICAL |
                        ECO_NOHIDESEL | ECO_WANTRETURN |
                        ECO_SELECTIONBAR | ECO_AUTOWORDSELECTION;
     DWORD settings = mask & editor->styleFlags;
@@ -3592,10 +3590,6 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       if (changedSettings & settings & ECO_VERTICAL)
         FIXME("ECO_VERTICAL not implemented yet!\n");
       if (changedSettings & settings & ECO_AUTOHSCROLL)
-        FIXME("ECO_AUTOHSCROLL not implemented yet!\n");
-      if (changedSettings & settings & ECO_AUTOVSCROLL)
-        FIXME("ECO_AUTOVSCROLL not implemented yet!\n");
-      if (changedSettings & settings & ECO_WANTRETURN)
         FIXME("ECO_WANTRETURN not implemented yet!\n");
       if (changedSettings & settings & ECO_AUTOWORDSELECTION)
         FIXME("ECO_AUTOWORDSELECTION not implemented yet!\n");
@@ -3631,39 +3625,6 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     CHARRANGE range = *(CHARRANGE *)lParam;
 
     return set_selection( editor, range.cpMin, range.cpMax );
-  }
-  case EM_SHOWSCROLLBAR:
-  {
-    DWORD flags;
-
-    switch (wParam)
-    {
-      case SB_HORZ:
-        flags = WS_HSCROLL;
-        break;
-      case SB_VERT:
-        flags = WS_VSCROLL;
-        break;
-      case SB_BOTH:
-        flags = WS_HSCROLL|WS_VSCROLL;
-        break;
-      default:
-        return 0;
-    }
-
-    if (lParam) {
-      editor->styleFlags |= flags;
-      if (flags & WS_HSCROLL)
-        ITextHost_TxShowScrollBar(editor->texthost, SB_HORZ,
-                          editor->nTotalWidth > editor->sizeWindow.cx);
-      if (flags & WS_VSCROLL)
-        ITextHost_TxShowScrollBar(editor->texthost, SB_VERT,
-                          editor->nTotalLength > editor->sizeWindow.cy);
-    } else {
-      editor->styleFlags &= ~flags;
-      ITextHost_TxShowScrollBar(editor->texthost, wParam, FALSE);
-    }
-    return 0;
   }
   case EM_SETTEXTEX:
   {
