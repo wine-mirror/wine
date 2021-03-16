@@ -694,7 +694,7 @@ static void CDECL wg_parser_stream_notify_qos(struct wg_parser_stream *stream,
     GstEvent *event;
 
     if (!(event = gst_event_new_qos(underflow ? GST_QOS_TYPE_UNDERFLOW : GST_QOS_TYPE_OVERFLOW,
-            1000.0 / proportion, diff * 100, timestamp * 100)))
+            proportion, diff * 100, timestamp * 100)))
         ERR("Failed to create QOS event.\n");
     gst_pad_push_event(stream->my_sink, event);
 }
