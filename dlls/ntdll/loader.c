@@ -3215,7 +3215,8 @@ void WINAPI LdrShutdownThread(void)
     RtlReleasePebLock();
 
     RtlLeaveCriticalSection( &loader_section );
-    if (DbgUiGetThreadDebugObject()) NtClose( DbgUiGetThreadDebugObject() );
+    /* don't call DbgUiGetThreadDebugObject as some apps hook it and terminate if called */
+    if (NtCurrentTeb()->DbgSsReserved[1]) NtClose( NtCurrentTeb()->DbgSsReserved[1] );
     RtlFreeThreadActivationContextStack();
 }
 
