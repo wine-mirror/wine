@@ -2,5 +2,7 @@ MODULE    = opencl.dll
 EXTRALIBS = $(OPENCL_LIBS)
 
 C_SRCS = \
-	opencl.c \
-	opencl_thunks.c
+	pe_thunks.c \
+	pe_wrappers.c \
+	unix_thunks.c \
+	unix_wrappers.c

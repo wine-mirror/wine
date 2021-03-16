@@ -20,7 +20,9 @@ use XML::LibXML;
 
 # Files to generate
 my $spec_file = "opencl.spec";
-my $thunks_file = "opencl_thunks.c";
+my $pe_file = "pe_thunks.c";
+my $unix_file = "unix_thunks.c";
+my $unixheader_file = "unixlib.h";
 
 # If set to 1, generate TRACEs for each OpenGL function
 my $gen_traces = 1;
@@ -49,7 +51,7 @@ my %arg_types =
         "unsigned int"   => [ "long",   "%u" ],
     );
 
-sub generate_thunk($$)
+sub generate_pe_thunk($$)
 {
     my ($name, $func_ref) = @_;
     my $call_arg = "";
@@ -85,6 +87,28 @@ sub generate_thunk($$)
     $ret .= "\n{\n";
     $ret .= "    TRACE( \"($trace_arg)\\n\"$trace_call_arg );\n" if $gen_traces;
     $ret .= "    ";
+    $ret .= "return " unless is_void_func( $func_ref );
+    $ret .= "opencl_funcs->p$name($call_arg);\n";
+    $ret .= "}\n";
+    return $ret;
+}
+
+sub generate_unix_thunk($$)
+{
+    my ($name, $func_ref) = @_;
+    my $call_arg = "";
+
+    my $ret = get_func_proto( "static %s WINAPI wrap_%s(%s)", $name, $func_ref );
+    foreach my $arg (@{$func_ref->[1]})
+    {
+        my $ptype = get_arg_type( $arg );
+        next unless $arg->findnodes("./name");
+        my $pname = get_arg_name( $arg );
+        my $param = $arg->textContent();
+        $call_arg .= " " . $pname . ",";
+    }
+    $call_arg =~ s/,$/ /;
+    $ret .= "\n{\n    ";
     $ret .= "return " unless is_void_func( $func_ref );
     $ret .= "$name($call_arg);\n";
     $ret .= "}\n";
@@ -122,6 +146,7 @@ sub get_func_proto($$$)
     foreach my $arg (@{$func->[1]})
     {
         (my $argtext = $arg->textContent()) =~ s/ +/ /g;
+        $argtext =~ s/CL_CALLBACK/WINAPI/g;
         $args .= " " . $argtext . ",";
     }
     $args =~ s/,$/ /;
@@ -180,7 +205,24 @@ my %cl_enums;
 my (%cl_types, @cl_types);  # also use an array to preserve declaration order
 
 # some functions need a hand-written wrapper
-sub needs_wrapper($)
+sub needs_pe_wrapper($)
+{
+    my %funcs =
+        (
+            # need extension filtering
+            "clGetDeviceInfo" => 1,
+            "clGetPlatformInfo" => 1,
+
+            # needs function pointer conversion
+            "clGetExtensionFunctionAddress" => 1,
+        );
+    my $name = shift;
+
+    return defined $funcs{$name};
+}
+
+# some functions need a hand-written wrapper
+sub needs_unix_wrapper($)
 {
     my %funcs =
         (
@@ -189,13 +231,6 @@ sub needs_wrapper($)
             "clCreateContext" => 1,
             "clCreateContextFromType" => 1,
             "clEnqueueNativeKernel" => 1,
-
-            # need extension filtering
-            "clGetDeviceInfo" => 1,
-            "clGetPlatformInfo" => 1,
-
-            # needs function pointer conversion
-            "clGetExtensionFunctionAddress" => 1,
         );
     my $name = shift;
 
@@ -279,21 +314,66 @@ foreach (sort keys %core_functions)
 
 close(SPEC);
 
-my $file_header =
-"/* Automatically generated from OpenCL registry files; DO NOT EDIT! */\n\n" .
-"#include \"config.h\"\n" .
-"#include \"opencl_private.h\"\n\n";
+# generate the PE thunks
+open(PE, ">$pe_file") or die "cannot create $pe_file";
 
-$file_header .= "WINE_DEFAULT_DEBUG_CHANNEL(opencl);\n" if $gen_traces;
+print PE "/* Automatically generated from OpenCL registry files; DO NOT EDIT! */\n\n";
 
-# generate the thunks file
-open(THUNKS, ">$thunks_file") or die "cannot create $thunks_file";
-print THUNKS $file_header;
+print PE "#include \"config.h\"\n";
+print PE "#include \"opencl_private.h\"\n\n";
+
+print PE "WINE_DEFAULT_DEBUG_CHANNEL(opencl);\n" if $gen_traces;
 
 foreach (sort keys %core_functions)
 {
-    next if needs_wrapper( $_ );
-    print THUNKS "\n", generate_thunk( $_, $core_functions{$_} );
+    next if needs_pe_wrapper( $_ );
+    print PE "\n", generate_pe_thunk( $_, $core_functions{$_} );
 }
 
-close(THUNKS);
+close(PE);
+
+# generate the unix library thunks
+open(UNIX, ">$unix_file") or die "cannot create $unix_file";
+
+print UNIX <<EOF
+/* Automatically generated from OpenCL registry files; DO NOT EDIT! */
+
+#if 0
+#pragma makedep unix
+#endif
+
+#include "config.h"
+#include "unix_private.h"
+EOF
+;
+
+foreach (sort keys %core_functions)
+{
+    next if needs_unix_wrapper( $_ );
+    print UNIX "\n", generate_unix_thunk( $_, $core_functions{$_} );
+}
+
+print UNIX "\nconst struct opencl_funcs funcs =\n{\n";
+foreach (sort keys %core_functions)
+{
+    print UNIX "    wrap_" . $_ . ",\n";
+}
+print UNIX "};\n";
+
+close(UNIX);
+
+# generate the unix library header
+open(UNIXHEADER, ">$unixheader_file") or die "cannot create $unixheader_file";
+
+print UNIXHEADER "/* Automatically generated from OpenCL registry files; DO NOT EDIT! */\n\n";
+
+print UNIXHEADER "struct opencl_funcs\n{\n";
+foreach (sort keys %core_functions)
+{
+    print UNIXHEADER get_func_proto( "    %s (WINAPI *p%s)(%s);\n", $_, $core_functions{$_} );
+}
+print UNIXHEADER "};\n\n";
+
+print UNIXHEADER "extern const struct opencl_funcs *opencl_funcs;\n";
+
+close(UNIXHEADER);

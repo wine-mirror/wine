@@ -1,0 +1,45 @@
+/*
+ * Copyright 2021 Zebediah Figura
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifndef __WINE_UNIX_PRIVATE_H
+#define __WINE_UNIX_PRIVATE_H
+
+#include "opencl_private.h"
+
+cl_int WINAPI wrap_clBuildProgram( cl_program program, cl_uint num_devices,
+        const cl_device_id *device_list, const char *options,
+        void (WINAPI *pfn_notify)(cl_program program, void *user_data),
+        void *user_data ) DECLSPEC_HIDDEN;
+
+cl_context WINAPI wrap_clCreateContext( const cl_context_properties *properties,
+        cl_uint num_devices, const cl_device_id *devices,
+        void (WINAPI *pfn_notify)(const char *errinfo, const void *private_info, size_t cb, void *user_data),
+        void *user_data, cl_int *errcode_ret ) DECLSPEC_HIDDEN;
+
+cl_context WINAPI wrap_clCreateContextFromType( const cl_context_properties *properties, cl_device_type device_type,
+        void (WINAPI *pfn_notify)(const char *errinfo, const void *private_info, size_t cb, void *user_data),
+        void *user_data, cl_int *errcode_ret ) DECLSPEC_HIDDEN;
+
+cl_int WINAPI wrap_clEnqueueNativeKernel( cl_command_queue command_queue,
+        void (WINAPI *user_func)(void *),
+        void *args, size_t cb_args, cl_uint num_mem_objects, const cl_mem *mem_list, const void **args_mem_loc,
+        cl_uint num_events_in_wait_list, const cl_event *event_wait_list, cl_event *event ) DECLSPEC_HIDDEN;
+
+extern const struct opencl_funcs funcs;
+
+#endif

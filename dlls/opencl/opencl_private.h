@@ -21,8 +21,11 @@
 
 #include <stdarg.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 
 #include "wine/debug.h"
 
@@ -37,5 +40,7 @@
 #elif defined(HAVE_OPENCL_OPENCL_H)
 #include <OpenCL/opencl.h>
 #endif
+
+#include "unixlib.h"
 
 #endif
