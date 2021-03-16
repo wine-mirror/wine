@@ -1162,7 +1162,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetState(ID3D11DeviceCon
 static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetViewports(ID3D11DeviceContext1 *iface,
         UINT viewport_count, const D3D11_VIEWPORT *viewports)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext1(iface);
     struct wined3d_viewport wined3d_vp[WINED3D_MAX_VIEWPORTS];
     unsigned int i;
 
@@ -1182,7 +1182,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetViewports(ID3D11Devic
     }
 
     wined3d_mutex_lock();
-    wined3d_device_set_viewports(device->wined3d_device, viewport_count, wined3d_vp);
+    wined3d_device_context_set_viewports(context->wined3d_context, viewport_count, wined3d_vp);
     wined3d_mutex_unlock();
 }
 
