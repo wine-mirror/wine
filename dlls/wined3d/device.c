@@ -1835,7 +1835,6 @@ static void wined3d_device_set_sampler_state(struct wined3d_device *device,
 void CDECL wined3d_device_set_scissor_rects(struct wined3d_device *device, unsigned int rect_count,
         const RECT *rects)
 {
-    struct wined3d_state *state = device->cs->c.state;
     unsigned int i;
 
     TRACE("device %p, rect_count %u, rects %p.\n", device, rect_count, rects);
@@ -1845,20 +1844,7 @@ void CDECL wined3d_device_set_scissor_rects(struct wined3d_device *device, unsig
         TRACE("%u: %s\n", i, wine_dbgstr_rect(&rects[i]));
     }
 
-    if (state->scissor_rect_count == rect_count
-            && !memcmp(state->scissor_rects, rects, rect_count * sizeof(*rects)))
-    {
-        TRACE("App is setting the old scissor rectangles over, nothing to do.\n");
-        return;
-    }
-
-    if (rect_count)
-        memcpy(state->scissor_rects, rects, rect_count * sizeof(*rects));
-    else
-        memset(state->scissor_rects, 0, sizeof(state->scissor_rects));
-    state->scissor_rect_count = rect_count;
-
-    wined3d_device_context_emit_set_scissor_rects(&device->cs->c, rect_count, rects);
+    wined3d_device_context_set_scissor_rects(&device->cs->c, rect_count, rects);
 }
 
 void CDECL wined3d_device_get_scissor_rects(const struct wined3d_device *device, unsigned int *rect_count, RECT *rects)
@@ -2171,6 +2157,35 @@ void CDECL wined3d_device_context_set_viewports(struct wined3d_device_context *c
     state->viewport_count = viewport_count;
 
     wined3d_device_context_emit_set_viewports(context, viewport_count, viewports);
+}
+
+void CDECL wined3d_device_context_set_scissor_rects(struct wined3d_device_context *context, unsigned int rect_count,
+        const RECT *rects)
+{
+    struct wined3d_state *state = context->state;
+    unsigned int i;
+
+    TRACE("context %p, rect_count %u, rects %p.\n", context, rect_count, rects);
+
+    for (i = 0; i < rect_count; ++i)
+    {
+        TRACE("%u: %s\n", i, wine_dbgstr_rect(&rects[i]));
+    }
+
+    if (state->scissor_rect_count == rect_count
+            && !memcmp(state->scissor_rects, rects, rect_count * sizeof(*rects)))
+    {
+        TRACE("App is setting the old scissor rectangles over, nothing to do.\n");
+        return;
+    }
+
+    if (rect_count)
+        memcpy(state->scissor_rects, rects, rect_count * sizeof(*rects));
+    else
+        memset(state->scissor_rects, 0, sizeof(state->scissor_rects));
+    state->scissor_rect_count = rect_count;
+
+    wined3d_device_context_emit_set_scissor_rects(context, rect_count, rects);
 }
 
 void CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struct wined3d_shader *shader)
