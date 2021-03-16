@@ -512,7 +512,7 @@ static HRESULT create_html_rect(nsIDOMClientRect *nsrect, compat_mode_t compat_m
     rect->IHTMLRect_iface.lpVtbl = &HTMLRectVtbl;
     rect->ref = 1;
 
-    init_dispex_with_compat_mode(&rect->dispex, (IUnknown*)&rect->IHTMLRect_iface, &HTMLRect_dispex, compat_mode);
+    init_dispatch(&rect->dispex, (IUnknown*)&rect->IHTMLRect_iface, &HTMLRect_dispex, compat_mode);
 
     nsIDOMClientRect_AddRef(nsrect);
     rect->nsrect = nsrect;
@@ -2668,8 +2668,8 @@ static HRESULT WINAPI HTMLElement2_getClientRects(IHTMLElement2 *iface, IHTMLRec
     rects->IHTMLRectCollection_iface.lpVtbl = &HTMLRectCollectionVtbl;
     rects->ref = 1;
     rects->rect_list = rect_list;
-    init_dispex_with_compat_mode(&rects->dispex, (IUnknown*)&rects->IHTMLRectCollection_iface,
-                                 &HTMLRectCollection_dispex, dispex_compat_mode(&This->node.event_target.dispex));
+    init_dispatch(&rects->dispex, (IUnknown*)&rects->IHTMLRectCollection_iface,
+                  &HTMLRectCollection_dispex, dispex_compat_mode(&This->node.event_target.dispex));
 
     *pRectCol = &rects->IHTMLRectCollection_iface;
     return S_OK;
@@ -6614,8 +6614,8 @@ static HRESULT create_filters_collection(compat_mode_t compat_mode, IHTMLFilters
     collection->IHTMLFiltersCollection_iface.lpVtbl = &HTMLFiltersCollectionVtbl;
     collection->ref = 1;
 
-    init_dispex_with_compat_mode(&collection->dispex, (IUnknown*)&collection->IHTMLFiltersCollection_iface,
-                                 &HTMLFiltersCollection_dispex, compat_mode);
+    init_dispatch(&collection->dispex, (IUnknown*)&collection->IHTMLFiltersCollection_iface,
+                  &HTMLFiltersCollection_dispex, compat_mode);
 
     *ret = &collection->IHTMLFiltersCollection_iface;
     return S_OK;
@@ -7198,8 +7198,8 @@ HRESULT HTMLElement_get_attr_col(HTMLDOMNode *iface, HTMLAttributeCollection **a
 
     This->attrs->elem = This;
     list_init(&This->attrs->attrs);
-    init_dispex_with_compat_mode(&This->attrs->dispex, (IUnknown*)&This->attrs->IHTMLAttributeCollection_iface,
-                                 &HTMLAttributeCollection_dispex, dispex_compat_mode(&iface->event_target.dispex));
+    init_dispatch(&This->attrs->dispex, (IUnknown*)&This->attrs->IHTMLAttributeCollection_iface,
+                  &HTMLAttributeCollection_dispex, dispex_compat_mode(&iface->event_target.dispex));
 
     *ac = This->attrs;
     return S_OK;

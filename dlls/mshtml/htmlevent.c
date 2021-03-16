@@ -770,7 +770,7 @@ static HTMLEventObj *alloc_event_obj(DOMEvent *event, compat_mode_t compat_mode)
     if(event)
         IDOMEvent_AddRef(&event->IDOMEvent_iface);
 
-    init_dispex_with_compat_mode(&event_obj->dispex, (IUnknown*)&event_obj->IHTMLEventObj_iface, &HTMLEventObj_dispex, compat_mode);
+    init_dispatch(&event_obj->dispex, (IUnknown*)&event_obj->IHTMLEventObj_iface, &HTMLEventObj_dispex, compat_mode);
     return event_obj;
 }
 
@@ -2266,7 +2266,7 @@ static DOMEvent *alloc_event(nsIDOMEvent *nsevent, compat_mode_t compat_mode, ev
     else
         event->keyboard_event = NULL;
 
-    init_dispex_with_compat_mode(&event->dispex, (IUnknown*)&event->IDOMEvent_iface, dispex_data, compat_mode);
+    init_dispatch(&event->dispex, (IUnknown*)&event->IDOMEvent_iface, dispex_data, compat_mode);
     return event;
 }
 
@@ -3429,7 +3429,7 @@ static int event_id_cmp(const void *key, const struct wine_rb_entry *entry)
 void EventTarget_Init(EventTarget *event_target, IUnknown *outer, dispex_static_data_t *dispex_data,
                       compat_mode_t compat_mode)
 {
-    init_dispex_with_compat_mode(&event_target->dispex, outer, dispex_data, compat_mode);
+    init_dispatch(&event_target->dispex, outer, dispex_data, compat_mode);
     event_target->IEventTarget_iface.lpVtbl = &EventTargetVtbl;
     wine_rb_init(&event_target->handler_map, event_id_cmp);
 }

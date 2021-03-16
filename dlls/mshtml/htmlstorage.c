@@ -207,7 +207,7 @@ HRESULT create_html_storage(compat_mode_t compat_mode, IHTMLStorage **p)
 
     storage->IHTMLStorage_iface.lpVtbl = &HTMLStorageVtbl;
     storage->ref = 1;
-    init_dispex_with_compat_mode(&storage->dispex, (IUnknown*)&storage->IHTMLStorage_iface, &HTMLStorage_dispex, compat_mode);
+    init_dispatch(&storage->dispex, (IUnknown*)&storage->IHTMLStorage_iface, &HTMLStorage_dispex, compat_mode);
 
     *p = &storage->IHTMLStorage_iface;
     return S_OK;

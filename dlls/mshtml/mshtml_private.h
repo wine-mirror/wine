@@ -365,7 +365,7 @@ extern void (__cdecl *ccp_init)(ExternalCycleCollectionParticipant*,const CCObjC
 extern void (__cdecl *describe_cc_node)(nsCycleCollectingAutoRefCnt*,const char*,nsCycleCollectionTraversalCallback*) DECLSPEC_HIDDEN;
 extern void (__cdecl *note_cc_edge)(nsISupports*,const char*,nsCycleCollectionTraversalCallback*) DECLSPEC_HIDDEN;
 
-void init_dispex_with_compat_mode(DispatchEx*,IUnknown*,dispex_static_data_t*,compat_mode_t) DECLSPEC_HIDDEN;
+void init_dispatch(DispatchEx*,IUnknown*,dispex_static_data_t*,compat_mode_t) DECLSPEC_HIDDEN;
 void release_dispex(DispatchEx*) DECLSPEC_HIDDEN;
 BOOL dispex_query_interface(DispatchEx*,REFIID,void**) DECLSPEC_HIDDEN;
 HRESULT dispex_get_dprop_ref(DispatchEx*,const WCHAR*,BOOL,VARIANT**) DECLSPEC_HIDDEN;
@@ -379,11 +379,6 @@ HRESULT get_class_typeinfo(const CLSID*,ITypeInfo**) DECLSPEC_HIDDEN;
 const void *dispex_get_vtbl(DispatchEx*) DECLSPEC_HIDDEN;
 void dispex_info_add_interface(dispex_data_t*,tid_t,const dispex_hook_t*) DECLSPEC_HIDDEN;
 compat_mode_t dispex_compat_mode(DispatchEx*) DECLSPEC_HIDDEN;
-
-static inline void init_dispex(DispatchEx *dispex, IUnknown *outer, dispex_static_data_t *desc)
-{
-    init_dispex_with_compat_mode(dispex, outer, desc, COMPAT_MODE_NONE);
-}
 
 typedef enum {
     DISPEXPROP_CUSTOM,

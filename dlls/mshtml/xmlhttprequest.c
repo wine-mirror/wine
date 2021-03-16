@@ -1084,8 +1084,8 @@ HRESULT HTMLXMLHttpRequestFactory_Create(HTMLInnerWindow* window, HTMLXMLHttpReq
     ret->ref = 1;
     ret->window = window;
 
-    init_dispex_with_compat_mode(&ret->dispex, (IUnknown*)&ret->IHTMLXMLHttpRequestFactory_iface,
-                                 &HTMLXMLHttpRequestFactory_dispex, dispex_compat_mode(&window->event_target.dispex));
+    init_dispatch(&ret->dispex, (IUnknown*)&ret->IHTMLXMLHttpRequestFactory_iface,
+                  &HTMLXMLHttpRequestFactory_dispex, dispex_compat_mode(&window->event_target.dispex));
 
     *ret_ptr = ret;
     return S_OK;

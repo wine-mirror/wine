@@ -512,8 +512,8 @@ HRESULT HTMLDOMAttribute_Create(const WCHAR *name, HTMLElement *elem, DISPID dis
     ret->dispid = dispid;
     ret->elem = elem;
 
-    init_dispex_with_compat_mode(&ret->dispex, (IUnknown*)&ret->IHTMLDOMAttribute_iface,
-                                 &HTMLDOMAttribute_dispex, compat_mode);
+    init_dispatch(&ret->dispex, (IUnknown*)&ret->IHTMLDOMAttribute_iface,
+                  &HTMLDOMAttribute_dispex, compat_mode);
 
     /* For attributes attached to an element, (elem,dispid) pair should be valid used for its operation. */
     if(elem) {

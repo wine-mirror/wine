@@ -343,8 +343,8 @@ HRESULT HTMLSelectionObject_Create(HTMLDocumentNode *doc, nsISelection *nsselect
     if(!selection)
         return E_OUTOFMEMORY;
 
-    init_dispex_with_compat_mode(&selection->dispex, (IUnknown*)&selection->IHTMLSelectionObject_iface,
-                                 &HTMLSelectionObject_dispex, dispex_compat_mode(&doc->node.event_target.dispex));
+    init_dispatch(&selection->dispex, (IUnknown*)&selection->IHTMLSelectionObject_iface,
+                  &HTMLSelectionObject_dispex, dispex_compat_mode(&doc->node.event_target.dispex));
 
     selection->IHTMLSelectionObject_iface.lpVtbl = &HTMLSelectionObjectVtbl;
     selection->IHTMLSelectionObject2_iface.lpVtbl = &HTMLSelectionObject2Vtbl;
