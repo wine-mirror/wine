@@ -91,6 +91,7 @@ struct builtin_module
     void       *handle;
     void       *module;
     void       *unix_handle;
+    void       *unix_entry;
 };
 
 static struct list builtin_modules = LIST_INIT( builtin_modules );
@@ -570,6 +571,7 @@ static void add_builtin_module( void *module, void *handle, const struct stat *s
     builtin->handle = handle;
     builtin->module = module;
     builtin->unix_handle = NULL;
+    builtin->unix_entry  = NULL;
     if (st)
     {
         builtin->dev = st->st_dev;
@@ -641,7 +643,7 @@ void *get_builtin_so_handle( void *module )
 /***********************************************************************
  *           set_builtin_unix_handle
  */
-NTSTATUS set_builtin_unix_handle( void *module, void *handle )
+NTSTATUS set_builtin_unix_handle( void *module, void *handle, void *entry )
 {
     sigset_t sigset;
     NTSTATUS status = STATUS_DLL_NOT_FOUND;
@@ -650,22 +652,40 @@ NTSTATUS set_builtin_unix_handle( void *module, void *handle )
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
     LIST_FOR_EACH_ENTRY( builtin, &builtin_modules, struct builtin_module, entry )
     {
-        if (builtin->module == module)
+        if (builtin->module != module) continue;
+        if (!builtin->unix_handle)
         {
-            if (builtin->unix_handle == handle) status = STATUS_IMAGE_ALREADY_LOADED;
-            else if (builtin->unix_handle) status = STATUS_OBJECT_NAME_COLLISION;
-            else status = STATUS_SUCCESS;
-            break;
+            builtin->unix_handle = handle;
+            builtin->unix_entry = entry;
+            status = STATUS_SUCCESS;
         }
-        if (builtin->unix_handle == handle)
-        {
-            status = STATUS_DUPLICATE_NAME;
-            break;
-        }
+        else status = STATUS_IMAGE_ALREADY_LOADED;
+        break;
     }
-    if (!status) builtin->unix_handle = handle;
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
     return status;
+}
+
+
+/***********************************************************************
+ *           init_unix_lib
+ */
+NTSTATUS CDECL init_unix_lib( void *module, DWORD reason, const void *ptr_in, void *ptr_out )
+{
+    sigset_t sigset;
+    NTSTATUS (CDECL *init_func)( HMODULE, DWORD, const void *, void * ) = NULL;
+    struct builtin_module *builtin;
+
+    server_enter_uninterrupted_section( &virtual_mutex, &sigset );
+    LIST_FOR_EACH_ENTRY( builtin, &builtin_modules, struct builtin_module, entry )
+    {
+        if (builtin->module != module) continue;
+        init_func = builtin->unix_entry;
+        break;
+    }
+    server_leave_uninterrupted_section( &virtual_mutex, &sigset );
+    if (!init_func) return STATUS_DLL_NOT_FOUND;
+    return init_func( module, reason, ptr_in, ptr_out );
 }
 
 

@@ -117,7 +117,6 @@ typedef struct _wine_modref
 {
     LDR_DATA_TABLE_ENTRY  ldr;
     struct file_id        id;
-    void                 *unix_entry;
     int                   alloc_deps;
     int                   nDeps;
     struct _wine_modref **deps;
@@ -2340,12 +2339,12 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, UNICODE_STRING *nt_name,
                                   DWORD flags, WINE_MODREF** pwm, BOOL prefer_native )
 {
     NTSTATUS status;
-    void *module, *unix_entry = NULL;
+    void *module;
     SECTION_IMAGE_INFORMATION image_info;
 
     TRACE("Trying built-in %s\n", debugstr_us(nt_name));
 
-    status = unix_funcs->load_builtin_dll( nt_name, &module, &unix_entry, &image_info, prefer_native );
+    status = unix_funcs->load_builtin_dll( nt_name, &module, &image_info, prefer_native );
     if (status) return status;
 
     if ((*pwm = get_modref( module )))  /* already loaded */
@@ -2359,8 +2358,7 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, UNICODE_STRING *nt_name,
 
     TRACE( "loading %s\n", debugstr_us(nt_name) );
     status = build_module( load_path, nt_name, &module, &image_info, NULL, flags, pwm );
-    if (!status) (*pwm)->unix_entry = unix_entry;
-    else if (module) NtUnmapViewOfSection( NtCurrentProcess(), module );
+    if (status && module) NtUnmapViewOfSection( NtCurrentProcess(), module );
     return status;
 }
 
@@ -2730,15 +2728,11 @@ done:
 NTSTATUS __cdecl __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
 {
     WINE_MODREF *wm;
-    NTSTATUS ret = STATUS_DLL_NOT_FOUND;
+    NTSTATUS ret;
 
     RtlEnterCriticalSection( &loader_section );
 
-    if ((wm = get_modref( module )))
-    {
-        NTSTATUS (CDECL *init_func)( HMODULE, DWORD, const void *, void * ) = wm->unix_entry;
-        if (init_func) ret = init_func( module, reason, ptr_in, ptr_out );
-    }
+    if ((wm = get_modref( module ))) ret = unix_funcs->init_unix_lib( module, reason, ptr_in, ptr_out );
     else ret = STATUS_INVALID_HANDLE;
 
     RtlLeaveCriticalSection( &loader_section );

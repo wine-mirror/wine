@@ -1107,7 +1107,7 @@ already_loaded:
 /***********************************************************************
  *           dlopen_unix_dll
  */
-static NTSTATUS dlopen_unix_dll( void *module, const char *name, void **unix_entry )
+static NTSTATUS dlopen_unix_dll( void *module, const char *name )
 {
     void *unix_module, *handle, *entry;
     const IMAGE_NT_HEADERS *nt;
@@ -1119,25 +1119,12 @@ static NTSTATUS dlopen_unix_dll( void *module, const char *name, void **unix_ent
     if (!(entry = dlsym( handle, "__wine_init_unix_lib" ))) goto done;
 
     unix_module = (HMODULE)((nt->OptionalHeader.ImageBase + 0xffff) & ~0xffff);
-    switch (set_builtin_unix_handle( module, handle ))
+    status = set_builtin_unix_handle( module, handle, entry );
+    if (!status)
     {
-    case STATUS_IMAGE_ALREADY_LOADED:
-        *unix_entry = entry;
-        return STATUS_SUCCESS;
-    case STATUS_SUCCESS:
         map_so_dll( nt, unix_module );
         fixup_ntdll_imports( name, unix_module );
-        *unix_entry = entry;
-        return STATUS_SUCCESS;
-    case STATUS_OBJECT_NAME_COLLISION:
-        ERR( "module %p already has a Unix module that's not %s\n", module, debugstr_a(name) );
-        break;
-    case STATUS_DUPLICATE_NAME:
-        ERR( "%s already loaded for module %p\n", debugstr_a(name), module );
-        break;
-    case STATUS_DLL_NOT_FOUND:
-        ERR( "builtin module not found for %s\n", debugstr_a(name) );
-        break;
+        return status;
     }
 done:
     dlclose( handle );
@@ -1326,7 +1313,7 @@ static NTSTATUS open_builtin_file( char *name, OBJECT_ATTRIBUTES *attr, void **m
 /***********************************************************************
  *           load_builtin_dll
  */
-static NTSTATUS CDECL load_builtin_dll( UNICODE_STRING *nt_name, void **module, void **unix_entry,
+static NTSTATUS CDECL load_builtin_dll( UNICODE_STRING *nt_name, void **module,
                                         SECTION_IMAGE_INFORMATION *image_info, BOOL prefer_native )
 {
     unsigned int i, pos, namepos, namelen, maxlen = 0;
@@ -1400,7 +1387,7 @@ done:
     if (!status && ext)
     {
         strcpy( ext, ".so" );
-        dlopen_unix_dll( *module, ptr, unix_entry );
+        dlopen_unix_dll( *module, ptr );
     }
     free( file );
     return status;
@@ -1591,6 +1578,7 @@ static struct unix_funcs unix_funcs =
     load_so_dll,
     load_builtin_dll,
     init_builtin_dll,
+    init_unix_lib,
     unwind_builtin_dll,
     get_load_order,
     __wine_dbg_get_channel_flags,
