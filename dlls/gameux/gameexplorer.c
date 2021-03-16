@@ -80,12 +80,6 @@ HRESULT GAMEUX_buildGameRegistryPath(GAME_INSTALL_SCOPE installScope,
         LPCGUID gameInstanceId,
         LPWSTR* lpRegistryPath)
 {
-    static const WCHAR sGameUxRegistryPath[] = {'S','O','F','T','W','A','R','E','\\',
-            'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\',
-            'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','G','a','m','e','U','X',0};
-    static const WCHAR sGames[] = {'G','a','m','e','s',0};
-    static const WCHAR sBackslash[] = {'\\',0};
-
     HRESULT hr = S_OK;
     HANDLE hToken = NULL;
     PTOKEN_USER pTokenUser = NULL;
@@ -99,8 +93,7 @@ HRESULT GAMEUX_buildGameRegistryPath(GAME_INSTALL_SCOPE installScope,
     /* this will make freeing it easier for user */
     *lpRegistryPath = NULL;
 
-    lstrcpyW(sRegistryPath, sGameUxRegistryPath);
-    lstrcatW(sRegistryPath, sBackslash);
+    lstrcpyW(sRegistryPath, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\GameUX\\");
 
     if(installScope == GIS_CURRENT_USER)
     {
@@ -141,7 +134,7 @@ HRESULT GAMEUX_buildGameRegistryPath(GAME_INSTALL_SCOPE installScope,
     }
     else if(installScope == GIS_ALL_USERS)
         /* build registry path without SID */
-        lstrcatW(sRegistryPath, sGames);
+        lstrcatW(sRegistryPath, L"Games");
     else
         hr = E_INVALIDARG;
 
@@ -153,7 +146,7 @@ HRESULT GAMEUX_buildGameRegistryPath(GAME_INSTALL_SCOPE installScope,
 
         if(SUCCEEDED(hr))
         {
-            lstrcatW(sRegistryPath, sBackslash);
+            lstrcatW(sRegistryPath, L"\\");
             lstrcatW(sRegistryPath, sInstanceId);
         }
     }
@@ -197,17 +190,6 @@ HRESULT GAMEUX_buildGameRegistryPath(GAME_INSTALL_SCOPE installScope,
  */
 static HRESULT GAMEUX_WriteRegistryRecord(struct GAMEUX_GAME_DATA *GameData)
 {
-    static const WCHAR sApplicationId[] =
-            {'A','p','p','l','i','c','a','t','i','o','n','I','d',0};
-    static const WCHAR sConfigApplicationPath[] =
-            {'C','o','n','f','i','g','A','p','p','l','i','c','a','t','i','o','n','P','a','t','h',0};
-    static const WCHAR sConfigGDFBinaryPath[] =
-            {'C','o','n','f','i','g','G','D','F','B','i','n','a','r','y','P','a','t','h',0};
-    static const WCHAR sTitle[] =
-            {'T','i','t','l','e',0};
-    static const WCHAR sDescription[] =
-            {'D','e','s','c','r','i','p','t','i','o','n',0};
-
     HRESULT hr, hr2;
     LPWSTR lpRegistryKey;
     HKEY hKey;
@@ -228,27 +210,27 @@ static HRESULT GAMEUX_WriteRegistryRecord(struct GAMEUX_GAME_DATA *GameData)
     if(SUCCEEDED(hr))
     {
         /* write game data to registry key */
-        hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, sConfigApplicationPath, 0,
+        hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, L"ConfigApplicationPath", 0,
                                                REG_SZ, (LPBYTE)(GameData->sGameInstallDirectory),
                                                (lstrlenW(GameData->sGameInstallDirectory)+1)*sizeof(WCHAR)));
 
         if(SUCCEEDED(hr))
-            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, sConfigGDFBinaryPath, 0,
+            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, L"ConfigGDFBinaryPath", 0,
                                                    REG_SZ, (LPBYTE)(GameData->sGDFBinaryPath),
                                                    (lstrlenW(GameData->sGDFBinaryPath)+1)*sizeof(WCHAR)));
 
         if(SUCCEEDED(hr))
-            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, sApplicationId, 0,
+            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, L"ApplicationId", 0,
                                                    REG_SZ, (LPBYTE)(sGameApplicationId),
                                                    (lstrlenW(sGameApplicationId)+1)*sizeof(WCHAR)));
 
         if(SUCCEEDED(hr))
-            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, sTitle, 0,
+            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, L"Title", 0,
                                                    REG_SZ, (LPBYTE)(GameData->bstrName),
                                                    (lstrlenW(GameData->bstrName)+1)*sizeof(WCHAR)));
 
         if(SUCCEEDED(hr))
-            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, sDescription, 0,
+            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, L"Description", 0,
                                                    REG_SZ, (LPBYTE)(GameData->bstrDescription ? GameData->bstrDescription : GameData->bstrName),
                                                    (lstrlenW(GameData->bstrDescription ? GameData->bstrDescription : GameData->bstrName)+1)*sizeof(WCHAR)));
 
@@ -282,11 +264,6 @@ static HRESULT GAMEUX_ProcessGameDefinitionElement(
         IXMLDOMElement *element,
         struct GAMEUX_GAME_DATA *GameData)
 {
-    static const WCHAR sName[] =
-            {'N','a','m','e',0};
-    static const WCHAR sDescription[] =
-            {'D','e','s','c','r','i','p','t','i','o','n',0};
-
     HRESULT hr;
     BSTR bstrElementName;
 
@@ -296,10 +273,10 @@ static HRESULT GAMEUX_ProcessGameDefinitionElement(
     if(SUCCEEDED(hr))
     {
         /* check element name */
-        if(lstrcmpW(bstrElementName, sName) == 0)
+        if(lstrcmpW(bstrElementName, L"Name") == 0)
             hr = IXMLDOMElement_get_text(element, &GameData->bstrName);
 
-        else if(lstrcmpW(bstrElementName, sDescription) == 0)
+        else if(lstrcmpW(bstrElementName, L"Description") == 0)
             hr = IXMLDOMElement_get_text(element, &GameData->bstrDescription);
 
         else
@@ -323,7 +300,6 @@ static HRESULT GAMEUX_ProcessGameDefinitionElement(
  */
 static HRESULT GAMEUX_ParseGameDefinition(IXMLDOMElement *gamedef, struct GAMEUX_GAME_DATA *game_data)
 {
-    static const WCHAR gameidW[] = {'g','a','m','e','I','D',0};
     IXMLDOMNodeList *props;
     VARIANT var;
     HRESULT hr;
@@ -331,7 +307,7 @@ static HRESULT GAMEUX_ParseGameDefinition(IXMLDOMElement *gamedef, struct GAMEUX
 
     TRACE("(%p, %p)\n", gamedef, game_data);
 
-    attr = SysAllocString(gameidW);
+    attr = SysAllocString(L"gameID");
     if (!attr)
         return E_OUTOFMEMORY;
 
@@ -397,9 +373,6 @@ static DWORD WINAPI GAMEUX_ParseGDFBinary(void *thread_param)
 {
     struct parse_gdf_thread_param *ctx = thread_param;
     struct GAMEUX_GAME_DATA *GameData = ctx->GameData;
-    static const WCHAR sRes[] = {'r','e','s',':','/','/',0};
-    static const WCHAR sDATA[] = {'D','A','T','A',0};
-    static const WCHAR sSlash[] = {'/',0};
 
     HRESULT hr = S_OK;
     WCHAR sResourcePath[MAX_PATH];
@@ -412,11 +385,9 @@ static DWORD WINAPI GAMEUX_ParseGDFBinary(void *thread_param)
     TRACE("(%p)->sGDFBinaryPath = %s\n", GameData, debugstr_w(GameData->sGDFBinaryPath));
 
     /* prepare path to GDF, using res:// prefix */
-    lstrcpyW(sResourcePath, sRes);
+    lstrcpyW(sResourcePath, L"res://");
     lstrcatW(sResourcePath, GameData->sGDFBinaryPath);
-    lstrcatW(sResourcePath, sSlash);
-    lstrcatW(sResourcePath, sDATA);
-    lstrcatW(sResourcePath, sSlash);
+    lstrcatW(sResourcePath, L"/DATA/");
     lstrcatW(sResourcePath, ID_GDF_XML_STR);
 
     CoInitialize(NULL);
@@ -662,9 +633,6 @@ static HRESULT GAMEUX_LoadRegistryString(HKEY hRootKey,
  * Helper function, updates stored data about game with given InstanceID
  */
 static HRESULT GAMEUX_UpdateGame(LPGUID InstanceID) {
-    static const WCHAR sConfigGDFBinaryPath[] = {'C','o','n','f','i','g','G','D','F','B','i','n','a','r','y','P','a','t','h',0};
-    static const WCHAR sConfigApplicationPath[] = {'C','o','n','f','i','g','A','p','p','l','i','c','a','t','i','o','n','P','a','t','h',0};
-
     HRESULT hr;
     GAME_INSTALL_SCOPE installScope;
     LPWSTR lpRegistryPath;
@@ -697,11 +665,11 @@ static HRESULT GAMEUX_UpdateGame(LPGUID InstanceID) {
 
         /* first, read required data about game */
         hr = GAMEUX_LoadRegistryString(HKEY_LOCAL_MACHINE, lpRegistryPath,
-            sConfigGDFBinaryPath, &lpGDFBinaryPath);
+            L"ConfigGDFBinaryPath", &lpGDFBinaryPath);
 
         if(SUCCEEDED(hr))
             hr = GAMEUX_LoadRegistryString(HKEY_LOCAL_MACHINE, lpRegistryPath,
-                sConfigApplicationPath, &lpGameInstallDirectory);
+                L"ConfigApplicationPath", &lpGameInstallDirectory);
 
         /* now remove currently existing registry key */
         if(SUCCEEDED(hr))
@@ -730,9 +698,6 @@ HRESULT GAMEUX_FindGameInstanceId(
         GAME_INSTALL_SCOPE installScope,
         GUID* pInstanceId)
 {
-    static const WCHAR sConfigGDFBinaryPath[] =
-            {'C','o','n','f','i','g','G','D','F','B','i','n','a','r','y','P','a','t','h',0};
-
     HRESULT hr;
     BOOL found = FALSE;
     LPWSTR lpRegistryPath = NULL;
@@ -769,7 +734,7 @@ HRESULT GAMEUX_FindGameInstanceId(
 
                 if(SUCCEEDED(hr))
                     hr = GAMEUX_LoadRegistryString(hRootKey, lpName,
-                                             sConfigGDFBinaryPath, &lpValue);
+                            L"ConfigGDFBinaryPath", &lpValue);
 
                 if(SUCCEEDED(hr))
                 {

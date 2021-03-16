@@ -102,13 +102,6 @@ static HRESULT GAMEUX_createStatsDirectory(LPCWSTR lpFilePath)
  */
 static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
 {
-    static const WCHAR sStatistics[] = {'S','t','a','t','i','s','t','i','c','s',0};
-    static const WCHAR sCategory[] = {'C','a','t','e','g','o','r','y',0};
-    static const WCHAR sIndex[] = {'I','n','d','e','x',0};
-    static const WCHAR sStatistic[] = {'S','t','a','t','i','s','t','i','c',0};
-    static const WCHAR sName[] = {'N','a','m','e',0};
-    static const WCHAR sValue[] = {'V','a','l','u','e',0};
-
     HRESULT hr = S_OK;
     IXMLDOMDocument *document = NULL;
     IXMLDOMElement *root = NULL, *statisticsElement = NULL;
@@ -131,7 +124,7 @@ static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
 
     if(SUCCEEDED(hr))
     {
-        bstrStatistics = SysAllocString(sStatistics);
+        bstrStatistics = SysAllocString(L"Statistics");
         if(!bstrStatistics)
             hr = E_OUTOFMEMORY;
     }
@@ -141,35 +134,35 @@ static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
 
     if(SUCCEEDED(hr))
     {
-        bstrCategory = SysAllocString(sCategory);
+        bstrCategory = SysAllocString(L"Category");
         if(!bstrCategory)
             hr = E_OUTOFMEMORY;
     }
 
     if(SUCCEEDED(hr))
     {
-        bstrIndex = SysAllocString(sIndex);
+        bstrIndex = SysAllocString(L"Index");
         if(!bstrIndex)
             hr = E_OUTOFMEMORY;
     }
 
     if(SUCCEEDED(hr))
     {
-        bstrStatistic = SysAllocString(sStatistic);
+        bstrStatistic = SysAllocString(L"Statistic");
         if(!bstrStatistic)
             hr = E_OUTOFMEMORY;
     }
 
     if(SUCCEEDED(hr))
     {
-        bstrName = SysAllocString(sName);
+        bstrName = SysAllocString(L"Name");
         if(!bstrName)
             hr = E_OUTOFMEMORY;
     }
 
     if(SUCCEEDED(hr))
     {
-        bstrValue = SysAllocString(sValue);
+        bstrValue = SysAllocString(L"Value");
         if(!bstrValue)
             hr = E_OUTOFMEMORY;
     }
@@ -318,24 +311,17 @@ static HRESULT GAMEUX_buildStatisticsFilePath(
         LPCWSTR lpApplicationId,
         LPWSTR lpStatisticsFile)
 {
-    static const WCHAR sBackslash[] = {'\\',0};
-    static const WCHAR sStatisticsDir[] = {'\\','M','i','c','r','o','s','o','f','t',
-            '\\','W','i','n','d','o','w','s','\\','G','a','m','e','E','x','p',
-            'l','o','r','e','r','\\','G','a','m','e','S','t','a','t','i','s',
-            't','i','c','s','\\',0};
-    static const WCHAR sDotGamestats[] = {'.','g','a','m','e','s','t','a','t','s',0};
-
     HRESULT hr;
 
     hr = SHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, lpStatisticsFile);
 
     if(SUCCEEDED(hr))
     {
-        lstrcatW(lpStatisticsFile, sStatisticsDir);
+        lstrcatW(lpStatisticsFile, L"\\Microsoft\\Windows\\GameExplorer\\GameStatistics\\");
         lstrcatW(lpStatisticsFile, lpApplicationId);
-        lstrcatW(lpStatisticsFile, sBackslash);
+        lstrcatW(lpStatisticsFile, L"\\");
         lstrcatW(lpStatisticsFile, lpApplicationId);
-        lstrcatW(lpStatisticsFile, sDotGamestats);
+        lstrcatW(lpStatisticsFile, L".gamestats");
     }
 
     return hr;
@@ -357,9 +343,6 @@ static HRESULT GAMEUX_getAppIdFromGDFPath(
         LPCWSTR GDFBinaryPath,
         LPWSTR lpApplicationId)
 {
-    static const WCHAR sApplicationId[] =
-            {'A','p','p','l','i','c','a','t','i','o','n','I','d',0};
-
     HRESULT hr;
     GAME_INSTALL_SCOPE installScope;
     GUID instanceId;
@@ -393,8 +376,7 @@ static HRESULT GAMEUX_getAppIdFromGDFPath(
         hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_LOCAL_MACHINE,
                 lpRegistryPath, 0, KEY_READ | KEY_WOW64_64KEY, &hKey));
         if(SUCCEEDED(hr)) {
-            hr = HRESULT_FROM_WIN32(RegGetValueW(hKey,
-                    NULL, sApplicationId, RRF_RT_REG_SZ,
+            hr = HRESULT_FROM_WIN32(RegGetValueW(hKey, NULL, L"ApplicationId", RRF_RT_REG_SZ,
                     NULL, lpApplicationId, &dwLength));
             RegCloseKey(hKey);
         }
@@ -416,13 +398,6 @@ static HRESULT GAMEUX_getAppIdFromGDFPath(
  */
 static HRESULT GAMEUX_loadStatisticsFromFile(struct GAMEUX_STATS *data)
 {
-    static const WCHAR sStatistics[] = {'S','t','a','t','i','s','t','i','c','s',0};
-    static const WCHAR sCategory[] = {'C','a','t','e','g','o','r','y',0};
-    static const WCHAR sIndex[] = {'I','n','d','e','x',0};
-    static const WCHAR sStatistic[] = {'S','t','a','t','i','s','t','i','c',0};
-    static const WCHAR sName[] = {'N','a','m','e',0};
-    static const WCHAR sValue[] = {'V','a','l','u','e',0};
-
     HRESULT hr = S_OK;
     IXMLDOMDocument *document = NULL;
     IXMLDOMElement *root = NULL, *categoryElement = NULL, *statisticElement = NULL;
@@ -446,42 +421,42 @@ static HRESULT GAMEUX_loadStatisticsFromFile(struct GAMEUX_STATS *data)
 
     if(SUCCEEDED(hr))
     {
-        bstrStatistics = SysAllocString(sStatistics);
+        bstrStatistics = SysAllocString(L"Statistics");
         if(!bstrStatistics)
             hr = E_OUTOFMEMORY;
     }
 
     if(SUCCEEDED(hr))
     {
-        bstrCategory = SysAllocString(sCategory);
+        bstrCategory = SysAllocString(L"Category");
         if(!bstrCategory)
             hr = E_OUTOFMEMORY;
     }
 
     if(SUCCEEDED(hr))
     {
-        bstrIndex = SysAllocString(sIndex);
+        bstrIndex = SysAllocString(L"Index");
         if(!bstrIndex)
             hr = E_OUTOFMEMORY;
     }
 
     if(SUCCEEDED(hr))
     {
-        bstrStatistic = SysAllocString(sStatistic);
+        bstrStatistic = SysAllocString(L"Statistic");
         if(!bstrStatistic)
             hr = E_OUTOFMEMORY;
     }
 
     if(SUCCEEDED(hr))
     {
-        bstrName = SysAllocString(sName);
+        bstrName = SysAllocString(L"Name");
         if(!bstrName)
             hr = E_OUTOFMEMORY;
     }
 
     if(SUCCEEDED(hr))
     {
-        bstrValue = SysAllocString(sValue);
+        bstrValue = SysAllocString(L"Value");
         if(!bstrValue)
             hr = E_OUTOFMEMORY;
     }
