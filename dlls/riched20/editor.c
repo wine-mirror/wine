@@ -2461,7 +2461,7 @@ static BOOL handle_enter(ME_TextEditor *editor)
         }
     }
 
-    if (editor->styleFlags & ES_MULTILINE)
+    if (editor->props & TXTBIT_MULTILINE)
     {
         ME_Cursor cursor = editor->pCursors[0];
         ME_Paragraph *para = cursor.para;
@@ -3118,15 +3118,7 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   if (ed->props & TXTBIT_USEPASSWORD)
     ITextHost_TxGetPasswordChar(texthost, &ed->cPasswordMask);
 
-  if (ed->props & TXTBIT_MULTILINE) {
-    ed->styleFlags |= ES_MULTILINE;
-    ed->bWordWrap = (ed->props & TXTBIT_WORDWRAP) != 0;
-  } else {
-    ed->bWordWrap = FALSE;
-  }
-
-  if (ed->props & TXTBIT_DISABLEDRAG)
-    ed->styleFlags |= ES_NOOLEDRAGDROP;
+  ed->bWordWrap = (ed->props & TXTBIT_WORDWRAP) && (ed->props & TXTBIT_MULTILINE);
 
   ed->notified_cr.cpMin = ed->notified_cr.cpMax = 0;
 
@@ -3435,7 +3427,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
 
     if (lParam)
       editor->bDialogMode = TRUE;
-    if (editor->styleFlags & ES_MULTILINE)
+    if (editor->props & TXTBIT_MULTILINE)
       code |= DLGC_WANTMESSAGE;
     if (!(editor->props & TXTBIT_SAVESELECTION))
       code |= DLGC_HASSETSEL;
@@ -3784,7 +3776,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_LINESCROLL:
   {
-    if (!(editor->styleFlags & ES_MULTILINE))
+    if (!(editor->props & TXTBIT_MULTILINE))
       return FALSE;
     ME_ScrollDown( editor, lParam * get_default_line_height( editor ) );
     return TRUE;
@@ -4579,7 +4571,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case EM_SETTARGETDEVICE:
     if (wParam == 0)
     {
-      BOOL new = (lParam == 0 && (editor->styleFlags & ES_MULTILINE));
+      BOOL new = (lParam == 0 && (editor->props & TXTBIT_MULTILINE));
       if (editor->nAvailWidth || editor->bWordWrap != new)
       {
         editor->bWordWrap = new;
@@ -4588,7 +4580,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       }
     } else {
       int width = max(0, lParam);
-      if ((editor->styleFlags & ES_MULTILINE) &&
+      if ((editor->props & TXTBIT_MULTILINE) &&
           (!editor->bWordWrap || editor->nAvailWidth != width))
       {
         editor->nAvailWidth = width;
