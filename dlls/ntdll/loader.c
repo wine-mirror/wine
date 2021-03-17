@@ -1832,6 +1832,9 @@ static NTSTATUS build_module( LPCWSTR load_path, const UNICODE_STRING *nt_name, 
                               const SECTION_IMAGE_INFORMATION *image_info, const struct file_id *id,
                               DWORD flags, WINE_MODREF **pwm )
 {
+    static const char builtin_signature[] = "Wine builtin DLL";
+    char *signature = (char *)((IMAGE_DOS_HEADER *)*module + 1);
+    BOOL is_builtin;
     IMAGE_NT_HEADERS *nt;
     WINE_MODREF *wm;
     NTSTATUS status;
@@ -1842,10 +1845,12 @@ static NTSTATUS build_module( LPCWSTR load_path, const UNICODE_STRING *nt_name, 
     map_size = (nt->OptionalHeader.SizeOfImage + page_size - 1) & ~(page_size - 1);
     if ((status = perform_relocations( *module, nt, map_size ))) return status;
 
+    is_builtin = ((char *)nt - signature >= sizeof(builtin_signature) &&
+                  !memcmp( signature, builtin_signature, sizeof(builtin_signature) ));
+
     /* create the MODREF */
 
-    if (!(wm = alloc_module( *module, nt_name, (image_info->u.s.WineBuiltin) )))
-        return STATUS_NO_MEMORY;
+    if (!(wm = alloc_module( *module, nt_name, is_builtin ))) return STATUS_NO_MEMORY;
 
     if (id) wm->id = *id;
     if (image_info->LoaderFlags) wm->ldr.Flags |= LDR_COR_IMAGE;
@@ -1883,7 +1888,7 @@ static NTSTATUS build_module( LPCWSTR load_path, const UNICODE_STRING *nt_name, 
 
     TRACE( "loaded %s %p %p\n", debugstr_us(nt_name), wm, *module );
 
-    if (image_info->u.s.WineBuiltin)
+    if (is_builtin)
     {
         if (TRACE_ON(relay)) RELAY_SetupDLL( *module );
     }
@@ -1893,7 +1898,7 @@ static NTSTATUS build_module( LPCWSTR load_path, const UNICODE_STRING *nt_name, 
     }
 
     TRACE_(loaddll)( "Loaded %s at %p: %s\n", debugstr_w(wm->ldr.FullDllName.Buffer), *module,
-                     (image_info->u.s.WineBuiltin) ? "builtin" : "native" );
+                     is_builtin ? "builtin" : "native" );
 
     wm->ldr.LoadCount = 1;
     *pwm = wm;
@@ -2319,7 +2324,6 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
     {
         SECTION_IMAGE_INFORMATION image_info = { 0 };
 
-        image_info.u.s.WineBuiltin = 1;
         if ((status = build_module( load_path, &win_name, &module, &image_info, NULL, flags, &wm )))
         {
             if (module) NtUnmapViewOfSection( NtCurrentProcess(), module );
