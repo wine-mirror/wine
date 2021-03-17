@@ -998,6 +998,9 @@ static HRESULT wined3d_swapchain_vk_create_vulkan_swapchain(struct wined3d_swapc
         goto fail;
     }
 
+    swapchain_vk->width = width;
+    swapchain_vk->height = height;
+
     return WINED3D_OK;
 
 fail:
@@ -1031,7 +1034,7 @@ static void wined3d_swapchain_vk_set_swap_interval(struct wined3d_swapchain_vk *
     wined3d_swapchain_vk_recreate(swapchain_vk);
 }
 
-static void wined3d_swapchain_vk_blit(struct wined3d_swapchain_vk *swapchain_vk,
+static VkResult wined3d_swapchain_vk_blit(struct wined3d_swapchain_vk *swapchain_vk,
         struct wined3d_context_vk *context_vk, const RECT *src_rect, const RECT *dst_rect, unsigned int swap_interval)
 {
     struct wined3d_texture_vk *back_buffer_vk = wined3d_texture_vk(swapchain_vk->s.back_buffers[0]);
@@ -1043,34 +1046,36 @@ static void wined3d_swapchain_vk_blit(struct wined3d_swapchain_vk *swapchain_vk,
     unsigned int present_idx;
     VkImageLayout vk_layout;
     uint32_t image_idx;
+    RECT dst_rect_tmp;
     VkImageBlit blit;
+    VkFilter filter;
     VkResult vr;
-    HRESULT hr;
 
     static const VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+    TRACE("swapchain_vk %p, context_vk %p, src_rect %s, dst_rect %s, swap_interval %u.\n",
+            swapchain_vk, context_vk, wine_dbgstr_rect(src_rect), wine_dbgstr_rect(dst_rect), swap_interval);
 
     wined3d_swapchain_vk_set_swap_interval(swapchain_vk, swap_interval);
 
     present_idx = swapchain_vk->current++ % swapchain_vk->image_count;
     wined3d_context_vk_wait_command_buffer(context_vk, swapchain_vk->vk_semaphores[present_idx].command_buffer_id);
-    vr = VK_CALL(vkAcquireNextImageKHR(device_vk->vk_device, swapchain_vk->vk_swapchain, UINT64_MAX,
-            swapchain_vk->vk_semaphores[present_idx].available, VK_NULL_HANDLE, &image_idx));
-    if (vr == VK_ERROR_OUT_OF_DATE_KHR)
-    {
-        if (FAILED(hr = wined3d_swapchain_vk_recreate(swapchain_vk)))
-        {
-            ERR("Failed to recreate swapchain, hr %#x.\n", hr);
-            return;
-        }
-        vr = VK_CALL(vkAcquireNextImageKHR(device_vk->vk_device, swapchain_vk->vk_swapchain, UINT64_MAX,
-                swapchain_vk->vk_semaphores[present_idx].available, VK_NULL_HANDLE, &image_idx));
-    }
-    if (vr < 0)
-    {
-        ERR("Failed to acquire next Vulkan image, vr %s.\n", wined3d_debug_vkresult(vr));
-        return;
-    }
+    if ((vr = VK_CALL(vkAcquireNextImageKHR(device_vk->vk_device, swapchain_vk->vk_swapchain, UINT64_MAX,
+            swapchain_vk->vk_semaphores[present_idx].available, VK_NULL_HANDLE, &image_idx))) < 0)
+        return vr;
 
+    if (dst_rect->right > swapchain_vk->width || dst_rect->bottom > swapchain_vk->height)
+    {
+        dst_rect_tmp = *dst_rect;
+        if (dst_rect->right > swapchain_vk->width)
+            dst_rect_tmp.right = swapchain_vk->width;
+        if (dst_rect->bottom > swapchain_vk->height)
+            dst_rect_tmp.bottom = swapchain_vk->height;
+        dst_rect = &dst_rect_tmp;
+    }
+    filter = src_rect->right - src_rect->left != dst_rect->right - dst_rect->left
+            || src_rect->bottom - src_rect->top != dst_rect->bottom - dst_rect->top
+            ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
     vk_command_buffer = wined3d_context_vk_get_command_buffer(context_vk);
 
     wined3d_context_vk_end_current_render_pass(context_vk);
@@ -1108,7 +1113,7 @@ static void wined3d_swapchain_vk_blit(struct wined3d_swapchain_vk *swapchain_vk,
     VK_CALL(vkCmdBlitImage(vk_command_buffer,
             back_buffer_vk->vk_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
             swapchain_vk->vk_images[image_idx], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            1, &blit, VK_FILTER_NEAREST));
+            1, &blit, filter));
 
     wined3d_context_vk_reference_texture(context_vk, back_buffer_vk);
     wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
@@ -1142,8 +1147,7 @@ static void wined3d_swapchain_vk_blit(struct wined3d_swapchain_vk *swapchain_vk,
     present_desc.pSwapchains = &swapchain_vk->vk_swapchain;
     present_desc.pImageIndices = &image_idx;
     present_desc.pResults = NULL;
-    if ((vr = VK_CALL(vkQueuePresentKHR(device_vk->vk_queue, &present_desc))))
-        ERR("Present returned vr %s.\n", wined3d_debug_vkresult(vr));
+    return VK_CALL(vkQueuePresentKHR(device_vk->vk_queue, &present_desc));
 }
 
 static void wined3d_swapchain_vk_rotate(struct wined3d_swapchain *swapchain, struct wined3d_context_vk *context_vk)
@@ -1215,15 +1219,35 @@ static void swapchain_vk_present(struct wined3d_swapchain *swapchain, const RECT
     struct wined3d_swapchain_vk *swapchain_vk = wined3d_swapchain_vk(swapchain);
     struct wined3d_texture *back_buffer = swapchain->back_buffers[0];
     struct wined3d_context_vk *context_vk;
+    VkResult vr;
+    HRESULT hr;
 
     context_vk = wined3d_context_vk(context_acquire(swapchain->device, back_buffer, 0));
 
     wined3d_texture_load_location(back_buffer, 0, &context_vk->c, back_buffer->resource.draw_binding);
 
     if (swapchain_vk->vk_swapchain)
-        wined3d_swapchain_vk_blit(swapchain_vk, context_vk, src_rect, dst_rect, swap_interval);
+    {
+        if ((vr = wined3d_swapchain_vk_blit(swapchain_vk, context_vk, src_rect, dst_rect, swap_interval)))
+        {
+            if (vr == VK_ERROR_OUT_OF_DATE_KHR || vr == VK_SUBOPTIMAL_KHR)
+            {
+                if (FAILED(hr = wined3d_swapchain_vk_recreate(swapchain_vk)))
+                    ERR("Failed to recreate swapchain, hr %#x.\n", hr);
+                else if (vr == VK_ERROR_OUT_OF_DATE_KHR && (vr = wined3d_swapchain_vk_blit(
+                        swapchain_vk, context_vk, src_rect, dst_rect, swap_interval)))
+                    ERR("Failed to blit image, vr %s.\n", wined3d_debug_vkresult(vr));
+            }
+            else
+            {
+                ERR("Failed to blit image, vr %s.\n", wined3d_debug_vkresult(vr));
+            }
+        }
+    }
     else
+    {
         swapchain_blit_gdi(swapchain, &context_vk->c, src_rect, dst_rect);
+    }
 
     wined3d_swapchain_vk_rotate(swapchain, context_vk);
 

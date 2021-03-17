@@ -5284,6 +5284,7 @@ struct wined3d_swapchain_vk
         uint64_t command_buffer_id;
     } *vk_semaphores;
     unsigned int current, image_count;
+    unsigned int width, height;
 };
 
 static inline struct wined3d_swapchain_vk *wined3d_swapchain_vk(struct wined3d_swapchain *swapchain)
