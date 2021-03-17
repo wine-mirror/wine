@@ -327,6 +327,7 @@ DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_OnTxPropertyBitsChange( ITextServic
     struct text_services *services = impl_from_ITextServices( iface );
     DWORD scrollbars;
     HRESULT hr;
+    BOOL repaint = FALSE;
 
     TRACE( "%p, mask %08x, bits %08x\n", services, mask, bits );
 
@@ -348,6 +349,23 @@ DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_OnTxPropertyBitsChange( ITextServic
     }
 
     if ((mask & TXTBIT_HIDESELECTION) && !services->editor->bHaveFocus) ME_InvalidateSelection( services->editor );
+
+    if (mask & TXTBIT_SELBARCHANGE)
+    {
+        LONG width;
+
+        hr = ITextHost_TxGetSelectionBarWidth( services->host, &width );
+        if (hr == S_OK)
+        {
+            ITextHost_TxInvalidateRect( services->host, &services->editor->rcFormat, TRUE );
+            services->editor->rcFormat.left -= services->editor->selofs;
+            services->editor->selofs = width ? SELECTIONBAR_WIDTH : 0; /* FIXME: convert from HIMETRIC */
+            services->editor->rcFormat.left += services->editor->selofs;
+            repaint = TRUE;
+        }
+    }
+
+    if (repaint) ME_RewrapRepaint( services->editor );
 
     return S_OK;
 }

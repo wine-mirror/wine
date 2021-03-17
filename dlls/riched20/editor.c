@@ -2979,6 +2979,7 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ME_TextEditor *ed = heap_alloc(sizeof(*ed));
   int i;
   LONG selbarwidth;
+  HRESULT hr;
 
   ed->hWnd = NULL;
   ed->hwndParent = NULL;
@@ -2986,7 +2987,6 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->texthost = texthost;
   ed->reOle = NULL;
   ed->bEmulateVersion10 = bEmulateVersion10;
-  ed->styleFlags = 0;
   ed->exStyleFlags = 0;
   ed->total_rows = 0;
   ITextHost_TxGetPropertyBits( texthost, TXTBIT_RICHTEXT | TXTBIT_MULTILINE | TXTBIT_READONLY |
@@ -3047,14 +3047,10 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ME_CheckCharOffsets(ed);
   SetRectEmpty(&ed->rcFormat);
   ed->bDefaultFormatRect = TRUE;
-  ITextHost_TxGetSelectionBarWidth(ed->texthost, &selbarwidth);
-  if (selbarwidth) {
-    /* FIXME: Convert selbarwidth from HIMETRIC to pixels */
-    ed->selofs = SELECTIONBAR_WIDTH;
-    ed->styleFlags |= ES_SELECTIONBAR;
-  } else {
-    ed->selofs = 0;
-  }
+  hr = ITextHost_TxGetSelectionBarWidth( ed->texthost, &selbarwidth );
+  /* FIXME: Convert selbarwidth from HIMETRIC to pixels */
+  if (hr == S_OK && selbarwidth) ed->selofs = SELECTIONBAR_WIDTH;
+  else ed->selofs = 0;
   ed->nSelectionType = stPosition;
 
   ed->cPasswordMask = 0;
@@ -3405,14 +3401,6 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     return ME_Undo(editor);
   case EM_REDO:
     return ME_Redo(editor);
-  case EM_GETOPTIONS:
-  {
-    /* these flags are equivalent to the ES_* counterparts */
-    DWORD mask = ECO_SELECTIONBAR;
-    DWORD settings = editor->styleFlags & mask;
-
-    return settings;
-  }
   case EM_SETFONTSIZE:
   {
       CHARFORMAT2W cf;
@@ -3453,54 +3441,6 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       ME_UpdateScrollBar(editor);
 
       return TRUE;
-  }
-  case EM_SETOPTIONS:
-  {
-    /* these flags are equivalent to ES_* counterparts, except for
-     * ECO_AUTOWORDSELECTION that doesn't have an ES_* counterpart,
-     * but is still stored in editor->styleFlags. */
-    const DWORD mask = ECO_SELECTIONBAR;
-    DWORD settings = mask & editor->styleFlags;
-    DWORD oldSettings = settings;
-    DWORD changedSettings;
-
-    switch(wParam)
-    {
-      case ECOOP_SET:
-        settings = lParam;
-        break;
-      case ECOOP_OR:
-        settings |= lParam;
-        break;
-      case ECOOP_AND:
-        settings &= lParam;
-        break;
-      case ECOOP_XOR:
-        settings ^= lParam;
-    }
-    changedSettings = oldSettings ^ settings;
-
-    if (changedSettings) {
-      editor->styleFlags = (editor->styleFlags & ~mask) | (settings & mask);
-
-      if (changedSettings & ECO_SELECTIONBAR)
-      {
-        ITextHost_TxInvalidateRect(editor->texthost, &editor->rcFormat, TRUE);
-        if (settings & ECO_SELECTIONBAR) {
-          assert(!editor->selofs);
-          editor->selofs = SELECTIONBAR_WIDTH;
-          editor->rcFormat.left += editor->selofs;
-        } else {
-          editor->rcFormat.left -= editor->selofs;
-          editor->selofs = 0;
-        }
-        ME_RewrapRepaint(editor);
-      }
-
-
-    }
-
-    return settings;
   }
   case EM_SETSEL:
   {
