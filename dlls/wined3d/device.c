@@ -1907,7 +1907,7 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
         }
         for (j = 0; j < MAX_SHADER_RESOURCE_VIEWS; ++j)
         {
-            wined3d_cs_emit_set_shader_resource_view(device->cs, i, j, state->shader_resource_view[i][j]);
+            wined3d_device_context_emit_set_shader_resource_view(context, i, j, state->shader_resource_view[i][j]);
         }
     }
 
@@ -2256,7 +2256,7 @@ static void wined3d_device_set_shader_resource_view(struct wined3d_device *devic
     }
 
     state->shader_resource_view[type][idx] = view;
-    wined3d_cs_emit_set_shader_resource_view(device->cs, type, idx, view);
+    wined3d_device_context_emit_set_shader_resource_view(&device->cs->c, type, idx, view);
     if (prev)
     {
         wined3d_srv_bind_count_dec(prev);
