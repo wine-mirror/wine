@@ -1307,13 +1307,11 @@ static void dump_varargs_pe_image_info( const char *prefix, data_size_t size )
     fprintf( stderr, ",zerobits=%08x,subsystem=%08x,subsystem_minor=%04x,subsystem_major=%04x"
              ",osversion_major=%04x,osversion_minor=%04x,image_charact=%04x,dll_charact=%04x,machine=%04x"
              ",contains_code=%u,image_flags=%02x"
-             ",loader_flags=%08x,header_size=%08x,file_size=%08x,checksum=%08x",
+             ",loader_flags=%08x,header_size=%08x,file_size=%08x,checksum=%08x}",
              info.zerobits, info.subsystem, info.subsystem_minor, info.subsystem_major,
              info.osversion_major, info.osversion_minor, info.image_charact, info.dll_charact,
              info.machine, info.contains_code, info.image_flags, info.loader_flags,
              info.header_size, info.file_size, info.checksum );
-    dump_client_cpu( ",cpu=", &info.cpu );
-    fputc( '}', stderr );
     remove_data( min( size, sizeof(info) ));
 }
 

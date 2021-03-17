@@ -673,17 +673,12 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         switch (nt.FileHeader.Machine)
         {
         case IMAGE_FILE_MACHINE_I386:
-            mapping->image.cpu = CPU_x86;
             if (cpu_mask & (CPU_FLAG(CPU_x86) | CPU_FLAG(CPU_x86_64))) break;
             return STATUS_INVALID_IMAGE_FORMAT;
-        case IMAGE_FILE_MACHINE_ARM:
-        case IMAGE_FILE_MACHINE_THUMB:
         case IMAGE_FILE_MACHINE_ARMNT:
-            mapping->image.cpu = CPU_ARM;
             if (cpu_mask & (CPU_FLAG(CPU_ARM) | CPU_FLAG(CPU_ARM64))) break;
             return STATUS_INVALID_IMAGE_FORMAT;
         case IMAGE_FILE_MACHINE_POWERPC:
-            mapping->image.cpu = CPU_POWERPC;
             if (cpu_mask & CPU_FLAG(CPU_POWERPC)) break;
             return STATUS_INVALID_IMAGE_FORMAT;
         default:
@@ -721,11 +716,9 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         switch (nt.FileHeader.Machine)
         {
         case IMAGE_FILE_MACHINE_AMD64:
-            mapping->image.cpu = CPU_x86_64;
             if (cpu_mask & (CPU_FLAG(CPU_x86) | CPU_FLAG(CPU_x86_64))) break;
             return STATUS_INVALID_IMAGE_FORMAT;
         case IMAGE_FILE_MACHINE_ARM64:
-            mapping->image.cpu = CPU_ARM64;
             if (cpu_mask & (CPU_FLAG(CPU_ARM) | CPU_FLAG(CPU_ARM64))) break;
             return STATUS_INVALID_IMAGE_FORMAT;
         default:
@@ -769,7 +762,6 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     mapping->image.zerobits      = 0; /* FIXME */
     mapping->image.file_size     = file_size;
     mapping->image.loader_flags  = clr_va && clr_size;
-    mapping->image.__pad         = 0;
     if (mz_size == sizeof(mz) && !memcmp( mz.buffer, builtin_signature, sizeof(builtin_signature) ))
         mapping->image.image_flags |= IMAGE_FLAGS_WineBuiltin;
     else if (mz_size == sizeof(mz) && !memcmp( mz.buffer, fakedll_signature, sizeof(fakedll_signature) ))
@@ -798,8 +790,8 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
             if (!(clr.Flags & COMIMAGE_FLAGS_32BITREQUIRED))
             {
                 mapping->image.image_flags |= IMAGE_FLAGS_ComPlusNativeReady;
-                if (cpu_mask & CPU_FLAG(CPU_x86_64)) mapping->image.cpu = CPU_x86_64;
-                else if (cpu_mask & CPU_FLAG(CPU_ARM64)) mapping->image.cpu = CPU_ARM64;
+                if (cpu_mask & CPU_FLAG(CPU_x86_64)) mapping->image.machine = IMAGE_FILE_MACHINE_AMD64;
+                else if (cpu_mask & CPU_FLAG(CPU_ARM64)) mapping->image.machine = IMAGE_FILE_MACHINE_ARM64;
             }
             if (clr.Flags & COMIMAGE_FLAGS_32BITPREFERRED)
                 mapping->image.image_flags |= IMAGE_FLAGS_ComPlusPrefer32bit;

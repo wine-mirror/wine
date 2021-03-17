@@ -80,6 +80,18 @@ static const char * const cpu_names[] = { "x86", "x86_64", "PowerPC", "ARM", "AR
 
 static UINT process_error_mode;
 
+static client_cpu_t get_machine_cpu( WORD machine )
+{
+    switch (machine)
+    {
+    case IMAGE_FILE_MACHINE_I386:  return CPU_x86;
+    case IMAGE_FILE_MACHINE_AMD64: return CPU_x86_64;
+    case IMAGE_FILE_MACHINE_ARMNT: return CPU_ARM;
+    case IMAGE_FILE_MACHINE_ARM64: return CPU_ARM64;
+    default: return 0;
+    }
+}
+
 static char **build_argv( const UNICODE_STRING *cmdline, int reserved )
 {
     char **argv, *arg, *src, *dst;
@@ -356,10 +368,10 @@ static BOOL get_so_file_info( HANDLE handle, pe_image_info_t *info )
 #endif
         switch (header.elf.machine)
         {
-        case 3:   info->cpu = CPU_x86; break;
-        case 40:  info->cpu = CPU_ARM; break;
-        case 62:  info->cpu = CPU_x86_64; break;
-        case 183: info->cpu = CPU_ARM64; break;
+        case 3:   info->machine = IMAGE_FILE_MACHINE_I386; break;
+        case 40:  info->machine = IMAGE_FILE_MACHINE_ARMNT; break;
+        case 62:  info->machine = IMAGE_FILE_MACHINE_AMD64; break;
+        case 183: info->machine = IMAGE_FILE_MACHINE_ARM64; break;
         }
         if (header.elf.type != 3 /* ET_DYN */) return FALSE;
         if (header.elf.class == 2 /* ELFCLASS64 */)
@@ -385,10 +397,10 @@ static BOOL get_so_file_info( HANDLE handle, pe_image_info_t *info )
     {
         switch (header.macho.cputype)
         {
-        case 0x00000007: info->cpu = CPU_x86; break;
-        case 0x01000007: info->cpu = CPU_x86_64; break;
-        case 0x0000000c: info->cpu = CPU_ARM; break;
-        case 0x0100000c: info->cpu = CPU_ARM64; break;
+        case 0x00000007: info->machine = IMAGE_FILE_MACHINE_I386; break;
+        case 0x01000007: info->machine = IMAGE_FILE_MACHINE_AMD64; break;
+        case 0x0000000c: info->machine = IMAGE_FILE_MACHINE_ARMNT; break;
+        case 0x0100000c: info->machine = IMAGE_FILE_MACHINE_ARM64; break;
         }
         if (header.macho.filetype == 8) return TRUE;
     }
@@ -419,9 +431,9 @@ static NTSTATUS get_pe_file_info( UNICODE_STRING *path, HANDLE *handle, pe_image
             TRACE( "assuming %u-bit builtin for %s\n", is_64bit ? 64 : 32, debugstr_us(path));
             /* assume current arch */
 #if defined(__i386__) || defined(__x86_64__)
-            info->cpu = is_64bit ? CPU_x86_64 : CPU_x86;
+            info->machine = is_64bit ? IMAGE_FILE_MACHINE_AMD64 : IMAGE_FILE_MACHINE_I386;
 #else
-            info->cpu = client_cpu;
+            info->machine = current_machine;
 #endif
             return STATUS_SUCCESS;
         }
@@ -642,7 +654,7 @@ void DECLSPEC_NORETURN exec_process( NTSTATUS status )
     case STATUS_INVALID_IMAGE_PROTECT:
         /* we'll start winevdm */
         memset( &pe_info, 0, sizeof(pe_info) );
-        pe_info.cpu = CPU_x86;
+        pe_info.machine = IMAGE_FILE_MACHINE_I386;
         break;
     default:
         goto done;
@@ -668,7 +680,7 @@ void DECLSPEC_NORETURN exec_process( NTSTATUS status )
     SERVER_START_REQ( exec_process )
     {
         req->socket_fd = socketfd[1];
-        req->cpu       = pe_info.cpu;
+        req->cpu       = get_machine_cpu( pe_info.machine );
         status = wine_server_call( req );
     }
     SERVER_END_REQ;
@@ -952,7 +964,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
         req->create_flags   = params->DebugFlags; /* hack: creation flags stored in DebugFlags for now */
         req->socket_fd      = socketfd[1];
         req->access         = process_access;
-        req->cpu            = pe_info.cpu;
+        req->cpu            = get_machine_cpu( pe_info.machine );
         req->info_size      = startup_info_size;
         req->handles_size   = handles_size;
         wine_server_add_data( req, objattr, attr_len );
@@ -979,7 +991,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
             break;
         case STATUS_INVALID_IMAGE_FORMAT:
             ERR( "%s not supported on this installation (%s binary)\n",
-                 debugstr_us(&path), cpu_names[pe_info.cpu] );
+                 debugstr_us(&path), cpu_names[get_machine_cpu(pe_info.machine)] );
             break;
         }
         goto done;
