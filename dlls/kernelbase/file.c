@@ -499,7 +499,8 @@ BOOL WINAPI CopyFileExW( const WCHAR *source, const WCHAR *dest, LPPROGRESS_ROUT
 {
     static const int buffer_size = 65536;
     HANDLE h1, h2;
-    BY_HANDLE_FILE_INFORMATION info;
+    FILE_BASIC_INFORMATION info;
+    IO_STATUS_BLOCK io;
     DWORD count;
     BOOL ret = FALSE;
     char *buffer;
@@ -525,7 +526,7 @@ BOOL WINAPI CopyFileExW( const WCHAR *source, const WCHAR *dest, LPPROGRESS_ROUT
         return FALSE;
     }
 
-    if (!GetFileInformationByHandle( h1, &info ))
+    if (!set_ntstatus( NtQueryInformationFile( h1, &io, &info, sizeof(info), FileBasicInformation )))
     {
         WARN("GetFileInformationByHandle returned error for %s\n", debugstr_w(source));
         HeapFree( GetProcessHeap(), 0, buffer );
@@ -553,7 +554,7 @@ BOOL WINAPI CopyFileExW( const WCHAR *source, const WCHAR *dest, LPPROGRESS_ROUT
 
     if ((h2 = CreateFileW( dest, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                            (flags & COPY_FILE_FAIL_IF_EXISTS) ? CREATE_NEW : CREATE_ALWAYS,
-                           info.dwFileAttributes, h1 )) == INVALID_HANDLE_VALUE)
+                           info.FileAttributes, h1 )) == INVALID_HANDLE_VALUE)
     {
         WARN("Unable to open dest %s\n", debugstr_w(dest));
         HeapFree( GetProcessHeap(), 0, buffer );
@@ -575,7 +576,8 @@ BOOL WINAPI CopyFileExW( const WCHAR *source, const WCHAR *dest, LPPROGRESS_ROUT
     ret =  TRUE;
 done:
     /* Maintain the timestamp of source file to destination file */
-    SetFileTime( h2, NULL, NULL, &info.ftLastWriteTime );
+    info.FileAttributes = 0;
+    NtSetInformationFile( h2, &io, &info, sizeof(info), FileBasicInformation );
     HeapFree( GetProcessHeap(), 0, buffer );
     CloseHandle( h1 );
     CloseHandle( h2 );
