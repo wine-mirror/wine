@@ -41,6 +41,7 @@ struct host
     HWND window, parent;
     unsigned int emulate_10 : 1;
     unsigned int dialog_mode : 1;
+    unsigned int want_return : 1;
     PARAFORMAT2 para_fmt;
     DWORD props, scrollbars, event_mask;
 };
@@ -71,6 +72,8 @@ static void host_init_props( struct host *host )
     if (style & ES_NOOLEDRAGDROP) host->props |= TXTBIT_DISABLEDRAG;
 
     if (!(host->scrollbars & ES_AUTOHSCROLL)) host->props |= TXTBIT_WORDWRAP;
+
+    host->want_return = !!(style & ES_WANTRETURN);
 }
 
 struct host *host_create( HWND hwnd, CREATESTRUCTW *cs, BOOL emulate_10 )
@@ -698,7 +701,6 @@ static BOOL create_windowed_editor( HWND hwnd, CREATESTRUCTW *create, BOOL emula
     IUnknown_Release( unk );
 
     host->editor->exStyleFlags = GetWindowLongW( hwnd, GWL_EXSTYLE );
-    host->editor->styleFlags |= GetWindowLongW( hwnd, GWL_STYLE ) & ES_WANTRETURN;
     host->editor->hWnd = hwnd; /* FIXME: Remove editor's dependence on hWnd */
     host->editor->hwndParent = create->hwndParent;
 
@@ -772,7 +774,7 @@ static HRESULT set_options( struct host *host, DWORD op, DWORD value, LRESULT *r
     DWORD mask = ECO_AUTOWORDSELECTION | ECO_AUTOVSCROLL | ECO_AUTOHSCROLL | ECO_NOHIDESEL | ECO_READONLY |
         ECO_WANTRETURN | ECO_SAVESEL | ECO_SELECTIONBAR | ECO_VERTICAL;
     const DWORD host_mask = ECO_AUTOWORDSELECTION | ECO_AUTOVSCROLL | ECO_AUTOHSCROLL | ECO_NOHIDESEL | ECO_READONLY |
-        ECO_SAVESEL | ECO_VERTICAL;
+        ECO_WANTRETURN | ECO_SAVESEL | ECO_VERTICAL;
 
     HRESULT hr = S_OK;
 
@@ -831,6 +833,7 @@ static HRESULT set_options( struct host *host, DWORD op, DWORD value, LRESULT *r
         host->props ^= TXTBIT_VERTICAL;
         props_mask |= TXTBIT_VERTICAL;
     }
+    if (change & ECO_WANTRETURN) host->want_return ^= 1;
 
     if (props_mask)
         ITextServices_OnTxPropertyBitsChange( host->text_srv, props_mask, host->props & props_mask );
@@ -853,7 +856,7 @@ static BOOL handle_dialog_enter( struct host *host )
 
     if (ctrl_is_down) return TRUE;
 
-    if (host->editor->styleFlags & ES_WANTRETURN) return FALSE;
+    if (host->want_return) return FALSE;
 
     if (host->parent)
     {
@@ -1022,6 +1025,7 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         if (host->props & TXTBIT_VERTICAL) res |= ECO_VERTICAL;
         if (host->scrollbars & ES_AUTOHSCROLL) res |= ECO_AUTOHSCROLL;
         if (host->scrollbars & ES_AUTOVSCROLL) res |= ECO_AUTOVSCROLL;
+        if (host->want_return) res |= ECO_WANTRETURN;
         break;
 
     case WM_GETTEXT:

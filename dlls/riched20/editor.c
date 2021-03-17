@@ -3408,7 +3408,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case EM_GETOPTIONS:
   {
     /* these flags are equivalent to the ES_* counterparts */
-    DWORD mask = ECO_WANTRETURN | ECO_SELECTIONBAR;
+    DWORD mask = ECO_SELECTIONBAR;
     DWORD settings = editor->styleFlags & mask;
 
     return settings;
@@ -3459,7 +3459,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     /* these flags are equivalent to ES_* counterparts, except for
      * ECO_AUTOWORDSELECTION that doesn't have an ES_* counterpart,
      * but is still stored in editor->styleFlags. */
-    const DWORD mask = ECO_WANTRETURN | ECO_SELECTIONBAR;
+    const DWORD mask = ECO_SELECTIONBAR;
     DWORD settings = mask & editor->styleFlags;
     DWORD oldSettings = settings;
     DWORD changedSettings;
