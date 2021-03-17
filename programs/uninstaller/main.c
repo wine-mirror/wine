@@ -110,7 +110,7 @@ static void WINAPIV output_message(unsigned int id, ...)
     __ms_va_end(va_args);
 }
 
-static void WINAPIV output_array(WCHAR *fmt, ...)
+static void WINAPIV output_array(const WCHAR *fmt, ...)
 {
     __ms_va_list va_args;
 
