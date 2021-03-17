@@ -40,6 +40,7 @@ static HRESULT (WINAPI *pCreateAsyncBindCtxEx)(IBindCtx *, DWORD,
                 IBindStatusCallback *, IEnumFORMATETC *, IBindCtx **, DWORD);
 static HRESULT (WINAPI *pCreateUri)(LPCWSTR, DWORD, DWORD_PTR, IUri**);
 
+DEFINE_OLEGUID(CLSID_CompositeMoniker, 0x309, 0, 0 );
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(CLSID_IdentityUnmarshal,0x0000001b,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 DEFINE_GUID(IID_IBindStatusCallbackHolder,0x79eac9cc,0xbaf9,0x11ce,0x8c,0x82,0x00,0xaa,0x00,0x4b,0xa9,0x0b);
@@ -2896,6 +2897,114 @@ static void init_bind_test(int protocol, DWORD flags, DWORD t)
     if (winetest_debug > 1) trace("URL: %s\n", wine_dbgstr_w(current_url));
 }
 
+static void test_MonikerComposeWith(void)
+{
+    static const struct test_data
+    {
+       const WCHAR *l, *r, *expected;
+    } data[] =
+    {
+        {L"https://test.winehq.org/", L"/tests/hello.html", L"https://test.winehq.org/tests/hello.html"},
+        {L"url1", L"url2", L"url2"},
+        {L"http://", L"tests.winehq.org", L"http:///tests.winehq.org"},
+        {L"http://a/b/c/d;p?q#f", L"g", L"http://a/b/c/g"},
+        {L"http://a/b/c/d;p?q#f", L"./g", L"http://a/b/c/g"},
+        {L"http://a/b/c/d;p?q#f", L"g/", L"http://a/b/c/g/"},
+        {L"http://a/b/c/d;p?q#f", L"/g", L"http://a/g"},
+        {L"http://a/b/c/d;p?q#f", L"//g", L"http://g/"},
+        {L"http://a/b/c/d;p?q#f", L"?y", L"http://a/b/c/d;p?y"},
+        {L"http://a/b/c/d;p?q#f", L"g?y", L"http://a/b/c/g?y"},
+        {L"http://a/b/c/d;p?q#f", L"g?y/./x", L"http://a/b/c/g?y/./x"},
+        {L"http://a/b/c/d;p?q#f", L"#s", L"http://a/b/c/d;p?q#s"},
+        {L"http://a/b/c/d;p?q#f", L"g#s", L"http://a/b/c/g#s"},
+        {L"http://a/b/c/d;p?q#f", L"g#s/./x", L"http://a/b/c/g#s/./x"},
+        {L"http://a/b/c/d;p?q#f", L"g?y#s", L"http://a/b/c/g?y#s"},
+        {L"http://a/b/c/d;p?q#f", L";x", L"http://a/b/c/;x"},
+        {L"http://a/b/c/d;p?q#f", L"g;x", L"http://a/b/c/g;x"},
+        {L"http://a/b/c/d;p?q#f", L"g;x?y#s", L"http://a/b/c/g;x?y#s"},
+        {L"http://a/b/c/d;p?q#f", L".", L"http://a/b/c/"},
+        {L"http://a/b/c/d;p?q#f", L"./", L"http://a/b/c/"},
+        {L"http://a/b/c/d;p?q#f", L"..", L"http://a/b/"},
+        {L"http://a/b/c/d;p?q#f", L"../", L"http://a/b/"},
+        {L"http://a/b/c/d;p?q#f", L"../g", L"http://a/b/g"},
+        {L"http://a/b/c/d;p?q#f", L"../..", L"http://a/"},
+        {L"http://a/b/c/d;p?q#f", L"../../", L"http://a/"},
+        {L"http://a/b/c/d;p?q#f", L"../../g", L"http://a/g"},
+        {L"http://a/b/c/d;p?q#f", L"../../../g", L"http://a/g"},
+        {L"http://a/b/c/d;p?q#f", L"../../../../g", L"http://a/g"},
+        {L"http://a/b/c/d;p?q#f", L"/./g", L"http://a/g"},
+        {L"http://a/b/c/d;p?q#f", L"/../g", L"http://a/g"},
+        {L"http://a/b/c/d;p?q#f", L"g.", L"http://a/b/c/g."},
+        {L"http://a/b/c/d;p?q#f", L".g", L"http://a/b/c/.g"},
+        {L"http://a/b/c/d;p?q#f", L"g..", L"http://a/b/c/g.."},
+        {L"http://a/b/c/d;p?q#f", L"..g", L"http://a/b/c/..g"},
+        {L"http://a/b/c/d;p?q#f", L"./../g", L"http://a/b/g"},
+        {L"http://a/b/c/d;p?q#f", L"./g/.", L"http://a/b/c/g/"},
+        {L"http://a/b/c/d;p?q#f", L"g/./h", L"http://a/b/c/g/h"},
+        {L"http://a/b/c/d;p?q#f", L"g/../h", L"http://a/b/c/h"},
+        {L"file://a/b/c/d;p?q#f", L"http:g", L"http:g"},
+        {L"http://a/b/c/d;p?q#f", L"http://g/h", L"http://g/h"},
+    };
+    IMoniker *lmon, *rmon, *outmon, *filemon;
+    HRESULT hres;
+    LPOLESTR urlpath;
+    CLSID clsid;
+    int i;
+    IBindCtx* bind;
+
+    CreateBindCtx(0, &bind);
+    for(i = 0; i < ARRAY_SIZE( data ); i++){
+        hres = CreateURLMoniker(NULL, data[i].l, &lmon);
+        ok(hres == S_OK, "failed to create moniker: %08x\n", hres);
+        hres = CreateURLMoniker(NULL, data[i].r, &rmon);
+        ok(hres == S_OK, "failed to create moniker: %08x\n", hres);
+
+        hres = IMoniker_ComposeWith(lmon, rmon, FALSE, &outmon);
+        ok(hres == S_OK,
+            "ComposeWith failed: l: %s, r: %s, ret: %08x\n", wine_dbgstr_w(data[i].l), wine_dbgstr_w(data[i].r), hres);
+
+        IMoniker_GetClassID(outmon, &clsid);
+        ok(IsEqualCLSID(&clsid, &CLSID_StdURLMoniker),
+            "ComposeWith error: expected URL CLSID, got %s\n", wine_dbgstr_guid(&clsid));
+        IMoniker_GetDisplayName(outmon, bind, NULL, &urlpath);
+        ok(lstrcmpW(data[i].expected, urlpath) == S_OK,
+            "ComposeWith expected %s got %s\n", wine_dbgstr_w(data[i].expected), wine_dbgstr_w(urlpath));
+
+        IMoniker_Release(lmon);
+        IMoniker_Release(rmon);
+        IMoniker_Release(outmon);
+        CoTaskMemFree(urlpath);
+    }
+    IBindCtx_Release(bind);
+
+    hres = CreateURLMoniker(NULL, data[0].l, &lmon);
+    ok(hres == S_OK, "failed to create moniker: %08x\n", hres);
+    hres = CreateURLMoniker(NULL, data[0].r, &rmon);
+    ok(hres == S_OK, "failed to create moniker: %08x\n", hres);
+    hres = CreateFileMoniker(L"/a/b", &filemon);
+    ok(hres == S_OK, "failed to create moniker: %08x\n", hres);
+
+    hres = IMoniker_ComposeWith(lmon, NULL, FALSE, &outmon);
+    ok(hres == E_INVALIDARG, "ComposeWith error: %08x\n", hres);
+
+    hres = IMoniker_ComposeWith(lmon, rmon, FALSE, NULL);
+    ok(hres == E_INVALIDARG, "ComposeWith error: %08x\n", hres);
+
+    hres = IMoniker_ComposeWith(lmon, filemon, TRUE, &outmon);
+    ok(hres == MK_E_NEEDGENERIC, "ComposeWith error: %08x\n", hres);
+    hres = IMoniker_ComposeWith(lmon, filemon, FALSE, &outmon);
+    ok(hres == S_OK, "ComposeWith error: %08x\n", hres);
+
+    IMoniker_GetClassID(outmon, &clsid);
+    ok(IsEqualCLSID(&clsid, &CLSID_CompositeMoniker),
+        "ComposeWith: got CLSID %s, not generic\n", wine_dbgstr_guid(&clsid));
+
+    IMoniker_Release(lmon);
+    IMoniker_Release(rmon);
+    IMoniker_Release(filemon);
+    IMoniker_Release(outmon);
+}
+
 static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
 {
     IMoniker *mon;
@@ -3930,6 +4039,9 @@ START_TEST(url)
 
         trace("test StdURLMoniker...\n");
         test_StdURLMoniker();
+
+        trace("test URLMonikerComposeWith...\n");
+        test_MonikerComposeWith();
 
         trace("synchronous http test...\n");
         test_BindToStorage(HTTP_TEST, 0, TYMED_ISTREAM);
