@@ -750,6 +750,7 @@ SOURCES = \
 	windns.h \
 	windows.foundation.collections.idl \
 	windows.foundation.idl \
+	windows.gaming.input.idl \
 	windows.h \
 	windows.media.speechsynthesis.idl \
 	windowscontracts.idl \

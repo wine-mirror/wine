@@ -1,0 +1,153 @@
+/*
+ * Copyright 2021 Rémi Bernon for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "eventtoken.idl";
+import "inspectable.idl";
+import "windows.foundation.idl";
+
+namespace Windows {
+    namespace Gaming {
+        namespace Input {
+            typedef enum GamepadButtons GamepadButtons;
+            typedef struct GamepadReading GamepadReading;
+            typedef struct GamepadVibration GamepadVibration;
+            interface IGameController;
+            interface IGameControllerBatteryInfo;
+            interface IGamepad;
+            interface IGamepad2;
+            interface IGamepadStatics;
+            interface IGamepadStatics2;
+            runtimeclass Gamepad;
+        }
+    }
+}
+
+namespace Windows {
+    namespace Gaming {
+        namespace Input {
+            declare {
+                interface Windows.Foundation.EventHandler<Windows.Gaming.Input.Gamepad*>;
+                interface Windows.Foundation.Collections.IVectorView<Gamepad*>;
+            }
+        }
+    }
+}
+
+namespace Windows {
+    namespace Gaming {
+        namespace Input {
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                flags
+            ]
+            enum GamepadButtons
+            {
+                None = 0x0,
+                Menu = 0x1,
+                View = 0x2,
+                A = 0x4,
+                B = 0x8,
+                X = 0x10,
+                Y = 0x20,
+                DPadUp = 0x40,
+                DPadDown = 0x80,
+                DPadLeft = 0x100,
+                DPadRight = 0x200,
+                LeftShoulder = 0x400,
+                RightShoulder = 0x800,
+                LeftThumbstick = 0x1000,
+                RightThumbstick = 0x2000,
+                [contract(Windows.Foundation.UniversalApiContract, 3.0)]
+                Paddle1 = 0x4000,
+                [contract(Windows.Foundation.UniversalApiContract, 3.0)]
+                Paddle2 = 0x8000,
+                [contract(Windows.Foundation.UniversalApiContract, 3.0)]
+                Paddle3 = 0x10000,
+                [contract(Windows.Foundation.UniversalApiContract, 3.0)]
+                Paddle4 = 0x20000
+            };
+
+            [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+            struct GamepadReading
+            {
+                UINT64 Timestamp;
+                Windows.Gaming.Input.GamepadButtons Buttons;
+                DOUBLE LeftTrigger;
+                DOUBLE RightTrigger;
+                DOUBLE LeftThumbstickX;
+                DOUBLE LeftThumbstickY;
+                DOUBLE RightThumbstickX;
+                DOUBLE RightThumbstickY;
+            };
+
+            [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+            struct GamepadVibration
+            {
+                DOUBLE LeftMotor;
+                DOUBLE RightMotor;
+                DOUBLE LeftTrigger;
+                DOUBLE RightTrigger;
+            };
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Gaming.Input.Gamepad),
+                uuid(bc7bb43c-0a69-3903-9e9d-a50f86a45de5)
+            ]
+            interface IGamepad : IInspectable
+                requires Windows.Gaming.Input.IGameController
+            {
+                [propget] HRESULT Vibration([out, retval] Windows.Gaming.Input.GamepadVibration* value);
+                [propput] HRESULT Vibration([in] Windows.Gaming.Input.GamepadVibration value);
+                HRESULT GetCurrentReading([out, retval] Windows.Gaming.Input.GamepadReading* value);
+            }
+
+            [
+                object,
+                uuid(8bbce529-d49c-39e9-9560-e47dde96b7c8)
+            ]
+            interface IGamepadStatics : IInspectable
+            {
+                [eventadd] HRESULT GamepadAdded([in] Windows.Foundation.EventHandler<Gamepad*> *value, [out, retval] EventRegistrationToken* token);
+                [eventremove] HRESULT GamepadAdded([in] EventRegistrationToken token);
+                [eventadd] HRESULT GamepadRemoved([in] Windows.Foundation.EventHandler<Gamepad*> *value, [out, retval] EventRegistrationToken* token);
+                [eventremove] HRESULT GamepadRemoved([in] EventRegistrationToken token);
+                [propget] HRESULT Gamepads([out, retval] Windows.Foundation.Collections.IVectorView<Gamepad*> **value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile),
+                static(Windows.Gaming.Input.IGamepadStatics, Windows.Foundation.UniversalApiContract, 1.0),
+                static(Windows.Gaming.Input.IGamepadStatics2, Windows.Foundation.UniversalApiContract, 4.0),
+                threading(both)
+            ]
+            runtimeclass Gamepad
+            {
+                [default] interface Windows.Gaming.Input.IGamepad;
+                interface Windows.Gaming.Input.IGameController;
+                [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Gaming.Input.IGamepad2;
+                [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Gaming.Input.IGameControllerBatteryInfo;
+            }
+        }
+    }
+}
