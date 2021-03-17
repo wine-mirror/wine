@@ -2411,33 +2411,7 @@ static void ME_UpdateSelectionLinkAttribute(ME_TextEditor *editor)
 
 static BOOL handle_enter(ME_TextEditor *editor)
 {
-    BOOL ctrl_is_down = GetKeyState(VK_CONTROL) & 0x8000;
     BOOL shift_is_down = GetKeyState(VK_SHIFT) & 0x8000;
-
-    if (editor->bDialogMode)
-    {
-        if (ctrl_is_down)
-            return TRUE;
-
-        if (!(editor->styleFlags & ES_WANTRETURN))
-        {
-            if (editor->hwndParent)
-            {
-                DWORD dw;
-                dw = SendMessageW(editor->hwndParent, DM_GETDEFID, 0, 0);
-                if (HIWORD(dw) == DC_HASDEFID)
-                {
-                    HWND hwDefCtrl = GetDlgItem(editor->hwndParent, LOWORD(dw));
-                    if (hwDefCtrl)
-                    {
-                        SendMessageW(editor->hwndParent, WM_NEXTDLGCTL, (WPARAM)hwDefCtrl, TRUE);
-                        PostMessageW(hwDefCtrl, WM_KEYDOWN, VK_RETURN, 0);
-                    }
-                }
-            }
-            return TRUE;
-        }
-    }
 
     if (editor->props & TXTBIT_MULTILINE)
     {
@@ -2647,14 +2621,6 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
       if (!editor->bEmulateVersion10)
           return handle_enter(editor);
       break;
-    case VK_ESCAPE:
-      if (editor->bDialogMode && editor->hwndParent)
-        PostMessageW(editor->hwndParent, WM_CLOSE, 0, 0);
-      return TRUE;
-    case VK_TAB:
-      if (editor->bDialogMode && editor->hwndParent)
-        SendMessageW(editor->hwndParent, WM_NEXTDLGCTL, shift_is_down, 0);
-      return TRUE;
     case 'A':
       if (ctrl_is_down)
       {
@@ -3068,7 +3034,6 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->mode |= (ed->props & TXTBIT_RICHTEXT) ? TM_RICHTEXT : TM_PLAINTEXT;
   ed->AutoURLDetect_bEnable = FALSE;
   ed->bHaveFocus = FALSE;
-  ed->bDialogMode = FALSE;
   ed->bMouseCaptured = FALSE;
   ed->caret_hidden = FALSE;
   ed->caret_height = 0;
@@ -3399,18 +3364,6 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
    return ME_StreamIn(editor, wParam, (EDITSTREAM*)lParam, TRUE);
   case EM_STREAMOUT:
    return ME_StreamOut(editor, wParam, (EDITSTREAM *)lParam);
-  case WM_GETDLGCODE:
-  {
-    UINT code = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS;
-
-    if (lParam)
-      editor->bDialogMode = TRUE;
-    if (editor->props & TXTBIT_MULTILINE)
-      code |= DLGC_WANTMESSAGE;
-    if (!(editor->props & TXTBIT_SAVESELECTION))
-      code |= DLGC_HASSETSEL;
-    return code;
-  }
   case EM_EMPTYUNDOBUFFER:
     ME_EmptyUndoStack(editor);
     return 0;

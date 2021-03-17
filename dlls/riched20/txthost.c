@@ -39,7 +39,8 @@ struct host
     ITextServices *text_srv;
     ME_TextEditor *editor; /* to be removed */
     HWND window, parent;
-    BOOL emulate_10;
+    unsigned int emulate_10 : 1;
+    unsigned int dialog_mode : 1;
     PARAFORMAT2 para_fmt;
     DWORD props, scrollbars, event_mask;
 };
@@ -84,6 +85,7 @@ struct host *host_create( HWND hwnd, CREATESTRUCTW *cs, BOOL emulate_10 )
     texthost->window = hwnd;
     texthost->parent = cs->hwndParent;
     texthost->emulate_10 = emulate_10;
+    texthost->dialog_mode = 0;
     memset( &texthost->para_fmt, 0, sizeof(texthost->para_fmt) );
     texthost->para_fmt.cbSize = sizeof(texthost->para_fmt);
     texthost->para_fmt.dwMask = PFM_ALIGNMENT;
@@ -844,6 +846,31 @@ static HRESULT set_options( struct host *host, DWORD op, DWORD value, LRESULT *r
     return hr;
 }
 
+/* handle dialog mode VK_RETURN. Returns TRUE if message has been processed */
+static BOOL handle_dialog_enter( struct host *host )
+{
+    BOOL ctrl_is_down = GetKeyState( VK_CONTROL ) & 0x8000;
+
+    if (ctrl_is_down) return TRUE;
+
+    if (host->editor->styleFlags & ES_WANTRETURN) return FALSE;
+
+    if (host->parent)
+    {
+        DWORD id = SendMessageW( host->parent, DM_GETDEFID, 0, 0 );
+        if (HIWORD( id ) == DC_HASDEFID)
+        {
+            HWND ctrl = GetDlgItem( host->parent, LOWORD( id ));
+            if (ctrl)
+            {
+                SendMessageW( host->parent, WM_NEXTDLGCTL, (WPARAM)ctrl, TRUE );
+                PostMessageW( ctrl, WM_KEYDOWN, VK_RETURN, 0 );
+            }
+        }
+    }
+    return TRUE;
+}
+
 static LRESULT send_msg_filter( struct host *host, UINT msg, WPARAM *wparam, LPARAM *lparam )
 {
     MSGFILTER msgf;
@@ -905,6 +932,7 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         WCHAR wc = wparam;
 
         if (!unicode) MultiByteToWideChar( CP_ACP, 0, (char *)&wparam, 1, &wc, 1 );
+        if (wparam == '\r' && host->dialog_mode && host->emulate_10 && handle_dialog_enter( host )) break;
         hr = ITextServices_TxSendMessage( host->text_srv, msg, wc, lparam, &res );
         break;
     }
@@ -958,6 +986,14 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         }
         break;
     }
+    case WM_GETDLGCODE:
+        if (lparam) host->dialog_mode = TRUE;
+
+        res = DLGC_WANTCHARS | DLGC_WANTTAB | DLGC_WANTARROWS;
+        if (host->props & TXTBIT_MULTILINE) res |= DLGC_WANTMESSAGE;
+        if (!(host->props & TXTBIT_SAVESELECTION)) res |= DLGC_HASSETSEL;
+        break;
+
     case EM_GETLINE:
         if (unicode) hr = ITextServices_TxSendMessage( host->text_srv, msg, wparam, lparam, &res );
         else hr = get_lineA( host->text_srv, wparam, lparam, &res );
@@ -1012,6 +1048,25 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
     case EM_GETTEXTRANGE:
         if (unicode) hr = ITextServices_TxSendMessage( host->text_srv, msg, wparam, lparam, &res );
         else hr = get_text_rangeA( host, (TEXTRANGEA *)lparam, &res );
+        break;
+
+    case WM_KEYDOWN:
+        switch (LOWORD( wparam ))
+        {
+        case VK_ESCAPE:
+            if (host->dialog_mode && host->parent)
+                PostMessageW( host->parent, WM_CLOSE, 0, 0 );
+            break;
+        case VK_TAB:
+            if (host->dialog_mode && host->parent)
+                SendMessageW( host->parent, WM_NEXTDLGCTL, GetKeyState( VK_SHIFT ) & 0x8000, 0 );
+            break;
+        case VK_RETURN:
+            if (host->dialog_mode && !host->emulate_10 && handle_dialog_enter( host )) break;
+            /* fall through */
+        default:
+            hr = ITextServices_TxSendMessage( host->text_srv, msg, wparam, lparam, &res );
+        }
         break;
 
     case WM_PAINT:
