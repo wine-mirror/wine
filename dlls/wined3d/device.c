@@ -2188,6 +2188,48 @@ void CDECL wined3d_device_context_set_scissor_rects(struct wined3d_device_contex
     wined3d_device_context_emit_set_scissor_rects(context, rect_count, rects);
 }
 
+void CDECL wined3d_device_context_set_shader_resource_view(struct wined3d_device_context *context,
+        enum wined3d_shader_type type, unsigned int idx, struct wined3d_shader_resource_view *view)
+{
+    struct wined3d_state *state = context->state;
+    const struct wined3d_rendertarget_view *dsv;
+    struct wined3d_shader_resource_view *prev;
+
+    TRACE("context %p, type %#x, idx %u, view %p.\n", context, type, idx, view);
+
+    if (idx >= MAX_SHADER_RESOURCE_VIEWS)
+    {
+        WARN("Invalid view index %u.\n", idx);
+        return;
+    }
+
+    prev = state->shader_resource_view[type][idx];
+    if (view == prev)
+        return;
+
+    if (view && (wined3d_is_srv_rtv_bound(view)
+            || ((dsv = state->fb.depth_stencil)
+            && dsv->resource == view->resource && wined3d_dsv_srv_conflict(dsv, view->format))))
+    {
+        WARN("Application is trying to bind resource which is attached as render target.\n");
+        view = NULL;
+    }
+
+    if (view)
+    {
+        wined3d_shader_resource_view_incref(view);
+        wined3d_srv_bind_count_inc(view);
+    }
+
+    state->shader_resource_view[type][idx] = view;
+    wined3d_device_context_emit_set_shader_resource_view(context, type, idx, view);
+    if (prev)
+    {
+        wined3d_srv_bind_count_dec(prev);
+        wined3d_shader_resource_view_decref(prev);
+    }
+}
+
 void CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struct wined3d_shader *shader)
 {
     TRACE("device %p, shader %p.\n", device, shader);
@@ -2224,52 +2266,12 @@ struct wined3d_buffer * CDECL wined3d_device_get_constant_buffer(const struct wi
     return device->cs->c.state->cb[shader_type][idx];
 }
 
-static void wined3d_device_set_shader_resource_view(struct wined3d_device *device,
-        enum wined3d_shader_type type, UINT idx, struct wined3d_shader_resource_view *view)
-{
-    const struct wined3d_rendertarget_view *dsv;
-    struct wined3d_state *state = device->cs->c.state;
-    struct wined3d_shader_resource_view *prev;
-
-    if (idx >= MAX_SHADER_RESOURCE_VIEWS)
-    {
-        WARN("Invalid view index %u.\n", idx);
-        return;
-    }
-
-    prev = state->shader_resource_view[type][idx];
-    if (view == prev)
-        return;
-
-    if (view && (wined3d_is_srv_rtv_bound(view)
-            || ((dsv = state->fb.depth_stencil)
-            && dsv->resource == view->resource && wined3d_dsv_srv_conflict(dsv, view->format))))
-    {
-        WARN("Application is trying to bind resource which is attached as render target.\n");
-        view = NULL;
-    }
-
-    if (view)
-    {
-        wined3d_shader_resource_view_incref(view);
-        wined3d_srv_bind_count_inc(view);
-    }
-
-    state->shader_resource_view[type][idx] = view;
-    wined3d_device_context_emit_set_shader_resource_view(&device->cs->c, type, idx, view);
-    if (prev)
-    {
-        wined3d_srv_bind_count_dec(prev);
-        wined3d_shader_resource_view_decref(prev);
-    }
-}
-
 void CDECL wined3d_device_set_vs_resource_view(struct wined3d_device *device,
         UINT idx, struct wined3d_shader_resource_view *view)
 {
     TRACE("device %p, idx %u, view %p.\n", device, idx, view);
 
-    wined3d_device_set_shader_resource_view(device, WINED3D_SHADER_TYPE_VERTEX, idx, view);
+    wined3d_device_context_set_shader_resource_view(&device->cs->c, WINED3D_SHADER_TYPE_VERTEX, idx, view);
 }
 
 static struct wined3d_shader_resource_view *wined3d_device_get_shader_resource_view(
@@ -2415,7 +2417,7 @@ void CDECL wined3d_device_set_ps_resource_view(struct wined3d_device *device,
 {
     TRACE("device %p, idx %u, view %p.\n", device, idx, view);
 
-    wined3d_device_set_shader_resource_view(device, WINED3D_SHADER_TYPE_PIXEL, idx, view);
+    wined3d_device_context_set_shader_resource_view(&device->cs->c, WINED3D_SHADER_TYPE_PIXEL, idx, view);
 }
 
 struct wined3d_shader_resource_view * CDECL wined3d_device_get_ps_resource_view(const struct wined3d_device *device,
@@ -2513,7 +2515,7 @@ void CDECL wined3d_device_set_hs_resource_view(struct wined3d_device *device,
 {
     TRACE("device %p, idx %u, view %p.\n", device, idx, view);
 
-    wined3d_device_set_shader_resource_view(device, WINED3D_SHADER_TYPE_HULL, idx, view);
+    wined3d_device_context_set_shader_resource_view(&device->cs->c, WINED3D_SHADER_TYPE_HULL, idx, view);
 }
 
 struct wined3d_shader_resource_view * CDECL wined3d_device_get_hs_resource_view(const struct wined3d_device *device,
@@ -2558,7 +2560,7 @@ void CDECL wined3d_device_set_ds_resource_view(struct wined3d_device *device,
 {
     TRACE("device %p, idx %u, view %p.\n", device, idx, view);
 
-    wined3d_device_set_shader_resource_view(device, WINED3D_SHADER_TYPE_DOMAIN, idx, view);
+    wined3d_device_context_set_shader_resource_view(&device->cs->c, WINED3D_SHADER_TYPE_DOMAIN, idx, view);
 }
 
 struct wined3d_shader_resource_view * CDECL wined3d_device_get_ds_resource_view(const struct wined3d_device *device,
@@ -2603,7 +2605,7 @@ void CDECL wined3d_device_set_gs_resource_view(struct wined3d_device *device,
 {
     TRACE("device %p, idx %u, view %p.\n", device, idx, view);
 
-    wined3d_device_set_shader_resource_view(device, WINED3D_SHADER_TYPE_GEOMETRY, idx, view);
+    wined3d_device_context_set_shader_resource_view(&device->cs->c, WINED3D_SHADER_TYPE_GEOMETRY, idx, view);
 }
 
 struct wined3d_shader_resource_view * CDECL wined3d_device_get_gs_resource_view(const struct wined3d_device *device,
@@ -2647,7 +2649,7 @@ void CDECL wined3d_device_set_cs_resource_view(struct wined3d_device *device,
 {
     TRACE("device %p, idx %u, view %p.\n", device, idx, view);
 
-    wined3d_device_set_shader_resource_view(device, WINED3D_SHADER_TYPE_COMPUTE, idx, view);
+    wined3d_device_context_set_shader_resource_view(&device->cs->c, WINED3D_SHADER_TYPE_COMPUTE, idx, view);
 }
 
 struct wined3d_shader_resource_view * CDECL wined3d_device_get_cs_resource_view(const struct wined3d_device *device,
@@ -5183,7 +5185,7 @@ static void wined3d_unbind_srv_for_rtv(struct wined3d_device *device,
                 if ((srv = state->shader_resource_view[i][j]) && srv->resource == resource
                         && ((!dsv && wined3d_is_srv_rtv_bound(srv))
                         || (dsv && wined3d_dsv_srv_conflict(view, srv->format))))
-                    wined3d_device_set_shader_resource_view(device, i, j, NULL);
+                    wined3d_device_context_set_shader_resource_view(&device->cs->c, i, j, NULL);
     }
 }
 
