@@ -1903,7 +1903,7 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
             wined3d_device_context_emit_set_constant_buffer(context, i, j, state->cb[i][j]);
         for (j = 0; j < MAX_SAMPLER_OBJECTS; ++j)
         {
-            wined3d_cs_emit_set_sampler(device->cs, i, j, state->sampler[i][j]);
+            wined3d_device_context_emit_set_sampler(context, i, j, state->sampler[i][j]);
         }
         for (j = 0; j < MAX_SHADER_RESOURCE_VIEWS; ++j)
         {
@@ -2313,7 +2313,7 @@ static void wined3d_device_set_sampler(struct wined3d_device *device,
     if (sampler)
         wined3d_sampler_incref(sampler);
     state->sampler[type][idx] = sampler;
-    wined3d_cs_emit_set_sampler(device->cs, type, idx, sampler);
+    wined3d_device_context_emit_set_sampler(&device->cs->c, type, idx, sampler);
     if (prev)
         wined3d_sampler_decref(prev);
 }
