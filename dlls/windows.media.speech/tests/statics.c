@@ -136,8 +136,7 @@ static void test_VoiceInformation(void)
     ok(SUCCEEDED(hr), "WindowsCreateString failed, hr %#x\n", hr);
 
     hr = pRoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
-    todo_wine ok(hr == REGDB_E_CLASSNOTREG, "RoGetActivationFactory returned unexpected hr %#x\n", hr);
-    if (SUCCEEDED(hr)) IActivationFactory_Release(factory);
+    ok(hr == REGDB_E_CLASSNOTREG, "RoGetActivationFactory returned unexpected hr %#x\n", hr);
 
     pWindowsDeleteString(str);
 
