@@ -2230,6 +2230,32 @@ void CDECL wined3d_device_context_set_shader_resource_view(struct wined3d_device
     }
 }
 
+void CDECL wined3d_device_context_set_sampler(struct wined3d_device_context *context,
+        enum wined3d_shader_type type, unsigned int idx, struct wined3d_sampler *sampler)
+{
+    struct wined3d_state *state = context->state;
+    struct wined3d_sampler *prev;
+
+    TRACE("context %p, type %#x, idx %u, sampler %p.\n", context, type, idx, sampler);
+
+    if (idx >= MAX_SAMPLER_OBJECTS)
+    {
+        WARN("Invalid sampler index %u.\n", idx);
+        return;
+    }
+
+    prev = state->sampler[type][idx];
+    if (sampler == prev)
+        return;
+
+    if (sampler)
+        wined3d_sampler_incref(sampler);
+    state->sampler[type][idx] = sampler;
+    wined3d_device_context_emit_set_sampler(context, type, idx, sampler);
+    if (prev)
+        wined3d_sampler_decref(prev);
+}
+
 void CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struct wined3d_shader *shader)
 {
     TRACE("device %p, shader %p.\n", device, shader);
@@ -2294,35 +2320,11 @@ struct wined3d_shader_resource_view * CDECL wined3d_device_get_vs_resource_view(
     return wined3d_device_get_shader_resource_view(device, WINED3D_SHADER_TYPE_VERTEX, idx);
 }
 
-static void wined3d_device_set_sampler(struct wined3d_device *device,
-        enum wined3d_shader_type type, UINT idx, struct wined3d_sampler *sampler)
-{
-    struct wined3d_state *state = device->cs->c.state;
-    struct wined3d_sampler *prev;
-
-    if (idx >= MAX_SAMPLER_OBJECTS)
-    {
-        WARN("Invalid sampler index %u.\n", idx);
-        return;
-    }
-
-    prev = state->sampler[type][idx];
-    if (sampler == prev)
-        return;
-
-    if (sampler)
-        wined3d_sampler_incref(sampler);
-    state->sampler[type][idx] = sampler;
-    wined3d_device_context_emit_set_sampler(&device->cs->c, type, idx, sampler);
-    if (prev)
-        wined3d_sampler_decref(prev);
-}
-
 void CDECL wined3d_device_set_vs_sampler(struct wined3d_device *device, UINT idx, struct wined3d_sampler *sampler)
 {
     TRACE("device %p, idx %u, sampler %p.\n", device, idx, sampler);
 
-    wined3d_device_set_sampler(device, WINED3D_SHADER_TYPE_VERTEX, idx, sampler);
+    wined3d_device_context_set_sampler(&device->cs->c, WINED3D_SHADER_TYPE_VERTEX, idx, sampler);
 }
 
 static struct wined3d_sampler *wined3d_device_get_sampler(const struct wined3d_device *device,
@@ -2432,7 +2434,7 @@ void CDECL wined3d_device_set_ps_sampler(struct wined3d_device *device, UINT idx
 {
     TRACE("device %p, idx %u, sampler %p.\n", device, idx, sampler);
 
-    wined3d_device_set_sampler(device, WINED3D_SHADER_TYPE_PIXEL, idx, sampler);
+    wined3d_device_context_set_sampler(&device->cs->c, WINED3D_SHADER_TYPE_PIXEL, idx, sampler);
 }
 
 struct wined3d_sampler * CDECL wined3d_device_get_ps_sampler(const struct wined3d_device *device, UINT idx)
@@ -2531,7 +2533,7 @@ void CDECL wined3d_device_set_hs_sampler(struct wined3d_device *device,
 {
     TRACE("device %p, idx %u, sampler %p.\n", device, idx, sampler);
 
-    wined3d_device_set_sampler(device, WINED3D_SHADER_TYPE_HULL, idx, sampler);
+    wined3d_device_context_set_sampler(&device->cs->c, WINED3D_SHADER_TYPE_HULL, idx, sampler);
 }
 
 struct wined3d_sampler * CDECL wined3d_device_get_hs_sampler(const struct wined3d_device *device, unsigned int idx)
@@ -2576,7 +2578,7 @@ void CDECL wined3d_device_set_ds_sampler(struct wined3d_device *device,
 {
     TRACE("device %p, idx %u, sampler %p.\n", device, idx, sampler);
 
-    wined3d_device_set_sampler(device, WINED3D_SHADER_TYPE_DOMAIN, idx, sampler);
+    wined3d_device_context_set_sampler(&device->cs->c, WINED3D_SHADER_TYPE_DOMAIN, idx, sampler);
 }
 
 struct wined3d_sampler * CDECL wined3d_device_get_ds_sampler(const struct wined3d_device *device, unsigned int idx)
@@ -2620,7 +2622,7 @@ void CDECL wined3d_device_set_gs_sampler(struct wined3d_device *device, UINT idx
 {
     TRACE("device %p, idx %u, sampler %p.\n", device, idx, sampler);
 
-    wined3d_device_set_sampler(device, WINED3D_SHADER_TYPE_GEOMETRY, idx, sampler);
+    wined3d_device_context_set_sampler(&device->cs->c, WINED3D_SHADER_TYPE_GEOMETRY, idx, sampler);
 }
 
 struct wined3d_sampler * CDECL wined3d_device_get_gs_sampler(const struct wined3d_device *device, UINT idx)
@@ -2665,7 +2667,7 @@ void CDECL wined3d_device_set_cs_sampler(struct wined3d_device *device,
 {
     TRACE("device %p, idx %u, sampler %p.\n", device, idx, sampler);
 
-    wined3d_device_set_sampler(device, WINED3D_SHADER_TYPE_COMPUTE, idx, sampler);
+    wined3d_device_context_set_sampler(&device->cs->c, WINED3D_SHADER_TYPE_COMPUTE, idx, sampler);
 }
 
 struct wined3d_sampler * CDECL wined3d_device_get_cs_sampler(const struct wined3d_device *device, unsigned int idx)
