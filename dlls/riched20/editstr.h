@@ -383,7 +383,6 @@ typedef struct tagME_TextEditor
   BOOL bEmulateVersion10;
   ME_TextBuffer *pBuffer;
   ME_Cursor *pCursors;
-  DWORD exStyleFlags;
   DWORD props;
   DWORD scrollbars;
   int nCursors;
@@ -407,9 +406,7 @@ typedef struct tagME_TextEditor
   ME_Paragraph *last_sel_start_para, *last_sel_end_para;
   ME_FontCacheItem pFontCache[HFONT_CACHE_SIZE];
   int nZoomNumerator, nZoomDenominator;
-  RECT prevClientRect;
   RECT rcFormat;
-  BOOL bDefaultFormatRect;
   BOOL bWordWrap;
   int nTextLimit;
   EDITWORDBREAKPROCW pfnWordBreak;

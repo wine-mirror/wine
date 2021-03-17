@@ -43,8 +43,11 @@ struct host
     unsigned int dialog_mode : 1;
     unsigned int want_return : 1;
     unsigned int sel_bar : 1;
+    unsigned int client_edge : 1;
+    unsigned int use_set_rect : 1;
     PARAFORMAT2 para_fmt;
     DWORD props, scrollbars, event_mask;
+    RECT client_rect, set_rect;
 };
 
 static const ITextHostVtbl textHostVtbl;
@@ -76,6 +79,9 @@ static void host_init_props( struct host *host )
 
     host->sel_bar     = !!(style & ES_SELECTIONBAR);
     host->want_return = !!(style & ES_WANTRETURN);
+
+    style = GetWindowLongW( host->window, GWL_EXSTYLE );
+    host->client_edge = !!(style & WS_EX_CLIENTEDGE);
 }
 
 struct host *host_create( HWND hwnd, CREATESTRUCTW *cs, BOOL emulate_10 )
@@ -102,6 +108,9 @@ struct host *host_create( HWND hwnd, CREATESTRUCTW *cs, BOOL emulate_10 )
     texthost->editor = NULL;
     host_init_props( texthost );
     texthost->event_mask = 0;
+    texthost->use_set_rect = 0;
+    SetRectEmpty( &texthost->set_rect );
+    GetClientRect( hwnd, &texthost->client_rect );
 
     return texthost;
 }
@@ -301,8 +310,16 @@ DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetClientRect,8)
 DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxGetClientRect( ITextHost *iface, RECT *rect )
 {
     struct host *host = impl_from_ITextHost( iface );
-    int ret = GetClientRect( host->window, rect );
-    return ret ? S_OK : E_FAIL;
+
+    if (!host->use_set_rect)
+    {
+        *rect = host->client_rect;
+        if (host->client_edge) rect->top += 1;
+        InflateRect( rect, -1, 0 );
+    }
+    else *rect = host->set_rect;
+
+    return S_OK;
 }
 
 DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetViewInset,8)
@@ -701,7 +718,6 @@ static BOOL create_windowed_editor( HWND hwnd, CREATESTRUCTW *create, BOOL emula
     IUnknown_QueryInterface( unk, &IID_ITextServices, (void **)&host->text_srv );
     IUnknown_Release( unk );
 
-    host->editor->exStyleFlags = GetWindowLongW( hwnd, GWL_EXSTYLE );
     host->editor->hWnd = hwnd; /* FIXME: Remove editor's dependence on hWnd */
     host->editor->hwndParent = create->hwndParent;
 
@@ -829,6 +845,12 @@ static HRESULT set_options( struct host *host, DWORD op, DWORD value, LRESULT *r
     {
         host->sel_bar ^= 1;
         props_mask |= TXTBIT_SELBARCHANGE;
+        if (host->use_set_rect)
+        {
+            int width = SELECTIONBAR_WIDTH;
+            host->set_rect.left += host->sel_bar ? width : -width;
+            props_mask |= TXTBIT_CLIENTRECTCHANGE;
+        }
     }
     if (change & ECO_VERTICAL)
     {
@@ -939,6 +961,12 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         hr = ITextServices_TxSendMessage( host->text_srv, msg, wc, lparam, &res );
         break;
     }
+
+    case WM_CREATE:
+        ITextServices_OnTxPropertyBitsChange( host->text_srv, TXTBIT_CLIENTRECTCHANGE, 0 );
+        res = ME_HandleMessage( editor, msg, wparam, lparam, unicode, &hr );
+        break;
+
     case WM_DESTROY:
         ITextHost_Release( &host->ITextHost_iface );
         return 0;
@@ -1000,6 +1028,10 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
     case EM_GETLINE:
         if (unicode) hr = ITextServices_TxSendMessage( host->text_srv, msg, wparam, lparam, &res );
         else hr = get_lineA( host->text_srv, wparam, lparam, &res );
+        break;
+
+    case EM_GETRECT:
+        hr = ITextHost_TxGetClientRect( &host->ITextHost_iface, (RECT *)lparam );
         break;
 
     case EM_GETSELTEXT:
@@ -1149,6 +1181,27 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         SendMessageW( hwnd, EM_SETOPTIONS, op, mask );
         return 1;
     }
+    case EM_SETRECT:
+    case EM_SETRECTNP:
+    {
+        RECT *rc = (RECT *)lparam;
+
+        if (!rc) host->use_set_rect = 0;
+        else
+        {
+            if (wparam >= 2) break;
+            host->set_rect = *rc;
+            if (host->client_edge)
+            {
+                InflateRect( &host->set_rect, 1, 0 );
+                host->set_rect.top -= 1;
+            }
+            if (!wparam) IntersectRect( &host->set_rect, &host->set_rect, &host->client_rect );
+            host->use_set_rect = 1;
+        }
+        ITextServices_OnTxPropertyBitsChange( host->text_srv, TXTBIT_CLIENTRECTCHANGE, 0 );
+        break;
+    }
     case WM_SETTEXT:
     {
         char *textA = (char *)lparam;
@@ -1181,6 +1234,23 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         }
 
         res = 0;
+        break;
+    }
+    case WM_WINDOWPOSCHANGED:
+    {
+        RECT client;
+        WINDOWPOS *winpos = (WINDOWPOS *)lparam;
+
+        hr = S_FALSE; /* call defwndproc */
+        if (winpos->flags & SWP_NOCLIENTSIZE) break;
+        GetClientRect( hwnd, &client );
+        if (host->use_set_rect)
+        {
+            host->set_rect.right += client.right - host->client_rect.right;
+            host->set_rect.bottom += client.bottom - host->client_rect.bottom;
+        }
+        host->client_rect = client;
+        ITextServices_OnTxPropertyBitsChange( host->text_srv, TXTBIT_CLIENTRECTCHANGE, 0 );
         break;
     }
     default:

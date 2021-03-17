@@ -206,6 +206,25 @@ DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_TxQueryHitPoint(ITextServices *ifac
     return E_NOTIMPL;
 }
 
+static HRESULT update_client_rect( struct text_services *services, const RECT *client )
+{
+    RECT rect;
+    HRESULT hr = S_OK;
+
+    if (!client)
+    {
+        hr = ITextHost_TxGetClientRect( services->host, &rect );
+        client = &rect;
+    }
+
+    if (SUCCEEDED( hr ))
+    {
+        services->editor->rcFormat = *client;
+        services->editor->rcFormat.left += services->editor->selofs;
+    }
+    return hr;
+}
+
 DEFINE_THISCALL_WRAPPER(fnTextSrv_OnTxInplaceActivate,8)
 DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_OnTxInplaceActivate(ITextServices *iface, LPCRECT prcClient)
 {
@@ -363,6 +382,12 @@ DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_OnTxPropertyBitsChange( ITextServic
             services->editor->rcFormat.left += services->editor->selofs;
             repaint = TRUE;
         }
+    }
+
+    if (mask & TXTBIT_CLIENTRECTCHANGE)
+    {
+        hr = update_client_rect( services, NULL );
+        if (SUCCEEDED( hr )) repaint = TRUE;
     }
 
     if (repaint) ME_RewrapRepaint( services->editor );

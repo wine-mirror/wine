@@ -2909,14 +2909,6 @@ static BOOL ME_SetCursor(ME_TextEditor *editor)
   return TRUE;
 }
 
-static void ME_SetDefaultFormatRect(ME_TextEditor *editor)
-{
-  ITextHost_TxGetClientRect(editor->texthost, &editor->rcFormat);
-  editor->rcFormat.top += editor->exStyleFlags & WS_EX_CLIENTEDGE ? 1 : 0;
-  editor->rcFormat.left += 1 + editor->selofs;
-  editor->rcFormat.right -= 1;
-}
-
 static LONG ME_GetSelectionType(ME_TextEditor *editor)
 {
     LONG sel_type = SEL_EMPTY;
@@ -2987,7 +2979,6 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->texthost = texthost;
   ed->reOle = NULL;
   ed->bEmulateVersion10 = bEmulateVersion10;
-  ed->exStyleFlags = 0;
   ed->total_rows = 0;
   ITextHost_TxGetPropertyBits( texthost, TXTBIT_RICHTEXT | TXTBIT_MULTILINE | TXTBIT_READONLY |
                                TXTBIT_USEPASSWORD | TXTBIT_HIDESELECTION | TXTBIT_SAVESELECTION |
@@ -3046,7 +3037,6 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
 
   ME_CheckCharOffsets(ed);
   SetRectEmpty(&ed->rcFormat);
-  ed->bDefaultFormatRect = TRUE;
   hr = ITextHost_TxGetSelectionBarWidth( ed->texthost, &selbarwidth );
   /* FIXME: Convert selbarwidth from HIMETRIC to pixels */
   if (hr == S_OK && selbarwidth) ed->selofs = SELECTIONBAR_WIDTH;
@@ -3226,8 +3216,6 @@ static LRESULT ME_WmCreate(ME_TextEditor *editor, LPARAM lParam, BOOL unicode)
 
   if (lParam)
     text = unicode ? (void*)createW->lpszName : (void*)createA->lpszName;
-
-  ME_SetDefaultFormatRect(editor);
 
   max = (editor->scrollbars & ES_DISABLENOSCROLL) ? 1 : 0;
   if (~editor->scrollbars & ES_DISABLENOSCROLL || editor->scrollbars & WS_VSCROLL)
@@ -4212,78 +4200,9 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     }
     break;
   }
-  case EM_GETRECT:
-  {
-    *((RECT *)lParam) = editor->rcFormat;
-    if (editor->bDefaultFormatRect)
-      ((RECT *)lParam)->left -= editor->selofs;
-    return 0;
-  }
-  case EM_SETRECT:
-  case EM_SETRECTNP:
-  {
-    if (lParam)
-    {
-      int border = 0;
-      RECT clientRect;
-      RECT *rc = (RECT *)lParam;
-
-      border = editor->exStyleFlags & WS_EX_CLIENTEDGE ? 1 : 0;
-      ITextHost_TxGetClientRect(editor->texthost, &clientRect);
-      if (wParam == 0)
-      {
-        editor->rcFormat.top = max(0, rc->top - border);
-        editor->rcFormat.left = max(0, rc->left - border);
-        editor->rcFormat.bottom = min(clientRect.bottom, rc->bottom);
-        editor->rcFormat.right = min(clientRect.right, rc->right + border);
-      } else if (wParam == 1) {
-        /* MSDN incorrectly says a wParam value of 1 causes the
-         * lParam rect to be used as a relative offset,
-         * however, the tests show it just prevents min/max bound
-         * checking. */
-        editor->rcFormat.top = rc->top - border;
-        editor->rcFormat.left = rc->left - border;
-        editor->rcFormat.bottom = rc->bottom;
-        editor->rcFormat.right = rc->right + border;
-      } else {
-        return 0;
-      }
-      editor->bDefaultFormatRect = FALSE;
-    }
-    else
-    {
-      ME_SetDefaultFormatRect(editor);
-      editor->bDefaultFormatRect = TRUE;
-    }
-    editor_mark_rewrap_all( editor );
-    ME_WrapMarkedParagraphs(editor);
-    ME_UpdateScrollBar(editor);
-    if (msg != EM_SETRECTNP)
-      ME_Repaint(editor);
-    return 0;
-  }
   case EM_REQUESTRESIZE:
     ME_SendRequestResize(editor, TRUE);
     return 0;
-  case WM_SETREDRAW:
-    goto do_default;
-  case WM_WINDOWPOSCHANGED:
-  {
-    RECT clientRect;
-    WINDOWPOS *winpos = (WINDOWPOS *)lParam;
-
-    if (winpos->flags & SWP_NOCLIENTSIZE) goto do_default;
-    ITextHost_TxGetClientRect(editor->texthost, &clientRect);
-    if (editor->bDefaultFormatRect) {
-      ME_SetDefaultFormatRect(editor);
-    } else {
-      editor->rcFormat.right += clientRect.right - editor->prevClientRect.right;
-      editor->rcFormat.bottom += clientRect.bottom - editor->prevClientRect.bottom;
-    }
-    editor->prevClientRect = clientRect;
-    ME_RewrapRepaint(editor);
-    goto do_default;
-  }
   /* IME messages to make richedit controls IME aware */
   case WM_IME_SETCONTEXT:
   case WM_IME_CONTROL:
