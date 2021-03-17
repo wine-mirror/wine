@@ -29,6 +29,7 @@
 
 #include "mmdeviceapi.h"
 #include "spatialaudioclient.h"
+#include "mmsystem.h"
 
 static IMMDeviceEnumerator *mme = NULL;
 static IMMDevice *dev = NULL;
@@ -269,15 +270,14 @@ static BOOL is_buffer_zeroed(const BYTE *buffer, UINT32 buffer_length)
 
 static void test_audio_object_buffers(void)
 {
-    HRESULT hr;
-    ISpatialAudioObjectRenderStream *sas = NULL;
-    ISpatialAudioObject *sao[4];
-    UINT32 dyn_object_count, frame_count, buffer_length;
-    BYTE *buffer;
-    INT i;
-
+    UINT32 dyn_object_count, frame_count, max_frame_count, buffer_length;
     SpatialAudioObjectRenderStreamActivationParams activation_params;
+    ISpatialAudioObjectRenderStream *sas = NULL;
     PROPVARIANT activation_params_prop;
+    ISpatialAudioObject *sao[4];
+    BYTE *buffer;
+    INT i, j, k;
+    HRESULT hr;
 
     PropVariantInit(&activation_params_prop);
     activation_params_prop.vt = VT_BLOB;
@@ -287,6 +287,17 @@ static void test_audio_object_buffers(void)
     fill_activation_params(&activation_params);
     hr = ISpatialAudioClient_ActivateSpatialAudioStream(sac, &activation_params_prop, &IID_ISpatialAudioObjectRenderStream, (void**)&sas);
     ok(hr == S_OK, "Failed to activate spatial audio stream: 0x%08x\n", hr);
+
+    hr = ISpatialAudioClient_GetMaxFrameCount(sac, &format, &max_frame_count);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    frame_count = format.nSamplesPerSec / 100; /* 10ms */
+    /* Most of the time the frame count matches the 10ms interval exactly.
+     * However (seen on some Testbot machines) it might be a bit higher for some reason. */
+    ok(max_frame_count <= frame_count + frame_count / 4, "Got unexpected frame count %u.\n", frame_count);
+
+    /* The tests below which check frame count from _BeginUpdatingAudioObjects fail on some Testbot machines
+     * with max_frame_count from _GetMaxFrameCount(). */
+    max_frame_count = frame_count + frame_count / 4;
 
     hr = ISpatialAudioObjectRenderStream_ActivateSpatialAudioObject(sas, AudioObjectType_FrontLeft, &sao[0]);
     ok(hr == S_OK, "Failed to activate spatial audio object: 0x%08x\n", hr);
@@ -306,6 +317,7 @@ static void test_audio_object_buffers(void)
     hr = ISpatialAudioObjectRenderStream_BeginUpdatingAudioObjects(sas, &dyn_object_count, &frame_count);
     ok(hr == S_OK, "Failed to beging updating audio objects: 0x%08x\n", hr);
     ok(dyn_object_count == 0, "Unexpected dynamic objects\n");
+    ok(frame_count <= max_frame_count, "Got unexpected frame count %u.\n", frame_count);
 
     hr = ISpatialAudioObjectRenderStream_ActivateSpatialAudioObject(sas, AudioObjectType_SideRight, &sao[3]);
     ok(hr == S_OK, "Failed to activate spatial audio object: 0x%08x\n", hr);
@@ -322,6 +334,55 @@ static void test_audio_object_buffers(void)
 
     hr = ISpatialAudioObjectRenderStream_EndUpdatingAudioObjects(sas);
     ok(hr == S_OK, "Failed to end updating audio objects: 0x%08x\n", hr);
+
+    /* Emulate underrun and test frame count approximate limit. */
+
+    /* Force 1ms Sleep() timer resolution. */
+    timeBeginPeriod(1);
+    for (j = 0; j < 20; ++j)
+    {
+        hr = WaitForSingleObject(event, 200);
+        ok(hr == WAIT_OBJECT_0, "Expected event to be flagged: 0x%08x, j %u.\n", hr, j);
+
+        hr = ISpatialAudioObjectRenderStream_BeginUpdatingAudioObjects(sas, &dyn_object_count, &frame_count);
+        ok(hr == S_OK, "Failed to beging updating audio objects: 0x%08x\n", hr);
+        ok(dyn_object_count == 0, "Unexpected dynamic objects\n");
+        ok(frame_count <= max_frame_count, "Got unexpected frame_count %u.\n", frame_count);
+
+        /* Audio starts crackling with delays 10ms and above. However, setting such delay (that is, the delay
+         * which skips the whole quantum) breaks SA on some Testbot machines: _BeginUpdatingAudioObjects fails
+         * with SPTLAUDCLNT_E_INTERNAL starting from some iteration or WaitForSingleObject timeouts. That seems
+         * to work on the real hardware though. */
+        Sleep(5);
+
+        for (i = 0; i < ARRAYSIZE(sao); i++)
+        {
+            hr = ISpatialAudioObject_GetBuffer(sao[i], &buffer, &buffer_length);
+            ok(hr == S_OK, "Expected to be able to get buffers for audio object: 0x%08x, i %d\n", hr, i);
+            ok(buffer != NULL, "Expected to get a non-NULL buffer\n");
+            ok(buffer_length == frame_count * format.wBitsPerSample / 8,
+                    "Expected buffer length to be sample_size * frame_count = %hu but got %u\n",
+                    frame_count * format.wBitsPerSample / 8, buffer_length);
+
+            /* Enable to hear the test sound. */
+            if (0)
+            {
+                if (format.wFormatTag == WAVE_FORMAT_IEEE_FLOAT)
+                {
+                    for (k = 0; k < frame_count; ++k)
+                    {
+                        float time_sec = 10.0f / 1000.0f * (j + (float)k / frame_count);
+
+                        /* 440Hz tone. */
+                        ((float *)buffer)[k] = sinf(2.0f * M_PI * time_sec * 440.0f);
+                    }
+                }
+            }
+        }
+        hr = ISpatialAudioObjectRenderStream_EndUpdatingAudioObjects(sas);
+        ok(hr == S_OK, "Failed to end updating audio objects: 0x%08x\n", hr);
+    }
+    timeEndPeriod(1);
 
     hr = WaitForSingleObject(event, 200);
     ok(hr == WAIT_OBJECT_0, "Expected event to be flagged: 0x%08x\n", hr);

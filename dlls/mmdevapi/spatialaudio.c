@@ -41,8 +41,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 
-#define MAX_PERIODS 3
-
 static UINT32 AudioObjectType_to_index(AudioObjectType type)
 {
     UINT32 o = 0;
@@ -361,7 +359,6 @@ static HRESULT WINAPI SAORS_BeginUpdatingAudioObjects(ISpatialAudioObjectRenderS
     static BOOL fixme_once = FALSE;
     SpatialAudioStreamImpl *This = impl_from_ISpatialAudioObjectRenderStream(iface);
     SpatialAudioObjectImpl *object;
-    UINT32 pad;
     HRESULT hr;
 
     TRACE("(%p)->(%p, %p)\n", This, dyn_count, frames);
@@ -373,18 +370,7 @@ static HRESULT WINAPI SAORS_BeginUpdatingAudioObjects(ISpatialAudioObjectRenderS
         return SPTLAUDCLNT_E_OUT_OF_ORDER;
     }
 
-    hr = IAudioClient_GetCurrentPadding(This->client, &pad);
-    if(FAILED(hr)){
-        WARN("GetCurrentPadding failed: %08x\n", hr);
-        LeaveCriticalSection(&This->lock);
-        return hr;
-    }
-
-    if(pad < This->period_frames * MAX_PERIODS){
-        This->update_frames = This->period_frames * MAX_PERIODS - pad;
-    }else{
-        This->update_frames = 0;
-    }
+    This->update_frames = This->period_frames;
 
     if(This->update_frames > 0){
         hr = IAudioRenderClient_GetBuffer(This->render, This->update_frames, (BYTE **)&This->buf);
@@ -496,7 +482,7 @@ static HRESULT WINAPI SAORS_ActivateSpatialAudioObject(ISpatialAudioObjectRender
     obj->sa_stream = This;
     SAORS_AddRef(&This->ISpatialAudioObjectRenderStream_iface);
 
-    obj->buf = heap_alloc_zero(This->period_frames * MAX_PERIODS * This->sa_client->object_fmtex.Format.nBlockAlign);
+    obj->buf = heap_alloc_zero(This->period_frames * This->sa_client->object_fmtex.Format.nBlockAlign);
 
     EnterCriticalSection(&This->lock);
 
@@ -616,7 +602,7 @@ static HRESULT WINAPI SAC_GetMaxFrameCount(ISpatialAudioClient *iface,
 
     TRACE("(%p)->(%p, %p)\n", This, format, count);
 
-    *count = MulDiv(period, format->nSamplesPerSec, 10000000) * MAX_PERIODS;
+    *count = MulDiv(period, format->nSamplesPerSec, 10000000);
 
     return S_OK;
 }
@@ -731,7 +717,7 @@ static HRESULT activate_stream(SpatialAudioStreamImpl *stream)
 
     hr = IAudioClient_Initialize(stream->client, AUDCLNT_SHAREMODE_SHARED,
             AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_NOPERSIST,
-            period * MAX_PERIODS, 0, &stream->stream_fmtex.Format, NULL);
+            period, 0, &stream->stream_fmtex.Format, NULL);
     if(FAILED(hr)){
         WARN("Initialize failed: %08x\n", hr);
         IAudioClient_Release(stream->client);
