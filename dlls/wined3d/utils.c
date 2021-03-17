@@ -3071,7 +3071,9 @@ static void query_internal_format(struct wined3d_adapter *adapter,
     query_view_class(format);
 
     if (format->internal && format->f.flags[WINED3D_GL_RES_TYPE_RB]
-            & (WINED3DFMT_FLAG_RENDERTARGET | WINED3DFMT_FLAG_DEPTH_STENCIL))
+            & (WINED3DFMT_FLAG_RENDERTARGET | WINED3DFMT_FLAG_DEPTH_STENCIL)
+            && (gl_info->supported[ARB_FRAMEBUFFER_OBJECT] || gl_info->supported[EXT_FRAMEBUFFER_MULTISAMPLE])
+            && wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
         if (gl_info->supported[ARB_INTERNALFORMAT_QUERY])
         {
