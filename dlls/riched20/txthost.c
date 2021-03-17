@@ -963,10 +963,27 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
     }
 
     case WM_CREATE:
-        ITextServices_OnTxPropertyBitsChange( host->text_srv, TXTBIT_CLIENTRECTCHANGE, 0 );
-        res = ME_HandleMessage( editor, msg, wparam, lparam, unicode, &hr );
-        break;
+    {
+        CREATESTRUCTW *createW = (CREATESTRUCTW *)lparam;
+        CREATESTRUCTA *createA = (CREATESTRUCTA *)lparam;
+        void *text;
+        WCHAR *textW = NULL;
+        LONG codepage = unicode ? CP_UNICODE : CP_ACP;
+        int len;
 
+        ITextServices_OnTxPropertyBitsChange( host->text_srv, TXTBIT_CLIENTRECTCHANGE, 0 );
+
+        if (lparam)
+        {
+            text = unicode ? (void *)createW->lpszName : (void *)createA->lpszName;
+            textW = ME_ToUnicode( codepage, text, &len );
+        }
+        ITextServices_TxSetText( host->text_srv, textW );
+        if (lparam) ME_EndToUnicode( codepage, textW );
+
+        hr = ITextServices_TxSendMessage( host->text_srv, msg, wparam, lparam, &res );
+        break;
+    }
     case WM_DESTROY:
         ITextHost_Release( &host->ITextHost_iface );
         return 0;
@@ -1254,7 +1271,7 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         break;
     }
     default:
-        res = ME_HandleMessage( editor, msg, wparam, lparam, unicode, &hr );
+        hr = ITextServices_TxSendMessage( host->text_srv, msg, wparam, lparam, &res );
     }
 
     if (hr == S_FALSE)

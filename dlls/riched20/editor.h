@@ -271,8 +271,8 @@ void ME_DeleteReObject(struct re_object *re_object) DECLSPEC_HIDDEN;
 /* editor.c */
 ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10) DECLSPEC_HIDDEN;
 void ME_DestroyEditor(ME_TextEditor *editor) DECLSPEC_HIDDEN;
-LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
-                         LPARAM lParam, BOOL unicode, HRESULT* phresult) DECLSPEC_HIDDEN;
+LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
+                               LPARAM lParam, HRESULT* phresult ) DECLSPEC_HIDDEN;
 void ME_SendOldNotify(ME_TextEditor *editor, int nCode) DECLSPEC_HIDDEN;
 int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int buflen,
                 const ME_Cursor *start, int srcChars, BOOL bCRLF, BOOL bEOP) DECLSPEC_HIDDEN;

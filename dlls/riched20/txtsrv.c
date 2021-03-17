@@ -130,16 +130,16 @@ static ULONG WINAPI fnTextSrv_Release(ITextServices *iface)
 }
 
 DEFINE_THISCALL_WRAPPER(fnTextSrv_TxSendMessage,20)
-DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_TxSendMessage(ITextServices *iface, UINT msg, WPARAM wparam,
-                                                           LPARAM lparam, LRESULT *plresult)
+DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_TxSendMessage( ITextServices *iface, UINT msg, WPARAM wparam,
+                                                            LPARAM lparam, LRESULT *result )
 {
-   struct text_services *services = impl_from_ITextServices( iface );
-   HRESULT hresult;
-   LRESULT lresult;
+    struct text_services *services = impl_from_ITextServices( iface );
+    HRESULT hr;
+    LRESULT res;
 
-   lresult = ME_HandleMessage( services->editor, msg, wparam, lparam, TRUE, &hresult );
-   if (plresult) *plresult = lresult;
-   return hresult;
+    res = editor_handle_message( services->editor, msg, wparam, lparam, &hr );
+    if (result) *result = res;
+    return hr;
 }
 
 DEFINE_THISCALL_WRAPPER(fnTextSrv_TxDraw,52)

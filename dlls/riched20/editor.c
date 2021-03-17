@@ -3207,15 +3207,9 @@ static void ME_SetText(ME_TextEditor *editor, void *text, BOOL unicode)
   ME_EndToUnicode(codepage, wszText);
 }
 
-static LRESULT ME_WmCreate(ME_TextEditor *editor, LPARAM lParam, BOOL unicode)
+static LRESULT ME_WmCreate( ME_TextEditor *editor )
 {
-  CREATESTRUCTW *createW = (CREATESTRUCTW*)lParam;
-  CREATESTRUCTA *createA = (CREATESTRUCTA*)lParam;
-  void *text = NULL;
   INT max;
-
-  if (lParam)
-    text = unicode ? (void*)createW->lpszName : (void*)createA->lpszName;
 
   max = (editor->scrollbars & ES_DISABLENOSCROLL) ? 1 : 0;
   if (~editor->scrollbars & ES_DISABLENOSCROLL || editor->scrollbars & WS_VSCROLL)
@@ -3237,17 +3231,6 @@ static LRESULT ME_WmCreate(ME_TextEditor *editor, LPARAM lParam, BOOL unicode)
       ITextHost_TxShowScrollBar(editor->texthost, SB_HORZ, TRUE);
     }
   }
-
-  if (text)
-  {
-    ME_SetText(editor, text, unicode);
-    ME_SetCursorToStart(editor, &editor->pCursors[0]);
-    ME_SetCursorToStart(editor, &editor->pCursors[1]);
-  }
-
-  ME_CommitUndo(editor);
-  ME_WrapMarkedParagraphs(editor);
-  update_caret(editor);
   return 0;
 }
 
@@ -3312,8 +3295,8 @@ static LRESULT handle_EM_SETCHARFORMAT( ME_TextEditor *editor, WPARAM flags, con
  * The LRESULT that is returned is a return value for window procs,
  * and the phresult parameter is the COM return code needed by the
  * text services interface. */
-LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
-                         LPARAM lParam, BOOL unicode, HRESULT* phresult)
+LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
+                               LPARAM lParam, HRESULT* phresult )
 {
   *phresult = S_OK;
 
@@ -3978,7 +3961,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     return (wParam >= 0x40000) ? 0 : MAKELONG( pt.x, pt.y );
   }
   case WM_CREATE:
-    return ME_WmCreate(editor, lParam, unicode);
+    return ME_WmCreate( editor );
   case WM_SETCURSOR:
   {
     POINT cursor_pos;
@@ -4060,23 +4043,19 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case WM_CHAR:
     return handle_wm_char( editor, wParam, lParam );
   case WM_UNICHAR:
-    if (unicode)
-    {
-        if(wParam == UNICODE_NOCHAR) return TRUE;
-        if(wParam <= 0x000fffff)
-        {
-            if(wParam > 0xffff) /* convert to surrogates */
-            {
-                wParam -= 0x10000;
-                handle_wm_char( editor, (wParam >> 10) + 0xd800, 0 );
-                handle_wm_char( editor, (wParam & 0x03ff) + 0xdc00, 0 );
-            }
-            else
-                handle_wm_char( editor, wParam, 0 );
-        }
-        return 0;
-    }
-    break;
+      if (wParam == UNICODE_NOCHAR) return TRUE;
+      if (wParam <= 0x000fffff)
+      {
+          if (wParam > 0xffff) /* convert to surrogates */
+          {
+              wParam -= 0x10000;
+              handle_wm_char( editor, (wParam >> 10) + 0xd800, 0 );
+              handle_wm_char( editor, (wParam & 0x03ff) + 0xdc00, 0 );
+          }
+          else
+              handle_wm_char( editor, wParam, 0 );
+      }
+      return 0;
   case EM_STOPGROUPTYPING:
     ME_CommitUndo(editor); /* End coalesced undos for typed characters */
     return 0;
