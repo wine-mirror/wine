@@ -1649,23 +1649,28 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, DWORD co
                     || (ins.handler_idx == WINED3DSIH_LD_RAW && ins.src[1].reg.type == WINED3DSPR_UAV)
                     || (ins.handler_idx == WINED3DSIH_LD_STRUCTURED && ins.src[2].reg.type == WINED3DSPR_UAV))
             {
-                unsigned int reg_idx;
+                const struct wined3d_shader_register *reg;
+
                 if (ins.handler_idx == WINED3DSIH_LD_UAV_TYPED || ins.handler_idx == WINED3DSIH_LD_RAW)
-                    reg_idx = ins.src[1].reg.idx[0].offset;
+                    reg = &ins.src[1].reg;
                 else if (ins.handler_idx == WINED3DSIH_LD_STRUCTURED)
-                    reg_idx = ins.src[2].reg.idx[0].offset;
+                    reg = &ins.src[2].reg;
                 else if (WINED3DSIH_ATOMIC_AND <= ins.handler_idx && ins.handler_idx <= WINED3DSIH_ATOMIC_XOR)
-                    reg_idx = ins.dst[0].reg.idx[0].offset;
+                    reg = &ins.dst[0].reg;
                 else if (ins.handler_idx == WINED3DSIH_BUFINFO)
-                    reg_idx = ins.src[0].reg.idx[0].offset;
+                    reg = &ins.src[0].reg;
                 else
-                    reg_idx = ins.dst[1].reg.idx[0].offset;
-                if (reg_idx >= MAX_UNORDERED_ACCESS_VIEWS)
+                    reg = &ins.dst[1].reg;
+
+                if (reg->type == WINED3DSPR_UAV)
                 {
-                    ERR("Invalid UAV index %u.\n", reg_idx);
-                    break;
+                    if (reg->idx[0].offset >= MAX_UNORDERED_ACCESS_VIEWS)
+                    {
+                        ERR("Invalid UAV index %u.\n", reg->idx[0].offset);
+                        break;
+                    }
+                    reg_maps->uav_read_mask |= (1u << reg->idx[0].offset);
                 }
-                reg_maps->uav_read_mask |= (1u << reg_idx);
             }
             else if (ins.handler_idx == WINED3DSIH_NRM)
             {
