@@ -390,6 +390,13 @@ DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_OnTxPropertyBitsChange( ITextServic
         if (SUCCEEDED( hr )) repaint = TRUE;
     }
 
+    if (mask & TXTBIT_USEPASSWORD)
+    {
+        if (bits & TXTBIT_USEPASSWORD) ITextHost_TxGetPasswordChar( services->host, &services->editor->password_char );
+        else services->editor->password_char = 0;
+        repaint = TRUE;
+    }
+
     if (repaint) ME_RewrapRepaint( services->editor );
 
     return S_OK;

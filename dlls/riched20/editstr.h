@@ -416,7 +416,7 @@ typedef struct tagME_TextEditor
   int mode;
   BOOL bHideSelection;
   BOOL AutoURLDetect_bEnable;
-  WCHAR cPasswordMask;
+  WCHAR password_char;
   BOOL bHaveFocus;
   /*for IME */
   int imeStartIndex;

@@ -829,7 +829,7 @@ static void ME_WrapTextParagraph( ME_TextEditor *editor, ME_Context *c, ME_Parag
   para_num_init( c, para );
 
   /* For now treating all non-password text as complex for better testing */
-  if (!c->editor->cPasswordMask /* &&
+  if (!c->editor->password_char /* &&
       ScriptIsComplex( tp->member.para.text->szData, tp->member.para.text->nLen, SIC_COMPLEX ) == S_OK */)
   {
       if (SUCCEEDED( itemize_para( c, para ) ))

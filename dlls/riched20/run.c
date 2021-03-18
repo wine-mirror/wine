@@ -543,9 +543,9 @@ int ME_CharFromPointContext(ME_Context *c, int cx, ME_Run *run, BOOL closest, BO
       return closest ? cp + trailing : cp;
   }
 
-  if (c->editor->cPasswordMask)
+  if (c->editor->password_char)
   {
-    mask_text = ME_MakeStringR( c->editor->cPasswordMask, run->len );
+    mask_text = ME_MakeStringR( c->editor->password_char, run->len );
     str = mask_text->szData;
   }
   else
@@ -626,9 +626,9 @@ int ME_PointFromCharContext(ME_Context *c, ME_Run *pRun, int nOffset, BOOL visua
       if (visual_order && pRun->script_analysis.fRTL) x = pRun->nWidth - x - 1;
       return x;
   }
-  if (c->editor->cPasswordMask)
+  if (c->editor->password_char)
   {
-    mask_text = ME_MakeStringR(c->editor->cPasswordMask, pRun->len);
+    mask_text = ME_MakeStringR( c->editor->password_char, pRun->len );
     str = mask_text->szData;
   }
   else
@@ -678,9 +678,9 @@ SIZE ME_GetRunSizeCommon(ME_Context *c, const ME_Paragraph *para, ME_Run *run, i
   {
       size.cx = run->nWidth;
   }
-  else if (c->editor->cPasswordMask)
+  else if (c->editor->password_char)
   {
-    ME_String *szMasked = ME_MakeStringR(c->editor->cPasswordMask,nLen);
+    ME_String *szMasked = ME_MakeStringR( c->editor->password_char, nLen );
     ME_GetTextExtent(c, szMasked->szData, nLen,run->style, &size); 
     ME_DestroyString(szMasked);
   }

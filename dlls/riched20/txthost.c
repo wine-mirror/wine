@@ -50,6 +50,7 @@ struct host
     DWORD props, scrollbars, event_mask;
     RECT client_rect, set_rect;
     COLORREF back_colour;
+    WCHAR password_char;
 };
 
 static const ITextHostVtbl textHostVtbl;
@@ -114,6 +115,7 @@ struct host *host_create( HWND hwnd, CREATESTRUCTW *cs, BOOL emulate_10 )
     SetRectEmpty( &texthost->set_rect );
     GetClientRect( hwnd, &texthost->client_rect );
     texthost->use_back_colour = 0;
+    texthost->password_char = (texthost->props & TXTBIT_USEPASSWORD) ? '*' : 0;
 
     return texthost;
 }
@@ -381,8 +383,10 @@ DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxGetScrollBars( ITextHost *ifa
 DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetPasswordChar,8)
 DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxGetPasswordChar( ITextHost *iface, WCHAR *c )
 {
-    *c = '*';
-    return S_OK;
+    struct host *host = impl_from_ITextHost( iface );
+
+    *c = host->password_char;
+    return *c ? S_OK : S_FALSE;
 }
 
 DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetAcceleratorPos,8)
@@ -1058,6 +1062,10 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         else hr = get_lineA( host->text_srv, wparam, lparam, &res );
         break;
 
+    case EM_GETPASSWORDCHAR:
+        ITextHost_TxGetPasswordChar( &host->ITextHost_iface, (WCHAR *)&res );
+        break;
+
     case EM_GETRECT:
         hr = ITextHost_TxGetClientRect( &host->ITextHost_iface, (RECT *)lparam );
         break;
@@ -1206,6 +1214,14 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
 
     case EM_SETOPTIONS:
         hr = set_options( host, wparam, lparam, &res );
+        break;
+
+    case EM_SETPASSWORDCHAR:
+        if (wparam == host->password_char) break;
+        host->password_char = wparam;
+        if (wparam) host->props |= TXTBIT_USEPASSWORD;
+        else host->props &= ~TXTBIT_USEPASSWORD;
+        ITextServices_OnTxPropertyBitsChange( host->text_srv, TXTBIT_USEPASSWORD, host->props & TXTBIT_USEPASSWORD );
         break;
 
     case EM_SETREADONLY:

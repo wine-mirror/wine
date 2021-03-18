@@ -2375,7 +2375,7 @@ static BOOL copy_or_cut( ME_TextEditor *editor, BOOL cut )
     int start_cursor = ME_GetSelectionOfs( editor, &offs, &count );
     ME_Cursor *sel_start = &editor->pCursors[start_cursor];
 
-    if (editor->cPasswordMask) return FALSE;
+    if (editor->password_char) return FALSE;
 
     count -= offs;
     hr = editor_copy_or_cut( editor, cut, sel_start, count, NULL );
@@ -3041,9 +3041,9 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   else ed->selofs = 0;
   ed->nSelectionType = stPosition;
 
-  ed->cPasswordMask = 0;
+  ed->password_char = 0;
   if (ed->props & TXTBIT_USEPASSWORD)
-    ITextHost_TxGetPasswordChar(texthost, &ed->cPasswordMask);
+    ITextHost_TxGetPasswordChar( texthost, &ed->password_char );
 
   ed->bWordWrap = (ed->props & TXTBIT_WORDWRAP) && (ed->props & TXTBIT_MULTILINE);
 
@@ -4217,10 +4217,6 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
       return 1;
     return 0;
   }
-  case EM_GETPASSWORDCHAR:
-  {
-    return editor->cPasswordMask;
-  }
   case EM_SETOLECALLBACK:
     if(editor->lpOleCallback)
       IRichEditOleCallback_Release(editor->lpOleCallback);
@@ -4272,12 +4268,6 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
     }
     /* FIXME: Currently no support for undo level and code page options */
     editor->mode = (editor->mode & ~mask) | changes;
-    return 0;
-  }
-  case EM_SETPASSWORDCHAR:
-  {
-    editor->cPasswordMask = wParam;
-    ME_RewrapRepaint(editor);
     return 0;
   }
   case EM_SETTARGETDEVICE:

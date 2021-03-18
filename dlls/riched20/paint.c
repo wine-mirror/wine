@@ -333,9 +333,9 @@ static void draw_text( ME_Context *c, ME_Run *run, int x, int y, BOOL selected, 
             && !(CFE_AUTOBACKCOLOR & run->style->fmt.dwEffects) )
         );
 
-    if (c->editor->cPasswordMask)
+    if (c->editor->password_char)
     {
-        masked = ME_MakeStringR( c->editor->cPasswordMask, run->len );
+        masked = ME_MakeStringR( c->editor->password_char, run->len );
         text = masked->szData;
     }
 
