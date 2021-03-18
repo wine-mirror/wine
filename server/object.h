@@ -215,7 +215,6 @@ extern struct keyed_event *create_keyed_event( struct object *root, const struct
                                                unsigned int attr, const struct security_descriptor *sd );
 extern struct event *get_event_obj( struct process *process, obj_handle_t handle, unsigned int access );
 extern struct keyed_event *get_keyed_event_obj( struct process *process, obj_handle_t handle, unsigned int access );
-extern void pulse_event( struct event *event );
 extern void set_event( struct event *event );
 extern void reset_event( struct event *event );
 
