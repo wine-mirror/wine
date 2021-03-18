@@ -19,8 +19,10 @@
  */
 
 #define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "ntdll_test.h"
 #include "ddk/wdm.h"
+#include "intrin.h"
 
 #define TICKSPERSEC        10000000
 #define TICKSPERMSEC       10000
@@ -34,6 +36,9 @@ static NTSTATUS (WINAPI *pNtQuerySystemInformation)( SYSTEM_INFORMATION_CLASS cl
 static NTSTATUS (WINAPI *pRtlQueryTimeZoneInformation)( RTL_TIME_ZONE_INFORMATION *);
 static NTSTATUS (WINAPI *pRtlQueryDynamicTimeZoneInformation)( RTL_DYNAMIC_TIME_ZONE_INFORMATION *);
 static BOOL     (WINAPI *pRtlQueryUnbiasedInterruptTime)( ULONGLONG *time );
+
+static BOOL     (WINAPI *pRtlQueryPerformanceCounter)(LARGE_INTEGER*);
+static BOOL     (WINAPI *pRtlQueryPerformanceFrequency)(LARGE_INTEGER*);
 
 static const int MonthLengths[2][12] =
 {
@@ -121,6 +126,107 @@ static void test_NtQueryPerformanceCounter(void)
     status = pNtQueryPerformanceCounter(&counter, &frequency);
     ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
 }
+
+#if defined(__i386__) || defined(__x86_64__)
+
+struct hypervisor_shared_data
+{
+    UINT64 unknown;
+    UINT64 QpcMultiplier;
+    UINT64 QpcBias;
+};
+
+/* 128-bit multiply a by b and return the high 64 bits, same as __umulh */
+static UINT64 multiply_tsc(UINT64 a, UINT64 b)
+{
+    UINT64 ah = a >> 32, al = (UINT32)a, bh = b >> 32, bl = (UINT32)b, m;
+    m = (ah * bl) + (bh * al) + ((al * bl) >> 32);
+    return (ah * bh) + (m >> 32);
+}
+
+static void test_RtlQueryPerformanceCounter(void)
+{
+    struct hypervisor_shared_data *hsd;
+    KSHARED_USER_DATA *usd = (void *)0x7ffe0000;
+    LARGE_INTEGER frequency, counter;
+    NTSTATUS status;
+    UINT64 tsc0, tsc1;
+    ULONG len;
+    BOOL ret;
+
+    if (!pRtlQueryPerformanceCounter || !pRtlQueryPerformanceFrequency)
+    {
+        win_skip( "RtlQueryPerformanceCounter/Frequency not available, skipping tests\n" );
+        return;
+    }
+
+    if (!(usd->u3.s.QpcBypassEnabled & SHARED_GLOBAL_FLAGS_QPC_BYPASS_ENABLED))
+    {
+        todo_wine win_skip("QpcBypassEnabled is not set, skipping tests\n");
+        return;
+    }
+
+    if ((usd->u3.s.QpcBypassEnabled & SHARED_GLOBAL_FLAGS_QPC_BYPASS_USE_HV_PAGE))
+    {
+        ok( usd->u3.s.QpcBypassEnabled == (SHARED_GLOBAL_FLAGS_QPC_BYPASS_ENABLED|SHARED_GLOBAL_FLAGS_QPC_BYPASS_USE_HV_PAGE|SHARED_GLOBAL_FLAGS_QPC_BYPASS_USE_RDTSCP),
+            "unexpected QpcBypassEnabled %x, expected 0x83\n", usd->u3.s.QpcBypassEnabled );
+        ok( usd->QpcFrequency == 10000000, "unexpected QpcFrequency %I64d, expected 10000000\n", usd->QpcFrequency );
+        ok( !usd->u3.s.QpcShift, "unexpected QpcShift %d, expected 0\n", usd->u3.s.QpcShift );
+        ok( usd->QpcInterruptTimeIncrement == ((ULONGLONG)1 << 63),
+            "unexpected QpcInterruptTimeIncrement %I64x, expected 1<<63\n", usd->QpcInterruptTimeIncrement );
+        ok( usd->QpcInterruptTimeIncrementShift == 1,
+            "unexpected QpcInterruptTimeIncrementShift %d, expected 1\n", usd->QpcInterruptTimeIncrementShift );
+        ok( usd->QpcSystemTimeIncrement == ((ULONGLONG)1 << 63),
+            "unexpected QpcSystemTimeIncrement %I64x, expected 1<<63\n", usd->QpcSystemTimeIncrement );
+        ok( usd->QpcSystemTimeIncrementShift == 1,
+            "unexpected QpcSystemTimeIncrementShift %d, expected 1\n", usd->QpcSystemTimeIncrementShift );
+
+        hsd = NULL;
+        status = pNtQuerySystemInformation( SystemHypervisorSharedPageInformation, &hsd, sizeof(void *), &len );
+        ok( !status, "NtQuerySystemInformation returned %x\n", status );
+        ok( len == sizeof(void *), "unexpected SystemHypervisorSharedPageInformation length %u\n", len );
+        ok( !!hsd, "unexpected SystemHypervisorSharedPageInformation address %p\n", hsd );
+
+        tsc0 = __rdtsc();
+        ret = pRtlQueryPerformanceCounter( &counter );
+        tsc1 = __rdtsc();
+        ok( ret, "RtlQueryPerformanceCounter failed\n" );
+
+        tsc0 = multiply_tsc(tsc0, hsd->QpcMultiplier) + hsd->QpcBias + usd->QpcBias;
+        tsc1 = multiply_tsc(tsc1, hsd->QpcMultiplier) + hsd->QpcBias + usd->QpcBias;
+
+        ok( tsc0 <= counter.QuadPart, "rdtscp %I64d and RtlQueryPerformanceCounter %I64d are out of order\n", tsc0, counter.QuadPart );
+        ok( counter.QuadPart <= tsc1, "RtlQueryPerformanceCounter %I64d and rdtscp %I64d are out of order\n", counter.QuadPart, tsc1 );
+    }
+    else
+    {
+        ok( usd->u3.s.QpcShift == 10, "unexpected QpcShift %d, expected 10\n", usd->u3.s.QpcShift );
+        ok( usd->QpcInterruptTimeIncrementShift == 2,
+            "unexpected QpcInterruptTimeIncrementShift %d, expected 2\n", usd->QpcInterruptTimeIncrementShift );
+        ok( usd->QpcSystemTimeIncrementShift == 2,
+            "unexpected QpcSystemTimeIncrementShift %d, expected 2\n", usd->QpcSystemTimeIncrementShift );
+
+        tsc0 = __rdtsc();
+        ret = pRtlQueryPerformanceCounter( &counter );
+        tsc1 = __rdtsc();
+        ok( ret, "RtlQueryPerformanceCounter failed\n" );
+
+        tsc0 += usd->QpcBias;
+        tsc0 >>= usd->u3.s.QpcShift;
+        tsc1 += usd->QpcBias;
+        tsc1 >>= usd->u3.s.QpcShift;
+
+        ok( tsc0 <= counter.QuadPart, "rdtscp %I64d and RtlQueryPerformanceCounter %I64d are out of order\n", tsc0, counter.QuadPart );
+        ok( counter.QuadPart <= tsc1, "RtlQueryPerformanceCounter %I64d and rdtscp %I64d are out of order\n", counter.QuadPart, tsc1 );
+    }
+
+    ret = pRtlQueryPerformanceFrequency( &frequency );
+    ok( ret, "RtlQueryPerformanceFrequency failed\n" );
+    ok( frequency.QuadPart == usd->QpcFrequency,
+        "RtlQueryPerformanceFrequency returned %I64d, expected USD QpcFrequency %I64d\n",
+        frequency.QuadPart, usd->QpcFrequency );
+}
+#endif
 
 static void test_RtlQueryTimeZoneInformation(void)
 {
@@ -266,6 +372,8 @@ START_TEST(time)
     pRtlQueryDynamicTimeZoneInformation =
         (void *)GetProcAddress(mod, "RtlQueryDynamicTimeZoneInformation");
     pRtlQueryUnbiasedInterruptTime = (void *)GetProcAddress(mod, "RtlQueryUnbiasedInterruptTime");
+    pRtlQueryPerformanceCounter = (void *)GetProcAddress(mod, "RtlQueryPerformanceCounter");
+    pRtlQueryPerformanceFrequency = (void *)GetProcAddress(mod, "RtlQueryPerformanceFrequency");
 
     if (pRtlTimeToTimeFields && pRtlTimeFieldsToTime)
         test_pRtlTimeToTimeFields();
@@ -274,4 +382,7 @@ START_TEST(time)
     test_NtQueryPerformanceCounter();
     test_RtlQueryTimeZoneInformation();
     test_user_shared_data_time();
+#if defined(__i386__) || defined(__x86_64__)
+    test_RtlQueryPerformanceCounter();
+#endif
 }
