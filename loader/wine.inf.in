@@ -2609,6 +2609,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,dosx.exe
 11,,dsound.vxd
 11,,winhlp32.exe
+52,win40\0,wineps16.drv,wineps16.drv16
 
 ; 64bit-only fake dlls
 [FakeDllsWin64]
@@ -2652,6 +2653,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 16427,System\OLE DB,oledb32.dll
 16427,System\OLE DB,msdaps.dll
 16427,System\ADO,msado15.dll
+66000,3,wineps.drv
 12,,*.sys,-
 11,,*
 
@@ -2707,6 +2709,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 16427,System\OLE DB,oledb32.dll
 16427,System\OLE DB,msdaps.dll
 16427,System\ADO,msado15.dll
+66000,3,wineps.drv
 12,,*.sys,-
 11,,*
 

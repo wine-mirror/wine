@@ -2609,7 +2609,6 @@ static void test_GetPrinterDriver(void)
             hf = CreateFileA(di_2->pDriverPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
             if(hf != INVALID_HANDLE_VALUE)
                 CloseHandle(hf);
-            todo_wine
             ok(hf != INVALID_HANDLE_VALUE, "Could not open %s\n", di_2->pDriverPath);
 
             hf = CreateFileA(di_2->pDataFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -2620,7 +2619,6 @@ static void test_GetPrinterDriver(void)
             hf = CreateFileA(di_2->pConfigFile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
             if(hf != INVALID_HANDLE_VALUE)
                 CloseHandle(hf);
-            todo_wine
             ok(hf != INVALID_HANDLE_VALUE, "Could not open %s\n", di_2->pConfigFile);
 
             /* XP allocates memory for both ANSI and unicode names */
