@@ -1,0 +1,5 @@
+TESTDLL = windows.gaming.input.dll
+IMPORTS = uuid
+
+C_SRCS = \
+	input.c
