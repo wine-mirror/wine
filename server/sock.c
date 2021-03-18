@@ -163,7 +163,6 @@ struct sock
 };
 
 static void sock_dump( struct object *obj, int verbose );
-static int sock_signaled( struct object *obj, struct wait_queue_entry *entry );
 static struct fd *sock_get_fd( struct object *obj );
 static int sock_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 static void sock_destroy( struct object *obj );
@@ -189,7 +188,7 @@ static const struct object_ops sock_ops =
     sock_dump,                    /* dump */
     add_queue,                    /* add_queue */
     remove_queue,                 /* remove_queue */
-    sock_signaled,                /* signaled */
+    default_fd_signaled,          /* signaled */
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     sock_get_fd,                  /* get_fd */
@@ -773,10 +772,6 @@ static void sock_poll_event( struct fd *fd, int event )
     event = sock_dispatch_asyncs( sock, event, error );
     sock_dispatch_events( sock, prevstate, event, error );
 
-    /* if anyone is stupid enough to wait on the socket object itself,
-     * maybe we should wake them up too, just in case? */
-    wake_up( &sock->obj, 0 );
-
     sock_reselect( sock );
 }
 
@@ -787,14 +782,6 @@ static void sock_dump( struct object *obj, int verbose )
     fprintf( stderr, "Socket fd=%p, state=%x, mask=%x, pending=%x, held=%x\n",
             sock->fd, sock->state,
             sock->mask, sock->pmask, sock->hmask );
-}
-
-static int sock_signaled( struct object *obj, struct wait_queue_entry *entry )
-{
-    struct sock *sock = (struct sock *)obj;
-    assert( obj->ops == &sock_ops );
-
-    return check_fd_events( sock->fd, sock_get_poll_events( sock->fd ) ) != 0;
 }
 
 static int sock_get_poll_events( struct fd *fd )
