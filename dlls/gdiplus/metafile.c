@@ -4850,6 +4850,52 @@ GpStatus METAFILE_FillPath(GpMetafile *metafile, GpBrush *brush, GpPath *path)
     return Ok;
 }
 
+GpStatus METAFILE_FillEllipse(GpMetafile *metafile, GpBrush *brush, GpRectF *rect)
+{
+    EmfPlusFillEllipse *record;
+    DWORD brush_id = -1;
+    BOOL inline_color;
+    GpStatus stat;
+
+    if (metafile->metafile_type == MetafileTypeEmf)
+    {
+        FIXME("stub!\n");
+        return NotImplemented;
+    }
+
+    inline_color = brush->bt == BrushTypeSolidColor;
+    if (!inline_color)
+    {
+        stat = METAFILE_AddBrushObject(metafile, brush, &brush_id);
+        if (stat != Ok) return stat;
+    }
+
+    stat = METAFILE_AllocateRecord(metafile, sizeof(EmfPlusFillEllipse), (void **)&record);
+    if (stat != Ok) return stat;
+    record->Header.Type = EmfPlusRecordTypeFillEllipse;
+    if (inline_color)
+    {
+        record->Header.Flags = 0x8000;
+        record->BrushId = ((GpSolidFill *)brush)->color;
+    }
+    else
+        record->BrushId = brush_id;
+
+    if (is_integer_rect(rect))
+    {
+        record->Header.Flags |= 0x4000;
+        record->RectData.rect.X = (SHORT)rect->X;
+        record->RectData.rect.Y = (SHORT)rect->Y;
+        record->RectData.rect.Width = (SHORT)rect->Width;
+        record->RectData.rect.Height = (SHORT)rect->Height;
+    }
+    else
+        memcpy(&record->RectData.rectF, rect, sizeof(*rect));
+
+    METAFILE_WriteRecords(metafile);
+    return Ok;
+}
+
 static GpStatus METAFILE_AddFontObject(GpMetafile *metafile, GDIPCONST GpFont *font, DWORD *id)
 {
     EmfPlusObject *object_record;

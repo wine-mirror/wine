@@ -3593,6 +3593,63 @@ static void test_drawellipse(void)
     expect(Ok, stat);
 }
 
+static const emfplus_record fill_ellipse_records[] =
+{
+    { EMR_HEADER },
+    { EmfPlusRecordTypeHeader },
+    { EmfPlusRecordTypeFillEllipse, 0xc000 },
+    { EMR_SAVEDC, 0, 1 },
+    { EMR_SETICMMODE, 0, 1 },
+    { EMR_BITBLT, 0, 1 },
+    { EMR_RESTOREDC, 0, 1 },
+    { EmfPlusRecordTypeEndOfFile },
+    { EMR_EOF },
+    { 0 }
+};
+
+static void test_fillellipse(void)
+{
+    static const GpRectF frame = { 0.0f, 0.0f, 100.0f, 100.0f };
+
+    GpMetafile *metafile;
+    GpGraphics *graphics;
+    GpSolidFill *brush;
+    HENHMETAFILE hemf;
+    GpStatus stat;
+    HDC hdc;
+
+    hdc = CreateCompatibleDC(0);
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel, description, &metafile);
+    expect(Ok, stat);
+    DeleteDC(hdc);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipCreateSolidFill(0xffaabbcc, &brush);
+    expect(Ok, stat);
+
+    stat = GdipFillEllipse(graphics, (GpBrush *)brush, 0.0f, 0.0f, 10.0f, 20.0f);
+    expect(Ok, stat);
+
+    stat = GdipDeleteBrush((GpBrush*)brush);
+    expect(Ok, stat);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+    sync_metafile(&metafile, "fill_ellipse.emf");
+
+    stat = GdipGetHemfFromMetafile(metafile, &hemf);
+    expect(Ok, stat);
+
+    check_emfplus(hemf, fill_ellipse_records, "fill ellipse");
+
+    DeleteEnhMetaFile(hemf);
+
+    stat = GdipDisposeImage((GpImage*)metafile);
+    expect(Ok, stat);
+}
+
 START_TEST(metafile)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -3648,6 +3705,7 @@ START_TEST(metafile)
     test_lineargradient();
     test_printer_dc();
     test_drawellipse();
+    test_fillellipse();
 
     GdiplusShutdown(gdiplusToken);
 }

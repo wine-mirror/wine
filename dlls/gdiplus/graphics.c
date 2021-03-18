@@ -4258,6 +4258,17 @@ GpStatus WINGDIPAPI GdipFillEllipse(GpGraphics *graphics, GpBrush *brush, REAL x
     if(graphics->busy)
         return ObjectBusy;
 
+    if (graphics->image && graphics->image->type == ImageTypeMetafile)
+    {
+        GpRectF rect;
+
+        rect.X = x;
+        rect.Y = y;
+        rect.Width = width;
+        rect.Height = height;
+        return METAFILE_FillEllipse((GpMetafile *)graphics->image, brush, &rect);
+    }
+
     stat = GdipCreatePath(FillModeAlternate, &path);
 
     if (stat == Ok)
