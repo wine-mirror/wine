@@ -2,4 +2,4 @@ TESTDLL = windows.media.speech.dll
 IMPORTS = uuid
 
 C_SRCS = \
-	statics.c
+	speech.c

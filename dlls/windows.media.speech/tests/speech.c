@@ -52,69 +52,59 @@ static void test_SpeechSynthesizer(void)
     IAgileObject *agile_object = NULL, *tmp_agile_object = NULL;
     HSTRING str;
     HRESULT hr;
-    ULONG rc, size;
+    ULONG size;
 
     hr = pRoInitialize(RO_INIT_MULTITHREADED);
-    ok(SUCCEEDED(hr), "RoInitialize failed, hr %#x\n", hr);
+    ok(hr == S_OK, "RoInitialize failed, hr %#x\n", hr);
 
     hr = pWindowsCreateString(speech_synthesizer_name, wcslen(speech_synthesizer_name), &str);
-    ok(SUCCEEDED(hr), "WindowsCreateString failed, hr %#x\n", hr);
+    ok(hr == S_OK, "WindowsCreateString failed, hr %#x\n", hr);
 
     hr = pRoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
-    ok(SUCCEEDED(hr), "RoGetActivationFactory failed, hr %#x\n", hr);
-
-    rc = IActivationFactory_AddRef(factory);
-    ok(rc == 3, "IActivationFactory_AddRef returned %d\n", rc);
-    rc = IActivationFactory_Release(factory);
-    ok(rc == 2, "IActivationFactory_Release returned %d\n", rc);
+    ok(hr == S_OK, "RoGetActivationFactory failed, hr %#x\n", hr);
 
     hr = IActivationFactory_QueryInterface(factory, &IID_IInspectable, (void **)&inspectable);
-    ok(SUCCEEDED(hr), "IActivationFactory_QueryInterface IID_IInspectable failed, hr %#x\n", hr);
+    ok(hr == S_OK, "IActivationFactory_QueryInterface IID_IInspectable failed, hr %#x\n", hr);
 
     hr = IActivationFactory_QueryInterface(factory, &IID_IAgileObject, (void **)&agile_object);
-    ok(SUCCEEDED(hr), "IActivationFactory_QueryInterface IID_IAgileObject failed, hr %#x\n", hr);
+    ok(hr == S_OK, "IActivationFactory_QueryInterface IID_IAgileObject failed, hr %#x\n", hr);
 
     hr = IActivationFactory_QueryInterface(factory, &IID_IInstalledVoicesStatic, (void **)&voices_static);
-    ok(SUCCEEDED(hr), "IActivationFactory_QueryInterface IID_IInstalledVoicesStatic failed, hr %#x\n", hr);
+    ok(hr == S_OK, "IActivationFactory_QueryInterface IID_IInstalledVoicesStatic failed, hr %#x\n", hr);
 
     hr = IInstalledVoicesStatic_QueryInterface(voices_static, &IID_IInspectable, (void **)&tmp_inspectable);
-    ok(SUCCEEDED(hr), "IInstalledVoicesStatic_QueryInterface IID_IInspectable failed, hr %#x\n", hr);
+    ok(hr == S_OK, "IInstalledVoicesStatic_QueryInterface IID_IInspectable failed, hr %#x\n", hr);
     ok(tmp_inspectable == inspectable, "IInstalledVoicesStatic_QueryInterface IID_IInspectable returned %p, expected %p\n", tmp_inspectable, inspectable);
     IInspectable_Release(tmp_inspectable);
 
     hr = IInstalledVoicesStatic_QueryInterface(voices_static, &IID_IAgileObject, (void **)&tmp_agile_object);
-    ok(SUCCEEDED(hr), "IInstalledVoicesStatic_QueryInterface IID_IAgileObject failed, hr %#x\n", hr);
+    ok(hr == S_OK, "IInstalledVoicesStatic_QueryInterface IID_IAgileObject failed, hr %#x\n", hr);
     ok(tmp_agile_object == agile_object, "IInstalledVoicesStatic_QueryInterface IID_IAgileObject returned %p, expected %p\n", tmp_agile_object, agile_object);
     IAgileObject_Release(tmp_agile_object);
 
     hr = IInstalledVoicesStatic_get_AllVoices(voices_static, &voices);
-    ok(SUCCEEDED(hr), "IInstalledVoicesStatic_get_AllVoices failed, hr %#x\n", hr);
+    ok(hr == S_OK, "IInstalledVoicesStatic_get_AllVoices failed, hr %#x\n", hr);
 
     hr = IVectorView_VoiceInformation_QueryInterface(voices, &IID_IInspectable, (void **)&tmp_inspectable);
-    ok(SUCCEEDED(hr), "IVectorView_VoiceInformation_QueryInterface voices failed, hr %#x\n", hr);
+    ok(hr == S_OK, "IVectorView_VoiceInformation_QueryInterface voices failed, hr %#x\n", hr);
     ok(tmp_inspectable != inspectable, "IVectorView_VoiceInformation_QueryInterface voices returned %p, expected %p\n", tmp_inspectable, inspectable);
     IInspectable_Release(tmp_inspectable);
 
     hr = IVectorView_VoiceInformation_QueryInterface(voices, &IID_IAgileObject, (void **)&tmp_agile_object);
-    ok(FAILED(hr), "IVectorView_VoiceInformation_QueryInterface voices failed, hr %#x\n", hr);
+    ok(hr == E_NOINTERFACE, "IVectorView_VoiceInformation_QueryInterface voices failed, hr %#x\n", hr);
 
     size = 0xdeadbeef;
     hr = IVectorView_VoiceInformation_get_Size(voices, &size);
-    ok(SUCCEEDED(hr), "IVectorView_VoiceInformation_QueryInterface voices failed, hr %#x\n", hr);
+    ok(hr == S_OK, "IVectorView_VoiceInformation_get_Size voices failed, hr %#x\n", hr);
     todo_wine ok(size != 0 && size != 0xdeadbeef, "IVectorView_VoiceInformation_get_Size returned %u\n", size);
 
-    rc = IVectorView_VoiceInformation_Release(voices);
-    ok(rc == 0, "IVectorView_VoiceInformation_Release returned unexpected refcount %d\n", rc);
+    IVectorView_VoiceInformation_Release(voices);
 
-    rc = IInstalledVoicesStatic_Release(voices_static);
-    ok(rc == 4, "IInstalledVoicesStatic_Release returned unexpected refcount %d\n", rc);
+    IInstalledVoicesStatic_Release(voices_static);
 
-    rc = IAgileObject_Release(agile_object);
-    ok(rc == 3, "IAgileObject_Release returned unexpected refcount %d\n", rc);
-    rc = IInspectable_Release(inspectable);
-    ok(rc == 2, "IInspectable_Release returned unexpected refcount %d\n", rc);
-    rc = IActivationFactory_Release(factory);
-    ok(rc == 1, "IActivationFactory_Release returned unexpected refcount %d\n", rc);
+    IAgileObject_Release(agile_object);
+    IInspectable_Release(inspectable);
+    IActivationFactory_Release(factory);
 
     pWindowsDeleteString(str);
 
@@ -130,10 +120,10 @@ static void test_VoiceInformation(void)
     HRESULT hr;
 
     hr = pRoInitialize(RO_INIT_MULTITHREADED);
-    ok(SUCCEEDED(hr), "RoInitialize failed, hr %#x\n", hr);
+    ok(hr == S_OK, "RoInitialize failed, hr %#x\n", hr);
 
     hr = pWindowsCreateString(voice_information_name, wcslen(voice_information_name), &str);
-    ok(SUCCEEDED(hr), "WindowsCreateString failed, hr %#x\n", hr);
+    ok(hr == S_OK, "WindowsCreateString failed, hr %#x\n", hr);
 
     hr = pRoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
     ok(hr == REGDB_E_CLASSNOTREG, "RoGetActivationFactory returned unexpected hr %#x\n", hr);
@@ -143,7 +133,7 @@ static void test_VoiceInformation(void)
     pRoUninitialize();
 }
 
-START_TEST(statics)
+START_TEST(speech)
 {
     HMODULE combase;
 
