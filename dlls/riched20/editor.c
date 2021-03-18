@@ -233,6 +233,7 @@
 #include "shlwapi.h"
 #include "rtf.h"
 #include "imm.h"
+#include "res.h"
 
 #define STACK_SIZE_DEFAULT  100
 #define STACK_SIZE_MAX     1000
@@ -243,7 +244,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
 static BOOL ME_UpdateLinkAttribute(ME_TextEditor *editor, ME_Cursor *start, int nChars);
 
-HCURSOR cursor_reverse = NULL;
+HINSTANCE dll_instance = NULL;
 BOOL me_debug = FALSE;
 HANDLE me_heap = NULL;
 
@@ -2817,96 +2818,52 @@ static BOOL is_link( ME_Run *run )
     return (run->style->fmt.dwMask & CFM_LINK) && (run->style->fmt.dwEffects & CFE_LINK);
 }
 
-static BOOL ME_SetCursor(ME_TextEditor *editor)
+void editor_set_cursor( ME_TextEditor *editor, int x, int y )
 {
-  ME_Cursor cursor;
-  POINT pt;
-  BOOL isExact;
-  SCROLLBARINFO sbi;
-  DWORD messagePos = GetMessagePos();
-  pt.x = (short)LOWORD(messagePos);
-  pt.y = (short)HIWORD(messagePos);
+    ME_Cursor pos;
+    BOOL is_exact;
+    static HCURSOR cursor_arrow, cursor_hand, cursor_ibeam, cursor_reverse;
+    HCURSOR cursor;
 
-  if (editor->hWnd)
-  {
-    sbi.cbSize = sizeof(sbi);
-    GetScrollBarInfo(editor->hWnd, OBJID_HSCROLL, &sbi);
-    if (!(sbi.rgstate[0] & (STATE_SYSTEM_INVISIBLE|STATE_SYSTEM_OFFSCREEN)) &&
-        PtInRect(&sbi.rcScrollBar, pt))
+    if (!cursor_arrow)
     {
-        ITextHost_TxSetCursor(editor->texthost,
-                              LoadCursorW(NULL, (WCHAR*)IDC_ARROW), FALSE);
-        return TRUE;
+        cursor_arrow = LoadCursorW( NULL, MAKEINTRESOURCEW( IDC_ARROW ) );
+        cursor_hand = LoadCursorW( NULL, MAKEINTRESOURCEW( IDC_HAND ) );
+        cursor_ibeam = LoadCursorW( NULL, MAKEINTRESOURCEW( IDC_IBEAM ) );
+        cursor_reverse = LoadCursorW( dll_instance, MAKEINTRESOURCEW( OCR_REVERSE ) );
     }
-    sbi.cbSize = sizeof(sbi);
-    GetScrollBarInfo(editor->hWnd, OBJID_VSCROLL, &sbi);
-    if (!(sbi.rgstate[0] & (STATE_SYSTEM_INVISIBLE|STATE_SYSTEM_OFFSCREEN)) &&
-        PtInRect(&sbi.rcScrollBar, pt))
+
+    cursor = cursor_ibeam;
+
+    if ((editor->nSelectionType == stLine && editor->bMouseCaptured) ||
+        (!editor->bEmulateVersion10 && y < editor->rcFormat.top && x < editor->rcFormat.left))
+        cursor = cursor_reverse;
+    else if (y < editor->rcFormat.top || y > editor->rcFormat.bottom)
     {
-        ITextHost_TxSetCursor(editor->texthost,
-                              LoadCursorW(NULL, (WCHAR*)IDC_ARROW), FALSE);
-        return TRUE;
+        if (editor->bEmulateVersion10) cursor = cursor_arrow;
+        else cursor = cursor_ibeam;
     }
-  }
-  ITextHost_TxScreenToClient(editor->texthost, &pt);
+    else if (x < editor->rcFormat.left) cursor = cursor_reverse;
+    else
+    {
+        ME_CharFromPos( editor, x, y, &pos, &is_exact );
+        if (is_exact)
+        {
+            ME_Run *run = pos.run;
 
-  if (editor->nSelectionType == stLine && editor->bMouseCaptured)
-  {
-      ITextHost_TxSetCursor( editor->texthost, cursor_reverse, FALSE );
-      return TRUE;
-  }
-  if (!editor->bEmulateVersion10 /* v4.1 */ &&
-      pt.y < editor->rcFormat.top &&
-      pt.x < editor->rcFormat.left)
-  {
-      ITextHost_TxSetCursor( editor->texthost, cursor_reverse, FALSE );
-      return TRUE;
-  }
-  if (pt.y < editor->rcFormat.top || pt.y > editor->rcFormat.bottom)
-  {
-      if (editor->bEmulateVersion10) /* v1.0 - 3.0 */
-          ITextHost_TxSetCursor(editor->texthost,
-                                LoadCursorW(NULL, (WCHAR*)IDC_ARROW), FALSE);
-      else /* v4.1 */
-          ITextHost_TxSetCursor(editor->texthost,
-                                LoadCursorW(NULL, (WCHAR*)IDC_IBEAM), TRUE);
-      return TRUE;
-  }
-  if (pt.x < editor->rcFormat.left)
-  {
-      ITextHost_TxSetCursor( editor->texthost, cursor_reverse, FALSE );
-      return TRUE;
-  }
-  ME_CharFromPos(editor, pt.x, pt.y, &cursor, &isExact);
-  if (isExact)
-  {
-      ME_Run *run = cursor.run;
+            if (is_link( run )) cursor = cursor_hand;
 
-      if (is_link( run ))
-      {
-          ITextHost_TxSetCursor(editor->texthost,
-                                LoadCursorW(NULL, (WCHAR*)IDC_HAND),
-                                FALSE);
-          return TRUE;
-      }
+            else if (ME_IsSelection( editor ))
+            {
+                int start, end, offset = ME_GetCursorOfs( &pos );
 
-      if (ME_IsSelection(editor))
-      {
-          int selStart, selEnd;
-          int offset = ME_GetCursorOfs(&cursor);
+                ME_GetSelectionOfs( editor, &start, &end );
+                if (start <= offset && end >= offset) cursor = cursor_arrow;
+            }
+        }
+    }
 
-          ME_GetSelectionOfs(editor, &selStart, &selEnd);
-          if (selStart <= offset && selEnd >= offset) {
-              ITextHost_TxSetCursor(editor->texthost,
-                                    LoadCursorW(NULL, (WCHAR*)IDC_ARROW),
-                                    FALSE);
-              return TRUE;
-          }
-      }
-  }
-  ITextHost_TxSetCursor(editor->texthost,
-                        LoadCursorW(NULL, (WCHAR*)IDC_IBEAM), TRUE);
-  return TRUE;
+    ITextHost_TxSetCursor( editor->texthost, cursor, cursor == cursor_ibeam );
 }
 
 static LONG ME_GetSelectionType(ME_TextEditor *editor)
@@ -3130,7 +3087,7 @@ static inline int calc_wheel_change( int *remain, int amount_per_click )
     return change;
 }
 
-static void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam)
+void link_notify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   int x,y;
   BOOL isExact;
@@ -3936,14 +3893,6 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case WM_CREATE:
     return ME_WmCreate( editor );
-  case WM_SETCURSOR:
-  {
-    POINT cursor_pos;
-    if (wParam == (WPARAM)editor->hWnd && GetCursorPos(&cursor_pos) &&
-        ScreenToClient(editor->hWnd, &cursor_pos))
-      ME_LinkNotify(editor, msg, 0, MAKELPARAM(cursor_pos.x, cursor_pos.y));
-    return ME_SetCursor(editor);
-  }
   case WM_LBUTTONDBLCLK:
   case WM_LBUTTONDOWN:
   {
@@ -3953,14 +3902,14 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
                    ME_CalculateClickCount(editor, msg, wParam, lParam));
     ITextHost_TxSetCapture(editor->texthost, TRUE);
     editor->bMouseCaptured = TRUE;
-    ME_LinkNotify(editor, msg, wParam, lParam);
+    link_notify( editor, msg, wParam, lParam );
     break;
   }
   case WM_MOUSEMOVE:
     if (editor->bMouseCaptured)
       ME_MouseMove(editor, (short)LOWORD(lParam), (short)HIWORD(lParam));
     else
-      ME_LinkNotify(editor, msg, wParam, lParam);
+      link_notify( editor, msg, wParam, lParam );
     break;
   case WM_LBUTTONUP:
     if (editor->bMouseCaptured) {
@@ -3971,14 +3920,14 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
       editor->nSelectionType = stPosition;
     else
     {
-      ME_LinkNotify(editor, msg, wParam, lParam);
+      link_notify( editor, msg, wParam, lParam );
     }
     break;
   case WM_RBUTTONUP:
   case WM_RBUTTONDOWN:
   case WM_RBUTTONDBLCLK:
     ME_CommitUndo(editor); /* End coalesced undos for typed characters */
-    ME_LinkNotify(editor, msg, wParam, lParam);
+    link_notify( editor, msg, wParam, lParam );
     goto do_default;
   case WM_CONTEXTMENU:
     if (!ME_ShowContextMenu(editor, (short)LOWORD(lParam), (short)HIWORD(lParam)))

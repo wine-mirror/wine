@@ -184,14 +184,21 @@ DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_TxGetVScroll( ITextServices *iface,
 }
 
 DEFINE_THISCALL_WRAPPER(fnTextSrv_OnTxSetCursor,40)
-DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_OnTxSetCursor(ITextServices *iface, DWORD dwDrawAspect, LONG lindex,
-                                                           void *pvAspect, DVTARGETDEVICE *ptd, HDC hdcDraw,
-                                                           HDC hicTargetDev, LPCRECT lprcClient, INT x, INT y)
+DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_OnTxSetCursor( ITextServices *iface, DWORD aspect, LONG index,
+                                                            void *aspect_info, DVTARGETDEVICE *td, HDC draw,
+                                                            HDC target, const RECT *client, INT x, INT y )
 {
     struct text_services *services = impl_from_ITextServices( iface );
 
-    FIXME( "%p: STUB\n", services );
-    return E_NOTIMPL;
+    TRACE( "%p: %d, %d, %p, %p, draw %p target %p client %s pos (%d, %d)\n", services, aspect, index, aspect_info, td, draw,
+           target, wine_dbgstr_rect( client ), x, y );
+
+    if (aspect != DVASPECT_CONTENT || index || aspect_info || td || draw || target || client)
+        FIXME( "Ignoring most params\n" );
+
+    link_notify( services->editor, WM_SETCURSOR, 0, MAKELPARAM( x, y ) );
+    editor_set_cursor( services->editor, x, y );
+    return S_OK;
 }
 
 DEFINE_THISCALL_WRAPPER(fnTextSrv_TxQueryHitPoint,44)

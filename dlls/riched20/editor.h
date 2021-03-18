@@ -22,8 +22,8 @@
 
 struct _RTF_Info;
 
+extern HINSTANCE dll_instance DECLSPEC_HIDDEN;
 extern HANDLE me_heap DECLSPEC_HIDDEN;
-extern HCURSOR cursor_reverse DECLSPEC_HIDDEN;
 
 #define RUN_IS_HIDDEN(run) ((run)->style->fmt.dwMask & CFM_HIDDEN \
                              && (run)->style->fmt.dwEffects & CFE_HIDDEN)
@@ -288,6 +288,8 @@ HRESULT editor_copy_or_cut( ME_TextEditor *editor, BOOL cut, ME_Cursor *start, i
                             IDataObject **data_out ) DECLSPEC_HIDDEN;
 ME_Paragraph *editor_end_para( ME_TextEditor *editor ) DECLSPEC_HIDDEN;
 ME_Paragraph *editor_first_para( ME_TextEditor *editor ) DECLSPEC_HIDDEN;
+void editor_set_cursor( ME_TextEditor *editor, int x, int y ) DECLSPEC_HIDDEN;
+void link_notify( ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam ) DECLSPEC_HIDDEN;
 
 /* table.c */
 ME_Cell *cell_create( void ) DECLSPEC_HIDDEN;
