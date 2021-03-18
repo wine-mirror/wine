@@ -3019,6 +3019,20 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->horz_si.nPage = 0;
   ed->horz_si.nPos = 0;
 
+  if (ed->scrollbars & ES_DISABLENOSCROLL)
+  {
+      if (ed->scrollbars & WS_VSCROLL)
+      {
+          ITextHost_TxSetScrollRange( texthost, SB_VERT, 0, 1, TRUE );
+          ITextHost_TxEnableScrollBar( texthost, SB_VERT, ESB_DISABLE_BOTH );
+      }
+      if (ed->scrollbars & WS_HSCROLL)
+      {
+          ITextHost_TxSetScrollRange( texthost, SB_HORZ, 0, 1, TRUE );
+          ITextHost_TxEnableScrollBar( texthost, SB_HORZ, ESB_DISABLE_BOTH );
+      }
+  }
+
   ed->wheel_remain = 0;
 
   list_init( &ed->reobj_list );
@@ -3158,33 +3172,6 @@ static void ME_SetText(ME_TextEditor *editor, void *text, BOOL unicode)
   LPWSTR wszText = ME_ToUnicode(codepage, text, &textLen);
   ME_InsertTextFromCursor(editor, 0, wszText, textLen, editor->pBuffer->pDefaultStyle);
   ME_EndToUnicode(codepage, wszText);
-}
-
-static LRESULT ME_WmCreate( ME_TextEditor *editor )
-{
-  INT max;
-
-  max = (editor->scrollbars & ES_DISABLENOSCROLL) ? 1 : 0;
-  if (~editor->scrollbars & ES_DISABLENOSCROLL || editor->scrollbars & WS_VSCROLL)
-    ITextHost_TxSetScrollRange(editor->texthost, SB_VERT, 0, max, TRUE);
-
-  if (~editor->scrollbars & ES_DISABLENOSCROLL || editor->scrollbars & WS_HSCROLL)
-    ITextHost_TxSetScrollRange(editor->texthost, SB_HORZ, 0, max, TRUE);
-
-  if (editor->scrollbars & ES_DISABLENOSCROLL)
-  {
-    if (editor->scrollbars & WS_VSCROLL)
-    {
-      ITextHost_TxEnableScrollBar(editor->texthost, SB_VERT, ESB_DISABLE_BOTH);
-      ITextHost_TxShowScrollBar(editor->texthost, SB_VERT, TRUE);
-    }
-    if (editor->scrollbars & WS_HSCROLL)
-    {
-      ITextHost_TxEnableScrollBar(editor->texthost, SB_HORZ, ESB_DISABLE_BOTH);
-      ITextHost_TxShowScrollBar(editor->texthost, SB_HORZ, TRUE);
-    }
-  }
-  return 0;
 }
 
 static LRESULT handle_EM_SETCHARFORMAT( ME_TextEditor *editor, WPARAM flags, const CHARFORMAT2W *fmt_in )
@@ -3891,8 +3878,6 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
 
     return (wParam >= 0x40000) ? 0 : MAKELONG( pt.x, pt.y );
   }
-  case WM_CREATE:
-    return ME_WmCreate( editor );
   case WM_LBUTTONDBLCLK:
   case WM_LBUTTONDOWN:
   {

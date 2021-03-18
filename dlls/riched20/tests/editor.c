@@ -3109,11 +3109,9 @@ static void test_scrollbar_visibility(void)
   GetScrollInfo(hwndRichEdit, SB_VERT, &si);
   ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) != 0),
     "Vertical scrollbar is invisible, should be visible.\n");
-  todo_wine {
   ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 100,
         "reported page/range is %d (%d..%d) expected 0 (0..100)\n",
         si.nPage, si.nMin, si.nMax);
-  }
 
   /* Ditto, see above */
   SendMessageA(hwndRichEdit, WM_SETTEXT, 0, 0);
@@ -3123,11 +3121,9 @@ static void test_scrollbar_visibility(void)
   GetScrollInfo(hwndRichEdit, SB_VERT, &si);
   ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) != 0),
     "Vertical scrollbar is invisible, should be visible.\n");
-  todo_wine {
   ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 100,
         "reported page/range is %d (%d..%d) expected 0 (0..100)\n",
         si.nPage, si.nMin, si.nMax);
-  }
 
   /* Ditto, see above */
   SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"a");
@@ -3137,11 +3133,9 @@ static void test_scrollbar_visibility(void)
   GetScrollInfo(hwndRichEdit, SB_VERT, &si);
   ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) != 0),
     "Vertical scrollbar is invisible, should be visible.\n");
-  todo_wine {
   ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 100,
         "reported page/range is %d (%d..%d) expected 0 (0..100)\n",
         si.nPage, si.nMin, si.nMax);
-  }
 
   /* Ditto, see above */
   SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"a\na");
@@ -3151,11 +3145,9 @@ static void test_scrollbar_visibility(void)
   GetScrollInfo(hwndRichEdit, SB_VERT, &si);
   ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) != 0),
     "Vertical scrollbar is invisible, should be visible.\n");
-  todo_wine {
   ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 100,
         "reported page/range is %d (%d..%d) expected 0 (0..100)\n",
         si.nPage, si.nMin, si.nMax);
-  }
 
   /* Ditto, see above */
   SendMessageA(hwndRichEdit, WM_SETTEXT, 0, 0);
@@ -3165,11 +3157,9 @@ static void test_scrollbar_visibility(void)
   GetScrollInfo(hwndRichEdit, SB_VERT, &si);
   ok (((GetWindowLongA(hwndRichEdit, GWL_STYLE) & WS_VSCROLL) != 0),
     "Vertical scrollbar is invisible, should be visible.\n");
-  todo_wine {
   ok(si.nPage == 0 && si.nMin == 0 && si.nMax == 100,
         "reported page/range is %d (%d..%d) expected 0 (0..100)\n",
         si.nPage, si.nMin, si.nMax);
-  }
 
   SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text);
   SendMessageA(hwndRichEdit, WM_SETTEXT, 0, 0);

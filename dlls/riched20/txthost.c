@@ -63,6 +63,10 @@ static void host_init_props( struct host *host )
 
     style = GetWindowLongW( host->window, GWL_STYLE );
 
+    /* text services assumes the scrollbars are originally not shown, so hide them.
+       However with ES_DISABLENOSCROLL it'll immediately show them, so don't bother */
+    if (!(style & ES_DISABLENOSCROLL)) ShowScrollBar( host->window, SB_BOTH, FALSE );
+
     host->scrollbars = style & (WS_VSCROLL | WS_HSCROLL | ES_AUTOVSCROLL |
                                 ES_AUTOHSCROLL | ES_DISABLENOSCROLL);
     if (style & WS_VSCROLL) host->scrollbars |= ES_AUTOVSCROLL;
@@ -989,8 +993,6 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         }
         ITextServices_TxSetText( host->text_srv, textW );
         if (lparam) ME_EndToUnicode( codepage, textW );
-
-        hr = ITextServices_TxSendMessage( host->text_srv, msg, wparam, lparam, &res );
         break;
     }
     case WM_DESTROY:
