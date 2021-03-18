@@ -151,8 +151,7 @@ static void test_Gamepad(void)
     IAgileObject_Release(tmp_agile_object);
 
     hr = IGamepadStatics_get_Gamepads(gamepad_statics, &gamepads);
-    todo_wine ok(hr == S_OK, "IGamepadStatics_get_Gamepads failed, hr %#x\n", hr);
-    if (FAILED(hr)) goto done;
+    ok(hr == S_OK, "IGamepadStatics_get_Gamepads failed, hr %#x\n", hr);
 
     hr = IVectorView_Gamepad_QueryInterface(gamepads, &IID_IInspectable, (void **)&tmp_inspectable);
     ok(hr == S_OK, "IVectorView_Gamepad_QueryInterface failed, hr %#x\n", hr);
@@ -166,12 +165,11 @@ static void test_Gamepad(void)
 
     size = 0xdeadbeef;
     hr = IVectorView_Gamepad_get_Size(gamepads, &size);
-    ok(hr == S_OK, "IVectorView_Gamepad_get_Size failed, hr %#x\n", hr);
+    todo_wine ok(hr == S_OK, "IVectorView_Gamepad_get_Size failed, hr %#x\n", hr);
     todo_wine ok(size != 0xdeadbeef, "IVectorView_Gamepad_get_Size returned %u\n", size);
 
     IVectorView_Gamepad_Release(gamepads);
 
-done:
     token.value = 0xdeadbeef;
     hr = IGamepadStatics_add_GamepadAdded(gamepad_statics, &gamepad_event_handler.IEventHandler_Gamepad_iface, &token);
     todo_wine ok(hr == S_OK, "IGamepadStatics_add_GamepadAdded failed, hr %#x\n", hr);

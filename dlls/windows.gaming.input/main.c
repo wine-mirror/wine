@@ -46,6 +46,126 @@ static const char *debugstr_hstring(HSTRING hstr)
     return wine_dbgstr_wn(str, len);
 }
 
+struct gamepad_vector
+{
+    IVectorView_Gamepad IVectorView_Gamepad_iface;
+    LONG ref;
+};
+
+static inline struct gamepad_vector *impl_from_IVectorView_Gamepad(IVectorView_Gamepad *iface)
+{
+    return CONTAINING_RECORD(iface, struct gamepad_vector, IVectorView_Gamepad_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE vector_view_gamepad_QueryInterface(
+        IVectorView_Gamepad *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p stub!\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IInspectable) ||
+        IsEqualGUID(iid, &IID_IAgileObject) ||
+        IsEqualGUID(iid, &IID_IVectorView_Gamepad))
+    {
+        IUnknown_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE vector_view_gamepad_AddRef(
+        IVectorView_Gamepad *iface)
+{
+    struct gamepad_vector *impl = impl_from_IVectorView_Gamepad(iface);
+    ULONG ref = InterlockedIncrement(&impl->ref);
+    TRACE("iface %p, ref %u.\n", iface, ref);
+    return ref;
+}
+
+static ULONG STDMETHODCALLTYPE vector_view_gamepad_Release(
+        IVectorView_Gamepad *iface)
+{
+    struct gamepad_vector *impl = impl_from_IVectorView_Gamepad(iface);
+    ULONG ref = InterlockedDecrement(&impl->ref);
+    TRACE("iface %p, ref %u.\n", iface, ref);
+    return ref;
+}
+
+static HRESULT STDMETHODCALLTYPE vector_view_gamepad_GetIids(
+        IVectorView_Gamepad *iface, ULONG *iid_count, IID **iids)
+{
+    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE vector_view_gamepad_GetRuntimeClassName(
+        IVectorView_Gamepad *iface, HSTRING *class_name)
+{
+    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE vector_view_gamepad_GetTrustLevel(
+        IVectorView_Gamepad *iface, TrustLevel *trust_level)
+{
+    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE vector_view_gamepad_GetAt(
+    IVectorView_Gamepad *iface, ULONG index, IGamepad **value)
+{
+    FIXME("iface %p, index %#x, value %p stub!\n", iface, index, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE vector_view_gamepad_get_Size(
+    IVectorView_Gamepad *iface, ULONG *value)
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE vector_view_gamepad_IndexOf(
+    IVectorView_Gamepad *iface, IGamepad *element, ULONG *index, BOOLEAN *value)
+{
+    FIXME("iface %p, element %p, index %p, value %p stub!\n", iface, element, index, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE vector_view_gamepad_GetMany(
+    IVectorView_Gamepad *iface, ULONG start_index, IGamepad **items, UINT *value)
+{
+    FIXME("iface %p, start_index %#x, items %p, value %p stub!\n", iface, start_index, items, value);
+    return E_NOTIMPL;
+}
+
+static const struct IVectorView_GamepadVtbl vector_view_gamepad_vtbl =
+{
+    vector_view_gamepad_QueryInterface,
+    vector_view_gamepad_AddRef,
+    vector_view_gamepad_Release,
+    /* IInspectable methods */
+    vector_view_gamepad_GetIids,
+    vector_view_gamepad_GetRuntimeClassName,
+    vector_view_gamepad_GetTrustLevel,
+    /* IVectorView<VoiceInformation> methods */
+    vector_view_gamepad_GetAt,
+    vector_view_gamepad_get_Size,
+    vector_view_gamepad_IndexOf,
+    vector_view_gamepad_GetMany,
+};
+
+static struct gamepad_vector gamepads =
+{
+    {&vector_view_gamepad_vtbl},
+    0
+};
+
 struct windows_gaming_input
 {
     IActivationFactory IActivationFactory_iface;
@@ -224,8 +344,10 @@ static HRESULT STDMETHODCALLTYPE gamepad_statics_remove_GamepadRemoved(
 static HRESULT STDMETHODCALLTYPE gamepad_statics_get_Gamepads(
     IGamepadStatics *iface, IVectorView_Gamepad **value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+    *value = &gamepads.IVectorView_Gamepad_iface;
+    IVectorView_Gamepad_AddRef(*value);
+    return S_OK;
 }
 
 static const struct IGamepadStaticsVtbl gamepad_statics_vtbl =
