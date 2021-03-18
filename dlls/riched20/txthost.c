@@ -45,9 +45,11 @@ struct host
     unsigned int sel_bar : 1;
     unsigned int client_edge : 1;
     unsigned int use_set_rect : 1;
+    unsigned int use_back_colour : 1;
     PARAFORMAT2 para_fmt;
     DWORD props, scrollbars, event_mask;
     RECT client_rect, set_rect;
+    COLORREF back_colour;
 };
 
 static const ITextHostVtbl textHostVtbl;
@@ -111,6 +113,7 @@ struct host *host_create( HWND hwnd, CREATESTRUCTW *cs, BOOL emulate_10 )
     texthost->use_set_rect = 0;
     SetRectEmpty( &texthost->set_rect );
     GetClientRect( hwnd, &texthost->client_rect );
+    texthost->use_back_colour = 0;
 
     return texthost;
 }
@@ -346,6 +349,9 @@ DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxGetParaFormat( ITextHost *ifa
 DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxGetSysColor,8)
 DECLSPEC_HIDDEN COLORREF __thiscall ITextHostImpl_TxGetSysColor( ITextHost *iface, int index )
 {
+    struct host *host = impl_from_ITextHost( iface );
+
+    if (index == COLOR_WINDOW && host->use_back_colour) return host->back_colour;
     return GetSysColor( index );
 }
 
@@ -992,9 +998,14 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
     {
         HDC hdc = (HDC)wparam;
         RECT rc;
+        HBRUSH brush;
 
         if (GetUpdateRect( editor->hWnd, &rc, TRUE ))
-            FillRect( hdc, &rc, editor->hbrBackground );
+        {
+            brush = CreateSolidBrush( ITextHost_TxGetSysColor( &host->ITextHost_iface, COLOR_WINDOW ) );
+            FillRect( hdc, &rc, brush );
+            DeleteObject( brush );
+        }
         return 1;
     }
     case EM_FINDTEXT:
@@ -1127,13 +1138,13 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         HDC hdc;
         RECT rc;
         PAINTSTRUCT ps;
-        HBRUSH old_brush;
+        HBRUSH brush = CreateSolidBrush( ITextHost_TxGetSysColor( &host->ITextHost_iface, COLOR_WINDOW ) );
 
         update_caret( editor );
         hdc = BeginPaint( editor->hWnd, &ps );
         if (!editor->bEmulateVersion10 || (editor->nEventMask & ENM_UPDATE))
             ME_SendOldNotify( editor, EN_UPDATE );
-        old_brush = SelectObject( hdc, editor->hbrBackground );
+        brush = SelectObject( hdc, brush );
 
         /* Erase area outside of the formatting rectangle */
         if (ps.rcPaint.top < editor->rcFormat.top)
@@ -1166,7 +1177,7 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         }
 
         ME_PaintContent( editor, hdc, &ps.rcPaint );
-        SelectObject( hdc, old_brush );
+        DeleteObject( SelectObject( hdc, brush ) );
         EndPaint( editor->hWnd, &ps );
         return 0;
     }
@@ -1181,6 +1192,13 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         res = len;
         break;
     }
+    case EM_SETBKGNDCOLOR:
+        res = ITextHost_TxGetSysColor( &host->ITextHost_iface, COLOR_WINDOW );
+        host->use_back_colour = !wparam;
+        if (host->use_back_colour) host->back_colour = lparam;
+        InvalidateRect( hwnd, NULL, TRUE );
+        break;
+
     case EM_SETEVENTMASK:
         host->event_mask = lparam;
         hr = ITextServices_TxSendMessage( host->text_srv, msg, wparam, lparam, &res );

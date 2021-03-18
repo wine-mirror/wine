@@ -3005,8 +3005,6 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->nLastTotalLength = ed->nTotalLength = 0;
   ed->nLastTotalWidth = ed->nTotalWidth = 0;
   ed->nUDArrowX = -1;
-  ed->rgbBackColor = -1;
-  ed->hbrBackground = GetSysColorBrush(COLOR_WINDOW);
   ed->nEventMask = 0;
   ed->nModifyStep = 0;
   ed->nTextLimit = TEXT_LIMIT_DEFAULT;
@@ -3100,8 +3098,6 @@ void ME_DestroyEditor(ME_TextEditor *editor)
     if (editor->pFontCache[i].hFont)
       DeleteObject(editor->pFontCache[i].hFont);
   }
-  if (editor->rgbBackColor != -1)
-    DeleteObject(editor->hbrBackground);
   if(editor->lpOleCallback)
     IRichEditOleCallback_Release(editor->lpOleCallback);
   if (editor->reOle)
@@ -3516,28 +3512,6 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_SELECTIONTYPE:
     return ME_GetSelectionType(editor);
-  case EM_SETBKGNDCOLOR:
-  {
-    LRESULT lColor;
-    if (editor->rgbBackColor != -1) {
-      DeleteObject(editor->hbrBackground);
-      lColor = editor->rgbBackColor;
-    }
-    else lColor = ITextHost_TxGetSysColor(editor->texthost, COLOR_WINDOW);
-
-    if (wParam)
-    {
-      editor->rgbBackColor = -1;
-      editor->hbrBackground = GetSysColorBrush(COLOR_WINDOW);
-    }
-    else
-    {
-      editor->rgbBackColor = lParam;
-      editor->hbrBackground = CreateSolidBrush(editor->rgbBackColor);
-    }
-    ITextHost_TxInvalidateRect(editor->texthost, NULL, TRUE);
-    return lColor;
-  }
   case EM_GETMODIFY:
     return editor->nModifyStep == 0 ? 0 : -1;
   case EM_SETMODIFY:

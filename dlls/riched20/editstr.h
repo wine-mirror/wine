@@ -392,8 +392,6 @@ typedef struct tagME_TextEditor
   int nAvailWidth; /* 0 = wrap to client area, else wrap width in twips */
   int nUDArrowX;
   int total_rows;
-  COLORREF rgbBackColor;
-  HBRUSH hbrBackground;
   int nEventMask;
   int nModifyStep;
   struct list undo_stack;
