@@ -934,6 +934,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetRenderTargets(ID3D11D
         UINT render_target_view_count, ID3D11RenderTargetView *const *render_target_views,
         ID3D11DepthStencilView *depth_stencil_view)
 {
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext1(iface);
     struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
     struct d3d_depthstencil_view *dsv;
     unsigned int i;
@@ -945,11 +946,12 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetRenderTargets(ID3D11D
     for (i = 0; i < render_target_view_count; ++i)
     {
         struct d3d_rendertarget_view *rtv = unsafe_impl_from_ID3D11RenderTargetView(render_target_views[i]);
-        wined3d_device_set_rendertarget_view(device->wined3d_device, i, rtv ? rtv->wined3d_view : NULL, FALSE);
+        wined3d_device_context_set_rendertarget_view(context->wined3d_context, i,
+                rtv ? rtv->wined3d_view : NULL, FALSE);
     }
     for (; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
     {
-        wined3d_device_set_rendertarget_view(device->wined3d_device, i, NULL, FALSE);
+        wined3d_device_context_set_rendertarget_view(context->wined3d_context, i, NULL, FALSE);
     }
 
     dsv = unsafe_impl_from_ID3D11DepthStencilView(depth_stencil_view);
@@ -2619,7 +2621,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_ClearState(ID3D11DeviceCon
     wined3d_device_set_primitive_type(device->wined3d_device, WINED3D_PT_UNDEFINED, 0);
     for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
     {
-        wined3d_device_set_rendertarget_view(device->wined3d_device, i, NULL, FALSE);
+        wined3d_device_context_set_rendertarget_view(context->wined3d_context, i, NULL, FALSE);
     }
     wined3d_device_set_depth_stencil_view(device->wined3d_device, NULL);
     for (i = 0; i < WINED3D_PIPELINE_COUNT; ++i)
