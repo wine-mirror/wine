@@ -668,7 +668,7 @@ typedef union
     } map_view;
     struct
     {
-        enum apc_type    type;      /* APC_MAP_VIEW */
+        enum apc_type    type;      /* APC_UNMAP_VIEW */
         unsigned int     status;    /* status returned by call */
     } unmap_view;
     struct
