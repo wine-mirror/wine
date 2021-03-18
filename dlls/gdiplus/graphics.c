@@ -2906,6 +2906,7 @@ GpStatus WINGDIPAPI GdipDrawEllipse(GpGraphics *graphics, GpPen *pen, REAL x,
 {
     GpPath *path;
     GpStatus status;
+    GpRectF rect;
 
     TRACE("(%p, %p, %.2f, %.2f, %.2f, %.2f)\n", graphics, pen, x, y, width, height);
 
@@ -2914,6 +2915,15 @@ GpStatus WINGDIPAPI GdipDrawEllipse(GpGraphics *graphics, GpPen *pen, REAL x,
 
     if(graphics->busy)
         return ObjectBusy;
+
+    if (graphics->image && graphics->image->type == ImageTypeMetafile)
+    {
+        rect.X = x;
+        rect.Y = y;
+        rect.Width = width;
+        rect.Height = height;
+        return METAFILE_DrawEllipse((GpMetafile *)graphics->image, pen, &rect);
+    }
 
     status = GdipCreatePath(FillModeAlternate, &path);
     if (status != Ok) return status;

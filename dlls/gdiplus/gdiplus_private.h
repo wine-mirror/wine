@@ -110,6 +110,7 @@ extern GpStatus METAFILE_DrawDriverString(GpMetafile *metafile, GDIPCONST UINT16
 extern GpStatus METAFILE_FillRegion(GpMetafile* metafile, GpBrush* brush,
     GpRegion* region) DECLSPEC_HIDDEN;
 extern void METAFILE_Free(GpMetafile *metafile) DECLSPEC_HIDDEN;
+extern GpStatus METAFILE_DrawEllipse(GpMetafile *metafile, GpPen *pen, GpRectF *rect) DECLSPEC_HIDDEN;
 
 extern void calc_curve_bezier(const GpPointF *pts, REAL tension, REAL *x1,
     REAL *y1, REAL *x2, REAL *y2) DECLSPEC_HIDDEN;
