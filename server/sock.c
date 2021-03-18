@@ -1536,7 +1536,7 @@ static const struct object_ops ifchange_ops =
     sizeof(struct ifchange), /* size */
     &no_type,                /* type */
     ifchange_dump,           /* dump */
-    add_queue,               /* add_queue */
+    no_add_queue,            /* add_queue */
     NULL,                    /* remove_queue */
     NULL,                    /* signaled */
     no_satisfied,            /* satisfied */
