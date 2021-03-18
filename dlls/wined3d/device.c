@@ -1874,7 +1874,7 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
 
     for (i = 0; i < WINED3D_MAX_RENDER_TARGETS; ++i)
     {
-        wined3d_cs_emit_set_rendertarget_view(device->cs, i, state->fb.render_targets[i]);
+        wined3d_device_context_emit_set_rendertarget_view(context, i, state->fb.render_targets[i]);
     }
 
     wined3d_cs_emit_set_depth_stencil_view(device->cs, state->fb.depth_stencil);
@@ -5246,7 +5246,7 @@ HRESULT CDECL wined3d_device_set_rendertarget_view(struct wined3d_device *device
         wined3d_rtv_bind_count_inc(view);
     }
     state->fb.render_targets[view_idx] = view;
-    wined3d_cs_emit_set_rendertarget_view(device->cs, view_idx, view);
+    wined3d_device_context_emit_set_rendertarget_view(&device->cs->c, view_idx, view);
     /* Release after the assignment, to prevent device_resource_released()
      * from seeing the surface as still in use. */
     if (prev)
