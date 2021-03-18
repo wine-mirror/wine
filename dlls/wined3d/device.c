@@ -1915,7 +1915,8 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
     {
         for (j = 0; j < MAX_UNORDERED_ACCESS_VIEWS; ++j)
         {
-            wined3d_cs_emit_set_unordered_access_view(device->cs, i, j, state->unordered_access_view[i][j], ~0);
+            wined3d_device_context_emit_set_unordered_access_view(context, i, j,
+                    state->unordered_access_view[i][j], ~0);
         }
     }
 
@@ -2697,7 +2698,7 @@ static void wined3d_device_set_pipeline_unordered_access_view(struct wined3d_dev
     if (uav)
         wined3d_unordered_access_view_incref(uav);
     state->unordered_access_view[pipeline][idx] = uav;
-    wined3d_cs_emit_set_unordered_access_view(device->cs, pipeline, idx, uav, initial_count);
+    wined3d_device_context_emit_set_unordered_access_view(&device->cs->c, pipeline, idx, uav, initial_count);
     if (prev)
         wined3d_unordered_access_view_decref(prev);
 }
