@@ -620,7 +620,7 @@ static HRESULT map_index( struct fields *fields, VARIANT *index, ULONG *ret )
         }
     }
 
-    return E_INVALIDARG;
+    return MAKE_ADO_HRESULT(adErrItemNotFound);
 }
 
 static HRESULT WINAPI fields_get_Item( Fields *iface, VARIANT index, Field **obj )
