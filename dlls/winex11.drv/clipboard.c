@@ -2064,9 +2064,8 @@ static DWORD WINAPI clipboard_thread( void *arg )
     clipboard_thread_id = GetCurrentThreadId();
     AddClipboardFormatListener( clipboard_hwnd );
     register_builtin_formats();
-    request_selection_contents( clipboard_display, TRUE );
-
     xfixes_init();
+    request_selection_contents( clipboard_display, TRUE );
 
     TRACE( "clipboard thread %04x running\n", GetCurrentThreadId() );
     while (GetMessageW( &msg, 0, 0, 0 )) DispatchMessageW( &msg );
