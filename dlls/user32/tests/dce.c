@@ -384,7 +384,7 @@ static void test_dc_visrgn(void)
 static void test_begin_paint(void)
 {
     HDC old_hdc, hdc;
-    RECT rect, parent_rect;
+    RECT rect, parent_rect, client_rect;
     PAINTSTRUCT ps;
     COLORREF cr;
 
@@ -399,6 +399,33 @@ static void test_begin_paint(void)
     GetClipBox( hdc, &rect );
     ok( rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20,
         "invalid clip box %s\n", wine_dbgstr_rect( &rect ));
+    EndPaint( hwnd_cache, &ps );
+
+    SetWindowPos( hwnd_cache, 0, 0, 0, 100, 100, SWP_NOZORDER|SWP_NOMOVE|SWP_NOACTIVATE );
+    RedrawWindow( hwnd_cache, NULL, 0, RDW_VALIDATE|RDW_NOFRAME|RDW_NOERASE );
+    SetRect( &rect, 0, 0, 150, 150 );
+    RedrawWindow( hwnd_cache, &rect, 0, RDW_INVALIDATE|RDW_NOFRAME|RDW_NOERASE );
+    hdc = BeginPaint( hwnd_cache, &ps );
+    GetClipBox( hdc, &rect );
+    GetClientRect( hwnd_cache, &client_rect );
+    ok( EqualRect( &rect, &client_rect ), "clip box = %s, expected %s\n",
+            wine_dbgstr_rect( &rect ), wine_dbgstr_rect( &client_rect ));
+    SetWindowPos( hwnd_cache, 0, 0, 0, 200, 200, SWP_NOZORDER|SWP_NOMOVE|SWP_NOACTIVATE );
+    GetClipBox( hdc, &rect );
+    GetClientRect( hwnd_cache, &client_rect );
+    todo_wine ok( (!rect.left && !rect.top && rect.right == 150 && rect.bottom == 150) ||
+            broken( EqualRect( &rect, &client_rect )),
+            "clip box = %s\n", wine_dbgstr_rect( &rect ));
+    EndPaint( hwnd_cache, &ps );
+
+    SetWindowPos( hwnd_cache, 0, 0, 0, 100, 100, SWP_NOZORDER|SWP_NOMOVE|SWP_NOACTIVATE );
+    RedrawWindow( hwnd_cache, NULL, 0, RDW_INVALIDATE|RDW_NOFRAME|RDW_NOERASE );
+    hdc = BeginPaint( hwnd_cache, &ps );
+    SetWindowPos( hwnd_cache, 0, 0, 0, 200, 200, SWP_NOZORDER|SWP_NOMOVE|SWP_NOACTIVATE );
+    GetClipBox( hdc, &rect );
+    GetClientRect( hwnd_cache, &client_rect );
+    todo_wine ok( EqualRect( &rect, &client_rect ), "clip box = %s, expected %s\n",
+            wine_dbgstr_rect( &rect ), wine_dbgstr_rect( &client_rect ));
     EndPaint( hwnd_cache, &ps );
 
     /* window DC */
@@ -439,6 +466,21 @@ static void test_begin_paint(void)
     GetClipBox( hdc, &rect );
     ok( !(rect.left >= 10 && rect.top >= 10 && rect.right <= 20 && rect.bottom <= 20),
         "clip box should still be the whole window %s\n", wine_dbgstr_rect( &rect ));
+
+    SetWindowPos( hwnd_owndc, 0, 0, 0, 100, 100, SWP_NOZORDER|SWP_NOMOVE|SWP_NOACTIVATE );
+    RedrawWindow( hwnd_owndc, NULL, 0, RDW_VALIDATE|RDW_NOFRAME|RDW_NOERASE );
+    SetRect( &rect, 0, 0, 50, 50 );
+    RedrawWindow( hwnd_owndc, &rect, 0, RDW_INVALIDATE|RDW_ERASE );
+    hdc = BeginPaint( hwnd_owndc, &ps );
+    GetClipBox( hdc, &rect );
+    ok( !rect.left && !rect.top && rect.right == 50 && rect.bottom == 50,
+            "clip box = %s\n", wine_dbgstr_rect( &rect ));
+    SetWindowPos( hwnd_owndc, 0, 0, 0, 200, 200, SWP_NOZORDER|SWP_NOMOVE|SWP_NOACTIVATE );
+    GetClipBox( hdc, &rect );
+    GetClientRect( hwnd_owndc, &client_rect );
+    ok( EqualRect( &rect, &client_rect ), "clip box = %s, expected %s\n",
+            wine_dbgstr_rect( &rect ), wine_dbgstr_rect( &client_rect ));
+    EndPaint( hwnd_owndc, &ps );
 
     /* class DC */
 
