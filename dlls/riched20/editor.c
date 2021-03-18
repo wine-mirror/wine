@@ -3954,7 +3954,6 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
     ITextHost_TxSetCapture(editor->texthost, TRUE);
     editor->bMouseCaptured = TRUE;
     ME_LinkNotify(editor, msg, wParam, lParam);
-    if (!ME_SetCursor(editor)) goto do_default;
     break;
   }
   case WM_MOUSEMOVE:
@@ -3962,9 +3961,6 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
       ME_MouseMove(editor, (short)LOWORD(lParam), (short)HIWORD(lParam));
     else
       ME_LinkNotify(editor, msg, wParam, lParam);
-    /* Set cursor if mouse is captured, since WM_SETCURSOR won't be received. */
-    if (editor->bMouseCaptured)
-        ME_SetCursor(editor);
     break;
   case WM_LBUTTONUP:
     if (editor->bMouseCaptured) {
@@ -3975,7 +3971,6 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
       editor->nSelectionType = stPosition;
     else
     {
-      ME_SetCursor(editor);
       ME_LinkNotify(editor, msg, wParam, lParam);
     }
     break;
