@@ -1730,13 +1730,6 @@ void dispatch_compute(struct wined3d_device *device, const struct wined3d_state 
 #define GET_TEXCOORD_SIZE_FROM_FVF(d3dvtVertexType, tex_num) \
     (((((d3dvtVertexType) >> (16 + (2 * (tex_num)))) + 1) & 0x03) + 1)
 
-enum wined3d_pipeline
-{
-    WINED3D_PIPELINE_GRAPHICS,
-    WINED3D_PIPELINE_COMPUTE,
-    WINED3D_PIPELINE_COUNT,
-};
-
 /* Routines and structures related to state management */
 
 #define STATE_RENDER(a) (a)

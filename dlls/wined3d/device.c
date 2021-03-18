@@ -2257,6 +2257,33 @@ void CDECL wined3d_device_context_set_sampler(struct wined3d_device_context *con
         wined3d_sampler_decref(prev);
 }
 
+void CDECL wined3d_device_context_set_unordered_access_view(struct wined3d_device_context *context,
+        enum wined3d_pipeline pipeline, unsigned int idx, struct wined3d_unordered_access_view *uav,
+        unsigned int initial_count)
+{
+    struct wined3d_state *state = context->state;
+    struct wined3d_unordered_access_view *prev;
+
+    TRACE("context %p, pipeline %#x, idx %u, uav %p, initial_count %u.\n", context, pipeline, idx, uav, initial_count);
+
+    if (idx >= MAX_UNORDERED_ACCESS_VIEWS)
+    {
+        WARN("Invalid UAV index %u.\n", idx);
+        return;
+    }
+
+    prev = state->unordered_access_view[pipeline][idx];
+    if (uav == prev && initial_count == ~0u)
+        return;
+
+    if (uav)
+        wined3d_unordered_access_view_incref(uav);
+    state->unordered_access_view[pipeline][idx] = uav;
+    wined3d_device_context_emit_set_unordered_access_view(context, pipeline, idx, uav, initial_count);
+    if (prev)
+        wined3d_unordered_access_view_decref(prev);
+}
+
 void CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struct wined3d_shader *shader)
 {
     TRACE("device %p, shader %p.\n", device, shader);
@@ -2678,31 +2705,6 @@ struct wined3d_sampler * CDECL wined3d_device_get_cs_sampler(const struct wined3
     return wined3d_device_get_sampler(device, WINED3D_SHADER_TYPE_COMPUTE, idx);
 }
 
-static void wined3d_device_set_pipeline_unordered_access_view(struct wined3d_device *device,
-        enum wined3d_pipeline pipeline, unsigned int idx, struct wined3d_unordered_access_view *uav,
-        unsigned int initial_count)
-{
-    struct wined3d_state *state = device->cs->c.state;
-    struct wined3d_unordered_access_view *prev;
-
-    if (idx >= MAX_UNORDERED_ACCESS_VIEWS)
-    {
-        WARN("Invalid UAV index %u.\n", idx);
-        return;
-    }
-
-    prev = state->unordered_access_view[pipeline][idx];
-    if (uav == prev && initial_count == ~0u)
-        return;
-
-    if (uav)
-        wined3d_unordered_access_view_incref(uav);
-    state->unordered_access_view[pipeline][idx] = uav;
-    wined3d_device_context_emit_set_unordered_access_view(&device->cs->c, pipeline, idx, uav, initial_count);
-    if (prev)
-        wined3d_unordered_access_view_decref(prev);
-}
-
 static struct wined3d_unordered_access_view *wined3d_device_get_pipeline_unordered_access_view(
         const struct wined3d_device *device, enum wined3d_pipeline pipeline, unsigned int idx)
 {
@@ -2720,7 +2722,7 @@ void CDECL wined3d_device_set_cs_uav(struct wined3d_device *device, unsigned int
 {
     TRACE("device %p, idx %u, uav %p, initial_count %#x.\n", device, idx, uav, initial_count);
 
-    wined3d_device_set_pipeline_unordered_access_view(device, WINED3D_PIPELINE_COMPUTE, idx, uav, initial_count);
+    wined3d_device_context_set_unordered_access_view(&device->cs->c, WINED3D_PIPELINE_COMPUTE, idx, uav, initial_count);
 }
 
 struct wined3d_unordered_access_view * CDECL wined3d_device_get_cs_uav(const struct wined3d_device *device,
@@ -2736,7 +2738,7 @@ void CDECL wined3d_device_set_unordered_access_view(struct wined3d_device *devic
 {
     TRACE("device %p, idx %u, uav %p, initial_count %#x.\n", device, idx, uav, initial_count);
 
-    wined3d_device_set_pipeline_unordered_access_view(device, WINED3D_PIPELINE_GRAPHICS, idx, uav, initial_count);
+    wined3d_device_context_set_unordered_access_view(&device->cs->c, WINED3D_PIPELINE_GRAPHICS, idx, uav, initial_count);
 }
 
 struct wined3d_unordered_access_view * CDECL wined3d_device_get_unordered_access_view(
