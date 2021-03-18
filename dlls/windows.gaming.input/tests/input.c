@@ -138,8 +138,7 @@ static void test_Gamepad(void)
     ok(hr == S_OK, "IActivationFactory_QueryInterface IID_IAgileObject failed, hr %#x\n", hr);
 
     hr = IActivationFactory_QueryInterface(factory, &IID_IGamepadStatics, (void **)&gamepad_statics);
-    todo_wine ok(hr == S_OK, "IActivationFactory_QueryInterface IID_IGamepadStatics failed, hr %#x\n", hr);
-    if (FAILED(hr)) goto done;
+    ok(hr == S_OK, "IActivationFactory_QueryInterface IID_IGamepadStatics failed, hr %#x\n", hr);
 
     hr = IGamepadStatics_QueryInterface(gamepad_statics, &IID_IInspectable, (void **)&tmp_inspectable);
     ok(hr == S_OK, "IGamepadStatics_QueryInterface IID_IInspectable failed, hr %#x\n", hr);
@@ -152,7 +151,8 @@ static void test_Gamepad(void)
     IAgileObject_Release(tmp_agile_object);
 
     hr = IGamepadStatics_get_Gamepads(gamepad_statics, &gamepads);
-    ok(hr == S_OK, "IGamepadStatics_get_Gamepads failed, hr %#x\n", hr);
+    todo_wine ok(hr == S_OK, "IGamepadStatics_get_Gamepads failed, hr %#x\n", hr);
+    if (FAILED(hr)) goto done;
 
     hr = IVectorView_Gamepad_QueryInterface(gamepads, &IID_IInspectable, (void **)&tmp_inspectable);
     ok(hr == S_OK, "IVectorView_Gamepad_QueryInterface failed, hr %#x\n", hr);
@@ -171,6 +171,7 @@ static void test_Gamepad(void)
 
     IVectorView_Gamepad_Release(gamepads);
 
+done:
     token.value = 0xdeadbeef;
     hr = IGamepadStatics_add_GamepadAdded(gamepad_statics, &gamepad_event_handler.IEventHandler_Gamepad_iface, &token);
     todo_wine ok(hr == S_OK, "IGamepadStatics_add_GamepadAdded failed, hr %#x\n", hr);
@@ -189,7 +190,6 @@ static void test_Gamepad(void)
 
     IGamepadStatics_Release(gamepad_statics);
 
-done:
     IAgileObject_Release(agile_object);
     IInspectable_Release(inspectable);
     IActivationFactory_Release(factory);
