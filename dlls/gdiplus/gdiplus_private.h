@@ -112,6 +112,7 @@ extern GpStatus METAFILE_FillRegion(GpMetafile* metafile, GpBrush* brush,
 extern void METAFILE_Free(GpMetafile *metafile) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_DrawEllipse(GpMetafile *metafile, GpPen *pen, GpRectF *rect) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_FillEllipse(GpMetafile *metafile, GpBrush *brush, GpRectF *rect) DECLSPEC_HIDDEN;
+extern GpStatus METAFILE_DrawRectangles(GpMetafile *metafile, GpPen *pen, const GpRectF *rects, INT count) DECLSPEC_HIDDEN;
 
 extern void calc_curve_bezier(const GpPointF *pts, REAL tension, REAL *x1,
     REAL *y1, REAL *x2, REAL *y2) DECLSPEC_HIDDEN;

@@ -4132,6 +4132,9 @@ GpStatus WINGDIPAPI GdipDrawRectangles(GpGraphics *graphics, GpPen *pen,
     if(graphics->busy)
         return ObjectBusy;
 
+    if (is_metafile_graphics(graphics))
+        return METAFILE_DrawRectangles((GpMetafile *)graphics->image, pen, rects, count);
+
     status = GdipCreatePath(FillModeAlternate, &path);
     if (status != Ok) return status;
 
