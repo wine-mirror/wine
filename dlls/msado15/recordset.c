@@ -488,6 +488,7 @@ static ULONG WINAPI fields_Release( Fields *iface )
     if (!refs)
     {
         if (fields->recordset) _Recordset_Release( &fields->recordset->Recordset_iface );
+        fields->recordset = NULL;
         WARN( "not destroying %p\n", fields );
         return InterlockedIncrement( &fields->refs );
     }
@@ -864,7 +865,6 @@ static void close_recordset( struct recordset *recordset )
     if (!recordset->fields) return;
     col_count = get_column_count( recordset );
 
-    recordset->fields->recordset = NULL;
     Fields_Release( &recordset->fields->Fields_iface );
     recordset->fields = NULL;
 
@@ -1092,6 +1092,7 @@ static HRESULT WINAPI recordset_get_Fields( _Recordset *iface, Fields **obj )
     {
         /* yes, this adds a reference to the recordset instead of the fields object */
         _Recordset_AddRef( &recordset->Recordset_iface );
+        recordset->fields->recordset = recordset;
         *obj = &recordset->fields->Fields_iface;
         return S_OK;
     }
