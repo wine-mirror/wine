@@ -4038,12 +4038,12 @@ HKLM,Software\Wine\LicenseInformation,"Shell-InBoxGames-SpiderSolitaire-EnableGa
 HKLM,Software\Wine\LicenseInformation,"Shell-PremiumInBoxGames-Chess-EnableGame",0x10001,0x00000001
 
 [ColorFiles]
-srgb color space profile.icm,"@mscms.dll,-1"
+srgb color space profile.icm,"@%11%\mscms.dll,-1"
 
 [InfFiles]
-winebus.inf,"@winebus.sys,-1"
-winehid.inf,"@winehid.sys,-1"
-wineusb.inf,"@wineusb.sys,-1"
+winebus.inf,"@%12%\winebus.sys,-1"
+winehid.inf,"@%12%\winehid.sys,-1"
+wineusb.inf,"@%12%\wineusb.sys,-1"
 
 [NlsFiles]
 c_037.nls
