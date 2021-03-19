@@ -3012,12 +3012,14 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->vert_si.nMax = 0;
   ed->vert_si.nPage = 0;
   ed->vert_si.nPos = 0;
+  ed->vert_sb_enabled = 0;
 
   ed->horz_si.cbSize = sizeof(SCROLLINFO);
   ed->horz_si.nMin = 0;
   ed->horz_si.nMax = 0;
   ed->horz_si.nPage = 0;
   ed->horz_si.nPos = 0;
+  ed->horz_sb_enabled = 0;
 
   if (ed->scrollbars & ES_DISABLENOSCROLL)
   {

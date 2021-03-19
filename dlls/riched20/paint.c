@@ -1073,15 +1073,14 @@ void ME_ScrollAbs(ME_TextEditor *editor, int x, int y)
     if (editor->scrollbars & WS_HSCROLL)
     {
       old_vis = winStyle & WS_HSCROLL;
-      new_vis = editor->nTotalWidth > editor->sizeWindow.cx || editor->scrollbars & ES_DISABLENOSCROLL;
+      new_vis = editor->horz_sb_enabled || editor->scrollbars & ES_DISABLENOSCROLL;
       if (!old_vis ^ !new_vis) ITextHost_TxShowScrollBar( editor->texthost, SB_HORZ, new_vis );
     }
 
     if (editor->scrollbars & WS_VSCROLL)
     {
       old_vis = winStyle & WS_VSCROLL;
-      new_vis = (editor->nTotalLength > editor->sizeWindow.cy && editor->props & TXTBIT_MULTILINE) ||
-          editor->scrollbars & ES_DISABLENOSCROLL;
+      new_vis = editor->vert_sb_enabled || editor->scrollbars & ES_DISABLENOSCROLL;
       if (!old_vis ^ !new_vis) ITextHost_TxShowScrollBar( editor->texthost, SB_VERT, new_vis );
     }
   }
@@ -1118,25 +1117,13 @@ void ME_ScrollRight(ME_TextEditor *editor, int cx)
   ME_HScrollAbs(editor, editor->horz_si.nPos + cx);
 }
 
-/* Calculates the visibility after a call to SetScrollRange or
- * SetScrollInfo with SIF_RANGE. */
-static BOOL ME_PostSetScrollRangeVisibility(SCROLLINFO *si)
-{
-  if (si->fMask & SIF_DISABLENOSCROLL)
-    return TRUE;
-
-  /* This must match the check in SetScrollInfo to determine whether
-   * to show or hide the scrollbars. */
-  return si->nMin < si->nMax - max(si->nPage - 1, 0);
-}
-
 void ME_UpdateScrollBar(ME_TextEditor *editor)
 {
   /* Note that this is the only function that should ever call
    * SetScrollInfo with SIF_PAGE or SIF_RANGE. */
 
   SCROLLINFO si;
-  BOOL bScrollBarWasVisible, bScrollBarWillBeVisible;
+  BOOL enable;
 
   if (ME_WrapMarkedParagraphs(editor))
     FIXME("ME_UpdateScrollBar had to call ME_WrapMarkedParagraphs\n");
@@ -1148,13 +1135,11 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     si.fMask |= SIF_DISABLENOSCROLL;
 
   /* Update horizontal scrollbar */
-  bScrollBarWasVisible = editor->horz_si.nMax > editor->horz_si.nPage;
-  bScrollBarWillBeVisible = editor->nTotalWidth > editor->sizeWindow.cx;
-  if (editor->horz_si.nPos && !bScrollBarWillBeVisible)
+  enable = editor->nTotalWidth > editor->sizeWindow.cx;
+  if (editor->horz_si.nPos && !enable)
   {
     ME_HScrollAbs(editor, 0);
-    /* ME_HScrollAbs will call this function,
-     * so nothing else needs to be done here. */
+    /* ME_HScrollAbs will call this function, so nothing else needs to be done here. */
     return;
   }
 
@@ -1168,8 +1153,7 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     TRACE("min=%d max=%d page=%d\n", si.nMin, si.nMax, si.nPage);
     editor->horz_si.nMax = si.nMax;
     editor->horz_si.nPage = si.nPage;
-    if ((bScrollBarWillBeVisible || bScrollBarWasVisible) &&
-        editor->scrollbars & WS_HSCROLL)
+    if ((enable || editor->horz_sb_enabled) && editor->scrollbars & WS_HSCROLL)
     {
       if (si.nMax > 0xFFFF)
       {
@@ -1183,29 +1167,25 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
         ITextHost_TxSetScrollRange(editor->texthost, SB_HORZ, si.nMin, si.nMax, FALSE);
         ITextHost_TxSetScrollPos(editor->texthost, SB_HORZ, si.nPos, TRUE);
       }
-      /* SetScrollInfo or SetScrollRange change scrollbar visibility. */
-      bScrollBarWasVisible = ME_PostSetScrollRangeVisibility(&si);
     }
   }
 
-  if (editor->scrollbars & WS_HSCROLL)
+  if (editor->scrollbars & WS_HSCROLL && !enable ^ !editor->horz_sb_enabled)
   {
-    if (si.fMask & SIF_DISABLENOSCROLL) bScrollBarWillBeVisible = TRUE;
-
-    if (bScrollBarWasVisible != bScrollBarWillBeVisible)
-      ITextHost_TxShowScrollBar(editor->texthost, SB_HORZ, bScrollBarWillBeVisible);
+    if (enable || editor->scrollbars & ES_DISABLENOSCROLL)
+      ITextHost_TxEnableScrollBar( editor->texthost, SB_HORZ, enable ? 0 : ESB_DISABLE_BOTH );
+    if (!(editor->scrollbars & ES_DISABLENOSCROLL))
+      ITextHost_TxShowScrollBar( editor->texthost, SB_HORZ, enable );
+    editor->horz_sb_enabled = enable;
   }
 
   /* Update vertical scrollbar */
-  bScrollBarWasVisible = editor->vert_si.nMax > editor->vert_si.nPage;
-  bScrollBarWillBeVisible = editor->nTotalLength > editor->sizeWindow.cy &&
-                            (editor->props & TXTBIT_MULTILINE);
+  enable = editor->nTotalLength > editor->sizeWindow.cy && (editor->props & TXTBIT_MULTILINE);
 
-  if (editor->vert_si.nPos && !bScrollBarWillBeVisible)
+  if (editor->vert_si.nPos && !enable)
   {
     ME_VScrollAbs(editor, 0);
-    /* ME_VScrollAbs will call this function,
-     * so nothing else needs to be done here. */
+    /* ME_VScrollAbs will call this function, so nothing else needs to be done here. */
     return;
   }
 
@@ -1219,8 +1199,7 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     TRACE("min=%d max=%d page=%d\n", si.nMin, si.nMax, si.nPage);
     editor->vert_si.nMax = si.nMax;
     editor->vert_si.nPage = si.nPage;
-    if ((bScrollBarWillBeVisible || bScrollBarWasVisible) &&
-        editor->scrollbars & WS_VSCROLL)
+    if ((enable || editor->vert_sb_enabled) && editor->scrollbars & WS_VSCROLL)
     {
       if (si.nMax > 0xFFFF)
       {
@@ -1234,18 +1213,16 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
         ITextHost_TxSetScrollRange(editor->texthost, SB_VERT, si.nMin, si.nMax, FALSE);
         ITextHost_TxSetScrollPos(editor->texthost, SB_VERT, si.nPos, TRUE);
       }
-      /* SetScrollInfo or SetScrollRange change scrollbar visibility. */
-      bScrollBarWasVisible = ME_PostSetScrollRangeVisibility(&si);
     }
   }
 
-  if (editor->scrollbars & WS_VSCROLL)
+  if (editor->scrollbars & WS_VSCROLL && !enable ^ !editor->vert_sb_enabled)
   {
-    if (si.fMask & SIF_DISABLENOSCROLL) bScrollBarWillBeVisible = TRUE;
-
-    if (bScrollBarWasVisible != bScrollBarWillBeVisible)
-      ITextHost_TxShowScrollBar(editor->texthost, SB_VERT,
-                                bScrollBarWillBeVisible);
+    if (enable || editor->scrollbars & ES_DISABLENOSCROLL)
+      ITextHost_TxEnableScrollBar( editor->texthost, SB_VERT, enable ? 0 : ESB_DISABLE_BOTH );
+    if (!(editor->scrollbars & ES_DISABLENOSCROLL))
+      ITextHost_TxShowScrollBar( editor->texthost, SB_VERT, enable );
+    editor->vert_sb_enabled = enable;
   }
 }
 
