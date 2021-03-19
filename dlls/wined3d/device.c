@@ -2372,6 +2372,38 @@ HRESULT CDECL wined3d_device_context_set_rendertarget_view(struct wined3d_device
     return WINED3D_OK;
 }
 
+HRESULT CDECL wined3d_device_context_set_depth_stencil_view(struct wined3d_device_context *context,
+        struct wined3d_rendertarget_view *view)
+{
+    struct wined3d_fb_state *fb = &context->state->fb;
+    struct wined3d_rendertarget_view *prev;
+
+    TRACE("context %p, view %p.\n", context, view);
+
+    if (view && !(view->resource->bind_flags & WINED3D_BIND_DEPTH_STENCIL))
+    {
+        WARN("View resource %p has incompatible %s bind flags.\n",
+                view->resource, wined3d_debug_bind_flags(view->resource->bind_flags));
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    prev = fb->depth_stencil;
+    if (prev == view)
+    {
+        TRACE("Trying to do a NOP SetRenderTarget operation.\n");
+        return WINED3D_OK;
+    }
+
+    if ((fb->depth_stencil = view))
+        wined3d_rendertarget_view_incref(view);
+    wined3d_device_context_emit_set_depth_stencil_view(context, view);
+    if (prev)
+        wined3d_rendertarget_view_decref(prev);
+    wined3d_device_context_unbind_srv_for_rtv(context, view, TRUE);
+
+    return WINED3D_OK;
+}
+
 void CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struct wined3d_shader *shader)
 {
     TRACE("device %p, shader %p.\n", device, shader);
@@ -5272,33 +5304,9 @@ HRESULT CDECL wined3d_device_set_rendertarget_view(struct wined3d_device *device
 HRESULT CDECL wined3d_device_set_depth_stencil_view(struct wined3d_device *device,
         struct wined3d_rendertarget_view *view)
 {
-    struct wined3d_fb_state *fb = &device->cs->c.state->fb;
-    struct wined3d_rendertarget_view *prev;
-
     TRACE("device %p, view %p.\n", device, view);
 
-    if (view && !(view->resource->bind_flags & WINED3D_BIND_DEPTH_STENCIL))
-    {
-        WARN("View resource %p has incompatible %s bind flags.\n",
-                view->resource, wined3d_debug_bind_flags(view->resource->bind_flags));
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    prev = fb->depth_stencil;
-    if (prev == view)
-    {
-        TRACE("Trying to do a NOP SetRenderTarget operation.\n");
-        return WINED3D_OK;
-    }
-
-    if ((fb->depth_stencil = view))
-        wined3d_rendertarget_view_incref(view);
-    wined3d_device_context_emit_set_depth_stencil_view(&device->cs->c, view);
-    if (prev)
-        wined3d_rendertarget_view_decref(prev);
-    wined3d_device_context_unbind_srv_for_rtv(&device->cs->c, view, TRUE);
-
-    return WINED3D_OK;
+    return wined3d_device_context_set_depth_stencil_view(&device->cs->c, view);
 }
 
 static struct wined3d_texture *wined3d_device_create_cursor_texture(struct wined3d_device *device,

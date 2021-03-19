@@ -169,6 +169,7 @@
 @ cdecl wined3d_device_context_set_blend_state(ptr ptr ptr long)
 @ cdecl wined3d_device_context_set_constant_buffer(ptr long long ptr)
 @ cdecl wined3d_device_context_set_depth_stencil_state(ptr ptr long)
+@ cdecl wined3d_device_context_set_depth_stencil_view(ptr ptr)
 @ cdecl wined3d_device_context_set_rasterizer_state(ptr ptr)
 @ cdecl wined3d_device_context_set_rendertarget_view(ptr long ptr long)
 @ cdecl wined3d_device_context_set_sampler(ptr long long ptr)
