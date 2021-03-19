@@ -20,14 +20,21 @@
 #pragma winrt ns_prefix
 #endif
 
-import "eventtoken.idl";
 import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
 import "windows.foundation.idl";
+import "windows.gaming.input.forcefeedback.idl";
+import "windows.system.idl";
 
 namespace Windows {
     namespace Gaming {
         namespace Input {
             typedef enum GamepadButtons GamepadButtons;
+            typedef enum GameControllerButtonLabel GameControllerButtonLabel;
+            typedef enum GameControllerSwitchKind GameControllerSwitchKind;
+            typedef enum GameControllerSwitchPosition GameControllerSwitchPosition;
             typedef struct GamepadReading GamepadReading;
             typedef struct GamepadVibration GamepadVibration;
             interface IGameController;
@@ -36,7 +43,11 @@ namespace Windows {
             interface IGamepad2;
             interface IGamepadStatics;
             interface IGamepadStatics2;
+            interface IRawGameController;
+            interface IRawGameController2;
             runtimeclass Gamepad;
+            runtimeclass Headset;
+            runtimeclass RawGameController;
         }
     }
 }
@@ -46,7 +57,11 @@ namespace Windows {
         namespace Input {
             declare {
                 interface Windows.Foundation.EventHandler<Windows.Gaming.Input.Gamepad*>;
+                interface Windows.Foundation.EventHandler<Windows.Gaming.Input.RawGameController*>;
+                interface Windows.Foundation.TypedEventHandler<Windows.Gaming.Input.IGameController*, Windows.Gaming.Input.Headset*>;
+                interface Windows.Foundation.TypedEventHandler<Windows.Gaming.Input.IGameController*, Windows.System.UserChangedEventArgs*>;
                 interface Windows.Foundation.Collections.IVectorView<Gamepad*>;
+                interface Windows.Foundation.Collections.IVectorView<Windows.Gaming.Input.RawGameController*>;
             }
         }
     }
@@ -86,6 +101,102 @@ namespace Windows {
                 Paddle4 = 0x20000
             };
 
+            [contract(Windows.Foundation.UniversalApiContract, 3.0)]
+            enum GameControllerButtonLabel
+            {
+                None                 = 0,
+                XboxBack             = 1,
+                XboxStart            = 2,
+                XboxMenu             = 3,
+                XboxView             = 4,
+                XboxUp               = 5,
+                XboxDown             = 6,
+                XboxLeft             = 7,
+                XboxRight            = 8,
+                XboxA                = 9,
+                XboxB                = 10,
+                XboxX                = 11,
+                XboxY                = 12,
+                XboxLeftBumper       = 13,
+                XboxLeftTrigger      = 14,
+                XboxLeftStickButton  = 15,
+                XboxRightBumper      = 16,
+                XboxRightTrigger     = 17,
+                XboxRightStickButton = 18,
+                XboxPaddle1          = 19,
+                XboxPaddle2          = 20,
+                XboxPaddle3          = 21,
+                XboxPaddle4          = 22,
+                Mode                 = 23,
+                Select               = 24,
+                Menu                 = 25,
+                View                 = 26,
+                Back                 = 27,
+                Start                = 28,
+                Options              = 29,
+                Share                = 30,
+                Up                   = 31,
+                Down                 = 32,
+                Left                 = 33,
+                Right                = 34,
+                LetterA              = 35,
+                LetterB              = 36,
+                LetterC              = 37,
+                LetterL              = 38,
+                LetterR              = 39,
+                LetterX              = 40,
+                LetterY              = 41,
+                LetterZ              = 42,
+                Cross                = 43,
+                Circle               = 44,
+                Square               = 45,
+                Triangle             = 46,
+                LeftBumper           = 47,
+                LeftTrigger          = 48,
+                LeftStickButton      = 49,
+                Left1                = 50,
+                Left2                = 51,
+                Left3                = 52,
+                RightBumper          = 53,
+                RightTrigger         = 54,
+                RightStickButton     = 55,
+                Right1               = 56,
+                Right2               = 57,
+                Right3               = 58,
+                Paddle1              = 59,
+                Paddle2              = 60,
+                Paddle3              = 61,
+                Paddle4              = 62,
+                Plus                 = 63,
+                Minus                = 64,
+                DownLeftArrow        = 65,
+                DialLeft             = 66,
+                DialRight            = 67,
+                Suspension           = 68
+            };
+
+            [contract(Windows.Foundation.UniversalApiContract, 4.0)]
+            enum GameControllerSwitchKind
+            {
+                TwoWay   = 0,
+                FourWay  = 1,
+                EightWay = 2
+            };
+
+            [contract(Windows.Foundation.UniversalApiContract, 4.0)]
+            enum GameControllerSwitchPosition
+            {
+                Center    = 0,
+                Up        = 1,
+                UpRight   = 2,
+                Right     = 3,
+                DownRight = 4,
+                Down      = 5,
+                DownLeft  = 6,
+                Left      = 7,
+                UpLeft    = 8
+            };
+
             [contract(Windows.Foundation.UniversalApiContract, 1.0)]
             struct GamepadReading
             {
@@ -110,6 +221,26 @@ namespace Windows {
 
             [
                 contract(Windows.Foundation.UniversalApiContract, 1.0),
+                uuid(1baf6522-5f64-42c5-8267-b9fe2215bfbd)
+            ]
+            interface IGameController : IInspectable
+            {
+                [eventadd] HRESULT HeadsetConnected([in] Windows.Foundation.TypedEventHandler<Windows.Gaming.Input.IGameController*, Windows.Gaming.Input.Headset*>* handler,
+                                                    [out, retval] EventRegistrationToken* token);
+                [eventremove] HRESULT HeadsetConnected([in] EventRegistrationToken token);
+                [eventadd] HRESULT HeadsetDisconnected([in] Windows.Foundation.TypedEventHandler<Windows.Gaming.Input.IGameController*, Windows.Gaming.Input.Headset*>* handler,
+                                                       [out, retval] EventRegistrationToken* token);
+                [eventremove] HRESULT HeadsetDisconnected([in] EventRegistrationToken token);
+                [eventadd] HRESULT UserChanged([in] Windows.Foundation.TypedEventHandler<Windows.Gaming.Input.IGameController*, Windows.System.UserChangedEventArgs*>* handler,
+                                               [out, retval] EventRegistrationToken* token);
+                [eventremove] HRESULT UserChanged([in] EventRegistrationToken token);
+                [propget] HRESULT Headset([out, retval] Windows.Gaming.Input.Headset** value);
+                [propget] HRESULT IsWireless([out, retval] boolean* value);
+                [propget] HRESULT User([out, retval] Windows.System.User** value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
                 exclusiveto(Windows.Gaming.Input.Gamepad),
                 uuid(bc7bb43c-0a69-3903-9e9d-a50f86a45de5)
             ]
@@ -119,6 +250,28 @@ namespace Windows {
                 [propget] HRESULT Vibration([out, retval] Windows.Gaming.Input.GamepadVibration* value);
                 [propput] HRESULT Vibration([in] Windows.Gaming.Input.GamepadVibration value);
                 HRESULT GetCurrentReading([out, retval] Windows.Gaming.Input.GamepadReading* value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 4.0),
+                exclusiveto(Windows.Gaming.Input.RawGameController),
+                uuid(7cad6d91-a7e1-4f71-9a78-33e9c5dfea62)
+            ]
+            interface IRawGameController : IInspectable
+                requires Windows.Gaming.Input.IGameController
+            {
+                [propget] HRESULT AxisCount([out, retval] INT32* value);
+                [propget] HRESULT ButtonCount([out, retval] INT32* value);
+                [propget] HRESULT ForceFeedbackMotors([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Gaming.Input.ForceFeedback.ForceFeedbackMotor*>** value);
+                [propget] HRESULT HardwareProductId([out, retval] UINT16* value);
+                [propget] HRESULT HardwareVendorId([out, retval] UINT16* value);
+                [propget] HRESULT SwitchCount([out, retval] INT32* value);
+                HRESULT GetButtonLabel([in] INT32 index, [out, retval] Windows.Gaming.Input.GameControllerButtonLabel* value);
+                HRESULT GetCurrentReading([in] UINT32 buttons_size, [out, size_is(buttons_size)] boolean* buttons,
+                                          [in] UINT32 switches_size, [out, size_is(switches_size)] Windows.Gaming.Input.GameControllerSwitchPosition* switches,
+                                          [in] UINT32 axes_size, [out, size_is(axes_size)] DOUBLE* axes,
+                                          [out, retval] UINT64* timestamp);
+                HRESULT GetSwitchKind([in] INT32 index, [out, retval] Windows.Gaming.Input.GameControllerSwitchKind* value);
             }
 
             [
@@ -136,6 +289,33 @@ namespace Windows {
 
             [
                 contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Gaming.Input.Headset),
+                uuid(3fd156ef-6925-3fa8-9181-029c5223ae3b)
+            ]
+            interface IHeadset : IInspectable
+            {
+                [propget] HRESULT CaptureDeviceId([out, retval] HSTRING* value);
+                [propget] HRESULT RenderDeviceId([out, retval] HSTRING* value);
+            }
+
+            [
+                object,
+                uuid(eb8d0792-e95a-4b19-afc7-0a59f8bf759e)
+            ]
+            interface IRawGameControllerStatics : IInspectable
+            {
+                [eventadd] HRESULT RawGameControllerAdded([in] Windows.Foundation.EventHandler<Windows.Gaming.Input.RawGameController*> *handler,
+                                                          [out, retval] EventRegistrationToken* token);
+                [eventremove] HRESULT RawGameControllerAdded([in] EventRegistrationToken token);
+                [eventadd] HRESULT RawGameControllerRemoved([in] Windows.Foundation.EventHandler<Windows.Gaming.Input.RawGameController*> *handler,
+                                                            [out, retval] EventRegistrationToken* token);
+                [eventremove] HRESULT RawGameControllerRemoved([in] EventRegistrationToken token);
+                [propget] HRESULT RawGameControllers([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Gaming.Input.RawGameController*> **value);
+                HRESULT FromGameController([in] Windows.Gaming.Input.IGameController *game_controller, [out, retval] Windows.Gaming.Input.RawGameController **value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
                 marshaling_behavior(agile),
                 static(Windows.Gaming.Input.IGamepadStatics, Windows.Foundation.UniversalApiContract, 1.0),
                 static(Windows.Gaming.Input.IGamepadStatics2, Windows.Foundation.UniversalApiContract, 4.0),
@@ -147,6 +327,31 @@ namespace Windows {
                 interface Windows.Gaming.Input.IGameController;
                 [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.Gaming.Input.IGamepad2;
                 [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Gaming.Input.IGameControllerBatteryInfo;
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile),
+                threading(both)
+            ]
+            runtimeclass Headset
+            {
+                [default] interface Windows.Gaming.Input.IHeadset;
+                [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Gaming.Input.IGameControllerBatteryInfo;
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 4.0),
+                marshaling_behavior(agile),
+                static(Windows.Gaming.Input.IRawGameControllerStatics, Windows.Foundation.UniversalApiContract, 4.0),
+                threading(both)
+            ]
+            runtimeclass RawGameController
+            {
+                [default] interface Windows.Gaming.Input.IRawGameController;
+                interface Windows.Gaming.Input.IGameController;
+                interface Windows.Gaming.Input.IGameControllerBatteryInfo;
+                [contract(Windows.Foundation.UniversalApiContract, 5.0)] interface Windows.Gaming.Input.IRawGameController2;
             }
         }
     }
