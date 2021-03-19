@@ -1035,7 +1035,7 @@ static void draw_paragraph( ME_Context *c, ME_Paragraph *para )
 
 void ME_ScrollAbs(ME_TextEditor *editor, int x, int y)
 {
-  BOOL bScrollBarIsVisible, bScrollBarWillBeVisible;
+  BOOL old_vis, new_vis;
   int scrollX = 0, scrollY = 0;
 
   if (editor->horz_si.nPos != x) {
@@ -1072,25 +1072,17 @@ void ME_ScrollAbs(ME_TextEditor *editor, int x, int y)
     LONG winStyle = GetWindowLongW(editor->hWnd, GWL_STYLE);
     if (editor->scrollbars & WS_HSCROLL)
     {
-      bScrollBarIsVisible = (winStyle & WS_HSCROLL) != 0;
-      bScrollBarWillBeVisible = (editor->nTotalWidth > editor->sizeWindow.cx
-                                 && (editor->scrollbars & WS_HSCROLL))
-                                || (editor->scrollbars & ES_DISABLENOSCROLL);
-      if (bScrollBarIsVisible != bScrollBarWillBeVisible)
-        ITextHost_TxShowScrollBar(editor->texthost, SB_HORZ,
-                                  bScrollBarWillBeVisible);
+      old_vis = winStyle & WS_HSCROLL;
+      new_vis = editor->nTotalWidth > editor->sizeWindow.cx || editor->scrollbars & ES_DISABLENOSCROLL;
+      if (!old_vis ^ !new_vis) ITextHost_TxShowScrollBar( editor->texthost, SB_HORZ, new_vis );
     }
 
     if (editor->scrollbars & WS_VSCROLL)
     {
-      bScrollBarIsVisible = (winStyle & WS_VSCROLL) != 0;
-      bScrollBarWillBeVisible = (editor->nTotalLength > editor->sizeWindow.cy
-                                 && (editor->scrollbars & WS_VSCROLL)
-                                 && (editor->props & TXTBIT_MULTILINE))
-                                || (editor->scrollbars & ES_DISABLENOSCROLL);
-      if (bScrollBarIsVisible != bScrollBarWillBeVisible)
-        ITextHost_TxShowScrollBar(editor->texthost, SB_VERT,
-                                  bScrollBarWillBeVisible);
+      old_vis = winStyle & WS_VSCROLL;
+      new_vis = (editor->nTotalLength > editor->sizeWindow.cy && editor->props & TXTBIT_MULTILINE) ||
+          editor->scrollbars & ES_DISABLENOSCROLL;
+      if (!old_vis ^ !new_vis) ITextHost_TxShowScrollBar( editor->texthost, SB_VERT, new_vis );
     }
   }
   ME_UpdateScrollBar(editor);
