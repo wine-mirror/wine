@@ -103,10 +103,10 @@ DECLARE_INTERFACE_(ITextServices,IUnknown)
         INT y,
         DWORD* pHitResult) PURE;
 
-    THISCALLMETHOD_(HRESULT,OnTxInplaceActivate)( THIS_
+    THISCALLMETHOD_(HRESULT,OnTxInPlaceActivate)( THIS_
         LPCRECT prcClient) PURE;
 
-    THISCALLMETHOD_(HRESULT,OnTxInplaceDeactivate)( THIS ) PURE;
+    THISCALLMETHOD_(HRESULT,OnTxInPlaceDeactivate)( THIS ) PURE;
 
     THISCALLMETHOD_(HRESULT,OnTxUIActivate)( THIS ) PURE;
 
