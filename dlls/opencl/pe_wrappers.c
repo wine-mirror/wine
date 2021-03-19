@@ -118,6 +118,15 @@ void * WINAPI clGetExtensionFunctionAddress( const char *func_name )
     return ret;
 }
 
+
+cl_int WINAPI clSetCommandQueueProperty( cl_command_queue command_queue, cl_command_queue_properties properties,
+        cl_bool enable, cl_command_queue_properties *old_properties )
+{
+    FIXME( "(%p, %s, %u, %p) deprecated\n", command_queue, wine_dbgstr_longlong(properties), enable, old_properties );
+    return CL_INVALID_QUEUE_PROPERTIES;
+}
+
+
 BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
 {
     if (reason == DLL_PROCESS_ATTACH)

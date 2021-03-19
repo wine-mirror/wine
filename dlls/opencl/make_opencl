@@ -216,6 +216,9 @@ sub needs_pe_wrapper($)
 
             # needs function pointer conversion
             "clGetExtensionFunctionAddress" => 1,
+
+            # deprecated and absent from headers
+            "clSetCommandQueueProperty" => 1,
         );
     my $name = shift;
 
@@ -244,6 +247,7 @@ sub needs_unix_function($)
     my %funcs =
         (
             "clGetExtensionFunctionAddress" => 1,
+            "clSetCommandQueueProperty" => 1,
         );
     my $name = shift;
 

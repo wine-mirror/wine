@@ -63,7 +63,6 @@ struct opencl_funcs
     cl_int (WINAPI *pclRetainMemObject)( cl_mem memobj );
     cl_int (WINAPI *pclRetainProgram)( cl_program program );
     cl_int (WINAPI *pclRetainSampler)( cl_sampler sampler );
-    cl_int (WINAPI *pclSetCommandQueueProperty)( cl_command_queue command_queue, cl_command_queue_properties properties, cl_bool enable, cl_command_queue_properties* old_properties );
     cl_int (WINAPI *pclSetKernelArg)( cl_kernel kernel, cl_uint arg_index, size_t arg_size, const void* arg_value );
     cl_int (WINAPI *pclUnloadCompiler)( void  );
     cl_int (WINAPI *pclWaitForEvents)( cl_uint num_events, const cl_event* event_list );

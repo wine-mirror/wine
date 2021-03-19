@@ -360,12 +360,6 @@ cl_int WINAPI clRetainSampler( cl_sampler sampler )
     return opencl_funcs->pclRetainSampler( sampler );
 }
 
-cl_int WINAPI clSetCommandQueueProperty( cl_command_queue command_queue, cl_command_queue_properties properties, cl_bool enable, cl_command_queue_properties* old_properties )
-{
-    TRACE( "(%p, %s, %u, %p)\n", command_queue, wine_dbgstr_longlong(properties), enable, old_properties );
-    return opencl_funcs->pclSetCommandQueueProperty( command_queue, properties, enable, old_properties );
-}
-
 cl_int WINAPI clSetKernelArg( cl_kernel kernel, cl_uint arg_index, size_t arg_size, const void* arg_value )
 {
     TRACE( "(%p, %u, %Iu, %p)\n", kernel, arg_index, arg_size, arg_value );
