@@ -1,0 +1,116 @@
+/*
+ * Copyright 2021 Rémi Bernon for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+
+namespace Windows {
+    namespace Gaming {
+        namespace Input {
+            namespace ForceFeedback {
+                typedef enum ForceFeedbackEffectAxes ForceFeedbackEffectAxes;
+                typedef enum ForceFeedbackLoadEffectResult ForceFeedbackLoadEffectResult;
+                interface IForceFeedbackEffect;
+                runtimeclass ForceFeedbackMotor;
+            }
+        }
+    }
+}
+
+namespace Windows {
+    namespace Gaming {
+        namespace Input {
+            namespace ForceFeedback {
+                declare {
+                    interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Gaming.Input.ForceFeedback.ForceFeedbackLoadEffectResult>;
+                    interface Windows.Foundation.IAsyncOperation<Windows.Gaming.Input.ForceFeedback.ForceFeedbackLoadEffectResult>;
+                    interface Windows.Foundation.Collections.IVectorView<Windows.Gaming.Input.ForceFeedback.ForceFeedbackMotor*>;
+                }
+            }
+        }
+    }
+}
+
+namespace Windows {
+    namespace Gaming {
+        namespace Input {
+            namespace ForceFeedback {
+                [
+                    contract(Windows.Foundation.UniversalApiContract, 3.0),
+                    flags
+                ]
+                enum ForceFeedbackEffectAxes
+                {
+                    None = 0x0,
+                    X    = 0x1,
+                    Y    = 0x2,
+                    Z    = 0x4
+                };
+
+                [contract(Windows.Foundation.UniversalApiContract, 3.0)]
+                enum ForceFeedbackLoadEffectResult
+                {
+                    Succeeded          = 0,
+                    EffectStorageFull  = 1,
+                    EffectNotSupported = 2
+                };
+
+                [
+                    contract(Windows.Foundation.UniversalApiContract, 3.0),
+                    exclusiveto(Windows.Gaming.Input.ForceFeedback.ForceFeedbackMotor),
+                    uuid(8d3d417c-a5ea-4516-8026-2b00f74ef6e5)
+                ]
+                interface IForceFeedbackMotor : IInspectable
+                {
+                    [propget] HRESULT AreEffectsPaused([out, retval] boolean* value);
+                    [propget] HRESULT MasterGain([out, retval] DOUBLE* value);
+                    [propput] HRESULT MasterGain([in] DOUBLE value);
+                    [propget] HRESULT IsEnabled([out, retval] boolean* value);
+                    [propget] HRESULT SupportedAxes([out, retval] Windows.Gaming.Input.ForceFeedback.ForceFeedbackEffectAxes* value);
+                    HRESULT LoadEffectAsync([in] Windows.Gaming.Input.ForceFeedback.IForceFeedbackEffect* effect,
+                                            [out, retval] Windows.Foundation.IAsyncOperation<Windows.Gaming.Input.ForceFeedback.ForceFeedbackLoadEffectResult>** async_op);
+                    HRESULT PauseAllEffects();
+                    HRESULT ResumeAllEffects();
+                    HRESULT StopAllEffects();
+                    HRESULT TryDisableAsync([out, retval] Windows.Foundation.IAsyncOperation<boolean>** async_op);
+                    HRESULT TryEnableAsync([out, retval] Windows.Foundation.IAsyncOperation<boolean>** async_op);
+                    HRESULT TryResetAsync([out, retval] Windows.Foundation.IAsyncOperation<boolean>** async_op);
+                    HRESULT TryUnloadEffectAsync([in] Windows.Gaming.Input.ForceFeedback.IForceFeedbackEffect* effect,
+                                                 [out, retval] Windows.Foundation.IAsyncOperation<boolean>** async_op);
+                }
+
+                [
+                    contract(Windows.Foundation.UniversalApiContract, 3.0),
+                    marshaling_behavior(agile),
+                    threading(both)
+                ]
+                runtimeclass ForceFeedbackMotor
+                {
+                    [default] interface Windows.Gaming.Input.ForceFeedback.IForceFeedbackMotor;
+                }
+            }
+        }
+    }
+}

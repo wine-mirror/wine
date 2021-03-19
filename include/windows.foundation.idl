@@ -114,3 +114,12 @@ namespace Windows {
         }
     }
 }
+
+namespace Windows {
+    namespace Foundation {
+        declare {
+            interface Windows.Foundation.AsyncOperationCompletedHandler<boolean>;
+            interface Windows.Foundation.IAsyncOperation<boolean>;
+        }
+    }
+}
