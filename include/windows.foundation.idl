@@ -29,6 +29,13 @@ import "windows.foundation.collections.idl";
 
 namespace Windows {
     namespace Foundation {
+        typedef enum PropertyType PropertyType;
+        typedef struct Point Point;
+        typedef struct Size Size;
+        typedef struct Rect Rect;
+        typedef struct DateTime DateTime;
+        typedef struct TimeSpan TimeSpan;
+
         [contract(Windows.Foundation.FoundationContract, 1.0)]
         enum PropertyType {
             Empty       = 0,
