@@ -1198,11 +1198,7 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
 
   if (editor->scrollbars & WS_HSCROLL)
   {
-    if (si.fMask & SIF_DISABLENOSCROLL) {
-      bScrollBarWillBeVisible = TRUE;
-    } else if (!(editor->scrollbars & WS_HSCROLL)) {
-      bScrollBarWillBeVisible = FALSE;
-    }
+    if (si.fMask & SIF_DISABLENOSCROLL) bScrollBarWillBeVisible = TRUE;
 
     if (bScrollBarWasVisible != bScrollBarWillBeVisible)
       ITextHost_TxShowScrollBar(editor->texthost, SB_HORZ, bScrollBarWillBeVisible);
@@ -1253,11 +1249,7 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
 
   if (editor->scrollbars & WS_VSCROLL)
   {
-    if (si.fMask & SIF_DISABLENOSCROLL) {
-      bScrollBarWillBeVisible = TRUE;
-    } else if (!(editor->scrollbars & WS_VSCROLL)) {
-      bScrollBarWillBeVisible = FALSE;
-    }
+    if (si.fMask & SIF_DISABLENOSCROLL) bScrollBarWillBeVisible = TRUE;
 
     if (bScrollBarWasVisible != bScrollBarWillBeVisible)
       ITextHost_TxShowScrollBar(editor->texthost, SB_VERT,
