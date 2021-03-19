@@ -381,8 +381,6 @@ static enum loadorder get_load_order_value( HANDLE std_key, HANDLE app_key, WCHA
 enum loadorder CDECL get_load_order( const WCHAR *app_name, const UNICODE_STRING *nt_name )
 {
     static const WCHAR prefixW[] = {'\\','?','?','\\'};
-    static const WCHAR system_dir[] = {'C',':','\\','w','i','n','d','o','w','s',
-                                       '\\','s','y','s','t','e','m','3','2'};
     enum loadorder ret = LO_INVALID;
     HANDLE std_key, app_key = 0;
     const WCHAR *path = nt_name->Buffer;
@@ -398,9 +396,9 @@ enum loadorder CDECL get_load_order( const WCHAR *app_name, const UNICODE_STRING
 
     /* Strip path information if the module resides in the system directory
      */
-    if (!wcsnicmp( system_dir, path, ARRAY_SIZE( system_dir )))
+    if (!wcsnicmp( system_dir + 4, path, wcslen(system_dir) - 4 ))
     {
-        const WCHAR *p = path + ARRAY_SIZE( system_dir );
+        const WCHAR *p = path + wcslen( system_dir ) - 4;
         while (*p == '\\' || *p == '/') p++;
         if (!wcschr( p, '\\' ) && !wcschr( p, '/' )) path = p;
     }

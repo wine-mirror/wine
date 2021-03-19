@@ -122,6 +122,7 @@ extern int main_argc DECLSPEC_HIDDEN;
 extern char **main_argv DECLSPEC_HIDDEN;
 extern char **main_envp DECLSPEC_HIDDEN;
 extern WCHAR **main_wargv DECLSPEC_HIDDEN;
+extern const WCHAR system_dir[] DECLSPEC_HIDDEN;
 extern unsigned int server_cpus DECLSPEC_HIDDEN;
 extern BOOL is_wow64 DECLSPEC_HIDDEN;
 extern BOOL process_exiting DECLSPEC_HIDDEN;

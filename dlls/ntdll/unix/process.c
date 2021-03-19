@@ -281,13 +281,12 @@ static startup_info_t *create_startup_info( const RTL_USER_PROCESS_PARAMETERS *p
  */
 static BOOL is_builtin_path( UNICODE_STRING *path, BOOL *is_64bit )
 {
-    static const WCHAR systemW[] = {'\\','?','?','\\','c',':','\\','w','i','n','d','o','w','s','\\',
-                                    's','y','s','t','e','m','3','2','\\'};
     static const WCHAR wow64W[] = {'\\','?','?','\\','c',':','\\','w','i','n','d','o','w','s','\\',
                                    's','y','s','w','o','w','6','4'};
 
     *is_64bit = is_win64;
-    if (path->Length > sizeof(systemW) && !wcsnicmp( path->Buffer, systemW, ARRAY_SIZE(systemW) ))
+    if (path->Length > wcslen(system_dir) * sizeof(WCHAR) &&
+        !wcsnicmp( path->Buffer, system_dir, wcslen(system_dir) ))
     {
 #ifndef _WIN64
         if (NtCurrentTeb64() && NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR]) *is_64bit = TRUE;

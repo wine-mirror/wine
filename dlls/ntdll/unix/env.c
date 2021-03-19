@@ -76,6 +76,10 @@ static LANGID user_ui_language, system_ui_language;
 static char system_locale[LOCALE_NAME_MAX_LENGTH];
 static char user_locale[LOCALE_NAME_MAX_LENGTH];
 
+/* system directory with trailing backslash */
+const WCHAR system_dir[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
+                            's','y','s','t','e','m','3','2','\\',0};
+
 static struct
 {
     USHORT *data;
@@ -149,8 +153,6 @@ static void *read_nls_file( ULONG type, ULONG id )
 
 static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
 {
-    static const WCHAR systemdirW[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
-                                       's','y','s','t','e','m','3','2','\\',0};
     static const WCHAR sortdirW[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
                                      'g','l','o','b','a','l','i','z','a','t','i','o','n','\\',
                                      's','o','r','t','i','n','g','\\',0};
@@ -165,7 +167,7 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
     if (!path) return STATUS_OBJECT_NAME_NOT_FOUND;
 
     /* try to open file in system dir */
-    wcscpy( buffer, type == NLS_SECTION_SORTKEYS ? sortdirW : systemdirW );
+    wcscpy( buffer, type == NLS_SECTION_SORTKEYS ? sortdirW : system_dir );
     p = strrchr( path, '/' ) + 1;
     ascii_to_unicode( buffer + wcslen(buffer), p, strlen(p) + 1 );
     init_unicode_string( &valueW, buffer );
@@ -1609,8 +1611,6 @@ static void run_wineboot( WCHAR *env, SIZE_T size )
     static const WCHAR cmdlineW[] = {'"','C',':','\\','w','i','n','d','o','w','s','\\',
         's','y','s','t','e','m','3','2','\\','w','i','n','e','b','o','o','t','.','e','x','e','"',
         ' ','-','-','i','n','i','t',0};
-    static const WCHAR sysdirW[] = {'C',':','\\','w','i','n','d','o','w','s',
-        '\\','s','y','s','t','e','m','3','2',0};
     RTL_USER_PROCESS_PARAMETERS params = { sizeof(params), sizeof(params) };
     PS_ATTRIBUTE_LIST ps_attr;
     PS_CREATE_INFO create_info;
@@ -1635,8 +1635,8 @@ static void run_wineboot( WCHAR *env, SIZE_T size )
     params.Flags           = PROCESS_PARAMS_FLAG_NORMALIZED;
     params.Environment     = env;
     params.EnvironmentSize = size;
-    init_unicode_string( &params.CurrentDirectory.DosPath, sysdirW );
-    init_unicode_string( &params.DllPath, sysdirW );
+    init_unicode_string( &params.CurrentDirectory.DosPath, system_dir + 4 );
+    init_unicode_string( &params.DllPath, system_dir + 4 );
     init_unicode_string( &params.ImagePathName, appnameW + 4 );
     init_unicode_string( &params.CommandLine, cmdlineW );
     init_unicode_string( &params.WindowTitle, appnameW + 4 );
