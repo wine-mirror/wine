@@ -1123,16 +1123,17 @@ static void wined3d_cs_exec_set_predication(struct wined3d_cs *cs, const void *d
     cs->state.predicate_value = op->value;
 }
 
-void wined3d_cs_emit_set_predication(struct wined3d_cs *cs, struct wined3d_query *predicate, BOOL value)
+void wined3d_device_context_emit_set_predication(struct wined3d_device_context *context,
+        struct wined3d_query *predicate, BOOL value)
 {
     struct wined3d_cs_set_predication *op;
 
-    op = wined3d_device_context_require_space(&cs->c, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_SET_PREDICATION;
     op->predicate = predicate;
     op->value = value;
 
-    wined3d_device_context_submit(&cs->c, WINED3D_CS_QUEUE_DEFAULT);
+    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
 static void wined3d_cs_exec_set_viewports(struct wined3d_cs *cs, const void *data)

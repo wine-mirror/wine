@@ -1894,7 +1894,7 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
 
     wined3d_cs_emit_set_index_buffer(device->cs, state->index_buffer, state->index_format, state->index_offset);
 
-    wined3d_cs_emit_set_predication(device->cs, state->predicate, state->predicate_value);
+    wined3d_device_context_emit_set_predication(context, state->predicate, state->predicate_value);
 
     for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
     {
@@ -4399,7 +4399,7 @@ void CDECL wined3d_device_set_predication(struct wined3d_device *device,
     }
     state->predicate = predicate;
     state->predicate_value = value;
-    wined3d_cs_emit_set_predication(device->cs, predicate, value);
+    wined3d_device_context_emit_set_predication(&device->cs->c, predicate, value);
     if (prev)
         wined3d_query_decref(prev);
 }
