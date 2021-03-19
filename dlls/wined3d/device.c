@@ -1877,7 +1877,7 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
         wined3d_device_context_emit_set_rendertarget_view(context, i, state->fb.render_targets[i]);
     }
 
-    wined3d_cs_emit_set_depth_stencil_view(device->cs, state->fb.depth_stencil);
+    wined3d_device_context_emit_set_depth_stencil_view(context, state->fb.depth_stencil);
     wined3d_cs_emit_set_vertex_declaration(device->cs, state->vertex_declaration);
 
     for (i = 0; i < WINED3D_MAX_STREAM_OUTPUT_BUFFERS; ++i)
@@ -5293,7 +5293,7 @@ HRESULT CDECL wined3d_device_set_depth_stencil_view(struct wined3d_device *devic
 
     if ((fb->depth_stencil = view))
         wined3d_rendertarget_view_incref(view);
-    wined3d_cs_emit_set_depth_stencil_view(device->cs, view);
+    wined3d_device_context_emit_set_depth_stencil_view(&device->cs->c, view);
     if (prev)
         wined3d_rendertarget_view_decref(prev);
     wined3d_device_context_unbind_srv_for_rtv(&device->cs->c, view, TRUE);
