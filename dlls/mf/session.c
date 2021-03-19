@@ -147,6 +147,7 @@ struct transform_stream
 {
     struct list samples;
     unsigned int requests;
+    unsigned int min_buffer_size;
 };
 
 enum topo_node_flags
@@ -1258,11 +1259,19 @@ static HRESULT session_add_media_sink(struct media_session *session, IMFTopology
     return S_OK;
 }
 
+static unsigned int transform_node_get_stream_id(struct topo_node *node, BOOL output, unsigned int index)
+{
+    unsigned int *map = output ? node->u.transform.output_map : node->u.transform.input_map;
+    return map ? map[index] : index;
+}
+
 static HRESULT session_set_transform_stream_info(struct topo_node *node)
 {
     unsigned int *input_map = NULL, *output_map = NULL;
-    unsigned int i, input_count, output_count;
+    unsigned int i, input_count, output_count, block_alignment;
     struct transform_stream *streams;
+    IMFMediaType *media_type;
+    GUID major = { 0 };
     HRESULT hr;
 
     hr = IMFTransform_GetStreamCount(node->object.transform, &input_count, &output_count);
@@ -1282,20 +1291,33 @@ static HRESULT session_set_transform_stream_info(struct topo_node *node)
 
     if (SUCCEEDED(hr))
     {
+        node->u.transform.input_map = input_map;
+        node->u.transform.output_map = output_map;
+
         streams = heap_calloc(input_count, sizeof(*streams));
         for (i = 0; i < input_count; ++i)
             list_init(&streams[i].samples);
         node->u.transform.inputs = streams;
+        node->u.transform.input_count = input_count;
 
         streams = heap_calloc(output_count, sizeof(*streams));
         for (i = 0; i < output_count; ++i)
+        {
             list_init(&streams[i].samples);
-        node->u.transform.outputs = streams;
 
-        node->u.transform.input_count = input_count;
+            if (SUCCEEDED(IMFTransform_GetOutputCurrentType(node->object.transform,
+                    transform_node_get_stream_id(node, TRUE, i), &media_type)))
+            {
+                if (SUCCEEDED(IMFMediaType_GetMajorType(media_type, &major)) && IsEqualGUID(&major, &MFMediaType_Audio)
+                        && SUCCEEDED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, &block_alignment)))
+                {
+                    streams[i].min_buffer_size = block_alignment;
+                }
+                IMFMediaType_Release(media_type);
+            }
+        }
+        node->u.transform.outputs = streams;
         node->u.transform.output_count = output_count;
-        node->u.transform.input_map = input_map;
-        node->u.transform.output_map = output_map;
     }
 
     return hr;
@@ -2646,12 +2668,6 @@ static void session_set_sink_stream_state(struct media_session *session, IMFStre
     }
 }
 
-static DWORD transform_node_get_stream_id(struct topo_node *node, BOOL output, DWORD index)
-{
-    unsigned int *map = output ? node->u.transform.output_map : node->u.transform.input_map;
-    return map ? map[index] : index;
-}
-
 static struct sample *transform_create_sample(IMFSample *sample)
 {
     struct sample *sample_entry = heap_alloc_zero(sizeof(*sample_entry));
@@ -2669,8 +2685,8 @@ static struct sample *transform_create_sample(IMFSample *sample)
 static HRESULT transform_get_external_output_sample(const struct media_session *session, struct topo_node *transform,
         unsigned int output_index, const MFT_OUTPUT_STREAM_INFO *stream_info, IMFSample **sample)
 {
+    unsigned int buffer_size, downstream_input;
     IMFTopologyNode *downstream_node;
-    unsigned int downstream_input;
     IMFMediaBuffer *buffer = NULL;
     struct topo_node *topo_node;
     TOPOID node_id;
@@ -2693,7 +2709,9 @@ static HRESULT transform_get_external_output_sample(const struct media_session *
     }
     else
     {
-        hr = MFCreateAlignedMemoryBuffer(stream_info->cbSize, stream_info->cbAlignment, &buffer);
+        buffer_size = max(stream_info->cbSize, transform->u.transform.outputs[output_index].min_buffer_size);
+
+        hr = MFCreateAlignedMemoryBuffer(buffer_size, stream_info->cbAlignment, &buffer);
         if (SUCCEEDED(hr))
             hr = MFCreateSample(sample);
 
