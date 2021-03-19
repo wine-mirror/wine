@@ -47,6 +47,31 @@ cpp_quote("#endif")
         ]
         delegate HRESULT EventHandler<T>([in] IInspectable *sender, [in] T args);
 
+        interface IAsyncOperation<TResult>;
+
+        [
+            contract(Windows.Foundation.FoundationContract, 1.0),
+            uuid(fcdcf02c-e5d8-4478-915a-4d90b74b83a5)
+        ]
+        delegate HRESULT AsyncOperationCompletedHandler<TResult>([in] IAsyncOperation<TResult> *info, [in] AsyncStatus status);
+
+        [
+            contract(Windows.Foundation.FoundationContract, 1.0),
+            uuid(9fc2b0bb-e446-44e2-aa61-9cab8f636af2)
+        ]
+        interface IAsyncOperation<TResult> : IInspectable
+        {
+            [propput] HRESULT Completed([in] AsyncOperationCompletedHandler<TResult> *handler);
+            [propget] HRESULT Completed([out, retval] AsyncOperationCompletedHandler<TResult> **handler);
+            HRESULT GetResults([out, retval] TResult **results);
+        }
+
+        [
+            contract(Windows.Foundation.FoundationContract, 1.0),
+            uuid(9de1c534-6ae1-11e0-84e1-18a905bcc53f)
+        ]
+        delegate HRESULT TypedEventHandler<TSender, TArgs>([in] TSender sender, [in] TArgs args);
+
         namespace Collections
         {
             [
