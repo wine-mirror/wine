@@ -172,11 +172,6 @@ static cl_int WINAPI wrap_clGetEventProfilingInfo( cl_event event, cl_profiling_
     return clGetEventProfilingInfo( event, param_name, param_value_size, param_value, param_value_size_ret );
 }
 
-static void* WINAPI wrap_clGetExtensionFunctionAddress( const char* func_name )
-{
-    return clGetExtensionFunctionAddress( func_name );
-}
-
 static cl_int WINAPI wrap_clGetImageInfo( cl_mem image, cl_image_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
 {
     return clGetImageInfo( image, param_name, param_value_size, param_value, param_value_size_ret );
@@ -356,7 +351,6 @@ const struct opencl_funcs funcs =
     wrap_clGetDeviceInfo,
     wrap_clGetEventInfo,
     wrap_clGetEventProfilingInfo,
-    wrap_clGetExtensionFunctionAddress,
     wrap_clGetImageInfo,
     wrap_clGetKernelInfo,
     wrap_clGetKernelWorkGroupInfo,

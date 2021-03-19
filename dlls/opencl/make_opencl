@@ -238,6 +238,18 @@ sub needs_unix_wrapper($)
     return defined $funcs{$name};
 }
 
+# don't bother putting unused functions in the interface
+sub needs_unix_function($)
+{
+    my %funcs =
+        (
+            "clGetExtensionFunctionAddress" => 1,
+        );
+    my $name = shift;
+
+    return not defined $funcs{$name};
+}
+
 sub generate_struct($)
 {
     my $type = shift;
@@ -382,6 +394,7 @@ EOF
 
 foreach (sort keys %core_functions)
 {
+    next unless needs_unix_function( $_ );
     next if needs_unix_wrapper( $_ );
     print UNIX "\n", generate_unix_thunk( $_, $core_functions{$_} );
 }
@@ -389,6 +402,7 @@ foreach (sort keys %core_functions)
 print UNIX "\nconst struct opencl_funcs funcs =\n{\n";
 foreach (sort keys %core_functions)
 {
+    next unless needs_unix_function( $_ );
     print UNIX "    wrap_" . $_ . ",\n";
 }
 print UNIX "};\n";
@@ -403,6 +417,7 @@ print UNIXHEADER "/* Automatically generated from OpenCL registry files; DO NOT 
 print UNIXHEADER "struct opencl_funcs\n{\n";
 foreach (sort keys %core_functions)
 {
+    next unless needs_unix_function( $_ );
     print UNIXHEADER get_func_proto( "    %s (WINAPI *p%s)(%s);\n", $_, $core_functions{$_} );
 }
 print UNIXHEADER "};\n\n";
