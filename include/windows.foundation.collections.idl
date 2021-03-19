@@ -21,7 +21,7 @@
 #endif
 
 import "inspectable.idl";
-/* import "asyncinfo.idl"; */
+import "asyncinfo.idl";
 import "windowscontracts.idl";
 /* import "eventtoken.idl"; */
 
