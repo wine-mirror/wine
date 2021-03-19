@@ -80,11 +80,14 @@ static const char * const cpu_names[] = { "x86", "x86_64", "PowerPC", "ARM", "AR
 
 static UINT process_error_mode;
 
-static client_cpu_t get_machine_cpu( WORD machine )
+static client_cpu_t get_machine_cpu( pe_image_info_t *pe_info )
 {
-    switch (machine)
+    switch (pe_info->machine)
     {
-    case IMAGE_FILE_MACHINE_I386:  return CPU_x86;
+    case IMAGE_FILE_MACHINE_I386:
+        if ((is_win64 || is_wow64) && (pe_info->image_flags & IMAGE_FLAGS_ComPlusNativeReady))
+            return CPU_x86_64;
+        return CPU_x86;
     case IMAGE_FILE_MACHINE_AMD64: return CPU_x86_64;
     case IMAGE_FILE_MACHINE_ARMNT: return CPU_ARM;
     case IMAGE_FILE_MACHINE_ARM64: return CPU_ARM64;
@@ -679,7 +682,7 @@ void DECLSPEC_NORETURN exec_process( NTSTATUS status )
     SERVER_START_REQ( exec_process )
     {
         req->socket_fd = socketfd[1];
-        req->cpu       = get_machine_cpu( pe_info.machine );
+        req->cpu       = get_machine_cpu( &pe_info );
         status = wine_server_call( req );
     }
     SERVER_END_REQ;
@@ -963,7 +966,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
         req->create_flags   = params->DebugFlags; /* hack: creation flags stored in DebugFlags for now */
         req->socket_fd      = socketfd[1];
         req->access         = process_access;
-        req->cpu            = get_machine_cpu( pe_info.machine );
+        req->cpu            = get_machine_cpu( &pe_info );
         req->info_size      = startup_info_size;
         req->handles_size   = handles_size;
         wine_server_add_data( req, objattr, attr_len );
@@ -990,7 +993,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
             break;
         case STATUS_INVALID_IMAGE_FORMAT:
             ERR( "%s not supported on this installation (%s binary)\n",
-                 debugstr_us(&path), cpu_names[get_machine_cpu(pe_info.machine)] );
+                 debugstr_us(&path), cpu_names[get_machine_cpu(&pe_info)] );
             break;
         }
         goto done;

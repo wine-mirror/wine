@@ -452,13 +452,19 @@ static NTSTATUS loader_exec( const char *loader, char **argv, WORD machine )
  */
 NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_info )
 {
-    int is_child_64bit = (pe_info->machine == IMAGE_FILE_MACHINE_AMD64 ||
-                          pe_info->machine == IMAGE_FILE_MACHINE_ARM64);
+    WORD machine = pe_info->machine;
+    int is_child_64bit = (machine == IMAGE_FILE_MACHINE_AMD64 || machine == IMAGE_FILE_MACHINE_ARM64);
     ULONGLONG res_start = pe_info->base;
     ULONGLONG res_end = pe_info->base + pe_info->map_size;
     const char *loader = argv0;
     const char *loader_env = getenv( "WINELOADER" );
     char preloader_reserve[64], socket_env[64];
+
+    if (!is_child_64bit && (is_win64 || is_wow64) && (pe_info->image_flags & IMAGE_FLAGS_ComPlusNativeReady))
+    {
+        is_child_64bit = TRUE;
+        machine = IMAGE_FILE_MACHINE_AMD64;
+    }
 
     if (!is_win64 ^ !is_child_64bit)
     {
@@ -495,7 +501,7 @@ NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_i
     putenv( preloader_reserve );
     putenv( socket_env );
 
-    return loader_exec( loader, argv, pe_info->machine );
+    return loader_exec( loader, argv, machine );
 }
 
 
