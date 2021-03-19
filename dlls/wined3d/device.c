@@ -2404,6 +2404,27 @@ HRESULT CDECL wined3d_device_context_set_depth_stencil_view(struct wined3d_devic
     return WINED3D_OK;
 }
 
+void CDECL wined3d_device_context_set_predication(struct wined3d_device_context *context,
+        struct wined3d_query *predicate, BOOL value)
+{
+    struct wined3d_state *state = context->state;
+    struct wined3d_query *prev;
+
+    TRACE("context %p, predicate %p, value %#x.\n", context, predicate, value);
+
+    prev = state->predicate;
+    if (predicate)
+    {
+        FIXME("Predicated rendering not implemented.\n");
+        wined3d_query_incref(predicate);
+    }
+    state->predicate = predicate;
+    state->predicate_value = value;
+    wined3d_device_context_emit_set_predication(context, predicate, value);
+    if (prev)
+        wined3d_query_decref(prev);
+}
+
 void CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struct wined3d_shader *shader)
 {
     TRACE("device %p, shader %p.\n", device, shader);
@@ -4386,22 +4407,9 @@ HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, DWORD rect_cou
 void CDECL wined3d_device_set_predication(struct wined3d_device *device,
         struct wined3d_query *predicate, BOOL value)
 {
-    struct wined3d_state *state = device->cs->c.state;
-    struct wined3d_query *prev;
-
     TRACE("device %p, predicate %p, value %#x.\n", device, predicate, value);
 
-    prev = state->predicate;
-    if (predicate)
-    {
-        FIXME("Predicated rendering not implemented.\n");
-        wined3d_query_incref(predicate);
-    }
-    state->predicate = predicate;
-    state->predicate_value = value;
-    wined3d_device_context_emit_set_predication(&device->cs->c, predicate, value);
-    if (prev)
-        wined3d_query_decref(prev);
+    wined3d_device_context_set_predication(&device->cs->c, predicate, value);
 }
 
 struct wined3d_query * CDECL wined3d_device_get_predication(struct wined3d_device *device, BOOL *value)
