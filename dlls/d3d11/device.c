@@ -879,7 +879,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_immediate_context_GetData(ID3D11DeviceCon
 static void STDMETHODCALLTYPE d3d11_immediate_context_SetPredication(ID3D11DeviceContext1 *iface,
         ID3D11Predicate *predicate, BOOL value)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext1(iface);
     struct d3d_query *query;
 
     TRACE("iface %p, predicate %p, value %#x.\n", iface, predicate, value);
@@ -887,7 +887,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_SetPredication(ID3D11Devic
     query = unsafe_impl_from_ID3D11Query((ID3D11Query *)predicate);
 
     wined3d_mutex_lock();
-    wined3d_device_set_predication(device->wined3d_device, query ? query->wined3d_query : NULL, value);
+    wined3d_device_context_set_predication(context->wined3d_context, query ? query->wined3d_query : NULL, value);
     wined3d_mutex_unlock();
 }
 
@@ -2637,7 +2637,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_ClearState(ID3D11DeviceCon
     {
         wined3d_device_set_stream_output(device->wined3d_device, i, NULL, 0);
     }
-    wined3d_device_set_predication(device->wined3d_device, NULL, FALSE);
+    wined3d_device_context_set_predication(context->wined3d_context, NULL, FALSE);
     wined3d_mutex_unlock();
 }
 
