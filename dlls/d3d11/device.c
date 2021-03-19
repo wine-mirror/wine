@@ -1575,7 +1575,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_CSSetShaderResources(ID3D1
 static void STDMETHODCALLTYPE d3d11_immediate_context_CSSetUnorderedAccessViews(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT view_count, ID3D11UnorderedAccessView *const *views, const UINT *initial_counts)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext1(iface);
     unsigned int i;
 
     TRACE("iface %p, start_slot %u, view_count %u, views %p, initial_counts %p.\n",
@@ -1586,8 +1586,8 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_CSSetUnorderedAccessViews(
     {
         struct d3d11_unordered_access_view *view = unsafe_impl_from_ID3D11UnorderedAccessView(views[i]);
 
-        wined3d_device_set_cs_uav(device->wined3d_device, start_slot + i,
-                view ? view->wined3d_view : NULL, initial_counts ? initial_counts[i] : ~0u);
+        wined3d_device_context_set_unordered_access_view(context->wined3d_context, WINED3D_PIPELINE_COMPUTE,
+                start_slot + i, view ? view->wined3d_view : NULL, initial_counts ? initial_counts[i] : ~0u);
     }
     wined3d_mutex_unlock();
 }
