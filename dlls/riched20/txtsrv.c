@@ -358,6 +358,8 @@ DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_OnTxPropertyBitsChange( ITextServic
     TRACE( "%p, mask %08x, bits %08x\n", services, mask, bits );
 
     services->editor->props = (services->editor->props & ~mask) | (bits & mask);
+    if (mask & (TXTBIT_WORDWRAP | TXTBIT_MULTILINE))
+        services->editor->bWordWrap = (services->editor->props & TXTBIT_WORDWRAP) && (services->editor->props & TXTBIT_MULTILINE);
 
     if (mask & TXTBIT_SCROLLBARCHANGE)
     {
