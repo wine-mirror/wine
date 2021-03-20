@@ -1785,6 +1785,7 @@ struct comparestringa_entry {
   const char *second;
   int second_len;
   int ret;
+  DWORD le;
 };
 
 static const struct comparestringa_entry comparestringa_data[] = {
@@ -1832,6 +1833,15 @@ static const struct comparestringa_entry comparestringa_data[] = {
   { LOCALE_SYSTEM_DEFAULT, 0, "a", 2, "a\0x", 4, CSTR_LESS_THAN },
   { LOCALE_SYSTEM_DEFAULT, 0, "a\0x", 4, "a", 1, CSTR_GREATER_THAN },
   { LOCALE_SYSTEM_DEFAULT, 0, "a\0x", 4, "a", 2, CSTR_GREATER_THAN },
+  /* flag tests */
+  { LOCALE_SYSTEM_DEFAULT, LOCALE_USE_CP_ACP, "NULL", -1, "NULL", -1, CSTR_EQUAL },
+  { LOCALE_SYSTEM_DEFAULT, LINGUISTIC_IGNORECASE, "NULL", -1, "NULL", -1, CSTR_EQUAL },
+  { LOCALE_SYSTEM_DEFAULT, LINGUISTIC_IGNOREDIACRITIC, "NULL", -1, "NULL", -1, CSTR_EQUAL },
+  { LOCALE_SYSTEM_DEFAULT, NORM_IGNOREKANATYPE, "NULL", -1, "NULL", -1, CSTR_EQUAL },
+  { LOCALE_SYSTEM_DEFAULT, NORM_IGNORENONSPACE, "NULL", -1, "NULL", -1, CSTR_EQUAL },
+  { LOCALE_SYSTEM_DEFAULT, NORM_IGNOREWIDTH, "NULL", -1, "NULL", -1, CSTR_EQUAL },
+  { LOCALE_SYSTEM_DEFAULT, NORM_LINGUISTIC_CASING, "NULL", -1, "NULL", -1, CSTR_EQUAL },
+  { LOCALE_SYSTEM_DEFAULT, SORT_DIGITSASNUMBERS, "NULL", -1, "NULL", -1, 0, ERROR_INVALID_FLAGS }
 };
 
 static void test_CompareStringA(void)
@@ -1846,9 +1856,15 @@ static void test_CompareStringA(void)
   {
       const struct comparestringa_entry *entry = &comparestringa_data[i];
 
+      SetLastError(0xdeadbeef);
       ret = CompareStringA(entry->lcid, entry->flags, entry->first, entry->first_len,
           entry->second, entry->second_len);
+todo_wine_if (entry->flags == LINGUISTIC_IGNOREDIACRITIC)
+{
       ok(ret == entry->ret, "%d: got %d, expected %d\n", i, ret, entry->ret);
+      ok(GetLastError() == (ret ? 0xdeadbeef : entry->le), "%d: got last error %d, expected %d\n",
+          i, GetLastError(), (ret ? 0xdeadbeef : entry->le));
+}
   }
 
   ret = CompareStringA(lcid, NORM_IGNORECASE, "Salut", -1, "Salute", -1);
@@ -1873,19 +1889,6 @@ static void test_CompareStringA(void)
 
     ret = CompareStringA(lcid, NORM_IGNORECASE, "Salut", 5, "saLuT", -1);
     ok (ret == CSTR_EQUAL, "(Salut/saLuT) Expected CSTR_EQUAL, got %d\n", ret);
-
-    /* test for CompareStringA flags */
-    SetLastError(0xdeadbeef);
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, 0x8, "NULL", -1, "NULL", -1);
-    ok(GetLastError() == ERROR_INVALID_FLAGS,
-        "unexpected error code %d\n", GetLastError());
-    ok(!ret, "CompareStringA must fail with invalid flag\n");
-
-    SetLastError(0xdeadbeef);
-    ret = CompareStringA(LOCALE_SYSTEM_DEFAULT, LOCALE_USE_CP_ACP, "NULL", -1, "NULL", -1);
-    ok(GetLastError() == 0xdeadbeef, "unexpected error code %d\n", GetLastError());
-    ok(ret == CSTR_EQUAL, "CompareStringA error: %d != CSTR_EQUAL\n", ret);
-    /* end of test for CompareStringA flags */
 
     ret = lstrcmpA("", "");
     ok (ret == 0, "lstrcmpA(\"\", \"\") should return 0, got %d\n", ret);
@@ -2025,6 +2028,11 @@ static void test_CompareStringW(void)
 
     success = VirtualFree(buf, 0, MEM_RELEASE);
     ok(success, "VirtualFree failed with %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = CompareStringW(CP_ACP, SORT_DIGITSASNUMBERS, L"NULL", -1, L"NULL", -1);
+    todo_wine ok(ret == CSTR_EQUAL || broken(!ret && GetLastError() == ERROR_INVALID_FLAGS) /* <Win7 */,
+        "expected CSTR_EQUAL, got %d, last error %d\n", ret, GetLastError());
 
     ret = CompareStringW(CP_ACP, 0, ABC_EE, 3, ABC_FF, 3);
     ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);

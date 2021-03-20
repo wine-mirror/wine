@@ -3081,6 +3081,13 @@ INT WINAPI DECLSPEC_HOTPATCH CompareStringA( LCID lcid, DWORD flags, const char 
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
+
+    if (flags & SORT_DIGITSASNUMBERS)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+
     if (len1 < 0) len1 = strlen(str1);
     if (len2 < 0) len2 = strlen(str2);
 
