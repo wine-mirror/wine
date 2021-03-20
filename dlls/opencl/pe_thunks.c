@@ -12,6 +12,12 @@ cl_int WINAPI clBuildProgram( cl_program program, cl_uint num_devices, const cl_
     return opencl_funcs->pclBuildProgram( program, num_devices, device_list, options, pfn_notify, user_data );
 }
 
+cl_int WINAPI clCompileProgram( cl_program program, cl_uint num_devices, const cl_device_id* device_list, const char* options, cl_uint num_input_headers, const cl_program* input_headers, const char** header_include_names, void (WINAPI* pfn_notify)(cl_program program, void* user_data), void* user_data )
+{
+    TRACE( "(%p, %u, %p, %p, %u, %p, %p, %p, %p)\n", program, num_devices, device_list, options, num_input_headers, input_headers, header_include_names, pfn_notify, user_data );
+    return opencl_funcs->pclCompileProgram( program, num_devices, device_list, options, num_input_headers, input_headers, header_include_names, pfn_notify, user_data );
+}
+
 cl_mem WINAPI clCreateBuffer( cl_context context, cl_mem_flags flags, size_t size, void* host_ptr, cl_int* errcode_ret )
 {
     TRACE( "(%p, %s, %Iu, %p, %p)\n", context, wine_dbgstr_longlong(flags), size, host_ptr, errcode_ret );
@@ -34,6 +40,12 @@ cl_context WINAPI clCreateContextFromType( const cl_context_properties* properti
 {
     TRACE( "(%p, %s, %p, %p, %p)\n", properties, wine_dbgstr_longlong(device_type), pfn_notify, user_data, errcode_ret );
     return opencl_funcs->pclCreateContextFromType( properties, device_type, pfn_notify, user_data, errcode_ret );
+}
+
+cl_mem WINAPI clCreateImage( cl_context context, cl_mem_flags flags, const cl_image_format* image_format, const cl_image_desc* image_desc, void* host_ptr, cl_int* errcode_ret )
+{
+    TRACE( "(%p, %s, %p, %p, %p, %p)\n", context, wine_dbgstr_longlong(flags), image_format, image_desc, host_ptr, errcode_ret );
+    return opencl_funcs->pclCreateImage( context, flags, image_format, image_desc, host_ptr, errcode_ret );
 }
 
 cl_mem WINAPI clCreateImage2D( cl_context context, cl_mem_flags flags, const cl_image_format* image_format, size_t image_width, size_t image_height, size_t image_row_pitch, void* host_ptr, cl_int* errcode_ret )
@@ -66,6 +78,12 @@ cl_program WINAPI clCreateProgramWithBinary( cl_context context, cl_uint num_dev
     return opencl_funcs->pclCreateProgramWithBinary( context, num_devices, device_list, lengths, binaries, binary_status, errcode_ret );
 }
 
+cl_program WINAPI clCreateProgramWithBuiltInKernels( cl_context context, cl_uint num_devices, const cl_device_id* device_list, const char* kernel_names, cl_int* errcode_ret )
+{
+    TRACE( "(%p, %u, %p, %p, %p)\n", context, num_devices, device_list, kernel_names, errcode_ret );
+    return opencl_funcs->pclCreateProgramWithBuiltInKernels( context, num_devices, device_list, kernel_names, errcode_ret );
+}
+
 cl_program WINAPI clCreateProgramWithSource( cl_context context, cl_uint count, const char** strings, const size_t* lengths, cl_int* errcode_ret )
 {
     TRACE( "(%p, %u, %p, %p, %p)\n", context, count, strings, lengths, errcode_ret );
@@ -84,6 +102,12 @@ cl_mem WINAPI clCreateSubBuffer( cl_mem buffer, cl_mem_flags flags, cl_buffer_cr
     return opencl_funcs->pclCreateSubBuffer( buffer, flags, buffer_create_type, buffer_create_info, errcode_ret );
 }
 
+cl_int WINAPI clCreateSubDevices( cl_device_id in_device, const cl_device_partition_property* properties, cl_uint num_devices, cl_device_id* out_devices, cl_uint* num_devices_ret )
+{
+    TRACE( "(%p, %p, %u, %p, %p)\n", in_device, properties, num_devices, out_devices, num_devices_ret );
+    return opencl_funcs->pclCreateSubDevices( in_device, properties, num_devices, out_devices, num_devices_ret );
+}
+
 cl_event WINAPI clCreateUserEvent( cl_context context, cl_int* errcode_ret )
 {
     TRACE( "(%p, %p)\n", context, errcode_ret );
@@ -94,6 +118,12 @@ cl_int WINAPI clEnqueueBarrier( cl_command_queue command_queue )
 {
     TRACE( "(%p)\n", command_queue );
     return opencl_funcs->pclEnqueueBarrier( command_queue );
+}
+
+cl_int WINAPI clEnqueueBarrierWithWaitList( cl_command_queue command_queue, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+{
+    TRACE( "(%p, %u, %p, %p)\n", command_queue, num_events_in_wait_list, event_wait_list, event );
+    return opencl_funcs->pclEnqueueBarrierWithWaitList( command_queue, num_events_in_wait_list, event_wait_list, event );
 }
 
 cl_int WINAPI clEnqueueCopyBuffer( cl_command_queue command_queue, cl_mem src_buffer, cl_mem dst_buffer, size_t src_offset, size_t dst_offset, size_t size, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
@@ -126,6 +156,18 @@ cl_int WINAPI clEnqueueCopyImageToBuffer( cl_command_queue command_queue, cl_mem
     return opencl_funcs->pclEnqueueCopyImageToBuffer( command_queue, src_image, dst_buffer, src_origin, region, dst_offset, num_events_in_wait_list, event_wait_list, event );
 }
 
+cl_int WINAPI clEnqueueFillBuffer( cl_command_queue command_queue, cl_mem buffer, const void* pattern, size_t pattern_size, size_t offset, size_t size, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+{
+    TRACE( "(%p, %p, %p, %Iu, %Iu, %Iu, %u, %p, %p)\n", command_queue, buffer, pattern, pattern_size, offset, size, num_events_in_wait_list, event_wait_list, event );
+    return opencl_funcs->pclEnqueueFillBuffer( command_queue, buffer, pattern, pattern_size, offset, size, num_events_in_wait_list, event_wait_list, event );
+}
+
+cl_int WINAPI clEnqueueFillImage( cl_command_queue command_queue, cl_mem image, const void* fill_color, const size_t* origin, const size_t* region, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+{
+    TRACE( "(%p, %p, %p, %p, %p, %u, %p, %p)\n", command_queue, image, fill_color, origin, region, num_events_in_wait_list, event_wait_list, event );
+    return opencl_funcs->pclEnqueueFillImage( command_queue, image, fill_color, origin, region, num_events_in_wait_list, event_wait_list, event );
+}
+
 void* WINAPI clEnqueueMapBuffer( cl_command_queue command_queue, cl_mem buffer, cl_bool blocking_map, cl_map_flags map_flags, size_t offset, size_t size, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event, cl_int* errcode_ret )
 {
     TRACE( "(%p, %p, %u, %s, %Iu, %Iu, %u, %p, %p, %p)\n", command_queue, buffer, blocking_map, wine_dbgstr_longlong(map_flags), offset, size, num_events_in_wait_list, event_wait_list, event, errcode_ret );
@@ -142,6 +184,18 @@ cl_int WINAPI clEnqueueMarker( cl_command_queue command_queue, cl_event* event )
 {
     TRACE( "(%p, %p)\n", command_queue, event );
     return opencl_funcs->pclEnqueueMarker( command_queue, event );
+}
+
+cl_int WINAPI clEnqueueMarkerWithWaitList( cl_command_queue command_queue, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+{
+    TRACE( "(%p, %u, %p, %p)\n", command_queue, num_events_in_wait_list, event_wait_list, event );
+    return opencl_funcs->pclEnqueueMarkerWithWaitList( command_queue, num_events_in_wait_list, event_wait_list, event );
+}
+
+cl_int WINAPI clEnqueueMigrateMemObjects( cl_command_queue command_queue, cl_uint num_mem_objects, const cl_mem* mem_objects, cl_mem_migration_flags flags, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+{
+    TRACE( "(%p, %u, %p, %s, %u, %p, %p)\n", command_queue, num_mem_objects, mem_objects, wine_dbgstr_longlong(flags), num_events_in_wait_list, event_wait_list, event );
+    return opencl_funcs->pclEnqueueMigrateMemObjects( command_queue, num_mem_objects, mem_objects, flags, num_events_in_wait_list, event_wait_list, event );
 }
 
 cl_int WINAPI clEnqueueNDRangeKernel( cl_command_queue command_queue, cl_kernel kernel, cl_uint work_dim, const size_t* global_work_offset, const size_t* global_work_size, const size_t* local_work_size, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
@@ -258,6 +312,12 @@ cl_int WINAPI clGetImageInfo( cl_mem image, cl_image_info param_name, size_t par
     return opencl_funcs->pclGetImageInfo( image, param_name, param_value_size, param_value, param_value_size_ret );
 }
 
+cl_int WINAPI clGetKernelArgInfo( cl_kernel kernel, cl_uint arg_index, cl_kernel_arg_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
+{
+    TRACE( "(%p, %u, %u, %Iu, %p, %p)\n", kernel, arg_index, param_name, param_value_size, param_value, param_value_size_ret );
+    return opencl_funcs->pclGetKernelArgInfo( kernel, arg_index, param_name, param_value_size, param_value, param_value_size_ret );
+}
+
 cl_int WINAPI clGetKernelInfo( cl_kernel kernel, cl_kernel_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
 {
     TRACE( "(%p, %u, %Iu, %p, %p)\n", kernel, param_name, param_value_size, param_value, param_value_size_ret );
@@ -306,6 +366,12 @@ cl_int WINAPI clGetSupportedImageFormats( cl_context context, cl_mem_flags flags
     return opencl_funcs->pclGetSupportedImageFormats( context, flags, image_type, num_entries, image_formats, num_image_formats );
 }
 
+cl_program WINAPI clLinkProgram( cl_context context, cl_uint num_devices, const cl_device_id* device_list, const char* options, cl_uint num_input_programs, const cl_program* input_programs, void (WINAPI* pfn_notify)(cl_program program, void* user_data), void* user_data, cl_int* errcode_ret )
+{
+    TRACE( "(%p, %u, %p, %p, %u, %p, %p, %p, %p)\n", context, num_devices, device_list, options, num_input_programs, input_programs, pfn_notify, user_data, errcode_ret );
+    return opencl_funcs->pclLinkProgram( context, num_devices, device_list, options, num_input_programs, input_programs, pfn_notify, user_data, errcode_ret );
+}
+
 cl_int WINAPI clReleaseCommandQueue( cl_command_queue command_queue )
 {
     TRACE( "(%p)\n", command_queue );
@@ -316,6 +382,12 @@ cl_int WINAPI clReleaseContext( cl_context context )
 {
     TRACE( "(%p)\n", context );
     return opencl_funcs->pclReleaseContext( context );
+}
+
+cl_int WINAPI clReleaseDevice( cl_device_id device )
+{
+    TRACE( "(%p)\n", device );
+    return opencl_funcs->pclReleaseDevice( device );
 }
 
 cl_int WINAPI clReleaseEvent( cl_event event )
@@ -358,6 +430,12 @@ cl_int WINAPI clRetainContext( cl_context context )
 {
     TRACE( "(%p)\n", context );
     return opencl_funcs->pclRetainContext( context );
+}
+
+cl_int WINAPI clRetainDevice( cl_device_id device )
+{
+    TRACE( "(%p)\n", device );
+    return opencl_funcs->pclRetainDevice( device );
 }
 
 cl_int WINAPI clRetainEvent( cl_event event )
@@ -418,6 +496,12 @@ cl_int WINAPI clUnloadCompiler( void  )
 {
     TRACE( "()\n" );
     return opencl_funcs->pclUnloadCompiler();
+}
+
+cl_int WINAPI clUnloadPlatformCompiler( cl_platform_id platform )
+{
+    TRACE( "(%p)\n", platform );
+    return opencl_funcs->pclUnloadPlatformCompiler( platform );
 }
 
 cl_int WINAPI clWaitForEvents( cl_uint num_events, const cl_event* event_list )

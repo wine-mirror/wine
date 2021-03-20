@@ -185,6 +185,13 @@ cl_int WINAPI clSetCommandQueueProperty( cl_command_queue command_queue, cl_comm
 }
 
 
+void * WINAPI clGetExtensionFunctionAddressForPlatform( cl_platform_id platform, const char *func_name )
+{
+    FIXME( "(%p, %s) stub!\n", platform, debugstr_a(func_name) );
+    return NULL;
+}
+
+
 BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
 {
     if (reason == DLL_PROCESS_ATTACH)

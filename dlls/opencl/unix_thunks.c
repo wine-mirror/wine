@@ -17,6 +17,11 @@ static cl_command_queue WINAPI wrap_clCreateCommandQueue( cl_context context, cl
     return clCreateCommandQueue( context, device, properties, errcode_ret );
 }
 
+static cl_mem WINAPI wrap_clCreateImage( cl_context context, cl_mem_flags flags, const cl_image_format* image_format, const cl_image_desc* image_desc, void* host_ptr, cl_int* errcode_ret )
+{
+    return clCreateImage( context, flags, image_format, image_desc, host_ptr, errcode_ret );
+}
+
 static cl_mem WINAPI wrap_clCreateImage2D( cl_context context, cl_mem_flags flags, const cl_image_format* image_format, size_t image_width, size_t image_height, size_t image_row_pitch, void* host_ptr, cl_int* errcode_ret )
 {
     return clCreateImage2D( context, flags, image_format, image_width, image_height, image_row_pitch, host_ptr, errcode_ret );
@@ -42,6 +47,11 @@ static cl_program WINAPI wrap_clCreateProgramWithBinary( cl_context context, cl_
     return clCreateProgramWithBinary( context, num_devices, device_list, lengths, binaries, binary_status, errcode_ret );
 }
 
+static cl_program WINAPI wrap_clCreateProgramWithBuiltInKernels( cl_context context, cl_uint num_devices, const cl_device_id* device_list, const char* kernel_names, cl_int* errcode_ret )
+{
+    return clCreateProgramWithBuiltInKernels( context, num_devices, device_list, kernel_names, errcode_ret );
+}
+
 static cl_program WINAPI wrap_clCreateProgramWithSource( cl_context context, cl_uint count, const char** strings, const size_t* lengths, cl_int* errcode_ret )
 {
     return clCreateProgramWithSource( context, count, strings, lengths, errcode_ret );
@@ -57,6 +67,11 @@ static cl_mem WINAPI wrap_clCreateSubBuffer( cl_mem buffer, cl_mem_flags flags, 
     return clCreateSubBuffer( buffer, flags, buffer_create_type, buffer_create_info, errcode_ret );
 }
 
+static cl_int WINAPI wrap_clCreateSubDevices( cl_device_id in_device, const cl_device_partition_property* properties, cl_uint num_devices, cl_device_id* out_devices, cl_uint* num_devices_ret )
+{
+    return clCreateSubDevices( in_device, properties, num_devices, out_devices, num_devices_ret );
+}
+
 static cl_event WINAPI wrap_clCreateUserEvent( cl_context context, cl_int* errcode_ret )
 {
     return clCreateUserEvent( context, errcode_ret );
@@ -65,6 +80,11 @@ static cl_event WINAPI wrap_clCreateUserEvent( cl_context context, cl_int* errco
 static cl_int WINAPI wrap_clEnqueueBarrier( cl_command_queue command_queue )
 {
     return clEnqueueBarrier( command_queue );
+}
+
+static cl_int WINAPI wrap_clEnqueueBarrierWithWaitList( cl_command_queue command_queue, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+{
+    return clEnqueueBarrierWithWaitList( command_queue, num_events_in_wait_list, event_wait_list, event );
 }
 
 static cl_int WINAPI wrap_clEnqueueCopyBuffer( cl_command_queue command_queue, cl_mem src_buffer, cl_mem dst_buffer, size_t src_offset, size_t dst_offset, size_t size, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
@@ -92,6 +112,16 @@ static cl_int WINAPI wrap_clEnqueueCopyImageToBuffer( cl_command_queue command_q
     return clEnqueueCopyImageToBuffer( command_queue, src_image, dst_buffer, src_origin, region, dst_offset, num_events_in_wait_list, event_wait_list, event );
 }
 
+static cl_int WINAPI wrap_clEnqueueFillBuffer( cl_command_queue command_queue, cl_mem buffer, const void* pattern, size_t pattern_size, size_t offset, size_t size, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+{
+    return clEnqueueFillBuffer( command_queue, buffer, pattern, pattern_size, offset, size, num_events_in_wait_list, event_wait_list, event );
+}
+
+static cl_int WINAPI wrap_clEnqueueFillImage( cl_command_queue command_queue, cl_mem image, const void* fill_color, const size_t* origin, const size_t* region, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+{
+    return clEnqueueFillImage( command_queue, image, fill_color, origin, region, num_events_in_wait_list, event_wait_list, event );
+}
+
 static void* WINAPI wrap_clEnqueueMapBuffer( cl_command_queue command_queue, cl_mem buffer, cl_bool blocking_map, cl_map_flags map_flags, size_t offset, size_t size, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event, cl_int* errcode_ret )
 {
     return clEnqueueMapBuffer( command_queue, buffer, blocking_map, map_flags, offset, size, num_events_in_wait_list, event_wait_list, event, errcode_ret );
@@ -105,6 +135,16 @@ static void* WINAPI wrap_clEnqueueMapImage( cl_command_queue command_queue, cl_m
 static cl_int WINAPI wrap_clEnqueueMarker( cl_command_queue command_queue, cl_event* event )
 {
     return clEnqueueMarker( command_queue, event );
+}
+
+static cl_int WINAPI wrap_clEnqueueMarkerWithWaitList( cl_command_queue command_queue, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+{
+    return clEnqueueMarkerWithWaitList( command_queue, num_events_in_wait_list, event_wait_list, event );
+}
+
+static cl_int WINAPI wrap_clEnqueueMigrateMemObjects( cl_command_queue command_queue, cl_uint num_mem_objects, const cl_mem* mem_objects, cl_mem_migration_flags flags, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+{
+    return clEnqueueMigrateMemObjects( command_queue, num_mem_objects, mem_objects, flags, num_events_in_wait_list, event_wait_list, event );
 }
 
 static cl_int WINAPI wrap_clEnqueueNDRangeKernel( cl_command_queue command_queue, cl_kernel kernel, cl_uint work_dim, const size_t* global_work_offset, const size_t* global_work_size, const size_t* local_work_size, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
@@ -202,6 +242,11 @@ static cl_int WINAPI wrap_clGetImageInfo( cl_mem image, cl_image_info param_name
     return clGetImageInfo( image, param_name, param_value_size, param_value, param_value_size_ret );
 }
 
+static cl_int WINAPI wrap_clGetKernelArgInfo( cl_kernel kernel, cl_uint arg_index, cl_kernel_arg_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
+{
+    return clGetKernelArgInfo( kernel, arg_index, param_name, param_value_size, param_value, param_value_size_ret );
+}
+
 static cl_int WINAPI wrap_clGetKernelInfo( cl_kernel kernel, cl_kernel_info param_name, size_t param_value_size, void* param_value, size_t* param_value_size_ret )
 {
     return clGetKernelInfo( kernel, param_name, param_value_size, param_value, param_value_size_ret );
@@ -257,6 +302,11 @@ static cl_int WINAPI wrap_clReleaseContext( cl_context context )
     return clReleaseContext( context );
 }
 
+static cl_int WINAPI wrap_clReleaseDevice( cl_device_id device )
+{
+    return clReleaseDevice( device );
+}
+
 static cl_int WINAPI wrap_clReleaseEvent( cl_event event )
 {
     return clReleaseEvent( event );
@@ -290,6 +340,11 @@ static cl_int WINAPI wrap_clRetainCommandQueue( cl_command_queue command_queue )
 static cl_int WINAPI wrap_clRetainContext( cl_context context )
 {
     return clRetainContext( context );
+}
+
+static cl_int WINAPI wrap_clRetainDevice( cl_device_id device )
+{
+    return clRetainDevice( device );
 }
 
 static cl_int WINAPI wrap_clRetainEvent( cl_event event )
@@ -332,6 +387,11 @@ static cl_int WINAPI wrap_clUnloadCompiler( void  )
     return clUnloadCompiler();
 }
 
+static cl_int WINAPI wrap_clUnloadPlatformCompiler( cl_platform_id platform )
+{
+    return clUnloadPlatformCompiler( platform );
+}
+
 static cl_int WINAPI wrap_clWaitForEvents( cl_uint num_events, const cl_event* event_list )
 {
     return clWaitForEvents( num_events, event_list );
@@ -340,28 +400,37 @@ static cl_int WINAPI wrap_clWaitForEvents( cl_uint num_events, const cl_event* e
 const struct opencl_funcs funcs =
 {
     wrap_clBuildProgram,
+    wrap_clCompileProgram,
     wrap_clCreateBuffer,
     wrap_clCreateCommandQueue,
     wrap_clCreateContext,
     wrap_clCreateContextFromType,
+    wrap_clCreateImage,
     wrap_clCreateImage2D,
     wrap_clCreateImage3D,
     wrap_clCreateKernel,
     wrap_clCreateKernelsInProgram,
     wrap_clCreateProgramWithBinary,
+    wrap_clCreateProgramWithBuiltInKernels,
     wrap_clCreateProgramWithSource,
     wrap_clCreateSampler,
     wrap_clCreateSubBuffer,
+    wrap_clCreateSubDevices,
     wrap_clCreateUserEvent,
     wrap_clEnqueueBarrier,
+    wrap_clEnqueueBarrierWithWaitList,
     wrap_clEnqueueCopyBuffer,
     wrap_clEnqueueCopyBufferRect,
     wrap_clEnqueueCopyBufferToImage,
     wrap_clEnqueueCopyImage,
     wrap_clEnqueueCopyImageToBuffer,
+    wrap_clEnqueueFillBuffer,
+    wrap_clEnqueueFillImage,
     wrap_clEnqueueMapBuffer,
     wrap_clEnqueueMapImage,
     wrap_clEnqueueMarker,
+    wrap_clEnqueueMarkerWithWaitList,
+    wrap_clEnqueueMigrateMemObjects,
     wrap_clEnqueueNDRangeKernel,
     wrap_clEnqueueNativeKernel,
     wrap_clEnqueueReadBuffer,
@@ -382,6 +451,7 @@ const struct opencl_funcs funcs =
     wrap_clGetEventInfo,
     wrap_clGetEventProfilingInfo,
     wrap_clGetImageInfo,
+    wrap_clGetKernelArgInfo,
     wrap_clGetKernelInfo,
     wrap_clGetKernelWorkGroupInfo,
     wrap_clGetMemObjectInfo,
@@ -391,8 +461,10 @@ const struct opencl_funcs funcs =
     wrap_clGetProgramInfo,
     wrap_clGetSamplerInfo,
     wrap_clGetSupportedImageFormats,
+    wrap_clLinkProgram,
     wrap_clReleaseCommandQueue,
     wrap_clReleaseContext,
+    wrap_clReleaseDevice,
     wrap_clReleaseEvent,
     wrap_clReleaseKernel,
     wrap_clReleaseMemObject,
@@ -400,6 +472,7 @@ const struct opencl_funcs funcs =
     wrap_clReleaseSampler,
     wrap_clRetainCommandQueue,
     wrap_clRetainContext,
+    wrap_clRetainDevice,
     wrap_clRetainEvent,
     wrap_clRetainKernel,
     wrap_clRetainMemObject,
@@ -410,5 +483,6 @@ const struct opencl_funcs funcs =
     wrap_clSetMemObjectDestructorCallback,
     wrap_clSetUserEventStatus,
     wrap_clUnloadCompiler,
+    wrap_clUnloadPlatformCompiler,
     wrap_clWaitForEvents,
 };

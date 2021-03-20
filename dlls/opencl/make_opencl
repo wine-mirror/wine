@@ -31,6 +31,7 @@ my $gen_traces = 1;
 # List of categories to put in the 'opengl_core.c' file
 my %cat_1_0 = ( "CL_VERSION_1_0" => 1 );
 my %cat_1_1 = ( %cat_1_0, "CL_VERSION_1_1" => 1 );
+my %cat_1_2 = ( %cat_1_1, "CL_VERSION_1_2" => 1 );
 
 my %core_categories = ();
 
@@ -184,7 +185,7 @@ if (@ARGV > 1)
     $name0 =~ s%^.*/%%;
     die "Usage: $name0 [version]\n";
 }
-my $version = $ARGV[0] || "1.1";
+my $version = $ARGV[0] || "1.2";
 if ($version eq "1.0")
 {
     %core_categories = %cat_1_0;
@@ -192,6 +193,10 @@ if ($version eq "1.0")
 elsif ($version eq "1.1")
 {
     %core_categories = %cat_1_1;
+}
+elsif ($version eq "1.2")
+{
+    %core_categories = %cat_1_2;
 }
 else
 {
@@ -242,6 +247,7 @@ sub needs_pe_wrapper($)
 
             # needs function pointer conversion
             "clGetExtensionFunctionAddress" => 1,
+            "clGetExtensionFunctionAddressForPlatform" => 1,
 
             # deprecated and absent from headers
             "clSetCommandQueueProperty" => 1,
@@ -258,9 +264,11 @@ sub needs_unix_wrapper($)
         (
             # need callback conversion
             "clBuildProgram" => 1,
+            "clCompileProgram" => 1,
             "clCreateContext" => 1,
             "clCreateContextFromType" => 1,
             "clEnqueueNativeKernel" => 1,
+            "clLinkProgram" => 1,
             "clSetEventCallback" => 1,
             "clSetMemObjectDestructorCallback" => 1,
         );
@@ -275,6 +283,7 @@ sub needs_unix_function($)
     my %funcs =
         (
             "clGetExtensionFunctionAddress" => 1,
+            "clGetExtensionFunctionAddressForPlatform" => 1,
             "clSetCommandQueueProperty" => 1,
         );
     my $name = shift;

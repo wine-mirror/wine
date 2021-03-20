@@ -71,6 +71,17 @@ cl_int WINAPI wrap_clSetMemObjectDestructorCallback(cl_mem memobj,
         void (WINAPI *pfn_notify)(cl_mem, void *),
         void *user_data) DECLSPEC_HIDDEN;
 
+cl_int WINAPI wrap_clCompileProgram( cl_program program, cl_uint num_devices,
+        const cl_device_id *device_list, const char *options, cl_uint num_input_headers,
+        const cl_program *input_headers, const char **header_include_names,
+        void (WINAPI *pfn_notify)(cl_program program, void *user_data),
+        void *user_data ) DECLSPEC_HIDDEN;
+
+cl_program WINAPI wrap_clLinkProgram( cl_context context, cl_uint num_devices, const cl_device_id *device_list,
+        const char *options, cl_uint num_input_programs, const cl_program *input_programs,
+        void (WINAPI *pfn_notify)(cl_program program, void *user_data),
+        void *user_data, cl_int *errcode_ret ) DECLSPEC_HIDDEN;
+
 extern const struct opencl_funcs funcs;
 
 #endif
