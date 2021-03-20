@@ -19,7 +19,16 @@
 #ifndef __WINE_UNIX_PRIVATE_H
 #define __WINE_UNIX_PRIVATE_H
 
-#include "opencl_private.h"
+#include <stdarg.h>
+#include <stdint.h>
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "windef.h"
+#include "winbase.h"
+#include "winternl.h"
+
+#include "wine/debug.h"
 
 #define CL_SILENCE_DEPRECATION
 #if defined(HAVE_CL_CL_H)

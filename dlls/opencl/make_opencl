@@ -52,6 +52,27 @@ my %arg_types =
         "unsigned int"   => [ "long",   "%u" ],
     );
 
+my %unsupported_extensions =
+    (
+        # Needs wined3d integration.
+        "cl_intel_d3d11_nv12_media_sharing" => 1,
+        "cl_intel_dx9_media_sharing" => 1,
+        "cl_khr_d3d10_sharing" => 1,
+        "cl_khr_d3d11_sharing" => 1,
+        "cl_khr_dx9_media_sharing" => 1,
+        "cl_nv_d3d9_sharing" => 1,
+        "cl_nv_d3d10_sharing" => 1,
+        "cl_nv_d3d11_sharing" => 1,
+
+        # Needs a loader/ICD split.
+        "cl_khr_icd" => 1,
+        "cl_loader_layers" => 1,
+
+        # Needs callback conversion.
+        "cl_apple_setmemobjectdestructor" => 1,
+        "cl_arm_shared_virtual_memory" => 1,
+    );
+
 sub generate_pe_thunk($$)
 {
     my ($name, $func_ref) = @_;
@@ -348,6 +369,16 @@ sub parse_file($)
             $cl_types{$type->{name}} = $types{$type->{name}};
         }
     }
+
+    # generate extension list
+    foreach my $ext ($xml->findnodes("/registry/extensions/extension"))
+    {
+        # we currently don't support clGetExtensionFunctionAddress, and
+        # implementing clGetExtensionFunctionAddressForPlatform is nontrivial;
+        # we need to generate a table of thunks per platform and retrieve the
+        # platform from the called object
+        $unsupported_extensions{lc($ext->{name})} = 1 if $ext->findnodes("./require/command");
+    }
 }
 
 parse_file( "cl-$commit.xml" );
@@ -361,6 +392,7 @@ foreach (sort keys %core_functions)
 }
 
 close(SPEC);
+
 
 # generate the PE thunks
 open(PE, ">$pe_file") or die "cannot create $pe_file";
@@ -378,6 +410,35 @@ foreach (sort keys %core_functions)
     next if needs_pe_wrapper( $_ );
     print PE "\n", generate_pe_thunk( $_, $core_functions{$_} );
 }
+
+print PE <<EOF
+
+BOOL extension_is_supported( const char *name, size_t len )
+{
+    unsigned int i;
+
+    static const char *const unsupported[] =
+    {
+EOF
+;
+
+foreach (sort keys %unsupported_extensions)
+{
+    print PE "        \"$_\",\n";
+}
+
+print PE <<EOF
+    };
+
+    for (i = 0; i < ARRAY_SIZE(unsupported); ++i)
+    {
+        if (!strncasecmp( name, unsupported[i], len ))
+            return FALSE;
+    }
+    return TRUE;
+}
+EOF
+;
 
 close(PE);
 

@@ -377,3 +377,50 @@ cl_int WINAPI clWaitForEvents( cl_uint num_events, const cl_event* event_list )
     TRACE( "(%u, %p)\n", num_events, event_list );
     return opencl_funcs->pclWaitForEvents( num_events, event_list );
 }
+
+BOOL extension_is_supported( const char *name, size_t len )
+{
+    unsigned int i;
+
+    static const char *const unsupported[] =
+    {
+        "cl_apple_contextloggingfunctions",
+        "cl_apple_setmemobjectdestructor",
+        "cl_arm_import_memory",
+        "cl_arm_shared_virtual_memory",
+        "cl_ext_device_fission",
+        "cl_ext_migrate_memobject",
+        "cl_img_generate_mipmap",
+        "cl_img_use_gralloc_ptr",
+        "cl_intel_accelerator",
+        "cl_intel_create_buffer_with_properties",
+        "cl_intel_d3d11_nv12_media_sharing",
+        "cl_intel_dx9_media_sharing",
+        "cl_intel_unified_shared_memory",
+        "cl_intel_va_api_media_sharing",
+        "cl_khr_create_command_queue",
+        "cl_khr_d3d10_sharing",
+        "cl_khr_d3d11_sharing",
+        "cl_khr_dx9_media_sharing",
+        "cl_khr_egl_event",
+        "cl_khr_egl_image",
+        "cl_khr_gl_event",
+        "cl_khr_gl_sharing",
+        "cl_khr_icd",
+        "cl_khr_il_program",
+        "cl_khr_subgroups",
+        "cl_khr_terminate_context",
+        "cl_loader_layers",
+        "cl_nv_d3d10_sharing",
+        "cl_nv_d3d11_sharing",
+        "cl_nv_d3d9_sharing",
+        "cl_qcom_ext_host_ptr",
+    };
+
+    for (i = 0; i < ARRAY_SIZE(unsupported); ++i)
+    {
+        if (!strncasecmp( name, unsupported[i], len ))
+            return FALSE;
+    }
+    return TRUE;
+}

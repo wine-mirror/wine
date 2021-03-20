@@ -26,81 +26,139 @@ WINE_DEFAULT_DEBUG_CHANNEL(opencl);
 
 const struct opencl_funcs *opencl_funcs = NULL;
 
-cl_int WINAPI clGetPlatformInfo( cl_platform_id platform, cl_platform_info param_name,
-        SIZE_T param_value_size, void * param_value, size_t * param_value_size_ret )
+static cl_int filter_extensions( const char *unix_exts, SIZE_T size, char *win_exts, size_t *ret_size )
+{
+    char *p = win_exts;
+    const char *ext;
+    SIZE_T win_size;
+
+    TRACE( "got host extension string %s\n", debugstr_a( unix_exts ) );
+
+    ext = unix_exts;
+    win_size = 0;
+    while (*ext)
+    {
+        const char *end = strchr( ext, ' ' );
+
+        if (!end) end = ext + strlen( ext );
+
+        if (extension_is_supported( ext, end - ext ))
+            win_size += strlen( ext ) + 1;
+
+        if (*end == ' ') ++end;
+        ext = end;
+    }
+
+    if (ret_size) *ret_size = win_size;
+    if (!win_exts) return CL_SUCCESS;
+    if (size < win_size) return CL_INVALID_VALUE;
+
+    win_exts[0] = 0;
+    ext = unix_exts;
+    while (*ext)
+    {
+        const char *end = strchr( ext, ' ' );
+        size_t len;
+
+        if (!end) end = ext + strlen( ext );
+        len = end - ext;
+
+        if (extension_is_supported( ext, len ))
+        {
+            if (p != win_exts) *p++ = ' ';
+            memcpy( p, ext, len );
+            p += len;
+        }
+
+        if (*end == ' ') ++end;
+        ext = end;
+    }
+    *p = 0;
+
+    TRACE( "returning extension string %s\n", debugstr_a(win_exts) );
+
+    return CL_SUCCESS;
+}
+
+cl_int WINAPI clGetPlatformInfo( cl_platform_id platform, cl_platform_info name,
+                                 SIZE_T size, void *value, size_t *ret_size )
 {
     cl_int ret;
-    TRACE("(%p, 0x%x, %ld, %p, %p)\n", platform, param_name, param_value_size, param_value, param_value_size_ret);
 
-    /* Hide all extensions.
-     * TODO: Add individual extension support as needed.
-     */
-    if (param_name == CL_PLATFORM_EXTENSIONS)
+    TRACE( "(%p, %#x, %ld, %p, %p)\n", platform, name, size, value, ret_size );
+
+    if (name == CL_PLATFORM_EXTENSIONS)
     {
-        ret = CL_INVALID_VALUE;
+        size_t unix_size;
+        char *unix_exts;
 
-        if (param_value && param_value_size > 0)
+        ret = opencl_funcs->pclGetPlatformInfo( platform, name, 0, NULL, &unix_size );
+        if (ret != CL_SUCCESS)
+            return ret;
+
+        if (!(unix_exts = malloc( unix_size )))
+            return CL_OUT_OF_HOST_MEMORY;
+        ret = opencl_funcs->pclGetPlatformInfo( platform, name, unix_size, unix_exts, NULL );
+        if (ret != CL_SUCCESS)
         {
-            char *exts = (char *) param_value;
-            exts[0] = '\0';
-            ret = CL_SUCCESS;
+            free( unix_exts );
+            return ret;
         }
 
-        if (param_value_size_ret)
-        {
-            *param_value_size_ret = 1;
-            ret = CL_SUCCESS;
-        }
+        ret = filter_extensions( unix_exts, size, value, ret_size );
+
+        free( unix_exts );
     }
     else
     {
-        ret = opencl_funcs->pclGetPlatformInfo(platform, param_name, param_value_size, param_value, param_value_size_ret);
+        ret = opencl_funcs->pclGetPlatformInfo( platform, name, size, value, ret_size );
     }
 
-    TRACE("(%p, 0x%x, %ld, %p, %p)=%d\n", platform, param_name, param_value_size, param_value, param_value_size_ret, ret);
     return ret;
 }
 
 
-cl_int WINAPI clGetDeviceInfo( cl_device_id device, cl_device_info param_name,
-        SIZE_T param_value_size, void * param_value, size_t * param_value_size_ret )
+cl_int WINAPI clGetDeviceInfo( cl_device_id device, cl_device_info name,
+                               SIZE_T size, void *value, size_t *ret_size )
 {
     cl_int ret;
-    TRACE("(%p, 0x%x, %ld, %p, %p)\n",device, param_name, param_value_size, param_value, param_value_size_ret);
 
-    /* Hide all extensions.
-     * TODO: Add individual extension support as needed.
-     */
-    if (param_name == CL_DEVICE_EXTENSIONS)
+    TRACE( "(%p, %#x, %ld, %p, %p)\n", device, name, size, value, ret_size );
+
+    if (name == CL_DEVICE_EXTENSIONS)
     {
-        ret = CL_INVALID_VALUE;
+        size_t unix_size;
+        char *unix_exts;
 
-        if (param_value && param_value_size > 0)
+        ret = opencl_funcs->pclGetDeviceInfo( device, name, 0, NULL, &unix_size );
+        if (ret != CL_SUCCESS)
+            return ret;
+
+        if (!(unix_exts = malloc( unix_size )))
+            return CL_OUT_OF_HOST_MEMORY;
+        ret = opencl_funcs->pclGetDeviceInfo( device, name, unix_size, unix_exts, NULL );
+        if (ret != CL_SUCCESS)
         {
-            char *exts = (char *) param_value;
-            exts[0] = '\0';
-            ret = CL_SUCCESS;
+            free( unix_exts );
+            return ret;
         }
 
-        if (param_value_size_ret)
-        {
-            *param_value_size_ret = 1;
-            ret = CL_SUCCESS;
-        }
+        ret = filter_extensions( unix_exts, size, value, ret_size );
+
+        free( unix_exts );
     }
     else
     {
-        ret = opencl_funcs->pclGetDeviceInfo(device, param_name, param_value_size, param_value, param_value_size_ret);
+        ret = opencl_funcs->pclGetDeviceInfo( device, name, size, value, ret_size );
     }
 
     /* Filter out the CL_EXEC_NATIVE_KERNEL flag */
-    if (param_name == CL_DEVICE_EXECUTION_CAPABILITIES)
+    if (name == CL_DEVICE_EXECUTION_CAPABILITIES)
     {
-        cl_device_exec_capabilities *caps = (cl_device_exec_capabilities *) param_value;
+        cl_device_exec_capabilities *caps = value;
         *caps &= ~CL_EXEC_NATIVE_KERNEL;
     }
 
-    TRACE("(%p, 0x%x, %ld, %p, %p)=%d\n",device, param_name, param_value_size, param_value, param_value_size_ret, ret);
     return ret;
 }
 

@@ -21,6 +21,7 @@
 
 #include <stdarg.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -29,5 +30,7 @@
 #include "winternl.h"
 
 #include "wine/debug.h"
+
+BOOL extension_is_supported( const char *name, size_t len ) DECLSPEC_HIDDEN;
 
 #endif
