@@ -30,6 +30,7 @@ my $gen_traces = 1;
 
 # List of categories to put in the 'opengl_core.c' file
 my %cat_1_0 = ( "CL_VERSION_1_0" => 1 );
+my %cat_1_1 = ( %cat_1_0, "CL_VERSION_1_1" => 1 );
 
 my %core_categories = ();
 
@@ -183,10 +184,14 @@ if (@ARGV > 1)
     $name0 =~ s%^.*/%%;
     die "Usage: $name0 [version]\n";
 }
-my $version = $ARGV[0] || "1.0";
+my $version = $ARGV[0] || "1.1";
 if ($version eq "1.0")
 {
     %core_categories = %cat_1_0;
+}
+elsif ($version eq "1.1")
+{
+    %core_categories = %cat_1_1;
 }
 else
 {
@@ -256,6 +261,8 @@ sub needs_unix_wrapper($)
             "clCreateContext" => 1,
             "clCreateContextFromType" => 1,
             "clEnqueueNativeKernel" => 1,
+            "clSetEventCallback" => 1,
+            "clSetMemObjectDestructorCallback" => 1,
         );
     my $name = shift;
 

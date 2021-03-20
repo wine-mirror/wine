@@ -78,6 +78,18 @@ cl_sampler WINAPI clCreateSampler( cl_context context, cl_bool normalized_coords
     return opencl_funcs->pclCreateSampler( context, normalized_coords, addressing_mode, filter_mode, errcode_ret );
 }
 
+cl_mem WINAPI clCreateSubBuffer( cl_mem buffer, cl_mem_flags flags, cl_buffer_create_type buffer_create_type, const void* buffer_create_info, cl_int* errcode_ret )
+{
+    TRACE( "(%p, %s, %u, %p, %p)\n", buffer, wine_dbgstr_longlong(flags), buffer_create_type, buffer_create_info, errcode_ret );
+    return opencl_funcs->pclCreateSubBuffer( buffer, flags, buffer_create_type, buffer_create_info, errcode_ret );
+}
+
+cl_event WINAPI clCreateUserEvent( cl_context context, cl_int* errcode_ret )
+{
+    TRACE( "(%p, %p)\n", context, errcode_ret );
+    return opencl_funcs->pclCreateUserEvent( context, errcode_ret );
+}
+
 cl_int WINAPI clEnqueueBarrier( cl_command_queue command_queue )
 {
     TRACE( "(%p)\n", command_queue );
@@ -88,6 +100,12 @@ cl_int WINAPI clEnqueueCopyBuffer( cl_command_queue command_queue, cl_mem src_bu
 {
     TRACE( "(%p, %p, %p, %Iu, %Iu, %Iu, %u, %p, %p)\n", command_queue, src_buffer, dst_buffer, src_offset, dst_offset, size, num_events_in_wait_list, event_wait_list, event );
     return opencl_funcs->pclEnqueueCopyBuffer( command_queue, src_buffer, dst_buffer, src_offset, dst_offset, size, num_events_in_wait_list, event_wait_list, event );
+}
+
+cl_int WINAPI clEnqueueCopyBufferRect( cl_command_queue command_queue, cl_mem src_buffer, cl_mem dst_buffer, const size_t* src_origin, const size_t* dst_origin, const size_t* region, size_t src_row_pitch, size_t src_slice_pitch, size_t dst_row_pitch, size_t dst_slice_pitch, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+{
+    TRACE( "(%p, %p, %p, %p, %p, %p, %Iu, %Iu, %Iu, %Iu, %u, %p, %p)\n", command_queue, src_buffer, dst_buffer, src_origin, dst_origin, region, src_row_pitch, src_slice_pitch, dst_row_pitch, dst_slice_pitch, num_events_in_wait_list, event_wait_list, event );
+    return opencl_funcs->pclEnqueueCopyBufferRect( command_queue, src_buffer, dst_buffer, src_origin, dst_origin, region, src_row_pitch, src_slice_pitch, dst_row_pitch, dst_slice_pitch, num_events_in_wait_list, event_wait_list, event );
 }
 
 cl_int WINAPI clEnqueueCopyBufferToImage( cl_command_queue command_queue, cl_mem src_buffer, cl_mem dst_image, size_t src_offset, const size_t* dst_origin, const size_t* region, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
@@ -144,6 +162,12 @@ cl_int WINAPI clEnqueueReadBuffer( cl_command_queue command_queue, cl_mem buffer
     return opencl_funcs->pclEnqueueReadBuffer( command_queue, buffer, blocking_read, offset, size, ptr, num_events_in_wait_list, event_wait_list, event );
 }
 
+cl_int WINAPI clEnqueueReadBufferRect( cl_command_queue command_queue, cl_mem buffer, cl_bool blocking_read, const size_t* buffer_origin, const size_t* host_origin, const size_t* region, size_t buffer_row_pitch, size_t buffer_slice_pitch, size_t host_row_pitch, size_t host_slice_pitch, void* ptr, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+{
+    TRACE( "(%p, %p, %u, %p, %p, %p, %Iu, %Iu, %Iu, %Iu, %p, %u, %p, %p)\n", command_queue, buffer, blocking_read, buffer_origin, host_origin, region, buffer_row_pitch, buffer_slice_pitch, host_row_pitch, host_slice_pitch, ptr, num_events_in_wait_list, event_wait_list, event );
+    return opencl_funcs->pclEnqueueReadBufferRect( command_queue, buffer, blocking_read, buffer_origin, host_origin, region, buffer_row_pitch, buffer_slice_pitch, host_row_pitch, host_slice_pitch, ptr, num_events_in_wait_list, event_wait_list, event );
+}
+
 cl_int WINAPI clEnqueueReadImage( cl_command_queue command_queue, cl_mem image, cl_bool blocking_read, const size_t* origin, const size_t* region, size_t row_pitch, size_t slice_pitch, void* ptr, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
 {
     TRACE( "(%p, %p, %u, %p, %p, %Iu, %Iu, %p, %u, %p, %p)\n", command_queue, image, blocking_read, origin, region, row_pitch, slice_pitch, ptr, num_events_in_wait_list, event_wait_list, event );
@@ -172,6 +196,12 @@ cl_int WINAPI clEnqueueWriteBuffer( cl_command_queue command_queue, cl_mem buffe
 {
     TRACE( "(%p, %p, %u, %Iu, %Iu, %p, %u, %p, %p)\n", command_queue, buffer, blocking_write, offset, size, ptr, num_events_in_wait_list, event_wait_list, event );
     return opencl_funcs->pclEnqueueWriteBuffer( command_queue, buffer, blocking_write, offset, size, ptr, num_events_in_wait_list, event_wait_list, event );
+}
+
+cl_int WINAPI clEnqueueWriteBufferRect( cl_command_queue command_queue, cl_mem buffer, cl_bool blocking_write, const size_t* buffer_origin, const size_t* host_origin, const size_t* region, size_t buffer_row_pitch, size_t buffer_slice_pitch, size_t host_row_pitch, size_t host_slice_pitch, const void* ptr, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
+{
+    TRACE( "(%p, %p, %u, %p, %p, %p, %Iu, %Iu, %Iu, %Iu, %p, %u, %p, %p)\n", command_queue, buffer, blocking_write, buffer_origin, host_origin, region, buffer_row_pitch, buffer_slice_pitch, host_row_pitch, host_slice_pitch, ptr, num_events_in_wait_list, event_wait_list, event );
+    return opencl_funcs->pclEnqueueWriteBufferRect( command_queue, buffer, blocking_write, buffer_origin, host_origin, region, buffer_row_pitch, buffer_slice_pitch, host_row_pitch, host_slice_pitch, ptr, num_events_in_wait_list, event_wait_list, event );
 }
 
 cl_int WINAPI clEnqueueWriteImage( cl_command_queue command_queue, cl_mem image, cl_bool blocking_write, const size_t* origin, const size_t* region, size_t input_row_pitch, size_t input_slice_pitch, const void* ptr, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event )
@@ -360,10 +390,28 @@ cl_int WINAPI clRetainSampler( cl_sampler sampler )
     return opencl_funcs->pclRetainSampler( sampler );
 }
 
+cl_int WINAPI clSetEventCallback( cl_event event, cl_int command_exec_callback_type, void (WINAPI* pfn_notify)(cl_event event, cl_int event_command_status, void *user_data), void* user_data )
+{
+    TRACE( "(%p, %d, %p, %p)\n", event, command_exec_callback_type, pfn_notify, user_data );
+    return opencl_funcs->pclSetEventCallback( event, command_exec_callback_type, pfn_notify, user_data );
+}
+
 cl_int WINAPI clSetKernelArg( cl_kernel kernel, cl_uint arg_index, size_t arg_size, const void* arg_value )
 {
     TRACE( "(%p, %u, %Iu, %p)\n", kernel, arg_index, arg_size, arg_value );
     return opencl_funcs->pclSetKernelArg( kernel, arg_index, arg_size, arg_value );
+}
+
+cl_int WINAPI clSetMemObjectDestructorCallback( cl_mem memobj, void (WINAPI* pfn_notify)(cl_mem memobj, void* user_data), void* user_data )
+{
+    TRACE( "(%p, %p, %p)\n", memobj, pfn_notify, user_data );
+    return opencl_funcs->pclSetMemObjectDestructorCallback( memobj, pfn_notify, user_data );
+}
+
+cl_int WINAPI clSetUserEventStatus( cl_event event, cl_int execution_status )
+{
+    TRACE( "(%p, %d)\n", event, execution_status );
+    return opencl_funcs->pclSetUserEventStatus( event, execution_status );
 }
 
 cl_int WINAPI clUnloadCompiler( void  )

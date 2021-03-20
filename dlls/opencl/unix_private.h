@@ -63,6 +63,14 @@ cl_int WINAPI wrap_clEnqueueNativeKernel( cl_command_queue command_queue,
         void *args, size_t cb_args, cl_uint num_mem_objects, const cl_mem *mem_list, const void **args_mem_loc,
         cl_uint num_events_in_wait_list, const cl_event *event_wait_list, cl_event *event ) DECLSPEC_HIDDEN;
 
+cl_int WINAPI wrap_clSetEventCallback( cl_event event, cl_int type,
+        void (WINAPI *pfn_notify)(cl_event, cl_int, void *),
+        void *user_data) DECLSPEC_HIDDEN;
+
+cl_int WINAPI wrap_clSetMemObjectDestructorCallback(cl_mem memobj,
+        void (WINAPI *pfn_notify)(cl_mem, void *),
+        void *user_data) DECLSPEC_HIDDEN;
+
 extern const struct opencl_funcs funcs;
 
 #endif

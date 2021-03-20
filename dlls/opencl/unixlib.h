@@ -14,8 +14,11 @@ struct opencl_funcs
     cl_program (WINAPI *pclCreateProgramWithBinary)( cl_context context, cl_uint num_devices, const cl_device_id* device_list, const size_t* lengths, const unsigned char** binaries, cl_int* binary_status, cl_int* errcode_ret );
     cl_program (WINAPI *pclCreateProgramWithSource)( cl_context context, cl_uint count, const char** strings, const size_t* lengths, cl_int* errcode_ret );
     cl_sampler (WINAPI *pclCreateSampler)( cl_context context, cl_bool normalized_coords, cl_addressing_mode addressing_mode, cl_filter_mode filter_mode, cl_int* errcode_ret );
+    cl_mem (WINAPI *pclCreateSubBuffer)( cl_mem buffer, cl_mem_flags flags, cl_buffer_create_type buffer_create_type, const void* buffer_create_info, cl_int* errcode_ret );
+    cl_event (WINAPI *pclCreateUserEvent)( cl_context context, cl_int* errcode_ret );
     cl_int (WINAPI *pclEnqueueBarrier)( cl_command_queue command_queue );
     cl_int (WINAPI *pclEnqueueCopyBuffer)( cl_command_queue command_queue, cl_mem src_buffer, cl_mem dst_buffer, size_t src_offset, size_t dst_offset, size_t size, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event );
+    cl_int (WINAPI *pclEnqueueCopyBufferRect)( cl_command_queue command_queue, cl_mem src_buffer, cl_mem dst_buffer, const size_t* src_origin, const size_t* dst_origin, const size_t* region, size_t src_row_pitch, size_t src_slice_pitch, size_t dst_row_pitch, size_t dst_slice_pitch, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event );
     cl_int (WINAPI *pclEnqueueCopyBufferToImage)( cl_command_queue command_queue, cl_mem src_buffer, cl_mem dst_image, size_t src_offset, const size_t* dst_origin, const size_t* region, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event );
     cl_int (WINAPI *pclEnqueueCopyImage)( cl_command_queue command_queue, cl_mem src_image, cl_mem dst_image, const size_t* src_origin, const size_t* dst_origin, const size_t* region, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event );
     cl_int (WINAPI *pclEnqueueCopyImageToBuffer)( cl_command_queue command_queue, cl_mem src_image, cl_mem dst_buffer, const size_t* src_origin, const size_t* region, size_t dst_offset, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event );
@@ -25,11 +28,13 @@ struct opencl_funcs
     cl_int (WINAPI *pclEnqueueNDRangeKernel)( cl_command_queue command_queue, cl_kernel kernel, cl_uint work_dim, const size_t* global_work_offset, const size_t* global_work_size, const size_t* local_work_size, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event );
     cl_int (WINAPI *pclEnqueueNativeKernel)( cl_command_queue command_queue, void (WINAPI* user_func)(void*), void* args, size_t cb_args, cl_uint num_mem_objects, const cl_mem* mem_list, const void** args_mem_loc, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event );
     cl_int (WINAPI *pclEnqueueReadBuffer)( cl_command_queue command_queue, cl_mem buffer, cl_bool blocking_read, size_t offset, size_t size, void* ptr, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event );
+    cl_int (WINAPI *pclEnqueueReadBufferRect)( cl_command_queue command_queue, cl_mem buffer, cl_bool blocking_read, const size_t* buffer_origin, const size_t* host_origin, const size_t* region, size_t buffer_row_pitch, size_t buffer_slice_pitch, size_t host_row_pitch, size_t host_slice_pitch, void* ptr, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event );
     cl_int (WINAPI *pclEnqueueReadImage)( cl_command_queue command_queue, cl_mem image, cl_bool blocking_read, const size_t* origin, const size_t* region, size_t row_pitch, size_t slice_pitch, void* ptr, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event );
     cl_int (WINAPI *pclEnqueueTask)( cl_command_queue command_queue, cl_kernel kernel, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event );
     cl_int (WINAPI *pclEnqueueUnmapMemObject)( cl_command_queue command_queue, cl_mem memobj, void* mapped_ptr, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event );
     cl_int (WINAPI *pclEnqueueWaitForEvents)( cl_command_queue command_queue, cl_uint num_events, const cl_event* event_list );
     cl_int (WINAPI *pclEnqueueWriteBuffer)( cl_command_queue command_queue, cl_mem buffer, cl_bool blocking_write, size_t offset, size_t size, const void* ptr, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event );
+    cl_int (WINAPI *pclEnqueueWriteBufferRect)( cl_command_queue command_queue, cl_mem buffer, cl_bool blocking_write, const size_t* buffer_origin, const size_t* host_origin, const size_t* region, size_t buffer_row_pitch, size_t buffer_slice_pitch, size_t host_row_pitch, size_t host_slice_pitch, const void* ptr, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event );
     cl_int (WINAPI *pclEnqueueWriteImage)( cl_command_queue command_queue, cl_mem image, cl_bool blocking_write, const size_t* origin, const size_t* region, size_t input_row_pitch, size_t input_slice_pitch, const void* ptr, cl_uint num_events_in_wait_list, const cl_event* event_wait_list, cl_event* event );
     cl_int (WINAPI *pclFinish)( cl_command_queue command_queue );
     cl_int (WINAPI *pclFlush)( cl_command_queue command_queue );
@@ -63,7 +68,10 @@ struct opencl_funcs
     cl_int (WINAPI *pclRetainMemObject)( cl_mem memobj );
     cl_int (WINAPI *pclRetainProgram)( cl_program program );
     cl_int (WINAPI *pclRetainSampler)( cl_sampler sampler );
+    cl_int (WINAPI *pclSetEventCallback)( cl_event event, cl_int command_exec_callback_type, void (WINAPI* pfn_notify)(cl_event event, cl_int event_command_status, void *user_data), void* user_data );
     cl_int (WINAPI *pclSetKernelArg)( cl_kernel kernel, cl_uint arg_index, size_t arg_size, const void* arg_value );
+    cl_int (WINAPI *pclSetMemObjectDestructorCallback)( cl_mem memobj, void (WINAPI* pfn_notify)(cl_mem memobj, void* user_data), void* user_data );
+    cl_int (WINAPI *pclSetUserEventStatus)( cl_event event, cl_int execution_status );
     cl_int (WINAPI *pclUnloadCompiler)( void  );
     cl_int (WINAPI *pclWaitForEvents)( cl_uint num_events, const cl_event* event_list );
 };
