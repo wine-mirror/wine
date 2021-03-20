@@ -1859,12 +1859,9 @@ static void test_CompareStringA(void)
       SetLastError(0xdeadbeef);
       ret = CompareStringA(entry->lcid, entry->flags, entry->first, entry->first_len,
           entry->second, entry->second_len);
-todo_wine_if (entry->flags == LINGUISTIC_IGNOREDIACRITIC)
-{
       ok(ret == entry->ret, "%d: got %d, expected %d\n", i, ret, entry->ret);
       ok(GetLastError() == (ret ? 0xdeadbeef : entry->le), "%d: got last error %d, expected %d\n",
           i, GetLastError(), (ret ? 0xdeadbeef : entry->le));
-}
   }
 
   ret = CompareStringA(lcid, NORM_IGNORECASE, "Salut", -1, "Salute", -1);
@@ -2031,7 +2028,7 @@ static void test_CompareStringW(void)
 
     SetLastError(0xdeadbeef);
     ret = CompareStringW(CP_ACP, SORT_DIGITSASNUMBERS, L"NULL", -1, L"NULL", -1);
-    todo_wine ok(ret == CSTR_EQUAL || broken(!ret && GetLastError() == ERROR_INVALID_FLAGS) /* <Win7 */,
+    ok(ret == CSTR_EQUAL || broken(!ret && GetLastError() == ERROR_INVALID_FLAGS) /* <Win7 */,
         "expected CSTR_EQUAL, got %d, last error %d\n", ret, GetLastError());
 
     ret = CompareStringW(CP_ACP, 0, ABC_EE, 3, ABC_FF, 3);
