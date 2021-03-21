@@ -353,6 +353,20 @@ BOOL WINAPI WTSQuerySessionInformationW(HANDLE server, DWORD session_id, WTS_INF
         return TRUE;
     }
 
+    if (class ==  WTSDomainName)
+    {
+        DWORD size = MAX_COMPUTERNAME_LENGTH + 1;
+        WCHAR *computername;
+
+        if (!(computername = heap_alloc(size * sizeof(WCHAR)))) return FALSE;
+        GetComputerNameW(computername, &size);
+        *buffer = computername;
+        /* GetComputerNameW() return size doesn't include terminator */
+        size++;
+        *count = size * sizeof(WCHAR);
+        return TRUE;
+    }
+
     FIXME("Unimplemented class %d\n", class);
 
     *buffer = NULL;

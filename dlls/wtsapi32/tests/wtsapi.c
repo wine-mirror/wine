@@ -93,8 +93,8 @@ static void test_WTSEnumerateProcessesW(void)
 
 static void test_WTSQuerySessionInformation(void)
 {
-    WCHAR *buf1, usernameW[UNLEN + 1];
-    char *buf2, username[UNLEN + 1];
+    WCHAR *buf1, usernameW[UNLEN + 1], computernameW[MAX_COMPUTERNAME_LENGTH + 1];
+    char *buf2, username[UNLEN + 1], computername[MAX_COMPUTERNAME_LENGTH + 1];
     DWORD count, tempsize;
     BOOL ret;
 
@@ -130,6 +130,19 @@ static void test_WTSQuerySessionInformation(void)
     ok(count == tempsize * sizeof(WCHAR), "expected %u, got %u\n", tempsize * sizeof(WCHAR), count);
     WTSFreeMemory(buf1);
 
+    count = 0;
+    buf1 = NULL;
+    ret = WTSQuerySessionInformationW(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSDomainName, &buf1, &count);
+    ok(ret, "got %u\n", GetLastError());
+    ok(buf1 != NULL, "buf not set\n");
+    ok(count == (lstrlenW(buf1) + 1) * sizeof(WCHAR), "expected %u, got %u\n", (lstrlenW(buf1) + 1) * sizeof(WCHAR), count);
+    tempsize = MAX_COMPUTERNAME_LENGTH + 1;
+    GetComputerNameW(computernameW, &tempsize);
+    /* Windows Vista, 7 and 8 return uppercase computername, while the rest return lowercase. */
+    ok(!wcsicmp(buf1, computernameW), "expected %s, got %s\n", wine_dbgstr_w(computernameW), wine_dbgstr_w(buf1));
+    ok(count == (tempsize + 1) * sizeof(WCHAR), "expected %u, got %u\n", (tempsize + 1) * sizeof(WCHAR), count);
+    WTSFreeMemory(buf1);
+
     SetLastError(0xdeadbeef);
     count = 0;
     ret = WTSQuerySessionInformationA(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSUserName, NULL, &count);
@@ -160,6 +173,19 @@ static void test_WTSQuerySessionInformation(void)
     /* Windows Vista, 7 and 8 return uppercase username, while the rest return lowercase. */
     ok(!stricmp(buf2, username), "expected %s, got %s\n", username, buf2);
     ok(count == tempsize, "expected %u, got %u\n", tempsize, count);
+    WTSFreeMemory(buf2);
+
+    count = 0;
+    buf2 = NULL;
+    ret = WTSQuerySessionInformationA(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSDomainName, &buf2, &count);
+    ok(ret, "got %u\n", GetLastError());
+    ok(buf2 != NULL, "buf not set\n");
+    ok(count == lstrlenA(buf2) + 1, "expected %u, got %u\n", lstrlenA(buf2) + 1, count);
+    tempsize = MAX_COMPUTERNAME_LENGTH + 1;
+    GetComputerNameA(computername, &tempsize);
+    /* Windows Vista, 7 and 8 return uppercase computername, while the rest return lowercase. */
+    ok(!stricmp(buf2, computername), "expected %s, got %s\n", computername, buf2);
+    ok(count == tempsize + 1, "expected %u, got %u\n", tempsize + 1, count);
     WTSFreeMemory(buf2);
 }
 
