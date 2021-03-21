@@ -20,6 +20,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "lmcons.h"
 #include "wtsapi32.h"
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -330,41 +331,32 @@ BOOL WINAPI WTSQuerySessionInformationA(HANDLE server, DWORD session_id, WTS_INF
 /************************************************************
  *                WTSQuerySessionInformationW  (WTSAPI32.@)
  */
-BOOL WINAPI WTSQuerySessionInformationW(
-    HANDLE hServer,
-    DWORD SessionId,
-    WTS_INFO_CLASS WTSInfoClass,
-    LPWSTR* Buffer,
-    DWORD* BytesReturned)
+BOOL WINAPI WTSQuerySessionInformationW(HANDLE server, DWORD session_id, WTS_INFO_CLASS class, WCHAR **buffer, DWORD *count)
 {
-    /* FIXME: Forward request to winsta.dll::WinStationQueryInformationW */
-    FIXME("Stub %p 0x%08x %d %p %p\n", hServer, SessionId, WTSInfoClass,
-        Buffer, BytesReturned);
+    TRACE("%p 0x%08x %d %p %p\n", server, session_id, class, buffer, count);
 
-    if (!Buffer || !BytesReturned)
+    if (!buffer || !count)
     {
         SetLastError(ERROR_INVALID_USER_BUFFER);
         return FALSE;
     }
 
-    if (WTSInfoClass == WTSUserName)
+    if (class == WTSUserName)
     {
+        DWORD size = UNLEN + 1;
         WCHAR *username;
-        DWORD count = 0;
 
-        GetUserNameW(NULL, &count);
-        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return FALSE;
-        if (!(username = heap_alloc(count * sizeof(WCHAR)))) return FALSE;
-        GetUserNameW(username, &count);
-        *Buffer = username;
-        *BytesReturned = count * sizeof(WCHAR);
+        if (!(username = heap_alloc(size * sizeof(WCHAR)))) return FALSE;
+        GetUserNameW(username, &size);
+        *buffer = username;
+        *count = size * sizeof(WCHAR);
         return TRUE;
     }
-    else
-    {
-        *Buffer = NULL;
-        *BytesReturned = 0;
-    }
+
+    FIXME("Unimplemented class %d\n", class);
+
+    *buffer = NULL;
+    *count = 0;
     return FALSE;
 }
 
