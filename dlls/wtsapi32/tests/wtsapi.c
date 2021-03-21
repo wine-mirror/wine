@@ -21,6 +21,7 @@
 #include <windef.h>
 #include <winbase.h>
 #include <winternl.h>
+#include <lmcons.h>
 #include <wtsapi32.h>
 
 #include "wine/test.h"
@@ -92,10 +93,10 @@ static void test_WTSEnumerateProcessesW(void)
 
 static void test_WTSQuerySessionInformation(void)
 {
+    WCHAR *buf1, usernameW[UNLEN + 1];
+    char *buf2, username[UNLEN + 1];
+    DWORD count, tempsize;
     BOOL ret;
-    WCHAR *buf1;
-    char *buf2;
-    DWORD count;
 
     SetLastError(0xdeadbeef);
     count = 0;
@@ -122,6 +123,11 @@ static void test_WTSQuerySessionInformation(void)
     ok(ret, "got %u\n", GetLastError());
     ok(buf1 != NULL, "buf not set\n");
     ok(count == (lstrlenW(buf1) + 1) * sizeof(WCHAR), "expected %u, got %u\n", (lstrlenW(buf1) + 1) * sizeof(WCHAR), count);
+    tempsize = UNLEN + 1;
+    GetUserNameW(usernameW, &tempsize);
+    /* Windows Vista, 7 and 8 return uppercase username, while the rest return lowercase. */
+    ok(!wcsicmp(buf1, usernameW), "expected %s, got %s\n", wine_dbgstr_w(usernameW), wine_dbgstr_w(buf1));
+    ok(count == tempsize * sizeof(WCHAR), "expected %u, got %u\n", tempsize * sizeof(WCHAR), count);
     WTSFreeMemory(buf1);
 
     SetLastError(0xdeadbeef);
@@ -149,6 +155,11 @@ static void test_WTSQuerySessionInformation(void)
     ok(ret, "got %u\n", GetLastError());
     ok(buf2 != NULL, "buf not set\n");
     ok(count == lstrlenA(buf2) + 1, "expected %u, got %u\n", lstrlenA(buf2) + 1, count);
+    tempsize = UNLEN + 1;
+    GetUserNameA(username, &tempsize);
+    /* Windows Vista, 7 and 8 return uppercase username, while the rest return lowercase. */
+    ok(!stricmp(buf2, username), "expected %s, got %s\n", username, buf2);
+    ok(count == tempsize, "expected %u, got %u\n", tempsize, count);
     WTSFreeMemory(buf2);
 }
 
