@@ -85,13 +85,21 @@ typedef struct ITextHostTestImpl
 {
     ITextHost ITextHost_iface;
     LONG refCount;
+    HWND window;
+    RECT client_rect;
     CHARFORMAT2W char_format;
+    DWORD scrollbars, props;
 } ITextHostTestImpl;
 
 static inline ITextHostTestImpl *impl_from_ITextHost(ITextHost *iface)
 {
     return CONTAINING_RECORD(iface, ITextHostTestImpl, ITextHost_iface);
 }
+
+static const WCHAR lorem[] = L"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. "
+    "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. "
+    "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. "
+    "Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
 
 static HRESULT WINAPI ITextHostImpl_QueryInterface(ITextHost *iface,
                                                    REFIID riid,
@@ -133,6 +141,7 @@ static HDC __thiscall ITextHostImpl_TxGetDC(ITextHost *iface)
 {
     ITextHostTestImpl *This = impl_from_ITextHost(iface);
     TRACECALL("Call to TxGetDC(%p)\n", This);
+    if (This->window) return GetDC( This->window );
     return NULL;
 }
 
@@ -140,6 +149,7 @@ static INT __thiscall ITextHostImpl_TxReleaseDC(ITextHost *iface, HDC hdc)
 {
     ITextHostTestImpl *This = impl_from_ITextHost(iface);
     TRACECALL("Call to TxReleaseDC(%p)\n", This);
+    if (This->window) return ReleaseDC( This->window, hdc );
     return 0;
 }
 
@@ -287,7 +297,8 @@ static HRESULT __thiscall ITextHostImpl_TxGetClientRect(ITextHost *iface, LPRECT
 {
     ITextHostTestImpl *This = impl_from_ITextHost(iface);
     TRACECALL("Call to TxGetClientRect(%p, prc=%p)\n", This, prc);
-    return E_NOTIMPL;
+    *prc = This->client_rect;
+    return S_OK;
 }
 
 static HRESULT __thiscall ITextHostImpl_TxGetViewInset(ITextHost *iface, LPRECT prc)
@@ -333,12 +344,12 @@ static HRESULT __thiscall ITextHostImpl_TxGetMaxLength(ITextHost *iface, DWORD *
     return E_NOTIMPL;
 }
 
-static HRESULT __thiscall ITextHostImpl_TxGetScrollBars(ITextHost *iface, DWORD *pdwScrollBar)
+static HRESULT __thiscall ITextHostImpl_TxGetScrollBars(ITextHost *iface, DWORD *scrollbars)
 {
     ITextHostTestImpl *This = impl_from_ITextHost(iface);
-    TRACECALL("Call to TxGetScrollBars(%p, pdwScrollBar=%p)\n",
-               This, pdwScrollBar);
-    return E_NOTIMPL;
+    TRACECALL("Call to TxGetScrollBars(%p, scrollbars=%p)\n", This, scrollbars);
+    *scrollbars = This->scrollbars;
+    return S_OK;
 }
 
 static HRESULT __thiscall ITextHostImpl_TxGetPasswordChar(ITextHost *iface, WCHAR *pch)
@@ -383,7 +394,7 @@ static HRESULT __thiscall ITextHostImpl_TxGetPropertyBits(ITextHost *iface, DWOR
     ITextHostTestImpl *This = impl_from_ITextHost(iface);
     TRACECALL("Call to TxGetPropertyBits(%p, dwMask=0x%08x, pdwBits=%p)\n",
               This, dwMask, pdwBits);
-    *pdwBits = 0;
+    *pdwBits = This->props & dwMask;
     return S_OK;
 }
 
@@ -591,9 +602,13 @@ static BOOL init_texthost(ITextServices **txtserv, ITextHost **ret)
     }
     dummyTextHost->ITextHost_iface.lpVtbl = &itextHostVtbl;
     dummyTextHost->refCount = 1;
+    dummyTextHost->window = NULL;
+    SetRectEmpty( &dummyTextHost->client_rect );
     memset(&dummyTextHost->char_format, 0, sizeof(dummyTextHost->char_format));
     dummyTextHost->char_format.cbSize = sizeof(dummyTextHost->char_format);
     dummyTextHost->char_format.dwMask = CFM_ALL2;
+    dummyTextHost->scrollbars = 0;
+    dummyTextHost->props = 0;
     hf = GetStockObject(DEFAULT_GUI_FONT);
     hf_to_cf(hf, &dummyTextHost->char_format);
 
@@ -988,9 +1003,15 @@ static void test_TxGetScroll(void)
     ITextServices *txtserv;
     ITextHost *host;
     HRESULT ret;
+    LONG min_pos, max_pos, pos, page;
+    BOOL enabled;
+    ITextHostTestImpl *host_impl;
+    RECT client = {0, 0, 100, 100};
 
     if (!init_texthost(&txtserv, &host))
         return;
+
+    host_impl = impl_from_ITextHost( host );
 
     ret = ITextServices_TxGetHScroll(txtserv, NULL, NULL, NULL, NULL, NULL);
     ok(ret == S_OK, "ITextServices_TxGetHScroll failed: 0x%08x.\n", ret);
@@ -998,6 +1019,58 @@ static void test_TxGetScroll(void)
     ret = ITextServices_TxGetVScroll(txtserv, NULL, NULL, NULL, NULL, NULL);
     ok(ret == S_OK, "ITextServices_TxGetVScroll failed: 0x%08x.\n", ret);
 
+    ret = ITextServices_TxGetVScroll( txtserv, &min_pos, &max_pos, &pos, &page, &enabled );
+    ok( ret == S_OK, "ITextServices_TxGetHScroll failed: 0x%08x.\n", ret );
+    ok( min_pos == 0, "got %d\n", min_pos );
+    ok( max_pos == 0, "got %d\n", max_pos );
+    ok( pos == 0, "got %d\n", pos );
+    ok( page == 0, "got %d\n", page );
+    ok( !enabled, "got %d\n", enabled );
+
+    host_impl->scrollbars = WS_VSCROLL;
+    host_impl->props = TXTBIT_MULTILINE | TXTBIT_RICHTEXT | TXTBIT_WORDWRAP;
+    ITextServices_OnTxPropertyBitsChange( txtserv, TXTBIT_SCROLLBARCHANGE | TXTBIT_MULTILINE | TXTBIT_RICHTEXT | TXTBIT_WORDWRAP, host_impl->props );
+
+    host_impl->window = CreateWindowExA( 0, "static", NULL, WS_POPUP | WS_VISIBLE,
+                                         0, 0, 400, 400, 0, 0, 0, NULL );
+    host_impl->client_rect = client;
+    ret = ITextServices_OnTxInPlaceActivate( txtserv, &client );
+    ok( ret == S_OK, "got 0x%08x.\n", ret );
+
+    ret = ITextServices_TxGetVScroll( txtserv, &min_pos, &max_pos, &pos, &page, &enabled );
+    ok( ret == S_OK, "ITextServices_TxGetHScroll failed: 0x%08x.\n", ret );
+    ok( min_pos == 0, "got %d\n", min_pos );
+todo_wine
+    ok( max_pos == 0, "got %d\n", max_pos );
+    ok( pos == 0, "got %d\n", pos );
+    ok( page == client.bottom, "got %d\n", page );
+    ok( !enabled, "got %d\n", enabled );
+
+    ret = ITextServices_TxSetText( txtserv, lorem );
+    ok( ret == S_OK, "got 0x%08x.\n", ret );
+
+    ret = ITextServices_TxGetVScroll( txtserv, &min_pos, &max_pos, &pos, &page, &enabled );
+    ok( ret == S_OK, "ITextServices_TxGetHScroll failed: 0x%08x.\n", ret );
+    ok( min_pos == 0, "got %d\n", min_pos );
+    ok( max_pos > client.bottom, "got %d\n", max_pos );
+    ok( pos == 0, "got %d\n", pos );
+    ok( page == client.bottom, "got %d\n", page );
+    ok( enabled, "got %d\n", enabled );
+
+    host_impl->scrollbars = WS_VSCROLL | ES_DISABLENOSCROLL;
+    ITextServices_OnTxPropertyBitsChange( txtserv, TXTBIT_SCROLLBARCHANGE, host_impl->props );
+    ITextServices_TxSetText( txtserv, L"short" );
+
+    ret = ITextServices_TxGetVScroll( txtserv, &min_pos, &max_pos, &pos, &page, &enabled );
+    ok( ret == S_OK, "ITextServices_TxGetHScroll failed: 0x%08x.\n", ret );
+    ok( min_pos == 0, "got %d\n", min_pos );
+todo_wine
+    ok( max_pos == 0, "got %d\n", max_pos );
+    ok( pos == 0, "got %d\n", pos );
+    ok( page == client.bottom, "got %d\n", page );
+    ok( !enabled, "got %d\n", enabled );
+
+    DestroyWindow( host_impl->window );
     ITextServices_Release(txtserv);
     ITextHost_Release(host);
 }
