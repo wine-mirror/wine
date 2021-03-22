@@ -3809,12 +3809,12 @@ BOOL WINAPI GetUrlCacheConfigInfoW(LPINTERNET_CACHE_CONFIG_INFOW info, LPDWORD s
     info->dwNumCachePaths = 1;
     info->dwNormalUsage = 0;
     info->dwExemptUsage = 0;
-    info->u.s.dwCacheSize = container->file_size / 1024;
-    lstrcpynW(info->u.s.CachePath, container->path, MAX_PATH);
+    info->dwCacheSize = container->file_size / 1024;
+    lstrcpynW(info->CachePath, container->path, MAX_PATH);
 
     cache_container_close_index(container);
 
-    TRACE("CachePath %s\n", debugstr_w(info->u.s.CachePath));
+    TRACE("CachePath %s\n", debugstr_w(info->CachePath));
 
     return TRUE;
 }
@@ -3846,8 +3846,8 @@ BOOL WINAPI GetUrlCacheConfigInfoA(LPINTERNET_CACHE_CONFIG_INFOA info, LPDWORD s
     info->dwNumCachePaths = infoW.dwNumCachePaths;
     info->dwNormalUsage = infoW.dwNormalUsage;
     info->dwExemptUsage = infoW.dwExemptUsage;
-    info->u.s.dwCacheSize = infoW.u.s.dwCacheSize;
-    WideCharToMultiByte(CP_ACP, 0, infoW.u.s.CachePath, -1, info->u.s.CachePath, MAX_PATH, NULL, NULL);
+    info->dwCacheSize = infoW.dwCacheSize;
+    WideCharToMultiByte(CP_ACP, 0, infoW.CachePath, -1, info->CachePath, MAX_PATH, NULL, NULL);
 
     return TRUE;
 }
