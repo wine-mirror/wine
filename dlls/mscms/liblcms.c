@@ -130,69 +130,8 @@ static BOOL CDECL lcms_translate_colors( void *transform, COLOR *in, DWORD count
 
     if (!cmsChangeBuffersFormat( transform, from_type(input_type), from_type(output_type) )) return FALSE;
 
-    switch (input_type)
-    {
-    case COLOR_RGB:
-        switch (output_type)
-        {
-        case COLOR_RGB:  for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].rgb, &out[i].rgb, 1 ); return TRUE;
-        case COLOR_Lab:  for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].rgb, &out[i].Lab, 1 ); return TRUE;
-        case COLOR_GRAY: for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].rgb, &out[i].gray, 1 ); return TRUE;
-        case COLOR_CMYK: for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].rgb, &out[i].cmyk, 1 ); return TRUE;
-        case COLOR_XYZ:  for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].rgb, &out[i].XYZ, 1 ); return TRUE;
-        default: break;
-        }
-        break;
-    case COLOR_Lab:
-        switch (output_type)
-        {
-        case COLOR_RGB:  for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].Lab, &out[i].rgb, 1 ); return TRUE;
-        case COLOR_Lab:  for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].Lab, &out[i].Lab, 1 ); return TRUE;
-        case COLOR_GRAY: for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].Lab, &out[i].gray, 1 ); return TRUE;
-        case COLOR_CMYK: for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].Lab, &out[i].cmyk, 1 ); return TRUE;
-        case COLOR_XYZ:  for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].Lab, &out[i].XYZ, 1 ); return TRUE;
-        default: break;
-        }
-        break;
-    case COLOR_GRAY:
-        switch (output_type)
-        {
-        case COLOR_RGB:  for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].gray, &out[i].rgb, 1 ); return TRUE;
-        case COLOR_Lab:  for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].gray, &out[i].Lab, 1 ); return TRUE;
-        case COLOR_GRAY: for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].gray, &out[i].gray, 1 ); return TRUE;
-        case COLOR_CMYK: for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].gray, &out[i].cmyk, 1 ); return TRUE;
-        case COLOR_XYZ:  for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].gray, &out[i].XYZ, 1 ); return TRUE;
-        default: break;
-        }
-        break;
-    case COLOR_CMYK:
-        switch (output_type)
-        {
-        case COLOR_RGB:  for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].cmyk, &out[i].rgb, 1 ); return TRUE;
-        case COLOR_Lab:  for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].cmyk, &out[i].Lab, 1 ); return TRUE;
-        case COLOR_GRAY: for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].cmyk, &out[i].gray, 1 ); return TRUE;
-        case COLOR_CMYK: for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].cmyk, &out[i].cmyk, 1 ); return TRUE;
-        case COLOR_XYZ:  for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].cmyk, &out[i].XYZ, 1 ); return TRUE;
-        case COLOR_3_CHANNEL: for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].cmyk, &out[i].gen3ch, 1 ); return TRUE;
-        default: break;
-        }
-        break;
-    case COLOR_XYZ:
-        switch (output_type)
-        {
-        case COLOR_RGB:  for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].XYZ, &out[i].rgb, 1 ); return TRUE;
-        case COLOR_Lab:  for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].XYZ, &out[i].Lab, 1 ); return TRUE;
-        case COLOR_GRAY: for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].XYZ, &out[i].gray, 1 ); return TRUE;
-        case COLOR_CMYK: for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].XYZ, &out[i].cmyk, 1 ); return TRUE;
-        case COLOR_XYZ:  for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].XYZ, &out[i].XYZ, 1 ); return TRUE;
-        default: break;
-        }
-        break;
-    default:
-        break;
-    }
-    FIXME("unhandled input/output pair: %d/%d\n", input_type, output_type);
-    return FALSE;
+    for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i], &out[i], 1 );
+    return TRUE;
 }
 
 static void CDECL lcms_close_transform( void *transform )
