@@ -2316,8 +2316,19 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, const UNICODE_STRING *nt_nam
                                           ViewShare, 0, PAGE_EXECUTE_READ );
 
     if (status == STATUS_IMAGE_NOT_AT_BASE) status = STATUS_SUCCESS;
+    if (status) return status;
+
+    if ((*pwm = find_existing_module( module )))  /* already loaded */
+    {
+        if ((*pwm)->ldr.LoadCount != -1) (*pwm)->ldr.LoadCount++;
+        TRACE( "found %s for %s at %p, count=%d\n",
+               debugstr_us(&(*pwm)->ldr.FullDllName), debugstr_us(nt_name),
+               (*pwm)->ldr.DllBase, (*pwm)->ldr.LoadCount);
+        if (module != (*pwm)->ldr.DllBase) NtUnmapViewOfSection( NtCurrentProcess(), module );
+        return STATUS_SUCCESS;
+    }
 #ifdef _WIN64
-    if (!status && !convert_to_pe64( module, image_info )) status = STATUS_INVALID_IMAGE_FORMAT;
+    if (!convert_to_pe64( module, image_info )) status = STATUS_INVALID_IMAGE_FORMAT;
 #endif
     if (!status) status = build_module( load_path, nt_name, &module, image_info, id, flags, pwm );
     if (status && module) NtUnmapViewOfSection( NtCurrentProcess(), module );
@@ -2683,49 +2694,8 @@ static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, const WC
         break;
 
     case STATUS_SUCCESS:  /* valid PE file */
-        if (image_info.u.s.WineBuiltin)
-        {
-            switch (loadorder)
-            {
-            case LO_NATIVE_BUILTIN:
-            case LO_BUILTIN:
-            case LO_BUILTIN_NATIVE:
-            case LO_DEFAULT:
-                nts = load_builtin_dll( load_path, &nt_name, flags, pwm, FALSE );
-                if (nts == STATUS_DLL_NOT_FOUND)
-                    nts = load_native_dll( load_path, &nt_name, mapping, &image_info, &id, flags, pwm );
-                break;
-            default:
-                nts = STATUS_DLL_NOT_FOUND;
-                break;
-            }
-            break;
-        }
-        if (!(image_info.u.s.WineFakeDll))
-        {
-            switch (loadorder)
-            {
-            case LO_NATIVE:
-            case LO_NATIVE_BUILTIN:
-                nts = load_native_dll( load_path, &nt_name, mapping, &image_info, &id, flags, pwm );
-                break;
-            case LO_BUILTIN:
-                nts = load_builtin_dll( load_path, &nt_name, flags, pwm, FALSE );
-                break;
-            case LO_BUILTIN_NATIVE:
-            case LO_DEFAULT:
-                nts = load_builtin_dll( load_path, &nt_name, flags, pwm, loadorder == LO_DEFAULT );
-                if (nts == STATUS_DLL_NOT_FOUND || nts == STATUS_IMAGE_ALREADY_LOADED)
-                    nts = load_native_dll( load_path, &nt_name, mapping, &image_info, &id, flags, pwm );
-                break;
-            default:
-                nts = STATUS_DLL_NOT_FOUND;
-                break;
-            }
-            break;
-        }
-        TRACE( "%s is a fake Wine dll\n", debugstr_us(&nt_name) );
-        /* fall through */
+        nts = load_native_dll( load_path, &nt_name, mapping, &image_info, &id, flags, pwm );
+        break;
 
     case STATUS_DLL_NOT_FOUND:  /* no file found, try builtin */
         switch (loadorder)

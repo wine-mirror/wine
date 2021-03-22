@@ -1331,7 +1331,6 @@ static void test_NtAreMappedFilesTheSame(void)
     ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
     ok( ptr != NULL, "MapViewOfFile FILE_MAP_READ error %u\n", GetLastError() );
     status = pNtAreMappedFilesTheSame( ptr, GetModuleHandleA("kernel32.dll") );
-    todo_wine
     ok( status == STATUS_SUCCESS, "NtAreMappedFilesTheSame returned %x\n", status );
 
     file2 = CreateFileA( path, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
