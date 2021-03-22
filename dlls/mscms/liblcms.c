@@ -173,6 +173,7 @@ static BOOL CDECL lcms_translate_colors( void *transform, COLOR *in, DWORD count
         case COLOR_GRAY: for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].cmyk, &out[i].gray, 1 ); return TRUE;
         case COLOR_CMYK: for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].cmyk, &out[i].cmyk, 1 ); return TRUE;
         case COLOR_XYZ:  for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].cmyk, &out[i].XYZ, 1 ); return TRUE;
+        case COLOR_3_CHANNEL: for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i].cmyk, &out[i].gen3ch, 1 ); return TRUE;
         default: break;
         }
         break;
