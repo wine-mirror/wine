@@ -1,5 +1,6 @@
 MODULE    = qedit.dll
 IMPORTS   = strmiids strmbase uuid oleaut32 ole32 advapi32
+EXTRADEFS = -DWINE_NO_NAMELESS_EXTENSION
 
 EXTRADLLFLAGS = -mno-cygwin
 

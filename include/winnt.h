@@ -291,7 +291,7 @@ extern "C" {
 #undef __C89_NAMELESSUNIONNAME7
 #undef __C89_NAMELESSUNIONNAME8
 
-#if !defined(__WINESRC__) && !defined(WINE_NO_NAMELESS_EXTENSION)
+#if !defined(WINE_NO_NAMELESS_EXTENSION)
 # ifdef __GNUC__
    /* Anonymous structs support starts with gcc 2.96/g++ 2.95 */
 #  if (__GNUC__ > 2) || ((__GNUC__ == 2) && ((__GNUC_MINOR__ > 95) || ((__GNUC_MINOR__ == 95) && defined(__cplusplus))))

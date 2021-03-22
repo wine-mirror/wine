@@ -1,6 +1,7 @@
 MODULE    = d3d11.dll
 IMPORTLIB = d3d11
 IMPORTS   = dxguid uuid dxgi wined3d
+EXTRADEFS = -DWINE_NO_NAMELESS_EXTENSION
 
 EXTRADLLFLAGS = -mno-cygwin
 

@@ -2,6 +2,7 @@ MODULE    = gdiplus.dll
 IMPORTLIB = gdiplus
 IMPORTS   = uuid shlwapi ole32 user32 gdi32
 DELAYIMPORTS = windowscodecs
+EXTRADEFS = -DWINE_NO_NAMELESS_EXTENSION
 
 EXTRADLLFLAGS = -mno-cygwin
 

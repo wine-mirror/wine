@@ -1,6 +1,7 @@
 MODULE    = inetcomm.dll
 IMPORTLIB = inetcomm
 IMPORTS   = uuid urlmon propsys oleaut32 ole32 ws2_32 user32 advapi32
+EXTRADEFS = -DWINE_NO_NAMELESS_EXTENSION
 
 EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 

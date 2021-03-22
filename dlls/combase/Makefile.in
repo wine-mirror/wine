@@ -2,6 +2,7 @@ MODULE    = combase.dll
 IMPORTLIB = combase
 IMPORTS   = advapi32 ole32 user32 gdi32 uuid rpcrt4
 DELAYIMPORTS = oleaut32
+EXTRADEFS = -DWINE_NO_NAMELESS_EXTENSION
 
 EXTRADLLFLAGS = -mno-cygwin
 

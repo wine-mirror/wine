@@ -1,5 +1,6 @@
 TESTDLL   = amstream.dll
 IMPORTS   = strmbase strmiids uuid ddraw ole32 user32
+EXTRADEFS = -DWINE_NO_NAMELESS_EXTENSION
 
 C_SRCS = \
 	amstream.c
