@@ -1167,6 +1167,8 @@ static WINE_MODREF *alloc_module( HMODULE hModule, const UNICODE_STRING *nt_name
     wm->ldr.Flags         = LDR_DONT_RESOLVE_REFS | (builtin ? LDR_WINE_INTERNAL : 0);
     wm->ldr.TlsIndex      = -1;
     wm->ldr.LoadCount     = 1;
+    wm->ldr.CheckSum      = nt->OptionalHeader.CheckSum;
+    wm->ldr.TimeDateStamp = nt->FileHeader.TimeDateStamp;
 
     if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, nt_name->Length - 3 * sizeof(WCHAR) )))
     {
@@ -2275,6 +2277,33 @@ static NTSTATUS open_dll_file( UNICODE_STRING *nt_name, WINE_MODREF **pwm, HANDL
 
 
 /******************************************************************************
+ *	find_existing_module
+ *
+ * Find an existing module that is the same mapping as the new module.
+ */
+static WINE_MODREF *find_existing_module( HMODULE module )
+{
+    WINE_MODREF *wm;
+    LIST_ENTRY *mark, *entry;
+    LDR_DATA_TABLE_ENTRY *mod;
+    IMAGE_NT_HEADERS *nt = RtlImageNtHeader( module );
+
+    if ((wm = get_modref( module ))) return wm;
+
+    mark = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
+    for (entry = mark->Flink; entry != mark; entry = entry->Flink)
+    {
+        mod = CONTAINING_RECORD( entry, LDR_DATA_TABLE_ENTRY, InMemoryOrderLinks );
+        if (mod->TimeDateStamp != nt->FileHeader.TimeDateStamp) continue;
+        if (mod->CheckSum != nt->OptionalHeader.CheckSum) continue;
+        if (NtAreMappedFilesTheSame( mod->DllBase, module ) != STATUS_SUCCESS) continue;
+        return CONTAINING_RECORD( mod, WINE_MODREF, ldr );
+    }
+    return NULL;
+}
+
+
+/******************************************************************************
  *	load_native_dll  (internal)
  */
 static NTSTATUS load_native_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name, HANDLE mapping,
@@ -2351,12 +2380,13 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, UNICODE_STRING *nt_name,
     status = unix_funcs->load_builtin_dll( nt_name, &module, &image_info, prefer_native );
     if (status) return status;
 
-    if ((*pwm = get_modref( module )))  /* already loaded */
+    if ((*pwm = find_existing_module( module )))  /* already loaded */
     {
         if ((*pwm)->ldr.LoadCount != -1) (*pwm)->ldr.LoadCount++;
         TRACE( "Found %s for %s at %p, count=%d\n",
                debugstr_us(&(*pwm)->ldr.FullDllName), debugstr_us(nt_name),
                (*pwm)->ldr.DllBase, (*pwm)->ldr.LoadCount);
+        if (module != (*pwm)->ldr.DllBase) NtUnmapViewOfSection( NtCurrentProcess(), module );
         return STATUS_SUCCESS;
     }
 
