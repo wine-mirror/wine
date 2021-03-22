@@ -509,7 +509,7 @@ static HRESULT WINAPI PersistFile_Load(IPersistFile *pFile, LPCOLESTR pszFileNam
         ps.ulKind = PRSPEC_PROPID;
         ps.u.propid = PID_IS_ICONFILE;
         pv.vt = VT_LPWSTR;
-        pv.u.pwszVal = iconfile;
+        pv.pwszVal = iconfile;
         hr = IPropertyStorage_WriteMultiple(pPropStg, 1, &ps, &pv, 0);
         if (FAILED(hr))
             TRACE("Failed to store the iconfile to our property storage.  hr = 0x%x\n", hr);
@@ -525,7 +525,7 @@ static HRESULT WINAPI PersistFile_Load(IPersistFile *pFile, LPCOLESTR pszFileNam
         ps.ulKind = PRSPEC_PROPID;
         ps.u.propid = PID_IS_ICONINDEX;
         pv.vt = VT_I4;
-        pv.u.iVal = iconindex;
+        pv.iVal = iconindex;
         hr = IPropertyStorage_WriteMultiple(pPropStg, 1, &ps, &pv, 0);
         if (FAILED(hr))
            TRACE("Failed to store the iconindex to our property storage.  hr = 0x%x\n", hr);
@@ -606,18 +606,18 @@ static HRESULT WINAPI PersistFile_Save(IPersistFile *pFile, LPCOLESTR pszFileNam
                 else if (SUCCEEDED(hr))
                 {
                     char indexString[50];
-                    len = WideCharToMultiByte(CP_UTF8, 0, pvread[0].u.pwszVal, -1, NULL, 0, 0, 0);
+                    len = WideCharToMultiByte(CP_UTF8, 0, pvread[0].pwszVal, -1, NULL, 0, 0, 0);
                     iconfile = heap_alloc(len);
                     if (iconfile != NULL)
                     {
-                        WideCharToMultiByte(CP_UTF8, 0, pvread[0].u.pwszVal, -1, iconfile, len, 0, 0);
+                        WideCharToMultiByte(CP_UTF8, 0, pvread[0].pwszVal, -1, iconfile, len, 0, 0);
                         WriteFile(file, str_ICONFILE, lstrlenA(str_ICONFILE), &bytesWritten, NULL);
                         WriteFile(file, iconfile, lstrlenA(iconfile), &bytesWritten, NULL);
                         WriteFile(file, str_eol, lstrlenA(str_eol), &bytesWritten, NULL);
                         heap_free(iconfile);
                     }
 
-                    sprintf(indexString, "ICONINDEX=%d", pvread[1].u.iVal);
+                    sprintf(indexString, "ICONINDEX=%d", pvread[1].iVal);
                     WriteFile(file, indexString, lstrlenA(indexString), &bytesWritten, NULL);
                     WriteFile(file, str_eol, lstrlenA(str_eol), &bytesWritten, NULL);
 
