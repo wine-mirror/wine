@@ -111,6 +111,8 @@ static void test_Gamepad(void)
     IGamepadStatics *gamepad_statics = NULL;
     IInspectable *inspectable = NULL, *tmp_inspectable = NULL;
     IAgileObject *agile_object = NULL, *tmp_agile_object = NULL;
+    IGamepad *gamepad;
+    BOOLEAN found;
     HSTRING str;
     HRESULT hr;
     ULONG size;
@@ -165,8 +167,20 @@ static void test_Gamepad(void)
 
     size = 0xdeadbeef;
     hr = IVectorView_Gamepad_get_Size(gamepads, &size);
-    todo_wine ok(hr == S_OK, "IVectorView_Gamepad_get_Size failed, hr %#x\n", hr);
-    todo_wine ok(size != 0xdeadbeef, "IVectorView_Gamepad_get_Size returned %u\n", size);
+    ok(hr == S_OK, "IVectorView_Gamepad_get_Size failed, hr %#x\n", hr);
+    ok(size != 0xdeadbeef, "IVectorView_Gamepad_get_Size returned %u\n", size);
+
+    gamepad = (IGamepad *)0xdeadbeef;
+    hr = IVectorView_Gamepad_GetAt(gamepads, size, &gamepad);
+    ok(hr == E_BOUNDS, "IVectorView_Gamepad_GetAt failed, hr %#x\n", hr);
+    ok(gamepad == NULL, "IVectorView_Gamepad_GetAt returned %p\n", gamepad);
+
+    size = 0xdeadbeef;
+    found = TRUE;
+    gamepad = (IGamepad *)0xdeadbeef;
+    hr = IVectorView_Gamepad_IndexOf(gamepads, gamepad, &size, &found);
+    ok(hr == S_OK, "IVectorView_Gamepad_IndexOf failed, hr %#x\n", hr);
+    ok(size == 0 && found == FALSE, "IVectorView_Gamepad_IndexOf returned size %d, found %d\n", size, found);
 
     IVectorView_Gamepad_Release(gamepads);
 
