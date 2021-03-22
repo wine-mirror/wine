@@ -233,12 +233,23 @@ static HRESULT update_client_rect( struct text_services *services, const RECT *c
 }
 
 DEFINE_THISCALL_WRAPPER(fnTextSrv_OnTxInPlaceActivate,8)
-DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_OnTxInPlaceActivate(ITextServices *iface, LPCRECT prcClient)
+DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_OnTxInPlaceActivate( ITextServices *iface, const RECT *client )
 {
     struct text_services *services = impl_from_ITextServices( iface );
+    HRESULT hr;
+    BOOL old_active = services->editor->in_place_active;
 
-    FIXME( "%p: STUB\n", services );
-    return E_NOTIMPL;
+    TRACE( "%p: %s\n", services, wine_dbgstr_rect( client ) );
+
+    services->editor->in_place_active = TRUE;
+    hr = update_client_rect( services, client );
+    if (FAILED( hr ))
+    {
+        services->editor->in_place_active = old_active;
+        return hr;
+    }
+    ME_RewrapRepaint( services->editor );
+    return S_OK;
 }
 
 DEFINE_THISCALL_WRAPPER(fnTextSrv_OnTxInPlaceDeactivate,4)
@@ -246,8 +257,9 @@ DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_OnTxInPlaceDeactivate(ITextServices
 {
     struct text_services *services = impl_from_ITextServices( iface );
 
-    FIXME( "%p: STUB\n", services );
-    return E_NOTIMPL;
+    TRACE( "%p\n", services );
+    services->editor->in_place_active = FALSE;
+    return S_OK;
 }
 
 DEFINE_THISCALL_WRAPPER(fnTextSrv_OnTxUIActivate,4)

@@ -380,7 +380,8 @@ typedef struct tagME_TextEditor
   HWND hWnd, hwndParent;
   ITextHost *texthost;
   IUnknown *reOle;
-  BOOL bEmulateVersion10;
+  unsigned int bEmulateVersion10 : 1;
+  unsigned int in_place_active : 1;
   ME_TextBuffer *pBuffer;
   ME_Cursor *pCursors;
   DWORD props;

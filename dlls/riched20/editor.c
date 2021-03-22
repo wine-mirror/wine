@@ -2936,6 +2936,7 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->texthost = texthost;
   ed->reOle = NULL;
   ed->bEmulateVersion10 = bEmulateVersion10;
+  ed->in_place_active = FALSE;
   ed->total_rows = 0;
   ITextHost_TxGetPropertyBits( texthost, TXTBIT_RICHTEXT | TXTBIT_MULTILINE | TXTBIT_READONLY |
                                TXTBIT_USEPASSWORD | TXTBIT_HIDESELECTION | TXTBIT_SAVESELECTION |
