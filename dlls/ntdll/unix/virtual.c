@@ -2735,7 +2735,8 @@ void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info )
 /***********************************************************************
  *           virtual_map_builtin_module
  */
-NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size )
+NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size,
+                                     SECTION_IMAGE_INFORMATION *info, WORD machine, BOOL prefer_native )
 {
     mem_size_t full_size;
     unsigned int sec_flags;
@@ -2753,8 +2754,29 @@ NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size
     *module = NULL;
     *size = 0;
     filename = (WCHAR *)(image_info + 1);
-    status = virtual_map_image( mapping, SECTION_MAP_READ | SECTION_MAP_EXECUTE,
-                                module, size, 0, shared_file, 0, image_info, filename, TRUE );
+
+    if (!(image_info->image_flags & IMAGE_FLAGS_WineBuiltin)) /* ignore non-builtins */
+    {
+        WARN( "%s found in WINEDLLPATH but not a builtin, ignoring\n", debugstr_w(filename) );
+        status = STATUS_DLL_NOT_FOUND;
+    }
+    else if (machine && image_info->machine != machine)
+    {
+        TRACE( "%s is for arch %04x, continuing search\n", debugstr_w(filename), image_info->machine );
+        status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
+    }
+    else if (prefer_native && (image_info->dll_charact & IMAGE_DLLCHARACTERISTICS_PREFER_NATIVE))
+    {
+        TRACE( "%s has prefer-native flag, ignoring builtin\n", debugstr_w(filename) );
+        status = STATUS_IMAGE_ALREADY_LOADED;
+    }
+    else
+    {
+        status = virtual_map_image( mapping, SECTION_MAP_READ | SECTION_MAP_EXECUTE,
+                                    module, size, 0, shared_file, 0, image_info, filename, TRUE );
+        virtual_fill_image_information( image_info, info );
+    }
+
     if (shared_file) NtClose( shared_file );
     free( image_info );
     return status;
