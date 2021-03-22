@@ -3093,12 +3093,12 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
             hr = IPropertyStorage_ReadMultiple(pPropStg, 2, ps, pv);
             if (SUCCEEDED(hr))
             {
-                if (pv[0].vt == VT_LPWSTR && pv[0].u.pwszVal && pv[0].u.pwszVal[0])
+                if (pv[0].vt == VT_LPWSTR && pv[0].pwszVal && pv[0].pwszVal[0])
                 {
                     has_icon = TRUE;
-                    icon_name = extract_icon( pv[0].u.pwszVal, pv[1].u.iVal, NULL, bWait );
+                    icon_name = extract_icon( pv[0].pwszVal, pv[1].iVal, NULL, bWait );
 
-                    WINE_TRACE("URL icon path: %s icon index: %d icon name: %s\n", wine_dbgstr_w(pv[0].u.pwszVal), pv[1].u.iVal, icon_name);
+                    WINE_TRACE("URL icon path: %s icon index: %d icon name: %s\n", wine_dbgstr_w(pv[0].pwszVal), pv[1].iVal, icon_name);
                 }
                 PropVariantClear(&pv[0]);
                 PropVariantClear(&pv[1]);
@@ -3118,7 +3118,7 @@ static BOOL InvokeShellLinkerForURL( IUniformResourceLocatorW *url, LPCWSTR link
             goto cleanup;
         }
         WINE_ERR("failed to extract icon from %s\n",
-                 wine_dbgstr_w( pv[0].u.pwszVal ));
+                 wine_dbgstr_w( pv[0].pwszVal ));
     }
 
     hSem = CreateSemaphoreA( NULL, 1, 1, "winemenubuilder_semaphore");
