@@ -302,14 +302,14 @@ static HRESULT media_event_get_object(IMFMediaEvent *event, REFIID riid, void **
         return hr;
     }
 
-    if (value.vt != VT_UNKNOWN || !value.u.punkVal)
+    if (value.vt != VT_UNKNOWN || !value.punkVal)
     {
         WARN("Unexpected value type %d.\n", value.vt);
         PropVariantClear(&value);
         return E_UNEXPECTED;
     }
 
-    hr = IUnknown_QueryInterface(value.u.punkVal, riid, obj);
+    hr = IUnknown_QueryInterface(value.punkVal, riid, obj);
     PropVariantClear(&value);
     if (FAILED(hr))
     {
@@ -841,7 +841,7 @@ static HRESULT source_reader_media_stream_state_handler(struct source_reader *re
                 case MEStreamTick:
                     value.vt = VT_EMPTY;
                     hr = SUCCEEDED(IMFMediaEvent_GetValue(event, &value)) && value.vt == VT_I8 ? S_OK : E_UNEXPECTED;
-                    timestamp = SUCCEEDED(hr) ? value.u.hVal.QuadPart : 0;
+                    timestamp = SUCCEEDED(hr) ? value.hVal.QuadPart : 0;
                     PropVariantClear(&value);
 
                     source_reader_queue_response(reader, stream, hr, MF_SOURCE_READERF_STREAMTICK, timestamp, NULL);
@@ -1014,7 +1014,7 @@ static HRESULT source_reader_start_source(struct source_reader *reader)
         }
     }
 
-    position.u.hVal.QuadPart = 0;
+    position.hVal.QuadPart = 0;
     if (reader->source_state != SOURCE_STATE_STARTED || selection_changed)
     {
         position.vt = reader->source_state == SOURCE_STATE_STARTED ? VT_EMPTY : VT_I8;
@@ -2155,7 +2155,7 @@ static HRESULT WINAPI src_reader_GetPresentationAttribute(IMFSourceReader *iface
                     return hr;
 
                 value->vt = VT_UI4;
-                value->u.ulVal = flags;
+                value->ulVal = flags;
                 return S_OK;
             }
             else

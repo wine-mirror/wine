@@ -1,7 +1,6 @@
 MODULE    = mfreadwrite.dll
 IMPORTLIB = mfreadwrite
 IMPORTS   = mfuuid uuid mfplat ole32
-EXTRADEFS = -DWINE_NO_NAMELESS_EXTENSION
 
 EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 

@@ -2216,7 +2216,7 @@ static HRESULT attributes_get_item(struct attributes *attributes, const GUID *ke
     attribute = attributes_find_item(attributes, key, NULL);
     if (attribute)
     {
-        if (attribute->value.vt == value->vt && !(value->vt == VT_UNKNOWN && !attribute->value.u.punkVal))
+        if (attribute->value.vt == value->vt && !(value->vt == VT_UNKNOWN && !attribute->value.punkVal))
             hr = PropVariantCopy(value, &attribute->value);
         else
             hr = MF_E_INVALIDTYPE;
@@ -2372,7 +2372,7 @@ HRESULT attributes_GetUINT32(struct attributes *attributes, REFGUID key, UINT32 
     attrval.vt = VT_UI4;
     hr = attributes_get_item(attributes, key, &attrval);
     if (SUCCEEDED(hr))
-        *value = attrval.u.ulVal;
+        *value = attrval.ulVal;
 
     return hr;
 }
@@ -2386,7 +2386,7 @@ HRESULT attributes_GetUINT64(struct attributes *attributes, REFGUID key, UINT64 
     attrval.vt = VT_UI8;
     hr = attributes_get_item(attributes, key, &attrval);
     if (SUCCEEDED(hr))
-        *value = attrval.u.uhVal.QuadPart;
+        *value = attrval.uhVal.QuadPart;
 
     return hr;
 }
@@ -2400,7 +2400,7 @@ HRESULT attributes_GetDouble(struct attributes *attributes, REFGUID key, double 
     attrval.vt = VT_R8;
     hr = attributes_get_item(attributes, key, &attrval);
     if (SUCCEEDED(hr))
-        *value = attrval.u.dblVal;
+        *value = attrval.dblVal;
 
     return hr;
 }
@@ -2416,7 +2416,7 @@ HRESULT attributes_GetGUID(struct attributes *attributes, REFGUID key, GUID *val
     if (attribute)
     {
         if (attribute->value.vt == MF_ATTRIBUTE_GUID)
-            *value = *attribute->value.u.puuid;
+            *value = *attribute->value.puuid;
         else
             hr = MF_E_INVALIDTYPE;
     }
@@ -2439,7 +2439,7 @@ HRESULT attributes_GetStringLength(struct attributes *attributes, REFGUID key, U
     if (attribute)
     {
         if (attribute->value.vt == MF_ATTRIBUTE_STRING)
-            *length = lstrlenW(attribute->value.u.pwszVal);
+            *length = lstrlenW(attribute->value.pwszVal);
         else
             hr = MF_E_INVALIDTYPE;
     }
@@ -2464,7 +2464,7 @@ HRESULT attributes_GetString(struct attributes *attributes, REFGUID key, WCHAR *
     {
         if (attribute->value.vt == MF_ATTRIBUTE_STRING)
         {
-            int len = lstrlenW(attribute->value.u.pwszVal);
+            int len = lstrlenW(attribute->value.pwszVal);
 
             if (length)
                 *length = len;
@@ -2472,7 +2472,7 @@ HRESULT attributes_GetString(struct attributes *attributes, REFGUID key, WCHAR *
             if (size <= len)
                 hr = STRSAFE_E_INSUFFICIENT_BUFFER;
             else
-                memcpy(value, attribute->value.u.pwszVal, (len + 1) * sizeof(WCHAR));
+                memcpy(value, attribute->value.pwszVal, (len + 1) * sizeof(WCHAR));
         }
         else
             hr = MF_E_INVALIDTYPE;
@@ -2495,7 +2495,7 @@ HRESULT attributes_GetAllocatedString(struct attributes *attributes, REFGUID key
     hr = attributes_get_item(attributes, key, &attrval);
     if (SUCCEEDED(hr))
     {
-        *value = attrval.u.pwszVal;
+        *value = attrval.pwszVal;
         *length = lstrlenW(*value);
     }
 
@@ -2513,7 +2513,7 @@ HRESULT attributes_GetBlobSize(struct attributes *attributes, REFGUID key, UINT3
     if (attribute)
     {
         if (attribute->value.vt == MF_ATTRIBUTE_BLOB)
-            *size = attribute->value.u.caub.cElems;
+            *size = attribute->value.caub.cElems;
         else
             hr = MF_E_INVALIDTYPE;
     }
@@ -2537,7 +2537,7 @@ HRESULT attributes_GetBlob(struct attributes *attributes, REFGUID key, UINT8 *bu
     {
         if (attribute->value.vt == MF_ATTRIBUTE_BLOB)
         {
-            UINT32 size = attribute->value.u.caub.cElems;
+            UINT32 size = attribute->value.caub.cElems;
 
             if (bufsize >= size)
                 hr = PropVariantToBuffer(&attribute->value, buf, size);
@@ -2567,8 +2567,8 @@ HRESULT attributes_GetAllocatedBlob(struct attributes *attributes, REFGUID key, 
     hr = attributes_get_item(attributes, key, &attrval);
     if (SUCCEEDED(hr))
     {
-        *buf = attrval.u.caub.pElems;
-        *size = attrval.u.caub.cElems;
+        *buf = attrval.caub.pElems;
+        *size = attrval.caub.cElems;
     }
 
     return hr;
@@ -2583,7 +2583,7 @@ HRESULT attributes_GetUnknown(struct attributes *attributes, REFGUID key, REFIID
     attrval.vt = VT_UNKNOWN;
     hr = attributes_get_item(attributes, key, &attrval);
     if (SUCCEEDED(hr))
-        hr = IUnknown_QueryInterface(attrval.u.punkVal, riid, out);
+        hr = IUnknown_QueryInterface(attrval.punkVal, riid, out);
     PropVariantClear(&attrval);
     return hr;
 }
@@ -2683,7 +2683,7 @@ HRESULT attributes_SetUINT32(struct attributes *attributes, REFGUID key, UINT32 
     PROPVARIANT attrval;
 
     attrval.vt = VT_UI4;
-    attrval.u.ulVal = value;
+    attrval.ulVal = value;
     return attributes_set_item(attributes, key, &attrval);
 }
 
@@ -2692,7 +2692,7 @@ HRESULT attributes_SetUINT64(struct attributes *attributes, REFGUID key, UINT64 
     PROPVARIANT attrval;
 
     attrval.vt = VT_UI8;
-    attrval.u.uhVal.QuadPart = value;
+    attrval.uhVal.QuadPart = value;
     return attributes_set_item(attributes, key, &attrval);
 }
 
@@ -2701,7 +2701,7 @@ HRESULT attributes_SetDouble(struct attributes *attributes, REFGUID key, double 
     PROPVARIANT attrval;
 
     attrval.vt = VT_R8;
-    attrval.u.dblVal = value;
+    attrval.dblVal = value;
     return attributes_set_item(attributes, key, &attrval);
 }
 
@@ -2710,7 +2710,7 @@ HRESULT attributes_SetGUID(struct attributes *attributes, REFGUID key, REFGUID v
     PROPVARIANT attrval;
 
     attrval.vt = VT_CLSID;
-    attrval.u.puuid = (CLSID *)value;
+    attrval.puuid = (CLSID *)value;
     return attributes_set_item(attributes, key, &attrval);
 }
 
@@ -2719,7 +2719,7 @@ HRESULT attributes_SetString(struct attributes *attributes, REFGUID key, const W
     PROPVARIANT attrval;
 
     attrval.vt = VT_LPWSTR;
-    attrval.u.pwszVal = (WCHAR *)value;
+    attrval.pwszVal = (WCHAR *)value;
     return attributes_set_item(attributes, key, &attrval);
 }
 
@@ -2728,8 +2728,8 @@ HRESULT attributes_SetBlob(struct attributes *attributes, REFGUID key, const UIN
     PROPVARIANT attrval;
 
     attrval.vt = VT_VECTOR | VT_UI1;
-    attrval.u.caub.cElems = size;
-    attrval.u.caub.pElems = (UINT8 *)buf;
+    attrval.caub.cElems = size;
+    attrval.caub.pElems = (UINT8 *)buf;
     return attributes_set_item(attributes, key, &attrval);
 }
 
@@ -2738,7 +2738,7 @@ HRESULT attributes_SetUnknown(struct attributes *attributes, REFGUID key, IUnkno
     PROPVARIANT attrval;
 
     attrval.vt = VT_UNKNOWN;
-    attrval.u.punkVal = unknown;
+    attrval.punkVal = unknown;
     return attributes_set_item(attributes, key, &attrval);
 }
 
@@ -3340,22 +3340,22 @@ HRESULT WINAPI MFGetAttributesAsBlob(IMFAttributes *attributes, UINT8 *buffer, U
         {
             case MF_ATTRIBUTE_UINT32:
             case MF_ATTRIBUTE_UINT64:
-                item.u.i64 = value.u.uhVal.QuadPart;
+                item.u.i64 = value.uhVal.QuadPart;
                 break;
             case MF_ATTRIBUTE_DOUBLE:
-                item.u.f = value.u.dblVal;
+                item.u.f = value.dblVal;
                 break;
             case MF_ATTRIBUTE_GUID:
-                item.u.subheader.size = sizeof(*value.u.puuid);
-                data = value.u.puuid;
+                item.u.subheader.size = sizeof(*value.puuid);
+                data = value.puuid;
                 break;
             case MF_ATTRIBUTE_STRING:
-                item.u.subheader.size = (lstrlenW(value.u.pwszVal) + 1) * sizeof(WCHAR);
-                data = value.u.pwszVal;
+                item.u.subheader.size = (lstrlenW(value.pwszVal) + 1) * sizeof(WCHAR);
+                data = value.pwszVal;
                 break;
             case MF_ATTRIBUTE_BLOB:
-                item.u.subheader.size = value.u.caub.cElems;
-                data = value.u.caub.pElems;
+                item.u.subheader.size = value.caub.cElems;
+                data = value.caub.pElems;
                 break;
             case MF_ATTRIBUTE_IUNKNOWN:
                 break;
@@ -7236,7 +7236,7 @@ static HRESULT WINAPI eventqueue_QueueEventParamUnk(IMFMediaEventQueue *iface, M
     TRACE("%p, %s, %s, %#x, %p.\n", iface, debugstr_eventid(event_type), debugstr_guid(extended_type), status, unk);
 
     value.vt = VT_UNKNOWN;
-    value.u.punkVal = unk;
+    value.punkVal = unk;
 
     if (FAILED(hr = MFCreateMediaEvent(event_type, extended_type, status, &value, &event)))
         return hr;
