@@ -321,28 +321,32 @@ static HRESULT STDMETHODCALLTYPE gamepad_statics_add_GamepadAdded(
     IGamepadStatics *iface, IEventHandler_Gamepad *value, EventRegistrationToken* token)
 {
     FIXME("iface %p, value %p, token %p stub!\n", iface, value, token);
-    return E_NOTIMPL;
+    if (!value) return E_INVALIDARG;
+    token->value = 0;
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE gamepad_statics_remove_GamepadAdded(
     IGamepadStatics *iface, EventRegistrationToken token)
 {
     FIXME("iface %p, token %#I64x stub!\n", iface, token.value);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE gamepad_statics_add_GamepadRemoved(
     IGamepadStatics *iface, IEventHandler_Gamepad *value, EventRegistrationToken* token)
 {
     FIXME("iface %p, value %p, token %p stub!\n", iface, value, token);
-    return E_NOTIMPL;
+    if (!value) return E_INVALIDARG;
+    token->value = 0;
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE gamepad_statics_remove_GamepadRemoved(
     IGamepadStatics *iface, EventRegistrationToken token)
 {
     FIXME("iface %p, token %#I64x stub!\n", iface, token.value);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE gamepad_statics_get_Gamepads(

@@ -186,19 +186,22 @@ static void test_Gamepad(void)
 
     token.value = 0xdeadbeef;
     hr = IGamepadStatics_add_GamepadAdded(gamepad_statics, &gamepad_event_handler.IEventHandler_Gamepad_iface, &token);
-    todo_wine ok(hr == S_OK, "IGamepadStatics_add_GamepadAdded failed, hr %#x\n", hr);
-    todo_wine ok(token.value != 0xdeadbeef, "IGamepadStatics_add_GamepadAdded returned token %#I64x\n", token.value);
+    ok(hr == S_OK, "IGamepadStatics_add_GamepadAdded failed, hr %#x\n", hr);
+    ok(token.value != 0xdeadbeef, "IGamepadStatics_add_GamepadAdded returned token %#I64x\n", token.value);
 
     hr = IGamepadStatics_remove_GamepadAdded(gamepad_statics, token);
-    todo_wine ok(hr == S_OK, "IGamepadStatics_add_GamepadAdded failed, hr %#x\n", hr);
+    ok(hr == S_OK, "IGamepadStatics_add_GamepadAdded failed, hr %#x\n", hr);
 
     token.value = 0xdeadbeef;
     IGamepadStatics_add_GamepadRemoved(gamepad_statics, &gamepad_event_handler.IEventHandler_Gamepad_iface, &token);
-    todo_wine ok(hr == S_OK, "IGamepadStatics_add_GamepadRemoved failed, hr %#x\n", hr);
-    todo_wine ok(token.value != 0xdeadbeef, "IGamepadStatics_add_GamepadRemoved returned token %#I64x\n", token.value);
+    ok(hr == S_OK, "IGamepadStatics_add_GamepadRemoved failed, hr %#x\n", hr);
+    ok(token.value != 0xdeadbeef, "IGamepadStatics_add_GamepadRemoved returned token %#I64x\n", token.value);
 
     hr = IGamepadStatics_remove_GamepadRemoved(gamepad_statics, token);
-    todo_wine ok(hr == S_OK, "IGamepadStatics_add_GamepadAdded failed, hr %#x\n", hr);
+    ok(hr == S_OK, "IGamepadStatics_add_GamepadAdded failed, hr %#x\n", hr);
+
+    hr = IGamepadStatics_add_GamepadAdded(gamepad_statics, NULL, &token);
+    ok(hr == E_INVALIDARG, "IGamepadStatics_add_GamepadAdded failed, hr %#x\n", hr);
 
     IGamepadStatics_Release(gamepad_statics);
 
