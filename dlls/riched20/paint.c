@@ -1033,6 +1033,14 @@ static void draw_paragraph( ME_Context *c, ME_Paragraph *para )
     SetTextAlign( c->hDC, align );
 }
 
+static void enable_show_scrollbar( ME_TextEditor *editor, INT bar, BOOL enable )
+{
+    if (enable || editor->scrollbars & ES_DISABLENOSCROLL)
+        ITextHost_TxEnableScrollBar( editor->texthost, bar, enable ? 0 : ESB_DISABLE_BOTH );
+    if (!(editor->scrollbars & ES_DISABLENOSCROLL))
+        ITextHost_TxShowScrollBar( editor->texthost, bar, enable );
+}
+
 static void set_scroll_range_pos( ITextHost *host, INT bar, SCROLLINFO *info, BOOL set_range )
 {
     LONG max_pos = info->nMax, pos = info->nPos;
@@ -1145,6 +1153,12 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     return;
   }
 
+  if (editor->scrollbars & WS_HSCROLL && !enable ^ !editor->horz_sb_enabled)
+  {
+    editor->horz_sb_enabled = enable;
+    enable_show_scrollbar( editor, SB_HORZ, enable );
+  }
+
   if (editor->horz_si.nMax != editor->nTotalWidth || editor->horz_si.nPage != editor->sizeWindow.cx)
   {
     editor->horz_si.nMax = editor->nTotalWidth;
@@ -1152,15 +1166,6 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     TRACE( "min = %d max = %d page = %d\n", editor->horz_si.nMin, editor->horz_si.nMax, editor->horz_si.nPage );
     if ((enable || editor->horz_sb_enabled) && editor->scrollbars & WS_HSCROLL)
       set_scroll_range_pos( editor->texthost, SB_HORZ, &editor->horz_si, TRUE );
-  }
-
-  if (editor->scrollbars & WS_HSCROLL && !enable ^ !editor->horz_sb_enabled)
-  {
-    if (enable || editor->scrollbars & ES_DISABLENOSCROLL)
-      ITextHost_TxEnableScrollBar( editor->texthost, SB_HORZ, enable ? 0 : ESB_DISABLE_BOTH );
-    if (!(editor->scrollbars & ES_DISABLENOSCROLL))
-      ITextHost_TxShowScrollBar( editor->texthost, SB_HORZ, enable );
-    editor->horz_sb_enabled = enable;
   }
 
   /* Update vertical scrollbar */
@@ -1173,6 +1178,12 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     return;
   }
 
+  if (editor->scrollbars & WS_VSCROLL && !enable ^ !editor->vert_sb_enabled)
+  {
+    editor->vert_sb_enabled = enable;
+    enable_show_scrollbar( editor, SB_VERT, enable );
+  }
+
   if (editor->vert_si.nMax != editor->nTotalLength || editor->vert_si.nPage != editor->sizeWindow.cy)
   {
     editor->vert_si.nMax = editor->nTotalLength;
@@ -1180,15 +1191,6 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     TRACE( "min = %d max = %d page = %d\n", editor->vert_si.nMin, editor->vert_si.nMax, editor->vert_si.nPage );
     if ((enable || editor->vert_sb_enabled) && editor->scrollbars & WS_VSCROLL)
       set_scroll_range_pos( editor->texthost, SB_VERT, &editor->vert_si, TRUE );
-  }
-
-  if (editor->scrollbars & WS_VSCROLL && !enable ^ !editor->vert_sb_enabled)
-  {
-    if (enable || editor->scrollbars & ES_DISABLENOSCROLL)
-      ITextHost_TxEnableScrollBar( editor->texthost, SB_VERT, enable ? 0 : ESB_DISABLE_BOTH );
-    if (!(editor->scrollbars & ES_DISABLENOSCROLL))
-      ITextHost_TxShowScrollBar( editor->texthost, SB_VERT, enable );
-    editor->vert_sb_enabled = enable;
   }
 }
 
