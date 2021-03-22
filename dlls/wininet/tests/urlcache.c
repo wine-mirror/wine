@@ -1176,8 +1176,8 @@ static void test_GetUrlCacheConfigInfo(void)
             get_cache_path(td[i].flags, path, path_win8);
 
             ok(info.dwStructSize == td[i].dwStructSize, "got %u\n", info.dwStructSize);
-            ok(!lstrcmpA(info.u.s.CachePath, path) || !lstrcmpA(info.u.s.CachePath, path_win8),
-               "%d: expected %s or %s, got %s\n", i, path, path_win8, info.u.s.CachePath);
+            ok(!lstrcmpA(info.CachePath, path) || !lstrcmpA(info.CachePath, path_win8),
+               "%d: expected %s or %s, got %s\n", i, path, path_win8, info.CachePath);
         }
     }
 }
