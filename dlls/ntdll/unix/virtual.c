@@ -2531,8 +2531,11 @@ static NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsigned sh
     if (image_info)
     {
         filename = (WCHAR *)(image_info + 1);
-        res = virtual_map_image( handle, access, addr_ptr, size_ptr, zero_bits_64, shared_file,
-                                 alloc_type, image_info, filename, FALSE );
+        /* check if we can replace that mapping with the builtin */
+        res = load_builtin( image_info, filename, addr_ptr, size_ptr );
+        if (res == STATUS_IMAGE_ALREADY_LOADED)
+            res = virtual_map_image( handle, access, addr_ptr, size_ptr, zero_bits_64, shared_file,
+                                     alloc_type, image_info, filename, FALSE );
         if (shared_file) NtClose( shared_file );
         free( image_info );
         return res;

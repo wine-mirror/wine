@@ -1421,6 +1421,74 @@ static NTSTATUS CDECL load_builtin_dll( UNICODE_STRING *nt_name, void **module,
 }
 
 
+/***********************************************************************
+ *           load_builtin
+ *
+ * Load the builtin dll if specified by load order configuration.
+ * Return STATUS_IMAGE_ALREADY_LOADED if we should keep the native one that we have found.
+ */
+NTSTATUS load_builtin( const pe_image_info_t *image_info, const WCHAR *filename,
+                       void **module, SIZE_T *size )
+{
+    NTSTATUS status;
+    UNICODE_STRING nt_name;
+    SECTION_IMAGE_INFORMATION info;
+    enum loadorder loadorder;
+    const WCHAR *app_name = NULL;
+
+    if (NtCurrentTeb()->Peb->ImageBaseAddress)
+        app_name = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
+
+    init_unicode_string( &nt_name, filename );
+    loadorder = get_load_order( app_name, &nt_name );
+
+    if (image_info->image_flags & IMAGE_FLAGS_WineBuiltin)
+    {
+        switch (loadorder)
+        {
+        case LO_NATIVE_BUILTIN:
+        case LO_BUILTIN:
+        case LO_BUILTIN_NATIVE:
+        case LO_DEFAULT:
+            status = find_builtin_dll( &nt_name, module, size, &info, FALSE );
+            if (status == STATUS_DLL_NOT_FOUND) return STATUS_IMAGE_ALREADY_LOADED;
+            return status;
+        default:
+            return STATUS_DLL_NOT_FOUND;
+        }
+    }
+    if (image_info->image_flags & IMAGE_FLAGS_WineFakeDll)
+    {
+        TRACE( "%s is a fake Wine dll\n", debugstr_us(&nt_name) );
+        switch (loadorder)
+        {
+        case LO_NATIVE_BUILTIN:
+        case LO_BUILTIN:
+        case LO_BUILTIN_NATIVE:
+        case LO_DEFAULT:
+            return find_builtin_dll( &nt_name, module, size, &info, FALSE );
+        default:
+            return STATUS_DLL_NOT_FOUND;
+        }
+    }
+    switch (loadorder)
+    {
+    case LO_NATIVE:
+    case LO_NATIVE_BUILTIN:
+        return STATUS_IMAGE_ALREADY_LOADED;
+    case LO_BUILTIN:
+        return find_builtin_dll( &nt_name, module, size, &info, FALSE );
+    case LO_BUILTIN_NATIVE:
+    case LO_DEFAULT:
+        status = find_builtin_dll( &nt_name, module, size, &info, (loadorder == LO_DEFAULT) );
+        if (status == STATUS_DLL_NOT_FOUND) return STATUS_IMAGE_ALREADY_LOADED;
+        return status;
+    default:
+        return STATUS_DLL_NOT_FOUND;
+    }
+}
+
+
 #ifdef __FreeBSD__
 /* The PT_LOAD segments are sorted in increasing order, and the first
  * starts at the beginning of the ELF file. By parsing the file, we can
