@@ -170,6 +170,126 @@ static struct gamepad_vector gamepads =
     0
 };
 
+struct raw_game_controller_vector
+{
+    IVectorView_RawGameController IVectorView_RawGameController_iface;
+    LONG ref;
+};
+
+static inline struct raw_game_controller_vector *impl_from_IVectorView_RawGameController(IVectorView_RawGameController *iface)
+{
+    return CONTAINING_RECORD(iface, struct raw_game_controller_vector, IVectorView_RawGameController_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE vector_view_raw_game_controller_QueryInterface(
+        IVectorView_RawGameController *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p stub!\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IInspectable) ||
+        IsEqualGUID(iid, &IID_IAgileObject) ||
+        IsEqualGUID(iid, &IID_IVectorView_RawGameController))
+    {
+        IUnknown_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE vector_view_raw_game_controller_AddRef(
+        IVectorView_RawGameController *iface)
+{
+    struct raw_game_controller_vector *impl = impl_from_IVectorView_RawGameController(iface);
+    ULONG ref = InterlockedIncrement(&impl->ref);
+    TRACE("iface %p, ref %u.\n", iface, ref);
+    return ref;
+}
+
+static ULONG STDMETHODCALLTYPE vector_view_raw_game_controller_Release(
+        IVectorView_RawGameController *iface)
+{
+    struct raw_game_controller_vector *impl = impl_from_IVectorView_RawGameController(iface);
+    ULONG ref = InterlockedDecrement(&impl->ref);
+    TRACE("iface %p, ref %u.\n", iface, ref);
+    return ref;
+}
+
+static HRESULT STDMETHODCALLTYPE vector_view_raw_game_controller_GetIids(
+        IVectorView_RawGameController *iface, ULONG *iid_count, IID **iids)
+{
+    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE vector_view_raw_game_controller_GetRuntimeClassName(
+        IVectorView_RawGameController *iface, HSTRING *class_name)
+{
+    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE vector_view_raw_game_controller_GetTrustLevel(
+        IVectorView_RawGameController *iface, TrustLevel *trust_level)
+{
+    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE vector_view_raw_game_controller_GetAt(
+    IVectorView_RawGameController *iface, ULONG index, IRawGameController **value)
+{
+    FIXME("iface %p, index %#x, value %p stub!\n", iface, index, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE vector_view_raw_game_controller_get_Size(
+    IVectorView_RawGameController *iface, ULONG *value)
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE vector_view_raw_game_controller_IndexOf(
+    IVectorView_RawGameController *iface, IRawGameController *element, ULONG *index, BOOLEAN *found)
+{
+    FIXME("iface %p, element %p, index %p, found %p stub!\n", iface, element, index, found);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE vector_view_raw_game_controller_GetMany(
+    IVectorView_RawGameController *iface, ULONG start_index, IRawGameController **items, UINT *value)
+{
+    FIXME("iface %p, start_index %#x, items %p, value %p stub!\n", iface, start_index, items, value);
+    return E_NOTIMPL;
+}
+
+static const struct IVectorView_RawGameControllerVtbl vector_view_raw_game_controller_vtbl =
+{
+    vector_view_raw_game_controller_QueryInterface,
+    vector_view_raw_game_controller_AddRef,
+    vector_view_raw_game_controller_Release,
+    /* IInspectable methods */
+    vector_view_raw_game_controller_GetIids,
+    vector_view_raw_game_controller_GetRuntimeClassName,
+    vector_view_raw_game_controller_GetTrustLevel,
+    /* IVectorView<RawGameController> methods */
+    vector_view_raw_game_controller_GetAt,
+    vector_view_raw_game_controller_get_Size,
+    vector_view_raw_game_controller_IndexOf,
+    vector_view_raw_game_controller_GetMany,
+};
+
+static struct raw_game_controller_vector raw_game_controllers =
+{
+    {&vector_view_raw_game_controller_vtbl},
+    0
+};
+
 struct windows_gaming_input
 {
     IActivationFactory IActivationFactory_iface;
@@ -461,8 +581,10 @@ static HRESULT STDMETHODCALLTYPE raw_game_controller_statics_remove_RawGameContr
 static HRESULT STDMETHODCALLTYPE raw_game_controller_statics_get_RawGameControllers(
     IRawGameControllerStatics *iface, IVectorView_RawGameController **value)
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
-    return E_NOTIMPL;
+    TRACE("iface %p, value %p.\n", iface, value);
+    *value = &raw_game_controllers.IVectorView_RawGameController_iface;
+    IVectorView_RawGameController_AddRef(*value);
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE raw_game_controller_statics_FromGameController(
