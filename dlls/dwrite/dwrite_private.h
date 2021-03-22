@@ -457,14 +457,43 @@ struct dwrite_glyphbitmap
     DWRITE_MATRIX *m;
 };
 
+enum dwrite_outline_tags
+{
+    OUTLINE_BEGIN_FIGURE,
+    OUTLINE_END_FIGURE,
+    OUTLINE_LINE,
+    OUTLINE_BEZIER,
+};
+
+struct dwrite_outline
+{
+    struct
+    {
+        unsigned char *values;
+        size_t count;
+        size_t size;
+    } tags;
+
+    struct
+    {
+        D2D1_POINT_2F *values;
+        size_t count;
+        size_t size;
+    } points;
+};
+
+extern int dwrite_outline_push_tag(struct dwrite_outline *outline, unsigned char tag) DECLSPEC_HIDDEN;
+extern int dwrite_outline_push_points(struct dwrite_outline *outline, const D2D1_POINT_2F *points,
+        unsigned int count) DECLSPEC_HIDDEN;
+
 extern BOOL init_freetype(void) DECLSPEC_HIDDEN;
 extern void release_freetype(void) DECLSPEC_HIDDEN;
 
 extern HRESULT freetype_get_design_glyph_metrics(struct dwrite_fontface *fontface, UINT16 glyph,
         DWRITE_GLYPH_METRICS *metrics) DECLSPEC_HIDDEN;
 extern void freetype_notify_cacheremove(IDWriteFontFace5 *fontface) DECLSPEC_HIDDEN;
-extern HRESULT freetype_get_glyph_outline(IDWriteFontFace5 *fontface, float emSize, UINT16 glyph,
-        D2D1_POINT_2F origin, IDWriteGeometrySink *sink) DECLSPEC_HIDDEN;
+extern int freetype_get_glyph_outline(IDWriteFontFace5 *fontface, float emSize, UINT16 glyph,
+        struct dwrite_outline *outline) DECLSPEC_HIDDEN;
 extern UINT16 freetype_get_glyphcount(IDWriteFontFace5 *fontface) DECLSPEC_HIDDEN;
 extern void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap_desc) DECLSPEC_HIDDEN;
 extern BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap*) DECLSPEC_HIDDEN;

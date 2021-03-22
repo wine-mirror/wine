@@ -296,40 +296,46 @@ HRESULT freetype_get_design_glyph_metrics(struct dwrite_fontface *fontface, UINT
     return S_OK;
 }
 
-struct decompose_context {
-    IDWriteGeometrySink *sink;
-    D2D1_POINT_2F offset;
+struct decompose_context
+{
+    struct dwrite_outline *outline;
     BOOL figure_started;
     BOOL move_to;     /* last call was 'move_to' */
     FT_Vector origin; /* 'pen' position from last call */
 };
 
-static inline void ft_vector_to_d2d_point(const FT_Vector *v, D2D1_POINT_2F offset, D2D1_POINT_2F *p)
+static inline void ft_vector_to_d2d_point(const FT_Vector *v, D2D1_POINT_2F *p)
 {
-    p->x = (v->x / 64.0f) + offset.x;
-    p->y = (v->y / 64.0f) + offset.y;
+    p->x = v->x / 64.0f;
+    p->y = v->y / 64.0f;
 }
 
-static void decompose_beginfigure(struct decompose_context *ctxt)
+static int decompose_beginfigure(struct decompose_context *ctxt)
 {
     D2D1_POINT_2F point;
+    int ret;
 
     if (!ctxt->move_to)
-        return;
+        return 0;
 
-    ft_vector_to_d2d_point(&ctxt->origin, ctxt->offset, &point);
-    ID2D1SimplifiedGeometrySink_BeginFigure(ctxt->sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    ft_vector_to_d2d_point(&ctxt->origin, &point);
+    if ((ret = dwrite_outline_push_tag(ctxt->outline, OUTLINE_BEGIN_FIGURE))) return ret;
+    if ((ret = dwrite_outline_push_points(ctxt->outline, &point, 1))) return ret;
 
     ctxt->figure_started = TRUE;
     ctxt->move_to = FALSE;
+
+    return 0;
 }
 
 static int decompose_move_to(const FT_Vector *to, void *user)
 {
-    struct decompose_context *ctxt = (struct decompose_context*)user;
+    struct decompose_context *ctxt = (struct decompose_context *)user;
+    int ret;
 
-    if (ctxt->figure_started) {
-        ID2D1SimplifiedGeometrySink_EndFigure(ctxt->sink, D2D1_FIGURE_END_CLOSED);
+    if (ctxt->figure_started)
+    {
+        if ((ret = dwrite_outline_push_tag(ctxt->outline, OUTLINE_END_FIGURE))) return ret;
         ctxt->figure_started = FALSE;
     }
 
@@ -340,17 +346,19 @@ static int decompose_move_to(const FT_Vector *to, void *user)
 
 static int decompose_line_to(const FT_Vector *to, void *user)
 {
-    struct decompose_context *ctxt = (struct decompose_context*)user;
+    struct decompose_context *ctxt = (struct decompose_context *)user;
     D2D1_POINT_2F point;
+    int ret;
 
     /* Special case for empty contours, in a way freetype returns them. */
     if (ctxt->move_to && !memcmp(to, &ctxt->origin, sizeof(*to)))
         return 0;
 
-    decompose_beginfigure(ctxt);
+    ft_vector_to_d2d_point(to, &point);
 
-    ft_vector_to_d2d_point(to, ctxt->offset, &point);
-    ID2D1SimplifiedGeometrySink_AddLines(ctxt->sink, &point, 1);
+    if ((ret = decompose_beginfigure(ctxt))) return ret;
+    if ((ret = dwrite_outline_push_points(ctxt->outline, &point, 1))) return ret;
+    if ((ret = dwrite_outline_push_tag(ctxt->outline, OUTLINE_LINE))) return ret;
 
     ctxt->origin = *to;
     return 0;
@@ -358,11 +366,13 @@ static int decompose_line_to(const FT_Vector *to, void *user)
 
 static int decompose_conic_to(const FT_Vector *control, const FT_Vector *to, void *user)
 {
-    struct decompose_context *ctxt = (struct decompose_context*)user;
+    struct decompose_context *ctxt = (struct decompose_context *)user;
     D2D1_POINT_2F points[3];
     FT_Vector cubic[3];
+    int ret;
 
-    decompose_beginfigure(ctxt);
+    if ((ret = decompose_beginfigure(ctxt)))
+        return ret;
 
     /* convert from quadratic to cubic */
 
@@ -394,10 +404,11 @@ static int decompose_conic_to(const FT_Vector *control, const FT_Vector *to, voi
     cubic[1].y += (to->y + 1) / 3;
     cubic[2] = *to;
 
-    ft_vector_to_d2d_point(cubic, ctxt->offset, points);
-    ft_vector_to_d2d_point(cubic + 1, ctxt->offset, points + 1);
-    ft_vector_to_d2d_point(cubic + 2, ctxt->offset, points + 2);
-    ID2D1SimplifiedGeometrySink_AddBeziers(ctxt->sink, (D2D1_BEZIER_SEGMENT*)points, 1);
+    ft_vector_to_d2d_point(cubic, points);
+    ft_vector_to_d2d_point(cubic + 1, points + 1);
+    ft_vector_to_d2d_point(cubic + 2, points + 2);
+    if ((ret = dwrite_outline_push_points(ctxt->outline, points, 3))) return ret;
+    if ((ret = dwrite_outline_push_tag(ctxt->outline, OUTLINE_BEZIER))) return ret;
     ctxt->origin = *to;
     return 0;
 }
@@ -405,22 +416,28 @@ static int decompose_conic_to(const FT_Vector *control, const FT_Vector *to, voi
 static int decompose_cubic_to(const FT_Vector *control1, const FT_Vector *control2,
     const FT_Vector *to, void *user)
 {
-    struct decompose_context *ctxt = (struct decompose_context*)user;
+    struct decompose_context *ctxt = (struct decompose_context *)user;
     D2D1_POINT_2F points[3];
+    int ret;
 
-    decompose_beginfigure(ctxt);
+    if ((ret = decompose_beginfigure(ctxt)))
+        return ret;
 
-    ft_vector_to_d2d_point(control1, ctxt->offset, points);
-    ft_vector_to_d2d_point(control2, ctxt->offset, points + 1);
-    ft_vector_to_d2d_point(to, ctxt->offset, points + 2);
-    ID2D1SimplifiedGeometrySink_AddBeziers(ctxt->sink, (D2D1_BEZIER_SEGMENT*)points, 1);
+    ft_vector_to_d2d_point(control1, points);
+    ft_vector_to_d2d_point(control2, points + 1);
+    ft_vector_to_d2d_point(to, points + 2);
     ctxt->origin = *to;
+
+    if ((ret = dwrite_outline_push_points(ctxt->outline, points, 3))) return ret;
+    if ((ret = dwrite_outline_push_tag(ctxt->outline, OUTLINE_BEZIER))) return ret;
+
     return 0;
 }
 
-static void decompose_outline(FT_Outline *outline, D2D1_POINT_2F offset, IDWriteGeometrySink *sink)
+static int decompose_outline(FT_Outline *ft_outline, struct dwrite_outline *outline)
 {
-    static const FT_Outline_Funcs decompose_funcs = {
+    static const FT_Outline_Funcs decompose_funcs =
+    {
         decompose_move_to,
         decompose_line_to,
         decompose_conic_to,
@@ -428,19 +445,17 @@ static void decompose_outline(FT_Outline *outline, D2D1_POINT_2F offset, IDWrite
         0,
         0
     };
-    struct decompose_context context;
+    struct decompose_context context = { 0 };
+    int ret;
 
-    context.sink = sink;
-    context.offset = offset;
-    context.figure_started = FALSE;
-    context.move_to = FALSE;
-    context.origin.x = 0;
-    context.origin.y = 0;
+    context.outline = outline;
 
-    pFT_Outline_Decompose(outline, &decompose_funcs, &context);
+    ret = pFT_Outline_Decompose(ft_outline, &decompose_funcs, &context);
 
-    if (context.figure_started)
-        ID2D1SimplifiedGeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+    if (!ret && context.figure_started)
+        ret = dwrite_outline_push_tag(outline, OUTLINE_END_FIGURE);
+
+    return ret;
 }
 
 static void embolden_glyph_outline(FT_Outline *outline, FLOAT emsize)
@@ -464,13 +479,13 @@ static void embolden_glyph(FT_Glyph glyph, FLOAT emsize)
     embolden_glyph_outline(&outline_glyph->outline, emsize);
 }
 
-HRESULT freetype_get_glyph_outline(IDWriteFontFace5 *fontface, float emSize, UINT16 glyph,
-        D2D1_POINT_2F origin, IDWriteGeometrySink *sink)
+int freetype_get_glyph_outline(IDWriteFontFace5 *fontface, float emSize, UINT16 glyph,
+        struct dwrite_outline *outline)
 {
     FTC_ScalerRec scaler;
     USHORT simulations;
-    HRESULT hr = S_OK;
     FT_Size size;
+    int ret;
 
     simulations = IDWriteFontFace5_GetSimulations(fontface);
 
@@ -482,31 +497,29 @@ HRESULT freetype_get_glyph_outline(IDWriteFontFace5 *fontface, float emSize, UIN
     scaler.y_res = 0;
 
     EnterCriticalSection(&freetype_cs);
-    if (pFTC_Manager_LookupSize(cache_manager, &scaler, &size) == 0)
+    if (!(ret = pFTC_Manager_LookupSize(cache_manager, &scaler, &size)))
     {
         if (pFT_Load_Glyph(size->face, glyph, FT_LOAD_NO_BITMAP) == 0)
         {
-            FT_Outline *outline = &size->face->glyph->outline;
+            FT_Outline *ft_outline = &size->face->glyph->outline;
             FT_Matrix m;
 
             if (simulations & DWRITE_FONT_SIMULATIONS_BOLD)
-                embolden_glyph_outline(outline, emSize);
+                embolden_glyph_outline(ft_outline, emSize);
 
             m.xx = 1 << 16;
             m.xy = simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE ? (1 << 16) / 3 : 0;
             m.yx = 0;
             m.yy = -(1 << 16); /* flip Y axis */
 
-            pFT_Outline_Transform(outline, &m);
+            pFT_Outline_Transform(ft_outline, &m);
 
-            decompose_outline(outline, origin, sink);
+            ret = decompose_outline(ft_outline, outline);
         }
     }
-    else
-        hr = E_FAIL;
     LeaveCriticalSection(&freetype_cs);
 
-    return hr;
+    return ret;
 }
 
 UINT16 freetype_get_glyphcount(IDWriteFontFace5 *fontface)
@@ -797,10 +810,10 @@ HRESULT freetype_get_design_glyph_metrics(struct dwrite_fontface *fontface, UINT
     return E_NOTIMPL;
 }
 
-HRESULT freetype_get_glyph_outline(IDWriteFontFace5 *fontface, float emSize, UINT16 glyph,
-        D2D1_POINT_2F origin, IDWriteGeometrySink *sink)
+int freetype_get_glyph_outline(IDWriteFontFace5 *fontface, float emSize, UINT16 glyph,
+        struct dwrite_outline *outline)
 {
-    return E_NOTIMPL;
+    return 1;
 }
 
 UINT16 freetype_get_glyphcount(IDWriteFontFace5 *fontface)

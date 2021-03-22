@@ -823,13 +823,50 @@ static void WINAPI dwritefontface_ReleaseFontTable(IDWriteFontFace5 *iface, void
     IDWriteFontFileStream_ReleaseFileFragment(fontface->stream, table_context);
 }
 
+int dwrite_outline_push_tag(struct dwrite_outline *outline, unsigned char tag)
+{
+    if (!dwrite_array_reserve((void **)&outline->tags.values, &outline->tags.size, outline->tags.count + 1,
+            sizeof(*outline->tags.values)))
+    {
+        return 1;
+    }
+
+    outline->tags.values[outline->tags.count++] = tag;
+
+    return 0;
+}
+
+int dwrite_outline_push_points(struct dwrite_outline *outline, const D2D1_POINT_2F *points, unsigned int count)
+{
+    if (!dwrite_array_reserve((void **)&outline->points.values, &outline->points.size, outline->points.count + count,
+            sizeof(*outline->points.values)))
+    {
+        return 1;
+    }
+
+    memcpy(&outline->points.values[outline->points.count], points, sizeof(*points) * count);
+    outline->points.count += count;
+
+    return 0;
+}
+
+static void apply_outline_point_offset(const D2D1_POINT_2F *src, const D2D1_POINT_2F *offset,
+        D2D1_POINT_2F *dst)
+{
+    dst->x = src->x + offset->x;
+    dst->y = src->y + offset->y;
+}
+
 static HRESULT WINAPI dwritefontface_GetGlyphRunOutline(IDWriteFontFace5 *iface, FLOAT emSize,
     UINT16 const *glyphs, FLOAT const* advances, DWRITE_GLYPH_OFFSET const *offsets,
     UINT32 count, BOOL is_sideways, BOOL is_rtl, IDWriteGeometrySink *sink)
 {
     D2D1_POINT_2F *origins, baseline_origin = { 0 };
+    struct dwrite_outline outline = {{ 0 }};
+    D2D1_BEZIER_SEGMENT segment;
+    D2D1_POINT_2F point;
     DWRITE_GLYPH_RUN run;
-    unsigned int i;
+    unsigned int i, j, p;
     HRESULT hr;
 
     TRACE("%p, %.8e, %p, %p, %p, %u, %d, %d, %p.\n", iface, emSize, glyphs, advances, offsets,
@@ -863,10 +900,40 @@ static HRESULT WINAPI dwritefontface_GetGlyphRunOutline(IDWriteFontFace5 *iface,
 
     for (i = 0; i < count; ++i)
     {
-        if (FAILED(hr = freetype_get_glyph_outline(iface, emSize, glyphs[i], origins[i], sink)))
+        outline.tags.count = outline.points.count = 0;
+        if (freetype_get_glyph_outline(iface, emSize, glyphs[i], &outline))
+        {
             WARN("Failed to get glyph outline for glyph %u.\n", glyphs[i]);
+            continue;
+        }
+
+        for (j = 0, p = 0; j < outline.tags.count; ++j)
+        {
+            switch (outline.tags.values[j])
+            {
+                case OUTLINE_BEGIN_FIGURE:
+                    apply_outline_point_offset(&outline.points.values[p++], &origins[i], &point);
+                    ID2D1SimplifiedGeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+                    break;
+                case OUTLINE_END_FIGURE:
+                    ID2D1SimplifiedGeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+                    break;
+                case OUTLINE_LINE:
+                    apply_outline_point_offset(&outline.points.values[p++], &origins[i], &point);
+                    ID2D1SimplifiedGeometrySink_AddLines(sink, &point, 1);
+                    break;
+                case OUTLINE_BEZIER:
+                    apply_outline_point_offset(&outline.points.values[p++], &origins[i], &segment.point1);
+                    apply_outline_point_offset(&outline.points.values[p++], &origins[i], &segment.point2);
+                    apply_outline_point_offset(&outline.points.values[p++], &origins[i], &segment.point3);
+                    ID2D1SimplifiedGeometrySink_AddBeziers(sink, &segment, 1);
+                    break;
+            }
+        }
     }
 
+    heap_free(outline.tags.values);
+    heap_free(outline.points.values);
     heap_free(origins);
 
     return S_OK;
