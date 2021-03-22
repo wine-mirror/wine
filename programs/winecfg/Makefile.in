@@ -1,7 +1,6 @@
 MODULE    = winecfg.exe
 APPMODE   = -mwindows
 IMPORTS   = uuid comdlg32 comctl32 shell32 ole32 winmm shlwapi uxtheme user32 gdi32 advapi32
-EXTRADEFS = -DWINE_NO_NAMELESS_EXTENSION
 
 C_SRCS = \
 	about.c \

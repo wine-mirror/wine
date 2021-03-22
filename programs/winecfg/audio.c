@@ -125,7 +125,7 @@ static BOOL load_device(IMMDevice *dev, struct DeviceInfo *info)
     if(SUCCEEDED(hr) && pv.vt == VT_UI4){
         i = 0;
         while (speaker_configs[i].text_id != 0) {
-            if ((speaker_configs[i].speaker_mask & pv.u.ulVal) == speaker_configs[i].speaker_mask) {
+            if ((speaker_configs[i].speaker_mask & pv.ulVal) == speaker_configs[i].speaker_mask) {
                 info->speaker_config = i;
                 break;
             }
@@ -247,10 +247,10 @@ static void initAudioDlg (HWND hDlg)
         load_devices(devenum, eCapture, &num_capture_devs, &capture_devs);
 
         PropVariantInit(&pv);
-        if(get_driver_name(devenum, &pv) && pv.u.pwszVal[0] != '\0'){
+        if(get_driver_name(devenum, &pv) && pv.pwszVal[0] != '\0'){
             have_driver = TRUE;
-            wnsprintfW(display_str, ARRAY_SIZE(display_str), format_str, pv.u.pwszVal);
-            lstrcatW(g_drv_keyW, pv.u.pwszVal);
+            wnsprintfW(display_str, ARRAY_SIZE(display_str), format_str, pv.pwszVal);
+            lstrcatW(g_drv_keyW, pv.pwszVal);
         }
         PropVariantClear(&pv);
 
@@ -315,7 +315,7 @@ static void initAudioDlg (HWND hDlg)
                 continue;
 
             SendDlgItemMessageW(hDlg, IDC_AUDIOOUT_DEVICE, CB_ADDSTRING,
-                    0, (LPARAM)render_devs[i].name.u.pwszVal);
+                    0, (LPARAM)render_devs[i].name.pwszVal);
             SendDlgItemMessageW(hDlg, IDC_AUDIOOUT_DEVICE, CB_SETITEMDATA,
                     i + 1, (LPARAM)&render_devs[i]);
 
@@ -325,7 +325,7 @@ static void initAudioDlg (HWND hDlg)
             }
 
             SendDlgItemMessageW(hDlg, IDC_VOICEOUT_DEVICE, CB_ADDSTRING,
-                    0, (LPARAM)render_devs[i].name.u.pwszVal);
+                    0, (LPARAM)render_devs[i].name.pwszVal);
             SendDlgItemMessageW(hDlg, IDC_VOICEOUT_DEVICE, CB_SETITEMDATA,
                     i + 1, (LPARAM)&render_devs[i]);
             if(reg_vout_dev && !lstrcmpW(render_devs[i].id, reg_vout_dev))
@@ -334,7 +334,7 @@ static void initAudioDlg (HWND hDlg)
             lvitem.mask = LVIF_TEXT | LVIF_PARAM;
             lvitem.iItem = i;
             lvitem.iSubItem = 0;
-            lvitem.pszText = render_devs[i].name.u.pwszVal;
+            lvitem.pszText = render_devs[i].name.pwszVal;
             lvitem.cchTextMax = lstrlenW(lvitem.pszText);
             lvitem.lParam = (LPARAM)&render_devs[i];
 
@@ -357,14 +357,14 @@ static void initAudioDlg (HWND hDlg)
                 continue;
 
             SendDlgItemMessageW(hDlg, IDC_AUDIOIN_DEVICE, CB_ADDSTRING,
-                    0, (LPARAM)capture_devs[i].name.u.pwszVal);
+                    0, (LPARAM)capture_devs[i].name.pwszVal);
             SendDlgItemMessageW(hDlg, IDC_AUDIOIN_DEVICE, CB_SETITEMDATA,
                     i + 1, (LPARAM)&capture_devs[i]);
             if(reg_in_dev && !lstrcmpW(capture_devs[i].id, reg_in_dev))
                 SendDlgItemMessageW(hDlg, IDC_AUDIOIN_DEVICE, CB_SETCURSEL, i + 1, 0);
 
             SendDlgItemMessageW(hDlg, IDC_VOICEIN_DEVICE, CB_ADDSTRING,
-                    0, (LPARAM)capture_devs[i].name.u.pwszVal);
+                    0, (LPARAM)capture_devs[i].name.pwszVal);
             SendDlgItemMessageW(hDlg, IDC_VOICEIN_DEVICE, CB_SETITEMDATA,
                     i + 1, (LPARAM)&capture_devs[i]);
             if(reg_vin_dev && !lstrcmpW(capture_devs[i].id, reg_vin_dev))
@@ -447,7 +447,7 @@ static void apply_speaker_configs(void)
             continue;
         }
 
-        pv.u.ulVal = speaker_configs[render_devs[i].speaker_config].speaker_mask;
+        pv.ulVal = speaker_configs[render_devs[i].speaker_config].speaker_mask;
 
         hr = IPropertyStore_SetValue(ps, &PKEY_AudioEndpoint_PhysicalSpeakers, &pv);
 
