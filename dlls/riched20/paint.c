@@ -1033,6 +1033,20 @@ static void draw_paragraph( ME_Context *c, ME_Paragraph *para )
     SetTextAlign( c->hDC, align );
 }
 
+static void set_scroll_range_pos( ITextHost *host, INT bar, SCROLLINFO *info, BOOL set_range )
+{
+    LONG max_pos = info->nMax, pos = info->nPos;
+
+    /* Scale the scrollbar info to 16-bit values. */
+    if (max_pos > 0xffff)
+    {
+        pos = MulDiv( pos, 0xffff, max_pos );
+        max_pos = 0xffff;
+    }
+    if (set_range) ITextHost_TxSetScrollRange( host, bar, 0, max_pos, FALSE );
+    ITextHost_TxSetScrollPos( host, bar, pos, TRUE );
+}
+
 void ME_ScrollAbs(ME_TextEditor *editor, int x, int y)
 {
   BOOL old_vis, new_vis;
@@ -1043,9 +1057,7 @@ void ME_ScrollAbs(ME_TextEditor *editor, int x, int y)
     x = max(x, editor->horz_si.nMin);
     scrollX = editor->horz_si.nPos - x;
     editor->horz_si.nPos = x;
-    if (editor->horz_si.nMax > 0xFFFF) /* scale to 16-bit value */
-      x = MulDiv(x, 0xFFFF, editor->horz_si.nMax);
-    ITextHost_TxSetScrollPos(editor->texthost, SB_HORZ, x, TRUE);
+    set_scroll_range_pos( editor->texthost, SB_HORZ, &editor->horz_si, FALSE );
   }
 
   if (editor->vert_si.nPos != y) {
@@ -1053,9 +1065,7 @@ void ME_ScrollAbs(ME_TextEditor *editor, int x, int y)
     y = max(y, editor->vert_si.nMin);
     scrollY = editor->vert_si.nPos - y;
     editor->vert_si.nPos = y;
-    if (editor->vert_si.nMax > 0xFFFF) /* scale to 16-bit value */
-      y = MulDiv(y, 0xFFFF, editor->vert_si.nMax);
-    ITextHost_TxSetScrollPos(editor->texthost, SB_VERT, y, TRUE);
+    set_scroll_range_pos( editor->texthost, SB_VERT, &editor->vert_si, FALSE );
   }
 
   if (abs(scrollX) > editor->sizeWindow.cx ||
@@ -1121,18 +1131,10 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
 {
   /* Note that this is the only function that should ever call
    * SetScrollInfo with SIF_PAGE or SIF_RANGE. */
-
-  SCROLLINFO si;
   BOOL enable;
 
   if (ME_WrapMarkedParagraphs(editor))
     FIXME("ME_UpdateScrollBar had to call ME_WrapMarkedParagraphs\n");
-
-  si.cbSize = sizeof(si);
-  si.fMask = SIF_PAGE | SIF_RANGE | SIF_POS;
-  si.nMin = 0;
-  if (editor->scrollbars & ES_DISABLENOSCROLL)
-    si.fMask |= SIF_DISABLENOSCROLL;
 
   /* Update horizontal scrollbar */
   enable = editor->nTotalWidth > editor->sizeWindow.cx;
@@ -1143,31 +1145,13 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     return;
   }
 
-  si.nMax = editor->nTotalWidth;
-  si.nPos = editor->horz_si.nPos;
-  si.nPage = editor->sizeWindow.cx;
-
-  if (si.nMax != editor->horz_si.nMax ||
-      si.nPage != editor->horz_si.nPage)
+  if (editor->horz_si.nMax != editor->nTotalWidth || editor->horz_si.nPage != editor->sizeWindow.cx)
   {
-    TRACE("min=%d max=%d page=%d\n", si.nMin, si.nMax, si.nPage);
-    editor->horz_si.nMax = si.nMax;
-    editor->horz_si.nPage = si.nPage;
+    editor->horz_si.nMax = editor->nTotalWidth;
+    editor->horz_si.nPage = editor->sizeWindow.cx;
+    TRACE( "min = %d max = %d page = %d\n", editor->horz_si.nMin, editor->horz_si.nMax, editor->horz_si.nPage );
     if ((enable || editor->horz_sb_enabled) && editor->scrollbars & WS_HSCROLL)
-    {
-      if (si.nMax > 0xFFFF)
-      {
-        /* Native scales the scrollbar info to 16-bit external values. */
-        si.nPos = MulDiv(si.nPos, 0xFFFF, si.nMax);
-        si.nMax = 0xFFFF;
-      }
-      if (editor->hWnd) {
-        SetScrollInfo(editor->hWnd, SB_HORZ, &si, TRUE);
-      } else {
-        ITextHost_TxSetScrollRange(editor->texthost, SB_HORZ, si.nMin, si.nMax, FALSE);
-        ITextHost_TxSetScrollPos(editor->texthost, SB_HORZ, si.nPos, TRUE);
-      }
-    }
+      set_scroll_range_pos( editor->texthost, SB_HORZ, &editor->horz_si, TRUE );
   }
 
   if (editor->scrollbars & WS_HSCROLL && !enable ^ !editor->horz_sb_enabled)
@@ -1189,31 +1173,13 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     return;
   }
 
-  si.nMax = editor->nTotalLength;
-  si.nPos = editor->vert_si.nPos;
-  si.nPage = editor->sizeWindow.cy;
-
-  if (si.nMax != editor->vert_si.nMax ||
-      si.nPage != editor->vert_si.nPage)
+  if (editor->vert_si.nMax != editor->nTotalLength || editor->vert_si.nPage != editor->sizeWindow.cy)
   {
-    TRACE("min=%d max=%d page=%d\n", si.nMin, si.nMax, si.nPage);
-    editor->vert_si.nMax = si.nMax;
-    editor->vert_si.nPage = si.nPage;
+    editor->vert_si.nMax = editor->nTotalLength;
+    editor->vert_si.nPage = editor->sizeWindow.cy;
+    TRACE( "min = %d max = %d page = %d\n", editor->vert_si.nMin, editor->vert_si.nMax, editor->vert_si.nPage );
     if ((enable || editor->vert_sb_enabled) && editor->scrollbars & WS_VSCROLL)
-    {
-      if (si.nMax > 0xFFFF)
-      {
-        /* Native scales the scrollbar info to 16-bit external values. */
-        si.nPos = MulDiv(si.nPos, 0xFFFF, si.nMax);
-        si.nMax = 0xFFFF;
-      }
-      if (editor->hWnd) {
-        SetScrollInfo(editor->hWnd, SB_VERT, &si, TRUE);
-      } else {
-        ITextHost_TxSetScrollRange(editor->texthost, SB_VERT, si.nMin, si.nMax, FALSE);
-        ITextHost_TxSetScrollPos(editor->texthost, SB_VERT, si.nPos, TRUE);
-      }
-    }
+      set_scroll_range_pos( editor->texthost, SB_VERT, &editor->vert_si, TRUE );
   }
 
   if (editor->scrollbars & WS_VSCROLL && !enable ^ !editor->vert_sb_enabled)

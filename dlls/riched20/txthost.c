@@ -99,6 +99,7 @@ struct host *host_create( HWND hwnd, CREATESTRUCTW *cs, BOOL emulate_10 )
 
     texthost->ITextHost_iface.lpVtbl = &textHostVtbl;
     texthost->ref = 1;
+    texthost->text_srv = NULL;
     texthost->window = hwnd;
     texthost->parent = cs->hwndParent;
     texthost->emulate_10 = emulate_10;
@@ -196,7 +197,25 @@ DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxSetScrollRange,20)
 DECLSPEC_HIDDEN BOOL __thiscall ITextHostImpl_TxSetScrollRange( ITextHost *iface, INT bar, LONG min_pos, INT max_pos, BOOL redraw )
 {
     struct host *host = impl_from_ITextHost( iface );
-    return SetScrollRange( host->window, bar, min_pos, max_pos, redraw );
+    SCROLLINFO info = { .cbSize = sizeof(info), .fMask = SIF_PAGE | SIF_RANGE };
+
+    if (bar != SB_HORZ && bar != SB_VERT)
+    {
+        FIXME( "Unexpected bar %d\n", bar );
+        return FALSE;
+    }
+
+    if (host->scrollbars & ES_DISABLENOSCROLL) info.fMask |= SIF_DISABLENOSCROLL;
+
+    if (host->text_srv) /* This can be called during text services creation */
+    {
+        if (bar == SB_HORZ) ITextServices_TxGetHScroll( host->text_srv, NULL, NULL, NULL, (LONG *)&info.nPage, NULL );
+        else ITextServices_TxGetVScroll( host->text_srv, NULL, NULL, NULL, (LONG *)&info.nPage, NULL );
+    }
+
+    info.nMin = min_pos;
+    info.nMax = max_pos;
+    return SetScrollInfo( host->window, bar, &info, redraw );
 }
 
 DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxSetScrollPos,16)
