@@ -359,19 +359,22 @@ static void test_RawGameController(void)
 
     token.value = 0xdeadbeef;
     hr = IRawGameControllerStatics_add_RawGameControllerAdded(controller_statics, &controller_event_handler.IEventHandler_RawGameController_iface, &token);
-    todo_wine ok(hr == S_OK, "IRawGameControllerStatics_add_RawGameControllerAdded failed, hr %#x\n", hr);
-    todo_wine ok(token.value != 0xdeadbeef, "IRawGameControllerStatics_add_RawGameControllerAdded returned token %#I64x\n", token.value);
+    ok(hr == S_OK, "IRawGameControllerStatics_add_RawGameControllerAdded failed, hr %#x\n", hr);
+    ok(token.value != 0xdeadbeef, "IRawGameControllerStatics_add_RawGameControllerAdded returned token %#I64x\n", token.value);
 
     hr = IRawGameControllerStatics_remove_RawGameControllerAdded(controller_statics, token);
-    todo_wine ok(hr == S_OK, "IRawGameControllerStatics_add_RawGameControllerAdded failed, hr %#x\n", hr);
+    ok(hr == S_OK, "IRawGameControllerStatics_add_RawGameControllerAdded failed, hr %#x\n", hr);
 
     token.value = 0xdeadbeef;
     IRawGameControllerStatics_add_RawGameControllerRemoved(controller_statics, &controller_event_handler.IEventHandler_RawGameController_iface, &token);
-    todo_wine ok(hr == S_OK, "IRawGameControllerStatics_add_RawGameControllerRemoved failed, hr %#x\n", hr);
-    todo_wine ok(token.value != 0xdeadbeef, "IRawGameControllerStatics_add_RawGameControllerRemoved returned token %#I64x\n", token.value);
+    ok(hr == S_OK, "IRawGameControllerStatics_add_RawGameControllerRemoved failed, hr %#x\n", hr);
+    ok(token.value != 0xdeadbeef, "IRawGameControllerStatics_add_RawGameControllerRemoved returned token %#I64x\n", token.value);
 
     hr = IRawGameControllerStatics_remove_RawGameControllerRemoved(controller_statics, token);
-    todo_wine ok(hr == S_OK, "IRawGameControllerStatics_add_RawGameControllerAdded failed, hr %#x\n", hr);
+    ok(hr == S_OK, "IRawGameControllerStatics_add_RawGameControllerAdded failed, hr %#x\n", hr);
+
+    hr = IRawGameControllerStatics_add_RawGameControllerAdded(controller_statics, NULL, &token);
+    ok(hr == E_INVALIDARG, "IRawGameControllerStatics_add_RawGameControllerAdded failed, hr %#x\n", hr);
 
     IRawGameControllerStatics_Release(controller_statics);
 
