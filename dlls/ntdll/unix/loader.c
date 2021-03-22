@@ -1234,7 +1234,7 @@ static inline char *prepend( char *buffer, const char *str, size_t len )
  * Open a file for a new dll. Helper for open_builtin_file.
  */
 static NTSTATUS open_dll_file( const char *name, OBJECT_ATTRIBUTES *attr, void **module,
-                               SECTION_IMAGE_INFORMATION *image_info, BOOL prefer_native )
+                               SIZE_T *size_ptr, SECTION_IMAGE_INFORMATION *image_info, BOOL prefer_native )
 {
     LARGE_INTEGER size;
     NTSTATUS status;
@@ -1281,7 +1281,7 @@ static NTSTATUS open_dll_file( const char *name, OBJECT_ATTRIBUTES *attr, void *
         NtClose( mapping );
         return STATUS_IMAGE_ALREADY_LOADED;
     }
-    status = virtual_map_builtin_module( mapping, module );
+    status = virtual_map_builtin_module( mapping, module, size_ptr );
     NtClose( mapping );
     return status;
 }
@@ -1290,14 +1290,14 @@ static NTSTATUS open_dll_file( const char *name, OBJECT_ATTRIBUTES *attr, void *
 /***********************************************************************
  *           open_builtin_file
  */
-static NTSTATUS open_builtin_file( char *name, OBJECT_ATTRIBUTES *attr, void **module,
+static NTSTATUS open_builtin_file( char *name, OBJECT_ATTRIBUTES *attr, void **module, SIZE_T *size,
                                    SECTION_IMAGE_INFORMATION *image_info, BOOL prefer_native )
 {
     NTSTATUS status;
     int fd;
 
     *module = NULL;
-    status = open_dll_file( name, attr, module, image_info, prefer_native );
+    status = open_dll_file( name, attr, module, size, image_info, prefer_native );
     if (status != STATUS_DLL_NOT_FOUND) return status;
 
     /* try .so file */
@@ -1325,10 +1325,10 @@ static NTSTATUS open_builtin_file( char *name, OBJECT_ATTRIBUTES *attr, void **m
 
 
 /***********************************************************************
- *           load_builtin_dll
+ *           find_builtin_dll
  */
-static NTSTATUS CDECL load_builtin_dll( UNICODE_STRING *nt_name, void **module,
-                                        SECTION_IMAGE_INFORMATION *image_info, BOOL prefer_native )
+static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T *size_ptr,
+                                  SECTION_IMAGE_INFORMATION *image_info, BOOL prefer_native )
 {
     unsigned int i, pos, namepos, namelen, maxlen = 0;
     unsigned int len = nt_name->Length / sizeof(WCHAR);
@@ -1369,7 +1369,7 @@ static NTSTATUS CDECL load_builtin_dll( UNICODE_STRING *nt_name, void **module,
         ptr = prepend( ptr, ptr, namelen );
         ptr = prepend( ptr, "/dlls", sizeof("/dlls") - 1 );
         ptr = prepend( ptr, build_dir, strlen(build_dir) );
-        status = open_builtin_file( ptr, &attr, module, image_info, prefer_native );
+        status = open_builtin_file( ptr, &attr, module, size_ptr, image_info, prefer_native );
         if (status != STATUS_DLL_NOT_FOUND) goto done;
 
         /* now as a program */
@@ -1380,7 +1380,7 @@ static NTSTATUS CDECL load_builtin_dll( UNICODE_STRING *nt_name, void **module,
         ptr = prepend( ptr, ptr, namelen );
         ptr = prepend( ptr, "/programs", sizeof("/programs") - 1 );
         ptr = prepend( ptr, build_dir, strlen(build_dir) );
-        status = open_builtin_file( ptr, &attr, module, image_info, prefer_native );
+        status = open_builtin_file( ptr, &attr, module, size_ptr, image_info, prefer_native );
         if (status != STATUS_DLL_NOT_FOUND) goto done;
     }
 
@@ -1388,22 +1388,35 @@ static NTSTATUS CDECL load_builtin_dll( UNICODE_STRING *nt_name, void **module,
     {
         file[pos + len + 1] = 0;
         ptr = prepend( file + pos, dll_paths[i], strlen(dll_paths[i]) );
-        status = open_builtin_file( ptr, &attr, module, image_info, prefer_native );
+        status = open_builtin_file( ptr, &attr, module, size_ptr, image_info, prefer_native );
         if (status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH) found_image = TRUE;
         else if (status != STATUS_DLL_NOT_FOUND) goto done;
     }
 
     if (found_image) status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
     WARN( "cannot find builtin library for %s\n", debugstr_us(nt_name) );
-
 done:
-    if (status == STATUS_IMAGE_NOT_AT_BASE) status = STATUS_SUCCESS;
-    if (!status && ext)
+    if (status >= 0 && ext)
     {
         strcpy( ext, ".so" );
         set_builtin_unix_info( *module, ptr, NULL, NULL );
     }
     free( file );
+    return status;
+}
+
+
+/***********************************************************************
+ *           load_builtin_dll
+ */
+static NTSTATUS CDECL load_builtin_dll( UNICODE_STRING *nt_name, void **module,
+                                        SECTION_IMAGE_INFORMATION *image_info, BOOL prefer_native )
+{
+    SIZE_T size;
+    NTSTATUS status;
+
+    status = find_builtin_dll( nt_name, module, &size, image_info, prefer_native );
+    if (status == STATUS_IMAGE_NOT_AT_BASE) status = STATUS_SUCCESS;
     return status;
 }
 
@@ -1500,12 +1513,13 @@ static void load_ntdll(void)
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING str;
     void *module;
+    SIZE_T size = 0;
     char *name = build_path( dll_dir, "ntdll.dll.so" );
 
     init_unicode_string( &str, path );
     InitializeObjectAttributes( &attr, &str, 0, 0, NULL );
     name[strlen(name) - 3] = 0;  /* remove .so */
-    status = open_builtin_file( name, &attr, &module, &info, FALSE );
+    status = open_builtin_file( name, &attr, &module, &size, &info, FALSE );
     if (status == STATUS_IMAGE_NOT_AT_BASE) relocate_ntdll( module );
     else if (status) fatal_error( "failed to load %s error %x\n", name, status );
     free( name );

@@ -2732,14 +2732,13 @@ void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info )
 /***********************************************************************
  *           virtual_map_builtin_module
  */
-NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module )
+NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module, SIZE_T *size )
 {
     mem_size_t full_size;
     unsigned int sec_flags;
     HANDLE shared_file;
     pe_image_info_t *image_info = NULL;
     ACCESS_MASK access = SECTION_MAP_READ | SECTION_MAP_EXECUTE;
-    SIZE_T size = 0;
     NTSTATUS status;
     WCHAR *filename;
 
@@ -2749,9 +2748,10 @@ NTSTATUS virtual_map_builtin_module( HANDLE mapping, void **module )
     if (!image_info) return STATUS_INVALID_PARAMETER;
 
     *module = NULL;
+    *size = 0;
     filename = (WCHAR *)(image_info + 1);
     status = virtual_map_image( mapping, SECTION_MAP_READ | SECTION_MAP_EXECUTE,
-                                module, &size, 0, shared_file, 0, image_info, filename, TRUE );
+                                module, size, 0, shared_file, 0, image_info, filename, TRUE );
     if (shared_file) NtClose( shared_file );
     free( image_info );
     return status;
