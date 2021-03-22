@@ -222,6 +222,24 @@ DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxSetScrollPos,16)
 DECLSPEC_HIDDEN BOOL __thiscall ITextHostImpl_TxSetScrollPos( ITextHost *iface, INT bar, INT pos, BOOL redraw )
 {
     struct host *host = impl_from_ITextHost( iface );
+    DWORD style = GetWindowLongW( host->window, GWL_STYLE );
+    DWORD mask = (bar == SB_HORZ) ? WS_HSCROLL : WS_VSCROLL;
+    BOOL show = TRUE, shown = style & mask;
+
+    if (bar != SB_HORZ && bar != SB_VERT)
+    {
+        FIXME( "Unexpected bar %d\n", bar );
+        return FALSE;
+    }
+
+    /* If the application has adjusted the scrollbar's visibility it is reset */
+    if (!(host->scrollbars & ES_DISABLENOSCROLL))
+    {
+        if (bar == SB_HORZ) ITextServices_TxGetHScroll( host->text_srv, NULL, NULL, NULL, NULL, &show );
+        else ITextServices_TxGetVScroll( host->text_srv, NULL, NULL, NULL, NULL, &show );
+    }
+
+    if (!show ^ !shown) ShowScrollBar( host->window, bar, show );
     return SetScrollPos( host->window, bar, pos, redraw ) != 0;
 }
 

@@ -1057,7 +1057,6 @@ static void set_scroll_range_pos( ITextHost *host, INT bar, SCROLLINFO *info, BO
 
 void ME_ScrollAbs(ME_TextEditor *editor, int x, int y)
 {
-  BOOL old_vis, new_vis;
   int scrollX = 0, scrollY = 0;
 
   if (editor->horz_si.nPos != x) {
@@ -1076,33 +1075,14 @@ void ME_ScrollAbs(ME_TextEditor *editor, int x, int y)
     set_scroll_range_pos( editor->texthost, SB_VERT, &editor->vert_si, FALSE );
   }
 
-  if (abs(scrollX) > editor->sizeWindow.cx ||
-      abs(scrollY) > editor->sizeWindow.cy)
+  if (abs(scrollX) > editor->sizeWindow.cx || abs(scrollY) > editor->sizeWindow.cy)
     ITextHost_TxInvalidateRect(editor->texthost, NULL, TRUE);
   else
     ITextHost_TxScrollWindowEx(editor->texthost, scrollX, scrollY,
                                &editor->rcFormat, &editor->rcFormat,
                                NULL, NULL, SW_INVALIDATE);
-  ME_Repaint(editor);
-
-  if (editor->hWnd)
-  {
-    LONG winStyle = GetWindowLongW(editor->hWnd, GWL_STYLE);
-    if (editor->scrollbars & WS_HSCROLL)
-    {
-      old_vis = winStyle & WS_HSCROLL;
-      new_vis = editor->horz_sb_enabled || editor->scrollbars & ES_DISABLENOSCROLL;
-      if (!old_vis ^ !new_vis) ITextHost_TxShowScrollBar( editor->texthost, SB_HORZ, new_vis );
-    }
-
-    if (editor->scrollbars & WS_VSCROLL)
-    {
-      old_vis = winStyle & WS_VSCROLL;
-      new_vis = editor->vert_sb_enabled || editor->scrollbars & ES_DISABLENOSCROLL;
-      if (!old_vis ^ !new_vis) ITextHost_TxShowScrollBar( editor->texthost, SB_VERT, new_vis );
-    }
-  }
   ME_UpdateScrollBar(editor);
+  ME_Repaint(editor);
 }
 
 void ME_HScrollAbs(ME_TextEditor *editor, int x)
