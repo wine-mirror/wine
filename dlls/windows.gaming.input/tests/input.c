@@ -340,20 +340,20 @@ static void test_RawGameController(void)
 
     size = 0xdeadbeef;
     hr = IVectorView_RawGameController_get_Size(controllers, &size);
-    todo_wine ok(hr == S_OK, "IVectorView_RawGameController_get_Size failed, hr %#x\n", hr);
-    todo_wine ok(size != 0xdeadbeef, "IVectorView_RawGameController_get_Size returned %u\n", size);
+    ok(hr == S_OK, "IVectorView_RawGameController_get_Size failed, hr %#x\n", hr);
+    ok(size != 0xdeadbeef, "IVectorView_RawGameController_get_Size returned %u\n", size);
 
     controller = (IRawGameController *)0xdeadbeef;
     hr = IVectorView_RawGameController_GetAt(controllers, size, &controller);
-    todo_wine ok(hr == E_BOUNDS, "IVectorView_RawGameController_GetAt failed, hr %#x\n", hr);
-    todo_wine ok(controller == NULL, "IVectorView_RawGameController_GetAt returned %p\n", controller);
+    ok(hr == E_BOUNDS, "IVectorView_RawGameController_GetAt failed, hr %#x\n", hr);
+    ok(controller == NULL, "IVectorView_RawGameController_GetAt returned %p\n", controller);
 
     size = 0xdeadbeef;
     found = TRUE;
     controller = (IRawGameController *)0xdeadbeef;
     hr = IVectorView_RawGameController_IndexOf(controllers, controller, &size, &found);
-    todo_wine ok(hr == S_OK, "IVectorView_RawGameController_IndexOf failed, hr %#x\n", hr);
-    todo_wine ok(size == 0 && found == FALSE, "IVectorView_RawGameController_IndexOf returned size %d, found %d\n", size, found);
+    ok(hr == S_OK, "IVectorView_RawGameController_IndexOf failed, hr %#x\n", hr);
+    ok(size == 0 && found == FALSE, "IVectorView_RawGameController_IndexOf returned size %d, found %d\n", size, found);
 
     IVectorView_RawGameController_Release(controllers);
 
