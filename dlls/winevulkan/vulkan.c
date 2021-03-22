@@ -1061,6 +1061,14 @@ VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_na
     return *count < num_properties ? VK_INCOMPLETE : VK_SUCCESS;
 }
 
+VkResult WINAPI wine_vkEnumerateDeviceLayerProperties(VkPhysicalDevice phys_dev, uint32_t *count, VkLayerProperties *properties)
+{
+    TRACE("%p, %p, %p\n", phys_dev, count, properties);
+
+    *count = 0;
+    return VK_SUCCESS;
+}
+
 VkResult WINAPI wine_vkEnumerateInstanceLayerProperties(uint32_t *count, VkLayerProperties *properties)
 {
     TRACE("%p, %p\n", count, properties);

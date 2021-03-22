@@ -5710,12 +5710,6 @@ VkResult WINAPI wine_vkEndCommandBuffer(VkCommandBuffer commandBuffer)
     return commandBuffer->device->funcs.p_vkEndCommandBuffer(commandBuffer->command_buffer);
 }
 
-VkResult WINAPI wine_vkEnumerateDeviceLayerProperties(VkPhysicalDevice physicalDevice, uint32_t *pPropertyCount, VkLayerProperties *pProperties)
-{
-    TRACE("%p, %p, %p\n", physicalDevice, pPropertyCount, pProperties);
-    return physicalDevice->instance->funcs.p_vkEnumerateDeviceLayerProperties(physicalDevice->phys_dev, pPropertyCount, pProperties);
-}
-
 static VkResult WINAPI wine_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, uint32_t *pCounterCount, VkPerformanceCounterKHR *pCounters, VkPerformanceCounterDescriptionKHR *pCounterDescriptions)
 {
     TRACE("%p, %u, %p, %p, %p\n", physicalDevice, queueFamilyIndex, pCounterCount, pCounters, pCounterDescriptions);
