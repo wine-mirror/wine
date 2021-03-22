@@ -1456,7 +1456,9 @@ static void CDECL init_builtin_dll( void *module )
 #endif
 
     if (!(handle = get_builtin_so_handle( module ))) return;
-    if (dlinfo( handle, RTLD_DI_LINKMAP, &map )) return;
+    if (dlinfo( handle, RTLD_DI_LINKMAP, &map )) map = NULL;
+    release_builtin_module( module );
+    if (!map) return;
 
     for (dyn = map->l_ld; dyn->d_tag; dyn++)
     {

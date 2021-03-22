@@ -85,14 +85,15 @@ static struct list reserved_areas = LIST_INIT(reserved_areas);
 
 struct builtin_module
 {
-    struct list entry;
-    dev_t       dev;
-    ino_t       ino;
-    void       *handle;
-    void       *module;
-    char       *unix_name;
-    void       *unix_handle;
-    void       *unix_entry;
+    struct list  entry;
+    unsigned int refcount;
+    dev_t        dev;
+    ino_t        ino;
+    void        *handle;
+    void        *module;
+    char        *unix_name;
+    void        *unix_handle;
+    void        *unix_entry;
 };
 
 static struct list builtin_modules = LIST_INIT( builtin_modules );
@@ -569,8 +570,9 @@ static void add_builtin_module( void *module, void *handle, const struct stat *s
     struct builtin_module *builtin;
 
     if (!(builtin = malloc( sizeof(*builtin) ))) return;
-    builtin->handle = handle;
-    builtin->module = module;
+    builtin->handle      = handle;
+    builtin->module      = module;
+    builtin->refcount    = 1;
     builtin->unix_name   = NULL;
     builtin->unix_handle = NULL;
     builtin->unix_entry  = NULL;
@@ -589,19 +591,23 @@ static void add_builtin_module( void *module, void *handle, const struct stat *s
 
 
 /***********************************************************************
- *           remove_builtin_module
+ *           release_builtin_module
  */
-static NTSTATUS remove_builtin_module( void *module )
+NTSTATUS release_builtin_module( void *module )
 {
     struct builtin_module *builtin;
 
     LIST_FOR_EACH_ENTRY( builtin, &builtin_modules, struct builtin_module, entry )
     {
         if (builtin->module != module) continue;
-        list_remove( &builtin->entry );
-        if (builtin->handle) dlclose( builtin->handle );
-        if (builtin->unix_handle) dlclose( builtin->unix_handle );
-        free( builtin );
+        if (!--builtin->refcount)
+        {
+            list_remove( &builtin->entry );
+            if (builtin->handle) dlclose( builtin->handle );
+            if (builtin->unix_handle) dlclose( builtin->unix_handle );
+            free( builtin->unix_name );
+            free( builtin );
+        }
         return STATUS_SUCCESS;
     }
     return STATUS_INVALID_PARAMETER;
@@ -635,6 +641,7 @@ void *get_builtin_so_handle( void *module )
     {
         if (builtin->module != module) continue;
         ret = builtin->handle;
+        if (ret) builtin->refcount++;
         break;
     }
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
@@ -4374,6 +4381,23 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
     if ((view = find_view( addr, 0 )) && !is_view_valloc( view ))
     {
+        if (view->protect & VPROT_SYSTEM)
+        {
+            struct builtin_module *builtin;
+
+            LIST_FOR_EACH_ENTRY( builtin, &builtin_modules, struct builtin_module, entry )
+            {
+                if (builtin->module != view->base) continue;
+                if (builtin->refcount > 1)
+                {
+                    TRACE( "not freeing in-use builtin %p\n", view->base );
+                    builtin->refcount--;
+                    server_leave_uninterrupted_section( &virtual_mutex, &sigset );
+                    return STATUS_SUCCESS;
+                }
+            }
+        }
+
         SERVER_START_REQ( unmap_view )
         {
             req->base = wine_server_client_ptr( view->base );
@@ -4382,7 +4406,7 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
         SERVER_END_REQ;
         if (!status)
         {
-            if (view->protect & SEC_IMAGE) remove_builtin_module( view->base );
+            if (view->protect & SEC_IMAGE) release_builtin_module( view->base );
             delete_view( view );
         }
         else FIXME( "failed to unmap %p %x\n", view->base, status );
