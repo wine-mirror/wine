@@ -902,6 +902,7 @@ static void test_source_reader_from_media_source(void)
     IMFAttributes *attributes;
     ULONG refcount;
     int i;
+    PROPVARIANT pos;
 
     source = create_test_source();
     ok(!!source, "Failed to create test source.\n");
@@ -915,6 +916,11 @@ static void test_source_reader_from_media_source(void)
 
     hr = IMFSourceReader_SetStreamSelection(reader, 1, TRUE);
     ok(hr == S_OK, "Failed to select a stream, hr %#x.\n", hr);
+
+    pos.vt = VT_I8;
+    pos.hVal.QuadPart = 0;
+    hr = IMFSourceReader_SetCurrentPosition(reader, &GUID_NULL, &pos);
+    ok(hr == S_OK, "Failed to seek to beginning of stream, hr %#x.\n", hr);
 
     hr = IMFSourceReader_ReadSample(reader, MF_SOURCE_READER_ANY_STREAM, 0, &actual_index, &stream_flags,
             &timestamp, &sample);

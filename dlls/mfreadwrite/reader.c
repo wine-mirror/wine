@@ -550,9 +550,11 @@ static HRESULT source_reader_source_state_handler(struct source_reader *reader, 
     {
         case MESourceStarted:
             reader->source_state = SOURCE_STATE_STARTED;
+            reader->flags &= ~SOURCE_READER_SEEKING;
             break;
         case MESourceStopped:
             reader->source_state = SOURCE_STATE_STOPPED;
+            reader->flags &= ~SOURCE_READER_SEEKING;
             break;
         case MESourceSeeked:
             reader->flags &= ~SOURCE_READER_SEEKING;
