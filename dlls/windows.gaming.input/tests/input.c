@@ -214,6 +214,178 @@ static void test_Gamepad(void)
     pRoUninitialize();
 }
 
+struct controller_event_handler
+{
+    IEventHandler_RawGameController IEventHandler_RawGameController_iface;
+    LONG ref;
+};
+
+static inline struct controller_event_handler *impl_from_IEventHandler_RawGameController(IEventHandler_RawGameController *iface)
+{
+    return CONTAINING_RECORD(iface, struct controller_event_handler, IEventHandler_RawGameController_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE controller_event_handler_QueryInterface(
+        IEventHandler_RawGameController *iface, REFIID iid, void **out)
+{
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IEventHandler_RawGameController))
+    {
+        IUnknown_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    trace("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE controller_event_handler_AddRef(
+        IEventHandler_RawGameController *iface)
+{
+    struct controller_event_handler *impl = impl_from_IEventHandler_RawGameController(iface);
+    ULONG ref = InterlockedIncrement(&impl->ref);
+    return ref;
+}
+
+static ULONG STDMETHODCALLTYPE controller_event_handler_Release(
+        IEventHandler_RawGameController *iface)
+{
+    struct controller_event_handler *impl = impl_from_IEventHandler_RawGameController(iface);
+    ULONG ref = InterlockedDecrement(&impl->ref);
+    return ref;
+}
+
+static HRESULT STDMETHODCALLTYPE controller_event_handler_Invoke(
+        IEventHandler_RawGameController *iface, IInspectable *sender, IRawGameController *args)
+{
+    trace("iface %p, sender %p, args %p\n", iface, sender, args);
+    return S_OK;
+}
+
+static const IEventHandler_RawGameControllerVtbl controller_event_handler_vtbl =
+{
+    controller_event_handler_QueryInterface,
+    controller_event_handler_AddRef,
+    controller_event_handler_Release,
+    /*** IEventHandler<ABI::Windows::Gaming::Input::Gamepad* > methods ***/
+    controller_event_handler_Invoke,
+};
+
+static void test_RawGameController(void)
+{
+    static const WCHAR *controller_name = L"Windows.Gaming.Input.RawGameController";
+
+    struct controller_event_handler controller_event_handler;
+    EventRegistrationToken token;
+    IVectorView_RawGameController *controllers = NULL;
+    IActivationFactory *factory = NULL;
+    IRawGameControllerStatics *controller_statics = NULL;
+    IInspectable *inspectable = NULL, *tmp_inspectable = NULL;
+    IAgileObject *agile_object = NULL, *tmp_agile_object = NULL;
+    IRawGameController *controller;
+    BOOLEAN found;
+    HSTRING str;
+    HRESULT hr;
+    ULONG size;
+
+    controller_event_handler.IEventHandler_RawGameController_iface.lpVtbl = &controller_event_handler_vtbl;
+
+    hr = pRoInitialize(RO_INIT_MULTITHREADED);
+    ok(hr == S_OK || hr == S_FALSE, "RoInitialize failed, hr %#x\n", hr);
+
+    hr = pWindowsCreateString(controller_name, wcslen(controller_name), &str);
+    ok(hr == S_OK, "WindowsCreateString failed, hr %#x\n", hr);
+
+    hr = pRoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "RoGetActivationFactory failed, hr %#x\n", hr);
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip("%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w(controller_name));
+        return;
+    }
+
+    hr = IActivationFactory_QueryInterface(factory, &IID_IInspectable, (void **)&inspectable);
+    ok(hr == S_OK, "IActivationFactory_QueryInterface IID_IInspectable failed, hr %#x\n", hr);
+
+    hr = IActivationFactory_QueryInterface(factory, &IID_IAgileObject, (void **)&agile_object);
+    ok(hr == S_OK, "IActivationFactory_QueryInterface IID_IAgileObject failed, hr %#x\n", hr);
+
+    hr = IActivationFactory_QueryInterface(factory, &IID_IRawGameControllerStatics, (void **)&controller_statics);
+    ok(hr == S_OK, "IActivationFactory_QueryInterface IID_IRawGameControllerStatics failed, hr %#x\n", hr);
+
+    hr = IRawGameControllerStatics_QueryInterface(controller_statics, &IID_IInspectable, (void **)&tmp_inspectable);
+    ok(hr == S_OK, "IRawGameControllerStatics_QueryInterface IID_IInspectable failed, hr %#x\n", hr);
+    ok(tmp_inspectable == inspectable, "IRawGameControllerStatics_QueryInterface IID_IInspectable returned %p, expected %p\n", tmp_inspectable, inspectable);
+    IInspectable_Release(tmp_inspectable);
+
+    hr = IRawGameControllerStatics_QueryInterface(controller_statics, &IID_IAgileObject, (void **)&tmp_agile_object);
+    ok(hr == S_OK, "IRawGameControllerStatics_QueryInterface IID_IAgileObject failed, hr %#x\n", hr);
+    ok(tmp_agile_object == agile_object, "IRawGameControllerStatics_QueryInterface IID_IAgileObject returned %p, expected %p\n", tmp_agile_object, agile_object);
+    IAgileObject_Release(tmp_agile_object);
+
+    hr = IRawGameControllerStatics_get_RawGameControllers(controller_statics, &controllers);
+    todo_wine ok(hr == S_OK, "IRawGameControllerStatics_get_RawGameControllers failed, hr %#x\n", hr);
+    if (FAILED(hr)) goto done;
+
+    hr = IVectorView_RawGameController_QueryInterface(controllers, &IID_IInspectable, (void **)&tmp_inspectable);
+    ok(hr == S_OK, "IVectorView_RawGameController_QueryInterface failed, hr %#x\n", hr);
+    ok(tmp_inspectable != inspectable, "IVectorView_RawGameController_QueryInterface returned %p, expected %p\n", tmp_inspectable, inspectable);
+    IInspectable_Release(tmp_inspectable);
+
+    hr = IVectorView_RawGameController_QueryInterface(controllers, &IID_IAgileObject, (void **)&tmp_agile_object);
+    ok(hr == S_OK, "IVectorView_RawGameController_QueryInterface failed, hr %#x\n", hr);
+    ok(tmp_agile_object != agile_object, "IVectorView_RawGameController_QueryInterface IID_IAgileObject returned agile_object\n");
+    IAgileObject_Release(tmp_agile_object);
+
+    size = 0xdeadbeef;
+    hr = IVectorView_RawGameController_get_Size(controllers, &size);
+    ok(hr == S_OK, "IVectorView_RawGameController_get_Size failed, hr %#x\n", hr);
+    ok(size != 0xdeadbeef, "IVectorView_RawGameController_get_Size returned %u\n", size);
+
+    controller = (IRawGameController *)0xdeadbeef;
+    hr = IVectorView_RawGameController_GetAt(controllers, size, &controller);
+    ok(hr == E_BOUNDS, "IVectorView_RawGameController_GetAt failed, hr %#x\n", hr);
+    ok(controller == NULL, "IVectorView_RawGameController_GetAt returned %p\n", controller);
+
+    size = 0xdeadbeef;
+    found = TRUE;
+    controller = (IRawGameController *)0xdeadbeef;
+    hr = IVectorView_RawGameController_IndexOf(controllers, controller, &size, &found);
+    ok(hr == S_OK, "IVectorView_RawGameController_IndexOf failed, hr %#x\n", hr);
+    ok(size == 0 && found == FALSE, "IVectorView_RawGameController_IndexOf returned size %d, found %d\n", size, found);
+
+    IVectorView_RawGameController_Release(controllers);
+
+done:
+    token.value = 0xdeadbeef;
+    hr = IRawGameControllerStatics_add_RawGameControllerAdded(controller_statics, &controller_event_handler.IEventHandler_RawGameController_iface, &token);
+    todo_wine ok(hr == S_OK, "IRawGameControllerStatics_add_RawGameControllerAdded failed, hr %#x\n", hr);
+    todo_wine ok(token.value != 0xdeadbeef, "IRawGameControllerStatics_add_RawGameControllerAdded returned token %#I64x\n", token.value);
+
+    hr = IRawGameControllerStatics_remove_RawGameControllerAdded(controller_statics, token);
+    todo_wine ok(hr == S_OK, "IRawGameControllerStatics_add_RawGameControllerAdded failed, hr %#x\n", hr);
+
+    token.value = 0xdeadbeef;
+    IRawGameControllerStatics_add_RawGameControllerRemoved(controller_statics, &controller_event_handler.IEventHandler_RawGameController_iface, &token);
+    todo_wine ok(hr == S_OK, "IRawGameControllerStatics_add_RawGameControllerRemoved failed, hr %#x\n", hr);
+    todo_wine ok(token.value != 0xdeadbeef, "IRawGameControllerStatics_add_RawGameControllerRemoved returned token %#I64x\n", token.value);
+
+    hr = IRawGameControllerStatics_remove_RawGameControllerRemoved(controller_statics, token);
+    todo_wine ok(hr == S_OK, "IRawGameControllerStatics_add_RawGameControllerAdded failed, hr %#x\n", hr);
+
+    IRawGameControllerStatics_Release(controller_statics);
+
+    IAgileObject_Release(agile_object);
+    IInspectable_Release(inspectable);
+    IActivationFactory_Release(factory);
+
+    pWindowsDeleteString(str);
+
+    pRoUninitialize();
+}
+
 START_TEST(input)
 {
     HMODULE combase;
@@ -240,4 +412,5 @@ START_TEST(input)
 #undef LOAD_FUNCPTR
 
     test_Gamepad();
+    test_RawGameController();
 }
