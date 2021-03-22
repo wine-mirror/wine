@@ -90,6 +90,7 @@ struct builtin_module
     ino_t       ino;
     void       *handle;
     void       *module;
+    char       *unix_name;
     void       *unix_handle;
     void       *unix_entry;
 };
@@ -570,6 +571,7 @@ static void add_builtin_module( void *module, void *handle, const struct stat *s
     if (!(builtin = malloc( sizeof(*builtin) ))) return;
     builtin->handle = handle;
     builtin->module = module;
+    builtin->unix_name   = NULL;
     builtin->unix_handle = NULL;
     builtin->unix_entry  = NULL;
     if (st)
@@ -641,9 +643,33 @@ void *get_builtin_so_handle( void *module )
 
 
 /***********************************************************************
- *           set_builtin_unix_handle
+ *           get_builtin_unix_info
  */
-NTSTATUS set_builtin_unix_handle( void *module, void *handle, void *entry )
+NTSTATUS get_builtin_unix_info( void *module, const char **name, void **handle, void **entry )
+{
+    sigset_t sigset;
+    NTSTATUS status = STATUS_DLL_NOT_FOUND;
+    struct builtin_module *builtin;
+
+    server_enter_uninterrupted_section( &virtual_mutex, &sigset );
+    LIST_FOR_EACH_ENTRY( builtin, &builtin_modules, struct builtin_module, entry )
+    {
+        if (builtin->module != module) continue;
+        *name   = builtin->unix_name;
+        *handle = builtin->unix_handle;
+        *entry  = builtin->unix_entry;
+        status = STATUS_SUCCESS;
+        break;
+    }
+    server_leave_uninterrupted_section( &virtual_mutex, &sigset );
+    return status;
+}
+
+
+/***********************************************************************
+ *           set_builtin_unix_info
+ */
+NTSTATUS set_builtin_unix_info( void *module, const char *name, void *handle, void *entry )
 {
     sigset_t sigset;
     NTSTATUS status = STATUS_DLL_NOT_FOUND;
@@ -655,6 +681,8 @@ NTSTATUS set_builtin_unix_handle( void *module, void *handle, void *entry )
         if (builtin->module != module) continue;
         if (!builtin->unix_handle)
         {
+            free( builtin->unix_name );
+            builtin->unix_name = name ? strdup( name ) : NULL;
             builtin->unix_handle = handle;
             builtin->unix_entry = entry;
             status = STATUS_SUCCESS;
@@ -664,28 +692,6 @@ NTSTATUS set_builtin_unix_handle( void *module, void *handle, void *entry )
     }
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
     return status;
-}
-
-
-/***********************************************************************
- *           init_unix_lib
- */
-NTSTATUS CDECL init_unix_lib( void *module, DWORD reason, const void *ptr_in, void *ptr_out )
-{
-    sigset_t sigset;
-    NTSTATUS (CDECL *init_func)( HMODULE, DWORD, const void *, void * ) = NULL;
-    struct builtin_module *builtin;
-
-    server_enter_uninterrupted_section( &virtual_mutex, &sigset );
-    LIST_FOR_EACH_ENTRY( builtin, &builtin_modules, struct builtin_module, entry )
-    {
-        if (builtin->module != module) continue;
-        init_func = builtin->unix_entry;
-        break;
-    }
-    server_leave_uninterrupted_section( &virtual_mutex, &sigset );
-    if (!init_func) return STATUS_DLL_NOT_FOUND;
-    return init_func( module, reason, ptr_in, ptr_out );
 }
 
 

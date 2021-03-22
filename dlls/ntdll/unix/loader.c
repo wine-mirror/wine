@@ -1111,30 +1111,38 @@ already_loaded:
 
 
 /***********************************************************************
- *           dlopen_unix_dll
+ *           init_unix_lib
  */
-static NTSTATUS dlopen_unix_dll( void *module, const char *name )
+static NTSTATUS CDECL init_unix_lib( void *module, DWORD reason, const void *ptr_in, void *ptr_out )
 {
-    void *unix_module, *handle, *entry;
+    NTSTATUS (CDECL *init_func)( HMODULE, DWORD, const void *, void * );
     const IMAGE_NT_HEADERS *nt;
-    NTSTATUS status = STATUS_INVALID_IMAGE_FORMAT;
+    const char *name;
+    void *handle, *entry, *unix_module;
+    NTSTATUS status;
 
-    handle = dlopen( name, RTLD_NOW );
-    if (!handle) return STATUS_DLL_NOT_FOUND;
-    if (!(nt = dlsym( handle, "__wine_spec_nt_header" ))) goto done;
-    if (!(entry = dlsym( handle, "__wine_init_unix_lib" ))) goto done;
+    if ((status = get_builtin_unix_info( module, &name, &handle, &entry ))) return status;
 
-    unix_module = (HMODULE)((nt->OptionalHeader.ImageBase + 0xffff) & ~0xffff);
-    status = set_builtin_unix_handle( module, handle, entry );
-    if (!status)
+    if (!entry)
     {
+        if (!name) return STATUS_DLL_NOT_FOUND;
+        if (!(handle = dlopen( name, RTLD_NOW ))) return STATUS_DLL_NOT_FOUND;
+
+        if (!(nt = dlsym( handle, "__wine_spec_nt_header" )) ||
+            !(entry = dlsym( handle, "__wine_init_unix_lib" )))
+        {
+            dlclose( handle );
+            set_builtin_unix_info( module, NULL, NULL, NULL );
+            return STATUS_INVALID_IMAGE_FORMAT;
+        }
+        TRACE( "loaded %s for %p\n", debugstr_a(name), module );
+        unix_module = (void *)((nt->OptionalHeader.ImageBase + 0xffff) & ~0xffff);
         map_so_dll( nt, unix_module );
         fixup_ntdll_imports( name, unix_module );
-        return status;
+        set_builtin_unix_info( module, NULL, handle, entry );
     }
-done:
-    dlclose( handle );
-    return status;
+    init_func = entry;
+    return init_func( module, reason, ptr_in, ptr_out );
 }
 
 
@@ -1393,7 +1401,7 @@ done:
     if (!status && ext)
     {
         strcpy( ext, ".so" );
-        dlopen_unix_dll( *module, ptr );
+        set_builtin_unix_info( *module, ptr, NULL, NULL );
     }
     free( file );
     return status;
