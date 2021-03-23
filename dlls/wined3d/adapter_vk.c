@@ -1330,7 +1330,7 @@ static void wined3d_view_vk_destroy_object(void *object)
     {
         if (context)
         {
-            wined3d_context_vk_destroy_buffer_view(wined3d_context_vk(context),
+            wined3d_context_vk_destroy_vk_buffer_view(wined3d_context_vk(context),
                     *ctx->vk_buffer_view, *ctx->command_buffer_id);
         }
         else
@@ -1343,7 +1343,7 @@ static void wined3d_view_vk_destroy_object(void *object)
     {
         if (context)
         {
-            wined3d_context_vk_destroy_image_view(wined3d_context_vk(context),
+            wined3d_context_vk_destroy_vk_image_view(wined3d_context_vk(context),
                     *ctx->vk_image_view, *ctx->command_buffer_id);
         }
         else
@@ -1358,7 +1358,7 @@ static void wined3d_view_vk_destroy_object(void *object)
     {
         if (context)
         {
-            wined3d_context_vk_destroy_buffer_view(wined3d_context_vk(context),
+            wined3d_context_vk_destroy_vk_buffer_view(wined3d_context_vk(context),
                     *ctx->vk_counter_view, *ctx->command_buffer_id);
         }
         else
@@ -1556,7 +1556,7 @@ static void wined3d_sampler_vk_destroy_object(void *object)
 
     context_vk = wined3d_context_vk(context_acquire(sampler_vk->s.device, NULL, 0));
 
-    wined3d_context_vk_destroy_sampler(context_vk, sampler_vk->vk_image_info.sampler, sampler_vk->command_buffer_id);
+    wined3d_context_vk_destroy_vk_sampler(context_vk, sampler_vk->vk_image_info.sampler, sampler_vk->command_buffer_id);
     heap_free(sampler_vk);
 
     context_release(&context_vk->c);

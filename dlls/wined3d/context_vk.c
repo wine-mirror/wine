@@ -520,7 +520,7 @@ static struct wined3d_retired_object_vk *wined3d_context_vk_get_retired_object_v
     return &retired->objects[retired->count++];
 }
 
-void wined3d_context_vk_destroy_framebuffer(struct wined3d_context_vk *context_vk,
+void wined3d_context_vk_destroy_vk_framebuffer(struct wined3d_context_vk *context_vk,
         VkFramebuffer vk_framebuffer, uint64_t command_buffer_id)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
@@ -545,7 +545,7 @@ void wined3d_context_vk_destroy_framebuffer(struct wined3d_context_vk *context_v
     o->command_buffer_id = command_buffer_id;
 }
 
-static void wined3d_context_vk_destroy_descriptor_pool(struct wined3d_context_vk *context_vk,
+static void wined3d_context_vk_destroy_vk_descriptor_pool(struct wined3d_context_vk *context_vk,
         VkDescriptorPool vk_descriptor_pool, uint64_t command_buffer_id)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
@@ -570,7 +570,7 @@ static void wined3d_context_vk_destroy_descriptor_pool(struct wined3d_context_vk
     o->command_buffer_id = command_buffer_id;
 }
 
-void wined3d_context_vk_destroy_memory(struct wined3d_context_vk *context_vk,
+void wined3d_context_vk_destroy_vk_memory(struct wined3d_context_vk *context_vk,
         VkDeviceMemory vk_memory, uint64_t command_buffer_id)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
@@ -668,7 +668,7 @@ static void wined3d_context_vk_destroy_bo_slab_slice(struct wined3d_context_vk *
     o->command_buffer_id = command_buffer_id;
 }
 
-static void wined3d_context_vk_destroy_buffer(struct wined3d_context_vk *context_vk,
+static void wined3d_context_vk_destroy_vk_buffer(struct wined3d_context_vk *context_vk,
         VkBuffer vk_buffer, uint64_t command_buffer_id)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
@@ -693,7 +693,7 @@ static void wined3d_context_vk_destroy_buffer(struct wined3d_context_vk *context
     o->command_buffer_id = command_buffer_id;
 }
 
-void wined3d_context_vk_destroy_image(struct wined3d_context_vk *context_vk,
+void wined3d_context_vk_destroy_vk_image(struct wined3d_context_vk *context_vk,
         VkImage vk_image, uint64_t command_buffer_id)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
@@ -718,7 +718,7 @@ void wined3d_context_vk_destroy_image(struct wined3d_context_vk *context_vk,
     o->command_buffer_id = command_buffer_id;
 }
 
-void wined3d_context_vk_destroy_buffer_view(struct wined3d_context_vk *context_vk,
+void wined3d_context_vk_destroy_vk_buffer_view(struct wined3d_context_vk *context_vk,
         VkBufferView vk_view, uint64_t command_buffer_id)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
@@ -743,7 +743,7 @@ void wined3d_context_vk_destroy_buffer_view(struct wined3d_context_vk *context_v
     o->command_buffer_id = command_buffer_id;
 }
 
-void wined3d_context_vk_destroy_image_view(struct wined3d_context_vk *context_vk,
+void wined3d_context_vk_destroy_vk_image_view(struct wined3d_context_vk *context_vk,
         VkImageView vk_view, uint64_t command_buffer_id)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
@@ -768,7 +768,7 @@ void wined3d_context_vk_destroy_image_view(struct wined3d_context_vk *context_vk
     o->command_buffer_id = command_buffer_id;
 }
 
-void wined3d_context_vk_destroy_sampler(struct wined3d_context_vk *context_vk,
+void wined3d_context_vk_destroy_vk_sampler(struct wined3d_context_vk *context_vk,
         VkSampler vk_sampler, uint64_t command_buffer_id)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
@@ -812,7 +812,7 @@ void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk, const 
         return;
     }
 
-    wined3d_context_vk_destroy_buffer(context_vk, bo->vk_buffer, bo->command_buffer_id);
+    wined3d_context_vk_destroy_vk_buffer(context_vk, bo->vk_buffer, bo->command_buffer_id);
     if (bo->memory)
     {
         if (bo->map_ptr)
@@ -823,7 +823,7 @@ void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk, const 
 
     if (bo->map_ptr)
         VK_CALL(vkUnmapMemory(device_vk->vk_device, bo->vk_memory));
-    wined3d_context_vk_destroy_memory(context_vk, bo->vk_memory, bo->command_buffer_id);
+    wined3d_context_vk_destroy_vk_memory(context_vk, bo->vk_memory, bo->command_buffer_id);
 }
 
 void wined3d_context_vk_poll_command_buffers(struct wined3d_context_vk *context_vk)
@@ -1196,7 +1196,7 @@ void wined3d_context_vk_end_current_render_pass(struct wined3d_context_vk *conte
 
     if (context_vk->vk_framebuffer)
     {
-        wined3d_context_vk_destroy_framebuffer(context_vk,
+        wined3d_context_vk_destroy_vk_framebuffer(context_vk,
                 context_vk->vk_framebuffer, context_vk->current_command_buffer.id);
         context_vk->vk_framebuffer = VK_NULL_HANDLE;
     }
@@ -2305,7 +2305,7 @@ static void wined3d_context_vk_bind_stream_output_buffers(struct wined3d_context
         VK_CALL(vkCmdBindTransformFeedbackBuffersEXT(vk_command_buffer, first, count, buffers, offsets, sizes));
 }
 
-static VkResult wined3d_context_vk_create_descriptor_pool(struct wined3d_device_vk *device_vk,
+static VkResult wined3d_context_vk_create_vk_descriptor_pool(struct wined3d_device_vk *device_vk,
         const struct wined3d_vk_info *vk_info, VkDescriptorPool *vk_pool)
 {
     struct VkDescriptorPoolCreateInfo pool_desc;
@@ -2334,7 +2334,7 @@ static VkResult wined3d_context_vk_create_descriptor_pool(struct wined3d_device_
     return vr;
 }
 
-static VkResult wined3d_context_vk_create_descriptor_set(struct wined3d_context_vk *context_vk,
+static VkResult wined3d_context_vk_create_vk_descriptor_set(struct wined3d_context_vk *context_vk,
         VkDescriptorSetLayout vk_set_layout, VkDescriptorSet *vk_descriptor_set)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
@@ -2342,7 +2342,7 @@ static VkResult wined3d_context_vk_create_descriptor_set(struct wined3d_context_
     struct VkDescriptorSetAllocateInfo set_desc;
     VkResult vr;
 
-    if (!context_vk->vk_descriptor_pool && (vr = wined3d_context_vk_create_descriptor_pool(device_vk,
+    if (!context_vk->vk_descriptor_pool && (vr = wined3d_context_vk_create_vk_descriptor_pool(device_vk,
             vk_info, &context_vk->vk_descriptor_pool)))
     {
         WARN("Failed to create descriptor pool, vr %s.\n", wined3d_debug_vkresult(vr));
@@ -2359,10 +2359,10 @@ static VkResult wined3d_context_vk_create_descriptor_set(struct wined3d_context_
 
     if (vr == VK_ERROR_FRAGMENTED_POOL || vr == VK_ERROR_OUT_OF_POOL_MEMORY)
     {
-        wined3d_context_vk_destroy_descriptor_pool(context_vk,
+        wined3d_context_vk_destroy_vk_descriptor_pool(context_vk,
                 context_vk->vk_descriptor_pool, context_vk->current_command_buffer.id);
         context_vk->vk_descriptor_pool = VK_NULL_HANDLE;
-        if ((vr = wined3d_context_vk_create_descriptor_pool(device_vk, vk_info, &context_vk->vk_descriptor_pool)))
+        if ((vr = wined3d_context_vk_create_vk_descriptor_pool(device_vk, vk_info, &context_vk->vk_descriptor_pool)))
         {
             WARN("Failed to create descriptor pool, vr %s.\n", wined3d_debug_vkresult(vr));
             return vr;
@@ -2505,7 +2505,7 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
             return false;
     }
 
-    if ((vr = wined3d_context_vk_create_descriptor_set(context_vk, vk_set_layout, &vk_descriptor_set)))
+    if ((vr = wined3d_context_vk_create_vk_descriptor_set(context_vk, vk_set_layout, &vk_descriptor_set)))
     {
         WARN("Failed to create descriptor set, vr %s.\n", wined3d_debug_vkresult(vr));
         return false;
@@ -2641,7 +2641,7 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
     return true;
 }
 
-static VkResult wined3d_context_vk_create_descriptor_set_layout(struct wined3d_device_vk *device_vk,
+static VkResult wined3d_context_vk_create_vk_descriptor_set_layout(struct wined3d_device_vk *device_vk,
         const struct wined3d_vk_info *vk_info, const struct wined3d_pipeline_layout_key_vk *key,
         VkDescriptorSetLayout *vk_set_layout)
 {
@@ -2687,7 +2687,7 @@ struct wined3d_pipeline_layout_vk *wined3d_context_vk_get_pipeline_layout(
     memcpy(layout->key.bindings, key.bindings, sizeof(*layout->key.bindings) * key.binding_count);
     layout->key.binding_count = key.binding_count;
 
-    if ((vr = wined3d_context_vk_create_descriptor_set_layout(device_vk, vk_info, &key, &layout->vk_set_layout)))
+    if ((vr = wined3d_context_vk_create_vk_descriptor_set_layout(device_vk, vk_info, &key, &layout->vk_set_layout)))
     {
         WARN("Failed to create descriptor set layout, vr %s.\n", wined3d_debug_vkresult(vr));
         goto fail;

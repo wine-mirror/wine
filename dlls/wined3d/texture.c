@@ -5154,20 +5154,20 @@ static void wined3d_texture_vk_unload_location(struct wined3d_texture *texture,
         case WINED3D_LOCATION_TEXTURE_RGB:
             if (texture_vk->default_image_info.imageView)
             {
-                wined3d_context_vk_destroy_image_view(context_vk,
+                wined3d_context_vk_destroy_vk_image_view(context_vk,
                         texture_vk->default_image_info.imageView, texture_vk->command_buffer_id);
                 texture_vk->default_image_info.imageView = VK_NULL_HANDLE;
             }
 
             if (texture_vk->vk_image)
             {
-                wined3d_context_vk_destroy_image(context_vk, texture_vk->vk_image, texture_vk->command_buffer_id);
+                wined3d_context_vk_destroy_vk_image(context_vk, texture_vk->vk_image, texture_vk->command_buffer_id);
                 texture_vk->vk_image = VK_NULL_HANDLE;
                 if (texture_vk->memory)
                     wined3d_context_vk_destroy_allocator_block(context_vk,
                             texture_vk->memory, texture_vk->command_buffer_id);
                 else
-                    wined3d_context_vk_destroy_memory(context_vk,
+                    wined3d_context_vk_destroy_vk_memory(context_vk,
                             texture_vk->vk_memory, texture_vk->command_buffer_id);
                 texture_vk->vk_memory = VK_NULL_HANDLE;
                 texture_vk->memory = NULL;
@@ -6270,7 +6270,7 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
         VK_CALL(vkCmdEndRenderPass(vk_command_buffer));
     }
 
-    wined3d_context_vk_destroy_framebuffer(context_vk, vk_framebuffer, context_vk->current_command_buffer.id);
+    wined3d_context_vk_destroy_vk_framebuffer(context_vk, vk_framebuffer, context_vk->current_command_buffer.id);
 
     for (i = 0; i < rt_count; ++i)
     {

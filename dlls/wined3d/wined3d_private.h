@@ -2600,17 +2600,17 @@ void wined3d_context_vk_destroy_allocator_block(struct wined3d_context_vk *conte
         struct wined3d_allocator_block *block, uint64_t command_buffer_id) DECLSPEC_HIDDEN;
 void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk,
         const struct wined3d_bo_vk *bo) DECLSPEC_HIDDEN;
-void wined3d_context_vk_destroy_buffer_view(struct wined3d_context_vk *context_vk,
+void wined3d_context_vk_destroy_vk_buffer_view(struct wined3d_context_vk *context_vk,
         VkBufferView vk_view, uint64_t command_buffer_id) DECLSPEC_HIDDEN;
-void wined3d_context_vk_destroy_framebuffer(struct wined3d_context_vk *context_vk,
+void wined3d_context_vk_destroy_vk_framebuffer(struct wined3d_context_vk *context_vk,
         VkFramebuffer vk_framebuffer, uint64_t command_buffer_id) DECLSPEC_HIDDEN;
-void wined3d_context_vk_destroy_image(struct wined3d_context_vk *context_vk,
+void wined3d_context_vk_destroy_vk_image(struct wined3d_context_vk *context_vk,
         VkImage vk_image, uint64_t command_buffer_id) DECLSPEC_HIDDEN;
-void wined3d_context_vk_destroy_image_view(struct wined3d_context_vk *context_vk,
+void wined3d_context_vk_destroy_vk_image_view(struct wined3d_context_vk *context_vk,
         VkImageView vk_view, uint64_t command_buffer_id) DECLSPEC_HIDDEN;
-void wined3d_context_vk_destroy_memory(struct wined3d_context_vk *context_vk,
+void wined3d_context_vk_destroy_vk_memory(struct wined3d_context_vk *context_vk,
         VkDeviceMemory vk_memory, uint64_t command_buffer_id) DECLSPEC_HIDDEN;
-void wined3d_context_vk_destroy_sampler(struct wined3d_context_vk *context_vk,
+void wined3d_context_vk_destroy_vk_sampler(struct wined3d_context_vk *context_vk,
         VkSampler vk_sampler, uint64_t command_buffer_id) DECLSPEC_HIDDEN;
 void wined3d_context_vk_end_current_render_pass(struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
 VkCommandBuffer wined3d_context_vk_get_command_buffer(struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;

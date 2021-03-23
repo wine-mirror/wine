@@ -584,11 +584,11 @@ void wined3d_device_destroy_default_samplers(struct wined3d_device *device, stru
 static void wined3d_null_image_vk_cleanup(struct wined3d_null_image_vk *image,
         struct wined3d_context_vk *context_vk, uint64_t command_buffer_id)
 {
-    wined3d_context_vk_destroy_image(context_vk, image->vk_image, command_buffer_id);
+    wined3d_context_vk_destroy_vk_image(context_vk, image->vk_image, command_buffer_id);
     if (image->memory)
         wined3d_context_vk_destroy_allocator_block(context_vk, image->memory, command_buffer_id);
     else
-        wined3d_context_vk_destroy_memory(context_vk, image->vk_memory, command_buffer_id);
+        wined3d_context_vk_destroy_vk_memory(context_vk, image->vk_memory, command_buffer_id);
 }
 
 static bool wined3d_null_image_vk_init(struct wined3d_null_image_vk *image, struct wined3d_context_vk *context_vk,
@@ -934,16 +934,16 @@ void wined3d_device_vk_destroy_null_views(struct wined3d_device_vk *device_vk, s
     struct wined3d_null_views_vk *v = &device_vk->null_views_vk;
     uint64_t id = context_vk->current_command_buffer.id;
 
-    wined3d_context_vk_destroy_image_view(context_vk, v->vk_info_2dms_array.imageView, id);
-    wined3d_context_vk_destroy_image_view(context_vk, v->vk_info_2d_array.imageView, id);
-    wined3d_context_vk_destroy_image_view(context_vk, v->vk_info_cube.imageView, id);
-    wined3d_context_vk_destroy_image_view(context_vk, v->vk_info_3d.imageView, id);
-    wined3d_context_vk_destroy_image_view(context_vk, v->vk_info_2dms.imageView, id);
-    wined3d_context_vk_destroy_image_view(context_vk, v->vk_info_2d.imageView, id);
-    wined3d_context_vk_destroy_image_view(context_vk, v->vk_info_1d.imageView, id);
+    wined3d_context_vk_destroy_vk_image_view(context_vk, v->vk_info_2dms_array.imageView, id);
+    wined3d_context_vk_destroy_vk_image_view(context_vk, v->vk_info_2d_array.imageView, id);
+    wined3d_context_vk_destroy_vk_image_view(context_vk, v->vk_info_cube.imageView, id);
+    wined3d_context_vk_destroy_vk_image_view(context_vk, v->vk_info_3d.imageView, id);
+    wined3d_context_vk_destroy_vk_image_view(context_vk, v->vk_info_2dms.imageView, id);
+    wined3d_context_vk_destroy_vk_image_view(context_vk, v->vk_info_2d.imageView, id);
+    wined3d_context_vk_destroy_vk_image_view(context_vk, v->vk_info_1d.imageView, id);
 
-    wined3d_context_vk_destroy_buffer_view(context_vk, v->vk_view_buffer_float, id);
-    wined3d_context_vk_destroy_buffer_view(context_vk, v->vk_view_buffer_uint, id);
+    wined3d_context_vk_destroy_vk_buffer_view(context_vk, v->vk_view_buffer_float, id);
+    wined3d_context_vk_destroy_vk_buffer_view(context_vk, v->vk_view_buffer_uint, id);
 }
 
 HRESULT CDECL wined3d_device_acquire_focus_window(struct wined3d_device *device, HWND window)

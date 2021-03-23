@@ -656,7 +656,7 @@ VkImageViewType vk_image_view_type_from_wined3d(enum wined3d_resource_type type,
     }
 }
 
-static VkBufferView wined3d_view_vk_create_buffer_view(struct wined3d_context_vk *context_vk,
+static VkBufferView wined3d_view_vk_create_vk_buffer_view(struct wined3d_context_vk *context_vk,
         const struct wined3d_view_desc *desc, struct wined3d_buffer_vk *buffer_vk,
         const struct wined3d_format_vk *view_format_vk)
 {
@@ -688,7 +688,7 @@ static VkBufferView wined3d_view_vk_create_buffer_view(struct wined3d_context_vk
     return vk_buffer_view;
 }
 
-static VkImageView wined3d_view_vk_create_texture_view(struct wined3d_context_vk *context_vk,
+static VkImageView wined3d_view_vk_create_vk_image_view(struct wined3d_context_vk *context_vk,
         const struct wined3d_view_desc *desc, struct wined3d_texture_vk *texture_vk,
         const struct wined3d_format_vk *view_format_vk, struct color_fixup_desc fixup, bool rtv)
 {
@@ -826,7 +826,7 @@ static void wined3d_render_target_view_vk_cs_init(void *object)
     }
 
     context = context_acquire(resource->device, NULL, 0);
-    view_vk->vk_image_view = wined3d_view_vk_create_texture_view(wined3d_context_vk(context),
+    view_vk->vk_image_view = wined3d_view_vk_create_vk_image_view(wined3d_context_vk(context),
             desc, texture_vk, format_vk, COLOR_FIXUP_IDENTITY, true);
     context_release(context);
 
@@ -1040,8 +1040,8 @@ void wined3d_shader_resource_view_vk_update(struct wined3d_shader_resource_view_
     VkBufferView vk_buffer_view;
 
     buffer_vk = wined3d_buffer_vk(buffer_from_resource(resource));
-    wined3d_context_vk_destroy_buffer_view(context_vk, view_vk->u.vk_buffer_view, view_vk->command_buffer_id);
-    if ((vk_buffer_view = wined3d_view_vk_create_buffer_view(context_vk, desc, buffer_vk, view_format_vk)))
+    wined3d_context_vk_destroy_vk_buffer_view(context_vk, view_vk->u.vk_buffer_view, view_vk->command_buffer_id);
+    if ((vk_buffer_view = wined3d_view_vk_create_vk_buffer_view(context_vk, desc, buffer_vk, view_format_vk)))
     {
         view_vk->u.vk_buffer_view = vk_buffer_view;
         view_vk->bo_user.valid = true;
@@ -1071,7 +1071,7 @@ static void wined3d_shader_resource_view_vk_cs_init(void *object)
         buffer_vk = wined3d_buffer_vk(buffer_from_resource(resource));
 
         context = context_acquire(resource->device, NULL, 0);
-        vk_buffer_view = wined3d_view_vk_create_buffer_view(wined3d_context_vk(context),
+        vk_buffer_view = wined3d_view_vk_create_vk_buffer_view(wined3d_context_vk(context),
                 desc, buffer_vk, wined3d_format_vk(format));
         context_release(context);
 
@@ -1105,7 +1105,7 @@ static void wined3d_shader_resource_view_vk_cs_init(void *object)
         FIXME("Swapchain shader resource views not supported.\n");
 
     context = context_acquire(resource->device, NULL, 0);
-    vk_image_view = wined3d_view_vk_create_texture_view(wined3d_context_vk(context),
+    vk_image_view = wined3d_view_vk_create_vk_image_view(wined3d_context_vk(context),
             desc, texture_vk, wined3d_format_vk(format), format->color_fixup, false);
     context_release(context);
 
@@ -1721,8 +1721,8 @@ void wined3d_unordered_access_view_vk_update(struct wined3d_unordered_access_vie
     VkBufferView vk_buffer_view;
 
     buffer_vk = wined3d_buffer_vk(buffer_from_resource(resource));
-    wined3d_context_vk_destroy_buffer_view(context_vk, view_vk->u.vk_buffer_view, view_vk->command_buffer_id);
-    if ((vk_buffer_view = wined3d_view_vk_create_buffer_view(context_vk, desc, buffer_vk, view_format_vk)))
+    wined3d_context_vk_destroy_vk_buffer_view(context_vk, view_vk->u.vk_buffer_view, view_vk->command_buffer_id);
+    if ((vk_buffer_view = wined3d_view_vk_create_vk_buffer_view(context_vk, desc, buffer_vk, view_format_vk)))
     {
         view_vk->u.vk_buffer_view = vk_buffer_view;
         view_vk->bo_user.valid = true;
@@ -1760,7 +1760,7 @@ static void wined3d_unordered_access_view_vk_cs_init(void *object)
         context_vk = wined3d_context_vk(context_acquire(&device_vk->d, NULL, 0));
         vk_info = context_vk->vk_info;
 
-        if ((vk_buffer_view = wined3d_view_vk_create_buffer_view(context_vk, desc, buffer_vk, format_vk)))
+        if ((vk_buffer_view = wined3d_view_vk_create_vk_buffer_view(context_vk, desc, buffer_vk, format_vk)))
         {
             TRACE("Created buffer view 0x%s.\n", wine_dbgstr_longlong(vk_buffer_view));
 
@@ -1829,7 +1829,7 @@ static void wined3d_unordered_access_view_vk_cs_init(void *object)
         FIXME("Swapchain unordered access views not supported.\n");
 
     context_vk = wined3d_context_vk(context_acquire(&device_vk->d, NULL, 0));
-    vk_image_view = wined3d_view_vk_create_texture_view(context_vk, desc,
+    vk_image_view = wined3d_view_vk_create_vk_image_view(context_vk, desc,
             texture_vk, format_vk, format_vk->f.color_fixup, false);
     context_release(&context_vk->c);
 
