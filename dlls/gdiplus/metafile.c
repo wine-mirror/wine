@@ -777,10 +777,7 @@ GpStatus WINGDIPAPI GdipRecordMetafileI(HDC hdc, EmfType type, GDIPCONST GpRect 
 
     if (frameRect)
     {
-        frameRectF.X = frameRect->X;
-        frameRectF.Y = frameRect->Y;
-        frameRectF.Width = frameRect->Width;
-        frameRectF.Height = frameRect->Height;
+        set_rect(&frameRectF, frameRect->X, frameRect->Y, frameRect->Width, frameRect->Height);
         pFrameRectF = &frameRectF;
     }
     else
@@ -798,10 +795,7 @@ GpStatus WINGDIPAPI GdipRecordMetafileStreamI(IStream *stream, HDC hdc, EmfType 
 
     if (frameRect)
     {
-        frameRectF.X = frameRect->X;
-        frameRectF.Y = frameRect->Y;
-        frameRectF.Width = frameRect->Width;
-        frameRectF.Height = frameRect->Height;
+        set_rect(&frameRectF, frameRect->X, frameRect->Y, frameRect->Width, frameRect->Height);
         pFrameRectF = &frameRectF;
     }
     else

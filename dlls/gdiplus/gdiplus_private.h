@@ -618,4 +618,12 @@ static inline void image_unlock(GpImage *image, BOOL unlock)
     if (unlock) image->busy = 0;
 }
 
+static inline void set_rect(GpRectF *rect, REAL x, REAL y, REAL width, REAL height)
+{
+    rect->X = x;
+    rect->Y = y;
+    rect->Width = width;
+    rect->Height = height;
+}
+
 #endif

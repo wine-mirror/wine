@@ -2923,10 +2923,7 @@ GpStatus WINGDIPAPI GdipDrawEllipse(GpGraphics *graphics, GpPen *pen, REAL x,
 
     if (is_metafile_graphics(graphics))
     {
-        rect.X = x;
-        rect.Y = y;
-        rect.Width = width;
-        rect.Height = height;
+        set_rect(&rect, x, y, width, height);
         return METAFILE_DrawEllipse((GpMetafile *)graphics->image, pen, &rect);
     }
 
@@ -3411,11 +3408,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
     {
         GpRectF rc;
 
-        rc.X = srcx;
-        rc.Y = srcy;
-        rc.Width = srcwidth;
-        rc.Height = srcheight;
-
+        set_rect(&rc, srcx, srcy, srcwidth, srcheight);
         return GdipEnumerateMetafileSrcRectDestPoints(graphics, (GpMetafile*)image,
             points, count, &rc, srcUnit, play_metafile_proc, image, imageAttributes);
     }
@@ -4092,10 +4085,7 @@ GpStatus WINGDIPAPI GdipDrawRectangle(GpGraphics *graphics, GpPen *pen, REAL x,
 
     TRACE("(%p, %p, %.2f, %.2f, %.2f, %.2f)\n", graphics, pen, x, y, width, height);
 
-    rect.X = x;
-    rect.Y = y,
-    rect.Width = width;
-    rect.Height = height;
+    set_rect(&rect, x, y, width, height);
     return GdipDrawRectangles(graphics, pen, &rect, 1);
 }
 
@@ -4151,12 +4141,8 @@ GpStatus WINGDIPAPI GdipDrawRectanglesI(GpGraphics *graphics, GpPen *pen,
     if(!rectsF)
         return OutOfMemory;
 
-    for(i = 0;i < count;i++){
-        rectsF[i].X      = (REAL)rects[i].X;
-        rectsF[i].Y      = (REAL)rects[i].Y;
-        rectsF[i].Width  = (REAL)rects[i].Width;
-        rectsF[i].Height = (REAL)rects[i].Height;
-    }
+    for(i = 0;i < count;i++)
+        set_rect(&rectsF[i], rects[i].X, rects[i].Y, rects[i].Width, rects[i].Height);
 
     ret = GdipDrawRectangles(graphics, pen, rectsF, count);
     heap_free(rectsF);
@@ -4246,6 +4232,7 @@ GpStatus WINGDIPAPI GdipFillEllipse(GpGraphics *graphics, GpBrush *brush, REAL x
 {
     GpStatus stat;
     GpPath *path;
+    GpRectF rect;
 
     TRACE("(%p, %p, %.2f, %.2f, %.2f, %.2f)\n", graphics, brush, x, y, width, height);
 
@@ -4257,12 +4244,7 @@ GpStatus WINGDIPAPI GdipFillEllipse(GpGraphics *graphics, GpBrush *brush, REAL x
 
     if (is_metafile_graphics(graphics))
     {
-        GpRectF rect;
-
-        rect.X = x;
-        rect.Y = y;
-        rect.Width = width;
-        rect.Height = height;
+        set_rect(&rect, x, y, width, height);
         return METAFILE_FillEllipse((GpMetafile *)graphics->image, brush, &rect);
     }
 
@@ -4404,10 +4386,7 @@ GpStatus WINGDIPAPI GdipFillPie(GpGraphics *graphics, GpBrush *brush, REAL x,
 
     if (is_metafile_graphics(graphics))
     {
-        rect.X = x;
-        rect.Y = y;
-        rect.Width = width;
-        rect.Height = height;
+        set_rect(&rect, x, y, width, height);
         return METAFILE_FillPie((GpMetafile *)graphics->image, brush, &rect, startAngle, sweepAngle);
     }
 
@@ -4516,11 +4495,7 @@ GpStatus WINGDIPAPI GdipFillRectangle(GpGraphics *graphics, GpBrush *brush,
 
     TRACE("(%p, %p, %.2f, %.2f, %.2f, %.2f)\n", graphics, brush, x, y, width, height);
 
-    rect.X = x;
-    rect.Y = y;
-    rect.Width = width;
-    rect.Height = height;
-
+    set_rect(&rect, x, y, width, height);
     return GdipFillRectangles(graphics, brush, &rect, 1);
 }
 
@@ -4531,11 +4506,7 @@ GpStatus WINGDIPAPI GdipFillRectangleI(GpGraphics *graphics, GpBrush *brush,
 
     TRACE("(%p, %p, %d, %d, %d, %d)\n", graphics, brush, x, y, width, height);
 
-    rect.X = (REAL)x;
-    rect.Y = (REAL)y;
-    rect.Width = (REAL)width;
-    rect.Height = (REAL)height;
-
+    set_rect(&rect, x, y, width, height);
     return GdipFillRectangles(graphics, brush, &rect, 1);
 }
 
@@ -4584,12 +4555,8 @@ GpStatus WINGDIPAPI GdipFillRectanglesI(GpGraphics *graphics, GpBrush *brush, GD
     if(!rectsF)
         return OutOfMemory;
 
-    for(i = 0; i < count; i++){
-        rectsF[i].X      = (REAL)rects[i].X;
-        rectsF[i].Y      = (REAL)rects[i].Y;
-        rectsF[i].Width  = (REAL)rects[i].Width;
-        rectsF[i].Height = (REAL)rects[i].Height;
-    }
+    for(i = 0; i < count; i++)
+        set_rect(&rectsF[i], rects[i].X, rects[i].Y, rects[i].Width, rects[i].Height);
 
     ret = GdipFillRectangles(graphics,brush,rectsF,count);
     heap_free(rectsF);
@@ -5620,10 +5587,7 @@ GpStatus WINGDIPAPI GdipMeasureString(GpGraphics *graphics,
     get_font_hfont(graphics, font, format, &gdifont, NULL, NULL);
     oldfont = SelectObject(hdc, gdifont);
 
-    bounds->X = rect->X;
-    bounds->Y = rect->Y;
-    bounds->Width = 0.0;
-    bounds->Height = 0.0;
+    set_rect(bounds, rect->X, rect->Y, 0.0f, 0.0f);
 
     args.bounds = bounds;
     args.codepointsfitted = &glyphs;
@@ -6502,10 +6466,7 @@ GpStatus WINGDIPAPI GdipSetClipRect(GpGraphics *graphics, REAL x, REAL y,
             return status;
     }
 
-    rect.X = x;
-    rect.Y = y;
-    rect.Width  = width;
-    rect.Height = height;
+    set_rect(&rect, x, y, width, height);
     status = GdipCreateRegionRect(&rect, &region);
     if (status == Ok)
     {
@@ -7098,12 +7059,7 @@ GpStatus WINGDIPAPI GdipMeasureDriverString(GpGraphics *graphics, GDIPCONST UINT
         length = lstrlenW(text);
 
     if (length == 0)
-    {
-        boundingBox->X = 0.0;
-        boundingBox->Y = 0.0;
-        boundingBox->Width = 0.0;
-        boundingBox->Height = 0.0;
-    }
+        set_rect(boundingBox, 0.0f, 0.0f, 0.0f, 0.0f);
 
     if (flags & unsupported_flags)
         FIXME("Ignoring flags %x\n", flags & unsupported_flags);

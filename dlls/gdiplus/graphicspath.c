@@ -1080,19 +1080,16 @@ GpStatus WINGDIPAPI GdipAddPathString(GpPath* path, GDIPCONST WCHAR* string, INT
     return status;
 }
 
-GpStatus WINGDIPAPI GdipAddPathStringI(GpPath* path, GDIPCONST WCHAR* string, INT length, GDIPCONST GpFontFamily* family, INT style, REAL emSize, GDIPCONST Rect* layoutRect, GDIPCONST GpStringFormat* format)
+GpStatus WINGDIPAPI GdipAddPathStringI(GpPath* path, GDIPCONST WCHAR* string, INT length, GDIPCONST GpFontFamily* family,
+    INT style, REAL emSize, GDIPCONST Rect* layoutRect, GDIPCONST GpStringFormat* format)
 {
-    if (layoutRect)
-    {
-        RectF layoutRectF = {
-            (REAL)layoutRect->X,
-            (REAL)layoutRect->Y,
-            (REAL)layoutRect->Width,
-            (REAL)layoutRect->Height
-        };
-        return GdipAddPathString(path, string, length, family, style, emSize, &layoutRectF, format);
-    }
-    return InvalidParameter;
+    RectF rect;
+
+    if (!layoutRect)
+        return InvalidParameter;
+
+    set_rect(&rect, layoutRect->X, layoutRect->Y, layoutRect->Width, layoutRect->Height);
+    return GdipAddPathString(path, string, length, family, style, emSize, &rect, format);
 }
 
 /*************************************************************************
@@ -2547,12 +2544,8 @@ GpStatus WINGDIPAPI GdipAddPathRectanglesI(GpPath *path, GDIPCONST GpRect *rects
 
     rectsF = heap_alloc_zero(sizeof(GpRectF)*count);
 
-    for(i = 0;i < count;i++){
-        rectsF[i].X      = (REAL)rects[i].X;
-        rectsF[i].Y      = (REAL)rects[i].Y;
-        rectsF[i].Width  = (REAL)rects[i].Width;
-        rectsF[i].Height = (REAL)rects[i].Height;
-    }
+    for(i = 0;i < count;i++)
+        set_rect(&rectsF[i], rects[i].X, rects[i].Y, rects[i].Width, rects[i].Height);
 
     retstat = GdipAddPathRectangles(path, rectsF, count);
     heap_free(rectsF);
