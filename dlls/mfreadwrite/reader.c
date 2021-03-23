@@ -1643,12 +1643,6 @@ static HRESULT source_reader_setup_sample_allocator(struct source_reader *reader
     if (!(reader->flags & SOURCE_READER_HAS_DEVICE_MANAGER))
         return S_OK;
 
-    if (reader->flags & SOURCE_READER_DXGI_DEVICE_MANAGER)
-    {
-        FIXME("DXGI device manager is not supported.\n");
-        return S_OK;
-    }
-
     if (!stream->allocator)
     {
         if (FAILED(hr = MFCreateVideoSampleAllocatorEx(&IID_IMFVideoSampleAllocatorEx, (void **)&stream->allocator)))
