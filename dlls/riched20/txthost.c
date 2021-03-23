@@ -1021,7 +1021,7 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         LONG codepage = unicode ? CP_UNICODE : CP_ACP;
         int len;
 
-        ITextServices_OnTxPropertyBitsChange( host->text_srv, TXTBIT_CLIENTRECTCHANGE, 0 );
+        ITextServices_OnTxInPlaceActivate( host->text_srv, NULL );
 
         if (lparam)
         {

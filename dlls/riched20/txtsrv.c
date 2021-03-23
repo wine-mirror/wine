@@ -220,6 +220,7 @@ static HRESULT update_client_rect( struct text_services *services, const RECT *c
 
     if (!client)
     {
+        if (!services->editor->in_place_active) return E_INVALIDARG;
         hr = ITextHost_TxGetClientRect( services->host, &rect );
         client = &rect;
     }
