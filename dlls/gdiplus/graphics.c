@@ -4088,26 +4088,15 @@ GpStatus WINGDIPAPI GdipDrawPieI(GpGraphics *graphics, GpPen *pen, INT x,
 GpStatus WINGDIPAPI GdipDrawRectangle(GpGraphics *graphics, GpPen *pen, REAL x,
     REAL y, REAL width, REAL height)
 {
-    GpStatus status;
-    GpPath *path;
+    GpRectF rect;
 
     TRACE("(%p, %p, %.2f, %.2f, %.2f, %.2f)\n", graphics, pen, x, y, width, height);
 
-    if(!pen || !graphics)
-        return InvalidParameter;
-
-    if(graphics->busy)
-        return ObjectBusy;
-
-    status = GdipCreatePath(FillModeAlternate, &path);
-    if (status != Ok) return status;
-
-    status = GdipAddPathRectangle(path, x, y, width, height);
-    if (status == Ok)
-        status = GdipDrawPath(graphics, pen, path);
-
-    GdipDeletePath(path);
-    return status;
+    rect.X = x;
+    rect.Y = y,
+    rect.Width = width;
+    rect.Height = height;
+    return GdipDrawRectangles(graphics, pen, &rect, 1);
 }
 
 GpStatus WINGDIPAPI GdipDrawRectangleI(GpGraphics *graphics, GpPen *pen, INT x,
