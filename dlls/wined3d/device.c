@@ -1299,7 +1299,7 @@ HRESULT CDECL wined3d_device_set_stream_source(struct wined3d_device *device, UI
     stream->offset = offset;
     if (buffer)
         wined3d_buffer_incref(buffer);
-    wined3d_cs_emit_set_stream_source(device->cs, stream_idx, buffer, offset, stride);
+    wined3d_device_context_emit_set_stream_source(&device->cs->c, stream_idx, buffer, offset, stride);
     if (prev_buffer)
         wined3d_buffer_decref(prev_buffer);
 
@@ -1825,7 +1825,7 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
 
     for (i = 0; i < WINED3D_MAX_STREAMS; ++i)
     {
-        wined3d_cs_emit_set_stream_source(device->cs, i, state->streams[i].buffer,
+        wined3d_device_context_emit_set_stream_source(context, i, state->streams[i].buffer,
                 state->streams[i].offset, state->streams[i].stride);
     }
 
