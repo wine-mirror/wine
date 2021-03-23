@@ -1437,14 +1437,14 @@ static void get_initial_console( RTL_USER_PROCESS_PARAMETERS *params )
  *
  * Get the current directory at startup.
  */
-static void get_initial_directory( UNICODE_STRING *dir )
+static WCHAR *get_initial_directory(void)
 {
+    static const WCHAR backslashW[] = {'\\',0};
+    static const WCHAR windows_dir[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',0};
     const char *pwd;
     char *cwd;
     int size;
-
-    dir->MaximumLength = MAX_PATH * sizeof(WCHAR);
-    dir->Length = 0;
+    WCHAR *ret = NULL;
 
     /* try to get it from the Unix cwd */
 
@@ -1472,45 +1472,30 @@ static void get_initial_directory( UNICODE_STRING *dir )
 
     if (pwd)
     {
-        WCHAR *nt_name;
-
-        if (!unix_to_nt_file_name( pwd, &nt_name ))
+        if (!unix_to_nt_file_name( pwd, &ret ))
         {
-            /* skip the \??\ prefix */
-            ULONG len = wcslen( nt_name );
-            if (len > 6 && nt_name[5] == ':')
+            ULONG len = wcslen( ret );
+            if (len && ret[len - 1] != '\\')
             {
-                dir->Length = (len - 4) * sizeof(WCHAR);
-                memcpy( dir->Buffer, nt_name + 4, dir->Length );
+                /* add trailing backslash */
+                WCHAR *tmp = malloc( (len + 2) * sizeof(WCHAR) );
+                wcscpy( tmp, ret );
+                wcscat( tmp, backslashW );
+                free( ret );
+                ret = tmp;
             }
-            else  /* change \??\ to \\?\ */
-            {
-                dir->Length = len * sizeof(WCHAR);
-                memcpy( dir->Buffer, nt_name, dir->Length );
-                dir->Buffer[1] = '\\';
-            }
-            free( nt_name );
+            free( cwd );
+            return ret;
         }
     }
 
-    if (!dir->Length)  /* still not initialized */
-    {
-        static const WCHAR windows_dir[] = {'C',':','\\','w','i','n','d','o','w','s'};
-
-        MESSAGE("Warning: could not find DOS drive for current working directory '%s', "
-                "starting in the Windows directory.\n", cwd ? cwd : "" );
-        memcpy( dir->Buffer, windows_dir, sizeof(windows_dir) );
-        dir->Length = sizeof(windows_dir);
-    }
-
-    /* add trailing backslash */
-    if (dir->Buffer[dir->Length / sizeof(WCHAR) - 1] != '\\')
-    {
-        dir->Buffer[dir->Length / sizeof(WCHAR)] = '\\';
-        dir->Length += sizeof(WCHAR);
-    }
-    dir->Buffer[dir->Length / sizeof(WCHAR)] = 0;
+    /* still not initialized */
+    MESSAGE("Warning: could not find DOS drive for current working directory '%s', "
+            "starting in the Windows directory.\n", cwd ? cwd : "" );
+    ret = malloc( sizeof(windows_dir) );
+    wcscpy( ret, windows_dir );
     free( cwd );
+    return ret;
 }
 
 
@@ -1700,6 +1685,12 @@ static inline void put_unicode_string( WCHAR *src, WCHAR **dst, UNICODE_STRING *
     copy_unicode_string( &src, dst, str, wcslen(src) * sizeof(WCHAR) );
 }
 
+static inline WCHAR *get_dos_path( WCHAR *nt_path )
+{
+    if (nt_path[4] && nt_path[5] == ':') return nt_path + 4; /* skip the \??\ prefix */
+    nt_path[1] = '\\'; /* change \??\ to \\?\ */
+    return nt_path;
+}
 
 /*************************************************************************
  *		build_initial_params
@@ -1714,6 +1705,7 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
     WCHAR *dst, *p, *path = NULL;
     WCHAR *cmdline = build_command_line( main_wargv + 1 );
     WCHAR *env = get_initial_environment( &env_pos, &env_size );
+    WCHAR *curdir = get_initial_directory();
     NTSTATUS status;
 
     /* store the initial PATH value */
@@ -1749,12 +1741,15 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
     params->wShowWindow     = 1; /* SW_SHOWNORMAL */
 
     params->CurrentDirectory.DosPath.Buffer = (WCHAR *)(params + 1);
-    get_initial_directory( &params->CurrentDirectory.DosPath );
+    wcscpy( params->CurrentDirectory.DosPath.Buffer, get_dos_path( curdir ));
+    params->CurrentDirectory.DosPath.Length = wcslen(params->CurrentDirectory.DosPath.Buffer) * sizeof(WCHAR);
+    params->CurrentDirectory.DosPath.MaximumLength = MAX_PATH * sizeof(WCHAR);
     dst = params->CurrentDirectory.DosPath.Buffer + MAX_PATH;
 
     put_unicode_string( main_wargv[0], &dst, &params->ImagePathName );
     put_unicode_string( cmdline, &dst, &params->CommandLine );
     free( cmdline );
+    free( curdir );
 
     params->Environment = dst;
     params->EnvironmentSize = env_pos * sizeof(WCHAR);
