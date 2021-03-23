@@ -585,7 +585,7 @@ class VkFunction(object):
 
     def is_device_func(self):
         # If none of the other, it must be a device function
-        return not self.is_global_func() and not self.is_instance_func()
+        return not self.is_global_func() and not self.is_instance_func() and not self.is_phys_dev_func()
 
     def is_driver_func(self):
         """ Returns if function is part of Wine driver interface. """
@@ -602,8 +602,14 @@ class VkFunction(object):
         return True
 
     def is_instance_func(self):
-        # Instance functions are passed VkInstance or VkPhysicalDevice.
-        if self.params[0].type in ["VkInstance", "VkPhysicalDevice"]:
+        # Instance functions are passed VkInstance.
+        if self.params[0].type == "VkInstance":
+            return True
+        return False
+
+    def is_phys_dev_func(self):
+        # Physical device functions are passed VkPhysicalDevice.
+        if self.params[0].type == "VkPhysicalDevice":
             return True
         return False
 
@@ -2271,6 +2277,14 @@ class VkGenerator(object):
             f.write("    {{\"{0}\", &{1}{0}}},\n".format(vk_func.name, prefix))
         f.write("};\n\n")
 
+        f.write("static const struct vulkan_func vk_phys_dev_dispatch_table[] =\n{\n")
+        for vk_func in self.registry.phys_dev_funcs:
+            if not vk_func.is_required():
+                continue
+
+            f.write("    {{\"{0}\", &{1}{0}}},\n".format(vk_func.name, prefix))
+        f.write("};\n\n")
+
         f.write("static const struct vulkan_func vk_instance_dispatch_table[] =\n{\n")
         for vk_func in self.registry.instance_funcs:
             if not vk_func.is_required():
@@ -2288,6 +2302,20 @@ class VkGenerator(object):
         f.write("        {\n")
         f.write("            TRACE(\"Found name=%s in device table\\n\", debugstr_a(name));\n")
         f.write("            return vk_device_dispatch_table[i].func;\n")
+        f.write("        }\n")
+        f.write("    }\n")
+        f.write("    return NULL;\n")
+        f.write("}\n\n")
+
+        f.write("void *wine_vk_get_phys_dev_proc_addr(const char *name)\n")
+        f.write("{\n")
+        f.write("    unsigned int i;\n")
+        f.write("    for (i = 0; i < ARRAY_SIZE(vk_phys_dev_dispatch_table); i++)\n")
+        f.write("    {\n")
+        f.write("        if (strcmp(vk_phys_dev_dispatch_table[i].name, name) == 0)\n")
+        f.write("        {\n")
+        f.write("            TRACE(\"Found name=%s in physical device table\\n\", debugstr_a(name));\n")
+        f.write("            return vk_phys_dev_dispatch_table[i].func;\n")
         f.write("        }\n")
         f.write("    }\n")
         f.write("    return NULL;\n")
@@ -2435,7 +2463,7 @@ class VkGenerator(object):
 
         f.write("/* For use by vkInstance and children */\n")
         f.write("struct vulkan_instance_funcs\n{\n")
-        for vk_func in self.registry.instance_funcs:
+        for vk_func in self.registry.instance_funcs + self.registry.phys_dev_funcs:
             if not vk_func.is_required():
                 continue
 
@@ -2472,7 +2500,7 @@ class VkGenerator(object):
 
         f.write("#define ALL_VK_INSTANCE_FUNCS() \\\n")
         first = True
-        for vk_func in self.registry.instance_funcs:
+        for vk_func in self.registry.instance_funcs + self.registry.phys_dev_funcs:
             if not vk_func.is_required():
                 continue
 
@@ -2636,7 +2664,7 @@ class VkGenerator(object):
         f.write("\n")
         f.write("    if (!instance) return NULL;\n\n")
         for vk_func in self.registry.funcs.values():
-            if vk_func.is_driver_func() and vk_func.is_instance_func():
+            if vk_func.is_driver_func() and (vk_func.is_instance_func() or vk_func.is_phys_dev_func()):
                 f.write('    if (!strcmp(name, "{0}"))\n'.format(vk_func.name[2:]))
                 f.write('        return vulkan_funcs->p_{0};\n'.format(vk_func.name))
         f.write("\n")
@@ -2837,21 +2865,26 @@ class VkRegistry(object):
             funcs[func.name] = func
 
         # To make life easy for the code generation, separate all function
-        # calls out in the 3 types of Vulkan functions: device, global and instance.
+        # calls out in the 4 types of Vulkan functions:
+        # device, global, physical device and instance.
         device_funcs = []
         global_funcs = []
+        phys_dev_funcs = []
         instance_funcs = []
         for func in funcs.values():
             if func.is_device_func():
                 device_funcs.append(func)
             elif func.is_global_func():
                 global_funcs.append(func)
+            elif func.is_phys_dev_func():
+                phys_dev_funcs.append(func)
             else:
                 instance_funcs.append(func)
 
         # Sort function lists by name and store them.
         self.device_funcs = sorted(device_funcs, key=lambda func: func.name)
         self.global_funcs = sorted(global_funcs, key=lambda func: func.name)
+        self.phys_dev_funcs = sorted(phys_dev_funcs, key=lambda func: func.name)
         self.instance_funcs = sorted(instance_funcs, key=lambda func: func.name)
 
         # The funcs dictionary is used as a convenient way to lookup function

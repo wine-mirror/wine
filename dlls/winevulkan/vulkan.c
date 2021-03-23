@@ -1164,7 +1164,8 @@ PFN_vkVoidFunction WINAPI wine_vkGetDeviceProcAddr(VkDevice device, const char *
      * https://github.com/KhronosGroup/Vulkan-Docs/issues/655
      */
     if (device->quirks & WINEVULKAN_QUIRK_GET_DEVICE_PROC_ADDR
-            && (func = wine_vk_get_instance_proc_addr(name)))
+            && ((func = wine_vk_get_instance_proc_addr(name))
+             || (func = wine_vk_get_phys_dev_proc_addr(name))))
     {
         WARN("Returning instance function %s.\n", debugstr_a(name));
         return func;
@@ -1225,6 +1226,9 @@ PFN_vkVoidFunction WINAPI wine_vkGetInstanceProcAddr(VkInstance instance, const 
     }
 
     func = wine_vk_get_instance_proc_addr(name);
+    if (func) return func;
+
+    func = wine_vk_get_phys_dev_proc_addr(name);
     if (func) return func;
 
     /* vkGetInstanceProcAddr also loads any children of instance, so device functions as well. */

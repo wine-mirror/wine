@@ -232,6 +232,7 @@ static inline VkSurfaceKHR wine_surface_to_handle(struct wine_surface *surface)
 }
 
 void *wine_vk_get_device_proc_addr(const char *name) DECLSPEC_HIDDEN;
+void *wine_vk_get_phys_dev_proc_addr(const char *name) DECLSPEC_HIDDEN;
 void *wine_vk_get_instance_proc_addr(const char *name) DECLSPEC_HIDDEN;
 
 BOOL wine_vk_device_extension_supported(const char *name) DECLSPEC_HIDDEN;

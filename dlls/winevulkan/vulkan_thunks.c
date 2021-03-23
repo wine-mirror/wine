@@ -7276,23 +7276,12 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkWriteAccelerationStructuresPropertiesKHR", &wine_vkWriteAccelerationStructuresPropertiesKHR},
 };
 
-static const struct vulkan_func vk_instance_dispatch_table[] =
+static const struct vulkan_func vk_phys_dev_dispatch_table[] =
 {
-    {"vkCreateDebugReportCallbackEXT", &wine_vkCreateDebugReportCallbackEXT},
-    {"vkCreateDebugUtilsMessengerEXT", &wine_vkCreateDebugUtilsMessengerEXT},
     {"vkCreateDevice", &wine_vkCreateDevice},
-    {"vkCreateWin32SurfaceKHR", &wine_vkCreateWin32SurfaceKHR},
-    {"vkDebugReportMessageEXT", &wine_vkDebugReportMessageEXT},
-    {"vkDestroyDebugReportCallbackEXT", &wine_vkDestroyDebugReportCallbackEXT},
-    {"vkDestroyDebugUtilsMessengerEXT", &wine_vkDestroyDebugUtilsMessengerEXT},
-    {"vkDestroyInstance", &wine_vkDestroyInstance},
-    {"vkDestroySurfaceKHR", &wine_vkDestroySurfaceKHR},
     {"vkEnumerateDeviceExtensionProperties", &wine_vkEnumerateDeviceExtensionProperties},
     {"vkEnumerateDeviceLayerProperties", &wine_vkEnumerateDeviceLayerProperties},
-    {"vkEnumeratePhysicalDeviceGroups", &wine_vkEnumeratePhysicalDeviceGroups},
-    {"vkEnumeratePhysicalDeviceGroupsKHR", &wine_vkEnumeratePhysicalDeviceGroupsKHR},
     {"vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR", &wine_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR},
-    {"vkEnumeratePhysicalDevices", &wine_vkEnumeratePhysicalDevices},
     {"vkGetPhysicalDeviceCalibrateableTimeDomainsEXT", &wine_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT},
     {"vkGetPhysicalDeviceCooperativeMatrixPropertiesNV", &wine_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV},
     {"vkGetPhysicalDeviceExternalBufferProperties", &wine_vkGetPhysicalDeviceExternalBufferProperties},
@@ -7335,6 +7324,21 @@ static const struct vulkan_func vk_instance_dispatch_table[] =
     {"vkGetPhysicalDeviceSurfaceSupportKHR", &wine_vkGetPhysicalDeviceSurfaceSupportKHR},
     {"vkGetPhysicalDeviceToolPropertiesEXT", &wine_vkGetPhysicalDeviceToolPropertiesEXT},
     {"vkGetPhysicalDeviceWin32PresentationSupportKHR", &wine_vkGetPhysicalDeviceWin32PresentationSupportKHR},
+};
+
+static const struct vulkan_func vk_instance_dispatch_table[] =
+{
+    {"vkCreateDebugReportCallbackEXT", &wine_vkCreateDebugReportCallbackEXT},
+    {"vkCreateDebugUtilsMessengerEXT", &wine_vkCreateDebugUtilsMessengerEXT},
+    {"vkCreateWin32SurfaceKHR", &wine_vkCreateWin32SurfaceKHR},
+    {"vkDebugReportMessageEXT", &wine_vkDebugReportMessageEXT},
+    {"vkDestroyDebugReportCallbackEXT", &wine_vkDestroyDebugReportCallbackEXT},
+    {"vkDestroyDebugUtilsMessengerEXT", &wine_vkDestroyDebugUtilsMessengerEXT},
+    {"vkDestroyInstance", &wine_vkDestroyInstance},
+    {"vkDestroySurfaceKHR", &wine_vkDestroySurfaceKHR},
+    {"vkEnumeratePhysicalDeviceGroups", &wine_vkEnumeratePhysicalDeviceGroups},
+    {"vkEnumeratePhysicalDeviceGroupsKHR", &wine_vkEnumeratePhysicalDeviceGroupsKHR},
+    {"vkEnumeratePhysicalDevices", &wine_vkEnumeratePhysicalDevices},
     {"vkSubmitDebugUtilsMessageEXT", &wine_vkSubmitDebugUtilsMessageEXT},
 };
 
@@ -7347,6 +7351,20 @@ void *wine_vk_get_device_proc_addr(const char *name)
         {
             TRACE("Found name=%s in device table\n", debugstr_a(name));
             return vk_device_dispatch_table[i].func;
+        }
+    }
+    return NULL;
+}
+
+void *wine_vk_get_phys_dev_proc_addr(const char *name)
+{
+    unsigned int i;
+    for (i = 0; i < ARRAY_SIZE(vk_phys_dev_dispatch_table); i++)
+    {
+        if (strcmp(vk_phys_dev_dispatch_table[i].name, name) == 0)
+        {
+            TRACE("Found name=%s in physical device table\n", debugstr_a(name));
+            return vk_phys_dev_dispatch_table[i].func;
         }
     }
     return NULL;
