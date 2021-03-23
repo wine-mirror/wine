@@ -32,6 +32,9 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, const RECT *rcUpdate)
   ME_Cell *cell;
   int ys, ye;
   HRGN oldRgn;
+  HBRUSH brush = CreateSolidBrush( ITextHost_TxGetSysColor( editor->texthost, COLOR_WINDOW ) );
+
+  ME_InitContext( &c, editor, hDC );
 
   oldRgn = CreateRectRgn(0, 0, 0, 0);
   if (!GetClipRgn(hDC, oldRgn))
@@ -42,7 +45,7 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, const RECT *rcUpdate)
   IntersectClipRect(hDC, rcUpdate->left, rcUpdate->top,
                      rcUpdate->right, rcUpdate->bottom);
 
-  ME_InitContext(&c, editor, hDC);
+  brush = SelectObject( hDC, brush );
   SetBkMode(hDC, TRANSPARENT);
 
   para = editor_first_para( editor );
@@ -89,6 +92,7 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, const RECT *rcUpdate)
   editor->nLastTotalLength = editor->nTotalLength;
   editor->nLastTotalWidth = editor->nTotalWidth;
 
+  DeleteObject( SelectObject( hDC, brush ) );
   SelectClipRgn(hDC, oldRgn);
   if (oldRgn)
     DeleteObject(oldRgn);
