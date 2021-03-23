@@ -889,7 +889,7 @@ static int sock_close_handle( struct object *obj, struct process *process, obj_h
             async_terminate( req->async, STATUS_CANCELLED );
     }
 
-    return fd_close_handle( obj, process, handle );
+    return 1;
 }
 
 static void sock_destroy( struct object *obj )

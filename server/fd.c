@@ -2118,12 +2118,6 @@ void set_fd_signaled( struct fd *fd, int signaled )
     if (signaled) wake_up( fd->user, 0 );
 }
 
-/* handler for close_handle that refuses to close fd-associated handles in other processes */
-int fd_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
-{
-    return (!current || current->process == process);
-}
-
 /* check if events are pending and if yes return which one(s) */
 int check_fd_events( struct fd *fd, int events )
 {

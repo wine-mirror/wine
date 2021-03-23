@@ -421,7 +421,6 @@ static int dir_close_handle( struct object *obj, struct process *process, obj_ha
 {
     struct dir *dir = (struct dir *)obj;
 
-    if (!fd_close_handle( obj, process, handle )) return 0;
     if (obj->handle_count == 1) release_dir_cache_entry( dir ); /* closing last handle, release cache */
     return 1;  /* ok to close */
 }
