@@ -1650,6 +1650,14 @@ static inline struct wined3d_const_bo_address *wined3d_const_bo_address(struct w
     return (struct wined3d_const_bo_address *)data;
 }
 
+struct wined3d_image_vk
+{
+    VkImage vk_image;
+    struct wined3d_allocator_block *memory;
+    VkDeviceMemory vk_memory;
+    uint64_t command_buffer_id;
+};
+
 struct wined3d_stream_info_element
 {
     const struct wined3d_format *format;
@@ -2596,10 +2604,16 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
 void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
 BOOL wined3d_context_vk_create_bo(struct wined3d_context_vk *context_vk, VkDeviceSize size,
         VkBufferUsageFlags usage, VkMemoryPropertyFlags memory_type, struct wined3d_bo_vk *bo) DECLSPEC_HIDDEN;
+BOOL wined3d_context_vk_create_image(struct wined3d_context_vk *context_vk, VkImageType vk_image_type,
+        VkImageUsageFlags usage, VkFormat vk_format, unsigned int width, unsigned int height, unsigned int depth,
+        unsigned int sample_count, unsigned int mip_levels, unsigned int layer_count, unsigned int flags,
+        struct wined3d_image_vk *image) DECLSPEC_HIDDEN;
 void wined3d_context_vk_destroy_allocator_block(struct wined3d_context_vk *context_vk,
         struct wined3d_allocator_block *block, uint64_t command_buffer_id) DECLSPEC_HIDDEN;
 void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk,
         const struct wined3d_bo_vk *bo) DECLSPEC_HIDDEN;
+void wined3d_context_vk_destroy_image(struct wined3d_context_vk *context_vk,
+        struct wined3d_image_vk *image_vk) DECLSPEC_HIDDEN;
 void wined3d_context_vk_destroy_vk_buffer_view(struct wined3d_context_vk *context_vk,
         VkBufferView vk_view, uint64_t command_buffer_id) DECLSPEC_HIDDEN;
 void wined3d_context_vk_destroy_vk_framebuffer(struct wined3d_context_vk *context_vk,
@@ -3874,22 +3888,15 @@ static inline struct wined3d_device_gl *wined3d_device_gl(struct wined3d_device 
     return CONTAINING_RECORD(device, struct wined3d_device_gl, d);
 }
 
-struct wined3d_null_image_vk
-{
-    VkImage vk_image;
-    struct wined3d_allocator_block *memory;
-    VkDeviceMemory vk_memory;
-};
-
 struct wined3d_null_resources_vk
 {
     struct wined3d_bo_vk bo;
     VkDescriptorBufferInfo buffer_info;
 
-    struct wined3d_null_image_vk image_1d;
-    struct wined3d_null_image_vk image_2d;
-    struct wined3d_null_image_vk image_2dms;
-    struct wined3d_null_image_vk image_3d;
+    struct wined3d_image_vk image_1d;
+    struct wined3d_image_vk image_2d;
+    struct wined3d_image_vk image_2dms;
+    struct wined3d_image_vk image_3d;
 };
 
 struct wined3d_null_views_vk
@@ -4448,12 +4455,9 @@ struct wined3d_texture_vk
 {
     struct wined3d_texture t;
 
-    VkImage vk_image;
-    struct wined3d_allocator_block *memory;
-    VkDeviceMemory vk_memory;
+    struct wined3d_image_vk image;
     enum VkImageLayout layout;
     uint32_t bind_mask;
-    uint64_t command_buffer_id;
 
     VkDescriptorImageInfo default_image_info;
 };
@@ -6091,10 +6095,16 @@ static inline void wined3d_context_vk_reference_bo(const struct wined3d_context_
     bo->command_buffer_id = context_vk->current_command_buffer.id;
 }
 
+static inline void wined3d_context_vk_reference_image(const struct wined3d_context_vk *context_vk,
+        struct wined3d_image_vk *image)
+{
+    image->command_buffer_id = context_vk->current_command_buffer.id;
+}
+
 static inline void wined3d_context_vk_reference_texture(const struct wined3d_context_vk *context_vk,
         struct wined3d_texture_vk *texture_vk)
 {
-    texture_vk->command_buffer_id = context_vk->current_command_buffer.id;
+    wined3d_context_vk_reference_image(context_vk, &texture_vk->image);
 }
 
 static inline void wined3d_context_vk_reference_resource(const struct wined3d_context_vk *context_vk,

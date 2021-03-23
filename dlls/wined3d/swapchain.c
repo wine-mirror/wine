@@ -1092,7 +1092,7 @@ static VkResult wined3d_swapchain_vk_blit(struct wined3d_swapchain_vk *swapchain
             vk_access_mask_from_bind_flags(back_buffer_vk->t.resource.bind_flags),
             VK_ACCESS_TRANSFER_READ_BIT,
             back_buffer_vk->layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-            back_buffer_vk->vk_image, &vk_range);
+            back_buffer_vk->image.vk_image, &vk_range);
 
     wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
             VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
@@ -1118,7 +1118,7 @@ static VkResult wined3d_swapchain_vk_blit(struct wined3d_swapchain_vk *swapchain
     blit.dstOffsets[1].y = dst_rect->bottom;
     blit.dstOffsets[1].z = 1;
     VK_CALL(vkCmdBlitImage(vk_command_buffer,
-            back_buffer_vk->vk_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            back_buffer_vk->image.vk_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
             swapchain_vk->vk_images[image_idx], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             1, &blit, filter));
 
@@ -1138,7 +1138,7 @@ static VkResult wined3d_swapchain_vk_blit(struct wined3d_swapchain_vk *swapchain
             VK_ACCESS_TRANSFER_READ_BIT,
             vk_access_mask_from_bind_flags(back_buffer_vk->t.resource.bind_flags),
             vk_layout, back_buffer_vk->layout,
-            back_buffer_vk->vk_image, &vk_range);
+            back_buffer_vk->image.vk_image, &vk_range);
     back_buffer_vk->bind_mask = 0;
 
     swapchain_vk->vk_semaphores[present_idx].command_buffer_id = context_vk->current_command_buffer.id;
@@ -1161,14 +1161,11 @@ static void wined3d_swapchain_vk_rotate(struct wined3d_swapchain *swapchain, str
 {
     struct wined3d_texture_sub_resource *sub_resource;
     struct wined3d_texture_vk *texture, *texture_prev;
-    struct wined3d_allocator_block *memory0;
+    struct wined3d_image_vk image0;
     VkDescriptorImageInfo vk_info0;
-    VkDeviceMemory vk_memory0;
     VkImageLayout vk_layout0;
-    VkImage vk_image0;
     DWORD locations0;
     unsigned int i;
-    uint64_t id0;
 
     static const DWORD supported_locations = WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_RB_MULTISAMPLE;
 
@@ -1178,11 +1175,8 @@ static void wined3d_swapchain_vk_rotate(struct wined3d_swapchain *swapchain, str
     texture_prev = wined3d_texture_vk(swapchain->back_buffers[0]);
 
     /* Back buffer 0 is already in the draw binding. */
-    vk_image0 = texture_prev->vk_image;
-    memory0 = texture_prev->memory;
-    vk_memory0 = texture_prev->vk_memory;
+    image0 = texture_prev->image;
     vk_layout0 = texture_prev->layout;
-    id0 = texture_prev->command_buffer_id;
     vk_info0 = texture_prev->default_image_info;
     locations0 = texture_prev->t.sub_resources[0].locations;
 
@@ -1194,11 +1188,8 @@ static void wined3d_swapchain_vk_rotate(struct wined3d_swapchain *swapchain, str
         if (!(sub_resource->locations & supported_locations))
             wined3d_texture_load_location(&texture->t, 0, &context_vk->c, texture->t.resource.draw_binding);
 
-        texture_prev->vk_image = texture->vk_image;
-        texture_prev->memory = texture->memory;
-        texture_prev->vk_memory = texture->vk_memory;
+        texture_prev->image = texture->image;
         texture_prev->layout = texture->layout;
-        texture_prev->command_buffer_id = texture->command_buffer_id;
         texture_prev->default_image_info = texture->default_image_info;
 
         wined3d_texture_validate_location(&texture_prev->t, 0, sub_resource->locations & supported_locations);
@@ -1207,11 +1198,8 @@ static void wined3d_swapchain_vk_rotate(struct wined3d_swapchain *swapchain, str
         texture_prev = texture;
     }
 
-    texture_prev->vk_image = vk_image0;
-    texture_prev->memory = memory0;
-    texture_prev->vk_memory = vk_memory0;
+    texture_prev->image = image0;
     texture_prev->layout = vk_layout0;
-    texture_prev->command_buffer_id = id0;
     texture_prev->default_image_info = vk_info0;
 
     wined3d_texture_validate_location(&texture_prev->t, 0, locations0 & supported_locations);

@@ -581,27 +581,12 @@ void wined3d_device_destroy_default_samplers(struct wined3d_device *device, stru
     device->null_sampler = NULL;
 }
 
-static void wined3d_null_image_vk_cleanup(struct wined3d_null_image_vk *image,
-        struct wined3d_context_vk *context_vk, uint64_t command_buffer_id)
-{
-    wined3d_context_vk_destroy_vk_image(context_vk, image->vk_image, command_buffer_id);
-    if (image->memory)
-        wined3d_context_vk_destroy_allocator_block(context_vk, image->memory, command_buffer_id);
-    else
-        wined3d_context_vk_destroy_vk_memory(context_vk, image->vk_memory, command_buffer_id);
-}
-
-static bool wined3d_null_image_vk_init(struct wined3d_null_image_vk *image, struct wined3d_context_vk *context_vk,
+static bool wined3d_null_image_vk_init(struct wined3d_image_vk *image, struct wined3d_context_vk *context_vk,
         VkCommandBuffer vk_command_buffer, VkImageType type, unsigned int layer_count, unsigned int sample_count)
 {
-    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
-    VkMemoryRequirements memory_requirements;
     VkImageSubresourceRange range;
-    VkImageCreateInfo image_desc;
-    unsigned int memory_type_idx;
     uint32_t flags = 0;
-    VkResult vr;
 
     static const VkClearColorValue colour = {{0}};
 
@@ -611,63 +596,14 @@ static bool wined3d_null_image_vk_init(struct wined3d_null_image_vk *image, stru
     if (type == VK_IMAGE_TYPE_2D && layer_count >= 6)
         flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 
-    image_desc.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    image_desc.pNext = NULL;
-    image_desc.flags = flags;
-    image_desc.imageType = type;
-    image_desc.format = VK_FORMAT_R8G8B8A8_UNORM;
-    image_desc.extent.width = 1;
-    image_desc.extent.height = 1;
-    image_desc.extent.depth = 1;
-    image_desc.mipLevels = 1;
-    image_desc.arrayLayers = layer_count;
-    image_desc.samples = sample_count;
-    image_desc.tiling = VK_IMAGE_TILING_OPTIMAL;
-    image_desc.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-    image_desc.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    image_desc.queueFamilyIndexCount = 0;
-    image_desc.pQueueFamilyIndices = NULL;
-    image_desc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    if ((vr = VK_CALL(vkCreateImage(device_vk->vk_device, &image_desc, NULL, &image->vk_image))) < 0)
+    if (!wined3d_context_vk_create_image(context_vk, type,
+            VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_UNORM,
+            1, 1, 1, sample_count, 1, layer_count, flags, image))
     {
-        ERR("Failed to create Vulkan image, vr %s.\n", wined3d_debug_vkresult(vr));
         return false;
     }
 
-    VK_CALL(vkGetImageMemoryRequirements(device_vk->vk_device, image->vk_image, &memory_requirements));
-
-    memory_type_idx = wined3d_adapter_vk_get_memory_type_index(wined3d_adapter_vk(device_vk->d.adapter),
-            memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    if (memory_type_idx == ~0u)
-    {
-        ERR("Failed to find suitable image memory type.\n");
-        VK_CALL(vkDestroyImage(device_vk->vk_device, image->vk_image, NULL));
-        image->vk_image = VK_NULL_HANDLE;
-        return false;
-    }
-
-    image->memory = wined3d_context_vk_allocate_memory(context_vk,
-            memory_type_idx, memory_requirements.size, &image->vk_memory);
-    if (!image->vk_memory)
-    {
-        ERR("Failed to allocate image memory.\n");
-        VK_CALL(vkDestroyImage(device_vk->vk_device, image->vk_image, NULL));
-        image->vk_image = VK_NULL_HANDLE;
-        return false;
-    }
-
-    if ((vr = VK_CALL(vkBindImageMemory(device_vk->vk_device, image->vk_image,
-            image->vk_memory, image->memory ? image->memory->offset : 0))) < 0)
-    {
-        ERR("Failed to bind image memory, vr %s.\n", wined3d_debug_vkresult(vr));
-        if (image->memory)
-            wined3d_allocator_block_free(image->memory);
-        else
-            VK_CALL(vkFreeMemory(device_vk->vk_device, image->vk_memory, NULL));
-        VK_CALL(vkDestroyImage(device_vk->vk_device, image->vk_image, NULL));
-        image->vk_image = VK_NULL_HANDLE;
-        return false;
-    }
+    wined3d_context_vk_reference_image(context_vk, image);
 
     range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     range.baseMipLevel = 0;
@@ -702,7 +638,6 @@ bool wined3d_device_vk_create_null_resources(struct wined3d_device_vk *device_vk
     VkCommandBuffer vk_command_buffer;
     unsigned int sample_count = 2;
     VkBufferUsageFlags usage;
-    uint64_t id;
 
     format = wined3d_get_format(device_vk->d.adapter, WINED3DFMT_R8G8B8A8_UNORM, WINED3D_BIND_SHADER_RESOURCE);
     while (sample_count && !(sample_count & format->multisample_types))
@@ -753,13 +688,12 @@ bool wined3d_device_vk_create_null_resources(struct wined3d_device_vk *device_vk
     return true;
 
 fail:
-    id = context_vk->current_command_buffer.id;
     if (r->image_2dms.vk_image)
-        wined3d_null_image_vk_cleanup(&r->image_2dms, context_vk, id);
+        wined3d_context_vk_destroy_image(context_vk, &r->image_2dms);
     if (r->image_2d.vk_image)
-        wined3d_null_image_vk_cleanup(&r->image_2d, context_vk, id);
+        wined3d_context_vk_destroy_image(context_vk, &r->image_2d);
     if (r->image_1d.vk_image)
-        wined3d_null_image_vk_cleanup(&r->image_1d, context_vk, id);
+        wined3d_context_vk_destroy_image(context_vk, &r->image_1d);
     wined3d_context_vk_reference_bo(context_vk, &r->bo);
     wined3d_context_vk_destroy_bo(context_vk, &r->bo);
     return false;
@@ -769,14 +703,17 @@ void wined3d_device_vk_destroy_null_resources(struct wined3d_device_vk *device_v
         struct wined3d_context_vk *context_vk)
 {
     struct wined3d_null_resources_vk *r = &device_vk->null_resources_vk;
-    uint64_t id = context_vk->current_command_buffer.id;
 
     /* We don't track command buffer references to NULL resources. We easily
      * could, but it doesn't seem worth it. */
-    wined3d_null_image_vk_cleanup(&r->image_3d, context_vk, id);
-    wined3d_null_image_vk_cleanup(&r->image_2dms, context_vk, id);
-    wined3d_null_image_vk_cleanup(&r->image_2d, context_vk, id);
-    wined3d_null_image_vk_cleanup(&r->image_1d, context_vk, id);
+    wined3d_context_vk_reference_image(context_vk, &r->image_3d);
+    wined3d_context_vk_destroy_image(context_vk, &r->image_3d);
+    wined3d_context_vk_reference_image(context_vk, &r->image_2dms);
+    wined3d_context_vk_destroy_image(context_vk, &r->image_2dms);
+    wined3d_context_vk_reference_image(context_vk, &r->image_2d);
+    wined3d_context_vk_destroy_image(context_vk, &r->image_2d);
+    wined3d_context_vk_reference_image(context_vk, &r->image_1d);
+    wined3d_context_vk_destroy_image(context_vk, &r->image_1d);
     wined3d_context_vk_reference_bo(context_vk, &r->bo);
     wined3d_context_vk_destroy_bo(context_vk, &r->bo);
 }

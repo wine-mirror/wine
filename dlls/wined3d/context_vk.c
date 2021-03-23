@@ -501,6 +501,89 @@ BOOL wined3d_context_vk_create_bo(struct wined3d_context_vk *context_vk, VkDevic
     return TRUE;
 }
 
+BOOL wined3d_context_vk_create_image(struct wined3d_context_vk *context_vk, VkImageType vk_image_type,
+        VkImageUsageFlags usage, VkFormat vk_format, unsigned int width, unsigned int height, unsigned int depth,
+        unsigned int sample_count, unsigned int mip_levels, unsigned int layer_count, unsigned int flags,
+        struct wined3d_image_vk *image)
+{
+    struct wined3d_adapter_vk *adapter_vk = wined3d_adapter_vk(context_vk->c.device->adapter);
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    VkMemoryRequirements memory_requirements;
+    VkImageCreateInfo create_info;
+    unsigned int memory_type_idx;
+    VkResult vr;
+
+    create_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    create_info.pNext = NULL;
+    create_info.flags = flags;
+    create_info.imageType = vk_image_type;
+    create_info.format = vk_format;
+    create_info.extent.width = width;
+    create_info.extent.height = height;
+    create_info.extent.depth = depth;
+    create_info.mipLevels = mip_levels;
+    create_info.arrayLayers = layer_count;
+    create_info.samples = sample_count;
+    create_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+    create_info.usage = usage;
+    create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    create_info.queueFamilyIndexCount = 0;
+    create_info.pQueueFamilyIndices = NULL;
+    create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+    image->command_buffer_id = 0;
+
+    vr = VK_CALL(vkCreateImage(device_vk->vk_device, &create_info, NULL, &image->vk_image));
+    if (vr != VK_SUCCESS)
+    {
+        ERR("Failed to create image, vr %s.\n", wined3d_debug_vkresult(vr));
+        image->vk_image = VK_NULL_HANDLE;
+        return FALSE;
+    }
+
+    VK_CALL(vkGetImageMemoryRequirements(device_vk->vk_device, image->vk_image,
+            &memory_requirements));
+
+    memory_type_idx = wined3d_adapter_vk_get_memory_type_index(adapter_vk,
+            memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    if (memory_type_idx == ~0u)
+    {
+        ERR("Failed to find suitable image memory type.\n");
+        VK_CALL(vkDestroyImage(device_vk->vk_device, image->vk_image, NULL));
+        image->vk_image = VK_NULL_HANDLE;
+        return FALSE;
+    }
+
+    image->memory = wined3d_context_vk_allocate_memory(context_vk, memory_type_idx,
+            memory_requirements.size, &image->vk_memory);
+    if (!image->vk_memory)
+    {
+        ERR("Failed to allocate image memory.\n");
+        VK_CALL(vkDestroyImage(device_vk->vk_device, image->vk_image, NULL));
+        image->vk_image = VK_NULL_HANDLE;
+        return FALSE;
+    }
+
+    vr = VK_CALL(vkBindImageMemory(device_vk->vk_device, image->vk_image, image->vk_memory,
+            image->memory ? image->memory->offset : 0));
+    if (vr != VK_SUCCESS)
+    {
+        VK_CALL(vkDestroyImage(device_vk->vk_device, image->vk_image, NULL));
+        if (image->memory)
+            wined3d_allocator_block_free(image->memory);
+        else
+            VK_CALL(vkFreeMemory(device_vk->vk_device, image->vk_memory, NULL));
+        ERR("Failed to bind image memory, vr %s.\n", wined3d_debug_vkresult(vr));
+        image->memory = NULL;
+        image->vk_memory = VK_NULL_HANDLE;
+        image->vk_image = VK_NULL_HANDLE;
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 static struct wined3d_retired_object_vk *wined3d_context_vk_get_retired_object_vk(struct wined3d_context_vk *context_vk)
 {
     struct wined3d_retired_objects_vk *retired = &context_vk->retired;
@@ -791,6 +874,20 @@ void wined3d_context_vk_destroy_vk_sampler(struct wined3d_context_vk *context_vk
     o->type = WINED3D_RETIRED_SAMPLER_VK;
     o->u.vk_sampler = vk_sampler;
     o->command_buffer_id = command_buffer_id;
+}
+
+void wined3d_context_vk_destroy_image(struct wined3d_context_vk *context_vk, struct wined3d_image_vk *image)
+{
+    wined3d_context_vk_destroy_vk_image(context_vk, image->vk_image, image->command_buffer_id);
+    if (image->memory)
+        wined3d_context_vk_destroy_allocator_block(context_vk, image->memory,
+                image->command_buffer_id);
+    else
+        wined3d_context_vk_destroy_vk_memory(context_vk, image->vk_memory, image->command_buffer_id);
+
+    image->vk_image = VK_NULL_HANDLE;
+    image->vk_memory = VK_NULL_HANDLE;
+    image->memory = NULL;
 }
 
 void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk, const struct wined3d_bo_vk *bo)

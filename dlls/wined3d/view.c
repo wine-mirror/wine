@@ -730,7 +730,7 @@ static VkImageView wined3d_view_vk_create_vk_image_view(struct wined3d_context_v
     create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     create_info.pNext = NULL;
     create_info.flags = 0;
-    create_info.image = texture_vk->vk_image;
+    create_info.image = texture_vk->image.vk_image;
     create_info.viewType = vk_image_view_type_from_wined3d(resource->type, desc->flags);
     if (rtv && create_info.viewType == VK_IMAGE_VIEW_TYPE_3D)
     {
@@ -1318,13 +1318,13 @@ void wined3d_shader_resource_view_vk_generate_mipmap(struct wined3d_shader_resou
             vk_access_mask_from_bind_flags(texture_vk->t.resource.bind_flags),
             VK_ACCESS_TRANSFER_READ_BIT,
             texture_vk->layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-            texture_vk->vk_image, &vk_src_range);
+            texture_vk->image.vk_image, &vk_src_range);
     wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
             vk_access_mask_from_bind_flags(texture_vk->t.resource.bind_flags),
             VK_ACCESS_TRANSFER_WRITE_BIT,
             texture_vk->layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-            texture_vk->vk_image, &vk_dst_range);
+            texture_vk->image.vk_image, &vk_dst_range);
 
     region.srcSubresource.aspectMask = vk_src_range.aspectMask;
     region.srcSubresource.mipLevel = vk_src_range.baseMipLevel;
@@ -1352,15 +1352,15 @@ void wined3d_shader_resource_view_vk_generate_mipmap(struct wined3d_shader_resou
         region.dstOffsets[1].y = wined3d_texture_get_level_height(&texture_vk->t, vk_dst_range.baseMipLevel);
         region.dstOffsets[1].z = wined3d_texture_get_level_depth(&texture_vk->t, vk_dst_range.baseMipLevel);
 
-        VK_CALL(vkCmdBlitImage(vk_command_buffer, texture_vk->vk_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                texture_vk->vk_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region, VK_FILTER_LINEAR));
+        VK_CALL(vkCmdBlitImage(vk_command_buffer, texture_vk->image.vk_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                texture_vk->image.vk_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region, VK_FILTER_LINEAR));
 
         wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
                 VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
                 VK_ACCESS_TRANSFER_READ_BIT,
                 vk_access_mask_from_bind_flags(texture_vk->t.resource.bind_flags),
                 VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, texture_vk->layout,
-                texture_vk->vk_image, &vk_src_range);
+                texture_vk->image.vk_image, &vk_src_range);
 
         if (i == level_count - 1)
         {
@@ -1369,7 +1369,7 @@ void wined3d_shader_resource_view_vk_generate_mipmap(struct wined3d_shader_resou
                     VK_ACCESS_TRANSFER_WRITE_BIT,
                     vk_access_mask_from_bind_flags(texture_vk->t.resource.bind_flags),
                     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, texture_vk->layout,
-                    texture_vk->vk_image, &vk_dst_range);
+                    texture_vk->image.vk_image, &vk_dst_range);
         }
         else
         {
@@ -1380,13 +1380,13 @@ void wined3d_shader_resource_view_vk_generate_mipmap(struct wined3d_shader_resou
                     VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
                     VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT,
                     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                    texture_vk->vk_image, &vk_src_range);
+                    texture_vk->image.vk_image, &vk_src_range);
             wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
                     VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
                     vk_access_mask_from_bind_flags(texture_vk->t.resource.bind_flags),
                     VK_ACCESS_TRANSFER_WRITE_BIT,
                     texture_vk->layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                    texture_vk->vk_image, &vk_dst_range);
+                    texture_vk->image.vk_image, &vk_dst_range);
         }
     }
 
