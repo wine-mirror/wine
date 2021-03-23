@@ -4402,6 +4402,7 @@ GpStatus WINGDIPAPI GdipFillPie(GpGraphics *graphics, GpBrush *brush, REAL x,
 {
     GpStatus stat;
     GpPath *path;
+    GpRectF rect;
 
     TRACE("(%p, %p, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f)\n",
             graphics, brush, x, y, width, height, startAngle, sweepAngle);
@@ -4411,6 +4412,15 @@ GpStatus WINGDIPAPI GdipFillPie(GpGraphics *graphics, GpBrush *brush, REAL x,
 
     if(graphics->busy)
         return ObjectBusy;
+
+    if (is_metafile_graphics(graphics))
+    {
+        rect.X = x;
+        rect.Y = y;
+        rect.Width = width;
+        rect.Height = height;
+        return METAFILE_FillPie((GpMetafile *)graphics->image, brush, &rect, startAngle, sweepAngle);
+    }
 
     stat = GdipCreatePath(FillModeAlternate, &path);
 

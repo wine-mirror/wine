@@ -4896,6 +4896,59 @@ GpStatus METAFILE_FillEllipse(GpMetafile *metafile, GpBrush *brush, GpRectF *rec
     return Ok;
 }
 
+GpStatus METAFILE_FillPie(GpMetafile *metafile, GpBrush *brush, const GpRectF *rect,
+        REAL startAngle, REAL sweepAngle)
+{
+    BOOL is_int_rect, inline_color;
+    EmfPlusFillPie *record;
+    DWORD brush_id = -1;
+    GpStatus stat;
+
+    if (metafile->metafile_type == MetafileTypeEmf)
+    {
+        FIXME("stub!\n");
+        return NotImplemented;
+    }
+
+    inline_color = brush->bt == BrushTypeSolidColor;
+    if (!inline_color)
+    {
+        stat = METAFILE_AddBrushObject(metafile, brush, &brush_id);
+        if (stat != Ok) return stat;
+    }
+
+    is_int_rect = is_integer_rect(rect);
+
+    stat = METAFILE_AllocateRecord(metafile, FIELD_OFFSET(EmfPlusFillPie, RectData) +
+            is_int_rect ? sizeof(EmfPlusRect) : sizeof(EmfPlusRectF), (void **)&record);
+    if (stat != Ok) return stat;
+    record->Header.Type = EmfPlusRecordTypeFillPie;
+    if (inline_color)
+    {
+        record->Header.Flags = 0x8000;
+        record->BrushId = ((GpSolidFill *)brush)->color;
+    }
+    else
+        record->BrushId = brush_id;
+
+    record->StartAngle = startAngle;
+    record->SweepAngle = sweepAngle;
+
+    if (is_int_rect)
+    {
+        record->Header.Flags |= 0x4000;
+        record->RectData.rect.X = (SHORT)rect->X;
+        record->RectData.rect.Y = (SHORT)rect->Y;
+        record->RectData.rect.Width = (SHORT)rect->Width;
+        record->RectData.rect.Height = (SHORT)rect->Height;
+    }
+    else
+        memcpy(&record->RectData.rectF, rect, sizeof(*rect));
+
+    METAFILE_WriteRecords(metafile);
+    return Ok;
+}
+
 static GpStatus METAFILE_AddFontObject(GpMetafile *metafile, GDIPCONST GpFont *font, DWORD *id)
 {
     EmfPlusObject *object_record;
