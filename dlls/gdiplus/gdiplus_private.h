@@ -115,6 +115,8 @@ extern GpStatus METAFILE_FillEllipse(GpMetafile *metafile, GpBrush *brush, GpRec
 extern GpStatus METAFILE_DrawRectangles(GpMetafile *metafile, GpPen *pen, const GpRectF *rects, INT count) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_FillPie(GpMetafile *metafile, GpBrush *brush, const GpRectF *rect,
     REAL startAngle, REAL sweepAngle) DECLSPEC_HIDDEN;
+extern GpStatus METAFILE_DrawArc(GpMetafile *metafile, GpPen *pen, const GpRectF *rect,
+    REAL startAngle, REAL sweepAngle) DECLSPEC_HIDDEN;
 
 extern void calc_curve_bezier(const GpPointF *pts, REAL tension, REAL *x1,
     REAL *y1, REAL *x2, REAL *y2) DECLSPEC_HIDDEN;

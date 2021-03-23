@@ -5205,3 +5205,49 @@ GpStatus METAFILE_DrawRectangles(GpMetafile *metafile, GpPen *pen, const GpRectF
 
     return Ok;
 }
+
+GpStatus METAFILE_DrawArc(GpMetafile *metafile, GpPen *pen, const GpRectF *rect, REAL startAngle, REAL sweepAngle)
+{
+    EmfPlusDrawArc *record;
+    GpStatus stat;
+    BOOL integer_rect;
+    DWORD pen_id;
+
+    if (metafile->metafile_type == MetafileTypeEmf)
+    {
+        FIXME("stub!\n");
+        return NotImplemented;
+    }
+
+    stat = METAFILE_AddPenObject(metafile, pen, &pen_id);
+    if (stat != Ok) return stat;
+
+    integer_rect = is_integer_rect(rect);
+
+    stat = METAFILE_AllocateRecord(metafile, FIELD_OFFSET(EmfPlusDrawArc, RectData) +
+        integer_rect ? sizeof(record->RectData.rect) : sizeof(record->RectData.rectF),
+        (void **)&record);
+    if (stat != Ok)
+        return stat;
+
+    record->Header.Type = EmfPlusRecordTypeDrawArc;
+    record->Header.Flags = pen_id;
+    if (integer_rect)
+        record->Header.Flags |= 0x4000;
+    record->StartAngle = startAngle;
+    record->SweepAngle = sweepAngle;
+
+    if (integer_rect)
+    {
+        record->RectData.rect.X = (SHORT)rect->X;
+        record->RectData.rect.Y = (SHORT)rect->Y;
+        record->RectData.rect.Width = (SHORT)rect->Width;
+        record->RectData.rect.Height = (SHORT)rect->Height;
+    }
+    else
+        memcpy(&record->RectData.rectF, rect, sizeof(*rect));
+
+    METAFILE_WriteRecords(metafile);
+
+    return Ok;
+}

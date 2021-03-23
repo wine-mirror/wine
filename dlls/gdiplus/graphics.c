@@ -2595,6 +2595,7 @@ GpStatus WINGDIPAPI GdipDrawArc(GpGraphics *graphics, GpPen *pen, REAL x,
 {
     GpStatus status;
     GpPath *path;
+    GpRectF rect;
 
     TRACE("(%p, %p, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f)\n", graphics, pen, x, y,
           width, height, startAngle, sweepAngle);
@@ -2604,6 +2605,12 @@ GpStatus WINGDIPAPI GdipDrawArc(GpGraphics *graphics, GpPen *pen, REAL x,
 
     if(graphics->busy)
         return ObjectBusy;
+
+    if (is_metafile_graphics(graphics))
+    {
+        set_rect(&rect, x, y, width, height);
+        return METAFILE_DrawArc((GpMetafile *)graphics->image, pen, &rect, startAngle, sweepAngle);
+    }
 
     status = GdipCreatePath(FillModeAlternate, &path);
     if (status != Ok) return status;
