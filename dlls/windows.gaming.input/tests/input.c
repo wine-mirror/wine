@@ -115,7 +115,7 @@ static void test_Gamepad(void)
     BOOLEAN found;
     HSTRING str;
     HRESULT hr;
-    ULONG size;
+    UINT32 size;
 
     gamepad_event_handler.IEventHandler_Gamepad_iface.lpVtbl = &gamepad_event_handler_vtbl;
 
@@ -292,7 +292,7 @@ static void test_RawGameController(void)
     BOOLEAN found;
     HSTRING str;
     HRESULT hr;
-    ULONG size;
+    UINT32 size;
 
     controller_event_handler.IEventHandler_RawGameController_iface.lpVtbl = &controller_event_handler_vtbl;
 

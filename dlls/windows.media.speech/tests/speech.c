@@ -53,7 +53,7 @@ static void test_SpeechSynthesizer(void)
     IAgileObject *agile_object = NULL, *tmp_agile_object = NULL;
     HSTRING str;
     HRESULT hr;
-    ULONG size;
+    UINT32 size;
 
     hr = pRoInitialize(RO_INIT_MULTITHREADED);
     ok(hr == S_OK, "RoInitialize failed, hr %#x\n", hr);

@@ -116,14 +116,14 @@ static HRESULT STDMETHODCALLTYPE vector_view_voice_information_GetTrustLevel(
 }
 
 static HRESULT STDMETHODCALLTYPE vector_view_voice_information_GetAt(
-    IVectorView_VoiceInformation *iface, ULONG index, IVoiceInformation **value)
+        IVectorView_VoiceInformation *iface, UINT32 index, IVoiceInformation **value)
 {
     FIXME("iface %p, index %#x, value %p stub!\n", iface, index, value);
     return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE vector_view_voice_information_get_Size(
-    IVectorView_VoiceInformation *iface, ULONG *value)
+        IVectorView_VoiceInformation *iface, UINT32 *value)
 {
     FIXME("iface %p, value %p stub!\n", iface, value);
     *value = 0;
@@ -131,7 +131,7 @@ static HRESULT STDMETHODCALLTYPE vector_view_voice_information_get_Size(
 }
 
 static HRESULT STDMETHODCALLTYPE vector_view_voice_information_IndexOf(
-    IVectorView_VoiceInformation *iface, IVoiceInformation *element, ULONG *index, BOOLEAN *value)
+        IVectorView_VoiceInformation *iface, IVoiceInformation *element, UINT32 *index, BOOLEAN *value)
 {
     FIXME("iface %p, element %p, index %p, value %p stub!\n", iface, element, index, value);
     *value = FALSE;
@@ -139,8 +139,8 @@ static HRESULT STDMETHODCALLTYPE vector_view_voice_information_IndexOf(
 }
 
 static HRESULT STDMETHODCALLTYPE vector_view_voice_information_GetMany(
-        IVectorView_VoiceInformation *iface, ULONG start_index,
-        ULONG items_size, IVoiceInformation **items, UINT *value)
+        IVectorView_VoiceInformation *iface, UINT32 start_index,
+        UINT32 items_size, IVoiceInformation **items, UINT *value)
 {
     FIXME("iface %p, start_index %#x, items %p, value %p stub!\n", iface, start_index, items, value);
     *value = 0;

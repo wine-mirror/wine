@@ -117,7 +117,7 @@ static HRESULT STDMETHODCALLTYPE vector_view_gamepad_GetTrustLevel(
 }
 
 static HRESULT STDMETHODCALLTYPE vector_view_gamepad_GetAt(
-    IVectorView_Gamepad *iface, ULONG index, IGamepad **value)
+        IVectorView_Gamepad *iface, UINT32 index, IGamepad **value)
 {
     FIXME("iface %p, index %#x, value %p stub!\n", iface, index, value);
     *value = NULL;
@@ -125,7 +125,7 @@ static HRESULT STDMETHODCALLTYPE vector_view_gamepad_GetAt(
 }
 
 static HRESULT STDMETHODCALLTYPE vector_view_gamepad_get_Size(
-    IVectorView_Gamepad *iface, ULONG *value)
+        IVectorView_Gamepad *iface, UINT32 *value)
 {
     FIXME("iface %p, value %p stub!\n", iface, value);
     *value = 0;
@@ -133,7 +133,7 @@ static HRESULT STDMETHODCALLTYPE vector_view_gamepad_get_Size(
 }
 
 static HRESULT STDMETHODCALLTYPE vector_view_gamepad_IndexOf(
-    IVectorView_Gamepad *iface, IGamepad *element, ULONG *index, BOOLEAN *found)
+        IVectorView_Gamepad *iface, IGamepad *element, UINT32 *index, BOOLEAN *found)
 {
     FIXME("iface %p, element %p, index %p, found %p stub!\n", iface, element, index, found);
     *index = 0;
@@ -142,8 +142,8 @@ static HRESULT STDMETHODCALLTYPE vector_view_gamepad_IndexOf(
 }
 
 static HRESULT STDMETHODCALLTYPE vector_view_gamepad_GetMany(
-        IVectorView_Gamepad *iface, ULONG start_index,
-        ULONG items_size, IGamepad **items, UINT *value)
+        IVectorView_Gamepad *iface, UINT32 start_index,
+        UINT32 items_size, IGamepad **items, UINT *value)
 {
     FIXME("iface %p, start_index %#x, items %p, value %p stub!\n", iface, start_index, items, value);
     *value = 0;
@@ -243,7 +243,7 @@ static HRESULT STDMETHODCALLTYPE vector_view_raw_game_controller_GetTrustLevel(
 }
 
 static HRESULT STDMETHODCALLTYPE vector_view_raw_game_controller_GetAt(
-    IVectorView_RawGameController *iface, ULONG index, IRawGameController **value)
+        IVectorView_RawGameController *iface, UINT32 index, IRawGameController **value)
 {
     FIXME("iface %p, index %#x, value %p stub!\n", iface, index, value);
     *value = NULL;
@@ -251,7 +251,7 @@ static HRESULT STDMETHODCALLTYPE vector_view_raw_game_controller_GetAt(
 }
 
 static HRESULT STDMETHODCALLTYPE vector_view_raw_game_controller_get_Size(
-    IVectorView_RawGameController *iface, ULONG *value)
+        IVectorView_RawGameController *iface, UINT32 *value)
 {
     FIXME("iface %p, value %p stub!\n", iface, value);
     *value = 0;
@@ -259,7 +259,7 @@ static HRESULT STDMETHODCALLTYPE vector_view_raw_game_controller_get_Size(
 }
 
 static HRESULT STDMETHODCALLTYPE vector_view_raw_game_controller_IndexOf(
-    IVectorView_RawGameController *iface, IRawGameController *element, ULONG *index, BOOLEAN *found)
+        IVectorView_RawGameController *iface, IRawGameController *element, UINT32 *index, BOOLEAN *found)
 {
     FIXME("iface %p, element %p, index %p, found %p stub!\n", iface, element, index, found);
     *index = 0;
@@ -268,8 +268,8 @@ static HRESULT STDMETHODCALLTYPE vector_view_raw_game_controller_IndexOf(
 }
 
 static HRESULT STDMETHODCALLTYPE vector_view_raw_game_controller_GetMany(
-        IVectorView_RawGameController *iface, ULONG start_index,
-        ULONG items_size, IRawGameController **items, UINT *value)
+        IVectorView_RawGameController *iface, UINT32 start_index,
+        UINT32 items_size, IRawGameController **items, UINT *value)
 {
     FIXME("iface %p, start_index %#x, items %p, value %p stub!\n", iface, start_index, items, value);
     *value = 0;
