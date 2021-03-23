@@ -842,8 +842,8 @@ static void process_killed( struct process *process )
     if (!process->is_system) close_process_desktop( process );
     process->winstation = 0;
     process->desktop = 0;
-    close_process_handles( process );
     cancel_process_asyncs( process );
+    close_process_handles( process );
     if (process->idle_event) release_object( process->idle_event );
     process->idle_event = NULL;
     assert( !process->console );
