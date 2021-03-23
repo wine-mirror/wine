@@ -686,14 +686,14 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_IASetVertexBuffers(ID3D11D
 static void STDMETHODCALLTYPE d3d11_immediate_context_IASetIndexBuffer(ID3D11DeviceContext1 *iface,
         ID3D11Buffer *buffer, DXGI_FORMAT format, UINT offset)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext1(iface);
     struct d3d_buffer *buffer_impl = unsafe_impl_from_ID3D11Buffer(buffer);
 
     TRACE("iface %p, buffer %p, format %s, offset %u.\n",
             iface, buffer, debug_dxgi_format(format), offset);
 
     wined3d_mutex_lock();
-    wined3d_device_set_index_buffer(device->wined3d_device,
+    wined3d_device_context_set_index_buffer(context->wined3d_context,
             buffer_impl ? buffer_impl->wined3d_buffer : NULL,
             wined3dformat_from_dxgi_format(format), offset);
     wined3d_mutex_unlock();
@@ -2615,7 +2615,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_ClearState(ID3D11DeviceCon
     {
         wined3d_device_context_set_stream_source(context->wined3d_context, i, NULL, 0, 0);
     }
-    wined3d_device_set_index_buffer(device->wined3d_device, NULL, WINED3DFMT_UNKNOWN, 0);
+    wined3d_device_context_set_index_buffer(context->wined3d_context, NULL, WINED3DFMT_UNKNOWN, 0);
     wined3d_device_set_vertex_declaration(device->wined3d_device, NULL);
     wined3d_device_set_primitive_type(device->wined3d_device, WINED3D_PT_UNDEFINED, 0);
     for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
