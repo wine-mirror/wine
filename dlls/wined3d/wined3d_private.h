@@ -1665,6 +1665,7 @@ struct wined3d_stream_info_element
     GLsizei stride;
     unsigned int stream_idx;
     unsigned int divisor;
+    bool instanced;
 };
 
 struct wined3d_stream_info

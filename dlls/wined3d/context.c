@@ -238,16 +238,17 @@ void wined3d_stream_info_from_declaration(struct wined3d_stream_info *stream_inf
             if (stream->flags & WINED3DSTREAMSOURCE_INSTANCEDATA)
             {
                 stream_info->elements[idx].divisor = 1;
+                stream_info->elements[idx].instanced = true;
             }
             else if (element->input_slot_class == WINED3D_INPUT_PER_INSTANCE_DATA)
             {
                 stream_info->elements[idx].divisor = element->instance_data_step_rate;
-                if (!element->instance_data_step_rate)
-                    FIXME("Instance step rate 0 not implemented.\n");
+                stream_info->elements[idx].instanced = true;
             }
             else
             {
                 stream_info->elements[idx].divisor = 0;
+                stream_info->elements[idx].instanced = false;
             }
 
             if (!d3d_info->vertex_bgra && element->format->id == WINED3DFMT_B8G8R8A8_UNORM)

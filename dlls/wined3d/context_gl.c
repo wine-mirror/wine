@@ -5378,7 +5378,11 @@ static void wined3d_context_gl_load_numbered_arrays(struct wined3d_context_gl *c
 
         if (gl_info->supported[ARB_INSTANCED_ARRAYS])
         {
-            GL_EXTCALL(glVertexAttribDivisor(i, element->divisor));
+            unsigned int divisor = 0;
+
+            if (element->instanced)
+                divisor = element->divisor ? element->divisor : UINT_MAX;
+            GL_EXTCALL(glVertexAttribDivisor(i, divisor));
         }
         else if (element->divisor)
         {

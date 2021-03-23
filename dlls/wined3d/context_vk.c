@@ -2061,9 +2061,9 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
             b = &key->bindings[binding_count++];
             b->binding = binding;
             b->stride = e->stride;
-            b->inputRate = e->divisor ? VK_VERTEX_INPUT_RATE_INSTANCE : VK_VERTEX_INPUT_RATE_VERTEX;
+            b->inputRate = e->instanced ? VK_VERTEX_INPUT_RATE_INSTANCE : VK_VERTEX_INPUT_RATE_VERTEX;
 
-            if (e->divisor > 1)
+            if (e->instanced)
             {
                 d = &key->divisors[divisor_count++];
                 d->binding = binding;
