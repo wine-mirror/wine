@@ -1266,44 +1266,10 @@ struct wined3d_buffer * CDECL wined3d_device_get_stream_output(struct wined3d_de
 HRESULT CDECL wined3d_device_set_stream_source(struct wined3d_device *device, UINT stream_idx,
         struct wined3d_buffer *buffer, UINT offset, UINT stride)
 {
-    struct wined3d_stream_state *stream;
-    struct wined3d_buffer *prev_buffer;
-
     TRACE("device %p, stream_idx %u, buffer %p, offset %u, stride %u.\n",
             device, stream_idx, buffer, offset, stride);
 
-    if (stream_idx >= WINED3D_MAX_STREAMS)
-    {
-        WARN("Stream index %u out of range.\n", stream_idx);
-        return WINED3DERR_INVALIDCALL;
-    }
-    else if (offset & 0x3)
-    {
-        WARN("Offset %u is not 4 byte aligned.\n", offset);
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    stream = &device->cs->c.state->streams[stream_idx];
-    prev_buffer = stream->buffer;
-
-    if (prev_buffer == buffer
-            && stream->stride == stride
-            && stream->offset == offset)
-    {
-       TRACE("Application is setting the old values over, nothing to do.\n");
-       return WINED3D_OK;
-    }
-
-    stream->buffer = buffer;
-    stream->stride = stride;
-    stream->offset = offset;
-    if (buffer)
-        wined3d_buffer_incref(buffer);
-    wined3d_device_context_emit_set_stream_source(&device->cs->c, stream_idx, buffer, offset, stride);
-    if (prev_buffer)
-        wined3d_buffer_decref(prev_buffer);
-
-    return WINED3D_OK;
+    return wined3d_device_context_set_stream_source(&device->cs->c, stream_idx, buffer, offset, stride);
 }
 
 HRESULT CDECL wined3d_device_get_stream_source(const struct wined3d_device *device,
@@ -2360,6 +2326,49 @@ void CDECL wined3d_device_context_set_predication(struct wined3d_device_context 
     wined3d_device_context_emit_set_predication(context, predicate, value);
     if (prev)
         wined3d_query_decref(prev);
+}
+
+HRESULT CDECL wined3d_device_context_set_stream_source(struct wined3d_device_context *context,
+        unsigned int stream_idx, struct wined3d_buffer *buffer, unsigned int offset, unsigned int stride)
+{
+    struct wined3d_stream_state *stream;
+    struct wined3d_buffer *prev_buffer;
+
+    TRACE("context %p, stream_idx %u, buffer %p, offset %u, stride %u.\n",
+            context, stream_idx, buffer, offset, stride);
+
+    if (stream_idx >= WINED3D_MAX_STREAMS)
+    {
+        WARN("Stream index %u out of range.\n", stream_idx);
+        return WINED3DERR_INVALIDCALL;
+    }
+    else if (offset & 0x3)
+    {
+        WARN("Offset %u is not 4 byte aligned.\n", offset);
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    stream = &context->state->streams[stream_idx];
+    prev_buffer = stream->buffer;
+
+    if (prev_buffer == buffer
+            && stream->stride == stride
+            && stream->offset == offset)
+    {
+       TRACE("Application is setting the old values over, nothing to do.\n");
+       return WINED3D_OK;
+    }
+
+    stream->buffer = buffer;
+    stream->stride = stride;
+    stream->offset = offset;
+    if (buffer)
+        wined3d_buffer_incref(buffer);
+    wined3d_device_context_emit_set_stream_source(context, stream_idx, buffer, offset, stride);
+    if (prev_buffer)
+        wined3d_buffer_decref(prev_buffer);
+
+    return WINED3D_OK;
 }
 
 void CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struct wined3d_shader *shader)
