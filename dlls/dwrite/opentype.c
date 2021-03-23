@@ -2858,6 +2858,13 @@ HRESULT opentype_get_cpal_entries(const struct dwrite_fonttable *cpal, unsigned 
     unsigned int num_palettes, num_palette_entries, i;
     const struct cpal_color_record *records;
     const struct cpal_header_0 *header;
+    struct d3d_color
+    {
+        float r;
+        float g;
+        float b;
+        float a;
+    } *colors = (void *)entries;
 
     header = table_read_ensure(cpal, 0, sizeof(*header));
 
@@ -2883,11 +2890,12 @@ HRESULT opentype_get_cpal_entries(const struct dwrite_fonttable *cpal, unsigned 
 
     first_entry_index += GET_BE_WORD(header->color_record_indices[palette]);
 
-    for (i = 0; i < entry_count; i++) {
-        entries[i].u1.r = records[first_entry_index + i].red   / 255.0f;
-        entries[i].u2.g = records[first_entry_index + i].green / 255.0f;
-        entries[i].u3.b = records[first_entry_index + i].blue  / 255.0f;
-        entries[i].u4.a = records[first_entry_index + i].alpha / 255.0f;
+    for (i = 0; i < entry_count; ++i)
+    {
+        colors[i].r = records[first_entry_index + i].red   / 255.0f;
+        colors[i].g = records[first_entry_index + i].green / 255.0f;
+        colors[i].b = records[first_entry_index + i].blue  / 255.0f;
+        colors[i].a = records[first_entry_index + i].alpha / 255.0f;
     }
 
     return S_OK;
