@@ -9041,7 +9041,7 @@ static void test_il_append_aligned(void)
     release_test_context(&test_context);
 }
 
-static void test_instance_id(void)
+static void test_instanced_draw(void)
 {
     struct d3d10core_test_context test_context;
     D3D10_TEXTURE2D_DESC texture_desc;
@@ -9053,7 +9053,7 @@ static void test_instance_id(void)
     ID3D10VertexShader *vs;
     ID3D10PixelShader *ps;
     ID3D10Device *device;
-    ID3D10Buffer *vb[2];
+    ID3D10Buffer *vb[4];
     unsigned int i;
     HRESULT hr;
 
@@ -9063,6 +9063,10 @@ static void test_instance_id(void)
                 D3D10_INPUT_PER_VERTEX_DATA, 0},
         {"color",    0, DXGI_FORMAT_R8_UNORM,           1, D3D10_APPEND_ALIGNED_ELEMENT,
                 D3D10_INPUT_PER_INSTANCE_DATA, 1},
+        {"color",    1, DXGI_FORMAT_R8_UNORM,           2, D3D10_APPEND_ALIGNED_ELEMENT,
+                D3D10_INPUT_PER_INSTANCE_DATA, 0},
+        {"color",    2, DXGI_FORMAT_R8_UNORM,           3, D3D10_APPEND_ALIGNED_ELEMENT,
+                D3D10_INPUT_PER_INSTANCE_DATA, 2},
         {"v_offset", 0, DXGI_FORMAT_R32_FLOAT,          1, D3D10_APPEND_ALIGNED_ELEMENT,
                 D3D10_INPUT_PER_INSTANCE_DATA, 1},
     };
@@ -9072,7 +9076,9 @@ static void test_instance_id(void)
         struct vs_in
         {
             float4 position : Position;
-            float color : Color;
+            float r : color0;
+            float g : color1;
+            float b : color2;
             float v_offset : V_Offset;
             uint instance_id : SV_InstanceId;
         };
@@ -9080,7 +9086,9 @@ static void test_instance_id(void)
         struct vs_out
         {
             float4 position : SV_Position;
-            float color : Color;
+            float r : color0;
+            float g : color1;
+            float b : color2;
             uint instance_id : InstanceId;
         };
 
@@ -9088,27 +9096,34 @@ static void test_instance_id(void)
         {
             o.position = i.position;
             o.position.x += i.v_offset;
-            o.color = i.color;
+            o.r = i.r;
+            o.g = i.g;
+            o.b = i.b;
             o.instance_id = i.instance_id;
         }
 #endif
-        0x43425844, 0xcde3cfbf, 0xe2e3d090, 0xe2eb1038, 0x7e5ad1cf, 0x00000001, 0x00000204, 0x00000003,
-        0x0000002c, 0x000000c4, 0x0000013c, 0x4e475349, 0x00000090, 0x00000004, 0x00000008, 0x00000068,
-        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x00000071, 0x00000000, 0x00000000,
-        0x00000003, 0x00000001, 0x00000101, 0x00000077, 0x00000000, 0x00000000, 0x00000003, 0x00000002,
-        0x00000101, 0x00000080, 0x00000000, 0x00000008, 0x00000001, 0x00000003, 0x00000101, 0x69736f50,
-        0x6e6f6974, 0x6c6f4300, 0x5600726f, 0x66664f5f, 0x00746573, 0x495f5653, 0x6174736e, 0x4965636e,
-        0xabab0064, 0x4e47534f, 0x00000070, 0x00000003, 0x00000008, 0x00000050, 0x00000000, 0x00000001,
-        0x00000003, 0x00000000, 0x0000000f, 0x0000005c, 0x00000000, 0x00000000, 0x00000003, 0x00000001,
-        0x00000e01, 0x00000062, 0x00000000, 0x00000000, 0x00000001, 0x00000002, 0x00000e01, 0x505f5653,
-        0x7469736f, 0x006e6f69, 0x6f6c6f43, 0x6e490072, 0x6e617473, 0x64496563, 0xababab00, 0x52444853,
-        0x000000c0, 0x00010040, 0x00000030, 0x0300005f, 0x001010f2, 0x00000000, 0x0300005f, 0x00101012,
-        0x00000001, 0x0300005f, 0x00101012, 0x00000002, 0x04000060, 0x00101012, 0x00000003, 0x00000008,
-        0x04000067, 0x001020f2, 0x00000000, 0x00000001, 0x03000065, 0x00102012, 0x00000001, 0x03000065,
-        0x00102012, 0x00000002, 0x07000000, 0x00102012, 0x00000000, 0x0010100a, 0x00000000, 0x0010100a,
-        0x00000002, 0x05000036, 0x001020e2, 0x00000000, 0x00101e56, 0x00000000, 0x05000036, 0x00102012,
-        0x00000001, 0x0010100a, 0x00000001, 0x05000036, 0x00102012, 0x00000002, 0x0010100a, 0x00000003,
-        0x0100003e,
+        0x43425844, 0x036df42e, 0xff0da346, 0x7b23a14a, 0xc26ec9be, 0x00000001, 0x000002bc, 0x00000003,
+        0x0000002c, 0x000000f4, 0x0000019c, 0x4e475349, 0x000000c0, 0x00000006, 0x00000008, 0x00000098,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x000000a1, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000101, 0x000000a1, 0x00000001, 0x00000000, 0x00000003, 0x00000002,
+        0x00000101, 0x000000a1, 0x00000002, 0x00000000, 0x00000003, 0x00000003, 0x00000101, 0x000000a7,
+        0x00000000, 0x00000000, 0x00000003, 0x00000004, 0x00000101, 0x000000b0, 0x00000000, 0x00000008,
+        0x00000001, 0x00000005, 0x00000101, 0x69736f50, 0x6e6f6974, 0x6c6f6300, 0x5600726f, 0x66664f5f,
+        0x00746573, 0x495f5653, 0x6174736e, 0x4965636e, 0xabab0064, 0x4e47534f, 0x000000a0, 0x00000005,
+        0x00000008, 0x00000080, 0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x0000008c,
+        0x00000000, 0x00000000, 0x00000003, 0x00000001, 0x00000e01, 0x0000008c, 0x00000001, 0x00000000,
+        0x00000003, 0x00000001, 0x00000d02, 0x0000008c, 0x00000002, 0x00000000, 0x00000003, 0x00000001,
+        0x00000b04, 0x00000092, 0x00000000, 0x00000000, 0x00000001, 0x00000002, 0x00000e01, 0x505f5653,
+        0x7469736f, 0x006e6f69, 0x6f6c6f63, 0x6e490072, 0x6e617473, 0x64496563, 0xababab00, 0x52444853,
+        0x00000118, 0x00010040, 0x00000046, 0x0300005f, 0x001010f2, 0x00000000, 0x0300005f, 0x00101012,
+        0x00000001, 0x0300005f, 0x00101012, 0x00000002, 0x0300005f, 0x00101012, 0x00000003, 0x0300005f,
+        0x00101012, 0x00000004, 0x04000060, 0x00101012, 0x00000005, 0x00000008, 0x04000067, 0x001020f2,
+        0x00000000, 0x00000001, 0x03000065, 0x00102012, 0x00000001, 0x03000065, 0x00102022, 0x00000001,
+        0x03000065, 0x00102042, 0x00000001, 0x03000065, 0x00102012, 0x00000002, 0x07000000, 0x00102012,
+        0x00000000, 0x0010100a, 0x00000000, 0x0010100a, 0x00000004, 0x05000036, 0x001020e2, 0x00000000,
+        0x00101e56, 0x00000000, 0x05000036, 0x00102012, 0x00000001, 0x0010100a, 0x00000001, 0x05000036,
+        0x00102022, 0x00000001, 0x0010100a, 0x00000002, 0x05000036, 0x00102042, 0x00000001, 0x0010100a,
+        0x00000003, 0x05000036, 0x00102012, 0x00000002, 0x0010100a, 0x00000005, 0x0100003e,
     };
     static const DWORD ps_code[] =
     {
@@ -9116,28 +9131,32 @@ static void test_instance_id(void)
         struct vs_out
         {
             float4 position : SV_Position;
-            float color : Color;
+            float r : color0;
+            float g : color1;
+            float b : color2;
             uint instance_id : InstanceId;
         };
 
         void main(vs_out i, out float4 o0 : SV_Target0, out uint4 o1 : SV_Target1)
         {
-            o0 = float4(i.color, i.color, i.color, 1.0f);
+            o0 = float4(i.r, i.g, i.b, 1.0f);
             o1 = i.instance_id;
         }
 #endif
-        0x43425844, 0xda0ad0bb, 0x4743f5f5, 0xfbc6d0b1, 0x7c8e7df5, 0x00000001, 0x00000170, 0x00000003,
-        0x0000002c, 0x000000a4, 0x000000f0, 0x4e475349, 0x00000070, 0x00000003, 0x00000008, 0x00000050,
-        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x0000005c, 0x00000000, 0x00000000,
-        0x00000003, 0x00000001, 0x00000101, 0x00000062, 0x00000000, 0x00000000, 0x00000001, 0x00000002,
-        0x00000101, 0x505f5653, 0x7469736f, 0x006e6f69, 0x6f6c6f43, 0x6e490072, 0x6e617473, 0x64496563,
-        0xababab00, 0x4e47534f, 0x00000044, 0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000000,
-        0x00000003, 0x00000000, 0x0000000f, 0x00000038, 0x00000001, 0x00000000, 0x00000001, 0x00000001,
-        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000078, 0x00000040, 0x0000001e,
-        0x03001062, 0x00101012, 0x00000001, 0x03000862, 0x00101012, 0x00000002, 0x03000065, 0x001020f2,
-        0x00000000, 0x03000065, 0x001020f2, 0x00000001, 0x05000036, 0x00102072, 0x00000000, 0x00101006,
-        0x00000001, 0x05000036, 0x00102082, 0x00000000, 0x00004001, 0x3f800000, 0x05000036, 0x001020f2,
-        0x00000001, 0x00101006, 0x00000002, 0x0100003e,
+        0x43425844, 0xc9f9c86d, 0xa24d87aa, 0xff75d05b, 0xfbe0581a, 0x00000001, 0x000001b8, 0x00000003,
+        0x0000002c, 0x000000d4, 0x00000120, 0x4e475349, 0x000000a0, 0x00000005, 0x00000008, 0x00000080,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x0000008c, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000101, 0x0000008c, 0x00000001, 0x00000000, 0x00000003, 0x00000001,
+        0x00000202, 0x0000008c, 0x00000002, 0x00000000, 0x00000003, 0x00000001, 0x00000404, 0x00000092,
+        0x00000000, 0x00000000, 0x00000001, 0x00000002, 0x00000101, 0x505f5653, 0x7469736f, 0x006e6f69,
+        0x6f6c6f63, 0x6e490072, 0x6e617473, 0x64496563, 0xababab00, 0x4e47534f, 0x00000044, 0x00000002,
+        0x00000008, 0x00000038, 0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x0000000f, 0x00000038,
+        0x00000001, 0x00000000, 0x00000001, 0x00000001, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074,
+        0x52444853, 0x00000090, 0x00000040, 0x00000024, 0x03001062, 0x00101012, 0x00000001, 0x03001062,
+        0x00101022, 0x00000001, 0x03001062, 0x00101042, 0x00000001, 0x03000862, 0x00101012, 0x00000002,
+        0x03000065, 0x001020f2, 0x00000000, 0x03000065, 0x001020f2, 0x00000001, 0x05000036, 0x00102072,
+        0x00000000, 0x00101246, 0x00000001, 0x05000036, 0x00102082, 0x00000000, 0x00004001, 0x3f800000,
+        0x05000036, 0x001020f2, 0x00000001, 0x00101006, 0x00000002, 0x0100003e,
     };
     static const struct vec4 stream0[] =
     {
@@ -9148,7 +9167,7 @@ static void test_instance_id(void)
     };
     static const struct
     {
-        BYTE color;
+        BYTE red;
         float v_offset;
     }
     stream1[] =
@@ -9163,6 +9182,8 @@ static void test_instance_id(void)
         {0xcc, 1.50f},
         {0x90, 1.75f},
     };
+    static const BYTE stream2[] = {0xf0, 0x80, 0x10, 0x40, 0xaa, 0xbb, 0xcc, 0x90};
+    static const BYTE stream3[] = {0xf0, 0x80, 0x10, 0x40, 0xaa, 0xbb, 0xcc, 0x90};
     static const struct
     {
         RECT rect;
@@ -9172,13 +9193,13 @@ static void test_instance_id(void)
     expected_results[] =
     {
         {{  0, 0,  80, 240}, 0xfff0f0f0, 0},
-        {{ 80, 0, 160, 240}, 0xff808080, 1},
-        {{160, 0, 240, 240}, 0xff101010, 2},
-        {{240, 0, 320, 240}, 0xff404040, 3},
+        {{ 80, 0, 160, 240}, 0xfff0f080, 1},
+        {{160, 0, 240, 240}, 0xff80f010, 2},
+        {{240, 0, 320, 240}, 0xff80f040, 3},
         {{320, 0, 400, 240}, 0xffaaaaaa, 0},
-        {{400, 0, 480, 240}, 0xffbbbbbb, 1},
-        {{480, 0, 560, 240}, 0xffcccccc, 2},
-        {{560, 0, 640, 240}, 0xff909090, 3},
+        {{400, 0, 480, 240}, 0xffaaaabb, 1},
+        {{480, 0, 560, 240}, 0xffbbaacc, 2},
+        {{560, 0, 640, 240}, 0xffbbaa90, 3},
 
         {{0, 240, 640, 480}, 0xffffffff, 1},
     };
@@ -9208,6 +9229,8 @@ static void test_instance_id(void)
 
     vb[0] = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, sizeof(stream0), stream0);
     vb[1] = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, sizeof(stream1), stream1);
+    vb[2] = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, sizeof(stream2), stream2);
+    vb[3] = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, sizeof(stream3), stream3);
 
     ID3D10Device_VSSetShader(device, vs);
     ID3D10Device_PSSetShader(device, ps);
@@ -9218,6 +9241,10 @@ static void test_instance_id(void)
     ID3D10Device_IASetVertexBuffers(device, 0, 1, &vb[0], &stride, &offset);
     stride = sizeof(*stream1);
     ID3D10Device_IASetVertexBuffers(device, 1, 1, &vb[1], &stride, &offset);
+    stride = sizeof(*stream2);
+    ID3D10Device_IASetVertexBuffers(device, 2, 1, &vb[2], &stride, &offset);
+    stride = sizeof(*stream3);
+    ID3D10Device_IASetVertexBuffers(device, 3, 1, &vb[3], &stride, &offset);
 
     ID3D10Device_ClearRenderTargetView(device, rtvs[0], white);
     ID3D10Device_ClearRenderTargetView(device, rtvs[1], white);
@@ -9241,6 +9268,8 @@ static void test_instance_id(void)
 
     ID3D10Buffer_Release(vb[0]);
     ID3D10Buffer_Release(vb[1]);
+    ID3D10Buffer_Release(vb[2]);
+    ID3D10Buffer_Release(vb[3]);
     ID3D10RenderTargetView_Release(rtvs[1]);
     ID3D10Texture2D_Release(render_target);
     ID3D10VertexShader_Release(vs);
@@ -18848,7 +18877,7 @@ START_TEST(d3d10core)
     queue_test(test_private_data);
     queue_test(test_state_refcounting);
     queue_test(test_il_append_aligned);
-    queue_test(test_instance_id);
+    queue_test(test_instanced_draw);
     queue_test(test_fragment_coords);
     queue_test(test_initial_texture_data);
     queue_test(test_update_subresource);
