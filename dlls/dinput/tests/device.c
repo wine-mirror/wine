@@ -197,12 +197,14 @@ struct enum_data
 {
     IDirectInputA *pDI;
     HWND hwnd;
+    BOOL tested_product_creation;
 };
 
 static BOOL CALLBACK enum_devices(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
 {
     struct enum_data *data = pvRef;
     IDirectInputDeviceA *device, *obj = NULL;
+    DIDEVICEINSTANCEA ddi2;
     HRESULT hr;
 
     hr = IDirectInput_GetDeviceStatus(data->pDI, &lpddi->guidInstance);
@@ -226,6 +228,24 @@ static BOOL CALLBACK enum_devices(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
         IUnknown_Release(obj);
 
         IUnknown_Release(device);
+
+        if (!IsEqualGUID(&lpddi->guidInstance, &lpddi->guidProduct))
+        {
+            data->tested_product_creation = TRUE;
+            hr = IDirectInput_CreateDevice(data->pDI, &lpddi->guidProduct, &device, NULL);
+            ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
+
+            ddi2.dwSize = sizeof(ddi2);
+            hr = IDirectInputDevice_GetDeviceInfo(device, &ddi2);
+            ok(SUCCEEDED(hr), "IDirectInput_GetDeviceInfo failed: %08x\n", hr);
+
+            ok(IsEqualGUID(&lpddi->guidProduct, &ddi2.guidProduct), "Product GUIDs do not match. Expected %s, got %s\n", debugstr_guid(&lpddi->guidProduct), debugstr_guid(&ddi2.guidProduct));
+            ok(IsEqualGUID(&ddi2.guidProduct, &ddi2.guidInstance), "Instance GUID should equal product GUID. Expected %s, got %s\n", debugstr_guid(&ddi2.guidProduct), debugstr_guid(&ddi2.guidInstance));
+            /* we cannot compare guidInstances as we may get a different device */
+
+            IUnknown_Release(device);
+        }
+
     }
     return DIENUM_CONTINUE;
 }
@@ -263,9 +283,11 @@ static void device_tests(void)
 
         data.pDI = pDI;
         data.hwnd = hwnd;
+        data.tested_product_creation = FALSE;
         hr = IDirectInput_EnumDevices(pDI, 0, enum_devices, &data, DIEDFL_ALLDEVICES);
         ok(SUCCEEDED(hr), "IDirectInput_EnumDevices() failed: %08x\n", hr);
 
+        if (!data.tested_product_creation) winetest_skip("Device creation using product GUID not tested\n");
 
         /* If GetDeviceStatus returns DI_OK the device must exist */
         hr = IDirectInput_GetDeviceStatus(pDI, &GUID_Joystick);

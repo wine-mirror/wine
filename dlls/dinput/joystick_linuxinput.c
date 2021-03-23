@@ -612,6 +612,7 @@ static unsigned short get_joystick_index(REFGUID guid)
 {
     GUID wine_joystick = DInput_Wine_Joystick_Base_GUID;
     GUID dev_guid = *guid;
+    INT i;
 
     wine_joystick.Data3 = 0;
     dev_guid.Data3 = 0;
@@ -621,6 +622,9 @@ static unsigned short get_joystick_index(REFGUID guid)
 
     /* for the wine joystick GUIDs use the index stored in Data3 */
     if(IsEqualGUID(&wine_joystick, &dev_guid)) return guid->Data3 - DInput_Wine_Joystick_Base_GUID.Data3;
+
+    for(i = 0; i < have_joydevs; i++)
+        if(IsEqualGUID(&joydevs[i].guid_product, guid)) return i;
 
     return MAX_JOYDEV;
 }
@@ -1450,6 +1454,9 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8A iface,
 
     fill_joystick_dideviceinstanceA(pdidi, This->generic.base.dinput->dwVersion,
                                     get_joystick_index(&This->generic.base.guid));
+
+    pdidi->guidInstance = This->generic.base.guid;
+
     return DI_OK;
 }
 
@@ -1467,6 +1474,9 @@ static HRESULT WINAPI JoystickWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface,
 
     fill_joystick_dideviceinstanceW(pdidi, This->generic.base.dinput->dwVersion,
                                     get_joystick_index(&This->generic.base.guid));
+
+    pdidi->guidInstance = This->generic.base.guid;
+
     return DI_OK;
 }
 

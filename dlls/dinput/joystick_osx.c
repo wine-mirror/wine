@@ -1322,6 +1322,10 @@ static unsigned short get_joystick_index(REFGUID guid)
 {
     GUID wine_joystick = DInput_Wine_OsX_Joystick_GUID;
     GUID dev_guid = *guid;
+    GUID prod_guid = *guid;
+    IOHIDDeviceRef device;
+    int joystick_devices_count;
+    INT i;
 
     wine_joystick.Data3 = 0;
     dev_guid.Data3 = 0;
@@ -1331,6 +1335,18 @@ static unsigned short get_joystick_index(REFGUID guid)
 
     /* for the wine joystick GUIDs use the index stored in Data3 */
     if(IsEqualGUID(&wine_joystick, &dev_guid)) return guid->Data3;
+
+    prod_guid.Data1 = 0;
+    if(IsEqualGUID(&DInput_PIDVID_Product_GUID, &prod_guid))
+    {
+        joystick_devices_count = find_joystick_devices();
+        for(i = 0; i < joystick_devices_count; i++)
+        {
+            device = get_device_ref(i);
+            if(guid->Data1 == make_vid_pid(device))
+                return i;
+        }
+    }
 
     return 0xffff;
 }
