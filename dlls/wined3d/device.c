@@ -1536,29 +1536,10 @@ static void wined3d_device_set_material(struct wined3d_device *device, const str
 void CDECL wined3d_device_set_index_buffer(struct wined3d_device *device,
         struct wined3d_buffer *buffer, enum wined3d_format_id format_id, unsigned int offset)
 {
-    struct wined3d_state *state = device->cs->c.state;
-    enum wined3d_format_id prev_format;
-    struct wined3d_buffer *prev_buffer;
-    unsigned int prev_offset;
-
     TRACE("device %p, buffer %p, format %s, offset %u.\n",
             device, buffer, debug_d3dformat(format_id), offset);
 
-    prev_buffer = state->index_buffer;
-    prev_format = state->index_format;
-    prev_offset = state->index_offset;
-
-    if (prev_buffer == buffer && prev_format == format_id && prev_offset == offset)
-        return;
-
-    if (buffer)
-        wined3d_buffer_incref(buffer);
-    state->index_buffer = buffer;
-    state->index_format = format_id;
-    state->index_offset = offset;
-    wined3d_device_context_emit_set_index_buffer(&device->cs->c, buffer, format_id, offset);
-    if (prev_buffer)
-        wined3d_buffer_decref(prev_buffer);
+    wined3d_device_context_set_index_buffer(&device->cs->c, buffer, format_id, offset);
 }
 
 struct wined3d_buffer * CDECL wined3d_device_get_index_buffer(const struct wined3d_device *device,
@@ -2370,6 +2351,34 @@ HRESULT CDECL wined3d_device_context_set_stream_source(struct wined3d_device_con
         wined3d_buffer_decref(prev_buffer);
 
     return WINED3D_OK;
+}
+
+void CDECL wined3d_device_context_set_index_buffer(struct wined3d_device_context *context,
+        struct wined3d_buffer *buffer, enum wined3d_format_id format_id, unsigned int offset)
+{
+    struct wined3d_state *state = context->state;
+    enum wined3d_format_id prev_format;
+    struct wined3d_buffer *prev_buffer;
+    unsigned int prev_offset;
+
+    TRACE("context %p, buffer %p, format %s, offset %u.\n",
+            context, buffer, debug_d3dformat(format_id), offset);
+
+    prev_buffer = state->index_buffer;
+    prev_format = state->index_format;
+    prev_offset = state->index_offset;
+
+    if (prev_buffer == buffer && prev_format == format_id && prev_offset == offset)
+        return;
+
+    if (buffer)
+        wined3d_buffer_incref(buffer);
+    state->index_buffer = buffer;
+    state->index_format = format_id;
+    state->index_offset = offset;
+    wined3d_device_context_emit_set_index_buffer(context, buffer, format_id, offset);
+    if (prev_buffer)
+        wined3d_buffer_decref(prev_buffer);
 }
 
 void CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struct wined3d_shader *shader)

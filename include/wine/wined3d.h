@@ -2563,6 +2563,8 @@ void __cdecl wined3d_device_context_set_depth_stencil_state(struct wined3d_devic
         struct wined3d_depth_stencil_state *depth_stencil_state, unsigned int stencil_ref);
 HRESULT __cdecl wined3d_device_context_set_depth_stencil_view(struct wined3d_device_context *context,
         struct wined3d_rendertarget_view *view);
+void __cdecl wined3d_device_context_set_index_buffer(struct wined3d_device_context *context,
+        struct wined3d_buffer *buffer, enum wined3d_format_id format_id, unsigned int offset);
 void __cdecl wined3d_device_context_set_predication(struct wined3d_device_context *context,
         struct wined3d_query *predicate, BOOL value);
 void __cdecl wined3d_device_context_set_rasterizer_state(struct wined3d_device_context *context,
