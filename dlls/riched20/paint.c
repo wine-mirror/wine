@@ -32,6 +32,7 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, const RECT *rcUpdate)
   ME_Cell *cell;
   int ys, ye;
   HRGN oldRgn;
+  RECT rc;
   HBRUSH brush = CreateSolidBrush( ITextHost_TxGetSysColor( editor->texthost, COLOR_WINDOW ) );
 
   ME_InitContext( &c, editor, hDC );
@@ -73,21 +74,24 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, const RECT *rcUpdate)
     para = para_next( para );
   }
   if (c.pt.y + editor->nTotalLength < c.rcView.bottom)
-  {
-    /* Fill space after the end of the text. */
-    RECT rc;
+  { /* space after the end of the text */
     rc.top = c.pt.y + editor->nTotalLength;
     rc.left = c.rcView.left;
     rc.bottom = c.rcView.bottom;
     rc.right = c.rcView.right;
-
-    IntersectRect(&rc, &rc, rcUpdate);
-
-    if (!IsRectEmpty(&rc))
+    if (IntersectRect( &rc, &rc, rcUpdate ))
       PatBlt(hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
   }
-  if (editor->nTotalLength != editor->nLastTotalLength ||
-      editor->nTotalWidth != editor->nLastTotalWidth)
+  if (editor->selofs)
+  { /* selection bar */
+    rc.left = c.rcView.left - editor->selofs;
+    rc.top = c.rcView.top;
+    rc.right = c.rcView.left;
+    rc.bottom = c.rcView.bottom;
+    if (IntersectRect( &rc, &rc, rcUpdate ))
+      PatBlt( hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
+  }
+  if (editor->nTotalLength != editor->nLastTotalLength || editor->nTotalWidth != editor->nLastTotalWidth)
     ME_SendRequestResize(editor, FALSE);
   editor->nLastTotalLength = editor->nTotalLength;
   editor->nLastTotalWidth = editor->nTotalWidth;
