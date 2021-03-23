@@ -319,10 +319,7 @@ struct wined3d_physical_device_info
 
 static void wined3d_disable_vulkan_features(struct wined3d_physical_device_info *info)
 {
-    VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT *vertex_divisor_features = &info->vertex_divisor_features;
     VkPhysicalDeviceFeatures *features = &info->features2.features;
-
-    vertex_divisor_features->vertexAttributeInstanceRateZeroDivisor = VK_FALSE;
 
     features->depthBounds = VK_FALSE;
     features->alphaToOne = VK_FALSE;
@@ -447,7 +444,8 @@ static HRESULT adapter_vk_create_device(struct wined3d *wined3d, const struct wi
     else
         VK_CALL(vkGetPhysicalDeviceFeatures(physical_device, &features2->features));
 
-    if (!vertex_divisor_features->vertexAttributeInstanceRateDivisor)
+    if (!vertex_divisor_features->vertexAttributeInstanceRateDivisor
+            || !vertex_divisor_features->vertexAttributeInstanceRateZeroDivisor)
     {
         WARN("Vertex attribute divisors not supported.\n");
         hr = E_FAIL;
