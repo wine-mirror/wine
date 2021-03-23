@@ -5250,6 +5250,77 @@ todo_wine
     CloseHandle(file);
 }
 
+static void test_SetFileRenameInfo(void)
+{
+    WCHAR tempFileFrom[MAX_PATH], tempFileTo1[MAX_PATH], tempFileTo2[MAX_PATH];
+    WCHAR tempPath[MAX_PATH];
+    FILE_RENAME_INFORMATION *fri;
+    HANDLE file;
+    DWORD size;
+    BOOL ret;
+
+    if (!pSetFileInformationByHandle)
+    {
+        win_skip("SetFileInformationByHandle is not supported\n");
+        return;
+    }
+
+    ret = GetTempPathW(MAX_PATH, tempPath);
+    ok(ret, "GetTempPathW failed, got error %u.\n", GetLastError());
+
+    ret = GetTempFileNameW(tempPath, L"abc", 0, tempFileFrom);
+    ok(ret, "GetTempFileNameW failed, got error %u.\n", GetLastError());
+
+    ret = GetTempFileNameW(tempPath, L"abc", 0, tempFileTo1);
+    ok(ret, "GetTempFileNameW failed, got error %u.\n", GetLastError());
+
+    ret = GetTempFileNameW(tempPath, L"abc", 1, tempFileTo2);
+    ok(ret, "GetTempFileNameW failed, got error %u.\n", GetLastError());
+
+    file = CreateFileW(tempFileFrom, GENERIC_READ | GENERIC_WRITE | DELETE, 0, 0, OPEN_EXISTING, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "failed to create temp file, error %u.\n", GetLastError());
+
+    size = sizeof(FILE_RENAME_INFORMATION) + MAX_PATH;
+    fri = HeapAlloc(GetProcessHeap(), 0, size);
+
+    fri->ReplaceIfExists = FALSE;
+    fri->RootDirectory = NULL;
+    fri->FileNameLength = wcslen(tempFileTo1) * sizeof(WCHAR);
+    memcpy(fri->FileName, tempFileTo1, fri->FileNameLength + sizeof(WCHAR));
+    ret = pSetFileInformationByHandle(file, FileRenameInfo, fri, size);
+todo_wine
+    ok(!ret && GetLastError() == ERROR_ALREADY_EXISTS, "FileRenameInfo unexpected result %d\n", GetLastError());
+
+    fri->ReplaceIfExists = TRUE;
+    ret = pSetFileInformationByHandle(file, FileRenameInfo, fri, size);
+todo_wine
+    ok(ret, "FileRenameInfo failed, error %d\n", GetLastError());
+
+    fri->ReplaceIfExists = FALSE;
+    fri->FileNameLength = wcslen(tempFileTo2) * sizeof(WCHAR);
+    memcpy(fri->FileName, tempFileTo2, fri->FileNameLength + sizeof(WCHAR));
+    ret = pSetFileInformationByHandle(file, FileRenameInfo, fri, size);
+todo_wine
+    ok(ret, "FileRenameInfo failed, error %d\n", GetLastError());
+    CloseHandle(file);
+
+    file = CreateFileW(tempFileTo2, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, 0, 0);
+todo_wine
+    ok(file != INVALID_HANDLE_VALUE, "file not renamed, error %d\n", GetLastError());
+
+    fri->FileNameLength = wcslen(tempFileTo1) * sizeof(WCHAR);
+    memcpy(fri->FileName, tempFileTo1, fri->FileNameLength + sizeof(WCHAR));
+    ret = pSetFileInformationByHandle(file, FileRenameInfo, fri, size);
+todo_wine
+    ok(!ret && GetLastError() == ERROR_ACCESS_DENIED, "FileRenameInfo unexpected result %d\n", GetLastError());
+    CloseHandle(file);
+
+    HeapFree(GetProcessHeap(), 0, fri);
+    DeleteFileW(tempFileFrom);
+    DeleteFileW(tempFileTo1);
+    DeleteFileW(tempFileTo2);
+}
+
 static void test_GetFileAttributesExW(void)
 {
     static const WCHAR path1[] = {'\\','\\','?','\\',0};
@@ -5812,6 +5883,7 @@ START_TEST(file)
     test_GetFinalPathNameByHandleA();
     test_GetFinalPathNameByHandleW();
     test_SetFileInformationByHandle();
+    test_SetFileRenameInfo();
     test_GetFileAttributesExW();
     test_post_completion();
     test_overlapped_read();
