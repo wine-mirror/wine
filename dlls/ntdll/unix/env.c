@@ -1351,6 +1351,36 @@ static void add_registry_variables( WCHAR **env, SIZE_T *pos, SIZE_T *size, HAND
 
 
 /***********************************************************************
+ *           get_registry_value
+ */
+static WCHAR *get_registry_value( WCHAR *env, SIZE_T pos, HKEY key, const WCHAR *name )
+{
+    WCHAR buffer[offsetof(KEY_VALUE_PARTIAL_INFORMATION, Data[1024 * sizeof(WCHAR)])];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
+    DWORD len, size = sizeof(buffer) - sizeof(WCHAR);
+    WCHAR *ret = NULL;
+    UNICODE_STRING nameW;
+
+    init_unicode_string( &nameW, name );
+    if (NtQueryValueKey( key, &nameW, KeyValuePartialInformation, buffer, size, &size )) return NULL;
+    if (size <= offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data )) return NULL;
+    len = size - offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data );
+
+    if (info->Type == REG_EXPAND_SZ)
+    {
+        ret = expand_value( env, pos, (WCHAR *)info->Data, len / sizeof(WCHAR) );
+    }
+    else
+    {
+        ret = malloc( len + sizeof(WCHAR) );
+        memcpy( ret, info->Data, len );
+        ret[len / sizeof(WCHAR)] = 0;
+    }
+    return ret;
+}
+
+
+/***********************************************************************
  *           add_registry_environment
  *
  * Set the environment variables specified in the registry.
@@ -1364,8 +1394,27 @@ static void add_registry_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
         '\\','C','o','n','t','r','o','l',
         '\\','S','e','s','s','i','o','n',' ','M','a','n','a','g','e','r',
         '\\','E','n','v','i','r','o','n','m','e','n','t',0};
+    static const WCHAR profileW[] = {'\\','R','e','g','i','s','t','r','y',
+        '\\','M','a','c','h','i','n','e','\\',
+        'S','o','f','t','w','a','r','e','\\',
+        'M','i','c','r','o','s','o','f','t','\\',
+        'W','i','n','d','o','w','s',' ','N','T','\\',
+        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+        'P','r','o','f','i','l','e','L','i','s','t',0};
+    static const WCHAR computerW[] = {'\\','R','e','g','i','s','t','r','y',
+        '\\','M','a','c','h','i','n','e',
+        '\\','S','y','s','t','e','m',
+        '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
+        '\\','C','o','n','t','r','o','l',
+        '\\','C','o','m','p','u','t','e','r','N','a','m','e',
+        '\\','A','c','t','i','v','e','C','o','m','p','u','t','e','r','N','a','m','e',0};
+    static const WCHAR progdataW[] = {'P','r','o','g','r','a','m','D','a','t','a',0};
+    static const WCHAR allusersW[] = {'A','L','L','U','S','E','R','S','P','R','O','F','I','L','E',0};
+    static const WCHAR publicW[] = {'P','U','B','L','I','C',0};
+    static const WCHAR computernameW[] = {'C','O','M','P','U','T','E','R','N','A','M','E',0};
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
+    WCHAR *value;
     HANDLE key;
 
     InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
@@ -1383,6 +1432,36 @@ static void add_registry_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
     if (!open_hkcu_key( "Volatile Environment", &key ))
     {
         add_registry_variables( env, pos, size, key );
+        NtClose( key );
+    }
+
+    /* set the user profile variables */
+    init_unicode_string( &nameW, profileW );
+    if (!NtOpenKey( &key, KEY_READ, &attr ))
+    {
+        if ((value = get_registry_value( *env, *pos, key, progdataW )))
+        {
+            set_env_var( env, pos, size, allusersW, wcslen(allusersW), value );
+            set_env_var( env, pos, size, progdataW, wcslen(progdataW), value );
+            free( value );
+        }
+        if ((value = get_registry_value( *env, *pos, key, publicW )))
+        {
+            set_env_var( env, pos, size, publicW, wcslen(publicW), value );
+            free( value );
+        }
+        NtClose( key );
+    }
+
+    /* set the computer name */
+    init_unicode_string( &nameW, computerW );
+    if (!NtOpenKey( &key, KEY_READ, &attr ))
+    {
+        if ((value = get_registry_value( *env, *pos, key, computernameW )))
+        {
+            set_env_var( env, pos, size, computernameW, wcslen(computernameW), value );
+            free( value );
+        }
         NtClose( key );
     }
 }

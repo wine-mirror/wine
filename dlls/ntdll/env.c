@@ -109,55 +109,6 @@ static WCHAR *get_registry_value( WCHAR *env, HKEY hkey, const WCHAR *name )
 
 
 /***********************************************************************
- *           set_additional_environment
- *
- * Set some additional environment variables not specified in the registry.
- */
-static void set_additional_environment( WCHAR **env )
-{
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
-    WCHAR *val;
-    HANDLE hkey;
-
-    /* set the user profile variables */
-
-    InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
-    RtlInitUnicodeString( &nameW, L"\\Registry\\Machine\\Software\\Microsoft\\Windows NT\\"
-                          "CurrentVersion\\ProfileList" );
-    if (!NtOpenKey( &hkey, KEY_READ, &attr ))
-    {
-        if ((val = get_registry_value( *env, hkey, L"ProgramData" )))
-        {
-            set_env_var( env, L"ALLUSERSPROFILE", val );
-            set_env_var( env, L"ProgramData", val );
-            RtlFreeHeap( GetProcessHeap(), 0, val );
-        }
-        if ((val = get_registry_value( *env, hkey, L"Public" )))
-        {
-            set_env_var( env, L"PUBLIC", val );
-            RtlFreeHeap( GetProcessHeap(), 0, val );
-        }
-        NtClose( hkey );
-    }
-
-    /* set the computer name */
-
-    RtlInitUnicodeString( &nameW, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\"
-                          "ComputerName\\ActiveComputerName" );
-    if (!NtOpenKey( &hkey, KEY_READ, &attr ))
-    {
-        if ((val = get_registry_value( *env, hkey, L"ComputerName" )))
-        {
-            set_env_var( env, L"COMPUTERNAME", val );
-            RtlFreeHeap( GetProcessHeap(), 0, val );
-        }
-        NtClose( hkey );
-    }
-}
-
-
-/***********************************************************************
  *           set_wow64_environment
  *
  * Set the environment variables that change across 32/64/Wow64.
@@ -844,8 +795,6 @@ void init_user_process_params(void)
 
     if (!params->DllPath.MaximumLength)  /* not inherited from parent process */
     {
-        set_additional_environment( &params->Environment );
-
         get_image_path( params->ImagePathName.Buffer, image, sizeof(image) );
         RtlInitUnicodeString( &params->ImagePathName, image );
 
