@@ -25,17 +25,23 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
 static void draw_paragraph( ME_Context *c, ME_Paragraph *para );
 
-void ME_PaintContent(ME_TextEditor *editor, HDC hDC, const RECT *rcUpdate)
+void editor_draw( ME_TextEditor *editor, HDC hDC, const RECT *update )
 {
   ME_Paragraph *para;
   ME_Context c;
   ME_Cell *cell;
   int ys, ye;
   HRGN oldRgn;
-  RECT rc;
+  RECT rc, client;
   HBRUSH brush = CreateSolidBrush( ITextHost_TxGetSysColor( editor->texthost, COLOR_WINDOW ) );
 
   ME_InitContext( &c, editor, hDC );
+  if (!update)
+  {
+      client = c.rcView;
+      client.left -= editor->selofs;
+      update = &client;
+  }
 
   oldRgn = CreateRectRgn(0, 0, 0, 0);
   if (!GetClipRgn(hDC, oldRgn))
@@ -43,8 +49,7 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, const RECT *rcUpdate)
     DeleteObject(oldRgn);
     oldRgn = NULL;
   }
-  IntersectClipRect(hDC, rcUpdate->left, rcUpdate->top,
-                     rcUpdate->right, rcUpdate->bottom);
+  IntersectClipRect( hDC, update->left, update->top, update->right, update->bottom );
 
   brush = SelectObject( hDC, brush );
   SetBkMode(hDC, TRANSPARENT);
@@ -69,7 +74,7 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, const RECT *rcUpdate)
     }
 
     /* Draw the paragraph if any of the paragraph is in the update region. */
-    if (ys < rcUpdate->bottom && ye > rcUpdate->top)
+    if (ys < update->bottom && ye > update->top)
       draw_paragraph( &c, para );
     para = para_next( para );
   }
@@ -79,7 +84,7 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, const RECT *rcUpdate)
     rc.left = c.rcView.left;
     rc.bottom = c.rcView.bottom;
     rc.right = c.rcView.right;
-    if (IntersectRect( &rc, &rc, rcUpdate ))
+    if (IntersectRect( &rc, &rc, update ))
       PatBlt(hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
   }
   if (editor->selofs)
@@ -88,7 +93,7 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, const RECT *rcUpdate)
     rc.top = c.rcView.top;
     rc.right = c.rcView.left;
     rc.bottom = c.rcView.bottom;
-    if (IntersectRect( &rc, &rc, rcUpdate ))
+    if (IntersectRect( &rc, &rc, update ))
       PatBlt( hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
   }
   if (editor->nTotalLength != editor->nLastTotalLength || editor->nTotalWidth != editor->nLastTotalWidth)

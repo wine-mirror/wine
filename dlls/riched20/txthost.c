@@ -1222,7 +1222,7 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
             ps.rcPaint.right = editor->rcFormat.right;
         }
 
-        ME_PaintContent( editor, hdc, &ps.rcPaint );
+        editor_draw( editor, hdc, &ps.rcPaint );
         DeleteObject( SelectObject( hdc, brush ) );
         EndPaint( editor->hWnd, &ps );
         return 0;

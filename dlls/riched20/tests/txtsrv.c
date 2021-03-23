@@ -764,26 +764,51 @@ static void test_TxDraw(void)
 {
     ITextServices *txtserv;
     ITextHost *host;
-    HDC tmphdc = GetDC(NULL);
-    DWORD dwAspect = DVASPECT_CONTENT;
-    HDC hicTargetDev = NULL; /* Means "default" device */
-    DVTARGETDEVICE *ptd = NULL;
-    void *pvAspect = NULL;
-    HRESULT result;
-    RECTL client = {0,0,100,100};
-
+    HRESULT hr;
+    RECT client = {0, 0, 100, 100};
+    ITextHostTestImpl *host_impl;
+    HDC hdc;
 
     if (!init_texthost(&txtserv, &host))
         return;
 
-    todo_wine {
-        result = ITextServices_TxDraw(txtserv, dwAspect, 0, pvAspect, ptd,
-                                      tmphdc, hicTargetDev, &client, NULL,
-                                      NULL, NULL, 0, 0);
-        ok(result == S_OK, "TxDraw failed (result = %x)\n", result);
-    }
+    host_impl = impl_from_ITextHost( host );
+    host_impl->window = CreateWindowExA( 0, "static", NULL, WS_POPUP | WS_VISIBLE,
+                                         0, 0, 400, 400, 0, 0, 0, NULL );
+    host_impl->client_rect = client;
+    host_impl->props = TXTBIT_MULTILINE | TXTBIT_RICHTEXT | TXTBIT_WORDWRAP;
+    ITextServices_OnTxPropertyBitsChange( txtserv, TXTBIT_CLIENTRECTCHANGE | TXTBIT_MULTILINE | TXTBIT_RICHTEXT | TXTBIT_WORDWRAP,
+                                          host_impl->props );
+    hdc = GetDC( host_impl->window );
 
+    hr = ITextServices_TxDraw( txtserv, DVASPECT_CONTENT, 0, NULL, NULL, NULL, NULL, NULL, NULL,
+                               NULL, NULL, 0, TXTVIEW_INACTIVE );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    hr = ITextServices_TxDraw( txtserv, DVASPECT_CONTENT, 0, NULL, NULL, hdc, NULL, NULL, NULL,
+                               NULL, NULL, 0, TXTVIEW_INACTIVE );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    hr = ITextServices_TxDraw( txtserv, DVASPECT_CONTENT, 0, NULL, NULL, NULL, NULL, (RECTL *)&client, NULL,
+                               NULL, NULL, 0, TXTVIEW_INACTIVE );
+    ok( hr == E_FAIL, "got %08x\n", hr );
+    hr = ITextServices_TxDraw( txtserv, DVASPECT_CONTENT, 0, NULL, NULL, hdc, NULL, (RECTL *)&client, NULL,
+                               NULL, NULL, 0, TXTVIEW_INACTIVE );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = ITextServices_TxDraw( txtserv, DVASPECT_CONTENT, 0, NULL, NULL, hdc, NULL, (RECTL *)&client, NULL,
+                               NULL, NULL, 0, TXTVIEW_ACTIVE );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = ITextServices_OnTxInPlaceActivate( txtserv, &client );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = ITextServices_TxDraw( txtserv, DVASPECT_CONTENT, 0, NULL, NULL, NULL, NULL, NULL, NULL,
+                               NULL, NULL, 0, TXTVIEW_INACTIVE );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = ITextServices_OnTxInPlaceDeactivate( txtserv );
+
+    ReleaseDC( host_impl->window, hdc );
     ITextServices_Release(txtserv);
+    DestroyWindow( host_impl->window );
     ITextHost_Release(host);
 }
 
