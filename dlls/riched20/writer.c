@@ -939,11 +939,13 @@ static BOOL stream_out_graphics( ME_TextEditor *editor, ME_OutStream *stream,
     UINT size;
     SIZE goal, pic;
     ME_Context c;
+    HDC hdc;
 
     hr = IOleObject_QueryInterface( run->reobj->obj.poleobj, &IID_IDataObject, (void **)&data );
     if (FAILED(hr)) return FALSE;
 
-    ME_InitContext( &c, editor, ITextHost_TxGetDC( editor->texthost ) );
+    hdc = ITextHost_TxGetDC( editor->texthost );
+    ME_InitContext( &c, editor, hdc );
     hr = IDataObject_QueryGetData( data, &fmt );
     if (hr != S_OK) goto done;
 
@@ -985,6 +987,7 @@ static BOOL stream_out_graphics( ME_TextEditor *editor, ME_OutStream *stream,
 
 done:
     ME_DestroyContext( &c );
+    ITextHost_TxReleaseDC( editor->texthost, hdc );
     HeapFree( GetProcessHeap(), 0, emf_bits );
     ReleaseStgMedium( &med );
     IDataObject_Release( data );

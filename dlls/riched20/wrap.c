@@ -1027,10 +1027,12 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
   ME_Context c;
   int totalWidth = editor->nTotalWidth, prev_width;
   struct repaint_range repaint = { NULL, NULL };
+  HDC hdc;
 
   if (!editor->marked_paras.root) return FALSE;
 
-  ME_InitContext(&c, editor, ITextHost_TxGetDC(editor->texthost));
+  hdc = ITextHost_TxGetDC( editor->texthost );
+  ME_InitContext( &c, editor, hdc );
 
   entry = wine_rb_head( editor->marked_paras.root );
   while (entry)
@@ -1085,6 +1087,7 @@ BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor)
   editor->nTotalWidth = totalWidth;
 
   ME_DestroyContext(&c);
+  ITextHost_TxReleaseDC( editor->texthost, hdc );
 
   if (repaint.start || editor->nTotalLength < editor->nLastTotalLength)
     para_range_invalidate( editor, repaint.start, repaint.end);

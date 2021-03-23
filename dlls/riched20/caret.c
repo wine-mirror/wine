@@ -227,12 +227,13 @@ void cursor_coords( ME_TextEditor *editor, ME_Cursor *cursor,
   ME_Run *size_run = run, *prev;
   ME_Context c;
   int run_x;
+  HDC hdc = ITextHost_TxGetDC( editor->texthost );
 
   assert(~para->nFlags & MEPF_REWRAP);
 
   row = row_from_cursor( cursor );
 
-  ME_InitContext(&c, editor, ITextHost_TxGetDC(editor->texthost));
+  ME_InitContext( &c, editor, hdc );
 
   if (!cursor->nOffset && (prev = run_prev( run ))) size_run = prev;
 
@@ -243,6 +244,7 @@ void cursor_coords( ME_TextEditor *editor, ME_Cursor *cursor,
   *y = c.rcView.top + para->pt.y + row->nBaseline
        + run->pt.y - size_run->nAscent - editor->vert_si.nPos;
   ME_DestroyContext(&c);
+  ITextHost_TxReleaseDC( editor->texthost, hdc );
   return;
 }
 

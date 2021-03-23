@@ -160,8 +160,9 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   ME_Run *run;
   ME_Style *style;
   int eol_len;
+  HDC hdc = ITextHost_TxGetDC( editor->texthost );
 
-  ME_InitContext(&c, editor, ITextHost_TxGetDC(editor->texthost));
+  ME_InitContext( &c, editor, hdc );
 
   hf = GetStockObject(SYSTEM_FONT);
   assert(hf);
@@ -221,6 +222,7 @@ void ME_MakeFirstParagraph(ME_TextEditor *editor)
   wine_rb_init( &editor->marked_paras, para_mark_compare );
   para_mark_add( editor, para );
   ME_DestroyContext(&c);
+  ITextHost_TxReleaseDC( editor->texthost, hdc );
 }
 
 static void para_mark_rewrap_paras( ME_TextEditor *editor, ME_Paragraph *first, const ME_Paragraph *end )

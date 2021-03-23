@@ -93,7 +93,6 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, const RECT *rcUpdate)
   if (oldRgn)
     DeleteObject(oldRgn);
 
-  c.hDC = NULL;
   ME_DestroyContext(&c);
 }
 

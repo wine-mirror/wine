@@ -571,10 +571,12 @@ int ME_CharFromPoint(ME_TextEditor *editor, int cx, ME_Run *run, BOOL closest, B
 {
     ME_Context c;
     int ret;
+    HDC hdc = ITextHost_TxGetDC( editor->texthost );
 
-    ME_InitContext( &c, editor, ITextHost_TxGetDC( editor->texthost ) );
+    ME_InitContext( &c, editor, hdc );
     ret = ME_CharFromPointContext( &c, cx, run, closest, visual_order );
     ME_DestroyContext(&c);
+    ITextHost_TxReleaseDC( editor->texthost, hdc );
     return ret;
 }
 
@@ -648,10 +650,12 @@ int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset, BOOL visu
 {
     ME_Context c;
     int ret;
+    HDC hdc = ITextHost_TxGetDC( editor->texthost );
 
-    ME_InitContext(&c, editor, ITextHost_TxGetDC(editor->texthost));
+    ME_InitContext( &c, editor, hdc );
     ret = ME_PointFromCharContext( &c, pRun, nOffset, visual_order );
     ME_DestroyContext(&c);
+    ITextHost_TxReleaseDC( editor->texthost, hdc );
 
     return ret;
 }
