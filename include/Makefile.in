@@ -757,6 +757,7 @@ SOURCES = \
 	windows.h \
 	windows.media.speechsynthesis.idl \
 	windows.system.idl \
+	windows.system.userprofile.idl \
 	windowscontracts.idl \
 	windowsx.h \
 	wine/debug.h \
