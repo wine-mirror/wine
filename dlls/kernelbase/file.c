@@ -3554,8 +3554,27 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetFileInformationByHandle( HANDLE file, FILE_INFO
         status = NtSetInformationFile( file, &io, info, size, FileIoPriorityHintInformation );
         break;
     case FileRenameInfo:
-        status = NtSetInformationFile( file, &io, info, size, FileRenameInformation );
-        break;
+        {
+            FILE_RENAME_INFORMATION *rename_info;
+            UNICODE_STRING nt_name;
+            ULONG size;
+
+            if ((status = RtlDosPathNameToNtPathName_U_WithStatus( ((FILE_RENAME_INFORMATION *)info)->FileName,
+                                                                   &nt_name, NULL, NULL )))
+                break;
+
+            size = sizeof(*rename_info) + nt_name.Length;
+            if ((rename_info = HeapAlloc( GetProcessHeap(), 0, size )))
+            {
+                memcpy( rename_info, info, sizeof(*rename_info) );
+                memcpy( rename_info->FileName, nt_name.Buffer, nt_name.Length + sizeof(WCHAR) );
+                rename_info->FileNameLength = nt_name.Length;
+                status = NtSetInformationFile( file, &io, rename_info, size, FileRenameInformation );
+                HeapFree( GetProcessHeap(), 0, rename_info );
+            }
+            RtlFreeUnicodeString( &nt_name );
+            break;
+        }
     case FileStandardInfo:
     case FileCompressionInfo:
     case FileAttributeTagInfo:

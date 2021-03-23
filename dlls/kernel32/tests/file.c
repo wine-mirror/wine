@@ -5288,24 +5288,20 @@ static void test_SetFileRenameInfo(void)
     fri->FileNameLength = wcslen(tempFileTo1) * sizeof(WCHAR);
     memcpy(fri->FileName, tempFileTo1, fri->FileNameLength + sizeof(WCHAR));
     ret = pSetFileInformationByHandle(file, FileRenameInfo, fri, size);
-todo_wine
     ok(!ret && GetLastError() == ERROR_ALREADY_EXISTS, "FileRenameInfo unexpected result %d\n", GetLastError());
 
     fri->ReplaceIfExists = TRUE;
     ret = pSetFileInformationByHandle(file, FileRenameInfo, fri, size);
-todo_wine
     ok(ret, "FileRenameInfo failed, error %d\n", GetLastError());
 
     fri->ReplaceIfExists = FALSE;
     fri->FileNameLength = wcslen(tempFileTo2) * sizeof(WCHAR);
     memcpy(fri->FileName, tempFileTo2, fri->FileNameLength + sizeof(WCHAR));
     ret = pSetFileInformationByHandle(file, FileRenameInfo, fri, size);
-todo_wine
     ok(ret, "FileRenameInfo failed, error %d\n", GetLastError());
     CloseHandle(file);
 
     file = CreateFileW(tempFileTo2, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, 0, 0);
-todo_wine
     ok(file != INVALID_HANDLE_VALUE, "file not renamed, error %d\n", GetLastError());
 
     fri->FileNameLength = wcslen(tempFileTo1) * sizeof(WCHAR);
