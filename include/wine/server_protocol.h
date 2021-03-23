@@ -467,6 +467,7 @@ enum apc_type
     APC_MAP_VIEW,
     APC_UNMAP_VIEW,
     APC_CREATE_THREAD,
+    APC_DUP_HANDLE,
     APC_BREAK_PROCESS
 };
 
@@ -577,6 +578,15 @@ typedef union
         mem_size_t       reserve;
         mem_size_t       commit;
     } create_thread;
+    struct
+    {
+        enum apc_type    type;
+        obj_handle_t     src_handle;
+        obj_handle_t     dst_process;
+        unsigned int     access;
+        unsigned int     attributes;
+        unsigned int     options;
+    } dup_handle;
 } apc_call_t;
 
 typedef union
@@ -664,6 +674,12 @@ typedef union
         client_ptr_t     teb;
         obj_handle_t     handle;
     } create_thread;
+    struct
+    {
+        enum apc_type    type;
+        unsigned int     status;
+        obj_handle_t     handle;
+    } dup_handle;
     struct
     {
         enum apc_type    type;
@@ -1253,9 +1269,7 @@ struct dup_handle_reply
 {
     struct reply_header __header;
     obj_handle_t handle;
-    int          self;
-    int          closed;
-    char __pad_20[4];
+    char __pad_12[4];
 };
 
 
@@ -6229,7 +6243,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 686
+#define SERVER_PROTOCOL_VERSION 687
 
 /* ### protocol_version end ### */
 

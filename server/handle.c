@@ -678,8 +678,7 @@ DECL_HANDLER(dup_handle)
         }
         /* close the handle no matter what happened */
         if ((req->options & DUPLICATE_CLOSE_SOURCE) && (src != dst || req->src_handle != reply->handle))
-            reply->closed = !close_handle( src, req->src_handle );
-        reply->self = (src == current->process);
+            close_handle( src, req->src_handle );
         release_object( src );
     }
 }

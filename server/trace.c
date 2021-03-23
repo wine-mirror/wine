@@ -235,6 +235,11 @@ static void dump_apc_call( const char *prefix, const apc_call_t *call )
         dump_uint64( ",commit=", &call->create_thread.commit );
         fprintf( stderr, ",flags=%x", call->create_thread.flags );
         break;
+    case APC_DUP_HANDLE:
+        fprintf( stderr, "APC_DUP_HANDLE,src_handle=%04x,dst_process=%04x,access=%x,attributes=%x,options=%x",
+                 call->dup_handle.src_handle, call->dup_handle.dst_process, call->dup_handle.access,
+                 call->dup_handle.attributes, call->dup_handle.options );
+        break;
     case APC_BREAK_PROCESS:
         fprintf( stderr, "APC_BREAK_PROCESS" );
         break;
@@ -317,6 +322,10 @@ static void dump_apc_result( const char *prefix, const apc_result_t *result )
         fprintf( stderr, "APC_CREATE_THREAD,status=%s,pid=%04x,tid=%04x,handle=%04x",
                  get_status_name( result->create_thread.status ),
                  result->create_thread.pid, result->create_thread.tid, result->create_thread.handle );
+        break;
+    case APC_DUP_HANDLE:
+        fprintf( stderr, "APC_DUP_HANDLE,status=%s,handle=%04x",
+                 get_status_name( result->dup_handle.status ), result->dup_handle.handle );
         break;
     case APC_BREAK_PROCESS:
         fprintf( stderr, "APC_BREAK_PROCESS,status=%s", get_status_name( result->break_process.status ) );
@@ -1676,8 +1685,6 @@ static void dump_dup_handle_request( const struct dup_handle_request *req )
 static void dump_dup_handle_reply( const struct dup_handle_reply *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
-    fprintf( stderr, ", self=%d", req->self );
-    fprintf( stderr, ", closed=%d", req->closed );
 }
 
 static void dump_make_temporary_request( const struct make_temporary_request *req )

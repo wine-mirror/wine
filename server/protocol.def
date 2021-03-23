@@ -483,6 +483,7 @@ enum apc_type
     APC_MAP_VIEW,
     APC_UNMAP_VIEW,
     APC_CREATE_THREAD,
+    APC_DUP_HANDLE,
     APC_BREAK_PROCESS
 };
 
@@ -593,6 +594,15 @@ typedef union
         mem_size_t       reserve;   /* reserve size for thread stack */
         mem_size_t       commit;    /* commit size for thread stack */
     } create_thread;
+    struct
+    {
+        enum apc_type    type;         /* APC_DUP_HANDLE */
+        obj_handle_t     src_handle;   /* src handle to duplicate */
+        obj_handle_t     dst_process;  /* dst process handle */
+        unsigned int     access;       /* wanted access rights */
+        unsigned int     attributes;   /* object attributes */
+        unsigned int     options;      /* duplicate options */
+    } dup_handle;
 } apc_call_t;
 
 typedef union
@@ -680,6 +690,12 @@ typedef union
         client_ptr_t     teb;       /* thread teb (in process address space) */
         obj_handle_t     handle;    /* handle to new thread */
     } create_thread;
+    struct
+    {
+        enum apc_type    type;      /* APC_DUP_HANDLE */
+        unsigned int     status;    /* status returned by call */
+        obj_handle_t     handle;    /* duplicated handle in dst process */
+    } dup_handle;
     struct
     {
         enum apc_type    type;      /* APC_BREAK_PROCESS */
@@ -1117,8 +1133,6 @@ typedef struct
     unsigned int options;      /* duplicate options */
 @REPLY
     obj_handle_t handle;       /* duplicated handle in dst process */
-    int          self;         /* is the source the current process? */
-    int          closed;       /* whether the source handle has been closed */
 @END
 
 

@@ -580,6 +580,21 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result )
         else result->create_thread.status = STATUS_INVALID_PARAMETER;
         break;
     }
+    case APC_DUP_HANDLE:
+    {
+        HANDLE dst_handle = NULL;
+
+        result->type = call->type;
+
+        result->dup_handle.status = NtDuplicateObject( NtCurrentProcess(),
+                                                       wine_server_ptr_handle(call->dup_handle.src_handle),
+                                                       wine_server_ptr_handle(call->dup_handle.dst_process),
+                                                       &dst_handle, call->dup_handle.access,
+                                                       call->dup_handle.attributes, call->dup_handle.options );
+        result->dup_handle.handle = wine_server_obj_handle( dst_handle );
+        NtClose( wine_server_ptr_handle(call->dup_handle.dst_process) );
+        break;
+    }
     case APC_BREAK_PROCESS:
     {
         HANDLE handle;
@@ -1678,6 +1693,27 @@ NTSTATUS WINAPI NtDuplicateObject( HANDLE source_process, HANDLE source, HANDLE 
                                    ACCESS_MASK access, ULONG attributes, ULONG options )
 {
     NTSTATUS ret;
+
+    if ((options & DUPLICATE_CLOSE_SOURCE) && source_process != NtCurrentProcess())
+    {
+        apc_call_t call;
+        apc_result_t result;
+
+        memset( &call, 0, sizeof(call) );
+
+        call.dup_handle.type        = APC_DUP_HANDLE;
+        call.dup_handle.src_handle  = wine_server_obj_handle( source );
+        call.dup_handle.dst_process = wine_server_obj_handle( dest_process );
+        call.dup_handle.access      = access;
+        call.dup_handle.attributes  = attributes;
+        call.dup_handle.options     = options;
+        ret = server_queue_process_apc( source_process, &call, &result );
+        if (ret != STATUS_SUCCESS) return ret;
+
+        if (!result.dup_handle.status)
+            *dest = wine_server_ptr_handle( result.dup_handle.handle );
+        return result.dup_handle.status;
+    }
 
     SERVER_START_REQ( dup_handle )
     {
