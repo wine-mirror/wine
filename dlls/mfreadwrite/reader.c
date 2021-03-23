@@ -1629,15 +1629,14 @@ static HRESULT source_reader_set_compatible_media_type(struct source_reader *rea
     return type_set ? S_OK : S_FALSE;
 }
 
-static HRESULT source_reader_setup_sample_allocator(struct source_reader *reader, unsigned int index,
-        IMFMediaType *media_type)
+static HRESULT source_reader_setup_sample_allocator(struct source_reader *reader, unsigned int index)
 {
     struct media_stream *stream = &reader->streams[index];
     IMFVideoSampleAllocatorCallback *callback;
     GUID major = { 0 };
     HRESULT hr;
 
-    IMFMediaType_GetMajorType(media_type, &major);
+    IMFMediaType_GetMajorType(stream->current, &major);
     if (!IsEqualGUID(&major, &MFMediaType_Video))
         return S_OK;
 
@@ -1666,7 +1665,7 @@ static HRESULT source_reader_setup_sample_allocator(struct source_reader *reader
         return hr;
     }
 
-    if (FAILED(hr = IMFVideoSampleAllocatorEx_InitializeSampleAllocatorEx(stream->allocator, 2, 8, NULL, media_type)))
+    if (FAILED(hr = IMFVideoSampleAllocatorEx_InitializeSampleAllocatorEx(stream->allocator, 2, 8, NULL, stream->current)))
         WARN("Failed to initialize sample allocator, hr %#x.\n", hr);
 
     if (SUCCEEDED(IMFVideoSampleAllocatorEx_QueryInterface(stream->allocator, &IID_IMFVideoSampleAllocatorCallback, (void **)&callback)))
@@ -1837,7 +1836,7 @@ static HRESULT WINAPI src_reader_SetCurrentMediaType(IMFSourceReader *iface, DWO
     if (hr == S_FALSE)
         hr = source_reader_create_decoder_for_stream(reader, index, type);
     if (SUCCEEDED(hr))
-        hr = source_reader_setup_sample_allocator(reader, index, type);
+        hr = source_reader_setup_sample_allocator(reader, index);
 
     LeaveCriticalSection(&reader->cs);
 
