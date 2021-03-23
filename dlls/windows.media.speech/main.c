@@ -139,7 +139,8 @@ static HRESULT STDMETHODCALLTYPE vector_view_voice_information_IndexOf(
 }
 
 static HRESULT STDMETHODCALLTYPE vector_view_voice_information_GetMany(
-    IVectorView_VoiceInformation *iface, ULONG start_index, IVoiceInformation **items, UINT *value)
+        IVectorView_VoiceInformation *iface, ULONG start_index,
+        ULONG items_size, IVoiceInformation **items, UINT *value)
 {
     FIXME("iface %p, start_index %#x, items %p, value %p stub!\n", iface, start_index, items, value);
     *value = 0;

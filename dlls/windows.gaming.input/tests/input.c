@@ -175,6 +175,10 @@ static void test_Gamepad(void)
     ok(hr == E_BOUNDS, "IVectorView_Gamepad_GetAt failed, hr %#x\n", hr);
     ok(gamepad == NULL, "IVectorView_Gamepad_GetAt returned %p\n", gamepad);
 
+    hr = IVectorView_Gamepad_GetMany(gamepads, size, 1, &gamepad, &size);
+    ok(hr == E_BOUNDS, "IVectorView_Gamepad_GetMany failed, hr %#x\n", hr);
+    ok(size == 0, "IVectorView_Gamepad_GetMany returned count %u\n", size);
+
     size = 0xdeadbeef;
     found = TRUE;
     gamepad = (IGamepad *)0xdeadbeef;
@@ -342,6 +346,10 @@ static void test_RawGameController(void)
     hr = IVectorView_RawGameController_get_Size(controllers, &size);
     ok(hr == S_OK, "IVectorView_RawGameController_get_Size failed, hr %#x\n", hr);
     ok(size != 0xdeadbeef, "IVectorView_RawGameController_get_Size returned %u\n", size);
+
+    hr = IVectorView_RawGameController_GetMany(controllers, size, 1, &controller, &size);
+    ok(hr == E_BOUNDS, "IVectorView_RawGameController_GetMany failed, hr %#x\n", hr);
+    ok(size == 0, "IVectorView_RawGameController_GetMany returned count %u\n", size);
 
     controller = (IRawGameController *)0xdeadbeef;
     hr = IVectorView_RawGameController_GetAt(controllers, size, &controller);

@@ -142,10 +142,12 @@ static HRESULT STDMETHODCALLTYPE vector_view_gamepad_IndexOf(
 }
 
 static HRESULT STDMETHODCALLTYPE vector_view_gamepad_GetMany(
-    IVectorView_Gamepad *iface, ULONG start_index, IGamepad **items, UINT *value)
+        IVectorView_Gamepad *iface, ULONG start_index,
+        ULONG items_size, IGamepad **items, UINT *value)
 {
     FIXME("iface %p, start_index %#x, items %p, value %p stub!\n", iface, start_index, items, value);
-    return E_NOTIMPL;
+    *value = 0;
+    return E_BOUNDS;
 }
 
 static const struct IVectorView_GamepadVtbl vector_view_gamepad_vtbl =
@@ -266,10 +268,12 @@ static HRESULT STDMETHODCALLTYPE vector_view_raw_game_controller_IndexOf(
 }
 
 static HRESULT STDMETHODCALLTYPE vector_view_raw_game_controller_GetMany(
-    IVectorView_RawGameController *iface, ULONG start_index, IRawGameController **items, UINT *value)
+        IVectorView_RawGameController *iface, ULONG start_index,
+        ULONG items_size, IRawGameController **items, UINT *value)
 {
     FIXME("iface %p, start_index %#x, items %p, value %p stub!\n", iface, start_index, items, value);
-    return E_NOTIMPL;
+    *value = 0;
+    return E_BOUNDS;
 }
 
 static const struct IVectorView_RawGameControllerVtbl vector_view_raw_game_controller_vtbl =
