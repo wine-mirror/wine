@@ -1692,8 +1692,9 @@ NTSTATUS WINAPI DbgUiIssueRemoteBreakin( HANDLE process )
 NTSTATUS WINAPI NtDuplicateObject( HANDLE source_process, HANDLE source, HANDLE dest_process, HANDLE *dest,
                                    ACCESS_MASK access, ULONG attributes, ULONG options )
 {
+    sigset_t sigset;
     NTSTATUS ret;
-    int fd;
+    int fd = -1;
 
     if ((options & DUPLICATE_CLOSE_SOURCE) && source_process != NtCurrentProcess())
     {
@@ -1716,13 +1717,12 @@ NTSTATUS WINAPI NtDuplicateObject( HANDLE source_process, HANDLE source, HANDLE 
         return result.dup_handle.status;
     }
 
+    server_enter_uninterrupted_section( &fd_cache_mutex, &sigset );
+
     /* always remove the cached fd; if the server request fails we'll just
      * retrieve it again */
     if (options & DUPLICATE_CLOSE_SOURCE)
-    {
         fd = remove_fd_from_cache( source );
-        if (fd != -1) close( fd );
-    }
 
     SERVER_START_REQ( dup_handle )
     {
@@ -1738,6 +1738,10 @@ NTSTATUS WINAPI NtDuplicateObject( HANDLE source_process, HANDLE source, HANDLE 
         }
     }
     SERVER_END_REQ;
+
+    server_leave_uninterrupted_section( &fd_cache_mutex, &sigset );
+
+    if (fd != -1) close( fd );
     return ret;
 }
 
@@ -1747,12 +1751,16 @@ NTSTATUS WINAPI NtDuplicateObject( HANDLE source_process, HANDLE source, HANDLE 
  */
 NTSTATUS WINAPI NtClose( HANDLE handle )
 {
+    sigset_t sigset;
     HANDLE port;
     NTSTATUS ret;
+    int fd;
+
+    server_enter_uninterrupted_section( &fd_cache_mutex, &sigset );
 
     /* always remove the cached fd; if the server request fails we'll just
      * retrieve it again */
-    int fd = remove_fd_from_cache( handle );
+    fd = remove_fd_from_cache( handle );
 
     SERVER_START_REQ( close_handle )
     {
@@ -1760,6 +1768,9 @@ NTSTATUS WINAPI NtClose( HANDLE handle )
         ret = wine_server_call( req );
     }
     SERVER_END_REQ;
+
+    server_leave_uninterrupted_section( &fd_cache_mutex, &sigset );
+
     if (fd != -1) close( fd );
 
     if (ret != STATUS_INVALID_HANDLE || !handle) return ret;
