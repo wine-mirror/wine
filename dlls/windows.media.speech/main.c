@@ -119,7 +119,8 @@ static HRESULT STDMETHODCALLTYPE vector_view_voice_information_GetAt(
         IVectorView_VoiceInformation *iface, UINT32 index, IVoiceInformation **value)
 {
     FIXME("iface %p, index %#x, value %p stub!\n", iface, index, value);
-    return S_OK;
+    *value = NULL;
+    return E_BOUNDS;
 }
 
 static HRESULT STDMETHODCALLTYPE vector_view_voice_information_get_Size(
@@ -131,10 +132,11 @@ static HRESULT STDMETHODCALLTYPE vector_view_voice_information_get_Size(
 }
 
 static HRESULT STDMETHODCALLTYPE vector_view_voice_information_IndexOf(
-        IVectorView_VoiceInformation *iface, IVoiceInformation *element, UINT32 *index, BOOLEAN *value)
+        IVectorView_VoiceInformation *iface, IVoiceInformation *element, UINT32 *index, BOOLEAN *found)
 {
-    FIXME("iface %p, element %p, index %p, value %p stub!\n", iface, element, index, value);
-    *value = FALSE;
+    FIXME("iface %p, element %p, index %p, found %p stub!\n", iface, element, index, found);
+    *index = 0;
+    *found = FALSE;
     return S_OK;
 }
 
