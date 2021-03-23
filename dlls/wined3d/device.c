@@ -1556,7 +1556,7 @@ void CDECL wined3d_device_set_index_buffer(struct wined3d_device *device,
     state->index_buffer = buffer;
     state->index_format = format_id;
     state->index_offset = offset;
-    wined3d_cs_emit_set_index_buffer(device->cs, buffer, format_id, offset);
+    wined3d_device_context_emit_set_index_buffer(&device->cs->c, buffer, format_id, offset);
     if (prev_buffer)
         wined3d_buffer_decref(prev_buffer);
 }
@@ -1795,7 +1795,8 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
                 state->streams[i].offset, state->streams[i].stride);
     }
 
-    wined3d_cs_emit_set_index_buffer(device->cs, state->index_buffer, state->index_format, state->index_offset);
+    wined3d_device_context_emit_set_index_buffer(context, state->index_buffer,
+            state->index_format, state->index_offset);
 
     wined3d_device_context_emit_set_predication(context, state->predicate, state->predicate_value);
 
