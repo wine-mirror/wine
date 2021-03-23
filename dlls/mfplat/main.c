@@ -1511,6 +1511,7 @@ const char *debugstr_attr(const GUID *guid)
     static const struct guid_def guid_defs[] =
     {
 #define X(g) { &(g), #g }
+#define MF_READER_WRITER_D3D_MANAGER MF_SOURCE_READER_D3D_MANAGER
         X(MF_READWRITE_MMCSS_CLASS),
         X(MF_TOPONODE_MARKIN_HERE),
         X(MF_MT_H264_SUPPORTED_SYNC_FRAME_TYPES),
@@ -1728,8 +1729,7 @@ const char *debugstr_attr(const GUID *guid)
         X(MF_SA_D3D11_ALLOW_DYNAMIC_YUV_TEXTURE),
         X(MF_MT_VIDEO_3D_FORMAT),
         X(MF_EVENT_STREAM_METADATA_KEYDATA),
-        X(MF_SINK_WRITER_D3D_MANAGER),
-        X(MF_SOURCE_READER_D3D_MANAGER),
+        X(MF_READER_WRITER_D3D_MANAGER),
         X(MFSampleExtension_3DVideo),
         X(MF_MT_H264_USAGE),
         X(MF_MEDIA_ENGINE_EME_CALLBACK),
@@ -1863,6 +1863,7 @@ const char *debugstr_attr(const GUID *guid)
         X(MF_AUDIO_RENDERER_ATTRIBUTE_ENDPOINT_ROLE),
         X(MF_MT_VIDEO_3D_LEFT_IS_BASE),
         X(MF_TOPONODE_WORKQUEUE_MMCSS_TASKID),
+#undef MF_READER_WRITER_D3D_MANAGER
 #undef X
     };
     struct guid_def *ret = NULL;
