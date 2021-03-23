@@ -2676,6 +2676,7 @@ class VkGenerator(object):
     def generate_vulkan_spec(self, f):
         self._generate_copyright(f, spec_file=True)
         f.write("@ stdcall -private vk_icdGetInstanceProcAddr(ptr str) wine_vk_icdGetInstanceProcAddr\n")
+        f.write("@ stdcall -private vk_icdGetPhysicalDeviceProcAddr(ptr str) wine_vk_icdGetPhysicalDeviceProcAddr\n")
         f.write("@ stdcall -private vk_icdNegotiateLoaderICDInterfaceVersion(ptr) wine_vk_icdNegotiateLoaderICDInterfaceVersion\n")
         f.write("@ cdecl -norelay native_vkGetInstanceProcAddrWINE(ptr str)\n")
 
