@@ -1187,8 +1187,6 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         HBRUSH brush = CreateSolidBrush( ITextHost_TxGetSysColor( &host->ITextHost_iface, COLOR_WINDOW ) );
 
         hdc = BeginPaint( editor->hWnd, &ps );
-        if (!editor->bEmulateVersion10 || (editor->nEventMask & ENM_UPDATE))
-            ME_SendOldNotify( editor, EN_UPDATE );
         brush = SelectObject( hdc, brush );
 
         /* Erase area outside of the formatting rectangle */

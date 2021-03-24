@@ -132,11 +132,14 @@ void ME_UpdateRepaint(ME_TextEditor *editor, BOOL update_now)
   editor_ensure_visible( editor, &editor->pCursors[0] );
 
   update_caret( editor );
+
+  if (!editor->bEmulateVersion10 || (editor->nEventMask & ENM_UPDATE))
+    ME_SendOldNotify( editor, EN_UPDATE );
+
   ITextHost_TxViewChange(editor->texthost, update_now);
 
   ME_SendSelChange(editor);
 
-  /* send EN_CHANGE if the event mask asks for it */
   if(editor->nEventMask & ENM_CHANGE)
   {
     editor->nEventMask &= ~ENM_CHANGE;
