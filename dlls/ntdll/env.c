@@ -542,7 +542,7 @@ NTSTATUS WINAPI RtlCreateProcessParametersEx( RTL_USER_PROCESS_PARAMETERS **resu
 
     RtlAcquirePebLock();
     cur_params = NtCurrentTeb()->Peb->ProcessParameters;
-    if (!DllPath) DllPath = &cur_params->DllPath;
+    if (!DllPath) DllPath = &null_str;
     if (!CurrentDirectoryName)
     {
         if (NtCurrentTeb()->Tib.SubSystemTib)  /* FIXME: hack */
@@ -637,46 +637,45 @@ void WINAPI RtlDestroyProcessParameters( RTL_USER_PROCESS_PARAMETERS *params )
  */
 void init_user_process_params(void)
 {
-    WCHAR *env, *load_path, *dummy;
+    WCHAR *env;
     SIZE_T env_size;
     RTL_USER_PROCESS_PARAMETERS *new_params, *params = NtCurrentTeb()->Peb->ProcessParameters;
-    UNICODE_STRING curdir, dllpath;
+    UNICODE_STRING curdir;
 
     /* environment needs to be a separate memory block */
     env_size = params->EnvironmentSize;
-    env = params->Environment;
     if ((env = RtlAllocateHeap( GetProcessHeap(), 0, max( env_size, sizeof(WCHAR) ))))
     {
         if (env_size) memcpy( env, params->Environment, env_size );
         else env[0] = 0;
-        params->Environment = env;
     }
 
-    if (!params->DllPath.MaximumLength)  /* not inherited from parent process */
-    {
-        LdrGetDllPath( params->ImagePathName.Buffer, 0, &load_path, &dummy );
-        RtlInitUnicodeString( &dllpath, load_path );
+    params->Environment = NULL;  /* avoid copying it */
+    if (RtlCreateProcessParametersEx( &new_params, &params->ImagePathName, &params->DllPath,
+                                      &params->CurrentDirectory.DosPath,
+                                      &params->CommandLine, NULL, &params->WindowTitle, &params->Desktop,
+                                      &params->ShellInfo, &params->RuntimeInfo,
+                                      PROCESS_PARAMS_FLAG_NORMALIZED ))
+        return;
 
-        env = params->Environment;
-        params->Environment = NULL;  /* avoid copying it */
-        if (RtlCreateProcessParametersEx( &new_params, &params->ImagePathName, &dllpath,
-                                          &params->CurrentDirectory.DosPath,
-                                          &params->CommandLine, NULL, &params->ImagePathName, NULL, NULL, NULL,
-                                          PROCESS_PARAMS_FLAG_NORMALIZED ))
-            return;
+    new_params->Environment     = env;
+    new_params->DebugFlags      = params->DebugFlags;
+    new_params->ConsoleHandle   = params->ConsoleHandle;
+    new_params->ConsoleFlags    = params->ConsoleFlags;
+    new_params->hStdInput       = params->hStdInput;
+    new_params->hStdOutput      = params->hStdOutput;
+    new_params->hStdError       = params->hStdError;
+    new_params->dwX             = params->dwX;
+    new_params->dwY             = params->dwY;
+    new_params->dwXSize         = params->dwXSize;
+    new_params->dwYSize         = params->dwYSize;
+    new_params->dwXCountChars   = params->dwXCountChars;
+    new_params->dwYCountChars   = params->dwYCountChars;
+    new_params->dwFillAttribute = params->dwFillAttribute;
+    new_params->dwFlags         = params->dwFlags;
+    new_params->wShowWindow     = params->wShowWindow;
 
-        new_params->Environment   = env;
-        new_params->hStdInput     = params->hStdInput;
-        new_params->hStdOutput    = params->hStdOutput;
-        new_params->hStdError     = params->hStdError;
-        new_params->ConsoleHandle = params->ConsoleHandle;
-        new_params->dwXCountChars = params->dwXCountChars;
-        new_params->dwYCountChars = params->dwYCountChars;
-        new_params->wShowWindow   = params->wShowWindow;
-        NtCurrentTeb()->Peb->ProcessParameters = params = new_params;
-
-        RtlReleasePath( load_path );
-    }
+    NtCurrentTeb()->Peb->ProcessParameters = params = new_params;
 
     if (RtlSetCurrentDirectory_U( &params->CurrentDirectory.DosPath ))
     {

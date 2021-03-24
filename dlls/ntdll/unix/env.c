@@ -1767,7 +1767,6 @@ static void run_wineboot( WCHAR *env, SIZE_T size )
     params.Environment     = env;
     params.EnvironmentSize = size;
     init_unicode_string( &params.CurrentDirectory.DosPath, system_dir + 4 );
-    init_unicode_string( &params.DllPath, system_dir + 4 );
     init_unicode_string( &params.ImagePathName, appnameW + 4 );
     init_unicode_string( &params.CommandLine, cmdlineW );
     init_unicode_string( &params.WindowTitle, appnameW + 4 );

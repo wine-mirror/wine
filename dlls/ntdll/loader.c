@@ -80,6 +80,7 @@ static ULONG path_safe_mode;  /* path mode set by RtlSetSearchPathMode */
 static ULONG dll_safe_mode = 1;  /* dll search mode */
 static UNICODE_STRING dll_directory;  /* extra path for LdrSetDllDirectory */
 static DWORD default_search_flags;  /* default flags set by LdrSetDefaultDllDirectories */
+static WCHAR *default_load_path;    /* default dll search path */
 
 struct dll_dir_entry
 {
@@ -1687,9 +1688,8 @@ NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE module, const ANSI_STRING *name,
     else if ((exports = RtlImageDirectoryEntryToData( module, TRUE,
                                                       IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
     {
-        LPCWSTR load_path = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
-        void *proc = name ? find_named_export( module, exports, exp_size, name->Buffer, -1, load_path )
-                          : find_ordinal_export( module, exports, exp_size, ord - exports->Base, load_path );
+        void *proc = name ? find_named_export( module, exports, exp_size, name->Buffer, -1, NULL )
+                          : find_ordinal_export( module, exports, exp_size, ord - exports->Base, NULL );
         if (proc)
         {
             *address = proc;
@@ -2423,6 +2423,10 @@ static void build_main_module(void)
     RTL_USER_PROCESS_PARAMETERS *params = NtCurrentTeb()->Peb->ProcessParameters;
     void *module = NtCurrentTeb()->Peb->ImageBaseAddress;
 
+    default_load_path = params->DllPath.Buffer;
+    if (!default_load_path)
+        get_dll_load_path( params->ImagePathName.Buffer, NULL, dll_safe_mode, &default_load_path );
+
     NtQueryInformationProcess( GetCurrentProcess(), ProcessImageInformation, &info, sizeof(info), NULL );
     if (info.ImageCharacteristics & IMAGE_FILE_DLL)
     {
@@ -2438,8 +2442,7 @@ static void build_main_module(void)
 #endif
     status = RtlDosPathNameToNtPathName_U_WithStatus( params->ImagePathName.Buffer, &nt_name, NULL, NULL );
     if (status) goto failed;
-    status = build_module( params->DllPath.Buffer, &nt_name, &module, &info,
-                           NULL, DONT_RESOLVE_DLL_REFERENCES, &wm );
+    status = build_module( NULL, &nt_name, &module, &info, NULL, DONT_RESOLVE_DLL_REFERENCES, &wm );
     RtlFreeUnicodeString( &nt_name );
     if (!status) return;
 failed:
@@ -2561,7 +2564,10 @@ static NTSTATUS search_dll_file( LPCWSTR paths, LPCWSTR search, UNICODE_STRING *
     WCHAR *name;
     BOOL found_image = FALSE;
     NTSTATUS status = STATUS_DLL_NOT_FOUND;
-    ULONG len = wcslen( paths );
+    ULONG len;
+
+    if (!paths) paths = default_load_path;
+    len = wcslen( paths );
 
     if (len < wcslen( system_dir )) len = wcslen( system_dir );
     len += wcslen( search ) + 2;
@@ -2796,7 +2802,6 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH LdrLoadDll(LPCWSTR path_name, DWORD flags,
 
     RtlEnterCriticalSection( &loader_section );
 
-    if (!path_name) path_name = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
     nts = load_dll( path_name, libname->Buffer, L".dll", flags, &wm );
 
     if (nts == STATUS_SUCCESS && !(wm->ldr.Flags & LDR_DONT_RESOLVE_REFS))
@@ -2828,8 +2833,6 @@ NTSTATUS WINAPI LdrGetDllHandle( LPCWSTR load_path, ULONG flags, const UNICODE_S
     struct file_id id;
 
     RtlEnterCriticalSection( &loader_section );
-
-    if (!load_path) load_path = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
 
     status = find_dll_file( load_path, name->Buffer, L".dll", &nt_name, &wm, &mapping, &image_info, &id );
 
@@ -3465,7 +3468,6 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
     ULONG_PTR cookie;
     WINE_MODREF *wm;
     void **entry;
-    LPCWSTR load_path = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
 
 #ifdef __i386__
     entry = (void **)&context->Eax;
@@ -3488,9 +3490,9 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
     {
         actctx_init();
         if (wm->ldr.Flags & LDR_COR_ILONLY)
-            status = fixup_imports_ilonly( wm, load_path, entry );
+            status = fixup_imports_ilonly( wm, NULL, entry );
         else
-            status = fixup_imports( wm, load_path );
+            status = fixup_imports( wm, NULL );
 
         if (status)
         {
@@ -3971,7 +3973,6 @@ static void map_wow64cpu(void)
  */
 static NTSTATUS process_init(void)
 {
-    RTL_USER_PROCESS_PARAMETERS *params;
     WINE_MODREF *wm;
     NTSTATUS status;
     ANSI_STRING func_name;
@@ -4006,8 +4007,6 @@ static NTSTATUS process_init(void)
 #endif
 
     init_user_process_params();
-    params = peb->ProcessParameters;
-
     load_global_options();
     version_init();
     build_main_module();
@@ -4032,8 +4031,7 @@ static NTSTATUS process_init(void)
         map_wow64cpu();
 #endif
 
-    if ((status = load_dll( params->DllPath.Buffer, L"C:\\windows\\system32\\kernel32.dll",
-                            NULL, 0, &wm )) != STATUS_SUCCESS)
+    if ((status = load_dll( NULL, L"C:\\windows\\system32\\kernel32.dll", NULL, 0, &wm )) != STATUS_SUCCESS)
     {
         MESSAGE( "wine: could not load kernel32.dll, status %x\n", status );
         NtTerminateProcess( GetCurrentProcess(), status );
