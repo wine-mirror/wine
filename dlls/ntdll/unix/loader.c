@@ -1214,13 +1214,11 @@ static inline char *prepend( char *buffer, const char *str, size_t len )
  *
  * Open a file for a new dll. Helper for open_builtin_file.
  */
-static NTSTATUS open_dll_file( const char *name, OBJECT_ATTRIBUTES *attr, void **module,
-                               SIZE_T *size_ptr, SECTION_IMAGE_INFORMATION *image_info,
-                               WORD machine, BOOL prefer_native )
+static NTSTATUS open_dll_file( const char *name, OBJECT_ATTRIBUTES *attr, HANDLE *mapping )
 {
     LARGE_INTEGER size;
     NTSTATUS status;
-    HANDLE handle, mapping;
+    HANDLE handle;
 
     if ((status = open_unix_file( &handle, name, GENERIC_READ | SYNCHRONIZE, attr, 0,
                                   FILE_SHARE_READ | FILE_SHARE_DELETE, FILE_OPEN,
@@ -1237,14 +1235,10 @@ static NTSTATUS open_dll_file( const char *name, OBJECT_ATTRIBUTES *attr, void *
     }
 
     size.QuadPart = 0;
-    status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY |
+    status = NtCreateSection( mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY |
                               SECTION_MAP_READ | SECTION_MAP_EXECUTE,
                               NULL, &size, PAGE_EXECUTE_READ, SEC_IMAGE, handle );
     NtClose( handle );
-    if (status) return status;
-
-    status = virtual_map_builtin_module( mapping, module, size_ptr, image_info, machine, prefer_native );
-    NtClose( mapping );
     return status;
 }
 
@@ -1256,10 +1250,16 @@ static NTSTATUS open_builtin_file( char *name, OBJECT_ATTRIBUTES *attr, void **m
                                    SECTION_IMAGE_INFORMATION *image_info, WORD machine, BOOL prefer_native )
 {
     NTSTATUS status;
+    HANDLE mapping;
     int fd;
 
     *module = NULL;
-    status = open_dll_file( name, attr, module, size, image_info, machine, prefer_native );
+    status = open_dll_file( name, attr, &mapping );
+    if (!status)
+    {
+        status = virtual_map_builtin_module( mapping, module, size, image_info, machine, prefer_native );
+        NtClose( mapping );
+    }
     if (status != STATUS_DLL_NOT_FOUND) return status;
 
     /* try .so file */
@@ -1449,6 +1449,98 @@ NTSTATUS load_builtin( const pe_image_info_t *image_info, const WCHAR *filename,
     default:
         return STATUS_DLL_NOT_FOUND;
     }
+}
+
+
+/***********************************************************************
+ *           open_main_image
+ */
+static NTSTATUS open_main_image( WCHAR *image, void **module, SECTION_IMAGE_INFORMATION *info )
+{
+    static const WCHAR soW[] = {'.','s','o',0};
+    UNICODE_STRING nt_name;
+    OBJECT_ATTRIBUTES attr;
+    pe_image_info_t pe_info;
+    SIZE_T size = 0;
+    char *unix_name;
+    NTSTATUS status;
+    HANDLE mapping;
+    WCHAR *p;
+
+    init_unicode_string( &nt_name, image );
+    InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
+    if (nt_to_unix_file_name( &nt_name, &unix_name, NULL, FILE_OPEN )) return STATUS_DLL_NOT_FOUND;
+
+    status = open_dll_file( unix_name, &attr, &mapping );
+    if (!status)
+    {
+        *module = NULL;
+        status = NtMapViewOfSection( mapping, NtCurrentProcess(), module, 0, 0, NULL, &size,
+                                     ViewShare, 0, PAGE_EXECUTE_READ );
+        if (!status) NtQuerySection( mapping, SectionImageInformation, info, sizeof(*info), NULL );
+        NtClose( mapping );
+    }
+    else if (status == STATUS_INVALID_IMAGE_NOT_MZ)
+    {
+        /* remove .so extension from Windows name */
+        p = image + wcslen(image);
+        if (p - image > 3 && !wcsicmp( p - 3, soW ))
+        {
+            p[-3] = 0;
+            nt_name.Length -= 3 * sizeof(WCHAR);
+        }
+        status = dlopen_dll( unix_name, &nt_name, module, &pe_info, FALSE );
+        if (!status) virtual_fill_image_information( &pe_info, info );
+    }
+    free( unix_name );
+    return status;
+}
+
+
+/***********************************************************************
+ *           load_main_exe
+ */
+NTSTATUS load_main_exe( const WCHAR *name, const WCHAR *curdir, WCHAR **image, void **module,
+                        SECTION_IMAGE_INFORMATION *image_info )
+{
+    UNICODE_STRING nt_name;
+    NTSTATUS status;
+    SIZE_T size;
+    struct stat st;
+    const WCHAR *p;
+
+    /* special case for Unix file name */
+    if (main_argv[0][0] == '/' && !stat( main_argv[0], &st ))
+    {
+        if ((status = unix_to_nt_file_name( main_argv[0], image ))) goto failed;
+        status = open_main_image( *image, module, image_info );
+        if (status != STATUS_DLL_NOT_FOUND) return status;
+        free( *image );
+    }
+
+    if ((status = get_full_path( name, curdir, image ))) goto failed;
+    status = open_main_image( *image, module, image_info );
+    if (status != STATUS_DLL_NOT_FOUND) return status;
+
+    /* if path is in system dir, we can load the builtin even if the file itself doesn't exist */
+    if (!wcsnicmp( *image, system_dir, wcslen(system_dir) ))
+    {
+        p = *image + wcslen( system_dir );
+        while (*p == '\\') p++;
+        if (wcschr( p, '\\' )) goto failed;
+        init_unicode_string( &nt_name, *image );
+        status = find_builtin_dll( &nt_name, module, &size, image_info, current_machine, FALSE );
+        if (status != STATUS_DLL_NOT_FOUND) return status;
+    }
+    /* if name contains a path, bail out */
+    if (wcschr( name, '/' ) || wcschr( name, '\\' ) || (name[0] && name[1] == ':')) goto failed;
+
+    return STATUS_DLL_NOT_FOUND;
+
+failed:
+    MESSAGE( "wine: failed to open %s: %x\n", debugstr_w(name), status );
+    NtTerminateProcess( GetCurrentProcess(), status );
+    return status;  /* unreached */
 }
 
 

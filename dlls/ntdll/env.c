@@ -106,69 +106,6 @@ static void set_wow64_environment( WCHAR **env )
 }
 
 
-/***********************************************************************
- *           is_path_prefix
- */
-static inline BOOL is_path_prefix( const WCHAR *prefix, const WCHAR *path, const WCHAR *file )
-{
-    DWORD len = wcslen( prefix );
-
-    if (wcsnicmp( path, prefix, len )) return FALSE;
-    while (path[len] == '\\') len++;
-    return path + len == file;
-}
-
-
-/***********************************************************************
- *           get_image_path
- */
-static void get_image_path( const WCHAR *name, WCHAR *full_name, UINT size )
-{
-    WCHAR *load_path, *file_part;
-    DWORD len;
-
-    if (RtlDetermineDosPathNameType_U( name ) != RELATIVE_PATH ||
-        wcschr( name, '/' ) || wcschr( name, '\\' ))
-    {
-        len = RtlGetFullPathName_U( name, size, full_name, &file_part );
-        if (!len || len > size) goto failed;
-        /* try first without extension */
-        if (RtlDoesFileExists_U( full_name )) return;
-        if (len < size - 4 * sizeof(WCHAR) && !wcschr( file_part, '.' ))
-        {
-            wcscat( file_part, L".exe" );
-            if (RtlDoesFileExists_U( full_name )) return;
-        }
-        /* check for builtin path inside system directory */
-        if (!is_path_prefix( system_dir, full_name, file_part ))
-        {
-            if (!is_win64 && !is_wow64) goto failed;
-            if (!is_path_prefix( syswow64_dir, full_name, file_part )) goto failed;
-        }
-    }
-    else
-    {
-        RtlGetExePath( name, &load_path );
-        len = RtlDosSearchPath_U( load_path, name, L".exe", size, full_name, &file_part );
-        RtlReleasePath( load_path );
-        if (!len || len > size)
-        {
-            /* build builtin path inside system directory */
-            len = wcslen( system_dir );
-            if (wcslen( name ) >= size/sizeof(WCHAR) - 4 - len) goto failed;
-            wcscpy( full_name, system_dir );
-            wcscat( full_name, name );
-            if (!wcschr( name, '.' )) wcscat( full_name, L".exe" );
-        }
-    }
-    return;
-
-failed:
-    MESSAGE( "wine: cannot find %s\n", debugstr_w(name) );
-    RtlExitUserProcess( STATUS_DLL_NOT_FOUND );
-}
-
-
 /******************************************************************************
  *  RtlCreateEnvironment		[NTDLL.@]
  */
@@ -700,10 +637,10 @@ void WINAPI RtlDestroyProcessParameters( RTL_USER_PROCESS_PARAMETERS *params )
  */
 void init_user_process_params(void)
 {
-    WCHAR *env, *load_path, *dummy, image[MAX_PATH];
+    WCHAR *env, *load_path, *dummy;
     SIZE_T env_size;
     RTL_USER_PROCESS_PARAMETERS *new_params, *params = NtCurrentTeb()->Peb->ProcessParameters;
-    UNICODE_STRING curdir, dllpath, cmdline;
+    UNICODE_STRING curdir, dllpath;
 
     /* environment needs to be a separate memory block */
     env_size = params->EnvironmentSize;
@@ -717,15 +654,6 @@ void init_user_process_params(void)
 
     if (!params->DllPath.MaximumLength)  /* not inherited from parent process */
     {
-        get_image_path( params->ImagePathName.Buffer, image, sizeof(image) );
-        RtlInitUnicodeString( &params->ImagePathName, image );
-
-        cmdline.Length = params->ImagePathName.Length + params->CommandLine.MaximumLength + 3 * sizeof(WCHAR);
-        cmdline.MaximumLength = cmdline.Length + sizeof(WCHAR);
-        cmdline.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, cmdline.MaximumLength );
-        swprintf( cmdline.Buffer, cmdline.MaximumLength / sizeof(WCHAR),
-                  L"\"%s\" %s", params->ImagePathName.Buffer, params->CommandLine.Buffer );
-
         LdrGetDllPath( params->ImagePathName.Buffer, 0, &load_path, &dummy );
         RtlInitUnicodeString( &dllpath, load_path );
 
@@ -733,7 +661,7 @@ void init_user_process_params(void)
         params->Environment = NULL;  /* avoid copying it */
         if (RtlCreateProcessParametersEx( &new_params, &params->ImagePathName, &dllpath,
                                           &params->CurrentDirectory.DosPath,
-                                          &cmdline, NULL, &params->ImagePathName, NULL, NULL, NULL,
+                                          &params->CommandLine, NULL, &params->ImagePathName, NULL, NULL, NULL,
                                           PROCESS_PARAMS_FLAG_NORMALIZED ))
             return;
 
@@ -747,7 +675,6 @@ void init_user_process_params(void)
         new_params->wShowWindow   = params->wShowWindow;
         NtCurrentTeb()->Peb->ProcessParameters = params = new_params;
 
-        RtlFreeUnicodeString( &cmdline );
         RtlReleasePath( load_path );
     }
 

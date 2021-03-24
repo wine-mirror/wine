@@ -936,6 +936,22 @@ static WCHAR **build_wargv( char **argv )
 }
 
 
+/***********************************************************************
+ *              prepend_main_wargv
+ *
+ * Rebuild the main_wargv array with some extra arguments in front.
+ */
+static void prepend_main_wargv( const WCHAR **args, int count )
+{
+    WCHAR **argv = malloc( (main_argc + count + 1) * sizeof(*argv) );
+
+    memcpy( argv, args, count * sizeof(*argv) );
+    memcpy( argv + count, main_wargv, (main_argc + 1) * sizeof(*argv) );
+    main_wargv = argv;
+    main_argc += count;
+}
+
+
 /* Unix format is: lang[_country][.charset][@modifier]
  * Windows format is: lang[-script][-country][_modifier] */
 static BOOL unix_to_win_locale( const char *unix_name, char *win_name )
@@ -1669,8 +1685,8 @@ static WCHAR *build_command_line( WCHAR **wargv )
         int i, bcount;
         WCHAR *a;
 
-        /* check for quotes and spaces in this argument */
-        has_space = !**arg || wcschr( *arg, ' ' ) || wcschr( *arg, '\t' );
+        /* check for quotes and spaces in this argument (first arg is always quoted) */
+        has_space = (arg == wargv) || !**arg || wcschr( *arg, ' ' ) || wcschr( *arg, '\t' );
         has_quote = wcschr( *arg, '"' ) != NULL;
 
         /* now transfer it to the command line */
@@ -1831,11 +1847,12 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
 {
     static const WCHAR pathW[] = {'P','A','T','H'};
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
+    SECTION_IMAGE_INFORMATION image_info;
     SIZE_T size, env_pos, env_size;
-    WCHAR *dst, *p, *path = NULL;
-    WCHAR *cmdline = build_command_line( main_wargv + 1 );
+    WCHAR *dst, *image, *cmdline, *p, *path = NULL;
     WCHAR *env = get_initial_environment( &env_pos, &env_size );
     WCHAR *curdir = get_initial_directory();
+    void *module;
     NTSTATUS status;
 
     /* store the initial PATH value */
@@ -1854,6 +1871,37 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
     free( path );
     add_registry_environment( &env, &env_pos, &env_size );
     env[env_pos++] = 0;
+
+    status = load_main_exe( main_wargv[0], curdir, &image, &module, &image_info );
+    if (!status && image_info.Machine != current_machine)  /* need to restart for Wow64 */
+    {
+        NtUnmapViewOfSection( GetCurrentProcess(), module );
+        status = STATUS_INVALID_IMAGE_FORMAT;
+    }
+
+    if (status)  /* try launching it through start.exe */
+    {
+        static const WCHAR startW[] = {'C',':','\\','w','i','n','d','o','w','s','\\',
+            's','y','s','t','e','m','3','2','\\','s','t','a','r','t','.','e','x','e',0};
+        static const WCHAR slashwW[] = {'/','w',0};
+        static const WCHAR slashbW[] = {'/','b',0};
+        const WCHAR *args[] = { startW, slashwW, slashbW };
+
+        free( image );
+        prepend_main_wargv( args, 3 );
+        if ((status = load_main_exe( startW, curdir, &image, &module, &image_info )))
+        {
+            MESSAGE( "wine: failed to start %s\n", debugstr_w(main_wargv[2]) );
+            NtTerminateProcess( GetCurrentProcess(), status );
+        }
+    }
+    else main_wargv[0] = get_dos_path( image );
+
+    NtCurrentTeb()->Peb->ImageBaseAddress = module;
+    cmdline = build_command_line( main_wargv );
+
+    TRACE( "image %s cmdline %s dir %s\n",
+           debugstr_w(main_wargv[0]), debugstr_w(cmdline), debugstr_w(curdir) );
 
     size = (sizeof(*params)
             + MAX_PATH * sizeof(WCHAR)  /* curdir */
@@ -1897,10 +1945,12 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
  */
 void init_startup_info(void)
 {
-    WCHAR *src, *dst, *env;
+    WCHAR *src, *dst, *env, *image;
+    void *module;
     NTSTATUS status;
     SIZE_T size, info_size, env_size, env_pos;
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
+    SECTION_IMAGE_INFORMATION image_info;
     startup_info_t *info;
 
     if (!startup_info_size)
@@ -1992,6 +2042,16 @@ void init_startup_info(void)
     free( env );
     free( info );
     NtCurrentTeb()->Peb->ProcessParameters = params;
+
+    status = load_main_exe( params->ImagePathName.Buffer, params->CommandLine.Buffer,
+                            &image, &module, &image_info );
+    if (status)
+    {
+        MESSAGE( "wine: failed to start %s\n", debugstr_us(&params->ImagePathName) );
+        NtTerminateProcess( GetCurrentProcess(), status );
+    }
+    NtCurrentTeb()->Peb->ImageBaseAddress = module;
+    free( image );
 }
 
 

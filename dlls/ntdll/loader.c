@@ -68,7 +68,6 @@ const WCHAR windows_dir[] = L"C:\\windows";
 const WCHAR system_dir[] = L"C:\\windows\\system32\\";
 const WCHAR syswow64_dir[] = L"C:\\windows\\syswow64\\";
 
-static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 BOOL is_wow64 = FALSE;
 
 /* system search path */
@@ -2410,6 +2409,46 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, UNICODE_STRING *nt_name,
 }
 
 
+/*************************************************************************
+ *		build_main_module
+ *
+ * Build the module data for the main image.
+ */
+static void build_main_module(void)
+{
+    SECTION_IMAGE_INFORMATION info;
+    UNICODE_STRING nt_name;
+    WINE_MODREF *wm;
+    NTSTATUS status;
+    RTL_USER_PROCESS_PARAMETERS *params = NtCurrentTeb()->Peb->ProcessParameters;
+    void *module = NtCurrentTeb()->Peb->ImageBaseAddress;
+
+    NtQueryInformationProcess( GetCurrentProcess(), ProcessImageInformation, &info, sizeof(info), NULL );
+    if (info.ImageCharacteristics & IMAGE_FILE_DLL)
+    {
+        MESSAGE( "wine: %s is a dll, not an executable\n", debugstr_us(&params->ImagePathName) );
+        NtTerminateProcess( GetCurrentProcess(), STATUS_INVALID_IMAGE_FORMAT );
+    }
+#ifdef _WIN64
+    if (!convert_to_pe64( module, &info ))
+    {
+        status = STATUS_INVALID_IMAGE_FORMAT;
+        goto failed;
+    }
+#endif
+    status = RtlDosPathNameToNtPathName_U_WithStatus( params->ImagePathName.Buffer, &nt_name, NULL, NULL );
+    if (status) goto failed;
+    status = build_module( params->DllPath.Buffer, &nt_name, &module, &info,
+                           NULL, DONT_RESOLVE_DLL_REFERENCES, &wm );
+    RtlFreeUnicodeString( &nt_name );
+    if (!status) return;
+failed:
+    MESSAGE( "wine: failed to create main module for %s, status %x\n",
+             debugstr_us(&params->ImagePathName), status );
+    NtTerminateProcess( GetCurrentProcess(), status );
+}
+
+
 /***********************************************************************
  *	find_actctx_dll
  *
@@ -3894,28 +3933,6 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 }
 
 
-/***********************************************************************
- *           restart_winevdm
- */
-static void restart_winevdm( RTL_USER_PROCESS_PARAMETERS *params )
-{
-    DWORD len;
-    WCHAR *appname, *cmdline;
-
-    len = wcslen(system_dir) + wcslen(L"winevdm.exe") + 1;
-    appname = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-    wcscpy( appname, (is_win64 || is_wow64) ? syswow64_dir : system_dir );
-    wcscat( appname, L"winevdm.exe" );
-
-    len += 16 + wcslen(params->ImagePathName.Buffer) + wcslen(params->CommandLine.Buffer);
-    cmdline = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-    swprintf( cmdline, len, L"%s --app-name \"%s\" %s",
-              appname, params->ImagePathName.Buffer, params->CommandLine.Buffer );
-
-    RtlInitUnicodeString( &params->ImagePathName, appname );
-    RtlInitUnicodeString( &params->CommandLine, cmdline );
-}
-
 #ifndef _WIN64
 void *Wow64Transition = NULL;
 
@@ -3993,54 +4010,7 @@ static NTSTATUS process_init(void)
 
     load_global_options();
     version_init();
-
-    if (!(status = load_dll( params->DllPath.Buffer, params->ImagePathName.Buffer, NULL,
-                             DONT_RESOLVE_DLL_REFERENCES, &wm )))
-    {
-        peb->ImageBaseAddress = wm->ldr.DllBase;
-        TRACE( "main exe loaded %s at %p\n", debugstr_us(&params->ImagePathName), peb->ImageBaseAddress );
-        if (wm->ldr.Flags & LDR_IMAGE_IS_DLL)
-        {
-            MESSAGE( "wine: %s is a dll, not an executable\n", debugstr_w(wm->ldr.FullDllName.Buffer) );
-            NtTerminateProcess( GetCurrentProcess(), STATUS_INVALID_IMAGE_FORMAT );
-        }
-    }
-    else
-    {
-        switch (status)
-        {
-        case STATUS_INVALID_IMAGE_NOT_MZ:
-        {
-            WCHAR *p = wcsrchr( params->ImagePathName.Buffer, '.' );
-            if (p && (!wcsicmp( p, L".com" ) || !wcsicmp( p, L".pif" )))
-            {
-                restart_winevdm( params );
-                status = STATUS_INVALID_IMAGE_WIN_16;
-            }
-            return status;
-        }
-        case STATUS_INVALID_IMAGE_WIN_16:
-        case STATUS_INVALID_IMAGE_NE_FORMAT:
-        case STATUS_INVALID_IMAGE_PROTECT:
-            restart_winevdm( params );
-            return status;
-        case STATUS_CONFLICTING_ADDRESSES:
-        case STATUS_NO_MEMORY:
-        case STATUS_INVALID_IMAGE_FORMAT:
-            return status;
-        case STATUS_INVALID_IMAGE_WIN_64:
-            ERR( "%s 64-bit application not supported in 32-bit prefix\n",
-                 debugstr_us(&params->ImagePathName) );
-            break;
-        case STATUS_DLL_NOT_FOUND:
-            ERR( "%s not found\n", debugstr_us(&params->ImagePathName) );
-            break;
-        default:
-            ERR( "failed to load %s, error %x\n", debugstr_us(&params->ImagePathName), status );
-            break;
-        }
-        NtTerminateProcess( GetCurrentProcess(), status );
-    }
+    build_main_module();
 
 #ifndef _WIN64
     if (NtCurrentTeb64())

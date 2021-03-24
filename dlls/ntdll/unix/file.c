@@ -3493,6 +3493,141 @@ NTSTATUS CDECL wine_unix_to_nt_file_name( const char *name, WCHAR *buffer, SIZE_
 }
 
 
+/******************************************************************
+ *		collapse_path
+ *
+ * Get rid of . and .. components in the path.
+ */
+static void collapse_path( WCHAR *path )
+{
+    WCHAR *p, *start, *next;
+
+    /* convert every / into a \ */
+    for (p = path; *p; p++) if (*p == '/') *p = '\\';
+
+    p = path + 4;
+    while (*p && *p != '\\') p++;
+    start = p + 1;
+
+    /* collapse duplicate backslashes */
+    next = start;
+    for (p = next; *p; p++) if (*p != '\\' || next[-1] != '\\') *next++ = *p;
+    *next = 0;
+
+    p = start;
+    while (*p)
+    {
+        if (*p == '.')
+        {
+            switch(p[1])
+            {
+            case '\\': /* .\ component */
+                next = p + 2;
+                memmove( p, next, (wcslen(next) + 1) * sizeof(WCHAR) );
+                continue;
+            case 0:  /* final . */
+                if (p > start) p--;
+                *p = 0;
+                continue;
+            case '.':
+                if (p[2] == '\\')  /* ..\ component */
+                {
+                    next = p + 3;
+                    if (p > start)
+                    {
+                        p--;
+                        while (p > start && p[-1] != '\\') p--;
+                    }
+                    memmove( p, next, (wcslen(next) + 1) * sizeof(WCHAR) );
+                    continue;
+                }
+                else if (!p[2])  /* final .. */
+                {
+                    if (p > start)
+                    {
+                        p--;
+                        while (p > start && p[-1] != '\\') p--;
+                        if (p > start) p--;
+                    }
+                    *p = 0;
+                    continue;
+                }
+                break;
+            }
+        }
+        /* skip to the next component */
+        while (*p && *p != '\\') p++;
+        if (*p == '\\')
+        {
+            /* remove last dot in previous dir name */
+            if (p > start && p[-1] == '.') memmove( p-1, p, (wcslen(p) + 1) * sizeof(WCHAR) );
+            else p++;
+        }
+    }
+
+    /* remove trailing spaces and dots (yes, Windows really does that, don't ask) */
+    while (p > start && (p[-1] == ' ' || p[-1] == '.')) p--;
+    *p = 0;
+}
+
+
+#define IS_SEPARATOR(ch)   ((ch) == '\\' || (ch) == '/')
+
+/***********************************************************************
+ *           get_full_path
+ *
+ * Simplified version of RtlGetFullPathName_U.
+ */
+NTSTATUS get_full_path( const WCHAR *name, const WCHAR *curdir, WCHAR **path )
+{
+    static const WCHAR uncW[] = {'\\','?','?','\\','U','N','C','\\',0};
+    static const WCHAR devW[] = {'\\','?','?','\\',0};
+    static const WCHAR unixW[] = {'u','n','i','x'};
+    WCHAR *ret, root[] = {'\\','?','?','\\','C',':','\\',0};
+    NTSTATUS status = STATUS_SUCCESS;
+    const WCHAR *prefix;
+
+    if (IS_SEPARATOR(name[0]) && IS_SEPARATOR(name[1]))  /* \\ prefix */
+    {
+        if ((name[2] == '.' || name[2] == '?') && IS_SEPARATOR(name[3])) /* \\?\ device */
+        {
+            name += 4;
+            if (!wcsnicmp( name, unixW, 4 ) && IS_SEPARATOR(name[4]))  /* \\?\unix special name */
+            {
+                char *unix_name;
+                name += 4;
+                unix_name = malloc( wcslen(name) * 3 + 1 );
+                ntdll_wcstoumbs( name, wcslen(name) + 1, unix_name, wcslen(name) * 3 + 1, FALSE );
+                status = unix_to_nt_file_name( unix_name, path );
+                free( unix_name );
+                return status;
+            }
+            prefix = devW;
+        }
+        else prefix = uncW;  /* UNC path */
+    }
+    else if (IS_SEPARATOR(name[0]))  /* absolute path */
+    {
+        root[4] = curdir[0];
+        prefix = root;
+    }
+    else if (name[0] && name[1] == ':')  /* drive letter */
+    {
+        root[4] = towupper(name[0]);
+        name += 2;
+        prefix = root;
+    }
+    else prefix = curdir;  /* relative path */
+
+    ret = malloc( (wcslen(prefix) + wcslen(name) + 1) * sizeof(WCHAR) );
+    wcscpy( ret, prefix );
+    wcscat( ret, name );
+    collapse_path( ret );
+    *path = ret;
+    return STATUS_SUCCESS;
+}
+
+
 /***********************************************************************
  *           unmount_device
  *

@@ -143,6 +143,8 @@ extern char **build_envp( const WCHAR *envW ) DECLSPEC_HIDDEN;
 extern NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_info ) DECLSPEC_HIDDEN;
 extern NTSTATUS load_builtin( const pe_image_info_t *image_info, const WCHAR *filename,
                               void **addr_ptr, SIZE_T *size_ptr ) DECLSPEC_HIDDEN;
+extern NTSTATUS load_main_exe( const WCHAR *name, const WCHAR *curdir, WCHAR **image, void **module,
+                               SECTION_IMAGE_INFORMATION *image_info ) DECLSPEC_HIDDEN;
 extern void start_server( BOOL debug ) DECLSPEC_HIDDEN;
 extern ULONG_PTR get_image_address(void) DECLSPEC_HIDDEN;
 
@@ -243,6 +245,7 @@ extern NTSTATUS errno_to_status( int err ) DECLSPEC_HIDDEN;
 extern NTSTATUS nt_to_unix_file_name( const UNICODE_STRING *nameW, char **unix_name_ret,
                                       UNICODE_STRING *nt_name, UINT disposition ) DECLSPEC_HIDDEN;
 extern NTSTATUS unix_to_nt_file_name( const char *name, WCHAR **nt ) DECLSPEC_HIDDEN;
+extern NTSTATUS get_full_path( const WCHAR *name, const WCHAR *curdir, WCHAR **path ) DECLSPEC_HIDDEN;
 extern NTSTATUS open_unix_file( HANDLE *handle, const char *unix_name, ACCESS_MASK access,
                                 OBJECT_ATTRIBUTES *attr, ULONG attributes, ULONG sharing, ULONG disposition,
                                 ULONG options, void *ea_buffer, ULONG ea_length ) DECLSPEC_HIDDEN;
