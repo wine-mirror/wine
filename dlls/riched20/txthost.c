@@ -1178,51 +1178,62 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         break;
 
     case WM_PAINT:
+    case WM_PRINTCLIENT:
     {
         HDC hdc;
-        RECT rc, client;
+        RECT rc, client, update;
         PAINTSTRUCT ps;
         HBRUSH brush = CreateSolidBrush( ITextHost_TxGetSysColor( &host->ITextHost_iface, COLOR_WINDOW ) );
 
         ITextHostImpl_TxGetClientRect( &host->ITextHost_iface, &client );
 
-        hdc = BeginPaint( hwnd, &ps );
+        if (msg == WM_PAINT)
+        {
+            hdc = BeginPaint( hwnd, &ps );
+            update = ps.rcPaint;
+        }
+        else
+        {
+            hdc = (HDC)wparam;
+            update = client;
+        }
+
         brush = SelectObject( hdc, brush );
 
         /* Erase area outside of the formatting rectangle */
-        if (ps.rcPaint.top < client.top)
+        if (update.top < client.top)
         {
-            rc = ps.rcPaint;
+            rc = update;
             rc.bottom = client.top;
             PatBlt( hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
-            ps.rcPaint.top = client.top;
+            update.top = client.top;
         }
-        if (ps.rcPaint.bottom > client.bottom)
+        if (update.bottom > client.bottom)
         {
-            rc = ps.rcPaint;
+            rc = update;
             rc.top = client.bottom;
             PatBlt( hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
-            ps.rcPaint.bottom = client.bottom;
+            update.bottom = client.bottom;
         }
-        if (ps.rcPaint.left < client.left)
+        if (update.left < client.left)
         {
-            rc = ps.rcPaint;
+            rc = update;
             rc.right = client.left;
             PatBlt( hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
-            ps.rcPaint.left = client.left;
+            update.left = client.left;
         }
-        if (ps.rcPaint.right > client.right)
+        if (update.right > client.right)
         {
-            rc = ps.rcPaint;
+            rc = update;
             rc.left = client.right;
             PatBlt( hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
-            ps.rcPaint.right = client.right;
+            update.right = client.right;
         }
 
         ITextServices_TxDraw( host->text_srv, DVASPECT_CONTENT, 0, NULL, NULL, hdc, NULL, NULL, NULL,
-                              &ps.rcPaint, NULL, 0, TXTVIEW_ACTIVE );
+                              &update, NULL, 0, TXTVIEW_ACTIVE );
         DeleteObject( SelectObject( hdc, brush ) );
-        EndPaint( hwnd, &ps );
+        if (msg == WM_PAINT) EndPaint( hwnd, &ps );
         return 0;
     }
     case EM_REPLACESEL:
