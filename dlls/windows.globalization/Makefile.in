@@ -1,0 +1,9 @@
+MODULE = windows.globalization.dll
+IMPORTS = combase uuid
+
+EXTRADLLFLAGS = -mno-cygwin
+
+C_SRCS = \
+	main.c
+
+IDL_SRCS = classes.idl
