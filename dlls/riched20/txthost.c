@@ -970,7 +970,6 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
                                        LPARAM lparam, BOOL unicode )
 {
     struct host *host;
-    ME_TextEditor *editor;
     HRESULT hr = S_OK;
     LRESULT res = 0;
 
@@ -999,7 +998,6 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         return res;
     }
 
-    editor = host->editor;
     switch (msg)
     {
     case WM_CHAR:
@@ -1042,7 +1040,7 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         RECT rc;
         HBRUSH brush;
 
-        if (GetUpdateRect( editor->hWnd, &rc, TRUE ))
+        if (GetUpdateRect( hwnd, &rc, TRUE ))
         {
             brush = CreateSolidBrush( ITextHost_TxGetSysColor( &host->ITextHost_iface, COLOR_WINDOW ) );
             FillRect( hdc, &rc, brush );
@@ -1182,47 +1180,49 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
     case WM_PAINT:
     {
         HDC hdc;
-        RECT rc;
+        RECT rc, client;
         PAINTSTRUCT ps;
         HBRUSH brush = CreateSolidBrush( ITextHost_TxGetSysColor( &host->ITextHost_iface, COLOR_WINDOW ) );
 
-        hdc = BeginPaint( editor->hWnd, &ps );
+        ITextHostImpl_TxGetClientRect( &host->ITextHost_iface, &client );
+
+        hdc = BeginPaint( hwnd, &ps );
         brush = SelectObject( hdc, brush );
 
         /* Erase area outside of the formatting rectangle */
-        if (ps.rcPaint.top < editor->rcFormat.top)
+        if (ps.rcPaint.top < client.top)
         {
             rc = ps.rcPaint;
-            rc.bottom = editor->rcFormat.top;
+            rc.bottom = client.top;
             PatBlt( hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
-            ps.rcPaint.top = editor->rcFormat.top;
+            ps.rcPaint.top = client.top;
         }
-        if (ps.rcPaint.bottom > editor->rcFormat.bottom)
+        if (ps.rcPaint.bottom > client.bottom)
         {
             rc = ps.rcPaint;
-            rc.top = editor->rcFormat.bottom;
+            rc.top = client.bottom;
             PatBlt( hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
-            ps.rcPaint.bottom = editor->rcFormat.bottom;
+            ps.rcPaint.bottom = client.bottom;
         }
-        if (ps.rcPaint.left < editor->rcFormat.left)
+        if (ps.rcPaint.left < client.left)
         {
             rc = ps.rcPaint;
-            rc.right = editor->rcFormat.left;
+            rc.right = client.left;
             PatBlt( hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
-            ps.rcPaint.left = editor->rcFormat.left;
+            ps.rcPaint.left = client.left;
         }
-        if (ps.rcPaint.right > editor->rcFormat.right)
+        if (ps.rcPaint.right > client.right)
         {
             rc = ps.rcPaint;
-            rc.left = editor->rcFormat.right;
+            rc.left = client.right;
             PatBlt( hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
-            ps.rcPaint.right = editor->rcFormat.right;
+            ps.rcPaint.right = client.right;
         }
 
         ITextServices_TxDraw( host->text_srv, DVASPECT_CONTENT, 0, NULL, NULL, hdc, NULL, NULL, NULL,
                               &ps.rcPaint, NULL, 0, TXTVIEW_ACTIVE );
         DeleteObject( SelectObject( hdc, brush ) );
-        EndPaint( editor->hWnd, &ps );
+        EndPaint( hwnd, &ps );
         return 0;
     }
     case EM_REPLACESEL:
@@ -1473,7 +1473,7 @@ static BOOL register_classes( HINSTANCE instance )
     wcW.style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS;
     wcW.lpfnWndProc = RichEditWndProcW;
     wcW.cbClsExtra = 0;
-    wcW.cbWndExtra = sizeof(ME_TextEditor *);
+    wcW.cbWndExtra = sizeof(struct host *);
     wcW.hInstance = NULL; /* hInstance would register DLL-local class */
     wcW.hIcon = NULL;
     wcW.hCursor = LoadCursorW( NULL, (LPWSTR)IDC_IBEAM );
@@ -1499,7 +1499,7 @@ static BOOL register_classes( HINSTANCE instance )
     wcA.style = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS;
     wcA.lpfnWndProc = RichEditWndProcA;
     wcA.cbClsExtra = 0;
-    wcA.cbWndExtra = sizeof(ME_TextEditor *);
+    wcA.cbWndExtra = sizeof(struct host *);
     wcA.hInstance = NULL; /* hInstance would register DLL-local class */
     wcA.hIcon = NULL;
     wcA.hCursor = LoadCursorW( NULL, (LPWSTR)IDC_IBEAM );
