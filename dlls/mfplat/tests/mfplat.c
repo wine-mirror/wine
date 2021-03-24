@@ -5895,6 +5895,10 @@ static void test_MFCreateDXSurfaceBuffer(void)
     hr = pMFCreateDXSurfaceBuffer(&IID_IDirect3DSurface9, (IUnknown *)backbuffer, FALSE, &buffer);
     ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
 
+    check_interface(buffer, &IID_IMF2DBuffer, TRUE);
+    check_interface(buffer, &IID_IMF2DBuffer2, TRUE);
+    check_interface(buffer, &IID_IMFGetService, TRUE);
+
     /* Surface is accessible. */
     hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFGetService, (void **)&gs);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -5976,6 +5980,12 @@ static void test_MFCreateDXSurfaceBuffer(void)
     hr = IMF2DBuffer_IsContiguousFormat(_2dbuffer, &value);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!value, "Unexpected return value %d.\n", value);
+
+    hr = IMF2DBuffer_GetContiguousLength(_2dbuffer, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    hr = IMF2DBuffer_GetContiguousLength(_2dbuffer, &length);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(length == max_length, "Unexpected length %u.\n", length);
 
     IMF2DBuffer_Release(_2dbuffer);
 

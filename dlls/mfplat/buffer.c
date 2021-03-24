@@ -697,13 +697,6 @@ static HRESULT WINAPI d3d9_surface_buffer_GetScanline0AndPitch(IMF2DBuffer2 *ifa
     return hr;
 }
 
-static HRESULT WINAPI d3d9_surface_buffer_GetContiguousLength(IMF2DBuffer2 *iface, DWORD *length)
-{
-    FIXME("%p, %p.\n", iface, length);
-
-    return E_NOTIMPL;
-}
-
 static HRESULT WINAPI d3d9_surface_buffer_Lock2DSize(IMF2DBuffer2 *iface, MF2DBuffer_LockFlags flags, BYTE **scanline0,
         LONG *pitch, BYTE **buffer_start, DWORD *buffer_length)
 {
@@ -748,7 +741,7 @@ static const IMF2DBuffer2Vtbl d3d9_surface_buffer_vtbl =
     d3d9_surface_buffer_Unlock2D,
     d3d9_surface_buffer_GetScanline0AndPitch,
     memory_2d_buffer_IsContiguousFormat,
-    d3d9_surface_buffer_GetContiguousLength,
+    memory_2d_buffer_GetContiguousLength,
     memory_2d_buffer_ContiguousCopyTo,
     memory_2d_buffer_ContiguousCopyFrom,
     d3d9_surface_buffer_Lock2DSize,
