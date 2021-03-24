@@ -131,6 +131,7 @@ void ME_UpdateRepaint(ME_TextEditor *editor, BOOL update_now)
   /* Ensure that the cursor is visible */
   editor_ensure_visible( editor, &editor->pCursors[0] );
 
+  update_caret( editor );
   ITextHost_TxViewChange(editor->texthost, update_now);
 
   ME_SendSelChange(editor);

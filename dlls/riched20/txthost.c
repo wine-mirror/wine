@@ -1186,7 +1186,6 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
         PAINTSTRUCT ps;
         HBRUSH brush = CreateSolidBrush( ITextHost_TxGetSysColor( &host->ITextHost_iface, COLOR_WINDOW ) );
 
-        update_caret( editor );
         hdc = BeginPaint( editor->hWnd, &ps );
         if (!editor->bEmulateVersion10 || (editor->nEventMask & ENM_UPDATE))
             ME_SendOldNotify( editor, EN_UPDATE );
