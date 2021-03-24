@@ -1,4 +1,4 @@
-EXTRADEFS = -D_SHELL32_ -DWINE_NO_NAMELESS_EXTENSION
+EXTRADEFS = -D_SHELL32_
 MODULE    = shell32.dll
 IMPORTLIB = shell32
 IMPORTS   = uuid shlwapi user32 gdi32 advapi32
