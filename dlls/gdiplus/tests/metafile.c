@@ -3803,6 +3803,62 @@ static void test_resetclip(void)
     expect(Ok, stat);
 }
 
+static void test_setclippath(void)
+{
+    static const GpRectF frame = { 0.0f, 0.0f, 100.0f, 100.0f };
+    static const emfplus_record set_clip_path_records[] =
+    {
+       { EMR_HEADER },
+       { EmfPlusRecordTypeHeader },
+       { EmfPlusRecordTypeObject, ObjectTypePath << 8 },
+       { EmfPlusRecordTypeSetClipPath, 0x100 },
+       { EmfPlusRecordTypeEndOfFile },
+       { EMR_EOF },
+       { 0 },
+    };
+
+    GpMetafile *metafile;
+    GpGraphics *graphics;
+    HENHMETAFILE hemf;
+    GpStatus stat;
+    GpPath *path;
+    HDC hdc;
+
+    hdc = CreateCompatibleDC(0);
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel, description, &metafile);
+    expect(Ok, stat);
+    DeleteDC(hdc);
+
+    stat = GdipGetImageGraphicsContext((GpImage *)metafile, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipCreatePath(FillModeAlternate, &path);
+    expect(Ok, stat);
+    stat = GdipAddPathLine(path, 5, 5, 30, 30);
+    expect(Ok, stat);
+    stat = GdipAddPathLine(path, 30, 30, 5, 30);
+    expect(Ok, stat);
+
+    stat = GdipSetClipPath(graphics, path, CombineModeIntersect);
+    expect(Ok, stat);
+
+    stat = GdipDeletePath(path);
+    expect(Ok, stat);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+    sync_metafile(&metafile, "set_clip_path.emf");
+
+    stat = GdipGetHemfFromMetafile(metafile, &hemf);
+    expect(Ok, stat);
+
+    check_emfplus(hemf, set_clip_path_records, "set clip path");
+    DeleteEnhMetaFile(hemf);
+
+    stat = GdipDisposeImage((GpImage*)metafile);
+    expect(Ok, stat);
+}
+
 START_TEST(metafile)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -3862,6 +3918,7 @@ START_TEST(metafile)
     test_drawrectangle();
     test_offsetclip();
     test_resetclip();
+    test_setclippath();
 
     GdiplusShutdown(gdiplusToken);
 }

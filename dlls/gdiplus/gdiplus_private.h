@@ -119,6 +119,7 @@ extern GpStatus METAFILE_DrawArc(GpMetafile *metafile, GpPen *pen, const GpRectF
     REAL startAngle, REAL sweepAngle) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_OffsetClip(GpMetafile *metafile, REAL dx, REAL dy) DECLSPEC_HIDDEN;
 extern GpStatus METAFILE_ResetClip(GpMetafile *metafile) DECLSPEC_HIDDEN;
+extern GpStatus METAFILE_SetClipPath(GpMetafile *metafile, GpPath *path, CombineMode mode) DECLSPEC_HIDDEN;
 
 extern void calc_curve_bezier(const GpPointF *pts, REAL tension, REAL *x1,
     REAL *y1, REAL *x2, REAL *y2) DECLSPEC_HIDDEN;

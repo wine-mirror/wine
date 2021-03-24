@@ -5248,3 +5248,30 @@ GpStatus METAFILE_ResetClip(GpMetafile *metafile)
 
     return Ok;
 }
+
+GpStatus METAFILE_SetClipPath(GpMetafile *metafile, GpPath *path, CombineMode mode)
+{
+    EmfPlusRecordHeader *record;
+    DWORD path_id;
+    GpStatus stat;
+
+    if (metafile->metafile_type == MetafileTypeEmf)
+    {
+        FIXME("stub!\n");
+        return NotImplemented;
+    }
+
+    stat = METAFILE_AddPathObject(metafile, path, &path_id);
+    if (stat != Ok) return stat;
+
+    stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeSetClipPath,
+        sizeof(*record), (void **)&record);
+    if (stat != Ok)
+        return stat;
+
+    record->Flags = ((mode & 0xf) << 8) | path_id;
+
+    METAFILE_WriteRecords(metafile);
+
+    return Ok;
+}

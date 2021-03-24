@@ -6443,6 +6443,13 @@ GpStatus WINGDIPAPI GdipSetClipPath(GpGraphics *graphics, GpPath *path, CombineM
     if(graphics->busy)
         return ObjectBusy;
 
+    if (is_metafile_graphics(graphics))
+    {
+        status = METAFILE_SetClipPath((GpMetafile*)graphics->image, path, mode);
+        if (status != Ok)
+            return status;
+    }
+
     status = GdipClonePath(path, &clip_path);
     if (status == Ok)
     {
