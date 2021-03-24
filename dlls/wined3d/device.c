@@ -1242,7 +1242,7 @@ void CDECL wined3d_device_set_stream_output(struct wined3d_device *device, UINT 
         wined3d_buffer_incref(buffer);
     stream->buffer = buffer;
     stream->offset = offset;
-    wined3d_cs_emit_set_stream_output(device->cs, idx, buffer, offset);
+    wined3d_device_context_emit_set_stream_output(&device->cs->c, idx, buffer, offset);
     if (prev_buffer)
         wined3d_buffer_decref(prev_buffer);
 }
@@ -1766,7 +1766,7 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
 
     for (i = 0; i < WINED3D_MAX_STREAM_OUTPUT_BUFFERS; ++i)
     {
-        wined3d_cs_emit_set_stream_output(device->cs, i,
+        wined3d_device_context_emit_set_stream_output(context, i,
                 state->stream_output[i].buffer, state->stream_output[i].offset);
     }
 
