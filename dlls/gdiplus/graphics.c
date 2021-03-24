@@ -7011,6 +7011,8 @@ HPALETTE WINGDIPAPI GdipCreateHalftonePalette(void)
  */
 GpStatus WINGDIPAPI GdipTranslateClip(GpGraphics *graphics, REAL dx, REAL dy)
 {
+    GpStatus stat;
+
     TRACE("(%p, %.2f, %.2f)\n", graphics, dx, dy);
 
     if(!graphics)
@@ -7018,6 +7020,13 @@ GpStatus WINGDIPAPI GdipTranslateClip(GpGraphics *graphics, REAL dx, REAL dy)
 
     if(graphics->busy)
         return ObjectBusy;
+
+    if (is_metafile_graphics(graphics))
+    {
+        stat = METAFILE_OffsetClip((GpMetafile *)graphics->image, dx, dy);
+        if (stat != Ok)
+            return stat;
+    }
 
     return GdipTranslateRegion(graphics->clip, dx, dy);
 }
@@ -7029,15 +7038,8 @@ GpStatus WINGDIPAPI GdipTranslateClipI(GpGraphics *graphics, INT dx, INT dy)
 {
     TRACE("(%p, %d, %d)\n", graphics, dx, dy);
 
-    if(!graphics)
-        return InvalidParameter;
-
-    if(graphics->busy)
-        return ObjectBusy;
-
-    return GdipTranslateRegion(graphics->clip, (REAL)dx, (REAL)dy);
+    return GdipTranslateClip(graphics, dx, dy);
 }
-
 
 /*****************************************************************************
  * GdipMeasureDriverString [GDIPLUS.@]

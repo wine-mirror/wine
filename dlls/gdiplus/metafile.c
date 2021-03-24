@@ -573,6 +573,13 @@ typedef struct EmfPlusFillRegion
     } data;
 } EmfPlusFillRegion;
 
+typedef struct EmfPlusOffsetClip
+{
+    EmfPlusRecordHeader Header;
+    float dx;
+    float dy;
+} EmfPlusOffsetClip;
+
 static void metafile_free_object_table_entry(GpMetafile *metafile, BYTE id)
 {
     struct emfplus_object *object = &metafile->objtable[id];
@@ -5191,6 +5198,30 @@ GpStatus METAFILE_DrawArc(GpMetafile *metafile, GpPen *pen, const GpRectF *rect,
     }
     else
         memcpy(&record->RectData.rectF, rect, sizeof(*rect));
+
+    METAFILE_WriteRecords(metafile);
+
+    return Ok;
+}
+
+GpStatus METAFILE_OffsetClip(GpMetafile *metafile, REAL dx, REAL dy)
+{
+    EmfPlusOffsetClip *record;
+    GpStatus stat;
+
+    if (metafile->metafile_type == MetafileTypeEmf)
+    {
+        FIXME("stub!\n");
+        return NotImplemented;
+    }
+
+    stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeOffsetClip,
+        sizeof(*record), (void **)&record);
+    if (stat != Ok)
+        return stat;
+
+    record->dx = dx;
+    record->dy = dy;
 
     METAFILE_WriteRecords(metafile);
 
