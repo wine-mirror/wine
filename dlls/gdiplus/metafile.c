@@ -639,7 +639,8 @@ static DWORD METAFILE_AddObjectId(GpMetafile *metafile)
     return (metafile->next_object_id++) % EmfPlusObjectTableSize;
 }
 
-static GpStatus METAFILE_AllocateRecord(GpMetafile *metafile, DWORD size, void **result)
+static GpStatus METAFILE_AllocateRecord(GpMetafile *metafile, EmfPlusRecordType record_type,
+        DWORD size, void **result)
 {
     DWORD size_needed;
     EmfPlusRecordHeader *record;
@@ -679,6 +680,8 @@ static GpStatus METAFILE_AllocateRecord(GpMetafile *metafile, DWORD size, void *
     metafile->comment_data_length += size;
 
     record = (EmfPlusRecordHeader*)*result;
+    record->Type = record_type;
+    record->Flags = 0;
     record->Size = size;
     record->DataSize = size - sizeof(EmfPlusRecordHeader);
 
@@ -708,16 +711,12 @@ static GpStatus METAFILE_WriteHeader(GpMetafile *metafile, HDC hdc)
     {
         EmfPlusHeader *header;
 
-        stat = METAFILE_AllocateRecord(metafile, sizeof(EmfPlusHeader), (void**)&header);
+        stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeHeader, sizeof(EmfPlusHeader), (void**)&header);
         if (stat != Ok)
             return stat;
 
-        header->Header.Type = EmfPlusRecordTypeHeader;
-
         if (metafile->metafile_type == MetafileTypeEmfPlusDual)
             header->Header.Flags = 1;
-        else
-            header->Header.Flags = 0;
 
         header->Version = VERSION_MAGIC2;
 
@@ -743,12 +742,9 @@ static GpStatus METAFILE_WriteEndOfFile(GpMetafile *metafile)
     {
         EmfPlusRecordHeader *record;
 
-        stat = METAFILE_AllocateRecord(metafile, sizeof(EmfPlusRecordHeader), (void**)&record);
+        stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeEndOfFile, sizeof(EmfPlusRecordHeader), (void**)&record);
         if (stat != Ok)
             return stat;
-
-        record->Type = EmfPlusRecordTypeEndOfFile;
-        record->Flags = 0;
 
         METAFILE_WriteRecords(metafile);
     }
@@ -876,12 +872,9 @@ GpStatus METAFILE_GetDC(GpMetafile* metafile, HDC *hdc)
         EmfPlusRecordHeader *record;
         GpStatus stat;
 
-        stat = METAFILE_AllocateRecord(metafile, sizeof(EmfPlusRecordHeader), (void**)&record);
+        stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeGetDC, sizeof(EmfPlusRecordHeader), (void**)&record);
         if (stat != Ok)
             return stat;
-
-        record->Type = EmfPlusRecordTypeGetDC;
-        record->Flags = 0;
 
         METAFILE_WriteRecords(metafile);
     }
@@ -898,12 +891,10 @@ GpStatus METAFILE_GraphicsClear(GpMetafile* metafile, ARGB color)
         EmfPlusClear *record;
         GpStatus stat;
 
-        stat = METAFILE_AllocateRecord(metafile, sizeof(EmfPlusClear), (void**)&record);
+        stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeClear, sizeof(EmfPlusClear), (void**)&record);
         if (stat != Ok)
             return stat;
 
-        record->Header.Type = EmfPlusRecordTypeClear;
-        record->Header.Flags = 0;
         record->Color = color;
 
         METAFILE_WriteRecords(metafile);
@@ -1063,12 +1054,11 @@ static GpStatus METAFILE_AddBrushObject(GpMetafile *metafile, GDIPCONST GpBrush 
     stat = METAFILE_PrepareBrushData(brush, &size);
     if (stat != Ok) return stat;
 
-    stat = METAFILE_AllocateRecord(metafile,
+    stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeObject,
         FIELD_OFFSET(EmfPlusObject, ObjectData) + size, (void**)&object_record);
     if (stat != Ok) return stat;
 
     *id = METAFILE_AddObjectId(metafile);
-    object_record->Header.Type = EmfPlusRecordTypeObject;
     object_record->Header.Flags = *id | ObjectTypeBrush << 8;
     METAFILE_FillBrushData(brush, &object_record->ObjectData.brush);
     return Ok;
@@ -1110,13 +1100,12 @@ GpStatus METAFILE_FillRectangles(GpMetafile* metafile, GpBrush* brush,
         if (integer_rects)
             flags |= 0x4000;
 
-        stat = METAFILE_AllocateRecord(metafile,
+        stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeFillRects,
             sizeof(EmfPlusFillRects) + count * (integer_rects ? sizeof(EmfPlusRect) : sizeof(GpRectF)),
             (void**)&record);
         if (stat != Ok)
             return stat;
 
-        record->Header.Type = EmfPlusRecordTypeFillRects;
         record->Header.Flags = flags;
         record->BrushID = brushid;
         record->Count = count;
@@ -1171,13 +1160,11 @@ GpStatus METAFILE_SetClipRect(GpMetafile* metafile, REAL x, REAL y, REAL width, 
         EmfPlusSetClipRect *record;
         GpStatus stat;
 
-        stat = METAFILE_AllocateRecord(metafile,
-            sizeof(EmfPlusSetClipRect),
-            (void**)&record);
+        stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeSetClipRect,
+                sizeof(EmfPlusSetClipRect), (void **)&record);
         if (stat != Ok)
             return stat;
 
-        record->Header.Type = EmfPlusRecordTypeSetClipRect;
         record->Header.Flags = (mode & 0xf) << 8;
         record->ClipRect.X = x;
         record->ClipRect.Y = y;
@@ -1201,12 +1188,11 @@ static GpStatus METAFILE_AddRegionObject(GpMetafile *metafile, GpRegion *region,
         return Ok;
 
     size = write_region_data(region, NULL);
-    stat = METAFILE_AllocateRecord(metafile,
+    stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeObject,
             FIELD_OFFSET(EmfPlusObject, ObjectData.region) + size, (void**)&object_record);
     if (stat != Ok) return stat;
 
     *id = METAFILE_AddObjectId(metafile);
-    object_record->Header.Type = EmfPlusRecordTypeObject;
     object_record->Header.Flags = *id | ObjectTypeRegion << 8;
     write_region_data(region, &object_record->ObjectData.region);
     return Ok;
@@ -1227,10 +1213,9 @@ GpStatus METAFILE_SetClipRegion(GpMetafile* metafile, GpRegion* region, CombineM
     stat = METAFILE_AddRegionObject(metafile, region, &region_id);
     if (stat != Ok) return stat;
 
-    stat = METAFILE_AllocateRecord(metafile, sizeof(*record), (void**)&record);
+    stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeSetClipRegion, sizeof(*record), (void**)&record);
     if (stat != Ok) return stat;
 
-    record->Type = EmfPlusRecordTypeSetClipRegion;
     record->Flags = region_id | mode << 8;
 
     METAFILE_WriteRecords(metafile);
@@ -1244,13 +1229,11 @@ GpStatus METAFILE_SetPageTransform(GpMetafile* metafile, GpUnit unit, REAL scale
         EmfPlusSetPageTransform *record;
         GpStatus stat;
 
-        stat = METAFILE_AllocateRecord(metafile,
-            sizeof(EmfPlusSetPageTransform),
-            (void**)&record);
+        stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeSetPageTransform,
+            sizeof(EmfPlusSetPageTransform), (void **)&record);
         if (stat != Ok)
             return stat;
 
-        record->Header.Type = EmfPlusRecordTypeSetPageTransform;
         record->Header.Flags = unit;
         record->PageScale = scale;
 
@@ -1267,14 +1250,11 @@ GpStatus METAFILE_SetWorldTransform(GpMetafile* metafile, GDIPCONST GpMatrix* tr
         EmfPlusSetWorldTransform *record;
         GpStatus stat;
 
-        stat = METAFILE_AllocateRecord(metafile,
-            sizeof(EmfPlusSetWorldTransform),
-            (void**)&record);
+        stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeSetWorldTransform,
+            sizeof(EmfPlusSetWorldTransform), (void **)&record);
         if (stat != Ok)
             return stat;
 
-        record->Header.Type = EmfPlusRecordTypeSetWorldTransform;
-        record->Header.Flags = 0;
         memcpy(record->MatrixData, transform->matrix, sizeof(record->MatrixData));
 
         METAFILE_WriteRecords(metafile);
@@ -1290,13 +1270,11 @@ GpStatus METAFILE_ScaleWorldTransform(GpMetafile* metafile, REAL sx, REAL sy, Ma
         EmfPlusScaleWorldTransform *record;
         GpStatus stat;
 
-        stat = METAFILE_AllocateRecord(metafile,
-            sizeof(EmfPlusScaleWorldTransform),
-            (void**)&record);
+        stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeScaleWorldTransform,
+            sizeof(EmfPlusScaleWorldTransform), (void **)&record);
         if (stat != Ok)
             return stat;
 
-        record->Header.Type = EmfPlusRecordTypeScaleWorldTransform;
         record->Header.Flags = (order == MatrixOrderAppend ? 0x2000 : 0);
         record->Sx = sx;
         record->Sy = sy;
@@ -1314,13 +1292,11 @@ GpStatus METAFILE_MultiplyWorldTransform(GpMetafile* metafile, GDIPCONST GpMatri
         EmfPlusMultiplyWorldTransform *record;
         GpStatus stat;
 
-        stat = METAFILE_AllocateRecord(metafile,
-            sizeof(EmfPlusMultiplyWorldTransform),
-            (void**)&record);
+        stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeMultiplyWorldTransform,
+            sizeof(EmfPlusMultiplyWorldTransform), (void **)&record);
         if (stat != Ok)
             return stat;
 
-        record->Header.Type = EmfPlusRecordTypeMultiplyWorldTransform;
         record->Header.Flags = (order == MatrixOrderAppend ? 0x2000 : 0);
         memcpy(record->MatrixData, matrix->matrix, sizeof(record->MatrixData));
 
@@ -1337,13 +1313,11 @@ GpStatus METAFILE_RotateWorldTransform(GpMetafile* metafile, REAL angle, MatrixO
         EmfPlusRotateWorldTransform *record;
         GpStatus stat;
 
-        stat = METAFILE_AllocateRecord(metafile,
-            sizeof(EmfPlusRotateWorldTransform),
-            (void**)&record);
+        stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeRotateWorldTransform,
+            sizeof(EmfPlusRotateWorldTransform), (void **)&record);
         if (stat != Ok)
             return stat;
 
-        record->Header.Type = EmfPlusRecordTypeRotateWorldTransform;
         record->Header.Flags = (order == MatrixOrderAppend ? 0x2000 : 0);
         record->Angle = angle;
 
@@ -1360,13 +1334,11 @@ GpStatus METAFILE_TranslateWorldTransform(GpMetafile* metafile, REAL dx, REAL dy
         EmfPlusTranslateWorldTransform *record;
         GpStatus stat;
 
-        stat = METAFILE_AllocateRecord(metafile,
-            sizeof(EmfPlusTranslateWorldTransform),
-            (void**)&record);
+        stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeTranslateWorldTransform,
+            sizeof(EmfPlusTranslateWorldTransform), (void **)&record);
         if (stat != Ok)
             return stat;
 
-        record->Header.Type = EmfPlusRecordTypeTranslateWorldTransform;
         record->Header.Flags = (order == MatrixOrderAppend ? 0x2000 : 0);
         record->dx = dx;
         record->dy = dy;
@@ -1384,14 +1356,10 @@ GpStatus METAFILE_ResetWorldTransform(GpMetafile* metafile)
         EmfPlusRecordHeader *record;
         GpStatus stat;
 
-        stat = METAFILE_AllocateRecord(metafile,
-            sizeof(EmfPlusRecordHeader),
-            (void**)&record);
+        stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeResetWorldTransform,
+            sizeof(EmfPlusRecordHeader), (void **)&record);
         if (stat != Ok)
             return stat;
-
-        record->Type = EmfPlusRecordTypeResetWorldTransform;
-        record->Flags = 0;
 
         METAFILE_WriteRecords(metafile);
     }
@@ -1407,11 +1375,10 @@ GpStatus METAFILE_BeginContainer(GpMetafile* metafile, GDIPCONST GpRectF *dstrec
         EmfPlusBeginContainer *record;
         GpStatus stat;
 
-        stat = METAFILE_AllocateRecord(metafile, sizeof(*record), (void**)&record);
+        stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeBeginContainer, sizeof(*record), (void**)&record);
         if (stat != Ok)
             return stat;
 
-        record->Header.Type = EmfPlusRecordTypeBeginContainer;
         record->Header.Flags = unit & 0xff;
         record->DestRect = *dstrect;
         record->SrcRect = *srcrect;
@@ -1430,14 +1397,11 @@ GpStatus METAFILE_BeginContainerNoParams(GpMetafile* metafile, DWORD StackIndex)
         EmfPlusContainerRecord *record;
         GpStatus stat;
 
-        stat = METAFILE_AllocateRecord(metafile,
-            sizeof(EmfPlusContainerRecord),
-            (void**)&record);
+        stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeBeginContainerNoParams,
+            sizeof(EmfPlusContainerRecord), (void **)&record);
         if (stat != Ok)
             return stat;
 
-        record->Header.Type = EmfPlusRecordTypeBeginContainerNoParams;
-        record->Header.Flags = 0;
         record->StackIndex = StackIndex;
 
         METAFILE_WriteRecords(metafile);
@@ -1453,14 +1417,11 @@ GpStatus METAFILE_EndContainer(GpMetafile* metafile, DWORD StackIndex)
         EmfPlusContainerRecord *record;
         GpStatus stat;
 
-        stat = METAFILE_AllocateRecord(metafile,
-            sizeof(EmfPlusContainerRecord),
-            (void**)&record);
+        stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeEndContainer,
+            sizeof(EmfPlusContainerRecord), (void **)&record);
         if (stat != Ok)
             return stat;
 
-        record->Header.Type = EmfPlusRecordTypeEndContainer;
-        record->Header.Flags = 0;
         record->StackIndex = StackIndex;
 
         METAFILE_WriteRecords(metafile);
@@ -1476,14 +1437,11 @@ GpStatus METAFILE_SaveGraphics(GpMetafile* metafile, DWORD StackIndex)
         EmfPlusContainerRecord *record;
         GpStatus stat;
 
-        stat = METAFILE_AllocateRecord(metafile,
-            sizeof(EmfPlusContainerRecord),
-            (void**)&record);
+        stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeSave,
+            sizeof(EmfPlusContainerRecord), (void **)&record);
         if (stat != Ok)
             return stat;
 
-        record->Header.Type = EmfPlusRecordTypeSave;
-        record->Header.Flags = 0;
         record->StackIndex = StackIndex;
 
         METAFILE_WriteRecords(metafile);
@@ -1499,14 +1457,11 @@ GpStatus METAFILE_RestoreGraphics(GpMetafile* metafile, DWORD StackIndex)
         EmfPlusContainerRecord *record;
         GpStatus stat;
 
-        stat = METAFILE_AllocateRecord(metafile,
-            sizeof(EmfPlusContainerRecord),
-            (void**)&record);
+        stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeRestore,
+            sizeof(EmfPlusContainerRecord), (void **)&record);
         if (stat != Ok)
             return stat;
 
-        record->Header.Type = EmfPlusRecordTypeRestore;
-        record->Header.Flags = 0;
         record->StackIndex = StackIndex;
 
         METAFILE_WriteRecords(metafile);
@@ -4363,7 +4318,7 @@ static GpStatus METAFILE_AddImageObject(GpMetafile *metafile, GpImage *image, DW
         if (stat != Ok) return stat;
         aligned_size = (size + 3) & ~3;
 
-        stat = METAFILE_AllocateRecord(metafile,
+        stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeObject,
                 FIELD_OFFSET(EmfPlusObject, ObjectData.image.ImageData.bitmap.BitmapData[aligned_size]),
                 (void**)&object_record);
         if (stat != Ok)
@@ -4374,7 +4329,6 @@ static GpStatus METAFILE_AddImageObject(GpMetafile *metafile, GpImage *image, DW
         memset(object_record->ObjectData.image.ImageData.bitmap.BitmapData + size, 0, aligned_size - size);
 
         *id = METAFILE_AddObjectId(metafile);
-        object_record->Header.Type = EmfPlusRecordTypeObject;
         object_record->Header.Flags = *id | ObjectTypeImage << 8;
         object_record->ObjectData.image.Version = VERSION_MAGIC2;
         object_record->ObjectData.image.Type = ImageDataTypeBitmap;
@@ -4394,13 +4348,12 @@ static GpStatus METAFILE_AddImageObject(GpMetafile *metafile, GpImage *image, DW
         size = GetEnhMetaFileBits(hemf, 0, NULL);
         if (!size) return GenericError;
 
-        stat  = METAFILE_AllocateRecord(metafile,
+        stat  = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeObject,
                 FIELD_OFFSET(EmfPlusObject, ObjectData.image.ImageData.metafile.MetafileData[size]),
                 (void**)&object_record);
         if (stat != Ok) return stat;
 
         *id = METAFILE_AddObjectId(metafile);
-        object_record->Header.Type = EmfPlusRecordTypeObject;
         object_record->Header.Flags = *id | ObjectTypeImage << 8;
         object_record->ObjectData.image.Version = VERSION_MAGIC2;
         object_record->ObjectData.image.Type = ImageDataTypeMetafile;
@@ -4435,13 +4388,12 @@ static GpStatus METAFILE_AddImageAttributesObject(GpMetafile *metafile, const Gp
     if (!attrs)
         return Ok;
 
-    stat = METAFILE_AllocateRecord(metafile,
+    stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeObject,
             FIELD_OFFSET(EmfPlusObject, ObjectData.image_attributes) + sizeof(EmfPlusImageAttributes),
             (void**)&object_record);
     if (stat != Ok) return stat;
 
     *id = METAFILE_AddObjectId(metafile);
-    object_record->Header.Type = EmfPlusRecordTypeObject;
     object_record->Header.Flags = *id | (ObjectTypeImageAttributes << 8);
     attrs_record = &object_record->ObjectData.image_attributes;
     attrs_record->Version = VERSION_MAGIC2;
@@ -4516,9 +4468,10 @@ GpStatus METAFILE_DrawImagePointsRect(GpMetafile *metafile, GpImage *image,
     stat = METAFILE_AddImageAttributesObject(metafile, imageAttributes, &attributes_id);
     if (stat != Ok) return stat;
 
-    stat = METAFILE_AllocateRecord(metafile, sizeof(EmfPlusDrawImagePoints), (void**)&draw_image_record);
+    stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeDrawImagePoints,
+        sizeof(EmfPlusDrawImagePoints), (void **)&draw_image_record);
     if (stat != Ok) return stat;
-    draw_image_record->Header.Type = EmfPlusRecordTypeDrawImagePoints;
+
     draw_image_record->Header.Flags = image_id;
     draw_image_record->ImageAttributesID = attributes_id;
     draw_image_record->SrcUnit = UnitPixel;
@@ -4540,10 +4493,9 @@ GpStatus METAFILE_AddSimpleProperty(GpMetafile *metafile, SHORT prop, SHORT val)
     if (metafile->metafile_type != MetafileTypeEmfPlusOnly && metafile->metafile_type != MetafileTypeEmfPlusDual)
         return Ok;
 
-    stat = METAFILE_AllocateRecord(metafile, sizeof(*record), (void**)&record);
+    stat = METAFILE_AllocateRecord(metafile, prop, sizeof(*record), (void**)&record);
     if (stat != Ok) return stat;
 
-    record->Type = prop;
     record->Flags = val;
 
     METAFILE_WriteRecords(metafile);
@@ -4561,13 +4513,12 @@ static GpStatus METAFILE_AddPathObject(GpMetafile *metafile, GpPath *path, DWORD
         return Ok;
 
     size = write_path_data(path, NULL);
-    stat = METAFILE_AllocateRecord(metafile,
+    stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeObject,
             FIELD_OFFSET(EmfPlusObject, ObjectData.path) + size,
             (void**)&object_record);
     if (stat != Ok) return stat;
 
     *id = METAFILE_AddObjectId(metafile);
-    object_record->Header.Type = EmfPlusRecordTypeObject;
     object_record->Header.Flags = *id | ObjectTypePath << 8;
     write_path_data(path, &object_record->ObjectData.path);
     return Ok;
@@ -4649,13 +4600,12 @@ static GpStatus METAFILE_AddPenObject(GpMetafile *metafile, GpPen *pen, DWORD *i
     stat = METAFILE_PrepareBrushData(pen->brush, &brush_size);
     if (stat != Ok) return stat;
 
-    stat = METAFILE_AllocateRecord(metafile,
+    stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeObject,
             FIELD_OFFSET(EmfPlusObject, ObjectData.pen.data) + pen_data_size + brush_size,
             (void**)&object_record);
     if (stat != Ok) return stat;
 
     *id = METAFILE_AddObjectId(metafile);
-    object_record->Header.Type = EmfPlusRecordTypeObject;
     object_record->Header.Flags = *id | ObjectTypePen << 8;
     object_record->ObjectData.pen.Version = VERSION_MAGIC2;
     object_record->ObjectData.pen.Type = 0;
@@ -4758,7 +4708,8 @@ GpStatus METAFILE_DrawPath(GpMetafile *metafile, GpPen *pen, GpPath *path)
     stat = METAFILE_AddPathObject(metafile, path, &path_id);
     if (stat != Ok) return stat;
 
-    stat = METAFILE_AllocateRecord(metafile, sizeof(EmfPlusDrawPath), (void**)&draw_path_record);
+    stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeDrawPath,
+        sizeof(EmfPlusDrawPath), (void **)&draw_path_record);
     if (stat != Ok) return stat;
     draw_path_record->Header.Type = EmfPlusRecordTypeDrawPath;
     draw_path_record->Header.Flags = path_id;
@@ -4783,7 +4734,8 @@ GpStatus METAFILE_DrawEllipse(GpMetafile *metafile, GpPen *pen, GpRectF *rect)
     stat = METAFILE_AddPenObject(metafile, pen, &pen_id);
     if (stat != Ok) return stat;
 
-    stat = METAFILE_AllocateRecord(metafile, sizeof(EmfPlusDrawEllipse), (void **)&record);
+    stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeDrawEllipse,
+        sizeof(EmfPlusDrawEllipse), (void **)&record);
     if (stat != Ok) return stat;
     record->Header.Type = EmfPlusRecordTypeDrawEllipse;
     record->Header.Flags = pen_id;
@@ -4825,10 +4777,9 @@ GpStatus METAFILE_FillPath(GpMetafile *metafile, GpBrush *brush, GpPath *path)
     stat = METAFILE_AddPathObject(metafile, path, &path_id);
     if (stat != Ok) return stat;
 
-    stat = METAFILE_AllocateRecord(metafile,
+    stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeFillPath,
             sizeof(EmfPlusFillPath), (void**)&fill_path_record);
     if (stat != Ok) return stat;
-    fill_path_record->Header.Type = EmfPlusRecordTypeFillPath;
     if (inline_color)
     {
         fill_path_record->Header.Flags = 0x8000 | path_id;
@@ -4864,9 +4815,8 @@ GpStatus METAFILE_FillEllipse(GpMetafile *metafile, GpBrush *brush, GpRectF *rec
         if (stat != Ok) return stat;
     }
 
-    stat = METAFILE_AllocateRecord(metafile, sizeof(EmfPlusFillEllipse), (void **)&record);
+    stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeFillEllipse, sizeof(EmfPlusFillEllipse), (void **)&record);
     if (stat != Ok) return stat;
-    record->Header.Type = EmfPlusRecordTypeFillEllipse;
     if (inline_color)
     {
         record->Header.Flags = 0x8000;
@@ -4913,10 +4863,10 @@ GpStatus METAFILE_FillPie(GpMetafile *metafile, GpBrush *brush, const GpRectF *r
 
     is_int_rect = is_integer_rect(rect);
 
-    stat = METAFILE_AllocateRecord(metafile, FIELD_OFFSET(EmfPlusFillPie, RectData) +
-            is_int_rect ? sizeof(EmfPlusRect) : sizeof(EmfPlusRectF), (void **)&record);
+    stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeFillPie,
+            FIELD_OFFSET(EmfPlusFillPie, RectData) + is_int_rect ? sizeof(EmfPlusRect) : sizeof(EmfPlusRectF),
+            (void **)&record);
     if (stat != Ok) return stat;
-    record->Header.Type = EmfPlusRecordTypeFillPie;
     if (inline_color)
     {
         record->Header.Flags = 0x8000;
@@ -4964,7 +4914,7 @@ static GpStatus METAFILE_AddFontObject(GpMetafile *metafile, GDIPCONST GpFont *f
         return stat;
 
     fn_len = lstrlenW(font->family->FamilyName);
-    stat = METAFILE_AllocateRecord(metafile,
+    stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeObject,
         FIELD_OFFSET(EmfPlusObject, ObjectData.font.FamilyName[(fn_len + 1) & ~1]),
         (void**)&object_record);
     if (stat != Ok)
@@ -4972,7 +4922,6 @@ static GpStatus METAFILE_AddFontObject(GpMetafile *metafile, GDIPCONST GpFont *f
 
     *id = METAFILE_AddObjectId(metafile);
 
-    object_record->Header.Type = EmfPlusRecordTypeObject;
     object_record->Header.Flags = *id | ObjectTypeFont << 8;
 
     font_record = &object_record->ObjectData.font;
@@ -5044,11 +4993,10 @@ GpStatus METAFILE_DrawDriverString(GpMetafile *metafile, GDIPCONST UINT16 *text,
     /* Pad record to DWORD alignment. */
     alloc_size = (alloc_size + 3) & ~3;
 
-    stat = METAFILE_AllocateRecord(metafile, alloc_size, (void**)&draw_string_record);
+    stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeDrawDriverString, alloc_size, (void**)&draw_string_record);
     if (stat != Ok)
         return stat;
 
-    draw_string_record->Header.Type = EmfPlusRecordTypeDrawDriverString;
     draw_string_record->Header.Flags = font_id;
     draw_string_record->DriverStringOptionsFlags = flags;
     draw_string_record->MatrixPresent = include_matrix;
@@ -5129,12 +5077,11 @@ GpStatus METAFILE_FillRegion(GpMetafile* metafile, GpBrush* brush, GpRegion* reg
     if (stat != Ok)
         return stat;
 
-    stat = METAFILE_AllocateRecord(metafile, sizeof(EmfPlusFillRegion),
+    stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeFillRegion, sizeof(EmfPlusFillRegion),
         (void**)&fill_region_record);
     if (stat != Ok)
         return stat;
 
-    fill_region_record->Header.Type = EmfPlusRecordTypeFillRegion;
     fill_region_record->Header.Flags = region_id;
 
     if (inline_color)
@@ -5176,13 +5123,12 @@ GpStatus METAFILE_DrawRectangles(GpMetafile *metafile, GpPen *pen, const GpRectF
         }
     }
 
-    stat = METAFILE_AllocateRecord(metafile, FIELD_OFFSET(EmfPlusDrawRects, RectData) +
+    stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeDrawRects, FIELD_OFFSET(EmfPlusDrawRects, RectData) +
         count * (integer_rects ? sizeof(record->RectData.rect) : sizeof(record->RectData.rectF)),
         (void **)&record);
     if (stat != Ok)
         return stat;
 
-    record->Header.Type = EmfPlusRecordTypeDrawRects;
     record->Header.Flags = pen_id;
     if (integer_rects)
         record->Header.Flags |= 0x4000;
@@ -5224,13 +5170,12 @@ GpStatus METAFILE_DrawArc(GpMetafile *metafile, GpPen *pen, const GpRectF *rect,
 
     integer_rect = is_integer_rect(rect);
 
-    stat = METAFILE_AllocateRecord(metafile, FIELD_OFFSET(EmfPlusDrawArc, RectData) +
+    stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeDrawArc, FIELD_OFFSET(EmfPlusDrawArc, RectData) +
         integer_rect ? sizeof(record->RectData.rect) : sizeof(record->RectData.rectF),
         (void **)&record);
     if (stat != Ok)
         return stat;
 
-    record->Header.Type = EmfPlusRecordTypeDrawArc;
     record->Header.Flags = pen_id;
     if (integer_rect)
         record->Header.Flags |= 0x4000;
