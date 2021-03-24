@@ -50,10 +50,6 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-#ifdef __APPLE__
-# include <CoreFoundation/CoreFoundation.h>
-# include <pthread.h>
-#endif
 #ifdef HAVE_MACH_MACH_H
 # include <mach/mach.h>
 #endif
@@ -160,55 +156,6 @@ static char **build_argv( const UNICODE_STRING *cmdline, int reserved )
     argv[argc] = NULL;
     return argv;
 }
-
-
-#ifdef __APPLE__
-/***********************************************************************
- *           terminate_main_thread
- *
- * On some versions of Mac OS X, the execve system call fails with
- * ENOTSUP if the process has multiple threads.  Wine is always multi-
- * threaded on Mac OS X because it specifically reserves the main thread
- * for use by the system frameworks (see apple_main_thread() in
- * libs/wine/loader.c).  So, when we need to exec without first forking,
- * we need to terminate the main thread first.  We do this by installing
- * a custom run loop source onto the main run loop and signaling it.
- * The source's "perform" callback is pthread_exit and it will be
- * executed on the main thread, terminating it.
- *
- * Returns TRUE if there's still hope the main thread has terminated or
- * will soon.  Return FALSE if we've given up.
- */
-static BOOL terminate_main_thread(void)
-{
-    static int delayms;
-
-    if (!delayms)
-    {
-        CFRunLoopSourceContext source_context = { 0 };
-        CFRunLoopSourceRef source;
-
-        source_context.perform = pthread_exit;
-        if (!(source = CFRunLoopSourceCreate( NULL, 0, &source_context )))
-            return FALSE;
-
-        CFRunLoopAddSource( CFRunLoopGetMain(), source, kCFRunLoopCommonModes );
-        CFRunLoopSourceSignal( source );
-        CFRunLoopWakeUp( CFRunLoopGetMain() );
-        CFRelease( source );
-
-        delayms = 20;
-    }
-
-    if (delayms > 1000)
-        return FALSE;
-
-    usleep(delayms * 1000);
-    delayms *= 2;
-
-    return TRUE;
-}
-#endif
 
 
 static inline const WCHAR *get_params_string( const RTL_USER_PROCESS_PARAMETERS *params,
@@ -621,108 +568,6 @@ static NTSTATUS spawn_process( const RTL_USER_PROCESS_PARAMETERS *params, int so
     if (stdin_fd != -1) close( stdin_fd );
     if (stdout_fd != -1) close( stdout_fd );
     return status;
-}
-
-
-/***********************************************************************
- *           exec_process
- */
-void DECLSPEC_NORETURN exec_process( NTSTATUS status )
-{
-    RTL_USER_PROCESS_PARAMETERS *params = NtCurrentTeb()->Peb->ProcessParameters;
-    pe_image_info_t pe_info;
-    int unixdir, socketfd[2];
-    char **argv;
-    HANDLE handle;
-
-    if (startup_info_size) goto done;  /* started from another Win32 process */
-
-    switch (status)
-    {
-    case STATUS_CONFLICTING_ADDRESSES:
-    case STATUS_NO_MEMORY:
-    case STATUS_INVALID_IMAGE_FORMAT:
-    case STATUS_INVALID_IMAGE_NOT_MZ:
-    {
-        UNICODE_STRING image;
-        if (getenv( "WINEPRELOADRESERVE" )) goto done;
-        image.Buffer = get_nt_pathname( &params->ImagePathName );
-        image.Length = wcslen( image.Buffer ) * sizeof(WCHAR);
-        if ((status = get_pe_file_info( &image, &handle, &pe_info ))) goto done;
-        break;
-    }
-    case STATUS_INVALID_IMAGE_WIN_16:
-    case STATUS_INVALID_IMAGE_NE_FORMAT:
-    case STATUS_INVALID_IMAGE_PROTECT:
-        /* we'll start winevdm */
-        memset( &pe_info, 0, sizeof(pe_info) );
-        pe_info.machine = IMAGE_FILE_MACHINE_I386;
-        break;
-    default:
-        goto done;
-    }
-
-    unixdir = get_unix_curdir( params );
-
-    if (socketpair( PF_UNIX, SOCK_STREAM, 0, socketfd ) == -1)
-    {
-        status = STATUS_TOO_MANY_OPENED_FILES;
-        goto done;
-    }
-#ifdef SO_PASSCRED
-    else
-    {
-        int enable = 1;
-        setsockopt( socketfd[0], SOL_SOCKET, SO_PASSCRED, &enable, sizeof(enable) );
-    }
-#endif
-    wine_server_send_fd( socketfd[1] );
-    close( socketfd[1] );
-
-    SERVER_START_REQ( exec_process )
-    {
-        req->socket_fd = socketfd[1];
-        req->cpu       = get_machine_cpu( &pe_info );
-        status = wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
-    if (!status)
-    {
-        if (!(argv = build_argv( &params->CommandLine, 2 )))
-        {
-            status = STATUS_NO_MEMORY;
-            goto done;
-        }
-        fchdir( unixdir );
-        do
-        {
-            status = exec_wineloader( argv, socketfd[0], &pe_info );
-        }
-#ifdef __APPLE__
-        while (errno == ENOTSUP && terminate_main_thread());
-#else
-        while (0);
-#endif
-        free( argv );
-    }
-    close( socketfd[0] );
-
-done:
-    switch (status)
-    {
-    case STATUS_INVALID_IMAGE_FORMAT:
-    case STATUS_INVALID_IMAGE_NOT_MZ:
-        ERR( "%s not supported on this system\n", debugstr_us(&params->ImagePathName) );
-        break;
-    case STATUS_REVISION_MISMATCH:
-        ERR( "ntdll library version mismatch\n" );
-        break;
-    default:
-        ERR( "failed to load %s error %x\n", debugstr_us(&params->ImagePathName), status );
-        break;
-    }
-    for (;;) NtTerminateProcess( GetCurrentProcess(), status );
 }
 
 

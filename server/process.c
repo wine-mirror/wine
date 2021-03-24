@@ -1212,39 +1212,6 @@ DECL_HANDLER(new_process)
     release_object( info );
 }
 
-/* execute a new process, replacing the existing one */
-DECL_HANDLER(exec_process)
-{
-    struct process *process;
-    int socket_fd = thread_get_inflight_fd( current, req->socket_fd );
-
-    if (socket_fd == -1)
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        return;
-    }
-    if (fcntl( socket_fd, F_SETFL, O_NONBLOCK ) == -1)
-    {
-        set_error( STATUS_INVALID_HANDLE );
-        close( socket_fd );
-        return;
-    }
-    if (shutdown_stage)
-    {
-        set_error( STATUS_SHUTDOWN_IN_PROGRESS );
-        close( socket_fd );
-        return;
-    }
-    if (!is_cpu_supported( req->cpu ))
-    {
-        close( socket_fd );
-        return;
-    }
-    if (!(process = create_process( socket_fd, NULL, 0, NULL, NULL, NULL, 0, NULL ))) return;
-    create_thread( -1, process, NULL );
-    release_object( process );
-}
-
 /* Retrieve information about a newly started process */
 DECL_HANDLER(get_new_process_info)
 {

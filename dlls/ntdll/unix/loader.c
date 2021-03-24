@@ -1763,7 +1763,11 @@ static void start_main_thread(void)
     load_ntdll();
     load_libwine();
     status = p__wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );
-    if (status) exec_process( status );
+    if (status == STATUS_REVISION_MISMATCH)
+    {
+        ERR( "ntdll library version mismatch\n" );
+        NtTerminateProcess( GetCurrentProcess(), status );
+    }
     server_init_process_done();
 }
 

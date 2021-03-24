@@ -857,20 +857,6 @@ struct new_process_reply
 
 
 
-struct exec_process_request
-{
-    struct request_header __header;
-    int          socket_fd;
-    client_cpu_t cpu;
-    char __pad_20[4];
-};
-struct exec_process_reply
-{
-    struct reply_header __header;
-};
-
-
-
 struct get_new_process_info_request
 {
     struct request_header __header;
@@ -5406,7 +5392,6 @@ struct resume_process_reply
 enum request
 {
     REQ_new_process,
-    REQ_exec_process,
     REQ_get_new_process_info,
     REQ_new_thread,
     REQ_get_startup_info,
@@ -5687,7 +5672,6 @@ union generic_request
     struct request_max_size max_size;
     struct request_header request_header;
     struct new_process_request new_process_request;
-    struct exec_process_request exec_process_request;
     struct get_new_process_info_request get_new_process_info_request;
     struct new_thread_request new_thread_request;
     struct get_startup_info_request get_startup_info_request;
@@ -5966,7 +5950,6 @@ union generic_reply
     struct request_max_size max_size;
     struct reply_header reply_header;
     struct new_process_reply new_process_reply;
-    struct exec_process_reply exec_process_reply;
     struct get_new_process_info_reply get_new_process_info_reply;
     struct new_thread_reply new_thread_reply;
     struct get_startup_info_reply get_startup_info_reply;
@@ -6243,7 +6226,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 687
+#define SERVER_PROTOCOL_VERSION 688
 
 /* ### protocol_version end ### */
 
