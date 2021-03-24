@@ -48,67 +48,6 @@ static inline SIZE_T get_env_length( const WCHAR *env )
 
 
 /***********************************************************************
- *           set_env_var
- */
-static void set_env_var( WCHAR **env, const WCHAR *name, const WCHAR *val )
-{
-    UNICODE_STRING nameW, valW;
-
-    RtlInitUnicodeString( &nameW, name );
-    if (val)
-    {
-        RtlInitUnicodeString( &valW, val );
-        RtlSetEnvironmentVariable( env, &nameW, &valW );
-    }
-    else RtlSetEnvironmentVariable( env, &nameW, NULL );
-}
-
-
-/***********************************************************************
- *           get_registry_value
- */
-static WCHAR *get_registry_value( WCHAR *env, HKEY hkey, const WCHAR *name )
-{
-    char buffer[1024 * sizeof(WCHAR) + sizeof(KEY_VALUE_PARTIAL_INFORMATION)];
-    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
-    DWORD len, size = sizeof(buffer);
-    WCHAR *ret = NULL;
-    UNICODE_STRING nameW;
-
-    RtlInitUnicodeString( &nameW, name );
-    if (NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, buffer, size, &size ))
-        return NULL;
-
-    if (size <= FIELD_OFFSET( KEY_VALUE_PARTIAL_INFORMATION, Data )) return NULL;
-    len = (size - FIELD_OFFSET( KEY_VALUE_PARTIAL_INFORMATION, Data )) / sizeof(WCHAR);
-
-    if (info->Type == REG_EXPAND_SZ)
-    {
-        UNICODE_STRING value, expanded;
-
-        value.MaximumLength = len * sizeof(WCHAR);
-        value.Buffer = (WCHAR *)info->Data;
-        if (!value.Buffer[len - 1]) len--;  /* don't count terminating null if any */
-        value.Length = len * sizeof(WCHAR);
-        expanded.Length = expanded.MaximumLength = 1024 * sizeof(WCHAR);
-        if (!(expanded.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, expanded.MaximumLength )))
-            return NULL;
-        if (!RtlExpandEnvironmentStrings_U( env, &value, &expanded, NULL )) ret = expanded.Buffer;
-        else RtlFreeUnicodeString( &expanded );
-    }
-    else if (info->Type == REG_SZ)
-    {
-        if ((ret = RtlAllocateHeap( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) )))
-        {
-            memcpy( ret, info->Data, len * sizeof(WCHAR) );
-            ret[len] = 0;
-        }
-    }
-    return ret;
-}
-
-
-/***********************************************************************
  *           set_wow64_environment
  *
  * Set the environment variables that change across 32/64/Wow64.
@@ -122,10 +61,7 @@ static void set_wow64_environment( WCHAR **env )
     UNICODE_STRING arch_strW = { sizeof(archW) - sizeof(WCHAR), sizeof(archW), archW };
     UNICODE_STRING arch6432_strW = { sizeof(arch6432W) - sizeof(WCHAR), sizeof(arch6432W), arch6432W };
     UNICODE_STRING valW = { 0, sizeof(buf), buf };
-    OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
-    HANDLE hkey;
-    WCHAR *val;
 
     /* set the PROCESSOR_ARCHITECTURE variable */
 
@@ -147,40 +83,26 @@ static void set_wow64_environment( WCHAR **env )
         }
     }
 
-    InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
-    RtlInitUnicodeString( &nameW, L"\\Registry\\Machine\\Software\\Microsoft\\Windows\\CurrentVersion" );
-    if (NtOpenKey( &hkey, KEY_READ | KEY_WOW64_64KEY, &attr )) return;
-
     /* set the ProgramFiles variables */
 
-    if ((val = get_registry_value( *env, hkey, L"ProgramFilesDir" )))
+    RtlInitUnicodeString( &nameW, is_win64 ? L"ProgramW6432" : L"ProgramFiles(x86)" );
+    if (!RtlQueryEnvironmentVariable_U( *env, &nameW, &valW ))
     {
-        if (is_win64 || is_wow64) set_env_var( env, L"ProgramW6432", val );
-        if (is_win64 || !is_wow64) set_env_var( env, L"ProgramFiles", val );
-        RtlFreeHeap( GetProcessHeap(), 0, val );
-    }
-    if ((val = get_registry_value( *env, hkey, L"ProgramFilesDir (x86)" )))
-    {
-        if (is_win64 || is_wow64) set_env_var( env, L"ProgramFiles(x86)", val );
-        if (is_wow64) set_env_var( env, L"ProgramFiles", val );
-        RtlFreeHeap( GetProcessHeap(), 0, val );
+        RtlInitUnicodeString( &nameW, L"ProgramFiles" );
+        RtlSetEnvironmentVariable( env, &nameW, &valW );
     }
 
     /* set the CommonProgramFiles variables */
 
-    if ((val = get_registry_value( *env, hkey, L"CommonFilesDir" )))
+    RtlInitUnicodeString( &nameW, is_win64 ? L"CommonProgramW6432" : L"CommonProgramFiles(x86)" );
+    if (!RtlQueryEnvironmentVariable_U( *env, &nameW, &valW ))
     {
-        if (is_win64 || is_wow64) set_env_var( env, L"CommonProgramW6432", val );
-        if (is_win64 || !is_wow64) set_env_var( env, L"CommonProgramFiles", val );
-        RtlFreeHeap( GetProcessHeap(), 0, val );
+        RtlInitUnicodeString( &nameW, L"CommonProgramFiles" );
+        RtlSetEnvironmentVariable( env, &nameW, &valW );
     }
-    if ((val = get_registry_value( *env, hkey, L"CommonFilesDir (x86)" )))
-    {
-        if (is_win64 || is_wow64) set_env_var( env, L"CommonProgramFiles(x86)", val );
-        if (is_wow64) set_env_var( env, L"CommonProgramFiles", val );
-        RtlFreeHeap( GetProcessHeap(), 0, val );
-    }
-    NtClose( hkey );
+
+    RtlReAllocateHeap( GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY, *env,
+                       get_env_length(*env) * sizeof(WCHAR) );
 }
 
 

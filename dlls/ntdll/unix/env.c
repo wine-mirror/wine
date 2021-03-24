@@ -1408,10 +1408,12 @@ static void add_registry_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
         '\\','C','o','n','t','r','o','l',
         '\\','C','o','m','p','u','t','e','r','N','a','m','e',
         '\\','A','c','t','i','v','e','C','o','m','p','u','t','e','r','N','a','m','e',0};
-    static const WCHAR progdataW[] = {'P','r','o','g','r','a','m','D','a','t','a',0};
-    static const WCHAR allusersW[] = {'A','L','L','U','S','E','R','S','P','R','O','F','I','L','E',0};
-    static const WCHAR publicW[] = {'P','U','B','L','I','C',0};
-    static const WCHAR computernameW[] = {'C','O','M','P','U','T','E','R','N','A','M','E',0};
+    static const WCHAR curversionW[] = {'\\','R','e','g','i','s','t','r','y',
+        '\\','M','a','c','h','i','n','e',
+        '\\','S','o','f','t','w','a','r','e',
+        '\\','M','i','c','r','o','s','o','f','t',
+        '\\','W','i','n','d','o','w','s',
+        '\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n',0};
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     WCHAR *value;
@@ -1439,6 +1441,9 @@ static void add_registry_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
     init_unicode_string( &nameW, profileW );
     if (!NtOpenKey( &key, KEY_READ, &attr ))
     {
+        static const WCHAR progdataW[] = {'P','r','o','g','r','a','m','D','a','t','a',0};
+        static const WCHAR allusersW[] = {'A','L','L','U','S','E','R','S','P','R','O','F','I','L','E',0};
+        static const WCHAR publicW[] = {'P','U','B','L','I','C',0};
         if ((value = get_registry_value( *env, *pos, key, progdataW )))
         {
             set_env_var( env, pos, size, allusersW, wcslen(allusersW), value );
@@ -1453,10 +1458,56 @@ static void add_registry_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
         NtClose( key );
     }
 
+    /* set the ProgramFiles variables */
+    init_unicode_string( &nameW, curversionW );
+    if (!NtOpenKey( &key, KEY_READ | KEY_WOW64_64KEY, &attr ))
+    {
+        static const WCHAR progdirW[] = {'P','r','o','g','r','a','m','F','i','l','e','s','D','i','r',0};
+        static const WCHAR progdirx86W[] = {'P','r','o','g','r','a','m','F','i','l','e','s','D','i','r',' ','(','x','8','6',')',0};
+        static const WCHAR progfilesW[] = {'P','r','o','g','r','a','m','F','i','l','e','s',0};
+        static const WCHAR prog6432W[] = {'P','r','o','g','r','a','m','W','6','4','3','2',0};
+        static const WCHAR progx86W[] = {'P','r','o','g','r','a','m','F','i','l','e','s','(','x','8','6',')',0};
+        static const WCHAR commondirW[] = {'C','o','m','m','o','n','F','i','l','e','s','D','i','r',0};
+        static const WCHAR commondirx86W[] = {'C','o','m','m','o','n','F','i','l','e','s','D','i','r',' ','(','x','8','6',')',0};
+        static const WCHAR commonfilesW[] = {'C','o','m','m','o','n','P','r','o','g','r','a','m','F','i','l','e','s',0};
+        static const WCHAR common6432W[] = {'C','o','m','m','o','n','P','r','o','g','r','a','m','W','6','4','3','2',0};
+        static const WCHAR commonx86W[] = {'C','o','m','m','o','n','P','r','o','g','r','a','m','F','i','l','e','s','(','x','8','6',')',0};
+
+        if ((value = get_registry_value( *env, *pos, key, progdirx86W )))
+        {
+            set_env_var( env, pos, size, progx86W, wcslen(progx86W), value );
+            free( value );
+            if ((value = get_registry_value( *env, *pos, key, progdirW )))
+                set_env_var( env, pos, size, prog6432W, wcslen(prog6432W), value );
+        }
+        else
+        {
+            if ((value = get_registry_value( *env, *pos, key, progdirW )))
+                set_env_var( env, pos, size, progfilesW, wcslen(progfilesW), value );
+        }
+        free( value );
+
+        if ((value = get_registry_value( *env, *pos, key, commondirx86W )))
+        {
+            set_env_var( env, pos, size, commonx86W, wcslen(commonx86W), value );
+            free( value );
+            if ((value = get_registry_value( *env, *pos, key, commondirW )))
+                set_env_var( env, pos, size, common6432W, wcslen(common6432W), value );
+        }
+        else
+        {
+            if ((value = get_registry_value( *env, *pos, key, commondirW )))
+                set_env_var( env, pos, size, commonfilesW, wcslen(commonfilesW), value );
+        }
+        free( value );
+        NtClose( key );
+    }
+
     /* set the computer name */
     init_unicode_string( &nameW, computerW );
     if (!NtOpenKey( &key, KEY_READ, &attr ))
     {
+        static const WCHAR computernameW[] = {'C','O','M','P','U','T','E','R','N','A','M','E',0};
         if ((value = get_registry_value( *env, *pos, key, computernameW )))
         {
             set_env_var( env, pos, size, computernameW, wcslen(computernameW), value );
