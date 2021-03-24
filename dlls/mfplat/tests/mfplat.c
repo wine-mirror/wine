@@ -6312,10 +6312,11 @@ static ID3D11Device *create_d3d11_device(void)
 
 static void test_dxgi_surface_buffer(void)
 {
-    DWORD max_length, cur_length, color;
+    DWORD max_length, cur_length, length, color;
     IMFDXGIBuffer *dxgi_buffer;
     D3D11_TEXTURE2D_DESC desc;
     ID3D11Texture2D *texture;
+    IMF2DBuffer *_2d_buffer;
     IMFMediaBuffer *buffer;
     ID3D11Device *device;
     UINT index, size;
@@ -6365,6 +6366,16 @@ static void test_dxgi_surface_buffer(void)
     hr = IMFMediaBuffer_GetCurrentLength(buffer, &cur_length);
     ok(hr == S_OK, "Failed to get length, hr %#x.\n", hr);
     ok(cur_length == 2 * max_length, "Unexpected length %u.\n", cur_length);
+
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer, (void **)&_2d_buffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMF2DBuffer_GetContiguousLength(_2d_buffer, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+    hr = IMF2DBuffer_GetContiguousLength(_2d_buffer, &length);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(length == max_length, "Unexpected length %u.\n", length);
+    IMF2DBuffer_Release(_2d_buffer);
 
     hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFDXGIBuffer, (void **)&dxgi_buffer);
     ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
