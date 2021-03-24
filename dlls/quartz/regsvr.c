@@ -86,8 +86,8 @@ static HRESULT register_filters(struct regsvr_filter const *list)
 	    for (i = 0; list->pins[i].flags != 0xFFFFFFFF; i++) ;
 	    rf2.dwVersion = 2;
 	    rf2.dwMerit = list->merit;
-	    rf2.u.s2.cPins2 = i;
-	    rf2.u.s2.rgPins2 = prfp2 = CoTaskMemAlloc(i*sizeof(REGFILTERPINS2));
+	    rf2.cPins2 = i;
+	    rf2.rgPins2 = prfp2 = CoTaskMemAlloc(i*sizeof(REGFILTERPINS2));
 	    if (!prfp2) {
 		hr = E_OUTOFMEMORY;
 		break;
