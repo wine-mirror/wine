@@ -2661,6 +2661,8 @@ static const emfplus_record properties_records[] = {
     { EmfPlusRecordTypeSetCompositingMode, CompositingModeSourceCopy },
     { EmfPlusRecordTypeSetCompositingQuality, CompositingQualityHighQuality },
     { EmfPlusRecordTypeSetInterpolationMode, InterpolationModeHighQualityBicubic },
+    { EmfPlusRecordTypeSetRenderingOrigin },
+    { EmfPlusRecordTypeSetRenderingOrigin },
     { EmfPlusRecordTypeEndOfFile },
     { EMR_EOF },
     { 0 }
@@ -2712,6 +2714,15 @@ static void test_properties(void)
     stat = GdipSetInterpolationMode(graphics, InterpolationModeDefault);
     expect(Ok, stat);
     stat = GdipSetInterpolationMode(graphics, InterpolationModeHighQuality);
+    expect(Ok, stat);
+
+    stat = GdipSetRenderingOrigin(graphics, 1, 2);
+    expect(Ok, stat);
+
+    stat = GdipSetRenderingOrigin(graphics, 1, 2);
+    expect(Ok, stat);
+
+    stat = GdipSetRenderingOrigin(graphics, 2, 1);
     expect(Ok, stat);
 
     stat = GdipDeleteGraphics(graphics);

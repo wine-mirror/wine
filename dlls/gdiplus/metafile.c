@@ -580,6 +580,13 @@ typedef struct EmfPlusOffsetClip
     float dy;
 } EmfPlusOffsetClip;
 
+typedef struct EmfPlusSetRenderingOrigin
+{
+    EmfPlusRecordHeader Header;
+    INT x;
+    INT y;
+} EmfPlusSetRenderingOrigin;
+
 static void metafile_free_object_table_entry(GpMetafile *metafile, BYTE id)
 {
     struct emfplus_object *object = &metafile->objtable[id];
@@ -5270,6 +5277,30 @@ GpStatus METAFILE_SetClipPath(GpMetafile *metafile, GpPath *path, CombineMode mo
         return stat;
 
     record->Flags = ((mode & 0xf) << 8) | path_id;
+
+    METAFILE_WriteRecords(metafile);
+
+    return Ok;
+}
+
+GpStatus METAFILE_SetRenderingOrigin(GpMetafile *metafile, INT x, INT y)
+{
+    EmfPlusSetRenderingOrigin *record;
+    GpStatus stat;
+
+    if (metafile->metafile_type == MetafileTypeEmf)
+    {
+        FIXME("stub!\n");
+        return NotImplemented;
+    }
+
+    stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeSetRenderingOrigin,
+        sizeof(*record), (void **)&record);
+    if (stat != Ok)
+        return stat;
+
+    record->x = x;
+    record->y = y;
 
     METAFILE_WriteRecords(metafile);
 

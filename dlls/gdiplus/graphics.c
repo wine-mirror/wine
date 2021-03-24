@@ -6250,10 +6250,22 @@ GpStatus WINGDIPAPI GdipSetPixelOffsetMode(GpGraphics *graphics, PixelOffsetMode
 
 GpStatus WINGDIPAPI GdipSetRenderingOrigin(GpGraphics *graphics, INT x, INT y)
 {
+    GpStatus stat;
+
     TRACE("(%p,%i,%i)\n", graphics, x, y);
 
     if (!graphics)
         return InvalidParameter;
+
+    if (graphics->origin_x == x && graphics->origin_y == y)
+        return Ok;
+
+    if (is_metafile_graphics(graphics))
+    {
+         stat = METAFILE_SetRenderingOrigin((GpMetafile *)graphics->image, x, y);
+         if (stat != Ok)
+             return stat;
+    }
 
     graphics->origin_x = x;
     graphics->origin_y = y;
