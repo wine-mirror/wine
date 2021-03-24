@@ -406,6 +406,17 @@ static HRESULT WINAPI d3d9_surface_buffer_Unlock(IMFMediaBuffer *iface)
     return hr;
 }
 
+static HRESULT WINAPI d3d9_surface_buffer_SetCurrentLength(IMFMediaBuffer *iface, DWORD current_length)
+{
+    struct memory_buffer *buffer = impl_from_IMFMediaBuffer(iface);
+
+    TRACE("%p, %u.\n", iface, current_length);
+
+    buffer->current_length = current_length;
+
+    return S_OK;
+}
+
 static const IMFMediaBufferVtbl d3d9_surface_1d_buffer_vtbl =
 {
     memory_1d_2d_buffer_QueryInterface,
@@ -414,7 +425,7 @@ static const IMFMediaBufferVtbl d3d9_surface_1d_buffer_vtbl =
     d3d9_surface_buffer_Lock,
     d3d9_surface_buffer_Unlock,
     memory_buffer_GetCurrentLength,
-    memory_buffer_SetCurrentLength,
+    d3d9_surface_buffer_SetCurrentLength,
     memory_buffer_GetMaxLength,
 };
 

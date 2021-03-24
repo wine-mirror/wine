@@ -5852,6 +5852,7 @@ static void test_MFCreateDXSurfaceBuffer(void)
 {
     IDirect3DSurface9 *backbuffer = NULL, *surface;
     IDirect3DSwapChain9 *swapchain;
+    DWORD length, max_length;
     IDirect3DDevice9 *device;
     IMF2DBuffer2 *_2dbuffer2;
     IMFMediaBuffer *buffer;
@@ -5859,7 +5860,6 @@ static void test_MFCreateDXSurfaceBuffer(void)
     BYTE *data, *data2;
     IMFGetService *gs;
     IDirect3D9 *d3d;
-    DWORD length;
     HWND window;
     HRESULT hr;
     LONG pitch;
@@ -5904,17 +5904,25 @@ static void test_MFCreateDXSurfaceBuffer(void)
     IDirect3DSurface9_Release(surface);
     IMFGetService_Release(gs);
 
-    length = 0;
-    hr = IMFMediaBuffer_GetMaxLength(buffer, &length);
+    max_length = 0;
+    hr = IMFMediaBuffer_GetMaxLength(buffer, &max_length);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(!!length, "Unexpected length %u.\n", length);
+    ok(!!max_length, "Unexpected length %u.\n", max_length);
 
     hr = IMFMediaBuffer_GetCurrentLength(buffer, &length);
     ok(hr == S_OK, "Failed to get length, hr %#x.\n", hr);
     ok(!length, "Unexpected length %u.\n", length);
 
-    hr = IMFMediaBuffer_Lock(buffer, &data, NULL, NULL);
+    hr = IMFMediaBuffer_SetCurrentLength(buffer, 2 * max_length);
+    ok(hr == S_OK, "Failed to get length, hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_GetCurrentLength(buffer, &length);
+    ok(hr == S_OK, "Failed to get length, hr %#x.\n", hr);
+    ok(length == 2 * max_length, "Unexpected length %u.\n", length);
+
+    hr = IMFMediaBuffer_Lock(buffer, &data, NULL, &length);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(length == max_length, "Unexpected length.\n");
 
     /* Unlock twice. */
     hr = IMFMediaBuffer_Unlock(buffer);
