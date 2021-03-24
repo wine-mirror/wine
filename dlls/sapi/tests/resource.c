@@ -25,15 +25,6 @@
 
 #include "wine/test.h"
 
-#define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
-static void _expect_ref(IUnknown *obj, ULONG ref, int line)
-{
-    ULONG rc;
-    IUnknown_AddRef(obj);
-    rc = IUnknown_Release(obj);
-    ok_(__FILE__,line)(rc == ref, "Unexpected refcount %d, expected %d.\n", rc, ref);
-}
-
 static void test_interfaces(void)
 {
     ISpResourceManager *resource_manager, *resource_manager2;
@@ -44,25 +35,21 @@ static void test_interfaces(void)
     hr = CoCreateInstance(&CLSID_SpResourceManager, NULL, CLSCTX_INPROC_SERVER,
                           &IID_ISpResourceManager, (void **)&resource_manager);
     ok(hr == S_OK, "Failed to create ISpeechVoice interface: %#x.\n", hr);
-    EXPECT_REF(resource_manager, 1);
+    ok(!!resource_manager, "Expected non-NULL resource manager.\n");
 
     hr = CoCreateInstance(&CLSID_SpResourceManager, NULL, CLSCTX_INPROC_SERVER,
                           &IID_ISpResourceManager, (void **)&resource_manager2);
     ok(hr == S_OK, "Failed to create ISpeechVoice interface: %#x.\n", hr);
+    ok(!!resource_manager2, "Expected non-NULL resource manager.\n");
     todo_wine ok(resource_manager2 == resource_manager, "Expected managers to match.\n");
-    todo_wine EXPECT_REF(resource_manager2, 2);
-    todo_wine EXPECT_REF(resource_manager, 2);
-    if (resource_manager2 == resource_manager) ISpResourceManager_Release(resource_manager2);
-    EXPECT_REF(resource_manager, 1);
+    ISpResourceManager_Release(resource_manager2);
 
     hr = CoCreateInstance(&CLSID_SpResourceManager, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IUnknown, (void **)&unk);
     ok(hr == S_OK, "Failed to create IUnknown interface: %#x.\n", hr);
+    ok(!!unk, "Expected non-NULL unk.\n");
     todo_wine ok(unk == (IUnknown *)resource_manager, "Expected unk to match existing manager.\n");
-    todo_wine EXPECT_REF(unk, 2);
-    todo_wine EXPECT_REF(resource_manager, 2);
-    if (unk == (IUnknown *)resource_manager) IUnknown_Release(unk);
-    EXPECT_REF(resource_manager, 1);
+    IUnknown_Release(unk);
 
     hr = CoCreateInstance(&CLSID_SpResourceManager, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IDispatch, (void **)&dispatch);
