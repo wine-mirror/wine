@@ -796,7 +796,7 @@ run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const ch
     if (test_filtered_out( test->name, subtest ))
     {
         report (R_STEP, "Skipping: %s:%s", test->name, subtest);
-        xprintf ("%s:%s skipped %s -\n", test->name, subtest, file);
+        xprintf ("%s:%s skipped %s\n", test->name, subtest, file);
         nr_of_skips++;
     }
     else
@@ -805,7 +805,7 @@ run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const ch
         DWORD pid, start = GetTickCount();
         char *cmd = strmake (NULL, "%s %s", test->exename, subtest);
         report (R_STEP, "Running: %s:%s", test->name, subtest);
-        xprintf ("%s:%s start %s -\n", test->name, subtest, file);
+        xprintf ("%s:%s start %s\n", test->name, subtest, file);
         status = run_ex (cmd, out_file, tempdir, 120000, FALSE, &pid);
         heap_free (cmd);
         xprintf ("%s:%s:%04x done (%d) in %ds\n", test->name, subtest, pid, status, (GetTickCount()-start)/1000);
