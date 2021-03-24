@@ -40,21 +40,21 @@ static BOOL (WINAPI *pRtlFreeUnicodeString)(UNICODE_STRING *);
 static BOOL (WINAPI *pCancelIoEx)(HANDLE, OVERLAPPED *);
 static BOOL (WINAPI *pSetFileCompletionNotificationModes)(HANDLE, UCHAR);
 
-static void load_resource(const char *name, char *filename)
+static void load_resource(const WCHAR *name, WCHAR *filename)
 {
-    static char path[MAX_PATH];
+    static WCHAR path[MAX_PATH];
     DWORD written;
     HANDLE file;
     HRSRC res;
     void *ptr;
 
-    GetTempPathA(sizeof(path), path);
-    GetTempFileNameA(path, name, 0, filename);
+    GetTempPathW(ARRAY_SIZE(path), path);
+    GetTempFileNameW(path, name, 0, filename);
 
-    file = CreateFileA(filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    ok(file != INVALID_HANDLE_VALUE, "file creation failed, at %s, error %d\n", filename, GetLastError());
+    file = CreateFileW(filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "failed to create %s, error %u\n", debugstr_w(filename), GetLastError());
 
-    res = FindResourceA(NULL, name, "TESTDLL");
+    res = FindResourceW(NULL, name, L"TESTDLL");
     ok( res != 0, "couldn't find resource\n" );
     ptr = LockResource( LoadResource( GetModuleHandleA(NULL), res ));
     WriteFile( file, ptr, SizeofResource( GetModuleHandleA(NULL), res ), &written, NULL );
@@ -81,7 +81,7 @@ static void unload_driver(SC_HANDLE service)
     CloseServiceHandle(service);
 }
 
-static SC_HANDLE load_driver(char *filename, const char *resname, const char *driver_name)
+static SC_HANDLE load_driver(WCHAR *filename, const WCHAR *resname, const WCHAR *driver_name)
 {
     SC_HANDLE manager, service;
 
@@ -94,13 +94,13 @@ static SC_HANDLE load_driver(char *filename, const char *resname, const char *dr
     ok(!!manager, "OpenSCManager failed\n");
 
     /* stop any old drivers running under this name */
-    service = OpenServiceA(manager, driver_name, SERVICE_ALL_ACCESS);
+    service = OpenServiceW(manager, driver_name, SERVICE_ALL_ACCESS);
     if (service) unload_driver(service);
 
     load_resource(resname, filename);
-    trace("Trying to load driver %s\n", filename);
+    trace("Trying to load driver %s\n", debugstr_w(filename));
 
-    service = CreateServiceA(manager, driver_name, driver_name,
+    service = CreateServiceW(manager, driver_name, driver_name,
                              SERVICE_ALL_ACCESS, SERVICE_KERNEL_DRIVER,
                              SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL,
                              filename, NULL, NULL, NULL, NULL, NULL);
@@ -618,11 +618,11 @@ static void test_object_info(void)
 
 static void test_driver3(void)
 {
-    char filename[MAX_PATH];
+    WCHAR filename[MAX_PATH];
     SC_HANDLE service;
     BOOL ret;
 
-    service = load_driver(filename, "driver3.dll", "WineTestDriver3");
+    service = load_driver(filename, L"driver3.dll", L"WineTestDriver3");
     ok(service != NULL, "driver3 failed to load\n");
 
     ret = StartServiceA(service, 0, NULL);
@@ -634,7 +634,7 @@ static void test_driver3(void)
 
     DeleteService(service);
     CloseServiceHandle(service);
-    DeleteFileA(filename);
+    DeleteFileW(filename);
 }
 
 static DWORD WINAPI wsk_test_thread(void *parameter)
@@ -698,18 +698,18 @@ static DWORD WINAPI wsk_test_thread(void *parameter)
 
 static void test_driver4(void)
 {
-    char filename[MAX_PATH];
+    WCHAR filename[MAX_PATH];
     SC_HANDLE service;
     HANDLE hthread;
     DWORD written;
     BOOL ret;
 
-    if (!(service = load_driver(filename, "driver4.dll", "WineTestDriver4")))
+    if (!(service = load_driver(filename, L"driver4.dll", L"WineTestDriver4")))
         return;
 
     if (!start_driver(service, TRUE))
     {
-        DeleteFileA(filename);
+        DeleteFileW(filename);
         return;
     }
 
@@ -726,13 +726,13 @@ static void test_driver4(void)
     CloseHandle(device);
 
     unload_driver(service);
-    ret = DeleteFileA(filename);
+    ret = DeleteFileW(filename);
     ok(ret, "DeleteFile failed: %u\n", GetLastError());
 }
 
 START_TEST(ntoskrnl)
 {
-    char filename[MAX_PATH], filename2[MAX_PATH];
+    WCHAR filename[MAX_PATH], filename2[MAX_PATH];
     SC_HANDLE service, service2;
     DWORD written;
     BOOL ret;
@@ -745,14 +745,14 @@ START_TEST(ntoskrnl)
                                                                  "SetFileCompletionNotificationModes");
 
     subtest("driver");
-    if (!(service = load_driver(filename, "driver.dll", "WineTestDriver")))
+    if (!(service = load_driver(filename, L"driver.dll", L"WineTestDriver")))
         return;
     if (!start_driver(service, FALSE))
     {
-        DeleteFileA(filename);
+        DeleteFileW(filename);
         return;
     }
-    service2 = load_driver(filename2, "driver2.dll", "WineTestDriver2");
+    service2 = load_driver(filename2, L"driver2.dll", L"WineTestDriver2");
 
     device = CreateFileA("\\\\.\\WineTestDriver", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
     ok(device != INVALID_HANDLE_VALUE, "failed to open device: %u\n", GetLastError());
@@ -778,9 +778,9 @@ START_TEST(ntoskrnl)
 
     unload_driver(service2);
     unload_driver(service);
-    ret = DeleteFileA(filename);
+    ret = DeleteFileW(filename);
     ok(ret, "DeleteFile failed: %u\n", GetLastError());
-    ret = DeleteFileA(filename2);
+    ret = DeleteFileW(filename2);
     ok(ret, "DeleteFile failed: %u\n", GetLastError());
 
     test_driver3();
