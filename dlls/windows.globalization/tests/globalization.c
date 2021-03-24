@@ -88,8 +88,7 @@ static void test_GlobalizationPreferences(void)
     ok(hr == S_OK, "IActivationFactory_QueryInterface IID_IAgileObject failed, hr %#x\n", hr);
 
     hr = IActivationFactory_QueryInterface(factory, &IID_IGlobalizationPreferencesStatics, (void **)&preferences_statics);
-    todo_wine ok(hr == S_OK, "IActivationFactory_QueryInterface IID_IGlobalizationPreferencesStatics failed, hr %#x\n", hr);
-    if (FAILED(hr)) goto done;
+    ok(hr == S_OK, "IActivationFactory_QueryInterface IID_IGlobalizationPreferencesStatics failed, hr %#x\n", hr);
 
     hr = IGlobalizationPreferencesStatics_QueryInterface(preferences_statics, &IID_IInspectable, (void **)&tmp_inspectable);
     ok(hr == S_OK, "IGlobalizationPreferencesStatics_QueryInterface IID_IInspectable failed, hr %#x\n", hr);
@@ -102,7 +101,8 @@ static void test_GlobalizationPreferences(void)
     IAgileObject_Release(tmp_agile_object);
 
     hr = IGlobalizationPreferencesStatics_get_HomeGeographicRegion(preferences_statics, &tmp_str);
-    ok(hr == S_OK, "IGlobalizationPreferencesStatics_get_HomeGeographicRegion failed, hr %#x\n", hr);
+    todo_wine ok(hr == S_OK, "IGlobalizationPreferencesStatics_get_HomeGeographicRegion failed, hr %#x\n", hr);
+    if (FAILED(hr)) goto done;
 
     buf = pWindowsGetStringRawBuffer(tmp_str, &len);
     ok(buf != NULL && len > 0, "WindowsGetStringRawBuffer returned buf %p, len %u\n", buf, len);
@@ -154,9 +154,9 @@ static void test_GlobalizationPreferences(void)
 
     IVectorView_HSTRING_Release(languages);
 
+done:
     IGlobalizationPreferencesStatics_Release(preferences_statics);
 
-done:
     IAgileObject_Release(agile_object);
     IInspectable_Release(inspectable);
     IActivationFactory_Release(factory);

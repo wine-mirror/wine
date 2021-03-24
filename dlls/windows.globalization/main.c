@@ -29,7 +29,13 @@
 #include "initguid.h"
 #include "activation.h"
 
+#define WIDL_using_Windows_Foundation
+#define WIDL_using_Windows_Foundation_Collections
 #include "windows.foundation.h"
+#define WIDL_using_Windows_Globalization
+#include "windows.globalization.h"
+#define WIDL_using_Windows_System_UserProfile
+#include "windows.system.userprofile.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(locale);
 
@@ -45,12 +51,18 @@ static const char *debugstr_hstring(HSTRING hstr)
 struct windows_globalization
 {
     IActivationFactory IActivationFactory_iface;
+    IGlobalizationPreferencesStatics IGlobalizationPreferencesStatics_iface;
     LONG ref;
 };
 
 static inline struct windows_globalization *impl_from_IActivationFactory(IActivationFactory *iface)
 {
     return CONTAINING_RECORD(iface, struct windows_globalization, IActivationFactory_iface);
+}
+
+static inline struct windows_globalization *impl_from_IGlobalizationPreferencesStatics(IGlobalizationPreferencesStatics *iface)
+{
+    return CONTAINING_RECORD(iface, struct windows_globalization, IGlobalizationPreferencesStatics_iface);
 }
 
 static HRESULT STDMETHODCALLTYPE windows_globalization_QueryInterface(
@@ -66,6 +78,13 @@ static HRESULT STDMETHODCALLTYPE windows_globalization_QueryInterface(
     {
         IUnknown_AddRef(iface);
         *out = &impl->IActivationFactory_iface;
+        return S_OK;
+    }
+
+    if (IsEqualGUID(iid, &IID_IGlobalizationPreferencesStatics))
+    {
+        IUnknown_AddRef(iface);
+        *out = &impl->IGlobalizationPreferencesStatics_iface;
         return S_OK;
     }
 
@@ -133,9 +152,112 @@ static const struct IActivationFactoryVtbl activation_factory_vtbl =
     windows_globalization_ActivateInstance,
 };
 
+static HRESULT STDMETHODCALLTYPE globalization_preferences_QueryInterface(
+        IGlobalizationPreferencesStatics *iface, REFIID iid, void **object)
+{
+    struct windows_globalization *impl = impl_from_IGlobalizationPreferencesStatics(iface);
+    return windows_globalization_QueryInterface(&impl->IActivationFactory_iface, iid, object);
+}
+
+static ULONG STDMETHODCALLTYPE globalization_preferences_AddRef(
+        IGlobalizationPreferencesStatics *iface)
+{
+    struct windows_globalization *impl = impl_from_IGlobalizationPreferencesStatics(iface);
+    return windows_globalization_AddRef(&impl->IActivationFactory_iface);
+}
+
+static ULONG STDMETHODCALLTYPE globalization_preferences_Release(
+        IGlobalizationPreferencesStatics *iface)
+{
+    struct windows_globalization *impl = impl_from_IGlobalizationPreferencesStatics(iface);
+    return windows_globalization_Release(&impl->IActivationFactory_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE globalization_preferences_GetIids(
+        IGlobalizationPreferencesStatics *iface, ULONG *iid_count, IID **iids)
+{
+    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE globalization_preferences_GetRuntimeClassName(
+        IGlobalizationPreferencesStatics *iface, HSTRING *class_name)
+{
+    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE globalization_preferences_GetTrustLevel(
+        IGlobalizationPreferencesStatics *iface, TrustLevel *trust_level)
+{
+    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE globalization_preferences_get_Calendars(
+        IGlobalizationPreferencesStatics *iface, IVectorView_HSTRING **out)
+{
+    FIXME("iface %p, out %p stub!\n", iface, out);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE globalization_preferences_get_Clocks(
+        IGlobalizationPreferencesStatics *iface, IVectorView_HSTRING **out)
+{
+    FIXME("iface %p, out %p stub!\n", iface, out);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE globalization_preferences_get_Currencies(
+        IGlobalizationPreferencesStatics *iface, IVectorView_HSTRING **out)
+{
+    FIXME("iface %p, out %p stub!\n", iface, out);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE globalization_preferences_get_Languages(
+        IGlobalizationPreferencesStatics *iface, IVectorView_HSTRING **out)
+{
+    FIXME("iface %p, out %p stub!\n", iface, out);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE globalization_preferences_get_HomeGeographicRegion(
+        IGlobalizationPreferencesStatics *iface, HSTRING* out)
+{
+    FIXME("iface %p, out %p stub!\n", iface, out);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE globalization_preferences_get_WeekStartsOn(
+        IGlobalizationPreferencesStatics *iface, enum DayOfWeek* out)
+{
+    FIXME("iface %p, out %p stub!\n", iface, out);
+    return E_NOTIMPL;
+}
+
+static const struct IGlobalizationPreferencesStaticsVtbl globalization_preferences_vtbl =
+{
+    globalization_preferences_QueryInterface,
+    globalization_preferences_AddRef,
+    globalization_preferences_Release,
+    /* IInspectable methods */
+    globalization_preferences_GetIids,
+    globalization_preferences_GetRuntimeClassName,
+    globalization_preferences_GetTrustLevel,
+    /* IGlobalizationPreferencesStatics methods */
+    globalization_preferences_get_Calendars,
+    globalization_preferences_get_Clocks,
+    globalization_preferences_get_Currencies,
+    globalization_preferences_get_Languages,
+    globalization_preferences_get_HomeGeographicRegion,
+    globalization_preferences_get_WeekStartsOn,
+};
+
 static struct windows_globalization windows_globalization =
 {
     {&activation_factory_vtbl},
+    {&globalization_preferences_vtbl},
     0
 };
 
