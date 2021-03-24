@@ -28,8 +28,13 @@
 #include "winioctl.h"
 #include "winternl.h"
 #include "winsock2.h"
+#include "wincrypt.h"
+#include "ntsecapi.h"
+#include "mscat.h"
+#include "mssip.h"
 #include "wine/test.h"
 #include "wine/heap.h"
+#include "wine/mssign.h"
 
 #include "driver.h"
 
@@ -39,6 +44,9 @@ static BOOL (WINAPI *pRtlDosPathNameToNtPathName_U)(const WCHAR *, UNICODE_STRIN
 static BOOL (WINAPI *pRtlFreeUnicodeString)(UNICODE_STRING *);
 static BOOL (WINAPI *pCancelIoEx)(HANDLE, OVERLAPPED *);
 static BOOL (WINAPI *pSetFileCompletionNotificationModes)(HANDLE, UCHAR);
+static HRESULT (WINAPI *pSignerSign)(SIGNER_SUBJECT_INFO *subject, SIGNER_CERT *cert,
+        SIGNER_SIGNATURE_INFO *signature, SIGNER_PROVIDER_INFO *provider,
+        const WCHAR *timestamp, CRYPT_ATTRIBUTES *attr, void *sip_data);
 
 static void load_resource(const WCHAR *name, WCHAR *filename)
 {
@@ -62,6 +70,189 @@ static void load_resource(const WCHAR *name, WCHAR *filename)
     CloseHandle( file );
 }
 
+struct testsign_context
+{
+    HCRYPTPROV provider;
+    const CERT_CONTEXT *cert, *root_cert, *publisher_cert;
+    HCERTSTORE root_store, publisher_store;
+};
+
+static BOOL testsign_create_cert(struct testsign_context *ctx)
+{
+    BYTE encoded_name[100], encoded_key_id[200], public_key_info_buffer[1000];
+    WCHAR container_name[26];
+    BYTE hash_buffer[16], cert_buffer[1000], provider_nameA[100], serial[16];
+    CERT_PUBLIC_KEY_INFO *public_key_info = (CERT_PUBLIC_KEY_INFO *)public_key_info_buffer;
+    CRYPT_KEY_PROV_INFO provider_info = {0};
+    CRYPT_ALGORITHM_IDENTIFIER algid = {0};
+    CERT_AUTHORITY_KEY_ID_INFO key_info;
+    CERT_INFO cert_info = {0};
+    WCHAR provider_nameW[100];
+    CERT_EXTENSION extension;
+    HCRYPTKEY key;
+    DWORD size;
+    BOOL ret;
+
+    memset(ctx, 0, sizeof(*ctx));
+
+    srand(time(NULL));
+    swprintf(container_name, ARRAY_SIZE(container_name), L"wine_testsign%u", rand());
+
+    ret = CryptAcquireContextW(&ctx->provider, container_name, NULL, PROV_RSA_FULL, CRYPT_NEWKEYSET);
+    ok(ret, "Failed to create container, error %#x\n", GetLastError());
+
+    ret = CryptGenKey(ctx->provider, AT_SIGNATURE, CRYPT_EXPORTABLE, &key);
+    ok(ret, "Failed to create key, error %#x\n", GetLastError());
+    ret = CryptDestroyKey(key);
+    ok(ret, "Failed to destroy key, error %#x\n", GetLastError());
+    ret = CryptGetUserKey(ctx->provider, AT_SIGNATURE, &key);
+    ok(ret, "Failed to get user key, error %#x\n", GetLastError());
+    ret = CryptDestroyKey(key);
+    ok(ret, "Failed to destroy key, error %#x\n", GetLastError());
+
+    size = sizeof(encoded_name);
+    ret = CertStrToNameA(X509_ASN_ENCODING, "CN=winetest_cert", CERT_X500_NAME_STR, NULL, encoded_name, &size, NULL);
+    ok(ret, "Failed to convert name, error %#x\n", GetLastError());
+    key_info.CertIssuer.cbData = size;
+    key_info.CertIssuer.pbData = encoded_name;
+
+    size = sizeof(public_key_info_buffer);
+    ret = CryptExportPublicKeyInfo(ctx->provider, AT_SIGNATURE, X509_ASN_ENCODING, public_key_info, &size);
+    ok(ret, "Failed to export public key, error %#x\n", GetLastError());
+    cert_info.SubjectPublicKeyInfo = *public_key_info;
+
+    size = sizeof(hash_buffer);
+    ret = CryptHashPublicKeyInfo(ctx->provider, CALG_MD5, 0, X509_ASN_ENCODING, public_key_info, hash_buffer, &size);
+    ok(ret, "Failed to hash public key, error %#x\n", GetLastError());
+
+    key_info.KeyId.cbData = size;
+    key_info.KeyId.pbData = hash_buffer;
+
+    RtlGenRandom(serial, sizeof(serial));
+    key_info.CertSerialNumber.cbData = sizeof(serial);
+    key_info.CertSerialNumber.pbData = serial;
+
+    size = sizeof(encoded_key_id);
+    ret = CryptEncodeObject(X509_ASN_ENCODING, X509_AUTHORITY_KEY_ID, &key_info, encoded_key_id, &size);
+    ok(ret, "Failed to convert name, error %#x\n", GetLastError());
+
+    extension.pszObjId = (char *)szOID_AUTHORITY_KEY_IDENTIFIER;
+    extension.fCritical = TRUE;
+    extension.Value.cbData = size;
+    extension.Value.pbData = encoded_key_id;
+
+    cert_info.dwVersion = CERT_V3;
+    cert_info.SerialNumber = key_info.CertSerialNumber;
+    cert_info.SignatureAlgorithm.pszObjId = (char *)szOID_RSA_SHA1RSA;
+    cert_info.Issuer = key_info.CertIssuer;
+    GetSystemTimeAsFileTime(&cert_info.NotBefore);
+    GetSystemTimeAsFileTime(&cert_info.NotAfter);
+    cert_info.NotAfter.dwHighDateTime += 1;
+    cert_info.Subject = key_info.CertIssuer;
+    cert_info.cExtension = 1;
+    cert_info.rgExtension = &extension;
+    algid.pszObjId = (char *)szOID_RSA_SHA1RSA;
+    size = sizeof(cert_buffer);
+    ret = CryptSignAndEncodeCertificate(ctx->provider, AT_SIGNATURE, X509_ASN_ENCODING,
+            X509_CERT_TO_BE_SIGNED, &cert_info, &algid, NULL, cert_buffer, &size);
+    ok(ret, "Failed to create certificate, error %#x\n", GetLastError());
+
+    ctx->cert = CertCreateCertificateContext(X509_ASN_ENCODING, cert_buffer, size);
+    ok(!!ctx->cert, "Failed to create context, error %#x\n", GetLastError());
+
+    size = sizeof(provider_nameA);
+    ret = CryptGetProvParam(ctx->provider, PP_NAME, provider_nameA, &size, 0);
+    ok(ret, "Failed to get prov param, error %#x\n", GetLastError());
+    MultiByteToWideChar(CP_ACP, 0, (char *)provider_nameA, -1, provider_nameW, ARRAY_SIZE(provider_nameW));
+
+    provider_info.pwszContainerName = (WCHAR *)container_name;
+    provider_info.pwszProvName = provider_nameW;
+    provider_info.dwProvType = PROV_RSA_FULL;
+    provider_info.dwKeySpec = AT_SIGNATURE;
+    ret = CertSetCertificateContextProperty(ctx->cert, CERT_KEY_PROV_INFO_PROP_ID, 0, &provider_info);
+    ok(ret, "Failed to set provider info, error %#x\n", GetLastError());
+
+    ctx->root_store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY_A, 0, 0, CERT_SYSTEM_STORE_LOCAL_MACHINE, "root");
+    ok(!!ctx->root_store, "Failed to open store, error %u\n", GetLastError());
+    ret = CertAddCertificateContextToStore(ctx->root_store, ctx->cert, CERT_STORE_ADD_ALWAYS, &ctx->root_cert);
+    if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
+    {
+        skip("Failed to add self-signed certificate to store.\n");
+
+        ret = CertFreeCertificateContext(ctx->cert);
+        ok(ret, "Failed to free certificate, error %u\n", GetLastError());
+        ret = CertCloseStore(ctx->root_store, CERT_CLOSE_STORE_CHECK_FLAG);
+        ok(ret, "Failed to close store, error %u\n", GetLastError());
+        ret = CryptReleaseContext(ctx->provider, 0);
+        ok(ret, "failed to release context, error %u\n", GetLastError());
+
+        return FALSE;
+    }
+    ok(ret, "Failed to add certificate, error %u\n", GetLastError());
+
+    ctx->publisher_store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY_A, 0, 0,
+            CERT_SYSTEM_STORE_LOCAL_MACHINE, "trustedpublisher");
+    ok(!!ctx->publisher_store, "Failed to open store, error %u\n", GetLastError());
+    ret = CertAddCertificateContextToStore(ctx->publisher_store, ctx->cert,
+            CERT_STORE_ADD_ALWAYS, &ctx->publisher_cert);
+    ok(ret, "Failed to add certificate, error %u\n", GetLastError());
+
+    return TRUE;
+}
+
+static void testsign_cleanup(struct testsign_context *ctx)
+{
+    BOOL ret;
+
+    ret = CertFreeCertificateContext(ctx->cert);
+    ok(ret, "Failed to free certificate, error %u\n", GetLastError());
+
+    ret = CertDeleteCertificateFromStore(ctx->root_cert);
+    ok(ret, "Failed to remove certificate, error %u\n", GetLastError());
+    ret = CertFreeCertificateContext(ctx->root_cert);
+    ok(ret, "Failed to free certificate, error %u\n", GetLastError());
+    ret = CertCloseStore(ctx->root_store, CERT_CLOSE_STORE_CHECK_FLAG);
+    ok(ret, "Failed to close store, error %u\n", GetLastError());
+
+    ret = CertDeleteCertificateFromStore(ctx->publisher_cert);
+    ok(ret, "Failed to remove certificate, error %u\n", GetLastError());
+    ret = CertFreeCertificateContext(ctx->publisher_cert);
+    ok(ret, "Failed to free certificate, error %u\n", GetLastError());
+    ret = CertCloseStore(ctx->publisher_store, CERT_CLOSE_STORE_CHECK_FLAG);
+    ok(ret, "Failed to close store, error %u\n", GetLastError());
+
+    ret = CryptReleaseContext(ctx->provider, 0);
+    ok(ret, "failed to release context, error %u\n", GetLastError());
+}
+
+static void testsign_sign(struct testsign_context *ctx, const WCHAR *filename)
+{
+    SIGNER_ATTR_AUTHCODE authcode = {sizeof(authcode)};
+    SIGNER_SIGNATURE_INFO signature = {sizeof(signature)};
+    SIGNER_SUBJECT_INFO subject = {sizeof(subject)};
+    SIGNER_CERT_STORE_INFO store = {sizeof(store)};
+    SIGNER_CERT cert_info = {sizeof(cert_info)};
+    SIGNER_FILE_INFO file = {sizeof(file)};
+    DWORD index = 0;
+    HRESULT hr;
+
+    subject.dwSubjectChoice = 1;
+    subject.pdwIndex = &index;
+    subject.pSignerFileInfo = &file;
+    file.pwszFileName = (WCHAR *)filename;
+    cert_info.dwCertChoice = 2;
+    cert_info.pCertStoreInfo = &store;
+    store.pSigningCert = ctx->cert;
+    store.dwCertPolicy = 0;
+    signature.algidHash = CALG_SHA_256;
+    signature.dwAttrChoice = SIGNER_AUTHCODE_ATTR;
+    signature.pAttrAuthcode = &authcode;
+    authcode.pwszName = L"";
+    authcode.pwszInfo = L"";
+    hr = pSignerSign(&subject, &cert_info, &signature, NULL, NULL, NULL, NULL);
+    todo_wine ok(hr == S_OK || broken(hr == NTE_BAD_ALGID) /* < 7 */, "Failed to sign, hr %#x\n", hr);
+}
+
 static void unload_driver(SC_HANDLE service)
 {
     SERVICE_STATUS status;
@@ -81,7 +272,8 @@ static void unload_driver(SC_HANDLE service)
     CloseServiceHandle(service);
 }
 
-static SC_HANDLE load_driver(WCHAR *filename, const WCHAR *resname, const WCHAR *driver_name)
+static SC_HANDLE load_driver(struct testsign_context *ctx, WCHAR *filename,
+        const WCHAR *resname, const WCHAR *driver_name)
 {
     SC_HANDLE manager, service;
 
@@ -98,6 +290,7 @@ static SC_HANDLE load_driver(WCHAR *filename, const WCHAR *resname, const WCHAR 
     if (service) unload_driver(service);
 
     load_resource(resname, filename);
+    testsign_sign(ctx, filename);
     trace("Trying to load driver %s\n", debugstr_w(filename));
 
     service = CreateServiceW(manager, driver_name, driver_name,
@@ -616,13 +809,13 @@ static void test_object_info(void)
     CloseHandle(file);
 }
 
-static void test_driver3(void)
+static void test_driver3(struct testsign_context *ctx)
 {
     WCHAR filename[MAX_PATH];
     SC_HANDLE service;
     BOOL ret;
 
-    service = load_driver(filename, L"driver3.dll", L"WineTestDriver3");
+    service = load_driver(ctx, filename, L"driver3.dll", L"WineTestDriver3");
     ok(service != NULL, "driver3 failed to load\n");
 
     ret = StartServiceA(service, 0, NULL);
@@ -696,7 +889,7 @@ static DWORD WINAPI wsk_test_thread(void *parameter)
     return TRUE;
 }
 
-static void test_driver4(void)
+static void test_driver4(struct testsign_context *ctx)
 {
     WCHAR filename[MAX_PATH];
     SC_HANDLE service;
@@ -704,7 +897,7 @@ static void test_driver4(void)
     DWORD written;
     BOOL ret;
 
-    if (!(service = load_driver(filename, L"driver4.dll", L"WineTestDriver4")))
+    if (!(service = load_driver(ctx, filename, L"driver4.dll", L"WineTestDriver4")))
         return;
 
     if (!start_driver(service, TRUE))
@@ -733,26 +926,35 @@ static void test_driver4(void)
 START_TEST(ntoskrnl)
 {
     WCHAR filename[MAX_PATH], filename2[MAX_PATH];
+    struct testsign_context ctx;
     SC_HANDLE service, service2;
     DWORD written;
     BOOL ret;
 
-    HMODULE hntdll = GetModuleHandleA("ntdll.dll");
-    pRtlDosPathNameToNtPathName_U = (void *)GetProcAddress(hntdll, "RtlDosPathNameToNtPathName_U");
-    pRtlFreeUnicodeString = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
+    pRtlDosPathNameToNtPathName_U = (void *)GetProcAddress(GetModuleHandleA("ntdll"), "RtlDosPathNameToNtPathName_U");
+    pRtlFreeUnicodeString = (void *)GetProcAddress(GetModuleHandleA("ntdll"), "RtlFreeUnicodeString");
     pCancelIoEx = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "CancelIoEx");
     pSetFileCompletionNotificationModes = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"),
                                                                  "SetFileCompletionNotificationModes");
+    pSignerSign = (void *)GetProcAddress(LoadLibraryA("mssign32"), "SignerSign");
+
+    if (!testsign_create_cert(&ctx))
+        return;
 
     subtest("driver");
-    if (!(service = load_driver(filename, L"driver.dll", L"WineTestDriver")))
+    if (!(service = load_driver(&ctx, filename, L"driver.dll", L"WineTestDriver")))
+    {
+        testsign_cleanup(&ctx);
         return;
+    }
+
     if (!start_driver(service, FALSE))
     {
         DeleteFileW(filename);
+        testsign_cleanup(&ctx);
         return;
     }
-    service2 = load_driver(filename2, L"driver2.dll", L"WineTestDriver2");
+    service2 = load_driver(&ctx, filename2, L"driver2.dll", L"WineTestDriver2");
 
     device = CreateFileA("\\\\.\\WineTestDriver", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
     ok(device != INVALID_HANDLE_VALUE, "failed to open device: %u\n", GetLastError());
@@ -783,7 +985,9 @@ START_TEST(ntoskrnl)
     ret = DeleteFileW(filename2);
     ok(ret, "DeleteFile failed: %u\n", GetLastError());
 
-    test_driver3();
+    test_driver3(&ctx);
     subtest("driver4");
-    test_driver4();
+    test_driver4(&ctx);
+
+    testsign_cleanup(&ctx);
 }
