@@ -3704,9 +3704,9 @@ HRESULT WINAPI AUDDRV_GetPropValue(GUID *guid, const PROPERTYKEY *prop, PROPVARI
 
     if (IsEqualGUID(guid, &pulse_render_guid) && IsEqualPropertyKey(*prop, PKEY_AudioEndpoint_PhysicalSpeakers)) {
         out->vt = VT_UI4;
-        out->u.ulVal = g_phys_speakers_mask;
+        out->ulVal = g_phys_speakers_mask;
 
-        return out->u.ulVal ? S_OK : E_FAIL;
+        return out->ulVal ? S_OK : E_FAIL;
     }
 
     return E_NOTIMPL;
