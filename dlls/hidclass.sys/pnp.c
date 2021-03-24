@@ -161,7 +161,7 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
         return status;
     }
 
-    ext->preparseData = ParseDescriptor(reportDescriptor, descriptor.DescriptorList[0].wReportLength);
+    ext->preparseData = ParseDescriptor(reportDescriptor, descriptor.DescriptorList[i].wReportLength);
 
     HeapFree(GetProcessHeap(), 0, reportDescriptor);
     if (!ext->preparseData)
