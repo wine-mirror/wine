@@ -197,10 +197,15 @@ static void WINAPI test_load_image_notify_routine(UNICODE_STRING *image_name, HA
 
 static void test_load_driver(void)
 {
+    char full_name_buffer[300];
+    OBJECT_NAME_INFORMATION *full_name = (OBJECT_NAME_INFORMATION *)full_name_buffer;
     static WCHAR image_path_key_name[] = L"ImagePath";
     RTL_QUERY_REGISTRY_TABLE query_table[2];
     UNICODE_STRING name, image_path;
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
     NTSTATUS ret;
+    HANDLE file;
 
     ret = PsSetLoadImageNotifyRoutine(test_load_image_notify_routine);
     ok(ret == STATUS_SUCCESS, "Got unexpected status %#x.\n", ret);
@@ -221,6 +226,18 @@ static void test_load_driver(void)
     ok(ret == STATUS_SUCCESS, "Got unexpected status %#x.\n", ret);
     ok(!!image_path.Buffer, "image_path.Buffer is NULL.\n");
 
+    /* The image path name in the registry may contain NT symlinks (e.g. DOS
+     * drives), which are resolved before the callback is called on Windows 10. */
+    InitializeObjectAttributes(&attr, &image_path, OBJ_KERNEL_HANDLE, NULL, NULL);
+    ret = ZwOpenFile(&file, SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT);
+    todo_wine ok(!ret, "Got unexpected status %#x.\n", ret);
+    if (!ret)
+    {
+        ret = ZwQueryObject(file, ObjectNameInformation, full_name_buffer, sizeof(full_name_buffer), NULL);
+        ok(!ret, "Got unexpected status %#x.\n", ret);
+        ZwClose(file);
+    }
+
     RtlInitUnicodeString(&name, driver2_path);
 
     ret = ZwLoadDriver(&name);
@@ -232,7 +249,9 @@ static void test_load_driver(void)
             "Got unexpected ImageAddressingMode %#x.\n", test_image_info.ImageAddressingMode);
     ok(test_image_info.SystemModeImage,
             "Got unexpected SystemModeImage %#x.\n", test_image_info.SystemModeImage);
-    ok(!wcscmp(test_load_image_name, image_path.Buffer), "Image path names do not match.\n");
+    ok(!wcscmp(test_load_image_name, image_path.Buffer) /* Win < 10 */
+            || !wcscmp(test_load_image_name, full_name->Name.Buffer),
+            "Expected image path name %ls, got %ls.\n", full_name->Name.Buffer, test_load_image_name);
 
     test_load_image_notify_count = -1;
 
