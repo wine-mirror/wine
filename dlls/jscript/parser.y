@@ -1595,7 +1595,8 @@ HRESULT script_parse(script_ctx_t *ctx, struct _compiler_ctx_t *compiler, byteco
     heap_pool_clear(mark);
     hres = parser_ctx->hres;
     if(FAILED(hres)) {
-        const WCHAR *line_start = code->source + parser_ctx->error_loc, *line_end = line_start;
+        unsigned int error_loc = parser_ctx->error_loc == -1 ? 0 : parser_ctx->error_loc;
+        const WCHAR *line_start = code->source + error_loc, *line_end = line_start;
         jsstr_t *line_str;
 
         while(line_start > code->source && line_start[-1] != '\n')
@@ -1609,7 +1610,7 @@ HRESULT script_parse(script_ctx_t *ctx, struct _compiler_ctx_t *compiler, byteco
              debugstr_jsstr(line_str));
 
         throw_error(ctx, hres, NULL);
-        set_error_location(ctx->ei, code, parser_ctx->error_loc, IDS_COMPILATION_ERROR, line_str);
+        set_error_location(ctx->ei, code, error_loc, IDS_COMPILATION_ERROR, line_str);
         parser_release(parser_ctx);
         if(line_str)
             jsstr_release(line_str);
