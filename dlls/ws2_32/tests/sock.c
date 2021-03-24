@@ -7296,6 +7296,7 @@ static void test_ConnectEx(void)
     buffer[1] = '2';
     buffer[2] = '3';
     bret = pConnectEx(connector, (struct sockaddr*)&address, addrlen, buffer, 3, &bytesReturned, &overlapped);
+    memset(buffer, 0, 3);
     ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING, "ConnectEx failed: "
         "returned %d + errno %d\n", bret, WSAGetLastError());
     dwret = WaitForSingleObject(overlapped.hEvent, 15000);
