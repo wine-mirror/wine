@@ -5809,6 +5809,8 @@ GpStatus WINGDIPAPI GdipDrawString(GpGraphics *graphics, GDIPCONST WCHAR *string
 
 GpStatus WINGDIPAPI GdipResetClip(GpGraphics *graphics)
 {
+    GpStatus stat;
+
     TRACE("(%p)\n", graphics);
 
     if(!graphics)
@@ -5816,6 +5818,13 @@ GpStatus WINGDIPAPI GdipResetClip(GpGraphics *graphics)
 
     if(graphics->busy)
         return ObjectBusy;
+
+    if (is_metafile_graphics(graphics))
+    {
+        stat = METAFILE_ResetClip((GpMetafile *)graphics->image);
+        if (stat != Ok)
+            return stat;
+    }
 
     return GdipSetInfinite(graphics->clip);
 }

@@ -5227,3 +5227,24 @@ GpStatus METAFILE_OffsetClip(GpMetafile *metafile, REAL dx, REAL dy)
 
     return Ok;
 }
+
+GpStatus METAFILE_ResetClip(GpMetafile *metafile)
+{
+    EmfPlusRecordHeader *record;
+    GpStatus stat;
+
+    if (metafile->metafile_type == MetafileTypeEmf)
+    {
+        FIXME("stub!\n");
+        return NotImplemented;
+    }
+
+    stat = METAFILE_AllocateRecord(metafile, EmfPlusRecordTypeResetClip,
+        sizeof(*record), (void **)&record);
+    if (stat != Ok)
+        return stat;
+
+    METAFILE_WriteRecords(metafile);
+
+    return Ok;
+}

@@ -3755,6 +3755,54 @@ static void test_offsetclip(void)
     expect(Ok, stat);
 }
 
+static void test_resetclip(void)
+{
+    static const GpRectF frame = { 0.0f, 0.0f, 100.0f, 100.0f };
+    static const emfplus_record reset_clip_records[] =
+    {
+       { EMR_HEADER },
+       { EmfPlusRecordTypeHeader },
+       { EmfPlusRecordTypeResetClip },
+       { EmfPlusRecordTypeResetClip },
+       { EmfPlusRecordTypeEndOfFile },
+       { EMR_EOF },
+       { 0 },
+    };
+
+    GpMetafile *metafile;
+    GpGraphics *graphics;
+    HENHMETAFILE hemf;
+    GpStatus stat;
+    HDC hdc;
+
+    hdc = CreateCompatibleDC(0);
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitPixel, description, &metafile);
+    expect(Ok, stat);
+    DeleteDC(hdc);
+
+    stat = GdipGetImageGraphicsContext((GpImage *)metafile, &graphics);
+    expect(Ok, stat);
+
+    stat = GdipResetClip(graphics);
+    expect(Ok, stat);
+
+    stat = GdipResetClip(graphics);
+    expect(Ok, stat);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+    sync_metafile(&metafile, "reset_clip.emf");
+
+    stat = GdipGetHemfFromMetafile(metafile, &hemf);
+    expect(Ok, stat);
+
+    check_emfplus(hemf, reset_clip_records, "reset clip");
+    DeleteEnhMetaFile(hemf);
+
+    stat = GdipDisposeImage((GpImage*)metafile);
+    expect(Ok, stat);
+}
+
 START_TEST(metafile)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -3813,6 +3861,7 @@ START_TEST(metafile)
     test_fillellipse();
     test_drawrectangle();
     test_offsetclip();
+    test_resetclip();
 
     GdiplusShutdown(gdiplusToken);
 }
