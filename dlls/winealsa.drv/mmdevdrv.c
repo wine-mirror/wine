@@ -4324,15 +4324,15 @@ HRESULT WINAPI AUDDRV_GetPropValue(GUID *guid, const PROPERTYKEY *prop, PROPVARI
                 serial_number = (guid->Data4[4] << 24) | (guid->Data4[5] << 16) | (guid->Data4[6] << 8) | guid->Data4[7];
 
                 out->vt = VT_LPWSTR;
-                out->u.pwszVal = CoTaskMemAlloc(128 * sizeof(WCHAR));
+                out->pwszVal = CoTaskMemAlloc(128 * sizeof(WCHAR));
 
-                if(!out->u.pwszVal)
+                if(!out->pwszVal)
                     return E_OUTOFMEMORY;
 
                 if(connection == AudioDeviceConnectionType_USB)
-                    sprintfW( out->u.pwszVal, usbformatW, vendor_id, product_id, device, serial_number);
+                    sprintfW( out->pwszVal, usbformatW, vendor_id, product_id, device, serial_number);
                 else if(connection == AudioDeviceConnectionType_PCI)
-                    sprintfW( out->u.pwszVal, pciformatW, vendor_id, product_id, device, serial_number);
+                    sprintfW( out->pwszVal, pciformatW, vendor_id, product_id, device, serial_number);
 
                 return S_OK;
             }
@@ -4356,15 +4356,15 @@ HRESULT WINAPI AUDDRV_GetPropValue(GUID *guid, const PROPERTYKEY *prop, PROPVARI
         out->vt = VT_UI4;
 
         if (num_speakers > 6)
-            out->u.ulVal = KSAUDIO_SPEAKER_STEREO;
+            out->ulVal = KSAUDIO_SPEAKER_STEREO;
         else if (num_speakers == 6)
-            out->u.ulVal = KSAUDIO_SPEAKER_5POINT1;
+            out->ulVal = KSAUDIO_SPEAKER_5POINT1;
         else if (num_speakers >= 4)
-            out->u.ulVal = KSAUDIO_SPEAKER_QUAD;
+            out->ulVal = KSAUDIO_SPEAKER_QUAD;
         else if (num_speakers >= 2)
-            out->u.ulVal = KSAUDIO_SPEAKER_STEREO;
+            out->ulVal = KSAUDIO_SPEAKER_STEREO;
         else if (num_speakers == 1)
-            out->u.ulVal = KSAUDIO_SPEAKER_MONO;
+            out->ulVal = KSAUDIO_SPEAKER_MONO;
 
         return S_OK;
     }

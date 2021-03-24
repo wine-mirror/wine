@@ -2,7 +2,6 @@ MODULE    = winealsa.drv
 IMPORTS   = uuid ole32 advapi32
 DELAYIMPORTS = winmm
 EXTRALIBS = $(ALSA_LIBS)
-EXTRADEFS = -DWINE_NO_NAMELESS_EXTENSION
 
 C_SRCS = \
 	midi.c \
