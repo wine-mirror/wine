@@ -6350,6 +6350,22 @@ static void test_dxgi_surface_buffer(void)
     check_interface(buffer, &IID_IMFDXGIBuffer, TRUE);
     check_interface(buffer, &IID_IMFGetService, FALSE);
 
+    max_length = 0;
+    hr = IMFMediaBuffer_GetMaxLength(buffer, &max_length);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!max_length, "Unexpected length %u.\n", max_length);
+
+    hr = IMFMediaBuffer_GetCurrentLength(buffer, &cur_length);
+    ok(hr == S_OK, "Failed to get length, hr %#x.\n", hr);
+    ok(!cur_length, "Unexpected length %u.\n", cur_length);
+
+    hr = IMFMediaBuffer_SetCurrentLength(buffer, 2 * max_length);
+    ok(hr == S_OK, "Failed to get length, hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_GetCurrentLength(buffer, &cur_length);
+    ok(hr == S_OK, "Failed to get length, hr %#x.\n", hr);
+    ok(cur_length == 2 * max_length, "Unexpected length %u.\n", cur_length);
+
     hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMFDXGIBuffer, (void **)&dxgi_buffer);
     ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
 

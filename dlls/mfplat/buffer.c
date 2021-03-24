@@ -856,6 +856,17 @@ static HRESULT WINAPI dxgi_surface_buffer_Unlock(IMFMediaBuffer *iface)
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI dxgi_surface_buffer_SetCurrentLength(IMFMediaBuffer *iface, DWORD current_length)
+{
+    struct memory_buffer *buffer = impl_from_IMFMediaBuffer(iface);
+
+    TRACE("%p, %u.\n", iface, current_length);
+
+    buffer->current_length = current_length;
+
+    return S_OK;
+}
+
 static HRESULT WINAPI dxgi_surface_buffer_Lock2D(IMF2DBuffer2 *iface, BYTE **scanline0, LONG *pitch)
 {
     FIXME("%p, %p, %p.\n", iface, scanline0, pitch);
@@ -977,7 +988,7 @@ static const IMFMediaBufferVtbl dxgi_surface_1d_buffer_vtbl =
     dxgi_surface_buffer_Lock,
     dxgi_surface_buffer_Unlock,
     memory_buffer_GetCurrentLength,
-    memory_buffer_SetCurrentLength,
+    dxgi_surface_buffer_SetCurrentLength,
     memory_buffer_GetMaxLength,
 };
 
