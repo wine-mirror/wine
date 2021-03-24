@@ -336,10 +336,10 @@ static bool amt_from_wg_format_video(AM_MEDIA_TYPE *mt, const struct wg_format *
 
     if (format->u.video.format == WG_VIDEO_FORMAT_RGB16)
     {
-        mt->cbFormat = offsetof(VIDEOINFO, u.dwBitMasks[3]);
-        video_format->u.dwBitMasks[iRED]   = 0xf800;
-        video_format->u.dwBitMasks[iGREEN] = 0x07e0;
-        video_format->u.dwBitMasks[iBLUE]  = 0x001f;
+        mt->cbFormat = offsetof(VIDEOINFO, dwBitMasks[3]);
+        video_format->dwBitMasks[iRED]   = 0xf800;
+        video_format->dwBitMasks[iGREEN] = 0x07e0;
+        video_format->dwBitMasks[iBLUE]  = 0x001f;
     }
 
     return true;

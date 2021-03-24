@@ -249,9 +249,9 @@ static void start_pipeline(struct media_source *source, struct source_async_comm
     if (source->state == SOURCE_STOPPED && position->vt == VT_EMPTY)
     {
         position->vt = VT_I8;
-        position->u.hVal.QuadPart = 0;
+        position->hVal.QuadPart = 0;
     }
-    source->start_time = position->u.hVal.QuadPart;
+    source->start_time = position->hVal.QuadPart;
 
     for (i = 0; i < source->stream_count; i++)
     {
@@ -310,7 +310,7 @@ static void start_pipeline(struct media_source *source, struct source_async_comm
     source->state = SOURCE_RUNNING;
 
     unix_funcs->wg_parser_stream_seek(source->streams[0]->wg_stream, 1.0,
-            position->u.hVal.QuadPart, 0, AM_SEEKING_AbsolutePositioning, AM_SEEKING_NoPositioning);
+            position->hVal.QuadPart, 0, AM_SEEKING_AbsolutePositioning, AM_SEEKING_NoPositioning);
     unix_funcs->wg_parser_end_flush(source->wg_parser);
 }
 
