@@ -357,7 +357,9 @@ static int dump_emfrecord(void)
         const EMREXTTEXTOUTW *etoW = PRD(offset, sizeof(*etoW));
 
         printf("%-20s %08x\n", "EMR_EXTTEXTOUTW", length);
-        printf("pt (%d,%d) rect (%d,%d - %d,%d) flags %#x, %s\n",
+        printf("bounds (%d,%d - %d,%d) mode %#x x_scale %f y_scale %f pt (%d,%d) rect (%d,%d - %d,%d) flags %#x, %s\n",
+               etoW->rclBounds.left, etoW->rclBounds.top, etoW->rclBounds.right, etoW->rclBounds.bottom,
+               etoW->iGraphicsMode, etoW->exScale, etoW->eyScale,
                etoW->emrtext.ptlReference.x, etoW->emrtext.ptlReference.y,
                etoW->emrtext.rcl.left, etoW->emrtext.rcl.top,
                etoW->emrtext.rcl.right, etoW->emrtext.rcl.bottom,
