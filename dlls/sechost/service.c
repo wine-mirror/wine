@@ -533,10 +533,10 @@ BOOL WINAPI DECLSPEC_HOTPATCH ChangeServiceConfig2W( SC_HANDLE service, DWORD le
 
             rpc_privinfo.cbRequiredPrivileges = multisz_size( privinfo->pmszRequiredPrivileges );
             rpc_privinfo.pRequiredPrivileges = (BYTE *)privinfo->pmszRequiredPrivileges;
-            rpc_info.u.privinfo = &rpc_privinfo;
+            rpc_info.privinfo = &rpc_privinfo;
         }
         else
-            rpc_info.u.descr = info;
+            rpc_info.descr = info;
         err = svcctl_ChangeServiceConfig2W( service, rpc_info );
     }
     __EXCEPT(rpc_filter)
@@ -1309,7 +1309,7 @@ static DWORD WINAPI notify_thread(void *user)
 
     if (err == ERROR_SUCCESS && list)
     {
-        cparams = list->NotifyParamsArray[0].u.params;
+        cparams = list->NotifyParamsArray[0].params;
 
         data->notify_buffer->dwNotificationStatus = cparams->dwNotificationStatus;
         memcpy(&data->notify_buffer->ServiceStatus, &cparams->ServiceStatus,
@@ -1372,7 +1372,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH NotifyServiceStatusChangeW( SC_HANDLE service, DW
     }
 
     data->params.dwInfoLevel = 2;
-    data->params.u.params = &data->cparams;
+    data->params.params = &data->cparams;
 
     data->cparams.dwNotifyMask = mask;
 

@@ -2,7 +2,6 @@ MODULE    = sechost.dll
 IMPORTLIB = sechost
 IMPORTS   = kernelbase
 DELAYIMPORTS = rpcrt4
-EXTRADEFS = -DWINE_NO_NAMELESS_EXTENSION
 
 EXTRADLLFLAGS = -mno-cygwin
 
