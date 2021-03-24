@@ -532,10 +532,10 @@ static void MMDRV_Init(void)
         goto exit;
     }
 
-    size = WideCharToMultiByte(CP_ACP, 0, pv.u.pwszVal, -1,
+    size = WideCharToMultiByte(CP_ACP, 0, pv.pwszVal, -1,
             NULL, 0, NULL, NULL);
     drvA = HeapAlloc(GetProcessHeap(), 0, size);
-    WideCharToMultiByte(CP_ACP, 0, pv.u.pwszVal, -1, drvA, size, NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, pv.pwszVal, -1, drvA, size, NULL, NULL);
 
     MMDRV_Install(drvA, drvA, FALSE);
 

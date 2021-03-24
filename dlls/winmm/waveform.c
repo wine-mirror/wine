@@ -422,7 +422,7 @@ static HRESULT WINMM_GetFriendlyName(IMMDevice *device, WCHAR *out,
         return hr;
     }
 
-    lstrcpynW(out, var.u.pwszVal, outlen);
+    lstrcpynW(out, var.pwszVal, outlen);
 
     PropVariantClear(&var);
 
@@ -2368,7 +2368,7 @@ static LRESULT DRV_QueryDeviceInterface(WINMM_QueryInterfaceInfo *info)
         return MMSYSERR_ERROR;
     }
 
-    len_bytes = (lstrlenW(pv.u.pwszVal) + 1) * sizeof(WCHAR);
+    len_bytes = (lstrlenW(pv.pwszVal) + 1) * sizeof(WCHAR);
 
     if(info->str){
         if(len_bytes > *info->len_bytes){
@@ -2378,7 +2378,7 @@ static LRESULT DRV_QueryDeviceInterface(WINMM_QueryInterfaceInfo *info)
             return MMSYSERR_INVALPARAM;
         }
 
-        memcpy(info->str, pv.u.pwszVal, len_bytes);
+        memcpy(info->str, pv.pwszVal, len_bytes);
     }else
         *info->len_bytes = len_bytes;
 
