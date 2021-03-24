@@ -1219,7 +1219,8 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
             ps.rcPaint.right = editor->rcFormat.right;
         }
 
-        editor_draw( editor, hdc, &ps.rcPaint );
+        ITextServices_TxDraw( host->text_srv, DVASPECT_CONTENT, 0, NULL, NULL, hdc, NULL, NULL, NULL,
+                              &ps.rcPaint, NULL, 0, TXTVIEW_ACTIVE );
         DeleteObject( SelectObject( hdc, brush ) );
         EndPaint( editor->hWnd, &ps );
         return 0;
