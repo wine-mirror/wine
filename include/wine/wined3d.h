@@ -2584,6 +2584,8 @@ HRESULT __cdecl wined3d_device_context_set_stream_source(struct wined3d_device_c
 void __cdecl wined3d_device_context_set_unordered_access_view(struct wined3d_device_context *context,
         enum wined3d_pipeline pipeline, unsigned int idx, struct wined3d_unordered_access_view *uav,
         unsigned int initial_count);
+void __cdecl wined3d_device_context_set_vertex_declaration(struct wined3d_device_context *context,
+        struct wined3d_vertex_declaration *declaration);
 void __cdecl wined3d_device_context_set_viewports(struct wined3d_device_context *context, unsigned int viewport_count,
         const struct wined3d_viewport *viewports);
 

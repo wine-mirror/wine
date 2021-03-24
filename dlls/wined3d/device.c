@@ -1887,21 +1887,9 @@ struct wined3d_device_context * CDECL wined3d_device_get_immediate_context(struc
 void CDECL wined3d_device_set_vertex_declaration(struct wined3d_device *device,
         struct wined3d_vertex_declaration *declaration)
 {
-    struct wined3d_state *state = device->cs->c.state;
-    struct wined3d_vertex_declaration *prev;
-
     TRACE("device %p, declaration %p.\n", device, declaration);
 
-    prev = state->vertex_declaration;
-    if (declaration == prev)
-        return;
-
-    if (declaration)
-        wined3d_vertex_declaration_incref(declaration);
-    state->vertex_declaration = declaration;
-    wined3d_device_context_emit_set_vertex_declaration(&device->cs->c, declaration);
-    if (prev)
-        wined3d_vertex_declaration_decref(prev);
+    wined3d_device_context_set_vertex_declaration(&device->cs->c, declaration);
 }
 
 struct wined3d_vertex_declaration * CDECL wined3d_device_get_vertex_declaration(const struct wined3d_device *device)
@@ -2379,6 +2367,26 @@ void CDECL wined3d_device_context_set_index_buffer(struct wined3d_device_context
     wined3d_device_context_emit_set_index_buffer(context, buffer, format_id, offset);
     if (prev_buffer)
         wined3d_buffer_decref(prev_buffer);
+}
+
+void CDECL wined3d_device_context_set_vertex_declaration(struct wined3d_device_context *context,
+        struct wined3d_vertex_declaration *declaration)
+{
+    struct wined3d_state *state = context->state;
+    struct wined3d_vertex_declaration *prev;
+
+    TRACE("context %p, declaration %p.\n", context, declaration);
+
+    prev = state->vertex_declaration;
+    if (declaration == prev)
+        return;
+
+    if (declaration)
+        wined3d_vertex_declaration_incref(declaration);
+    state->vertex_declaration = declaration;
+    wined3d_device_context_emit_set_vertex_declaration(context, declaration);
+    if (prev)
+        wined3d_vertex_declaration_decref(prev);
 }
 
 void CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struct wined3d_shader *shader)
