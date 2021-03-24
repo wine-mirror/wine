@@ -234,10 +234,10 @@ static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *sc
         if (vt == VT_ILLEGAL) return WINCODEC_ERR_WRONGSTATE;
 
         next_token.vt = VT_BSTR;
-        next_token.u.bstrVal = SysAllocStringLen(NULL, elem->len - (end - start) + 1);
-        if (!next_token.u.bstrVal) return E_OUTOFMEMORY;
+        next_token.bstrVal = SysAllocStringLen(NULL, elem->len - (end - start) + 1);
+        if (!next_token.bstrVal) return E_OUTOFMEMORY;
 
-        bstr = next_token.u.bstrVal;
+        bstr = next_token.bstrVal;
 
         end++;
         while (*end && *end != '}' && end - start < elem->len)
@@ -251,19 +251,19 @@ static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *sc
             return WINCODEC_ERR_INVALIDQUERYREQUEST;
         }
         *bstr = 0;
-        TRACE("schema/id %s\n", wine_dbgstr_w(next_token.u.bstrVal));
+        TRACE("schema/id %s\n", wine_dbgstr_w(next_token.bstrVal));
 
         if (vt == VT_CLSID)
         {
             id->vt = VT_CLSID;
-            id->u.puuid = CoTaskMemAlloc(sizeof(GUID));
-            if (!id->u.puuid)
+            id->puuid = CoTaskMemAlloc(sizeof(GUID));
+            if (!id->puuid)
             {
                 PropVariantClear(&next_token);
                 return E_OUTOFMEMORY;
             }
 
-            hr = UuidFromStringW(next_token.u.bstrVal, id->u.puuid);
+            hr = UuidFromStringW(next_token.bstrVal, id->puuid);
         }
         else
             hr = PropVariantChangeType(id, &next_token, 0, vt);
@@ -325,10 +325,10 @@ static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *sc
         elem->len = end - start;
 
     id->vt = VT_BSTR;
-    id->u.bstrVal = SysAllocStringLen(NULL, elem->len + 1);
-    if (!id->u.bstrVal) return E_OUTOFMEMORY;
+    id->bstrVal = SysAllocStringLen(NULL, elem->len + 1);
+    if (!id->bstrVal) return E_OUTOFMEMORY;
 
-    bstr = id->u.bstrVal;
+    bstr = id->bstrVal;
     p = elem->str;
     while (p - elem->str < elem->len)
     {
@@ -428,16 +428,16 @@ static HRESULT get_next_reader(IWICMetadataReader *reader, UINT index,
     if (index)
     {
         schema.vt = VT_UI2;
-        schema.u.uiVal = index;
+        schema.uiVal = index;
     }
 
     id.vt = VT_CLSID;
-    id.u.puuid = guid;
+    id.puuid = guid;
     hr = IWICMetadataReader_GetValue(reader, &schema, &id, &value);
     if (hr != S_OK) return hr;
 
     if (value.vt == VT_UNKNOWN)
-        hr = IUnknown_QueryInterface(value.u.punkVal, &IID_IWICMetadataReader, (void **)new_reader);
+        hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataReader, (void **)new_reader);
     else
         hr = WINCODEC_ERR_UNEXPECTEDMETADATATYPE;
 
@@ -499,7 +499,7 @@ static HRESULT WINAPI mqr_GetMetadataByName(IWICMetadataQueryReader *iface, LPCW
 
         if (!elem.len) break;
 
-        if (tk_id.vt == VT_CLSID || (tk_id.vt == VT_BSTR && WICMapShortNameToGuid(tk_id.u.bstrVal, &guid) == S_OK))
+        if (tk_id.vt == VT_CLSID || (tk_id.vt == VT_BSTR && WICMapShortNameToGuid(tk_id.bstrVal, &guid) == S_OK))
         {
             WCHAR *root;
 
@@ -509,7 +509,7 @@ static HRESULT WINAPI mqr_GetMetadataByName(IWICMetadataQueryReader *iface, LPCW
                 PropVariantClear(&tk_schema);
             }
 
-            if (tk_id.vt == VT_CLSID) guid = *tk_id.u.puuid;
+            if (tk_id.vt == VT_CLSID) guid = *tk_id.puuid;
 
             if (reader)
             {
@@ -534,7 +534,7 @@ static HRESULT WINAPI mqr_GetMetadataByName(IWICMetadataQueryReader *iface, LPCW
 
             PropVariantClear(&new_value);
             new_value.vt = VT_UNKNOWN;
-            hr = MetadataQueryReader_CreateInstance(This->block, root, (IWICMetadataQueryReader **)&new_value.u.punkVal);
+            hr = MetadataQueryReader_CreateInstance(This->block, root, (IWICMetadataQueryReader **)&new_value.punkVal);
             SysFreeString(root);
             if (hr != S_OK) break;
         }
@@ -554,9 +554,9 @@ static HRESULT WINAPI mqr_GetMetadataByName(IWICMetadataQueryReader *iface, LPCW
                 if (hr != S_OK) break;
 
                 schema.vt = VT_LPWSTR;
-                schema.u.pwszVal = (LPWSTR)map_shortname_to_schema(&guid, tk_schema.u.bstrVal);
-                if (!schema.u.pwszVal)
-                    schema.u.pwszVal = tk_schema.u.bstrVal;
+                schema.pwszVal = (LPWSTR)map_shortname_to_schema(&guid, tk_schema.bstrVal);
+                if (!schema.pwszVal)
+                    schema.pwszVal = tk_schema.bstrVal;
             }
             else
                 schema = tk_schema;
@@ -564,7 +564,7 @@ static HRESULT WINAPI mqr_GetMetadataByName(IWICMetadataQueryReader *iface, LPCW
             if (tk_id.vt == VT_BSTR)
             {
                 id.vt = VT_LPWSTR;
-                id.u.pwszVal = tk_id.u.bstrVal;
+                id.pwszVal = tk_id.bstrVal;
             }
             else
                 id = tk_id;

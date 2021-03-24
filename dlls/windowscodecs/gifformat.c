@@ -101,51 +101,51 @@ static HRESULT load_LSD_metadata(IStream *stream, const GUID *vendor, DWORD opti
     }
 
     result[0].id.vt = VT_LPWSTR;
-    result[0].id.u.pwszVal = strdupAtoW("Signature");
+    result[0].id.pwszVal = strdupAtoW("Signature");
     result[0].value.vt = VT_UI1|VT_VECTOR;
-    result[0].value.u.caub.cElems = sizeof(lsd_data.signature);
-    result[0].value.u.caub.pElems = HeapAlloc(GetProcessHeap(), 0, sizeof(lsd_data.signature));
-    memcpy(result[0].value.u.caub.pElems, lsd_data.signature, sizeof(lsd_data.signature));
+    result[0].value.caub.cElems = sizeof(lsd_data.signature);
+    result[0].value.caub.pElems = HeapAlloc(GetProcessHeap(), 0, sizeof(lsd_data.signature));
+    memcpy(result[0].value.caub.pElems, lsd_data.signature, sizeof(lsd_data.signature));
 
     result[1].id.vt = VT_LPWSTR;
-    result[1].id.u.pwszVal = strdupAtoW("Width");
+    result[1].id.pwszVal = strdupAtoW("Width");
     result[1].value.vt = VT_UI2;
-    result[1].value.u.uiVal = lsd_data.width;
+    result[1].value.uiVal = lsd_data.width;
 
     result[2].id.vt = VT_LPWSTR;
-    result[2].id.u.pwszVal = strdupAtoW("Height");
+    result[2].id.pwszVal = strdupAtoW("Height");
     result[2].value.vt = VT_UI2;
-    result[2].value.u.uiVal = lsd_data.height;
+    result[2].value.uiVal = lsd_data.height;
 
     result[3].id.vt = VT_LPWSTR;
-    result[3].id.u.pwszVal = strdupAtoW("GlobalColorTableFlag");
+    result[3].id.pwszVal = strdupAtoW("GlobalColorTableFlag");
     result[3].value.vt = VT_BOOL;
-    result[3].value.u.boolVal = (lsd_data.packed >> 7) & 1;
+    result[3].value.boolVal = (lsd_data.packed >> 7) & 1;
 
     result[4].id.vt = VT_LPWSTR;
-    result[4].id.u.pwszVal = strdupAtoW("ColorResolution");
+    result[4].id.pwszVal = strdupAtoW("ColorResolution");
     result[4].value.vt = VT_UI1;
-    result[4].value.u.bVal = (lsd_data.packed >> 4) & 7;
+    result[4].value.bVal = (lsd_data.packed >> 4) & 7;
 
     result[5].id.vt = VT_LPWSTR;
-    result[5].id.u.pwszVal = strdupAtoW("SortFlag");
+    result[5].id.pwszVal = strdupAtoW("SortFlag");
     result[5].value.vt = VT_BOOL;
-    result[5].value.u.boolVal = (lsd_data.packed >> 3) & 1;
+    result[5].value.boolVal = (lsd_data.packed >> 3) & 1;
 
     result[6].id.vt = VT_LPWSTR;
-    result[6].id.u.pwszVal = strdupAtoW("GlobalColorTableSize");
+    result[6].id.pwszVal = strdupAtoW("GlobalColorTableSize");
     result[6].value.vt = VT_UI1;
-    result[6].value.u.bVal = lsd_data.packed & 7;
+    result[6].value.bVal = lsd_data.packed & 7;
 
     result[7].id.vt = VT_LPWSTR;
-    result[7].id.u.pwszVal = strdupAtoW("BackgroundColorIndex");
+    result[7].id.pwszVal = strdupAtoW("BackgroundColorIndex");
     result[7].value.vt = VT_UI1;
-    result[7].value.u.bVal = lsd_data.background_color_index;
+    result[7].value.bVal = lsd_data.background_color_index;
 
     result[8].id.vt = VT_LPWSTR;
-    result[8].id.u.pwszVal = strdupAtoW("PixelAspectRatio");
+    result[8].id.pwszVal = strdupAtoW("PixelAspectRatio");
     result[8].value.vt = VT_UI1;
-    result[8].value.u.bVal = lsd_data.pixel_aspect_ratio;
+    result[8].value.bVal = lsd_data.pixel_aspect_ratio;
 
     *items = result;
     *count = 9;
@@ -189,44 +189,44 @@ static HRESULT load_IMD_metadata(IStream *stream, const GUID *vendor, DWORD opti
     }
 
     result[0].id.vt = VT_LPWSTR;
-    result[0].id.u.pwszVal = strdupAtoW("Left");
+    result[0].id.pwszVal = strdupAtoW("Left");
     result[0].value.vt = VT_UI2;
-    result[0].value.u.uiVal = imd_data.left;
+    result[0].value.uiVal = imd_data.left;
 
     result[1].id.vt = VT_LPWSTR;
-    result[1].id.u.pwszVal = strdupAtoW("Top");
+    result[1].id.pwszVal = strdupAtoW("Top");
     result[1].value.vt = VT_UI2;
-    result[1].value.u.uiVal = imd_data.top;
+    result[1].value.uiVal = imd_data.top;
 
     result[2].id.vt = VT_LPWSTR;
-    result[2].id.u.pwszVal = strdupAtoW("Width");
+    result[2].id.pwszVal = strdupAtoW("Width");
     result[2].value.vt = VT_UI2;
-    result[2].value.u.uiVal = imd_data.width;
+    result[2].value.uiVal = imd_data.width;
 
     result[3].id.vt = VT_LPWSTR;
-    result[3].id.u.pwszVal = strdupAtoW("Height");
+    result[3].id.pwszVal = strdupAtoW("Height");
     result[3].value.vt = VT_UI2;
-    result[3].value.u.uiVal = imd_data.height;
+    result[3].value.uiVal = imd_data.height;
 
     result[4].id.vt = VT_LPWSTR;
-    result[4].id.u.pwszVal = strdupAtoW("LocalColorTableFlag");
+    result[4].id.pwszVal = strdupAtoW("LocalColorTableFlag");
     result[4].value.vt = VT_BOOL;
-    result[4].value.u.boolVal = (imd_data.packed >> 7) & 1;
+    result[4].value.boolVal = (imd_data.packed >> 7) & 1;
 
     result[5].id.vt = VT_LPWSTR;
-    result[5].id.u.pwszVal = strdupAtoW("InterlaceFlag");
+    result[5].id.pwszVal = strdupAtoW("InterlaceFlag");
     result[5].value.vt = VT_BOOL;
-    result[5].value.u.boolVal = (imd_data.packed >> 6) & 1;
+    result[5].value.boolVal = (imd_data.packed >> 6) & 1;
 
     result[6].id.vt = VT_LPWSTR;
-    result[6].id.u.pwszVal = strdupAtoW("SortFlag");
+    result[6].id.pwszVal = strdupAtoW("SortFlag");
     result[6].value.vt = VT_BOOL;
-    result[6].value.u.boolVal = (imd_data.packed >> 5) & 1;
+    result[6].value.boolVal = (imd_data.packed >> 5) & 1;
 
     result[7].id.vt = VT_LPWSTR;
-    result[7].id.u.pwszVal = strdupAtoW("LocalColorTableSize");
+    result[7].id.pwszVal = strdupAtoW("LocalColorTableSize");
     result[7].value.vt = VT_UI1;
-    result[7].value.u.bVal = imd_data.packed & 7;
+    result[7].value.bVal = imd_data.packed & 7;
 
     *items = result;
     *count = 8;
@@ -282,29 +282,29 @@ static HRESULT load_GCE_metadata(IStream *stream, const GUID *vendor, DWORD opti
     }
 
     result[0].id.vt = VT_LPWSTR;
-    result[0].id.u.pwszVal = strdupAtoW("Disposal");
+    result[0].id.pwszVal = strdupAtoW("Disposal");
     result[0].value.vt = VT_UI1;
-    result[0].value.u.bVal = (gce_data.packed >> 2) & 7;
+    result[0].value.bVal = (gce_data.packed >> 2) & 7;
 
     result[1].id.vt = VT_LPWSTR;
-    result[1].id.u.pwszVal = strdupAtoW("UserInputFlag");
+    result[1].id.pwszVal = strdupAtoW("UserInputFlag");
     result[1].value.vt = VT_BOOL;
-    result[1].value.u.boolVal = (gce_data.packed >> 1) & 1;
+    result[1].value.boolVal = (gce_data.packed >> 1) & 1;
 
     result[2].id.vt = VT_LPWSTR;
-    result[2].id.u.pwszVal = strdupAtoW("TransparencyFlag");
+    result[2].id.pwszVal = strdupAtoW("TransparencyFlag");
     result[2].value.vt = VT_BOOL;
-    result[2].value.u.boolVal = gce_data.packed & 1;
+    result[2].value.boolVal = gce_data.packed & 1;
 
     result[3].id.vt = VT_LPWSTR;
-    result[3].id.u.pwszVal = strdupAtoW("Delay");
+    result[3].id.pwszVal = strdupAtoW("Delay");
     result[3].value.vt = VT_UI2;
-    result[3].value.u.uiVal = gce_data.delay;
+    result[3].value.uiVal = gce_data.delay;
 
     result[4].id.vt = VT_LPWSTR;
-    result[4].id.u.pwszVal = strdupAtoW("TransparentColorIndex");
+    result[4].id.pwszVal = strdupAtoW("TransparentColorIndex");
     result[4].value.vt = VT_UI1;
-    result[4].value.u.bVal = gce_data.transparent_color_index;
+    result[4].value.bVal = gce_data.transparent_color_index;
 
     *items = result;
     *count = 5;
@@ -401,17 +401,17 @@ static HRESULT load_APE_metadata(IStream *stream, const GUID *vendor, DWORD opti
     }
 
     result[0].id.vt = VT_LPWSTR;
-    result[0].id.u.pwszVal = strdupAtoW("Application");
+    result[0].id.pwszVal = strdupAtoW("Application");
     result[0].value.vt = VT_UI1|VT_VECTOR;
-    result[0].value.u.caub.cElems = sizeof(ape_data.application);
-    result[0].value.u.caub.pElems = HeapAlloc(GetProcessHeap(), 0, sizeof(ape_data.application));
-    memcpy(result[0].value.u.caub.pElems, ape_data.application, sizeof(ape_data.application));
+    result[0].value.caub.cElems = sizeof(ape_data.application);
+    result[0].value.caub.pElems = HeapAlloc(GetProcessHeap(), 0, sizeof(ape_data.application));
+    memcpy(result[0].value.caub.pElems, ape_data.application, sizeof(ape_data.application));
 
     result[1].id.vt = VT_LPWSTR;
-    result[1].id.u.pwszVal = strdupAtoW("Data");
+    result[1].id.pwszVal = strdupAtoW("Data");
     result[1].value.vt = VT_UI1|VT_VECTOR;
-    result[1].value.u.caub.cElems = data_size;
-    result[1].value.u.caub.pElems = data;
+    result[1].value.caub.cElems = data_size;
+    result[1].value.caub.pElems = data;
 
     *items = result;
     *count = 2;
@@ -503,9 +503,9 @@ static HRESULT load_GifComment_metadata(IStream *stream, const GUID *vendor, DWO
     PropVariantInit(&result->value);
 
     result->id.vt = VT_LPWSTR;
-    result->id.u.pwszVal = strdupAtoW("TextEntry");
+    result->id.pwszVal = strdupAtoW("TextEntry");
     result->value.vt = VT_LPSTR;
-    result->value.u.pszVal = data;
+    result->value.pszVal = data;
 
     *items = result;
     *count = 1;
