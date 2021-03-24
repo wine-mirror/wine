@@ -26,8 +26,7 @@
 
 #include "wine/debug.h"
 #include "wine/heap.h"
-
-#include "mssign32_private.h"
+#include "wine/mssign.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mssign);
 
