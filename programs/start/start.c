@@ -280,7 +280,7 @@ static BOOL search_path(const WCHAR *firstParam, WCHAR **full_path)
         GetFullPathNameW(temp, MAX_PATH, thisDir, NULL);
 
         /* 1. If extension supplied, see if that file exists */
-        lstrcatW(thisDir, L"\\");
+        if (thisDir[lstrlenW(thisDir) - 1] != '\\') lstrcatW(thisDir, L"\\");
         lstrcatW(thisDir, stemofsearch);
         pos = &thisDir[lstrlenW(thisDir)]; /* Pos = end of name */
 
