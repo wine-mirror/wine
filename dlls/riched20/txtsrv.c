@@ -192,7 +192,7 @@ DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_TxDraw( ITextServices *iface, DWORD
     if (rewrap)
     {
         editor_mark_rewrap_all( services->editor );
-        wrap_marked_paras_dc( services->editor, dc );
+        wrap_marked_paras_dc( services->editor, dc, FALSE );
     }
     editor_draw( services->editor, dc, update );
 

@@ -1020,7 +1020,7 @@ static void adjust_para_y( ME_Paragraph *para, ME_Context *c, struct repaint_ran
     }
 }
 
-BOOL wrap_marked_paras_dc( ME_TextEditor *editor, HDC hdc )
+BOOL wrap_marked_paras_dc( ME_TextEditor *editor, HDC hdc, BOOL invalidate )
 {
   ME_Paragraph *para, *next;
   struct wine_rb_entry *entry, *next_entry = NULL;
@@ -1086,7 +1086,7 @@ BOOL wrap_marked_paras_dc( ME_TextEditor *editor, HDC hdc )
 
   ME_DestroyContext(&c);
 
-  if (repaint.start || editor->nTotalLength < editor->nLastTotalLength)
+  if (invalidate && (repaint.start || editor->nTotalLength < editor->nLastTotalLength))
     para_range_invalidate( editor, repaint.start, repaint.end);
   return !!repaint.start;
 }
@@ -1094,7 +1094,7 @@ BOOL wrap_marked_paras_dc( ME_TextEditor *editor, HDC hdc )
 BOOL ME_WrapMarkedParagraphs( ME_TextEditor *editor )
 {
     HDC hdc = ITextHost_TxGetDC( editor->texthost );
-    BOOL ret = wrap_marked_paras_dc( editor, hdc );
+    BOOL ret = wrap_marked_paras_dc( editor, hdc, TRUE );
     ITextHost_TxReleaseDC( editor->texthost, hdc );
     return ret;
 }

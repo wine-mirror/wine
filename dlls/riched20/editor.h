@@ -202,7 +202,7 @@ void ME_DestroyContext(ME_Context *c) DECLSPEC_HIDDEN;
 BOOL ME_WrapMarkedParagraphs(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void para_range_invalidate( ME_TextEditor *editor, ME_Paragraph *start_para, ME_Paragraph *last_para ) DECLSPEC_HIDDEN;
 void ME_SendRequestResize(ME_TextEditor *editor, BOOL force) DECLSPEC_HIDDEN;
-BOOL wrap_marked_paras_dc( ME_TextEditor *editor, HDC hdc ) DECLSPEC_HIDDEN;
+BOOL wrap_marked_paras_dc( ME_TextEditor *editor, HDC hdc, BOOL invalidate ) DECLSPEC_HIDDEN;
 
 /* para.c */
 void editor_get_selection_paras(ME_TextEditor *editor, ME_Paragraph **para, ME_Paragraph **para_end ) DECLSPEC_HIDDEN;
