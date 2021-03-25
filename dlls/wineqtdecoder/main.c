@@ -27,6 +27,7 @@
 #define COBJMACROS
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
+#define WINE_NO_NAMELESS_EXTENSION
 
 #include "windef.h"
 #include "winbase.h"
