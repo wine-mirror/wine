@@ -505,18 +505,14 @@ static BOOL get_url_encoding(HKEY root, DWORD *encoding)
 
 static LPWSTR user_agent;
 
-static void ensure_useragent(void)
+static size_t obtain_user_agent(WCHAR *ret, size_t size)
 {
     OSVERSIONINFOW info = {sizeof(info)};
     const WCHAR *os_type, *is_nt;
-    WCHAR buf[512], *ret, *tmp;
     DWORD res, idx=0;
-    size_t len, size;
     BOOL is_wow;
+    size_t len;
     HKEY key;
-
-    if(user_agent)
-        return;
 
     GetVersionExW(&info);
     is_nt = info.dwPlatformId == VER_PLATFORM_WIN32_NT ? L"NT " : L"";
@@ -528,16 +524,9 @@ static void ensure_useragent(void)
     else
         os_type = L"";
 
-    swprintf(buf, ARRAY_SIZE(buf), L"Mozilla/4.0 (compatible; MSIE 7.0; Windows %s%d.%d; %sTrident/7.0",
+    swprintf(ret, size, L"Mozilla/4.0 (compatible; MSIE 7.0; Windows %s%d.%d; %sTrident/7.0",
              is_nt, info.dwMajorVersion, info.dwMinorVersion, os_type);
-    len = lstrlenW(buf);
-
-    size = len+40;
-    ret = heap_alloc(size * sizeof(WCHAR));
-    if(!ret)
-        return;
-
-    memcpy(ret, buf, len*sizeof(WCHAR));
+    len = lstrlenW(ret);
 
     res = RegOpenKeyW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\"
                       "Internet Settings\\5.0\\User Agent\\Post Platform", &key);
@@ -545,23 +534,16 @@ static void ensure_useragent(void)
         DWORD value_len;
 
         while(1) {
-            value_len = ARRAY_SIZE(buf);
-            res = RegEnumValueW(key, idx, buf, &value_len, NULL, NULL, NULL, NULL);
+            if(idx) {
+                ret[len++] = ';';
+                ret[len++] = ' ';
+            }
+            value_len = size - len - 2;
+            res = RegEnumValueW(key, idx, ret + len, &value_len, NULL, NULL, NULL, NULL);
             if(res != ERROR_SUCCESS)
                 break;
             idx++;
 
-            if(len + value_len + 2 /* strlen("; ") */ + 1 /* trailing ')' */ >= size) {
-                tmp = heap_realloc(ret, (size*2+value_len)*sizeof(WCHAR));
-                if(!tmp)
-                    break;
-                ret = tmp;
-                size = size*2+value_len;
-            }
-
-            ret[len++] = ';';
-            ret[len++] = ' ';
-            memcpy(ret+len, buf, value_len*sizeof(WCHAR));
             len += value_len;
         }
 
@@ -570,16 +552,28 @@ static void ensure_useragent(void)
 
     ret[len++] = ')';
     ret[len++] = 0;
+    TRACE("Using user agent %s\n", debugstr_w(ret));
+    return len;
+}
 
-    user_agent = ret;
-    TRACE("Using user agent %s\n", debugstr_w(user_agent));
+static void ensure_user_agent(void)
+{
+    EnterCriticalSection(&session_cs);
+
+    if(!user_agent) {
+        WCHAR buf[1024];
+        obtain_user_agent(buf, ARRAY_SIZE(buf));
+        user_agent = heap_strdupW(buf);
+    }
+
+    LeaveCriticalSection(&session_cs);
 }
 
 LPWSTR get_useragent(void)
 {
     LPWSTR ret;
 
-    ensure_useragent();
+    ensure_user_agent();
 
     EnterCriticalSection(&session_cs);
     ret = heap_strdupW(user_agent);
@@ -606,7 +600,7 @@ HRESULT WINAPI UrlMkGetSessionOption(DWORD dwOption, LPVOID pBuffer, DWORD dwBuf
 
         EnterCriticalSection(&session_cs);
 
-        ensure_useragent();
+        ensure_user_agent();
         if(user_agent) {
             size = WideCharToMultiByte(CP_ACP, 0, user_agent, -1, NULL, 0, NULL, NULL);
             *pdwBufferLength = size;
@@ -703,7 +697,7 @@ HRESULT WINAPI ObtainUserAgentString(DWORD dwOption, LPSTR pcszUAOut, DWORD *cbS
 
     EnterCriticalSection(&session_cs);
 
-    ensure_useragent();
+    ensure_user_agent();
     if(user_agent) {
         size = WideCharToMultiByte(CP_ACP, 0, user_agent, -1, NULL, 0, NULL, NULL);
 
