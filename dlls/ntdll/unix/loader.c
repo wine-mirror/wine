@@ -1500,8 +1500,8 @@ static NTSTATUS open_main_image( WCHAR *image, void **module, SECTION_IMAGE_INFO
 /***********************************************************************
  *           load_main_exe
  */
-NTSTATUS load_main_exe( const WCHAR *name, const WCHAR *curdir, WCHAR **image, void **module,
-                        SECTION_IMAGE_INFORMATION *image_info )
+NTSTATUS load_main_exe( const WCHAR *name, const char *unix_name, const WCHAR *curdir,
+                        WCHAR **image, void **module, SECTION_IMAGE_INFORMATION *image_info )
 {
     UNICODE_STRING nt_name;
     NTSTATUS status;
@@ -1510,9 +1510,9 @@ NTSTATUS load_main_exe( const WCHAR *name, const WCHAR *curdir, WCHAR **image, v
     const WCHAR *p;
 
     /* special case for Unix file name */
-    if (main_argv[0][0] == '/' && !stat( main_argv[0], &st ))
+    if (unix_name && unix_name[0] == '/' && !stat( unix_name, &st ))
     {
-        if ((status = unix_to_nt_file_name( main_argv[0], image ))) goto failed;
+        if ((status = unix_to_nt_file_name( unix_name, image ))) goto failed;
         status = open_main_image( *image, module, image_info );
         if (status != STATUS_DLL_NOT_FOUND) return status;
         free( *image );

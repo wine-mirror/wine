@@ -1871,7 +1871,7 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
     add_registry_environment( &env, &env_pos, &env_size );
     env[env_pos++] = 0;
 
-    status = load_main_exe( main_wargv[0], curdir, &image, &module, &image_info );
+    status = load_main_exe( main_wargv[0], main_argv[0], curdir, &image, &module, &image_info );
     if (!status && image_info.Machine != current_machine)  /* need to restart for Wow64 */
     {
         NtUnmapViewOfSection( GetCurrentProcess(), module );
@@ -1888,7 +1888,7 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
 
         free( image );
         prepend_main_wargv( args, 3 );
-        if ((status = load_main_exe( startW, curdir, &image, &module, &image_info )))
+        if ((status = load_main_exe( startW, NULL, curdir, &image, &module, &image_info )))
         {
             MESSAGE( "wine: failed to start %s\n", debugstr_w(main_wargv[2]) );
             NtTerminateProcess( GetCurrentProcess(), status );
@@ -2042,7 +2042,7 @@ void init_startup_info(void)
     free( info );
     NtCurrentTeb()->Peb->ProcessParameters = params;
 
-    status = load_main_exe( params->ImagePathName.Buffer, params->CommandLine.Buffer,
+    status = load_main_exe( params->ImagePathName.Buffer, NULL, params->CommandLine.Buffer,
                             &image, &module, &image_info );
     if (status)
     {
