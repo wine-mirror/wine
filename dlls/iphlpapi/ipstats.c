@@ -2437,7 +2437,7 @@ DWORD build_udp_table( UDP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE 
                 if (class >= UDP_TABLE_OWNER_MODULE)
                 {
                     row.liCreateTimestamp.QuadPart = 0; /* FIXME */
-                    row.u.dwFlags = 0;
+                    row.dwFlags = 0;
                     memset( &row.OwningModuleInfo, 0, sizeof(row.OwningModuleInfo) );
                 }
                 if (!(table = append_table_row( heap, flags, table, &table_size, &count, &row, row_size )))
@@ -2547,8 +2547,8 @@ DWORD build_udp_table( UDP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE 
             if (class >= UDP_TABLE_OWNER_MODULE)
             {
                 row.liCreateTimestamp.QuadPart = 0; /* FIXME */
-                row.u.dwFlags = 0;
-                row.u.SpecificPortBind = !(pINData->inp_flags & INP_ANONPORT);
+                row.dwFlags = 0;
+                row.SpecificPortBind = !(pINData->inp_flags & INP_ANONPORT);
                 memset( &row.OwningModuleInfo, 0, sizeof(row.OwningModuleInfo) );
             }
             if (!(table = append_table_row( heap, flags, table, &table_size, &count, &row, row_size )))
@@ -3087,7 +3087,7 @@ DWORD build_udp6_table( UDP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE
                 if (class >= UDP_TABLE_OWNER_MODULE)
                 {
                     row.liCreateTimestamp.QuadPart = 0; /* FIXME */
-                    row.u.dwFlags = 0;
+                    row.dwFlags = 0;
                     memset( &row.OwningModuleInfo, 0, sizeof(row.OwningModuleInfo) );
                 }
                 if (!(table = append_table_row( heap, flags, table, &table_size, &count, &row, row_size )))
@@ -3185,8 +3185,8 @@ DWORD build_udp6_table( UDP_TABLE_CLASS class, void **tablep, BOOL order, HANDLE
             if (class >= UDP_TABLE_OWNER_MODULE)
             {
                 row.liCreateTimestamp.QuadPart = 0; /* FIXME */
-                row.u.dwFlags = 0;
-                row.u.SpecificPortBind = !(in->inp_flags & INP_ANONPORT);
+                row.dwFlags = 0;
+                row.SpecificPortBind = !(in->inp_flags & INP_ANONPORT);
                 memset( &row.OwningModuleInfo, 0, sizeof(row.OwningModuleInfo) );
             }
             if (!(table = append_table_row( heap, flags, table, &table_size, &count, &row, row_size )))
