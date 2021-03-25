@@ -689,7 +689,11 @@ static HRESULT WINAPI d3d9_surface_buffer_GetScanline0AndPitch(IMF2DBuffer2 *ifa
     EnterCriticalSection(&buffer->cs);
 
     if (!buffer->_2d.locks)
+    {
+        *scanline0 = NULL;
+        *pitch = 0;
         hr = HRESULT_FROM_WIN32(ERROR_WAS_UNLOCKED);
+    }
     else
     {
         *scanline0 = buffer->d3d9_surface.rect.pBits;
