@@ -528,7 +528,7 @@ static void ensure_useragent(void)
     else
         os_type = L"";
 
-    swprintf(buf, ARRAY_SIZE(buf), L"Mozilla/4.0 (compatible; MSIE 8.0; Windows %s%d.%d; %sTrident/5.0",
+    swprintf(buf, ARRAY_SIZE(buf), L"Mozilla/4.0 (compatible; MSIE 7.0; Windows %s%d.%d; %sTrident/7.0",
              is_nt, info.dwMajorVersion, info.dwMinorVersion, os_type);
     len = lstrlenW(buf);
 
