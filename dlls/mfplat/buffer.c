@@ -64,7 +64,9 @@ struct memory_buffer
     struct
     {
         ID3D11Texture2D *texture;
-        unsigned int subresource;
+        unsigned int sub_resource_idx;
+        ID3D11Texture2D *rb_texture;
+        D3D11_MAPPED_SUBRESOURCE map_desc;
         struct attributes attributes;
     } dxgi_surface;
 
@@ -134,6 +136,8 @@ static ULONG WINAPI memory_buffer_Release(IMFMediaBuffer *iface)
         if (buffer->dxgi_surface.texture)
         {
             ID3D11Texture2D_Release(buffer->dxgi_surface.texture);
+            if (buffer->dxgi_surface.rb_texture)
+                ID3D11Texture2D_Release(buffer->dxgi_surface.rb_texture);
             clear_attributes_object(&buffer->dxgi_surface.attributes);
         }
         DeleteCriticalSection(&buffer->cs);
@@ -834,6 +838,75 @@ static HRESULT WINAPI dxgi_1d_2d_buffer_QueryInterface(IMFMediaBuffer *iface, RE
     return S_OK;
 }
 
+static HRESULT dxgi_surface_buffer_create_readback_texture(struct memory_buffer *buffer)
+{
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11Device *device;
+    HRESULT hr;
+
+    if (buffer->dxgi_surface.rb_texture)
+        return S_OK;
+
+    ID3D11Texture2D_GetDevice(buffer->dxgi_surface.texture, &device);
+
+    ID3D11Texture2D_GetDesc(buffer->dxgi_surface.texture, &texture_desc);
+    texture_desc.Usage = D3D11_USAGE_STAGING;
+    texture_desc.BindFlags = 0;
+    texture_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
+    texture_desc.MiscFlags = 0;
+    texture_desc.MipLevels = 1;
+    if (FAILED(hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &buffer->dxgi_surface.rb_texture)))
+        WARN("Failed to create readback texture, hr %#x.\n", hr);
+
+    ID3D11Device_Release(device);
+
+    return hr;
+}
+
+static HRESULT dxgi_surface_buffer_map(struct memory_buffer *buffer)
+{
+    ID3D11DeviceContext *immediate_context;
+    ID3D11Device *device;
+    HRESULT hr;
+
+    if (FAILED(hr = dxgi_surface_buffer_create_readback_texture(buffer)))
+        return hr;
+
+    ID3D11Texture2D_GetDevice(buffer->dxgi_surface.texture, &device);
+    ID3D11Device_GetImmediateContext(device, &immediate_context);
+    ID3D11DeviceContext_CopySubresourceRegion(immediate_context, (ID3D11Resource *)buffer->dxgi_surface.rb_texture,
+            0, 0, 0, 0, (ID3D11Resource *)buffer->dxgi_surface.texture, buffer->dxgi_surface.sub_resource_idx, NULL);
+
+    memset(&buffer->dxgi_surface.map_desc, 0, sizeof(buffer->dxgi_surface.map_desc));
+    if (FAILED(hr = ID3D11DeviceContext_Map(immediate_context, (ID3D11Resource *)buffer->dxgi_surface.rb_texture,
+            0, D3D11_MAP_READ_WRITE, 0, &buffer->dxgi_surface.map_desc)))
+    {
+        WARN("Failed to map readback texture, hr %#x.\n", hr);
+    }
+
+    ID3D11DeviceContext_Release(immediate_context);
+    ID3D11Device_Release(device);
+
+    return hr;
+}
+
+static void dxgi_surface_buffer_unmap(struct memory_buffer *buffer)
+{
+    ID3D11DeviceContext *immediate_context;
+    ID3D11Device *device;
+
+    ID3D11Texture2D_GetDevice(buffer->dxgi_surface.texture, &device);
+    ID3D11Device_GetImmediateContext(device, &immediate_context);
+    ID3D11DeviceContext_Unmap(immediate_context, (ID3D11Resource *)buffer->dxgi_surface.rb_texture, 0);
+    memset(&buffer->dxgi_surface.map_desc, 0, sizeof(buffer->dxgi_surface.map_desc));
+
+    ID3D11DeviceContext_CopySubresourceRegion(immediate_context, (ID3D11Resource *)buffer->dxgi_surface.texture,
+            buffer->dxgi_surface.sub_resource_idx, 0, 0, 0, (ID3D11Resource *)buffer->dxgi_surface.rb_texture, 0, NULL);
+
+    ID3D11DeviceContext_Release(immediate_context);
+    ID3D11Device_Release(device);
+}
+
 static HRESULT WINAPI dxgi_surface_buffer_Lock(IMFMediaBuffer *iface, BYTE **data, DWORD *max_length,
         DWORD *current_length)
 {
@@ -862,16 +935,52 @@ static HRESULT WINAPI dxgi_surface_buffer_SetCurrentLength(IMFMediaBuffer *iface
 
 static HRESULT WINAPI dxgi_surface_buffer_Lock2D(IMF2DBuffer2 *iface, BYTE **scanline0, LONG *pitch)
 {
-    FIXME("%p, %p, %p.\n", iface, scanline0, pitch);
+    struct memory_buffer *buffer = impl_from_IMF2DBuffer2(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, scanline0, pitch);
+
+    if (!scanline0 || !pitch)
+        return E_POINTER;
+
+    EnterCriticalSection(&buffer->cs);
+
+    if (buffer->_2d.linear_buffer)
+        hr = MF_E_UNEXPECTED;
+    else if (!buffer->_2d.locks++)
+        hr = dxgi_surface_buffer_map(buffer);
+
+    if (SUCCEEDED(hr))
+    {
+        *scanline0 = buffer->dxgi_surface.map_desc.pData;
+        *pitch = buffer->dxgi_surface.map_desc.RowPitch;
+    }
+
+    LeaveCriticalSection(&buffer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI dxgi_surface_buffer_Unlock2D(IMF2DBuffer2 *iface)
 {
-    FIXME("%p.\n", iface);
+    struct memory_buffer *buffer = impl_from_IMF2DBuffer2(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&buffer->cs);
+
+    if (buffer->_2d.locks)
+    {
+        if (!--buffer->_2d.locks)
+            dxgi_surface_buffer_unmap(buffer);
+    }
+    else
+        hr = HRESULT_FROM_WIN32(ERROR_WAS_UNLOCKED);
+
+    LeaveCriticalSection(&buffer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI dxgi_surface_buffer_GetScanline0AndPitch(IMF2DBuffer2 *iface, BYTE **scanline0, LONG *pitch)
@@ -925,7 +1034,7 @@ static HRESULT WINAPI dxgi_buffer_GetSubresourceIndex(IMFDXGIBuffer *iface, UINT
     if (!index)
         return E_POINTER;
 
-    *index = buffer->dxgi_surface.subresource;
+    *index = buffer->dxgi_surface.sub_resource_idx;
 
     return S_OK;
 }
@@ -1165,8 +1274,8 @@ static HRESULT create_d3d9_surface_buffer(IUnknown *surface, BOOL bottom_up, IMF
     return S_OK;
 }
 
-static HRESULT create_dxgi_surface_buffer(IUnknown *surface, UINT subresource, BOOL bottom_up,
-        IMFMediaBuffer **buffer)
+static HRESULT create_dxgi_surface_buffer(IUnknown *surface, unsigned int sub_resource_idx,
+        BOOL bottom_up, IMFMediaBuffer **buffer)
 {
     struct memory_buffer *object;
     D3D11_TEXTURE2D_DESC desc;
@@ -1208,7 +1317,7 @@ static HRESULT create_dxgi_surface_buffer(IUnknown *surface, UINT subresource, B
     object->refcount = 1;
     InitializeCriticalSection(&object->cs);
     object->dxgi_surface.texture = texture;
-    object->dxgi_surface.subresource = subresource;
+    object->dxgi_surface.sub_resource_idx = sub_resource_idx;
 
     MFGetPlaneSize(format, desc.Width, desc.Height, &object->_2d.plane_size);
     object->_2d.width = stride;

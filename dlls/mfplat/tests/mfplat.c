@@ -6320,6 +6320,22 @@ static ID3D11Device *create_d3d11_device(void)
     return NULL;
 }
 
+static void update_d3d11_texture(ID3D11Texture2D *texture, unsigned int sub_resource_idx,
+        const BYTE *data, unsigned int src_pitch)
+{
+    ID3D11DeviceContext *immediate_context;
+    ID3D11Device *device;
+
+    ID3D11Texture2D_GetDevice(texture, &device);
+    ID3D11Device_GetImmediateContext(device, &immediate_context);
+
+    ID3D11DeviceContext_UpdateSubresource(immediate_context, (ID3D11Resource *)texture,
+            sub_resource_idx, NULL, data, src_pitch, 0);
+
+    ID3D11DeviceContext_Release(immediate_context);
+    ID3D11Device_Release(device);
+}
+
 static void test_dxgi_surface_buffer(void)
 {
     DWORD max_length, cur_length, length, color;
@@ -6329,10 +6345,12 @@ static void test_dxgi_surface_buffer(void)
     IMF2DBuffer *_2d_buffer;
     IMFMediaBuffer *buffer;
     ID3D11Device *device;
+    BYTE buff[64 * 64 * 4];
     UINT index, size;
     IUnknown *obj;
     HRESULT hr;
     BYTE *data;
+    LONG pitch;
 
     if (!pMFCreateDXGISurfaceBuffer)
     {
@@ -6463,6 +6481,60 @@ todo_wine
 todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    /* Lock2D()/Unlock2D() */
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer, (void **)&_2d_buffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMF2DBuffer_Lock2D(_2d_buffer, &data, &pitch);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!data && pitch == desc.Width * 4, "Unexpected pitch %d.\n", pitch);
+
+    hr = IMF2DBuffer_Lock2D(_2d_buffer, &data, &pitch);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!data && pitch == desc.Width * 4, "Unexpected pitch %d.\n", pitch);
+
+    hr = IMFMediaBuffer_Lock(buffer, &data, &max_length, &cur_length);
+todo_wine
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMF2DBuffer_Unlock2D(_2d_buffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMF2DBuffer_Unlock2D(_2d_buffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMF2DBuffer_Unlock2D(_2d_buffer);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_WAS_UNLOCKED), "Unexpected hr %#x.\n", hr);
+
+    IMF2DBuffer_Release(_2d_buffer);
+    IMFMediaBuffer_Release(buffer);
+
+    ID3D11Texture2D_Release(texture);
+
+    /* Subresource index 1. */
+    hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
+    ok(hr == S_OK, "Failed to create a texture, hr %#x.\n", hr);
+
+    hr = pMFCreateDXGISurfaceBuffer(&IID_ID3D11Texture2D, (IUnknown *)texture, 1, FALSE, &buffer);
+    ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer, (void **)&_2d_buffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Pitch reflects top level. */
+    memset(buff, 0, sizeof(buff));
+    *(DWORD *)buff = 0xff00ff00;
+    update_d3d11_texture(texture, 1, buff, 64 * 4);
+
+    hr = IMF2DBuffer_Lock2D(_2d_buffer, &data, &pitch);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(pitch == desc.Width * 4, "Unexpected pitch %d.\n", pitch);
+    ok(*(DWORD *)data == 0xff00ff00, "Unexpected color %#x.\n", *(DWORD *)data);
+
+    hr = IMF2DBuffer_Unlock2D(_2d_buffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IMF2DBuffer_Release(_2d_buffer);
     IMFMediaBuffer_Release(buffer);
 
     ID3D11Texture2D_Release(texture);
