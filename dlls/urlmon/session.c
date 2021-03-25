@@ -510,9 +510,17 @@ static size_t obtain_user_agent(WCHAR *ret, size_t size)
     OSVERSIONINFOW info = {sizeof(info)};
     const WCHAR *os_type, *is_nt;
     DWORD res, idx=0;
+    size_t len = 0;
     BOOL is_wow;
-    size_t len;
     HKEY key;
+
+    EnterCriticalSection(&session_cs);
+    if(user_agent) {
+        len = wcslen(user_agent) + 1;
+        memcpy(ret, user_agent, min(size, len) * sizeof(WCHAR));
+    }
+    LeaveCriticalSection(&session_cs);
+    if(len) return len;
 
     GetVersionExW(&info);
     is_nt = info.dwPlatformId == VER_PLATFORM_WIN32_NT ? L"NT " : L"";
@@ -685,33 +693,25 @@ HRESULT WINAPI UrlMkSetSessionOption(DWORD dwOption, LPVOID pBuffer, DWORD dwBuf
 /**************************************************************************
  *                 ObtainUserAgentString (URLMON.@)
  */
-HRESULT WINAPI ObtainUserAgentString(DWORD dwOption, LPSTR pcszUAOut, DWORD *cbSize)
+HRESULT WINAPI ObtainUserAgentString(DWORD option, char *ret, DWORD *ret_size)
 {
-    DWORD size;
-    HRESULT hres = E_FAIL;
+    DWORD size, len;
+    WCHAR buf[1024];
+    HRESULT hres = S_OK;
 
-    TRACE("(%d %p %p)\n", dwOption, pcszUAOut, cbSize);
+    TRACE("(%d %p %p)\n", option, ret, ret_size);
 
-    if(!pcszUAOut || !cbSize)
+    if(!ret || !ret_size)
         return E_INVALIDARG;
 
-    EnterCriticalSection(&session_cs);
+    len = obtain_user_agent(buf, ARRAY_SIZE(buf));
+    size = WideCharToMultiByte(CP_ACP, 0, buf, len, NULL, 0, NULL, NULL);
+    if(size <= *ret_size)
+        WideCharToMultiByte(CP_ACP, 0, buf, len, ret, *ret_size+1, NULL, NULL);
+    else
+        hres = E_OUTOFMEMORY;
 
-    ensure_user_agent();
-    if(user_agent) {
-        size = WideCharToMultiByte(CP_ACP, 0, user_agent, -1, NULL, 0, NULL, NULL);
-
-        if(size <= *cbSize) {
-            WideCharToMultiByte(CP_ACP, 0, user_agent, -1, pcszUAOut, *cbSize, NULL, NULL);
-            hres = S_OK;
-        }else {
-            hres = E_OUTOFMEMORY;
-        }
-
-        *cbSize = size;
-    }
-
-    LeaveCriticalSection(&session_cs);
+    *ret_size = size;
     return hres;
 }
 
