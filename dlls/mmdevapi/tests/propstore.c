@@ -49,7 +49,7 @@ static void test_propertystore(IPropertyStore *store)
     ok(pv.vt == VT_LPWSTR, "Value should be %i, is %i\n", VT_LPWSTR, pv.vt);
     if (hr == S_OK && pv.vt == VT_LPWSTR)
     {
-        WideCharToMultiByte(CP_ACP, 0, pv.u.pwszVal, -1, temp, sizeof(temp)-1, NULL, NULL);
+        WideCharToMultiByte(CP_ACP, 0, pv.pwszVal, -1, temp, sizeof(temp)-1, NULL, NULL);
         trace("guid: %s\n", temp);
         PropVariantClear(&pv);
     }
@@ -57,7 +57,7 @@ static void test_propertystore(IPropertyStore *store)
     pv.vt = VT_EMPTY;
     hr = IPropertyStore_GetValue(store, (const PROPERTYKEY*)&DEVPKEY_DeviceInterface_FriendlyName, &pv);
     ok(hr == S_OK, "Failed with %08x\n", hr);
-    ok(pv.vt == VT_LPWSTR && pv.u.pwszVal, "FriendlyName value had wrong type: 0x%x or was NULL\n", pv.vt);
+    ok(pv.vt == VT_LPWSTR && pv.pwszVal, "FriendlyName value had wrong type: 0x%x or was NULL\n", pv.vt);
     PropVariantClear(&pv);
 
     pv.vt = VT_EMPTY;
@@ -86,7 +86,7 @@ static void test_deviceinterface(IPropertyStore *store)
     hr = IPropertyStore_GetValue(store, &deviceinterface_key, &pv);
     ok(hr == S_OK, "GetValue failed: %08x\n", hr);
     ok(pv.vt == VT_LPWSTR, "Got wrong variant type: 0x%x\n", pv.vt);
-    trace("device interface: %s\n", wine_dbgstr_w(pv.u.pwszVal));
+    trace("device interface: %s\n", wine_dbgstr_w(pv.pwszVal));
     PropVariantClear(&pv);
 }
 
@@ -139,10 +139,10 @@ static void test_setvalue_on_wow64(IPropertyStore *store)
     hr = IPropertyStore_GetValue(store, &PKEY_AudioEndpoint_GUID, &pv);
     ok(hr == S_OK, "Failed to get Endpoint GUID: %08x\n", hr);
 
-    guidW = pv.u.pwszVal;
+    guidW = pv.pwszVal;
 
     pv.vt = VT_UI4;
-    pv.u.ulVal = 0xAB;
+    pv.ulVal = 0xAB;
 
     hr = IPropertyStore_SetValue(store, &PKEY_Bogus, &pv);
     ok(hr == S_OK || hr == E_ACCESSDENIED, "SetValue failed: %08x\n", hr);
@@ -152,11 +152,11 @@ static void test_setvalue_on_wow64(IPropertyStore *store)
         return;
     }
 
-    pv.u.ulVal = 0x00;
+    pv.ulVal = 0x00;
 
     hr = IPropertyStore_GetValue(store, &PKEY_Bogus, &pv);
     ok(hr == S_OK, "GetValue failed: %08x\n", hr);
-    ok(pv.u.ulVal == 0xAB, "Got wrong value: 0x%x\n", pv.u.ulVal);
+    ok(pv.ulVal == 0xAB, "Got wrong value: 0x%x\n", pv.ulVal);
 
     /* should find the key in 64-bit view */
     ret = RegOpenKeyExW(HKEY_LOCAL_MACHINE, software_renderW, 0, KEY_READ|KEY_WOW64_64KEY, &root);
