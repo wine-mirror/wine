@@ -723,12 +723,22 @@ static void dispatch_script_readystatechange_event(HTMLScriptElement *script)
     DOMEvent *event;
     HRESULT hres;
 
-    hres = create_document_event(script->element.node.doc, EVENTID_READYSTATECHANGE, &event);
-    if(FAILED(hres))
-        return;
+    if(script->readystate != READYSTATE_LOADED ||
+       dispex_compat_mode(&script->element.node.event_target.dispex) < COMPAT_MODE_IE10) {
+        hres = create_document_event(script->element.node.doc, EVENTID_READYSTATECHANGE, &event);
+        if(SUCCEEDED(hres)) {
+            dispatch_event(&script->element.node.event_target, event);
+            IDOMEvent_Release(&event->IDOMEvent_iface);
+        }
+    }
 
-    dispatch_event(&script->element.node.event_target, event);
-    IDOMEvent_Release(&event->IDOMEvent_iface);
+    if(script->readystate == READYSTATE_LOADED) {
+        hres = create_document_event(script->element.node.doc, EVENTID_LOAD, &event);
+        if(SUCCEEDED(hres)) {
+            dispatch_event(&script->element.node.event_target, event);
+            IDOMEvent_Release(&event->IDOMEvent_iface);
+        }
+    }
 }
 
 typedef struct {
@@ -757,6 +767,10 @@ static void fire_readystatechange_task_destr(task_t *_task)
 static void set_script_elem_readystate(HTMLScriptElement *script_elem, READYSTATE readystate)
 {
     script_elem->readystate = readystate;
+
+    if(readystate != READYSTATE_LOADED &&
+       dispex_compat_mode(&script_elem->element.node.event_target.dispex) >= COMPAT_MODE_IE11)
+        return;
 
     if(readystate != READYSTATE_INTERACTIVE) {
         if(!script_elem->element.node.doc->window->parser_callback_cnt) {
