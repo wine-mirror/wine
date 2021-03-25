@@ -1544,6 +1544,32 @@ failed:
 }
 
 
+/***********************************************************************
+ *           load_start_exe
+ *
+ * Load start.exe as main image.
+ */
+NTSTATUS load_start_exe( WCHAR **image, void **module, SECTION_IMAGE_INFORMATION *image_info )
+{
+    static const WCHAR startW[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
+        's','y','s','t','e','m','3','2','\\','s','t','a','r','t','.','e','x','e',0};
+    UNICODE_STRING nt_name;
+    NTSTATUS status;
+    SIZE_T size;
+
+    init_unicode_string( &nt_name, startW );
+    status = find_builtin_dll( &nt_name, module, &size, image_info, current_machine, FALSE );
+    if (status)
+    {
+        MESSAGE( "wine: failed to load start.exe: %x\n", status );
+        NtTerminateProcess( GetCurrentProcess(), status );
+    }
+    *image = malloc( sizeof(startW) );
+    memcpy( *image, startW, sizeof(startW) );
+    return status;
+}
+
+
 #ifdef __FreeBSD__
 /* The PT_LOAD segments are sorted in increasing order, and the first
  * starts at the beginning of the ELF file. By parsing the file, we can

@@ -145,6 +145,7 @@ extern NTSTATUS load_builtin( const pe_image_info_t *image_info, const WCHAR *fi
                               void **addr_ptr, SIZE_T *size_ptr ) DECLSPEC_HIDDEN;
 extern NTSTATUS load_main_exe( const WCHAR *name, const char *unix_name, const WCHAR *curdir, WCHAR **image,
                                void **module, SECTION_IMAGE_INFORMATION *image_info ) DECLSPEC_HIDDEN;
+extern NTSTATUS load_start_exe( WCHAR **image, void **module, SECTION_IMAGE_INFORMATION *image_info ) DECLSPEC_HIDDEN;
 extern void start_server( BOOL debug ) DECLSPEC_HIDDEN;
 extern ULONG_PTR get_image_address(void) DECLSPEC_HIDDEN;
 

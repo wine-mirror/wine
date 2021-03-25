@@ -1880,23 +1880,17 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
 
     if (status)  /* try launching it through start.exe */
     {
-        static const WCHAR startW[] = {'C',':','\\','w','i','n','d','o','w','s','\\',
-            's','y','s','t','e','m','3','2','\\','s','t','a','r','t','.','e','x','e',0};
         static const WCHAR slashwW[] = {'/','w',0};
         static const WCHAR slashbW[] = {'/','b',0};
-        const WCHAR *args[] = { startW, slashwW, slashbW };
+        const WCHAR *args[] = { NULL, slashwW, slashbW };
 
         free( image );
         prepend_main_wargv( args, 3 );
-        if ((status = load_main_exe( startW, NULL, curdir, &image, &module, &image_info )))
-        {
-            MESSAGE( "wine: failed to start %s\n", debugstr_w(main_wargv[2]) );
-            NtTerminateProcess( GetCurrentProcess(), status );
-        }
+        load_start_exe( &image, &module, &image_info );
     }
-    else main_wargv[0] = get_dos_path( image );
 
     NtCurrentTeb()->Peb->ImageBaseAddress = module;
+    main_wargv[0] = get_dos_path( image );
     cmdline = build_command_line( main_wargv );
 
     TRACE( "image %s cmdline %s dir %s\n",
