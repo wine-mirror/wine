@@ -15184,7 +15184,7 @@ static void test_swapchain_views(void)
     ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
 
     draw_color_quad(&test_context, &color);
-    todo_wine check_texture_color(test_context.backbuffer, 0xffbc957c, 1);
+    check_texture_color(test_context.backbuffer, 0xffbc957c, 1);
 
     srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;

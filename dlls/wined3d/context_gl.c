@@ -4122,11 +4122,6 @@ static void wined3d_context_gl_setup_target(struct wined3d_context_gl *context_g
             if ((old->alpha_size && !new->alpha_size) || (!old->alpha_size && new->alpha_size)
                     || !(texture->resource.format_flags & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING))
                 context_invalidate_state(&context_gl->c, STATE_BLEND);
-
-            /* Update sRGB writing when switching between formats that do/do not support sRGB writing */
-            if ((context_gl->c.current_rt.texture->resource.format_flags & WINED3DFMT_FLAG_SRGB_WRITE)
-                    != (texture->resource.format_flags & WINED3DFMT_FLAG_SRGB_WRITE))
-                context_invalidate_state(&context_gl->c, STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE));
         }
 
         /* When switching away from an offscreen render target, and we're not
