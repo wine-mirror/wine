@@ -1509,6 +1509,19 @@ HRESULT CDECL wined3d_output_set_gamma_ramp(struct wined3d_output *output, const
     return WINED3D_OK;
 }
 
+HRESULT wined3d_output_get_gamma_ramp(struct wined3d_output *output, struct wined3d_gamma_ramp *ramp)
+{
+    HDC dc;
+
+    TRACE("output %p, ramp %p.\n", output, ramp);
+
+    dc = CreateDCW(output->device_name, NULL, NULL, NULL);
+    GetDeviceGammaRamp(dc, ramp);
+    DeleteDC(dc);
+
+    return WINED3D_OK;
+}
+
 HRESULT CDECL wined3d_adapter_get_identifier(const struct wined3d_adapter *adapter,
         DWORD flags, struct wined3d_adapter_identifier *identifier)
 {

@@ -363,18 +363,20 @@ void CDECL wined3d_swapchain_get_desc(const struct wined3d_swapchain *swapchain,
 HRESULT CDECL wined3d_swapchain_set_gamma_ramp(const struct wined3d_swapchain *swapchain,
         DWORD flags, const struct wined3d_gamma_ramp *ramp)
 {
-    HDC dc;
+    struct wined3d_output *output;
 
     TRACE("swapchain %p, flags %#x, ramp %p.\n", swapchain, flags, ramp);
 
     if (flags)
         FIXME("Ignoring flags %#x.\n", flags);
 
-    dc = GetDCEx(swapchain->state.device_window, 0, DCX_USESTYLE | DCX_CACHE);
-    SetDeviceGammaRamp(dc, (void *)ramp);
-    ReleaseDC(swapchain->state.device_window, dc);
+    if (!(output = wined3d_swapchain_get_output(swapchain)))
+    {
+        ERR("Failed to get output from swapchain %p.\n", swapchain);
+        return E_FAIL;
+    }
 
-    return WINED3D_OK;
+    return wined3d_output_set_gamma_ramp(output, ramp);
 }
 
 void CDECL wined3d_swapchain_set_palette(struct wined3d_swapchain *swapchain, struct wined3d_palette *palette)
@@ -389,15 +391,17 @@ void CDECL wined3d_swapchain_set_palette(struct wined3d_swapchain *swapchain, st
 HRESULT CDECL wined3d_swapchain_get_gamma_ramp(const struct wined3d_swapchain *swapchain,
         struct wined3d_gamma_ramp *ramp)
 {
-    HDC dc;
+    struct wined3d_output *output;
 
     TRACE("swapchain %p, ramp %p.\n", swapchain, ramp);
 
-    dc = GetDCEx(swapchain->state.device_window, 0, DCX_USESTYLE | DCX_CACHE);
-    GetDeviceGammaRamp(dc, ramp);
-    ReleaseDC(swapchain->state.device_window, dc);
+    if (!(output = wined3d_swapchain_get_output(swapchain)))
+    {
+        ERR("Failed to get output from swapchain %p.\n", swapchain);
+        return E_FAIL;
+    }
 
-    return WINED3D_OK;
+    return wined3d_output_get_gamma_ramp(output, ramp);
 }
 
 /* The is a fallback for cases where we e.g. can't create a GL context or

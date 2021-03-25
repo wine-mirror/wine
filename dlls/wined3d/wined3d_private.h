@@ -3367,6 +3367,8 @@ struct wined3d_output
     D3DDDI_VIDEO_PRESENT_SOURCE_ID vidpn_source_id;
 };
 
+HRESULT wined3d_output_get_gamma_ramp(struct wined3d_output *output, struct wined3d_gamma_ramp *ramp) DECLSPEC_HIDDEN;
+
 /* The adapter structure */
 struct wined3d_adapter
 {
