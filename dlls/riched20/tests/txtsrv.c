@@ -705,7 +705,7 @@ static void _check_txgetnaturalsize(HRESULT res, LONG width, LONG height, HDC hd
     expected_width = expected_rect.right - expected_rect.left;
     expected_height = expected_rect.bottom - expected_rect.top;
     ok_(__FILE__,line)(res == S_OK, "ITextServices_TxGetNaturalSize failed: 0x%08x.\n", res);
-    ok_(__FILE__,line)(width >= expected_width && width <= expected_width + 1,
+    todo_wine ok_(__FILE__,line)(width >= expected_width && width <= expected_width + 1,
                        "got wrong width: %d, expected: %d {+1}.\n", width, expected_width);
     ok_(__FILE__,line)(height == expected_height, "got wrong height: %d, expected: %d.\n",
                        height, expected_height);
@@ -717,7 +717,7 @@ static void test_TxGetNaturalSize(void)
     ITextHost *host;
     HRESULT result;
     SIZEL extent;
-    static const WCHAR test_text[] = {'T','e','s','t','S','o','m','e','T','e','x','t',0};
+    static const WCHAR test_text[] = L"TestSomeText";
     LONG width, height;
     HDC hdcDraw;
     HWND hwnd;
@@ -752,7 +752,7 @@ static void test_TxGetNaturalSize(void)
     height = 0;
     result = ITextServices_TxGetNaturalSize(txtserv, DVASPECT_CONTENT, hdcDraw, NULL, NULL,
                                             TXTNS_FITTOCONTENT, &extent, &width, &height);
-    todo_wine CHECK_TXGETNATURALSIZE(result, width, height, hdcDraw, rect, test_text);
+    CHECK_TXGETNATURALSIZE(result, width, height, hdcDraw, rect, test_text);
 
     ReleaseDC(hwnd, hdcDraw);
     DestroyWindow(hwnd);

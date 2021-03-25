@@ -366,14 +366,43 @@ DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_TxGetBaseLinePos(ITextServices *ifa
 }
 
 DEFINE_THISCALL_WRAPPER(fnTextSrv_TxGetNaturalSize,36)
-DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_TxGetNaturalSize(ITextServices *iface, DWORD dwAspect, HDC hdcDraw,
-                                                              HDC hicTargetDev, DVTARGETDEVICE *ptd, DWORD dwMode,
-                                                              const SIZEL *psizelExtent, LONG *pwidth, LONG *pheight)
+DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_TxGetNaturalSize( ITextServices *iface, DWORD aspect, HDC draw,
+                                                               HDC target, DVTARGETDEVICE *td, DWORD mode,
+                                                               const SIZEL *extent, LONG *width, LONG *height )
 {
     struct text_services *services = impl_from_ITextServices( iface );
+    RECT rect;
+    HDC dc = draw;
+    BOOL rewrap = FALSE;
+    HRESULT hr;
 
-    FIXME( "%p: STUB\n", services );
-    return E_NOTIMPL;
+    TRACE( "%p: aspect %d, draw %p, target %p, td %p, mode %08x, extent %s, *width %d, *height %d\n", services,
+           aspect, draw, target, td, mode, wine_dbgstr_point( (POINT *)extent ), *width, *height );
+
+    if (aspect != DVASPECT_CONTENT || target || td || mode != TXTNS_FITTOCONTENT )
+        FIXME( "Many arguments are ignored\n" );
+
+    SetRect( &rect, 0, 0, *width, *height );
+
+    hr = update_client_rect( services, &rect );
+    if (FAILED( hr )) return hr;
+    if (hr == S_OK) rewrap = TRUE;
+
+    if (!dc && services->editor->in_place_active)
+        dc = ITextHost_TxGetDC( services->host );
+    if (!dc) return E_FAIL;
+
+    if (rewrap)
+    {
+        editor_mark_rewrap_all( services->editor );
+        wrap_marked_paras_dc( services->editor, dc, FALSE );
+    }
+
+    *width = services->editor->nTotalWidth;
+    *height = services->editor->nTotalLength;
+
+    if (!draw) ITextHost_TxReleaseDC( services->host, dc );
+    return S_OK;
 }
 
 DEFINE_THISCALL_WRAPPER(fnTextSrv_TxGetDropTarget,8)
