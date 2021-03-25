@@ -6346,11 +6346,11 @@ static void test_dxgi_surface_buffer(void)
     IMFMediaBuffer *buffer;
     ID3D11Device *device;
     BYTE buff[64 * 64 * 4];
+    BYTE *data, *data2;
+    LONG pitch, pitch2;
     UINT index, size;
     IUnknown *obj;
     HRESULT hr;
-    BYTE *data;
-    LONG pitch;
 
     if (!pMFCreateDXGISurfaceBuffer)
     {
@@ -6485,6 +6485,9 @@ todo_wine
     hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer, (void **)&_2d_buffer);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    hr = IMF2DBuffer_GetScanline0AndPitch(_2d_buffer, &data2, &pitch2);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_WAS_UNLOCKED), "Unexpected hr %#x.\n", hr);
+
     hr = IMF2DBuffer_Lock2D(_2d_buffer, &data, &pitch);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!!data && pitch == desc.Width * 4, "Unexpected pitch %d.\n", pitch);
@@ -6492,6 +6495,10 @@ todo_wine
     hr = IMF2DBuffer_Lock2D(_2d_buffer, &data, &pitch);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(!!data && pitch == desc.Width * 4, "Unexpected pitch %d.\n", pitch);
+
+    hr = IMF2DBuffer_GetScanline0AndPitch(_2d_buffer, &data2, &pitch2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(data2 == data && pitch2 == pitch, "Unexpected data/pitch.\n");
 
     hr = IMFMediaBuffer_Lock(buffer, &data, &max_length, &cur_length);
 todo_wine
@@ -6505,6 +6512,27 @@ todo_wine
 
     hr = IMF2DBuffer_Unlock2D(_2d_buffer);
     ok(hr == HRESULT_FROM_WIN32(ERROR_WAS_UNLOCKED), "Unexpected hr %#x.\n", hr);
+
+    IMF2DBuffer_Release(_2d_buffer);
+    IMFMediaBuffer_Release(buffer);
+
+    /* Bottom up. */
+    hr = pMFCreateDXGISurfaceBuffer(&IID_ID3D11Texture2D, (IUnknown *)texture, 0, TRUE, &buffer);
+    ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
+
+    hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer, (void **)&_2d_buffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMF2DBuffer_Lock2D(_2d_buffer, &data, &pitch);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!data && pitch == desc.Width * 4, "Unexpected pitch %d.\n", pitch);
+
+    hr = IMF2DBuffer_GetScanline0AndPitch(_2d_buffer, &data2, &pitch2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(data2 == data && pitch2 == pitch, "Unexpected data/pitch.\n");
+
+    hr = IMF2DBuffer_Unlock2D(_2d_buffer);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     IMF2DBuffer_Release(_2d_buffer);
     IMFMediaBuffer_Release(buffer);

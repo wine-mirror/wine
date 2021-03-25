@@ -985,9 +985,31 @@ static HRESULT WINAPI dxgi_surface_buffer_Unlock2D(IMF2DBuffer2 *iface)
 
 static HRESULT WINAPI dxgi_surface_buffer_GetScanline0AndPitch(IMF2DBuffer2 *iface, BYTE **scanline0, LONG *pitch)
 {
-    FIXME("%p, %p, %p.\n", iface, scanline0, pitch);
+    struct memory_buffer *buffer = impl_from_IMF2DBuffer2(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, scanline0, pitch);
+
+    if (!scanline0 || !pitch)
+        return E_POINTER;
+
+    EnterCriticalSection(&buffer->cs);
+
+    if (!buffer->_2d.locks)
+    {
+        *scanline0 = NULL;
+        *pitch = 0;
+        hr = HRESULT_FROM_WIN32(ERROR_WAS_UNLOCKED);
+    }
+    else
+    {
+        *scanline0 = buffer->dxgi_surface.map_desc.pData;
+        *pitch = buffer->dxgi_surface.map_desc.RowPitch;
+    }
+
+    LeaveCriticalSection(&buffer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI dxgi_surface_buffer_Lock2DSize(IMF2DBuffer2 *iface, MF2DBuffer_LockFlags flags,
