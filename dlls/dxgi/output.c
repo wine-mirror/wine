@@ -420,10 +420,45 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetGammaControlCapabilities(IDXGIOu
     return S_OK;
 }
 
+static WORD uint16_from_float(float f)
+{
+    f *= 65535.0f;
+    if (f < 0.0f)
+        f = 0.0f;
+    else if (f > 65535.0f)
+        f = 65535.0f;
+
+    return f + 0.5f;
+}
+
 static HRESULT STDMETHODCALLTYPE dxgi_output_SetGammaControl(IDXGIOutput6 *iface,
         const DXGI_GAMMA_CONTROL *gamma_control)
 {
-    FIXME("iface %p, gamma_control %p stub!\n", iface, gamma_control);
+    struct dxgi_output *output = impl_from_IDXGIOutput6(iface);
+    struct wined3d_gamma_ramp ramp;
+    const DXGI_RGB *p;
+    unsigned int i;
+
+    TRACE("iface %p, gamma_control %p.\n", iface, gamma_control);
+
+    if (gamma_control->Scale.Red != 1.0f || gamma_control->Scale.Green != 1.0f || gamma_control->Scale.Blue != 1.0f)
+        FIXME("Ignoring unhandled scale {%.8e, %.8e, %.8e}.\n", gamma_control->Scale.Red,
+                gamma_control->Scale.Green, gamma_control->Scale.Blue);
+    if (gamma_control->Offset.Red != 0.0f || gamma_control->Offset.Green != 0.0f || gamma_control->Offset.Blue != 0.0f)
+        FIXME("Ignoring unhandled offset {%.8e, %.8e, %.8e}.\n", gamma_control->Offset.Red,
+                gamma_control->Offset.Green, gamma_control->Offset.Blue);
+
+    for (i = 0; i < 256; ++i)
+    {
+        p = &gamma_control->GammaCurve[i];
+        ramp.red[i] = uint16_from_float(p->Red);
+        ramp.green[i] = uint16_from_float(p->Green);
+        ramp.blue[i] = uint16_from_float(p->Blue);
+    }
+
+    wined3d_mutex_lock();
+    wined3d_output_set_gamma_ramp(output->wined3d_output, &ramp);
+    wined3d_mutex_unlock();
 
     return S_OK;
 }

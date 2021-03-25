@@ -1496,6 +1496,19 @@ HRESULT CDECL wined3d_output_set_display_mode(struct wined3d_output *output,
     return WINED3D_OK;
 }
 
+HRESULT CDECL wined3d_output_set_gamma_ramp(struct wined3d_output *output, const struct wined3d_gamma_ramp *ramp)
+{
+    HDC dc;
+
+    TRACE("output %p, ramp %p.\n", output, ramp);
+
+    dc = CreateDCW(output->device_name, NULL, NULL, NULL);
+    SetDeviceGammaRamp(dc, (void *)ramp);
+    DeleteDC(dc);
+
+    return WINED3D_OK;
+}
+
 HRESULT CDECL wined3d_adapter_get_identifier(const struct wined3d_adapter *adapter,
         DWORD flags, struct wined3d_adapter_identifier *identifier)
 {
