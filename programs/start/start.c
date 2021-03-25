@@ -380,11 +380,7 @@ int __cdecl wmain (int argc, WCHAR *argv[])
 		if (argv[i][0] != '/')
 			break;
 
-		/* Unix paths can start with / so we have to assume anything following /unix is not a flag */
-		if (unix_mode || progid_open)
-			break;
-
-		if (argv[i][0] == '/' && (argv[i][1] == 'd' || argv[i][1] == 'D')) {
+		if (argv[i][1] == 'd' || argv[i][1] == 'D') {
 			if (argv[i][2])
 				/* The start directory was concatenated to the option */
 				sei.lpDirectory = argv[i]+2;
@@ -462,22 +458,27 @@ int __cdecl wmain (int argc, WCHAR *argv[])
 
                 else if (is_option(argv[i], L"/unix")) {
                         unix_mode = TRUE;
+                        i++;
+                        break;
+		}
+                else if (is_option(argv[i], L"/exec")) {
+			creation_flags = 0;
+			sei.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_NO_CONSOLE | SEE_MASK_FLAG_NO_UI;
+                        i++;
+                        break;
 		}
                 else if (is_option(argv[i], L"/progIDOpen")) {
                         progid_open = TRUE;
+                        if (++i == argc) usage();
+                        sei.lpClass = argv[i++];
+                        sei.fMask |= SEE_MASK_CLASSNAME;
+                        break;
 		} else
 
 		{
 			WINE_ERR("Unknown option '%s'\n", wine_dbgstr_w(argv[i]));
 			usage();
 		}
-	}
-
-	if (progid_open) {
-		if (i == argc)
-			usage();
-		sei.lpClass = argv[i++];
-		sei.fMask |= SEE_MASK_CLASSNAME;
 	}
 
 	if (i == argc) {

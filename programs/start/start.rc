@@ -51,6 +51,7 @@ Options:\n\
                exit code.\n\
 /unix          Use a Unix filename and start the file like Windows\n\
                Explorer.\n\
+/exec          Exec the specified file (for internal Wine usage).\n\
 /ProgIDOpen    Open a document using the specified progID.\n\
 /?             Display this help and exit.\n"
 
