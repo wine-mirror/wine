@@ -160,28 +160,28 @@ static HRESULT MMDevice_GetPropValue(const GUID *devguid, DWORD flow, REFPROPERT
         case REG_SZ:
         {
             pv->vt = VT_LPWSTR;
-            pv->u.pwszVal = CoTaskMemAlloc(size);
-            if (!pv->u.pwszVal)
+            pv->pwszVal = CoTaskMemAlloc(size);
+            if (!pv->pwszVal)
                 hr = E_OUTOFMEMORY;
             else
-                RegGetValueW(regkey, NULL, buffer, RRF_RT_REG_SZ, NULL, (BYTE*)pv->u.pwszVal, &size);
+                RegGetValueW(regkey, NULL, buffer, RRF_RT_REG_SZ, NULL, (BYTE*)pv->pwszVal, &size);
             break;
         }
         case REG_DWORD:
         {
             pv->vt = VT_UI4;
-            RegGetValueW(regkey, NULL, buffer, RRF_RT_REG_DWORD, NULL, (BYTE*)&pv->u.ulVal, &size);
+            RegGetValueW(regkey, NULL, buffer, RRF_RT_REG_DWORD, NULL, (BYTE*)&pv->ulVal, &size);
             break;
         }
         case REG_BINARY:
         {
             pv->vt = VT_BLOB;
-            pv->u.blob.cbSize = size;
-            pv->u.blob.pBlobData = CoTaskMemAlloc(size);
-            if (!pv->u.blob.pBlobData)
+            pv->blob.cbSize = size;
+            pv->blob.pBlobData = CoTaskMemAlloc(size);
+            if (!pv->blob.pBlobData)
                 hr = E_OUTOFMEMORY;
             else
-                RegGetValueW(regkey, NULL, buffer, RRF_RT_REG_BINARY, NULL, (BYTE*)pv->u.blob.pBlobData, &size);
+                RegGetValueW(regkey, NULL, buffer, RRF_RT_REG_BINARY, NULL, (BYTE*)pv->blob.pBlobData, &size);
             break;
         }
         default:
@@ -211,19 +211,19 @@ static HRESULT MMDevice_SetPropValue(const GUID *devguid, DWORD flow, REFPROPERT
     {
         case VT_UI4:
         {
-            ret = RegSetValueExW(regkey, buffer, 0, REG_DWORD, (const BYTE*)&pv->u.ulVal, sizeof(DWORD));
+            ret = RegSetValueExW(regkey, buffer, 0, REG_DWORD, (const BYTE*)&pv->ulVal, sizeof(DWORD));
             break;
         }
         case VT_BLOB:
         {
-            ret = RegSetValueExW(regkey, buffer, 0, REG_BINARY, pv->u.blob.pBlobData, pv->u.blob.cbSize);
-            TRACE("Blob %p %u\n", pv->u.blob.pBlobData, pv->u.blob.cbSize);
+            ret = RegSetValueExW(regkey, buffer, 0, REG_BINARY, pv->blob.pBlobData, pv->blob.cbSize);
+            TRACE("Blob %p %u\n", pv->blob.pBlobData, pv->blob.cbSize);
 
             break;
         }
         case VT_LPWSTR:
         {
-            ret = RegSetValueExW(regkey, buffer, 0, REG_SZ, (const BYTE*)pv->u.pwszVal, sizeof(WCHAR)*(1+lstrlenW(pv->u.pwszVal)));
+            ret = RegSetValueExW(regkey, buffer, 0, REG_SZ, (const BYTE*)pv->pwszVal, sizeof(WCHAR)*(1+lstrlenW(pv->pwszVal)));
             break;
         }
         default:
@@ -327,12 +327,12 @@ static MMDevice *MMDevice_Create(WCHAR *name, GUID *id, EDataFlow flow, DWORD st
             PROPVARIANT pv;
 
             pv.vt = VT_LPWSTR;
-            pv.u.pwszVal = name;
+            pv.pwszVal = name;
             MMDevice_SetPropValue(id, flow, (const PROPERTYKEY*)&DEVPKEY_Device_FriendlyName, &pv);
             MMDevice_SetPropValue(id, flow, (const PROPERTYKEY*)&DEVPKEY_DeviceInterface_FriendlyName, &pv);
             MMDevice_SetPropValue(id, flow, (const PROPERTYKEY*)&DEVPKEY_Device_DeviceDesc, &pv);
 
-            pv.u.pwszVal = guidstr;
+            pv.pwszVal = guidstr;
             MMDevice_SetPropValue(id, flow, &deviceinterface_key, &pv);
 
             set_driver_prop_value(id, flow, &devicepath_key);
@@ -340,7 +340,7 @@ static MMDevice *MMDevice_Create(WCHAR *name, GUID *id, EDataFlow flow, DWORD st
             if (FAILED(set_driver_prop_value(id, flow, &PKEY_AudioEndpoint_FormFactor)))
             {
                 pv.vt = VT_UI4;
-                pv.u.ulVal = (flow == eCapture) ? Microphone : Speakers;
+                pv.ulVal = (flow == eCapture) ? Microphone : Speakers;
 
                 MMDevice_SetPropValue(id, flow, &PKEY_AudioEndpoint_FormFactor, &pv);
             }
@@ -423,12 +423,12 @@ static HRESULT load_devices_from_reg(void)
             && SUCCEEDED(MMDevice_GetPropValue(&guid, curflow, (const PROPERTYKEY*)&DEVPKEY_Device_FriendlyName, &pv))
             && pv.vt == VT_LPWSTR)
         {
-            DWORD size_bytes = (lstrlenW(pv.u.pwszVal) + 1) * sizeof(WCHAR);
+            DWORD size_bytes = (lstrlenW(pv.pwszVal) + 1) * sizeof(WCHAR);
             WCHAR *name = HeapAlloc(GetProcessHeap(), 0, size_bytes);
-            memcpy(name, pv.u.pwszVal, size_bytes);
+            memcpy(name, pv.pwszVal, size_bytes);
             MMDevice_Create(name, &guid, curflow,
                     DEVICE_STATE_NOTPRESENT, FALSE);
-            CoTaskMemFree(pv.u.pwszVal);
+            CoTaskMemFree(pv.pwszVal);
         }
     } while (1);
 
@@ -455,8 +455,8 @@ static HRESULT set_format(MMDevice *dev)
     IAudioClient_Release(client);
 
     pv.vt = VT_BLOB;
-    pv.u.blob.cbSize = sizeof(WAVEFORMATEX) + fmt->cbSize;
-    pv.u.blob.pBlobData = (BYTE*)fmt;
+    pv.blob.cbSize = sizeof(WAVEFORMATEX) + fmt->cbSize;
+    pv.blob.pBlobData = (BYTE*)fmt;
     MMDevice_SetPropValue(&dev->devguid, dev->flow,
             &PKEY_AudioEngine_DeviceFormat, &pv);
     MMDevice_SetPropValue(&dev->devguid, dev->flow,
@@ -1420,10 +1420,10 @@ static HRESULT WINAPI MMDevPropStore_GetValue(IPropertyStore *iface, REFPROPERTY
     if (IsEqualPropertyKey(*key, PKEY_AudioEndpoint_GUID))
     {
         pv->vt = VT_LPWSTR;
-        pv->u.pwszVal = CoTaskMemAlloc(39 * sizeof(WCHAR));
-        if (!pv->u.pwszVal)
+        pv->pwszVal = CoTaskMemAlloc(39 * sizeof(WCHAR));
+        if (!pv->pwszVal)
             return E_OUTOFMEMORY;
-        StringFromGUID2(&This->parent->devguid, pv->u.pwszVal, 39);
+        StringFromGUID2(&This->parent->devguid, pv->pwszVal, 39);
         return S_OK;
     }
 
@@ -1545,10 +1545,10 @@ static HRESULT WINAPI info_device_ps_GetValue(IPropertyStore *iface,
     {
         INT size = (lstrlenW(drvs.module_name) + 1) * sizeof(WCHAR);
         pv->vt = VT_LPWSTR;
-        pv->u.pwszVal = CoTaskMemAlloc(size);
-        if (!pv->u.pwszVal)
+        pv->pwszVal = CoTaskMemAlloc(size);
+        if (!pv->pwszVal)
             return E_OUTOFMEMORY;
-        memcpy(pv->u.pwszVal, drvs.module_name, size);
+        memcpy(pv->pwszVal, drvs.module_name, size);
         return S_OK;
     }
 
