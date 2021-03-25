@@ -436,6 +436,7 @@ typedef struct tagME_TextEditor
   BOOL caret_hidden;
   BOOL bMouseCaptured;
   int wheel_remain;
+  TXTBACKSTYLE back_style;
   struct list style_list;
   struct list reobj_list;
   struct wine_rb_tree marked_paras;

@@ -3037,6 +3037,9 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
 
   ed->wheel_remain = 0;
 
+  ed->back_style = TXTBACK_OPAQUE;
+  ITextHost_TxGetBackStyle( texthost, &ed->back_style );
+
   list_init( &ed->reobj_list );
   OleInitialize(NULL);
 

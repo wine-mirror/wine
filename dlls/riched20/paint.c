@@ -25,6 +25,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
 static void draw_paragraph( ME_Context *c, ME_Paragraph *para );
 
+static inline BOOL editor_opaque( ME_TextEditor *editor )
+{
+    return editor->back_style != TXTBACK_TRANSPARENT;
+}
+
 void editor_draw( ME_TextEditor *editor, HDC hDC, const RECT *update )
 {
   ME_Paragraph *para;
@@ -78,23 +83,26 @@ void editor_draw( ME_TextEditor *editor, HDC hDC, const RECT *update )
       draw_paragraph( &c, para );
     para = para_next( para );
   }
-  if (c.pt.y + editor->nTotalLength < c.rcView.bottom)
-  { /* space after the end of the text */
-    rc.top = c.pt.y + editor->nTotalLength;
-    rc.left = c.rcView.left;
-    rc.bottom = c.rcView.bottom;
-    rc.right = c.rcView.right;
-    if (IntersectRect( &rc, &rc, update ))
-      PatBlt(hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
-  }
-  if (editor->selofs)
-  { /* selection bar */
-    rc.left = c.rcView.left - editor->selofs;
-    rc.top = c.rcView.top;
-    rc.right = c.rcView.left;
-    rc.bottom = c.rcView.bottom;
-    if (IntersectRect( &rc, &rc, update ))
-      PatBlt( hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
+  if (editor_opaque( editor ))
+  {
+    if (c.pt.y + editor->nTotalLength < c.rcView.bottom)
+    { /* space after the end of the text */
+      rc.top = c.pt.y + editor->nTotalLength;
+      rc.left = c.rcView.left;
+      rc.bottom = c.rcView.bottom;
+      rc.right = c.rcView.right;
+      if (IntersectRect( &rc, &rc, update ))
+        PatBlt(hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
+    }
+    if (editor->selofs)
+    { /* selection bar */
+      rc.left = c.rcView.left - editor->selofs;
+      rc.top = c.rcView.top;
+      rc.right = c.rcView.left;
+      rc.bottom = c.rcView.bottom;
+      if (IntersectRect( &rc, &rc, update ))
+        PatBlt( hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
+    }
   }
   if (editor->nTotalLength != editor->nLastTotalLength || editor->nTotalWidth != editor->nLastTotalWidth)
     ME_SendRequestResize(editor, FALSE);
@@ -597,22 +605,28 @@ static void ME_DrawParaDecoration(ME_Context* c, ME_Paragraph* para, int y, RECT
 
   if (para->fmt.dwMask & PFM_SPACEBEFORE)
   {
-    rc.left = c->rcView.left;
-    rc.right = c->rcView.right;
-    rc.top = y;
     bounds->top = ME_twips2pointsY(c, para->fmt.dySpaceBefore);
-    rc.bottom = y + bounds->top + top_border;
-    PatBlt(c->hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
+    if (editor_opaque( c->editor ))
+    {
+      rc.left = c->rcView.left;
+      rc.right = c->rcView.right;
+      rc.top = y;
+      rc.bottom = y + bounds->top + top_border;
+      PatBlt(c->hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
+    }
   }
 
   if (para->fmt.dwMask & PFM_SPACEAFTER)
   {
-    rc.left = c->rcView.left;
-    rc.right = c->rcView.right;
-    rc.bottom = y + para->nHeight;
     bounds->bottom = ME_twips2pointsY(c, para->fmt.dySpaceAfter);
-    rc.top = rc.bottom - bounds->bottom - bottom_border;
-    PatBlt(c->hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
+    if (editor_opaque( c->editor ))
+    {
+      rc.left = c->rcView.left;
+      rc.right = c->rcView.right;
+      rc.bottom = y + para->nHeight;
+      rc.top = rc.bottom - bounds->bottom - bottom_border;
+      PatBlt(c->hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
+    }
   }
 
   /* Native richedit doesn't support paragraph borders in v1.0 - 4.1,
@@ -730,7 +744,7 @@ static void draw_table_borders( ME_Context *c, ME_Paragraph *para )
         rc.top = top + width;
         width = cell->yTextOffset - width;
         rc.bottom = rc.top + width;
-        if (width)
+        if (width && editor_opaque( c->editor ))
           PatBlt(c->hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
       }
       /* Draw cell borders.
@@ -973,7 +987,7 @@ static void draw_paragraph( ME_Context *c, ME_Paragraph *para )
           rc.bottom = y + p->member.row.nHeight;
         }
         visible = RectVisible(c->hDC, &rc);
-        if (visible)
+        if (editor_opaque( c->editor ) && visible)
           PatBlt(c->hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY);
         if (bounds.right)
         {
@@ -982,7 +996,7 @@ static void draw_paragraph( ME_Context *c, ME_Paragraph *para )
           RECT after_bdr = rc;
           after_bdr.left = rc.right + bounds.right;
           after_bdr.right = c->rcView.right;
-          if (RectVisible(c->hDC, &after_bdr))
+          if (editor_opaque( c->editor ) && RectVisible( c->hDC, &after_bdr ))
             PatBlt(c->hDC, after_bdr.left, after_bdr.top, after_bdr.right - after_bdr.left,
                    after_bdr.bottom - after_bdr.top, PATCOPY);
         }
@@ -1035,7 +1049,7 @@ static void draw_paragraph( ME_Context *c, ME_Paragraph *para )
     no++;
   }
 
-    if (para_cell( para ))
+    if (editor_opaque( c->editor ) && para_cell( para ))
     {
         /* Clear any space at the bottom of the cell after the text. */
         rc.top = c->pt.y + para->pt.y + para->nHeight;
