@@ -588,6 +588,34 @@ static BOOL is_old_motion_event( unsigned long serial )
 
 
 /***********************************************************************
+ *		map_event_coords
+ *
+ * Map the input event coordinates so they're relative to the desktop.
+ */
+static POINT map_event_coords( HWND hwnd, Window window, struct x11drv_win_data *data, const INPUT *input )
+{
+    POINT pt = { input->u.mi.dx, input->u.mi.dy };
+
+    TRACE( "hwnd %p, window %lx, data %p, input %p\n", hwnd, window, data, input );
+
+    if (window == root_window) pt = root_to_virtual_screen( pt.x, pt.y );
+    if (window == data->whole_window)
+    {
+        pt.x += data->whole_rect.left - data->client_rect.left;
+        pt.y += data->whole_rect.top - data->client_rect.top;
+    }
+
+    if (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
+        pt.x = data->client_rect.right - data->client_rect.left - 1 - pt.x;
+    MapWindowPoints( hwnd, 0, &pt, 1 );
+
+    TRACE( "mapped %s to %s\n", wine_dbgstr_point( (POINT *)&input->u.mi.dx ), wine_dbgstr_point( &pt ) );
+
+    return pt;
+}
+
+
+/***********************************************************************
  *		send_mouse_input
  *
  * Update the various window states on a mouse event.
@@ -618,24 +646,8 @@ static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPU
         return;
     }
 
-    if (window != root_window)
-    {
-        pt.x = input->u.mi.dx;
-        pt.y = input->u.mi.dy;
-    }
-    else pt = root_to_virtual_screen( input->u.mi.dx, input->u.mi.dy );
-
     if (!(data = get_win_data( hwnd ))) return;
-
-    if (window == data->whole_window)
-    {
-        pt.x += data->whole_rect.left - data->client_rect.left;
-        pt.y += data->whole_rect.top - data->client_rect.top;
-    }
-
-    if (GetWindowLongW( data->hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
-        pt.x = data->client_rect.right - data->client_rect.left - 1 - pt.x;
-    MapWindowPoints( hwnd, 0, &pt, 1 );
+    pt = map_event_coords( hwnd, window, data, input );
 
     if (InterlockedExchangePointer( (void **)&cursor_window, hwnd ) != hwnd ||
         input->u.mi.time - last_cursor_change > 100)
