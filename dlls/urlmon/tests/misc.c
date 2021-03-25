@@ -1448,13 +1448,27 @@ static void test_UrlMkGetSessionOption(void)
     ok(encoding == 0xdeadbeef, "encoding = %08x, exepcted 0xdeadbeef\n", encoding);
 }
 
+static size_t check_prefix(const char *str, const char *prefix)
+{
+    size_t len = strlen(prefix);
+    if(memcmp(str, prefix, len)) {
+        ok(0, "no %s prefix in %s\n", wine_dbgstr_a(prefix), wine_dbgstr_a(str));
+        return 0;
+    }
+    return len;
+}
+
 static void test_user_agent(void)
 {
     static const CHAR expected[] = "Mozilla/4.0 (compatible; MSIE ";
     static char test_str[] = "test";
     static char test2_str[] = "test\0test";
     static CHAR str[3];
+    OSVERSIONINFOW os_info = {sizeof(os_info)};
+    char ua[1024], buf[64];
+    unsigned int i;
     LPSTR str2 = NULL;
+    BOOL is_wow = FALSE;
     HRESULT hres;
     DWORD size, saved;
 
@@ -1492,6 +1506,67 @@ static void test_user_agent(void)
        !memcmp(expected, str2, strlen(expected)*sizeof(CHAR)),
        "user agent was \"%s\", expected to start with \"%s\"\n",
        str2, expected);
+
+    GetVersionExW(&os_info);
+    if (sizeof(void*) == 4) IsWow64Process(GetCurrentProcess(), &is_wow);
+
+    for(i = 1; i < 12; i++) {
+        const char *p = ua;
+
+        if (i != 7) {
+            size = sizeof(ua);
+            hres = pObtainUserAgentString(i | 0x1000, ua, &size);
+            ok(hres == S_OK, "ObtainUserAgentString failed: %08x\n", hres);
+            ok(size == strlen(ua) + 1, "unexpected size %u, expected %u\n", size, strlen(ua) + 1);
+            ok(!strcmp(ua, str2), "unexpected UA for version %u %s, expected %s\n",
+               i, wine_dbgstr_a(ua), wine_dbgstr_a(str2));
+        }
+
+        size = sizeof(ua);
+        hres = pObtainUserAgentString(i != 1 ? i : 0x1007, ua, &size);
+        ok(hres == S_OK, "ObtainUserAgentString failed: %08x\n", hres);
+        ok(size == strlen(ua) + 1, "unexpected size %u, expected %u\n", size, strlen(ua) + 1);
+        if(i < 8 && i != 1)
+            ok(!strcmp(ua, str2), "unexpected UA for version %u %s, expected %s\n",
+               i, wine_dbgstr_a(ua), wine_dbgstr_a(str2));
+
+        p += check_prefix(p, "Mozilla/");
+        p += check_prefix(p, i < 9 ? "4.0 (" : "5.0 (");
+        if(i < 11) {
+            p += check_prefix(p, "compatible; ");
+            sprintf(buf, "MSIE %u.0; ", max(i, 7));
+            p += check_prefix(p, buf);
+        }
+        sprintf(buf, "Windows NT %u.%u; ", os_info.dwMajorVersion, os_info.dwMinorVersion);
+        p += check_prefix(p, buf);
+        if(is_wow) {
+            p += check_prefix(p, "WOW64; ");
+        }else if(sizeof(void*) == 8) {
+            p += check_prefix(p, "Win64; ");
+#ifdef __x86_64__
+            p += check_prefix(p, "x64; ");
+#endif
+        }
+        if(i != 1) {
+            p += check_prefix(p, "Trident/");
+            ok('5' <= *p && *p <= '8', "unexpected version '%c'\n", *p);
+            if(*p < '7') {
+                win_skip("skipping UA tests, too old IE\n");
+                break;
+            }
+            p++; /* skip version number */
+            p += check_prefix(p, ".0");
+        }
+        if(i == 11) {
+            p += check_prefix(p, "; rv:11.0) like Gecko");
+        }else {
+            if(i < 9)
+                p = strchr(p, ')');
+            p += check_prefix(p, ")");
+        }
+
+        ok(!*p, "unexpected suffix %s for version %u\n", wine_dbgstr_a(p), i);
+    }
 
     size = saved+10;
     hres = pObtainUserAgentString(0, str2, &size);
