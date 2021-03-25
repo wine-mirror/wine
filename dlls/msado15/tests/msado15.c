@@ -74,6 +74,7 @@ static void test_Recordset(void)
     CursorTypeEnum cursor;
     BSTR name;
     HRESULT hr;
+    VARIANT bookmark;
 
     hr = CoCreateInstance( &CLSID_Recordset, NULL, CLSCTX_INPROC_SERVER, &IID__Recordset, (void **)&recordset );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -153,6 +154,14 @@ static void test_Recordset(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( cursor == adOpenForwardOnly, "got %d\n", cursor );
 
+    VariantInit( &bookmark );
+    hr = _Recordset_get_Bookmark( recordset, &bookmark );
+    ok( hr == MAKE_ADO_HRESULT( adErrObjectClosed ), "got %08x\n", hr );
+
+    VariantInit( &bookmark );
+    hr = _Recordset_put_Bookmark( recordset, bookmark );
+    ok( hr == MAKE_ADO_HRESULT( adErrObjectClosed ), "got %08x\n", hr );
+
     VariantInit( &missing );
     hr = _Recordset_AddNew( recordset, missing, missing );
     ok( hr == MAKE_ADO_HRESULT( adErrObjectClosed ), "got %08x\n", hr );
@@ -187,6 +196,14 @@ static void test_Recordset(void)
     hr = _Recordset_get_State( recordset, &state );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( state == adStateOpen, "got %d\n", state );
+
+    VariantInit( &bookmark );
+    hr = _Recordset_get_Bookmark( recordset, &bookmark );
+    ok( hr == MAKE_ADO_HRESULT( adErrNoCurrentRecord ), "got %08x\n", hr );
+
+    VariantInit( &bookmark );
+    hr = _Recordset_put_Bookmark( recordset, bookmark );
+    ok( hr == MAKE_ADO_HRESULT( adErrInvalidArgument ), "got %08x\n", hr );
 
     count = -1;
     hr = _Recordset_get_RecordCount( recordset, &count );

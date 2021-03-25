@@ -1029,14 +1029,28 @@ static HRESULT WINAPI recordset_get_BOF( _Recordset *iface, VARIANT_BOOL *bof )
 
 static HRESULT WINAPI recordset_get_Bookmark( _Recordset *iface, VARIANT *bookmark )
 {
-    FIXME( "%p, %p\n", iface, bookmark );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+    TRACE( "%p, %p\n", iface, bookmark );
+
+    if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+    if (recordset->index < 0) return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
+
+    V_VT(bookmark) = VT_I4;
+    V_I4(bookmark) = recordset->index;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_put_Bookmark( _Recordset *iface, VARIANT bookmark )
 {
-    FIXME( "%p, %s\n", iface, debugstr_variant(&bookmark) );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+    TRACE( "%p, %s\n", iface, debugstr_variant(&bookmark) );
+
+    if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+
+    if (V_VT(&bookmark) != VT_I4) return MAKE_ADO_HRESULT( adErrInvalidArgument );
+
+    recordset->index = V_I4(&bookmark);
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_get_CacheSize( _Recordset *iface, LONG *size )
