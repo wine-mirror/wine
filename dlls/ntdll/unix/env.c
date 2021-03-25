@@ -2011,7 +2011,7 @@ void init_startup_info(void)
     params->CurrentDirectory.DosPath.MaximumLength = MAX_PATH * sizeof(WCHAR);
     dst = params->CurrentDirectory.DosPath.Buffer + MAX_PATH;
 
-    copy_unicode_string( &src, &dst, &params->DllPath, info->dllpath_len );
+    if (info->dllpath_len) copy_unicode_string( &src, &dst, &params->DllPath, info->dllpath_len );
     copy_unicode_string( &src, &dst, &params->ImagePathName, info->imagepath_len );
     copy_unicode_string( &src, &dst, &params->CommandLine, info->cmdline_len );
     copy_unicode_string( &src, &dst, &params->WindowTitle, info->title_len );
