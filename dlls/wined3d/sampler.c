@@ -172,6 +172,33 @@ static VkSamplerAddressMode vk_address_mode_from_wined3d(enum wined3d_texture_ad
     }
 }
 
+static VkBorderColor vk_border_colour_from_wined3d(const struct wined3d_color *colour)
+{
+    unsigned int i;
+
+    static const struct
+    {
+        struct wined3d_color wined3d_colour;
+        VkBorderColor vk_colour;
+    }
+    colours[] =
+    {
+        {{0.0f, 0.0f, 0.0f, 0.0f}, VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK},
+        {{0.0f, 0.0f, 0.0f, 1.0f}, VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK},
+        {{1.0f, 1.0f, 1.0f, 1.0f}, VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE},
+    };
+
+    for (i = 0; i < ARRAY_SIZE(colours); ++i)
+    {
+        if (!memcmp(&colours[i], colour, sizeof(*colour)))
+            return colours[i].vk_colour;
+    }
+
+    FIXME("Unhandled border colour {%.8e, %.8e, %.8e, %.8e}.\n", colour->r, colour->g, colour->b, colour->a);
+
+    return VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+}
+
 static void wined3d_sampler_vk_cs_init(void *object)
 {
     struct wined3d_sampler_vk *sampler_vk = object;
@@ -211,13 +238,9 @@ static void wined3d_sampler_vk_cs_init(void *object)
     sampler_desc.borderColor = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
     sampler_desc.unnormalizedCoordinates = VK_FALSE;
 
-    if ((desc->address_u == WINED3D_TADDRESS_BORDER || desc->address_v == WINED3D_TADDRESS_BORDER
+    if (desc->address_u == WINED3D_TADDRESS_BORDER || desc->address_v == WINED3D_TADDRESS_BORDER
             || desc->address_w == WINED3D_TADDRESS_BORDER)
-            && (desc->border_color[0] != 0.0f || desc->border_color[1] != 0.0f
-            || desc->border_color[2] != 0.0f || desc->border_color[3] != 0.0f))
-        FIXME("Unhandled border colour {%.8e, %.8e, %.8e, %.8e}.\n",
-                desc->border_color[0], desc->border_color[1],
-                desc->border_color[2], desc->border_color[3]);
+        sampler_desc.borderColor = vk_border_colour_from_wined3d((const struct wined3d_color *)desc->border_color);
     if (desc->mip_base_level)
         FIXME("Unhandled mip_base_level %u.\n", desc->mip_base_level);
     if ((d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL) && !desc->srgb_decode)
