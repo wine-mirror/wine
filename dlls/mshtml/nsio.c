@@ -3980,3 +3980,21 @@ void release_nsio(void)
         nsio = NULL;
     }
 }
+
+nsresult create_onload_blocker_request(nsIRequest **ret)
+{
+    nsIChannel *channel;
+    nsACString spec;
+    nsresult nsres;
+
+    nsACString_InitDepend(&spec, "about:wine-script-onload-blocker");
+    nsres = nsIIOService_NewChannel(nsio, &spec, NULL, NULL, &channel);
+    nsACString_Finish(&spec);
+    if(NS_FAILED(nsres)) {
+        ERR("Failed to create channel: %08x\n", nsres);
+        return nsres;
+    }
+
+    *ret = (nsIRequest *)channel;
+    return NS_OK;
+}

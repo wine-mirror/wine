@@ -90,3 +90,19 @@ async_test("append_script", function() {
     elem.src = "jsstream.php?simple";
     external.writeStream("simple", " ");
 });
+
+function unexpected_load(e) {
+    ok(false, "onload event before executing script");
+}
+
+guard(function() {
+    var elem = document.createElement("script");
+    document.head.appendChild(elem);
+    elem.src = "jsstream.php?blockload";
+
+    window.addEventListener("load", unexpected_load, true);
+
+    setTimeout(guard(function() {
+        external.writeStream("blockload", "window.removeEventListener('load', unexpected_load, true);");
+    }), 100);
+})();
