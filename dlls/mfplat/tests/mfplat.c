@@ -240,6 +240,7 @@ static HRESULT (WINAPI *pMFCreateVideoSampleAllocatorEx)(REFIID riid, void **all
 static HRESULT (WINAPI *pMFCreateDXGISurfaceBuffer)(REFIID riid, IUnknown *surface, UINT subresource, BOOL bottomup,
         IMFMediaBuffer **buffer);
 static HRESULT (WINAPI *pMFCreateVideoMediaTypeFromSubtype)(const GUID *subtype, IMFVideoMediaType **media_type);
+static HRESULT (WINAPI *pMFLockSharedWorkQueue)(const WCHAR *name, LONG base_priority, DWORD *taskid, DWORD *queue);
 
 static HWND create_window(void)
 {
@@ -907,6 +908,7 @@ static void init_functions(void)
     X(MFCreateVideoSampleAllocatorEx);
     X(MFGetPlaneSize);
     X(MFGetStrideForBitmapInfoHeader);
+    X(MFLockSharedWorkQueue);
     X(MFMapDX9FormatToDXGIFormat);
     X(MFMapDXGIFormatToDX9Format);
     X(MFPutWaitingWorkItem);
@@ -7016,6 +7018,49 @@ done:
     DestroyWindow(window);
 }
 
+static void test_MFLockSharedWorkQueue(void)
+{
+    DWORD taskid, queue, queue2;
+    HRESULT hr;
+
+    if (!pMFLockSharedWorkQueue)
+    {
+        win_skip("MFLockSharedWorkQueue() is not available.\n");
+        return;
+    }
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#x.\n", hr);
+
+    hr = pMFLockSharedWorkQueue(NULL, 0, &taskid, &queue);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = pMFLockSharedWorkQueue(NULL, 0, NULL, &queue);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    taskid = 0;
+    hr = pMFLockSharedWorkQueue(L"", 0, &taskid, &queue);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    queue = 0;
+    hr = pMFLockSharedWorkQueue(L"", 0, NULL, &queue);
+    ok(queue & MFASYNC_CALLBACK_QUEUE_PRIVATE_MASK, "Unexpected queue id.\n");
+
+    queue2 = 0;
+    hr = pMFLockSharedWorkQueue(L"", 0, NULL, &queue2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(queue == queue2, "Unexpected queue %#x.\n", queue2);
+
+    hr = MFUnlockWorkQueue(queue2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = MFUnlockWorkQueue(queue);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+}
+
 START_TEST(mfplat)
 {
     char **argv;
@@ -7044,6 +7089,7 @@ START_TEST(mfplat)
     test_source_resolver();
     test_MFCreateAsyncResult();
     test_allocate_queue();
+    test_MFLockSharedWorkQueue();
     test_MFCopyImage();
     test_MFCreateCollection();
     test_MFHeapAlloc();

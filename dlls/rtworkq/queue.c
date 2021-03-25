@@ -58,6 +58,7 @@ static struct queue_handle user_queues[MAX_USER_QUEUE_HANDLES];
 static struct queue_handle *next_free_user_queue;
 static struct queue_handle *next_unused_user_queue = user_queues;
 static WORD queue_generation;
+static DWORD shared_mt_queue;
 
 static CRITICAL_SECTION queues_section;
 static CRITICAL_SECTION_DEBUG queues_critsect_debug =
@@ -217,6 +218,7 @@ static HRESULT unlock_user_queue(DWORD queue)
     {
         if (--entry->refcount == 0)
         {
+            if (shared_mt_queue == queue) shared_mt_queue = 0;
             shutdown_queue((struct queue *)entry->obj);
             heap_free(entry->obj);
             entry->obj = next_free_user_queue;
@@ -1438,9 +1440,37 @@ HRESULT WINAPI RtwqSetLongRunning(DWORD queue_id, BOOL enable)
 
 HRESULT WINAPI RtwqLockSharedWorkQueue(const WCHAR *usageclass, LONG priority, DWORD *taskid, DWORD *queue)
 {
-    FIXME("%s, %d, %p, %p.\n", debugstr_w(usageclass), priority, taskid, queue);
+    struct queue_desc desc;
+    HRESULT hr;
 
-    return RtwqAllocateWorkQueue(RTWQ_STANDARD_WORKQUEUE, queue);
+    TRACE("%s, %d, %p, %p.\n", debugstr_w(usageclass), priority, taskid, queue);
+
+    if (!usageclass)
+        return E_POINTER;
+
+    if (!*usageclass && taskid)
+        return E_INVALIDARG;
+
+    if (*usageclass)
+        FIXME("Class name is ignored.\n");
+
+    EnterCriticalSection(&queues_section);
+
+    if (shared_mt_queue)
+        hr = lock_user_queue(shared_mt_queue);
+    else
+    {
+        desc.queue_type = RTWQ_MULTITHREADED_WORKQUEUE;
+        desc.ops = &pool_queue_ops;
+        desc.target_queue = 0;
+        hr = alloc_user_queue(&desc, &shared_mt_queue);
+    }
+
+    *queue = shared_mt_queue;
+
+    LeaveCriticalSection(&queues_section);
+
+    return hr;
 }
 
 HRESULT WINAPI RtwqSetDeadline(DWORD queue_id, LONGLONG deadline, HANDLE *request)

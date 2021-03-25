@@ -132,6 +132,7 @@
 @ stub MFJoinIoPort
 @ stdcall MFJoinWorkQueue(long long ptr) rtworkq.RtwqJoinWorkQueue
 @ stdcall MFLockPlatform() rtworkq.RtwqLockPlatform
+@ stdcall MFLockSharedWorkQueue(wstr long ptr ptr) rtworkq.RtwqLockSharedWorkQueue
 @ stdcall MFLockWorkQueue(long) rtworkq.RtwqLockWorkQueue
 @ stdcall MFMapDX9FormatToDXGIFormat(long)
 @ stdcall MFMapDXGIFormatToDX9Format(long)
