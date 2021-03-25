@@ -1880,12 +1880,11 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
 
     if (status)  /* try launching it through start.exe */
     {
-        static const WCHAR slashwW[] = {'/','w',0};
-        static const WCHAR slashbW[] = {'/','b',0};
-        const WCHAR *args[] = { NULL, slashwW, slashbW };
+        static const WCHAR execW[] = {'/','e','x','e','c',0};
+        const WCHAR *args[] = { NULL, execW };
 
         free( image );
-        prepend_main_wargv( args, 3 );
+        prepend_main_wargv( args, 2 );
         load_start_exe( &image, &module, &image_info );
     }
 
