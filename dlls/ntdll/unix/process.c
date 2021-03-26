@@ -226,33 +226,6 @@ static startup_info_t *create_startup_info( const RTL_USER_PROCESS_PARAMETERS *p
 }
 
 
-/***************************************************************************
- *	is_builtin_path
- */
-static BOOL is_builtin_path( UNICODE_STRING *path, BOOL *is_64bit )
-{
-    static const WCHAR wow64W[] = {'\\','?','?','\\','c',':','\\','w','i','n','d','o','w','s','\\',
-                                   's','y','s','w','o','w','6','4'};
-
-    *is_64bit = is_win64;
-    if (path->Length > wcslen(system_dir) * sizeof(WCHAR) &&
-        !wcsnicmp( path->Buffer, system_dir, wcslen(system_dir) ))
-    {
-#ifndef _WIN64
-        if (NtCurrentTeb64() && NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR]) *is_64bit = TRUE;
-#endif
-        return TRUE;
-    }
-    if ((is_win64 || is_wow64) && path->Length > sizeof(wow64W) &&
-        !wcsnicmp( path->Buffer, wow64W, ARRAY_SIZE(wow64W) ))
-    {
-        *is_64bit = FALSE;
-        return TRUE;
-    }
-    return FALSE;
-}
-
-
 /***********************************************************************
  *           get_so_file_info
  */
@@ -373,17 +346,9 @@ static NTSTATUS get_pe_file_info( UNICODE_STRING *path, HANDLE *handle, pe_image
     if ((status = NtOpenFile( handle, GENERIC_READ, &attr, &io,
                               FILE_SHARE_READ | FILE_SHARE_DELETE, FILE_SYNCHRONOUS_IO_NONALERT )))
     {
-        BOOL is_64bit;
-
-        if (is_builtin_path( path, &is_64bit ))
+        if (is_builtin_path( path, &info->machine ))
         {
-            TRACE( "assuming %u-bit builtin for %s\n", is_64bit ? 64 : 32, debugstr_us(path));
-            /* assume current arch */
-#if defined(__i386__) || defined(__x86_64__)
-            info->machine = is_64bit ? IMAGE_FILE_MACHINE_AMD64 : IMAGE_FILE_MACHINE_I386;
-#else
-            info->machine = current_machine;
-#endif
+            TRACE( "assuming %04x builtin for %s\n", info->machine, debugstr_us(path));
             return STATUS_SUCCESS;
         }
         return status;
