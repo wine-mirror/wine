@@ -195,6 +195,7 @@ struct source_reader
     unsigned int last_read_index;
     unsigned int stream_count;
     unsigned int flags;
+    unsigned int queue;
     enum media_source_state source_state;
     struct media_stream *streams;
     struct list responses;
@@ -384,8 +385,7 @@ static void source_reader_response_ready(struct source_reader *reader, struct st
         if (SUCCEEDED(source_reader_create_async_op(SOURCE_READER_ASYNC_SAMPLE_READY, &command)))
         {
             command->u.sample.stream_index = stream->index;
-            if (FAILED(hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &reader->async_commands_callback,
-                    &command->IUnknown_iface)))
+            if (FAILED(hr = MFPutWorkItem(reader->queue, &reader->async_commands_callback, &command->IUnknown_iface)))
                 WARN("Failed to submit async result, hr %#x.\n", hr);
             IUnknown_Release(&command->IUnknown_iface);
         }
@@ -1396,6 +1396,7 @@ static ULONG WINAPI src_reader_Release(IMFSourceReader *iface)
         }
         source_reader_release_responses(reader, NULL);
         heap_free(reader->streams);
+        MFUnlockWorkQueue(reader->queue);
         DeleteCriticalSection(&reader->cs);
         heap_free(reader);
     }
@@ -1873,8 +1874,7 @@ static HRESULT WINAPI src_reader_SetCurrentPosition(IMFSourceReader *iface, REFG
                 command->u.seek.format = *format;
                 PropVariantCopy(&command->u.seek.position, position);
 
-                hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_MULTITHREADED, &reader->async_commands_callback,
-                        &command->IUnknown_iface);
+                hr = MFPutWorkItem(reader->queue, &reader->async_commands_callback, &command->IUnknown_iface);
                 IUnknown_Release(&command->IUnknown_iface);
             }
         }
@@ -1976,7 +1976,7 @@ static HRESULT source_reader_read_sample_async(struct source_reader *reader, uns
             command->u.read.stream_index = index;
             command->u.read.flags = flags;
 
-            hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &reader->async_commands_callback, &command->IUnknown_iface);
+            hr = MFPutWorkItem(reader->queue, &reader->async_commands_callback, &command->IUnknown_iface);
             IUnknown_Release(&command->IUnknown_iface);
         }
     }
@@ -2040,7 +2040,7 @@ static HRESULT source_reader_flush_async(struct source_reader *reader, unsigned 
 
     command->u.flush.stream_index = stream_index;
 
-    hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &reader->async_commands_callback, &command->IUnknown_iface);
+    hr = MFPutWorkItem(reader->queue, &reader->async_commands_callback, &command->IUnknown_iface);
     IUnknown_Release(&command->IUnknown_iface);
 
     return hr;
@@ -2265,7 +2265,7 @@ static HRESULT WINAPI stream_sample_allocator_cb_NotifyRelease(IMFVideoSampleAll
     if (SUCCEEDED(source_reader_create_async_op(SOURCE_READER_ASYNC_SA_READY, &command)))
     {
         command->u.sa.stream_index = stream->index;
-        MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &stream->reader->async_commands_callback, &command->IUnknown_iface);
+        MFPutWorkItem(stream->reader->queue, &stream->reader->async_commands_callback, &command->IUnknown_iface);
         IUnknown_Release(&command->IUnknown_iface);
     }
 
@@ -2406,7 +2406,11 @@ static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttri
         }
     }
 
-    hr = IMFSourceReader_QueryInterface(&object->IMFSourceReader_iface, riid, out);
+    if (FAILED(hr = MFLockSharedWorkQueue(L"", 0, NULL, &object->queue)))
+        WARN("Failed to acquired shared queue, hr %#x.\n", hr);
+
+    if (SUCCEEDED(hr))
+        hr = IMFSourceReader_QueryInterface(&object->IMFSourceReader_iface, riid, out);
 
 failed:
     IMFSourceReader_Release(&object->IMFSourceReader_iface);
