@@ -4401,7 +4401,7 @@ void CDECL wined3d_device_dispatch_compute(struct wined3d_device *device,
     TRACE("device %p, group_count_x %u, group_count_y %u, group_count_z %u.\n",
             device, group_count_x, group_count_y, group_count_z);
 
-    wined3d_cs_emit_dispatch(device->cs, group_count_x, group_count_y, group_count_z);
+    wined3d_device_context_dispatch(&device->cs->c, group_count_x, group_count_y, group_count_z);
 }
 
 void CDECL wined3d_device_dispatch_compute_indirect(struct wined3d_device *device,
