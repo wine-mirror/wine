@@ -323,6 +323,10 @@ img.onload = function() {
     trace("img.onload");
     img_onload_called = true;
 }
+img.onerror = function() {
+    trace("img.onerror");
+    img_onload_called = true;
+}
 </script>
 </head>
 <body>
