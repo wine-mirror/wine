@@ -377,7 +377,6 @@ typedef struct tagME_InStream ME_InStream;
 
 typedef struct tagME_TextEditor
 {
-  HWND hWnd, hwndParent;
   ITextHost2 *texthost;
   IUnknown *reOle;
   unsigned int bEmulateVersion10 : 1;

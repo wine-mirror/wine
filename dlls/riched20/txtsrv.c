@@ -581,8 +581,7 @@ static const ITextServicesVtbl textservices_vtbl =
     THISCALL(fnTextSrv_TxGetCachedSize)
 };
 
-HRESULT create_text_services( IUnknown *outer, ITextHost *text_host, IUnknown **unk, BOOL emulate_10,
-                              ME_TextEditor **editor )
+HRESULT create_text_services( IUnknown *outer, ITextHost *text_host, IUnknown **unk, BOOL emulate_10 )
 {
     struct text_services *services;
 
@@ -595,7 +594,6 @@ HRESULT create_text_services( IUnknown *outer, ITextHost *text_host, IUnknown **
     services->IUnknown_inner.lpVtbl = &textservices_inner_vtbl;
     services->ITextServices_iface.lpVtbl = &textservices_vtbl;
     services->editor = ME_MakeEditor( text_host, emulate_10 );
-    if (editor) *editor = services->editor; /* To be removed */
 
     if (outer) services->outer_unk = outer;
     else services->outer_unk = &services->IUnknown_inner;
@@ -609,5 +607,5 @@ HRESULT create_text_services( IUnknown *outer, ITextHost *text_host, IUnknown **
  */
 HRESULT WINAPI CreateTextServices( IUnknown *outer, ITextHost *text_host, IUnknown **unk )
 {
-    return create_text_services( outer, text_host, unk, FALSE, NULL );
+    return create_text_services( outer, text_host, unk, FALSE );
 }

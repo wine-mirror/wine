@@ -395,7 +395,7 @@ BOOL ME_Redo(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 void ME_EmptyUndoStack(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 
 /* txtsrv.c */
-HRESULT create_text_services( IUnknown *outer, ITextHost *text_host, IUnknown **unk, BOOL emulate_10, ME_TextEditor **editor ) DECLSPEC_HIDDEN;
+HRESULT create_text_services( IUnknown *outer, ITextHost *text_host, IUnknown **unk, BOOL emulate_10 ) DECLSPEC_HIDDEN;
 #ifdef __ASM_USE_THISCALL_WRAPPER
 extern const struct ITextServicesVtbl text_services_stdcall_vtbl DECLSPEC_HIDDEN;
 #define TXTSERV_VTABLE(This) (&text_services_stdcall_vtbl)
