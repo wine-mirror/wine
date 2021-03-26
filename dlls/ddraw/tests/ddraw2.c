@@ -15285,6 +15285,101 @@ done:
     IDirectDraw2_Release(ddraw);
 }
 
+static void test_texture_wrong_caps(const GUID *device_guid)
+{
+    static D3DLVERTEX quad[] =
+    {
+        {{-1.0f}, {-1.0f}, {0.0f}, 0, {0xffffffff}, {0}, {0.0f}, {1.0f}},
+        {{-1.0f}, { 1.0f}, {0.0f}, 0, {0xffffffff}, {0}, {0.0f}, {0.0f}},
+        {{ 1.0f}, {-1.0f}, {0.0f}, 0, {0xffffffff}, {0}, {1.0f}, {1.0f}},
+        {{ 1.0f}, { 1.0f}, {0.0f}, 0, {0xffffffff}, {0}, {1.0f}, {0.0f}},
+    };
+    static DDPIXELFORMAT fmt =
+    {
+        sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_ALPHAPIXELS, 0,
+                {32}, {0x00ff0000}, {0x0000ff00}, {0x000000ff}, {0xff000000}
+    };
+    D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+    IDirectDrawSurface *surface, *rt;
+    D3DTEXTUREHANDLE texture_handle;
+    D3DCOLOR color, expected_color;
+    IDirect3DMaterial2 *background;
+    IDirect3DViewport2 *viewport;
+    IDirect3DTexture2 *texture;
+    IDirect3DDevice2 *device;
+    IDirectDraw2 *ddraw;
+    DDSURFACEDESC ddsd;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    if (!(device = create_device_ex(ddraw, window, DDSCL_NORMAL, device_guid)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+    hr = IDirect3DDevice2_GetRenderTarget(device, &rt);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    viewport = create_viewport(device, 0, 0, 640, 480);
+    hr = IDirect3DDevice2_SetCurrentViewport(device, viewport);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
+    ddsd.dwHeight = 16;
+    ddsd.dwWidth = 16;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+    U4(ddsd).ddpfPixelFormat = fmt;
+    hr = IDirectDraw2_CreateSurface(ddraw, &ddsd, &surface, NULL);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirect3DTexture2, (void **)&texture);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DTexture2_GetHandle(texture, device, &texture_handle);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    fill_surface(surface, 0xff00ff00);
+
+    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_TEXTUREHANDLE, texture_handle);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    background = create_diffuse_material(device, 1.0f, 0.0f, 0.0f, 1.0f);
+    viewport_set_background(device, viewport, background);
+
+    hr = IDirect3DViewport2_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    if (is_software_device_type(device_guid))
+        fill_surface(rt, 0xffff0000);
+
+    hr = IDirect3DDevice2_BeginScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice2_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DVT_LVERTEX, quad, ARRAY_SIZE(quad), 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice2_EndScene(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    expected_color = is_software_device_type(device_guid) ? 0x0000ff00 : 0x00ffffff;
+    color = get_surface_color(rt, 320, 240);
+    ok(compare_color(color, expected_color, 1), "Got color 0x%08x, expected 0x%08x.\n", color, expected_color);
+
+    IDirect3DTexture2_Release(texture);
+    IDirectDrawSurface_Release(surface);
+    IDirectDrawSurface_Release(rt);
+    destroy_viewport(device, viewport);
+    destroy_material(background);
+    IDirectDraw2_Release(ddraw);
+    refcount = IDirect3DDevice2_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 static void run_for_each_device_type(void (*test_func)(const GUID *))
 {
     test_func(&IID_IDirect3DHALDevice);
@@ -15413,4 +15508,5 @@ START_TEST(ddraw2)
     test_cursor_clipping();
     test_window_position();
     test_get_display_mode();
+    run_for_each_device_type(test_texture_wrong_caps);
 }

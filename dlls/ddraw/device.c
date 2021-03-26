@@ -4858,19 +4858,21 @@ static HRESULT WINAPI d3d_device3_SetTexture(IDirect3DDevice3 *iface,
 {
     struct d3d_device *device = impl_from_IDirect3DDevice3(iface);
     struct ddraw_surface *tex = unsafe_impl_from_IDirect3DTexture2(texture);
-    HRESULT hr;
+    struct wined3d_texture *wined3d_texture = NULL;
 
     TRACE("iface %p, stage %u, texture %p.\n", iface, stage, texture);
 
     wined3d_mutex_lock();
 
-    hr = IDirect3DDevice7_SetTexture(&device->IDirect3DDevice7_iface, stage, &tex->IDirectDrawSurface7_iface);
+    if (tex && ((tex->surface_desc.ddsCaps.dwCaps & DDSCAPS_TEXTURE) || !device->hardware_device))
+        wined3d_texture = tex->draw_texture ? tex->draw_texture : tex->wined3d_texture;
 
+    wined3d_stateblock_set_texture(device->state, stage, wined3d_texture);
     fixup_texture_alpha_op(device);
 
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 static const struct tss_lookup
