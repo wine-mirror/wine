@@ -1071,7 +1071,7 @@ static void enable_show_scrollbar( ME_TextEditor *editor, INT bar, BOOL enable )
         ITextHost_TxShowScrollBar( editor->texthost, bar, enable );
 }
 
-static void set_scroll_range_pos( ITextHost *host, INT bar, SCROLLINFO *info, BOOL set_range )
+static void set_scroll_range_pos( ITextHost2 *host, INT bar, SCROLLINFO *info, BOOL set_range )
 {
     LONG max_pos = info->nMax, pos = info->nPos;
 

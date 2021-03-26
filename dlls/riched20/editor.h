@@ -321,8 +321,8 @@ static inline ME_DisplayItem *cell_get_di(ME_Cell *cell)
 
 /* txthost.c */
 #ifdef __ASM_USE_THISCALL_WRAPPER
-extern const struct ITextHostVtbl text_host_stdcall_vtbl DECLSPEC_HIDDEN;
-#define TXTHOST_VTABLE(This) (&text_host_stdcall_vtbl)
+extern const struct ITextHost2Vtbl text_host2_stdcall_vtbl DECLSPEC_HIDDEN;
+#define TXTHOST_VTABLE(This) (&text_host2_stdcall_vtbl)
 #else
 #define TXTHOST_VTABLE(This) (This)->lpVtbl
 #endif
@@ -366,6 +366,19 @@ extern const struct ITextHostVtbl text_host_stdcall_vtbl DECLSPEC_HIDDEN;
 #define ITextHost_TxImmGetContext(This) TXTHOST_VTABLE(This)->TxImmGetContext(This)
 #define ITextHost_TxImmReleaseContext(This,a) TXTHOST_VTABLE(This)->TxImmReleaseContext(This,a)
 #define ITextHost_TxGetSelectionBarWidth(This,a) TXTHOST_VTABLE(This)->TxGetSelectionBarWidth(This,a)
+/* ITextHost2 */
+#define ITextHost2_TxIsDoubleClickPending(This) TXTHOST_VTABLE(This)->TxIsDoubleClickPending(This)
+#define ITextHost2_TxGetWindow(This,a) TXTHOST_VTABLE(This)->TxGetWindow(This,a)
+#define ITextHost2_TxSetForegroundWindow(This) TXTHOST_VTABLE(This)->TxSetForegroundWindow(This)
+#define ITextHost2_TxGetPalette(This) TXTHOST_VTABLE(This)->TxGetPalette(This)
+#define ITextHost2_TxGetEastAsianFlags(This,a) TXTHOST_VTABLE(This)->TxGetEastAsianFlags(This,a)
+#define ITextHost2_TxSetCursor2(This,a,b) TXTHOST_VTABLE(This)->TxSetCursor2(This,a,b)
+#define ITextHost2_TxFreeTextServicesNotification(This) TXTHOST_VTABLE(This)->TxFreeTextServicesNotification(This)
+#define ITextHost2_TxGetEditStyle(This,a,b) TXTHOST_VTABLE(This)->TxGetEditStyle(This,a,b)
+#define ITextHost2_TxGetWindowStyles(This,a,b) TXTHOST_VTABLE(This)->TxGetWindowStyles(This,a,b)
+#define ITextHost2_TxShowDropCaret(This,a,b,c) TXTHOST_VTABLE(This)->TxShowDropCaret(This,a,b,c)
+#define ITextHost2_TxDestroyCaret(This) TXTHOST_VTABLE(This)->TxDestroyCaret(This)
+#define ITextHost2_TxGetHorzExtent(This,a) TXTHOST_VTABLE(This)->TxGetHorzExtent(This,a)
 
 /* undo.c */
 BOOL add_undo_insert_run( ME_TextEditor *, int pos, const WCHAR *str, int len, int flags, ME_Style *style ) DECLSPEC_HIDDEN;

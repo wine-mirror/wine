@@ -2906,20 +2906,24 @@ static LONG ME_GetSelectionType(ME_TextEditor *editor)
 
 static BOOL ME_ShowContextMenu(ME_TextEditor *editor, int x, int y)
 {
-  CHARRANGE selrange;
-  HMENU menu;
-  int seltype;
+    CHARRANGE selrange;
+    HMENU menu;
+    int seltype;
+    HWND hwnd, parent;
 
-  if(!editor->lpOleCallback || !editor->hWnd)
-    return FALSE;
-  ME_GetSelectionOfs(editor, &selrange.cpMin, &selrange.cpMax);
-  seltype = ME_GetSelectionType(editor);
-  if(SUCCEEDED(IRichEditOleCallback_GetContextMenu(editor->lpOleCallback, seltype, NULL, &selrange, &menu)))
-  {
-    TrackPopupMenu(menu, TPM_LEFTALIGN | TPM_RIGHTBUTTON, x, y, 0, editor->hwndParent, NULL);
-    DestroyMenu(menu);
-  }
-  return TRUE;
+    if (!editor->lpOleCallback || !editor->have_texthost2) return FALSE;
+    if (FAILED( ITextHost2_TxGetWindow( editor->texthost, &hwnd ))) return FALSE;
+    parent = GetParent( hwnd );
+    if (!parent) parent = hwnd;
+
+    ME_GetSelectionOfs( editor, &selrange.cpMin, &selrange.cpMax );
+    seltype = ME_GetSelectionType( editor );
+    if (SUCCEEDED( IRichEditOleCallback_GetContextMenu( editor->lpOleCallback, seltype, NULL, &selrange, &menu ) ))
+    {
+        TrackPopupMenu( menu, TPM_LEFTALIGN | TPM_RIGHTBUTTON, x, y, 0, parent, NULL );
+        DestroyMenu( menu );
+    }
+    return TRUE;
 }
 
 ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
@@ -2932,16 +2936,26 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->hWnd = NULL;
   ed->hwndParent = NULL;
   ed->sizeWindow.cx = ed->sizeWindow.cy = 0;
-  ed->texthost = texthost;
+  if (ITextHost_QueryInterface( texthost, &IID_ITextHost2, (void **)&ed->texthost ) == S_OK)
+  {
+    ITextHost_Release( texthost );
+    ed->have_texthost2 = TRUE;
+  }
+  else
+  {
+    ed->texthost = (ITextHost2 *)texthost;
+    ed->have_texthost2 = FALSE;
+  }
+
   ed->reOle = NULL;
   ed->bEmulateVersion10 = bEmulateVersion10;
   ed->in_place_active = FALSE;
   ed->total_rows = 0;
-  ITextHost_TxGetPropertyBits( texthost, TXTBIT_RICHTEXT | TXTBIT_MULTILINE | TXTBIT_READONLY |
+  ITextHost_TxGetPropertyBits( ed->texthost, TXTBIT_RICHTEXT | TXTBIT_MULTILINE | TXTBIT_READONLY |
                                TXTBIT_USEPASSWORD | TXTBIT_HIDESELECTION | TXTBIT_SAVESELECTION |
                                TXTBIT_AUTOWORDSEL | TXTBIT_VERTICAL | TXTBIT_WORDWRAP | TXTBIT_DISABLEDRAG,
                                &ed->props );
-  ITextHost_TxGetScrollBars( texthost, &ed->scrollbars );
+  ITextHost_TxGetScrollBars( ed->texthost, &ed->scrollbars );
   ed->pBuffer = ME_MakeText();
   ed->nZoomNumerator = ed->nZoomDenominator = 0;
   ed->nAvailWidth = 0; /* wrap to client area */
@@ -3000,7 +3014,7 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
 
   ed->password_char = 0;
   if (ed->props & TXTBIT_USEPASSWORD)
-    ITextHost_TxGetPasswordChar( texthost, &ed->password_char );
+    ITextHost_TxGetPasswordChar( ed->texthost, &ed->password_char );
 
   ed->bWordWrap = (ed->props & TXTBIT_WORDWRAP) && (ed->props & TXTBIT_MULTILINE);
 
@@ -3025,20 +3039,20 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   {
       if (ed->scrollbars & WS_VSCROLL)
       {
-          ITextHost_TxSetScrollRange( texthost, SB_VERT, 0, 1, TRUE );
-          ITextHost_TxEnableScrollBar( texthost, SB_VERT, ESB_DISABLE_BOTH );
+          ITextHost_TxSetScrollRange( ed->texthost, SB_VERT, 0, 1, TRUE );
+          ITextHost_TxEnableScrollBar( ed->texthost, SB_VERT, ESB_DISABLE_BOTH );
       }
       if (ed->scrollbars & WS_HSCROLL)
       {
-          ITextHost_TxSetScrollRange( texthost, SB_HORZ, 0, 1, TRUE );
-          ITextHost_TxEnableScrollBar( texthost, SB_HORZ, ESB_DISABLE_BOTH );
+          ITextHost_TxSetScrollRange( ed->texthost, SB_HORZ, 0, 1, TRUE );
+          ITextHost_TxEnableScrollBar( ed->texthost, SB_HORZ, ESB_DISABLE_BOTH );
       }
   }
 
   ed->wheel_remain = 0;
 
   ed->back_style = TXTBACK_OPAQUE;
-  ITextHost_TxGetBackStyle( texthost, &ed->back_style );
+  ITextHost_TxGetBackStyle( ed->texthost, &ed->back_style );
 
   list_init( &ed->reobj_list );
   OleInitialize(NULL);
