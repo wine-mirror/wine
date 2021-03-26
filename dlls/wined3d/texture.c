@@ -2169,43 +2169,44 @@ static void wined3d_texture_gl_upload_bo(const struct wined3d_format *src_format
             GL_EXTCALL(glCompressedTexSubImage1D(target, level, dst_x,
                     update_w, internal, dst_row_pitch, addr));
         }
-        else if (dst_row_pitch == src_row_pitch)
-        {
-            if (target == GL_TEXTURE_2D_ARRAY || target == GL_TEXTURE_3D)
-            {
-                GL_EXTCALL(glCompressedTexSubImage3D(target, level, dst_x, dst_y, dst_z,
-                        update_w, update_h, update_d, internal, dst_slice_pitch * update_d, addr));
-            }
-            else
-            {
-                GL_EXTCALL(glCompressedTexSubImage2D(target, level, dst_x, dst_y,
-                        update_w, update_h, internal, dst_slice_pitch, addr));
-            }
-        }
         else
         {
-            unsigned int row_count = (update_h + src_format->block_height - 1) / src_format->block_height;
-            unsigned int row, y, z;
+            unsigned int row, y, slice, slice_count = 1, row_count = 1;
 
             /* glCompressedTexSubImage2D() ignores pixel store state, so we
              * can't use the unpack row length like for glTexSubImage2D. */
-            for (z = dst_z; z < dst_z + update_d; ++z)
+            if (dst_row_pitch != src_row_pitch)
+            {
+                row_count = (update_h + src_format->block_height - 1) / src_format->block_height;
+                update_h = src_format->block_height;
+                wined3d_format_calculate_pitch(src_format, 1, update_w, update_h,
+                        &dst_row_pitch, &dst_slice_pitch);
+            }
+
+            if (dst_slice_pitch != src_slice_pitch)
+            {
+                slice_count = update_d;
+                update_d = 1;
+            }
+
+            for (slice = 0; slice < slice_count; ++slice)
             {
                 for (row = 0, y = dst_y; row < row_count; ++row)
                 {
+                    const BYTE *upload_addr = &addr[slice * src_slice_pitch + row * src_row_pitch];
+
                     if (target == GL_TEXTURE_2D_ARRAY || target == GL_TEXTURE_3D)
                     {
-                        GL_EXTCALL(glCompressedTexSubImage3D(target, level, dst_x, y, z,
-                                update_w, src_format->block_height, 1, internal, dst_row_pitch, addr));
+                        GL_EXTCALL(glCompressedTexSubImage3D(target, level, dst_x, y, dst_z + slice, update_w,
+                                update_h, update_d, internal, update_d * dst_slice_pitch, upload_addr));
                     }
                     else
                     {
-                        GL_EXTCALL(glCompressedTexSubImage2D(target, level, dst_x, y,
-                                update_w, src_format->block_height, internal, dst_row_pitch, addr));
+                        GL_EXTCALL(glCompressedTexSubImage2D(target, level, dst_x, y, update_w,
+                                update_h, internal, dst_slice_pitch, upload_addr));
                     }
 
                     y += src_format->block_height;
-                    addr += src_row_pitch;
                 }
             }
         }
