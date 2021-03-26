@@ -4735,8 +4735,6 @@ void wined3d_cs_emit_clear_unordered_access_view_uint(struct wined3d_cs *cs,
         struct wined3d_unordered_access_view *view, const struct wined3d_uvec4 *clear_value) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_copy_uav_counter(struct wined3d_cs *cs, struct wined3d_buffer *dst_buffer,
         unsigned int offset, struct wined3d_unordered_access_view *uav) DECLSPEC_HIDDEN;
-void wined3d_cs_emit_dispatch_indirect(struct wined3d_cs *cs,
-        struct wined3d_buffer *buffer, unsigned int offset) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_draw(struct wined3d_cs *cs, enum wined3d_primitive_type primitive_type,
         unsigned int patch_vertex_count, int base_vertex_idx, unsigned int start_idx, unsigned int index_count,
         unsigned int start_instance, unsigned int instance_count, bool indexed) DECLSPEC_HIDDEN;

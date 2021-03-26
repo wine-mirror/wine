@@ -4409,7 +4409,7 @@ void CDECL wined3d_device_dispatch_compute_indirect(struct wined3d_device *devic
 {
     TRACE("device %p, buffer %p, offset %u.\n", device, buffer, offset);
 
-    wined3d_cs_emit_dispatch_indirect(device->cs, buffer, offset);
+    wined3d_device_context_dispatch_indirect(&device->cs->c, buffer, offset);
 }
 
 void CDECL wined3d_device_set_primitive_type(struct wined3d_device *device,

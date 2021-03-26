@@ -908,22 +908,21 @@ void CDECL wined3d_device_context_dispatch(struct wined3d_device_context *contex
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
-void wined3d_cs_emit_dispatch_indirect(struct wined3d_cs *cs,
+void CDECL wined3d_device_context_dispatch_indirect(struct wined3d_device_context *context,
         struct wined3d_buffer *buffer, unsigned int offset)
 {
-    const struct wined3d_state *state = cs->c.state;
     struct wined3d_cs_dispatch *op;
 
-    op = wined3d_device_context_require_space(&cs->c, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_DISPATCH;
     op->parameters.indirect = TRUE;
     op->parameters.u.indirect.buffer = buffer;
     op->parameters.u.indirect.offset = offset;
 
-    acquire_compute_pipeline_resources(state);
+    acquire_compute_pipeline_resources(context->state);
     wined3d_resource_acquire(&buffer->resource);
 
-    wined3d_device_context_submit(&cs->c, WINED3D_CS_QUEUE_DEFAULT);
+    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
 static void wined3d_cs_exec_draw(struct wined3d_cs *cs, const void *data)
