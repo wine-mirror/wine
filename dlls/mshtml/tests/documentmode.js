@@ -375,4 +375,6 @@ sync_test("navigator", function() {
     ok(navigator.appCodeName === "Mozilla", "appCodeName = " + navigator.appCodeName);
     ok(navigator.appName === (v < 11 ? "Microsoft Internet Explorer" : "Netscape"),
        "appName = " + navigator.appName);
+    ok(navigator.toString() === (v < 9 ? "[object]" : "[object Navigator]"),
+       "navigator.toString() = " + navigator.toString());
 });

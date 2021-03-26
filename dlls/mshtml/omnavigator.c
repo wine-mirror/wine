@@ -1315,7 +1315,8 @@ static HRESULT WINAPI OmNavigator_toString(IOmNavigator *iface, BSTR *String)
     if(!String)
         return E_INVALIDARG;
 
-    *String = SysAllocString(L"[object]");
+    *String = SysAllocString(dispex_compat_mode(&This->dispex) < COMPAT_MODE_IE9
+                             ? L"[object]" : L"[object Navigator]");
     return *String ? S_OK : E_OUTOFMEMORY;
 }
 
