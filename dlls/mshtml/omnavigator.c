@@ -1157,6 +1157,27 @@ static HRESULT WINAPI OmNavigator_get_appName(IOmNavigator *iface, BSTR *p)
     return S_OK;
 }
 
+static unsigned int get_ua_version(OmNavigator *navigator)
+{
+    switch(dispex_compat_mode(&navigator->dispex)) {
+    case COMPAT_MODE_QUIRKS:
+        return UAS_EXACTLEGACY | 7;
+    case COMPAT_MODE_IE5:
+    case COMPAT_MODE_IE7:
+        return 7;
+    case COMPAT_MODE_IE8:
+        return 8;
+    case COMPAT_MODE_IE9:
+        return 9;
+    case COMPAT_MODE_IE10:
+        return 10;
+    case COMPAT_MODE_IE11:
+        return 11;
+    }
+    assert(0);
+    return 0;
+}
+
 static HRESULT WINAPI OmNavigator_get_appVersion(IOmNavigator *iface, BSTR *p)
 {
     OmNavigator *This = impl_from_IOmNavigator(iface);
@@ -1169,7 +1190,7 @@ static HRESULT WINAPI OmNavigator_get_appVersion(IOmNavigator *iface, BSTR *p)
     TRACE("(%p)->(%p)\n", This, p);
 
     size = sizeof(user_agent);
-    hres = ObtainUserAgentString(0, user_agent, &size);
+    hres = ObtainUserAgentString(get_ua_version(This), user_agent, &size);
     if(FAILED(hres))
         return hres;
 
@@ -1197,7 +1218,7 @@ static HRESULT WINAPI OmNavigator_get_userAgent(IOmNavigator *iface, BSTR *p)
     TRACE("(%p)->(%p)\n", This, p);
 
     size = sizeof(user_agent);
-    hres = ObtainUserAgentString(0, user_agent, &size);
+    hres = ObtainUserAgentString(get_ua_version(This), user_agent, &size);
     if(FAILED(hres))
         return hres;
 

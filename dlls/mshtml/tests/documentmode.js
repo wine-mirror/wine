@@ -360,3 +360,15 @@ async_test("script_load", function() {
     elem.src = "jsstream.php?simple";
     external.writeStream("simple", "ready_states += 'exec,';");
 });
+
+sync_test("navigator", function() {
+    var v = document.documentMode, re;
+    var app = navigator.appVersion;
+    ok(navigator.userAgent === "Mozilla/" + app,
+       "userAgent = " + navigator.userAgent + " appVersion = " + app);
+
+    re = v < 11
+        ? "^" + (v < 9 ? "4" : "5") + "\\.0 \\(compatible; MSIE " + (v < 7 ? 7 : v) + "\\.0; Windows NT [^\\)]*\\)$"
+        : "^5.0 \\(Windows NT [0-9].[0-9]; .*Trident/[678]\\.0.*rv:11.0\\) like Gecko$";
+    ok(new RegExp(re).test(app), "appVersion = " + app);
+});
