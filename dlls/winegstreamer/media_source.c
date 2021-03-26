@@ -78,6 +78,7 @@ struct source_async_command
 struct media_source
 {
     IMFMediaSource IMFMediaSource_iface;
+    IMFGetService IMFGetService_iface;
     IMFAsyncCallback async_commands_callback;
     LONG ref;
     DWORD async_commands_queue;
@@ -111,6 +112,11 @@ static inline struct media_stream *impl_from_IMFMediaStream(IMFMediaStream *ifac
 static inline struct media_source *impl_from_IMFMediaSource(IMFMediaSource *iface)
 {
     return CONTAINING_RECORD(iface, struct media_source, IMFMediaSource_iface);
+}
+
+static inline struct media_source *impl_from_IMFGetService(IMFGetService *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_source, IMFGetService_iface);
 }
 
 static inline struct media_source *impl_from_async_commands_callback_IMFAsyncCallback(IMFAsyncCallback *iface)
@@ -823,6 +829,39 @@ done:
     return hr;
 }
 
+static HRESULT WINAPI media_source_get_service_QueryInterface(IMFGetService *iface, REFIID riid, void **obj)
+{
+    struct media_source *source = impl_from_IMFGetService(iface);
+    return IMFMediaSource_QueryInterface(&source->IMFMediaSource_iface, riid, obj);
+}
+
+static ULONG WINAPI media_source_get_service_AddRef(IMFGetService *iface)
+{
+    struct media_source *source = impl_from_IMFGetService(iface);
+    return IMFMediaSource_AddRef(&source->IMFMediaSource_iface);
+}
+
+static ULONG WINAPI media_source_get_service_Release(IMFGetService *iface)
+{
+    struct media_source *source = impl_from_IMFGetService(iface);
+    return IMFMediaSource_Release(&source->IMFMediaSource_iface);
+}
+
+static HRESULT WINAPI media_source_get_service_GetService(IMFGetService *iface, REFGUID service, REFIID riid, void **obj)
+{
+    FIXME("stub %p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+
+    return E_NOINTERFACE;
+}
+
+static const IMFGetServiceVtbl media_source_get_service_vtbl =
+{
+    media_source_get_service_QueryInterface,
+    media_source_get_service_AddRef,
+    media_source_get_service_Release,
+    media_source_get_service_GetService,
+};
+
 static HRESULT WINAPI media_source_QueryInterface(IMFMediaSource *iface, REFIID riid, void **out)
 {
     struct media_source *source = impl_from_IMFMediaSource(iface);
@@ -834,6 +873,10 @@ static HRESULT WINAPI media_source_QueryInterface(IMFMediaSource *iface, REFIID 
         IsEqualIID(riid, &IID_IUnknown))
     {
         *out = &source->IMFMediaSource_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFGetService))
+    {
+        *out = &source->IMFGetService_iface;
     }
     else
     {
@@ -1094,6 +1137,7 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
         return E_OUTOFMEMORY;
 
     object->IMFMediaSource_iface.lpVtbl = &IMFMediaSource_vtbl;
+    object->IMFGetService_iface.lpVtbl = &media_source_get_service_vtbl;
     object->async_commands_callback.lpVtbl = &source_async_commands_callback_vtbl;
     object->ref = 1;
     object->byte_stream = bytestream;
