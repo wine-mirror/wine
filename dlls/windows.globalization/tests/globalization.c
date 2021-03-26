@@ -47,7 +47,7 @@ static void test_GlobalizationPreferences(void)
     static const WCHAR *class_name = L"Windows.System.UserProfile.GlobalizationPreferences";
 
     IGlobalizationPreferencesStatics *preferences_statics = NULL;
-    IVectorView_HSTRING *languages = NULL;
+    IVectorView_HSTRING *languages = NULL, *calendars, *clocks, *currencies;
     IActivationFactory *factory = NULL;
     IInspectable *inspectable = NULL, *tmp_inspectable = NULL;
     IAgileObject *agile_object = NULL, *tmp_agile_object = NULL;
@@ -177,6 +177,40 @@ static void test_GlobalizationPreferences(void)
     pWindowsDeleteString(tmp_str);
 
     IVectorView_HSTRING_Release(languages);
+
+
+    hr = IGlobalizationPreferencesStatics_get_Calendars(preferences_statics, &calendars);
+    ok(hr == S_OK, "IGlobalizationPreferencesStatics_get_Calendars failed, hr %#x\n", hr);
+
+    size = 0xdeadbeef;
+    hr = IVectorView_HSTRING_get_Size(calendars, &size);
+    ok(hr == S_OK, "IVectorView_HSTRING_get_Size failed, hr %#x\n", hr);
+    todo_wine ok(size != 0 && size != 0xdeadbeef, "IVectorView_HSTRING_get_Size returned %u\n", size);
+
+    IVectorView_HSTRING_Release(calendars);
+
+
+    hr = IGlobalizationPreferencesStatics_get_Clocks(preferences_statics, &clocks);
+    ok(hr == S_OK, "IGlobalizationPreferencesStatics_get_Clocks failed, hr %#x\n", hr);
+
+    size = 0xdeadbeef;
+    hr = IVectorView_HSTRING_get_Size(clocks, &size);
+    ok(hr == S_OK, "IVectorView_HSTRING_get_Size failed, hr %#x\n", hr);
+    todo_wine ok(size != 0 && size != 0xdeadbeef, "IVectorView_HSTRING_get_Size returned %u\n", size);
+
+    IVectorView_HSTRING_Release(clocks);
+
+
+    hr = IGlobalizationPreferencesStatics_get_Currencies(preferences_statics, &currencies);
+    ok(hr == S_OK, "IGlobalizationPreferencesStatics_get_Currencies failed, hr %#x\n", hr);
+
+    size = 0xdeadbeef;
+    hr = IVectorView_HSTRING_get_Size(currencies, &size);
+    ok(hr == S_OK, "IVectorView_HSTRING_get_Size failed, hr %#x\n", hr);
+    todo_wine ok(size != 0 && size != 0xdeadbeef, "IVectorView_HSTRING_get_Size returned %u\n", size);
+
+    IVectorView_HSTRING_Release(currencies);
+
 
     IGlobalizationPreferencesStatics_Release(preferences_statics);
 
