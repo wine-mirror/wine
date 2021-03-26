@@ -2349,10 +2349,11 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
     UNICODE_STRING win_name = *nt_name;
 
     TRACE( "trying %s as so lib\n", debugstr_us(&win_name) );
-    if (unix_funcs->load_so_dll( &win_name, &module ))
+    if ((status = unix_funcs->load_so_dll( &win_name, &module )))
     {
         WARN( "failed to load .so lib %s\n", debugstr_us(nt_name) );
-        return STATUS_INVALID_IMAGE_FORMAT;
+        if (status == STATUS_INVALID_IMAGE_FORMAT) status = STATUS_INVALID_IMAGE_NOT_MZ;
+        return status;
     }
 
     if ((wm = get_modref( module )))  /* already loaded */
@@ -2690,7 +2691,6 @@ done:
 static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, const WCHAR *default_ext,
                           DWORD flags, WINE_MODREF** pwm )
 {
-    enum loadorder loadorder;
     UNICODE_STRING nt_name;
     struct file_id id;
     HANDLE mapping = 0;
@@ -2715,27 +2715,13 @@ static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, const WC
 
     if (nts && nts != STATUS_DLL_NOT_FOUND && nts != STATUS_INVALID_IMAGE_NOT_MZ) goto done;
 
-    loadorder = unix_funcs->get_load_order( &nt_name );
-
     prev = NtCurrentTeb()->Tib.ArbitraryUserPointer;
     NtCurrentTeb()->Tib.ArbitraryUserPointer = nt_name.Buffer + 4;
 
     switch (nts)
     {
     case STATUS_INVALID_IMAGE_NOT_MZ:  /* not in PE format, maybe it's a .so file */
-        switch (loadorder)
-        {
-        case LO_NATIVE:
-        case LO_NATIVE_BUILTIN:
-        case LO_BUILTIN:
-        case LO_BUILTIN_NATIVE:
-        case LO_DEFAULT:
-            if (!load_so_dll( load_path, &nt_name, flags, pwm )) nts = STATUS_SUCCESS;
-            break;
-        default:
-            nts = STATUS_DLL_NOT_FOUND;
-            break;
-        }
+        nts = load_so_dll( load_path, &nt_name, flags, pwm );
         break;
 
     case STATUS_SUCCESS:  /* valid PE file */
@@ -2743,7 +2729,7 @@ static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, const WC
         break;
 
     case STATUS_DLL_NOT_FOUND:  /* no file found, try builtin */
-        switch (loadorder)
+        switch (unix_funcs->get_load_order( &nt_name ))
         {
         case LO_NATIVE_BUILTIN:
         case LO_BUILTIN:

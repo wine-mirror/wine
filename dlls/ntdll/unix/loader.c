@@ -1153,6 +1153,7 @@ static NTSTATUS CDECL load_so_dll( UNICODE_STRING *nt_name, void **module )
     NTSTATUS status;
     DWORD len;
 
+    if (get_load_order( nt_name ) == LO_DISABLED) return STATUS_DLL_NOT_FOUND;
     if (nt_to_unix_file_name( nt_name, &unix_name, NULL, FILE_OPEN )) return STATUS_DLL_NOT_FOUND;
 
     /* remove .so extension from Windows name */
