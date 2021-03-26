@@ -48,6 +48,183 @@ static const char *debugstr_hstring(HSTRING hstr)
     return wine_dbgstr_wn(str, len);
 }
 
+struct hstring_vector
+{
+    IVectorView_HSTRING IVectorView_HSTRING_iface;
+    LONG ref;
+
+    ULONG count;
+    HSTRING values[1];
+};
+
+static inline struct hstring_vector *impl_from_IVectorView_HSTRING(IVectorView_HSTRING *iface)
+{
+    return CONTAINING_RECORD(iface, struct hstring_vector, IVectorView_HSTRING_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE hstring_vector_QueryInterface(IVectorView_HSTRING *iface,
+        REFIID iid, void **out)
+{
+    struct hstring_vector *impl = impl_from_IVectorView_HSTRING(iface);
+    TRACE("iface %p, iid %s, out %p stub!\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IInspectable) ||
+        IsEqualGUID(iid, &IID_IAgileObject) ||
+        IsEqualGUID(iid, &IID_IVectorView_HSTRING))
+    {
+        IUnknown_AddRef(iface);
+        *out = &impl->IVectorView_HSTRING_iface;
+        return S_OK;
+    }
+
+    FIXME("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE hstring_vector_AddRef(IVectorView_HSTRING *iface)
+{
+    struct hstring_vector *impl = impl_from_IVectorView_HSTRING(iface);
+    ULONG ref = InterlockedIncrement(&impl->ref);
+    TRACE("iface %p, ref %u.\n", iface, ref);
+    return ref;
+}
+
+static ULONG STDMETHODCALLTYPE hstring_vector_Release(IVectorView_HSTRING *iface)
+{
+    struct hstring_vector *impl = impl_from_IVectorView_HSTRING(iface);
+    ULONG ref = InterlockedDecrement(&impl->ref);
+    TRACE("iface %p, ref %u.\n", iface, ref);
+    if (ref == 0)
+    {
+        while (impl->count--) WindowsDeleteString(impl->values[impl->count]);
+        free(impl);
+    }
+    return ref;
+}
+
+static HRESULT STDMETHODCALLTYPE hstring_vector_GetIids(IVectorView_HSTRING *iface,
+        ULONG *iid_count, IID **iids)
+{
+    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE hstring_vector_GetRuntimeClassName(IVectorView_HSTRING *iface,
+        HSTRING *class_name)
+{
+    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE hstring_vector_GetTrustLevel(IVectorView_HSTRING *iface,
+        TrustLevel *trust_level)
+{
+    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE hstring_vector_GetAt(IVectorView_HSTRING *iface,
+        ULONG index, HSTRING *value)
+{
+    struct hstring_vector *impl = impl_from_IVectorView_HSTRING(iface);
+
+    TRACE("iface %p, index %#x, value %p.\n", iface, index, value);
+
+    *value = NULL;
+    if (index >= impl->count) return E_BOUNDS;
+    return WindowsDuplicateString(impl->values[index], value);
+}
+
+static HRESULT STDMETHODCALLTYPE hstring_vector_get_Size(IVectorView_HSTRING *iface,
+        ULONG *value)
+{
+    struct hstring_vector *impl = impl_from_IVectorView_HSTRING(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    *value = impl->count;
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE hstring_vector_IndexOf(IVectorView_HSTRING *iface,
+        HSTRING element, ULONG *index, BOOLEAN *found)
+{
+    struct hstring_vector *impl = impl_from_IVectorView_HSTRING(iface);
+    INT32 i, order;
+
+    TRACE("iface %p, element %p, index %p, found %p.\n", iface, element, index, found);
+
+    for (i = 0; i < impl->count; ++i)
+        if (SUCCEEDED(WindowsCompareStringOrdinal(impl->values[i], element, &order)) && order == 0)
+            break;
+
+    if (i < impl->count)
+    {
+        *found = TRUE;
+        *index = i;
+    }
+    else
+    {
+        *found = FALSE;
+        *index = 0;
+    }
+
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE hstring_vector_GetMany(IVectorView_HSTRING *iface,
+        ULONG start_index, ULONG items_size, HSTRING *items, UINT *count)
+{
+    struct hstring_vector *impl = impl_from_IVectorView_HSTRING(iface);
+    HRESULT hr = S_OK;
+    ULONG i;
+
+    TRACE("iface %p, start_index %#x, items %p, count %p.\n", iface, start_index, items, count);
+
+    memset(items, 0, items_size * sizeof(HSTRING *));
+
+    for (i = start_index; i < impl->count && i < start_index + items_size; ++i)
+        if (FAILED(hr = WindowsDuplicateString(impl->values[i], items + i - start_index)))
+            break;
+
+    if (FAILED(hr)) while (i-- > start_index) WindowsDeleteString(items[i - start_index]);
+    *count = i - start_index;
+    return hr;
+}
+
+static const struct IVectorView_HSTRINGVtbl hstring_vector_vtbl =
+{
+    hstring_vector_QueryInterface,
+    hstring_vector_AddRef,
+    hstring_vector_Release,
+    /* IInspectable methods */
+    hstring_vector_GetIids,
+    hstring_vector_GetRuntimeClassName,
+    hstring_vector_GetTrustLevel,
+    /* IVectorView<HSTRING> methods */
+    hstring_vector_GetAt,
+    hstring_vector_get_Size,
+    hstring_vector_IndexOf,
+    hstring_vector_GetMany,
+};
+
+static HRESULT hstring_vector_create(HSTRING *values, SIZE_T count, IVectorView_HSTRING **out)
+{
+    struct hstring_vector *impl;
+
+    if (!(impl = malloc(offsetof(struct hstring_vector, values[count])))) return E_OUTOFMEMORY;
+    impl->ref = 1;
+
+    impl->IVectorView_HSTRING_iface.lpVtbl = &hstring_vector_vtbl;
+    impl->count = count;
+    memcpy(impl->values, values, count * sizeof(HSTRING));
+
+    *out = &impl->IVectorView_HSTRING_iface;
+    return S_OK;
+}
+
 struct windows_globalization
 {
     IActivationFactory IActivationFactory_iface;
@@ -218,8 +395,21 @@ static HRESULT STDMETHODCALLTYPE globalization_preferences_get_Currencies(
 static HRESULT STDMETHODCALLTYPE globalization_preferences_get_Languages(
         IGlobalizationPreferencesStatics *iface, IVectorView_HSTRING **out)
 {
-    FIXME("iface %p, out %p stub!\n", iface, out);
-    return E_NOTIMPL;
+    HSTRING hstring;
+    HRESULT hr;
+    WCHAR locale[LOCALE_NAME_MAX_LENGTH];
+
+    TRACE("iface %p, out %p.\n", iface, out);
+
+    if (!GetUserDefaultLocaleName(locale, LOCALE_NAME_MAX_LENGTH))
+        return E_FAIL;
+
+    TRACE("returning language %s\n", debugstr_w(locale));
+
+    if (FAILED(hr = WindowsCreateString(locale, wcslen(locale), &hstring)))
+        return hr;
+
+    return hstring_vector_create(&hstring, 1, out);
 }
 
 static HRESULT STDMETHODCALLTYPE globalization_preferences_get_HomeGeographicRegion(

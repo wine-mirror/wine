@@ -108,8 +108,7 @@ static void test_GlobalizationPreferences(void)
     pWindowsDeleteString(tmp_str);
 
     hr = IGlobalizationPreferencesStatics_get_Languages(preferences_statics, &languages);
-    todo_wine ok(hr == S_OK, "IGlobalizationPreferencesStatics_get_Languages failed, hr %#x\n", hr);
-    if (FAILED(hr)) goto done;
+    ok(hr == S_OK, "IGlobalizationPreferencesStatics_get_Languages failed, hr %#x\n", hr);
 
     hr = IVectorView_HSTRING_QueryInterface(languages, &IID_IInspectable, (void **)&tmp_inspectable);
     ok(hr == S_OK, "IVectorView_HSTRING_QueryInterface failed, hr %#x\n", hr);
@@ -143,14 +142,42 @@ static void test_GlobalizationPreferences(void)
 
     pWindowsDeleteString(tmp_str);
 
+    hr = pWindowsCreateString(L"deadbeef", 8, &tmp_str);
+    ok(hr == S_OK, "WindowsCreateString failed, hr %#x\n", hr);
+
+    i = 0xdeadbeef;
+    found = TRUE;
+    hr = IVectorView_HSTRING_IndexOf(languages, tmp_str, &i, &found);
+    ok(hr == S_OK, "IVectorView_HSTRING_IndexOf failed, hr %#x\n", hr);
+    ok(i == 0 && found == FALSE, "IVectorView_HSTRING_IndexOf returned size %d, found %d\n", size, found);
+
+    pWindowsDeleteString(tmp_str);
+
     tmp_str = (HSTRING)0xdeadbeef;
     hr = IVectorView_HSTRING_GetAt(languages, size, &tmp_str);
     ok(hr == E_BOUNDS, "IVectorView_HSTRING_GetAt failed, hr %#x\n", hr);
     ok(tmp_str == NULL, "IVectorView_HSTRING_GetAt returned %p\n", tmp_str);
 
+    tmp_str = (HSTRING)0xdeadbeef;
+    hr = IVectorView_HSTRING_GetMany(languages, size, 1, &tmp_str, &i);
+    ok(hr == S_OK, "IVectorView_HSTRING_GetAt failed, hr %#x\n", hr);
+    ok(i == 0 && tmp_str == NULL, "IVectorView_HSTRING_GetMany returned count %u, str %p\n", i, tmp_str);
+
+    hr = IVectorView_HSTRING_GetMany(languages, 0, 1, &tmp_str, &i);
+    ok(hr == S_OK, "IVectorView_HSTRING_GetAt failed, hr %#x\n", hr);
+    ok(i == 1, "IVectorView_HSTRING_GetMany returned count %u, expected 1\n", i);
+
+    buf = pWindowsGetStringRawBuffer(tmp_str, &len);
+    ok(buf != NULL && len > 0, "WindowsGetStringRawBuffer returned buf %p, len %u\n", buf, len);
+
+    ok(wcslen(locale) == len && !memcmp(buf, locale, len),
+       "IGlobalizationPreferencesStatics_get_Languages 0 returned len %u, str %s, expected %s\n",
+       len, wine_dbgstr_w(buf), wine_dbgstr_w(locale));
+
+    pWindowsDeleteString(tmp_str);
+
     IVectorView_HSTRING_Release(languages);
 
-done:
     IGlobalizationPreferencesStatics_Release(preferences_statics);
 
     IAgileObject_Release(agile_object);
