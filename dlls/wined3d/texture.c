@@ -2135,10 +2135,10 @@ HRESULT CDECL wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
 }
 
 static void wined3d_texture_gl_upload_bo(const struct wined3d_format *src_format, GLenum target,
-        unsigned int level, unsigned int src_row_pitch, unsigned int dst_x, unsigned int dst_y,
-        unsigned int dst_z, unsigned int update_w, unsigned int update_h, unsigned int update_d,
-        const BYTE *addr, BOOL srgb, struct wined3d_texture *dst_texture,
-        const struct wined3d_gl_info *gl_info)
+        unsigned int level, unsigned int src_row_pitch, unsigned int src_slice_pitch,
+        unsigned int dst_x, unsigned int dst_y, unsigned int dst_z, unsigned int update_w,
+        unsigned int update_h, unsigned int update_d, const BYTE *addr, BOOL srgb,
+        struct wined3d_texture *dst_texture, const struct wined3d_gl_info *gl_info)
 {
     const struct wined3d_format_gl *format_gl = wined3d_format_gl(src_format);
 
@@ -2211,17 +2211,19 @@ static void wined3d_texture_gl_upload_bo(const struct wined3d_format *src_format
     }
     else
     {
-        unsigned int y, y_count;
+        unsigned int y, y_count, z, z_count;
+        bool unpacking_rows = false;
 
         TRACE("Uploading data, target %#x, level %u, x %u, y %u, z %u, "
                 "w %u, h %u, d %u, format %#x, type %#x, addr %p.\n",
                 target, level, dst_x, dst_y, dst_z, update_w, update_h,
                 update_d, format_gl->format, format_gl->type, addr);
 
-        if (src_row_pitch)
+        if (src_row_pitch && !(src_row_pitch % src_format->byte_count))
         {
             gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_ROW_LENGTH, src_row_pitch / src_format->byte_count);
             y_count = 1;
+            unpacking_rows = true;
         }
         else
         {
@@ -2229,25 +2231,47 @@ static void wined3d_texture_gl_upload_bo(const struct wined3d_format *src_format
             update_h = 1;
         }
 
-        for (y = 0; y < y_count; ++y)
+        if (src_slice_pitch && unpacking_rows && !(src_slice_pitch % src_row_pitch))
         {
-            if (target == GL_TEXTURE_2D_ARRAY || target == GL_TEXTURE_3D)
+            gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_IMAGE_HEIGHT, src_slice_pitch / src_row_pitch);
+            z_count = 1;
+        }
+        else if (src_slice_pitch && !unpacking_rows && !(src_slice_pitch % (update_w * src_format->byte_count)))
+        {
+            gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_IMAGE_HEIGHT,
+                    src_slice_pitch / (update_w * src_format->byte_count));
+            z_count = 1;
+        }
+        else
+        {
+            z_count = update_d;
+            update_d = 1;
+        }
+
+        for (z = 0; z < z_count; ++z)
+        {
+            for (y = 0; y < y_count; ++y)
             {
-                GL_EXTCALL(glTexSubImage3D(target, level, dst_x, dst_y + y, dst_z,
-                        update_w, update_h, update_d, format_gl->format, format_gl->type, addr));
-            }
-            else if (target == GL_TEXTURE_1D)
-            {
-                gl_info->gl_ops.gl.p_glTexSubImage1D(target, level, dst_x,
-                        update_w, format_gl->format, format_gl->type, addr);
-            }
-            else
-            {
-                gl_info->gl_ops.gl.p_glTexSubImage2D(target, level, dst_x, dst_y + y,
-                        update_w, update_h, format_gl->format, format_gl->type, addr);
+                const BYTE *upload_addr = &addr[z * src_slice_pitch + y * src_row_pitch];
+                if (target == GL_TEXTURE_2D_ARRAY || target == GL_TEXTURE_3D)
+                {
+                    GL_EXTCALL(glTexSubImage3D(target, level, dst_x, dst_y + y, dst_z + z, update_w,
+                            update_h, update_d, format_gl->format, format_gl->type, upload_addr));
+                }
+                else if (target == GL_TEXTURE_1D)
+                {
+                    gl_info->gl_ops.gl.p_glTexSubImage1D(target, level, dst_x,
+                            update_w, format_gl->format, format_gl->type, upload_addr);
+                }
+                else
+                {
+                    gl_info->gl_ops.gl.p_glTexSubImage2D(target, level, dst_x, dst_y + y,
+                            update_w, update_h, format_gl->format, format_gl->type, upload_addr);
+                }
             }
         }
         gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+        gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_IMAGE_HEIGHT, 0);
         checkGLcall("Upload texture data");
     }
 }
@@ -2460,8 +2484,8 @@ static void wined3d_texture_gl_upload_data(struct wined3d_context *context,
                 src_format->upload(src_mem, converted_mem, src_row_pitch, src_slice_pitch,
                         dst_row_pitch, dst_slice_pitch, update_w, update_h, 1);
 
-            wined3d_texture_gl_upload_bo(src_format, target, level, dst_row_pitch, dst_x, dst_y,
-                    dst_z + z, update_w, update_h, 1, converted_mem, srgb, dst_texture, gl_info);
+            wined3d_texture_gl_upload_bo(src_format, target, level, dst_row_pitch, dst_slice_pitch, dst_x,
+                    dst_y, dst_z + z, update_w, update_h, 1, converted_mem, srgb, dst_texture, gl_info);
         }
 
         wined3d_context_gl_unmap_bo_address(context_gl, &bo, 0, NULL);
@@ -2475,8 +2499,8 @@ static void wined3d_texture_gl_upload_data(struct wined3d_context *context,
             checkGLcall("glBindBuffer");
         }
 
-        wined3d_texture_gl_upload_bo(src_format, target, level, src_row_pitch, dst_x, dst_y,
-                dst_z, update_w, update_h, update_d, bo.addr, srgb, dst_texture, gl_info);
+        wined3d_texture_gl_upload_bo(src_format, target, level, src_row_pitch, src_slice_pitch, dst_x,
+                dst_y, dst_z, update_w, update_h, update_d, bo.addr, srgb, dst_texture, gl_info);
 
         if (bo.buffer_object)
         {
