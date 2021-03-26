@@ -225,8 +225,16 @@ static HRESULT STDMETHODCALLTYPE globalization_preferences_get_Languages(
 static HRESULT STDMETHODCALLTYPE globalization_preferences_get_HomeGeographicRegion(
         IGlobalizationPreferencesStatics *iface, HSTRING* out)
 {
-    FIXME("iface %p, out %p stub!\n", iface, out);
-    return E_NOTIMPL;
+    WCHAR country[16];
+
+    TRACE("iface %p, out %p.\n", iface, out);
+
+    if (!GetUserDefaultGeoName(country, 16))
+        return E_FAIL;
+
+    TRACE("returning country %s\n", debugstr_w(country));
+
+    return WindowsCreateString(country, wcslen(country), out);
 }
 
 static HRESULT STDMETHODCALLTYPE globalization_preferences_get_WeekStartsOn(

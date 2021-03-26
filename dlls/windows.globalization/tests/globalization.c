@@ -55,14 +55,11 @@ static void test_GlobalizationPreferences(void)
     BOOLEAN found;
     HRESULT hr;
     UINT32 len;
-    WCHAR *buf, locale[LOCALE_NAME_MAX_LENGTH], *country, *tmp;
+    WCHAR *buf, locale[LOCALE_NAME_MAX_LENGTH], country[16];
     UINT32 i, size;
 
     GetUserDefaultLocaleName(locale, LOCALE_NAME_MAX_LENGTH);
-    if ((tmp = wcsrchr(locale, '_'))) *tmp = 0;
-    if (!(tmp = wcschr(locale, '-')) || (wcslen(tmp) > 3 && !(tmp = wcschr(tmp + 1, '-')))) country = wcsdup(L"US");
-    else country = wcsdup(tmp + 1);
-    GetUserDefaultLocaleName(locale, LOCALE_NAME_MAX_LENGTH);
+    GetUserDefaultGeoName(country, 16);
 
     hr = pRoInitialize(RO_INIT_MULTITHREADED);
     ok(hr == S_OK, "RoInitialize failed, hr %#x\n", hr);
@@ -77,7 +74,6 @@ static void test_GlobalizationPreferences(void)
         win_skip("%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w(class_name));
         pWindowsDeleteString(str);
         pRoUninitialize();
-        free(country);
         return;
     }
 
@@ -101,8 +97,7 @@ static void test_GlobalizationPreferences(void)
     IAgileObject_Release(tmp_agile_object);
 
     hr = IGlobalizationPreferencesStatics_get_HomeGeographicRegion(preferences_statics, &tmp_str);
-    todo_wine ok(hr == S_OK, "IGlobalizationPreferencesStatics_get_HomeGeographicRegion failed, hr %#x\n", hr);
-    if (FAILED(hr)) goto done;
+    ok(hr == S_OK, "IGlobalizationPreferencesStatics_get_HomeGeographicRegion failed, hr %#x\n", hr);
 
     buf = pWindowsGetStringRawBuffer(tmp_str, &len);
     ok(buf != NULL && len > 0, "WindowsGetStringRawBuffer returned buf %p, len %u\n", buf, len);
@@ -113,7 +108,8 @@ static void test_GlobalizationPreferences(void)
     pWindowsDeleteString(tmp_str);
 
     hr = IGlobalizationPreferencesStatics_get_Languages(preferences_statics, &languages);
-    ok(hr == S_OK, "IGlobalizationPreferencesStatics_get_Languages failed, hr %#x\n", hr);
+    todo_wine ok(hr == S_OK, "IGlobalizationPreferencesStatics_get_Languages failed, hr %#x\n", hr);
+    if (FAILED(hr)) goto done;
 
     hr = IVectorView_HSTRING_QueryInterface(languages, &IID_IInspectable, (void **)&tmp_inspectable);
     ok(hr == S_OK, "IVectorView_HSTRING_QueryInterface failed, hr %#x\n", hr);
@@ -164,7 +160,6 @@ done:
     pWindowsDeleteString(str);
 
     pRoUninitialize();
-    free(country);
 }
 
 START_TEST(globalization)
