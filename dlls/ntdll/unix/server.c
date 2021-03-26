@@ -99,8 +99,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(server);
 #define SOCKETNAME "socket"        /* name of the socket file */
 #define LOCKNAME   "lock"          /* name of the lock file */
 
-static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
-
 static const char *server_dir;
 
 unsigned int server_cpus = 0;

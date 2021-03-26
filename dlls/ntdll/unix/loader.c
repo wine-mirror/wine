@@ -114,8 +114,6 @@ static const BOOL use_preloader = TRUE;
 static const BOOL use_preloader = FALSE;
 #endif
 
-static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
-
 static char *argv0;
 static const char *bin_dir;
 static const char *dll_dir;

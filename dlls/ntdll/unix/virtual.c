@@ -141,7 +141,6 @@ static const BYTE VIRTUAL_Win32Flags[16] =
 static struct wine_rb_tree views_tree;
 static pthread_mutex_t virtual_mutex;
 
-static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 static const UINT page_shift = 12;
 static const UINT_PTR page_mask = 0xfff;
 static const UINT_PTR granularity_mask = 0xffff;

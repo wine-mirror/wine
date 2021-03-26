@@ -41,6 +41,8 @@ static const enum cpu_type client_cpu = CPU_ARM64;
 static const WORD current_machine = IMAGE_FILE_MACHINE_ARM64;
 #endif
 
+static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
+
 struct debug_info
 {
     unsigned int str_pos;       /* current position in strings buffer */
