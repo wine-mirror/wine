@@ -1560,6 +1560,9 @@ static void test_user_agent(void)
         if(i == 11) {
             p += check_prefix(p, "; rv:11.0) like Gecko");
         }else {
+            if(i != 1)
+                ok(*p == ';' || *p == ')', "unexpected suffix %s for version %u\n",
+                   wine_dbgstr_a(p), i);
             if(i < 9)
                 p = strchr(p, ')');
             p += check_prefix(p, ")");

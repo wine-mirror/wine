@@ -550,22 +550,22 @@ static size_t obtain_user_agent(unsigned int version, WCHAR *ret, size_t size)
 
     if(sizeof(void*) == 8)
 #ifdef __x86_64__
-        os_type = L"Win64; x64; ";
+        os_type = L"; Win64; x64";
 #else
-        os_type = L"Win64; ";
+        os_type = L"; Win64";
 #endif
     else if(IsWow64Process(GetCurrentProcess(), &is_wow) && is_wow)
-        os_type = L"WOW64; ";
+        os_type = L"; WOW64";
     else
         os_type = L"";
 
-    swprintf(ret + len, size - len, L"Windows %s%d.%d; %s", is_nt, info.dwMajorVersion,
+    swprintf(ret + len, size - len, L"Windows %s%d.%d%s", is_nt, info.dwMajorVersion,
              info.dwMinorVersion, os_type);
     len = lstrlenW(ret);
 
     if(!quirks) {
-        wcscpy(ret + len, L"Trident/7.0");
-        len += ARRAY_SIZE(L"Trident/7.0") - 1;
+        wcscpy(ret + len, L"; Trident/7.0");
+        len += ARRAY_SIZE(L"; Trident/7.0") - 1;
     }
 
     if(version < 9) {
@@ -575,10 +575,9 @@ static size_t obtain_user_agent(unsigned int version, WCHAR *ret, size_t size)
             DWORD value_len, idx;
 
             for(idx = 0;; idx++) {
-                if(idx) {
-                    ret[len++] = ';';
-                    ret[len++] = ' ';
-                }
+                ret[len++] = ';';
+                ret[len++] = ' ';
+
                 value_len = size - len - 2;
                 res = RegEnumValueW(key, idx, ret + len, &value_len, NULL, NULL, NULL, NULL);
                 if(res != ERROR_SUCCESS)
