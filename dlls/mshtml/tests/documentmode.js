@@ -371,4 +371,8 @@ sync_test("navigator", function() {
         ? "^" + (v < 9 ? "4" : "5") + "\\.0 \\(compatible; MSIE " + (v < 7 ? 7 : v) + "\\.0; Windows NT [^\\)]*\\)$"
         : "^5.0 \\(Windows NT [0-9].[0-9]; .*Trident/[678]\\.0.*rv:11.0\\) like Gecko$";
     ok(new RegExp(re).test(app), "appVersion = " + app);
+
+    ok(navigator.appCodeName === "Mozilla", "appCodeName = " + navigator.appCodeName);
+    ok(navigator.appName === (v < 11 ? "Microsoft Internet Explorer" : "Netscape"),
+       "appName = " + navigator.appName);
 });

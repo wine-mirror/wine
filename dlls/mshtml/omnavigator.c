@@ -1150,7 +1150,8 @@ static HRESULT WINAPI OmNavigator_get_appName(IOmNavigator *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    *p = SysAllocString(L"Microsoft Internet Explorer");
+    *p = SysAllocString(dispex_compat_mode(&This->dispex) == COMPAT_MODE_IE11
+                        ? L"Netscape" : L"Microsoft Internet Explorer");
     if(!*p)
         return E_OUTOFMEMORY;
 
