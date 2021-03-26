@@ -13713,12 +13713,14 @@ static void test_update_subresource(void)
 {
     struct d3d11_test_context test_context;
     D3D11_SUBRESOURCE_DATA resource_data;
+    D3D11_TEXTURE3D_DESC texture_desc_3d;
     D3D11_TEXTURE2D_DESC texture_desc;
     ID3D11SamplerState *sampler_state;
     ID3D11ShaderResourceView *ps_srv;
     D3D11_SAMPLER_DESC sampler_desc;
     ID3D11DeviceContext *context;
     struct resource_readback rb;
+    ID3D11Texture3D *texture_3d;
     ID3D11Texture2D *texture;
     ID3D11PixelShader *ps;
     ID3D11Device *device;
@@ -13753,8 +13755,41 @@ static void test_update_subresource(void)
         0x3b088889, 0x00000000, 0x00000000, 0x09000045, 0x001020f2, 0x00000000, 0x00100046, 0x00000000,
         0x00107e46, 0x00000000, 0x00106000, 0x00000000, 0x0100003e,
     };
+    static const DWORD ps_code_3d[] =
+    {
+#if 0
+        Texture3D t;
+        SamplerState s;
+
+        float4 main(float4 position : SV_POSITION) : SV_Target
+        {
+            float3 p1, p2;
+            p2.x = p1.x = position.x / 640.0f;
+            p2.y = p1.y = position.y / 480.0f;
+            p1.z = 0.25;
+            p2.z = 0.75;
+            return 0.5 * (t.Sample(s, p1) + t.Sample(s, p2));
+        }
+#endif
+        0x43425844, 0x4d466d63, 0xa3d10db1, 0xd6534470, 0x16d738ef, 0x00000001, 0x000001ec, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f, 0x004e4f49,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000150, 0x00000040,
+        0x00000054, 0x0300005a, 0x00106000, 0x00000000, 0x04002858, 0x00107000, 0x00000000, 0x00005555,
+        0x04002064, 0x00101032, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068,
+        0x00000002, 0x0a000038, 0x00100032, 0x00000000, 0x00101046, 0x00000000, 0x00004002, 0x3acccccd,
+        0x3b088889, 0x00000000, 0x00000000, 0x05000036, 0x00100042, 0x00000000, 0x00004001, 0x3e800000,
+        0x09000045, 0x001000f2, 0x00000000, 0x00100246, 0x00000000, 0x00107e46, 0x00000000, 0x00106000,
+        0x00000000, 0x0a000038, 0x00100032, 0x00000001, 0x00101046, 0x00000000, 0x00004002, 0x3acccccd,
+        0x3b088889, 0x00000000, 0x00000000, 0x05000036, 0x00100042, 0x00000001, 0x00004001, 0x3f400000,
+        0x09000045, 0x001000f2, 0x00000001, 0x00100246, 0x00000001, 0x00107e46, 0x00000000, 0x00106000,
+        0x00000000, 0x07000000, 0x001000f2, 0x00000000, 0x00100e46, 0x00000000, 0x00100e46, 0x00000001,
+        0x0a000038, 0x001020f2, 0x00000000, 0x00100e46, 0x00000000, 0x00004002, 0x3f000000, 0x3f000000,
+        0x3f000000, 0x3f000000, 0x0100003e,
+    };
     static const float red[] = {1.0f, 0.0f, 0.0f, 0.5f};
-    static const DWORD initial_data[16] = {0};
+    static const DWORD initial_data[32] = {0};
     static const DWORD bitmap_data[] =
     {
         0xff0000ff, 0xff00ffff, 0xff00ff00, 0xffffff00,
@@ -13769,6 +13804,25 @@ static void test_update_subresource(void)
         0xffffff00, 0xffff0000, 0xffff00ff, 0x00000000,
         0xff000000, 0xff7f7f7f, 0xffffffff, 0x00000000,
     };
+    static const DWORD bc7_data[] =
+    {
+        0x3a7b944b, 0x982a5800, 0x9cab4983, 0xc6a09579,
+        0x5f7f2bfe, 0xa95d98f2, 0x3bfb4c03, 0x8be16a41,
+        0x8362e6c0, 0x358ed7a2, 0xec3e130b, 0x86cebc86,
+        0xf045be66, 0x7a16507f, 0xfe9ccc9f, 0x3f103e16,
+        0x84d466c5, 0xfaf5cb5a, 0x9b9e1859, 0x384589b0,
+        0x9268b4b8, 0x212b3643, 0x813f853a, 0x4a2bd7c2,
+        0x1809f3e0, 0xf646d5ef, 0x40e80679, 0x05791fe5,
+        0x6604e7e5, 0x5c28b55d, 0x1ef211f5, 0x632d47f6,
+    };
+    static const DWORD bc7_expected_colors[] =
+    {
+        0xc1752752, 0xc39859a9, 0xff79c08e, 0xff63bf6c,
+        0xbf7d2756, 0xb89f3d40, 0xffda3a77, 0xffd08099,
+        0x415f1f37, 0x43671d3f, 0xffc64758, 0xff57a194,
+        0x405a2032, 0x39422619, 0xff749b76, 0xffabb879,
+    };
+    static const DWORD expected_colors_3d[] = { 0xffff8000, 0xffff8080, 0x80008000, 0xff8080ff };
 
     if (!init_test_context(&test_context, NULL))
         return;
@@ -13876,10 +13930,117 @@ static void test_update_subresource(void)
     }
     release_resource_readback(&rb);
 
-    ID3D11PixelShader_Release(ps);
-    ID3D11SamplerState_Release(sampler_state);
     ID3D11ShaderResourceView_Release(ps_srv);
     ID3D11Texture2D_Release(texture);
+    ID3D11PixelShader_Release(ps);
+
+    hr = ID3D11Device_CreatePixelShader(device, ps_code_3d, sizeof(ps_code_3d), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+
+    texture_desc_3d.Width = 2;
+    texture_desc_3d.Height = 2;
+    texture_desc_3d.Depth = 2;
+    texture_desc_3d.MipLevels = 1;
+    texture_desc_3d.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texture_desc_3d.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc_3d.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    texture_desc_3d.CPUAccessFlags = 0;
+    texture_desc_3d.MiscFlags = 0;
+
+    resource_data.SysMemPitch = texture_desc_3d.Width * sizeof(*initial_data);
+    resource_data.SysMemSlicePitch = texture_desc_3d.Width * texture_desc_3d.Height * sizeof(*initial_data);
+
+    hr = ID3D11Device_CreateTexture3D(device, &texture_desc_3d, &resource_data, &texture_3d);
+    ok(SUCCEEDED(hr), "Failed to create 3d texture, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture_3d, NULL, &ps_srv);
+    ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+    ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &ps_srv);
+
+    set_box(&box, 0, 0, 0, 1, 2, 1);
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)texture_3d, 0, &box, bitmap_data, 8, 16);
+    set_box(&box, 0, 0, 0, 1, 1, 2);
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)texture_3d, 0, &box, bitmap_data + 4, 16, 32);
+    set_box(&box, 1, 0, 0, 2, 1, 2);
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)texture_3d, 0, &box, bitmap_data + 8, 4, 0);
+    set_box(&box, 0, 0, 1, 2, 1, 2);
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)texture_3d, 0, &box, bitmap_data + 2, 4, 5);
+    set_box(&box, 0, 0, 1, 2, 1, 2);
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)texture_3d, 0, &box, bitmap_data + 3, 12, 0);
+    set_box(&box, 1, 1, 0, 2, 2, 2);
+    ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)texture_3d, 0, &box, bitmap_data, 0, 32);
+
+    draw_quad(&test_context);
+    get_texture_readback(test_context.backbuffer, 0, &rb);
+    for (i = 0; i < 2; ++i)
+    {
+        for (j = 0; j < 2; ++j)
+        {
+            color = get_readback_color(&rb, 160 + j * 320, 120 + i * 240, 0);
+            ok(compare_color(color, expected_colors_3d[j + i * 2], 1),
+                    "Got color 0x%08x at (%u, %u), expected 0x%08x.\n",
+                    color, j, i, expected_colors_3d[j + i * 2]);
+        }
+    }
+    release_resource_readback(&rb);
+    ID3D11ShaderResourceView_Release(ps_srv);
+    ID3D11Texture3D_Release(texture_3d);
+
+    texture_desc_3d.Width = 8;
+    texture_desc_3d.Height = 8;
+    texture_desc_3d.Depth = 2;
+    texture_desc_3d.Format = DXGI_FORMAT_BC7_UNORM;
+
+    resource_data.SysMemPitch = 32;
+    resource_data.SysMemSlicePitch = 64;
+
+    hr = ID3D11Device_CreateTexture3D(device, &texture_desc_3d, &resource_data, &texture_3d);
+    if (FAILED(hr))
+    {
+        skip("Failed to create BC7 3d texture, hr %#x.\n", hr);
+    }
+    else
+    {
+        hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture_3d, NULL, &ps_srv);
+        ok(SUCCEEDED(hr), "Failed to create shader resource view, hr %#x.\n", hr);
+
+        ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &ps_srv);
+        ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, red);
+
+        set_box(&box, 0, 0, 0, 8, 8, 2);
+        ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)texture_3d, 0, &box, bc7_data, 32, 64);
+        set_box(&box, 0, 0, 1, 8, 8, 2);
+        ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)texture_3d, 0, &box, bc7_data, 16, 0);
+        set_box(&box, 0, 0, 0, 4, 4, 1);
+        ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)texture_3d, 0, &box, bc7_data + 8, 0, 0);
+        set_box(&box, 4, 4, 0, 8, 8, 2);
+        ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)texture_3d, 0, &box, bc7_data + 16, 0, 16);
+        set_box(&box, 0, 4, 1, 8, 8, 2);
+        ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)texture_3d, 0, &box, bc7_data + 1, 4, 32);
+        set_box(&box, 4, 0, 0, 8, 4, 2);
+        ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)texture_3d, 0, &box, bc7_data + 2, 0, 1);
+
+        draw_quad(&test_context);
+        get_texture_readback(test_context.backbuffer, 0, &rb);
+        for (i = 0; i < 4; ++i)
+        {
+            for (j = 0; j < 4; ++j)
+            {
+                color = get_readback_color(&rb, 70 + j * 160, 50 + i * 120, 0);
+                ok(compare_color(color, bc7_expected_colors[j + i * 4], 1),
+                        "Got color 0x%08x at (%u, %u), expected 0x%08x.\n",
+                        color, j, i, bc7_expected_colors[j + i * 4]);
+            }
+        }
+        release_resource_readback(&rb);
+        ID3D11ShaderResourceView_Release(ps_srv);
+        ID3D11Texture3D_Release(texture_3d);
+    }
+
+    ID3D11PixelShader_Release(ps);
+    ID3D11SamplerState_Release(sampler_state);
     release_test_context(&test_context);
 }
 
