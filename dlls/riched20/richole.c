@@ -1195,20 +1195,19 @@ static ULONG STDMETHODCALLTYPE IOleInPlaceSite_fnRelease(IOleInPlaceSite *iface)
     return IOleClientSite_Release(&This->IOleClientSite_iface);
 }
 
-static HRESULT STDMETHODCALLTYPE IOleInPlaceSite_fnGetWindow(IOleInPlaceSite *iface, HWND *phwnd)
+static HRESULT STDMETHODCALLTYPE IOleInPlaceSite_fnGetWindow( IOleInPlaceSite *iface, HWND *window )
 {
     IOleClientSiteImpl *This = impl_from_IOleInPlaceSite(iface);
 
-    TRACE("(%p)->(%p)\n", This, phwnd);
+    TRACE( "(%p)->(%p)\n", This, window );
 
     if (!This->child.reole)
         return CO_E_RELEASED;
 
-    if (!phwnd)
-        return E_INVALIDARG;
+    if (!window) return E_INVALIDARG;
 
-    *phwnd = This->child.reole->editor->hWnd;
-    return S_OK;
+    if (!This->child.reole->editor->have_texthost2) return E_NOTIMPL;
+    return ITextHost2_TxGetWindow( This->child.reole->editor->texthost, window );
 }
 
 static HRESULT STDMETHODCALLTYPE IOleInPlaceSite_fnContextSensitiveHelp(IOleInPlaceSite *iface, BOOL fEnterMode)
