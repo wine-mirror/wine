@@ -2113,6 +2113,8 @@ struct CONFIRMSAFETY
     DWORD dwFlags;
 };
 
+cpp_quote("#define UAS_EXACTLEGACY 0x1000")
+
 cpp_quote("EXTERN_C const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY;")
 
 cpp_quote("DEFINE_GUID(CLSID_InternetSecurityManager, 0x7b8a2d94, 0x0ac9, 0x11d1, 0x89, 0x6c, 0x00, 0xc0, 0x4f, 0xB6, 0xbf, 0xc4);")

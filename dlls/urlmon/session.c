@@ -514,8 +514,8 @@ static size_t obtain_user_agent(unsigned int version, WCHAR *ret, size_t size)
     size_t len = 0;
     HKEY key;
 
-    if(version & 0x1000) {
-        version &= ~0x1000;
+    if(version & UAS_EXACTLEGACY) {
+        version &= ~UAS_EXACTLEGACY;
         if(version == 7)
             quirks = TRUE;
         else
