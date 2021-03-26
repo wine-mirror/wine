@@ -2579,6 +2579,8 @@ void __cdecl wined3d_device_context_set_shader(struct wined3d_device_context *co
         enum wined3d_shader_type type, struct wined3d_shader *shader);
 void __cdecl wined3d_device_context_set_shader_resource_view(struct wined3d_device_context *context,
         enum wined3d_shader_type type, unsigned int idx, struct wined3d_shader_resource_view *view);
+void __cdecl wined3d_device_context_set_stream_output(struct wined3d_device_context *context, unsigned int idx,
+        struct wined3d_buffer *buffer, unsigned int offset);
 HRESULT __cdecl wined3d_device_context_set_stream_source(struct wined3d_device_context *context,
         unsigned int stream_idx, struct wined3d_buffer *buffer, unsigned int offset, unsigned int stride);
 void __cdecl wined3d_device_context_set_unordered_access_view(struct wined3d_device_context *context,

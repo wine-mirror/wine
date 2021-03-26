@@ -178,6 +178,7 @@
 @ cdecl wined3d_device_context_set_scissor_rects(ptr long ptr)
 @ cdecl wined3d_device_context_set_shader(ptr long ptr)
 @ cdecl wined3d_device_context_set_shader_resource_view(ptr long long ptr)
+@ cdecl wined3d_device_context_set_stream_output(ptr long ptr long)
 @ cdecl wined3d_device_context_set_stream_source(ptr long ptr long long)
 @ cdecl wined3d_device_context_set_unordered_access_view(ptr long long ptr long)
 @ cdecl wined3d_device_context_set_vertex_declaration(ptr ptr)
