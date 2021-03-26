@@ -467,12 +467,11 @@ DEFINE_THISCALL_WRAPPER(ITextHostImpl_TxNotify,12)
 DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxNotify( ITextHost2 *iface, DWORD iNotify, void *pv )
 {
     struct host *host = impl_from_ITextHost( iface );
-    HWND hwnd = host->window;
     UINT id;
 
-    if (!host->editor || !host->editor->hwndParent) return S_OK;
+    if (!host->parent) return S_OK;
 
-    id = GetWindowLongW(hwnd, GWLP_ID);
+    id = GetWindowLongW( host->window, GWLP_ID );
 
     switch (iNotify)
     {
@@ -490,16 +489,16 @@ DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxNotify( ITextHost2 *iface, DW
             if (!info)
                 return E_FAIL;
 
-            info->hwndFrom = hwnd;
+            info->hwndFrom = host->window;
             info->idFrom = id;
             info->code = iNotify;
-            SendMessageW( host->editor->hwndParent, WM_NOTIFY, id, (LPARAM)info );
+            SendMessageW( host->parent, WM_NOTIFY, id, (LPARAM)info );
             break;
         }
 
         case EN_UPDATE:
             /* Only sent when the window is visible. */
-            if (!IsWindowVisible(hwnd))
+            if (!IsWindowVisible( host->window ))
                 break;
             /* Fall through */
         case EN_CHANGE:
@@ -509,7 +508,7 @@ DECLSPEC_HIDDEN HRESULT __thiscall ITextHostImpl_TxNotify( ITextHost2 *iface, DW
         case EN_MAXTEXT:
         case EN_SETFOCUS:
         case EN_VSCROLL:
-            SendMessageW( host->editor->hwndParent, WM_COMMAND, MAKEWPARAM( id, iNotify ), (LPARAM)hwnd );
+            SendMessageW( host->parent, WM_COMMAND, MAKEWPARAM( id, iNotify ), (LPARAM)host->window );
             break;
 
         case EN_MSGFILTER:
