@@ -1027,6 +1027,7 @@ static HRESULT surface_lock(struct ddraw_surface *surface,
         DWORD flags, HANDLE h)
 {
     struct wined3d_map_desc map_desc;
+    unsigned int wined3d_flags;
     struct wined3d_box box;
     HRESULT hr = DD_OK;
 
@@ -1061,9 +1062,12 @@ static HRESULT surface_lock(struct ddraw_surface *surface,
     if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
         hr = ddraw_surface_update_frontbuffer(surface, rect, TRUE, 0);
     if (SUCCEEDED(hr))
+    {
+        wined3d_flags = wined3dmapflags_from_ddrawmapflags(flags);
         hr = wined3d_resource_map(wined3d_texture_get_resource
-                (ddraw_surface_get_default_texture(surface, DDRAW_SURFACE_RW)), surface->sub_resource_idx,
-                &map_desc, rect ? &box : NULL, wined3dmapflags_from_ddrawmapflags(flags));
+                (ddraw_surface_get_default_texture(surface, wined3d_flags & WINED3D_MAP_WRITE ? DDRAW_SURFACE_RW
+                : DDRAW_SURFACE_READ)), surface->sub_resource_idx, &map_desc, rect ? &box : NULL, wined3d_flags);
+    }
     if (FAILED(hr))
     {
         wined3d_mutex_unlock();
