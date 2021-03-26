@@ -37,7 +37,7 @@ enum loadorder
 };
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 118
+#define NTDLL_UNIXLIB_VERSION 119
 
 struct unix_funcs
 {
@@ -91,7 +91,7 @@ struct unix_funcs
     NTSTATUS      (CDECL *init_unix_lib)( void *module, DWORD reason, const void *ptr_in, void *ptr_out );
     NTSTATUS      (CDECL *unwind_builtin_dll)( ULONG type, struct _DISPATCHER_CONTEXT *dispatch,
                                                CONTEXT *context );
-    enum loadorder (CDECL *get_load_order)( const WCHAR *app_name, const UNICODE_STRING *nt_name );
+    enum loadorder (CDECL *get_load_order)( const UNICODE_STRING *nt_name );
 
     /* debugging functions */
     unsigned char (CDECL *dbg_get_channel_flags)( struct __wine_debug_channel *channel );

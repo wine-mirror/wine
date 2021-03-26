@@ -2691,7 +2691,6 @@ static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, const WC
                           DWORD flags, WINE_MODREF** pwm )
 {
     enum loadorder loadorder;
-    WINE_MODREF *main_exe;
     UNICODE_STRING nt_name;
     struct file_id id;
     HANDLE mapping = 0;
@@ -2716,8 +2715,7 @@ static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, const WC
 
     if (nts && nts != STATUS_DLL_NOT_FOUND && nts != STATUS_INVALID_IMAGE_NOT_MZ) goto done;
 
-    main_exe = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
-    loadorder = unix_funcs->get_load_order( main_exe ? main_exe->ldr.BaseDllName.Buffer : NULL, &nt_name );
+    loadorder = unix_funcs->get_load_order( &nt_name );
 
     prev = NtCurrentTeb()->Tib.ArbitraryUserPointer;
     NtCurrentTeb()->Tib.ArbitraryUserPointer = nt_name.Buffer + 4;

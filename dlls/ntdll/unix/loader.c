@@ -1395,13 +1395,9 @@ NTSTATUS load_builtin( const pe_image_info_t *image_info, const WCHAR *filename,
     UNICODE_STRING nt_name;
     SECTION_IMAGE_INFORMATION info;
     enum loadorder loadorder;
-    const WCHAR *app_name = NULL;
-
-    if (NtCurrentTeb()->Peb->ImageBaseAddress)
-        app_name = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
 
     init_unicode_string( &nt_name, filename );
-    loadorder = get_load_order( app_name, &nt_name );
+    loadorder = get_load_order( &nt_name );
 
     if (image_info->image_flags & IMAGE_FLAGS_WineBuiltin)
     {

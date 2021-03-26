@@ -400,7 +400,7 @@ static inline void context_init_xstate( CONTEXT *context, void *xstate_buffer )
 }
 #endif
 
-extern enum loadorder CDECL get_load_order( const WCHAR *app_name, const UNICODE_STRING *nt_name ) DECLSPEC_HIDDEN;
+extern enum loadorder CDECL get_load_order( const UNICODE_STRING *nt_name ) DECLSPEC_HIDDEN;
 
 static inline size_t ntdll_wcslen( const WCHAR *str )
 {
