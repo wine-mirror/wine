@@ -80,6 +80,7 @@ struct media_source
     IMFMediaSource IMFMediaSource_iface;
     IMFGetService IMFGetService_iface;
     IMFRateSupport IMFRateSupport_iface;
+    IMFRateControl IMFRateControl_iface;
     IMFAsyncCallback async_commands_callback;
     LONG ref;
     DWORD async_commands_queue;
@@ -123,6 +124,11 @@ static inline struct media_source *impl_from_IMFGetService(IMFGetService *iface)
 static inline struct media_source *impl_from_IMFRateSupport(IMFRateSupport *iface)
 {
     return CONTAINING_RECORD(iface, struct media_source, IMFRateSupport_iface);
+}
+
+static inline struct media_source *impl_from_IMFRateControl(IMFRateControl *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_source, IMFRateControl_iface);
 }
 
 static inline struct media_source *impl_from_async_commands_callback_IMFAsyncCallback(IMFAsyncCallback *iface)
@@ -867,6 +873,10 @@ static HRESULT WINAPI media_source_get_service_GetService(IMFGetService *iface, 
         {
             *obj = &source->IMFRateSupport_iface;
         }
+        else if (IsEqualIID(riid, &IID_IMFRateControl))
+        {
+            *obj = &source->IMFRateControl_iface;
+        }
     }
     else
         FIXME("Unsupported service %s.\n", debugstr_guid(service));
@@ -957,6 +967,61 @@ static const IMFRateSupportVtbl media_source_rate_support_vtbl =
     media_source_rate_support_GetSlowestRate,
     media_source_rate_support_GetFastestRate,
     media_source_rate_support_IsRateSupported,
+};
+
+static HRESULT WINAPI media_source_rate_control_QueryInterface(IMFRateControl *iface, REFIID riid, void **obj)
+{
+    struct media_source *source = impl_from_IMFRateControl(iface);
+    return IMFMediaSource_QueryInterface(&source->IMFMediaSource_iface, riid, obj);
+}
+
+static ULONG WINAPI media_source_rate_control_AddRef(IMFRateControl *iface)
+{
+    struct media_source *source = impl_from_IMFRateControl(iface);
+    return IMFMediaSource_AddRef(&source->IMFMediaSource_iface);
+}
+
+static ULONG WINAPI media_source_rate_control_Release(IMFRateControl *iface)
+{
+    struct media_source *source = impl_from_IMFRateControl(iface);
+    return IMFMediaSource_Release(&source->IMFMediaSource_iface);
+}
+
+static HRESULT WINAPI media_source_rate_control_SetRate(IMFRateControl *iface, BOOL thin, float rate)
+{
+    FIXME("%p, %d, %f.\n", iface, thin, rate);
+
+    if (rate < 0.0f)
+        return MF_E_REVERSE_UNSUPPORTED;
+
+    if (thin)
+        return MF_E_THINNING_UNSUPPORTED;
+
+    if (rate != 1.0f)
+        return MF_E_UNSUPPORTED_RATE;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI media_source_rate_control_GetRate(IMFRateControl *iface, BOOL *thin, float *rate)
+{
+    TRACE("%p, %p, %p.\n", iface, thin, rate);
+
+    if (thin)
+        *thin = FALSE;
+
+    *rate = 1.0f;
+
+    return S_OK;
+}
+
+static const IMFRateControlVtbl media_source_rate_control_vtbl =
+{
+    media_source_rate_control_QueryInterface,
+    media_source_rate_control_AddRef,
+    media_source_rate_control_Release,
+    media_source_rate_control_SetRate,
+    media_source_rate_control_GetRate,
 };
 
 static HRESULT WINAPI media_source_QueryInterface(IMFMediaSource *iface, REFIID riid, void **out)
@@ -1236,6 +1301,7 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
     object->IMFMediaSource_iface.lpVtbl = &IMFMediaSource_vtbl;
     object->IMFGetService_iface.lpVtbl = &media_source_get_service_vtbl;
     object->IMFRateSupport_iface.lpVtbl = &media_source_rate_support_vtbl;
+    object->IMFRateControl_iface.lpVtbl = &media_source_rate_control_vtbl;
     object->async_commands_callback.lpVtbl = &source_async_commands_callback_vtbl;
     object->ref = 1;
     object->byte_stream = bytestream;

@@ -759,7 +759,6 @@ static void test_source_resolver(void)
 
     check_interface(mediasource, &IID_IMFGetService, TRUE);
     check_service_interface(mediasource, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport, TRUE);
-todo_wine
     check_service_interface(mediasource, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateControl, TRUE);
     hr = IMFMediaSource_CreatePresentationDescriptor(mediasource, &descriptor);
     ok(hr == S_OK, "Failed to get presentation descriptor, hr %#x.\n", hr);
