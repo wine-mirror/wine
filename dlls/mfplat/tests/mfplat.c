@@ -93,6 +93,26 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
         IUnknown_Release(unk);
 }
 
+#define check_service_interface(a, b, c, d) check_service_interface_(__LINE__, a, b, c, d)
+static void check_service_interface_(unsigned int line, void *iface_ptr, REFGUID service, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IMFGetService *gs;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    if (SUCCEEDED(hr = IUnknown_QueryInterface(iface, &IID_IMFGetService, (void **)&gs)))
+    {
+        hr = IMFGetService_GetService(gs, service, iid, (void **)&unk);
+        IMFGetService_Release(gs);
+    }
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
 struct d3d11_resource_readback
 {
     ID3D11Resource *resource;
@@ -737,6 +757,11 @@ static void test_source_resolver(void)
     ok(mediasource != NULL, "got %p\n", mediasource);
     ok(obj_type == MF_OBJECT_MEDIASOURCE, "got %d\n", obj_type);
 
+todo_wine {
+    check_interface(mediasource, &IID_IMFGetService, TRUE);
+    check_service_interface(mediasource, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport, TRUE);
+    check_service_interface(mediasource, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateControl, TRUE);
+}
     hr = IMFMediaSource_CreatePresentationDescriptor(mediasource, &descriptor);
     ok(hr == S_OK, "Failed to get presentation descriptor, hr %#x.\n", hr);
     ok(descriptor != NULL, "got %p\n", descriptor);
