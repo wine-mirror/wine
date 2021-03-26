@@ -1014,7 +1014,7 @@
 # @ stub PackageFamilyNameFromProductId
 # @ stub PackageFullNameFromId
 # @ stub PackageFullNameFromProductId
-# @ stub PackageIdFromFullName
+@ stdcall PackageIdFromFullName(wstr long ptr ptr)
 # @ stub PackageIdFromProductId
 # @ stub PackageNameAndPublisherIdFromFamilyName
 # @ stub PackageRelativeApplicationIdFromProductId

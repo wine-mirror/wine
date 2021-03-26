@@ -39,6 +39,7 @@
 #include "winnls.h"
 #include "winternl.h"
 #include "winerror.h"
+#include "appmodel.h"
 
 #include "kernelbase.h"
 #include "wine/debug.h"
@@ -1564,4 +1565,119 @@ LONG WINAPI /* DECLSPEC_HOTPATCH */ GetPackageFamilyName( HANDLE process, UINT32
 {
     FIXME( "(%p %p %p): stub\n", process, length, name );
     return APPMODEL_ERROR_NO_PACKAGE;
+}
+
+
+static const struct
+{
+    UINT32 code;
+    const WCHAR *name;
+}
+arch_names[] =
+{
+    {PROCESSOR_ARCHITECTURE_INTEL,         L"x86"},
+    {PROCESSOR_ARCHITECTURE_ARM,           L"arm"},
+    {PROCESSOR_ARCHITECTURE_AMD64,         L"x64"},
+    {PROCESSOR_ARCHITECTURE_NEUTRAL,       L"neutral"},
+    {PROCESSOR_ARCHITECTURE_ARM64,         L"arm64"},
+    {PROCESSOR_ARCHITECTURE_UNKNOWN,       L"unknown"},
+};
+
+static UINT32 processor_arch_from_string(const WCHAR *str, unsigned int len)
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(arch_names); ++i)
+        if (lstrlenW(arch_names[i].name) == len && !wcsnicmp(str, arch_names[i].name, len))
+            return arch_names[i].code;
+    return ~0u;
+}
+
+/***********************************************************************
+ *         PackageIdFromFullName   (kernelbase.@)
+ */
+LONG WINAPI PackageIdFromFullName(const WCHAR *full_name, UINT32 flags, UINT32 *buffer_length, BYTE *buffer)
+{
+    const WCHAR *name, *version_str, *arch_str, *resource_id, *publisher_id, *s;
+    PACKAGE_ID *id = (PACKAGE_ID *)buffer;
+    UINT32 size, buffer_size, len;
+
+    TRACE("full_name %s, flags %#x, buffer_length %p, buffer %p.\n",
+            debugstr_w(full_name), flags, buffer_length, buffer);
+
+    if (flags)
+        FIXME("Flags %#x are not supported.\n", flags);
+
+    if (!full_name || !buffer_length)
+        return ERROR_INVALID_PARAMETER;
+
+    if (!buffer && *buffer_length)
+        return ERROR_INVALID_PARAMETER;
+
+    name = full_name;
+    if (!(version_str = wcschr(name, L'_')))
+        return ERROR_INVALID_PARAMETER;
+    ++version_str;
+
+    if (!(arch_str = wcschr(version_str, L'_')))
+        return ERROR_INVALID_PARAMETER;
+    ++arch_str;
+
+    if (!(resource_id = wcschr(arch_str, L'_')))
+        return ERROR_INVALID_PARAMETER;
+    ++resource_id;
+
+    if (!(publisher_id = wcschr(resource_id, L'_')))
+        return ERROR_INVALID_PARAMETER;
+    ++publisher_id;
+
+    /* Publisher id length should be 13. */
+    size = sizeof(*id) + sizeof(WCHAR) * ((version_str - name) + (publisher_id - resource_id) + 13 + 1);
+    buffer_size = *buffer_length;
+    *buffer_length = size;
+    if (buffer_size < size)
+        return ERROR_INSUFFICIENT_BUFFER;
+
+    memset(id, 0, sizeof(*id));
+    if ((id->processorArchitecture = processor_arch_from_string(arch_str, resource_id - arch_str - 1)) == ~0u)
+    {
+        FIXME("Unrecognized arch %s.\n", debugstr_w(arch_str));
+        return ERROR_INVALID_PARAMETER;
+    }
+    buffer += sizeof(*id);
+
+    id->version.u.s.Major = wcstol(version_str, NULL, 10);
+    if (!(s = wcschr(version_str, L'.')))
+        return ERROR_INVALID_PARAMETER;
+    ++s;
+    id->version.u.s.Minor = wcstol(s, NULL, 10);
+    if (!(s = wcschr(s, L'.')))
+        return ERROR_INVALID_PARAMETER;
+    ++s;
+    id->version.u.s.Build = wcstol(s, NULL, 10);
+    if (!(s = wcschr(s, L'.')))
+        return ERROR_INVALID_PARAMETER;
+    ++s;
+    id->version.u.s.Revision = wcstol(s, NULL, 10);
+
+    id->name = (WCHAR *)buffer;
+    len = version_str - name - 1;
+    memcpy(id->name, name, sizeof(*id->name) * len);
+    id->name[len] = 0;
+    buffer += sizeof(*id->name) * (len + 1);
+
+    id->resourceId = (WCHAR *)buffer;
+    len = publisher_id - resource_id - 1;
+    memcpy(id->resourceId, resource_id, sizeof(*id->resourceId) * len);
+    id->resourceId[len] = 0;
+    buffer += sizeof(*id->resourceId) * (len + 1);
+
+    id->publisherId = (WCHAR *)buffer;
+    len = lstrlenW(publisher_id);
+    if (len != 13)
+        return ERROR_INVALID_PARAMETER;
+    memcpy(id->publisherId, publisher_id, sizeof(*id->publisherId) * len);
+    id->publisherId[len] = 0;
+
+    return ERROR_SUCCESS;
 }

@@ -18,4 +18,4 @@
 @ stub PackageFamilyNameFromFullName
 @ stub PackageFamilyNameFromId
 @ stub PackageFullNameFromId
-@ stub PackageIdFromFullName
+@ stdcall PackageIdFromFullName(wstr long ptr ptr) kernel32.PackageIdFromFullName

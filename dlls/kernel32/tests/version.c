@@ -21,9 +21,11 @@
 #include "wine/test.h"
 #include "winbase.h"
 #include "winternl.h"
+#include "appmodel.h"
 
 static BOOL (WINAPI * pGetProductInfo)(DWORD, DWORD, DWORD, DWORD, DWORD *);
 static UINT (WINAPI * pGetSystemFirmwareTable)(DWORD, DWORD, void *, DWORD);
+static LONG (WINAPI * pPackageIdFromFullName)(const WCHAR *, UINT32, UINT32 *, BYTE *);
 static NTSTATUS (WINAPI * pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, void *, ULONG, ULONG *);
 static NTSTATUS (WINAPI * pRtlGetVersion)(RTL_OSVERSIONINFOEXW *);
 
@@ -43,6 +45,7 @@ static void init_function_pointers(void)
 
     GET_PROC(GetProductInfo);
     GET_PROC(GetSystemFirmwareTable);
+    GET_PROC(PackageIdFromFullName);
 
     hmod = GetModuleHandleA("ntdll.dll");
 
@@ -746,6 +749,175 @@ static void test_GetSystemFirmwareTable(void)
     HeapFree(GetProcessHeap(), 0, smbios_table);
 }
 
+static const struct
+{
+    UINT32 code;
+    const WCHAR *name;
+    BOOL broken;
+}
+arch_data[] =
+{
+    {PROCESSOR_ARCHITECTURE_INTEL,   L"X86"},
+    {PROCESSOR_ARCHITECTURE_ARM,     L"Arm"},
+    {PROCESSOR_ARCHITECTURE_AMD64,   L"X64"},
+    {PROCESSOR_ARCHITECTURE_NEUTRAL, L"Neutral"},
+    {PROCESSOR_ARCHITECTURE_ARM64,   L"Arm64",   TRUE /* Before Win10. */},
+    {PROCESSOR_ARCHITECTURE_UNKNOWN, L"Unknown", TRUE /* Before Win10 1709. */},
+};
+
+static const WCHAR *arch_string_from_code(UINT32 arch)
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(arch_data); ++i)
+        if (arch_data[i].code == arch)
+            return arch_data[i].name;
+
+    return NULL;
+}
+
+static unsigned int get_package_str_size(const WCHAR *str)
+{
+    return str ? (lstrlenW(str) + 1) * sizeof(*str) : 0;
+}
+
+static unsigned int get_package_id_size(const PACKAGE_ID *id)
+{
+    return sizeof(*id) + get_package_str_size(id->name)
+            + get_package_str_size(id->resourceId) + 14 * sizeof(WCHAR);
+}
+
+static void packagefullname_from_packageid(WCHAR *buffer, size_t count, const PACKAGE_ID *id)
+{
+    swprintf(buffer, count, L"%s_%u.%u.%u.%u_%s_%s_%s", id->name, id->version.Major,
+            id->version.Minor, id->version.Build, id->version.Revision,
+            arch_string_from_code(id->processorArchitecture), id->resourceId,
+            id->publisherId);
+}
+
+static void test_PackageIdFromFullName(void)
+{
+    static const PACKAGE_ID test_package_id =
+    {
+        0, PROCESSOR_ARCHITECTURE_INTEL,
+                {{.Major = 1, .Minor = 2, .Build = 3, .Revision = 4}},
+                (WCHAR *)L"TestPackage", NULL,
+                (WCHAR *)L"TestResourceId", (WCHAR *)L"0abcdefghjkme"
+    };
+    UINT32 size, expected_size;
+    PACKAGE_ID test_id;
+    WCHAR fullname[512];
+    BYTE id_buffer[512];
+    unsigned int i;
+    PACKAGE_ID *id;
+    LONG ret;
+
+    if (!pPackageIdFromFullName)
+    {
+        win_skip("PackageIdFromFullName not available.\n");
+        return;
+    }
+
+    packagefullname_from_packageid(fullname, ARRAY_SIZE(fullname), &test_package_id);
+
+    id = (PACKAGE_ID *)id_buffer;
+
+    memset(id_buffer, 0xcc, sizeof(id_buffer));
+    expected_size = get_package_id_size(&test_package_id);
+    size = sizeof(id_buffer);
+    ret = pPackageIdFromFullName(fullname, 0, &size, id_buffer);
+    ok(ret == ERROR_SUCCESS, "Got unexpected ret %u.\n", ret);
+    ok(size == expected_size, "Got unexpected length %u, expected %u.\n", size, expected_size);
+    ok(!lstrcmpW(id->name, test_package_id.name), "Got unexpected name %s.\n", debugstr_w(id->name));
+    ok(!lstrcmpW(id->resourceId, test_package_id.resourceId), "Got unexpected resourceId %s.\n",
+            debugstr_w(id->resourceId));
+    ok(!lstrcmpW(id->publisherId, test_package_id.publisherId), "Got unexpected publisherId %s.\n",
+            debugstr_w(id->publisherId));
+    ok(!id->publisher, "Got unexpected publisher %s.\n", debugstr_w(id->publisher));
+    ok(id->processorArchitecture == PROCESSOR_ARCHITECTURE_INTEL, "Got unexpected processorArchitecture %u.\n",
+            id->processorArchitecture);
+    ok(id->version.Version == 0x0001000200030004, "Got unexpected Version %s.\n",
+            wine_dbgstr_longlong(id->version.Version));
+    ok((BYTE *)id->name == id_buffer + sizeof(*id), "Got unexpected name %p, buffer %p.\n", id->name, id_buffer);
+    ok((BYTE *)id->resourceId == (BYTE *)id->name + (lstrlenW(id->name) + 1) * 2,
+            "Got unexpected resourceId %p, buffer %p.\n", id->resourceId, id_buffer);
+    ok((BYTE *)id->publisherId == (BYTE *)id->resourceId + (lstrlenW(id->resourceId) + 1) * 2,
+            "Got unexpected publisherId %p, buffer %p.\n", id->resourceId, id_buffer);
+
+    ret = pPackageIdFromFullName(fullname, 0, NULL, id_buffer);
+    ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %d.\n", ret);
+
+    size = sizeof(id_buffer);
+    ret = pPackageIdFromFullName(NULL, 0, &size, id_buffer);
+    ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %d.\n", ret);
+    ok(size == sizeof(id_buffer), "Got unexpected size %u.\n", size);
+
+    size = sizeof(id_buffer);
+    ret = pPackageIdFromFullName(fullname, 0, &size, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %d.\n", ret);
+    ok(size == sizeof(id_buffer), "Got unexpected size %u.\n", size);
+
+    size = expected_size - 1;
+    ret = pPackageIdFromFullName(fullname, 0, &size, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %d.\n", ret);
+    ok(size == expected_size - 1, "Got unexpected size %u.\n", size);
+
+    size = expected_size - 1;
+    ret = pPackageIdFromFullName(fullname, 0, &size, id_buffer);
+    ok(ret == ERROR_INSUFFICIENT_BUFFER, "Got unexpected ret %d.\n", ret);
+    ok(size == expected_size, "Got unexpected size %u.\n", size);
+
+    size = 0;
+    ret = pPackageIdFromFullName(fullname, 0, &size, NULL);
+    ok(ret == ERROR_INSUFFICIENT_BUFFER, "Got unexpected ret %d.\n", ret);
+    ok(size == expected_size, "Got unexpected size %u.\n", size);
+
+    for (i = 0; i < ARRAY_SIZE(arch_data); ++i)
+    {
+        test_id = test_package_id;
+        test_id.processorArchitecture = arch_data[i].code;
+        packagefullname_from_packageid(fullname, ARRAY_SIZE(fullname), &test_id);
+        size = expected_size;
+        ret = pPackageIdFromFullName(fullname, 0, &size, id_buffer);
+        ok(ret == ERROR_SUCCESS || broken(arch_data[i].broken && ret == ERROR_INVALID_PARAMETER),
+                "Got unexpected ret %u.\n", ret);
+        if (ret != ERROR_SUCCESS)
+            continue;
+        ok(size == expected_size, "Got unexpected length %u, expected %u.\n", size, expected_size);
+        ok(id->processorArchitecture == arch_data[i].code, "Got unexpected processorArchitecture %u, arch %S.\n",
+                id->processorArchitecture, arch_data[i].name);
+    }
+
+    size = sizeof(id_buffer);
+    ret = pPackageIdFromFullName(L"TestPackage_1.2.3.4_X86_TestResourceId_0abcdefghjkme", 0, &size, id_buffer);
+    ok(ret == ERROR_SUCCESS, "Got unexpected ret %u.\n", ret);
+
+    size = sizeof(id_buffer);
+    ret = pPackageIdFromFullName(L"TestPackage_1.2.3.4_X86_TestResourceId_abcdefghjkme", 0, &size, id_buffer);
+    ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %u.\n", ret);
+
+    size = sizeof(id_buffer);
+    ret = pPackageIdFromFullName(L"TestPackage_1.2.3.4_X86_TestResourceId_0abcdefghjkmee", 0, &size, id_buffer);
+    ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %u.\n", ret);
+
+    size = sizeof(id_buffer);
+    ret = pPackageIdFromFullName(L"TestPackage_1.2.3_X86_TestResourceId_0abcdefghjkme", 0, &size, id_buffer);
+    ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %u.\n", ret);
+
+    size = sizeof(id_buffer);
+    ret = pPackageIdFromFullName(L"TestPackage_1.2.3.4_X86_TestResourceId_0abcdefghjkme_", 0, &size, id_buffer);
+    ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %u.\n", ret);
+
+    size = sizeof(id_buffer);
+    ret = pPackageIdFromFullName(L"TestPackage_1.2.3.4_X86__0abcdefghjkme", 0, &size, id_buffer);
+    ok(ret == ERROR_SUCCESS, "Got unexpected ret %u.\n", ret);
+    ok(!lstrcmpW(id->resourceId, L""), "Got unexpected resourceId %s.\n", debugstr_w(id->resourceId));
+
+    size = sizeof(id_buffer);
+    ret = pPackageIdFromFullName(L"TestPackage_1.2.3.4_X86_0abcdefghjkme", 0, &size, id_buffer);
+    ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %u.\n", ret);
+}
+
 START_TEST(version)
 {
     init_function_pointers();
@@ -754,4 +926,5 @@ START_TEST(version)
     test_GetVersionEx();
     test_VerifyVersionInfo();
     test_GetSystemFirmwareTable();
+    test_PackageIdFromFullName();
 }
