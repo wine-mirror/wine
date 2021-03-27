@@ -113,8 +113,7 @@ struct d3d9_device
     DWORD sysmem_ib : 1;
     DWORD in_destruction : 1;
     DWORD in_scene : 1;
-    DWORD has_vertex_declaration : 1;
-    DWORD padding : 12;
+    DWORD padding : 13;
 
     DWORD auto_mipmaps; /* D3D9_MAX_TEXTURE_UNITS */
 

@@ -3024,7 +3024,7 @@ static HRESULT WINAPI d3d9_device_DrawPrimitive(IDirect3DDevice9Ex *iface,
             iface, primitive_type, start_vertex, primitive_count);
 
     wined3d_mutex_lock();
-    if (!device->has_vertex_declaration)
+    if (!device->stateblock_state->vertex_declaration)
     {
         wined3d_mutex_unlock();
         WARN("Called without a valid vertex declaration set.\n");
@@ -3057,7 +3057,7 @@ static HRESULT WINAPI d3d9_device_DrawIndexedPrimitive(IDirect3DDevice9Ex *iface
             vertex_count, start_idx, primitive_count);
 
     wined3d_mutex_lock();
-    if (!device->has_vertex_declaration)
+    if (!device->stateblock_state->vertex_declaration)
     {
         wined3d_mutex_unlock();
         WARN("Called without a valid vertex declaration set.\n");
@@ -3143,7 +3143,7 @@ static HRESULT WINAPI d3d9_device_DrawPrimitiveUP(IDirect3DDevice9Ex *iface,
 
     wined3d_mutex_lock();
 
-    if (!device->has_vertex_declaration)
+    if (!device->stateblock_state->vertex_declaration)
     {
         wined3d_mutex_unlock();
         WARN("Called without a valid vertex declaration set.\n");
@@ -3260,7 +3260,7 @@ static HRESULT WINAPI d3d9_device_DrawIndexedPrimitiveUP(IDirect3DDevice9Ex *ifa
 
     wined3d_mutex_lock();
 
-    if (!device->has_vertex_declaration)
+    if (!device->stateblock_state->vertex_declaration)
     {
         wined3d_mutex_unlock();
         WARN("Called without a valid vertex declaration set.\n");
@@ -3425,7 +3425,6 @@ static HRESULT WINAPI d3d9_device_SetVertexDeclaration(IDirect3DDevice9Ex *iface
     wined3d_mutex_lock();
     wined3d_stateblock_set_vertex_declaration(device->update_state,
             decl_impl ? decl_impl->wined3d_declaration : NULL);
-    device->has_vertex_declaration = !!decl_impl;
     wined3d_mutex_unlock();
 
     return D3D_OK;
@@ -3548,7 +3547,6 @@ static HRESULT WINAPI d3d9_device_SetFVF(IDirect3DDevice9Ex *iface, DWORD fvf)
     }
 
     wined3d_stateblock_set_vertex_declaration(device->update_state, decl);
-    device->has_vertex_declaration = TRUE;
     wined3d_mutex_unlock();
 
     return D3D_OK;
