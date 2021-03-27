@@ -20,6 +20,7 @@
 
 #define COBJMACROS
 #define NONAMELESSUNION
+#define WINE_NO_NAMELESS_EXTENSION
 
 #include "wine/test.h"
 #include "dshow.h"
