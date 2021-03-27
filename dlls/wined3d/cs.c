@@ -1046,15 +1046,16 @@ static void acquire_graphics_pipeline_resources(const struct wined3d_state *stat
             state->unordered_access_view[WINED3D_PIPELINE_GRAPHICS]);
 }
 
-void wined3d_cs_emit_draw(struct wined3d_cs *cs, enum wined3d_primitive_type primitive_type,
-        unsigned int patch_vertex_count, int base_vertex_idx, unsigned int start_idx,
-        unsigned int index_count, unsigned int start_instance, unsigned int instance_count, bool indexed)
+void wined3d_device_context_emit_draw(struct wined3d_device_context *context,
+        enum wined3d_primitive_type primitive_type, unsigned int patch_vertex_count, int base_vertex_idx,
+        unsigned int start_idx, unsigned int index_count, unsigned int start_instance, unsigned int instance_count,
+        bool indexed)
 {
-    const struct wined3d_d3d_info *d3d_info = &cs->c.device->adapter->d3d_info;
-    const struct wined3d_state *state = cs->c.state;
+    const struct wined3d_d3d_info *d3d_info = &context->device->adapter->d3d_info;
+    const struct wined3d_state *state = context->state;
     struct wined3d_cs_draw *op;
 
-    op = wined3d_device_context_require_space(&cs->c, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_DRAW;
     op->primitive_type = primitive_type;
     op->patch_vertex_count = patch_vertex_count;
@@ -1068,7 +1069,7 @@ void wined3d_cs_emit_draw(struct wined3d_cs *cs, enum wined3d_primitive_type pri
 
     acquire_graphics_pipeline_resources(state, indexed, d3d_info);
 
-    wined3d_device_context_submit(&cs->c, WINED3D_CS_QUEUE_DEFAULT);
+    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
 void wined3d_cs_emit_draw_indirect(struct wined3d_cs *cs, enum wined3d_primitive_type primitive_type,
