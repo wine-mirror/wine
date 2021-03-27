@@ -256,37 +256,37 @@ static void test_convert(void)
     CoTaskMemFree(dst.pBlobData);
 
     prop_in.vt = VT_LPWSTR;
-    prop_in.u.pwszVal = test_stringW;
+    prop_in.pwszVal = test_stringW;
     hr = IMimeInternational_ConvertString(internat, CP_UNICODE, 1252, &prop_in, &prop_out);
     ok(hr == S_OK, "ret %08x\n", hr);
     ok(prop_out.vt == VT_LPSTR, "got %d\n", prop_out.vt);
-    ok(!strcmp(prop_out.u.pszVal, test_string), "got %s\n", prop_out.u.pszVal);
+    ok(!strcmp(prop_out.pszVal, test_string), "got %s\n", prop_out.pszVal);
     PropVariantClear(&prop_out);
 
     /* If in.vt is VT_LPWSTR, ignore cpiSrc */
     prop_in.vt = VT_LPWSTR;
-    prop_in.u.pwszVal = test_stringW;
+    prop_in.pwszVal = test_stringW;
     hr = IMimeInternational_ConvertString(internat, 28591, 1252, &prop_in, &prop_out);
     ok(hr == S_OK, "ret %08x\n", hr);
     ok(prop_out.vt == VT_LPSTR, "got %d\n", prop_out.vt);
-    ok(!strcmp(prop_out.u.pszVal, test_string), "got %s\n", prop_out.u.pszVal);
+    ok(!strcmp(prop_out.pszVal, test_string), "got %s\n", prop_out.pszVal);
     PropVariantClear(&prop_out);
 
     prop_in.vt = VT_LPSTR;
-    prop_in.u.pszVal = test_string;
+    prop_in.pszVal = test_string;
     hr = IMimeInternational_ConvertString(internat, 28591, CP_UNICODE, &prop_in, &prop_out);
     ok(hr == S_OK, "ret %08x\n", hr);
     ok(prop_out.vt == VT_LPWSTR, "got %d\n", prop_out.vt);
-    ok(!lstrcmpW(prop_out.u.pwszVal, test_stringW), "mismatched strings\n");
+    ok(!lstrcmpW(prop_out.pwszVal, test_stringW), "mismatched strings\n");
     PropVariantClear(&prop_out);
 
     /* If in.vt is VT_LPSTR and cpiSrc is CP_UNICODE, use another multibyte codepage (probably GetACP()) */
     prop_in.vt = VT_LPSTR;
-    prop_in.u.pszVal = test_string;
+    prop_in.pszVal = test_string;
     hr = IMimeInternational_ConvertString(internat, CP_UNICODE, CP_UNICODE, &prop_in, &prop_out);
     ok(hr == S_OK, "ret %08x\n", hr);
     ok(prop_out.vt == VT_LPWSTR, "got %d\n", prop_out.vt);
-    ok(!lstrcmpW(prop_out.u.pwszVal, test_stringW), "mismatched strings\n");
+    ok(!lstrcmpW(prop_out.pwszVal, test_stringW), "mismatched strings\n");
     PropVariantClear(&prop_out);
 
     IMimeInternational_Release(internat);

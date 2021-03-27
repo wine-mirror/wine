@@ -641,7 +641,7 @@ static void test_CreateMessage(void)
     hr = IMimeMessage_GetBodyProp(msg, hbody, att_pritype, 0, &prop);
     ok(hr == S_OK, "ret %08x\n", hr);
     ok(prop.vt == VT_LPSTR, "vt %08x\n", prop.vt);
-    ok(!strcasecmp(prop.u.pszVal, "multipart"), "got %s\n", prop.u.pszVal);
+    ok(!strcasecmp(prop.pszVal, "multipart"), "got %s\n", prop.pszVal);
     PropVariantClear(&prop);
 
     hr = IMimeMessage_GetBody(msg, IBL_FIRST, hbody, &hbody);
@@ -721,7 +721,7 @@ static void test_CreateMessage(void)
         ok(hr == S_OK, "ret %08x\n", hr);
 
         ok(prop.vt == VT_LPSTR, "type %d\n", prop.vt);
-        ok(!strcmp(prop.u.pszVal, "8bit"), "got  %s\n", prop.u.pszVal);
+        ok(!strcmp(prop.pszVal, "8bit"), "got  %s\n", prop.pszVal);
         PropVariantClear(&prop);
 
         hr = IMimeBody_IsType(attachment, IBT_ATTACHMENT);
@@ -741,7 +741,7 @@ static void test_CreateMessage(void)
         hr = IMimeBody_GetProp(attachment, "Content-Transfer-Encoding", 0, &prop);
         ok(hr == S_OK, "ret %08x\n", hr);
         ok(prop.vt == VT_LPSTR, "type %d\n", prop.vt);
-        ok(!strcmp(prop.u.pszVal, "7bit"), "got  %s\n", prop.u.pszVal);
+        ok(!strcmp(prop.pszVal, "7bit"), "got  %s\n", prop.pszVal);
         PropVariantClear(&prop);
 
         hr = IMimeBody_IsType(attachment, IBT_ATTACHMENT);
@@ -846,8 +846,8 @@ static void test_MessageSetProp(void)
     ok(hr == E_INVALIDARG, "ret %08x\n", hr);
 
     prop.vt = VT_LPSTR;
-    prop.u.pszVal = CoTaskMemAlloc(strlen(topic)+1);
-    strcpy(prop.u.pszVal, topic);
+    prop.pszVal = CoTaskMemAlloc(strlen(topic)+1);
+    strcpy(prop.pszVal, topic);
     hr = IMimeBody_SetProp(body, "Thread-Topic", 0, &prop);
     ok(hr == S_OK, "ret %08x\n", hr);
     PropVariantClear(&prop);
@@ -867,13 +867,13 @@ static void test_MessageSetProp(void)
     if(hr == S_OK)
     {
         ok(prop.vt == VT_LPSTR, "type %d\n", prop.vt);
-        ok(!strcmp(prop.u.pszVal, topic), "got  %s\n", prop.u.pszVal);
+        ok(!strcmp(prop.pszVal, topic), "got  %s\n", prop.pszVal);
         PropVariantClear(&prop);
     }
 
     prop.vt = VT_LPSTR;
-    prop.u.pszVal = CoTaskMemAlloc(strlen(topic)+1);
-    strcpy(prop.u.pszVal, topic);
+    prop.pszVal = CoTaskMemAlloc(strlen(topic)+1);
+    strcpy(prop.pszVal, topic);
     hr = IMimeBody_SetProp(body, PIDTOSTR(PID_HDR_SUBJECT), 0, &prop);
     ok(hr == S_OK, "ret %08x\n", hr);
     PropVariantClear(&prop);
@@ -884,7 +884,7 @@ static void test_MessageSetProp(void)
     if(hr == S_OK)
     {
         ok(prop.vt == VT_LPSTR, "type %d\n", prop.vt);
-        ok(!strcmp(prop.u.pszVal, topic), "got  %s\n", prop.u.pszVal);
+        ok(!strcmp(prop.pszVal, topic), "got  %s\n", prop.pszVal);
         PropVariantClear(&prop);
     }
 
@@ -895,7 +895,7 @@ static void test_MessageSetProp(void)
     if(hr == S_OK)
     {
         ok(prop.vt == VT_LPSTR, "type %d\n", prop.vt);
-        ok(!strcmp(prop.u.pszVal, topic), "got  %s\n", prop.u.pszVal);
+        ok(!strcmp(prop.pszVal, topic), "got  %s\n", prop.pszVal);
         PropVariantClear(&prop);
     }
 
@@ -905,21 +905,21 @@ static void test_MessageSetProp(void)
     if(hr == S_OK)
     {
         ok(prop.vt == VT_LPWSTR, "type %d\n", prop.vt);
-        ok(!lstrcmpW(prop.u.pwszVal, L"wine topic"), "got %s\n", wine_dbgstr_w(prop.u.pwszVal));
+        ok(!lstrcmpW(prop.pwszVal, L"wine topic"), "got %s\n", wine_dbgstr_w(prop.pwszVal));
         PropVariantClear(&prop);
     }
 
     prop.vt = VT_LPSTR;
-    prop.u.pszVal = CoTaskMemAlloc(strlen(topic)+1);
-    strcpy(prop.u.pszVal, topic);
+    prop.pszVal = CoTaskMemAlloc(strlen(topic)+1);
+    strcpy(prop.pszVal, topic);
     hr = IMimeBody_SetProp(body, PIDTOSTR(PID_HDR_TO), 0, &prop);
     ok(hr == S_OK, "ret %08x\n", hr);
     PropVariantClear(&prop);
 
     /* Out of Range PID */
     prop.vt = VT_LPSTR;
-    prop.u.pszVal = CoTaskMemAlloc(strlen(topic)+1);
-    strcpy(prop.u.pszVal, topic);
+    prop.pszVal = CoTaskMemAlloc(strlen(topic)+1);
+    strcpy(prop.pszVal, topic);
     hr = IMimeBody_SetProp(body, PIDTOSTR(124), 0, &prop);
     ok(hr == MIME_E_NOT_FOUND, "ret %08x\n", hr);
     PropVariantClear(&prop);
@@ -947,15 +947,15 @@ static void test_MessageGetPropInfo(void)
     ok(hr == S_OK, "ret %08x\n", hr);
 
     prop.vt = VT_LPSTR;
-    prop.u.pszVal = CoTaskMemAlloc(strlen(topic)+1);
-    strcpy(prop.u.pszVal, topic);
+    prop.pszVal = CoTaskMemAlloc(strlen(topic)+1);
+    strcpy(prop.pszVal, topic);
     hr = IMimeBody_SetProp(body, "Thread-Topic", 0, &prop);
     ok(hr == S_OK, "ret %08x\n", hr);
     PropVariantClear(&prop);
 
     prop.vt = VT_LPSTR;
-    prop.u.pszVal = CoTaskMemAlloc(strlen(subject)+1);
-    strcpy(prop.u.pszVal, subject);
+    prop.pszVal = CoTaskMemAlloc(strlen(subject)+1);
+    strcpy(prop.pszVal, subject);
     hr = IMimeBody_SetProp(body, PIDTOSTR(PID_HDR_SUBJECT), 0, &prop);
     ok(hr == S_OK, "ret %08x\n", hr);
     PropVariantClear(&prop);
@@ -1032,7 +1032,7 @@ static void test_MessageOptions(void)
     PropVariantInit(&prop);
 
     prop.vt = VT_BOOL;
-    prop.u.boolVal = TRUE;
+    prop.boolVal = TRUE;
     hr = IMimeMessage_SetOption(msg, OID_HIDE_TNEF_ATTACHMENTS, &prop);
     ok(hr == S_OK, "ret %08x\n", hr);
     PropVariantClear(&prop);
@@ -1040,12 +1040,12 @@ static void test_MessageOptions(void)
     hr = IMimeMessage_GetOption(msg, OID_HIDE_TNEF_ATTACHMENTS, &prop);
     todo_wine ok(hr == S_OK, "ret %08x\n", hr);
     todo_wine ok(prop.vt == VT_BOOL, "vt %08x\n", prop.vt);
-    todo_wine ok(prop.u.boolVal == TRUE, "Hide Attachments got %d\n", prop.u.boolVal);
+    todo_wine ok(prop.boolVal == TRUE, "Hide Attachments got %d\n", prop.boolVal);
     PropVariantClear(&prop);
 
     prop.vt = VT_LPSTR;
-    prop.u.pszVal = CoTaskMemAlloc(strlen(string)+1);
-    strcpy(prop.u.pszVal, string);
+    prop.pszVal = CoTaskMemAlloc(strlen(string)+1);
+    strcpy(prop.pszVal, string);
     hr = IMimeMessage_SetOption(msg, OID_HIDE_TNEF_ATTACHMENTS, &prop);
     ok(hr == S_OK, "ret %08x\n", hr);
     PropVariantClear(&prop);
@@ -1053,13 +1053,13 @@ static void test_MessageOptions(void)
     hr = IMimeMessage_GetOption(msg, OID_HIDE_TNEF_ATTACHMENTS, &prop);
     todo_wine ok(hr == S_OK, "ret %08x\n", hr);
     todo_wine ok(prop.vt == VT_BOOL, "vt %08x\n", prop.vt);
-    todo_wine ok(prop.u.boolVal == TRUE, "Hide Attachments got %d\n", prop.u.boolVal);
+    todo_wine ok(prop.boolVal == TRUE, "Hide Attachments got %d\n", prop.boolVal);
     PropVariantClear(&prop);
 
     /* Invalid property type doesn't change the value */
     prop.vt = VT_LPSTR;
-    prop.u.pszVal = CoTaskMemAlloc(strlen(zero)+1);
-    strcpy(prop.u.pszVal, zero);
+    prop.pszVal = CoTaskMemAlloc(strlen(zero)+1);
+    strcpy(prop.pszVal, zero);
     hr = IMimeMessage_SetOption(msg, OID_HIDE_TNEF_ATTACHMENTS, &prop);
     ok(hr == S_OK, "ret %08x\n", hr);
     PropVariantClear(&prop);
@@ -1067,19 +1067,19 @@ static void test_MessageOptions(void)
     hr = IMimeMessage_GetOption(msg, OID_HIDE_TNEF_ATTACHMENTS, &prop);
     todo_wine ok(hr == S_OK, "ret %08x\n", hr);
     todo_wine ok(prop.vt == VT_BOOL, "vt %08x\n", prop.vt);
-    todo_wine ok(prop.u.boolVal == TRUE, "Hide Attachments got %d\n", prop.u.boolVal);
+    todo_wine ok(prop.boolVal == TRUE, "Hide Attachments got %d\n", prop.boolVal);
     PropVariantClear(&prop);
 
     /* Invalid OID */
     prop.vt = VT_BOOL;
-    prop.u.boolVal = TRUE;
+    prop.boolVal = TRUE;
     hr = IMimeMessage_SetOption(msg, 0xff00000a, &prop);
     ok(hr == MIME_E_INVALID_OPTION_ID, "ret %08x\n", hr);
     PropVariantClear(&prop);
 
     /* Out of range before type. */
     prop.vt = VT_I4;
-    prop.u.lVal = 1;
+    prop.lVal = 1;
     hr = IMimeMessage_SetOption(msg, 0xff00000a, &prop);
     ok(hr == MIME_E_INVALID_OPTION_ID, "ret %08x\n", hr);
     PropVariantClear(&prop);
@@ -1131,8 +1131,8 @@ static void test_BodyDeleteProp(void)
     ok(hr == MIME_E_NOT_FOUND, "ret %08x\n", hr);
 
     prop.vt = VT_LPSTR;
-    prop.u.pszVal = CoTaskMemAlloc(strlen(topic)+1);
-    strcpy(prop.u.pszVal, topic);
+    prop.pszVal = CoTaskMemAlloc(strlen(topic)+1);
+    strcpy(prop.pszVal, topic);
     hr = IMimeBody_SetProp(body, "Subject", 0, &prop);
     ok(hr == S_OK, "ret %08x\n", hr);
     PropVariantClear(&prop);
@@ -1144,8 +1144,8 @@ static void test_BodyDeleteProp(void)
     ok(hr == MIME_E_NOT_FOUND, "ret %08x\n", hr);
 
     prop.vt = VT_LPSTR;
-    prop.u.pszVal = CoTaskMemAlloc(strlen(topic)+1);
-    strcpy(prop.u.pszVal, topic);
+    prop.pszVal = CoTaskMemAlloc(strlen(topic)+1);
+    strcpy(prop.pszVal, topic);
     hr = IMimeBody_SetProp(body, PIDTOSTR(PID_HDR_SUBJECT), 0, &prop);
     ok(hr == S_OK, "ret %08x\n", hr);
     PropVariantClear(&prop);
