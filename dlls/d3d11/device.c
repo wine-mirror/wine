@@ -589,13 +589,13 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_DrawIndexed(ID3D11DeviceCo
 static void STDMETHODCALLTYPE d3d11_immediate_context_Draw(ID3D11DeviceContext1 *iface,
         UINT vertex_count, UINT start_vertex_location)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext1(iface);
 
     TRACE("iface %p, vertex_count %u, start_vertex_location %u.\n",
             iface, vertex_count, start_vertex_location);
 
     wined3d_mutex_lock();
-    wined3d_device_draw_primitive(device->wined3d_device, start_vertex_location, vertex_count);
+    wined3d_device_context_draw(context->wined3d_context, start_vertex_location, vertex_count, 0, 0);
     wined3d_mutex_unlock();
 }
 
@@ -720,7 +720,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_DrawIndexedInstanced(ID3D1
 static void STDMETHODCALLTYPE d3d11_immediate_context_DrawInstanced(ID3D11DeviceContext1 *iface,
         UINT instance_vertex_count, UINT instance_count, UINT start_vertex_location, UINT start_instance_location)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext1(iface);
 
     TRACE("iface %p, instance_vertex_count %u, instance_count %u, start_vertex_location %u, "
             "start_instance_location %u.\n",
@@ -728,7 +728,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_DrawInstanced(ID3D11Device
             start_instance_location);
 
     wined3d_mutex_lock();
-    wined3d_device_draw_primitive_instanced(device->wined3d_device, start_vertex_location,
+    wined3d_device_context_draw(context->wined3d_context, start_vertex_location,
             instance_vertex_count, start_instance_location, instance_count);
     wined3d_mutex_unlock();
 }
