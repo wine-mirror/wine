@@ -1,6 +1,5 @@
 TESTDLL   = propsys.dll
 IMPORTS   = propsys ole32 oleaut32
-EXTRADEFS = -DWINE_NO_NAMELESS_EXTENSION
 
 C_SRCS = \
 	propsys.c
