@@ -738,7 +738,7 @@ static void read_value(header_t *header, char **cur)
     }
 
     header->value.vt = VT_LPSTR;
-    header->value.u.pszVal = value;
+    header->value.pszVal = value;
 
     *cur = end;
 }
@@ -748,22 +748,22 @@ static void init_content_type(MimeBody *body, header_t *header)
     char *slash;
     DWORD len;
 
-    slash = strchr(header->value.u.pszVal, '/');
+    slash = strchr(header->value.pszVal, '/');
     if(!slash)
     {
         WARN("malformed context type value\n");
         return;
     }
-    len = slash - header->value.u.pszVal;
+    len = slash - header->value.pszVal;
     body->content_pri_type = HeapAlloc(GetProcessHeap(), 0, len + 1);
-    memcpy(body->content_pri_type, header->value.u.pszVal, len);
+    memcpy(body->content_pri_type, header->value.pszVal, len);
     body->content_pri_type[len] = '\0';
     body->content_sub_type = strdupA(slash + 1);
 }
 
 static void init_content_encoding(MimeBody *body, header_t *header)
 {
-    const char *encoding = header->value.u.pszVal;
+    const char *encoding = header->value.pszVal;
 
     if(!stricmp(encoding, "base64"))
         body->encoding = IET_BASE64;
@@ -1099,7 +1099,7 @@ static HRESULT WINAPI MimeBody_GetProp(
     {
         PropVariantClear(pValue);
         pValue->vt = VT_LPSTR;
-        pValue->u.pszVal = strdupA(This->content_pri_type);
+        pValue->pszVal = strdupA(This->content_pri_type);
         return S_OK;
     }
 
@@ -1416,11 +1416,11 @@ static HRESULT WINAPI MimeBody_SetOption(
     switch(oid)
     {
     case OID_SECURITY_HWND_OWNER:
-        FIXME("OID_SECURITY_HWND_OWNER (value %08x): ignoring\n", pValue->u.ulVal);
+        FIXME("OID_SECURITY_HWND_OWNER (value %08x): ignoring\n", pValue->ulVal);
         hr = S_OK;
         break;
     case OID_TRANSMIT_BODY_ENCODING:
-        FIXME("OID_TRANSMIT_BODY_ENCODING (value %08x): ignoring\n", pValue->u.ulVal);
+        FIXME("OID_TRANSMIT_BODY_ENCODING (value %08x): ignoring\n", pValue->ulVal);
         hr = S_OK;
         break;
     default:
@@ -2745,16 +2745,16 @@ static HRESULT WINAPI MimeMessage_SetOption(
     switch(oid)
     {
     case OID_HIDE_TNEF_ATTACHMENTS:
-        FIXME("OID_HIDE_TNEF_ATTACHMENTS (value %d): ignoring\n", pValue->u.boolVal);
+        FIXME("OID_HIDE_TNEF_ATTACHMENTS (value %d): ignoring\n", pValue->boolVal);
         break;
     case OID_SHOW_MACBINARY:
-        FIXME("OID_SHOW_MACBINARY (value %d): ignoring\n", pValue->u.boolVal);
+        FIXME("OID_SHOW_MACBINARY (value %d): ignoring\n", pValue->boolVal);
         break;
     case OID_SAVEBODY_KEEPBOUNDARY:
-        FIXME("OID_SAVEBODY_KEEPBOUNDARY (value %d): ignoring\n", pValue->u.boolVal);
+        FIXME("OID_SAVEBODY_KEEPBOUNDARY (value %d): ignoring\n", pValue->boolVal);
         break;
     case OID_CLEANUP_TREE_ON_SAVE:
-        FIXME("OID_CLEANUP_TREE_ON_SAVE (value %d): ignoring\n", pValue->u.boolVal);
+        FIXME("OID_CLEANUP_TREE_ON_SAVE (value %d): ignoring\n", pValue->boolVal);
         break;
     default:
         FIXME("Unhandled oid %08x\n", oid);

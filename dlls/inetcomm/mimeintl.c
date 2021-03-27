@@ -410,11 +410,11 @@ static HRESULT WINAPI MimeInternat_ConvertString(IMimeInternational *iface, CODE
     {
     case VT_LPSTR:
         if(cpiSource == CP_UNICODE) cpiSource = GetACP();
-        src_len = strlen(pIn->u.pszVal);
+        src_len = strlen(pIn->pszVal);
         break;
     case VT_LPWSTR:
         cpiSource = CP_UNICODE;
-        src_len = lstrlenW(pIn->u.pwszVal) * sizeof(WCHAR);
+        src_len = lstrlenW(pIn->pwszVal) * sizeof(WCHAR);
         break;
     default:
         return E_INVALIDARG;
@@ -426,37 +426,37 @@ static HRESULT WINAPI MimeInternat_ConvertString(IMimeInternational *iface, CODE
         DWORD mode = 0;
         UINT in_size = src_len, out_size;
 
-        hr = IMultiLanguage_ConvertString(ml, &mode, cpiSource, cpiDest, (BYTE*)pIn->u.pszVal, &in_size,
+        hr = IMultiLanguage_ConvertString(ml, &mode, cpiSource, cpiDest, (BYTE*)pIn->pszVal, &in_size,
                                           NULL, &out_size);
         if(hr == S_OK) /* S_FALSE means the conversion could not be performed */
         {
             out_size += (cpiDest == CP_UNICODE) ? sizeof(WCHAR) : sizeof(char);
 
-            pOut->u.pszVal = CoTaskMemAlloc(out_size);
-            if(!pOut->u.pszVal)
+            pOut->pszVal = CoTaskMemAlloc(out_size);
+            if(!pOut->pszVal)
                 hr = E_OUTOFMEMORY;
             else
             {
                 mode = 0;
                 in_size = src_len;
-                hr = IMultiLanguage_ConvertString(ml, &mode, cpiSource, cpiDest, (BYTE*)pIn->u.pszVal, &in_size,
-                                                  (BYTE*)pOut->u.pszVal, &out_size);
+                hr = IMultiLanguage_ConvertString(ml, &mode, cpiSource, cpiDest, (BYTE*)pIn->pszVal, &in_size,
+                                                  (BYTE*)pOut->pszVal, &out_size);
 
                 if(hr == S_OK)
                 {
                     if(cpiDest == CP_UNICODE)
                     {
-                        pOut->u.pwszVal[out_size / sizeof(WCHAR)] = 0;
+                        pOut->pwszVal[out_size / sizeof(WCHAR)] = 0;
                         pOut->vt = VT_LPWSTR;
                     }
                     else
                     {
-                        pOut->u.pszVal[out_size] = '\0';
+                        pOut->pszVal[out_size] = '\0';
                         pOut->vt = VT_LPSTR;
                     }
                 }
                 else
-                    CoTaskMemFree(pOut->u.pszVal);
+                    CoTaskMemFree(pOut->pszVal);
             }
         }
         IMultiLanguage_Release(ml);

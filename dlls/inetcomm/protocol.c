@@ -141,7 +141,7 @@ static HRESULT on_mime_message_available(MimeHtmlProtocol *protocol, IMimeMessag
             if(FAILED(hres))
                 return report_result(protocol, hres);
 
-            found = !lstrcmpW(protocol->location, value.u.pwszVal);
+            found = !lstrcmpW(protocol->location, value.pwszVal);
             PropVariantClear(&value);
         }while(!found);
     }else {
@@ -159,7 +159,7 @@ static HRESULT on_mime_message_available(MimeHtmlProtocol *protocol, IMimeMessag
     value.vt = VT_LPWSTR;
     hres = IMimeBody_GetProp(mime_body, "content-type", 0, &value);
     if(SUCCEEDED(hres)) {
-        hres = IInternetProtocolSink_ReportProgress(protocol->sink, BINDSTATUS_MIMETYPEAVAILABLE, value.u.pwszVal);
+        hres = IInternetProtocolSink_ReportProgress(protocol->sink, BINDSTATUS_MIMETYPEAVAILABLE, value.pwszVal);
         PropVariantClear(&value);
     }
 

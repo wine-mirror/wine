@@ -331,12 +331,12 @@ static HRESULT POP3Transport_ParseResponse(POP3Transport *This, char *pszRespons
     {
         switch (This->command)
         {
-        case POP3_UIDL: hr = parse_uidl_response(This, &pResponse->u.rUidlInfo); break;
-        case POP3_STAT: hr = parse_stat_response(This, &pResponse->u.rStatInfo); break;
-        case POP3_LIST: hr = parse_list_response(This, &pResponse->u.rListInfo); break;
-        case POP3_DELE: hr = parse_dele_response(This, &pResponse->u.dwPopId); break;
-        case POP3_RETR: hr = parse_retr_response(This, &pResponse->u.rRetrInfo); break;
-        case POP3_TOP: hr = parse_top_response(This, &pResponse->u.rTopInfo); break;
+        case POP3_UIDL: hr = parse_uidl_response(This, &pResponse->rUidlInfo); break;
+        case POP3_STAT: hr = parse_stat_response(This, &pResponse->rStatInfo); break;
+        case POP3_LIST: hr = parse_list_response(This, &pResponse->rListInfo); break;
+        case POP3_DELE: hr = parse_dele_response(This, &pResponse->dwPopId); break;
+        case POP3_RETR: hr = parse_retr_response(This, &pResponse->rRetrInfo); break;
+        case POP3_TOP: hr = parse_top_response(This, &pResponse->rTopInfo); break;
         default:
             This->state = STATE_DONE;
             break;
