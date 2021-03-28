@@ -2812,7 +2812,7 @@ static void test___C_specific_handler(void)
 /* This is heavily based on the i386 exception tests. */
 static const struct exception
 {
-    BYTE     code[18];      /* asm code */
+    BYTE     code[40];      /* asm code */
     BYTE     offset;        /* offset of faulting instruction */
     BYTE     length;        /* length of faulting instruction */
     NTSTATUS status;        /* expected status code */
@@ -2921,6 +2921,34 @@ static const struct exception
 /* 35 */
     { { 0xa3, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xc3 },  /* movl %eax,0xffffffffffffffff; ret */
       0, 9, STATUS_ACCESS_VIOLATION, 2, { 1, 0xffffffffffffffff } },
+
+    /* test exception with cleared segment registers */
+    { {
+        0x8c, 0xc0, /* mov %es,%eax */
+        0x50,       /* push %rax */
+        0x8c, 0xd8, /* mov %ds,%eax */
+        0x50,       /* push %rax */
+        0x8c, 0xe0, /* mov %fs,%eax */
+        0x50,       /* push %rax */
+        0x8c, 0xe8, /* mov %gs,%eax */
+        0x50,       /* push %rax */
+        0x31, 0xc0, /* xor %eax,%eax */
+        0x8e, 0xc0, /* mov %eax,%es */
+        0x8e, 0xd8, /* mov %eax,%ds */
+        0x8e, 0xe0, /* mov %eax,%fs */
+        0x8e, 0xe8, /* mov %eax,%gs */
+        0xfa,       /* cli */
+        0x58,       /* pop %rax */
+        0x8e, 0xe8, /* mov %eax,%gs */
+        0x58,       /* pop %rax */
+        0x8e, 0xe0, /* mov %eax,%fs */
+        0x58,       /* pop %rax */
+        0x8e, 0xd8, /* mov %eax,%ds */
+        0x58,       /* pop %rax */
+        0x8e, 0xc0, /* mov %eax,%es */
+        0xc3,       /* retq */
+      }, 22, 1, STATUS_PRIVILEGED_INSTRUCTION, 0 },
+
     { { 0xf1, 0x90, 0xc3 },  /* icebp; nop; ret */
       1, 1, STATUS_SINGLE_STEP, 0 },
     { { 0xcd, 0x2c, 0xc3 },
@@ -2991,6 +3019,16 @@ static DWORD WINAPI handler( EXCEPTION_RECORD *rec, ULONG64 frame,
         (rec->ExceptionCode == STATUS_BREAKPOINT && rec->ExceptionAddress == (char*)context->Rip + 1),
         "%u: Unexpected exception address %p/%p\n", entry,
         rec->ExceptionAddress, (char*)context->Rip );
+
+    todo_wine ok( context->SegDs == context->SegSs,
+        "%u: ds %#x does not match ss %#x\n", entry, context->SegDs, context->SegSs );
+    todo_wine ok( context->SegEs == context->SegSs,
+        "%u: es %#x does not match ss %#x\n", entry, context->SegEs, context->SegSs );
+    todo_wine ok( context->SegGs == context->SegSs,
+        "%u: ds %#x does not match ss %#x\n", entry, context->SegGs, context->SegSs );
+
+    todo_wine ok( context->SegFs && context->SegFs != context->SegSs,
+        "%u: got fs %#x\n", entry, context->SegFs );
 
     if (except->status == STATUS_BREAKPOINT && is_wow64)
         parameter_count = 1;
