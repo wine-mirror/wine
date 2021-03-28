@@ -3020,7 +3020,7 @@ static DWORD WINAPI handler( EXCEPTION_RECORD *rec, ULONG64 frame,
         "%u: Unexpected exception address %p/%p\n", entry,
         rec->ExceptionAddress, (char*)context->Rip );
 
-    todo_wine ok( context->SegDs == context->SegSs,
+    ok( context->SegDs == context->SegSs,
         "%u: ds %#x does not match ss %#x\n", entry, context->SegDs, context->SegSs );
     todo_wine ok( context->SegEs == context->SegSs,
         "%u: es %#x does not match ss %#x\n", entry, context->SegEs, context->SegSs );
