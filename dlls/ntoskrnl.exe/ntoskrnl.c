@@ -3691,7 +3691,7 @@ static HMODULE load_driver( const WCHAR *driver_name, const UNICODE_STRING *keyn
 
     TRACE( "loading driver %s\n", wine_dbgstr_w(str) );
 
-    module = LoadLibraryExW( str, 0, LOAD_WITH_ALTERED_SEARCH_PATH );
+    module = LoadLibraryExW( str, 0, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS );
 
     if (module && load_image_notify_routine_count)
     {

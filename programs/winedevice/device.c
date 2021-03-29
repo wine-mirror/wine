@@ -115,6 +115,7 @@ static DWORD WINAPI service_handler( DWORD ctrl, DWORD event_type, LPVOID event_
 
 static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
 {
+    WCHAR driver_dir[MAX_PATH];
     const WCHAR *service_group = (argc >= 2) ? argv[1] : argv[0];
 
     if (!(stop_event = CreateEventW( NULL, TRUE, FALSE, NULL )))
@@ -123,6 +124,10 @@ static void WINAPI ServiceMain( DWORD argc, LPWSTR *argv )
         return;
     if (!(service_handle = RegisterServiceCtrlHandlerExW( winedeviceW, service_handler, (void *)service_group )))
         return;
+
+    GetSystemDirectoryW( driver_dir, MAX_PATH );
+    wcscat( driver_dir, L"\\drivers" );
+    AddDllDirectory( driver_dir );
 
     TRACE( "starting service group %s\n", wine_dbgstr_w(service_group) );
     set_service_status( service_handle, SERVICE_RUNNING,
