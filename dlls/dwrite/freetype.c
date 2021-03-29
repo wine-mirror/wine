@@ -42,14 +42,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
-static CRITICAL_SECTION freetype_cs;
-static CRITICAL_SECTION_DEBUG critsect_debug =
+static RTL_CRITICAL_SECTION freetype_cs;
+static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 {
     0, 0, &freetype_cs,
     { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
       0, 0, { (DWORD_PTR)(__FILE__ ": freetype_cs") }
 };
-static CRITICAL_SECTION freetype_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
+static RTL_CRITICAL_SECTION freetype_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static void *ft_handle = NULL;
 static FT_Library library = 0;
@@ -209,9 +209,9 @@ sym_not_found:
 
 static void CDECL freetype_notify_release(void *key)
 {
-    EnterCriticalSection(&freetype_cs);
+    RtlEnterCriticalSection(&freetype_cs);
     pFTC_Manager_RemoveFaceID(cache_manager, key);
-    LeaveCriticalSection(&freetype_cs);
+    RtlLeaveCriticalSection(&freetype_cs);
 }
 
 static void CDECL freetype_get_design_glyph_metrics(void *key, UINT16 upem, UINT16 ascent,
@@ -227,7 +227,7 @@ static void CDECL freetype_get_design_glyph_metrics(void *key, UINT16 upem, UINT
     scaler.x_res = 0;
     scaler.y_res = 0;
 
-    EnterCriticalSection(&freetype_cs);
+    RtlEnterCriticalSection(&freetype_cs);
     if (pFTC_Manager_LookupSize(cache_manager, &scaler, &size) == 0) {
          if (pFT_Load_Glyph(size->face, glyph, FT_LOAD_NO_SCALE) == 0) {
              FT_Glyph_Metrics *metrics = &size->face->glyph->metrics;
@@ -250,7 +250,7 @@ static void CDECL freetype_get_design_glyph_metrics(void *key, UINT16 upem, UINT
              }
          }
     }
-    LeaveCriticalSection(&freetype_cs);
+    RtlLeaveCriticalSection(&freetype_cs);
 }
 
 struct decompose_context
@@ -450,7 +450,7 @@ static int CDECL freetype_get_glyph_outline(void *key, float emSize, unsigned in
     scaler.x_res = 0;
     scaler.y_res = 0;
 
-    EnterCriticalSection(&freetype_cs);
+    RtlEnterCriticalSection(&freetype_cs);
     if (!(ret = pFTC_Manager_LookupSize(cache_manager, &scaler, &size)))
     {
         if (pFT_Load_Glyph(size->face, glyph, FT_LOAD_NO_BITMAP) == 0)
@@ -471,7 +471,7 @@ static int CDECL freetype_get_glyph_outline(void *key, float emSize, unsigned in
             ret = decompose_outline(ft_outline, outline);
         }
     }
-    LeaveCriticalSection(&freetype_cs);
+    RtlLeaveCriticalSection(&freetype_cs);
 
     return ret;
 }
@@ -481,10 +481,10 @@ static UINT16 CDECL freetype_get_glyph_count(void *key)
     UINT16 count = 0;
     FT_Face face;
 
-    EnterCriticalSection(&freetype_cs);
+    RtlEnterCriticalSection(&freetype_cs);
     if (pFTC_Manager_LookupFace(cache_manager, key, &face) == 0)
         count = face->num_glyphs;
-    LeaveCriticalSection(&freetype_cs);
+    RtlLeaveCriticalSection(&freetype_cs);
 
     return count;
 }
@@ -545,7 +545,7 @@ static void CDECL freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
     FT_Glyph glyph;
     FT_Matrix m;
 
-    EnterCriticalSection(&freetype_cs);
+    RtlEnterCriticalSection(&freetype_cs);
 
     needs_transform = get_glyph_transform(bitmap, &m);
 
@@ -572,7 +572,7 @@ static void CDECL freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
             pFT_Glyph_Get_CBox(glyph, FT_GLYPH_BBOX_PIXELS, &bbox);
     }
 
-    LeaveCriticalSection(&freetype_cs);
+    RtlLeaveCriticalSection(&freetype_cs);
 
     /* flip Y axis */
     SetRect(&bitmap->bbox, bbox.xMin, -bbox.yMax, bbox.xMax, -bbox.yMin);
@@ -677,7 +677,7 @@ static BOOL CDECL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
     FT_Glyph glyph;
     FT_Matrix m;
 
-    EnterCriticalSection(&freetype_cs);
+    RtlEnterCriticalSection(&freetype_cs);
 
     needs_transform = get_glyph_transform(bitmap, &m);
 
@@ -711,7 +711,7 @@ static BOOL CDECL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
             pFT_Done_Glyph(glyph_copy);
     }
 
-    LeaveCriticalSection(&freetype_cs);
+    RtlLeaveCriticalSection(&freetype_cs);
 
     return ret;
 }
@@ -730,7 +730,7 @@ static INT32 CDECL freetype_get_glyph_advance(void *key, float emSize, UINT16 in
     if (mode == DWRITE_MEASURING_MODE_NATURAL)
         imagetype.flags |= FT_LOAD_NO_HINTING;
 
-    EnterCriticalSection(&freetype_cs);
+    RtlEnterCriticalSection(&freetype_cs);
     if (pFTC_ImageCache_Lookup(image_cache, &imagetype, index, &glyph, NULL) == 0) {
         *has_contours = glyph->format == FT_GLYPH_FORMAT_OUTLINE && ((FT_OutlineGlyph)glyph)->outline.n_contours;
         advance = glyph->advance.x >> 16;
@@ -739,7 +739,7 @@ static INT32 CDECL freetype_get_glyph_advance(void *key, float emSize, UINT16 in
         *has_contours = FALSE;
         advance = 0;
     }
-    LeaveCriticalSection(&freetype_cs);
+    RtlLeaveCriticalSection(&freetype_cs);
 
     return advance;
 }
