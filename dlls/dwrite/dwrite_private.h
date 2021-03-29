@@ -442,10 +442,9 @@ extern unsigned int opentype_get_gasp_flags(const struct dwrite_fonttable *gasp,
 /* BiDi helpers */
 extern HRESULT bidi_computelevels(const WCHAR*,UINT32,UINT8,UINT8*,UINT8*) DECLSPEC_HIDDEN;
 
-/* FreeType integration */
 struct dwrite_glyphbitmap
 {
-    IDWriteFontFace4 *fontface;
+    void *key;
     DWORD simulations;
     float emsize;
     BOOL nohint;
@@ -485,18 +484,6 @@ struct dwrite_outline
 extern int dwrite_outline_push_tag(struct dwrite_outline *outline, unsigned char tag) DECLSPEC_HIDDEN;
 extern int dwrite_outline_push_points(struct dwrite_outline *outline, const D2D1_POINT_2F *points,
         unsigned int count) DECLSPEC_HIDDEN;
-
-extern HRESULT freetype_get_design_glyph_metrics(struct dwrite_fontface *fontface, UINT16 glyph,
-        DWRITE_GLYPH_METRICS *metrics) DECLSPEC_HIDDEN;
-extern void freetype_notify_cacheremove(IDWriteFontFace5 *fontface) DECLSPEC_HIDDEN;
-extern int freetype_get_glyph_outline(IDWriteFontFace5 *fontface, float emSize, UINT16 glyph,
-        struct dwrite_outline *outline) DECLSPEC_HIDDEN;
-extern UINT16 freetype_get_glyphcount(IDWriteFontFace5 *fontface) DECLSPEC_HIDDEN;
-extern void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap_desc) DECLSPEC_HIDDEN;
-extern BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap*) DECLSPEC_HIDDEN;
-extern INT32 freetype_get_glyph_advance(IDWriteFontFace5 *fontface, FLOAT emsize, UINT16 index,
-        DWRITE_MEASURING_MODE measuring_mode, BOOL *has_contours) DECLSPEC_HIDDEN;
-extern void freetype_get_design_glyph_bbox(IDWriteFontFace4*,UINT16,UINT16,RECT*) DECLSPEC_HIDDEN;
 
 /* Glyph shaping */
 enum SCRIPT_JUSTIFY
@@ -742,6 +729,21 @@ struct font_callback_funcs
     void (CDECL *release_font_data)(struct font_data_context *context);
 };
 
+struct font_backend_funcs
+{
+    void (CDECL *notify_release)(void *key);
+    int (CDECL *get_glyph_outline)(void *key, float em_size, UINT16 glyph, struct dwrite_outline *outline);
+    UINT16 (CDECL *get_glyph_count)(void *key);
+    INT32 (CDECL *get_glyph_advance)(void *key, float em_size, UINT16 index, DWRITE_MEASURING_MODE measuring_mode,
+            BOOL *has_contours);
+    void (CDECL *get_glyph_bbox)(struct dwrite_glyphbitmap *bitmap_desc);
+    BOOL (CDECL *get_glyph_bitmap)(struct dwrite_glyphbitmap *bitmap_desc);
+    void (CDECL *get_design_glyph_metrics)(void *key, UINT16 upem, UINT16 ascent, unsigned int simulations,
+            UINT16 glyph, DWRITE_GLYPH_METRICS *metrics);
+};
+
 extern NTSTATUS CDECL init_font_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out) DECLSPEC_HIDDEN;
 extern void init_font_backend(void) DECLSPEC_HIDDEN;
 extern void release_font_backend(void) DECLSPEC_HIDDEN;
+
+extern void dwrite_fontface_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap) DECLSPEC_HIDDEN;

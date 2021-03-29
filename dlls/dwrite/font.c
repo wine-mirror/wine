@@ -63,6 +63,13 @@ static const WCHAR demiW[] = {'d','e','m','i',0};
 static const WCHAR spaceW[] = {' ',0};
 static const WCHAR enusW[] = {'e','n','-','u','s',0};
 
+static const struct font_backend_funcs *font_funcs;
+
+void dwrite_fontface_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
+{
+    font_funcs->get_glyph_bbox(bitmap);
+}
+
 struct dwrite_font_propvec {
     FLOAT stretch;
     FLOAT style;
@@ -662,7 +669,7 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace5 *iface)
         for (i = 0; i < ARRAY_SIZE(fontface->glyphs); i++)
             heap_free(fontface->glyphs[i]);
 
-        freetype_notify_cacheremove(iface);
+        font_funcs->notify_release(iface);
 
         dwrite_cmap_release(&fontface->cmap);
         IDWriteFactory7_Release(fontface->factory);
@@ -743,7 +750,7 @@ static UINT16 WINAPI dwritefontface_GetGlyphCount(IDWriteFontFace5 *iface)
 {
     TRACE("%p.\n", iface);
 
-    return freetype_get_glyphcount(iface);
+    return font_funcs->get_glyph_count(iface);
 }
 
 static HRESULT WINAPI dwritefontface_GetDesignGlyphMetrics(IDWriteFontFace5 *iface,
@@ -765,8 +772,10 @@ static HRESULT WINAPI dwritefontface_GetDesignGlyphMetrics(IDWriteFontFace5 *ifa
         DWRITE_GLYPH_METRICS metrics;
 
         hr = get_cached_glyph_metrics(fontface, glyphs[i], &metrics);
-        if (hr != S_OK) {
-            freetype_get_design_glyph_metrics(fontface, glyphs[i], &metrics);
+        if (hr != S_OK)
+        {
+            font_funcs->get_design_glyph_metrics(iface, fontface->metrics.designUnitsPerEm,
+                    fontface->typo_metrics.ascent, fontface->simulations, glyphs[i], &metrics);
             hr = set_cached_glyph_metrics(fontface, glyphs[i], &metrics);
             if (FAILED(hr))
                 return hr;
@@ -901,7 +910,7 @@ static HRESULT WINAPI dwritefontface_GetGlyphRunOutline(IDWriteFontFace5 *iface,
     for (i = 0; i < count; ++i)
     {
         outline.tags.count = outline.points.count = 0;
-        if (freetype_get_glyph_outline(iface, emSize, glyphs[i], &outline))
+        if (font_funcs->get_glyph_outline(iface, emSize, glyphs[i], &outline))
         {
             WARN("Failed to get glyph outline for glyph %u.\n", glyphs[i]);
             continue;
@@ -1049,7 +1058,7 @@ static HRESULT WINAPI dwritefontface_GetGdiCompatibleGlyphMetrics(IDWriteFontFac
         if (FAILED(hr))
             return hr;
 
-        ret->advanceWidth = freetype_get_glyph_advance(iface, size, glyphs[i], mode, &has_contours);
+        ret->advanceWidth = font_funcs->get_glyph_advance(iface, size, glyphs[i], mode, &has_contours);
         if (has_contours)
             ret->advanceWidth = round_metric(ret->advanceWidth * fontface->metrics.designUnitsPerEm / size + adjustment);
         else
@@ -1180,7 +1189,7 @@ static int fontface_get_design_advance(struct dwrite_fontface *fontface, DWRITE_
     switch (measuring_mode)
     {
         case DWRITE_MEASURING_MODE_NATURAL:
-            advance = freetype_get_glyph_advance(&fontface->IDWriteFontFace5_iface, fontface->metrics.designUnitsPerEm,
+            advance = font_funcs->get_glyph_advance(&fontface->IDWriteFontFace5_iface, fontface->metrics.designUnitsPerEm,
                     glyph, measuring_mode, &has_contours);
             if (has_contours)
                 advance += adjustment;
@@ -1195,7 +1204,7 @@ static int fontface_get_design_advance(struct dwrite_fontface *fontface, DWRITE_
             if (transform && memcmp(transform, &identity, sizeof(*transform)))
                 FIXME("Transform is not supported.\n");
 
-            advance = freetype_get_glyph_advance(&fontface->IDWriteFontFace5_iface, emsize, glyph, measuring_mode,
+            advance = font_funcs->get_glyph_advance(&fontface->IDWriteFontFace5_iface, emsize, glyph, measuring_mode,
                     &has_contours);
             if (has_contours)
                 advance = round_metric(advance * fontface->metrics.designUnitsPerEm / emsize + adjustment);
@@ -5709,7 +5718,7 @@ static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *a
         WARN("failed to get IDWriteFontFace4, 0x%08x\n", hr);
 
     memset(&glyph_bitmap, 0, sizeof(glyph_bitmap));
-    glyph_bitmap.fontface = fontface;
+    glyph_bitmap.key = fontface;
     glyph_bitmap.simulations = IDWriteFontFace4_GetSimulations(fontface);
     glyph_bitmap.emsize = analysis->run.fontEmSize;
     glyph_bitmap.nohint = is_natural_rendering_mode(analysis->rendering_mode);
@@ -5721,7 +5730,7 @@ static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *a
         UINT32 bitmap_size;
 
         glyph_bitmap.glyph = analysis->run.glyphIndices[i];
-        freetype_get_glyph_bbox(&glyph_bitmap);
+        font_funcs->get_glyph_bbox(&glyph_bitmap);
 
         bitmap_size = get_glyph_bitmap_pitch(analysis->rendering_mode, bbox->right - bbox->left) *
             (bbox->bottom - bbox->top);
@@ -5799,7 +5808,7 @@ static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis)
     origin.x = origin.y = 0.0f;
 
     memset(&glyph_bitmap, 0, sizeof(glyph_bitmap));
-    glyph_bitmap.fontface = fontface;
+    glyph_bitmap.key = fontface;
     glyph_bitmap.simulations = IDWriteFontFace4_GetSimulations(fontface);
     glyph_bitmap.emsize = analysis->run.fontEmSize;
     glyph_bitmap.nohint = is_natural_rendering_mode(analysis->rendering_mode);
@@ -5819,7 +5828,7 @@ static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis)
         BOOL is_1bpp;
 
         glyph_bitmap.glyph = analysis->run.glyphIndices[i];
-        freetype_get_glyph_bbox(&glyph_bitmap);
+        font_funcs->get_glyph_bbox(&glyph_bitmap);
 
         if (IsRectEmpty(bbox))
             continue;
@@ -5829,7 +5838,7 @@ static HRESULT glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis)
 
         glyph_bitmap.pitch = get_glyph_bitmap_pitch(analysis->rendering_mode, width);
         memset(src, 0, height * glyph_bitmap.pitch);
-        is_1bpp = freetype_get_glyph_bitmap(&glyph_bitmap);
+        is_1bpp = font_funcs->get_glyph_bitmap(&glyph_bitmap);
 
         OffsetRect(bbox, analysis->origins[i].x, analysis->origins[i].y);
 
@@ -8030,7 +8039,7 @@ struct font_callback_funcs callback_funcs =
 
 void init_font_backend(void)
 {
-    init_font_lib(dwrite_module, DLL_PROCESS_ATTACH, &callback_funcs, NULL);
+    init_font_lib(dwrite_module, DLL_PROCESS_ATTACH, &callback_funcs, &font_funcs);
 }
 
 void release_font_backend(void)

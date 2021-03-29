@@ -207,21 +207,22 @@ sym_not_found:
     return FALSE;
 }
 
-void freetype_notify_cacheremove(IDWriteFontFace5 *fontface)
+static void CDECL freetype_notify_release(void *key)
 {
     EnterCriticalSection(&freetype_cs);
-    pFTC_Manager_RemoveFaceID(cache_manager, fontface);
+    pFTC_Manager_RemoveFaceID(cache_manager, key);
     LeaveCriticalSection(&freetype_cs);
 }
 
-HRESULT freetype_get_design_glyph_metrics(struct dwrite_fontface *fontface, UINT16 glyph, DWRITE_GLYPH_METRICS *ret)
+static void CDECL freetype_get_design_glyph_metrics(void *key, UINT16 upem, UINT16 ascent,
+        unsigned int simulations, UINT16 glyph, DWRITE_GLYPH_METRICS *ret)
 {
     FTC_ScalerRec scaler;
     FT_Size size;
 
-    scaler.face_id = &fontface->IDWriteFontFace5_iface;
-    scaler.width = fontface->metrics.designUnitsPerEm;
-    scaler.height = fontface->metrics.designUnitsPerEm;
+    scaler.face_id = key;
+    scaler.width = upem;
+    scaler.height = upem;
     scaler.pixel = 1;
     scaler.x_res = 0;
     scaler.y_res = 0;
@@ -236,22 +237,20 @@ HRESULT freetype_get_design_glyph_metrics(struct dwrite_fontface *fontface, UINT
              ret->rightSideBearing = metrics->horiAdvance - metrics->horiBearingX - metrics->width;
 
              ret->advanceHeight = metrics->vertAdvance;
-             ret->verticalOriginY = fontface->typo_metrics.ascent;
-             ret->topSideBearing = fontface->typo_metrics.ascent - metrics->horiBearingY;
+             ret->verticalOriginY = ascent;
+             ret->topSideBearing = ascent - metrics->horiBearingY;
              ret->bottomSideBearing = metrics->vertAdvance - metrics->height - ret->topSideBearing;
 
              /* Adjust in case of bold simulation, glyphs without contours are ignored. */
-             if (fontface->simulations & DWRITE_FONT_SIMULATIONS_BOLD &&
+             if (simulations & DWRITE_FONT_SIMULATIONS_BOLD &&
                      size->face->glyph->format == FT_GLYPH_FORMAT_OUTLINE && size->face->glyph->outline.n_contours)
              {
                  if (ret->advanceWidth)
-                     ret->advanceWidth += (fontface->metrics.designUnitsPerEm + 49) / 50;
+                     ret->advanceWidth += (upem + 49) / 50;
              }
          }
     }
     LeaveCriticalSection(&freetype_cs);
-
-    return S_OK;
 }
 
 struct decompose_context
@@ -437,9 +436,9 @@ static void embolden_glyph(FT_Glyph glyph, FLOAT emsize)
     embolden_glyph_outline(&outline_glyph->outline, emsize);
 }
 
-int freetype_get_glyph_outline(IDWriteFontFace5 *fontface, float emSize, UINT16 glyph,
-        struct dwrite_outline *outline)
+static int CDECL freetype_get_glyph_outline(void *key, float emSize, UINT16 glyph, struct dwrite_outline *outline)
 {
+    IDWriteFontFace5 *fontface = key;
     FTC_ScalerRec scaler;
     USHORT simulations;
     FT_Size size;
@@ -480,13 +479,13 @@ int freetype_get_glyph_outline(IDWriteFontFace5 *fontface, float emSize, UINT16 
     return ret;
 }
 
-UINT16 freetype_get_glyphcount(IDWriteFontFace5 *fontface)
+static UINT16 CDECL freetype_get_glyph_count(void *key)
 {
     UINT16 count = 0;
     FT_Face face;
 
     EnterCriticalSection(&freetype_cs);
-    if (pFTC_Manager_LookupFace(cache_manager, fontface, &face) == 0)
+    if (pFTC_Manager_LookupFace(cache_manager, key, &face) == 0)
         count = face->num_glyphs;
     LeaveCriticalSection(&freetype_cs);
 
@@ -502,10 +501,10 @@ static inline void ft_matrix_from_dwrite_matrix(const DWRITE_MATRIX *m, FT_Matri
 }
 
 /* Should be used only while holding 'freetype_cs' */
-static BOOL is_face_scalable(IDWriteFontFace4 *fontface)
+static BOOL is_face_scalable(void *key)
 {
     FT_Face face;
-    if (pFTC_Manager_LookupFace(cache_manager, fontface, &face) == 0)
+    if (pFTC_Manager_LookupFace(cache_manager, key, &face) == 0)
         return FT_IS_SCALABLE(face);
     else
         return FALSE;
@@ -522,7 +521,7 @@ static BOOL get_glyph_transform(struct dwrite_glyphbitmap *bitmap, FT_Matrix *re
 
     /* Some fonts provide mostly bitmaps and very few outlines, for example for .notdef.
        Disable transform if that's the case. */
-    if (!is_face_scalable(bitmap->fontface) || (!bitmap->m && bitmap->simulations == 0))
+    if (!is_face_scalable(bitmap->key) || (!bitmap->m && bitmap->simulations == 0))
         return FALSE;
 
     if (bitmap->simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE) {
@@ -541,7 +540,7 @@ static BOOL get_glyph_transform(struct dwrite_glyphbitmap *bitmap, FT_Matrix *re
     return TRUE;
 }
 
-void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
+static void CDECL freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
 {
     FTC_ImageTypeRec imagetype;
     FT_BBox bbox = { 0 };
@@ -553,7 +552,7 @@ void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
 
     needs_transform = get_glyph_transform(bitmap, &m);
 
-    imagetype.face_id = bitmap->fontface;
+    imagetype.face_id = bitmap->key;
     imagetype.width = 0;
     imagetype.height = bitmap->emsize;
     imagetype.flags = needs_transform ? FT_LOAD_NO_BITMAP : FT_LOAD_DEFAULT;
@@ -673,7 +672,7 @@ static BOOL freetype_get_aa_glyph_bitmap(struct dwrite_glyphbitmap *bitmap, FT_G
     return ret;
 }
 
-BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
+static BOOL CDECL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
 {
     FTC_ImageTypeRec imagetype;
     BOOL needs_transform;
@@ -685,7 +684,7 @@ BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
 
     needs_transform = get_glyph_transform(bitmap, &m);
 
-    imagetype.face_id = bitmap->fontface;
+    imagetype.face_id = bitmap->key;
     imagetype.width = 0;
     imagetype.height = bitmap->emsize;
     imagetype.flags = needs_transform ? FT_LOAD_NO_BITMAP : FT_LOAD_DEFAULT;
@@ -720,14 +719,14 @@ BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
     return ret;
 }
 
-INT32 freetype_get_glyph_advance(IDWriteFontFace5 *fontface, FLOAT emSize, UINT16 index, DWRITE_MEASURING_MODE mode,
-    BOOL *has_contours)
+static INT32 CDECL freetype_get_glyph_advance(void *key, float emSize, UINT16 index,
+        DWRITE_MEASURING_MODE mode, BOOL *has_contours)
 {
     FTC_ImageTypeRec imagetype;
     FT_Glyph glyph;
     INT32 advance;
 
-    imagetype.face_id = fontface;
+    imagetype.face_id = key;
     imagetype.width = 0;
     imagetype.height = emSize;
     imagetype.flags = FT_LOAD_DEFAULT;
@@ -748,10 +747,22 @@ INT32 freetype_get_glyph_advance(IDWriteFontFace5 *fontface, FLOAT emSize, UINT1
     return advance;
 }
 
+const static struct font_backend_funcs freetype_funcs =
+{
+    freetype_notify_release,
+    freetype_get_glyph_outline,
+    freetype_get_glyph_count,
+    freetype_get_glyph_advance,
+    freetype_get_glyph_bbox,
+    freetype_get_glyph_bitmap,
+    freetype_get_design_glyph_metrics,
+};
+
 static NTSTATUS init_freetype_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out)
 {
     callback_funcs = ptr_in;
     if (!init_freetype()) return STATUS_DLL_NOT_FOUND;
+    *(const struct font_backend_funcs **)ptr_out = &freetype_funcs;
     return STATUS_SUCCESS;
 }
 
@@ -764,45 +775,56 @@ static NTSTATUS release_freetype_lib(void)
 
 #else /* HAVE_FREETYPE */
 
-void freetype_notify_cacheremove(IDWriteFontFace5 *fontface)
+static void CDECL null_notify_release(void *key)
 {
 }
 
-HRESULT freetype_get_design_glyph_metrics(struct dwrite_fontface *fontface, UINT16 glyph, DWRITE_GLYPH_METRICS *ret)
-{
-    return E_NOTIMPL;
-}
-
-int freetype_get_glyph_outline(IDWriteFontFace5 *fontface, float emSize, UINT16 glyph,
-        struct dwrite_outline *outline)
+static int CDECL null_get_glyph_outline(void *key, float emSize, UINT16 glyph, struct dwrite_outline *outline)
 {
     return 1;
 }
 
-UINT16 freetype_get_glyphcount(IDWriteFontFace5 *fontface)
+static UINT16 CDECL null_get_glyph_count(void *key)
 {
     return 0;
 }
 
-void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
-{
-    SetRectEmpty(&bitmap->bbox);
-}
-
-BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
-{
-    return FALSE;
-}
-
-INT32 freetype_get_glyph_advance(IDWriteFontFace5 *fontface, FLOAT emSize, UINT16 index, DWRITE_MEASURING_MODE mode,
+static INT32 CDECL null_get_glyph_advance(void *key, float emSize, UINT16 index, DWRITE_MEASURING_MODE mode,
     BOOL *has_contours)
 {
     *has_contours = FALSE;
     return 0;
 }
 
+static void CDECL null_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
+{
+    SetRectEmpty(&bitmap->bbox);
+}
+
+static BOOL CDECL null_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
+{
+    return FALSE;
+}
+
+static void CDECL null_get_design_glyph_metrics(void *key, UINT16 upem, UINT16 ascent, unsigned int simulations,
+        UINT16 glyph, DWRITE_GLYPH_METRICS *metrics)
+{
+}
+
+const static struct font_backend_funcs null_funcs =
+{
+    null_notify_release,
+    null_get_glyph_outline,
+    null_get_glyph_count,
+    null_get_glyph_advance,
+    null_get_glyph_bbox,
+    null_get_glyph_bitmap,
+    null_get_design_glyph_metrics,
+};
+
 static NTSTATUS init_freetype_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out)
 {
+    *(const struct font_backend_funcs **)ptr_out = &null_funcs;
     return STATUS_DLL_NOT_FOUND;
 }
 

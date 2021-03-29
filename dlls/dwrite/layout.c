@@ -3936,7 +3936,7 @@ static void layout_get_erun_bbox(struct dwrite_textlayout *layout, struct layout
         RECT *bbox;
 
         memset(&glyph_bitmap, 0, sizeof(glyph_bitmap));
-        glyph_bitmap.fontface = (IDWriteFontFace4 *)glyph_run->fontFace;
+        glyph_bitmap.key = glyph_run->fontFace;
         glyph_bitmap.simulations = IDWriteFontFace_GetSimulations(glyph_run->fontFace);
         glyph_bitmap.emsize = glyph_run->fontEmSize;
         glyph_bitmap.nohint = layout->measuringmode == DWRITE_MEASURING_MODE_NATURAL;
@@ -3952,7 +3952,7 @@ static void layout_get_erun_bbox(struct dwrite_textlayout *layout, struct layout
                 origin.x -= glyph_run->glyphAdvances[i + start_glyph];
 
             glyph_bitmap.glyph = glyph_run->glyphIndices[i + start_glyph];
-            freetype_get_glyph_bbox(&glyph_bitmap);
+            dwrite_fontface_get_glyph_bbox(&glyph_bitmap);
 
             glyph_bbox.left = bbox->left;
             glyph_bbox.top = bbox->top;
