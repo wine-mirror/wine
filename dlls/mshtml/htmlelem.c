@@ -1628,7 +1628,7 @@ static HRESULT WINAPI HTMLElement_get_offsetParent(IHTMLElement *iface, IHTMLEle
 
     if(!nsparent) {
         *p = NULL;
-        hres = S_OK;
+        return S_OK;
     }
 
     hres = get_element(nsparent, &parent);
