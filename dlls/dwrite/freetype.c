@@ -77,6 +77,7 @@ MAKE_FUNCPTR(FT_Init_FreeType);
 MAKE_FUNCPTR(FT_Library_Version);
 MAKE_FUNCPTR(FT_Load_Glyph);
 MAKE_FUNCPTR(FT_Matrix_Multiply);
+MAKE_FUNCPTR(FT_MulDiv);
 MAKE_FUNCPTR(FT_New_Memory_Face);
 MAKE_FUNCPTR(FT_Outline_Copy);
 MAKE_FUNCPTR(FT_Outline_Decompose);
@@ -156,6 +157,7 @@ static BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Library_Version)
     LOAD_FUNCPTR(FT_Load_Glyph)
     LOAD_FUNCPTR(FT_Matrix_Multiply)
+    LOAD_FUNCPTR(FT_MulDiv)
     LOAD_FUNCPTR(FT_New_Memory_Face)
     LOAD_FUNCPTR(FT_Outline_Copy)
     LOAD_FUNCPTR(FT_Outline_Decompose)
@@ -418,7 +420,7 @@ static void embolden_glyph_outline(FT_Outline *outline, FLOAT emsize)
 {
     FT_Pos strength;
 
-    strength = MulDiv(emsize, 1 << 6, 24);
+    strength = pFT_MulDiv(emsize, 1 << 6, 24);
     if (pFT_Outline_EmboldenXY)
         pFT_Outline_EmboldenXY(outline, strength, 0);
     else
