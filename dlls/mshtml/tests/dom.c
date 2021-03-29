@@ -1298,11 +1298,14 @@ static void _test_elem_offset(unsigned line, IUnknown *unk, const WCHAR *parent_
 
     hres = IHTMLElement_get_offsetParent(elem, &off_parent);
     ok_(__FILE__,line) (hres == S_OK, "get_offsetParent failed: %08x\n", hres);
-
-    _test_elem_tag(line, (IUnknown*)off_parent, parent_tag);
-    IHTMLElement_Release(off_parent);
-
     IHTMLElement_Release(elem);
+
+    if(off_parent) {
+        _test_elem_tag(line, (IUnknown*)off_parent, parent_tag);
+        IHTMLElement_Release(off_parent);
+    }else {
+        ok_(__FILE__,line) (parent_tag == NULL, "Offset parent is NULL. %s expected\n", wine_dbgstr_w(parent_tag));
+    }
 }
 
 #define test_elem_source_index(a,b) _test_elem_source_index(__LINE__,a,b)
@@ -8901,6 +8904,10 @@ static void test_elems(IHTMLDocument2 *doc)
 
         IHTMLElement_Release(elem);
     }
+
+    elem = doc_get_body(doc);
+    test_elem_offset((IUnknown*)elem, NULL);
+    IHTMLElement_Release(elem);
 
     elem = get_elem_by_id(doc, L"sc", TRUE);
     if(elem) {
