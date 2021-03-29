@@ -1675,14 +1675,26 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     }
 }
 
-static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
+static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR name, DWORD grfdex)
 {
     DispatchEx *This = impl_from_IDispatchEx(iface);
+    DISPID id;
+    HRESULT hres;
 
-    TRACE("(%p)->(%s %x)\n", This, debugstr_w(bstrName), grfdex);
+    TRACE("(%p)->(%s %x)\n", This, debugstr_w(name), grfdex);
 
-    /* Not implemented by IE */
-    return E_NOTIMPL;
+    if(dispex_compat_mode(This) < COMPAT_MODE_IE8) {
+        /* Not implemented by IE */
+        return E_NOTIMPL;
+    }
+
+    hres = IDispatchEx_GetDispID(&This->IDispatchEx_iface, name, grfdex & ~fdexNameEnsure, &id);
+    if(FAILED(hres)) {
+        TRACE("property %s not found\n", debugstr_w(name));
+        return dispex_compat_mode(This) < COMPAT_MODE_IE9 ? hres : S_OK;
+    }
+
+    return IDispatchEx_DeleteMemberByDispID(&This->IDispatchEx_iface, id);
 }
 
 static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID id)
@@ -1691,8 +1703,25 @@ static HRESULT WINAPI DispatchEx_DeleteMemberByDispID(IDispatchEx *iface, DISPID
 
     TRACE("(%p)->(%x)\n", This, id);
 
-    /* Not implemented by IE */
-    return E_NOTIMPL;
+    if(dispex_compat_mode(This) < COMPAT_MODE_IE8) {
+        /* Not implemented by IE */
+        return E_NOTIMPL;
+    }
+
+    if(is_dynamic_dispid(id)) {
+        DWORD idx = id - DISPID_DYNPROP_0;
+        dynamic_prop_t *prop;
+
+        if(!get_dynamic_data(This) || idx > This->dynamic_data->prop_cnt)
+            return S_OK;
+
+        prop = This->dynamic_data->props + idx;
+        VariantClear(&prop->var);
+        prop->flags |= DYNPROP_DELETED;
+        return S_OK;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DispatchEx_GetMemberProperties(IDispatchEx *iface, DISPID id, DWORD grfdexFetch, DWORD *pgrfdex)

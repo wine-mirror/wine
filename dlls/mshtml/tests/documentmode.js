@@ -379,3 +379,112 @@ sync_test("navigator", function() {
     ok(navigator.toString() === (v < 9 ? "[object]" : "[object Navigator]"),
        "navigator.toString() = " + navigator.toString());
 });
+
+sync_test("delete_prop", function() {
+    var v = document.documentMode;
+    var obj = document.createElement("div"), r, obj2;
+
+    obj.prop1 = true;
+    r = false;
+    try {
+        delete obj.prop1;
+    }catch(ex) {
+        r = true;
+    }
+    if(v < 8) {
+        ok(r, "did not get an expected exception");
+        return;
+    }
+    ok(!r, "got an unexpected exception");
+    ok(!("prop1" in obj), "prop1 is still in obj");
+
+    /* again, this time prop1 does not exist */
+    r = false;
+    try {
+        delete obj.prop1;
+    }catch(ex) {
+        r = true;
+    }
+    if(v < 9) {
+        ok(r, "did not get an expected exception");
+        return;
+    }else {
+        ok(!r, "got an unexpected exception");
+        ok(!("prop1" in obj), "prop1 is still in obj");
+    }
+
+    r = (delete obj.className);
+    ok(r, "delete returned " + r);
+    ok("className" in obj, "className deleted from obj");
+    ok(obj.className === "", "className = " + obj.className);
+
+    /* builtin propertiles don't throw any exception, but are not really deleted */
+    r = (delete obj.tagName);
+    ok(r, "delete returned " + r);
+    ok("tagName" in obj, "tagName deleted from obj");
+    ok(obj.tagName === "DIV", "tagName = " + obj.tagName);
+
+    obj = document.querySelectorAll("*");
+    ok("0" in obj, "0 is not in obj");
+    obj2 = obj[0];
+    r = (delete obj[0]);
+    ok("0" in obj, "0 is not in obj");
+    ok(obj[0] === obj2, "obj[0] != obj2");
+
+    /* test window object and its global scope handling */
+    obj = window;
+
+    obj.globalprop1 = true;
+    ok(globalprop1, "globalprop1 = " + globalprop1);
+    r = false;
+    try {
+        delete obj.globalprop1;
+    }catch(ex) {
+        r = true;
+    }
+    if(v < 9) {
+        ok(r, "did not get an expected exception");
+    }else {
+        ok(!r, "got an unexpected globalprop1 exception");
+        ok(!("globalprop1" in obj), "globalprop1 is still in obj");
+    }
+
+    globalprop2 = true;
+    ok(obj.globalprop2, "globalprop2 = " + globalprop2);
+    r = false;
+    try {
+        delete obj.globalprop2;
+    }catch(ex) {
+        r = true;
+    }
+    if(v < 9) {
+        ok(r, "did not get an expected globalprop2 exception");
+    }else {
+        ok(!r, "got an unexpected exception");
+        todo_wine.
+        ok(!("globalprop2" in obj), "globalprop2 is still in obj");
+    }
+
+    obj.globalprop3 = true;
+    ok(globalprop3, "globalprop3 = " + globalprop3);
+    r = false;
+    try {
+        delete globalprop3;
+    }catch(ex) {
+        r = true;
+    }
+    if(v < 9) {
+        ok(r, "did not get an expected exception");
+        ok("globalprop3" in obj, "globalprop3 is not in obj");
+    }else {
+        ok(!r, "got an unexpected globalprop3 exception");
+        ok(!("globalprop3" in obj), "globalprop3 is still in obj");
+    }
+
+    globalprop4 = true;
+    ok(obj.globalprop4, "globalprop4 = " + globalprop4);
+    r = (delete globalprop4);
+    ok(r, "delete returned " + r);
+    todo_wine.
+    ok(!("globalprop4" in obj), "globalprop4 is still in obj");
+});
