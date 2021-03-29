@@ -425,3 +425,11 @@ sync_test("navigator", function() {
     v.testProp = true;
     ok(window.navigator.testProp, "window.navigator.testProp = " + window.navigator.testProp);
 });
+
+sync_test("elem_props", function() {
+    var elem = document.body;
+
+    ok(elem.accessKey === "", "accessKey = " + elem.accessKey);
+    elem.accessKey = "q";
+    ok(elem.accessKey === "q", "accessKey = " + elem.accessKey + " expected q");
+});
