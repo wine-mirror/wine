@@ -31,6 +31,8 @@
 #include FT_TRUETYPE_TABLES_H
 #endif /* HAVE_FT2BUILD_H */
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "wine/debug.h"
 
@@ -59,6 +61,8 @@ typedef struct
     FT_Int minor;
     FT_Int patch;
 } FT_Version_t;
+
+static const struct font_callback_funcs *callback_funcs;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f = NULL
 MAKE_FUNCPTR(FT_Done_FreeType);
@@ -92,86 +96,44 @@ MAKE_FUNCPTR(FTC_Manager_RemoveFaceID);
 #undef MAKE_FUNCPTR
 static FT_Error (*pFT_Outline_EmboldenXY)(FT_Outline *, FT_Pos, FT_Pos);
 
-struct face_finalizer_data
-{
-    IDWriteFontFileStream *stream;
-    void *context;
-};
-
 static void face_finalizer(void *object)
 {
     FT_Face face = object;
-    struct face_finalizer_data *data = (struct face_finalizer_data *)face->generic.data;
-
-    IDWriteFontFileStream_ReleaseFileFragment(data->stream, data->context);
-    IDWriteFontFileStream_Release(data->stream);
-    heap_free(data);
+    callback_funcs->release_font_data((struct font_data_context *)face->generic.data);
 }
 
 static FT_Error face_requester(FTC_FaceID face_id, FT_Library library, FT_Pointer request_data, FT_Face *face)
 {
-    IDWriteFontFace *fontface = (IDWriteFontFace*)face_id;
-    IDWriteFontFileStream *stream;
-    IDWriteFontFile *file;
+    struct font_data_context *context;
     const void *data_ptr;
-    UINT32 index, count;
     FT_Error fterror;
     UINT64 data_size;
-    void *context;
-    HRESULT hr;
+    UINT32 index;
 
     *face = NULL;
 
-    if (!fontface) {
+    if (!face_id)
+    {
         WARN("NULL fontface requested.\n");
         return FT_Err_Ok;
     }
 
-    count = 1;
-    hr = IDWriteFontFace_GetFiles(fontface, &count, &file);
-    if (FAILED(hr))
+    if (callback_funcs->get_font_data(face_id, &data_ptr, &data_size, &index, &context))
         return FT_Err_Ok;
 
-    hr = get_filestream_from_file(file, &stream);
-    IDWriteFontFile_Release(file);
-    if (FAILED(hr))
-        return FT_Err_Ok;
-
-    hr = IDWriteFontFileStream_GetFileSize(stream, &data_size);
-    if (FAILED(hr)) {
-        fterror = FT_Err_Invalid_Stream_Read;
-        goto fail;
-    }
-
-    hr = IDWriteFontFileStream_ReadFileFragment(stream, &data_ptr, 0, data_size, &context);
-    if (FAILED(hr)) {
-        fterror = FT_Err_Invalid_Stream_Read;
-        goto fail;
-    }
-
-    index = IDWriteFontFace_GetIndex(fontface);
     fterror = pFT_New_Memory_Face(library, data_ptr, data_size, index, face);
-    if (fterror == FT_Err_Ok) {
-        struct face_finalizer_data *data;
-
-        data = heap_alloc(sizeof(*data));
-        data->stream = stream;
-        data->context = context;
-
-        (*face)->generic.data = data;
+    if (fterror == FT_Err_Ok)
+    {
+        (*face)->generic.data = context;
         (*face)->generic.finalizer = face_finalizer;
-        return fterror;
     }
     else
-        IDWriteFontFileStream_ReleaseFileFragment(stream, context);
-
-fail:
-    IDWriteFontFileStream_Release(stream);
+        callback_funcs->release_font_data(context);
 
     return fterror;
 }
 
-BOOL init_freetype(void)
+static BOOL init_freetype(void)
 {
     FT_Version_t FT_Version;
 
@@ -241,12 +203,6 @@ sym_not_found:
     dlclose(ft_handle);
     ft_handle = NULL;
     return FALSE;
-}
-
-void release_freetype(void)
-{
-    pFTC_Manager_Done(cache_manager);
-    pFT_Done_FreeType(library);
 }
 
 void freetype_notify_cacheremove(IDWriteFontFace5 *fontface)
@@ -790,16 +746,21 @@ INT32 freetype_get_glyph_advance(IDWriteFontFace5 *fontface, FLOAT emSize, UINT1
     return advance;
 }
 
+static NTSTATUS init_freetype_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out)
+{
+    callback_funcs = ptr_in;
+    if (!init_freetype()) return STATUS_DLL_NOT_FOUND;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS release_freetype_lib(void)
+{
+    pFTC_Manager_Done(cache_manager);
+    pFT_Done_FreeType(library);
+    return STATUS_SUCCESS;
+}
+
 #else /* HAVE_FREETYPE */
-
-BOOL init_freetype(void)
-{
-    return FALSE;
-}
-
-void release_freetype(void)
-{
-}
 
 void freetype_notify_cacheremove(IDWriteFontFace5 *fontface)
 {
@@ -838,4 +799,23 @@ INT32 freetype_get_glyph_advance(IDWriteFontFace5 *fontface, FLOAT emSize, UINT1
     return 0;
 }
 
+static NTSTATUS init_freetype_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out)
+{
+    return STATUS_DLL_NOT_FOUND;
+}
+
+static NTSTATUS release_freetype_lib(void)
+{
+    return STATUS_DLL_NOT_FOUND;
+}
+
 #endif /* HAVE_FREETYPE */
+
+NTSTATUS CDECL init_font_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out)
+{
+    if (reason == DLL_PROCESS_ATTACH)
+        return init_freetype_lib(module, reason, ptr_in, ptr_out);
+    else if (reason == DLL_PROCESS_DETACH)
+        return release_freetype_lib();
+    return STATUS_SUCCESS;
+}

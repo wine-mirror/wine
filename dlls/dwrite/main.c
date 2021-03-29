@@ -34,6 +34,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
+HMODULE dwrite_module = 0;
 static IDWriteFactory7 *shared_factory;
 static void release_shared_factory(IDWriteFactory7 *factory);
 
@@ -42,14 +43,15 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
+        dwrite_module = hinstDLL;
         DisableThreadLibraryCalls( hinstDLL );
-        init_freetype();
+        init_font_backend();
         init_local_fontfile_loader();
         break;
     case DLL_PROCESS_DETACH:
         if (reserved) break;
         release_shared_factory(shared_factory);
-        release_freetype();
+        release_font_backend();
     }
     return TRUE;
 }

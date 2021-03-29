@@ -486,9 +486,6 @@ extern int dwrite_outline_push_tag(struct dwrite_outline *outline, unsigned char
 extern int dwrite_outline_push_points(struct dwrite_outline *outline, const D2D1_POINT_2F *points,
         unsigned int count) DECLSPEC_HIDDEN;
 
-extern BOOL init_freetype(void) DECLSPEC_HIDDEN;
-extern void release_freetype(void) DECLSPEC_HIDDEN;
-
 extern HRESULT freetype_get_design_glyph_metrics(struct dwrite_fontface *fontface, UINT16 glyph,
         DWRITE_GLYPH_METRICS *metrics) DECLSPEC_HIDDEN;
 extern void freetype_notify_cacheremove(IDWriteFontFace5 *fontface) DECLSPEC_HIDDEN;
@@ -734,3 +731,17 @@ extern HRESULT shape_get_typographic_features(struct scriptshaping_context *cont
         unsigned int max_tagcount, unsigned int *actual_tagcount, unsigned int *tags) DECLSPEC_HIDDEN;
 extern HRESULT shape_check_typographic_feature(struct scriptshaping_context *context, const unsigned int *scripts,
         unsigned int tag, unsigned int glyph_count, const UINT16 *glyphs, UINT8 *feature_applies) DECLSPEC_HIDDEN;
+
+struct font_data_context;
+extern HMODULE dwrite_module DECLSPEC_HIDDEN;
+
+struct font_callback_funcs
+{
+    int (CDECL *get_font_data)(void *key, const void **data_ptr, UINT64 *data_size, unsigned int *index,
+            struct font_data_context **context);
+    void (CDECL *release_font_data)(struct font_data_context *context);
+};
+
+extern NTSTATUS CDECL init_font_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out) DECLSPEC_HIDDEN;
+extern void init_font_backend(void) DECLSPEC_HIDDEN;
+extern void release_font_backend(void) DECLSPEC_HIDDEN;
