@@ -104,17 +104,16 @@ void editor_draw( ME_TextEditor *editor, HDC hDC, const RECT *update )
         PatBlt( hDC, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
     }
   }
+
+  DeleteObject( SelectObject( hDC, brush ) );
+  SelectClipRgn( hDC, oldRgn );
+  if (oldRgn) DeleteObject( oldRgn );
+  ME_DestroyContext( &c );
+
   if (editor->nTotalLength != editor->nLastTotalLength || editor->nTotalWidth != editor->nLastTotalWidth)
     ME_SendRequestResize(editor, FALSE);
   editor->nLastTotalLength = editor->nTotalLength;
   editor->nLastTotalWidth = editor->nTotalWidth;
-
-  DeleteObject( SelectObject( hDC, brush ) );
-  SelectClipRgn(hDC, oldRgn);
-  if (oldRgn)
-    DeleteObject(oldRgn);
-
-  ME_DestroyContext(&c);
 }
 
 void ME_Repaint(ME_TextEditor *editor)
