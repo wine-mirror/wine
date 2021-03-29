@@ -375,6 +375,7 @@ static const IID * const html_iids[] = {
 static const IID * const head_iids[] = {
     ELEM_IFACES,
     &IID_IHTMLHeadElement,
+    &DIID_DispHTMLHeadElement,
     &IID_IConnectionPointContainer,
     NULL
 };

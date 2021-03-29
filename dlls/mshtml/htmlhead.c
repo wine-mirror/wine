@@ -719,6 +719,8 @@ static HRESULT HTMLHeadElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
 
     if(IsEqualGUID(&IID_IHTMLHeadElement, riid))
         *ppv = &This->IHTMLHeadElement_iface;
+    else if(IsEqualGUID(&DIID_DispHTMLHeadElement, riid))
+        *ppv = &This->IHTMLHeadElement_iface;
     else
         return HTMLElement_QI(&This->element.node, riid, ppv);
 
