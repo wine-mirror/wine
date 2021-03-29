@@ -135,8 +135,10 @@ static char * get_file_version(char * file_name)
             heap_free(data);
         } else
             sprintf(version, "version error %u", ERROR_OUTOFMEMORY);
-    } else
-        sprintf(version, "version not present");
+    } else if (GetLastError() == ERROR_FILE_NOT_FOUND)
+        sprintf(version, "dll is missing");
+    else
+        sprintf(version, "version not present %u", GetLastError());
 
     return version;
 }
