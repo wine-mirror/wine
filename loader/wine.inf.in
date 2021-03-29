@@ -641,7 +641,7 @@ HKLM,%Control%\Session Manager,HeapSegmentCommit,0x00040002,0
 HKLM,%Control%\Session Manager,HeapSegmentReserve,0x00040002,0
 HKLM,%Control%\Session Manager\Environment,"ComSpec",0x00020000,"%SystemRoot%\system32\cmd.exe"
 HKLM,%Control%\Session Manager\Environment,"PATH",0x00020002,"%SystemRoot%\system32;%SystemRoot%;%SystemRoot%\system32\wbem;%SystemRoot%\system32\WindowsPowershell\v1.0"
-HKLM,%Control%\Session Manager\Environment,"PATHEXT",,".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH"
+HKLM,%Control%\Session Manager\Environment,"PATHEXT",,".com;.exe;.bat;.cmd;.vbs;.vbe;.js;.jse;.wsf;.wsh"
 HKLM,%Control%\Session Manager\Environment,"TEMP",0x00020002,"%SystemRoot%\temp"
 HKLM,%Control%\Session Manager\Environment,"TMP",0x00020002,"%SystemRoot%\temp"
 HKLM,%Control%\Session Manager\Environment,"windir",0x00020000,"%SystemRoot%"
