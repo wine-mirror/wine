@@ -985,12 +985,16 @@ extract_test_proc (HMODULE hModule, LPCSTR lpszType, LPSTR lpszName, LONG_PTR lP
             break;
         case STATUS_DLL_NOT_FOUND:
             xprintf ("    %s=dll is missing\n", dllname);
+            /* or it is a side-by-side dll but the test has no manifest */
             break;
         case STATUS_ORDINAL_NOT_FOUND:
             xprintf ("    %s=dll is missing an ordinal (%s)\n", dllname, get_file_version(filename));
             break;
         case STATUS_ENTRYPOINT_NOT_FOUND:
             xprintf ("    %s=dll is missing an entrypoint (%s)\n", dllname, get_file_version(filename));
+            break;
+        case ERROR_SXS_CANT_GEN_ACTCTX:
+            xprintf ("    %s=dll is missing the requested side-by-side version\n", dllname);
             break;
         default:
             xprintf ("    %s=load error %u\n", dllname, err);
