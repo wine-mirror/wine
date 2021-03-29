@@ -732,7 +732,8 @@ struct font_callback_funcs
 struct font_backend_funcs
 {
     void (CDECL *notify_release)(void *key);
-    int (CDECL *get_glyph_outline)(void *key, float em_size, UINT16 glyph, struct dwrite_outline *outline);
+    int (CDECL *get_glyph_outline)(void *key, float em_size, unsigned int simulations, UINT16 glyph,
+            struct dwrite_outline *outline);
     UINT16 (CDECL *get_glyph_count)(void *key);
     INT32 (CDECL *get_glyph_advance)(void *key, float em_size, UINT16 index, DWRITE_MEASURING_MODE measuring_mode,
             BOOL *has_contours);

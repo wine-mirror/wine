@@ -870,6 +870,7 @@ static HRESULT WINAPI dwritefontface_GetGlyphRunOutline(IDWriteFontFace5 *iface,
     UINT16 const *glyphs, FLOAT const* advances, DWRITE_GLYPH_OFFSET const *offsets,
     UINT32 count, BOOL is_sideways, BOOL is_rtl, IDWriteGeometrySink *sink)
 {
+    struct dwrite_fontface *fontface = impl_from_IDWriteFontFace5(iface);
     D2D1_POINT_2F *origins, baseline_origin = { 0 };
     struct dwrite_outline outline = {{ 0 }};
     D2D1_BEZIER_SEGMENT segment;
@@ -910,7 +911,7 @@ static HRESULT WINAPI dwritefontface_GetGlyphRunOutline(IDWriteFontFace5 *iface,
     for (i = 0; i < count; ++i)
     {
         outline.tags.count = outline.points.count = 0;
-        if (font_funcs->get_glyph_outline(iface, emSize, glyphs[i], &outline))
+        if (font_funcs->get_glyph_outline(iface, emSize, fontface->simulations, glyphs[i], &outline))
         {
             WARN("Failed to get glyph outline for glyph %u.\n", glyphs[i]);
             continue;

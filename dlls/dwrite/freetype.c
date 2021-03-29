@@ -436,17 +436,14 @@ static void embolden_glyph(FT_Glyph glyph, FLOAT emsize)
     embolden_glyph_outline(&outline_glyph->outline, emsize);
 }
 
-static int CDECL freetype_get_glyph_outline(void *key, float emSize, UINT16 glyph, struct dwrite_outline *outline)
+static int CDECL freetype_get_glyph_outline(void *key, float emSize, unsigned int simulations,
+        UINT16 glyph, struct dwrite_outline *outline)
 {
-    IDWriteFontFace5 *fontface = key;
     FTC_ScalerRec scaler;
-    USHORT simulations;
     FT_Size size;
     int ret;
 
-    simulations = IDWriteFontFace5_GetSimulations(fontface);
-
-    scaler.face_id = fontface;
+    scaler.face_id = key;
     scaler.width  = emSize;
     scaler.height = emSize;
     scaler.pixel = 1;
@@ -779,7 +776,8 @@ static void CDECL null_notify_release(void *key)
 {
 }
 
-static int CDECL null_get_glyph_outline(void *key, float emSize, UINT16 glyph, struct dwrite_outline *outline)
+static int CDECL null_get_glyph_outline(void *key, float emSize, unsigned int simulations,
+        UINT16 glyph, struct dwrite_outline *outline)
 {
     return 1;
 }
