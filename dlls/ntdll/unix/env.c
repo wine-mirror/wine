@@ -1872,7 +1872,7 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
     env[env_pos++] = 0;
 
     status = load_main_exe( main_wargv[0], main_argv[0], curdir, &image, &module, &image_info );
-    if (!status && image_info.Machine != current_machine)  /* need to restart for Wow64 */
+    if (status >= 0 && image_info.Machine != current_machine)  /* need to restart for Wow64 */
     {
         NtUnmapViewOfSection( GetCurrentProcess(), module );
         status = STATUS_INVALID_IMAGE_FORMAT;
