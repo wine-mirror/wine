@@ -1162,7 +1162,6 @@ static unsigned int get_ua_version(OmNavigator *navigator)
 {
     switch(dispex_compat_mode(&navigator->dispex)) {
     case COMPAT_MODE_QUIRKS:
-        return UAS_EXACTLEGACY | 7;
     case COMPAT_MODE_IE5:
     case COMPAT_MODE_IE7:
         return 7;

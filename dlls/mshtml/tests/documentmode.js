@@ -368,7 +368,8 @@ sync_test("navigator", function() {
        "userAgent = " + navigator.userAgent + " appVersion = " + app);
 
     re = v < 11
-        ? "^" + (v < 9 ? "4" : "5") + "\\.0 \\(compatible; MSIE " + (v < 7 ? 7 : v) + "\\.0; Windows NT [^\\)]*\\)$"
+        ? "^" + (v < 9 ? "4" : "5") + "\\.0 \\(compatible; MSIE " + (v < 7 ? 7 : v) +
+          "\\.0; Windows NT [0-9].[0-9]; .*Trident/[678]\\.0.*\\)$"
         : "^5.0 \\(Windows NT [0-9].[0-9]; .*Trident/[678]\\.0.*rv:11.0\\) like Gecko$";
     ok(new RegExp(re).test(app), "appVersion = " + app);
 

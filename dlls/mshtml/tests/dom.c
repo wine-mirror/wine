@@ -6383,7 +6383,6 @@ static void test_navigator(IHTMLDocument2 *doc)
     bstr = NULL;
     hres = IOmNavigator_get_userAgent(navigator, &bstr);
     ok(hres == S_OK, "get_userAgent failed: %08x\n", hres);
-    todo_wine
     ok(!lstrcmpW(bstr, buf), "userAgent returned %s, expected \"%s\"\n", wine_dbgstr_w(bstr), wine_dbgstr_w(buf));
     SysFreeString(bstr);
 
@@ -6393,7 +6392,6 @@ static void test_navigator(IHTMLDocument2 *doc)
 
     hres = IOmNavigator_get_appVersion(navigator, &bstr);
     ok(hres == S_OK, "get_appVersion failed: %08x\n", hres);
-    todo_wine
     ok(!lstrcmpW(bstr, buf+8), "appVersion returned %s, expected \"%s\"\n", wine_dbgstr_w(bstr), wine_dbgstr_w(buf+8));
     SysFreeString(bstr);
 
