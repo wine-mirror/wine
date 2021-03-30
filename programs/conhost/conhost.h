@@ -132,7 +132,7 @@ struct screen_buffer
 
 BOOL init_window( struct console *console );
 void update_window_region( struct console *console, const RECT *update );
-void update_window_config( struct console *console );
+void update_window_config( struct console *console, BOOL delay );
 
 NTSTATUS write_console_input( struct console *console, const INPUT_RECORD *records,
                               unsigned int count, BOOL flush );
