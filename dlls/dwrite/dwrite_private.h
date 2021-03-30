@@ -97,7 +97,11 @@ static inline BOOL dwrite_array_reserve(void **elements, size_t *capacity, size_
     if (new_capacity < count)
         new_capacity = max_capacity;
 
-    if (!(new_elements = heap_realloc(*elements, new_capacity * size)))
+    if (!*elements)
+        new_elements = RtlAllocateHeap(GetProcessHeap(), 0, new_capacity * size);
+    else
+        new_elements = RtlReAllocateHeap(GetProcessHeap(), 0, *elements, new_capacity * size);
+    if (!new_elements)
         return FALSE;
 
     *elements = new_elements;
@@ -480,10 +484,6 @@ struct dwrite_outline
         size_t size;
     } points;
 };
-
-extern int dwrite_outline_push_tag(struct dwrite_outline *outline, unsigned char tag) DECLSPEC_HIDDEN;
-extern int dwrite_outline_push_points(struct dwrite_outline *outline, const D2D1_POINT_2F *points,
-        unsigned int count) DECLSPEC_HIDDEN;
 
 /* Glyph shaping */
 enum SCRIPT_JUSTIFY

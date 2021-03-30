@@ -832,33 +832,6 @@ static void WINAPI dwritefontface_ReleaseFontTable(IDWriteFontFace5 *iface, void
     IDWriteFontFileStream_ReleaseFileFragment(fontface->stream, table_context);
 }
 
-int dwrite_outline_push_tag(struct dwrite_outline *outline, unsigned char tag)
-{
-    if (!dwrite_array_reserve((void **)&outline->tags.values, &outline->tags.size, outline->tags.count + 1,
-            sizeof(*outline->tags.values)))
-    {
-        return 1;
-    }
-
-    outline->tags.values[outline->tags.count++] = tag;
-
-    return 0;
-}
-
-int dwrite_outline_push_points(struct dwrite_outline *outline, const D2D1_POINT_2F *points, unsigned int count)
-{
-    if (!dwrite_array_reserve((void **)&outline->points.values, &outline->points.size, outline->points.count + count,
-            sizeof(*outline->points.values)))
-    {
-        return 1;
-    }
-
-    memcpy(&outline->points.values[outline->points.count], points, sizeof(*points) * count);
-    outline->points.count += count;
-
-    return 0;
-}
-
 static void apply_outline_point_offset(const D2D1_POINT_2F *src, const D2D1_POINT_2F *offset,
         D2D1_POINT_2F *dst)
 {
