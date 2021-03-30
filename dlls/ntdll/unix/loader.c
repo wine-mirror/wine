@@ -1531,10 +1531,12 @@ static NTSTATUS open_main_image( WCHAR *image, void **module, SECTION_IMAGE_INFO
 /***********************************************************************
  *           load_main_exe
  */
-NTSTATUS load_main_exe( const WCHAR *name, const char *unix_name, const WCHAR *curdir,
+NTSTATUS load_main_exe( const WCHAR *dos_name, const char *unix_name, const WCHAR *curdir,
                         WCHAR **image, void **module, SECTION_IMAGE_INFORMATION *image_info )
 {
     UNICODE_STRING nt_name;
+    WCHAR *tmp = NULL;
+    BOOL contains_path;
     NTSTATUS status;
     SIZE_T size;
     struct stat st;
@@ -1549,7 +1551,18 @@ NTSTATUS load_main_exe( const WCHAR *name, const char *unix_name, const WCHAR *c
         free( *image );
     }
 
-    if ((status = get_full_path( name, curdir, image ))) goto failed;
+    if (!dos_name)
+    {
+        dos_name = tmp = malloc( (strlen(unix_name) + 1) * sizeof(WCHAR) );
+        ntdll_umbstowcs( unix_name, strlen(unix_name) + 1, tmp, strlen(unix_name) + 1 );
+    }
+    contains_path = (wcschr( dos_name, '/' ) ||
+                     wcschr( dos_name, '\\' ) ||
+                     (dos_name[0] && dos_name[1] == ':'));
+
+    if ((status = get_full_path( dos_name, curdir, image ))) goto failed;
+    free( tmp );
+
     status = open_main_image( *image, module, image_info );
     if (status != STATUS_DLL_NOT_FOUND) return status;
 
@@ -1560,13 +1573,11 @@ NTSTATUS load_main_exe( const WCHAR *name, const char *unix_name, const WCHAR *c
         status = find_builtin_dll( &nt_name, module, &size, image_info, machine, FALSE );
         if (status != STATUS_DLL_NOT_FOUND) return status;
     }
-    /* if name contains a path, bail out */
-    if (wcschr( name, '/' ) || wcschr( name, '\\' ) || (name[0] && name[1] == ':')) goto failed;
-
-    return STATUS_DLL_NOT_FOUND;
+    if (!contains_path) return STATUS_DLL_NOT_FOUND;
 
 failed:
-    MESSAGE( "wine: failed to open %s: %x\n", debugstr_w(name), status );
+    MESSAGE( "wine: failed to open %s: %x\n",
+             unix_name ? debugstr_a(unix_name) : debugstr_w(dos_name), status );
     NtTerminateProcess( GetCurrentProcess(), status );
     return status;  /* unreached */
 }
