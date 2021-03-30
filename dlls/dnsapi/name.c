@@ -27,7 +27,6 @@
 #include "windns.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "dnsapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dnsapi);
@@ -67,23 +66,13 @@ BOOL WINAPI DnsNameCompare_W( PCWSTR name1, PCWSTR name2 )
     if (!name1 && !name2) return TRUE;
     if (!name1 || !name2) return FALSE;
 
-    p = name1 + lstrlenW( name1 ) - 1;
-    q = name2 + lstrlenW( name2 ) - 1;
+    p = name1 + lstrlenW( name1 );
+    q = name2 + lstrlenW( name2 );
 
-    while (*p == '.' && p >= name1) p--;
-    while (*q == '.' && q >= name2) q--;
+    while (p > name1 && p[-1] == '.') p--;
+    while (q > name2 && q[-1] == '.') q--;
 
-    if (p - name1 != q - name2) return FALSE;
-
-    while (name1 <= p)
-    {
-        if (toupperW( *name1 ) != toupperW( *name2 ))
-            return FALSE;
-
-        name1++;
-        name2++;
-    }
-    return TRUE;
+    return CompareStringOrdinal( name1, p - name1, name2, q - name2, TRUE ) == CSTR_EQUAL;
 }
 
 /******************************************************************************
@@ -141,9 +130,7 @@ DNS_STATUS WINAPI DnsValidateName_W( PCWSTR name, DNS_NAME_FORMAT format )
 {
     PCWSTR p;
     unsigned int i, j, state = 0;
-    static const WCHAR invalid[] = {
-        '{','|','}','~','[','\\',']','^','\'',':',';','<','=','>',
-        '?','@','!','\"','#','$','%','^','`','(',')','+','/',',',0 };
+    static const WCHAR invalid[] = L"{|}~[\\]^':;<=>?@!\"#$%&`()+/,";
 
     TRACE( "(%s, %d)\n", debugstr_w(name), format );
 
@@ -162,7 +149,7 @@ DNS_STATUS WINAPI DnsValidateName_W( PCWSTR name, DNS_NAME_FORMAT format )
 
         if (j > 62) state |= HAS_LONG_LABEL;
 
-        if (strchrW( invalid, *p )) state |= HAS_INVALID;
+        if (wcschr( invalid, *p )) state |= HAS_INVALID;
         else if ((unsigned)*p > 127) state |= HAS_EXTENDED;
         else if (*p == ' ') state |= HAS_SPACE;
         else if (*p == '_') state |= HAS_UNDERSCORE;

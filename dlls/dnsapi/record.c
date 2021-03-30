@@ -25,7 +25,6 @@
 #include "windns.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "dnsapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dnsapi);
@@ -450,8 +449,8 @@ PDNS_RECORD WINAPI DnsRecordCopyEx( PDNS_RECORD src, DNS_CHARSET in, DNS_CHARSET
 
         dst->wDataLength = sizeof(dst->Data.MINFO);
         if (out == DnsCharSetUnicode) dst->wDataLength +=
-            (strlenW( dst->Data.MINFO.pNameMailbox ) + 1) * sizeof(WCHAR) +
-            (strlenW( dst->Data.MINFO.pNameErrorsMailbox ) + 1) * sizeof(WCHAR);
+            (wcslen( dst->Data.MINFO.pNameMailbox ) + 1) * sizeof(WCHAR) +
+            (wcslen( dst->Data.MINFO.pNameErrorsMailbox ) + 1) * sizeof(WCHAR);
         break;
     }
     case DNS_TYPE_AFSDB:
@@ -463,7 +462,7 @@ PDNS_RECORD WINAPI DnsRecordCopyEx( PDNS_RECORD src, DNS_CHARSET in, DNS_CHARSET
 
         dst->wDataLength = sizeof(dst->Data.MX);
         if (out == DnsCharSetUnicode) dst->wDataLength +=
-            (strlenW( dst->Data.MX.pNameExchange ) + 1) * sizeof(WCHAR);
+            (wcslen( dst->Data.MX.pNameExchange ) + 1) * sizeof(WCHAR);
         break;
     }
     case DNS_TYPE_NXT:
@@ -473,7 +472,7 @@ PDNS_RECORD WINAPI DnsRecordCopyEx( PDNS_RECORD src, DNS_CHARSET in, DNS_CHARSET
 
         dst->wDataLength = sizeof(dst->Data.NXT);
         if (out == DnsCharSetUnicode) dst->wDataLength +=
-            (strlenW( dst->Data.NXT.pNameNext ) + 1) * sizeof(WCHAR);
+            (wcslen( dst->Data.NXT.pNameNext ) + 1) * sizeof(WCHAR);
         break;
     }
     case DNS_TYPE_CNAME:
@@ -490,7 +489,7 @@ PDNS_RECORD WINAPI DnsRecordCopyEx( PDNS_RECORD src, DNS_CHARSET in, DNS_CHARSET
 
         dst->wDataLength = sizeof(dst->Data.PTR);
         if (out == DnsCharSetUnicode) dst->wDataLength +=
-            (strlenW( dst->Data.PTR.pNameHost ) + 1) * sizeof(WCHAR);
+            (wcslen( dst->Data.PTR.pNameHost ) + 1) * sizeof(WCHAR);
         break;
     }
     case DNS_TYPE_SIG:
@@ -500,7 +499,7 @@ PDNS_RECORD WINAPI DnsRecordCopyEx( PDNS_RECORD src, DNS_CHARSET in, DNS_CHARSET
 
         dst->wDataLength = sizeof(dst->Data.SIG);
         if (out == DnsCharSetUnicode) dst->wDataLength +=
-            (strlenW( dst->Data.SIG.pNameSigner ) + 1) * sizeof(WCHAR);
+            (wcslen( dst->Data.SIG.pNameSigner ) + 1) * sizeof(WCHAR);
         break;
     }
     case DNS_TYPE_SOA:
@@ -517,8 +516,8 @@ PDNS_RECORD WINAPI DnsRecordCopyEx( PDNS_RECORD src, DNS_CHARSET in, DNS_CHARSET
 
         dst->wDataLength = sizeof(dst->Data.SOA);
         if (out == DnsCharSetUnicode) dst->wDataLength +=
-            (strlenW( dst->Data.SOA.pNamePrimaryServer ) + 1) * sizeof(WCHAR) +
-            (strlenW( dst->Data.SOA.pNameAdministrator ) + 1) * sizeof(WCHAR);
+            (wcslen( dst->Data.SOA.pNamePrimaryServer ) + 1) * sizeof(WCHAR) +
+            (wcslen( dst->Data.SOA.pNameAdministrator ) + 1) * sizeof(WCHAR);
         break;
     }
     case DNS_TYPE_SRV:
@@ -528,7 +527,7 @@ PDNS_RECORD WINAPI DnsRecordCopyEx( PDNS_RECORD src, DNS_CHARSET in, DNS_CHARSET
 
         dst->wDataLength = sizeof(dst->Data.SRV);
         if (out == DnsCharSetUnicode) dst->wDataLength +=
-            (strlenW( dst->Data.SRV.pNameTarget ) + 1) * sizeof(WCHAR);
+            (wcslen( dst->Data.SRV.pNameTarget ) + 1) * sizeof(WCHAR);
         break;
     }
     default:
