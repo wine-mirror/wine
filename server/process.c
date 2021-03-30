@@ -945,13 +945,7 @@ void kill_process( struct process *process, int violent_death )
         process->msg_fd = NULL;
     }
 
-    if (process->sigkill_timeout)  /* already waiting for it to die */
-    {
-        remove_timeout_user( process->sigkill_timeout );
-        process->sigkill_timeout = NULL;
-        process_died( process );
-        return;
-    }
+    if (process->sigkill_timeout) return;  /* already waiting for it to die */
 
     if (violent_death) terminate_process( process, NULL, 1 );
     else
