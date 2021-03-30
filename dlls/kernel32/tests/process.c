@@ -79,6 +79,7 @@ static BOOL   (WINAPI *pSetInformationJobObject)(HANDLE job, JOBOBJECTINFOCLASS 
 static HANDLE (WINAPI *pCreateIoCompletionPort)(HANDLE file, HANDLE existing_port, ULONG_PTR key, DWORD threads);
 static BOOL   (WINAPI *pGetNumaProcessorNode)(UCHAR, PUCHAR);
 static NTSTATUS (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
+static NTSTATUS (WINAPI *pNtQuerySystemInformationEx)(SYSTEM_INFORMATION_CLASS, void*, ULONG, void*, ULONG, ULONG*);
 static DWORD  (WINAPI *pWTSGetActiveConsoleSessionId)(void);
 static HANDLE (WINAPI *pCreateToolhelp32Snapshot)(DWORD, DWORD);
 static BOOL   (WINAPI *pProcess32First)(HANDLE, PROCESSENTRY32*);
@@ -87,6 +88,7 @@ static BOOL   (WINAPI *pThread32First)(HANDLE, THREADENTRY32*);
 static BOOL   (WINAPI *pThread32Next)(HANDLE, THREADENTRY32*);
 static BOOL   (WINAPI *pGetLogicalProcessorInformationEx)(LOGICAL_PROCESSOR_RELATIONSHIP,SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*,DWORD*);
 static SIZE_T (WINAPI *pGetLargePageMinimum)(void);
+static BOOL   (WINAPI *pGetSystemCpuSetInformation)(SYSTEM_CPU_SET_INFORMATION*,ULONG,ULONG*,HANDLE,ULONG);
 static BOOL   (WINAPI *pInitializeProcThreadAttributeList)(struct _PROC_THREAD_ATTRIBUTE_LIST*, DWORD, DWORD, SIZE_T*);
 static BOOL   (WINAPI *pUpdateProcThreadAttribute)(struct _PROC_THREAD_ATTRIBUTE_LIST*, DWORD, DWORD_PTR, void *,SIZE_T,void*,SIZE_T*);
 static void   (WINAPI *pDeleteProcThreadAttributeList)(struct _PROC_THREAD_ATTRIBUTE_LIST*);
@@ -245,6 +247,7 @@ static BOOL init(void)
     hntdll    = GetModuleHandleA("ntdll.dll");
 
     pNtQueryInformationProcess = (void *)GetProcAddress(hntdll, "NtQueryInformationProcess");
+    pNtQuerySystemInformationEx = (void *)GetProcAddress(hntdll, "NtQuerySystemInformationEx");
 
     pGetNativeSystemInfo = (void *) GetProcAddress(hkernel32, "GetNativeSystemInfo");
     pGetSystemRegistryQuota = (void *) GetProcAddress(hkernel32, "GetSystemRegistryQuota");
@@ -269,6 +272,7 @@ static BOOL init(void)
     pThread32Next = (void *)GetProcAddress(hkernel32, "Thread32Next");
     pGetLogicalProcessorInformationEx = (void *)GetProcAddress(hkernel32, "GetLogicalProcessorInformationEx");
     pGetLargePageMinimum = (void *)GetProcAddress(hkernel32, "GetLargePageMinimum");
+    pGetSystemCpuSetInformation = (void *)GetProcAddress(hkernel32, "GetSystemCpuSetInformation");
     pInitializeProcThreadAttributeList = (void *)GetProcAddress(hkernel32, "InitializeProcThreadAttributeList");
     pUpdateProcThreadAttribute = (void *)GetProcAddress(hkernel32, "UpdateProcThreadAttribute");
     pDeleteProcThreadAttributeList = (void *)GetProcAddress(hkernel32, "DeleteProcThreadAttributeList");
@@ -3786,6 +3790,67 @@ static void test_GetLogicalProcessorInformationEx(void)
     HeapFree(GetProcessHeap(), 0, info);
 }
 
+static void test_GetSystemCpuSetInformation(void)
+{
+    SYSTEM_CPU_SET_INFORMATION *info, *info_nt;
+    HANDLE process = GetCurrentProcess();
+    ULONG size, expected_size;
+    NTSTATUS status;
+    SYSTEM_INFO si;
+    BOOL ret;
+
+    if (!pGetSystemCpuSetInformation)
+    {
+        win_skip("GetSystemCpuSetInformation() is not supported.\n");
+        return;
+    }
+
+    GetSystemInfo(&si);
+
+    expected_size = sizeof(*info) * si.dwNumberOfProcessors;
+
+    if (0)
+    {
+        /* Crashes on Windows with NULL return length. */
+        pGetSystemCpuSetInformation(NULL, 0, NULL, process, 0);
+    }
+
+    size = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = pGetSystemCpuSetInformation(NULL, size, &size, process, 0);
+    ok(!ret && GetLastError() == ERROR_NOACCESS, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(!size, "Got unexpected size %u.\n", size);
+
+    size = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = pGetSystemCpuSetInformation(NULL, 0, &size, (HANDLE)0xdeadbeef, 0);
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(!size, "Got unexpected size %u.\n", size);
+
+    size = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = pGetSystemCpuSetInformation(NULL, 0, &size, process, 0);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(size == expected_size, "Got unexpected size %u.\n", size);
+
+    info = heap_alloc(size);
+    info_nt = heap_alloc(size);
+
+    status = pNtQuerySystemInformationEx(SystemCpuSetInformation, &process, sizeof(process), info_nt, expected_size, NULL);
+    ok(!status, "Got unexpected status %#x.\n", status);
+
+    size = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = pGetSystemCpuSetInformation(info, expected_size, &size, process, 0);
+    ok(ret && GetLastError() == 0xdeadbeef, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ok(size == expected_size, "Got unexpected size %u.\n", size);
+
+    ok(!memcmp(info, info_nt, expected_size), "Info does not match NtQuerySystemInformationEx().");
+
+    heap_free(info_nt);
+    heap_free(info);
+}
+
 static void test_largepages(void)
 {
     SIZE_T size;
@@ -4348,6 +4413,7 @@ START_TEST(process)
     test_GetNumaProcessorNode();
     test_session_info();
     test_GetLogicalProcessorInformationEx();
+    test_GetSystemCpuSetInformation();
     test_largepages();
     test_ProcThreadAttributeList();
     test_SuspendProcessState();
