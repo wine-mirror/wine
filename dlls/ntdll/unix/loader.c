@@ -1375,21 +1375,6 @@ done:
 
 
 /***********************************************************************
- *           load_builtin_dll
- */
-static NTSTATUS CDECL load_builtin_dll( UNICODE_STRING *nt_name, void **module,
-                                        SECTION_IMAGE_INFORMATION *image_info, BOOL prefer_native )
-{
-    SIZE_T size;
-    NTSTATUS status;
-
-    status = find_builtin_dll( nt_name, module, &size, image_info, current_machine, prefer_native );
-    if (status == STATUS_IMAGE_NOT_AT_BASE) status = STATUS_SUCCESS;
-    return status;
-}
-
-
-/***********************************************************************
  *           load_builtin
  *
  * Load the builtin dll if specified by load order configuration.
@@ -1794,11 +1779,9 @@ static struct unix_funcs unix_funcs =
     ntdll_tan,
     virtual_release_address_space,
     load_so_dll,
-    load_builtin_dll,
     init_builtin_dll,
     init_unix_lib,
     unwind_builtin_dll,
-    get_load_order,
     __wine_dbg_get_channel_flags,
     __wine_dbg_strdup,
     __wine_dbg_output,

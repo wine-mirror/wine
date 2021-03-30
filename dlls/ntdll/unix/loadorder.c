@@ -378,7 +378,7 @@ static enum loadorder get_load_order_value( HANDLE std_key, HANDLE app_key, WCHA
  * Return the loadorder of a module.
  * The system directory and '.dll' extension is stripped from the path.
  */
-enum loadorder CDECL get_load_order( const UNICODE_STRING *nt_name )
+enum loadorder get_load_order( const UNICODE_STRING *nt_name )
 {
     static const WCHAR prefixW[] = {'\\','?','?','\\'};
     enum loadorder ret = LO_INVALID;
