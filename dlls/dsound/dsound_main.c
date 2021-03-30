@@ -213,7 +213,7 @@ static HRESULT get_mmdevice_guid(IMMDevice *device, IPropertyStore *ps,
         return hr;
     }
 
-    CLSIDFromString(pv.u.pwszVal, guid);
+    CLSIDFromString(pv.pwszVal, guid);
 
     PropVariantClear(&pv);
     IPropertyStore_Release(ps);
@@ -432,9 +432,9 @@ static BOOL send_device(IMMDevice *device, GUID *guid,
     }
 
     TRACE("Calling back with %s (%s)\n", wine_dbgstr_guid(guid),
-            wine_dbgstr_w(pv.u.pwszVal));
+            wine_dbgstr_w(pv.pwszVal));
 
-    keep_going = cb(guid, pv.u.pwszVal, wine_vxd_drv, user);
+    keep_going = cb(guid, pv.pwszVal, wine_vxd_drv, user);
 
     PropVariantClear(&pv);
     IPropertyStore_Release(ps);
