@@ -1112,7 +1112,7 @@ static void test_first_device(void)
     hr = IPropertyStore_GetValue(ps, &PKEY_AudioEndpoint_GUID, &pv);
     ok(hr == S_OK, "GetValue failed: %08x\n", hr);
 
-    CLSIDFromString(pv.u.pwszVal, &default_info.guid);
+    CLSIDFromString(pv.pwszVal, &default_info.guid);
 
     PropVariantClear(&pv);
     IPropertyStore_Release(ps);

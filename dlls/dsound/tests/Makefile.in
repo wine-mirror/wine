@@ -1,6 +1,5 @@
 TESTDLL   = dsound.dll
 IMPORTS   = dmoguids dsound msdmo ole32 version user32
-EXTRADEFS = -DWINE_NO_NAMELESS_EXTENSION
 
 C_SRCS = \
 	capture.c \
