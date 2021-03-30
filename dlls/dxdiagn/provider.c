@@ -1548,16 +1548,16 @@ static HRESULT fill_filter_data_information(IDxDiagContainerImpl_Container *subc
 
     if (pRF->dwVersion == 1)
     {
-        for (j = 0; j < pRF->u.s1.cPins; j++)
-            if (pRF->u.s1.rgPins[j].bOutput)
+        for (j = 0; j < pRF->cPins; j++)
+            if (pRF->rgPins[j].bOutput)
                 dwNOutputs++;
             else
                 dwNInputs++;
     }
     else if (pRF->dwVersion == 2)
     {
-        for (j = 0; j < pRF->u.s2.cPins2; j++)
-            if (pRF->u.s2.rgPins2[j].dwFlags & REG_PINFLAG_B_OUTPUT)
+        for (j = 0; j < pRF->cPins2; j++)
+            if (pRF->rgPins2[j].dwFlags & REG_PINFLAG_B_OUTPUT)
                 dwNOutputs++;
             else
                 dwNInputs++;
