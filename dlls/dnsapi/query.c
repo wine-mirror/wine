@@ -162,7 +162,7 @@ static char *dns_dname_from_msg( ns_msg msg, const unsigned char *pos )
     char *str, dname[NS_MAXDNAME] = ".";
 
     /* returns *compressed* length, ignore it */
-    dns_ns_name_uncompress( ns_msg_base(msg), ns_msg_end(msg), pos, dname, sizeof(dname) );
+    ns_name_uncompress( ns_msg_base(msg), ns_msg_end(msg), pos, dname, sizeof(dname) );
 
     len = strlen( dname );
     str = heap_alloc( len + 1 );
@@ -282,7 +282,7 @@ static DNS_STATUS dns_copy_rdata( ns_msg msg, const ns_rr *rr, DNS_RECORDA *r, W
         r->Data.MINFO.pNameMailbox = dns_dname_from_msg( msg, pos );
         if (!r->Data.MINFO.pNameMailbox) return ERROR_NOT_ENOUGH_MEMORY;
 
-        if (dns_ns_name_skip( &pos, ns_msg_end( msg ) ) < 0)
+        if (ns_name_skip( &pos, ns_msg_end( msg ) ) < 0)
             return DNS_ERROR_BAD_PACKET;
 
         r->Data.MINFO.pNameErrorsMailbox = dns_dname_from_msg( msg, pos );
@@ -343,7 +343,7 @@ static DNS_STATUS dns_copy_rdata( ns_msg msg, const ns_rr *rr, DNS_RECORDA *r, W
         r->Data.SIG.pNameSigner = dns_dname_from_msg( msg, pos );
         if (!r->Data.SIG.pNameSigner) return ERROR_NOT_ENOUGH_MEMORY;
 
-        if (dns_ns_name_skip( &pos, ns_msg_end( msg ) ) < 0)
+        if (ns_name_skip( &pos, ns_msg_end( msg ) ) < 0)
             return DNS_ERROR_BAD_PACKET;
 
         /* FIXME: byte order? */
@@ -368,7 +368,7 @@ static DNS_STATUS dns_copy_rdata( ns_msg msg, const ns_rr *rr, DNS_RECORDA *r, W
         r->Data.SOA.pNamePrimaryServer = dns_dname_from_msg( msg, pos );
         if (!r->Data.SOA.pNamePrimaryServer) return ERROR_NOT_ENOUGH_MEMORY;
 
-        if (dns_ns_name_skip( &pos, ns_msg_end( msg ) ) < 0)
+        if (ns_name_skip( &pos, ns_msg_end( msg ) ) < 0)
             return DNS_ERROR_BAD_PACKET;
 
         r->Data.SOA.pNameAdministrator = dns_dname_from_msg( msg, pos );
@@ -378,7 +378,7 @@ static DNS_STATUS dns_copy_rdata( ns_msg msg, const ns_rr *rr, DNS_RECORDA *r, W
             return ERROR_NOT_ENOUGH_MEMORY;
         }
 
-        if (dns_ns_name_skip( &pos, ns_msg_end( msg ) ) < 0)
+        if (ns_name_skip( &pos, ns_msg_end( msg ) ) < 0)
             return DNS_ERROR_BAD_PACKET;
 
         r->Data.SOA.dwSerialNo   = ntohl( *(const DWORD *)pos ); pos += sizeof(DWORD);
@@ -447,7 +447,7 @@ static DNS_STATUS dns_copy_record( ns_msg msg, ns_sect section,
     WORD dlen;
     ns_rr rr;
 
-    if (dns_ns_parserr( &msg, section, num, &rr ) < 0)
+    if (ns_parserr( &msg, section, num, &rr ) < 0)
         return DNS_ERROR_BAD_PACKET;
 
     if (!(record = heap_alloc_zero( dns_get_record_size( &rr ) )))
@@ -615,7 +615,7 @@ static DNS_STATUS dns_do_query( PCSTR name, WORD type, DWORD options, PDNS_RECOR
         goto exit;
     }
 
-    if (dns_ns_initparse( answer, len, &msg ) < 0)
+    if (ns_initparse( answer, len, &msg ) < 0)
     {
         ret = DNS_ERROR_BAD_PACKET;
         goto exit;

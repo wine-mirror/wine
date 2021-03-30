@@ -6,8 +6,6 @@ EXTRALIBS = $(RESOLV_LIBS)
 C_SRCS = \
 	main.c \
 	name.c \
-	ns_name.c \
-	ns_parse.c \
 	query.c \
 	record.c
 
