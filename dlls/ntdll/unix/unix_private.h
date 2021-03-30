@@ -143,7 +143,7 @@ extern DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD d
 extern int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BOOL strict ) DECLSPEC_HIDDEN;
 extern char **build_envp( const WCHAR *envW ) DECLSPEC_HIDDEN;
 extern NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_info ) DECLSPEC_HIDDEN;
-extern NTSTATUS load_builtin( const pe_image_info_t *image_info, const WCHAR *filename,
+extern NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename,
                               void **addr_ptr, SIZE_T *size_ptr ) DECLSPEC_HIDDEN;
 extern BOOL is_builtin_path( const UNICODE_STRING *path, WORD *machine ) DECLSPEC_HIDDEN;
 extern NTSTATUS load_main_exe( const WCHAR *name, const char *unix_name, const WCHAR *curdir, WCHAR **image,

@@ -1395,7 +1395,7 @@ static NTSTATUS CDECL load_builtin_dll( UNICODE_STRING *nt_name, void **module,
  * Load the builtin dll if specified by load order configuration.
  * Return STATUS_IMAGE_ALREADY_LOADED if we should keep the native one that we have found.
  */
-NTSTATUS load_builtin( const pe_image_info_t *image_info, const WCHAR *filename,
+NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename,
                        void **module, SIZE_T *size )
 {
     WORD machine = image_info->machine;  /* request same machine as the native one */
@@ -1404,38 +1404,32 @@ NTSTATUS load_builtin( const pe_image_info_t *image_info, const WCHAR *filename,
     SECTION_IMAGE_INFORMATION info;
     enum loadorder loadorder;
 
+    /* remove .fake extension if present */
+    if (image_info->image_flags & IMAGE_FLAGS_WineFakeDll)
+    {
+        static const WCHAR fakeW[] = {'.','f','a','k','e',0};
+        WCHAR *ext = wcsrchr( filename, '.' );
+
+        TRACE( "%s is a fake Wine dll\n", debugstr_w(filename) );
+        if (ext && !wcsicmp( ext, fakeW )) *ext = 0;
+    }
+
     init_unicode_string( &nt_name, filename );
     loadorder = get_load_order( &nt_name );
 
+    if (loadorder == LO_DISABLED) return STATUS_DLL_NOT_FOUND;
+
     if (image_info->image_flags & IMAGE_FLAGS_WineBuiltin)
     {
-        switch (loadorder)
-        {
-        case LO_NATIVE_BUILTIN:
-        case LO_BUILTIN:
-        case LO_BUILTIN_NATIVE:
-        case LO_DEFAULT:
-            status = find_builtin_dll( &nt_name, module, size, &info, machine, FALSE );
-            if (status == STATUS_DLL_NOT_FOUND) return STATUS_IMAGE_ALREADY_LOADED;
-            return status;
-        default:
-            return STATUS_DLL_NOT_FOUND;
-        }
+        if (loadorder == LO_NATIVE) return STATUS_DLL_NOT_FOUND;
+        loadorder = LO_BUILTIN_NATIVE;  /* load builtin, then fallback to the file we found */
     }
-    if (image_info->image_flags & IMAGE_FLAGS_WineFakeDll)
+    else if (image_info->image_flags & IMAGE_FLAGS_WineFakeDll)
     {
-        TRACE( "%s is a fake Wine dll\n", debugstr_us(&nt_name) );
-        switch (loadorder)
-        {
-        case LO_NATIVE_BUILTIN:
-        case LO_BUILTIN:
-        case LO_BUILTIN_NATIVE:
-        case LO_DEFAULT:
-            return find_builtin_dll( &nt_name, module, size, &info, machine, FALSE );
-        default:
-            return STATUS_DLL_NOT_FOUND;
-        }
+        if (loadorder == LO_NATIVE) return STATUS_DLL_NOT_FOUND;
+        loadorder = LO_BUILTIN;  /* builtin with no fallback since mapping a fake dll is not useful */
     }
+
     switch (loadorder)
     {
     case LO_NATIVE:
@@ -1443,13 +1437,10 @@ NTSTATUS load_builtin( const pe_image_info_t *image_info, const WCHAR *filename,
         return STATUS_IMAGE_ALREADY_LOADED;
     case LO_BUILTIN:
         return find_builtin_dll( &nt_name, module, size, &info, machine, FALSE );
-    case LO_BUILTIN_NATIVE:
-    case LO_DEFAULT:
+    default:
         status = find_builtin_dll( &nt_name, module, size, &info, machine, (loadorder == LO_DEFAULT) );
         if (status == STATUS_DLL_NOT_FOUND) return STATUS_IMAGE_ALREADY_LOADED;
         return status;
-    default:
-        return STATUS_DLL_NOT_FOUND;
     }
 }
 
