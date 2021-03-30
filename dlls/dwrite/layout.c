@@ -3925,33 +3925,45 @@ static void layout_get_erun_bbox(struct dwrite_textlayout *layout, struct layout
 {
     const struct regular_layout_run *regular = &run->run->u.regular;
     UINT32 start_glyph = regular->clustermap[run->start];
-    const DWRITE_GLYPH_RUN *glyph_run = &regular->run;
-    D2D1_POINT_2F origin = { 0 };
-    float rtl_factor;
-    UINT32 i;
+    D2D1_POINT_2F baseline_origin = { 0 }, *origins;
+    DWRITE_GLYPH_RUN glyph_run;
+    unsigned int i;
+    HRESULT hr;
 
     if (run->bbox.top == run->bbox.bottom)
     {
         struct dwrite_glyphbitmap glyph_bitmap;
         RECT *bbox;
 
+        glyph_run = regular->run;
+        glyph_run.glyphCount = run->glyphcount;
+        glyph_run.glyphIndices = &regular->run.glyphIndices[start_glyph];
+        glyph_run.glyphAdvances = &regular->run.glyphAdvances[start_glyph];
+        glyph_run.glyphOffsets = &regular->run.glyphOffsets[start_glyph];
+
         memset(&glyph_bitmap, 0, sizeof(glyph_bitmap));
-        glyph_bitmap.key = glyph_run->fontFace;
-        glyph_bitmap.simulations = IDWriteFontFace_GetSimulations(glyph_run->fontFace);
-        glyph_bitmap.emsize = glyph_run->fontEmSize;
+        glyph_bitmap.key = glyph_run.fontFace;
+        glyph_bitmap.simulations = IDWriteFontFace_GetSimulations(glyph_run.fontFace);
+        glyph_bitmap.emsize = glyph_run.fontEmSize;
         glyph_bitmap.nohint = layout->measuringmode == DWRITE_MEASURING_MODE_NATURAL;
 
         bbox = &glyph_bitmap.bbox;
 
-        rtl_factor = glyph_run->bidiLevel & 1 ? -1.0f : 1.0f;
-        for (i = 0; i < run->glyphcount; i++) {
+        if (!(origins = heap_calloc(glyph_run.glyphCount, sizeof(*origins))))
+            return;
+
+        if (FAILED(hr = compute_glyph_origins(&glyph_run, layout->measuringmode, baseline_origin, &layout->transform, origins)))
+        {
+            WARN("Failed to compute glyph origins, hr %#x.\n", hr);
+            heap_free(origins);
+            return;
+        }
+
+        for (i = 0; i < glyph_run.glyphCount; ++i)
+        {
             D2D1_RECT_F glyph_bbox;
 
-            /* FIXME: take care of vertical/rtl */
-            if (glyph_run->bidiLevel & 1)
-                origin.x -= glyph_run->glyphAdvances[i + start_glyph];
-
-            glyph_bitmap.glyph = glyph_run->glyphIndices[i + start_glyph];
+            glyph_bitmap.glyph = glyph_run.glyphIndices[i];
             dwrite_fontface_get_glyph_bbox(&glyph_bitmap);
 
             glyph_bbox.left = bbox->left;
@@ -3959,14 +3971,11 @@ static void layout_get_erun_bbox(struct dwrite_textlayout *layout, struct layout
             glyph_bbox.right = bbox->right;
             glyph_bbox.bottom = bbox->bottom;
 
-            d2d_rect_offset(&glyph_bbox, origin.x + rtl_factor * glyph_run->glyphOffsets[i + start_glyph].advanceOffset,
-                    origin.y - glyph_run->glyphOffsets[i + start_glyph].ascenderOffset);
-
+            d2d_rect_offset(&glyph_bbox, origins[i].x, origins[i].y);
             d2d_rect_union(&run->bbox, &glyph_bbox);
+        }
 
-            if (!(glyph_run->bidiLevel & 1))
-                origin.x += glyph_run->glyphAdvances[i + start_glyph];
-       }
+        heap_free(origins);
     }
 
     *bbox = run->bbox;
