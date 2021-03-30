@@ -399,6 +399,7 @@ static HRESULT __thiscall ITextHostImpl_TxGetPropertyBits(ITextHost *iface, DWOR
 }
 
 static int en_vscroll_sent;
+static int en_update_sent;
 static HRESULT __thiscall ITextHostImpl_TxNotify( ITextHost *iface, DWORD code, void *data )
 {
     ITextHostTestImpl *This = impl_from_ITextHost(iface);
@@ -407,6 +408,10 @@ static HRESULT __thiscall ITextHostImpl_TxNotify( ITextHost *iface, DWORD code, 
     {
     case EN_VSCROLL:
         en_vscroll_sent++;
+        ok( !data, "got %p\n", data );
+        break;
+    case EN_UPDATE:
+        en_update_sent++;
         ok( !data, "got %p\n", data );
         break;
     }
@@ -1151,6 +1156,13 @@ static void test_notifications( void )
     hr = ITextServices_TxSendMessage( txtserv, WM_VSCROLL, MAKEWPARAM( SB_THUMBPOSITION, 0 ), 0, &res );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( en_vscroll_sent == 2, "got %d\n", en_vscroll_sent );
+
+    /* EN_UPDATE is sent by TxDraw() */
+    en_update_sent = 0;
+    hr = ITextServices_TxDraw( txtserv, DVASPECT_CONTENT, 0, NULL, NULL, NULL, NULL, NULL, NULL,
+                               NULL, NULL, 0, TXTVIEW_ACTIVE );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( en_update_sent == 1, "got %d\n", en_update_sent );
 
     DestroyWindow( host_impl->window );
     ITextServices_Release( txtserv );

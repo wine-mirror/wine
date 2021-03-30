@@ -140,9 +140,6 @@ void ME_UpdateRepaint(ME_TextEditor *editor, BOOL update_now)
 
   update_caret( editor );
 
-  if (!editor->bEmulateVersion10 || (editor->nEventMask & ENM_UPDATE))
-    ITextHost_TxNotify( editor->texthost, EN_UPDATE, NULL );
-
   ITextHost_TxViewChange(editor->texthost, update_now);
 
   ME_SendSelChange(editor);

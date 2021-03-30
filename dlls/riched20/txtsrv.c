@@ -193,6 +193,10 @@ DECLSPEC_HIDDEN HRESULT __thiscall fnTextSrv_TxDraw( ITextServices *iface, DWORD
         editor_mark_rewrap_all( services->editor );
         wrap_marked_paras_dc( services->editor, dc, FALSE );
     }
+
+    if (!services->editor->bEmulateVersion10 || services->editor->nEventMask & ENM_UPDATE)
+        ITextHost_TxNotify( services->editor->texthost, EN_UPDATE, NULL );
+
     editor_draw( services->editor, dc, update );
 
     if (!draw) ITextHost_TxReleaseDC( services->editor->texthost, dc );
