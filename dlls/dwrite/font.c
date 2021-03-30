@@ -3910,16 +3910,17 @@ static BOOL font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
     weight = font_extract_weight(&tokens, font->weight, &weight_name);
 
     /* resolve weight */
-    if (weight != font->weight) {
+    if (weight != font->weight)
+    {
         if (!(weight < DWRITE_FONT_WEIGHT_NORMAL && font->weight < DWRITE_FONT_WEIGHT_NORMAL) &&
             !(weight > DWRITE_FONT_WEIGHT_MEDIUM && font->weight > DWRITE_FONT_WEIGHT_MEDIUM) &&
             !((weight == DWRITE_FONT_WEIGHT_NORMAL && font->weight == DWRITE_FONT_WEIGHT_MEDIUM) ||
               (weight == DWRITE_FONT_WEIGHT_MEDIUM && font->weight == DWRITE_FONT_WEIGHT_NORMAL)) &&
-            !(abs(weight - font->weight) <= 150 &&
+            !(abs((int)weight - (int)font->weight) <= 150 &&
               font->weight != DWRITE_FONT_WEIGHT_NORMAL &&
               font->weight != DWRITE_FONT_WEIGHT_MEDIUM &&
-              font->weight != DWRITE_FONT_WEIGHT_BOLD)) {
-
+              font->weight != DWRITE_FONT_WEIGHT_BOLD))
+        {
             font->weight = weight;
         }
     }
