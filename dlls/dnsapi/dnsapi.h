@@ -24,39 +24,36 @@
 
 #include "wine/heap.h"
 
-static inline LPSTR dns_strdup_a( LPCSTR src )
+static inline char *strdup_a( const char *src )
 {
-    LPSTR dst;
-
+    char *dst;
     if (!src) return NULL;
     dst = heap_alloc( (lstrlenA( src ) + 1) * sizeof(char) );
     if (dst) lstrcpyA( dst, src );
     return dst;
 }
 
-static inline char *dns_strdup_u( const char *src )
+static inline char *strdup_u( const char *src )
 {
     char *dst;
-
     if (!src) return NULL;
     dst = heap_alloc( (strlen( src ) + 1) * sizeof(char) );
     if (dst) strcpy( dst, src );
     return dst;
 }
 
-static inline LPWSTR dns_strdup_w( LPCWSTR src )
+static inline WCHAR *strdup_w( const WCHAR *src )
 {
-    LPWSTR dst;
-
+    WCHAR *dst;
     if (!src) return NULL;
     dst = heap_alloc( (lstrlenW( src ) + 1) * sizeof(WCHAR) );
     if (dst) lstrcpyW( dst, src );
     return dst;
 }
 
-static inline LPWSTR dns_strdup_aw( LPCSTR str )
+static inline WCHAR *strdup_aw( const char *str )
 {
-    LPWSTR ret = NULL;
+    WCHAR *ret = NULL;
     if (str)
     {
         DWORD len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
@@ -66,9 +63,9 @@ static inline LPWSTR dns_strdup_aw( LPCSTR str )
     return ret;
 }
 
-static inline LPWSTR dns_strdup_uw( const char *str )
+static inline WCHAR *strdup_uw( const char *str )
 {
-    LPWSTR ret = NULL;
+    WCHAR *ret = NULL;
     if (str)
     {
         DWORD len = MultiByteToWideChar( CP_UTF8, 0, str, -1, NULL, 0 );
@@ -78,9 +75,9 @@ static inline LPWSTR dns_strdup_uw( const char *str )
     return ret;
 }
 
-static inline LPSTR dns_strdup_wa( LPCWSTR str )
+static inline char *strdup_wa( const WCHAR *str )
 {
-    LPSTR ret = NULL;
+    char *ret = NULL;
     if (str)
     {
         DWORD len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
@@ -90,9 +87,9 @@ static inline LPSTR dns_strdup_wa( LPCWSTR str )
     return ret;
 }
 
-static inline char *dns_strdup_wu( LPCWSTR str )
+static inline char *strdup_wu( const WCHAR *str )
 {
-    LPSTR ret = NULL;
+    char *ret = NULL;
     if (str)
     {
         DWORD len = WideCharToMultiByte( CP_UTF8, 0, str, -1, NULL, 0, NULL, NULL );
@@ -102,30 +99,28 @@ static inline char *dns_strdup_wu( LPCWSTR str )
     return ret;
 }
 
-static inline char *dns_strdup_au( LPCSTR src )
+static inline char *strdup_au( const char *src )
 {
     char *dst = NULL;
-    LPWSTR ret = dns_strdup_aw( src );
-
+    WCHAR *ret = strdup_aw( src );
     if (ret)
     {
-        dst = dns_strdup_wu( ret );
+        dst = strdup_wu( ret );
         heap_free( ret );
     }
     return dst;
 }
 
-static inline LPSTR dns_strdup_ua( const char *src )
+static inline char *strdup_ua( const char *src )
 {
-    LPSTR dst = NULL;
-    LPWSTR ret = dns_strdup_uw( src );
-
+    char *dst = NULL;
+    WCHAR *ret = strdup_uw( src );
     if (ret)
     {
-        dst = dns_strdup_wa( ret );
+        dst = strdup_wa( ret );
         heap_free( ret );
     }
     return dst;
 }
 
-const char *dns_type_to_str( unsigned short ) DECLSPEC_HIDDEN;
+const char *type_to_str( unsigned short ) DECLSPEC_HIDDEN;

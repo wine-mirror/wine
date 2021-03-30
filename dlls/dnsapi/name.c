@@ -58,8 +58,8 @@ BOOL WINAPI DnsNameCompare_A( PCSTR name1, PCSTR name2 )
 
     TRACE( "(%s,%s)\n", debugstr_a(name1), debugstr_a(name2) );
 
-    name1W = dns_strdup_aw( name1 );
-    name2W = dns_strdup_aw( name2 );
+    name1W = strdup_aw( name1 );
+    name2W = strdup_aw( name2 );
 
     ret = DnsNameCompare_W( name1W, name2W );
 
@@ -112,7 +112,7 @@ DNS_STATUS WINAPI DnsValidateName_A( PCSTR name, DNS_NAME_FORMAT format )
 
     TRACE( "(%s, %d)\n", debugstr_a(name), format );
 
-    nameW = dns_strdup_aw( name );
+    nameW = strdup_aw( name );
     ret = DnsValidateName_W( nameW, format );
 
     heap_free( nameW );
@@ -130,7 +130,7 @@ DNS_STATUS WINAPI DnsValidateName_UTF8( PCSTR name, DNS_NAME_FORMAT format )
 
     TRACE( "(%s, %d)\n", debugstr_a(name), format );
 
-    nameW = dns_strdup_uw( name );
+    nameW = strdup_uw( name );
     ret = DnsValidateName_W( nameW, format );
 
     heap_free( nameW );
