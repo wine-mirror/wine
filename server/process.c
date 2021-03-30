@@ -503,7 +503,7 @@ static void process_sigkill( void *private )
 static void start_sigkill_timer( struct process *process )
 {
     grab_object( process );
-    if (process->unix_pid != -1 && process->msg_fd)
+    if (process->unix_pid != -1)
         process->sigkill_timeout = add_timeout_user( -TICKS_PER_SEC, process_sigkill, process );
     else
         process_died( process );
