@@ -1099,6 +1099,89 @@ static void test_query_logicalprocex(void)
     HeapFree(GetProcessHeap(), 0, infoex_group);
 }
 
+static void test_query_cpusetinfo(void)
+{
+    SYSTEM_CPU_SET_INFORMATION *info;
+    unsigned int i, cpu_count;
+    ULONG len, expected_len;
+    NTSTATUS status;
+    SYSTEM_INFO si;
+    HANDLE process;
+
+    if (!pNtQuerySystemInformationEx)
+        return;
+
+    GetSystemInfo(&si);
+    cpu_count = si.dwNumberOfProcessors;
+    expected_len = cpu_count * sizeof(*info);
+
+    process = GetCurrentProcess();
+
+    status = pNtQuerySystemInformationEx(SystemCpuSetInformation, &process, sizeof(process), NULL, 0, &len);
+    if (status == STATUS_INVALID_INFO_CLASS)
+    {
+        win_skip("SystemCpuSetInformation is not supported\n");
+        return;
+    }
+
+    ok(status == STATUS_BUFFER_TOO_SMALL, "Got unexpected status %#x.\n", status);
+    ok(len == expected_len, "Got unexpected length %u.\n", len);
+
+    len = 0xdeadbeef;
+    status = pNtQuerySystemInformation(SystemCpuSetInformation, NULL, 0, &len);
+    ok(status == STATUS_INVALID_PARAMETER || status == STATUS_INVALID_INFO_CLASS,
+            "Got unexpected status %#x.\n", status);
+    ok(len == 0xdeadbeef, "Got unexpected len %u.\n", len);
+
+    len = 0xdeadbeef;
+    process = (HANDLE)0xdeadbeef;
+    status = pNtQuerySystemInformationEx(SystemCpuSetInformation, &process, sizeof(process), NULL, 0, &len);
+    ok(status == STATUS_INVALID_HANDLE, "Got unexpected status %#x.\n", status);
+    ok(len == 0xdeadbeef, "Got unexpected length %u.\n", len);
+
+    len = 0xdeadbeef;
+    process = NULL;
+    status = pNtQuerySystemInformationEx(SystemCpuSetInformation, &process, 4 * sizeof(process), NULL, 0, &len);
+    ok((status == STATUS_INVALID_PARAMETER && len == 0xdeadbeef)
+            || (status == STATUS_BUFFER_TOO_SMALL && len == expected_len),
+            "Got unexpected status %#x, length %u.\n", status, len);
+
+    len = 0xdeadbeef;
+    status = pNtQuerySystemInformationEx(SystemCpuSetInformation, NULL, sizeof(process), NULL, 0, &len);
+    ok(status == STATUS_INVALID_PARAMETER, "Got unexpected status %#x.\n", status);
+    ok(len == 0xdeadbeef, "Got unexpected length %u.\n", len);
+
+    status = pNtQuerySystemInformationEx(SystemCpuSetInformation, &process, sizeof(process), NULL, 0, &len);
+    ok(status == STATUS_BUFFER_TOO_SMALL, "Got unexpected status %#x.\n", status);
+    ok(len == expected_len, "Got unexpected length %u.\n", len);
+
+    len = 0xdeadbeef;
+    status = pNtQuerySystemInformationEx(SystemCpuSetInformation, &process, sizeof(process), NULL,
+            expected_len, &len);
+    ok(status == STATUS_ACCESS_VIOLATION, "Got unexpected status %#x.\n", status);
+    ok(len == 0xdeadbeef, "Got unexpected length %u.\n", len);
+
+    info = malloc(expected_len);
+    len = 0;
+    status = pNtQuerySystemInformationEx(SystemCpuSetInformation, &process, sizeof(process), info, expected_len, &len);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#x.\n", status);
+    ok(len == expected_len, "Got unexpected length %u.\n", len);
+
+    for (i = 0; i < cpu_count; ++i)
+    {
+        SYSTEM_CPU_SET_INFORMATION *d = &info[i];
+
+        ok(d->Size == sizeof(*d), "Got unexpected size %u, i %u.\n", d->Size, i);
+        ok(d->Type == CpuSetInformation, "Got unexpected type %u, i %u.\n", d->Type, i);
+        ok(d->CpuSet.Id == 0x100 + i, "Got unexpected Id %#x, i %u.\n", d->CpuSet.Id, i);
+        ok(!d->CpuSet.Group, "Got unexpected Group %u, i %u.\n", d->CpuSet.Group, i);
+        ok(d->CpuSet.LogicalProcessorIndex == i, "Got unexpected LogicalProcessorIndex %u, i %u.\n",
+                d->CpuSet.LogicalProcessorIndex, i);
+        ok(!d->CpuSet.AllFlags, "Got unexpected AllFlags %#x, i %u.\n", d->CpuSet.AllFlags, i);
+    }
+    free(info);
+}
+
 static void test_query_firmware(void)
 {
     static const ULONG min_sfti_len = FIELD_OFFSET(SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer);
@@ -3059,6 +3142,7 @@ START_TEST(info)
     test_query_regquota();
     test_query_logicalproc();
     test_query_logicalprocex();
+    test_query_cpusetinfo();
     test_query_firmware();
     test_query_data_alignment();
 

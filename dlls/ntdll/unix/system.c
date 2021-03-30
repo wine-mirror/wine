@@ -1166,6 +1166,98 @@ static NTSTATUS create_logical_proc_info( SYSTEM_LOGICAL_PROCESSOR_INFORMATION *
 }
 #endif
 
+static NTSTATUS create_cpuset_info(SYSTEM_CPU_SET_INFORMATION *info)
+{
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *proc_info;
+    BYTE core_index, cache_index, max_cache_level;
+    unsigned int i, j, count;
+    BYTE *proc_info_buffer;
+    DWORD cpu_info_size;
+    ULONG64 cpu_mask;
+    NTSTATUS status;
+
+    count = NtCurrentTeb()->Peb->NumberOfProcessors;
+
+    cpu_info_size = 3 * sizeof(*proc_info);
+    if (!(proc_info_buffer = malloc(cpu_info_size)))
+        return STATUS_NO_MEMORY;
+
+    if ((status = create_logical_proc_info(NULL, (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **)&proc_info_buffer,
+            &cpu_info_size, RelationAll)))
+    {
+        free(proc_info_buffer);
+        return status;
+    }
+
+    max_cache_level = 0;
+    proc_info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)proc_info_buffer;
+    for (i = 0; (BYTE *)proc_info != proc_info_buffer + cpu_info_size; ++i)
+    {
+        if (proc_info->Relationship == RelationCache)
+        {
+            if (max_cache_level < proc_info->u.Cache.Level)
+                max_cache_level = proc_info->u.Cache.Level;
+        }
+        proc_info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((BYTE *)proc_info + proc_info->Size);
+    }
+
+    memset(info, 0, count * sizeof(*info));
+
+    core_index = 0;
+    cache_index = 0;
+    proc_info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)proc_info_buffer;
+    for (i = 0; i < count; ++i)
+    {
+        info[i].Size = sizeof(*info);
+        info[i].Type = CpuSetInformation;
+        info[i].u.CpuSet.Id = 0x100 + i;
+        info[i].u.CpuSet.LogicalProcessorIndex = i;
+    }
+
+    for (i = 0; (BYTE *)proc_info != (BYTE *)proc_info_buffer + cpu_info_size; ++i)
+    {
+        if (proc_info->Relationship == RelationProcessorCore)
+        {
+            if (proc_info->u.Processor.GroupCount != 1)
+            {
+                FIXME("Unsupported group count %u.\n", proc_info->u.Processor.GroupCount);
+                continue;
+            }
+            cpu_mask = proc_info->u.Processor.GroupMask[0].Mask;
+            for (j = 0; j < count; ++j)
+                if (((ULONG64)1 << j) & cpu_mask)
+                {
+                    info[j].u.CpuSet.CoreIndex = core_index;
+                    info[j].u.CpuSet.EfficiencyClass = proc_info->u.Processor.EfficiencyClass;
+                }
+            ++core_index;
+        }
+        else if (proc_info->Relationship == RelationCache)
+        {
+            if (proc_info->u.Cache.Level == max_cache_level)
+            {
+                cpu_mask = proc_info->u.Cache.GroupMask.Mask;
+                for (j = 0; j < count; ++j)
+                    if (((ULONG64)1 << j) & cpu_mask)
+                        info[j].u.CpuSet.LastLevelCacheIndex = cache_index;
+            }
+            ++cache_index;
+        }
+        else if (proc_info->Relationship == RelationNumaNode)
+        {
+            cpu_mask = proc_info->u.NumaNode.GroupMask.Mask;
+            for (j = 0; j < count; ++j)
+                if (((ULONG64)1 << j) & cpu_mask)
+                    info[j].u.CpuSet.NumaNodeIndex = proc_info->u.NumaNode.NodeNumber;
+        }
+        proc_info = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((BYTE *)proc_info + proc_info->Size);
+    }
+
+    free(proc_info_buffer);
+
+    return STATUS_SUCCESS;
+}
+
 #ifdef linux
 
 static void copy_smbios_string( char **buffer, char *s, size_t len )
@@ -2651,6 +2743,9 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         break;
     }
 
+    case SystemCpuSetInformation:
+        return NtQuerySystemInformationEx(class, NULL, 0, info, size, ret_size);
+
     case SystemRecommendedSharedDataAlignment:
     {
         len = sizeof(DWORD);
@@ -2773,6 +2868,31 @@ NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
         break;
     }
 
+    case SystemCpuSetInformation:
+    {
+        unsigned int cpu_count = NtCurrentTeb()->Peb->NumberOfProcessors;
+        PROCESS_BASIC_INFORMATION pbi;
+        HANDLE process;
+
+        if (!query || query_len < sizeof(HANDLE))
+            return STATUS_INVALID_PARAMETER;
+
+        process = *(HANDLE *)query;
+        if (process && (ret = NtQueryInformationProcess(process, ProcessBasicInformation, &pbi, sizeof(pbi), NULL)))
+            return ret;
+
+        if (size < (len = cpu_count * sizeof(SYSTEM_CPU_SET_INFORMATION)))
+        {
+            ret = STATUS_BUFFER_TOO_SMALL;
+            break;
+        }
+        if (!info)
+            return STATUS_ACCESS_VIOLATION;
+
+        if ((ret = create_cpuset_info(info)))
+            return ret;
+        break;
+    }
     default:
         FIXME( "(0x%08x,%p,%u,%p,%u,%p) stub\n", class, query, query_len, info, size, ret_size );
         break;
