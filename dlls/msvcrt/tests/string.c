@@ -4457,6 +4457,17 @@ static void test__mbbtype(void)
     }
 }
 
+static void test_wcsncpy(void)
+{
+    wchar_t dst[6], *p;
+
+    memset(dst, 0xff, sizeof(dst));
+    p = wcsncpy(dst, L"1234567", 6);
+    ok(p == dst, "Unexpected return value.\n");
+    ok(!memcmp(dst, L"123456", sizeof(dst)), "unexpected buffer %s\n",
+            wine_dbgstr_wn(dst, ARRAY_SIZE(dst)));
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -4612,4 +4623,5 @@ START_TEST(string)
     test___STRINGTOLD();
     test_SpecialCasing();
     test__mbbtype();
+    test_wcsncpy();
 }
