@@ -1097,7 +1097,8 @@ static LRESULT RichEditWndProc_common( HWND hwnd, UINT msg, WPARAM wparam,
     }
 
     if ((((host->event_mask & ENM_KEYEVENTS) && msg >= WM_KEYFIRST && msg <= WM_KEYLAST) ||
-         ((host->event_mask & ENM_MOUSEEVENTS) && msg >= WM_MOUSEFIRST && msg <= WM_MOUSELAST)) &&
+         ((host->event_mask & ENM_MOUSEEVENTS) && msg >= WM_MOUSEFIRST && msg <= WM_MOUSELAST) ||
+         ((host->event_mask & ENM_SCROLLEVENTS) && msg >= WM_HSCROLL && msg <= WM_VSCROLL)) &&
         send_msg_filter( host, msg, &wparam, &lparam ))
     {
         TRACE( "exit (filtered) hwnd %p msg %04x (%s) %lx %lx -> %lu\n",
