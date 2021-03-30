@@ -1974,7 +1974,7 @@ static void init_u_splitting_params_from_erun(struct layout_effective_run *erun,
 static BOOL is_same_u_splitting(struct layout_underline_splitting_params *left,
     struct layout_underline_splitting_params *right)
 {
-    return left->effect == right->effect && !strcmpiW(left->locale, right->locale);
+    return left->effect == right->effect && !wcsicmp(left->locale, right->locale);
 }
 
 static HRESULT layout_add_underline(struct dwrite_textlayout *layout, struct layout_effective_run *first,
@@ -2432,9 +2432,9 @@ static BOOL is_same_layout_attrvalue(struct layout_range_header const *h, enum l
     case LAYOUT_RANGE_ATTR_FONTCOLL:
         return range->collection == value->u.collection;
     case LAYOUT_RANGE_ATTR_LOCALE:
-        return strcmpiW(range->locale, value->u.locale) == 0;
+        return !wcsicmp(range->locale, value->u.locale);
     case LAYOUT_RANGE_ATTR_FONTFAMILY:
-        return strcmpW(range->fontfamily, value->u.fontfamily) == 0;
+        return !wcscmp(range->fontfamily, value->u.fontfamily);
     case LAYOUT_RANGE_ATTR_SPACING:
         return range_spacing->leading == value->u.spacing.leading &&
                range_spacing->trailing == value->u.spacing.trailing &&
@@ -2463,8 +2463,8 @@ static inline BOOL is_same_layout_attributes(struct layout_range_header const *h
                left->object == right->object &&
                left->pair_kerning == right->pair_kerning &&
                left->collection == right->collection &&
-              !strcmpiW(left->locale, right->locale) &&
-              !strcmpW(left->fontfamily, right->fontfamily);
+              !wcsicmp(left->locale, right->locale) &&
+              !wcscmp(left->fontfamily, right->fontfamily);
     }
     case LAYOUT_RANGE_UNDERLINE:
     case LAYOUT_RANGE_STRIKETHROUGH:
@@ -2529,7 +2529,7 @@ static struct layout_range_header *alloc_layout_range(struct dwrite_textlayout *
         range->collection = layout->format.collection;
         if (range->collection)
             IDWriteFontCollection_AddRef(range->collection);
-        strcpyW(range->locale, layout->format.locale);
+        wcscpy(range->locale, layout->format.locale);
 
         h = &range->h;
         break;
@@ -2792,15 +2792,17 @@ static BOOL set_layout_range_attrval(struct layout_range_header *h, enum layout_
         changed = set_layout_range_iface_attr((IUnknown**)&dest->collection, (IUnknown*)value->u.collection);
         break;
     case LAYOUT_RANGE_ATTR_LOCALE:
-        changed = strcmpiW(dest->locale, value->u.locale) != 0;
-        if (changed) {
-            strcpyW(dest->locale, value->u.locale);
-            strlwrW(dest->locale);
+        changed = !!wcsicmp(dest->locale, value->u.locale);
+        if (changed)
+        {
+            wcscpy(dest->locale, value->u.locale);
+            wcslwr(dest->locale);
         }
         break;
     case LAYOUT_RANGE_ATTR_FONTFAMILY:
-        changed = strcmpW(dest->fontfamily, value->u.fontfamily) != 0;
-        if (changed) {
+        changed = !!wcscmp(dest->fontfamily, value->u.fontfamily);
+        if (changed)
+        {
             heap_free(dest->fontfamily);
             dest->fontfamily = heap_strdupW(value->u.fontfamily);
         }
@@ -3033,7 +3035,7 @@ static HRESULT get_string_attribute_length(struct dwrite_textlayout *layout, enu
     }
 
     str = get_string_attribute_ptr(range, kind);
-    *length = strlenW(str);
+    *length = wcslen(str);
     return return_range(&range->h, r);
 }
 
@@ -3052,10 +3054,10 @@ static HRESULT get_string_attribute_value(struct dwrite_textlayout *layout, enum
         return E_INVALIDARG;
 
     str = get_string_attribute_ptr(range, kind);
-    if (length < strlenW(str) + 1)
+    if (length < wcslen(str) + 1)
         return E_NOT_SUFFICIENT_BUFFER;
 
-    strcpyW(ret, str);
+    wcscpy(ret, str);
     return return_range(&range->h, r);
 }
 
@@ -3488,7 +3490,7 @@ static HRESULT WINAPI dwritetextlayout_SetLocaleName(IDWriteTextLayout4 *iface, 
 
     TRACE("%p, %s, %s.\n", iface, debugstr_w(locale), debugstr_range(&range));
 
-    if (!locale || strlenW(locale) > LOCALE_NAME_MAX_LENGTH-1)
+    if (!locale || wcslen(locale) > LOCALE_NAME_MAX_LENGTH-1)
         return E_INVALIDARG;
 
     value.range = range;
@@ -4816,7 +4818,7 @@ static HRESULT WINAPI dwritetextformat_layout_GetFontFamilyName(IDWriteTextForma
     TRACE("%p, %p, %u.\n", iface, name, size);
 
     if (size <= layout->format.family_len) return E_NOT_SUFFICIENT_BUFFER;
-    strcpyW(name, layout->format.family_name);
+    wcscpy(name, layout->format.family_name);
     return S_OK;
 }
 
@@ -4872,7 +4874,7 @@ static HRESULT WINAPI dwritetextformat_layout_GetLocaleName(IDWriteTextFormat3 *
     TRACE("%p, %p, %u.\n", iface, name, size);
 
     if (size <= layout->format.locale_len) return E_NOT_SUFFICIENT_BUFFER;
-    strcpyW(name, layout->format.locale);
+    wcscpy(name, layout->format.locale);
     return S_OK;
 }
 
@@ -5285,7 +5287,8 @@ static HRESULT WINAPI dwritetextlayout_source_GetLocaleName(IDWriteTextAnalysisS
         *text_len = range->h.range.length - position;
 
         next = LIST_ENTRY(list_next(&layout->ranges, &range->h.entry), struct layout_range, h.entry);
-        while (next && next->h.range.startPosition < layout->len && !strcmpW(range->locale, next->locale)) {
+        while (next && next->h.range.startPosition < layout->len && !wcscmp(range->locale, next->locale))
+        {
             *text_len += next->h.range.length;
             next = LIST_ENTRY(list_next(&layout->ranges, &next->h.entry), struct layout_range, h.entry);
         }
@@ -5939,7 +5942,7 @@ static HRESULT WINAPI dwritetextformat_GetFontFamilyName(IDWriteTextFormat3 *ifa
 
     if (size <= format->format.family_len)
         return E_NOT_SUFFICIENT_BUFFER;
-    strcpyW(name, format->format.family_name);
+    wcscpy(name, format->format.family_name);
     return S_OK;
 }
 
@@ -5996,7 +5999,7 @@ static HRESULT WINAPI dwritetextformat_GetLocaleName(IDWriteTextFormat3 *iface, 
 
     if (size <= format->format.locale_len)
         return E_NOT_SUFFICIENT_BUFFER;
-    strcpyW(name, format->format.locale);
+    wcscpy(name, format->format.locale);
     return S_OK;
 }
 
@@ -6216,11 +6219,11 @@ HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *colle
     object->IDWriteTextFormat3_iface.lpVtbl = &dwritetextformatvtbl;
     object->refcount = 1;
     object->format.family_name = heap_strdupW(family_name);
-    object->format.family_len = strlenW(family_name);
+    object->format.family_len = wcslen(family_name);
     object->format.locale = heap_strdupW(locale);
-    object->format.locale_len = strlenW(locale);
+    object->format.locale_len = wcslen(locale);
     /* Force locale name to lower case, layout will inherit this modified value. */
-    strlwrW(object->format.locale);
+    wcslwr(object->format.locale);
     object->format.weight = weight;
     object->format.style = style;
     object->format.fontsize = size;

@@ -21,9 +21,7 @@
 #define COBJMACROS
 #define NONAMELESSUNION
 
-#include "config.h"
 #include "dwrite_private.h"
-#include "winternl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
@@ -1574,7 +1572,7 @@ struct cmap_format4_compare_context
     unsigned int ch;
 };
 
-static int cmap_format4_compare_range(const void *a, const void *b)
+static int __cdecl cmap_format4_compare_range(const void *a, const void *b)
 {
     const struct cmap_format4_compare_context *key = a;
     const UINT16 *end = b;
@@ -1659,7 +1657,7 @@ static unsigned int opentype_cmap_format6_10_get_ranges(const struct dwrite_cmap
     return 1;
 }
 
-static int cmap_format12_13_compare_group(const void *a, const void *b)
+static int __cdecl cmap_format12_13_compare_group(const void *a, const void *b)
 {
     const unsigned int *ch = a;
     const UINT32 *group = b;
@@ -1737,7 +1735,7 @@ UINT16 opentype_cmap_get_glyph(const struct dwrite_cmap *cmap, unsigned int ch)
     return glyph;
 }
 
-static int cmap_header_compare(const void *a, const void *b)
+static int __cdecl cmap_header_compare(const void *a, const void *b)
 {
     const UINT16 *key = a;
     const UINT16 *record = b;
@@ -2271,17 +2269,18 @@ static void get_name_record_locale(enum OPENTYPE_PLATFORM_ID platform, USHORT la
         if (locale_name)
             MultiByteToWideChar(CP_ACP, 0, name_mac_langid_to_locale[lang_id], -1, locale, locale_len);
         else
-            strcpyW(locale, enusW);
+            wcscpy(locale, enusW);
         break;
     }
     case OPENTYPE_PLATFORM_WIN:
-        if (!LCIDToLocaleName(MAKELCID(lang_id, SORT_DEFAULT), locale, locale_len, 0)) {
+        if (!LCIDToLocaleName(MAKELCID(lang_id, SORT_DEFAULT), locale, locale_len, 0))
+        {
             FIXME("failed to get locale name for lcid=0x%08x\n", MAKELCID(lang_id, SORT_DEFAULT));
-            strcpyW(locale, enusW);
+            wcscpy(locale, enusW);
         }
         break;
     case OPENTYPE_PLATFORM_UNICODE:
-        strcpyW(locale, enusW);
+        wcscpy(locale, enusW);
         break;
     default:
         FIXME("unknown platform %d\n", platform);
@@ -2351,7 +2350,7 @@ static BOOL opentype_decode_namerecord(const struct dwrite_fonttable *table, uns
         add_localizedstring(strings, locale, name_string);
         heap_free(name_string);
 
-        ret = !lstrcmpW(locale, enusW);
+        ret = !wcscmp(locale, enusW);
     }
     else
         FIXME("handle NAME format 1\n");
@@ -2448,10 +2447,10 @@ static WCHAR *meta_get_lng_name(WCHAR *str, WCHAR **ctx)
     WCHAR *ret;
 
     if (!str) str = *ctx;
-    while (*str && strchrW(delimW, *str)) str++;
+    while (*str && wcschr(delimW, *str)) str++;
     if (!*str) return NULL;
     ret = str++;
-    while (*str && !strchrW(delimW, *str)) str++;
+    while (*str && !wcschr(delimW, *str)) str++;
     if (*str) *str++ = 0;
     *ctx = str;
 
@@ -2651,10 +2650,12 @@ HRESULT opentype_get_font_facename(struct file_stream_desc *stream_desc, WCHAR *
 
             IDWriteLocalizedStrings_GetStringLength(lfnames, index, &length);
             nameW = heap_alloc((length + 1) * sizeof(WCHAR));
-            if (nameW) {
+            if (nameW)
+            {
                 *nameW = 0;
                 IDWriteLocalizedStrings_GetString(lfnames, index, nameW, length + 1);
-                lstrcpynW(lfname, nameW, LF_FACESIZE);
+                wcsncpy(lfname, nameW, LF_FACESIZE);
+                lfname[LF_FACESIZE-1] = 0;
                 heap_free(nameW);
             }
         }
@@ -2901,7 +2902,7 @@ HRESULT opentype_get_cpal_entries(const struct dwrite_fonttable *cpal, unsigned 
     return S_OK;
 }
 
-static int colr_compare_gid(const void *g, const void *r)
+static int __cdecl colr_compare_gid(const void *g, const void *r)
 {
     const struct colr_baseglyph_record *record = r;
     UINT16 glyph = *(UINT16*)g, GID = GET_BE_WORD(record->glyph);
@@ -3259,7 +3260,7 @@ unsigned int opentype_layout_find_language(const struct scriptshaping_cache *cac
     return 0;
 }
 
-static int gdef_class_compare_format2(const void *g, const void *r)
+static int __cdecl gdef_class_compare_format2(const void *g, const void *r)
 {
     const struct ot_gdef_class_range *range = r;
     UINT16 glyph = *(UINT16 *)g;
@@ -3368,7 +3369,7 @@ struct coverage_compare_format1_context
     unsigned int *coverage_index;
 };
 
-static int coverage_compare_format1(const void *left, const void *right)
+static int __cdecl coverage_compare_format1(const void *left, const void *right)
 {
     const struct coverage_compare_format1_context *context = left;
     UINT16 glyph = GET_BE_WORD(*(UINT16 *)right);
@@ -3381,7 +3382,7 @@ static int coverage_compare_format1(const void *left, const void *right)
     return ret;
 }
 
-static int coverage_compare_format2(const void *g, const void *r)
+static int __cdecl coverage_compare_format2(const void *g, const void *r)
 {
     const struct ot_coverage_range *range = r;
     UINT16 glyph = *(UINT16 *)g;
@@ -3440,7 +3441,7 @@ static unsigned int opentype_layout_is_glyph_covered(const struct dwrite_fonttab
 
 static inline unsigned int dwrite_popcount(unsigned int x)
 {
-#ifdef HAVE___BUILTIN_POPCOUNT
+#if defined(__GNUC__) && (__GNUC__ >= 4)
     return __builtin_popcount(x);
 #else
     x -= x >> 1 & 0x55555555;
@@ -3866,7 +3867,7 @@ static BOOL opentype_layout_apply_gpos_single_adjustment(struct scriptshaping_co
     return TRUE;
 }
 
-static int gpos_pair_adjustment_compare_format1(const void *g, const void *r)
+static int __cdecl gpos_pair_adjustment_compare_format1(const void *g, const void *r)
 {
     const struct ot_gpos_pairvalue *pairvalue = r;
     UINT16 second_glyph = GET_BE_WORD(pairvalue->second_glyph);
@@ -4456,7 +4457,7 @@ struct lookups
     size_t count;
 };
 
-static int lookups_sorting_compare(const void *a, const void *b)
+static int __cdecl lookups_sorting_compare(const void *a, const void *b)
 {
     const struct lookup *left = (const struct lookup *)a;
     const struct lookup *right = (const struct lookup *)b;
@@ -4715,7 +4716,7 @@ static void opentype_layout_collect_lookups(struct scriptshaping_context *contex
     }
 }
 
-static int feature_search_compare(const void *a, const void* b)
+static int __cdecl feature_search_compare(const void *a, const void* b)
 {
     unsigned int tag = *(unsigned int *)a;
     const struct shaping_feature *feature = b;
@@ -6525,7 +6526,7 @@ struct kern_format0_compare_key
     UINT16 right;
 };
 
-static int kern_format0_compare(const void *a, const void *b)
+static int __cdecl kern_format0_compare(const void *a, const void *b)
 {
     const struct kern_format0_compare_key *key = a;
     const WORD *data = b;

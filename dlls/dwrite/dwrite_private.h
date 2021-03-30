@@ -18,11 +18,11 @@
 
 #include "dwrite_3.h"
 #include "d2d1.h"
+#include "winternl.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 
 #define MS_GSUB_TAG DWRITE_MAKE_OPENTYPE_TAG('G','S','U','B')
 #define MS_GPOS_TAG DWRITE_MAKE_OPENTYPE_TAG('G','P','O','S')
@@ -41,7 +41,7 @@ static inline LPWSTR heap_strdupW(const WCHAR *str)
     if(str) {
         DWORD size;
 
-        size = (strlenW(str)+1)*sizeof(WCHAR);
+        size = (lstrlenW(str) + 1)*sizeof(WCHAR);
         ret = heap_alloc(size);
         if(ret)
             memcpy(ret, str, size);
@@ -743,7 +743,6 @@ struct font_backend_funcs
             UINT16 glyph, DWRITE_GLYPH_METRICS *metrics);
 };
 
-extern NTSTATUS CDECL init_font_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out) DECLSPEC_HIDDEN;
 extern void init_font_backend(void) DECLSPEC_HIDDEN;
 extern void release_font_backend(void) DECLSPEC_HIDDEN;
 

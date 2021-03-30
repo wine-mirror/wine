@@ -3053,10 +3053,11 @@ static UINT32 collection_find_family(struct dwrite_fontcollection *collection, c
         UINT32 j, count = IDWriteLocalizedStrings_GetCount(family_name);
         HRESULT hr;
 
-        for (j = 0; j < count; j++) {
+        for (j = 0; j < count; j++)
+        {
             WCHAR buffer[255];
             hr = IDWriteLocalizedStrings_GetString(family_name, j, buffer, ARRAY_SIZE(buffer));
-            if (SUCCEEDED(hr) && !strcmpiW(buffer, name))
+            if (SUCCEEDED(hr) && !wcsicmp(buffer, name))
                 return i;
         }
     }
@@ -3330,14 +3331,14 @@ static int trim_spaces(WCHAR *in, WCHAR *ret)
 {
     int len;
 
-    while (isspaceW(*in))
+    while (iswspace(*in))
         in++;
 
     ret[0] = 0;
-    if (!(len = strlenW(in)))
+    if (!(len = wcslen(in)))
         return 0;
 
-    while (isspaceW(in[len-1]))
+    while (iswspace(in[len-1]))
         len--;
 
     memcpy(ret, in, len*sizeof(WCHAR));
@@ -3369,9 +3370,10 @@ static BOOL match_pattern_list(struct list *tokens, const struct name_pattern *p
     struct name_token *token;
     int i = 0;
 
-    while ((pattern = &patterns[i++])->part1) {
-        int len_part1 = strlenW(pattern->part1);
-        int len_part2 = pattern->part2 ? strlenW(pattern->part2) : 0;
+    while ((pattern = &patterns[i++])->part1)
+    {
+        int len_part1 = wcslen(pattern->part1);
+        int len_part2 = pattern->part2 ? wcslen(pattern->part2) : 0;
 
         LIST_FOR_EACH_ENTRY(token, tokens, struct name_token, entry) {
             if (len_part2 == 0) {
@@ -3379,7 +3381,8 @@ static BOOL match_pattern_list(struct list *tokens, const struct name_pattern *p
                 if (token->len != len_part1)
                     continue;
 
-                if (!strncmpiW(token->ptr, pattern->part1, len_part1)) {
+                if (!wcsnicmp(token->ptr, pattern->part1, len_part1))
+                {
                     if (match) *match = *token;
                     list_remove(&token->entry);
                     heap_free(token);
@@ -3395,11 +3398,12 @@ static BOOL match_pattern_list(struct list *tokens, const struct name_pattern *p
                     continue;
 
                 /* it's possible to have combined string as a token, like ExtraCondensed */
-                if (token->len == len_part1 + len_part2) {
-                    if (strncmpiW(token->ptr, pattern->part1, len_part1))
+                if (token->len == len_part1 + len_part2)
+                {
+                    if (wcsnicmp(token->ptr, pattern->part1, len_part1))
                         continue;
 
-                    if (strncmpiW(&token->ptr[len_part1], pattern->part2, len_part2))
+                    if (wcsnicmp(&token->ptr[len_part1], pattern->part2, len_part2))
                         continue;
 
                     /* combined string match */
@@ -3419,10 +3423,10 @@ static BOOL match_pattern_list(struct list *tokens, const struct name_pattern *p
                     if (next_token->len != len_part1)
                         continue;
 
-                    if (strncmpiW(token->ptr, pattern->part2, len_part2))
+                    if (wcsnicmp(token->ptr, pattern->part2, len_part2))
                         continue;
 
-                    if (strncmpiW(next_token->ptr, pattern->part1, len_part1))
+                    if (wcsnicmp(next_token->ptr, pattern->part1, len_part1))
                         continue;
 
                     /* both parts matched, remove tokens */
@@ -3716,12 +3720,13 @@ static DWRITE_FONT_WEIGHT font_extract_weight(struct list *tokens, DWRITE_FONT_W
     return weight;
 }
 
-struct knownweight_entry {
+struct knownweight_entry
+{
     const WCHAR *nameW;
     DWRITE_FONT_WEIGHT weight;
 };
 
-static int compare_knownweights(const void *a, const void* b)
+static int __cdecl compare_knownweights(const void *a, const void* b)
 {
     DWRITE_FONT_WEIGHT target = *(DWRITE_FONT_WEIGHT*)a;
     const struct knownweight_entry *entry = (struct knownweight_entry*)b;
@@ -3768,7 +3773,7 @@ static BOOL is_known_weight_value(DWRITE_FONT_WEIGHT weight, WCHAR *nameW)
         return FALSE;
     }
 
-    strcpyW(nameW, ptr->nameW);
+    wcscpy(nameW, ptr->nameW);
     return TRUE;
 }
 
@@ -3800,21 +3805,24 @@ static const WCHAR *facename_remove_regular_term(WCHAR *facenameW, INT len)
     int i = 0;
 
     if (len == -1)
-        len = strlenW(facenameW);
+        len = wcslen(facenameW);
 
     /* remove rightmost regular variant from face name */
-    while (!regular_ptr && (ptr = regular_patterns[i++])) {
-        int pattern_len = strlenW(ptr);
+    while (!regular_ptr && (ptr = regular_patterns[i++]))
+    {
+        int pattern_len = wcslen(ptr);
         WCHAR *src;
 
         if (pattern_len > len)
             continue;
 
         src = facenameW + len - pattern_len;
-        while (src >= facenameW) {
-            if (!strncmpiW(src, ptr, pattern_len)) {
+        while (src >= facenameW)
+        {
+            if (!wcsnicmp(src, ptr, pattern_len))
+            {
                 memmove(src, src + pattern_len, (len - pattern_len - (src - facenameW) + 1)*sizeof(WCHAR));
-                len = strlenW(facenameW);
+                len = wcslen(facenameW);
                 regular_ptr = ptr;
                 break;
             }
@@ -3892,9 +3900,10 @@ static BOOL font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
     regular_ptr = facename_remove_regular_term(facenameW, len);
 
     /* append face name to family name, FIXME check if face name is a substring of family name */
-    if (*facenameW) {
-        strcatW(familynameW, spaceW);
-        strcatW(familynameW, facenameW);
+    if (*facenameW)
+    {
+        wcscat(familynameW, spaceW);
+        wcscat(familynameW, facenameW);
     }
 
     /* tokenize with " .-_" */
@@ -3942,11 +3951,11 @@ static BOOL font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
     /* get final combined string from what's left in token list, list is released */
     fontname_tokens_to_str(&tokens, finalW);
 
-    if (!strcmpW(familyW, finalW))
+    if (!wcscmp(familyW, finalW))
         return FALSE;
 
     /* construct face name */
-    strcpyW(familyW, finalW);
+    wcscpy(familyW, finalW);
 
     /* resolved weight name */
     if (weight_name.ptr)
@@ -3958,9 +3967,10 @@ static BOOL font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
     else if (is_known_weight_value(font->weight, weightW)) {
     }
     /* use Wnnn format as a fallback in case weight is not one of known values */
-    else {
+    else
+    {
         static const WCHAR fmtW[] = {'W','%','d',0};
-        sprintfW(weightW, fmtW, font->weight);
+        swprintf(weightW, ARRAY_SIZE(weightW), fmtW, font->weight);
     }
 
     /* resolved stretch name */
@@ -3990,7 +4000,7 @@ static BOOL font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
             extraexpandedW,
             ultraexpandedW
         };
-        strcpyW(stretchW, stretchnamesW[font->stretch]);
+        wcscpy(stretchW, stretchnamesW[font->stretch]);
     }
 
     /* resolved style name */
@@ -4001,27 +4011,30 @@ static BOOL font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
     /* use predefined names */
     else {
         if (font->style == DWRITE_FONT_STYLE_ITALIC)
-            strcpyW(styleW, italicW);
+            wcscpy(styleW, italicW);
         else
-            strcpyW(styleW, obliqueW);
+            wcscpy(styleW, obliqueW);
     }
 
     /* use Regular match if it was found initially */
     if (!*weightW && !*stretchW && !*styleW)
-        strcpyW(faceW, regular_ptr ? regular_ptr : regularW);
-    else {
+        wcscpy(faceW, regular_ptr ? regular_ptr : regularW);
+    else
+    {
         faceW[0] = 0;
-        if (*stretchW)
-            strcpyW(faceW, stretchW);
-        if (*weightW) {
-            if (*faceW)
-                strcatW(faceW, spaceW);
-            strcatW(faceW, weightW);
+
+        if (*stretchW) wcscpy(faceW, stretchW);
+
+        if (*weightW)
+        {
+            if (*faceW) wcscat(faceW, spaceW);
+            wcscat(faceW, weightW);
         }
-        if (*styleW) {
-            if (*faceW)
-                strcatW(faceW, spaceW);
-            strcatW(faceW, styleW);
+
+        if (*styleW)
+        {
+            if (*faceW) wcscat(faceW, spaceW);
+            wcscat(faceW, styleW);
         }
     }
 
@@ -4216,9 +4229,8 @@ static void fontfamily_add_bold_simulated_face(struct dwrite_fontfamily_data *fa
             fontname_tokens_to_str(&tokens, facenameW);
 
             /* Bold suffix for new name */
-            if (*facenameW)
-                strcatW(facenameW, spaceW);
-            strcatW(facenameW, boldW);
+            if (*facenameW) wcscat(facenameW, spaceW);
+            wcscat(facenameW, boldW);
 
             if (init_font_data_from_font(family->fonts[heaviest], DWRITE_FONT_SIMULATIONS_BOLD, facenameW, &boldface) == S_OK) {
                 boldface->bold_sim_tested = 1;
@@ -4283,9 +4295,8 @@ static void fontfamily_add_oblique_simulated_face(struct dwrite_fontfamily_data 
         fontstrings_get_en_string(family->fonts[regular]->names, facenameW, ARRAY_SIZE(facenameW));
         facename_remove_regular_term(facenameW, -1);
 
-        if (*facenameW)
-            strcatW(facenameW, spaceW);
-        strcatW(facenameW, obliqueW);
+        if (*facenameW) wcscat(facenameW, spaceW);
+        wcscat(facenameW, obliqueW);
 
         if (init_font_data_from_font(family->fonts[regular], DWRITE_FONT_SIMULATIONS_OBLIQUE, facenameW, &obliqueface) == S_OK) {
             obliqueface->oblique_sim_tested = 1;
@@ -4362,7 +4373,7 @@ static void fontcollection_add_replacements(struct dwrite_fontcollection *collec
                 while (*replacement) {
                     if (fontcollection_add_replacement(collection, name, replacement))
                         break;
-                    replacement += strlenW(replacement) + 1;
+                    replacement += wcslen(replacement) + 1;
                 }
             }
             else if (type == REG_SZ)
@@ -4599,13 +4610,14 @@ static HRESULT create_local_file_reference(IDWriteFactory7 *factory, const WCHAR
     HRESULT hr;
 
     /* Fonts installed in 'Fonts' system dir don't get full path in registry font files cache */
-    if (!strchrW(filename, '\\')) {
+    if (!wcschr(filename, '\\'))
+    {
         static const WCHAR fontsW[] = {'\\','f','o','n','t','s','\\',0};
         WCHAR fullpathW[MAX_PATH];
 
         GetWindowsDirectoryW(fullpathW, ARRAY_SIZE(fullpathW));
-        strcatW(fullpathW, fontsW);
-        strcatW(fullpathW, filename);
+        wcscat(fullpathW, fontsW);
+        wcscat(fullpathW, filename);
 
         hr = IDWriteFactory7_CreateFontFileReference(factory, fullpathW, NULL, file);
     }
@@ -4790,7 +4802,7 @@ static HRESULT eudc_collection_add_family(IDWriteFactory7 *factory, struct dwrit
     /* Family names are added for non-specific locale, represented with empty string.
        Default family appears with empty family name. */
     create_localizedstrings(&names);
-    if (!strcmpiW(keynameW, defaultfontW))
+    if (!wcsicmp(keynameW, defaultfontW))
         add_localizedstring(names, emptyW, emptyW);
     else
         add_localizedstring(names, emptyW, keynameW);
@@ -4867,7 +4879,7 @@ HRESULT get_eudc_fontcollection(IDWriteFactory7 *factory, IDWriteFontCollection3
     IDWriteFactory7_AddRef(factory);
 
     /* return empty collection if EUDC fonts are not configured */
-    sprintfW(eudckeypathW, eudckeyfmtW, GetACP());
+    swprintf(eudckeypathW, ARRAY_SIZE(eudckeypathW), eudckeyfmtW, GetACP());
     if (RegOpenKeyExW(HKEY_CURRENT_USER, eudckeypathW, 0, GENERIC_READ, &eudckey))
         return S_OK;
 
@@ -5522,7 +5534,7 @@ static HRESULT WINAPI localfontfileloader_GetFilePathLengthFromKey(IDWriteLocalF
 
     TRACE("%p, %p, %u, %p.\n", iface, key, key_size, length);
 
-    *length = strlenW(refkey->name);
+    *length = wcslen(refkey->name);
     return S_OK;
 }
 
@@ -5533,10 +5545,10 @@ static HRESULT WINAPI localfontfileloader_GetFilePathFromKey(IDWriteLocalFontFil
 
     TRACE("%p, %p, %u, %p, %u.\n", iface, key, key_size, path, length);
 
-    if (length < strlenW(refkey->name))
+    if (length < wcslen(refkey->name))
         return E_INVALIDARG;
 
-    strcpyW(path, refkey->name);
+    wcscpy(path, refkey->name);
     return S_OK;
 }
 
@@ -5583,7 +5595,7 @@ HRESULT get_local_refkey(const WCHAR *path, const FILETIME *writetime, void **ke
     if (!path)
         return E_INVALIDARG;
 
-    *size = FIELD_OFFSET(struct local_refkey, name) + (strlenW(path)+1)*sizeof(WCHAR);
+    *size = FIELD_OFFSET(struct local_refkey, name) + (wcslen(path)+1)*sizeof(WCHAR);
     *key = NULL;
 
     refkey = heap_alloc(*size);
@@ -5600,7 +5612,7 @@ HRESULT get_local_refkey(const WCHAR *path, const FILETIME *writetime, void **ke
         else
             memset(&refkey->writetime, 0, sizeof(refkey->writetime));
     }
-    strcpyW(refkey->name, path);
+    wcscpy(refkey->name, path);
 
     *key = refkey;
 
@@ -8014,10 +8026,10 @@ struct font_callback_funcs callback_funcs =
 
 void init_font_backend(void)
 {
-    init_font_lib(dwrite_module, DLL_PROCESS_ATTACH, &callback_funcs, &font_funcs);
+    __wine_init_unix_lib(dwrite_module, DLL_PROCESS_ATTACH, &callback_funcs, &font_funcs);
 }
 
 void release_font_backend(void)
 {
-    init_font_lib(dwrite_module, DLL_PROCESS_DETACH, &callback_funcs, NULL);
+    __wine_init_unix_lib(dwrite_module, DLL_PROCESS_DETACH, &callback_funcs, NULL);
 }

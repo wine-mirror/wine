@@ -18,7 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define COBJMACROS
+#if 0
+#pragma makedep unix
+#endif
 
 #include "config.h"
 #include "wine/port.h"
@@ -860,7 +862,7 @@ static NTSTATUS release_freetype_lib(void)
 
 #endif /* HAVE_FREETYPE */
 
-NTSTATUS CDECL init_font_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out)
+NTSTATUS CDECL __wine_init_unix_lib(HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out)
 {
     if (reason == DLL_PROCESS_ATTACH)
         return init_freetype_lib(module, reason, ptr_in, ptr_out);

@@ -619,7 +619,7 @@ typedef struct tagBracketPair
     int end;
 } BracketPair;
 
-static int bracketpair_compr(const void *a, const void* b)
+static int __cdecl bracketpair_compr(const void *a, const void* b)
 {
     return ((BracketPair*)a)->start - ((BracketPair*)b)->start;
 }
