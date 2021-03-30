@@ -1471,6 +1471,18 @@ static void init_teb64( TEB *teb )
 }
 
 /***********************************************************************
+ *           process_exit_wrapper
+ *
+ * Close server socket and exit process normally.
+ */
+void process_exit_wrapper( int status )
+{
+    close( fd_socket );
+    exit( status );
+}
+
+
+/***********************************************************************
  *           server_init_process
  *
  * Start the server and create the initial socket pair.

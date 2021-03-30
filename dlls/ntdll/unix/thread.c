@@ -329,7 +329,7 @@ static void exit_thread( int status )
 void exit_process( int status )
 {
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
-    signal_exit_thread( get_unix_exit_code( status ), exit );
+    signal_exit_thread( get_unix_exit_code( status ), process_exit_wrapper );
 }
 
 

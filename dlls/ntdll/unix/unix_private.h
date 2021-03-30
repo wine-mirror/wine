@@ -164,6 +164,7 @@ extern unsigned int server_queue_process_apc( HANDLE process, const apc_call_t *
                                               apc_result_t *result ) DECLSPEC_HIDDEN;
 extern int server_get_unix_fd( HANDLE handle, unsigned int wanted_access, int *unix_fd,
                                int *needs_close, enum server_fd_type *type, unsigned int *options ) DECLSPEC_HIDDEN;
+extern void process_exit_wrapper( int status )  DECLSPEC_HIDDEN;
 extern size_t server_init_process(void) DECLSPEC_HIDDEN;
 extern void server_init_process_done(void) DECLSPEC_HIDDEN;
 extern void server_init_thread( void *entry_point, BOOL *suspend ) DECLSPEC_HIDDEN;
