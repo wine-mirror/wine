@@ -282,7 +282,7 @@ static void test_RtlQueryTimeZoneInformation(void)
        wine_dbgstr_w(tzinfo.DaylightName));
 
     memset(&tzinfo2, 0xcc, sizeof(tzinfo2));
-    status = pNtQuerySystemInformation( SystemTimeZoneInformation, &tzinfo2,
+    status = pNtQuerySystemInformation( SystemCurrentTimeZoneInformation, &tzinfo2,
                                         sizeof(RTL_TIME_ZONE_INFORMATION), &len );
     ok( !status, "NtQuerySystemInformation failed %x\n", status );
     ok( len == sizeof(RTL_TIME_ZONE_INFORMATION), "wrong len %u\n", len );

@@ -2603,7 +2603,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         break;
     }
 
-    case SystemCacheInformation:
+    case SystemFileCacheInformation:
     {
         SYSTEM_CACHE_INFORMATION sci = { 0 };
 
@@ -2701,7 +2701,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         break;
     }
 
-    case SystemTimeZoneInformation:
+    case SystemCurrentTimeZoneInformation:
     {
         RTL_DYNAMIC_TIME_ZONE_INFORMATION tz;
 

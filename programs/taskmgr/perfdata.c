@@ -100,7 +100,7 @@ void PerfDataRefresh(void)
         return;
 
     /* Get system cache information */
-    status = NtQuerySystemInformation(SystemCacheInformation, &SysCacheInfo, sizeof(SysCacheInfo), NULL);
+    status = NtQuerySystemInformation(SystemFileCacheInformation, &SysCacheInfo, sizeof(SysCacheInfo), NULL);
     if (status != NO_ERROR)
         return;
 

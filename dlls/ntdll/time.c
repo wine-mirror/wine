@@ -417,7 +417,7 @@ ULONG WINAPI DECLSPEC_HOTPATCH NtGetTickCount(void)
  */
 NTSTATUS WINAPI RtlQueryTimeZoneInformation(RTL_TIME_ZONE_INFORMATION *ret)
 {
-    return NtQuerySystemInformation( SystemTimeZoneInformation, ret, sizeof(*ret), NULL );
+    return NtQuerySystemInformation( SystemCurrentTimeZoneInformation, ret, sizeof(*ret), NULL );
 }
 
 /***********************************************************************

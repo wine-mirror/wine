@@ -715,21 +715,21 @@ static void test_query_cache(void)
     for (i = sizeof(buffer); i>= expected; i--)
     {
         ReturnLength = 0xdeadbeef;
-        status = pNtQuerySystemInformation(SystemCacheInformation, sci, i, &ReturnLength);
+        status = pNtQuerySystemInformation(SystemFileCacheInformation, sci, i, &ReturnLength);
         ok(!status && (ReturnLength == expected),
             "%d: got 0x%x and %u (expected STATUS_SUCCESS and %u)\n", i, status, ReturnLength, expected);
     }
 
     /* buffer too small for the full result.
        Up to win7, the function succeeds with a partial result. */
-    status = pNtQuerySystemInformation(SystemCacheInformation, sci, i, &ReturnLength);
+    status = pNtQuerySystemInformation(SystemFileCacheInformation, sci, i, &ReturnLength);
     if (!status)
     {
         expected = offsetof(SYSTEM_CACHE_INFORMATION, MinimumWorkingSet);
         for (; i>= expected; i--)
         {
             ReturnLength = 0xdeadbeef;
-            status = pNtQuerySystemInformation(SystemCacheInformation, sci, i, &ReturnLength);
+            status = pNtQuerySystemInformation(SystemFileCacheInformation, sci, i, &ReturnLength);
             ok(!status && (ReturnLength == expected),
                 "%d: got 0x%x and %u (expected STATUS_SUCCESS and %u)\n", i, status, ReturnLength, expected);
         }
@@ -737,7 +737,7 @@ static void test_query_cache(void)
 
     /* buffer too small for the result, this call will always fail */
     ReturnLength = 0xdeadbeef;
-    status = pNtQuerySystemInformation(SystemCacheInformation, sci, i, &ReturnLength);
+    status = pNtQuerySystemInformation(SystemFileCacheInformation, sci, i, &ReturnLength);
     ok( status == STATUS_INFO_LENGTH_MISMATCH &&
         ((ReturnLength == expected) || broken(!ReturnLength) || broken(ReturnLength == 0xfffffff0)),
         "%d: got 0x%x and %u (expected STATUS_INFO_LENGTH_MISMATCH and %u)\n", i, status, ReturnLength, expected);
@@ -745,7 +745,7 @@ static void test_query_cache(void)
     if (0) {
         /* this crashes on some vista / win7 machines */
         ReturnLength = 0xdeadbeef;
-        status = pNtQuerySystemInformation(SystemCacheInformation, sci, 0, &ReturnLength);
+        status = pNtQuerySystemInformation(SystemFileCacheInformation, sci, 0, &ReturnLength);
         ok( status == STATUS_INFO_LENGTH_MISMATCH &&
             ((ReturnLength == expected) || broken(!ReturnLength) || broken(ReturnLength == 0xfffffff0)),
             "0: got 0x%x and %u (expected STATUS_INFO_LENGTH_MISMATCH and %u)\n", status, ReturnLength, expected);
