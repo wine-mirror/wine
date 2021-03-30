@@ -3377,7 +3377,7 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case EM_SETSCROLLPOS:
   {
     POINT *point = (POINT *)lParam;
-    ME_ScrollAbs(editor, point->x, point->y);
+    scroll_abs( editor, point->x, point->y, TRUE );
     return 0;
   }
   case EM_AUTOURLDETECT:
@@ -3986,12 +3986,11 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
     switch(LOWORD(wParam))
     {
       case SB_LEFT:
-        ME_ScrollAbs(editor, 0, 0);
+        scroll_abs( editor, 0, 0, TRUE );
         break;
       case SB_RIGHT:
-        ME_ScrollAbs(editor,
-                     editor->horz_si.nMax - (int)editor->horz_si.nPage,
-                     editor->vert_si.nMax - (int)editor->vert_si.nPage);
+        scroll_abs( editor, editor->horz_si.nMax - (int)editor->horz_si.nPage,
+                    editor->vert_si.nMax - (int)editor->vert_si.nPage, TRUE );
         break;
       case SB_LINELEFT:
         ME_ScrollLeft(editor, scrollUnit);
@@ -4011,7 +4010,7 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
         int pos = HIWORD(wParam);
         if (editor->horz_si.nMax > 0xffff)
           pos = MulDiv(pos, editor->horz_si.nMax, 0xffff);
-        ME_HScrollAbs(editor, pos);
+        scroll_h_abs( editor, pos, FALSE );
         break;
       }
     }
@@ -4028,12 +4027,11 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
     switch(LOWORD(wParam))
     {
       case SB_TOP:
-        ME_ScrollAbs(editor, 0, 0);
+        scroll_abs( editor, 0, 0, TRUE );
         break;
       case SB_BOTTOM:
-        ME_ScrollAbs(editor,
-                     editor->horz_si.nMax - (int)editor->horz_si.nPage,
-                     editor->vert_si.nMax - (int)editor->vert_si.nPage);
+        scroll_abs( editor, editor->horz_si.nMax - (int)editor->horz_si.nPage,
+                    editor->vert_si.nMax - (int)editor->vert_si.nPage, TRUE );
         break;
       case SB_LINEUP:
         ME_ScrollUp(editor,lineHeight);
@@ -4053,7 +4051,7 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
         int pos = HIWORD(wParam);
         if (editor->vert_si.nMax > 0xffff)
           pos = MulDiv(pos, editor->vert_si.nMax, 0xffff);
-        ME_VScrollAbs(editor, pos);
+        scroll_v_abs( editor, pos, FALSE );
         break;
       }
     }

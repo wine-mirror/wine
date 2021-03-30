@@ -2743,7 +2743,7 @@ static HRESULT WINAPI ITextRange_fnScrollIntoView(ITextRange *me, LONG value)
         FIXME("bStart value %d not handled\n", value);
         return E_NOTIMPL;
     }
-    ME_ScrollAbs(editor, x, y);
+    scroll_abs( editor, x, y, TRUE );
     return S_OK;
 }
 

@@ -1070,7 +1070,7 @@ static void enable_show_scrollbar( ME_TextEditor *editor, INT bar, BOOL enable )
         ITextHost_TxShowScrollBar( editor->texthost, bar, enable );
 }
 
-static void set_scroll_range_pos( ITextHost2 *host, INT bar, SCROLLINFO *info, BOOL set_range )
+static void set_scroll_range_pos( ME_TextEditor *editor, INT bar, SCROLLINFO *info, BOOL set_range, BOOL notify )
 {
     LONG max_pos = info->nMax, pos = info->nPos;
 
@@ -1080,11 +1080,14 @@ static void set_scroll_range_pos( ITextHost2 *host, INT bar, SCROLLINFO *info, B
         pos = MulDiv( pos, 0xffff, max_pos );
         max_pos = 0xffff;
     }
-    if (set_range) ITextHost_TxSetScrollRange( host, bar, 0, max_pos, FALSE );
-    ITextHost_TxSetScrollPos( host, bar, pos, TRUE );
+    if (set_range) ITextHost_TxSetScrollRange( editor->texthost, bar, 0, max_pos, FALSE );
+    ITextHost_TxSetScrollPos( editor->texthost, bar, pos, TRUE );
+
+    if (notify && editor->nEventMask & ENM_SCROLL)
+        ITextHost_TxNotify( editor->texthost, bar == SB_VERT ? EN_VSCROLL : EN_HSCROLL, NULL );
 }
 
-void ME_ScrollAbs(ME_TextEditor *editor, int x, int y)
+void scroll_abs( ME_TextEditor *editor, int x, int y, BOOL notify )
 {
   int scrollX = 0, scrollY = 0;
 
@@ -1093,7 +1096,7 @@ void ME_ScrollAbs(ME_TextEditor *editor, int x, int y)
     x = max(x, editor->horz_si.nMin);
     scrollX = editor->horz_si.nPos - x;
     editor->horz_si.nPos = x;
-    set_scroll_range_pos( editor->texthost, SB_HORZ, &editor->horz_si, FALSE );
+    set_scroll_range_pos( editor, SB_HORZ, &editor->horz_si, FALSE, notify );
   }
 
   if (editor->vert_si.nPos != y) {
@@ -1101,7 +1104,7 @@ void ME_ScrollAbs(ME_TextEditor *editor, int x, int y)
     y = max(y, editor->vert_si.nMin);
     scrollY = editor->vert_si.nPos - y;
     editor->vert_si.nPos = y;
-    set_scroll_range_pos( editor->texthost, SB_VERT, &editor->vert_si, FALSE );
+    set_scroll_range_pos( editor, SB_VERT, &editor->vert_si, FALSE, notify );
   }
 
   if (abs(scrollX) > editor->sizeWindow.cx || abs(scrollY) > editor->sizeWindow.cy)
@@ -1114,34 +1117,34 @@ void ME_ScrollAbs(ME_TextEditor *editor, int x, int y)
   ME_Repaint(editor);
 }
 
-void ME_HScrollAbs(ME_TextEditor *editor, int x)
+void scroll_h_abs( ME_TextEditor *editor, int x, BOOL notify )
 {
-  ME_ScrollAbs(editor, x, editor->vert_si.nPos);
+    scroll_abs( editor, x, editor->vert_si.nPos, notify );
 }
 
-void ME_VScrollAbs(ME_TextEditor *editor, int y)
+void scroll_v_abs( ME_TextEditor *editor, int y, BOOL notify )
 {
-  ME_ScrollAbs(editor, editor->horz_si.nPos, y);
+    scroll_abs( editor, editor->horz_si.nPos, y, notify );
 }
 
 void ME_ScrollUp(ME_TextEditor *editor, int cy)
 {
-  ME_VScrollAbs(editor, editor->vert_si.nPos - cy);
+    scroll_v_abs( editor, editor->vert_si.nPos - cy, TRUE );
 }
 
 void ME_ScrollDown(ME_TextEditor *editor, int cy)
 {
-  ME_VScrollAbs(editor, editor->vert_si.nPos + cy);
+    scroll_v_abs( editor, editor->vert_si.nPos + cy, TRUE );
 }
 
 void ME_ScrollLeft(ME_TextEditor *editor, int cx)
 {
-  ME_HScrollAbs(editor, editor->horz_si.nPos - cx);
+    scroll_h_abs( editor, editor->horz_si.nPos - cx, TRUE );
 }
 
 void ME_ScrollRight(ME_TextEditor *editor, int cx)
 {
-  ME_HScrollAbs(editor, editor->horz_si.nPos + cx);
+    scroll_h_abs( editor, editor->horz_si.nPos + cx, TRUE );
 }
 
 void ME_UpdateScrollBar(ME_TextEditor *editor)
@@ -1157,7 +1160,7 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
   enable = editor->nTotalWidth > editor->sizeWindow.cx;
   if (editor->horz_si.nPos && !enable)
   {
-    ME_HScrollAbs(editor, 0);
+    scroll_h_abs( editor, 0, TRUE );
     /* ME_HScrollAbs will call this function, so nothing else needs to be done here. */
     return;
   }
@@ -1174,7 +1177,7 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     editor->horz_si.nPage = editor->sizeWindow.cx;
     TRACE( "min = %d max = %d page = %d\n", editor->horz_si.nMin, editor->horz_si.nMax, editor->horz_si.nPage );
     if ((enable || editor->horz_sb_enabled) && editor->scrollbars & WS_HSCROLL)
-      set_scroll_range_pos( editor->texthost, SB_HORZ, &editor->horz_si, TRUE );
+      set_scroll_range_pos( editor, SB_HORZ, &editor->horz_si, TRUE, TRUE );
   }
 
   /* Update vertical scrollbar */
@@ -1182,7 +1185,7 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
 
   if (editor->vert_si.nPos && !enable)
   {
-    ME_VScrollAbs(editor, 0);
+    scroll_v_abs( editor, 0, TRUE );
     /* ME_VScrollAbs will call this function, so nothing else needs to be done here. */
     return;
   }
@@ -1199,7 +1202,7 @@ void ME_UpdateScrollBar(ME_TextEditor *editor)
     editor->vert_si.nPage = editor->sizeWindow.cy;
     TRACE( "min = %d max = %d page = %d\n", editor->vert_si.nMin, editor->vert_si.nMax, editor->vert_si.nPage );
     if ((enable || editor->vert_sb_enabled) && editor->scrollbars & WS_VSCROLL)
-      set_scroll_range_pos( editor->texthost, SB_VERT, &editor->vert_si, TRUE );
+      set_scroll_range_pos( editor, SB_VERT, &editor->vert_si, TRUE, TRUE );
   }
 }
 
@@ -1221,7 +1224,7 @@ void editor_ensure_visible( ME_TextEditor *editor, ME_Cursor *cursor )
 
     if (~editor->scrollbars & ES_AUTOVSCROLL)
     {
-      ME_HScrollAbs(editor, x);
+      scroll_h_abs( editor, x, TRUE );
       return;
     }
   }
@@ -1235,11 +1238,11 @@ void editor_ensure_visible( ME_TextEditor *editor, ME_Cursor *cursor )
   yheight = row->nHeight;
 
   if (y < editor->vert_si.nPos)
-    ME_ScrollAbs(editor, x, y);
+    scroll_abs( editor, x, y, TRUE );
   else if (y + yheight > editor->vert_si.nPos + editor->sizeWindow.cy)
-    ME_ScrollAbs(editor, x, y + yheight - editor->sizeWindow.cy);
+    scroll_abs( editor, x, y + yheight - editor->sizeWindow.cy, TRUE );
   else if (x != editor->horz_si.nPos)
-    ME_ScrollAbs(editor, x, editor->vert_si.nPos);
+    scroll_abs( editor, x, editor->vert_si.nPos, TRUE );
 }
 
 

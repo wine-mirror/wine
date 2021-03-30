@@ -398,11 +398,19 @@ static HRESULT __thiscall ITextHostImpl_TxGetPropertyBits(ITextHost *iface, DWOR
     return S_OK;
 }
 
-static HRESULT __thiscall ITextHostImpl_TxNotify(ITextHost *iface, DWORD iNotify, void *pv)
+static int en_vscroll_sent;
+static HRESULT __thiscall ITextHostImpl_TxNotify( ITextHost *iface, DWORD code, void *data )
 {
     ITextHostTestImpl *This = impl_from_ITextHost(iface);
-    TRACECALL("Call to TxNotify(%p, iNotify=%d, pv=%p)\n", This, iNotify, pv);
-    return E_NOTIMPL;
+    TRACECALL( "Call to TxNotify(%p, code = %#x, data = %p)\n", This, code, data );
+    switch (code)
+    {
+    case EN_VSCROLL:
+        en_vscroll_sent++;
+        ok( !data, "got %p\n", data );
+        break;
+    }
+    return S_OK;
 }
 
 static HIMC __thiscall ITextHostImpl_TxImmGetContext(ITextHost *iface)
@@ -1100,6 +1108,55 @@ todo_wine
     ITextHost_Release(host);
 }
 
+static void test_notifications( void )
+{
+    ITextServices *txtserv;
+    ITextHost *host;
+    LRESULT res;
+    HRESULT hr;
+    RECT client = { 0, 0, 100, 100 };
+    ITextHostTestImpl *host_impl;
+
+    init_texthost( &txtserv, &host );
+    host_impl = impl_from_ITextHost( host );
+
+    host_impl->scrollbars = WS_VSCROLL;
+    host_impl->props = TXTBIT_MULTILINE | TXTBIT_RICHTEXT | TXTBIT_WORDWRAP;
+    ITextServices_OnTxPropertyBitsChange( txtserv, TXTBIT_SCROLLBARCHANGE | TXTBIT_MULTILINE | TXTBIT_RICHTEXT | TXTBIT_WORDWRAP, host_impl->props );
+
+    ITextServices_TxSetText( txtserv, lorem );
+
+    host_impl->window = CreateWindowExA( 0, "static", NULL, WS_POPUP | WS_VISIBLE,
+                                         0, 0, 400, 400, 0, 0, 0, NULL );
+    host_impl->client_rect = client;
+    hr = ITextServices_OnTxInPlaceActivate( txtserv, &client );
+    ok( hr == S_OK, "got 0x%08x.\n", hr );
+
+    hr = ITextServices_TxSendMessage( txtserv, EM_SETEVENTMASK, 0, ENM_SCROLL, &res );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* check EN_VSCROLL notification is sent */
+    en_vscroll_sent = 0;
+    hr = ITextServices_TxSendMessage( txtserv, WM_VSCROLL, SB_LINEDOWN, 0, &res );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( en_vscroll_sent == 1, "got %d\n", en_vscroll_sent );
+
+    hr = ITextServices_TxSendMessage( txtserv, WM_VSCROLL, SB_BOTTOM, 0, &res );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( en_vscroll_sent == 2, "got %d\n", en_vscroll_sent );
+
+    /* but not when the thumb is moved */
+    hr = ITextServices_TxSendMessage( txtserv, WM_VSCROLL, MAKEWPARAM( SB_THUMBTRACK, 0 ), 0, &res );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = ITextServices_TxSendMessage( txtserv, WM_VSCROLL, MAKEWPARAM( SB_THUMBPOSITION, 0 ), 0, &res );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( en_vscroll_sent == 2, "got %d\n", en_vscroll_sent );
+
+    DestroyWindow( host_impl->window );
+    ITextServices_Release( txtserv );
+    ITextHost_Release( host );
+}
+
 START_TEST( txtsrv )
 {
     ITextServices *txtserv;
@@ -1132,6 +1189,7 @@ START_TEST( txtsrv )
         test_QueryInterface();
         test_default_format();
         test_TxGetScroll();
+        test_notifications();
     }
     if (wrapperCodeMem) VirtualFree(wrapperCodeMem, 0, MEM_RELEASE);
 }

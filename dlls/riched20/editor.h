@@ -250,9 +250,9 @@ int  ME_twips2pointsY(const ME_Context *c, int y) DECLSPEC_HIDDEN;
 
 /* scroll functions in paint.c */
 
-void ME_ScrollAbs(ME_TextEditor *editor, int x, int y) DECLSPEC_HIDDEN;
-void ME_HScrollAbs(ME_TextEditor *editor, int x) DECLSPEC_HIDDEN;
-void ME_VScrollAbs(ME_TextEditor *editor, int y) DECLSPEC_HIDDEN;
+void scroll_abs( ME_TextEditor *editor, int x, int y, BOOL notify ) DECLSPEC_HIDDEN;
+void scroll_h_abs( ME_TextEditor *editor, int x, BOOL notify ) DECLSPEC_HIDDEN;
+void scroll_v_abs( ME_TextEditor *editor, int y, BOOL notify ) DECLSPEC_HIDDEN;
 void ME_ScrollUp(ME_TextEditor *editor, int cy) DECLSPEC_HIDDEN;
 void ME_ScrollDown(ME_TextEditor *editor, int cy) DECLSPEC_HIDDEN;
 void ME_ScrollLeft(ME_TextEditor *editor, int cx) DECLSPEC_HIDDEN;
