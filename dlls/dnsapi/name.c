@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2006 Matthew Kehrer
  * Copyright (C) 2006 Hans Leidekker
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
@@ -19,30 +19,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/debug.h"
-#include "wine/unicode.h"
-
 #include <stdarg.h>
-#include <sys/types.h>
-
-#ifdef HAVE_NETINET_IN_H
-# include <netinet/in.h>
-#endif
-#ifdef HAVE_ARPA_NAMESER_H
-# include <arpa/nameser.h>
-# undef NOERROR
-#endif
-#ifdef HAVE_RESOLV_H
-# include <resolv.h>
-#endif
-
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "winnls.h"
 #include "windns.h"
 
+#include "wine/debug.h"
+#include "wine/unicode.h"
 #include "dnsapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dnsapi);
@@ -81,7 +66,7 @@ BOOL WINAPI DnsNameCompare_W( PCWSTR name1, PCWSTR name2 )
 
     if (!name1 && !name2) return TRUE;
     if (!name1 || !name2) return FALSE;
- 
+
     p = name1 + lstrlenW( name1 ) - 1;
     q = name2 + lstrlenW( name2 ) - 1;
 

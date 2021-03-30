@@ -2,7 +2,7 @@
  * DNS support
  *
  * Copyright (C) 2006 Hans Leidekker
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
@@ -18,31 +18,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-#include "wine/debug.h"
-#include "wine/unicode.h"
-
 #include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
-
-#ifdef HAVE_NETINET_IN_H
-# include <netinet/in.h>
-#endif
-#ifdef HAVE_ARPA_NAMESER_H
-# include <arpa/nameser.h>
-#endif
-#ifdef HAVE_RESOLV_H
-# include <resolv.h>
-#endif
-
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "windns.h"
 
+#include "wine/debug.h"
+#include "wine/unicode.h"
 #include "dnsapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dnsapi);
@@ -158,10 +141,8 @@ BOOL WINAPI DnsRecordCompare( PDNS_RECORD r1, PDNS_RECORD r2 )
             r1->Data.SOA.dwExpire     != r2->Data.SOA.dwExpire   ||
             r1->Data.SOA.dwDefaultTtl != r2->Data.SOA.dwDefaultTtl)
             return FALSE;
-        if (strcmpX( r1->Data.SOA.pNamePrimaryServer,
-                         r2->Data.SOA.pNamePrimaryServer, wide ) ||
-            strcmpX( r1->Data.SOA.pNameAdministrator,
-                         r2->Data.SOA.pNameAdministrator, wide ))
+        if (strcmpX( r1->Data.SOA.pNamePrimaryServer, r2->Data.SOA.pNamePrimaryServer, wide ) ||
+            strcmpX( r1->Data.SOA.pNameAdministrator, r2->Data.SOA.pNameAdministrator, wide ))
             return FALSE;
         break;
     }
@@ -174,17 +155,14 @@ BOOL WINAPI DnsRecordCompare( PDNS_RECORD r1, PDNS_RECORD r2 )
     case DNS_TYPE_MG:
     case DNS_TYPE_MR:
     {
-        if (strcmpX( r1->Data.PTR.pNameHost,
-                         r2->Data.PTR.pNameHost, wide )) return FALSE;
+        if (strcmpX( r1->Data.PTR.pNameHost, r2->Data.PTR.pNameHost, wide )) return FALSE;
         break;
     }
     case DNS_TYPE_MINFO:
     case DNS_TYPE_RP:
     {
-        if (strcmpX( r1->Data.MINFO.pNameMailbox,
-                         r2->Data.MINFO.pNameMailbox, wide ) ||
-            strcmpX( r1->Data.MINFO.pNameErrorsMailbox,
-                         r2->Data.MINFO.pNameErrorsMailbox, wide ))
+        if (strcmpX( r1->Data.MINFO.pNameMailbox, r2->Data.MINFO.pNameMailbox, wide ) ||
+            strcmpX( r1->Data.MINFO.pNameErrorsMailbox, r2->Data.MINFO.pNameErrorsMailbox, wide ))
             return FALSE;
         break;
     }
@@ -194,8 +172,7 @@ BOOL WINAPI DnsRecordCompare( PDNS_RECORD r1, PDNS_RECORD r2 )
     {
         if (r1->Data.MX.wPreference != r2->Data.MX.wPreference)
             return FALSE;
-        if (strcmpX( r1->Data.MX.pNameExchange,
-                         r2->Data.MX.pNameExchange, wide ))
+        if (strcmpX( r1->Data.MX.pNameExchange, r2->Data.MX.pNameExchange, wide ))
             return FALSE;
         break;
     }
@@ -208,8 +185,7 @@ BOOL WINAPI DnsRecordCompare( PDNS_RECORD r1, PDNS_RECORD r2 )
             return FALSE;
         for (i = 0; i < r1->Data.TXT.dwStringCount; i++)
         {
-            if (strcmpX( r1->Data.TXT.pStringArray[i],
-                             r2->Data.TXT.pStringArray[i], wide ))
+            if (strcmpX( r1->Data.TXT.pStringArray[i], r2->Data.TXT.pStringArray[i], wide ))
                 return FALSE;
         }
         break;
@@ -255,8 +231,7 @@ BOOL WINAPI DnsRecordCompare( PDNS_RECORD r1, PDNS_RECORD r2 )
     }
     case DNS_TYPE_SIG:
     {
-        if (strcmpX( r1->Data.SIG.pNameSigner,
-                         r2->Data.SIG.pNameSigner, wide ))
+        if (strcmpX( r1->Data.SIG.pNameSigner, r2->Data.SIG.pNameSigner, wide ))
             return FALSE;
         if (r1->Data.SIG.wTypeCovered  != r2->Data.SIG.wTypeCovered  ||
             r1->Data.SIG.chAlgorithm   != r2->Data.SIG.chAlgorithm   ||
@@ -284,8 +259,7 @@ BOOL WINAPI DnsRecordCompare( PDNS_RECORD r1, PDNS_RECORD r2 )
     }
     case DNS_TYPE_NXT:
     {
-        if (strcmpX( r1->Data.NXT.pNameNext,
-                         r2->Data.NXT.pNameNext, wide )) return FALSE;
+        if (strcmpX( r1->Data.NXT.pNameNext, r2->Data.NXT.pNameNext, wide )) return FALSE;
         if (r1->Data.NXT.wNumTypes != r2->Data.NXT.wNumTypes) return FALSE;
         if (memcmp( r1->Data.NXT.wTypes, r2->Data.NXT.wTypes,
                     r1->wDataLength - sizeof(DNS_NXT_DATAA) + sizeof(WORD) ))
@@ -294,8 +268,7 @@ BOOL WINAPI DnsRecordCompare( PDNS_RECORD r1, PDNS_RECORD r2 )
     }
     case DNS_TYPE_SRV:
     {
-        if (strcmpX( r1->Data.SRV.pNameTarget,
-                         r2->Data.SRV.pNameTarget, wide )) return FALSE;
+        if (strcmpX( r1->Data.SRV.pNameTarget, r2->Data.SRV.pNameTarget, wide )) return FALSE;
         if (r1->Data.SRV.wPriority != r2->Data.SRV.wPriority ||
             r1->Data.SRV.wWeight   != r2->Data.SRV.wWeight   ||
             r1->Data.SRV.wPort     != r2->Data.SRV.wPort)
@@ -304,8 +277,7 @@ BOOL WINAPI DnsRecordCompare( PDNS_RECORD r1, PDNS_RECORD r2 )
     }
     case DNS_TYPE_TKEY:
     {
-        if (strcmpX( r1->Data.TKEY.pNameAlgorithm,
-                         r2->Data.TKEY.pNameAlgorithm, wide ))
+        if (strcmpX( r1->Data.TKEY.pNameAlgorithm, r2->Data.TKEY.pNameAlgorithm, wide ))
             return FALSE;
         if (r1->Data.TKEY.dwCreateTime    != r2->Data.TKEY.dwCreateTime     ||
             r1->Data.TKEY.dwExpireTime    != r2->Data.TKEY.dwExpireTime     ||
@@ -326,8 +298,7 @@ BOOL WINAPI DnsRecordCompare( PDNS_RECORD r1, PDNS_RECORD r2 )
     }
     case DNS_TYPE_TSIG:
     {
-        if (strcmpX( r1->Data.TSIG.pNameAlgorithm,
-                         r2->Data.TSIG.pNameAlgorithm, wide ))
+        if (strcmpX( r1->Data.TSIG.pNameAlgorithm, r2->Data.TSIG.pNameAlgorithm, wide ))
             return FALSE;
         if (r1->Data.TSIG.i64CreateTime   != r2->Data.TSIG.i64CreateTime    ||
             r1->Data.TSIG.wFudgeTime      != r2->Data.TSIG.wFudgeTime       ||
@@ -364,8 +335,7 @@ BOOL WINAPI DnsRecordCompare( PDNS_RECORD r1, PDNS_RECORD r2 )
             r1->Data.WINSR.dwLookupTimeout != r2->Data.WINSR.dwLookupTimeout ||
             r1->Data.WINSR.dwCacheTimeout  != r2->Data.WINSR.dwCacheTimeout)
             return FALSE;
-        if (strcmpX( r1->Data.WINSR.pNameResultDomain,
-                         r2->Data.WINSR.pNameResultDomain, wide ))
+        if (strcmpX( r1->Data.WINSR.pNameResultDomain, r2->Data.WINSR.pNameResultDomain, wide ))
             return FALSE;
         break;
     }
@@ -748,7 +718,7 @@ BOOL WINAPI DnsRecordSetCompare( PDNS_RECORD set1, PDNS_RECORD set2,
 
     DNS_RRSET_TERMINATE( rr1 );
     DNS_RRSET_TERMINATE( rr2 );
-    
+
     if (diff1) *diff1 = rr1.pFirstRR;
     else DnsRecordListFree( rr1.pFirstRR, DnsFreeRecordList );
 
@@ -763,7 +733,7 @@ error:
 
     DnsRecordListFree( rr1.pFirstRR, DnsFreeRecordList );
     DnsRecordListFree( rr2.pFirstRR, DnsFreeRecordList );
-    
+
     return FALSE;
 }
 

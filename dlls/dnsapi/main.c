@@ -22,6 +22,7 @@
 #include <stdarg.h>
 
 #include "windef.h"
+#include "winternl.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "windns.h"
@@ -29,6 +30,25 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dnsapi);
+
+const struct resolv_funcs *resolv_funcs = NULL;
+
+BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
+{
+    TRACE( "(%p,%u,%p)\n", hinst, reason, reserved );
+
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls( hinst );
+        if (__wine_init_unix_lib( hinst, reason, NULL, &resolv_funcs ))
+            ERR( "No libresolv support, expect problems\n" );
+        break;
+    case DLL_PROCESS_DETACH:
+        break;
+    }
+    return TRUE;
+}
 
 /******************************************************************************
  * DnsAcquireContextHandle_A              [DNSAPI.@]

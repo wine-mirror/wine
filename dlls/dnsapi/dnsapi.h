@@ -18,10 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __WINE_CONFIG_H
-# error You must include config.h to use this header
-#endif
-
 #include "wine/heap.h"
 
 static inline char *strdup_a( const char *src )
@@ -123,4 +119,17 @@ static inline char *strdup_ua( const char *src )
     return dst;
 }
 
-const char *type_to_str( unsigned short ) DECLSPEC_HIDDEN;
+extern const char *type_to_str( unsigned short ) DECLSPEC_HIDDEN;
+
+extern DNS_STATUS CDECL resolv_get_serverlist( IP4_ARRAY *, DWORD * ) DECLSPEC_HIDDEN;
+extern DNS_STATUS CDECL resolv_query( const char *, WORD, DWORD, DNS_RECORDA ** ) DECLSPEC_HIDDEN;
+extern DNS_STATUS CDECL resolv_set_serverlist( const IP4_ARRAY * ) DECLSPEC_HIDDEN;
+
+struct resolv_funcs
+{
+    DNS_STATUS (CDECL *get_serverlist)( IP4_ARRAY *addrs, DWORD *len );
+    DNS_STATUS (CDECL *query)( const char *name, WORD type, DWORD options, DNS_RECORDA **result );
+    DNS_STATUS (CDECL *set_serverlist)( const IP4_ARRAY *addrs );
+};
+
+extern const struct resolv_funcs *resolv_funcs;

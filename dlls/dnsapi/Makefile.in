@@ -4,6 +4,7 @@ IMPORTS   = netapi32
 EXTRALIBS = $(RESOLV_LIBS)
 
 C_SRCS = \
+	libresolv.c \
 	main.c \
 	name.c \
 	query.c \
