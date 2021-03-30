@@ -914,16 +914,73 @@ static void dxgi_surface_buffer_unmap(struct buffer *buffer)
 static HRESULT WINAPI dxgi_surface_buffer_Lock(IMFMediaBuffer *iface, BYTE **data, DWORD *max_length,
         DWORD *current_length)
 {
-    FIXME("%p, %p, %p, %p.\n", iface, data, max_length, current_length);
+    struct buffer *buffer = impl_from_IMFMediaBuffer(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p, %p.\n", iface, data, max_length, current_length);
+
+    if (!data)
+        return E_POINTER;
+
+    EnterCriticalSection(&buffer->cs);
+
+    if (!buffer->_2d.linear_buffer && buffer->_2d.locks)
+        hr = MF_E_INVALIDREQUEST;
+    else if (!buffer->_2d.linear_buffer)
+    {
+        if (!(buffer->_2d.linear_buffer = heap_alloc(ALIGN_SIZE(buffer->_2d.plane_size, MF_64_BYTE_ALIGNMENT))))
+            hr = E_OUTOFMEMORY;
+
+        if (SUCCEEDED(hr))
+        {
+            hr = dxgi_surface_buffer_map(buffer);
+            if (SUCCEEDED(hr))
+            {
+                MFCopyImage(buffer->_2d.linear_buffer, buffer->_2d.width, buffer->dxgi_surface.map_desc.pData,
+                        buffer->dxgi_surface.map_desc.RowPitch, buffer->_2d.width, buffer->_2d.height);
+            }
+        }
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        ++buffer->_2d.locks;
+        *data = buffer->_2d.linear_buffer;
+        if (max_length)
+            *max_length = buffer->_2d.plane_size;
+        if (current_length)
+            *current_length = buffer->_2d.plane_size;
+    }
+
+    LeaveCriticalSection(&buffer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI dxgi_surface_buffer_Unlock(IMFMediaBuffer *iface)
 {
-    FIXME("%p.\n", iface);
+    struct buffer *buffer = impl_from_IMFMediaBuffer(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&buffer->cs);
+
+    if (!buffer->_2d.linear_buffer)
+        hr = HRESULT_FROM_WIN32(ERROR_WAS_UNLOCKED);
+    else if (!--buffer->_2d.locks)
+    {
+        MFCopyImage(buffer->dxgi_surface.map_desc.pData, buffer->dxgi_surface.map_desc.RowPitch,
+                buffer->_2d.linear_buffer, buffer->_2d.width, buffer->_2d.width, buffer->_2d.height);
+        dxgi_surface_buffer_unmap(buffer);
+
+        heap_free(buffer->_2d.linear_buffer);
+        buffer->_2d.linear_buffer = NULL;
+    }
+
+    LeaveCriticalSection(&buffer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI dxgi_surface_buffer_SetCurrentLength(IMFMediaBuffer *iface, DWORD current_length)

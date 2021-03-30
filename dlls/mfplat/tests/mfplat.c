@@ -6479,31 +6479,24 @@ static void test_dxgi_surface_buffer(void)
     max_length = cur_length = 0;
     data = NULL;
     hr = IMFMediaBuffer_Lock(buffer, &data, &max_length, &cur_length);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(max_length && max_length == cur_length, "Unexpected length %u.\n", max_length);
-}
     if (data) *(DWORD *)data = ~0u;
 
     color = get_d3d11_texture_color(texture, 0, 0);
     ok(!color, "Unexpected texture color %#x.\n", color);
 
     hr = IMFMediaBuffer_Unlock(buffer);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     color = get_d3d11_texture_color(texture, 0, 0);
-todo_wine
     ok(color == ~0u, "Unexpected texture color %#x.\n", color);
 
     hr = IMFMediaBuffer_Lock(buffer, &data, &max_length, &cur_length);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-        ok(*(DWORD *)data == ~0u, "Unexpected buffer %#x.\n", *(DWORD *)data);
+    ok(*(DWORD *)data == ~0u, "Unexpected buffer %#x.\n", *(DWORD *)data);
 
     hr = IMFMediaBuffer_Unlock(buffer);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     /* Lock2D()/Unlock2D() */
@@ -6526,7 +6519,6 @@ todo_wine
     ok(data2 == data && pitch2 == pitch, "Unexpected data/pitch.\n");
 
     hr = IMFMediaBuffer_Lock(buffer, &data, &max_length, &cur_length);
-todo_wine
     ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
 
     hr = IMF2DBuffer_Unlock2D(_2d_buffer);
@@ -6906,11 +6898,9 @@ todo_wine
     IMFDXGIBuffer_Release(dxgi_buffer);
 
     hr = IMFMediaBuffer_Lock(buffer, &data, NULL, NULL);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaBuffer_Unlock(buffer);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     IMFSample_Release(sample);
