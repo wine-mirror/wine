@@ -377,11 +377,7 @@ static void testLoadLibraryEx(void)
     SetLastError(0xdeadbeef);
     hmodule = LoadLibraryExA("testfile.dll", NULL, LOAD_LIBRARY_AS_DATAFILE);
     ok(hmodule == 0, "Expected 0, got %p\n", hmodule);
-    todo_wine
-    {
-        ok(GetLastError() == ERROR_FILE_INVALID,
-           "Expected ERROR_FILE_INVALID, got %d\n", GetLastError());
-    }
+    ok(GetLastError() == ERROR_FILE_INVALID, "Expected ERROR_FILE_INVALID, got %d\n", GetLastError());
 
     DeleteFileA("testfile.dll");
 
@@ -423,7 +419,6 @@ static void testLoadLibraryEx(void)
     SetLastError(0xdeadbeef);
     hmodule = LoadLibraryExA(path, NULL, LOAD_LIBRARY_AS_DATAFILE);
     ok(hmodule == 0, "Expected 0, got %p\n", hmodule);
-    todo_wine
     ok(GetLastError() == ERROR_FILE_NOT_FOUND,
        "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
 

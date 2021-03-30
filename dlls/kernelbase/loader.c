@@ -95,6 +95,7 @@ static BOOL load_library_as_datafile( LPCWSTR load_path, DWORD flags, LPCWSTR na
         file = CreateFileW( filenameW, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE,
                             NULL, OPEN_EXISTING, 0, 0 );
     }
+    if (file == INVALID_HANDLE_VALUE) ERR("can't load %s\n", debugstr_w(name));
     if (file == INVALID_HANDLE_VALUE) return FALSE;
 
     mapping = CreateFileMappingW( file, NULL, protect, 0, 0, NULL );
@@ -154,31 +155,22 @@ static HMODULE load_library( const UNICODE_STRING *libname, DWORD flags )
 
         LdrLockLoaderLock( 0, NULL, &magic );
         if (!LdrGetDllHandle( load_path, flags, libname, &module ))
-        {
             LdrAddRefDll( 0, module );
-            LdrUnlockLoaderLock( 0, magic );
-            goto done;
-        }
-        if (load_library_as_datafile( load_path, flags, libname->Buffer, &module ))
-        {
-            LdrUnlockLoaderLock( 0, magic );
-            goto done;
-        }
+        else
+            load_library_as_datafile( load_path, flags, libname->Buffer, &module );
         LdrUnlockLoaderLock( 0, magic );
-        flags |= DONT_RESOLVE_DLL_REFERENCES; /* Just in case */
-        /* Fallback to normal behaviour */
+    }
+    else
+    {
+        status = LdrLoadDll( load_path, flags, libname, &module );
+        if (!set_ntstatus( status ))
+        {
+            module = 0;
+            if (status == STATUS_DLL_NOT_FOUND && (GetVersion() & 0x80000000))
+                SetLastError( ERROR_DLL_NOT_FOUND );
+        }
     }
 
-    status = LdrLoadDll( load_path, flags, libname, &module );
-    if (status != STATUS_SUCCESS)
-    {
-        module = 0;
-        if (status == STATUS_DLL_NOT_FOUND && (GetVersion() & 0x80000000))
-            SetLastError( ERROR_DLL_NOT_FOUND );
-        else
-            SetLastError( RtlNtStatusToDosError( status ) );
-    }
-done:
     RtlReleasePath( load_path );
     return module;
 }
