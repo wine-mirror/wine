@@ -1941,7 +1941,7 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
     size = (sizeof(*params)
             + MAX_PATH * sizeof(WCHAR)  /* curdir */
             + (wcslen( cmdline ) + 1) * sizeof(WCHAR)  /* command line */
-            + (wcslen( main_wargv[0] ) + 1) * sizeof(WCHAR)  /* image path */
+            + (wcslen( main_wargv[0] ) + 1) * sizeof(WCHAR) * 2 /* image path + window title */
             + env_pos * sizeof(WCHAR));
 
     status = NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&params, 0, &size,
@@ -1961,6 +1961,7 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
 
     put_unicode_string( main_wargv[0], &dst, &params->ImagePathName );
     put_unicode_string( cmdline, &dst, &params->CommandLine );
+    put_unicode_string( main_wargv[0], &dst, &params->WindowTitle );
     free( image );
     free( cmdline );
     free( curdir );
