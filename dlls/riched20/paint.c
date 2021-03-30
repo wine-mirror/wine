@@ -141,7 +141,7 @@ void ME_UpdateRepaint(ME_TextEditor *editor, BOOL update_now)
   update_caret( editor );
 
   if (!editor->bEmulateVersion10 || (editor->nEventMask & ENM_UPDATE))
-    ME_SendOldNotify( editor, EN_UPDATE );
+    ITextHost_TxNotify( editor->texthost, EN_UPDATE, NULL );
 
   ITextHost_TxViewChange(editor->texthost, update_now);
 
@@ -150,7 +150,7 @@ void ME_UpdateRepaint(ME_TextEditor *editor, BOOL update_now)
   if(editor->nEventMask & ENM_CHANGE)
   {
     editor->nEventMask &= ~ENM_CHANGE;
-    ME_SendOldNotify(editor, EN_CHANGE);
+    ITextHost_TxNotify( editor->texthost, EN_CHANGE, NULL );
     editor->nEventMask |= ENM_CHANGE;
   }
 }

@@ -274,7 +274,6 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10) DECLSP
 void ME_DestroyEditor(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
                                LPARAM lParam, HRESULT* phresult ) DECLSPEC_HIDDEN;
-void ME_SendOldNotify(ME_TextEditor *editor, int nCode) DECLSPEC_HIDDEN;
 int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int buflen,
                 const ME_Cursor *start, int srcChars, BOOL bCRLF, BOOL bEOP) DECLSPEC_HIDDEN;
 void ME_RTFCharAttrHook(struct _RTF_Info *info) DECLSPEC_HIDDEN;

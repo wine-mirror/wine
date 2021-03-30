@@ -3939,7 +3939,7 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
     editor->bHaveFocus = TRUE;
     create_caret(editor);
     update_caret(editor);
-    ME_SendOldNotify(editor, EN_SETFOCUS);
+    ITextHost_TxNotify( editor->texthost, EN_SETFOCUS, NULL );
     if (!editor->bHideSelection && (editor->props & TXTBIT_HIDESELECTION))
         ME_InvalidateSelection( editor );
     return 0;
@@ -3949,7 +3949,7 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
     editor->wheel_remain = 0;
     hide_caret(editor);
     DestroyCaret();
-    ME_SendOldNotify(editor, EN_KILLFOCUS);
+    ITextHost_TxNotify( editor->texthost, EN_KILLFOCUS, NULL );
     if (!editor->bHideSelection && (editor->props & TXTBIT_HIDESELECTION))
         ME_InvalidateSelection( editor );
     return 0;
@@ -4242,11 +4242,6 @@ LRESULT editor_handle_message( ME_TextEditor *editor, UINT msg, WPARAM wParam,
     break;
   }
   return 0L;
-}
-
-void ME_SendOldNotify(ME_TextEditor *editor, int nCode)
-{
-  ITextHost_TxNotify(editor->texthost, nCode, NULL);
 }
 
 /* Fill buffer with srcChars unicode characters from the start cursor.
