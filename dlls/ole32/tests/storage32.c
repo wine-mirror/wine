@@ -241,6 +241,9 @@ static void CreateTestLockBytes(TestLockBytes **This)
     {
         (*This)->ILockBytes_iface.lpVtbl = &TestLockBytes_Vtbl;
         (*This)->ref = 1;
+        (*This)->size = 0;
+        (*This)->buffer_size = 1024;
+        (*This)->contents = HeapAlloc(GetProcessHeap(), 0, (*This)->buffer_size);
     }
 }
 
@@ -3872,9 +3875,16 @@ static void test_custom_lockbytes(void)
     hr = IStorage_CreateStream(stg, stmname, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, 0, &stm);
     ok(hr==S_OK, "IStorage_CreateStream failed %x\n", hr);
 
+    IStream_Write(stm, "Hello World!", 12, NULL);
     IStream_Release(stm);
 
+    memset(lockbytes->contents, 0, lockbytes->buffer_size);
+
     hr = IStorage_Commit(stg, 0);
+    ok(hr==S_OK, "IStorage_Commit failed %x\n", hr);
+
+todo_wine
+    ok(*(DWORD *)lockbytes->contents == 0xe011cfd0, "contents: %08x\n", *(DWORD *)lockbytes->contents);
 
     IStorage_Release(stg);
 
@@ -3888,13 +3898,24 @@ static void test_custom_lockbytes(void)
     hr = IStorage_CreateStream(stg, stmname, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, 0, &stm);
     ok(hr==S_OK, "IStorage_CreateStream failed %x\n", hr);
 
+    IStream_Write(stm, "Hello World!", 12, NULL);
     IStream_Release(stm);
 
     hr = IStorage_Commit(stg, 0);
-
-    IStorage_Release(stg);
+    ok(hr==S_OK, "IStorage_Commit failed %x\n", hr);
 
     ok(lockbytes->lock_called, "expected LockRegion to be called\n");
+
+    ok(*(DWORD *)lockbytes->contents == 0xe011cfd0, "contents: %08x\n", *(DWORD *)lockbytes->contents);
+
+    memset(lockbytes->contents, 0, lockbytes->buffer_size);
+
+    hr = IStorage_Commit(stg, 0);
+    ok(hr==STG_E_INVALIDHEADER, "IStorage_Commit should fail: %x\n", hr);
+
+    ok(*(DWORD *)lockbytes->contents == 0, "contents: %08x\n", *(DWORD *)lockbytes->contents);
+
+    IStorage_Release(stg);
 
     lockbytes->lock_hr = STG_E_INVALIDFUNCTION;
 
