@@ -1999,13 +1999,7 @@ void wined3d_texture_gl_prepare_texture(struct wined3d_texture_gl *texture_gl,
 
     wined3d_texture_gl_bind_and_dirtify(texture_gl, context_gl, srgb);
 
-    if (srgb)
-        internal = format_gl->srgb_internal;
-    else if (resource->bind_flags & WINED3D_BIND_RENDER_TARGET && wined3d_resource_is_offscreen(resource))
-        internal = format_gl->rt_internal;
-    else
-        internal = format_gl->internal;
-
+    internal = wined3d_gl_get_internal_format(resource, format_gl, srgb);
     if (!internal)
         FIXME("No GL internal format for format %s.\n", debug_d3dformat(format->id));
 
@@ -2146,16 +2140,8 @@ static void wined3d_texture_gl_upload_bo(const struct wined3d_format *src_format
 
     if (src_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_COMPRESSED)
     {
+        GLenum internal = wined3d_gl_get_internal_format(&dst_texture->resource, format_gl, srgb);
         unsigned int dst_row_pitch, dst_slice_pitch;
-        GLenum internal;
-
-        if (srgb)
-            internal = format_gl->srgb_internal;
-        else if (dst_texture->resource.bind_flags & WINED3D_BIND_RENDER_TARGET
-                && wined3d_resource_is_offscreen(&dst_texture->resource))
-            internal = format_gl->rt_internal;
-        else
-            internal = format_gl->internal;
 
         wined3d_format_calculate_pitch(src_format, 1, update_w, update_h, &dst_row_pitch, &dst_slice_pitch);
 
