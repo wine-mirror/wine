@@ -33,6 +33,8 @@
 #include <ole2.h>
 #include <richedit.h>
 #include <richole.h>
+#include <imm.h>
+#include <textserv.h>
 #include <commdlg.h>
 #include <time.h>
 #include <wine/test.h>
@@ -51,12 +53,38 @@ static CHAR string1[MAX_PATH], string2[MAX_PATH], string3[MAX_PATH];
 static HMODULE hmoduleRichEdit;
 static BOOL is_lang_japanese;
 
+#if defined(__i386__) && !defined(__MINGW32__) && (!defined(_MSC_VER) || !defined(__clang__))
+static void disable_beep( HWND hwnd )
+{
+    /* don't attempt to disable beep if we don't have thiscall compiler support */
+}
+#else
+#define ITextServices_OnTxPropertyBitsChange(This,a,b) (This)->lpVtbl->OnTxPropertyBitsChange(This,a,b)
+static void disable_beep( HWND hwnd )
+{
+    IRichEditOle *richole;
+    ITextServices *services;
+    IID *pIID_ITextServices = (IID *)GetProcAddress( hmoduleRichEdit, "IID_ITextServices" );
+
+    if (SendMessageW( hwnd, EM_GETOLEINTERFACE, 0, (LPARAM)&richole ))
+    {
+        if (SUCCEEDED( IRichEditOle_QueryInterface( richole, pIID_ITextServices, (void **)&services ) ))
+        {
+            ITextServices_OnTxPropertyBitsChange( services, TXTBIT_ALLOWBEEP, 0 );
+            ITextServices_Release( services );
+        }
+        IRichEditOle_Release( richole );
+    }
+}
+#endif
+
 static HWND new_window(LPCSTR lpClassName, DWORD dwStyle, HWND parent) {
   HWND hwnd;
   hwnd = CreateWindowA(lpClassName, NULL, dwStyle|WS_POPUP|WS_HSCROLL|WS_VSCROLL
                       |WS_VISIBLE, 0, 0, 200, 60, parent, NULL,
                       hmoduleRichEdit, NULL);
   ok(hwnd != NULL, "class: %s, error: %d\n", lpClassName, (int) GetLastError());
+  disable_beep( hwnd );
   return hwnd;
 }
 
@@ -66,6 +94,7 @@ static HWND new_windowW(LPCWSTR lpClassName, DWORD dwStyle, HWND parent) {
                       |WS_VISIBLE, 0, 0, 200, 60, parent, NULL,
                       hmoduleRichEdit, NULL);
   ok(hwnd != NULL, "class: %s, error: %d\n", wine_dbgstr_w(lpClassName), (int) GetLastError());
+  disable_beep( hwnd );
   return hwnd;
 }
 
@@ -1862,6 +1891,7 @@ static void test_EM_SETOPTIONS(void)
                                 hmoduleRichEdit, NULL);
     ok(hwndRichEdit != NULL, "class: %s, error: %d\n",
        RICHEDIT_CLASS20A, (int) GetLastError());
+    disable_beep( hwndRichEdit );
     options = SendMessageA(hwndRichEdit, EM_GETOPTIONS, 0, 0);
     /* WS_[VH]SCROLL cause the ECO_AUTO[VH]SCROLL options to be set */
     ok(options == (ECO_AUTOVSCROLL|ECO_AUTOHSCROLL),
@@ -6337,6 +6367,7 @@ static void test_WM_CHAR(void)
     hwnd = CreateWindowExA(0, "RichEdit20W", NULL, WS_POPUP,
                            0, 0, 200, 60, 0, 0, 0, 0);
     ok(hwnd != 0, "CreateWindowExA error %u\n", GetLastError());
+    disable_beep( hwnd );
 
     p = char_list;
     while (*p != '\0') {
@@ -6940,6 +6971,7 @@ static void test_undo_coalescing(void)
     hwnd = CreateWindowExA(0, "RichEdit20W", NULL, WS_POPUP|ES_MULTILINE,
                            0, 0, 200, 60, 0, 0, 0, 0);
     ok(hwnd != 0, "CreateWindowExA error %u\n", GetLastError());
+    disable_beep( hwnd );
 
     result = SendMessageA(hwnd, EM_CANUNDO, 0, 0);
     ok (result == FALSE, "Can undo after window creation.\n");
