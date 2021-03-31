@@ -32,16 +32,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
-struct text_services
-{
-    IUnknown IUnknown_inner;
-    ITextServices ITextServices_iface;
-    IUnknown *outer_unk;
-    LONG ref;
-    ME_TextEditor *editor;
-    char spare[256]; /* for bug #12179 */
-};
-
 static inline struct text_services *impl_from_IUnknown( IUnknown *iface )
 {
     return CONTAINING_RECORD( iface, struct text_services, IUnknown_inner );
@@ -55,13 +45,10 @@ static HRESULT WINAPI ITextServicesImpl_QueryInterface( IUnknown *iface, REFIID 
 
     if (IsEqualIID( iid, &IID_IUnknown )) *obj = &services->IUnknown_inner;
     else if (IsEqualIID( iid, &IID_ITextServices )) *obj = &services->ITextServices_iface;
-    else if (IsEqualIID( iid, &IID_IRichEditOle ) || IsEqualIID( iid, &IID_ITextDocument ) ||
-             IsEqualIID( iid, &IID_ITextDocument2Old ))
-    {
-        if (!services->editor->reOle && !CreateIRichEditOle( services->outer_unk, services->editor, (void **)&services->editor->reOle ))
-            return E_OUTOFMEMORY;
-        return IUnknown_QueryInterface( services->editor->reOle, iid, obj );
-    }
+    else if (IsEqualIID( iid, &IID_IRichEditOle )) *obj= &services->IRichEditOle_iface;
+    else if (IsEqualIID( iid, &IID_IDispatch ) ||
+             IsEqualIID( iid, &IID_ITextDocument ) ||
+             IsEqualIID( iid, &IID_ITextDocument2Old )) *obj = &services->ITextDocument2Old_iface;
     else
     {
         *obj = NULL;
@@ -92,6 +79,7 @@ static ULONG WINAPI ITextServicesImpl_Release(IUnknown *iface)
 
     if (!ref)
     {
+        richole_release_children( services );
         ME_DestroyEditor( services->editor );
         CoTaskMemFree( services );
     }
@@ -597,10 +585,17 @@ HRESULT create_text_services( IUnknown *outer, ITextHost *text_host, IUnknown **
     services->ref = 1;
     services->IUnknown_inner.lpVtbl = &textservices_inner_vtbl;
     services->ITextServices_iface.lpVtbl = &textservices_vtbl;
+    services->IRichEditOle_iface.lpVtbl = &re_ole_vtbl;
+    services->ITextDocument2Old_iface.lpVtbl = &text_doc2old_vtbl;
     services->editor = ME_MakeEditor( text_host, emulate_10 );
+    services->editor->richole = &services->IRichEditOle_iface;
 
     if (outer) services->outer_unk = outer;
     else services->outer_unk = &services->IUnknown_inner;
+
+    services->text_selection = NULL;
+    list_init( &services->rangelist );
+    list_init( &services->clientsites );
 
     *unk = &services->IUnknown_inner;
     return S_OK;

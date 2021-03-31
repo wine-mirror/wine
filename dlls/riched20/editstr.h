@@ -41,6 +41,7 @@
 #include <richole.h>
 #include "imm.h"
 #include <textserv.h>
+#include <tom.h>
 #include "usp10.h"
 
 #include "wine/asm.h"
@@ -378,7 +379,6 @@ typedef struct tagME_InStream ME_InStream;
 typedef struct tagME_TextEditor
 {
   ITextHost2 *texthost;
-  IUnknown *reOle;
   unsigned int bEmulateVersion10 : 1;
   unsigned int in_place_active : 1;
   unsigned int have_texthost2 : 1;
@@ -409,6 +409,7 @@ typedef struct tagME_TextEditor
   BOOL bWordWrap;
   int nTextLimit;
   EDITWORDBREAKPROCW pfnWordBreak;
+  IRichEditOle *richole;
   LPRICHEDITOLECALLBACK lpOleCallback;
   /*TEXTMODE variable; contains only one of each of the following options:
    *TM_RICHTEXT or TM_PLAINTEXT
@@ -455,5 +456,28 @@ typedef struct tagME_Context
   /* those are valid inside ME_WrapTextParagraph and related */
   ME_TextEditor *editor;
 } ME_Context;
+
+struct text_selection
+{
+    ITextSelection ITextSelection_iface;
+    LONG ref;
+
+    struct text_services *services;
+};
+
+struct text_services
+{
+    IUnknown IUnknown_inner;
+    ITextServices ITextServices_iface;
+    IRichEditOle IRichEditOle_iface;
+    ITextDocument2Old ITextDocument2Old_iface;
+    IUnknown *outer_unk;
+    LONG ref;
+    ME_TextEditor *editor;
+    struct text_selection *text_selection;
+    struct list rangelist;
+    struct list clientsites;
+    char spare[256]; /* for bug #12179 */
+};
 
 #endif

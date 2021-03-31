@@ -263,11 +263,13 @@ void ME_UpdateScrollBar(ME_TextEditor *editor) DECLSPEC_HIDDEN;
 int ME_GetParaBorderWidth(const ME_Context *c, int flags) DECLSPEC_HIDDEN;
 
 /* richole.c */
-LRESULT CreateIRichEditOle(IUnknown *outer_unk, ME_TextEditor *editor, LPVOID *ppvObj) DECLSPEC_HIDDEN;
 void draw_ole( ME_Context *c, int x, int y, ME_Run* run, BOOL selected ) DECLSPEC_HIDDEN;
 void ME_GetOLEObjectSize(const ME_Context *c, ME_Run *run, SIZE *pSize) DECLSPEC_HIDDEN;
 void ME_CopyReObject(REOBJECT *dst, const REOBJECT *src, DWORD flags) DECLSPEC_HIDDEN;
 void ME_DeleteReObject(struct re_object *re_object) DECLSPEC_HIDDEN;
+void richole_release_children( struct text_services *services ) DECLSPEC_HIDDEN;
+extern const IRichEditOleVtbl re_ole_vtbl DECLSPEC_HIDDEN;
+extern const ITextDocument2OldVtbl text_doc2old_vtbl DECLSPEC_HIDDEN;
 
 /* editor.c */
 ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10) DECLSPEC_HIDDEN;
