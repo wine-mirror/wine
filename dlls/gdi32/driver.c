@@ -177,6 +177,18 @@ static void release_display_device_init_mutex( HANDLE mutex )
     CloseHandle( mutex );
 }
 
+#ifdef __i386__
+static const WCHAR printer_env[] = L"w32x86";
+#elif defined __x86_64__
+static const WCHAR printer_env[] = L"x64";
+#elif defined __arm__
+static const WCHAR printer_env[] = L"arm";
+#elif defined __aarch64__
+static const WCHAR printer_env[] = L"arm64";
+#else
+#error not defined for this cpu
+#endif
+
 /**********************************************************************
  *	     DRIVER_load_driver
  */
@@ -200,7 +212,15 @@ const struct gdi_dc_funcs *DRIVER_load_driver( LPCWSTR name )
         LeaveCriticalSection( &driver_section );
     }
 
-    if (!(module = LoadLibraryW( name ))) return NULL;
+    if (!(module = LoadLibraryW( name )))
+    {
+        WCHAR path[MAX_PATH];
+
+        GetSystemDirectoryW( path, MAX_PATH );
+        swprintf( path + wcslen(path), MAX_PATH - wcslen(path), L"\\spool\\drivers\\%s\\3\\%s",
+                  printer_env, name );
+        if (!(module = LoadLibraryW( path ))) return NULL;
+    }
 
     if (!(new_driver = create_driver( module )))
     {
