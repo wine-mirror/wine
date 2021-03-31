@@ -149,6 +149,7 @@ static void test_Interfaces(void)
   LRESULT res;
   HWND w;
   ULONG refcount;
+  IUnknown *unk, *unk2;
 
   w = new_richedit(NULL);
   if (!w) {
@@ -179,6 +180,14 @@ static void test_Interfaces(void)
 
   hres = ITextDocument_GetSelection(txtDoc, &txtSel);
   ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  hres = ITextDocument_QueryInterface(txtDoc, &IID_IUnknown, (void **)&unk);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  hres = ITextSelection_QueryInterface(txtSel, &IID_IUnknown, (void **)&unk2);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(unk != unk2, "unknowns are the same\n");
+  IUnknown_Release(unk2);
+  IUnknown_Release(unk);
 
   EXPECT_REF(txtDoc, 4);
   EXPECT_REF(txtSel, 2);

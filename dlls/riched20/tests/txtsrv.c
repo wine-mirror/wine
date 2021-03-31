@@ -917,6 +917,7 @@ static void test_QueryInterface(void)
     IRichEditOle *reole, *txtsrv_reole;
     ITextDocument *txtdoc, *txtsrv_txtdoc;
     ITextDocument2Old *txtdoc2old, *txtsrv_txtdoc2old;
+    IUnknown *unk, *unk2;
     ULONG refcount;
 
     if(!init_texthost(&txtserv, &host))
@@ -932,6 +933,14 @@ static void test_QueryInterface(void)
     ok(refcount == 2, "got wrong ref count: %d\n", refcount);
     refcount = get_refcount((IUnknown *)txtsrv_reole);
     ok(refcount == 2, "got wrong ref count: %d\n", refcount);
+
+    hres = ITextServices_QueryInterface( txtserv, &IID_IUnknown, (void **)&unk );
+    ok( hres == S_OK, "got 0x%08x\n", hres );
+    hres = IRichEditOle_QueryInterface( txtsrv_reole, &IID_IUnknown, (void **)&unk2 );
+    ok( hres == S_OK, "got 0x%08x\n", hres );
+    ok( unk == unk2, "unknowns differ\n" );
+    IUnknown_Release( unk2 );
+    IUnknown_Release( unk );
 
     hres = IRichEditOle_QueryInterface(txtsrv_reole, &IID_ITextDocument, (void **)&txtdoc);
     ok(hres == S_OK, "IRichEditOle_QueryInterface: 0x%08x\n", hres);
