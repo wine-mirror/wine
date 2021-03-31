@@ -118,7 +118,6 @@ static char *argv0;
 static const char *bin_dir;
 static const char *dll_dir;
 static SIZE_T dll_path_maxlen;
-static BOOL is_prefix_bootstrap;
 
 const char *home_dir = NULL;
 const char *data_dir = NULL;
@@ -311,8 +310,6 @@ static void set_config_dir(void)
 static void init_paths( char *argv[] )
 {
     Dl_info info;
-    struct stat st;
-    char *ntdll;
 
     argv0 = strdup( argv[0] );
 
@@ -335,10 +332,6 @@ static void init_paths( char *argv[] )
     set_dll_path();
     set_home_dir();
     set_config_dir();
-
-    ntdll = build_path( config_dir, "dosdevices/c:/windows/system32/ntdll.dll" );
-    is_prefix_bootstrap = stat( ntdll, &st ) == -1;
-    free( ntdll );
 }
 
 
@@ -1437,9 +1430,10 @@ BOOL is_builtin_path( const UNICODE_STRING *path, WORD *machine )
 {
     static const WCHAR wow64W[] = {'\\','?','?','\\','c',':','\\','w','i','n','d','o','w','s','\\',
                                    's','y','s','w','o','w','6','4'};
+    BOOL is_prefix_bootstrap;
     unsigned int len;
-
-    if (!is_prefix_bootstrap) return FALSE;
+    struct stat st;
+    char *ntdll;
 
     *machine = current_machine;
     if (path->Length > wcslen(system_dir) * sizeof(WCHAR) &&
@@ -1464,7 +1458,15 @@ found:
     len = wcslen(system_dir);
     while (len < path->Length / sizeof(WCHAR) && path->Buffer[len] == '\\') len++;
     while (len < path->Length / sizeof(WCHAR) && path->Buffer[len] != '\\') len++;
-    return len == path->Length / sizeof(WCHAR);
+    if (len != path->Length / sizeof(WCHAR)) return FALSE;
+
+    /* if the corresponding ntdll exists, don't fake the existence of the builtin */
+    ntdll = build_path( config_dir, *machine == IMAGE_FILE_MACHINE_I386 ?
+                        "dosdevices/c:/windows/syswow64/ntdll.dll" :
+                        "dosdevices/c:/windows/system32/ntdll.dll" );
+    is_prefix_bootstrap = stat( ntdll, &st ) == -1;
+    free( ntdll );
+    return is_prefix_bootstrap;
 }
 
 
