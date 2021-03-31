@@ -1509,6 +1509,7 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
         TRACE("src_color_key {0x%08x, 0x%08x}.\n",
                 fx->src_color_key.color_space_low_value,
                 fx->src_color_key.color_space_high_value);
+        TRACE("resolve_format_id %s.\n", debug_d3dformat(fx->resolve_format_id));
     }
 
     dst_sub_resource = &dst_texture->sub_resources[dst_sub_resource_idx];

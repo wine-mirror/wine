@@ -2014,6 +2014,7 @@ struct wined3d_blt_fx
     DWORD fx;
     struct wined3d_color_key dst_color_key;
     struct wined3d_color_key src_color_key;
+    enum wined3d_format_id resolve_format_id;
 };
 
 struct wined3d_buffer_desc

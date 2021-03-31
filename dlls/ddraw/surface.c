@@ -1686,7 +1686,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface1_Blt(IDirectDrawSurface *i
 {
     struct ddraw_surface *dst_impl = impl_from_IDirectDrawSurface(iface);
     struct ddraw_surface *src_impl = unsafe_impl_from_IDirectDrawSurface(src_surface);
-    struct wined3d_blt_fx wined3d_fx;
+    struct wined3d_blt_fx wined3d_fx = {0};
     DWORD unsupported_flags;
     DWORD fill_colour = 0;
     HRESULT hr = DD_OK;
