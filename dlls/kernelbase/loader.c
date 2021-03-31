@@ -95,7 +95,6 @@ static BOOL load_library_as_datafile( LPCWSTR load_path, DWORD flags, LPCWSTR na
         file = CreateFileW( filenameW, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE,
                             NULL, OPEN_EXISTING, 0, 0 );
     }
-    if (file == INVALID_HANDLE_VALUE) ERR("can't load %s\n", debugstr_w(name));
     if (file == INVALID_HANDLE_VALUE) return FALSE;
 
     mapping = CreateFileMappingW( file, NULL, protect, 0, 0, NULL );
@@ -108,7 +107,11 @@ static BOOL load_library_as_datafile( LPCWSTR load_path, DWORD flags, LPCWSTR na
     if (!(flags & LOAD_LIBRARY_AS_IMAGE_RESOURCE))
     {
         /* make sure it's a valid PE file */
-        if (!RtlImageNtHeader( module )) goto failed;
+        if (!RtlImageNtHeader( module ))
+        {
+            SetLastError( ERROR_BAD_EXE_FORMAT );
+            goto failed;
+        }
         *mod_ret = (HMODULE)((char *)module + 1); /* set bit 0 for data file module */
 
         if (flags & LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE)
