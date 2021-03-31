@@ -504,13 +504,12 @@ USHORT WINAPI RtlCaptureStackBackTrace( ULONG skip, ULONG count, PVOID *buffer, 
  */
 __ASM_GLOBAL_FUNC( signal_start_thread,
                    "movl 4(%esp),%esi\n\t"   /* context */
-                   "leal -12(%esi),%ecx\n\t"
+                   "leal -12(%esi),%edi\n\t"
                    /* clear the thread stack */
-                   "andl $~0xfff,%ecx\n\t"   /* round down to page size */
-                   "movl %fs:8,%edi\n\t"     /* NtCurrentTeb()->Tib.StackLimit */
-                   "addl $0x1000,%edi\n\t"
+                   "andl $~0xfff,%edi\n\t"   /* round down to page size */
+                   "movl $0xf0000,%ecx\n\t"
+                   "subl %ecx,%edi\n\t"
                    "movl %edi,%esp\n\t"
-                   "subl %edi,%ecx\n\t"
                    "xorl %eax,%eax\n\t"
                    "shrl $2,%ecx\n\t"
                    "rep; stosl\n\t"
