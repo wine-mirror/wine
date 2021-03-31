@@ -4158,6 +4158,18 @@ static INT CALLBACK enum_emf_WorldTransform(HDC hdc, HANDLETABLE *ht,
 
                     CombineTransform(&test_data->expected, &test_data->stored, &test_data->scale);
                 }
+                else if(lpXfrm->iMode == MWT_IDENTITY)
+                {
+                    /* reset to identity matrix also does discard */
+                    test_data->stored.eM11 = 1.0f;
+                    test_data->stored.eM12 = 0.0f;
+                    test_data->stored.eM21 = 0.0f;
+                    test_data->stored.eM22 = 1.0f;
+                    test_data->stored.eDx = 0.0f;
+                    test_data->stored.eDy = 0.0f;
+
+                    CombineTransform(&test_data->expected, &test_data->stored, &test_data->scale);
+                }
 
                 /* verify it is updated immediately */
                 ret = GetWorldTransform(hdc, &xform);
@@ -4264,6 +4276,9 @@ static void test_emf_WorldTransform(void)
         set_rotation_xform(&xform, M_PI / 4.f, 2, 3);
         ret = SetWorldTransform(hdcMetafile, &xform); /* EMR_SETWORLDTRANSFORM */
         ok(ret == TRUE, "SetWorldTransform failed\n");
+
+        ret = ModifyWorldTransform(hdcMetafile, NULL, MWT_IDENTITY); /* EMR_MODIFYWORLDTRANSFORM */
+        ok(ret == TRUE, "ModifyWorldTransform failed\n");
 
         set_rotation_xform(&xform, M_PI / 2.f, -2, -3);
         ret = ModifyWorldTransform(hdcMetafile, &xform, MWT_LEFTMULTIPLY); /* EMR_MODIFYWORLDTRANSFORM */

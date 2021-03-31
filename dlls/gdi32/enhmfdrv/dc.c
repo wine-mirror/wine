@@ -362,7 +362,19 @@ BOOL CDECL EMFDRV_ModifyWorldTransform( PHYSDEV dev, const XFORM *xform, DWORD m
 
     emr.emr.iType = EMR_MODIFYWORLDTRANSFORM;
     emr.emr.nSize = sizeof(emr);
-    emr.xform = *xform;
+    if (mode == MWT_IDENTITY)
+    {
+        emr.xform.eM11 = 1.0f;
+        emr.xform.eM12 = 0.0f;
+        emr.xform.eM21 = 0.0f;
+        emr.xform.eM22 = 1.0f;
+        emr.xform.eDx = 0.0f;
+        emr.xform.eDy = 0.0f;
+    }
+    else
+    {
+        emr.xform = *xform;
+    }
     emr.iMode = mode;
 
     if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
