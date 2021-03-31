@@ -101,7 +101,6 @@ struct norm_table
 };
 
 static NLSTABLEINFO nls_info;
-static HMODULE kernel32_handle;
 static struct norm_table *norm_tables[16];
 
 
@@ -528,15 +527,6 @@ static unsigned int compose_string( const struct norm_table *info, WCHAR *str, u
         }
     }
     return srclen;
-}
-
-
-/******************************************************************
- *		init_locale
- */
-void init_locale( HMODULE module )
-{
-    kernel32_handle = module;
 }
 
 

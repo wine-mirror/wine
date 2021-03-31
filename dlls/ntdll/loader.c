@@ -68,6 +68,7 @@ const WCHAR windows_dir[] = L"C:\\windows";
 const WCHAR system_dir[] = L"C:\\windows\\system32\\";
 const WCHAR syswow64_dir[] = L"C:\\windows\\syswow64\\";
 
+HMODULE kernel32_handle = 0;
 BOOL is_wow64 = FALSE;
 
 /* system search path */
@@ -3517,6 +3518,23 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
 
     if (!imports_fixup_done)
     {
+        ANSI_STRING func_name;
+        WINE_MODREF *kernel32;
+
+        if ((status = load_dll( NULL, L"kernel32.dll", NULL, 0, &kernel32 )) != STATUS_SUCCESS)
+        {
+            MESSAGE( "wine: could not load kernel32.dll, status %x\n", status );
+            NtTerminateProcess( GetCurrentProcess(), status );
+        }
+        kernel32_handle = kernel32->ldr.DllBase;
+        RtlInitAnsiString( &func_name, "BaseThreadInitThunk" );
+        if ((status = LdrGetProcedureAddress( kernel32_handle, &func_name,
+                                              0, (void **)&pBaseThreadInitThunk )) != STATUS_SUCCESS)
+        {
+            MESSAGE( "wine: could not find BaseThreadInitThunk in kernel32.dll, status %x\n", status );
+            NtTerminateProcess( GetCurrentProcess(), status );
+        }
+
         actctx_init();
         if (wm->ldr.Flags & LDR_COR_ILONLY)
             status = fixup_imports_ilonly( wm, NULL, entry );
@@ -4002,9 +4020,6 @@ static void map_wow64cpu(void)
  */
 static NTSTATUS process_init(void)
 {
-    WINE_MODREF *wm;
-    NTSTATUS status;
-    ANSI_STRING func_name;
     INITIAL_TEB stack;
     TEB *teb = NtCurrentTeb();
     PEB *peb = teb->Peb;
@@ -4039,6 +4054,7 @@ static NTSTATUS process_init(void)
     load_global_options();
     version_init();
     build_main_module();
+    build_ntdll_module();
 
 #ifndef _WIN64
     if (NtCurrentTeb64())
@@ -4050,30 +4066,9 @@ static NTSTATUS process_init(void)
         peb64->OSBuildNumber    = peb->OSBuildNumber;
         peb64->OSPlatformId     = peb->OSPlatformId;
         peb64->SessionId        = peb->SessionId;
-    }
-#endif
-
-    build_ntdll_module();
-
-#ifndef _WIN64
-    if (is_wow64)
         map_wow64cpu();
+    }
 #endif
-
-    if ((status = load_dll( NULL, L"C:\\windows\\system32\\kernel32.dll", NULL, 0, &wm )) != STATUS_SUCCESS)
-    {
-        MESSAGE( "wine: could not load kernel32.dll, status %x\n", status );
-        NtTerminateProcess( GetCurrentProcess(), status );
-    }
-    RtlInitAnsiString( &func_name, "BaseThreadInitThunk" );
-    if ((status = LdrGetProcedureAddress( wm->ldr.DllBase, &func_name,
-                                          0, (void **)&pBaseThreadInitThunk )) != STATUS_SUCCESS)
-    {
-        MESSAGE( "wine: could not find BaseThreadInitThunk in kernel32.dll, status %x\n", status );
-        NtTerminateProcess( GetCurrentProcess(), status );
-    }
-
-    init_locale( wm->ldr.DllBase );
 
     RtlCreateUserStack( 0, 0, 0, 0x10000, 0x10000, &stack );
     teb->Tib.StackBase = stack.StackBase;
