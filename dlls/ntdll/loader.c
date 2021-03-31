@@ -2577,10 +2577,10 @@ static NTSTATUS find_builtin_without_file( const WCHAR *name, UNICODE_STRING *ne
         RtlAppendUnicodeToString( new_name, L"\\" );
         RtlAppendUnicodeToString( new_name, name );
         status = open_dll_file( new_name, pwm, mapping, image_info, id );
-        if (status != STATUS_DLL_NOT_FOUND) return status;
+        if (status != STATUS_DLL_NOT_FOUND) goto done;
         RtlAppendUnicodeToString( new_name, L".fake" );
         status = open_dll_file( new_name, pwm, mapping, image_info, id );
-        if (status != STATUS_DLL_NOT_FOUND) return status;
+        if (status != STATUS_DLL_NOT_FOUND) goto done;
         RtlFreeUnicodeString( new_name );
     }
     for (i = 0; ; i++)
@@ -2592,16 +2592,27 @@ static NTSTATUS find_builtin_without_file( const WCHAR *name, UNICODE_STRING *ne
         RtlAppendUnicodeToString( new_name, name );
         status = open_dll_file( new_name, pwm, mapping, image_info, id );
         if (status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH) found_image = TRUE;
-        else if (status != STATUS_DLL_NOT_FOUND) return status;
+        else if (status != STATUS_DLL_NOT_FOUND) goto done;
         new_name->Length = len;
         RtlAppendUnicodeToString( new_name, L"\\fakedlls\\" );
         RtlAppendUnicodeToString( new_name, name );
         status = open_dll_file( new_name, pwm, mapping, image_info, id );
         if (status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH) found_image = TRUE;
-        else if (status != STATUS_DLL_NOT_FOUND) return status;
+        else if (status != STATUS_DLL_NOT_FOUND) goto done;
         RtlFreeUnicodeString( new_name );
     }
     if (found_image) status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
+
+done:
+    RtlFreeUnicodeString( new_name );
+    if (!status)
+    {
+        new_name->Length = (4 + wcslen(system_dir) + wcslen(name)) * sizeof(WCHAR);
+        new_name->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, new_name->Length + sizeof(WCHAR) );
+        wcscpy( new_name->Buffer, L"\\??\\" );
+        wcscat( new_name->Buffer, system_dir );
+        wcscat( new_name->Buffer, name );
+    }
     return status;
 }
 
