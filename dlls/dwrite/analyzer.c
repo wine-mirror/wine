@@ -207,9 +207,7 @@ const char *debugstr_sa_script(UINT16 script)
 }
 
 /* system font falback configuration */
-static const WCHAR meiryoW[] = {'M','e','i','r','y','o',0};
-
-static const WCHAR *cjk_families[] = { meiryoW };
+static const WCHAR *cjk_families[] = { L"Meiryo" };
 
 static const DWRITE_UNICODE_RANGE cjk_ranges[] =
 {
@@ -1102,12 +1100,12 @@ static void get_number_substitutes(IDWriteNumberSubstitution *substitution, BOOL
         break;
     case DWRITE_NUMBER_SUBSTITUTION_METHOD_CONTEXTUAL:
     case DWRITE_NUMBER_SUBSTITUTION_METHOD_TRADITIONAL:
-        if (GetLocaleInfoEx(numbersubst->locale, LOCALE_SISO639LANGNAME, isolang, ARRAY_SIZE(isolang))) {
-             static const WCHAR arW[] = {'a','r',0};
+        if (GetLocaleInfoEx(numbersubst->locale, LOCALE_SISO639LANGNAME, isolang, ARRAY_SIZE(isolang)))
+        {
              static const WCHAR arabicW[] = {0x640,0x641,0x642,0x643,0x644,0x645,0x646,0x647,0x648,0x649,0};
 
              /* For some Arabic locales Latin digits are returned for SNATIVEDIGITS */
-             if (!wcscmp(arW, isolang))
+             if (!wcscmp(L"ar", isolang))
              {
                  wcscpy(digits, arabicW);
                  break;

@@ -531,13 +531,12 @@ HRESULT clone_localizedstrings(IDWriteLocalizedStrings *iface, IDWriteLocalizedS
 
 void set_en_localizedstring(IDWriteLocalizedStrings *iface, const WCHAR *string)
 {
-    static const WCHAR enusW[] = {'e','n','-','U','S',0};
     struct localizedstrings *strings = impl_from_IDWriteLocalizedStrings(iface);
     UINT32 i;
 
     for (i = 0; i < strings->count; i++)
     {
-        if (!wcsicmp(strings->data[i].locale, enusW))
+        if (!wcsicmp(strings->data[i].locale, L"en-US"))
         {
             heap_free(strings->data[i].string);
             strings->data[i].string = heap_strdupW(string);
@@ -1573,12 +1572,11 @@ static HRESULT create_system_path_list(WCHAR ***ret, unsigned int *ret_count)
             {
                 if (!wcschr(value, '\\'))
                 {
-                    static const WCHAR fontsW[] = {'\\','f','o','n','t','s','\\',0};
                     WCHAR *ptrW;
 
                     ptrW = heap_alloc((MAX_PATH + wcslen(value)) * sizeof(WCHAR));
                     GetWindowsDirectoryW(ptrW, MAX_PATH);
-                    wcscat(ptrW, fontsW);
+                    wcscat(ptrW, L"\\fonts\\");
                     wcscat(ptrW, value);
 
                     heap_free(value);

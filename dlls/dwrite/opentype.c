@@ -2252,9 +2252,8 @@ static UINT get_name_record_codepage(enum OPENTYPE_PLATFORM_ID platform, USHORT 
 
 static void get_name_record_locale(enum OPENTYPE_PLATFORM_ID platform, USHORT lang_id, WCHAR *locale, USHORT locale_len)
 {
-    static const WCHAR enusW[] = {'e','n','-','U','S',0};
-
-    switch (platform) {
+    switch (platform)
+    {
     case OPENTYPE_PLATFORM_MAC:
     {
         const char *locale_name = NULL;
@@ -2269,18 +2268,18 @@ static void get_name_record_locale(enum OPENTYPE_PLATFORM_ID platform, USHORT la
         if (locale_name)
             MultiByteToWideChar(CP_ACP, 0, name_mac_langid_to_locale[lang_id], -1, locale, locale_len);
         else
-            wcscpy(locale, enusW);
+            wcscpy(locale, L"en-US");
         break;
     }
     case OPENTYPE_PLATFORM_WIN:
         if (!LCIDToLocaleName(MAKELCID(lang_id, SORT_DEFAULT), locale, locale_len, 0))
         {
             FIXME("failed to get locale name for lcid=0x%08x\n", MAKELCID(lang_id, SORT_DEFAULT));
-            wcscpy(locale, enusW);
+            wcscpy(locale, L"en-US");
         }
         break;
     case OPENTYPE_PLATFORM_UNICODE:
-        wcscpy(locale, enusW);
+        wcscpy(locale, L"en-US");
         break;
     default:
         FIXME("unknown platform %d\n", platform);
@@ -2301,7 +2300,6 @@ static BOOL opentype_is_english_namerecord(const struct dwrite_fonttable *table,
 static BOOL opentype_decode_namerecord(const struct dwrite_fonttable *table, unsigned int idx,
         IDWriteLocalizedStrings *strings)
 {
-    static const WCHAR enusW[] = {'e','n','-','U','S',0};
     USHORT lang_id, length, offset, encoding, platform;
     const struct name_header *header = (const struct name_header *)table->data;
     const struct name_record *record;
@@ -2350,7 +2348,7 @@ static BOOL opentype_decode_namerecord(const struct dwrite_fonttable *table, uns
         add_localizedstring(strings, locale, name_string);
         heap_free(name_string);
 
-        ret = !wcscmp(locale, enusW);
+        ret = !wcscmp(locale, L"en-US");
     }
     else
         FIXME("handle NAME format 1\n");
@@ -2443,14 +2441,13 @@ static HRESULT opentype_get_font_strings_from_id(const struct dwrite_fonttable *
 
 static WCHAR *meta_get_lng_name(WCHAR *str, WCHAR **ctx)
 {
-    static const WCHAR delimW[] = {',',' ',0};
     WCHAR *ret;
 
     if (!str) str = *ctx;
-    while (*str && wcschr(delimW, *str)) str++;
+    while (*str && wcschr(L", ", *str)) str++;
     if (!*str) return NULL;
     ret = str++;
-    while (*str && !wcschr(delimW, *str)) str++;
+    while (*str && !wcschr(L", ", *str)) str++;
     if (*str) *str++ = 0;
     *ctx = str;
 
@@ -2460,7 +2457,6 @@ static WCHAR *meta_get_lng_name(WCHAR *str, WCHAR **ctx)
 static HRESULT opentype_get_font_strings_from_meta(const struct file_stream_desc *stream_desc,
         DWRITE_INFORMATIONAL_STRING_ID id, IDWriteLocalizedStrings **ret)
 {
-    static const WCHAR emptyW[] = { 0 };
     const struct meta_data_map *maps;
     IDWriteLocalizedStrings *strings;
     struct dwrite_fonttable meta;
@@ -2528,7 +2524,7 @@ static HRESULT opentype_get_font_strings_from_meta(const struct file_stream_desc
 
                     while (token)
                     {
-                        add_localizedstring(strings, emptyW, token);
+                        add_localizedstring(strings, L"", token);
                         token = meta_get_lng_name(NULL, &ctx);
                     }
 
@@ -2632,7 +2628,6 @@ HRESULT opentype_get_font_facename(struct file_stream_desc *stream_desc, WCHAR *
     *lfname = 0;
     if (SUCCEEDED(opentype_get_font_strings_from_id(&name, OPENTYPE_STRING_FAMILY_NAME, &lfnames)))
     {
-        static const WCHAR enusW[] = {'e','n','-','u','s',0};
         WCHAR localeW[LOCALE_NAME_MAX_LENGTH];
         UINT32 index;
         BOOL exists;
@@ -2642,7 +2637,7 @@ HRESULT opentype_get_font_facename(struct file_stream_desc *stream_desc, WCHAR *
             IDWriteLocalizedStrings_FindLocaleName(lfnames, localeW, &index, &exists);
 
         if (!exists)
-            IDWriteLocalizedStrings_FindLocaleName(lfnames, enusW, &index, &exists);
+            IDWriteLocalizedStrings_FindLocaleName(lfnames, L"en-us", &index, &exists);
 
         if (exists) {
             UINT32 length = 0;
