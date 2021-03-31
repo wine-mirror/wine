@@ -389,64 +389,6 @@ static HRESULT convert_params(const DISPPARAMS *dp, jsval_t *buf, unsigned *argc
     return S_OK;
 }
 
-static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t *prop, WORD flags,
-        unsigned argc, jsval_t *argv, jsval_t *r, IServiceProvider *caller)
-{
-    HRESULT hres;
-
-    switch(prop->type) {
-    case PROP_BUILTIN: {
-        if(flags == DISPATCH_CONSTRUCT && (prop->flags & PROPF_METHOD)) {
-            WARN("%s is not a constructor\n", debugstr_w(prop->name));
-            return E_INVALIDARG;
-        }
-
-        if(prop->name || This->builtin_info->class != JSCLASS_FUNCTION) {
-            vdisp_t vthis;
-
-            if(This->builtin_info->class != JSCLASS_FUNCTION && prop->u.p->invoke != JSGlobal_eval)
-                flags &= ~DISPATCH_JSCRIPT_INTERNAL_MASK;
-            if(jsthis)
-                set_disp(&vthis, jsthis);
-            else
-                set_jsdisp(&vthis, This);
-            hres = prop->u.p->invoke(This->ctx, &vthis, flags, argc, argv, r);
-            vdisp_release(&vthis);
-        }else {
-            /* Function object calls are special case */
-            hres = Function_invoke(This, jsthis, flags, argc, argv, r);
-        }
-        return hres;
-    }
-    case PROP_PROTREF:
-        return invoke_prop_func(This->prototype, jsthis ? jsthis : (IDispatch *)&This->IDispatchEx_iface,
-                                This->prototype->props+prop->u.ref, flags, argc, argv, r, caller);
-    case PROP_JSVAL: {
-        if(!is_object_instance(prop->u.val)) {
-            FIXME("invoke %s\n", debugstr_jsval(prop->u.val));
-            return E_FAIL;
-        }
-
-        TRACE("call %s %p\n", debugstr_w(prop->name), get_object(prop->u.val));
-
-        return disp_call_value(This->ctx, get_object(prop->u.val),
-                               jsthis ? jsthis : (IDispatch*)&This->IDispatchEx_iface,
-                               flags, argc, argv, r);
-    }
-    case PROP_ACCESSOR:
-        FIXME("accessor\n");
-        return E_NOTIMPL;
-    case PROP_IDX:
-        FIXME("Invoking PROP_IDX not yet supported\n");
-        return E_NOTIMPL;
-    case PROP_DELETED:
-        assert(0);
-    }
-
-    assert(0);
-    return E_FAIL;
-}
-
 static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop,  jsval_t *r)
 {
     jsdisp_t *prop_obj = This;
@@ -569,6 +511,78 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val)
         This->builtin_info->on_put(This, prop->name);
 
     return S_OK;
+}
+
+static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t *prop, WORD flags,
+        unsigned argc, jsval_t *argv, jsval_t *r, IServiceProvider *caller)
+{
+    HRESULT hres;
+
+    switch(prop->type) {
+    case PROP_BUILTIN: {
+        if(flags == DISPATCH_CONSTRUCT && (prop->flags & PROPF_METHOD)) {
+            WARN("%s is not a constructor\n", debugstr_w(prop->name));
+            return E_INVALIDARG;
+        }
+
+        if(prop->name || This->builtin_info->class != JSCLASS_FUNCTION) {
+            vdisp_t vthis;
+
+            if(This->builtin_info->class != JSCLASS_FUNCTION && prop->u.p->invoke != JSGlobal_eval)
+                flags &= ~DISPATCH_JSCRIPT_INTERNAL_MASK;
+            if(jsthis)
+                set_disp(&vthis, jsthis);
+            else
+                set_jsdisp(&vthis, This);
+            hres = prop->u.p->invoke(This->ctx, &vthis, flags, argc, argv, r);
+            vdisp_release(&vthis);
+        }else {
+            /* Function object calls are special case */
+            hres = Function_invoke(This, jsthis, flags, argc, argv, r);
+        }
+        return hres;
+    }
+    case PROP_PROTREF:
+        return invoke_prop_func(This->prototype, jsthis ? jsthis : (IDispatch *)&This->IDispatchEx_iface,
+                                This->prototype->props+prop->u.ref, flags, argc, argv, r, caller);
+    case PROP_JSVAL: {
+        if(!is_object_instance(prop->u.val) || !get_object(prop->u.val)) {
+            FIXME("invoke %s\n", debugstr_jsval(prop->u.val));
+            return E_FAIL;
+        }
+
+        TRACE("call %s %p\n", debugstr_w(prop->name), get_object(prop->u.val));
+
+        return disp_call_value(This->ctx, get_object(prop->u.val),
+                               jsthis ? jsthis : (IDispatch*)&This->IDispatchEx_iface,
+                               flags, argc, argv, r);
+    }
+    case PROP_ACCESSOR:
+    case PROP_IDX: {
+        jsval_t val;
+
+        hres = prop_get(This, prop, &val);
+        if(FAILED(hres))
+            return hres;
+
+        if(is_object_instance(val) && get_object(val)) {
+            hres = disp_call_value(This->ctx, get_object(val),
+                                   jsthis ? jsthis : (IDispatch*)&This->IDispatchEx_iface,
+                                   flags, argc, argv, r);
+        }else {
+            FIXME("invoke %s\n", debugstr_jsval(val));
+            hres = E_NOTIMPL;
+        }
+
+        jsval_release(val);
+        return hres;
+    }
+    case PROP_DELETED:
+        assert(0);
+        break;
+    }
+
+    return E_FAIL;
 }
 
 HRESULT builtin_set_const(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t value)

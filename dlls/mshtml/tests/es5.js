@@ -513,6 +513,19 @@ sync_test("defineProperty", function() {
     test_accessor_prop_desc(obj, "no_setter", desc);
     obj.no_setter = false;
     ok(obj.no_setter === true, "no_setter = " + obj.no_setter);
+
+    /* call prop with getter */
+    desc = {
+        get: function() {
+            return function(x) {
+                ok(x === 100, "x = " + x);
+                return 10;
+            };
+        }
+    };
+    Object.defineProperty(obj, "funcprop", desc);
+    test_accessor_prop_desc(obj, "funcprop", desc);
+    ok(obj.funcprop(100) === 10, "obj.funcprop() = " + obj.funcprop(100));
 });
 
 sync_test("defineProperties", function() {
