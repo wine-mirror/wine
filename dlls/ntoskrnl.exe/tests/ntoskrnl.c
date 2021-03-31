@@ -173,6 +173,17 @@ static BOOL testsign_create_cert(struct testsign_context *ctx)
     ok(ret, "Failed to set provider info, error %#x\n", GetLastError());
 
     ctx->root_store = CertOpenStore(CERT_STORE_PROV_SYSTEM_REGISTRY_A, 0, 0, CERT_SYSTEM_STORE_LOCAL_MACHINE, "root");
+    if (!ctx->root_store && GetLastError() == ERROR_ACCESS_DENIED)
+    {
+        skip("Failed to open root store.\n");
+
+        ret = CertFreeCertificateContext(ctx->cert);
+        ok(ret, "Failed to free certificate, error %u\n", GetLastError());
+        ret = CryptReleaseContext(ctx->provider, 0);
+        ok(ret, "failed to release context, error %u\n", GetLastError());
+
+        return FALSE;
+    }
     ok(!!ctx->root_store, "Failed to open store, error %u\n", GetLastError());
     ret = CertAddCertificateContextToStore(ctx->root_store, ctx->cert, CERT_STORE_ADD_ALWAYS, &ctx->root_cert);
     if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
