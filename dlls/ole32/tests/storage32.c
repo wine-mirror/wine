@@ -3883,7 +3883,6 @@ static void test_custom_lockbytes(void)
     hr = IStorage_Commit(stg, 0);
     ok(hr==S_OK, "IStorage_Commit failed %x\n", hr);
 
-todo_wine
     ok(*(DWORD *)lockbytes->contents == 0xe011cfd0, "contents: %08x\n", *(DWORD *)lockbytes->contents);
 
     IStorage_Release(stg);

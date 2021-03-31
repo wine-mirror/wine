@@ -3016,19 +3016,9 @@ static void StorageImpl_SaveFileHeader(
 {
   BYTE   headerBigBlock[HEADER_SIZE];
   int    index;
-  HRESULT hr;
   ULARGE_INTEGER offset;
-  DWORD bytes_read, bytes_written;
+  DWORD bytes_written;
   DWORD major_version, dirsectorcount;
-
-  /*
-   * Get a pointer to the big block of data containing the header.
-   */
-  offset.u.HighPart = 0;
-  offset.u.LowPart = 0;
-  hr = StorageImpl_ReadAt(This, offset, headerBigBlock, HEADER_SIZE, &bytes_read);
-  if (SUCCEEDED(hr) && bytes_read != HEADER_SIZE)
-    hr = STG_E_FILENOTFOUND;
 
   if (This->bigBlockSizeBits == 0x9)
     major_version = 3;
@@ -3040,21 +3030,8 @@ static void StorageImpl_SaveFileHeader(
     major_version = 4;
   }
 
-  /*
-   * If the block read failed, the file is probably new.
-   */
-  if (FAILED(hr))
-  {
-    /*
-     * Initialize for all unknown fields.
-     */
-    memset(headerBigBlock, 0, HEADER_SIZE);
-
-    /*
-     * Initialize the magic number.
-     */
-    memcpy(headerBigBlock, STORAGE_magic, sizeof(STORAGE_magic));
-  }
+  memset(headerBigBlock, 0, HEADER_SIZE);
+  memcpy(headerBigBlock, STORAGE_magic, sizeof(STORAGE_magic));
 
   /*
    * Write the information to the header.
@@ -3150,9 +3127,7 @@ static void StorageImpl_SaveFileHeader(
       (This->bigBlockDepotStart[index]));
   }
 
-  /*
-   * Write the big block back to the file.
-   */
+  offset.QuadPart = 0;
   StorageImpl_WriteAt(This, offset, headerBigBlock, HEADER_SIZE, &bytes_written);
 }
 
