@@ -3049,7 +3049,6 @@ static HRESULT WINAPI d3d9_device_DrawIndexedPrimitive(IDirect3DDevice9Ex *iface
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     unsigned int index_count;
-    HRESULT hr;
 
     TRACE("iface %p, primitive_type %#x, base_vertex_idx %u, min_vertex_idx %u, "
             "vertex_count %u, start_idx %u, primitive_count %u.\n",
@@ -3063,6 +3062,12 @@ static HRESULT WINAPI d3d9_device_DrawIndexedPrimitive(IDirect3DDevice9Ex *iface
         WARN("Called without a valid vertex declaration set.\n");
         return D3DERR_INVALIDCALL;
     }
+    if (!device->stateblock_state->index_buffer)
+    {
+        wined3d_mutex_unlock();
+        WARN("Called without a valid index buffer set.\n");
+        return D3DERR_INVALIDCALL;
+    }
     index_count = vertex_count_from_primitive_count(primitive_type, primitive_count);
     d3d9_device_upload_sysmem_vertex_buffers(device, base_vertex_idx, min_vertex_idx, vertex_count);
     d3d9_device_upload_sysmem_index_buffer(device, start_idx, index_count);
@@ -3070,12 +3075,11 @@ static HRESULT WINAPI d3d9_device_DrawIndexedPrimitive(IDirect3DDevice9Ex *iface
     wined3d_stateblock_set_base_vertex_index(device->state, base_vertex_idx);
     wined3d_device_set_primitive_type(device->wined3d_device, wined3d_primitive_type_from_d3d(primitive_type), 0);
     wined3d_device_apply_stateblock(device->wined3d_device, device->state);
-    hr = wined3d_device_draw_indexed_primitive(device->wined3d_device, start_idx, index_count);
-    if (SUCCEEDED(hr))
-        d3d9_rts_flag_auto_gen_mipmap(device);
+    wined3d_device_draw_indexed_primitive(device->wined3d_device, start_idx, index_count);
+    d3d9_rts_flag_auto_gen_mipmap(device);
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 /* The caller is responsible for wined3d locking */
@@ -3322,13 +3326,12 @@ static HRESULT WINAPI d3d9_device_DrawIndexedPrimitiveUP(IDirect3DDevice9Ex *ifa
 
     wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     wined3d_device_set_primitive_type(device->wined3d_device, wined3d_primitive_type_from_d3d(primitive_type), 0);
-    hr = wined3d_device_draw_indexed_primitive(device->wined3d_device, ib_pos / idx_fmt_size, idx_count);
+    wined3d_device_draw_indexed_primitive(device->wined3d_device, ib_pos / idx_fmt_size, idx_count);
 
     wined3d_stateblock_set_stream_source(device->state, 0, NULL, 0, 0);
     wined3d_stateblock_set_index_buffer(device->state, NULL, WINED3DFMT_UNKNOWN);
 
-    if (SUCCEEDED(hr))
-        d3d9_rts_flag_auto_gen_mipmap(device);
+    d3d9_rts_flag_auto_gen_mipmap(device);
 
 done:
     wined3d_mutex_unlock();

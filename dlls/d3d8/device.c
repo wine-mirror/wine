@@ -2518,22 +2518,27 @@ static HRESULT WINAPI d3d8_device_DrawIndexedPrimitive(IDirect3DDevice8 *iface,
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
     unsigned int index_count;
     int base_vertex_index;
-    HRESULT hr;
 
     TRACE("iface %p, primitive_type %#x, min_vertex_idx %u, vertex_count %u, start_idx %u, primitive_count %u.\n",
             iface, primitive_type, min_vertex_idx, vertex_count, start_idx, primitive_count);
 
     index_count = vertex_count_from_primitive_count(primitive_type, primitive_count);
     wined3d_mutex_lock();
+    if (!device->stateblock_state->index_buffer)
+    {
+        wined3d_mutex_unlock();
+        WARN("Index buffer not set, returning D3D_OK.\n");
+        return D3D_OK;
+    }
     base_vertex_index = device->stateblock_state->base_vertex_index;
     d3d8_device_upload_sysmem_vertex_buffers(device, base_vertex_index + min_vertex_idx, vertex_count);
     d3d8_device_upload_sysmem_index_buffer(device, start_idx, index_count);
     wined3d_device_set_primitive_type(device->wined3d_device, wined3d_primitive_type_from_d3d(primitive_type), 0);
     wined3d_device_apply_stateblock(device->wined3d_device, device->state);
-    hr = wined3d_device_draw_indexed_primitive(device->wined3d_device, start_idx, index_count);
+    wined3d_device_draw_indexed_primitive(device->wined3d_device, start_idx, index_count);
     wined3d_mutex_unlock();
 
-    return hr;
+    return D3D_OK;
 }
 
 /* The caller is responsible for wined3d locking */
@@ -2752,7 +2757,7 @@ static HRESULT WINAPI d3d8_device_DrawIndexedPrimitiveUP(IDirect3DDevice8 *iface
 
     wined3d_device_set_primitive_type(device->wined3d_device, wined3d_primitive_type_from_d3d(primitive_type), 0);
     wined3d_device_apply_stateblock(device->wined3d_device, device->state);
-    hr = wined3d_device_draw_indexed_primitive(device->wined3d_device, ib_pos / idx_fmt_size, idx_count);
+    wined3d_device_draw_indexed_primitive(device->wined3d_device, ib_pos / idx_fmt_size, idx_count);
 
     wined3d_stateblock_set_stream_source(device->state, 0, NULL, 0, 0);
     wined3d_stateblock_set_index_buffer(device->state, NULL, WINED3DFMT_UNKNOWN);

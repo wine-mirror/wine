@@ -10176,7 +10176,7 @@ static void test_draw_primitive(void)
     hr = IDirect3DDevice8_SetIndices(device, NULL, 0);
     ok(SUCCEEDED(hr), "SetIndices failed, hr %#x.\n", hr);
     hr = IDirect3DDevice8_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, 0, 4, 0, 2);
-    todo_wine ok(SUCCEEDED(hr), "DrawIndexedPrimitive failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     /* Valid index buffer, NULL stream source. */
     hr = IDirect3DDevice8_SetIndices(device, index_buffer, 1);

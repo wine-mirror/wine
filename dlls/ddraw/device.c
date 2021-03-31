@@ -3736,7 +3736,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitive(IDirect3DDevice7 *iface,
     wined3d_stateblock_set_base_vertex_index(device->state, vb_pos / stride);
     wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     d3d_device_sync_surfaces(device);
-    hr = wined3d_device_draw_indexed_primitive(device->wined3d_device, ib_pos / sizeof(*indices), index_count);
+    wined3d_device_draw_indexed_primitive(device->wined3d_device, ib_pos / sizeof(*indices), index_count);
 
 done:
     wined3d_mutex_unlock();
@@ -4200,7 +4200,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
     wined3d_device_set_primitive_type(device->wined3d_device, wined3d_primitive_type_from_ddraw(primitive_type), 0);
     wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     d3d_device_sync_surfaces(device);
-    hr = wined3d_device_draw_indexed_primitive(device->wined3d_device, ib_pos / sizeof(WORD), index_count);
+    wined3d_device_draw_indexed_primitive(device->wined3d_device, ib_pos / sizeof(WORD), index_count);
 
 done:
     wined3d_mutex_unlock();
@@ -4478,7 +4478,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
     wined3d_device_set_primitive_type(device->wined3d_device, wined3d_primitive_type_from_ddraw(primitive_type), 0);
     wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     d3d_device_sync_surfaces(device);
-    hr = wined3d_device_draw_indexed_primitive(device->wined3d_device, ib_pos / sizeof(WORD), index_count);
+    wined3d_device_draw_indexed_primitive(device->wined3d_device, ib_pos / sizeof(WORD), index_count);
 
     wined3d_mutex_unlock();
 

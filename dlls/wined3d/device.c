@@ -4480,26 +4480,14 @@ void CDECL wined3d_device_draw_primitive_instanced_indirect(struct wined3d_devic
             state->patch_vertex_count, buffer, offset, false);
 }
 
-HRESULT CDECL wined3d_device_draw_indexed_primitive(struct wined3d_device *device, UINT start_idx, UINT index_count)
+void CDECL wined3d_device_draw_indexed_primitive(struct wined3d_device *device, UINT start_idx, UINT index_count)
 {
     struct wined3d_state *state = device->cs->c.state;
 
     TRACE("device %p, start_idx %u, index_count %u.\n", device, start_idx, index_count);
 
-    if (!state->index_buffer)
-    {
-        /* D3D9 returns D3DERR_INVALIDCALL when DrawIndexedPrimitive is called
-         * without an index buffer set. (The first time at least...)
-         * D3D8 simply dies, but I doubt it can do much harm to return
-         * D3DERR_INVALIDCALL there as well. */
-        WARN("Called without a valid index buffer set, returning WINED3DERR_INVALIDCALL.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
     wined3d_device_context_emit_draw(&device->cs->c, state->primitive_type, state->patch_vertex_count,
             state->base_vertex_index, start_idx, index_count, 0, 0, true);
-
-    return WINED3D_OK;
 }
 
 void CDECL wined3d_device_draw_indexed_primitive_instanced(struct wined3d_device *device,
