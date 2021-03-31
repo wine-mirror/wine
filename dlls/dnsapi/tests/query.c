@@ -40,7 +40,12 @@ static void test_DnsQuery(void)
 
     rec = NULL;
     status = DnsQuery_W(L"winehq.org", DNS_TYPE_A, DNS_QUERY_STANDARD, NULL, &rec, NULL);
-    ok(status == ERROR_SUCCESS, "DnsQuery_W(%s) => %d\n", wine_dbgstr_w(name), status);
+    if (status == ERROR_TIMEOUT)
+    {
+        skip("query timed out\n");
+        return;
+    }
+    ok(status == ERROR_SUCCESS, "got %d\n", status);
     DnsRecordListFree(rec, DnsFreeRecordList);
 
     status = DnsQuery_W(L"", DNS_TYPE_SRV, DNS_QUERY_STANDARD, NULL, &rec, NULL);
