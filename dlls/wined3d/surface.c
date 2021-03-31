@@ -1400,7 +1400,8 @@ static DWORD cpu_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit
         struct wined3d_context *context, struct wined3d_texture *src_texture, unsigned int src_sub_resource_idx,
         DWORD src_location, const RECT *src_rect, struct wined3d_texture *dst_texture,
         unsigned int dst_sub_resource_idx, DWORD dst_location, const RECT *dst_rect,
-        const struct wined3d_color_key *color_key, enum wined3d_texture_filter_type filter)
+        const struct wined3d_color_key *color_key, enum wined3d_texture_filter_type filter,
+        const struct wined3d_format *resolve_format)
 {
     struct wined3d_box dst_box = {dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom, 0, 1};
     struct wined3d_box src_box = {src_rect->left, src_rect->top, src_rect->right, src_rect->bottom, 0, 1};
@@ -1481,6 +1482,7 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
     struct wined3d_texture_sub_resource *src_sub_resource, *dst_sub_resource;
     struct wined3d_device *device = dst_texture->resource.device;
     struct wined3d_swapchain *src_swapchain, *dst_swapchain;
+    const struct wined3d_format *resolve_format = NULL;
     const struct wined3d_color_key *colour_key = NULL;
     DWORD src_location, dst_location, valid_locations;
     struct wined3d_context *context;
@@ -1510,6 +1512,9 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
                 fx->src_color_key.color_space_low_value,
                 fx->src_color_key.color_space_high_value);
         TRACE("resolve_format_id %s.\n", debug_d3dformat(fx->resolve_format_id));
+
+        if (fx->resolve_format_id != WINED3DFMT_UNKNOWN)
+            resolve_format = wined3d_get_format(device->adapter, fx->resolve_format_id, 0);
     }
 
     dst_sub_resource = &dst_texture->sub_resources[dst_sub_resource_idx];
@@ -1582,7 +1587,7 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
         context = context_acquire(device, dst_texture, dst_sub_resource_idx);
         valid_locations = device->blitter->ops->blitter_blit(device->blitter, blit_op, context,
                 src_texture, src_sub_resource_idx, src_texture->resource.draw_binding, &src_rect,
-                dst_texture, dst_sub_resource_idx, dst_location, &dst_rect, NULL, filter);
+                dst_texture, dst_sub_resource_idx, dst_location, &dst_rect, NULL, filter, resolve_format);
         context_release(context);
 
         wined3d_texture_validate_location(dst_texture, dst_sub_resource_idx, valid_locations);
@@ -1716,7 +1721,7 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
 
     valid_locations = device->blitter->ops->blitter_blit(device->blitter, blit_op, context,
             src_texture, src_sub_resource_idx, src_location, &src_rect,
-            dst_texture, dst_sub_resource_idx, dst_location, &dst_rect, colour_key, filter);
+            dst_texture, dst_sub_resource_idx, dst_location, &dst_rect, colour_key, filter, resolve_format);
 
     context_release(context);
 
