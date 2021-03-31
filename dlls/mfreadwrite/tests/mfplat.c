@@ -255,6 +255,7 @@ struct test_source
     IMFMediaEventQueue *event_queue;
     IMFPresentationDescriptor *pd;
     struct test_media_stream *streams[TEST_SOURCE_NUM_STREAMS];
+    unsigned stream_count;
     enum source_state state;
     CRITICAL_SECTION cs;
 };
@@ -352,7 +353,7 @@ static HRESULT WINAPI test_source_CreatePresentationDescriptor(IMFMediaSource *i
     }
     else
     {
-        for (i = 0; i < ARRAY_SIZE(source->streams); ++i)
+        for (i = 0; i < source->stream_count; ++i)
         {
             hr = MFCreateMediaType(&media_type);
             ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
@@ -368,9 +369,9 @@ static HRESULT WINAPI test_source_CreatePresentationDescriptor(IMFMediaSource *i
             IMFMediaType_Release(media_type);
         }
 
-        hr = MFCreatePresentationDescriptor(ARRAY_SIZE(sds), sds, &source->pd);
+        hr = MFCreatePresentationDescriptor(source->stream_count, sds, &source->pd);
         ok(hr == S_OK, "Failed to create presentation descriptor, hr %#x.\n", hr);
-        for (i = 0; i < ARRAY_SIZE(sds); ++i)
+        for (i = 0; i < source->stream_count; ++i)
             IMFStreamDescriptor_Release(sds[i]);
 
         *pd = source->pd;
@@ -413,7 +414,7 @@ static HRESULT WINAPI test_source_Start(IMFMediaSource *iface, IMFPresentationDe
     hr = IMFMediaEventQueue_QueueEventParamVar(source->event_queue, event_type, &GUID_NULL, S_OK, NULL);
     ok(hr == S_OK, "Failed to queue event, hr %#x.\n", hr);
 
-    for (i = 0; i < ARRAY_SIZE(source->streams); ++i)
+    for (i = 0; i < source->stream_count; ++i)
     {
         if (!is_stream_selected(pd, i))
             continue;
@@ -501,7 +502,7 @@ static struct test_media_stream *create_test_stream(DWORD stream_index, IMFMedia
     return stream;
 }
 
-static IMFMediaSource *create_test_source(int stream_num)
+static IMFMediaSource *create_test_source(int stream_count)
 {
     struct test_source *source;
     int i;
@@ -509,9 +510,10 @@ static IMFMediaSource *create_test_source(int stream_num)
     source = heap_alloc_zero(sizeof(*source));
     source->IMFMediaSource_iface.lpVtbl = &test_source_vtbl;
     source->refcount = 1;
+    source->stream_count = stream_count;
     MFCreateEventQueue(&source->event_queue);
     InitializeCriticalSection(&source->cs);
-    for (i = 0; i < stream_num; ++i)
+    for (i = 0; i < source->stream_count; ++i)
         source->streams[i] = create_test_stream(i, &source->IMFMediaSource_iface);
 
     return &source->IMFMediaSource_iface;
