@@ -18,14 +18,46 @@
 
 import "d2d1_1.idl";
 
-interface ID2D1DeviceContext1;
-
 typedef enum D2D1_RENDERING_PRIORITY
 {
     D2D1_RENDERING_PRIORITY_NORMAL = 0,
     D2D1_RENDERING_PRIORITY_LOW = 1,
     D2D1_RENDERING_PRIORITY_FORCE_DWORD = 0xffffffff,
 } D2D1_RENDERING_PRIORITY;
+
+[
+    object,
+    uuid(a16907d7-bc02-4801-99e8-8cf7f485f774),
+    local,
+]
+interface ID2D1GeometryRealization : ID2D1Resource
+{
+}
+
+[
+    object,
+    uuid(d37f57e4-6908-459f-a199-e72f24f79987),
+    local,
+]
+interface ID2D1DeviceContext1 : ID2D1DeviceContext
+{
+    HRESULT CreateFilledGeometryRealization(
+        [in] ID2D1Geometry *geometry,
+        [in] float tolerance,
+        [out] ID2D1GeometryRealization **realization
+    );
+    HRESULT CreateStrokedGeometryRealization(
+        [in] ID2D1Geometry *geometry,
+        [in] float tolerance,
+        [in] float stroke_width,
+        [in] ID2D1StrokeStyle *stroke_style,
+        [out] ID2D1GeometryRealization **realization
+    );
+    void DrawGeometryRealization(
+        [in] ID2D1GeometryRealization *realization,
+        [in] ID2D1Brush *brush
+    );
+}
 
 [
     object,
