@@ -148,17 +148,6 @@ static const IClassFactoryVtbl ComCatCFVtbl =
 
 static IClassFactory ComCatCF = { &ComCatCFVtbl };
 
-static const IClassFactoryVtbl GlobalOptionsCFVtbl =
-{
-    ClassFactory_QueryInterface,
-    ClassFactory_AddRef,
-    ClassFactory_Release,
-    GlobalOptions_CreateInstance,
-    ClassFactory_LockServer
-};
-
-IClassFactory GlobalOptionsCF = { &GlobalOptionsCFVtbl };
-
 static const IClassFactoryVtbl GlobalInterfaceTableCFVtbl =
 {
     ClassFactory_QueryInterface,
@@ -230,8 +219,6 @@ HRESULT WINAPI Ole32DllGetClassObject(REFCLSID rclsid, REFIID riid, void **obj)
         return IClassFactory_QueryInterface(&GlobalInterfaceTableCF, riid, obj);
     else if (IsEqualCLSID(rclsid, &CLSID_ManualResetEvent))
         return IClassFactory_QueryInterface(&ManualResetEventCF, riid, obj);
-    else if (IsEqualCLSID(rclsid, &CLSID_GlobalOptions))
-        return IClassFactory_QueryInterface(&GlobalOptionsCF, riid, obj);
     else if (IsEqualCLSID(rclsid, &CLSID_InProcFreeMarshaler))
         return FTMarshalCF_Create(riid, obj);
     else

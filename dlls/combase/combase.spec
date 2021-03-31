@@ -178,7 +178,7 @@
 @ stub DcomChannelSetHResult
 @ stdcall DllDebugObjectRPCHook(long ptr)
 @ stdcall DllGetActivationFactory(ptr ptr)
-@ stdcall -private DllGetClassObject(ptr ptr ptr) ole32.DllGetClassObject
+@ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stub EnableHookObject
 @ stdcall FreePropVariantArray(long ptr)
 @ stub FreePropVariantArrayWorker

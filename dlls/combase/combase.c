@@ -429,6 +429,150 @@ static void com_cleanup_tlsdata(void)
     NtCurrentTeb()->ReservedForOle = NULL;
 }
 
+struct global_options
+{
+    IGlobalOptions IGlobalOptions_iface;
+    LONG refcount;
+};
+
+static inline struct global_options *impl_from_IGlobalOptions(IGlobalOptions *iface)
+{
+    return CONTAINING_RECORD(iface, struct global_options, IGlobalOptions_iface);
+}
+
+static HRESULT WINAPI global_options_QueryInterface(IGlobalOptions *iface, REFIID riid, void **ppv)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), ppv);
+
+    if (IsEqualGUID(&IID_IGlobalOptions, riid) || IsEqualGUID(&IID_IUnknown, riid))
+    {
+        *ppv = iface;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI global_options_AddRef(IGlobalOptions *iface)
+{
+    struct global_options *options = impl_from_IGlobalOptions(iface);
+    LONG refcount = InterlockedIncrement(&options->refcount);
+
+    TRACE("%p, refcount %d.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI global_options_Release(IGlobalOptions *iface)
+{
+    struct global_options *options = impl_from_IGlobalOptions(iface);
+    LONG refcount = InterlockedDecrement(&options->refcount);
+
+    TRACE("%p, refcount %d.\n", iface, refcount);
+
+    if (!refcount)
+        heap_free(options);
+
+    return refcount;
+}
+
+static HRESULT WINAPI global_options_Set(IGlobalOptions *iface, GLOBALOPT_PROPERTIES property, ULONG_PTR value)
+{
+    FIXME("%p, %u, %lx.\n", iface, property, value);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI global_options_Query(IGlobalOptions *iface, GLOBALOPT_PROPERTIES property, ULONG_PTR *value)
+{
+    FIXME("%p, %u, %p.\n", iface, property, value);
+
+    return E_NOTIMPL;
+}
+
+static const IGlobalOptionsVtbl global_options_vtbl =
+{
+    global_options_QueryInterface,
+    global_options_AddRef,
+    global_options_Release,
+    global_options_Set,
+    global_options_Query
+};
+
+static HRESULT WINAPI class_factory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), ppv);
+
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IClassFactory))
+    {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI class_factory_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI class_factory_Release(IClassFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI class_factory_LockServer(IClassFactory *iface, BOOL fLock)
+{
+    TRACE("%d\n", fLock);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI global_options_CreateInstance(IClassFactory *iface, IUnknown *outer, REFIID riid, void **ppv)
+{
+    struct global_options *object;
+    HRESULT hr;
+
+    TRACE("%p, %s, %p.\n", outer, debugstr_guid(riid), ppv);
+
+    if (outer)
+        return E_INVALIDARG;
+
+    if (!(object = heap_alloc(sizeof(*object))))
+        return E_OUTOFMEMORY;
+    object->IGlobalOptions_iface.lpVtbl = &global_options_vtbl;
+    object->refcount = 1;
+
+    hr = IGlobalOptions_QueryInterface(&object->IGlobalOptions_iface, riid, ppv);
+    IGlobalOptions_Release(&object->IGlobalOptions_iface);
+    return hr;
+}
+
+static const IClassFactoryVtbl global_options_factory_vtbl =
+{
+    class_factory_QueryInterface,
+    class_factory_AddRef,
+    class_factory_Release,
+    global_options_CreateInstance,
+    class_factory_LockServer
+};
+
+static IClassFactory global_options_factory = { &global_options_factory_vtbl };
+
+static HRESULT get_builtin_class_factory(REFCLSID rclsid, REFIID riid, void **obj)
+{
+    if (IsEqualCLSID(rclsid, &CLSID_GlobalOptions))
+        return IClassFactory_QueryInterface(&global_options_factory, riid, obj);
+    return E_UNEXPECTED;
+}
+
 /***********************************************************************
  *           FreePropVariantArray    (combase.@)
  */
@@ -1569,7 +1713,11 @@ static HRESULT com_get_class_object(REFCLSID rclsid, DWORD clscontext,
                 IsEqualCLSID(rclsid, &CLSID_StdGlobalInterfaceTable))
         {
             apartment_release(apt);
-            return Ole32DllGetClassObject(rclsid, riid, obj);
+
+            if (IsEqualCLSID(rclsid, &CLSID_GlobalOptions))
+                return get_builtin_class_factory(rclsid, riid, obj);
+            else
+                return Ole32DllGetClassObject(rclsid, riid, obj);
         }
     }
 
@@ -3225,4 +3373,16 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
     }
 
     return TRUE;
+}
+
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **obj)
+{
+    TRACE("%s, %s, %p.\n", debugstr_guid(rclsid), debugstr_guid(riid), obj);
+
+    *obj = NULL;
+
+    if (IsEqualCLSID(rclsid, &CLSID_GlobalOptions))
+        return IClassFactory_QueryInterface(&global_options_factory, riid, obj);
+
+    return CLASS_E_CLASSNOTAVAILABLE;
 }
