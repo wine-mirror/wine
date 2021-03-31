@@ -73,6 +73,7 @@ BOOL is_wow64 = FALSE;
 /* system search path */
 static const WCHAR system_path[] = L"C:\\windows\\system32;C:\\windows\\system;C:\\windows";
 
+static BOOL is_prefix_bootstrap;  /* are we bootstrapping the prefix? */
 static BOOL imports_fixup_done = FALSE;  /* set once the imports have been fixed up, before attaching them */
 static BOOL process_detaching = FALSE;  /* set on process detach to avoid deadlocks with thread detach */
 static int free_lib_count;   /* recursion depth of LdrUnloadDll calls */
@@ -1918,10 +1919,14 @@ static NTSTATUS build_module( LPCWSTR load_path, const UNICODE_STRING *nt_name, 
 static void build_ntdll_module(void)
 {
     MEMORY_BASIC_INFORMATION meminfo;
+    FILE_BASIC_INFORMATION basic_info;
     UNICODE_STRING nt_name;
+    OBJECT_ATTRIBUTES attr;
     WINE_MODREF *wm;
 
     RtlInitUnicodeString( &nt_name, L"\\??\\C:\\windows\\system32\\ntdll.dll" );
+    InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
+    is_prefix_bootstrap = NtQueryAttributesFile( &attr, &basic_info) != STATUS_SUCCESS;
     NtQueryVirtualMemory( GetCurrentProcess(), build_ntdll_module, MemoryBasicInformation,
                           &meminfo, sizeof(meminfo), NULL );
     wm = alloc_module( meminfo.AllocationBase, &nt_name, TRUE );
@@ -2647,7 +2652,7 @@ static NTSTATUS search_dll_file( LPCWSTR paths, LPCWSTR search, UNICODE_STRING *
 
     if (found_image)
         status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
-    else if (!wcspbrk( search, L":/\\" ))
+    else if (is_prefix_bootstrap && !wcspbrk( search, L":/\\" ))
         status = find_builtin_without_file( search, nt_name, pwm, mapping, image_info, id );
 
 done:
