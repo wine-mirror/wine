@@ -1439,10 +1439,8 @@ BOOL is_builtin_path( const UNICODE_STRING *path, WORD *machine )
     if (path->Length > wcslen(system_dir) * sizeof(WCHAR) &&
         !wcsnicmp( path->Buffer, system_dir, wcslen(system_dir) ))
     {
-#ifndef _WIN64
         if (NtCurrentTeb64() && NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR])
             *machine = IMAGE_FILE_MACHINE_AMD64;
-#endif
         goto found;
     }
     if ((is_win64 || is_wow64) && path->Length > sizeof(wow64W) &&

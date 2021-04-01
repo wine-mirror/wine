@@ -64,9 +64,6 @@ extern void heap_set_debug_flags( HANDLE handle ) DECLSPEC_HIDDEN;
 extern void init_user_process_params(void) DECLSPEC_HIDDEN;
 extern void CDECL DECLSPEC_NORETURN signal_start_thread( CONTEXT *ctx ) DECLSPEC_HIDDEN;
 
-/* server support */
-extern BOOL is_wow64 DECLSPEC_HIDDEN;
-
 /* module handling */
 extern LIST_ENTRY tls_links DECLSPEC_HIDDEN;
 extern FARPROC RELAY_GetProcAddress( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
@@ -90,7 +87,9 @@ extern int CDECL NTDLL__vsnwprintf( WCHAR *str, SIZE_T len, const WCHAR *format,
 
 /* load order */
 
-#ifndef _WIN64
+#ifdef _WIN64
+static inline TEB64 *NtCurrentTeb64(void) { return NULL; }
+#else
 static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiBatchCount; }
 #endif
 

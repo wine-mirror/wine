@@ -73,14 +73,11 @@ static void set_wow64_environment( WCHAR **env )
             RtlSetEnvironmentVariable( env, &arch6432_strW, NULL );
         }
     }
-    else if (!RtlQueryEnvironmentVariable_U( *env, &arch_strW, &valW ))
+    else if (NtCurrentTeb64() && !RtlQueryEnvironmentVariable_U( *env, &arch_strW, &valW ))
     {
-        if (is_wow64)
-        {
-            RtlSetEnvironmentVariable( env, &arch6432_strW, &valW );
-            RtlInitUnicodeString( &nameW, L"x86" );
-            RtlSetEnvironmentVariable( env, &arch_strW, &nameW );
-        }
+        RtlSetEnvironmentVariable( env, &arch6432_strW, &valW );
+        RtlInitUnicodeString( &nameW, L"x86" );
+        RtlSetEnvironmentVariable( env, &arch_strW, &nameW );
     }
 
     /* set the ProgramFiles variables */

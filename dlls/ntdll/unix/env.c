@@ -1827,7 +1827,6 @@ static void run_wineboot( WCHAR *env, SIZE_T size )
 
     wine_server_fd_to_handle( 2, GENERIC_WRITE | SYNCHRONIZE, OBJ_INHERIT, &params.hStdError );
 
-#ifndef _WIN64
     if (NtCurrentTeb64() && !NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR])
     {
         NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR] = TRUE;
@@ -1837,10 +1836,9 @@ static void run_wineboot( WCHAR *env, SIZE_T size )
         NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR] = FALSE;
     }
     else
-#endif
-    status = NtCreateUserProcess( &process, &thread, PROCESS_ALL_ACCESS, THREAD_ALL_ACCESS,
-                                  NULL, NULL, 0, THREAD_CREATE_FLAGS_CREATE_SUSPENDED, &params,
-                                  &create_info, &ps_attr );
+        status = NtCreateUserProcess( &process, &thread, PROCESS_ALL_ACCESS, THREAD_ALL_ACCESS,
+                                      NULL, NULL, 0, THREAD_CREATE_FLAGS_CREATE_SUSPENDED, &params,
+                                      &create_info, &ps_attr );
     NtClose( params.hStdError );
 
     if (status)

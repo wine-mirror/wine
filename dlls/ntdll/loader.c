@@ -69,7 +69,6 @@ const WCHAR system_dir[] = L"C:\\windows\\system32\\";
 const WCHAR syswow64_dir[] = L"C:\\windows\\syswow64\\";
 
 HMODULE kernel32_handle = 0;
-BOOL is_wow64 = FALSE;
 
 /* system search path */
 static const WCHAR system_path[] = L"C:\\windows\\system32;C:\\windows\\system;C:\\windows";
@@ -2704,7 +2703,7 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, con
     }
 
     /* Win 7/2008R2 and up seem to re-enable WoW64 FS redirection when loading libraries */
-    if (is_wow64) RtlWow64EnableFsRedirectionEx( 0, &wow64_old_value );
+    RtlWow64EnableFsRedirectionEx( 0, &wow64_old_value );
 
     nt_name->Buffer = NULL;
 
@@ -4047,10 +4046,6 @@ static NTSTATUS process_init(void)
     InitializeListHead( &ldr.InLoadOrderModuleList );
     InitializeListHead( &ldr.InMemoryOrderModuleList );
     InitializeListHead( &ldr.InInitializationOrderModuleList );
-
-#ifndef _WIN64
-    is_wow64 = !!NtCurrentTeb64();
-#endif
 
     init_user_process_params();
     load_global_options();

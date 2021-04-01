@@ -3118,11 +3118,7 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
     int ret, len;
     struct stat st;
     char *unix_name = *buffer;
-#ifdef _WIN64
-    const BOOL redirect = FALSE;
-#else
     const BOOL redirect = NtCurrentTeb64() && !NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR];
-#endif
 
     /* try a shortcut first */
 
