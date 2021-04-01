@@ -14781,6 +14781,12 @@ msgid "reg: Unable to find the specified registry key\n"
 msgstr ""
 "reg: Das System konnte den angegebenen Schlüssel oder Wert nicht finden\n"
 
+#: programs/reg/reg.rc:175
+#, fuzzy
+#| msgid "reg: Unable to open the registry key '%1'.\n"
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "reg: Der Schlüssel '%1' konnte nicht geöffnet werden.\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Registrierung"

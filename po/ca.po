@@ -14665,6 +14665,12 @@ msgstr ""
 "reg: El sistema no ha pogut trobar la clau de registre especificada o el "
 "valor de registre especificat\n"
 
+#: programs/reg/reg.rc:175
+#, fuzzy
+#| msgid "reg: Unable to open the registry key '%1'.\n"
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "reg: No s'ha pogut obrir la clau de registre '%1'.\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Registre"

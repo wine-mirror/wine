@@ -14696,6 +14696,12 @@ msgstr "Failas „%1“ jau egzistuoja. Ar norite jį perrašyti?"
 msgid "reg: Unable to find the specified registry key\n"
 msgstr "reg: Sistemai nepavyko rasti nurodyto registro rakto ar reikšmės\n"
 
+#: programs/reg/reg.rc:175
+#, fuzzy
+#| msgid "reg: Unable to open the registry key '%1'.\n"
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "reg: Nepavyko atverti registro rakto „%1“.\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "R&egistras"

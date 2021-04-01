@@ -14796,6 +14796,12 @@ msgstr "Soubor „%1“ již existuje. Chcete jej nahradit?"
 msgid "reg: Unable to find the specified registry key\n"
 msgstr "Chyba: Systém nemohl najít specifikovaný klíč registru nebo hodnotu\n"
 
+#: programs/reg/reg.rc:175
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "Chyba: Nepodařilo se přidat klíče na vzdálený stroj\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Registr"

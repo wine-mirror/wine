@@ -15259,6 +15259,12 @@ msgstr ""
 "Fejl: Systemet kunne ikke finde, den angivet registrerings nøgle eller "
 "værdi\n"
 
+#: programs/reg/reg.rc:175
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "Fejl: Kunne ikke tilføje nøgler til fjern maskinen\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Register"

@@ -14759,6 +14759,12 @@ msgid "reg: Unable to find the specified registry key\n"
 msgstr ""
 "Greška: Sustav nije mogao pronaći navedeni ključ ili vrijednost u registru.\n"
 
+#: programs/reg/reg.rc:175
+#, fuzzy
+#| msgid "Could not open the file."
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "Datoteka se ne može otvoriti."
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Registar"

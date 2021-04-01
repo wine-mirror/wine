@@ -14776,6 +14776,12 @@ msgstr ""
 "reg: Het systeem kon de gespecificeerde registersleutel of waarde niet "
 "vinden\n"
 
+#: programs/reg/reg.rc:175
+#, fuzzy
+#| msgid "reg: Unable to open the registry key '%1'.\n"
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "reg: Onmogelijk om de registersleutel '%1' te openen.\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Registerbestand"

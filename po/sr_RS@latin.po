@@ -15077,6 +15077,12 @@ msgstr ""
 msgid "reg: Unable to find the specified registry key\n"
 msgstr "Želite li da izbrišete „%1“?"
 
+#: programs/reg/reg.rc:175
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "Želite li da izbrišete „%1“?"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr ""

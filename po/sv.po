@@ -14942,6 +14942,12 @@ msgid "reg: Unable to find the specified registry key\n"
 msgstr ""
 "reg: Systemet kunde inte hitta angiven nyckel eller värde i registret\n"
 
+#: programs/reg/reg.rc:175
+#, fuzzy
+#| msgid "reg: Unable to open the registry key '%1'.\n"
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "reg: Kan inte öppna registernyckeln '%1'.\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Register"

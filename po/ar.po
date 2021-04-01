@@ -15301,6 +15301,12 @@ msgstr "الملف المحدد موجود بالفعل ، هل ترغب باس�
 msgid "reg: Unable to find the specified registry key\n"
 msgstr "خطأ : فشل النظام في العثور على المفتاح أو القيمة المحددة\n"
 
+#: programs/reg/reg.rc:175
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "خطأ : تعذر إضافة المفاتيح للجهاز البعيد\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "ال&سجل"

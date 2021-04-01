@@ -13994,6 +13994,10 @@ msgstr ""
 msgid "reg: Unable to find the specified registry key\n"
 msgstr ""
 
+#: programs/reg/reg.rc:175
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr ""
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr ""

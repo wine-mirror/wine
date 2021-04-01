@@ -14550,6 +14550,12 @@ msgid "reg: Unable to find the specified registry key\n"
 msgstr ""
 "reg: システムは指定されたレジストリ キーまたは値を見つけられませんでした\n"
 
+#: programs/reg/reg.rc:175
+#, fuzzy
+#| msgid "reg: Unable to open the registry key '%1'.\n"
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "reg: レジストリ キー '%1' を開けません。\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "レジストリ(&R)"

@@ -15279,6 +15279,12 @@ msgstr "Določena datoteka že obstaja. Ali jo želite zamenjati?"
 msgid "reg: Unable to find the specified registry key\n"
 msgstr "Napaka: sistem ni našel navedenega ključa ali vrednosti registra\n"
 
+#: programs/reg/reg.rc:175
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "Napaka: ni mogoče dodati ključa na oddaljen računalnik\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Register"

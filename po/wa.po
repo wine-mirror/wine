@@ -14214,6 +14214,11 @@ msgstr ""
 msgid "reg: Unable to find the specified registry key\n"
 msgstr "Fitchîs tekse (*.txt).\n"
 
+#: programs/reg/reg.rc:175
+#, fuzzy
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "Fitchîs tekse (*.txt).\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr ""

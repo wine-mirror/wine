@@ -14684,6 +14684,10 @@ msgstr "The file '%1' already exists. Do you want to overwrite it?"
 msgid "reg: Unable to find the specified registry key\n"
 msgstr "reg: Unable to find the specified registry key\n"
 
+#: programs/reg/reg.rc:175
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "reg: Unable to import the registry key '%1'\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Registry"

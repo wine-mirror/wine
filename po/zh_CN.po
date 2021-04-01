@@ -14337,6 +14337,12 @@ msgstr "文件 '%1' 已存在。您想要覆盖它吗?"
 msgid "reg: Unable to find the specified registry key\n"
 msgstr "reg：系统无法找到指定的注册表键或值\n"
 
+#: programs/reg/reg.rc:175
+#, fuzzy
+#| msgid "reg: Unable to open the registry key '%1'.\n"
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "reg: 无法打开注册表键 '%1'。\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "注册表(&R)"

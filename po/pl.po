@@ -14977,6 +14977,12 @@ msgstr "Plik '%1' już istnieje. Czy chcesz go zastąpić?"
 msgid "reg: Unable to find the specified registry key\n"
 msgstr "reg: System nie mógł znaleźć podanej wartości lub klucza rejestru\n"
 
+#: programs/reg/reg.rc:175
+#, fuzzy
+#| msgid "reg: Unable to open the registry key '%1'.\n"
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "reg: Nie udało się otworzyć klucza rejestru '%1'.\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Rejestr"

@@ -15340,6 +15340,12 @@ msgstr ""
 "Errore: il sistema non è riuscito a trovare la chiave di registro o il "
 "valore specificati\n"
 
+#: programs/reg/reg.rc:175
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "Errore: impossibile aggiungere chiavi alla macchina remota\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Registro"

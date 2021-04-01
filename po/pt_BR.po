@@ -14613,6 +14613,12 @@ msgstr ""
 "reg: O sistema foi incapaz de encontrar a chave de registo ou valor "
 "especificado\n"
 
+#: programs/reg/reg.rc:175
+#, fuzzy
+#| msgid "reg: Unable to open the registry key '%1'.\n"
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "reg: Não foi possível abrir a chave de registro '%1'.\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Registro"

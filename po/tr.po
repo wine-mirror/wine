@@ -14571,6 +14571,12 @@ msgid "reg: Unable to find the specified registry key\n"
 msgstr ""
 "reg: Sistem belirtilen kayıt defteri anahtarını veya değerini bulamadı\n"
 
+#: programs/reg/reg.rc:175
+#, fuzzy
+#| msgid "reg: Unable to open the registry key '%1'.\n"
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "reg: '%1' kayıt defteri anahtarı açılamıyor.\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Kayıt Defteri"

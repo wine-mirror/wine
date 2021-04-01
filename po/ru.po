@@ -14651,6 +14651,12 @@ msgstr "Файл «%1» уже существует. Вы хотите заме�
 msgid "reg: Unable to find the specified registry key\n"
 msgstr "reg: не удалось найти указанный раздел реестра или значение\n"
 
+#: programs/reg/reg.rc:175
+#, fuzzy
+#| msgid "reg: Unable to open the registry key '%1'.\n"
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "reg: не удалось открыть ключ «%1».\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Реестр"

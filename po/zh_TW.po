@@ -15211,6 +15211,12 @@ msgstr "檔案已經存在。您要取代嗎？"
 msgid "reg: Unable to find the specified registry key\n"
 msgstr "錯誤：系統無法找到指定的註冊表索引鍵或值\n"
 
+#: programs/reg/reg.rc:175
+#, fuzzy
+#| msgid "Error: Unable to add keys to remote machine\n"
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "錯誤：無法加入索引鍵到遠端機器\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "註冊表(&R)"

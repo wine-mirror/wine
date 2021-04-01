@@ -14588,6 +14588,12 @@ msgstr ""
 msgid "reg: Unable to find the specified registry key\n"
 msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
 
+#: programs/reg/reg.rc:175
+#, fuzzy
+#| msgid "Error: Unable to terminate process \"%1\".\n"
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Registry"

@@ -14250,6 +14250,12 @@ msgstr "El ficheru «%1» yá esiste. ¿Quies sobrescribilu?"
 msgid "reg: Unable to find the specified registry key\n"
 msgstr "reg: La sintaxis nun ye válida. "
 
+#: programs/reg/reg.rc:175
+#, fuzzy
+#| msgid "reg: Invalid syntax. "
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "reg: La sintaxis nun ye válida. "
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Rexistru"

@@ -14508,6 +14508,12 @@ msgstr "'%1' 파일이 이미 존재합니다. 덮어쓰시겠습니까?"
 msgid "reg: Unable to find the specified registry key\n"
 msgstr "reg: 시스템에서 지정한 레지스트리 키 또는 값을 찾을 수 없습니다\n"
 
+#: programs/reg/reg.rc:175
+#, fuzzy
+#| msgid "reg: Unable to open the registry key '%1'.\n"
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "레지스트리 키 '%1'을(를) 열 수 없습니다.\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "레지스트리(&R)"
