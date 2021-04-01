@@ -474,6 +474,8 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val)
         return prop->u.p->setter(This->ctx, This, val);
     case PROP_PROTREF:
     case PROP_DELETED:
+        if(!This->extensible)
+            return S_OK;
         prop->type = PROP_JSVAL;
         prop->flags = PROPF_ENUMERABLE | PROPF_CONFIGURABLE | PROPF_WRITABLE;
         prop->u.val = jsval_undefined();
@@ -1747,6 +1749,7 @@ HRESULT init_dispex(jsdisp_t *dispex, script_ctx_t *ctx, const builtin_info_t *b
     dispex->IDispatchEx_iface.lpVtbl = &DispatchExVtbl;
     dispex->ref = 1;
     dispex->builtin_info = builtin_info;
+    dispex->extensible = TRUE;
 
     dispex->props = heap_alloc_zero(sizeof(dispex_prop_t)*(dispex->buf_size=4));
     if(!dispex->props)
@@ -1894,7 +1897,7 @@ HRESULT jsdisp_get_id(jsdisp_t *jsdisp, const WCHAR *name, DWORD flags, DISPID *
     dispex_prop_t *prop;
     HRESULT hres;
 
-    if(flags & fdexNameEnsure)
+    if(jsdisp->extensible && (flags & fdexNameEnsure))
         hres = ensure_prop_name(jsdisp, name, PROPF_ENUMERABLE | PROPF_CONFIGURABLE | PROPF_WRITABLE,
                                 &prop);
     else
@@ -2147,8 +2150,11 @@ HRESULT jsdisp_propput(jsdisp_t *obj, const WCHAR *name, DWORD flags, jsval_t va
     dispex_prop_t *prop;
     HRESULT hres;
 
-    hres = ensure_prop_name(obj, name, flags, &prop);
-    if(FAILED(hres))
+    if(obj->extensible)
+        hres = ensure_prop_name(obj, name, flags, &prop);
+    else
+        hres = find_prop_name_prot(obj, string_hash(name), name, &prop);
+    if(FAILED(hres) || !prop)
         return hres;
 
     return prop_put(obj, prop, val);

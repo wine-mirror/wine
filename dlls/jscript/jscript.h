@@ -247,6 +247,7 @@ struct jsdisp_t {
     DWORD prop_cnt;
     dispex_prop_t *props;
     script_ctx_t *ctx;
+    BOOL extensible;
 
     jsdisp_t *prototype;
 

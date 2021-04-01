@@ -947,7 +947,6 @@ sync_test("preventExtensions", function() {
     var r = Object.preventExtensions(o);
     ok(r === o, "r != o");
     o.x = 1;
-    todo_wine.
     ok(!("x" in o), "x property added to o");
     try {
         Object.defineProperty(o, "y", { value: true });
@@ -959,6 +958,13 @@ sync_test("preventExtensions", function() {
 
     r = Object.preventExtensions(o);
     ok(r === o, "r != o");
+
+    function Constr() {}
+    o = Object.preventExtensions(new Constr());
+    Constr.prototype.prop = 1;
+    ok(o.prop === 1, "o.prop = " + o.prop);
+    o.prop = 2;
+    ok(o.prop === 1, "o.prop = " + o.prop);
 
     ok(Object.preventExtensions.length === 1, "Object.preventExtensions.length = " + Object.preventExtensions.length);
 });
