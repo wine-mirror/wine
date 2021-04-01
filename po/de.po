@@ -14570,7 +14570,9 @@ msgstr ""
 "\n"
 
 #: programs/reg/reg.rc:116
-msgid "The operation completed successfully\n"
+#, fuzzy
+#| msgid "The operation completed successfully\n"
+msgid "reg: The operation completed successfully\n"
 msgstr "Der Vorgang wurde erfolgreich abgeschlossen\n"
 
 #: programs/reg/reg.rc:117
@@ -14612,7 +14614,9 @@ msgid "The registry value '%1' already exists. Do you want to overwrite it?"
 msgstr "Der Wert '%1' existiert bereits. Möchten Sie ihn ersetzen?"
 
 #: programs/reg/reg.rc:129
-msgid "The registry operation was cancelled\n"
+#, fuzzy
+#| msgid "The registry operation was cancelled\n"
+msgid "reg: The registry operation was cancelled\n"
 msgstr "Der Registrierungsvorgang wurde abgebrochen\n"
 
 #: programs/reg/reg.rc:130 programs/regedit/regedit.rc:239

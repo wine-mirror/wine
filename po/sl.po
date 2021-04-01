@@ -15079,7 +15079,9 @@ msgid ""
 msgstr ""
 
 #: programs/reg/reg.rc:116
-msgid "The operation completed successfully\n"
+#, fuzzy
+#| msgid "The operation completed successfully\n"
+msgid "reg: The operation completed successfully\n"
 msgstr "Opravilo se je uspešno izvedlo\n"
 
 #: programs/reg/reg.rc:117
@@ -15133,8 +15135,10 @@ msgid "The registry value '%1' already exists. Do you want to overwrite it?"
 msgstr "Določena datoteka že obstaja. Ali jo želite zamenjati?"
 
 #: programs/reg/reg.rc:129
-msgid "The registry operation was cancelled\n"
-msgstr ""
+#, fuzzy
+#| msgid "Operation canceled by user.\n"
+msgid "reg: The registry operation was cancelled\n"
+msgstr "Uporabnik je prekinil opravilo.\n"
 
 #: programs/reg/reg.rc:130 programs/regedit/regedit.rc:239
 msgid "(Default)"

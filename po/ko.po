@@ -14334,7 +14334,9 @@ msgid ""
 msgstr ""
 
 #: programs/reg/reg.rc:116
-msgid "The operation completed successfully\n"
+#, fuzzy
+#| msgid "The operation completed successfully\n"
+msgid "reg: The operation completed successfully\n"
 msgstr "작업이 성공적으로 끝났습니다\n"
 
 #: programs/reg/reg.rc:117
@@ -14377,7 +14379,9 @@ msgid "The registry value '%1' already exists. Do you want to overwrite it?"
 msgstr "레지스트리 값 '%1'(이)가 이미 존재합니다. 덮어쓰시겠습니까?"
 
 #: programs/reg/reg.rc:129
-msgid "The registry operation was cancelled\n"
+#, fuzzy
+#| msgid "The registry operation was cancelled\n"
+msgid "reg: The registry operation was cancelled\n"
 msgstr "레지스트리 작업이 취소되었습니다\n"
 
 #: programs/reg/reg.rc:130 programs/regedit/regedit.rc:239

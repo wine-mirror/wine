@@ -14641,7 +14641,9 @@ msgid ""
 msgstr ""
 
 #: programs/reg/reg.rc:116
-msgid "The operation completed successfully\n"
+#, fuzzy
+#| msgid "The operation completed successfully\n"
+msgid "reg: The operation completed successfully\n"
 msgstr "The operation completed successfully\n"
 
 #: programs/reg/reg.rc:117
@@ -14697,8 +14699,9 @@ msgstr ""
 "האם ברצונך להחליף אותו?"
 
 #: programs/reg/reg.rc:129
-msgid "The registry operation was cancelled\n"
-msgstr ""
+#, fuzzy
+msgid "reg: The registry operation was cancelled\n"
+msgstr "תכניות התקנה.\n"
 
 #: programs/reg/reg.rc:130 programs/regedit/regedit.rc:239
 msgid "(Default)"

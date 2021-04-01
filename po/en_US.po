@@ -14479,8 +14479,8 @@ msgstr ""
 "\n"
 
 #: programs/reg/reg.rc:116
-msgid "The operation completed successfully\n"
-msgstr "The operation completed successfully\n"
+msgid "reg: The operation completed successfully\n"
+msgstr "reg: The operation completed successfully\n"
 
 #: programs/reg/reg.rc:117
 msgid "reg: Invalid registry key\n"
@@ -14521,8 +14521,8 @@ msgid "The registry value '%1' already exists. Do you want to overwrite it?"
 msgstr "The registry value '%1' already exists. Do you want to overwrite it?"
 
 #: programs/reg/reg.rc:129
-msgid "The registry operation was cancelled\n"
-msgstr "The registry operation was cancelled\n"
+msgid "reg: The registry operation was cancelled\n"
+msgstr "reg: The registry operation was cancelled\n"
 
 #: programs/reg/reg.rc:130 programs/regedit/regedit.rc:239
 msgid "(Default)"

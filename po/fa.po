@@ -14074,7 +14074,7 @@ msgid ""
 msgstr ""
 
 #: programs/reg/reg.rc:116
-msgid "The operation completed successfully\n"
+msgid "reg: The operation completed successfully\n"
 msgstr ""
 
 #: programs/reg/reg.rc:117
@@ -14120,8 +14120,9 @@ msgstr ""
 "آیا می‌خواهید یک پرونده‌ی جدید ایجاد کنید؟"
 
 #: programs/reg/reg.rc:129
-msgid "The registry operation was cancelled\n"
-msgstr ""
+#, fuzzy
+msgid "reg: The registry operation was cancelled\n"
+msgstr "&پرونده.\n"
 
 #: programs/reg/reg.rc:130 programs/regedit/regedit.rc:239
 msgid "(Default)"

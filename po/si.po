@@ -14186,7 +14186,9 @@ msgid ""
 msgstr ""
 
 #: programs/reg/reg.rc:116
-msgid "The operation completed successfully\n"
+#, fuzzy
+#| msgid "The operation completed successfully\n"
+msgid "reg: The operation completed successfully\n"
 msgstr "මෙහෙයුම හරියට ඉවර උනා\n"
 
 #: programs/reg/reg.rc:117
@@ -14229,7 +14231,9 @@ msgid "The registry value '%1' already exists. Do you want to overwrite it?"
 msgstr "රෙජිස්තරයේ අගය '%1' දැනටමත් තියෙනවා. ඔබට ඒක උඩින් ලියන්න ඕනෙද?"
 
 #: programs/reg/reg.rc:129
-msgid "The registry operation was cancelled\n"
+#, fuzzy
+#| msgid "The registry operation was cancelled\n"
+msgid "reg: The registry operation was cancelled\n"
 msgstr "රෙජිස්තරයේ මෙහෙයුම අවලංගු කරා\n"
 
 #: programs/reg/reg.rc:130 programs/regedit/regedit.rc:239
