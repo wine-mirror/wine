@@ -2389,7 +2389,7 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
  *
  * Build the module data for the main image.
  */
-static void build_main_module(void)
+static WINE_MODREF *build_main_module(void)
 {
     SECTION_IMAGE_INFORMATION info;
     UNICODE_STRING nt_name;
@@ -2419,11 +2419,12 @@ static void build_main_module(void)
     if (status) goto failed;
     status = build_module( NULL, &nt_name, &module, &info, NULL, DONT_RESOLVE_DLL_REFERENCES, &wm );
     RtlFreeUnicodeString( &nt_name );
-    if (!status) return;
+    if (!status) return wm;
 failed:
     MESSAGE( "wine: failed to create main module for %s, status %x\n",
              debugstr_us(&params->ImagePathName), status );
     NtTerminateProcess( GetCurrentProcess(), status );
+    return NULL;  /* unreached */
 }
 
 
@@ -3513,13 +3514,15 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
 
     RtlEnterCriticalSection( &loader_section );
 
-    wm = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
-    assert( wm );
-
     if (!imports_fixup_done)
     {
         ANSI_STRING func_name;
         WINE_MODREF *kernel32;
+
+        wm = build_main_module();
+        wm->ldr.LoadCount = -1;
+
+        build_ntdll_module();
 
         if ((status = load_dll( NULL, L"kernel32.dll", NULL, 0, &kernel32 )) != STATUS_SUCCESS)
         {
@@ -3549,6 +3552,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
         }
         imports_fixup_done = TRUE;
     }
+    else wm = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
 
     RtlAcquirePebLock();
     InsertHeadList( &tls_links, &NtCurrentTeb()->TlsLinks );
@@ -3565,7 +3569,6 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
                  debugstr_w(NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer), status );
             NtTerminateProcess( GetCurrentProcess(), status );
         }
-        wm->ldr.LoadCount = -1;
         wm->ldr.Flags |= LDR_PROCESS_ATTACHED;  /* don't try to attach again */
         if (wm->ldr.ActivationContext)
             RtlActivateActivationContext( 0, wm->ldr.ActivationContext, &cookie );
@@ -4052,8 +4055,6 @@ static NTSTATUS process_init(void)
     init_user_process_params();
     load_global_options();
     version_init();
-    build_main_module();
-    build_ntdll_module();
 
 #ifndef _WIN64
     if (NtCurrentTeb64())
