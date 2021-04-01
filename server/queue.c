@@ -3098,25 +3098,13 @@ DECL_HANDLER(get_key_state)
         set_reply_data( desktop->keystate, size );
         release_object( desktop );
     }
-    else if (!current->queue)
-    {
-        unsigned char *keystate;
-        /* fallback to desktop keystate */
-        if (!(desktop = get_thread_desktop( current, 0 ))) return;
-        if (req->key >= 0) reply->state = desktop->keystate[req->key & 0xff] & ~0x40;
-        if ((keystate = set_reply_data_size( size )))
-        {
-            unsigned int i;
-            for (i = 0; i < size; i++) keystate[i] = desktop->keystate[i] & ~0x40;
-        }
-        release_object( desktop );
-    }
     else
     {
-        unsigned char *keystate = current->queue->input->keystate;
+        struct msg_queue *queue = get_current_queue();
+        unsigned char *keystate = queue->input->keystate;
         if (req->key >= 0)
         {
-            if (current->queue) sync_input_keystate( current->queue->input );
+            sync_input_keystate( queue->input );
             reply->state = keystate[req->key & 0xff];
         }
         set_reply_data( keystate, size );
