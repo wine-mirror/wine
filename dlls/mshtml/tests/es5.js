@@ -958,6 +958,8 @@ sync_test("preventExtensions", function() {
 
     r = Object.preventExtensions(o);
     ok(r === o, "r != o");
+    r = Object.isExtensible(o);
+    ok(r === false, "isExtensible(o) returned " + r);
 
     function Constr() {}
     o = Object.preventExtensions(new Constr());
@@ -965,8 +967,21 @@ sync_test("preventExtensions", function() {
     ok(o.prop === 1, "o.prop = " + o.prop);
     o.prop = 2;
     ok(o.prop === 1, "o.prop = " + o.prop);
+    r = Object.isExtensible(o);
+    ok(r === false, "isExtensible(o) returned " + r);
+
+    r = Object.isExtensible({});
+    ok(r === true, "isExtensible(o) returned " + r);
+
+    try {
+        Object.isExtensible(1);
+        ok(false, "exception expected");
+    }catch(e) {
+        ok(e.name === "TypeError", "got " + e.name + " exception");
+    }
 
     ok(Object.preventExtensions.length === 1, "Object.preventExtensions.length = " + Object.preventExtensions.length);
+    ok(Object.isExtensible.length === 1, "Object.isExtensible.length = " + Object.isExtensible.length);
 });
 
 sync_test("head_setter", function() {
