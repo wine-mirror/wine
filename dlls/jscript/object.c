@@ -711,7 +711,30 @@ static HRESULT Object_freeze(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
         return E_NOTIMPL;
     }
 
-    jsdisp_freeze(obj);
+    jsdisp_freeze(obj, FALSE);
+    if(r) *r = jsval_obj(jsdisp_addref(obj));
+    return S_OK;
+}
+
+static HRESULT Object_seal(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc,
+                           jsval_t *argv, jsval_t *r)
+{
+    jsdisp_t *obj;
+
+    if(!argc || !is_object_instance(argv[0]) || !get_object(argv[0])) {
+        WARN("argument is not an object\n");
+        return JS_E_OBJECT_EXPECTED;
+    }
+
+    TRACE("(%s)\n", debugstr_jsval(argv[0]));
+
+    obj = to_jsdisp(get_object(argv[0]));
+    if(!obj) {
+        FIXME("Non-JS object\n");
+        return E_NOTIMPL;
+    }
+
+    jsdisp_freeze(obj, TRUE);
     if(r) *r = jsval_obj(jsdisp_addref(obj));
     return S_OK;
 }
@@ -747,6 +770,7 @@ static const builtin_prop_t ObjectConstr_props[] = {
     {L"isExtensible",             Object_isExtensible,                PROPF_ES5|PROPF_METHOD|1},
     {L"keys",                     Object_keys,                        PROPF_ES5|PROPF_METHOD|1},
     {L"preventExtensions",        Object_preventExtensions,           PROPF_ES5|PROPF_METHOD|1},
+    {L"seal",                     Object_seal,                        PROPF_ES5|PROPF_METHOD|1},
 };
 
 static const builtin_info_t ObjectConstr_info = {

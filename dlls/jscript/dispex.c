@@ -2628,12 +2628,12 @@ HRESULT jsdisp_define_data_property(jsdisp_t *obj, const WCHAR *name, unsigned f
     return jsdisp_define_property(obj, name, &prop_desc);
 }
 
-void jsdisp_freeze(jsdisp_t *obj)
+void jsdisp_freeze(jsdisp_t *obj, BOOL seal)
 {
     unsigned int i;
 
     for(i = 0; i < obj->prop_cnt; i++) {
-        if(obj->props[i].type == PROP_JSVAL)
+        if(!seal && obj->props[i].type == PROP_JSVAL)
             obj->props[i].flags &= ~PROPF_WRITABLE;
         obj->props[i].flags &= ~PROPF_CONFIGURABLE;
     }

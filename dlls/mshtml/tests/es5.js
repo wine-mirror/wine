@@ -1024,6 +1024,47 @@ sync_test("freeze", function() {
     ok(o.accprop === 3, "o.accprop = " + o.accprop);
 });
 
+sync_test("seal", function() {
+    ok(Object.seal.length === 1, "Object.seal.length = " + Object.seal.length);
+    try {
+        Object.seal(1);
+        ok(false, "exception expected");
+    }catch(e) {
+        ok(e.name === "TypeError", "got " + e.name + " exception");
+    }
+
+    function f() {}
+
+    var o = {}, r;
+    o.prop = 1;
+    o.func = f;
+    Object.defineProperty(o, "accprop", {
+        get: function() {
+            return r;
+        },
+        set: function(v) {
+            r = v;
+        }
+    });
+
+    test_own_data_prop_desc(o, "prop", true, true, true);
+    r = Object.seal(o);
+    ok(r === o, "r != o");
+    test_own_data_prop_desc(o, "prop", true, true, false);
+    test_own_data_prop_desc(o, "func", true, true, false);
+    ok(!Object.isExtensible(o), "o is still extensible");
+    o.prop = false;
+    o.func = false;
+    ok(o.prop === false, "o.prop = " + o.prop);
+    ok(o.func === false, "o.func = " + o.func);
+
+    r = 1;
+    o.accprop = 2;
+    ok(r === 2, "r = " + r);
+    r = 3;
+    ok(o.accprop === 3, "o.accprop = " + o.accprop);
+});
+
 sync_test("head_setter", function() {
     document.head = "";
     ok(typeof(document.head) === "object", "typeof(document.head) = " + typeof(document.head));
