@@ -14668,8 +14668,7 @@ msgstr "Error: Unable to add keys to remote machine\n"
 #, fuzzy
 #| msgid ""
 #| "Error: The system was unable to find the specified registry key or value\n"
-msgid ""
-"reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry value\n"
 msgstr ""
 "Error: The system was unable to find the specified registry key or value\n"
 

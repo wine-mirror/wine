@@ -15106,8 +15106,7 @@ msgstr "Napaka: ni mogoče dodati ključa na oddaljen računalnik\n"
 #, fuzzy
 #| msgid ""
 #| "Error: The system was unable to find the specified registry key or value\n"
-msgid ""
-"reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry value\n"
 msgstr "Napaka: sistem ni našel navedenega ključa ali vrednosti registra\n"
 
 #: programs/reg/reg.rc:121

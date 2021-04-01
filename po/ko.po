@@ -14354,8 +14354,10 @@ msgid "reg: Unable to access remote machine\n"
 msgstr "reg: 원격 컴퓨터에 액세스할 수 없습니다\n"
 
 #: programs/reg/reg.rc:120
-msgid ""
-"reg: The system was unable to find the specified registry key or value\n"
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry value\n"
 msgstr "reg: 시스템에서 지정한 레지스트리 키 또는 값을 찾을 수 없습니다\n"
 
 #: programs/reg/reg.rc:121

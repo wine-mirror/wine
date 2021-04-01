@@ -14509,8 +14509,10 @@ msgid "reg: Unable to access remote machine\n"
 msgstr "reg: Nepavyko prieiti prie nuotolinio kompiuterio\n"
 
 #: programs/reg/reg.rc:120
-msgid ""
-"reg: The system was unable to find the specified registry key or value\n"
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry value\n"
 msgstr "reg: Sistemai nepavyko rasti nurodyto registro rakto ar reikšmės\n"
 
 #: programs/reg/reg.rc:121

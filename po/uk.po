@@ -14491,8 +14491,10 @@ msgid "reg: Unable to access remote machine\n"
 msgstr "reg: неможливо отримати доступ до віддаленої машини\n"
 
 #: programs/reg/reg.rc:120
-msgid ""
-"reg: The system was unable to find the specified registry key or value\n"
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry value\n"
 msgstr "reg: не вдалось знайти вказаний ключ реєстру чи значення\n"
 
 #: programs/reg/reg.rc:121

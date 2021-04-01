@@ -15128,8 +15128,7 @@ msgstr "خطأ : تعذر إضافة المفاتيح للجهاز البعيد\
 #, fuzzy
 #| msgid ""
 #| "Error: The system was unable to find the specified registry key or value\n"
-msgid ""
-"reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry value\n"
 msgstr "خطأ : فشل النظام في العثور على المفتاح أو القيمة المحددة\n"
 
 #: programs/reg/reg.rc:121

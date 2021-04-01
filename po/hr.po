@@ -14584,8 +14584,7 @@ msgstr ""
 #, fuzzy
 #| msgid ""
 #| "Error: The system was unable to find the specified registry key or value\n"
-msgid ""
-"reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry value\n"
 msgstr ""
 "Greška: Sustav nije mogao pronaći navedeni ključ ili vrijednost u registru.\n"
 

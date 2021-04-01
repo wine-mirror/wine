@@ -14411,8 +14411,10 @@ msgid "reg: Unable to access remote machine\n"
 msgstr "reg: Uzak makineye erişilemiyor\n"
 
 #: programs/reg/reg.rc:120
-msgid ""
-"reg: The system was unable to find the specified registry key or value\n"
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry value\n"
 msgstr ""
 "reg: Sistem belirtilen kayıt defteri anahtarını veya değerini bulamadı\n"
 

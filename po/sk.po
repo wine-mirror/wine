@@ -14408,9 +14408,10 @@ msgid "reg: Unable to access remote machine\n"
 msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
 
 #: programs/reg/reg.rc:120
-msgid ""
-"reg: The system was unable to find the specified registry key or value\n"
-msgstr ""
+#, fuzzy
+#| msgid "Error: Unable to terminate process \"%1\".\n"
+msgid "reg: Unable to find the specified registry value\n"
+msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
 
 #: programs/reg/reg.rc:121
 #, fuzzy

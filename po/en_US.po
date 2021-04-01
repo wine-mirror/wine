@@ -14495,10 +14495,8 @@ msgid "reg: Unable to access remote machine\n"
 msgstr "reg: Unable to access remote machine\n"
 
 #: programs/reg/reg.rc:120
-msgid ""
-"reg: The system was unable to find the specified registry key or value\n"
-msgstr ""
-"reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry value\n"
+msgstr "reg: Unable to find the specified registry value\n"
 
 #: programs/reg/reg.rc:121
 msgid "reg: Unsupported registry data type [%1]\n"

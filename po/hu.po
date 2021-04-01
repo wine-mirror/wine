@@ -15077,8 +15077,7 @@ msgstr "Hiba: nem lehet kulcsokat hozzáadni a távoli gépnél\n"
 #, fuzzy
 #| msgid ""
 #| "Error: The system was unable to find the specified registry key or value\n"
-msgid ""
-"reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry value\n"
 msgstr ""
 "Hiba: A rendszer nem találta a megadott regisztrációs kulcsot vagy értéket\n"
 

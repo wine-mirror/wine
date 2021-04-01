@@ -14580,8 +14580,10 @@ msgid "reg: Unable to access remote machine\n"
 msgstr "reg: Kan de computer op afstand niet benaderen\n"
 
 #: programs/reg/reg.rc:120
-msgid ""
-"reg: The system was unable to find the specified registry key or value\n"
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry value\n"
 msgstr ""
 "reg: Het systeem kon de gespecificeerde registersleutel of waarde niet "
 "vinden\n"

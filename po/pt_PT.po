@@ -14797,8 +14797,10 @@ msgid "reg: Unable to access remote machine\n"
 msgstr "reg: Incapaz de aceder à máquina remota\n"
 
 #: programs/reg/reg.rc:120
-msgid ""
-"reg: The system was unable to find the specified registry key or value\n"
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry value\n"
 msgstr ""
 "reg: O sistema foi incapaz de encontrar no Registo a chave ou valor "
 "especificados\n"

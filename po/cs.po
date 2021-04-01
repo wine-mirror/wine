@@ -14637,8 +14637,7 @@ msgstr "Chyba: Nepodařilo se přidat klíče na vzdálený stroj\n"
 #, fuzzy
 #| msgid ""
 #| "Error: The system was unable to find the specified registry key or value\n"
-msgid ""
-"reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry value\n"
 msgstr "Chyba: Systém nemohl najít specifikovaný klíč registru nebo hodnotu\n"
 
 #: programs/reg/reg.rc:121

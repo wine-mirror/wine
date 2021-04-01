@@ -14100,9 +14100,10 @@ msgid "reg: Unable to access remote machine\n"
 msgstr "reg: Nun pue accedese a la máquina remota\n"
 
 #: programs/reg/reg.rc:120
-msgid ""
-"reg: The system was unable to find the specified registry key or value\n"
-msgstr ""
+#, fuzzy
+#| msgid "reg: Invalid syntax. "
+msgid "reg: Unable to find the specified registry value\n"
+msgstr "reg: La sintaxis nun ye válida. "
 
 #: programs/reg/reg.rc:121
 msgid "reg: Unsupported registry data type [%1]\n"
