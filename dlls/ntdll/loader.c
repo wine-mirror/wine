@@ -4020,7 +4020,6 @@ static void map_wow64cpu(void)
  */
 static NTSTATUS process_init(void)
 {
-    INITIAL_TEB stack;
     TEB *teb = NtCurrentTeb();
     PEB *peb = teb->Peb;
 
@@ -4069,11 +4068,6 @@ static NTSTATUS process_init(void)
         map_wow64cpu();
     }
 #endif
-
-    RtlCreateUserStack( 0, 0, 0, 0x10000, 0x10000, &stack );
-    teb->Tib.StackBase = stack.StackBase;
-    teb->Tib.StackLimit = stack.StackLimit;
-    teb->DeallocationStack = stack.DeallocationStack;
     return STATUS_SUCCESS;
 }
 

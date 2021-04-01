@@ -1797,6 +1797,7 @@ static struct unix_funcs unix_funcs =
 static void start_main_thread(void)
 {
     NTSTATUS status;
+    INITIAL_TEB stack;
     TEB *teb = virtual_alloc_first_teb();
 
     signal_init_threading();
@@ -1809,6 +1810,10 @@ static void start_main_thread(void)
     syscall_dispatcher = signal_init_syscalls();
     init_files();
     init_startup_info();
+    virtual_alloc_thread_stack( &stack, 0, 0, NULL );
+    teb->Tib.StackBase = stack.StackBase;
+    teb->Tib.StackLimit = stack.StackLimit;
+    teb->DeallocationStack = stack.DeallocationStack;
     NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
     load_ntdll();
     load_libwine();
