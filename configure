@@ -20739,6 +20739,7 @@ wine_fn_config_makefile dlls/mfmediaengine/tests enable_tests
 wine_fn_config_makefile dlls/mfplat enable_mfplat
 wine_fn_config_makefile dlls/mfplat/tests enable_tests
 wine_fn_config_makefile dlls/mfplay enable_mfplay
+wine_fn_config_makefile dlls/mfplay/tests enable_tests
 wine_fn_config_makefile dlls/mfreadwrite enable_mfreadwrite
 wine_fn_config_makefile dlls/mfreadwrite/tests enable_tests
 wine_fn_config_makefile dlls/mfuuid enable_mfuuid

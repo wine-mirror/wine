@@ -1,0 +1,5 @@
+TESTDLL   = mfplay.dll
+IMPORTS   = mfplay
+
+C_SRCS = \
+	mfplay.c
