@@ -14344,6 +14344,11 @@ msgstr ""
 "\n"
 "คุณต้องการสร้างใหม่ไม่?"
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+msgid "reg: Unable to find the specified registry key\n"
+msgstr "แฟ้มตํารา (*.txt).\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr ""

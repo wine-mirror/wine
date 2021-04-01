@@ -14420,6 +14420,12 @@ msgstr "Nevalida nomo de kunuzata aparato.\n"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "Dosiero estas jam ekzistanta. Ĉu vi volas anstataŭi ĝin?"
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "reg: Unable to find the specified registry key\n"
+msgstr "Ĉu vi estas certa pri forigo de '%1'?"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Registrejo"

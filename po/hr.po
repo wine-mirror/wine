@@ -14751,6 +14751,14 @@ msgstr "Greška: Neispravan naziv ključa\n"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "Odabrana datoteka već postoji. Želite li je zamijeniti?"
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+#| msgid ""
+#| "Error: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry key\n"
+msgstr ""
+"Greška: Sustav nije mogao pronaći navedeni ključ ili vrijednost u registru.\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Registar"

@@ -13903,6 +13903,10 @@ msgstr ""
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr ""
 
+#: programs/reg/reg.rc:174
+msgid "reg: Unable to find the specified registry key\n"
+msgstr ""
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr ""

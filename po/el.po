@@ -14291,6 +14291,11 @@ msgstr ""
 "Το αρχείο υπάρχει ήδη.\n"
 "Θέλετε να το αντικαταστήσετε;"
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+msgid "reg: Unable to find the specified registry key\n"
+msgstr "Μη έγγυρος(οι) χαρακτήρας(ες) στο μονοπάτι.\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr ""

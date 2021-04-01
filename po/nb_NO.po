@@ -14800,6 +14800,14 @@ msgstr "reg: Ugyldig systemnøkkel [%1]\n"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "Filen \"%1\" finnes fra før. Vil du erstatte den?"
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry key\n"
+msgstr ""
+"reg: Systemet klarte ikke finne den angitte registernøkkelen eller -verdien\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Register"

@@ -14680,6 +14680,10 @@ msgstr "reg: Invalid system key [%1]\n"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "The file '%1' already exists. Do you want to overwrite it?"
 
+#: programs/reg/reg.rc:174
+msgid "reg: Unable to find the specified registry key\n"
+msgstr "reg: Unable to find the specified registry key\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Registry"

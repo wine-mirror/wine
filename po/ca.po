@@ -14656,6 +14656,15 @@ msgstr "reg: Nom de clau de sistema no vàlid [%1]\n"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "El fitxer '%1' ja existeix. El voleu sobreescriure?"
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry key\n"
+msgstr ""
+"reg: El sistema no ha pogut trobar la clau de registre especificada o el "
+"valor de registre especificat\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Registre"

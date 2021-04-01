@@ -15016,6 +15016,14 @@ msgstr "reg: Nume de cheie nevalid\n"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "Valoare de registru „%1” există deja. Doriți să o înlocuiți?"
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry key\n"
+msgstr ""
+"reg: Sistemul nu a putut găsi cheia sau valoarea de registru specificată\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Registru"

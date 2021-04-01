@@ -14857,6 +14857,15 @@ msgstr "reg: Nombre de clave inválido[%1]\n"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "El archivo '%1' ya existe. ¿Desea reemplazarlo?"
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry key\n"
+msgstr ""
+"reg: El sistema no pudo encontrar la clave o el valor del Registro "
+"especificado\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Registro"

@@ -14895,6 +14895,12 @@ msgstr ""
 "Датотека већ постоји.\n"
 "Желите ли да је замените?"
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "reg: Unable to find the specified registry key\n"
+msgstr "Желите ли да избришете „%1“?"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr ""

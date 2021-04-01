@@ -14350,6 +14350,12 @@ msgstr "reg: අවලංගු පද්ධතිය යතුර [%1]\n"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "'%1' ගොනුව දැනටමත් තියෙනවා. ඔබට ඒක උඩින් ලියන්න ඕනෙද?"
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+#| msgid "reg: Unable to open the registry key '%1'.\n"
+msgid "reg: Unable to find the specified registry key\n"
+msgstr "reg: රෙජිස්තරයේ යතුර '%1' අරින්න බැහැ.\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "රෙජිස්තරය (&R)"

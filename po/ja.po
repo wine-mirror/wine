@@ -14542,6 +14542,14 @@ msgstr "reg: システム キーが無効です [%1]\n"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "ファイル '%1' はすでに存在します。上書きしますか?"
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry key\n"
+msgstr ""
+"reg: システムは指定されたレジストリ キーまたは値を見つけられませんでした\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "レジストリ(&R)"

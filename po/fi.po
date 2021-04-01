@@ -14651,6 +14651,13 @@ msgstr "reg: Järjestelmäavain [%1] ei kelpaa\n"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "Tiedosto '%1' on jo olemassa. Haluatko korvata sen?"
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry key\n"
+msgstr "reg: Järjestelmä ei löytänyt annettua rekisteriavainta tai -arvoa\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Rekisteri"

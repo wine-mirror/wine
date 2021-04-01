@@ -14689,6 +14689,13 @@ msgstr "reg: Netinkamas sisteminis raktas [%1]\n"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "Failas „%1“ jau egzistuoja. Ar norite jį perrašyti?"
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry key\n"
+msgstr "reg: Sistemai nepavyko rasti nurodyto registro rakto ar reikšmės\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "R&egistras"

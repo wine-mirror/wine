@@ -14563,6 +14563,14 @@ msgstr "reg: Geçersiz anahtar adı [%1]\n"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "Belirtilen '%1' dosyası zaten var. Üzerine yazılsın mı?"
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry key\n"
+msgstr ""
+"reg: Sistem belirtilen kayıt defteri anahtarını veya değerini bulamadı\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Kayıt Defteri"

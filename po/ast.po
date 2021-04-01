@@ -14244,6 +14244,12 @@ msgstr ""
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "El ficheru «%1» yá esiste. ¿Quies sobrescribilu?"
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+#| msgid "reg: Invalid syntax. "
+msgid "reg: Unable to find the specified registry key\n"
+msgstr "reg: La sintaxis nun ye válida. "
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Rexistru"

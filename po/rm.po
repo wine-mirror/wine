@@ -14076,6 +14076,11 @@ msgstr ""
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr ""
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+msgid "reg: Unable to find the specified registry key\n"
+msgstr "Tuot las datotecas (*.*).\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr ""

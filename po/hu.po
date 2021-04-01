@@ -15244,6 +15244,14 @@ msgstr "Hiba: Érvénytelen kulcsnév\n"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "A fájl már létezik. Lecseréli a fájlt?"
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+#| msgid ""
+#| "Error: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry key\n"
+msgstr ""
+"Hiba: A rendszer nem találta a megadott regisztrációs kulcsot vagy értéket\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Fájl"

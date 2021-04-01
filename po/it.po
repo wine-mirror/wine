@@ -15331,6 +15331,15 @@ msgstr "Errore: nome della chiave non valido\n"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "Il file specificato esiste già. Vuoi sostituirlo?"
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+#| msgid ""
+#| "Error: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry key\n"
+msgstr ""
+"Errore: il sistema non è riuscito a trovare la chiave di registro o il "
+"valore specificati\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Registro"

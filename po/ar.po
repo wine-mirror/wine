@@ -15294,6 +15294,13 @@ msgstr "خطأ : اسم المفتاح غير سليم\n"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "الملف المحدد موجود بالفعل ، هل ترغب باستبداله ؟"
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+#| msgid ""
+#| "Error: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry key\n"
+msgstr "خطأ : فشل النظام في العثور على المفتاح أو القيمة المحددة\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "ال&سجل"

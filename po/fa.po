@@ -14246,6 +14246,11 @@ msgstr ""
 "\n"
 "آیا می‌خواهید یک پرونده‌ی جدید ایجاد کنید؟"
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+msgid "reg: Unable to find the specified registry key\n"
+msgstr "پرونده‌های متنی (*.txt).\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr ""

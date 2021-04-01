@@ -15204,6 +15204,13 @@ msgstr "錯誤：無效的索引鍵名稱\n"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "檔案已經存在。您要取代嗎？"
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+#| msgid ""
+#| "Error: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry key\n"
+msgstr "錯誤：系統無法找到指定的註冊表索引鍵或值\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "註冊表(&R)"

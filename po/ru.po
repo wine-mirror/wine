@@ -14644,6 +14644,13 @@ msgstr "reg: неверный системный ключ [%1]\n"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "Файл «%1» уже существует. Вы хотите заменить его?"
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry key\n"
+msgstr "reg: не удалось найти указанный раздел реестра или значение\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Реестр"

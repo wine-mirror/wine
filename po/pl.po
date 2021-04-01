@@ -14970,6 +14970,13 @@ msgstr "reg: Nieprawidłowy klucz systemowy [%1]\n"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "Plik '%1' już istnieje. Czy chcesz go zastąpić?"
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry key\n"
+msgstr "reg: System nie mógł znaleźć podanej wartości lub klucza rejestru\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Rejestr"

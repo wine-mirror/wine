@@ -14837,6 +14837,14 @@ msgstr ""
 "הקובץ כבר קיים.\n"
 "האם ברצונך להחליף אותו?"
 
+#: programs/reg/reg.rc:174
+#, fuzzy
+#| msgid ""
+#| "Error: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry key\n"
+msgstr ""
+"Error: The system was unable to find the specified registry key or value\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&רישום המערכת"
