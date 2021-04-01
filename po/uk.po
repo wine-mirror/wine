@@ -3876,15 +3876,15 @@ msgstr "Умовна компіляція вимкнена"
 msgid "Expected '@'"
 msgstr "Очікується ';'"
 
-#: dlls/jscript/jscript.rc:78
+#: dlls/jscript/jscript.rc:79
 msgid "Microsoft JScript compilation error"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:79
+#: dlls/jscript/jscript.rc:80
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:80 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:81 dlls/vbscript/vbscript.rc:64
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
@@ -3978,14 +3978,18 @@ msgstr ""
 "Властивість 'writable' не може бути встановлена на 'true' для цього об'єкта"
 
 #: dlls/jscript/jscript.rc:74
+msgid "Cannot define property '|': object is not extensible"
+msgstr ""
+
+#: dlls/jscript/jscript.rc:75
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "Неможливо перевизначити властивість, яка не підлягає налаштуванню '|'"
 
-#: dlls/jscript/jscript.rc:75
+#: dlls/jscript/jscript.rc:76
 msgid "Cannot modify non-writable property '|'"
 msgstr "Неможливо змінити властивість, яка не підлягає запису '|'"
 
-#: dlls/jscript/jscript.rc:76
+#: dlls/jscript/jscript.rc:77
 msgid "Property cannot have both accessors and a value"
 msgstr "Властивість не може одночасно мати доступ і значення"
 

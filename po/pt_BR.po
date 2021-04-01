@@ -3871,15 +3871,15 @@ msgstr "Compilação condicional está desligada"
 msgid "Expected '@'"
 msgstr "Esperado '@'"
 
-#: dlls/jscript/jscript.rc:78
+#: dlls/jscript/jscript.rc:79
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript erro de compilação"
 
-#: dlls/jscript/jscript.rc:79
+#: dlls/jscript/jscript.rc:80
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript erro de execução"
 
-#: dlls/jscript/jscript.rc:80 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:81 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Erro de execução desconhecido"
 
@@ -3972,14 +3972,18 @@ msgstr ""
 "'verdade' neste objeto"
 
 #: dlls/jscript/jscript.rc:74
+msgid "Cannot define property '|': object is not extensible"
+msgstr ""
+
+#: dlls/jscript/jscript.rc:75
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "Não pode redefinir propriedade não configurável '|'"
 
-#: dlls/jscript/jscript.rc:75
+#: dlls/jscript/jscript.rc:76
 msgid "Cannot modify non-writable property '|'"
 msgstr "Não pode modificar propriedade não gravável '|'"
 
-#: dlls/jscript/jscript.rc:76
+#: dlls/jscript/jscript.rc:77
 msgid "Property cannot have both accessors and a value"
 msgstr "Propriedade não pode ter ambos acessores e valor"
 

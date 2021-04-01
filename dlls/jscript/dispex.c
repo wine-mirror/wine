@@ -2503,6 +2503,9 @@ HRESULT jsdisp_define_property(jsdisp_t *obj, const WCHAR *name, property_desc_t
     if(FAILED(hres))
         return hres;
 
+    if((!prop || prop->type == PROP_DELETED) && !obj->extensible)
+        return throw_error(obj->ctx, JS_E_OBJECT_NONEXTENSIBLE, name);
+
     if(!prop && !(prop = alloc_prop(obj, name, PROP_DELETED, 0)))
        return E_OUTOFMEMORY;
 

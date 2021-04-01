@@ -950,7 +950,6 @@ sync_test("preventExtensions", function() {
     ok(!("x" in o), "x property added to o");
     try {
         Object.defineProperty(o, "y", { value: true });
-        todo_wine.
         ok(false, "expected exception");
     }catch(e) {
         ok(e.name === "TypeError", "got " + e.name + " exception");

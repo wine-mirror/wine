@@ -68,6 +68,7 @@
 #define IDS_INVALID_LENGTH                  0x13A5
 #define IDS_ARRAY_EXPECTED                  0x13A7
 #define IDS_INVALID_WRITABLE_PROP_DESC      0x13AC
+#define IDS_OBJECT_NONEXTENSIBLE            0x13D5
 #define IDS_NONCONFIGURABLE_REDEFINED       0x13D6
 #define IDS_NONWRITABLE_MODIFIED            0x13D7
 /* FIXME: This is not compatible with native, but we would
