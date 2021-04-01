@@ -3919,6 +3919,7 @@ todo_wine {
 static void test_GlobalOptions(void)
 {
     IGlobalOptions *global_options;
+    ULONG_PTR value;
     HRESULT hres;
 
     CoInitialize(NULL);
@@ -3932,6 +3933,18 @@ static void test_GlobalOptions(void)
         CoUninitialize();
         return;
     }
+
+    hres = IGlobalOptions_Query(global_options, 0, &value);
+    ok(FAILED(hres), "Unexpected hr %#x.\n", hres);
+
+    hres = IGlobalOptions_Query(global_options, COMGLB_PROPERTIES_RESERVED3 + 1, &value);
+    ok(FAILED(hres), "Unexpected hr %#x.\n", hres);
+
+    value = ~0u;
+    hres = IGlobalOptions_Query(global_options, COMGLB_EXCEPTION_HANDLING, &value);
+    ok(hres == S_OK || broken(hres == E_FAIL) /* Vista */, "Unexpected hr %#x.\n", hres);
+    if (SUCCEEDED(hres))
+        ok(value == COMGLB_EXCEPTION_HANDLE, "Unexpected value %ld.\n", value);
 
     IGlobalOptions_Release(global_options);
 

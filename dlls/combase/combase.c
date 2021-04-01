@@ -38,6 +38,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 HINSTANCE hProxyDll;
 
+static ULONG_PTR global_options[COMGLB_PROPERTIES_RESERVED3 + 1];
+
 /* Ole32 exports */
 extern void WINAPI DestroyRunningObjectTable(void);
 extern HRESULT WINAPI Ole32DllGetClassObject(REFCLSID rclsid, REFIID riid, void **obj);
@@ -490,9 +492,14 @@ static HRESULT WINAPI global_options_Set(IGlobalOptions *iface, GLOBALOPT_PROPER
 
 static HRESULT WINAPI global_options_Query(IGlobalOptions *iface, GLOBALOPT_PROPERTIES property, ULONG_PTR *value)
 {
-    FIXME("%p, %u, %p.\n", iface, property, value);
+    TRACE("%p, %u, %p.\n", iface, property, value);
 
-    return E_NOTIMPL;
+    if (property < COMGLB_EXCEPTION_HANDLING || property > COMGLB_PROPERTIES_RESERVED3)
+        return E_INVALIDARG;
+
+    *value = global_options[property];
+
+    return S_OK;
 }
 
 static const IGlobalOptionsVtbl global_options_vtbl =
