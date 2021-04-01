@@ -8522,10 +8522,19 @@ static void test_events(void)
 
 static void test_createProcessingInstruction(void)
 {
+    static const WCHAR xml1[] = L"<?xml version=\"1.0\"?>\r\n<test/>\r\n";
+    static const char xml2[] = "<?xml version=\"1.0\" encoding=\"windows-1252\"?>\r\n<test/>\r\n";
     IXMLDOMProcessingInstruction *pi;
     IXMLDOMDocument *doc;
+    IXMLDOMNode *node;
+    IXMLDOMElement *element;
     WCHAR buff[10];
+    BSTR xml;
+    VARIANT var;
     HRESULT hr;
+    IStream *stream;
+    HGLOBAL global;
+    char *p;
 
     doc = create_document(&IID_IXMLDOMDocument);
 
@@ -8537,6 +8546,47 @@ static void test_createProcessingInstruction(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     IXMLDOMProcessingInstruction_Release(pi);
+    IXMLDOMDocument_Release(doc);
+
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_createProcessingInstruction(doc, _bstr_("xml"), _bstr_("version=\"1.0\" encoding=\"windows-1252\""), &pi);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IXMLDOMProcessingInstruction_QueryInterface(pi, &IID_IXMLDOMNode, (void **)&node);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IXMLDOMDocument_appendChild(doc, node, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IXMLDOMNode_Release(node);
+    IXMLDOMProcessingInstruction_Release(pi);
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("test"), &element);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IXMLDOMDocument_appendChild(doc, (IXMLDOMNode *)element, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IXMLDOMElement_Release(element);
+
+    hr = IXMLDOMDocument_get_xml(doc, &xml);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    ok(!wcscmp(xml, xml1), "got %s\n", wine_dbgstr_w(xml));
+    SysFreeString(xml);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    V_VT(&var) = VT_UNKNOWN;
+    V_UNKNOWN(&var) = (IUnknown*)stream;
+    hr = IXMLDOMDocument_save(doc, var);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = GetHGlobalFromStream(stream, &global);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    p = GlobalLock(global);
+    p[GlobalSize(global)] = 0;
+todo_wine
+    ok(!strcmp(p, xml2), "got %s\n", wine_dbgstr_a(p));
+    GlobalUnlock(global);
+    IStream_Release(stream);
+
     IXMLDOMDocument_Release(doc);
 }
 
