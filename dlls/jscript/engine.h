@@ -90,8 +90,10 @@
     X(typeofident,1, 0,0)                  \
     X(refval,     1, 0,0)                  \
     X(ret,        0, ARG_UINT,   0)        \
+    X(set_member, 1, 0,0)                  \
     X(setret,     1, 0,0)                  \
     X(sub,        1, 0,0)                  \
+    X(to_string,  1, 0,0)                  \
     X(undefined,  1, 0,0)                  \
     X(void,       1, 0,0)                  \
     X(xor,        1, 0,0)

@@ -1834,6 +1834,12 @@ ok(""+str === "test", "''+str = " + str);
 
 ok((function (){return 1;})() === 1, "(function (){return 1;})() = " + (function (){return 1;})());
 
+(function() {
+    var order = "", o = {};
+    o[order += "1,", { toString: function() { order += "2,"; } }] = (order += "3");
+    ok(order === "1,2,3", "array expression order = " + order);
+})();
+
 var re = /=(\?|%3F)/g;
 ok(re.source === "=(\\?|%3F)", "re.source = " + re.source);
 

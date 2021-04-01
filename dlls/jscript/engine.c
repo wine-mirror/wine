@@ -2511,6 +2511,25 @@ static HRESULT interp_rshift2(script_ctx_t *ctx)
     return stack_push(ctx, jsval_number(l >> (r&0x1f)));
 }
 
+/* ECMA-262 3rd Edition    9.8 */
+static HRESULT interp_to_string(script_ctx_t *ctx)
+{
+    jsstr_t *str;
+    jsval_t v;
+    HRESULT hres;
+
+    v = stack_pop(ctx);
+    TRACE("%s\n", debugstr_jsval(v));
+    hres = to_string(ctx, v, &str);
+    jsval_release(v);
+    if(FAILED(hres)) {
+        WARN("failed %08x\n", hres);
+        return hres;
+    }
+
+    return stack_push(ctx, jsval_string(str));
+}
+
 /* ECMA-262 3rd Edition    11.13.1 */
 static HRESULT interp_assign(script_ctx_t *ctx)
 {
@@ -2535,6 +2554,41 @@ static HRESULT interp_assign(script_ctx_t *ctx)
     }
 
     return stack_push(ctx, v);
+}
+
+/* ECMA-262 3rd Edition    11.13.1 */
+static HRESULT interp_set_member(script_ctx_t *ctx)
+{
+    jsval_t objv, namev, value;
+    const WCHAR *name;
+    IDispatch *obj;
+    HRESULT hres;
+
+    value = stack_pop(ctx);
+    namev = stack_pop(ctx);
+    assert(is_string(namev));
+    objv = stack_pop(ctx);
+
+    TRACE("%s.%s = %s\n", debugstr_jsval(objv), debugstr_jsval(namev), debugstr_jsval(value));
+
+    hres = to_object(ctx, objv, &obj);
+    jsval_release(objv);
+    if(SUCCEEDED(hres) && !(name = jsstr_flatten(get_string(namev)))) {
+        IDispatch_Release(obj);
+        hres = E_OUTOFMEMORY;
+    }
+    if(SUCCEEDED(hres)) {
+        hres = disp_propput_name(ctx, obj, name, value);
+        IDispatch_Release(obj);
+        jsstr_release(get_string(namev));
+    }
+    if(FAILED(hres)) {
+        WARN("failed %08x\n", hres);
+        jsval_release(value);
+        return hres;
+    }
+
+    return stack_push(ctx, value);
 }
 
 /* JScript extension */

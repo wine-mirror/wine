@@ -111,6 +111,7 @@ DEFINE_EXPECT(testobj_onlydispid_d);
 DEFINE_EXPECT(testobj_onlydispid_i);
 DEFINE_EXPECT(testobj_notexists_d);
 DEFINE_EXPECT(testobj_newenum);
+DEFINE_EXPECT(testobj_getidfail_d);
 DEFINE_EXPECT(enumvariant_next_0);
 DEFINE_EXPECT(enumvariant_next_1);
 DEFINE_EXPECT(enumvariant_reset);
@@ -479,6 +480,10 @@ static HRESULT WINAPI testObj_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD
         CHECK_EXPECT(testobj_notexists_d);
         test_grfdex(grfdex, fdexNameCaseSensitive);
         return DISP_E_UNKNOWNNAME;
+    }
+    if(!lstrcmpW(bstrName, L"getIDFail")) {
+        CHECK_EXPECT(testobj_getidfail_d);
+        return E_FAIL;
     }
 
     ok(0, "unexpected name %s\n", wine_dbgstr_w(bstrName));
@@ -3373,6 +3378,20 @@ static BOOL run_tests(void)
     run_script(L"ok(typeof(testObj.onlyDispID) === 'unknown', 'unexpected typeof(testObj.onlyDispID)');");
     CHECK_CALLED(testobj_onlydispid_d);
     CHECK_CALLED(testobj_onlydispid_i);
+
+    SET_EXPECT(testobj_getidfail_d);
+    hres = parse_script(SCRIPTITEM_GLOBALMEMBERS, L"testObj.notExists = testObj.getIDFail;");
+    ok(hres == E_FAIL, "parse_script returned %08x\n", hres);
+    CHECK_CALLED(testobj_getidfail_d);
+
+    SET_EXPECT(global_propget_d);
+    SET_EXPECT(global_propget_i);
+    SET_EXPECT(testobj_getidfail_d);
+    hres = parse_script(SCRIPTITEM_GLOBALMEMBERS, L"testObj.getIDFail = testPropGet;");
+    ok(hres == E_FAIL, "parse_script returned %08x\n", hres);
+    CHECK_CALLED(global_propget_d);
+    CHECK_CALLED(global_propget_i);
+    CHECK_CALLED(testobj_getidfail_d);
 
     SET_EXPECT(global_propargput_d);
     SET_EXPECT(global_propargput_i);
