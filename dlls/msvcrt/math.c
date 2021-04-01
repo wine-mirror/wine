@@ -2579,21 +2579,22 @@ char * CDECL _ecvt( double number, int ndigits, int *decpt, int *sign )
     int prec, len;
     thread_data_t *data = msvcrt_get_thread_data();
     /* FIXME: check better for overflow (native supports over 300 chars) */
-    ndigits = min( ndigits, 80 - 7); /* 7 : space for dec point, 1 for "e",
+    ndigits = min( ndigits, 80 - 8); /* 8 : space for sign, dec point, "e",
                                       * 4 for exponent and one for
                                       * terminating '\0' */
     if (!data->efcvt_buffer)
         data->efcvt_buffer = malloc( 80 ); /* ought to be enough */
 
-    if( number < 0) {
-        *sign = TRUE;
-        number = -number;
-    } else
-        *sign = FALSE;
     /* handle cases with zero ndigits or less */
     prec = ndigits;
     if( prec < 1) prec = 2;
     len = _snprintf(data->efcvt_buffer, 80, "%.*le", prec - 1, number);
+
+    if (data->efcvt_buffer[0] == '-') {
+        memmove( data->efcvt_buffer, data->efcvt_buffer + 1, len-- );
+        *sign = 1;
+    } else *sign = 0;
+
     /* take the decimal "point away */
     if( prec != 1)
         memmove( data->efcvt_buffer + 1, data->efcvt_buffer + 2, len - 1 );
@@ -2622,7 +2623,6 @@ int CDECL _ecvt_s( char *buffer, size_t length, double number, int ndigits, int 
 {
     int prec, len;
     char *result;
-    const char infret[] = "1#INF";
 
     if (!MSVCRT_CHECK_PMT(buffer != NULL)) return EINVAL;
     if (!MSVCRT_CHECK_PMT(decpt != NULL)) return EINVAL;
@@ -2630,30 +2630,17 @@ int CDECL _ecvt_s( char *buffer, size_t length, double number, int ndigits, int 
     if (!MSVCRT_CHECK_PMT_ERR( length > 2, ERANGE )) return ERANGE;
     if (!MSVCRT_CHECK_PMT_ERR(ndigits < (int)length - 1, ERANGE )) return ERANGE;
 
-    /* special case - inf */
-    if(number == HUGE_VAL || number == -HUGE_VAL)
-    {
-        memset(buffer, '0', ndigits);
-        memcpy(buffer, infret, min(ndigits, sizeof(infret) - 1 ) );
-        buffer[ndigits] = '\0';
-        (*decpt) = 1;
-        if(number == -HUGE_VAL)
-            (*sign) = 1;
-        else
-            (*sign) = 0;
-        return 0;
-    }
     /* handle cases with zero ndigits or less */
     prec = ndigits;
     if( prec < 1) prec = 2;
-    result = malloc(prec + 7);
+    result = malloc(prec + 8);
 
-    if( number < 0) {
-        *sign = TRUE;
-        number = -number;
-    } else
-        *sign = FALSE;
-    len = _snprintf(result, prec + 7, "%.*le", prec - 1, number);
+    len = _snprintf(result, prec + 8, "%.*le", prec - 1, number);
+    if (result[0] == '-') {
+        memmove( result, result + 1, len-- );
+        *sign = 1;
+    } else *sign = 0;
+
     /* take the decimal "point away */
     if( prec != 1)
         memmove( result + 1, result + 2, len - 1 );
@@ -2690,18 +2677,17 @@ char * CDECL _fcvt( double number, int ndigits, int *decpt, int *sign )
     if (!data->efcvt_buffer)
         data->efcvt_buffer = malloc( 80 ); /* ought to be enough */
 
-    if (number < 0)
-    {
-	*sign = 1;
-	number = -number;
-    } else *sign = 0;
-
     stop = _snprintf(buf, 80, "%.*f", ndigits < 0 ? 0 : ndigits, number);
     ptr1 = buf;
     ptr2 = data->efcvt_buffer;
     first = NULL;
     dec1 = 0;
     dec2 = 0;
+
+    if (*ptr1 == '-') {
+        *sign = 1;
+        ptr1++;
+    } else *sign = 0;
 
     /* For numbers below the requested resolution, work out where
        the decimal point will be rather than finding it in the string */
@@ -2774,18 +2760,17 @@ int CDECL _fcvt_s(char* outbuffer, size_t size, double number, int ndigits, int 
         return EINVAL;
     }
 
-    if (number < 0)
-    {
-	*sign = 1;
-	number = -number;
-    } else *sign = 0;
-
     stop = _snprintf(buf, 80, "%.*f", ndigits < 0 ? 0 : ndigits, number);
     ptr1 = buf;
     ptr2 = outbuffer;
     first = NULL;
     dec1 = 0;
     dec2 = 0;
+
+    if (*ptr1 == '-') {
+        *sign = 1;
+        ptr1++;
+    } else *sign = 0;
 
     /* For numbers below the requested resolution, work out where
        the decimal point will be rather than finding it in the string */
