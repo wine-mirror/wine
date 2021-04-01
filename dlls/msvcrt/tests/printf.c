@@ -634,27 +634,20 @@ static struct {
     int expsign;
 } test_cvt_testcases[] = {
     {          45.0,   2,        "45",           "4500",          2,      2,      0 },
-    /* Numbers less than 1.0 with different precisions */
     {        0.0001,   1,         "1",               "",         -3,     -3,     0 },
     {        0.0001,  10,"1000000000",        "1000000",         -3,     -3,     0 },
-    /* Basic sign test */
     {     -111.0001,   5,     "11100",       "11100010",          3,      3,     1 },
     {      111.0001,   5,     "11100",       "11100010",          3,      3,     0 },
-    /* big numbers with low precision */
     {        3333.3,   2,        "33",         "333330",          4,      4,     0 },
     {999999999999.9,   3,       "100","999999999999900",         13,     12,     0 },
-    /* 0.0 with different precisions */
     {           0.0,   5,     "00000",          "00000",          0,      0,     0 },
     {           0.0,   0,          "",               "",          0,      0,     0 },
     {           0.0,  -1,          "",               "",          0,      0,     0 },
-    /* Numbers > 1.0 with 0 or -ve precision */
     {     -123.0001,   0,          "",            "123",          3,      3,     1 },
     {     -123.0001,  -1,          "",             "12",          3,      3,     1 },
     {     -123.0001,  -2,          "",              "1",          3,      3,     1 },
     {     -123.0001,  -3,          "",               "",          3,      3,     1 },
-    /* Numbers > 1.0, but with rounding at the point of precision */
     {         99.99,   1,         "1",           "1000",          3,      3,     0 },
-    /* Numbers < 1.0 where rounding occurs at the point of precision */
     {        0.0063,   2,        "63",              "1",         -2,     -1,     0 },
     {        0.0063,   3,        "630",             "6",         -2,     -2,     0 },
     { 0.09999999996,   2,        "10",             "10",          0,      0,     0 },
@@ -663,12 +656,10 @@ static struct {
     {           0.4,   0,          "",               "",          0,      0,     0 },
     {          0.49,   0,          "",               "",          0,      0,     0 },
     {          0.51,   0,          "",              "1",          1,      1,     0 },
-    /* ask for ridiculous precision, ruin formatting this table */
     {           1.0,  30, "100000000000000000000000000000",
                       "1000000000000000000000000000000",          1,      1,      0},
     {           123456789012345678901.0,  30, "123456789012345680000000000000",
                       "123456789012345680000000000000000000000000000000000",         21,    21,      0},
-    /* end marker */
     { 0, 0, "END"}
 };
 
@@ -683,14 +674,14 @@ static void test_xcvt(void)
                 test_cvt_testcases[i].nrdigits,
                 &decpt,
                 &sign);
-        ok( 0 == strncmp( str, test_cvt_testcases[i].expstr_e, 15),
-               "_ecvt() bad return, got \n'%s' expected \n'%s'\n", str,
+        ok( !strncmp( str, test_cvt_testcases[i].expstr_e, 15),
+               "%d) _ecvt() bad return, got '%s' expected '%s'\n", i, str,
               test_cvt_testcases[i].expstr_e);
         ok( decpt == test_cvt_testcases[i].expdecpt_e,
-                "_ecvt() decimal point wrong, got %d expected %d\n", decpt,
+                "%d) _ecvt() decimal point wrong, got %d expected %d\n", i, decpt,
                 test_cvt_testcases[i].expdecpt_e);
         ok( sign == test_cvt_testcases[i].expsign,
-                "_ecvt() sign wrong, got %d expected %d\n", sign,
+                "%d) _ecvt() sign wrong, got %d expected %d\n", i, sign,
                 test_cvt_testcases[i].expsign);
     }
     for( i = 0; strcmp( test_cvt_testcases[i].expstr_e, "END"); i++){
@@ -699,14 +690,14 @@ static void test_xcvt(void)
                 test_cvt_testcases[i].nrdigits,
                 &decpt,
                 &sign);
-        ok( 0 == strncmp( str, test_cvt_testcases[i].expstr_f, 15),
-               "_fcvt() bad return, got \n'%s' expected \n'%s'\n", str,
+        ok( !strncmp( str, test_cvt_testcases[i].expstr_f, 15),
+               "%d) _fcvt() bad return, got '%s' expected '%s'\n", i, str,
               test_cvt_testcases[i].expstr_f);
         ok( decpt == test_cvt_testcases[i].expdecpt_f,
-                "_fcvt() decimal point wrong, got %d expected %d\n", decpt,
+                "%d) _fcvt() decimal point wrong, got %d expected %d\n", i, decpt,
                 test_cvt_testcases[i].expdecpt_f);
         ok( sign == test_cvt_testcases[i].expsign,
-                "_fcvt() sign wrong, got %d expected %d\n", sign,
+                "%d) _fcvt() sign wrong, got %d expected %d\n", i, sign,
                 test_cvt_testcases[i].expsign);
     }
 
@@ -717,14 +708,14 @@ static void test_xcvt(void)
             decpt = sign = 100;
             err = p__ecvt_s(str, 1024, test_cvt_testcases[i].value, test_cvt_testcases[i].nrdigits, &decpt, &sign);
             ok(err == 0, "_ecvt_s() failed with error code %d\n", err);
-            ok( 0 == strncmp( str, test_cvt_testcases[i].expstr_e, 15),
-                   "_ecvt_s() bad return, got \n'%s' expected \n'%s'\n", str,
+            ok( !strncmp( str, test_cvt_testcases[i].expstr_e, 15),
+                   "%d) _ecvt_s() bad return, got '%s' expected '%s'\n", i, str,
                   test_cvt_testcases[i].expstr_e);
             ok( decpt == test_cvt_testcases[i].expdecpt_e,
-                    "_ecvt_s() decimal point wrong, got %d expected %d\n", decpt,
+                    "%d) _ecvt_s() decimal point wrong, got %d expected %d\n", i, decpt,
                     test_cvt_testcases[i].expdecpt_e);
             ok( sign == test_cvt_testcases[i].expsign,
-                    "_ecvt_s() sign wrong, got %d expected %d\n", sign,
+                    "%d) _ecvt_s() sign wrong, got %d expected %d\n", i, sign,
                     test_cvt_testcases[i].expsign);
         }
         free(str);
@@ -761,15 +752,15 @@ static void test_xcvt(void)
         for( i = 0; strcmp( test_cvt_testcases[i].expstr_e, "END"); i++){
             decpt = sign = 100;
             err = p__fcvt_s(str, 1024, test_cvt_testcases[i].value, test_cvt_testcases[i].nrdigits, &decpt, &sign);
-            ok(err == 0, "_fcvt_s() failed with error code %d\n", err);
-            ok( 0 == strncmp( str, test_cvt_testcases[i].expstr_f, 15),
-                   "_fcvt_s() bad return, got '%s' expected '%s'. test %d\n", str,
+            ok(!err, "%d) _fcvt_s() failed with error code %d\n", i, err);
+            ok( !strncmp( str, test_cvt_testcases[i].expstr_f, 15),
+                   "%d) _fcvt_s() bad return, got '%s' expected '%s'. test %d\n", i, str,
                   test_cvt_testcases[i].expstr_f, i);
             ok( decpt == test_cvt_testcases[i].expdecpt_f,
-                    "_fcvt_s() decimal point wrong, got %d expected %d\n", decpt,
+                    "%d) _fcvt_s() decimal point wrong, got %d expected %d\n", i, decpt,
                     test_cvt_testcases[i].expdecpt_f);
             ok( sign == test_cvt_testcases[i].expsign,
-                    "_fcvt_s() sign wrong, got %d expected %d\n", sign,
+                    "%d) _fcvt_s() sign wrong, got %d expected %d\n", i, sign,
                     test_cvt_testcases[i].expsign);
         }
         free(str);
