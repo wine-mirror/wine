@@ -119,28 +119,83 @@ static void usage(void)
 	fatal_string(STRING_USAGE);
 }
 
-static WCHAR *build_args( int argc, WCHAR **argvW )
+/***********************************************************************
+ *           build_command_line
+ *
+ * Build the command line of a process from the argv array.
+ *
+ * We must quote and escape characters so that the argv array can be rebuilt
+ * from the command line:
+ * - spaces and tabs must be quoted
+ *   'a b'   -> '"a b"'
+ * - quotes must be escaped
+ *   '"'     -> '\"'
+ * - if '\'s are followed by a '"', they must be doubled and followed by '\"',
+ *   resulting in an odd number of '\' followed by a '"'
+ *   '\"'    -> '\\\"'
+ *   '\\"'   -> '\\\\\"'
+ * - '\'s are followed by the closing '"' must be doubled,
+ *   resulting in an even number of '\' followed by a '"'
+ *   ' \'    -> '" \\"'
+ *   ' \\'    -> '" \\\\"'
+ * - '\'s that are not followed by a '"' can be left as is
+ *   'a\b'   == 'a\b'
+ *   'a\\b'  == 'a\\b'
+ */
+static WCHAR *build_command_line( WCHAR **wargv )
 {
-	int i, wlen = 1;
-	WCHAR *ret, *p;
+    int len;
+    WCHAR **arg, *ret;
+    LPWSTR p;
 
-	for (i = 0; i < argc; i++ )
-	{
-		wlen += lstrlenW(argvW[i]) + 1;
-		if (wcschr(argvW[i], ' '))
-			wlen += 2;
-	}
-	ret = HeapAlloc( GetProcessHeap(), 0, wlen*sizeof(WCHAR) );
-	ret[0] = 0;
+    len = 1;
+    for (arg = wargv; *arg; arg++) len += 3 + 2 * wcslen( *arg );
+    if (!(ret = malloc( len * sizeof(WCHAR) ))) return NULL;
 
-	for (i = 0, p = ret; i < argc; i++ )
-	{
-		if (wcschr(argvW[i], ' '))
-                    p += swprintf(p, wlen - (p - ret), L" \"%s\"", argvW[i]);
-		else
-                    p += swprintf(p, wlen - (p - ret), L" %s", argvW[i]);
-	}
-	return ret;
+    p = ret;
+    for (arg = wargv; *arg; arg++)
+    {
+        BOOL has_space, has_quote;
+        int i, bcount;
+        WCHAR *a;
+
+        /* check for quotes and spaces in this argument */
+        has_space = !**arg || wcschr( *arg, ' ' ) || wcschr( *arg, '\t' );
+        has_quote = wcschr( *arg, '"' ) != NULL;
+
+        /* now transfer it to the command line */
+        if (has_space) *p++ = '"';
+        if (has_quote || has_space)
+        {
+            bcount = 0;
+            for (a = *arg; *a; a++)
+            {
+                if (*a == '\\') bcount++;
+                else
+                {
+                    if (*a == '"') /* double all the '\\' preceding this '"', plus one */
+                        for (i = 0; i <= bcount; i++) *p++ = '\\';
+                    bcount = 0;
+                }
+                *p++ = *a;
+            }
+        }
+        else
+        {
+            wcscpy( p, *arg );
+            p += wcslen( p );
+        }
+        if (has_space)
+        {
+            /* Double all the '\' preceding the closing quote */
+            for (i = 0; i < bcount; i++) *p++ = '\\';
+            *p++ = '"';
+        }
+        *p++ = ' ';
+    }
+    if (p > ret) p--;  /* remove last space */
+    *p = 0;
+    return ret;
 }
 
 static WCHAR *get_parent_dir(WCHAR* path)
@@ -339,7 +394,6 @@ int __cdecl wmain (int argc, WCHAR *argv[])
 {
 	SHELLEXECUTEINFOW sei;
 	DWORD creation_flags;
-	WCHAR *args = NULL;
 	int i;
         BOOL unix_mode = FALSE;
         BOOL progid_open = FALSE;
@@ -489,8 +543,7 @@ int __cdecl wmain (int argc, WCHAR *argv[])
 	else
 		file = argv[i++];
 
-	args = build_args( argc - i, &argv[i] );
-	sei.lpParameters = args;
+	sei.lpParameters = build_command_line( &argv[i] );
 
 	if (unix_mode || progid_open) {
 		LPWSTR (*CDECL wine_get_dos_file_name_ptr)(LPCSTR);
@@ -537,9 +590,9 @@ int __cdecl wmain (int argc, WCHAR *argv[])
 
                     /* explorer on windows always quotes the filename when running a binary on windows (see bug 5224) so we have to use CreateProcessW in this case */
 
-                    commandline = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(sei.lpFile)+3+lstrlenW(sei.lpParameters))*sizeof(WCHAR));
-                    swprintf(commandline, lstrlenW(sei.lpFile) + 3 + lstrlenW(sei.lpParameters),
-                             L"\"%s\"%s", sei.lpFile, sei.lpParameters);
+                    commandline = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(sei.lpFile)+4+lstrlenW(sei.lpParameters))*sizeof(WCHAR));
+                    swprintf(commandline, lstrlenW(sei.lpFile) + 4 + lstrlenW(sei.lpParameters),
+                             L"\"%s\" %s", sei.lpFile, sei.lpParameters);
 
                     ZeroMemory(&startup_info, sizeof(startup_info));
                     startup_info.cb = sizeof(startup_info);
@@ -616,7 +669,6 @@ int __cdecl wmain (int argc, WCHAR *argv[])
         }
 
 done:
-	HeapFree( GetProcessHeap(), 0, args );
 	HeapFree( GetProcessHeap(), 0, dos_filename );
 	HeapFree( GetProcessHeap(), 0, fullpath );
 	HeapFree( GetProcessHeap(), 0, parent_directory );
