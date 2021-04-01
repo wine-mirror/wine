@@ -2628,6 +2628,19 @@ HRESULT jsdisp_define_data_property(jsdisp_t *obj, const WCHAR *name, unsigned f
     return jsdisp_define_property(obj, name, &prop_desc);
 }
 
+void jsdisp_freeze(jsdisp_t *obj)
+{
+    unsigned int i;
+
+    for(i = 0; i < obj->prop_cnt; i++) {
+        if(obj->props[i].type == PROP_JSVAL)
+            obj->props[i].flags &= ~PROPF_WRITABLE;
+        obj->props[i].flags &= ~PROPF_CONFIGURABLE;
+    }
+
+    obj->extensible = FALSE;
+}
+
 HRESULT jsdisp_get_prop_name(jsdisp_t *obj, DISPID id, jsstr_t **r)
 {
     dispex_prop_t *prop = get_prop(obj, id);

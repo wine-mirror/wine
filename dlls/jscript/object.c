@@ -693,6 +693,29 @@ static HRESULT Object_preventExtensions(script_ctx_t *ctx, vdisp_t *jsthis, WORD
     return S_OK;
 }
 
+static HRESULT Object_freeze(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc,
+                             jsval_t *argv, jsval_t *r)
+{
+    jsdisp_t *obj;
+
+    if(!argc || !is_object_instance(argv[0]) || !get_object(argv[0])) {
+        WARN("argument is not an object\n");
+        return JS_E_OBJECT_EXPECTED;
+    }
+
+    TRACE("(%s)\n", debugstr_jsval(argv[0]));
+
+    obj = to_jsdisp(get_object(argv[0]));
+    if(!obj) {
+        FIXME("Non-JS object\n");
+        return E_NOTIMPL;
+    }
+
+    jsdisp_freeze(obj);
+    if(r) *r = jsval_obj(jsdisp_addref(obj));
+    return S_OK;
+}
+
 static HRESULT Object_isExtensible(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
     jsdisp_t *obj;
@@ -718,6 +741,7 @@ static const builtin_prop_t ObjectConstr_props[] = {
     {L"create",                   Object_create,                      PROPF_ES5|PROPF_METHOD|2},
     {L"defineProperties",         Object_defineProperties,            PROPF_ES5|PROPF_METHOD|2},
     {L"defineProperty",           Object_defineProperty,              PROPF_ES5|PROPF_METHOD|2},
+    {L"freeze",                   Object_freeze,                      PROPF_ES5|PROPF_METHOD|1},
     {L"getOwnPropertyDescriptor", Object_getOwnPropertyDescriptor,    PROPF_ES5|PROPF_METHOD|2},
     {L"getPrototypeOf",           Object_getPrototypeOf,              PROPF_ES5|PROPF_METHOD|1},
     {L"isExtensible",             Object_isExtensible,                PROPF_ES5|PROPF_METHOD|1},
