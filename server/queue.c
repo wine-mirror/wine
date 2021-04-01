@@ -3080,9 +3080,10 @@ DECL_HANDLER(get_key_state)
 DECL_HANDLER(set_key_state)
 {
     struct desktop *desktop;
+    struct msg_queue *queue = get_current_queue();
     data_size_t size = min( 256, get_req_data_size() );
 
-    if (current->queue) memcpy( current->queue->input->keystate, get_req_data(), size );
+    memcpy( queue->input->keystate, get_req_data(), size );
     if (req->async && (desktop = get_thread_desktop( current, 0 )))
     {
         memcpy( desktop->keystate, get_req_data(), size );
