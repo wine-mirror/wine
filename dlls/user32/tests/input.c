@@ -4042,15 +4042,15 @@ static DWORD WINAPI get_key_state_thread(void *arg)
         else expect_c = FALSE;
 
         check_get_keyboard_state(i, j, expect_c, FALSE, /* todo */ !has_queue);
-        check_get_key_state(i, j, expect_c, expect_x, /* todo */ has_queue || j == 0);
-        check_get_keyboard_state(i, j, expect_c, expect_x, /* todo */ has_queue || j == 0);
+        check_get_key_state(i, j, expect_c, expect_x, /* todo */ !has_queue && j == 0);
+        check_get_keyboard_state(i, j, expect_c, expect_x, /* todo */ !has_queue && j == 0);
 
         /* key released */
         ReleaseSemaphore(semaphores[0], 1, NULL);
         result = WaitForSingleObject(semaphores[1], 1000);
         ok(result == WAIT_OBJECT_0, "%d: WaitForSingleObject returned %lu\n", i, result);
 
-        check_get_keyboard_state(i, j, expect_c, expect_x, /* todo */ has_queue || j > 0);
+        check_get_keyboard_state(i, j, expect_c, expect_x, /* todo */ !has_queue && j > 0);
         check_get_key_state(i, j, expect_c, FALSE, /* todo */ FALSE);
         check_get_keyboard_state(i, j, expect_c, FALSE, /* todo */ FALSE);
     }
