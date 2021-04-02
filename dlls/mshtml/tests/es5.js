@@ -1104,6 +1104,74 @@ sync_test("seal", function() {
     ok(o.length === 1, "o.length = " + o.length);
 });
 
+sync_test("isFrozen", function() {
+    ok(Object.isFrozen.length === 1, "Object.isFrozen.length = " + Object.isFrozen.length);
+    ok(Object.isSealed.length === 1, "Object.isSealed.length = " + Object.isSealed.length);
+
+    var o = Object.freeze({});
+    ok(Object.isFrozen(o) === true, "o is not frozen");
+    ok(Object.isSealed(o) === true, "o is not sealed");
+    ok(Object.isExtensible(o) === false, "o is extensible");
+
+    ok(Object.isFrozen({}) === false, "{} is frozen");
+    ok(Object.isSealed({}) === false, "{} is sealed");
+
+    o = Object.preventExtensions({});
+    ok(Object.isFrozen(o) === true, "o is not frozen");
+    ok(Object.isSealed(o) === true, "o is not sealed");
+    ok(Object.isExtensible(o) === false, "o is extensible");
+
+    o = Object.preventExtensions({ prop: 1 });
+    ok(Object.isFrozen(o) === false, "o is frozen");
+    ok(Object.isSealed(o) === false, "o is sealed");
+    ok(Object.isExtensible(o) === false, "o is extensible");
+
+    o = Object.freeze({ prop: 1 });
+    ok(Object.isFrozen(o) === true, "o is not frozen");
+    ok(Object.isSealed(o) === true, "o is not sealed");
+    ok(Object.isExtensible(o) === false, "o is extensible");
+
+    o = Object.seal({ prop: 1 });
+    ok(Object.isFrozen(o) === false, "o is frozen");
+    ok(Object.isSealed(o) === true, "o is not sealed");
+    ok(Object.isExtensible(o) === false, "o is extensible");
+
+    o = {};
+    Object.defineProperty(o, "prop", { value: 1 });
+    Object.preventExtensions(o);
+    ok(Object.isFrozen(o) === true, "o is not frozen");
+    ok(Object.isSealed(o) === true, "o is not sealed");
+    ok(Object.isExtensible(o) === false, "o is extensible");
+
+    o = {};
+    Object.defineProperty(o, "prop", { value: 1, writable: true });
+    Object.preventExtensions(o);
+    ok(Object.isFrozen(o) === false, "o is frozen");
+    ok(Object.isSealed(o) === true, "o is not sealed");
+    ok(Object.isExtensible(o) === false, "o is extensible");
+
+    o = {};
+    Object.defineProperty(o, "prop", { value: 1, writable: true, configurable: true });
+    Object.preventExtensions(o);
+    ok(Object.isFrozen(o) === false, "o is frozen");
+    ok(Object.isSealed(o) === false, "o is sealed");
+    ok(Object.isExtensible(o) === false, "o is extensible");
+
+    o = {};
+    Object.defineProperty(o, "prop", { value: 1, configurable: true });
+    Object.preventExtensions(o);
+    ok(Object.isFrozen(o) === false, "o is frozen");
+    ok(Object.isSealed(o) === false, "o is sealed");
+    ok(Object.isExtensible(o) === false, "o is extensible");
+
+    o = {};
+    Object.defineProperty(o, "prop", { get: function() {}, set: function() {} });
+    Object.preventExtensions(o);
+    ok(Object.isFrozen(o) === true, "o is not frozen");
+    ok(Object.isSealed(o) === true, "o is not sealed");
+    ok(Object.isExtensible(o) === false, "o is extensible");
+});
+
 sync_test("head_setter", function() {
     document.head = "";
     ok(typeof(document.head) === "object", "typeof(document.head) = " + typeof(document.head));

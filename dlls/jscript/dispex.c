@@ -2646,6 +2646,26 @@ void jsdisp_freeze(jsdisp_t *obj, BOOL seal)
     obj->extensible = FALSE;
 }
 
+BOOL jsdisp_is_frozen(jsdisp_t *obj, BOOL sealed)
+{
+    unsigned int i;
+
+    if(obj->extensible)
+        return FALSE;
+
+    for(i = 0; i < obj->prop_cnt; i++) {
+        if(obj->props[i].type == PROP_JSVAL) {
+            if(!sealed && (obj->props[i].flags & PROPF_WRITABLE))
+                return FALSE;
+        }else if(obj->props[i].type != PROP_ACCESSOR)
+            continue;
+        if(obj->props[i].flags & PROPF_CONFIGURABLE)
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
 HRESULT jsdisp_get_prop_name(jsdisp_t *obj, DISPID id, jsstr_t **r)
 {
     dispex_prop_t *prop = get_prop(obj, id);
