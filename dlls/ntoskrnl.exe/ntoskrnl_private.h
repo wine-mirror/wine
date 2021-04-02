@@ -101,10 +101,11 @@ struct wine_driver
 
 void ObReferenceObject( void *obj ) DECLSPEC_HIDDEN;
 
-void pnp_manager_enumerate_root_devices( const WCHAR *driver_name ) DECLSPEC_HIDDEN;
 void pnp_manager_start(void) DECLSPEC_HIDDEN;
 void pnp_manager_stop_driver( struct wine_driver *driver ) DECLSPEC_HIDDEN;
 void pnp_manager_stop(void) DECLSPEC_HIDDEN;
+
+void CDECL wine_enumerate_root_devices( const WCHAR *driver_name );
 
 struct wine_driver *get_driver( const WCHAR *name ) DECLSPEC_HIDDEN;
 

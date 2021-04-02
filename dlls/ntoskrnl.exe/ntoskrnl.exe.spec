@@ -1686,3 +1686,4 @@
 # or 'wine_' (for user-visible functions) to avoid namespace conflicts.
 
 @ cdecl wine_ntoskrnl_main_loop(long)
+@ cdecl wine_enumerate_root_devices(wstr)

@@ -35,6 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(winedevice);
 static const WCHAR servicesW[] = L"\\Registry\\Machine\\System\\CurrentControlSet\\Services\\";
 
 extern NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event );
+extern void CDECL wine_enumerate_root_devices( const WCHAR *driver_name );
 
 static WCHAR winedeviceW[] = L"winedevice";
 static SERVICE_STATUS_HANDLE service_handle;
@@ -54,6 +55,8 @@ static void set_service_status( SERVICE_STATUS_HANDLE handle, DWORD state, DWORD
     status.dwWaitHint                = (state == SERVICE_START_PENDING) ? 10000 : 0;
     SetServiceStatus( handle, &status );
 }
+
+#define SERVICE_CONTROL_REENUMERATE_ROOT_DEVICES 128
 
 static DWORD device_handler( DWORD ctrl, const WCHAR *driver_name )
 {
@@ -77,6 +80,9 @@ static DWORD device_handler( DWORD ctrl, const WCHAR *driver_name )
     case SERVICE_CONTROL_STOP:
         result = RtlNtStatusToDosError(ZwUnloadDriver( &service_name ));
         break;
+
+    case SERVICE_CONTROL_REENUMERATE_ROOT_DEVICES:
+        wine_enumerate_root_devices( driver_name );
 
     default:
         FIXME( "got driver ctrl %x for %s\n", ctrl, wine_dbgstr_w(driver_name) );

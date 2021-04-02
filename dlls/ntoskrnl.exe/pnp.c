@@ -1047,13 +1047,14 @@ void pnp_manager_stop(void)
     RpcBindingFree( &plugplay_binding_handle );
 }
 
-void pnp_manager_enumerate_root_devices( const WCHAR *driver_name )
+void CDECL wine_enumerate_root_devices( const WCHAR *driver_name )
 {
     static const WCHAR driverW[] = {'\\','D','r','i','v','e','r','\\',0};
     static const WCHAR rootW[] = {'R','O','O','T',0};
     WCHAR buffer[MAX_SERVICE_NAME + ARRAY_SIZE(driverW)], id[MAX_DEVICE_ID_LEN];
     SP_DEVINFO_DATA sp_device = {sizeof(sp_device)};
-    struct root_pnp_device *pnp_device;
+    struct list new_list = LIST_INIT(new_list);
+    struct root_pnp_device *pnp_device, *next;
     struct wine_driver *driver;
     DEVICE_OBJECT *device;
     NTSTATUS status;
@@ -1082,8 +1083,13 @@ void pnp_manager_enumerate_root_devices( const WCHAR *driver_name )
 
         SetupDiGetDeviceInstanceIdW( set, &sp_device, id, ARRAY_SIZE(id), NULL );
 
-        if (find_root_pnp_device( driver, id ))
+        if ((pnp_device = find_root_pnp_device( driver, id )))
+        {
+            TRACE("Found device %s already enumerated.\n", debugstr_w(id));
+            list_remove( &pnp_device->entry );
+            list_add_tail( &new_list, &pnp_device->entry );
             continue;
+        }
 
         TRACE("Adding new root-enumerated device %s.\n", debugstr_w(id));
 
@@ -1097,10 +1103,19 @@ void pnp_manager_enumerate_root_devices( const WCHAR *driver_name )
         pnp_device = device->DeviceExtension;
         wcscpy( pnp_device->id, id );
         pnp_device->device = device;
-        list_add_tail( &driver->root_pnp_devices, &pnp_device->entry );
+        list_add_tail( &new_list, &pnp_device->entry );
 
         start_device( device, set, &sp_device );
     }
+
+    LIST_FOR_EACH_ENTRY_SAFE( pnp_device, next, &driver->root_pnp_devices, struct root_pnp_device, entry )
+    {
+        TRACE("Removing device %s.\n", debugstr_w(pnp_device->id));
+
+        remove_device( pnp_device->device );
+    }
+
+    list_move_head( &driver->root_pnp_devices, &new_list );
 
     SetupDiDestroyDeviceInfoList(set);
 }
