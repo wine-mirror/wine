@@ -2409,6 +2409,18 @@ void CDECL wined3d_device_context_draw(struct wined3d_device_context *context, u
             0, start_vertex, vertex_count, start_instance, instance_count, false);
 }
 
+void CDECL wined3d_device_context_draw_indexed(struct wined3d_device_context *context, int base_vertex_index,
+        unsigned int start_index, unsigned int index_count, unsigned int start_instance, unsigned int instance_count)
+{
+    struct wined3d_state *state = context->state;
+
+    TRACE("context %p, base_vertex_index %d, start_index %u, index_count %u, start_instance %u, instance_count %u.\n",
+            context, base_vertex_index, start_index, index_count, start_instance, instance_count);
+
+    wined3d_device_context_emit_draw(context, state->primitive_type, state->patch_vertex_count,
+            base_vertex_index, start_index, index_count, start_instance, instance_count, true);
+}
+
 void CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struct wined3d_shader *shader)
 {
     TRACE("device %p, shader %p.\n", device, shader);
@@ -4486,8 +4498,7 @@ void CDECL wined3d_device_draw_indexed_primitive(struct wined3d_device *device, 
 
     TRACE("device %p, start_idx %u, index_count %u.\n", device, start_idx, index_count);
 
-    wined3d_device_context_emit_draw(&device->cs->c, state->primitive_type, state->patch_vertex_count,
-            state->base_vertex_index, start_idx, index_count, 0, 0, true);
+    wined3d_device_context_draw_indexed(&device->cs->c, state->base_vertex_index, start_idx, index_count, 0, 0);
 }
 
 void CDECL wined3d_device_draw_indexed_primitive_instanced(struct wined3d_device *device,
@@ -4498,8 +4509,8 @@ void CDECL wined3d_device_draw_indexed_primitive_instanced(struct wined3d_device
     TRACE("device %p, start_idx %u, index_count %u, start_instance %u, instance_count %u.\n",
             device, start_idx, index_count, start_instance, instance_count);
 
-    wined3d_device_context_emit_draw(&device->cs->c, state->primitive_type, state->patch_vertex_count,
-            state->base_vertex_index, start_idx, index_count, start_instance, instance_count, true);
+    wined3d_device_context_draw_indexed(&device->cs->c, state->base_vertex_index,
+            start_idx, index_count, start_instance, instance_count);
 }
 
 void CDECL wined3d_device_draw_indexed_primitive_instanced_indirect(struct wined3d_device *device,
