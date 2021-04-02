@@ -1,4 +1,4 @@
-1 stub @
+1 stub -noname SHCreateReadOnlySharedMemoryStream
 @ stdcall CommandLineToArgvW(wstr ptr)
 @ stub CreateRandomAccessStreamOnFile
 @ stub CreateRandomAccessStreamOverStream
@@ -9,6 +9,8 @@
 @ stdcall GetCurrentProcessExplicitAppUserModelID(ptr)
 @ stdcall GetDpiForMonitor(long long ptr ptr)
 @ stub GetDpiForShellUIComponent
+# @ stub GetFeatureEnabledState
+# @ stub GetFeatureVariant
 @ stdcall GetProcessDpiAwareness(long ptr)
 @ stdcall GetProcessReference(ptr)
 @ stdcall GetScaleFactorForDevice(long)
@@ -26,6 +28,10 @@
 @ stdcall IUnknown_Set(ptr ptr)
 @ stdcall IUnknown_SetSite(ptr ptr)
 @ stdcall IsOS(long)
+# @ stub IsProcessInIsolatedContainer
+# @ stub IsProcessInWDAGContainer
+# @ stub RecordFeatureError
+# @ stub RecordFeatureUsage
 @ stub RegisterScaleChangeEvent
 @ stub RegisterScaleChangeNotifications
 @ stub RevokeScaleChangeNotifications
@@ -75,107 +81,118 @@
 @ stdcall SHSetValueW(long wstr wstr long ptr long)
 @ stdcall SHStrDupA(str ptr)
 @ stdcall SHStrDupW(wstr ptr)
+# @ stub SHTaskPoolAllowThreadReuse
+# @ stub SHTaskPoolDoNotWaitForMoreTasks
+# @ stub SHTaskPoolGetCurrentThreadLifetime
+# @ stub SHTaskPoolGetUniqueContext
+# @ stub SHTaskPoolQueueTask
+# @ stub SHTaskPoolSetThreadReuseAllowed
 @ stdcall SHUnicodeToAnsi(wstr ptr ptr)
 @ stdcall SHUnicodeToUnicode(wstr ptr long)
 @ stdcall SetCurrentProcessExplicitAppUserModelID(wstr)
 @ stdcall SetProcessDpiAwareness(long)
 @ stdcall SetProcessReference(ptr)
+# @ stub SubscribeFeatureStateChangeNotification
 @ stub UnregisterScaleChangeEvent
+# @ stub UnsubscribeFeatureStateChangeNotification
 
-100 stub @
-101 stub @
-102 stub @
-103 stub @
-104 stub @
-105 stub @
-106 stub @
-107 stub @
-108 stub @
-109 stub @
-110 stub @
-111 stub @
-115 stub @
-116 stub @
-117 stub @
-120 stub @
-121 stub @
+100 stub -noname SHManagedCreateStreamOnFile
+101 stub -noname SHManagedCreateFile
+102 stub -noname SHIsEmptyStream
+103 stub -noname MapWin32ErrorToSTG
+104 stub -noname ModeToCreateFileFlags
+105 stub -noname CreateTempStreamName
+106 stub -noname StreamCopyTo
+107 stub -noname IStream_ReadStrLong
+108 stub -noname IStream_WriteStrLong
+109 stub -noname SHCreateStreamOnModuleResourceW
+110 stub -noname SHCreateStreamOnDllResourceW
+111 stub -noname CreateWritableSharedMemoryStream
+115 stub -noname CreateRandomAccessStreamOnFileWithOptions
+116 stub -noname RandomAccessStreamCopyAsync
+117 stub -noname CreateRandomAccessStreamOnPlaceholderFile
+120 stub -noname SHRegGetCLSIDKey
+121 stub -noname SHRegSetValue
 122 stub SHRegGetValueFromHKCUHKLM
-123 stub @
-124 stub @
-125 stub @
-126 stub @
-127 stub @
-130 stub @
-131 stub @
-132 stub @
-133 stub @
-140 stub @
-141 stub @
-142 stub @
-143 stub @
-144 stub @
-145 stub @
-150 stub @
-151 stub @
-152 stub @
-153 stub @
-160 stub @
-161 stub @
-162 stub @
-170 stub @
-171 stub @
-172 stub @
-173 stub @
-181 stub @
-182 stub @
-183 stub @
-184 stub @
-185 stub @
-186 stub @
-187 stub @
-188 stub @
-190 stub @
-191 stub @
-192 stub @
-193 stub @
-200 stub @
-220 stub @
-221 stub @
-222 stub @
-223 stub @
-224 stub @
-225 stub @
-226 stub @
-227 stub @
-228 stub @
-230 stub @
-231 stub @
-232 stub @
-233 stub @
-234 stub @
-240 stub @
-241 stub @
-242 stub @
-243 stub @
-244 stub @
-245 stub @
-246 stub @
-247 stub @
-248 stub @
-250 stub @
-251 stub @
-252 stub @
-253 stub @
-254 stub @
-255 stub @
-260 stub @
-261 stub @
-270 stub @
-280 stub @
-281 stub @
-282 stub @
-283 stub @
-284 stub @
-290 stub @
-291 stub @
-292 stub @
+123 stub -noname SHRegGetBoolValueFromHKCUHKLM
+124 stub -noname SHGetValueGoodBootA
+125 stub -noname SHGetValueGoodBootW
+126 stub -noname SHLoadRegUIStringW
+127 stub -noname QuerySourceCreateFromKeyEx
+130 stub -noname SHGlobalCounterGetValue
+131 stub -noname SHGlobalCounterIncrement
+132 stub -noname SHGlobalCounterDecrement
+133 stub -noname SHGlobalCounterSetValue
+140 stub -noname IUnknown_ProfferService
+141 stub -noname IUnknown_RemoveBackReferences
+142 stub -noname IUnknown_GetClassID
+143 stub -noname StrRetToStrW
+144 stub -noname StrRetToBSTR
+145 stub -noname StrRetToBufW
+150 stub -noname SHAnsiToUnicodeCP
+151 stub -noname SHUnicodeToAnsiCP
+152 stub -noname SHUnicodeToAnsiCPAlloc
+153 stub -noname SHAnsiToUnicodeCPAlloc
+160 stub -noname SHWaitForSendMessageThread
+161 stub -noname SHWaitForThreadWithWakeMask
+162 stub -noname SHQueueUserWorkItem
+170 stub -noname PathIsNetworkPathW
+171 stub -noname PathIsNetworkPathA
+172 stub -noname PathBuildRootW
+173 stub -noname PathBuildRootA
+174 stub -noname DriveType
+175 stub -noname IsNetDrive
+181 stub -noname SHMapHandle
+182 stub -noname SHAllocShared
+183 stub -noname SHLockSharedEx
+184 stub -noname SHLockShared
+185 stub -noname SHGetSizeShared
+186 stub -noname SHUnlockShared
+187 stub -noname SHFreeShared
+188 stub -noname SHCreateWorkerWindowW
+189 stub -noname SHCreateOplockProvider
+190 stub -noname SHWindowsPolicy
+191 stub -noname SHWindowsPolicyGetValue
+192 stub -noname IsAppCompatModeEnabled
+193 stub -noname SHGetObjectCompatFlags
+200 stub -noname GUIDFromStringW
+220 stub -noname GetPhysicalDpiForDevice
+222 stub -noname ScaleRelativePixelsForDevice
+223 stub -noname PhysicalRectFromScaledRect
+224 stub -noname ScaleAndMapRelativeRectForDevice
+225 stub -noname CanOverrideScaleFactor
+226 stub -noname GetScalingOverride
+227 stub -noname RegisterScaleChangeSink
+228 stub -noname SetDesignModeScaleFactor
+229 stub -noname GetProposedScaleFactorForWindow
+230 stub -noname SHSetWindowSubclass
+231 stub -noname SHGetWindowSubclassData
+232 stub -noname SHRemoveWindowSubclass
+233 stub -noname SHDefSubclassProc
+234 stub -noname SHRegisterClassW
+240 stub -noname RegisterScaleChangeSinkForWindow
+241 stub -noname ScaleAndMapRelativeRect
+242 stub -noname RelativeRectFromPhysicalRectWithScale
+244 stub -noname GetScaleFactorForWindow
+245 stub -noname RegisterScaleChangeNotificationsForWindow
+246 stub -noname RevokeScaleChangeNotificationsForWindow
+247 stub -noname GetOverrideScaleFactorForWindow
+248 stub -noname GetSystemScaleFactorForWindow
+249 stub -noname UpdateScalingInfoCache
+250 stub -noname RegisterCurrentWindowChangeListener
+251 stub -noname RegisterWindowMonitorChangeListener
+252 stub -noname UnregisterCurrentWindowChangeListener
+253 stub -noname UnregisterWindowMonitorChangeListener
+254 stub -noname AddCurrentWindowCandidate
+255 stub -noname GetCurrentWindow
+260 stub -noname PhysicalRectFromRelativeRectWithScales
+261 stub -noname RelativeRectFromPhysicalRectWithScales
+270 stub -noname SHCreateMemoryStreamOnSharedBuffer
+280 stub -noname _CreateDirectoryHelper
+281 stub -noname Win32CreateDirectory
+282 stub -noname SuspendSHNotify
+283 stub -noname ResumeSHNotify
+284 stub -noname IsNotifySuspended
+290 stub -noname SHCreateDirectoryExW
+291 stub -noname SHCreateDirectoryExA
+292 stub -noname SHCreateDirectory
