@@ -42,6 +42,7 @@
 #include "wine/exception.h"
 #include "wine/heap.h"
 #include "wine/rbtree.h"
+#include "wine/list.h"
 
 #include "ntoskrnl_private.h"
 #include "plugplay.h"
@@ -923,19 +924,24 @@ static DRIVER_OBJECT *pnp_manager;
 struct root_pnp_device
 {
     WCHAR id[MAX_DEVICE_ID_LEN];
-    struct wine_rb_entry entry;
+    struct list entry;
     DEVICE_OBJECT *device;
 };
 
-static int root_pnp_devices_rb_compare( const void *key, const struct wine_rb_entry *entry )
+static struct list root_pnp_devices = LIST_INIT(root_pnp_devices);
+
+static struct root_pnp_device *find_root_pnp_device( const WCHAR *id )
 {
-    const struct root_pnp_device *device = WINE_RB_ENTRY_VALUE( entry, const struct root_pnp_device, entry );
-    const WCHAR *k = key;
+    struct root_pnp_device *device;
 
-    return wcsicmp( k, device->id );
+    LIST_FOR_EACH_ENTRY( device, &root_pnp_devices, struct root_pnp_device, entry )
+    {
+        if (!wcsicmp( id, device->id ))
+            return device;
+    }
+
+    return NULL;
 }
-
-static struct wine_rb_tree root_pnp_devices = { root_pnp_devices_rb_compare };
 
 static NTSTATUS WINAPI pnp_manager_device_pnp( DEVICE_OBJECT *device, IRP *irp )
 {
@@ -1043,15 +1049,12 @@ void pnp_manager_start(void)
         ERR("RpcBindingFromStringBinding() failed, error %#x\n", err);
 }
 
-static void destroy_root_pnp_device( struct wine_rb_entry *entry, void *context )
-{
-    struct root_pnp_device *device = WINE_RB_ENTRY_VALUE(entry, struct root_pnp_device, entry);
-    remove_device( device->device );
-}
-
 void pnp_manager_stop(void)
 {
-    wine_rb_destroy( &root_pnp_devices, destroy_root_pnp_device, NULL );
+    struct root_pnp_device *device, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE( device, next, &root_pnp_devices, struct root_pnp_device, entry )
+        remove_device( device->device );
     IoDeleteDriver( pnp_manager );
     RpcBindingFree( &plugplay_binding_handle );
 }
@@ -1088,7 +1091,7 @@ void pnp_manager_enumerate_root_devices( const WCHAR *driver_name )
 
         SetupDiGetDeviceInstanceIdW( set, &sp_device, id, ARRAY_SIZE(id), NULL );
 
-        if (wine_rb_get( &root_pnp_devices, id ))
+        if (find_root_pnp_device( id ))
             continue;
 
         TRACE("Adding new root-enumerated device %s.\n", debugstr_w(id));
@@ -1103,12 +1106,7 @@ void pnp_manager_enumerate_root_devices( const WCHAR *driver_name )
         pnp_device = device->DeviceExtension;
         wcscpy( pnp_device->id, id );
         pnp_device->device = device;
-        if (wine_rb_put( &root_pnp_devices, id, &pnp_device->entry ))
-        {
-            ERR("Failed to insert device %s into tree.\n", debugstr_w(id));
-            IoDeleteDevice( device );
-            continue;
-        }
+        list_add_tail( &root_pnp_devices, &pnp_device->entry );
 
         start_device( device, set, &sp_device );
     }
