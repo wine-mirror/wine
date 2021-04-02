@@ -1082,7 +1082,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_DrawAuto(ID3D11DeviceConte
 static void STDMETHODCALLTYPE d3d11_immediate_context_DrawIndexedInstancedIndirect(ID3D11DeviceContext1 *iface,
         ID3D11Buffer *buffer, UINT offset)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext1(iface);
     struct d3d_buffer *d3d_buffer;
 
     TRACE("iface %p, buffer %p, offset %u.\n", iface, buffer, offset);
@@ -1090,15 +1090,14 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_DrawIndexedInstancedIndire
     d3d_buffer = unsafe_impl_from_ID3D11Buffer(buffer);
 
     wined3d_mutex_lock();
-    wined3d_device_draw_indexed_primitive_instanced_indirect(device->wined3d_device,
-            d3d_buffer->wined3d_buffer, offset);
+    wined3d_device_context_draw_indirect(context->wined3d_context, d3d_buffer->wined3d_buffer, offset, true);
     wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_DrawInstancedIndirect(ID3D11DeviceContext1 *iface,
         ID3D11Buffer *buffer, UINT offset)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext1(iface);
     struct d3d_buffer *d3d_buffer;
 
     TRACE("iface %p, buffer %p, offset %u.\n", iface, buffer, offset);
@@ -1106,8 +1105,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_DrawInstancedIndirect(ID3D
     d3d_buffer = unsafe_impl_from_ID3D11Buffer(buffer);
 
     wined3d_mutex_lock();
-    wined3d_device_draw_primitive_instanced_indirect(device->wined3d_device,
-            d3d_buffer->wined3d_buffer, offset);
+    wined3d_device_context_draw_indirect(context->wined3d_context, d3d_buffer->wined3d_buffer, offset, false);
     wined3d_mutex_unlock();
 }
 
