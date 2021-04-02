@@ -3719,18 +3719,40 @@ struct get_key_state_test_desc
 {
     BOOL peek_message;
     BOOL peek_message_main;
+    BOOL set_keyboard_state_main;
+    BOOL set_keyboard_state;
 };
 
 struct get_key_state_test_desc get_key_state_tests[] =
 {
     /* 0: not peeking in thread, no msg queue: GetKeyState / GetKeyboardState miss key press */
-    {FALSE,  TRUE},
+    {FALSE,  TRUE, FALSE, FALSE},
     /* 1: peeking on thread init, not in main: GetKeyState / GetKeyboardState catch key press */
     /*    - GetKeyboardState misses key press if called before GetKeyState */
     /*    - GetKeyboardState catches key press, if called after GetKeyState */
-    { TRUE, FALSE},
+    { TRUE, FALSE, FALSE, FALSE},
     /* 2: peeking on thread init, and in main: GetKeyState / GetKeyboardState catch key press */
-    { TRUE,  TRUE},
+    { TRUE,  TRUE, FALSE, FALSE},
+
+    /* same tests but with SetKeyboardState called in main thread */
+    /* 3: not peeking in thread, no msg queue: GetKeyState / GetKeyboardState miss key press */
+    {FALSE,  TRUE,  TRUE, FALSE},
+    /* 4: peeking on thread init, not in main: GetKeyState / GetKeyboardState catch key press */
+    /*    - GetKeyboardState misses key press if called before GetKeyState */
+    /*    - GetKeyboardState catches key press, if called after GetKeyState */
+    { TRUE, FALSE,  TRUE, FALSE},
+    /* 5: peeking on thread init, and in main: GetKeyState / GetKeyboardState catch key press */
+    { TRUE,  TRUE,  TRUE, FALSE},
+
+    /* same tests but with SetKeyboardState called in other thread */
+    /* 6: not peeking in thread, no msg queue: GetKeyState / GetKeyboardState miss key press */
+    {FALSE,  TRUE,  TRUE,  TRUE},
+    /* 7: peeking on thread init, not in main: GetKeyState / GetKeyboardState catch key press */
+    /*    - GetKeyboardState misses key press if called before GetKeyState */
+    /*    - GetKeyboardState catches key press, if called after GetKeyState */
+    { TRUE, FALSE,  TRUE,  TRUE},
+    /* 8: peeking on thread init, and in main: GetKeyState / GetKeyboardState catch key press */
+    { TRUE,  TRUE,  TRUE,  TRUE},
 };
 
 struct get_key_state_thread_params
@@ -3739,8 +3761,8 @@ struct get_key_state_thread_params
     int index;
 };
 
-#define check_get_keyboard_state(i, j, c, x, todo) check_get_keyboard_state_(i, j, c, x, todo, __LINE__)
-static void check_get_keyboard_state_(int i, int j, int c, int x, int todo, int line)
+#define check_get_keyboard_state(i, j, c, x, todo_c, todo_x) check_get_keyboard_state_(i, j, c, x, todo_c, todo_x, __LINE__)
+static void check_get_keyboard_state_(int i, int j, int c, int x, int todo_c, int todo_x, int line)
 {
     unsigned char keystate[256];
     BOOL ret;
@@ -3748,28 +3770,28 @@ static void check_get_keyboard_state_(int i, int j, int c, int x, int todo, int 
     memset(keystate, 0, sizeof(keystate));
     ret = GetKeyboardState(keystate);
     ok_(__FILE__, line)(ret, "GetKeyboardState failed, %u\n", GetLastError());
-    todo_wine_if(todo) ok_(__FILE__, line)(!(keystate['X'] & 0x80) == !x, "%d:%d: expected that X keystate is %s\n", i, j, x ? "set" : "unset");
-    ok_(__FILE__, line)(!(keystate['C'] & 0x80) == !c, "%d:%d: expected that C keystate is %s\n", i, j, c ? "set" : "unset");
+    todo_wine_if(todo_x) ok_(__FILE__, line)(!(keystate['X'] & 0x80) == !x, "%d:%d: expected that X keystate is %s\n", i, j, x ? "set" : "unset");
+    todo_wine_if(todo_c) ok_(__FILE__, line)(!(keystate['C'] & 0x80) == !c, "%d:%d: expected that C keystate is %s\n", i, j, c ? "set" : "unset");
 
     /* calling it twice shouldn't change */
     memset(keystate, 0, sizeof(keystate));
     ret = GetKeyboardState(keystate);
     ok_(__FILE__, line)(ret, "GetKeyboardState failed, %u\n", GetLastError());
-    todo_wine_if(todo) ok_(__FILE__, line)(!(keystate['X'] & 0x80) == !x, "%d:%d: expected that X keystate is %s\n", i, j, x ? "set" : "unset");
-    ok_(__FILE__, line)(!(keystate['C'] & 0x80) == !c, "%d:%d: expected that C keystate is %s\n", i, j, c ? "set" : "unset");
+    todo_wine_if(todo_x) ok_(__FILE__, line)(!(keystate['X'] & 0x80) == !x, "%d:%d: expected that X keystate is %s\n", i, j, x ? "set" : "unset");
+    todo_wine_if(todo_c) ok_(__FILE__, line)(!(keystate['C'] & 0x80) == !c, "%d:%d: expected that C keystate is %s\n", i, j, c ? "set" : "unset");
 }
 
-#define check_get_key_state(i, j, c, x, todo) check_get_key_state_(i, j, c, x, todo, __LINE__)
-static void check_get_key_state_(int i, int j, int c, int x, int todo, int line)
+#define check_get_key_state(i, j, c, x, todo_c, todo_x) check_get_key_state_(i, j, c, x, todo_c, todo_x, __LINE__)
+static void check_get_key_state_(int i, int j, int c, int x, int todo_c, int todo_x, int line)
 {
     SHORT state;
 
     state = GetKeyState('X');
-    todo_wine_if(todo) ok_(__FILE__, line)(!(state & 0x8000) == !x, "%d:%d: expected that X highest bit is %s, got %#x\n", i, j, x ? "set" : "unset", state);
+    todo_wine_if(todo_x) ok_(__FILE__, line)(!(state & 0x8000) == !x, "%d:%d: expected that X highest bit is %s, got %#x\n", i, j, x ? "set" : "unset", state);
     ok_(__FILE__, line)(!(state & 0x007e), "%d:%d: expected that X undefined bits are unset, got %#x\n", i, j, state);
 
     state = GetKeyState('C');
-    ok_(__FILE__, line)(!(state & 0x8000) == !c, "%d:%d: expected that C highest bit is %s, got %#x\n", i, j, c ? "set" : "unset", state);
+    todo_wine_if(todo_c) ok_(__FILE__, line)(!(state & 0x8000) == !c, "%d:%d: expected that C highest bit is %s, got %#x\n", i, j, c ? "set" : "unset", state);
     ok_(__FILE__, line)(!(state & 0x007e), "%d:%d: expected that C undefined bits are unset, got %#x\n", i, j, state);
 }
 
@@ -3779,8 +3801,9 @@ static DWORD WINAPI get_key_state_thread(void *arg)
     struct get_key_state_test_desc* test;
     HANDLE *semaphores = params->semaphores;
     DWORD result;
+    BYTE keystate[256];
     BOOL has_queue;
-    BOOL expect_x;
+    BOOL expect_x, expect_c;
     MSG msg;
     int i = params->index, j;
 
@@ -3800,26 +3823,36 @@ static DWORD WINAPI get_key_state_thread(void *arg)
         result = WaitForSingleObject(semaphores[1], 1000);
         ok(result == WAIT_OBJECT_0, "%d:%d: WaitForSingleObject returned %u\n", i, j, result);
 
+        if (test->set_keyboard_state)
+        {
+            keystate['C'] = 0xff;
+            SetKeyboardState(keystate);
+        }
+
         /* key pressed */
         ReleaseSemaphore(semaphores[0], 1, NULL);
         result = WaitForSingleObject(semaphores[1], 1000);
         ok(result == WAIT_OBJECT_0, "%d:%d: WaitForSingleObject returned %u\n", i, j, result);
 
-        if (!has_queue && j == 0) expect_x = FALSE;
+        if (test->set_keyboard_state) expect_x = TRUE;
+        else if (!has_queue && j == 0) expect_x = FALSE;
         else expect_x = TRUE;
 
-        check_get_keyboard_state(i, j, FALSE, FALSE, /* todo */ !has_queue);
-        check_get_key_state(i, j, FALSE, expect_x, /* todo */ has_queue || j == 0);
-        check_get_keyboard_state(i, j, FALSE, expect_x, /* todo */ has_queue || j == 0);
+        if (test->set_keyboard_state) expect_c = TRUE;
+        else expect_c = FALSE;
+
+        check_get_keyboard_state(i, j, expect_c, FALSE, /* todo */ i == 6, !has_queue);
+        check_get_key_state(i, j, expect_c, expect_x, /* todo */ i == 6, i != 6 && (has_queue || j == 0));
+        check_get_keyboard_state(i, j, expect_c, expect_x, /* todo */ i == 6, i != 6 && (has_queue || j == 0));
 
         /* key released */
         ReleaseSemaphore(semaphores[0], 1, NULL);
         result = WaitForSingleObject(semaphores[1], 1000);
-        ok(result == WAIT_OBJECT_0, "%d:%d: WaitForSingleObject returned %u\n", i, j, result);
+        ok(result == WAIT_OBJECT_0, "%d: WaitForSingleObject returned %u\n", i, result);
 
-        check_get_keyboard_state(i, j, FALSE, expect_x, /* todo */ has_queue || j > 0);
-        check_get_key_state(i, j, FALSE, FALSE, /* todo */ FALSE);
-        check_get_keyboard_state(i, j, FALSE, FALSE, /* todo */ FALSE);
+        check_get_keyboard_state(i, j, expect_c, expect_x, /* todo */ i == 6, has_queue || i == 6 || j > 0);
+        check_get_key_state(i, j, expect_c, FALSE, /* todo */ i == 6, FALSE);
+        check_get_keyboard_state(i, j, expect_c, FALSE, /* todo */ i == 6, FALSE);
     }
 
     return 0;
@@ -3831,7 +3864,7 @@ static void test_GetKeyState(void)
     HANDLE thread;
     DWORD result;
     BYTE keystate[256];
-    BOOL expect_x;
+    BOOL expect_x, expect_c;
     HWND hwnd;
     MSG msg;
     int i, j;
@@ -3879,21 +3912,26 @@ static void test_GetKeyState(void)
             ok(result == WAIT_OBJECT_0, "%d:%d: WaitForSingleObject returned %u\n", i, j, result);
 
             keybd_event('X', 0, 0, 0);
-            keystate['C'] = 0xff;
-            SetKeyboardState(keystate);
+            if (test->set_keyboard_state_main)
+            {
+                expect_c = TRUE;
+                keystate['C'] = 0xff;
+                SetKeyboardState(keystate);
+            }
+            else expect_c = FALSE;
 
-            check_get_keyboard_state(i, j, TRUE, FALSE, /* todo */ FALSE);
-            check_get_key_state(i, j, TRUE, FALSE, /* todo */ FALSE);
-            check_get_keyboard_state(i, j, TRUE, FALSE, /* todo */ FALSE);
+            check_get_keyboard_state(i, j, expect_c, FALSE, /* todo */ FALSE, FALSE);
+            check_get_key_state(i, j, expect_c, FALSE, /* todo */ FALSE, FALSE);
+            check_get_keyboard_state(i, j, expect_c, FALSE, /* todo */ FALSE, FALSE);
 
             if (test->peek_message_main) while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
 
             if (test->peek_message_main) expect_x = TRUE;
             else expect_x = FALSE;
 
-            check_get_keyboard_state(i, j, TRUE, expect_x, /* todo */ FALSE);
-            check_get_key_state(i, j, TRUE, expect_x, /* todo */ FALSE);
-            check_get_keyboard_state(i, j, TRUE, expect_x, /* todo */ FALSE);
+            check_get_keyboard_state(i, j, expect_c, expect_x, /* todo */ FALSE, FALSE);
+            check_get_key_state(i, j, expect_c, expect_x, /* todo */ FALSE, FALSE);
+            check_get_keyboard_state(i, j, expect_c, expect_x, /* todo */ FALSE, FALSE);
 
             ReleaseSemaphore(params.semaphores[1], 1, NULL);
 
@@ -3902,18 +3940,22 @@ static void test_GetKeyState(void)
             ok(result == WAIT_OBJECT_0, "%d:%d: WaitForSingleObject returned %u\n", i, j, result);
 
             keybd_event('X', 0, KEYEVENTF_KEYUP, 0);
-            keystate['C'] = 0x00;
-            SetKeyboardState(keystate);
+            if (test->set_keyboard_state_main)
+            {
+                expect_x = FALSE;
+                keystate['C'] = 0x00;
+                SetKeyboardState(keystate);
+            }
 
-            check_get_keyboard_state(i, j, FALSE, FALSE, /* todo */ FALSE);
-            check_get_key_state(i, j, FALSE, FALSE, /* todo */ FALSE);
-            check_get_keyboard_state(i, j, FALSE, FALSE, /* todo */ FALSE);
+            check_get_keyboard_state(i, j, FALSE, expect_x, /* todo */ FALSE, FALSE);
+            check_get_key_state(i, j, FALSE, expect_x, /* todo */ FALSE, FALSE);
+            check_get_keyboard_state(i, j, FALSE, expect_x, /* todo */ FALSE, FALSE);
 
             if (test->peek_message_main) while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
 
-            check_get_keyboard_state(i, j, FALSE, FALSE, /* todo */ FALSE);
-            check_get_key_state(i, j, FALSE, FALSE, /* todo */ FALSE);
-            check_get_keyboard_state(i, j, FALSE, FALSE, /* todo */ FALSE);
+            check_get_keyboard_state(i, j, FALSE, FALSE, /* todo */ FALSE, FALSE);
+            check_get_key_state(i, j, FALSE, FALSE, /* todo */ FALSE, FALSE);
+            check_get_keyboard_state(i, j, FALSE, FALSE, /* todo */ FALSE, FALSE);
 
             ReleaseSemaphore(params.semaphores[1], 1, NULL);
         }
