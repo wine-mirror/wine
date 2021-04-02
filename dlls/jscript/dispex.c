@@ -2327,7 +2327,10 @@ HRESULT jsdisp_delete_idx(jsdisp_t *obj, DWORD idx)
     if(FAILED(hres) || !prop)
         return hres;
 
-    return delete_prop(prop, &b);
+    hres = delete_prop(prop, &b);
+    if(FAILED(hres))
+        return hres;
+    return b ? S_OK : JS_E_INVALID_ACTION;
 }
 
 HRESULT disp_delete(IDispatch *disp, DISPID id, BOOL *ret)

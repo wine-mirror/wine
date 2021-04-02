@@ -1044,13 +1044,11 @@ sync_test("freeze", function() {
     Object.freeze(o);
     try {
         o.pop();
-        todo_wine.
         ok(false, "exception expected on o.pop");
     }catch(e) {
         ok(e.name === "TypeError", "got " + e.name + " exception");
     }
     ok(o[0] === 1, "o[0] = " + o[0]);
-    todo_wine.
     ok(o.length === 1, "o.length = " + o.length);
 });
 
@@ -1098,13 +1096,11 @@ sync_test("seal", function() {
     Object.seal(o);
     try {
         o.pop();
-        todo_wine.
        ok(false, "exception expected on o.pop");
     }catch(e) {
         ok(e.name === "TypeError", "got " + e.name + " exception");
     }
     ok(o[0] === 1, "o[0] = " + o[0]);
-    todo_wine.
     ok(o.length === 1, "o.length = " + o.length);
 });
 
