@@ -2964,14 +2964,13 @@ DECL_HANDLER(get_thread_input)
 }
 
 
-/* retrieve queue keyboard state for a given thread */
+/* retrieve queue keyboard state for current thread or global async state */
 DECL_HANDLER(get_key_state)
 {
-    struct thread *thread;
     struct desktop *desktop;
     data_size_t size = min( 256, get_reply_max_size() );
 
-    if (!req->tid)  /* get global async key state */
+    if (req->async)  /* get global async key state */
     {
         if (!(desktop = get_thread_desktop( current, 0 ))) return;
         if (req->key >= 0)
@@ -2985,15 +2984,12 @@ DECL_HANDLER(get_key_state)
     else
     {
         unsigned char *keystate;
-        if (!(thread = get_thread_from_id( req->tid ))) return;
-        if (thread->queue)
+        if (current->queue)
         {
-            if (req->key >= 0) reply->state = thread->queue->input->keystate[req->key & 0xff];
-            set_reply_data( thread->queue->input->keystate, size );
-            release_object( thread );
+            if (req->key >= 0) reply->state = current->queue->input->keystate[req->key & 0xff];
+            set_reply_data( current->queue->input->keystate, size );
             return;
         }
-        release_object( thread );
 
         /* fallback to desktop keystate */
         if (!(desktop = get_thread_desktop( current, 0 ))) return;

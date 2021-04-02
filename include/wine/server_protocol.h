@@ -3830,7 +3830,7 @@ struct get_last_input_time_reply
 struct get_key_state_request
 {
     struct request_header __header;
-    thread_id_t    tid;
+    int            async;
     int            key;
     char __pad_20[4];
 };
@@ -6226,7 +6226,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 688
+#define SERVER_PROTOCOL_VERSION 689
 
 /* ### protocol_version end ### */
 

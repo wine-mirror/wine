@@ -2749,9 +2749,9 @@ enum coords_relative
 @END
 
 
-/* Retrieve queue keyboard state for a given thread */
+/* Retrieve queue keyboard state for current thread or global async state */
 @REQ(get_key_state)
-    thread_id_t    tid;           /* id of thread */
+    int            async;         /* whether to query the async state */
     int            key;           /* optional key code or -1 */
 @REPLY
     unsigned char  state;         /* state of specified key */

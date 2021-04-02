@@ -1719,7 +1719,7 @@ C_ASSERT( sizeof(struct get_thread_input_reply) == 64 );
 C_ASSERT( sizeof(struct get_last_input_time_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_last_input_time_reply, time) == 8 );
 C_ASSERT( sizeof(struct get_last_input_time_reply) == 16 );
-C_ASSERT( FIELD_OFFSET(struct get_key_state_request, tid) == 12 );
+C_ASSERT( FIELD_OFFSET(struct get_key_state_request, async) == 12 );
 C_ASSERT( FIELD_OFFSET(struct get_key_state_request, key) == 16 );
 C_ASSERT( sizeof(struct get_key_state_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct get_key_state_reply, state) == 8 );

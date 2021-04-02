@@ -3401,7 +3401,7 @@ static void dump_get_last_input_time_reply( const struct get_last_input_time_rep
 
 static void dump_get_key_state_request( const struct get_key_state_request *req )
 {
-    fprintf( stderr, " tid=%04x", req->tid );
+    fprintf( stderr, " async=%d", req->async );
     fprintf( stderr, ", key=%d", req->key );
 }
 

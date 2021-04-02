@@ -942,7 +942,7 @@ static BOOL get_async_key_state(BYTE state[256])
 
     SERVER_START_REQ(get_key_state)
     {
-        req->tid = 0;
+        req->async = 1;
         req->key = -1;
         wine_server_set_reply(req, state, 256);
         ret = !wine_server_call(req);
