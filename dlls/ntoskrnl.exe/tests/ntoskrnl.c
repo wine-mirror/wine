@@ -32,11 +32,15 @@
 #include "ntsecapi.h"
 #include "mscat.h"
 #include "mssip.h"
+#include "setupapi.h"
+#include "newdev.h"
 #include "wine/test.h"
 #include "wine/heap.h"
 #include "wine/mssign.h"
 
 #include "driver.h"
+
+static const GUID GUID_NULL;
 
 static HANDLE device;
 
@@ -935,6 +939,226 @@ static void test_driver4(struct testsign_context *ctx)
     ok(ret, "DeleteFile failed: %u\n", GetLastError());
 }
 
+static void add_file_to_catalog(HANDLE catalog, const WCHAR *file)
+{
+    SIP_SUBJECTINFO subject_info = {sizeof(SIP_SUBJECTINFO)};
+    SIP_INDIRECT_DATA *indirect_data;
+    const WCHAR *filepart = file;
+    CRYPTCATMEMBER *member;
+    WCHAR hash_buffer[100];
+    GUID subject_guid;
+    unsigned int i;
+    DWORD size;
+    BOOL ret;
+
+    ret = CryptSIPRetrieveSubjectGuidForCatalogFile(file, NULL, &subject_guid);
+    todo_wine ok(ret, "Failed to get subject guid, error %u\n", GetLastError());
+
+    size = 0;
+    subject_info.pgSubjectType = &subject_guid;
+    subject_info.pwsFileName = file;
+    subject_info.DigestAlgorithm.pszObjId = (char *)szOID_OIWSEC_sha1;
+    subject_info.dwFlags = SPC_INC_PE_RESOURCES_FLAG | SPC_INC_PE_IMPORT_ADDR_TABLE_FLAG | SPC_EXC_PE_PAGE_HASHES_FLAG | 0x10000;
+    ret = CryptSIPCreateIndirectData(&subject_info, &size, NULL);
+    todo_wine ok(ret, "Failed to get indirect data size, error %u\n", GetLastError());
+
+    indirect_data = malloc(size);
+    ret = CryptSIPCreateIndirectData(&subject_info, &size, indirect_data);
+    todo_wine ok(ret, "Failed to get indirect data, error %u\n", GetLastError());
+    if (ret)
+    {
+        memset(hash_buffer, 0, sizeof(hash_buffer));
+        for (i = 0; i < indirect_data->Digest.cbData; ++i)
+            swprintf(&hash_buffer[i * 2], 2, L"%02X", indirect_data->Digest.pbData[i]);
+
+        member = CryptCATPutMemberInfo(catalog, (WCHAR *)file,
+                hash_buffer, &subject_guid, 0, size, (BYTE *)indirect_data);
+        ok(!!member, "Failed to write member, error %u\n", GetLastError());
+
+        if (wcsrchr(file, '\\'))
+            filepart = wcsrchr(file, '\\') + 1;
+
+        ret = !!CryptCATPutAttrInfo(catalog, member, (WCHAR *)L"File",
+                CRYPTCAT_ATTR_NAMEASCII | CRYPTCAT_ATTR_DATAASCII | CRYPTCAT_ATTR_AUTHENTICATED,
+                (wcslen(filepart) + 1) * 2, (BYTE *)filepart);
+        ok(ret, "Failed to write attr, error %u\n", GetLastError());
+
+        ret = !!CryptCATPutAttrInfo(catalog, member, (WCHAR *)L"OSAttr",
+                CRYPTCAT_ATTR_NAMEASCII | CRYPTCAT_ATTR_DATAASCII | CRYPTCAT_ATTR_AUTHENTICATED,
+                sizeof(L"2:6.0"), (BYTE *)L"2:6.0");
+        ok(ret, "Failed to write attr, error %u\n", GetLastError());
+    }
+}
+
+static void test_pnp_driver(struct testsign_context *ctx)
+{
+    static const char hardware_id[] = "test_hardware_id\0";
+    char path[MAX_PATH], dest[MAX_PATH], *filepart;
+    SP_DEVINFO_DATA device = {sizeof(device)};
+    char cwd[MAX_PATH], tempdir[MAX_PATH];
+    WCHAR driver_filename[MAX_PATH];
+    SC_HANDLE manager, service;
+    BOOL ret, need_reboot;
+    HANDLE catalog, file;
+    HDEVINFO set;
+    FILE *f;
+
+#ifdef __i386__
+#define EXT "x86"
+#elif defined(__x86_64__)
+#define EXT "amd64"
+#elif defined(__arm__)
+#define EXT "arm"
+#elif defined(__aarch64__)
+#define EXT "arm64"
+#else
+#define EXT
+#endif
+
+    static const char inf_text[] =
+        "[Version]\n"
+        "Signature=$Chicago$\n"
+        "ClassGuid={4d36e97d-e325-11ce-bfc1-08002be10318}\n"
+        "CatalogFile=winetest.cat\n"
+        "DriverVer=09/21/2006,6.0.5736.1\n"
+
+        "[Manufacturer]\n"
+        "Wine=mfg_section,NT" EXT "\n"
+
+        "[mfg_section.NT" EXT "]\n"
+        "Wine test root driver=device_section,test_hardware_id\n"
+
+        "[device_section.NT" EXT "]\n"
+        "CopyFiles=file_section\n"
+
+        "[device_section.NT" EXT ".Services]\n"
+        "AddService=winetest,0x2,svc_section\n"
+
+        "[file_section]\n"
+        "winetest.sys\n"
+
+        "[SourceDisksFiles]\n"
+        "winetest.sys=1\n"
+
+        "[SourceDisksNames]\n"
+        "1=,winetest.sys\n"
+
+        "[DestinationDirs]\n"
+        "DefaultDestDir=12\n"
+
+        "[svc_section]\n"
+        "ServiceBinary=%12%\\winetest.sys\n"
+        "ServiceType=1\n"
+        "StartType=3\n"
+        "ErrorControl=1\n"
+        "LoadOrderGroup=Extended Base\n"
+        "DisplayName=\"winetest bus driver\"\n"
+        "; they don't sleep anymore, on the beach\n";
+
+    GetCurrentDirectoryA(ARRAY_SIZE(cwd), cwd);
+    GetTempPathA(ARRAY_SIZE(tempdir), tempdir);
+    SetCurrentDirectoryA(tempdir);
+
+    load_resource(L"driver_pnp.dll", driver_filename);
+    ret = MoveFileExW(driver_filename, L"winetest.sys", MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING);
+    ok(ret, "failed to move file, error %u\n", GetLastError());
+
+    f = fopen("winetest.inf", "w");
+    ok(!!f, "failed to open winetest.inf: %s\n", strerror(errno));
+    fputs(inf_text, f);
+    fclose(f);
+
+    /* Create the catalog file. */
+
+    catalog = CryptCATOpen((WCHAR *)L"winetest.cat", CRYPTCAT_OPEN_CREATENEW, 0, CRYPTCAT_VERSION_1, 0);
+    ok(catalog != INVALID_HANDLE_VALUE, "Failed to create catalog, error %#x\n", GetLastError());
+
+    ret = !!CryptCATPutCatAttrInfo(catalog, (WCHAR *)L"HWID1",
+            CRYPTCAT_ATTR_NAMEASCII | CRYPTCAT_ATTR_DATAASCII | CRYPTCAT_ATTR_AUTHENTICATED,
+            sizeof(L"test_hardware_id"), (BYTE *)L"test_hardware_id");
+    todo_wine ok(ret, "failed to add attribute, error %#x\n", GetLastError());
+
+    ret = !!CryptCATPutCatAttrInfo(catalog, (WCHAR *)L"OS",
+            CRYPTCAT_ATTR_NAMEASCII | CRYPTCAT_ATTR_DATAASCII | CRYPTCAT_ATTR_AUTHENTICATED,
+            sizeof(L"VistaX64"), (BYTE *)L"VistaX64");
+    todo_wine ok(ret, "failed to add attribute, error %#x\n", GetLastError());
+
+    add_file_to_catalog(catalog, L"winetest.sys");
+    add_file_to_catalog(catalog, L"winetest.inf");
+
+    ret = CryptCATPersistStore(catalog);
+    todo_wine ok(ret, "Failed to write catalog, error %u\n", GetLastError());
+
+    ret = CryptCATClose(catalog);
+    ok(ret, "Failed to close catalog, error %u\n", GetLastError());
+
+    testsign_sign(ctx, L"winetest.cat");
+
+    /* Install the driver. */
+
+    set = SetupDiCreateDeviceInfoList(NULL, NULL);
+    ok(set != INVALID_HANDLE_VALUE, "failed to create device list, error %#x\n", GetLastError());
+
+    ret = SetupDiCreateDeviceInfoA(set, "root\\winetest\\0", &GUID_NULL, NULL, NULL, 0, &device);
+    ok(ret, "failed to create device, error %#x\n", GetLastError());
+
+    ret = SetupDiSetDeviceRegistryPropertyA( set, &device, SPDRP_HARDWAREID,
+            (const BYTE *)hardware_id, sizeof(hardware_id) );
+    ok(ret, "failed to create set hardware ID, error %#x\n", GetLastError());
+
+    ret = SetupDiCallClassInstaller(DIF_REGISTERDEVICE, set, &device);
+    ok(ret, "failed to register device, error %#x\n", GetLastError());
+
+    GetFullPathNameA("winetest.inf", sizeof(path), path, NULL);
+    ret = UpdateDriverForPlugAndPlayDevicesA(NULL, hardware_id, path, INSTALLFLAG_FORCE, &need_reboot);
+    ok(ret, "failed to install device, error %#x\n", GetLastError());
+    ok(!need_reboot, "expected no reboot necessary\n");
+
+    /* Tests. */
+
+    file = CreateFileA("\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+    CloseHandle(file);
+
+    /* Clean up. */
+
+    ret = SetupDiCallClassInstaller(DIF_REMOVE, set, &device);
+    ok(ret, "failed to remove device, error %#x\n", GetLastError());
+
+    file = CreateFileA("\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(file == INVALID_HANDLE_VALUE, "expected failure\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "got error %u\n", GetLastError());
+
+    ret = SetupDiDestroyDeviceInfoList(set);
+    ok(ret, "failed to destroy set, error %#x\n", GetLastError());
+
+    /* Windows stops the service but does not delete it. */
+    manager = OpenSCManagerA(NULL, NULL, SC_MANAGER_CONNECT);
+    ok(!!manager, "failed to open service manager, error %u\n", GetLastError());
+    service = OpenServiceA(manager, "winetest", SERVICE_STOP | DELETE);
+    ok(!!service, "failed to open service, error %u\n", GetLastError());
+    unload_driver(service);
+    CloseServiceHandle(manager);
+
+    GetFullPathNameA("winetest.inf", sizeof(path), path, NULL);
+    ret = SetupCopyOEMInfA(path, NULL, 0, 0, dest, sizeof(dest), NULL, &filepart);
+    ok(ret, "Failed to copy INF, error %#x\n", GetLastError());
+    ret = SetupUninstallOEMInfA(filepart, 0, NULL);
+    ok(ret, "Failed to uninstall INF, error %u\n", GetLastError());
+
+    ret = DeleteFileA("winetest.cat");
+    ok(ret, "Failed to delete file, error %u\n", GetLastError());
+    ret = DeleteFileA("winetest.inf");
+    ok(ret, "Failed to delete file, error %u\n", GetLastError());
+    ret = DeleteFileA("winetest.sys");
+    ok(ret, "Failed to delete file, error %u\n", GetLastError());
+    /* Windows 10 apparently deletes the image in SetupUninstallOEMInf(). */
+    ret = DeleteFileA("C:/windows/system32/drivers/winetest.sys");
+    ok(ret || GetLastError() == ERROR_FILE_NOT_FOUND, "Failed to delete file, error %u\n", GetLastError());
+
+    SetCurrentDirectoryA(cwd);
+}
+
 START_TEST(ntoskrnl)
 {
     WCHAR filename[MAX_PATH], filename2[MAX_PATH];
@@ -1007,6 +1231,8 @@ START_TEST(ntoskrnl)
     test_driver3(&ctx);
     subtest("driver4");
     test_driver4(&ctx);
+
+    test_pnp_driver(&ctx);
 
     testsign_cleanup(&ctx);
 }

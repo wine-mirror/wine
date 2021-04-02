@@ -1,5 +1,5 @@
 TESTDLL   = ntoskrnl.exe
-IMPORTS   = advapi32 crypt32 wintrust ws2_32
+IMPORTS   = advapi32 crypt32 newdev setupapi wintrust ws2_32
 
 driver_IMPORTS = winecrt0 ntoskrnl
 driver_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
@@ -9,6 +9,8 @@ driver3_IMPORTS = winecrt0 ntoskrnl
 driver3_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
 driver4_IMPORTS = winecrt0 ntoskrnl netio
 driver4_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
+driver_pnp_IMPORTS = winecrt0 ntoskrnl
+driver_pnp_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
 
 SOURCES = \
 	driver.c \
@@ -19,4 +21,6 @@ SOURCES = \
 	driver3.spec \
 	driver4.c \
 	driver4.spec \
+	driver_pnp.c \
+	driver_pnp.spec \
 	ntoskrnl.c
