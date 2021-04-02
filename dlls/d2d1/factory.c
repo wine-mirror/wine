@@ -30,17 +30,25 @@ struct d2d_settings d2d_settings =
 struct d2d_factory
 {
     ID2D1Factory2 ID2D1Factory2_iface;
+    ID2D1Multithread ID2D1Multithread_iface;
     LONG refcount;
 
     ID3D10Device1 *device;
 
     float dpi_x;
     float dpi_y;
+
+    CRITICAL_SECTION cs;
 };
 
 static inline struct d2d_factory *impl_from_ID2D1Factory2(ID2D1Factory2 *iface)
 {
     return CONTAINING_RECORD(iface, struct d2d_factory, ID2D1Factory2_iface);
+}
+
+static inline struct d2d_factory *impl_from_ID2D1Multithread(ID2D1Multithread *iface)
+{
+    return CONTAINING_RECORD(iface, struct d2d_factory, ID2D1Multithread_iface);
 }
 
 static HRESULT d2d_factory_reload_sysmetrics(struct d2d_factory *factory)
@@ -63,6 +71,8 @@ static HRESULT d2d_factory_reload_sysmetrics(struct d2d_factory *factory)
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_QueryInterface(ID2D1Factory2 *iface, REFIID iid, void **out)
 {
+    struct d2d_factory *factory = impl_from_ID2D1Factory2(iface);
+
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
     if ((IsEqualGUID(iid, &IID_ID2D1Factory2) && d2d_settings.max_version_factory >= 2)
@@ -72,6 +82,12 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_QueryInterface(ID2D1Factory2 *iface
     {
         ID2D1Factory2_AddRef(iface);
         *out = iface;
+        return S_OK;
+    }
+    else if (IsEqualGUID(iid, &IID_ID2D1Multithread))
+    {
+        ID2D1Factory2_AddRef(iface);
+        *out = &factory->ID2D1Multithread_iface;
         return S_OK;
     }
 
@@ -102,6 +118,7 @@ static ULONG STDMETHODCALLTYPE d2d_factory_Release(ID2D1Factory2 *iface)
     {
         if (factory->device)
             ID3D10Device1_Release(factory->device);
+        DeleteCriticalSection(&factory->cs);
         heap_free(factory);
     }
 
@@ -593,17 +610,92 @@ static const struct ID2D1Factory2Vtbl d2d_factory_vtbl =
     d2d_factory_ID2D1Factory1_CreateDevice,
 };
 
+static HRESULT STDMETHODCALLTYPE d2d_factory_mt_QueryInterface(ID2D1Multithread *iface, REFIID iid, void **out)
+{
+    struct d2d_factory *factory = impl_from_ID2D1Multithread(iface);
+    return d2d_factory_QueryInterface(&factory->ID2D1Factory2_iface, iid, out);
+}
+
+static ULONG STDMETHODCALLTYPE d2d_factory_mt_AddRef(ID2D1Multithread *iface)
+{
+    struct d2d_factory *factory = impl_from_ID2D1Multithread(iface);
+    return d2d_factory_AddRef(&factory->ID2D1Factory2_iface);
+}
+
+static ULONG STDMETHODCALLTYPE d2d_factory_mt_Release(ID2D1Multithread *iface)
+{
+    struct d2d_factory *factory = impl_from_ID2D1Multithread(iface);
+    return d2d_factory_Release(&factory->ID2D1Factory2_iface);
+}
+
+static BOOL STDMETHODCALLTYPE d2d_factory_mt_GetMultithreadProtected(ID2D1Multithread *iface)
+{
+    return TRUE;
+}
+
+static void STDMETHODCALLTYPE d2d_factory_mt_Enter(ID2D1Multithread *iface)
+{
+    struct d2d_factory *factory = impl_from_ID2D1Multithread(iface);
+
+    TRACE("%p.\n", iface);
+
+    return EnterCriticalSection(&factory->cs);
+}
+
+static void STDMETHODCALLTYPE d2d_factory_mt_Leave(ID2D1Multithread *iface)
+{
+    struct d2d_factory *factory = impl_from_ID2D1Multithread(iface);
+
+    TRACE("%p.\n", iface);
+
+    return LeaveCriticalSection(&factory->cs);
+}
+
+static BOOL STDMETHODCALLTYPE d2d_factory_st_GetMultithreadProtected(ID2D1Multithread *iface)
+{
+    return FALSE;
+}
+
+static void STDMETHODCALLTYPE d2d_factory_st_Enter(ID2D1Multithread *iface)
+{
+}
+
+static void STDMETHODCALLTYPE d2d_factory_st_Leave(ID2D1Multithread *iface)
+{
+}
+
+static const struct ID2D1MultithreadVtbl d2d_factory_multithread_vtbl =
+{
+    d2d_factory_mt_QueryInterface,
+    d2d_factory_mt_AddRef,
+    d2d_factory_mt_Release,
+    d2d_factory_mt_GetMultithreadProtected,
+    d2d_factory_mt_Enter,
+    d2d_factory_mt_Leave,
+};
+
+static const struct ID2D1MultithreadVtbl d2d_factory_multithread_noop_vtbl =
+{
+    d2d_factory_mt_QueryInterface,
+    d2d_factory_mt_AddRef,
+    d2d_factory_mt_Release,
+    d2d_factory_st_GetMultithreadProtected,
+    d2d_factory_st_Enter,
+    d2d_factory_st_Leave,
+};
+
 static void d2d_factory_init(struct d2d_factory *factory, D2D1_FACTORY_TYPE factory_type,
         const D2D1_FACTORY_OPTIONS *factory_options)
 {
-    if (factory_type != D2D1_FACTORY_TYPE_SINGLE_THREADED)
-        FIXME("Ignoring factory type %#x.\n", factory_type);
     if (factory_options && factory_options->debugLevel != D2D1_DEBUG_LEVEL_NONE)
         WARN("Ignoring debug level %#x.\n", factory_options->debugLevel);
 
     factory->ID2D1Factory2_iface.lpVtbl = &d2d_factory_vtbl;
+    factory->ID2D1Multithread_iface.lpVtbl = factory_type == D2D1_FACTORY_TYPE_SINGLE_THREADED ?
+            &d2d_factory_multithread_noop_vtbl : &d2d_factory_multithread_vtbl;
     factory->refcount = 1;
     d2d_factory_reload_sysmetrics(factory);
+    InitializeCriticalSection(&factory->cs);
 }
 
 HRESULT WINAPI D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,
@@ -614,6 +706,12 @@ HRESULT WINAPI D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,
 
     TRACE("factory_type %#x, iid %s, factory_options %p, factory %p.\n",
             factory_type, debugstr_guid(iid), factory_options, factory);
+
+    if (factory_type != D2D1_FACTORY_TYPE_SINGLE_THREADED &&
+            factory_type != D2D1_FACTORY_TYPE_MULTI_THREADED)
+    {
+        return E_INVALIDARG;
+    }
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
