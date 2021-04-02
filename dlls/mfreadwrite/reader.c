@@ -667,7 +667,7 @@ static HRESULT source_reader_pull_stream_samples(struct source_reader *reader, s
     {
         memset(&out_buffer, 0, sizeof(out_buffer));
 
-        if (!(stream_info.dwFlags & MFT_OUTPUT_STREAM_PROVIDES_SAMPLES))
+        if (!(stream_info.dwFlags & (MFT_OUTPUT_STREAM_PROVIDES_SAMPLES | MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES)))
         {
             if (FAILED(hr = MFCreateSample(&out_buffer.pSample)))
                 break;
