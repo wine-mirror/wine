@@ -26,6 +26,7 @@
 #ifndef __WINE_WINED3D_H
 #define __WINE_WINED3D_H
 
+#include <stdbool.h>
 #include "wine/list.h"
 
 #define WINED3D_OK                                              S_OK
@@ -2564,6 +2565,8 @@ void __cdecl wined3d_device_context_draw(struct wined3d_device_context *context,
         unsigned int vertex_count, unsigned int start_instance, unsigned int instance_count);
 void __cdecl wined3d_device_context_draw_indexed(struct wined3d_device_context *context, int base_vertex_index,
         unsigned int start_index, unsigned int index_count, unsigned int start_instance, unsigned int instance_count);
+void __cdecl wined3d_device_context_draw_indirect(struct wined3d_device_context *context,
+        struct wined3d_buffer *buffer, unsigned int offset, bool indexed);
 void __cdecl wined3d_device_context_set_blend_state(struct wined3d_device_context *context,
         struct wined3d_blend_state *state, const struct wined3d_color *blend_factor, unsigned int sample_mask);
 void __cdecl wined3d_device_context_set_constant_buffer(struct wined3d_device_context *context,

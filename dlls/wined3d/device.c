@@ -4484,12 +4484,9 @@ void CDECL wined3d_device_draw_primitive_instanced(struct wined3d_device *device
 void CDECL wined3d_device_draw_primitive_instanced_indirect(struct wined3d_device *device,
         struct wined3d_buffer *buffer, unsigned int offset)
 {
-    struct wined3d_state *state = device->cs->c.state;
-
     TRACE("device %p, buffer %p, offset %u.\n", device, buffer, offset);
 
-    wined3d_cs_emit_draw_indirect(device->cs, state->primitive_type,
-            state->patch_vertex_count, buffer, offset, false);
+    wined3d_device_context_draw_indirect(&device->cs->c, buffer, offset, false);
 }
 
 void CDECL wined3d_device_draw_indexed_primitive(struct wined3d_device *device, UINT start_idx, UINT index_count)
@@ -4516,12 +4513,9 @@ void CDECL wined3d_device_draw_indexed_primitive_instanced(struct wined3d_device
 void CDECL wined3d_device_draw_indexed_primitive_instanced_indirect(struct wined3d_device *device,
         struct wined3d_buffer *buffer, unsigned int offset)
 {
-    struct wined3d_state *state = device->cs->c.state;
-
     TRACE("device %p, buffer %p, offset %u.\n", device, buffer, offset);
 
-    wined3d_cs_emit_draw_indirect(device->cs, state->primitive_type,
-            state->patch_vertex_count, buffer, offset, true);
+    wined3d_device_context_draw_indirect(&device->cs->c, buffer, offset, true);
 }
 
 HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
