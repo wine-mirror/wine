@@ -21,33 +21,19 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
 #include <assert.h>
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 
-#include "ntstatus.h"
-#define WIN32_NO_STATUS
-#include "windef.h"
-#include "winsvc.h"
-#include "winternl.h"
+#include "ntoskrnl_private.h"
 #include "excpt.h"
-#include "winioctl.h"
-#include "winbase.h"
 #include "winreg.h"
 #include "ntsecapi.h"
 #include "ddk/csq.h"
-#include "ddk/ntddk.h"
-#include "ddk/ntifs.h"
-#include "ddk/wdm.h"
 #include "wine/server.h"
-#include "wine/debug.h"
 #include "wine/heap.h"
-#include "wine/rbtree.h"
 #include "wine/svcctl.h"
-
-#include "ntoskrnl_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
@@ -90,14 +76,6 @@ static void *ldr_notify_cookie;
 static PLOAD_IMAGE_NOTIFY_ROUTINE load_image_notify_routines[8];
 static unsigned int load_image_notify_routine_count;
 
-struct wine_driver
-{
-    DRIVER_OBJECT driver_obj;
-    DRIVER_EXTENSION driver_extension;
-    SERVICE_STATUS_HANDLE service_handle;
-    struct wine_rb_entry entry;
-};
-
 static int wine_drivers_rb_compare( const void *key, const struct wine_rb_entry *entry )
 {
     const struct wine_driver *driver = WINE_RB_ENTRY_VALUE( entry, const struct wine_driver, entry );
@@ -109,6 +87,24 @@ static int wine_drivers_rb_compare( const void *key, const struct wine_rb_entry 
 static struct wine_rb_tree wine_drivers = { wine_drivers_rb_compare };
 
 DECLARE_CRITICAL_SECTION(drivers_cs);
+
+struct wine_driver *get_driver( const WCHAR *name )
+{
+    static const WCHAR driverW[] = L"\\Driver\\";
+    struct wine_rb_entry *entry;
+    UNICODE_STRING drv_name;
+
+    drv_name.Length = (wcslen( driverW ) + wcslen( name )) * sizeof(WCHAR);
+    if (!(drv_name.Buffer = malloc( drv_name.Length + sizeof(WCHAR) )))
+        return NULL;
+    wcscpy( drv_name.Buffer, driverW );
+    wcscat( drv_name.Buffer, name );
+    entry = wine_rb_get( &wine_drivers, &drv_name );
+    free( drv_name.Buffer );
+
+    if (entry) return WINE_RB_ENTRY_VALUE( entry, struct wine_driver, entry );
+    return NULL;
+}
 
 static HANDLE get_device_manager(void)
 {
@@ -902,6 +898,7 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
     HANDLE manager = get_device_manager();
     struct dispatch_context context;
     NTSTATUS status = STATUS_SUCCESS;
+    struct wine_driver *driver;
     HANDLE handles[2];
 
     context.handle  = NULL;
@@ -983,9 +980,13 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
 
 done:
     /* Native PnP drivers expect that all of their devices will be removed when
-     * their unload routine is called, so we must stop the PnP manager first. */
-    pnp_manager_stop();
+     * their unload routine is called. Moreover, we cannot unload a module
+     * until we have removed devices for all lower drivers, so we have to stop
+     * all devices first, and then unload all drivers. */
+    WINE_RB_FOR_EACH_ENTRY( driver, &wine_drivers, struct wine_driver, entry )
+        pnp_manager_stop_driver( driver );
     wine_rb_destroy( &wine_drivers, unload_driver, NULL );
+    pnp_manager_stop();
     return status;
 }
 
@@ -1486,6 +1487,7 @@ NTSTATUS WINAPI IoCreateDriver( UNICODE_STRING *name, PDRIVER_INITIALIZE init )
     build_driver_keypath( driver->driver_obj.DriverName.Buffer, &driver->driver_extension.ServiceKeyName );
     for (i = 0; i <= IRP_MJ_MAXIMUM_FUNCTION; i++)
         driver->driver_obj.MajorFunction[i] = unhandled_irp;
+    list_init( &driver->root_pnp_devices );
 
     EnterCriticalSection( &drivers_cs );
     if (wine_rb_put( &wine_drivers, &driver->driver_obj.DriverName, &driver->entry ))

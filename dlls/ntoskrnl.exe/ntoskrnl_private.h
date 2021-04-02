@@ -21,7 +21,21 @@
 #ifndef __WINE_NTOSKRNL_PRIVATE_H
 #define __WINE_NTOSKRNL_PRIVATE_H
 
+#include <stdarg.h>
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "windef.h"
+#include "winioctl.h"
+#include "winbase.h"
+#include "winsvc.h"
+#include "winternl.h"
+#include "ddk/ntifs.h"
+#include "ddk/wdm.h"
+
 #include "wine/asm.h"
+#include "wine/debug.h"
+#include "wine/list.h"
+#include "wine/rbtree.h"
 
 static inline LPCSTR debugstr_us( const UNICODE_STRING *us )
 {
@@ -76,11 +90,23 @@ extern POBJECT_TYPE SeTokenObjectType;
       0, 0, { (DWORD_PTR)(__FILE__ ": " # cs) }}; \
     static CRITICAL_SECTION cs = { &cs##_debug, -1, 0, 0, 0, 0 };
 
+struct wine_driver
+{
+    DRIVER_OBJECT driver_obj;
+    DRIVER_EXTENSION driver_extension;
+    SERVICE_STATUS_HANDLE service_handle;
+    struct wine_rb_entry entry;
+    struct list root_pnp_devices;
+};
+
 void ObReferenceObject( void *obj ) DECLSPEC_HIDDEN;
 
 void pnp_manager_enumerate_root_devices( const WCHAR *driver_name ) DECLSPEC_HIDDEN;
 void pnp_manager_start(void) DECLSPEC_HIDDEN;
+void pnp_manager_stop_driver( struct wine_driver *driver ) DECLSPEC_HIDDEN;
 void pnp_manager_stop(void) DECLSPEC_HIDDEN;
+
+struct wine_driver *get_driver( const WCHAR *name ) DECLSPEC_HIDDEN;
 
 static const WCHAR servicesW[] = {'\\','R','e','g','i','s','t','r','y',
                                   '\\','M','a','c','h','i','n','e',

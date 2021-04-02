@@ -19,23 +19,12 @@
  */
 
 #include <limits.h>
-#include <stdarg.h>
-
-#include "ntstatus.h"
-#define WIN32_NO_STATUS
-#include "windef.h"
-#include "winbase.h"
-#include "winternl.h"
-#include "ddk/ntddk.h"
-#include "ddk/wdm.h"
-#include "ddk/ntifs.h"
-
-#include "wine/asm.h"
-#include "wine/debug.h"
-#include "wine/heap.h"
-#include "wine/server.h"
 
 #include "ntoskrnl_private.h"
+#include "ddk/ntddk.h"
+
+#include "wine/heap.h"
+#include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntoskrnl);
 
