@@ -3739,15 +3739,48 @@ struct get_key_state_thread_params
     int index;
 };
 
+#define check_get_keyboard_state(i, c, x, todo) check_get_keyboard_state_(i, c, x, todo, __LINE__)
+static void check_get_keyboard_state_(int i, int c, int x, int todo, int line)
+{
+    unsigned char keystate[256];
+    BOOL ret;
+
+    memset(keystate, 0, sizeof(keystate));
+    ret = GetKeyboardState(keystate);
+    ok_(__FILE__, line)(ret, "GetKeyboardState failed, %u\n", GetLastError());
+    todo_wine_if(todo) ok_(__FILE__, line)(!(keystate['X'] & 0x80) == !x, "%d: expected that X keystate is %s\n", i, x ? "set" : "unset");
+    ok_(__FILE__, line)(!(keystate['C'] & 0x80) == !c, "%d: expected that C keystate is %s\n", i, c ? "set" : "unset");
+
+    /* calling it twice shouldn't change */
+    memset(keystate, 0, sizeof(keystate));
+    ret = GetKeyboardState(keystate);
+    ok_(__FILE__, line)(ret, "GetKeyboardState failed, %u\n", GetLastError());
+    todo_wine_if(todo) ok_(__FILE__, line)(!(keystate['X'] & 0x80) == !x, "%d: expected that X keystate is %s\n", i, x ? "set" : "unset");
+    ok_(__FILE__, line)(!(keystate['C'] & 0x80) == !c, "%d: expected that C keystate is %s\n", i, c ? "set" : "unset");
+}
+
+#define check_get_key_state(i, c, x, todo) check_get_key_state_(i, c, x, todo, __LINE__)
+static void check_get_key_state_(int i, int c, int x, int todo, int line)
+{
+    SHORT state;
+
+    state = GetKeyState('X');
+    todo_wine_if(todo) ok_(__FILE__, line)(!(state & 0x8000) == !x, "%d: expected that X highest bit is %s, got %#x\n", i, x ? "set" : "unset", state);
+    ok_(__FILE__, line)(!(state & 0x007e), "%d: expected that X undefined bits are unset, got %#x\n", i, state);
+
+    state = GetKeyState('C');
+    ok_(__FILE__, line)(!(state & 0x8000) == !c, "%d: expected that C highest bit is %s, got %#x\n", i, c ? "set" : "unset", state);
+    ok_(__FILE__, line)(!(state & 0x007e), "%d: expected that C undefined bits are unset, got %#x\n", i, state);
+}
+
 static DWORD WINAPI get_key_state_thread(void *arg)
 {
     struct get_key_state_thread_params *params = arg;
     struct get_key_state_test_desc* test;
     HANDLE *semaphores = params->semaphores;
     DWORD result;
-    BYTE keystate[256];
     BOOL has_queue;
-    BOOL ret;
+    BOOL expect_x;
     MSG msg;
     int i = params->index;
 
@@ -3770,67 +3803,21 @@ static DWORD WINAPI get_key_state_thread(void *arg)
     result = WaitForSingleObject(semaphores[1], 1000);
     ok(result == WAIT_OBJECT_0, "%d: WaitForSingleObject returned %u\n", i, result);
 
-    memset(keystate, 0, sizeof(keystate));
-    ret = GetKeyboardState(keystate);
-    ok(ret, "GetKeyboardState failed, %u\n", GetLastError());
-    result = keystate['X'];
-    todo_wine_if(!has_queue)
-    ok(!result, "%d: expected that keystate is not set, got %#x\n", i, result);
+    if (!has_queue) expect_x = FALSE;
+    else expect_x = TRUE;
 
-    result = keystate['C'];
-    ok(!result, "%d: expected that C keystate is not set, got %#x\n", i, result);
-
-    result = GetKeyState('X');
-    if (!has_queue) todo_wine ok(!(result & 0x8000), "%d: expected that highest bit is unset, got %#x\n", i, result);
-    else todo_wine ok((result & 0x8000), "%d: expected that highest bit is set, got %#x\n", i, result);
-    ok(!(result & 0x007e), "%d: expected that undefined bits are unset, got %#x\n", i, result);
-
-    result = GetKeyState('C');
-    ok(!(result & 0x8000), "%d: expected that C highest bit is unset, got %#x\n", i, result);
-    ok(!(result & 0x007e), "%d: expected that C undefined bits are unset, got %#x\n", i, result);
-
-    memset(keystate, 0, sizeof(keystate));
-    ret = GetKeyboardState(keystate);
-    ok(ret, "GetKeyboardState failed, %u\n", GetLastError());
-    result = keystate['X'];
-    if (!has_queue) todo_wine ok(!result, "%d: expected that keystate is unset, got %#x\n", i, result);
-    else todo_wine ok(result, "%d: expected that keystate is set, got %#x\n", i, result);
-
-    result = keystate['C'];
-    ok(!result, "%d: expected that C keystate is not set, got %#x\n", i, result);
+    check_get_keyboard_state(i, FALSE, FALSE, /* todo */ !has_queue);
+    check_get_key_state(i, FALSE, expect_x, /* todo */ TRUE);
+    check_get_keyboard_state(i, FALSE, expect_x, /* todo */ TRUE);
 
     /* key released */
     ReleaseSemaphore(semaphores[0], 1, NULL);
     result = WaitForSingleObject(semaphores[1], 1000);
     ok(result == WAIT_OBJECT_0, "%d: WaitForSingleObject returned %u\n", i, result);
 
-    memset(keystate, 0, sizeof(keystate));
-    ret = GetKeyboardState(keystate);
-    ok(ret, "GetKeyboardState failed, %u\n", GetLastError());
-    result = keystate['X'];
-    if (!has_queue) ok(!result, "%d: expected that keystate is unset, got %#x\n", i, result);
-    else todo_wine ok(result, "%d: expected that keystate is set, got %#x\n", i, result);
-
-    result = keystate['C'];
-    ok(!result, "%d: expected that C keystate is not set, got %#x\n", i, result);
-
-    result = GetKeyState('X');
-    ok(!(result & 0x8000), "%d: expected that highest bit is unset, got %#x\n", i, result);
-    ok(!(result & 0x007e), "%d: expected that undefined bits are unset, got %#x\n", i, result);
-
-    result = GetKeyState('C');
-    ok(!(result & 0x8000), "%d: expected that C highest bit is unset, got %#x\n", i, result);
-    ok(!(result & 0x007e), "%d: expected that C undefined bits are unset, got %#x\n", i, result);
-
-    memset(keystate, 0, sizeof(keystate));
-    ret = GetKeyboardState(keystate);
-    ok(ret, "GetKeyboardState failed, %u\n", GetLastError());
-    result = keystate['X'];
-    if (!has_queue) ok(!result || broken(result) /* w2008 */, "%d: expected that keystate is unset, got %#x\n", i, result);
-    else todo_wine ok(result || broken(!result) /* w2008 */, "%d: expected that keystate is set, got %#x\n", i, result);
-
-    result = keystate['C'];
-    ok(!result, "%d: expected that C keystate is not set, got %#x\n", i, result);
+    check_get_keyboard_state(i, FALSE, expect_x, /* todo */ has_queue);
+    check_get_key_state(i, FALSE, FALSE, /* todo */ FALSE);
+    check_get_keyboard_state(i, FALSE, FALSE, /* todo */ FALSE);
 
     return 0;
 }
@@ -3841,6 +3828,7 @@ static void test_GetKeyState(void)
     HANDLE thread;
     DWORD result;
     BYTE keystate[256];
+    BOOL expect_x;
     HWND hwnd;
     MSG msg;
     int i;
@@ -3888,13 +3876,19 @@ static void test_GetKeyState(void)
         keybd_event('X', 0, 0, 0);
         keystate['C'] = 0xff;
         SetKeyboardState(keystate);
+
+        check_get_keyboard_state(i, TRUE, FALSE, /* todo */ FALSE);
+        check_get_key_state(i, TRUE, FALSE, /* todo */ FALSE);
+        check_get_keyboard_state(i, TRUE, FALSE, /* todo */ FALSE);
+
         if (test->peek_message_main) while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
 
-        result = GetKeyState('C');
-        ok((result & 0x8000), "%d: expected that highest bit is set, got %#x\n", i, result);
-        result = GetKeyState('X');
-        if (test->peek_message_main) ok((result & 0x8000), "%d: expected that highest bit is set, got %#x\n", i, result);
-        else ok(!(result & 0x8000), "%d: expected that highest bit is unset, got %#x\n", i, result);
+        if (test->peek_message_main) expect_x = TRUE;
+        else expect_x = FALSE;
+
+        check_get_keyboard_state(i, TRUE, expect_x, /* todo */ FALSE);
+        check_get_key_state(i, TRUE, expect_x, /* todo */ FALSE);
+        check_get_keyboard_state(i, TRUE, expect_x, /* todo */ FALSE);
 
         ReleaseSemaphore(params.semaphores[1], 1, NULL);
 
@@ -3905,12 +3899,16 @@ static void test_GetKeyState(void)
         keybd_event('X', 0, KEYEVENTF_KEYUP, 0);
         keystate['C'] = 0x00;
         SetKeyboardState(keystate);
+
+        check_get_keyboard_state(i, FALSE, FALSE, /* todo */ FALSE);
+        check_get_key_state(i, FALSE, FALSE, /* todo */ FALSE);
+        check_get_keyboard_state(i, FALSE, FALSE, /* todo */ FALSE);
+
         if (test->peek_message_main) while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
 
-        result = GetKeyState('C');
-        ok(!(result & 0x8000), "%d: expected that highest bit is unset, got %#x\n", i, result);
-        result = GetKeyState('X');
-        ok(!(result & 0x8000), "%d: expected that highest bit is unset, got %#x\n", i, result);
+        check_get_keyboard_state(i, FALSE, FALSE, /* todo */ FALSE);
+        check_get_key_state(i, FALSE, FALSE, /* todo */ FALSE);
+        check_get_keyboard_state(i, FALSE, FALSE, /* todo */ FALSE);
 
         ReleaseSemaphore(params.semaphores[1], 1, NULL);
 
