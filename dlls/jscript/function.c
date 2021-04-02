@@ -206,7 +206,7 @@ HRESULT setup_arguments_object(script_ctx_t *ctx, call_frame_t *frame)
         hres = jsdisp_define_data_property(&args->jsdisp, L"callee", PROPF_WRITABLE | PROPF_CONFIGURABLE,
                                            jsval_obj(&args->function->function.dispex));
     if(SUCCEEDED(hres))
-        hres = jsdisp_propput(frame->base_scope->jsobj, L"arguments", PROPF_WRITABLE, jsval_obj(&args->jsdisp));
+        hres = jsdisp_propput(frame->base_scope->jsobj, L"arguments", PROPF_WRITABLE, TRUE, jsval_obj(&args->jsdisp));
     if(FAILED(hres)) {
         jsdisp_release(&args->jsdisp);
         return hres;

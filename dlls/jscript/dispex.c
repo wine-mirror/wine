@@ -2145,7 +2145,7 @@ HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, W
     return hres;
 }
 
-HRESULT jsdisp_propput(jsdisp_t *obj, const WCHAR *name, DWORD flags, jsval_t val)
+HRESULT jsdisp_propput(jsdisp_t *obj, const WCHAR *name, DWORD flags, BOOL throw, jsval_t val)
 {
     dispex_prop_t *prop;
     HRESULT hres;
@@ -2153,16 +2153,18 @@ HRESULT jsdisp_propput(jsdisp_t *obj, const WCHAR *name, DWORD flags, jsval_t va
     if(obj->extensible)
         hres = ensure_prop_name(obj, name, flags, &prop);
     else
-        hres = find_prop_name_prot(obj, string_hash(name), name, &prop);
-    if(FAILED(hres) || !prop)
+        hres = find_prop_name(obj, string_hash(name), name, &prop);
+    if(FAILED(hres))
         return hres;
+    if(!prop || (prop->type == PROP_DELETED && !obj->extensible))
+        return throw ? JS_E_INVALID_ACTION : S_OK;
 
     return prop_put(obj, prop, val);
 }
 
 HRESULT jsdisp_propput_name(jsdisp_t *obj, const WCHAR *name, jsval_t val)
 {
-    return jsdisp_propput(obj, name, PROPF_ENUMERABLE | PROPF_CONFIGURABLE | PROPF_WRITABLE, val);
+    return jsdisp_propput(obj, name, PROPF_ENUMERABLE | PROPF_CONFIGURABLE | PROPF_WRITABLE, FALSE, val);
 }
 
 HRESULT jsdisp_propput_idx(jsdisp_t *obj, DWORD idx, jsval_t val)
@@ -2170,7 +2172,7 @@ HRESULT jsdisp_propput_idx(jsdisp_t *obj, DWORD idx, jsval_t val)
     WCHAR buf[12];
 
     swprintf(buf, ARRAY_SIZE(buf), L"%d", idx);
-    return jsdisp_propput_name(obj, buf, val);
+    return jsdisp_propput(obj, buf, PROPF_ENUMERABLE | PROPF_CONFIGURABLE | PROPF_WRITABLE, TRUE, val);
 }
 
 HRESULT disp_propput(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t val)

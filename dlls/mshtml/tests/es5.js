@@ -979,6 +979,23 @@ sync_test("preventExtensions", function() {
         ok(e.name === "TypeError", "got " + e.name + " exception");
     }
 
+    o = [];
+    Object.preventExtensions(o);
+    try {
+        o.push(1);
+        ok(false, "exception expected on o.push");
+    }catch(e) {
+        ok(e.name === "TypeError", "got " + e.name + " exception");
+    }
+    ok(!("0" in o), "0 is in o");
+    ok(o.length === 0, "o.length = " + o.length);
+
+    o = [1];
+    Object.preventExtensions(o);
+    o.pop();
+    ok(!("0" in o), "0 is in o");
+    ok(o.length === 0, "o.length = " + o.length);
+
     ok(Object.preventExtensions.length === 1, "Object.preventExtensions.length = " + Object.preventExtensions.length);
     ok(Object.isExtensible.length === 1, "Object.isExtensible.length = " + Object.isExtensible.length);
 });
@@ -1022,6 +1039,19 @@ sync_test("freeze", function() {
     ok(r === 2, "r = " + r);
     r = 3;
     ok(o.accprop === 3, "o.accprop = " + o.accprop);
+
+    o = [1];
+    Object.freeze(o);
+    try {
+        o.pop();
+        todo_wine.
+        ok(false, "exception expected on o.pop");
+    }catch(e) {
+        ok(e.name === "TypeError", "got " + e.name + " exception");
+    }
+    ok(o[0] === 1, "o[0] = " + o[0]);
+    todo_wine.
+    ok(o.length === 1, "o.length = " + o.length);
 });
 
 sync_test("seal", function() {
@@ -1063,6 +1093,19 @@ sync_test("seal", function() {
     ok(r === 2, "r = " + r);
     r = 3;
     ok(o.accprop === 3, "o.accprop = " + o.accprop);
+
+    o = [1];
+    Object.seal(o);
+    try {
+        o.pop();
+        todo_wine.
+       ok(false, "exception expected on o.pop");
+    }catch(e) {
+        ok(e.name === "TypeError", "got " + e.name + " exception");
+    }
+    ok(o[0] === 1, "o[0] = " + o[0]);
+    todo_wine.
+    ok(o.length === 1, "o.length = " + o.length);
 });
 
 sync_test("head_setter", function() {
