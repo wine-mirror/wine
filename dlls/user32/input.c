@@ -591,7 +591,6 @@ BOOL WINAPI SetKeyboardState( LPBYTE state )
 
     SERVER_START_REQ( set_key_state )
     {
-        req->tid = GetCurrentThreadId();
         wine_server_add_data( req, state, 256 );
         ret = !wine_server_call_err( req );
     }

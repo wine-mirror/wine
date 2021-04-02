@@ -2758,9 +2758,8 @@ enum coords_relative
     VARARG(keystate,bytes);       /* state array for all the keys */
 @END
 
-/* Set queue keyboard state for a given thread */
+/* Set queue keyboard state for current thread */
 @REQ(set_key_state)
-    thread_id_t    tid;           /* id of thread */
     int            async;         /* whether to change the async state too */
     VARARG(keystate,bytes);       /* state array for all the keys */
 @END
