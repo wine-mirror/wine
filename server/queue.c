@@ -2981,16 +2981,9 @@ DECL_HANDLER(get_key_state)
         set_reply_data( desktop->keystate, size );
         release_object( desktop );
     }
-    else
+    else if (!current->queue)
     {
         unsigned char *keystate;
-        if (current->queue)
-        {
-            if (req->key >= 0) reply->state = current->queue->input->keystate[req->key & 0xff];
-            set_reply_data( current->queue->input->keystate, size );
-            return;
-        }
-
         /* fallback to desktop keystate */
         if (!(desktop = get_thread_desktop( current, 0 ))) return;
         if (req->key >= 0) reply->state = desktop->keystate[req->key & 0xff] & ~0x40;
@@ -3000,6 +2993,12 @@ DECL_HANDLER(get_key_state)
             for (i = 0; i < size; i++) keystate[i] = desktop->keystate[i] & ~0x40;
         }
         release_object( desktop );
+    }
+    else
+    {
+        unsigned char *keystate = current->queue->input->keystate;
+        if (req->key >= 0) reply->state = keystate[req->key & 0xff];
+        set_reply_data( keystate, size );
     }
 }
 
