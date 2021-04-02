@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -1692,14 +1693,37 @@ BOOL WINAPI SetupDiRegisterDeviceInfo(HDEVINFO devinfo, SP_DEVINFO_DATA *device_
  */
 BOOL WINAPI SetupDiRemoveDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 {
+    SC_HANDLE manager = NULL, service = NULL;
     struct device *device;
+    WCHAR *service_name;
+    DWORD size;
 
     TRACE("devinfo %p, device_data %p.\n", devinfo, device_data);
 
     if (!(device = get_device(devinfo, device_data)))
         return FALSE;
 
+    if (!(manager = OpenSCManagerW(NULL, NULL, SC_MANAGER_CONNECT)))
+        return FALSE;
+
+    if (!RegGetValueW(device->key, NULL, L"Service", RRF_RT_REG_SZ, NULL, NULL, &size))
+    {
+        service_name = malloc(size);
+        if (!RegGetValueW(device->key, NULL, L"Service", RRF_RT_REG_SZ, NULL, service_name, &size))
+            service = OpenServiceW(manager, service_name, SERVICE_USER_DEFINED_CONTROL);
+        free(service_name);
+    }
+
     remove_device(device);
+
+    if (service)
+    {
+        SERVICE_STATUS status;
+        if (!ControlService(service, SERVICE_CONTROL_REENUMERATE_ROOT_DEVICES, &status))
+            ERR("Failed to control service %s, error %u.\n", debugstr_w(service_name), GetLastError());
+        CloseServiceHandle(service);
+    }
+    CloseServiceHandle(manager);
 
     return TRUE;
 }
