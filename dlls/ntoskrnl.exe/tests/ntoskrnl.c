@@ -43,6 +43,7 @@ static HANDLE device;
 static BOOL (WINAPI *pRtlDosPathNameToNtPathName_U)(const WCHAR *, UNICODE_STRING *, WCHAR **, CURDIR *);
 static BOOL (WINAPI *pRtlFreeUnicodeString)(UNICODE_STRING *);
 static BOOL (WINAPI *pCancelIoEx)(HANDLE, OVERLAPPED *);
+static BOOL (WINAPI *pIsWow64Process)(HANDLE, BOOL *);
 static BOOL (WINAPI *pSetFileCompletionNotificationModes)(HANDLE, UCHAR);
 static HRESULT (WINAPI *pSignerSign)(SIGNER_SUBJECT_INFO *subject, SIGNER_CERT *cert,
         SIGNER_SIGNATURE_INFO *signature, SIGNER_PROVIDER_INFO *provider,
@@ -939,15 +940,22 @@ START_TEST(ntoskrnl)
     WCHAR filename[MAX_PATH], filename2[MAX_PATH];
     struct testsign_context ctx;
     SC_HANDLE service, service2;
+    BOOL ret, is_wow64;
     DWORD written;
-    BOOL ret;
 
     pRtlDosPathNameToNtPathName_U = (void *)GetProcAddress(GetModuleHandleA("ntdll"), "RtlDosPathNameToNtPathName_U");
     pRtlFreeUnicodeString = (void *)GetProcAddress(GetModuleHandleA("ntdll"), "RtlFreeUnicodeString");
     pCancelIoEx = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "CancelIoEx");
+    pIsWow64Process = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "IsWow64Process");
     pSetFileCompletionNotificationModes = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"),
                                                                  "SetFileCompletionNotificationModes");
     pSignerSign = (void *)GetProcAddress(LoadLibraryA("mssign32"), "SignerSign");
+
+    if (IsWow64Process(GetCurrentProcess(), &is_wow64) && is_wow64)
+    {
+        skip("Running in WoW64.\n");
+        return;
+    }
 
     if (!testsign_create_cert(&ctx))
         return;
