@@ -191,7 +191,7 @@ static HRESULT WINAPI DHTMLEdit_NewDocument(IDHTMLEdit *iface)
 {
     DHTMLEditImpl *This = impl_from_IDHTMLEdit(iface);
     FIXME("(%p)->() stub\n", This);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI DHTMLEdit_LoadURL(IDHTMLEdit *iface, BSTR url)
