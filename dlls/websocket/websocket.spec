@@ -1,0 +1,13 @@
+@ stub WebSocketAbortHandle
+@ stub WebSocketBeginClientHandshake
+@ stub WebSocketBeginServerHandshake
+@ stub WebSocketCompleteAction
+@ stub WebSocketCreateClientHandle
+@ stub WebSocketCreateServerHandle
+@ stub WebSocketDeleteHandle
+@ stub WebSocketEndClientHandshake
+@ stub WebSocketEndServerHandshake
+@ stub WebSocketGetAction
+@ stub WebSocketGetGlobalProperty
+@ stub WebSocketReceive
+@ stub WebSocketSend
