@@ -1908,7 +1908,7 @@ NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *p
         *(const struct key_funcs **)ptr_out = &key_funcs;
         break;
     case DLL_PROCESS_DETACH:
-        gnutls_uninitialize();
+        if (libgnutls_handle) gnutls_uninitialize();
         break;
     }
     return STATUS_SUCCESS;
