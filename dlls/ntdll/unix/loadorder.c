@@ -384,16 +384,20 @@ enum loadorder get_load_order( const UNICODE_STRING *nt_name )
     enum loadorder ret = LO_INVALID;
     HANDLE std_key, app_key = 0;
     const WCHAR *path = nt_name->Buffer;
-    const WCHAR *app_name = NULL;
+    const WCHAR *p, *app_name = NULL;
     WCHAR *module, *basename;
     int len;
 
-    if (NtCurrentTeb()->Peb->ImageBaseAddress)
-        app_name = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
-
     if (!init_done) init_load_order();
     std_key = get_standard_key();
-    if (app_name) app_key = get_app_key( app_name );
+
+    if (NtCurrentTeb()->Peb->ImageBaseAddress)
+    {
+        app_name = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
+        if ((p = wcsrchr( app_name, '\\' ))) app_name = p + 1;
+        app_key = get_app_key( app_name );
+    }
+
     if (!wcsncmp( path, prefixW, 4 )) path += 4;
 
     TRACE("looking for %s\n", debugstr_w(path));
@@ -402,7 +406,7 @@ enum loadorder get_load_order( const UNICODE_STRING *nt_name )
      */
     if (!wcsnicmp( system_dir + 4, path, wcslen(system_dir) - 4 ))
     {
-        const WCHAR *p = path + wcslen( system_dir ) - 4;
+        p = path + wcslen( system_dir ) - 4;
         while (*p == '\\' || *p == '/') p++;
         if (!wcschr( p, '\\' ) && !wcschr( p, '/' )) path = p;
     }
