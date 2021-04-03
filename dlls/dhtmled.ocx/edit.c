@@ -30,6 +30,7 @@ typedef struct
     IDHTMLEdit IDHTMLEdit_iface;
     IOleObject IOleObject_iface;
     IPersistStreamInit IPersistStreamInit_iface;
+    IOleControl IOleControl_iface;
     IOleClientSite *client_site;
     SIZEL extent;
     LONG ref;
@@ -48,6 +49,11 @@ static inline DHTMLEditImpl *impl_from_IOleObject(IOleObject *iface)
 static inline DHTMLEditImpl *impl_from_IPersistStreamInit(IPersistStreamInit *iface)
 {
     return CONTAINING_RECORD(iface, DHTMLEditImpl, IPersistStreamInit_iface);
+}
+
+static inline DHTMLEditImpl *impl_from_IOleControl(IOleControl *iface)
+{
+    return CONTAINING_RECORD(iface, DHTMLEditImpl, IOleControl_iface);
 }
 
 static ULONG dhtml_edit_addref(DHTMLEditImpl *This)
@@ -81,6 +87,12 @@ static HRESULT dhtml_edit_qi(DHTMLEditImpl *This, REFIID iid, void **out)
     {
         dhtml_edit_addref(This);
         *out = &This->IPersistStreamInit_iface;
+        return S_OK;
+    }
+    else if(IsEqualGUID(iid, &IID_IOleControl))
+    {
+        dhtml_edit_addref(This);
+        *out = &This->IOleControl_iface;
         return S_OK;
     }
 
@@ -858,6 +870,59 @@ static const IPersistStreamInitVtbl PersistStreamInitVtbl = {
     PersistStreamInit_InitNew
 };
 
+static HRESULT WINAPI OleControl_QueryInterface(IOleControl *iface, REFIID iid, void **out)
+{
+    return dhtml_edit_qi(impl_from_IOleControl(iface), iid, out);
+}
+
+static ULONG WINAPI OleControl_AddRef(IOleControl *iface)
+{
+    return dhtml_edit_addref(impl_from_IOleControl(iface));
+}
+
+static ULONG WINAPI OleControl_Release(IOleControl *iface)
+{
+    return dhtml_edit_release(impl_from_IOleControl(iface));
+}
+
+static HRESULT WINAPI OleControl_GetControlInfo(IOleControl *iface, CONTROLINFO *pCI)
+{
+    DHTMLEditImpl *This = impl_from_IOleControl(iface);
+    FIXME("(%p)->(%p)\n", This, pCI);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleControl_OnMnemonic(IOleControl *iface, MSG *msg)
+{
+    DHTMLEditImpl *This = impl_from_IOleControl(iface);
+    FIXME("(%p)->(%p)\n", This, msg);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DISPID dispID)
+{
+    DHTMLEditImpl *This = impl_from_IOleControl(iface);
+    FIXME("(%p)->(%d)\n", This, dispID);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleControl_FreezeEvents(IOleControl *iface, BOOL freeze)
+{
+    DHTMLEditImpl *This = impl_from_IOleControl(iface);
+    FIXME("(%p)->(%x)\n", This, freeze);
+    return E_NOTIMPL;
+}
+
+static const IOleControlVtbl OleControlVtbl = {
+    OleControl_QueryInterface,
+    OleControl_AddRef,
+    OleControl_Release,
+    OleControl_GetControlInfo,
+    OleControl_OnMnemonic,
+    OleControl_OnAmbientPropertyChange,
+    OleControl_FreezeEvents
+};
+
 HRESULT dhtml_edit_create(REFIID iid, void **out)
 {
     DHTMLEditImpl *This;
@@ -874,6 +939,7 @@ HRESULT dhtml_edit_create(REFIID iid, void **out)
     This->IDHTMLEdit_iface.lpVtbl = &DHTMLEditVtbl;
     This->IOleObject_iface.lpVtbl = &OleObjectVtbl;
     This->IPersistStreamInit_iface.lpVtbl = &PersistStreamInitVtbl;
+    This->IOleControl_iface.lpVtbl = &OleControlVtbl;
     This->client_site = NULL;
     This->ref = 1;
 
