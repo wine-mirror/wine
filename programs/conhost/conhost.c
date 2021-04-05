@@ -1948,7 +1948,16 @@ static NTSTATUS write_console( struct screen_buffer *screen_buffer, const WCHAR 
 
     if (screen_buffer->cursor_x == screen_buffer->width)
     {
-        if (screen_buffer->mode & ENABLE_WRAP_AT_EOL_OUTPUT) screen_buffer->cursor_x--;
+        if (screen_buffer->mode & ENABLE_WRAP_AT_EOL_OUTPUT)
+        {
+            if (!(screen_buffer->mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+            {
+                screen_buffer->cursor_x = 0;
+                if (++screen_buffer->cursor_y == screen_buffer->height)
+                    new_line( screen_buffer, &update_rect );
+            }
+            else screen_buffer->cursor_x--;
+        }
         else screen_buffer->cursor_x = update_rect.left;
     }
 
