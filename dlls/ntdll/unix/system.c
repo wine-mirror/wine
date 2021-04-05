@@ -40,6 +40,9 @@
 #ifdef HAVE_SYS_SYSCTL_H
 # include <sys/sysctl.h>
 #endif
+#ifdef HAVE_SYS_UTSNAME_H
+# include <sys/utsname.h>
+#endif
 #ifdef HAVE_MACHINE_CPU_H
 # include <machine/cpu.h>
 #endif
@@ -2808,6 +2811,21 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         memset( info, 0, size );
         ret = STATUS_SUCCESS;
         break;
+
+    /* Wine extensions */
+
+    case SystemWineVersionInformation:
+    {
+        static const char version[] = PACKAGE_VERSION;
+        extern const char wine_build[];
+        struct utsname buf;
+
+        uname( &buf );
+        len = strlen(version) + strlen(wine_build) + strlen(buf.sysname) + strlen(buf.release) + 4;
+        snprintf( info, size, "%s%c%s%c%s%c%s", version, 0, wine_build, 0, buf.sysname, 0, buf.release );
+        if (size < len) ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+    }
 
     default:
 	FIXME( "(0x%08x,%p,0x%08x,%p) stub\n", class, info, size, ret_size );

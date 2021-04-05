@@ -1693,7 +1693,9 @@ typedef enum _SYSTEM_INFORMATION_CLASS {
     SystemDifRemovePluginVerificationOnDriver = 220,
     SystemShadowStackInformation = 221,
     SystemBuildVersionInformation = 222,
-    SystemInformationClassMax
+#ifdef __WINESRC__
+    SystemWineVersionInformation = 1000,
+#endif
 } SYSTEM_INFORMATION_CLASS, *PSYSTEM_INFORMATION_CLASS;
 
 typedef enum _THREADINFOCLASS {

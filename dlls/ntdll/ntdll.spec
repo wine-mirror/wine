@@ -1623,9 +1623,9 @@
 @ cdecl -syscall __wine_locked_recvmsg(long ptr long)
 
 # Version
-@ cdecl -syscall wine_get_version()
-@ cdecl -syscall wine_get_build_id()
-@ cdecl -syscall wine_get_host_version(ptr ptr)
+@ cdecl wine_get_version()
+@ cdecl wine_get_build_id()
+@ cdecl wine_get_host_version(ptr ptr)
 
 # Filesystem
 @ cdecl -syscall wine_nt_to_unix_file_name(ptr ptr ptr long)

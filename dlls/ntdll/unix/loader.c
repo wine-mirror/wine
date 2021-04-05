@@ -51,9 +51,6 @@
 #ifdef HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>
 #endif
-#ifdef HAVE_SYS_UTSNAME_H
-#include <sys/utsname.h>
-#endif
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
@@ -332,48 +329,6 @@ static void init_paths( char *argv[] )
     set_dll_path();
     set_home_dir();
     set_config_dir();
-}
-
-
-/*********************************************************************
- *                  wine_get_version
- */
-const char * CDECL wine_get_version(void)
-{
-    return PACKAGE_VERSION;
-}
-
-
-/*********************************************************************
- *                  wine_get_build_id
- */
-const char * CDECL wine_get_build_id(void)
-{
-    extern const char wine_build[];
-    return wine_build;
-}
-
-
-/*********************************************************************
- *                  wine_get_host_version
- */
-void CDECL wine_get_host_version( const char **sysname, const char **release )
-{
-#ifdef HAVE_SYS_UTSNAME_H
-    static struct utsname buf;
-    static BOOL init_done;
-
-    if (!init_done)
-    {
-        uname( &buf );
-        init_done = TRUE;
-    }
-    if (sysname) *sysname = buf.sysname;
-    if (release) *release = buf.release;
-#else
-    if (sysname) *sysname = "";
-    if (release) *release = "";
-#endif
 }
 
 
@@ -2107,7 +2062,8 @@ static void check_command_line( int argc, char *argv[] )
     }
     if (!strcmp( argv[1], "--version" ))
     {
-        printf( "%s\n", wine_get_build_id() );
+        extern const char wine_build[];
+        printf( "%s\n", wine_build );
         exit(0);
     }
 }
