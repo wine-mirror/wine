@@ -26,6 +26,21 @@
 
 #include "wine/test.h"
 
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
 static HRESULT WINAPI test_callback_QueryInterface(IMFPMediaPlayerCallback *iface, REFIID riid, void **obj)
 {
     if (IsEqualIID(riid, &IID_IMFPMediaPlayerCallback) ||
@@ -65,11 +80,32 @@ static const IMFPMediaPlayerCallbackVtbl test_callback_vtbl =
 static void test_create_player(void)
 {
     IMFPMediaPlayerCallback callback = { &test_callback_vtbl };
+    IPropertyStore *propstore;
     IMFPMediaPlayer *player;
+    IUnknown *unk, *unk2;
     HRESULT hr;
 
     hr = MFPCreateMediaPlayer(NULL, FALSE, 0, NULL, NULL, &player);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    check_interface(player, &IID_IMFPMediaPlayer, TRUE);
+    check_interface(player, &IID_IPropertyStore, TRUE);
+
+    hr = IMFPMediaPlayer_QueryInterface(player, &IID_IPropertyStore, (void **)&propstore);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    check_interface(propstore, &IID_IMFPMediaPlayer, TRUE);
+
+    hr = IPropertyStore_QueryInterface(propstore, &IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFPMediaPlayer_QueryInterface(player, &IID_IUnknown, (void **)&unk2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(unk == unk2, "Unexpected interface.\n");
+    IUnknown_Release(unk);
+    IUnknown_Release(unk2);
+
+    IPropertyStore_Release(propstore);
+
     IMFPMediaPlayer_Release(player);
 
     hr = MFPCreateMediaPlayer(NULL, FALSE, 0, &callback, NULL, &player);

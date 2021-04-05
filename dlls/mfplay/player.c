@@ -47,8 +47,10 @@ static void platform_shutdown(void)
 struct media_player
 {
     IMFPMediaPlayer IMFPMediaPlayer_iface;
+    IPropertyStore IPropertyStore_iface;
     LONG refcount;
     IMFPMediaPlayerCallback *callback;
+    IPropertyStore *propstore;
 };
 
 static struct media_player *impl_from_IMFPMediaPlayer(IMFPMediaPlayer *iface)
@@ -56,22 +58,36 @@ static struct media_player *impl_from_IMFPMediaPlayer(IMFPMediaPlayer *iface)
     return CONTAINING_RECORD(iface, struct media_player, IMFPMediaPlayer_iface);
 }
 
+static struct media_player *impl_from_IPropertyStore(IPropertyStore *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_player, IPropertyStore_iface);
+}
+
 static HRESULT WINAPI media_player_QueryInterface(IMFPMediaPlayer *iface, REFIID riid, void **obj)
 {
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
+
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
 
     if (IsEqualIID(riid, &IID_IMFPMediaPlayer) ||
             IsEqualIID(riid, &IID_IUnknown))
     {
-        *obj = iface;
-        IMFPMediaPlayer_AddRef(iface);
-        return S_OK;
+        *obj = &player->IMFPMediaPlayer_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IPropertyStore))
+    {
+        *obj = &player->IPropertyStore_iface;
+    }
+    else
+    {
+        WARN("Unsupported interface %s.\n", debugstr_guid(riid));
+        *obj = NULL;
+
+        return E_NOINTERFACE;
     }
 
-    WARN("Unsupported interface %s.\n", debugstr_guid(riid));
-    *obj = NULL;
-
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown *)*obj);
+    return S_OK;
 }
 
 static ULONG WINAPI media_player_AddRef(IMFPMediaPlayer *iface)
@@ -95,6 +111,8 @@ static ULONG WINAPI media_player_Release(IMFPMediaPlayer *iface)
     {
         if (player->callback)
             IMFPMediaPlayerCallback_Release(player->callback);
+        if (player->propstore)
+            IPropertyStore_Release(player->propstore);
         heap_free(player);
 
         platform_shutdown();
@@ -406,25 +424,111 @@ static const IMFPMediaPlayerVtbl media_player_vtbl =
     media_player_Shutdown,
 };
 
+static HRESULT WINAPI media_player_propstore_QueryInterface(IPropertyStore *iface,
+        REFIID riid, void **obj)
+{
+    struct media_player *player = impl_from_IPropertyStore(iface);
+    return IMFPMediaPlayer_QueryInterface(&player->IMFPMediaPlayer_iface, riid, obj);
+}
+
+static ULONG WINAPI media_player_propstore_AddRef(IPropertyStore *iface)
+{
+    struct media_player *player = impl_from_IPropertyStore(iface);
+    return IMFPMediaPlayer_AddRef(&player->IMFPMediaPlayer_iface);
+}
+
+static ULONG WINAPI media_player_propstore_Release(IPropertyStore *iface)
+{
+    struct media_player *player = impl_from_IPropertyStore(iface);
+    return IMFPMediaPlayer_Release(&player->IMFPMediaPlayer_iface);
+}
+
+static HRESULT WINAPI media_player_propstore_GetCount(IPropertyStore *iface, DWORD *count)
+{
+    struct media_player *player = impl_from_IPropertyStore(iface);
+
+    TRACE("%p, %p.\n", iface, count);
+
+    return IPropertyStore_GetCount(player->propstore, count);
+}
+
+static HRESULT WINAPI media_player_propstore_GetAt(IPropertyStore *iface, DWORD prop, PROPERTYKEY *key)
+{
+    struct media_player *player = impl_from_IPropertyStore(iface);
+
+    TRACE("%p, %u, %p.\n", iface, prop, key);
+
+    return IPropertyStore_GetAt(player->propstore, prop, key);
+}
+
+static HRESULT WINAPI media_player_propstore_GetValue(IPropertyStore *iface, REFPROPERTYKEY key, PROPVARIANT *value)
+{
+    struct media_player *player = impl_from_IPropertyStore(iface);
+
+    TRACE("%p, %p, %p.\n", iface, key, value);
+
+    return IPropertyStore_GetValue(player->propstore, key, value);
+}
+
+static HRESULT WINAPI media_player_propstore_SetValue(IPropertyStore *iface, REFPROPERTYKEY key, REFPROPVARIANT value)
+{
+    struct media_player *player = impl_from_IPropertyStore(iface);
+
+    TRACE("%p, %p, %p.\n", iface, key, value);
+
+    return IPropertyStore_SetValue(player->propstore, key, value);
+}
+
+static HRESULT WINAPI media_player_propstore_Commit(IPropertyStore *iface)
+{
+    struct media_player *player = impl_from_IPropertyStore(iface);
+
+    TRACE("%p.\n", iface);
+
+    return IPropertyStore_Commit(player->propstore);
+}
+
+static const IPropertyStoreVtbl media_player_propstore_vtbl =
+{
+    media_player_propstore_QueryInterface,
+    media_player_propstore_AddRef,
+    media_player_propstore_Release,
+    media_player_propstore_GetCount,
+    media_player_propstore_GetAt,
+    media_player_propstore_GetValue,
+    media_player_propstore_SetValue,
+    media_player_propstore_Commit,
+};
+
 HRESULT WINAPI MFPCreateMediaPlayer(const WCHAR *url, BOOL start_playback, MFP_CREATION_OPTIONS options,
         IMFPMediaPlayerCallback *callback, HWND hwnd, IMFPMediaPlayer **player)
 {
     struct media_player *object;
+    HRESULT hr;
 
     TRACE("%s, %d, %#x, %p, %p, %p.\n", debugstr_w(url), start_playback, options, callback, hwnd, player);
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
+    platform_startup();
+
     object->IMFPMediaPlayer_iface.lpVtbl = &media_player_vtbl;
+    object->IPropertyStore_iface.lpVtbl = &media_player_propstore_vtbl;
     object->refcount = 1;
     object->callback = callback;
     if (object->callback)
         IMFPMediaPlayerCallback_AddRef(object->callback);
-
-    platform_startup();
+    if (FAILED(hr = CreatePropertyStore(&object->propstore)))
+        goto failed;
 
     *player = &object->IMFPMediaPlayer_iface;
 
     return S_OK;
+
+failed:
+
+    IMFPMediaPlayer_Release(&object->IMFPMediaPlayer_iface);
+
+    return hr;
 }
