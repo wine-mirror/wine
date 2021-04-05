@@ -915,16 +915,17 @@ no_compat_defines:
             }
             strarray_add(comp_args, "-D__MSVCRT__");
         }
-        if (includedir)
-        {
-            strarray_add( comp_args, strmake( "-I%s", includedir ));
-            strarray_add( comp_args, strmake( "%s%s/wine/windows", isystem, includedir ));
-        }
+        if (includedir) strarray_add( comp_args, strmake( "%s%s/wine/windows", isystem, includedir ));
         for (j = 0; j < ARRAY_SIZE(incl_dirs); j++)
         {
             if (j && !strcmp( incl_dirs[0], incl_dirs[j] )) continue;
-            strarray_add(comp_args, strmake( "-I%s%s", root, incl_dirs[j] ));
             strarray_add(comp_args, strmake( "%s%s%s/wine/windows", isystem, root, incl_dirs[j] ));
+        }
+        if (includedir) strarray_add( comp_args, strmake( "%s%s", isystem, includedir ));
+        for (j = 0; j < ARRAY_SIZE(incl_dirs); j++)
+        {
+            if (j && !strcmp( incl_dirs[0], incl_dirs[j] )) continue;
+            strarray_add(comp_args, strmake( "%s%s%s", isystem, root, incl_dirs[j] ));
         }
     }
     else if (opts->wine_objdir)
