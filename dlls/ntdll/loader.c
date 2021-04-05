@@ -3484,6 +3484,54 @@ static void process_breakpoint(void)
 }
 
 
+/***********************************************************************
+ *           load_global_options
+ */
+static void load_global_options(void)
+{
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING name_str;
+    HANDLE hkey;
+    ULONG value;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &name_str;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &name_str, L"Machine\\System\\CurrentControlSet\\Control\\Session Manager" );
+
+    if (!NtOpenKey( &hkey, KEY_QUERY_VALUE, &attr ))
+    {
+        query_dword_option( hkey, L"GlobalFlag", &NtCurrentTeb()->Peb->NtGlobalFlag );
+        query_dword_option( hkey, L"SafeProcessSearchMode", &path_safe_mode );
+        query_dword_option( hkey, L"SafeDllSearchMode", &dll_safe_mode );
+
+        if (!query_dword_option( hkey, L"CriticalSectionTimeout", &value ))
+            NtCurrentTeb()->Peb->CriticalSectionTimeout.QuadPart = (ULONGLONG)value * -10000000;
+
+        if (!query_dword_option( hkey, L"HeapSegmentReserve", &value ))
+            NtCurrentTeb()->Peb->HeapSegmentReserve = value;
+
+        if (!query_dword_option( hkey, L"HeapSegmentCommit", &value ))
+            NtCurrentTeb()->Peb->HeapSegmentCommit = value;
+
+        if (!query_dword_option( hkey, L"HeapDeCommitTotalFreeThreshold", &value ))
+            NtCurrentTeb()->Peb->HeapDeCommitTotalFreeThreshold = value;
+
+        if (!query_dword_option( hkey, L"HeapDeCommitFreeBlockThreshold", &value ))
+            NtCurrentTeb()->Peb->HeapDeCommitFreeBlockThreshold = value;
+
+        NtClose( hkey );
+    }
+    LdrQueryImageFileExecutionOptions( &NtCurrentTeb()->Peb->ProcessParameters->ImagePathName,
+                                       L"GlobalFlag", REG_DWORD, &NtCurrentTeb()->Peb->NtGlobalFlag,
+                                       sizeof(DWORD), NULL );
+    heap_set_debug_flags( GetProcessHeap() );
+}
+
+
 #ifndef _WIN64
 void *Wow64Transition = NULL;
 
@@ -3568,6 +3616,9 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
         ANSI_STRING func_name;
         WINE_MODREF *kernel32;
 
+        init_user_process_params();
+        load_global_options();
+        version_init();
 #ifndef _WIN64
         init_wow64();
 #endif
@@ -3654,54 +3705,6 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
 
     RtlLeaveCriticalSection( &loader_section );
     signal_start_thread( context );
-}
-
-
-/***********************************************************************
- *           load_global_options
- */
-static void load_global_options(void)
-{
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING name_str;
-    HANDLE hkey;
-    ULONG value;
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.ObjectName = &name_str;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &name_str, L"Machine\\System\\CurrentControlSet\\Control\\Session Manager" );
-
-    if (!NtOpenKey( &hkey, KEY_QUERY_VALUE, &attr ))
-    {
-        query_dword_option( hkey, L"GlobalFlag", &NtCurrentTeb()->Peb->NtGlobalFlag );
-        query_dword_option( hkey, L"SafeProcessSearchMode", &path_safe_mode );
-        query_dword_option( hkey, L"SafeDllSearchMode", &dll_safe_mode );
-
-        if (!query_dword_option( hkey, L"CriticalSectionTimeout", &value ))
-            NtCurrentTeb()->Peb->CriticalSectionTimeout.QuadPart = (ULONGLONG)value * -10000000;
-
-        if (!query_dword_option( hkey, L"HeapSegmentReserve", &value ))
-            NtCurrentTeb()->Peb->HeapSegmentReserve = value;
-
-        if (!query_dword_option( hkey, L"HeapSegmentCommit", &value ))
-            NtCurrentTeb()->Peb->HeapSegmentCommit = value;
-
-        if (!query_dword_option( hkey, L"HeapDeCommitTotalFreeThreshold", &value ))
-            NtCurrentTeb()->Peb->HeapDeCommitTotalFreeThreshold = value;
-
-        if (!query_dword_option( hkey, L"HeapDeCommitFreeBlockThreshold", &value ))
-            NtCurrentTeb()->Peb->HeapDeCommitFreeBlockThreshold = value;
-
-        NtClose( hkey );
-    }
-    LdrQueryImageFileExecutionOptions( &NtCurrentTeb()->Peb->ProcessParameters->ImagePathName,
-                                       L"GlobalFlag", REG_DWORD, &NtCurrentTeb()->Peb->NtGlobalFlag,
-                                       sizeof(DWORD), NULL );
-    heap_set_debug_flags( GetProcessHeap() );
 }
 
 
@@ -4067,9 +4070,6 @@ static NTSTATUS process_init(void)
     InitializeListHead( &ldr.InMemoryOrderModuleList );
     InitializeListHead( &ldr.InInitializationOrderModuleList );
 
-    init_user_process_params();
-    load_global_options();
-    version_init();
     return STATUS_SUCCESS;
 }
 
