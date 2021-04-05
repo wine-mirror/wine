@@ -195,13 +195,21 @@ static void set_tty_cursor( struct console *console, unsigned int x, unsigned in
     else if (!x && y == console->tty_cursor_y) strcpy( buf, "\r" );
     else if (y == console->tty_cursor_y)
     {
-        if (console->is_unix && console->tty_cursor_x >= console->active->width)
+        if (console->tty_cursor_x >= console->active->width)
         {
-            /* Unix will usually have the cursor at width-1 in this case. instead of depending
-             * on the exact behaviour, move the cursor to the first column and move forward
-             * from threre. */
-            tty_write( console, "\r", 1 );
-            console->tty_cursor_x = 0;
+            if (console->is_unix)
+            {
+                /* Unix will usually have the cursor at width-1 in this case. instead of depending
+                 * on the exact behaviour, move the cursor to the first column and move forward
+                 * from there. */
+                tty_write( console, "\r", 1 );
+                console->tty_cursor_x = 0;
+            }
+            else if (console->active->mode & ENABLE_WRAP_AT_EOL_OUTPUT)
+            {
+                console->tty_cursor_x--;
+            }
+            if (console->tty_cursor_x == x) return;
         }
         if (x + 1 == console->tty_cursor_x) strcpy( buf, "\b" );
         else if (x > console->tty_cursor_x) sprintf( buf, "\x1b[%uC", x - console->tty_cursor_x );
@@ -278,7 +286,7 @@ static void tty_sync( struct console *console )
 
     if (console->active->cursor_visible)
     {
-        set_tty_cursor( console, console->active->cursor_x, console->active->cursor_y );
+        set_tty_cursor( console, get_bounded_cursor_x( console->active ), console->active->cursor_y );
         if (!console->tty_cursor_visible)
         {
             tty_write( console, "\x1b[?25h", 6 ); /* show cursor */
@@ -305,13 +313,14 @@ static void init_tty_output( struct console *console )
 
 static void scroll_to_cursor( struct screen_buffer *screen_buffer )
 {
+    unsigned int cursor_x = get_bounded_cursor_x( screen_buffer );
     int w = screen_buffer->win.right - screen_buffer->win.left + 1;
     int h = screen_buffer->win.bottom - screen_buffer->win.top + 1;
 
-    if (screen_buffer->cursor_x < screen_buffer->win.left)
-        screen_buffer->win.left = min( screen_buffer->cursor_x, screen_buffer->width - w );
-    else if (screen_buffer->cursor_x > screen_buffer->win.right)
-        screen_buffer->win.left = max( screen_buffer->cursor_x, w ) - w + 1;
+    if (cursor_x < screen_buffer->win.left)
+        screen_buffer->win.left = min( cursor_x, screen_buffer->width - w );
+    else if (cursor_x > screen_buffer->win.right)
+        screen_buffer->win.left = max( cursor_x, w ) - w + 1;
     screen_buffer->win.right = screen_buffer->win.left + w - 1;
 
     if (screen_buffer->cursor_y < screen_buffer->win.top)
@@ -1716,7 +1725,7 @@ static NTSTATUS get_output_info( struct screen_buffer *screen_buffer, size_t *ou
 
     info->cursor_size    = screen_buffer->cursor_size;
     info->cursor_visible = screen_buffer->cursor_visible;
-    info->cursor_x       = screen_buffer->cursor_x;
+    info->cursor_x       = get_bounded_cursor_x( screen_buffer );
     info->cursor_y       = screen_buffer->cursor_y;
     info->width          = screen_buffer->width;
     info->height         = screen_buffer->height;
@@ -1917,10 +1926,12 @@ static NTSTATUS write_console( struct screen_buffer *screen_buffer, const WCHAR 
             switch (buffer[i])
             {
             case '\b':
+                screen_buffer->cursor_x = get_bounded_cursor_x( screen_buffer );
                 if (screen_buffer->cursor_x) screen_buffer->cursor_x--;
                 continue;
             case '\t':
                 j = min( screen_buffer->width - screen_buffer->cursor_x, 8 - (screen_buffer->cursor_x % 8) );
+                if (!j) j = 8;
                 while (j--) write_char( screen_buffer, ' ', &update_rect, NULL );
                 continue;
             case '\n':
@@ -1956,7 +1967,6 @@ static NTSTATUS write_console( struct screen_buffer *screen_buffer, const WCHAR 
                 if (++screen_buffer->cursor_y == screen_buffer->height)
                     new_line( screen_buffer, &update_rect );
             }
-            else screen_buffer->cursor_x--;
         }
         else screen_buffer->cursor_x = update_rect.left;
     }

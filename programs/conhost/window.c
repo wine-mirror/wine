@@ -430,7 +430,7 @@ static void update_window_cursor( struct console *console )
 {
     if (console->win != GetFocus() || !console->active->cursor_visible) return;
 
-    SetCaretPos( (console->active->cursor_x - console->active->win.left) * console->active->font.width,
+    SetCaretPos( (get_bounded_cursor_x( console->active ) - console->active->win.left) * console->active->font.width,
                  (console->active->cursor_y - console->active->win.top)  * console->active->font.height );
     ShowCaret( console->win );
 }
@@ -607,10 +607,10 @@ static void update_window( struct console *console )
         }
     }
 
-    if (update_all || console->active->cursor_x != console->window->cursor_pos.X ||
+    if (update_all || get_bounded_cursor_x( console->active ) != console->window->cursor_pos.X ||
         console->active->cursor_y != console->window->cursor_pos.Y)
     {
-        console->window->cursor_pos.X = console->active->cursor_x;
+        console->window->cursor_pos.X = get_bounded_cursor_x( console->active );
         console->window->cursor_pos.Y = console->active->cursor_y;
         update_window_cursor( console );
     }

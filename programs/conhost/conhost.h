@@ -145,6 +145,11 @@ static inline void empty_update_rect( struct screen_buffer *screen_buffer, RECT 
     SetRect( rect, screen_buffer->width, screen_buffer->height, 0, 0 );
 }
 
+static inline unsigned int get_bounded_cursor_x( struct screen_buffer *screen_buffer )
+{
+    return min( screen_buffer->cursor_x, screen_buffer->width - 1 );
+}
+
 #endif /* RC_INVOKED */
 
 /* strings */
