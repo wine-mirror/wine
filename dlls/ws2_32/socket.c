@@ -1298,7 +1298,7 @@ static inline int get_sock_fd( SOCKET s, DWORD access, unsigned int *options )
 
 static inline void release_sock_fd( SOCKET s, int fd )
 {
-    wine_server_release_fd( SOCKET2HANDLE(s), fd );
+    close( fd );
 }
 
 static void _enable_event( HANDLE s, unsigned int event,
@@ -2450,7 +2450,7 @@ static NTSTATUS WS2_async_recv( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS stat
             break;
 
         result = WS2_recv( fd, wsa, convert_flags(wsa->flags) );
-        wine_server_release_fd( wsa->hSocket, fd );
+        close( fd );
         if (result >= 0)
         {
             status = STATUS_SUCCESS;
@@ -2581,7 +2581,7 @@ static NTSTATUS WS2_async_send( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS stat
 
         /* check to see if the data is ready (non-blocking) */
         result = WS2_send( fd, wsa, convert_flags(wsa->flags) );
-        wine_server_release_fd( wsa->hSocket, fd );
+        close( fd );
 
         if (result >= 0)
         {
@@ -2633,7 +2633,7 @@ static NTSTATUS WS2_async_shutdown( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS 
         case ASYNC_TYPE_WRITE:  err = shutdown( fd, 1 );  break;
         }
         status = err ? wsaErrStatus() : STATUS_SUCCESS;
-        wine_server_release_fd( wsa->hSocket, fd );
+        close( fd );
         break;
     }
     iosb->u.Status = status;
@@ -2804,7 +2804,7 @@ static NTSTATUS WS2_ReadFile(HANDLE hFile, PIO_STATUS_BLOCK io_status, char* buf
     else
         status = STATUS_PENDING;
 
-    wine_server_release_fd( hFile, unix_handle );
+    close( unix_handle );
     TRACE("= 0x%08x (%d)\n", status, result);
     if (status == STATUS_SUCCESS || status == STATUS_END_OF_FILE)
     {
@@ -2929,7 +2929,7 @@ static NTSTATUS WS2_async_transmitfile( void *user, IO_STATUS_BLOCK *iosb, NTSTA
         if (!(status = wine_server_handle_to_fd( wsa->write.hSocket, FILE_WRITE_DATA, &fd, NULL )))
         {
             status = WS2_transmitfile_base( fd, wsa );
-            wine_server_release_fd( wsa->write.hSocket, fd );
+            close( fd );
         }
         if (status == STATUS_PENDING)
             return status;
