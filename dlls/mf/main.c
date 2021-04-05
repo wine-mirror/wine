@@ -1460,3 +1460,22 @@ HRESULT WINAPI MFCreateSimpleTypeHandler(IMFMediaTypeHandler **handler)
 
     return S_OK;
 }
+
+HRESULT WINAPI MFRequireProtectedEnvironment(IMFPresentationDescriptor *pd)
+{
+    BOOL selected, protected = FALSE;
+    unsigned int i = 0, value;
+    IMFStreamDescriptor *sd;
+
+    TRACE("%p.\n", pd);
+
+    while (SUCCEEDED(IMFPresentationDescriptor_GetStreamDescriptorByIndex(pd, i++, &selected, &sd)))
+    {
+        value = 0;
+        protected = SUCCEEDED(IMFStreamDescriptor_GetUINT32(sd, &MF_SD_PROTECTED, &value)) && value;
+        IMFStreamDescriptor_Release(sd);
+        if (protected) break;
+    }
+
+    return protected ? S_OK : S_FALSE;
+}

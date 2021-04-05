@@ -77,7 +77,7 @@
 @ stdcall MFGetSupportedSchemes(ptr)
 @ stdcall MFGetTopoNodeCurrentType(ptr long long ptr)
 @ stub MFReadSequencerSegmentOffset
-@ stub MFRequireProtectedEnvironment
+@ stdcall MFRequireProtectedEnvironment(ptr)
 @ stdcall MFShutdownObject(ptr)
 @ stub MFTranscodeGetAudioOutputAvailableTypes
 @ stub MergePropertyStore

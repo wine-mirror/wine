@@ -5185,6 +5185,44 @@ static void init_functions(void)
 #undef X
 }
 
+static void test_MFRequireProtectedEnvironment(void)
+{
+    IMFPresentationDescriptor *pd;
+    IMFMediaType *mediatype;
+    IMFStreamDescriptor *sd;
+    HRESULT hr;
+
+    hr = MFCreateMediaType(&mediatype);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateStreamDescriptor(0, 1, &mediatype, &sd);
+    ok(hr == S_OK, "Failed to create stream descriptor, hr %#x.\n", hr);
+
+    hr = MFCreatePresentationDescriptor(1, &sd, &pd);
+    ok(hr == S_OK, "Failed to create presentation descriptor, hr %#x.\n", hr);
+
+    hr = IMFPresentationDescriptor_SelectStream(pd, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = MFRequireProtectedEnvironment(pd);
+    ok(hr == S_FALSE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFStreamDescriptor_SetUINT32(sd, &MF_SD_PROTECTED, 1);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = MFRequireProtectedEnvironment(pd);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPresentationDescriptor_DeselectStream(pd, 0);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = MFRequireProtectedEnvironment(pd);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IMFStreamDescriptor_Release(sd);
+    IMFPresentationDescriptor_Release(pd);
+}
+
 START_TEST(mf)
 {
     init_functions();
@@ -5216,4 +5254,5 @@ START_TEST(mf)
     test_sample_copier();
     test_sample_copier_output_processing();
     test_MFGetTopoNodeCurrentType();
+    test_MFRequireProtectedEnvironment();
 }
