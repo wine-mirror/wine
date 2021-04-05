@@ -1,6 +1,6 @@
 MODULE    = mfplay.dll
 IMPORTLIB = mfplay
-IMPORTS   = uuid mfuuid
+IMPORTS   = mfplat uuid mfuuid
 
 EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 

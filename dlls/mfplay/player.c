@@ -22,12 +22,27 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "mfapi.h"
 #include "mfplay.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
+
+static LONG startup_refcount;
+
+static void platform_startup(void)
+{
+    if (InterlockedIncrement(&startup_refcount) == 1)
+        MFStartup(MF_VERSION, MFSTARTUP_FULL);
+}
+
+static void platform_shutdown(void)
+{
+    if (InterlockedDecrement(&startup_refcount) == 0)
+        MFShutdown();
+}
 
 struct media_player
 {
@@ -81,6 +96,8 @@ static ULONG WINAPI media_player_Release(IMFPMediaPlayer *iface)
         if (player->callback)
             IMFPMediaPlayerCallback_Release(player->callback);
         heap_free(player);
+
+        platform_shutdown();
     }
 
     return refcount;
@@ -404,6 +421,8 @@ HRESULT WINAPI MFPCreateMediaPlayer(const WCHAR *url, BOOL start_playback, MFP_C
     object->callback = callback;
     if (object->callback)
         IMFPMediaPlayerCallback_AddRef(object->callback);
+
+    platform_startup();
 
     *player = &object->IMFPMediaPlayer_iface;
 
