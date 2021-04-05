@@ -34,6 +34,8 @@
 #include "mssip.h"
 #include "setupapi.h"
 #include "newdev.h"
+#include "initguid.h"
+#include "devguid.h"
 #include "wine/test.h"
 #include "wine/heap.h"
 #include "wine/mssign.h"
@@ -990,6 +992,49 @@ static void add_file_to_catalog(HANDLE catalog, const WCHAR *file)
     }
 }
 
+static void test_pnp_devices(void)
+{
+    static const GUID control_class = {0xdeadbeef, 0x29ef, 0x4538, {0xa5, 0xfd, 0xb6, 0x95, 0x73, 0xa3, 0x62, 0xc0}};
+
+    char buffer[200];
+    SP_DEVICE_INTERFACE_DETAIL_DATA_A *iface_detail = (void *)buffer;
+    SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
+    SP_DEVINFO_DATA device = {sizeof(device)};
+    HDEVINFO set;
+    HANDLE bus;
+    BOOL ret;
+
+    set = SetupDiGetClassDevsA(&control_class, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
+
+    ret = SetupDiEnumDeviceInfo(set, 0, &device);
+    ok(ret, "failed to get device, error %#x\n", GetLastError());
+    ok(IsEqualGUID(&device.ClassGuid, &GUID_DEVCLASS_SYSTEM), "wrong class %s\n", debugstr_guid(&device.ClassGuid));
+
+    ret = SetupDiGetDeviceInstanceIdA(set, &device, buffer, sizeof(buffer), NULL);
+    ok(ret, "failed to get device ID, error %#x\n", GetLastError());
+    ok(!strcasecmp(buffer, "root\\winetest\\0"), "got ID %s\n", debugstr_a(buffer));
+
+    ret = SetupDiEnumDeviceInterfaces(set, NULL, &control_class, 0, &iface);
+    ok(ret, "failed to get interface, error %#x\n", GetLastError());
+    ok(IsEqualGUID(&iface.InterfaceClassGuid, &control_class),
+            "wrong class %s\n", debugstr_guid(&iface.InterfaceClassGuid));
+    ok(iface.Flags == SPINT_ACTIVE, "got flags %#x\n", iface.Flags);
+
+    iface_detail->cbSize = sizeof(*iface_detail);
+    ret = SetupDiGetDeviceInterfaceDetailA(set, &iface, iface_detail, sizeof(buffer), NULL, NULL);
+    ok(ret, "failed to get interface path, error %#x\n", GetLastError());
+    ok(!strcasecmp(iface_detail->DevicePath, "\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}"),
+            "wrong path %s\n", debugstr_a(iface_detail->DevicePath));
+
+    SetupDiDestroyDeviceInfoList(set);
+
+    bus = CreateFileA(iface_detail->DevicePath, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(bus != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+
+    CloseHandle(bus);
+}
+
 static void test_pnp_driver(struct testsign_context *ctx)
 {
     static const char hardware_id[] = "test_hardware_id\0";
@@ -1116,9 +1161,7 @@ static void test_pnp_driver(struct testsign_context *ctx)
 
     /* Tests. */
 
-    file = CreateFileA("\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
-    ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
-    CloseHandle(file);
+    test_pnp_devices();
 
     /* Clean up. */
 
