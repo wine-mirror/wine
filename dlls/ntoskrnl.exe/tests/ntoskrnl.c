@@ -904,7 +904,6 @@ static void test_driver4(struct testsign_context *ctx)
     WCHAR filename[MAX_PATH];
     SC_HANDLE service;
     HANDLE hthread;
-    DWORD written;
     BOOL ret;
 
     if (!(service = load_driver(ctx, filename, L"driver4.dll", L"WineTestDriver4")))
@@ -922,9 +921,6 @@ static void test_driver4(struct testsign_context *ctx)
     hthread = CreateThread(NULL, 0, wsk_test_thread, NULL, 0, NULL);
     main_test();
     WaitForSingleObject(hthread, INFINITE);
-
-    ret = DeviceIoControl(device, IOCTL_WINETEST_DETACH, NULL, 0, NULL, 0, &written, NULL);
-    ok(ret, "DeviceIoControl failed: %u\n", GetLastError());
 
     CloseHandle(device);
 

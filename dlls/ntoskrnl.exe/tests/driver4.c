@@ -37,19 +37,10 @@
 #include "utils.h"
 
 static DRIVER_OBJECT *driver_obj;
-static DEVICE_OBJECT *lower_device, *upper_device;
-
-static unsigned int create_count, close_count;
+static DEVICE_OBJECT *device_obj;
 
 static const WCHAR driver_link[] = L"\\DosDevices\\WineTestDriver4";
 static const WCHAR device_name[] = L"\\Device\\WineTestDriver4";
-static const WCHAR upper_name[] = L"\\Device\\WineTestUpper4";
-
-static FILE_OBJECT *last_created_file;
-static void *create_caller_thread;
-static PETHREAD create_irp_thread;
-
-static POBJECT_TYPE *pIoDriverObjectType;
 
 static WSK_CLIENT_NPI client_npi;
 static WSK_REGISTRATION registration;
@@ -525,10 +516,6 @@ static NTSTATUS WINAPI driver_iocontrol(DEVICE_OBJECT *device, IRP *irp)
         case IOCTL_WINETEST_MAIN_TEST:
             status = main_test(device, irp, stack);
             break;
-        case IOCTL_WINETEST_DETACH:
-            IoDetachDevice(lower_device);
-            status = STATUS_SUCCESS;
-            break;
         default:
             break;
     }
@@ -543,17 +530,6 @@ static NTSTATUS WINAPI driver_iocontrol(DEVICE_OBJECT *device, IRP *irp)
 
 static NTSTATUS WINAPI driver_create(DEVICE_OBJECT *device, IRP *irp)
 {
-    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
-    DWORD *context = ExAllocatePool(PagedPool, sizeof(*context));
-
-    last_created_file = irpsp->FileObject;
-    ++create_count;
-    if (context)
-        *context = create_count;
-    irpsp->FileObject->FsContext = context;
-    create_caller_thread = KeGetCurrentThread();
-    create_irp_thread = irp->Tail.Overlay.Thread;
-
     irp->IoStatus.Status = STATUS_SUCCESS;
     IoCompleteRequest(irp, IO_NO_INCREMENT);
     return STATUS_SUCCESS;
@@ -561,13 +537,8 @@ static NTSTATUS WINAPI driver_create(DEVICE_OBJECT *device, IRP *irp)
 
 static NTSTATUS WINAPI driver_close(DEVICE_OBJECT *device, IRP *irp)
 {
-    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
-
     netio_uninit();
 
-    ++close_count;
-    if (stack->FileObject->FsContext)
-        ExFreePool(stack->FileObject->FsContext);
     irp->IoStatus.Status = STATUS_SUCCESS;
     IoCompleteRequest(irp, IO_NO_INCREMENT);
     return STATUS_SUCCESS;
@@ -582,17 +553,13 @@ static VOID WINAPI driver_unload(DRIVER_OBJECT *driver)
     RtlInitUnicodeString(&linkW, driver_link);
     IoDeleteSymbolicLink(&linkW);
 
-    IoDeleteDevice(upper_device);
-    IoDeleteDevice(lower_device);
+    IoDeleteDevice(device_obj);
 }
 
 NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
 {
-    static const WCHAR IoDriverObjectTypeW[] = L"IoDriverObjectType";
-    static const WCHAR driver_nameW[] = L"\\Driver\\WineTestDriver4";
     UNICODE_STRING nameW, linkW;
     NTSTATUS status;
-    void *obj;
 
     DbgPrint("Loading driver.\n");
 
@@ -603,41 +570,14 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL]    = driver_iocontrol;
     driver->MajorFunction[IRP_MJ_CLOSE]             = driver_close;
 
-    RtlInitUnicodeString(&nameW, IoDriverObjectTypeW);
-    pIoDriverObjectType = MmGetSystemRoutineAddress(&nameW);
-
-    RtlInitUnicodeString(&nameW, driver_nameW);
-    if ((status = ObReferenceObjectByName(&nameW, 0, NULL, 0, *pIoDriverObjectType, KernelMode, NULL, &obj)))
-        return status;
-    if (obj != driver)
-    {
-        ObDereferenceObject(obj);
-        return STATUS_UNSUCCESSFUL;
-    }
-    ObDereferenceObject(obj);
-
     RtlInitUnicodeString(&nameW, device_name);
     RtlInitUnicodeString(&linkW, driver_link);
 
     if (!(status = IoCreateDevice(driver, 0, &nameW, FILE_DEVICE_UNKNOWN,
-            FILE_DEVICE_SECURE_OPEN, FALSE, &lower_device)))
+            FILE_DEVICE_SECURE_OPEN, FALSE, &device_obj)))
     {
         status = IoCreateSymbolicLink(&linkW, &nameW);
-        lower_device->Flags &= ~DO_DEVICE_INITIALIZING;
-    }
-
-    if (!status)
-    {
-        RtlInitUnicodeString(&nameW, upper_name);
-
-        status = IoCreateDevice(driver, 0, &nameW, FILE_DEVICE_UNKNOWN,
-                FILE_DEVICE_SECURE_OPEN, FALSE, &upper_device);
-    }
-
-    if (!status)
-    {
-        IoAttachDeviceToDeviceStack(upper_device, lower_device);
-        upper_device->Flags &= ~DO_DEVICE_INITIALIZING;
+        device_obj->Flags &= ~DO_DEVICE_INITIALIZING;
     }
 
     return status;
