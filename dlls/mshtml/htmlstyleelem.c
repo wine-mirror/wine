@@ -156,29 +156,29 @@ static HRESULT WINAPI HTMLStyleElement_get_onreadystatechange(IHTMLStyleElement 
 static HRESULT WINAPI HTMLStyleElement_put_onload(IHTMLStyleElement *iface, VARIANT v)
 {
     HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+    return IHTMLElement6_put_onload(&This->element.IHTMLElement6_iface, v);
 }
 
 static HRESULT WINAPI HTMLStyleElement_get_onload(IHTMLStyleElement *iface, VARIANT *p)
 {
     HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return IHTMLElement6_get_onload(&This->element.IHTMLElement6_iface, p);
 }
 
 static HRESULT WINAPI HTMLStyleElement_put_onerror(IHTMLStyleElement *iface, VARIANT v)
 {
     HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+    return IHTMLElement6_put_onerror(&This->element.IHTMLElement6_iface, v);
 }
 
 static HRESULT WINAPI HTMLStyleElement_get_onerror(IHTMLStyleElement *iface, VARIANT *p)
 {
     HTMLStyleElement *This = impl_from_IHTMLStyleElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return IHTMLElement6_get_onerror(&This->element.IHTMLElement6_iface, p);
 }
 
 static HRESULT WINAPI HTMLStyleElement_get_styleSheet(IHTMLStyleElement *iface, IHTMLStyleSheet **p)
