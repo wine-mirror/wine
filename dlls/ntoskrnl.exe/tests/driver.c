@@ -1166,7 +1166,7 @@ static void WINAPI thread_proc(void *arg)
     PsTerminateSystemThread(STATUS_SUCCESS);
 }
 
-static void test_ob_reference(const WCHAR *test_path)
+static void test_ob_reference(void)
 {
     POBJECT_TYPE (WINAPI *pObGetObjectType)(void*);
     OBJECT_ATTRIBUTES attr = { sizeof(attr) };
@@ -1177,8 +1177,6 @@ static void test_ob_reference(const WCHAR *test_path)
     POBJECT_TYPE obj1_type;
     UNICODE_STRING pathU;
     IO_STATUS_BLOCK io;
-    WCHAR *tmp_path;
-    SIZE_T len;
     NTSTATUS status;
 
     pObGetObjectType = get_proc_address("ObGetObjectType");
@@ -1189,18 +1187,12 @@ static void test_ob_reference(const WCHAR *test_path)
     status = ZwCreateEvent(&event_handle, SYNCHRONIZE, &attr, NotificationEvent, TRUE);
     ok(!status, "ZwCreateEvent failed: %#x\n", status);
 
-    len = wcslen(test_path);
-    tmp_path = ExAllocatePool(PagedPool, len * sizeof(WCHAR) + sizeof(L".tmp"));
-    memcpy(tmp_path, test_path, len * sizeof(WCHAR));
-    memcpy(tmp_path + len, L".tmp", sizeof(L".tmp"));
-
-    RtlInitUnicodeString(&pathU, tmp_path);
+    RtlInitUnicodeString(&pathU, L"\\??\\C:\\windows\\winetest_ntoskrnl_file.tmp");
     attr.ObjectName = &pathU;
-    attr.Attributes = OBJ_KERNEL_HANDLE;
+    attr.Attributes = OBJ_KERNEL_HANDLE | OBJ_CASE_INSENSITIVE;
     status = ZwCreateFile(&file_handle,  DELETE | FILE_WRITE_DATA | SYNCHRONIZE, &attr, &io, NULL, 0, 0, FILE_CREATE,
                           FILE_DELETE_ON_CLOSE | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0);
     ok(!status, "ZwCreateFile failed: %#x\n", status);
-    ExFreePool(tmp_path);
 
     status = ZwDuplicateObject(NtCurrentProcess(), file_handle, NtCurrentProcess(), &file_handle2,
                                0, OBJ_KERNEL_HANDLE, DUPLICATE_SAME_ACCESS);
@@ -2164,7 +2156,7 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     test_version();
     test_stack_callout();
     test_lookaside_list();
-    test_ob_reference(test_input->path);
+    test_ob_reference();
     test_resource();
     test_lookup_thread();
     test_IoAttachDeviceToDeviceStack();
