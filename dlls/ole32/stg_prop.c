@@ -2267,6 +2267,16 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
         bytesWritten = count;
         break;
     }
+    case VT_BLOB:
+    {
+        StorageUtl_WriteDWord(&dwTemp, 0, var->blob.cbSize);
+        hr = IStream_Write(This->stm, &dwTemp, sizeof(dwTemp), &count);
+        if (FAILED(hr))
+            goto end;
+        hr = IStream_Write(This->stm, var->blob.pBlobData, var->blob.cbSize, &count);
+        bytesWritten = count + sizeof(DWORD);
+        break;
+    }
     default:
         FIXME("unsupported type: %d\n", var->vt);
         return STG_E_INVALIDPARAMETER;
