@@ -241,7 +241,7 @@ TEB_ACTIVE_FRAME * WINAPI RtlGetFrame(void)
  ***********************************************************************/
 
 
-static GLOBAL_FLS_DATA fls_data;
+static GLOBAL_FLS_DATA fls_data = { { NULL }, { &fls_data.fls_list_head, &fls_data.fls_list_head } };
 
 static RTL_CRITICAL_SECTION fls_section;
 static RTL_CRITICAL_SECTION_DEBUG fls_critsect_debug =
@@ -253,11 +253,6 @@ static RTL_CRITICAL_SECTION_DEBUG fls_critsect_debug =
 static RTL_CRITICAL_SECTION fls_section = { &fls_critsect_debug, -1, 0, 0, 0, 0 };
 
 #define MAX_FLS_DATA_COUNT 0xff0
-
-void init_global_fls_data(void)
-{
-    InitializeListHead( &fls_data.fls_list_head );
-}
 
 static void lock_fls_data(void)
 {
