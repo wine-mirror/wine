@@ -30,6 +30,7 @@
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
+#include "mshtmdid.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -420,6 +421,23 @@ static void HTMLStyleElement_unlink(HTMLDOMNode *iface)
     }
 }
 
+static void HTMLStyleElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const dispex_hook_t ie11_hooks[] = {
+        {DISPID_IHTMLSTYLEELEMENT_READYSTATE, NULL},
+        {DISPID_IHTMLSTYLEELEMENT_STYLESHEET, NULL},
+        {DISPID_UNKNOWN}
+    };
+
+    HTMLElement_init_dispex_info(info, mode);
+
+    dispex_info_add_interface(info, IHTMLStyleElement_tid,
+                              mode >= COMPAT_MODE_IE11 ? ie11_hooks : NULL);
+
+    if(mode >= COMPAT_MODE_IE9)
+        dispex_info_add_interface(info, IHTMLStyleElement2_tid, NULL);
+}
+
 static const NodeImplVtbl HTMLStyleElementImplVtbl = {
     &CLSID_HTMLStyleElement,
     HTMLStyleElement_QI,
@@ -442,14 +460,13 @@ static const NodeImplVtbl HTMLStyleElementImplVtbl = {
 
 static const tid_t HTMLStyleElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
-    IHTMLStyleElement_tid,
     0
 };
 static dispex_static_data_t HTMLStyleElement_dispex = {
     NULL,
     DispHTMLStyleElement_tid,
     HTMLStyleElement_iface_tids,
-    HTMLElement_init_dispex_info
+    HTMLStyleElement_init_dispex_info
 };
 
 HRESULT HTMLStyleElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)

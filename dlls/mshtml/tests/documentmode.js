@@ -45,6 +45,15 @@ sync_test("elem_props", function() {
     test_exposed("dispatchEvent", v >= 9);
     test_exposed("msSetPointerCapture", v >= 10);
     if (v >= 9) test_exposed("spellcheck", v >= 10);
+
+    elem = document.createElement("style");
+    test_exposed("media", true);
+    test_exposed("type", true);
+    test_exposed("disabled", true);
+    test_exposed("media", true);
+    test_exposed("sheet", v >= 9);
+    test_exposed("readyState", v < 11);
+    test_exposed("styleSheet", v < 11);
 });
 
 sync_test("doc_props", function() {
