@@ -1,6 +1,6 @@
 # Polish translations for Wine
 #
-# Łukasz Wojniłowicz <lukasz.wojnilowicz@gmail.com>, 2011, 2012, 2013, 2014.
+# Łukasz Wojniłowicz <lukasz.wojnilowicz@gmail.com>, 2011, 2012, 2013, 2014, 2021.
 # Adam "Saibamen" Stachowicz <saibamenppl@gmail.com>, 2015.
 # Marcin Mikołajczak <me@m4sk.in>, 2017, 2018.
 msgid ""
@@ -8,14 +8,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2018-02-24 13:47+0100\n"
-"Last-Translator: Marcin Mikołajczak <me@m4sk.in>\n"
+"PO-Revision-Date: 2021-04-05 10:02+0200\n"
+"Last-Translator: Łukasz Wojniłowicz <lukasz.wojnilowicz@gmail.com>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.6\n"
+"X-Generator: Lokalize 20.12.1\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2);\n"
 
@@ -25,30 +25,24 @@ msgid "Security"
 msgstr "Prawa dostępu"
 
 #: dlls/aclui/aclui.rc:32
-#, fuzzy
-#| msgid "&User name:"
 msgid "&Group or user names:"
-msgstr "&Użytkownik:"
+msgstr "Nazwy &grup lub użytkowników:"
 
 #: dlls/aclui/aclui.rc:38
-#, fuzzy
-#| msgid "Yellow"
 msgid "Allow"
-msgstr "Żółty"
+msgstr "Zezwól"
 
 #: dlls/aclui/aclui.rc:39
 msgid "Deny"
-msgstr ""
+msgstr "Odmów"
 
 #: dlls/aclui/aclui.rc:47
-#, fuzzy
-#| msgid "Access denied.\n"
 msgid "Permissions for %1"
-msgstr "Dostęp zastrzeżony.\n"
+msgstr "Uprawnienia dla %1"
 
 #: dlls/appwiz.cpl/appwiz.rc:58
 msgid "Install/Uninstall"
-msgstr "Zainstaluj/Odinstaluj"
+msgstr "Wgraj/Usuń"
 
 #: dlls/appwiz.cpl/appwiz.rc:61
 msgid ""
@@ -56,11 +50,11 @@ msgid ""
 "drive, click Install."
 msgstr ""
 "Aby dodać program z dysku, płyty CD-ROM lub dyskietki, kliknij przycisk "
-"Zainstaluj."
+"Wgraj."
 
 #: dlls/appwiz.cpl/appwiz.rc:62
 msgid "&Install..."
-msgstr "Za&instaluj..."
+msgstr "&Wgraj..."
 
 #: dlls/appwiz.cpl/appwiz.rc:65
 msgid ""
@@ -190,7 +184,7 @@ msgstr ""
 
 #: dlls/appwiz.cpl/appwiz.rc:109 dlls/appwiz.cpl/appwiz.rc:124
 msgid "&Install"
-msgstr "Za&instaluj"
+msgstr "&Wgraj"
 
 #: dlls/appwiz.cpl/appwiz.rc:110 dlls/appwiz.cpl/appwiz.rc:125
 #: dlls/avifil32/avifil32.rc:55 dlls/browseui/browseui.rc:45
@@ -400,18 +394,16 @@ msgid "%1!u! %2 and %3!u! %4 remaining"
 msgstr ""
 
 #: dlls/browseui/browseui.rc:31
-#, fuzzy
-#| msgid "&Seconds"
 msgid "seconds"
-msgstr "&Sekundy"
+msgstr "sekundy"
 
 #: dlls/browseui/browseui.rc:32
 msgid "minutes"
-msgstr ""
+msgstr "minuty"
 
 #: dlls/browseui/browseui.rc:33
 msgid "hours"
-msgstr ""
+msgstr "godziny"
 
 #: dlls/comctl32/comctl32.rc:68 programs/winefile/winefile.rc:156
 msgid "Properties for %s"
@@ -456,7 +448,7 @@ msgstr "&Zamknij"
 
 #: dlls/comctl32/comctl32.rc:101
 msgid "R&eset"
-msgstr "Z&resetuj"
+msgstr "Wyze&ruj"
 
 #: dlls/comctl32/comctl32.rc:102 dlls/comdlg32/comdlg32.rc:173
 #: dlls/comdlg32/comdlg32.rc:195 dlls/comdlg32/comdlg32.rc:266
@@ -526,16 +518,12 @@ msgid "&Retry"
 msgstr "&Ponów próbę"
 
 #: dlls/comctl32/comctl32.rc:62
-#, fuzzy
-#| msgid "Hide &Tabs"
 msgid "Hide details"
-msgstr "Ukryj &karty"
+msgstr "Ukryj szczegóły"
 
 #: dlls/comctl32/comctl32.rc:63
-#, fuzzy
-#| msgid "Details"
 msgid "See details"
-msgstr "Szczegóły"
+msgstr "Obejrzyj szczegóły"
 
 #: dlls/comctl32/comctl32.rc:31 dlls/cryptui/cryptui.rc:235
 #: programs/regedit/regedit.rc:286 programs/taskmgr/taskmgr.rc:434
@@ -742,8 +730,9 @@ msgid "&Custom Colors:"
 msgstr "Własne &kolory:"
 
 #: dlls/comdlg32/comdlg32.rc:289
+#, fuzzy
 msgid "|S&olid"
-msgstr ""
+msgstr "Ciągła"
 
 #: dlls/comdlg32/comdlg32.rc:290
 msgid "&Red:"
@@ -780,11 +769,9 @@ msgid "&Define Custom Colors >>"
 msgstr "Z&definiuj własne kolory >>"
 
 #: dlls/comdlg32/comdlg32.rc:312
-#, fuzzy
-#| msgid "&No"
 msgctxt "Solid"
 msgid "&o"
-msgstr "&Nie"
+msgstr "&o"
 
 #: dlls/comdlg32/comdlg32.rc:318 programs/regedit/regedit.rc:275
 #: programs/regedit/regedit.rc:285
@@ -897,7 +884,7 @@ msgstr "&Sortuj"
 
 #: dlls/comdlg32/comdlg32.rc:414 programs/winecfg/winecfg.rc:298
 msgid "Si&ze:"
-msgstr "Wielkość:"
+msgstr "Ro&zmiar:"
 
 #: dlls/comdlg32/comdlg32.rc:416
 msgid "&Source:"
@@ -1143,7 +1130,7 @@ msgid ""
 "Please reenter margins."
 msgstr ""
 "Marginesy znajdują się poza stroną.\n"
-"Wprowadź inną wielkość marginesu."
+"Wprowadź inny rozmiar marginesu."
 
 #: dlls/comdlg32/comdlg32.rc:65
 msgid "The 'Number of copies' field cannot be empty."
@@ -2256,7 +2243,7 @@ msgstr "Ogólne"
 
 #: dlls/cryptui/cryptui.rc:196
 msgid "&Install Certificate..."
-msgstr "&Zainstaluj certyfikat..."
+msgstr "Wgraj certyf&ikat..."
 
 #: dlls/cryptui/cryptui.rc:197
 msgid "Issuer &Statement"
@@ -2272,7 +2259,7 @@ msgstr "&Edytuj właściwości..."
 
 #: dlls/cryptui/cryptui.rc:211
 msgid "&Copy to File..."
-msgstr "&Kopiuj do pliku..."
+msgstr "&Skopiuj do pliku..."
 
 #: dlls/cryptui/cryptui.rc:215
 msgid "Certification Path"
@@ -2601,10 +2588,8 @@ msgid "You have successfully completed the Certificate Export Wizard."
 msgstr "Praca kreatora eksportu certyfikatów została zakończona pomyślnie."
 
 #: dlls/cryptui/cryptui.rc:456 dlls/cryptui/cryptui.rc:179
-#, fuzzy
-#| msgid "Select Certificate Store"
 msgid "Select Certificate"
-msgstr "Wybór magazynu certyfikatów"
+msgstr "Wybierz certyfikat"
 
 #: dlls/cryptui/cryptui.rc:459
 #, fuzzy
@@ -3146,10 +3131,8 @@ msgstr ""
 "eksportu."
 
 #: dlls/cryptui/cryptui.rc:177
-#, fuzzy
-#| msgid "I&ntended purpose:"
 msgid "Intended Use"
-msgstr "&Zamierzone cele:"
+msgstr "Zamiar użycia"
 
 #: dlls/cryptui/cryptui.rc:178 dlls/shell32/shell32.rc:152
 msgid "Location"
@@ -3289,7 +3272,7 @@ msgstr "Pliki w aparacie"
 
 #: dlls/gphoto2.ds/gphoto2.rc:34
 msgid "Import Selected"
-msgstr "Skopiuj wybrane"
+msgstr "Zaimportuj zaznaczone"
 
 #: dlls/gphoto2.ds/gphoto2.rc:35
 msgid "Preview"
@@ -3297,7 +3280,7 @@ msgstr "Podgląd"
 
 #: dlls/gphoto2.ds/gphoto2.rc:36
 msgid "Import All"
-msgstr "Skopiuj wszystkie"
+msgstr "Zaimportuj wszystkie"
 
 #: dlls/gphoto2.ds/gphoto2.rc:37
 msgid "Skip This Dialog"
@@ -3383,7 +3366,7 @@ msgstr "Wy&tnij"
 #: dlls/user32/user32.rc:61 programs/conhost/conhost.rc:36
 #: programs/winhlp32/winhlp32.rc:40 programs/wordpad/wordpad.rc:113
 msgid "&Copy"
-msgstr "&Kopiuj"
+msgstr "&Skopiuj"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:89 dlls/shdoclc/shdoclc.rc:119
 #: dlls/shell32/shell32.rc:64
@@ -3671,10 +3654,8 @@ msgid "Publishers..."
 msgstr "Wydawcy..."
 
 #: dlls/inetcpl.cpl/inetcpl.rc:123
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Connections"
-msgstr "Połączenie LAN"
+msgstr "Połączenia"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:125
 #, fuzzy
@@ -3691,26 +3672,20 @@ msgid "Use Proxy Auto-Config (PAC) script"
 msgstr ""
 
 #: dlls/inetcpl.cpl/inetcpl.rc:128 dlls/inetcpl.cpl/inetcpl.rc:132
-#, fuzzy
-#| msgid "Address"
 msgid "Address:"
-msgstr "Adres"
+msgstr "Adres:"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:130
-#, fuzzy
-#| msgid "&Local server"
 msgid "Proxy server"
-msgstr "Serwer &lokalny"
+msgstr "Serwer pośredniczący"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:131
 msgid "Use a proxy server"
 msgstr ""
 
 #: dlls/inetcpl.cpl/inetcpl.rc:134
-#, fuzzy
-#| msgid "No Ports"
 msgid "Port:"
-msgstr "Brak portów"
+msgstr "Port:"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:31
 msgid "Internet Settings"
@@ -3730,7 +3705,7 @@ msgstr "Dostosuj"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:35
 msgid "Very Low"
-msgstr "Najniższy"
+msgstr "Bardzo nisko"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:36 dlls/wininet/wininet.rc:42
 msgid "Low"
@@ -3821,10 +3796,8 @@ msgid "Subscript out of range"
 msgstr "Indeks dolny poza zakresem"
 
 #: dlls/jscript/jscript.rc:31
-#, fuzzy
-#| msgid "Out of paper; "
 msgid "Out of stack space"
-msgstr "Brak papieru; "
+msgstr "Wyczerpano pamięć stosu"
 
 #: dlls/jscript/jscript.rc:32
 msgid "Object required"
@@ -7000,16 +6973,12 @@ msgid "Connection reset by peer.\n"
 msgstr "Połączenie wyzerowane przez uczestnika.\n"
 
 #: dlls/kernel32/winerror.mc:3767
-#, fuzzy
-#| msgid "Not implemented"
 msgid "Not implemented.\n"
-msgstr "Nie zaimplementowane"
+msgstr "Niezaimplementowane.\n"
 
 #: dlls/kernel32/winerror.mc:3788
-#, fuzzy
-#| msgid "RPC call failed.\n"
 msgid "Call failed.\n"
-msgstr "Wywołanie RPC nieudane.\n"
+msgstr "Nie udało się wywołać.\n"
 
 #: dlls/kernel32/winerror.mc:3760
 #, fuzzy
@@ -7018,10 +6987,8 @@ msgid "No Signature found in file.\n"
 msgstr "Nie znaleziono wiadomości 0x%1 w pliku %2.\n"
 
 #: dlls/kernel32/winerror.mc:3774
-#, fuzzy
-#| msgid "Invalid level.\n"
 msgid "Invalid call.\n"
-msgstr "Niepoprawny poziom.\n"
+msgstr "Nieprawidłowe wywołanie.\n"
 
 #: dlls/kernel32/winerror.mc:3781
 #, fuzzy
@@ -7091,10 +7058,8 @@ msgid "Sink has not been finalized.\n"
 msgstr "Nie znaleziono UUID obiektu.\n"
 
 #: dlls/mferror/mferror.mc:732
-#, fuzzy
-#| msgid "Class already exists.\n"
 msgid "Clock was stopped\n"
-msgstr "Klasa już istnieje.\n"
+msgstr "Zegar został zatrzymany\n"
 
 #: dlls/mferror/mferror.mc:32
 #, fuzzy
@@ -7103,16 +7068,12 @@ msgid "Media Foundation platform is not initialized.\n"
 msgstr "Platforma instalacyjna niewspierana.\n"
 
 #: dlls/mferror/mferror.mc:39
-#, fuzzy
-#| msgid "Byte count too small.\n"
 msgid "Buffer is too small.\n"
-msgstr "Liczba bajtów zbyt mała.\n"
+msgstr "Zbyt mały bufor.\n"
 
 #: dlls/mferror/mferror.mc:46
-#, fuzzy
-#| msgid "Invalid query syntax.\n"
 msgid "Invalid request.\n"
-msgstr "Niepoprawne składnia kwerendy.\n"
+msgstr "Nieprawidłowe żądanie.\n"
 
 #: dlls/mferror/mferror.mc:53
 #, fuzzy
@@ -7149,28 +7110,20 @@ msgid "No more types in the list of suggested media types.\n"
 msgstr ""
 
 #: dlls/mferror/mferror.mc:95
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported service.\n"
-msgstr "Niewspierany typ.\n"
+msgstr "Nieobsługiwana usługa.\n"
 
 #: dlls/mferror/mferror.mc:102
-#, fuzzy
-#| msgid "Unexpected network error.\n"
 msgid "Unexpected error.\n"
-msgstr "Nieoczekiwany błąd sieciowy.\n"
+msgstr "Nieoczekiwany błąd.\n"
 
 #: dlls/mferror/mferror.mc:116
-#, fuzzy
-#| msgid "Invalid time.\n"
 msgid "Invalid type.\n"
-msgstr "Niepoprawny czas.\n"
+msgstr "Niepoprawny rodzaj.\n"
 
 #: dlls/mferror/mferror.mc:123
-#, fuzzy
-#| msgid "Invalid pixel format.\n"
 msgid "Invalid file format.\n"
-msgstr "Niepoprawny format piksela.\n"
+msgstr "Nieprawidłowy format pliku.\n"
 
 #: dlls/mferror/mferror.mc:137
 #, fuzzy
@@ -7217,10 +7170,8 @@ msgid "Realtime support is not available.\n"
 msgstr "Pomoc nie jest dostępna."
 
 #: dlls/mferror/mferror.mc:193
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Unsupported rate.\n"
-msgstr "Niewspierany typ.\n"
+msgstr "Nieobsługiwana szybkość.\n"
 
 #: dlls/mferror/mferror.mc:200
 #, fuzzy
@@ -7303,10 +7254,8 @@ msgid "Sample is not writable.\n"
 msgstr "Katalog tymczasowy jest nie do zapisu.\n"
 
 #: dlls/mferror/mferror.mc:312
-#, fuzzy
-#| msgid "Path is invalid.\n"
 msgid "Key is invalid.\n"
-msgstr "Niepoprawna ścieżka.\n"
+msgstr "Nieprawidłowy klucz.\n"
 
 #: dlls/mferror/mferror.mc:319
 #, fuzzy
@@ -7321,10 +7270,8 @@ msgid "Unsupported caption.\n"
 msgstr "Niewspierany typ.\n"
 
 #: dlls/mferror/mferror.mc:333
-#, fuzzy
-#| msgid "Invalid workstation.\n"
 msgid "Invalid position.\n"
-msgstr "Niepoprawna stacja robocza.\n"
+msgstr "Nieprawidłowe położenie.\n"
 
 #: dlls/mferror/mferror.mc:340
 #, fuzzy
@@ -7605,10 +7552,8 @@ msgid "Stream descriptor is not selected.\n"
 msgstr "Urządzenie jest niepodłączone.\n"
 
 #: dlls/mferror/mferror.mc:697
-#, fuzzy
-#| msgid "Index is missing.\n"
 msgid "Source is missing.\n"
-msgstr "Brakuje wskaźnika.\n"
+msgstr "Brakuje źródła.\n"
 
 #: dlls/mferror/mferror.mc:704
 msgid "Topology loader does not support sink activates.\n"
@@ -8723,10 +8668,8 @@ msgid "Off"
 msgstr "Wyłączone"
 
 #: dlls/oledb32/version.rc:56
-#, fuzzy
-#| msgid "video"
 msgid "Provider"
-msgstr "obraz"
+msgstr "Dostawca"
 
 #: dlls/oledb32/version.rc:59
 #, fuzzy
@@ -8735,10 +8678,8 @@ msgid "Select the data you want to connect to:"
 msgstr "Wybierz format, którego chcesz użyć:"
 
 #: dlls/oledb32/version.rc:66
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "Connection"
-msgstr "Połączenie LAN"
+msgstr "Połączenie"
 
 #: dlls/oledb32/version.rc:69
 #, fuzzy
@@ -8763,32 +8704,24 @@ msgid "Use c&onnection string"
 msgstr "Wyzerowane połączenia"
 
 #: dlls/oledb32/version.rc:75
-#, fuzzy
-#| msgid "LAN Connection"
 msgid "&Connection string:"
-msgstr "Połączenie LAN"
+msgstr "&Ciąg znaków połączenia:"
 
 #: dlls/oledb32/version.rc:77
-#, fuzzy
-#| msgid "A&dd..."
 msgid "B&uild..."
-msgstr "&Dodaj..."
+msgstr "B&uduj..."
 
 #: dlls/oledb32/version.rc:78
 msgid "2. Enter information to log on to the server"
 msgstr ""
 
 #: dlls/oledb32/version.rc:79
-#, fuzzy
-#| msgid "&User name:"
 msgid "User &name:"
-msgstr "&Użytkownik:"
+msgstr "&Nazwa użytkownika:"
 
 #: dlls/oledb32/version.rc:83
-#, fuzzy
-#| msgid "&Blank page"
 msgid "&Blank password"
-msgstr "Użyj pu&stej"
+msgstr "&Puste hasło"
 
 #: dlls/oledb32/version.rc:84
 #, fuzzy
@@ -8801,20 +8734,16 @@ msgid "3. Enter the &initial catalog to use:"
 msgstr ""
 
 #: dlls/oledb32/version.rc:87
-#, fuzzy
-#| msgid "Reset Connections"
 msgid "&Test Connection"
-msgstr "Wyzerowane połączenia"
+msgstr "&Testuj połączenie"
 
 #: dlls/oledb32/version.rc:92
 msgid "Advanced"
 msgstr "Zaawansowany"
 
 #: dlls/oledb32/version.rc:95
-#, fuzzy
-#| msgid "Network share"
 msgid "Network settings"
-msgstr "Zasób sieciowy"
+msgstr "Ustawienia sieciowe"
 
 #: dlls/oledb32/version.rc:96
 #, fuzzy
@@ -8827,28 +8756,20 @@ msgid "P&rotection level:"
 msgstr ""
 
 #: dlls/oledb32/version.rc:101
-#, fuzzy
-#| msgid "Connected"
 msgid "Connect:"
-msgstr "Włączone"
+msgstr "Połącz:"
 
 #: dlls/oledb32/version.rc:103
-#, fuzzy
-#| msgid "&Seconds"
 msgid "seconds."
-msgstr "&Sekundy"
+msgstr "sekund."
 
 #: dlls/oledb32/version.rc:104
-#, fuzzy
-#| msgid "Success"
 msgid "A&ccess:"
-msgstr "Powodzenie"
+msgstr "&Dostęp:"
 
 #: dlls/oledb32/version.rc:110
-#, fuzzy
-#| msgid "&All"
 msgid "All"
-msgstr "&Cały rejestr"
+msgstr "Wszystkie"
 
 #: dlls/oledb32/version.rc:114
 msgid ""
@@ -8857,16 +8778,12 @@ msgid ""
 msgstr ""
 
 #: dlls/oledb32/version.rc:115
-#, fuzzy
-#| msgid "&Edit..."
 msgid "&Edit Value..."
-msgstr "&Edycja..."
+msgstr "Zmi&eń wartość..."
 
 #: dlls/oledb32/version.rc:49
-#, fuzzy
-#| msgid "Properties"
 msgid "Data Link Error"
-msgstr "Właściwości"
+msgstr "Błąd odnośnika danych"
 
 #: dlls/oledb32/version.rc:50
 #, fuzzy
@@ -8891,16 +8808,12 @@ msgid "OLE DB Provider(s)"
 msgstr ""
 
 #: dlls/oledb32/version.rc:41
-#, fuzzy
-#| msgid "Ready"
 msgid "Read"
-msgstr "Gotowe"
+msgstr "Odczyt"
 
 #: dlls/oledb32/version.rc:42
-#, fuzzy
-#| msgid "Readme:"
 msgid "ReadWrite"
-msgstr "CzytajTo:"
+msgstr "OdczytZapis"
 
 #: dlls/oledb32/version.rc:43
 msgid "Share Deny None"
@@ -8919,10 +8832,8 @@ msgid "Share Exclusive"
 msgstr ""
 
 #: dlls/oledb32/version.rc:47
-#, fuzzy
-#| msgid "I/O Writes"
 msgid "Write"
-msgstr "Zapisy We/Wy"
+msgstr "Zapis"
 
 #: dlls/oledlg/oledlg.rc:55
 msgid "Insert Object"
@@ -8970,7 +8881,7 @@ msgstr "Wklej specjalnie"
 
 #: dlls/oledlg/oledlg.rc:85 dlls/setupapi/setupapi.rc:43
 msgid "Source:"
-msgstr "Kopiuj pliki z:"
+msgstr "Skopiuj pliki z:"
 
 #: dlls/oledlg/oledlg.rc:86 dlls/shdoclc/shdoclc.rc:50
 #: dlls/shdoclc/shdoclc.rc:82 dlls/shdoclc/shdoclc.rc:95
@@ -9170,7 +9081,7 @@ msgstr "Kopiowanie plików..."
 
 #: dlls/setupapi/setupapi.rc:45
 msgid "Destination:"
-msgstr "Kopiuj pliki do:"
+msgstr "Skopiuj pliki do:"
 
 #: dlls/setupapi/setupapi.rc:52
 msgid "Files Needed"
@@ -9186,7 +9097,7 @@ msgstr ""
 
 #: dlls/setupapi/setupapi.rc:57
 msgid "Copy manufacturer's files from:"
-msgstr "Kopiuj pliki producenta z:"
+msgstr "Skopiuj pliki producenta z:"
 
 #: dlls/setupapi/setupapi.rc:31
 msgid "The file '%1' on %2 is needed"
@@ -9198,7 +9109,7 @@ msgstr "Nieznane"
 
 #: dlls/setupapi/setupapi.rc:33
 msgid "Copy files from:"
-msgstr "Kopiuj pliki z:"
+msgstr "Skopiuj pliki z:"
 
 #: dlls/setupapi/setupapi.rc:34
 msgid "Type the path where the file is located, and then click OK."
@@ -9218,7 +9129,7 @@ msgstr "&Ustaw jako tło"
 
 #: dlls/shdoclc/shdoclc.rc:46
 msgid "&Copy Background"
-msgstr "Kop&iuj tło"
+msgstr "Skop&iuj tło"
 
 #: dlls/shdoclc/shdoclc.rc:47
 msgid "Set as &Desktop Item"
@@ -9296,7 +9207,7 @@ msgstr "Ustaw jako &element pulpitu..."
 #: dlls/shdoclc/shdoclc.rc:81 dlls/shdoclc/shdoclc.rc:134
 #: dlls/shdoclc/shdoclc.rc:161 dlls/shdoclc/shdoclc.rc:185
 msgid "Copy Shor&tcut"
-msgstr "Kopiuj &skrót"
+msgstr "Skopiuj &skrót"
 
 #: dlls/shdoclc/shdoclc.rc:86 dlls/shdoclc/shdoclc.rc:139
 #: dlls/shdoclc/shdoclc.rc:168 dlls/shdoclc/shdoclc.rc:194
@@ -9650,10 +9561,8 @@ msgid "&Browse..."
 msgstr "&Przeglądaj..."
 
 #: dlls/shell32/shell32.rc:355 dlls/shell32/shell32.rc:384
-#, fuzzy
-#| msgid "File type"
 msgid "File type:"
-msgstr "Typ pliku"
+msgstr "Rodzaj pliku:"
 
 #: dlls/shell32/shell32.rc:359 dlls/shell32/shell32.rc:392
 #: dlls/urlmon/urlmon.rc:37 programs/explorer/explorer.rc:32
@@ -9663,19 +9572,15 @@ msgstr "Położenie:"
 #: dlls/shell32/shell32.rc:361 dlls/shell32/shell32.rc:394
 #: programs/winefile/winefile.rc:169
 msgid "Size:"
-msgstr "Wie&lkość:"
+msgstr "Rozmiar:"
 
 #: dlls/shell32/shell32.rc:365 dlls/shell32/shell32.rc:398
-#, fuzzy
-#| msgid "Creation date"
 msgid "Creation date:"
-msgstr "Data utworzenia"
+msgstr "Data utworzenia:"
 
 #: dlls/shell32/shell32.rc:369 dlls/shell32/shell32.rc:406
-#, fuzzy
-#| msgid "&Attributes:"
 msgid "Attributes:"
-msgstr "&Atrybuty:"
+msgstr "Atrybuty:"
 
 #: dlls/shell32/shell32.rc:371 dlls/shell32/shell32.rc:408
 #: programs/winefile/winefile.rc:173
@@ -9688,28 +9593,20 @@ msgid "&Archive"
 msgstr "&Archiwalny"
 
 #: dlls/shell32/shell32.rc:386
-#, fuzzy
-#| msgid "Open:"
 msgid "Open with:"
-msgstr "Otwórz:"
+msgstr "Otwórz za pomocą:"
 
 #: dlls/shell32/shell32.rc:389
-#, fuzzy
-#| msgid "Change &Icon..."
 msgid "&Change..."
-msgstr "Zmień &ikonę..."
+msgstr "&Zmień..."
 
 #: dlls/shell32/shell32.rc:400
-#, fuzzy
-#| msgid "Modified"
 msgid "Last modified:"
-msgstr "Zmieniony"
+msgstr "Ostatnio zmieniony:"
 
 #: dlls/shell32/shell32.rc:402
-#, fuzzy
-#| msgid "Last Change:"
 msgid "Last accessed:"
-msgstr "Ostatnio zmieniony:"
+msgstr "Ostatnio otwierany:"
 
 #: dlls/shell32/shell32.rc:138 dlls/shell32/shell32.rc:142
 #: programs/winefile/winefile.rc:107
@@ -9731,7 +9628,7 @@ msgstr "Atrybuty"
 
 #: dlls/shell32/shell32.rc:143
 msgid "Size available"
-msgstr "Dostępna wielkość"
+msgstr "Dostępny rozmiar"
 
 #: dlls/shell32/shell32.rc:145
 msgid "Comments"
@@ -10137,7 +10034,7 @@ msgstr "Zaznacz źródło"
 
 #: dlls/tzres/tzres.rc:90
 msgid "China Standard Time"
-msgstr ""
+msgstr "Czas urzędowy chiński"
 
 #: dlls/tzres/tzres.rc:91
 msgid "China Daylight Time"
@@ -10176,10 +10073,8 @@ msgid "Cape Verde Daylight Time"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:126
-#, fuzzy
-#| msgid "Date and time"
 msgid "Haiti Standard Time"
-msgstr "Data i godzina"
+msgstr "Czas urzędowy Haiti"
 
 #: dlls/tzres/tzres.rc:127
 #, fuzzy
@@ -10264,10 +10159,8 @@ msgid "Mountain Daylight Time (Mexico)"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:118
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "GMT Standard Time"
-msgstr "Pasek &standardowy"
+msgstr "Czas urzędowy GMT"
 
 #: dlls/tzres/tzres.rc:119
 msgid "GMT Daylight Time"
@@ -10327,7 +10220,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:186
 msgid "Pacific Standard Time"
-msgstr ""
+msgstr "Czas urzędowy pacyficzny"
 
 #: dlls/tzres/tzres.rc:187
 msgid "Pacific Daylight Time"
@@ -10402,10 +10295,8 @@ msgid "Line Islands Daylight Time"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:92
-#, fuzzy
-#| msgid "Date and time"
 msgid "Cuba Standard Time"
-msgstr "Data i godzina"
+msgstr "Czas urzędowy kubański"
 
 #: dlls/tzres/tzres.rc:93
 #, fuzzy
@@ -10423,7 +10314,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:84
 msgid "Central Standard Time"
-msgstr ""
+msgstr "Czas urzędowy środkowy"
 
 #: dlls/tzres/tzres.rc:85
 msgid "Central Daylight Time"
@@ -10447,7 +10338,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:42
 msgid "Argentina Standard Time"
-msgstr ""
+msgstr "Czas urzędowy argentyński"
 
 #: dlls/tzres/tzres.rc:43
 msgid "Argentina Daylight Time"
@@ -10479,17 +10370,15 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:130
 msgid "India Standard Time"
-msgstr ""
+msgstr "Czas urzędowy indyjski"
 
 #: dlls/tzres/tzres.rc:131
 msgid "India Daylight Time"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:124
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "GTB Standard Time"
-msgstr "Pasek &standardowy"
+msgstr "Czas urzędowy GTB"
 
 #: dlls/tzres/tzres.rc:125
 msgid "GTB Daylight Time"
@@ -10577,7 +10466,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:104
 msgid "Eastern Standard Time"
-msgstr ""
+msgstr "Czas urzędowy wschodni"
 
 #: dlls/tzres/tzres.rc:105
 msgid "Eastern Daylight Time"
@@ -10601,7 +10490,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:162
 msgid "Mountain Standard Time"
-msgstr ""
+msgstr "Czas urzędowy górski"
 
 #: dlls/tzres/tzres.rc:163
 msgid "Mountain Daylight Time"
@@ -10805,7 +10694,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:58
 msgid "Bangladesh Standard Time"
-msgstr ""
+msgstr "Czas urzędowy bangladeski"
 
 #: dlls/tzres/tzres.rc:59
 msgid "Bangladesh Daylight Time"
@@ -10907,7 +10796,7 @@ msgstr ""
 
 #: dlls/tzres/tzres.rc:174
 msgid "New Zealand Standard Time"
-msgstr ""
+msgstr "Czas urzędowy nowozelandzki "
 
 #: dlls/tzres/tzres.rc:175
 msgid "New Zealand Daylight Time"
@@ -10971,7 +10860,7 @@ msgstr "Data i godzina"
 
 #: dlls/tzres/tzres.rc:108
 msgid "Egypt Standard Time"
-msgstr ""
+msgstr "Czas urzędowy egipski"
 
 #: dlls/tzres/tzres.rc:109
 msgid "Egypt Daylight Time"
@@ -11042,10 +10931,8 @@ msgid "E. Africa Daylight Time"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:114
-#, fuzzy
-#| msgid "&Standard bar"
 msgid "FLE Standard Time"
-msgstr "Pasek &standardowy"
+msgstr "Czas urzędowy FLE"
 
 #: dlls/tzres/tzres.rc:115
 msgid "FLE Daylight Time"
@@ -11109,16 +10996,15 @@ msgstr "Czy chcesz zainstalować to oprogramowanie?"
 
 #: dlls/urlmon/urlmon.rc:39
 msgid "Don't install"
-msgstr "Nie instaluj"
+msgstr "Nie wgrywaj"
 
 #: dlls/urlmon/urlmon.rc:43
 msgid ""
 "When installed, an ActiveX component has full access to your computer. Do "
 "not click install unless you have absolute trust in the above source."
 msgstr ""
-"Składnik ActiveX ma pełny dostęp do twojego komputera, jeśli jest "
-"zainstalowany. Nie klikaj zainstaluj dopóki nie masz pełnego zaufania do "
-"powyższego źródła."
+"Składnik ActiveX ma pełny dostęp do twojego komputera, jeśli jest wgrany. "
+"Nie klikaj wgraj dopóki nie masz pełnego zaufania do powyższego źródła."
 
 #: dlls/urlmon/urlmon.rc:51
 msgid "Installation of component failed: %08x"
@@ -11126,11 +11012,11 @@ msgstr "Nieudana instalacja składnika: %08x"
 
 #: dlls/urlmon/urlmon.rc:52
 msgid "Install (%d)"
-msgstr "Zainstaluj (%d)"
+msgstr "Wgraj (%d)"
 
 #: dlls/urlmon/urlmon.rc:53
 msgid "Install"
-msgstr "Zainstaluj"
+msgstr "Wgraj"
 
 #: dlls/user32/user32.rc:30 dlls/user32/user32.rc:43
 #: programs/taskmgr/taskmgr.rc:138
@@ -11179,7 +11065,7 @@ msgstr "&Zaniechaj"
 
 #: dlls/user32/user32.rc:85
 msgid "&Ignore"
-msgstr "&Ignoruj"
+msgstr "Pom&iń"
 
 #: dlls/user32/user32.rc:86
 msgid "&Try Again"
@@ -11199,75 +11085,55 @@ msgstr "&Więcej okien..."
 
 #: dlls/vbscript/vbscript.rc:30
 msgid "Overflow"
-msgstr ""
+msgstr "Przepełnienie w górę"
 
 #: dlls/vbscript/vbscript.rc:31
-#, fuzzy
-#| msgid "Out of memory."
 msgid "Out of memory"
-msgstr "Za mało pamięci dla tej operacji."
+msgstr "Brak pamięci"
 
 #: dlls/vbscript/vbscript.rc:33
 msgid "This array is fixed or temporarily locked"
 msgstr ""
 
 #: dlls/vbscript/vbscript.rc:34
-#, fuzzy
-#| msgid "Data type mismatch.\n"
 msgid "Type mismatch"
-msgstr "Niezgodność typu danych.\n"
+msgstr "Niezgodność rodzajów"
 
 #: dlls/vbscript/vbscript.rc:36
-#, fuzzy
-#| msgid "I/O device error.\n"
 msgid "Device I/O error"
-msgstr "Błąd WE/WY urządzenia.\n"
+msgstr "Błąd WE/WY urządzenia."
 
 #: dlls/vbscript/vbscript.rc:37
-#, fuzzy
-#| msgid "File already exists.\n"
 msgid "File already exists"
-msgstr "Plik już istnieje.\n"
+msgstr "Plik już istnieje"
 
 #: dlls/vbscript/vbscript.rc:38
-#, fuzzy
-#| msgid "Disk full.\n"
 msgid "Disk full"
-msgstr "Dysk pełen.\n"
+msgstr "Dysk pełen"
 
 #: dlls/vbscript/vbscript.rc:39
-#, fuzzy
-#| msgid "Too many open files.\n"
 msgid "Too many files"
-msgstr "Zbyt dużo otwartych plików.\n"
+msgstr "Zbyt wiele plików"
 
 #: dlls/vbscript/vbscript.rc:40
-#, fuzzy
-#| msgid "Access denied.\n"
 msgid "Permission denied"
-msgstr "Dostęp zastrzeżony.\n"
+msgstr "Odmówiono dostępu"
 
 #: dlls/vbscript/vbscript.rc:41
 msgid "Path/File access error"
 msgstr ""
 
 #: dlls/vbscript/vbscript.rc:42
-#, fuzzy
-#| msgid "Path not found.\n"
 msgid "Path not found"
-msgstr "Nie znaleziono ścieżki.\n"
+msgstr "Nie znaleziono ścieżki"
 
 #: dlls/vbscript/vbscript.rc:43
-#, fuzzy
-#| msgid "(value not set)"
 msgid "Object variable not set"
-msgstr "(wartość nie ustalona)"
+msgstr "Nie ustawiono zmiennej obiektu"
 
 #: dlls/vbscript/vbscript.rc:44
-#, fuzzy
-#| msgid "Invalid user buffer.\n"
 msgid "Invalid use of Null"
-msgstr "Niepoprawny bufor użytkownika.\n"
+msgstr "Nieprawidłowe użycie Null"
 
 #: dlls/vbscript/vbscript.rc:45
 msgid "Can't create necessary temporary file"
@@ -11312,10 +11178,8 @@ msgid "Wrong number of arguments or invalid property assignment"
 msgstr ""
 
 #: dlls/vbscript/vbscript.rc:56
-#, fuzzy
-#| msgid "Object Class Violation"
 msgid "Object not a collection"
-msgstr "Naruszenie klasy obiektu"
+msgstr "Obiekt nie jest zbiorem"
 
 #: dlls/vbscript/vbscript.rc:57
 #, fuzzy
@@ -11438,25 +11302,19 @@ msgstr "Wystąpił przynajmniej jeden nieokreślony problem z tym certyfikatem."
 
 #: dlls/wininet/wininet.rc:35
 msgid "Effective Date"
-msgstr ""
+msgstr "Data obowiązywania"
 
 #: dlls/wininet/wininet.rc:37
-#, fuzzy
-#| msgid "Security"
 msgid "Security Protocol"
-msgstr "Prawa dostępu"
+msgstr "Protokół zabezpieczeń"
 
 #: dlls/wininet/wininet.rc:38
-#, fuzzy
-#| msgid "Signature"
 msgid "Signature Type"
-msgstr "Podpis"
+msgstr "Rodzaj podpisu"
 
 #: dlls/wininet/wininet.rc:39
-#, fuzzy
-#| msgid "Encrypting File System"
 msgid "Encryption Type"
-msgstr "Szyfrowanie systemu plików"
+msgstr "Rodzaj szyfrowania"
 
 #: dlls/wininet/wininet.rc:40
 msgid "Privacy Strength"
@@ -11464,7 +11322,7 @@ msgstr ""
 
 #: dlls/wininet/wininet.rc:43
 msgid "bits"
-msgstr ""
+msgstr "bity"
 
 #: dlls/wininet/winineterror.mc:26
 #, fuzzy
@@ -12359,7 +12217,7 @@ msgstr "Błąd podczas dekodowania"
 
 #: dlls/wldap32/wldap32.rc:117
 msgid "Timeout"
-msgstr "Limit czasu"
+msgstr "Czas oczekiwania"
 
 #: dlls/wldap32/wldap32.rc:118
 msgid "Auth Unknown"
@@ -13320,7 +13178,7 @@ msgstr ""
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
-msgstr "Wielkość kursora"
+msgstr "Rozmiar kursora"
 
 #: programs/conhost/conhost.rc:55
 msgid "&Small"
@@ -13472,7 +13330,7 @@ msgstr "Błąd ustawiania"
 msgid ""
 "The size of the screen buffer must be greater than or equal to the size of "
 "the window."
-msgstr "Wielkość bufora ekranu musi być większa lub równa rozmiarowi okna."
+msgstr "Rozmiar bufora ekranu musi być większa lub równa rozmiarowi okna."
 
 #: programs/conhost/conhost.rc:41
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
@@ -13892,7 +13750,7 @@ msgstr "Wy&tnij\tCtrl+X"
 
 #: programs/notepad/notepad.rc:45 programs/wordpad/wordpad.rc:48
 msgid "&Copy\tCtrl+C"
-msgstr "&Kopiuj\tCtrl+C"
+msgstr "&Skopiuj\tCtrl+C"
 
 #: programs/notepad/notepad.rc:46 programs/wordpad/wordpad.rc:49
 msgid "&Paste\tCtrl+V"
@@ -14109,7 +13967,7 @@ msgstr "Ustawienia &systemu"
 
 #: programs/oleview/oleview.rc:36
 msgid "&Run the Registry Editor"
-msgstr "&Uruchom Edytor Rejestrów"
+msgstr "&Uruchom Edytor Rejestru"
 
 #: programs/oleview/oleview.rc:42
 msgid "&CoCreateInstance Flag"
@@ -14149,11 +14007,11 @@ msgstr "&Zwolnij instancję"
 
 #: programs/oleview/oleview.rc:56
 msgid "Copy C&LSID to clipboard"
-msgstr "Kopiuj C&LSID do schowka"
+msgstr "Skopiuj C&LSID do schowka"
 
 #: programs/oleview/oleview.rc:57
 msgid "Copy &HTML object Tag to clipboard"
-msgstr "Kopiuj tag obiektu &HTML do schowka"
+msgstr "Skopiuj znacznik obiektu &HTML do schowka"
 
 #: programs/oleview/oleview.rc:63
 msgid "&Expert mode"
@@ -14286,7 +14144,7 @@ msgstr "Zmień ustawienia Distributed COM tego komputera"
 
 #: programs/oleview/oleview.rc:108
 msgid "Run the Wine registry editor"
-msgstr "Uruchom Edytor Rejestrów Wine"
+msgstr "Uruchom Edytor Rejestru Wine"
 
 #: programs/oleview/oleview.rc:109
 msgid "Quit the application. Prompts to save changes"
@@ -14448,7 +14306,7 @@ msgstr "&Przenieś...\tF7"
 
 #: programs/progman/progman.rc:36 programs/winefile/winefile.rc:31
 msgid "&Copy...\tF8"
-msgstr "&Kopiuj...\tF8"
+msgstr "&Skopiuj...\tF8"
 
 #: programs/progman/progman.rc:38
 msgid "&Properties\tAlt+Enter"
@@ -14526,7 +14384,7 @@ msgstr "&Do grupy:"
 
 #: programs/progman/progman.rc:134
 msgid "Copy Program"
-msgstr "Kopiuj program"
+msgstr "Skopiuj program"
 
 #: programs/progman/progman.rc:136
 msgid "Copy program:"
@@ -16986,7 +16844,7 @@ msgstr "Wys&trój:"
 
 #: programs/winecfg/winecfg.rc:289
 msgid "&Install theme..."
-msgstr "Za&instaluj wystrój..."
+msgstr "&Wgraj wystrój..."
 
 #: programs/winecfg/winecfg.rc:294
 msgid "It&em:"
@@ -16998,11 +16856,11 @@ msgstr "K&olor:"
 
 #: programs/winecfg/winecfg.rc:302
 msgid "MIME types"
-msgstr ""
+msgstr "Typy MIME"
 
 #: programs/winecfg/winecfg.rc:303
 msgid "Manage file &associations"
-msgstr ""
+msgstr "Z&arządzaj skojarzeniami plików"
 
 #: programs/winecfg/winecfg.rc:306
 msgid "Folders"
@@ -17502,11 +17360,11 @@ msgstr "Wybór celu"
 
 #: programs/winefile/winefile.rc:134
 msgid "By File Type"
-msgstr "Według typu pliku"
+msgstr "Wg rodzaju pliku"
 
 #: programs/winefile/winefile.rc:139
 msgid "File type"
-msgstr "Typ pliku"
+msgstr "Rodzaj pliku"
 
 #: programs/winefile/winefile.rc:140
 msgid "&Directories"
@@ -17618,14 +17476,12 @@ msgid "&Beginner"
 msgstr "&Początkujący"
 
 #: programs/winemine/winemine.rc:45
-#, fuzzy
-#| msgid "Interface"
 msgid "&Intermediate"
-msgstr "Interfejs"
+msgstr "Dośw&iadczony"
 
 #: programs/winemine/winemine.rc:46
 msgid "&Expert"
-msgstr "&Ekspert"
+msgstr "&Mistrz"
 
 #: programs/winemine/winemine.rc:47
 msgid "&Custom..."
@@ -17641,25 +17497,23 @@ msgstr "Saper Wine - i&nformacje"
 
 #: programs/winemine/winemine.rc:61
 msgid "Fastest Times"
-msgstr "Najlepsze Wyniki"
+msgstr "Najszybsze czasy"
 
 #: programs/winemine/winemine.rc:63
 msgid "Fastest times"
-msgstr "Najlepsze wyniki"
+msgstr "Najszybsze czasy"
 
 #: programs/winemine/winemine.rc:64
 msgid "Beginner"
 msgstr "Początkujący"
 
 #: programs/winemine/winemine.rc:65
-#, fuzzy
-#| msgid "Interface"
 msgid "Intermediate"
-msgstr "Interfejs"
+msgstr "Doświadczony"
 
 #: programs/winemine/winemine.rc:66
 msgid "Expert"
-msgstr "Ekspert"
+msgstr "Mistrz"
 
 #: programs/winemine/winemine.rc:74 programs/winemine/winemine.rc:33
 msgid "Reset Results"
@@ -17671,7 +17525,7 @@ msgstr "Gratulacje!"
 
 #: programs/winemine/winemine.rc:82
 msgid "Please enter your name"
-msgstr "Podaj swoje imię"
+msgstr "Wpisz swoje imię"
 
 #: programs/winemine/winemine.rc:90
 msgid "Custom Game"
@@ -17755,7 +17609,7 @@ msgstr "Adnotacja..."
 
 #: programs/winhlp32/winhlp32.rc:68
 msgid "Copy"
-msgstr "Kopiuj"
+msgstr "Skopiuj"
 
 #: programs/winhlp32/winhlp32.rc:100
 msgid "Index"
