@@ -424,6 +424,7 @@ interface IHTMLChangeLog;
 interface IHTMLChangeSink;
 interface ISVGSVGElement;
 interface IHTMLDOMRange;
+interface IHTMLStyleSheet;
 
 /*****************************************************************************
  *    IHTMLCSSStyleDeclaration interface
@@ -5764,6 +5765,33 @@ interface IHTMLRuleStyle : IDispatch
         [in] BSTR strAttributeName,
         [defaultvalue(1), in] LONG lFlags,
         [retval, out] VARIANT_BOOL *pfSuccess);
+}
+
+/*****************************************************************************
+ *    IHTMLCSSRule interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305106e9-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLCSSRule : IDispatch
+{
+    [propget, id(DISPID_IHTMLCSSRULE_TYPE)]
+    HRESULT type([out, retval] USHORT *p);
+
+    [propput, id(DISPID_IHTMLCSSRULE_CSSTEXT)]
+    HRESULT cssText([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLCSSRULE_CSSTEXT)]
+    HRESULT cssText([out, retval] BSTR *p);
+
+    [propget, id(DISPID_IHTMLCSSRULE_PARENTRULE)]
+    HRESULT parentRule([out, retval] IHTMLCSSRule **p);
+
+    [propget, id(DISPID_IHTMLCSSRULE_PARENTSTYLESHEET)]
+    HRESULT parentStyleSheet([out, retval] IHTMLStyleSheet **p);
 }
 
 /*****************************************************************************
@@ -12023,6 +12051,48 @@ interface IHTMLStyleSheet2 : IDispatch
         [retval, out] LONG *plNewIndex);
 }
 
+/*****************************************************************************
+ *    IHTMLStyleSheet4 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(305106f4-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLStyleSheet4 : IDispatch
+{
+    [propget, id(DISPID_IHTMLSTYLESHEET4_IE9_TYPE)]
+    HRESULT type([out, retval] BSTR *p);
+
+    [propget, id(DISPID_IHTMLSTYLESHEET4_IE9_HREF)]
+    HRESULT href([out, retval] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLSTYLESHEET4_IE9_TITLE)]
+    HRESULT title([out, retval] BSTR *p);
+
+    [propget, id(DISPID_IHTMLSTYLESHEET4_OWNERNODE)]
+    HRESULT ownerNode([out, retval] IHTMLElement **p);
+
+    [propget, id(DISPID_IHTMLSTYLESHEET4_OWNERRULE)]
+    HRESULT ownerRule([out, retval] IHTMLCSSRule **p);
+
+    [propget, id(DISPID_IHTMLSTYLESHEET4_CSSRULES)]
+    HRESULT cssRules([out, retval] IHTMLStyleSheetRulesCollection **p);
+
+    [propget, id(DISPID_IHTMLSTYLESHEET4_IE9_MEDIA)]
+    HRESULT media([out, retval] VARIANT *p);
+
+    [id(DISPID_IHTMLSTYLESHEET4_INSERTRULE)]
+    HRESULT insertRule(
+        [in] BSTR bstrRule,
+        [in, defaultvalue(-1)] long lIndex,
+        [out, retval] long *plNewIndex);
+
+    [id(DISPID_IHTMLSTYLESHEET4_DELETERULE)]
+    HRESULT deleteRule([in, defaultvalue(-1)] long lIndex);
+}
+
 [
     hidden,
     uuid(3050f58d-98b5-11cf-bb82-00aa00bdce0b)
@@ -12107,6 +12177,35 @@ methods:
         [in] BSTR bstrSelector,
         [in] BSTR bstrStyle,
         [defaultvalue(-1), in] LONG lIndex);
+
+    [propget, id(DISPID_IHTMLSTYLESHEET4_IE9_TYPE)]
+    BSTR ie9_type();
+
+    [propget, id(DISPID_IHTMLSTYLESHEET4_IE9_HREF)]
+    VARIANT ie9_href();
+
+    [propget, id(DISPID_IHTMLSTYLESHEET4_IE9_TITLE)]
+    BSTR ie9_title();
+
+    [propget, id(DISPID_IHTMLSTYLESHEET4_OWNERNODE)]
+    IHTMLElement *ownerNode();
+
+    [propget, id(DISPID_IHTMLSTYLESHEET4_OWNERRULE)]
+    IHTMLCSSRule *ownerRule();
+
+    [propget, id(DISPID_IHTMLSTYLESHEET4_CSSRULES)]
+    IHTMLStyleSheetRulesCollection *cssRules();
+
+    [propget, id(DISPID_IHTMLSTYLESHEET4_IE9_MEDIA)]
+    VARIANT ie9_media();
+
+    [id(DISPID_IHTMLSTYLESHEET4_INSERTRULE)]
+    long insertRule(
+        [in] BSTR bstrRule,
+        [in, defaultvalue(-1)] long lIndex);
+
+    [id(DISPID_IHTMLSTYLESHEET4_DELETERULE)]
+    void deleteRule([in, defaultvalue(-1)] long lIndex);
 }
 
 [
@@ -12118,6 +12217,7 @@ coclass HTMLStyleSheet
     [default]           dispinterface DispHTMLStyleSheet;
                         interface IHTMLStyleSheet;
                         interface IHTMLStyleSheet2;
+                        interface IHTMLStyleSheet4;
 }
 
 /*****************************************************************************
