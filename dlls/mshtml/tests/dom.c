@@ -10100,6 +10100,7 @@ static void test_null_write(IHTMLDocument2 *doc)
 static void test_create_stylesheet(IHTMLDocument2 *doc)
 {
     IHTMLStyleSheet *stylesheet, *stylesheet2;
+    IHTMLStyleElement2 *style_elem2;
     IHTMLStyleElement *style_elem;
     IHTMLElement *doc_elem, *elem;
     HRESULT hres;
@@ -10142,8 +10143,18 @@ static void test_create_stylesheet(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_styleSheet failed: %08x\n", hres);
     ok(stylesheet2 != NULL, "stylesheet2 == NULL\n");
     ok(iface_cmp((IUnknown*)stylesheet, (IUnknown*)stylesheet2), "stylesheet != stylesheet2\n");
-
     IHTMLStyleSheet_Release(stylesheet2);
+
+    hres = IHTMLStyleElement_QueryInterface(style_elem, &IID_IHTMLStyleElement2, (void**)&style_elem2);
+    ok(hres == S_OK, "Could not get IHTMLStyleElement2: %08x\n", hres);
+
+    hres = IHTMLStyleElement2_get_sheet(style_elem2, &stylesheet2);
+    ok(hres == S_OK, "get_styleSheet failed: %08x\n", hres);
+    ok(stylesheet2 != NULL, "stylesheet2 == NULL\n");
+    ok(iface_cmp((IUnknown*)stylesheet, (IUnknown*)stylesheet2), "stylesheet != stylesheet2\n");
+    IHTMLStyleSheet_Release(stylesheet2);
+
+    IHTMLStyleElement2_Release(style_elem2);
     IHTMLStyleSheet_Release(stylesheet);
 
     IHTMLStyleElement_Release(style_elem);

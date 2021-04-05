@@ -236,6 +236,7 @@ typedef struct EventTarget EventTarget;
     XIID(IHTMLStyle5) \
     XIID(IHTMLStyle6) \
     XIID(IHTMLStyleElement) \
+    XIID(IHTMLStyleElement2) \
     XIID(IHTMLStyleSheet) \
     XIID(IHTMLStyleSheetRule) \
     XIID(IHTMLStyleSheetRulesCollection) \
