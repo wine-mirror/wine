@@ -46,7 +46,6 @@ struct test_input
     DWORD process_id;
     SIZE_T teststr_offset;
     ULONG64 *modified_value;
-    WCHAR path[1];
 };
 
 static inline char *drv_strrchr( const char *str, char ch )

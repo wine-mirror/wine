@@ -487,13 +487,14 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
         return STATUS_BUFFER_TOO_SMALL;
 
     attr.Length = sizeof(attr);
-    RtlInitUnicodeString(&pathU, test_input->path);
+    RtlInitUnicodeString(&pathU, L"\\??\\C:\\winetest_ntoskrnl_okfile");
     running_under_wine = test_input->running_under_wine;
     winetest_debug = test_input->winetest_debug;
     winetest_report_success = test_input->winetest_report_success;
     attr.ObjectName = &pathU;
-    attr.Attributes = OBJ_KERNEL_HANDLE; /* needed to be accessible from system threads */
-    ZwOpenFile(&okfile, FILE_APPEND_DATA | SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT);
+    attr.Attributes = OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE; /* needed to be accessible from system threads */
+    ZwOpenFile(&okfile, FILE_APPEND_DATA | SYNCHRONIZE, &attr, &io,
+            FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT);
 
     netio_init();
     test_wsk_get_address_info();

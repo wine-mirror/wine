@@ -367,22 +367,20 @@ static ULONG64 modified_value;
 
 static void main_test(void)
 {
-    WCHAR temppathW[MAX_PATH], pathW[MAX_PATH];
     struct test_input *test_input;
-    DWORD len, written, read;
-    UNICODE_STRING pathU;
+    DWORD written, read;
     LONG new_failures;
     char buffer[512];
     HANDLE okfile;
     BOOL res;
 
     /* Create a temporary file that the driver will write ok/trace output to. */
-    GetTempPathW(MAX_PATH, temppathW);
-    GetTempFileNameW(temppathW, L"dok", 0, pathW);
-    pRtlDosPathNameToNtPathName_U( pathW, &pathU, NULL, NULL );
 
-    len = pathU.Length + sizeof(WCHAR);
-    test_input = heap_alloc( offsetof( struct test_input, path[len / sizeof(WCHAR)]) );
+    okfile = CreateFileA("C:\\windows\\winetest_ntoskrnl_okfile", GENERIC_READ,
+            FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(okfile != INVALID_HANDLE_VALUE, "failed to create file, error %u\n", GetLastError());
+
+    test_input = heap_alloc( sizeof(*test_input) );
     test_input->running_under_wine = !strcmp(winetest_platform, "wine");
     test_input->winetest_report_success = winetest_report_success;
     test_input->winetest_debug = winetest_debug;
@@ -391,15 +389,10 @@ static void main_test(void)
     test_input->modified_value = &modified_value;
     modified_value = 0;
 
-    memcpy(test_input->path, pathU.Buffer, len);
-    res = DeviceIoControl(device, IOCTL_WINETEST_MAIN_TEST, test_input,
-                          offsetof( struct test_input, path[len / sizeof(WCHAR)]),
+    res = DeviceIoControl(device, IOCTL_WINETEST_MAIN_TEST, test_input, sizeof(*test_input),
                           &new_failures, sizeof(new_failures), &written, NULL);
     ok(res, "DeviceIoControl failed: %u\n", GetLastError());
     ok(written == sizeof(new_failures), "got size %x\n", written);
-
-    okfile = CreateFileW(pathW, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
-    ok(okfile != INVALID_HANDLE_VALUE, "failed to create %s: %u\n", wine_dbgstr_w(pathW), GetLastError());
 
     /* Print the ok/trace output and then add to our failure count. */
     do {
@@ -408,10 +401,9 @@ static void main_test(void)
     } while (read == sizeof(buffer));
     winetest_add_failures(new_failures);
 
-    pRtlFreeUnicodeString(&pathU);
     heap_free(test_input);
     CloseHandle(okfile);
-    DeleteFileW(pathW);
+    DeleteFileA("C:\\windows\\winetest_ntoskrnl_okfile");
 }
 
 static void test_basic_ioctl(void)
