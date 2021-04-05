@@ -6301,6 +6301,7 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
     static const dispex_hook_t elem2_ie11_hooks[] = {
         {DISPID_IHTMLELEMENT2_DOSCROLL, NULL},
+        {DISPID_IHTMLELEMENT2_READYSTATE, NULL},
         {DISPID_UNKNOWN}
     };
 

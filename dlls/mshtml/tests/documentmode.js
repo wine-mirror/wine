@@ -32,6 +32,7 @@ sync_test("elem_props", function() {
     var v = document.documentMode;
 
     test_exposed("doScroll", v < 11);
+    test_exposed("readyState", v < 11);
     test_exposed("querySelectorAll", v >= 8);
     test_exposed("textContent", v >= 9);
     test_exposed("prefix", v >= 9);
