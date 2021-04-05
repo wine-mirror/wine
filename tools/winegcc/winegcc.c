@@ -1393,7 +1393,7 @@ static void build(struct options* opts)
 		strarray_add(link_args, name);
 		break;
 	    case 'a':
-                if (is_pe && !opts->lib_suffix && strchr(name, '/'))
+                if (is_pe && !opts->use_msvcrt && !opts->lib_suffix && strchr(name, '/'))
                 {
                     /* turn the path back into -Ldir -lfoo options
                      * this makes sure that we use the specified libs even
