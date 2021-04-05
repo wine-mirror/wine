@@ -27625,6 +27625,21 @@ interface IHTMLStyleElement : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLStyleElement2 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3051072a-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLStyleElement2 : IDispatch
+{
+    [propget, id(DISPID_IHTMLSTYLEELEMENT2_SHEET)]
+    HRESULT sheet([out, retval] IHTMLStyleSheet **p);
+}
+
+/*****************************************************************************
  *    DispHTMLStyleElement dispinterface
  */
 [
@@ -27651,6 +27666,9 @@ methods:
 
     [propget, id(DISPID_IHTMLSTYLEELEMENT_MEDIA), displaybind, bindable]
     BSTR media();
+
+    [propget, id(DISPID_IHTMLSTYLEELEMENT2_SHEET)]
+    IHTMLStyleSheet *sheet();
 }
 
 /*****************************************************************************
@@ -27667,7 +27685,7 @@ coclass HTMLStyleElement
  /* [source]          dispinterface HTMLStyleElementEvents2; */
     WINE_HTMLELEMENT_INTERFACES;
     interface IHTMLStyleElement;
- /* interface IHTMLStyleElement2; */
+    interface IHTMLStyleElement2;
 }
 
 /*****************************************************************************
