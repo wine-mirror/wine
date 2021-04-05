@@ -1,5 +1,5 @@
 /*
- * ntoskrnl.exe testing framework
+ * Unit tests for netio.sys (kernel sockets)
  *
  * Copyright 2020 Paul Gofman for CodeWeavers
  *
@@ -39,8 +39,8 @@
 static DRIVER_OBJECT *driver_obj;
 static DEVICE_OBJECT *device_obj;
 
-static const WCHAR driver_link[] = L"\\DosDevices\\WineTestDriver4";
-static const WCHAR device_name[] = L"\\Device\\WineTestDriver4";
+static const WCHAR driver_link[] = L"\\DosDevices\\winetest_netio";
+static const WCHAR device_name[] = L"\\Device\\winetest_netio";
 
 static WSK_CLIENT_NPI client_npi;
 static WSK_REGISTRATION registration;

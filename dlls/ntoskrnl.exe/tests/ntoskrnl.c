@@ -899,14 +899,14 @@ static DWORD WINAPI wsk_test_thread(void *parameter)
     return TRUE;
 }
 
-static void test_driver4(struct testsign_context *ctx)
+static void test_driver_netio(struct testsign_context *ctx)
 {
     WCHAR filename[MAX_PATH];
     SC_HANDLE service;
     HANDLE hthread;
     BOOL ret;
 
-    if (!(service = load_driver(ctx, filename, L"driver4.dll", L"WineTestDriver4")))
+    if (!(service = load_driver(ctx, filename, L"driver_netio.dll", L"winetest_netio")))
         return;
 
     if (!start_driver(service, TRUE))
@@ -915,7 +915,7 @@ static void test_driver4(struct testsign_context *ctx)
         return;
     }
 
-    device = CreateFileA("\\\\.\\WineTestDriver4", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    device = CreateFileA("\\\\.\\winetest_netio", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
     ok(device != INVALID_HANDLE_VALUE, "failed to open device: %u\n", GetLastError());
 
     hthread = CreateThread(NULL, 0, wsk_test_thread, NULL, 0, NULL);
@@ -1260,8 +1260,8 @@ START_TEST(ntoskrnl)
     ok(ret, "DeleteFile failed: %u\n", GetLastError());
 
     test_driver3(&ctx);
-    subtest("driver4");
-    test_driver4(&ctx);
+    subtest("driver_netio");
+    test_driver_netio(&ctx);
 
     test_pnp_driver(&ctx);
 
