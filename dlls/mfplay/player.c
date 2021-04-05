@@ -33,6 +33,7 @@ struct media_player
 {
     IMFPMediaPlayer IMFPMediaPlayer_iface;
     LONG refcount;
+    IMFPMediaPlayerCallback *callback;
 };
 
 static struct media_player *impl_from_IMFPMediaPlayer(IMFPMediaPlayer *iface)
@@ -76,7 +77,11 @@ static ULONG WINAPI media_player_Release(IMFPMediaPlayer *iface)
     TRACE("%p, refcount %u.\n", iface, refcount);
 
     if (!refcount)
+    {
+        if (player->callback)
+            IMFPMediaPlayerCallback_Release(player->callback);
         heap_free(player);
+    }
 
     return refcount;
 }
@@ -396,6 +401,9 @@ HRESULT WINAPI MFPCreateMediaPlayer(const WCHAR *url, BOOL start_playback, MFP_C
 
     object->IMFPMediaPlayer_iface.lpVtbl = &media_player_vtbl;
     object->refcount = 1;
+    object->callback = callback;
+    if (object->callback)
+        IMFPMediaPlayerCallback_AddRef(object->callback);
 
     *player = &object->IMFPMediaPlayer_iface;
 

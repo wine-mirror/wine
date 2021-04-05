@@ -26,12 +26,53 @@
 
 #include "wine/test.h"
 
+static HRESULT WINAPI test_callback_QueryInterface(IMFPMediaPlayerCallback *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IMFPMediaPlayerCallback) ||
+            IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IMFPMediaPlayerCallback_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_callback_AddRef(IMFPMediaPlayerCallback *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI test_callback_Release(IMFPMediaPlayerCallback *iface)
+{
+    return 1;
+}
+
+static void WINAPI test_callback_OnMediaPlayerEvent(IMFPMediaPlayerCallback *iface, MFP_EVENT_HEADER *event_header)
+{
+}
+
+static const IMFPMediaPlayerCallbackVtbl test_callback_vtbl =
+{
+    test_callback_QueryInterface,
+    test_callback_AddRef,
+    test_callback_Release,
+    test_callback_OnMediaPlayerEvent,
+};
+
 static void test_create_player(void)
 {
+    IMFPMediaPlayerCallback callback = { &test_callback_vtbl };
     IMFPMediaPlayer *player;
     HRESULT hr;
 
     hr = MFPCreateMediaPlayer(NULL, FALSE, 0, NULL, NULL, &player);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IMFPMediaPlayer_Release(player);
+
+    hr = MFPCreateMediaPlayer(NULL, FALSE, 0, &callback, NULL, &player);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     IMFPMediaPlayer_Release(player);
 }
