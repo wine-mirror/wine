@@ -2685,7 +2685,9 @@ static UINT get_font_type( const NEWTEXTMETRICEXW *ntm )
 static BOOL get_face_enum_data( struct gdi_font_face *face, ENUMLOGFONTEXW *elf, NEWTEXTMETRICEXW *ntm )
 {
     struct gdi_font *font;
-    LOGFONTW lf = { .lfHeight = 100 };
+    LOGFONTW lf = { .lfHeight = -4096 /* preferable EM Square size */ };
+
+    if (!face->scalable) lf.lfHeight = 0;
 
     if (!(font = create_gdi_font( face, NULL, &lf ))) return FALSE;
 
@@ -2695,12 +2697,42 @@ static BOOL get_face_enum_data( struct gdi_font_face *face, ENUMLOGFONTEXW *elf,
         return FALSE;
     }
 
+    if (font->scalable && -lf.lfHeight % font->otm.otmEMSquare != 0)
+    {
+        /* reload with the original EM Square size */
+        lf.lfHeight = -font->otm.otmEMSquare;
+        free_gdi_font( font );
+
+        if (!(font = create_gdi_font( face, NULL, &lf ))) return FALSE;
+        if (!font_funcs->load_font( font ))
+        {
+            free_gdi_font( font );
+            return FALSE;
+        }
+    }
+
     if (font_funcs->set_outline_text_metrics( font ))
     {
-        memcpy( &ntm->ntmTm, &font->otm.otmTextMetrics, sizeof(TEXTMETRICW) );
+        static const DWORD ntm_ppem = 32;
+
+#define TM font->otm.otmTextMetrics
+#define SCALE_NTM(value) (MulDiv( ntm->ntmTm.tmHeight, (value), TM.tmHeight ))
+        ntm->ntmTm.tmHeight = MulDiv( ntm_ppem, font->ntmCellHeight, font->otm.otmEMSquare );
+        ntm->ntmTm.tmAscent = SCALE_NTM( TM.tmAscent );
+        ntm->ntmTm.tmDescent = ntm->ntmTm.tmHeight - ntm->ntmTm.tmAscent;
+        ntm->ntmTm.tmInternalLeading = SCALE_NTM( TM.tmInternalLeading );
+        ntm->ntmTm.tmExternalLeading = SCALE_NTM( TM.tmExternalLeading );
+        ntm->ntmTm.tmAveCharWidth = SCALE_NTM( TM.tmAveCharWidth );
+        ntm->ntmTm.tmMaxCharWidth = SCALE_NTM( TM.tmMaxCharWidth );
+
+        memcpy((char *)&ntm->ntmTm + offsetof( TEXTMETRICW, tmWeight ),
+               (const char *)&TM + offsetof( TEXTMETRICW, tmWeight ),
+               sizeof(TEXTMETRICW) - offsetof( TEXTMETRICW, tmWeight ));
         ntm->ntmTm.ntmSizeEM = font->otm.otmEMSquare;
         ntm->ntmTm.ntmCellHeight = font->ntmCellHeight;
         ntm->ntmTm.ntmAvgWidth = font->ntmAvgWidth;
+#undef SCALE_NTM
+#undef TM
     }
     else if (font_funcs->set_bitmap_text_metrics( font ))
     {
