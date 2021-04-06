@@ -365,6 +365,7 @@ static NTSTATUS get_pe_file_info( UNICODE_STRING *path, HANDLE *handle, pe_image
         }
         SERVER_END_REQ;
         NtClose( mapping );
+        if (info->image_charact & IMAGE_FILE_DLL) return STATUS_INVALID_IMAGE_FORMAT;
     }
     else if (status == STATUS_INVALID_IMAGE_NOT_MZ)
     {

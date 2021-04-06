@@ -1917,7 +1917,11 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
     env[env_pos++] = 0;
 
     status = load_main_exe( NULL, main_argv[1], curdir, &image, &module, &image_info );
-    if (!status && image_info.Machine != current_machine) status = STATUS_INVALID_IMAGE_FORMAT;
+    if (!status)
+    {
+        if (image_info.ImageCharacteristics & IMAGE_FILE_DLL) status = STATUS_INVALID_IMAGE_FORMAT;
+        if (image_info.Machine != current_machine) status = STATUS_INVALID_IMAGE_FORMAT;
+    }
 
     if (status)  /* try launching it through start.exe */
     {
