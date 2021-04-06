@@ -23,6 +23,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <winternl.h>
 #include <ole2.h>
 #include "regsvr32.h"
 #include "wine/debug.h"
@@ -166,9 +167,9 @@ static void reexec_self(void)
 }
 
 #ifdef _WIN64
-# define ALT_BINARY_TYPE SCS_32BIT_BINARY
+# define ALT_MACHINE IMAGE_FILE_MACHINE_I386
 #else
-# define ALT_BINARY_TYPE SCS_64BIT_BINARY
+# define ALT_MACHINE IMAGE_FILE_MACHINE_AMD64
 #endif
 
 /**
@@ -187,12 +188,12 @@ static VOID *LoadProc(const WCHAR* strDll, const char* procName, HMODULE* DllHan
     *DllHandle = LoadLibraryExW(strDll, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
     if(!*DllHandle)
     {
-        DWORD binary_type;
+        HMODULE module;
         if (firstDll && GetLastError() == ERROR_BAD_EXE_FORMAT &&
-            GetBinaryTypeW(strDll, &binary_type) &&
-            binary_type == ALT_BINARY_TYPE)
+            (module = LoadLibraryExW(strDll, 0, LOAD_LIBRARY_AS_IMAGE_RESOURCE)))
         {
-            reexec_self();
+            IMAGE_NT_HEADERS *nt = RtlImageNtHeader( (HMODULE)((ULONG_PTR)module & ~3) );
+            if (nt->FileHeader.Machine == ALT_MACHINE) reexec_self();
         }
         output_write(STRING_DLL_LOAD_FAILED, strDll);
         ExitProcess(LOADLIBRARY_FAILED);
