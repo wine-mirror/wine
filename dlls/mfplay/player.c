@@ -215,9 +215,13 @@ static HRESULT WINAPI media_item_HasAudio(IMFPMediaItem *iface, BOOL *has_audio,
 
 static HRESULT WINAPI media_item_IsProtected(IMFPMediaItem *iface, BOOL *protected)
 {
-    FIXME("%p, %p.\n", iface, protected);
+    struct media_item *item = impl_from_IMFPMediaItem(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, protected);
+
+    *protected = MFRequireProtectedEnvironment(item->pd) == S_OK;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI media_item_GetDuration(IMFPMediaItem *iface, REFGUID format, PROPVARIANT *value)
