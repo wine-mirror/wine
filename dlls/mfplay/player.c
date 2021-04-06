@@ -30,7 +30,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
+static const WCHAR eventclassW[] = L"MediaPlayerEventCallbackClass";
+
 static LONG startup_refcount;
+static HINSTANCE mfplay_instance;
 
 static void platform_startup(void)
 {
@@ -65,6 +68,7 @@ struct media_player
     IPropertyStore *propstore;
     IMFSourceResolver *resolver;
     MFP_CREATION_OPTIONS options;
+    HWND event_window;
 };
 
 struct generic_event
@@ -223,6 +227,23 @@ static HRESULT media_event_create(MFP_EVENT_TYPE event_type, HRESULT hr,
     *event = object;
 
     return S_OK;
+}
+
+static LRESULT WINAPI media_player_event_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    struct media_event *event = (void *)lparam;
+    struct media_player *player;
+
+    if (msg == WM_USER)
+    {
+        player = impl_from_IMFPMediaPlayer(event->u.header.pMediaPlayer);
+        if (player->callback)
+            IMFPMediaPlayerCallback_OnMediaPlayerEvent(player->callback, &event->u.header);
+        IUnknown_Release(&event->IUnknown_iface);
+        return 0;
+    }
+
+    return DefWindowProcW(hwnd, msg, wparam, lparam);
 }
 
 static HRESULT WINAPI media_item_QueryInterface(IMFPMediaItem *iface, REFIID riid, void **obj)
@@ -539,7 +560,8 @@ static void media_player_queue_event(struct media_player *player, struct media_e
     }
     else
     {
-        /* FIXME: same-thread callback notification */
+        IUnknown_AddRef(&event->IUnknown_iface);
+        PostMessageW(player->event_window, WM_USER, 0, (LPARAM)event);
     }
 }
 
@@ -595,6 +617,7 @@ static ULONG WINAPI media_player_Release(IMFPMediaPlayer *iface)
             IPropertyStore_Release(player->propstore);
         if (player->resolver)
             IMFSourceResolver_Release(player->resolver);
+        DestroyWindow(player->event_window);
         heap_free(player);
 
         platform_shutdown();
@@ -1168,6 +1191,11 @@ HRESULT WINAPI MFPCreateMediaPlayer(const WCHAR *url, BOOL start_playback, MFP_C
         goto failed;
     if (FAILED(hr = MFCreateSourceResolver(&object->resolver)))
         goto failed;
+    if (!(object->options & MFP_OPTION_FREE_THREADED_CALLBACK))
+    {
+        object->event_window = CreateWindowW(eventclassW, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE,
+                0, mfplay_instance, NULL);
+    }
 
     *player = &object->IMFPMediaPlayer_iface;
 
@@ -1178,4 +1206,33 @@ failed:
     IMFPMediaPlayer_Release(&object->IMFPMediaPlayer_iface);
 
     return hr;
+}
+
+static void media_player_register_window_class(void)
+{
+    WNDCLASSW cls = { 0 };
+
+    cls.lpfnWndProc = media_player_event_proc;
+    cls.hInstance = mfplay_instance;
+    cls.lpszClassName = eventclassW;
+
+    RegisterClassW(&cls);
+}
+
+BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
+{
+    switch (reason)
+    {
+        case DLL_PROCESS_ATTACH:
+            mfplay_instance = instance;
+            DisableThreadLibraryCalls(instance);
+            media_player_register_window_class();
+            break;
+        case DLL_PROCESS_DETACH:
+            if (reserved) break;
+            UnregisterClassW(eventclassW, instance);
+            break;
+    }
+
+    return TRUE;
 }
