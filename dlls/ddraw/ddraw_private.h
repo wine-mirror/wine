@@ -97,6 +97,7 @@ struct ddraw
     struct wined3d_adapter *wined3d_adapter;
     struct wined3d_output *wined3d_output;
     struct wined3d_device *wined3d_device;
+    struct wined3d_device_context *immediate_context;
     DWORD flags;
     LONG device_state;
 
@@ -326,6 +327,7 @@ struct d3d_device
 
     IUnknown *outer_unknown;
     struct wined3d_device *wined3d_device;
+    struct wined3d_device_context *immediate_context;
     struct ddraw *ddraw;
     IUnknown *rt_iface;
 

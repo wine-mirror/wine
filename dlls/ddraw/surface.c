@@ -1369,7 +1369,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface1_Flip(IDirectDrawSurface *
 
         src_rtv = ddraw_surface_get_rendertarget_view(src_impl);
         if (rtv == dst_impl->wined3d_rtv)
-            wined3d_device_set_rendertarget_view(dst_impl->ddraw->wined3d_device, 0, src_rtv, FALSE);
+            wined3d_device_context_set_rendertarget_view(dst_impl->ddraw->immediate_context, 0, src_rtv, FALSE);
         wined3d_rendertarget_view_set_parent(src_rtv, dst_impl);
         dst_impl->wined3d_rtv = src_rtv;
         wined3d_texture_set_sub_resource_parent(src_impl->wined3d_texture, 0, dst_impl);
@@ -1406,7 +1406,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface1_Flip(IDirectDrawSurface *
             src_impl = impl_from_IDirectDrawSurface(current);
             src_rtv = ddraw_surface_get_rendertarget_view(src_impl);
             if (rtv == dst_impl->wined3d_rtv)
-                wined3d_device_set_rendertarget_view(dst_impl->ddraw->wined3d_device, 0, src_rtv, FALSE);
+                wined3d_device_context_set_rendertarget_view(dst_impl->ddraw->immediate_context, 0, src_rtv, FALSE);
             wined3d_rendertarget_view_set_parent(src_rtv, dst_impl);
             dst_impl->wined3d_rtv = src_rtv;
             wined3d_texture_set_sub_resource_parent(src_impl->wined3d_texture, 0, dst_impl);
@@ -1429,7 +1429,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface1_Flip(IDirectDrawSurface *
     /* We don't have to worry about potential texture bindings, since
      * flippable surfaces can never be textures. */
     if (rtv == src_impl->wined3d_rtv)
-        wined3d_device_set_rendertarget_view(dst_impl->ddraw->wined3d_device, 0, tmp_rtv, FALSE);
+        wined3d_device_context_set_rendertarget_view(dst_impl->ddraw->immediate_context, 0, tmp_rtv, FALSE);
     wined3d_rendertarget_view_set_parent(tmp_rtv, src_impl);
     src_impl->wined3d_rtv = tmp_rtv;
     wined3d_texture_set_sub_resource_parent(texture, 0, src_impl);
@@ -2183,7 +2183,7 @@ static HRESULT ddraw_surface_delete_attached_surface(struct ddraw_surface *surfa
      * but don't cleanup properly after the relevant dll is unloaded. */
     if (attachment->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER
             && wined3d_device_get_depth_stencil_view(surface->ddraw->wined3d_device) == attachment->wined3d_rtv)
-        wined3d_device_set_depth_stencil_view(surface->ddraw->wined3d_device, NULL);
+        wined3d_device_context_set_depth_stencil_view(surface->ddraw->immediate_context, NULL);
     wined3d_mutex_unlock();
 
     /* Set attached_iface to NULL before releasing it, the surface may go

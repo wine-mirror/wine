@@ -83,7 +83,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
                 wined3d_device_apply_stateblock(device->wined3d_device, device->state);
                 d3d_device_sync_surfaces(device);
                 for (i = 0; i < count; ++i)
-                    wined3d_device_draw_primitive(device->wined3d_device, p[i].wFirst, p[i].wCount);
+                    wined3d_device_context_draw(device->immediate_context, p[i].wFirst, p[i].wCount, 0, 0);
 
                 instr += sizeof(*p) * count;
                 break;
@@ -191,7 +191,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
                 wined3d_stateblock_set_index_buffer(device->state, buffer->index_buffer, WINED3DFMT_R16_UINT);
                 wined3d_device_apply_stateblock(device->wined3d_device, device->state);
                 d3d_device_sync_surfaces(device);
-                wined3d_device_draw_indexed_primitive(device->wined3d_device, index_pos, index_count);
+                wined3d_device_context_draw_indexed(device->immediate_context, 0, index_pos, index_count, 0, 0);
 
                 buffer->index_pos = index_pos + index_count;
                 break;

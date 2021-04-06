@@ -952,13 +952,13 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
     {
         if (dsv)
         {
-            wined3d_device_set_depth_stencil_view(ddraw->wined3d_device, dsv);
+            wined3d_device_context_set_depth_stencil_view(ddraw->immediate_context, dsv);
             wined3d_rendertarget_view_decref(dsv);
         }
 
         if (rtv)
         {
-            wined3d_device_set_rendertarget_view(ddraw->wined3d_device, 0, rtv, FALSE);
+            wined3d_device_context_set_rendertarget_view(ddraw->immediate_context, 0, rtv, FALSE);
             wined3d_rendertarget_view_decref(rtv);
         }
 
@@ -5166,6 +5166,7 @@ HRESULT ddraw_init(struct ddraw *ddraw, DWORD flags, enum wined3d_device_type de
         wined3d_decref(ddraw->wined3d);
         return hr;
     }
+    ddraw->immediate_context = wined3d_device_get_immediate_context(ddraw->wined3d_device);
 
     list_init(&ddraw->surface_list);
 
