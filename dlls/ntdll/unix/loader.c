@@ -1372,7 +1372,8 @@ NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename,
         return find_builtin_dll( &nt_name, module, size, &info, machine, FALSE );
     default:
         status = find_builtin_dll( &nt_name, module, size, &info, machine, (loadorder == LO_DEFAULT) );
-        if (status == STATUS_DLL_NOT_FOUND) return STATUS_IMAGE_ALREADY_LOADED;
+        if (status == STATUS_DLL_NOT_FOUND || status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH)
+            return STATUS_IMAGE_ALREADY_LOADED;
         return status;
     }
 }
