@@ -2031,15 +2031,25 @@ static void test_pin_info(void)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 }
 
-static IUnknown *graph_inner_unk;
-static IFilterGraph2 *graph_inner;
-static LONG graph_refcount = 1;
-static unsigned int got_add_filter;
-static IBaseFilter *graph_filter;
-static WCHAR graph_filter_name[128];
+struct graph
+{
+    IFilterGraph2 IFilterGraph2_iface;
+    IUnknown *inner_unk;
+    IFilterGraph2 *inner;
+    LONG refcount;
+    unsigned int got_add_filter;
+    IBaseFilter *filter;
+    WCHAR filter_name[128];
+};
+
+static struct graph *impl_from_IFilterGraph2(IFilterGraph2 *iface)
+{
+    return CONTAINING_RECORD(iface, struct graph, IFilterGraph2_iface);
+}
 
 static HRESULT WINAPI graph_QueryInterface(IFilterGraph2 *iface, REFIID iid, void **out)
 {
+    struct graph *graph = impl_from_IFilterGraph2(iface);
     if (winetest_debug > 1) trace("QueryInterface(%s)\n", wine_dbgstr_guid(iid));
     if (IsEqualGUID(iid, &IID_IFilterGraph2)
             || IsEqualGUID(iid, &IID_IGraphBuilder)
@@ -2054,31 +2064,34 @@ static HRESULT WINAPI graph_QueryInterface(IFilterGraph2 *iface, REFIID iid, voi
             || IsEqualGUID(iid, &IID_IMediaControl)
             || IsEqualGUID(iid, &IID_IMediaEventEx))
     {
-        return IUnknown_QueryInterface(graph_inner_unk, iid, out);
+        return IUnknown_QueryInterface(graph->inner_unk, iid, out);
     }
     return E_NOINTERFACE;
 }
 
 static ULONG WINAPI graph_AddRef(IFilterGraph2 *iface)
 {
-    return InterlockedIncrement(&graph_refcount);
+    struct graph *graph = impl_from_IFilterGraph2(iface);
+    return InterlockedIncrement(&graph->refcount);
 }
 
 static ULONG WINAPI graph_Release(IFilterGraph2 *iface)
 {
-    return InterlockedDecrement(&graph_refcount);
+    struct graph *graph = impl_from_IFilterGraph2(iface);
+    return InterlockedDecrement(&graph->refcount);
 }
 
 static HRESULT WINAPI graph_AddFilter(IFilterGraph2 *iface, IBaseFilter *filter, const WCHAR *name)
 {
+    struct graph *graph = impl_from_IFilterGraph2(iface);
     if (winetest_debug > 1) trace("AddFilter(%p, %s)\n", filter, wine_dbgstr_w(name));
-    ++got_add_filter;
-    graph_filter = filter;
+    ++graph->got_add_filter;
+    graph->filter = filter;
     if (name)
-        wcscpy(graph_filter_name, name);
+        wcscpy(graph->filter_name, name);
     else
-        graph_filter_name[0] = 0;
-    return IFilterGraph2_AddFilter(graph_inner, filter, name);
+        graph->filter_name[0] = 0;
+    return IFilterGraph2_AddFilter(graph->inner, filter, name);
 }
 
 static HRESULT WINAPI graph_RemoveFilter(IFilterGraph2 *iface, IBaseFilter *filter)
@@ -2089,8 +2102,9 @@ static HRESULT WINAPI graph_RemoveFilter(IFilterGraph2 *iface, IBaseFilter *filt
 
 static HRESULT WINAPI graph_EnumFilters(IFilterGraph2 *iface, IEnumFilters **enumfilters)
 {
+    struct graph *graph = impl_from_IFilterGraph2(iface);
     if (winetest_debug > 1) trace("EnumFilters()\n");
-    return IFilterGraph2_EnumFilters(graph_inner, enumfilters);
+    return IFilterGraph2_EnumFilters(graph->inner, enumfilters);
 }
 
 static HRESULT WINAPI graph_FindFilterByName(IFilterGraph2 *iface, const WCHAR *name, IBaseFilter **filter)
@@ -2210,13 +2224,36 @@ static const IFilterGraph2Vtbl graph_vtbl =
     graph_RenderEx,
 };
 
+static void graph_init(struct graph *graph)
+{
+    HRESULT hr;
+
+    memset(graph, 0, sizeof(*graph));
+    graph->IFilterGraph2_iface.lpVtbl = &graph_vtbl;
+    graph->refcount = 1;
+    hr = CoCreateInstance(&CLSID_FilterGraph, (IUnknown *)&graph->IFilterGraph2_iface, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void **)&graph->inner_unk);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IUnknown_QueryInterface(graph->inner_unk, &IID_IFilterGraph2, (void **)&graph->inner);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+}
+
+static void graph_destroy(struct graph *graph)
+{
+    ULONG ref;
+
+    IFilterGraph2_Release(graph->inner);
+    ref = IUnknown_Release(graph->inner_unk);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+}
+
 static void test_initialize(void)
 {
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
-    IFilterGraph2 graph = {&graph_vtbl};
     IMediaStreamFilter *filter;
     IGraphBuilder *ret_graph;
     IMediaStream *stream;
+    struct graph graph;
     STREAM_TYPE type;
     HRESULT hr;
     ULONG ref;
@@ -2351,9 +2388,7 @@ static void test_initialize(void)
 
     mmstream = create_ammultimediastream();
 
-    CoCreateInstance(&CLSID_FilterGraph, (IUnknown *)&graph, CLSCTX_INPROC_SERVER,
-            &IID_IUnknown, (void **)&graph_inner_unk);
-    IUnknown_QueryInterface(graph_inner_unk, &IID_IFilterGraph2, (void **)&graph_inner);
+    graph_init(&graph);
 
     ret_graph = (IGraphBuilder *)0xdeadbeef;
     hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &ret_graph);
@@ -2364,27 +2399,27 @@ static void test_initialize(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!!filter, "Expected a non-NULL filter.");
 
-    got_add_filter = 0;
-    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, (IGraphBuilder *)&graph);
+    graph.got_add_filter = 0;
+    hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, (IGraphBuilder *)&graph.IFilterGraph2_iface);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(got_add_filter == 1, "Got %d calls to IGraphBuilder::AddFilter().\n", got_add_filter);
-    ok(graph_filter == (IBaseFilter *)filter, "Got filter %p.\n", filter);
-    ok(!wcscmp(graph_filter_name, L"MediaStreamFilter"), "Got unexpected name %s.\n", wine_dbgstr_w(graph_filter_name));
+    ok(graph.got_add_filter == 1, "Got %d calls to IGraphBuilder::AddFilter().\n", graph.got_add_filter);
+    ok(graph.filter == (IBaseFilter *)filter, "Got filter %p.\n", filter);
+    ok(!wcscmp(graph.filter_name, L"MediaStreamFilter"), "Got unexpected name %s.\n", wine_dbgstr_w(graph.filter_name));
 
     hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &ret_graph);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(ret_graph == (IGraphBuilder *)&graph, "Got unexpected graph %p.\n", ret_graph);
     IGraphBuilder_Release(ret_graph);
 
-    got_add_filter = 0;
+    graph.got_add_filter = 0;
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryAudio, 0, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(!got_add_filter, "Got %d calls to IGraphBuilder::AddFilter().\n", got_add_filter);
+    ok(!graph.got_add_filter, "Got %d calls to IGraphBuilder::AddFilter().\n", graph.got_add_filter);
 
-    got_add_filter = 0;
+    graph.got_add_filter = 0;
     hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(!got_add_filter, "Got %d calls to IGraphBuilder::AddFilter().\n", got_add_filter);
+    ok(!graph.got_add_filter, "Got %d calls to IGraphBuilder::AddFilter().\n", graph.got_add_filter);
 
     hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, (IGraphBuilder *)&graph);
     ok(hr == E_INVALIDARG, "Got hr %#x.\n", hr);
@@ -2398,9 +2433,8 @@ static void test_initialize(void)
     IMediaStreamFilter_Release(filter);
     ref = IAMMultiMediaStream_Release(mmstream);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
-    IFilterGraph2_Release(graph_inner);
-    ok(graph_refcount == 1, "Got outstanding refcount %d.\n", graph_refcount);
-    IUnknown_Release(graph_inner_unk);
+
+    graph_destroy(&graph);
 }
 
 static IAMMultiMediaStream *mmstream_mmstream;
