@@ -2874,7 +2874,6 @@ static INT CALLBACK arial_enum_proc(const LOGFONTA *lf, const TEXTMETRICA *tm, D
     const NEWTEXTMETRICA *ntm = (const NEWTEXTMETRICA *)tm;
 
     ok(lf->lfHeight == tm->tmHeight, "lfHeight %d != tmHeight %d\n", lf->lfHeight, tm->tmHeight);
-    ok(lf->lfHeight > 0 && lf->lfHeight < 200, "enumerated font height %d\n", lf->lfHeight);
 
     if (type != TRUETYPE_FONTTYPE) return 1;
 
@@ -2897,7 +2896,6 @@ static INT CALLBACK arial_enum_procw(const LOGFONTW *lf, const TEXTMETRICW *tm, 
     const NEWTEXTMETRICW *ntm = (const NEWTEXTMETRICW *)tm;
 
     ok(lf->lfHeight == tm->tmHeight, "lfHeight %d != tmHeight %d\n", lf->lfHeight, tm->tmHeight);
-    ok(lf->lfHeight > 0 && lf->lfHeight < 200, "enumerated font height %d\n", lf->lfHeight);
 
     if (type != TRUETYPE_FONTTYPE) return 1;
 
