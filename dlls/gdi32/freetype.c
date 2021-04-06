@@ -2489,6 +2489,7 @@ static BOOL CDECL freetype_load_font( struct gdi_font *font )
         TRACE( "height %d => ppem %d\n", font->lf.lfHeight, font->ppem );
         height = font->ppem;
         font->ttc_item_offset = get_ttc_offset( ft_face, font->face_index );
+        font->otm.otmEMSquare = ft_face->units_per_EM;
     }
     else
     {
@@ -3952,7 +3953,6 @@ static BOOL CDECL freetype_set_outline_text_metrics( struct gdi_font *font )
     font->otm.otmsCharSlopeRise = pHori->caret_Slope_Rise;
     font->otm.otmsCharSlopeRun = pHori->caret_Slope_Run;
     font->otm.otmItalicAngle = 0; /* POST table */
-    font->otm.otmEMSquare = ft_face->units_per_EM;
     font->otm.otmAscent = SCALE_Y(pOS2->sTypoAscender);
     font->otm.otmDescent = SCALE_Y(pOS2->sTypoDescender);
     font->otm.otmLineGap = SCALE_Y(pOS2->sTypoLineGap);
