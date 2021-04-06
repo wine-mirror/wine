@@ -4812,13 +4812,13 @@ float CDECL wined3d_device_get_npatch_mode(const struct wined3d_device *device)
     return 0.0f;
 }
 
-void CDECL wined3d_device_copy_uav_counter(struct wined3d_device *device,
+void CDECL wined3d_device_context_copy_uav_counter(struct wined3d_device_context *context,
         struct wined3d_buffer *dst_buffer, unsigned int offset, struct wined3d_unordered_access_view *uav)
 {
-    TRACE("device %p, dst_buffer %p, offset %u, uav %p.\n",
-            device, dst_buffer, offset, uav);
+    TRACE("context %p, dst_buffer %p, offset %u, uav %p.\n",
+            context, dst_buffer, offset, uav);
 
-    wined3d_device_context_emit_copy_uav_counter(&device->cs->c, dst_buffer, offset, uav);
+    wined3d_device_context_emit_copy_uav_counter(context, dst_buffer, offset, uav);
 }
 
 static bool resources_format_compatible(const struct wined3d_resource *src_resource,

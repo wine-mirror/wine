@@ -1273,7 +1273,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_UpdateSubresource(ID3D11De
 static void STDMETHODCALLTYPE d3d11_immediate_context_CopyStructureCount(ID3D11DeviceContext1 *iface,
         ID3D11Buffer *dst_buffer, UINT dst_offset, ID3D11UnorderedAccessView *src_view)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext1(iface);
     struct d3d11_unordered_access_view *uav;
     struct d3d_buffer *buffer_impl;
 
@@ -1284,7 +1284,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_CopyStructureCount(ID3D11D
     uav = unsafe_impl_from_ID3D11UnorderedAccessView(src_view);
 
     wined3d_mutex_lock();
-    wined3d_device_copy_uav_counter(device->wined3d_device,
+    wined3d_device_context_copy_uav_counter(context->wined3d_context,
             buffer_impl->wined3d_buffer, dst_offset, uav->wined3d_view);
     wined3d_mutex_unlock();
 }
