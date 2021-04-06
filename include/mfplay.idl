@@ -20,6 +20,8 @@ import "unknwn.idl";
 import "propsys.idl";
 import "evr.idl";
 
+interface IMFNetCredential;
+
 typedef [v1_enum] enum _MFP_CREATION_OPTIONS
 {
     MFP_OPTION_NONE = 0,
@@ -64,6 +66,18 @@ typedef [v1_enum] enum _MFP_MEDIAITEM_CHARACTERISTICS
     MFP_MEDIAITEM_HAS_SLOW_SEEK = 0x00000008,
 } _MFP_MEDIAITEM_CHARACTERISTICS;
 
+typedef UINT32 MFP_CREDENTIAL_FLAGS;
+
+typedef [v1_enum] enum _MFP_CREDENTIAL_FLAGS
+{
+    MFP_CREDENTIAL_PROMPT         = 0x00000001,
+    MFP_CREDENTIAL_SAVE           = 0x00000002,
+    MFP_CREDENTIAL_DO_NOT_CACHE   = 0x00000004,
+    MFP_CREDENTIAL_CLEAR_TEXT     = 0x00000008,
+    MFP_CREDENTIAL_PROXY          = 0x00000010,
+    MFP_CREDENTIAL_LOGGED_ON_USER = 0x00000020,
+} _MFP_CREDENTIAL_FLAGS;
+
 interface IMFPMediaPlayer;
 interface IMFPMediaItem;
 
@@ -75,6 +89,96 @@ typedef struct MFP_EVENT_HEADER
     MFP_MEDIAPLAYER_STATE eState;
     IPropertyStore *pPropertyStore;
 } MFP_EVENT_HEADER;
+
+typedef struct MFP_PLAY_EVENT
+{
+    MFP_EVENT_HEADER header;
+    IMFPMediaItem *pMediaItem;
+} MFP_PLAY_EVENT;
+
+typedef struct MFP_PAUSE_EVENT
+{
+    MFP_EVENT_HEADER header;
+    IMFPMediaItem *pMediaItem;
+} MFP_PAUSE_EVENT;
+
+typedef struct MFP_STOP_EVENT
+{
+    MFP_EVENT_HEADER header;
+    IMFPMediaItem *pMediaItem;
+} MFP_STOP_EVENT;
+
+typedef struct MFP_POSITION_SET_EVENT
+{
+    MFP_EVENT_HEADER header;
+    IMFPMediaItem *pMediaItem;
+} MFP_POSITION_SET_EVENT;
+
+typedef struct MFP_RATE_SET_EVENT
+{
+    MFP_EVENT_HEADER header;
+    IMFPMediaItem *pMediaItem;
+    float flRate;
+} MFP_RATE_SET_EVENT;
+
+typedef struct MFP_MEDIAITEM_CREATED_EVENT
+{
+    MFP_EVENT_HEADER header;
+    IMFPMediaItem *pMediaItem;
+    DWORD_PTR dwUserData;
+} MFP_MEDIAITEM_CREATED_EVENT;
+
+typedef struct MFP_MEDIAITEM_SET_EVENT
+{
+    MFP_EVENT_HEADER header;
+    IMFPMediaItem *pMediaItem;
+} MFP_MEDIAITEM_SET_EVENT;
+
+typedef struct MFP_FRAME_STEP_EVENT
+{
+    MFP_EVENT_HEADER header;
+    IMFPMediaItem *pMediaItem;
+} MFP_FRAME_STEP_EVENT;
+
+typedef struct MFP_MEDIAITEM_CLEARED_EVENT
+{
+    MFP_EVENT_HEADER header;
+    IMFPMediaItem *pMediaItem;
+} MFP_MEDIAITEM_CLEARED_EVENT;
+
+typedef struct MFP_MF_EVENT
+{
+    MFP_EVENT_HEADER header;
+    MediaEventType MFEventType;
+    IMFMediaEvent *pMFMediaEvent;
+    IMFPMediaItem *pMediaItem;
+} MFP_MF_EVENT;
+
+typedef struct MFP_ERROR_EVENT
+{
+    MFP_EVENT_HEADER header;
+} MFP_ERROR_EVENT;
+
+typedef struct MFP_PLAYBACK_ENDED_EVENT
+{
+    MFP_EVENT_HEADER header;
+    IMFPMediaItem *pMediaItem;
+} MFP_PLAYBACK_ENDED_EVENT;
+
+typedef struct MFP_ACQUIRE_USER_CREDENTIAL_EVENT
+{
+    MFP_EVENT_HEADER header;
+    DWORD_PTR dwUserData;
+    BOOL fProceedWithAuthentication;
+    HRESULT hrAuthenticationStatus;
+    LPCWSTR pwszURL;
+    LPCWSTR pwszSite;
+    LPCWSTR pwszRealm;
+    LPCWSTR pwszPackage;
+    LONG nRetries;
+    MFP_CREDENTIAL_FLAGS flags;
+    IMFNetCredential *pCredential;
+} MFP_ACQUIRE_USER_CREDENTIAL_EVENT;
 
 [
     object,
