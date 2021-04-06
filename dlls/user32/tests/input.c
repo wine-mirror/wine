@@ -3195,7 +3195,7 @@ static LRESULT CALLBACK mouse_move_wndproc(HWND hwnd, UINT msg, WPARAM wparam, L
         POINT pt = {LOWORD(lparam), HIWORD(lparam)};
         MapWindowPoints(hwnd, NULL, &pt, 1);
 
-        if (pt.x != last_x) todo_wine ok( pt.x == expect_x, "got unexpected WM_MOUSEMOVE x %d, expected %d\n", pt.x, expect_x );
+        if (pt.x != last_x) ok( pt.x == expect_x, "got unexpected WM_MOUSEMOVE x %d, expected %d\n", pt.x, expect_x );
 
         expect_x = pt.x == 200 ? 210 : 200;
         last_x = pt.x;
@@ -3449,13 +3449,13 @@ static void test_Input_mouse(void)
     SetWindowPos(hwnd, NULL, 110, 100, 0, 0, SWP_NOSIZE);
     empty_message_queue();
     GetCursorPos(&pt);
-    todo_wine ok(pt.x == 210 && pt.y == 200, "GetCursorPos returned %dx%d, expected 210x200\n", pt.x, pt.y);
+    ok(pt.x == 210 && pt.y == 200, "GetCursorPos returned %dx%d, expected 210x200\n", pt.x, pt.y);
 
     SetCursorPos(200, 200);
     SetWindowPos(hwnd, NULL, 100, 100, 0, 0, SWP_NOSIZE);
     empty_message_queue();
     GetCursorPos(&pt);
-    todo_wine ok(pt.x == 200 && pt.y == 200, "GetCursorPos returned %dx%d, expected 200x200\n", pt.x, pt.y);
+    ok(pt.x == 200 && pt.y == 200, "GetCursorPos returned %dx%d, expected 200x200\n", pt.x, pt.y);
 
     SetCursorPos(pt_org.x, pt_org.y);
     empty_message_queue();

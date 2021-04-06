@@ -592,13 +592,14 @@ static BOOL is_old_motion_event( unsigned long serial )
  *
  * Map the input event coordinates so they're relative to the desktop.
  */
-static void map_event_coords( HWND hwnd, Window window, INPUT *input )
+static void map_event_coords( HWND hwnd, Window window, Window event_root, int x_root, int y_root, INPUT *input )
 {
     struct x11drv_thread_data *thread_data;
     struct x11drv_win_data *data;
     POINT pt = { input->u.mi.dx, input->u.mi.dy };
 
-    TRACE( "hwnd %p, window %lx, input %p\n", hwnd, window, input );
+    TRACE( "hwnd %p, window %lx, event_root %lx, x_root %d, y_root %d, input %p\n", hwnd, window, event_root,
+           x_root, y_root, input );
 
     if (!hwnd)
     {
@@ -611,6 +612,7 @@ static void map_event_coords( HWND hwnd, Window window, INPUT *input )
     else if ((data = get_win_data( hwnd )))
     {
         if (window == root_window) pt = root_to_virtual_screen( pt.x, pt.y );
+        else if (event_root == root_window) pt = root_to_virtual_screen( x_root, y_root );
         else
         {
             if (window == data->whole_window)
@@ -1709,7 +1711,7 @@ BOOL X11DRV_ButtonPress( HWND hwnd, XEvent *xev )
     input.u.mi.dwExtraInfo = 0;
 
     update_user_time( event->time );
-    map_event_coords( hwnd, event->window, &input );
+    map_event_coords( hwnd, event->window, event->root, event->x_root, event->y_root, &input );
     send_mouse_input( hwnd, event->window, event->state, &input );
     return TRUE;
 }
@@ -1735,7 +1737,7 @@ BOOL X11DRV_ButtonRelease( HWND hwnd, XEvent *xev )
     input.u.mi.time        = EVENT_x11_time_to_win32_time( event->time );
     input.u.mi.dwExtraInfo = 0;
 
-    map_event_coords( hwnd, event->window, &input );
+    map_event_coords( hwnd, event->window, event->root, event->x_root, event->y_root, &input );
     send_mouse_input( hwnd, event->window, event->state, &input );
     return TRUE;
 }
@@ -1764,7 +1766,7 @@ BOOL X11DRV_MotionNotify( HWND hwnd, XEvent *xev )
         TRACE( "pos %d,%d old serial %lu, ignoring\n", input.u.mi.dx, input.u.mi.dy, event->serial );
         return FALSE;
     }
-    map_event_coords( hwnd, event->window, &input );
+    map_event_coords( hwnd, event->window, event->root, event->x_root, event->y_root, &input );
     send_mouse_input( hwnd, event->window, event->state, &input );
     return TRUE;
 }
@@ -1796,7 +1798,7 @@ BOOL X11DRV_EnterNotify( HWND hwnd, XEvent *xev )
         TRACE( "pos %d,%d old serial %lu, ignoring\n", input.u.mi.dx, input.u.mi.dy, event->serial );
         return FALSE;
     }
-    map_event_coords( hwnd, event->window, &input );
+    map_event_coords( hwnd, event->window, event->root, event->x_root, event->y_root, &input );
     send_mouse_input( hwnd, event->window, event->state, &input );
     return TRUE;
 }
