@@ -599,15 +599,18 @@ static void map_event_coords( HWND hwnd, Window window, struct x11drv_win_data *
     TRACE( "hwnd %p, window %lx, data %p, input %p\n", hwnd, window, data, input );
 
     if (window == root_window) pt = root_to_virtual_screen( pt.x, pt.y );
-    if (window == data->whole_window)
+    else
     {
-        pt.x += data->whole_rect.left - data->client_rect.left;
-        pt.y += data->whole_rect.top - data->client_rect.top;
-    }
+        if (window == data->whole_window)
+        {
+            pt.x += data->whole_rect.left - data->client_rect.left;
+            pt.y += data->whole_rect.top - data->client_rect.top;
+        }
 
-    if (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
-        pt.x = data->client_rect.right - data->client_rect.left - 1 - pt.x;
-    MapWindowPoints( hwnd, 0, &pt, 1 );
+        if (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
+            pt.x = data->client_rect.right - data->client_rect.left - 1 - pt.x;
+        MapWindowPoints( hwnd, 0, &pt, 1 );
+    }
 
     TRACE( "mapped %s to %s\n", wine_dbgstr_point( (POINT *)&input->u.mi.dx ), wine_dbgstr_point( &pt ) );
 
