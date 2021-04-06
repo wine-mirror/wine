@@ -24,6 +24,7 @@
 #include <windef.h>
 #include <winbase.h>
 #include <winldap.h>
+#include <winber.h>
 
 #include "wine/test.h"
 

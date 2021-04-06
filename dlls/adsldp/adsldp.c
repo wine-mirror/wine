@@ -38,6 +38,7 @@
 #include "lmcons.h"
 #include "lmapibuf.h"
 #include "winldap.h"
+#include "winber.h"
 
 #include "adsldp_private.h"
 

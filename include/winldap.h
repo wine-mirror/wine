@@ -632,19 +632,7 @@ ULONG CDECL ldap_value_freeW(PWCHAR*);
 #define    ldap_value_free WINELIB_NAME_AW(ldap_value_free)
 ULONG CDECL ldap_value_free_len(struct berval**);
 
-BerElement* CDECL ber_alloc_t(INT);
-BERVAL* CDECL ber_bvdup(BERVAL*);
-void CDECL ber_bvecfree(PBERVAL*);
 void CDECL ber_bvfree(BERVAL*);
-ULONG CDECL ber_first_element(BerElement*,ULONG*,CHAR**);
-INT CDECL ber_flatten(BerElement*,PBERVAL*);
-void CDECL ber_free(BerElement*,INT);
-BerElement* CDECL ber_init(BERVAL*);
-ULONG CDECL ber_next_element(BerElement*,ULONG*,CHAR*);
-ULONG CDECL ber_peek_tag(BerElement*,ULONG*);
-INT WINAPIV ber_printf(BerElement*,PCHAR,...);
-ULONG CDECL ber_skip_tag(BerElement*,ULONG*);
-INT WINAPIV ber_scanf(BerElement*,PCHAR,...);
 
 ULONG CDECL LdapGetLastError(void);
 ULONG CDECL LdapMapErrorToWin32(ULONG);

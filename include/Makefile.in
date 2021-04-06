@@ -741,6 +741,7 @@ SOURCES = \
 	wimgapi.h \
 	winapifamily.h \
 	winbase.h \
+	winber.h \
 	wincodec.idl \
 	wincodecsdk.idl \
 	wincon.h \
