@@ -50,6 +50,7 @@ struct media_item
     LONG refcount;
     IMFPMediaPlayer *player;
     IMFMediaSource *source;
+    IMFPresentationDescriptor *pd;
     DWORD_PTR user_data;
 };
 
@@ -124,6 +125,8 @@ static ULONG WINAPI media_item_Release(IMFPMediaItem *iface)
             IMFPMediaPlayer_Release(item->player);
         if (item->source)
             IMFMediaSource_Release(item->source);
+        if (item->pd)
+            IMFPresentationDescriptor_Release(item->pd);
         heap_free(item);
     }
 
@@ -328,7 +331,24 @@ static HRESULT create_media_item(IMFPMediaPlayer *player, DWORD_PTR user_data, s
 
 static HRESULT media_item_set_source(struct media_item *item, IUnknown *object)
 {
-    return IUnknown_QueryInterface(object, &IID_IMFMediaSource, (void **)&item->source);
+    IMFPresentationDescriptor *pd;
+    IMFMediaSource *source;
+    HRESULT hr;
+
+    if (FAILED(hr = IUnknown_QueryInterface(object, &IID_IMFMediaSource, (void **)&source)))
+        return hr;
+
+    if (FAILED(hr = IMFMediaSource_CreatePresentationDescriptor(source, &pd)))
+    {
+        WARN("Failed to get presentation descriptor, hr %#x.\n", hr);
+        IMFMediaSource_Release(source);
+        return hr;
+    }
+
+    item->source = source;
+    item->pd = pd;
+
+    return hr;
 }
 
 static HRESULT WINAPI media_player_QueryInterface(IMFPMediaPlayer *iface, REFIID riid, void **obj)
