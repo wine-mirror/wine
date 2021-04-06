@@ -3186,6 +3186,24 @@ static DWORD WINAPI create_static_win(void *arg)
     return 0;
 }
 
+static LRESULT CALLBACK mouse_move_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    static DWORD last_x = 200, expect_x = 210;
+
+    if (msg == WM_MOUSEMOVE)
+    {
+        POINT pt = {LOWORD(lparam), HIWORD(lparam)};
+        MapWindowPoints(hwnd, NULL, &pt, 1);
+
+        if (pt.x != last_x) todo_wine ok( pt.x == expect_x, "got unexpected WM_MOUSEMOVE x %d, expected %d\n", pt.x, expect_x );
+
+        expect_x = pt.x == 200 ? 210 : 200;
+        last_x = pt.x;
+    }
+
+    return DefWindowProcW(hwnd, msg, wparam, lparam);
+}
+
 static void test_Input_mouse(void)
 {
     BOOL got_button_down, got_button_up;
@@ -3412,6 +3430,36 @@ static void test_Input_mouse(void)
     CloseHandle(thread_data.start_event);
     CloseHandle(thread_data.end_event);
     DestroyWindow(button_win);
+
+    SetCursorPos(200, 200);
+    hwnd = CreateWindowA("static", "Title", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                         100, 100, 200, 200, NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "CreateWindowA failed %u\n", GetLastError());
+
+    /* warm up test case by moving cursor and window a bit first */
+    SetCursorPos(210, 200);
+    SetWindowPos(hwnd, NULL, 110, 100, 0, 0, SWP_NOSIZE);
+    empty_message_queue();
+    SetCursorPos(200, 200);
+    SetWindowPos(hwnd, NULL, 100, 100, 0, 0, SWP_NOSIZE);
+    empty_message_queue();
+    SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)mouse_move_wndproc);
+
+    SetCursorPos(210, 200);
+    SetWindowPos(hwnd, NULL, 110, 100, 0, 0, SWP_NOSIZE);
+    empty_message_queue();
+    GetCursorPos(&pt);
+    todo_wine ok(pt.x == 210 && pt.y == 200, "GetCursorPos returned %dx%d, expected 210x200\n", pt.x, pt.y);
+
+    SetCursorPos(200, 200);
+    SetWindowPos(hwnd, NULL, 100, 100, 0, 0, SWP_NOSIZE);
+    empty_message_queue();
+    GetCursorPos(&pt);
+    todo_wine ok(pt.x == 200 && pt.y == 200, "GetCursorPos returned %dx%d, expected 200x200\n", pt.x, pt.y);
+
+    SetCursorPos(pt_org.x, pt_org.y);
+    empty_message_queue();
+    DestroyWindow(hwnd);
 }
 
 
