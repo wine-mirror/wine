@@ -3775,7 +3775,6 @@ static BOOL CDECL freetype_set_outline_text_metrics( struct gdi_font *font )
         descent = windescent;
     }
 
-    font->ntmCellHeight = ascent + descent;
     font->ntmAvgWidth = pOS2->xAvgCharWidth;
 
 #define SCALE_X(x) (pFT_MulFix(x, em_scale))

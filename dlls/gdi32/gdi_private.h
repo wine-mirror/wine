@@ -344,7 +344,6 @@ struct gdi_font
     SHORT                  yMax;
     SHORT                  yMin;
     UINT                   ntmFlags;
-    UINT                   ntmCellHeight;
     UINT                   ntmAvgWidth;
     UINT                   aa_flags;
     ULONG                  ttc_item_offset;    /* 0 if font is not a part of TrueType collection */
