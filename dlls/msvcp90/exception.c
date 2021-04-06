@@ -26,6 +26,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
+CREATE_TYPE_INFO_VTABLE
+
 #define CLASS_IS_SIMPLE_TYPE          1
 #define CLASS_HAS_VIRTUAL_BASE_CLASS  4
 
@@ -64,34 +66,6 @@ extern const vtable_ptr MSVCP_failure_vtable;
 extern const vtable_ptr MSVCP_bad_cast_vtable;
 /* ??_7range_error@std@@6B@ */
 extern const vtable_ptr MSVCP_range_error_vtable;
-
-static void MSVCP_type_info_dtor(type_info * _this)
-{
-    free(_this->name);
-}
-
-/* Unexported */
-DEFINE_THISCALL_WRAPPER(MSVCP_type_info_vector_dtor,8)
-void * __thiscall MSVCP_type_info_vector_dtor(type_info * _this, unsigned int flags)
-{
-    TRACE("(%p %x)\n", _this, flags);
-    if (flags & 2)
-    {
-        /* we have an array, with the number of elements stored before the first object */
-        INT_PTR i, *ptr = (INT_PTR *)_this - 1;
-
-        for (i = *ptr - 1; i >= 0; i--) MSVCP_type_info_dtor(_this + i);
-        MSVCRT_operator_delete(ptr);
-    }
-    else
-    {
-        MSVCP_type_info_dtor(_this);
-        if (flags & 1) MSVCRT_operator_delete(_this);
-    }
-    return _this;
-}
-
-DEFINE_RTTI_DATA0( type_info, 0, ".?AVtype_info@@" )
 
 /* ??0exception@@QAE@ABQBD@Z */
 /* ??0exception@@QEAA@AEBQEBD@Z */
@@ -1022,8 +996,6 @@ void __cdecl __ExceptionPtrDestroy(exception_ptr *ep)
 #endif
 
 __ASM_BLOCK_BEGIN(exception_vtables)
-    __ASM_VTABLE(type_info,
-            VTABLE_ADD_FUNC(MSVCP_type_info_vector_dtor));
     EXCEPTION_VTABLE(exception,
             VTABLE_ADD_FUNC(MSVCP_exception_vector_dtor)
             VTABLE_ADD_FUNC(MSVCP_exception_what));
