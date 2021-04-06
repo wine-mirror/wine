@@ -134,6 +134,42 @@ sync_test("xhr_props", function() {
     test_exposed("dispatchEvent", v >= 9);
 });
 
+sync_test("stylesheet_props", function() {
+    var v = document.documentMode;
+    var elem = document.createElement("style");
+    document.body.appendChild(elem);
+    var sheet = v >= 9 ? elem.sheet : elem.styleSheet;
+
+    function test_exposed(prop, expect) {
+        if(expect)
+            ok(prop in sheet, prop + " not found in style sheet.");
+        else
+            ok(!(prop in sheet), prop + " found in style sheet.");
+    }
+
+    test_exposed("href", true);
+    test_exposed("title", true);
+    test_exposed("type", true);
+    test_exposed("media", true);
+    test_exposed("ownerNode", v >= 9);
+    test_exposed("ownerRule", v >= 9);
+    test_exposed("cssRules", v >= 9);
+    test_exposed("insertRule", v >= 9);
+    test_exposed("deleteRule", v >= 9);
+    test_exposed("disabled", true);
+    test_exposed("parentStyleSheet", true);
+    test_exposed("owningElement", true);
+    test_exposed("readOnly", true);
+    test_exposed("imports", true);
+    test_exposed("id", true);
+    test_exposed("addImport", true);
+    test_exposed("addRule", true);
+    test_exposed("removeImport", true);
+    test_exposed("removeRule", true);
+    test_exposed("cssText", true);
+    test_exposed("rules", true);
+});
+
 sync_test("xhr open", function() {
     var e = false;
     try {

@@ -1102,6 +1102,12 @@ static const IHTMLStyleSheet4Vtbl HTMLStyleSheet4Vtbl = {
     HTMLStyleSheet4_deleteRule,
 };
 
+static void HTMLStyleSheet_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    if(mode >= COMPAT_MODE_IE9)
+        dispex_info_add_interface(info, IHTMLStyleSheet4_tid, NULL);
+}
+
 static const tid_t HTMLStyleSheet_iface_tids[] = {
     IHTMLStyleSheet_tid,
     0
@@ -1109,7 +1115,8 @@ static const tid_t HTMLStyleSheet_iface_tids[] = {
 static dispex_static_data_t HTMLStyleSheet_dispex = {
     NULL,
     DispHTMLStyleSheet_tid,
-    HTMLStyleSheet_iface_tids
+    HTMLStyleSheet_iface_tids,
+    HTMLStyleSheet_init_dispex_info
 };
 
 HRESULT create_style_sheet(nsIDOMStyleSheet *nsstylesheet, compat_mode_t compat_mode, IHTMLStyleSheet **ret)
