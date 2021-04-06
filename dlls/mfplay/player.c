@@ -59,10 +59,41 @@ struct media_player
     IMFPMediaPlayer IMFPMediaPlayer_iface;
     IPropertyStore IPropertyStore_iface;
     IMFAsyncCallback resolver_callback;
+    IMFAsyncCallback events_callback;
     LONG refcount;
     IMFPMediaPlayerCallback *callback;
     IPropertyStore *propstore;
     IMFSourceResolver *resolver;
+    MFP_CREATION_OPTIONS options;
+};
+
+struct generic_event
+{
+    MFP_EVENT_HEADER header;
+    IMFPMediaItem *item;
+};
+
+struct media_event
+{
+    IUnknown IUnknown_iface;
+    LONG refcount;
+    union
+    {
+        MFP_EVENT_HEADER header;
+        struct generic_event generic;
+        MFP_PLAY_EVENT play;
+        MFP_PAUSE_EVENT pause;
+        MFP_STOP_EVENT stop;
+        MFP_POSITION_SET_EVENT position_set;
+        MFP_RATE_SET_EVENT rate_set;
+        MFP_MEDIAITEM_CREATED_EVENT item_created;
+        MFP_MEDIAITEM_SET_EVENT item_set;
+        MFP_MEDIAITEM_CLEARED_EVENT item_cleared;
+        MFP_MF_EVENT event;
+        MFP_ERROR_EVENT error;
+        MFP_PLAYBACK_ENDED_EVENT ended;
+        MFP_ACQUIRE_USER_CREDENTIAL_EVENT acquire_creds;
+    } u;
 };
 
 static struct media_player *impl_from_IMFPMediaPlayer(IMFPMediaPlayer *iface)
@@ -80,9 +111,118 @@ static struct media_player *impl_from_resolver_IMFAsyncCallback(IMFAsyncCallback
     return CONTAINING_RECORD(iface, struct media_player, resolver_callback);
 }
 
+static struct media_player *impl_from_events_IMFAsyncCallback(IMFAsyncCallback *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_player, events_callback);
+}
+
 static struct media_item *impl_from_IMFPMediaItem(IMFPMediaItem *iface)
 {
     return CONTAINING_RECORD(iface, struct media_item, IMFPMediaItem_iface);
+}
+
+static struct media_event *impl_event_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_event, IUnknown_iface);
+}
+
+static HRESULT WINAPI media_event_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI media_event_AddRef(IUnknown *iface)
+{
+    struct media_event *event = impl_event_from_IUnknown(iface);
+    ULONG refcount = InterlockedIncrement(&event->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI media_event_Release(IUnknown *iface)
+{
+    struct media_event *event = impl_event_from_IUnknown(iface);
+    ULONG refcount = InterlockedDecrement(&event->refcount);
+
+    TRACE("%p, refcount %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        if (event->u.header.pMediaPlayer)
+            IMFPMediaPlayer_Release(event->u.header.pMediaPlayer);
+        if (event->u.header.pPropertyStore)
+            IPropertyStore_Release(event->u.header.pPropertyStore);
+
+        switch (event->u.header.eEventType)
+        {
+            /* Most types share same layout. */
+            case MFP_EVENT_TYPE_PLAY:
+            case MFP_EVENT_TYPE_PAUSE:
+            case MFP_EVENT_TYPE_STOP:
+            case MFP_EVENT_TYPE_POSITION_SET:
+            case MFP_EVENT_TYPE_RATE_SET:
+            case MFP_EVENT_TYPE_MEDIAITEM_CREATED:
+            case MFP_EVENT_TYPE_MEDIAITEM_SET:
+            case MFP_EVENT_TYPE_FRAME_STEP:
+            case MFP_EVENT_TYPE_MEDIAITEM_CLEARED:
+            case MFP_EVENT_TYPE_PLAYBACK_ENDED:
+                if (event->u.generic.item)
+                    IMFPMediaItem_Release(event->u.generic.item);
+                break;
+            case MFP_EVENT_TYPE_MF:
+                if (event->u.event.pMFMediaEvent)
+                    IMFMediaEvent_Release(event->u.event.pMFMediaEvent);
+                if (event->u.event.pMediaItem)
+                    IMFPMediaItem_Release(event->u.event.pMediaItem);
+                break;
+            default:
+                FIXME("Unsupported event %u.\n", event->u.header.eEventType);
+                break;
+        }
+
+        heap_free(event);
+    }
+
+    return refcount;
+}
+
+static const IUnknownVtbl media_event_vtbl =
+{
+    media_event_QueryInterface,
+    media_event_AddRef,
+    media_event_Release,
+};
+
+static HRESULT media_event_create(MFP_EVENT_TYPE event_type, HRESULT hr,
+        IMFPMediaPlayer *player, struct media_event **event)
+{
+    struct media_event *object;
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IUnknown_iface.lpVtbl = &media_event_vtbl;
+    object->refcount = 1;
+    object->u.header.eEventType = event_type;
+    object->u.header.hrEvent = hr;
+    object->u.header.pMediaPlayer = player;
+    IMFPMediaPlayer_AddRef(object->u.header.pMediaPlayer);
+    /* FIXME: set player state field */
+    /* FIXME: set properties for some events? */
+
+    *event = object;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI media_item_QueryInterface(IMFPMediaItem *iface, REFIID riid, void **obj)
@@ -389,6 +529,18 @@ static HRESULT media_item_set_source(struct media_item *item, IUnknown *object)
     item->pd = pd;
 
     return hr;
+}
+
+static void media_player_queue_event(struct media_player *player, struct media_event *event)
+{
+    if (player->options & MFP_OPTION_FREE_THREADED_CALLBACK)
+    {
+        MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_MULTITHREADED, &player->events_callback, &event->IUnknown_iface);
+    }
+    else
+    {
+        /* FIXME: same-thread callback notification */
+    }
 }
 
 static HRESULT WINAPI media_player_QueryInterface(IMFPMediaPlayer *iface, REFIID riid, void **obj)
@@ -863,7 +1015,7 @@ static const IPropertyStoreVtbl media_player_propstore_vtbl =
     media_player_propstore_Commit,
 };
 
-static HRESULT WINAPI media_player_resolver_callback_QueryInterface(IMFAsyncCallback *iface,
+static HRESULT WINAPI media_player_callback_QueryInterface(IMFAsyncCallback *iface,
         REFIID riid, void **obj)
 {
     if (IsEqualIID(riid, &IID_IMFAsyncCallback) ||
@@ -890,7 +1042,7 @@ static ULONG WINAPI media_player_resolver_callback_Release(IMFAsyncCallback *ifa
     return IMFPMediaPlayer_Release(&player->IMFPMediaPlayer_iface);
 }
 
-static HRESULT WINAPI media_player_resolver_callback_GetParameters(IMFAsyncCallback *iface, DWORD *flags,
+static HRESULT WINAPI media_player_callback_GetParameters(IMFAsyncCallback *iface, DWORD *flags,
         DWORD *queue)
 {
     return E_NOTIMPL;
@@ -899,9 +1051,10 @@ static HRESULT WINAPI media_player_resolver_callback_GetParameters(IMFAsyncCallb
 static HRESULT WINAPI media_player_resolver_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct media_player *player = impl_from_resolver_IMFAsyncCallback(iface);
-    struct media_item *item;
+    struct media_event *event;
     IUnknown *object, *state;
     MF_OBJECT_TYPE obj_type;
+    struct media_item *item;
     HRESULT hr;
 
     if (FAILED(IMFAsyncResult_GetState(result, &state)))
@@ -918,8 +1071,23 @@ static HRESULT WINAPI media_player_resolver_callback_Invoke(IMFAsyncCallback *if
     if (FAILED(hr))
         WARN("Failed to set media source, hr %#x.\n", hr);
 
-    /* FIXME: callback notification */
+    if (FAILED(media_event_create(MFP_EVENT_TYPE_MEDIAITEM_CREATED, hr, &player->IMFPMediaPlayer_iface, &event)))
+    {
+        WARN("Failed to create event object.\n");
+        IUnknown_Release(state);
+        return S_OK;
+    }
 
+    if (SUCCEEDED(hr))
+    {
+        event->u.item_created.pMediaItem = &item->IMFPMediaItem_iface;
+        IMFPMediaItem_AddRef(event->u.item_created.pMediaItem);
+    }
+    event->u.item_created.dwUserData = item->user_data;
+
+    media_player_queue_event(player, event);
+
+    IUnknown_Release(&event->IUnknown_iface);
     IUnknown_Release(state);
 
     return S_OK;
@@ -927,11 +1095,51 @@ static HRESULT WINAPI media_player_resolver_callback_Invoke(IMFAsyncCallback *if
 
 static const IMFAsyncCallbackVtbl media_player_resolver_callback_vtbl =
 {
-    media_player_resolver_callback_QueryInterface,
+    media_player_callback_QueryInterface,
     media_player_resolver_callback_AddRef,
     media_player_resolver_callback_Release,
-    media_player_resolver_callback_GetParameters,
+    media_player_callback_GetParameters,
     media_player_resolver_callback_Invoke,
+};
+
+static ULONG WINAPI media_player_events_callback_AddRef(IMFAsyncCallback *iface)
+{
+    struct media_player *player = impl_from_events_IMFAsyncCallback(iface);
+    return IMFPMediaPlayer_AddRef(&player->IMFPMediaPlayer_iface);
+}
+
+static ULONG WINAPI media_player_events_callback_Release(IMFAsyncCallback *iface)
+{
+    struct media_player *player = impl_from_events_IMFAsyncCallback(iface);
+    return IMFPMediaPlayer_Release(&player->IMFPMediaPlayer_iface);
+}
+
+static HRESULT WINAPI media_player_events_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
+{
+    struct media_player *player = impl_from_events_IMFAsyncCallback(iface);
+    struct media_event *event;
+    IUnknown *state;
+
+    if (FAILED(IMFAsyncResult_GetState(result, &state)))
+        return S_OK;
+
+    event = impl_event_from_IUnknown(state);
+
+    if (player->callback)
+        IMFPMediaPlayerCallback_OnMediaPlayerEvent(player->callback, &event->u.header);
+
+    IUnknown_Release(state);
+
+    return S_OK;
+}
+
+static const IMFAsyncCallbackVtbl media_player_events_callback_vtbl =
+{
+    media_player_callback_QueryInterface,
+    media_player_events_callback_AddRef,
+    media_player_events_callback_Release,
+    media_player_callback_GetParameters,
+    media_player_events_callback_Invoke,
 };
 
 HRESULT WINAPI MFPCreateMediaPlayer(const WCHAR *url, BOOL start_playback, MFP_CREATION_OPTIONS options,
@@ -950,8 +1158,10 @@ HRESULT WINAPI MFPCreateMediaPlayer(const WCHAR *url, BOOL start_playback, MFP_C
     object->IMFPMediaPlayer_iface.lpVtbl = &media_player_vtbl;
     object->IPropertyStore_iface.lpVtbl = &media_player_propstore_vtbl;
     object->resolver_callback.lpVtbl = &media_player_resolver_callback_vtbl;
+    object->events_callback.lpVtbl = &media_player_events_callback_vtbl;
     object->refcount = 1;
     object->callback = callback;
+    object->options = options;
     if (object->callback)
         IMFPMediaPlayerCallback_AddRef(object->callback);
     if (FAILED(hr = CreatePropertyStore(&object->propstore)))
