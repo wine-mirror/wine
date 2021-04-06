@@ -229,39 +229,64 @@ static HRESULT WINAPI media_item_GetDuration(IMFPMediaItem *iface, REFGUID forma
 
 static HRESULT WINAPI media_item_GetNumberOfStreams(IMFPMediaItem *iface, DWORD *count)
 {
-    FIXME("%p, %p.\n", iface, count);
+    struct media_item *item = impl_from_IMFPMediaItem(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, count);
+
+    return IMFPresentationDescriptor_GetStreamDescriptorCount(item->pd, count);
 }
 
-static HRESULT WINAPI media_item_GetStreamSelection(IMFPMediaItem *iface, DWORD index, BOOL *enabled)
+static HRESULT WINAPI media_item_GetStreamSelection(IMFPMediaItem *iface, DWORD index, BOOL *selected)
 {
-    FIXME("%p, %u, %p.\n", iface, index, enabled);
+    struct media_item *item = impl_from_IMFPMediaItem(iface);
+    IMFStreamDescriptor *sd;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p.\n", iface, index, selected);
+
+    if (SUCCEEDED(hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(item->pd, index, selected, &sd)))
+        IMFStreamDescriptor_Release(sd);
+
+    return hr;
 }
 
-static HRESULT WINAPI media_item_SetStreamSelection(IMFPMediaItem *iface, DWORD index, BOOL enabled)
+static HRESULT WINAPI media_item_SetStreamSelection(IMFPMediaItem *iface, DWORD index, BOOL select)
 {
-    FIXME("%p, %u, %d.\n", iface, index, enabled);
+    struct media_item *item = impl_from_IMFPMediaItem(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %d.\n", iface, index, select);
+
+    return select ? IMFPresentationDescriptor_SelectStream(item->pd, index) :
+            IMFPresentationDescriptor_DeselectStream(item->pd, index);
 }
 
 static HRESULT WINAPI media_item_GetStreamAttribute(IMFPMediaItem *iface, DWORD index, REFGUID key,
         PROPVARIANT *value)
 {
-    FIXME("%p, %u, %s, %p.\n", iface, index, debugstr_guid(key), value);
+    struct media_item *item = impl_from_IMFPMediaItem(iface);
+    IMFStreamDescriptor *sd;
+    BOOL selected;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %s, %p.\n", iface, index, debugstr_guid(key), value);
+
+    if (SUCCEEDED(hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(item->pd, index, &selected, &sd)))
+    {
+        hr = IMFStreamDescriptor_GetItem(sd, key, value);
+        IMFStreamDescriptor_Release(sd);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI media_item_GetPresentationAttribute(IMFPMediaItem *iface, REFGUID key,
         PROPVARIANT *value)
 {
-    FIXME("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+    struct media_item *item = impl_from_IMFPMediaItem(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(key), value);
+
+    return IMFPresentationDescriptor_GetItem(item->pd, key, value);
 }
 
 static HRESULT WINAPI media_item_GetCharacteristics(IMFPMediaItem *iface, MFP_MEDIAITEM_CHARACTERISTICS *flags)
