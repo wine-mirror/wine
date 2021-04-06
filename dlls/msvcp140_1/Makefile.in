@@ -1,1 +1,6 @@
-MODULE = msvcp140_1.dll
+MODULE       = msvcp140_1.dll
+PARENTSRC    = ../msvcp90
+
+EXTRADLLFLAGS = -mno-cygwin
+
+C_SRCS = msvcp140_1.c
