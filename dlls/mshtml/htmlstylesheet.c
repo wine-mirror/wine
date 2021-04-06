@@ -1059,11 +1059,21 @@ static HRESULT WINAPI HTMLStyleSheet4_get_media(IHTMLStyleSheet4 *iface, VARIANT
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLStyleSheet4_insertRule(IHTMLStyleSheet4 *iface, BSTR rule, LONG index, LONG *new_index)
+static HRESULT WINAPI HTMLStyleSheet4_insertRule(IHTMLStyleSheet4 *iface, BSTR rule, LONG index, LONG *p)
 {
     HTMLStyleSheet *This = impl_from_IHTMLStyleSheet4(iface);
-    FIXME("(%p)->(%s %d %p)\n", This, debugstr_w(rule), index, new_index);
-    return E_NOTIMPL;
+    UINT32 new_index = 0;
+    nsAString nsstr;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s %d %p)\n", This, debugstr_w(rule), index, p);
+
+    nsAString_InitDepend(&nsstr, rule);
+    nsres = nsIDOMCSSStyleSheet_InsertRule(This->nsstylesheet, &nsstr, index, &new_index);
+    if(NS_FAILED(nsres)) WARN("failed: %08x\n", nsres);
+    nsAString_Finish(&nsstr);
+    *p = new_index;
+    return map_nsresult(nsres);
 }
 
 static HRESULT WINAPI HTMLStyleSheet4_deleteRule(IHTMLStyleSheet4 *iface, LONG index)
