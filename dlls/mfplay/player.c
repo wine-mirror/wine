@@ -70,8 +70,10 @@ struct media_player
     IMFSourceResolver *resolver;
     IMFMediaSession *session;
     MFP_CREATION_OPTIONS options;
+    MFP_MEDIAPLAYER_STATE state;
     HWND event_window;
     HWND output_window;
+    CRITICAL_SECTION cs;
 };
 
 struct generic_event
@@ -215,8 +217,8 @@ static const IUnknownVtbl media_event_vtbl =
     media_event_Release,
 };
 
-static HRESULT media_event_create(MFP_EVENT_TYPE event_type, HRESULT hr,
-        IMFPMediaPlayer *player, struct media_event **event)
+static HRESULT media_event_create(struct media_player *player, MFP_EVENT_TYPE event_type,
+        HRESULT hr, struct media_event **event)
 {
     struct media_event *object;
 
@@ -227,9 +229,9 @@ static HRESULT media_event_create(MFP_EVENT_TYPE event_type, HRESULT hr,
     object->refcount = 1;
     object->u.header.eEventType = event_type;
     object->u.header.hrEvent = hr;
-    object->u.header.pMediaPlayer = player;
+    object->u.header.pMediaPlayer = &player->IMFPMediaPlayer_iface;
     IMFPMediaPlayer_AddRef(object->u.header.pMediaPlayer);
-    /* FIXME: set player state field */
+    object->u.header.eState = player->state;
     /* FIXME: set properties for some events? */
 
     *event = object;
@@ -252,6 +254,16 @@ static LRESULT WINAPI media_player_event_proc(HWND hwnd, UINT msg, WPARAM wparam
     }
 
     return DefWindowProcW(hwnd, msg, wparam, lparam);
+}
+
+static void media_player_set_state(struct media_player *player, MFP_MEDIAPLAYER_STATE state)
+{
+    if (player->state != MFP_MEDIAPLAYER_STATE_SHUTDOWN)
+    {
+        if (state == MFP_MEDIAPLAYER_STATE_SHUTDOWN)
+            IMFMediaSession_Shutdown(player->session);
+        player->state = state;
+    }
 }
 
 static HRESULT WINAPI media_item_QueryInterface(IMFPMediaItem *iface, REFIID riid, void **obj)
@@ -628,6 +640,7 @@ static ULONG WINAPI media_player_Release(IMFPMediaPlayer *iface)
         if (player->session)
             IMFMediaSession_Release(player->session);
         DestroyWindow(player->event_window);
+        DeleteCriticalSection(&player->cs);
         heap_free(player);
 
         platform_shutdown();
@@ -708,9 +721,13 @@ static HRESULT WINAPI media_player_GetSupportedRates(IMFPMediaPlayer *iface, BOO
 
 static HRESULT WINAPI media_player_GetState(IMFPMediaPlayer *iface, MFP_MEDIAPLAYER_STATE *state)
 {
-    FIXME("%p, %p.\n", iface, state);
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, state);
+
+    *state = player->state;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI media_player_CreateMediaItemFromURL(IMFPMediaPlayer *iface,
@@ -928,9 +945,15 @@ static HRESULT WINAPI media_player_RemoveAllEffects(IMFPMediaPlayer *iface)
 
 static HRESULT WINAPI media_player_Shutdown(IMFPMediaPlayer *iface)
 {
-    FIXME("%p.\n", iface);
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&player->cs);
+    media_player_set_state(player, MFP_MEDIAPLAYER_STATE_SHUTDOWN);
+    LeaveCriticalSection(&player->cs);
+
+    return S_OK;
 }
 
 static const IMFPMediaPlayerVtbl media_player_vtbl =
@@ -1108,7 +1131,7 @@ static HRESULT WINAPI media_player_resolver_callback_Invoke(IMFAsyncCallback *if
     if (FAILED(hr))
         WARN("Failed to set media source, hr %#x.\n", hr);
 
-    if (FAILED(media_event_create(MFP_EVENT_TYPE_MEDIAITEM_CREATED, hr, &player->IMFPMediaPlayer_iface, &event)))
+    if (FAILED(media_event_create(player, MFP_EVENT_TYPE_MEDIAITEM_CREATED, hr, &event)))
     {
         WARN("Failed to create event object.\n");
         IUnknown_Release(state);
@@ -1195,14 +1218,61 @@ static HRESULT WINAPI media_player_session_events_callback_Invoke(IMFAsyncCallba
         IMFAsyncResult *result)
 {
     struct media_player *player = impl_from_session_events_IMFAsyncCallback(iface);
-    IMFMediaEvent *event;
-    HRESULT hr;
+    MediaEventType session_event_type = MEUnknown;
+    struct media_event *event = NULL;
+    IMFMediaEvent *session_event;
+    MFP_MEDIAPLAYER_STATE state;
+    MFP_EVENT_TYPE event_type;
+    HRESULT hr, event_status;
 
-    if (FAILED(hr = IMFMediaSession_EndGetEvent(player->session, result, &event)))
+    if (FAILED(hr = IMFMediaSession_EndGetEvent(player->session, result, &session_event)))
         return S_OK;
 
+    IMFMediaEvent_GetType(session_event, &session_event_type);
+    IMFMediaEvent_GetStatus(session_event, &event_status);
+
+    switch (session_event_type)
+    {
+        case MESessionStarted:
+        case MESessionStopped:
+        case MESessionPaused:
+            if (session_event_type == MESessionStarted)
+            {
+                event_type = MFP_EVENT_TYPE_PLAY;
+                state = MFP_MEDIAPLAYER_STATE_PLAYING;
+            }
+            else if (session_event_type == MESessionStopped)
+            {
+                event_type = MFP_EVENT_TYPE_STOP;
+                state = MFP_MEDIAPLAYER_STATE_STOPPED;
+            }
+            else
+            {
+                event_type = MFP_EVENT_TYPE_PAUSE;
+                state = MFP_MEDIAPLAYER_STATE_PAUSED;
+            }
+
+            EnterCriticalSection(&player->cs);
+            media_player_set_state(player, state);
+            media_event_create(player, event_type, event_status, &event);
+            LeaveCriticalSection(&player->cs);
+
+            /* FIXME: set pMediaItem */
+            media_player_queue_event(player, event);
+            IUnknown_Release(&event->IUnknown_iface);
+
+            break;
+        default:
+            ;
+    }
+
+    if (event)
+    {
+        IUnknown_Release(&event->IUnknown_iface);
+    }
+
     IMFMediaSession_BeginGetEvent(player->session, &player->session_events_callback, NULL);
-    IMFMediaEvent_Release(event);
+    IMFMediaEvent_Release(session_event);
 
     return S_OK;
 }
@@ -1240,6 +1310,7 @@ HRESULT WINAPI MFPCreateMediaPlayer(const WCHAR *url, BOOL start_playback, MFP_C
         IMFPMediaPlayerCallback_AddRef(object->callback);
     object->options = options;
     object->output_window = window;
+    InitializeCriticalSection(&object->cs);
     if (FAILED(hr = CreatePropertyStore(&object->propstore)))
         goto failed;
     if (FAILED(hr = MFCreateSourceResolver(&object->resolver)))
