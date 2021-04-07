@@ -366,19 +366,37 @@ static BOOL start_driver(HANDLE service, BOOL vista_plus)
     return TRUE;
 }
 
+static void cat_okfile(HANDLE okfile)
+{
+    char buffer[512];
+    DWORD size;
+
+    SetFilePointer(okfile, 0, NULL, FILE_BEGIN);
+
+    do
+    {
+        ReadFile(okfile, buffer, sizeof(buffer), &size, NULL);
+        printf("%.*s", size, buffer);
+    } while (size == sizeof(buffer));
+
+    SetFilePointer(okfile, 0, NULL, FILE_BEGIN);
+    SetEndOfFile(okfile);
+
+    winetest_add_failures(InterlockedExchange(&test_data->failures, 0));
+}
+
 static ULONG64 modified_value;
 
 static void main_test(void)
 {
     struct main_test_input *test_input;
-    char buffer[512];
     HANDLE okfile;
     DWORD size;
     BOOL res;
 
     /* Create a temporary file that the driver will write ok/trace output to. */
 
-    okfile = CreateFileA("C:\\windows\\winetest_ntoskrnl_okfile", GENERIC_READ,
+    okfile = CreateFileA("C:\\windows\\winetest_ntoskrnl_okfile", GENERIC_READ | GENERIC_WRITE,
             FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 0, NULL);
     ok(okfile != INVALID_HANDLE_VALUE, "failed to create file, error %u\n", GetLastError());
 
@@ -392,12 +410,7 @@ static void main_test(void)
     ok(res, "DeviceIoControl failed: %u\n", GetLastError());
     ok(!size, "got size %u\n", size);
 
-    do {
-        ReadFile(okfile, buffer, sizeof(buffer), &size, NULL);
-        printf("%.*s", size, buffer);
-    } while (size == sizeof(buffer));
-
-    winetest_add_failures(InterlockedExchange(&test_data->failures, 0));
+    cat_okfile(okfile);
 
     heap_free(test_input);
     CloseHandle(okfile);
