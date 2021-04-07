@@ -2163,8 +2163,8 @@ basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor_alloc(
 
 /* ??0?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE@ABV01@@Z */
 /* ??0?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAA@AEBV01@@Z */
-DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_copy_ctor, 8)
-basic_string_wchar* __thiscall MSVCP_basic_string_wchar_copy_ctor(
+DEFINE_THISCALL_WRAPPER(basic_string_wchar_copy_ctor, 8)
+basic_string_wchar* __thiscall basic_string_wchar_copy_ctor(
         basic_string_wchar *this, const basic_string_wchar *copy)
 {
     TRACE("%p %p\n", this, copy);
@@ -2884,7 +2884,7 @@ basic_string_wchar* __cdecl MSVCP_basic_string_wchar_concatenate(basic_string_wc
 {
     TRACE("%p %p\n", left, right);
 
-    MSVCP_basic_string_wchar_copy_ctor(ret, left);
+    basic_string_wchar_copy_ctor(ret, left);
     MSVCP_basic_string_wchar_append(ret, right);
     return ret;
 }
@@ -2898,7 +2898,7 @@ basic_string_wchar* __cdecl MSVCP_basic_string_wchar_concatenate_bstr_ch(basic_s
 {
     TRACE("%p %c\n", left, right);
 
-    MSVCP_basic_string_wchar_copy_ctor(ret, left);
+    basic_string_wchar_copy_ctor(ret, left);
     MSVCP_basic_string_wchar_append_ch(ret, right);
     return ret;
 }
@@ -2912,7 +2912,7 @@ basic_string_wchar* __cdecl MSVCP_basic_string_wchar_concatenate_bstr_cstr(basic
 {
     TRACE("%p %s\n", left, debugstr_w(right));
 
-    MSVCP_basic_string_wchar_copy_ctor(ret, left);
+    basic_string_wchar_copy_ctor(ret, left);
     MSVCP_basic_string_wchar_append_cstr(ret, right);
     return ret;
 }

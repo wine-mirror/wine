@@ -1058,11 +1058,11 @@ static custom_category iostream_category;
 DEFINE_RTTI_DATA0(error_category, 0, ".?AVerror_category@std@@")
 DEFINE_RTTI_DATA1(iostream_category, 0, &error_category_rtti_base_descriptor, ".?AV_Iostream_error_category@std@@")
 
-extern const vtable_ptr MSVCP_iostream_category_vtable;
+extern const vtable_ptr iostream_category_vtable;
 
 static void iostream_category_ctor(custom_category *this)
 {
-    this->base.vtable = &MSVCP_iostream_category_vtable;
+    this->base.vtable = &iostream_category_vtable;
     this->type = "iostream";
 }
 
@@ -1140,11 +1140,11 @@ const error_category* __cdecl std_iostream_category(void)
 static custom_category system_category;
 DEFINE_RTTI_DATA1(system_category, 0, &error_category_rtti_base_descriptor, ".?AV_System_error_category@std@@")
 
-extern const vtable_ptr MSVCP_system_category_vtable;
+extern const vtable_ptr system_category_vtable;
 
 static void system_category_ctor(custom_category *this)
 {
-    this->base.vtable = &MSVCP_system_category_vtable;
+    this->base.vtable = &system_category_vtable;
     this->type = "system";
 }
 
@@ -1159,11 +1159,11 @@ const error_category* __cdecl std_system_category(void)
 static custom_category generic_category;
 DEFINE_RTTI_DATA1(generic_category, 0, &error_category_rtti_base_descriptor, ".?AV_Generic_error_category@std@@")
 
-extern const vtable_ptr MSVCP_generic_category_vtable;
+extern const vtable_ptr generic_category_vtable;
 
 static void generic_category_ctor(custom_category *this)
 {
-    this->base.vtable = &MSVCP_generic_category_vtable;
+    this->base.vtable = &generic_category_vtable;
     this->type = "generic";
 }
 
@@ -1354,7 +1354,7 @@ typedef struct
 DEFINE_RTTI_DATA0(_Pad, 0, ".?AV_Pad@std@@")
 
 /* ??_7_Pad@std@@6B@ */
-extern const vtable_ptr MSVCP__Pad_vtable;
+extern const vtable_ptr _Pad_vtable;
 
 unsigned int __cdecl _Thrd_hardware_concurrency(void)
 {
@@ -1385,7 +1385,7 @@ _Pad* __thiscall _Pad_ctor(_Pad *this)
 {
     TRACE("(%p)\n", this);
 
-    this->vtable = &MSVCP__Pad_vtable;
+    this->vtable = &_Pad_vtable;
     _Cnd_init(&this->cnd);
     _Mtx_init(&this->mtx, 0);
     this->launched = FALSE;
@@ -1413,7 +1413,7 @@ _Pad* __thiscall _Pad_copy_ctor(_Pad *this, const _Pad *copy)
 {
     TRACE("(%p %p)\n", this, copy);
 
-    this->vtable = &MSVCP__Pad_vtable;
+    this->vtable = &_Pad_vtable;
     return _Pad_op_assign(this, copy);
 }
 
@@ -1501,7 +1501,7 @@ typedef struct
     size_t item_size;
 } _Concurrent_queue_base_v4;
 
-extern const vtable_ptr MSVCP__Concurrent_queue_base_v4_vtable;
+extern const vtable_ptr _Concurrent_queue_base_v4_vtable;
 #if _MSVCP_VER == 100
 #define call__Concurrent_queue_base_v4__Move_item call__Concurrent_queue_base_v4__Copy_item
 #define call__Concurrent_queue_base_v4__Copy_item(this,dst,idx,src) CALL_VTBL_FUNC(this, \
@@ -1546,7 +1546,7 @@ _Concurrent_queue_base_v4* __thiscall _Concurrent_queue_base_v4_ctor(
     this->data = MSVCRT_operator_new(sizeof(*this->data));
     memset(this->data, 0, sizeof(*this->data));
 
-    this->vtable = &MSVCP__Concurrent_queue_base_v4_vtable;
+    this->vtable = &_Concurrent_queue_base_v4_vtable;
     this->item_size = size;
 
     /* alloc_count needs to be power of 2 */
@@ -1834,7 +1834,7 @@ typedef struct
     int id;
 } _Runtime_object;
 
-extern const vtable_ptr MSVCP__Runtime_object_vtable;
+extern const vtable_ptr _Runtime_object_vtable;
 
 /* ??0_Runtime_object@details@Concurrency@@QAE@H@Z */
 /* ??0_Runtime_object@details@Concurrency@@QEAA@H@Z */
@@ -1842,7 +1842,7 @@ DEFINE_THISCALL_WRAPPER(_Runtime_object_ctor_id, 8)
 _Runtime_object* __thiscall _Runtime_object_ctor_id(_Runtime_object *this, int id)
 {
     TRACE("(%p %d)\n", this, id);
-    this->vtable = &MSVCP__Runtime_object_vtable;
+    this->vtable = &_Runtime_object_vtable;
     this->id = id;
     return this;
 }
@@ -1853,7 +1853,7 @@ DEFINE_THISCALL_WRAPPER(_Runtime_object_ctor, 4)
 _Runtime_object* __thiscall _Runtime_object_ctor(_Runtime_object *this)
 {
     TRACE("(%p)\n", this);
-    this->vtable = &MSVCP__Runtime_object_vtable;
+    this->vtable = &_Runtime_object_vtable;
     this->id = InterlockedExchangeAdd(&_Runtime_object_id, 2);
     return this;
 }

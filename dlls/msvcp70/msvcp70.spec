@@ -446,8 +446,8 @@
 @ stub -arch=win64 ??0__non_rtti_object@std@@QEAA@AEBV01@@Z
 @ stub -arch=win32 ??0__non_rtti_object@std@@QAE@PBD@Z
 @ stub -arch=win64 ??0__non_rtti_object@std@@QEAA@PEBD@Z
-@ thiscall -arch=i386 ??0bad_cast@std@@QAE@ABV01@@Z(ptr ptr) MSVCP_bad_cast_copy_ctor
-@ cdecl -arch=win64 ??0bad_cast@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_bad_cast_copy_ctor
+@ thiscall -arch=i386 ??0bad_cast@std@@QAE@ABV01@@Z(ptr ptr) bad_cast_copy_ctor
+@ cdecl -arch=win64 ??0bad_cast@std@@QEAA@AEBV01@@Z(ptr ptr) bad_cast_copy_ctor
 @ thiscall -arch=i386 ??0bad_cast@std@@QAE@PBD@Z(ptr str) MSVCP_bad_cast_ctor
 @ cdecl -arch=win64 ??0bad_cast@std@@QEAA@PEBD@Z(ptr str) MSVCP_bad_cast_ctor
 @ stub -arch=win32 ??0bad_typeid@std@@QAE@ABV01@@Z
@@ -1424,54 +1424,54 @@
 # extern ??_7?$_Mpunct@D@std@@6B@
 # extern ??_7?$_Mpunct@G@std@@6B@
 # extern ??_7?$_Mpunct@_W@std@@6B@
-@ extern ??_7?$basic_filebuf@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_filebuf_char_vtable
-@ extern ??_7?$basic_filebuf@GU?$char_traits@G@std@@@std@@6B@ MSVCP_basic_filebuf_short_vtable
-@ extern ??_7?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@6B@ MSVCP_basic_filebuf_wchar_vtable
-@ extern ??_7?$basic_fstream@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_fstream_char_vtable
-@ extern ??_7?$basic_fstream@GU?$char_traits@G@std@@@std@@6B@ MSVCP_basic_fstream_short_vtable
-@ extern ??_7?$basic_fstream@_WU?$char_traits@_W@std@@@std@@6B@ MSVCP_basic_fstream_wchar_vtable
-@ extern ??_7?$basic_ifstream@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_ifstream_char_vtable
-@ extern ??_7?$basic_ifstream@GU?$char_traits@G@std@@@std@@6B@ MSVCP_basic_ifstream_short_vtable
-@ extern ??_7?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@6B@ MSVCP_basic_ifstream_wchar_vtable
-@ extern ??_7?$basic_ios@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_ios_char_vtable
-@ extern ??_7?$basic_ios@GU?$char_traits@G@std@@@std@@6B@ MSVCP_basic_ios_short_vtable
-@ extern ??_7?$basic_ios@_WU?$char_traits@_W@std@@@std@@6B@ MSVCP_basic_ios_wchar_vtable
-@ extern ??_7?$basic_iostream@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_iostream_char_vtable
-@ extern ??_7?$basic_iostream@GU?$char_traits@G@std@@@std@@6B@ MSVCP_basic_iostream_short_vtable
-@ extern ??_7?$basic_iostream@_WU?$char_traits@_W@std@@@std@@6B@ MSVCP_basic_iostream_wchar_vtable
-@ extern ??_7?$basic_istream@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_istream_char_vtable
-@ extern ??_7?$basic_istream@GU?$char_traits@G@std@@@std@@6B@ MSVCP_basic_istream_short_vtable
-@ extern ??_7?$basic_istream@_WU?$char_traits@_W@std@@@std@@6B@ MSVCP_basic_istream_wchar_vtable
-@ extern ??_7?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ MSVCP_basic_istringstream_char_vtable
-@ extern ??_7?$basic_istringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ MSVCP_basic_istringstream_short_vtable
-@ extern ??_7?$basic_istringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@6B@ MSVCP_basic_istringstream_wchar_vtable
-@ extern ??_7?$basic_ofstream@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_ofstream_char_vtable
-@ extern ??_7?$basic_ofstream@GU?$char_traits@G@std@@@std@@6B@ MSVCP_basic_ofstream_short_vtable
-@ extern ??_7?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@6B@ MSVCP_basic_ofstream_wchar_vtable
-@ extern ??_7?$basic_ostream@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_ostream_char_vtable
-@ extern ??_7?$basic_ostream@GU?$char_traits@G@std@@@std@@6B@ MSVCP_basic_ostream_short_vtable
-@ extern ??_7?$basic_ostream@_WU?$char_traits@_W@std@@@std@@6B@ MSVCP_basic_ostream_wchar_vtable
-@ extern ??_7?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ MSVCP_basic_ostringstream_char_vtable
-@ extern ??_7?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ MSVCP_basic_ostringstream_short_vtable
-@ extern ??_7?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@6B@ MSVCP_basic_ostringstream_wchar_vtable
-@ extern ??_7?$basic_streambuf@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_streambuf_char_vtable
-@ extern ??_7?$basic_streambuf@GU?$char_traits@G@std@@@std@@6B@ MSVCP_basic_streambuf_short_vtable
-@ extern ??_7?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@6B@ MSVCP_basic_streambuf_wchar_vtable
-@ extern ??_7?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ MSVCP_basic_stringbuf_char_vtable
-@ extern ??_7?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ MSVCP_basic_stringbuf_short_vtable
-@ extern ??_7?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@6B@ MSVCP_basic_stringbuf_wchar_vtable
-@ extern ??_7?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ MSVCP_basic_stringstream_char_vtable
-@ extern ??_7?$basic_stringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ MSVCP_basic_stringstream_short_vtable
-@ extern ??_7?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@6B@ MSVCP_basic_stringstream_wchar_vtable
-@ extern ??_7?$codecvt@DDH@std@@6B@ MSVCP_codecvt_char_vtable
-@ extern ??_7?$codecvt@GDH@std@@6B@ MSVCP_codecvt_short_vtable
-@ extern ??_7?$codecvt@_WDH@std@@6B@ MSVCP_codecvt_wchar_vtable
-@ extern ??_7?$collate@D@std@@6B@ MSVCP_collate_char_vtable
-@ extern ??_7?$collate@G@std@@6B@ MSVCP_collate_short_vtable
-@ extern ??_7?$collate@_W@std@@6B@ MSVCP_collate_wchar_vtable
-@ extern ??_7?$ctype@D@std@@6B@ MSVCP_ctype_char_vtable
-@ extern ??_7?$ctype@G@std@@6B@ MSVCP_ctype_short_vtable
-@ extern ??_7?$ctype@_W@std@@6B@ MSVCP_ctype_wchar_vtable
+@ extern ??_7?$basic_filebuf@DU?$char_traits@D@std@@@std@@6B@ basic_filebuf_char_vtable
+@ extern ??_7?$basic_filebuf@GU?$char_traits@G@std@@@std@@6B@ basic_filebuf_short_vtable
+@ extern ??_7?$basic_filebuf@_WU?$char_traits@_W@std@@@std@@6B@ basic_filebuf_wchar_vtable
+@ extern ??_7?$basic_fstream@DU?$char_traits@D@std@@@std@@6B@ basic_fstream_char_vtable
+@ extern ??_7?$basic_fstream@GU?$char_traits@G@std@@@std@@6B@ basic_fstream_short_vtable
+@ extern ??_7?$basic_fstream@_WU?$char_traits@_W@std@@@std@@6B@ basic_fstream_wchar_vtable
+@ extern ??_7?$basic_ifstream@DU?$char_traits@D@std@@@std@@6B@ basic_ifstream_char_vtable
+@ extern ??_7?$basic_ifstream@GU?$char_traits@G@std@@@std@@6B@ basic_ifstream_short_vtable
+@ extern ??_7?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@6B@ basic_ifstream_wchar_vtable
+@ extern ??_7?$basic_ios@DU?$char_traits@D@std@@@std@@6B@ basic_ios_char_vtable
+@ extern ??_7?$basic_ios@GU?$char_traits@G@std@@@std@@6B@ basic_ios_short_vtable
+@ extern ??_7?$basic_ios@_WU?$char_traits@_W@std@@@std@@6B@ basic_ios_wchar_vtable
+@ extern ??_7?$basic_iostream@DU?$char_traits@D@std@@@std@@6B@ basic_iostream_char_vtable
+@ extern ??_7?$basic_iostream@GU?$char_traits@G@std@@@std@@6B@ basic_iostream_short_vtable
+@ extern ??_7?$basic_iostream@_WU?$char_traits@_W@std@@@std@@6B@ basic_iostream_wchar_vtable
+@ extern ??_7?$basic_istream@DU?$char_traits@D@std@@@std@@6B@ basic_istream_char_vtable
+@ extern ??_7?$basic_istream@GU?$char_traits@G@std@@@std@@6B@ basic_istream_short_vtable
+@ extern ??_7?$basic_istream@_WU?$char_traits@_W@std@@@std@@6B@ basic_istream_wchar_vtable
+@ extern ??_7?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ basic_istringstream_char_vtable
+@ extern ??_7?$basic_istringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ basic_istringstream_short_vtable
+@ extern ??_7?$basic_istringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@6B@ basic_istringstream_wchar_vtable
+@ extern ??_7?$basic_ofstream@DU?$char_traits@D@std@@@std@@6B@ basic_ofstream_char_vtable
+@ extern ??_7?$basic_ofstream@GU?$char_traits@G@std@@@std@@6B@ basic_ofstream_short_vtable
+@ extern ??_7?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@6B@ basic_ofstream_wchar_vtable
+@ extern ??_7?$basic_ostream@DU?$char_traits@D@std@@@std@@6B@ basic_ostream_char_vtable
+@ extern ??_7?$basic_ostream@GU?$char_traits@G@std@@@std@@6B@ basic_ostream_short_vtable
+@ extern ??_7?$basic_ostream@_WU?$char_traits@_W@std@@@std@@6B@ basic_ostream_wchar_vtable
+@ extern ??_7?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ basic_ostringstream_char_vtable
+@ extern ??_7?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ basic_ostringstream_short_vtable
+@ extern ??_7?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@6B@ basic_ostringstream_wchar_vtable
+@ extern ??_7?$basic_streambuf@DU?$char_traits@D@std@@@std@@6B@ basic_streambuf_char_vtable
+@ extern ??_7?$basic_streambuf@GU?$char_traits@G@std@@@std@@6B@ basic_streambuf_short_vtable
+@ extern ??_7?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@6B@ basic_streambuf_wchar_vtable
+@ extern ??_7?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ basic_stringbuf_char_vtable
+@ extern ??_7?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ basic_stringbuf_short_vtable
+@ extern ??_7?$basic_stringbuf@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@6B@ basic_stringbuf_wchar_vtable
+@ extern ??_7?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ basic_stringstream_char_vtable
+@ extern ??_7?$basic_stringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ basic_stringstream_short_vtable
+@ extern ??_7?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@6B@ basic_stringstream_wchar_vtable
+@ extern ??_7?$codecvt@DDH@std@@6B@ codecvt_char_vtable
+@ extern ??_7?$codecvt@GDH@std@@6B@ codecvt_short_vtable
+@ extern ??_7?$codecvt@_WDH@std@@6B@ codecvt_wchar_vtable
+@ extern ??_7?$collate@D@std@@6B@ collate_char_vtable
+@ extern ??_7?$collate@G@std@@6B@ collate_short_vtable
+@ extern ??_7?$collate@_W@std@@6B@ collate_wchar_vtable
+@ extern ??_7?$ctype@D@std@@6B@ ctype_char_vtable
+@ extern ??_7?$ctype@G@std@@6B@ ctype_short_vtable
+@ extern ??_7?$ctype@_W@std@@6B@ ctype_wchar_vtable
 # extern ??_7?$messages@D@std@@6B@
 # extern ??_7?$messages@G@std@@6B@
 # extern ??_7?$messages@_W@std@@6B@
@@ -1487,28 +1487,28 @@
 # extern ??_7?$moneypunct@G$0A@@std@@6B@
 # extern ??_7?$moneypunct@_W$00@std@@6B@
 # extern ??_7?$moneypunct@_W$0A@@std@@6B@
-@ extern ??_7?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@ MSVCP_num_get_char_vtable
-@ extern ??_7?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@ MSVCP_num_get_short_vtable
-@ extern ??_7?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@6B@ MSVCP_num_get_wchar_vtable
-@ extern ??_7?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@ MSVCP_num_put_char_vtable
-@ extern ??_7?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@ MSVCP_num_put_short_vtable
-@ extern ??_7?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@6B@ MSVCP_num_put_wchar_vtable
-@ extern ??_7?$numpunct@D@std@@6B@ MSVCP_numpunct_char_vtable
-@ extern ??_7?$numpunct@G@std@@6B@ MSVCP_numpunct_short_vtable
-@ extern ??_7?$numpunct@_W@std@@6B@ MSVCP_numpunct_wchar_vtable
-@ extern ??_7?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@ MSVCP_time_get_char_vtable
+@ extern ??_7?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@ num_get_char_vtable
+@ extern ??_7?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@ num_get_short_vtable
+@ extern ??_7?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@6B@ num_get_wchar_vtable
+@ extern ??_7?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@ num_put_char_vtable
+@ extern ??_7?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@ num_put_short_vtable
+@ extern ??_7?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@6B@ num_put_wchar_vtable
+@ extern ??_7?$numpunct@D@std@@6B@ numpunct_char_vtable
+@ extern ??_7?$numpunct@G@std@@6B@ numpunct_short_vtable
+@ extern ??_7?$numpunct@_W@std@@6B@ numpunct_wchar_vtable
+@ extern ??_7?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@ time_get_char_vtable
 # extern ??_7?$time_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@
-@ extern ??_7?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@6B@ MSVCP_time_get_wchar_vtable
-@ extern ??_7?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@ MSVCP_time_put_char_vtable
-@ extern ??_7?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@ MSVCP_time_put_short_vtable
-@ extern ??_7?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@6B@ MSVCP_time_put_wchar_vtable
+@ extern ??_7?$time_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@6B@ time_get_wchar_vtable
+@ extern ??_7?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@ time_put_char_vtable
+@ extern ??_7?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@ time_put_short_vtable
+@ extern ??_7?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@6B@ time_put_wchar_vtable
 # extern ??_7__non_rtti_object@std@@6B@
-@ extern ??_7bad_cast@std@@6B@ MSVCP_bad_cast_vtable
+@ extern ??_7bad_cast@std@@6B@ bad_cast_vtable
 # extern ??_7bad_typeid@std@@6B@
-@ extern ??_7codecvt_base@std@@6B@ MSVCP_codecvt_base_vtable
-@ extern ??_7ctype_base@std@@6B@ MSVCP_ctype_base_vtable
-@ extern ??_7facet@locale@std@@6B@ MSVCP_locale_facet_vtable
-@ extern ??_7ios_base@std@@6B@ MSVCP_ios_base_vtable
+@ extern ??_7codecvt_base@std@@6B@ codecvt_base_vtable
+@ extern ??_7ctype_base@std@@6B@ ctype_base_vtable
+@ extern ??_7facet@locale@std@@6B@ locale_facet_vtable
+@ extern ??_7ios_base@std@@6B@ ios_base_vtable
 # extern ??_7messages_base@std@@6B@
 # extern ??_7money_base@std@@6B@
 # extern ??_7time_base@std@@6B@

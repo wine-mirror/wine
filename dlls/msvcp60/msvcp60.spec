@@ -659,8 +659,8 @@
 @ cdecl -arch=win64 ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@PEBD_KAEBV?$allocator@D@1@@Z(ptr ptr long ptr) MSVCP_basic_string_char_ctor_cstr_len_alloc
 @ thiscall -arch=win32 ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@PBDIABV?$allocator@D@1@@Z(ptr ptr long ptr) MSVCP_basic_string_char_ctor_cstr_len_alloc
 @ cdecl -arch=win64 ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@_KDAEBV?$allocator@D@1@@Z(ptr long long ptr) MSVCP_basic_string_char_ctor_ch_alloc
-@ thiscall -arch=win32 ??0?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE@ABV01@@Z(ptr ptr) MSVCP_basic_string_wchar_copy_ctor
-@ cdecl -arch=win64 ??0?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_basic_string_wchar_copy_ctor
+@ thiscall -arch=win32 ??0?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE@ABV01@@Z(ptr ptr) basic_string_wchar_copy_ctor
+@ cdecl -arch=win64 ??0?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAA@AEBV01@@Z(ptr ptr) basic_string_wchar_copy_ctor
 @ thiscall -arch=win32 ??0?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE@ABV01@IIABV?$allocator@G@1@@Z(ptr ptr long long ptr) MSVCP_basic_string_wchar_ctor_substr_alloc
 @ cdecl -arch=win64 ??0?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAA@AEBV01@_K1AEBV?$allocator@G@1@@Z(ptr ptr long long ptr) MSVCP_basic_string_wchar_ctor_substr_alloc
 @ thiscall -arch=win32 ??0?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE@ABV?$allocator@G@1@@Z(ptr ptr) MSVCP_basic_string_wchar_ctor_alloc
@@ -839,14 +839,14 @@
 @ stub -arch=win64 ??0__non_rtti_object@std@@QEAA@AEBV01@@Z
 @ stub -arch=win32 ??0__non_rtti_object@std@@QAE@PBD@Z
 @ stub -arch=win64 ??0__non_rtti_object@std@@QEAA@PEBD@Z
-@ thiscall -arch=win32 ??0bad_alloc@std@@QAE@ABV01@@Z(ptr ptr) MSVCP_bad_alloc_copy_ctor
-@ cdecl -arch=win64 ??0bad_alloc@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_bad_alloc_copy_ctor
+@ thiscall -arch=win32 ??0bad_alloc@std@@QAE@ABV01@@Z(ptr ptr) bad_alloc_copy_ctor
+@ cdecl -arch=win64 ??0bad_alloc@std@@QEAA@AEBV01@@Z(ptr ptr) bad_alloc_copy_ctor
 @ thiscall -arch=win32 ??0bad_alloc@std@@QAE@PBD@Z(ptr str) MSVCP_bad_alloc_ctor
 @ cdecl -arch=win64 ??0bad_alloc@std@@QEAA@PEBD@Z(ptr str) MSVCP_bad_alloc_ctor
 @ thiscall -arch=win32 ??0bad_alloc@std@@QAE@XZ(ptr) MSVCP_bad_alloc_default_ctor
 @ cdecl -arch=win64 ??0bad_alloc@std@@QEAA@XZ(ptr) MSVCP_bad_alloc_default_ctor
-@ thiscall -arch=i386 ??0bad_cast@std@@QAE@ABV01@@Z(ptr ptr) MSVCP_bad_cast_copy_ctor
-@ cdecl -arch=win64 ??0bad_cast@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_bad_cast_copy_ctor
+@ thiscall -arch=i386 ??0bad_cast@std@@QAE@ABV01@@Z(ptr ptr) bad_cast_copy_ctor
+@ cdecl -arch=win64 ??0bad_cast@std@@QEAA@AEBV01@@Z(ptr ptr) bad_cast_copy_ctor
 @ thiscall -arch=i386 ??0bad_cast@std@@QAE@PBD@Z(ptr str) MSVCP_bad_cast_ctor
 @ cdecl -arch=win64 ??0bad_cast@std@@QEAA@PEBD@Z(ptr str) MSVCP_bad_cast_ctor
 @ stub -arch=win32 ??0bad_exception@std@@QAE@ABV01@@Z
@@ -871,8 +871,8 @@
 @ cdecl -arch=win64 ??0ios_base@std@@IEAA@XZ(ptr) ios_base_ctor
 @ thiscall -arch=win32 ??0ios_base@std@@QAE@ABV01@@Z(ptr ptr) ios_base_copy_ctor
 @ cdecl -arch=win64 ??0ios_base@std@@QEAA@AEBV01@@Z(ptr ptr) ios_base_copy_ctor
-@ thiscall -arch=win32 ??0length_error@std@@QAE@ABV01@@Z(ptr ptr) MSVCP_length_error_copy_ctor
-@ cdecl -arch=win64 ??0length_error@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_length_error_copy_ctor
+@ thiscall -arch=win32 ??0length_error@std@@QAE@ABV01@@Z(ptr ptr) length_error_copy_ctor
+@ cdecl -arch=win64 ??0length_error@std@@QEAA@AEBV01@@Z(ptr ptr) length_error_copy_ctor
 @ thiscall -arch=win32 ??0length_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_length_error_ctor_bstr
 @ cdecl -arch=win64 ??0length_error@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_length_error_ctor_bstr
 @ thiscall -arch=win32 ??0locale@std@@AAE@PAV_Locimp@01@@Z(ptr ptr) locale_ctor_locimp
@@ -889,8 +889,8 @@
 @ cdecl -arch=win64 ??0locale@std@@QEAA@W4_Uninitialized@1@@Z(ptr long) locale_ctor_uninitialized
 @ thiscall -arch=win32 ??0locale@std@@QAE@XZ(ptr) locale_ctor
 @ cdecl -arch=win64 ??0locale@std@@QEAA@XZ(ptr) locale_ctor
-@ thiscall -arch=win32 ??0logic_error@std@@QAE@ABV01@@Z(ptr ptr) MSVCP_logic_error_copy_ctor
-@ cdecl -arch=win64 ??0logic_error@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_logic_error_copy_ctor
+@ thiscall -arch=win32 ??0logic_error@std@@QAE@ABV01@@Z(ptr ptr) logic_error_copy_ctor
+@ cdecl -arch=win64 ??0logic_error@std@@QEAA@AEBV01@@Z(ptr ptr) logic_error_copy_ctor
 @ thiscall -arch=win32 ??0logic_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_logic_error_ctor_bstr
 @ cdecl -arch=win64 ??0logic_error@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_logic_error_ctor_bstr
 @ stub -arch=win32 ??0messages_base@std@@QAE@I@Z
@@ -899,20 +899,20 @@
 @ stub -arch=win64 ??0money_base@std@@QEAA@_K@Z
 @ thiscall -arch=win32 ??0ostrstream@std@@QAE@PADHH@Z(ptr ptr long long long) ostrstream_ctor
 @ cdecl -arch=win64 ??0ostrstream@std@@QEAA@PEAD_JH@Z(ptr ptr long long long) ostrstream_ctor
-@ thiscall -arch=win32 ??0out_of_range@std@@QAE@ABV01@@Z(ptr ptr) MSVCP_out_of_range_copy_ctor
-@ cdecl -arch=win64 ??0out_of_range@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_out_of_range_copy_ctor
+@ thiscall -arch=win32 ??0out_of_range@std@@QAE@ABV01@@Z(ptr ptr) out_of_range_copy_ctor
+@ cdecl -arch=win64 ??0out_of_range@std@@QEAA@AEBV01@@Z(ptr ptr) out_of_range_copy_ctor
 @ thiscall -arch=win32 ??0out_of_range@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_out_of_range_ctor_bstr
 @ cdecl -arch=win64 ??0out_of_range@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_out_of_range_ctor_bstr
 @ stub -arch=win32 ??0overflow_error@std@@QAE@ABV01@@Z
 @ stub -arch=win64 ??0overflow_error@std@@QEAA@AEBV01@@Z
 @ stub -arch=win32 ??0overflow_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z
 @ stub -arch=win64 ??0overflow_error@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z
-@ thiscall -arch=win32 ??0range_error@std@@QAE@ABV01@@Z(ptr ptr) MSVCP_range_error_copy_ctor
-@ cdecl -arch=win64 ??0range_error@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_range_error_copy_ctor
+@ thiscall -arch=win32 ??0range_error@std@@QAE@ABV01@@Z(ptr ptr) range_error_copy_ctor
+@ cdecl -arch=win64 ??0range_error@std@@QEAA@AEBV01@@Z(ptr ptr) range_error_copy_ctor
 @ thiscall -arch=win32 ??0range_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_range_error_ctor_bstr
 @ cdecl -arch=win64 ??0range_error@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_range_error_ctor_bstr
-@ thiscall -arch=win32 ??0runtime_error@std@@QAE@ABV01@@Z(ptr ptr) MSVCP_runtime_error_copy_ctor
-@ cdecl -arch=win64 ??0runtime_error@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_runtime_error_copy_ctor
+@ thiscall -arch=win32 ??0runtime_error@std@@QAE@ABV01@@Z(ptr ptr) runtime_error_copy_ctor
+@ cdecl -arch=win64 ??0runtime_error@std@@QEAA@AEBV01@@Z(ptr ptr) runtime_error_copy_ctor
 @ thiscall -arch=win32 ??0runtime_error@std@@QAE@ABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_runtime_error_ctor_bstr
 @ cdecl -arch=win64 ??0runtime_error@std@@QEAA@AEBV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@1@@Z(ptr ptr) MSVCP_runtime_error_ctor_bstr
 @ thiscall -arch=win32 ??0strstream@std@@QAE@PADHH@Z(ptr ptr long long long) strstream_ctor
@@ -1761,38 +1761,38 @@
 @ stub -arch=win64 ??_0std@@YAAEAV?$complex@O@0@AEAV10@AEBV10@@Z
 # extern ??_7?$_Mpunct@D@std@@6B@
 # extern ??_7?$_Mpunct@G@std@@6B@
-@ extern ??_7?$basic_filebuf@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_filebuf_char_vtable
-@ extern ??_7?$basic_filebuf@GU?$char_traits@G@std@@@std@@6B@ MSVCP_basic_filebuf_short_vtable
-@ extern ??_7?$basic_fstream@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_fstream_char_vtable
-@ extern ??_7?$basic_fstream@GU?$char_traits@G@std@@@std@@6B@ MSVCP_basic_fstream_short_vtable
-@ extern ??_7?$basic_ifstream@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_ifstream_char_vtable
-@ extern ??_7?$basic_ifstream@GU?$char_traits@G@std@@@std@@6B@ MSVCP_basic_ifstream_short_vtable
-@ extern ??_7?$basic_ios@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_ios_char_vtable
-@ extern ??_7?$basic_ios@GU?$char_traits@G@std@@@std@@6B@ MSVCP_basic_ios_short_vtable
-@ extern ??_7?$basic_iostream@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_iostream_char_vtable
-@ extern ??_7?$basic_iostream@GU?$char_traits@G@std@@@std@@6B@ MSVCP_basic_iostream_short_vtable
-@ extern ??_7?$basic_istream@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_istream_char_vtable
-@ extern ??_7?$basic_istream@GU?$char_traits@G@std@@@std@@6B@ MSVCP_basic_istream_short_vtable
-@ extern ??_7?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ MSVCP_basic_istringstream_char_vtable
-@ extern ??_7?$basic_istringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ MSVCP_basic_istringstream_short_vtable
-@ extern ??_7?$basic_ofstream@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_ofstream_char_vtable
-@ extern ??_7?$basic_ofstream@GU?$char_traits@G@std@@@std@@6B@ MSVCP_basic_ofstream_short_vtable
-@ extern ??_7?$basic_ostream@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_ostream_char_vtable
-@ extern ??_7?$basic_ostream@GU?$char_traits@G@std@@@std@@6B@ MSVCP_basic_ostream_short_vtable
-@ extern ??_7?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ MSVCP_basic_ostringstream_char_vtable
-@ extern ??_7?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ MSVCP_basic_ostringstream_short_vtable
-@ extern ??_7?$basic_streambuf@DU?$char_traits@D@std@@@std@@6B@ MSVCP_basic_streambuf_char_vtable
-@ extern ??_7?$basic_streambuf@GU?$char_traits@G@std@@@std@@6B@ MSVCP_basic_streambuf_short_vtable
-@ extern ??_7?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ MSVCP_basic_stringbuf_char_vtable
-@ extern ??_7?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ MSVCP_basic_stringbuf_short_vtable
-@ extern ??_7?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ MSVCP_basic_stringstream_char_vtable
-@ extern ??_7?$basic_stringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ MSVCP_basic_stringstream_short_vtable
-@ extern ??_7?$codecvt@DDH@std@@6B@ MSVCP_codecvt_char_vtable
-@ extern ??_7?$codecvt@GDH@std@@6B@ MSVCP_codecvt_short_vtable
-@ extern ??_7?$collate@D@std@@6B@ MSVCP_collate_char_vtable
-@ extern ??_7?$collate@G@std@@6B@ MSVCP_collate_short_vtable
-@ extern ??_7?$ctype@D@std@@6B@ MSVCP_ctype_char_vtable
-@ extern ??_7?$ctype@G@std@@6B@ MSVCP_ctype_short_vtable
+@ extern ??_7?$basic_filebuf@DU?$char_traits@D@std@@@std@@6B@ basic_filebuf_char_vtable
+@ extern ??_7?$basic_filebuf@GU?$char_traits@G@std@@@std@@6B@ basic_filebuf_short_vtable
+@ extern ??_7?$basic_fstream@DU?$char_traits@D@std@@@std@@6B@ basic_fstream_char_vtable
+@ extern ??_7?$basic_fstream@GU?$char_traits@G@std@@@std@@6B@ basic_fstream_short_vtable
+@ extern ??_7?$basic_ifstream@DU?$char_traits@D@std@@@std@@6B@ basic_ifstream_char_vtable
+@ extern ??_7?$basic_ifstream@GU?$char_traits@G@std@@@std@@6B@ basic_ifstream_short_vtable
+@ extern ??_7?$basic_ios@DU?$char_traits@D@std@@@std@@6B@ basic_ios_char_vtable
+@ extern ??_7?$basic_ios@GU?$char_traits@G@std@@@std@@6B@ basic_ios_short_vtable
+@ extern ??_7?$basic_iostream@DU?$char_traits@D@std@@@std@@6B@ basic_iostream_char_vtable
+@ extern ??_7?$basic_iostream@GU?$char_traits@G@std@@@std@@6B@ basic_iostream_short_vtable
+@ extern ??_7?$basic_istream@DU?$char_traits@D@std@@@std@@6B@ basic_istream_char_vtable
+@ extern ??_7?$basic_istream@GU?$char_traits@G@std@@@std@@6B@ basic_istream_short_vtable
+@ extern ??_7?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ basic_istringstream_char_vtable
+@ extern ??_7?$basic_istringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ basic_istringstream_short_vtable
+@ extern ??_7?$basic_ofstream@DU?$char_traits@D@std@@@std@@6B@ basic_ofstream_char_vtable
+@ extern ??_7?$basic_ofstream@GU?$char_traits@G@std@@@std@@6B@ basic_ofstream_short_vtable
+@ extern ??_7?$basic_ostream@DU?$char_traits@D@std@@@std@@6B@ basic_ostream_char_vtable
+@ extern ??_7?$basic_ostream@GU?$char_traits@G@std@@@std@@6B@ basic_ostream_short_vtable
+@ extern ??_7?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ basic_ostringstream_char_vtable
+@ extern ??_7?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ basic_ostringstream_short_vtable
+@ extern ??_7?$basic_streambuf@DU?$char_traits@D@std@@@std@@6B@ basic_streambuf_char_vtable
+@ extern ??_7?$basic_streambuf@GU?$char_traits@G@std@@@std@@6B@ basic_streambuf_short_vtable
+@ extern ??_7?$basic_stringbuf@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ basic_stringbuf_char_vtable
+@ extern ??_7?$basic_stringbuf@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ basic_stringbuf_short_vtable
+@ extern ??_7?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ basic_stringstream_char_vtable
+@ extern ??_7?$basic_stringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ basic_stringstream_short_vtable
+@ extern ??_7?$codecvt@DDH@std@@6B@ codecvt_char_vtable
+@ extern ??_7?$codecvt@GDH@std@@6B@ codecvt_short_vtable
+@ extern ??_7?$collate@D@std@@6B@ collate_char_vtable
+@ extern ??_7?$collate@G@std@@6B@ collate_short_vtable
+@ extern ??_7?$ctype@D@std@@6B@ ctype_char_vtable
+@ extern ??_7?$ctype@G@std@@6B@ ctype_short_vtable
 # extern ??_7?$messages@D@std@@6B@
 # extern ??_7?$messages@G@std@@6B@
 # extern ??_7?$money_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@
@@ -1803,34 +1803,34 @@
 # extern ??_7?$moneypunct@D$0A@@std@@6B@
 # extern ??_7?$moneypunct@G$00@std@@6B@
 # extern ??_7?$moneypunct@G$0A@@std@@6B@
-@ extern ??_7?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@ MSVCP_num_get_char_vtable
-@ extern ??_7?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@ MSVCP_num_get_short_vtable
-@ extern ??_7?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@ MSVCP_num_put_char_vtable
-@ extern ??_7?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@ MSVCP_num_put_short_vtable
-@ extern ??_7?$numpunct@D@std@@6B@ MSVCP_numpunct_char_vtable
-@ extern ??_7?$numpunct@G@std@@6B@ MSVCP_numpunct_short_vtable
-@ extern ??_7?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@ MSVCP_time_get_char_vtable
+@ extern ??_7?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@ num_get_char_vtable
+@ extern ??_7?$num_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@ num_get_short_vtable
+@ extern ??_7?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@ num_put_char_vtable
+@ extern ??_7?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@ num_put_short_vtable
+@ extern ??_7?$numpunct@D@std@@6B@ numpunct_char_vtable
+@ extern ??_7?$numpunct@G@std@@6B@ numpunct_short_vtable
+@ extern ??_7?$time_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@ time_get_char_vtable
 # extern ??_7?$time_get@GV?$istreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@
-@ extern ??_7?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@ MSVCP_time_put_char_vtable
-@ extern ??_7?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@ MSVCP_time_put_short_vtable
+@ extern ??_7?$time_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@6B@ time_put_char_vtable
+@ extern ??_7?$time_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@6B@ time_put_short_vtable
 # extern ??_7__non_rtti_object@std@@6B@
-@ extern ??_7bad_alloc@std@@6B@ MSVCP_bad_alloc_vtable
-@ extern ??_7bad_cast@std@@6B@ MSVCP_bad_cast_vtable
+@ extern ??_7bad_alloc@std@@6B@ bad_alloc_vtable
+@ extern ??_7bad_cast@std@@6B@ bad_cast_vtable
 # extern ??_7bad_exception@std@@6B@
 # extern ??_7bad_typeid@std@@6B@
-@ extern ??_7codecvt_base@std@@6B@ MSVCP_codecvt_base_vtable
-@ extern ??_7ctype_base@std@@6B@ MSVCP_ctype_base_vtable
+@ extern ??_7codecvt_base@std@@6B@ codecvt_base_vtable
+@ extern ??_7ctype_base@std@@6B@ ctype_base_vtable
 # extern ??_7domain_error@std@@6B@
-@ extern ??_7facet@locale@std@@6B@ MSVCP_locale_facet_vtable
-@ extern ??_7ios_base@std@@6B@ MSVCP_ios_base_vtable
-@ extern ??_7length_error@std@@6B@ MSVCP_length_error_vtable
-@ extern ??_7logic_error@std@@6B@ MSVCP_logic_error_vtable
+@ extern ??_7facet@locale@std@@6B@ locale_facet_vtable
+@ extern ??_7ios_base@std@@6B@ ios_base_vtable
+@ extern ??_7length_error@std@@6B@ length_error_vtable
+@ extern ??_7logic_error@std@@6B@ logic_error_vtable
 # extern ??_7messages_base@std@@6B@
 # extern ??_7money_base@std@@6B@
-@ extern ??_7out_of_range@std@@6B@ MSVCP_out_of_range_vtable
+@ extern ??_7out_of_range@std@@6B@ out_of_range_vtable
 # extern ??_7overflow_error@std@@6B@
-@ extern ??_7range_error@std@@6B@ MSVCP_range_error_vtable
-@ extern ??_7runtime_error@std@@6B@ MSVCP_runtime_error_vtable
+@ extern ??_7range_error@std@@6B@ range_error_vtable
+@ extern ??_7runtime_error@std@@6B@ runtime_error_vtable
 # extern ??_7time_base@std@@6B@
 # extern ??_7underflow_error@std@@6B@
 @ extern ??_8?$basic_fstream@DU?$char_traits@D@std@@@std@@7B?$basic_istream@DU?$char_traits@D@std@@@1@@ basic_fstream_char_vbtable1

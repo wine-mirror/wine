@@ -4,8 +4,8 @@
 @ cdecl -arch=win64 ??0Iostream_init@@QEAA@XZ(ptr) Iostream_init_ctor
 @ thiscall -arch=i386 ??0exception@@QAE@ABQBD@Z(ptr ptr) MSVCP_exception_ctor
 @ cdecl -arch=win64 ??0exception@@QEAA@AEBQEBD@Z(ptr ptr) MSVCP_exception_ctor
-@ thiscall -arch=i386 ??0exception@@QAE@ABV0@@Z(ptr ptr) MSVCP_exception_copy_ctor
-@ cdecl -arch=win64 ??0exception@@QEAA@AEBV0@@Z(ptr ptr) MSVCP_exception_copy_ctor
+@ thiscall -arch=i386 ??0exception@@QAE@ABV0@@Z(ptr ptr) exception_copy_ctor
+@ cdecl -arch=win64 ??0exception@@QEAA@AEBV0@@Z(ptr ptr) exception_copy_ctor
 @ thiscall -arch=i386 ??0exception@@QAE@XZ(ptr) MSVCP_exception_default_ctor
 @ cdecl -arch=win64 ??0exception@@QEAA@XZ(ptr) MSVCP_exception_default_ctor
 @ thiscall -arch=win32 ??0filebuf@@QAE@ABV0@@Z(ptr ptr) filebuf_copy_ctor
@@ -68,8 +68,8 @@
 @ cdecl -arch=win64 ??0istrstream@@QEAA@PEADH@Z(ptr ptr long long) istrstream_buffer_ctor
 @ thiscall -arch=win32 ??0logic_error@@QAE@ABQBD@Z(ptr ptr) MSVCP_logic_error_ctor
 @ cdecl -arch=win64 ??0logic_error@@QEAA@AEBQEBD@Z(ptr ptr) MSVCP_logic_error_ctor
-@ thiscall -arch=win32 ??0logic_error@@QAE@ABV0@@Z(ptr ptr) MSVCP_logic_error_copy_ctor
-@ cdecl -arch=win64 ??0logic_error@@QEAA@AEBV0@@Z(ptr ptr) MSVCP_logic_error_copy_ctor
+@ thiscall -arch=win32 ??0logic_error@@QAE@ABV0@@Z(ptr ptr) logic_error_copy_ctor
+@ cdecl -arch=win64 ??0logic_error@@QEAA@AEBV0@@Z(ptr ptr) logic_error_copy_ctor
 @ thiscall -arch=win32 ??0ofstream@@QAE@ABV0@@Z(ptr ptr long) ofstream_copy_ctor
 @ cdecl -arch=win64 ??0ofstream@@QEAA@AEBV0@@Z(ptr ptr long) ofstream_copy_ctor
 @ thiscall -arch=win32 ??0ofstream@@QAE@H@Z(ptr long long) ofstream_fd_ctor
@@ -302,25 +302,25 @@
 @ cdecl -arch=win64 ??7ios@@QEBAHXZ(ptr) ios_op_not
 @ thiscall -arch=win32 ??Bios@@QBEPAXXZ(ptr) ios_op_void
 @ cdecl -arch=win64 ??Bios@@QEBAPEAXXZ(ptr) ios_op_void
-@ extern ??_7exception@@6B@ MSVCP_exception_vtable
-@ extern ??_7filebuf@@6B@ MSVCP_filebuf_vtable
-@ extern ??_7fstream@@6B@ MSVCP_fstream_vtable
-@ extern ??_7ifstream@@6B@ MSVCP_ifstream_vtable
-@ extern ??_7ios@@6B@ MSVCP_ios_vtable
-@ extern ??_7iostream@@6B@ MSVCP_iostream_vtable
-@ extern ??_7istream@@6B@ MSVCP_istream_vtable
-@ extern ??_7istream_withassign@@6B@ MSVCP_istream_vtable
-@ extern ??_7istrstream@@6B@ MSVCP_istrstream_vtable
-@ extern ??_7logic_error@@6B@ MSVCP_logic_error_vtable
-@ extern ??_7ofstream@@6B@ MSVCP_ofstream_vtable
-@ extern ??_7ostream@@6B@ MSVCP_ostream_vtable
-@ extern ??_7ostream_withassign@@6B@ MSVCP_ostream_withassign_vtable
-@ extern ??_7ostrstream@@6B@ MSVCP_ostrstream_vtable
-@ extern ??_7stdiobuf@@6B@ MSVCP_stdiobuf_vtable
-@ extern ??_7stdiostream@@6B@ MSVCP_stdiostream_vtable
-@ extern ??_7streambuf@@6B@ MSVCP_streambuf_vtable
-@ extern ??_7strstream@@6B@ MSVCP_strstream_vtable
-@ extern ??_7strstreambuf@@6B@ MSVCP_strstreambuf_vtable
+@ extern ??_7exception@@6B@ exception_vtable
+@ extern ??_7filebuf@@6B@ filebuf_vtable
+@ extern ??_7fstream@@6B@ fstream_vtable
+@ extern ??_7ifstream@@6B@ ifstream_vtable
+@ extern ??_7ios@@6B@ ios_vtable
+@ extern ??_7iostream@@6B@ iostream_vtable
+@ extern ??_7istream@@6B@ istream_vtable
+@ extern ??_7istream_withassign@@6B@ istream_vtable
+@ extern ??_7istrstream@@6B@ istrstream_vtable
+@ extern ??_7logic_error@@6B@ logic_error_vtable
+@ extern ??_7ofstream@@6B@ ofstream_vtable
+@ extern ??_7ostream@@6B@ ostream_vtable
+@ extern ??_7ostream_withassign@@6B@ ostream_withassign_vtable
+@ extern ??_7ostrstream@@6B@ ostrstream_vtable
+@ extern ??_7stdiobuf@@6B@ stdiobuf_vtable
+@ extern ??_7stdiostream@@6B@ stdiostream_vtable
+@ extern ??_7streambuf@@6B@ streambuf_vtable
+@ extern ??_7strstream@@6B@ strstream_vtable
+@ extern ??_7strstreambuf@@6B@ strstreambuf_vtable
 @ extern ??_8fstream@@7Bistream@@@ iostream_vbtable_istream
 @ extern ??_8fstream@@7Bostream@@@  iostream_vbtable_ostream
 @ extern ??_8ifstream@@7B@ istream_vbtable

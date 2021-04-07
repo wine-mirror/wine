@@ -171,39 +171,39 @@ typedef struct {
 } iostream;
 
 /* ??_7streambuf@@6B@ */
-extern const vtable_ptr MSVCP_streambuf_vtable;
+extern const vtable_ptr streambuf_vtable;
 /* ??_7filebuf@@6B@ */
-extern const vtable_ptr MSVCP_filebuf_vtable;
+extern const vtable_ptr filebuf_vtable;
 /* ??_7strstreambuf@@6B@ */
-extern const vtable_ptr MSVCP_strstreambuf_vtable;
+extern const vtable_ptr strstreambuf_vtable;
 /* ??_7stdiobuf@@6B@ */
-extern const vtable_ptr MSVCP_stdiobuf_vtable;
+extern const vtable_ptr stdiobuf_vtable;
 /* ??_7ios@@6B@ */
-extern const vtable_ptr MSVCP_ios_vtable;
+extern const vtable_ptr ios_vtable;
 /* ??_7ostream@@6B@ */
-extern const vtable_ptr MSVCP_ostream_vtable;
+extern const vtable_ptr ostream_vtable;
 /* ??_7ostream_withassign@@6B@ */
-extern const vtable_ptr MSVCP_ostream_withassign_vtable;
+extern const vtable_ptr ostream_withassign_vtable;
 /* ??_7ostrstream@@6B@ */
-extern const vtable_ptr MSVCP_ostrstream_vtable;
+extern const vtable_ptr ostrstream_vtable;
 /* ??_7ofstream@@6B@ */
-extern const vtable_ptr MSVCP_ofstream_vtable;
+extern const vtable_ptr ofstream_vtable;
 /* ??_7istream@@6B@ */
-extern const vtable_ptr MSVCP_istream_vtable;
+extern const vtable_ptr istream_vtable;
 /* ??_7istream_withassign@@6B@ */
-extern const vtable_ptr MSVCP_istream_withassign_vtable;
+extern const vtable_ptr istream_withassign_vtable;
 /* ??_7istrstream@@6B@ */
-extern const vtable_ptr MSVCP_istrstream_vtable;
+extern const vtable_ptr istrstream_vtable;
 /* ??_7ifstream@@6B@ */
-extern const vtable_ptr MSVCP_ifstream_vtable;
+extern const vtable_ptr ifstream_vtable;
 /* ??_7iostream@@6B@ */
-extern const vtable_ptr MSVCP_iostream_vtable;
+extern const vtable_ptr iostream_vtable;
 /* ??_7strstream@@6B@ */
-extern const vtable_ptr MSVCP_strstream_vtable;
+extern const vtable_ptr strstream_vtable;
 /* ??_7stdiostream@@6B@ */
-extern const vtable_ptr MSVCP_stdiostream_vtable;
+extern const vtable_ptr stdiostream_vtable;
 /* ??_7fstream@@6B@ */
-extern const vtable_ptr MSVCP_fstream_vtable;
+extern const vtable_ptr fstream_vtable;
 
 __ASM_BLOCK_BEGIN(vtables)
     __ASM_VTABLE(streambuf,
@@ -357,7 +357,7 @@ DEFINE_THISCALL_WRAPPER(streambuf_reserve_ctor, 12)
 streambuf* __thiscall streambuf_reserve_ctor(streambuf *this, char *buffer, int length)
 {
     TRACE("(%p %p %d)\n", this, buffer, length);
-    this->vtable = &MSVCP_streambuf_vtable;
+    this->vtable = &streambuf_vtable;
     this->allocated = 0;
     this->stored_char = EOF;
     this->do_lock = -1;
@@ -386,7 +386,7 @@ streambuf* __thiscall streambuf_copy_ctor(streambuf *this, const streambuf *copy
 {
     TRACE("(%p %p)\n", this, copy);
     *this = *copy;
-    this->vtable = &MSVCP_streambuf_vtable;
+    this->vtable = &streambuf_vtable;
     return this;
 }
 
@@ -961,7 +961,7 @@ filebuf* __thiscall filebuf_copy_ctor(filebuf* this, const filebuf *copy)
 {
     TRACE("(%p %p)\n", this, copy);
     *this = *copy;
-    this->base.vtable = &MSVCP_filebuf_vtable;
+    this->base.vtable = &filebuf_vtable;
     return this;
 }
 
@@ -972,7 +972,7 @@ filebuf* __thiscall filebuf_fd_reserve_ctor(filebuf* this, filedesc fd, char *bu
 {
     TRACE("(%p %d %p %d)\n", this, fd, buffer, length);
     streambuf_reserve_ctor(&this->base, buffer, length);
-    this->base.vtable = &MSVCP_filebuf_vtable;
+    this->base.vtable = &filebuf_vtable;
     this->fd = fd;
     this->close = 0;
     return this;
@@ -1305,7 +1305,7 @@ strstreambuf* __thiscall strstreambuf_copy_ctor(strstreambuf *this, const strstr
 {
     TRACE("(%p %p)\n", this, copy);
     *this = *copy;
-    this->base.vtable = &MSVCP_strstreambuf_vtable;
+    this->base.vtable = &strstreambuf_vtable;
     return this;
 }
 
@@ -1316,7 +1316,7 @@ strstreambuf* __thiscall strstreambuf_dynamic_ctor(strstreambuf* this, int lengt
 {
     TRACE("(%p %d)\n", this, length);
     streambuf_ctor(&this->base);
-    this->base.vtable = &MSVCP_strstreambuf_vtable;
+    this->base.vtable = &strstreambuf_vtable;
     this->dynamic = 1;
     this->increase = length;
     this->constant = 0;
@@ -1361,7 +1361,7 @@ strstreambuf* __thiscall strstreambuf_buffer_ctor(strstreambuf *this, char *buff
         streambuf_setg(&this->base, buffer, buffer, put);
         streambuf_setp(&this->base, put, end_buffer);
     }
-    this->base.vtable = &MSVCP_strstreambuf_vtable;
+    this->base.vtable = &strstreambuf_vtable;
     this->dynamic = 0;
     this->constant = 1;
     return this;
@@ -1608,7 +1608,7 @@ stdiobuf* __thiscall stdiobuf_copy_ctor(stdiobuf *this, const stdiobuf *copy)
 {
     TRACE("(%p %p)\n", this, copy);
     *this = *copy;
-    this->base.vtable = &MSVCP_stdiobuf_vtable;
+    this->base.vtable = &stdiobuf_vtable;
     return this;
 }
 
@@ -1619,7 +1619,7 @@ stdiobuf* __thiscall stdiobuf_file_ctor(stdiobuf *this, FILE *file)
 {
     TRACE("(%p %p)\n", this, file);
     streambuf_reserve_ctor(&this->base, NULL, 0);
-    this->base.vtable = &MSVCP_stdiobuf_vtable;
+    this->base.vtable = &stdiobuf_vtable;
     this->file = file;
     return this;
 }
@@ -1835,7 +1835,7 @@ ios* __thiscall ios_copy_ctor(ios *this, const ios *copy)
 {
     TRACE("(%p %p)\n", this, copy);
     ios_fLockcInit++;
-    this->vtable = &MSVCP_ios_vtable;
+    this->vtable = &ios_vtable;
     this->sb = NULL;
     this->delbuf = 0;
     this->do_lock = -1;
@@ -1850,7 +1850,7 @@ ios* __thiscall ios_sb_ctor(ios *this, streambuf *sb)
 {
     TRACE("(%p %p)\n", this, sb);
     ios_fLockcInit++;
-    this->vtable = &MSVCP_ios_vtable;
+    this->vtable = &ios_vtable;
     this->sb = sb;
     this->state = sb ? IOSTATE_goodbit : IOSTATE_badbit;
     this->special[0] = this->special[1] = 0;
@@ -2381,7 +2381,7 @@ ostream* __thiscall ostream_ctor(ostream *this, BOOL virt_init)
         ios_ctor(base);
     } else
         base = ostream_get_ios(this);
-    base->vtable = &MSVCP_ostream_vtable;
+    base->vtable = &ostream_vtable;
     this->unknown = 0;
     return this;
 }
@@ -2977,7 +2977,7 @@ ostream* __thiscall ostream_withassign_copy_ctor(ostream *this, const ostream *c
     } else
         base = ostream_get_ios(this);
     ios_init(base, base_copy->sb);
-    base->vtable = &MSVCP_ostream_withassign_vtable;
+    base->vtable = &ostream_withassign_vtable;
     this->unknown = 0;
     return this;
 }
@@ -2993,7 +2993,7 @@ ostream* __thiscall ostream_withassign_sb_ctor(ostream *this, streambuf *sb, BOO
 
     ostream_sb_ctor(this, sb, virt_init);
     base = ostream_get_ios(this);
-    base->vtable = &MSVCP_ostream_withassign_vtable;
+    base->vtable = &ostream_withassign_vtable;
     return this;
 }
 
@@ -3008,7 +3008,7 @@ ostream* __thiscall ostream_withassign_ctor(ostream *this, BOOL virt_init)
 
     ostream_ctor(this, virt_init);
     base = ostream_get_ios(this);
-    base->vtable = &MSVCP_ostream_withassign_vtable;
+    base->vtable = &ostream_withassign_vtable;
     return this;
 }
 
@@ -3021,7 +3021,7 @@ static ostream* ostrstream_internal_sb_ctor(ostream *this, strstreambuf *ssb, BO
     else
         ostream_ctor(this, virt_init);
     base = ostream_get_ios(this);
-    base->vtable = &MSVCP_ostrstream_vtable;
+    base->vtable = &ostrstream_vtable;
     base->delbuf = 1;
     return this;
 }
@@ -3033,7 +3033,7 @@ ostream* __thiscall ostrstream_copy_ctor(ostream *this, const ostream *copy, BOO
 {
     TRACE("(%p %p %d)\n", this, copy, virt_init);
     ostream_withassign_copy_ctor(this, copy, virt_init);
-    ostream_get_ios(this)->vtable = &MSVCP_ostrstream_vtable;
+    ostream_get_ios(this)->vtable = &ostrstream_vtable;
     return this;
 }
 
@@ -3108,7 +3108,7 @@ ostream* __thiscall ofstream_copy_ctor(ostream *this, const ostream *copy, BOOL 
 {
     TRACE("(%p %p %d)\n", this, copy, virt_init);
     ostream_withassign_copy_ctor(this, copy, virt_init);
-    ostream_get_ios(this)->vtable = &MSVCP_ofstream_vtable;
+    ostream_get_ios(this)->vtable = &ofstream_vtable;
     return this;
 }
 
@@ -3131,7 +3131,7 @@ ostream* __thiscall ofstream_buffer_ctor(ostream *this, filedesc fd, char *buffe
     ostream_sb_ctor(this, &fb->base, virt_init);
 
     base = ostream_get_ios(this);
-    base->vtable = &MSVCP_ofstream_vtable;
+    base->vtable = &ofstream_vtable;
     base->delbuf = 1;
 
     return this;
@@ -3156,7 +3156,7 @@ ostream* __thiscall ofstream_fd_ctor(ostream *this, filedesc fd, BOOL virt_init)
     ostream_sb_ctor(this, &fb->base, virt_init);
 
     base = ostream_get_ios(this);
-    base->vtable = &MSVCP_ofstream_vtable;
+    base->vtable = &ofstream_vtable;
     base->delbuf = 1;
 
     return this;
@@ -3181,7 +3181,7 @@ ostream* __thiscall ofstream_open_ctor(ostream *this, const char *name, int mode
     ostream_sb_ctor(this, &fb->base, virt_init);
 
     base = ostream_get_ios(this);
-    base->vtable = &MSVCP_ofstream_vtable;
+    base->vtable = &ofstream_vtable;
     base->delbuf = 1;
 
     if (filebuf_open(fb, name, mode|OPENMODE_out, protection) == NULL)
@@ -3316,7 +3316,7 @@ istream* __thiscall istream_ctor(istream *this, BOOL virt_init)
         ios_ctor(base);
     } else
         base = istream_get_ios(this);
-    base->vtable = &MSVCP_istream_vtable;
+    base->vtable = &istream_vtable;
     base->flags |= FLAGS_skipws;
     this->extract_delim = 0;
     this->count = 0;
@@ -4239,7 +4239,7 @@ istream* __thiscall istream_withassign_copy_ctor(istream *this, const istream *c
     } else
         base = istream_get_ios(this);
     ios_init(base, base_copy->sb);
-    base->vtable = &MSVCP_istream_withassign_vtable;
+    base->vtable = &istream_withassign_vtable;
     base->flags |= FLAGS_skipws;
     this->extract_delim = 0;
     this->count = 0;
@@ -4257,7 +4257,7 @@ istream* __thiscall istream_withassign_sb_ctor(istream *this, streambuf *sb, BOO
 
     istream_sb_ctor(this, sb, virt_init);
     base = istream_get_ios(this);
-    base->vtable = &MSVCP_istream_withassign_vtable;
+    base->vtable = &istream_withassign_vtable;
     return this;
 }
 
@@ -4272,7 +4272,7 @@ istream* __thiscall istream_withassign_ctor(istream *this, BOOL virt_init)
 
     istream_ctor(this, virt_init);
     base = istream_get_ios(this);
-    base->vtable = &MSVCP_istream_withassign_vtable;
+    base->vtable = &istream_withassign_vtable;
     return this;
 }
 
@@ -4283,7 +4283,7 @@ istream* __thiscall istrstream_copy_ctor(istream *this, const istream *copy, BOO
 {
     TRACE("(%p %p %d)\n", this, copy, virt_init);
     istream_withassign_copy_ctor(this, copy, virt_init);
-    istream_get_ios(this)->vtable = &MSVCP_istrstream_vtable;
+    istream_get_ios(this)->vtable = &istrstream_vtable;
     return this;
 }
 
@@ -4306,7 +4306,7 @@ istream* __thiscall istrstream_buffer_ctor(istream *this, char *buffer, int leng
     istream_sb_ctor(this, &ssb->base, virt_init);
 
     base = istream_get_ios(this);
-    base->vtable = &MSVCP_istrstream_vtable;
+    base->vtable = &istrstream_vtable;
     base->delbuf = 1;
     return this;
 }
@@ -4342,7 +4342,7 @@ istream* __thiscall ifstream_copy_ctor(istream *this, const istream *copy, BOOL 
 {
     TRACE("(%p %p %d)\n", this, copy, virt_init);
     istream_withassign_copy_ctor(this, copy, virt_init);
-    istream_get_ios(this)->vtable = &MSVCP_ifstream_vtable;
+    istream_get_ios(this)->vtable = &ifstream_vtable;
     return this;
 }
 
@@ -4365,7 +4365,7 @@ istream* __thiscall ifstream_buffer_ctor(istream *this, filedesc fd, char *buffe
     istream_sb_ctor(this, &fb->base, virt_init);
 
     base = istream_get_ios(this);
-    base->vtable = &MSVCP_ifstream_vtable;
+    base->vtable = &ifstream_vtable;
     base->delbuf = 1;
 
     return this;
@@ -4390,7 +4390,7 @@ istream* __thiscall ifstream_fd_ctor(istream *this, filedesc fd, BOOL virt_init)
     istream_sb_ctor(this, &fb->base, virt_init);
 
     base = istream_get_ios(this);
-    base->vtable = &MSVCP_ifstream_vtable;
+    base->vtable = &ifstream_vtable;
     base->delbuf = 1;
 
     return this;
@@ -4415,7 +4415,7 @@ istream* __thiscall ifstream_open_ctor(istream *this, const char *name, ios_open
     istream_sb_ctor(this, &fb->base, virt_init);
 
     base = istream_get_ios(this);
-    base->vtable = &MSVCP_ifstream_vtable;
+    base->vtable = &ifstream_vtable;
     base->delbuf = 1;
 
     if (filebuf_open(fb, name, mode|OPENMODE_in, protection) == NULL)
@@ -4548,7 +4548,7 @@ iostream* __thiscall iostream_ctor(iostream *this, BOOL virt_init)
         base = istream_get_ios(&this->base1);
     istream_ctor(&this->base1, FALSE);
     ostream_ctor(&this->base2, FALSE);
-    base->vtable = &MSVCP_iostream_vtable;
+    base->vtable = &iostream_vtable;
     return this;
 }
 
@@ -4707,7 +4707,7 @@ DEFINE_THISCALL_WRAPPER(strstream_copy_ctor, 12)
 iostream* __thiscall strstream_copy_ctor(iostream *this, const iostream *copy, BOOL virt_init)
 {
     TRACE("(%p %p %d)\n", this, copy, virt_init);
-    return iostream_internal_copy_ctor(this, copy, &MSVCP_strstream_vtable, virt_init);
+    return iostream_internal_copy_ctor(this, copy, &strstream_vtable, virt_init);
 }
 
 /* ??0strstream@@QAE@PADHH@Z */
@@ -4729,7 +4729,7 @@ iostream* __thiscall strstream_buffer_ctor(iostream *this, char *buffer, int len
     if ((mode & OPENMODE_out) && (mode & (OPENMODE_app|OPENMODE_ate)))
         ssb->base.pptr = buffer + strlen(buffer);
 
-    return iostream_internal_sb_ctor(this, &ssb->base, &MSVCP_strstream_vtable, virt_init);
+    return iostream_internal_sb_ctor(this, &ssb->base, &strstream_vtable, virt_init);
 }
 
 /* ??0strstream@@QAE@XZ */
@@ -4748,7 +4748,7 @@ iostream* __thiscall strstream_ctor(iostream *this, BOOL virt_init)
 
     strstreambuf_ctor(ssb);
 
-    return iostream_internal_sb_ctor(this, &ssb->base, &MSVCP_strstream_vtable, virt_init);
+    return iostream_internal_sb_ctor(this, &ssb->base, &strstream_vtable, virt_init);
 }
 
 /* ?pcount@strstream@@QBEHXZ */
@@ -4781,7 +4781,7 @@ DEFINE_THISCALL_WRAPPER(stdiostream_copy_ctor, 12)
 iostream* __thiscall stdiostream_copy_ctor(iostream *this, const iostream *copy, BOOL virt_init)
 {
     TRACE("(%p %p %d)\n", this, copy, virt_init);
-    return iostream_internal_copy_ctor(this, copy, &MSVCP_stdiostream_vtable, virt_init);
+    return iostream_internal_copy_ctor(this, copy, &stdiostream_vtable, virt_init);
 }
 
 /* ??0stdiostream@@QAE@PAU_iobuf@@@Z */
@@ -4800,7 +4800,7 @@ iostream* __thiscall stdiostream_file_ctor(iostream *this, FILE *file, BOOL virt
 
     stdiobuf_file_ctor(stb, file);
 
-    return iostream_internal_sb_ctor(this, &stb->base, &MSVCP_stdiostream_vtable, virt_init);
+    return iostream_internal_sb_ctor(this, &stb->base, &stdiostream_vtable, virt_init);
 }
 
 /* ?rdbuf@stdiostream@@QBEPAVstdiobuf@@XZ */
@@ -4817,7 +4817,7 @@ DEFINE_THISCALL_WRAPPER(fstream_copy_ctor, 12)
 iostream* __thiscall fstream_copy_ctor(iostream *this, const iostream *copy, BOOL virt_init)
 {
     TRACE("(%p %p %d)\n", this, copy, virt_init);
-    iostream_internal_copy_ctor(this, copy, &MSVCP_fstream_vtable, virt_init);
+    iostream_internal_copy_ctor(this, copy, &fstream_vtable, virt_init);
     return this;
 }
 
@@ -4838,7 +4838,7 @@ iostream* __thiscall fstream_buffer_ctor(iostream *this, filedesc fd, char *buff
 
     filebuf_fd_reserve_ctor(fb, fd, buffer, length);
 
-    iostream_internal_sb_ctor(this, &fb->base, &MSVCP_fstream_vtable, virt_init);
+    iostream_internal_sb_ctor(this, &fb->base, &fstream_vtable, virt_init);
 
     base = istream_get_ios(&this->base1);
     base->delbuf = 1;
@@ -4863,7 +4863,7 @@ iostream* __thiscall fstream_fd_ctor(iostream *this, filedesc fd, BOOL virt_init
 
     filebuf_fd_ctor(fb, fd);
 
-    iostream_internal_sb_ctor(this, &fb->base, &MSVCP_fstream_vtable, virt_init);
+    iostream_internal_sb_ctor(this, &fb->base, &fstream_vtable, virt_init);
 
     base = istream_get_ios(&this->base1);
     base->delbuf = 1;
@@ -4888,7 +4888,7 @@ iostream* __thiscall fstream_open_ctor(iostream *this, const char *name, ios_ope
 
     filebuf_ctor(fb);
 
-    iostream_internal_sb_ctor(this, &fb->base, &MSVCP_fstream_vtable, virt_init);
+    iostream_internal_sb_ctor(this, &fb->base, &fstream_vtable, virt_init);
 
     base = istream_get_ios(&this->base1);
     base->delbuf = 1;
