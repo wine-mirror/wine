@@ -467,17 +467,12 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
 {
     ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
     void *buffer = irp->AssociatedIrp.SystemBuffer;
-    struct test_input *test_input = buffer;
     NTSTATUS status;
 
     if (!buffer)
         return STATUS_ACCESS_VIOLATION;
     if (length < sizeof(failures))
         return STATUS_BUFFER_TOO_SMALL;
-
-    running_under_wine = test_input->running_under_wine;
-    winetest_debug = test_input->winetest_debug;
-    winetest_report_success = test_input->winetest_report_success;
 
     if ((status = winetest_init()))
         return status;

@@ -1427,7 +1427,7 @@
 @ stdcall -private ZwLockFile(long long ptr ptr ptr ptr ptr ptr long long) NtLockFile
 @ stdcall -private ZwLockVirtualMemory(long ptr ptr long) NtLockVirtualMemory
 @ stdcall ZwMakeTemporaryObject(long) NtMakeTemporaryObject
-@ stdcall -private ZwMapViewOfSection(long long ptr long long ptr ptr long long long) NtMapViewOfSection
+@ stdcall ZwMapViewOfSection(long long ptr long long ptr ptr long long long) NtMapViewOfSection
 @ stdcall -private ZwNotifyChangeDirectoryFile(long long ptr ptr ptr ptr long long long) NtNotifyChangeDirectoryFile
 @ stdcall -private ZwNotifyChangeKey(long long ptr ptr ptr long long ptr long long) NtNotifyChangeKey
 @ stdcall ZwOpenDirectoryObject(ptr long ptr) NtOpenDirectoryObject
@@ -1441,7 +1441,7 @@
 @ stdcall -private ZwOpenProcess(ptr long ptr ptr) NtOpenProcess
 @ stdcall -private ZwOpenProcessToken(long long ptr) NtOpenProcessToken
 @ stdcall -private ZwOpenProcessTokenEx(long long long ptr) NtOpenProcessTokenEx
-@ stdcall -private ZwOpenSection(ptr long ptr) NtOpenSection
+@ stdcall ZwOpenSection(ptr long ptr) NtOpenSection
 @ stdcall -private ZwOpenSymbolicLinkObject(ptr long ptr) NtOpenSymbolicLinkObject
 @ stdcall -private ZwOpenThread(ptr long ptr ptr) NtOpenThread
 @ stdcall -private ZwOpenThreadToken(long long long ptr) NtOpenThreadToken
@@ -1517,7 +1517,7 @@
 @ stdcall -private ZwUnloadKey(ptr) NtUnloadKey
 @ stdcall -private ZwUnlockFile(long ptr ptr ptr ptr) NtUnlockFile
 @ stdcall -private ZwUnlockVirtualMemory(long ptr ptr long) NtUnlockVirtualMemory
-@ stdcall -private ZwUnmapViewOfSection(long ptr) NtUnmapViewOfSection
+@ stdcall ZwUnmapViewOfSection(long ptr) NtUnmapViewOfSection
 @ stdcall -private ZwWaitForMultipleObjects(long ptr long long ptr) NtWaitForMultipleObjects
 @ stdcall ZwWaitForSingleObject(long long ptr) NtWaitForSingleObject
 @ stdcall ZwWriteFile(long long ptr ptr ptr ptr long ptr ptr) NtWriteFile

@@ -5,6 +5,7 @@
  * Copyright 2015 Michael Müller
  * Copyright 2015 Christian Costa
  * Copyright 2020 Paul Gofman for CodeWeavers
+ * Copyright 2020-2021 Zebediah Figura for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -51,13 +52,36 @@ static inline void WINAPIV kprintf(const char *format, ...)
 
 static inline NTSTATUS winetest_init(void)
 {
+    const struct test_data *data;
+    SIZE_T size = sizeof(*data);
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING string;
     IO_STATUS_BLOCK io;
+    void *addr = NULL;
+    HANDLE section;
+    NTSTATUS ret;
 
-    RtlInitUnicodeString(&string, L"\\??\\C:\\windows\\winetest_ntoskrnl_okfile");
+    RtlInitUnicodeString(&string, L"\\BaseNamedObjects\\winetest_ntoskrnl_section");
     /* OBJ_KERNEL_HANDLE is necessary for the file to be accessible from system threads */
     InitializeObjectAttributes(&attr, &string, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, 0, NULL);
+    if ((ret = ZwOpenSection(&section, SECTION_MAP_READ, &attr)))
+        return ret;
+
+    if ((ret = ZwMapViewOfSection(section, NtCurrentProcess(), &addr,
+            0, 0, NULL, &size, ViewUnmap, 0, PAGE_READONLY)))
+    {
+        ZwClose(section);
+        return ret;
+    }
+    data = addr;
+    running_under_wine = data->running_under_wine;
+    winetest_debug = data->winetest_debug;
+    winetest_report_success = data->winetest_report_success;
+
+    ZwUnmapViewOfSection(NtCurrentProcess(), addr);
+    ZwClose(section);
+
+    RtlInitUnicodeString(&string, L"\\??\\C:\\windows\\winetest_ntoskrnl_okfile");
     return ZwOpenFile(&okfile, FILE_APPEND_DATA | SYNCHRONIZE, &attr, &io,
             FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT);
 }

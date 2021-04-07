@@ -38,11 +38,15 @@
 
 static const char teststr[] = "Wine is not an emulator";
 
-struct test_input
+struct test_data
 {
     int running_under_wine;
     int winetest_report_success;
     int winetest_debug;
+};
+
+struct main_test_input
+{
     DWORD process_id;
     SIZE_T teststr_offset;
     ULONG64 *modified_value;

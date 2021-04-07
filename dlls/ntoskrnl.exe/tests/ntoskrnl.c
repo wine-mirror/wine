@@ -4,6 +4,7 @@
  * Copyright 2015 Sebastian Lackner
  * Copyright 2015 Michael Müller
  * Copyright 2015 Christian Costa
+ * Copyright 2020-2021 Zebediah Figura for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -367,7 +368,7 @@ static ULONG64 modified_value;
 
 static void main_test(void)
 {
-    struct test_input *test_input;
+    struct main_test_input *test_input;
     DWORD written, read;
     LONG new_failures;
     char buffer[512];
@@ -381,9 +382,6 @@ static void main_test(void)
     ok(okfile != INVALID_HANDLE_VALUE, "failed to create file, error %u\n", GetLastError());
 
     test_input = heap_alloc( sizeof(*test_input) );
-    test_input->running_under_wine = !strcmp(winetest_platform, "wine");
-    test_input->winetest_report_success = winetest_report_success;
-    test_input->winetest_debug = winetest_debug;
     test_input->process_id = GetCurrentProcessId();
     test_input->teststr_offset = (SIZE_T)((BYTE *)&teststr - (BYTE *)NtCurrentTeb()->Peb->ImageBaseAddress);
     test_input->modified_value = &modified_value;
@@ -1195,7 +1193,9 @@ START_TEST(ntoskrnl)
     WCHAR filename[MAX_PATH], filename2[MAX_PATH];
     struct testsign_context ctx;
     SC_HANDLE service, service2;
+    struct test_data *data;
     BOOL ret, is_wow64;
+    HANDLE mapping;
     DWORD written;
 
     pRtlDosPathNameToNtPathName_U = (void *)GetProcAddress(GetModuleHandleA("ntdll"), "RtlDosPathNameToNtPathName_U");
@@ -1215,18 +1215,22 @@ START_TEST(ntoskrnl)
     if (!testsign_create_cert(&ctx))
         return;
 
+    mapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE,
+            0, sizeof(*data), "Global\\winetest_ntoskrnl_section");
+    ok(!!mapping, "got error %u\n", GetLastError());
+    data = MapViewOfFile(mapping, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 1024);
+    data->running_under_wine = !strcmp(winetest_platform, "wine");
+    data->winetest_report_success = winetest_report_success;
+    data->winetest_debug = winetest_debug;
+
     subtest("driver");
     if (!(service = load_driver(&ctx, filename, L"driver.dll", L"WineTestDriver")))
-    {
-        testsign_cleanup(&ctx);
-        return;
-    }
+        goto out;
 
     if (!start_driver(service, FALSE))
     {
         DeleteFileW(filename);
-        testsign_cleanup(&ctx);
-        return;
+        goto out;
     }
     service2 = load_driver(&ctx, filename2, L"driver2.dll", L"WineTestDriver2");
 
@@ -1265,5 +1269,8 @@ START_TEST(ntoskrnl)
 
     test_pnp_driver(&ctx);
 
+out:
     testsign_cleanup(&ctx);
+    UnmapViewOfFile(data);
+    CloseHandle(mapping);
 }

@@ -1990,7 +1990,7 @@ static void test_dpc(void)
     KeRevertToUserAffinityThread();
 }
 
-static void test_process_memory(const struct test_input *test_input)
+static void test_process_memory(const struct main_test_input *test_input)
 {
     NTSTATUS (WINAPI *pMmCopyVirtualMemory)(PEPROCESS fromprocess, void *fromaddress, PEPROCESS toprocess,
             void *toaddress, SIZE_T bufsize, KPROCESSOR_MODE mode, SIZE_T *copied);
@@ -2044,7 +2044,7 @@ static void test_process_memory(const struct test_input *test_input)
        win_skip("MmCopyVirtualMemory is not available.\n");
     }
 
-    if (!test_input->running_under_wine)
+    if (!running_under_wine)
     {
         KeStackAttachProcess((PKPROCESS)process, &state);
         todo_wine ok(!strcmp(teststr, (char *)(base + test_input->teststr_offset)),
@@ -2107,17 +2107,13 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
 {
     ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
     void *buffer = irp->AssociatedIrp.SystemBuffer;
-    struct test_input *test_input = (struct test_input *)buffer;
+    struct main_test_input *test_input = (struct main_test_input *)buffer;
     NTSTATUS status;
 
     if (!buffer)
         return STATUS_ACCESS_VIOLATION;
     if (length < sizeof(failures))
         return STATUS_BUFFER_TOO_SMALL;
-
-    running_under_wine = test_input->running_under_wine;
-    winetest_debug = test_input->winetest_debug;
-    winetest_report_success = test_input->winetest_report_success;
 
     if ((status = winetest_init()))
         return status;
