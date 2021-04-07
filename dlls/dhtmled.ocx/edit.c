@@ -31,6 +31,7 @@ typedef struct
     IOleObject IOleObject_iface;
     IPersistStreamInit IPersistStreamInit_iface;
     IOleControl IOleControl_iface;
+    IConnectionPointContainer IConnectionPointContainer_iface;
     IOleClientSite *client_site;
     SIZEL extent;
     LONG ref;
@@ -54,6 +55,11 @@ static inline DHTMLEditImpl *impl_from_IPersistStreamInit(IPersistStreamInit *if
 static inline DHTMLEditImpl *impl_from_IOleControl(IOleControl *iface)
 {
     return CONTAINING_RECORD(iface, DHTMLEditImpl, IOleControl_iface);
+}
+
+static inline DHTMLEditImpl *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
+{
+    return CONTAINING_RECORD(iface, DHTMLEditImpl, IConnectionPointContainer_iface);
 }
 
 static ULONG dhtml_edit_addref(DHTMLEditImpl *This)
@@ -93,6 +99,12 @@ static HRESULT dhtml_edit_qi(DHTMLEditImpl *This, REFIID iid, void **out)
     {
         dhtml_edit_addref(This);
         *out = &This->IOleControl_iface;
+        return S_OK;
+    }
+    else if(IsEqualGUID(iid, &IID_IConnectionPointContainer))
+    {
+        dhtml_edit_addref(This);
+        *out = &This->IConnectionPointContainer_iface;
         return S_OK;
     }
 
@@ -923,6 +935,47 @@ static const IOleControlVtbl OleControlVtbl = {
     OleControl_FreezeEvents
 };
 
+static HRESULT WINAPI ConnectionPointContainer_QueryInterface(IConnectionPointContainer *iface,
+        REFIID iid, LPVOID *out)
+{
+    return dhtml_edit_qi(impl_from_IConnectionPointContainer(iface), iid, out);
+}
+
+static ULONG WINAPI ConnectionPointContainer_AddRef(IConnectionPointContainer *iface)
+{
+    return dhtml_edit_addref(impl_from_IConnectionPointContainer(iface));
+}
+
+static ULONG WINAPI ConnectionPointContainer_Release(IConnectionPointContainer *iface)
+{
+    return dhtml_edit_release(impl_from_IConnectionPointContainer(iface));
+}
+
+static HRESULT WINAPI ConnectionPointContainer_EnumConnectionPoints(IConnectionPointContainer *iface,
+        IEnumConnectionPoints **ppEnum)
+{
+    DHTMLEditImpl *This = impl_from_IConnectionPointContainer(iface);
+    FIXME("(%p)->(%p)\n", This, ppEnum);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPointContainer *iface,
+        REFIID riid, IConnectionPoint **ppCP)
+{
+    DHTMLEditImpl *This = impl_from_IConnectionPointContainer(iface);
+    FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppCP);
+    return CONNECT_E_NOCONNECTION;
+}
+
+static const IConnectionPointContainerVtbl ConnectionPointContainerVtbl =
+{
+    ConnectionPointContainer_QueryInterface,
+    ConnectionPointContainer_AddRef,
+    ConnectionPointContainer_Release,
+    ConnectionPointContainer_EnumConnectionPoints,
+    ConnectionPointContainer_FindConnectionPoint
+};
+
 HRESULT dhtml_edit_create(REFIID iid, void **out)
 {
     DHTMLEditImpl *This;
@@ -940,6 +993,7 @@ HRESULT dhtml_edit_create(REFIID iid, void **out)
     This->IOleObject_iface.lpVtbl = &OleObjectVtbl;
     This->IPersistStreamInit_iface.lpVtbl = &PersistStreamInitVtbl;
     This->IOleControl_iface.lpVtbl = &OleControlVtbl;
+    This->IConnectionPointContainer_iface.lpVtbl = &ConnectionPointContainerVtbl;
     This->client_site = NULL;
     This->ref = 1;
 
