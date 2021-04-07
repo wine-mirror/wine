@@ -30,6 +30,7 @@ typedef struct
     IDHTMLEdit IDHTMLEdit_iface;
     IOleObject IOleObject_iface;
     IProvideClassInfo2 IProvideClassInfo2_iface;
+    IPersistStorage IPersistStorage_iface;
     IPersistStreamInit IPersistStreamInit_iface;
     IOleControl IOleControl_iface;
     IViewObjectEx IViewObjectEx_iface;
@@ -57,6 +58,11 @@ static inline DHTMLEditImpl *impl_from_IOleObject(IOleObject *iface)
 static inline DHTMLEditImpl *impl_from_IProvideClassInfo2(IProvideClassInfo2 *iface)
 {
     return CONTAINING_RECORD(iface, DHTMLEditImpl, IProvideClassInfo2_iface);
+}
+
+static inline DHTMLEditImpl *impl_from_IPersistStorage(IPersistStorage *iface)
+{
+    return CONTAINING_RECORD(iface, DHTMLEditImpl, IPersistStorage_iface);
 }
 
 static inline DHTMLEditImpl *impl_from_IPersistStreamInit(IPersistStreamInit *iface)
@@ -131,6 +137,12 @@ static HRESULT dhtml_edit_qi(DHTMLEditImpl *This, REFIID iid, void **out)
     {
         dhtml_edit_addref(This);
         *out = &This->IProvideClassInfo2_iface;
+        return S_OK;
+    }
+    else if (IsEqualGUID(iid, &IID_IPersistStorage))
+    {
+        dhtml_edit_addref(This);
+        *out = &This->IPersistStorage_iface;
         return S_OK;
     }
     else if (IsEqualGUID(iid, &IID_IPersistStreamInit))
@@ -928,6 +940,76 @@ static const IProvideClassInfo2Vtbl ProvideClassInfo2Vtbl = {
     ProvideClassInfo2_GetGUID
 };
 
+static HRESULT WINAPI PersistStorage_QueryInterface(IPersistStorage *iface, REFIID iid, void **out)
+{
+    return dhtml_edit_qi(impl_from_IPersistStorage(iface), iid, out);
+}
+
+static ULONG WINAPI PersistStorage_AddRef(IPersistStorage *iface)
+{
+    return dhtml_edit_addref(impl_from_IPersistStorage(iface));
+}
+
+static ULONG WINAPI PersistStorage_Release(IPersistStorage *iface)
+{
+    return dhtml_edit_release(impl_from_IPersistStorage(iface));
+}
+
+static HRESULT WINAPI PersistStorage_GetClassID(IPersistStorage *iface, CLSID *clsid)
+{
+    DHTMLEditImpl *This = impl_from_IPersistStorage(iface);
+    FIXME("(%p)->(%p) stub\n", This, clsid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStorage_IsDirty(IPersistStorage *iface)
+{
+    DHTMLEditImpl *This = impl_from_IPersistStorage(iface);
+    FIXME("(%p) stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStorage_InitNew(IPersistStorage *iface, LPSTORAGE storage)
+{
+    DHTMLEditImpl *This = impl_from_IPersistStorage(iface);
+    FIXME("(%p)->(%p) stub\n", This, storage);
+    return S_OK;
+}
+
+static HRESULT WINAPI PersistStorage_Load(IPersistStorage *iface, LPSTORAGE storage)
+{
+    DHTMLEditImpl *This = impl_from_IPersistStorage(iface);
+    FIXME("(%p)->(%p) stub\n", This, storage);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStorage_Save(IPersistStorage *iface, LPSTORAGE storage, BOOL sameasld)
+{
+    DHTMLEditImpl *This = impl_from_IPersistStorage(iface);
+    FIXME("(%p)->(%p, %u) stub\n", This, storage, sameasld);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStorage_SaveCompleted(IPersistStorage *iface, LPSTORAGE storage)
+{
+    DHTMLEditImpl *This = impl_from_IPersistStorage(iface);
+    FIXME("(%p)->(%p)\n", This, storage);
+    return E_NOTIMPL;
+}
+
+static const IPersistStorageVtbl PersistStorageVtbl =
+{
+    PersistStorage_QueryInterface,
+    PersistStorage_AddRef,
+    PersistStorage_Release,
+    PersistStorage_GetClassID,
+    PersistStorage_IsDirty,
+    PersistStorage_InitNew,
+    PersistStorage_Load,
+    PersistStorage_Save,
+    PersistStorage_SaveCompleted
+};
+
 static HRESULT WINAPI PersistStreamInit_QueryInterface(IPersistStreamInit *iface, REFIID iid, void **out)
 {
     return dhtml_edit_qi(impl_from_IPersistStreamInit(iface), iid, out);
@@ -1563,6 +1645,7 @@ HRESULT dhtml_edit_create(REFIID iid, void **out)
     This->IDHTMLEdit_iface.lpVtbl = &DHTMLEditVtbl;
     This->IOleObject_iface.lpVtbl = &OleObjectVtbl;
     This->IProvideClassInfo2_iface.lpVtbl = &ProvideClassInfo2Vtbl;
+    This->IPersistStorage_iface.lpVtbl = &PersistStorageVtbl;
     This->IPersistStreamInit_iface.lpVtbl = &PersistStreamInitVtbl;
     This->IOleControl_iface.lpVtbl = &OleControlVtbl;
     This->IViewObjectEx_iface.lpVtbl = &ViewObjectExVtbl;
