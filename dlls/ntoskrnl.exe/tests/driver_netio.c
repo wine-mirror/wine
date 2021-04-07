@@ -468,38 +468,26 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
     void *buffer = irp->AssociatedIrp.SystemBuffer;
     struct test_input *test_input = buffer;
-    OBJECT_ATTRIBUTES attr = {0};
-    UNICODE_STRING pathU;
-    IO_STATUS_BLOCK io;
+    NTSTATUS status;
 
     if (!buffer)
         return STATUS_ACCESS_VIOLATION;
     if (length < sizeof(failures))
         return STATUS_BUFFER_TOO_SMALL;
 
-    attr.Length = sizeof(attr);
-    RtlInitUnicodeString(&pathU, L"\\??\\C:\\winetest_ntoskrnl_okfile");
     running_under_wine = test_input->running_under_wine;
     winetest_debug = test_input->winetest_debug;
     winetest_report_success = test_input->winetest_report_success;
-    attr.ObjectName = &pathU;
-    attr.Attributes = OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE; /* needed to be accessible from system threads */
-    ZwOpenFile(&okfile, FILE_APPEND_DATA | SYNCHRONIZE, &attr, &io,
-            FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT);
+
+    if ((status = winetest_init()))
+        return status;
 
     netio_init();
     test_wsk_get_address_info();
     test_wsk_listen_socket();
     test_wsk_connect_socket();
 
-    if (winetest_debug)
-    {
-        kprintf("%04x:ntoskrnl: %d tests executed (%d marked as todo, %d %s), %d skipped.\n",
-            PsGetCurrentProcessId(), successes + failures + todo_successes + todo_failures,
-            todo_successes, failures + todo_failures,
-            (failures + todo_failures != 1) ? "failures" : "failure", skipped );
-    }
-    ZwClose(okfile);
+    winetest_cleanup();
 
     *((LONG *)buffer) = failures;
     irp->IoStatus.Information = sizeof(failures);

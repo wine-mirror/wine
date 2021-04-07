@@ -49,6 +49,31 @@ static inline void WINAPIV kprintf(const char *format, ...)
     __ms_va_end(valist);
 }
 
+static inline NTSTATUS winetest_init(void)
+{
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING string;
+    IO_STATUS_BLOCK io;
+
+    RtlInitUnicodeString(&string, L"\\??\\C:\\windows\\winetest_ntoskrnl_okfile");
+    /* OBJ_KERNEL_HANDLE is necessary for the file to be accessible from system threads */
+    InitializeObjectAttributes(&attr, &string, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, 0, NULL);
+    return ZwOpenFile(&okfile, FILE_APPEND_DATA | SYNCHRONIZE, &attr, &io,
+            FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT);
+}
+
+static inline void winetest_cleanup(void)
+{
+    if (winetest_debug)
+    {
+        kprintf("%04x:ntoskrnl: %d tests executed (%d marked as todo, %d %s), %d skipped.\n",
+                PsGetCurrentProcessId(), successes + failures + todo_successes + todo_failures,
+                todo_successes, failures + todo_failures,
+                (failures + todo_failures != 1) ? "failures" : "failure", skipped );
+    }
+    ZwClose(okfile);
+}
+
 static inline void WINAPIV vok_(const char *file, int line, int condition, const char *msg,  __ms_va_list args)
 {
     const char *current_file;
