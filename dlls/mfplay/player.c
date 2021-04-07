@@ -722,11 +722,23 @@ static HRESULT WINAPI media_player_GetRate(IMFPMediaPlayer *iface, float *rate)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI media_player_GetSupportedRates(IMFPMediaPlayer *iface, BOOL forward, float *slowest_rate, float *fastest_rate)
+static HRESULT WINAPI media_player_GetSupportedRates(IMFPMediaPlayer *iface, BOOL forward,
+        float *slowest_rate, float *fastest_rate)
 {
-    FIXME("%p, %d, %p, %p.\n", iface, forward, slowest_rate, fastest_rate);
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
+    IMFRateSupport *rs;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %d, %p, %p.\n", iface, forward, slowest_rate, fastest_rate);
+
+    if (SUCCEEDED(hr = MFGetService((IUnknown *)player->session, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport, (void **)&rs)))
+    {
+        if (SUCCEEDED(hr = IMFRateSupport_GetSlowestRate(rs, forward ? MFRATE_FORWARD : MFRATE_REVERSE, FALSE, slowest_rate)))
+            hr = IMFRateSupport_GetFastestRate(rs, forward ? MFRATE_FORWARD : MFRATE_REVERSE, FALSE, fastest_rate);
+        IMFRateSupport_Release(rs);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI media_player_GetState(IMFPMediaPlayer *iface, MFP_MEDIAPLAYER_STATE *state)
