@@ -37,6 +37,7 @@ typedef struct
     IOleInPlaceActiveObject IOleInPlaceActiveObject_iface;
     IConnectionPointContainer IConnectionPointContainer_iface;
     IDataObject IDataObject_iface;
+    IServiceProvider IServiceProvider_iface;
 
     IOleClientSite *client_site;
     SIZEL extent;
@@ -91,6 +92,11 @@ static inline DHTMLEditImpl *impl_from_IConnectionPointContainer(IConnectionPoin
 static inline DHTMLEditImpl *impl_from_IDataObject(IDataObject *iface)
 {
     return CONTAINING_RECORD(iface, DHTMLEditImpl, IDataObject_iface);
+}
+
+static inline DHTMLEditImpl *impl_from_IServiceProvider(IServiceProvider *iface)
+{
+    return CONTAINING_RECORD(iface, DHTMLEditImpl, IServiceProvider_iface);
 }
 
 static ULONG dhtml_edit_addref(DHTMLEditImpl *This)
@@ -171,6 +177,12 @@ static HRESULT dhtml_edit_qi(DHTMLEditImpl *This, REFIID iid, void **out)
     {
         dhtml_edit_addref(This);
         *out = &This->IDataObject_iface;
+        return S_OK;
+    }
+    else if(IsEqualGUID(iid, &IID_IServiceProvider))
+    {
+        dhtml_edit_addref(This);
+        *out = &This->IServiceProvider_iface;
         return S_OK;
     }
 
@@ -1503,6 +1515,38 @@ static const IDataObjectVtbl DataObjectVtbl = {
     DataObject_EnumDAdvise
 };
 
+static HRESULT WINAPI ServiceProvider_QueryInterface(IServiceProvider *iface, REFIID iid,
+        LPVOID *out)
+{
+    return dhtml_edit_qi(impl_from_IServiceProvider(iface), iid, out);
+}
+
+static ULONG WINAPI ServiceProvider_AddRef(IServiceProvider *iface)
+{
+    return dhtml_edit_addref(impl_from_IServiceProvider(iface));
+}
+
+static ULONG WINAPI ServiceProvider_Release(IServiceProvider *iface)
+{
+    return dhtml_edit_release(impl_from_IServiceProvider(iface));
+}
+
+static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFGUID guidService,
+        REFIID riid, void **ppv)
+{
+    DHTMLEditImpl *This = impl_from_IServiceProvider(iface);
+    FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static const IServiceProviderVtbl ServiceProviderVtbl = {
+    ServiceProvider_QueryInterface,
+    ServiceProvider_AddRef,
+    ServiceProvider_Release,
+    ServiceProvider_QueryService
+};
+
+
 HRESULT dhtml_edit_create(REFIID iid, void **out)
 {
     DHTMLEditImpl *This;
@@ -1526,6 +1570,7 @@ HRESULT dhtml_edit_create(REFIID iid, void **out)
     This->IOleInPlaceActiveObject_iface.lpVtbl = &OleInPlaceActiveObjectVtbl;
     This->IConnectionPointContainer_iface.lpVtbl = &ConnectionPointContainerVtbl;
     This->IDataObject_iface.lpVtbl = &DataObjectVtbl;
+    This->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
 
     This->client_site = NULL;
     This->ref = 1;
