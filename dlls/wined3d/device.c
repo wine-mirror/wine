@@ -4924,16 +4924,16 @@ void CDECL wined3d_device_context_copy_resource(struct wined3d_device_context *c
     }
 }
 
-HRESULT CDECL wined3d_device_copy_sub_resource_region(struct wined3d_device *device,
+HRESULT CDECL wined3d_device_context_copy_sub_resource_region(struct wined3d_device_context *context,
         struct wined3d_resource *dst_resource, unsigned int dst_sub_resource_idx, unsigned int dst_x,
         unsigned int dst_y, unsigned int dst_z, struct wined3d_resource *src_resource,
         unsigned int src_sub_resource_idx, const struct wined3d_box *src_box, unsigned int flags)
 {
     struct wined3d_box dst_box, b;
 
-    TRACE("device %p, dst_resource %p, dst_sub_resource_idx %u, dst_x %u, dst_y %u, dst_z %u, "
+    TRACE("context %p, dst_resource %p, dst_sub_resource_idx %u, dst_x %u, dst_y %u, dst_z %u, "
             "src_resource %p, src_sub_resource_idx %u, src_box %s, flags %#x.\n",
-            device, dst_resource, dst_sub_resource_idx, dst_x, dst_y, dst_z,
+            context, dst_resource, dst_sub_resource_idx, dst_x, dst_y, dst_z,
             src_resource, src_sub_resource_idx, debug_box(src_box), flags);
 
     if (flags)
@@ -5079,7 +5079,7 @@ HRESULT CDECL wined3d_device_copy_sub_resource_region(struct wined3d_device *dev
         }
     }
 
-    wined3d_device_context_emit_blt_sub_resource(&device->cs->c, dst_resource, dst_sub_resource_idx, &dst_box,
+    wined3d_device_context_emit_blt_sub_resource(context, dst_resource, dst_sub_resource_idx, &dst_box,
             src_resource, src_sub_resource_idx, src_box, WINED3D_BLT_RAW, NULL, WINED3D_TEXF_POINT);
 
     return WINED3D_OK;

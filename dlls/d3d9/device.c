@@ -1710,7 +1710,7 @@ static HRESULT WINAPI d3d9_device_UpdateSurface(IDirect3DDevice9Ex *iface,
     else
         wined3d_box_set(&src_box, 0, 0, src_desc.width, src_desc.height, 0, 1);
 
-    hr = wined3d_device_copy_sub_resource_region(device->wined3d_device,
+    hr = wined3d_device_context_copy_sub_resource_region(device->immediate_context,
             wined3d_texture_get_resource(dst->wined3d_texture), dst->sub_resource_idx, dst_point ? dst_point->x : 0,
             dst_point ? dst_point->y : 0, 0, wined3d_texture_get_resource(src->wined3d_texture),
             src->sub_resource_idx, &src_box, 0);
@@ -2976,7 +2976,7 @@ static void d3d9_device_upload_sysmem_vertex_buffers(struct d3d9_device *device,
         wined3d_resource_get_desc(dst_resource, &desc);
         box.left = stream->offset + start_vertex * stride;
         box.right = min(box.left + vertex_count * stride, desc.size);
-        if (FAILED(hr = wined3d_device_copy_sub_resource_region(device->wined3d_device,
+        if (FAILED(hr = wined3d_device_context_copy_sub_resource_region(device->immediate_context,
                 dst_resource, 0, box.left, 0, 0,
                 wined3d_buffer_get_resource(d3d9_buffer->wined3d_buffer), 0, &box, 0)))
             ERR("Failed to update buffer.\n");
@@ -3007,7 +3007,7 @@ static void d3d9_device_upload_sysmem_index_buffer(struct d3d9_device *device,
     idx_size = format == WINED3DFMT_R16_UINT ? 2 : 4;
     box.left = start_idx * idx_size;
     box.right = min(box.left + idx_count * idx_size, desc.size);
-    if (FAILED(hr = wined3d_device_copy_sub_resource_region(device->wined3d_device,
+    if (FAILED(hr = wined3d_device_context_copy_sub_resource_region(device->immediate_context,
             dst_resource, 0, box.left, 0, 0,
             wined3d_buffer_get_resource(d3d9_buffer->wined3d_buffer), 0, &box, 0)))
         ERR("Failed to update buffer.\n");

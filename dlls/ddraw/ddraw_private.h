@@ -670,7 +670,7 @@ static inline struct wined3d_texture *ddraw_surface_get_default_texture(struct d
     {
         if (flags & DDRAW_SURFACE_READ && !(surface->texture_location & DDRAW_SURFACE_LOCATION_DEFAULT))
         {
-            wined3d_device_copy_sub_resource_region(surface->ddraw->wined3d_device,
+            wined3d_device_context_copy_sub_resource_region(surface->ddraw->immediate_context,
                     wined3d_texture_get_resource(surface->wined3d_texture), surface->sub_resource_idx, 0, 0, 0,
                     wined3d_texture_get_resource(surface->draw_texture), surface->sub_resource_idx, NULL, 0);
             surface->texture_location |= DDRAW_SURFACE_LOCATION_DEFAULT;
@@ -689,7 +689,7 @@ static inline struct wined3d_texture *ddraw_surface_get_draw_texture(struct ddra
 
     if (flags & DDRAW_SURFACE_READ && !(surface->texture_location & DDRAW_SURFACE_LOCATION_DRAW))
     {
-        wined3d_device_copy_sub_resource_region(surface->ddraw->wined3d_device,
+        wined3d_device_context_copy_sub_resource_region(surface->ddraw->immediate_context,
                 wined3d_texture_get_resource(surface->draw_texture), surface->sub_resource_idx, 0, 0, 0,
                 wined3d_texture_get_resource(surface->wined3d_texture), surface->sub_resource_idx, NULL, 0);
         surface->texture_location |= DDRAW_SURFACE_LOCATION_DRAW;

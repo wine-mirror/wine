@@ -322,7 +322,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer, struct d3d
                             box.right = box.left + ci->dwCount * sizeof(D3DTLVERTEX);
                             box.top = box.front = 0;
                             box.bottom = box.back = 1;
-                            wined3d_device_copy_sub_resource_region(device->wined3d_device,
+                            wined3d_device_context_copy_sub_resource_region(device->immediate_context,
                                     wined3d_buffer_get_resource(buffer->dst_vertex_buffer), 0,
                                     ci->wDest * sizeof(D3DTLVERTEX), 0, 0,
                                     wined3d_buffer_get_resource(buffer->src_vertex_buffer), 0, &box, 0);
