@@ -366,7 +366,9 @@ static BOOL start_driver(HANDLE service, BOOL vista_plus)
     return TRUE;
 }
 
-static void cat_okfile(HANDLE okfile)
+static HANDLE okfile;
+
+static void cat_okfile(void)
 {
     char buffer[512];
     DWORD size;
@@ -390,15 +392,8 @@ static ULONG64 modified_value;
 static void main_test(void)
 {
     struct main_test_input *test_input;
-    HANDLE okfile;
     DWORD size;
     BOOL res;
-
-    /* Create a temporary file that the driver will write ok/trace output to. */
-
-    okfile = CreateFileA("C:\\windows\\winetest_ntoskrnl_okfile", GENERIC_READ | GENERIC_WRITE,
-            FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 0, NULL);
-    ok(okfile != INVALID_HANDLE_VALUE, "failed to create file, error %u\n", GetLastError());
 
     test_input = heap_alloc( sizeof(*test_input) );
     test_input->process_id = GetCurrentProcessId();
@@ -410,11 +405,9 @@ static void main_test(void)
     ok(res, "DeviceIoControl failed: %u\n", GetLastError());
     ok(!size, "got size %u\n", size);
 
-    cat_okfile(okfile);
+    cat_okfile();
 
     heap_free(test_input);
-    CloseHandle(okfile);
-    DeleteFileA("C:\\windows\\winetest_ntoskrnl_okfile");
 }
 
 static void test_basic_ioctl(void)
@@ -1235,6 +1228,10 @@ START_TEST(ntoskrnl)
     test_data->winetest_report_success = winetest_report_success;
     test_data->winetest_debug = winetest_debug;
 
+    okfile = CreateFileA("C:\\windows\\winetest_ntoskrnl_okfile", GENERIC_READ | GENERIC_WRITE,
+            FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(okfile != INVALID_HANDLE_VALUE, "failed to create file, error %u\n", GetLastError());
+
     subtest("driver");
     if (!(service = load_driver(&ctx, filename, L"driver.dll", L"WineTestDriver")))
         goto out;
@@ -1285,4 +1282,6 @@ out:
     testsign_cleanup(&ctx);
     UnmapViewOfFile(test_data);
     CloseHandle(mapping);
+    CloseHandle(okfile);
+    DeleteFileA("C:\\windows\\winetest_ntoskrnl_okfile");
 }
