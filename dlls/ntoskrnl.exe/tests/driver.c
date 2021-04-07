@@ -1770,7 +1770,6 @@ static PIO_WORKITEM main_test_work_item;
 static void WINAPI main_test_task(DEVICE_OBJECT *device, void *context)
 {
     IRP *irp = context;
-    void *buffer = irp->AssociatedIrp.SystemBuffer;
 
     IoFreeWorkItem(main_test_work_item);
     main_test_work_item = NULL;
@@ -1784,9 +1783,8 @@ static void WINAPI main_test_task(DEVICE_OBJECT *device, void *context)
 
     winetest_cleanup();
 
-    *((LONG *)buffer) = failures;
     irp->IoStatus.Status = STATUS_SUCCESS;
-    irp->IoStatus.Information = sizeof(failures);
+    irp->IoStatus.Information = 0;
     IoCompleteRequest(irp, IO_NO_INCREMENT);
 }
 
@@ -2105,15 +2103,12 @@ static void test_permanence(void)
 
 static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack)
 {
-    ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
     void *buffer = irp->AssociatedIrp.SystemBuffer;
     struct main_test_input *test_input = (struct main_test_input *)buffer;
     NTSTATUS status;
 
     if (!buffer)
         return STATUS_ACCESS_VIOLATION;
-    if (length < sizeof(failures))
-        return STATUS_BUFFER_TOO_SMALL;
 
     if ((status = winetest_init()))
         return status;

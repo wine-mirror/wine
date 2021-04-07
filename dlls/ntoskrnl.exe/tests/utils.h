@@ -88,6 +88,13 @@ static inline NTSTATUS winetest_init(void)
 
 static inline void winetest_cleanup(void)
 {
+    struct test_data *data;
+    SIZE_T size = sizeof(*data);
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING string;
+    void *addr = NULL;
+    HANDLE section;
+
     if (winetest_debug)
     {
         kprintf("%04x:ntoskrnl: %d tests executed (%d marked as todo, %d %s), %d skipped.\n",
@@ -95,6 +102,29 @@ static inline void winetest_cleanup(void)
                 todo_successes, failures + todo_failures,
                 (failures + todo_failures != 1) ? "failures" : "failure", skipped );
     }
+
+    RtlInitUnicodeString(&string, L"\\BaseNamedObjects\\winetest_ntoskrnl_section");
+    /* OBJ_KERNEL_HANDLE is necessary for the file to be accessible from system threads */
+    InitializeObjectAttributes(&attr, &string, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, 0, NULL);
+
+    if (!ZwOpenSection(&section, SECTION_MAP_READ | SECTION_MAP_WRITE, &attr))
+    {
+        if (!ZwMapViewOfSection(section, NtCurrentProcess(), &addr,
+                0, 0, NULL, &size, ViewUnmap, 0, PAGE_READWRITE))
+        {
+            data = addr;
+
+            InterlockedExchangeAdd(&data->successes, successes);
+            InterlockedExchangeAdd(&data->failures, failures);
+            InterlockedExchangeAdd(&data->skipped, skipped);
+            InterlockedExchangeAdd(&data->todo_successes, todo_successes);
+            InterlockedExchangeAdd(&data->todo_failures, todo_failures);
+
+            ZwUnmapViewOfSection(NtCurrentProcess(), addr);
+        }
+        ZwClose(section);
+    }
+
     ZwClose(okfile);
 }
 

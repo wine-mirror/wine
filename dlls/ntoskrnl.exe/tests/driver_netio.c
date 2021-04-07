@@ -465,14 +465,11 @@ static void test_wsk_connect_socket(void)
 
 static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack)
 {
-    ULONG length = stack->Parameters.DeviceIoControl.OutputBufferLength;
     void *buffer = irp->AssociatedIrp.SystemBuffer;
     NTSTATUS status;
 
     if (!buffer)
         return STATUS_ACCESS_VIOLATION;
-    if (length < sizeof(failures))
-        return STATUS_BUFFER_TOO_SMALL;
 
     if ((status = winetest_init()))
         return status;
@@ -484,8 +481,7 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
 
     winetest_cleanup();
 
-    *((LONG *)buffer) = failures;
-    irp->IoStatus.Information = sizeof(failures);
+    irp->IoStatus.Information = 0;
     return STATUS_SUCCESS;
 }
 

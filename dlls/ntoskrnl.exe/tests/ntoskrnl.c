@@ -47,6 +47,8 @@ static const GUID GUID_NULL;
 
 static HANDLE device;
 
+static struct test_data *test_data;
+
 static BOOL (WINAPI *pRtlDosPathNameToNtPathName_U)(const WCHAR *, UNICODE_STRING *, WCHAR **, CURDIR *);
 static BOOL (WINAPI *pRtlFreeUnicodeString)(UNICODE_STRING *);
 static BOOL (WINAPI *pCancelIoEx)(HANDLE, OVERLAPPED *);
@@ -369,10 +371,9 @@ static ULONG64 modified_value;
 static void main_test(void)
 {
     struct main_test_input *test_input;
-    DWORD written, read;
-    LONG new_failures;
     char buffer[512];
     HANDLE okfile;
+    DWORD size;
     BOOL res;
 
     /* Create a temporary file that the driver will write ok/trace output to. */
@@ -387,17 +388,16 @@ static void main_test(void)
     test_input->modified_value = &modified_value;
     modified_value = 0;
 
-    res = DeviceIoControl(device, IOCTL_WINETEST_MAIN_TEST, test_input, sizeof(*test_input),
-                          &new_failures, sizeof(new_failures), &written, NULL);
+    res = DeviceIoControl(device, IOCTL_WINETEST_MAIN_TEST, test_input, sizeof(*test_input), NULL, 0, &size, NULL);
     ok(res, "DeviceIoControl failed: %u\n", GetLastError());
-    ok(written == sizeof(new_failures), "got size %x\n", written);
+    ok(!size, "got size %u\n", size);
 
-    /* Print the ok/trace output and then add to our failure count. */
     do {
-        ReadFile(okfile, buffer, sizeof(buffer), &read, NULL);
-        printf("%.*s", read, buffer);
-    } while (read == sizeof(buffer));
-    winetest_add_failures(new_failures);
+        ReadFile(okfile, buffer, sizeof(buffer), &size, NULL);
+        printf("%.*s", size, buffer);
+    } while (size == sizeof(buffer));
+
+    winetest_add_failures(InterlockedExchange(&test_data->failures, 0));
 
     heap_free(test_input);
     CloseHandle(okfile);
@@ -1193,7 +1193,6 @@ START_TEST(ntoskrnl)
     WCHAR filename[MAX_PATH], filename2[MAX_PATH];
     struct testsign_context ctx;
     SC_HANDLE service, service2;
-    struct test_data *data;
     BOOL ret, is_wow64;
     HANDLE mapping;
     DWORD written;
@@ -1216,12 +1215,12 @@ START_TEST(ntoskrnl)
         return;
 
     mapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE,
-            0, sizeof(*data), "Global\\winetest_ntoskrnl_section");
+            0, sizeof(*test_data), "Global\\winetest_ntoskrnl_section");
     ok(!!mapping, "got error %u\n", GetLastError());
-    data = MapViewOfFile(mapping, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 1024);
-    data->running_under_wine = !strcmp(winetest_platform, "wine");
-    data->winetest_report_success = winetest_report_success;
-    data->winetest_debug = winetest_debug;
+    test_data = MapViewOfFile(mapping, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 1024);
+    test_data->running_under_wine = !strcmp(winetest_platform, "wine");
+    test_data->winetest_report_success = winetest_report_success;
+    test_data->winetest_debug = winetest_debug;
 
     subtest("driver");
     if (!(service = load_driver(&ctx, filename, L"driver.dll", L"WineTestDriver")))
@@ -1271,6 +1270,6 @@ START_TEST(ntoskrnl)
 
 out:
     testsign_cleanup(&ctx);
-    UnmapViewOfFile(data);
+    UnmapViewOfFile(test_data);
     CloseHandle(mapping);
 }

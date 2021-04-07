@@ -43,6 +43,7 @@ struct test_data
     int running_under_wine;
     int winetest_report_success;
     int winetest_debug;
+    int successes, failures, skipped, todo_successes, todo_failures;
 };
 
 struct main_test_input
