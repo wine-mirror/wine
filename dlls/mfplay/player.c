@@ -503,9 +503,12 @@ static HRESULT WINAPI media_item_SetStreamSink(IMFPMediaItem *iface, DWORD index
 
 static HRESULT WINAPI media_item_GetMetadata(IMFPMediaItem *iface, IPropertyStore **metadata)
 {
-    FIXME("%p, %p.\n", iface, metadata);
+    struct media_item *item = impl_from_IMFPMediaItem(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, metadata);
+
+    return MFGetService((IUnknown *)item->source, &MF_PROPERTY_HANDLER_SERVICE,
+            &IID_IPropertyStore, (void **)&metadata);
 }
 
 static const IMFPMediaItemVtbl media_item_vtbl =
