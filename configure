@@ -1141,6 +1141,7 @@ enable_api_ms_win_service_private_l1_1_1
 enable_api_ms_win_service_winsvc_l1_1_0
 enable_api_ms_win_service_winsvc_l1_2_0
 enable_api_ms_win_shcore_obsolete_l1_1_0
+enable_api_ms_win_shcore_scaling_l1_1_0
 enable_api_ms_win_shcore_scaling_l1_1_1
 enable_api_ms_win_shcore_stream_l1_1_0
 enable_api_ms_win_shcore_stream_winrt_l1_1_0
@@ -20349,6 +20350,7 @@ wine_fn_config_makefile dlls/api-ms-win-service-private-l1-1-1 enable_api_ms_win
 wine_fn_config_makefile dlls/api-ms-win-service-winsvc-l1-1-0 enable_api_ms_win_service_winsvc_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-service-winsvc-l1-2-0 enable_api_ms_win_service_winsvc_l1_2_0
 wine_fn_config_makefile dlls/api-ms-win-shcore-obsolete-l1-1-0 enable_api_ms_win_shcore_obsolete_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-shcore-scaling-l1-1-0 enable_api_ms_win_shcore_scaling_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-shcore-scaling-l1-1-1 enable_api_ms_win_shcore_scaling_l1_1_1
 wine_fn_config_makefile dlls/api-ms-win-shcore-stream-l1-1-0 enable_api_ms_win_shcore_stream_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-shcore-stream-winrt-l1-1-0 enable_api_ms_win_shcore_stream_winrt_l1_1_0
