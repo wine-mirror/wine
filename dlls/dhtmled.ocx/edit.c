@@ -36,6 +36,8 @@ typedef struct
     IOleInPlaceObjectWindowless IOleInPlaceObjectWindowless_iface;
     IOleInPlaceActiveObject IOleInPlaceActiveObject_iface;
     IConnectionPointContainer IConnectionPointContainer_iface;
+    IDataObject IDataObject_iface;
+
     IOleClientSite *client_site;
     SIZEL extent;
     LONG ref;
@@ -84,6 +86,11 @@ static inline DHTMLEditImpl *impl_from_IOleInPlaceActiveObject(IOleInPlaceActive
 static inline DHTMLEditImpl *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
 {
     return CONTAINING_RECORD(iface, DHTMLEditImpl, IConnectionPointContainer_iface);
+}
+
+static inline DHTMLEditImpl *impl_from_IDataObject(IDataObject *iface)
+{
+    return CONTAINING_RECORD(iface, DHTMLEditImpl, IDataObject_iface);
 }
 
 static ULONG dhtml_edit_addref(DHTMLEditImpl *This)
@@ -160,6 +167,13 @@ static HRESULT dhtml_edit_qi(DHTMLEditImpl *This, REFIID iid, void **out)
         *out = &This->IConnectionPointContainer_iface;
         return S_OK;
     }
+    else if(IsEqualGUID(iid, &IID_IDataObject))
+    {
+        dhtml_edit_addref(This);
+        *out = &This->IDataObject_iface;
+        return S_OK;
+    }
+
 
     *out = NULL;
     ERR("no interface for %s\n", debugstr_guid(iid));
@@ -1390,6 +1404,105 @@ static const IConnectionPointContainerVtbl ConnectionPointContainerVtbl =
     ConnectionPointContainer_FindConnectionPoint
 };
 
+static HRESULT WINAPI DataObject_QueryInterface(IDataObject *iface, REFIID iid, LPVOID *out)
+{
+    return dhtml_edit_qi(impl_from_IDataObject(iface), iid, out);
+}
+
+static ULONG WINAPI DataObject_AddRef(IDataObject *iface)
+{
+    return dhtml_edit_addref(impl_from_IDataObject(iface));
+}
+
+static ULONG WINAPI DataObject_Release(IDataObject *iface)
+{
+    return dhtml_edit_release(impl_from_IDataObject(iface));
+}
+
+static HRESULT WINAPI DataObject_GetData(IDataObject *iface, LPFORMATETC pformatetcIn,
+        STGMEDIUM *pmedium)
+{
+    DHTMLEditImpl *This = impl_from_IDataObject(iface);
+    FIXME("(%p)->()\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DataObject_GetDataHere(IDataObject *iface, LPFORMATETC pformatetc,
+        STGMEDIUM *pmedium)
+{
+    DHTMLEditImpl *This = impl_from_IDataObject(iface);
+    FIXME("(%p)->()\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DataObject_QueryGetData(IDataObject *iface, LPFORMATETC pformatetc)
+{
+    DHTMLEditImpl *This = impl_from_IDataObject(iface);
+    FIXME("(%p)->()\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DataObject_GetCanonicalFormatEtc(IDataObject *iface,
+        LPFORMATETC pformatectIn, LPFORMATETC pformatetcOut)
+{
+    DHTMLEditImpl *This = impl_from_IDataObject(iface);
+    FIXME("(%p)->()\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DataObject_SetData(IDataObject *iface, LPFORMATETC pformatetc,
+        STGMEDIUM *pmedium, BOOL fRelease)
+{
+    DHTMLEditImpl *This = impl_from_IDataObject(iface);
+    FIXME("(%p)->()\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DataObject_EnumFormatEtc(IDataObject *iface, DWORD dwDirection,
+        IEnumFORMATETC **ppenumFormatEtc)
+{
+    DHTMLEditImpl *This = impl_from_IDataObject(iface);
+    FIXME("(%p)->()\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DataObject_DAdvise(IDataObject *iface, FORMATETC *pformatetc,
+        DWORD advf, IAdviseSink *pAdvSink, DWORD *pdwConnection)
+{
+    DHTMLEditImpl *This = impl_from_IDataObject(iface);
+    FIXME("(%p)->()\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DataObject_DUnadvise(IDataObject *iface, DWORD dwConnection)
+{
+    DHTMLEditImpl *This = impl_from_IDataObject(iface);
+    FIXME("(%p)->()\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DataObject_EnumDAdvise(IDataObject *iface, IEnumSTATDATA **ppenumAdvise)
+{
+    DHTMLEditImpl *This = impl_from_IDataObject(iface);
+    FIXME("(%p)->()\n", This);
+    return E_NOTIMPL;
+}
+
+static const IDataObjectVtbl DataObjectVtbl = {
+    DataObject_QueryInterface,
+    DataObject_AddRef,
+    DataObject_Release,
+    DataObject_GetData,
+    DataObject_GetDataHere,
+    DataObject_QueryGetData,
+    DataObject_GetCanonicalFormatEtc,
+    DataObject_SetData,
+    DataObject_EnumFormatEtc,
+    DataObject_DAdvise,
+    DataObject_DUnadvise,
+    DataObject_EnumDAdvise
+};
+
 HRESULT dhtml_edit_create(REFIID iid, void **out)
 {
     DHTMLEditImpl *This;
@@ -1412,6 +1525,8 @@ HRESULT dhtml_edit_create(REFIID iid, void **out)
     This->IOleInPlaceObjectWindowless_iface.lpVtbl = &OleInPlaceObjectWindowlessVtbl;
     This->IOleInPlaceActiveObject_iface.lpVtbl = &OleInPlaceActiveObjectVtbl;
     This->IConnectionPointContainer_iface.lpVtbl = &ConnectionPointContainerVtbl;
+    This->IDataObject_iface.lpVtbl = &DataObjectVtbl;
+
     This->client_site = NULL;
     This->ref = 1;
 
