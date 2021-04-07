@@ -27,7 +27,6 @@
 #include "mferror.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -206,7 +205,7 @@ static ULONG WINAPI media_event_Release(IUnknown *iface)
                 break;
         }
 
-        heap_free(event);
+        free(event);
     }
 
     return refcount;
@@ -224,7 +223,7 @@ static HRESULT media_event_create(struct media_player *player, MFP_EVENT_TYPE ev
 {
     struct media_event *object;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IUnknown_iface.lpVtbl = &media_event_vtbl;
@@ -311,7 +310,7 @@ static ULONG WINAPI media_item_Release(IMFPMediaItem *iface)
         if (item->pd)
             IMFPresentationDescriptor_Release(item->pd);
         free(item->url);
-        heap_free(item);
+        free(item);
     }
 
     return refcount;
@@ -554,7 +553,7 @@ static HRESULT create_media_item(IMFPMediaPlayer *player, DWORD_PTR user_data, s
 {
     struct media_item *object;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMFPMediaItem_iface.lpVtbl = &media_item_vtbl;
@@ -659,7 +658,7 @@ static ULONG WINAPI media_player_Release(IMFPMediaPlayer *iface)
             IMFMediaSession_Release(player->session);
         DestroyWindow(player->event_window);
         DeleteCriticalSection(&player->cs);
-        heap_free(player);
+        free(player);
 
         platform_shutdown();
     }
@@ -1338,7 +1337,7 @@ HRESULT WINAPI MFPCreateMediaPlayer(const WCHAR *url, BOOL start_playback, MFP_C
 
     TRACE("%s, %d, %#x, %p, %p, %p.\n", debugstr_w(url), start_playback, options, callback, window, player);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     platform_startup();
