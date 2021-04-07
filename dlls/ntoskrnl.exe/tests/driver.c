@@ -1781,8 +1781,6 @@ static void WINAPI main_test_task(DEVICE_OBJECT *device, void *context)
     test_stack_limits();
     test_completion();
 
-    winetest_cleanup();
-
     irp->IoStatus.Status = STATUS_SUCCESS;
     irp->IoStatus.Information = 0;
     IoCompleteRequest(irp, IO_NO_INCREMENT);
@@ -2104,14 +2102,10 @@ static void test_permanence(void)
 static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack)
 {
     void *buffer = irp->AssociatedIrp.SystemBuffer;
-    struct main_test_input *test_input = (struct main_test_input *)buffer;
-    NTSTATUS status;
+    struct main_test_input *test_input = buffer;
 
     if (!buffer)
         return STATUS_ACCESS_VIOLATION;
-
-    if ((status = winetest_init()))
-        return status;
 
     pExEventObjectType = get_proc_address("ExEventObjectType");
     ok(!!pExEventObjectType, "ExEventObjectType not found\n");
@@ -2520,6 +2514,8 @@ static VOID WINAPI driver_Unload(DRIVER_OBJECT *driver)
 
     IoDeleteDevice(upper_device);
     IoDeleteDevice(lower_device);
+
+    winetest_cleanup();
 }
 
 NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
@@ -2527,6 +2523,9 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
     UNICODE_STRING nameW, linkW;
     NTSTATUS status;
     void *obj;
+
+    if ((status = winetest_init()))
+        return status;
 
     DbgPrint("loading driver\n");
 
@@ -2547,38 +2546,26 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
     pIoDriverObjectType = MmGetSystemRoutineAddress(&nameW);
 
     RtlInitUnicodeString(&nameW, L"\\Driver\\WineTestDriver");
-    if ((status = ObReferenceObjectByName(&nameW, 0, NULL, 0, *pIoDriverObjectType, KernelMode, NULL, &obj)))
-        return status;
-    if (obj != driver)
-    {
-        ObDereferenceObject(obj);
-        return STATUS_UNSUCCESSFUL;
-    }
+    status = ObReferenceObjectByName(&nameW, 0, NULL, 0, *pIoDriverObjectType, KernelMode, NULL, &obj);
+    ok(!status, "got %#x\n", status);
+    ok(obj == driver, "expected %p, got %p\n", driver, obj);
     ObDereferenceObject(obj);
 
     RtlInitUnicodeString(&nameW, L"\\Device\\WineTestDriver");
     RtlInitUnicodeString(&linkW, L"\\DosDevices\\WineTestDriver");
 
-    if (!(status = IoCreateDevice(driver, 0, &nameW, FILE_DEVICE_UNKNOWN,
-                                  FILE_DEVICE_SECURE_OPEN, FALSE, &lower_device)))
-    {
-        status = IoCreateSymbolicLink(&linkW, &nameW);
-        lower_device->Flags &= ~DO_DEVICE_INITIALIZING;
-    }
+    status = IoCreateDevice(driver, 0, &nameW, FILE_DEVICE_UNKNOWN, FILE_DEVICE_SECURE_OPEN, FALSE, &lower_device);
+    ok(!status, "failed to create device, status %#x\n", status);
+    status = IoCreateSymbolicLink(&linkW, &nameW);
+    ok(!status, "failed to create link, status %#x\n", status);
+    lower_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
-    if (!status)
-    {
-        RtlInitUnicodeString(&nameW, L"\\Device\\WineTestUpper");
+    RtlInitUnicodeString(&nameW, L"\\Device\\WineTestUpper");
+    status = IoCreateDevice(driver, 0, &nameW, FILE_DEVICE_UNKNOWN, FILE_DEVICE_SECURE_OPEN, FALSE, &upper_device);
+    ok(!status, "failed to create device, status %#x\n", status);
 
-        status = IoCreateDevice(driver, 0, &nameW, FILE_DEVICE_UNKNOWN,
-                                FILE_DEVICE_SECURE_OPEN, FALSE, &upper_device);
-    }
+    IoAttachDeviceToDeviceStack(upper_device, lower_device);
+    upper_device->Flags &= ~DO_DEVICE_INITIALIZING;
 
-    if (!status)
-    {
-        IoAttachDeviceToDeviceStack(upper_device, lower_device);
-        upper_device->Flags &= ~DO_DEVICE_INITIALIZING;
-    }
-
-    return status;
+    return STATUS_SUCCESS;
 }

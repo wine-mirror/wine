@@ -466,20 +466,14 @@ static void test_wsk_connect_socket(void)
 static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack)
 {
     void *buffer = irp->AssociatedIrp.SystemBuffer;
-    NTSTATUS status;
 
     if (!buffer)
         return STATUS_ACCESS_VIOLATION;
-
-    if ((status = winetest_init()))
-        return status;
 
     netio_init();
     test_wsk_get_address_info();
     test_wsk_listen_socket();
     test_wsk_connect_socket();
-
-    winetest_cleanup();
 
     irp->IoStatus.Information = 0;
     return STATUS_SUCCESS;
@@ -533,12 +527,17 @@ static VOID WINAPI driver_unload(DRIVER_OBJECT *driver)
     IoDeleteSymbolicLink(&linkW);
 
     IoDeleteDevice(device_obj);
+
+    winetest_cleanup();
 }
 
 NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
 {
     UNICODE_STRING nameW, linkW;
     NTSTATUS status;
+
+    if ((status = winetest_init()))
+        return status;
 
     DbgPrint("Loading driver.\n");
 
@@ -552,12 +551,11 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, PUNICODE_STRING registry)
     RtlInitUnicodeString(&nameW, device_name);
     RtlInitUnicodeString(&linkW, driver_link);
 
-    if (!(status = IoCreateDevice(driver, 0, &nameW, FILE_DEVICE_UNKNOWN,
-            FILE_DEVICE_SECURE_OPEN, FALSE, &device_obj)))
-    {
-        status = IoCreateSymbolicLink(&linkW, &nameW);
-        device_obj->Flags &= ~DO_DEVICE_INITIALIZING;
-    }
+    status = IoCreateDevice(driver, 0, &nameW, FILE_DEVICE_UNKNOWN, FILE_DEVICE_SECURE_OPEN, FALSE, &device_obj);
+    ok(!status, "failed to create device, status %#x\n", status);
+    status = IoCreateSymbolicLink(&linkW, &nameW);
+    ok(!status, "failed to create link, status %#x\n", status);
+    device_obj->Flags &= ~DO_DEVICE_INITIALIZING;
 
-    return status;
+    return STATUS_SUCCESS;
 }

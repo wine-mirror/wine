@@ -405,8 +405,6 @@ static void main_test(void)
     ok(res, "DeviceIoControl failed: %u\n", GetLastError());
     ok(!size, "got size %u\n", size);
 
-    cat_okfile();
-
     heap_free(test_input);
 }
 
@@ -931,6 +929,8 @@ static void test_driver_netio(struct testsign_context *ctx)
     unload_driver(service);
     ret = DeleteFileW(filename);
     ok(ret, "DeleteFile failed: %u\n", GetLastError());
+
+    cat_okfile();
 }
 
 static void add_file_to_catalog(HANDLE catalog, const WCHAR *file)
@@ -1271,6 +1271,8 @@ START_TEST(ntoskrnl)
     ok(ret, "DeleteFile failed: %u\n", GetLastError());
     ret = DeleteFileW(filename2);
     ok(ret, "DeleteFile failed: %u\n", GetLastError());
+
+    cat_okfile();
 
     test_driver3(&ctx);
     subtest("driver_netio");
