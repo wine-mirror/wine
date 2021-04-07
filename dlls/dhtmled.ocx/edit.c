@@ -34,6 +34,7 @@ typedef struct
     IOleControl IOleControl_iface;
     IViewObjectEx IViewObjectEx_iface;
     IOleInPlaceObjectWindowless IOleInPlaceObjectWindowless_iface;
+    IOleInPlaceActiveObject IOleInPlaceActiveObject_iface;
     IConnectionPointContainer IConnectionPointContainer_iface;
     IOleClientSite *client_site;
     SIZEL extent;
@@ -73,6 +74,11 @@ static inline DHTMLEditImpl *impl_from_IViewObjectEx(IViewObjectEx *iface)
 static inline DHTMLEditImpl *impl_from_IOleInPlaceObjectWindowless(IOleInPlaceObjectWindowless *iface)
 {
     return CONTAINING_RECORD(iface, DHTMLEditImpl, IOleInPlaceObjectWindowless_iface);
+}
+
+static inline DHTMLEditImpl *impl_from_IOleInPlaceActiveObject(IOleInPlaceActiveObject *iface)
+{
+    return CONTAINING_RECORD(iface, DHTMLEditImpl, IOleInPlaceActiveObject_iface);
 }
 
 static inline DHTMLEditImpl *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
@@ -140,6 +146,12 @@ static HRESULT dhtml_edit_qi(DHTMLEditImpl *This, REFIID iid, void **out)
     {
         dhtml_edit_addref(This);
         *out = &This->IOleInPlaceObjectWindowless_iface;
+        return S_OK;
+    }
+    else if(IsEqualGUID(iid, &IID_IOleInPlaceActiveObject))
+    {
+        dhtml_edit_addref(This);
+        *out = &This->IOleInPlaceActiveObject_iface;
         return S_OK;
     }
     else if(IsEqualGUID(iid, &IID_IConnectionPointContainer))
@@ -1254,6 +1266,89 @@ static const IOleInPlaceObjectWindowlessVtbl OleInPlaceObjectWindowlessVtbl = {
     OleInPlaceObjectWindowless_GetDropTarget
 };
 
+static HRESULT WINAPI InPlaceActiveObject_QueryInterface(IOleInPlaceActiveObject *iface,
+        REFIID iid, LPVOID *out)
+{
+    return dhtml_edit_qi(impl_from_IOleInPlaceActiveObject(iface), iid, out);
+}
+
+static ULONG WINAPI InPlaceActiveObject_AddRef(IOleInPlaceActiveObject *iface)
+{
+    return dhtml_edit_addref(impl_from_IOleInPlaceActiveObject(iface));
+}
+
+static ULONG WINAPI InPlaceActiveObject_Release(IOleInPlaceActiveObject *iface)
+{
+    return dhtml_edit_release(impl_from_IOleInPlaceActiveObject(iface));
+}
+
+static HRESULT WINAPI InPlaceActiveObject_GetWindow(IOleInPlaceActiveObject *iface,
+        HWND *phwnd)
+{
+    DHTMLEditImpl *This = impl_from_IOleInPlaceActiveObject(iface);
+    return IOleInPlaceObjectWindowless_GetWindow(&This->IOleInPlaceObjectWindowless_iface, phwnd);
+}
+
+static HRESULT WINAPI InPlaceActiveObject_ContextSensitiveHelp(IOleInPlaceActiveObject *iface,
+        BOOL fEnterMode)
+{
+    DHTMLEditImpl *This = impl_from_IOleInPlaceActiveObject(iface);
+    return IOleInPlaceObjectWindowless_ContextSensitiveHelp(&This->IOleInPlaceObjectWindowless_iface, fEnterMode);
+}
+
+static HRESULT WINAPI InPlaceActiveObject_TranslateAccelerator(IOleInPlaceActiveObject *iface,
+        LPMSG lpmsg)
+{
+    DHTMLEditImpl *This = impl_from_IOleInPlaceActiveObject(iface);
+    FIXME("(%p)->(%p)\n", This, lpmsg);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceActiveObject_OnFrameWindowActivate(IOleInPlaceActiveObject *iface,
+        BOOL fActivate)
+{
+    DHTMLEditImpl *This = impl_from_IOleInPlaceActiveObject(iface);
+    FIXME("(%p)->(%x)\n", This, fActivate);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceActiveObject_OnDocWindowActivate(IOleInPlaceActiveObject *iface,
+        BOOL fActivate)
+{
+    DHTMLEditImpl *This = impl_from_IOleInPlaceActiveObject(iface);
+    FIXME("(%p)->(%x)\n", This, fActivate);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceActiveObject_ResizeBorder(IOleInPlaceActiveObject *iface,
+        LPCRECT lprcBorder, IOleInPlaceUIWindow *pUIWindow, BOOL fFrameWindow)
+{
+    DHTMLEditImpl *This = impl_from_IOleInPlaceActiveObject(iface);
+    FIXME("(%p)->(%p %p %x)\n", This, lprcBorder, pUIWindow, fFrameWindow);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceActiveObject_EnableModeless(IOleInPlaceActiveObject *iface,
+        BOOL fEnable)
+{
+    DHTMLEditImpl *This = impl_from_IOleInPlaceActiveObject(iface);
+    FIXME("(%p)->(%x)\n", This, fEnable);
+    return E_NOTIMPL;
+}
+
+static const IOleInPlaceActiveObjectVtbl OleInPlaceActiveObjectVtbl = {
+    InPlaceActiveObject_QueryInterface,
+    InPlaceActiveObject_AddRef,
+    InPlaceActiveObject_Release,
+    InPlaceActiveObject_GetWindow,
+    InPlaceActiveObject_ContextSensitiveHelp,
+    InPlaceActiveObject_TranslateAccelerator,
+    InPlaceActiveObject_OnFrameWindowActivate,
+    InPlaceActiveObject_OnDocWindowActivate,
+    InPlaceActiveObject_ResizeBorder,
+    InPlaceActiveObject_EnableModeless
+};
+
 static HRESULT WINAPI ConnectionPointContainer_QueryInterface(IConnectionPointContainer *iface,
         REFIID iid, LPVOID *out)
 {
@@ -1315,6 +1410,7 @@ HRESULT dhtml_edit_create(REFIID iid, void **out)
     This->IOleControl_iface.lpVtbl = &OleControlVtbl;
     This->IViewObjectEx_iface.lpVtbl = &ViewObjectExVtbl;
     This->IOleInPlaceObjectWindowless_iface.lpVtbl = &OleInPlaceObjectWindowlessVtbl;
+    This->IOleInPlaceActiveObject_iface.lpVtbl = &OleInPlaceActiveObjectVtbl;
     This->IConnectionPointContainer_iface.lpVtbl = &ConnectionPointContainerVtbl;
     This->client_site = NULL;
     This->ref = 1;
