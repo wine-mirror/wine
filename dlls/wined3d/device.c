@@ -4839,7 +4839,7 @@ static bool resources_format_compatible(const struct wined3d_resource *src_resou
     return false;
 }
 
-void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
+void CDECL wined3d_device_context_copy_resource(struct wined3d_device_context *context,
         struct wined3d_resource *dst_resource, struct wined3d_resource *src_resource)
 {
     unsigned int src_row_block_count, dst_row_block_count;
@@ -4848,7 +4848,7 @@ void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
     struct wined3d_box src_box, dst_box;
     unsigned int i, j;
 
-    TRACE("device %p, dst_resource %p, src_resource %p.\n", device, dst_resource, src_resource);
+    TRACE("context %p, dst_resource %p, src_resource %p.\n", context, dst_resource, src_resource);
 
     if (src_resource == dst_resource)
     {
@@ -4893,7 +4893,7 @@ void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
     if (dst_resource->type == WINED3D_RTYPE_BUFFER)
     {
         wined3d_box_set(&src_box, 0, 0, src_resource->size, 1, 0, 1);
-        wined3d_device_context_emit_blt_sub_resource(&device->cs->c, dst_resource, 0, &src_box,
+        wined3d_device_context_emit_blt_sub_resource(context, dst_resource, 0, &src_box,
                 src_resource, 0, &src_box, WINED3D_BLT_RAW, NULL, WINED3D_TEXF_POINT);
         return;
     }
@@ -4918,7 +4918,7 @@ void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
         {
             unsigned int idx = j * dst_texture->level_count + i;
 
-            wined3d_device_context_emit_blt_sub_resource(&device->cs->c, dst_resource, idx, &dst_box,
+            wined3d_device_context_emit_blt_sub_resource(context, dst_resource, idx, &dst_box,
                     src_resource, idx, &src_box, WINED3D_BLT_RAW, NULL, WINED3D_TEXF_POINT);
         }
     }

@@ -2357,8 +2357,6 @@ HRESULT __cdecl wined3d_device_clear_rendertarget_view(struct wined3d_device *de
         const struct wined3d_color *color, float depth, DWORD stencil);
 void __cdecl wined3d_device_clear_unordered_access_view_uint(struct wined3d_device *device,
         struct wined3d_unordered_access_view *view, const struct wined3d_uvec4 *clear_value);
-void __cdecl wined3d_device_copy_resource(struct wined3d_device *device,
-        struct wined3d_resource *dst_resource, struct wined3d_resource *src_resource);
 HRESULT __cdecl wined3d_device_copy_sub_resource_region(struct wined3d_device *device,
         struct wined3d_resource *dst_resource, unsigned int dst_sub_resource_idx, unsigned int dst_x,
         unsigned int dst_y, unsigned int dst_z, struct wined3d_resource *src_resource,
@@ -2555,6 +2553,8 @@ HRESULT __cdecl wined3d_device_update_texture(struct wined3d_device *device,
         struct wined3d_texture *src_texture, struct wined3d_texture *dst_texture);
 HRESULT __cdecl wined3d_device_validate_device(const struct wined3d_device *device, DWORD *num_passes);
 
+void __cdecl wined3d_device_context_copy_resource(struct wined3d_device_context *context,
+        struct wined3d_resource *dst_resource, struct wined3d_resource *src_resource);
 void __cdecl wined3d_device_context_copy_uav_counter(struct wined3d_device_context *context,
         struct wined3d_buffer *dst_buffer, unsigned int offset, struct wined3d_unordered_access_view *uav);
 void __cdecl wined3d_device_context_dispatch(struct wined3d_device_context *context,
