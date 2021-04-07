@@ -31,6 +31,7 @@ typedef struct
     IOleObject IOleObject_iface;
     IPersistStreamInit IPersistStreamInit_iface;
     IOleControl IOleControl_iface;
+    IOleInPlaceObjectWindowless IOleInPlaceObjectWindowless_iface;
     IConnectionPointContainer IConnectionPointContainer_iface;
     IOleClientSite *client_site;
     SIZEL extent;
@@ -55,6 +56,11 @@ static inline DHTMLEditImpl *impl_from_IPersistStreamInit(IPersistStreamInit *if
 static inline DHTMLEditImpl *impl_from_IOleControl(IOleControl *iface)
 {
     return CONTAINING_RECORD(iface, DHTMLEditImpl, IOleControl_iface);
+}
+
+static inline DHTMLEditImpl *impl_from_IOleInPlaceObjectWindowless(IOleInPlaceObjectWindowless *iface)
+{
+    return CONTAINING_RECORD(iface, DHTMLEditImpl, IOleInPlaceObjectWindowless_iface);
 }
 
 static inline DHTMLEditImpl *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
@@ -99,6 +105,14 @@ static HRESULT dhtml_edit_qi(DHTMLEditImpl *This, REFIID iid, void **out)
     {
         dhtml_edit_addref(This);
         *out = &This->IOleControl_iface;
+        return S_OK;
+    }
+    else if (IsEqualGUID(iid, &IID_IOleWindow) ||
+             IsEqualGUID(iid, &IID_IOleInPlaceObject) ||
+             IsEqualGUID(iid, &IID_IOleInPlaceObjectWindowless))
+    {
+        dhtml_edit_addref(This);
+        *out = &This->IOleInPlaceObjectWindowless_iface;
         return S_OK;
     }
     else if(IsEqualGUID(iid, &IID_IConnectionPointContainer))
@@ -935,6 +949,96 @@ static const IOleControlVtbl OleControlVtbl = {
     OleControl_FreezeEvents
 };
 
+static HRESULT WINAPI OleInPlaceObjectWindowless_QueryInterface(IOleInPlaceObjectWindowless *iface,
+        REFIID iid, LPVOID *out)
+{
+    return dhtml_edit_qi(impl_from_IOleInPlaceObjectWindowless(iface), iid, out);
+}
+
+static ULONG WINAPI OleInPlaceObjectWindowless_AddRef(IOleInPlaceObjectWindowless *iface)
+{
+    return dhtml_edit_addref(impl_from_IOleInPlaceObjectWindowless(iface));
+}
+
+static ULONG WINAPI OleInPlaceObjectWindowless_Release(IOleInPlaceObjectWindowless *iface)
+{
+    return dhtml_edit_release(impl_from_IOleInPlaceObjectWindowless(iface));
+}
+
+static HRESULT WINAPI OleInPlaceObjectWindowless_GetWindow(IOleInPlaceObjectWindowless *iface, HWND *phwnd)
+{
+    DHTMLEditImpl *This = impl_from_IOleInPlaceObjectWindowless(iface);
+    FIXME("(%p)->(%p)\n", This, phwnd);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleInPlaceObjectWindowless_ContextSensitiveHelp(IOleInPlaceObjectWindowless *iface,
+        BOOL fEnterMode)
+{
+    DHTMLEditImpl *This = impl_from_IOleInPlaceObjectWindowless(iface);
+    FIXME("(%p)->(%x)\n", This, fEnterMode);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleInPlaceObjectWindowless_InPlaceDeactivate(IOleInPlaceObjectWindowless *iface)
+{
+    DHTMLEditImpl *This = impl_from_IOleInPlaceObjectWindowless(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleInPlaceObjectWindowless_UIDeactivate(IOleInPlaceObjectWindowless *iface)
+{
+    DHTMLEditImpl *This = impl_from_IOleInPlaceObjectWindowless(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleInPlaceObjectWindowless_SetObjectRects(IOleInPlaceObjectWindowless *iface,
+        LPCRECT lprcPosRect, LPCRECT lprcClipRect)
+{
+    DHTMLEditImpl *This = impl_from_IOleInPlaceObjectWindowless(iface);
+    FIXME("(%p)->(%p %p)\n", This, lprcPosRect, lprcClipRect);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleInPlaceObjectWindowless_ReactivateAndUndo(IOleInPlaceObjectWindowless *iface)
+{
+    DHTMLEditImpl *This = impl_from_IOleInPlaceObjectWindowless(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleInPlaceObjectWindowless_OnWindowMessage(IOleInPlaceObjectWindowless *iface,
+        UINT msg, WPARAM wParam, LPARAM lParam, LRESULT *lpResult)
+{
+    DHTMLEditImpl *This = impl_from_IOleInPlaceObjectWindowless(iface);
+    FIXME("(%p)->(%u %lu %lu %p)\n", This, msg, wParam, lParam, lpResult);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleInPlaceObjectWindowless_GetDropTarget(IOleInPlaceObjectWindowless *iface,
+        IDropTarget **ppDropTarget)
+{
+    DHTMLEditImpl *This = impl_from_IOleInPlaceObjectWindowless(iface);
+    FIXME("(%p)->(%p)\n", This, ppDropTarget);
+    return E_NOTIMPL;
+}
+
+static const IOleInPlaceObjectWindowlessVtbl OleInPlaceObjectWindowlessVtbl = {
+    OleInPlaceObjectWindowless_QueryInterface,
+    OleInPlaceObjectWindowless_AddRef,
+    OleInPlaceObjectWindowless_Release,
+    OleInPlaceObjectWindowless_GetWindow,
+    OleInPlaceObjectWindowless_ContextSensitiveHelp,
+    OleInPlaceObjectWindowless_InPlaceDeactivate,
+    OleInPlaceObjectWindowless_UIDeactivate,
+    OleInPlaceObjectWindowless_SetObjectRects,
+    OleInPlaceObjectWindowless_ReactivateAndUndo,
+    OleInPlaceObjectWindowless_OnWindowMessage,
+    OleInPlaceObjectWindowless_GetDropTarget
+};
+
 static HRESULT WINAPI ConnectionPointContainer_QueryInterface(IConnectionPointContainer *iface,
         REFIID iid, LPVOID *out)
 {
@@ -993,6 +1097,7 @@ HRESULT dhtml_edit_create(REFIID iid, void **out)
     This->IOleObject_iface.lpVtbl = &OleObjectVtbl;
     This->IPersistStreamInit_iface.lpVtbl = &PersistStreamInitVtbl;
     This->IOleControl_iface.lpVtbl = &OleControlVtbl;
+    This->IOleInPlaceObjectWindowless_iface.lpVtbl = &OleInPlaceObjectWindowlessVtbl;
     This->IConnectionPointContainer_iface.lpVtbl = &ConnectionPointContainerVtbl;
     This->client_site = NULL;
     This->ref = 1;
