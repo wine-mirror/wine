@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "mfapi.h"
 #include "mfplay.h"
+#include "mferror.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"
@@ -55,6 +56,7 @@ struct media_item
     IMFMediaSource *source;
     IMFPresentationDescriptor *pd;
     DWORD_PTR user_data;
+    WCHAR *url;
 };
 
 struct media_player
@@ -308,6 +310,7 @@ static ULONG WINAPI media_item_Release(IMFPMediaItem *iface)
             IMFMediaSource_Release(item->source);
         if (item->pd)
             IMFPresentationDescriptor_Release(item->pd);
+        free(item->url);
         heap_free(item);
     }
 
@@ -329,9 +332,19 @@ static HRESULT WINAPI media_item_GetMediaPlayer(IMFPMediaItem *iface,
 
 static HRESULT WINAPI media_item_GetURL(IMFPMediaItem *iface, LPWSTR *url)
 {
-    FIXME("%p, %p.\n", iface, url);
+    struct media_item *item = impl_from_IMFPMediaItem(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, url);
+
+    if (!item->url)
+        return MF_E_NOT_FOUND;
+
+    if (!(*url = CoTaskMemAlloc((wcslen(item->url) + 1) * sizeof(*item->url))))
+        return E_OUTOFMEMORY;
+
+    wcscpy(*url, item->url);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI media_item_GetObject(IMFPMediaItem *iface, IUnknown **obj)
@@ -768,6 +781,12 @@ static HRESULT WINAPI media_player_CreateMediaItemFromURL(IMFPMediaPlayer *iface
 
     if (FAILED(hr = create_media_item(iface, user_data, &item)))
         return hr;
+
+    if (url && !(item->url = wcsdup(url)))
+    {
+        IMFPMediaItem_Release(&item->IMFPMediaItem_iface);
+        return E_OUTOFMEMORY;
+    }
 
     if (sync)
     {
