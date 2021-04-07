@@ -29,6 +29,7 @@ typedef struct
 {
     IDHTMLEdit IDHTMLEdit_iface;
     IOleObject IOleObject_iface;
+    IProvideClassInfo2 IProvideClassInfo2_iface;
     IPersistStreamInit IPersistStreamInit_iface;
     IOleControl IOleControl_iface;
     IOleInPlaceObjectWindowless IOleInPlaceObjectWindowless_iface;
@@ -46,6 +47,11 @@ static inline DHTMLEditImpl *impl_from_IDHTMLEdit(IDHTMLEdit *iface)
 static inline DHTMLEditImpl *impl_from_IOleObject(IOleObject *iface)
 {
     return CONTAINING_RECORD(iface, DHTMLEditImpl, IOleObject_iface);
+}
+
+static inline DHTMLEditImpl *impl_from_IProvideClassInfo2(IProvideClassInfo2 *iface)
+{
+    return CONTAINING_RECORD(iface, DHTMLEditImpl, IProvideClassInfo2_iface);
 }
 
 static inline DHTMLEditImpl *impl_from_IPersistStreamInit(IPersistStreamInit *iface)
@@ -93,6 +99,13 @@ static HRESULT dhtml_edit_qi(DHTMLEditImpl *This, REFIID iid, void **out)
     {
         dhtml_edit_addref(This);
         *out = &This->IOleObject_iface;
+        return S_OK;
+    }
+    else if (IsEqualGUID(iid, &IID_IProvideClassInfo) ||
+             IsEqualGUID(iid, &IID_IProvideClassInfo2))
+    {
+        dhtml_edit_addref(This);
+        *out = &This->IProvideClassInfo2_iface;
         return S_OK;
     }
     else if (IsEqualGUID(iid, &IID_IPersistStreamInit))
@@ -826,6 +839,43 @@ static const IOleObjectVtbl OleObjectVtbl = {
     OleObject_SetColorScheme
 };
 
+static HRESULT WINAPI ProvideClassInfo2_QueryInterface(IProvideClassInfo2 *iface, REFIID iid, LPVOID *out)
+{
+    return dhtml_edit_qi(impl_from_IProvideClassInfo2(iface), iid, out);
+}
+
+static ULONG WINAPI ProvideClassInfo2_AddRef(IProvideClassInfo2 *iface)
+{
+    return dhtml_edit_addref(impl_from_IProvideClassInfo2(iface));
+}
+
+static ULONG WINAPI ProvideClassInfo2_Release(IProvideClassInfo2 *iface)
+{
+    return dhtml_edit_release(impl_from_IProvideClassInfo2(iface));
+}
+
+static HRESULT WINAPI ProvideClassInfo2_GetClassInfo(IProvideClassInfo2 *iface, ITypeInfo **ppTI)
+{
+    DHTMLEditImpl *This = impl_from_IProvideClassInfo2(iface);
+    FIXME("(%p)->(%p)\n", This, ppTI);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProvideClassInfo2_GetGUID(IProvideClassInfo2 *iface, DWORD dwGuidKind, GUID *pGUID)
+{
+    DHTMLEditImpl *This = impl_from_IProvideClassInfo2(iface);
+    FIXME("(%p)->(%d %p)\n", This, dwGuidKind, pGUID);
+    return E_NOTIMPL;
+}
+
+static const IProvideClassInfo2Vtbl ProvideClassInfo2Vtbl = {
+    ProvideClassInfo2_QueryInterface,
+    ProvideClassInfo2_AddRef,
+    ProvideClassInfo2_Release,
+    ProvideClassInfo2_GetClassInfo,
+    ProvideClassInfo2_GetGUID
+};
+
 static HRESULT WINAPI PersistStreamInit_QueryInterface(IPersistStreamInit *iface, REFIID iid, void **out)
 {
     return dhtml_edit_qi(impl_from_IPersistStreamInit(iface), iid, out);
@@ -1095,6 +1145,7 @@ HRESULT dhtml_edit_create(REFIID iid, void **out)
 
     This->IDHTMLEdit_iface.lpVtbl = &DHTMLEditVtbl;
     This->IOleObject_iface.lpVtbl = &OleObjectVtbl;
+    This->IProvideClassInfo2_iface.lpVtbl = &ProvideClassInfo2Vtbl;
     This->IPersistStreamInit_iface.lpVtbl = &PersistStreamInitVtbl;
     This->IOleControl_iface.lpVtbl = &OleControlVtbl;
     This->IOleInPlaceObjectWindowless_iface.lpVtbl = &OleInPlaceObjectWindowlessVtbl;
