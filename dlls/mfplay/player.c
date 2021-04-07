@@ -407,9 +407,11 @@ static HRESULT WINAPI media_item_IsProtected(IMFPMediaItem *iface, BOOL *protect
 
 static HRESULT WINAPI media_item_GetDuration(IMFPMediaItem *iface, REFGUID format, PROPVARIANT *value)
 {
-    FIXME("%p, %s, %p.\n", iface, debugstr_guid(format), value);
+    struct media_item *item = impl_from_IMFPMediaItem(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(format), value);
+
+    return IMFPresentationDescriptor_GetItem(item->pd, &MF_PD_DURATION, value);
 }
 
 static HRESULT WINAPI media_item_GetNumberOfStreams(IMFPMediaItem *iface, DWORD *count)
