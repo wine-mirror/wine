@@ -63,10 +63,12 @@ struct media_player
     IPropertyStore IPropertyStore_iface;
     IMFAsyncCallback resolver_callback;
     IMFAsyncCallback events_callback;
+    IMFAsyncCallback session_events_callback;
     LONG refcount;
     IMFPMediaPlayerCallback *callback;
     IPropertyStore *propstore;
     IMFSourceResolver *resolver;
+    IMFMediaSession *session;
     MFP_CREATION_OPTIONS options;
     HWND event_window;
     HWND output_window;
@@ -119,6 +121,11 @@ static struct media_player *impl_from_resolver_IMFAsyncCallback(IMFAsyncCallback
 static struct media_player *impl_from_events_IMFAsyncCallback(IMFAsyncCallback *iface)
 {
     return CONTAINING_RECORD(iface, struct media_player, events_callback);
+}
+
+static struct media_player *impl_from_session_events_IMFAsyncCallback(IMFAsyncCallback *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_player, session_events_callback);
 }
 
 static struct media_item *impl_from_IMFPMediaItem(IMFPMediaItem *iface)
@@ -618,6 +625,8 @@ static ULONG WINAPI media_player_Release(IMFPMediaPlayer *iface)
             IPropertyStore_Release(player->propstore);
         if (player->resolver)
             IMFSourceResolver_Release(player->resolver);
+        if (player->session)
+            IMFMediaSession_Release(player->session);
         DestroyWindow(player->event_window);
         heap_free(player);
 
@@ -1170,6 +1179,43 @@ static const IMFAsyncCallbackVtbl media_player_events_callback_vtbl =
     media_player_events_callback_Invoke,
 };
 
+static ULONG WINAPI media_player_session_events_callback_AddRef(IMFAsyncCallback *iface)
+{
+    struct media_player *player = impl_from_session_events_IMFAsyncCallback(iface);
+    return IMFPMediaPlayer_AddRef(&player->IMFPMediaPlayer_iface);
+}
+
+static ULONG WINAPI media_player_session_events_callback_Release(IMFAsyncCallback *iface)
+{
+    struct media_player *player = impl_from_session_events_IMFAsyncCallback(iface);
+    return IMFPMediaPlayer_Release(&player->IMFPMediaPlayer_iface);
+}
+
+static HRESULT WINAPI media_player_session_events_callback_Invoke(IMFAsyncCallback *iface,
+        IMFAsyncResult *result)
+{
+    struct media_player *player = impl_from_session_events_IMFAsyncCallback(iface);
+    IMFMediaEvent *event;
+    HRESULT hr;
+
+    if (FAILED(hr = IMFMediaSession_EndGetEvent(player->session, result, &event)))
+        return S_OK;
+
+    IMFMediaSession_BeginGetEvent(player->session, &player->session_events_callback, NULL);
+    IMFMediaEvent_Release(event);
+
+    return S_OK;
+}
+
+static const IMFAsyncCallbackVtbl media_player_session_events_callback_vtbl =
+{
+    media_player_callback_QueryInterface,
+    media_player_session_events_callback_AddRef,
+    media_player_session_events_callback_Release,
+    media_player_callback_GetParameters,
+    media_player_session_events_callback_Invoke,
+};
+
 HRESULT WINAPI MFPCreateMediaPlayer(const WCHAR *url, BOOL start_playback, MFP_CREATION_OPTIONS options,
         IMFPMediaPlayerCallback *callback, HWND window, IMFPMediaPlayer **player)
 {
@@ -1187,6 +1233,7 @@ HRESULT WINAPI MFPCreateMediaPlayer(const WCHAR *url, BOOL start_playback, MFP_C
     object->IPropertyStore_iface.lpVtbl = &media_player_propstore_vtbl;
     object->resolver_callback.lpVtbl = &media_player_resolver_callback_vtbl;
     object->events_callback.lpVtbl = &media_player_events_callback_vtbl;
+    object->session_events_callback.lpVtbl = &media_player_session_events_callback_vtbl;
     object->refcount = 1;
     object->callback = callback;
     if (object->callback)
@@ -1196,6 +1243,10 @@ HRESULT WINAPI MFPCreateMediaPlayer(const WCHAR *url, BOOL start_playback, MFP_C
     if (FAILED(hr = CreatePropertyStore(&object->propstore)))
         goto failed;
     if (FAILED(hr = MFCreateSourceResolver(&object->resolver)))
+        goto failed;
+    if (FAILED(hr = MFCreateMediaSession(NULL, &object->session)))
+        goto failed;
+    if (FAILED(hr = IMFMediaSession_BeginGetEvent(object->session, &object->session_events_callback, NULL)))
         goto failed;
     if (!(object->options & MFP_OPTION_FREE_THREADED_CALLBACK))
     {
