@@ -474,6 +474,12 @@ static inline void wined3d_device_context_submit(struct wined3d_device_context *
     context->ops->submit(context, queue_id);
 }
 
+static inline void wined3d_device_context_finish(struct wined3d_device_context *context,
+        enum wined3d_cs_queue_id queue_id)
+{
+    context->ops->finish(context, queue_id);
+}
+
 static const char *debug_cs_op(enum wined3d_cs_op op)
 {
     switch (op)
@@ -2425,14 +2431,14 @@ error:
     wined3d_resource_release(op->dst_resource);
 }
 
-void wined3d_cs_emit_blt_sub_resource(struct wined3d_cs *cs, struct wined3d_resource *dst_resource,
-        unsigned int dst_sub_resource_idx, const struct wined3d_box *dst_box, struct wined3d_resource *src_resource,
-        unsigned int src_sub_resource_idx, const struct wined3d_box *src_box, DWORD flags,
-        const struct wined3d_blt_fx *fx, enum wined3d_texture_filter_type filter)
+void wined3d_device_context_emit_blt_sub_resource(struct wined3d_device_context *context,
+        struct wined3d_resource *dst_resource, unsigned int dst_sub_resource_idx, const struct wined3d_box *dst_box,
+        struct wined3d_resource *src_resource, unsigned int src_sub_resource_idx, const struct wined3d_box *src_box,
+        unsigned int flags, const struct wined3d_blt_fx *fx, enum wined3d_texture_filter_type filter)
 {
     struct wined3d_cs_blt_sub_resource *op;
 
-    op = wined3d_device_context_require_space(&cs->c, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_BLT_SUB_RESOURCE;
     op->dst_resource = dst_resource;
     op->dst_sub_resource_idx = dst_sub_resource_idx;
@@ -2451,9 +2457,9 @@ void wined3d_cs_emit_blt_sub_resource(struct wined3d_cs *cs, struct wined3d_reso
     if (src_resource)
         wined3d_resource_acquire(src_resource);
 
-    wined3d_device_context_submit(&cs->c, WINED3D_CS_QUEUE_DEFAULT);
+    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
     if (flags & WINED3D_BLT_SYNCHRONOUS)
-        wined3d_cs_finish(cs, WINED3D_CS_QUEUE_DEFAULT);
+        wined3d_device_context_finish(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
 static void wined3d_cs_exec_update_sub_resource(struct wined3d_cs *cs, const void *data)
