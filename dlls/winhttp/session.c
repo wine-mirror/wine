@@ -1854,7 +1854,7 @@ static BOOL run_script( char *script, DWORD size, const WCHAR *url, WINHTTP_PROX
     uc.dwStructSize = sizeof(uc);
     uc.dwHostNameLength = -1;
 
-    if (WinHttpCrackUrl( url, 0, 0, &uc ))
+    if ((ret = WinHttpCrackUrl( url, 0, 0, &uc )))
     {
         char *hostnameA = strdupWA_sized( uc.lpszHostName, uc.dwHostNameLength );
 
@@ -1868,7 +1868,8 @@ static BOOL run_script( char *script, DWORD size, const WCHAR *url, WINHTTP_PROX
         heap_free( hostnameA );
     }
     heap_free( urlA );
-    return InternetDeInitializeAutoProxyDll( NULL, 0 );
+    InternetDeInitializeAutoProxyDll( NULL, 0 );
+    return ret;
 }
 
 /***********************************************************************
