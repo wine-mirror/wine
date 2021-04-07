@@ -248,12 +248,12 @@ static void test_set_value(void)
 {
     DWORD ret;
 
-    static const WCHAR name1W[] =   {'C','l','e','a','n','S','i','n','g','l','e','S','t','r','i','n','g', 0};
-    static const WCHAR name2W[] =   {'S','o','m','e','I','n','t','r','a','Z','e','r','o','e','d','S','t','r','i','n','g', 0};
-    static const WCHAR emptyW[] = {0};
-    static const WCHAR string1W[] = {'T','h','i','s','N','e','v','e','r','B','r','e','a','k','s', 0};
-    static const WCHAR string2W[] = {'T','h','i','s', 0 ,'B','r','e','a','k','s', 0 , 0 ,'A', 0 , 0 , 0 , 'L','o','t', 0 , 0 , 0 , 0, 0};
-    static const WCHAR substring2W[] = {'T','h','i','s',0};
+    static const WCHAR name1W[] =   L"CleanSingleString";
+    static const WCHAR name2W[] =   L"SomeIntraZeroedString";
+    static const WCHAR emptyW[] =   L"";
+    static const WCHAR string1W[] = L"ThisNeverBreaks";
+    static const WCHAR string2W[] = L"This\0Breaks\0\0A\0\0\0Lot\0\0\0\0";
+    static const WCHAR substring2W[] = L"This";
 
     static const char name1A[] =   "CleanSingleString";
     static const char name2A[] =   "SomeIntraZeroedString";
@@ -412,7 +412,6 @@ static void test_set_value(void)
         win_skip("RegSetKeyValue() is not supported.\n");
     else
     {
-        static const WCHAR subkeyW[] = {'s','u','b','k','e','y',0};
         DWORD len, type;
         HKEY subkey;
 
@@ -421,10 +420,10 @@ static void test_set_value(void)
         test_hkey_main_Value_A(name1A, string2A, sizeof(string2A));
         test_hkey_main_Value_W(name1W, string2W, sizeof(string2W));
 
-        ret = pRegSetKeyValueW(hkey_main, subkeyW, name1W, REG_SZ, string1W, sizeof(string1W));
+        ret = pRegSetKeyValueW(hkey_main, L"subkey", name1W, REG_SZ, string1W, sizeof(string1W));
         ok(ret == ERROR_SUCCESS, "got %d\n", ret);
 
-        ret = RegOpenKeyExW(hkey_main, subkeyW, 0, KEY_QUERY_VALUE, &subkey);
+        ret = RegOpenKeyExW(hkey_main, L"subkey", 0, KEY_QUERY_VALUE, &subkey);
         ok(ret == ERROR_SUCCESS, "got %d\n", ret);
         type = len = 0;
         ret = RegQueryValueExW(subkey, name1W, 0, &type, NULL, &len);
@@ -432,13 +431,13 @@ static void test_set_value(void)
         ok(len == sizeof(string1W), "got %d\n", len);
         ok(type == REG_SZ, "got type %d\n", type);
 
-        ret = pRegSetKeyValueW(hkey_main, subkeyW, name1W, REG_SZ, NULL, 0);
+        ret = pRegSetKeyValueW(hkey_main, L"subkey", name1W, REG_SZ, NULL, 0);
         ok(ret == ERROR_SUCCESS, "got %d\n", ret);
 
-        ret = pRegSetKeyValueW(hkey_main, subkeyW, name1W, REG_SZ, NULL, 4);
+        ret = pRegSetKeyValueW(hkey_main, L"subkey", name1W, REG_SZ, NULL, 4);
         ok(ret == ERROR_NOACCESS, "got %d\n", ret);
 
-        ret = pRegSetKeyValueW(hkey_main, subkeyW, name1W, REG_DWORD, NULL, 4);
+        ret = pRegSetKeyValueW(hkey_main, L"subkey", name1W, REG_DWORD, NULL, 4);
         ok(ret == ERROR_NOACCESS, "got %d\n", ret);
 
         RegCloseKey(subkey);
@@ -475,9 +474,6 @@ static void test_enum_value(void)
     char value[20], data[20];
     WCHAR valueW[20], dataW[20];
     DWORD val_count, data_count, type;
-    static const WCHAR foobarW[] = {'f','o','o','b','a','r',0};
-    static const WCHAR testW[] = {'T','e','s','t',0};
-    static const WCHAR xxxW[] = {'x','x','x','x','x','x','x','x',0};
 
     /* create the working key for new 'Test' value */
     res = RegCreateKeyA( hkey_main, "TestKey", &test_key );
@@ -511,15 +507,15 @@ static void test_enum_value(void)
     val_count = 20;
     data_count = 20;
     type = 1234;
-    memcpy( valueW, xxxW, sizeof(xxxW) );
-    memcpy( dataW, xxxW, sizeof(xxxW) );
+    wcscpy( valueW, L"xxxxxxxx" );
+    wcscpy( dataW, L"xxxxxxxx" );
     res = RegEnumValueW( test_key, 0, valueW, &val_count, NULL, &type, (BYTE*)dataW, &data_count );
     ok( res == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", res );
     ok( val_count == 4, "val_count set to %d instead of 4\n", val_count );
     ok( data_count == 0, "data_count set to %d instead of 0\n", data_count );
     ok( type == REG_BINARY, "type %d is not REG_BINARY\n", type );
-    ok( !memcmp( valueW, testW, sizeof(testW) ), "value is not 'Test'\n" );
-    ok( !memcmp( dataW, xxxW, sizeof(xxxW) ), "data is not 'xxxxxxxxxx'\n" );
+    ok( !wcscmp( valueW, L"Test" ), "value is not 'Test'\n" );
+    ok( !wcscmp( dataW, L"xxxxxxxx" ), "data is not 'xxxxxxxx'\n" );
 
     res = RegSetValueExA( test_key, "Test", 0, REG_SZ, (const BYTE *)"foobar", 7 );
     ok( res == 0, "RegSetValueExA failed error %d\n", res );
@@ -628,7 +624,7 @@ static void test_enum_value(void)
     /* Unicode tests */
 
     SetLastError(0xdeadbeef);
-    res = RegSetValueExW( test_key, testW, 0, REG_SZ, (const BYTE *)foobarW, 7*sizeof(WCHAR) );
+    res = RegSetValueExW( test_key, L"Test", 0, REG_SZ, (const BYTE *)L"foobar", 7*sizeof(WCHAR) );
     if (res==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
     {
         win_skip("RegSetValueExW is not implemented\n");
@@ -640,64 +636,64 @@ static void test_enum_value(void)
     val_count = 2;
     data_count = 2;
     type = 1234;
-    memcpy( valueW, xxxW, sizeof(xxxW) );
-    memcpy( dataW, xxxW, sizeof(xxxW) );
+    wcscpy( valueW, L"xxxxxxxx" );
+    wcscpy( dataW, L"xxxxxxxx" );
     res = RegEnumValueW( test_key, 0, valueW, &val_count, NULL, &type, (BYTE*)dataW, &data_count );
     ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %d\n", res );
     ok( val_count == 2, "val_count set to %d\n", val_count );
     ok( data_count == 7*sizeof(WCHAR), "data_count set to %d instead of 7*sizeof(WCHAR)\n", data_count );
     ok( type == REG_SZ, "type %d is not REG_SZ\n", type );
-    ok( !memcmp( valueW, xxxW, sizeof(xxxW) ), "value modified\n" );
-    ok( !memcmp( dataW, xxxW, sizeof(xxxW) ), "data modified\n" );
+    ok( !wcscmp( valueW, L"xxxxxxxx" ), "value modified\n" );
+    ok( !wcscmp( dataW, L"xxxxxxxx" ), "data modified\n" );
 
     /* overflow name */
     val_count = 3;
     data_count = 20;
     type = 1234;
-    memcpy( valueW, xxxW, sizeof(xxxW) );
-    memcpy( dataW, xxxW, sizeof(xxxW) );
+    wcscpy( valueW, L"xxxxxxxx" );
+    wcscpy( dataW, L"xxxxxxxx" );
     res = RegEnumValueW( test_key, 0, valueW, &val_count, NULL, &type, (BYTE*)dataW, &data_count );
     ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %d\n", res );
     ok( val_count == 3, "val_count set to %d\n", val_count );
     ok( data_count == 7*sizeof(WCHAR), "data_count set to %d instead of 7*sizeof(WCHAR)\n", data_count );
     ok( type == REG_SZ, "type %d is not REG_SZ\n", type );
-    ok( !memcmp( valueW, xxxW, sizeof(xxxW) ), "value modified\n" );
-    ok( !memcmp( dataW, xxxW, sizeof(xxxW) ), "data modified\n" );
+    ok( !wcscmp( valueW, L"xxxxxxxx" ), "value modified\n" );
+    ok( !wcscmp( dataW, L"xxxxxxxx" ), "data modified\n" );
 
     /* overflow data */
     val_count = 20;
     data_count = 2;
     type = 1234;
-    memcpy( valueW, xxxW, sizeof(xxxW) );
-    memcpy( dataW, xxxW, sizeof(xxxW) );
+    wcscpy( valueW, L"xxxxxxxx" );
+    wcscpy( dataW, L"xxxxxxxx" );
     res = RegEnumValueW( test_key, 0, valueW, &val_count, NULL, &type, (BYTE*)dataW, &data_count );
     ok( res == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %d\n", res );
     ok( val_count == 4, "val_count set to %d instead of 4\n", val_count );
     ok( data_count == 7*sizeof(WCHAR), "data_count set to %d instead of 7*sizeof(WCHAR)\n", data_count );
     ok( type == REG_SZ, "type %d is not REG_SZ\n", type );
-    ok( !memcmp( valueW, testW, sizeof(testW) ), "value is not 'Test'\n" );
-    ok( !memcmp( dataW, xxxW, sizeof(xxxW) ), "data modified\n" );
+    ok( !wcscmp( valueW, L"Test" ), "value is not 'Test'\n" );
+    ok( !wcscmp( dataW, L"xxxxxxxx" ), "data modified\n" );
 
     /* no overflow */
     val_count = 20;
     data_count = 20;
     type = 1234;
-    memcpy( valueW, xxxW, sizeof(xxxW) );
-    memcpy( dataW, xxxW, sizeof(xxxW) );
+    wcscpy( valueW, L"xxxxxxxx" );
+    wcscpy( dataW, L"xxxxxxxx" );
     res = RegEnumValueW( test_key, 0, valueW, &val_count, NULL, &type, (BYTE*)dataW, &data_count );
     ok( res == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", res );
     ok( val_count == 4, "val_count set to %d instead of 4\n", val_count );
     ok( data_count == 7*sizeof(WCHAR), "data_count set to %d instead of 7*sizeof(WCHAR)\n", data_count );
     ok( type == REG_SZ, "type %d is not REG_SZ\n", type );
-    ok( !memcmp( valueW, testW, sizeof(testW) ), "value is not 'Test'\n" );
-    ok( !memcmp( dataW, foobarW, sizeof(foobarW) ), "data is not 'foobar'\n" );
+    ok( !wcscmp( valueW, L"Test" ), "value is not 'Test'\n" );
+    ok( !wcscmp( dataW, L"foobar" ), "data is not 'foobar'\n" );
 
     if (pRegGetValueA) /* avoid a crash on Windows 2000 */
     {
         /* no valueW and no val_count parameter */
         data_count = 20;
         type = 1234;
-        memcpy( dataW, xxxW, sizeof(xxxW) );
+        wcscpy( dataW, L"xxxxxxxx" );
         res = RegEnumValueW( test_key, 0, NULL, NULL, NULL, &type, (BYTE*)dataW, &data_count );
         ok( res == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", res );
 
@@ -705,15 +701,15 @@ static void test_enum_value(void)
         val_count = 20;
         data_count = 20;
         type = 1234;
-        memcpy( dataW, xxxW, sizeof(xxxW) );
+        wcscpy( dataW, L"xxxxxxxx" );
         res = RegEnumValueW( test_key, 0, NULL, &val_count, NULL, &type, (BYTE*)dataW, &data_count );
         ok( res == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", res );
 
         /* no val_count parameter */
         data_count = 20;
         type = 1234;
-        memcpy( valueW, xxxW, sizeof(xxxW) );
-        memcpy( dataW, xxxW, sizeof(xxxW) );
+        wcscpy( valueW, L"xxxxxxxx" );
+        wcscpy( dataW, L"xxxxxxxx" );
         res = RegEnumValueW( test_key, 0, valueW, NULL, NULL, &type, (BYTE*)dataW, &data_count );
         ok( res == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", res );
     }
@@ -1660,8 +1656,6 @@ static void test_reg_query_value(void)
     WCHAR valW[5];
     LONG size, ret;
 
-    static const WCHAR expected[] = {'d','a','t','a',0};
-
     ret = RegCreateKeyA(hkey_main, "subkey", &subkey);
     ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
 
@@ -1741,7 +1735,7 @@ static void test_reg_query_value(void)
     ok(ret == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", ret);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
     ok(!valW[0], "Expected valW to be untouched\n");
-    ok(size == sizeof(expected), "Got wrong size: %d\n", size);
+    ok(size == 10, "Got wrong size: %d\n", size);
 
     /* unicode - try size in WCHARS */
     SetLastError(0xdeadbeef);
@@ -1750,17 +1744,17 @@ static void test_reg_query_value(void)
     ok(ret == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", ret);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
     ok(!valW[0], "Expected valW to be untouched\n");
-    ok(size == sizeof(expected), "Got wrong size: %d\n", size);
+    ok(size == 10, "Got wrong size: %d\n", size);
 
     /* unicode - successfully read the value */
     size = sizeof(valW);
     ret = RegQueryValueW(subkey, NULL, valW, &size);
     ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
-    ok(!lstrcmpW(valW, expected), "Got wrong value\n");
-    ok(size == sizeof(expected), "Got wrong size: %d\n", size);
+    ok(!lstrcmpW(valW, L"data"), "Got wrong value\n");
+    ok(size == 10, "Got wrong size: %d\n", size);
 
     /* unicode - set the value without a NULL terminator */
-    ret = RegSetValueW(subkey, NULL, REG_SZ, expected, sizeof(expected)-sizeof(WCHAR));
+    ret = RegSetValueW(subkey, NULL, REG_SZ, L"data", 8);
     ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
 
     /* unicode - read the unterminated value, value is terminated for us */
@@ -1768,8 +1762,8 @@ static void test_reg_query_value(void)
     size = sizeof(valW);
     ret = RegQueryValueW(subkey, NULL, valW, &size);
     ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
-    ok(!lstrcmpW(valW, expected), "Got wrong value\n");
-    ok(size == sizeof(expected), "Got wrong size: %d\n", size);
+    ok(!lstrcmpW(valW, L"data"), "Got wrong value\n");
+    ok(size == 10, "Got wrong size: %d\n", size);
 
 cleanup:
     RegDeleteKeyA(subkey, "");
@@ -1786,7 +1780,7 @@ static void test_reg_query_info(void)
     char expectbuffer[32];
     WCHAR expectbufferW[32];
     char subkey_class[] = "subkey class";
-    WCHAR subkey_classW[] = {'s','u','b','k','e','y',' ','c','l','a','s','s',0};
+    WCHAR subkey_classW[] = L"subkey class";
     char subsubkey_class[] = "subsubkey class";
     DWORD classlen;
     DWORD subkeys, maxsubkeylen, maxclasslen;
@@ -2330,8 +2324,7 @@ static void test_rw_order(void)
 
 static void test_symlinks(void)
 {
-    static const WCHAR targetW[] = {'\\','S','o','f','t','w','a','r','e','\\','W','i','n','e',
-                                    '\\','T','e','s','t','\\','t','a','r','g','e','t',0};
+    static const WCHAR targetW[] = L"\\Software\\Wine\\Test\\target";
     BYTE buffer[1024];
     UNICODE_STRING target_str;
     WCHAR *target;
@@ -3613,8 +3606,6 @@ static void cmp_li_real(LARGE_INTEGER *l1, LARGE_INTEGER *l2, LONGLONG slack, in
 
 static void test_RegQueryValueExPerformanceData(void)
 {
-    static const WCHAR globalW[] = { 'G','l','o','b','a','l',0 };
-    static const WCHAR dummyW[5] = { 'd','u','m','m','y' };
     static const char * const names[] = { NULL, "", "Global", "2", "invalid counter name" };
     DWORD cbData, len, i, type;
     BYTE *value;
@@ -3628,7 +3619,7 @@ static void test_RegQueryValueExPerformanceData(void)
     dwret = RegQueryValueExA( HKEY_PERFORMANCE_DATA, "Global", NULL, NULL, NULL, &cbData );
     ok( dwret == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %d\n", dwret );
 
-    dwret = RegQueryValueExW( HKEY_PERFORMANCE_DATA, globalW, NULL, NULL, NULL, &cbData );
+    dwret = RegQueryValueExW( HKEY_PERFORMANCE_DATA, L"Global", NULL, NULL, NULL, &cbData );
     ok( dwret == ERROR_MORE_DATA, "expected ERROR_MORE_DATA, got %d\n", dwret );
 
     /* Test ERROR_MORE_DATA, start with small buffer */
@@ -3809,7 +3800,7 @@ todo_wine
 
     if (pRegSetKeyValueW)
     {
-        dwret = pRegSetKeyValueW(HKEY_PERFORMANCE_DATA, NULL, globalW, REG_SZ, dummyW, sizeof(dummyW));
+        dwret = pRegSetKeyValueW(HKEY_PERFORMANCE_DATA, NULL, L"Global", REG_SZ, L"dummy", 10);
 todo_wine
         ok(dwret == ERROR_INVALID_HANDLE, "got %u\n", dwret);
     }
@@ -3831,7 +3822,7 @@ static void test_RegLoadMUIString(void)
     WCHAR textW[64], bufW[64];
     WCHAR curdirW[MAX_PATH], sysdirW[MAX_PATH];
     const static char tz_value[] = "MUI_Std";
-    const static WCHAR tz_valueW[] = {'M','U','I','_','S','t','d', 0};
+    const static WCHAR tz_valueW[] = L"MUI_Std";
     struct {
         const char* value;
         DWORD type;
@@ -4026,11 +4017,6 @@ static void test_EnumDynamicTimeZoneInformation(void)
     WCHAR sysdir[MAX_PATH];
     DWORD index, ret, gle, size;
     DYNAMIC_TIME_ZONE_INFORMATION bogus_dtzi, dtzi;
-    static const WCHAR stdW[] = {'S','t','d',0};
-    static const WCHAR dltW[] = {'D','l','t',0};
-    static const WCHAR tziW[] = {'T','Z','I',0};
-    static const WCHAR mui_stdW[] = {'M','U','I','_','S','t','d',0};
-    static const WCHAR mui_dltW[] = {'M','U','I','_','D','l','t',0};
     struct tz_reg_data
     {
         LONG bias;
@@ -4093,9 +4079,9 @@ static void test_EnumDynamicTimeZoneInformation(void)
             size = sizeof(name);
             memset(name, 0, sizeof(name));
             if (pRegLoadMUIStringW)
-                status = pRegLoadMUIStringW(subkey, mui_stdW, name, size, &size, 0, sysdir);
+                status = pRegLoadMUIStringW(subkey, L"MUI_Std", name, size, &size, 0, sysdir);
             else
-                status = pRegGetValueW(subkey, NULL, stdW, RRF_RT_REG_SZ, NULL, name, &size);
+                status = pRegGetValueW(subkey, NULL, L"Std", RRF_RT_REG_SZ, NULL, name, &size);
             ok(status == ERROR_SUCCESS, "status %d name %s\n", status, wine_dbgstr_w(name));
             ok(!memcmp(&dtzi.StandardName, name, size),
                 "expected %s, got %s\n", wine_dbgstr_w(name), wine_dbgstr_w(dtzi.StandardName));
@@ -4103,9 +4089,9 @@ static void test_EnumDynamicTimeZoneInformation(void)
             size = sizeof(name);
             memset(name, 0, sizeof(name));
             if (pRegLoadMUIStringW)
-                status = pRegLoadMUIStringW(subkey, mui_dltW, name, size, &size, 0, sysdir);
+                status = pRegLoadMUIStringW(subkey, L"MUI_Dlt", name, size, &size, 0, sysdir);
             else
-                status = pRegGetValueW(subkey, NULL, dltW, RRF_RT_REG_SZ, NULL, name, &size);
+                status = pRegGetValueW(subkey, NULL, L"Dlt", RRF_RT_REG_SZ, NULL, name, &size);
             ok(status == ERROR_SUCCESS, "status %d name %s\n", status, wine_dbgstr_w(name));
             ok(!memcmp(&dtzi.DaylightName, name, size),
                 "expected %s, got %s\n", wine_dbgstr_w(name), wine_dbgstr_w(dtzi.DaylightName));
@@ -4119,7 +4105,7 @@ static void test_EnumDynamicTimeZoneInformation(void)
         ok(!dtzi.DynamicDaylightTimeDisabled, "got %d\n", dtzi.DynamicDaylightTimeDisabled);
 
         size = sizeof(tz_data);
-        status = pRegGetValueW(key, keyname, tziW, RRF_RT_REG_BINARY, NULL, &tz_data, &size);
+        status = pRegGetValueW(key, keyname, L"TZI", RRF_RT_REG_BINARY, NULL, &tz_data, &size);
         ok(status == ERROR_SUCCESS, "got %d\n", status);
 
         ok(dtzi.Bias == tz_data.bias, "expected %d, got %d\n",
