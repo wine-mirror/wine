@@ -122,6 +122,7 @@ const char *build_dir = NULL;
 const char *config_dir = NULL;
 const char **dll_paths = NULL;
 const char *user_name = NULL;
+SECTION_IMAGE_INFORMATION main_image_info = { NULL };
 static HMODULE ntdll_module;
 static const IMAGE_EXPORT_DIRECTORY *ntdll_exports;
 
@@ -1473,7 +1474,7 @@ static NTSTATUS open_main_image( WCHAR *image, void **module, SECTION_IMAGE_INFO
  *           load_main_exe
  */
 NTSTATUS load_main_exe( const WCHAR *dos_name, const char *unix_name, const WCHAR *curdir,
-                        WCHAR **image, void **module, SECTION_IMAGE_INFORMATION *image_info )
+                        WCHAR **image, void **module )
 {
     UNICODE_STRING nt_name;
     WCHAR *tmp = NULL;
@@ -1487,7 +1488,7 @@ NTSTATUS load_main_exe( const WCHAR *dos_name, const char *unix_name, const WCHA
     if (unix_name && unix_name[0] == '/' && !stat( unix_name, &st ))
     {
         if ((status = unix_to_nt_file_name( unix_name, image ))) goto failed;
-        status = open_main_image( *image, module, image_info );
+        status = open_main_image( *image, module, &main_image_info );
         if (status != STATUS_DLL_NOT_FOUND) return status;
         free( *image );
     }
@@ -1504,14 +1505,14 @@ NTSTATUS load_main_exe( const WCHAR *dos_name, const char *unix_name, const WCHA
     if ((status = get_full_path( dos_name, curdir, image ))) goto failed;
     free( tmp );
 
-    status = open_main_image( *image, module, image_info );
+    status = open_main_image( *image, module, &main_image_info );
     if (status != STATUS_DLL_NOT_FOUND) return status;
 
     /* if path is in system dir, we can load the builtin even if the file itself doesn't exist */
     init_unicode_string( &nt_name, *image );
     if (is_builtin_path( &nt_name, &machine ))
     {
-        status = find_builtin_dll( &nt_name, module, &size, image_info, machine, FALSE );
+        status = find_builtin_dll( &nt_name, module, &size, &main_image_info, machine, FALSE );
         if (status != STATUS_DLL_NOT_FOUND) return status;
     }
     if (!contains_path) return STATUS_DLL_NOT_FOUND;
@@ -1529,7 +1530,7 @@ failed:
  *
  * Load start.exe as main image.
  */
-NTSTATUS load_start_exe( WCHAR **image, void **module, SECTION_IMAGE_INFORMATION *image_info )
+NTSTATUS load_start_exe( WCHAR **image, void **module )
 {
     static const WCHAR startW[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
         's','y','s','t','e','m','3','2','\\','s','t','a','r','t','.','e','x','e',0};
@@ -1538,7 +1539,7 @@ NTSTATUS load_start_exe( WCHAR **image, void **module, SECTION_IMAGE_INFORMATION
     SIZE_T size;
 
     init_unicode_string( &nt_name, startW );
-    status = find_builtin_dll( &nt_name, module, &size, image_info, current_machine, FALSE );
+    status = find_builtin_dll( &nt_name, module, &size, &main_image_info, current_machine, FALSE );
     if (status)
     {
         MESSAGE( "wine: failed to load start.exe: %x\n", status );

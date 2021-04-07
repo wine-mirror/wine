@@ -3006,12 +3006,8 @@ NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, SIZE_T reserve_size, SI
     sigset_t sigset;
     SIZE_T size, extra_size = 0;
 
-    if (!reserve_size || !commit_size)
-    {
-        IMAGE_NT_HEADERS *nt = get_exe_nt_header();
-        if (!reserve_size) reserve_size = nt->OptionalHeader.SizeOfStackReserve;
-        if (!commit_size) commit_size = nt->OptionalHeader.SizeOfStackCommit;
-    }
+    if (!reserve_size) reserve_size = main_image_info.MaximumStackSize;
+    if (!commit_size) commit_size = main_image_info.CommittedStackSize;
 
     size = max( reserve_size, commit_size );
     if (size < 1024 * 1024) size = 1024 * 1024;  /* Xlib needs a large stack */

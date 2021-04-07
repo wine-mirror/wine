@@ -120,6 +120,7 @@ extern const char **dll_paths DECLSPEC_HIDDEN;
 extern USHORT *uctable DECLSPEC_HIDDEN;
 extern USHORT *lctable DECLSPEC_HIDDEN;
 extern SIZE_T startup_info_size DECLSPEC_HIDDEN;
+extern SECTION_IMAGE_INFORMATION main_image_info DECLSPEC_HIDDEN;
 extern int main_argc DECLSPEC_HIDDEN;
 extern char **main_argv DECLSPEC_HIDDEN;
 extern char **main_envp DECLSPEC_HIDDEN;
@@ -147,8 +148,8 @@ extern NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename
                               void **addr_ptr, SIZE_T *size_ptr ) DECLSPEC_HIDDEN;
 extern BOOL is_builtin_path( const UNICODE_STRING *path, WORD *machine ) DECLSPEC_HIDDEN;
 extern NTSTATUS load_main_exe( const WCHAR *name, const char *unix_name, const WCHAR *curdir, WCHAR **image,
-                               void **module, SECTION_IMAGE_INFORMATION *image_info ) DECLSPEC_HIDDEN;
-extern NTSTATUS load_start_exe( WCHAR **image, void **module, SECTION_IMAGE_INFORMATION *image_info ) DECLSPEC_HIDDEN;
+                               void **module ) DECLSPEC_HIDDEN;
+extern NTSTATUS load_start_exe( WCHAR **image, void **module ) DECLSPEC_HIDDEN;
 extern void start_server( BOOL debug ) DECLSPEC_HIDDEN;
 extern ULONG_PTR get_image_address(void) DECLSPEC_HIDDEN;
 
@@ -293,12 +294,6 @@ static inline const char *debugstr_us( const UNICODE_STRING *us )
 static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
 {
     while (len--) *dst++ = (unsigned char)*src++;
-}
-
-static inline IMAGE_NT_HEADERS *get_exe_nt_header(void)
-{
-    IMAGE_DOS_HEADER *module = (IMAGE_DOS_HEADER *)NtCurrentTeb()->Peb->ImageBaseAddress;
-    return (IMAGE_NT_HEADERS *)((char *)module + module->e_lfanew);
 }
 
 static inline void *get_signal_stack(void)

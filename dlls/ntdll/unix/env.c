@@ -1891,7 +1891,6 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
 {
     static const WCHAR pathW[] = {'P','A','T','H'};
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
-    SECTION_IMAGE_INFORMATION image_info;
     SIZE_T size, env_pos, env_size;
     WCHAR *dst, *image, *cmdline, *p, *path = NULL;
     WCHAR *env = get_initial_environment( &env_pos, &env_size );
@@ -1916,11 +1915,11 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
     add_registry_environment( &env, &env_pos, &env_size );
     env[env_pos++] = 0;
 
-    status = load_main_exe( NULL, main_argv[1], curdir, &image, &module, &image_info );
+    status = load_main_exe( NULL, main_argv[1], curdir, &image, &module );
     if (!status)
     {
-        if (image_info.ImageCharacteristics & IMAGE_FILE_DLL) status = STATUS_INVALID_IMAGE_FORMAT;
-        if (image_info.Machine != current_machine) status = STATUS_INVALID_IMAGE_FORMAT;
+        if (main_image_info.ImageCharacteristics & IMAGE_FILE_DLL) status = STATUS_INVALID_IMAGE_FORMAT;
+        if (main_image_info.Machine != current_machine) status = STATUS_INVALID_IMAGE_FORMAT;
     }
 
     if (status)  /* try launching it through start.exe */
@@ -1928,7 +1927,7 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
         static const char *args[] = { "start.exe", "/exec" };
         free( image );
         if (module) NtUnmapViewOfSection( GetCurrentProcess(), module );
-        load_start_exe( &image, &module, &image_info );
+        load_start_exe( &image, &module );
         prepend_argv( args, 2 );
     }
     else rebuild_argv();
@@ -1989,7 +1988,6 @@ void init_startup_info(void)
     NTSTATUS status;
     SIZE_T size, info_size, env_size, env_pos;
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
-    SECTION_IMAGE_INFORMATION image_info;
     startup_info_t *info;
 
     if (!startup_info_size)
@@ -2082,8 +2080,8 @@ void init_startup_info(void)
     free( info );
     NtCurrentTeb()->Peb->ProcessParameters = params;
 
-    status = load_main_exe( params->ImagePathName.Buffer, NULL, params->CommandLine.Buffer,
-                            &image, &module, &image_info );
+    status = load_main_exe( params->ImagePathName.Buffer, NULL,
+                            params->CommandLine.Buffer, &image, &module );
     if (status)
     {
         MESSAGE( "wine: failed to start %s\n", debugstr_us(&params->ImagePathName) );
