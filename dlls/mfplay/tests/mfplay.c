@@ -83,6 +83,7 @@ static void test_create_player(void)
     IPropertyStore *propstore;
     IMFPMediaPlayer *player;
     IUnknown *unk, *unk2;
+    HWND window;
     HRESULT hr;
 
     hr = MFPCreateMediaPlayer(NULL, FALSE, 0, NULL, NULL, &player);
@@ -108,8 +109,13 @@ static void test_create_player(void)
 
     IMFPMediaPlayer_Release(player);
 
-    hr = MFPCreateMediaPlayer(NULL, FALSE, 0, &callback, NULL, &player);
+    hr = MFPCreateMediaPlayer(NULL, FALSE, 0, &callback, (HWND)0x1, &player);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetVideoWindow(player, &window);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(window == (HWND)0x1, "Unexpected window.\n");
+
     IMFPMediaPlayer_Release(player);
 }
 

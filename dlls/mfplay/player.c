@@ -69,6 +69,7 @@ struct media_player
     IMFSourceResolver *resolver;
     MFP_CREATION_OPTIONS options;
     HWND event_window;
+    HWND output_window;
 };
 
 struct generic_event
@@ -862,11 +863,15 @@ static HRESULT WINAPI media_player_GetAspectRatioMode(IMFPMediaPlayer *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI media_player_GetVideoWindow(IMFPMediaPlayer *iface, HWND *hwnd)
+static HRESULT WINAPI media_player_GetVideoWindow(IMFPMediaPlayer *iface, HWND *window)
 {
-    FIXME("%p, %p.\n", iface, hwnd);
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, window);
+
+    *window = player->output_window;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI media_player_UpdateVideo(IMFPMediaPlayer *iface)
@@ -1166,12 +1171,12 @@ static const IMFAsyncCallbackVtbl media_player_events_callback_vtbl =
 };
 
 HRESULT WINAPI MFPCreateMediaPlayer(const WCHAR *url, BOOL start_playback, MFP_CREATION_OPTIONS options,
-        IMFPMediaPlayerCallback *callback, HWND hwnd, IMFPMediaPlayer **player)
+        IMFPMediaPlayerCallback *callback, HWND window, IMFPMediaPlayer **player)
 {
     struct media_player *object;
     HRESULT hr;
 
-    TRACE("%s, %d, %#x, %p, %p, %p.\n", debugstr_w(url), start_playback, options, callback, hwnd, player);
+    TRACE("%s, %d, %#x, %p, %p, %p.\n", debugstr_w(url), start_playback, options, callback, window, player);
 
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -1184,9 +1189,10 @@ HRESULT WINAPI MFPCreateMediaPlayer(const WCHAR *url, BOOL start_playback, MFP_C
     object->events_callback.lpVtbl = &media_player_events_callback_vtbl;
     object->refcount = 1;
     object->callback = callback;
-    object->options = options;
     if (object->callback)
         IMFPMediaPlayerCallback_AddRef(object->callback);
+    object->options = options;
+    object->output_window = window;
     if (FAILED(hr = CreatePropertyStore(&object->propstore)))
         goto failed;
     if (FAILED(hr = MFCreateSourceResolver(&object->resolver)))
