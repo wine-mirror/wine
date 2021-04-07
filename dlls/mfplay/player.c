@@ -651,23 +651,31 @@ static ULONG WINAPI media_player_Release(IMFPMediaPlayer *iface)
 
 static HRESULT WINAPI media_player_Play(IMFPMediaPlayer *iface)
 {
-    FIXME("%p.\n", iface);
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
+    PROPVARIANT pos;
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    pos.vt = VT_EMPTY;
+    return IMFMediaSession_Start(player->session, &GUID_NULL, &pos);
 }
 
 static HRESULT WINAPI media_player_Pause(IMFPMediaPlayer *iface)
 {
-    FIXME("%p.\n", iface);
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    return IMFMediaSession_Pause(player->session);
 }
 
 static HRESULT WINAPI media_player_Stop(IMFPMediaPlayer *iface)
 {
-    FIXME("%p.\n", iface);
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    return IMFMediaSession_Stop(player->session);
 }
 
 static HRESULT WINAPI media_player_FrameStep(IMFPMediaPlayer *iface)
