@@ -2549,6 +2549,10 @@ HRESULT __cdecl wined3d_device_update_texture(struct wined3d_device *device,
         struct wined3d_texture *src_texture, struct wined3d_texture *dst_texture);
 HRESULT __cdecl wined3d_device_validate_device(const struct wined3d_device *device, DWORD *num_passes);
 
+HRESULT __cdecl wined3d_device_context_blt(struct wined3d_device_context *context,
+        struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx, const RECT *dst_rect,
+        struct wined3d_texture *src_texture, unsigned int src_sub_resource_idx, const RECT *src_rect,
+        unsigned int flags, const struct wined3d_blt_fx *fx, enum wined3d_texture_filter_type filter);
 void __cdecl wined3d_device_context_copy_resource(struct wined3d_device_context *context,
         struct wined3d_resource *dst_resource, struct wined3d_resource *src_resource);
 HRESULT __cdecl wined3d_device_context_copy_sub_resource_region(struct wined3d_device_context *context,
@@ -2893,9 +2897,6 @@ HRESULT __cdecl wined3d_swapchain_state_set_fullscreen(struct wined3d_swapchain_
 
 HRESULT __cdecl wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
         UINT layer, const struct wined3d_box *dirty_region);
-HRESULT __cdecl wined3d_texture_blt(struct wined3d_texture *dst_texture, unsigned int dst_idx, const RECT *dst_rect_in,
-        struct wined3d_texture *src_texture, unsigned int src_idx, const RECT *src_rect_in, DWORD flags,
-        const struct wined3d_blt_fx *fx, enum wined3d_texture_filter_type filter);
 HRESULT __cdecl wined3d_texture_create(struct wined3d_device *device, const struct wined3d_resource_desc *desc,
         UINT layer_count, UINT level_count, DWORD flags, const struct wined3d_sub_resource_data *data,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture);

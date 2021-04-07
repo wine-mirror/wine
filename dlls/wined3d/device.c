@@ -5197,7 +5197,7 @@ void CDECL wined3d_device_resolve_sub_resource(struct wined3d_device *device,
     src_level = src_sub_resource_idx % src_texture->level_count;
     SetRect(&src_rect, 0, 0, wined3d_texture_get_level_width(src_texture, src_level),
             wined3d_texture_get_level_height(src_texture, src_level));
-    wined3d_texture_blt(dst_texture, dst_sub_resource_idx, &dst_rect,
+    wined3d_device_context_blt(&device->cs->c, dst_texture, dst_sub_resource_idx, &dst_rect,
             src_texture, src_sub_resource_idx, &src_rect, 0, &fx, WINED3D_TEXF_POINT);
 }
 

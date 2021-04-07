@@ -266,7 +266,7 @@ HRESULT CDECL wined3d_swapchain_get_front_buffer_data(const struct wined3d_swapc
                 wine_dbgstr_rect(&dst_rect));
     }
 
-    return wined3d_texture_blt(dst_texture, sub_resource_idx, &dst_rect,
+    return wined3d_device_context_blt(&swapchain->device->cs->c, dst_texture, sub_resource_idx, &dst_rect,
             swapchain->front_buffer, 0, &src_rect, 0, NULL, WINED3D_TEXF_POINT);
 }
 

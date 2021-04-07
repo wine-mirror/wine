@@ -163,6 +163,7 @@
 @ cdecl wined3d_device_update_texture(ptr ptr ptr)
 @ cdecl wined3d_device_validate_device(ptr ptr)
 
+@ cdecl wined3d_device_context_blt(ptr ptr long ptr ptr long ptr long ptr long)
 @ cdecl wined3d_device_context_copy_resource(ptr ptr ptr)
 @ cdecl wined3d_device_context_copy_sub_resource_region(ptr ptr long long long long ptr long ptr long)
 @ cdecl wined3d_device_context_copy_uav_counter(ptr ptr long ptr)
@@ -327,7 +328,6 @@
 @ cdecl wined3d_swapchain_state_set_fullscreen(ptr ptr ptr)
 
 @ cdecl wined3d_texture_add_dirty_region(ptr long ptr)
-@ cdecl wined3d_texture_blt(ptr long ptr ptr long ptr long ptr long)
 @ cdecl wined3d_texture_create(ptr ptr long long long ptr ptr ptr ptr)
 @ cdecl wined3d_texture_decref(ptr)
 @ cdecl wined3d_texture_from_resource(ptr)

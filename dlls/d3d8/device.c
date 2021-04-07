@@ -1348,6 +1348,7 @@ static HRESULT WINAPI d3d8_device_CopyRects(IDirect3DDevice8 *iface,
         IDirect3DSurface8 *src_surface, const RECT *src_rects, UINT rect_count,
         IDirect3DSurface8 *dst_surface, const POINT *dst_points)
 {
+    struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
     struct d3d8_surface *src = unsafe_impl_from_IDirect3DSurface8(src_surface);
     struct d3d8_surface *dst = unsafe_impl_from_IDirect3DSurface8(dst_surface);
     enum wined3d_format_id src_format, dst_format;
@@ -1394,7 +1395,7 @@ static HRESULT WINAPI d3d8_device_CopyRects(IDirect3DDevice8 *iface,
     if (!rect_count && !src_rects && !dst_points)
     {
         RECT rect = {0, 0, src_w, src_h};
-        wined3d_texture_blt(dst->wined3d_texture, dst->sub_resource_idx, &rect,
+        wined3d_device_context_blt(device->immediate_context, dst->wined3d_texture, dst->sub_resource_idx, &rect,
                 src->wined3d_texture, src->sub_resource_idx, &rect, 0, NULL, WINED3D_TEXF_POINT);
     }
     else
@@ -1410,7 +1411,8 @@ static HRESULT WINAPI d3d8_device_CopyRects(IDirect3DDevice8 *iface,
                 RECT dst_rect = {dst_points[i].x, dst_points[i].y,
                         dst_points[i].x + w, dst_points[i].y + h};
 
-                wined3d_texture_blt(dst->wined3d_texture, dst->sub_resource_idx, &dst_rect,
+                wined3d_device_context_blt(device->immediate_context,
+                        dst->wined3d_texture, dst->sub_resource_idx, &dst_rect,
                         src->wined3d_texture, src->sub_resource_idx, &src_rects[i], 0, NULL, WINED3D_TEXF_POINT);
             }
         }
@@ -1422,7 +1424,8 @@ static HRESULT WINAPI d3d8_device_CopyRects(IDirect3DDevice8 *iface,
                 UINT h = src_rects[i].bottom - src_rects[i].top;
                 RECT dst_rect = {0, 0, w, h};
 
-                wined3d_texture_blt(dst->wined3d_texture, dst->sub_resource_idx, &dst_rect,
+                wined3d_device_context_blt(device->immediate_context,
+                        dst->wined3d_texture, dst->sub_resource_idx, &dst_rect,
                         src->wined3d_texture, src->sub_resource_idx, &src_rects[i], 0, NULL, WINED3D_TEXF_POINT);
             }
         }

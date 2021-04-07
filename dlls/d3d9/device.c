@@ -1750,6 +1750,7 @@ static HRESULT WINAPI d3d9_device_UpdateTexture(IDirect3DDevice9Ex *iface,
 static HRESULT WINAPI d3d9_device_GetRenderTargetData(IDirect3DDevice9Ex *iface,
         IDirect3DSurface9 *render_target, IDirect3DSurface9 *dst_surface)
 {
+    struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     struct d3d9_surface *rt_impl = unsafe_impl_from_IDirect3DSurface9(render_target);
     struct d3d9_surface *dst_impl = unsafe_impl_from_IDirect3DSurface9(dst_surface);
     struct wined3d_sub_resource_desc wined3d_desc;
@@ -1772,7 +1773,8 @@ static HRESULT WINAPI d3d9_device_GetRenderTargetData(IDirect3DDevice9Ex *iface,
     if (wined3d_desc.multisample_type)
         hr = D3DERR_INVALIDCALL;
     else
-        hr = wined3d_texture_blt(dst_impl->wined3d_texture, dst_impl->sub_resource_idx, &dst_rect,
+        hr = wined3d_device_context_blt(device->immediate_context,
+                dst_impl->wined3d_texture, dst_impl->sub_resource_idx, &dst_rect,
                 rt_impl->wined3d_texture, rt_impl->sub_resource_idx, &src_rect, 0, NULL, WINED3D_TEXF_POINT);
     wined3d_mutex_unlock();
 
@@ -1873,8 +1875,9 @@ static HRESULT WINAPI d3d9_device_StretchRect(IDirect3DDevice9Ex *iface, IDirect
         }
     }
 
-    hr = wined3d_texture_blt(dst->wined3d_texture, dst->sub_resource_idx, dst_rect, src->wined3d_texture,
-            src->sub_resource_idx, src_rect, 0, NULL, wined3d_texture_filter_type_from_d3d(filter));
+    hr = wined3d_device_context_blt(device->immediate_context, dst->wined3d_texture,
+            dst->sub_resource_idx, dst_rect, src->wined3d_texture, src->sub_resource_idx,
+            src_rect, 0, NULL, wined3d_texture_filter_type_from_d3d(filter));
     if (hr == WINEDDERR_INVALIDRECT)
         hr = D3DERR_INVALIDCALL;
     if (SUCCEEDED(hr) && dst->texture)

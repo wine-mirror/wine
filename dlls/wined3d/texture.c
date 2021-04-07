@@ -3858,17 +3858,18 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_texture_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx,
-        const RECT *dst_rect, struct wined3d_texture *src_texture, unsigned int src_sub_resource_idx,
-        const RECT *src_rect, DWORD flags, const struct wined3d_blt_fx *fx, enum wined3d_texture_filter_type filter)
+HRESULT CDECL wined3d_device_context_blt(struct wined3d_device_context *context,
+        struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx, const RECT *dst_rect,
+        struct wined3d_texture *src_texture, unsigned int src_sub_resource_idx, const RECT *src_rect,
+        unsigned int flags, const struct wined3d_blt_fx *fx, enum wined3d_texture_filter_type filter)
 {
     struct wined3d_box src_box = {src_rect->left, src_rect->top, src_rect->right, src_rect->bottom, 0, 1};
     struct wined3d_box dst_box = {dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom, 0, 1};
     HRESULT hr;
 
-    TRACE("dst_texture %p, dst_sub_resource_idx %u, dst_rect %s, src_texture %p, "
+    TRACE("context %p, dst_texture %p, dst_sub_resource_idx %u, dst_rect %s, src_texture %p, "
             "src_sub_resource_idx %u, src_rect %s, flags %#x, fx %p, filter %s.\n",
-            dst_texture, dst_sub_resource_idx, wine_dbgstr_rect(dst_rect), src_texture,
+            context, dst_texture, dst_sub_resource_idx, wine_dbgstr_rect(dst_rect), src_texture,
             src_sub_resource_idx, wine_dbgstr_rect(src_rect), flags, fx, debug_d3dtexturefiltertype(filter));
 
     if (dst_sub_resource_idx >= dst_texture->level_count * dst_texture->layer_count

@@ -563,7 +563,7 @@ static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
         RECT rect = {0, 0, logo_texture->resource.width, logo_texture->resource.height};
 
         /* Blit the logo into the upper left corner of the back-buffer. */
-        wined3d_texture_blt(back_buffer, 0, &rect, logo_texture, 0,
+        wined3d_device_context_blt(&cs->c, back_buffer, 0, &rect, logo_texture, 0,
                 &rect, WINED3D_BLT_SRC_CKEY, NULL, WINED3D_TEXF_POINT);
     }
 
@@ -588,7 +588,7 @@ static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
         if (desc->windowed)
             MapWindowPoints(NULL, swapchain->win_handle, (POINT *)&dst_rect, 2);
         if (wined3d_clip_blit(&clip_rect, &dst_rect, &src_rect))
-            wined3d_texture_blt(back_buffer, 0, &dst_rect, cursor_texture, 0,
+            wined3d_device_context_blt(&cs->c, back_buffer, 0, &dst_rect, cursor_texture, 0,
                     &src_rect, WINED3D_BLT_ALPHA_TEST, NULL, WINED3D_TEXF_POINT);
     }
 
