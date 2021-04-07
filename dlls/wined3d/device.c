@@ -1590,7 +1590,7 @@ static void resolve_depth_buffer(struct wined3d_device *device)
     if (!(src_view = state->fb.depth_stencil))
         return;
 
-    wined3d_device_resolve_sub_resource(device, dst_resource, 0,
+    wined3d_device_context_resolve_sub_resource(&device->cs->c, dst_resource, 0,
             src_view->resource, src_view->sub_resource_idx, dst_resource->format->id);
 }
 
@@ -5152,7 +5152,7 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
     wined3d_cs_emit_update_sub_resource(device->cs, resource, sub_resource_idx, box, data, row_pitch, depth_pitch);
 }
 
-void CDECL wined3d_device_resolve_sub_resource(struct wined3d_device *device,
+void CDECL wined3d_device_context_resolve_sub_resource(struct wined3d_device_context *context,
         struct wined3d_resource *dst_resource, unsigned int dst_sub_resource_idx,
         struct wined3d_resource *src_resource, unsigned int src_sub_resource_idx,
         enum wined3d_format_id format_id)
@@ -5162,9 +5162,9 @@ void CDECL wined3d_device_resolve_sub_resource(struct wined3d_device *device,
     struct wined3d_blt_fx fx = {0};
     RECT dst_rect, src_rect;
 
-    TRACE("device %p, dst_resource %p, dst_sub_resource_idx %u, "
+    TRACE("context %p, dst_resource %p, dst_sub_resource_idx %u, "
             "src_resource %p, src_sub_resource_idx %u, format %s.\n",
-            device, dst_resource, dst_sub_resource_idx,
+            context, dst_resource, dst_sub_resource_idx,
             src_resource, src_sub_resource_idx, debug_d3dformat(format_id));
 
     if (wined3d_format_is_typeless(dst_resource->format)
@@ -5197,7 +5197,7 @@ void CDECL wined3d_device_resolve_sub_resource(struct wined3d_device *device,
     src_level = src_sub_resource_idx % src_texture->level_count;
     SetRect(&src_rect, 0, 0, wined3d_texture_get_level_width(src_texture, src_level),
             wined3d_texture_get_level_height(src_texture, src_level));
-    wined3d_device_context_blt(&device->cs->c, dst_texture, dst_sub_resource_idx, &dst_rect,
+    wined3d_device_context_blt(context, dst_texture, dst_sub_resource_idx, &dst_rect,
             src_texture, src_sub_resource_idx, &src_rect, 0, &fx, WINED3D_TEXF_POINT);
 }
 

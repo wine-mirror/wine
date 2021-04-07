@@ -2461,10 +2461,6 @@ void __cdecl wined3d_device_release_focus_window(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_reset(struct wined3d_device *device,
         const struct wined3d_swapchain_desc *swapchain_desc, const struct wined3d_display_mode *mode,
         wined3d_device_reset_cb callback, BOOL reset_state);
-void __cdecl wined3d_device_resolve_sub_resource(struct wined3d_device *device,
-        struct wined3d_resource *dst_resource, unsigned int dst_sub_resource_idx,
-        struct wined3d_resource *src_resource, unsigned int src_sub_resource_idx,
-        enum wined3d_format_id format_id);
 void __cdecl wined3d_device_set_base_vertex_index(struct wined3d_device *device, INT base_index);
 void __cdecl wined3d_device_set_blend_state(struct wined3d_device *device, struct wined3d_blend_state *blend_state,
         const struct wined3d_color *blend_factor, unsigned int sample_mask);
@@ -2571,6 +2567,9 @@ void __cdecl wined3d_device_context_draw_indexed(struct wined3d_device_context *
         unsigned int start_index, unsigned int index_count, unsigned int start_instance, unsigned int instance_count);
 void __cdecl wined3d_device_context_draw_indirect(struct wined3d_device_context *context,
         struct wined3d_buffer *buffer, unsigned int offset, bool indexed);
+void __cdecl wined3d_device_context_resolve_sub_resource(struct wined3d_device_context *context,
+        struct wined3d_resource *dst_resource, unsigned int dst_sub_resource_idx,
+        struct wined3d_resource *src_resource, unsigned int src_sub_resource_idx, enum wined3d_format_id format_id);
 void __cdecl wined3d_device_context_set_blend_state(struct wined3d_device_context *context,
         struct wined3d_blend_state *state, const struct wined3d_color *blend_factor, unsigned int sample_mask);
 void __cdecl wined3d_device_context_set_constant_buffer(struct wined3d_device_context *context,
