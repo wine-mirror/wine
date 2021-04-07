@@ -357,6 +357,7 @@ my @dll_groups =
   "api-ms-win-shcore-thread-l1-1-0",
   "api-ms-win-shcore-stream-l1-1-0",
   "api-ms-win-shcore-stream-winrt-l1-1-0",
+  "api-ms-win-shcore-scaling-l1-1-1",
  ],
  [
   "shell32",
@@ -374,11 +375,6 @@ my @dll_groups =
   "api-ms-win-core-shlwapi-obsolete-l1-1-0",
   "api-ms-win-core-shlwapi-obsolete-l1-2-0",
   "api-ms-win-core-url-l1-1-0",
- ],
- [
-  "shell32",
-  "shlwapi",
-  "api-ms-win-shcore-scaling-l1-1-1",
  ],
  [
   "user32",
