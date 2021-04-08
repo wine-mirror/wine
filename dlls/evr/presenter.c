@@ -28,7 +28,6 @@
 #include "evr_private.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(evr);
 
@@ -369,7 +368,7 @@ static void video_presenter_sample_queue_init(struct video_presenter *presenter)
         return;
 
     memset(queue, 0, sizeof(*queue));
-    queue->samples = heap_calloc(presenter->allocator_capacity, sizeof(*queue->samples));
+    queue->samples = calloc(presenter->allocator_capacity, sizeof(*queue->samples));
     queue->size = presenter->allocator_capacity;
     queue->back = queue->size - 1;
 }
@@ -836,7 +835,7 @@ static ULONG WINAPI video_presenter_inner_Release(IUnknown *iface)
         }
         if (presenter->allocator)
             IMFVideoSampleAllocator_Release(presenter->allocator);
-        heap_free(presenter);
+        free(presenter);
     }
 
     return refcount;
@@ -1929,7 +1928,7 @@ HRESULT evr_presenter_create(IUnknown *outer, void **out)
 
     *out = NULL;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMFVideoPresenter_iface.lpVtbl = &video_presenter_vtbl;

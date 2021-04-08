@@ -31,7 +31,6 @@
 #include "evcode.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(evr);
 
@@ -200,7 +199,7 @@ static void video_mixer_clear_types(struct video_mixer *mixer)
     {
         IMFMediaType_Release(mixer->output.rt_formats[i].media_type);
     }
-    heap_free(mixer->output.rt_formats);
+    free(mixer->output.rt_formats);
     if (mixer->output.media_type)
         IMFMediaType_Release(mixer->output.media_type);
     mixer->output.media_type = NULL;
@@ -668,7 +667,7 @@ static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const
         if (SUCCEEDED(IDirectXVideoProcessorService_GetVideoProcessorRenderTargets(service, &devices[i], video_desc,
               &format_count, &formats)))
         {
-            if (!(ptr = heap_realloc(rt_formats, (count + format_count) * sizeof(*rt_formats))))
+            if (!(ptr = realloc(rt_formats, (count + format_count) * sizeof(*rt_formats))))
             {
                 hr = E_OUTOFMEMORY;
                 count = 0;
@@ -703,7 +702,7 @@ static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const
         count = j + 1;
 
         memcpy(&subtype, &MFVideoFormat_Base, sizeof(subtype));
-        if ((mixer->output.rt_formats = heap_calloc(count, sizeof(*mixer->output.rt_formats))))
+        if ((mixer->output.rt_formats = calloc(count, sizeof(*mixer->output.rt_formats))))
         {
             for (i = 0; i < count; ++i)
             {
@@ -727,7 +726,7 @@ static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const
         }
     }
 
-    heap_free(rt_formats);
+    free(rt_formats);
 
     return count ? S_OK : hr;
 }

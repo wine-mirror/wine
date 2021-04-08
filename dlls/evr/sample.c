@@ -25,7 +25,6 @@
 #include "dxva2api.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(evr);
@@ -168,7 +167,7 @@ static ULONG WINAPI tracked_async_result_Release(IMFAsyncResult *iface)
             IUnknown_Release(result->object);
         if (result->state)
             IUnknown_Release(result->state);
-        heap_free(result);
+        free(result);
     }
 
     return refcount;
@@ -250,7 +249,7 @@ static HRESULT create_async_result(IUnknown *object, IMFAsyncCallback *callback,
 {
     struct tracked_async_result *result;
 
-    result = heap_alloc_zero(sizeof(*result));
+    result = calloc(1, sizeof(*result));
     if (!result)
         return E_OUTOFMEMORY;
 
@@ -464,13 +463,13 @@ static void sample_allocator_release_samples(struct sample_allocator *allocator)
     {
         list_remove(&iter->entry);
         IMFSample_Release(iter->sample);
-        heap_free(iter);
+        free(iter);
     }
 
     LIST_FOR_EACH_ENTRY_SAFE(iter, iter2, &allocator->used_samples, struct queued_sample, entry)
     {
         list_remove(&iter->entry);
-        heap_free(iter);
+        free(iter);
     }
 }
 
@@ -489,7 +488,7 @@ static ULONG WINAPI sample_allocator_Release(IMFVideoSampleAllocator *iface)
             IDirect3DDeviceManager9_Release(allocator->device_manager);
         sample_allocator_release_samples(allocator);
         DeleteCriticalSection(&allocator->cs);
-        heap_free(allocator);
+        free(allocator);
     }
 
     return refcount;
@@ -618,7 +617,7 @@ static HRESULT sample_allocator_create_samples(struct sample_allocator *allocato
             break;
         }
 
-        queued_sample = heap_alloc(sizeof(*queued_sample));
+        queued_sample = malloc(sizeof(*queued_sample));
         queued_sample->sample = sample;
         list_add_tail(&allocator->free_samples, &queued_sample->entry);
         allocator->free_sample_count++;
@@ -860,7 +859,7 @@ HRESULT WINAPI MFCreateVideoSampleAllocator(REFIID riid, void **obj)
 
     TRACE("%s, %p.\n", debugstr_guid(riid), obj);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMFVideoSampleAllocator_iface.lpVtbl = &sample_allocator_vtbl;
@@ -943,7 +942,7 @@ static ULONG WINAPI video_sample_Release(IMFSample *iface)
         if (sample->sample)
             IMFSample_Release(sample->sample);
         DeleteCriticalSection(&sample->cs);
-        heap_free(sample);
+        free(sample);
     }
 
     return refcount;
@@ -1601,7 +1600,7 @@ static ULONG WINAPI surface_buffer_Release(IMFMediaBuffer *iface)
     if (!refcount)
     {
         IUnknown_Release(buffer->surface);
-        heap_free(buffer);
+        free(buffer);
     }
 
     return refcount;
@@ -1704,7 +1703,7 @@ static HRESULT create_surface_buffer(IUnknown *surface, IMFMediaBuffer **buffer)
 {
     struct surface_buffer *object;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMFMediaBuffer_iface.lpVtbl = &surface_buffer_vtbl;
@@ -1726,7 +1725,7 @@ HRESULT WINAPI MFCreateVideoSampleFromSurface(IUnknown *surface, IMFSample **sam
 
     TRACE("%p, %p.\n", surface, sample);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMFSample_iface.lpVtbl = &video_sample_vtbl;
@@ -1737,7 +1736,7 @@ HRESULT WINAPI MFCreateVideoSampleFromSurface(IUnknown *surface, IMFSample **sam
 
     if (FAILED(hr = MFCreateSample(&object->sample)))
     {
-        heap_free(object);
+        free(object);
         return hr;
     }
 
