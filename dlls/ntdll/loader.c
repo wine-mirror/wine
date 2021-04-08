@@ -1926,14 +1926,10 @@ static NTSTATUS build_module( LPCWSTR load_path, const UNICODE_STRING *nt_name, 
 static void build_ntdll_module(void)
 {
     MEMORY_BASIC_INFORMATION meminfo;
-    FILE_BASIC_INFORMATION basic_info;
     UNICODE_STRING nt_name;
-    OBJECT_ATTRIBUTES attr;
     WINE_MODREF *wm;
 
     RtlInitUnicodeString( &nt_name, L"\\??\\C:\\windows\\system32\\ntdll.dll" );
-    InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
-    is_prefix_bootstrap = NtQueryAttributesFile( &attr, &basic_info) != STATUS_SUCCESS;
     NtQueryVirtualMemory( GetCurrentProcess(), build_ntdll_module, MemoryBasicInformation,
                           &meminfo, sizeof(meminfo), NULL );
     wm = alloc_module( meminfo.AllocationBase, &nt_name, TRUE );
@@ -2672,7 +2668,7 @@ static NTSTATUS search_dll_file( LPCWSTR paths, LPCWSTR search, UNICODE_STRING *
 
     if (found_image)
         status = STATUS_IMAGE_MACHINE_TYPE_MISMATCH;
-    else if (is_prefix_bootstrap && !wcspbrk( search, L":/\\" ))
+    else if (is_prefix_bootstrap && !contains_path( search ))
         status = find_builtin_without_file( search, nt_name, pwm, mapping, image_info, id );
 
 done:
@@ -3498,9 +3494,13 @@ static void process_breakpoint(void)
 static void load_global_options(void)
 {
     OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING name_str;
+    UNICODE_STRING name_str, val_str;
     HANDLE hkey;
     ULONG value;
+
+    RtlInitUnicodeString( &name_str, L"WINEBOOTSTRAPMODE" );
+    val_str.MaximumLength = 0;
+    is_prefix_bootstrap = RtlQueryEnvironmentVariable_U( NULL, &name_str, &val_str ) != STATUS_VARIABLE_NOT_FOUND;
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;

@@ -120,6 +120,7 @@ extern const char **dll_paths DECLSPEC_HIDDEN;
 extern USHORT *uctable DECLSPEC_HIDDEN;
 extern USHORT *lctable DECLSPEC_HIDDEN;
 extern SIZE_T startup_info_size DECLSPEC_HIDDEN;
+extern BOOL is_prefix_bootstrap DECLSPEC_HIDDEN;
 extern SECTION_IMAGE_INFORMATION main_image_info DECLSPEC_HIDDEN;
 extern int main_argc DECLSPEC_HIDDEN;
 extern char **main_argv DECLSPEC_HIDDEN;

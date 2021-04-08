@@ -1387,10 +1387,10 @@ BOOL is_builtin_path( const UNICODE_STRING *path, WORD *machine )
 {
     static const WCHAR wow64W[] = {'\\','?','?','\\','c',':','\\','w','i','n','d','o','w','s','\\',
                                    's','y','s','w','o','w','6','4'};
-    BOOL is_prefix_bootstrap;
     unsigned int len;
-    struct stat st;
-    char *ntdll;
+
+    /* only fake builtin existence during prefix bootstrap */
+    if (!is_prefix_bootstrap) return FALSE;
 
     *machine = current_machine;
     if (path->Length > wcslen(system_dir) * sizeof(WCHAR) &&
@@ -1413,15 +1413,7 @@ found:
     len = wcslen(system_dir);
     while (len < path->Length / sizeof(WCHAR) && path->Buffer[len] == '\\') len++;
     while (len < path->Length / sizeof(WCHAR) && path->Buffer[len] != '\\') len++;
-    if (len != path->Length / sizeof(WCHAR)) return FALSE;
-
-    /* if the corresponding ntdll exists, don't fake the existence of the builtin */
-    ntdll = build_path( config_dir, *machine == IMAGE_FILE_MACHINE_I386 ?
-                        "dosdevices/c:/windows/syswow64/ntdll.dll" :
-                        "dosdevices/c:/windows/system32/ntdll.dll" );
-    is_prefix_bootstrap = stat( ntdll, &st ) == -1;
-    free( ntdll );
-    return is_prefix_bootstrap;
+    return (len == path->Length / sizeof(WCHAR));
 }
 
 
