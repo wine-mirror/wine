@@ -399,7 +399,13 @@ static HRESULT WINAPI device_manager_processor_service_GetVideoProcessorRenderTa
 
     if (IsEqualGUID(deviceguid, &DXVA2_VideoProcSoftwareDevice))
     {
-        /* FIXME: filter some input formats */
+        if (!(video_desc->Format == D3DFMT_A8R8G8B8 ||
+                video_desc->Format == D3DFMT_X8R8G8B8 ||
+                video_desc->Format == D3DFMT_YUY2))
+        {
+            WARN("Unsupported content format %#x.\n", video_desc->Format);
+            return E_FAIL;
+        }
 
         if (!(*formats = CoTaskMemAlloc(2 * sizeof(**formats))))
             return E_OUTOFMEMORY;

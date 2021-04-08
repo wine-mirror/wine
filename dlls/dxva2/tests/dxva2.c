@@ -78,6 +78,14 @@ static void test_surface_desc(IDirect3DSurface9 *surface)
     ok(desc.Height == 64, "Unexpected height %u.\n", desc.Height);
 }
 
+static void init_video_desc(DXVA2_VideoDesc *video_desc, D3DFORMAT format)
+{
+    memset(video_desc, 0, sizeof(*video_desc));
+    video_desc->SampleWidth = 64;
+    video_desc->SampleHeight = 64;
+    video_desc->Format = format;
+}
+
 static void test_device_manager(void)
 {
     IDirectXVideoProcessorService *processor_service;
@@ -92,10 +100,28 @@ static void test_device_manager(void)
     D3DFORMAT *formats;
     UINT token, count;
     IDirect3D9 *d3d;
+    unsigned int i;
     HWND window;
     GUID *guids;
     HRESULT hr;
     RECT rect;
+
+    static const D3DFORMAT rt_formats[] =
+    {
+        D3DFMT_A8R8G8B8,
+        D3DFMT_X8R8G8B8,
+        D3DFMT_YUY2,
+    };
+    static const D3DFORMAT rt_unsupported_formats[] =
+    {
+        D3DFMT_A1R5G5B5,
+        D3DFMT_X1R5G5B5,
+        D3DFMT_A2R10G10B10,
+        D3DFMT_A8B8G8R8,
+        D3DFMT_X8B8G8R8,
+        D3DFMT_R5G6B5,
+        D3DFMT_UYVY,
+    };
 
     window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
@@ -316,22 +342,36 @@ static void test_device_manager(void)
     hr = DXVA2CreateVideoService(device, &IID_IDirectXVideoProcessorService, (void **)&proc_service);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    memset(&video_desc, 0, sizeof(video_desc));
-    video_desc.SampleWidth = 64;
-    video_desc.SampleHeight = 64;
-    video_desc.Format = D3DFMT_A8R8G8B8;
+    init_video_desc(&video_desc, D3DFMT_A8R8G8B8);
 
     hr = IDirectXVideoProcessorService_GetVideoProcessorDeviceGuids(proc_service, &video_desc, &count, &guids);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(count, "Unexpected format count %u.\n", count);
     CoTaskMemFree(guids);
 
-    count = 0;
-    hr = IDirectXVideoProcessorService_GetVideoProcessorRenderTargets(proc_service, &DXVA2_VideoProcSoftwareDevice,
-            &video_desc, &count, &formats);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(count, "Unexpected format count %u.\n", count);
-    CoTaskMemFree(formats);
+    for (i = 0; i < ARRAY_SIZE(rt_formats); ++i)
+    {
+        init_video_desc(&video_desc, rt_formats[i]);
+
+        count = 0;
+        hr = IDirectXVideoProcessorService_GetVideoProcessorRenderTargets(proc_service, &DXVA2_VideoProcSoftwareDevice,
+                &video_desc, &count, &formats);
+        ok(hr == S_OK, "Unexpected hr %#x, format %d.\n", hr, rt_formats[i]);
+        ok(count == 2, "Unexpected format count %u.\n", count);
+        if (count == 2)
+            ok(formats[0] == D3DFMT_X8R8G8B8 && formats[1] == D3DFMT_A8R8G8B8, "Unexpected formats %d,%d.\n",
+                    formats[0], formats[1]);
+        CoTaskMemFree(formats);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(rt_unsupported_formats); ++i)
+    {
+        init_video_desc(&video_desc, rt_unsupported_formats[i]);
+
+        hr = IDirectXVideoProcessorService_GetVideoProcessorRenderTargets(proc_service, &DXVA2_VideoProcSoftwareDevice,
+                &video_desc, &count, &formats);
+        ok(hr == E_FAIL, "Unexpected hr %#x, format %d.\n", hr, rt_unsupported_formats[i]);
+    }
 
     IDirectXVideoProcessorService_Release(proc_service);
 
