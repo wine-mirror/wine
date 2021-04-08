@@ -96,6 +96,115 @@ static NTSTATUS WINAPI driver_pnp(DEVICE_OBJECT *device, IRP *irp)
     return pdo_pnp(device, irp);
 }
 
+static void test_bus_query_caps(DEVICE_OBJECT *top_device)
+{
+    DEVICE_CAPABILITIES caps;
+    IO_STACK_LOCATION *stack;
+    IO_STATUS_BLOCK io;
+    unsigned int i;
+    NTSTATUS ret;
+    KEVENT event;
+    IRP *irp;
+
+    memset(&caps, 0, sizeof(caps));
+    caps.Size = sizeof(caps);
+    caps.Version = 1;
+
+    KeInitializeEvent(&event, NotificationEvent, FALSE);
+
+    irp = IoBuildSynchronousFsdRequest(IRP_MJ_PNP, top_device, NULL, 0, NULL, &event, &io);
+    irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
+    stack = IoGetNextIrpStackLocation(irp);
+    stack->MinorFunction = IRP_MN_QUERY_CAPABILITIES;
+    stack->Parameters.DeviceCapabilities.Capabilities = &caps;
+    ret = IoCallDriver(top_device, irp);
+    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+    ok(io.Status == STATUS_SUCCESS, "got %#x\n", ret);
+
+    ok(caps.Size == sizeof(caps), "wrong size %u\n", caps.Size);
+    ok(caps.Version == 1, "wrong version %u\n", caps.Version);
+    ok(!caps.DeviceD1, "got DeviceD1 %u\n", caps.DeviceD1);
+    ok(!caps.DeviceD2, "got DeviceD2 %u\n", caps.DeviceD2);
+    ok(!caps.LockSupported, "got LockSupported %u\n", caps.LockSupported);
+    ok(!caps.EjectSupported, "got EjectSupported %u\n", caps.EjectSupported);
+    ok(!caps.Removable, "got Removable %u\n", caps.Removable);
+    ok(!caps.DockDevice, "got DockDevice %u\n", caps.DockDevice);
+    ok(!caps.UniqueID, "got UniqueID %u\n", caps.UniqueID);
+    ok(!caps.SilentInstall, "got SilentInstall %u\n", caps.SilentInstall);
+    ok(!caps.RawDeviceOK, "got RawDeviceOK %u\n", caps.RawDeviceOK);
+    ok(!caps.SurpriseRemovalOK, "got SurpriseRemovalOK %u\n", caps.SurpriseRemovalOK);
+    ok(!caps.WakeFromD0, "got WakeFromD0 %u\n", caps.WakeFromD0);
+    ok(!caps.WakeFromD1, "got WakeFromD1 %u\n", caps.WakeFromD1);
+    ok(!caps.WakeFromD2, "got WakeFromD2 %u\n", caps.WakeFromD2);
+    ok(!caps.WakeFromD3, "got WakeFromD3 %u\n", caps.WakeFromD3);
+    ok(!caps.HardwareDisabled, "got HardwareDisabled %u\n", caps.HardwareDisabled);
+    ok(!caps.NonDynamic, "got NonDynamic %u\n", caps.NonDynamic);
+    ok(!caps.WarmEjectSupported, "got WarmEjectSupported %u\n", caps.WarmEjectSupported);
+    ok(!caps.NoDisplayInUI, "got NoDisplayInUI %u\n", caps.NoDisplayInUI);
+    ok(!caps.Address, "got Address %#x\n", caps.Address);
+    ok(!caps.UINumber, "got UINumber %#x\n", caps.UINumber);
+    ok(caps.DeviceState[PowerSystemUnspecified] == PowerDeviceUnspecified,
+            "got DeviceState[PowerSystemUnspecified] %u\n", caps.DeviceState[PowerSystemUnspecified]);
+    todo_wine ok(caps.DeviceState[PowerSystemWorking] == PowerDeviceD0,
+            "got DeviceState[PowerSystemWorking] %u\n", caps.DeviceState[PowerSystemWorking]);
+    for (i = PowerSystemSleeping1; i < PowerSystemMaximum; ++i)
+        todo_wine ok(caps.DeviceState[i] == PowerDeviceD3, "got DeviceState[%u] %u\n", i, caps.DeviceState[i]);
+    ok(caps.SystemWake == PowerSystemUnspecified, "got SystemWake %u\n", caps.SystemWake);
+    ok(caps.DeviceWake == PowerDeviceUnspecified, "got DeviceWake %u\n", caps.DeviceWake);
+    ok(!caps.D1Latency, "got D1Latency %u\n", caps.D1Latency);
+    ok(!caps.D2Latency, "got D2Latency %u\n", caps.D2Latency);
+    ok(!caps.D3Latency, "got D3Latency %u\n", caps.D3Latency);
+
+    memset(&caps, 0xff, sizeof(caps));
+    caps.Size = sizeof(caps);
+    caps.Version = 1;
+
+    KeClearEvent(&event);
+
+    irp = IoBuildSynchronousFsdRequest(IRP_MJ_PNP, top_device, NULL, 0, NULL, &event, &io);
+    irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
+    stack = IoGetNextIrpStackLocation(irp);
+    stack->MinorFunction = IRP_MN_QUERY_CAPABILITIES;
+    stack->Parameters.DeviceCapabilities.Capabilities = &caps;
+    ret = IoCallDriver(top_device, irp);
+    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+    ok(io.Status == STATUS_SUCCESS, "got %#x\n", ret);
+
+    ok(caps.Size == sizeof(caps), "wrong size %u\n", caps.Size);
+    ok(caps.Version == 1, "wrong version %u\n", caps.Version);
+    ok(caps.DeviceD1, "got DeviceD1 %u\n", caps.DeviceD1);
+    ok(caps.DeviceD2, "got DeviceD2 %u\n", caps.DeviceD2);
+    ok(caps.LockSupported, "got LockSupported %u\n", caps.LockSupported);
+    ok(caps.EjectSupported, "got EjectSupported %u\n", caps.EjectSupported);
+    ok(caps.Removable, "got Removable %u\n", caps.Removable);
+    ok(caps.DockDevice, "got DockDevice %u\n", caps.DockDevice);
+    ok(caps.UniqueID, "got UniqueID %u\n", caps.UniqueID);
+    ok(caps.SilentInstall, "got SilentInstall %u\n", caps.SilentInstall);
+    ok(caps.RawDeviceOK, "got RawDeviceOK %u\n", caps.RawDeviceOK);
+    ok(caps.SurpriseRemovalOK, "got SurpriseRemovalOK %u\n", caps.SurpriseRemovalOK);
+    ok(caps.WakeFromD0, "got WakeFromD0 %u\n", caps.WakeFromD0);
+    ok(caps.WakeFromD1, "got WakeFromD1 %u\n", caps.WakeFromD1);
+    ok(caps.WakeFromD2, "got WakeFromD2 %u\n", caps.WakeFromD2);
+    ok(caps.WakeFromD3, "got WakeFromD3 %u\n", caps.WakeFromD3);
+    ok(caps.HardwareDisabled, "got HardwareDisabled %u\n", caps.HardwareDisabled);
+    ok(caps.NonDynamic, "got NonDynamic %u\n", caps.NonDynamic);
+    ok(caps.WarmEjectSupported, "got WarmEjectSupported %u\n", caps.WarmEjectSupported);
+    ok(caps.NoDisplayInUI, "got NoDisplayInUI %u\n", caps.NoDisplayInUI);
+    ok(caps.Address == 0xffffffff, "got Address %#x\n", caps.Address);
+    ok(caps.UINumber == 0xffffffff, "got UINumber %#x\n", caps.UINumber);
+    todo_wine ok(caps.DeviceState[PowerSystemUnspecified] == PowerDeviceUnspecified,
+            "got DeviceState[PowerSystemUnspecified] %u\n", caps.DeviceState[PowerSystemUnspecified]);
+    todo_wine ok(caps.DeviceState[PowerSystemWorking] == PowerDeviceD0,
+            "got DeviceState[PowerSystemWorking] %u\n", caps.DeviceState[PowerSystemWorking]);
+    for (i = PowerSystemSleeping1; i < PowerSystemMaximum; ++i)
+        todo_wine ok(caps.DeviceState[i] == PowerDeviceD3, "got DeviceState[%u] %u\n", i, caps.DeviceState[i]);
+    ok(caps.SystemWake == 0xffffffff, "got SystemWake %u\n", caps.SystemWake);
+    ok(caps.DeviceWake == 0xffffffff, "got DeviceWake %u\n", caps.DeviceWake);
+    ok(caps.D1Latency == 0xffffffff, "got D1Latency %u\n", caps.D1Latency);
+    ok(caps.D2Latency == 0xffffffff, "got D2Latency %u\n", caps.D2Latency);
+    ok(caps.D3Latency == 0xffffffff, "got D3Latency %u\n", caps.D3Latency);
+}
+
 static void test_bus_query_id(DEVICE_OBJECT *top_device)
 {
     IO_STACK_LOCATION *stack;
@@ -136,6 +245,7 @@ static void test_bus_query(void)
     top_device = IoGetAttachedDeviceReference(bus_pdo);
     ok(top_device == bus_fdo, "wrong top device\n");
 
+    test_bus_query_caps(top_device);
     test_bus_query_id(top_device);
 
     ObDereferenceObject(top_device);
