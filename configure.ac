@@ -1588,16 +1588,7 @@ dnl **** Check for gstreamer ****
 if test "x$with_gstreamer" != "xno"
 then
     WINE_PACKAGE_FLAGS(GSTREAMER,[gstreamer-1.0 gstreamer-video-1.0 gstreamer-audio-1.0],,,,
-        [ac_gst_incl=""
-        for i in $GSTREAMER_CFLAGS
-        do
-            case "$i" in
-                -I*) ac_gst_incl="$ac_gst_incl $i";;
-            esac
-        done
-        GSTREAMER_CFLAGS=$ac_gst_incl
-        CPPFLAGS="$ac_save_CPPFLAGS $GSTREAMER_CFLAGS"
-        AC_CHECK_HEADER([gst/gst.h],
+        [AC_CHECK_HEADER([gst/gst.h],
             [AC_MSG_CHECKING([whether gint64 defined by gst/gst.h is indeed 64-bit])
               AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <gst/gst.h>]],
                                                  [[static int a[sizeof(gint64) > 4 ? 1 : -1]; if (a[0]) return 0;]])],

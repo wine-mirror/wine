@@ -4259,7 +4259,7 @@ static void load_sources( struct makefile *make )
     for (i = 0; i < value.count; i++)
         if (!strncmp( value.str[i], "-I", 2 ))
             strarray_add_uniq( &make->include_paths, value.str[i] + 2 );
-        else
+        else if (!strncmp( value.str[i], "-D", 2 ) || !strncmp( value.str[i], "-U", 2 ))
             strarray_add_uniq( &make->define_args, value.str[i] );
     strarray_addall( &make->define_args, get_expanded_make_var_array( make, "EXTRADEFS" ));
 
