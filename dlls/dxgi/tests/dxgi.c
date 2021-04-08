@@ -2886,8 +2886,7 @@ static void test_default_fullscreen_target_output(IUnknown *device, BOOL is_d3d1
             swapchain_desc.BufferDesc.Height = 480;
             swapchain_desc.OutputWindow = create_window();
             swapchain_desc.Windowed = TRUE;
-            hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc,
-                    &swapchain);
+            hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
             ok(SUCCEEDED(hr), "Adapter %u output %u: CreateSwapChain failed, hr %#x.\n",
                     adapter_idx, output_idx, hr);
 
@@ -2988,8 +2987,7 @@ static void test_default_fullscreen_target_output(IUnknown *device, BOOL is_d3d1
                     output_desc.DesktopCoordinates.top, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
             ok(ret, "Adapter %u output %u: SetWindowPos failed, error %#x.\n", adapter_idx,
                     output_idx, GetLastError());
-            hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc,
-                    &swapchain);
+            hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
             if (FAILED(hr))
             {
                 skip("Adapter %u output %u: CreateSwapChain failed, hr %#x.\n", adapter_idx,
@@ -6620,8 +6618,7 @@ static void test_cursor_clipping(IUnknown *device, BOOL is_d3d12)
             swapchain_desc.BufferDesc.Scaling = modes[mode_idx].Scaling;
             swapchain_desc.OutputWindow = create_window();
             heap_free(modes);
-            hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc,
-                    &swapchain);
+            hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
             ok(hr == S_OK, "Adapter %u output %u: CreateSwapChain failed, hr %#x.\n",
                     adapter_idx, output_idx, hr);
 
