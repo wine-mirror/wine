@@ -993,13 +993,27 @@ if(0)
     ok(hr == S_OK, "Failed to get media type property, hr %#x.\n", hr);
     ok(compressed, "Unexpected value %d.\n", compressed);
 
+    hr = IMFMediaType_SetUINT32(mediatype, &MF_MT_COMPRESSED, 0);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    compressed = FALSE;
+    hr = IMFMediaType_IsCompressedFormat(mediatype, &compressed);
+    ok(hr == S_OK, "Failed to get media type property, hr %#x.\n", hr);
+    ok(compressed, "Unexpected value %d.\n", compressed);
+
     hr = IMFMediaType_SetUINT32(mediatype, &MF_MT_ALL_SAMPLES_INDEPENDENT, 1);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetUINT32(mediatype, &MF_MT_COMPRESSED, 1);
     ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
 
     compressed = TRUE;
     hr = IMFMediaType_IsCompressedFormat(mediatype, &compressed);
     ok(hr == S_OK, "Failed to get media type property, hr %#x.\n", hr);
     ok(!compressed, "Unexpected value %d.\n", compressed);
+
+    hr = IMFMediaType_DeleteItem(mediatype, &MF_MT_COMPRESSED);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaType_SetGUID(mediatype, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
     ok(hr == S_OK, "Failed to set GUID value, hr %#x.\n", hr);
