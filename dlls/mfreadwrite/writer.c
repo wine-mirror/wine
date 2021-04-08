@@ -25,7 +25,6 @@
 #include "mf_private.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -76,7 +75,7 @@ static ULONG WINAPI sink_writer_Release(IMFSinkWriter *iface)
 
     if (!refcount)
     {
-        heap_free(writer);
+        free(writer);
     }
 
     return refcount;
@@ -185,7 +184,7 @@ HRESULT create_sink_writer_from_sink(IMFMediaSink *sink, IMFAttributes *attribut
     struct sink_writer *object;
     HRESULT hr;
 
-    object = heap_alloc(sizeof(*object));
+    object = malloc(sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
@@ -203,7 +202,7 @@ HRESULT create_sink_writer_from_stream(IMFByteStream *stream, IMFAttributes *att
     struct sink_writer *object;
     HRESULT hr;
 
-    object = heap_alloc(sizeof(*object));
+    object = malloc(sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
