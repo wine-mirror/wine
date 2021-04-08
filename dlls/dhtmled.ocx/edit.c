@@ -1587,10 +1587,23 @@ static HRESULT WINAPI ConnectionPointContainer_EnumConnectionPoints(IConnectionP
 }
 
 static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPointContainer *iface,
-        REFIID riid, IConnectionPoint **ppCP)
+        REFIID riid, IConnectionPoint **point)
 {
     DHTMLEditImpl *This = impl_from_IConnectionPointContainer(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppCP);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), point);
+
+    if (!point)
+        return E_POINTER;
+
+    if (IsEqualGUID(riid, This->conpt.riid))
+    {
+        *point = &This->conpt.IConnectionPoint_iface;
+        IConnectionPoint_AddRef(*point);
+        return S_OK;
+    }
+
+    FIXME("unsupported connection point %s\n", debugstr_guid(riid));
     return CONNECT_E_NOCONNECTION;
 }
 
@@ -1814,7 +1827,6 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
     ServiceProvider_Release,
     ServiceProvider_QueryService
 };
-
 
 HRESULT dhtml_edit_create(REFIID iid, void **out)
 {
