@@ -83,6 +83,7 @@ static DWORD device_handler( DWORD ctrl, const WCHAR *driver_name )
 
     case SERVICE_CONTROL_REENUMERATE_ROOT_DEVICES:
         wine_enumerate_root_devices( driver_name );
+        break;
 
     default:
         FIXME( "got driver ctrl %x for %s\n", ctrl, wine_dbgstr_w(driver_name) );
