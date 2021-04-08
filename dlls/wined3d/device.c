@@ -5237,7 +5237,7 @@ HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *devi
             return hr;
     }
 
-    wined3d_cs_emit_clear_rendertarget_view(device->cs, view, rect, flags, color, depth, stencil);
+    wined3d_device_context_emit_clear_rendertarget_view(&device->cs->c, view, rect, flags, color, depth, stencil);
 
     return WINED3D_OK;
 }
