@@ -372,7 +372,7 @@ static void invoke_apc( CONTEXT *context, const user_apc_t *apc )
  * Invoke a single APC.
  *
  */
-static void invoke_system_apc( const apc_call_t *call, apc_result_t *result )
+static void invoke_system_apc( const apc_call_t *call, apc_result_t *result, BOOL self )
 {
     SIZE_T size, bits;
     void *addr;
@@ -531,7 +531,7 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result )
             result->map_view.size = size;
         }
         else result->map_view.status = STATUS_INVALID_PARAMETER;
-        NtClose( wine_server_ptr_handle(call->map_view.handle) );
+        if (!self) NtClose( wine_server_ptr_handle(call->map_view.handle) );
         break;
     case APC_UNMAP_VIEW:
         result->type = call->type;
@@ -590,7 +590,7 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result )
                                                        &dst_handle, call->dup_handle.access,
                                                        call->dup_handle.attributes, call->dup_handle.options );
         result->dup_handle.handle = wine_server_obj_handle( dst_handle );
-        NtClose( wine_server_ptr_handle(call->dup_handle.dst_process) );
+        if (!self) NtClose( wine_server_ptr_handle(call->dup_handle.dst_process) );
         break;
     }
     case APC_BREAK_PROCESS:
@@ -674,7 +674,7 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
             SERVER_END_REQ;
 
             if (ret != STATUS_KERNEL_APC) break;
-            invoke_system_apc( &call, &result );
+            invoke_system_apc( &call, &result, FALSE );
 
             /* don't signal multiple times */
             if (size >= sizeof(select_op->signal_and_wait) && select_op->op == SELECT_SIGNAL_AND_WAIT)
@@ -772,7 +772,7 @@ unsigned int server_queue_process_apc( HANDLE process, const apc_call_t *call, a
 
         if (self)
         {
-            invoke_system_apc( call, result );
+            invoke_system_apc( call, result, TRUE );
         }
         else
         {
