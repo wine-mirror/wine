@@ -690,6 +690,81 @@ static void delete_device_iface(struct device_iface *iface)
     heap_free(iface);
 }
 
+/* remove all interfaces associated with the device, including those not
+ * enumerated in the set */
+static void remove_all_device_ifaces(struct device *device)
+{
+    HKEY classes_key;
+    DWORD i, len;
+    LONG ret;
+
+    if ((ret = RegOpenKeyExW(HKEY_LOCAL_MACHINE, DeviceClasses, 0, KEY_READ, &classes_key)))
+    {
+        ERR("Failed to open classes key, error %u.\n", ret);
+        return;
+    }
+
+    for (i = 0; ; ++i)
+    {
+        WCHAR class_name[40];
+        HKEY class_key;
+        DWORD j;
+
+        len = ARRAY_SIZE(class_name);
+        if ((ret = RegEnumKeyExW(classes_key, i, class_name, &len, NULL, NULL, NULL, NULL)))
+        {
+            if (ret != ERROR_NO_MORE_ITEMS) ERR("Failed to enumerate classes, error %u.\n", ret);
+            break;
+        }
+
+        if ((ret = RegOpenKeyExW(classes_key, class_name, 0, KEY_READ, &class_key)))
+        {
+            ERR("Failed to open class %s, error %u.\n", debugstr_w(class_name), ret);
+            continue;
+        }
+
+        for (j = 0; ; ++j)
+        {
+            WCHAR iface_name[MAX_DEVICE_ID_LEN + 39], device_name[MAX_DEVICE_ID_LEN];
+            HKEY iface_key;
+
+            len = ARRAY_SIZE(iface_name);
+            if ((ret = RegEnumKeyExW(class_key, j, iface_name, &len, NULL, NULL, NULL, NULL)))
+            {
+                if (ret != ERROR_NO_MORE_ITEMS) ERR("Failed to enumerate interfaces, error %u.\n", ret);
+                break;
+            }
+
+            if ((ret = RegOpenKeyExW(class_key, iface_name, 0, KEY_ALL_ACCESS, &iface_key)))
+            {
+                ERR("Failed to open interface %s, error %u.\n", debugstr_w(iface_name), ret);
+                continue;
+            }
+
+            len = sizeof(device_name);
+            if ((ret = RegQueryValueExW(iface_key, L"DeviceInstance", NULL, NULL, (BYTE *)device_name, &len)))
+            {
+                ERR("Failed to query device instance, error %u.\n", ret);
+                RegCloseKey(iface_key);
+                continue;
+            }
+
+            if (!wcsicmp(device_name, device->instanceId))
+            {
+                if ((ret = RegDeleteTreeW(iface_key, NULL)))
+                    ERR("Failed to delete interface %s subkeys, error %u.\n", debugstr_w(iface_name), ret);
+                if ((ret = RegDeleteKeyW(iface_key, L"")))
+                    ERR("Failed to delete interface %s, error %u.\n", debugstr_w(iface_name), ret);
+            }
+
+            RegCloseKey(iface_key);
+        }
+        RegCloseKey(class_key);
+    }
+
+    RegCloseKey(classes_key);
+}
+
 static void remove_device(struct device *device)
 {
     WCHAR id[MAX_DEVICE_ID_LEN], *p;
@@ -735,7 +810,10 @@ static void delete_device(struct device *device)
     SetupDiCallClassInstaller(DIF_DESTROYPRIVATEDATA, device->set, &device_data);
 
     if (device->phantom)
+    {
         remove_device(device);
+        remove_all_device_ifaces(device);
+    }
 
     RegCloseKey(device->key);
     heap_free(device->instanceId);
@@ -1724,6 +1802,8 @@ BOOL WINAPI SetupDiRemoveDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
         CloseServiceHandle(service);
     }
     CloseServiceHandle(manager);
+
+    remove_all_device_ifaces(device);
 
     return TRUE;
 }
