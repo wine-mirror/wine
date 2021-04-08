@@ -401,7 +401,7 @@ static const struct wined3d_parent_ops d3d9_view_wined3d_parent_ops =
 struct d3d9_device *d3d9_surface_get_device(const struct d3d9_surface *surface)
 {
     IDirect3DDevice9Ex *device;
-    device = surface->texture ? surface->texture->parent_device : surface->parent_device;
+    device = surface->texture ? &surface->texture->parent_device->IDirect3DDevice9Ex_iface : surface->parent_device;
     return impl_from_IDirect3DDevice9Ex(device);
 }
 

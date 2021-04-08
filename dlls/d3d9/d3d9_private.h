@@ -225,7 +225,7 @@ struct d3d9_texture
     IDirect3DBaseTexture9 IDirect3DBaseTexture9_iface;
     struct d3d9_resource resource;
     struct wined3d_texture *wined3d_texture;
-    IDirect3DDevice9Ex *parent_device;
+    struct d3d9_device *parent_device;
     struct list rtv_list;
     DWORD usage;
     BOOL flags;

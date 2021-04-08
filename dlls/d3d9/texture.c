@@ -79,7 +79,7 @@ static struct wined3d_shader_resource_view *d3d9_texture_acquire_shader_resource
 
 static void d3d9_texture_cleanup(struct d3d9_texture *texture)
 {
-    IDirect3DDevice9Ex *parent_device = texture->parent_device;
+    IDirect3DDevice9Ex *parent_device = &texture->parent_device->IDirect3DDevice9Ex_iface;
     struct d3d9_surface *surface;
 
     wined3d_mutex_lock();
@@ -141,7 +141,7 @@ static ULONG WINAPI d3d9_texture_2d_AddRef(IDirect3DTexture9 *iface)
     {
         struct d3d9_surface *surface;
 
-        IDirect3DDevice9Ex_AddRef(texture->parent_device);
+        IDirect3DDevice9Ex_AddRef(&texture->parent_device->IDirect3DDevice9Ex_iface);
         wined3d_mutex_lock();
         LIST_FOR_EACH_ENTRY(surface, &texture->rtv_list, struct d3d9_surface, rtv_entry)
         {
@@ -172,7 +172,7 @@ static HRESULT WINAPI d3d9_texture_2d_GetDevice(IDirect3DTexture9 *iface, IDirec
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    *device = (IDirect3DDevice9 *)texture->parent_device;
+    *device = (IDirect3DDevice9 *)&texture->parent_device->IDirect3DDevice9Ex_iface;
     IDirect3DDevice9_AddRef(*device);
 
     TRACE("Returning device %p.\n", *device);
@@ -539,7 +539,7 @@ static ULONG WINAPI d3d9_texture_cube_AddRef(IDirect3DCubeTexture9 *iface)
     {
         struct d3d9_surface *surface;
 
-        IDirect3DDevice9Ex_AddRef(texture->parent_device);
+        IDirect3DDevice9Ex_AddRef(&texture->parent_device->IDirect3DDevice9Ex_iface);
         wined3d_mutex_lock();
         LIST_FOR_EACH_ENTRY(surface, &texture->rtv_list, struct d3d9_surface, rtv_entry)
         {
@@ -570,7 +570,7 @@ static HRESULT WINAPI d3d9_texture_cube_GetDevice(IDirect3DCubeTexture9 *iface, 
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    *device = (IDirect3DDevice9 *)texture->parent_device;
+    *device = (IDirect3DDevice9 *)&texture->parent_device->IDirect3DDevice9Ex_iface;
     IDirect3DDevice9_AddRef(*device);
 
     TRACE("Returning device %p.\n", *device);
@@ -961,7 +961,7 @@ static ULONG WINAPI d3d9_texture_3d_AddRef(IDirect3DVolumeTexture9 *iface)
 
     if (ref == 1)
     {
-        IDirect3DDevice9Ex_AddRef(texture->parent_device);
+        IDirect3DDevice9Ex_AddRef(&texture->parent_device->IDirect3DDevice9Ex_iface);
         wined3d_mutex_lock();
         wined3d_texture_incref(texture->wined3d_texture);
         wined3d_mutex_unlock();
@@ -988,7 +988,7 @@ static HRESULT WINAPI d3d9_texture_3d_GetDevice(IDirect3DVolumeTexture9 *iface, 
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    *device = (IDirect3DDevice9 *)texture->parent_device;
+    *device = (IDirect3DDevice9 *)&texture->parent_device->IDirect3DDevice9Ex_iface;
     IDirect3DDevice9_AddRef(*device);
 
     TRACE("Returning device %p.\n", *device);
@@ -1386,8 +1386,8 @@ HRESULT texture_init(struct d3d9_texture *texture, struct d3d9_device *device,
         return hr;
     }
 
-    texture->parent_device = &device->IDirect3DDevice9Ex_iface;
-    IDirect3DDevice9Ex_AddRef(texture->parent_device);
+    texture->parent_device = device;
+    IDirect3DDevice9Ex_AddRef(&texture->parent_device->IDirect3DDevice9Ex_iface);
 
     return D3D_OK;
 }
@@ -1468,8 +1468,8 @@ HRESULT cubetexture_init(struct d3d9_texture *texture, struct d3d9_device *devic
         return hr;
     }
 
-    texture->parent_device = &device->IDirect3DDevice9Ex_iface;
-    IDirect3DDevice9Ex_AddRef(texture->parent_device);
+    texture->parent_device = device;
+    IDirect3DDevice9Ex_AddRef(&texture->parent_device->IDirect3DDevice9Ex_iface);
 
     return D3D_OK;
 }
@@ -1535,8 +1535,8 @@ HRESULT volumetexture_init(struct d3d9_texture *texture, struct d3d9_device *dev
         return hr;
     }
 
-    texture->parent_device = &device->IDirect3DDevice9Ex_iface;
-    IDirect3DDevice9Ex_AddRef(texture->parent_device);
+    texture->parent_device = device;
+    IDirect3DDevice9Ex_AddRef(&texture->parent_device->IDirect3DDevice9Ex_iface);
 
     return D3D_OK;
 }
