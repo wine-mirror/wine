@@ -2730,6 +2730,12 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, con
                 status = STATUS_SUCCESS;
                 goto done;
             }
+            /* 16-bit files can't be loaded from the prefix */
+            if (libname[0] && libname[1] && !wcscmp( libname + wcslen(libname) - 2, L"16" ))
+            {
+                status = find_builtin_without_file( libname, nt_name, pwm, mapping, image_info, id );
+                goto done;
+            }
         }
     }
 
