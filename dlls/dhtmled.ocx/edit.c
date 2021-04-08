@@ -25,6 +25,78 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dhtmled);
 
+typedef enum tid_t {
+    NULL_tid,
+    IDHTMLEdit_tid,
+    LAST_tid
+} tid_t;
+
+static ITypeLib *typelib;
+static ITypeInfo *typeinfos[LAST_tid];
+
+static REFIID tid_ids[] = {
+    &IID_NULL,
+    &IID_IDHTMLEdit
+};
+
+static HRESULT load_typelib(void)
+{
+    ITypeLib *tl;
+    HRESULT hr;
+
+    hr = LoadRegTypeLib(&LIBID_DHTMLEDLib, 1, 0, LOCALE_SYSTEM_DEFAULT, &tl);
+    if (FAILED(hr)) {
+        ERR("LoadRegTypeLib failed: %08x\n", hr);
+        return hr;
+    }
+
+    if (InterlockedCompareExchangePointer((void**)&typelib, tl, NULL))
+        ITypeLib_Release(tl);
+    return hr;
+}
+
+void release_typelib(void)
+{
+    unsigned i;
+
+    if (!typelib)
+        return;
+
+    for (i = 0; i < ARRAY_SIZE(typeinfos); i++)
+        if (typeinfos[i])
+            ITypeInfo_Release(typeinfos[i]);
+
+    ITypeLib_Release(typelib);
+}
+
+static HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
+{
+    HRESULT hr;
+
+    if (!typelib)
+        hr = load_typelib();
+    if (!typelib)
+        return hr;
+
+    if (!typeinfos[tid])
+    {
+        ITypeInfo *ti;
+
+        hr = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], &ti);
+        if (FAILED(hr))
+        {
+            ERR("GetTypeInfoOfGuid(%s) failed: %08x\n", debugstr_guid(tid_ids[tid]), hr);
+            return hr;
+        }
+
+        if (InterlockedCompareExchangePointer((void**)(typeinfos+tid), ti, NULL))
+            ITypeInfo_Release(ti);
+    }
+
+    *typeinfo = typeinfos[tid];
+    return S_OK;
+}
+
 typedef struct
 {
     IDHTMLEdit IDHTMLEdit_iface;
@@ -239,33 +311,55 @@ static ULONG WINAPI DHTMLEdit_Release(IDHTMLEdit *iface)
 static HRESULT WINAPI DHTMLEdit_GetTypeInfoCount(IDHTMLEdit *iface, UINT *count)
 {
     DHTMLEditImpl *This = impl_from_IDHTMLEdit(iface);
-    FIXME("(%p)->(%p) stub\n", This, count);
-    *count = 0;
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, count);
+    *count = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI DHTMLEdit_GetTypeInfo(IDHTMLEdit *iface, UINT type_index, LCID lcid, ITypeInfo **type_info)
 {
     DHTMLEditImpl *This = impl_from_IDHTMLEdit(iface);
-    FIXME("(%p)->(%u, %08x, %p) stub\n", This, type_index, lcid, type_info);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%u, %08x, %p)\n", This, type_index, lcid, type_info);
+
+    hr = get_typeinfo(IDHTMLEdit_tid, type_info);
+    if (SUCCEEDED(hr))
+        ITypeInfo_AddRef(*type_info);
+    return hr;
 }
 
 static HRESULT WINAPI DHTMLEdit_GetIDsOfNames(IDHTMLEdit *iface, REFIID iid, OLECHAR **names, UINT name_count,
                                               LCID lcid, DISPID *disp_ids)
 {
     DHTMLEditImpl *This = impl_from_IDHTMLEdit(iface);
-    FIXME("(%p)->(%s, %p, %u, %08x, %p) stub\n", This, debugstr_guid(iid), names, name_count, lcid, disp_ids);
-    return E_NOTIMPL;
+    ITypeInfo *ti;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s, %p, %u, %08x, %p)\n", This, debugstr_guid(iid), names, name_count, lcid, disp_ids);
+
+    hr = get_typeinfo(IDHTMLEdit_tid, &ti);
+    if (FAILED(hr))
+        return hr;
+
+    return ITypeInfo_GetIDsOfNames(ti, names, name_count, disp_ids);
 }
 
 static HRESULT WINAPI DHTMLEdit_Invoke(IDHTMLEdit *iface, DISPID member, REFIID iid, LCID lcid, WORD flags,
                                        DISPPARAMS *params, VARIANT *ret, EXCEPINFO *exception_info, UINT *error_index)
 {
     DHTMLEditImpl *This = impl_from_IDHTMLEdit(iface);
-    FIXME("(%p)->(%d, %s, %08x, 0x%x, %p, %p, %p, %p) stub\n",
+    ITypeInfo *ti;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d, %s, %08x, 0x%x, %p, %p, %p, %p)\n",
           This, member, debugstr_guid(iid), lcid, flags, params, ret, exception_info, error_index);
-    return E_NOTIMPL;
+
+    hr = get_typeinfo(IDHTMLEdit_tid, &ti);
+    if (FAILED(hr))
+        return hr;
+
+    return ITypeInfo_Invoke(ti, iface, member, flags, params, ret, exception_info, error_index);
 }
 
 static HRESULT WINAPI DHTMLEdit_ExecCommand(IDHTMLEdit *iface, DHTMLEDITCMDID cmd_id, OLECMDEXECOPT options,

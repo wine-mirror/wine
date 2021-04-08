@@ -20,10 +20,14 @@
 
 #define COBJMACROS
 
+#include "oaidl.h"
+#include "ocidl.h"
+#include "docobj.h"
+#include "mshtml.h"
+#include "rpcproxy.h"
 #include "initguid.h"
 #include "dhtmled.h"
 #include "dhtmled_private.h"
-#include "rpcproxy.h"
 
 #include "wine/debug.h"
 
@@ -106,6 +110,10 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, VOID *reserved)
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls(instance);
             dhtmled_instance = instance;
+            break;
+        case DLL_PROCESS_DETACH:
+            if (reserved) break;
+            release_typelib();
             break;
     }
 
