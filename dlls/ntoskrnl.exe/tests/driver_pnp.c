@@ -33,7 +33,8 @@
 #include "utils.h"
 
 static const GUID control_class = {0xdeadbeef, 0x29ef, 0x4538, {0xa5, 0xfd, 0xb6, 0x95, 0x73, 0xa3, 0x62, 0xc0}};
-static UNICODE_STRING control_symlink;
+static const GUID bus_class     = {0xdeadbeef, 0x29ef, 0x4538, {0xa5, 0xfd, 0xb6, 0x95, 0x73, 0xa3, 0x62, 0xc1}};
+static UNICODE_STRING control_symlink, bus_symlink;
 
 static DEVICE_OBJECT *bus_fdo, *bus_pdo;
 
@@ -60,6 +61,7 @@ static NTSTATUS fdo_pnp(IRP *irp)
             IoDetachDevice(bus_pdo);
             IoDeleteDevice(bus_fdo);
             RtlFreeUnicodeString(&control_symlink);
+            RtlFreeUnicodeString(&bus_symlink);
             return ret;
     }
 
@@ -257,6 +259,17 @@ static NTSTATUS fdo_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
     {
         case IOCTL_WINETEST_BUS_MAIN:
             test_bus_query();
+            return STATUS_SUCCESS;
+
+        case IOCTL_WINETEST_BUS_REGISTER_IFACE:
+            return IoRegisterDeviceInterface(bus_pdo, &bus_class, NULL, &bus_symlink);
+
+        case IOCTL_WINETEST_BUS_ENABLE_IFACE:
+            IoSetDeviceInterfaceState(&bus_symlink, TRUE);
+            return STATUS_SUCCESS;
+
+        case IOCTL_WINETEST_BUS_DISABLE_IFACE:
+            IoSetDeviceInterfaceState(&bus_symlink, FALSE);
             return STATUS_SUCCESS;
 
         default:

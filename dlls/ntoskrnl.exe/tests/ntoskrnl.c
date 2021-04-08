@@ -987,6 +987,7 @@ static void add_file_to_catalog(HANDLE catalog, const WCHAR *file)
 static void test_pnp_devices(void)
 {
     static const GUID control_class = {0xdeadbeef, 0x29ef, 0x4538, {0xa5, 0xfd, 0xb6, 0x95, 0x73, 0xa3, 0x62, 0xc0}};
+    static const GUID bus_class     = {0xdeadbeef, 0x29ef, 0x4538, {0xa5, 0xfd, 0xb6, 0x95, 0x73, 0xa3, 0x62, 0xc1}};
 
     char buffer[200];
     SP_DEVICE_INTERFACE_DETAIL_DATA_A *iface_detail = (void *)buffer;
@@ -1027,6 +1028,65 @@ static void test_pnp_devices(void)
 
     ret = DeviceIoControl(bus, IOCTL_WINETEST_BUS_MAIN, NULL, 0, NULL, 0, &size, NULL);
     ok(ret, "got error %u\n", GetLastError());
+
+    /* Test IoRegisterDeviceInterface() and IoSetDeviceInterfaceState(). */
+
+    set = SetupDiGetClassDevsA(&bus_class, NULL, NULL, DIGCF_DEVICEINTERFACE);
+    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
+    ret = SetupDiEnumDeviceInterfaces(set, NULL, &bus_class, 0, &iface);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_NO_MORE_ITEMS, "got error %#x\n", GetLastError());
+    SetupDiDestroyDeviceInfoList(set);
+
+    ret = DeviceIoControl(bus, IOCTL_WINETEST_BUS_REGISTER_IFACE, NULL, 0, NULL, 0, &size, NULL);
+    ok(ret, "got error %u\n", GetLastError());
+
+    set = SetupDiGetClassDevsA(&bus_class, NULL, NULL, DIGCF_DEVICEINTERFACE);
+    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
+    ret = SetupDiEnumDeviceInterfaces(set, NULL, &bus_class, 0, &iface);
+    ok(ret, "failed to get interface, error %#x\n", GetLastError());
+    ok(IsEqualGUID(&iface.InterfaceClassGuid, &bus_class),
+            "wrong class %s\n", debugstr_guid(&iface.InterfaceClassGuid));
+    ok(!iface.Flags, "got flags %#x\n", iface.Flags);
+    SetupDiDestroyDeviceInfoList(set);
+
+    set = SetupDiGetClassDevsA(&bus_class, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
+    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
+    ret = SetupDiEnumDeviceInterfaces(set, NULL, &bus_class, 0, &iface);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_NO_MORE_ITEMS, "got error %#x\n", GetLastError());
+    SetupDiDestroyDeviceInfoList(set);
+
+    ret = DeviceIoControl(bus, IOCTL_WINETEST_BUS_ENABLE_IFACE, NULL, 0, NULL, 0, &size, NULL);
+    ok(ret, "got error %u\n", GetLastError());
+
+    set = SetupDiGetClassDevsA(&bus_class, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
+    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
+    ret = SetupDiEnumDeviceInterfaces(set, NULL, &bus_class, 0, &iface);
+    ok(ret, "failed to get interface, error %#x\n", GetLastError());
+    ok(IsEqualGUID(&iface.InterfaceClassGuid, &bus_class),
+            "wrong class %s\n", debugstr_guid(&iface.InterfaceClassGuid));
+    ok(iface.Flags == SPINT_ACTIVE, "got flags %#x\n", iface.Flags);
+    SetupDiDestroyDeviceInfoList(set);
+
+    ret = DeviceIoControl(bus, IOCTL_WINETEST_BUS_DISABLE_IFACE, NULL, 0, NULL, 0, &size, NULL);
+    ok(ret, "got error %u\n", GetLastError());
+
+    set = SetupDiGetClassDevsA(&bus_class, NULL, NULL, DIGCF_DEVICEINTERFACE);
+    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
+    ret = SetupDiEnumDeviceInterfaces(set, NULL, &bus_class, 0, &iface);
+    ok(ret, "failed to get interface, error %#x\n", GetLastError());
+    ok(IsEqualGUID(&iface.InterfaceClassGuid, &bus_class),
+            "wrong class %s\n", debugstr_guid(&iface.InterfaceClassGuid));
+    ok(!iface.Flags, "got flags %#x\n", iface.Flags);
+    SetupDiDestroyDeviceInfoList(set);
+
+    set = SetupDiGetClassDevsA(&bus_class, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
+    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
+    ret = SetupDiEnumDeviceInterfaces(set, NULL, &bus_class, 0, &iface);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_NO_MORE_ITEMS, "got error %#x\n", GetLastError());
+    SetupDiDestroyDeviceInfoList(set);
 
     CloseHandle(bus);
 }
