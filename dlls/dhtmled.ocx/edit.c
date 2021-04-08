@@ -1336,9 +1336,10 @@ static HRESULT WINAPI ViewObjectEx_GetViewStatus(IViewObjectEx *iface, DWORD *st
 {
     DHTMLEditImpl *This = impl_from_IViewObjectEx(iface);
 
-    FIXME("(%p)->(%p)\n", This, status);
+    TRACE("(%p)->(%p)\n", This, status);
 
-    return E_NOTIMPL;
+    *status = VIEWSTATUS_OPAQUE | VIEWSTATUS_SOLIDBKGND;
+    return S_OK;
 }
 
 static HRESULT WINAPI ViewObjectEx_QueryHitPoint(IViewObjectEx *iface, DWORD aspect, const RECT *bounds,
