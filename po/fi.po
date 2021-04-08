@@ -14674,6 +14674,16 @@ msgstr "reg: Järjestelmä ei löytänyt annettua rekisteriavainta tai -arvoa\n"
 msgid "reg: Unable to import the registry key '%1'\n"
 msgstr "reg: Rekisteriavainta '%1' ei voida avata.\n"
 
+#: programs/reg/reg.rc:179
+msgid ""
+"  /reg:32\n"
+"     Access the registry using the 32-bit view.\n"
+"\n"
+"  /reg:64\n"
+"     Access the registry using the 64-bit view.\n"
+"\n"
+msgstr ""
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Rekisteri"

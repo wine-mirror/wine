@@ -15224,6 +15224,16 @@ msgstr "錯誤：系統無法找到指定的註冊表索引鍵或值\n"
 msgid "reg: Unable to import the registry key '%1'\n"
 msgstr "錯誤：無法加入索引鍵到遠端機器\n"
 
+#: programs/reg/reg.rc:179
+msgid ""
+"  /reg:32\n"
+"     Access the registry using the 32-bit view.\n"
+"\n"
+"  /reg:64\n"
+"     Access the registry using the 64-bit view.\n"
+"\n"
+msgstr ""
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "註冊表(&R)"

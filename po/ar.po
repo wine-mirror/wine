@@ -15314,6 +15314,16 @@ msgstr "خطأ : فشل النظام في العثور على المفتاح أ�
 msgid "reg: Unable to import the registry key '%1'\n"
 msgstr "خطأ : تعذر إضافة المفاتيح للجهاز البعيد\n"
 
+#: programs/reg/reg.rc:179
+msgid ""
+"  /reg:32\n"
+"     Access the registry using the 32-bit view.\n"
+"\n"
+"  /reg:64\n"
+"     Access the registry using the 64-bit view.\n"
+"\n"
+msgstr ""
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "ال&سجل"

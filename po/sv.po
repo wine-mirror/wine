@@ -14958,6 +14958,16 @@ msgstr ""
 msgid "reg: Unable to import the registry key '%1'\n"
 msgstr "reg: Kan inte öppna registernyckeln '%1'.\n"
 
+#: programs/reg/reg.rc:179
+msgid ""
+"  /reg:32\n"
+"     Access the registry using the 32-bit view.\n"
+"\n"
+"  /reg:64\n"
+"     Access the registry using the 64-bit view.\n"
+"\n"
+msgstr ""
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Register"

@@ -14353,6 +14353,16 @@ msgstr "reg：系统无法找到指定的注册表键或值\n"
 msgid "reg: Unable to import the registry key '%1'\n"
 msgstr "reg: 无法打开注册表键 '%1'。\n"
 
+#: programs/reg/reg.rc:179
+msgid ""
+"  /reg:32\n"
+"     Access the registry using the 32-bit view.\n"
+"\n"
+"  /reg:64\n"
+"     Access the registry using the 64-bit view.\n"
+"\n"
+msgstr ""
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "注册表(&R)"
