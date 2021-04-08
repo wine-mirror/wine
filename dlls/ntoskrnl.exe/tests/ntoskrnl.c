@@ -994,6 +994,7 @@ static void test_pnp_devices(void)
     SP_DEVINFO_DATA device = {sizeof(device)};
     HDEVINFO set;
     HANDLE bus;
+    DWORD size;
     BOOL ret;
 
     set = SetupDiGetClassDevsA(&control_class, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
@@ -1023,6 +1024,9 @@ static void test_pnp_devices(void)
 
     bus = CreateFileA(iface_detail->DevicePath, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
     ok(bus != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+
+    ret = DeviceIoControl(bus, IOCTL_WINETEST_BUS_MAIN, NULL, 0, NULL, 0, &size, NULL);
+    ok(ret, "got error %u\n", GetLastError());
 
     CloseHandle(bus);
 }
@@ -1175,6 +1179,8 @@ static void test_pnp_driver(struct testsign_context *ctx)
     unload_driver(service);
     CloseServiceHandle(manager);
 
+    cat_okfile();
+
     GetFullPathNameA("winetest.inf", sizeof(path), path, NULL);
     ret = SetupCopyOEMInfA(path, NULL, 0, 0, dest, sizeof(dest), NULL, &filepart);
     ok(ret, "Failed to copy INF, error %#x\n", GetLastError());
@@ -1278,6 +1284,7 @@ START_TEST(ntoskrnl)
     subtest("driver_netio");
     test_driver_netio(&ctx);
 
+    subtest("driver_pnp");
     test_pnp_driver(&ctx);
 
 out:

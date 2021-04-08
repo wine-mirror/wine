@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -29,6 +30,7 @@
 #include "ddk/wdm.h"
 
 #include "driver.h"
+#include "utils.h"
 
 static const GUID control_class = {0xdeadbeef, 0x29ef, 0x4538, {0xa5, 0xfd, 0xb6, 0x95, 0x73, 0xa3, 0x62, 0xc0}};
 static UNICODE_STRING control_symlink;
@@ -94,6 +96,79 @@ static NTSTATUS WINAPI driver_pnp(DEVICE_OBJECT *device, IRP *irp)
     return pdo_pnp(device, irp);
 }
 
+static void test_bus_query_id(DEVICE_OBJECT *top_device)
+{
+    IO_STACK_LOCATION *stack;
+    IO_STATUS_BLOCK io;
+    NTSTATUS ret;
+    KEVENT event;
+    IRP *irp;
+
+    KeInitializeEvent(&event, NotificationEvent, FALSE);
+
+    irp = IoBuildSynchronousFsdRequest(IRP_MJ_PNP, top_device, NULL, 0, NULL, &event, &io);
+    irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
+    stack = IoGetNextIrpStackLocation(irp);
+    stack->MinorFunction = IRP_MN_QUERY_ID;
+    stack->Parameters.QueryId.IdType = BusQueryDeviceID;
+    ret = IoCallDriver(top_device, irp);
+    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+    ok(io.Status == STATUS_SUCCESS, "got %#x\n", ret);
+    ok(!wcscmp((WCHAR *)io.Information, L"ROOT\\WINETEST"), "got id '%ls'\n", (WCHAR *)io.Information);
+    ExFreePool((WCHAR *)io.Information);
+
+    irp = IoBuildSynchronousFsdRequest(IRP_MJ_PNP, top_device, NULL, 0, NULL, &event, &io);
+    irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
+    stack = IoGetNextIrpStackLocation(irp);
+    stack->MinorFunction = IRP_MN_QUERY_ID;
+    stack->Parameters.QueryId.IdType = BusQueryInstanceID;
+    ret = IoCallDriver(top_device, irp);
+    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+    ok(io.Status == STATUS_SUCCESS, "got %#x\n", ret);
+    ok(!wcscmp((WCHAR *)io.Information, L"0"), "got id '%ls'\n", (WCHAR *)io.Information);
+    ExFreePool((WCHAR *)io.Information);
+}
+
+static void test_bus_query(void)
+{
+    DEVICE_OBJECT *top_device;
+
+    top_device = IoGetAttachedDeviceReference(bus_pdo);
+    ok(top_device == bus_fdo, "wrong top device\n");
+
+    test_bus_query_id(top_device);
+
+    ObDereferenceObject(top_device);
+}
+
+static NTSTATUS fdo_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
+{
+    switch (code)
+    {
+        case IOCTL_WINETEST_BUS_MAIN:
+            test_bus_query();
+            return STATUS_SUCCESS;
+
+        default:
+            ok(0, "Unexpected ioctl %#x.\n", code);
+            return STATUS_NOT_IMPLEMENTED;
+    }
+}
+
+static NTSTATUS WINAPI driver_ioctl(DEVICE_OBJECT *device, IRP *irp)
+{
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
+    ULONG code = stack->Parameters.DeviceIoControl.IoControlCode;
+    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+
+    if (device == bus_fdo)
+        status = fdo_ioctl(irp, stack, code);
+
+    irp->IoStatus.Status = status;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    return status;
+}
+
 static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *pdo)
 {
     NTSTATUS ret;
@@ -129,13 +204,20 @@ static NTSTATUS WINAPI driver_close(DEVICE_OBJECT *device, IRP *irp)
 
 static void WINAPI driver_unload(DRIVER_OBJECT *driver)
 {
+    winetest_cleanup();
 }
 
 NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *registry)
 {
+    NTSTATUS ret;
+
+    if ((ret = winetest_init()))
+        return ret;
+
     driver->DriverExtension->AddDevice = driver_add_device;
     driver->DriverUnload = driver_unload;
     driver->MajorFunction[IRP_MJ_PNP] = driver_pnp;
+    driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = driver_ioctl;
     driver->MajorFunction[IRP_MJ_CREATE] = driver_create;
     driver->MajorFunction[IRP_MJ_CLOSE] = driver_close;
 
