@@ -97,7 +97,17 @@ static HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
     return S_OK;
 }
 
-typedef struct
+typedef struct DHTMLEditImpl DHTMLEditImpl;
+typedef struct ConnectionPoint ConnectionPoint;
+
+struct ConnectionPoint
+{
+    IConnectionPoint IConnectionPoint_iface;
+    DHTMLEditImpl *dhed;
+    const IID *riid;
+};
+
+struct DHTMLEditImpl
 {
     IDHTMLEdit IDHTMLEdit_iface;
     IOleObject IOleObject_iface;
@@ -113,9 +123,10 @@ typedef struct
     IServiceProvider IServiceProvider_iface;
 
     IOleClientSite *client_site;
+    ConnectionPoint conpt;
     SIZEL extent;
     LONG ref;
-} DHTMLEditImpl;
+};
 
 static inline DHTMLEditImpl *impl_from_IDHTMLEdit(IDHTMLEdit *iface)
 {
@@ -1592,6 +1603,88 @@ static const IConnectionPointContainerVtbl ConnectionPointContainerVtbl =
     ConnectionPointContainer_FindConnectionPoint
 };
 
+static inline ConnectionPoint *impl_from_IConnectionPoint(IConnectionPoint *iface)
+{
+    return CONTAINING_RECORD(iface, ConnectionPoint, IConnectionPoint_iface);
+}
+
+static HRESULT WINAPI ConnectionPoint_QueryInterface(IConnectionPoint *iface, REFIID iid, LPVOID *out)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+
+    if (IsEqualGUID(&IID_IUnknown, iid) || IsEqualGUID(&IID_IConnectionPoint, iid))
+    {
+        *out = &This->IConnectionPoint_iface;
+        DHTMLEdit_AddRef(&This->dhed->IDHTMLEdit_iface);
+        return S_OK;
+    }
+
+    *out = NULL;
+    WARN("Unsupported interface %s\n", debugstr_guid(iid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ConnectionPoint_AddRef(IConnectionPoint *iface)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+    return IConnectionPointContainer_AddRef(&This->dhed->IConnectionPointContainer_iface);
+}
+
+static ULONG WINAPI ConnectionPoint_Release(IConnectionPoint *iface)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+    return IConnectionPointContainer_AddRef(&This->dhed->IConnectionPointContainer_iface);
+}
+
+static HRESULT WINAPI ConnectionPoint_GetConnectionInterface(IConnectionPoint *iface, IID *iid)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+    FIXME("%p, %p\n", This, iid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPoint_GetConnectionPointContainer(IConnectionPoint *iface,
+        IConnectionPointContainer **container)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+    FIXME("%p, %p\n", This, container);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *unk_sink,
+        DWORD *cookie)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+    FIXME("%p, %p, %p\n", This, unk_sink, cookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPoint_Unadvise(IConnectionPoint *iface, DWORD cookie)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+    FIXME("%p, %d\n", This, cookie);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPoint_EnumConnections(IConnectionPoint *iface,
+        IEnumConnections **points)
+{
+    ConnectionPoint *This = impl_from_IConnectionPoint(iface);
+    FIXME("%p, %p\n", This, points);
+    return E_NOTIMPL;
+}
+
+static const IConnectionPointVtbl ConnectionPointVtbl = {
+    ConnectionPoint_QueryInterface,
+    ConnectionPoint_AddRef,
+    ConnectionPoint_Release,
+    ConnectionPoint_GetConnectionInterface,
+    ConnectionPoint_GetConnectionPointContainer,
+    ConnectionPoint_Advise,
+    ConnectionPoint_Unadvise,
+    ConnectionPoint_EnumConnections
+};
+
 static HRESULT WINAPI DataObject_QueryInterface(IDataObject *iface, REFIID iid, LPVOID *out)
 {
     return dhtml_edit_qi(impl_from_IDataObject(iface), iid, out);
@@ -1751,6 +1844,10 @@ HRESULT dhtml_edit_create(REFIID iid, void **out)
 
     This->client_site = NULL;
     This->ref = 1;
+
+    This->conpt.dhed = This;
+    This->conpt.riid = &DIID__DHTMLEditEvents;
+    This->conpt.IConnectionPoint_iface.lpVtbl = &ConnectionPointVtbl;
 
     hdc = GetDC(0);
     dpi_x = GetDeviceCaps(hdc, LOGPIXELSX);
