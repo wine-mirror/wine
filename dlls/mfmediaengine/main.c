@@ -30,7 +30,6 @@
 #include "dxgi.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -52,7 +51,7 @@ static BOOL mf_array_reserve(void **elements, size_t *capacity, size_t count, si
     if (new_capacity < count)
         new_capacity = max_capacity;
 
-    if (!(new_elements = heap_realloc(*elements, new_capacity * size)))
+    if (!(new_elements = realloc(*elements, new_capacity * size)))
         return FALSE;
 
     *elements = new_elements;
@@ -189,7 +188,7 @@ static ULONG WINAPI media_error_Release(IMFMediaError *iface)
     TRACE("%p, refcount %u.\n", iface, refcount);
 
     if (!refcount)
-        heap_free(me);
+        free(me);
 
     return refcount;
 }
@@ -250,7 +249,7 @@ static HRESULT create_media_error(IMFMediaError **ret)
 
     *ret = NULL;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMFMediaError_iface.lpVtbl = &media_error_vtbl;
@@ -297,8 +296,8 @@ static ULONG WINAPI time_range_Release(IMFMediaTimeRange *iface)
 
     if (!refcount)
     {
-        heap_free(range->ranges);
-        heap_free(range);
+        free(range->ranges);
+        free(range);
     }
 
     return refcount;
@@ -407,7 +406,7 @@ static HRESULT create_time_range(IMFMediaTimeRange **range)
 {
     struct time_range *object;
 
-    object = heap_alloc_zero(sizeof(*object));
+    object = calloc(1, sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
@@ -977,7 +976,7 @@ static void free_media_engine(struct media_engine *engine)
         IMFSourceResolver_Release(engine->resolver);
     SysFreeString(engine->current_source);
     DeleteCriticalSection(&engine->cs);
-    heap_free(engine);
+    free(engine);
 }
 
 static ULONG WINAPI media_engine_Release(IMFMediaEngine *iface)
@@ -1919,7 +1918,7 @@ static HRESULT WINAPI media_engine_factory_CreateInstance(IMFMediaEngineClassFac
     if (!attributes || !engine)
         return E_POINTER;
 
-    object = heap_alloc_zero(sizeof(*object));
+    object = calloc(1, sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
