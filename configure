@@ -2711,8 +2711,8 @@ Some influential environment variables:
   SDL2_CFLAGS C compiler flags for sdl2, overriding pkg-config
   SDL2_LIBS   Linker flags for sdl2, overriding pkg-config
   FAUDIO_CFLAGS
-              C compiler flags for faudio, overriding pkg-config
-  FAUDIO_LIBS Linker flags for faudio, overriding pkg-config
+              C compiler flags for FAudio, overriding pkg-config
+  FAUDIO_LIBS Linker flags for FAudio, overriding pkg-config
   CAPI20_CFLAGS
               C compiler flags for capi20, overriding pkg-config
   CAPI20_LIBS Linker flags for capi20, overriding pkg-config
@@ -15007,19 +15007,19 @@ if test "x$with_faudio" != "xno"
 then
     if ${FAUDIO_CFLAGS:+false} :; then :
   if ${PKG_CONFIG+:} false; then :
-  FAUDIO_CFLAGS=`$PKG_CONFIG --cflags faudio 2>/dev/null`
+  FAUDIO_CFLAGS=`$PKG_CONFIG --cflags FAudio 2>/dev/null`
 fi
 fi
 
 if ${FAUDIO_LIBS:+false} :; then :
   if ${PKG_CONFIG+:} false; then :
-  FAUDIO_LIBS=`$PKG_CONFIG --libs faudio 2>/dev/null`
+  FAUDIO_LIBS=`$PKG_CONFIG --libs FAudio 2>/dev/null`
 fi
 fi
 
 FAUDIO_LIBS=${FAUDIO_LIBS:-"-lFAudio"}
-$as_echo "$as_me:${as_lineno-$LINENO}: faudio cflags: $FAUDIO_CFLAGS" >&5
-$as_echo "$as_me:${as_lineno-$LINENO}: faudio libs: $FAUDIO_LIBS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: FAudio cflags: $FAUDIO_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: FAudio libs: $FAUDIO_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $FAUDIO_CFLAGS"
 for ac_header in FAudio.h

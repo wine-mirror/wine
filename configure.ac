@@ -1695,7 +1695,7 @@ WINE_NOTICE_WITH(sdl,[test "x$ac_cv_lib_soname_SDL2" = "x"],
 dnl **** Check for FAudio ****
 if test "x$with_faudio" != "xno"
 then
-    WINE_PACKAGE_FLAGS(FAUDIO,[faudio],[-lFAudio],,,
+    WINE_PACKAGE_FLAGS(FAUDIO,[FAudio],[-lFAudio],,,
         [AC_CHECK_HEADERS([FAudio.h],
             [WINE_CHECK_SONAME(FAudio,FAudioCreate,,,[$FAUDIO_LIBS],[[libFAudio*]])])
              WINE_CHECK_LIB_FUNCS([FAudio_CommitOperationSet \
