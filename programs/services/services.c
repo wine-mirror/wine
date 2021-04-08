@@ -25,6 +25,7 @@
 #include <assert.h>
 #include <windows.h>
 #include <winsvc.h>
+#include <winternl.h>
 #include <rpc.h>
 #include <userenv.h>
 #include <setupapi.h>
@@ -1069,7 +1070,16 @@ found:
 
     if (!environment && OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY | TOKEN_DUPLICATE, &token))
     {
+        WCHAR val[16];
         CreateEnvironmentBlock(&environment, token, FALSE);
+        if (GetEnvironmentVariableW( L"WINEBOOTSTRAPMODE", val, ARRAY_SIZE(val) ))
+        {
+            UNICODE_STRING name, value;
+
+            RtlInitUnicodeString( &name, L"WINEBOOTSTRAPMODE" );
+            RtlInitUnicodeString( &value, val );
+            RtlSetEnvironmentVariable( (WCHAR **)&environment, &name, &value );
+        }
         CloseHandle(token);
     }
 
