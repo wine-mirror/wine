@@ -1624,7 +1624,7 @@ static void test_thread_context(void)
             x87_control;
     } expect;
     NTSTATUS (*func_ptr)( struct expected *res, void *func, void *arg1, void *arg2,
-            DWORD *new_x87_control ) = (void *)code_mem;
+            DWORD *new_x87_control ) = code_mem;
     DWORD new_x87_control;
 
     static const BYTE call_func[] =
@@ -3563,7 +3563,7 @@ static void test_thread_context(void)
         WORD SegCs, SegDs, SegEs, SegFs, SegGs, SegSs;
     } expect;
     XMM_SAVE_AREA32 broken_fltsave;
-    NTSTATUS (*func_ptr)( void *arg1, void *arg2, struct expected *res, void *func ) = (void *)code_mem;
+    NTSTATUS (*func_ptr)( void *arg1, void *arg2, struct expected *res, void *func ) = code_mem;
 
     static const BYTE call_func[] =
     {
@@ -4195,7 +4195,7 @@ static void test_thread_context(void)
     {
         DWORD R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, Sp, Lr, Pc, Cpsr;
     } expect;
-    NTSTATUS (*func_ptr)( void *arg1, void *arg2, struct expected *res, void *func ) = (void *)code_mem;
+    NTSTATUS (*func_ptr)( void *arg1, void *arg2, struct expected *res, void *func ) = code_mem;
 
     static const DWORD call_func[] =
     {
@@ -5381,7 +5381,7 @@ static void test_thread_context(void)
             X17, X18, X19, X20, X21, X22, X23, X24, X25, X26, X27, X28, Fp, Lr, Sp, Pc;
         ULONG Cpsr;
     } expect;
-    NTSTATUS (*func_ptr)( void *arg1, void *arg2, struct expected *res, void *func ) = (void *)code_mem;
+    NTSTATUS (*func_ptr)( void *arg1, void *arg2, struct expected *res, void *func ) = code_mem;
 
     static const DWORD call_func[] =
     {
