@@ -5201,15 +5201,15 @@ void CDECL wined3d_device_context_resolve_sub_resource(struct wined3d_device_con
             src_texture, src_sub_resource_idx, &src_rect, 0, &fx, WINED3D_TEXF_POINT);
 }
 
-HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *device,
-        struct wined3d_rendertarget_view *view, const RECT *rect, DWORD flags,
-        const struct wined3d_color *color, float depth, DWORD stencil)
+HRESULT CDECL wined3d_device_context_clear_rendertarget_view(struct wined3d_device_context *context,
+        struct wined3d_rendertarget_view *view, const RECT *rect, unsigned int flags,
+        const struct wined3d_color *color, float depth, unsigned int stencil)
 {
     struct wined3d_resource *resource;
     RECT r;
 
-    TRACE("device %p, view %p, rect %s, flags %#x, color %s, depth %.8e, stencil %u.\n",
-            device, view, wine_dbgstr_rect(rect), flags, debug_color(color), depth, stencil);
+    TRACE("context %p, view %p, rect %s, flags %#x, color %s, depth %.8e, stencil %u.\n",
+            context, view, wine_dbgstr_rect(rect), flags, debug_color(color), depth, stencil);
 
     if (!flags)
         return WINED3D_OK;
@@ -5237,7 +5237,7 @@ HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *devi
             return hr;
     }
 
-    wined3d_device_context_emit_clear_rendertarget_view(&device->cs->c, view, rect, flags, color, depth, stencil);
+    wined3d_device_context_emit_clear_rendertarget_view(context, view, rect, flags, color, depth, stencil);
 
     return WINED3D_OK;
 }

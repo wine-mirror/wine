@@ -1513,7 +1513,8 @@ static HRESULT ddraw_surface_blt(struct ddraw_surface *dst_surface, const RECT *
         struct ddraw_surface *src_surface, const RECT *src_rect, DWORD flags, DWORD fill_colour,
         const struct wined3d_blt_fx *fx, enum wined3d_texture_filter_type filter)
 {
-    struct wined3d_device *wined3d_device = dst_surface->ddraw->wined3d_device;
+    struct ddraw *ddraw = dst_surface->ddraw;
+    struct wined3d_device *wined3d_device = ddraw->wined3d_device;
     struct wined3d_color colour;
     DWORD wined3d_flags;
 
@@ -1527,9 +1528,9 @@ static HRESULT ddraw_surface_blt(struct ddraw_surface *dst_surface, const RECT *
                 dst_surface->palette, fill_colour, &colour))
             return DDERR_INVALIDPARAMS;
 
-        wined3d_device_apply_stateblock(wined3d_device, dst_surface->ddraw->state);
+        wined3d_device_apply_stateblock(wined3d_device, ddraw->state);
         ddraw_surface_get_draw_texture(dst_surface, dst_rect ? DDRAW_SURFACE_RW : DDRAW_SURFACE_WRITE);
-        return wined3d_device_clear_rendertarget_view(wined3d_device,
+        return wined3d_device_context_clear_rendertarget_view(ddraw->immediate_context,
                 ddraw_surface_get_rendertarget_view(dst_surface),
                 dst_rect, wined3d_flags, &colour, 0.0f, 0);
     }
@@ -1544,9 +1545,9 @@ static HRESULT ddraw_surface_blt(struct ddraw_surface *dst_surface, const RECT *
                 dst_surface->palette, fill_colour, &colour))
             return DDERR_INVALIDPARAMS;
 
-        wined3d_device_apply_stateblock(wined3d_device, dst_surface->ddraw->state);
+        wined3d_device_apply_stateblock(wined3d_device, ddraw->state);
         ddraw_surface_get_draw_texture(dst_surface, dst_rect ? DDRAW_SURFACE_RW : DDRAW_SURFACE_WRITE);
-        return wined3d_device_clear_rendertarget_view(wined3d_device,
+        return wined3d_device_context_clear_rendertarget_view(ddraw->immediate_context,
                 ddraw_surface_get_rendertarget_view(dst_surface),
                 dst_rect, wined3d_flags, NULL, colour.r, 0);
     }
@@ -1561,7 +1562,7 @@ static HRESULT ddraw_surface_blt(struct ddraw_surface *dst_surface, const RECT *
     if (!(flags & DDBLT_ASYNC))
         wined3d_flags |= WINED3D_BLT_SYNCHRONOUS;
 
-    return wined3d_device_context_blt(dst_surface->ddraw->immediate_context,
+    return wined3d_device_context_blt(ddraw->immediate_context,
             ddraw_surface_get_any_texture(dst_surface, DDRAW_SURFACE_RW), dst_surface->sub_resource_idx, dst_rect,
             ddraw_surface_get_any_texture(src_surface, DDRAW_SURFACE_READ), src_surface->sub_resource_idx, src_rect,
             wined3d_flags, fx, filter);
