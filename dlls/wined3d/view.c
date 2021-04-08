@@ -1423,7 +1423,7 @@ void CDECL wined3d_shader_resource_view_generate_mipmaps(struct wined3d_shader_r
         return;
     }
 
-    wined3d_cs_emit_generate_mipmaps(view->resource->device->cs, view);
+    wined3d_device_context_emit_generate_mipmaps(&view->resource->device->cs->c, view);
 }
 
 ULONG CDECL wined3d_unordered_access_view_incref(struct wined3d_unordered_access_view *view)
