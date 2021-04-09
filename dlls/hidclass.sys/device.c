@@ -71,6 +71,17 @@ NTSTATUS HID_CreateDevice(DEVICE_OBJECT *native_device, HID_MINIDRIVER_REGISTRAT
     return STATUS_SUCCESS;
 }
 
+/* user32 reserves 1 & 2 for winemouse and winekeyboard,
+ * keep this in sync with user_private.h */
+#define WINE_MOUSE_HANDLE 1
+#define WINE_KEYBOARD_HANDLE 2
+
+static UINT32 alloc_rawinput_handle(void)
+{
+    static LONG counter = WINE_KEYBOARD_HANDLE + 1;
+    return InterlockedIncrement(&counter);
+}
+
 NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device)
 {
     WCHAR device_instance_id[MAX_DEVICE_ID_LEN];
@@ -125,7 +136,13 @@ NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device)
     {
         if (!IoRegisterDeviceInterface(device, &GUID_DEVINTERFACE_MOUSE, NULL, &ext->mouse_link_name))
             ext->is_mouse = TRUE;
+        ext->rawinput_handle = WINE_MOUSE_HANDLE;
     }
+    else if (ext->preparseData->caps.UsagePage == HID_USAGE_PAGE_GENERIC
+            && ext->preparseData->caps.Usage == HID_USAGE_GENERIC_KEYBOARD)
+        ext->rawinput_handle = WINE_KEYBOARD_HANDLE;
+    else
+        ext->rawinput_handle = alloc_rawinput_handle();
 
     return STATUS_SUCCESS;
 
