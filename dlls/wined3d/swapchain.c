@@ -884,6 +884,7 @@ static HRESULT wined3d_swapchain_vk_create_vulkan_swapchain(struct wined3d_swapc
     VkSurfaceKHR vk_surface;
     VkBool32 supported;
     VkFormat vk_format;
+    RECT client_rect;
     VkResult vr;
 
     adapter_vk = wined3d_adapter_vk(device_vk->d.adapter);
@@ -931,21 +932,23 @@ static HRESULT wined3d_swapchain_vk_create_vulkan_swapchain(struct wined3d_swapc
         WARN("Image count %u is not supported (%u-%u).\n", desc->backbuffer_count,
                 surface_caps.minImageCount, surface_caps.maxImageCount);
 
-    width = desc->backbuffer_width;
+    GetClientRect(swapchain_vk->s.win_handle, &client_rect);
+
+    width = client_rect.right - client_rect.left;
     if (width < surface_caps.minImageExtent.width)
         width = surface_caps.minImageExtent.width;
     else if (width > surface_caps.maxImageExtent.width)
         width = surface_caps.maxImageExtent.width;
 
-    height = desc->backbuffer_height;
+    height = client_rect.bottom - client_rect.top;
     if (height < surface_caps.minImageExtent.height)
         height = surface_caps.minImageExtent.height;
     else if (height > surface_caps.maxImageExtent.height)
         height = surface_caps.maxImageExtent.height;
 
-    if (width != desc->backbuffer_width || height != desc->backbuffer_height)
+    if (width != client_rect.right - client_rect.left || height != client_rect.bottom - client_rect.top)
         WARN("Swapchain dimensions %ux%u are not supported (%u-%u x %u-%u).\n",
-                desc->backbuffer_width, desc->backbuffer_height,
+                client_rect.right - client_rect.left, client_rect.bottom - client_rect.top,
                 surface_caps.minImageExtent.width, surface_caps.maxImageExtent.width,
                 surface_caps.minImageExtent.height, surface_caps.maxImageExtent.height);
 
