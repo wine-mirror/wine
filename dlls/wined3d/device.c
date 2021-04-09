@@ -5247,7 +5247,7 @@ void CDECL wined3d_device_clear_unordered_access_view_uint(struct wined3d_device
 {
     TRACE("device %p, view %p, clear_value %s.\n", device, view, debug_uvec4(clear_value));
 
-    wined3d_cs_emit_clear_unordered_access_view_uint(device->cs, view, clear_value);
+    wined3d_device_context_emit_clear_uav_uint(&device->cs->c, view, clear_value);
 }
 
 struct wined3d_rendertarget_view * CDECL wined3d_device_get_rendertarget_view(const struct wined3d_device *device,

@@ -2594,19 +2594,19 @@ static void wined3d_cs_exec_clear_unordered_access_view(struct wined3d_cs *cs, c
     wined3d_resource_release(view->resource);
 }
 
-void wined3d_cs_emit_clear_unordered_access_view_uint(struct wined3d_cs *cs,
+void wined3d_device_context_emit_clear_uav_uint(struct wined3d_device_context *context,
         struct wined3d_unordered_access_view *view, const struct wined3d_uvec4 *clear_value)
 {
     struct wined3d_cs_clear_unordered_access_view *op;
 
-    op = wined3d_device_context_require_space(&cs->c, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_CLEAR_UNORDERED_ACCESS_VIEW;
     op->view = view;
     op->clear_value = *clear_value;
 
     wined3d_resource_acquire(view->resource);
 
-    wined3d_device_context_submit(&cs->c, WINED3D_CS_QUEUE_DEFAULT);
+    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
 static void wined3d_cs_exec_copy_uav_counter(struct wined3d_cs *cs, const void *data)
