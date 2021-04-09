@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-03-26 15:45+0100\n"
+"PO-Revision-Date: 2021-04-09 10:15+0200\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -3974,7 +3974,7 @@ msgstr ""
 
 #: dlls/jscript/jscript.rc:74
 msgid "Cannot define property '|': object is not extensible"
-msgstr ""
+msgstr "Kan de eigenschap '|' niet definiëren: object is niet uitbreidbaar"
 
 #: dlls/jscript/jscript.rc:75
 msgid "Cannot redefine non-configurable property '|'"
@@ -14566,10 +14566,8 @@ msgstr ""
 "\n"
 
 #: programs/reg/reg.rc:116
-#, fuzzy
-#| msgid "The operation completed successfully\n"
 msgid "reg: The operation completed successfully\n"
-msgstr "De bewerking is succesvol voltooid\n"
+msgstr "reg: De bewerking is succesvol voltooid\n"
 
 #: programs/reg/reg.rc:117
 msgid "reg: Invalid registry key\n"
@@ -14584,13 +14582,8 @@ msgid "reg: Unable to access remote machine\n"
 msgstr "reg: Kan de computer op afstand niet benaderen\n"
 
 #: programs/reg/reg.rc:120
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
 msgid "reg: Unable to find the specified registry value\n"
-msgstr ""
-"reg: Het systeem kon de gespecificeerde registersleutel of waarde niet "
-"vinden\n"
+msgstr "reg: Kan de gegeven registerwaarde niet vinden\n"
 
 #: programs/reg/reg.rc:121
 msgid "reg: Unsupported registry data type [%1]\n"
@@ -14613,10 +14606,8 @@ msgid "The registry value '%1' already exists. Do you want to overwrite it?"
 msgstr "De registerwaarde '%1' bestand bestaat al. Wilt u het vervangen?"
 
 #: programs/reg/reg.rc:129
-#, fuzzy
-#| msgid "The registry operation was cancelled\n"
 msgid "reg: The registry operation was cancelled\n"
-msgstr "De register bewerking is afgebroken\n"
+msgstr "reg: De register bewerking is afgebroken\n"
 
 #: programs/reg/reg.rc:130 programs/regedit/regedit.rc:239
 msgid "(Default)"
@@ -14778,19 +14769,12 @@ msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "Het bestand '%1' bestaat al. Wilt u het overschrijven?"
 
 #: programs/reg/reg.rc:174
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
 msgid "reg: Unable to find the specified registry key\n"
-msgstr ""
-"reg: Het systeem kon de gespecificeerde registersleutel of waarde niet "
-"vinden\n"
+msgstr "reg: Kan de gegeven registersleutel niet vinden\n"
 
 #: programs/reg/reg.rc:175
-#, fuzzy
-#| msgid "reg: Unable to open the registry key '%1'.\n"
 msgid "reg: Unable to import the registry key '%1'\n"
-msgstr "reg: Onmogelijk om de registersleutel '%1' te openen.\n"
+msgstr "reg: Importeren van de registersleutel '%1' is niet mogelijk.\n"
 
 #: programs/reg/reg.rc:179
 msgid ""
@@ -14801,6 +14785,13 @@ msgid ""
 "     Access the registry using the 64-bit view.\n"
 "\n"
 msgstr ""
+" /reg:32\n"
+"  /reg:32\n"
+"     Open de 32-bits weergave van het register.\n"
+"\n"
+"  /reg:64\n"
+"     Open de 64-bits weergave van het register.\n"
+"\n"
 
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
