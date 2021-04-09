@@ -50,6 +50,8 @@ static NTSTATUS fdo_pnp(IRP *irp)
             break;
 
         case IRP_MN_SURPRISE_REMOVAL:
+        case IRP_MN_QUERY_REMOVE_DEVICE:
+        case IRP_MN_STOP_DEVICE:
             irp->IoStatus.Status = STATUS_SUCCESS;
             break;
 
