@@ -33,7 +33,7 @@
 @ stdcall GetConsoleWindow() kernel32.GetConsoleWindow
 @ stub GetDurationFormatEx
 @ stdcall GetFirmwareEnvironmentVariableW(wstr wstr ptr long) kernel32.GetFirmwareEnvironmentVariableW
-@ stub GetMaximumProcessorGroupCount
+@ stdcall GetMaximumProcessorGroupCount() kernel32.GetMaximumProcessorGroupCount
 @ stdcall GetNamedPipeClientProcessId(long ptr) kernel32.GetNamedPipeClientProcessId
 @ stdcall GetNamedPipeServerProcessId(long ptr) kernel32.GetNamedPipeServerProcessId
 @ stdcall GetPrivateProfileIntA(str str long str) kernel32.GetPrivateProfileIntA

@@ -636,6 +636,15 @@ DWORD WINAPI GetMaximumProcessorCount(WORD group)
 }
 
 /***********************************************************************
+ *           GetMaximumProcessorGroupCount (KERNEL32.@)
+ */
+DWORD WINAPI GetMaximumProcessorGroupCount(void)
+{
+    FIXME("semi-stub, always returning 1\n");
+    return 1;
+}
+
+/***********************************************************************
  *           GetFirmwareEnvironmentVariableA     (KERNEL32.@)
  */
 DWORD WINAPI GetFirmwareEnvironmentVariableA(LPCSTR name, LPCSTR guid, PVOID buffer, DWORD size)
