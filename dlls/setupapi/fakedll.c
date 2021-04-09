@@ -843,6 +843,7 @@ static void register_fake_dll( const WCHAR *name, const void *data, size_t size,
     HRESULT hr = S_OK;
     HMODULE module = (HMODULE)((ULONG_PTR)data | 1);
     struct dll_data dll_data = { delay_copy, name, 0 };
+    WCHAR buffer[MAX_PATH];
     const WCHAR *p;
 
     if (!(p = wcsrchr( name, '\\' ))) p = name;
@@ -873,6 +874,8 @@ static void register_fake_dll( const WCHAR *name, const void *data, size_t size,
     TRACE( "registering %s\n", debugstr_w(name) );
     IRegistrar_ClearReplacements( registrar );
     IRegistrar_AddReplacement( registrar, L"MODULE", name );
+    GetEnvironmentVariableW( L"SystemRoot", buffer, ARRAY_SIZE(buffer) );
+    IRegistrar_AddReplacement( registrar, L"SystemRoot", buffer );
     EnumResourceNamesW( module, L"WINE_REGISTRY", register_resource, (LONG_PTR)&hr );
     if (FAILED(hr)) ERR( "failed to register %s: %x\n", debugstr_w(name), hr );
 }
