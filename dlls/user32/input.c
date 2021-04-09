@@ -182,6 +182,24 @@ UINT WINAPI SendInput( UINT count, LPINPUT inputs, int size )
     UINT i;
     NTSTATUS status;
 
+    if (size != sizeof(INPUT))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    if (!count)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    if (!inputs)
+    {
+        SetLastError( ERROR_NOACCESS );
+        return 0;
+    }
+
     for (i = 0; i < count; i++)
     {
         if (inputs[i].type == INPUT_MOUSE)

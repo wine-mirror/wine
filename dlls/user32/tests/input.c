@@ -4212,6 +4212,118 @@ static void test_UnregisterDeviceNotification(void)
     ok(ret == FALSE, "Unregistering NULL Device Notification returned: %d\n", ret);
 }
 
+static void test_SendInput(void)
+{
+    INPUT input[16];
+    UINT res, i;
+    HWND hwnd;
+    MSG msg;
+
+    hwnd = CreateWindowW( L"static", L"test", WS_OVERLAPPED, 0, 0, 100, 100, 0, 0, 0, 0 );
+    ok( hwnd != 0, "CreateWindowW failed\n" );
+
+    ShowWindow( hwnd, SW_SHOWNORMAL );
+    UpdateWindow( hwnd );
+    SetForegroundWindow( hwnd );
+    SetFocus( hwnd );
+    empty_message_queue();
+
+    SetLastError( 0xdeadbeef );
+    res = SendInput( 0, NULL, 0 );
+    ok( res == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "SendInput returned %u, error %#x\n", res, GetLastError() );
+    SetLastError( 0xdeadbeef );
+    res = SendInput( 1, NULL, 0 );
+    ok( res == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "SendInput returned %u, error %#x\n", res, GetLastError() );
+    SetLastError( 0xdeadbeef );
+    res = SendInput( 1, NULL, sizeof(*input) );
+    ok( res == 0 && (GetLastError() == ERROR_NOACCESS || GetLastError() == ERROR_INVALID_PARAMETER),
+        "SendInput returned %u, error %#x\n", res, GetLastError() );
+    SetLastError( 0xdeadbeef );
+    res = SendInput( 0, input, sizeof(*input) );
+    ok( res == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "SendInput returned %u, error %#x\n", res, GetLastError() );
+    SetLastError( 0xdeadbeef );
+    res = SendInput( 0, NULL, sizeof(*input) );
+    ok( res == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "SendInput returned %u, error %#x\n", res, GetLastError() );
+
+    memset( input, 0, sizeof(input) );
+    SetLastError( 0xdeadbeef );
+    res = SendInput( 1, input, sizeof(*input) );
+    ok( res == 1 && GetLastError() == 0xdeadbeef, "SendInput returned %u, error %#x\n", res, GetLastError() );
+    SetLastError( 0xdeadbeef );
+    res = SendInput( 16, input, sizeof(*input) );
+    ok( res == 16 && GetLastError() == 0xdeadbeef, "SendInput returned %u, error %#x\n", res, GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    res = SendInput( 1, input, 0 );
+    ok( res == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "SendInput returned %u, error %#x\n", res, GetLastError() );
+    SetLastError( 0xdeadbeef );
+    res = SendInput( 1, input, sizeof(*input) + 1 );
+    ok( res == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "SendInput returned %u, error %#x\n", res, GetLastError() );
+    SetLastError( 0xdeadbeef );
+    res = SendInput( 1, input, sizeof(*input) - 1 );
+    ok( res == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "SendInput returned %u, error %#x\n", res, GetLastError() );
+
+    for (i = 0; i < ARRAY_SIZE(input); ++i) input[i].type = INPUT_KEYBOARD;
+    SetLastError( 0xdeadbeef );
+    res = SendInput( 16, input, offsetof( INPUT, ki ) + sizeof(KEYBDINPUT) );
+    ok( res == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "SendInput returned %u, error %#x\n", res, GetLastError() );
+    SetLastError( 0xdeadbeef );
+    res = SendInput( 16, input, sizeof(*input) );
+    ok( res == 16 && GetLastError() == 0xdeadbeef, "SendInput returned %u, error %#x\n", res, GetLastError() );
+    empty_message_queue();
+
+    for (i = 0; i < ARRAY_SIZE(input); ++i) input[i].type = INPUT_HARDWARE;
+    SetLastError( 0xdeadbeef );
+    res = SendInput( 16, input, offsetof( INPUT, hi ) + sizeof(HARDWAREINPUT) );
+    ok( res == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "SendInput returned %u, error %#x\n", res, GetLastError() );
+
+    input[0].hi.uMsg = WM_KEYDOWN;
+    input[0].hi.wParamL = 0;
+    input[0].hi.wParamH = 'A';
+    input[1].hi.uMsg = WM_KEYUP;
+    input[1].hi.wParamL = 0;
+    input[1].hi.wParamH = 'A' | 0xc000;
+    SetLastError( 0xdeadbeef );
+    res = SendInput( 16, input, sizeof(*input) );
+    todo_wine
+    ok( (res == 0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) ||
+        broken(res == 16 && GetLastError() == 0xdeadbeef) /* 32bit */,
+        "SendInput returned %u, error %#x\n", res, GetLastError() );
+    while ((res = wait_for_message(&msg)) && msg.message == WM_TIMER) DispatchMessageA(&msg);
+    todo_wine ok( !res, "SendInput triggered unexpected message %#x\n", msg.message );
+    empty_message_queue();
+
+    memset( input, 0, sizeof(input) );
+    input[0].type = INPUT_HARDWARE;
+    input[1].type = INPUT_KEYBOARD;
+    input[1].ki.wVk = 'A';
+    input[1].ki.dwFlags = 0;
+    input[2].type = INPUT_KEYBOARD;
+    input[2].ki.wVk = 'A';
+    input[2].ki.dwFlags = KEYEVENTF_KEYUP;
+    SetLastError( 0xdeadbeef );
+    res = SendInput( 16, input, sizeof(*input) );
+    todo_wine
+    ok( (res == 0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) ||
+        broken(res == 16 && GetLastError() == 0xdeadbeef),
+        "SendInput returned %u, error %#x\n", res, GetLastError() );
+    while ((res = wait_for_message(&msg)) && (msg.message == WM_TIMER || broken(msg.message == WM_KEYDOWN || msg.message == WM_KEYUP)))
+        DispatchMessageA(&msg);
+    todo_wine ok( !res, "SendInput triggered unexpected message %#x\n", msg.message );
+    empty_message_queue();
+
+    for (i = 0; i < ARRAY_SIZE(input); ++i) input[i].type = INPUT_HARDWARE + 1;
+    SetLastError( 0xdeadbeef );
+    res = SendInput( 16, input, sizeof(*input) );
+    todo_wine ok( res == 16 && GetLastError() == 0xdeadbeef, "SendInput returned %u, error %#x\n", res, GetLastError() );
+    while ((res = wait_for_message(&msg)) && msg.message == WM_TIMER) DispatchMessageA(&msg);
+    todo_wine ok( !res, "SendInput triggered unexpected message %#x\n", msg.message );
+    empty_message_queue();
+
+    trace( "done\n" );
+    DestroyWindow( hwnd );
+}
+
 START_TEST(input)
 {
     char **argv;
@@ -4234,6 +4346,7 @@ START_TEST(input)
         return;
     }
 
+    test_SendInput();
     test_Input_blackbox();
     test_Input_whitebox();
     test_Input_unicode();
