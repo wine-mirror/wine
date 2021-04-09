@@ -3953,7 +3953,7 @@ msgstr ""
 
 #: dlls/jscript/jscript.rc:74
 msgid "Cannot define property '|': object is not extensible"
-msgstr ""
+msgstr "Ominaisuutta '|' ei voi määritellä: objekti ei ole laajennettava"
 
 #: dlls/jscript/jscript.rc:75
 msgid "Cannot redefine non-configurable property '|'"
@@ -14456,10 +14456,8 @@ msgstr ""
 "\n"
 
 #: programs/reg/reg.rc:116
-#, fuzzy
-#| msgid "The operation completed successfully\n"
 msgid "reg: The operation completed successfully\n"
-msgstr "Toiminnon suorittaminen onnistui\n"
+msgstr "reg: Toiminnon suorittaminen onnistui\n"
 
 #: programs/reg/reg.rc:117
 msgid "reg: Invalid registry key\n"
@@ -14474,11 +14472,8 @@ msgid "reg: Unable to access remote machine\n"
 msgstr "reg: Ei pääsyä etäkoneelle\n"
 
 #: programs/reg/reg.rc:120
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
 msgid "reg: Unable to find the specified registry value\n"
-msgstr "reg: Järjestelmä ei löytänyt annettua rekisteriavainta tai -arvoa\n"
+msgstr "reg: Annettua rekisteriarvoa ei löydy\n"
 
 #: programs/reg/reg.rc:121
 msgid "reg: Unsupported registry data type [%1]\n"
@@ -14501,10 +14496,8 @@ msgid "The registry value '%1' already exists. Do you want to overwrite it?"
 msgstr "Rekisterin arvo '%1' on jo olemassa. Haluatko korvata sen?"
 
 #: programs/reg/reg.rc:129
-#, fuzzy
-#| msgid "The registry operation was cancelled\n"
 msgid "reg: The registry operation was cancelled\n"
-msgstr "Rekisterin toimenpide peruttiin\n"
+msgstr "reg: Rekisterin toimenpide peruttiin\n"
 
 #: programs/reg/reg.rc:130 programs/regedit/regedit.rc:239
 msgid "(Default)"
@@ -14662,17 +14655,12 @@ msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "Tiedosto '%1' on jo olemassa. Haluatko korvata sen?"
 
 #: programs/reg/reg.rc:174
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
 msgid "reg: Unable to find the specified registry key\n"
-msgstr "reg: Järjestelmä ei löytänyt annettua rekisteriavainta tai -arvoa\n"
+msgstr "reg: Annettua rekisteriavainta ei löydy\n"
 
 #: programs/reg/reg.rc:175
-#, fuzzy
-#| msgid "reg: Unable to open the registry key '%1'.\n"
 msgid "reg: Unable to import the registry key '%1'\n"
-msgstr "reg: Rekisteriavainta '%1' ei voida avata.\n"
+msgstr "reg: Rekisteriavaimen '%1' tuonti ei onnistu\n"
 
 #: programs/reg/reg.rc:179
 msgid ""
@@ -14683,6 +14671,12 @@ msgid ""
 "     Access the registry using the 64-bit view.\n"
 "\n"
 msgstr ""
+"  /reg:32\n"
+"     Käytä rekisterin 32-bittistä näkymää.\n"
+"\n"
+"  /reg:64\n"
+"     Käytä rekisterin 64-bittistä näkymää.\n"
+"\n"
 
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
