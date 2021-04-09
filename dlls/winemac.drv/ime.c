@@ -1427,10 +1427,10 @@ void macdrv_im_set_text(const macdrv_event *event)
             {
                 input.ki.wScan      = chars[i];
                 input.ki.dwFlags    = KEYEVENTF_UNICODE;
-                __wine_send_input(hwnd, &input);
+                __wine_send_input(hwnd, &input, NULL);
 
                 input.ki.dwFlags    = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
-                __wine_send_input(hwnd, &input);
+                __wine_send_input(hwnd, &input, NULL);
             }
         }
 
