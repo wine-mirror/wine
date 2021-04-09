@@ -2352,8 +2352,6 @@ void __cdecl wined3d_device_apply_stateblock(struct wined3d_device *device, stru
 HRESULT __cdecl wined3d_device_begin_scene(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_clear(struct wined3d_device *device, DWORD rect_count, const RECT *rects, DWORD flags,
         const struct wined3d_color *color, float z, DWORD stencil);
-void __cdecl wined3d_device_clear_unordered_access_view_uint(struct wined3d_device *device,
-        struct wined3d_unordered_access_view *view, const struct wined3d_uvec4 *clear_value);
 HRESULT __cdecl wined3d_device_create(struct wined3d *wined3d, struct wined3d_adapter *adapter,
         enum wined3d_device_type device_type, HWND focus_window, DWORD behaviour_flags, BYTE surface_alignment,
         const enum wined3d_feature_level *feature_levels, unsigned int feature_level_count,
@@ -2549,6 +2547,8 @@ HRESULT __cdecl wined3d_device_context_blt(struct wined3d_device_context *contex
 HRESULT __cdecl wined3d_device_context_clear_rendertarget_view(struct wined3d_device_context *context,
         struct wined3d_rendertarget_view *view, const RECT *rect, unsigned int flags,
         const struct wined3d_color *color, float depth, unsigned int stencil);
+void __cdecl wined3d_device_context_clear_uav_uint(struct wined3d_device_context *context,
+        struct wined3d_unordered_access_view *view, const struct wined3d_uvec4 *clear_value);
 void __cdecl wined3d_device_context_copy_resource(struct wined3d_device_context *context,
         struct wined3d_resource *dst_resource, struct wined3d_resource *src_resource);
 HRESULT __cdecl wined3d_device_context_copy_sub_resource_region(struct wined3d_device_context *context,

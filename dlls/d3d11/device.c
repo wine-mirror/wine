@@ -1313,7 +1313,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_ClearRenderTargetView(ID3D
 static void STDMETHODCALLTYPE d3d11_immediate_context_ClearUnorderedAccessViewUint(ID3D11DeviceContext1 *iface,
         ID3D11UnorderedAccessView *unordered_access_view, const UINT values[4])
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext1(iface);
     struct d3d11_unordered_access_view *view;
 
     TRACE("iface %p, unordered_access_view %p, values {%u, %u, %u, %u}.\n",
@@ -1321,7 +1321,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_ClearUnorderedAccessViewUi
 
     view = unsafe_impl_from_ID3D11UnorderedAccessView(unordered_access_view);
     wined3d_mutex_lock();
-    wined3d_device_clear_unordered_access_view_uint(device->wined3d_device,
+    wined3d_device_context_clear_uav_uint(context->wined3d_context,
             view->wined3d_view, (const struct wined3d_uvec4 *)values);
     wined3d_mutex_unlock();
 }

@@ -5242,12 +5242,12 @@ HRESULT CDECL wined3d_device_context_clear_rendertarget_view(struct wined3d_devi
     return WINED3D_OK;
 }
 
-void CDECL wined3d_device_clear_unordered_access_view_uint(struct wined3d_device *device,
+void CDECL wined3d_device_context_clear_uav_uint(struct wined3d_device_context *context,
         struct wined3d_unordered_access_view *view, const struct wined3d_uvec4 *clear_value)
 {
-    TRACE("device %p, view %p, clear_value %s.\n", device, view, debug_uvec4(clear_value));
+    TRACE("context %p, view %p, clear_value %s.\n", context, view, debug_uvec4(clear_value));
 
-    wined3d_device_context_emit_clear_uav_uint(&device->cs->c, view, clear_value);
+    wined3d_device_context_emit_clear_uav_uint(context, view, clear_value);
 }
 
 struct wined3d_rendertarget_view * CDECL wined3d_device_get_rendertarget_view(const struct wined3d_device *device,
