@@ -32,6 +32,7 @@
 static const WCHAR atl100W[] = {'a','t','l','1','0','0','.','d','l','l',0};
 static const WCHAR regtypeW[] = {'W','I','N','E','_','R','E','G','I','S','T','R','Y',0};
 static const WCHAR moduleW[] = {'M','O','D','U','L','E',0};
+static const WCHAR systemrootW[] = {'S','y','s','t','e','m','R','o','o','t',0};
 
 struct reg_info
 {
@@ -62,6 +63,8 @@ static IRegistrar *create_registrar( HMODULE inst, struct reg_info *info )
 
         GetModuleFileNameW( inst, str, MAX_PATH );
         IRegistrar_AddReplacement( info->registrar, moduleW, str );
+        GetEnvironmentVariableW( systemrootW, str, MAX_PATH );
+        IRegistrar_AddReplacement( info->registrar, systemrootW, str );
     }
     return info->registrar;
 }
