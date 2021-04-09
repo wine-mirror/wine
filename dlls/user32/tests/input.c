@@ -4285,12 +4285,11 @@ static void test_SendInput(void)
     input[1].hi.wParamH = 'A' | 0xc000;
     SetLastError( 0xdeadbeef );
     res = SendInput( 16, input, sizeof(*input) );
-    todo_wine
     ok( (res == 0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) ||
         broken(res == 16 && GetLastError() == 0xdeadbeef) /* 32bit */,
         "SendInput returned %u, error %#x\n", res, GetLastError() );
     while ((res = wait_for_message(&msg)) && msg.message == WM_TIMER) DispatchMessageA(&msg);
-    todo_wine ok( !res, "SendInput triggered unexpected message %#x\n", msg.message );
+    ok( !res, "SendInput triggered unexpected message %#x\n", msg.message );
     empty_message_queue();
 
     memset( input, 0, sizeof(input) );
@@ -4303,21 +4302,20 @@ static void test_SendInput(void)
     input[2].ki.dwFlags = KEYEVENTF_KEYUP;
     SetLastError( 0xdeadbeef );
     res = SendInput( 16, input, sizeof(*input) );
-    todo_wine
     ok( (res == 0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) ||
         broken(res == 16 && GetLastError() == 0xdeadbeef),
         "SendInput returned %u, error %#x\n", res, GetLastError() );
     while ((res = wait_for_message(&msg)) && (msg.message == WM_TIMER || broken(msg.message == WM_KEYDOWN || msg.message == WM_KEYUP)))
         DispatchMessageA(&msg);
-    todo_wine ok( !res, "SendInput triggered unexpected message %#x\n", msg.message );
+    ok( !res, "SendInput triggered unexpected message %#x\n", msg.message );
     empty_message_queue();
 
     for (i = 0; i < ARRAY_SIZE(input); ++i) input[i].type = INPUT_HARDWARE + 1;
     SetLastError( 0xdeadbeef );
     res = SendInput( 16, input, sizeof(*input) );
-    todo_wine ok( res == 16 && GetLastError() == 0xdeadbeef, "SendInput returned %u, error %#x\n", res, GetLastError() );
+    ok( res == 16 && GetLastError() == 0xdeadbeef, "SendInput returned %u, error %#x\n", res, GetLastError() );
     while ((res = wait_for_message(&msg)) && msg.message == WM_TIMER) DispatchMessageA(&msg);
-    todo_wine ok( !res, "SendInput triggered unexpected message %#x\n", msg.message );
+    ok( !res, "SendInput triggered unexpected message %#x\n", msg.message );
     empty_message_queue();
 
     trace( "done\n" );

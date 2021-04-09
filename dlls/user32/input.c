@@ -180,7 +180,7 @@ static void update_mouse_coords( INPUT *input )
 UINT WINAPI SendInput( UINT count, LPINPUT inputs, int size )
 {
     UINT i;
-    NTSTATUS status;
+    NTSTATUS status = STATUS_SUCCESS;
 
     if (size != sizeof(INPUT))
     {
@@ -202,14 +202,20 @@ UINT WINAPI SendInput( UINT count, LPINPUT inputs, int size )
 
     for (i = 0; i < count; i++)
     {
-        if (inputs[i].type == INPUT_MOUSE)
+        INPUT input = inputs[i];
+        switch (input.type)
         {
+        case INPUT_MOUSE:
             /* we need to update the coordinates to what the server expects */
-            INPUT input = inputs[i];
             update_mouse_coords( &input );
+            /* fallthrough */
+        case INPUT_KEYBOARD:
             status = send_hardware_message( 0, &input, SEND_HWMSG_INJECTED );
+            break;
+        case INPUT_HARDWARE:
+            SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+            return 0;
         }
-        else status = send_hardware_message( 0, &inputs[i], SEND_HWMSG_INJECTED );
 
         if (status)
         {
