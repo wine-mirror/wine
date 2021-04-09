@@ -5085,16 +5085,15 @@ HRESULT CDECL wined3d_device_context_copy_sub_resource_region(struct wined3d_dev
     return WINED3D_OK;
 }
 
-void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, struct wined3d_resource *resource,
-        unsigned int sub_resource_idx, const struct wined3d_box *box, const void *data, unsigned int row_pitch,
-        unsigned int depth_pitch, unsigned int flags)
+void CDECL wined3d_device_context_update_sub_resource(struct wined3d_device_context *context,
+        struct wined3d_resource *resource, unsigned int sub_resource_idx, const struct wined3d_box *box,
+        const void *data, unsigned int row_pitch, unsigned int depth_pitch, unsigned int flags)
 {
     unsigned int width, height, depth;
     struct wined3d_box b;
 
-    TRACE("device %p, resource %p, sub_resource_idx %u, box %s, data %p, row_pitch %u, depth_pitch %u, "
-            "flags %#x.\n",
-            device, resource, sub_resource_idx, debug_box(box), data, row_pitch, depth_pitch, flags);
+    TRACE("context %p, resource %p, sub_resource_idx %u, box %s, data %p, row_pitch %u, depth_pitch %u, flags %#x.\n",
+            context, resource, sub_resource_idx, debug_box(box), data, row_pitch, depth_pitch, flags);
 
     if (flags)
         FIXME("Ignoring flags %#x.\n", flags);
@@ -5149,7 +5148,7 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
 
     wined3d_resource_wait_idle(resource);
 
-    wined3d_device_context_emit_update_sub_resource(&device->cs->c, resource,
+    wined3d_device_context_emit_update_sub_resource(context, resource,
             sub_resource_idx, box, data, row_pitch, depth_pitch);
 }
 

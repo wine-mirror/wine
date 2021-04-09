@@ -156,7 +156,6 @@
 @ cdecl wined3d_device_set_vs_resource_view(ptr long ptr)
 @ cdecl wined3d_device_set_vs_sampler(ptr long ptr)
 @ cdecl wined3d_device_show_cursor(ptr long)
-@ cdecl wined3d_device_update_sub_resource(ptr ptr long ptr ptr long long long)
 @ cdecl wined3d_device_update_texture(ptr ptr ptr)
 @ cdecl wined3d_device_validate_device(ptr ptr)
 
@@ -190,6 +189,7 @@
 @ cdecl wined3d_device_context_set_unordered_access_view(ptr long long ptr long)
 @ cdecl wined3d_device_context_set_vertex_declaration(ptr ptr)
 @ cdecl wined3d_device_context_set_viewports(ptr long ptr)
+@ cdecl wined3d_device_context_update_sub_resource(ptr ptr long ptr ptr long long long)
 
 @ cdecl wined3d_output_find_closest_matching_mode(ptr ptr)
 @ cdecl wined3d_output_get_adapter(ptr)
