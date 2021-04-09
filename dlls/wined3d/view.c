@@ -1404,28 +1404,6 @@ void wined3d_shader_resource_view_vk_generate_mipmap(struct wined3d_shader_resou
     wined3d_context_vk_reference_texture(context_vk, texture_vk);
 }
 
-void CDECL wined3d_shader_resource_view_generate_mipmaps(struct wined3d_shader_resource_view *view)
-{
-    struct wined3d_texture *texture;
-
-    TRACE("view %p.\n", view);
-
-    if (view->resource->type == WINED3D_RTYPE_BUFFER)
-    {
-        WARN("Called on buffer resource %p.\n", view->resource);
-        return;
-    }
-
-    texture = texture_from_resource(view->resource);
-    if (!(texture->flags & WINED3D_TEXTURE_GENERATE_MIPMAPS))
-    {
-        WARN("Texture without the WINED3D_TEXTURE_GENERATE_MIPMAPS flag, ignoring.\n");
-        return;
-    }
-
-    wined3d_device_context_emit_generate_mipmaps(&view->resource->device->cs->c, view);
-}
-
 ULONG CDECL wined3d_unordered_access_view_incref(struct wined3d_unordered_access_view *view)
 {
     ULONG refcount = InterlockedIncrement(&view->refcount);

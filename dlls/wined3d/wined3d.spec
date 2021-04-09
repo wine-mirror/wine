@@ -171,6 +171,7 @@
 @ cdecl wined3d_device_context_draw_indirect(ptr ptr long long)
 @ cdecl wined3d_device_context_dispatch(ptr long long long)
 @ cdecl wined3d_device_context_dispatch_indirect(ptr ptr long)
+@ cdecl wined3d_device_context_generate_mipmaps(ptr ptr)
 @ cdecl wined3d_device_context_resolve_sub_resource(ptr ptr long ptr long long)
 @ cdecl wined3d_device_context_set_blend_state(ptr ptr ptr long)
 @ cdecl wined3d_device_context_set_constant_buffer(ptr long long ptr)
@@ -260,7 +261,6 @@
 
 @ cdecl wined3d_shader_resource_view_create(ptr ptr ptr ptr ptr)
 @ cdecl wined3d_shader_resource_view_decref(ptr)
-@ cdecl wined3d_shader_resource_view_generate_mipmaps(ptr)
 @ cdecl wined3d_shader_resource_view_get_parent(ptr)
 @ cdecl wined3d_shader_resource_view_incref(ptr)
 

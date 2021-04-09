@@ -2567,6 +2567,8 @@ void __cdecl wined3d_device_context_draw_indexed(struct wined3d_device_context *
         unsigned int start_index, unsigned int index_count, unsigned int start_instance, unsigned int instance_count);
 void __cdecl wined3d_device_context_draw_indirect(struct wined3d_device_context *context,
         struct wined3d_buffer *buffer, unsigned int offset, bool indexed);
+void __cdecl wined3d_device_context_generate_mipmaps(struct wined3d_device_context *context,
+        struct wined3d_shader_resource_view *view);
 void __cdecl wined3d_device_context_resolve_sub_resource(struct wined3d_device_context *context,
         struct wined3d_resource *dst_resource, unsigned int dst_sub_resource_idx,
         struct wined3d_resource *src_resource, unsigned int src_sub_resource_idx, enum wined3d_format_id format_id);
@@ -2789,7 +2791,6 @@ HRESULT __cdecl wined3d_shader_resource_view_create(const struct wined3d_view_de
         struct wined3d_resource *resource, void *parent, const struct wined3d_parent_ops *parent_ops,
         struct wined3d_shader_resource_view **view);
 ULONG __cdecl wined3d_shader_resource_view_decref(struct wined3d_shader_resource_view *view);
-void __cdecl wined3d_shader_resource_view_generate_mipmaps(struct wined3d_shader_resource_view *view);
 void * __cdecl wined3d_shader_resource_view_get_parent(const struct wined3d_shader_resource_view *view);
 ULONG __cdecl wined3d_shader_resource_view_incref(struct wined3d_shader_resource_view *view);
 

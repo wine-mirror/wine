@@ -5291,6 +5291,29 @@ HRESULT CDECL wined3d_device_set_depth_stencil_view(struct wined3d_device *devic
     return wined3d_device_context_set_depth_stencil_view(&device->cs->c, view);
 }
 
+void CDECL wined3d_device_context_generate_mipmaps(struct wined3d_device_context *context,
+        struct wined3d_shader_resource_view *view)
+{
+    struct wined3d_texture *texture;
+
+    TRACE("context %p, view %p.\n", context, view);
+
+    if (view->resource->type == WINED3D_RTYPE_BUFFER)
+    {
+        WARN("Called on buffer resource %p.\n", view->resource);
+        return;
+    }
+
+    texture = texture_from_resource(view->resource);
+    if (!(texture->flags & WINED3D_TEXTURE_GENERATE_MIPMAPS))
+    {
+        WARN("Texture without the WINED3D_TEXTURE_GENERATE_MIPMAPS flag, ignoring.\n");
+        return;
+    }
+
+    wined3d_device_context_emit_generate_mipmaps(context, view);
+}
+
 static struct wined3d_texture *wined3d_device_create_cursor_texture(struct wined3d_device *device,
         struct wined3d_texture *cursor_image, unsigned int sub_resource_idx)
 {

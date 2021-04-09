@@ -100,7 +100,7 @@ void d3d9_texture_gen_auto_mipmap(struct d3d9_texture *texture)
     if (!(texture->flags & D3D9_TEXTURE_MIPMAP_DIRTY))
         return;
     d3d9_texture_acquire_shader_resource_view(texture);
-    wined3d_shader_resource_view_generate_mipmaps(texture->wined3d_srv);
+    wined3d_device_context_generate_mipmaps(texture->parent_device->immediate_context, texture->wined3d_srv);
     texture->flags &= ~D3D9_TEXTURE_MIPMAP_DIRTY;
 }
 
