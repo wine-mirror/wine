@@ -7027,6 +7027,35 @@ static void test_mediastreamfilter_end_of_stream(void)
 
     todo_wine ok(graph.got_notify == 1, "Got %d calls to IMediaEventSink::Notify().\n", graph.got_notify);
 
+    hr = IMediaControl_Run(media_control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    todo_wine ok(graph.got_notify == 1, "Got %d calls to IMediaEventSink::Notify().\n", graph.got_notify);
+
+    hr = IMediaControl_Stop(media_control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* EC_COMPLETE is sent on paused->running state transition
+     * if EndOfStream has been called for all streams. */
+    graph.got_notify = 0;
+
+    hr = IMediaStreamFilter_EndOfStream(filter);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStreamFilter_EndOfStream(filter);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(graph.got_notify == 0, "Got %d calls to IMediaEventSink::Notify().\n", graph.got_notify);
+
+    hr = IMediaControl_Pause(media_control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(graph.got_notify == 0, "Got %d calls to IMediaEventSink::Notify().\n", graph.got_notify);
+
+    hr = IMediaControl_Run(media_control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    todo_wine ok(graph.got_notify == 1, "Got %d calls to IMediaEventSink::Notify().\n", graph.got_notify);
+
     hr = IMediaControl_Stop(media_control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
@@ -7074,6 +7103,26 @@ static void test_mediastreamfilter_end_of_stream(void)
     hr = IMediaControl_Stop(media_control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
+    /* EndOfStream count is not reset when Stop() is called on an already stopped filter. */
+    hr = IMediaStreamFilter_EndOfStream(filter);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaStreamFilter_Stop(filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaStreamFilter_EndOfStream(filter);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    graph.got_notify = 0;
+
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    todo_wine ok(graph.got_notify == 1, "Got %d calls to IMediaEventSink::Notify().\n", graph.got_notify);
+
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
     /* Flush with cancel_eos=TRUE decrements EOS count. */
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -7089,6 +7138,54 @@ static void test_mediastreamfilter_end_of_stream(void)
     todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ok(graph.got_notify == 0, "Got %d calls to IMediaEventSink::Notify().\n", graph.got_notify);
+
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* Flush followed by EndOfStream causes another EC_COMPLETE to be sent. */
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    graph.got_notify = 0;
+
+    hr = IMediaStreamFilter_EndOfStream(filter);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStreamFilter_EndOfStream(filter);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    todo_wine ok(graph.got_notify == 1, "Got %d calls to IMediaEventSink::Notify().\n", graph.got_notify);
+
+    hr = IMediaStreamFilter_Flush(filter, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaStreamFilter_EndOfStream(filter);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    todo_wine ok(graph.got_notify == 2, "Got %d calls to IMediaEventSink::Notify().\n", graph.got_notify);
+
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    /* Flush decrements EOS count event when it is 0. */
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    graph.got_notify = 0;
+
+    hr = IMediaStreamFilter_Flush(filter, TRUE);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IMediaStreamFilter_EndOfStream(filter);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaStreamFilter_EndOfStream(filter);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ok(graph.got_notify == 0, "Got %d calls to IMediaEventSink::Notify().\n", graph.got_notify);
+
+    hr = IMediaStreamFilter_EndOfStream(filter);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    todo_wine ok(graph.got_notify == 1, "Got %d calls to IMediaEventSink::Notify().\n", graph.got_notify);
 
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
