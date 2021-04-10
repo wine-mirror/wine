@@ -104,6 +104,11 @@ struct filter_graph
     IReferenceClock *refClock;
     IBaseFilter *refClockProvider;
 
+    /* We may indirectly wait for streaming threads while holding graph->cs in
+     * IMediaFilter::Stop() or IMediaSeeking::SetPositions(). Since streaming
+     * threads call IMediaEventSink::Notify() to queue EC_COMPLETE, we must
+     * use a separate lock to avoid them deadlocking on graph->cs. */
+    CRITICAL_SECTION event_cs;
     struct list media_events;
     HANDLE media_event_handle;
     HWND media_event_window;
@@ -116,6 +121,8 @@ struct filter_graph
     int HandleEcComplete;
     int HandleEcRepaint;
     int HandleEcClockChanged;
+    unsigned int got_ec_complete : 1;
+    unsigned int media_events_disabled : 1;
 
     CRITICAL_SECTION cs;
     ITF_CACHE_ENTRY ItfCacheEntries[MAX_ITF_CACHE_ENTRIES];
@@ -135,8 +142,6 @@ struct filter_graph
     LONGLONG current_pos;
 
     unsigned int needs_async_run : 1;
-    unsigned int got_ec_complete : 1;
-    unsigned int media_events_disabled : 1;
 };
 
 struct enum_filters
@@ -467,6 +472,7 @@ static ULONG WINAPI FilterGraphInner_Release(IUnknown *iface)
             CloseHandle(This->message_thread);
             CloseHandle(This->message_thread_ret);
         }
+        DeleteCriticalSection(&This->event_cs);
 	DeleteCriticalSection(&This->cs);
         free(This);
 
@@ -1695,8 +1701,10 @@ static HRESULT graph_start(struct filter_graph *graph, REFERENCE_TIME stream_sta
     struct filter *filter;
     HRESULT hr = S_OK;
 
+    EnterCriticalSection(&graph->event_cs);
     graph->EcCompleteCount = 0;
     update_render_count(graph);
+    LeaveCriticalSection(&graph->event_cs);
 
     LIST_FOR_EACH_ENTRY_SAFE(event, next, &graph->media_events, struct media_event, entry)
     {
@@ -1813,7 +1821,10 @@ static HRESULT WINAPI MediaControl_Run(IMediaControl *iface)
     }
 
     sort_filters(graph);
+
+    EnterCriticalSection(&graph->event_cs);
     update_render_count(graph);
+    LeaveCriticalSection(&graph->event_cs);
 
     if (graph->state == State_Stopped)
     {
@@ -4752,12 +4763,12 @@ static HRESULT WINAPI MediaEvent_GetEvent(IMediaEventEx *iface, LONG *code,
     if (WaitForSingleObject(graph->media_event_handle, timeout))
         return E_ABORT;
 
-    EnterCriticalSection(&graph->cs);
+    EnterCriticalSection(&graph->event_cs);
 
     if (!(entry = list_head(&graph->media_events)))
     {
         ResetEvent(graph->media_event_handle);
-        LeaveCriticalSection(&graph->cs);
+        LeaveCriticalSection(&graph->event_cs);
         return E_ABORT;
     }
     event = LIST_ENTRY(entry, struct media_event, entry);
@@ -4767,7 +4778,7 @@ static HRESULT WINAPI MediaEvent_GetEvent(IMediaEventEx *iface, LONG *code,
     *param2 = event->param2;
     free(event);
 
-    LeaveCriticalSection(&graph->cs);
+    LeaveCriticalSection(&graph->event_cs);
     return S_OK;
 }
 
@@ -5015,7 +5026,10 @@ static HRESULT WINAPI MediaFilter_Pause(IMediaFilter *iface)
     }
 
     sort_filters(graph);
+
+    EnterCriticalSection(&graph->event_cs);
     update_render_count(graph);
+    LeaveCriticalSection(&graph->event_cs);
 
     if (graph->defaultclock && !graph->refClock)
         IFilterGraph2_SetDefaultSyncSource(&graph->IFilterGraph2_iface);
@@ -5261,7 +5275,7 @@ static HRESULT WINAPI MediaEventSink_Notify(IMediaEventSink *iface, LONG code,
 
     TRACE("graph %p, code %#x, param1 %#Ix, param2 %#Ix.\n", graph, code, param1, param2);
 
-    EnterCriticalSection(&graph->cs);
+    EnterCriticalSection(&graph->event_cs);
 
     if (code == EC_COMPLETE && graph->HandleEcComplete)
     {
@@ -5285,7 +5299,7 @@ static HRESULT WINAPI MediaEventSink_Notify(IMediaEventSink *iface, LONG code,
         queue_media_event(graph, code, param1, param2);
     }
 
-    LeaveCriticalSection(&graph->cs);
+    LeaveCriticalSection(&graph->event_cs);
     return S_OK;
 }
 
@@ -5591,6 +5605,8 @@ static HRESULT filter_graph_common_create(IUnknown *outer, IUnknown **out, BOOL 
 
     InitializeCriticalSection(&object->cs);
     object->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": filter_graph.cs");
+    InitializeCriticalSection(&object->event_cs);
+    object->event_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": filter_graph.event_cs");
 
     object->defaultclock = TRUE;
 
