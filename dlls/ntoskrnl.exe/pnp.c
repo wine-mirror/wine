@@ -165,6 +165,36 @@ static void send_power_irp( DEVICE_OBJECT *device, DEVICE_POWER_STATE power )
         KeWaitForSingleObject( &event, Executive, KernelMode, FALSE, NULL );
 }
 
+static NTSTATUS get_device_caps( DEVICE_OBJECT *device, DEVICE_CAPABILITIES *caps )
+{
+    IO_STACK_LOCATION *irpsp;
+    IO_STATUS_BLOCK irp_status;
+    KEVENT event;
+    IRP *irp;
+
+    memset( caps, 0, sizeof(*caps) );
+    caps->Size = sizeof(*caps);
+    caps->Version = 1;
+    caps->Address = 0xffffffff;
+    caps->UINumber = 0xffffffff;
+
+    device = IoGetAttachedDevice( device );
+
+    KeInitializeEvent( &event, NotificationEvent, FALSE );
+    if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_PNP, device, NULL, 0, NULL, NULL, &irp_status )))
+        return STATUS_NO_MEMORY;
+
+    irpsp = IoGetNextIrpStackLocation( irp );
+    irpsp->MinorFunction = IRP_MN_QUERY_CAPABILITIES;
+    irpsp->Parameters.DeviceCapabilities.Capabilities = caps;
+
+    irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
+    if (IoCallDriver( device, irp ) == STATUS_PENDING)
+        KeWaitForSingleObject( &event, Executive, KernelMode, FALSE, NULL );
+
+    return irp_status.u.Status;
+}
+
 static void load_function_driver( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVINFO_DATA *sp_device )
 {
     static const WCHAR driverW[] = {'\\','D','r','i','v','e','r','\\',0};
@@ -299,7 +329,9 @@ static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set )
 
     SP_DEVINFO_DATA sp_device = {sizeof(sp_device)};
     WCHAR device_instance_id[MAX_DEVICE_ID_LEN];
+    DEVICE_CAPABILITIES caps;
     BOOL need_driver = TRUE;
+    NTSTATUS status;
     HKEY key;
 
     if (get_device_instance_id( device, device_instance_id ))
@@ -324,8 +356,17 @@ static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set )
         RegCloseKey( key );
     }
 
-    if (need_driver && !install_device_driver( device, set, &sp_device ))
+    if ((status = get_device_caps( device, &caps )))
+    {
+        ERR("Failed to get caps for device %s, status %#x.\n", debugstr_w(device_instance_id), status);
         return;
+    }
+
+    if (need_driver && !install_device_driver( device, set, &sp_device ) && !caps.RawDeviceOK)
+    {
+        ERR("Unable to install a function driver for device %s.\n", debugstr_w(device_instance_id));
+        return;
+    }
 
     start_device( device, set, &sp_device );
 }

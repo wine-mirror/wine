@@ -217,7 +217,7 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
             IoSetDeviceInterfaceState(&device->child_symlink, TRUE);
 
             state = PoSetPowerState(device_obj, DevicePowerState, state);
-            ok(state.DeviceState == device->power_state, "got previous state %u\n", state.DeviceState);
+            todo_wine ok(state.DeviceState == device->power_state, "got previous state %u\n", state.DeviceState);
             device->power_state = PowerDeviceD0;
             ret = STATUS_SUCCESS;
             break;

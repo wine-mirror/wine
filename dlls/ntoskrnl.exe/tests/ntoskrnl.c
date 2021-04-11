@@ -1221,61 +1221,65 @@ static void test_pnp_devices(void)
     ok(ret, "got error %u\n", GetLastError());
 
     pump_messages();
-    todo_wine ok(got_child_arrival == 1, "got %u child arrival messages\n", got_child_arrival);
+    ok(got_child_arrival == 1, "got %u child arrival messages\n", got_child_arrival);
     ok(!got_child_removal, "got %u child removal messages\n", got_child_removal);
 
     set = SetupDiGetClassDevsA(&child_class, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
     ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
 
     ret = SetupDiEnumDeviceInfo(set, 0, &device);
-    todo_wine ok(ret, "failed to get device, error %#x\n", GetLastError());
+    ok(ret, "failed to get device, error %#x\n", GetLastError());
+    ok(IsEqualGUID(&device.ClassGuid, &GUID_NULL), "wrong class %s\n", debugstr_guid(&device.ClassGuid));
+
+    ret = SetupDiGetDeviceInstanceIdA(set, &device, buffer, sizeof(buffer), NULL);
+    ok(ret, "failed to get device ID, error %#x\n", GetLastError());
+    ok(!strcasecmp(buffer, "wine\\test\\1"), "got ID %s\n", debugstr_a(buffer));
+
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_CAPABILITIES,
+            &type, (BYTE *)&dword, sizeof(dword), NULL);
+    todo_wine ok(ret, "got error %#x\n", GetLastError());
     if (ret)
     {
-        ok(IsEqualGUID(&device.ClassGuid, &GUID_NULL), "wrong class %s\n", debugstr_guid(&device.ClassGuid));
-
-        ret = SetupDiGetDeviceInstanceIdA(set, &device, buffer, sizeof(buffer), NULL);
-        ok(ret, "failed to get device ID, error %#x\n", GetLastError());
-        ok(!strcasecmp(buffer, "wine\\test\\1"), "got ID %s\n", debugstr_a(buffer));
-
-        ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_CAPABILITIES,
-                &type, (BYTE *)&dword, sizeof(dword), NULL);
-        ok(ret, "got error %#x\n", GetLastError());
         ok(dword == (CM_DEVCAP_EJECTSUPPORTED | CM_DEVCAP_UNIQUEID
                 | CM_DEVCAP_RAWDEVICEOK | CM_DEVCAP_SURPRISEREMOVALOK), "got flags %#x\n", dword);
         ok(type == REG_DWORD, "got type %u\n", type);
+    }
 
-        ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_CLASSGUID,
-                &type, (BYTE *)buffer, sizeof(buffer), NULL);
-        ok(!ret, "expected failure\n");
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_CLASSGUID,
+            &type, (BYTE *)buffer, sizeof(buffer), NULL);
+    todo_wine ok(!ret, "expected failure\n");
+    if (ret)
         ok(GetLastError() == ERROR_INVALID_DATA, "got error %#x\n", GetLastError());
 
-        ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_DEVTYPE,
-                &type, (BYTE *)&dword, sizeof(dword), NULL);
-        ok(!ret, "expected failure\n");
-        ok(GetLastError() == ERROR_INVALID_DATA, "got error %#x\n", GetLastError());
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_DEVTYPE,
+            &type, (BYTE *)&dword, sizeof(dword), NULL);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_DATA, "got error %#x\n", GetLastError());
 
-        ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_DRIVER,
-                &type, (BYTE *)buffer, sizeof(buffer), NULL);
-        ok(!ret, "expected failure\n");
-        ok(GetLastError() == ERROR_INVALID_DATA, "got error %#x\n", GetLastError());
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_DRIVER,
+            &type, (BYTE *)buffer, sizeof(buffer), NULL);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_DATA, "got error %#x\n", GetLastError());
 
-        ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_HARDWAREID,
-                &type, (BYTE *)buffer, sizeof(buffer), &size);
-        ok(ret, "got error %#x\n", GetLastError());
-        ok(type == REG_MULTI_SZ, "got type %u\n", type);
-        ok(size == sizeof(expect_hardware_id), "got size %u\n", size);
-        ok(!memcmp(buffer, expect_hardware_id, size), "got hardware IDs %s\n", debugstr_an(buffer, size));
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_HARDWAREID,
+            &type, (BYTE *)buffer, sizeof(buffer), &size);
+    ok(ret, "got error %#x\n", GetLastError());
+    ok(type == REG_MULTI_SZ, "got type %u\n", type);
+    ok(size == sizeof(expect_hardware_id), "got size %u\n", size);
+    ok(!memcmp(buffer, expect_hardware_id, size), "got hardware IDs %s\n", debugstr_an(buffer, size));
 
-        ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_COMPATIBLEIDS,
-                &type, (BYTE *)buffer, sizeof(buffer), &size);
-        ok(ret, "got error %#x\n", GetLastError());
-        ok(type == REG_MULTI_SZ, "got type %u\n", type);
-        ok(size == sizeof(expect_compat_id), "got size %u\n", size);
-        ok(!memcmp(buffer, expect_compat_id, size), "got compatible IDs %s\n", debugstr_an(buffer, size));
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_COMPATIBLEIDS,
+            &type, (BYTE *)buffer, sizeof(buffer), &size);
+    ok(ret, "got error %#x\n", GetLastError());
+    ok(type == REG_MULTI_SZ, "got type %u\n", type);
+    ok(size == sizeof(expect_compat_id), "got size %u\n", size);
+    ok(!memcmp(buffer, expect_compat_id, size), "got compatible IDs %s\n", debugstr_an(buffer, size));
 
-        ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_PHYSICAL_DEVICE_OBJECT_NAME,
-                &type, (BYTE *)buffer, sizeof(buffer), NULL);
-        ok(ret, "got error %#x\n", GetLastError());
+    ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_PHYSICAL_DEVICE_OBJECT_NAME,
+            &type, (BYTE *)buffer, sizeof(buffer), NULL);
+    todo_wine ok(ret, "got error %#x\n", GetLastError());
+    if (ret)
+    {
         ok(type == REG_SZ, "got type %u\n", type);
         ok(!strcmp(buffer, "\\Device\\winetest_pnp_1"), "got PDO name %s\n", debugstr_a(buffer));
     }
@@ -1300,8 +1304,8 @@ static void test_pnp_devices(void)
     ok(ret, "got error %u\n", GetLastError());
 
     pump_messages();
-    todo_wine ok(got_child_arrival == 1, "got %u child arrival messages\n", got_child_arrival);
-    todo_wine ok(got_child_removal == 1, "got %u child removal messages\n", got_child_removal);
+    ok(got_child_arrival == 1, "got %u child arrival messages\n", got_child_arrival);
+    ok(got_child_removal == 1, "got %u child removal messages\n", got_child_removal);
 
     ret = NtOpenFile(&child, SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT);
     ok(ret == STATUS_OBJECT_NAME_NOT_FOUND, "got %#x\n", ret);
