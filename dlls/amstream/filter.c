@@ -178,6 +178,7 @@ struct filter
     REFERENCE_TIME start_time;
     struct list free_events;
     struct list used_events;
+    LONG eos_count;
 };
 
 struct event
@@ -266,6 +267,22 @@ static HRESULT WINAPI filter_GetClassID(IMediaStreamFilter *iface, CLSID *clsid)
     return S_OK;
 }
 
+static void send_ec_complete(struct filter *filter)
+{
+    IMediaEventSink *event_sink;
+
+    if (!filter->graph)
+        return;
+
+    if (FAILED(IFilterGraph_QueryInterface(filter->graph, &IID_IMediaEventSink, (void **)&event_sink)))
+        return;
+
+    IMediaEventSink_Notify(event_sink, EC_COMPLETE, S_OK,
+            (LONG_PTR)&filter->IMediaStreamFilter_iface);
+
+    IMediaEventSink_Release(event_sink);
+}
+
 static void set_state(struct filter *filter, FILTER_STATE state)
 {
     if (filter->state != state)
@@ -286,6 +303,9 @@ static HRESULT WINAPI filter_Stop(IMediaStreamFilter *iface)
     TRACE("iface %p.\n", iface);
 
     EnterCriticalSection(&filter->cs);
+
+    if (filter->state != State_Stopped)
+        filter->eos_count = 0;
 
     set_state(filter, State_Stopped);
 
@@ -326,6 +346,10 @@ static HRESULT WINAPI filter_Run(IMediaStreamFilter *iface, REFERENCE_TIME start
     TRACE("iface %p, start %s.\n", iface, wine_dbgstr_longlong(start));
 
     EnterCriticalSection(&filter->cs);
+
+    if (filter->state != State_Running && filter->seekable_stream
+            && filter->eos_count == (LONG)filter->nb_streams)
+        send_ec_complete(filter);
 
     filter->start_time = start;
     set_state(filter, State_Running);
@@ -769,6 +793,9 @@ static HRESULT WINAPI filter_Flush(IMediaStreamFilter *iface, BOOL cancel_eos)
         }
     }
 
+    if (cancel_eos)
+        --filter->eos_count;
+
     LeaveCriticalSection(&filter->cs);
 
     return S_OK;
@@ -776,9 +803,20 @@ static HRESULT WINAPI filter_Flush(IMediaStreamFilter *iface, BOOL cancel_eos)
 
 static HRESULT WINAPI filter_EndOfStream(IMediaStreamFilter *iface)
 {
-    FIXME("(%p)->(): Stub!\n",  iface);
+    struct filter *filter = impl_from_IMediaStreamFilter(iface);
 
-    return E_NOTIMPL;
+    TRACE("filter %p.\n", filter);
+
+    EnterCriticalSection(&filter->cs);
+
+    ++filter->eos_count;
+    if (filter->state == State_Running && filter->seekable_stream &&
+            filter->eos_count == (LONG)filter->nb_streams)
+        send_ec_complete(filter);
+
+    LeaveCriticalSection(&filter->cs);
+
+    return S_OK;
 }
 
 static const IMediaStreamFilterVtbl filter_vtbl =
