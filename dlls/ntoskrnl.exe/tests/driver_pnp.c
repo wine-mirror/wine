@@ -308,6 +308,34 @@ static NTSTATUS WINAPI driver_pnp(DEVICE_OBJECT *device, IRP *irp)
     return pdo_pnp(device, irp);
 }
 
+static NTSTATUS WINAPI driver_power(DEVICE_OBJECT *device, IRP *irp)
+{
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
+    NTSTATUS ret = STATUS_NOT_SUPPORTED;
+
+    /* We do not expect power IRPs as part of normal operation. */
+    ok(0, "unexpected call\n");
+
+    if (device == bus_fdo)
+    {
+        PoStartNextPowerIrp(irp);
+        IoSkipCurrentIrpStackLocation(irp);
+        return PoCallDriver(bus_pdo, irp);
+    }
+
+    if (stack->MinorFunction == IRP_MN_SET_POWER)
+    {
+        if (stack->Parameters.Power.Type == DevicePowerState)
+            PoSetPowerState(device, DevicePowerState, stack->Parameters.Power.State);
+        ret = STATUS_SUCCESS;
+    }
+
+    PoStartNextPowerIrp(irp);
+    irp->IoStatus.Status = ret;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    return ret;
+}
+
 static void test_bus_query_caps(DEVICE_OBJECT *top_device)
 {
     DEVICE_CAPABILITIES caps;
@@ -633,6 +661,7 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *registry)
     driver->DriverExtension->AddDevice = driver_add_device;
     driver->DriverUnload = driver_unload;
     driver->MajorFunction[IRP_MJ_PNP] = driver_pnp;
+    driver->MajorFunction[IRP_MJ_POWER] = driver_power;
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = driver_ioctl;
     driver->MajorFunction[IRP_MJ_CREATE] = driver_create;
     driver->MajorFunction[IRP_MJ_CLOSE] = driver_close;
