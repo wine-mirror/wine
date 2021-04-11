@@ -2608,6 +2608,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,ddhelp.exe
 11,,dosx.exe
 11,,dsound.vxd
+11,,start.exe
 11,,winhlp32.exe
 52,win40\0,wineps16.drv,wineps16.drv16
 
@@ -2674,7 +2675,6 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,explorer.exe
 11,,iexplore.exe
 11,,notepad.exe
-11,,start.exe
 11,,winetest.exe,-
 ; skip .NET fake dlls in Wine Mono package
 11,,aspnet_regiis.exe,-
