@@ -9,7 +9,7 @@ driver3_IMPORTS = winecrt0 ntoskrnl
 driver3_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
 driver_netio_IMPORTS = winecrt0 ntoskrnl netio
 driver_netio_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
-driver_pnp_IMPORTS = winecrt0 ntoskrnl
+driver_pnp_IMPORTS = winecrt0 ntoskrnl hal
 driver_pnp_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
 
 SOURCES = \

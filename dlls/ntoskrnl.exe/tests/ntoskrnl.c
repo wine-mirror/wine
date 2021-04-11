@@ -34,6 +34,7 @@
 #include "mscat.h"
 #include "mssip.h"
 #include "setupapi.h"
+#include "cfgmgr32.h"
 #include "newdev.h"
 #include "dbt.h"
 #include "initguid.h"
@@ -987,8 +988,9 @@ static void add_file_to_catalog(HANDLE catalog, const WCHAR *file)
 
 static const GUID control_class = {0xdeadbeef, 0x29ef, 0x4538, {0xa5, 0xfd, 0xb6, 0x95, 0x73, 0xa3, 0x62, 0xc0}};
 static const GUID bus_class     = {0xdeadbeef, 0x29ef, 0x4538, {0xa5, 0xfd, 0xb6, 0x95, 0x73, 0xa3, 0x62, 0xc1}};
+static const GUID child_class   = {0xdeadbeef, 0x29ef, 0x4538, {0xa5, 0xfd, 0xb6, 0x95, 0x73, 0xa3, 0x62, 0xc2}};
 
-static unsigned int got_bus_arrival, got_bus_removal;
+static unsigned int got_bus_arrival, got_bus_removal, got_child_arrival, got_child_removal;
 
 static LRESULT WINAPI device_notify_proc(HWND window, UINT message, WPARAM wparam, LPARAM lparam)
 {
@@ -1023,6 +1025,12 @@ static LRESULT WINAPI device_notify_proc(HWND window, UINT message, WPARAM wpara
                 todo_wine ok(!strcmp(iface->dbcc_name, "\\\\?\\ROOT#WINETEST#0#{deadbeef-29ef-4538-a5fd-b69573a362c1}"),
                         "got name %s\n", debugstr_a(iface->dbcc_name));
             }
+            else if (IsEqualGUID(&iface->dbcc_classguid, &child_class))
+            {
+                ++got_child_arrival;
+                todo_wine ok(!strcmp(iface->dbcc_name, "\\\\?\\wine#test#1#{deadbeef-29ef-4538-a5fd-b69573a362c2}"),
+                        "got name %s\n", debugstr_a(iface->dbcc_name));
+            }
             break;
         }
 
@@ -1043,6 +1051,12 @@ static LRESULT WINAPI device_notify_proc(HWND window, UINT message, WPARAM wpara
             {
                 ++got_bus_removal;
                 todo_wine ok(!strcmp(iface->dbcc_name, "\\\\?\\ROOT#WINETEST#0#{deadbeef-29ef-4538-a5fd-b69573a362c1}"),
+                        "got name %s\n", debugstr_a(iface->dbcc_name));
+            }
+            else if (IsEqualGUID(&iface->dbcc_classguid, &child_class))
+            {
+                ++got_child_removal;
+                todo_wine ok(!strcmp(iface->dbcc_name, "\\\\?\\wine#test#1#{deadbeef-29ef-4538-a5fd-b69573a362c2}"),
                         "got name %s\n", debugstr_a(iface->dbcc_name));
             }
             break;
@@ -1067,6 +1081,9 @@ static void pump_messages(void)
 
 static void test_pnp_devices(void)
 {
+    static const char expect_hardware_id[] = "winetest_hardware\0winetest_hardware_1\0";
+    static const char expect_compat_id[] = "winetest_compat\0winetest_compat_1\0";
+
     char buffer[200];
     SP_DEVICE_INTERFACE_DETAIL_DATA_A *iface_detail = (void *)buffer;
     SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
@@ -1082,11 +1099,15 @@ static void test_pnp_devices(void)
         .lpfnWndProc = device_notify_proc,
     };
     HDEVNOTIFY notify_handle;
-    HANDLE window;
+    DWORD size, type, dword;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING string;
+    IO_STATUS_BLOCK io;
+    HANDLE bus, child;
     HDEVINFO set;
-    HANDLE bus;
-    DWORD size;
+    HWND window;
     BOOL ret;
+    int id;
 
     ret = RegisterClassA(&class);
     ok(ret, "failed to register class\n");
@@ -1193,6 +1214,98 @@ static void test_pnp_devices(void)
     ok(GetLastError() == ERROR_NO_MORE_ITEMS, "got error %#x\n", GetLastError());
     SetupDiDestroyDeviceInfoList(set);
 
+    /* Test exposing a child device. */
+
+    id = 1;
+    ret = DeviceIoControl(bus, IOCTL_WINETEST_BUS_ADD_CHILD, &id, sizeof(id), NULL, 0, &size, NULL);
+    ok(ret, "got error %u\n", GetLastError());
+
+    pump_messages();
+    todo_wine ok(got_child_arrival == 1, "got %u child arrival messages\n", got_child_arrival);
+    ok(!got_child_removal, "got %u child removal messages\n", got_child_removal);
+
+    set = SetupDiGetClassDevsA(&child_class, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
+    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
+
+    ret = SetupDiEnumDeviceInfo(set, 0, &device);
+    todo_wine ok(ret, "failed to get device, error %#x\n", GetLastError());
+    if (ret)
+    {
+        ok(IsEqualGUID(&device.ClassGuid, &GUID_NULL), "wrong class %s\n", debugstr_guid(&device.ClassGuid));
+
+        ret = SetupDiGetDeviceInstanceIdA(set, &device, buffer, sizeof(buffer), NULL);
+        ok(ret, "failed to get device ID, error %#x\n", GetLastError());
+        ok(!strcasecmp(buffer, "wine\\test\\1"), "got ID %s\n", debugstr_a(buffer));
+
+        ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_CAPABILITIES,
+                &type, (BYTE *)&dword, sizeof(dword), NULL);
+        ok(ret, "got error %#x\n", GetLastError());
+        ok(dword == (CM_DEVCAP_EJECTSUPPORTED | CM_DEVCAP_UNIQUEID
+                | CM_DEVCAP_RAWDEVICEOK | CM_DEVCAP_SURPRISEREMOVALOK), "got flags %#x\n", dword);
+        ok(type == REG_DWORD, "got type %u\n", type);
+
+        ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_CLASSGUID,
+                &type, (BYTE *)buffer, sizeof(buffer), NULL);
+        ok(!ret, "expected failure\n");
+        ok(GetLastError() == ERROR_INVALID_DATA, "got error %#x\n", GetLastError());
+
+        ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_DEVTYPE,
+                &type, (BYTE *)&dword, sizeof(dword), NULL);
+        ok(!ret, "expected failure\n");
+        ok(GetLastError() == ERROR_INVALID_DATA, "got error %#x\n", GetLastError());
+
+        ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_DRIVER,
+                &type, (BYTE *)buffer, sizeof(buffer), NULL);
+        ok(!ret, "expected failure\n");
+        ok(GetLastError() == ERROR_INVALID_DATA, "got error %#x\n", GetLastError());
+
+        ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_HARDWAREID,
+                &type, (BYTE *)buffer, sizeof(buffer), &size);
+        ok(ret, "got error %#x\n", GetLastError());
+        ok(type == REG_MULTI_SZ, "got type %u\n", type);
+        ok(size == sizeof(expect_hardware_id), "got size %u\n", size);
+        ok(!memcmp(buffer, expect_hardware_id, size), "got hardware IDs %s\n", debugstr_an(buffer, size));
+
+        ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_COMPATIBLEIDS,
+                &type, (BYTE *)buffer, sizeof(buffer), &size);
+        ok(ret, "got error %#x\n", GetLastError());
+        ok(type == REG_MULTI_SZ, "got type %u\n", type);
+        ok(size == sizeof(expect_compat_id), "got size %u\n", size);
+        ok(!memcmp(buffer, expect_compat_id, size), "got compatible IDs %s\n", debugstr_an(buffer, size));
+
+        ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_PHYSICAL_DEVICE_OBJECT_NAME,
+                &type, (BYTE *)buffer, sizeof(buffer), NULL);
+        ok(ret, "got error %#x\n", GetLastError());
+        ok(type == REG_SZ, "got type %u\n", type);
+        ok(!strcmp(buffer, "\\Device\\winetest_pnp_1"), "got PDO name %s\n", debugstr_a(buffer));
+    }
+
+    SetupDiDestroyDeviceInfoList(set);
+
+    RtlInitUnicodeString(&string, L"\\Device\\winetest_pnp_1");
+    InitializeObjectAttributes(&attr, &string, OBJ_CASE_INSENSITIVE, NULL, NULL);
+    ret = NtOpenFile(&child, SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT);
+    ok(!ret, "failed to open child: %#x\n", ret);
+
+    id = 0xdeadbeef;
+    ret = DeviceIoControl(child, IOCTL_WINETEST_CHILD_GET_ID, NULL, 0, &id, sizeof(id), &size, NULL);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(id == 1, "got id %d\n", id);
+    ok(size == sizeof(id), "got size %u\n", size);
+
+    CloseHandle(child);
+
+    id = 1;
+    ret = DeviceIoControl(bus, IOCTL_WINETEST_BUS_REMOVE_CHILD, &id, sizeof(id), NULL, 0, &size, NULL);
+    ok(ret, "got error %u\n", GetLastError());
+
+    pump_messages();
+    todo_wine ok(got_child_arrival == 1, "got %u child arrival messages\n", got_child_arrival);
+    todo_wine ok(got_child_removal == 1, "got %u child removal messages\n", got_child_removal);
+
+    ret = NtOpenFile(&child, SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT);
+    ok(ret == STATUS_OBJECT_NAME_NOT_FOUND, "got %#x\n", ret);
+
     CloseHandle(bus);
 
     UnregisterDeviceNotification(notify_handle);
@@ -1210,6 +1323,7 @@ static void test_pnp_driver(struct testsign_context *ctx)
     SC_HANDLE manager, service;
     BOOL ret, need_reboot;
     HANDLE catalog, file;
+    unsigned int i;
     HDEVINFO set;
     FILE *f;
 
@@ -1339,6 +1453,15 @@ static void test_pnp_driver(struct testsign_context *ctx)
 
     ret = SetupDiDestroyDeviceInfoList(set);
     ok(ret, "failed to destroy set, error %#x\n", GetLastError());
+
+    set = SetupDiGetClassDevsA(NULL, "wine", NULL, DIGCF_ALLCLASSES);
+    ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
+
+    for (i = 0; SetupDiEnumDeviceInfo(set, i, &device); ++i)
+    {
+        ret = SetupDiCallClassInstaller(DIF_REMOVE, set, &device);
+        ok(ret, "failed to remove device, error %#x\n", GetLastError());
+    }
 
     /* Windows stops the service but does not delete it. */
     manager = OpenSCManagerA(NULL, NULL, SC_MANAGER_CONNECT);

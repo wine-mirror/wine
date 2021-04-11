@@ -261,8 +261,10 @@ NTSTATUS WINAPI HID_PNP_Dispatch(DEVICE_OBJECT *device, IRP *irp)
                     irp->IoStatus.Information = (ULONG_PTR)id;
                     rc = STATUS_SUCCESS;
                     break;
+
+                case BusQueryContainerID:
                 case BusQueryDeviceSerialNumber:
-                    FIXME("BusQueryDeviceSerialNumber not implemented\n");
+                    FIXME("unimplemented id type %#x\n", irpsp->Parameters.QueryId.IdType);
                     ExFreePool(id);
                     break;
             }
