@@ -35,6 +35,7 @@
 #include "mssip.h"
 #include "setupapi.h"
 #include "newdev.h"
+#include "dbt.h"
 #include "initguid.h"
 #include "devguid.h"
 #include "wine/test.h"
@@ -984,19 +985,115 @@ static void add_file_to_catalog(HANDLE catalog, const WCHAR *file)
     }
 }
 
+static const GUID control_class = {0xdeadbeef, 0x29ef, 0x4538, {0xa5, 0xfd, 0xb6, 0x95, 0x73, 0xa3, 0x62, 0xc0}};
+static const GUID bus_class     = {0xdeadbeef, 0x29ef, 0x4538, {0xa5, 0xfd, 0xb6, 0x95, 0x73, 0xa3, 0x62, 0xc1}};
+
+static unsigned int got_bus_arrival, got_bus_removal;
+
+static LRESULT WINAPI device_notify_proc(HWND window, UINT message, WPARAM wparam, LPARAM lparam)
+{
+    if (message != WM_DEVICECHANGE)
+        return DefWindowProcA(window, message, wparam, lparam);
+
+    switch (wparam)
+    {
+        case DBT_DEVNODES_CHANGED:
+            if (winetest_debug > 1) trace("device nodes changed\n");
+
+            ok(InSendMessageEx(NULL) == ISMEX_NOTIFY, "got message flags %#x\n", InSendMessageEx(NULL));
+            ok(!lparam, "got lparam %#Ix\n", lparam);
+            break;
+
+        case DBT_DEVICEARRIVAL:
+        {
+            const DEV_BROADCAST_DEVICEINTERFACE_A *iface = (const DEV_BROADCAST_DEVICEINTERFACE_A *)lparam;
+            DWORD expect_size = offsetof(DEV_BROADCAST_DEVICEINTERFACE_A, dbcc_name[strlen(iface->dbcc_name)]);
+
+            if (winetest_debug > 1) trace("device arrival %s\n", iface->dbcc_name);
+
+            ok(InSendMessageEx(NULL) == ISMEX_SEND, "got message flags %#x\n", InSendMessageEx(NULL));
+
+            ok(iface->dbcc_devicetype == DBT_DEVTYP_DEVICEINTERFACE,
+                    "got unexpected notification type %#x\n", iface->dbcc_devicetype);
+            ok(iface->dbcc_size >= expect_size, "expected size at least %u, got %u\n", expect_size, iface->dbcc_size);
+            ok(!iface->dbcc_reserved, "got reserved %#x\n", iface->dbcc_reserved);
+            if (IsEqualGUID(&iface->dbcc_classguid, &bus_class))
+            {
+                ++got_bus_arrival;
+                todo_wine ok(!strcmp(iface->dbcc_name, "\\\\?\\ROOT#WINETEST#0#{deadbeef-29ef-4538-a5fd-b69573a362c1}"),
+                        "got name %s\n", debugstr_a(iface->dbcc_name));
+            }
+            break;
+        }
+
+        case DBT_DEVICEREMOVECOMPLETE:
+        {
+            const DEV_BROADCAST_DEVICEINTERFACE_A *iface = (const DEV_BROADCAST_DEVICEINTERFACE_A *)lparam;
+            DWORD expect_size = offsetof(DEV_BROADCAST_DEVICEINTERFACE_A, dbcc_name[strlen(iface->dbcc_name)]);
+
+            if (winetest_debug > 1) trace("device removal %s\n", iface->dbcc_name);
+
+            ok(InSendMessageEx(NULL) == ISMEX_SEND, "got message flags %#x\n", InSendMessageEx(NULL));
+
+            ok(iface->dbcc_devicetype == DBT_DEVTYP_DEVICEINTERFACE,
+                    "got unexpected notification type %#x\n", iface->dbcc_devicetype);
+            ok(iface->dbcc_size >= expect_size, "expected size at least %u, got %u\n", expect_size, iface->dbcc_size);
+            ok(!iface->dbcc_reserved, "got reserved %#x\n", iface->dbcc_reserved);
+            if (IsEqualGUID(&iface->dbcc_classguid, &bus_class))
+            {
+                ++got_bus_removal;
+                todo_wine ok(!strcmp(iface->dbcc_name, "\\\\?\\ROOT#WINETEST#0#{deadbeef-29ef-4538-a5fd-b69573a362c1}"),
+                        "got name %s\n", debugstr_a(iface->dbcc_name));
+            }
+            break;
+        }
+    }
+    return DefWindowProcA(window, message, wparam, lparam);
+}
+
+static void pump_messages(void)
+{
+    MSG msg;
+
+    if (!MsgWaitForMultipleObjects(0, NULL, FALSE, 200, QS_ALLINPUT))
+    {
+        while (PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE))
+        {
+            TranslateMessage(&msg);
+            DispatchMessageA(&msg);
+        }
+    }
+}
+
 static void test_pnp_devices(void)
 {
-    static const GUID control_class = {0xdeadbeef, 0x29ef, 0x4538, {0xa5, 0xfd, 0xb6, 0x95, 0x73, 0xa3, 0x62, 0xc0}};
-    static const GUID bus_class     = {0xdeadbeef, 0x29ef, 0x4538, {0xa5, 0xfd, 0xb6, 0x95, 0x73, 0xa3, 0x62, 0xc1}};
-
     char buffer[200];
     SP_DEVICE_INTERFACE_DETAIL_DATA_A *iface_detail = (void *)buffer;
     SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
     SP_DEVINFO_DATA device = {sizeof(device)};
+    DEV_BROADCAST_DEVICEINTERFACE_A filter =
+    {
+        .dbcc_size = sizeof(filter),
+        .dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE,
+    };
+    static const WNDCLASSA class =
+    {
+        .lpszClassName = "ntoskrnl_test_wc",
+        .lpfnWndProc = device_notify_proc,
+    };
+    HDEVNOTIFY notify_handle;
+    HANDLE window;
     HDEVINFO set;
     HANDLE bus;
     DWORD size;
     BOOL ret;
+
+    ret = RegisterClassA(&class);
+    ok(ret, "failed to register class\n");
+    window = CreateWindowA("ntoskrnl_test_wc", NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL);
+    ok(!!window, "failed to create window\n");
+    notify_handle = RegisterDeviceNotificationA(window, &filter, DEVICE_NOTIFY_ALL_INTERFACE_CLASSES);
+    ok(!!notify_handle, "failed to register window, error %u\n", GetLastError());
 
     set = SetupDiGetClassDevsA(&control_class, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
     ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
@@ -1060,6 +1157,10 @@ static void test_pnp_devices(void)
     ret = DeviceIoControl(bus, IOCTL_WINETEST_BUS_ENABLE_IFACE, NULL, 0, NULL, 0, &size, NULL);
     ok(ret, "got error %u\n", GetLastError());
 
+    pump_messages();
+    ok(got_bus_arrival == 1, "got %u bus arrival messages\n", got_bus_arrival);
+    ok(!got_bus_removal, "got %u bus removal messages\n", got_bus_removal);
+
     set = SetupDiGetClassDevsA(&bus_class, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
     ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
     ret = SetupDiEnumDeviceInterfaces(set, NULL, &bus_class, 0, &iface);
@@ -1071,6 +1172,10 @@ static void test_pnp_devices(void)
 
     ret = DeviceIoControl(bus, IOCTL_WINETEST_BUS_DISABLE_IFACE, NULL, 0, NULL, 0, &size, NULL);
     ok(ret, "got error %u\n", GetLastError());
+
+    pump_messages();
+    ok(got_bus_arrival == 1, "got %u bus arrival messages\n", got_bus_arrival);
+    ok(got_bus_removal == 1, "got %u bus removal messages\n", got_bus_removal);
 
     set = SetupDiGetClassDevsA(&bus_class, NULL, NULL, DIGCF_DEVICEINTERFACE);
     ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
@@ -1089,6 +1194,10 @@ static void test_pnp_devices(void)
     SetupDiDestroyDeviceInfoList(set);
 
     CloseHandle(bus);
+
+    UnregisterDeviceNotification(notify_handle);
+    DestroyWindow(window);
+    UnregisterClassA("ntoskrnl_test_wc", GetModuleHandleA(NULL));
 }
 
 static void test_pnp_driver(struct testsign_context *ctx)
