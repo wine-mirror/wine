@@ -82,7 +82,7 @@ static BOOL parse_create_params( int argc, const WCHAR *argv[], struct create_pa
             if (!wcsicmp( argv[i + 1], L"rec" )) cp->type = SERVICE_RECOGNIZER_DRIVER;
             if (!wcsicmp( argv[i + 1], L"interact" )) cp->type |= SERVICE_INTERACTIVE_PROCESS;
         }
-        if (!wcsicmp( argv[i], L"start="L"start" ) && i < argc - 1)
+        if (!wcsicmp( argv[i], L"start=" ) && i < argc - 1)
         {
             if (!wcsicmp( argv[i + 1], L"boot" )) cp->start = SERVICE_BOOT_START;
             if (!wcsicmp( argv[i + 1], L"system" )) cp->start = SERVICE_SYSTEM_START;
@@ -134,7 +134,7 @@ static BOOL parse_failure_actions( const WCHAR *arg, SERVICE_FAILURE_ACTIONSW *f
     {
         if (!wcsicmp( p, L"run" )) fa->lpsaActions[i].Type = SC_ACTION_RUN_COMMAND;
         else if (!wcsicmp( p, L"restart" )) fa->lpsaActions[i].Type = SC_ACTION_RESTART;
-        else if (!wcsicmp( p, L"reboot="L"reboot" )) fa->lpsaActions[i].Type = SC_ACTION_REBOOT;
+        else if (!wcsicmp( p, L"reboot" )) fa->lpsaActions[i].Type = SC_ACTION_REBOOT;
         else fa->lpsaActions[i].Type = SC_ACTION_NONE;
 
         p += lstrlenW( p ) + 1;
@@ -159,7 +159,7 @@ static BOOL parse_failure_params( int argc, const WCHAR *argv[], SERVICE_FAILURE
     for (i = 0; i < argc; i++)
     {
         if (!wcsicmp( argv[i], L"reset=" ) && i < argc - 1) fa->dwResetPeriod = wcstol( argv[i + 1], NULL, 10 );
-        if (!wcsicmp( argv[i], L"reboot="L"reboot" ) && i < argc - 1) fa->lpRebootMsg = (WCHAR *)argv[i + 1];
+        if (!wcsicmp( argv[i], L"reboot=" ) && i < argc - 1) fa->lpRebootMsg = (WCHAR *)argv[i + 1];
         if (!wcsicmp( argv[i], L"command=" ) && i < argc - 1) fa->lpCommand = (WCHAR *)argv[i + 1];
         if (!wcsicmp( argv[i], L"actions=" ))
         {
@@ -264,7 +264,7 @@ int __cdecl wmain( int argc, const WCHAR *argv[] )
         }
         else WINE_TRACE("failed to open service %u\n", GetLastError());
     }
-    else if (!wcsicmp( argv[1], L"start="L"start" ))
+    else if (!wcsicmp( argv[1], L"start" ))
     {
         service = OpenServiceW( manager, argv[2], SERVICE_START );
         if (service)
