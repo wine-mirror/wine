@@ -192,6 +192,8 @@ static enum wg_video_format wg_video_format_from_gst(GstVideoFormat format)
             return WG_VIDEO_FORMAT_BGR;
         case GST_VIDEO_FORMAT_RGB15:
             return WG_VIDEO_FORMAT_RGB15;
+        case GST_VIDEO_FORMAT_RGB16:
+            return WG_VIDEO_FORMAT_RGB16;
         case GST_VIDEO_FORMAT_AYUV:
             return WG_VIDEO_FORMAT_AYUV;
         case GST_VIDEO_FORMAT_I420:
