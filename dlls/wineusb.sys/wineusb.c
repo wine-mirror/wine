@@ -377,8 +377,17 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
             ret = query_id(device, irp, stack->Parameters.QueryId.IdType);
             break;
 
-        case IRP_MN_START_DEVICE:
         case IRP_MN_QUERY_CAPABILITIES:
+        {
+            DEVICE_CAPABILITIES *caps = stack->Parameters.DeviceCapabilities.Capabilities;
+
+            caps->RawDeviceOK = 1;
+
+            ret = STATUS_SUCCESS;
+            break;
+        }
+
+        case IRP_MN_START_DEVICE:
         case IRP_MN_SURPRISE_REMOVAL:
             ret = STATUS_SUCCESS;
             break;
