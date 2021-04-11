@@ -141,30 +141,6 @@ static NTSTATUS get_device_instance_id( DEVICE_OBJECT *device, WCHAR *buffer )
     return STATUS_SUCCESS;
 }
 
-static void send_power_irp( DEVICE_OBJECT *device, DEVICE_POWER_STATE power )
-{
-    IO_STATUS_BLOCK irp_status;
-    IO_STACK_LOCATION *irpsp;
-    KEVENT event;
-    IRP *irp;
-
-    device = IoGetAttachedDevice( device );
-
-    KeInitializeEvent( &event, NotificationEvent, FALSE );
-    if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_POWER, device, NULL, 0, NULL, &event, &irp_status )))
-        return;
-
-    irpsp = IoGetNextIrpStackLocation( irp );
-    irpsp->MinorFunction = IRP_MN_SET_POWER;
-
-    irpsp->Parameters.Power.Type = DevicePowerState;
-    irpsp->Parameters.Power.State.DeviceState = power;
-
-    irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
-    if (IoCallDriver( device, irp ) == STATUS_PENDING)
-        KeWaitForSingleObject( &event, Executive, KernelMode, FALSE, NULL );
-}
-
 static NTSTATUS get_device_caps( DEVICE_OBJECT *device, DEVICE_CAPABILITIES *caps )
 {
     IO_STACK_LOCATION *irpsp;
@@ -317,10 +293,7 @@ static void start_device( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVINFO_DATA *
 {
     load_function_driver( device, set, sp_device );
     if (device->DriverObject)
-    {
         send_pnp_irp( device, IRP_MN_START_DEVICE );
-        send_power_irp( device, PowerDeviceD0 );
-    }
 }
 
 static void enumerate_new_device( DEVICE_OBJECT *device, HDEVINFO set )
@@ -384,7 +357,6 @@ static void remove_device( DEVICE_OBJECT *device )
             remove_device( wine_device->children->Objects[i] );
     }
 
-    send_power_irp( device, PowerDeviceD3 );
     send_pnp_irp( device, IRP_MN_SURPRISE_REMOVAL );
     send_pnp_irp( device, IRP_MN_REMOVE_DEVICE );
 }
