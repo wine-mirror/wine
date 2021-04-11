@@ -7224,6 +7224,36 @@ int WINAPI WS_gethostname(char *name, int namelen)
     return 0;
 }
 
+/***********************************************************************
+ *              GetHostNameW           (WS2_32.@)
+ */
+int WINAPI GetHostNameW(WCHAR *name, int namelen)
+{
+    char buf[256];
+    int len;
+
+    TRACE("name %p, len %d\n", name, namelen);
+
+    if (!name)
+    {
+        SetLastError(WSAEFAULT);
+        return SOCKET_ERROR;
+    }
+
+    if (gethostname(buf, sizeof(buf)))
+    {
+        SetLastError(wsaErrno());
+        return SOCKET_ERROR;
+    }
+
+    if ((len = MultiByteToWideChar(CP_ACP, 0, buf, -1, NULL, 0)) > namelen)
+    {
+        SetLastError(WSAEFAULT);
+        return SOCKET_ERROR;
+    }
+    MultiByteToWideChar(CP_ACP, 0, buf, -1, name, namelen);
+    return 0;
+}
 
 /* ------------------------------------- Windows sockets extensions -- *
  *								       *

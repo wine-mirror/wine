@@ -57,6 +57,7 @@
 @ stdcall GetAddrInfoExOverlappedResult(ptr)
 @ stdcall GetAddrInfoExW(wstr wstr long ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall GetAddrInfoW(wstr wstr ptr ptr)
+@ stdcall GetHostNameW(ptr long)
 @ stdcall GetNameInfoW(ptr long ptr long ptr long long)
 @ stdcall InetNtopW(long ptr ptr long)
 @ stdcall InetPtonW(long wstr ptr)

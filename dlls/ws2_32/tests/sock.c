@@ -4323,6 +4323,34 @@ static void test_gethostname(void)
     ok(he != NULL, "gethostbyname(\"%s\") failed: %d\n", name, WSAGetLastError());
 }
 
+static void test_GetHostNameW(void)
+{
+    WCHAR name[256];
+    int ret, len;
+
+    WSASetLastError(0xdeadbeef);
+    ret = GetHostNameW(NULL, 256);
+    ok(ret == -1, "GetHostNameW() returned %d\n", ret);
+    ok(WSAGetLastError() == WSAEFAULT, "GetHostNameW with null buffer "
+            "failed with %d, expected %d\n", WSAGetLastError(), WSAEFAULT);
+
+    ret = GetHostNameW(name, sizeof(name));
+    ok(ret == 0, "GetHostNameW() call failed: %d\n", WSAGetLastError());
+
+    len = wcslen(name);
+    WSASetLastError(0xdeadbeef);
+    wcscpy(name, L"deadbeef");
+    ret = GetHostNameW(name, len);
+    ok(ret == -1, "GetHostNameW() returned %d\n", ret);
+    ok(!wcscmp(name, L"deadbeef"), "name changed unexpected!\n");
+    ok(WSAGetLastError() == WSAEFAULT, "GetHostNameW with insufficient length "
+            "failed with %d, expected %d\n", WSAGetLastError(), WSAEFAULT);
+
+    len++;
+    ret = GetHostNameW(name, len);
+    ok(ret == 0, "GetHostNameW() call failed: %d\n", WSAGetLastError());
+}
+
 static void test_inet_addr(void)
 {
     u_long addr;
@@ -10631,6 +10659,7 @@ START_TEST( sock )
     test_gethostbyname();
     test_gethostbyname_hack();
     test_gethostname();
+    test_GetHostNameW();
 
     test_WSASendMsg();
     test_WSASendTo();
