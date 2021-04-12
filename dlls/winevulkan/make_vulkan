@@ -2422,7 +2422,7 @@ class VkGenerator(object):
         # Generate prototypes for device and instance functions requiring a custom implementation.
         f.write("/* Functions for which we have custom implementations outside of the thunks. */\n")
         for vk_func in self.registry.funcs.values():
-            if not vk_func.is_required() or vk_func.is_global_func():
+            if not vk_func.is_required():
                 continue
             if vk_func.needs_thunk() and not vk_func.needs_private_thunk():
                 continue

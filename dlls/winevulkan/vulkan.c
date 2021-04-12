@@ -37,11 +37,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 DEFINE_DEVPROPKEY(DEVPROPKEY_GPU_LUID, 0x60b193cb, 0x5276, 0x4d0f, 0x96, 0xfc, 0xf1, 0x73, 0xab, 0xad, 0x3e, 0xc6, 2);
 DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_GPU_VULKAN_UUID, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5c, 2);
 
-/* For now default to 4 as it felt like a reasonable version feature wise to support.
- * Version 5 adds more extensive version checks. Something to tackle later.
- */
-#define WINE_VULKAN_ICD_VERSION 4
-
 #define wine_vk_find_struct(s, t) wine_vk_find_struct_((void *)s, VK_STRUCTURE_TYPE_##t)
 static void *wine_vk_find_struct_(void *s, VkStructureType t)
 {
@@ -70,8 +65,6 @@ static uint32_t wine_vk_count_struct_(void *s, VkStructureType t)
 
     return result;
 }
-
-static void *wine_vk_get_global_proc_addr(const char *name);
 
 static const struct vulkan_funcs *vk_funcs;
 static VkResult (*p_vkEnumerateInstanceVersion)(uint32_t *version);
@@ -1068,14 +1061,6 @@ VkResult WINAPI wine_vkEnumerateDeviceLayerProperties(VkPhysicalDevice phys_dev,
     return VK_SUCCESS;
 }
 
-VkResult WINAPI wine_vkEnumerateInstanceLayerProperties(uint32_t *count, VkLayerProperties *properties)
-{
-    TRACE("%p, %p\n", count, properties);
-
-    *count = 0;
-    return VK_SUCCESS;
-}
-
 VkResult WINAPI wine_vkEnumerateInstanceVersion(uint32_t *version)
 {
     VkResult res;
@@ -1133,47 +1118,6 @@ void WINAPI wine_vkFreeCommandBuffers(VkDevice device, VkCommandPool pool_handle
     wine_vk_free_command_buffers(device, pool, count, buffers);
 }
 
-PFN_vkVoidFunction WINAPI wine_vkGetDeviceProcAddr(VkDevice device, const char *name)
-{
-    void *func;
-    TRACE("%p, %s\n", device, debugstr_a(name));
-
-    /* The spec leaves return value undefined for a NULL device, let's just return NULL. */
-    if (!device || !name)
-        return NULL;
-
-    /* Per the spec, we are only supposed to return device functions as in functions
-     * for which the first parameter is vkDevice or a child of vkDevice like a
-     * vkCommandBuffer or vkQueue.
-     * Loader takes care of filtering of extensions which are enabled or not.
-     */
-    func = wine_vk_get_device_proc_addr(name);
-    if (func)
-        return func;
-
-    /* vkGetDeviceProcAddr was intended for loading device and subdevice functions.
-     * idTech 6 titles such as Doom and Wolfenstein II, however use it also for
-     * loading of instance functions. This is undefined behavior as the specification
-     * disallows using any of the returned function pointers outside of device /
-     * subdevice objects. The games don't actually use the function pointers and if they
-     * did, they would crash as VkInstance / VkPhysicalDevice parameters need unwrapping.
-     * Khronos clarified behavior in the Vulkan spec and expects drivers to get updated,
-     * however it would require both driver and game fixes.
-     * https://github.com/KhronosGroup/Vulkan-LoaderAndValidationLayers/issues/2323
-     * https://github.com/KhronosGroup/Vulkan-Docs/issues/655
-     */
-    if (device->quirks & WINEVULKAN_QUIRK_GET_DEVICE_PROC_ADDR
-            && ((func = wine_vk_get_instance_proc_addr(name))
-             || (func = wine_vk_get_phys_dev_proc_addr(name))))
-    {
-        WARN("Returning instance function %s.\n", debugstr_a(name));
-        return func;
-    }
-
-    WARN("Unsupported device function: %s.\n", debugstr_a(name));
-    return NULL;
-}
-
 void WINAPI wine_vkGetDeviceQueue(VkDevice device, uint32_t family_index,
         uint32_t queue_index, VkQueue *queue)
 {
@@ -1199,81 +1143,6 @@ void WINAPI wine_vkGetDeviceQueue2(VkDevice device, const VkDeviceQueueInfo2 *in
         matching_queue = VK_NULL_HANDLE;
     }
     *queue = matching_queue;
-}
-
-PFN_vkVoidFunction WINAPI wine_vkGetInstanceProcAddr(VkInstance instance, const char *name)
-{
-    void *func;
-
-    TRACE("%p, %s\n", instance, debugstr_a(name));
-
-    if (!name)
-        return NULL;
-
-    /* vkGetInstanceProcAddr can load most Vulkan functions when an instance is passed in, however
-     * for a NULL instance it can only load global functions.
-     */
-    func = wine_vk_get_global_proc_addr(name);
-    if (func)
-    {
-        return func;
-    }
-    if (!instance)
-    {
-        WARN("Global function %s not found.\n", debugstr_a(name));
-        return NULL;
-    }
-
-    func = wine_vk_get_instance_proc_addr(name);
-    if (func) return func;
-
-    func = wine_vk_get_phys_dev_proc_addr(name);
-    if (func) return func;
-
-    /* vkGetInstanceProcAddr also loads any children of instance, so device functions as well. */
-    func = wine_vk_get_device_proc_addr(name);
-    if (func) return func;
-
-    WARN("Unsupported device or instance function: %s.\n", debugstr_a(name));
-    return NULL;
-}
-
-void * WINAPI wine_vk_icdGetPhysicalDeviceProcAddr(VkInstance instance, const char *name)
-{
-    TRACE("%p, %s\n", instance, debugstr_a(name));
-
-    return wine_vk_get_phys_dev_proc_addr(name);
-}
-
-void * WINAPI wine_vk_icdGetInstanceProcAddr(VkInstance instance, const char *name)
-{
-    TRACE("%p, %s\n", instance, debugstr_a(name));
-
-    /* Initial version of the Vulkan ICD spec required vkGetInstanceProcAddr to be
-     * exported. vk_icdGetInstanceProcAddr was added later to separate ICD calls from
-     * Vulkan API. One of them in our case should forward to the other, so just forward
-     * to the older vkGetInstanceProcAddr.
-     */
-    return wine_vkGetInstanceProcAddr(instance, name);
-}
-
-VkResult WINAPI wine_vk_icdNegotiateLoaderICDInterfaceVersion(uint32_t *supported_version)
-{
-    uint32_t req_version;
-
-    TRACE("%p\n", supported_version);
-
-    /* The spec is not clear how to handle this. Mesa drivers don't check, but it
-     * is probably best to not explode. VK_INCOMPLETE seems to be the closest value.
-     */
-    if (!supported_version)
-        return VK_INCOMPLETE;
-
-    req_version = *supported_version;
-    *supported_version = min(req_version, WINE_VULKAN_ICD_VERSION);
-    TRACE("Loader requested ICD version %u, returning %u\n", req_version, *supported_version);
-
-    return VK_SUCCESS;
 }
 
 VkResult WINAPI wine_vkQueueSubmit(VkQueue queue, uint32_t count,
@@ -2102,31 +1971,6 @@ VkResult WINAPI wine_vkDebugMarkerSetObjectNameEXT(VkDevice device, const VkDebu
     wine_name_info.object = wine_vk_unwrap_handle(name_info->objectType, name_info->object);
 
     return thunk_vkDebugMarkerSetObjectNameEXT(device, &wine_name_info);
-}
-
-static const struct vulkan_func vk_global_dispatch_table[] =
-{
-    /* These functions must call wine_vk_init_once() before accessing vk_funcs. */
-    {"vkCreateInstance", &wine_vkCreateInstance},
-    {"vkEnumerateInstanceExtensionProperties", &wine_vkEnumerateInstanceExtensionProperties},
-    {"vkEnumerateInstanceLayerProperties", &wine_vkEnumerateInstanceLayerProperties},
-    {"vkEnumerateInstanceVersion", &wine_vkEnumerateInstanceVersion},
-    {"vkGetInstanceProcAddr", &wine_vkGetInstanceProcAddr},
-};
-
-static void *wine_vk_get_global_proc_addr(const char *name)
-{
-    unsigned int i;
-
-    for (i = 0; i < ARRAY_SIZE(vk_global_dispatch_table); i++)
-    {
-        if (strcmp(name, vk_global_dispatch_table[i].name) == 0)
-        {
-            TRACE("Found name=%s in global table\n", debugstr_a(name));
-            return vk_global_dispatch_table[i].func;
-        }
-    }
-    return NULL;
 }
 
 /*
