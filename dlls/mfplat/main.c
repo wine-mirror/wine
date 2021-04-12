@@ -7109,7 +7109,7 @@ static void queue_notify_subscriber(struct event_queue *queue)
 static HRESULT WINAPI eventqueue_BeginGetEvent(IMFMediaEventQueue *iface, IMFAsyncCallback *callback, IUnknown *state)
 {
     struct event_queue *queue = impl_from_IMFMediaEventQueue(iface);
-    MFASYNCRESULT *result_data = (MFASYNCRESULT *)queue->subscriber;
+    MFASYNCRESULT *result_data;
     HRESULT hr;
 
     TRACE("%p, %p, %p.\n", iface, callback, state);
@@ -7121,7 +7121,7 @@ static HRESULT WINAPI eventqueue_BeginGetEvent(IMFMediaEventQueue *iface, IMFAsy
 
     if (queue->is_shut_down)
         hr = MF_E_SHUTDOWN;
-    else if (result_data)
+    else if ((result_data = (MFASYNCRESULT *)queue->subscriber))
     {
         if (result_data->pCallback == callback)
             hr = IRtwqAsyncResult_GetStateNoAddRef(queue->subscriber) == state ?
