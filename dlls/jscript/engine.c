@@ -171,7 +171,10 @@ static HRESULT stack_push_exprval(script_ctx_t *ctx, exprval_t *val)
 
     switch(val->type) {
     case EXPRVAL_JSVAL:
-        assert(0);
+        hres = stack_push(ctx, jsval_null());
+        if(SUCCEEDED(hres))
+            hres = stack_push(ctx, val->u.val);
+        return hres;
     case EXPRVAL_IDREF:
         hres = stack_push(ctx, jsval_disp(val->u.idref.disp));
         if(SUCCEEDED(hres))
@@ -245,6 +248,10 @@ static BOOL stack_topn_exprval(script_ctx_t *ctx, unsigned n, exprval_t *r)
         assert(is_number(stack_topn(ctx, n)));
         r->u.hres = get_number(stack_topn(ctx, n));
         return FALSE;
+    case JSV_NULL:
+        r->type = EXPRVAL_JSVAL;
+        r->u.val = stack_topn(ctx, n);
+        return TRUE;
     default:
         assert(0);
         return FALSE;
@@ -268,6 +275,9 @@ static HRESULT exprval_propput(script_ctx_t *ctx, exprval_t *ref, jsval_t v)
     }
     case EXPRVAL_IDREF:
         return disp_propput(ctx, ref->u.idref.disp, ref->u.idref.id, v);
+    case EXPRVAL_JSVAL:
+        WARN("ignoring an attempt to set value reference\n");
+        return S_OK;
     default:
         assert(0);
         return E_FAIL;
@@ -281,6 +291,8 @@ static HRESULT exprval_propget(script_ctx_t *ctx, exprval_t *ref, jsval_t *r)
         return jsval_copy(ctx->stack[ref->u.off], r);
     case EXPRVAL_IDREF:
         return disp_propget(ctx, ref->u.idref.disp, ref->u.idref.id, r);
+    case EXPRVAL_JSVAL:
+        return jsval_copy(ref->u.val, r);
     default:
         assert(0);
         return E_FAIL;
@@ -302,6 +314,17 @@ static HRESULT exprval_call(script_ctx_t *ctx, exprval_t *ref, WORD flags, unsig
     }
     case EXPRVAL_IDREF:
         return disp_call(ctx, ref->u.idref.disp, ref->u.idref.id, flags, argc, argv, r);
+    case EXPRVAL_JSVAL: {
+        IDispatch *obj;
+        HRESULT hres;
+
+        hres = to_object(ctx, ref->u.val, &obj);
+        if(SUCCEEDED(hres)) {
+            hres = disp_call_value(ctx, obj, NULL, flags, argc, argv, r);
+            IDispatch_Release(obj);
+        }
+        return hres;
+    }
     default:
         assert(0);
         return E_FAIL;
