@@ -1773,7 +1773,7 @@ BOOL WINAPI SetupDiRemoveDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 {
     SC_HANDLE manager = NULL, service = NULL;
     struct device *device;
-    WCHAR *service_name;
+    WCHAR *service_name = NULL;
     DWORD size;
 
     TRACE("devinfo %p, device_data %p.\n", devinfo, device_data);
@@ -1789,7 +1789,6 @@ BOOL WINAPI SetupDiRemoveDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
         service_name = malloc(size);
         if (!RegGetValueW(device->key, NULL, L"Service", RRF_RT_REG_SZ, NULL, service_name, &size))
             service = OpenServiceW(manager, service_name, SERVICE_USER_DEFINED_CONTROL);
-        free(service_name);
     }
 
     remove_device(device);
@@ -1802,6 +1801,8 @@ BOOL WINAPI SetupDiRemoveDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
         CloseServiceHandle(service);
     }
     CloseServiceHandle(manager);
+
+    free(service_name);
 
     remove_all_device_ifaces(device);
 
