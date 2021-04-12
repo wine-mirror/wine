@@ -3432,64 +3432,6 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, char *nam
 
 
 /******************************************************************
- *           unix_to_nt_file_name
- */
-NTSTATUS unix_to_nt_file_name( const char *name, WCHAR **nt )
-{
-    static const WCHAR unix_prefixW[] = {'\\','?','?','\\','u','n','i','x',0};
-    WCHAR dos_prefixW[] = {'\\','?','?','\\','A',':','\\',0};
-    const WCHAR *prefix = unix_prefixW;
-    unsigned int lenW, lenA = strlen(name);
-    const char *path = name;
-    NTSTATUS status;
-    WCHAR *p, *buffer;
-    int drive;
-
-    status = find_drive_rootA( &path, lenA, &drive );
-    lenA -= path - name;
-
-    if (status == STATUS_SUCCESS)
-    {
-        while (lenA && path[0] == '/') { lenA--; path++; }
-        dos_prefixW[4] += drive;
-        prefix = dos_prefixW;
-    }
-    else if (status != STATUS_OBJECT_PATH_NOT_FOUND) return status;
-
-    lenW = wcslen( prefix );
-    if (!(buffer = malloc( (lenA + lenW + 1) * sizeof(WCHAR) ))) return STATUS_NO_MEMORY;
-    memcpy( buffer, prefix, lenW * sizeof(WCHAR) );
-    lenW += ntdll_umbstowcs( path, lenA, buffer + lenW, lenA );
-    buffer[lenW] = 0;
-    for (p = buffer; *p; p++) if (*p == '/') *p = '\\';
-    *nt = buffer;
-    return STATUS_SUCCESS;
-}
-
-
-/******************************************************************
- *           wine_unix_to_nt_file_name
- */
-NTSTATUS CDECL wine_unix_to_nt_file_name( const char *name, WCHAR *buffer, SIZE_T *size )
-{
-    WCHAR *nt_name = NULL;
-    NTSTATUS status;
-
-    if (name[0] != '/') return STATUS_INVALID_PARAMETER;  /* relative paths are not supported */
-
-    status = unix_to_nt_file_name( name, &nt_name );
-    if (nt_name)
-    {
-        if (*size > wcslen(nt_name)) wcscpy( buffer, nt_name );
-        else status = STATUS_BUFFER_TOO_SMALL;
-        *size = wcslen(nt_name) + 1;
-        free( nt_name );
-    }
-    return status;
-}
-
-
-/******************************************************************
  *		collapse_path
  *
  * Get rid of . and .. components in the path.
@@ -3567,7 +3509,63 @@ static void collapse_path( WCHAR *path )
 }
 
 
-#define IS_SEPARATOR(ch)   ((ch) == '\\' || (ch) == '/')
+/******************************************************************
+ *           unix_to_nt_file_name
+ */
+NTSTATUS unix_to_nt_file_name( const char *name, WCHAR **nt )
+{
+    static const WCHAR unix_prefixW[] = {'\\','?','?','\\','u','n','i','x',0};
+    WCHAR dos_prefixW[] = {'\\','?','?','\\','A',':','\\',0};
+    const WCHAR *prefix = unix_prefixW;
+    unsigned int lenW, lenA = strlen(name);
+    const char *path = name;
+    NTSTATUS status;
+    WCHAR *buffer;
+    int drive;
+
+    status = find_drive_rootA( &path, lenA, &drive );
+    lenA -= path - name;
+
+    if (status == STATUS_SUCCESS)
+    {
+        while (lenA && path[0] == '/') { lenA--; path++; }
+        dos_prefixW[4] += drive;
+        prefix = dos_prefixW;
+    }
+    else if (status != STATUS_OBJECT_PATH_NOT_FOUND) return status;
+
+    lenW = wcslen( prefix );
+    if (!(buffer = malloc( (lenA + lenW + 1) * sizeof(WCHAR) ))) return STATUS_NO_MEMORY;
+    memcpy( buffer, prefix, lenW * sizeof(WCHAR) );
+    lenW += ntdll_umbstowcs( path, lenA, buffer + lenW, lenA );
+    buffer[lenW] = 0;
+    collapse_path( buffer );
+    *nt = buffer;
+    return STATUS_SUCCESS;
+}
+
+
+/******************************************************************
+ *           wine_unix_to_nt_file_name
+ */
+NTSTATUS CDECL wine_unix_to_nt_file_name( const char *name, WCHAR *buffer, SIZE_T *size )
+{
+    WCHAR *nt_name = NULL;
+    NTSTATUS status;
+
+    if (name[0] != '/') return STATUS_INVALID_PARAMETER;  /* relative paths are not supported */
+
+    status = unix_to_nt_file_name( name, &nt_name );
+    if (nt_name)
+    {
+        if (*size > wcslen(nt_name)) wcscpy( buffer, nt_name );
+        else status = STATUS_BUFFER_TOO_SMALL;
+        *size = wcslen(nt_name) + 1;
+        free( nt_name );
+    }
+    return status;
+}
+
 
 /***********************************************************************
  *           get_full_path
