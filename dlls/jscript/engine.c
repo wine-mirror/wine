@@ -661,6 +661,14 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
                     if(FAILED(hres))
                         return hres;
                 }
+
+                /* ECMA-262 5.1 Edition    13 */
+                if(func->name && ctx->version >= SCRIPTLANGUAGEVERSION_ES5 && !wcscmp(identifier, func->name)) {
+                    TRACE("returning a function from scope chain\n");
+                    ret->type = EXPRVAL_JSVAL;
+                    ret->u.val = jsval_obj(jsdisp_addref(scope->frame->function_instance));
+                    return S_OK;
+                }
             }
             if(scope->jsobj)
                 hres = jsdisp_get_id(scope->jsobj, identifier, fdexNameImplicit, &id);

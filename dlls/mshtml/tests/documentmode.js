@@ -534,3 +534,39 @@ sync_test("delete_prop", function() {
     todo_wine.
     ok(!("globalprop4" in obj), "globalprop4 is still in obj");
 });
+
+var func_scope_val = 1;
+
+sync_test("func_scope", function() {
+    var func_scope_val = 2;
+
+    var f = function func_scope_val() {
+        return func_scope_val;
+    };
+
+    func_scope_val = 3;
+    if(document.documentMode < 9) {
+        ok(f() === 3, "f() = " + f());
+        return;
+    }
+    ok(f === f(), "f() = " + f());
+
+    f = function func_scope_val(a) {
+        func_scope_val = 4;
+        return func_scope_val;
+    };
+
+    func_scope_val = 3;
+    ok(f === f(), "f() = " + f());
+    ok(func_scope_val === 3, "func_scope_val = " + func_scope_val);
+    ok(window.func_scope_val === 1, "window.func_scope_val = " + window.func_scope_val);
+
+    f = function func_scope_val(a) {
+        return (function() { return a ? func_scope_val(false) : func_scope_val; })();
+    };
+
+    ok(f === f(true), "f(true) = " + f(true));
+
+    window = 1;
+    ok(window === window.self, "window = " + window);
+});
