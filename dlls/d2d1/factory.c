@@ -639,7 +639,7 @@ static void STDMETHODCALLTYPE d2d_factory_mt_Enter(ID2D1Multithread *iface)
 
     TRACE("%p.\n", iface);
 
-    return EnterCriticalSection(&factory->cs);
+    EnterCriticalSection(&factory->cs);
 }
 
 static void STDMETHODCALLTYPE d2d_factory_mt_Leave(ID2D1Multithread *iface)
@@ -648,7 +648,7 @@ static void STDMETHODCALLTYPE d2d_factory_mt_Leave(ID2D1Multithread *iface)
 
     TRACE("%p.\n", iface);
 
-    return LeaveCriticalSection(&factory->cs);
+    LeaveCriticalSection(&factory->cs);
 }
 
 static BOOL STDMETHODCALLTYPE d2d_factory_st_GetMultithreadProtected(ID2D1Multithread *iface)
