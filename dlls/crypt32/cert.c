@@ -2689,10 +2689,93 @@ done:
     return !status;
 }
 
+static BOOL CNG_ImportRSAPubKey(CERT_PUBLIC_KEY_INFO *info, BCRYPT_KEY_HANDLE *key)
+{
+    DWORD size, modulus_len, i;
+    BLOBHEADER *hdr;
+    RSAPUBKEY *rsapubkey;
+    const WCHAR *rsa_algo;
+    BCRYPT_ALG_HANDLE alg = NULL;
+    BCRYPT_RSAKEY_BLOB *rsakey;
+    BYTE *s, *d;
+    NTSTATUS status;
+
+    if (!info->PublicKey.cbData)
+    {
+        SetLastError(NTE_BAD_ALGID);
+        return FALSE;
+    }
+
+    if (!CryptDecodeObjectEx(X509_ASN_ENCODING, RSA_CSP_PUBLICKEYBLOB, info->PublicKey.pbData,
+            info->PublicKey.cbData, CRYPT_DECODE_ALLOC_FLAG, NULL, &hdr, &size))
+    {
+        WARN("CryptDecodeObjectEx failed\n");
+        return FALSE;
+    }
+
+    if (hdr->aiKeyAlg == CALG_RSA_KEYX)
+        rsa_algo = BCRYPT_RSA_ALGORITHM;
+    else if (hdr->aiKeyAlg == CALG_RSA_SIGN)
+        rsa_algo = BCRYPT_RSA_SIGN_ALGORITHM;
+    else
+    {
+        FIXME("Unsupported RSA algorithm: %#x\n", hdr->aiKeyAlg);
+        CryptMemFree(hdr);
+        SetLastError(NTE_BAD_ALGID);
+        return FALSE;
+    }
+
+    if ((status = BCryptOpenAlgorithmProvider(&alg, rsa_algo, NULL, 0)))
+        goto done;
+
+    rsapubkey = (RSAPUBKEY *)(hdr + 1);
+
+    modulus_len = size - sizeof(*hdr) - sizeof(*rsapubkey);
+    if (modulus_len != rsapubkey->bitlen / 8)
+        FIXME("RSA pubkey has wrong modulus_len %u\n", modulus_len);
+
+    size = sizeof(*rsakey) + sizeof(ULONG) + modulus_len;
+
+    if (!(rsakey = CryptMemAlloc(size)))
+    {
+        status = STATUS_NO_MEMORY;
+        goto done;
+    }
+
+    rsakey->Magic = BCRYPT_RSAPUBLIC_MAGIC;
+    rsakey->BitLength = rsapubkey->bitlen;
+    rsakey->cbPublicExp = sizeof(ULONG);
+    rsakey->cbModulus = modulus_len;
+    rsakey->cbPrime1 = 0;
+    rsakey->cbPrime2 = 0;
+
+    d = (BYTE *)(rsakey + 1);
+    /* According to MSDN modulus and pubexp are in LE while
+     * BCRYPT_RSAKEY_BLOB is supposed to have them in BE format */
+    *(ULONG *)d = RtlUlongByteSwap(rsapubkey->pubexp);
+    d += sizeof(ULONG);
+    s = (BYTE *)(rsapubkey + 1);
+    for (i = 0; i < modulus_len; i++)
+        d[i] = s[modulus_len - i - 1];
+
+    status = BCryptImportKeyPair(alg, NULL, BCRYPT_RSAPUBLIC_BLOB, key, (BYTE *)rsakey, size, 0);
+    CryptMemFree(rsakey);
+
+done:
+    CryptMemFree(hdr);
+    if (alg) BCryptCloseAlgorithmProvider(alg, 0);
+    if (status) SetLastError(RtlNtStatusToDosError(status));
+    return !status;
+}
+
 BOOL CNG_ImportPubKey(CERT_PUBLIC_KEY_INFO *pubKeyInfo, BCRYPT_KEY_HANDLE *key)
 {
     if (!strcmp(pubKeyInfo->Algorithm.pszObjId, szOID_ECC_PUBLIC_KEY))
         return CNG_ImportECCPubKey(pubKeyInfo, key);
+
+
+    if (!strcmp(pubKeyInfo->Algorithm.pszObjId, szOID_RSA_RSA))
+        return CNG_ImportRSAPubKey(pubKeyInfo, key);
 
     FIXME("Unsupported public key type: %s\n", debugstr_a(pubKeyInfo->Algorithm.pszObjId));
     SetLastError(NTE_BAD_ALGID);

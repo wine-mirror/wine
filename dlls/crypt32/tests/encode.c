@@ -30,6 +30,7 @@
 
 static BOOL (WINAPI *pCryptDecodeObjectEx)(DWORD,LPCSTR,const BYTE*,DWORD,DWORD,PCRYPT_DECODE_PARA,void*,DWORD*);
 static BOOL (WINAPI *pCryptEncodeObjectEx)(DWORD,LPCSTR,const void*,DWORD,PCRYPT_ENCODE_PARA,void*,DWORD*);
+static DWORD (WINAPI *pBCryptDestroyKey)(BCRYPT_KEY_HANDLE);
 
 struct encodedInt
 {
@@ -8400,6 +8401,7 @@ static void testImportPublicKey(HCRYPTPROV csp, PCERT_PUBLIC_KEY_INFO info)
 {
     BOOL ret;
     HCRYPTKEY key;
+    BCRYPT_KEY_HANDLE key2;
     PCCERT_CONTEXT context;
     DWORD dwSize;
     ALG_ID ai;
@@ -8469,6 +8471,12 @@ static void testImportPublicKey(HCRYPTPROV csp, PCERT_PUBLIC_KEY_INFO info)
          &context->pCertInfo->SubjectPublicKeyInfo, 0, 0, NULL, &key);
         ok(ret, "CryptImportPublicKeyInfoEx failed: %08x\n", GetLastError());
         CryptDestroyKey(key);
+
+        ret = CryptImportPublicKeyInfoEx2(X509_ASN_ENCODING,
+         &context->pCertInfo->SubjectPublicKeyInfo, 0, NULL, &key2);
+        ok(ret, "CryptImportPublicKeyInfoEx2 failed: %08x\n", GetLastError());
+        if (pBCryptDestroyKey) pBCryptDestroyKey(key2);
+
         CertFreeCertificateContext(context);
     }
 }
@@ -8502,7 +8510,7 @@ START_TEST(encode)
 {
     static const DWORD encodings[] = { X509_ASN_ENCODING, PKCS_7_ASN_ENCODING,
      X509_ASN_ENCODING | PKCS_7_ASN_ENCODING };
-    HMODULE hCrypt32;
+    HMODULE hCrypt32, hBcrypt;
     DWORD i;
 
     hCrypt32 = GetModuleHandleA("crypt32.dll");
@@ -8513,6 +8521,9 @@ START_TEST(encode)
         win_skip("CryptDecodeObjectEx() is not available\n");
         return;
     }
+
+    hBcrypt = GetModuleHandleA("bcrypt.dll");
+    pBCryptDestroyKey = (void*)GetProcAddress(hBcrypt, "BCryptDestroyKey");
 
     for (i = 0; i < ARRAY_SIZE(encodings); i++)
     {
