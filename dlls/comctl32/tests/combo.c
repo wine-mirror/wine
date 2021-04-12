@@ -1391,6 +1391,11 @@ START_TEST(combo)
         return;
     }
 
+    test_comboex();
+    test_comboex_CB_GETLBTEXT();
+    test_comboex_WM_WINDOWPOSCHANGING();
+    test_comboex_get_set_item();
+
     /* ComboBox control tests. */
     test_combo_WS_VSCROLL();
     test_combo_setfont(CBS_DROPDOWN);
