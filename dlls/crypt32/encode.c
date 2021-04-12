@@ -5050,8 +5050,11 @@ BOOL WINAPI CryptImportPublicKeyInfoEx2(DWORD dwCertEncodingType,
  PCERT_PUBLIC_KEY_INFO pInfo, DWORD dwFlags, void *pvAuxInfo,
  BCRYPT_KEY_HANDLE *phKey)
 {
-    FIXME_(crypt)("(%d, %p, %08x, %p, %p): stub\n", dwCertEncodingType, pInfo,
+    TRACE_(crypt)("(%d, %p, %08x, %p, %p)\n", dwCertEncodingType, pInfo,
      dwFlags, pvAuxInfo, phKey);
-    SetLastError(ERROR_FILE_NOT_FOUND);
-    return FALSE;
+
+    if (dwFlags)
+        FIXME("flags %#x ignored\n", dwFlags);
+
+    return CNG_ImportPubKey(pInfo, phKey);
 }
