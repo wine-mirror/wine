@@ -442,12 +442,14 @@ static void source_reader_set_sa_response(struct source_reader *reader, struct s
     }
 }
 
-static void source_reader_queue_response(struct source_reader *reader, struct media_stream *stream, HRESULT status,
+static HRESULT source_reader_queue_response(struct source_reader *reader, struct media_stream *stream, HRESULT status,
         DWORD stream_flags, LONGLONG timestamp, IMFSample *sample)
 {
     struct stream_response *response;
 
-    response = calloc(1, sizeof(*response));
+    if (!(response = calloc(1, sizeof(*response))))
+        return E_OUTOFMEMORY;
+
     response->status = status;
     response->stream_index = stream->index;
     response->stream_flags = stream_flags;
@@ -466,6 +468,8 @@ static void source_reader_queue_response(struct source_reader *reader, struct me
     stream->responses++;
 
     source_reader_response_ready(reader, response);
+
+    return S_OK;
 }
 
 static HRESULT source_reader_request_sample(struct source_reader *reader, struct media_stream *stream)
@@ -716,8 +720,7 @@ static HRESULT source_reader_process_sample(struct source_reader *reader, struct
         if (FAILED(IMFSample_GetSampleTime(sample, &timestamp)))
             WARN("Sample time wasn't set.\n");
 
-        source_reader_queue_response(reader, stream, S_OK, 0, timestamp, sample);
-        return S_OK;
+        return source_reader_queue_response(reader, stream, S_OK, 0, timestamp, sample);
     }
 
     /* It's assumed that decoder has 1 input and 1 output, both id's are 0. */
