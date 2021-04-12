@@ -3233,6 +3233,15 @@ static HRESULT WINAPI session_events_callback_Invoke(IMFAsyncCallback *iface, IM
             LeaveCriticalSection(&session->cs);
             break;
 
+        case MEReconnectStart:
+        case MEReconnectEnd:
+
+            EnterCriticalSection(&session->cs);
+            if (session_get_media_source(session, (IMFMediaSource *)event_source))
+                IMFMediaEventQueue_QueueEvent(session->event_queue, event);
+            LeaveCriticalSection(&session->cs);
+            break;
+
         case MENewStream:
             stream = (IMFMediaStream *)value.punkVal;
 
