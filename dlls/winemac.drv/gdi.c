@@ -68,7 +68,7 @@ static void compute_desktop_rect(void)
     uint32_t count, i;
 
     desktop_rect = CGRectNull;
-    if (CGGetActiveDisplayList(ARRAY_SIZE(displayIDs), displayIDs, &count) != kCGErrorSuccess ||
+    if (CGGetOnlineDisplayList(ARRAY_SIZE(displayIDs), displayIDs, &count) != kCGErrorSuccess ||
         !count)
     {
         displayIDs[0] = CGMainDisplayID();
