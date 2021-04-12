@@ -894,6 +894,9 @@ static WORD day_of_month(const SYSTEMTIME* systemtime, WORD year)
     if (systemtime->wYear != 0)
         return systemtime->wDay;
 
+    if (systemtime->wMonth == 0)
+        return 0;
+
     first_of_month.wYear = year;
     first_of_month.wMonth = systemtime->wMonth;
     first_of_month.wDay = 1;
@@ -926,13 +929,37 @@ static WORD day_of_month(const SYSTEMTIME* systemtime, WORD year)
 
 static void test_GetTimeZoneInformationForYear(void)
 {
-    BOOL ret;
+    BOOL ret, broken_test = FALSE;
     SYSTEMTIME systemtime;
     TIME_ZONE_INFORMATION local_tzinfo, tzinfo, tzinfo2;
     DYNAMIC_TIME_ZONE_INFORMATION dyn_tzinfo;
-    static const WCHAR std_tzname[] = {'G','r','e','e','n','l','a','n','d',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e',0};
-    static const WCHAR dlt_tzname[] = {'G','r','e','e','n','l','a','n','d',' ','D','a','y','l','i','g','h','t',' ','T','i','m','e',0};
     WORD std_day, dlt_day;
+    unsigned i;
+    static const struct
+    {
+        const WCHAR *tzname;
+        USHORT year;
+        LONG bias, std_bias, dlt_bias;
+        WORD std_month, std_day, dlt_month, dlt_day;
+        int tzinfo_todo : 1, bias_todo : 1, std_bias_todo : 1, dlt_bias_todo : 1;
+        int std_month_todo : 1, std_day_todo : 1, dlt_month_todo : 1, dlt_day_todo : 1;
+    }
+    test_data[] =
+    {
+        { L"Greenland Standard Time",     2015,  180, 0, -60, 10, 24, 3, 28 },
+        { L"Greenland Standard Time",     2016,  180, 0, -60, 10, 29, 3, 26 },
+        { L"Greenland Standard Time",     2017,  180, 0, -60, 10, 28, 3, 25 },
+        { L"Easter Island Standard Time", 2014,  360, 0, -60,  4, 26, 9,  6, 0, 1, 0, 1, 1, 1, 1, 1 },
+        { L"Easter Island Standard Time", 2015,  300, 0, -60,  0,  0, 0,  0, 0, 0, 0, 0, 1, 1, 1, 1 },
+        { L"Easter Island Standard Time", 2016,  360, 0, -60,  5, 14, 8, 13, 0, 1, 0, 1, 1, 1, 1, 1 },
+        { L"Egypt Standard Time",         2013, -120, 0, -60,  0,  0, 0,  0, 0, 0, 0, 0, 1, 1, 1, 1 },
+        { L"Egypt Standard Time",         2014, -120, 0, -60,  9, 25, 5, 15, 0, 0, 0, 0, 1, 1, 1, 1 },
+        { L"Egypt Standard Time",         2015, -120, 0, -60,  0,  0, 0,  0, 0, 0, 0, 0, 1, 1, 1, 1 },
+        { L"Egypt Standard Time",         2016, -120, 0, -60,  0,  0, 0,  0, 0, 0, 0, 0, 1, 1, 1, 1 },
+        { L"Altai Standard Time",         2016, -420, 0,  60,  3, 27, 1,  1, 1 },
+        { L"Altai Standard Time",         2017, -420, 0, -60,  0,  0, 0,  0, 1 },
+        { L"Altai Standard Time",         2018, -420, 0, -60,  0,  0, 0,  0, 1 },
+    };
 
     if (!pGetTimeZoneInformationForYear || !pGetDynamicTimeZoneInformation)
     {
@@ -971,38 +998,78 @@ static void test_GetTimeZoneInformationForYear(void)
     ok(tzinfo.DaylightBias == local_tzinfo.DaylightBias, "Expected DaylightBias %d, got %d\n", local_tzinfo.DaylightBias, tzinfo.DaylightBias);
 
     memset(&dyn_tzinfo, 0xaa, sizeof(dyn_tzinfo));
-    lstrcpyW(dyn_tzinfo.TimeZoneKeyName, std_tzname);
-    dyn_tzinfo.DynamicDaylightTimeDisabled = FALSE;
-
-    ret = pGetTimeZoneInformationForYear(2015, &dyn_tzinfo, &tzinfo);
-    ok(ret == TRUE, "GetTimeZoneInformationForYear failed, err %u\n", GetLastError());
-    ok(tzinfo.Bias == 180, "Expected Bias 180, got %d\n", tzinfo.Bias);
-    ok(tzinfo.StandardDate.wMonth == 10, "Expected standard month 10, got %d\n", tzinfo.StandardDate.wMonth);
-    std_day = day_of_month(&tzinfo.StandardDate, 2015);
-    ok(std_day == 24, "Expected standard day 24, got %d\n", std_day);
-    ok(tzinfo.StandardBias == 0, "Expected StandardBias 0, got %d\n", tzinfo.StandardBias);
-    ok(tzinfo.DaylightDate.wMonth == 3, "Expected daylight month 3, got %d\n", tzinfo.DaylightDate.wMonth);
-    dlt_day = day_of_month(&tzinfo.DaylightDate, 2015);
-    ok(dlt_day == 28, "Expected daylight day 28, got %d\n", dlt_day);
-    ok(tzinfo.DaylightBias == -60, "Expected DaylightBias -60, got %d\n", tzinfo.DaylightBias);
-
-    ret = pGetTimeZoneInformationForYear(2016, &dyn_tzinfo, &tzinfo2);
-    ok(ret == TRUE, "GetTimeZoneInformationForYear failed, err %u\n", GetLastError());
-    ok(!lstrcmpW(tzinfo.StandardName, tzinfo2.StandardName),
-        "Got differing StandardName values %s and %s\n",
-        wine_dbgstr_w(tzinfo.StandardName), wine_dbgstr_w(tzinfo2.StandardName));
-    ok(!lstrcmpW(tzinfo.DaylightName, tzinfo2.DaylightName),
-        "Got differing DaylightName values %s and %s\n",
-        wine_dbgstr_w(tzinfo.DaylightName), wine_dbgstr_w(tzinfo2.DaylightName));
-
-    memset(&dyn_tzinfo, 0xaa, sizeof(dyn_tzinfo));
-    lstrcpyW(dyn_tzinfo.TimeZoneKeyName, dlt_tzname);
-
+    lstrcpyW(dyn_tzinfo.TimeZoneKeyName, L"Greenland Daylight Time");
     SetLastError(0xdeadbeef);
     ret = pGetTimeZoneInformationForYear(2015, &dyn_tzinfo, &tzinfo);
+    if (ret)
+        broken_test = TRUE;
     ok((ret == FALSE && GetLastError() == ERROR_FILE_NOT_FOUND) ||
-       broken(ret == TRUE) /* vista,7 */,
-       "GetTimeZoneInformationForYear err %u\n", GetLastError());
+        broken(broken_test) /* vista,7 */,
+        "GetTimeZoneInformationForYear err %u\n", GetLastError());
+
+    memset(&dyn_tzinfo, 0xaa, sizeof(dyn_tzinfo));
+    lstrcpyW(dyn_tzinfo.TimeZoneKeyName, L"Altai Standard Time");
+    SetLastError(0xdeadbeef);
+    ret = pGetTimeZoneInformationForYear(2015, &dyn_tzinfo, &tzinfo);
+    if (!ret && GetLastError() == ERROR_FILE_NOT_FOUND)
+        broken_test = TRUE;
+    todo_wine ok(ret == TRUE || broken(broken_test) /* before 10 1809 */,
+        "GetTimeZoneInformationForYear err %u\n", GetLastError());
+
+    if (broken(broken_test))
+    {
+        win_skip("Old Windows version\n");
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(test_data); i++)
+    {
+        memset(&dyn_tzinfo, 0xaa, sizeof(dyn_tzinfo));
+        memset(&tzinfo, 0xbb, sizeof(tzinfo));
+        lstrcpyW(dyn_tzinfo.TimeZoneKeyName, test_data[i].tzname);
+        dyn_tzinfo.DynamicDaylightTimeDisabled = FALSE;
+
+        ret = pGetTimeZoneInformationForYear(test_data[i].year, &dyn_tzinfo, &tzinfo);
+        todo_wine_if(test_data[i].tzinfo_todo)
+            ok(ret == TRUE, "GetTimeZoneInformationForYear failed, err %u, for %s\n", GetLastError(), wine_dbgstr_w(test_data[i].tzname));
+        if (!ret)
+            continue;
+        todo_wine_if(test_data[i].bias_todo)
+            ok(tzinfo.Bias == test_data[i].bias, "Expected bias %d, got %d, for %s\n",
+                test_data[i].bias, tzinfo.Bias, wine_dbgstr_w(test_data[i].tzname));
+        todo_wine_if(test_data[i].std_month_todo)
+            ok(tzinfo.StandardDate.wMonth == test_data[i].std_month, "Expected standard month %d, got %d, for %s\n",
+                test_data[i].std_month, tzinfo.StandardDate.wMonth, wine_dbgstr_w(test_data[i].tzname));
+        std_day = day_of_month(&tzinfo.StandardDate, test_data[i].year);
+        todo_wine_if(test_data[i].std_day_todo)
+            ok(std_day == test_data[i].std_day, "Expected standard day %d, got %d, for %s\n",
+                test_data[i].std_day, std_day, wine_dbgstr_w(test_data[i].tzname));
+        todo_wine_if(test_data[i].std_bias_todo)
+            ok(tzinfo.StandardBias == test_data[i].std_bias, "Expected standard bias %d, got %d, for %s\n",
+                test_data[i].std_bias, tzinfo.StandardBias, wine_dbgstr_w(test_data[i].tzname));
+        todo_wine_if(test_data[i].dlt_month_todo)
+            ok(tzinfo.DaylightDate.wMonth == test_data[i].dlt_month, "Expected daylight month %d, got %d, for %s\n",
+                test_data[i].dlt_month, tzinfo.DaylightDate.wMonth, wine_dbgstr_w(test_data[i].tzname));
+        dlt_day = day_of_month(&tzinfo.DaylightDate, test_data[i].year);
+        todo_wine_if(test_data[i].dlt_day_todo)
+            ok(dlt_day == test_data[i].dlt_day, "Expected daylight day %d, got %d, for %s\n",
+                test_data[i].dlt_day, dlt_day, wine_dbgstr_w(test_data[i].tzname));
+        todo_wine_if(test_data[i].dlt_bias_todo)
+            ok(tzinfo.DaylightBias == test_data[i].dlt_bias, "Expected daylight bias %d, got %d, for %s\n",
+                test_data[i].dlt_bias, tzinfo.DaylightBias, wine_dbgstr_w(test_data[i].tzname));
+
+        if (i > 0 && test_data[i-1].tzname == test_data[i].tzname)
+        {
+            ok(!lstrcmpW(tzinfo.StandardName, tzinfo2.StandardName),
+                "Got differing StandardName values %s and %s\n",
+                wine_dbgstr_w(tzinfo.StandardName), wine_dbgstr_w(tzinfo2.StandardName));
+            ok(!lstrcmpW(tzinfo.DaylightName, tzinfo2.DaylightName),
+                "Got differing DaylightName values %s and %s\n",
+                wine_dbgstr_w(tzinfo.DaylightName), wine_dbgstr_w(tzinfo2.DaylightName));
+        }
+
+        memcpy(&tzinfo2, &tzinfo, sizeof(tzinfo2));
+    }
 }
 
 static void test_GetTickCount(void)
