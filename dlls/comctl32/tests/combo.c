@@ -27,8 +27,12 @@
 #include "v6util.h"
 #include "msg.h"
 
-#define EDITBOX_SEQ_INDEX  0
-#define NUM_MSG_SEQUENCES  1
+enum message_seq_index
+{
+    EDITBOX_SEQ_INDEX = 0,
+    PARENT_SEQ_INDEX,
+    NUM_MSG_SEQUENCES,
+};
 
 #define EDITBOX_ID         0
 #define COMBO_ID           1995
@@ -442,10 +446,29 @@ static void test_comboex_WM_WINDOWPOSCHANGING(void)
     ok(ret, "DestroyWindow failed\n");
 }
 
-static LRESULT ComboExTestOnNotify(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+struct di_context
 {
+    unsigned int mask;
+    BOOL set_CBEIF_DI_SETITEM;
+};
+
+static struct di_context di_context;
+
+static LRESULT ComboExTestOnNotify(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    struct message msg;
     NMHDR *hdr = (NMHDR*)lParam;
-    switch(hdr->code){
+
+    msg.message = message;
+    msg.flags = sent|wparam|lparam;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+    if (hdr) msg.id = hdr->code;
+
+    add_message(sequences, PARENT_SEQ_INDEX, &msg);
+
+    switch (hdr->code)
+    {
     case CBEN_ENDEDITA:
         {
             NMCBEENDEDITA *edit_info = (NMCBEENDEDITA*)hdr;
@@ -460,6 +483,42 @@ static LRESULT ComboExTestOnNotify(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
             if(edit_info->iWhy==CBENF_DROPDOWN){
                 received_end_edit = TRUE;
             }
+            break;
+        }
+    case CBEN_GETDISPINFOA:
+    case CBEN_GETDISPINFOW:
+        {
+            NMCOMBOBOXEXA *item = (NMCOMBOBOXEXA *)hdr;
+
+            di_context.mask = item->ceItem.mask;
+
+            if (item->ceItem.mask & CBEIF_IMAGE)
+            {
+                ok(item->ceItem.iImage == I_IMAGECALLBACK, "Unexpected iImage %d.\n", item->ceItem.iImage);
+                item->ceItem.iImage = 123;
+            }
+
+            if (item->ceItem.mask & CBEIF_TEXT)
+            {
+                ok(item->ceItem.pszText && item->ceItem.pszText != LPSTR_TEXTCALLBACKA,
+                        "Unexpected pszText %p.\n", item->ceItem.pszText);
+                ok(item->ceItem.cchTextMax == 0, "Unexpected cchTextMax %d.\n", item->ceItem.cchTextMax);
+            }
+
+            if (item->ceItem.mask & CBEIF_SELECTEDIMAGE)
+                ok(item->ceItem.iSelectedImage == I_IMAGECALLBACK, "Unexpected iSelectedImage %d.\n",
+                        item->ceItem.iSelectedImage);
+
+            if (item->ceItem.mask & CBEIF_OVERLAY)
+                ok(item->ceItem.iOverlay == I_IMAGECALLBACK, "Unexpected iOverlay %d.\n",
+                        item->ceItem.iOverlay);
+
+            if (item->ceItem.mask & CBEIF_INDENT)
+                ok(item->ceItem.iIndent == 0, "Unexpected iIndent %d.\n", item->ceItem.iIndent);
+
+            if (di_context.set_CBEIF_DI_SETITEM)
+                item->ceItem.mask |= CBEIF_DI_SETITEM;
+
             break;
         }
     }
@@ -1365,6 +1424,96 @@ static void test_combo_ctlcolor(void)
     DestroyWindow(combo);
 }
 
+static const struct message getdisp_parent_seq[] =
+{
+    { WM_NOTIFY, sent|id, 0, 0, CBEN_GETDISPINFOA },
+    { 0 }
+};
+
+static const struct message empty_seq[] =
+{
+    { 0 }
+};
+
+static void test_comboex_CBEN_GETDISPINFO(void)
+{
+    static const unsigned int test_masks[] =
+    {
+        CBEIF_TEXT,
+        CBEIF_IMAGE,
+        CBEIF_INDENT,
+        CBEIF_OVERLAY,
+        CBEIF_SELECTEDIMAGE,
+        CBEIF_IMAGE | CBEIF_INDENT,
+    };
+    COMBOBOXEXITEMA item;
+    unsigned int i;
+    HWND combo;
+    DWORD res;
+
+    combo = createComboEx(WS_BORDER | WS_VISIBLE | WS_CHILD | CBS_DROPDOWN);
+    ok(!!combo, "Failed to create control window.\n");
+
+    /* All possible callback fields. */
+    memset(&item, 0, sizeof(item));
+    item.mask = CBEIF_TEXT | CBEIF_IMAGE | CBEIF_INDENT | CBEIF_OVERLAY | CBEIF_SELECTEDIMAGE;
+    item.pszText = LPSTR_TEXTCALLBACKA;
+    item.iImage = I_IMAGECALLBACK;
+    item.iSelectedImage = I_IMAGECALLBACK;
+    item.iOverlay = I_IMAGECALLBACK;
+    item.iIndent = I_INDENTCALLBACK;
+
+    res = SendMessageA(combo, CBEM_INSERTITEMA, 0, (LPARAM)&item);
+    ok(!res, "Unexpected return value %u.\n", res);
+
+    for (i = 0; i < ARRAY_SIZE(test_masks); ++i)
+    {
+        flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+        memset(&item, 0, sizeof(item));
+        item.mask = test_masks[i];
+        res = SendMessageA(combo, CBEM_GETITEMA, 0, (LPARAM)&item);
+        ok(res == 1, "Unexpected return value %u.\n", res);
+
+        ok_sequence(sequences, PARENT_SEQ_INDEX, getdisp_parent_seq, "Get disp mask seq", TRUE);
+    }
+
+    di_context.set_CBEIF_DI_SETITEM = TRUE;
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    memset(&item, 0, sizeof(item));
+    item.mask = CBEIF_IMAGE;
+    di_context.mask = 0;
+    res = SendMessageA(combo, CBEM_GETITEMA, 0, (LPARAM)&item);
+    ok(res == 1, "Unexpected return value %u.\n", res);
+todo_wine
+    ok(di_context.mask == CBEIF_IMAGE, "Unexpected mask %#x.\n", di_context.mask);
+
+    ok_sequence(sequences, PARENT_SEQ_INDEX, getdisp_parent_seq, "Get disp DI_SETITEM seq", TRUE);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    memset(&item, 0, sizeof(item));
+    item.mask = CBEIF_IMAGE;
+    res = SendMessageA(combo, CBEM_GETITEMA, 0, (LPARAM)&item);
+    ok(res == 1, "Unexpected return value %u.\n", res);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq, "Get disp after DI_SETITEM seq", FALSE);
+
+    /* Request two fields, one was set. */
+    memset(&item, 0, sizeof(item));
+    item.mask = CBEIF_IMAGE | CBEIF_INDENT;
+    di_context.mask = 0;
+    res = SendMessageA(combo, CBEM_GETITEMA, 0, (LPARAM)&item);
+    ok(res == 1, "Unexpected return value %u.\n", res);
+todo_wine
+    ok(di_context.mask == CBEIF_INDENT, "Unexpected mask %#x.\n", di_context.mask);
+
+    di_context.set_CBEIF_DI_SETITEM = FALSE;
+
+    DestroyWindow(combo);
+}
+
 START_TEST(combo)
 {
     ULONG_PTR ctx_cookie;
@@ -1384,6 +1533,7 @@ START_TEST(combo)
     test_comboex_WM_WINDOWPOSCHANGING();
     test_comboex_subclass();
     test_comboex_get_set_item();
+    test_comboex_CBEN_GETDISPINFO();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
@@ -1395,6 +1545,7 @@ START_TEST(combo)
     test_comboex_CB_GETLBTEXT();
     test_comboex_WM_WINDOWPOSCHANGING();
     test_comboex_get_set_item();
+    test_comboex_CBEN_GETDISPINFO();
 
     /* ComboBox control tests. */
     test_combo_WS_VSCROLL();
