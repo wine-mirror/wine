@@ -1914,7 +1914,7 @@ class ConversionFunction(object):
         body += "    unsigned int i;\n\n"
         body += "    if (!in) return NULL;\n\n"
 
-        body += "    out = heap_alloc(count * sizeof(*out));\n"
+        body += "    out = malloc(count * sizeof(*out));\n"
 
         body += "    for (i = 0; i < count; i++)\n"
         body += "    {\n"
@@ -2053,7 +2053,7 @@ class FreeFunction(object):
         else:
             body += "    if (!in) return;\n\n"
 
-        body += "    heap_free(in);\n"
+        body += "    free(in);\n"
 
         body += "}\n\n"
         return body
@@ -2132,7 +2132,7 @@ class StructChainConversionFunction(object):
             body += "            const {0} *in = (const {0} *)in_header;\n".format(e.name)
             body += "            {0} *out;\n\n".format(e.name)
 
-            body += "            if (!(out = heap_alloc(sizeof(*out)))) goto out_of_memory;\n\n"
+            body += "            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;\n\n"
 
             for m in e:
                 if m.name == "pNext":
@@ -2184,7 +2184,7 @@ class FreeStructChainFunction(object):
         body += "    {\n"
         body += "        void *prev = header;\n"
         body += "        header = header->pNext;\n"
-        body += "        heap_free(prev);\n"
+        body += "        free(prev);\n"
         body += "    }\n\n"
 
         body += "    s->pNext = NULL;\n"
