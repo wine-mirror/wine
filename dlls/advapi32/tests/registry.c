@@ -4014,6 +4014,7 @@ static void test_EnumDynamicTimeZoneInformation(void)
     HKEY key, subkey;
     WCHAR name[32];
     WCHAR keyname[128];
+    WCHAR displayname[128];
     WCHAR sysdir[MAX_PATH];
     DWORD index, ret, gle, size;
     DYNAMIC_TIME_ZONE_INFORMATION bogus_dtzi, dtzi;
@@ -4095,6 +4096,14 @@ static void test_EnumDynamicTimeZoneInformation(void)
             ok(status == ERROR_SUCCESS, "status %d name %s\n", status, wine_dbgstr_w(name));
             ok(!memcmp(&dtzi.DaylightName, name, size),
                 "expected %s, got %s\n", wine_dbgstr_w(name), wine_dbgstr_w(dtzi.DaylightName));
+
+            size = sizeof(displayname);
+            memset(displayname, 0, sizeof(displayname));
+            if (pRegLoadMUIStringW)
+                status = pRegLoadMUIStringW(subkey, L"MUI_Display", displayname, size, &size, 0, sysdir);
+            else
+                status = pRegGetValueW(subkey, NULL, L"Display", RRF_RT_REG_SZ, NULL, displayname, &size);
+            todo_wine ok(status == ERROR_SUCCESS, "status %d displayname %s\n", status, wine_dbgstr_w(displayname));
         }
         else
         {
