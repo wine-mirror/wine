@@ -1170,6 +1170,7 @@ static void test_media_session(void)
     IMFShutdown *shutdown;
     PROPVARIANT propvar;
     DWORD status, caps;
+    IMFGetService *gs;
     IMFClock *clock;
     IUnknown *unk;
     HRESULT hr;
@@ -1270,6 +1271,16 @@ todo_wine
 
     hr = IMFMediaSession_Shutdown(session);
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
+
+    check_interface(session, &IID_IMFGetService, TRUE);
+
+    hr = IMFMediaSession_QueryInterface(session, &IID_IMFGetService, (void **)&gs);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFGetService_GetService(gs, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport, (void **)&rate_support);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    IMFGetService_Release(gs);
 
     hr = IMFShutdown_GetShutdownStatus(shutdown, &status);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
