@@ -37,8 +37,6 @@ enum message_seq_index
 #define EDITBOX_ID         0
 #define COMBO_ID           1995
 
-#define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
-
 #define expect_rect(r, _left, _top, _right, _bottom) ok(r.left == _left && r.top == _top && \
     r.bottom == _bottom && r.right == _right, "Invalid rect %s vs (%d,%d)-(%d,%d)\n", \
     wine_dbgstr_rect(&r), _left, _top, _right, _bottom);
@@ -631,7 +629,7 @@ static void test_comboex_get_set_item(void)
     char textA[] = "test";
     HWND hComboEx;
     COMBOBOXEXITEMA item;
-    BOOL ret;
+    DWORD ret;
 
     hComboEx = createComboEx(WS_BORDER | WS_VISIBLE | WS_CHILD | CBS_DROPDOWN);
 
@@ -644,7 +642,7 @@ static void test_comboex_get_set_item(void)
     item.pszText = textA;
     item.iItem = -1;
     ret = SendMessageA(hComboEx, CBEM_SETITEMA, 0, (LPARAM)&item);
-    expect(TRUE, ret);
+    ok(ret == 1, "Unexpected return value %d.\n", ret);
 
     ok_sequence(sequences, EDITBOX_SEQ_INDEX, test_setitem_edit_seq, "set item data for edit", FALSE);
 
@@ -653,16 +651,16 @@ static void test_comboex_get_set_item(void)
     item.iItem = -1;
     item.lParam = 0xdeadbeef;
     ret = SendMessageA(hComboEx, CBEM_GETITEMA, 0, (LPARAM)&item);
-    expect(TRUE, ret);
+    ok(ret == 1, "Unexpected return value %d.\n", ret);
     ok(item.lParam == 0, "Expected zero, got %lx\n", item.lParam);
 
     item.lParam = 0x1abe11ed;
     ret = SendMessageA(hComboEx, CBEM_SETITEMA, 0, (LPARAM)&item);
-    expect(TRUE, ret);
+    ok(ret == 1, "Unexpected return value %d.\n", ret);
 
     item.lParam = 0;
     ret = SendMessageA(hComboEx, CBEM_GETITEMA, 0, (LPARAM)&item);
-    expect(TRUE, ret);
+    ok(ret == 1, "Unexpected return value %d.\n", ret);
     ok(item.lParam == 0x1abe11ed, "Expected 0x1abe11ed, got %lx\n", item.lParam);
 
     DestroyWindow(hComboEx);
