@@ -1420,7 +1420,8 @@ found:
 /***********************************************************************
  *           open_main_image
  */
-static NTSTATUS open_main_image( WCHAR *image, void **module, SECTION_IMAGE_INFORMATION *info )
+static NTSTATUS open_main_image( WCHAR *image, void **module, SECTION_IMAGE_INFORMATION *info,
+                                 enum loadorder loadorder )
 {
     static const WCHAR soW[] = {'.','s','o',0};
     UNICODE_STRING nt_name;
@@ -1431,6 +1432,8 @@ static NTSTATUS open_main_image( WCHAR *image, void **module, SECTION_IMAGE_INFO
     NTSTATUS status;
     HANDLE mapping;
     WCHAR *p;
+
+    if (loadorder == LO_DISABLED) NtTerminateProcess( GetCurrentProcess(), STATUS_DLL_NOT_FOUND );
 
     init_unicode_string( &nt_name, image );
     InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
@@ -1445,7 +1448,7 @@ static NTSTATUS open_main_image( WCHAR *image, void **module, SECTION_IMAGE_INFO
         if (!status) NtQuerySection( mapping, SectionImageInformation, info, sizeof(*info), NULL );
         NtClose( mapping );
     }
-    else if (status == STATUS_INVALID_IMAGE_NOT_MZ)
+    else if (status == STATUS_INVALID_IMAGE_NOT_MZ && loadorder != LO_NATIVE)
     {
         /* remove .so extension from Windows name */
         p = image + wcslen(image);
@@ -1468,6 +1471,7 @@ static NTSTATUS open_main_image( WCHAR *image, void **module, SECTION_IMAGE_INFO
 NTSTATUS load_main_exe( const WCHAR *dos_name, const char *unix_name, const WCHAR *curdir,
                         WCHAR **image, void **module )
 {
+    enum loadorder loadorder = LO_INVALID;
     UNICODE_STRING nt_name;
     WCHAR *tmp = NULL;
     BOOL contains_path;
@@ -1480,7 +1484,8 @@ NTSTATUS load_main_exe( const WCHAR *dos_name, const char *unix_name, const WCHA
     if (unix_name && unix_name[0] == '/' && !stat( unix_name, &st ))
     {
         if ((status = unix_to_nt_file_name( unix_name, image ))) goto failed;
-        status = open_main_image( *image, module, &main_image_info );
+        loadorder = get_load_order( &nt_name );
+        status = open_main_image( *image, module, &main_image_info, loadorder );
         if (status != STATUS_DLL_NOT_FOUND) return status;
         free( *image );
     }
@@ -1497,12 +1502,14 @@ NTSTATUS load_main_exe( const WCHAR *dos_name, const char *unix_name, const WCHA
     if ((status = get_full_path( dos_name, curdir, image ))) goto failed;
     free( tmp );
 
-    status = open_main_image( *image, module, &main_image_info );
+    init_unicode_string( &nt_name, *image );
+    if (loadorder == LO_INVALID) loadorder = get_load_order( &nt_name );
+
+    status = open_main_image( *image, module, &main_image_info, loadorder );
     if (status != STATUS_DLL_NOT_FOUND) return status;
 
     /* if path is in system dir, we can load the builtin even if the file itself doesn't exist */
-    init_unicode_string( &nt_name, *image );
-    if (is_builtin_path( &nt_name, &machine ))
+    if (loadorder != LO_NATIVE && is_builtin_path( &nt_name, &machine ))
     {
         status = find_builtin_dll( &nt_name, module, &size, &main_image_info, machine, FALSE );
         if (status != STATUS_DLL_NOT_FOUND) return status;
