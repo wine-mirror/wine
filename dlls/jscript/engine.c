@@ -1291,7 +1291,8 @@ static HRESULT interp_identifier_ref(script_ctx_t *ctx, BSTR identifier, unsigne
         exprval_set_disp_ref(&exprval, to_disp(script_obj), id);
     }
 
-    if(exprval.type == EXPRVAL_JSVAL || exprval.type == EXPRVAL_INVALID) {
+    if(exprval.type == EXPRVAL_INVALID ||
+       (exprval.type == EXPRVAL_JSVAL && ctx->version < SCRIPTLANGUAGEVERSION_ES5)) {
         WARN("invalid ref\n");
         exprval_release(&exprval);
         exprval_set_exception(&exprval, JS_E_OBJECT_EXPECTED);
