@@ -617,13 +617,8 @@ NTSTATUS get_thread_context( HANDLE handle, context_t *context, unsigned int fla
 
     if (ret == STATUS_PENDING)
     {
-        LARGE_INTEGER timeout;
-        timeout.QuadPart = -1000000;
-        if (NtWaitForSingleObject( handle, FALSE, &timeout ))
-        {
-            NtClose( handle );
-            return STATUS_ACCESS_DENIED;
-        }
+        NtWaitForSingleObject( handle, FALSE, NULL );
+
         SERVER_START_REQ( get_thread_context )
         {
             req->handle  = wine_server_obj_handle( handle );
