@@ -2109,9 +2109,13 @@ todo_wine {
 
             IMFTopologyNode_Release(sink_node2);
 
+            hr = IMFTopology_SetUINT32(full_topology, &IID_IMFTopology, 123);
+            ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
             hr = IMFTopoLoader_Load(loader, full_topology, &topology2, NULL);
             ok(hr == S_OK, "Failed to resolve topology, hr %#x.\n", hr);
             ok(full_topology != topology2, "Unexpected instance.\n");
+            hr = IMFTopology_GetUINT32(topology2, &IID_IMFTopology, &value);
+            ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
             IMFTopology_Release(topology2);
             IMFTopology_Release(full_topology);

@@ -2567,6 +2567,8 @@ static HRESULT WINAPI topology_loader_Load(IMFTopoLoader *iface, IMFTopology *in
     if (FAILED(hr = MFCreateTopology(&output_topology)))
         return hr;
 
+    IMFTopology_CopyAllItems(input_topology, (IMFAttributes *)output_topology);
+
     context.input_topology = input_topology;
     context.output_topology = output_topology;
     memset(&context.key, 0xff, sizeof(context.key));
