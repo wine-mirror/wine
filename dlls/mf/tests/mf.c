@@ -5237,6 +5237,7 @@ static void test_MFRequireProtectedEnvironment(void)
     hr = MFRequireProtectedEnvironment(pd);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
+    IMFMediaType_Release(mediatype);
     IMFStreamDescriptor_Release(sd);
     IMFPresentationDescriptor_Release(pd);
 }
