@@ -4417,14 +4417,6 @@ static const WCHAR WC_COMBOBOXEXW[] = { 'C','o','m','b','o',
 #endif
 #define WC_COMBOBOXEX           WINELIB_NAME_AW(WC_COMBOBOXEX)
 
-#define CBEIF_TEXT              0x00000001
-#define CBEIF_IMAGE             0x00000002
-#define CBEIF_SELECTEDIMAGE     0x00000004
-#define CBEIF_OVERLAY           0x00000008
-#define CBEIF_INDENT            0x00000010
-#define CBEIF_LPARAM            0x00000020
-#define CBEIF_DI_SETITEM        0x10000000
-
 #define CBEM_INSERTITEMA        (WM_USER+1)
 #define CBEM_INSERTITEMW        (WM_USER+11)
 #define CBEM_INSERTITEM         WINELIB_NAME_AW(CBEM_INSERTITEM)
