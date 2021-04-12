@@ -25,6 +25,8 @@
 #define USE_STRUCT_CONVERSION
 #endif
 
+#include <pthread.h>
+
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "wine/list.h"
@@ -123,7 +125,7 @@ struct VkInstance_T
 
     VkBool32 enable_wrapper_list;
     struct list wrappers;
-    SRWLOCK wrapper_lock;
+    pthread_rwlock_t wrapper_lock;
 
     struct wine_debug_utils_messenger *utils_messengers;
     uint32_t utils_messenger_count;

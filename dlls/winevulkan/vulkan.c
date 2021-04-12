@@ -91,9 +91,9 @@ static void  wine_vk_add_handle_mapping(struct VkInstance_T *instance, uint64_t 
     {
         mapping->native_handle = native_handle;
         mapping->wine_wrapped_handle = wrapped_handle;
-        AcquireSRWLockExclusive(&instance->wrapper_lock);
+        pthread_rwlock_wrlock(&instance->wrapper_lock);
         list_add_tail(&instance->wrappers, &mapping->link);
-        ReleaseSRWLockExclusive(&instance->wrapper_lock);
+        pthread_rwlock_unlock(&instance->wrapper_lock);
     }
 }
 
@@ -103,9 +103,9 @@ static void wine_vk_remove_handle_mapping(struct VkInstance_T *instance, struct 
 {
     if (instance->enable_wrapper_list)
     {
-        AcquireSRWLockExclusive(&instance->wrapper_lock);
+        pthread_rwlock_wrlock(&instance->wrapper_lock);
         list_remove(&mapping->link);
-        ReleaseSRWLockExclusive(&instance->wrapper_lock);
+        pthread_rwlock_unlock(&instance->wrapper_lock);
     }
 }
 
@@ -114,7 +114,7 @@ static uint64_t wine_vk_get_wrapper(struct VkInstance_T *instance, uint64_t nati
     struct wine_vk_mapping *mapping;
     uint64_t result = 0;
 
-    AcquireSRWLockShared(&instance->wrapper_lock);
+    pthread_rwlock_rdlock(&instance->wrapper_lock);
     LIST_FOR_EACH_ENTRY(mapping, &instance->wrappers, struct wine_vk_mapping, link)
     {
         if (mapping->native_handle == native_handle)
@@ -123,7 +123,7 @@ static uint64_t wine_vk_get_wrapper(struct VkInstance_T *instance, uint64_t nati
             break;
         }
     }
-    ReleaseSRWLockShared(&instance->wrapper_lock);
+    pthread_rwlock_unlock(&instance->wrapper_lock);
     return result;
 }
 
@@ -666,6 +666,7 @@ static void wine_vk_instance_free(struct VkInstance_T *instance)
         WINE_VK_REMOVE_HANDLE_MAPPING(instance, instance);
     }
 
+    pthread_rwlock_destroy(&instance->wrapper_lock);
     free(instance->utils_messengers);
 
     free(instance);
@@ -882,7 +883,7 @@ VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     }
     object->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
     list_init(&object->wrappers);
-    InitializeSRWLock(&object->wrapper_lock);
+    pthread_rwlock_init(&object->wrapper_lock, NULL);
 
     res = wine_vk_instance_convert_create_info(create_info, &create_info_host, object);
     if (res != VK_SUCCESS)
