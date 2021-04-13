@@ -52,7 +52,6 @@
 #include "ifmib.h"
 #include "iphlpapi.h"
 #include "ntsecapi.h"
-#include "winnls.h"
 #include "dsrole.h"
 #include "dsgetdc.h"
 #include "davclnt.h"
@@ -65,12 +64,77 @@ WINE_DEFAULT_DEBUG_CHANNEL(netapi32);
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
+static CPTABLEINFO unix_cptable;
+static ULONG unix_cp;
+
+static BOOL get_unix_codepage(void)
+{
+    static const WCHAR wineunixcpW[] = {'W','I','N','E','U','N','I','X','C','P',0};
+    UNICODE_STRING name, value;
+    WCHAR value_buffer[13];
+    SIZE_T size;
+    void *ptr;
+
+    if (unix_cp) return TRUE;
+
+    RtlInitUnicodeString( &name, wineunixcpW );
+    value.Buffer = value_buffer;
+    value.MaximumLength = sizeof(value_buffer);
+    if (!RtlQueryEnvironmentVariable_U( NULL, &name, &value ))
+        RtlUnicodeStringToInteger( &value, 10, &unix_cp );
+    if (NtGetNlsSectionPtr( 11, unix_cp, NULL, &ptr, &size ))
+        return FALSE;
+    RtlInitCodePageTable( ptr, &unix_cptable );
+    return TRUE;
+}
+
+static DWORD netapi_wcstoumbs( const WCHAR *src, char *dst, DWORD dstlen )
+{
+    DWORD srclen = (strlenW( src ) + 1) * sizeof(WCHAR);
+    DWORD len;
+
+    get_unix_codepage();
+
+    if (unix_cp == CP_UTF8)
+    {
+        RtlUnicodeToUTF8N( dst, dstlen, &len, src, srclen );
+        return len;
+    }
+    else
+    {
+        len = (strlenW( src ) * 2) + 1;
+        if (dst) RtlUnicodeToCustomCPN( &unix_cptable, dst, dstlen, &len, src, srclen );
+        return len;
+    }
+}
+
+static DWORD netapi_umbstowcs( const char *src, WCHAR *dst, DWORD dstlen )
+{
+    DWORD srclen = strlen( src ) + 1;
+    DWORD len;
+
+    get_unix_codepage();
+
+    if (unix_cp == CP_UTF8)
+    {
+        RtlUTF8ToUnicodeN( dst, dstlen, &len, src, srclen );
+        return len;
+    }
+    else
+    {
+        len = srclen * sizeof(WCHAR);
+        if (dst) RtlCustomCPToUnicodeN( &unix_cptable, dst, dstlen, &len, src, srclen );
+        return len;
+    }
+}
+
 static char *strdup_unixcp( const WCHAR *str )
 {
     char *ret;
-    int len = WideCharToMultiByte( CP_UNIXCP, 0, str, -1, NULL, 0, NULL, NULL );
+
+    int len = netapi_wcstoumbs( str, NULL, 0 );
     if ((ret = HeapAlloc( GetProcessHeap(), 0, len )))
-        WideCharToMultiByte( CP_UNIXCP, 0, str, -1, ret, len, NULL, NULL );
+        netapi_wcstoumbs( str, ret, len );
     return ret;
 }
 
@@ -186,8 +250,8 @@ static NET_API_STATUS server_info_101_from_samba( const unsigned char *buf, BYTE
     DWORD len = 0;
     WCHAR *ptr;
 
-    if (info->sv101_name) len += MultiByteToWideChar( CP_UNIXCP, 0, info->sv101_name, -1, NULL, 0 );
-    if (info->sv101_comment) len += MultiByteToWideChar( CP_UNIXCP, 0, info->sv101_comment, -1, NULL, 0 );
+    if (info->sv101_name) len += netapi_umbstowcs( info->sv101_name, NULL, 0 );
+    if (info->sv101_comment) len += netapi_umbstowcs( info->sv101_comment, NULL, 0 );
     if (!(ret = HeapAlloc( GetProcessHeap(), 0, sizeof(*ret) + (len * sizeof(WCHAR) ))))
         return ERROR_OUTOFMEMORY;
 
@@ -197,7 +261,7 @@ static NET_API_STATUS server_info_101_from_samba( const unsigned char *buf, BYTE
     else
     {
         ret->sv101_name = ptr;
-        ptr += MultiByteToWideChar( CP_UNIXCP, 0, info->sv101_name, -1, ptr, len );
+        ptr += netapi_umbstowcs( info->sv101_name, ptr, len );
     }
     ret->sv101_version_major = info->sv101_version_major;
     ret->sv101_version_minor = info->sv101_version_minor;
@@ -206,7 +270,7 @@ static NET_API_STATUS server_info_101_from_samba( const unsigned char *buf, BYTE
     else
     {
         ret->sv101_comment = ptr;
-        MultiByteToWideChar( CP_UNIXCP, 0, info->sv101_comment, -1, ptr, len );
+        netapi_umbstowcs( info->sv101_comment, ptr, len );
     }
     *bufptr = (BYTE *)ret;
     return NERR_Success;
@@ -260,13 +324,13 @@ static NET_API_STATUS share_info_2_to_samba( const BYTE *buf, unsigned char **bu
     char *ptr;
 
     if (info->shi2_netname)
-        len += WideCharToMultiByte( CP_UNIXCP, 0, info->shi2_netname, -1, NULL, 0, NULL, NULL );
+        len += netapi_wcstoumbs( info->shi2_netname, NULL, 0 );
     if (info->shi2_remark)
-        len += WideCharToMultiByte( CP_UNIXCP, 0, info->shi2_remark, -1, NULL, 0, NULL, NULL );
+        len += netapi_wcstoumbs( info->shi2_remark, NULL, 0 );
     if (info->shi2_path)
-        len += WideCharToMultiByte( CP_UNIXCP, 0, info->shi2_path, -1, NULL, 0, NULL, NULL );
+        len += netapi_wcstoumbs( info->shi2_path, NULL, 0 );
     if (info->shi2_passwd)
-        len += WideCharToMultiByte( CP_UNIXCP, 0, info->shi2_passwd, -1, NULL, 0, NULL, NULL );
+        len += netapi_wcstoumbs( info->shi2_passwd, NULL, 0 );
     if (!(ret = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret) + len )))
         return ERROR_OUTOFMEMORY;
 
@@ -275,14 +339,14 @@ static NET_API_STATUS share_info_2_to_samba( const BYTE *buf, unsigned char **bu
     else
     {
         ret->shi2_netname = ptr;
-        ptr += WideCharToMultiByte( CP_UNIXCP, 0, info->shi2_netname, -1, ptr, len, NULL, NULL );
+        ptr += netapi_wcstoumbs( info->shi2_netname, ptr, len );
     }
     ret->shi2_type = info->shi2_type;
     if (!info->shi2_remark) ret->shi2_remark = NULL;
     else
     {
         ret->shi2_remark = ptr;
-        ptr += WideCharToMultiByte( CP_UNIXCP, 0, info->shi2_remark, -1, ptr, len, NULL, NULL );
+        ptr += netapi_wcstoumbs( info->shi2_remark, ptr, len );
     }
     ret->shi2_permissions  = info->shi2_permissions;
     ret->shi2_max_uses     = info->shi2_max_uses;
@@ -291,13 +355,13 @@ static NET_API_STATUS share_info_2_to_samba( const BYTE *buf, unsigned char **bu
     else
     {
         ret->shi2_path = ptr;
-        ptr += WideCharToMultiByte( CP_UNIXCP, 0, info->shi2_path, -1, ptr, len, NULL, NULL );
+        ptr += netapi_wcstoumbs( info->shi2_path, ptr, len );
     }
     if (!info->shi2_passwd) ret->shi2_passwd = NULL;
     else
     {
         ret->shi2_passwd = ptr;
-        WideCharToMultiByte( CP_UNIXCP, 0, info->shi2_passwd, -1, ptr, len, NULL, NULL );
+        netapi_wcstoumbs( info->shi2_passwd, ptr, len );
     }
     *bufptr = (unsigned char *)ret;
     return NERR_Success;
@@ -712,13 +776,13 @@ static NET_API_STATUS share_info_502_to_samba( const BYTE *buf, unsigned char **
 
     *bufptr = NULL;
     if (info->shi502_netname)
-        len += WideCharToMultiByte( CP_UNIXCP, 0, info->shi502_netname, -1, NULL, 0, NULL, NULL );
+        len += netapi_wcstoumbs( info->shi502_netname, NULL, 0 );
     if (info->shi502_remark)
-        len += WideCharToMultiByte( CP_UNIXCP, 0, info->shi502_remark, -1, NULL, 0, NULL, NULL );
+        len += netapi_wcstoumbs( info->shi502_remark, NULL, 0 );
     if (info->shi502_path)
-        len += WideCharToMultiByte( CP_UNIXCP, 0, info->shi502_path, -1, NULL, 0, NULL, NULL );
+        len += netapi_wcstoumbs( info->shi502_path, NULL, 0 );
     if (info->shi502_passwd)
-        len += WideCharToMultiByte( CP_UNIXCP, 0, info->shi502_passwd, -1, NULL, 0, NULL, NULL );
+        len += netapi_wcstoumbs( info->shi502_passwd, NULL, 0 );
     if (info->shi502_security_descriptor)
         size = sd_to_samba_size( info->shi502_security_descriptor );
     if (!(ret = HeapAlloc( GetProcessHeap(), 0, sizeof(*ret) + (len * sizeof(WCHAR)) + size )))
@@ -729,14 +793,14 @@ static NET_API_STATUS share_info_502_to_samba( const BYTE *buf, unsigned char **
     else
     {
         ret->shi502_netname = ptr;
-        ptr += WideCharToMultiByte( CP_UNIXCP, 0, info->shi502_netname, -1, ptr, len, NULL, NULL );
+        ptr += netapi_wcstoumbs( info->shi502_netname, ptr, len );
     }
     ret->shi502_type = info->shi502_type;
     if (!info->shi502_remark) ret->shi502_remark = NULL;
     else
     {
         ret->shi502_remark = ptr;
-        ptr += WideCharToMultiByte( CP_UNIXCP, 0, info->shi502_remark, -1, ptr, len, NULL, NULL );
+        ptr += netapi_wcstoumbs( info->shi502_remark, ptr, len );
     }
     ret->shi502_permissions  = info->shi502_permissions;
     ret->shi502_max_uses     = info->shi502_max_uses;
@@ -745,13 +809,13 @@ static NET_API_STATUS share_info_502_to_samba( const BYTE *buf, unsigned char **
     else
     {
         ret->shi502_path = ptr;
-        ptr += WideCharToMultiByte( CP_UNIXCP, 0, info->shi502_path, -1, ptr, len, NULL, NULL );
+        ptr += netapi_wcstoumbs( info->shi502_path, ptr, len );
     }
     if (!info->shi502_passwd) ret->shi502_passwd = NULL;
     else
     {
         ret->shi502_passwd = ptr;
-        ptr += WideCharToMultiByte( CP_UNIXCP, 0, info->shi502_passwd, -1, ptr, len, NULL, NULL );
+        ptr += netapi_wcstoumbs( info->shi502_passwd, ptr, len );
     }
     ret->shi502_reserved = info->shi502_reserved;
     if (!info->shi502_security_descriptor) ret->shi502_security_descriptor = NULL;
@@ -835,9 +899,9 @@ static NET_API_STATUS wksta_info_100_from_samba( const unsigned char *buf, BYTE 
     WCHAR *ptr;
 
     if (info->wki100_computername)
-        len += MultiByteToWideChar( CP_UNIXCP, 0, info->wki100_computername, -1, NULL, 0 );
+        len += netapi_umbstowcs( info->wki100_computername, NULL, 0 );
     if (info->wki100_langroup)
-        len += MultiByteToWideChar( CP_UNIXCP, 0, info->wki100_langroup, -1, NULL, 0 );
+        len += netapi_umbstowcs( info->wki100_langroup, NULL, 0 );
     if (!(ret = HeapAlloc( GetProcessHeap(), 0, sizeof(*ret) + (len * sizeof(WCHAR) ))))
         return ERROR_OUTOFMEMORY;
 
@@ -847,13 +911,13 @@ static NET_API_STATUS wksta_info_100_from_samba( const unsigned char *buf, BYTE 
     else
     {
         ret->wki100_computername = ptr;
-        ptr += MultiByteToWideChar( CP_UNIXCP, 0, info->wki100_computername, -1, ptr, len );
+        ptr += netapi_umbstowcs( info->wki100_computername, ptr, len );
     }
     if (!info->wki100_langroup) ret->wki100_langroup = NULL;
     else
     {
         ret->wki100_langroup = ptr;
-        MultiByteToWideChar( CP_UNIXCP, 0, info->wki100_langroup, -1, ptr, len );
+        netapi_umbstowcs( info->wki100_langroup, ptr, len );
     }
     ret->wki100_ver_major = info->wki100_ver_major;
     ret->wki100_ver_minor = info->wki100_ver_minor;
