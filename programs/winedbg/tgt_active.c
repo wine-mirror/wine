@@ -296,16 +296,23 @@ static DWORD dbg_handle_exception(const EXCEPTION_RECORD* rec, BOOL first_chance
 
 static BOOL tgt_process_active_close_process(struct dbg_process* pcs, BOOL kill);
 
-static void fetch_module_name(void* name_addr, BOOL unicode, void* mod_addr,
-                              WCHAR* buffer, size_t bufsz)
+void fetch_module_name(void* name_addr, void* mod_addr, WCHAR* buffer, size_t bufsz)
 {
     static const WCHAR dlladdr[] = {'D','L','L','_','%','0','8','l','x',0};
 
-    memory_get_string_indirect(dbg_curr_process, name_addr, unicode, buffer, bufsz);
-    if (!buffer[0] &&
-        !GetModuleFileNameExW(dbg_curr_process->handle, mod_addr, buffer, bufsz))
+    memory_get_string_indirect(dbg_curr_process, name_addr, TRUE, buffer, bufsz);
+    if (!buffer[0] && !GetModuleFileNameExW(dbg_curr_process->handle, mod_addr, buffer, bufsz))
     {
-        snprintfW(buffer, bufsz, dlladdr, (ULONG_PTR)mod_addr);
+        if (GetMappedFileNameW( dbg_curr_process->handle, mod_addr, buffer, bufsz ))
+        {
+            /* FIXME: proper NT->Dos conversion */
+            static const WCHAR nt_prefixW[] = {'\\','?','?','\\'};
+
+            if (!strncmpW( buffer, nt_prefixW, 4 ))
+                memmove( buffer, buffer + 4, (lstrlenW(buffer + 4) + 1) * sizeof(WCHAR) );
+        }
+        else
+            snprintfW(buffer, bufsz, dlladdr, (ULONG_PTR)mod_addr);
     }
 }
 
@@ -462,9 +469,7 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
             WINE_ERR("Unknown thread\n");
             break;
         }
-        fetch_module_name(de->u.LoadDll.lpImageName,
-                          de->u.LoadDll.fUnicode,
-                          de->u.LoadDll.lpBaseOfDll,
+        fetch_module_name(de->u.LoadDll.lpImageName, de->u.LoadDll.lpBaseOfDll,
                           u.buffer, ARRAY_SIZE(u.buffer));
 
         WINE_TRACE("%04x:%04x: loads DLL %s @%p (%u<%u>)\n",

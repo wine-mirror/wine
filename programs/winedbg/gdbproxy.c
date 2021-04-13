@@ -443,10 +443,8 @@ static BOOL handle_debug_event(struct gdb_context* gdbctx)
         return TRUE;
 
     case LOAD_DLL_DEBUG_EVENT:
-        memory_get_string_indirect(gdbctx->process,
-                                   de->u.LoadDll.lpImageName,
-                                   de->u.LoadDll.fUnicode,
-                                   u.buffer, ARRAY_SIZE(u.buffer));
+        fetch_module_name( de->u.LoadDll.lpImageName, de->u.LoadDll.lpBaseOfDll,
+                           u.buffer, ARRAY_SIZE(u.buffer) );
         fprintf(stderr, "%04x:%04x: loads DLL %s @%p (%u<%u>)\n",
                 de->dwProcessId, de->dwThreadId,
                 dbg_W2A(u.buffer, -1),
