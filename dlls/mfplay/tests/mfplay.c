@@ -163,7 +163,6 @@ static void test_shutdown(void)
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFPMediaPlayer_GetMediaItem(player, &item);
-todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFPMediaPlayer_GetVideoWindow(player, &window);

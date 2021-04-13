@@ -998,7 +998,9 @@ static HRESULT WINAPI media_player_GetMediaItem(IMFPMediaPlayer *iface, IMFPMedi
         return E_POINTER;
 
     EnterCriticalSection(&player->cs);
-    if (!player->item)
+    if (player->state == MFP_MEDIAPLAYER_STATE_SHUTDOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (!player->item)
         hr = MF_E_NOT_FOUND;
     else
     {
