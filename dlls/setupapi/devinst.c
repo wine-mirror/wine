@@ -560,7 +560,7 @@ static LONG open_driver_key(struct device *device, REGSAM access, HKEY *key)
             RegCloseKey(class_key);
             return l;
         }
-        ERR("Failed to open driver key, error %u.\n", l);
+        TRACE("Failed to open driver key, error %u.\n", l);
     }
 
     RegCloseKey(class_key);
