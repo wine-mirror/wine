@@ -190,6 +190,7 @@
 @ cdecl wined3d_device_context_set_unordered_access_view(ptr long long ptr long)
 @ cdecl wined3d_device_context_set_vertex_declaration(ptr ptr)
 @ cdecl wined3d_device_context_set_viewports(ptr long ptr)
+@ cdecl wined3d_device_context_unmap(ptr ptr long)
 @ cdecl wined3d_device_context_update_sub_resource(ptr ptr long ptr ptr long long long)
 
 @ cdecl wined3d_output_find_closest_matching_mode(ptr ptr)

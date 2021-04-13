@@ -327,7 +327,7 @@ HRESULT CDECL wined3d_resource_unmap(struct wined3d_resource *resource, unsigned
 {
     TRACE("resource %p, sub_resource_idx %u.\n", resource, sub_resource_idx);
 
-    return resource->device->cs->c.ops->unmap(&resource->device->cs->c, resource, sub_resource_idx);
+    return wined3d_device_context_unmap(&resource->device->cs->c, resource, sub_resource_idx);
 }
 
 void CDECL wined3d_resource_preload(struct wined3d_resource *resource)

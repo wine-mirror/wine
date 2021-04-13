@@ -5316,6 +5316,14 @@ HRESULT CDECL wined3d_device_context_map(struct wined3d_device_context *context,
     return context->ops->map(context, resource, sub_resource_idx, map_desc, box, flags);
 }
 
+HRESULT CDECL wined3d_device_context_unmap(struct wined3d_device_context *context,
+        struct wined3d_resource *resource, unsigned int sub_resource_idx)
+{
+    TRACE("context %p, resource %p, sub_resource_idx %u.\n", context, resource, sub_resource_idx);
+
+    return context->ops->unmap(context, resource, sub_resource_idx);
+}
+
 struct wined3d_rendertarget_view * CDECL wined3d_device_get_rendertarget_view(const struct wined3d_device *device,
         unsigned int view_idx)
 {
