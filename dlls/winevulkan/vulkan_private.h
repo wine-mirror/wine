@@ -89,8 +89,8 @@ struct VkDevice_T
     struct VkPhysicalDevice_T *phys_dev; /* parent */
     VkDevice device; /* native device */
 
-    struct VkQueue_T **queues;
-    uint32_t max_queue_families;
+    struct VkQueue_T* queues;
+    uint32_t queue_count;
 
     unsigned int quirks;
 
@@ -155,6 +155,8 @@ struct VkQueue_T
     struct VkDevice_T *device; /* parent */
     VkQueue queue; /* native queue */
 
+    uint32_t family_index;
+    uint32_t queue_index;
     VkDeviceQueueCreateFlags flags;
 
     struct wine_vk_mapping mapping;

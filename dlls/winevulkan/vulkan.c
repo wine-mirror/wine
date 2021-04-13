@@ -310,18 +310,12 @@ static void wine_vk_free_command_buffers(struct VkDevice_T *device,
     }
 }
 
-static struct VkQueue_T *wine_vk_device_alloc_queues(struct VkDevice_T *device,
-        uint32_t family_index, uint32_t queue_count, VkDeviceQueueCreateFlags flags)
+static void wine_vk_device_get_queues(struct VkDevice_T *device,
+        uint32_t family_index, uint32_t queue_count, VkDeviceQueueCreateFlags flags,
+        struct VkQueue_T* queues)
 {
     VkDeviceQueueInfo2 queue_info;
-    struct VkQueue_T *queues;
     unsigned int i;
-
-    if (!(queues = calloc(queue_count, sizeof(*queues))))
-    {
-        ERR("Failed to allocate memory for queues\n");
-        return NULL;
-    }
 
     for (i = 0; i < queue_count; i++)
     {
@@ -329,6 +323,8 @@ static struct VkQueue_T *wine_vk_device_alloc_queues(struct VkDevice_T *device,
 
         queue->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
         queue->device = device;
+        queue->family_index = family_index;
+        queue->queue_index = i;
         queue->flags = flags;
 
         /* The Vulkan spec says:
@@ -352,8 +348,6 @@ static struct VkQueue_T *wine_vk_device_alloc_queues(struct VkDevice_T *device,
 
         WINE_VK_ADD_DISPATCHABLE_MAPPING(device->phys_dev->instance, queue, queue->queue);
     }
-
-    return queues;
 }
 
 static void wine_vk_device_free_create_info(VkDeviceCreateInfo *create_info)
@@ -425,17 +419,19 @@ static VkResult wine_vk_device_convert_create_info(const VkDeviceCreateInfo *src
  */
 static void wine_vk_device_free(struct VkDevice_T *device)
 {
+    struct VkQueue_T *queue;
+
     if (!device)
         return;
 
     if (device->queues)
     {
         unsigned int i;
-        for (i = 0; i < device->max_queue_families; i++)
+        for (i = 0; i < device->queue_count; i++)
         {
-            if (device->queues[i] && device->queues[i]->queue)
-                WINE_VK_REMOVE_HANDLE_MAPPING(device->phys_dev->instance, device->queues[i]);
-            free(device->queues[i]);
+            queue = &device->queues[i];
+            if (queue && queue->queue)
+                WINE_VK_REMOVE_HANDLE_MAPPING(device->phys_dev->instance, queue);
         }
         free(device->queues);
         device->queues = NULL;
@@ -736,7 +732,7 @@ VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
         const VkAllocationCallbacks *allocator, VkDevice *device)
 {
     VkDeviceCreateInfo create_info_host;
-    uint32_t max_queue_families;
+    struct VkQueue_T *next_queue;
     struct VkDevice_T *object;
     unsigned int i;
     VkResult res;
@@ -791,17 +787,18 @@ VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
     /* We need to cache all queues within the device as each requires wrapping since queues are
      * dispatchable objects.
      */
-    phys_dev->instance->funcs.p_vkGetPhysicalDeviceQueueFamilyProperties(phys_dev->phys_dev,
-            &max_queue_families, NULL);
-    object->max_queue_families = max_queue_families;
-    TRACE("Max queue families: %u.\n", object->max_queue_families);
+    for (i = 0; i < create_info_host.queueCreateInfoCount; i++)
+    {
+        object->queue_count += create_info_host.pQueueCreateInfos[i].queueCount;
+    }
 
-    if (!(object->queues = calloc(max_queue_families, sizeof(*object->queues))))
+    if (!(object->queues = calloc(object->queue_count, sizeof(*object->queues))))
     {
         res = VK_ERROR_OUT_OF_HOST_MEMORY;
         goto fail;
     }
 
+    next_queue = object->queues;
     for (i = 0; i < create_info_host.queueCreateInfoCount; i++)
     {
         uint32_t flags = create_info_host.pQueueCreateInfos[i].flags;
@@ -810,12 +807,8 @@ VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
 
         TRACE("Queue family index %u, queue count %u.\n", family_index, queue_count);
 
-        if (!(object->queues[family_index] = wine_vk_device_alloc_queues(object, family_index, queue_count, flags)))
-        {
-            ERR("Failed to allocate memory for queues.\n");
-            res = VK_ERROR_OUT_OF_HOST_MEMORY;
-            goto fail;
-        }
+        wine_vk_device_get_queues(object, family_index, queue_count, flags, next_queue);
+        next_queue += queue_count;
     }
 
     object->quirks = phys_dev->instance->quirks;
@@ -1071,17 +1064,42 @@ void WINAPI wine_vkFreeCommandBuffers(VkDevice device, VkCommandPool pool_handle
     wine_vk_free_command_buffers(device, pool, count, buffers);
 }
 
+static VkQueue wine_vk_device_find_queue(VkDevice device, const VkDeviceQueueInfo2 *info)
+{
+    struct VkQueue_T* queue;
+    uint32_t i;
+
+    for (i = 0; i < device->queue_count; i++)
+    {
+        queue = &device->queues[i];
+        if (queue->family_index == info->queueFamilyIndex
+                && queue->queue_index == info->queueIndex
+                && queue->flags == info->flags)
+        {
+            return queue;
+        }
+    }
+
+    return VK_NULL_HANDLE;
+}
+
 void WINAPI wine_vkGetDeviceQueue(VkDevice device, uint32_t family_index,
         uint32_t queue_index, VkQueue *queue)
 {
+    VkDeviceQueueInfo2 queue_info;
     TRACE("%p, %u, %u, %p\n", device, family_index, queue_index, queue);
 
-    *queue = &device->queues[family_index][queue_index];
+    queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_INFO_2;
+    queue_info.pNext = NULL;
+    queue_info.flags = 0;
+    queue_info.queueFamilyIndex = family_index;
+    queue_info.queueIndex = queue_index;
+
+    *queue = wine_vk_device_find_queue(device, &queue_info);
 }
 
 void WINAPI wine_vkGetDeviceQueue2(VkDevice device, const VkDeviceQueueInfo2 *info, VkQueue *queue)
 {
-    struct VkQueue_T *matching_queue;
     const VkBaseInStructure *chain;
 
     TRACE("%p, %p, %p\n", device, info, queue);
@@ -1089,13 +1107,7 @@ void WINAPI wine_vkGetDeviceQueue2(VkDevice device, const VkDeviceQueueInfo2 *in
     if ((chain = info->pNext))
         FIXME("Ignoring a linked structure of type %u.\n", chain->sType);
 
-    matching_queue = &device->queues[info->queueFamilyIndex][info->queueIndex];
-    if (matching_queue->flags != info->flags)
-    {
-        WARN("No matching flags were specified %#x, %#x.\n", matching_queue->flags, info->flags);
-        matching_queue = VK_NULL_HANDLE;
-    }
-    *queue = matching_queue;
+    *queue = wine_vk_device_find_queue(device, info);
 }
 
 VkResult WINAPI wine_vkQueueSubmit(VkQueue queue, uint32_t count,
