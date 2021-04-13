@@ -3455,6 +3455,18 @@ static void test_SuspendProcessState(void)
         "wrong entry point %p/%p\n", entry_ptr,
         (char *)exe_base + nt_header.OptionalHeader.AddressOfEntryPoint );
 
+    ok( !child_peb.LdrData, "LdrData set %p\n", child_peb.LdrData );
+    ok( !child_peb.FastPebLock, "FastPebLock set %p\n", child_peb.FastPebLock );
+    ok( !child_peb.TlsBitmap, "TlsBitmap set %p\n", child_peb.TlsBitmap );
+    ok( !child_peb.TlsExpansionBitmap, "TlsExpansionBitmap set %p\n", child_peb.TlsExpansionBitmap );
+    ok( !child_peb.LoaderLock, "LoaderLock set %p\n", child_peb.LoaderLock );
+    ok( !child_peb.ProcessHeap, "ProcessHeap set %p\n", child_peb.ProcessHeap );
+    ok( !child_peb.CSDVersion.Buffer, "CSDVersion set %s\n", debugstr_w(child_peb.CSDVersion.Buffer) );
+
+    ok( child_peb.OSMajorVersion, "OSMajorVersion not set %u\n", child_peb.OSMajorVersion );
+    ok( child_peb.OSPlatformId == VER_PLATFORM_WIN32_NT, "OSPlatformId not set %u\n", child_peb.OSPlatformId );
+    ok( child_peb.SessionId == 1, "SessionId not set %u\n", child_peb.SessionId );
+
     ret = SetThreadContext(pi.hThread, &ctx);
     ok(ret, "Failed to set remote thread context (%d)\n", GetLastError());
 

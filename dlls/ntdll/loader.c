@@ -3636,11 +3636,6 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
         peb->TlsBitmap          = &tls_bitmap;
         peb->TlsExpansionBitmap = &tls_expansion_bitmap;
         peb->LoaderLock         = &loader_section;
-        peb->OSMajorVersion     = 5;
-        peb->OSMinorVersion     = 1;
-        peb->OSBuildNumber      = 0xA28;
-        peb->OSPlatformId       = VER_PLATFORM_WIN32_NT;
-        peb->SessionId          = 1;
         peb->ProcessHeap        = RtlCreateHeap( HEAP_GROWABLE, NULL, 0, 0, NULL, NULL );
 
         RtlInitializeBitMap( &tls_bitmap, peb->TlsBitmapBits, sizeof(peb->TlsBitmapBits) * 8 );

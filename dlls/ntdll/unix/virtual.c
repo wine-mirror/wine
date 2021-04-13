@@ -2805,6 +2805,17 @@ NTSTATUS virtual_create_builtin_view( void *module, const UNICODE_STRING *nt_nam
 }
 
 
+/* set some initial values in the new PEB */
+static void init_peb( PEB *peb )
+{
+    peb->OSMajorVersion = 6;
+    peb->OSMinorVersion = 1;
+    peb->OSBuildNumber  = 0x1db1;
+    peb->OSPlatformId   = VER_PLATFORM_WIN32_NT;
+    peb->SessionId      = 1;
+}
+
+
 /* set some initial values in a new TEB */
 static void init_teb( TEB *teb, PEB *peb )
 {
@@ -2870,6 +2881,7 @@ TEB *virtual_alloc_first_teb(void)
     peb = (PEB *)((char *)teb_block + 32 * block_size - peb_size);
     NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&ptr, 0, &block_size, MEM_COMMIT, PAGE_READWRITE );
     NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&peb, 0, &peb_size, MEM_COMMIT, PAGE_READWRITE );
+    init_peb( peb );
     init_teb( teb, peb );
     *(ULONG_PTR *)&peb->CloudFileFlags = get_image_address();
     return teb;
