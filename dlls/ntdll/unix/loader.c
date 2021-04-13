@@ -1484,6 +1484,7 @@ NTSTATUS load_main_exe( const WCHAR *dos_name, const char *unix_name, const WCHA
     if (unix_name && unix_name[0] == '/' && !stat( unix_name, &st ))
     {
         if ((status = unix_to_nt_file_name( unix_name, image ))) goto failed;
+        init_unicode_string( &nt_name, *image );
         loadorder = get_load_order( &nt_name );
         status = open_main_image( *image, module, &main_image_info, loadorder );
         if (status != STATUS_DLL_NOT_FOUND) return status;
