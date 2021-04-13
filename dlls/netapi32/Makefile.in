@@ -8,7 +8,8 @@ C_SRCS = \
 	nbnamecache.c \
 	nbt.c \
 	netapi32.c \
-	netbios.c
+	netbios.c \
+	unixlib.c
 
 IDL_SRCS = \
 	atsvc.idl
