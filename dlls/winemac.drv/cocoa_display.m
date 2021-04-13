@@ -575,15 +575,13 @@ int macdrv_get_adapters(uint64_t gpu_id, struct macdrv_adapter** new_adapters, i
         if (gpu.id == gpu_id || (gpu_id == dedicated_gpu_id && gpu.id == integrated_gpu_id))
         {
             adapters[adapter_count].id = display_ids[i];
+            adapters[adapter_count].state_flags = DISPLAY_DEVICE_ATTACHED_TO_DESKTOP;
 
             if (CGDisplayIsMain(display_ids[i]))
             {
                 adapters[adapter_count].state_flags |= DISPLAY_DEVICE_PRIMARY_DEVICE;
                 primary_index = adapter_count;
             }
-
-            if (CGDisplayIsActive(display_ids[i]))
-                adapters[adapter_count].state_flags |= DISPLAY_DEVICE_ATTACHED_TO_DESKTOP;
 
             adapter_count++;
         }
