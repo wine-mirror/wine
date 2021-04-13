@@ -309,7 +309,10 @@ static HRESULT WINAPI media_device_statics_add_DefaultAudioCaptureDeviceChanged(
         EventRegistrationToken *token)
 {
     FIXME("iface %p, handler %p token %p stub!\n", iface, handler, token);
-    return E_NOTIMPL;
+    if(!token)
+        return E_POINTER;
+    token->value = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI media_device_statics_remove_DefaultAudioCaptureDeviceChanged(
@@ -317,7 +320,7 @@ static HRESULT WINAPI media_device_statics_remove_DefaultAudioCaptureDeviceChang
         EventRegistrationToken token)
 {
     FIXME("iface %p, token %#I64x stub!\n", iface, token.value);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI media_device_statics_add_DefaultAudioRenderDeviceChanged(
@@ -326,7 +329,10 @@ static HRESULT WINAPI media_device_statics_add_DefaultAudioRenderDeviceChanged(
         EventRegistrationToken *token)
 {
     FIXME("iface %p, handler %p token %p stub!\n", iface, handler, token);
-    return E_NOTIMPL;
+    if(!token)
+        return E_POINTER;
+    token->value = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI media_device_statics_remove_DefaultAudioRenderDeviceChanged(
@@ -334,7 +340,7 @@ static HRESULT WINAPI media_device_statics_remove_DefaultAudioRenderDeviceChange
         EventRegistrationToken token)
 {
     FIXME("iface %p, token %#I64x stub!\n", iface, token.value);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static IMediaDeviceStaticsVtbl media_device_statics_vtbl = {
