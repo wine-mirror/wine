@@ -1415,8 +1415,9 @@ static HRESULT WINAPI media_player_session_events_callback_Invoke(IMFAsyncCallba
             media_player_set_state(player, state);
             media_event_create(player, event_type, event_status, &event);
             LeaveCriticalSection(&player->cs);
-
-            /* FIXME: set pMediaItem */
+            event->u.generic.item = item;
+            if (event->u.generic.item)
+                IMFPMediaItem_AddRef(event->u.generic.item);
             media_player_queue_event(player, event);
 
             break;
