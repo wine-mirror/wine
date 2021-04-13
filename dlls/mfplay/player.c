@@ -806,18 +806,17 @@ static HRESULT WINAPI media_player_GetState(IMFPMediaPlayer *iface, MFP_MEDIAPLA
     return S_OK;
 }
 
-static HRESULT WINAPI media_player_CreateMediaItemFromURL(IMFPMediaPlayer *iface,
+static HRESULT media_player_create_item_from_url(struct media_player *player,
         const WCHAR *url, BOOL sync, DWORD_PTR user_data, IMFPMediaItem **ret)
 {
-    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
     struct media_item *item;
     MF_OBJECT_TYPE obj_type;
     IUnknown *object;
     HRESULT hr;
 
-    TRACE("%p, %s, %d, %lx, %p.\n", iface, debugstr_w(url), sync, user_data, ret);
+    *ret = NULL;
 
-    if (FAILED(hr = create_media_item(iface, user_data, &item)))
+    if (FAILED(hr = create_media_item(&player->IMFPMediaPlayer_iface, user_data, &item)))
         return hr;
 
     if (url && !(item->url = wcsdup(url)))
@@ -828,8 +827,6 @@ static HRESULT WINAPI media_player_CreateMediaItemFromURL(IMFPMediaPlayer *iface
 
     if (sync)
     {
-        *ret = NULL;
-
         if (SUCCEEDED(hr = IMFSourceResolver_CreateObjectFromURL(player->resolver, url, MF_RESOLUTION_MEDIASOURCE,
                 player->propstore, &obj_type, &object)))
         {
@@ -849,6 +846,24 @@ static HRESULT WINAPI media_player_CreateMediaItemFromURL(IMFPMediaPlayer *iface
 
         IMFPMediaItem_Release(&item->IMFPMediaItem_iface);
     }
+
+    return hr;
+}
+
+static HRESULT WINAPI media_player_CreateMediaItemFromURL(IMFPMediaPlayer *iface,
+        const WCHAR *url, BOOL sync, DWORD_PTR user_data, IMFPMediaItem **ret)
+{
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
+    HRESULT hr;
+
+    TRACE("%p, %s, %d, %lx, %p.\n", iface, debugstr_w(url), sync, user_data, ret);
+
+    EnterCriticalSection(&player->cs);
+    if (player->state == MFP_MEDIAPLAYER_STATE_SHUTDOWN)
+        hr = MF_E_SHUTDOWN;
+    else
+        hr = media_player_create_item_from_url(player, url, sync, user_data, ret);
+    LeaveCriticalSection(&player->cs);
 
     return hr;
 }

@@ -23,6 +23,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "mfplay.h"
+#include "mferror.h"
 
 #include "wine/test.h"
 
@@ -119,7 +120,63 @@ static void test_create_player(void)
     IMFPMediaPlayer_Release(player);
 }
 
+static void test_shutdown(void)
+{
+    IMFPMediaPlayer *player;
+    float slowest, fastest;
+    HRESULT hr;
+    MFP_MEDIAPLAYER_STATE state;
+    IMFPMediaItem *item;
+    HWND window;
+
+    hr = MFPCreateMediaPlayer(NULL, FALSE, 0, NULL, NULL, &player);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetState(player, &state);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(state == MFP_MEDIAPLAYER_STATE_EMPTY, "Unexpected state %d.\n", state);
+
+    hr = IMFPMediaPlayer_Shutdown(player);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Check methods in shutdown state. */
+    hr = IMFPMediaPlayer_Play(player);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_Pause(player);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_Stop(player);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetSupportedRates(player, TRUE, &slowest, &fastest);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetState(player, &state);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(state == MFP_MEDIAPLAYER_STATE_SHUTDOWN, "Unexpected state %d.\n", state);
+
+    hr = IMFPMediaPlayer_CreateMediaItemFromURL(player, L"url", TRUE, 0, &item);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_ClearMediaItem(player);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetMediaItem(player, &item);
+todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_GetVideoWindow(player, &window);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPMediaPlayer_Shutdown(player);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IMFPMediaPlayer_Release(player);
+}
+
 START_TEST(mfplay)
 {
     test_create_player();
+    test_shutdown();
 }
