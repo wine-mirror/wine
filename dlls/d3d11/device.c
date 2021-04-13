@@ -603,6 +603,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_Draw(ID3D11DeviceContext1 
 static HRESULT STDMETHODCALLTYPE d3d11_immediate_context_Map(ID3D11DeviceContext1 *iface, ID3D11Resource *resource,
         UINT subresource_idx, D3D11_MAP map_type, UINT map_flags, D3D11_MAPPED_SUBRESOURCE *mapped_subresource)
 {
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext1(iface);
     struct wined3d_resource *wined3d_resource;
     struct wined3d_map_desc map_desc;
     HRESULT hr;
@@ -616,7 +617,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_immediate_context_Map(ID3D11DeviceContext
     wined3d_resource = wined3d_resource_from_d3d11_resource(resource);
 
     wined3d_mutex_lock();
-    hr = wined3d_resource_map(wined3d_resource, subresource_idx,
+    hr = wined3d_device_context_map(context->wined3d_context, wined3d_resource, subresource_idx,
             &map_desc, NULL, wined3d_map_flags_from_d3d11_map_type(map_type));
     wined3d_mutex_unlock();
 
