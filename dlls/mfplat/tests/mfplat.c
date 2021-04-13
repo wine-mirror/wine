@@ -3979,6 +3979,12 @@ static void test_MFCalculateImageSize(void)
         { &MFVideoFormat_I420, 4, 3, 18 },
         { &MFVideoFormat_I420, 320, 240, 115200 },
 
+        { &MFVideoFormat_IYUV, 1, 1, 3, 1 },
+        { &MFVideoFormat_IYUV, 2, 1, 3 },
+        { &MFVideoFormat_IYUV, 1, 2, 6, 3 },
+        { &MFVideoFormat_IYUV, 4, 3, 18 },
+        { &MFVideoFormat_IYUV, 320, 240, 115200 },
+
         { &MFVideoFormat_YUY2, 2, 1, 4 },
         { &MFVideoFormat_YUY2, 4, 3, 24 },
         { &MFVideoFormat_YUY2, 128, 128, 32768 },
@@ -5307,6 +5313,10 @@ static void test_MFGetStrideForBitmapInfoHeader(void)
         { &MFVideoFormat_I420, 2, 2 },
         { &MFVideoFormat_I420, 3, 3 },
         { &MFVideoFormat_I420, 320, 320 },
+        { &MFVideoFormat_IYUV, 1, 1 },
+        { &MFVideoFormat_IYUV, 2, 2 },
+        { &MFVideoFormat_IYUV, 3, 3 },
+        { &MFVideoFormat_IYUV, 320, 320 },
     };
     unsigned int i;
     LONG stride;
