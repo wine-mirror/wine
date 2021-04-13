@@ -25,14 +25,6 @@
 #include "wine/port.h"
 
 #include <stdarg.h>
-#include <fcntl.h>
-#include <errno.h>
-#ifdef HAVE_SYS_WAIT_H
-#include <sys/wait.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -67,60 +59,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(netapi32);
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 static HINSTANCE netapi32_instance;
-
-static CPTABLEINFO unix_cptable;
-static ULONG unix_cp;
-
-static BOOL get_unix_codepage(void)
-{
-    static const WCHAR wineunixcpW[] = {'W','I','N','E','U','N','I','X','C','P',0};
-    UNICODE_STRING name, value;
-    WCHAR value_buffer[13];
-    SIZE_T size;
-    void *ptr;
-
-    if (unix_cp) return TRUE;
-
-    RtlInitUnicodeString( &name, wineunixcpW );
-    value.Buffer = value_buffer;
-    value.MaximumLength = sizeof(value_buffer);
-    if (!RtlQueryEnvironmentVariable_U( NULL, &name, &value ))
-        RtlUnicodeStringToInteger( &value, 10, &unix_cp );
-    if (NtGetNlsSectionPtr( 11, unix_cp, NULL, &ptr, &size ))
-        return FALSE;
-    RtlInitCodePageTable( ptr, &unix_cptable );
-    return TRUE;
-}
-
-static DWORD netapi_wcstoumbs( const WCHAR *src, char *dst, DWORD dstlen )
-{
-    DWORD srclen = (strlenW( src ) + 1) * sizeof(WCHAR);
-    DWORD len;
-
-    get_unix_codepage();
-
-    if (unix_cp == CP_UTF8)
-    {
-        RtlUnicodeToUTF8N( dst, dstlen, &len, src, srclen );
-        return len;
-    }
-    else
-    {
-        len = (strlenW( src ) * 2) + 1;
-        if (dst) RtlUnicodeToCustomCPN( &unix_cptable, dst, dstlen, &len, src, srclen );
-        return len;
-    }
-}
-
-static char *strdup_unixcp( const WCHAR *str )
-{
-    char *ret;
-
-    int len = netapi_wcstoumbs( str, NULL, 0 );
-    if ((ret = HeapAlloc( GetProcessHeap(), 0, len )))
-        netapi_wcstoumbs( str, ret, len );
-    return ret;
-}
 
 static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
 
@@ -2087,101 +2025,6 @@ NET_API_STATUS WINAPI NetUserModalsGet(
     return NERR_Success;
 }
 
-static NET_API_STATUS change_password_smb( LPCWSTR domainname, LPCWSTR username,
-    LPCWSTR oldpassword, LPCWSTR newpassword )
-{
-#ifdef HAVE_FORK
-    NET_API_STATUS ret = NERR_Success;
-    static char option_silent[] = "-s";
-    static char option_user[] = "-U";
-    static char option_remote[] = "-r";
-    static char smbpasswd[] = "smbpasswd";
-    int pipe_out[2];
-    pid_t pid, wret;
-    int status;
-    char *server = NULL, *user, *argv[7], *old = NULL, *new = NULL;
-
-    if (domainname && !(server = strdup_unixcp( domainname ))) return ERROR_OUTOFMEMORY;
-    if (!(user = strdup_unixcp( username )))
-    {
-        ret = ERROR_OUTOFMEMORY;
-        goto end;
-    }
-    if (!(old = strdup_unixcp( oldpassword )))
-    {
-        ret = ERROR_OUTOFMEMORY;
-        goto end;
-    }
-    if (!(new = strdup_unixcp( newpassword )))
-    {
-        ret = ERROR_OUTOFMEMORY;
-        goto end;
-    }
-    argv[0] = smbpasswd;
-    argv[1] = option_silent;
-    argv[2] = option_user;
-    argv[3] = user;
-    if (server)
-    {
-        argv[4] = option_remote;
-        argv[5] = server;
-        argv[6] = NULL;
-    }
-    else argv[4] = NULL;
-
-    if (pipe( pipe_out ) == -1)
-    {
-        ret = NERR_InternalError;
-        goto end;
-    }
-    fcntl( pipe_out[0], F_SETFD, FD_CLOEXEC );
-    fcntl( pipe_out[1], F_SETFD, FD_CLOEXEC );
-
-    switch ((pid = fork()))
-    {
-    case -1:
-        close( pipe_out[0] );
-        close( pipe_out[1] );
-        ret = NERR_InternalError;
-        goto end;
-    case 0:
-        dup2( pipe_out[0], 0 );
-        close( pipe_out[0] );
-        close( pipe_out[1] );
-        execvp( "smbpasswd", argv );
-        ERR( "can't execute smbpasswd, is it installed?\n" );
-        _exit(1);
-    default:
-        close( pipe_out[0] );
-        break;
-    }
-    write( pipe_out[1], old, strlen( old ) );
-    write( pipe_out[1], "\n", 1 );
-    write( pipe_out[1], new, strlen( new ) );
-    write( pipe_out[1], "\n", 1 );
-    write( pipe_out[1], new, strlen( new ) );
-    write( pipe_out[1], "\n", 1 );
-    close( pipe_out[1] );
-
-    do {
-        wret = waitpid(pid, &status, 0);
-    } while (wret < 0 && errno == EINTR);
-
-    if (ret == NERR_Success && (wret < 0 || !WIFEXITED(status) || WEXITSTATUS(status)))
-        ret = NERR_InternalError;
-
-end:
-    HeapFree( GetProcessHeap(), 0, server );
-    HeapFree( GetProcessHeap(), 0, user );
-    HeapFree( GetProcessHeap(), 0, old );
-    HeapFree( GetProcessHeap(), 0, new );
-    return ret;
-#else
-    ERR( "no fork support on this platform\n" );
-    return NERR_InternalError;
-#endif
-}
-
 /******************************************************************************
  *                NetUserChangePassword  (NETAPI32.@)
  * PARAMS
@@ -2204,7 +2047,9 @@ NET_API_STATUS WINAPI NetUserChangePassword(LPCWSTR domainname, LPCWSTR username
 
     TRACE("(%s, %s, ..., ...)\n", debugstr_w(domainname), debugstr_w(username));
 
-    if (!change_password_smb( domainname, username, oldpassword, newpassword ))
+    if (!samba_init()) return ERROR_DLL_INIT_FAILED;
+
+    if (!samba_funcs->change_password( domainname, username, oldpassword, newpassword ))
         return NERR_Success;
 
     if(domainname)

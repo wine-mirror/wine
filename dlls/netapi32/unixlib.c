@@ -27,6 +27,14 @@
 #include "wine/port.h"
 
 #include <stdarg.h>
+#include <fcntl.h>
+#include <errno.h>
+#ifdef HAVE_SYS_WAIT_H
+#include <sys/wait.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -949,12 +957,103 @@ static void libnetapi_init(void)
 
 #endif /* SONAME_LIBNETAPI */
 
+static NET_API_STATUS WINAPI change_password( const WCHAR *domainname, const WCHAR *username,
+                                              const WCHAR *oldpassword, const WCHAR *newpassword )
+{
+    NET_API_STATUS ret = NERR_Success;
+    static char option_silent[] = "-s";
+    static char option_user[] = "-U";
+    static char option_remote[] = "-r";
+    static char smbpasswd[] = "smbpasswd";
+    int pipe_out[2];
+    pid_t pid, wret;
+    int status;
+    char *server = NULL, *user, *argv[7], *old = NULL, *new = NULL;
+
+    if (domainname && !(server = strdup_unixcp( domainname ))) return ERROR_OUTOFMEMORY;
+    if (!(user = strdup_unixcp( username )))
+    {
+        ret = ERROR_OUTOFMEMORY;
+        goto end;
+    }
+    if (!(old = strdup_unixcp( oldpassword )))
+    {
+        ret = ERROR_OUTOFMEMORY;
+        goto end;
+    }
+    if (!(new = strdup_unixcp( newpassword )))
+    {
+        ret = ERROR_OUTOFMEMORY;
+        goto end;
+    }
+    argv[0] = smbpasswd;
+    argv[1] = option_silent;
+    argv[2] = option_user;
+    argv[3] = user;
+    if (server)
+    {
+        argv[4] = option_remote;
+        argv[5] = server;
+        argv[6] = NULL;
+    }
+    else argv[4] = NULL;
+
+    if (pipe( pipe_out ) == -1)
+    {
+        ret = NERR_InternalError;
+        goto end;
+    }
+    fcntl( pipe_out[0], F_SETFD, FD_CLOEXEC );
+    fcntl( pipe_out[1], F_SETFD, FD_CLOEXEC );
+
+    switch ((pid = fork()))
+    {
+    case -1:
+        close( pipe_out[0] );
+        close( pipe_out[1] );
+        ret = NERR_InternalError;
+        goto end;
+    case 0:
+        dup2( pipe_out[0], 0 );
+        close( pipe_out[0] );
+        close( pipe_out[1] );
+        execvp( "smbpasswd", argv );
+        ERR( "can't execute smbpasswd, is it installed?\n" );
+        _exit(1);
+    default:
+        close( pipe_out[0] );
+        break;
+    }
+    write( pipe_out[1], old, strlen( old ) );
+    write( pipe_out[1], "\n", 1 );
+    write( pipe_out[1], new, strlen( new ) );
+    write( pipe_out[1], "\n", 1 );
+    write( pipe_out[1], new, strlen( new ) );
+    write( pipe_out[1], "\n", 1 );
+    close( pipe_out[1] );
+
+    do {
+        wret = waitpid(pid, &status, 0);
+    } while (wret < 0 && errno == EINTR);
+
+    if (ret == NERR_Success && (wret < 0 || !WIFEXITED(status) || WEXITSTATUS(status)))
+        ret = NERR_InternalError;
+
+end:
+    RtlFreeHeap( GetProcessHeap(), 0, server );
+    RtlFreeHeap( GetProcessHeap(), 0, user );
+    RtlFreeHeap( GetProcessHeap(), 0, old );
+    RtlFreeHeap( GetProcessHeap(), 0, new );
+    return ret;
+}
+
 static const struct samba_funcs samba_funcs =
 {
     server_getinfo,
     share_add,
     share_del,
     wksta_getinfo,
+    change_password,
 };
 
 NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
