@@ -42,6 +42,90 @@ static HRESULT (WINAPI *pRoInitialize)(RO_INIT_TYPE);
 static void    (WINAPI *pRoUninitialize)(void);
 static HRESULT (WINAPI *pWindowsCreateString)(LPCWSTR, UINT32, HSTRING *);
 static HRESULT (WINAPI *pWindowsDeleteString)(HSTRING);
+static WCHAR  *(WINAPI *pWindowsGetStringRawBuffer)(HSTRING, UINT32 *);
+
+static HRESULT (WINAPI *pActivateAudioInterfaceAsync)(const WCHAR *path,
+            REFIID riid, PROPVARIANT *params,
+            IActivateAudioInterfaceCompletionHandler *done_handler,
+            IActivateAudioInterfaceAsyncOperation **op);
+
+static IMMDeviceEnumerator *g_mmdevenum;
+static WCHAR *g_default_capture_id, *g_default_render_id;
+
+static struct {
+    LONG ref;
+    HANDLE evt;
+    CRITICAL_SECTION lock;
+    IActivateAudioInterfaceAsyncOperation *op;
+    char msg_pfx[128];
+    IUnknown *result_iface;
+    HRESULT result_hr;
+} async_activate_test;
+
+static HRESULT WINAPI async_activate_QueryInterface(
+        IActivateAudioInterfaceCompletionHandler *iface,
+        REFIID riid,
+        void **ppvObject)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+            IsEqualIID(riid, &IID_IAgileObject) ||
+            IsEqualIID(riid, &IID_IActivateAudioInterfaceCompletionHandler))
+    {
+        *ppvObject = iface;
+        IUnknown_AddRef((IUnknown*)*ppvObject);
+        return S_OK;
+    }
+
+    *ppvObject = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI async_activate_AddRef(
+        IActivateAudioInterfaceCompletionHandler *iface)
+{
+    return InterlockedIncrement(&async_activate_test.ref);
+}
+
+static ULONG WINAPI async_activate_Release(
+        IActivateAudioInterfaceCompletionHandler *iface)
+{
+    ULONG ref = InterlockedDecrement(&async_activate_test.ref);
+    if (ref == 1)
+        SetEvent(async_activate_test.evt);
+    return ref;
+}
+
+static HRESULT WINAPI async_activate_ActivateCompleted(
+        IActivateAudioInterfaceCompletionHandler *iface,
+        IActivateAudioInterfaceAsyncOperation *op)
+{
+    HRESULT hr;
+
+    EnterCriticalSection(&async_activate_test.lock);
+    ok(op == async_activate_test.op,
+            "%s: Got different completion operation\n",
+            async_activate_test.msg_pfx);
+    LeaveCriticalSection(&async_activate_test.lock);
+
+    hr = IActivateAudioInterfaceAsyncOperation_GetActivateResult(op,
+            &async_activate_test.result_hr, &async_activate_test.result_iface);
+    ok(hr == S_OK,
+            "%s: GetActivateResult failed: %08x\n",
+            async_activate_test.msg_pfx, hr);
+
+    return S_OK;
+}
+
+static IActivateAudioInterfaceCompletionHandlerVtbl async_activate_vtbl = {
+    async_activate_QueryInterface,
+    async_activate_AddRef,
+    async_activate_Release,
+    async_activate_ActivateCompleted,
+};
+
+static IActivateAudioInterfaceCompletionHandler async_activate_done = {
+    &async_activate_vtbl
+};
 
 static void test_MediaDeviceStatics(void)
 {
@@ -51,8 +135,11 @@ static void test_MediaDeviceStatics(void)
     IActivationFactory *factory = NULL;
     IInspectable *inspectable = NULL, *tmp_inspectable = NULL;
     IAgileObject *agile_object = NULL, *tmp_agile_object = NULL;
+    HANDLE done_evt = CreateEventW(NULL, FALSE, FALSE, NULL);
+    IMMDevice *mmdev;
     HSTRING str;
     HRESULT hr;
+    DWORD dr;
 
     hr = pWindowsCreateString(media_device_statics_name, wcslen(media_device_statics_name), &str);
     ok(hr == S_OK, "WindowsCreateString failed, hr %#x\n", hr);
@@ -85,13 +172,100 @@ static void test_MediaDeviceStatics(void)
     IInspectable_Release(inspectable);
     IActivationFactory_Release(factory);
 
+    InitializeCriticalSection(&async_activate_test.lock);
+
+    /* test default capture device creation */
+    hr = IMediaDeviceStatics_GetDefaultAudioCaptureId(media_device_statics, AudioDeviceRole_Default, &str);
+    ok(hr == S_OK, "GetDefaultAudioCaptureId failed: %08x\n", hr);
+    ok((!!g_default_capture_id) == (!!str),
+            "Presence of default capture device doesn't match expected state\n");
+
+    if (g_default_capture_id)
+    {
+        ok(wcsstr(pWindowsGetStringRawBuffer(str, NULL), g_default_capture_id) != NULL,
+                "Expected to find substring of default capture id in %s\n",
+                wine_dbgstr_w(pWindowsGetStringRawBuffer(str, NULL)));
+
+        /* returned id does not work in GetDevice... */
+        hr = IMMDeviceEnumerator_GetDevice(g_mmdevenum, pWindowsGetStringRawBuffer(str, NULL), &mmdev);
+        ok(hr == E_INVALIDARG, "GetDevice gave wrong error: %08x\n", hr);
+
+        /* ...but does work in ActivateAudioInterfaceAsync */
+        async_activate_test.ref = 1;
+        async_activate_test.evt = done_evt;
+        async_activate_test.op = NULL;
+        async_activate_test.result_iface = NULL;
+        async_activate_test.result_hr = 0;
+        strcpy(async_activate_test.msg_pfx, "capture_activate");
+
+        EnterCriticalSection(&async_activate_test.lock);
+        hr = pActivateAudioInterfaceAsync(pWindowsGetStringRawBuffer(str, NULL),
+                &IID_IAudioClient2, NULL, &async_activate_done, &async_activate_test.op);
+        ok(hr == S_OK, "ActivateAudioInterfaceAsync failed: %08x\n", hr);
+        LeaveCriticalSection(&async_activate_test.lock);
+
+        IActivateAudioInterfaceAsyncOperation_Release(async_activate_test.op);
+
+        dr = WaitForSingleObject(async_activate_test.evt, 1000); /* wait for all refs other than our own to be released */
+        ok(dr == WAIT_OBJECT_0, "Timed out waiting for async activate to complete\n");
+        ok(async_activate_test.result_hr == S_OK, "Got unexpected activation result: %08x\n", async_activate_test.result_hr);
+        ok(async_activate_test.result_iface != NULL, "Expected to get WASAPI interface, but got NULL\n");
+        IUnknown_Release(async_activate_test.result_iface);
+
+        pWindowsDeleteString(str);
+    }
+
+    /* test default render device creation */
+    hr = IMediaDeviceStatics_GetDefaultAudioRenderId(media_device_statics, AudioDeviceRole_Default, &str);
+    ok(hr == S_OK, "GetDefaultAudioRenderId failed: %08x\n", hr);
+    ok((!!g_default_render_id) == (!!str),
+            "Presence of default render device doesn't match expected state\n");
+
+    if (g_default_render_id)
+    {
+        ok(wcsstr(pWindowsGetStringRawBuffer(str, NULL), g_default_render_id) != NULL,
+                "Expected to find substring of default render id in %s\n",
+                wine_dbgstr_w(pWindowsGetStringRawBuffer(str, NULL)));
+
+        /* returned id does not work in GetDevice... */
+        hr = IMMDeviceEnumerator_GetDevice(g_mmdevenum, pWindowsGetStringRawBuffer(str, NULL), &mmdev);
+        ok(hr == E_INVALIDARG, "GetDevice gave wrong error: %08x\n", hr);
+
+        /* ...but does work in ActivateAudioInterfaceAsync */
+        async_activate_test.ref = 1;
+        async_activate_test.evt = done_evt;
+        async_activate_test.op = NULL;
+        async_activate_test.result_iface = NULL;
+        async_activate_test.result_hr = 0;
+        strcpy(async_activate_test.msg_pfx, "render_activate");
+
+        EnterCriticalSection(&async_activate_test.lock);
+        hr = pActivateAudioInterfaceAsync(pWindowsGetStringRawBuffer(str, NULL),
+                &IID_IAudioClient2, NULL, &async_activate_done, &async_activate_test.op);
+        ok(hr == S_OK, "ActivateAudioInterfaceAsync failed: %08x\n", hr);
+        LeaveCriticalSection(&async_activate_test.lock);
+
+        IActivateAudioInterfaceAsyncOperation_Release(async_activate_test.op);
+
+        dr = WaitForSingleObject(async_activate_test.evt, 1000); /* wait for all refs other than our own to be released */
+        ok(dr == WAIT_OBJECT_0, "Timed out waiting for async activate to complete\n");
+        ok(async_activate_test.result_hr == S_OK, "Got unexpected activation result: %08x\n", async_activate_test.result_hr);
+        ok(async_activate_test.result_iface != NULL, "Expected to get WASAPI interface, but got NULL\n");
+        IUnknown_Release(async_activate_test.result_iface);
+
+        pWindowsDeleteString(str);
+    }
+
     /* cleanup */
+    CloseHandle(done_evt);
+    DeleteCriticalSection(&async_activate_test.lock);
     IMediaDeviceStatics_Release(media_device_statics);
 }
 
 START_TEST(devices)
 {
-    HMODULE combase;
+    HMODULE combase, mmdevapi;
+    IMMDevice *mmdev;
     HRESULT hr;
 
     if (!(combase = LoadLibraryW(L"combase.dll")))
@@ -112,12 +286,59 @@ START_TEST(devices)
     LOAD_FUNCPTR(RoUninitialize);
     LOAD_FUNCPTR(WindowsCreateString);
     LOAD_FUNCPTR(WindowsDeleteString);
+    LOAD_FUNCPTR(WindowsGetStringRawBuffer);
+#undef LOAD_FUNCPTR
+
+    if (!(mmdevapi = LoadLibraryW(L"mmdevapi.dll")))
+    {
+        win_skip("Failed to load mmdevapi.dll, skipping tests\n");
+        return;
+    }
+
+#define LOAD_FUNCPTR(x) \
+    if (!(p##x = (void*)GetProcAddress(mmdevapi, #x))) \
+    { \
+        win_skip("Failed to find %s in mmdevapi.dll, skipping tests.\n", #x); \
+        return; \
+    }
+
+    LOAD_FUNCPTR(ActivateAudioInterfaceAsync);
 #undef LOAD_FUNCPTR
 
     hr = pRoInitialize(RO_INIT_MULTITHREADED);
     ok(hr == S_OK, "RoInitialize failed, hr %#x\n", hr);
 
+    hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL,
+            CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&g_mmdevenum);
+    ok(hr == S_OK, "Couldn't make MMDeviceEnumerator: %08x\n", hr);
+
+    hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(g_mmdevenum, eCapture, eMultimedia, &mmdev);
+    if (hr == S_OK)
+    {
+        hr = IMMDevice_GetId(mmdev, &g_default_capture_id);
+        ok(hr == S_OK, "IMMDevice::GetId(capture) failed: %08x\n", hr);
+
+        IMMDevice_Release(mmdev);
+    }
+    if (hr != S_OK)
+        g_default_capture_id = NULL;
+
+    hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(g_mmdevenum, eRender, eMultimedia, &mmdev);
+    if (hr == S_OK)
+    {
+        hr = IMMDevice_GetId(mmdev, &g_default_render_id);
+        ok(hr == S_OK, "IMMDevice::GetId(render) failed: %08x\n", hr);
+
+        IMMDevice_Release(mmdev);
+    }
+    if (hr != S_OK)
+        g_default_render_id = NULL;
+
     test_MediaDeviceStatics();
+
+    CoTaskMemFree(g_default_capture_id);
+    CoTaskMemFree(g_default_render_id);
+    IMMDeviceEnumerator_Release(g_mmdevenum);
 
     pRoUninitialize();
 }

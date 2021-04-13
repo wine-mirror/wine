@@ -25,9 +25,11 @@
 #include "winbase.h"
 #include "winstring.h"
 #include "wine/debug.h"
+#include "wine/heap.h"
 #include "objbase.h"
 
 #include "activation.h"
+#include "mmdeviceapi.h"
 
 #define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Collections
@@ -44,6 +46,16 @@ static const char *debugstr_hstring(HSTRING hstr)
     if (hstr && !((ULONG_PTR)hstr >> 16)) return "(invalid)";
     str = WindowsGetStringRawBuffer(hstr, &len);
     return wine_dbgstr_wn(str, len);
+}
+
+static ERole AudioDeviceRole_to_ERole(AudioDeviceRole role)
+{
+    switch(role){
+        case AudioDeviceRole_Communications:
+            return eCommunications;
+        default:
+            return eMultimedia;
+    }
 }
 
 struct windows_media_devices
@@ -151,6 +163,71 @@ static const struct IActivationFactoryVtbl activation_factory_vtbl =
     windows_media_devices_ActivateInstance,
 };
 
+static HRESULT get_default_device_id(EDataFlow direction, AudioDeviceRole role, HSTRING *device_id_hstr)
+{
+    HRESULT hr;
+    WCHAR *devid, *s;
+    IMMDevice *dev;
+    IMMDeviceEnumerator *devenum;
+    ERole mmdev_role = AudioDeviceRole_to_ERole(role);
+
+    static const WCHAR id_fmt_pre[] = L"\\\\?\\SWD#MMDEVAPI#";
+    static const WCHAR id_fmt_hash[] = L"#";
+    static const size_t GUID_STR_LEN = 38; /* == strlen("{00000000-0000-0000-0000-000000000000}") */
+
+    *device_id_hstr = NULL;
+
+    hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL,
+            CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&devenum);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create MMDeviceEnumerator: %08x\n", hr);
+        return hr;
+    }
+
+    hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(devenum, direction, mmdev_role, &dev);
+    if (FAILED(hr))
+    {
+        WARN("GetDefaultAudioEndpoint failed: %08x\n", hr);
+        IMMDeviceEnumerator_Release(devenum);
+        return hr;
+    }
+
+    hr = IMMDevice_GetId(dev, &devid);
+    if (FAILED(hr))
+    {
+        WARN("GetId failed: %08x\n", hr);
+        IMMDevice_Release(dev);
+        IMMDeviceEnumerator_Release(devenum);
+        return hr;
+    }
+
+    s = heap_alloc((sizeof(id_fmt_pre) - sizeof(WCHAR)) +
+            (sizeof(id_fmt_hash) - sizeof(WCHAR)) +
+            (wcslen(devid) + GUID_STR_LEN + 1 /* nul */) * sizeof(WCHAR));
+
+    wcscpy(s, id_fmt_pre);
+    wcscat(s, devid);
+    wcscat(s, id_fmt_hash);
+
+    if(direction == eRender)
+        StringFromGUID2(&DEVINTERFACE_AUDIO_RENDER, s + wcslen(s), GUID_STR_LEN + 1);
+    else
+        StringFromGUID2(&DEVINTERFACE_AUDIO_CAPTURE, s + wcslen(s), GUID_STR_LEN + 1);
+
+    hr = WindowsCreateString(s, wcslen(s), device_id_hstr);
+    if (FAILED(hr))
+        WARN("WindowsCreateString failed: %08x\n", hr);
+
+    heap_free(s);
+
+    CoTaskMemFree(devid);
+    IMMDevice_Release(dev);
+    IMMDeviceEnumerator_Release(devenum);
+
+    return hr;
+}
+
 static HRESULT WINAPI media_device_statics_QueryInterface(IMediaDeviceStatics *iface,
         REFIID riid, void **ppvObject)
 {
@@ -215,15 +292,15 @@ static HRESULT WINAPI media_device_statics_GetVideoCaptureSelector(IMediaDeviceS
 static HRESULT WINAPI media_device_statics_GetDefaultAudioCaptureId(IMediaDeviceStatics *iface,
         AudioDeviceRole role, HSTRING *value)
 {
-    FIXME("iface %p, role 0x%x, value %p stub!\n", iface, role, value);
-    return E_NOTIMPL;
+    TRACE("iface %p, role 0x%x, value %p\n", iface, role, value);
+    return get_default_device_id(eCapture, role, value);
 }
 
 static HRESULT WINAPI media_device_statics_GetDefaultAudioRenderId(IMediaDeviceStatics *iface,
         AudioDeviceRole role, HSTRING *value)
 {
-    FIXME("iface %p, role 0x%x, value %p stub!\n", iface, role, value);
-    return E_NOTIMPL;
+    TRACE("iface %p, role 0x%x, value %p\n", iface, role, value);
+    return get_default_device_id(eRender, role, value);
 }
 
 static HRESULT WINAPI media_device_statics_add_DefaultAudioCaptureDeviceChanged(
