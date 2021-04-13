@@ -2040,10 +2040,10 @@ typedef struct _OBJECT_TYPES_INFORMATION
 
 typedef struct _PROCESS_BASIC_INFORMATION {
 #ifdef __WINESRC__
-    DWORD_PTR ExitStatus;
-    PPEB PebBaseAddress;
-    DWORD_PTR AffinityMask;
-    DWORD_PTR BasePriority;
+    NTSTATUS  ExitStatus;
+    PEB      *PebBaseAddress;
+    ULONG_PTR AffinityMask;
+    LONG      BasePriority;
     ULONG_PTR UniqueProcessId;
     ULONG_PTR InheritedFromUniqueProcessId;
 #else
