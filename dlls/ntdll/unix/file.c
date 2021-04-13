@@ -1228,13 +1228,9 @@ static BOOL is_hidden_file( const UNICODE_STRING *name )
     if (show_dot_files) return FALSE;
 
     end = p = name->Buffer + name->Length/sizeof(WCHAR);
-    while (p > name->Buffer && IS_SEPARATOR(p[-1])) p--;
-    while (p > name->Buffer && !IS_SEPARATOR(p[-1])) p--;
-    if (p == end || *p != '.') return FALSE;
-    /* make sure it isn't '.' or '..' */
-    if (p + 1 == end) return FALSE;
-    if (p[1] == '.' && p + 2 == end) return FALSE;
-    return TRUE;
+    while (p > name->Buffer && p[-1] == '\\') p--;
+    while (p > name->Buffer && p[-1] != '\\') p--;
+    return (p < end && *p == '.');
 }
 
 
@@ -2779,6 +2775,8 @@ static NTSTATUS get_dos_device( char **unix_name, int start_pos )
     /* special case for drive devices */
     if (dev[0] && dev[1] == ':' && !dev[2]) strcpy( dev + 1, "::" );
 
+    if (strchr( dev, '/' )) goto failed;
+
     for (;;)
     {
         if (!stat( *unix_name, &st ))
@@ -2811,6 +2809,7 @@ static NTSTATUS get_dos_device( char **unix_name, int start_pos )
         if (!new_name) return STATUS_BAD_DEVICE_TYPE;
         dev = NULL; /* last try */
     }
+failed:
     free( *unix_name );
     *unix_name = NULL;
     return STATUS_BAD_DEVICE_TYPE;
@@ -3090,21 +3089,41 @@ done:
  * Helper for nt_to_unix_file_name
  */
 static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer, int unix_len, int pos,
-                                  UINT disposition, BOOLEAN check_case )
+                                  UINT disposition, BOOL is_unix )
 {
+    static const WCHAR invalid_charsW[] = { INVALID_NT_CHARS, '/', 0 };
     NTSTATUS status;
     int ret, len;
     struct stat st;
     char *unix_name = *buffer;
+    const WCHAR *ptr, *end;
     const BOOL redirect = NtCurrentTeb64() && !NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR];
 
-    /* try a shortcut first */
+    /* check syntax of individual components */
 
-    while (name_len && IS_SEPARATOR(*name))
+    for (ptr = name, end = name + name_len; ptr < end; ptr++)
     {
-        name++;
-        name_len--;
+        if (*ptr == '\\') return STATUS_OBJECT_NAME_INVALID;  /* duplicate backslash */
+        if (*ptr == '.')
+        {
+            if (ptr + 1 == end) return STATUS_OBJECT_NAME_INVALID;  /* "." element */
+            if (ptr[1] == '\\') return STATUS_OBJECT_NAME_INVALID;  /* "." element */
+            if (ptr[1] == '.')
+            {
+                if (ptr + 2 == end) return STATUS_OBJECT_NAME_INVALID;  /* ".." element */
+                if (ptr[2] == '\\') return STATUS_OBJECT_NAME_INVALID;  /* ".." element */
+            }
+        }
+        /* check for invalid characters (all chars except 0 are valid for unix) */
+        for ( ; ptr < end && *ptr != '\\'; ptr++)
+        {
+            if (!*ptr) return STATUS_OBJECT_NAME_INVALID;
+            if (is_unix) continue;
+            if (*ptr < 32 || wcschr( invalid_charsW, *ptr )) return STATUS_OBJECT_NAME_INVALID;
+        }
     }
+
+    /* try a shortcut first */
 
     unix_name[pos] = '/';
     ret = ntdll_wcstoumbs( name, name_len, unix_name + pos + 1, unix_len - pos - 1, TRUE );
@@ -3126,7 +3145,7 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
 
     if (!name_len)  /* empty name -> drive root doesn't exist */
         return STATUS_OBJECT_PATH_NOT_FOUND;
-    if (check_case && !redirect && (disposition == FILE_OPEN || disposition == FILE_OVERWRITE))
+    if (is_unix && !redirect && (disposition == FILE_OPEN || disposition == FILE_OVERWRITE))
         return STATUS_OBJECT_NAME_NOT_FOUND;
 
     /* now do it component by component */
@@ -3137,9 +3156,9 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
         BOOLEAN is_win_dir = FALSE;
 
         end = name;
-        while (end < name + name_len && !IS_SEPARATOR(*end)) end++;
+        while (end < name + name_len && *end != '\\') end++;
         next = end;
-        while (next < name + name_len && IS_SEPARATOR(*next)) next++;
+        if (next < name + name_len) next++;
         name_len -= next - name;
 
         /* grow the buffer if needed */
@@ -3153,7 +3172,7 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
         }
 
         status = find_file_in_dir( unix_name, pos, name, end - name,
-                                   check_case, redirect ? &is_win_dir : NULL );
+                                   is_unix, redirect ? &is_win_dir : NULL );
 
         /* if this is the last element, not finding it is not necessarily fatal */
         if (!name_len)
@@ -3184,7 +3203,7 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
         pos += strlen( unix_name + pos );
         name = next;
 
-        if (is_win_dir && (len = get_redirect_path( unix_name, pos, name, name_len, check_case )))
+        if (is_win_dir && (len = get_redirect_path( unix_name, pos, name, name_len, is_unix )))
         {
             name += len;
             name_len -= len;
@@ -3203,10 +3222,9 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
 static NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, char **name_ret,
                                            UNICODE_STRING *nt_name, UINT disposition )
 {
-    static const WCHAR invalid_charsW[] = { INVALID_NT_CHARS, 0 };
     enum server_fd_type type;
     int old_cwd, root_fd, needs_close;
-    const WCHAR *name, *p;
+    const WCHAR *name;
     char *unix_name;
     int name_len, unix_len;
     NTSTATUS status;
@@ -3217,11 +3235,7 @@ static NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, char *
     name     = attr->ObjectName->Buffer;
     name_len = attr->ObjectName->Length / sizeof(WCHAR);
 
-    if (name_len && IS_SEPARATOR(name[0])) return STATUS_INVALID_PARAMETER;
-
-    /* check for invalid characters */
-    for (p = name; p < name + name_len; p++)
-        if (*p < 32 || wcschr( invalid_charsW, *p )) return STATUS_OBJECT_NAME_INVALID;
+    if (name_len && name[0] == '\\') return STATUS_INVALID_PARAMETER;
 
     unix_len = name_len * 3 + MAX_DIR_ENTRY_LEN + 3;
     if (!(unix_name = malloc( unix_len ))) return STATUS_NO_MEMORY;
@@ -3239,8 +3253,7 @@ static NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, char *
             mutex_lock( &dir_mutex );
             if ((old_cwd = open( ".", O_RDONLY )) != -1 && fchdir( root_fd ) != -1)
             {
-                status = lookup_unix_name( name, name_len, &unix_name, unix_len, 1,
-                                           disposition, FALSE );
+                status = lookup_unix_name( name, name_len, &unix_name, unix_len, 1, disposition, FALSE );
                 if (fchdir( old_cwd ) == -1) chdir( "/" );
             }
             else status = errno_to_status( errno );
@@ -3282,18 +3295,17 @@ NTSTATUS nt_to_unix_file_name( const UNICODE_STRING *nameW, char **unix_name_ret
     static const WCHAR invalid_charsW[] = { INVALID_NT_CHARS, 0 };
 
     NTSTATUS status = STATUS_SUCCESS;
-    const WCHAR *name, *p;
+    const WCHAR *name;
     struct stat st;
     char *unix_name;
     int pos, ret, name_len, unix_len, prefix_len;
     WCHAR prefix[MAX_DIR_ENTRY_LEN + 1];
-    BOOLEAN check_case = FALSE;
     BOOLEAN is_unix = FALSE;
 
     name     = nameW->Buffer;
     name_len = nameW->Length / sizeof(WCHAR);
 
-    if (!name_len || !IS_SEPARATOR(name[0])) return STATUS_OBJECT_PATH_SYNTAX_BAD;
+    if (!name_len || name[0] != '\\') return STATUS_OBJECT_PATH_SYNTAX_BAD;
 
     if (!(pos = get_dos_prefix_len( nameW )))
         return STATUS_BAD_DEVICE_TYPE;  /* no DOS prefix, assume NT native name */
@@ -3306,29 +3318,21 @@ NTSTATUS nt_to_unix_file_name( const UNICODE_STRING *nameW, char **unix_name_ret
     /* check for sub-directory */
     for (pos = 0; pos < name_len && pos <= MAX_DIR_ENTRY_LEN; pos++)
     {
-        if (IS_SEPARATOR(name[pos])) break;
+        if (name[pos] == '\\') break;
         if (name[pos] < 32 || wcschr( invalid_charsW, name[pos] ))
             return STATUS_OBJECT_NAME_INVALID;
         prefix[pos] = (name[pos] >= 'A' && name[pos] <= 'Z') ? name[pos] + 'a' - 'A' : name[pos];
     }
     if (pos > MAX_DIR_ENTRY_LEN) return STATUS_OBJECT_NAME_INVALID;
 
+    if (pos >= 4 && !memcmp( prefix, unixW, sizeof(unixW) ))
+    {
+        /* allow slash for unix namespace */
+        if (pos > 4 && prefix[4] == '/') pos = 4;
+        is_unix = pos == 4;
+    }
     prefix_len = pos;
     prefix[prefix_len] = 0;
-
-    /* check for invalid characters (all chars except 0 are valid for unix) */
-    is_unix = (prefix_len == 4 && !memcmp( prefix, unixW, sizeof(unixW) ));
-    if (is_unix)
-    {
-        for (p = name + prefix_len; p < name + name_len; p++)
-            if (!*p) return STATUS_OBJECT_NAME_INVALID;
-        check_case = TRUE;
-    }
-    else
-    {
-        for (p = name + prefix_len; p < name + name_len; p++)
-            if (*p < 32 || wcschr( invalid_charsW, *p )) return STATUS_OBJECT_NAME_INVALID;
-    }
 
     unix_len = name_len * 3 + MAX_DIR_ENTRY_LEN + 3;
     unix_len += strlen(config_dir) + sizeof("/dosdevices/");
@@ -3353,6 +3357,7 @@ NTSTATUS nt_to_unix_file_name( const UNICODE_STRING *nameW, char **unix_name_ret
 
     /* check if prefix exists (except for DOS drives to avoid extra stat calls) */
 
+    if (wcschr( prefix, '/' )) return STATUS_OBJECT_PATH_NOT_FOUND;
     if (prefix_len != 2 || prefix[1] != ':')
     {
         unix_name[pos] = 0;
@@ -3367,10 +3372,10 @@ NTSTATUS nt_to_unix_file_name( const UNICODE_STRING *nameW, char **unix_name_ret
         }
     }
 
-    name += prefix_len;
-    name_len -= prefix_len;
+    name += prefix_len + 1;
+    name_len -= prefix_len + 1;
 
-    status = lookup_unix_name( name, name_len, &unix_name, unix_len, pos, disposition, check_case );
+    status = lookup_unix_name( name, name_len, &unix_name, unix_len, pos, disposition, is_unix );
     if (status == STATUS_SUCCESS || status == STATUS_NO_SUCH_FILE)
     {
         TRACE( "%s -> %s\n", debugstr_us(nameW), debugstr_a(unix_name) );
