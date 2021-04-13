@@ -75,6 +75,7 @@ struct media_player
     IPropertyStore *propstore;
     IMFSourceResolver *resolver;
     IMFMediaSession *session;
+    IMFPMediaItem *item;
     MFP_CREATION_OPTIONS options;
     MFP_MEDIAPLAYER_STATE state;
     HWND event_window;
@@ -224,7 +225,7 @@ static const IUnknownVtbl media_event_vtbl =
 };
 
 static HRESULT media_event_create(struct media_player *player, MFP_EVENT_TYPE event_type,
-        HRESULT hr, struct media_event **event)
+        HRESULT hr, IMFPMediaItem *item, struct media_event **event)
 {
     struct media_event *object;
 
@@ -238,6 +239,31 @@ static HRESULT media_event_create(struct media_player *player, MFP_EVENT_TYPE ev
     object->u.header.pMediaPlayer = &player->IMFPMediaPlayer_iface;
     IMFPMediaPlayer_AddRef(object->u.header.pMediaPlayer);
     object->u.header.eState = player->state;
+    switch (event_type)
+    {
+        case MFP_EVENT_TYPE_PLAY:
+        case MFP_EVENT_TYPE_PAUSE:
+        case MFP_EVENT_TYPE_STOP:
+        case MFP_EVENT_TYPE_POSITION_SET:
+        case MFP_EVENT_TYPE_RATE_SET:
+        case MFP_EVENT_TYPE_MEDIAITEM_CREATED:
+        case MFP_EVENT_TYPE_MEDIAITEM_SET:
+        case MFP_EVENT_TYPE_FRAME_STEP:
+        case MFP_EVENT_TYPE_MEDIAITEM_CLEARED:
+        case MFP_EVENT_TYPE_PLAYBACK_ENDED:
+            object->u.generic.item = item;
+            if (object->u.generic.item)
+                IMFPMediaItem_AddRef(object->u.generic.item);
+            break;
+        case MFP_EVENT_TYPE_MF:
+            object->u.event.pMediaItem = item;
+            if (object->u.event.pMediaItem)
+                IMFPMediaItem_AddRef(object->u.event.pMediaItem);
+            break;
+        default:
+            ;
+    }
+
     /* FIXME: set properties for some events? */
 
     *event = object;
@@ -939,16 +965,34 @@ static HRESULT WINAPI media_player_SetMediaItem(IMFPMediaPlayer *iface, IMFPMedi
 
 static HRESULT WINAPI media_player_ClearMediaItem(IMFPMediaPlayer *iface)
 {
-    FIXME("%p.\n", iface);
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    return IMFMediaSession_SetTopology(player->session, MFSESSION_SETTOPOLOGY_CLEAR_CURRENT, NULL);
 }
 
 static HRESULT WINAPI media_player_GetMediaItem(IMFPMediaPlayer *iface, IMFPMediaItem **item)
 {
-    FIXME("%p, %p.\n", iface, item);
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, item);
+
+    if (!item)
+        return E_POINTER;
+
+    EnterCriticalSection(&player->cs);
+    if (!player->item)
+        hr = MF_E_NOT_FOUND;
+    else
+    {
+        *item = player->item;
+        IMFPMediaItem_AddRef(player->item);
+    }
+    LeaveCriticalSection(&player->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_player_GetVolume(IMFPMediaPlayer *iface, float *volume)
@@ -1102,6 +1146,11 @@ static HRESULT WINAPI media_player_Shutdown(IMFPMediaPlayer *iface)
 
     EnterCriticalSection(&player->cs);
     media_player_set_state(player, MFP_MEDIAPLAYER_STATE_SHUTDOWN);
+    if (player->item)
+    {
+        IMFPMediaItem_Release(player->item);
+        player->item = NULL;
+    }
     LeaveCriticalSection(&player->cs);
 
     return S_OK;
@@ -1282,17 +1331,12 @@ static HRESULT WINAPI media_player_resolver_callback_Invoke(IMFAsyncCallback *if
     if (FAILED(hr))
         WARN("Failed to set media source, hr %#x.\n", hr);
 
-    if (FAILED(media_event_create(player, MFP_EVENT_TYPE_MEDIAITEM_CREATED, hr, &event)))
+    if (FAILED(media_event_create(player, MFP_EVENT_TYPE_MEDIAITEM_CREATED, hr,
+            &item->IMFPMediaItem_iface, &event)))
     {
         WARN("Failed to create event object.\n");
         IUnknown_Release(state);
         return S_OK;
-    }
-
-    if (SUCCEEDED(hr))
-    {
-        event->u.item_created.pMediaItem = &item->IMFPMediaItem_iface;
-        IMFPMediaItem_AddRef(event->u.item_created.pMediaItem);
     }
     event->u.item_created.dwUserData = item->user_data;
 
@@ -1365,6 +1409,63 @@ static ULONG WINAPI media_player_session_events_callback_Release(IMFAsyncCallbac
     return IMFPMediaPlayer_Release(&player->IMFPMediaPlayer_iface);
 }
 
+static void media_player_change_state(struct media_player *player, MFP_MEDIAPLAYER_STATE state,
+        HRESULT event_status, struct media_event **event)
+{
+    MFP_EVENT_TYPE event_type;
+
+    EnterCriticalSection(&player->cs);
+
+    if (state == MFP_MEDIAPLAYER_STATE_PLAYING)
+        event_type = MFP_EVENT_TYPE_PLAY;
+    else if (state == MFP_MEDIAPLAYER_STATE_PAUSED)
+        event_type = MFP_EVENT_TYPE_PAUSE;
+    else
+        event_type = MFP_EVENT_TYPE_STOP;
+
+    media_player_set_state(player, state);
+    media_event_create(player, event_type, event_status, player->item, event);
+
+    LeaveCriticalSection(&player->cs);
+}
+
+static void media_player_set_item(struct media_player *player, IMFTopology *topology, HRESULT event_status,
+        struct media_event **event)
+{
+    IMFPMediaItem *item;
+
+    if (FAILED(IMFTopology_GetUnknown(topology, &_MF_TOPO_MEDIA_ITEM, &IID_IMFPMediaItem, (void **)&item)))
+        return;
+
+    EnterCriticalSection(&player->cs);
+
+    if (player->item)
+        IMFPMediaItem_Release(player->item);
+    player->item = item;
+    IMFPMediaItem_AddRef(player->item);
+
+    media_event_create(player, MFP_EVENT_TYPE_MEDIAITEM_SET, event_status, item, event);
+
+    LeaveCriticalSection(&player->cs);
+
+    IMFPMediaItem_Release(item);
+}
+
+static void media_player_clear_item(struct media_player *player, HRESULT event_status,
+        struct media_event **event)
+{
+    IMFPMediaItem *item;
+
+    EnterCriticalSection(&player->cs);
+
+    item = player->item;
+    player->item = NULL;
+
+    media_event_create(player, MFP_EVENT_TYPE_MEDIAITEM_SET, event_status, item, event);
+
+    LeaveCriticalSection(&player->cs);
+}
+
 static HRESULT WINAPI media_player_session_events_callback_Invoke(IMFAsyncCallback *iface,
         IMFAsyncResult *result)
 {
@@ -1373,10 +1474,10 @@ static HRESULT WINAPI media_player_session_events_callback_Invoke(IMFAsyncCallba
     struct media_event *event = NULL;
     IMFMediaEvent *session_event;
     MFP_MEDIAPLAYER_STATE state;
-    MFP_EVENT_TYPE event_type;
     HRESULT hr, event_status;
     IMFPMediaItem *item = NULL;
     IMFTopology *topology;
+    PROPVARIANT value;
 
     if (FAILED(hr = IMFMediaSession_EndGetEvent(player->session, result, &session_event)))
         return S_OK;
@@ -1384,51 +1485,40 @@ static HRESULT WINAPI media_player_session_events_callback_Invoke(IMFAsyncCallba
     IMFMediaEvent_GetType(session_event, &session_event_type);
     IMFMediaEvent_GetStatus(session_event, &event_status);
 
-    if (SUCCEEDED(IMFMediaSession_GetFullTopology(player->session, MFSESSION_GETFULLTOPOLOGY_CURRENT, 0, &topology)))
-    {
-        IMFTopology_GetUnknown(topology, &_MF_TOPO_MEDIA_ITEM, &IID_IMFPMediaItem, (void **)&item);
-        IMFTopology_Release(topology);
-    }
-
     switch (session_event_type)
     {
         case MESessionStarted:
         case MESessionStopped:
         case MESessionPaused:
-            if (session_event_type == MESessionStarted)
-            {
-                event_type = MFP_EVENT_TYPE_PLAY;
-                state = MFP_MEDIAPLAYER_STATE_PLAYING;
-            }
-            else if (session_event_type == MESessionStopped)
-            {
-                event_type = MFP_EVENT_TYPE_STOP;
-                state = MFP_MEDIAPLAYER_STATE_STOPPED;
-            }
-            else
-            {
-                event_type = MFP_EVENT_TYPE_PAUSE;
-                state = MFP_MEDIAPLAYER_STATE_PAUSED;
-            }
 
-            EnterCriticalSection(&player->cs);
-            media_player_set_state(player, state);
-            media_event_create(player, event_type, event_status, &event);
-            LeaveCriticalSection(&player->cs);
-            event->u.generic.item = item;
-            if (event->u.generic.item)
-                IMFPMediaItem_AddRef(event->u.generic.item);
-            media_player_queue_event(player, event);
+            if (session_event_type == MESessionStarted)
+                state = MFP_MEDIAPLAYER_STATE_PLAYING;
+            else if (session_event_type == MESessionPaused)
+                state = MFP_MEDIAPLAYER_STATE_PAUSED;
+            else
+                state = MFP_MEDIAPLAYER_STATE_STOPPED;
+
+            media_player_change_state(player, state, event_status, &event);
 
             break;
 
         case MESessionTopologySet:
 
-            media_event_create(player, MFP_EVENT_TYPE_MEDIAITEM_SET, event_status, &event);
-            event->u.generic.item = item;
-            if (event->u.generic.item)
-                IMFPMediaItem_AddRef(event->u.generic.item);
-            media_player_queue_event(player, event);
+            value.vt = VT_EMPTY;
+            if (SUCCEEDED(IMFMediaEvent_GetValue(session_event, &value)))
+            {
+                if (value.vt == VT_EMPTY)
+                {
+                    media_player_clear_item(player, event_status, &event);
+                }
+                else if (value.vt == VT_UNKNOWN && value.punkVal &&
+                        SUCCEEDED(IUnknown_QueryInterface(value.punkVal, &IID_IMFTopology, (void **)&topology)))
+                {
+                    media_player_set_item(player, topology, event_status, &event);
+                    IMFTopology_Release(topology);
+                }
+                PropVariantClear(&value);
+            }
 
             break;
         default:
@@ -1439,7 +1529,10 @@ static HRESULT WINAPI media_player_session_events_callback_Invoke(IMFAsyncCallba
         IMFPMediaItem_Release(item);
 
     if (event)
+    {
+        media_player_queue_event(player, event);
         IUnknown_Release(&event->IUnknown_iface);
+    }
 
     IMFMediaSession_BeginGetEvent(player->session, &player->session_events_callback, NULL);
     IMFMediaEvent_Release(session_event);
