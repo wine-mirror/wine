@@ -1,0 +1,5 @@
+TESTDLL = windows.media.devices.dll
+IMPORTS = ole32
+
+C_SRCS = \
+	devices.c

@@ -29,7 +29,11 @@
 
 #include "activation.h"
 
+#define WIDL_using_Windows_Foundation
+#define WIDL_using_Windows_Foundation_Collections
 #include "windows.foundation.h"
+#define WIDL_using_Windows_Media_Devices
+#include "windows.media.devices.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 
@@ -45,6 +49,7 @@ static const char *debugstr_hstring(HSTRING hstr)
 struct windows_media_devices
 {
     IActivationFactory IActivationFactory_iface;
+    IMediaDeviceStatics IMediaDeviceStatics_iface;
     LONG ref;
 };
 
@@ -53,10 +58,17 @@ static inline struct windows_media_devices *impl_from_IActivationFactory(IActiva
     return CONTAINING_RECORD(iface, struct windows_media_devices, IActivationFactory_iface);
 }
 
+static inline struct windows_media_devices *impl_from_IMediaDeviceStatics(IMediaDeviceStatics *iface)
+{
+    return CONTAINING_RECORD(iface, struct windows_media_devices, IMediaDeviceStatics_iface);
+}
+
 static HRESULT STDMETHODCALLTYPE windows_media_devices_QueryInterface(
         IActivationFactory *iface, REFIID iid, void **out)
 {
-    TRACE("iface %p, iid %s, out %p stub!\n", iface, debugstr_guid(iid), out);
+    struct windows_media_devices *impl = impl_from_IActivationFactory(iface);
+
+    TRACE("iface %p, iid %s, out %p\n", iface, debugstr_guid(iid), out);
 
     if (IsEqualGUID(iid, &IID_IUnknown) ||
             IsEqualGUID(iid, &IID_IInspectable) ||
@@ -65,6 +77,13 @@ static HRESULT STDMETHODCALLTYPE windows_media_devices_QueryInterface(
     {
         IUnknown_AddRef(iface);
         *out = iface;
+        return S_OK;
+    }
+
+    if (IsEqualGUID(iid, &IID_IMediaDeviceStatics))
+    {
+        IUnknown_AddRef(iface);
+        *out = &impl->IMediaDeviceStatics_iface;
         return S_OK;
     }
 
@@ -132,9 +151,137 @@ static const struct IActivationFactoryVtbl activation_factory_vtbl =
     windows_media_devices_ActivateInstance,
 };
 
+static HRESULT WINAPI media_device_statics_QueryInterface(IMediaDeviceStatics *iface,
+        REFIID riid, void **ppvObject)
+{
+    struct windows_media_devices *This = impl_from_IMediaDeviceStatics(iface);
+    return windows_media_devices_QueryInterface(&This->IActivationFactory_iface, riid, ppvObject);
+}
+
+static ULONG WINAPI media_device_statics_AddRef(IMediaDeviceStatics *iface)
+{
+    struct windows_media_devices *This = impl_from_IMediaDeviceStatics(iface);
+    return windows_media_devices_AddRef(&This->IActivationFactory_iface);
+}
+
+static ULONG WINAPI media_device_statics_Release(IMediaDeviceStatics *iface)
+{
+    struct windows_media_devices *This = impl_from_IMediaDeviceStatics(iface);
+    return windows_media_devices_Release(&This->IActivationFactory_iface);
+}
+
+static HRESULT WINAPI media_device_statics_GetIids(IMediaDeviceStatics *iface,
+        ULONG *iidCount, IID **iids)
+{
+    struct windows_media_devices *This = impl_from_IMediaDeviceStatics(iface);
+    return windows_media_devices_GetIids(&This->IActivationFactory_iface, iidCount, iids);
+}
+
+static HRESULT WINAPI media_device_statics_GetRuntimeClassName(IMediaDeviceStatics *iface,
+        HSTRING *className)
+{
+    struct windows_media_devices *This = impl_from_IMediaDeviceStatics(iface);
+    return windows_media_devices_GetRuntimeClassName(&This->IActivationFactory_iface, className);
+}
+
+static HRESULT WINAPI media_device_statics_GetTrustLevel(IMediaDeviceStatics *iface,
+        TrustLevel *trustLevel)
+{
+    struct windows_media_devices *This = impl_from_IMediaDeviceStatics(iface);
+    return windows_media_devices_GetTrustLevel(&This->IActivationFactory_iface, trustLevel);
+}
+
+static HRESULT WINAPI media_device_statics_GetAudioCaptureSelector(IMediaDeviceStatics *iface,
+        HSTRING *value)
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_device_statics_GetAudioRenderSelector(IMediaDeviceStatics *iface,
+        HSTRING *value)
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_device_statics_GetVideoCaptureSelector(IMediaDeviceStatics *iface,
+        HSTRING *value)
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_device_statics_GetDefaultAudioCaptureId(IMediaDeviceStatics *iface,
+        AudioDeviceRole role, HSTRING *value)
+{
+    FIXME("iface %p, role 0x%x, value %p stub!\n", iface, role, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_device_statics_GetDefaultAudioRenderId(IMediaDeviceStatics *iface,
+        AudioDeviceRole role, HSTRING *value)
+{
+    FIXME("iface %p, role 0x%x, value %p stub!\n", iface, role, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_device_statics_add_DefaultAudioCaptureDeviceChanged(
+        IMediaDeviceStatics *iface,
+        ITypedEventHandler_IInspectable_DefaultAudioCaptureDeviceChangedEventArgs *handler,
+        EventRegistrationToken *token)
+{
+    FIXME("iface %p, handler %p token %p stub!\n", iface, handler, token);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_device_statics_remove_DefaultAudioCaptureDeviceChanged(
+        IMediaDeviceStatics *iface,
+        EventRegistrationToken token)
+{
+    FIXME("iface %p, token %#I64x stub!\n", iface, token.value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_device_statics_add_DefaultAudioRenderDeviceChanged(
+        IMediaDeviceStatics *iface,
+        ITypedEventHandler_IInspectable_DefaultAudioRenderDeviceChangedEventArgs *handler,
+        EventRegistrationToken *token)
+{
+    FIXME("iface %p, handler %p token %p stub!\n", iface, handler, token);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI media_device_statics_remove_DefaultAudioRenderDeviceChanged(
+        IMediaDeviceStatics *iface,
+        EventRegistrationToken token)
+{
+    FIXME("iface %p, token %#I64x stub!\n", iface, token.value);
+    return E_NOTIMPL;
+}
+
+static IMediaDeviceStaticsVtbl media_device_statics_vtbl = {
+    media_device_statics_QueryInterface,
+    media_device_statics_AddRef,
+    media_device_statics_Release,
+    media_device_statics_GetIids,
+    media_device_statics_GetRuntimeClassName,
+    media_device_statics_GetTrustLevel,
+    media_device_statics_GetAudioCaptureSelector,
+    media_device_statics_GetAudioRenderSelector,
+    media_device_statics_GetVideoCaptureSelector,
+    media_device_statics_GetDefaultAudioCaptureId,
+    media_device_statics_GetDefaultAudioRenderId,
+    media_device_statics_add_DefaultAudioCaptureDeviceChanged,
+    media_device_statics_remove_DefaultAudioCaptureDeviceChanged,
+    media_device_statics_add_DefaultAudioRenderDeviceChanged,
+    media_device_statics_remove_DefaultAudioRenderDeviceChanged,
+};
+
 static struct windows_media_devices windows_media_devices =
 {
     {&activation_factory_vtbl},
+    {&media_device_statics_vtbl},
     1
 };
 

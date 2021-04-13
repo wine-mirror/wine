@@ -756,6 +756,7 @@ SOURCES = \
 	windows.gaming.input.idl \
 	windows.globalization.idl \
 	windows.h \
+	windows.media.devices.idl \
 	windows.media.speechsynthesis.idl \
 	windows.system.idl \
 	windows.system.userprofile.idl \

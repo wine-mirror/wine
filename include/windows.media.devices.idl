@@ -1,0 +1,126 @@
+/*
+ * Copyright 2021 Andrew Eikum for CodeWeavers
+ * Copyright 2020 Rémi Bernon for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "eventtoken.idl";
+import "windows.foundation.idl";
+
+namespace Windows {
+    namespace Media {
+        namespace Devices {
+            typedef enum AudioDeviceRole AudioDeviceRole;
+            interface IDefaultAudioDeviceChangedEventArgs;
+            interface IMediaDeviceStatics;
+            runtimeclass DefaultAudioCaptureDeviceChangedEventArgs;
+            runtimeclass DefaultAudioRenderDeviceChangedEventArgs;
+            runtimeclass MediaDevice;
+        }
+    }
+}
+
+namespace Windows {
+    namespace Media {
+        namespace Devices {
+            declare {
+                interface Windows.Foundation.TypedEventHandler<IInspectable *, Windows.Media.Devices.DefaultAudioCaptureDeviceChangedEventArgs *>;
+                interface Windows.Foundation.TypedEventHandler<IInspectable *, Windows.Media.Devices.DefaultAudioRenderDeviceChangedEventArgs *>;
+            }
+        }
+    }
+}
+
+namespace Windows {
+    namespace Media {
+        namespace Devices {
+            enum AudioDeviceRole {
+                Default = 0,
+                Communications = 1,
+            };
+        }
+    }
+}
+
+namespace Windows {
+    namespace Media {
+        namespace Devices {
+            [
+                uuid(110f882f-1c05-4657-a18e-47c9b69f07ab)
+            ]
+            interface IDefaultAudioDeviceChangedEventArgs : IInspectable
+            {
+                [propget] HRESULT Id([out] [retval] HSTRING *value);
+                [propget] HRESULT Role([out] [retval] Windows.Media.Devices.AudioDeviceRole *value);
+            }
+
+            [
+                exclusiveto(Windows.Media.Devices.MediaDevice),
+                uuid(aa2d9a40-909f-4bba-bf8b-0c0d296f14f0)
+            ]
+            interface IMediaDeviceStatics : IInspectable
+            {
+                HRESULT GetAudioCaptureSelector([out] [retval] HSTRING *value);
+                HRESULT GetAudioRenderSelector([out] [retval] HSTRING *value);
+                HRESULT GetVideoCaptureSelector([out] [retval] HSTRING *value);
+                HRESULT GetDefaultAudioCaptureId([in] Windows.Media.Devices.AudioDeviceRole role, [out] [retval] HSTRING *value);
+                HRESULT GetDefaultAudioRenderId([in] Windows.Media.Devices.AudioDeviceRole role, [out] [retval] HSTRING *value);
+
+                [eventadd] HRESULT DefaultAudioCaptureDeviceChanged(
+                        [in] Windows.Foundation.TypedEventHandler<IInspectable *, Windows.Media.Devices.DefaultAudioCaptureDeviceChangedEventArgs *> *handler,
+                        [out, retval] EventRegistrationToken* token);
+                [eventremove] HRESULT DefaultAudioCaptureDeviceChanged(
+                        [in] EventRegistrationToken token);
+
+                [eventadd] HRESULT DefaultAudioRenderDeviceChanged(
+                        [in] Windows.Foundation.TypedEventHandler<IInspectable *, Windows.Media.Devices.DefaultAudioRenderDeviceChangedEventArgs *> *handler,
+                        [out, retval] EventRegistrationToken* token);
+                [eventremove] HRESULT DefaultAudioRenderDeviceChanged(
+                        [in] EventRegistrationToken token);
+            }
+
+            [
+                activatable(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile),
+                static(Windows.Media.Devices.IMediaDeviceStatics, Windows.Foundation.UniversalApiContract, 1.0),
+            ]
+            runtimeclass MediaDevice
+            {
+            }
+
+            [
+                marshaling_behavior(agile)
+            ]
+            runtimeclass DefaultAudioRenderDeviceChangedEventArgs
+            {
+                [default] interface Windows.Media.Devices.IDefaultAudioDeviceChangedEventArgs;
+            }
+
+            [
+                marshaling_behavior(agile)
+            ]
+            runtimeclass DefaultAudioCaptureDeviceChangedEventArgs
+            {
+                [default] interface Windows.Media.Devices.IDefaultAudioDeviceChangedEventArgs;
+            }
+        }
+    }
+}
