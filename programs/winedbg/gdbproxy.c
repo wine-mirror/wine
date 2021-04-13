@@ -404,6 +404,7 @@ static BOOL handle_debug_event(struct gdb_context* gdbctx)
         char                bufferA[256];
         WCHAR               buffer[256];
     } u;
+    DWORD size;
 
     gdbctx->exec_tid = de->dwThreadId;
     gdbctx->other_tid = de->dwThreadId;
@@ -417,10 +418,8 @@ static BOOL handle_debug_event(struct gdb_context* gdbctx)
         if (!gdbctx->process)
             return TRUE;
 
-        memory_get_string_indirect(gdbctx->process,
-                                   de->u.CreateProcessInfo.lpImageName,
-                                   de->u.CreateProcessInfo.fUnicode,
-                                   u.buffer, ARRAY_SIZE(u.buffer));
+        size = ARRAY_SIZE(u.buffer);
+        QueryFullProcessImageNameW( gdbctx->process->handle, 0, u.buffer, &size );
         dbg_set_process_name(gdbctx->process, u.buffer);
 
         fprintf(stderr, "%04x:%04x: create process '%s'/%p @%p (%u<%u>)\n",
