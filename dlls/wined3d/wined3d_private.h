@@ -4687,6 +4687,11 @@ struct wined3d_device_context_ops
     void (*finish)(struct wined3d_device_context *context, enum wined3d_cs_queue_id queue_id);
     void (*push_constants)(struct wined3d_device_context *context, enum wined3d_push_constants p,
             unsigned int start_idx, unsigned int count, const void *constants);
+    HRESULT (*map)(struct wined3d_device_context *context, struct wined3d_resource *resource,
+            unsigned int sub_resource_idx, struct wined3d_map_desc *map_desc, const struct wined3d_box *box,
+            unsigned int flags);
+    HRESULT (*unmap)(struct wined3d_device_context *context, struct wined3d_resource *resource,
+        unsigned int sub_resource_idx);
 };
 
 struct wined3d_device_context
@@ -4756,10 +4761,6 @@ void wined3d_cs_emit_set_transform(struct wined3d_cs *cs, enum wined3d_transform
 void wined3d_cs_emit_unload_resource(struct wined3d_cs *cs, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void wined3d_cs_init_object(struct wined3d_cs *cs,
         void (*callback)(void *object), void *object) DECLSPEC_HIDDEN;
-HRESULT wined3d_cs_map(struct wined3d_cs *cs, struct wined3d_resource *resource, unsigned int sub_resource_idx,
-        struct wined3d_map_desc *map_desc, const struct wined3d_box *box, unsigned int flags) DECLSPEC_HIDDEN;
-HRESULT wined3d_cs_unmap(struct wined3d_cs *cs, struct wined3d_resource *resource,
-        unsigned int sub_resource_idx) DECLSPEC_HIDDEN;
 
 static inline void wined3d_cs_finish(struct wined3d_cs *cs, enum wined3d_cs_queue_id queue_id)
 {
