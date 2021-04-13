@@ -19,6 +19,7 @@
 #define COBJMACROS
 
 #include <stdarg.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -28,7 +29,11 @@
 
 #include "wine/debug.h"
 
+#include "initguid.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
+
+DEFINE_GUID(_MF_TOPO_MEDIA_ITEM, 0x6c1bb4df, 0x59ba, 0x4020, 0x85, 0x0c, 0x35, 0x79, 0xa2, 0x7a, 0xe2, 0x51);
 
 static const WCHAR eventclassW[] = L"MediaPlayerEventCallbackClass";
 
@@ -549,6 +554,14 @@ static const IMFPMediaItemVtbl media_item_vtbl =
     media_item_GetMetadata,
 };
 
+static struct media_item *unsafe_impl_from_IMFPMediaItem(IMFPMediaItem *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == (IMFPMediaItemVtbl *)&media_item_vtbl);
+    return CONTAINING_RECORD(iface, struct media_item, IMFPMediaItem_iface);
+}
+
 static HRESULT create_media_item(IMFPMediaPlayer *player, DWORD_PTR user_data, struct media_item **item)
 {
     struct media_item *object;
@@ -822,11 +835,106 @@ static HRESULT WINAPI media_player_CreateMediaItemFromObject(IMFPMediaPlayer *if
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI media_player_SetMediaItem(IMFPMediaPlayer *iface, IMFPMediaItem *item)
+static HRESULT media_item_get_stream_type(IMFStreamDescriptor *sd, GUID *major)
 {
-    FIXME("%p, %p.\n", iface, item);
+    IMFMediaTypeHandler *handler;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    if (SUCCEEDED(hr = IMFStreamDescriptor_GetMediaTypeHandler(sd, &handler)))
+    {
+        hr = IMFMediaTypeHandler_GetMajorType(handler, major);
+        IMFMediaTypeHandler_Release(handler);
+    }
+
+    return hr;
+}
+
+static HRESULT media_item_create_topology(struct media_player *player, struct media_item *item, IMFTopology **out)
+{
+    IMFTopologyNode *src_node, *sink_node;
+    IMFActivate *sar_activate;
+    IMFStreamDescriptor *sd;
+    IMFTopology *topology;
+    unsigned int idx;
+    BOOL selected;
+    HRESULT hr;
+    GUID major;
+
+    if (FAILED(hr = MFCreateTopology(&topology)))
+        return hr;
+
+    /* FIXME: handle user sinks */
+
+    /* Use first stream if none selected. */
+    if (player->output_window)
+    {
+        FIXME("Video streams are not handled.\n");
+    }
+
+    /* Set up audio branches for all selected streams. */
+
+    idx = 0;
+    while (SUCCEEDED(IMFPresentationDescriptor_GetStreamDescriptorByIndex(item->pd, idx++, &selected, &sd)))
+    {
+        if (selected && SUCCEEDED(media_item_get_stream_type(sd, &major)) && IsEqualGUID(&major, &MFMediaType_Audio))
+        {
+            if (SUCCEEDED(hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &src_node)))
+            {
+                IMFTopologyNode_SetUnknown(src_node, &MF_TOPONODE_SOURCE, (IUnknown *)item->source);
+                IMFTopologyNode_SetUnknown(src_node, &MF_TOPONODE_PRESENTATION_DESCRIPTOR, (IUnknown *)item->pd);
+                IMFTopologyNode_SetUnknown(src_node, &MF_TOPONODE_STREAM_DESCRIPTOR, (IUnknown *)sd);
+
+                IMFTopology_AddNode(topology, src_node);
+            }
+
+            if (SUCCEEDED(hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &sink_node)))
+            {
+                if (SUCCEEDED(MFCreateAudioRendererActivate(&sar_activate)))
+                {
+                    IMFTopologyNode_SetObject(sink_node, (IUnknown *)sar_activate);
+                    IMFActivate_Release(sar_activate);
+                }
+
+                IMFTopology_AddNode(topology, sink_node);
+            }
+
+            if (src_node && sink_node)
+                IMFTopologyNode_ConnectOutput(src_node, 0, sink_node, 0);
+
+            if (src_node)
+                IMFTopologyNode_Release(src_node);
+            if (sink_node)
+                IMFTopologyNode_Release(sink_node);
+        }
+
+        IMFStreamDescriptor_Release(sd);
+    }
+
+    *out = topology;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI media_player_SetMediaItem(IMFPMediaPlayer *iface, IMFPMediaItem *item_iface)
+{
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
+    struct media_item *item = unsafe_impl_from_IMFPMediaItem(item_iface);
+    IMFTopology *topology;
+    HRESULT hr;
+
+    TRACE("%p, %p.\n", iface, item_iface);
+
+    if (item->player != iface)
+        return E_INVALIDARG;
+
+    if (FAILED(hr = media_item_create_topology(player, item, &topology)))
+        return hr;
+
+    IMFTopology_SetUnknown(topology, &_MF_TOPO_MEDIA_ITEM, (IUnknown *)item_iface);
+    hr = IMFMediaSession_SetTopology(player->session, MFSESSION_SETTOPOLOGY_IMMEDIATE, topology);
+    IMFTopology_Release(topology);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_player_ClearMediaItem(IMFPMediaPlayer *iface)
@@ -1267,12 +1375,20 @@ static HRESULT WINAPI media_player_session_events_callback_Invoke(IMFAsyncCallba
     MFP_MEDIAPLAYER_STATE state;
     MFP_EVENT_TYPE event_type;
     HRESULT hr, event_status;
+    IMFPMediaItem *item = NULL;
+    IMFTopology *topology;
 
     if (FAILED(hr = IMFMediaSession_EndGetEvent(player->session, result, &session_event)))
         return S_OK;
 
     IMFMediaEvent_GetType(session_event, &session_event_type);
     IMFMediaEvent_GetStatus(session_event, &event_status);
+
+    if (SUCCEEDED(IMFMediaSession_GetFullTopology(player->session, MFSESSION_GETFULLTOPOLOGY_CURRENT, 0, &topology)))
+    {
+        IMFTopology_GetUnknown(topology, &_MF_TOPO_MEDIA_ITEM, &IID_IMFPMediaItem, (void **)&item);
+        IMFTopology_Release(topology);
+    }
 
     switch (session_event_type)
     {
@@ -1302,17 +1418,27 @@ static HRESULT WINAPI media_player_session_events_callback_Invoke(IMFAsyncCallba
 
             /* FIXME: set pMediaItem */
             media_player_queue_event(player, event);
-            IUnknown_Release(&event->IUnknown_iface);
+
+            break;
+
+        case MESessionTopologySet:
+
+            media_event_create(player, MFP_EVENT_TYPE_MEDIAITEM_SET, event_status, &event);
+            event->u.generic.item = item;
+            if (event->u.generic.item)
+                IMFPMediaItem_AddRef(event->u.generic.item);
+            media_player_queue_event(player, event);
 
             break;
         default:
             ;
     }
 
+    if (item)
+        IMFPMediaItem_Release(item);
+
     if (event)
-    {
         IUnknown_Release(&event->IUnknown_iface);
-    }
 
     IMFMediaSession_BeginGetEvent(player->session, &player->session_events_callback, NULL);
     IMFMediaEvent_Release(session_event);
