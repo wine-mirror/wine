@@ -21,15 +21,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "winsock2.h"
 #include "ws2ipdef.h"
 #include "windns.h"
@@ -49,7 +47,6 @@
 #include "davclnt.h"
 #include "wine/debug.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 #include "initguid.h"
 
 #include "unixlib.h"
@@ -90,7 +87,7 @@ static BOOL NETAPI_IsLocalComputer( LMCSTR name )
 
     ret = GetComputerNameW( buf,  &size );
     if (ret && name[0] == '\\' && name[1] == '\\') name += 2;
-    return ret && !strcmpiW( name, buf );
+    return ret && !wcsicmp( name, buf );
 }
 
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
@@ -246,12 +243,6 @@ NET_API_STATUS WINAPI NetStatisticsGet(LMSTR server, LMSTR service,
                                        LPBYTE *bufptr)
 {
     int res;
-    static const WCHAR SERVICE_WORKSTATION[] = {
-                 'L', 'a', 'n', 'm', 'a', 'n',
-                 'W', 'o', 'r', 'k', 's', 't', 'a', 't', 'i', 'o', 'n', '\0'};
-    static const WCHAR SERVICE_SERVER[] = {
-                 'L', 'a', 'n', 'm', 'a', 'n',
-                 'S', 'e', 'r', 'v', 'e', 'r', '\0'};
     union
     {
         STAT_WORKSTATION_0 workst;
@@ -270,13 +261,13 @@ NET_API_STATUS WINAPI NetStatisticsGet(LMSTR server, LMSTR service,
     switch (level)
     {
         case 0:
-            if (!lstrcmpW(service, SERVICE_WORKSTATION))
+            if (!wcscmp( service, L"Lanman Workstation" ))
             {
                 /* Fill the struct STAT_WORKSTATION_0 properly */
                 memset(&stat->workst, 0, sizeof(stat->workst));
                 res = NERR_Success;
             }
-            else if (!lstrcmpW(service, SERVICE_SERVER))
+            else if (!wcscmp( service, L"Lanman Server" ))
             {
                 /* Fill the struct STAT_SERVER_0 properly */
                 memset(&stat->server, 0, sizeof(stat->server));
@@ -985,7 +976,7 @@ NET_API_STATUS WINAPI NetWkstaGetInfo( LMSTR servername, DWORD level,
         case 101:
         case 102:
         {
-            static const WCHAR lanroot[] = {'c',':','\\','l','a','n','m','a','n',0};  /* FIXME */
+            static const WCHAR lanroot[] = L"c:\\lanman";  /* FIXME */
             DWORD computerNameLen, domainNameLen, size;
             WCHAR computerName[MAX_COMPUTERNAME_LENGTH + 1];
             LSA_OBJECT_ATTRIBUTES ObjectAttributes;
@@ -1055,7 +1046,7 @@ NET_API_STATUS NET_API_FUNCTION NetGetJoinInformation(
     LPWSTR *Name,
     PNETSETUP_JOIN_STATUS type)
 {
-    static const WCHAR workgroupW[] = {'W','o','r','k','g','r','o','u','p',0};
+    static const WCHAR workgroupW[] = L"Workgroup";
 
     FIXME("Semi-stub %s %p %p\n", wine_dbgstr_w(Server), Name, type);
 
@@ -1144,7 +1135,7 @@ static struct sam_user* NETAPI_FindUser(LPCWSTR UserName)
 
     LIST_FOR_EACH_ENTRY(user, &user_list, struct sam_user, entry)
     {
-        if(lstrcmpW(user->user_name, UserName) == 0)
+        if(wcscmp(user->user_name, UserName) == 0)
             return user;
     }
     return NULL;
@@ -1168,7 +1159,7 @@ static BOOL NETAPI_IsCurrentUser(LPCWSTR username)
         ERR("Failed to get current user's user name.\n");
         goto end;
     }
-    if (!lstrcmpW(curr_user, username))
+    if (!wcscmp(curr_user, username))
     {
         ret = TRUE;
     }
@@ -1371,7 +1362,6 @@ NetUserGetInfo(LPCWSTR servername, LPCWSTR username, DWORD level,
 
     case 1:
       {
-        static const WCHAR homedirW[] = {'H','O','M','E',0};
         PUSER_INFO_1 ui;
         PUSER_INFO_0 ui0;
         /* sizes of the field buffers in WCHARS */
@@ -1389,7 +1379,7 @@ NetUserGetInfo(LPCWSTR servername, LPCWSTR username, DWORD level,
             return status;
         }
         name_sz = lstrlenW(ui0->usri0_name) + 1;
-        home_dir_sz = GetEnvironmentVariableW(homedirW, NULL,0);
+        home_dir_sz = GetEnvironmentVariableW(L"HOME", NULL,0);
         /* set up buffer */
         NetApiBufferAllocate(sizeof(USER_INFO_1) +
                              (name_sz + password_sz + home_dir_sz +
@@ -1408,7 +1398,7 @@ NetUserGetInfo(LPCWSTR servername, LPCWSTR username, DWORD level,
         ui->usri1_password[0] = 0;
         ui->usri1_password_age = 0;
         ui->usri1_priv = 0;
-        GetEnvironmentVariableW(homedirW, ui->usri1_home_dir,home_dir_sz);
+        GetEnvironmentVariableW(L"HOME", ui->usri1_home_dir,home_dir_sz);
         ui->usri1_comment[0] = 0;
         ui->usri1_flags = 0;
         ui->usri1_script_path[0] = 0;
@@ -1459,7 +1449,7 @@ NetUserGetLocalGroups(LPCWSTR servername, LPCWSTR username, DWORD level,
                       DWORD flags, LPBYTE* bufptr, DWORD prefmaxlen,
                       LPDWORD entriesread, LPDWORD totalentries)
 {
-    static const WCHAR admins[] = {'A','d','m','i','n','i','s','t','r','a','t','o','r','s',0};
+    static const WCHAR admins[] = L"Administrators";
     NET_API_STATUS status;
     LPWSTR currentuser;
     LOCALGROUP_USERS_INFO_0* info;
@@ -1545,7 +1535,7 @@ NetUserEnum(LPCWSTR servername, DWORD level, DWORD filter, LPBYTE* bufptr,
     {
         USER_INFO_0 *info;
 
-        size = sizeof(*info) + (strlenW(user) + 1) * sizeof(WCHAR);
+        size = sizeof(*info) + (wcslen(user) + 1) * sizeof(WCHAR);
 
         if (prefmaxlen < size)
             status = ERROR_MORE_DATA;
@@ -1556,7 +1546,7 @@ NetUserEnum(LPCWSTR servername, DWORD level, DWORD filter, LPBYTE* bufptr,
             return status;
 
         info->usri0_name = (WCHAR *)((char *)info + sizeof(*info));
-        strcpyW(info->usri0_name, user);
+        wcscpy(info->usri0_name, user);
 
         *bufptr = (BYTE *)info;
         *entriesread = *totalentries = 1;
@@ -1570,7 +1560,7 @@ NetUserEnum(LPCWSTR servername, DWORD level, DWORD filter, LPBYTE* bufptr,
         DWORD *rid;
         SID_NAME_USE use;
 
-        size = sizeof(*info) + (strlenW(user) + 1) * sizeof(WCHAR);
+        size = sizeof(*info) + (wcslen(user) + 1) * sizeof(WCHAR);
 
         if (prefmaxlen < size)
             status = ERROR_MORE_DATA;
@@ -1596,7 +1586,7 @@ NetUserEnum(LPCWSTR servername, DWORD level, DWORD filter, LPBYTE* bufptr,
         rid = GetSidSubAuthority(sid, *count - 1);
 
         info->usri20_name      = (WCHAR *)((char *)info + sizeof(*info));
-        strcpyW(info->usri20_name, user);
+        wcscpy(info->usri20_name, user);
         info->usri20_full_name = NULL;
         info->usri20_comment   = NULL;
         info->usri20_flags     = UF_NORMAL_ACCOUNT;
@@ -1622,8 +1612,7 @@ NetUserEnum(LPCWSTR servername, DWORD level, DWORD filter, LPBYTE* bufptr,
  */
 static void ACCESS_QueryAdminDisplayInformation(PNET_DISPLAY_USER *buf, PDWORD pdwSize)
 {
-    static const WCHAR sAdminUserName[] = {
-        'A','d','m','i','n','i','s','t','r','a','t','o','r',0};
+    static const WCHAR sAdminUserName[] = L"Administrator";
 
     /* sizes of the field buffers in WCHARS */
     int name_sz, comment_sz, full_name_sz;
@@ -1661,8 +1650,7 @@ static void ACCESS_QueryAdminDisplayInformation(PNET_DISPLAY_USER *buf, PDWORD p
  */
 static void ACCESS_QueryGuestDisplayInformation(PNET_DISPLAY_USER *buf, PDWORD pdwSize)
 {
-    static const WCHAR sGuestUserName[] = {
-        'G','u','e','s','t',0 };
+    static const WCHAR sGuestUserName[] = L"Guest";
 
     /* sizes of the field buffers in WCHARS */
     int name_sz, comment_sz, full_name_sz;
@@ -2058,7 +2046,7 @@ NET_API_STATUS WINAPI NetUserChangePassword(LPCWSTR domainname, LPCWSTR username
     if((user = NETAPI_FindUser(username)) == NULL)
         return NERR_UserNotFound;
 
-    if(lstrcmpW(user->user_password, oldpassword) != 0)
+    if(wcscmp(user->user_password, oldpassword) != 0)
         return ERROR_INVALID_PASSWORD;
 
     if(lstrlenW(newpassword) > PWLEN)
@@ -2105,13 +2093,12 @@ NET_API_STATUS WINAPI I_BrowserQueryEmulatedDomains(
 
 static DWORD get_dc_info(const WCHAR *domain, WCHAR *dc, WCHAR *ip)
 {
-    static const WCHAR pfx[] = {'_','l','d','a','p','.','_','t','c','p','.','d','c','.','_','m','s','d','c','s','.',0};
     WCHAR name[NS_MAXDNAME];
     DWORD ret, size;
     DNS_RECORDW *rec;
 
-    lstrcpyW(name, pfx);
-    lstrcatW(name, domain);
+    wcscpy( name, L"_ldap._tcp.dc._msdcs." );
+    wcscat( name, domain );
 
     ret = DnsQuery_W(name, DNS_TYPE_SRV, DNS_QUERY_STANDARD, NULL, &rec, NULL);
     TRACE("DnsQuery_W(%s) => %d\n", wine_dbgstr_w(domain), ret);
@@ -2169,7 +2156,7 @@ DWORD WINAPI DsGetDcNameW(LPCWSTR computer, LPCWSTR domain, GUID *domain_guid,
                           LPCWSTR site, ULONG flags, PDOMAIN_CONTROLLER_INFOW *dc_info)
 {
     static const WCHAR pfxW[] = {'\\','\\'};
-    static const WCHAR default_site_nameW[] = {'D','e','f','a','u','l','t','-','F','i','r','s','t','-','S','i','t','e','-','N','a','m','e',0};
+    static const WCHAR default_site_nameW[] = L"Default-First-Site-Name";
     NTSTATUS status;
     POLICY_DNS_DOMAIN_INFO *dns_domain_info = NULL;
     DOMAIN_CONTROLLER_INFOW *info;
@@ -2217,12 +2204,12 @@ DWORD WINAPI DsGetDcNameW(LPCWSTR computer, LPCWSTR domain, GUID *domain_guid,
     info->DomainControllerName = (WCHAR *)(info + 1);
     memcpy(info->DomainControllerName, pfxW, sizeof(pfxW));
     lstrcpyW(info->DomainControllerName + 2, dc);
-    info->DomainControllerAddress = (WCHAR *)((char *)info->DomainControllerName + (strlenW(info->DomainControllerName) + 1) * sizeof(WCHAR));
+    info->DomainControllerAddress = (WCHAR *)((char *)info->DomainControllerName + (wcslen(info->DomainControllerName) + 1) * sizeof(WCHAR));
     memcpy(info->DomainControllerAddress, pfxW, sizeof(pfxW));
     lstrcpyW(info->DomainControllerAddress + 2, ip);
     info->DomainControllerAddressType = DS_INET_ADDRESS;
     info->DomainGuid = dns_domain_info ? dns_domain_info->DomainGuid : GUID_NULL /* FIXME */;
-    info->DomainName = (WCHAR *)((char *)info->DomainControllerAddress + (strlenW(info->DomainControllerAddress) + 1) * sizeof(WCHAR));
+    info->DomainName = (WCHAR *)((char *)info->DomainControllerAddress + (wcslen(info->DomainControllerAddress) + 1) * sizeof(WCHAR));
     lstrcpyW(info->DomainName, domain);
     info->DnsForestName = (WCHAR *)((char *)info->DomainName + (lstrlenW(info->DomainName) + 1) * sizeof(WCHAR));
     lstrcpyW(info->DnsForestName, domain);
@@ -2461,7 +2448,7 @@ NET_API_STATUS WINAPI NetLocalGroupGetInfo(
     DWORD level,
     LPBYTE* bufptr)
 {
-    static const WCHAR commentW[]={'N','o',' ','c','o','m','m','e','n','t',0};
+    static const WCHAR commentW[] = L"No comment";
     LOCALGROUP_INFO_1* info;
     DWORD size;
 
@@ -2571,10 +2558,8 @@ NET_API_STATUS WINAPI NetLocalGroupSetMembers(
  */
 DWORD WINAPI DavGetHTTPFromUNCPath(const WCHAR *unc_path, WCHAR *buf, DWORD *buflen)
 {
-    static const WCHAR httpW[] = {'h','t','t','p',':','/','/',0};
-    static const WCHAR httpsW[] = {'h','t','t','p','s',':','/','/',0};
-    static const WCHAR sslW[] = {'S','S','L',0};
-    static const WCHAR fmtW[] = {':','%','u',0};
+    static const WCHAR httpW[] = L"http://";
+    static const WCHAR httpsW[] = L"https://";
     const WCHAR *p = unc_path, *q, *server, *path, *scheme = httpW;
     UINT i, len_server, len_path = 0, len_port = 0, len, port = 0;
     WCHAR *end, portbuf[12];
@@ -2590,17 +2575,17 @@ DWORD WINAPI DavGetHTTPFromUNCPath(const WCHAR *unc_path, WCHAR *buf, DWORD *buf
     {
         p = ++q;
         while (*p && (*p != '\\' && *p != '/' && *p != '@')) p++;
-        if (p - q == 3 && !strncmpiW( q, sslW, 3 ))
+        if (p - q == 3 && !wcsnicmp( q, L"SSL", 3 ))
         {
             scheme = httpsW;
             q = p;
         }
-        else if ((port = strtolW( q, &end, 10 ))) q = end;
+        else if ((port = wcstol( q, &end, 10 ))) q = end;
         else return ERROR_INVALID_PARAMETER;
     }
     if (*q == '@')
     {
-        if (!(port = strtolW( ++q, &end, 10 ))) return ERROR_INVALID_PARAMETER;
+        if (!(port = wcstol( ++q, &end, 10 ))) return ERROR_INVALID_PARAMETER;
         q = end;
     }
     if (*q == '\\' || *q  == '/') q++;
@@ -2609,16 +2594,16 @@ DWORD WINAPI DavGetHTTPFromUNCPath(const WCHAR *unc_path, WCHAR *buf, DWORD *buf
     if (len_path && (path[len_path - 1] == '\\' || path[len_path - 1] == '/'))
         len_path--; /* remove trailing slash */
 
-    sprintfW( portbuf, fmtW, port );
+    swprintf( portbuf, ARRAY_SIZE(portbuf), L":%u", port );
     if (scheme == httpsW)
     {
-        len = strlenW( httpsW );
-        if (port && port != 443) len_port = strlenW( portbuf );
+        len = wcslen( httpsW );
+        if (port && port != 443) len_port = wcslen( portbuf );
     }
     else
     {
-        len = strlenW( httpW );
-        if (port && port != 80) len_port = strlenW( portbuf );
+        len = wcslen( httpW );
+        if (port && port != 80) len_port = wcslen( portbuf );
     }
     len += len_server;
     len += len_port;
@@ -2631,8 +2616,8 @@ DWORD WINAPI DavGetHTTPFromUNCPath(const WCHAR *unc_path, WCHAR *buf, DWORD *buf
         return ERROR_INSUFFICIENT_BUFFER;
     }
 
-    memcpy( buf, scheme, strlenW(scheme) * sizeof(WCHAR) );
-    buf += strlenW( scheme );
+    memcpy( buf, scheme, wcslen(scheme) * sizeof(WCHAR) );
+    buf += wcslen( scheme );
     memcpy( buf, server, len_server * sizeof(WCHAR) );
     buf += len_server;
     if (len_port)
@@ -2673,8 +2658,8 @@ DWORD WINAPI DavGetUNCFromHTTPPath(const WCHAR *http_path, WCHAR *buf, DWORD *bu
     TRACE("(%s %p %p)\n", debugstr_w(http_path), buf, buflen);
 
     while (*p && *p != ':') { p++; len++; };
-    if (len == ARRAY_SIZE(httpW) && !strncmpiW( http_path, httpW, len )) ssl = FALSE;
-    else if (len == ARRAY_SIZE(httpsW) && !strncmpiW( http_path, httpsW, len )) ssl = TRUE;
+    if (len == ARRAY_SIZE(httpW) && !wcsnicmp( http_path, httpW, len )) ssl = FALSE;
+    else if (len == ARRAY_SIZE(httpsW) && !wcsnicmp( http_path, httpsW, len )) ssl = TRUE;
     else return ERROR_INVALID_PARAMETER;
 
     if (p[0] != ':' || p[1] != '/' || p[2] != '/') return ERROR_INVALID_PARAMETER;

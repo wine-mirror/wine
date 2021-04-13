@@ -65,7 +65,6 @@
  * See also other FIXMEs in the code.
  */
 
-#include "config.h"
 #include <stdarg.h>
 
 #include "winsock2.h"
@@ -83,10 +82,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(netbios);
 #define PORT_NBNS 137
 #define PORT_NBDG 138
 #define PORT_NBSS 139
-
-#ifndef INADDR_NONE
-#define INADDR_NONE ~0UL
-#endif
 
 #define NBR_ADDWORD(p,word) (*(WORD *)(p)) = htons(word)
 #define NBR_GETWORD(p) ntohs(*(WORD *)(p))
@@ -1412,28 +1407,6 @@ static UCHAR NetBTEnum(void)
     return ret;
 }
 
-static const WCHAR VxD_MSTCPW[] = { 'S','Y','S','T','E','M','\\','C','u','r',
- 'r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\','S','e','r','v',
- 'i','c','e','s','\\','V','x','D','\\','M','S','T','C','P','\0' };
-static const WCHAR NetBT_ParametersW[] = { 'S','Y','S','T','E','M','\\','C','u',
- 'r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\','S','e','r',
- 'v','i','c','e','s','\\','N','e','t','B','T','\\','P','a','r','a','m','e','t',
- 'e','r','s','\0' };
-static const WCHAR EnableDNSW[] = { 'E','n','a','b','l','e','D','N','S','\0' };
-static const WCHAR BcastNameQueryCountW[] = { 'B','c','a','s','t','N','a','m',
- 'e','Q','u','e','r','y','C','o','u','n','t','\0' };
-static const WCHAR BcastNameQueryTimeoutW[] = { 'B','c','a','s','t','N','a','m',
- 'e','Q','u','e','r','y','T','i','m','e','o','u','t','\0' };
-static const WCHAR NameSrvQueryCountW[] = { 'N','a','m','e','S','r','v',
- 'Q','u','e','r','y','C','o','u','n','t','\0' };
-static const WCHAR NameSrvQueryTimeoutW[] = { 'N','a','m','e','S','r','v',
- 'Q','u','e','r','y','T','i','m','e','o','u','t','\0' };
-static const WCHAR ScopeIDW[] = { 'S','c','o','p','e','I','D','\0' };
-static const WCHAR CacheTimeoutW[] = { 'C','a','c','h','e','T','i','m','e','o',
- 'u','t','\0' };
-static const WCHAR Config_NetworkW[] = { 'S','o','f','t','w','a','r','e','\\',
-                                         'W','i','n','e','\\','N','e','t','w','o','r','k','\0' };
-
 /* Initializes global variables and registers the NetBT transport */
 void NetBTInit(void)
 {
@@ -1457,40 +1430,37 @@ void NetBTInit(void)
     gCacheTimeout = CACHE_TIMEOUT;
 
     /* Try to open the Win9x NetBT configuration key */
-    ret = RegOpenKeyExW(HKEY_LOCAL_MACHINE, VxD_MSTCPW, 0, KEY_READ, &hKey);
+    ret = RegOpenKeyExW( HKEY_LOCAL_MACHINE, L"SYSTEM\\CurrentControlSet\\Services\\VxD\\MSTCP",
+                         0, KEY_READ, &hKey );
     /* If that fails, try the WinNT NetBT configuration key */
     if (ret != ERROR_SUCCESS)
-        ret = RegOpenKeyExW(HKEY_LOCAL_MACHINE, NetBT_ParametersW, 0, KEY_READ,
-         &hKey);
+        ret = RegOpenKeyExW( HKEY_LOCAL_MACHINE, L"SYSTEM\\CurrentControlSet\\Services\\NetBT\\Parameters",
+                             0, KEY_READ, &hKey );
     if (ret == ERROR_SUCCESS)
     {
         DWORD dword, size;
 
         size = sizeof(dword);
-        if (RegQueryValueExW(hKey, EnableDNSW, NULL, NULL,
-         (LPBYTE)&dword, &size) == ERROR_SUCCESS)
+        if (!RegQueryValueExW( hKey, L"EnableDNS", NULL, NULL, (BYTE *)&dword, &size ))
             gEnableDNS = dword;
         size = sizeof(dword);
-        if (RegQueryValueExW(hKey, BcastNameQueryCountW, NULL, NULL,
-         (LPBYTE)&dword, &size) == ERROR_SUCCESS && dword >= MIN_QUERIES
-         && dword <= MAX_QUERIES)
+        if (!RegQueryValueExW( hKey, L"BcastNameQueryCount", NULL, NULL, (BYTE *)&dword, &size )
+                && dword >= MIN_QUERIES && dword <= MAX_QUERIES)
             gBCastQueries = dword;
         size = sizeof(dword);
-        if (RegQueryValueExW(hKey, BcastNameQueryTimeoutW, NULL, NULL,
-         (LPBYTE)&dword, &size) == ERROR_SUCCESS && dword >= MIN_QUERY_TIMEOUT)
+        if (!RegQueryValueExW( hKey, L"BcastNameQueryTimeout", NULL, NULL, (BYTE *)&dword, &size )
+                && dword >= MIN_QUERY_TIMEOUT)
             gBCastQueryTimeout = dword;
         size = sizeof(dword);
-        if (RegQueryValueExW(hKey, NameSrvQueryCountW, NULL, NULL,
-         (LPBYTE)&dword, &size) == ERROR_SUCCESS && dword >= MIN_QUERIES
-         && dword <= MAX_QUERIES)
+        if (!RegQueryValueExW( hKey, L"NameSrvQueryCount", NULL, NULL, (BYTE *)&dword, &size )
+                    && dword >= MIN_QUERIES && dword <= MAX_QUERIES)
             gWINSQueries = dword;
         size = sizeof(dword);
-        if (RegQueryValueExW(hKey, NameSrvQueryTimeoutW, NULL, NULL,
-         (LPBYTE)&dword, &size) == ERROR_SUCCESS && dword >= MIN_QUERY_TIMEOUT)
+        if (!RegQueryValueExW( hKey, L"NameSrvQueryTimeout", NULL, NULL, (BYTE *)&dword, &size )
+                && dword >= MIN_QUERY_TIMEOUT)
             gWINSQueryTimeout = dword;
         size = sizeof(gScopeID) - 1;
-        if (RegQueryValueExW(hKey, ScopeIDW, NULL, NULL, (LPBYTE)gScopeID + 1, &size)
-         == ERROR_SUCCESS)
+        if (!RegQueryValueExW( hKey, L"ScopeID", NULL, NULL, (BYTE *)gScopeID + 1, &size ))
         {
             /* convert into L2-encoded version, suitable for use by
                NetBTNameEncode */
@@ -1509,8 +1479,8 @@ void NetBTInit(void)
                 }
             }
         }
-        if (RegQueryValueExW(hKey, CacheTimeoutW, NULL, NULL,
-         (LPBYTE)&dword, &size) == ERROR_SUCCESS && dword >= MIN_CACHE_TIMEOUT)
+        if (!RegQueryValueExW( hKey, L"CacheTimeout", NULL, NULL, (BYTE *)&dword, &size )
+                && dword >= MIN_CACHE_TIMEOUT)
             gCacheTimeout = dword;
         RegCloseKey(hKey);
     }
@@ -1519,7 +1489,7 @@ void NetBTInit(void)
      * same place.  Just do a global WINS configuration instead.
      */
     /* @@ Wine registry key: HKCU\Software\Wine\Network */
-    if (RegOpenKeyW(HKEY_CURRENT_USER, Config_NetworkW, &hKey) == ERROR_SUCCESS)
+    if (!RegOpenKeyW( HKEY_CURRENT_USER, L"Software\\Wine\\Network", &hKey ))
     {
         static const char *nsValueNames[] = { "WinsServer", "BackupWinsServer" };
         char nsString[16];

@@ -3,6 +3,8 @@ MODULE    = netapi32.dll
 IMPORTLIB = netapi32
 IMPORTS   = rpcrt4 iphlpapi ws2_32 advapi32 dnsapi
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	nbcmdqueue.c \
 	nbnamecache.c \
