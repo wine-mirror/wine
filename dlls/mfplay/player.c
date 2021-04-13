@@ -835,7 +835,12 @@ static HRESULT media_player_create_item_from_url(struct media_player *player,
         }
 
         if (SUCCEEDED(hr))
+        {
             *ret = &item->IMFPMediaItem_iface;
+            IMFPMediaItem_AddRef(*ret);
+        }
+
+        IMFPMediaItem_Release(&item->IMFPMediaItem_iface);
 
         return hr;
     }
