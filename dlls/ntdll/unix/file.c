@@ -3217,16 +3217,10 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
 
 
 /******************************************************************************
- *           nt_to_unix_file_name
- *
- * Convert a file name from NT namespace to Unix namespace.
- *
- * If disposition is not FILE_OPEN or FILE_OVERWRITE, the last path
- * element doesn't have to exist; in that case STATUS_NO_SUCH_FILE is
- * returned, but the unix name is still filled in properly.
+ *           nt_to_unix_file_name_no_root
  */
-NTSTATUS nt_to_unix_file_name( const UNICODE_STRING *nameW, char **unix_name_ret,
-                               UNICODE_STRING *nt_name, UINT disposition )
+static NTSTATUS nt_to_unix_file_name_no_root( const UNICODE_STRING *nameW, char **unix_name_ret,
+                                              UNICODE_STRING *nt_name, UINT disposition )
 {
     static const WCHAR unixW[] = {'u','n','i','x'};
     static const WCHAR invalid_charsW[] = { INVALID_NT_CHARS, 0 };
@@ -3331,10 +3325,16 @@ NTSTATUS nt_to_unix_file_name( const UNICODE_STRING *nameW, char **unix_name_ret
 
 
 /******************************************************************************
- *           nt_to_unix_file_name_attr
+ *           nt_to_unix_file_name
+ *
+ * Convert a file name from NT namespace to Unix namespace.
+ *
+ * If disposition is not FILE_OPEN or FILE_OVERWRITE, the last path
+ * element doesn't have to exist; in that case STATUS_NO_SUCH_FILE is
+ * returned, but the unix name is still filled in properly.
  */
-static NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, char **name_ret,
-                                           UNICODE_STRING *nt_name, UINT disposition )
+NTSTATUS nt_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char **name_ret,
+                               UNICODE_STRING *nt_name, UINT disposition )
 {
     enum server_fd_type type;
     int old_cwd, root_fd, needs_close;
@@ -3344,7 +3344,7 @@ static NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, char *
     NTSTATUS status;
 
     if (!attr->RootDirectory)  /* without root dir fall back to normal lookup */
-        return nt_to_unix_file_name( attr->ObjectName, name_ret, nt_name, disposition );
+        return nt_to_unix_file_name_no_root( attr->ObjectName, name_ret, nt_name, disposition );
 
     name     = attr->ObjectName->Buffer;
     name_len = attr->ObjectName->Length / sizeof(WCHAR);
@@ -3406,7 +3406,11 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, char *nam
                                           UINT disposition )
 {
     char *buffer = NULL;
-    NTSTATUS status = nt_to_unix_file_name( nameW, &buffer, NULL, disposition );
+    NTSTATUS status;
+    OBJECT_ATTRIBUTES attr;
+
+    InitializeObjectAttributes( &attr, (UNICODE_STRING *)nameW, OBJ_CASE_INSENSITIVE, 0, NULL );
+    status = nt_to_unix_file_name( &attr, &buffer, NULL, disposition );
 
     if (buffer)
     {
@@ -3716,7 +3720,7 @@ NTSTATUS WINAPI NtCreateFile( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBU
     if (options & FILE_OPEN_BY_FILE_ID)
         io->u.Status = file_id_to_unix_file_name( attr, &unix_name, &nt_name );
     else
-        io->u.Status = nt_to_unix_file_name_attr( attr, &unix_name, &nt_name, disposition );
+        io->u.Status = nt_to_unix_file_name( attr, &unix_name, &nt_name, disposition );
 
     if (io->u.Status == STATUS_BAD_DEVICE_TYPE)
     {
@@ -3903,7 +3907,7 @@ NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
     char *unix_name;
     NTSTATUS status;
 
-    if (!(status = nt_to_unix_file_name_attr( attr, &unix_name, NULL, FILE_OPEN )))
+    if (!(status = nt_to_unix_file_name( attr, &unix_name, NULL, FILE_OPEN )))
     {
         ULONG attributes;
         struct stat st;
@@ -3944,7 +3948,7 @@ NTSTATUS WINAPI NtQueryAttributesFile( const OBJECT_ATTRIBUTES *attr, FILE_BASIC
     char *unix_name;
     NTSTATUS status;
 
-    if (!(status = nt_to_unix_file_name_attr( attr, &unix_name, NULL, FILE_OPEN )))
+    if (!(status = nt_to_unix_file_name( attr, &unix_name, NULL, FILE_OPEN )))
     {
         ULONG attributes;
         struct stat st;
@@ -4506,7 +4510,7 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             attr.RootDirectory = info->RootDirectory;
             attr.Attributes = OBJ_CASE_INSENSITIVE;
 
-            io->u.Status = nt_to_unix_file_name_attr( &attr, &unix_name, &nt_name, FILE_OPEN_IF );
+            io->u.Status = nt_to_unix_file_name( &attr, &unix_name, &nt_name, FILE_OPEN_IF );
             if (io->u.Status != STATUS_SUCCESS && io->u.Status != STATUS_NO_SUCH_FILE)
                 break;
 
@@ -4546,7 +4550,7 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
             attr.RootDirectory = info->RootDirectory;
             attr.Attributes = OBJ_CASE_INSENSITIVE;
 
-            io->u.Status = nt_to_unix_file_name_attr( &attr, &unix_name, &nt_name, FILE_OPEN_IF );
+            io->u.Status = nt_to_unix_file_name( &attr, &unix_name, &nt_name, FILE_OPEN_IF );
             if (io->u.Status != STATUS_SUCCESS && io->u.Status != STATUS_NO_SUCH_FILE)
                 break;
 

@@ -331,22 +331,20 @@ static BOOL get_so_file_info( HANDLE handle, pe_image_info_t *info )
 /***********************************************************************
  *           get_pe_file_info
  */
-static NTSTATUS get_pe_file_info( UNICODE_STRING *path, HANDLE *handle, pe_image_info_t *info )
+static NTSTATUS get_pe_file_info( OBJECT_ATTRIBUTES *attr, HANDLE *handle, pe_image_info_t *info )
 {
     NTSTATUS status;
     HANDLE mapping;
-    OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
 
     *handle = 0;
     memset( info, 0, sizeof(*info) );
-    InitializeObjectAttributes( &attr, path, OBJ_CASE_INSENSITIVE, 0, 0 );
-    if ((status = NtOpenFile( handle, GENERIC_READ, &attr, &io,
+    if ((status = NtOpenFile( handle, GENERIC_READ, attr, &io,
                               FILE_SHARE_READ | FILE_SHARE_DELETE, FILE_SYNCHRONOUS_IO_NONALERT )))
     {
-        if (is_builtin_path( path, &info->machine ))
+        if (is_builtin_path( attr->ObjectName, &info->machine ))
         {
-            TRACE( "assuming %04x builtin for %s\n", info->machine, debugstr_us(path));
+            TRACE( "assuming %04x builtin for %s\n", info->machine, debugstr_us(attr->ObjectName));
             return STATUS_SUCCESS;
         }
         return status;
@@ -540,7 +538,7 @@ static NTSTATUS spawn_process( const RTL_USER_PROCESS_PARAMETERS *params, int so
  *
  * Fork and exec a new Unix binary, checking for errors.
  */
-static NTSTATUS fork_and_exec( UNICODE_STRING *path, int unixdir,
+static NTSTATUS fork_and_exec( OBJECT_ATTRIBUTES *attr, int unixdir,
                                const RTL_USER_PROCESS_PARAMETERS *params )
 {
     pid_t pid;
@@ -549,7 +547,7 @@ static NTSTATUS fork_and_exec( UNICODE_STRING *path, int unixdir,
     char *unix_name;
     NTSTATUS status;
 
-    status = nt_to_unix_file_name( path, &unix_name, NULL, FILE_OPEN );
+    status = nt_to_unix_file_name( attr, &unix_name, NULL, FILE_OPEN );
     if (status) return status;
 
 #ifdef HAVE_PIPE2
@@ -669,7 +667,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
                                      OBJECT_ATTRIBUTES *process_attr, OBJECT_ATTRIBUTES *thread_attr,
                                      ULONG process_flags, ULONG thread_flags,
                                      RTL_USER_PROCESS_PARAMETERS *params, PS_CREATE_INFO *info,
-                                     PS_ATTRIBUTE_LIST *attr )
+                                     PS_ATTRIBUTE_LIST *ps_attr )
 {
     NTSTATUS status;
     BOOL success = FALSE;
@@ -684,36 +682,36 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
     CLIENT_ID id;
     HANDLE parent = 0, debug = 0, token = 0;
     UNICODE_STRING path = {0};
-    OBJECT_ATTRIBUTES empty_attr = { sizeof(empty_attr) };
-    SIZE_T i, attr_count = (attr->TotalLength - sizeof(attr->TotalLength)) / sizeof(PS_ATTRIBUTE);
+    OBJECT_ATTRIBUTES attr, empty_attr = { sizeof(empty_attr) };
+    SIZE_T i, attr_count = (ps_attr->TotalLength - sizeof(ps_attr->TotalLength)) / sizeof(PS_ATTRIBUTE);
     const PS_ATTRIBUTE *handles_attr = NULL;
     data_size_t handles_size;
     obj_handle_t *handles;
 
     for (i = 0; i < attr_count; i++)
     {
-        switch (attr->Attributes[i].Attribute)
+        switch (ps_attr->Attributes[i].Attribute)
         {
         case PS_ATTRIBUTE_PARENT_PROCESS:
-            parent = attr->Attributes[i].ValuePtr;
+            parent = ps_attr->Attributes[i].ValuePtr;
             break;
         case PS_ATTRIBUTE_DEBUG_PORT:
-            debug = attr->Attributes[i].ValuePtr;
+            debug = ps_attr->Attributes[i].ValuePtr;
             break;
         case PS_ATTRIBUTE_IMAGE_NAME:
-            path.Length = attr->Attributes[i].Size;
-            path.Buffer = attr->Attributes[i].ValuePtr;
+            path.Length = ps_attr->Attributes[i].Size;
+            path.Buffer = ps_attr->Attributes[i].ValuePtr;
             break;
         case PS_ATTRIBUTE_TOKEN:
-            token = attr->Attributes[i].ValuePtr;
+            token = ps_attr->Attributes[i].ValuePtr;
             break;
         case PS_ATTRIBUTE_HANDLE_LIST:
             if (process_flags & PROCESS_CREATE_FLAGS_INHERIT_HANDLES)
-                handles_attr = &attr->Attributes[i];
+                handles_attr = &ps_attr->Attributes[i];
             break;
         default:
-            if (attr->Attributes[i].Attribute & PS_ATTRIBUTE_INPUT)
-                FIXME( "unhandled input attribute %lx\n", attr->Attributes[i].Attribute );
+            if (ps_attr->Attributes[i].Attribute & PS_ATTRIBUTE_INPUT)
+                FIXME( "unhandled input attribute %lx\n", ps_attr->Attributes[i].Attribute );
             break;
         }
     }
@@ -724,9 +722,10 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
 
     unixdir = get_unix_curdir( params );
 
-    if ((status = get_pe_file_info( &path, &file_handle, &pe_info )))
+    InitializeObjectAttributes( &attr, &path, OBJ_CASE_INSENSITIVE, 0, 0 );
+    if ((status = get_pe_file_info( &attr, &file_handle, &pe_info )))
     {
-        if (status == STATUS_INVALID_IMAGE_NOT_MZ && !fork_and_exec( &path, unixdir, params ))
+        if (status == STATUS_INVALID_IMAGE_NOT_MZ && !fork_and_exec( &attr, unixdir, params ))
         {
             memset( info, 0, sizeof(*info) );
             return STATUS_SUCCESS;
@@ -860,28 +859,28 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
 
     for (i = 0; i < attr_count; i++)
     {
-        switch (attr->Attributes[i].Attribute)
+        switch (ps_attr->Attributes[i].Attribute)
         {
         case PS_ATTRIBUTE_CLIENT_ID:
         {
-            SIZE_T size = min( attr->Attributes[i].Size, sizeof(id) );
-            memcpy( attr->Attributes[i].ValuePtr, &id, size );
-            if (attr->Attributes[i].ReturnLength) *attr->Attributes[i].ReturnLength = size;
+            SIZE_T size = min( ps_attr->Attributes[i].Size, sizeof(id) );
+            memcpy( ps_attr->Attributes[i].ValuePtr, &id, size );
+            if (ps_attr->Attributes[i].ReturnLength) *ps_attr->Attributes[i].ReturnLength = size;
             break;
         }
         case PS_ATTRIBUTE_IMAGE_INFO:
         {
             SECTION_IMAGE_INFORMATION info;
-            SIZE_T size = min( attr->Attributes[i].Size, sizeof(info) );
+            SIZE_T size = min( ps_attr->Attributes[i].Size, sizeof(info) );
             virtual_fill_image_information( &pe_info, &info );
-            memcpy( attr->Attributes[i].ValuePtr, &info, size );
-            if (attr->Attributes[i].ReturnLength) *attr->Attributes[i].ReturnLength = size;
+            memcpy( ps_attr->Attributes[i].ValuePtr, &info, size );
+            if (ps_attr->Attributes[i].ReturnLength) *ps_attr->Attributes[i].ReturnLength = size;
             break;
         }
         case PS_ATTRIBUTE_TEB_ADDRESS:
         default:
-            if (!(attr->Attributes[i].Attribute & PS_ATTRIBUTE_INPUT))
-                FIXME( "unhandled output attribute %lx\n", attr->Attributes[i].Attribute );
+            if (!(ps_attr->Attributes[i].Attribute & PS_ATTRIBUTE_INPUT))
+                FIXME( "unhandled output attribute %lx\n", ps_attr->Attributes[i].Attribute );
             break;
         }
     }

@@ -1104,13 +1104,15 @@ static NTSTATUS CDECL init_unix_lib( void *module, DWORD reason, const void *ptr
 static NTSTATUS CDECL load_so_dll( UNICODE_STRING *nt_name, void **module )
 {
     static const WCHAR soW[] = {'.','s','o',0};
+    OBJECT_ATTRIBUTES attr;
     pe_image_info_t info;
     char *unix_name;
     NTSTATUS status;
     DWORD len;
 
     if (get_load_order( nt_name ) == LO_DISABLED) return STATUS_DLL_NOT_FOUND;
-    if (nt_to_unix_file_name( nt_name, &unix_name, NULL, FILE_OPEN )) return STATUS_DLL_NOT_FOUND;
+    InitializeObjectAttributes( &attr, nt_name, OBJ_CASE_INSENSITIVE, 0, 0 );
+    if (nt_to_unix_file_name( &attr, &unix_name, NULL, FILE_OPEN )) return STATUS_DLL_NOT_FOUND;
 
     /* remove .so extension from Windows name */
     len = nt_name->Length / sizeof(WCHAR);
@@ -1437,7 +1439,7 @@ static NTSTATUS open_main_image( WCHAR *image, void **module, SECTION_IMAGE_INFO
 
     init_unicode_string( &nt_name, image );
     InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
-    if (nt_to_unix_file_name( &nt_name, &unix_name, NULL, FILE_OPEN )) return STATUS_DLL_NOT_FOUND;
+    if (nt_to_unix_file_name( &attr, &unix_name, NULL, FILE_OPEN )) return STATUS_DLL_NOT_FOUND;
 
     status = open_dll_file( unix_name, &attr, &mapping );
     if (!status)
