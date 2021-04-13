@@ -3217,69 +3217,6 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
 
 
 /******************************************************************************
- *           nt_to_unix_file_name_attr
- */
-static NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, char **name_ret,
-                                           UNICODE_STRING *nt_name, UINT disposition )
-{
-    enum server_fd_type type;
-    int old_cwd, root_fd, needs_close;
-    const WCHAR *name;
-    char *unix_name;
-    int name_len, unix_len;
-    NTSTATUS status;
-
-    if (!attr->RootDirectory)  /* without root dir fall back to normal lookup */
-        return nt_to_unix_file_name( attr->ObjectName, name_ret, nt_name, disposition );
-
-    name     = attr->ObjectName->Buffer;
-    name_len = attr->ObjectName->Length / sizeof(WCHAR);
-
-    if (name_len && name[0] == '\\') return STATUS_INVALID_PARAMETER;
-
-    unix_len = name_len * 3 + MAX_DIR_ENTRY_LEN + 3;
-    if (!(unix_name = malloc( unix_len ))) return STATUS_NO_MEMORY;
-    unix_name[0] = '.';
-
-    if (!(status = server_get_unix_fd( attr->RootDirectory, 0, &root_fd, &needs_close, &type, NULL )))
-    {
-        if (type != FD_TYPE_DIR)
-        {
-            if (needs_close) close( root_fd );
-            status = STATUS_BAD_DEVICE_TYPE;
-        }
-        else
-        {
-            mutex_lock( &dir_mutex );
-            if ((old_cwd = open( ".", O_RDONLY )) != -1 && fchdir( root_fd ) != -1)
-            {
-                status = lookup_unix_name( name, name_len, &unix_name, unix_len, 1, disposition, FALSE );
-                if (fchdir( old_cwd ) == -1) chdir( "/" );
-            }
-            else status = errno_to_status( errno );
-            mutex_unlock( &dir_mutex );
-            if (old_cwd != -1) close( old_cwd );
-            if (needs_close) close( root_fd );
-        }
-    }
-    else if (status == STATUS_OBJECT_TYPE_MISMATCH) status = STATUS_BAD_DEVICE_TYPE;
-
-    if (status == STATUS_SUCCESS || status == STATUS_NO_SUCH_FILE)
-    {
-        TRACE( "%s -> %s\n", debugstr_us(attr->ObjectName), debugstr_a(unix_name) );
-        *name_ret = unix_name;
-        if (nt_name) rebuild_nt_name( attr->ObjectName, 0, unix_name, nt_name );
-    }
-    else
-    {
-        TRACE( "%s not found in %s\n", debugstr_w(name), unix_name );
-        free( unix_name );
-    }
-    return status;
-}
-
-
-/******************************************************************************
  *           nt_to_unix_file_name
  *
  * Convert a file name from NT namespace to Unix namespace.
@@ -3383,6 +3320,69 @@ NTSTATUS nt_to_unix_file_name( const UNICODE_STRING *nameW, char **unix_name_ret
         TRACE( "%s -> %s\n", debugstr_us(nameW), debugstr_a(unix_name) );
         *unix_name_ret = unix_name;
         if (nt_name) rebuild_nt_name( nameW, name - nameW->Buffer, unix_name + pos, nt_name );
+    }
+    else
+    {
+        TRACE( "%s not found in %s\n", debugstr_w(name), unix_name );
+        free( unix_name );
+    }
+    return status;
+}
+
+
+/******************************************************************************
+ *           nt_to_unix_file_name_attr
+ */
+static NTSTATUS nt_to_unix_file_name_attr( const OBJECT_ATTRIBUTES *attr, char **name_ret,
+                                           UNICODE_STRING *nt_name, UINT disposition )
+{
+    enum server_fd_type type;
+    int old_cwd, root_fd, needs_close;
+    const WCHAR *name;
+    char *unix_name;
+    int name_len, unix_len;
+    NTSTATUS status;
+
+    if (!attr->RootDirectory)  /* without root dir fall back to normal lookup */
+        return nt_to_unix_file_name( attr->ObjectName, name_ret, nt_name, disposition );
+
+    name     = attr->ObjectName->Buffer;
+    name_len = attr->ObjectName->Length / sizeof(WCHAR);
+
+    if (name_len && name[0] == '\\') return STATUS_INVALID_PARAMETER;
+
+    unix_len = name_len * 3 + MAX_DIR_ENTRY_LEN + 3;
+    if (!(unix_name = malloc( unix_len ))) return STATUS_NO_MEMORY;
+    unix_name[0] = '.';
+
+    if (!(status = server_get_unix_fd( attr->RootDirectory, 0, &root_fd, &needs_close, &type, NULL )))
+    {
+        if (type != FD_TYPE_DIR)
+        {
+            if (needs_close) close( root_fd );
+            status = STATUS_BAD_DEVICE_TYPE;
+        }
+        else
+        {
+            mutex_lock( &dir_mutex );
+            if ((old_cwd = open( ".", O_RDONLY )) != -1 && fchdir( root_fd ) != -1)
+            {
+                status = lookup_unix_name( name, name_len, &unix_name, unix_len, 1, disposition, FALSE );
+                if (fchdir( old_cwd ) == -1) chdir( "/" );
+            }
+            else status = errno_to_status( errno );
+            mutex_unlock( &dir_mutex );
+            if (old_cwd != -1) close( old_cwd );
+            if (needs_close) close( root_fd );
+        }
+    }
+    else if (status == STATUS_OBJECT_TYPE_MISMATCH) status = STATUS_BAD_DEVICE_TYPE;
+
+    if (status == STATUS_SUCCESS || status == STATUS_NO_SUCH_FILE)
+    {
+        TRACE( "%s -> %s\n", debugstr_us(attr->ObjectName), debugstr_a(unix_name) );
+        *name_ret = unix_name;
+        if (nt_name) rebuild_nt_name( attr->ObjectName, 0, unix_name, nt_name );
     }
     else
     {
