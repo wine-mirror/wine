@@ -314,69 +314,13 @@ void CDECL wined3d_resource_get_desc(const struct wined3d_resource *resource, st
     desc->size = resource->size;
 }
 
-static DWORD wined3d_resource_sanitise_map_flags(const struct wined3d_resource *resource, DWORD flags)
-{
-    /* Not all flags make sense together, but Windows never returns an error.
-     * Catch the cases that could cause issues. */
-    if (flags & WINED3D_MAP_READ)
-    {
-        if (flags & WINED3D_MAP_DISCARD)
-        {
-            WARN("WINED3D_MAP_READ combined with WINED3D_MAP_DISCARD, ignoring flags.\n");
-            return flags & (WINED3D_MAP_READ | WINED3D_MAP_WRITE);
-        }
-        if (flags & WINED3D_MAP_NOOVERWRITE)
-        {
-            WARN("WINED3D_MAP_READ combined with WINED3D_MAP_NOOVERWRITE, ignoring flags.\n");
-            return flags & (WINED3D_MAP_READ | WINED3D_MAP_WRITE);
-        }
-    }
-    else if (flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
-    {
-        if (!(resource->usage & WINED3DUSAGE_DYNAMIC))
-        {
-            WARN("DISCARD or NOOVERWRITE map on non-dynamic buffer, ignoring.\n");
-            return flags & (WINED3D_MAP_READ | WINED3D_MAP_WRITE);
-        }
-        if ((flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
-                == (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
-        {
-            WARN("WINED3D_MAP_NOOVERWRITE used with WINED3D_MAP_DISCARD, ignoring WINED3D_MAP_DISCARD.\n");
-            flags &= ~WINED3D_MAP_DISCARD;
-        }
-    }
-
-    return flags;
-}
-
 HRESULT CDECL wined3d_resource_map(struct wined3d_resource *resource, unsigned int sub_resource_idx,
         struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags)
 {
     TRACE("resource %p, sub_resource_idx %u, map_desc %p, box %s, flags %#x.\n",
             resource, sub_resource_idx, map_desc, debug_box(box), flags);
 
-    if (!(flags & (WINED3D_MAP_READ | WINED3D_MAP_WRITE)))
-    {
-        WARN("No read/write flags specified.\n");
-        return E_INVALIDARG;
-    }
-
-    if ((flags & WINED3D_MAP_READ) && !(resource->access & WINED3D_RESOURCE_ACCESS_MAP_R))
-    {
-        WARN("Resource does not have MAP_R access.\n");
-        return E_INVALIDARG;
-    }
-
-    if ((flags & WINED3D_MAP_WRITE) && !(resource->access & WINED3D_RESOURCE_ACCESS_MAP_W))
-    {
-        WARN("Resource does not have MAP_W access.\n");
-        return E_INVALIDARG;
-    }
-
-    flags = wined3d_resource_sanitise_map_flags(resource, flags);
-    wined3d_resource_wait_idle(resource);
-
-    return resource->device->cs->c.ops->map(&resource->device->cs->c, resource, sub_resource_idx, map_desc, box, flags);
+    return wined3d_device_context_map(&resource->device->cs->c, resource, sub_resource_idx, map_desc, box, flags);
 }
 
 HRESULT CDECL wined3d_resource_unmap(struct wined3d_resource *resource, unsigned int sub_resource_idx)

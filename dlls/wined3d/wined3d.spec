@@ -171,6 +171,7 @@
 @ cdecl wined3d_device_context_dispatch(ptr long long long)
 @ cdecl wined3d_device_context_dispatch_indirect(ptr ptr long)
 @ cdecl wined3d_device_context_generate_mipmaps(ptr ptr)
+@ cdecl wined3d_device_context_map(ptr ptr long ptr ptr long)
 @ cdecl wined3d_device_context_resolve_sub_resource(ptr ptr long ptr long long)
 @ cdecl wined3d_device_context_set_blend_state(ptr ptr ptr long)
 @ cdecl wined3d_device_context_set_constant_buffer(ptr long long ptr)
