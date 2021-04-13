@@ -2771,41 +2771,19 @@ void init_files(void)
  *
  * Get the Unix path of a DOS device.
  */
-static NTSTATUS get_dos_device( const WCHAR *name, UINT name_len, char **unix_name_ret )
+static NTSTATUS get_dos_device( char **unix_name, int start_pos )
 {
     struct stat st;
-    char *unix_name, *new_name, *dev;
-    unsigned int i;
-    int unix_len;
-
-    /* make sure the device name is ASCII */
-    for (i = 0; i < name_len; i++)
-        if (name[i] <= 32 || name[i] >= 127) return STATUS_BAD_DEVICE_TYPE;
-
-    unix_len = strlen(config_dir) + sizeof("/dosdevices/") + name_len + 1;
-
-    if (!(unix_name = malloc( unix_len ))) return STATUS_NO_MEMORY;
-
-    strcpy( unix_name, config_dir );
-    strcat( unix_name, "/dosdevices/" );
-    dev = unix_name + strlen(unix_name);
-
-    for (i = 0; i < name_len; i++) dev[i] = (name[i] >= 'A' && name[i] <= 'Z' ? name[i] + 32 : name[i]);
-    dev[i] = 0;
+    char *new_name, *dev = *unix_name + start_pos;
 
     /* special case for drive devices */
-    if (name_len == 2 && dev[1] == ':')
-    {
-        dev[i++] = ':';
-        dev[i] = 0;
-    }
+    if (dev[0] && dev[1] == ':' && !dev[2]) strcpy( dev + 1, "::" );
 
     for (;;)
     {
-        if (!stat( unix_name, &st ))
+        if (!stat( *unix_name, &st ))
         {
-            TRACE( "%s -> %s\n", debugstr_wn(name,name_len), debugstr_a(unix_name) );
-            *unix_name_ret = unix_name;
+            TRACE( "-> %s\n", debugstr_a(*unix_name));
             return STATUS_SUCCESS;
         }
         if (!dev) break;
@@ -2826,15 +2804,15 @@ static NTSTATUS get_dos_device( const WCHAR *name, UINT name_len, char **unix_na
         if (dev[1] == ':' && dev[2] == ':')  /* drive device */
         {
             dev[2] = 0;  /* remove last ':' to get the drive mount point symlink */
-            new_name = get_default_drive_device( unix_name );
+            new_name = get_default_drive_device( *unix_name );
         }
-
-        if (!new_name) break;
-        free( unix_name );
-        unix_name = new_name;
+        free( *unix_name );
+        *unix_name = new_name;
+        if (!new_name) return STATUS_BAD_DEVICE_TYPE;
         dev = NULL; /* last try */
     }
-    free( unix_name );
+    free( *unix_name );
+    *unix_name = NULL;
     return STATUS_BAD_DEVICE_TYPE;
 }
 
@@ -3335,30 +3313,24 @@ NTSTATUS nt_to_unix_file_name( const UNICODE_STRING *nameW, char **unix_name_ret
     }
     if (pos > MAX_DIR_ENTRY_LEN) return STATUS_OBJECT_NAME_INVALID;
 
-    if (pos == name_len)  /* no subdir, plain DOS device */
-        return get_dos_device( name, name_len, unix_name_ret );
-
     prefix_len = pos;
     prefix[prefix_len] = 0;
-
-    name += prefix_len;
-    name_len -= prefix_len;
 
     /* check for invalid characters (all chars except 0 are valid for unix) */
     is_unix = (prefix_len == 4 && !memcmp( prefix, unixW, sizeof(unixW) ));
     if (is_unix)
     {
-        for (p = name; p < name + name_len; p++)
+        for (p = name + prefix_len; p < name + name_len; p++)
             if (!*p) return STATUS_OBJECT_NAME_INVALID;
         check_case = TRUE;
     }
     else
     {
-        for (p = name; p < name + name_len; p++)
+        for (p = name + prefix_len; p < name + name_len; p++)
             if (*p < 32 || wcschr( invalid_charsW, *p )) return STATUS_OBJECT_NAME_INVALID;
     }
 
-    unix_len = (prefix_len + name_len) * 3 + MAX_DIR_ENTRY_LEN + 3;
+    unix_len = name_len * 3 + MAX_DIR_ENTRY_LEN + 3;
     unix_len += strlen(config_dir) + sizeof("/dosdevices/");
     if (!(unix_name = malloc( unix_len ))) return STATUS_NO_MEMORY;
     strcpy( unix_name, config_dir );
@@ -3370,6 +3342,12 @@ NTSTATUS nt_to_unix_file_name( const UNICODE_STRING *nameW, char **unix_name_ret
     {
         free( unix_name );
         return STATUS_OBJECT_NAME_INVALID;
+    }
+
+    if (prefix_len == name_len)  /* no subdir, plain DOS device */
+    {
+        *unix_name_ret = unix_name;
+        return get_dos_device( unix_name_ret, pos );
     }
     pos += ret;
 
@@ -3388,6 +3366,9 @@ NTSTATUS nt_to_unix_file_name( const UNICODE_STRING *nameW, char **unix_name_ret
             pos = 0;  /* fall back to unix root */
         }
     }
+
+    name += prefix_len;
+    name_len -= prefix_len;
 
     status = lookup_unix_name( name, name_len, &unix_name, unix_len, pos, disposition, check_case );
     if (status == STATUS_SUCCESS || status == STATUS_NO_SUCH_FILE)
