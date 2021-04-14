@@ -397,7 +397,30 @@ static int dump_emfrecord(void)
     EMRCASE(EMR_COLORCORRECTPALETTE);
     EMRCASE(EMR_SETICMPROFILEA);
     EMRCASE(EMR_SETICMPROFILEW);
-    EMRCASE(EMR_ALPHABLEND);
+
+    case EMR_ALPHABLEND:
+    {
+        const EMRALPHABLEND *blend = PRD(offset, sizeof(*blend));
+        const BITMAPINFOHEADER *bmih = (const BITMAPINFOHEADER *)((const unsigned char *)blend + blend->offBmiSrc);
+
+        printf("%-20s %08x\n", "EMR_ALPHABLEND", length);
+        printf("bounds (%d,%d - %d,%d) dst %d,%d %dx%d src %d,%d %dx%d rop %#x xform (%f, %f, %f, %f, %f, %f)\n"
+               "bk_color %#x usage %#x bmi_offset %#x bmi_size %#x bits_offset %#x bits_size %#x\n",
+               blend->rclBounds.left, blend->rclBounds.top, blend->rclBounds.right, blend->rclBounds.bottom,
+               blend->xDest, blend->yDest, blend->cxDest, blend->cyDest,
+               blend->xSrc, blend->ySrc, blend->cxSrc, blend->cySrc, blend->dwRop,
+               blend->xformSrc.eM11, blend->xformSrc.eM12, blend->xformSrc.eM21,
+               blend->xformSrc.eM22, blend->xformSrc.eDx, blend->xformSrc.eDy,
+               blend->crBkColorSrc, blend->iUsageSrc, blend->offBmiSrc, blend->cbBmiSrc,
+               blend->offBitsSrc, blend->cbBitsSrc);
+        printf("BITMAPINFOHEADER biSize %#x biWidth %d biHeight %d biPlanes %d biBitCount %d biCompression %#x\n"
+               "biSizeImage %#x biXPelsPerMeter %d biYPelsPerMeter %d biClrUsed %#x biClrImportant %#x\n",
+               bmih->biSize, bmih->biWidth, bmih->biHeight, bmih->biPlanes, bmih->biBitCount,
+               bmih->biCompression, bmih->biSizeImage, bmih->biXPelsPerMeter, bmih->biYPelsPerMeter,
+               bmih->biClrUsed, bmih->biClrImportant);
+        break;
+    }
+
     EMRCASE(EMR_SETLAYOUT);
     EMRCASE(EMR_TRANSPARENTBLT);
     EMRCASE(EMR_RESERVED_117);
