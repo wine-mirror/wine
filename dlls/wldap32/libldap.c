@@ -309,6 +309,11 @@ int CDECL wrap_ldap_add_ext_s( void *ld, const char *dn, LDAPModU **attrs, LDAPC
                            (LDAPControl **)clientctrls );
 }
 
+void CDECL wrap_ldap_control_free( LDAPControlU *control )
+{
+    ldap_control_free( (LDAPControl *)control );
+}
+
 int CDECL wrap_ldap_compare_ext( void *ld, const char *dn, const char *attrs, struct bervalU *value,
                                  LDAPControlU **serverctrls, LDAPControlU **clientctrls, ULONG *msg )
 {
@@ -322,6 +327,16 @@ int CDECL wrap_ldap_compare_ext_s( void *ld, const char *dn, const char *attrs, 
 {
     return ldap_compare_ext_s( ld, dn ? dn : "", attrs ? attrs : "", (struct berval *)value,
                                (LDAPControl **)serverctrls, (LDAPControl **)clientctrls );
+}
+
+int CDECL wrap_ldap_create_sort_control( void *ld, LDAPSortKeyU **keylist, int critical, LDAPControlU **control )
+{
+    return ldap_create_sort_control( ld, (LDAPSortKey **)keylist, critical, (LDAPControl **)control );
+}
+
+int CDECL wrap_ldap_create_vlv_control( void *ld, LDAPVLVInfoU *info, LDAPControlU **control )
+{
+    return ldap_create_vlv_control( ld, (LDAPVLVInfo *)info, (LDAPControl **)control );
 }
 
 void CDECL wrap_ldap_memfree( void *ptr )
@@ -392,6 +407,9 @@ static const struct ldap_funcs funcs =
     wrap_ldap_add_ext_s,
     wrap_ldap_compare_ext,
     wrap_ldap_compare_ext_s,
+    wrap_ldap_control_free,
+    wrap_ldap_create_sort_control,
+    wrap_ldap_create_vlv_control,
     wrap_ldap_memfree,
     wrap_ldap_sasl_bind,
     wrap_ldap_sasl_bind_s,

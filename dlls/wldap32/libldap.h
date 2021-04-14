@@ -98,6 +98,9 @@ extern int CDECL wrap_ldap_compare_ext(void *, const char *, const char *, struc
                                        LDAPControlU **, ULONG *) DECLSPEC_HIDDEN;
 extern int CDECL wrap_ldap_compare_ext_s(void *, const char *, const char *, struct bervalU *, LDAPControlU **,
                                          LDAPControlU **) DECLSPEC_HIDDEN;
+extern void CDECL wrap_ldap_control_free(LDAPControlU *) DECLSPEC_HIDDEN;
+extern int CDECL wrap_ldap_create_sort_control(void *, LDAPSortKeyU **, int, LDAPControlU **) DECLSPEC_HIDDEN;
+extern int CDECL wrap_ldap_create_vlv_control(void *, LDAPVLVInfoU *, LDAPControlU **) DECLSPEC_HIDDEN;
 extern void CDECL wrap_ldap_memfree(void *) DECLSPEC_HIDDEN;
 extern int CDECL wrap_ldap_sasl_bind(void *, const char *, const char *, struct bervalU *, LDAPControlU **,
                                      LDAPControlU **, int *) DECLSPEC_HIDDEN;
@@ -130,6 +133,9 @@ struct ldap_funcs
                                   LDAPControlU **, ULONG *);
     int (CDECL *ldap_compare_ext_s)(void *, const char *, const char *, struct bervalU *, LDAPControlU **,
                                     LDAPControlU **);
+    void (CDECL *ldap_control_free)(LDAPControlU *);
+    int (CDECL *ldap_create_sort_control)(void *, LDAPSortKeyU **, int, LDAPControlU **);
+    int (CDECL *ldap_create_vlv_control)(void *, LDAPVLVInfoU *, LDAPControlU **);
     void (CDECL *ldap_memfree)(void *);
     int (CDECL *ldap_sasl_bind)(void *, const char *, const char *, struct bervalU *, LDAPControlU **, LDAPControlU **,
                                 int *);
