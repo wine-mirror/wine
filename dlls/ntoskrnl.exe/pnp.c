@@ -955,8 +955,11 @@ static NTSTATUS WINAPI pnp_manager_device_pnp( DEVICE_OBJECT *device, IRP *irp )
         break;
     case IRP_MN_START_DEVICE:
     case IRP_MN_SURPRISE_REMOVAL:
-    case IRP_MN_REMOVE_DEVICE:
         /* Nothing to do. */
+        irp->IoStatus.u.Status = STATUS_SUCCESS;
+        break;
+    case IRP_MN_REMOVE_DEVICE:
+        list_remove( &root_device->entry );
         irp->IoStatus.u.Status = STATUS_SUCCESS;
         break;
     case IRP_MN_QUERY_CAPABILITIES:
