@@ -19,7 +19,7 @@
 @ stdcall UnmapViewOfFile(ptr) kernel32.UnmapViewOfFile
 @ stub UnmapViewOfFileEx
 @ stdcall VirtualAlloc(ptr long long long) kernel32.VirtualAlloc
-@ stub VirtualAllocFromApp
+@ stdcall VirtualAllocFromApp(ptr long long long) kernelbase.VirtualAllocFromApp
 @ stdcall VirtualFree(ptr long long) kernel32.VirtualFree
 @ stdcall VirtualFreeEx(long ptr long long) kernel32.VirtualFreeEx
 @ stdcall VirtualLock(ptr long) kernel32.VirtualLock

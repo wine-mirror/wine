@@ -35,7 +35,7 @@
 #define NUM_THREADS 4
 #define MAPPING_SIZE 0x100000
 
-static HINSTANCE hkernel32, hntdll;
+static HINSTANCE hkernel32, hkernelbase, hntdll;
 static SYSTEM_INFO si;
 static UINT   (WINAPI *pGetWriteWatch)(DWORD,LPVOID,SIZE_T,LPVOID*,ULONG_PTR*,ULONG*);
 static UINT   (WINAPI *pResetWriteWatch)(LPVOID,SIZE_T);
@@ -50,6 +50,7 @@ static ULONG  (WINAPI *pRtlRemoveVectoredExceptionHandler)(PVOID);
 static BOOL   (WINAPI *pGetProcessDEPPolicy)(HANDLE, LPDWORD, PBOOL);
 static BOOL   (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 static NTSTATUS (WINAPI *pNtProtectVirtualMemory)(HANDLE, PVOID *, SIZE_T *, ULONG, ULONG *);
+static PVOID (WINAPI *pVirtualAllocFromApp)(PVOID, SIZE_T, DWORD, DWORD);
 
 /* ############################### */
 
@@ -441,6 +442,39 @@ static void test_VirtualAlloc(void)
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %d, expected ERROR_INVALID_PARAMETER\n", GetLastError());
 
     ok(VirtualFree(addr1, 0, MEM_RELEASE), "VirtualFree failed\n");
+}
+
+static void test_VirtualAllocFromApp(void)
+{
+    void *p;
+    BOOL ret;
+    if (!pVirtualAllocFromApp)
+    {
+        win_skip("VirtualAllocFromApp is not available.\n");
+        return;
+    }
+
+    p = GetProcAddress(hkernel32, "VirtualAllocFromApp");
+    ok(!p, "Found VirtualAllocFromApp in kernel32.dll.\n");
+
+    SetLastError(0xdeadbeef);
+    p = pVirtualAllocFromApp(NULL, 0x1000, MEM_RESERVE, PAGE_READWRITE);
+    ok(p && GetLastError() == 0xdeadbeef, "Got unexpected mem %p, GetLastError() %u.\n", p, GetLastError());
+    ret = VirtualFree(p, 0, MEM_RELEASE);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    p = pVirtualAllocFromApp(NULL, 0x1000, MEM_RESERVE, PAGE_EXECUTE);
+    ok(!p && GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected mem %p, GetLastError() %u.\n",
+            p, GetLastError());
+    SetLastError(0xdeadbeef);
+    p = pVirtualAllocFromApp(NULL, 0x1000, MEM_RESERVE, PAGE_EXECUTE_READ);
+    ok(!p && GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected mem %p, GetLastError() %u.\n",
+            p, GetLastError());
+    SetLastError(0xdeadbeef);
+    p = pVirtualAllocFromApp(NULL, 0x1000, MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    ok(!p && GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected mem %p, GetLastError() %u.\n",
+            p, GetLastError());
 }
 
 static void test_MapViewOfFile(void)
@@ -4238,6 +4272,7 @@ START_TEST(virtual)
     }
 
     hkernel32 = GetModuleHandleA("kernel32.dll");
+    hkernelbase = GetModuleHandleA("kernelbase.dll");
     hntdll    = GetModuleHandleA("ntdll.dll");
 
     pGetWriteWatch = (void *) GetProcAddress(hkernel32, "GetWriteWatch");
@@ -4252,6 +4287,7 @@ START_TEST(virtual)
     pRtlAddVectoredExceptionHandler = (void *)GetProcAddress( hntdll, "RtlAddVectoredExceptionHandler" );
     pRtlRemoveVectoredExceptionHandler = (void *)GetProcAddress( hntdll, "RtlRemoveVectoredExceptionHandler" );
     pNtProtectVirtualMemory = (void *)GetProcAddress( hntdll, "NtProtectVirtualMemory" );
+    pVirtualAllocFromApp = (void *)GetProcAddress( hkernelbase, "VirtualAllocFromApp" );
 
     GetSystemInfo(&si);
     trace("system page size %#x\n", si.dwPageSize);
@@ -4266,6 +4302,7 @@ START_TEST(virtual)
     test_VirtualProtect();
     test_VirtualAllocEx();
     test_VirtualAlloc();
+    test_VirtualAllocFromApp();
     test_MapViewOfFile();
     test_NtAreMappedFilesTheSame();
     test_CreateFileMapping();
