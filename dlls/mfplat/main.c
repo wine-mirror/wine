@@ -7006,6 +7006,13 @@ static IMFMediaEvent *queue_pop_event(struct event_queue *queue)
     return event;
 }
 
+static void event_queue_clear_subscriber(struct event_queue *queue)
+{
+    if (queue->subscriber)
+        IRtwqAsyncResult_Release(queue->subscriber);
+    queue->subscriber = NULL;
+}
+
 static void event_queue_cleanup(struct event_queue *queue)
 {
     IMFMediaEvent *event;
@@ -7258,6 +7265,7 @@ static HRESULT WINAPI eventqueue_Shutdown(IMFMediaEventQueue *iface)
     if (!queue->is_shut_down)
     {
         event_queue_cleanup(queue);
+        event_queue_clear_subscriber(queue);
         queue->is_shut_down = TRUE;
     }
 
