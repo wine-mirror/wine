@@ -309,6 +309,21 @@ int CDECL wrap_ldap_add_ext_s( void *ld, const char *dn, LDAPModU **attrs, LDAPC
                            (LDAPControl **)clientctrls );
 }
 
+int CDECL wrap_ldap_compare_ext( void *ld, const char *dn, const char *attrs, struct bervalU *value,
+                                 LDAPControlU **serverctrls, LDAPControlU **clientctrls, ULONG *msg )
+{
+    int dummy;
+    return ldap_compare_ext( ld, dn ? dn : "", attrs ? attrs : "", (struct berval *)value,
+                             (LDAPControl **)serverctrls, (LDAPControl **)clientctrls, msg ? (int *)msg : &dummy );
+}
+
+int CDECL wrap_ldap_compare_ext_s( void *ld, const char *dn, const char *attrs, struct bervalU *value,
+                                   LDAPControlU **serverctrls, LDAPControlU **clientctrls )
+{
+    return ldap_compare_ext_s( ld, dn ? dn : "", attrs ? attrs : "", (struct berval *)value,
+                               (LDAPControl **)serverctrls, (LDAPControl **)clientctrls );
+}
+
 void CDECL wrap_ldap_memfree( void *ptr )
 {
     return ldap_memfree( ptr );
@@ -375,6 +390,8 @@ static const struct ldap_funcs funcs =
     wrap_ber_scanf,
     wrap_ldap_add_ext,
     wrap_ldap_add_ext_s,
+    wrap_ldap_compare_ext,
+    wrap_ldap_compare_ext_s,
     wrap_ldap_memfree,
     wrap_ldap_sasl_bind,
     wrap_ldap_sasl_bind_s,
