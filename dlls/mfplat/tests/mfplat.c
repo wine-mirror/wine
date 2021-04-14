@@ -326,6 +326,7 @@ static WCHAR *load_resource(const WCHAR *name)
 struct test_callback
 {
     IMFAsyncCallback IMFAsyncCallback_iface;
+    LONG refcount;
     HANDLE event;
     DWORD param;
     IMFMediaEvent *media_event;
@@ -352,12 +353,14 @@ static HRESULT WINAPI testcallback_QueryInterface(IMFAsyncCallback *iface, REFII
 
 static ULONG WINAPI testcallback_AddRef(IMFAsyncCallback *iface)
 {
-    return 2;
+    struct test_callback *callback = impl_from_IMFAsyncCallback(iface);
+    return InterlockedIncrement(&callback->refcount);
 }
 
 static ULONG WINAPI testcallback_Release(IMFAsyncCallback *iface)
 {
-    return 1;
+    struct test_callback *callback = impl_from_IMFAsyncCallback(iface);
+    return InterlockedDecrement(&callback->refcount);
 }
 
 static HRESULT WINAPI testcallback_GetParameters(IMFAsyncCallback *iface, DWORD *flags, DWORD *queue)
@@ -2462,6 +2465,7 @@ static void init_test_callback(struct test_callback *callback)
 {
     callback->IMFAsyncCallback_iface.lpVtbl = &testcallbackvtbl;
     callback->event = NULL;
+    callback->refcount = 1;
 }
 
 static void test_MFCreateAsyncResult(void)
@@ -3113,6 +3117,19 @@ static void test_event_queue(void)
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 
     IMFMediaEventQueue_Release(queue);
+
+    /* Release while subscribed. */
+    init_test_callback(&callback);
+
+    hr = MFCreateEventQueue(&queue);
+    ok(hr == S_OK, "Failed to create event queue, hr %#x.\n", hr);
+
+    hr = IMFMediaEventQueue_BeginGetEvent(queue, &callback.IMFAsyncCallback_iface, NULL);
+    ok(hr == S_OK, "Failed to Begin*, hr %#x.\n", hr);
+    EXPECT_REF(&callback.IMFAsyncCallback_iface, 2);
+
+    IMFMediaEventQueue_Release(queue);
+    EXPECT_REF(&callback.IMFAsyncCallback_iface, 1);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);

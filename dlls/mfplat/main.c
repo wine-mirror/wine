@@ -7019,6 +7019,7 @@ static void event_queue_cleanup(struct event_queue *queue)
 
     while ((event = queue_pop_event(queue)))
         IMFMediaEvent_Release(event);
+    event_queue_clear_subscriber(queue);
 }
 
 static HRESULT WINAPI eventqueue_QueryInterface(IMFMediaEventQueue *iface, REFIID riid, void **out)
@@ -7162,9 +7163,7 @@ static HRESULT WINAPI eventqueue_EndGetEvent(IMFMediaEventQueue *iface, IMFAsync
     else if (queue->subscriber == (IRtwqAsyncResult *)result)
     {
         *event = queue_pop_event(queue);
-        if (queue->subscriber)
-            IRtwqAsyncResult_Release(queue->subscriber);
-        queue->subscriber = NULL;
+        event_queue_clear_subscriber(queue);
         queue->notified = FALSE;
         hr = *event ? S_OK : E_FAIL;
     }
@@ -7265,7 +7264,6 @@ static HRESULT WINAPI eventqueue_Shutdown(IMFMediaEventQueue *iface)
     if (!queue->is_shut_down)
     {
         event_queue_cleanup(queue);
-        event_queue_clear_subscriber(queue);
         queue->is_shut_down = TRUE;
     }
 
