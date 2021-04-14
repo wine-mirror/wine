@@ -75,7 +75,7 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     DEVICE_OBJECT *device = NULL;
     NTSTATUS status;
     minidriver *minidriver;
-    HID_DEVICE_ATTRIBUTES attr;
+    HID_DEVICE_ATTRIBUTES attr = {0};
     BASE_DEVICE_EXTENSION *ext = NULL;
     HID_DESCRIPTOR descriptor;
     BYTE *reportDescriptor;
