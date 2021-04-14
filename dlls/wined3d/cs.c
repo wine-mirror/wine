@@ -480,6 +480,11 @@ static inline void wined3d_device_context_finish(struct wined3d_device_context *
     context->ops->finish(context, queue_id);
 }
 
+static struct wined3d_cs *wined3d_cs_from_context(struct wined3d_device_context *context)
+{
+    return CONTAINING_RECORD(context, struct wined3d_cs, c);
+}
+
 static const char *debug_cs_op(enum wined3d_cs_op op)
 {
     switch (op)
@@ -1110,14 +1115,15 @@ static void wined3d_cs_exec_flush(struct wined3d_cs *cs, const void *data)
     context_release(context);
 }
 
-void wined3d_cs_emit_flush(struct wined3d_cs *cs)
+static void wined3d_cs_flush(struct wined3d_device_context *context)
 {
+    struct wined3d_cs *cs = wined3d_cs_from_context(context);
     struct wined3d_cs_flush *op;
 
-    op = wined3d_device_context_require_space(&cs->c, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_FLUSH;
 
-    wined3d_device_context_submit(&cs->c, WINED3D_CS_QUEUE_DEFAULT);
+    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
     cs->queries_flushed = TRUE;
 }
 
@@ -2073,11 +2079,6 @@ wined3d_cs_push_constant_info[] =
     {FIELD_OFFSET(struct wined3d_state, ps_consts_b), sizeof(BOOL),                 WINED3D_SHADER_CONST_PS_B},
 };
 
-static struct wined3d_cs *wined3d_cs_from_context(struct wined3d_device_context *context)
-{
-    return CONTAINING_RECORD(context, struct wined3d_cs, c);
-}
-
 static void wined3d_cs_st_push_constants(struct wined3d_device_context *context, enum wined3d_push_constants p,
         unsigned int start_idx, unsigned int count, const void *constants)
 {
@@ -2799,6 +2800,7 @@ static const struct wined3d_device_context_ops wined3d_cs_st_ops =
     wined3d_cs_map,
     wined3d_cs_unmap,
     wined3d_cs_issue_query,
+    wined3d_cs_flush,
 };
 
 static BOOL wined3d_cs_queue_is_empty(const struct wined3d_cs *cs, const struct wined3d_cs_queue *queue)
@@ -2923,6 +2925,7 @@ static const struct wined3d_device_context_ops wined3d_cs_mt_ops =
     wined3d_cs_map,
     wined3d_cs_unmap,
     wined3d_cs_issue_query,
+    wined3d_cs_flush,
 };
 
 static void poll_queries(struct wined3d_cs *cs)
