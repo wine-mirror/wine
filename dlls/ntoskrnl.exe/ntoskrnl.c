@@ -3842,6 +3842,7 @@ error:
 NTSTATUS WINAPI ZwUnloadDriver( const UNICODE_STRING *service_name )
 {
     struct wine_rb_entry *entry;
+    struct wine_driver *driver;
     UNICODE_STRING drv_name;
 
     TRACE( "(%s)\n", debugstr_us(service_name) );
@@ -3855,6 +3856,13 @@ NTSTATUS WINAPI ZwUnloadDriver( const UNICODE_STRING *service_name )
     {
         ERR( "failed to locate driver %s\n", debugstr_us(service_name) );
         return STATUS_OBJECT_NAME_NOT_FOUND;
+    }
+    driver = WINE_RB_ENTRY_VALUE( entry, struct wine_driver, entry );
+
+    if (!list_empty( &driver->root_pnp_devices ))
+    {
+        ERR( "cannot unload driver %s which still has running PnP devices\n", debugstr_us(service_name) );
+        return STATUS_UNSUCCESSFUL;
     }
 
     unload_driver( entry, NULL );
