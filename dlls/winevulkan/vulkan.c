@@ -450,26 +450,10 @@ static void wine_vk_device_free(struct VkDevice_T *device)
     free(device);
 }
 
-static BOOL WINAPI wine_vk_init(INIT_ONCE *once, void *param, void **context)
+void unix_vk_init(const struct vulkan_funcs *driver)
 {
-    HDC hdc;
-
-    hdc = GetDC(0);
-    vk_funcs = __wine_get_vulkan_driver(hdc, WINE_VULKAN_DRIVER_VERSION);
-    ReleaseDC(0, hdc);
-    if (!vk_funcs)
-        ERR("Failed to load Wine graphics driver supporting Vulkan.\n");
-    else
-        p_vkEnumerateInstanceVersion = vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkEnumerateInstanceVersion");
-
-    return TRUE;
-}
-
-static void wine_vk_init_once(void)
-{
-    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
-
-    InitOnceExecuteOnce(&init_once, wine_vk_init, NULL, NULL);
+    vk_funcs = driver;
+    p_vkEnumerateInstanceVersion = vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkEnumerateInstanceVersion");
 }
 
 /* Helper function for converting between win32 and host compatible VkInstanceCreateInfo.
@@ -845,19 +829,13 @@ fail:
     return res;
 }
 
-VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
+VkResult WINAPI unix_vkCreateInstance(const VkInstanceCreateInfo *create_info,
         const VkAllocationCallbacks *allocator, VkInstance *instance)
 {
     VkInstanceCreateInfo create_info_host;
     const VkApplicationInfo *app_info;
     struct VkInstance_T *object;
     VkResult res;
-
-    TRACE("create_info %p, allocator %p, instance %p\n", create_info, allocator, instance);
-
-    wine_vk_init_once();
-    if (!vk_funcs)
-        return VK_ERROR_INITIALIZATION_FAILED;
 
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
@@ -975,28 +953,13 @@ VkResult WINAPI wine_vkEnumerateDeviceExtensionProperties(VkPhysicalDevice phys_
     return *count < phys_dev->extension_count ? VK_INCOMPLETE : VK_SUCCESS;
 }
 
-VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_name,
+VkResult WINAPI unix_vkEnumerateInstanceExtensionProperties(const char *layer_name,
         uint32_t *count, VkExtensionProperties *properties)
 {
     uint32_t num_properties = 0, num_host_properties;
     VkExtensionProperties *host_properties;
     unsigned int i, j;
     VkResult res;
-
-    TRACE("%p, %p, %p\n", layer_name, count, properties);
-
-    if (layer_name)
-    {
-        WARN("Layer enumeration not supported from ICD.\n");
-        return VK_ERROR_LAYER_NOT_PRESENT;
-    }
-
-    wine_vk_init_once();
-    if (!vk_funcs)
-    {
-        *count = 0;
-        return VK_SUCCESS;
-    }
 
     res = vk_funcs->p_vkEnumerateInstanceExtensionProperties(NULL, &num_host_properties, NULL);
     if (res != VK_SUCCESS)
@@ -1055,13 +1018,9 @@ VkResult WINAPI wine_vkEnumerateDeviceLayerProperties(VkPhysicalDevice phys_dev,
     return VK_SUCCESS;
 }
 
-VkResult WINAPI wine_vkEnumerateInstanceVersion(uint32_t *version)
+VkResult WINAPI unix_vkEnumerateInstanceVersion(uint32_t *version)
 {
     VkResult res;
-
-    TRACE("%p\n", version);
-
-    wine_vk_init_once();
 
     if (p_vkEnumerateInstanceVersion)
     {

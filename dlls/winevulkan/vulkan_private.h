@@ -243,4 +243,12 @@ BOOL wine_vk_instance_extension_supported(const char *name) DECLSPEC_HIDDEN;
 BOOL wine_vk_is_type_wrapped(VkObjectType type) DECLSPEC_HIDDEN;
 uint64_t wine_vk_unwrap_handle(VkObjectType type, uint64_t handle) DECLSPEC_HIDDEN;
 
+void unix_vk_init(const struct vulkan_funcs *driver) DECLSPEC_HIDDEN;
+
+VkResult WINAPI unix_vkCreateInstance(const VkInstanceCreateInfo *create_info,
+        const VkAllocationCallbacks *allocator, VkInstance *instance) DECLSPEC_HIDDEN;
+VkResult WINAPI unix_vkEnumerateInstanceExtensionProperties(const char *layer_name,
+        uint32_t *count, VkExtensionProperties *properties) DECLSPEC_HIDDEN;
+VkResult WINAPI unix_vkEnumerateInstanceVersion(uint32_t *version) DECLSPEC_HIDDEN;
+
 #endif /* __WINE_VULKAN_PRIVATE_H */

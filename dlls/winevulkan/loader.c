@@ -206,6 +206,73 @@ VkResult WINAPI wine_vk_icdNegotiateLoaderICDInterfaceVersion(uint32_t *supporte
     return VK_SUCCESS;
 }
 
+static BOOL WINAPI wine_vk_init(INIT_ONCE *once, void *param, void **context)
+{
+    const struct vulkan_funcs *driver;
+    HDC hdc;
+
+    hdc = GetDC(0);
+    driver = __wine_get_vulkan_driver(hdc, WINE_VULKAN_DRIVER_VERSION);
+    ReleaseDC(0, hdc);
+    if (!driver)
+        ERR("Failed to load Wine graphics driver supporting Vulkan.\n");
+    else
+        unix_vk_init(driver);
+
+    return driver != NULL;
+}
+
+static BOOL  wine_vk_init_once(void)
+{
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+
+    return InitOnceExecuteOnce(&init_once, wine_vk_init, NULL, NULL);
+}
+
+VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
+        const VkAllocationCallbacks *allocator, VkInstance *instance)
+{
+    TRACE("create_info %p, allocator %p, instance %p\n", create_info, allocator, instance);
+
+    if(!wine_vk_init_once())
+        return VK_ERROR_INITIALIZATION_FAILED;
+
+    return unix_vkCreateInstance(create_info, allocator, instance);
+}
+
+VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_name,
+        uint32_t *count, VkExtensionProperties *properties)
+{
+    TRACE("%p, %p, %p\n", layer_name, count, properties);
+
+    if (layer_name)
+    {
+        WARN("Layer enumeration not supported from ICD.\n");
+        return VK_ERROR_LAYER_NOT_PRESENT;
+    }
+
+    if (!wine_vk_init_once())
+    {
+        *count = 0;
+        return VK_SUCCESS;
+    }
+
+    return unix_vkEnumerateInstanceExtensionProperties(layer_name, count, properties);
+}
+
+VkResult WINAPI wine_vkEnumerateInstanceVersion(uint32_t *version)
+{
+    TRACE("%p\n", version);
+
+    if (!wine_vk_init_once())
+    {
+        *version = VK_API_VERSION_1_0;
+        return VK_SUCCESS;
+    }
+
+    return unix_vkEnumerateInstanceVersion(version);
+}
+
 static HANDLE get_display_device_init_mutex(void)
 {
     static const WCHAR init_mutexW[] = {'d','i','s','p','l','a','y','_','d','e','v','i','c','e','_','i','n','i','t',0};
