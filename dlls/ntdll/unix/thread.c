@@ -144,6 +144,16 @@ static void update_attr_list( PS_ATTRIBUTE_LIST *attr, const CLIENT_ID *id, TEB 
     }
 }
 
+/***********************************************************************
+ *              NtCreateThread   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCreateThread( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
+                                HANDLE process, CLIENT_ID *id, CONTEXT *ctx, INITIAL_TEB *teb,
+                                BOOLEAN suspended )
+{
+    FIXME( "%p %d %p %p %p %p %p %d, stub!\n", handle, access, attr, process, id, ctx, teb, suspended );
+    return STATUS_NOT_IMPLEMENTED;
+}
 
 /***********************************************************************
  *              NtCreateThreadEx   (NTDLL.@)
