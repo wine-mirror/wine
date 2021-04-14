@@ -1972,17 +1972,3 @@ VkResult WINAPI wine_vkDebugMarkerSetObjectNameEXT(VkDevice device, const VkDebu
 
     return thunk_vkDebugMarkerSetObjectNameEXT(device, &wine_name_info);
 }
-
-/*
- * Wrapper around driver vkGetInstanceProcAddr implementation.
- * Allows winelib applications to access Vulkan functions with Wine
- * additions and native ABI.
- */
-void *native_vkGetInstanceProcAddrWINE(VkInstance instance, const char *name)
-{
-    wine_vk_init_once();
-    if (!vk_funcs)
-        return NULL;
-
-    return vk_funcs->p_vkGetInstanceProcAddr(instance, name);
-}
