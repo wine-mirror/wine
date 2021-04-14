@@ -507,7 +507,7 @@ HRESULT CDECL wined3d_query_issue(struct wined3d_query *query, DWORD flags)
     if (flags & WINED3DISSUE_END)
         ++query->counter_main;
 
-    wined3d_cs_emit_query_issue(query->device->cs, query, flags);
+    query->device->cs->c.ops->issue_query(&query->device->cs->c, query, flags);
 
     if (flags & WINED3DISSUE_BEGIN)
         query->state = QUERY_BUILDING;

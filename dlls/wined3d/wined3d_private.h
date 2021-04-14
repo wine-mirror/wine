@@ -4692,6 +4692,7 @@ struct wined3d_device_context_ops
             unsigned int flags);
     HRESULT (*unmap)(struct wined3d_device_context *context, struct wined3d_resource *resource,
         unsigned int sub_resource_idx);
+    void (*issue_query)(struct wined3d_device_context *context, struct wined3d_query *query, unsigned int flags);
 };
 
 struct wined3d_device_context
@@ -4737,7 +4738,6 @@ void wined3d_cs_emit_flush(struct wined3d_cs *cs) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_preload_resource(struct wined3d_cs *cs, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_present(struct wined3d_cs *cs, struct wined3d_swapchain *swapchain, const RECT *src_rect,
         const RECT *dst_rect, HWND dst_window_override, unsigned int swap_interval, DWORD flags) DECLSPEC_HIDDEN;
-void wined3d_cs_emit_query_issue(struct wined3d_cs *cs, struct wined3d_query *query, DWORD flags) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_reset_state(struct wined3d_cs *cs) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_clip_plane(struct wined3d_cs *cs, UINT plane_idx,
         const struct wined3d_vec4 *plane) DECLSPEC_HIDDEN;

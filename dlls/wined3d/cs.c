@@ -2213,16 +2213,18 @@ static void wined3d_cs_exec_query_issue(struct wined3d_cs *cs, const void *data)
         InterlockedIncrement(&query->counter_retrieved);
 }
 
-void wined3d_cs_emit_query_issue(struct wined3d_cs *cs, struct wined3d_query *query, DWORD flags)
+static void wined3d_cs_issue_query(struct wined3d_device_context *context,
+        struct wined3d_query *query, unsigned int flags)
 {
+    struct wined3d_cs *cs = wined3d_cs_from_context(context);
     struct wined3d_cs_query_issue *op;
 
-    op = wined3d_device_context_require_space(&cs->c, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_QUERY_ISSUE;
     op->query = query;
     op->flags = flags;
 
-    wined3d_device_context_submit(&cs->c, WINED3D_CS_QUEUE_DEFAULT);
+    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
     cs->queries_flushed = FALSE;
 }
 
@@ -2796,6 +2798,7 @@ static const struct wined3d_device_context_ops wined3d_cs_st_ops =
     wined3d_cs_st_push_constants,
     wined3d_cs_map,
     wined3d_cs_unmap,
+    wined3d_cs_issue_query,
 };
 
 static BOOL wined3d_cs_queue_is_empty(const struct wined3d_cs *cs, const struct wined3d_cs_queue *queue)
@@ -2919,6 +2922,7 @@ static const struct wined3d_device_context_ops wined3d_cs_mt_ops =
     wined3d_cs_mt_push_constants,
     wined3d_cs_map,
     wined3d_cs_unmap,
+    wined3d_cs_issue_query,
 };
 
 static void poll_queries(struct wined3d_cs *cs)
