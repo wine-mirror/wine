@@ -328,15 +328,22 @@ PWCHAR CDECL ldap_first_attributeW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry
 {
     PWCHAR ret = NULL;
 #ifdef HAVE_LDAP
+    BerElement *berU;
     char *retU;
 
     TRACE( "(%p, %p, %p)\n", ld, entry, ptr );
 
     if (!ld || !entry) return NULL;
-    retU = ldap_first_attribute( ld->ld, entry, ptr );
 
-    ret = strUtoW( retU );
-    ldap_memfree( retU );
+    retU = ldap_first_attribute( ld->ld, entry, &berU );
+    if (retU)
+    {
+        WLDAP32_BerElement *ber = heap_alloc( sizeof(*ber) );
+        ber->opaque = (char *)berU;
+        *ptr = ber;
+        ret = strUtoW( retU );
+        ldap_memfree( retU );
+    }
 
 #endif
     return ret;
@@ -487,19 +494,22 @@ PCHAR CDECL ldap_next_attributeA( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry,
  *  When done iterating and when ptr != NULL, call ber_free( ptr, 0 ).
  */
 PWCHAR CDECL ldap_next_attributeW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry,
-    WLDAP32_BerElement *ptr )
+    WLDAP32_BerElement *ber )
 {
     PWCHAR ret = NULL;
 #ifdef HAVE_LDAP
     char *retU;
 
-    TRACE( "(%p, %p, %p)\n", ld, entry, ptr );
+    TRACE( "(%p, %p, %p)\n", ld, entry, ber );
 
-    if (!ld || !entry || !ptr) return NULL;
-    retU = ldap_next_attribute( ld->ld, entry, ptr );
+    if (!ld || !entry) return NULL;
 
-    ret = strUtoW( retU );
-    ldap_memfree( retU );
+    retU = ldap_next_attribute( ld->ld, entry, (BerElement *)ber->opaque );
+    if (retU)
+    {
+        ret = strUtoW( retU );
+        ldap_memfree( retU );
+    }
 
 #endif
     return ret;

@@ -27,6 +27,8 @@
 #include "winnls.h"
 #include "libldap.h"
 
+#define WLDAP32_LBER_ERROR (~0L)
+
 typedef enum {
     WLDAP32_LDAP_SUCCESS                 =   0x00,
     WLDAP32_LDAP_UNWILLING_TO_PERFORM    =   0x35,
@@ -1185,6 +1187,26 @@ static inline WCHAR **strarrayUtoW( char **strarray )
         }
     }
     return strarrayW;
+}
+
+static inline char **strarrayUtoU( char **strarray )
+{
+    char **strarrayU = NULL;
+    DWORD size;
+
+    if (strarray)
+    {
+        size = sizeof(char *) * (strarraylenU( strarray ) + 1);
+        if ((strarrayU = RtlAllocateHeap( GetProcessHeap(), 0, size )))
+        {
+            char **p = strarray;
+            char **q = strarrayU;
+
+            while (*p) *q++ = strdupU( *p++ );
+            *q = NULL;
+        }
+    }
+    return strarrayU;
 }
 
 static inline LDAPControlW *controlUtoW( const LDAPControlU *control )

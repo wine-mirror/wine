@@ -60,13 +60,41 @@ typedef struct
     void           *ldvlv_extradata;
 } LDAPVLVInfoU;
 
+extern void * CDECL wrap_ber_alloc_t(int) DECLSPEC_HIDDEN;
+extern void CDECL wrap_ber_bvecfree(struct bervalU **) DECLSPEC_HIDDEN;
+extern void CDECL wrap_ber_bvfree(struct bervalU *) DECLSPEC_HIDDEN;
+extern unsigned int CDECL wrap_ber_first_element(void *, unsigned int *, char **) DECLSPEC_HIDDEN;
+extern int CDECL wrap_ber_flatten(void *, struct bervalU **) DECLSPEC_HIDDEN;
+extern void CDECL wrap_ber_free(void *, int) DECLSPEC_HIDDEN;
+extern void * CDECL wrap_ber_init(struct bervalU *) DECLSPEC_HIDDEN;
+extern unsigned int CDECL wrap_ber_next_element(void *, unsigned int *, char *) DECLSPEC_HIDDEN;
+extern unsigned int CDECL wrap_ber_peek_tag(void *, unsigned int *) DECLSPEC_HIDDEN;
+extern unsigned int CDECL wrap_ber_skip_tag(void *, unsigned int *) DECLSPEC_HIDDEN;
+extern int WINAPIV wrap_ber_printf(void *, char *, ...) DECLSPEC_HIDDEN;
+extern int WINAPIV wrap_ber_scanf(void *, char *, ...) DECLSPEC_HIDDEN;
+
 extern int CDECL wrap_ldap_add_ext(void *, char *, LDAPModU **, LDAPControlU **, LDAPControlU **, ULONG *) DECLSPEC_HIDDEN;
 extern int CDECL wrap_ldap_add_ext_s(void *, char *, LDAPModU **, LDAPControlU **, LDAPControlU **) DECLSPEC_HIDDEN;
+extern void CDECL wrap_ldap_memfree(void *) DECLSPEC_HIDDEN;
 
 struct ldap_funcs
 {
+    void * (CDECL *ber_alloc_t)(int);
+    void (CDECL *ber_bvecfree)(struct bervalU **);
+    void (CDECL *ber_bvfree)(struct bervalU *);
+    unsigned int (CDECL *ber_first_element)(void *, unsigned int *, char **);
+    int (CDECL *ber_flatten)(void *, struct bervalU **);
+    void (CDECL *ber_free)(void *, int);
+    void * (CDECL *ber_init)(struct bervalU *);
+    unsigned int (CDECL *ber_next_element)(void *, unsigned int *, char *);
+    unsigned int (CDECL *ber_peek_tag)(void *, unsigned int *);
+    unsigned int (CDECL *ber_skip_tag)(void *, unsigned int *);
+    int (WINAPIV *ber_printf)(void *, char *, ...);
+    int (WINAPIV *ber_scanf)(void *, char *, ...);
+
     int (CDECL *ldap_add_ext)(void *, char *, LDAPModU **, LDAPControlU **, LDAPControlU **, ULONG *);
     int (CDECL *ldap_add_ext_s)(void *, char *, LDAPModU **, LDAPControlU **, LDAPControlU **);
+    void (CDECL *ldap_memfree)(void *);
 };
 
 extern const struct ldap_funcs *ldap_funcs;
