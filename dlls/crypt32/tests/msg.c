@@ -29,7 +29,6 @@
 
 #include "wine/test.h"
 
-static BOOL have_nt = TRUE;
 static BOOL old_crypt32 = FALSE;
 static char oid_rsa_md5[] = szOID_RSA_MD5;
 
@@ -403,27 +402,20 @@ static void test_data_msg_update(void)
 
     msg = CryptMsgOpenToEncode(PKCS_7_ASN_ENCODING, CMSG_DETACHED_FLAG,
      CMSG_DATA, NULL, NULL, NULL);
-    if (have_nt)
-    {
-        /* Doesn't appear to be able to update CMSG-DATA with non-final updates.
-         * On Win9x, this sometimes succeeds, sometimes fails with
-         * GetLastError() == 0, so it's not worth checking there.
-         */
-        SetLastError(0xdeadbeef);
-        ret = CryptMsgUpdate(msg, NULL, 0, FALSE);
-        ok(!ret &&
-         (GetLastError() == E_INVALIDARG ||
-          broken(GetLastError() == ERROR_SUCCESS)), /* Older NT4 */
-         "Expected E_INVALIDARG, got %x\n", GetLastError());
-        SetLastError(0xdeadbeef);
-        ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
-        ok(!ret &&
-         (GetLastError() == E_INVALIDARG ||
-          broken(GetLastError() == ERROR_SUCCESS)), /* Older NT4 */
-         "Expected E_INVALIDARG, got %x\n", GetLastError());
-    }
-    else
-        skip("not updating CMSG_DATA with a non-final update\n");
+
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, NULL, 0, FALSE);
+    ok(!ret &&
+     (GetLastError() == E_INVALIDARG ||
+      broken(GetLastError() == ERROR_SUCCESS)), /* Older NT4 */
+     "Expected E_INVALIDARG, got %x\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), FALSE);
+    ok(!ret &&
+     (GetLastError() == E_INVALIDARG ||
+      broken(GetLastError() == ERROR_SUCCESS)), /* Older NT4 */
+     "Expected E_INVALIDARG, got %x\n", GetLastError());
+
     ret = CryptMsgUpdate(msg, msgData, sizeof(msgData), TRUE);
     ok(ret, "CryptMsgUpdate failed: %x\n", GetLastError());
     CryptMsgClose(msg);
@@ -1046,8 +1038,6 @@ static void test_hash_msg(void)
 }
 
 static const CHAR cspNameA[] = { 'W','i','n','e','C','r','y','p','t','T','e',
- 'm','p',0 };
-static const WCHAR cspNameW[] = { 'W','i','n','e','C','r','y','p','t','T','e',
  'm','p',0 };
 static BYTE serialNum[] = { 1 };
 static BYTE encodedCommonName[] = { 0x30,0x15,0x31,0x13,0x30,0x11,0x06,0x03,
@@ -3576,39 +3566,6 @@ static void test_msg_control(void)
     CryptMsgClose(msg);
 }
 
-/* win9x has much less parameter checks and will crash on many tests
- * this code is from test_signed_msg_update()
- */
-static BOOL detect_nt(void)
-{
-    BOOL ret;
-    CMSG_SIGNER_ENCODE_INFO signer = { sizeof(signer), 0 };
-    CERT_INFO certInfo = { 0 };
-
-    certInfo.SerialNumber.cbData = sizeof(serialNum);
-    certInfo.SerialNumber.pbData = serialNum;
-    certInfo.Issuer.cbData = sizeof(encodedCommonName);
-    certInfo.Issuer.pbData = encodedCommonName;
-    signer.pCertInfo = &certInfo;
-    signer.HashAlgorithm.pszObjId = oid_rsa_md5;
-
-    ret = CryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
-                                PROV_RSA_FULL, CRYPT_NEWKEYSET);
-    if (!ret && GetLastError() == NTE_EXISTS) {
-        ret = CryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL,
-                                    PROV_RSA_FULL, 0);
-    }
-
-    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) return FALSE;
-
-    /* cleanup */
-    CryptReleaseContext(signer.hCryptProv, 0);
-    CryptAcquireContextW(&signer.hCryptProv, cspNameW, NULL, PROV_RSA_FULL,
-                          CRYPT_DELETEKEYSET);
-
-    return TRUE;
-}
-
 static void test_msg_get_and_verify_signer(void)
 {
     BOOL ret;
@@ -3737,10 +3694,6 @@ static void test_msg_get_and_verify_signer(void)
 
 START_TEST(msg)
 {
-    have_nt = detect_nt();
-    if (!have_nt)
-        win_skip("Win9x crashes on some parameter checks\n");
-
     /* I_CertUpdateStore can be used for verification if crypt32 is new enough */
     if (!GetProcAddress(GetModuleHandleA("crypt32.dll"), "I_CertUpdateStore"))
     {
