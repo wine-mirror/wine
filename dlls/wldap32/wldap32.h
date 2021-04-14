@@ -30,14 +30,7 @@ ULONG map_error( int ) DECLSPEC_HIDDEN;
  * to and from ansi (A), wide character (W) and utf8 (U) encodings.
  */
 
-static inline char *strdupU( const char *src )
-{
-    char *dst;
-    if (!src) return NULL;
-    if ((dst = heap_alloc( (strlen( src ) + 1) * sizeof(char) ))) strcpy( dst, src );
-    return dst;
-}
-
+#ifdef HAVE_LDAP
 static inline WCHAR *strdupW( const WCHAR *src )
 {
     WCHAR *dst;
@@ -264,16 +257,6 @@ static inline LPWSTR *strarraydupW( LPWSTR *strarray )
     return strarrayW;
 }
 
-static inline void strarrayfreeA( LPSTR *strarray )
-{
-    if (strarray)
-    {
-        LPSTR *p = strarray;
-        while (*p) strfreeA( *p++ );
-        heap_free( strarray );
-    }
-}
-
 static inline void strarrayfreeW( LPWSTR *strarray )
 {
     if (strarray)
@@ -315,6 +298,17 @@ static inline void bvarrayfreeW( struct WLDAP32_berval **bv )
     struct WLDAP32_berval **p = bv;
     while (*p) heap_free( *p++ );
     heap_free( bv );
+}
+#endif
+
+static inline void strarrayfreeA( LPSTR *strarray )
+{
+    if (strarray)
+    {
+        LPSTR *p = strarray;
+        while (*p) strfreeA( *p++ );
+        heap_free( strarray );
+    }
 }
 
 #ifdef HAVE_LDAP

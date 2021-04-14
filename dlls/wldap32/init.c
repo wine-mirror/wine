@@ -128,11 +128,11 @@ static BOOL has_ldap_scheme( char *url )
 static char *join_hostnames( const char *scheme, char **hostnames, ULONG portnumber )
 {
     char *res, *p, *q, **v;
-    unsigned int i = 0, size = 0; 
+    unsigned int i = 0, size = 0;
     static const char sep[] = " ", fmt[] = ":%d";
     char port[7];
 
-    sprintf( port, fmt, portnumber ); 
+    sprintf( port, fmt, portnumber );
 
     for (v = hostnames; *v; v++)
     {
@@ -147,7 +147,7 @@ static char *join_hostnames( const char *scheme, char **hostnames, ULONG portnum
 
         size += strlen( *v );
 
-        if (!strchr( q, ':' )) 
+        if (!strchr( q, ':' ))
             size += strlen( port );
 
         i++;
@@ -212,7 +212,7 @@ static WLDAP32_LDAP *create_context( const char *url )
 
     ld = heap_alloc_zero( sizeof( *ld ));
     if (!ld) return NULL;
-    if (ldap_initialize( &ld->ld, url ) != LDAP_SUCCESS)
+    if (ldap_initialize( (LDAP **)&ld->ld, url ) != LDAP_SUCCESS)
     {
         heap_free( ld );
         return NULL;
@@ -307,7 +307,7 @@ exit:
 /***********************************************************************
  *      ldap_connect     (WLDAP32.@)
  *
- * Connect to an LDAP server. 
+ * Connect to an LDAP server.
  *
  * PARAMS
  *  ld      [I] Pointer to an LDAP context.

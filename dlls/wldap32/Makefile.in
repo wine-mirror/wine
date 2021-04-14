@@ -15,6 +15,7 @@ C_SRCS = \
 	error.c \
 	extended.c \
 	init.c \
+	libldap.c \
 	main.c \
 	misc.c \
 	modify.c \
