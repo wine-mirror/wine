@@ -69,5 +69,7 @@ static inline char *drv_strrchr( const char *str, char ch )
     return ret;
 }
 
+static const GUID control_class = {0xdeadbeef, 0x29ef, 0x4538, {0xa5, 0xfd, 0xb6, 0x95, 0x73, 0xa3, 0x62, 0xc0}};
+
 #define SERVER_LISTEN_PORT 9374
 #define CLIENT_LISTEN_PORT 9375

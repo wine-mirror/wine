@@ -207,6 +207,23 @@ static inline void WINAPIV win_skip_(const char *file, int line, const char *msg
     __ms_va_end(args);
 }
 
+static inline void WINAPIV trace_(const char *file, int line, const char *msg, ...)
+{
+    const char *current_file;
+    __ms_va_list args;
+
+    if (!(current_file = drv_strrchr(file, '/')) &&
+        !(current_file = drv_strrchr(file, '\\')))
+        current_file = file;
+    else
+        current_file++;
+
+    __ms_va_start(args, msg);
+    kprintf("%s:%d: ", current_file, line);
+    kvprintf(msg, args);
+    __ms_va_end(args);
+}
+
 static inline void winetest_start_todo( int is_todo )
 {
     todo_level = (todo_level << 1) | (is_todo != 0);
@@ -237,3 +254,4 @@ static inline int broken(int condition)
 #define todo_wine               todo_if(running_under_wine)
 #define todo_wine_if(is_todo)   todo_if((is_todo) && running_under_wine)
 #define win_skip(...)           win_skip_(__FILE__, __LINE__, __VA_ARGS__)
+#define trace(...)              trace_(__FILE__, __LINE__, __VA_ARGS__)
