@@ -5324,6 +5324,22 @@ HRESULT CDECL wined3d_device_context_unmap(struct wined3d_device_context *contex
     return context->ops->unmap(context, resource, sub_resource_idx);
 }
 
+void CDECL wined3d_device_context_issue_query(struct wined3d_device_context *context,
+        struct wined3d_query *query, unsigned int flags)
+{
+    TRACE("context %p, query %p, flags %#x.\n", context, query, flags);
+
+    if (flags & WINED3DISSUE_END)
+        ++query->counter_main;
+
+    query->device->cs->c.ops->issue_query(context, query, flags);
+
+    if (flags & WINED3DISSUE_BEGIN)
+        query->state = QUERY_BUILDING;
+    else
+        query->state = QUERY_SIGNALLED;
+}
+
 struct wined3d_rendertarget_view * CDECL wined3d_device_get_rendertarget_view(const struct wined3d_device *device,
         unsigned int view_idx)
 {
