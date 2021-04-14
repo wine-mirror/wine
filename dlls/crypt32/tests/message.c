@@ -27,23 +27,6 @@
 
 #include "wine/test.h"
 
-static BOOL (WINAPI * pCryptAcquireContextA)
-                        (HCRYPTPROV *, LPCSTR, LPCSTR, DWORD, DWORD);
-
-static void init_function_pointers(void)
-{
-    HMODULE hAdvapi32 = GetModuleHandleA("advapi32.dll");
-
-#define GET_PROC(dll, func) \
-    p ## func = (void *)GetProcAddress(dll, #func); \
-    if(!p ## func) \
-      trace("GetProcAddress(%s) failed\n", #func);
-
-    GET_PROC(hAdvapi32, CryptAcquireContextA)
-
-#undef GET_PROC
-}
-
 static const BYTE dataEmptyBareContent[] = { 0x04,0x00 };
 static const BYTE dataEmptyContent[] = {
 0x30,0x0f,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x07,0x01,0xa0,0x02,
@@ -1032,7 +1015,7 @@ static void test_sign_message(void)
     ok(signedBlobSize, "bad size\n");
 
     SetLastError(0xdeadbeef);
-    ret = pCryptAcquireContextA(&hCryptProv, NULL, NULL, PROV_RSA_FULL,
+    ret = CryptAcquireContextA(&hCryptProv, NULL, NULL, PROV_RSA_FULL,
      CRYPT_VERIFYCONTEXT);
     ok(ret, "CryptAcquireContextA failed: %08x\n", GetLastError());
     SetLastError(0xdeadbeef);
@@ -1219,7 +1202,7 @@ static void test_encrypt_message(void)
     DWORD encryptedBlobSize;
 
     SetLastError(0xdeadbeef);
-    ret = pCryptAcquireContextA(&hCryptProv, NULL, NULL, PROV_RSA_FULL,
+    ret = CryptAcquireContextA(&hCryptProv, NULL, NULL, PROV_RSA_FULL,
      CRYPT_VERIFYCONTEXT);
     ok(ret, "CryptAcquireContextA failed: %08x\n", GetLastError());
 
@@ -1365,8 +1348,6 @@ static void test_encrypt_message(void)
 
 START_TEST(message)
 {
-    init_function_pointers();
-
     test_msg_get_signer_count();
     test_verify_detached_message_hash();
     test_verify_message_hash();
