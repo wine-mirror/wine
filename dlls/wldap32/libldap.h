@@ -60,6 +60,23 @@ typedef struct
     void           *ldvlv_extradata;
 } LDAPVLVInfoU;
 
+#ifndef SASL_CB_LIST_END
+#define SASL_CB_LIST_END    0
+#define SASL_CB_USER        0x4001
+#define SASL_CB_PASS        0x4004
+#define SASL_CB_GETREALM    0x4008
+#endif
+
+typedef struct sasl_interactU
+{
+    unsigned long id;
+    const char   *challenge;
+    const char   *prompt;
+    const char   *defresult;
+    const void   *result;
+    unsigned int  len;
+} sasl_interact_tU;
+
 extern void * CDECL wrap_ber_alloc_t(int) DECLSPEC_HIDDEN;
 extern void CDECL wrap_ber_bvecfree(struct bervalU **) DECLSPEC_HIDDEN;
 extern void CDECL wrap_ber_bvfree(struct bervalU *) DECLSPEC_HIDDEN;
@@ -73,9 +90,20 @@ extern unsigned int CDECL wrap_ber_skip_tag(void *, unsigned int *) DECLSPEC_HID
 extern int WINAPIV wrap_ber_printf(void *, char *, ...) DECLSPEC_HIDDEN;
 extern int WINAPIV wrap_ber_scanf(void *, char *, ...) DECLSPEC_HIDDEN;
 
-extern int CDECL wrap_ldap_add_ext(void *, char *, LDAPModU **, LDAPControlU **, LDAPControlU **, ULONG *) DECLSPEC_HIDDEN;
-extern int CDECL wrap_ldap_add_ext_s(void *, char *, LDAPModU **, LDAPControlU **, LDAPControlU **) DECLSPEC_HIDDEN;
+extern int CDECL wrap_ldap_add_ext(void *, const char *, LDAPModU **, LDAPControlU **, LDAPControlU **,
+                                   ULONG *) DECLSPEC_HIDDEN;
+extern int CDECL wrap_ldap_add_ext_s(void *, const char *, LDAPModU **, LDAPControlU **,
+                                     LDAPControlU **) DECLSPEC_HIDDEN;
 extern void CDECL wrap_ldap_memfree(void *) DECLSPEC_HIDDEN;
+extern int CDECL wrap_ldap_sasl_bind(void *, const char *, const char *, struct bervalU *, LDAPControlU **,
+                                     LDAPControlU **, int *) DECLSPEC_HIDDEN;
+extern int CDECL wrap_ldap_sasl_bind_s(void *, const char *, const char *, struct bervalU *, LDAPControlU **,
+                                       LDAPControlU **, struct bervalU **) DECLSPEC_HIDDEN;
+extern int CDECL wrap_ldap_sasl_interactive_bind_s(void *, const char *, const char *, LDAPControlU **,
+                                                   LDAPControlU **, unsigned int, void *) DECLSPEC_HIDDEN;
+extern int CDECL wrap_ldap_unbind_ext(void *, LDAPControlU **, LDAPControlU **) DECLSPEC_HIDDEN;
+extern int CDECL wrap_ldap_unbind_ext_s(void *, LDAPControlU **, LDAPControlU **) DECLSPEC_HIDDEN;
+extern void CDECL wrap_ldap_value_free_len(struct bervalU **) DECLSPEC_HIDDEN;
 
 struct ldap_funcs
 {
@@ -92,9 +120,25 @@ struct ldap_funcs
     int (WINAPIV *ber_printf)(void *, char *, ...);
     int (WINAPIV *ber_scanf)(void *, char *, ...);
 
-    int (CDECL *ldap_add_ext)(void *, char *, LDAPModU **, LDAPControlU **, LDAPControlU **, ULONG *);
-    int (CDECL *ldap_add_ext_s)(void *, char *, LDAPModU **, LDAPControlU **, LDAPControlU **);
+    int (CDECL *ldap_add_ext)(void *, const char *, LDAPModU **, LDAPControlU **, LDAPControlU **, ULONG *);
+    int (CDECL *ldap_add_ext_s)(void *, const char *, LDAPModU **, LDAPControlU **, LDAPControlU **);
     void (CDECL *ldap_memfree)(void *);
+    int (CDECL *ldap_sasl_bind)(void *, const char *, const char *, struct bervalU *, LDAPControlU **, LDAPControlU **,
+                                int *);
+    int (CDECL *ldap_sasl_bind_s)(void *, const char *, const char *, struct bervalU *, LDAPControlU **,
+                                  LDAPControlU **, struct bervalU **);
+    int (CDECL *ldap_sasl_interactive_bind_s)(void *, const char *, const char *, LDAPControlU **, LDAPControlU **,
+                                              unsigned int, void *);
+    int (CDECL *ldap_unbind_ext)(void *, LDAPControlU **, LDAPControlU **);
+    int (CDECL *ldap_unbind_ext_s)(void *, LDAPControlU **, LDAPControlU **);
+    void (CDECL *ldap_value_free_len)(struct bervalU **);
+};
+
+extern int CDECL sasl_interact_cb(void *, unsigned int, void *, void *) DECLSPEC_HIDDEN;
+
+struct ldap_callbacks
+{
+    int (CDECL *sasl_interact)(void *, unsigned int, void *, void *);
 };
 
 extern const struct ldap_funcs *ldap_funcs;

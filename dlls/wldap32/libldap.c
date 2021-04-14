@@ -52,6 +52,8 @@ C_ASSERT( sizeof(LDAPVLVInfoU) == sizeof(LDAPVLVInfo) );
 
 static LDAPMod *nullattrs[] = { NULL };
 
+static const struct ldap_callbacks *callbacks;
+
 void * CDECL wrap_ber_alloc_t( int options )
 {
     return ber_alloc_t( options );
@@ -292,7 +294,7 @@ int WINAPIV wrap_ber_scanf( void *ber, char *fmt, ... )
     return ret;
 }
 
-int CDECL wrap_ldap_add_ext( void *ld, char *dn, LDAPModU **attrs, LDAPControlU **serverctrls,
+int CDECL wrap_ldap_add_ext( void *ld, const char *dn, LDAPModU **attrs, LDAPControlU **serverctrls,
                              LDAPControlU **clientctrls, ULONG *msg )
 {
     int dummy;
@@ -300,7 +302,7 @@ int CDECL wrap_ldap_add_ext( void *ld, char *dn, LDAPModU **attrs, LDAPControlU 
                          (LDAPControl **)clientctrls, msg ? (int *)msg : &dummy );
 }
 
-int CDECL wrap_ldap_add_ext_s( void *ld, char *dn, LDAPModU **attrs, LDAPControlU **serverctrls,
+int CDECL wrap_ldap_add_ext_s( void *ld, const char *dn, LDAPModU **attrs, LDAPControlU **serverctrls,
                                LDAPControlU **clientctrls )
 {
     return ldap_add_ext_s( ld, dn ? dn : "", attrs ? (LDAPMod **)attrs : nullattrs, (LDAPControl **)serverctrls,
@@ -310,6 +312,51 @@ int CDECL wrap_ldap_add_ext_s( void *ld, char *dn, LDAPModU **attrs, LDAPControl
 void CDECL wrap_ldap_memfree( void *ptr )
 {
     return ldap_memfree( ptr );
+}
+
+int CDECL wrap_ldap_sasl_bind( void *ld, const char *dn, const char *mech, struct bervalU *cred,
+                               LDAPControlU **serverctrls, LDAPControlU **clientctrls, int *msgid )
+{
+    return ldap_sasl_bind( ld, dn, mech, (struct berval *)cred, (LDAPControl **)serverctrls,
+                           (LDAPControl **)clientctrls, msgid );
+}
+
+int CDECL wrap_ldap_sasl_bind_s( void *ld, const char *dn, const char *mech, struct bervalU *cred,
+                                 LDAPControlU **serverctrls, LDAPControlU **clientctrls, struct bervalU **servercred )
+{
+    return ldap_sasl_bind_s( ld, dn, mech, (struct berval *)cred, (LDAPControl **)serverctrls,
+                             (LDAPControl **)clientctrls, (struct berval **)servercred );
+}
+
+static int wrap_sasl_interact( LDAP *ld, unsigned int flags, void *defaults, void *interact )
+{
+#ifdef HAVE_SASL_SASL_H
+    C_ASSERT( sizeof(struct sasl_interactU) == sizeof(struct sasl_interact) );
+    return callbacks->sasl_interact( ld, flags, defaults, interact );
+#endif
+    return -1;
+}
+
+int CDECL wrap_ldap_sasl_interactive_bind_s( void *ld, const char *dn, const char *mech, LDAPControlU **serverctrls,
+                                             LDAPControlU **clientctrls, unsigned int flags, void *defaults )
+{
+    return ldap_sasl_interactive_bind_s( ld, dn, mech, (LDAPControl **)serverctrls, (LDAPControl **)clientctrls, flags,
+                                         wrap_sasl_interact, defaults );
+}
+
+int CDECL wrap_ldap_unbind_ext( void *ld, LDAPControlU **serverctrls, LDAPControlU **clientctrls )
+{
+    return ldap_unbind_ext( ld, (LDAPControl **)serverctrls, (LDAPControl **)clientctrls );
+}
+
+int CDECL wrap_ldap_unbind_ext_s( void *ld, LDAPControlU **serverctrls, LDAPControlU **clientctrls )
+{
+    return ldap_unbind_ext_s( ld, (LDAPControl **)serverctrls, (LDAPControl **)clientctrls );
+}
+
+void CDECL wrap_ldap_value_free_len( struct bervalU **values )
+{
+    ldap_value_free_len( (struct berval **)values );
 }
 
 static const struct ldap_funcs funcs =
@@ -329,11 +376,18 @@ static const struct ldap_funcs funcs =
     wrap_ldap_add_ext,
     wrap_ldap_add_ext_s,
     wrap_ldap_memfree,
+    wrap_ldap_sasl_bind,
+    wrap_ldap_sasl_bind_s,
+    wrap_ldap_sasl_interactive_bind_s,
+    wrap_ldap_unbind_ext,
+    wrap_ldap_unbind_ext_s,
+    wrap_ldap_value_free_len,
 };
 
 NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
 {
     if (reason != DLL_PROCESS_ATTACH) return STATUS_SUCCESS;
+    callbacks = ptr_in;
     *(const struct ldap_funcs **)ptr_out = &funcs;
     return STATUS_SUCCESS;
 }

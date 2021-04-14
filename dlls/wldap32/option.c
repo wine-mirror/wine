@@ -416,8 +416,8 @@ static BOOL query_supported_server_ctrls( WLDAP32_LDAP *ld )
     {
         ULONG count, i;
 
-        ld->ld_server_ctrls = ldap_get_values_len( ld->ld, entry, attrs[0] );
-        count = ldap_count_values_len( ld->ld_server_ctrls );
+        ld->ld_server_ctrls = (struct bervalU **)ldap_get_values_len( ld->ld, entry, attrs[0] );
+        count = ldap_count_values_len( (struct berval **)ld->ld_server_ctrls );
         for (i = 0; i < count; i++)
             TRACE("%u: %s\n", i, debugstr_an( ld->ld_server_ctrls[i]->bv_val, ld->ld_server_ctrls[i]->bv_len ));
     }
@@ -435,7 +435,7 @@ static BOOL is_supported_server_ctrls( WLDAP32_LDAP *ld, LDAPControl **ctrls )
         return TRUE; /* can't verify, let the server handle it on next query */
 
     user_count = controlarraylenU( ctrls );
-    server_count = ldap_count_values_len( ld->ld_server_ctrls );
+    server_count = ldap_count_values_len( (struct berval **)ld->ld_server_ctrls );
 
     for (n = 0; n < user_count; n++)
     {

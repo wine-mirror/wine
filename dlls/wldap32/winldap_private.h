@@ -144,7 +144,7 @@ typedef struct wldap32
     ULONG ld_refhoplimit;
     ULONG ld_options;
     /* internal LDAP context */
-    struct berval **ld_server_ctrls;
+    struct bervalU **ld_server_ctrls;
     void *ld;
 } WLDAP32_LDAP, *WLDAP32_PLDAP;
 
