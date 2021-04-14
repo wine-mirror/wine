@@ -673,6 +673,14 @@ static void test_CreateNamedPipe(int pipemode)
 
     CloseHandle(hnp);
 
+    hnp = CreateNamedPipeA("\\\\.\\pipe\\a<>*?|\"/b", PIPE_ACCESS_DUPLEX,
+            PIPE_TYPE_BYTE, 1, 1024, 1024, NMPWAIT_USE_DEFAULT_WAIT, NULL);
+    ok(hnp != INVALID_HANDLE_VALUE, "failed to create pipe, error %u\n", GetLastError());
+    hFile = CreateFileA("\\\\.\\pipe\\a<>*?|\"/b", 0, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(hFile != INVALID_HANDLE_VALUE, "failed to open pipe, error %u\n", GetLastError());
+    CloseHandle(hFile);
+    CloseHandle(hnp);
+
     if (winetest_debug > 1) trace("test_CreateNamedPipe returning\n");
 }
 
