@@ -622,15 +622,16 @@ static void test_RtlDosPathNameToNtPathName_U(void)
 
 static void test_nt_names(void)
 {
-    static const struct { const WCHAR *root, *name; NTSTATUS expect; BOOL todo; } tests[] =
+    static const struct { const WCHAR *root, *name; NTSTATUS expect, broken; BOOL todo; } tests[] =
     {
         { NULL, L"\\??\\C:\\windows\\system32\\kernel32.dll", STATUS_SUCCESS },
-        { NULL, L"\\??\\C:\\\\windows\\system32\\kernel32.dll", STATUS_OBJECT_NAME_INVALID },
-        { NULL, L"\\??\\C:\\\\windows\\system32\\", STATUS_OBJECT_NAME_INVALID },
+        { NULL, L"\\??\\C:\\\\windows\\system32\\kernel32.dll", STATUS_SUCCESS, STATUS_OBJECT_NAME_INVALID },
+        { NULL, L"\\??\\C:\\windows\\system32\\", STATUS_FILE_IS_A_DIRECTORY },
+        { NULL, L"\\??\\C:\\\\\\windows\\system32\\kernel32.dll", STATUS_OBJECT_NAME_INVALID },
         { NULL, L"\\??\\C:\\windows\\\\system32\\kernel32.dll", STATUS_OBJECT_NAME_INVALID },
-        { NULL, L"\\??\\C:\\windows\\system32\\.\\kernel32.dll", STATUS_OBJECT_NAME_INVALID },
+        { NULL, L"\\??\\C:\\windows\\system32\\.\\kernel32.dll", STATUS_OBJECT_NAME_INVALID, STATUS_OBJECT_PATH_NOT_FOUND },
         { NULL, L"\\??\\C:\\windows\\system32\\..\\system32\\kernel32.dll", STATUS_OBJECT_NAME_INVALID },
-        { NULL, L"\\??\\C:\\.\\windows\\system32\\kernel32.dll", STATUS_OBJECT_NAME_INVALID },
+        { NULL, L"\\??\\C:\\.\\windows\\system32\\kernel32.dll", STATUS_OBJECT_NAME_INVALID, STATUS_OBJECT_PATH_NOT_FOUND },
         { NULL, L"\\??\\C:\\windows\\system32\\kernel32.dll   ", STATUS_OBJECT_NAME_NOT_FOUND },
         { NULL, L"\\??\\C:\\windows\\system32\\kernel32.dll..", STATUS_OBJECT_NAME_NOT_FOUND },
         { NULL, L"\\??\\C:\\windows   \\system32   \\kernel32.dll", STATUS_OBJECT_PATH_NOT_FOUND },
@@ -642,12 +643,12 @@ static void test_nt_names(void)
         { NULL, L"/??\\C:\\windows\\system32\\kernel32.dll", STATUS_OBJECT_PATH_SYNTAX_BAD },
         { NULL, L"\\??" L"/C:\\windows\\system32\\kernel32.dll", STATUS_OBJECT_PATH_NOT_FOUND },
         { NULL, L"\\??\\C:/windows\\system32\\kernel32.dll", STATUS_OBJECT_PATH_NOT_FOUND },
-        { NULL, L"\\??\\C:\\windows\\system32\\kernel32.dll\\", STATUS_OBJECT_NAME_INVALID, TRUE },
-        { NULL, L"\\??\\C:\\windows\\system32\\kernel32.dll\\foo", STATUS_OBJECT_PATH_NOT_FOUND, TRUE },
+        { NULL, L"\\??\\C:\\windows\\system32\\kernel32.dll\\", STATUS_OBJECT_NAME_INVALID, 0, TRUE },
+        { NULL, L"\\??\\C:\\windows\\system32\\kernel32.dll\\foo", STATUS_OBJECT_PATH_NOT_FOUND, 0, TRUE },
         { NULL, L"\\??\\C:\\windows\\sys\001", STATUS_OBJECT_NAME_INVALID },
         { L"\\??\\", NULL, STATUS_OBJECT_NAME_INVALID },
         { L"\\??\\C:\\", NULL, STATUS_SUCCESS },
-        { L"\\??\\C:\\\\", NULL, STATUS_OBJECT_NAME_INVALID },
+        { L"\\??\\C:\\\\", NULL, STATUS_SUCCESS, STATUS_OBJECT_NAME_INVALID },
         { L"/??\\C:\\", NULL, STATUS_OBJECT_PATH_SYNTAX_BAD },
         { L"\\??\\C:/", NULL, STATUS_OBJECT_NAME_NOT_FOUND },
         { L"\\??" L"/C:", NULL, STATUS_OBJECT_NAME_NOT_FOUND },
@@ -659,14 +660,15 @@ static void test_nt_names(void)
         { L"\\??\\C:\\windows\\..", NULL, STATUS_OBJECT_NAME_INVALID },
         { L"\\??\\C:\\windows\\..\\", NULL, STATUS_OBJECT_NAME_INVALID },
         { L"\\??\\C:\\", L"windows\\system32\\kernel32.dll", STATUS_SUCCESS },
+        { L"\\??\\C:\\\\", L"windows\\system32\\kernel32.dll", STATUS_SUCCESS, STATUS_OBJECT_NAME_INVALID },
         { L"\\??\\C:\\windows", L"system32\\kernel32.dll", STATUS_SUCCESS },
         { L"\\??\\C:\\windows\\", L"system32\\kernel32.dll", STATUS_SUCCESS },
         { L"\\??\\C:\\windows\\", L"system32\\", STATUS_FILE_IS_A_DIRECTORY },
-        { L"\\??\\C:\\windows\\", L"system32\\kernel32.dll\\", STATUS_OBJECT_NAME_INVALID, TRUE },
-        { L"\\??\\C:\\windows\\", L"system32\\kernel32.dll\\foo", STATUS_OBJECT_PATH_NOT_FOUND, TRUE },
+        { L"\\??\\C:\\windows\\", L"system32\\kernel32.dll\\", STATUS_OBJECT_NAME_INVALID, 0, TRUE },
+        { L"\\??\\C:\\windows\\", L"system32\\kernel32.dll\\foo", STATUS_OBJECT_PATH_NOT_FOUND, 0, TRUE },
         { L"\\??\\C:\\windows\\", L"\\system32\\kernel32.dll", STATUS_INVALID_PARAMETER },
         { L"\\??\\C:\\windows\\", L"/system32\\kernel32.dll", STATUS_OBJECT_NAME_INVALID },
-        { L"\\??\\C:\\windows\\", L".\\system32\\kernel32.dll", STATUS_OBJECT_NAME_INVALID },
+        { L"\\??\\C:\\windows\\", L".\\system32\\kernel32.dll", STATUS_OBJECT_NAME_INVALID, STATUS_OBJECT_PATH_NOT_FOUND },
         { L"\\??\\C:\\windows\\", L"..\\windows\\system32\\kernel32.dll", STATUS_OBJECT_NAME_INVALID },
         { L"\\??\\C:\\windows\\", L".", STATUS_OBJECT_NAME_INVALID },
         { L"\\??\\C:\\windows\\", L"..", STATUS_OBJECT_NAME_INVALID },
@@ -703,7 +705,8 @@ static void test_nt_names(void)
         if (attr.RootDirectory) NtClose( attr.RootDirectory );
         if (handle) NtClose( handle );
         todo_wine_if( tests[i].todo )
-        ok( status == tests[i].expect, "%u: got %x / %x for %s + %s\n", i, status, tests[i].expect,
+        ok( status == tests[i].expect || broken( tests[i].broken && status == tests[i].broken ),
+            "%u: got %x / %x for %s + %s\n", i, status, tests[i].expect,
             debugstr_w( tests[i].root ), debugstr_w( tests[i].name ));
     }
 }

@@ -3372,8 +3372,10 @@ NTSTATUS nt_to_unix_file_name( const UNICODE_STRING *nameW, char **unix_name_ret
         }
     }
 
-    name += prefix_len + 1;
-    name_len -= prefix_len + 1;
+    prefix_len++;  /* skip initial backslash */
+    if (name_len > prefix_len && name[prefix_len] == '\\') prefix_len++;  /* allow a second backslash */
+    name += prefix_len;
+    name_len -= prefix_len;
 
     status = lookup_unix_name( name, name_len, &unix_name, unix_len, pos, disposition, is_unix );
     if (status == STATUS_SUCCESS || status == STATUS_NO_SUCH_FILE)
