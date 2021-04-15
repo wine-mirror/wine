@@ -5091,7 +5091,8 @@ static void check_base_policy(void)
      CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG;
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_BASE, NULL,
      ignoredBadDateNestingBasePolicyCheck, &oct2007, &policyPara);
-    policyPara.dwFlags = CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG;
+    policyPara.dwFlags = CERT_CHAIN_POLICY_ALLOW_UNKNOWN_CA_FLAG |
+     CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG;
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_BASE, NULL,
      ignoredInvalidDateBasePolicyCheck, &oct2007, &policyPara);
     policyPara.dwFlags = CERT_CHAIN_POLICY_ALLOW_UNKNOWN_CA_FLAG |
@@ -5134,7 +5135,7 @@ static void check_authenticode_policy(void)
     epochStart.wYear = 1601;
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_AUTHENTICODE, NULL,
      ignoredUnknownCAPolicyCheck, &epochStart, &policyPara);
-    policyPara.dwFlags = CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG;
+    policyPara.dwFlags |= CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG;
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_AUTHENTICODE, NULL,
      ignoredInvalidDateBasePolicyCheck, &oct2007, &policyPara);
 }
@@ -5228,22 +5229,24 @@ static void check_ssl_policy(void)
     policyPara.dwFlags = CERT_CHAIN_POLICY_ALLOW_UNKNOWN_CA_FLAG;
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, NULL,
      ignoredUnknownCAPolicyCheck, &oct2007, &policyPara);
-    policyPara.dwFlags = 0;
     /* And again, but checking the Google chain at a bad date */
     sslPolicyPara.pwszServerName = google_dot_com;
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, NULL,
      googlePolicyCheckWithMatchingNameExpired, &oct2007, &policyPara);
+    policyPara.dwFlags = 0;
     /* Again checking the Google chain at a bad date, but ignoring date
      * errors.
      */
-    sslPolicyPara.fdwChecks = SECURITY_FLAG_IGNORE_CERT_DATE_INVALID;
+    sslPolicyPara.fdwChecks = SECURITY_FLAG_IGNORE_UNKNOWN_CA |
+     SECURITY_FLAG_IGNORE_CERT_DATE_INVALID;
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, NULL,
      googlePolicyCheckWithMatchingName, &oct2007, &policyPara);
-    sslPolicyPara.fdwChecks = 0;
     /* And again, but checking the Google chain at a good date */
+    sslPolicyPara.fdwChecks = SECURITY_FLAG_IGNORE_UNKNOWN_CA;
     sslPolicyPara.pwszServerName = google_dot_com;
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, NULL,
      googlePolicyCheckWithMatchingName, &nov2016, &policyPara);
+    sslPolicyPara.fdwChecks = 0;
 
     /* Check again with the openssl cert, which has a wildcard in its name,
      * with various combinations of matching and non-matching names.
