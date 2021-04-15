@@ -288,12 +288,11 @@ static DWORD CALLBACK hid_device_thread(void *args)
     IO_STATUS_BLOCK irp_status;
     HID_XFER_PACKET *packet;
     DWORD rc;
-    HANDLE events[2];
+    HANDLE event;
     NTSTATUS ntrc;
 
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
-    events[0] = CreateEventA(NULL, TRUE, FALSE, NULL);
-    events[1] = ext->halt_event;
+    event = CreateEventA(NULL, TRUE, FALSE, NULL);
 
     packet = HeapAlloc(GetProcessHeap(), 0, sizeof(*packet) + ext->preparseData->caps.InputReportByteLength);
     packet->reportBuffer = (BYTE *)packet + sizeof(*packet);
@@ -302,7 +301,7 @@ static DWORD CALLBACK hid_device_thread(void *args)
     {
         while(1)
         {
-            ResetEvent(events[0]);
+            ResetEvent(event);
 
             packet->reportBufferLen = ext->preparseData->caps.InputReportByteLength;
             packet->reportId = 0;
@@ -311,11 +310,11 @@ static DWORD CALLBACK hid_device_thread(void *args)
                 device, NULL, 0, packet, sizeof(*packet), TRUE, NULL,
                 &irp_status);
 
-            IoSetCompletionRoutine(irp, read_Completion, events[0], TRUE, TRUE, TRUE);
+            IoSetCompletionRoutine(irp, read_Completion, event, TRUE, TRUE, TRUE);
             ntrc = IoCallDriver(device, irp);
 
             if (ntrc == STATUS_PENDING)
-                WaitForMultipleObjects(2, events, FALSE, INFINITE);
+                WaitForSingleObject(event, INFINITE);
 
             if (irp->IoStatus.u.Status == STATUS_SUCCESS)
             {
@@ -339,19 +338,19 @@ static DWORD CALLBACK hid_device_thread(void *args)
 
         while(1)
         {
-            ResetEvent(events[0]);
+            ResetEvent(event);
 
             irp = IoBuildDeviceIoControlRequest(IOCTL_HID_READ_REPORT,
                 device, NULL, 0, packet->reportBuffer,
                 ext->preparseData->caps.InputReportByteLength, TRUE, NULL,
                 &irp_status);
 
-            IoSetCompletionRoutine(irp, read_Completion, events[0], TRUE, TRUE, TRUE);
+            IoSetCompletionRoutine(irp, read_Completion, event, TRUE, TRUE, TRUE);
             ntrc = IoCallDriver(device, irp);
 
             if (ntrc == STATUS_PENDING)
             {
-                WaitForMultipleObjects(2, events, FALSE, INFINITE);
+                WaitForSingleObject(event, INFINITE);
             }
 
             rc = WaitForSingleObject(ext->halt_event, 0);
@@ -376,8 +375,7 @@ static DWORD CALLBACK hid_device_thread(void *args)
         }
     }
 
-    /* FIXME: releasing packet requires IRP cancellation support */
-    CloseHandle(events[0]);
+    CloseHandle(event);
 
     TRACE("Device thread exiting\n");
     return 1;
