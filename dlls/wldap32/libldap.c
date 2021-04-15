@@ -369,6 +369,21 @@ int CDECL wrap_ldap_delete_ext_s( void *ld, const char *dn, LDAPControlU **serve
     return ldap_delete_ext_s( ld, dn ? dn : "", (LDAPControl **)serverctrls, (LDAPControl **)clientctrls );
 }
 
+char * CDECL wrap_ldap_dn2ufn( const char *dn )
+{
+    return ldap_dn2ufn( dn );
+}
+
+char ** CDECL wrap_ldap_explode_dn( const char *dn, int notypes )
+{
+    return ldap_explode_dn( dn, notypes );
+}
+
+char * CDECL wrap_ldap_get_dn( void *ld, void *entry )
+{
+    return ldap_get_dn( ld, entry );
+}
+
 char * CDECL wrap_ldap_first_attribute( void *ld, void *entry, void **ber )
 {
     return ldap_first_attribute( ld, entry, (BerElement **)ber );
@@ -387,6 +402,11 @@ void * CDECL wrap_ldap_first_reference( void *ld, void *chain )
 void CDECL wrap_ldap_memfree( void *ptr )
 {
     return ldap_memfree( ptr );
+}
+
+void CDECL wrap_ldap_memvfree( void **ptr )
+{
+    ldap_memvfree( ptr );
 }
 
 int CDECL wrap_ldap_msgfree( void *msg )
@@ -508,10 +528,14 @@ static const struct ldap_funcs funcs =
     wrap_ldap_create_vlv_control,
     wrap_ldap_delete_ext,
     wrap_ldap_delete_ext_s,
+    wrap_ldap_dn2ufn,
+    wrap_ldap_explode_dn,
+    wrap_ldap_get_dn,
     wrap_ldap_first_attribute,
     wrap_ldap_first_entry,
     wrap_ldap_first_reference,
     wrap_ldap_memfree,
+    wrap_ldap_memvfree,
     wrap_ldap_msgfree,
     wrap_ldap_next_attribute,
     wrap_ldap_next_entry,
