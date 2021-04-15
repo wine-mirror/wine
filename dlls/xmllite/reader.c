@@ -844,6 +844,8 @@ static HRESULT readerinput_growraw(xmlreaderinput *readerinput)
     readerinput->pending = hr == E_PENDING;
     if (FAILED(hr)) return hr;
     buffer->written += read;
+    if (!buffer->written)
+        return MX_E_INPUTEND;
 
     return hr;
 }
@@ -929,6 +931,8 @@ static int readerinput_get_utf8_convlen(xmlreaderinput *readerinput)
     encoded_buffer *buffer = &readerinput->buffer->encoded;
     int len = buffer->written;
 
+    assert(len);
+
     /* complete single byte char */
     if (!(buffer->data[len-1] & 0x80)) return len;
 
@@ -966,6 +970,7 @@ static void readerinput_shrinkraw(xmlreaderinput *readerinput, int len)
     if (len == -1)
         len = readerinput_get_convlen(readerinput);
 
+    assert(len >= 0);
     memmove(buffer->data, buffer->data + buffer->cur + (buffer->written - len), len);
     /* everything below cur is lost too */
     buffer->written -= len + buffer->cur;
@@ -1068,7 +1073,9 @@ static HRESULT reader_more(xmlreader *reader)
     WCHAR *ptr;
 
     /* get some raw data from stream first */
-    hr = readerinput_growraw(readerinput);
+    if (FAILED(hr = readerinput_growraw(readerinput)))
+        return hr;
+
     len = readerinput_get_convlen(readerinput);
     prev_len = dest->written / sizeof(WCHAR);
 
