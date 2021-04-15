@@ -114,6 +114,8 @@ struct device_extension
 {
     CRITICAL_SECTION cs;
 
+    BOOL removed;
+
     struct pnp_device *pnp_device;
 
     WORD vid, pid, input;
@@ -355,6 +357,10 @@ void bus_unlink_hid_device(DEVICE_OBJECT *device)
     EnterCriticalSection(&device_list_cs);
     list_remove(&pnp_device->entry);
     LeaveCriticalSection(&device_list_cs);
+
+    EnterCriticalSection(&ext->cs);
+    ext->removed = TRUE;
+    LeaveCriticalSection(&ext->cs);
 }
 
 void bus_remove_hid_device(DEVICE_OBJECT *device)
@@ -709,6 +715,16 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
         return IoCallDriver(bus_pdo, irp);
     }
 
+    EnterCriticalSection(&ext->cs);
+
+    if (ext->removed)
+    {
+        LeaveCriticalSection(&ext->cs);
+        irp->IoStatus.u.Status = STATUS_DELETE_PENDING;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+        return STATUS_DELETE_PENDING;
+    }
+
     switch (irpsp->Parameters.DeviceIoControl.IoControlCode)
     {
         case IOCTL_HID_GET_DEVICE_ATTRIBUTES:
@@ -791,7 +807,6 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
         {
             HID_XFER_PACKET *packet = (HID_XFER_PACKET*)(irp->UserBuffer);
             TRACE_(hid_report)("IOCTL_HID_GET_INPUT_REPORT\n");
-            EnterCriticalSection(&ext->cs);
             status = ext->vtbl->begin_report_processing(device);
             if (status != STATUS_SUCCESS)
             {
@@ -806,13 +821,11 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
 
             if (status == STATUS_SUCCESS)
                 packet->reportBufferLen = irp->IoStatus.Information;
-            LeaveCriticalSection(&ext->cs);
             break;
         }
         case IOCTL_HID_READ_REPORT:
         {
             TRACE_(hid_report)("IOCTL_HID_READ_REPORT\n");
-            EnterCriticalSection(&ext->cs);
             status = ext->vtbl->begin_report_processing(device);
             if (status != STATUS_SUCCESS)
             {
@@ -832,7 +845,6 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
                 InsertTailList(&ext->irp_queue, &irp->Tail.Overlay.s.ListEntry);
                 status = STATUS_PENDING;
             }
-            LeaveCriticalSection(&ext->cs);
             break;
         }
         case IOCTL_HID_SET_OUTPUT_REPORT:
@@ -872,6 +884,8 @@ static NTSTATUS WINAPI hid_internal_dispatch(DEVICE_OBJECT *device, IRP *irp)
             break;
         }
     }
+
+    LeaveCriticalSection(&ext->cs);
 
     if (status != STATUS_PENDING)
         IoCompleteRequest(irp, IO_NO_INCREMENT);
