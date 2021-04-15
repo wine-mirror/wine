@@ -1300,6 +1300,7 @@ static void try_add_device(struct udev_device *dev)
         private->device_fd = fd;
 #ifdef HAS_PROPER_INPUT_HEADER
         if (strcmp(subsystem, "input") == 0)
+            /* FIXME: We should probably move this to IRP_MN_START_DEVICE. */
             if (!build_report_descriptor((struct wine_input_private*)private, dev))
             {
                 ERR("Building report descriptor failed, removing device\n");
@@ -1335,7 +1336,6 @@ static void try_remove_device(struct udev_device *dev)
 
     bus_unlink_hid_device(device);
     IoInvalidateDeviceRelations(bus_pdo, BusRelations);
-    bus_remove_hid_device(device);
 }
 
 static void build_initial_deviceset(void)

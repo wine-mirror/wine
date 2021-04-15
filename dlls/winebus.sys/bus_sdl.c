@@ -890,8 +890,6 @@ static void try_remove_device(SDL_JoystickID id)
 
     bus_unlink_hid_device(device);
     IoInvalidateDeviceRelations(bus_pdo, BusRelations);
-
-    bus_remove_hid_device(device);
 }
 
 static void try_add_device(unsigned int index)
@@ -965,6 +963,8 @@ static void try_add_device(unsigned int index)
         private->sdl_joystick = joystick;
         private->sdl_controller = controller;
         private->id = id;
+
+        /* FIXME: We should probably move this to IRP_MN_START_DEVICE. */
         if (controller)
             rc = build_mapped_report_descriptor(private);
         else

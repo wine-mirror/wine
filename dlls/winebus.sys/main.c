@@ -367,23 +367,8 @@ void bus_remove_hid_device(DEVICE_OBJECT *device)
 {
     struct device_extension *ext = (struct device_extension *)device->DeviceExtension;
     struct pnp_device *pnp_device = ext->pnp_device;
-    LIST_ENTRY *entry;
-    IRP *irp;
 
     TRACE("(%p)\n", device);
-
-    /* Cancel pending IRPs */
-    EnterCriticalSection(&ext->cs);
-    while ((entry = RemoveHeadList(&ext->irp_queue)) != &ext->irp_queue)
-    {
-        irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.s.ListEntry);
-        irp->IoStatus.u.Status = STATUS_DELETE_PENDING;
-        irp->IoStatus.Information = 0;
-        IoCompleteRequest(irp, IO_NO_INCREMENT);
-    }
-    LeaveCriticalSection(&ext->cs);
-
-    ext->vtbl->free_device(device);
 
     ext->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&ext->cs);
@@ -606,19 +591,56 @@ static NTSTATUS fdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
 
 static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
 {
+    struct device_extension *ext = device->DeviceExtension;
     NTSTATUS status = irp->IoStatus.u.Status;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
+
+    TRACE("device %p, irp %p, minor function %#x.\n", device, irp, irpsp->MinorFunction);
 
     switch (irpsp->MinorFunction)
     {
         case IRP_MN_QUERY_ID:
-            TRACE("IRP_MN_QUERY_ID\n");
             status = handle_IRP_MN_QUERY_ID(device, irp);
             break;
+
         case IRP_MN_QUERY_CAPABILITIES:
-            TRACE("IRP_MN_QUERY_CAPABILITIES\n");
             status = STATUS_SUCCESS;
             break;
+
+        case IRP_MN_REMOVE_DEVICE:
+        {
+            struct pnp_device *pnp_device = ext->pnp_device;
+            LIST_ENTRY *entry;
+
+            EnterCriticalSection(&ext->cs);
+            while ((entry = RemoveHeadList(&ext->irp_queue)) != &ext->irp_queue)
+            {
+                IRP *queued_irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.s.ListEntry);
+                queued_irp->IoStatus.u.Status = STATUS_DELETE_PENDING;
+                queued_irp->IoStatus.Information = 0;
+                IoCompleteRequest(queued_irp, IO_NO_INCREMENT);
+            }
+            LeaveCriticalSection(&ext->cs);
+
+            ext->vtbl->free_device(device);
+
+            ext->cs.DebugInfo->Spare[0] = 0;
+            DeleteCriticalSection(&ext->cs);
+
+            HeapFree(GetProcessHeap(), 0, ext->serial);
+            HeapFree(GetProcessHeap(), 0, ext->last_report);
+
+            irp->IoStatus.u.Status = STATUS_SUCCESS;
+            IoCompleteRequest(irp, IO_NO_INCREMENT);
+
+            IoDeleteDevice(device);
+
+            /* pnp_device must be released after the device is gone */
+            HeapFree(GetProcessHeap(), 0, pnp_device);
+
+            return STATUS_SUCCESS;
+        }
+
         default:
             FIXME("Unhandled function %08x\n", irpsp->MinorFunction);
             break;
