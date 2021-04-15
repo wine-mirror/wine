@@ -841,6 +841,40 @@ done:
     pRtlFreeUnicodeString(&ntdirname);
 }
 
+static NTSTATUS get_file_id( FILE_INTERNAL_INFORMATION *info, const WCHAR *root, const WCHAR *name )
+{
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    HANDLE handle;
+
+    InitializeObjectAttributes( &attr, &nameW, OBJ_CASE_INSENSITIVE, 0, NULL );
+    if (root)
+    {
+        RtlInitUnicodeString( &nameW, root );
+        status = pNtOpenFile( &attr.RootDirectory, SYNCHRONIZE | FILE_LIST_DIRECTORY, &attr, &io,
+                              FILE_SHARE_READ, FILE_SYNCHRONOUS_IO_NONALERT |
+                              FILE_OPEN_FOR_BACKUP_INTENT | FILE_DIRECTORY_FILE );
+        if (status) return status;
+    }
+    if (name)
+    {
+        RtlInitUnicodeString( &nameW, name );
+        status = pNtOpenFile( &handle, FILE_GENERIC_READ, &attr, &io, FILE_SHARE_READ,
+                              FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE );
+        if (attr.RootDirectory) NtClose( attr.RootDirectory );
+    }
+    else handle = attr.RootDirectory;
+
+    if (!status)
+    {
+        status = pNtQueryInformationFile( handle, &io, info, sizeof(*info), FileInternalInformation );
+        NtClose( handle );
+    }
+    return status;
+}
+
 static void test_redirection(void)
 {
     ULONG old, cur;
@@ -908,6 +942,72 @@ static void test_redirection(void)
     ok( cur == 1, "RtlWow64EnableFsRedirectionEx got %u\n", cur );
     if (tls64) ok( *tls64 == FALSE, "wrong tls %s\n", wine_dbgstr_longlong(*tls64) );
 
+    if (tls64)
+    {
+        static const struct
+        {
+            const WCHAR *root, *name;
+            NTSTATUS expect;
+            BOOL redirected;
+            NTSTATUS alt;
+        } tests[] =
+        {
+            { NULL, L"\\??\\C:\\windows\\system32\\kernel32.dll", STATUS_SUCCESS, TRUE },
+            { NULL, L"\\??\\C:\\\\windows\\system32\\kernel32.dll", STATUS_SUCCESS, FALSE, STATUS_OBJECT_NAME_INVALID },
+            { L"\\??\\C:\\", L"windows\\system32\\kernel32.dll", STATUS_SUCCESS, FALSE },
+            { L"\\??\\C:\\windows", L"system32\\kernel32.dll", STATUS_SUCCESS, TRUE },
+            { L"\\??\\C:\\\\windows", L"system32\\kernel32.dll", STATUS_SUCCESS, TRUE, STATUS_OBJECT_NAME_INVALID },
+            { L"\\??\\C:\\windows\\system32", L"kernel32.dll", STATUS_SUCCESS, TRUE },
+            { L"\\??\\C:\\windows\\system32", NULL, STATUS_SUCCESS, TRUE },
+            { L"\\??\\C:\\windows\\system32", L"drivers\\ndis.sys", STATUS_OBJECT_NAME_NOT_FOUND, FALSE, STATUS_OBJECT_PATH_NOT_FOUND },
+            { L"\\??\\C:\\windows\\system32", L"drivers\\etc\\hosts", STATUS_OBJECT_PATH_NOT_FOUND },
+            { L"\\??\\C:\\windows\\system32\\drivers", NULL, STATUS_SUCCESS, TRUE, STATUS_OBJECT_NAME_NOT_FOUND },
+            { L"\\??\\C:\\windows\\system32\\drivers\\etc", L"hosts", STATUS_SUCCESS, FALSE },
+            { NULL, L"\\DosDevices\\C:\\windows\\system32\\kernel32.dll", STATUS_SUCCESS, FALSE },
+            { L"\\DosDevices\\C:\\", L"windows\\system32\\kernel32.dll", STATUS_SUCCESS, FALSE },
+            { L"\\DosDevices\\C:\\windows", L"system32\\kernel32.dll", STATUS_SUCCESS, TRUE },
+            { L"\\DosDevices\\C:\\windows\\system32", L"kernel32.dll", STATUS_SUCCESS, TRUE },
+            { L"\\DosDevices\\C:\\windows\\system32", NULL, STATUS_SUCCESS, FALSE },
+            { L"\\DosDevices\\C:\\windows\\system32", L"drivers\\ndis.sys", STATUS_OBJECT_NAME_NOT_FOUND, FALSE, STATUS_OBJECT_PATH_NOT_FOUND },
+            { L"\\DosDevices\\C:\\windows\\system32", L"drivers\\etc\\hosts", STATUS_SUCCESS, FALSE },
+            { L"\\DosDevices\\C:\\windows\\system32\\drivers", NULL, STATUS_SUCCESS, FALSE },
+            { L"\\DosDevices\\C:\\windows\\system32\\drivers\\etc", NULL, STATUS_SUCCESS, FALSE },
+            { NULL, L"\\??\\C:\\windows\\sysnative\\kernel32.dll", STATUS_SUCCESS, FALSE },
+            { L"\\??\\C:\\", L"windows\\sysnative\\kernel32.dll", STATUS_OBJECT_PATH_NOT_FOUND },
+            { L"\\??\\C:\\windows", L"sysnative\\kernel32.dll", STATUS_SUCCESS, FALSE },
+            { L"\\??\\C:\\windows\\sysnative", L"kernel32.dll" , STATUS_SUCCESS, TRUE },
+            { L"\\??\\C:\\windows\\sysnative", NULL, STATUS_SUCCESS, FALSE },
+            { NULL, L"\\DosDevices\\C:\\windows\\sysnative\\kernel32.dll", STATUS_OBJECT_PATH_NOT_FOUND },
+            { L"\\DosDevices\\C:\\", L"windows\\sysnative\\kernel32.dll", STATUS_OBJECT_PATH_NOT_FOUND },
+            { L"\\DosDevices\\C:\\windows", L"sysnative\\kernel32.dll", STATUS_SUCCESS, FALSE },
+            { L"\\DosDevices\\C:\\windows\\sysnative", L"kernel32.dll" , STATUS_OBJECT_NAME_NOT_FOUND },
+            { L"\\DosDevices\\C:\\windows\\sysnative", NULL, STATUS_OBJECT_NAME_NOT_FOUND },
+        };
+        FILE_INTERNAL_INFORMATION info, info_redir;
+        unsigned int i;
+
+        for (i = 0; i < ARRAY_SIZE(tests); i++)
+        {
+            pRtlWow64EnableFsRedirection( FALSE );
+            status = get_file_id( &info, tests[i].root, tests[i].name );
+            ok( !status || status == tests[i].expect || (tests[i].alt && status == tests[i].alt),
+                "%u: got %x / %x for %s + %s without redirect\n", i, status, tests[i].expect,
+                debugstr_w( tests[i].root ), debugstr_w( tests[i].name ));
+            if (status) memset( &info, 0xcc, sizeof(info) );
+            pRtlWow64EnableFsRedirection( TRUE );
+            status = get_file_id( &info_redir, tests[i].root, tests[i].name );
+            ok( status == tests[i].expect || (tests[i].alt && status == tests[i].alt),
+                "%u: got %x / %x for %s + %s\n", i, status, tests[i].expect,
+                debugstr_w( tests[i].root ), debugstr_w( tests[i].name ));
+            if (!status)
+            {
+                BOOL redirected = memcmp( &info_redir, &info, sizeof(info) );
+                ok( !redirected == !tests[i].redirected,
+                    "%u: was %sredirected for %s + %s\n", i, redirected ? "" : "not ",
+                    debugstr_w( tests[i].root ), debugstr_w( tests[i].name ));
+            }
+        }
+    }
     pRtlWow64EnableFsRedirectionEx( old, &cur );
 }
 
@@ -915,11 +1015,6 @@ START_TEST(directory)
 {
     WCHAR sysdir[MAX_PATH];
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
-    if (!hntdll)
-    {
-        skip("not running on NT, skipping test\n");
-        return;
-    }
 
     pNtClose                = (void *)GetProcAddress(hntdll, "NtClose");
     pNtOpenFile             = (void *)GetProcAddress(hntdll, "NtOpenFile");
