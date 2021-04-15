@@ -171,6 +171,7 @@
 @ cdecl wined3d_device_context_dispatch_indirect(ptr ptr long)
 @ cdecl wined3d_device_context_flush(ptr)
 @ cdecl wined3d_device_context_generate_mipmaps(ptr ptr)
+@ cdecl wined3d_device_context_get_shader(ptr long)
 @ cdecl wined3d_device_context_issue_query(ptr ptr long)
 @ cdecl wined3d_device_context_map(ptr ptr long ptr ptr long)
 @ cdecl wined3d_device_context_resolve_sub_resource(ptr ptr long ptr long long)

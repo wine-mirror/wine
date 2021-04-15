@@ -1901,6 +1901,14 @@ void CDECL wined3d_device_context_set_shader(struct wined3d_device_context *cont
         wined3d_shader_decref(prev);
 }
 
+struct wined3d_shader * CDECL wined3d_device_context_get_shader(const struct wined3d_device_context *context,
+        enum wined3d_shader_type type)
+{
+    TRACE("context %p, type %#x.\n", context, type);
+
+    return context->state->shader[type];
+}
+
 void CDECL wined3d_device_context_set_constant_buffer(struct wined3d_device_context *context,
         enum wined3d_shader_type type, unsigned int idx, struct wined3d_buffer *buffer)
 {

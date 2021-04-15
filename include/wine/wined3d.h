@@ -2567,6 +2567,8 @@ void __cdecl wined3d_device_context_draw_indirect(struct wined3d_device_context 
 void __cdecl wined3d_device_context_flush(struct wined3d_device_context *context);
 void __cdecl wined3d_device_context_generate_mipmaps(struct wined3d_device_context *context,
         struct wined3d_shader_resource_view *view);
+struct wined3d_shader * __cdecl wined3d_device_context_get_shader(const struct wined3d_device_context *context,
+        enum wined3d_shader_type type);
 void __cdecl wined3d_device_context_issue_query(struct wined3d_device_context *context,
         struct wined3d_query *query, unsigned int flags);
 HRESULT __cdecl wined3d_device_context_map(struct wined3d_device_context *context,
