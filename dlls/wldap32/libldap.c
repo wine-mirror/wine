@@ -339,6 +339,19 @@ int CDECL wrap_ldap_create_vlv_control( void *ld, LDAPVLVInfoU *info, LDAPContro
     return ldap_create_vlv_control( ld, (LDAPVLVInfo *)info, (LDAPControl **)control );
 }
 
+int CDECL wrap_ldap_delete_ext( void *ld, const char *dn, LDAPControlU **serverctrls, LDAPControlU **clientctrls,
+                                ULONG *msg )
+{
+    int dummy;
+    return ldap_delete_ext( ld, dn ? dn : "", (LDAPControl **)serverctrls, (LDAPControl **)clientctrls,
+                            msg ? (int *)msg : &dummy );
+}
+
+int CDECL wrap_ldap_delete_ext_s( void *ld, const char *dn, LDAPControlU **serverctrls, LDAPControlU **clientctrls )
+{
+    return ldap_delete_ext_s( ld, dn ? dn : "", (LDAPControl **)serverctrls, (LDAPControl **)clientctrls );
+}
+
 void CDECL wrap_ldap_memfree( void *ptr )
 {
     return ldap_memfree( ptr );
@@ -410,6 +423,8 @@ static const struct ldap_funcs funcs =
     wrap_ldap_control_free,
     wrap_ldap_create_sort_control,
     wrap_ldap_create_vlv_control,
+    wrap_ldap_delete_ext,
+    wrap_ldap_delete_ext_s,
     wrap_ldap_memfree,
     wrap_ldap_sasl_bind,
     wrap_ldap_sasl_bind_s,
