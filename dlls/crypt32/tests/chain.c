@@ -4741,12 +4741,12 @@ static const CERT_CHAIN_POLICY_STATUS badDateNestingStatus =
 
 static const ChainPolicyCheck ignoredBadDateNestingBasePolicyCheck = {
  { ARRAY_SIZE(chain2), chain2 },
- { 0, 0, -1, -1, NULL}, NULL, TODO_ERROR
+ { 0, 0, -1, -1, NULL}, NULL, 0
 };
 
 static const ChainPolicyCheck ignoredInvalidDateBasePolicyCheck = {
  { ARRAY_SIZE(googleChain), googleChain },
- { 0, 0, -1, -1, NULL}, NULL, TODO_ERROR
+ { 0, 0, -1, -1, NULL}, NULL, 0
 };
 
 static const ChainPolicyCheck ignoredInvalidUsageBasePolicyCheck = {

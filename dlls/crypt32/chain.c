@@ -3027,7 +3027,8 @@ static BOOL WINAPI verify_base_policy(LPCSTR szPolicyOID,
          &pPolicyStatus->lElementIndex);
     }
     if (!pPolicyStatus->dwError &&
-     pChainContext->TrustStatus.dwErrorStatus & CERT_TRUST_IS_NOT_TIME_VALID)
+     pChainContext->TrustStatus.dwErrorStatus & CERT_TRUST_IS_NOT_TIME_VALID &&
+     !(checks & CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG))
     {
         pPolicyStatus->dwError = CERT_E_EXPIRED;
         find_element_with_error(pChainContext,
@@ -3492,7 +3493,8 @@ static BOOL WINAPI verify_ssl_policy(LPCSTR szPolicyOID,
     }
     else if (pChainContext->TrustStatus.dwErrorStatus &
      CERT_TRUST_IS_NOT_TIME_VALID &&
-     !(checks & SECURITY_FLAG_IGNORE_CERT_DATE_INVALID))
+     !(checks & SECURITY_FLAG_IGNORE_CERT_DATE_INVALID) &&
+     !(baseChecks & CERT_CHAIN_POLICY_IGNORE_NOT_TIME_VALID_FLAG))
     {
         pPolicyStatus->dwError = CERT_E_EXPIRED;
         find_element_with_error(pChainContext,
