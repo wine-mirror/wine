@@ -29,6 +29,7 @@ void sdl_driver_unload( void ) DECLSPEC_HIDDEN;
 /* Native device function table */
 typedef struct
 {
+    void (*free_device)(DEVICE_OBJECT *device);
     int (*compare_platform_device)(DEVICE_OBJECT *device, void *platform_dev);
     NTSTATUS (*get_reportdescriptor)(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *out_length);
     NTSTATUS (*get_string)(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD length);

@@ -377,6 +377,8 @@ void bus_remove_hid_device(DEVICE_OBJECT *device)
     }
     LeaveCriticalSection(&ext->cs);
 
+    ext->vtbl->free_device(device);
+
     ext->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&ext->cs);
 
@@ -474,6 +476,10 @@ static NTSTATUS handle_IRP_MN_QUERY_ID(DEVICE_OBJECT *device, IRP *irp)
     return status;
 }
 
+static void mouse_free_device(DEVICE_OBJECT *device)
+{
+}
+
 static NTSTATUS mouse_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *ret_length)
 {
     TRACE("buffer %p, length %u.\n", buffer, length);
@@ -526,6 +532,7 @@ static NTSTATUS mouse_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *
 
 static const platform_vtbl mouse_vtbl =
 {
+    .free_device = mouse_free_device,
     .get_reportdescriptor = mouse_get_reportdescriptor,
     .get_string = mouse_get_string,
     .begin_report_processing = mouse_begin_report_processing,

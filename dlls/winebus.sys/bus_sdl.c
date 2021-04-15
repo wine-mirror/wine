@@ -605,6 +605,17 @@ static BOOL build_mapped_report_descriptor(struct platform_private *ext)
     return TRUE;
 }
 
+static void free_device(DEVICE_OBJECT *device)
+{
+    struct platform_private *ext = impl_from_DEVICE_OBJECT(device);
+
+    pSDL_JoystickClose(ext->sdl_joystick);
+    if (ext->sdl_controller)
+        pSDL_GameControllerClose(ext->sdl_controller);
+    if (ext->sdl_haptic)
+        pSDL_HapticClose(ext->sdl_haptic);
+}
+
 static int compare_platform_device(DEVICE_OBJECT *device, void *platform_dev)
 {
     SDL_JoystickID id1 = impl_from_DEVICE_OBJECT(device)->id;
@@ -722,6 +733,7 @@ static NTSTATUS set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report
 
 static const platform_vtbl sdl_vtbl =
 {
+    free_device,
     compare_platform_device,
     get_reportdescriptor,
     get_string,
@@ -872,29 +884,14 @@ static BOOL set_mapped_report_from_event(SDL_Event *event)
 static void try_remove_device(SDL_JoystickID id)
 {
     DEVICE_OBJECT *device = NULL;
-    struct platform_private *private;
-    SDL_Joystick *sdl_joystick;
-    SDL_GameController *sdl_controller;
-    SDL_Haptic *sdl_haptic;
 
     device = bus_enumerate_hid_devices(&sdl_vtbl, compare_joystick_id, ULongToPtr(id));
     if (!device) return;
-
-    private = impl_from_DEVICE_OBJECT(device);
-    sdl_joystick = private->sdl_joystick;
-    sdl_controller = private->sdl_controller;
-    sdl_haptic = private->sdl_haptic;
 
     bus_unlink_hid_device(device);
     IoInvalidateDeviceRelations(bus_pdo, BusRelations);
 
     bus_remove_hid_device(device);
-
-    pSDL_JoystickClose(sdl_joystick);
-    if (sdl_controller)
-        pSDL_GameControllerClose(sdl_controller);
-    if (sdl_haptic)
-        pSDL_HapticClose(sdl_haptic);
 }
 
 static void try_add_device(unsigned int index)

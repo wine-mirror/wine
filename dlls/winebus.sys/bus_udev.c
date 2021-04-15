@@ -653,6 +653,23 @@ static WCHAR *get_sysattr_string(struct udev_device *dev, const char *sysattr)
     return strdupAtoW(attr);
 }
 
+static void hidraw_free_device(DEVICE_OBJECT *device)
+{
+    struct platform_private *private = impl_from_DEVICE_OBJECT(device);
+
+    if (private->report_thread)
+    {
+        write(private->control_pipe[1], "q", 1);
+        WaitForSingleObject(private->report_thread, INFINITE);
+        close(private->control_pipe[0]);
+        close(private->control_pipe[1]);
+        CloseHandle(private->report_thread);
+    }
+
+    close(private->device_fd);
+    udev_device_unref(private->udev_device);
+}
+
 static int compare_platform_device(DEVICE_OBJECT *device, void *platform_dev)
 {
     struct udev_device *dev1 = impl_from_DEVICE_OBJECT(device)->udev_device;
@@ -921,6 +938,7 @@ static NTSTATUS hidraw_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE 
 
 static const platform_vtbl hidraw_vtbl =
 {
+    hidraw_free_device,
     compare_platform_device,
     hidraw_get_reportdescriptor,
     hidraw_get_string,
@@ -935,6 +953,27 @@ static const platform_vtbl hidraw_vtbl =
 static inline struct wine_input_private *input_impl_from_DEVICE_OBJECT(DEVICE_OBJECT *device)
 {
     return (struct wine_input_private*)get_platform_private(device);
+}
+
+static void lnxev_free_device(DEVICE_OBJECT *device)
+{
+    struct wine_input_private *ext = input_impl_from_DEVICE_OBJECT(device);
+
+    if (ext->base.report_thread)
+    {
+        write(ext->base.control_pipe[1], "q", 1);
+        WaitForSingleObject(ext->base.report_thread, INFINITE);
+        close(ext->base.control_pipe[0]);
+        close(ext->base.control_pipe[1]);
+        CloseHandle(ext->base.report_thread);
+    }
+
+    HeapFree(GetProcessHeap(), 0, ext->current_report_buffer);
+    HeapFree(GetProcessHeap(), 0, ext->last_report_buffer);
+    HeapFree(GetProcessHeap(), 0, ext->report_descriptor);
+
+    close(ext->base.device_fd);
+    udev_device_unref(ext->base.udev_device);
 }
 
 static NTSTATUS lnxev_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *out_length)
@@ -1051,6 +1090,7 @@ static NTSTATUS lnxev_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *
 }
 
 static const platform_vtbl lnxev_vtbl = {
+    lnxev_free_device,
     compare_platform_device,
     lnxev_get_reportdescriptor,
     lnxev_get_string,
@@ -1285,54 +1325,17 @@ static void try_add_device(struct udev_device *dev)
 static void try_remove_device(struct udev_device *dev)
 {
     DEVICE_OBJECT *device = NULL;
-    struct platform_private* private;
-#ifdef HAS_PROPER_INPUT_HEADER
-    BOOL is_input = FALSE;
-#endif
 
     device = bus_find_hid_device(&hidraw_vtbl, dev);
 #ifdef HAS_PROPER_INPUT_HEADER
     if (device == NULL)
-    {
         device = bus_find_hid_device(&lnxev_vtbl, dev);
-        is_input = TRUE;
-    }
 #endif
     if (!device) return;
 
     bus_unlink_hid_device(device);
     IoInvalidateDeviceRelations(bus_pdo, BusRelations);
-
-    private = impl_from_DEVICE_OBJECT(device);
-
-    if (private->report_thread)
-    {
-        write(private->control_pipe[1], "q", 1);
-        WaitForSingleObject(private->report_thread, INFINITE);
-        close(private->control_pipe[0]);
-        close(private->control_pipe[1]);
-        CloseHandle(private->report_thread);
-#ifdef HAS_PROPER_INPUT_HEADER
-        if (strcmp(udev_device_get_subsystem(dev), "input") == 0)
-        {
-            HeapFree(GetProcessHeap(), 0, ((struct wine_input_private*)private)->current_report_buffer);
-            HeapFree(GetProcessHeap(), 0, ((struct wine_input_private*)private)->last_report_buffer);
-        }
-#endif
-    }
-
-#ifdef HAS_PROPER_INPUT_HEADER
-    if (is_input)
-    {
-        struct wine_input_private *ext = (struct wine_input_private*)private;
-        HeapFree(GetProcessHeap(), 0, ext->report_descriptor);
-    }
-#endif
-
-    dev = private->udev_device;
-    close(private->device_fd);
     bus_remove_hid_device(device);
-    udev_device_unref(dev);
 }
 
 static void build_initial_deviceset(void)
@@ -1482,12 +1485,6 @@ static DWORD CALLBACK deviceloop_thread(void *args)
     return 0;
 }
 
-static int device_unload(DEVICE_OBJECT *device, void *context)
-{
-    try_remove_device(impl_from_DEVICE_OBJECT(device)->udev_device);
-    return 1;
-}
-
 void udev_driver_unload( void )
 {
     TRACE("Unload Driver\n");
@@ -1500,11 +1497,6 @@ void udev_driver_unload( void )
     close(deviceloop_control[0]);
     close(deviceloop_control[1]);
     CloseHandle(deviceloop_handle);
-
-    bus_enumerate_hid_devices(&hidraw_vtbl, device_unload, NULL);
-#ifdef HAS_PROPER_INPUT_HEADER
-    bus_enumerate_hid_devices(&lnxev_vtbl, device_unload, NULL);
-#endif
 }
 
 NTSTATUS udev_driver_init(void)

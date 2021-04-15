@@ -136,6 +136,10 @@ static void handle_IOHIDDeviceIOHIDReportCallback(void *context,
     process_hid_report(device, report, report_length);
 }
 
+static void free_device(DEVICE_OBJECT *device)
+{
+}
+
 static int compare_platform_device(DEVICE_OBJECT *device, void *platform_dev)
 {
     struct platform_private *private = impl_from_DEVICE_OBJECT(device);
@@ -270,6 +274,7 @@ static NTSTATUS set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report
 
 static const platform_vtbl iohid_vtbl =
 {
+    free_device,
     compare_platform_device,
     get_reportdescriptor,
     get_string,
