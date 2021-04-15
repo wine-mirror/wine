@@ -2451,10 +2451,10 @@ void CDECL wined3d_device_set_constant_buffer(struct wined3d_device *device,
     return wined3d_device_context_set_constant_buffer(&device->cs->c, type, idx, buffer);
 }
 
-struct wined3d_buffer * CDECL wined3d_device_get_constant_buffer(const struct wined3d_device *device,
+struct wined3d_buffer * CDECL wined3d_device_context_get_constant_buffer(const struct wined3d_device_context *context,
         enum wined3d_shader_type shader_type, unsigned int idx)
 {
-    TRACE("device %p, shader_type %#x, idx %u.\n", device, shader_type, idx);
+    TRACE("context %p, shader_type %#x, idx %u.\n", context, shader_type, idx);
 
     if (idx >= MAX_CONSTANT_BUFFERS)
     {
@@ -2462,7 +2462,7 @@ struct wined3d_buffer * CDECL wined3d_device_get_constant_buffer(const struct wi
         return NULL;
     }
 
-    return device->cs->c.state->cb[shader_type][idx];
+    return context->state->cb[shader_type][idx];
 }
 
 void CDECL wined3d_device_set_vs_resource_view(struct wined3d_device *device,
