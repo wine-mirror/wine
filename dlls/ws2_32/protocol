@@ -1,0 +1,21 @@
+# Internet protocols
+
+ip           0   IP
+icmp         1   ICMP
+ggp          3   GGP
+tcp          6   TCP
+egp          8   EGP
+pup          12  PUP
+udp          17  UDP
+hmp          20  HMP
+xns-idp      22  XNS-IDP
+rdp          27  RDP
+ipv6         41  IPv6
+ipv6-route   43  IPv6-Route
+ipv6-frag    44  IPv6-Frag
+esp          50  ESP
+ah           51  AH
+ipv6-icmp    58  IPv6-ICMP
+ipv6-nonxt   59  IPv6-NoNxt
+ipv6-opts    60  IPv6-Opts
+rvd          66  RVD
