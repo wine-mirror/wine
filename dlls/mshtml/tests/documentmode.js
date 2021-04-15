@@ -33,6 +33,7 @@ sync_test("elem_props", function() {
 
     test_exposed("doScroll", v < 11);
     test_exposed("readyState", v < 11);
+    test_exposed("clientTop", true);
     test_exposed("querySelectorAll", v >= 8);
     test_exposed("textContent", v >= 9);
     test_exposed("prefix", v >= 9);
@@ -41,6 +42,7 @@ sync_test("elem_props", function() {
     test_exposed("getElementsByClassName", v >= 9);
     test_exposed("removeAttributeNS", v >= 9);
     test_exposed("addEventListener", v >= 9);
+    if (v != 8 /* todo_wine */) test_exposed("hasAttribute", v >= 8);
     test_exposed("removeEventListener", v >= 9);
     test_exposed("dispatchEvent", v >= 9);
     test_exposed("msSetPointerCapture", v >= 10);
