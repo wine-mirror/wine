@@ -4279,13 +4279,13 @@ static void adapter_gl_destroy_device(struct wined3d_device *device)
     heap_free(device_gl);
 }
 
-struct wined3d_context *adapter_gl_acquire_context(struct wined3d_device *device,
+static struct wined3d_context *adapter_gl_acquire_context(struct wined3d_device *device,
         struct wined3d_texture *texture, unsigned int sub_resource_idx)
 {
     return wined3d_context_gl_acquire(device, texture, sub_resource_idx);
 }
 
-void adapter_gl_release_context(struct wined3d_context *context)
+static void adapter_gl_release_context(struct wined3d_context *context)
 {
     return wined3d_context_gl_release(wined3d_context_gl(context));
 }

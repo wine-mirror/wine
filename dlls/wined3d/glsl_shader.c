@@ -419,7 +419,7 @@ static void shader_glsl_add_version_declaration(struct wined3d_string_buffer *bu
     shader_addline(buffer, "#version %u\n", shader_glsl_get_version(gl_info));
 }
 
-unsigned int shader_glsl_full_ffp_varyings(const struct wined3d_gl_info *gl_info)
+static unsigned int shader_glsl_full_ffp_varyings(const struct wined3d_gl_info *gl_info)
 {
     /* On core profile we have to also count diffuse and specular colours and
      * the fog coordinate. */

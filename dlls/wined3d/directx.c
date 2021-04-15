@@ -2687,7 +2687,7 @@ static void adapter_no3d_destroy_device(struct wined3d_device *device)
     heap_free(device);
 }
 
-struct wined3d_context *adapter_no3d_acquire_context(struct wined3d_device *device,
+static struct wined3d_context *adapter_no3d_acquire_context(struct wined3d_device *device,
         struct wined3d_texture *texture, unsigned int sub_resource_idx)
 {
     TRACE("device %p, texture %p, sub_resource_idx %u.\n", device, texture, sub_resource_idx);
@@ -2700,7 +2700,7 @@ struct wined3d_context *adapter_no3d_acquire_context(struct wined3d_device *devi
     return &wined3d_device_no3d(device)->context_no3d;
 }
 
-void adapter_no3d_release_context(struct wined3d_context *context)
+static void adapter_no3d_release_context(struct wined3d_context *context)
 {
     TRACE("context %p.\n", context);
 }
@@ -3044,7 +3044,7 @@ static void adapter_no3d_dispatch_compute(struct wined3d_device *device,
     ERR("device %p, state %p, parameters %p.\n", device, state, parameters);
 }
 
-void adapter_no3d_clear_uav(struct wined3d_context *context,
+static void adapter_no3d_clear_uav(struct wined3d_context *context,
         struct wined3d_unordered_access_view *view, const struct wined3d_uvec4 *clear_value)
 {
     ERR("context %p, view %p, clear_value %s.\n", context, view, debug_uvec4(clear_value));
