@@ -379,6 +379,21 @@ char ** CDECL wrap_ldap_explode_dn( const char *dn, int notypes )
     return ldap_explode_dn( dn, notypes );
 }
 
+int CDECL wrap_ldap_extended_operation( void *ld, const char *oid, struct bervalU *data, LDAPControlU **serverctrls,
+                                        LDAPControlU **clientctrls, ULONG *msg )
+{
+    int dummy;
+    return ldap_extended_operation( ld, oid ? oid : "", (struct berval *)data, (LDAPControl **)serverctrls,
+                                    (LDAPControl **)clientctrls, msg ? (int *)msg : &dummy );
+}
+
+int CDECL wrap_ldap_extended_operation_s( void *ld, const char *oid, struct bervalU *data, LDAPControlU **serverctrls,
+                                          LDAPControlU **clientctrls, char **retoid, struct bervalU **retdata )
+{
+    return ldap_extended_operation_s( ld, oid ? oid : "", (struct berval *)data, (LDAPControl **)serverctrls,
+                                      (LDAPControl **)clientctrls, retoid, (struct berval **)retdata );
+}
+
 char * CDECL wrap_ldap_get_dn( void *ld, void *entry )
 {
     return ldap_get_dn( ld, entry );
@@ -530,6 +545,8 @@ static const struct ldap_funcs funcs =
     wrap_ldap_delete_ext_s,
     wrap_ldap_dn2ufn,
     wrap_ldap_explode_dn,
+    wrap_ldap_extended_operation,
+    wrap_ldap_extended_operation_s,
     wrap_ldap_get_dn,
     wrap_ldap_first_attribute,
     wrap_ldap_first_entry,
