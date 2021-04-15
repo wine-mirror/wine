@@ -42,6 +42,8 @@ typedef HRESULT (WINAPI *PFNGETACTIVATIONFACTORY)(HSTRING, IActivationFactory **
 extern "C" {
 #endif
 
+HRESULT WINAPI RoActivateInstance(HSTRING classid, IInspectable **instance);
+HRESULT WINAPI RoGetActivationFactory(HSTRING classid, REFIID iid, void **class_factory);
 HRESULT WINAPI RoInitialize(RO_INIT_TYPE type);
 void WINAPI RoUninitialize(void);
 
