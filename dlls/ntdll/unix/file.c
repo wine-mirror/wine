@@ -2964,29 +2964,6 @@ static NTSTATUS find_drive_rootA( LPCSTR *ppath, unsigned int len, int *drive_re
 
 
 /******************************************************************************
- *           rebuild_nt_name
- */
-static void rebuild_nt_name( const UNICODE_STRING *nameW, DWORD prefix_len,
-                             const char *unix_name, UNICODE_STRING *nt_name )
-{
-    WCHAR *buf;
-    DWORD len;
-
-    while (*unix_name == '/') unix_name++;
-    nt_name->MaximumLength = (prefix_len + strlen(unix_name) + 2) * sizeof(WCHAR);
-    if (!(buf = malloc( nt_name->MaximumLength ))) return;
-    nt_name->Buffer = buf;
-    memcpy( buf, nameW->Buffer, prefix_len * sizeof(WCHAR) );
-    if (prefix_len && buf[prefix_len - 1] != '\\') buf[prefix_len++] = '\\';
-    buf += prefix_len;
-    len = ntdll_umbstowcs( unix_name, strlen(unix_name), buf, strlen(unix_name) );
-    for (; len; len--, buf++) if (*buf == '/') *buf = '\\';
-    *buf = 0;
-    nt_name->Length = (buf - nt_name->Buffer) * sizeof(WCHAR);
-}
-
-
-/******************************************************************************
  *           find_file_id
  *
  * Recursively search directories from the dir queue for a given inode.
@@ -3110,7 +3087,15 @@ done:
     {
         TRACE( "%s -> %s\n", wine_dbgstr_longlong(file_id), debugstr_a(unix_name) );
         *unix_name_ret = unix_name;
-        if (nt_name) rebuild_nt_name( attr->ObjectName, 0, unix_name, nt_name );
+
+        nt_name->MaximumLength = (strlen(unix_name) + 1) * sizeof(WCHAR);
+        if ((nt_name->Buffer = malloc( nt_name->MaximumLength )))
+        {
+            DWORD i, len = ntdll_umbstowcs( unix_name, strlen(unix_name), nt_name->Buffer, strlen(unix_name) );
+            nt_name->Buffer[len] = 0;
+            nt_name->Length = len * sizeof(WCHAR);
+            for (i = 0; i < len; i++) if (nt_name->Buffer[i] == '/') nt_name->Buffer[i] = '\\';
+        }
     }
     else
     {
