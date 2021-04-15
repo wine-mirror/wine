@@ -1105,6 +1105,7 @@ static NTSTATUS CDECL load_so_dll( UNICODE_STRING *nt_name, void **module )
 {
     static const WCHAR soW[] = {'.','s','o',0};
     OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING redir;
     pe_image_info_t info;
     char *unix_name;
     NTSTATUS status;
@@ -1112,7 +1113,13 @@ static NTSTATUS CDECL load_so_dll( UNICODE_STRING *nt_name, void **module )
 
     if (get_load_order( nt_name ) == LO_DISABLED) return STATUS_DLL_NOT_FOUND;
     InitializeObjectAttributes( &attr, nt_name, OBJ_CASE_INSENSITIVE, 0, 0 );
-    if (nt_to_unix_file_name( &attr, &unix_name, NULL, FILE_OPEN )) return STATUS_DLL_NOT_FOUND;
+    get_redirect( &attr, &redir );
+
+    if (nt_to_unix_file_name( &attr, &unix_name, FILE_OPEN ))
+    {
+        free( redir.Buffer );
+        return STATUS_DLL_NOT_FOUND;
+    }
 
     /* remove .so extension from Windows name */
     len = nt_name->Length / sizeof(WCHAR);
@@ -1120,6 +1127,7 @@ static NTSTATUS CDECL load_so_dll( UNICODE_STRING *nt_name, void **module )
 
     status = dlopen_dll( unix_name, nt_name, module, &info, FALSE );
     free( unix_name );
+    free( redir.Buffer );
     return status;
 }
 
@@ -1398,8 +1406,7 @@ BOOL is_builtin_path( const UNICODE_STRING *path, WORD *machine )
     if (path->Length > wcslen(system_dir) * sizeof(WCHAR) &&
         !wcsnicmp( path->Buffer, system_dir, wcslen(system_dir) ))
     {
-        if (NtCurrentTeb64() && NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR])
-            *machine = IMAGE_FILE_MACHINE_AMD64;
+        if (is_wow64) *machine = IMAGE_FILE_MACHINE_AMD64;
         goto found;
     }
     if ((is_win64 || is_wow64) && path->Length > sizeof(wow64W) &&
@@ -1439,7 +1446,7 @@ static NTSTATUS open_main_image( WCHAR *image, void **module, SECTION_IMAGE_INFO
 
     init_unicode_string( &nt_name, image );
     InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
-    if (nt_to_unix_file_name( &attr, &unix_name, NULL, FILE_OPEN )) return STATUS_DLL_NOT_FOUND;
+    if (nt_to_unix_file_name( &attr, &unix_name, FILE_OPEN )) return STATUS_DLL_NOT_FOUND;
 
     status = open_dll_file( unix_name, &attr, &mapping );
     if (!status)
@@ -1536,11 +1543,13 @@ NTSTATUS load_start_exe( WCHAR **image, void **module )
 {
     static const WCHAR startW[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
         's','y','s','t','e','m','3','2','\\','s','t','a','r','t','.','e','x','e',0};
+    static const WCHAR startwow64W[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
+        's','y','s','w','o','w','6','4','\\','s','t','a','r','t','.','e','x','e',0};
     UNICODE_STRING nt_name;
     NTSTATUS status;
     SIZE_T size;
 
-    init_unicode_string( &nt_name, startW );
+    init_unicode_string( &nt_name, is_wow64 ? startwow64W : startW );
     status = find_builtin_dll( &nt_name, module, &size, &main_image_info, current_machine, FALSE );
     if (status)
     {

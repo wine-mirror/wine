@@ -267,12 +267,18 @@ static NTSTATUS get_pe_file_info( OBJECT_ATTRIBUTES *attr, HANDLE *handle, pe_im
 {
     NTSTATUS status;
     HANDLE mapping;
-    IO_STATUS_BLOCK io;
+    char *unix_name;
 
     *handle = 0;
     memset( info, 0, sizeof(*info) );
-    if ((status = NtOpenFile( handle, GENERIC_READ, attr, &io,
-                              FILE_SHARE_READ | FILE_SHARE_DELETE, FILE_SYNCHRONOUS_IO_NONALERT )))
+    if (!(status = nt_to_unix_file_name( attr, &unix_name, FILE_OPEN )))
+    {
+        status = open_unix_file( handle, unix_name, GENERIC_READ, attr, 0,
+                                 FILE_SHARE_READ | FILE_SHARE_DELETE,
+                                 FILE_OPEN, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
+        free( unix_name );
+    }
+    if (status)
     {
         if (is_builtin_path( attr->ObjectName, &info->machine ))
         {
@@ -479,7 +485,7 @@ static NTSTATUS fork_and_exec( OBJECT_ATTRIBUTES *attr, int unixdir,
     char *unix_name;
     NTSTATUS status;
 
-    status = nt_to_unix_file_name( attr, &unix_name, NULL, FILE_OPEN );
+    status = nt_to_unix_file_name( attr, &unix_name, FILE_OPEN );
     if (status) return status;
 
 #ifdef HAVE_PIPE2
@@ -613,7 +619,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
     pe_image_info_t pe_info;
     CLIENT_ID id;
     HANDLE parent = 0, debug = 0, token = 0;
-    UNICODE_STRING path = {0};
+    UNICODE_STRING redir, path = {0};
     OBJECT_ATTRIBUTES attr, empty_attr = { sizeof(empty_attr) };
     SIZE_T i, attr_count = (ps_attr->TotalLength - sizeof(ps_attr->TotalLength)) / sizeof(PS_ATTRIBUTE);
     const PS_ATTRIBUTE *handles_attr = NULL;
@@ -655,16 +661,19 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
     unixdir = get_unix_curdir( params );
 
     InitializeObjectAttributes( &attr, &path, OBJ_CASE_INSENSITIVE, 0, 0 );
+    get_redirect( &attr, &redir );
+
     if ((status = get_pe_file_info( &attr, &file_handle, &pe_info )))
     {
         if (status == STATUS_INVALID_IMAGE_NOT_MZ && !fork_and_exec( &attr, unixdir, params ))
         {
             memset( info, 0, sizeof(*info) );
+            free( redir.Buffer );
             return STATUS_SUCCESS;
         }
         goto done;
     }
-    if (!(startup_info = create_startup_info( params, &startup_info_size ))) goto done;
+    if (!(startup_info = create_startup_info( attr.ObjectName, params, &startup_info_size ))) goto done;
     env_size = get_env_size( params, &winedebug );
 
     if ((status = alloc_object_attributes( process_attr, &objattr, &attr_len ))) goto done;
@@ -830,6 +839,7 @@ done:
     if (unixdir != -1) close( unixdir );
     free( startup_info );
     free( winedebug );
+    free( redir.Buffer );
     return status;
 }
 

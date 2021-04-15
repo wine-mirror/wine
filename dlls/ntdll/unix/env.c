@@ -2133,16 +2133,21 @@ void init_startup_info(void)
 /***********************************************************************
  *           create_startup_info
  */
-void *create_startup_info( const RTL_USER_PROCESS_PARAMETERS *params, DWORD *info_size )
+void *create_startup_info( const UNICODE_STRING *nt_image, const RTL_USER_PROCESS_PARAMETERS *params,
+                           DWORD *info_size )
 {
     startup_info_t *info;
+    UNICODE_STRING dos_image = *nt_image;
     DWORD size;
     void *ptr;
+
+    dos_image.Buffer = get_dos_path( nt_image->Buffer );
+    dos_image.Length = nt_image->Length - (dos_image.Buffer - nt_image->Buffer) * sizeof(WCHAR);
 
     size = sizeof(*info);
     size += params->CurrentDirectory.DosPath.Length;
     size += params->DllPath.Length;
-    size += params->ImagePathName.Length;
+    size += dos_image.Length;
     size += params->CommandLine.Length;
     size += params->WindowTitle.Length;
     size += params->Desktop.Length;
@@ -2172,7 +2177,7 @@ void *create_startup_info( const RTL_USER_PROCESS_PARAMETERS *params, DWORD *inf
     ptr = info + 1;
     info->curdir_len = append_string( &ptr, params, &params->CurrentDirectory.DosPath );
     info->dllpath_len = append_string( &ptr, params, &params->DllPath );
-    info->imagepath_len = append_string( &ptr, params, &params->ImagePathName );
+    info->imagepath_len = append_string( &ptr, params, &dos_image );
     info->cmdline_len = append_string( &ptr, params, &params->CommandLine );
     info->title_len = append_string( &ptr, params, &params->WindowTitle );
     info->desktop_len = append_string( &ptr, params, &params->Desktop );
