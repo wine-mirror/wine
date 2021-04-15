@@ -152,7 +152,7 @@ ULONG CDECL WLDAP32_ldap_result2error( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *re
 
     if (!ld || !res) return ~0u;
 
-    ret = map_error( ldap_funcs->ldap_parse_result( ld->ld, res, &error, NULL, NULL, NULL, NULL, free ) );
+    ret = map_error( ldap_funcs->ldap_parse_result( ld->ld, res->Request, &error, NULL, NULL, NULL, NULL, free ) );
     if (ret == WLDAP32_LDAP_SUCCESS)
         ret = error;
     else

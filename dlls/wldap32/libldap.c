@@ -26,6 +26,7 @@
 
 #ifdef HAVE_LDAP
 #include <stdarg.h>
+#include <sys/time.h>
 #ifdef HAVE_LDAP_H
 # include <ldap.h>
 #endif
@@ -49,6 +50,7 @@ C_ASSERT( sizeof(LDAPModU) == sizeof(LDAPMod) );
 C_ASSERT( sizeof(LDAPControlU) == sizeof(LDAPControl) );
 C_ASSERT( sizeof(LDAPSortKeyU) == sizeof(LDAPSortKey) );
 C_ASSERT( sizeof(LDAPVLVInfoU) == sizeof(LDAPVLVInfo) );
+C_ASSERT( sizeof(struct timevalU) == sizeof(struct timeval) );
 
 static LDAPMod *nullattrs[] = { NULL };
 
@@ -294,6 +296,11 @@ int WINAPIV wrap_ber_scanf( void *ber, char *fmt, ... )
     return ret;
 }
 
+int CDECL wrap_ldap_abandon_ext( void *ld, int msgid, LDAPControlU **serverctrls, LDAPControlU **clientctrls )
+{
+    return ldap_abandon_ext( ld, msgid, (LDAPControl **)serverctrls, (LDAPControl **)clientctrls );
+}
+
 int CDECL wrap_ldap_add_ext( void *ld, const char *dn, LDAPModU **attrs, LDAPControlU **serverctrls,
                              LDAPControlU **clientctrls, ULONG *msg )
 {
@@ -309,11 +316,6 @@ int CDECL wrap_ldap_add_ext_s( void *ld, const char *dn, LDAPModU **attrs, LDAPC
                            (LDAPControl **)clientctrls );
 }
 
-void CDECL wrap_ldap_control_free( LDAPControlU *control )
-{
-    ldap_control_free( (LDAPControl *)control );
-}
-
 int CDECL wrap_ldap_compare_ext( void *ld, const char *dn, const char *attrs, struct bervalU *value,
                                  LDAPControlU **serverctrls, LDAPControlU **clientctrls, ULONG *msg )
 {
@@ -327,6 +329,21 @@ int CDECL wrap_ldap_compare_ext_s( void *ld, const char *dn, const char *attrs, 
 {
     return ldap_compare_ext_s( ld, dn ? dn : "", attrs ? attrs : "", (struct berval *)value,
                                (LDAPControl **)serverctrls, (LDAPControl **)clientctrls );
+}
+
+void CDECL wrap_ldap_control_free( LDAPControlU *control )
+{
+    ldap_control_free( (LDAPControl *)control );
+}
+
+int CDECL wrap_ldap_count_entries( void *ld, void *chain )
+{
+    return ldap_count_entries( ld, chain );
+}
+
+int CDECL wrap_ldap_count_references( void *ld, void *chain )
+{
+    return ldap_count_references( ld, chain );
 }
 
 int CDECL wrap_ldap_create_sort_control( void *ld, LDAPSortKeyU **keylist, int critical, LDAPControlU **control )
@@ -352,15 +369,55 @@ int CDECL wrap_ldap_delete_ext_s( void *ld, const char *dn, LDAPControlU **serve
     return ldap_delete_ext_s( ld, dn ? dn : "", (LDAPControl **)serverctrls, (LDAPControl **)clientctrls );
 }
 
+char * CDECL wrap_ldap_first_attribute( void *ld, void *entry, void **ber )
+{
+    return ldap_first_attribute( ld, entry, (BerElement **)ber );
+}
+
+void * CDECL wrap_ldap_first_entry( void *ld, void *chain )
+{
+    return ldap_first_entry( ld, chain );
+}
+
+void * CDECL wrap_ldap_first_reference( void *ld, void *chain )
+{
+    return ldap_first_reference( ld, chain );
+}
+
 void CDECL wrap_ldap_memfree( void *ptr )
 {
     return ldap_memfree( ptr );
+}
+
+int CDECL wrap_ldap_msgfree( void *msg )
+{
+    return ldap_msgfree( msg );
+}
+
+char * CDECL wrap_ldap_next_attribute( void *ld, void *entry, void *ber )
+{
+    return ldap_next_attribute( ld, entry, ber );
+}
+
+void * CDECL wrap_ldap_next_entry( void *ld, void *entry )
+{
+    return ldap_next_entry( ld, entry );
+}
+
+void * CDECL wrap_ldap_next_reference( void *ld, void *entry )
+{
+    return ldap_next_reference( ld, entry );
 }
 
 int CDECL wrap_ldap_parse_result( void *ld, void *res, int *errcode, char **matcheddn, char **errmsg,
                                   char ***referrals, LDAPControlU ***serverctrls, int free )
 {
     return ldap_parse_result( ld, res, errcode, matcheddn, errmsg, referrals, (LDAPControl ***)serverctrls, free );
+}
+
+int CDECL wrap_ldap_result( void *ld, int msgid, int all, struct timevalU *timeout, void **result )
+{
+    return ldap_result( ld, msgid, all, (struct timeval *)timeout, (LDAPMessage **)result );
 }
 
 int CDECL wrap_ldap_sasl_bind( void *ld, const char *dn, const char *mech, struct bervalU *cred,
@@ -393,6 +450,23 @@ int CDECL wrap_ldap_sasl_interactive_bind_s( void *ld, const char *dn, const cha
                                          wrap_sasl_interact, defaults );
 }
 
+int CDECL wrap_ldap_search_ext( void *ld, const char *base, int scope, const char *filter, char **attrs, int attrsonly,
+                                LDAPControlU **serverctrls, LDAPControlU **clientctrls, struct timevalU *timeout,
+                                int sizelimit, ULONG *msg )
+{
+    return ldap_search_ext( ld, base, scope, filter, attrs, attrsonly, (LDAPControl **)serverctrls,
+                            (LDAPControl **)clientctrls, (struct timeval *)timeout, sizelimit, (int *)msg );
+}
+
+int CDECL wrap_ldap_search_ext_s( void *ld, const char *base, int scope, const char *filter, char **attrs,
+                                  int attrsonly, LDAPControlU **serverctrls, LDAPControlU **clientctrls,
+                                  struct timevalU *timeout, int sizelimit, void **result )
+{
+    return ldap_search_ext_s( ld, base, scope, filter, attrs, attrsonly, (LDAPControl **)serverctrls,
+                              (LDAPControl **)clientctrls, (struct timeval *)timeout, sizelimit,
+                              (LDAPMessage **)result );
+}
+
 int CDECL wrap_ldap_unbind_ext( void *ld, LDAPControlU **serverctrls, LDAPControlU **clientctrls )
 {
     return ldap_unbind_ext( ld, (LDAPControl **)serverctrls, (LDAPControl **)clientctrls );
@@ -422,20 +496,33 @@ static const struct ldap_funcs funcs =
     wrap_ber_skip_tag,
     wrap_ber_printf,
     wrap_ber_scanf,
+    wrap_ldap_abandon_ext,
     wrap_ldap_add_ext,
     wrap_ldap_add_ext_s,
     wrap_ldap_compare_ext,
     wrap_ldap_compare_ext_s,
     wrap_ldap_control_free,
+    wrap_ldap_count_entries,
+    wrap_ldap_count_references,
     wrap_ldap_create_sort_control,
     wrap_ldap_create_vlv_control,
     wrap_ldap_delete_ext,
     wrap_ldap_delete_ext_s,
+    wrap_ldap_first_attribute,
+    wrap_ldap_first_entry,
+    wrap_ldap_first_reference,
     wrap_ldap_memfree,
+    wrap_ldap_msgfree,
+    wrap_ldap_next_attribute,
+    wrap_ldap_next_entry,
+    wrap_ldap_next_reference,
     wrap_ldap_parse_result,
+    wrap_ldap_result,
     wrap_ldap_sasl_bind,
     wrap_ldap_sasl_bind_s,
     wrap_ldap_sasl_interactive_bind_s,
+    wrap_ldap_search_ext,
+    wrap_ldap_search_ext_s,
     wrap_ldap_unbind_ext,
     wrap_ldap_unbind_ext_s,
     wrap_ldap_value_free_len,
@@ -448,5 +535,4 @@ NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *p
     *(const struct ldap_funcs **)ptr_out = &funcs;
     return STATUS_SUCCESS;
 }
-
 #endif /* HAVE_LDAP */

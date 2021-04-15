@@ -99,7 +99,7 @@ ULONG CDECL ldap_parse_extended_resultW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *
     if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
     if (!result) return WLDAP32_LDAP_NO_RESULTS_RETURNED;
 
-    ret = map_error( ldap_parse_extended_result( ld->ld, result, &oidU, (struct berval **)data, free ) );
+    ret = map_error( ldap_parse_extended_result( ld->ld, result->Request, &oidU, (struct berval **)data, free ) );
 
     if (oid) {
         *oid = strUtoW( oidU );
@@ -153,18 +153,18 @@ ULONG CDECL ldap_parse_referenceA( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *messag
  * NOTES
  *  Free the referrals with ldap_value_free.
  */
-ULONG CDECL ldap_parse_referenceW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *message,
+ULONG CDECL ldap_parse_referenceW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *result,
     PWCHAR **referrals )
 {
     ULONG ret = WLDAP32_LDAP_NOT_SUPPORTED;
 #ifdef HAVE_LDAP_PARSE_REFERENCE
     char **referralsU = NULL;
 
-    TRACE( "(%p, %p, %p)\n", ld, message, referrals );
+    TRACE( "(%p, %p, %p)\n", ld, result, referrals );
 
     if (!ld) return ~0u;
 
-    ret = map_error( ldap_parse_reference( ld->ld, message, &referralsU, NULL, 0 ));
+    ret = map_error( ldap_parse_reference( ld->ld, result->Request, &referralsU, NULL, 0 ));
 
     *referrals = strarrayUtoW( referralsU );
     ldap_memfree( referralsU );
@@ -249,7 +249,7 @@ ULONG CDECL ldap_parse_resultW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *result,
 
     if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
 
-    ret = map_error( ldap_parse_result( ld->ld, result, (int *)retcode, &matchedU, &errorU,
+    ret = map_error( ldap_parse_result( ld->ld, result->Request, (int *)retcode, &matchedU, &errorU,
                                         &referralsU, &serverctrlsU, free ));
 
     if (matched) *matched = strUtoW( matchedU );
