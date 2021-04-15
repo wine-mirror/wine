@@ -357,6 +357,12 @@ void CDECL wrap_ldap_memfree( void *ptr )
     return ldap_memfree( ptr );
 }
 
+int CDECL wrap_ldap_parse_result( void *ld, void *res, int *errcode, char **matcheddn, char **errmsg,
+                                  char ***referrals, LDAPControlU ***serverctrls, int free )
+{
+    return ldap_parse_result( ld, res, errcode, matcheddn, errmsg, referrals, (LDAPControl ***)serverctrls, free );
+}
+
 int CDECL wrap_ldap_sasl_bind( void *ld, const char *dn, const char *mech, struct bervalU *cred,
                                LDAPControlU **serverctrls, LDAPControlU **clientctrls, int *msgid )
 {
@@ -426,6 +432,7 @@ static const struct ldap_funcs funcs =
     wrap_ldap_delete_ext,
     wrap_ldap_delete_ext_s,
     wrap_ldap_memfree,
+    wrap_ldap_parse_result,
     wrap_ldap_sasl_bind,
     wrap_ldap_sasl_bind_s,
     wrap_ldap_sasl_interactive_bind_s,
