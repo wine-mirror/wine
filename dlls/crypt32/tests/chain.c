@@ -4741,17 +4741,17 @@ static const CERT_CHAIN_POLICY_STATUS badDateNestingStatus =
 
 static const ChainPolicyCheck ignoredBadDateNestingBasePolicyCheck = {
  { ARRAY_SIZE(chain2), chain2 },
- { 0, CERT_E_EXPIRED, 0, 1, NULL}, &badDateNestingStatus, TODO_ELEMENTS
+ { 0, 0, -1, -1, NULL}, NULL, TODO_ERROR
 };
 
 static const ChainPolicyCheck ignoredInvalidDateBasePolicyCheck = {
  { ARRAY_SIZE(googleChain), googleChain },
- { 0, CERT_E_EXPIRED, 0, 1, NULL}, &badDateNestingStatus, TODO_ELEMENTS
+ { 0, 0, -1, -1, NULL}, NULL, TODO_ERROR
 };
 
 static const ChainPolicyCheck ignoredInvalidUsageBasePolicyCheck = {
  { ARRAY_SIZE(chain15), chain15 },
- { 0, CERT_E_EXPIRED, 0, 1, NULL}, NULL, TODO_ERROR
+ { 0, 0, -1, -1, NULL}, NULL, 0
 };
 
 static const ChainPolicyCheck invalidUsageBasePolicyCheck = {
@@ -4812,13 +4812,9 @@ static const ChainPolicyCheck googlePolicyCheckWithMatchingNameExpired = {
  { 0, CERT_E_EXPIRED, 0, 0, NULL}, NULL, 0
 };
 
-/* Win98 sees the chain as expired, even though it isn't for the date tested */
-static const CERT_CHAIN_POLICY_STATUS expiredStatus =
- { 0, CERT_E_EXPIRED, 0, 0, NULL };
-
 static const ChainPolicyCheck googlePolicyCheckWithMatchingName = {
  { ARRAY_SIZE(googleChain), googleChain },
- { 0, 0, -1, -1, NULL}, &expiredStatus, 0
+ { 0, 0, -1, -1, NULL}, NULL, 0
 };
 
 /* Win98 does not trust the root of the OpenSSL chain or the Stanford chain */
