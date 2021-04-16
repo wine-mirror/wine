@@ -1,5 +1,5 @@
 /*
- * WINE HID Pseudo-Plug and Play support
+ * Human Interface Device class driver
  *
  * Copyright 2015 Aric Stewart
  *
@@ -29,6 +29,19 @@
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hid);
+
+static struct list minidriver_list = LIST_INIT(minidriver_list);
+
+static minidriver *find_minidriver(DRIVER_OBJECT *driver)
+{
+    minidriver *md;
+    LIST_FOR_EACH_ENTRY(md, &minidriver_list, minidriver, entry)
+    {
+        if (md->minidriver.DriverObject == driver)
+            return md;
+    }
+    return NULL;
+}
 
 static NTSTATUS WINAPI internalComplete(DEVICE_OBJECT *deviceObject, IRP *irp,
     void *context)
@@ -69,7 +82,7 @@ static NTSTATUS get_device_id(DEVICE_OBJECT *device, BUS_QUERY_ID_TYPE type, WCH
     return status;
 }
 
-NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
+static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
 {
     WCHAR device_id[MAX_DEVICE_ID_LEN], instance_id[MAX_DEVICE_ID_LEN];
     DEVICE_OBJECT *device = NULL;
@@ -211,7 +224,7 @@ static NTSTATUS remove_device(minidriver *minidriver, DEVICE_OBJECT *device, IRP
     return rc;
 }
 
-NTSTATUS WINAPI HID_PNP_Dispatch(DEVICE_OBJECT *device, IRP *irp)
+static NTSTATUS WINAPI driver_pnp(DEVICE_OBJECT *device, IRP *irp)
 {
     NTSTATUS rc = STATUS_NOT_SUPPORTED;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
@@ -295,4 +308,64 @@ NTSTATUS WINAPI HID_PNP_Dispatch(DEVICE_OBJECT *device, IRP *irp)
     irp->IoStatus.u.Status = rc;
     IoCompleteRequest( irp, IO_NO_INCREMENT );
     return rc;
+}
+
+static void WINAPI driver_unload(DRIVER_OBJECT *driver)
+{
+    minidriver *md;
+
+    TRACE("\n");
+
+    if ((md = find_minidriver(driver)))
+    {
+        if (md->DriverUnload)
+            md->DriverUnload(md->minidriver.DriverObject);
+        list_remove(&md->entry);
+        HeapFree(GetProcessHeap(), 0, md);
+    }
+}
+
+NTSTATUS WINAPI HidRegisterMinidriver(HID_MINIDRIVER_REGISTRATION *registration)
+{
+    minidriver *driver;
+
+    if (!(driver = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*driver))))
+        return STATUS_NO_MEMORY;
+
+    driver->DriverUnload = registration->DriverObject->DriverUnload;
+    registration->DriverObject->DriverUnload = driver_unload;
+
+    registration->DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = HID_Device_ioctl;
+    registration->DriverObject->MajorFunction[IRP_MJ_READ] = HID_Device_read;
+    registration->DriverObject->MajorFunction[IRP_MJ_WRITE] = HID_Device_write;
+    registration->DriverObject->MajorFunction[IRP_MJ_CREATE] = HID_Device_create;
+    registration->DriverObject->MajorFunction[IRP_MJ_CLOSE] = HID_Device_close;
+
+    driver->PNPDispatch = registration->DriverObject->MajorFunction[IRP_MJ_PNP];
+    registration->DriverObject->MajorFunction[IRP_MJ_PNP] = driver_pnp;
+
+    driver->AddDevice = registration->DriverObject->DriverExtension->AddDevice;
+    registration->DriverObject->DriverExtension->AddDevice = driver_add_device;
+
+    driver->minidriver = *registration;
+    list_add_tail(&minidriver_list, &driver->entry);
+
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS call_minidriver(ULONG code, DEVICE_OBJECT *device, void *in_buff, ULONG in_size, void *out_buff, ULONG out_size)
+{
+    IRP *irp;
+    IO_STATUS_BLOCK io;
+    KEVENT event;
+
+    KeInitializeEvent(&event, NotificationEvent, FALSE);
+
+    irp = IoBuildDeviceIoControlRequest(code, device, in_buff, in_size,
+        out_buff, out_size, TRUE, &event, &io);
+
+    if (IoCallDriver(device, irp) == STATUS_PENDING)
+        KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
+
+    return io.u.Status;
 }
