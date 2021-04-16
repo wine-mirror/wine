@@ -1333,6 +1333,7 @@ static void test_query_object(void)
     char buffer[1024];
     NTSTATUS status;
     ULONG len, expected_len;
+    OBJECT_BASIC_INFORMATION info;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING path, *str;
     char dir[MAX_PATH], tmp_path[MAX_PATH], file1[MAX_PATH + 16];
@@ -1343,6 +1344,20 @@ static void test_query_object(void)
     InitializeObjectAttributes( &attr, &path, 0, 0, 0 );
 
     handle = CreateEventA( NULL, FALSE, FALSE, "test_event" );
+
+    status = pNtQueryObject( handle, ObjectBasicInformation, NULL, 0, NULL );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtQueryObject failed %x\n", status );
+
+    status = pNtQueryObject( handle, ObjectBasicInformation, &info, 0, NULL );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtQueryObject failed %x\n", status );
+
+    status = pNtQueryObject( handle, ObjectBasicInformation, NULL, 0, &len );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtQueryObject failed %x\n", status );
+
+    len = 0;
+    status = pNtQueryObject( handle, ObjectBasicInformation, &info, sizeof(OBJECT_BASIC_INFORMATION), &len );
+    ok( status == STATUS_SUCCESS, "NtQueryObject failed %x\n", status );
+    ok( len >= sizeof(OBJECT_BASIC_INFORMATION), "unexpected len %u\n", len );
 
     len = 0;
     status = pNtQueryObject( handle, ObjectNameInformation, buffer, 0, &len );

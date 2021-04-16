@@ -6509,7 +6509,7 @@ NTSTATUS WINAPI NtQueryObject( HANDLE handle, OBJECT_INFORMATION_CLASS info_clas
     {
         OBJECT_BASIC_INFORMATION *p = ptr;
 
-        if (len < sizeof(*p)) return STATUS_INVALID_BUFFER_SIZE;
+        if (len < sizeof(*p)) return STATUS_INFO_LENGTH_MISMATCH;
 
         SERVER_START_REQ( get_object_info )
         {
