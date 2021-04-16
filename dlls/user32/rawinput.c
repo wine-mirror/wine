@@ -134,6 +134,7 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
     device->detail = detail;
     device->file = file;
     device->info.cbSize = sizeof(RID_DEVICE_INFO);
+    device->data = NULL;
 
     return device;
 }
@@ -161,6 +162,7 @@ static void find_devices(void)
     /* destroy previous list */
     for (idx = 0; idx < rawinput_devices_count; ++idx)
     {
+        HidD_FreePreparsedData(rawinput_devices[idx].data);
         CloseHandle(rawinput_devices[idx].file);
         free(rawinput_devices[idx].detail);
     }
