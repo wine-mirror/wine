@@ -2385,8 +2385,6 @@ struct wined3d_shader_resource_view * __cdecl wined3d_device_get_cs_resource_vie
 struct wined3d_sampler * __cdecl wined3d_device_get_cs_sampler(const struct wined3d_device *device, unsigned int idx);
 struct wined3d_unordered_access_view * __cdecl wined3d_device_get_cs_uav(const struct wined3d_device *device,
         unsigned int idx);
-struct wined3d_depth_stencil_state * __cdecl wined3d_device_get_depth_stencil_state(
-        const struct wined3d_device *device, unsigned int *stencil_ref);
 struct wined3d_rendertarget_view * __cdecl wined3d_device_get_depth_stencil_view(const struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_get_device_caps(const struct wined3d_device *device, struct wined3d_caps *caps);
 HRESULT __cdecl wined3d_device_get_display_mode(const struct wined3d_device *device, UINT swapchain_idx,
@@ -2567,6 +2565,8 @@ struct wined3d_blend_state * __cdecl wined3d_device_context_get_blend_state(
         const struct wined3d_device_context *context, struct wined3d_color *blend_factor, unsigned int *sample_mask);
 struct wined3d_buffer * __cdecl wined3d_device_context_get_constant_buffer(const struct wined3d_device_context *context,
         enum wined3d_shader_type shader_type, unsigned int idx);
+struct wined3d_depth_stencil_state * __cdecl wined3d_device_context_get_depth_stencil_state(
+        const struct wined3d_device_context *context, unsigned int *stencil_ref);
 struct wined3d_shader * __cdecl wined3d_device_context_get_shader(const struct wined3d_device_context *context,
         enum wined3d_shader_type type);
 void __cdecl wined3d_device_context_issue_query(struct wined3d_device_context *context,

@@ -1623,12 +1623,12 @@ void CDECL wined3d_device_set_depth_stencil_state(struct wined3d_device *device,
     wined3d_device_context_set_depth_stencil_state(&device->cs->c, depth_stencil_state, stencil_ref);
 }
 
-struct wined3d_depth_stencil_state * CDECL wined3d_device_get_depth_stencil_state(const struct wined3d_device *device,
-        unsigned int *stencil_ref)
+struct wined3d_depth_stencil_state * CDECL wined3d_device_context_get_depth_stencil_state(
+        const struct wined3d_device_context *context, unsigned int *stencil_ref)
 {
-    const struct wined3d_state *state = device->cs->c.state;
+    const struct wined3d_state *state = context->state;
 
-    TRACE("device %p, stencil_ref %p.\n", device, stencil_ref);
+    TRACE("context %p, stencil_ref %p.\n", context, stencil_ref);
 
     *stencil_ref = state->stencil_ref;
     return state->depth_stencil_state;
@@ -4221,7 +4221,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         if (wined3d_bitmap_is_set(changed->renderState, WINED3D_RS_STENCILREF))
             stencil_ref = state->rs[WINED3D_RS_STENCILREF];
         else
-            wined3d_device_get_depth_stencil_state(device, &stencil_ref);
+            wined3d_device_context_get_depth_stencil_state(context, &stencil_ref);
 
         if ((entry = wine_rb_get(&device->depth_stencil_states, &desc)))
         {
