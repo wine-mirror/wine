@@ -470,6 +470,20 @@ int CDECL wrap_ldap_parse_result( void *ld, void *res, int *errcode, char **matc
     return ldap_parse_result( ld, res, errcode, matcheddn, errmsg, referrals, (LDAPControl ***)serverctrls, free );
 }
 
+int CDECL wrap_ldap_rename( void *ld, const char *dn, const char *newrdn, const char *newparent, int delete,
+                            LDAPControlU **clientctrls, LDAPControlU **serverctrls, ULONG *msg )
+{
+    return ldap_rename( ld, dn ? dn : "", newrdn, newparent, delete, (LDAPControl **)clientctrls,
+                        (LDAPControl **)serverctrls, (int *)msg );
+}
+
+int CDECL wrap_ldap_rename_s( void *ld, const char *dn, const char *newrdn, const char *newparent, int delete,
+                              LDAPControlU **clientctrls, LDAPControlU **serverctrls )
+{
+    return ldap_rename_s( ld, dn ? dn : "", newrdn, newparent, delete, (LDAPControl **)clientctrls,
+                          (LDAPControl **)serverctrls );
+}
+
 int CDECL wrap_ldap_result( void *ld, int msgid, int all, struct timevalU *timeout, void **result )
 {
     return ldap_result( ld, msgid, all, (struct timeval *)timeout, (LDAPMessage **)result );
@@ -591,6 +605,8 @@ static const struct ldap_funcs funcs =
     wrap_ldap_next_entry,
     wrap_ldap_next_reference,
     wrap_ldap_parse_result,
+    wrap_ldap_rename,
+    wrap_ldap_rename_s,
     wrap_ldap_result,
     wrap_ldap_sasl_bind,
     wrap_ldap_sasl_bind_s,
