@@ -2534,7 +2534,6 @@ static HRESULT WINAPI domdoc_save(
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
     xmlSaveCtxtPtr ctx = NULL;
-    xmlNodePtr xmldecl;
     HRESULT ret = S_OK;
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&destination));
@@ -2567,9 +2566,8 @@ static HRESULT WINAPI domdoc_save(
             ret = IUnknown_QueryInterface(pUnk, &IID_IStream, (void**)&stream);
             if(ret == S_OK)
             {
-                int options = get_doc(This)->standalone == -1 ? XML_SAVE_NO_DECL : 0;
                 ctx = xmlSaveToIO(domdoc_stream_save_writecallback,
-                    domdoc_stream_save_closecallback, stream, NULL, options);
+                    domdoc_stream_save_closecallback, stream, NULL, XML_SAVE_NO_DECL);
 
                 if(!ctx)
                 {
@@ -2583,8 +2581,6 @@ static HRESULT WINAPI domdoc_save(
     case VT_BSTR:
     case VT_BSTR | VT_BYREF:
         {
-            int options = get_doc(This)->standalone == -1 ? XML_SAVE_NO_DECL : 0;
-
             /* save with file path */
             HANDLE handle = CreateFileW( (V_VT(&destination) & VT_BYREF)? *V_BSTRREF(&destination) : V_BSTR(&destination),
                                          GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
@@ -2594,9 +2590,8 @@ static HRESULT WINAPI domdoc_save(
                 return E_FAIL;
             }
 
-            /* disable top XML declaration */
             ctx = xmlSaveToIO(domdoc_save_writecallback, domdoc_save_closecallback,
-                              handle, NULL, options);
+                              handle, NULL, XML_SAVE_NO_DECL);
             if (!ctx)
             {
                 CloseHandle(handle);
@@ -2610,9 +2605,7 @@ static HRESULT WINAPI domdoc_save(
         return S_FALSE;
     }
 
-    xmldecl = xmldoc_unlink_xmldecl(get_doc(This));
     if (xmlSaveDoc(ctx, get_doc(This)) == -1) ret = S_FALSE;
-    xmldoc_link_xmldecl(get_doc(This), xmldecl);
 
     /* will release resources through close callback */
     xmlSaveClose(ctx);

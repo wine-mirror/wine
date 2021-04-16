@@ -8524,6 +8524,9 @@ static void test_createProcessingInstruction(void)
 {
     static const WCHAR xml1[] = L"<?xml version=\"1.0\"?>\r\n<test/>\r\n";
     static const char xml2[] = "<?xml version=\"1.0\" encoding=\"windows-1252\"?>\r\n<test/>\r\n";
+    static const char xml2_wine[] = "<?xml version=\"1.0\" encoding=\"windows-1252\"?>\n<test/>\n";
+    static const char xml3[] = "<?xml version=\"1.0\" standalone=\"yes\"?>\r\n<test/>\r\n";
+    static const char xml3_wine[] = "<?xml version=\"1.0\" standalone=\"yes\"?>\n<test/>\n";
     IXMLDOMProcessingInstruction *pi;
     IXMLDOMDocument *doc;
     IXMLDOMNode *node;
@@ -8533,6 +8536,8 @@ static void test_createProcessingInstruction(void)
     VARIANT var;
     HRESULT hr;
     IStream *stream;
+    LARGE_INTEGER off;
+    VARIANT_BOOL b;
     HGLOBAL global;
     char *p;
 
@@ -8582,11 +8587,55 @@ todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     p = GlobalLock(global);
     p[GlobalSize(global)] = 0;
-todo_wine
-    ok(!strcmp(p, xml2), "got %s\n", wine_dbgstr_a(p));
+    ok(!strcmp(p, xml2) || !strcmp(p, xml2_wine), "got %s\n", wine_dbgstr_a(p));
     GlobalUnlock(global);
+
+    /* Verify the result after load+save */
+    off.QuadPart = 0;
+    hr = IStream_Seek(stream, off, STREAM_SEEK_SET, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument_load(doc, var, &b);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(b == VARIANT_TRUE, "got %d\n", b);
+
+    off.QuadPart = 0;
+    hr = IStream_Seek(stream, off, STREAM_SEEK_SET, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument_save(doc, var);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = GetHGlobalFromStream(stream, &global);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    p = GlobalLock(global);
+    p[GlobalSize(global)] = 0;
+    ok(!strcmp(p, xml2) || !strcmp(p, xml2_wine), "got %s\n", wine_dbgstr_a(p));
+    GlobalUnlock(global);
+
     IStream_Release(stream);
 
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_("<?xml version=\"1.0\" standalone=\"yes\"?>\r\n<test/>\r\n"), &b);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(b == VARIANT_TRUE, "got %d\n", b);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    V_VT(&var) = VT_UNKNOWN;
+    V_UNKNOWN(&var) = (IUnknown*)stream;
+    hr = IXMLDOMDocument_save(doc, var);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = GetHGlobalFromStream(stream, &global);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    p = GlobalLock(global);
+    p[GlobalSize(global)] = 0;
+    ok(!strcmp(p, xml3) || !strcmp(p, xml3_wine), "got %s\n", wine_dbgstr_a(p));
+    GlobalUnlock(global);
+
+    IStream_Release(stream);
     IXMLDOMDocument_Release(doc);
 }
 
