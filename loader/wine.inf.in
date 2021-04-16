@@ -4052,7 +4052,7 @@ srgb color space profile.icm,"@%11%\mscms.dll,-1"
 [EtcFiles]
 hosts,"@%11%\ws2_32.dll,-1"
 networks,"@%11%\ws2_32.dll,-2"
-protocols,"@%11%\ws2_32.dll,-3"
+protocol,"@%11%\ws2_32.dll,-3"
 services,"@%11%\ws2_32.dll,-4"
 
 [InfFiles]
