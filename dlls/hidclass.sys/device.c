@@ -290,13 +290,6 @@ static void HID_Device_processQueue(DEVICE_OBJECT *device)
     HeapFree(GetProcessHeap(), 0, packet);
 }
 
-static NTSTATUS WINAPI read_Completion(DEVICE_OBJECT *deviceObject, IRP *irp, void *context)
-{
-    HANDLE event = context;
-    SetEvent(event);
-    return STATUS_MORE_PROCESSING_REQUIRED;
-}
-
 static DWORD CALLBACK hid_device_thread(void *args)
 {
     DEVICE_OBJECT *device = (DEVICE_OBJECT*)args;
@@ -305,11 +298,8 @@ static DWORD CALLBACK hid_device_thread(void *args)
     IO_STATUS_BLOCK irp_status;
     HID_XFER_PACKET *packet;
     DWORD rc;
-    HANDLE event;
-    NTSTATUS ntrc;
 
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
-    event = CreateEventA(NULL, TRUE, FALSE, NULL);
 
     packet = HeapAlloc(GetProcessHeap(), 0, sizeof(*packet) + ext->preparseData->caps.InputReportByteLength);
     packet->reportBuffer = (BYTE *)packet + sizeof(*packet);
@@ -318,28 +308,24 @@ static DWORD CALLBACK hid_device_thread(void *args)
     {
         while(1)
         {
-            ResetEvent(event);
+            KEVENT event;
+
+            KeInitializeEvent(&event, NotificationEvent, FALSE);
 
             packet->reportBufferLen = ext->preparseData->caps.InputReportByteLength;
             packet->reportId = 0;
 
-            irp = IoBuildDeviceIoControlRequest(IOCTL_HID_GET_INPUT_REPORT,
-                device, NULL, 0, packet, sizeof(*packet), TRUE, NULL,
-                &irp_status);
+            irp = IoBuildDeviceIoControlRequest(IOCTL_HID_GET_INPUT_REPORT, device,
+                    NULL, 0, packet, sizeof(*packet), TRUE, &event, &irp_status);
 
-            IoSetCompletionRoutine(irp, read_Completion, event, TRUE, TRUE, TRUE);
-            ntrc = IoCallDriver(device, irp);
+            if (IoCallDriver(device, irp) == STATUS_PENDING)
+                KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
 
-            if (ntrc == STATUS_PENDING)
-                WaitForSingleObject(event, INFINITE);
-
-            if (irp->IoStatus.u.Status == STATUS_SUCCESS)
+            if (irp_status.u.Status == STATUS_SUCCESS)
             {
                 RingBuffer_Write(ext->ring_buffer, packet);
                 HID_Device_processQueue(device);
             }
-
-            IoCompleteRequest(irp, IO_NO_INCREMENT );
 
             rc = WaitForSingleObject(ext->halt_event, ext->poll_interval ? ext->poll_interval : DEFAULT_POLL_INTERVAL);
 
@@ -355,28 +341,23 @@ static DWORD CALLBACK hid_device_thread(void *args)
 
         while(1)
         {
-            ResetEvent(event);
+            KEVENT event;
 
-            irp = IoBuildDeviceIoControlRequest(IOCTL_HID_READ_REPORT,
-                device, NULL, 0, packet->reportBuffer,
-                ext->preparseData->caps.InputReportByteLength, TRUE, NULL,
-                &irp_status);
+            KeInitializeEvent(&event, NotificationEvent, FALSE);
 
-            IoSetCompletionRoutine(irp, read_Completion, event, TRUE, TRUE, TRUE);
-            ntrc = IoCallDriver(device, irp);
+            irp = IoBuildDeviceIoControlRequest(IOCTL_HID_READ_REPORT, device, NULL, 0, packet->reportBuffer,
+                    ext->preparseData->caps.InputReportByteLength, TRUE, &event, &irp_status);
 
-            if (ntrc == STATUS_PENDING)
-            {
-                WaitForSingleObject(event, INFINITE);
-            }
+            if (IoCallDriver(device, irp) == STATUS_PENDING)
+                KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
 
             rc = WaitForSingleObject(ext->halt_event, 0);
             if (rc == WAIT_OBJECT_0)
                 exit_now = TRUE;
 
-            if (!exit_now && irp->IoStatus.u.Status == STATUS_SUCCESS)
+            if (!exit_now && irp_status.u.Status == STATUS_SUCCESS)
             {
-                packet->reportBufferLen = irp->IoStatus.Information;
+                packet->reportBufferLen = irp_status.Information;
                 if (ext->preparseData->reports[0].reportID)
                     packet->reportId = packet->reportBuffer[0];
                 else
@@ -385,14 +366,10 @@ static DWORD CALLBACK hid_device_thread(void *args)
                 HID_Device_processQueue(device);
             }
 
-            IoCompleteRequest(irp, IO_NO_INCREMENT );
-
             if (exit_now)
                 break;
         }
     }
-
-    CloseHandle(event);
 
     TRACE("Device thread exiting\n");
     return 1;
