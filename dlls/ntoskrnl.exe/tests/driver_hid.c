@@ -217,7 +217,7 @@ static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *f
     ok(!!ext->PhysicalDeviceObject, "expected non-NULL pdo\n");
     todo_wine ok(ext->NextDeviceObject == ext->PhysicalDeviceObject, "got pdo %p, next %p\n",
             ext->PhysicalDeviceObject, ext->NextDeviceObject);
-    ok(ext->NextDeviceObject->AttachedDevice == fdo, "wrong attached device\n");
+    todo_wine ok(ext->NextDeviceObject->AttachedDevice == fdo, "wrong attached device\n");
 
     ret = IoRegisterDeviceInterface(ext->PhysicalDeviceObject, &control_class, NULL, &control_symlink);
     ok(!ret, "got %#x\n", ret);

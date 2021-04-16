@@ -37,28 +37,47 @@
 /* Ring buffer functions */
 struct ReportRingBuffer;
 
-typedef struct _BASE_DEVICE_EXTENSION {
-    HID_DEVICE_EXTENSION deviceExtension;
+typedef struct _BASE_DEVICE_EXTENSION
+{
+    union
+    {
+        struct
+        {
+            /* this must be the first member */
+            HID_DEVICE_EXTENSION hid_ext;
 
-    HID_COLLECTION_INFORMATION information;
-    WINE_HIDP_PREPARSED_DATA *preparseData;
+            DEVICE_OBJECT *child_pdo;
+        } fdo;
 
-    ULONG poll_interval;
-    UNICODE_STRING link_name;
+        struct
+        {
+            DEVICE_OBJECT *parent_fdo;
+
+            HID_COLLECTION_INFORMATION information;
+            WINE_HIDP_PREPARSED_DATA *preparsed_data;
+
+            ULONG poll_interval;
+            struct ReportRingBuffer *ring_buffer;
+            HANDLE halt_event;
+            HANDLE thread;
+            UINT32 rawinput_handle;
+
+            UNICODE_STRING link_name;
+
+            KSPIN_LOCK irp_queue_lock;
+            LIST_ENTRY irp_queue;
+
+            BOOL is_mouse;
+            UNICODE_STRING mouse_link_name;
+        } pdo;
+    } u;
+
+    /* These are unique to the parent FDO, but stored in the children as well
+     * for convenience. */
     WCHAR device_id[MAX_DEVICE_ID_LEN];
     WCHAR instance_id[MAX_DEVICE_ID_LEN];
-    struct ReportRingBuffer *ring_buffer;
-    HANDLE halt_event;
-    HANDLE thread;
-    UINT32 rawinput_handle;
 
-    KSPIN_LOCK irp_queue_lock;
-    LIST_ENTRY irp_queue;
-
-    BOOL is_mouse;
-    UNICODE_STRING mouse_link_name;
-
-    /* Minidriver Specific stuff will end up here */
+    BOOL is_fdo;
 } BASE_DEVICE_EXTENSION;
 
 void RingBuffer_Write(struct ReportRingBuffer *buffer, void *data) DECLSPEC_HIDDEN;
@@ -87,16 +106,16 @@ typedef struct _minidriver
 NTSTATUS call_minidriver(ULONG code, DEVICE_OBJECT *device, void *in_buff, ULONG in_size, void *out_buff, ULONG out_size) DECLSPEC_HIDDEN;
 
 /* Internal device functions */
-NTSTATUS HID_CreateDevice(DEVICE_OBJECT *native_device, HID_MINIDRIVER_REGISTRATION *driver, DEVICE_OBJECT **device) DECLSPEC_HIDDEN;
 NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device) DECLSPEC_HIDDEN;
-void HID_DeleteDevice(DEVICE_OBJECT *device) DECLSPEC_HIDDEN;
 void HID_StartDeviceThread(DEVICE_OBJECT *device) DECLSPEC_HIDDEN;
 
-NTSTATUS WINAPI HID_Device_ioctl(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
-NTSTATUS WINAPI HID_Device_read(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
-NTSTATUS WINAPI HID_Device_write(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
-NTSTATUS WINAPI HID_Device_create(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
-NTSTATUS WINAPI HID_Device_close(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
+IRP *pop_irp_from_queue(BASE_DEVICE_EXTENSION *ext) DECLSPEC_HIDDEN;
+
+NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
+NTSTATUS WINAPI pdo_read(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
+NTSTATUS WINAPI pdo_write(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
+NTSTATUS WINAPI pdo_create(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
+NTSTATUS WINAPI pdo_close(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
 
 /* Parsing HID Report Descriptors into preparsed data */
 WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length) DECLSPEC_HIDDEN;
