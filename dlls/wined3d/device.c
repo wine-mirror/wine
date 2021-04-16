@@ -1714,12 +1714,13 @@ void CDECL wined3d_device_set_scissor_rects(struct wined3d_device *device, unsig
     wined3d_device_context_set_scissor_rects(&device->cs->c, rect_count, rects);
 }
 
-void CDECL wined3d_device_get_scissor_rects(const struct wined3d_device *device, unsigned int *rect_count, RECT *rects)
+void CDECL wined3d_device_context_get_scissor_rects(const struct wined3d_device_context *context,
+        unsigned int *rect_count, RECT *rects)
 {
-    const struct wined3d_state *state = device->cs->c.state;
+    const struct wined3d_state *state = context->state;
     unsigned int count;
 
-    TRACE("device %p, rect_count %p, rects %p.\n", device, rect_count, rects);
+    TRACE("context %p, rect_count %p, rects %p.\n", context, rect_count, rects);
 
     count = rect_count ? min(*rect_count, state->scissor_rect_count) : 1;
     if (count && rects)

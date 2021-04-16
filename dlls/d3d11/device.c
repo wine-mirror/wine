@@ -2270,7 +2270,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSGetViewports(ID3D11Devic
 static void STDMETHODCALLTYPE d3d11_immediate_context_RSGetScissorRects(ID3D11DeviceContext1 *iface,
         UINT *rect_count, D3D11_RECT *rects)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext1(iface);
     unsigned int actual_count;
 
     TRACE("iface %p, rect_count %p, rects %p.\n", iface, rect_count, rects);
@@ -2281,7 +2281,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSGetScissorRects(ID3D11De
     actual_count = *rect_count;
 
     wined3d_mutex_lock();
-    wined3d_device_get_scissor_rects(device->wined3d_device, &actual_count, rects);
+    wined3d_device_context_get_scissor_rects(context->wined3d_context, &actual_count, rects);
     wined3d_mutex_unlock();
 
     if (rects && *rect_count > actual_count)
@@ -5564,7 +5564,7 @@ static void STDMETHODCALLTYPE d3d10_device_RSGetScissorRects(ID3D10Device1 *ifac
     actual_count = *rect_count;
 
     wined3d_mutex_lock();
-    wined3d_device_get_scissor_rects(device->wined3d_device, &actual_count, rects);
+    wined3d_device_context_get_scissor_rects(device->immediate_context.wined3d_context, &actual_count, rects);
     wined3d_mutex_unlock();
 
     if (!rects)
