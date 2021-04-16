@@ -413,7 +413,7 @@ int WINAPIV WLDAP32_ber_printf( WLDAP32_BerElement *ber, char *fmt, ... )
  *  berelement must have been allocated with ber_init. This function
  *  can be called multiple times to decode data.
  */
-int WINAPIV WLDAP32_ber_scanf( WLDAP32_BerElement *ber, char *fmt, ... )
+ULONG WINAPIV WLDAP32_ber_scanf( WLDAP32_BerElement *ber, char *fmt, ... )
 {
     __ms_va_list list;
     int ret = 0;
