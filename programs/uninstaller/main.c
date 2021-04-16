@@ -161,7 +161,8 @@ int __cdecl wmain(int argc, WCHAR *argv[])
 
         memset( &si, 0, sizeof(si) );
         si.cb = sizeof(si);
-        GetModuleFileNameW( 0, filename, MAX_PATH );
+        GetSystemDirectoryW( filename, MAX_PATH );
+        wcscat( filename, L"\\uninstaller.exe" );
 
         Wow64DisableWow64FsRedirection( &redir );
         if (CreateProcessW( filename, GetCommandLineW(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi ))
