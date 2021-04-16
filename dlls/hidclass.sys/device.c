@@ -62,8 +62,6 @@ NTSTATUS HID_CreateDevice(DEVICE_OBJECT *native_device, HID_MINIDRIVER_REGISTRAT
     ext->deviceExtension.MiniDeviceExtension = ext + 1;
     ext->deviceExtension.PhysicalDeviceObject = *device;
     ext->deviceExtension.NextDeviceObject = native_device;
-    ext->device_name = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(dev_name) + 1) * sizeof(WCHAR));
-    lstrcpyW(ext->device_name, dev_name);
     ext->link_name.Buffer = NULL;
 
     IoAttachDeviceToDeviceStack(*device, native_device);
@@ -86,7 +84,6 @@ NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device)
 {
     WCHAR device_instance_id[MAX_DEVICE_ID_LEN];
     SP_DEVINFO_DATA Data;
-    UNICODE_STRING nameW;
     NTSTATUS status;
     HDEVINFO devinfo;
     GUID hidGuid;
@@ -94,8 +91,6 @@ NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device)
 
     HidD_GetHidGuid(&hidGuid);
     ext = device->DeviceExtension;
-
-    RtlInitUnicodeString( &nameW, ext->device_name);
 
     lstrcpyW(device_instance_id, ext->device_id);
     lstrcatW(device_instance_id, L"\\");
@@ -220,8 +215,6 @@ void HID_DeleteDevice(DEVICE_OBJECT *device)
         IoCompleteRequest(irp, IO_NO_INCREMENT);
     }
 
-    TRACE("Delete device(%p) %s\n", device, debugstr_w(ext->device_name));
-    HeapFree(GetProcessHeap(), 0, ext->device_name);
     RtlFreeUnicodeString(&ext->link_name);
 
     IoDetachDevice(ext->deviceExtension.NextDeviceObject);

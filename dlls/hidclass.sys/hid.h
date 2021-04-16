@@ -44,7 +44,6 @@ typedef struct _BASE_DEVICE_EXTENSION {
     WINE_HIDP_PREPARSED_DATA *preparseData;
 
     ULONG poll_interval;
-    WCHAR *device_name;
     UNICODE_STRING link_name;
     WCHAR device_id[MAX_DEVICE_ID_LEN];
     WCHAR instance_id[MAX_DEVICE_ID_LEN];
