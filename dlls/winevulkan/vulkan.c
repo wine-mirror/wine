@@ -446,10 +446,11 @@ static void wine_vk_device_free(struct VkDevice_T *device)
     free(device);
 }
 
-void unix_vk_init(const struct vulkan_funcs *driver)
+const struct unix_funcs *unix_vk_init(const struct vulkan_funcs *driver)
 {
     vk_funcs = driver;
     p_vkEnumerateInstanceVersion = vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkEnumerateInstanceVersion");
+    return &loader_funcs;
 }
 
 /* Helper function for converting between win32 and host compatible VkInstanceCreateInfo.

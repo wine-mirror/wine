@@ -35,6 +35,7 @@
 #include "wine/vulkan_driver.h"
 
 #include "vulkan_thunks.h"
+#include "loader_thunks.h"
 
 /* Magic value defined by Vulkan ICD / Loader spec */
 #define VULKAN_ICD_MAGIC_VALUE 0x01CDC0DE
@@ -245,7 +246,9 @@ BOOL wine_vk_instance_extension_supported(const char *name) DECLSPEC_HIDDEN;
 BOOL wine_vk_is_type_wrapped(VkObjectType type) DECLSPEC_HIDDEN;
 uint64_t wine_vk_unwrap_handle(VkObjectType type, uint64_t handle) DECLSPEC_HIDDEN;
 
-void unix_vk_init(const struct vulkan_funcs *driver) DECLSPEC_HIDDEN;
+extern const struct unix_funcs loader_funcs;
+
+const struct unix_funcs *unix_vk_init(const struct vulkan_funcs *driver) DECLSPEC_HIDDEN;
 
 VkResult WINAPI unix_vkCreateInstance(const VkInstanceCreateInfo *create_info,
         const VkAllocationCallbacks *allocator, VkInstance *instance) DECLSPEC_HIDDEN;

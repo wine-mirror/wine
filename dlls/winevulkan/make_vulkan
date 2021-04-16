@@ -75,6 +75,7 @@ WINE_VULKAN_JSON = "winevulkan.json"
 WINE_VULKAN_SPEC = "winevulkan.spec"
 WINE_VULKAN_THUNKS_C = "vulkan_thunks.c"
 WINE_VULKAN_THUNKS_H = "vulkan_thunks.h"
+WINE_VULKAN_LOADER_THUNKS_H = "loader_thunks.h"
 
 # Extension enum values start at a certain offset (EXT_BASE).
 # Relative to the offset each extension has a block (EXT_BLOCK_SIZE)
@@ -151,12 +152,14 @@ class ThunkType(Enum):
 #   - PUBLIC means the implementation is fully auto generated.
 #   - PRIVATE thunks can be used in custom implementations for
 #     struct conversion.
+# - loader_thunk sets whether to create a thunk for unix_funcs.
 FUNCTION_OVERRIDES = {
     # Global functions
     "vkCreateInstance" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE},
     "vkEnumerateInstanceExtensionProperties" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE},
+    "vkEnumerateInstanceLayerProperties" : {"dispatch" : False, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.NONE},
     "vkEnumerateInstanceVersion": {"dispatch" : False, "driver" : False, "thunk" : ThunkType.NONE},
-    "vkGetInstanceProcAddr": {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE},
+    "vkGetInstanceProcAddr": {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.NONE},
 
     # Instance functions
     "vkCreateDevice" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE},
@@ -179,7 +182,7 @@ FUNCTION_OVERRIDES = {
     "vkDestroyCommandPool" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
     "vkDestroyDevice" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE},
     "vkFreeCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE},
-    "vkGetDeviceProcAddr" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE},
+    "vkGetDeviceProcAddr" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.NONE},
     "vkGetDeviceQueue" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
     "vkGetDeviceQueue2" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
     "vkQueueSubmit" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
@@ -525,6 +528,7 @@ class VkFunction(object):
         self.dispatch = func_info["dispatch"] if func_info else True
         self.driver = func_info["driver"] if func_info else False
         self.thunk_type = func_info["thunk"] if func_info else ThunkType.PUBLIC
+        self.loader_thunk_type = func_info["loader_thunk"] if func_info and "loader_thunk" in func_info else ThunkType.PUBLIC
 
         # Required is set while parsing which APIs and types are required
         # and is used by the code generation.
@@ -2409,7 +2413,18 @@ class VkGenerator(object):
         f.write("    default:\n")
         f.write("       return handle;\n")
         f.write("    }\n")
-        f.write("}\n")
+        f.write("}\n\n")
+
+        f.write("const struct unix_funcs loader_funcs =\n")
+        f.write("{\n")
+        for vk_func in self.registry.funcs.values():
+            if not vk_func.is_required():
+                continue
+            if vk_func.loader_thunk_type == ThunkType.NONE:
+                continue
+
+            f.write("    &{1}{0},\n".format(vk_func.name, prefix))
+        f.write("};\n")
 
     def generate_thunks_h(self, f, prefix):
         self._generate_copyright(f)
@@ -2522,6 +2537,25 @@ class VkGenerator(object):
         f.write("\n\n")
 
         f.write("#endif /* __WINE_VULKAN_THUNKS_H */\n")
+
+    def generate_loader_thunks_h(self, f, prefix):
+        self._generate_copyright(f)
+
+        f.write("#ifndef __WINE_VULKAN_LOADER_THUNKS_H\n")
+        f.write("#define __WINE_VULKAN_LOADER_THUNKS_H\n\n")
+
+        f.write("struct unix_funcs\n")
+        f.write("{\n")
+        for vk_func in self.registry.funcs.values():
+            if not vk_func.is_required():
+                continue
+            if vk_func.loader_thunk_type == ThunkType.NONE:
+                continue
+
+            f.write("    {0};\n".format(vk_func.pfn(conv=False, call_conv="WINAPI")))
+        f.write("};\n\n")
+
+        f.write("#endif /* __WINE_VULKAN_LOADER_THUNKS_H */\n")
 
     def generate_vulkan_h(self, f):
         self._generate_copyright(f)
@@ -3340,6 +3374,9 @@ def main():
 
     with open(WINE_VULKAN_THUNKS_C, "w") as f:
         generator.generate_thunks_c(f, "wine_")
+
+    with open(WINE_VULKAN_LOADER_THUNKS_H, "w") as f:
+        generator.generate_loader_thunks_h(f, "wine_")
 
     with open(WINE_VULKAN_JSON, "w") as f:
         generate_vulkan_json(f)

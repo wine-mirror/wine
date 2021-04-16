@@ -39,6 +39,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 DEFINE_DEVPROPKEY(DEVPROPKEY_GPU_LUID, 0x60b193cb, 0x5276, 0x4d0f, 0x96, 0xfc, 0xf1, 0x73, 0xab, 0xad, 0x3e, 0xc6, 2);
 DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_GPU_VULKAN_UUID, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5c, 2);
 
+const struct unix_funcs *unix_funcs;
+
 static HINSTANCE hinstance;
 
 static void *wine_vk_get_global_proc_addr(const char *name);
@@ -217,7 +219,7 @@ static BOOL WINAPI wine_vk_init(INIT_ONCE *once, void *param, void **context)
     if (!driver)
         ERR("Failed to load Wine graphics driver supporting Vulkan.\n");
     else
-        unix_vk_init(driver);
+        unix_funcs = unix_vk_init(driver);
 
     return driver != NULL;
 }
