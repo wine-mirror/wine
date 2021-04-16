@@ -1603,12 +1603,12 @@ void CDECL wined3d_device_set_blend_state(struct wined3d_device *device,
     wined3d_device_context_set_blend_state(&device->cs->c, blend_state, blend_factor, sample_mask);
 }
 
-struct wined3d_blend_state * CDECL wined3d_device_get_blend_state(const struct wined3d_device *device,
+struct wined3d_blend_state * CDECL wined3d_device_context_get_blend_state(const struct wined3d_device_context *context,
         struct wined3d_color *blend_factor, unsigned int *sample_mask)
 {
-    const struct wined3d_state *state = device->cs->c.state;
+    const struct wined3d_state *state = context->state;
 
-    TRACE("device %p, blend_factor %p, sample_mask %p.\n", device, blend_factor, sample_mask);
+    TRACE("context %p, blend_factor %p, sample_mask %p.\n", context, blend_factor, sample_mask);
 
     *blend_factor = state->blend_factor;
     *sample_mask = state->sample_mask;
@@ -3921,6 +3921,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     const struct wined3d_stateblock_state *state = &stateblock->stateblock_state;
     const struct wined3d_saved_states *changed = &stateblock->changed;
     const unsigned int word_bit_count = sizeof(DWORD) * CHAR_BIT;
+    struct wined3d_device_context *context = &device->cs->c;
     unsigned int i, j, start, idx;
     struct wined3d_range range;
     uint32_t map;
@@ -4153,7 +4154,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         if (wined3d_bitmap_is_set(changed->renderState, WINED3D_RS_BLENDFACTOR))
             wined3d_color_from_d3dcolor(&colour, state->rs[WINED3D_RS_BLENDFACTOR]);
         else
-            wined3d_device_get_blend_state(device, &colour, &sample_mask);
+            wined3d_device_context_get_blend_state(context, &colour, &sample_mask);
 
         if ((entry = wine_rb_get(&device->blend_states, &desc)))
         {

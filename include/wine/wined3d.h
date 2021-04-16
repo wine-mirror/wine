@@ -2375,8 +2375,6 @@ HRESULT __cdecl wined3d_device_end_scene(struct wined3d_device *device);
 void __cdecl wined3d_device_evict_managed_resources(struct wined3d_device *device);
 void __cdecl wined3d_device_flush(struct wined3d_device *device);
 UINT __cdecl wined3d_device_get_available_texture_mem(const struct wined3d_device *device);
-struct wined3d_blend_state * __cdecl wined3d_device_get_blend_state(const struct wined3d_device *device,
-        struct wined3d_color *blend_factor, unsigned int *sample_mask);
 HRESULT __cdecl wined3d_device_get_clip_status(const struct wined3d_device *device,
         struct wined3d_clip_status *clip_status);
 struct wined3d_shader * __cdecl wined3d_device_get_compute_shader(const struct wined3d_device *device);
@@ -2565,6 +2563,8 @@ void __cdecl wined3d_device_context_draw_indirect(struct wined3d_device_context 
 void __cdecl wined3d_device_context_flush(struct wined3d_device_context *context);
 void __cdecl wined3d_device_context_generate_mipmaps(struct wined3d_device_context *context,
         struct wined3d_shader_resource_view *view);
+struct wined3d_blend_state * __cdecl wined3d_device_context_get_blend_state(
+        const struct wined3d_device_context *context, struct wined3d_color *blend_factor, unsigned int *sample_mask);
 struct wined3d_buffer * __cdecl wined3d_device_context_get_constant_buffer(const struct wined3d_device_context *context,
         enum wined3d_shader_type shader_type, unsigned int idx);
 struct wined3d_shader * __cdecl wined3d_device_context_get_shader(const struct wined3d_device_context *context,
