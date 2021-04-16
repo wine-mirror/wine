@@ -21,6 +21,7 @@
 #include <stdarg.h>
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#include "initguid.h"
 #include "hid.h"
 #include "winreg.h"
 #include "winuser.h"
@@ -30,8 +31,6 @@
 #include "ddk/hidsdi.h"
 #include "ddk/hidtypes.h"
 #include "ddk/wdm.h"
-
-#include "initguid.h"
 #include "devguid.h"
 #include "ntddmou.h"
 
@@ -86,10 +85,8 @@ NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device)
     SP_DEVINFO_DATA Data;
     NTSTATUS status;
     HDEVINFO devinfo;
-    GUID hidGuid;
     BASE_DEVICE_EXTENSION *ext;
 
-    HidD_GetHidGuid(&hidGuid);
     ext = device->DeviceExtension;
 
     lstrcpyW(device_instance_id, ext->device_id);
@@ -118,7 +115,7 @@ NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device)
     }
     SetupDiDestroyDeviceInfoList(devinfo);
 
-    status = IoRegisterDeviceInterface(device, &hidGuid, NULL, &ext->link_name);
+    status = IoRegisterDeviceInterface(device, &GUID_DEVINTERFACE_HID, NULL, &ext->link_name);
     if (status != STATUS_SUCCESS)
     {
         FIXME( "failed to register device interface %x\n", status );
