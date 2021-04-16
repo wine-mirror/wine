@@ -28,7 +28,6 @@
 #include <pthread.h>
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 #define VK_NO_PROTOTYPES
 #include "wine/vulkan.h"

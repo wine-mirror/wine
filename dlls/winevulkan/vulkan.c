@@ -26,6 +26,7 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winuser.h"
+#include "winternl.h"
 
 #include "vulkan_private.h"
 
@@ -140,7 +141,8 @@ static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagB
 
     wine_callback_data = *((VkDebugUtilsMessengerCallbackDataEXT *) callback_data);
 
-    object_name_infos = heap_calloc(wine_callback_data.objectCount, sizeof(*object_name_infos));
+    object_name_infos = RtlAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                        wine_callback_data.objectCount * sizeof(*object_name_infos));
 
     for (i = 0; i < wine_callback_data.objectCount; i++)
     {
@@ -155,7 +157,7 @@ static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagB
             if (!object_name_infos[i].objectHandle)
             {
                 WARN("handle conversion failed 0x%s\n", wine_dbgstr_longlong(callback_data->pObjects[i].objectHandle));
-                heap_free(object_name_infos);
+                RtlFreeHeap(GetProcessHeap(), 0, object_name_infos);
                 return VK_FALSE;
             }
         }
@@ -170,7 +172,7 @@ static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagB
     /* applications should always return VK_FALSE */
     result = object->user_callback(severity, message_types, &wine_callback_data, object->user_data);
 
-    heap_free(object_name_infos);
+    RtlFreeHeap(GetProcessHeap(), 0, object_name_infos);
 
     return result;
 }
@@ -714,7 +716,7 @@ void WINAPI unix_vkCmdExecuteCommands(VkCommandBuffer buffer, uint32_t count,
      * alloca as we shouldn't need much memory and it needs to be cleaned up after
      * the call anyway.
      */
-    if (!(tmp_buffers = heap_alloc(count * sizeof(*tmp_buffers))))
+    if (!(tmp_buffers = malloc(count * sizeof(*tmp_buffers))))
     {
         ERR("Failed to allocate memory for temporary command buffers\n");
         return;
@@ -1397,7 +1399,7 @@ VkResult WINAPI unix_vkGetCalibratedTimestampsEXT(VkDevice device,
     VkResult res;
     TRACE("%p, %u, %p, %p, %p\n", device, timestamp_count, timestamp_infos, timestamps, max_deviation);
 
-    if (!(host_timestamp_infos = heap_alloc(sizeof(VkCalibratedTimestampInfoEXT) * timestamp_count)))
+    if (!(host_timestamp_infos = malloc(sizeof(VkCalibratedTimestampInfoEXT) * timestamp_count)))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
     for (i = 0; i < timestamp_count; i++)
@@ -1438,7 +1440,7 @@ VkResult WINAPI unix_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(VkPhysicalDe
     if (res != VK_SUCCESS)
         return res;
 
-    if (!(host_time_domains = heap_alloc(sizeof(VkTimeDomainEXT) * host_time_domain_count)))
+    if (!(host_time_domains = malloc(sizeof(VkTimeDomainEXT) * host_time_domain_count)))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
     res = phys_dev->instance->funcs.p_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(phys_dev->phys_dev, &host_time_domain_count, host_time_domains);
