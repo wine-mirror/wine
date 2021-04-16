@@ -640,6 +640,7 @@ static void restart_if_wow64(void)
 
     if (IsWow64Process( GetCurrentProcess(), &is_wow64 ) && is_wow64)
     {
+        static const WCHAR winedbgW[] = {'\\','w','i','n','e','d','b','g','.','e','x','e',0};
         STARTUPINFOW si;
         PROCESS_INFORMATION pi;
         WCHAR filename[MAX_PATH];
@@ -648,7 +649,8 @@ static void restart_if_wow64(void)
 
         memset( &si, 0, sizeof(si) );
         si.cb = sizeof(si);
-        GetModuleFileNameW( 0, filename, MAX_PATH );
+        GetSystemDirectoryW( filename, MAX_PATH );
+        lstrcatW( filename, winedbgW );
 
         Wow64DisableWow64FsRedirection( &redir );
         if (CreateProcessW( filename, GetCommandLineW(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi ))
