@@ -80,7 +80,7 @@ static BOOL array_reserve(void **elements, unsigned int *capacity, unsigned int 
     if (new_capacity < count)
         new_capacity = max_capacity;
 
-    if (!(new_elements = heap_realloc(*elements, new_capacity * size)))
+    if (!(new_elements = realloc(*elements, new_capacity * size)))
         return FALSE;
 
     *elements = new_elements;
@@ -102,7 +102,7 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
         ERR("Failed to get device path, error %#x.\n", GetLastError());
         return FALSE;
     }
-    if (!(detail = heap_alloc(size)))
+    if (!(detail = malloc(size)))
     {
         ERR("Failed to allocate memory.\n");
         return FALSE;
@@ -117,7 +117,7 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
     if (file == INVALID_HANDLE_VALUE)
     {
         ERR("Failed to open device file %s, error %u.\n", debugstr_w(detail->DevicePath), GetLastError());
-        heap_free(detail);
+        free(detail);
         return NULL;
     }
 
@@ -126,7 +126,7 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
     {
         ERR("Failed to allocate memory.\n");
         CloseHandle(file);
-        heap_free(detail);
+        free(detail);
         return NULL;
     }
 
@@ -162,7 +162,7 @@ static void find_devices(void)
     for (idx = 0; idx < rawinput_devices_count; ++idx)
     {
         CloseHandle(rawinput_devices[idx].file);
-        heap_free(rawinput_devices[idx].detail);
+        free(rawinput_devices[idx].detail);
     }
     rawinput_devices_count = 0;
 
