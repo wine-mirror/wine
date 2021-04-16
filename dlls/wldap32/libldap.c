@@ -50,6 +50,8 @@ C_ASSERT( sizeof(LDAPModU) == sizeof(LDAPMod) );
 C_ASSERT( sizeof(LDAPControlU) == sizeof(LDAPControl) );
 C_ASSERT( sizeof(LDAPSortKeyU) == sizeof(LDAPSortKey) );
 C_ASSERT( sizeof(LDAPVLVInfoU) == sizeof(LDAPVLVInfo) );
+C_ASSERT( sizeof(LDAPAPIInfoU) == sizeof(LDAPAPIInfo) );
+C_ASSERT( sizeof(LDAPAPIFeatureInfoU) == sizeof(LDAPAPIFeatureInfo) );
 C_ASSERT( sizeof(struct timevalU) == sizeof(struct timeval) );
 
 static LDAPMod *nullmods[] = { NULL };
@@ -346,6 +348,11 @@ int CDECL wrap_ldap_count_references( void *ld, void *chain )
     return ldap_count_references( ld, chain );
 }
 
+int CDECL wrap_ldap_count_values_len( struct bervalU **values )
+{
+    return ldap_count_values_len( (struct berval **)values );
+}
+
 int CDECL wrap_ldap_create_sort_control( void *ld, LDAPSortKeyU **keylist, int critical, LDAPControlU **control )
 {
     return ldap_create_sort_control( ld, (LDAPSortKey **)keylist, critical, (LDAPControl **)control );
@@ -412,6 +419,16 @@ void * CDECL wrap_ldap_first_entry( void *ld, void *chain )
 void * CDECL wrap_ldap_first_reference( void *ld, void *chain )
 {
     return ldap_first_reference( ld, chain );
+}
+
+int CDECL wrap_ldap_get_option( void *ld, int option, void *value )
+{
+    return ldap_get_option( ld, option, value );
+}
+
+struct bervalU ** CDECL wrap_ldap_get_values_len( void *ld, void *entry, const char *attr )
+{
+    return (struct bervalU **)ldap_get_values_len( ld, entry, attr );
 }
 
 int CDECL wrap_ldap_initialize( void **ld, const char *url )
@@ -583,6 +600,7 @@ static const struct ldap_funcs funcs =
     wrap_ldap_control_free,
     wrap_ldap_count_entries,
     wrap_ldap_count_references,
+    wrap_ldap_count_values_len,
     wrap_ldap_create_sort_control,
     wrap_ldap_create_vlv_control,
     wrap_ldap_delete_ext,
@@ -592,6 +610,8 @@ static const struct ldap_funcs funcs =
     wrap_ldap_extended_operation,
     wrap_ldap_extended_operation_s,
     wrap_ldap_get_dn,
+    wrap_ldap_get_option,
+    wrap_ldap_get_values_len,
     wrap_ldap_initialize,
     wrap_ldap_first_attribute,
     wrap_ldap_first_entry,

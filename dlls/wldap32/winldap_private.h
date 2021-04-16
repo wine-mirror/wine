@@ -33,6 +33,13 @@
 #define WLDAP32_LDAP_VERSION2   2
 #define WLDAP32_LDAP_VERSION3   3
 
+#define WLDAP32_LDAP_OPT_ON  ((void *)1)
+#define WLDAP32_LDAP_OPT_OFF ((void *)0)
+
+#define WLDAP32_LDAP_SCOPE_BASE     0x00
+#define WLDAP32_LDAP_SCOPE_ONELEVEL 0x01
+#define WLDAP32_LDAP_SCOPE_SUBTREE  0x02
+
 typedef enum {
     WLDAP32_LDAP_SUCCESS                 =   0x00,
     WLDAP32_LDAP_UNWILLING_TO_PERFORM    =   0x35,
