@@ -4212,9 +4212,11 @@ static void test_evr(void)
     IMFStreamSink *stream_sink, *stream_sink2;
     IMFVideoDisplayControl *display_control;
     IMFMediaType *media_type, *media_type2;
+    IMFPresentationTimeSource *time_source;
     IMFVideoSampleAllocator *allocator;
     IMFMediaTypeHandler *type_handler;
     IMFVideoRenderer *video_renderer;
+    IMFPresentationClock *clock;
     IMFMediaSink *sink, *sink2;
     IMFAttributes *attributes;
     DWORD flags, count, value;
@@ -4228,8 +4230,8 @@ static void test_evr(void)
     HRESULT hr;
     GUID guid;
 
-    hr = CoInitialize(NULL);
-    ok(hr == S_OK, "Failed to initialize, hr %#x.\n", hr);
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Startup failure, hr %#x.\n", hr);
 
     hr = MFCreateVideoRenderer(&IID_IMFVideoRenderer, (void **)&video_renderer);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
@@ -4481,7 +4483,35 @@ todo_wine
 
     IMFActivate_Release(activate);
 
-    CoUninitialize();
+    /* Set clock. */
+    window = create_window();
+
+    hr = MFCreateVideoRendererActivate(window, &activate);
+    ok(hr == S_OK, "Failed to create activate object, hr %#x.\n", hr);
+
+    hr = IMFActivate_ActivateObject(activate, &IID_IMFMediaSink, (void **)&sink);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateSystemTimeSource(&time_source);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreatePresentationClock(&clock);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFPresentationClock_SetTimeSource(clock, time_source);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IMFPresentationTimeSource_Release(time_source);
+
+    hr = IMFMediaSink_SetPresentationClock(sink, clock);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IMFPresentationClock_Release(clock);
+
+    IMFActivate_Release(activate);
+    DestroyWindow(window);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Shutdown failure, hr %#x.\n", hr);
 }
 
 static void test_MFCreateSimpleTypeHandler(void)

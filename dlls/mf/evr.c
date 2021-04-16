@@ -2068,6 +2068,13 @@ static HRESULT WINAPI video_renderer_service_lookup_LookupService(IMFTopologySer
             *objects = &renderer->IMediaEventSink_iface;
             IUnknown_AddRef((IUnknown *)*objects);
         }
+        else if (IsEqualIID(riid, &IID_IMFClock))
+        {
+            *objects = renderer->clock;
+            if (*objects)
+                IUnknown_AddRef((IUnknown *)*objects);
+            hr = *objects ? S_OK : E_NOINTERFACE;
+        }
         else
         {
             FIXME("Unsupported interface %s for render service.\n", debugstr_guid(riid));
