@@ -847,8 +847,7 @@ typedef struct
     obj_handle_t token;          /* process token */
     obj_handle_t debug;          /* process debug object */
     obj_handle_t parent_process; /* parent process */
-    int          inherit_all;    /* inherit all handles from parent */
-    unsigned int create_flags;   /* creation flags */
+    unsigned int flags;          /* process creation flags */
     int          socket_fd;      /* file descriptor for process socket */
     unsigned int access;         /* access rights for process object */
     client_cpu_t cpu;            /* CPU that the new process will use */

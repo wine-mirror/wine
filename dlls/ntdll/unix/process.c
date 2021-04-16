@@ -711,8 +711,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
         req->token          = wine_server_obj_handle( token );
         req->debug          = wine_server_obj_handle( debug );
         req->parent_process = wine_server_obj_handle( parent );
-        req->inherit_all    = !!(process_flags & PROCESS_CREATE_FLAGS_INHERIT_HANDLES);
-        req->create_flags   = params->DebugFlags; /* hack: creation flags stored in DebugFlags for now */
+        req->flags          = process_flags;
         req->socket_fd      = socketfd[1];
         req->access         = process_access;
         req->cpu            = get_machine_cpu( &pe_info );
