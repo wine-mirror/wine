@@ -79,6 +79,7 @@ struct video_presenter
     IMFVideoPositionMapper IMFVideoPositionMapper_iface;
     IQualProp IQualProp_iface;
     IMFQualityAdvise IMFQualityAdvise_iface;
+    IMFQualityAdviseLimits IMFQualityAdviseLimits_iface;
     IDirect3DDeviceManager9 IDirect3DDeviceManager9_iface;
     IMFVideoSampleAllocatorNotify allocator_cb;
     IUnknown IUnknown_inner;
@@ -164,6 +165,11 @@ static struct video_presenter *impl_from_IQualProp(IQualProp *iface)
 static struct video_presenter *impl_from_IMFQualityAdvise(IMFQualityAdvise *iface)
 {
     return CONTAINING_RECORD(iface, struct video_presenter, IMFQualityAdvise_iface);
+}
+
+static struct video_presenter *impl_from_IMFQualityAdviseLimits(IMFQualityAdviseLimits *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_presenter, IMFQualityAdviseLimits_iface);
 }
 
 static struct video_presenter *impl_from_IDirect3DDeviceManager9(IDirect3DDeviceManager9 *iface)
@@ -774,6 +780,10 @@ static HRESULT WINAPI video_presenter_inner_QueryInterface(IUnknown *iface, REFI
     else if (IsEqualIID(riid, &IID_IMFQualityAdvise))
     {
         *obj = &presenter->IMFQualityAdvise_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFQualityAdviseLimits))
+    {
+        *obj = &presenter->IMFQualityAdviseLimits_iface;
     }
     else if (IsEqualIID(riid, &IID_IDirect3DDeviceManager9))
     {
@@ -1870,6 +1880,47 @@ static const IDirect3DDeviceManager9Vtbl video_presenter_device_manager_vtbl =
     video_presenter_device_manager_GetVideoService,
 };
 
+static HRESULT WINAPI video_presenter_qa_limits_QueryInterface(IMFQualityAdviseLimits *iface, REFIID riid, void **obj)
+{
+    struct video_presenter *presenter = impl_from_IMFQualityAdviseLimits(iface);
+    return IMFVideoPresenter_QueryInterface(&presenter->IMFVideoPresenter_iface, riid, obj);
+}
+
+static ULONG WINAPI video_presenter_qa_limits_AddRef(IMFQualityAdviseLimits *iface)
+{
+    struct video_presenter *presenter = impl_from_IMFQualityAdviseLimits(iface);
+    return IMFVideoPresenter_AddRef(&presenter->IMFVideoPresenter_iface);
+}
+
+static ULONG WINAPI video_presenter_qa_limits_Release(IMFQualityAdviseLimits *iface)
+{
+    struct video_presenter *presenter = impl_from_IMFQualityAdviseLimits(iface);
+    return IMFVideoPresenter_Release(&presenter->IMFVideoPresenter_iface);
+}
+
+static HRESULT WINAPI video_presenter_qa_limits_GetMaximumDropMode(IMFQualityAdviseLimits *iface, MF_QUALITY_DROP_MODE *mode)
+{
+    FIXME("%p, %p.\n", iface, mode);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_presenter_qa_limits_GetMinimumQualityLevel(IMFQualityAdviseLimits *iface, MF_QUALITY_LEVEL *level)
+{
+    FIXME("%p, %p.\n", iface, level);
+
+    return E_NOTIMPL;
+}
+
+static const IMFQualityAdviseLimitsVtbl video_presenter_qa_limits_vtbl =
+{
+    video_presenter_qa_limits_QueryInterface,
+    video_presenter_qa_limits_AddRef,
+    video_presenter_qa_limits_Release,
+    video_presenter_qa_limits_GetMaximumDropMode,
+    video_presenter_qa_limits_GetMinimumQualityLevel,
+};
+
 HRESULT WINAPI MFCreateVideoPresenter(IUnknown *owner, REFIID riid_device, REFIID riid, void **obj)
 {
     TRACE("%p, %s, %s, %p.\n", owner, debugstr_guid(riid_device), debugstr_guid(riid), obj);
@@ -1940,6 +1991,7 @@ HRESULT evr_presenter_create(IUnknown *outer, void **out)
     object->IMFVideoPositionMapper_iface.lpVtbl = &video_presenter_position_mapper_vtbl;
     object->IQualProp_iface.lpVtbl = &video_presenter_qualprop_vtbl;
     object->IMFQualityAdvise_iface.lpVtbl = &video_presenter_quality_advise_vtbl;
+    object->IMFQualityAdviseLimits_iface.lpVtbl = &video_presenter_qa_limits_vtbl;
     object->allocator_cb.lpVtbl = &video_presenter_allocator_cb_vtbl;
     object->IUnknown_inner.lpVtbl = &video_presenter_inner_vtbl;
     object->IDirect3DDeviceManager9_iface.lpVtbl = &video_presenter_device_manager_vtbl;

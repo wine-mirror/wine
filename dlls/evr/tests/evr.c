@@ -1154,7 +1154,7 @@ static void test_default_presenter(void)
     check_interface(presenter, &IID_IMFVideoDeviceID, TRUE);
     check_interface(presenter, &IID_IMFQualityAdvise, TRUE);
     check_interface(presenter, &IID_IDirect3DDeviceManager9, TRUE);
-    todo_wine check_interface(presenter, &IID_IMFQualityAdviseLimits, TRUE);
+    check_interface(presenter, &IID_IMFQualityAdviseLimits, TRUE);
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoPositionMapper, TRUE);
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoDisplayControl, TRUE);
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoPresenter, TRUE);
@@ -1165,7 +1165,7 @@ static void test_default_presenter(void)
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFGetService, TRUE);
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoDeviceID, TRUE);
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFQualityAdvise, TRUE);
-    todo_wine check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFQualityAdviseLimits, TRUE);
+    check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFQualityAdviseLimits, TRUE);
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IMFTransform, FALSE);
     check_service_interface(presenter, &MR_VIDEO_RENDER_SERVICE, &IID_IDirect3DDeviceManager9, TRUE);
     check_service_interface(presenter, &MR_VIDEO_ACCELERATION_SERVICE, &IID_IDirect3DDeviceManager9, TRUE);
@@ -2018,30 +2018,32 @@ static void test_presenter_quality_control(void)
     ok(hr == S_OK, "Failed to create default presenter, hr %#x.\n", hr);
 
     hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFQualityAdviseLimits, (void **)&qa_limits);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     hr = IMFVideoPresenter_QueryInterface(presenter, &IID_IMFQualityAdvise, (void **)&advise);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-if (qa_limits)
-{
     hr = IMFQualityAdviseLimits_GetMaximumDropMode(qa_limits, NULL);
+todo_wine
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
     hr = IMFQualityAdviseLimits_GetMaximumDropMode(qa_limits, &mode);
+todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(mode == MF_DROP_MODE_NONE, "Unexpected mode %d.\n", mode);
+    if (SUCCEEDED(hr))
+        ok(mode == MF_DROP_MODE_NONE, "Unexpected mode %d.\n", mode);
 
     hr = IMFQualityAdviseLimits_GetMinimumQualityLevel(qa_limits, NULL);
+todo_wine
     ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
 
     hr = IMFQualityAdviseLimits_GetMinimumQualityLevel(qa_limits, &level);
+todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    ok(level == MF_QUALITY_NORMAL, "Unexpected level %d.\n", level);
+    if (SUCCEEDED(hr))
+        ok(level == MF_QUALITY_NORMAL, "Unexpected level %d.\n", level);
 
     IMFQualityAdviseLimits_Release(qa_limits);
-}
 
 todo_wine {
     mode = 1;
