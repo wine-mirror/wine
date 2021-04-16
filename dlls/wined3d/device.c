@@ -1642,11 +1642,12 @@ void CDECL wined3d_device_set_rasterizer_state(struct wined3d_device *device,
     wined3d_device_context_set_rasterizer_state(&device->cs->c, rasterizer_state);
 }
 
-struct wined3d_rasterizer_state * CDECL wined3d_device_get_rasterizer_state(struct wined3d_device *device)
+struct wined3d_rasterizer_state * CDECL wined3d_device_context_get_rasterizer_state(
+        struct wined3d_device_context *context)
 {
-    TRACE("device %p.\n", device);
+    TRACE("context %p.\n", context);
 
-    return device->cs->c.state->rasterizer_state;
+    return context->state->rasterizer_state;
 }
 
 void CDECL wined3d_device_set_render_state(struct wined3d_device *device,
