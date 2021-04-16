@@ -3503,16 +3503,40 @@ static inline BOOL color_tables_match(const dib_info *d1, const dib_info *d2)
     return !memcmp(d1->color_table, d2->color_table, (1 << d1->bit_count) * sizeof(d1->color_table[0]));
 }
 
-static inline DWORD rgb_lookup_colortable(const dib_info *dst, BYTE r, BYTE g, BYTE b)
+/*
+ * To translate an RGB value into a colour table index Windows uses the 5 msbs of each component.
+ * We thus create a lookup table with 32^3 entries.
+ */
+struct rgb_lookup_colortable_ctx
 {
-    /* Windows reduces precision to 5 bits, probably in order to build some sort of lookup cache */
-    return rgb_to_pixel_colortable( dst, (r & ~7) + 4, (g & ~7) + 4, (b & ~7) + 4 );
+    const dib_info *dib;
+    BYTE map[32 * 32 * 32];
+    BYTE valid[32 * 32 * 32 / 8];
+};
+
+static void rgb_lookup_colortable_init(const dib_info *dib, struct rgb_lookup_colortable_ctx *ctx)
+{
+    ctx->dib = dib;
+    memset(ctx->valid, 0, sizeof(ctx->valid));
+}
+
+static inline BYTE rgb_lookup_colortable(struct rgb_lookup_colortable_ctx *ctx, DWORD r, DWORD g, DWORD b)
+{
+    DWORD pos = ((r & 0xf8) >> 3) | ((g & 0xf8) << 2) | ((b & 0xf8) << 7);
+
+    if (!(ctx->valid[pos / 8] & pixel_masks_1[pos & 7]))
+    {
+        ctx->valid[pos / 8] |= pixel_masks_1[pos & 7];
+        ctx->map[pos] = rgb_to_pixel_colortable(ctx->dib, (r & 0xf8) | 4, (g & 0xf8) | 4, (b & 0xf8) | 4);
+    }
+    return ctx->map[pos];
 }
 
 static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rect, BOOL dither)
 {
     BYTE *dst_start = get_pixel_ptr_8(dst, 0, 0), *dst_pixel;
     INT x, y, pad_size = ((dst->width + 3) & ~3) - (src_rect->right - src_rect->left);
+    struct rgb_lookup_colortable_ctx lookup_ctx;
     DWORD src_val;
 
     switch(src->bit_count)
@@ -3521,6 +3545,7 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
     {
         DWORD *src_start = get_pixel_ptr_32(src, src_rect->left, src_rect->top), *src_pixel;
 
+        rgb_lookup_colortable_init(dst, &lookup_ctx);
         if(src->funcs == &funcs_8888)
         {
             for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -3530,7 +3555,7 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = rgb_lookup_colortable(dst, src_val >> 16, src_val >> 8, src_val );
+                    *dst_pixel++ = rgb_lookup_colortable(&lookup_ctx, src_val >> 16, src_val >> 8, src_val );
                 }
                 if(pad_size) memset(dst_pixel, 0, pad_size);
                 dst_start += dst->stride;
@@ -3546,7 +3571,7 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = rgb_lookup_colortable(dst,
+                    *dst_pixel++ = rgb_lookup_colortable(&lookup_ctx,
                                                          src_val >> src->red_shift,
                                                          src_val >> src->green_shift,
                                                          src_val >> src->blue_shift );
@@ -3565,7 +3590,7 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = rgb_lookup_colortable(dst,
+                    *dst_pixel++ = rgb_lookup_colortable(&lookup_ctx,
                                                          get_field(src_val, src->red_shift, src->red_len),
                                                          get_field(src_val, src->green_shift, src->green_len),
                                                          get_field(src_val, src->blue_shift, src->blue_len));
@@ -3582,13 +3607,14 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
     {
         BYTE *src_start = get_pixel_ptr_24(src, src_rect->left, src_rect->top), *src_pixel;
 
+        rgb_lookup_colortable_init(dst, &lookup_ctx);
         for(y = src_rect->top; y < src_rect->bottom; y++)
         {
             dst_pixel = dst_start;
             src_pixel = src_start;
             for(x = src_rect->left; x < src_rect->right; x++, src_pixel += 3)
             {
-                *dst_pixel++ = rgb_lookup_colortable(dst, src_pixel[2], src_pixel[1], src_pixel[0] );
+                *dst_pixel++ = rgb_lookup_colortable(&lookup_ctx, src_pixel[2], src_pixel[1], src_pixel[0] );
             }
             if(pad_size) memset(dst_pixel, 0, pad_size);
             dst_start += dst->stride;
@@ -3600,6 +3626,7 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
     case 16:
     {
         WORD *src_start = get_pixel_ptr_16(src, src_rect->left, src_rect->top), *src_pixel;
+        rgb_lookup_colortable_init(dst, &lookup_ctx);
         if(src->funcs == &funcs_555)
         {
             for(y = src_rect->top; y < src_rect->bottom; y++)
@@ -3609,7 +3636,7 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = rgb_lookup_colortable(dst,
+                    *dst_pixel++ = rgb_lookup_colortable(&lookup_ctx,
                                                          ((src_val >> 7) & 0xf8) | ((src_val >> 12) & 0x07),
                                                          ((src_val >> 2) & 0xf8) | ((src_val >> 7) & 0x07),
                                                          ((src_val << 3) & 0xf8) | ((src_val >> 2) & 0x07) );
@@ -3628,7 +3655,7 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = rgb_lookup_colortable(dst,
+                    *dst_pixel++ = rgb_lookup_colortable(&lookup_ctx,
                                                          (((src_val >> src->red_shift)   << 3) & 0xf8) |
                                                          (((src_val >> src->red_shift)   >> 2) & 0x07),
                                                          (((src_val >> src->green_shift) << 3) & 0xf8) |
@@ -3650,7 +3677,7 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = rgb_lookup_colortable(dst,
+                    *dst_pixel++ = rgb_lookup_colortable(&lookup_ctx,
                                                          (((src_val >> src->red_shift)   << 3) & 0xf8) |
                                                          (((src_val >> src->red_shift)   >> 2) & 0x07),
                                                          (((src_val >> src->green_shift) << 2) & 0xfc) |
@@ -3672,7 +3699,7 @@ static void convert_to_8(dib_info *dst, const dib_info *src, const RECT *src_rec
                 for(x = src_rect->left; x < src_rect->right; x++)
                 {
                     src_val = *src_pixel++;
-                    *dst_pixel++ = rgb_lookup_colortable(dst,
+                    *dst_pixel++ = rgb_lookup_colortable(&lookup_ctx,
                                                          get_field(src_val, src->red_shift, src->red_len),
                                                          get_field(src_val, src->green_shift, src->green_len),
                                                          get_field(src_val, src->blue_shift, src->blue_len));
@@ -4802,8 +4829,10 @@ static void blend_rects_8(const dib_info *dst, int num, const RECT *rc,
                           const dib_info *src, const POINT *offset, BLENDFUNCTION blend)
 {
     const RGBQUAD *color_table = get_dib_color_table( dst );
+    struct rgb_lookup_colortable_ctx lookup_ctx;
     int i, x, y;
 
+    rgb_lookup_colortable_init( dst, &lookup_ctx );
     for (i = 0; i < num; i++, rc++)
     {
         DWORD *src_ptr = get_pixel_ptr_32( src, rc->left + offset->x, rc->top + offset->y );
@@ -4815,7 +4844,7 @@ static void blend_rects_8(const dib_info *dst, int num, const RECT *rc,
             {
                 RGBQUAD rgb = color_table[dst_ptr[x]];
                 DWORD val = blend_rgb( rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue, src_ptr[x], blend );
-                dst_ptr[x] = rgb_lookup_colortable( dst, val >> 16, val >> 8, val );
+                dst_ptr[x] = rgb_lookup_colortable( &lookup_ctx, val >> 16, val >> 8, val );
             }
         }
     }
@@ -4825,8 +4854,10 @@ static void blend_rects_4(const dib_info *dst, int num, const RECT *rc,
                           const dib_info *src, const POINT *offset, BLENDFUNCTION blend)
 {
     const RGBQUAD *color_table = get_dib_color_table( dst );
+    struct rgb_lookup_colortable_ctx lookup_ctx;
     int i, j, x, y;
 
+    rgb_lookup_colortable_init( dst, &lookup_ctx );
     for (i = 0; i < num; i++, rc++)
     {
         DWORD *src_ptr = get_pixel_ptr_32( src, rc->left + offset->x, rc->top + offset->y );
@@ -4839,7 +4870,7 @@ static void blend_rects_4(const dib_info *dst, int num, const RECT *rc,
                 DWORD val = ((x & 1) ? dst_ptr[x / 2] : (dst_ptr[x / 2] >> 4)) & 0x0f;
                 RGBQUAD rgb = color_table[val];
                 val = blend_rgb( rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue, src_ptr[j], blend );
-                val = rgb_lookup_colortable( dst, val >> 16, val >> 8, val );
+                val = rgb_lookup_colortable( &lookup_ctx, val >> 16, val >> 8, val );
                 if (x & 1)
                     dst_ptr[x / 2] = val | (dst_ptr[x / 2] & 0xf0);
                 else
