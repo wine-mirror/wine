@@ -587,7 +587,7 @@ static void device_reset_viewport_state(struct d3d9_device *device)
     struct wined3d_viewport vp;
     RECT rect;
 
-    wined3d_device_get_viewports(device->wined3d_device, NULL, &vp);
+    wined3d_device_context_get_viewports(device->immediate_context, NULL, &vp);
     wined3d_stateblock_set_viewport(device->state, &vp);
     wined3d_device_get_scissor_rects(device->wined3d_device, NULL, &rect);
     wined3d_stateblock_set_scissor_rect(device->state, &rect);

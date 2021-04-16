@@ -2233,7 +2233,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSGetState(ID3D11DeviceCon
 static void STDMETHODCALLTYPE d3d11_immediate_context_RSGetViewports(ID3D11DeviceContext1 *iface,
         UINT *viewport_count, D3D11_VIEWPORT *viewports)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext1(iface);
     struct wined3d_viewport wined3d_vp[WINED3D_MAX_VIEWPORTS];
     unsigned int actual_count = ARRAY_SIZE(wined3d_vp), i;
 
@@ -2243,7 +2243,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSGetViewports(ID3D11Devic
         return;
 
     wined3d_mutex_lock();
-    wined3d_device_get_viewports(device->wined3d_device, &actual_count, viewports ? wined3d_vp : NULL);
+    wined3d_device_context_get_viewports(context->wined3d_context, &actual_count, viewports ? wined3d_vp : NULL);
     wined3d_mutex_unlock();
 
     if (!viewports)
@@ -5526,7 +5526,8 @@ static void STDMETHODCALLTYPE d3d10_device_RSGetViewports(ID3D10Device1 *iface,
         return;
 
     wined3d_mutex_lock();
-    wined3d_device_get_viewports(device->wined3d_device, &actual_count, viewports ? wined3d_vp : NULL);
+    wined3d_device_context_get_viewports(device->immediate_context.wined3d_context,
+            &actual_count, viewports ? wined3d_vp : NULL);
     wined3d_mutex_unlock();
 
     if (!viewports)

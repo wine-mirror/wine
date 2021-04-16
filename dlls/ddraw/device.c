@@ -6972,7 +6972,7 @@ static void ddraw_reset_viewport_state(struct ddraw *ddraw)
     struct wined3d_viewport vp;
     RECT rect;
 
-    wined3d_device_get_viewports(ddraw->wined3d_device, NULL, &vp);
+    wined3d_device_context_get_viewports(ddraw->immediate_context, NULL, &vp);
     wined3d_stateblock_set_viewport(ddraw->state, &vp);
     wined3d_device_get_scissor_rects(ddraw->wined3d_device, NULL, &rect);
     wined3d_stateblock_set_scissor_rect(ddraw->state, &rect);

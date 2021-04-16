@@ -1560,13 +1560,13 @@ void CDECL wined3d_device_set_viewports(struct wined3d_device *device, unsigned 
     wined3d_device_context_set_viewports(&device->cs->c, viewport_count, viewports);
 }
 
-void CDECL wined3d_device_get_viewports(const struct wined3d_device *device, unsigned int *viewport_count,
-        struct wined3d_viewport *viewports)
+void CDECL wined3d_device_context_get_viewports(const struct wined3d_device_context *context,
+        unsigned int *viewport_count, struct wined3d_viewport *viewports)
 {
-    const struct wined3d_state *state = device->cs->c.state;
+    const struct wined3d_state *state = context->state;
     unsigned int count;
 
-    TRACE("device %p, viewport_count %p, viewports %p.\n", device, viewport_count, viewports);
+    TRACE("context %p, viewport_count %p, viewports %p.\n", context, viewport_count, viewports);
 
     count = viewport_count ? min(*viewport_count, state->viewport_count) : 1;
     if (count && viewports)
@@ -3536,7 +3536,7 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
     TRACE("%.8e %.8e %.8e %.8e\n", world_mat._41, world_mat._42, world_mat._43, world_mat._44);
 
     /* Get the viewport */
-    wined3d_device_get_viewports(device, NULL, &vp);
+    wined3d_device_context_get_viewports(&device->cs->c, NULL, &vp);
     TRACE("viewport x %.8e, y %.8e, width %.8e, height %.8e, min_z %.8e, max_z %.8e.\n",
           vp.x, vp.y, vp.width, vp.height, vp.min_z, vp.max_z);
 

@@ -2435,8 +2435,6 @@ struct wined3d_unordered_access_view * __cdecl wined3d_device_get_unordered_acce
         const struct wined3d_device *device, unsigned int idx);
 struct wined3d_vertex_declaration * __cdecl wined3d_device_get_vertex_declaration(const struct wined3d_device *device);
 struct wined3d_shader * __cdecl wined3d_device_get_vertex_shader(const struct wined3d_device *device);
-void __cdecl wined3d_device_get_viewports(const struct wined3d_device *device, unsigned int *viewport_count,
-        struct wined3d_viewport *viewports);
 struct wined3d_shader_resource_view * __cdecl wined3d_device_get_vs_resource_view(const struct wined3d_device *device,
         UINT idx);
 struct wined3d_sampler * __cdecl wined3d_device_get_vs_sampler(const struct wined3d_device *device, UINT idx);
@@ -2570,6 +2568,8 @@ struct wined3d_rasterizer_state * __cdecl wined3d_device_context_get_rasterizer_
         struct wined3d_device_context *context);
 struct wined3d_shader * __cdecl wined3d_device_context_get_shader(const struct wined3d_device_context *context,
         enum wined3d_shader_type type);
+void __cdecl wined3d_device_context_get_viewports(const struct wined3d_device_context *context,
+        unsigned int *viewport_count, struct wined3d_viewport *viewports);
 void __cdecl wined3d_device_context_issue_query(struct wined3d_device_context *context,
         struct wined3d_query *query, unsigned int flags);
 HRESULT __cdecl wined3d_device_context_map(struct wined3d_device_context *context,
