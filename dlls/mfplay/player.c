@@ -1571,6 +1571,12 @@ static HRESULT WINAPI media_player_session_events_callback_Invoke(IMFAsyncCallba
 
             break;
 
+        case MEError:
+
+            media_event_create(player, MFP_EVENT_TYPE_ERROR, event_status, NULL, &event);
+
+            break;
+
         default:
             ;
     }
