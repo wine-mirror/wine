@@ -21,6 +21,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "winreg.h"
 #include "winuser.h"
 #include "initguid.h"
@@ -218,10 +219,8 @@ static BOOL WINAPI wine_vk_init(INIT_ONCE *once, void *param, void **context)
     ReleaseDC(0, hdc);
     if (!driver)
         ERR("Failed to load Wine graphics driver supporting Vulkan.\n");
-    else
-        unix_funcs = unix_vk_init(driver);
 
-    return driver != NULL;
+    return driver && !__wine_init_unix_lib(hinstance, DLL_PROCESS_ATTACH, driver, &unix_funcs);
 }
 
 static BOOL  wine_vk_init_once(void)
@@ -239,7 +238,7 @@ VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     if(!wine_vk_init_once())
         return VK_ERROR_INITIALIZATION_FAILED;
 
-    return unix_vkCreateInstance(create_info, allocator, instance);
+    return unix_funcs->p_vkCreateInstance(create_info, allocator, instance);
 }
 
 VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_name,
@@ -259,7 +258,7 @@ VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_na
         return VK_SUCCESS;
     }
 
-    return unix_vkEnumerateInstanceExtensionProperties(layer_name, count, properties);
+    return unix_funcs->p_vkEnumerateInstanceExtensionProperties(layer_name, count, properties);
 }
 
 VkResult WINAPI wine_vkEnumerateInstanceVersion(uint32_t *version)
@@ -272,7 +271,7 @@ VkResult WINAPI wine_vkEnumerateInstanceVersion(uint32_t *version)
         return VK_SUCCESS;
     }
 
-    return unix_vkEnumerateInstanceVersion(version);
+    return unix_funcs->p_vkEnumerateInstanceVersion(version);
 }
 
 static HANDLE get_display_device_init_mutex(void)

@@ -17,11 +17,17 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include "config.h"
 #include <time.h>
 #include <stdarg.h>
 #include <stdlib.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
@@ -448,11 +454,14 @@ static void wine_vk_device_free(struct VkDevice_T *device)
     free(device);
 }
 
-const struct unix_funcs *unix_vk_init(const struct vulkan_funcs *driver)
+NTSTATUS CDECL __wine_init_unix_lib(HMODULE module, DWORD reason, const void *driver, void *ptr_out)
 {
+    if (reason != DLL_PROCESS_ATTACH) return STATUS_SUCCESS;
+
     vk_funcs = driver;
     p_vkEnumerateInstanceVersion = vk_funcs->p_vkGetInstanceProcAddr(NULL, "vkEnumerateInstanceVersion");
-    return &loader_funcs;
+    *(const struct unix_funcs **)ptr_out = &loader_funcs;
+    return STATUS_SUCCESS;
 }
 
 /* Helper function for converting between win32 and host compatible VkInstanceCreateInfo.

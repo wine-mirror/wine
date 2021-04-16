@@ -2263,6 +2263,11 @@ class VkGenerator(object):
 
     def generate_thunks_c(self, f, prefix):
         self._generate_copyright(f)
+
+        f.write("#if 0\n")
+        f.write("#pragma makedep unix\n")
+        f.write("#endif\n\n")
+
         f.write("#include \"config.h\"\n")
         f.write("#include \"wine/port.h\"\n\n")
 
