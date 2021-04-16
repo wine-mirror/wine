@@ -643,6 +643,9 @@ static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
 
         default:
             FIXME("Unhandled function %08x\n", irpsp->MinorFunction);
+            /* fall through */
+
+        case IRP_MN_QUERY_DEVICE_RELATIONS:
             break;
     }
 
