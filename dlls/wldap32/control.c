@@ -152,7 +152,7 @@ ULONG CDECL ldap_create_sort_controlW( WLDAP32_LDAP *ld, LDAPSortKeyW **sortkey,
 
     if (!ld || !sortkey || !control) return WLDAP32_LDAP_PARAM_ERROR;
 
-    if (sortkey && !(sortkeyU = sortkeyarrayWtoU( sortkey ))) return WLDAP32_LDAP_NO_MEMORY;
+    if (!(sortkeyU = sortkeyarrayWtoU( sortkey ))) return WLDAP32_LDAP_NO_MEMORY;
 
     ret = map_error( ldap_funcs->ldap_create_sort_control( ld->ld, sortkeyU, critical, &controlU ) );
     if (ret == WLDAP32_LDAP_SUCCESS)
