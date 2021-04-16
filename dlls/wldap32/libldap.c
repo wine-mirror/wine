@@ -414,6 +414,11 @@ void * CDECL wrap_ldap_first_reference( void *ld, void *chain )
     return ldap_first_reference( ld, chain );
 }
 
+int CDECL wrap_ldap_initialize( void **ld, const char *url )
+{
+    return ldap_initialize( (LDAP **)ld, url );
+}
+
 void CDECL wrap_ldap_memfree( void *ptr )
 {
     return ldap_memfree( ptr );
@@ -502,6 +507,16 @@ int CDECL wrap_ldap_search_ext_s( void *ld, const char *base, int scope, const c
                               (LDAPMessage **)result );
 }
 
+int CDECL wrap_ldap_set_option( void *ld, int option, const void *value )
+{
+    return ldap_set_option( ld, option, value );
+}
+
+int CDECL wrap_ldap_start_tls_s( void *ld, LDAPControlU **serverctrls, LDAPControlU **clientctrls )
+{
+    return ldap_start_tls_s( ld, (LDAPControl **)serverctrls, (LDAPControl **)clientctrls );
+}
+
 int CDECL wrap_ldap_unbind_ext( void *ld, LDAPControlU **serverctrls, LDAPControlU **clientctrls )
 {
     return ldap_unbind_ext( ld, (LDAPControl **)serverctrls, (LDAPControl **)clientctrls );
@@ -548,6 +563,7 @@ static const struct ldap_funcs funcs =
     wrap_ldap_extended_operation,
     wrap_ldap_extended_operation_s,
     wrap_ldap_get_dn,
+    wrap_ldap_initialize,
     wrap_ldap_first_attribute,
     wrap_ldap_first_entry,
     wrap_ldap_first_reference,
@@ -564,6 +580,8 @@ static const struct ldap_funcs funcs =
     wrap_ldap_sasl_interactive_bind_s,
     wrap_ldap_search_ext,
     wrap_ldap_search_ext_s,
+    wrap_ldap_set_option,
+    wrap_ldap_start_tls_s,
     wrap_ldap_unbind_ext,
     wrap_ldap_unbind_ext_s,
     wrap_ldap_value_free_len,

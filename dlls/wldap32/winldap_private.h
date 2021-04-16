@@ -29,6 +29,10 @@
 
 #define WLDAP32_LBER_ERROR (~0L)
 
+#define WLDAP32_LDAP_VERSION1   1
+#define WLDAP32_LDAP_VERSION2   2
+#define WLDAP32_LDAP_VERSION3   3
+
 typedef enum {
     WLDAP32_LDAP_SUCCESS                 =   0x00,
     WLDAP32_LDAP_UNWILLING_TO_PERFORM    =   0x35,
