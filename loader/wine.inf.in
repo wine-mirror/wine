@@ -2641,6 +2641,11 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,regasm.exe,-
 11,,servicemodelreg.exe,-
 11,,presentationfontcache.exe,-
+; some programs are 64-bit only
+11,,conhost.exe,-
+11,,services.exe,-
+11,,spoolsv.exe,-
+11,,winemenubuilder.exe,-
 ; registration order matters for these
 11,,msxml.dll
 11,,msxml2.dll
