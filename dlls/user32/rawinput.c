@@ -674,7 +674,7 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE handle, UINT command, void *data, UINT
         }
         else
         {
-            *data_size = lstrlenW(device->detail->DevicePath) + 1;
+            *data_size = wcslen(device->detail->DevicePath) + 1;
             to_copy = device->detail->DevicePath;
         }
         to_copy_bytes = *data_size * sizeof(WCHAR);
