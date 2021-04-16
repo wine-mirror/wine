@@ -52,7 +52,7 @@ C_ASSERT( sizeof(LDAPSortKeyU) == sizeof(LDAPSortKey) );
 C_ASSERT( sizeof(LDAPVLVInfoU) == sizeof(LDAPVLVInfo) );
 C_ASSERT( sizeof(struct timevalU) == sizeof(struct timeval) );
 
-static LDAPMod *nullattrs[] = { NULL };
+static LDAPMod *nullmods[] = { NULL };
 
 static const struct ldap_callbacks *callbacks;
 
@@ -305,14 +305,14 @@ int CDECL wrap_ldap_add_ext( void *ld, const char *dn, LDAPModU **attrs, LDAPCon
                              LDAPControlU **clientctrls, ULONG *msg )
 {
     int dummy;
-    return ldap_add_ext( ld, dn ? dn : "", attrs ? (LDAPMod **)attrs : nullattrs, (LDAPControl **)serverctrls,
+    return ldap_add_ext( ld, dn ? dn : "", attrs ? (LDAPMod **)attrs : nullmods, (LDAPControl **)serverctrls,
                          (LDAPControl **)clientctrls, msg ? (int *)msg : &dummy );
 }
 
 int CDECL wrap_ldap_add_ext_s( void *ld, const char *dn, LDAPModU **attrs, LDAPControlU **serverctrls,
                                LDAPControlU **clientctrls )
 {
-    return ldap_add_ext_s( ld, dn ? dn : "", attrs ? (LDAPMod **)attrs : nullattrs, (LDAPControl **)serverctrls,
+    return ldap_add_ext_s( ld, dn ? dn : "", attrs ? (LDAPMod **)attrs : nullmods, (LDAPControl **)serverctrls,
                            (LDAPControl **)clientctrls );
 }
 
@@ -427,6 +427,21 @@ void CDECL wrap_ldap_memfree( void *ptr )
 void CDECL wrap_ldap_memvfree( void **ptr )
 {
     ldap_memvfree( ptr );
+}
+
+int CDECL wrap_ldap_modify_ext( void *ld, const char *dn, LDAPModU **mods, LDAPControlU **serverctrls,
+                                LDAPControlU **clientctrls, ULONG *msg )
+{
+    int dummy;
+    return ldap_modify_ext( ld, dn ? dn : "", mods ? (LDAPMod **)mods : nullmods, (LDAPControl **)serverctrls,
+                            (LDAPControl **)clientctrls, msg ? (int *)msg : &dummy );
+}
+
+int CDECL wrap_ldap_modify_ext_s( void *ld, const char *dn, LDAPModU **mods, LDAPControlU **serverctrls,
+                                  LDAPControlU **clientctrls )
+{
+    return ldap_modify_ext_s( ld, dn ? dn : "", mods ? (LDAPMod **)mods : nullmods, (LDAPControl **)serverctrls,
+                              (LDAPControl **)clientctrls );
 }
 
 int CDECL wrap_ldap_msgfree( void *msg )
@@ -569,6 +584,8 @@ static const struct ldap_funcs funcs =
     wrap_ldap_first_reference,
     wrap_ldap_memfree,
     wrap_ldap_memvfree,
+    wrap_ldap_modify_ext,
+    wrap_ldap_modify_ext_s,
     wrap_ldap_msgfree,
     wrap_ldap_next_attribute,
     wrap_ldap_next_entry,

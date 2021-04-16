@@ -125,6 +125,10 @@ extern void * CDECL wrap_ldap_first_entry(void *, void *) DECLSPEC_HIDDEN;
 extern void * CDECL wrap_ldap_first_reference(void *, void *) DECLSPEC_HIDDEN;
 extern void CDECL wrap_ldap_memfree(void *) DECLSPEC_HIDDEN;
 extern void CDECL wrap_ldap_memvfree(void **) DECLSPEC_HIDDEN;
+extern int CDECL wrap_ldap_modify_ext(void *, const char *, LDAPModU **, LDAPControlU **, LDAPControlU **,
+                                      ULONG *) DECLSPEC_HIDDEN;
+extern int CDECL wrap_ldap_modify_ext_s(void *, const char *, LDAPModU **, LDAPControlU **,
+                                        LDAPControlU **) DECLSPEC_HIDDEN;
 extern int CDECL wrap_ldap_msgfree(void *) DECLSPEC_HIDDEN;
 extern char * CDECL wrap_ldap_next_attribute(void *, void *, void *) DECLSPEC_HIDDEN;
 extern void * CDECL wrap_ldap_next_entry(void *, void *) DECLSPEC_HIDDEN;
@@ -190,6 +194,8 @@ struct ldap_funcs
     void * (CDECL *ldap_first_reference)(void *, void *);
     void (CDECL *ldap_memfree)(void *);
     void (CDECL *ldap_memvfree)(void **);
+    int (CDECL *ldap_modify_ext)(void *, const char *, LDAPModU **, LDAPControlU **, LDAPControlU **, ULONG *);
+    int (CDECL *ldap_modify_ext_s)(void *, const char *, LDAPModU **, LDAPControlU **, LDAPControlU **);
     int (CDECL *ldap_msgfree)(void *);
     char * (CDECL *ldap_next_attribute)(void *, void *, void *);
     void * (CDECL *ldap_next_entry)(void *, void *);
