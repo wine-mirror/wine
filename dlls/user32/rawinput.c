@@ -44,7 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(rawinput);
 
 struct device
 {
-    WCHAR *path;
+    SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail;
     HANDLE file;
     RID_DEVICE_INFO info;
     PHIDP_PREPARSED_DATA data;
@@ -94,7 +94,6 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
     SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail;
     struct device *device;
     HANDLE file;
-    WCHAR *path;
     DWORD size;
 
     SetupDiGetDeviceInterfaceDetailW(set, iface, NULL, 0, &size, NULL);
@@ -113,20 +112,12 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
 
     TRACE("Found HID device %s.\n", debugstr_w(detail->DevicePath));
 
-    if (!(path = heap_strdupW(detail->DevicePath)))
-    {
-        ERR("Failed to allocate memory.\n");
-        heap_free(detail);
-        return NULL;
-    }
-    heap_free(detail);
-
-    file = CreateFileW(path, GENERIC_READ | GENERIC_WRITE,
+    file = CreateFileW(detail->DevicePath, GENERIC_READ | GENERIC_WRITE,
             FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
     if (file == INVALID_HANDLE_VALUE)
     {
-        ERR("Failed to open device file %s, error %u.\n", debugstr_w(path), GetLastError());
-        heap_free(path);
+        ERR("Failed to open device file %s, error %u.\n", debugstr_w(detail->DevicePath), GetLastError());
+        heap_free(detail);
         return NULL;
     }
 
@@ -135,12 +126,12 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
     {
         ERR("Failed to allocate memory.\n");
         CloseHandle(file);
-        heap_free(path);
+        heap_free(detail);
         return NULL;
     }
 
     device = &rawinput_devices[rawinput_devices_count++];
-    device->path = path;
+    device->detail = detail;
     device->file = file;
     device->info.cbSize = sizeof(RID_DEVICE_INFO);
 
@@ -171,7 +162,7 @@ static void find_devices(void)
     for (idx = 0; idx < rawinput_devices_count; ++idx)
     {
         CloseHandle(rawinput_devices[idx].file);
-        heap_free(rawinput_devices[idx].path);
+        heap_free(rawinput_devices[idx].detail);
     }
     rawinput_devices_count = 0;
 
@@ -681,8 +672,8 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE handle, UINT command, void *data, UINT
         }
         else
         {
-            *data_size = lstrlenW(device->path) + 1;
-            to_copy = device->path;
+            *data_size = lstrlenW(device->detail->DevicePath) + 1;
+            to_copy = device->detail->DevicePath;
         }
         to_copy_bytes = *data_size * sizeof(WCHAR);
         break;
