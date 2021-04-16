@@ -5,6 +5,7 @@ EXTRALIBS = $(PTHREAD_LIBS)
 
 C_SRCS = \
 	loader.c \
+	loader_thunks.c \
 	vulkan.c \
 	vulkan_thunks.c
 

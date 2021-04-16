@@ -351,7 +351,7 @@ void WINAPI wine_vkGetPhysicalDeviceProperties2(VkPhysicalDevice phys_dev,
 {
     TRACE("%p, %p\n", phys_dev, properties2);
 
-    thunk_vkGetPhysicalDeviceProperties2(phys_dev, properties2);
+    unix_funcs->p_vkGetPhysicalDeviceProperties2(phys_dev, properties2);
     fill_luid_property(properties2);
 }
 
@@ -360,7 +360,7 @@ void WINAPI wine_vkGetPhysicalDeviceProperties2KHR(VkPhysicalDevice phys_dev,
 {
     TRACE("%p, %p\n", phys_dev, properties2);
 
-    thunk_vkGetPhysicalDeviceProperties2KHR(phys_dev, properties2);
+    unix_funcs->p_vkGetPhysicalDeviceProperties2KHR(phys_dev, properties2);
     fill_luid_property(properties2);
 }
 
