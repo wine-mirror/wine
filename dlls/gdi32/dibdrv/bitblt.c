@@ -584,17 +584,15 @@ static void mask_rect( dib_info *dst, const RECT *dst_rect, const dib_info *src,
 static DWORD blend_rect( dib_info *dst, const RECT *dst_rect, const dib_info *src, const RECT *src_rect,
                          HRGN clip, BLENDFUNCTION blend )
 {
-    POINT origin;
+    POINT offset;
     struct clipped_rects clipped_rects;
-    int i;
 
     if (!get_clipped_rects( dst, dst_rect, clip, &clipped_rects )) return ERROR_SUCCESS;
-    for (i = 0; i < clipped_rects.count; i++)
-    {
-        origin.x = src_rect->left + clipped_rects.rects[i].left - dst_rect->left;
-        origin.y = src_rect->top  + clipped_rects.rects[i].top  - dst_rect->top;
-        dst->funcs->blend_rect( dst, &clipped_rects.rects[i], src, &origin, blend );
-    }
+
+    offset.x = src_rect->left - dst_rect->left;
+    offset.y = src_rect->top  - dst_rect->top;
+    dst->funcs->blend_rects( dst, clipped_rects.count, clipped_rects.rects, src, &offset, blend );
+
     free_clipped_rects( &clipped_rects );
     return ERROR_SUCCESS;
 }

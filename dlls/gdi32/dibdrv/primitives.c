@@ -4651,60 +4651,140 @@ static inline DWORD blend_rgb( BYTE dst_r, BYTE dst_g, BYTE dst_b, DWORD src, BL
             blend_color( dst_r, src >> 16, blend.SourceConstantAlpha ) << 16);
 }
 
-static void blend_rect_8888(const dib_info *dst, const RECT *rc,
-                            const dib_info *src, const POINT *origin, BLENDFUNCTION blend)
+static void blend_rects_8888(const dib_info *dst, int num, const RECT *rc,
+                             const dib_info *src, const POINT *offset, BLENDFUNCTION blend)
 {
-    DWORD *src_ptr = get_pixel_ptr_32( src, origin->x, origin->y );
-    DWORD *dst_ptr = get_pixel_ptr_32( dst, rc->left, rc->top );
-    int x, y;
+    int i, x, y;
 
-    if (blend.AlphaFormat & AC_SRC_ALPHA)
+    for (i = 0; i < num; i++, rc++)
     {
-	if (blend.SourceConstantAlpha == 255)
-	    for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride / 4, src_ptr += src->stride / 4)
-		for (x = 0; x < rc->right - rc->left; x++)
-		    dst_ptr[x] = blend_argb( dst_ptr[x], src_ptr[x] );
+        DWORD *src_ptr = get_pixel_ptr_32( src, rc->left + offset->x, rc->top + offset->y );
+        DWORD *dst_ptr = get_pixel_ptr_32( dst, rc->left, rc->top );
+
+        if (blend.AlphaFormat & AC_SRC_ALPHA)
+        {
+            if (blend.SourceConstantAlpha == 255)
+                for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride / 4, src_ptr += src->stride / 4)
+                    for (x = 0; x < rc->right - rc->left; x++)
+                        dst_ptr[x] = blend_argb( dst_ptr[x], src_ptr[x] );
+            else
+                for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride / 4, src_ptr += src->stride / 4)
+                    for (x = 0; x < rc->right - rc->left; x++)
+                        dst_ptr[x] = blend_argb_alpha( dst_ptr[x], src_ptr[x], blend.SourceConstantAlpha );
+        }
+        else if (src->compression == BI_RGB)
+            for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride / 4, src_ptr += src->stride / 4)
+                for (x = 0; x < rc->right - rc->left; x++)
+                    dst_ptr[x] = blend_argb_constant_alpha( dst_ptr[x], src_ptr[x], blend.SourceConstantAlpha );
         else
-	    for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride / 4, src_ptr += src->stride / 4)
-		for (x = 0; x < rc->right - rc->left; x++)
-		    dst_ptr[x] = blend_argb_alpha( dst_ptr[x], src_ptr[x], blend.SourceConstantAlpha );
+            for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride / 4, src_ptr += src->stride / 4)
+                for (x = 0; x < rc->right - rc->left; x++)
+                    dst_ptr[x] = blend_argb_no_src_alpha( dst_ptr[x], src_ptr[x], blend.SourceConstantAlpha );
     }
-    else if (src->compression == BI_RGB)
-	for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride / 4, src_ptr += src->stride / 4)
-	    for (x = 0; x < rc->right - rc->left; x++)
-		dst_ptr[x] = blend_argb_constant_alpha( dst_ptr[x], src_ptr[x], blend.SourceConstantAlpha );
-    else
-	for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride / 4, src_ptr += src->stride / 4)
-	    for (x = 0; x < rc->right - rc->left; x++)
-		dst_ptr[x] = blend_argb_no_src_alpha( dst_ptr[x], src_ptr[x], blend.SourceConstantAlpha );
 }
 
-static void blend_rect_32(const dib_info *dst, const RECT *rc,
-                          const dib_info *src, const POINT *origin, BLENDFUNCTION blend)
+static void blend_rects_32(const dib_info *dst, int num, const RECT *rc,
+                           const dib_info *src, const POINT *offset, BLENDFUNCTION blend)
 {
-    DWORD *src_ptr = get_pixel_ptr_32( src, origin->x, origin->y );
-    DWORD *dst_ptr = get_pixel_ptr_32( dst, rc->left, rc->top );
-    int x, y;
+    int i, x, y;
 
-    if (dst->red_len == 8 && dst->green_len == 8 && dst->blue_len == 8)
+    for (i = 0; i < num; i++, rc++)
     {
-        for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride / 4, src_ptr += src->stride / 4)
+        DWORD *src_ptr = get_pixel_ptr_32( src, rc->left + offset->x, rc->top + offset->y );
+        DWORD *dst_ptr = get_pixel_ptr_32( dst, rc->left, rc->top );
+
+        if (dst->red_len == 8 && dst->green_len == 8 && dst->blue_len == 8)
         {
-            for (x = 0; x < rc->right - rc->left; x++)
+            for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride / 4, src_ptr += src->stride / 4)
             {
-                DWORD val = blend_rgb( dst_ptr[x] >> dst->red_shift,
-                                       dst_ptr[x] >> dst->green_shift,
-                                       dst_ptr[x] >> dst->blue_shift,
-                                       src_ptr[x], blend );
-                dst_ptr[x] = ((( val        & 0xff) << dst->blue_shift) |
-                              (((val >> 8)  & 0xff) << dst->green_shift) |
-                              (((val >> 16) & 0xff) << dst->red_shift));
+                for (x = 0; x < rc->right - rc->left; x++)
+                {
+                    DWORD val = blend_rgb( dst_ptr[x] >> dst->red_shift,
+                                           dst_ptr[x] >> dst->green_shift,
+                                           dst_ptr[x] >> dst->blue_shift,
+                                           src_ptr[x], blend );
+                    dst_ptr[x] = ((( val        & 0xff) << dst->blue_shift) |
+                                  (((val >> 8)  & 0xff) << dst->green_shift) |
+                                  (((val >> 16) & 0xff) << dst->red_shift));
+                }
+            }
+        }
+        else
+        {
+            for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride / 4, src_ptr += src->stride / 4)
+            {
+                for (x = 0; x < rc->right - rc->left; x++)
+                {
+                    DWORD val = blend_rgb( get_field( dst_ptr[x], dst->red_shift, dst->red_len ),
+                                           get_field( dst_ptr[x], dst->green_shift, dst->green_len ),
+                                           get_field( dst_ptr[x], dst->blue_shift, dst->blue_len ),
+                                           src_ptr[x], blend );
+                    dst_ptr[x] = rgb_to_pixel_masks( dst, val >> 16, val >> 8, val );
+                }
             }
         }
     }
-    else
+}
+
+static void blend_rects_24(const dib_info *dst, int num, const RECT *rc,
+                           const dib_info *src, const POINT *offset, BLENDFUNCTION blend)
+{
+    int i, x, y;
+
+    for (i = 0; i < num; i++, rc++)
     {
-        for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride / 4, src_ptr += src->stride / 4)
+        DWORD *src_ptr = get_pixel_ptr_32( src, rc->left + offset->x, rc->top + offset->y );
+        BYTE *dst_ptr = get_pixel_ptr_24( dst, rc->left, rc->top );
+
+        for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride, src_ptr += src->stride / 4)
+        {
+            for (x = 0; x < rc->right - rc->left; x++)
+            {
+                DWORD val = blend_rgb( dst_ptr[x * 3 + 2], dst_ptr[x * 3 + 1], dst_ptr[x * 3],
+                                       src_ptr[x], blend );
+                dst_ptr[x * 3]     = val;
+                dst_ptr[x * 3 + 1] = val >> 8;
+                dst_ptr[x * 3 + 2] = val >> 16;
+            }
+        }
+    }
+}
+
+static void blend_rects_555(const dib_info *dst, int num, const RECT *rc,
+                            const dib_info *src, const POINT *offset, BLENDFUNCTION blend)
+{
+    int i, x, y;
+
+    for (i = 0; i < num; i++, rc++)
+    {
+        DWORD *src_ptr = get_pixel_ptr_32( src, rc->left + offset->x, rc->top + offset->y );
+        WORD *dst_ptr = get_pixel_ptr_16( dst, rc->left, rc->top );
+
+        for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride / 2, src_ptr += src->stride / 4)
+        {
+            for (x = 0; x < rc->right - rc->left; x++)
+            {
+                DWORD val = blend_rgb( ((dst_ptr[x] >> 7) & 0xf8) | ((dst_ptr[x] >> 12) & 0x07),
+                                       ((dst_ptr[x] >> 2) & 0xf8) | ((dst_ptr[x] >>  7) & 0x07),
+                                       ((dst_ptr[x] << 3) & 0xf8) | ((dst_ptr[x] >>  2) & 0x07),
+                                       src_ptr[x], blend );
+                dst_ptr[x] = ((val >> 9) & 0x7c00) | ((val >> 6) & 0x03e0) | ((val >> 3) & 0x001f);
+            }
+        }
+    }
+}
+
+static void blend_rects_16(const dib_info *dst, int num, const RECT *rc,
+                           const dib_info *src, const POINT *offset, BLENDFUNCTION blend)
+{
+    int i, x, y;
+
+    for (i = 0; i < num; i++, rc++)
+    {
+        DWORD *src_ptr = get_pixel_ptr_32( src, rc->left + offset->x, rc->top + offset->y );
+        WORD *dst_ptr = get_pixel_ptr_16( dst, rc->left, rc->top );
+
+        for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride / 2, src_ptr += src->stride / 4)
         {
             for (x = 0; x < rc->right - rc->left; x++)
             {
@@ -4718,132 +4798,84 @@ static void blend_rect_32(const dib_info *dst, const RECT *rc,
     }
 }
 
-static void blend_rect_24(const dib_info *dst, const RECT *rc,
-                          const dib_info *src, const POINT *origin, BLENDFUNCTION blend)
-{
-    DWORD *src_ptr = get_pixel_ptr_32( src, origin->x, origin->y );
-    BYTE *dst_ptr = get_pixel_ptr_24( dst, rc->left, rc->top );
-    int x, y;
-
-    for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride, src_ptr += src->stride / 4)
-    {
-        for (x = 0; x < rc->right - rc->left; x++)
-        {
-            DWORD val = blend_rgb( dst_ptr[x * 3 + 2], dst_ptr[x * 3 + 1], dst_ptr[x * 3],
-                                   src_ptr[x], blend );
-            dst_ptr[x * 3]     = val;
-            dst_ptr[x * 3 + 1] = val >> 8;
-            dst_ptr[x * 3 + 2] = val >> 16;
-        }
-    }
-}
-
-static void blend_rect_555(const dib_info *dst, const RECT *rc,
-                           const dib_info *src, const POINT *origin, BLENDFUNCTION blend)
-{
-    DWORD *src_ptr = get_pixel_ptr_32( src, origin->x, origin->y );
-    WORD *dst_ptr = get_pixel_ptr_16( dst, rc->left, rc->top );
-    int x, y;
-
-    for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride / 2, src_ptr += src->stride / 4)
-    {
-        for (x = 0; x < rc->right - rc->left; x++)
-        {
-            DWORD val = blend_rgb( ((dst_ptr[x] >> 7) & 0xf8) | ((dst_ptr[x] >> 12) & 0x07),
-                                   ((dst_ptr[x] >> 2) & 0xf8) | ((dst_ptr[x] >>  7) & 0x07),
-                                   ((dst_ptr[x] << 3) & 0xf8) | ((dst_ptr[x] >>  2) & 0x07),
-                                   src_ptr[x], blend );
-            dst_ptr[x] = ((val >> 9) & 0x7c00) | ((val >> 6) & 0x03e0) | ((val >> 3) & 0x001f);
-        }
-    }
-}
-
-static void blend_rect_16(const dib_info *dst, const RECT *rc,
-                          const dib_info *src, const POINT *origin, BLENDFUNCTION blend)
-{
-    DWORD *src_ptr = get_pixel_ptr_32( src, origin->x, origin->y );
-    WORD *dst_ptr = get_pixel_ptr_16( dst, rc->left, rc->top );
-    int x, y;
-
-    for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride / 2, src_ptr += src->stride / 4)
-    {
-        for (x = 0; x < rc->right - rc->left; x++)
-        {
-            DWORD val = blend_rgb( get_field( dst_ptr[x], dst->red_shift, dst->red_len ),
-                                   get_field( dst_ptr[x], dst->green_shift, dst->green_len ),
-                                   get_field( dst_ptr[x], dst->blue_shift, dst->blue_len ),
-                                   src_ptr[x], blend );
-            dst_ptr[x] = rgb_to_pixel_masks( dst, val >> 16, val >> 8, val );
-        }
-    }
-}
-
-static void blend_rect_8(const dib_info *dst, const RECT *rc,
-                         const dib_info *src, const POINT *origin, BLENDFUNCTION blend)
+static void blend_rects_8(const dib_info *dst, int num, const RECT *rc,
+                          const dib_info *src, const POINT *offset, BLENDFUNCTION blend)
 {
     const RGBQUAD *color_table = get_dib_color_table( dst );
-    DWORD *src_ptr = get_pixel_ptr_32( src, origin->x, origin->y );
-    BYTE *dst_ptr = get_pixel_ptr_8( dst, rc->left, rc->top );
-    int x, y;
-
-    for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride, src_ptr += src->stride / 4)
-    {
-        for (x = 0; x < rc->right - rc->left; x++)
-        {
-            RGBQUAD rgb = color_table[dst_ptr[x]];
-            DWORD val = blend_rgb( rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue, src_ptr[x], blend );
-            dst_ptr[x] = rgb_lookup_colortable( dst, val >> 16, val >> 8, val );
-        }
-    }
-}
-
-static void blend_rect_4(const dib_info *dst, const RECT *rc,
-                         const dib_info *src, const POINT *origin, BLENDFUNCTION blend)
-{
-    const RGBQUAD *color_table = get_dib_color_table( dst );
-    DWORD *src_ptr = get_pixel_ptr_32( src, origin->x, origin->y );
-    BYTE *dst_ptr = get_pixel_ptr_4( dst, rc->left, rc->top );
     int i, x, y;
 
-    for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride, src_ptr += src->stride / 4)
+    for (i = 0; i < num; i++, rc++)
     {
-        for (i = 0, x = (dst->rect.left + rc->left) & 1; i < rc->right - rc->left; i++, x++)
+        DWORD *src_ptr = get_pixel_ptr_32( src, rc->left + offset->x, rc->top + offset->y );
+        BYTE *dst_ptr = get_pixel_ptr_8( dst, rc->left, rc->top );
+
+        for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride, src_ptr += src->stride / 4)
         {
-            DWORD val = ((x & 1) ? dst_ptr[x / 2] : (dst_ptr[x / 2] >> 4)) & 0x0f;
-            RGBQUAD rgb = color_table[val];
-            val = blend_rgb( rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue, src_ptr[i], blend );
-            val = rgb_lookup_colortable( dst, val >> 16, val >> 8, val );
-            if (x & 1)
-                dst_ptr[x / 2] = val | (dst_ptr[x / 2] & 0xf0);
-            else
-                dst_ptr[x / 2] = (val << 4) | (dst_ptr[x / 2] & 0x0f);
+            for (x = 0; x < rc->right - rc->left; x++)
+            {
+                RGBQUAD rgb = color_table[dst_ptr[x]];
+                DWORD val = blend_rgb( rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue, src_ptr[x], blend );
+                dst_ptr[x] = rgb_lookup_colortable( dst, val >> 16, val >> 8, val );
+            }
         }
     }
 }
 
-static void blend_rect_1(const dib_info *dst, const RECT *rc,
-                         const dib_info *src, const POINT *origin, BLENDFUNCTION blend)
+static void blend_rects_4(const dib_info *dst, int num, const RECT *rc,
+                          const dib_info *src, const POINT *offset, BLENDFUNCTION blend)
 {
     const RGBQUAD *color_table = get_dib_color_table( dst );
-    DWORD *src_ptr = get_pixel_ptr_32( src, origin->x, origin->y );
-    BYTE *dst_ptr = get_pixel_ptr_1( dst, rc->left, rc->top );
-    int i, x, y;
+    int i, j, x, y;
 
-    for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride, src_ptr += src->stride / 4)
+    for (i = 0; i < num; i++, rc++)
     {
-        for (i = 0, x = (dst->rect.left + rc->left) & 7; i < rc->right - rc->left; i++, x++)
+        DWORD *src_ptr = get_pixel_ptr_32( src, rc->left + offset->x, rc->top + offset->y );
+        BYTE *dst_ptr = get_pixel_ptr_4( dst, rc->left, rc->top );
+
+        for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride, src_ptr += src->stride / 4)
         {
-            DWORD val = (dst_ptr[x / 8] & pixel_masks_1[x % 8]) ? 1 : 0;
-            RGBQUAD rgb = color_table[val];
-            val = blend_rgb( rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue, src_ptr[i], blend );
-            val = rgb_to_pixel_colortable(dst, val >> 16, val >> 8, val) ? 0xff : 0;
-            dst_ptr[x / 8] = (dst_ptr[x / 8] & ~pixel_masks_1[x % 8]) | (val & pixel_masks_1[x % 8]);
+            for (j = 0, x = (dst->rect.left + rc->left) & 1; j < rc->right - rc->left; j++, x++)
+            {
+                DWORD val = ((x & 1) ? dst_ptr[x / 2] : (dst_ptr[x / 2] >> 4)) & 0x0f;
+                RGBQUAD rgb = color_table[val];
+                val = blend_rgb( rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue, src_ptr[j], blend );
+                val = rgb_lookup_colortable( dst, val >> 16, val >> 8, val );
+                if (x & 1)
+                    dst_ptr[x / 2] = val | (dst_ptr[x / 2] & 0xf0);
+                else
+                    dst_ptr[x / 2] = (val << 4) | (dst_ptr[x / 2] & 0x0f);
+            }
         }
     }
 }
 
-static void blend_rect_null(const dib_info *dst, const RECT *rc,
-                            const dib_info *src, const POINT *origin, BLENDFUNCTION blend)
+static void blend_rects_1(const dib_info *dst, int num, const RECT *rc,
+                          const dib_info *src, const POINT *offset, BLENDFUNCTION blend)
+{
+    const RGBQUAD *color_table = get_dib_color_table( dst );
+    int i, j, x, y;
+
+    for (i = 0; i < num; i++, rc++)
+    {
+        DWORD *src_ptr = get_pixel_ptr_32( src, rc->left + offset->x, rc->top + offset->y );
+        BYTE *dst_ptr = get_pixel_ptr_1( dst, rc->left, rc->top );
+
+        for (y = rc->top; y < rc->bottom; y++, dst_ptr += dst->stride, src_ptr += src->stride / 4)
+        {
+            for (j = 0, x = (dst->rect.left + rc->left) & 7; j < rc->right - rc->left; j++, x++)
+            {
+                DWORD val = (dst_ptr[x / 8] & pixel_masks_1[x % 8]) ? 1 : 0;
+                RGBQUAD rgb = color_table[val];
+                val = blend_rgb( rgb.rgbRed, rgb.rgbGreen, rgb.rgbBlue, src_ptr[j], blend );
+                val = rgb_to_pixel_colortable(dst, val >> 16, val >> 8, val) ? 0xff : 0;
+                dst_ptr[x / 8] = (dst_ptr[x / 8] & ~pixel_masks_1[x % 8]) | (val & pixel_masks_1[x % 8]);
+            }
+        }
+    }
+}
+
+static void blend_rects_null(const dib_info *dst, int num, const RECT *rc,
+                             const dib_info *src, const POINT *offset, BLENDFUNCTION blend)
 {
 }
 
@@ -7373,7 +7405,7 @@ const primitive_funcs funcs_8888 =
     solid_line_32,
     pattern_rects_32,
     copy_rect_32,
-    blend_rect_8888,
+    blend_rects_8888,
     gradient_rect_8888,
     mask_rect_32,
     draw_glyph_8888,
@@ -7394,7 +7426,7 @@ const primitive_funcs funcs_32 =
     solid_line_32,
     pattern_rects_32,
     copy_rect_32,
-    blend_rect_32,
+    blend_rects_32,
     gradient_rect_32,
     mask_rect_32,
     draw_glyph_32,
@@ -7415,7 +7447,7 @@ const primitive_funcs funcs_24 =
     solid_line_24,
     pattern_rects_24,
     copy_rect_24,
-    blend_rect_24,
+    blend_rects_24,
     gradient_rect_24,
     mask_rect_24,
     draw_glyph_24,
@@ -7436,7 +7468,7 @@ const primitive_funcs funcs_555 =
     solid_line_16,
     pattern_rects_16,
     copy_rect_16,
-    blend_rect_555,
+    blend_rects_555,
     gradient_rect_555,
     mask_rect_16,
     draw_glyph_555,
@@ -7457,7 +7489,7 @@ const primitive_funcs funcs_16 =
     solid_line_16,
     pattern_rects_16,
     copy_rect_16,
-    blend_rect_16,
+    blend_rects_16,
     gradient_rect_16,
     mask_rect_16,
     draw_glyph_16,
@@ -7478,7 +7510,7 @@ const primitive_funcs funcs_8 =
     solid_line_8,
     pattern_rects_8,
     copy_rect_8,
-    blend_rect_8,
+    blend_rects_8,
     gradient_rect_8,
     mask_rect_8,
     draw_glyph_8,
@@ -7499,7 +7531,7 @@ const primitive_funcs funcs_4 =
     solid_line_4,
     pattern_rects_4,
     copy_rect_4,
-    blend_rect_4,
+    blend_rects_4,
     gradient_rect_4,
     mask_rect_4,
     draw_glyph_4,
@@ -7520,7 +7552,7 @@ const primitive_funcs funcs_1 =
     solid_line_1,
     pattern_rects_1,
     copy_rect_1,
-    blend_rect_1,
+    blend_rects_1,
     gradient_rect_1,
     mask_rect_null,
     draw_glyph_1,
@@ -7541,7 +7573,7 @@ const primitive_funcs funcs_null =
     solid_line_null,
     pattern_rects_null,
     copy_rect_null,
-    blend_rect_null,
+    blend_rects_null,
     gradient_rect_null,
     mask_rect_null,
     draw_glyph_null,
