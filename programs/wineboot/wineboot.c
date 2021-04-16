@@ -1624,7 +1624,8 @@ int __cdecl main( int argc, char *argv[] )
 
         memset( &si, 0, sizeof(si) );
         si.cb = sizeof(si);
-        GetModuleFileNameW( 0, filename, MAX_PATH );
+        GetSystemDirectoryW( filename, MAX_PATH );
+        wcscat( filename, L"\\wineboot.exe" );
 
         Wow64DisableWow64FsRedirection( &redir );
         if (CreateProcessW( filename, GetCommandLineW(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi ))
