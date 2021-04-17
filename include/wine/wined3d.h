@@ -2564,6 +2564,8 @@ struct wined3d_depth_stencil_state * __cdecl wined3d_device_context_get_depth_st
         const struct wined3d_device_context *context, unsigned int *stencil_ref);
 struct wined3d_rasterizer_state * __cdecl wined3d_device_context_get_rasterizer_state(
         struct wined3d_device_context *context);
+struct wined3d_sampler * __cdecl wined3d_device_context_get_sampler(const struct wined3d_device_context *context,
+        enum wined3d_shader_type shader_type, unsigned int idx);
 void __cdecl wined3d_device_context_get_scissor_rects(const struct wined3d_device_context *context,
         unsigned int *rect_count, RECT *rects);
 struct wined3d_shader * __cdecl wined3d_device_context_get_shader(const struct wined3d_device_context *context,

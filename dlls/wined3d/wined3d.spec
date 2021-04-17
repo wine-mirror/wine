@@ -169,6 +169,7 @@
 @ cdecl wined3d_device_context_get_constant_buffer(ptr long long)
 @ cdecl wined3d_device_context_get_depth_stencil_state(ptr ptr)
 @ cdecl wined3d_device_context_get_rasterizer_state(ptr)
+@ cdecl wined3d_device_context_get_sampler(ptr long long)
 @ cdecl wined3d_device_context_get_scissor_rects(ptr ptr ptr)
 @ cdecl wined3d_device_context_get_shader(ptr long)
 @ cdecl wined3d_device_context_get_shader_resource_view(ptr long long)
