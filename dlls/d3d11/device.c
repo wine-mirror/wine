@@ -2105,7 +2105,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMGetRenderTargetsAndUnord
         UINT unordered_access_view_start_slot, UINT unordered_access_view_count,
         ID3D11UnorderedAccessView **unordered_access_views)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext1(iface);
     struct wined3d_unordered_access_view *wined3d_view;
     struct d3d11_unordered_access_view *view_impl;
     unsigned int i;
@@ -2125,8 +2125,8 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMGetRenderTargetsAndUnord
         wined3d_mutex_lock();
         for (i = 0; i < unordered_access_view_count; ++i)
         {
-            if (!(wined3d_view = wined3d_device_get_unordered_access_view(device->wined3d_device,
-                    unordered_access_view_start_slot + i)))
+            if (!(wined3d_view = wined3d_device_context_get_unordered_access_view(context->wined3d_context,
+                    WINED3D_PIPELINE_GRAPHICS, unordered_access_view_start_slot + i)))
             {
                 unordered_access_views[i] = NULL;
                 continue;
@@ -2512,7 +2512,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_CSGetShaderResources(ID3D1
 static void STDMETHODCALLTYPE d3d11_immediate_context_CSGetUnorderedAccessViews(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT view_count, ID3D11UnorderedAccessView **views)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext1(iface);
     unsigned int i;
 
     TRACE("iface %p, start_slot %u, view_count %u, views %p.\n", iface, start_slot, view_count, views);
@@ -2523,7 +2523,8 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_CSGetUnorderedAccessViews(
         struct wined3d_unordered_access_view *wined3d_view;
         struct d3d11_unordered_access_view *view_impl;
 
-        if (!(wined3d_view = wined3d_device_get_cs_uav(device->wined3d_device, start_slot + i)))
+        if (!(wined3d_view = wined3d_device_context_get_unordered_access_view(
+                context->wined3d_context, WINED3D_PIPELINE_COMPUTE, start_slot + i)))
         {
             views[i] = NULL;
             continue;
