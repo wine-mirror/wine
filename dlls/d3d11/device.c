@@ -1650,7 +1650,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_VSGetConstantBuffers(ID3D1
 static void STDMETHODCALLTYPE d3d11_immediate_context_PSGetShaderResources(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT view_count, ID3D11ShaderResourceView **views)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext1(iface);
     unsigned int i;
 
     TRACE("iface %p, start_slot %u, view_count %u, views %p.\n",
@@ -1662,7 +1662,8 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_PSGetShaderResources(ID3D1
         struct wined3d_shader_resource_view *wined3d_view;
         struct d3d_shader_resource_view *view_impl;
 
-        if (!(wined3d_view = wined3d_device_get_ps_resource_view(device->wined3d_device, start_slot + i)))
+        if (!(wined3d_view = wined3d_device_context_get_shader_resource_view(
+                context->wined3d_context, WINED3D_SHADER_TYPE_PIXEL, start_slot + i)))
         {
             views[i] = NULL;
             continue;
@@ -1914,7 +1915,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_IAGetPrimitiveTopology(ID3
 static void STDMETHODCALLTYPE d3d11_immediate_context_VSGetShaderResources(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT view_count, ID3D11ShaderResourceView **views)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext1(iface);
     unsigned int i;
 
     TRACE("iface %p, start_slot %u, view_count %u, views %p.\n", iface, start_slot, view_count, views);
@@ -1925,7 +1926,8 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_VSGetShaderResources(ID3D1
         struct wined3d_shader_resource_view *wined3d_view;
         struct d3d_shader_resource_view *view_impl;
 
-        if (!(wined3d_view = wined3d_device_get_vs_resource_view(device->wined3d_device, start_slot + i)))
+        if (!(wined3d_view = wined3d_device_context_get_shader_resource_view(
+                context->wined3d_context, WINED3D_SHADER_TYPE_VERTEX, start_slot + i)))
         {
             views[i] = NULL;
             continue;
@@ -1992,7 +1994,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_GetPredication(ID3D11Devic
 static void STDMETHODCALLTYPE d3d11_immediate_context_GSGetShaderResources(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT view_count, ID3D11ShaderResourceView **views)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext1(iface);
     unsigned int i;
 
     TRACE("iface %p, start_slot %u, view_count %u, views %p.\n", iface, start_slot, view_count, views);
@@ -2003,7 +2005,8 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_GSGetShaderResources(ID3D1
         struct wined3d_shader_resource_view *wined3d_view;
         struct d3d_shader_resource_view *view_impl;
 
-        if (!(wined3d_view = wined3d_device_get_gs_resource_view(device->wined3d_device, start_slot + i)))
+        if (!(wined3d_view = wined3d_device_context_get_shader_resource_view(
+                context->wined3d_context, WINED3D_SHADER_TYPE_GEOMETRY, start_slot + i)))
         {
             views[i] = NULL;
             continue;
@@ -2292,7 +2295,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSGetScissorRects(ID3D11De
 static void STDMETHODCALLTYPE d3d11_immediate_context_HSGetShaderResources(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT view_count, ID3D11ShaderResourceView **views)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext1(iface);
     unsigned int i;
 
     TRACE("iface %p, start_slot %u, view_count %u, views %p.\n", iface, start_slot, view_count, views);
@@ -2303,7 +2306,8 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_HSGetShaderResources(ID3D1
         struct wined3d_shader_resource_view *wined3d_view;
         struct d3d_shader_resource_view *view_impl;
 
-        if (!(wined3d_view = wined3d_device_get_hs_resource_view(device->wined3d_device, start_slot + i)))
+        if (!(wined3d_view = wined3d_device_context_get_shader_resource_view(
+                context->wined3d_context, WINED3D_SHADER_TYPE_HULL, start_slot + i)))
         {
             views[i] = NULL;
             continue;
@@ -2383,7 +2387,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_HSGetConstantBuffers(ID3D1
 static void STDMETHODCALLTYPE d3d11_immediate_context_DSGetShaderResources(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT view_count, ID3D11ShaderResourceView **views)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext1(iface);
     unsigned int i;
 
     TRACE("iface %p, start_slot %u, view_count %u, views %p.\n",
@@ -2395,7 +2399,8 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_DSGetShaderResources(ID3D1
         struct wined3d_shader_resource_view *wined3d_view;
         struct d3d_shader_resource_view *view_impl;
 
-        if (!(wined3d_view = wined3d_device_get_ds_resource_view(device->wined3d_device, start_slot + i)))
+        if (!(wined3d_view = wined3d_device_context_get_shader_resource_view(
+                context->wined3d_context, WINED3D_SHADER_TYPE_DOMAIN, start_slot + i)))
         {
             views[i] = NULL;
             continue;
@@ -2475,7 +2480,7 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_DSGetConstantBuffers(ID3D1
 static void STDMETHODCALLTYPE d3d11_immediate_context_CSGetShaderResources(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT view_count, ID3D11ShaderResourceView **views)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext1(iface);
     unsigned int i;
 
     TRACE("iface %p, start_slot %u, view_count %u, views %p.\n", iface, start_slot, view_count, views);
@@ -2486,7 +2491,8 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_CSGetShaderResources(ID3D1
         struct wined3d_shader_resource_view *wined3d_view;
         struct d3d_shader_resource_view *view_impl;
 
-        if (!(wined3d_view = wined3d_device_get_cs_resource_view(device->wined3d_device, start_slot + i)))
+        if (!(wined3d_view = wined3d_device_context_get_shader_resource_view(
+                context->wined3d_context, WINED3D_SHADER_TYPE_COMPUTE, start_slot + i)))
         {
             views[i] = NULL;
             continue;
@@ -5024,7 +5030,8 @@ static void STDMETHODCALLTYPE d3d10_device_PSGetShaderResources(ID3D10Device1 *i
         struct wined3d_shader_resource_view *wined3d_view;
         struct d3d_shader_resource_view *view_impl;
 
-        if (!(wined3d_view = wined3d_device_get_ps_resource_view(device->wined3d_device, start_slot + i)))
+        if (!(wined3d_view = wined3d_device_context_get_shader_resource_view(
+                device->immediate_context.wined3d_context, WINED3D_SHADER_TYPE_PIXEL, start_slot + i)))
         {
             views[i] = NULL;
             continue;
@@ -5261,7 +5268,8 @@ static void STDMETHODCALLTYPE d3d10_device_VSGetShaderResources(ID3D10Device1 *i
         struct wined3d_shader_resource_view *wined3d_view;
         struct d3d_shader_resource_view *view_impl;
 
-        if (!(wined3d_view = wined3d_device_get_vs_resource_view(device->wined3d_device, start_slot + i)))
+        if (!(wined3d_view = wined3d_device_context_get_shader_resource_view(
+                device->immediate_context.wined3d_context, WINED3D_SHADER_TYPE_VERTEX, start_slot + i)))
         {
             views[i] = NULL;
             continue;
@@ -5340,7 +5348,8 @@ static void STDMETHODCALLTYPE d3d10_device_GSGetShaderResources(ID3D10Device1 *i
         struct wined3d_shader_resource_view *wined3d_view;
         struct d3d_shader_resource_view *view_impl;
 
-        if (!(wined3d_view = wined3d_device_get_gs_resource_view(device->wined3d_device, start_slot + i)))
+        if (!(wined3d_view = wined3d_device_context_get_shader_resource_view(
+                device->immediate_context.wined3d_context, WINED3D_SHADER_TYPE_GEOMETRY, start_slot + i)))
         {
             views[i] = NULL;
             continue;
