@@ -2,11 +2,11 @@
 @ cdecl __p__commode() ucrtbase.__p__commode
 @ cdecl __p__fmode() ucrtbase.__p__fmode
 @ cdecl __stdio_common_vfprintf(int64 ptr str ptr ptr) ucrtbase.__stdio_common_vfprintf
-@ stub __stdio_common_vfprintf_p
+@ cdecl __stdio_common_vfprintf_p(int64 ptr str ptr ptr) ucrtbase.__stdio_common_vfprintf_p
 @ cdecl __stdio_common_vfprintf_s(int64 ptr str ptr ptr) ucrtbase.__stdio_common_vfprintf_s
 @ cdecl __stdio_common_vfscanf(int64 ptr str ptr ptr) ucrtbase.__stdio_common_vfscanf
 @ cdecl __stdio_common_vfwprintf(int64 ptr wstr ptr ptr) ucrtbase.__stdio_common_vfwprintf
-@ stub __stdio_common_vfwprintf_p
+@ cdecl __stdio_common_vfwprintf_p(int64 ptr wstr ptr ptr) ucrtbase.__stdio_common_vfwprintf_p
 @ cdecl __stdio_common_vfwprintf_s(int64 ptr wstr ptr ptr) ucrtbase.__stdio_common_vfwprintf_s
 @ cdecl __stdio_common_vfwscanf(int64 ptr wstr ptr ptr) ucrtbase.__stdio_common_vfwscanf
 @ cdecl __stdio_common_vsnprintf_s(int64 ptr long long str ptr ptr) ucrtbase.__stdio_common_vsnprintf_s
