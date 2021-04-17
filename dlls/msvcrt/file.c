@@ -5258,6 +5258,20 @@ int CDECL _stdio_common_vfprintf(unsigned __int64 options, FILE *file, const cha
 }
 
 /*********************************************************************
+ *              __stdio_common_vfprintf_p (UCRTBASE.@)
+ */
+int CDECL __stdio_common_vfprintf_p(unsigned __int64 options, FILE *file, const char *format,
+                                          _locale_t locale, __ms_va_list valist)
+{
+    if (options & ~UCRTBASE_PRINTF_MASK)
+        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+
+    return vfprintf_helper((options & UCRTBASE_PRINTF_MASK) | MSVCRT_PRINTF_POSITIONAL_PARAMS
+            | MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER, file, format, locale, valist);
+}
+
+
+/*********************************************************************
  *              __stdio_common_vfprintf_s (UCRTBASE.@)
  */
 int CDECL __stdio_common_vfprintf_s(unsigned __int64 options, FILE *file, const char *format,
@@ -5281,6 +5295,20 @@ int CDECL __stdio_common_vfwprintf(unsigned __int64 options, FILE *file, const w
 
     return vfwprintf_helper(options & UCRTBASE_PRINTF_MASK, file, format, locale, valist);
 }
+
+/*********************************************************************
+ *              __stdio_common_vfwprintf_p (UCRTBASE.@)
+ */
+int CDECL __stdio_common_vfwprintf_p(unsigned __int64 options, FILE *file, const wchar_t *format,
+                                           _locale_t locale, __ms_va_list valist)
+{
+    if (options & ~UCRTBASE_PRINTF_MASK)
+        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+
+    return vfwprintf_helper((options & UCRTBASE_PRINTF_MASK) | MSVCRT_PRINTF_POSITIONAL_PARAMS
+            | MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER, file, format, locale, valist);
+}
+
 
 /*********************************************************************
  *              __stdio_common_vfwprintf_s (UCRTBASE.@)

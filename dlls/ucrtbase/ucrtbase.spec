@@ -147,11 +147,11 @@
 @ cdecl __std_type_info_hash(ptr)
 @ cdecl __std_type_info_name(ptr ptr)
 @ cdecl __stdio_common_vfprintf(int64 ptr str ptr ptr) _stdio_common_vfprintf
-@ stub __stdio_common_vfprintf_p
+@ cdecl __stdio_common_vfprintf_p(int64 ptr str ptr ptr)
 @ cdecl __stdio_common_vfprintf_s(int64 ptr str ptr ptr)
 @ cdecl __stdio_common_vfscanf(int64 ptr str ptr ptr)
 @ cdecl __stdio_common_vfwprintf(int64 ptr wstr ptr ptr)
-@ stub __stdio_common_vfwprintf_p
+@ cdecl __stdio_common_vfwprintf_p(int64 ptr wstr ptr ptr)
 @ cdecl __stdio_common_vfwprintf_s(int64 ptr wstr ptr ptr)
 @ cdecl __stdio_common_vfwscanf(int64 ptr wstr ptr ptr)
 @ cdecl __stdio_common_vsnprintf_s(int64 ptr long long str ptr ptr)
@@ -811,11 +811,11 @@
 @ cdecl _o___std_type_info_destroy_list(ptr) __std_type_info_destroy_list
 @ cdecl _o___std_type_info_name(ptr ptr) __std_type_info_name
 @ cdecl _o___stdio_common_vfprintf(int64 ptr str ptr ptr) _stdio_common_vfprintf
-@ stub _o___stdio_common_vfprintf_p
+@ cdecl _o___stdio_common_vfprintf_p(int64 ptr str ptr ptr) __stdio_common_vfprintf_p
 @ cdecl _o___stdio_common_vfprintf_s(int64 ptr str ptr ptr) __stdio_common_vfprintf_s
 @ cdecl _o___stdio_common_vfscanf(int64 ptr str ptr ptr) __stdio_common_vfscanf
 @ cdecl _o___stdio_common_vfwprintf(int64 ptr wstr ptr ptr) __stdio_common_vfwprintf
-@ stub _o___stdio_common_vfwprintf_p
+@ cdecl _o___stdio_common_vfwprintf_p(int64 ptr wstr ptr ptr) __stdio_common_vfwprintf_p
 @ cdecl _o___stdio_common_vfwprintf_s(int64 ptr wstr ptr ptr) __stdio_common_vfwprintf_s
 @ cdecl _o___stdio_common_vfwscanf(int64 ptr wstr ptr ptr) __stdio_common_vfwscanf
 @ cdecl _o___stdio_common_vsnprintf_s(int64 ptr long long str ptr ptr) __stdio_common_vsnprintf_s
