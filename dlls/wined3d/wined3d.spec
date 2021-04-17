@@ -173,6 +173,7 @@
 @ cdecl wined3d_device_context_get_scissor_rects(ptr ptr ptr)
 @ cdecl wined3d_device_context_get_shader(ptr long)
 @ cdecl wined3d_device_context_get_shader_resource_view(ptr long long)
+@ cdecl wined3d_device_context_get_unordered_access_view(ptr long long)
 @ cdecl wined3d_device_context_get_viewports(ptr ptr ptr)
 @ cdecl wined3d_device_context_issue_query(ptr ptr long)
 @ cdecl wined3d_device_context_map(ptr ptr long ptr ptr long)

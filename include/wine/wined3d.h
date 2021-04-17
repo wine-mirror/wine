@@ -2572,6 +2572,8 @@ struct wined3d_shader * __cdecl wined3d_device_context_get_shader(const struct w
         enum wined3d_shader_type type);
 struct wined3d_shader_resource_view * __cdecl wined3d_device_context_get_shader_resource_view(
         const struct wined3d_device_context *context, enum wined3d_shader_type shader_type, unsigned int idx);
+struct wined3d_unordered_access_view * __cdecl wined3d_device_context_get_unordered_access_view(
+        const struct wined3d_device_context *context, enum wined3d_pipeline pipeline, unsigned int idx);
 void __cdecl wined3d_device_context_get_viewports(const struct wined3d_device_context *context,
         unsigned int *viewport_count, struct wined3d_viewport *viewports);
 void __cdecl wined3d_device_context_issue_query(struct wined3d_device_context *context,

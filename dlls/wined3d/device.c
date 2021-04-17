@@ -2878,6 +2878,20 @@ struct wined3d_sampler * CDECL wined3d_device_get_cs_sampler(const struct wined3
     return wined3d_device_get_sampler(device, WINED3D_SHADER_TYPE_COMPUTE, idx);
 }
 
+struct wined3d_unordered_access_view * CDECL wined3d_device_context_get_unordered_access_view(
+        const struct wined3d_device_context *context, enum wined3d_pipeline pipeline, unsigned int idx)
+{
+    TRACE("context %p, pipeline %#x, idx %u.\n", context, pipeline, idx);
+
+    if (idx >= MAX_UNORDERED_ACCESS_VIEWS)
+    {
+        WARN("Invalid UAV index %u.\n", idx);
+        return NULL;
+    }
+
+    return context->state->unordered_access_view[pipeline][idx];
+}
+
 static struct wined3d_unordered_access_view *wined3d_device_get_pipeline_unordered_access_view(
         const struct wined3d_device *device, enum wined3d_pipeline pipeline, unsigned int idx)
 {
