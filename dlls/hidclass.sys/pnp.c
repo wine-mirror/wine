@@ -62,43 +62,28 @@ static minidriver *find_minidriver(DRIVER_OBJECT *driver)
     return NULL;
 }
 
-static NTSTATUS WINAPI internalComplete(DEVICE_OBJECT *deviceObject, IRP *irp,
-    void *context)
-{
-    HANDLE event = context;
-    SetEvent(event);
-    return STATUS_MORE_PROCESSING_REQUIRED;
-}
-
 static NTSTATUS get_device_id(DEVICE_OBJECT *device, BUS_QUERY_ID_TYPE type, WCHAR *id)
 {
-    NTSTATUS status;
     IO_STACK_LOCATION *irpsp;
     IO_STATUS_BLOCK irp_status;
-    HANDLE event;
+    KEVENT event;
     IRP *irp;
 
-    irp = IoBuildSynchronousFsdRequest(IRP_MJ_PNP, device, NULL, 0, NULL, NULL, &irp_status);
+    KeInitializeEvent(&event, NotificationEvent, FALSE);
+    irp = IoBuildSynchronousFsdRequest(IRP_MJ_PNP, device, NULL, 0, NULL, &event, &irp_status);
     if (irp == NULL)
         return STATUS_NO_MEMORY;
 
-    event = CreateEventA(NULL, FALSE, FALSE, NULL);
     irpsp = IoGetNextIrpStackLocation(irp);
     irpsp->MinorFunction = IRP_MN_QUERY_ID;
     irpsp->Parameters.QueryId.IdType = type;
 
-    IoSetCompletionRoutine(irp, internalComplete, event, TRUE, TRUE, TRUE);
-    status = IoCallDriver(device, irp);
-    if (status == STATUS_PENDING)
-        WaitForSingleObject(event, INFINITE);
+    if (IoCallDriver(device, irp) == STATUS_PENDING)
+        KeWaitForSingleObject(&event, Executive, KernelMode, FALSE, NULL);
 
-    lstrcpyW(id, (WCHAR *)irp->IoStatus.Information);
-    ExFreePool( (WCHAR *)irp->IoStatus.Information );
-    status = irp->IoStatus.u.Status;
-    IoCompleteRequest(irp, IO_NO_INCREMENT );
-    CloseHandle(event);
-
-    return status;
+    wcscpy(id, (WCHAR *)irp_status.Information);
+    ExFreePool((WCHAR *)irp_status.Information);
+    return irp_status.u.Status;
 }
 
 static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *bus_pdo)
