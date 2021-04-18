@@ -1701,8 +1701,6 @@ static void fontconfig_add_fonts_from_dir_list( FcConfig *config, FcStrList *dir
     }
 
 done:
-    if (font_set) pFcFontSetDestroy( font_set );
-    if (subdir_list) pFcStrListDone( subdir_list );
     if (subdir_set) pFcStrSetDestroy( subdir_set );
     if (cache) pFcDirCacheUnload( cache );
 }
