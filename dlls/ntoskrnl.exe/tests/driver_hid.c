@@ -215,7 +215,7 @@ static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *f
 
     /* We should be given the FDO, not the PDO. */
     ok(!!ext->PhysicalDeviceObject, "expected non-NULL pdo\n");
-    todo_wine ok(ext->NextDeviceObject == ext->PhysicalDeviceObject, "got pdo %p, next %p\n",
+    ok(ext->NextDeviceObject == ext->PhysicalDeviceObject, "got pdo %p, next %p\n",
             ext->PhysicalDeviceObject, ext->NextDeviceObject);
     todo_wine ok(ext->NextDeviceObject->AttachedDevice == fdo, "wrong attached device\n");
 

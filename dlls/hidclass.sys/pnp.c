@@ -135,7 +135,7 @@ static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *b
     ext = fdo->DeviceExtension;
     ext->is_fdo = TRUE;
     ext->u.fdo.hid_ext.MiniDeviceExtension = ext + 1;
-    ext->u.fdo.hid_ext.PhysicalDeviceObject = fdo;
+    ext->u.fdo.hid_ext.PhysicalDeviceObject = bus_pdo;
     ext->u.fdo.hid_ext.NextDeviceObject = bus_pdo;
     swprintf(ext->device_id, ARRAY_SIZE(ext->device_id), L"HID\\%s", wcsrchr(device_id, '\\') + 1);
     wcscpy(ext->instance_id, instance_id);
