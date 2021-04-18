@@ -700,7 +700,7 @@ static void remove_all_device_ifaces(struct device *device)
 
     if ((ret = RegOpenKeyExW(HKEY_LOCAL_MACHINE, DeviceClasses, 0, KEY_READ, &classes_key)))
     {
-        ERR("Failed to open classes key, error %u.\n", ret);
+        WARN("Failed to open classes key, error %u.\n", ret);
         return;
     }
 
