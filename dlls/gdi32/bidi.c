@@ -336,17 +336,17 @@ BOOL BIDI_Reorder(
                 INT *cGlyphs /* [out] number of glyphs generated */
     )
 {
-    WORD *chartype;
-    BYTE *levels;
+    WORD *chartype = NULL;
+    BYTE *levels = NULL;
     INT i, done;
     unsigned glyph_i;
-    BOOL is_complex;
+    BOOL is_complex, ret = FALSE;
 
     int maxItems;
     int nItems;
     SCRIPT_CONTROL Control;
     SCRIPT_STATE State;
-    SCRIPT_ITEM *pItems;
+    SCRIPT_ITEM *pItems = NULL;
     HRESULT res;
     SCRIPT_CACHE psc = NULL;
     WORD *run_glyphs = NULL;
@@ -429,8 +429,7 @@ BOOL BIDI_Reorder(
     if (!levels)
     {
         WARN("Out of memory\n");
-        HeapFree(GetProcessHeap(), 0, chartype);
-        return FALSE;
+        goto cleanup;
     }
 
     maxItems = 5;
@@ -438,9 +437,7 @@ BOOL BIDI_Reorder(
     if (!pItems)
     {
         WARN("Out of memory\n");
-        HeapFree(GetProcessHeap(), 0, chartype);
-        HeapFree(GetProcessHeap(), 0, levels);
-        return FALSE;
+        goto cleanup;
     }
 
     if (lpGlyphs)
@@ -450,31 +447,19 @@ BOOL BIDI_Reorder(
         if (!run_glyphs)
         {
             WARN("Out of memory\n");
-            HeapFree(GetProcessHeap(), 0, chartype);
-            HeapFree(GetProcessHeap(), 0, levels);
-            HeapFree(GetProcessHeap(), 0, pItems);
-            return FALSE;
+            goto cleanup;
         }
         pwLogClust = HeapAlloc(GetProcessHeap(),0,sizeof(WORD) * uCount);
         if (!pwLogClust)
         {
             WARN("Out of memory\n");
-            HeapFree(GetProcessHeap(), 0, chartype);
-            HeapFree(GetProcessHeap(), 0, levels);
-            HeapFree(GetProcessHeap(), 0, pItems);
-            HeapFree(GetProcessHeap(), 0, run_glyphs);
-            return FALSE;
+            goto cleanup;
         }
         psva = HeapAlloc(GetProcessHeap(),0,sizeof(SCRIPT_VISATTR) * uCount);
         if (!psva)
         {
             WARN("Out of memory\n");
-            HeapFree(GetProcessHeap(), 0, chartype);
-            HeapFree(GetProcessHeap(), 0, levels);
-            HeapFree(GetProcessHeap(), 0, pItems);
-            HeapFree(GetProcessHeap(), 0, run_glyphs);
-            HeapFree(GetProcessHeap(), 0, pwLogClust);
-            return FALSE;
+            goto cleanup;
         }
     }
 
@@ -519,18 +504,14 @@ BOOL BIDI_Reorder(
         res = ScriptItemize(lpString + done, i, maxItems, &Control, &State, pItems, &nItems);
         while (res == E_OUTOFMEMORY)
         {
-            maxItems = maxItems * 2;
-            pItems = HeapReAlloc(GetProcessHeap(), 0, pItems, sizeof(SCRIPT_ITEM) * maxItems);
-            if (!pItems)
+            SCRIPT_ITEM *new_pItems = HeapReAlloc(GetProcessHeap(), 0, pItems, sizeof(*pItems) * maxItems * 2);
+            if (!new_pItems)
             {
                 WARN("Out of memory\n");
-                HeapFree(GetProcessHeap(), 0, chartype);
-                HeapFree(GetProcessHeap(), 0, levels);
-                HeapFree(GetProcessHeap(), 0, run_glyphs);
-                HeapFree(GetProcessHeap(), 0, pwLogClust);
-                HeapFree(GetProcessHeap(), 0, psva);
-                return FALSE;
+                goto cleanup;
             }
+            pItems = new_pItems;
+            maxItems *= 2;
             res = ScriptItemize(lpString + done, i, maxItems, &Control, &State, pItems, &nItems);
         }
 
@@ -587,12 +568,7 @@ BOOL BIDI_Reorder(
                 WARN("Out of memory\n");
                 HeapFree(GetProcessHeap(), 0, runOrder);
                 HeapFree(GetProcessHeap(), 0, visOrder);
-                HeapFree(GetProcessHeap(), 0, chartype);
-                HeapFree(GetProcessHeap(), 0, levels);
-                HeapFree(GetProcessHeap(), 0, pItems);
-                HeapFree(GetProcessHeap(), 0, psva);
-                HeapFree(GetProcessHeap(), 0, pwLogClust);
-                return FALSE;
+                goto cleanup;
             }
 
             for (j = 0; j < nItems; j++)
@@ -611,23 +587,18 @@ BOOL BIDI_Reorder(
                 res = ScriptShape(hDC, &psc, lpString + done + curItem->iCharPos, cChars, cMaxGlyphs, &curItem->a, run_glyphs, pwLogClust, psva, &cOutGlyphs);
                 while (res == E_OUTOFMEMORY)
                 {
-                    cMaxGlyphs *= 2;
-                    run_glyphs = HeapReAlloc(GetProcessHeap(), 0, run_glyphs, sizeof(WORD) * cMaxGlyphs);
-                    if (!run_glyphs)
+                    WORD *new_run_glyphs = HeapReAlloc(GetProcessHeap(), 0, run_glyphs, sizeof(*run_glyphs) * cMaxGlyphs * 2);
+                    if (!new_run_glyphs)
                     {
                         WARN("Out of memory\n");
                         HeapFree(GetProcessHeap(), 0, runOrder);
                         HeapFree(GetProcessHeap(), 0, visOrder);
-                        HeapFree(GetProcessHeap(), 0, chartype);
-                        HeapFree(GetProcessHeap(), 0, levels);
-                        HeapFree(GetProcessHeap(), 0, pItems);
-                        HeapFree(GetProcessHeap(), 0, psva);
-                        HeapFree(GetProcessHeap(), 0, pwLogClust);
                         HeapFree(GetProcessHeap(), 0, *lpGlyphs);
-                        ScriptFreeCache(&psc);
                         *lpGlyphs = NULL;
-                        return FALSE;
+                        goto cleanup;
                     }
+                    run_glyphs = new_run_glyphs;
+                    cMaxGlyphs *= 2;
                     res = ScriptShape(hDC, &psc, lpString + done + curItem->iCharPos, cChars, cMaxGlyphs, &curItem->a, run_glyphs, pwLogClust, psva, &cOutGlyphs);
                 }
                 if (res)
@@ -643,10 +614,21 @@ BOOL BIDI_Reorder(
                 }
                 else
                 {
+                    WORD *new_glyphs;
                     if (*lpGlyphs)
-                        *lpGlyphs = HeapReAlloc(GetProcessHeap(), 0, *lpGlyphs, sizeof(WORD) * (glyph_i + cOutGlyphs));
+                        new_glyphs = HeapReAlloc(GetProcessHeap(), 0, *lpGlyphs, sizeof(**lpGlyphs) * (glyph_i + cOutGlyphs));
                    else
-                        *lpGlyphs = HeapAlloc(GetProcessHeap(), 0, sizeof(WORD) * (glyph_i + cOutGlyphs));
+                        new_glyphs = HeapAlloc(GetProcessHeap(), 0, sizeof(**lpGlyphs) * (glyph_i + cOutGlyphs));
+                    if (!new_glyphs)
+                    {
+                        WARN("Out of memory\n");
+                        HeapFree(GetProcessHeap(), 0, runOrder);
+                        HeapFree(GetProcessHeap(), 0, visOrder);
+                        HeapFree(GetProcessHeap(), 0, *lpGlyphs);
+                        *lpGlyphs = NULL;
+                        goto cleanup;
+                    }
+                    *lpGlyphs = new_glyphs;
                     for (k = 0; k < cOutGlyphs; k++)
                         (*lpGlyphs)[glyph_i+k] = run_glyphs[k];
                     glyph_i += cOutGlyphs;
@@ -661,6 +643,8 @@ BOOL BIDI_Reorder(
     if (cGlyphs)
         *cGlyphs = glyph_i;
 
+    ret = TRUE;
+cleanup:
     HeapFree(GetProcessHeap(), 0, chartype);
     HeapFree(GetProcessHeap(), 0, levels);
     HeapFree(GetProcessHeap(), 0, pItems);
@@ -668,5 +652,5 @@ BOOL BIDI_Reorder(
     HeapFree(GetProcessHeap(), 0, pwLogClust);
     HeapFree(GetProcessHeap(), 0, psva);
     ScriptFreeCache(&psc);
-    return TRUE;
+    return ret;
 }
