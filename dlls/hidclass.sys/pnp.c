@@ -86,6 +86,17 @@ static NTSTATUS get_device_id(DEVICE_OBJECT *device, BUS_QUERY_ID_TYPE type, WCH
     return irp_status.u.Status;
 }
 
+/* user32 reserves 1 & 2 for winemouse and winekeyboard,
+ * keep this in sync with user_private.h */
+#define WINE_MOUSE_HANDLE 1
+#define WINE_KEYBOARD_HANDLE 2
+
+static UINT32 alloc_rawinput_handle(void)
+{
+    static LONG counter = WINE_KEYBOARD_HANDLE + 1;
+    return InterlockedIncrement(&counter);
+}
+
 static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *bus_pdo)
 {
     WCHAR device_id[MAX_DEVICE_ID_LEN], instance_id[MAX_DEVICE_ID_LEN], pdo_name[255];
@@ -93,6 +104,7 @@ static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *b
     HID_DEVICE_ATTRIBUTES attr = {0};
     DEVICE_OBJECT *fdo, *child_pdo;
     UNICODE_STRING string;
+    USAGE page, usage;
     NTSTATUS status;
     minidriver *minidriver;
     HID_DESCRIPTOR descriptor;
@@ -214,7 +226,14 @@ static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *b
 
     IoInvalidateDeviceRelations(bus_pdo, BusRelations);
 
-    HID_LinkDevice(child_pdo);
+    page = pdo_ext->u.pdo.preparsed_data->caps.UsagePage;
+    usage = pdo_ext->u.pdo.preparsed_data->caps.Usage;
+    if (page == HID_USAGE_PAGE_GENERIC && usage == HID_USAGE_GENERIC_MOUSE)
+        pdo_ext->u.pdo.rawinput_handle = WINE_MOUSE_HANDLE;
+    else if (page == HID_USAGE_PAGE_GENERIC && usage == HID_USAGE_GENERIC_KEYBOARD)
+        pdo_ext->u.pdo.rawinput_handle = WINE_KEYBOARD_HANDLE;
+    else
+        pdo_ext->u.pdo.rawinput_handle = alloc_rawinput_handle();
 
     pdo_ext->u.pdo.poll_interval = DEFAULT_POLL_INTERVAL;
 

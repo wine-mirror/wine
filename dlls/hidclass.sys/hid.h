@@ -106,7 +106,6 @@ typedef struct _minidriver
 NTSTATUS call_minidriver(ULONG code, DEVICE_OBJECT *device, void *in_buff, ULONG in_size, void *out_buff, ULONG out_size) DECLSPEC_HIDDEN;
 
 /* Internal device functions */
-NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device) DECLSPEC_HIDDEN;
 void HID_StartDeviceThread(DEVICE_OBJECT *device) DECLSPEC_HIDDEN;
 
 IRP *pop_irp_from_queue(BASE_DEVICE_EXTENSION *ext) DECLSPEC_HIDDEN;

@@ -25,7 +25,6 @@
 #include "hid.h"
 #include "winreg.h"
 #include "winuser.h"
-#include "setupapi.h"
 
 #include "wine/debug.h"
 #include "ddk/hidsdi.h"
@@ -36,69 +35,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(hid);
 WINE_DECLARE_DEBUG_CHANNEL(hid_report);
-
-/* user32 reserves 1 & 2 for winemouse and winekeyboard,
- * keep this in sync with user_private.h */
-#define WINE_MOUSE_HANDLE 1
-#define WINE_KEYBOARD_HANDLE 2
-
-static UINT32 alloc_rawinput_handle(void)
-{
-    static LONG counter = WINE_KEYBOARD_HANDLE + 1;
-    return InterlockedIncrement(&counter);
-}
-
-NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device)
-{
-    WCHAR device_instance_id[MAX_DEVICE_ID_LEN];
-    SP_DEVINFO_DATA Data;
-    HDEVINFO devinfo;
-    BASE_DEVICE_EXTENSION *ext;
-    USAGE usage, page;
-
-    ext = device->DeviceExtension;
-    page = ext->u.pdo.preparsed_data->caps.UsagePage;
-    usage = ext->u.pdo.preparsed_data->caps.Usage;
-
-    lstrcpyW(device_instance_id, ext->device_id);
-    lstrcatW(device_instance_id, L"\\");
-    lstrcatW(device_instance_id, ext->instance_id);
-
-    devinfo = SetupDiCreateDeviceInfoList(&GUID_DEVCLASS_HIDCLASS, NULL);
-    if (devinfo == INVALID_HANDLE_VALUE)
-    {
-        FIXME( "failed to get ClassDevs %x\n", GetLastError());
-        return STATUS_UNSUCCESSFUL;
-    }
-    Data.cbSize = sizeof(Data);
-    if (SetupDiCreateDeviceInfoW(devinfo, device_instance_id, &GUID_DEVCLASS_HIDCLASS, NULL, NULL, DICD_INHERIT_CLASSDRVS, &Data))
-    {
-        if (!SetupDiRegisterDeviceInfo(devinfo, &Data, 0, NULL, NULL, NULL))
-        {
-            FIXME( "failed to register device info %x\n", GetLastError());
-            goto error;
-        }
-    }
-    else if (GetLastError() != ERROR_DEVINST_ALREADY_EXISTS)
-    {
-        FIXME( "failed to create device info %x\n", GetLastError());
-        goto error;
-    }
-    SetupDiDestroyDeviceInfoList(devinfo);
-
-    if (page == HID_USAGE_PAGE_GENERIC && usage == HID_USAGE_GENERIC_MOUSE)
-        ext->u.pdo.rawinput_handle = WINE_MOUSE_HANDLE;
-    else if (page == HID_USAGE_PAGE_GENERIC && usage == HID_USAGE_GENERIC_KEYBOARD)
-        ext->u.pdo.rawinput_handle = WINE_KEYBOARD_HANDLE;
-    else
-        ext->u.pdo.rawinput_handle = alloc_rawinput_handle();
-
-    return STATUS_SUCCESS;
-
-error:
-    SetupDiDestroyDeviceInfoList(devinfo);
-    return STATUS_UNSUCCESSFUL;
-}
 
 IRP *pop_irp_from_queue(BASE_DEVICE_EXTENSION *ext)
 {
