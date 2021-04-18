@@ -1729,7 +1729,11 @@ static struct gdi_path *PATH_WidenPath(DC *dc)
                     pStrokes = HeapAlloc(GetProcessHeap(), 0, sizeof(*pStrokes));
                 else
                     pStrokes = HeapReAlloc(GetProcessHeap(), 0, pStrokes, numStrokes * sizeof(*pStrokes));
-                if(!pStrokes) return NULL;
+                if(!pStrokes)
+                {
+                    free_gdi_path(flat_path);
+                    return NULL;
+                }
                 pStrokes[numStrokes - 1] = alloc_gdi_path(0);
                 /* fall through */
             case PT_LINETO:
