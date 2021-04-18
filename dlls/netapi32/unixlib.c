@@ -929,34 +929,6 @@ static void libnetapi_init(void)
     libnetapi_ctx = ctx;
 }
 
-#else
-
-static NET_API_STATUS WINAPI server_getinfo( LMSTR servername, DWORD level, LPBYTE *bufptr )
-{
-    return ERROR_NOT_SUPPORTED;
-}
-
-static NET_API_STATUS WINAPI share_add( LMSTR servername, DWORD level, LPBYTE buf, LPDWORD parm_err )
-{
-    return ERROR_NOT_SUPPORTED;
-}
-
-static NET_API_STATUS WINAPI share_del( LMSTR servername, LMSTR netname, DWORD reserved )
-{
-    return ERROR_NOT_SUPPORTED;
-}
-
-static NET_API_STATUS WINAPI wksta_getinfo(  LMSTR servername, DWORD level, LPBYTE *bufptr )
-{
-    return ERROR_NOT_SUPPORTED;
-}
-
-static void libnetapi_init(void)
-{
-}
-
-#endif /* SONAME_LIBNETAPI */
-
 static NET_API_STATUS WINAPI change_password( const WCHAR *domainname, const WCHAR *username,
                                               const WCHAR *oldpassword, const WCHAR *newpassword )
 {
@@ -1046,6 +1018,40 @@ end:
     RtlFreeHeap( GetProcessHeap(), 0, new );
     return ret;
 }
+
+#else
+
+static NET_API_STATUS WINAPI server_getinfo( const WCHAR *server, DWORD level, BYTE **buffer )
+{
+    return ERROR_NOT_SUPPORTED;
+}
+
+static NET_API_STATUS WINAPI share_add( const WCHAR *server, DWORD level, const BYTE *info, DWORD *err )
+{
+    return ERROR_NOT_SUPPORTED;
+}
+
+static NET_API_STATUS WINAPI share_del( const WCHAR *server, const WCHAR *share, DWORD reserved )
+{
+    return ERROR_NOT_SUPPORTED;
+}
+
+static NET_API_STATUS WINAPI wksta_getinfo( const WCHAR *server, DWORD level, BYTE **buffer )
+{
+    return ERROR_NOT_SUPPORTED;
+}
+
+static NET_API_STATUS WINAPI change_password( const WCHAR *domainname, const WCHAR *username,
+                                              const WCHAR *oldpassword, const WCHAR *newpassword )
+{
+    return ERROR_NOT_SUPPORTED;
+}
+
+static void libnetapi_init(void)
+{
+}
+
+#endif /* SONAME_LIBNETAPI */
 
 static const struct samba_funcs samba_funcs =
 {
