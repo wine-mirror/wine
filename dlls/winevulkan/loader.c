@@ -276,8 +276,7 @@ VkResult WINAPI wine_vkEnumerateInstanceVersion(uint32_t *version)
 
 static HANDLE get_display_device_init_mutex(void)
 {
-    static const WCHAR init_mutexW[] = {'d','i','s','p','l','a','y','_','d','e','v','i','c','e','_','i','n','i','t',0};
-    HANDLE mutex = CreateMutexW(NULL, FALSE, init_mutexW);
+    HANDLE mutex = CreateMutexW(NULL, FALSE, L"display_device_init");
 
     WaitForSingleObject(mutex, INFINITE);
     return mutex;
@@ -303,7 +302,6 @@ static void wait_graphics_driver_ready(void)
 
 static void fill_luid_property(VkPhysicalDeviceProperties2 *properties2)
 {
-    static const WCHAR pci[] = {'P','C','I',0};
     VkPhysicalDeviceIDProperties *id;
     SP_DEVINFO_DATA device_data;
     DWORD type, device_idx = 0;
@@ -317,7 +315,7 @@ static void fill_luid_property(VkPhysicalDeviceProperties2 *properties2)
 
     wait_graphics_driver_ready();
     mutex = get_display_device_init_mutex();
-    devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_DISPLAY, pci, NULL, 0);
+    devinfo = SetupDiGetClassDevsW(&GUID_DEVCLASS_DISPLAY, L"PCI", NULL, 0);
     device_data.cbSize = sizeof(device_data);
     while (SetupDiEnumDeviceInfo(devinfo, device_idx++, &device_data))
     {
@@ -377,10 +375,8 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
     return TRUE;
 }
 
-static const WCHAR winevulkan_json_resW[] = {'w','i','n','e','v','u','l','k','a','n','_','j','s','o','n',0};
-static const WCHAR winevulkan_json_pathW[] = {'\\','w','i','n','e','v','u','l','k','a','n','.','j','s','o','n',0};
-static const WCHAR vulkan_driversW[] = {'S','o','f','t','w','a','r','e','\\','K','h','r','o','n','o','s','\\',
-                                        'V','u','l','k','a','n','\\','D','r','i','v','e','r','s',0};
+static const WCHAR winevulkan_json_pathW[] = L"\\winevulkan.json";
+static const WCHAR vulkan_driversW[] = L"Software\\Khronos\\Vulkan\\Drivers";
 
 HRESULT WINAPI DllRegisterServer(void)
 {
@@ -393,7 +389,7 @@ HRESULT WINAPI DllRegisterServer(void)
 
     /* Create the JSON manifest and registry key to register this ICD with the official Vulkan loader. */
     TRACE("\n");
-    rsrc = FindResourceW(hinstance, winevulkan_json_resW, (const WCHAR *)RT_RCDATA);
+    rsrc = FindResourceW(hinstance, L"winevulkan_json", (const WCHAR *)RT_RCDATA);
     data = LockResource(LoadResource(hinstance, rsrc));
     datalen = SizeofResource(hinstance, rsrc);
 
