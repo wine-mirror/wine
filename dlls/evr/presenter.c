@@ -391,17 +391,21 @@ static HRESULT video_presenter_invalidate_media_type(struct video_presenter *pre
     return hr;
 }
 
-static void video_presenter_sample_queue_init(struct video_presenter *presenter)
+static HRESULT video_presenter_sample_queue_init(struct video_presenter *presenter)
 {
     struct sample_queue *queue = &presenter->thread.queue;
 
     if (queue->size)
-        return;
+        return S_OK;
 
     memset(queue, 0, sizeof(*queue));
-    queue->samples = calloc(presenter->allocator_capacity, sizeof(*queue->samples));
+    if (!(queue->samples = calloc(presenter->allocator_capacity, sizeof(*queue->samples))))
+        return E_OUTOFMEMORY;
+
     queue->size = presenter->allocator_capacity;
     queue->back = queue->size - 1;
+
+    return S_OK;
 }
 
 static void video_presenter_sample_queue_push(struct video_presenter *presenter, IMFSample *sample)
@@ -714,10 +718,13 @@ static DWORD CALLBACK video_presenter_streaming_thread(void *arg)
 
 static HRESULT video_presenter_start_streaming(struct video_presenter *presenter)
 {
+    HRESULT hr;
+
     if (presenter->thread.hthread)
         return S_OK;
 
-    video_presenter_sample_queue_init(presenter);
+    if (FAILED(hr = video_presenter_sample_queue_init(presenter)))
+        return hr;
 
     if (!(presenter->thread.ready_event = CreateEventW(NULL, FALSE, FALSE, NULL)))
         return HRESULT_FROM_WIN32(GetLastError());
