@@ -412,6 +412,8 @@ NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_i
     const char *loader_env = getenv( "WINELOADER" );
     char preloader_reserve[64], socket_env[64];
 
+    if (pe_info->image_flags & IMAGE_FLAGS_WineFakeDll) res_start = res_end = 0;
+
     if (!is_child_64bit && (is_win64 || is_wow64) && (pe_info->image_flags & IMAGE_FLAGS_ComPlusNativeReady))
     {
         is_child_64bit = TRUE;
