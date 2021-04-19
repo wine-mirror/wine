@@ -117,8 +117,10 @@ struct unix_funcs
     void (WINAPI *p_vkCmdSetBlendConstants)(VkCommandBuffer, const float[4]);
     void (WINAPI *p_vkCmdSetCheckpointNV)(VkCommandBuffer, const void *);
     void (WINAPI *p_vkCmdSetCoarseSampleOrderNV)(VkCommandBuffer, VkCoarseSampleOrderTypeNV, uint32_t, const VkCoarseSampleOrderCustomNV *);
+    void (WINAPI *p_vkCmdSetColorWriteEnableEXT)(VkCommandBuffer, uint32_t, const VkBool32 *);
     void (WINAPI *p_vkCmdSetCullModeEXT)(VkCommandBuffer, VkCullModeFlags);
     void (WINAPI *p_vkCmdSetDepthBias)(VkCommandBuffer, float, float, float);
+    void (WINAPI *p_vkCmdSetDepthBiasEnableEXT)(VkCommandBuffer, VkBool32);
     void (WINAPI *p_vkCmdSetDepthBounds)(VkCommandBuffer, float, float);
     void (WINAPI *p_vkCmdSetDepthBoundsTestEnableEXT)(VkCommandBuffer, VkBool32);
     void (WINAPI *p_vkCmdSetDepthCompareOpEXT)(VkCommandBuffer, VkCompareOp);
@@ -135,10 +137,14 @@ struct unix_funcs
     void (WINAPI *p_vkCmdSetFrontFaceEXT)(VkCommandBuffer, VkFrontFace);
     void (WINAPI *p_vkCmdSetLineStippleEXT)(VkCommandBuffer, uint32_t, uint16_t);
     void (WINAPI *p_vkCmdSetLineWidth)(VkCommandBuffer, float);
+    void (WINAPI *p_vkCmdSetLogicOpEXT)(VkCommandBuffer, VkLogicOp);
+    void (WINAPI *p_vkCmdSetPatchControlPointsEXT)(VkCommandBuffer, uint32_t);
     VkResult (WINAPI *p_vkCmdSetPerformanceMarkerINTEL)(VkCommandBuffer, const VkPerformanceMarkerInfoINTEL *);
     VkResult (WINAPI *p_vkCmdSetPerformanceOverrideINTEL)(VkCommandBuffer, const VkPerformanceOverrideInfoINTEL *);
     VkResult (WINAPI *p_vkCmdSetPerformanceStreamMarkerINTEL)(VkCommandBuffer, const VkPerformanceStreamMarkerInfoINTEL *);
+    void (WINAPI *p_vkCmdSetPrimitiveRestartEnableEXT)(VkCommandBuffer, VkBool32);
     void (WINAPI *p_vkCmdSetPrimitiveTopologyEXT)(VkCommandBuffer, VkPrimitiveTopology);
+    void (WINAPI *p_vkCmdSetRasterizerDiscardEnableEXT)(VkCommandBuffer, VkBool32);
     void (WINAPI *p_vkCmdSetRayTracingPipelineStackSizeKHR)(VkCommandBuffer, uint32_t);
     void (WINAPI *p_vkCmdSetSampleLocationsEXT)(VkCommandBuffer, const VkSampleLocationsInfoEXT *);
     void (WINAPI *p_vkCmdSetScissor)(VkCommandBuffer, uint32_t, uint32_t, const VkRect2D *);
@@ -148,6 +154,7 @@ struct unix_funcs
     void (WINAPI *p_vkCmdSetStencilReference)(VkCommandBuffer, VkStencilFaceFlags, uint32_t);
     void (WINAPI *p_vkCmdSetStencilTestEnableEXT)(VkCommandBuffer, VkBool32);
     void (WINAPI *p_vkCmdSetStencilWriteMask)(VkCommandBuffer, VkStencilFaceFlags, uint32_t);
+    void (WINAPI *p_vkCmdSetVertexInputEXT)(VkCommandBuffer, uint32_t, const VkVertexInputBindingDescription2EXT *, uint32_t, const VkVertexInputAttributeDescription2EXT *);
     void (WINAPI *p_vkCmdSetViewport)(VkCommandBuffer, uint32_t, uint32_t, const VkViewport *);
     void (WINAPI *p_vkCmdSetViewportShadingRatePaletteNV)(VkCommandBuffer, uint32_t, uint32_t, const VkShadingRatePaletteNV *);
     void (WINAPI *p_vkCmdSetViewportWScalingNV)(VkCommandBuffer, uint32_t, uint32_t, const VkViewportWScalingNV *);

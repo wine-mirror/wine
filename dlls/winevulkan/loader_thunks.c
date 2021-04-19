@@ -528,6 +528,11 @@ void WINAPI wine_vkCmdSetCoarseSampleOrderNV(VkCommandBuffer commandBuffer, VkCo
     unix_funcs->p_vkCmdSetCoarseSampleOrderNV(commandBuffer, sampleOrderType, customSampleOrderCount, pCustomSampleOrders);
 }
 
+void WINAPI wine_vkCmdSetColorWriteEnableEXT(VkCommandBuffer commandBuffer, uint32_t attachmentCount, const VkBool32 *pColorWriteEnables)
+{
+    unix_funcs->p_vkCmdSetColorWriteEnableEXT(commandBuffer, attachmentCount, pColorWriteEnables);
+}
+
 void WINAPI wine_vkCmdSetCullModeEXT(VkCommandBuffer commandBuffer, VkCullModeFlags cullMode)
 {
     unix_funcs->p_vkCmdSetCullModeEXT(commandBuffer, cullMode);
@@ -536,6 +541,11 @@ void WINAPI wine_vkCmdSetCullModeEXT(VkCommandBuffer commandBuffer, VkCullModeFl
 void WINAPI wine_vkCmdSetDepthBias(VkCommandBuffer commandBuffer, float depthBiasConstantFactor, float depthBiasClamp, float depthBiasSlopeFactor)
 {
     unix_funcs->p_vkCmdSetDepthBias(commandBuffer, depthBiasConstantFactor, depthBiasClamp, depthBiasSlopeFactor);
+}
+
+void WINAPI wine_vkCmdSetDepthBiasEnableEXT(VkCommandBuffer commandBuffer, VkBool32 depthBiasEnable)
+{
+    unix_funcs->p_vkCmdSetDepthBiasEnableEXT(commandBuffer, depthBiasEnable);
 }
 
 void WINAPI wine_vkCmdSetDepthBounds(VkCommandBuffer commandBuffer, float minDepthBounds, float maxDepthBounds)
@@ -618,6 +628,16 @@ void WINAPI wine_vkCmdSetLineWidth(VkCommandBuffer commandBuffer, float lineWidt
     unix_funcs->p_vkCmdSetLineWidth(commandBuffer, lineWidth);
 }
 
+void WINAPI wine_vkCmdSetLogicOpEXT(VkCommandBuffer commandBuffer, VkLogicOp logicOp)
+{
+    unix_funcs->p_vkCmdSetLogicOpEXT(commandBuffer, logicOp);
+}
+
+void WINAPI wine_vkCmdSetPatchControlPointsEXT(VkCommandBuffer commandBuffer, uint32_t patchControlPoints)
+{
+    unix_funcs->p_vkCmdSetPatchControlPointsEXT(commandBuffer, patchControlPoints);
+}
+
 VkResult WINAPI wine_vkCmdSetPerformanceMarkerINTEL(VkCommandBuffer commandBuffer, const VkPerformanceMarkerInfoINTEL *pMarkerInfo)
 {
     return unix_funcs->p_vkCmdSetPerformanceMarkerINTEL(commandBuffer, pMarkerInfo);
@@ -633,9 +653,19 @@ VkResult WINAPI wine_vkCmdSetPerformanceStreamMarkerINTEL(VkCommandBuffer comman
     return unix_funcs->p_vkCmdSetPerformanceStreamMarkerINTEL(commandBuffer, pMarkerInfo);
 }
 
+void WINAPI wine_vkCmdSetPrimitiveRestartEnableEXT(VkCommandBuffer commandBuffer, VkBool32 primitiveRestartEnable)
+{
+    unix_funcs->p_vkCmdSetPrimitiveRestartEnableEXT(commandBuffer, primitiveRestartEnable);
+}
+
 void WINAPI wine_vkCmdSetPrimitiveTopologyEXT(VkCommandBuffer commandBuffer, VkPrimitiveTopology primitiveTopology)
 {
     unix_funcs->p_vkCmdSetPrimitiveTopologyEXT(commandBuffer, primitiveTopology);
+}
+
+void WINAPI wine_vkCmdSetRasterizerDiscardEnableEXT(VkCommandBuffer commandBuffer, VkBool32 rasterizerDiscardEnable)
+{
+    unix_funcs->p_vkCmdSetRasterizerDiscardEnableEXT(commandBuffer, rasterizerDiscardEnable);
 }
 
 void WINAPI wine_vkCmdSetRayTracingPipelineStackSizeKHR(VkCommandBuffer commandBuffer, uint32_t pipelineStackSize)
@@ -681,6 +711,11 @@ void WINAPI wine_vkCmdSetStencilTestEnableEXT(VkCommandBuffer commandBuffer, VkB
 void WINAPI wine_vkCmdSetStencilWriteMask(VkCommandBuffer commandBuffer, VkStencilFaceFlags faceMask, uint32_t writeMask)
 {
     unix_funcs->p_vkCmdSetStencilWriteMask(commandBuffer, faceMask, writeMask);
+}
+
+void WINAPI wine_vkCmdSetVertexInputEXT(VkCommandBuffer commandBuffer, uint32_t vertexBindingDescriptionCount, const VkVertexInputBindingDescription2EXT *pVertexBindingDescriptions, uint32_t vertexAttributeDescriptionCount, const VkVertexInputAttributeDescription2EXT *pVertexAttributeDescriptions)
+{
+    unix_funcs->p_vkCmdSetVertexInputEXT(commandBuffer, vertexBindingDescriptionCount, pVertexBindingDescriptions, vertexAttributeDescriptionCount, pVertexAttributeDescriptions);
 }
 
 void WINAPI wine_vkCmdSetViewport(VkCommandBuffer commandBuffer, uint32_t firstViewport, uint32_t viewportCount, const VkViewport *pViewports)
@@ -2018,8 +2053,10 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdSetBlendConstants", &wine_vkCmdSetBlendConstants},
     {"vkCmdSetCheckpointNV", &wine_vkCmdSetCheckpointNV},
     {"vkCmdSetCoarseSampleOrderNV", &wine_vkCmdSetCoarseSampleOrderNV},
+    {"vkCmdSetColorWriteEnableEXT", &wine_vkCmdSetColorWriteEnableEXT},
     {"vkCmdSetCullModeEXT", &wine_vkCmdSetCullModeEXT},
     {"vkCmdSetDepthBias", &wine_vkCmdSetDepthBias},
+    {"vkCmdSetDepthBiasEnableEXT", &wine_vkCmdSetDepthBiasEnableEXT},
     {"vkCmdSetDepthBounds", &wine_vkCmdSetDepthBounds},
     {"vkCmdSetDepthBoundsTestEnableEXT", &wine_vkCmdSetDepthBoundsTestEnableEXT},
     {"vkCmdSetDepthCompareOpEXT", &wine_vkCmdSetDepthCompareOpEXT},
@@ -2036,10 +2073,14 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdSetFrontFaceEXT", &wine_vkCmdSetFrontFaceEXT},
     {"vkCmdSetLineStippleEXT", &wine_vkCmdSetLineStippleEXT},
     {"vkCmdSetLineWidth", &wine_vkCmdSetLineWidth},
+    {"vkCmdSetLogicOpEXT", &wine_vkCmdSetLogicOpEXT},
+    {"vkCmdSetPatchControlPointsEXT", &wine_vkCmdSetPatchControlPointsEXT},
     {"vkCmdSetPerformanceMarkerINTEL", &wine_vkCmdSetPerformanceMarkerINTEL},
     {"vkCmdSetPerformanceOverrideINTEL", &wine_vkCmdSetPerformanceOverrideINTEL},
     {"vkCmdSetPerformanceStreamMarkerINTEL", &wine_vkCmdSetPerformanceStreamMarkerINTEL},
+    {"vkCmdSetPrimitiveRestartEnableEXT", &wine_vkCmdSetPrimitiveRestartEnableEXT},
     {"vkCmdSetPrimitiveTopologyEXT", &wine_vkCmdSetPrimitiveTopologyEXT},
+    {"vkCmdSetRasterizerDiscardEnableEXT", &wine_vkCmdSetRasterizerDiscardEnableEXT},
     {"vkCmdSetRayTracingPipelineStackSizeKHR", &wine_vkCmdSetRayTracingPipelineStackSizeKHR},
     {"vkCmdSetSampleLocationsEXT", &wine_vkCmdSetSampleLocationsEXT},
     {"vkCmdSetScissor", &wine_vkCmdSetScissor},
@@ -2049,6 +2090,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdSetStencilReference", &wine_vkCmdSetStencilReference},
     {"vkCmdSetStencilTestEnableEXT", &wine_vkCmdSetStencilTestEnableEXT},
     {"vkCmdSetStencilWriteMask", &wine_vkCmdSetStencilWriteMask},
+    {"vkCmdSetVertexInputEXT", &wine_vkCmdSetVertexInputEXT},
     {"vkCmdSetViewport", &wine_vkCmdSetViewport},
     {"vkCmdSetViewportShadingRatePaletteNV", &wine_vkCmdSetViewportShadingRatePaletteNV},
     {"vkCmdSetViewportWScalingNV", &wine_vkCmdSetViewportWScalingNV},
