@@ -541,13 +541,14 @@ static void video_presenter_check_queue(struct video_presenter *presenter,
 {
     LONGLONG pts, clocktime, delta;
     unsigned int wait = 0;
-    BOOL present = TRUE;
     IMFSample *sample;
     MFTIME systime;
+    BOOL present;
     HRESULT hr;
 
     while (video_presenter_sample_queue_pop(presenter, &sample))
     {
+        present = TRUE;
         wait = 0;
 
         if (presenter->clock)
