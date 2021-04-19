@@ -2327,6 +2327,38 @@ static void parse_supportedos_elem( xmlbuf_t *xmlbuf, struct assembly *assembly,
     if (!end) parse_expect_end_elem(xmlbuf, parent);
 }
 
+static void parse_maxversiontested_elem( xmlbuf_t *xmlbuf, struct assembly *assembly,
+                                         struct actctx_loader *acl, const struct xml_elem *parent )
+{
+    struct xml_attr attr;
+    BOOL end = FALSE;
+
+    while (next_xml_attr(xmlbuf, &attr, &end))
+    {
+        if (xml_attr_cmp(&attr, L"Id"))
+        {
+            COMPATIBILITY_CONTEXT_ELEMENT *compat;
+            struct assembly_version version;
+
+            if (!(compat = add_compat_context(assembly)))
+            {
+                set_error( xmlbuf );
+                return;
+            }
+            parse_version( &attr.value, &version );
+            compat->Type = ACTCTX_COMPATIBILITY_ELEMENT_TYPE_MAXVERSIONTESTED;
+            compat->MaxVersionTested = (ULONGLONG)version.major << 48 |
+                (ULONGLONG)version.minor << 32 | version.build << 16 | version.revision;
+        }
+        else if (!is_xmlns_attr( &attr ))
+        {
+            WARN("unknown attr %s\n", debugstr_xml_attr(&attr));
+        }
+    }
+
+    if (!end) parse_expect_end_elem(xmlbuf, parent);
+}
+
 static void parse_compatibility_application_elem(xmlbuf_t *xmlbuf, struct assembly *assembly,
                                                  struct actctx_loader* acl, const struct xml_elem *parent)
 {
@@ -2337,6 +2369,10 @@ static void parse_compatibility_application_elem(xmlbuf_t *xmlbuf, struct assemb
         if (xml_elem_cmp(&elem, L"supportedOS", compatibilityNSW))
         {
             parse_supportedos_elem(xmlbuf, assembly, acl, &elem);
+        }
+        else if (xml_elem_cmp(&elem, L"maxversiontested", compatibilityNSW))
+        {
+            parse_maxversiontested_elem(xmlbuf, assembly, acl, &elem);
         }
         else
         {
@@ -5328,8 +5364,11 @@ NTSTATUS WINAPI RtlQueryInformationActivationContext( ULONG flags, HANDLE handle
 
     case CompatibilityInformationInActivationContext:
         {
-            /*ACTIVATION_CONTEXT_COMPATIBILITY_INFORMATION*/DWORD *acci = buffer;
-            COMPATIBILITY_CONTEXT_ELEMENT *elements;
+            struct acci
+            {
+                DWORD ElementCount;
+                COMPATIBILITY_CONTEXT_ELEMENT Elements[1];
+            } *acci = buffer;
             struct assembly *assembly = NULL;
             ULONG num_compat_contexts = 0, n;
             SIZE_T len;
@@ -5340,16 +5379,15 @@ NTSTATUS WINAPI RtlQueryInformationActivationContext( ULONG flags, HANDLE handle
 
             if (assembly)
                 num_compat_contexts = assembly->num_compat_contexts;
-            len = sizeof(*acci) + num_compat_contexts * sizeof(COMPATIBILITY_CONTEXT_ELEMENT);
+            len = offsetof( struct acci, Elements[num_compat_contexts] );
 
             if (retlen) *retlen = len;
             if (!buffer || bufsize < len) return STATUS_BUFFER_TOO_SMALL;
 
-            *acci = num_compat_contexts;
-            elements = (COMPATIBILITY_CONTEXT_ELEMENT*)(acci + 1);
+            acci->ElementCount = num_compat_contexts;
             for (n = 0; n < num_compat_contexts; ++n)
             {
-                elements[n] = assembly->compat_contexts[n];
+                acci->Elements[n] = assembly->compat_contexts[n];
             }
         }
         break;

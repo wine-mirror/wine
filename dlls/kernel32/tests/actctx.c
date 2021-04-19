@@ -429,6 +429,8 @@ static const char compat_manifest_vista_7_8_10_81[] =
 "           <supportedOS Id=\"{4a2f28e3-53b9-4441-ba9c-d69d4a4a6e38}\" ></supportedOS>"  /* Windows 8 */
 "           <supportedOS Id=\"{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}\" />"  /* Windows 10 */
 "           <supportedOS Id=\"{1f676c76-80e1-4239-95bb-83d0f6d0da78}\" />"  /* Windows 8.1 */
+"           <maxversiontested Id=\"10.0.18358\" />"
+"           <maxversiontested Id=\"2.3.4.5\" />"
 "       </application>"
 "   </compatibility>"
 "</assembly>";
@@ -2818,6 +2820,20 @@ typedef struct _test_act_ctx_compat_info {
     COMPATIBILITY_CONTEXT_ELEMENT Elements[10];
 } test_act_ctx_compat_info;
 
+/* Win10 versions before 1909 don't have the MaxVersionTested field */
+typedef struct
+{
+    GUID Id;
+    ACTCTX_COMPATIBILITY_ELEMENT_TYPE Type;
+} old_win10_COMPATIBILITY_CONTEXT_ELEMENT;
+
+typedef struct
+{
+    DWORD ElementCount;
+    old_win10_COMPATIBILITY_CONTEXT_ELEMENT Elements[10];
+} old_win10_test_act_ctx_compat_info;
+
+
 static void test_no_compat(HANDLE handle, int line)
 {
     test_act_ctx_compat_info compat_info;
@@ -2829,15 +2845,17 @@ static void test_no_compat(HANDLE handle, int line)
             &compat_info, sizeof(compat_info), &size);
 
     ok_(__FILE__, line)(b, "CompatibilityInformationInActivationContext failed\n");
-    ok_(__FILE__, line)(size == sizeof(DWORD), "size mismatch (got %lu, expected 4)\n", size);
+    ok_(__FILE__, line)(size == offsetof(test_act_ctx_compat_info,Elements[0]) ||
+                        broken(size == offsetof(old_win10_test_act_ctx_compat_info,Elements[0])),
+                        "size mismatch got %lu\n", size);
     ok_(__FILE__, line)(compat_info.ElementCount == 0, "unexpected ElementCount %u\n", compat_info.ElementCount);
 }
 
-static void test_with_compat(HANDLE handle, DWORD num_compat, const GUID* expected_compat[], int line)
+static void test_with_compat(HANDLE handle, DWORD num_compat, DWORD num_version,
+                             const GUID *expected_compat[], const ULONGLONG expected_version[], int line)
 {
     test_act_ctx_compat_info compat_info;
     SIZE_T size;
-    SIZE_T expected = sizeof(COMPATIBILITY_CONTEXT_ELEMENT) * num_compat + sizeof(DWORD);
     DWORD n;
     BOOL b;
 
@@ -2846,18 +2864,46 @@ static void test_with_compat(HANDLE handle, DWORD num_compat, const GUID* expect
             &compat_info, sizeof(compat_info), &size);
 
     ok_(__FILE__, line)(b, "CompatibilityInformationInActivationContext failed\n");
-    ok_(__FILE__, line)(size == expected, "size mismatch (got %lu, expected %lu)\n", size, expected);
-    ok_(__FILE__, line)(compat_info.ElementCount == num_compat, "unexpected ElementCount %u\n", compat_info.ElementCount);
+    ok_(__FILE__, line)(size == offsetof(test_act_ctx_compat_info,Elements[num_compat + num_version]) ||
+                        broken(size == offsetof(old_win10_test_act_ctx_compat_info,Elements[num_compat])),
+                        "size mismatch got %lu\n", size);
+    ok_(__FILE__, line)(compat_info.ElementCount == num_compat + num_version ||
+                        broken(compat_info.ElementCount == num_compat),
+                        "unexpected ElementCount %u\n", compat_info.ElementCount);
 
-    for (n = 0; n < num_compat; ++n)
+    if (size == offsetof(old_win10_test_act_ctx_compat_info,Elements[num_compat]))
     {
-        ok_(__FILE__, line)(IsEqualGUID(&compat_info.Elements[n].Id, expected_compat[n]),
-                            "got wrong clsid %s, expected %s for %u\n",
-                            wine_dbgstr_guid(&compat_info.Elements[n].Id),
-                            wine_dbgstr_guid(expected_compat[n]),
-                            n);
-        ok_(__FILE__, line)(compat_info.Elements[n].Type == ACTCTX_COMPATIBILITY_ELEMENT_TYPE_OS,
-                            "Wrong type, got %u for %u\n", (DWORD)compat_info.Elements[n].Type, n);
+        for (n = 0; n < num_compat; ++n)
+        {
+            old_win10_test_act_ctx_compat_info *info = (old_win10_test_act_ctx_compat_info *)&compat_info;
+            ok_(__FILE__, line)(IsEqualGUID(&info->Elements[n].Id, expected_compat[n]),
+                                "got wrong clsid %s, expected %s for %u\n",
+                                wine_dbgstr_guid(&info->Elements[n].Id),
+                                wine_dbgstr_guid(expected_compat[n]),
+                                n);
+            ok_(__FILE__, line)(info->Elements[n].Type == ACTCTX_COMPATIBILITY_ELEMENT_TYPE_OS,
+                                "Wrong type, got %u for %u\n", (DWORD)info->Elements[n].Type, n);
+        }
+    }
+    else
+    {
+        for (n = 0; n < num_compat; ++n)
+        {
+            ok_(__FILE__, line)(IsEqualGUID(&compat_info.Elements[n].Id, expected_compat[n]),
+                                "got wrong clsid %s, expected %s for %u\n",
+                                wine_dbgstr_guid(&compat_info.Elements[n].Id),
+                                wine_dbgstr_guid(expected_compat[n]),
+                                n);
+            ok_(__FILE__, line)(compat_info.Elements[n].Type == ACTCTX_COMPATIBILITY_ELEMENT_TYPE_OS,
+                                "Wrong type, got %u for %u\n", (DWORD)compat_info.Elements[n].Type, n);
+        }
+        for (; n < num_compat + num_version; ++n)
+        {
+            ok_(__FILE__, line)(compat_info.Elements[n].Type == ACTCTX_COMPATIBILITY_ELEMENT_TYPE_MAXVERSIONTESTED,
+                                "Wrong type, got %u for %u\n", (DWORD)compat_info.Elements[n].Type, n);
+            ok_(__FILE__, line)(compat_info.Elements[n].MaxVersionTested == expected_version[n - num_compat],
+                                "Wrong version, got %s for %u\n", wine_dbgstr_longlong(compat_info.Elements[n].MaxVersionTested), n);
+        }
     }
 }
 
@@ -2931,7 +2977,7 @@ static void test_compatibility(void)
             &VISTA_COMPAT_GUID
         };
         test_basic_info(handle, __LINE__);
-        test_with_compat(handle, 1, expect_manifest, __LINE__);
+        test_with_compat(handle, 1, 0, expect_manifest, NULL, __LINE__);
         ReleaseActCtx(handle);
     }
 
@@ -2955,8 +3001,13 @@ static void test_compatibility(void)
             &WIN10_COMPAT_GUID,
             &WIN81_COMPAT_GUID,
         };
+        static const ULONGLONG expect_version[] =
+        {
+            0x000a000047b60000ull,  /* 10.0.18358.0 */
+            0x0002000300040005ull,  /* 2.3.4.5 */
+        };
         test_basic_info(handle, __LINE__);
-        test_with_compat(handle, 5, expect_manifest, __LINE__);
+        test_with_compat(handle, 5, 2, expect_manifest, expect_version, __LINE__);
         ReleaseActCtx(handle);
     }
 
@@ -2977,7 +3028,7 @@ static void test_compatibility(void)
             &OTHER_COMPAT_GUID,
         };
         test_basic_info(handle, __LINE__);
-        test_with_compat(handle, 1, expect_manifest, __LINE__);
+        test_with_compat(handle, 1, 0, expect_manifest, NULL, __LINE__);
         ReleaseActCtx(handle);
     }
 }
