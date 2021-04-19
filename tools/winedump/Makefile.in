@@ -12,6 +12,7 @@ C_SRCS = \
 	lib.c \
 	lnk.c \
 	main.c \
+	mf.c \
 	minidump.c \
 	misc.c \
 	msc.c \
