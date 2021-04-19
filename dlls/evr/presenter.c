@@ -312,6 +312,9 @@ static HRESULT video_presenter_set_media_type(struct video_presenter *presenter,
 static HRESULT video_presenter_configure_output_type(struct video_presenter *presenter, const MFVideoArea *aperture,
         IMFMediaType *media_type)
 {
+    unsigned int size;
+    GUID subtype;
+    LONG stride;
     HRESULT hr;
 
     hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, (UINT64)aperture->Area.cx << 32 | aperture->Area.cy);
@@ -319,6 +322,20 @@ static HRESULT video_presenter_configure_output_type(struct video_presenter *pre
         hr = IMFMediaType_SetBlob(media_type, &MF_MT_GEOMETRIC_APERTURE, (UINT8 *)aperture, sizeof(*aperture));
     if (SUCCEEDED(hr))
         hr = IMFMediaType_SetBlob(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (UINT8 *)aperture, sizeof(*aperture));
+
+    if (SUCCEEDED(hr))
+        hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &subtype);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = MFGetStrideForBitmapInfoHeader(subtype.Data1, aperture->Area.cx, &stride);
+        if (SUCCEEDED(hr))
+            hr = MFGetPlaneSize(subtype.Data1, aperture->Area.cx, aperture->Area.cy, &size);
+        if (SUCCEEDED(hr))
+            hr = IMFMediaType_SetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, stride);
+        if (SUCCEEDED(hr))
+            hr = IMFMediaType_SetUINT32(media_type, &MF_MT_SAMPLE_SIZE, stride);
+    }
 
     return hr;
 }
