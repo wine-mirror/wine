@@ -1098,6 +1098,16 @@ static inline void strfreeA( char *str )
     RtlFreeHeap( GetProcessHeap(), 0, str );
 }
 
+static inline void strarrayfreeA( char **strarray )
+{
+    if (strarray)
+    {
+        char **p = strarray;
+        while (*p) strfreeA( *p++ );
+        RtlFreeHeap( GetProcessHeap(), 0, strarray );
+    }
+}
+
 static inline void controlfreeA( LDAPControlA *control )
 {
     if (control)
