@@ -381,14 +381,4 @@ struct png_funcs
 #define assert(expr) ((void)0)
 #endif
 
-static inline WCHAR *heap_strdupW(const WCHAR *src)
-{
-    WCHAR *dst;
-    unsigned len;
-    if (!src) return NULL;
-    len = (lstrlenW(src) + 1) * sizeof(WCHAR);
-    if ((dst = heap_alloc(len))) memcpy(dst, src, len);
-    return dst;
-}
-
 #endif /* __WINE_USER_PRIVATE_H */
