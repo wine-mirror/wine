@@ -19,13 +19,13 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "winternl.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "winldap_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
@@ -56,9 +56,9 @@ static char **split_hostnames( const char *hostnames )
         p++;
     }
 
-    if (!(res = heap_alloc( (i + 1) * sizeof(char *) )))
+    if (!(res = malloc( (i + 1) * sizeof(char *) )))
     {
-        heap_free( str );
+        free( str );
         return NULL;
     }
 
@@ -93,15 +93,13 @@ static char **split_hostnames( const char *hostnames )
     }
     res[i] = NULL;
 
-    heap_free( str );
+    free( str );
     return res;
 
 oom:
-    while (i > 0) strfreeU( res[--i] );
-
-    heap_free( res );
-    heap_free( str );
-
+    while (i > 0) free( res[--i] );
+    free( res );
+    free( str );
     return NULL;
 }
 
@@ -147,7 +145,7 @@ static char *join_hostnames( const char *scheme, char **hostnames, ULONG portnum
     }
 
     size += (i - 1) * strlen( sep );
-    if (!(res = heap_alloc( size + 1 ))) return NULL;
+    if (!(res = malloc( size + 1 ))) return NULL;
 
     p = res;
     for (v = hostnames; *v; v++)
@@ -200,10 +198,10 @@ static WLDAP32_LDAP *create_context( const char *url )
     WLDAP32_LDAP *ld;
     int version = WLDAP32_LDAP_VERSION3;
 
-    if (!(ld = heap_alloc_zero( sizeof( *ld )))) return NULL;
+    if (!(ld = calloc( 1, sizeof( *ld )))) return NULL;
     if (map_error( ldap_funcs->ldap_initialize( &ld->ld, url ) ) != WLDAP32_LDAP_SUCCESS)
     {
-        heap_free( ld );
+        free( ld );
         return NULL;
     }
     ldap_funcs->ldap_set_option( ld->ld, WLDAP32_LDAP_OPT_PROTOCOL_VERSION, &version );
@@ -226,7 +224,7 @@ WLDAP32_LDAP * CDECL cldap_openA( char *hostname, ULONG portnumber )
 
     ld = cldap_openW( hostnameW, portnumber );
 
-    strfreeW( hostnameW );
+    free( hostnameW );
     return ld;
 }
 
@@ -264,8 +262,8 @@ WLDAP32_LDAP * CDECL cldap_openW( WCHAR *hostname, ULONG portnumber )
     ld = create_context( url );
 
 exit:
-    strfreeU( hostnameU );
-    strfreeU( url );
+    free( hostnameU );
+    free( url );
     return ld;
 }
 
@@ -311,7 +309,7 @@ WLDAP32_LDAP *  CDECL ldap_initA( const PCHAR hostname, ULONG portnumber )
 
     ld = ldap_initW( hostnameW, portnumber );
 
-    strfreeW( hostnameW );
+    free( hostnameW );
     return ld;
 }
 
@@ -350,8 +348,8 @@ WLDAP32_LDAP * CDECL ldap_initW( const PWCHAR hostname, ULONG portnumber )
     ld = create_context( url );
 
 exit:
-    strfreeU( hostnameU );
-    strfreeU( url );
+    free( hostnameU );
+    free( url );
     return ld;
 }
 
@@ -371,7 +369,7 @@ WLDAP32_LDAP * CDECL ldap_openA( char *hostname, ULONG portnumber )
 
     ld = ldap_openW( hostnameW, portnumber );
 
-    strfreeW( hostnameW );
+    free( hostnameW );
     return ld;
 }
 
@@ -409,8 +407,8 @@ WLDAP32_LDAP * CDECL ldap_openW( WCHAR *hostname, ULONG portnumber )
     ld = create_context( url );
 
 exit:
-    strfreeU( hostnameU );
-    strfreeU( url );
+    free( hostnameU );
+    free( url );
     return ld;
 }
 
@@ -430,7 +428,7 @@ WLDAP32_LDAP * CDECL ldap_sslinitA( char *hostname, ULONG portnumber, int secure
 
     ld  = ldap_sslinitW( hostnameW, portnumber, secure );
 
-    strfreeW( hostnameW );
+    free( hostnameW );
     return ld;
 }
 
@@ -475,8 +473,8 @@ WLDAP32_LDAP * CDECL ldap_sslinitW( WCHAR *hostname, ULONG portnumber, int secur
     ld = create_context( url );
 
 exit:
-    strfreeU( hostnameU );
-    strfreeU( url );
+    free( hostnameU );
+    free( url );
     return ld;
 }
 

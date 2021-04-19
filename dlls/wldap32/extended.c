@@ -76,7 +76,7 @@ ULONG CDECL ldap_extended_operationA( WLDAP32_LDAP *ld, char *oid, struct WLDAP3
     ret = ldap_extended_operationW( ld, oidW, data, serverctrlsW, clientctrlsW, message );
 
 exit:
-    strfreeW( oidW );
+    free( oidW );
     controlarrayfreeW( serverctrlsW );
     controlarrayfreeW( clientctrlsW );
     return ret;
@@ -127,7 +127,7 @@ ULONG CDECL ldap_extended_operationW( WLDAP32_LDAP *ld, WCHAR *oid, struct WLDAP
     ret = map_error( ldap_funcs->ldap_extended_operation( ld->ld, oidU, dataU, serverctrlsU, clientctrlsU, message ) );
 
 exit:
-    strfreeU( oidU );
+    free( oidU );
     bvfreeU( dataU );
     controlarrayfreeU( serverctrlsU );
     controlarrayfreeU( clientctrlsU );
@@ -164,7 +164,7 @@ ULONG CDECL ldap_extended_operation_sA( WLDAP32_LDAP *ld, char *oid, struct WLDA
     }
 
 exit:
-    strfreeW( oidW );
+    free( oidW );
     controlarrayfreeW( serverctrlsW );
     controlarrayfreeW( clientctrlsW );
     return ret;
@@ -229,7 +229,7 @@ ULONG CDECL ldap_extended_operation_sW( WLDAP32_LDAP *ld, WCHAR *oid, struct WLD
     }
 
 exit:
-    strfreeU( oidU );
+    free( oidU );
     bvfreeU( dataU );
     controlarrayfreeU( serverctrlsU );
     controlarrayfreeU( clientctrlsU );

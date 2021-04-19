@@ -57,7 +57,7 @@ ULONG CDECL ldap_get_optionA( WLDAP32_LDAP *ld, int option, void *value )
         ret = ldap_get_optionW( ld, option, &featureW );
 
         if (ret == WLDAP32_LDAP_SUCCESS) featureA->ldapaif_version = featureW.ldapaif_version;
-        strfreeW( featureW.ldapaif_name );
+        free( featureW.ldapaif_name );
         return ret;
     }
     case WLDAP32_LDAP_OPT_API_INFO:
@@ -185,7 +185,7 @@ ULONG CDECL ldap_get_optionW( WLDAP32_LDAP *ld, int option, void *value )
         ret = map_error( ldap_funcs->ldap_get_option( ld->ld, option, &featureU ) );
 
         if (ret == WLDAP32_LDAP_SUCCESS) featureW->ldapaif_version = featureU.ldapaif_version;
-        strfreeU( featureU.ldapaif_name );
+        free( featureU.ldapaif_name );
         return ret;
     }
     case WLDAP32_LDAP_OPT_API_INFO:

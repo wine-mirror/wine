@@ -49,7 +49,7 @@ ULONG CDECL ldap_modifyA( WLDAP32_LDAP *ld, char *dn, LDAPModA **mods )
     ret = ldap_modifyW( ld, dnW, modsW );
 
 exit:
-    strfreeW( dnW );
+    free( dnW );
     modarrayfreeW( modsW );
     return ret;
 }
@@ -110,7 +110,7 @@ ULONG CDECL ldap_modify_extA( WLDAP32_LDAP *ld, char *dn, LDAPModA **mods,
     ret = ldap_modify_extW( ld, dnW, modsW, serverctrlsW, clientctrlsW, message );
 
 exit:
-    strfreeW( dnW );
+    free( dnW );
     modarrayfreeW( modsW );
     controlarrayfreeW( serverctrlsW );
     controlarrayfreeW( clientctrlsW );
@@ -160,7 +160,7 @@ ULONG CDECL ldap_modify_extW( WLDAP32_LDAP *ld, WCHAR *dn, LDAPModW **mods,
     ret = map_error( ldap_funcs->ldap_modify_ext( ld->ld, dnU, modsU, serverctrlsU, clientctrlsU, message ) );
 
 exit:
-    strfreeU( dnU );
+    free( dnU );
     modarrayfreeU( modsU );
     controlarrayfreeU( serverctrlsU );
     controlarrayfreeU( clientctrlsU );
@@ -192,7 +192,7 @@ ULONG CDECL ldap_modify_ext_sA( WLDAP32_LDAP *ld, char *dn, LDAPModA **mods,
     ret = ldap_modify_ext_sW( ld, dnW, modsW, serverctrlsW, clientctrlsW );
 
 exit:
-    strfreeW( dnW );
+    free( dnW );
     modarrayfreeW( modsW );
     controlarrayfreeW( serverctrlsW );
     controlarrayfreeW( clientctrlsW );
@@ -240,7 +240,7 @@ ULONG CDECL ldap_modify_ext_sW( WLDAP32_LDAP *ld, WCHAR *dn, LDAPModW **mods,
     ret = map_error( ldap_funcs->ldap_modify_ext_s( ld->ld, dnU, modsU, serverctrlsU, clientctrlsU ) );
 
 exit:
-    strfreeU( dnU );
+    free( dnU );
     modarrayfreeU( modsU );
     controlarrayfreeU( serverctrlsU );
     controlarrayfreeU( clientctrlsU );
@@ -268,7 +268,7 @@ ULONG CDECL ldap_modify_sA( WLDAP32_LDAP *ld, char *dn, LDAPModA **mods )
     ret = ldap_modify_sW( ld, dnW, modsW );
 
 exit:
-    strfreeW( dnW );
+    free( dnW );
     modarrayfreeW( modsW );
     return ret;
 }

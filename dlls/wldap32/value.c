@@ -19,12 +19,12 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "winldap_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
@@ -120,7 +120,7 @@ char ** CDECL ldap_get_valuesA( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry, ch
     ret = strarrayWtoA( retW );
 
     ldap_value_freeW( retW );
-    strfreeW( attrW );
+    free( attrW );
     return ret;
 }
 
@@ -129,7 +129,7 @@ static char *bv2str( struct bervalU *bv )
     char *str = NULL;
     unsigned int len = bv->bv_len;
 
-    if ((str = heap_alloc( len + 1 )))
+    if ((str = malloc( len + 1 )))
     {
         memcpy( str, bv->bv_val, len );
         str[len] = '\0';
@@ -148,7 +148,7 @@ static char **bv2str_array( struct bervalU **bv )
         len++;
         p++;
     }
-    if (!(str = heap_alloc( (len + 1) * sizeof(char *) ))) return NULL;
+    if (!(str = malloc( (len + 1) * sizeof(char *) ))) return NULL;
 
     p = bv;
     while (*p)
@@ -156,8 +156,8 @@ static char **bv2str_array( struct bervalU **bv )
         str[i] = bv2str( *p );
         if (!str[i])
         {
-            while (i > 0) heap_free( str[--i] );
-            heap_free( str );
+            while (i > 0) free( str[--i] );
+            free( str );
             return NULL;
         }
         i++;
@@ -205,7 +205,7 @@ WCHAR ** CDECL ldap_get_valuesW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entry, W
         strarrayfreeU( retU );
     }
 
-    strfreeU( attrU );
+    free( attrU );
     return ret;
 }
 
@@ -225,7 +225,7 @@ struct WLDAP32_berval ** CDECL ldap_get_values_lenA( WLDAP32_LDAP *ld, WLDAP32_L
 
     ret = ldap_get_values_lenW( ld, message, attrW );
 
-    strfreeW( attrW );
+    free( attrW );
     return ret;
 }
 
@@ -264,7 +264,7 @@ struct WLDAP32_berval ** CDECL ldap_get_values_lenW( WLDAP32_LDAP *ld, WLDAP32_L
         bvarrayfreeU( retU );
     }
 
-    strfreeU( attrU );
+    free( attrU );
     return ret;
 }
 

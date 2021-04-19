@@ -19,12 +19,12 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "winldap_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
@@ -82,20 +82,20 @@ static ULONG create_page_control( ULONG pagesize, struct WLDAP32_berval *cookie,
     if (ret == -1) return WLDAP32_LDAP_NO_MEMORY;
 
     /* copy the berval so it can be properly freed by the caller */
-    if (!(val = heap_alloc( berval->bv_len ))) return WLDAP32_LDAP_NO_MEMORY;
+    if (!(val = malloc( berval->bv_len ))) return WLDAP32_LDAP_NO_MEMORY;
 
     len = berval->bv_len;
     memcpy( val, berval->bv_val, len );
     WLDAP32_ber_bvfree( berval );
 
-    if (!(ctrl = heap_alloc( sizeof(*ctrl) )))
+    if (!(ctrl = malloc( sizeof(*ctrl) )))
     {
-        heap_free( val );
+        free( val );
         return WLDAP32_LDAP_NO_MEMORY;
     }
     if (!(ctrl->ldctl_oid = strAtoW( LDAP_PAGED_RESULT_OID_STRING )))
     {
-        heap_free( ctrl );
+        free( ctrl );
         return WLDAP32_LDAP_NO_MEMORY;
     }
     ctrl->ldctl_value.bv_len = len;
@@ -196,7 +196,7 @@ ULONG CDECL ldap_get_paged_count( WLDAP32_LDAP *ld, LDAPSearch *search, ULONG *c
         return WLDAP32_LDAP_SUCCESS;
     }
 
-    heap_free( search->cookie );
+    free( search->cookie );
     search->cookie = NULL;
 
     ret = ldap_parse_page_controlW( ld, server_ctrls, count, &search->cookie );
@@ -272,17 +272,17 @@ ULONG CDECL ldap_search_abandon_page( WLDAP32_LDAP *ld, LDAPSearch *search )
 
     if (!ld || !search) return ~0u;
 
-    strfreeW( search->dn );
-    strfreeW( search->filter );
+    free( search->dn );
+    free( search->filter );
     strarrayfreeW( search->attrs );
     ctrls = search->serverctrls;
     controlfreeW( ctrls[0] ); /* page control */
     ctrls++;
     while (*ctrls) controlfreeW( *ctrls++ );
-    heap_free( search->serverctrls );
+    free( search->serverctrls );
     controlarrayfreeW( search->clientctrls );
-    if (search->cookie && search->cookie != &null_cookieW) heap_free( search->cookie );
-    heap_free( search );
+    if (search->cookie && search->cookie != &null_cookieW) free( search->cookie );
+    free( search );
 
     return WLDAP32_LDAP_SUCCESS;
 }
@@ -306,7 +306,7 @@ LDAPSearch * CDECL ldap_search_init_pageW( WLDAP32_LDAP *ld, WCHAR *dn, ULONG sc
     TRACE( "(%p, %s, 0x%08x, %s, %p, 0x%08x, %p, %p, 0x%08x, 0x%08x, %p)\n", ld, debugstr_w(dn), scope,
            debugstr_w(filter), attrs, attrsonly, serverctrls, clientctrls, timelimit, sizelimit, sortkeys );
 
-    if (!(search = heap_alloc_zero( sizeof(*search) )))
+    if (!(search = calloc( 1, sizeof(*search) )))
     {
         ld->ld_errno = WLDAP32_LDAP_NO_MEMORY;
         return NULL;
@@ -317,7 +317,7 @@ LDAPSearch * CDECL ldap_search_init_pageW( WLDAP32_LDAP *ld, WCHAR *dn, ULONG sc
     if (attrs && !(search->attrs = strarraydupW( attrs ))) goto fail;
 
     len = serverctrls ? controlarraylenW( serverctrls ) : 0;
-    if (!(search->serverctrls = heap_alloc( sizeof(LDAPControlW *) * (len + 2) ))) goto fail;
+    if (!(search->serverctrls = malloc( sizeof(LDAPControlW *) * (len + 2) ))) goto fail;
     search->serverctrls[0] = NULL; /* reserve 0 for page control */
     for (i = 0; i < len; i++)
     {

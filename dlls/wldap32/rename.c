@@ -54,9 +54,9 @@ ULONG CDECL ldap_rename_extA( WLDAP32_LDAP *ld, char *dn, char *newrdn, char *ne
     ret = ldap_rename_extW( ld, dnW, newrdnW, newparentW, delete, serverctrlsW, clientctrlsW, message );
 
 exit:
-    strfreeW( dnW );
-    strfreeW( newrdnW );
-    strfreeW( newparentW );
+    free( dnW );
+    free( newrdnW );
+    free( newparentW );
     controlarrayfreeW( serverctrlsW );
     controlarrayfreeW( clientctrlsW );
     return ret;
@@ -107,9 +107,9 @@ ULONG CDECL ldap_rename_extW( WLDAP32_LDAP *ld, WCHAR *dn, WCHAR *newrdn, WCHAR 
     ret = map_error( ldap_funcs->ldap_rename( ld->ld, dnU, newrdnU, newparentU, delete, serverctrlsU, clientctrlsU,
                                               message ) );
 exit:
-    strfreeU( dnU );
-    strfreeU( newrdnU );
-    strfreeU( newparentU );
+    free( dnU );
+    free( newrdnU );
+    free( newparentU );
     controlarrayfreeU( serverctrlsU );
     controlarrayfreeU( clientctrlsU );
     return ret;
@@ -141,9 +141,9 @@ ULONG CDECL ldap_rename_ext_sA( WLDAP32_LDAP *ld, char *dn, char *newrdn, char *
     ret = ldap_rename_ext_sW( ld, dnW, newrdnW, newparentW, delete, serverctrlsW, clientctrlsW );
 
 exit:
-    strfreeW( dnW );
-    strfreeW( newrdnW );
-    strfreeW( newparentW );
+    free( dnW );
+    free( newrdnW );
+    free( newparentW );
     controlarrayfreeW( serverctrlsW );
     controlarrayfreeW( clientctrlsW );
     return ret;
@@ -187,9 +187,9 @@ ULONG CDECL ldap_rename_ext_sW( WLDAP32_LDAP *ld, WCHAR *dn, WCHAR *newrdn, WCHA
     ret = map_error( ldap_funcs->ldap_rename_s( ld->ld, dnU, newrdnU, newparentU, delete, serverctrlsU,
                                                 clientctrlsU ) );
 exit:
-    strfreeU( dnU );
-    strfreeU( newrdnU );
-    strfreeU( newparentU );
+    free( dnU );
+    free( newrdnU );
+    free( newparentU );
     controlarrayfreeU( serverctrlsU );
     controlarrayfreeU( clientctrlsU );
     return ret;

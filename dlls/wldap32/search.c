@@ -19,12 +19,12 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "winldap_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
@@ -50,8 +50,8 @@ ULONG CDECL ldap_searchA( WLDAP32_LDAP *ld, char *base, ULONG scope, char *filte
     ret = ldap_searchW( ld, baseW, scope, filterW, attrsW, attrsonly );
 
 exit:
-    strfreeW( baseW );
-    strfreeW( filterW );
+    free( baseW );
+    free( filterW );
     strarrayfreeW( attrsW );
     return ret;
 }
@@ -116,8 +116,8 @@ ULONG CDECL ldap_search_extA( WLDAP32_LDAP *ld, char *base, ULONG scope, char *f
                             sizelimit, message );
 
 exit:
-    strfreeW( baseW );
-    strfreeW( filterW );
+    free( baseW );
+    free( filterW );
     strarrayfreeW( attrsW );
     controlarrayfreeW( serverctrlsW );
     controlarrayfreeW( clientctrlsW );
@@ -179,8 +179,8 @@ ULONG CDECL ldap_search_extW( WLDAP32_LDAP *ld, WCHAR *base, ULONG scope, WCHAR 
                                                   serverctrlsU, clientctrlsU, timelimit ? &timevalU : NULL, sizelimit,
                                                   message ) );
 exit:
-    strfreeU( baseU );
-    strfreeU( filterU );
+    free( baseU );
+    free( filterU );
     strarrayfreeU( attrsU );
     controlarrayfreeU( serverctrlsU );
     controlarrayfreeU( clientctrlsU );
@@ -215,8 +215,8 @@ ULONG CDECL ldap_search_ext_sA( WLDAP32_LDAP *ld, char *base, ULONG scope, char 
                               sizelimit, res );
 
 exit:
-    strfreeW( baseW );
-    strfreeW( filterW );
+    free( baseW );
+    free( filterW );
     strarrayfreeW( attrsW );
     controlarrayfreeW( serverctrlsW );
     controlarrayfreeW( clientctrlsW );
@@ -280,7 +280,7 @@ ULONG CDECL ldap_search_ext_sW( WLDAP32_LDAP *ld, WCHAR *base, ULONG scope, WCHA
                                                     clientctrlsU, timeout ? &timevalU : NULL, sizelimit, &msgU ) );
     if (msgU)
     {
-        WLDAP32_LDAPMessage *msg = heap_alloc_zero( sizeof(*msg) );
+        WLDAP32_LDAPMessage *msg = calloc( 1, sizeof(*msg) );
         if (msg)
         {
             msg->Request = msgU;
@@ -294,8 +294,8 @@ ULONG CDECL ldap_search_ext_sW( WLDAP32_LDAP *ld, WCHAR *base, ULONG scope, WCHA
     }
 
 exit:
-    strfreeU( baseU );
-    strfreeU( filterU );
+    free( baseU );
+    free( filterU );
     strarrayfreeU( attrsU );
     controlarrayfreeU( serverctrlsU );
     controlarrayfreeU( clientctrlsU );
@@ -325,8 +325,8 @@ ULONG CDECL ldap_search_sA( WLDAP32_LDAP *ld, char *base, ULONG scope, char *fil
     ret = ldap_search_sW( ld, baseW, scope, filterW, attrsW, attrsonly, res );
 
 exit:
-    strfreeW( baseW );
-    strfreeW( filterW );
+    free( baseW );
+    free( filterW );
     strarrayfreeW( attrsW );
     return ret;
 }
@@ -384,8 +384,8 @@ ULONG CDECL ldap_search_stA( WLDAP32_LDAP *ld, const PCHAR base, ULONG scope, co
     ret = ldap_search_stW( ld, baseW, scope, filterW, attrsW, attrsonly, timeout, res );
 
 exit:
-    strfreeW( baseW );
-    strfreeW( filterW );
+    free( baseW );
+    free( filterW );
     strarrayfreeW( attrsW );
     return ret;
 }

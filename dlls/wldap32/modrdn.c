@@ -48,8 +48,8 @@ ULONG CDECL ldap_modrdnA( WLDAP32_LDAP *ld, char *dn, char *newdn )
     ret = ldap_modrdnW( ld, dnW, newdnW );
 
 exit:
-    strfreeW( dnW );
-    strfreeW( newdnW );
+    free( dnW );
+    free( newdnW );
     return ret;
 }
 
@@ -98,8 +98,8 @@ ULONG CDECL ldap_modrdn2A( WLDAP32_LDAP *ld, char *dn, char *newdn, int delete )
     ret = ldap_modrdn2W( ld, dnW, newdnW, delete );
 
 exit:
-    strfreeW( dnW );
-    strfreeW( newdnW );
+    free( dnW );
+    free( newdnW );
     return ret;
 }
 
@@ -143,8 +143,8 @@ ULONG CDECL ldap_modrdn2W( WLDAP32_LDAP *ld, WCHAR *dn, WCHAR *newdn, int delete
         ret = ~0u;
 
 exit:
-    strfreeU( dnU );
-    strfreeU( newdnU );
+    free( dnU );
+    free( newdnU );
     return ret;
 }
 
@@ -168,8 +168,8 @@ ULONG CDECL ldap_modrdn2_sA( WLDAP32_LDAP *ld, char *dn, char *newdn, int delete
     ret = ldap_modrdn2_sW( ld, dnW, newdnW, delete );
 
 exit:
-    strfreeW( dnW );
-    strfreeW( newdnW );
+    free( dnW );
+    free( newdnW );
     return ret;
 }
 
@@ -203,8 +203,8 @@ ULONG CDECL ldap_modrdn2_sW( WLDAP32_LDAP *ld, WCHAR *dn, WCHAR *newdn, int dele
     ret = map_error( ldap_funcs->ldap_rename_s( ld->ld, dnU, newdnU, NULL, delete, NULL, NULL ));
 
 exit:
-    strfreeU( dnU );
-    strfreeU( newdnU );
+    free( dnU );
+    free( newdnU );
     return ret;
 }
 
@@ -228,8 +228,8 @@ ULONG CDECL ldap_modrdn_sA( WLDAP32_LDAP *ld, char *dn, char *newdn )
     ret = ldap_modrdn_sW( ld, dnW, newdnW );
 
 exit:
-    strfreeW( dnW );
-    strfreeW( newdnW );
+    free( dnW );
+    free( newdnW );
     return ret;
 }
 

@@ -45,7 +45,7 @@ char * CDECL ldap_dn2ufnA( char *dn )
     retW = ldap_dn2ufnW( dnW );
     ret = strWtoA( retW );
 
-    strfreeW( dnW );
+    free( dnW );
     ldap_memfreeW( retW );
     return ret;
 }
@@ -77,7 +77,7 @@ WCHAR * CDECL ldap_dn2ufnW( WCHAR *dn )
     retU = ldap_funcs->ldap_dn2ufn( dnU );
     ret = strUtoW( retU );
 
-    strfreeU( dnU );
+    free( dnU );
     ldap_funcs->ldap_memfree( retU );
     return ret;
 }
@@ -99,7 +99,7 @@ char ** CDECL ldap_explode_dnA( char *dn, ULONG notypes )
     retW = ldap_explode_dnW( dnW, notypes );
     ret = strarrayWtoA( retW );
 
-    strfreeW( dnW );
+    free( dnW );
     ldap_value_freeW( retW );
     return ret;
 }
@@ -133,7 +133,7 @@ WCHAR ** CDECL ldap_explode_dnW( WCHAR *dn, ULONG notypes )
     retU = ldap_funcs->ldap_explode_dn( dnU, notypes );
     ret = strarrayUtoW( retU );
 
-    strfreeU( dnU );
+    free( dnU );
     ldap_funcs->ldap_memvfree( (void **)retU );
     return ret;
 }
@@ -216,7 +216,7 @@ ULONG CDECL ldap_ufn2dnA( char *ufn, char **dn )
         else *dn = str;
     }
 
-    strfreeW( ufnW );
+    free( ufnW );
     ldap_memfreeW( dnW );
     return ret;
 }
@@ -257,6 +257,6 @@ ULONG CDECL ldap_ufn2dnW( WCHAR *ufn, WCHAR **dn )
         else *dn = str;
     }
 
-    strfreeU( ufnU );
+    free( ufnU );
     return ret;
 }

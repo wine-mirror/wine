@@ -19,12 +19,12 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "winldap_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
@@ -48,10 +48,10 @@ WLDAP32_BerElement * CDECL WLDAP32_ber_alloc_t( int options )
 {
     WLDAP32_BerElement *ret;
 
-    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+    if (!(ret = malloc( sizeof(*ret) ))) return NULL;
     if (!(ret->opaque = ldap_funcs->ber_alloc_t( options )))
     {
-        heap_free( ret );
+        free( ret );
         return NULL;
     }
     return ret;
@@ -117,7 +117,7 @@ void CDECL WLDAP32_ber_bvecfree( BERVAL **berval )
  */
 void CDECL WLDAP32_ber_bvfree( BERVAL *berval )
 {
-    heap_free( berval );
+    free( berval );
 }
 
 
@@ -194,7 +194,7 @@ int CDECL WLDAP32_ber_flatten( WLDAP32_BerElement *ber, BERVAL **berval )
 void CDECL WLDAP32_ber_free( WLDAP32_BerElement *ber, int freebuf )
 {
     ldap_funcs->ber_free( ber->opaque, freebuf );
-    heap_free( ber );
+    free( ber );
 }
 
 
@@ -218,18 +218,18 @@ WLDAP32_BerElement * CDECL WLDAP32_ber_init( BERVAL *berval )
     struct bervalU *bervalU;
     WLDAP32_BerElement *ret;
 
-    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+    if (!(ret = malloc( sizeof(*ret) ))) return NULL;
     if (!(bervalU = bervalWtoU( berval )))
     {
-        heap_free( ret );
+        free( ret );
         return NULL;
     }
     if (!(ret->opaque = ldap_funcs->ber_init( bervalU )))
     {
-        heap_free( ret );
+        free( ret );
         ret = NULL;
     }
-    heap_free( bervalU );
+    free( bervalU );
     return ret;
 }
 
@@ -467,7 +467,7 @@ ULONG WINAPIV WLDAP32_ber_scanf( WLDAP32_BerElement *ber, char *fmt, ... )
             char *strU, **str = va_arg( list, char ** );
             int *len = va_arg( list, int * );
             if ((ret = ldap_funcs->ber_scanf( ber->opaque, new_fmt, &strU, len )) == -1) break;
-            *str = heap_alloc( *len );
+            *str = malloc( *len );
             memcpy( *str, strU, *len );
             ldap_funcs->ldap_memfree( strU );
             break;

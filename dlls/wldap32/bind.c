@@ -19,13 +19,13 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "rpc.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "winldap_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
@@ -50,8 +50,8 @@ ULONG CDECL ldap_bindA( WLDAP32_LDAP *ld, char *dn, char *cred, ULONG method )
     ret = ldap_bindW( ld, dnW, credW, method );
 
 exit:
-    strfreeW( dnW );
-    strfreeW( credW );
+    free( dnW );
+    free( credW );
     return ret;
 }
 
@@ -100,8 +100,8 @@ ULONG CDECL ldap_bindW( WLDAP32_LDAP *ld, WCHAR *dn, WCHAR *cred, ULONG method )
         ret = ~0u;
 
 exit:
-    strfreeU( dnU );
-    strfreeU( credU );
+    free( dnU );
+    free( credU );
     return ret;
 }
 
@@ -132,8 +132,8 @@ ULONG CDECL ldap_bind_sA( WLDAP32_LDAP *ld, char *dn, char *cred, ULONG method )
     ret = ldap_bind_sW( ld, dnW, credW, method );
 
 exit:
-    strfreeW( dnW );
-    if (credW != (WCHAR *)cred) strfreeW( credW );
+    free( dnW );
+    if (credW != (WCHAR *)cred) free( credW );
     return ret;
 }
 
@@ -235,14 +235,14 @@ ULONG CDECL ldap_bind_sW( WLDAP32_LDAP *ld, WCHAR *dn, WCHAR *cred, ULONG method
 
         if (id && (id->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI))
         {
-            strfreeW( (WCHAR *)idW.Domain );
-            strfreeW( (WCHAR *)idW.User );
-            strfreeW( (WCHAR *)idW.Password );
+            free( (WCHAR *)idW.Domain );
+            free( (WCHAR *)idW.User );
+            free( (WCHAR *)idW.Password );
         }
 
-        strfreeU( (char *)idU.Domain );
-        strfreeU( (char *)idU.User );
-        strfreeU( (char *)idU.Password );
+        free( (char *)idU.Domain );
+        free( (char *)idU.User );
+        free( (char *)idU.Password );
     }
     else
     {
@@ -251,8 +251,8 @@ ULONG CDECL ldap_bind_sW( WLDAP32_LDAP *ld, WCHAR *dn, WCHAR *cred, ULONG method
     }
 
 exit:
-    strfreeU( dnU );
-    strfreeU( credU );
+    free( dnU );
+    free( credU );
     return ret;
 }
 
@@ -282,8 +282,8 @@ ULONG CDECL ldap_sasl_bindA( WLDAP32_LDAP *ld, const PCHAR dn, const PCHAR mecha
     ret = ldap_sasl_bindW( ld, dnW, mechanismW, cred, serverctrlsW, clientctrlsW, message );
 
 exit:
-    strfreeW( dnW );
-    strfreeW( mechanismW );
+    free( dnW );
+    free( mechanismW );
     controlarrayfreeW( serverctrlsW );
     controlarrayfreeW( clientctrlsW );
     return ret;
@@ -336,8 +336,8 @@ ULONG CDECL ldap_sasl_bindW( WLDAP32_LDAP *ld, const PWCHAR dn, const PWCHAR mec
     ret = map_error( ldap_funcs->ldap_sasl_bind( ld->ld, dnU, mechanismU, &credU, serverctrlsU, clientctrlsU, message ) );
 
 exit:
-    strfreeU( dnU );
-    strfreeU( mechanismU );
+    free( dnU );
+    free( mechanismU );
     controlarrayfreeU( serverctrlsU );
     controlarrayfreeU( clientctrlsU );
     return ret;
@@ -369,8 +369,8 @@ ULONG CDECL ldap_sasl_bind_sA( WLDAP32_LDAP *ld, const PCHAR dn, const PCHAR mec
     ret = ldap_sasl_bind_sW( ld, dnW, mechanismW, cred, serverctrlsW, clientctrlsW, serverdata );
 
 exit:
-    strfreeW( dnW );
-    strfreeW( mechanismW );
+    free( dnW );
+    free( mechanismW );
     controlarrayfreeW( serverctrlsW );
     controlarrayfreeW( clientctrlsW );
     return ret;
@@ -431,8 +431,8 @@ ULONG CDECL ldap_sasl_bind_sW( WLDAP32_LDAP *ld, const PWCHAR dn,
     }
 
 exit:
-    strfreeU( dnU );
-    strfreeU( mechanismU );
+    free( dnU );
+    free( mechanismU );
     controlarrayfreeU( serverctrlsU );
     controlarrayfreeU( clientctrlsU );
     return ret;
@@ -458,8 +458,8 @@ ULONG CDECL ldap_simple_bindA( WLDAP32_LDAP *ld, char *dn, char *passwd )
     ret = ldap_simple_bindW( ld, dnW, passwdW );
 
 exit:
-    strfreeW( dnW );
-    strfreeW( passwdW );
+    free( dnW );
+    free( passwdW );
     return ret;
 }
 
@@ -506,8 +506,8 @@ ULONG CDECL ldap_simple_bindW( WLDAP32_LDAP *ld, WCHAR *dn, WCHAR *passwd )
         ret = ~0u;
 
 exit:
-    strfreeU( dnU );
-    strfreeU( passwdU );
+    free( dnU );
+    free( passwdU );
     return ret;
 }
 
@@ -531,8 +531,8 @@ ULONG CDECL ldap_simple_bind_sA( WLDAP32_LDAP *ld, char *dn, char *passwd )
     ret = ldap_simple_bind_sW( ld, dnW, passwdW );
 
 exit:
-    strfreeW( dnW );
-    strfreeW( passwdW );
+    free( dnW );
+    free( passwdW );
     return ret;
 }
 
@@ -574,8 +574,8 @@ ULONG CDECL ldap_simple_bind_sW( WLDAP32_LDAP *ld, WCHAR *dn, WCHAR *passwd )
     ret = map_error( ldap_funcs->ldap_sasl_bind_s( ld->ld, dnU, 0, &pwd, NULL, NULL, NULL ) );
 
 exit:
-    strfreeU( dnU );
-    strfreeU( passwdU );
+    free( dnU );
+    free( passwdU );
     return ret;
 }
 
@@ -602,7 +602,7 @@ ULONG CDECL WLDAP32_ldap_unbind( WLDAP32_LDAP *ld )
     ret = map_error( ldap_funcs->ldap_unbind_ext( ld->ld, NULL, NULL ));
     if (ld->ld_server_ctrls) ldap_funcs->ldap_value_free_len( ld->ld_server_ctrls );
 
-    heap_free( ld );
+    free( ld );
     return ret;
 }
 
@@ -629,6 +629,6 @@ ULONG CDECL WLDAP32_ldap_unbind_s( WLDAP32_LDAP *ld )
     ret = map_error( ldap_funcs->ldap_unbind_ext_s( ld->ld, NULL, NULL ) );
     if (ld->ld_server_ctrls) ldap_funcs->ldap_value_free_len( ld->ld_server_ctrls );
 
-    heap_free( ld );
+    free( ld );
     return ret;
 }

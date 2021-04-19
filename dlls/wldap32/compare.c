@@ -49,9 +49,9 @@ ULONG CDECL ldap_compareA( WLDAP32_LDAP *ld, char *dn, char *attr, char *value )
     ret = ldap_compareW( ld, dnW, attrW, valueW );
 
 exit:
-    strfreeW( dnW );
-    strfreeW( attrW );
-    strfreeW( valueW );
+    free( dnW );
+    free( attrW );
+    free( valueW );
     return ret;
 }
 
@@ -108,9 +108,9 @@ ULONG CDECL ldap_compare_extA( WLDAP32_LDAP *ld, char *dn, char *attr, char *val
     ret = ldap_compare_extW( ld, dnW, attrW, valueW, data, serverctrlsW, clientctrlsW, message );
 
 exit:
-    strfreeW( dnW );
-    strfreeW( attrW );
-    strfreeW( valueW );
+    free( dnW );
+    free( attrW );
+    free( valueW );
     controlarrayfreeW( serverctrlsW );
     controlarrayfreeW( clientctrlsW );
     return ret;
@@ -173,9 +173,9 @@ ULONG CDECL ldap_compare_extW( WLDAP32_LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *
     ret = map_error( ldap_funcs->ldap_compare_ext( ld->ld, dnU, attrU, dataU ? dataU : &val, serverctrlsU,
                                                    clientctrlsU, message ) );
 exit:
-    strfreeU( dnU );
-    strfreeU( attrU );
-    strfreeU( valueU );
+    free( dnU );
+    free( attrU );
+    free( valueU );
     bvfreeU( dataU );
     controlarrayfreeU( serverctrlsU );
     controlarrayfreeU( clientctrlsU );
@@ -208,9 +208,9 @@ ULONG CDECL ldap_compare_ext_sA( WLDAP32_LDAP *ld, char *dn, char *attr, char *v
     ret = ldap_compare_ext_sW( ld, dnW, attrW, valueW, data, serverctrlsW, clientctrlsW );
 
 exit:
-    strfreeW( dnW );
-    strfreeW( attrW );
-    strfreeW( valueW );
+    free( dnW );
+    free( attrW );
+    free( valueW );
     controlarrayfreeW( serverctrlsW );
     controlarrayfreeW( clientctrlsW );
     return ret;
@@ -271,9 +271,9 @@ ULONG CDECL ldap_compare_ext_sW( WLDAP32_LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR
     ret = map_error( ldap_funcs->ldap_compare_ext_s( ld->ld, dnU, attrU, dataU ? dataU : &val, serverctrlsU,
                                                      clientctrlsU ) );
 exit:
-    strfreeU( dnU );
-    strfreeU( attrU );
-    strfreeU( valueU );
+    free( dnU );
+    free( attrU );
+    free( valueU );
     bvfreeU( dataU );
     controlarrayfreeU( serverctrlsU );
     controlarrayfreeU( clientctrlsU );
@@ -301,9 +301,9 @@ ULONG CDECL ldap_compare_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR attr, PCHAR value
     ret = ldap_compare_sW( ld, dnW, attrW, valueW );
 
 exit:
-    strfreeW( dnW );
-    strfreeW( attrW );
-    strfreeW( valueW );
+    free( dnW );
+    free( attrW );
+    free( valueW );
     return ret;
 }
 

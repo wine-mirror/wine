@@ -19,12 +19,12 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "winldap_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
@@ -67,7 +67,7 @@ ULONG CDECL ldap_check_filterA( WLDAP32_LDAP *ld, char *filter )
 
     ret = ldap_check_filterW( ld, filterW );
 
-    strfreeW( filterW );
+    free( filterW );
     return ret;
 }
 
@@ -299,7 +299,7 @@ WCHAR * CDECL ldap_first_attributeW( WLDAP32_LDAP *ld, WLDAP32_LDAPMessage *entr
     if (!ld || !entry) return NULL;
 
     retU = ldap_funcs->ldap_first_attribute( ld->ld, entry->Request, &berU );
-    if (retU && (ber = heap_alloc( sizeof(*ber) )))
+    if (retU && (ber = malloc( sizeof(*ber) )))
     {
         ber->opaque = (char *)berU;
         *ptr = ber;
@@ -383,7 +383,7 @@ WLDAP32_LDAPMessage * CDECL WLDAP32_ldap_first_reference( WLDAP32_LDAP *ld, WLDA
 void CDECL ldap_memfreeA( char *block )
 {
     TRACE( "(%p)\n", block );
-    strfreeA( block );
+    free( block );
 }
 
 /***********************************************************************
@@ -397,7 +397,7 @@ void CDECL ldap_memfreeA( char *block )
 void CDECL ldap_memfreeW( WCHAR *block )
 {
     TRACE( "(%p)\n", block );
-    strfreeW( block );
+    free( block );
 }
 
 /***********************************************************************
@@ -421,7 +421,7 @@ ULONG CDECL WLDAP32_ldap_msgfree( WLDAP32_LDAPMessage *res )
     {
         entry = list;
         list = entry->lm_next;
-        heap_free( entry );
+        free( entry );
     }
 
     return WLDAP32_LDAP_SUCCESS;
@@ -516,7 +516,7 @@ WLDAP32_LDAPMessage * CDECL WLDAP32_ldap_next_entry( WLDAP32_LDAP *ld, WLDAP32_L
     if (entry->lm_next) return entry->lm_next;
 
     msgU = ldap_funcs->ldap_next_entry( ld->ld, entry->Request );
-    if (msgU && (msg = heap_alloc_zero( sizeof(*msg) )))
+    if (msgU && (msg = calloc( 1, sizeof(*msg) )))
     {
         msg->Request = msgU;
         entry->lm_next = msg;
@@ -553,7 +553,7 @@ WLDAP32_LDAPMessage * CDECL WLDAP32_ldap_next_reference( WLDAP32_LDAP *ld, WLDAP
     if (entry->lm_next) return entry->lm_next;
 
     msgU = ldap_funcs->ldap_next_reference( ld->ld, entry->Request );
-    if (msgU && (msg = heap_alloc_zero( sizeof(*msg) )))
+    if (msgU && (msg = calloc( 1, sizeof(*msg) )))
     {
         msg->Request = msgU;
         entry->lm_next = msg;
@@ -617,7 +617,7 @@ ULONG CDECL WLDAP32_ldap_result( WLDAP32_LDAP *ld, ULONG msgid, ULONG all, struc
     }
 
     ret = ldap_funcs->ldap_result( ld->ld, msgid, all, timeout ? &timeval : NULL, &msgU );
-    if (msgU && (msg = heap_alloc_zero( sizeof(*msg) )))
+    if (msgU && (msg = calloc( 1, sizeof(*msg) )))
     {
         msg->Request = msgU;
         *res = msg;

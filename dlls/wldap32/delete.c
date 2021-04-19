@@ -44,7 +44,7 @@ ULONG CDECL ldap_deleteA( WLDAP32_LDAP *ld, char *dn )
     if (dn && !(dnW = strAtoW( dn ))) return WLDAP32_LDAP_NO_MEMORY;
 
     ret = ldap_deleteW( ld, dnW );
-    strfreeW( dnW );
+    free( dnW );
     return ret;
 }
 
@@ -100,7 +100,7 @@ ULONG CDECL ldap_delete_extA( WLDAP32_LDAP *ld, char *dn, LDAPControlA **serverc
     ret = ldap_delete_extW( ld, dnW, serverctrlsW, clientctrlsW, message );
 
 exit:
-    strfreeW( dnW );
+    free( dnW );
     controlarrayfreeW( serverctrlsW );
     controlarrayfreeW( clientctrlsW );
     return ret;
@@ -145,7 +145,7 @@ ULONG CDECL ldap_delete_extW( WLDAP32_LDAP *ld, WCHAR *dn, LDAPControlW **server
     ret = map_error( ldap_funcs->ldap_delete_ext( ld->ld, dnU, serverctrlsU, clientctrlsU, message ) );
 
 exit:
-    strfreeU( dnU );
+    free( dnU );
     controlarrayfreeU( serverctrlsU );
     controlarrayfreeU( clientctrlsU );
     return ret;
@@ -174,7 +174,7 @@ ULONG CDECL ldap_delete_ext_sA( WLDAP32_LDAP *ld, char *dn, LDAPControlA **serve
     ret = ldap_delete_ext_sW( ld, dnW, serverctrlsW, clientctrlsW );
 
 exit:
-    strfreeW( dnW );
+    free( dnW );
     controlarrayfreeW( serverctrlsW );
     controlarrayfreeW( clientctrlsW );
     return ret;
@@ -217,7 +217,7 @@ ULONG CDECL ldap_delete_ext_sW( WLDAP32_LDAP *ld, WCHAR *dn, LDAPControlW **serv
     ret = map_error( ldap_funcs->ldap_delete_ext_s( ld->ld, dnU, serverctrlsU, clientctrlsU ) );
 
 exit:
-    strfreeU( dnU );
+    free( dnU );
     controlarrayfreeU( serverctrlsU );
     controlarrayfreeU( clientctrlsU );
     return ret;
@@ -239,7 +239,7 @@ ULONG CDECL ldap_delete_sA( WLDAP32_LDAP *ld, char *dn )
     if (dn && !(dnW = strAtoW( dn ))) return WLDAP32_LDAP_NO_MEMORY;
 
     ret = ldap_delete_sW( ld, dnW );
-    strfreeW( dnW );
+    free( dnW );
     return ret;
 }
 
