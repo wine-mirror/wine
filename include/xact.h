@@ -23,6 +23,7 @@
 #include <objbase.h>
 #include <float.h>
 #include <limits.h>
+#include <xact2wb.h>
 
 #if XACT3_VER == 0x0210
     DEFINE_GUID(CLSID_XACTEngine, 0x65d822a4, 0x4799, 0x42c6, 0x9b, 0x18, 0xd2, 0x6c, 0xf6, 0x6d, 0xd3, 0x20);
