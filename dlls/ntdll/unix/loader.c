@@ -115,6 +115,9 @@ static char *argv0;
 static const char *bin_dir;
 static const char *dll_dir;
 static SIZE_T dll_path_maxlen;
+static int *p___wine_main_argc;
+static char ***p___wine_main_argv;
+static WCHAR ***p___wine_main_wargv;
 
 const char *home_dir = NULL;
 const char *data_dir = NULL;
@@ -938,11 +941,8 @@ static void load_libwine(void)
 #define LIBWINE "libwine.so.1"
 #endif
     typedef void (*load_dll_callback_t)( void *, const char * );
-    static void (*p_wine_dll_set_callback)( load_dll_callback_t load );
-    static int *p___wine_main_argc;
-    static char ***p___wine_main_argv;
-    static char ***p___wine_main_environ;
-    static WCHAR ***p___wine_main_wargv;
+    void (*p_wine_dll_set_callback)( load_dll_callback_t load );
+    char ***p___wine_main_environ;
 
     char *path;
     void *handle;
@@ -961,9 +961,6 @@ static void load_libwine(void)
     p___wine_main_environ   = dlsym( handle, "__wine_main_environ" );
 
     if (p_wine_dll_set_callback) p_wine_dll_set_callback( load_builtin_callback );
-    if (p___wine_main_argc) *p___wine_main_argc = main_argc;
-    if (p___wine_main_argv) *p___wine_main_argv = main_argv;
-    if (p___wine_main_wargv) *p___wine_main_wargv = main_wargv;
     if (p___wine_main_environ) *p___wine_main_environ = main_envp;
 }
 
@@ -1777,14 +1774,17 @@ static void start_main_thread(void)
     init_cpu_info();
     syscall_dispatcher = signal_init_syscalls();
     init_files();
+    load_libwine();
     init_startup_info();
+    if (p___wine_main_argc) *p___wine_main_argc = main_argc;
+    if (p___wine_main_argv) *p___wine_main_argv = main_argv;
+    if (p___wine_main_wargv) *p___wine_main_wargv = main_wargv;
     virtual_alloc_thread_stack( &stack, 0, 0, NULL );
     teb->Tib.StackBase = stack.StackBase;
     teb->Tib.StackLimit = stack.StackLimit;
     teb->DeallocationStack = stack.DeallocationStack;
     NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
     load_ntdll();
-    load_libwine();
     status = p__wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );
     if (status == STATUS_REVISION_MISMATCH)
     {
