@@ -1476,8 +1476,8 @@ class VkParam(object):
                 self.format_conv = "wine_dbgstr_longlong({0})"
             elif self.type == "HANDLE":
                 self.format_str = "%p"
-            elif self.type in ["VisualID", "xcb_visualid_t", "RROutput"]:
-                # Don't care about Linux specific types.
+            elif self.type in ["VisualID", "xcb_visualid_t", "RROutput", "zx_handle_t"]:
+                # Don't care about specific types for non-Windows platforms.
                 self.format_str = ""
             else:
                 LOGGER.warn("Unhandled type: {0}".format(self.type_info))
