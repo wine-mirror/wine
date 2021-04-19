@@ -2125,6 +2125,7 @@ typedef struct
 #define META_ENDPAGE                 0x0050
 #define META_ABORTDOC                0x0052
 #define META_ENDDOC                  0x005E
+#define META_SETLAYOUT               0x0149
 #define META_DELETEOBJECT            0x01F0
 #define META_CREATEPALETTE           0x00F7
 #define META_CREATEBRUSH             0x00F8
