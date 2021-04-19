@@ -9,7 +9,7 @@
  *
  */
 
-#include "vulkan_private.h"
+#include "vulkan_loader.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 

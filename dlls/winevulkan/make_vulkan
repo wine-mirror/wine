@@ -2501,7 +2501,7 @@ class VkGenerator(object):
     def generate_loader_thunks_c(self, f, prefix):
         self._generate_copyright(f)
 
-        f.write("#include \"vulkan_private.h\"\n\n")
+        f.write("#include \"vulkan_loader.h\"\n\n")
 
         f.write("WINE_DEFAULT_DEBUG_CHANNEL(vulkan);\n\n")
 

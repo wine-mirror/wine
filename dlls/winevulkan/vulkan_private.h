@@ -27,14 +27,10 @@
 
 #include <pthread.h>
 
-#include "wine/debug.h"
 #include "wine/list.h"
-#define VK_NO_PROTOTYPES
-#include "wine/vulkan.h"
-#include "wine/vulkan_driver.h"
 
+#include "vulkan_loader.h"
 #include "vulkan_thunks.h"
-#include "loader_thunks.h"
 
 /* Magic value defined by Vulkan ICD / Loader spec */
 #define VULKAN_ICD_MAGIC_VALUE 0x01CDC0DE
@@ -42,12 +38,6 @@
 #define WINEVULKAN_QUIRK_GET_DEVICE_PROC_ADDR 0x00000001
 #define WINEVULKAN_QUIRK_ADJUST_MAX_IMAGE_COUNT 0x00000002
 #define WINEVULKAN_QUIRK_IGNORE_EXPLICIT_LAYERS 0x00000004
-
-struct vulkan_func
-{
-    const char *name;
-    void *func;
-};
 
 /* Base 'class' for our Vulkan dispatchable objects such as VkDevice and VkInstance.
  * This structure MUST be the first element of a dispatchable object as the ICD
@@ -235,10 +225,6 @@ static inline VkSurfaceKHR wine_surface_to_handle(struct wine_surface *surface)
     return (VkSurfaceKHR)(uintptr_t)surface;
 }
 
-void *wine_vk_get_device_proc_addr(const char *name) DECLSPEC_HIDDEN;
-void *wine_vk_get_phys_dev_proc_addr(const char *name) DECLSPEC_HIDDEN;
-void *wine_vk_get_instance_proc_addr(const char *name) DECLSPEC_HIDDEN;
-
 BOOL wine_vk_device_extension_supported(const char *name) DECLSPEC_HIDDEN;
 BOOL wine_vk_instance_extension_supported(const char *name) DECLSPEC_HIDDEN;
 
@@ -246,8 +232,5 @@ BOOL wine_vk_is_type_wrapped(VkObjectType type) DECLSPEC_HIDDEN;
 uint64_t wine_vk_unwrap_handle(VkObjectType type, uint64_t handle) DECLSPEC_HIDDEN;
 
 extern const struct unix_funcs loader_funcs;
-extern const struct unix_funcs *unix_funcs;
-
-const struct unix_funcs *unix_vk_init(const struct vulkan_funcs *driver) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_VULKAN_PRIVATE_H */
