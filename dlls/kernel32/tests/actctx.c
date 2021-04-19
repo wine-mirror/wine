@@ -1152,12 +1152,26 @@ struct wndclass_redirect_data
     ULONG module_offset;/* container name offset */
 };
 
+struct dllredirect_data_path
+{
+    ULONG len;
+    ULONG offset;
+};
+
 struct dllredirect_data
 {
     ULONG size;
-    ULONG unk;
-    DWORD res[3];
+    ULONG flags;
+    ULONG total_len;
+    ULONG paths_count;
+    ULONG paths_offset;
+    struct dllredirect_data_path paths[1];
 };
+
+#define DLL_REDIRECT_PATH_INCLUDES_BASE_NAME                      1
+#define DLL_REDIRECT_PATH_OMITS_ASSEMBLY_ROOT                     2
+#define DLL_REDIRECT_PATH_EXPAND                                  4
+#define DLL_REDIRECT_PATH_SYSTEM_DEFAULT_REDIRECTED_SYSTEM32_DLL  8
 
 struct tlibredirect_data
 {
@@ -1195,16 +1209,18 @@ static void test_find_dll_redirection(HANDLE handle, LPCWSTR libname, ULONG exid
     ok_(__FILE__, line)(data.cbSize == sizeof(data), "data.cbSize=%u\n", data.cbSize);
     ok_(__FILE__, line)(data.ulDataFormatVersion == 1, "data.ulDataFormatVersion=%u\n", data.ulDataFormatVersion);
     ok_(__FILE__, line)(data.lpData != NULL, "data.lpData == NULL\n");
-    ok_(__FILE__, line)(data.ulLength == 20, "data.ulLength=%u\n", data.ulLength);
+    ok_(__FILE__, line)(data.ulLength == offsetof( struct dllredirect_data, paths[0]), "data.ulLength=%u\n", data.ulLength);
 
     if (data.lpData)
     {
         struct dllredirect_data *dlldata = (struct dllredirect_data*)data.lpData;
-        ok_(__FILE__, line)(dlldata->size == data.ulLength, "got wrong size %d\n", dlldata->size);
-        ok_(__FILE__, line)(dlldata->unk == 2, "got wrong field value %d\n", dlldata->unk);
-        ok_(__FILE__, line)(dlldata->res[0] == 0, "got wrong res[0] value %d\n", dlldata->res[0]);
-        ok_(__FILE__, line)(dlldata->res[1] == 0, "got wrong res[1] value %d\n", dlldata->res[1]);
-        ok_(__FILE__, line)(dlldata->res[2] == 0, "got wrong res[2] value %d\n", dlldata->res[2]);
+        ok_(__FILE__, line)(dlldata->size == offsetof( struct dllredirect_data, paths[dlldata->paths_count]),
+                            "got wrong size %d\n", dlldata->size);
+        ok_(__FILE__, line)(dlldata->flags == DLL_REDIRECT_PATH_OMITS_ASSEMBLY_ROOT,
+                            "got wrong flags value %x\n", dlldata->flags);
+        ok_(__FILE__, line)(dlldata->total_len == 0, "got wrong total len value %d\n", dlldata->total_len);
+        ok_(__FILE__, line)(dlldata->paths_count == 0, "got wrong paths count value %d\n", dlldata->paths_count);
+        ok_(__FILE__, line)(dlldata->paths_offset == 0, "got wrong paths offset value %d\n", dlldata->paths_offset);
     }
 
     ok_(__FILE__, line)(data.lpSectionGlobalData == NULL, "data.lpSectionGlobalData != NULL\n");

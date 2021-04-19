@@ -85,7 +85,20 @@ extern struct _KUSER_SHARED_DATA *user_shared_data DECLSPEC_HIDDEN;
 extern int CDECL NTDLL__vsnprintf( char *str, SIZE_T len, const char *format, __ms_va_list args ) DECLSPEC_HIDDEN;
 extern int CDECL NTDLL__vsnwprintf( WCHAR *str, SIZE_T len, const WCHAR *format, __ms_va_list args ) DECLSPEC_HIDDEN;
 
-/* load order */
+struct dllredirect_data
+{
+    ULONG size;
+    ULONG flags;
+    ULONG total_len;
+    ULONG paths_count;
+    ULONG paths_offset;
+    struct { ULONG len; ULONG offset; } paths[1];
+};
+
+#define DLL_REDIRECT_PATH_INCLUDES_BASE_NAME                      1
+#define DLL_REDIRECT_PATH_OMITS_ASSEMBLY_ROOT                     2
+#define DLL_REDIRECT_PATH_EXPAND                                  4
+#define DLL_REDIRECT_PATH_SYSTEM_DEFAULT_REDIRECTED_SYSTEM32_DLL  8
 
 #ifdef _WIN64
 static inline TEB64 *NtCurrentTeb64(void) { return NULL; }
