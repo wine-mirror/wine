@@ -1482,12 +1482,12 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
     struct wined3d_texture_sub_resource *src_sub_resource, *dst_sub_resource;
     struct wined3d_device *device = dst_texture->resource.device;
     struct wined3d_swapchain *src_swapchain, *dst_swapchain;
+    BOOL scale, convert, resolve, resolve_typeless = FALSE;
     const struct wined3d_format *resolve_format = NULL;
     const struct wined3d_color_key *colour_key = NULL;
     DWORD src_location, dst_location, valid_locations;
     struct wined3d_context *context;
     enum wined3d_blit_op blit_op;
-    BOOL scale, convert, resolve;
     RECT src_rect, dst_rect;
     bool src_ds, dst_ds;
 
@@ -1566,6 +1566,14 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
             || src_box->bottom - src_box->top != dst_box->bottom - dst_box->top;
     convert = src_texture->resource.format->id != dst_texture->resource.format->id;
     resolve = src_texture->resource.multisample_type != dst_texture->resource.multisample_type;
+    if (resolve)
+    {
+        resolve_typeless = (wined3d_format_is_typeless(src_texture->resource.format)
+                || wined3d_format_is_typeless(dst_texture->resource.format))
+                && (src_texture->resource.format->typeless_id == dst_texture->resource.format->typeless_id);
+        if (resolve_typeless && !resolve_format)
+            WARN("Resolve format for typeless resolve not specified.\n");
+    }
 
     dst_ds = dst_texture->resource.format->depth_size || dst_texture->resource.format->stencil_size;
     src_ds = src_texture->resource.format->depth_size || src_texture->resource.format->stencil_size;
@@ -1704,7 +1712,7 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
 
     context = context_acquire(device, dst_texture, dst_sub_resource_idx);
 
-    if (src_texture->resource.multisample_type != WINED3D_MULTISAMPLE_NONE
+    if (src_texture->resource.multisample_type != WINED3D_MULTISAMPLE_NONE && !resolve_typeless
             && ((scale && !context->d3d_info->scaled_resolve)
             || convert || !wined3d_is_colour_blit(blit_op)))
         src_location = WINED3D_LOCATION_RB_RESOLVED;

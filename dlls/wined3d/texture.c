@@ -322,11 +322,12 @@ static void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_cont
         struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx, DWORD dst_location,
         const RECT *dst_rect, const struct wined3d_format *resolve_format)
 {
-    struct wined3d_texture *required_texture, *restore_texture;
+    struct wined3d_texture *required_texture, *restore_texture = NULL, *dst_save_texture = dst_texture;
+    unsigned int restore_idx, dst_save_sub_resource_idx = dst_sub_resource_idx;
+    struct wined3d_texture *src_staging_texture = NULL;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context_gl *context_gl;
-    unsigned int restore_idx;
-    bool scaled_resolve;
+    bool resolve, scaled_resolve;
     GLenum gl_filter;
     GLenum buffer;
     RECT s, d;
@@ -337,7 +338,8 @@ static void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_cont
             wined3d_debug_location(src_location), wine_dbgstr_rect(src_rect), dst_texture,
             dst_sub_resource_idx, wined3d_debug_location(dst_location), wine_dbgstr_rect(dst_rect), resolve_format);
 
-    scaled_resolve = wined3d_texture_gl_is_multisample_location(wined3d_texture_gl(src_texture), src_location)
+    resolve = wined3d_texture_gl_is_multisample_location(wined3d_texture_gl(src_texture), src_location);
+    scaled_resolve = resolve
             && (abs(src_rect->bottom - src_rect->top) != abs(dst_rect->bottom - dst_rect->top)
             || abs(src_rect->right - src_rect->left) != abs(dst_rect->right - dst_rect->left));
 
@@ -345,6 +347,106 @@ static void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_cont
         gl_filter = scaled_resolve ? GL_SCALED_RESOLVE_NICEST_EXT : GL_LINEAR;
     else
         gl_filter = scaled_resolve ? GL_SCALED_RESOLVE_FASTEST_EXT : GL_NEAREST;
+
+    if (resolve)
+    {
+        GLint resolve_internal, src_internal, dst_internal;
+        enum wined3d_format_id resolve_format_id;
+
+        src_internal = wined3d_gl_get_internal_format(&src_texture->resource,
+                wined3d_format_gl(src_texture->resource.format), src_location == WINED3D_LOCATION_TEXTURE_SRGB);
+        dst_internal = wined3d_gl_get_internal_format(&dst_texture->resource,
+                wined3d_format_gl(dst_texture->resource.format), dst_location == WINED3D_LOCATION_TEXTURE_SRGB);
+
+        if (resolve_format)
+        {
+            resolve_internal = wined3d_format_gl(resolve_format)->internal;
+            resolve_format_id = resolve_format->id;
+        }
+        else if (!wined3d_format_is_typeless(src_texture->resource.format))
+        {
+            resolve_internal = src_internal;
+            resolve_format_id = src_texture->resource.format->id;
+        }
+        else
+        {
+            resolve_internal = dst_internal;
+            resolve_format_id = dst_texture->resource.format->id;
+        }
+
+        /* In case of typeless resolve the texture type may not match the resolve type.
+         * To handle that, allocate intermediate texture(s) to resolve from/to.
+         * A possible performance improvement would be to resolve using a shader instead. */
+        if (src_internal != resolve_internal)
+        {
+            struct wined3d_resource_desc desc;
+            unsigned src_level;
+            HRESULT hr;
+
+            src_level = src_sub_resource_idx % src_texture->level_count;
+            desc.resource_type = WINED3D_RTYPE_TEXTURE_2D;
+            desc.format = resolve_format_id;
+            desc.multisample_type = src_texture->resource.multisample_type;
+            desc.multisample_quality = src_texture->resource.multisample_quality;
+            desc.usage = WINED3DUSAGE_PRIVATE;
+            desc.bind_flags = 0;
+            desc.access = WINED3D_RESOURCE_ACCESS_GPU;
+            desc.width = wined3d_texture_get_level_width(src_texture, src_level);
+            desc.height = wined3d_texture_get_level_height(src_texture, src_level);
+            desc.depth = 1;
+            desc.size = 0;
+
+            hr = wined3d_texture_create(device, &desc, 1, 1, 0, NULL, NULL, &wined3d_null_parent_ops,
+                    &src_staging_texture);
+            if (FAILED(hr))
+            {
+                ERR("Failed to create staging texture, hr %#x.\n", hr);
+                goto done;
+            }
+
+            if (src_location == WINED3D_LOCATION_DRAWABLE)
+                FIXME("WINED3D_LOCATION_DRAWABLE not supported for the source of a typeless resolve.");
+
+            device->blitter->ops->blitter_blit(device->blitter, WINED3D_BLIT_OP_RAW_BLIT, context,
+                    src_texture, src_sub_resource_idx, src_location, src_rect,
+                    src_staging_texture, 0, src_location, src_rect,
+                    NULL, WINED3D_TEXF_NONE, NULL);
+
+            src_texture = src_staging_texture;
+            src_sub_resource_idx = 0;
+        }
+
+        if (dst_internal != resolve_internal)
+        {
+            struct wined3d_resource_desc desc;
+            unsigned dst_level;
+            HRESULT hr;
+
+            dst_level = dst_sub_resource_idx % dst_texture->level_count;
+            desc.resource_type = WINED3D_RTYPE_TEXTURE_2D;
+            desc.format = resolve_format_id;
+            desc.multisample_type = dst_texture->resource.multisample_type;
+            desc.multisample_quality = dst_texture->resource.multisample_quality;
+            desc.usage = WINED3DUSAGE_PRIVATE;
+            desc.bind_flags = 0;
+            desc.access = WINED3D_RESOURCE_ACCESS_GPU;
+            desc.width = wined3d_texture_get_level_width(dst_texture, dst_level);
+            desc.height = wined3d_texture_get_level_height(dst_texture, dst_level);
+            desc.depth = 1;
+            desc.size = 0;
+
+            hr = wined3d_texture_create(device, &desc, 1, 1, 0, NULL, NULL, &wined3d_null_parent_ops,
+                    &dst_texture);
+            if (FAILED(hr))
+            {
+                ERR("Failed to create staging texture, hr %#x.\n", hr);
+                goto done;
+            }
+
+            wined3d_texture_load_location(dst_texture, 0, context, dst_location);
+            dst_sub_resource_idx = 0;
+        }
+    }
 
     /* Make sure the locations are up-to-date. Loading the destination
      * surface isn't required if the entire surface is overwritten. (And is
@@ -379,7 +481,8 @@ static void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_cont
     {
         context_release(context);
         WARN("Invalid context, skipping blit.\n");
-        return;
+        restore_texture = NULL;
+        goto done;
     }
 
     gl_info = context_gl->gl_info;
@@ -436,6 +539,24 @@ static void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_cont
 
     if (dst_location == WINED3D_LOCATION_DRAWABLE && dst_texture->swapchain->front_buffer == dst_texture)
         gl_info->gl_ops.gl.p_glFlush();
+
+    if (dst_texture != dst_save_texture)
+    {
+        if (dst_location == WINED3D_LOCATION_DRAWABLE)
+            FIXME("WINED3D_LOCATION_DRAWABLE not supported for the destination of a typeless resolve.");
+
+        device->blitter->ops->blitter_blit(device->blitter, WINED3D_BLIT_OP_RAW_BLIT, context,
+                dst_texture, 0, dst_location, dst_rect,
+                dst_save_texture, dst_save_sub_resource_idx, dst_location, dst_rect,
+                NULL, WINED3D_TEXF_NONE, NULL);
+    }
+
+done:
+    if (dst_texture != dst_save_texture)
+        wined3d_texture_decref(dst_texture);
+
+    if (src_staging_texture)
+        wined3d_texture_decref(src_staging_texture);
 
     if (restore_texture)
         context_restore(context, restore_texture, restore_idx);
