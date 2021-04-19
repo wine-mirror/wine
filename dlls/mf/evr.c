@@ -1611,11 +1611,15 @@ static HRESULT video_renderer_configure_mixer(struct video_renderer *renderer)
 static HRESULT video_renderer_configure_presenter(struct video_renderer *renderer)
 {
     IMFVideoDisplayControl *control;
+    RECT rect = { 0 };
     HRESULT hr;
 
     if (SUCCEEDED(IMFVideoPresenter_QueryInterface(renderer->presenter, &IID_IMFVideoDisplayControl, (void **)&control)))
     {
-        IMFVideoDisplayControl_SetVideoWindow(control, renderer->window);
+        GetClientRect(renderer->window, &rect);
+
+        if (SUCCEEDED(hr = IMFVideoDisplayControl_SetVideoWindow(control, renderer->window)))
+            hr = IMFVideoDisplayControl_SetVideoPosition(control, NULL, &rect);
         IMFVideoDisplayControl_Release(control);
     }
 
