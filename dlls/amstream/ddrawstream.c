@@ -1177,6 +1177,11 @@ static HRESULT WINAPI ddraw_sink_EndOfStream(IPin *iface)
 
     LeaveCriticalSection(&stream->cs);
 
+    /* Calling IMediaStreamFilter::EndOfStream() inside the critical section
+     * would invert the locking order, so we must leave it first to avoid
+     * the streaming thread deadlocking on the filter's critical section. */
+    IMediaStreamFilter_EndOfStream(stream->filter);
+
     return S_OK;
 }
 
