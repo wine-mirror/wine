@@ -317,8 +317,6 @@ class VkDefine(object):
 
         if name_elem is None:
             # <type category="define" name="some_name">some_value</type>
-            # At the time of writing there is only 1 define of this category
-            # 'VK_DEFINE_NON_DISPATCHABLE_HANDLE'.
             name = define.attrib.get("name")
 
             # We override behavior of VK_DEFINE_NON_DISPATCHABLE handle as the default
@@ -326,6 +324,10 @@ class VkDefine(object):
             # This complicates TRACEs in the thunks, so just use uint64_t.
             if name == "VK_DEFINE_NON_DISPATCHABLE_HANDLE":
                 value = "#define VK_DEFINE_NON_DISPATCHABLE_HANDLE(object) typedef uint64_t object;"
+            # As VK_DEFINE_NON_DISPATCHABLE handle is overriden above, we must also override
+            # VK_NULL_HANDLE so that its type will match.
+            elif name == "VK_NULL_HANDLE":
+                value = "#define VK_NULL_HANDLE 0ULL"
             else:
                 value = define.text
             return VkDefine(name, value)
