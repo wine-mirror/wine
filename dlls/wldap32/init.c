@@ -30,9 +30,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
-/* Should eventually be determined by the algorithm documented on MSDN. */
-static const WCHAR defaulthost[] = { 'l','o','c','a','l','h','o','s','t',0 };
-
 /* Split a space separated string of hostnames into a string array */
 static char **split_hostnames( const char *hostnames )
 {
@@ -256,7 +253,7 @@ WLDAP32_LDAP * CDECL cldap_openW( WCHAR *hostname, ULONG portnumber )
 
     TRACE( "(%s, %d)\n", debugstr_w(hostname), portnumber );
 
-    if (!(hostnameU = strWtoU( hostname ? hostname : defaulthost ))) return NULL;
+    if (!(hostnameU = strWtoU( hostname ? hostname : L"localhost" ))) return NULL;
     if (!(url = urlify_hostnames( "cldap://", hostnameU, portnumber ))) goto exit;
 
     ld = create_context( url );
@@ -342,7 +339,7 @@ WLDAP32_LDAP * CDECL ldap_initW( const PWCHAR hostname, ULONG portnumber )
 
     TRACE( "(%s, %d)\n", debugstr_w(hostname), portnumber );
 
-    if (!(hostnameU = strWtoU( hostname ? hostname : defaulthost ))) return NULL;
+    if (!(hostnameU = strWtoU( hostname ? hostname : L"localhost" ))) return NULL;
     if (!(url = urlify_hostnames( "ldap://", hostnameU, portnumber ))) goto exit;
 
     ld = create_context( url );
@@ -401,7 +398,7 @@ WLDAP32_LDAP * CDECL ldap_openW( WCHAR *hostname, ULONG portnumber )
 
     TRACE( "(%s, %d)\n", debugstr_w(hostname), portnumber );
 
-    if (!(hostnameU = strWtoU( hostname ? hostname : defaulthost ))) return NULL;
+    if (!(hostnameU = strWtoU( hostname ? hostname : L"localhost" ))) return NULL;
     if (!(url = urlify_hostnames( "ldap://", hostnameU, portnumber ))) goto exit;
 
     ld = create_context( url );
@@ -462,7 +459,7 @@ WLDAP32_LDAP * CDECL ldap_sslinitW( WCHAR *hostname, ULONG portnumber, int secur
 
     TRACE( "(%s, %d, 0x%08x)\n", debugstr_w(hostname), portnumber, secure );
 
-    if (!(hostnameU = strWtoU( hostname ? hostname : defaulthost ))) return NULL;
+    if (!(hostnameU = strWtoU( hostname ? hostname : L"localhost" ))) return NULL;
 
     if (secure)
         url = urlify_hostnames( "ldaps://", hostnameU, portnumber );
