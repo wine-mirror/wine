@@ -19,8 +19,8 @@
 /* compatible with structures defined in ldap.h */
 typedef struct bervalU
 {
-    unsigned long bv_len;
-    char         *bv_val;
+    ULONG_PTR bv_len;
+    char     *bv_val;
 } BerValueU;
 
 typedef struct
@@ -79,8 +79,8 @@ typedef struct
 
 typedef struct timevalU
 {
-    unsigned long tv_sec;
-    unsigned long tv_usec;
+    LONG_PTR tv_sec;
+    LONG_PTR tv_usec;
 } LDAP_TIMEVALU;
 
 #ifndef SASL_CB_LIST_END
@@ -92,7 +92,7 @@ typedef struct timevalU
 
 typedef struct sasl_interactU
 {
-    unsigned long id;
+    ULONG_PTR     id;
     const char   *challenge;
     const char   *prompt;
     const char   *defresult;

@@ -245,7 +245,7 @@ ULONG CDECL ldap_parse_page_controlW( WLDAP32_LDAP *ld, LDAPControlW **ctrls, UL
 
     for (i = 0; ctrls[i]; i++)
     {
-        if (!lstrcmpW( LDAP_PAGED_RESULT_OID_STRING_W, ctrls[i]->ldctl_oid ))
+        if (!wcscmp( LDAP_PAGED_RESULT_OID_STRING_W, ctrls[i]->ldctl_oid ))
             control = ctrls[i];
     }
     if (!control) return WLDAP32_LDAP_CONTROL_NOT_FOUND;
