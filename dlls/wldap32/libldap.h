@@ -184,80 +184,81 @@ extern void CDECL wrap_ldap_value_free_len(struct bervalU **) DECLSPEC_HIDDEN;
 
 struct ldap_funcs
 {
-    void * (CDECL *ber_alloc_t)(int);
-    void (CDECL *ber_bvecfree)(struct bervalU **);
-    void (CDECL *ber_bvfree)(struct bervalU *);
-    unsigned int (CDECL *ber_first_element)(void *, unsigned int *, char **);
-    int (CDECL *ber_flatten)(void *, struct bervalU **);
-    void (CDECL *ber_free)(void *, int);
-    void * (CDECL *ber_init)(struct bervalU *);
-    unsigned int (CDECL *ber_next_element)(void *, unsigned int *, char *);
-    unsigned int (CDECL *ber_peek_tag)(void *, unsigned int *);
-    unsigned int (CDECL *ber_skip_tag)(void *, unsigned int *);
-    int (WINAPIV *ber_printf)(void *, char *, ...);
-    int (WINAPIV *ber_scanf)(void *, char *, ...);
+    void * (CDECL *fn_ber_alloc_t)(int);
+    void (CDECL *fn_ber_bvecfree)(struct bervalU **);
+    void (CDECL *fn_ber_bvfree)(struct bervalU *);
+    unsigned int (CDECL *fn_ber_first_element)(void *, unsigned int *, char **);
+    int (CDECL *fn_ber_flatten)(void *, struct bervalU **);
+    void (CDECL *fn_ber_free)(void *, int);
+    void * (CDECL *fn_ber_init)(struct bervalU *);
+    unsigned int (CDECL *fn_ber_next_element)(void *, unsigned int *, char *);
+    unsigned int (CDECL *fn_ber_peek_tag)(void *, unsigned int *);
+    unsigned int (CDECL *fn_ber_skip_tag)(void *, unsigned int *);
+    int (WINAPIV *fn_ber_printf)(void *, char *, ...);
+    int (WINAPIV *fn_ber_scanf)(void *, char *, ...);
 
-    int (CDECL *ldap_abandon_ext)(void *, int, LDAPControlU **, LDAPControlU **);
-    int (CDECL *ldap_add_ext)(void *, const char *, LDAPModU **, LDAPControlU **, LDAPControlU **, ULONG *);
-    int (CDECL *ldap_add_ext_s)(void *, const char *, LDAPModU **, LDAPControlU **, LDAPControlU **);
-    int (CDECL *ldap_compare_ext)(void *, const char *, const char *, struct bervalU *, LDAPControlU **,
-                                  LDAPControlU **, ULONG *);
-    int (CDECL *ldap_compare_ext_s)(void *, const char *, const char *, struct bervalU *, LDAPControlU **,
-                                    LDAPControlU **);
-    void (CDECL *ldap_control_free)(LDAPControlU *);
-    void (CDECL *ldap_controls_free)(LDAPControlU **);
-    int (CDECL *ldap_count_entries)(void *, void *);
-    int (CDECL *ldap_count_references)(void *, void *);
-    int (CDECL *ldap_count_values_len)(struct bervalU **);
-    int (CDECL *ldap_create_sort_control)(void *, LDAPSortKeyU **, int, LDAPControlU **);
-    int (CDECL *ldap_create_vlv_control)(void *, LDAPVLVInfoU *, LDAPControlU **);
-    int (CDECL *ldap_delete_ext)(void *, const char *, LDAPControlU **, LDAPControlU **, ULONG *);
-    int (CDECL *ldap_delete_ext_s)(void *, const char *, LDAPControlU **, LDAPControlU **);
-    char * (CDECL *ldap_dn2ufn)(const char *);
-    char ** (CDECL *ldap_explode_dn)(const char *, int);
-    int (CDECL *ldap_extended_operation)(void *, const char *, struct bervalU *, LDAPControlU **,
-                                         LDAPControlU **, ULONG *);
-    int (CDECL *ldap_extended_operation_s)(void *, const char *, struct bervalU *, LDAPControlU **,
-                                           LDAPControlU **, char **, struct bervalU **);
-    char * (CDECL *ldap_get_dn)(void *, void *);
-    int (CDECL *ldap_get_option)(void *, int, void *);
-    struct bervalU ** (CDECL *ldap_get_values_len)(void *, void *, const char *);
-    int (CDECL *ldap_initialize)(void **, const char *);
-    char * (CDECL *ldap_first_attribute)(void *, void *, void **);
-    void * (CDECL *ldap_first_entry)(void *, void *);
-    void * (CDECL *ldap_first_reference)(void *, void *);
-    void (CDECL *ldap_memfree)(void *);
-    void (CDECL *ldap_memvfree)(void **);
-    int (CDECL *ldap_modify_ext)(void *, const char *, LDAPModU **, LDAPControlU **, LDAPControlU **, ULONG *);
-    int (CDECL *ldap_modify_ext_s)(void *, const char *, LDAPModU **, LDAPControlU **, LDAPControlU **);
-    int (CDECL *ldap_msgfree)(void *);
-    char * (CDECL *ldap_next_attribute)(void *, void *, void *);
-    void * (CDECL *ldap_next_entry)(void *, void *);
-    void * (CDECL *ldap_next_reference)(void *, void *);
-    int (CDECL *ldap_parse_extended_result)(void *, void *, char **, struct bervalU **, int);
-    int (CDECL *ldap_parse_reference)(void *, void *, char ***, LDAPControlU ***, int);
-    int (CDECL *ldap_parse_result)(void *, void *, int *, char **, char **, char ***, LDAPControlU ***, int);
-    int (CDECL *ldap_parse_sortresponse_control)(void *, LDAPControlU *, int *, char **);
-    int (CDECL *ldap_parse_vlvresponse_control)(void *, LDAPControlU *, int *, int *, struct bervalU **, int *);
-    int (CDECL *ldap_rename)(void *, const char *, const char *, const char *, int, LDAPControlU **, LDAPControlU **,
-                             ULONG *);
-    int (CDECL *ldap_rename_s)(void *, const char *, const char *, const char *, int, LDAPControlU **, LDAPControlU **);
-    int (CDECL *ldap_result)(void *, int, int, struct timevalU *, void **);
-    int (CDECL *ldap_sasl_bind)(void *, const char *, const char *, struct bervalU *, LDAPControlU **, LDAPControlU **,
-                                int *);
-    int (CDECL *ldap_sasl_bind_s)(void *, const char *, const char *, struct bervalU *, LDAPControlU **,
-                                  LDAPControlU **, struct bervalU **);
-    int (CDECL *ldap_sasl_interactive_bind_s)(void *, const char *, const char *, LDAPControlU **, LDAPControlU **,
-                                              unsigned int, void *);
-    int (CDECL *ldap_search_ext)(void *, const char *, int, const char *, char **, int, LDAPControlU **,
-                                 LDAPControlU **, struct timevalU *, int, ULONG *);
-    int (CDECL *ldap_search_ext_s)(void *, const char *, int, const char *, char **, int, LDAPControlU **,
-                                   LDAPControlU **, struct timevalU *, int, void **);
-    int (CDECL *ldap_set_option)(void *, int, const void *);
-    int (CDECL *ldap_start_tls_s)(void *, LDAPControlU **, LDAPControlU **);
-    int (CDECL *ldap_unbind_ext)(void *, LDAPControlU **, LDAPControlU **);
-    int (CDECL *ldap_unbind_ext_s)(void *, LDAPControlU **, LDAPControlU **);
-    void (CDECL *ldap_value_free_len)(struct bervalU **);
+    int (CDECL *fn_ldap_abandon_ext)(void *, int, LDAPControlU **, LDAPControlU **);
+    int (CDECL *fn_ldap_add_ext)(void *, const char *, LDAPModU **, LDAPControlU **, LDAPControlU **, ULONG *);
+    int (CDECL *fn_ldap_add_ext_s)(void *, const char *, LDAPModU **, LDAPControlU **, LDAPControlU **);
+    int (CDECL *fn_ldap_compare_ext)(void *, const char *, const char *, struct bervalU *, LDAPControlU **,
+                                     LDAPControlU **, ULONG *);
+    int (CDECL *fn_ldap_compare_ext_s)(void *, const char *, const char *, struct bervalU *, LDAPControlU **,
+                                       LDAPControlU **);
+    void (CDECL *fn_ldap_control_free)(LDAPControlU *);
+    void (CDECL *fn_ldap_controls_free)(LDAPControlU **);
+    int (CDECL *fn_ldap_count_entries)(void *, void *);
+    int (CDECL *fn_ldap_count_references)(void *, void *);
+    int (CDECL *fn_ldap_count_values_len)(struct bervalU **);
+    int (CDECL *fn_ldap_create_sort_control)(void *, LDAPSortKeyU **, int, LDAPControlU **);
+    int (CDECL *fn_ldap_create_vlv_control)(void *, LDAPVLVInfoU *, LDAPControlU **);
+    int (CDECL *fn_ldap_delete_ext)(void *, const char *, LDAPControlU **, LDAPControlU **, ULONG *);
+    int (CDECL *fn_ldap_delete_ext_s)(void *, const char *, LDAPControlU **, LDAPControlU **);
+    char * (CDECL *fn_ldap_dn2ufn)(const char *);
+    char ** (CDECL *fn_ldap_explode_dn)(const char *, int);
+    int (CDECL *fn_ldap_extended_operation)(void *, const char *, struct bervalU *, LDAPControlU **,
+                                            LDAPControlU **, ULONG *);
+    int (CDECL *fn_ldap_extended_operation_s)(void *, const char *, struct bervalU *, LDAPControlU **,
+                                              LDAPControlU **, char **, struct bervalU **);
+    char * (CDECL *fn_ldap_get_dn)(void *, void *);
+    int (CDECL *fn_ldap_get_option)(void *, int, void *);
+    struct bervalU ** (CDECL *fn_ldap_get_values_len)(void *, void *, const char *);
+    int (CDECL *fn_ldap_initialize)(void **, const char *);
+    char * (CDECL *fn_ldap_first_attribute)(void *, void *, void **);
+    void * (CDECL *fn_ldap_first_entry)(void *, void *);
+    void * (CDECL *fn_ldap_first_reference)(void *, void *);
+    void (CDECL *fn_ldap_memfree)(void *);
+    void (CDECL *fn_ldap_memvfree)(void **);
+    int (CDECL *fn_ldap_modify_ext)(void *, const char *, LDAPModU **, LDAPControlU **, LDAPControlU **, ULONG *);
+    int (CDECL *fn_ldap_modify_ext_s)(void *, const char *, LDAPModU **, LDAPControlU **, LDAPControlU **);
+    int (CDECL *fn_ldap_msgfree)(void *);
+    char * (CDECL *fn_ldap_next_attribute)(void *, void *, void *);
+    void * (CDECL *fn_ldap_next_entry)(void *, void *);
+    void * (CDECL *fn_ldap_next_reference)(void *, void *);
+    int (CDECL *fn_ldap_parse_extended_result)(void *, void *, char **, struct bervalU **, int);
+    int (CDECL *fn_ldap_parse_reference)(void *, void *, char ***, LDAPControlU ***, int);
+    int (CDECL *fn_ldap_parse_result)(void *, void *, int *, char **, char **, char ***, LDAPControlU ***, int);
+    int (CDECL *fn_ldap_parse_sortresponse_control)(void *, LDAPControlU *, int *, char **);
+    int (CDECL *fn_ldap_parse_vlvresponse_control)(void *, LDAPControlU *, int *, int *, struct bervalU **, int *);
+    int (CDECL *fn_ldap_rename)(void *, const char *, const char *, const char *, int, LDAPControlU **,
+                                LDAPControlU **, ULONG *);
+    int (CDECL *fn_ldap_rename_s)(void *, const char *, const char *, const char *, int, LDAPControlU **,
+                                  LDAPControlU **);
+    int (CDECL *fn_ldap_result)(void *, int, int, struct timevalU *, void **);
+    int (CDECL *fn_ldap_sasl_bind)(void *, const char *, const char *, struct bervalU *, LDAPControlU **,
+                                   LDAPControlU **, int *);
+    int (CDECL *fn_ldap_sasl_bind_s)(void *, const char *, const char *, struct bervalU *, LDAPControlU **,
+                                     LDAPControlU **, struct bervalU **);
+    int (CDECL *fn_ldap_sasl_interactive_bind_s)(void *, const char *, const char *, LDAPControlU **,
+                                                 LDAPControlU **, unsigned int, void *);
+    int (CDECL *fn_ldap_search_ext)(void *, const char *, int, const char *, char **, int, LDAPControlU **,
+                                    LDAPControlU **, struct timevalU *, int, ULONG *);
+    int (CDECL *fn_ldap_search_ext_s)(void *, const char *, int, const char *, char **, int, LDAPControlU **,
+                                      LDAPControlU **, struct timevalU *, int, void **);
+    int (CDECL *fn_ldap_set_option)(void *, int, const void *);
+    int (CDECL *fn_ldap_start_tls_s)(void *, LDAPControlU **, LDAPControlU **);
+    int (CDECL *fn_ldap_unbind_ext)(void *, LDAPControlU **, LDAPControlU **);
+    int (CDECL *fn_ldap_unbind_ext_s)(void *, LDAPControlU **, LDAPControlU **);
+    void (CDECL *fn_ldap_value_free_len)(struct bervalU **);
 };
 
 extern int CDECL sasl_interact_cb(void *, unsigned int, void *, void *) DECLSPEC_HIDDEN;

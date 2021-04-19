@@ -22,6 +22,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "winldap.h"
 
 #include "wine/debug.h"
 #include "winldap_private.h"
@@ -33,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
  *
  * See ldap_deleteW.
  */
-ULONG CDECL ldap_deleteA( WLDAP32_LDAP *ld, char *dn )
+ULONG CDECL ldap_deleteA( LDAP *ld, char *dn )
 {
     ULONG ret;
     WCHAR *dnW = NULL;
@@ -41,7 +42,7 @@ ULONG CDECL ldap_deleteA( WLDAP32_LDAP *ld, char *dn )
     TRACE( "(%p, %s)\n", ld, debugstr_a(dn) );
 
     if (!ld) return ~0u;
-    if (dn && !(dnW = strAtoW( dn ))) return WLDAP32_LDAP_NO_MEMORY;
+    if (dn && !(dnW = strAtoW( dn ))) return LDAP_NO_MEMORY;
 
     ret = ldap_deleteW( ld, dnW );
     free( dnW );
@@ -66,14 +67,14 @@ ULONG CDECL ldap_deleteA( WLDAP32_LDAP *ld, char *dn )
  *  the operation. Cancel the operation by calling ldap_abandon
  *  with the message ID.
  */
-ULONG CDECL ldap_deleteW( WLDAP32_LDAP *ld, WCHAR *dn )
+ULONG CDECL ldap_deleteW( LDAP *ld, WCHAR *dn )
 {
     ULONG ret, msg;
 
     TRACE( "(%p, %s)\n", ld, debugstr_w(dn) );
 
     ret = ldap_delete_extW( ld, dn, NULL, NULL, &msg );
-    if (ret == WLDAP32_LDAP_SUCCESS) return msg;
+    if (ret == LDAP_SUCCESS) return msg;
     return ~0u;
 }
 
@@ -82,16 +83,16 @@ ULONG CDECL ldap_deleteW( WLDAP32_LDAP *ld, WCHAR *dn )
  *
  * See ldap_delete_extW.
  */
-ULONG CDECL ldap_delete_extA( WLDAP32_LDAP *ld, char *dn, LDAPControlA **serverctrls,
-    LDAPControlA **clientctrls, ULONG *message )
+ULONG CDECL ldap_delete_extA( LDAP *ld, char *dn, LDAPControlA **serverctrls, LDAPControlA **clientctrls,
+    ULONG *message )
 {
-    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
+    ULONG ret = LDAP_NO_MEMORY;
     WCHAR *dnW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
 
     TRACE( "(%p, %s, %p, %p, %p)\n", ld, debugstr_a(dn), serverctrls, clientctrls, message );
 
-    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    if (!ld) return LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (serverctrls && !(serverctrlsW = controlarrayAtoW( serverctrls ))) goto exit;
@@ -127,22 +128,22 @@ exit:
  *  the operation. The serverctrls and clientctrls parameters are
  *  optional and should be set to NULL if not used.
  */
-ULONG CDECL ldap_delete_extW( WLDAP32_LDAP *ld, WCHAR *dn, LDAPControlW **serverctrls,
-    LDAPControlW **clientctrls, ULONG *message )
+ULONG CDECL ldap_delete_extW( LDAP *ld, WCHAR *dn, LDAPControlW **serverctrls, LDAPControlW **clientctrls,
+    ULONG *message )
 {
-    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
+    ULONG ret = LDAP_NO_MEMORY;
     char *dnU = NULL;
     LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
 
     TRACE( "(%p, %s, %p, %p, %p)\n", ld, debugstr_w(dn), serverctrls, clientctrls, message );
 
-    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    if (!ld) return LDAP_PARAM_ERROR;
 
     if (dn && !(dnU = strWtoU( dn ))) goto exit;
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
 
-    ret = map_error( ldap_funcs->ldap_delete_ext( ld->ld, dnU, serverctrlsU, clientctrlsU, message ) );
+    ret = map_error( ldap_funcs->fn_ldap_delete_ext( CTX(ld), dnU, serverctrlsU, clientctrlsU, message ) );
 
 exit:
     free( dnU );
@@ -156,16 +157,15 @@ exit:
  *
  * See ldap_delete_ext_sW.
  */
-ULONG CDECL ldap_delete_ext_sA( WLDAP32_LDAP *ld, char *dn, LDAPControlA **serverctrls,
-    LDAPControlA **clientctrls )
+ULONG CDECL ldap_delete_ext_sA( LDAP *ld, char *dn, LDAPControlA **serverctrls, LDAPControlA **clientctrls )
 {
-    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
+    ULONG ret = LDAP_NO_MEMORY;
     WCHAR *dnW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
 
     TRACE( "(%p, %s, %p, %p)\n", ld, debugstr_a(dn), serverctrls, clientctrls );
 
-    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    if (!ld) return LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (serverctrls && !(serverctrlsW = controlarrayAtoW( serverctrls ))) goto exit;
@@ -199,22 +199,21 @@ exit:
  *  The serverctrls and clientctrls parameters are optional and
  *  should be set to NULL if not used.
  */
-ULONG CDECL ldap_delete_ext_sW( WLDAP32_LDAP *ld, WCHAR *dn, LDAPControlW **serverctrls,
-    LDAPControlW **clientctrls )
+ULONG CDECL ldap_delete_ext_sW( LDAP *ld, WCHAR *dn, LDAPControlW **serverctrls, LDAPControlW **clientctrls )
 {
-    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
+    ULONG ret = LDAP_NO_MEMORY;
     char *dnU = NULL;
     LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
 
     TRACE( "(%p, %s, %p, %p)\n", ld, debugstr_w(dn), serverctrls, clientctrls );
 
-    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    if (!ld) return LDAP_PARAM_ERROR;
 
     if (dn && !(dnU = strWtoU( dn ))) goto exit;
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
 
-    ret = map_error( ldap_funcs->ldap_delete_ext_s( ld->ld, dnU, serverctrlsU, clientctrlsU ) );
+    ret = map_error( ldap_funcs->fn_ldap_delete_ext_s( CTX(ld), dnU, serverctrlsU, clientctrlsU ) );
 
 exit:
     free( dnU );
@@ -228,15 +227,15 @@ exit:
  *
  * See ldap_delete_sW.
  */
-ULONG CDECL ldap_delete_sA( WLDAP32_LDAP *ld, char *dn )
+ULONG CDECL ldap_delete_sA( LDAP *ld, char *dn )
 {
     ULONG ret;
     WCHAR *dnW = NULL;
 
     TRACE( "(%p, %s)\n", ld, debugstr_a(dn) );
 
-    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
-    if (dn && !(dnW = strAtoW( dn ))) return WLDAP32_LDAP_NO_MEMORY;
+    if (!ld) return LDAP_PARAM_ERROR;
+    if (dn && !(dnW = strAtoW( dn ))) return LDAP_NO_MEMORY;
 
     ret = ldap_delete_sW( ld, dnW );
     free( dnW );
@@ -256,7 +255,7 @@ ULONG CDECL ldap_delete_sA( WLDAP32_LDAP *ld, char *dn )
  *  Success: LDAP_SUCCESS
  *  Failure: An LDAP error code.
  */
-ULONG CDECL ldap_delete_sW( WLDAP32_LDAP *ld, WCHAR *dn )
+ULONG CDECL ldap_delete_sW( LDAP *ld, WCHAR *dn )
 {
     TRACE( "(%p, %s)\n", ld, debugstr_w(dn) );
     return ldap_delete_ext_sW( ld, dn, NULL, NULL );

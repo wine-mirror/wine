@@ -25,6 +25,7 @@
 #include "config.h"
 
 #ifdef HAVE_LDAP
+#include <assert.h>
 #include <stdarg.h>
 #include <sys/time.h>
 #ifdef HAVE_LDAP_H
@@ -41,7 +42,7 @@
 #include "winbase.h"
 
 #include "wine/debug.h"
-#include "winldap_private.h"
+#include "libldap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
 
@@ -53,6 +54,8 @@ C_ASSERT( sizeof(LDAPVLVInfoU) == sizeof(LDAPVLVInfo) );
 C_ASSERT( sizeof(LDAPAPIInfoU) == sizeof(LDAPAPIInfo) );
 C_ASSERT( sizeof(LDAPAPIFeatureInfoU) == sizeof(LDAPAPIFeatureInfo) );
 C_ASSERT( sizeof(struct timevalU) == sizeof(struct timeval) );
+
+#define WLDAP32_LBER_ERROR  (~0l)
 
 static LDAPMod *nullmods[] = { NULL };
 

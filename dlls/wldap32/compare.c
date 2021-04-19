@@ -22,6 +22,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "winldap.h"
 
 #include "wine/debug.h"
 #include "winldap_private.h"
@@ -33,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
  *
  * See ldap_compareW.
  */
-ULONG CDECL ldap_compareA( WLDAP32_LDAP *ld, char *dn, char *attr, char *value )
+ULONG CDECL ldap_compareA( LDAP *ld, char *dn, char *attr, char *value )
 {
     ULONG ret = ~0u;
     WCHAR *dnW = NULL, *attrW = NULL, *valueW = NULL;
@@ -70,14 +71,14 @@ exit:
  *  Success: Message ID of the compare operation.
  *  Failure: An LDAP error code.
  */
-ULONG CDECL ldap_compareW( WLDAP32_LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *value )
+ULONG CDECL ldap_compareW( LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *value )
 {
     ULONG msg, ret;
 
     TRACE( "(%p, %s, %s, %s)\n", ld, debugstr_w(dn), debugstr_w(attr), debugstr_w(value) );
 
     ret = ldap_compare_extW( ld, dn, attr, value, NULL, NULL, NULL, &msg );
-    if (ret == WLDAP32_LDAP_SUCCESS) return msg;
+    if (ret == LDAP_SUCCESS) return msg;
     return ~0u;
 }
 
@@ -86,18 +87,18 @@ ULONG CDECL ldap_compareW( WLDAP32_LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *valu
  *
  * See ldap_compare_extW.
  */
-ULONG CDECL ldap_compare_extA( WLDAP32_LDAP *ld, char *dn, char *attr, char *value,
-    struct WLDAP32_berval *data, LDAPControlA **serverctrls, LDAPControlA **clientctrls,
+ULONG CDECL ldap_compare_extA( LDAP *ld, char *dn, char *attr, char *value,
+    struct berval *data, LDAPControlA **serverctrls, LDAPControlA **clientctrls,
     ULONG *message )
 {
-    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
+    ULONG ret = LDAP_NO_MEMORY;
     WCHAR *dnW = NULL, *attrW = NULL, *valueW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
 
     TRACE( "(%p, %s, %s, %s, %p, %p, %p, %p)\n", ld, debugstr_a(dn), debugstr_a(attr), debugstr_a(value),
            data, serverctrls, clientctrls, message );
 
-    if (!ld || !message) return WLDAP32_LDAP_PARAM_ERROR;
+    if (!ld || !message) return LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (attr && !(attrW = strAtoW( attr ))) goto exit;
@@ -140,10 +141,10 @@ exit:
  *  both are non-NULL, data will be used. The serverctrls and clientctrls
  *  parameters are optional and should be set to NULL if not used.
  */
-ULONG CDECL ldap_compare_extW( WLDAP32_LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *value,
-    struct WLDAP32_berval *data, LDAPControlW **serverctrls, LDAPControlW **clientctrls, ULONG *message )
+ULONG CDECL ldap_compare_extW( LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *value, struct berval *data,
+    LDAPControlW **serverctrls, LDAPControlW **clientctrls, ULONG *message )
 {
-    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
+    ULONG ret = LDAP_NO_MEMORY;
     char *dnU = NULL, *attrU = NULL, *valueU = NULL;
     LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
     struct bervalU *dataU = NULL, val = { 0, NULL };
@@ -151,8 +152,8 @@ ULONG CDECL ldap_compare_extW( WLDAP32_LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *
     TRACE( "(%p, %s, %s, %s, %p, %p, %p, %p)\n", ld, debugstr_w(dn), debugstr_w(attr), debugstr_w(value),
            data, serverctrls, clientctrls, message );
 
-    if (!ld || !message) return WLDAP32_LDAP_PARAM_ERROR;
-    if (!attr) return WLDAP32_LDAP_NO_MEMORY;
+    if (!ld || !message) return LDAP_PARAM_ERROR;
+    if (!attr) return LDAP_NO_MEMORY;
 
     if (dn && !(dnU = strWtoU( dn ))) goto exit;
     if (!(attrU = strWtoU( attr ))) goto exit;
@@ -170,8 +171,8 @@ ULONG CDECL ldap_compare_extW( WLDAP32_LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
 
-    ret = map_error( ldap_funcs->ldap_compare_ext( ld->ld, dnU, attrU, dataU ? dataU : &val, serverctrlsU,
-                                                   clientctrlsU, message ) );
+    ret = map_error( ldap_funcs->fn_ldap_compare_ext( CTX(ld), dnU, attrU, dataU ? dataU : &val, serverctrlsU,
+                                                      clientctrlsU, message ) );
 exit:
     free( dnU );
     free( attrU );
@@ -187,17 +188,17 @@ exit:
  *
  * See ldap_compare_ext_sW.
  */
-ULONG CDECL ldap_compare_ext_sA( WLDAP32_LDAP *ld, char *dn, char *attr, char *value,
-    struct WLDAP32_berval *data, LDAPControlA **serverctrls, LDAPControlA **clientctrls )
+ULONG CDECL ldap_compare_ext_sA( LDAP *ld, char *dn, char *attr, char *value, struct berval *data,
+    LDAPControlA **serverctrls, LDAPControlA **clientctrls )
 {
-    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
+    ULONG ret = LDAP_NO_MEMORY;
     WCHAR *dnW = NULL, *attrW = NULL, *valueW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
 
     TRACE( "(%p, %s, %s, %s, %p, %p, %p)\n", ld, debugstr_a(dn), debugstr_a(attr), debugstr_a(value),
            data, serverctrls, clientctrls );
 
-    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    if (!ld) return LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (attr && !(attrW = strAtoW( attr ))) goto exit;
@@ -239,10 +240,10 @@ exit:
  *  both are non-NULL, data will be used. The serverctrls and clientctrls
  *  parameters are optional and should be set to NULL if not used.
  */
-ULONG CDECL ldap_compare_ext_sW( WLDAP32_LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *value,
-    struct WLDAP32_berval *data, LDAPControlW **serverctrls, LDAPControlW **clientctrls )
+ULONG CDECL ldap_compare_ext_sW( LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *value, struct berval *data,
+    LDAPControlW **serverctrls, LDAPControlW **clientctrls )
 {
-    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
+    ULONG ret = LDAP_NO_MEMORY;
     char *dnU = NULL, *attrU = NULL, *valueU = NULL;
     LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
     struct bervalU *dataU = NULL, val = { 0, NULL };
@@ -250,7 +251,7 @@ ULONG CDECL ldap_compare_ext_sW( WLDAP32_LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR
     TRACE( "(%p, %s, %s, %s, %p, %p, %p)\n", ld, debugstr_w(dn), debugstr_w(attr), debugstr_w(value), data,
            serverctrls, clientctrls );
 
-    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    if (!ld) return LDAP_PARAM_ERROR;
 
     if (dn && !(dnU = strWtoU( dn ))) goto exit;
     if (attr && !(attrU = strWtoU( attr ))) goto exit;
@@ -268,8 +269,8 @@ ULONG CDECL ldap_compare_ext_sW( WLDAP32_LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
 
-    ret = map_error( ldap_funcs->ldap_compare_ext_s( ld->ld, dnU, attrU, dataU ? dataU : &val, serverctrlsU,
-                                                     clientctrlsU ) );
+    ret = map_error( ldap_funcs->fn_ldap_compare_ext_s( CTX(ld), dnU, attrU, dataU ? dataU : &val, serverctrlsU,
+                                                        clientctrlsU ) );
 exit:
     free( dnU );
     free( attrU );
@@ -285,14 +286,14 @@ exit:
  *
  * See ldap_compare_sW.
  */
-ULONG CDECL ldap_compare_sA( WLDAP32_LDAP *ld, PCHAR dn, PCHAR attr, PCHAR value )
+ULONG CDECL ldap_compare_sA( LDAP *ld, PCHAR dn, PCHAR attr, PCHAR value )
 {
-    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
+    ULONG ret = LDAP_NO_MEMORY;
     WCHAR *dnW = NULL, *attrW = NULL, *valueW = NULL;
 
     TRACE( "(%p, %s, %s, %s)\n", ld, debugstr_a(dn), debugstr_a(attr), debugstr_a(value) );
 
-    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    if (!ld) return LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (attr && !(attrW = strAtoW( attr ))) goto exit;
@@ -322,7 +323,7 @@ exit:
  *  Success: LDAP_SUCCESS
  *  Failure: An LDAP error code.
  */
-ULONG CDECL ldap_compare_sW( WLDAP32_LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *value )
+ULONG CDECL ldap_compare_sW( LDAP *ld, WCHAR *dn, WCHAR *attr, WCHAR *value )
 {
     TRACE( "(%p, %s, %s, %s)\n", ld, debugstr_w(dn), debugstr_w(attr), debugstr_w(value) );
     return ldap_compare_ext_sW( ld, dn, attr, value, NULL, NULL, NULL );

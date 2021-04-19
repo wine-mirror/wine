@@ -22,6 +22,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "winldap.h"
 
 #include "wine/debug.h"
 #include "winldap_private.h"
@@ -33,9 +34,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
  *
  * See ldap_addW.
  */
-ULONG CDECL ldap_addA( WLDAP32_LDAP *ld, char *dn, LDAPModA **attrs )
+ULONG CDECL ldap_addA( LDAP *ld, char *dn, LDAPModA **attrs )
 {
-    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
+    ULONG ret = LDAP_NO_MEMORY;
     WCHAR *dnW = NULL;
     LDAPModW **attrsW = NULL;
 
@@ -74,14 +75,14 @@ exit:
  *  the operation. Cancel the operation by calling ldap_abandon
  *  with the message ID.
  */
-ULONG CDECL ldap_addW( WLDAP32_LDAP *ld, WCHAR *dn, LDAPModW **attrs )
+ULONG CDECL ldap_addW( LDAP *ld, WCHAR *dn, LDAPModW **attrs )
 {
     ULONG ret, msg;
 
     TRACE( "(%p, %s, %p)\n", ld, debugstr_w(dn), attrs );
 
     ret = ldap_add_extW( ld, dn, attrs, NULL, NULL, &msg );
-    if (ret == WLDAP32_LDAP_SUCCESS) return msg;
+    if (ret == LDAP_SUCCESS) return msg;
     return ~0u;
 }
 
@@ -90,17 +91,17 @@ ULONG CDECL ldap_addW( WLDAP32_LDAP *ld, WCHAR *dn, LDAPModW **attrs )
  *
  * See ldap_add_extW.
  */
-ULONG CDECL ldap_add_extA( WLDAP32_LDAP *ld, char *dn, LDAPModA **attrs, LDAPControlA **serverctrls,
+ULONG CDECL ldap_add_extA( LDAP *ld, char *dn, LDAPModA **attrs, LDAPControlA **serverctrls,
                            LDAPControlA **clientctrls, ULONG *message )
 {
-    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
+    ULONG ret = LDAP_NO_MEMORY;
     WCHAR *dnW = NULL;
     LDAPModW **attrsW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
 
     TRACE( "(%p, %s, %p, %p, %p, %p)\n", ld, debugstr_a(dn), attrs, serverctrls, clientctrls, message );
 
-    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    if (!ld) return LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (attrs && !(attrsW = modarrayAtoW( attrs ))) goto exit;
@@ -140,24 +141,24 @@ exit:
  *  the operation. The serverctrls and clientctrls parameters are
  *  optional and should be set to NULL if not used.
  */
-ULONG CDECL ldap_add_extW( WLDAP32_LDAP *ld, WCHAR *dn, LDAPModW **attrs, LDAPControlW **serverctrls,
+ULONG CDECL ldap_add_extW( LDAP *ld, WCHAR *dn, LDAPModW **attrs, LDAPControlW **serverctrls,
                            LDAPControlW **clientctrls, ULONG *message )
 {
-    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
+    ULONG ret = LDAP_NO_MEMORY;
     char *dnU = NULL;
     LDAPModU **attrsU = NULL;
     LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
 
     TRACE( "(%p, %s, %p, %p, %p, %p)\n", ld, debugstr_w(dn), attrs, serverctrls, clientctrls, message );
 
-    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    if (!ld) return LDAP_PARAM_ERROR;
 
     if (dn && !(dnU = strWtoU( dn ))) goto exit;
     if (attrs && !(attrsU = modarrayWtoU( attrs ))) goto exit;
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
 
-    ret = map_error( ldap_funcs->ldap_add_ext( ld->ld, dnU, attrsU, serverctrlsU, clientctrlsU, message ) );
+    ret = map_error( ldap_funcs->fn_ldap_add_ext( CTX(ld), dnU, attrsU, serverctrlsU, clientctrlsU, message ) );
 
 exit:
     free( dnU );
@@ -172,17 +173,17 @@ exit:
  *
  * See ldap_add_ext_sW.
  */
-ULONG CDECL ldap_add_ext_sA( WLDAP32_LDAP *ld, char *dn, LDAPModA **attrs, LDAPControlA **serverctrls,
+ULONG CDECL ldap_add_ext_sA( LDAP *ld, char *dn, LDAPModA **attrs, LDAPControlA **serverctrls,
                              LDAPControlA **clientctrls )
 {
-    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
+    ULONG ret = LDAP_NO_MEMORY;
     WCHAR *dnW = NULL;
     LDAPModW **attrsW = NULL;
     LDAPControlW **serverctrlsW = NULL, **clientctrlsW = NULL;
 
     TRACE( "(%p, %s, %p, %p, %p)\n", ld, debugstr_a(dn), attrs, serverctrls, clientctrls );
 
-    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    if (!ld) return LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (attrs && !(attrsW = modarrayAtoW( attrs ))) goto exit;
@@ -220,24 +221,24 @@ exit:
  *  The serverctrls and clientctrls parameters are optional and
  *  should be set to NULL if not used.
  */
-ULONG CDECL ldap_add_ext_sW( WLDAP32_LDAP *ld, WCHAR *dn, LDAPModW **attrs, LDAPControlW **serverctrls,
+ULONG CDECL ldap_add_ext_sW( LDAP *ld, WCHAR *dn, LDAPModW **attrs, LDAPControlW **serverctrls,
                              LDAPControlW **clientctrls )
 {
-    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
+    ULONG ret = LDAP_NO_MEMORY;
     char *dnU = NULL;
     LDAPModU **attrsU = NULL;
     LDAPControlU **serverctrlsU = NULL, **clientctrlsU = NULL;
 
     TRACE( "(%p, %s, %p, %p, %p)\n", ld, debugstr_w(dn), attrs, serverctrls, clientctrls );
 
-    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    if (!ld) return LDAP_PARAM_ERROR;
 
     if (dn && !(dnU = strWtoU( dn ))) goto exit;
     if (attrs && !(attrsU = modarrayWtoU( attrs ))) goto exit;
     if (serverctrls && !(serverctrlsU = controlarrayWtoU( serverctrls ))) goto exit;
     if (clientctrls && !(clientctrlsU = controlarrayWtoU( clientctrls ))) goto exit;
 
-    ret = map_error( ldap_funcs->ldap_add_ext_s( ld->ld, dnU, attrsU, serverctrlsU, clientctrlsU ) );
+    ret = map_error( ldap_funcs->fn_ldap_add_ext_s( CTX(ld), dnU, attrsU, serverctrlsU, clientctrlsU ) );
 
 exit:
     free( dnU );
@@ -252,15 +253,15 @@ exit:
  *
  * See ldap_add_sW.
  */
-ULONG CDECL ldap_add_sA( WLDAP32_LDAP *ld, char *dn, LDAPModA **attrs )
+ULONG CDECL ldap_add_sA( LDAP *ld, char *dn, LDAPModA **attrs )
 {
-    ULONG ret = WLDAP32_LDAP_NO_MEMORY;
+    ULONG ret = LDAP_NO_MEMORY;
     WCHAR *dnW = NULL;
     LDAPModW **attrsW = NULL;
 
     TRACE( "(%p, %s, %p)\n", ld, debugstr_a(dn), attrs );
 
-    if (!ld) return WLDAP32_LDAP_PARAM_ERROR;
+    if (!ld) return LDAP_PARAM_ERROR;
 
     if (dn && !(dnW = strAtoW( dn ))) goto exit;
     if (attrs && !(attrsW = modarrayAtoW( attrs ))) goto exit;
@@ -288,7 +289,7 @@ exit:
  *  Success: LDAP_SUCCESS
  *  Failure: An LDAP error code.
  */
-ULONG CDECL ldap_add_sW( WLDAP32_LDAP *ld, WCHAR *dn, LDAPModW **attrs )
+ULONG CDECL ldap_add_sW( LDAP *ld, WCHAR *dn, LDAPModW **attrs )
 {
     TRACE( "(%p, %s, %p)\n", ld, debugstr_w(dn), attrs );
     return ldap_add_ext_sW( ld, dn, attrs, NULL, NULL );

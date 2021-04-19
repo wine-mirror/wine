@@ -34,7 +34,7 @@ ULONG CDECL ber_first_element( BerElement *, ULONG *, char ** );
 int CDECL ber_flatten( BerElement *, BERVAL ** );
 void CDECL ber_free( BerElement *, int );
 BerElement * CDECL ber_init( BERVAL * );
-ULONG CDECL ber_next_element( BerElement *, ULONG *, char ** );
+ULONG CDECL ber_next_element( BerElement *, ULONG *, char * );
 ULONG CDECL ber_peek_tag( BerElement *, ULONG * );
 int WINAPIV ber_printf( BerElement *, char *, ... );
 ULONG WINAPIV ber_scanf( BerElement *, char *, ... );
