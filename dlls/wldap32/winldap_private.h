@@ -1237,6 +1237,26 @@ static inline LDAPControlW **controlarraydupW( LDAPControlW **controlarray )
     return controlarrayW;
 }
 
+static inline LDAPControlA **controlarrayWtoA( LDAPControlW **controlarray )
+{
+    LDAPControlA **controlarrayA = NULL;
+    DWORD size;
+
+    if (controlarray)
+    {
+        size = sizeof(LDAPControlA *) * (controlarraylenW( controlarray ) + 1);
+        if ((controlarrayA = RtlAllocateHeap( GetProcessHeap(), 0, size )))
+        {
+            LDAPControlW **p = controlarray;
+            LDAPControlA **q = controlarrayA;
+
+            while (*p) *q++ = controlWtoA( *p++ );
+            *q = NULL;
+        }
+    }
+    return controlarrayA;
+}
+
 static inline WCHAR *strUtoW( const char *str )
 {
     WCHAR *ret = NULL;
@@ -1320,6 +1340,26 @@ static inline LDAPControlW *controlUtoW( const LDAPControlU *control )
     controlW->ldctl_iscritical = control->ldctl_iscritical;
 
     return controlW;
+}
+
+static inline LDAPControlW **controlarrayUtoW( LDAPControlU **controlarray )
+{
+    LDAPControlW **controlarrayW = NULL;
+    DWORD size;
+
+    if (controlarray)
+    {
+        size = sizeof(LDAPControlW *) * (controlarraylenU( controlarray ) + 1);
+        if ((controlarrayW = RtlAllocateHeap( GetProcessHeap(), 0, size )))
+        {
+            LDAPControlU **p = controlarray;
+            LDAPControlW **q = controlarrayW;
+
+            while (*p) *q++ = controlUtoW( *p++ );
+            *q = NULL;
+        }
+    }
+    return controlarrayW;
 }
 
 static inline DWORD sortkeyarraylenA( LDAPSortKeyA **sortkeyarray )

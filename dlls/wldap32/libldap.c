@@ -338,6 +338,11 @@ void CDECL wrap_ldap_control_free( LDAPControlU *control )
     ldap_control_free( (LDAPControl *)control );
 }
 
+void CDECL wrap_ldap_controls_free( LDAPControlU **control )
+{
+    ldap_controls_free( (LDAPControl **)control );
+}
+
 int CDECL wrap_ldap_count_entries( void *ld, void *chain )
 {
     return ldap_count_entries( ld, chain );
@@ -481,10 +486,32 @@ void * CDECL wrap_ldap_next_reference( void *ld, void *entry )
     return ldap_next_reference( ld, entry );
 }
 
+int CDECL wrap_ldap_parse_extended_result( void *ld, void *result, char **retoid, struct bervalU **retdata, int free )
+{
+    return ldap_parse_extended_result( ld, result, retoid, (struct berval **)retdata, free );
+}
+
+int CDECL wrap_ldap_parse_reference( void *ld, void *ref, char ***referrals, LDAPControlU ***serverctrls, int free )
+{
+    return ldap_parse_reference( ld, ref, referrals, (LDAPControl ***)serverctrls, free );
+}
+
 int CDECL wrap_ldap_parse_result( void *ld, void *res, int *errcode, char **matcheddn, char **errmsg,
                                   char ***referrals, LDAPControlU ***serverctrls, int free )
 {
     return ldap_parse_result( ld, res, errcode, matcheddn, errmsg, referrals, (LDAPControl ***)serverctrls, free );
+}
+
+int CDECL wrap_ldap_parse_sortresponse_control( void *ld, LDAPControlU *ctrl, int *result, char **attr )
+{
+    return ldap_parse_sortresponse_control( ld, (LDAPControl *)ctrl, result, attr );
+}
+
+int CDECL wrap_ldap_parse_vlvresponse_control( void *ld, LDAPControlU *ctrls, int *target_pos, int *list_count,
+                                               struct bervalU **ctx, int *errcode )
+{
+    return ldap_parse_vlvresponse_control( ld, (LDAPControl *)ctrls, target_pos, list_count, (struct berval **)ctx,
+                                           errcode );
 }
 
 int CDECL wrap_ldap_rename( void *ld, const char *dn, const char *newrdn, const char *newparent, int delete,
@@ -598,6 +625,7 @@ static const struct ldap_funcs funcs =
     wrap_ldap_compare_ext,
     wrap_ldap_compare_ext_s,
     wrap_ldap_control_free,
+    wrap_ldap_controls_free,
     wrap_ldap_count_entries,
     wrap_ldap_count_references,
     wrap_ldap_count_values_len,
@@ -624,7 +652,11 @@ static const struct ldap_funcs funcs =
     wrap_ldap_next_attribute,
     wrap_ldap_next_entry,
     wrap_ldap_next_reference,
+    wrap_ldap_parse_extended_result,
+    wrap_ldap_parse_reference,
     wrap_ldap_parse_result,
+    wrap_ldap_parse_sortresponse_control,
+    wrap_ldap_parse_vlvresponse_control,
     wrap_ldap_rename,
     wrap_ldap_rename_s,
     wrap_ldap_result,

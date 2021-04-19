@@ -123,6 +123,7 @@ extern int CDECL wrap_ldap_compare_ext(void *, const char *, const char *, struc
 extern int CDECL wrap_ldap_compare_ext_s(void *, const char *, const char *, struct bervalU *, LDAPControlU **,
                                          LDAPControlU **) DECLSPEC_HIDDEN;
 extern void CDECL wrap_ldap_control_free(LDAPControlU *) DECLSPEC_HIDDEN;
+extern void CDECL wrap_ldap_controls_free(LDAPControlU **) DECLSPEC_HIDDEN;
 extern int CDECL wrap_ldap_count_entries(void *, void *) DECLSPEC_HIDDEN;
 extern int CDECL wrap_ldap_count_references(void *, void *) DECLSPEC_HIDDEN;
 extern int CDECL wrap_ldap_count_values_len(struct bervalU **) DECLSPEC_HIDDEN;
@@ -153,8 +154,13 @@ extern int CDECL wrap_ldap_msgfree(void *) DECLSPEC_HIDDEN;
 extern char * CDECL wrap_ldap_next_attribute(void *, void *, void *) DECLSPEC_HIDDEN;
 extern void * CDECL wrap_ldap_next_entry(void *, void *) DECLSPEC_HIDDEN;
 extern void * CDECL wrap_ldap_next_reference(void *, void *) DECLSPEC_HIDDEN;
+extern int CDECL wrap_ldap_parse_extended_result(void *, void *, char **, struct bervalU **, int) DECLSPEC_HIDDEN;
+extern int CDECL wrap_ldap_parse_reference(void *, void *, char ***, LDAPControlU ***, int) DECLSPEC_HIDDEN;
 extern int CDECL wrap_ldap_parse_result(void *, void *, int *, char **, char **, char ***, LDAPControlU ***,
                                         int) DECLSPEC_HIDDEN;
+extern int CDECL wrap_ldap_parse_sortresponse_control(void *, LDAPControlU *, int *, char **) DECLSPEC_HIDDEN;
+extern int CDECL wrap_ldap_parse_vlvresponse_control(void *, LDAPControlU *, int *, int *, struct bervalU **,
+                                                     int *) DECLSPEC_HIDDEN;
 extern int CDECL wrap_ldap_rename(void *, const char *, const char *, const char *, int, LDAPControlU **,
                                   LDAPControlU **, ULONG *) DECLSPEC_HIDDEN;
 extern int CDECL wrap_ldap_rename_s(void *, const char *, const char *, const char *, int, LDAPControlU **,
@@ -199,6 +205,7 @@ struct ldap_funcs
     int (CDECL *ldap_compare_ext_s)(void *, const char *, const char *, struct bervalU *, LDAPControlU **,
                                     LDAPControlU **);
     void (CDECL *ldap_control_free)(LDAPControlU *);
+    void (CDECL *ldap_controls_free)(LDAPControlU **);
     int (CDECL *ldap_count_entries)(void *, void *);
     int (CDECL *ldap_count_references)(void *, void *);
     int (CDECL *ldap_count_values_len)(struct bervalU **);
@@ -227,7 +234,11 @@ struct ldap_funcs
     char * (CDECL *ldap_next_attribute)(void *, void *, void *);
     void * (CDECL *ldap_next_entry)(void *, void *);
     void * (CDECL *ldap_next_reference)(void *, void *);
+    int (CDECL *ldap_parse_extended_result)(void *, void *, char **, struct bervalU **, int);
+    int (CDECL *ldap_parse_reference)(void *, void *, char ***, LDAPControlU ***, int);
     int (CDECL *ldap_parse_result)(void *, void *, int *, char **, char **, char ***, LDAPControlU ***, int);
+    int (CDECL *ldap_parse_sortresponse_control)(void *, LDAPControlU *, int *, char **);
+    int (CDECL *ldap_parse_vlvresponse_control)(void *, LDAPControlU *, int *, int *, struct bervalU **, int *);
     int (CDECL *ldap_rename)(void *, const char *, const char *, const char *, int, LDAPControlU **, LDAPControlU **,
                              ULONG *);
     int (CDECL *ldap_rename_s)(void *, const char *, const char *, const char *, int, LDAPControlU **, LDAPControlU **);
