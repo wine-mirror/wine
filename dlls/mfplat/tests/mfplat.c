@@ -5608,7 +5608,7 @@ static void test_MFCreate2DMediaBuffer(void)
 
         hr = IMFMediaBuffer_Lock(buffer, &data, &length2, NULL);
         ok(hr == S_OK, "Failed to lock buffer, hr %#x.\n", hr);
-        ok(length == ptr->contiguous_length, "%d: unexpected linear buffer length %u for %u x %u, format %s.\n",
+        ok(length2 == ptr->contiguous_length, "%d: unexpected linear buffer length %u for %u x %u, format %s.\n",
                 i, length2, ptr->width, ptr->height, wine_dbgstr_an((char *)&ptr->fourcc, 4));
 
         hr = IMFMediaBuffer_Unlock(buffer);
