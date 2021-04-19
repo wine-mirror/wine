@@ -768,7 +768,7 @@ VkResult WINAPI unix_vkCreateDevice(VkPhysicalDevice phys_dev,
     if (!(object = calloc(1, sizeof(*object))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
-    object->base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
+    object->base.base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
     object->phys_dev = phys_dev;
 
     res = wine_vk_device_convert_create_info(create_info, &create_info_host);
@@ -823,7 +823,7 @@ VkResult WINAPI unix_vkCreateDevice(VkPhysicalDevice phys_dev,
         next_queue += queue_count;
     }
 
-    object->quirks = phys_dev->instance->quirks;
+    object->base.quirks = phys_dev->instance->quirks;
 
     *device = object;
     TRACE("Created device %p (native device %p).\n", object, object->device);

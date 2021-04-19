@@ -28,6 +28,32 @@
 
 #include "loader_thunks.h"
 
+/* Magic value defined by Vulkan ICD / Loader spec */
+#define VULKAN_ICD_MAGIC_VALUE 0x01CDC0DE
+
+#define WINEVULKAN_QUIRK_GET_DEVICE_PROC_ADDR 0x00000001
+#define WINEVULKAN_QUIRK_ADJUST_MAX_IMAGE_COUNT 0x00000002
+#define WINEVULKAN_QUIRK_IGNORE_EXPLICIT_LAYERS 0x00000004
+
+/* Base 'class' for our Vulkan dispatchable objects such as VkDevice and VkInstance.
+ * This structure MUST be the first element of a dispatchable object as the ICD
+ * loader depends on it. For now only contains loader_magic, but over time more common
+ * functionality is expected.
+ */
+struct wine_vk_base
+{
+    /* Special section in each dispatchable object for use by the ICD loader for
+     * storing dispatch tables. The start contains a magical value '0x01CDC0DE'.
+     */
+    UINT_PTR loader_magic;
+};
+
+struct wine_vk_device_base
+{
+    struct wine_vk_base base;
+    unsigned int quirks;
+};
+
 struct vulkan_func
 {
     const char *name;
