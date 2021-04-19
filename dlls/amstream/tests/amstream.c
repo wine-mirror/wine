@@ -4214,7 +4214,7 @@ static void test_audiostream_begin_flush_end_flush(void)
     hr = IPin_EndOfStream(pin2);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    todo_wine ok(graph.got_notify == 0, "Got %d calls to IMediaEventSink::Notify().\n", graph.got_notify);
+    ok(graph.got_notify == 0, "Got %d calls to IMediaEventSink::Notify().\n", graph.got_notify);
 
     hr = IPin_EndOfStream(pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -4248,8 +4248,8 @@ static void test_audiostream_begin_flush_end_flush(void)
     hr = IPin_EndOfStream(pin2);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    todo_wine ok(graph.got_notify == 1, "Got %d calls to IMediaEventSink::Notify().\n", graph.got_notify);
-    todo_wine ok(graph.event_code == EC_COMPLETE, "Got event code %d.\n", graph.event_code);
+    ok(graph.got_notify == 1, "Got %d calls to IMediaEventSink::Notify().\n", graph.got_notify);
+    ok(graph.event_code == EC_COMPLETE, "Got event code %d.\n", graph.event_code);
 
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -5808,7 +5808,7 @@ static void test_ddrawstream_begin_flush_end_flush(void)
     hr = IPin_EndOfStream(pin2);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    todo_wine ok(graph.got_notify == 0, "Got %d calls to IMediaEventSink::Notify().\n", graph.got_notify);
+    ok(graph.got_notify == 0, "Got %d calls to IMediaEventSink::Notify().\n", graph.got_notify);
 
     hr = IPin_EndOfStream(pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -5842,8 +5842,8 @@ static void test_ddrawstream_begin_flush_end_flush(void)
     hr = IPin_EndOfStream(pin2);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    todo_wine ok(graph.got_notify == 1, "Got %d calls to IMediaEventSink::Notify().\n", graph.got_notify);
-    todo_wine ok(graph.event_code == EC_COMPLETE, "Got event code %d.\n", graph.event_code);
+    ok(graph.got_notify == 1, "Got %d calls to IMediaEventSink::Notify().\n", graph.got_notify);
+    ok(graph.event_code == EC_COMPLETE, "Got event code %d.\n", graph.event_code);
 
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
     ok(hr == S_OK, "Got hr %#x.\n", hr);

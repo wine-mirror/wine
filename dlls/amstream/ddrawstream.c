@@ -1188,16 +1188,24 @@ static HRESULT WINAPI ddraw_sink_EndOfStream(IPin *iface)
 static HRESULT WINAPI ddraw_sink_BeginFlush(IPin *iface)
 {
     struct ddraw_stream *stream = impl_from_IPin(iface);
+    BOOL cancel_eos;
 
     TRACE("stream %p.\n", stream);
 
     EnterCriticalSection(&stream->cs);
+
+    cancel_eos = stream->eos;
 
     stream->flushing = TRUE;
     stream->eos = FALSE;
     WakeConditionVariable(&stream->update_queued_cv);
 
     LeaveCriticalSection(&stream->cs);
+
+    /* Calling IMediaStreamFilter::Flush() inside the critical section would
+     * invert the locking order, so we must leave it first to avoid the
+     * application thread deadlocking on the filter's critical section. */
+    IMediaStreamFilter_Flush(stream->filter, cancel_eos);
 
     return S_OK;
 }
