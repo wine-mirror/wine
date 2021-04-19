@@ -513,7 +513,6 @@ static inline char *strdupU( const char *src )
     return dst;
 }
 
-#ifndef HAVE_LDAP
 static inline WCHAR *strdupW( const WCHAR *src )
 {
     WCHAR *dst;
@@ -1525,4 +1524,3 @@ static inline void vlvinfofreeU( LDAPVLVInfoU *info )
     RtlFreeHeap( GetProcessHeap(), 0, info->ldvlv_context );
     RtlFreeHeap( GetProcessHeap(), 0, info );
 }
-#endif
