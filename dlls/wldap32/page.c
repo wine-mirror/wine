@@ -20,6 +20,7 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
+#include <limits.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -30,8 +31,6 @@
 #include "winldap_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wldap32);
-
-#define LDAP_MAXINT (2^31)
 
 static struct berval null_cookieW = { 0, NULL };
 
@@ -48,7 +47,7 @@ ULONG CDECL ldap_create_page_controlA( LDAP *ld, ULONG pagesize, struct berval *
 
     TRACE( "(%p, 0x%08x, %p, 0x%02x, %p)\n", ld, pagesize, cookie, critical, control );
 
-    if (!ld || !control || pagesize > LDAP_MAXINT) return LDAP_PARAM_ERROR;
+    if (!ld || !control || pagesize > INT_MAX) return LDAP_PARAM_ERROR;
 
     ret = ldap_create_page_controlW( ld, pagesize, cookie, critical, &controlW );
     if (ret == LDAP_SUCCESS)
@@ -131,7 +130,7 @@ ULONG CDECL ldap_create_page_controlW( LDAP *ld, ULONG pagesize, struct berval *
 {
     TRACE( "(%p, 0x%08x, %p, 0x%02x, %p)\n", ld, pagesize, cookie, critical, control );
 
-    if (!ld || !control || pagesize > LDAP_MAXINT) return LDAP_PARAM_ERROR;
+    if (!ld || !control || pagesize > INT_MAX) return LDAP_PARAM_ERROR;
     return create_page_control( pagesize, cookie, critical, control );
 }
 
@@ -230,18 +229,18 @@ ULONG CDECL ldap_parse_page_controlA( LDAP *ld, LDAPControlA **ctrls, ULONG *cou
 /***********************************************************************
  *      ldap_parse_page_controlW      (WLDAP32.@)
  */
-ULONG CDECL ldap_parse_page_controlW( LDAP *ld, LDAPControlW **ctrls, ULONG *count, struct berval **cookie )
+ULONG CDECL ldap_parse_page_controlW( LDAP *ld, LDAPControlW **ctrls, ULONG *ret_count, struct berval **ret_cookie )
 {
-    ULONG ret;
+    ULONG ret, count;
     LDAPControlW *control = NULL;
     BerElement *ber;
-    struct berval *vec[2];
+    struct berval *cookie = NULL;
     int tag;
     ULONG i;
 
-    TRACE( "(%p, %p, %p, %p)\n", ld, ctrls, count, cookie );
+    TRACE( "(%p, %p, %p, %p)\n", ld, ctrls, ret_count, ret_cookie );
 
-    if (!ld || !ctrls || !count || !cookie) return LDAP_PARAM_ERROR;
+    if (!ld || !ctrls || !ret_count || !ret_cookie) return LDAP_PARAM_ERROR;
 
     for (i = 0; ctrls[i]; i++)
     {
@@ -252,13 +251,14 @@ ULONG CDECL ldap_parse_page_controlW( LDAP *ld, LDAPControlW **ctrls, ULONG *cou
 
     if (!(ber = ber_init( &control->ldctl_value ))) return LDAP_NO_MEMORY;
 
-    vec[0] = *cookie;
-    vec[1] = 0;
-    tag = ber_scanf( ber, (char *)"{iV}", count, vec );
-    if (tag == LBER_ERROR)
-        ret = LDAP_DECODING_ERROR;
+    tag = ber_scanf( ber, (char *)"{iO}", &count, &cookie );
+    if (tag == LBER_ERROR) ret = LDAP_DECODING_ERROR;
     else
+    {
+        *ret_count = count;
+        *ret_cookie = cookie;
         ret = LDAP_SUCCESS;
+    }
 
     ber_free( ber, 1 );
     return ret;
