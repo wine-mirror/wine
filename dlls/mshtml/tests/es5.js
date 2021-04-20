@@ -892,7 +892,38 @@ sync_test("keys", function() {
     keys = Object.keys(o).sort().join();
     ok(keys === "test", "keys = " + keys);
 
+    Object.defineProperty(o, "defined", { value: 3, enumerable: false });
+    keys = Object.keys(o).sort().join();
+    ok(keys === "test", "keys = " + keys);
+
+    keys = Object.keys([]).sort().join();
+    ok(keys === "", "keys([]) = " + keys);
+
     ok(Object.keys.length === 1, "Object.keys.length = " + Object.keys.length);
+});
+
+sync_test("getOwnPropertyNames", function() {
+    var o = { a: 1, b: 2, c: 3 };
+    var names = Object.getOwnPropertyNames(o).sort().join();
+    ok(names === "a,b,c", "names = " + names);
+
+    o = Object.create(o);
+    names = Object.getOwnPropertyNames(o).sort().join();
+    ok(names === "", "names = " + names);
+
+    o.test = 1;
+    names = Object.getOwnPropertyNames(o).sort().join();
+    ok(names === "test", "names = " + names);
+
+    Object.defineProperty(o, "defined", { value: 3, enumerable: false });
+    names = Object.getOwnPropertyNames(o).sort().join();
+    ok(names === "defined,test", "names = " + names);
+
+    names = Object.getOwnPropertyNames([]).sort().join();
+    todo_wine.
+    ok(names === "length", "names = " + names);
+
+    ok(Object.getOwnPropertyNames.length === 1, "Object.getOwnPropertyNames.length = " + Object.getOwnPropertyNames.length);
 });
 
 sync_test("reduce", function() {

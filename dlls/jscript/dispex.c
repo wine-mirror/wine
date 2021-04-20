@@ -2385,7 +2385,7 @@ HRESULT jsdisp_next_prop(jsdisp_t *obj, DISPID id, enum jsdisp_enum_type enum_ty
             continue;
         if(enum_type != JSDISP_ENUM_ALL && iter->type == PROP_PROTREF)
             continue;
-        if(!(get_flags(obj, iter) & PROPF_ENUMERABLE))
+        if(enum_type != JSDISP_ENUM_OWN && !(get_flags(obj, iter) & PROPF_ENUMERABLE))
             continue;
         *ret = prop_to_id(obj, iter);
         return S_OK;

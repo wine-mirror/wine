@@ -292,6 +292,7 @@ void jsdisp_release(jsdisp_t*) DECLSPEC_HIDDEN;
 
 enum jsdisp_enum_type {
     JSDISP_ENUM_ALL,
+    JSDISP_ENUM_OWN,
     JSDISP_ENUM_OWN_ENUMERABLE
 };
 

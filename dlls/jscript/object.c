@@ -625,8 +625,7 @@ static HRESULT Object_getPrototypeOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD fl
     return S_OK;
 }
 
-static HRESULT Object_keys(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
-                           unsigned argc, jsval_t *argv, jsval_t *r)
+static HRESULT object_keys(script_ctx_t *ctx, jsval_t arg, enum jsdisp_enum_type enum_type, jsval_t *r)
 {
     DISPID id = DISPID_STARTENUM;
     jsdisp_t *obj, *array;
@@ -634,14 +633,12 @@ static HRESULT Object_keys(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
     jsstr_t *key;
     HRESULT hres;
 
-    if(!argc || !is_object_instance(argv[0])) {
-        FIXME("invalid arguments %s\n", debugstr_jsval(argv[0]));
+    if(!is_object_instance(arg) || !get_object(arg)) {
+        FIXME("invalid arguments %s\n", debugstr_jsval(arg));
         return E_NOTIMPL;
     }
 
-    TRACE("(%s)\n", debugstr_jsval(argv[0]));
-
-    obj = to_jsdisp(get_object(argv[0]));
+    obj = to_jsdisp(get_object(arg));
     if(!obj) {
         FIXME("Non-JS object\n");
         return E_NOTIMPL;
@@ -652,7 +649,7 @@ static HRESULT Object_keys(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         return hres;
 
     do {
-        hres = jsdisp_next_prop(obj, id, JSDISP_ENUM_OWN_ENUMERABLE, &id);
+        hres = jsdisp_next_prop(obj, id, enum_type, &id);
         if(hres != S_OK)
             break;
 
@@ -669,6 +666,26 @@ static HRESULT Object_keys(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
     else
         jsdisp_release(array);
     return hres;
+}
+
+static HRESULT Object_keys(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+                           unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    jsval_t arg = argc ? argv[0] : jsval_undefined();
+
+    TRACE("(%s)\n", debugstr_jsval(arg));
+
+    return object_keys(ctx, arg, JSDISP_ENUM_OWN_ENUMERABLE, r);
+}
+
+static HRESULT Object_getOwnPropertyNames(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+                                          unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    jsval_t arg = argc ? argv[0] : jsval_undefined();
+
+    TRACE("(%s)\n", debugstr_jsval(arg));
+
+    return object_keys(ctx, arg, JSDISP_ENUM_OWN, r);
 }
 
 static HRESULT Object_preventExtensions(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
@@ -810,6 +827,7 @@ static const builtin_prop_t ObjectConstr_props[] = {
     {L"defineProperty",           Object_defineProperty,              PROPF_ES5|PROPF_METHOD|2},
     {L"freeze",                   Object_freeze,                      PROPF_ES5|PROPF_METHOD|1},
     {L"getOwnPropertyDescriptor", Object_getOwnPropertyDescriptor,    PROPF_ES5|PROPF_METHOD|2},
+    {L"getOwnPropertyNames",      Object_getOwnPropertyNames,         PROPF_ES5|PROPF_METHOD|1},
     {L"getPrototypeOf",           Object_getPrototypeOf,              PROPF_ES5|PROPF_METHOD|1},
     {L"isExtensible",             Object_isExtensible,                PROPF_ES5|PROPF_METHOD|1},
     {L"isFrozen",                 Object_isFrozen,                    PROPF_ES5|PROPF_METHOD|1},
