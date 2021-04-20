@@ -1186,6 +1186,7 @@ static BOOL wined3d_context_gl_set_pixel_format(struct wined3d_context_gl *conte
     int format = context_gl->pixel_format;
     HDC dc = context_gl->dc;
     int current;
+    HWND win;
 
     if (private && context_gl->dc_has_format)
         return TRUE;
@@ -1196,55 +1197,43 @@ static BOOL wined3d_context_gl_set_pixel_format(struct wined3d_context_gl *conte
     current = gl_info->gl_ops.wgl.p_wglGetPixelFormat(dc);
     if (current == format) goto success;
 
-    if (!current)
-    {
-        if (!SetPixelFormat(dc, format, NULL))
-        {
-            /* This may also happen if the dc belongs to a destroyed window. */
-            WARN("Failed to set pixel format %d on device context %p, last error %#x.\n",
-                    format, dc, GetLastError());
-            return FALSE;
-        }
-
-        context_gl->restore_pf = 0;
-        context_gl->restore_pf_win = private ? NULL : WindowFromDC(dc);
-        goto success;
-    }
-
     /* By default WGL doesn't allow pixel format adjustments but we need it
      * here. For this reason there's a Wine specific wglSetPixelFormat()
-     * which allows us to set the pixel format multiple times. Only use it
-     * when really needed. */
+     * which allows us to set the pixel format multiple times. Use it when we
+     * can, because even though no pixel format may currently be set, the
+     * application may try to set one later. */
     if (gl_info->supported[WGL_WINE_PIXEL_FORMAT_PASSTHROUGH])
     {
-        HWND win;
-
         if (!GL_EXTCALL(wglSetPixelFormatWINE(dc, format)))
         {
             ERR("wglSetPixelFormatWINE failed to set pixel format %d on device context %p.\n",
                     format, dc);
             return FALSE;
         }
-
-        win = private ? NULL : WindowFromDC(dc);
-        if (win != context_gl->restore_pf_win)
-        {
-            wined3d_context_gl_restore_pixel_format(context_gl);
-
-            context_gl->restore_pf = private ? 0 : current;
-            context_gl->restore_pf_win = win;
-        }
-
-        goto success;
+    }
+    else if (current)
+    {
+        /* OpenGL doesn't allow pixel format adjustments. Print an error and
+         * continue using the old format. There's a big chance that the old
+         * format works although with a performance hit and perhaps rendering
+         * errors. */
+        ERR("Unable to set pixel format %d on device context %p. Already using format %d.\n",
+                format, dc, current);
+        return TRUE;
+    }
+    else if (!SetPixelFormat(dc, format, NULL))
+    {
+        /* This may also happen if the dc belongs to a destroyed window. */
+        WARN("Failed to set pixel format %d on device context %p, last error %#x.\n",
+                format, dc, GetLastError());
+        return FALSE;
     }
 
-    /* OpenGL doesn't allow pixel format adjustments. Print an error and
-     * continue using the old format. There's a big chance that the old
-     * format works although with a performance hit and perhaps rendering
-     * errors. */
-    ERR("Unable to set pixel format %d on device context %p. Already using format %d.\n",
-            format, dc, current);
-    return TRUE;
+    win = private ? NULL : WindowFromDC(dc);
+    if (win != context_gl->restore_pf_win)
+        wined3d_context_gl_restore_pixel_format(context_gl);
+    context_gl->restore_pf = private ? 0 : current;
+    context_gl->restore_pf_win = win;
 
 success:
     if (private)
