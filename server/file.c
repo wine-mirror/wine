@@ -473,7 +473,6 @@ mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner )
     mode_t mode;
     int present;
     const ACL *dacl = sd_get_dacl( sd, &present );
-    const SID *user = token_get_user( current->process->token );
     if (present && dacl)
     {
         const ACE_HEADER *ace = (const ACE_HEADER *)(dacl + 1);
@@ -496,8 +495,8 @@ mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner )
                     {
                         bits_to_set &= ~((mode << 6) | (mode << 3) | mode); /* all */
                     }
-                    else if ((security_equal_sid( user, owner ) &&
-                              token_sid_present( current->process->token, sid, TRUE )))
+                    else if (token_sid_present( current->process->token, owner, TRUE ) &&
+                             token_sid_present( current->process->token, sid, TRUE ))
                     {
                         bits_to_set &= ~((mode << 6) | (mode << 3));  /* user + group */
                     }
@@ -516,8 +515,8 @@ mode_t sd_to_mode( const struct security_descriptor *sd, const SID *owner )
                         new_mode |= mode & bits_to_set;
                         bits_to_set &= ~mode;
                     }
-                    else if ((security_equal_sid( user, owner ) &&
-                              token_sid_present( current->process->token, sid, FALSE )))
+                    else if (token_sid_present( current->process->token, owner, FALSE ) &&
+                             token_sid_present( current->process->token, sid, FALSE ))
                     {
                         mode = (mode << 6) | (mode << 3);  /* user + group */
                         new_mode |= mode & bits_to_set;

@@ -8365,10 +8365,10 @@ static void test_group_as_file_owner(void)
 
     sprintf(path, "%s\\testdir\\subdir", temp_path);
     ret = CreateDirectoryA(path, NULL);
-    todo_wine ok(ret, "got error %u\n", GetLastError());
+    ok(ret, "got error %u\n", GetLastError());
 
     ret = RemoveDirectoryA(path);
-    todo_wine ok(ret, "got error %u\n", GetLastError());
+    ok(ret, "got error %u\n", GetLastError());
     sprintf(path, "%s\\testdir", temp_path);
     ret = RemoveDirectoryA(path);
     ok(ret, "got error %u\n", GetLastError());
