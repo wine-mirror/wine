@@ -334,12 +334,14 @@ BOOL CDECL EMFDRV_ScaleWindowExtEx( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
 
 DWORD CDECL EMFDRV_SetLayout( PHYSDEV dev, DWORD layout )
 {
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetMapMode );
     EMRSETLAYOUT emr;
 
     emr.emr.iType = EMR_SETLAYOUT;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = layout;
-    return EMFDRV_WriteRecord( dev, &emr.emr ) ? layout : GDI_ERROR;
+    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return GDI_ERROR;
+    return next->funcs->pSetLayout( next, layout );
 }
 
 BOOL CDECL EMFDRV_SetWorldTransform( PHYSDEV dev, const XFORM *xform)
