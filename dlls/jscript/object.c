@@ -404,7 +404,7 @@ static HRESULT jsdisp_define_properties(script_ctx_t *ctx, jsdisp_t *obj, jsval_
     }
 
     while(1) {
-        hres = jsdisp_next_prop(list_obj, id, TRUE, &id);
+        hres = jsdisp_next_prop(list_obj, id, JSDISP_ENUM_OWN_ENUMERABLE, &id);
         if(hres != S_OK)
             break;
 
@@ -652,7 +652,7 @@ static HRESULT Object_keys(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
         return hres;
 
     do {
-        hres = jsdisp_next_prop(obj, id, TRUE, &id);
+        hres = jsdisp_next_prop(obj, id, JSDISP_ENUM_OWN_ENUMERABLE, &id);
         if(hres != S_OK)
             break;
 

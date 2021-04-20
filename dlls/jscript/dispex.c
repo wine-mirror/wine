@@ -1700,7 +1700,7 @@ static HRESULT WINAPI DispatchEx_GetNextDispID(IDispatchEx *iface, DWORD grfdex,
 
     TRACE("(%p)->(%x %x %p)\n", This, grfdex, id, pid);
 
-    hres = jsdisp_next_prop(This, id, FALSE, pid);
+    hres = jsdisp_next_prop(This, id, JSDISP_ENUM_ALL, pid);
     if(hres == S_FALSE)
         *pid = DISPID_STARTENUM;
     return hres;
@@ -2366,12 +2366,12 @@ HRESULT disp_delete(IDispatch *disp, DISPID id, BOOL *ret)
     return S_OK;
 }
 
-HRESULT jsdisp_next_prop(jsdisp_t *obj, DISPID id, BOOL own_only, DISPID *ret)
+HRESULT jsdisp_next_prop(jsdisp_t *obj, DISPID id, enum jsdisp_enum_type enum_type, DISPID *ret)
 {
     dispex_prop_t *iter;
     HRESULT hres;
 
-    if(id == DISPID_STARTENUM && !own_only) {
+    if(id == DISPID_STARTENUM && enum_type == JSDISP_ENUM_ALL) {
         hres = fill_protrefs(obj);
         if(FAILED(hres))
             return hres;
@@ -2383,7 +2383,7 @@ HRESULT jsdisp_next_prop(jsdisp_t *obj, DISPID id, BOOL own_only, DISPID *ret)
     for(iter = &obj->props[id + 1]; iter < obj->props + obj->prop_cnt; iter++) {
         if(!iter->name || iter->type == PROP_DELETED)
             continue;
-        if(own_only && iter->type == PROP_PROTREF)
+        if(enum_type != JSDISP_ENUM_ALL && iter->type == PROP_PROTREF)
             continue;
         if(!(get_flags(obj, iter) & PROPF_ENUMERABLE))
             continue;
