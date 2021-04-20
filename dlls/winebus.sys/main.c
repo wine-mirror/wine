@@ -607,6 +607,10 @@ static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
             status = STATUS_SUCCESS;
             break;
 
+        case IRP_MN_START_DEVICE:
+            status = STATUS_SUCCESS;
+            break;
+
         case IRP_MN_REMOVE_DEVICE:
         {
             struct pnp_device *pnp_device = ext->pnp_device;
