@@ -1059,36 +1059,11 @@ static NTSTATUS SEC_ENTRY kerberos_SpMakeSignature( LSA_SEC_HANDLE context, ULON
 static NTSTATUS NTAPI kerberos_SpVerifySignature( LSA_SEC_HANDLE context, SecBufferDesc *message,
     ULONG message_seq_no, ULONG *quality_of_protection )
 {
-#ifdef SONAME_LIBGSSAPI_KRB5
-    OM_uint32 ret, minor_status;
-    gss_buffer_desc data_buffer, token_buffer;
-    gss_ctx_id_t ctxt_handle;
-    int data_idx, token_idx;
-
     TRACE( "(%lx %p %u %p)\n", context, message, message_seq_no, quality_of_protection );
     if (message_seq_no) FIXME( "ignoring message_seq_no %u\n", message_seq_no );
 
     if (!context) return SEC_E_INVALID_HANDLE;
-    ctxt_handle = ctxthandle_sspi_to_gss( context );
-
-    if ((data_idx = get_buffer_index( message, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
-    data_buffer.length = message->pBuffers[data_idx].cbBuffer;
-    data_buffer.value  = message->pBuffers[data_idx].pvBuffer;
-
-    if ((token_idx = get_buffer_index( message, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
-    token_buffer.length = message->pBuffers[token_idx].cbBuffer;
-    token_buffer.value  = message->pBuffers[token_idx].pvBuffer;
-
-    ret = pgss_verify_mic( &minor_status, ctxt_handle, &data_buffer, &token_buffer, NULL );
-    TRACE( "gss_verify_mic returned %08x minor status %08x\n", ret, minor_status );
-    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
-    if (ret == GSS_S_COMPLETE && quality_of_protection) *quality_of_protection = 0;
-
-    return status_gss_to_sspi( ret );
-#else
-    FIXME( "(%lx %p %u %p)\n", context, message, message_seq_no, quality_of_protection );
-    return SEC_E_UNSUPPORTED_FUNCTION;
-#endif
+    return krb5_funcs->verify_signature( context, message, quality_of_protection );
 }
 
 #ifdef SONAME_LIBGSSAPI_KRB5

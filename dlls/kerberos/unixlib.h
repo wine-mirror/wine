@@ -30,6 +30,7 @@ struct krb5_funcs
     NTSTATUS (CDECL *initialize_context)(LSA_SEC_HANDLE, LSA_SEC_HANDLE, const char *, ULONG, SecBufferDesc *,
                                          LSA_SEC_HANDLE *, SecBufferDesc *, ULONG *, TimeStamp *);
     NTSTATUS (CDECL *make_signature)(LSA_SEC_HANDLE, SecBufferDesc *);
+    NTSTATUS (CDECL *verify_signature)(LSA_SEC_HANDLE, SecBufferDesc *, ULONG *);
 };
 
 extern const struct krb5_funcs *krb5_funcs;

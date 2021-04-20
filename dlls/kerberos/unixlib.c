@@ -587,6 +587,29 @@ static NTSTATUS CDECL make_signature( LSA_SEC_HANDLE context, SecBufferDesc *msg
     return status_gss_to_sspi( ret );
 }
 
+static NTSTATUS CDECL verify_signature( LSA_SEC_HANDLE context, SecBufferDesc *msg, ULONG *qop )
+{
+    OM_uint32 ret, minor_status;
+    gss_buffer_desc data_buffer, token_buffer;
+    gss_ctx_id_t ctx_handle = ctxhandle_sspi_to_gss( context );
+    int data_idx, token_idx;
+
+    if ((data_idx = get_buffer_index( msg, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
+    data_buffer.length = msg->pBuffers[data_idx].cbBuffer;
+    data_buffer.value  = msg->pBuffers[data_idx].pvBuffer;
+
+    if ((token_idx = get_buffer_index( msg, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+    token_buffer.length = msg->pBuffers[token_idx].cbBuffer;
+    token_buffer.value  = msg->pBuffers[token_idx].pvBuffer;
+
+    ret = pgss_verify_mic( &minor_status, ctx_handle, &data_buffer, &token_buffer, NULL );
+    TRACE( "gss_verify_mic returned %08x minor status %08x\n", ret, minor_status );
+    if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
+    if (ret == GSS_S_COMPLETE && qop) *qop = 0;
+
+    return status_gss_to_sspi( ret );
+}
+
 static const struct krb5_funcs funcs =
 {
     accept_context,
@@ -595,6 +618,7 @@ static const struct krb5_funcs funcs =
     free_credentials_handle,
     initialize_context,
     make_signature,
+    verify_signature,
 };
 
 NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
