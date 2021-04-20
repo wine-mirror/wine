@@ -8306,6 +8306,74 @@ static void test_elevation(void)
     CloseHandle(token);
 }
 
+static void test_group_as_file_owner(void)
+{
+    char sd_buffer[200], sid_buffer[100];
+    SECURITY_DESCRIPTOR *sd = (SECURITY_DESCRIPTOR *)sd_buffer;
+    char temp_path[MAX_PATH], path[MAX_PATH];
+    SID *admin_sid = (SID *)sid_buffer;
+    BOOL ret, present, defaulted;
+    SECURITY_DESCRIPTOR new_sd;
+    HANDLE file;
+    DWORD size;
+    ACL *dacl;
+
+    /* The EA Origin client sets the SD owner of a directory to Administrators,
+     * while using the default DACL, and subsequently tries to create
+     * subdirectories. */
+
+    size = sizeof(sid_buffer);
+    CreateWellKnownSid(WinBuiltinAdministratorsSid, NULL, admin_sid, &size);
+
+    ret = CheckTokenMembership(NULL, admin_sid, &present);
+    ok(ret, "got error %u\n", GetLastError());
+    if (!present)
+    {
+        skip("user is not an administrator\n");
+        return;
+    }
+
+    GetTempPathA(ARRAY_SIZE(temp_path), temp_path);
+    sprintf(path, "%s\\testdir", temp_path);
+
+    ret = CreateDirectoryA(path, NULL);
+    ok(ret, "got error %u\n", GetLastError());
+
+    file = CreateFileA(path, FILE_ALL_ACCESS, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+
+    ret = GetKernelObjectSecurity(file, DACL_SECURITY_INFORMATION, sd_buffer, sizeof(sd_buffer), &size);
+    ok(ret, "got error %u\n", GetLastError());
+    ret = GetSecurityDescriptorDacl(sd, &present, &dacl, &defaulted);
+    ok(ret, "got error %u\n", GetLastError());
+
+    InitializeSecurityDescriptor(&new_sd, SECURITY_DESCRIPTOR_REVISION);
+
+    ret = SetSecurityDescriptorOwner(&new_sd, admin_sid, FALSE);
+    ok(ret, "got error %u\n", GetLastError());
+
+    ret = GetSecurityDescriptorDacl(sd, &present, &dacl, &defaulted);
+    ok(ret, "got error %u\n", GetLastError());
+
+    ret = SetSecurityDescriptorDacl(&new_sd, present, dacl, defaulted);
+    ok(ret, "got error %u\n", GetLastError());
+
+    ret = SetKernelObjectSecurity(file, OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION, &new_sd);
+    ok(ret, "got error %u\n", GetLastError());
+
+    CloseHandle(file);
+
+    sprintf(path, "%s\\testdir\\subdir", temp_path);
+    ret = CreateDirectoryA(path, NULL);
+    todo_wine ok(ret, "got error %u\n", GetLastError());
+
+    ret = RemoveDirectoryA(path);
+    todo_wine ok(ret, "got error %u\n", GetLastError());
+    sprintf(path, "%s\\testdir", temp_path);
+    ret = RemoveDirectoryA(path);
+    ok(ret, "got error %u\n", GetLastError());
+}
+
 START_TEST(security)
 {
     init();
@@ -8374,6 +8442,7 @@ START_TEST(security)
     test_duplicate_token();
     test_GetKernelObjectSecurity();
     test_elevation();
+    test_group_as_file_owner();
 
     /* Must be the last test, modifies process token */
     test_token_security_descriptor();
