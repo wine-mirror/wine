@@ -1036,57 +1036,24 @@ NTSTATUS NTAPI SpLsaModeInitialize(ULONG lsa_version, PULONG package_version,
     *package_version = SECPKG_INTERFACE_VERSION;
     *table = &kerberos_table;
     *table_count = 1;
-
     return STATUS_SUCCESS;
 }
 
 static NTSTATUS NTAPI kerberos_SpInstanceInit(ULONG version, SECPKG_DLL_FUNCTIONS *dll_function_table, void **user_functions)
 {
     TRACE("%#x,%p,%p\n", version, dll_function_table, user_functions);
-
     return STATUS_SUCCESS;
 }
 
 static NTSTATUS SEC_ENTRY kerberos_SpMakeSignature( LSA_SEC_HANDLE context, ULONG quality_of_protection,
     SecBufferDesc *message, ULONG message_seq_no )
 {
-#ifdef SONAME_LIBGSSAPI_KRB5
-    OM_uint32 ret, minor_status;
-    gss_buffer_desc data_buffer, token_buffer;
-    gss_ctx_id_t ctxt_handle;
-    int data_idx, token_idx;
-
     TRACE( "(%lx 0x%08x %p %u)\n", context, quality_of_protection, message, message_seq_no );
     if (quality_of_protection) FIXME( "ignoring quality_of_protection 0x%08x\n", quality_of_protection );
     if (message_seq_no) FIXME( "ignoring message_seq_no %u\n", message_seq_no );
 
     if (!context) return SEC_E_INVALID_HANDLE;
-    ctxt_handle = ctxthandle_sspi_to_gss( context );
-
-    /* FIXME: multiple data buffers, read-only buffers */
-    if ((data_idx = get_buffer_index( message, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
-    data_buffer.length = message->pBuffers[data_idx].cbBuffer;
-    data_buffer.value  = message->pBuffers[data_idx].pvBuffer;
-
-    if ((token_idx = get_buffer_index( message, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
-    token_buffer.length = 0;
-    token_buffer.value  = NULL;
-
-    ret = pgss_get_mic( &minor_status, ctxt_handle, GSS_C_QOP_DEFAULT, &data_buffer, &token_buffer );
-    TRACE( "gss_get_mic returned %08x minor status %08x\n", ret, minor_status );
-    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
-    if (ret == GSS_S_COMPLETE)
-    {
-        memcpy( message->pBuffers[token_idx].pvBuffer, token_buffer.value, token_buffer.length );
-        message->pBuffers[token_idx].cbBuffer = token_buffer.length;
-        pgss_release_buffer( &minor_status, &token_buffer );
-    }
-
-    return status_gss_to_sspi( ret );
-#else
-    FIXME( "(%lx 0x%08x %p %u)\n", context, quality_of_protection, message, message_seq_no );
-    return SEC_E_UNSUPPORTED_FUNCTION;
-#endif
+    return krb5_funcs->make_signature( context, message );
 }
 
 static NTSTATUS NTAPI kerberos_SpVerifySignature( LSA_SEC_HANDLE context, SecBufferDesc *message,

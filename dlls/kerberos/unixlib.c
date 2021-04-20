@@ -558,6 +558,35 @@ static NTSTATUS CDECL initialize_context( LSA_SEC_HANDLE credential, LSA_SEC_HAN
     return status_gss_to_sspi( ret );
 }
 
+static NTSTATUS CDECL make_signature( LSA_SEC_HANDLE context, SecBufferDesc *msg )
+{
+    OM_uint32 ret, minor_status;
+    gss_buffer_desc data_buffer, token_buffer;
+    gss_ctx_id_t ctx_handle = ctxhandle_sspi_to_gss( context );
+    int data_idx, token_idx;
+
+    /* FIXME: multiple data buffers, read-only buffers */
+    if ((data_idx = get_buffer_index( msg, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
+    data_buffer.length = msg->pBuffers[data_idx].cbBuffer;
+    data_buffer.value  = msg->pBuffers[data_idx].pvBuffer;
+
+    if ((token_idx = get_buffer_index( msg, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+    token_buffer.length = 0;
+    token_buffer.value  = NULL;
+
+    ret = pgss_get_mic( &minor_status, ctx_handle, GSS_C_QOP_DEFAULT, &data_buffer, &token_buffer );
+    TRACE( "gss_get_mic returned %08x minor status %08x\n", ret, minor_status );
+    if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
+    if (ret == GSS_S_COMPLETE)
+    {
+        memcpy( msg->pBuffers[token_idx].pvBuffer, token_buffer.value, token_buffer.length );
+        msg->pBuffers[token_idx].cbBuffer = token_buffer.length;
+        pgss_release_buffer( &minor_status, &token_buffer );
+    }
+
+    return status_gss_to_sspi( ret );
+}
+
 static const struct krb5_funcs funcs =
 {
     accept_context,
@@ -565,6 +594,7 @@ static const struct krb5_funcs funcs =
     delete_context,
     free_credentials_handle,
     initialize_context,
+    make_signature,
 };
 
 NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
