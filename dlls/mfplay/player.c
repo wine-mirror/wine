@@ -1605,6 +1605,21 @@ static void media_player_create_forward_event(struct media_player *player, HRESU
     LeaveCriticalSection(&player->cs);
 }
 
+static void media_player_create_playback_ended_event(struct media_player *player, HRESULT event_status,
+        struct media_event **event)
+{
+    EnterCriticalSection(&player->cs);
+
+    if (SUCCEEDED(media_event_create(player, MFP_EVENT_TYPE_PLAYBACK_ENDED, event_status, player->item, event)))
+    {
+        if (player->item)
+            IMFPMediaItem_Release(player->item);
+        player->item = NULL;
+    }
+
+    LeaveCriticalSection(&player->cs);
+}
+
 static HRESULT WINAPI media_player_session_events_callback_Invoke(IMFAsyncCallback *iface,
         IMFAsyncResult *result)
 {
@@ -1616,6 +1631,7 @@ static HRESULT WINAPI media_player_session_events_callback_Invoke(IMFAsyncCallba
     HRESULT hr, event_status;
     IMFPMediaItem *item = NULL;
     IMFTopology *topology;
+    unsigned int status;
     PROPVARIANT value;
 
     if (FAILED(hr = IMFMediaSession_EndGetEvent(player->session, result, &session_event)))
@@ -1657,6 +1673,16 @@ static HRESULT WINAPI media_player_session_events_callback_Invoke(IMFAsyncCallba
                     IMFTopology_Release(topology);
                 }
                 PropVariantClear(&value);
+            }
+
+            break;
+
+        case MESessionTopologyStatus:
+
+            if (SUCCEEDED(IMFMediaEvent_GetUINT32(session_event, &MF_EVENT_TOPOLOGY_STATUS, &status)) &&
+                    status == MF_TOPOSTATUS_ENDED)
+            {
+                media_player_create_playback_ended_event(player, event_status, &event);
             }
 
             break;
