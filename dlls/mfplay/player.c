@@ -34,6 +34,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
 DEFINE_GUID(_MF_TOPO_MEDIA_ITEM, 0x6c1bb4df, 0x59ba, 0x4020, 0x85, 0x0c, 0x35, 0x79, 0xa2, 0x7a, 0xe2, 0x51);
+DEFINE_GUID(_MF_CUSTOM_SINK, 0x7c1bb4df, 0x59ba, 0x4020, 0x85, 0x0c, 0x35, 0x79, 0xa2, 0x7a, 0xe2, 0x51);
 
 static const WCHAR eventclassW[] = L"MediaPlayerEventCallbackClass";
 
@@ -550,9 +551,34 @@ static HRESULT WINAPI media_item_GetCharacteristics(IMFPMediaItem *iface, MFP_ME
 
 static HRESULT WINAPI media_item_SetStreamSink(IMFPMediaItem *iface, DWORD index, IUnknown *sink)
 {
-    FIXME("%p, %u, %p.\n", iface, index, sink);
+    struct media_item *item = impl_from_IMFPMediaItem(iface);
+    IMFStreamDescriptor *sd;
+    IUnknown *sink_object;
+    BOOL selected;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %p.\n", iface, index, sink);
+
+    if (FAILED(hr = IMFPresentationDescriptor_GetStreamDescriptorByIndex(item->pd, index, &selected, &sd)))
+        return hr;
+
+    if (sink)
+    {
+        if (FAILED(hr = IUnknown_QueryInterface(sink, &IID_IMFStreamSink, (void **)&sink_object)))
+            hr = IUnknown_QueryInterface(sink, &IID_IMFActivate, (void **)&sink_object);
+
+        if (sink_object)
+        {
+            hr = IMFStreamDescriptor_SetUnknown(sd, &_MF_CUSTOM_SINK, sink_object);
+            IUnknown_Release(sink_object);
+        }
+    }
+    else
+        IMFStreamDescriptor_DeleteItem(sd, &_MF_CUSTOM_SINK);
+
+    IMFStreamDescriptor_Release(sd);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_item_GetMetadata(IMFPMediaItem *iface, IPropertyStore **metadata)
