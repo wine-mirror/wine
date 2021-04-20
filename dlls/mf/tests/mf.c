@@ -44,6 +44,8 @@ DEFINE_GUID(MFVideoFormat_ABGR32, 0x00000020, 0x0000, 0x0010, 0x80, 0x00, 0x00, 
 #include "mmdeviceapi.h"
 #include "audioclient.h"
 #include "evr.h"
+#include "d3d9.h"
+#include "evr9.h"
 
 #include "wine/test.h"
 
@@ -4223,7 +4225,6 @@ static void test_evr(void)
     IMFActivate *activate;
     HWND window, window2;
     LONG sample_count;
-    IMFGetService *gs;
     IMFSample *sample;
     IUnknown *unk;
     UINT64 window3;
@@ -4262,6 +4263,12 @@ static void test_evr(void)
     check_interface(sink, &IID_IMFClockStateSink, TRUE);
     check_interface(sink, &IID_IMFGetService, TRUE);
     check_interface(sink, &IID_IMFQualityAdvise, TRUE);
+    check_service_interface(sink, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoProcessor, TRUE);
+    check_service_interface(sink, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoMixerBitmap, TRUE);
+    check_service_interface(sink, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoMixerControl, TRUE);
+    check_service_interface(sink, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoMixerControl2, TRUE);
+    check_service_interface(sink, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoDisplayControl, TRUE);
+    check_service_interface(sink, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoPositionMapper, TRUE);
 
     hr = MFGetService((IUnknown *)sink, &MR_VIDEO_RENDER_SERVICE, &IID_IMFVideoDisplayControl,
             (void **)&display_control);
@@ -4443,15 +4450,6 @@ static void test_evr(void)
     hr = IMFMediaSink_GetCharacteristics(sink, &flags);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(flags == (MEDIASINK_CAN_PREROLL | MEDIASINK_CLOCK_REQUIRED), "Unexpected flags %#x.\n", flags);
-
-    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFGetService, (void **)&gs);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-
-    hr = IMFGetService_GetService(gs, &MR_VIDEO_MIXER_SERVICE, &IID_IMFVideoMixerControl, (void **)&unk);
-    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    IUnknown_Release(unk);
-
-    IMFGetService_Release(gs);
 
     hr = IMFActivate_ShutdownObject(activate);
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
