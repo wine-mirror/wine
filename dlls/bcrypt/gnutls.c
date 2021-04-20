@@ -1846,32 +1846,26 @@ static NTSTATUS CDECL key_asymmetric_duplicate( struct key *key_orig, struct key
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS CDECL key_asymmetric_decrypt( struct key *key, UCHAR *input, ULONG input_len,
-        UCHAR *output, ULONG *output_len )
+static NTSTATUS CDECL key_asymmetric_decrypt( struct key *key, UCHAR *input, ULONG input_len, UCHAR *output,
+                                              ULONG output_len, ULONG *ret_len )
 {
     gnutls_datum_t e, d = { 0 };
     NTSTATUS status = STATUS_SUCCESS;
     int ret;
 
-    e.data = (unsigned char *)input;
+    e.data = input;
     e.size = input_len;
-
     if ((ret = pgnutls_privkey_decrypt_data( key_data(key)->privkey, 0, &e, &d )))
     {
         pgnutls_perror( ret );
         return STATUS_INTERNAL_ERROR;
     }
 
-    if (*output_len >= d.size)
-    {
-        *output_len = d.size;
-        memcpy( output, d.data, *output_len );
-    }
-    else
-        status = STATUS_BUFFER_TOO_SMALL;
+    *ret_len = d.size;
+    if (output_len >= d.size) memcpy( output, d.data, *ret_len );
+    else status = STATUS_BUFFER_TOO_SMALL;
 
     free( d.data );
-
     return status;
 }
 

@@ -206,7 +206,7 @@ struct key_funcs
     void     (CDECL *key_symmetric_destroy)( struct key * );
     NTSTATUS (CDECL *key_asymmetric_init)( struct key * );
     NTSTATUS (CDECL *key_asymmetric_generate)( struct key * );
-    NTSTATUS (CDECL *key_asymmetric_decrypt)( struct key *, UCHAR *, ULONG, UCHAR *, ULONG * );
+    NTSTATUS (CDECL *key_asymmetric_decrypt)( struct key *, UCHAR *, ULONG, UCHAR *, ULONG, ULONG * );
     NTSTATUS (CDECL *key_asymmetric_duplicate)( struct key *, struct key * );
     NTSTATUS (CDECL *key_asymmetric_sign)( struct key *, void *, UCHAR *, ULONG, UCHAR *, ULONG, ULONG *, ULONG );
     NTSTATUS (CDECL *key_asymmetric_verify)( struct key *, void *, UCHAR *, ULONG, UCHAR *, ULONG, DWORD );
