@@ -320,6 +320,8 @@ typedef struct {
     size_t stack_size;
 
     WCHAR gap[11]; /* according to the spec, it's no longer than 10 chars */
+
+    jsdisp_t *replacer;
 } stringify_ctx_t;
 
 static BOOL stringify_push_obj(stringify_ctx_t *ctx, jsdisp_t *obj)
@@ -656,7 +658,22 @@ static HRESULT stringify(stringify_ctx_t *ctx, jsdisp_t *object, const WCHAR *na
             FIXME("Use toJSON.\n");
     }
 
-    /* FIXME: Support replacer replacer. */
+    if(ctx->replacer) {
+        jsstr_t *name_str;
+        jsval_t args[2];
+        if(!(name_str = jsstr_alloc(name))) {
+            jsval_release(value);
+            return E_OUTOFMEMORY;
+        }
+        args[0] = jsval_string(name_str);
+        args[1] = value;
+        hres = jsdisp_call_value(ctx->replacer, to_disp(object), DISPATCH_METHOD, ARRAY_SIZE(args), args, &v);
+        jsstr_release(name_str);
+        jsval_release(value);
+        if(FAILED(hres))
+            return hres;
+        value = v;
+    }
 
     v = value;
     hres = maybe_to_primitive(ctx->ctx, v, &value);
@@ -736,8 +753,8 @@ static HRESULT stringify(stringify_ctx_t *ctx, jsdisp_t *object, const WCHAR *na
 /* ECMA-262 5.1 Edition    15.12.3 */
 static HRESULT JSON_stringify(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
-    stringify_ctx_t stringify_ctx = {ctx, NULL,0,0, NULL,0,0, {0}};
-    jsdisp_t *obj;
+    stringify_ctx_t stringify_ctx = { ctx };
+    jsdisp_t *obj = NULL, *replacer;
     HRESULT hres;
 
     TRACE("\n");
@@ -748,9 +765,14 @@ static HRESULT JSON_stringify(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
         return S_OK;
     }
 
-    if(argc >= 2 && is_object_instance(argv[1])) {
-        FIXME("Replacer %s not yet supported\n", debugstr_jsval(argv[1]));
-        return E_NOTIMPL;
+    if(argc >= 2 && is_object_instance(argv[1]) && get_object(argv[1]) &&
+       (replacer = to_jsdisp(get_object(argv[1])))) {
+        if(is_callable(replacer)) {
+            stringify_ctx.replacer = jsdisp_addref(replacer);
+        }else if(is_class(replacer, JSCLASS_ARRAY)) {
+            FIXME("Array replacer not yet supported\n");
+            return E_NOTIMPL;
+        }
     }
 
     if(argc >= 3) {
@@ -758,7 +780,7 @@ static HRESULT JSON_stringify(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
 
         hres = maybe_to_primitive(ctx, argv[2], &space_val);
         if(FAILED(hres))
-            return hres;
+            goto fail;
 
         if(is_number(space_val)) {
             double n = get_number(space_val);
@@ -805,6 +827,8 @@ static HRESULT JSON_stringify(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
 fail:
     if(obj)
         jsdisp_release(obj);
+    if(stringify_ctx.replacer)
+        jsdisp_release(stringify_ctx.replacer);
     heap_free(stringify_ctx.buf);
     heap_free(stringify_ctx.stack);
     return hres;
