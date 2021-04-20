@@ -467,7 +467,6 @@ ULONG CDECL ldap_set_optionW( LDAP *ld, int option, void *value )
         else
             FIXME("upgrading referral value %p to LDAP_OPT_ON (OpenLDAP lacks sufficient granularity)\n", value);
         return map_error( ldap_funcs->fn_ldap_set_option( CTX(ld), option, openldap_referral ) );
-        break;
     }
     case LDAP_OPT_DEREF:
     case LDAP_OPT_DESC:
