@@ -5023,6 +5023,56 @@ static void test_emf_AlphaBlend(void)
     ReleaseDC(0, hdc);
 }
 
+static void test_emf_text_extents(void)
+{
+    static const XFORM xform = {0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.0f};
+    HFONT font, old_font, old_font2;
+    LOGFONTW logfont = {0};
+    HENHMETAFILE emf;
+    SIZE size, size2;
+    HDC dc, emf_dc;
+    BOOL ret;
+
+    dc = GetDC(0);
+    emf_dc = CreateEnhMetaFileW(dc, NULL, NULL, NULL);
+    ok(!!emf_dc, "CreateEnhMetaFileW failed, error %d\n", GetLastError());
+
+    logfont.lfWeight = FW_NORMAL;
+    logfont.lfHeight = 20;
+    lstrcpyW(logfont.lfFaceName, L"Tahoma");
+    font = CreateFontIndirectW(&logfont);
+    ok(!!font, "CreateFontIndirectW failed, error %d\n", GetLastError());
+
+    old_font = SelectObject(dc, font);
+    old_font2 = SelectObject(emf_dc, font);
+
+    ret = SetGraphicsMode(dc, GM_ADVANCED);
+    ok(ret, "SetGraphicsMode failed, error %d\n", GetLastError());
+    ret = SetGraphicsMode(emf_dc, GM_ADVANCED);
+    ok(ret, "SetGraphicsMode failed, error %d\n", GetLastError());
+
+    ret = ModifyWorldTransform(dc, &xform, MWT_RIGHTMULTIPLY);
+    ok(ret, "ModifyWorldTransform failed, error %d\n", GetLastError());
+    ret = ModifyWorldTransform(emf_dc, &xform, MWT_RIGHTMULTIPLY);
+    ok(ret, "ModifyWorldTransform failed, error %d\n", GetLastError());
+
+    ret = GetTextExtentPoint32W(dc, L"W", 1, &size);
+    ok(ret, "GetTextExtentPoint32W failed, error %d\n", GetLastError());
+    ret = GetTextExtentPoint32W(emf_dc, L"W", 1, &size2);
+    ok(ret, "GetTextExtentPoint32W failed, error %d\n", GetLastError());
+todo_wine
+    ok(size2.cx == size.cx && size2.cy == size.cy, "Expected size %dx%d, got %dx%d\n",
+       size.cx, size.cy, size2.cx, size2.cy);
+
+    SelectObject(emf_dc, old_font2);
+    SelectObject(dc, old_font);
+    DeleteObject(font);
+    emf = CloseEnhMetaFile(emf_dc);
+    ok(!!emf, "CloseEnhMetaFile failed, error %d\n", GetLastError());
+    DeleteEnhMetaFile(emf);
+    ReleaseDC(0, dc);
+}
+
 START_TEST(metafile)
 {
     init_function_pointers();
@@ -5041,6 +5091,7 @@ START_TEST(metafile)
     test_emf_PolyPolyline();
     test_emf_GradientFill();
     test_emf_WorldTransform();
+    test_emf_text_extents();
 
     /* For win-format metafiles (mfdrv) */
     test_mf_SaveDC();
