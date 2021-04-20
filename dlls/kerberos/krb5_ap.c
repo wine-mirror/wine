@@ -46,8 +46,13 @@
 #include "wine/heap.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(kerberos);
+
+static HINSTANCE instance;
+
+const struct krb5_funcs *krb5_funcs = NULL;
 
 #define KERBEROS_MAX_BUF 12000
 
@@ -674,11 +679,6 @@ static inline gss_cred_id_t credhandle_sspi_to_gss( LSA_SEC_HANDLE cred )
     return (gss_cred_id_t)cred;
 }
 
-static inline void credhandle_gss_to_sspi( gss_cred_id_t handle, LSA_SEC_HANDLE *cred )
-{
-    *cred = (LSA_SEC_HANDLE)handle;
-}
-
 static inline gss_ctx_id_t ctxthandle_sspi_to_gss( LSA_SEC_HANDLE ctxt )
 {
     if (!ctxt) return GSS_C_NO_CONTEXT;
@@ -840,8 +840,19 @@ static int get_buffer_index( SecBufferDesc *desc, DWORD type )
     }
     return -1;
 }
+#endif /* SONAME_LIBGSSAPI_KRB5 */
 
-static char *get_user_at_domain( const WCHAR *user, ULONG user_len, const WCHAR *domain, ULONG domain_len )
+static char *get_str_unixcp( const UNICODE_STRING *str )
+{
+    char *ret;
+    int len = WideCharToMultiByte( CP_UNIXCP, 0, str->Buffer, str->Length / sizeof(WCHAR), NULL, 0, NULL, NULL );
+    if (!(ret = heap_alloc( len + 1 ))) return NULL;
+    WideCharToMultiByte( CP_UNIXCP, 0, str->Buffer, str->Length / sizeof(WCHAR), ret, len, NULL, NULL );
+    ret[len] = 0;
+    return ret;
+}
+
+static char *get_username_unixcp( const WCHAR *user, ULONG user_len, const WCHAR *domain, ULONG domain_len )
 {
     int len_user, len_domain;
     char *ret;
@@ -857,7 +868,7 @@ static char *get_user_at_domain( const WCHAR *user, ULONG user_len, const WCHAR 
     return ret;
 }
 
-static char *get_password( const WCHAR *passwd, ULONG passwd_len )
+static char *get_password_unixcp( const WCHAR *passwd, ULONG passwd_len )
 {
     int len;
     char *ret;
@@ -869,145 +880,44 @@ static char *get_password( const WCHAR *passwd, ULONG passwd_len )
     return ret;
 }
 
-static NTSTATUS init_creds( const SEC_WINNT_AUTH_IDENTITY_W *id )
-{
-    char *user_at_domain, *password;
-    krb5_context ctx;
-    krb5_principal principal = NULL;
-    krb5_get_init_creds_opt *options = NULL;
-    krb5_ccache cache = NULL;
-    krb5_creds creds;
-    krb5_error_code err;
-
-    if (!id) return STATUS_SUCCESS;
-    if (id->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI)
-    {
-        FIXME( "ANSI identity not supported\n" );
-        return SEC_E_UNSUPPORTED_FUNCTION;
-    }
-    if (!(user_at_domain = get_user_at_domain( id->User, id->UserLength, id->Domain, id->DomainLength )))
-    {
-        return SEC_E_INSUFFICIENT_MEMORY;
-    }
-    if (!(password = get_password( id->Password, id->PasswordLength )))
-    {
-        heap_free( user_at_domain );
-        return SEC_E_INSUFFICIENT_MEMORY;
-    }
-
-    if ((err = p_krb5_init_context( &ctx )))
-    {
-        heap_free( password );
-        heap_free( user_at_domain );
-        return krb5_error_to_status( err );
-    }
-    if ((err = p_krb5_parse_name_flags( ctx, user_at_domain, 0, &principal ))) goto done;
-    if ((err = p_krb5_cc_default( ctx, &cache ))) goto done;
-    if ((err = p_krb5_get_init_creds_opt_alloc( ctx, &options ))) goto done;
-    if ((err = p_krb5_get_init_creds_opt_set_out_ccache( ctx, options, cache ))) goto done;
-    if ((err = p_krb5_get_init_creds_password( ctx, &creds, principal, password, 0, NULL, 0, NULL, 0 ))) goto done;
-    if ((err = p_krb5_cc_initialize( ctx, cache, principal ))) goto done;
-    if ((err = p_krb5_cc_store_cred( ctx, cache, &creds ))) goto done;
-
-    TRACE( "success\n" );
-    p_krb5_free_cred_contents( ctx, &creds );
-
-done:
-    if (cache) p_krb5_cc_close( ctx, cache );
-    if (principal) p_krb5_free_principal( ctx, principal );
-    if (options) p_krb5_get_init_creds_opt_free( ctx, options );
-    p_krb5_free_context( ctx );
-    heap_free( user_at_domain );
-    heap_free( password );
-
-    return krb5_error_to_status( err );
-}
-
-static NTSTATUS acquire_credentials_handle( UNICODE_STRING *principal_us, gss_cred_usage_t cred_usage,
-    LSA_SEC_HANDLE *credential, TimeStamp *ts_expiry )
-{
-    OM_uint32 ret, minor_status, expiry_time;
-    gss_name_t principal = GSS_C_NO_NAME;
-    gss_cred_id_t cred_handle;
-    NTSTATUS status;
-
-    if (principal_us && ((status = name_sspi_to_gss( principal_us, &principal )) != SEC_E_OK)) return status;
-
-    ret = pgss_acquire_cred( &minor_status, principal, GSS_C_INDEFINITE, GSS_C_NULL_OID_SET, cred_usage,
-                              &cred_handle, NULL, &expiry_time );
-    TRACE( "gss_acquire_cred returned %08x minor status %08x\n", ret, minor_status );
-    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
-    if (ret == GSS_S_COMPLETE)
-    {
-        credhandle_gss_to_sspi( cred_handle, credential );
-        expirytime_gss_to_sspi( expiry_time, ts_expiry );
-    }
-
-    if (principal != GSS_C_NO_NAME) pgss_release_name( &minor_status, &principal );
-
-    return status_gss_to_sspi( ret );
-}
-#endif /* SONAME_LIBGSSAPI_KRB5 */
-
 static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
     UNICODE_STRING *principal_us, ULONG credential_use, LUID *logon_id, void *auth_data,
-    void *get_key_fn, void *get_key_arg, LSA_SEC_HANDLE *credential, TimeStamp *ts_expiry )
+    void *get_key_fn, void *get_key_arg, LSA_SEC_HANDLE *credential, TimeStamp *expiry )
 {
-#ifdef SONAME_LIBGSSAPI_KRB5
-    gss_cred_usage_t cred_usage;
-    NTSTATUS status;
+    char *principal = NULL, *username = NULL,  *password = NULL;
+    SEC_WINNT_AUTH_IDENTITY_W *id = auth_data;
+    NTSTATUS status = SEC_E_INSUFFICIENT_MEMORY;
 
     TRACE( "(%s 0x%08x %p %p %p %p %p %p)\n", debugstr_us(principal_us), credential_use,
-           logon_id, auth_data, get_key_fn, get_key_arg, credential, ts_expiry );
+           logon_id, auth_data, get_key_fn, get_key_arg, credential, expiry );
 
-    switch (credential_use)
+    if (principal_us && !(principal = get_str_unixcp( principal_us ))) return SEC_E_INSUFFICIENT_MEMORY;
+    if (id)
     {
-    case SECPKG_CRED_INBOUND:
-        cred_usage = GSS_C_ACCEPT;
-        break;
-
-    case SECPKG_CRED_OUTBOUND:
-        if ((status = init_creds( auth_data )) != STATUS_SUCCESS) return status;
-        cred_usage = GSS_C_INITIATE;
-        break;
-
-    case SECPKG_CRED_BOTH:
-        cred_usage = GSS_C_BOTH;
-        break;
-
-    default:
-        return SEC_E_UNKNOWN_CREDENTIALS;
+        if (id->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI)
+        {
+            FIXME( "ANSI identity not supported\n" );
+            status = SEC_E_UNSUPPORTED_FUNCTION;
+            goto done;
+        }
+        if (!(username = get_username_unixcp( id->User, id->UserLength, id->Domain, id->DomainLength ))) goto done;
+        if (!(password = get_password_unixcp( id->Password, id->PasswordLength ))) goto done;
     }
 
-    return acquire_credentials_handle( principal_us, cred_usage, credential, ts_expiry );
-#else
-    FIXME( "(%s 0x%08x %p %p %p %p %p %p)\n", debugstr_us(principal_us), credential_use,
-           logon_id, auth_data, get_key_fn, get_key_arg, credential, ts_expiry );
-    FIXME( "Wine was built without Kerberos support.\n" );
-    return SEC_E_UNSUPPORTED_FUNCTION;
-#endif
+    status = krb5_funcs->acquire_credentials_handle( principal, credential_use, username, password, credential,
+                                                     expiry );
+done:
+    heap_free( principal );
+    heap_free( username );
+    heap_free( password );
+    return status;
 }
 
 static NTSTATUS NTAPI kerberos_SpFreeCredentialsHandle( LSA_SEC_HANDLE credential )
 {
-#ifdef SONAME_LIBGSSAPI_KRB5
-    OM_uint32 ret, minor_status;
-    gss_cred_id_t cred_handle;
-
     TRACE( "(%lx)\n", credential );
-
     if (!credential) return SEC_E_INVALID_HANDLE;
-    if (!(cred_handle = credhandle_sspi_to_gss( credential ))) return SEC_E_OK;
-
-    ret = pgss_release_cred( &minor_status, &cred_handle );
-    TRACE( "gss_release_cred returned %08x minor status %08x\n", ret, minor_status );
-    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
-
-    return status_gss_to_sspi( ret );
-#else
-    FIXME( "(%lx)\n", credential );
-    return SEC_E_UNSUPPORTED_FUNCTION;
-#endif
+    return krb5_funcs->free_credentials_handle( credential );
 }
 
 static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, LSA_SEC_HANDLE context,
@@ -1257,11 +1167,15 @@ static NTSTATUS NTAPI kerberos_SpInitialize(ULONG_PTR package_id, SECPKG_PARAMET
 {
     TRACE("%lu,%p,%p\n", package_id, params, lsa_function_table);
 
+    if (!krb5_funcs && __wine_init_unix_lib( instance, DLL_PROCESS_ATTACH, NULL, &krb5_funcs ))
+    {
+        WARN( "no Kerberos support\n" );
+        return STATUS_UNSUCCESSFUL;
+    }
 #ifdef SONAME_LIBGSSAPI_KRB5
     if (load_gssapi_krb5()) return STATUS_SUCCESS;
 #endif
-
-    return STATUS_UNSUCCESSFUL;
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS NTAPI kerberos_SpShutdown(void)
@@ -1643,4 +1557,18 @@ NTSTATUS NTAPI SpUserModeInitialize(ULONG lsa_version, PULONG package_version,
     *table_count = 1;
 
     return STATUS_SUCCESS;
+}
+
+BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
+{
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        instance = hinst;
+        DisableThreadLibraryCalls( hinst );
+        break;
+    case DLL_PROCESS_DETACH:
+        break;
+    }
+    return TRUE;
 }
