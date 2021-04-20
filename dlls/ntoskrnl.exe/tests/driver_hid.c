@@ -111,8 +111,7 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
 
     if (winetest_debug > 1) trace("ioctl %#x\n", code);
 
-    todo_wine_if (code != IOCTL_HID_READ_REPORT)
-        ok(got_start_device, "expected IRP_MN_START_DEVICE before any ioctls\n");
+    ok(got_start_device, "expected IRP_MN_START_DEVICE before any ioctls\n");
 
     irp->IoStatus.Information = 0;
 

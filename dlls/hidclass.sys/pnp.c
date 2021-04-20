@@ -99,17 +99,11 @@ static UINT32 alloc_rawinput_handle(void)
 
 static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *bus_pdo)
 {
-    WCHAR device_id[MAX_DEVICE_ID_LEN], instance_id[MAX_DEVICE_ID_LEN], pdo_name[255];
-    BASE_DEVICE_EXTENSION *ext, *pdo_ext;
-    HID_DEVICE_ATTRIBUTES attr = {0};
-    DEVICE_OBJECT *fdo, *child_pdo;
-    UNICODE_STRING string;
-    USAGE page, usage;
+    WCHAR device_id[MAX_DEVICE_ID_LEN], instance_id[MAX_DEVICE_ID_LEN];
+    BASE_DEVICE_EXTENSION *ext;
+    DEVICE_OBJECT *fdo;
     NTSTATUS status;
     minidriver *minidriver;
-    HID_DESCRIPTOR descriptor;
-    BYTE *reportDescriptor;
-    INT i;
 
     if ((status = get_device_id(bus_pdo, BusQueryDeviceID, device_id)))
     {
@@ -148,30 +142,48 @@ static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *b
         return status;
     }
 
+    IoAttachDeviceToDeviceStack(fdo, bus_pdo);
+    fdo->Flags &= ~DO_DEVICE_INITIALIZING;
+
+    return STATUS_SUCCESS;
+}
+
+static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
+{
+    BASE_DEVICE_EXTENSION *fdo_ext = fdo->DeviceExtension, *pdo_ext;
+    HID_DEVICE_ATTRIBUTES attr = {0};
+    HID_DESCRIPTOR descriptor;
+    DEVICE_OBJECT *child_pdo;
+    BYTE *reportDescriptor;
+    UNICODE_STRING string;
+    WCHAR pdo_name[255];
+    USAGE page, usage;
+    NTSTATUS status;
+    INT i;
+
     status = call_minidriver(IOCTL_HID_GET_DEVICE_ATTRIBUTES, fdo, NULL, 0, &attr, sizeof(attr));
     if (status != STATUS_SUCCESS)
     {
         ERR("Minidriver failed to get Attributes(%x)\n",status);
-        IoDeleteDevice(fdo);
-        return status;
+        return;
     }
 
-    swprintf(pdo_name, ARRAY_SIZE(pdo_name), L"\\Device\\HID#%p&%p", driver, bus_pdo);
+    swprintf(pdo_name, ARRAY_SIZE(pdo_name), L"\\Device\\HID#%p&%p", fdo->DriverObject,
+            fdo_ext->u.fdo.hid_ext.PhysicalDeviceObject);
     RtlInitUnicodeString(&string, pdo_name);
-    if ((status = IoCreateDevice(driver, sizeof(*ext), &string, 0, 0, FALSE, &child_pdo)))
+    if ((status = IoCreateDevice(fdo->DriverObject, sizeof(*pdo_ext), &string, 0, 0, FALSE, &child_pdo)))
     {
         ERR("Failed to create child PDO, status %#x.\n", status);
-        IoDeleteDevice(fdo);
-        return status;
+        return;
     }
-    ext->u.fdo.child_pdo = child_pdo;
+    fdo_ext->u.fdo.child_pdo = child_pdo;
 
     pdo_ext = child_pdo->DeviceExtension;
     pdo_ext->u.pdo.parent_fdo = fdo;
     InitializeListHead(&pdo_ext->u.pdo.irp_queue);
     KeInitializeSpinLock(&pdo_ext->u.pdo.irp_queue_lock);
-    wcscpy(pdo_ext->device_id, ext->device_id);
-    wcscpy(pdo_ext->instance_id, ext->instance_id);
+    wcscpy(pdo_ext->device_id, fdo_ext->device_id);
+    wcscpy(pdo_ext->instance_id, fdo_ext->instance_id);
 
     pdo_ext->u.pdo.information.VendorID = attr.VendorID;
     pdo_ext->u.pdo.information.ProductID = attr.ProductID;
@@ -183,8 +195,7 @@ static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *b
     {
         ERR("Cannot get Device Descriptor(%x)\n",status);
         IoDeleteDevice(child_pdo);
-        IoDeleteDevice(fdo);
-        return status;
+        return;
     }
     for (i = 0; i < descriptor.bNumDescriptors; i++)
         if (descriptor.DescriptorList[i].bReportType == HID_REPORT_DESCRIPTOR_TYPE)
@@ -194,8 +205,7 @@ static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *b
     {
         ERR("No Report Descriptor found in reply\n");
         IoDeleteDevice(child_pdo);
-        IoDeleteDevice(fdo);
-        return status;
+        return;
     }
 
     reportDescriptor = HeapAlloc(GetProcessHeap(), 0, descriptor.DescriptorList[i].wReportLength);
@@ -206,8 +216,7 @@ static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *b
         ERR("Cannot get Report Descriptor(%x)\n",status);
         HeapFree(GetProcessHeap(), 0, reportDescriptor);
         IoDeleteDevice(child_pdo);
-        IoDeleteDevice(fdo);
-        return status;
+        return;
     }
 
     pdo_ext->u.pdo.preparsed_data = ParseDescriptor(reportDescriptor, descriptor.DescriptorList[i].wReportLength);
@@ -216,15 +225,12 @@ static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *b
     {
         ERR("Cannot parse Report Descriptor\n");
         IoDeleteDevice(child_pdo);
-        IoDeleteDevice(fdo);
-        return STATUS_NOT_SUPPORTED;
+        return;
     }
 
     pdo_ext->u.pdo.information.DescriptorSize = pdo_ext->u.pdo.preparsed_data->dwSize;
 
-    IoAttachDeviceToDeviceStack(fdo, bus_pdo);
-
-    IoInvalidateDeviceRelations(bus_pdo, BusRelations);
+    IoInvalidateDeviceRelations(fdo_ext->u.fdo.hid_ext.PhysicalDeviceObject, BusRelations);
 
     page = pdo_ext->u.pdo.preparsed_data->caps.UsagePage;
     usage = pdo_ext->u.pdo.preparsed_data->caps.Usage;
@@ -241,9 +247,6 @@ static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *b
             sizeof(HID_XFER_PACKET) + pdo_ext->u.pdo.preparsed_data->caps.InputReportByteLength);
 
     HID_StartDeviceThread(child_pdo);
-
-    fdo->Flags &= ~DO_DEVICE_INITIALIZING;
-    return STATUS_SUCCESS;
 }
 
 static NTSTATUS fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
@@ -259,6 +262,7 @@ static NTSTATUS fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
         case IRP_MN_QUERY_DEVICE_RELATIONS:
         {
             DEVICE_RELATIONS *devices;
+            DEVICE_OBJECT *child;
 
             if (stack->Parameters.QueryDeviceRelations.Type != BusRelations)
                 return minidriver->PNPDispatch(device, irp);
@@ -270,14 +274,31 @@ static NTSTATUS fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
                 return STATUS_NO_MEMORY;
             }
 
-            devices->Objects[0] = ext->u.fdo.child_pdo;
-            call_fastcall_func1(ObfReferenceObject, ext->u.fdo.child_pdo);
-            devices->Count = 1;
+            if ((child = ext->u.fdo.child_pdo))
+            {
+                devices->Objects[0] = ext->u.fdo.child_pdo;
+                call_fastcall_func1(ObfReferenceObject, ext->u.fdo.child_pdo);
+                devices->Count = 1;
+            }
+            else
+            {
+                devices->Count = 0;
+            }
 
             irp->IoStatus.Information = (ULONG_PTR)devices;
             irp->IoStatus.u.Status = STATUS_SUCCESS;
             IoSkipCurrentIrpStackLocation(irp);
             return IoCallDriver(ext->u.fdo.hid_ext.NextDeviceObject, irp);
+        }
+
+        case IRP_MN_START_DEVICE:
+        {
+            NTSTATUS ret;
+
+            if ((ret = minidriver->PNPDispatch(device, irp)))
+                return ret;
+            create_child(minidriver, device);
+            return STATUS_SUCCESS;
         }
 
         case IRP_MN_REMOVE_DEVICE:
