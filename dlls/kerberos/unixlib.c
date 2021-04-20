@@ -211,6 +211,17 @@ fail:
     return FALSE;
 }
 
+static int get_buffer_index( SecBufferDesc *desc, DWORD type )
+{
+    UINT i;
+    if (!desc) return -1;
+    for (i = 0; i < desc->cBuffers; i++)
+    {
+        if (desc->pBuffers[i].BufferType == type) return i;
+    }
+    return -1;
+}
+
 static NTSTATUS status_gss_to_sspi( OM_uint32 status )
 {
     switch (status)
@@ -267,9 +278,19 @@ static void trace_gss_status( OM_uint32 major_status, OM_uint32 minor_status )
     }
 }
 
+static inline gss_ctx_id_t ctxhandle_sspi_to_gss( LSA_SEC_HANDLE handle )
+{
+    return (gss_ctx_id_t)handle;
+}
+
 static inline gss_cred_id_t credhandle_sspi_to_gss( LSA_SEC_HANDLE handle )
 {
     return (gss_cred_id_t)handle;
+}
+
+static inline void ctxhandle_gss_to_sspi( gss_ctx_id_t handle, LSA_SEC_HANDLE *ctx )
+{
+    *ctx = (LSA_SEC_HANDLE)handle;
 }
 
 static inline void credhandle_gss_to_sspi( gss_cred_id_t handle, LSA_SEC_HANDLE *cred )
@@ -371,6 +392,17 @@ static NTSTATUS CDECL acquire_credentials_handle( const char *principal, ULONG c
     return status_gss_to_sspi( ret );
 }
 
+static NTSTATUS CDECL delete_context( LSA_SEC_HANDLE context )
+{
+    OM_uint32 ret, minor_status;
+    gss_ctx_id_t ctx_handle = ctxhandle_sspi_to_gss( context );
+
+    ret = pgss_delete_sec_context( &minor_status, &ctx_handle, GSS_C_NO_BUFFER );
+    TRACE( "gss_delete_sec_context returned %08x minor status %08x\n", ret, minor_status );
+    if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
+    return status_gss_to_sspi( ret );
+}
+
 static NTSTATUS CDECL free_credentials_handle( LSA_SEC_HANDLE handle )
 {
     OM_uint32 ret, minor_status;
@@ -382,10 +414,94 @@ static NTSTATUS CDECL free_credentials_handle( LSA_SEC_HANDLE handle )
     return status_gss_to_sspi( ret );
 }
 
+static ULONG flags_isc_req_to_gss( ULONG flags )
+{
+    ULONG ret = 0;
+    if (flags & ISC_REQ_DELEGATE)        ret |= GSS_C_DELEG_FLAG;
+    if (flags & ISC_REQ_MUTUAL_AUTH)     ret |= GSS_C_MUTUAL_FLAG;
+    if (flags & ISC_REQ_REPLAY_DETECT)   ret |= GSS_C_REPLAY_FLAG;
+    if (flags & ISC_REQ_SEQUENCE_DETECT) ret |= GSS_C_SEQUENCE_FLAG;
+    if (flags & ISC_REQ_CONFIDENTIALITY) ret |= GSS_C_CONF_FLAG;
+    if (flags & ISC_REQ_INTEGRITY)       ret |= GSS_C_INTEG_FLAG;
+    if (flags & ISC_REQ_NULL_SESSION)    ret |= GSS_C_ANON_FLAG;
+    if (flags & ISC_REQ_USE_DCE_STYLE)   ret |= GSS_C_DCE_STYLE;
+    if (flags & ISC_REQ_IDENTIFY)        ret |= GSS_C_IDENTIFY_FLAG;
+    return ret;
+}
+
+static ULONG flags_gss_to_isc_ret( ULONG flags )
+{
+    ULONG ret = 0;
+    if (flags & GSS_C_DELEG_FLAG)    ret |= ISC_RET_DELEGATE;
+    if (flags & GSS_C_MUTUAL_FLAG)   ret |= ISC_RET_MUTUAL_AUTH;
+    if (flags & GSS_C_REPLAY_FLAG)   ret |= ISC_RET_REPLAY_DETECT;
+    if (flags & GSS_C_SEQUENCE_FLAG) ret |= ISC_RET_SEQUENCE_DETECT;
+    if (flags & GSS_C_CONF_FLAG)     ret |= ISC_RET_CONFIDENTIALITY;
+    if (flags & GSS_C_INTEG_FLAG)    ret |= ISC_RET_INTEGRITY;
+    if (flags & GSS_C_ANON_FLAG)     ret |= ISC_RET_NULL_SESSION;
+    if (flags & GSS_C_DCE_STYLE)     ret |= ISC_RET_USED_DCE_STYLE;
+    if (flags & GSS_C_IDENTIFY_FLAG) ret |= ISC_RET_IDENTIFY;
+    return ret;
+}
+
+static NTSTATUS CDECL initialize_context( LSA_SEC_HANDLE credential, LSA_SEC_HANDLE context, const char *target_name,
+                                          ULONG context_req, SecBufferDesc *input, LSA_SEC_HANDLE *new_context,
+                                          SecBufferDesc *output, ULONG *context_attr, TimeStamp *expiry )
+{
+    OM_uint32 ret, minor_status, ret_flags = 0, expiry_time, req_flags = flags_isc_req_to_gss( context_req );
+    gss_cred_id_t cred_handle = credhandle_sspi_to_gss( credential );
+    gss_ctx_id_t ctx_handle = ctxhandle_sspi_to_gss( context );
+    gss_buffer_desc input_token, output_token;
+    gss_name_t target = GSS_C_NO_NAME;
+    NTSTATUS status;
+    int idx;
+
+    if ((idx = get_buffer_index( input, SECBUFFER_TOKEN )) == -1) input_token.length = 0;
+    else
+    {
+        input_token.length = input->pBuffers[idx].cbBuffer;
+        input_token.value  = input->pBuffers[idx].pvBuffer;
+    }
+
+    if ((idx = get_buffer_index( output, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+    output_token.length = 0;
+    output_token.value  = NULL;
+
+    if (target_name && (status = import_name( target_name, &target ))) return status;
+
+    ret = pgss_init_sec_context( &minor_status, cred_handle, &ctx_handle, target, GSS_C_NO_OID, req_flags, 0,
+                                 GSS_C_NO_CHANNEL_BINDINGS, &input_token, NULL, &output_token, &ret_flags,
+                                 &expiry_time );
+    TRACE( "gss_init_sec_context returned %08x minor status %08x ret_flags %08x\n", ret, minor_status, ret_flags );
+    if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
+    if (ret == GSS_S_COMPLETE || ret == GSS_S_CONTINUE_NEEDED)
+    {
+        if (output_token.length > output->pBuffers[idx].cbBuffer) /* FIXME: check if larger buffer exists */
+        {
+            TRACE( "buffer too small %lu > %u\n", (SIZE_T)output_token.length, output->pBuffers[idx].cbBuffer );
+            pgss_release_buffer( &minor_status, &output_token );
+            pgss_delete_sec_context( &minor_status, &ctx_handle, GSS_C_NO_BUFFER );
+            return SEC_E_INCOMPLETE_MESSAGE;
+        }
+        output->pBuffers[idx].cbBuffer = output_token.length;
+        memcpy( output->pBuffers[idx].pvBuffer, output_token.value, output_token.length );
+        pgss_release_buffer( &minor_status, &output_token );
+
+        ctxhandle_gss_to_sspi( ctx_handle, new_context );
+        if (context_attr) *context_attr = flags_gss_to_isc_ret( ret_flags );
+        expirytime_gss_to_sspi( expiry_time, expiry );
+    }
+
+    if (target != GSS_C_NO_NAME) pgss_release_name( &minor_status, &target );
+    return status_gss_to_sspi( ret );
+}
+
 static const struct krb5_funcs funcs =
 {
     acquire_credentials_handle,
+    delete_context,
     free_credentials_handle,
+    initialize_context,
 };
 
 NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )

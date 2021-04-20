@@ -760,54 +760,6 @@ static void expirytime_gss_to_sspi( OM_uint32 expirytime, TimeStamp *timestamp )
     timestamp->HighPart = tmp.QuadPart >> 32;
 }
 
-static NTSTATUS name_sspi_to_gss( const UNICODE_STRING *name_str, gss_name_t *name )
-{
-    OM_uint32 ret, minor_status;
-    gss_OID type = GSS_C_NO_OID; /* FIXME: detect the appropriate value for this ourselves? */
-    gss_buffer_desc buf;
-
-    buf.length = WideCharToMultiByte( CP_UNIXCP, 0, name_str->Buffer, name_str->Length / sizeof(WCHAR), NULL, 0, NULL, NULL );
-    if (!(buf.value = heap_alloc( buf.length ))) return SEC_E_INSUFFICIENT_MEMORY;
-    WideCharToMultiByte( CP_UNIXCP, 0, name_str->Buffer, name_str->Length / sizeof(WCHAR), buf.value, buf.length, NULL, NULL );
-
-    ret = pgss_import_name( &minor_status, &buf, type, name );
-    TRACE( "gss_import_name returned %08x minor status %08x\n", ret, minor_status );
-    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
-
-    heap_free( buf.value );
-    return status_gss_to_sspi( ret );
-}
-
-static ULONG flags_isc_req_to_gss( ULONG flags )
-{
-    ULONG ret = 0;
-    if (flags & ISC_REQ_DELEGATE)        ret |= GSS_C_DELEG_FLAG;
-    if (flags & ISC_REQ_MUTUAL_AUTH)     ret |= GSS_C_MUTUAL_FLAG;
-    if (flags & ISC_REQ_REPLAY_DETECT)   ret |= GSS_C_REPLAY_FLAG;
-    if (flags & ISC_REQ_SEQUENCE_DETECT) ret |= GSS_C_SEQUENCE_FLAG;
-    if (flags & ISC_REQ_CONFIDENTIALITY) ret |= GSS_C_CONF_FLAG;
-    if (flags & ISC_REQ_INTEGRITY)       ret |= GSS_C_INTEG_FLAG;
-    if (flags & ISC_REQ_NULL_SESSION)    ret |= GSS_C_ANON_FLAG;
-    if (flags & ISC_REQ_USE_DCE_STYLE)   ret |= GSS_C_DCE_STYLE;
-    if (flags & ISC_REQ_IDENTIFY)        ret |= GSS_C_IDENTIFY_FLAG;
-    return ret;
-}
-
-static ULONG flags_gss_to_isc_ret( ULONG flags )
-{
-    ULONG ret = 0;
-    if (flags & GSS_C_DELEG_FLAG)    ret |= ISC_RET_DELEGATE;
-    if (flags & GSS_C_MUTUAL_FLAG)   ret |= ISC_RET_MUTUAL_AUTH;
-    if (flags & GSS_C_REPLAY_FLAG)   ret |= ISC_RET_REPLAY_DETECT;
-    if (flags & GSS_C_SEQUENCE_FLAG) ret |= ISC_RET_SEQUENCE_DETECT;
-    if (flags & GSS_C_CONF_FLAG)     ret |= ISC_RET_CONFIDENTIALITY;
-    if (flags & GSS_C_INTEG_FLAG)    ret |= ISC_RET_INTEGRITY;
-    if (flags & GSS_C_ANON_FLAG)     ret |= ISC_RET_NULL_SESSION;
-    if (flags & GSS_C_DCE_STYLE)     ret |= ISC_RET_USED_DCE_STYLE;
-    if (flags & GSS_C_IDENTIFY_FLAG) ret |= ISC_RET_IDENTIFY;
-    return ret;
-}
-
 static ULONG flags_gss_to_asc_ret( ULONG flags )
 {
     ULONG ret = 0;
@@ -922,80 +874,29 @@ static NTSTATUS NTAPI kerberos_SpFreeCredentialsHandle( LSA_SEC_HANDLE credentia
 
 static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, LSA_SEC_HANDLE context,
     UNICODE_STRING *target_name, ULONG context_req, ULONG target_data_rep, SecBufferDesc *input,
-    LSA_SEC_HANDLE *new_context, SecBufferDesc *output, ULONG *context_attr, TimeStamp *ts_expiry,
+    LSA_SEC_HANDLE *new_context, SecBufferDesc *output, ULONG *context_attr, TimeStamp *expiry,
     BOOLEAN *mapped_context, SecBuffer *context_data )
 {
-#ifdef SONAME_LIBGSSAPI_KRB5
     static const ULONG supported = ISC_REQ_CONFIDENTIALITY | ISC_REQ_INTEGRITY | ISC_REQ_SEQUENCE_DETECT |
                                    ISC_REQ_REPLAY_DETECT | ISC_REQ_MUTUAL_AUTH | ISC_REQ_USE_DCE_STYLE |
                                    ISC_REQ_IDENTIFY | ISC_REQ_CONNECTION;
-    OM_uint32 ret, minor_status, ret_flags = 0, expiry_time, req_flags = flags_isc_req_to_gss( context_req );
-    gss_cred_id_t cred_handle;
-    gss_ctx_id_t ctxt_handle;
-    gss_buffer_desc input_token, output_token;
-    gss_name_t target = GSS_C_NO_NAME;
+    char *target = NULL;
     NTSTATUS status;
-    int idx;
 
     TRACE( "(%lx %lx %s 0x%08x %u %p %p %p %p %p %p %p)\n", credential, context, debugstr_us(target_name),
-           context_req, target_data_rep, input, new_context, output, context_attr, ts_expiry,
+           context_req, target_data_rep, input, new_context, output, context_attr, expiry,
            mapped_context, context_data );
-    if (context_req & ~supported)
-        FIXME( "flags 0x%08x not supported\n", context_req & ~supported );
+    if (context_req & ~supported) FIXME( "flags 0x%08x not supported\n", context_req & ~supported );
 
     if (!context && !input && !credential) return SEC_E_INVALID_HANDLE;
-    cred_handle = credhandle_sspi_to_gss( credential );
-    ctxt_handle = ctxthandle_sspi_to_gss( context );
+    if (target_name && !(target = get_str_unixcp( target_name ))) return SEC_E_INSUFFICIENT_MEMORY;
 
-    if ((idx = get_buffer_index( input, SECBUFFER_TOKEN )) == -1) input_token.length = 0;
-    else
-    {
-        input_token.length = input->pBuffers[idx].cbBuffer;
-        input_token.value  = input->pBuffers[idx].pvBuffer;
-    }
-
-    if ((idx = get_buffer_index( output, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
-    output_token.length = 0;
-    output_token.value  = NULL;
-
-    if (target_name && ((status = name_sspi_to_gss( target_name, &target )) != SEC_E_OK)) return status;
-
-    ret = pgss_init_sec_context( &minor_status, cred_handle, &ctxt_handle, target, GSS_C_NO_OID, req_flags, 0,
-                                 GSS_C_NO_CHANNEL_BINDINGS, &input_token, NULL, &output_token, &ret_flags,
-                                 &expiry_time );
-    TRACE( "gss_init_sec_context returned %08x minor status %08x ret_flags %08x\n", ret, minor_status, ret_flags );
-    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
-    if (ret == GSS_S_COMPLETE || ret == GSS_S_CONTINUE_NEEDED)
-    {
-        if (output_token.length > output->pBuffers[idx].cbBuffer) /* FIXME: check if larger buffer exists */
-        {
-            TRACE( "buffer too small %lu > %u\n", (SIZE_T)output_token.length, output->pBuffers[idx].cbBuffer );
-            pgss_release_buffer( &minor_status, &output_token );
-            pgss_delete_sec_context( &minor_status, &ctxt_handle, GSS_C_NO_BUFFER );
-            return SEC_E_INCOMPLETE_MESSAGE;
-        }
-        output->pBuffers[idx].cbBuffer = output_token.length;
-        memcpy( output->pBuffers[idx].pvBuffer, output_token.value, output_token.length );
-        pgss_release_buffer( &minor_status, &output_token );
-
-        ctxthandle_gss_to_sspi( ctxt_handle, new_context );
-        if (context_attr) *context_attr = flags_gss_to_isc_ret( ret_flags );
-        expirytime_gss_to_sspi( expiry_time, ts_expiry );
-    }
-
-    if (target != GSS_C_NO_NAME) pgss_release_name( &minor_status, &target );
-
-    /* we do support user mode SSP/AP functions */
-    *mapped_context = TRUE;
+    status = krb5_funcs->initialize_context( credential, context, target, context_req, input, new_context, output,
+                                             context_attr, expiry );
+    if (!status) *mapped_context = TRUE;
     /* FIXME: initialize context_data */
-
-    return status_gss_to_sspi( ret );
-#else
-    FIXME( "(%lx %lx %s 0x%08x %u %p %p %p %p %p %p %p)\n", credential, context, debugstr_us(target_name),
-           context_req, target_data_rep, input, new_context, output, context_attr, ts_expiry,
-           mapped_context, context_data );
-    return SEC_E_UNSUPPORTED_FUNCTION;
-#endif
+    heap_free( target );
+    return status;
 }
 
 static NTSTATUS NTAPI kerberos_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential, LSA_SEC_HANDLE context,
@@ -1068,23 +969,9 @@ static NTSTATUS NTAPI kerberos_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential
 
 static NTSTATUS NTAPI kerberos_SpDeleteContext( LSA_SEC_HANDLE context )
 {
-#ifdef SONAME_LIBGSSAPI_KRB5
-    OM_uint32 ret, minor_status;
-    gss_ctx_id_t ctxt_handle;
-
     TRACE( "(%lx)\n", context );
     if (!context) return SEC_E_INVALID_HANDLE;
-    if (!(ctxt_handle = ctxthandle_sspi_to_gss( context ))) return SEC_E_OK;
-
-    ret = pgss_delete_sec_context( &minor_status, &ctxt_handle, GSS_C_NO_BUFFER );
-    TRACE( "gss_delete_sec_context returned %08x minor status %08x\n", ret, minor_status );
-    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
-
-    return status_gss_to_sspi( ret );
-#else
-    FIXME( "(%lx)\n", context );
-    return SEC_E_UNSUPPORTED_FUNCTION;
-#endif
+    return krb5_funcs->delete_context( context );
 }
 
 static SecPkgInfoW *build_package_info( const SecPkgInfoW *info )
