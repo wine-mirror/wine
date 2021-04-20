@@ -938,7 +938,7 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
             else if (rtv)
                 wined3d_rendertarget_view_incref(rtv);
 
-            if ((dsv = wined3d_device_get_depth_stencil_view(ddraw->wined3d_device)))
+            if ((dsv = wined3d_device_context_get_depth_stencil_view(ddraw->immediate_context)))
                 wined3d_rendertarget_view_incref(dsv);
         }
 

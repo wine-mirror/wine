@@ -2109,7 +2109,7 @@ static HRESULT WINAPI d3d9_device_GetDepthStencilSurface(IDirect3DDevice9Ex *ifa
         return D3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();
-    if ((wined3d_dsv = wined3d_device_get_depth_stencil_view(device->wined3d_device)))
+    if ((wined3d_dsv = wined3d_device_context_get_depth_stencil_view(device->immediate_context)))
     {
         /* We want the sub resource parent here, since the view itself may be
          * internal to wined3d and may not have a parent. */
@@ -2425,7 +2425,7 @@ static void resolve_depth_buffer(struct d3d9_device *device)
             && desc.format != WINED3DFMT_INTZ)
         return;
 
-    if (!(wined3d_dsv = wined3d_device_get_depth_stencil_view(device->wined3d_device)))
+    if (!(wined3d_dsv = wined3d_device_context_get_depth_stencil_view(device->immediate_context)))
         return;
     d3d9_dsv = wined3d_rendertarget_view_get_sub_resource_parent(wined3d_dsv);
 

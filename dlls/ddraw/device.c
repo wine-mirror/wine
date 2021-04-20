@@ -3437,7 +3437,7 @@ static void d3d_device_sync_rendertarget(struct d3d_device *device)
     if ((rtv = wined3d_device_context_get_rendertarget_view(device->immediate_context, 0)))
         ddraw_surface_get_draw_texture(wined3d_rendertarget_view_get_parent(rtv), DDRAW_SURFACE_RW);
 
-    if ((rtv = wined3d_device_get_depth_stencil_view(device->wined3d_device)))
+    if ((rtv = wined3d_device_context_get_depth_stencil_view(device->immediate_context)))
         ddraw_surface_get_draw_texture(wined3d_rendertarget_view_get_parent(rtv), DDRAW_SURFACE_RW);
 }
 

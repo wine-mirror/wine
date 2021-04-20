@@ -5408,11 +5408,12 @@ struct wined3d_rendertarget_view * CDECL wined3d_device_context_get_rendertarget
     return context->state->fb.render_targets[view_idx];
 }
 
-struct wined3d_rendertarget_view * CDECL wined3d_device_get_depth_stencil_view(const struct wined3d_device *device)
+struct wined3d_rendertarget_view * CDECL wined3d_device_context_get_depth_stencil_view(
+        const struct wined3d_device_context *context)
 {
-    TRACE("device %p.\n", device);
+    TRACE("context %p.\n", context);
 
-    return device->cs->c.state->fb.depth_stencil;
+    return context->state->fb.depth_stencil;
 }
 
 HRESULT CDECL wined3d_device_set_rendertarget_view(struct wined3d_device *device,

@@ -2136,6 +2136,7 @@ static HRESULT WINAPI ddraw_surface1_AddAttachedSurface(IDirectDrawSurface *ifac
 static HRESULT ddraw_surface_delete_attached_surface(struct ddraw_surface *surface,
         struct ddraw_surface *attachment, IUnknown *detach_iface)
 {
+    struct wined3d_rendertarget_view *dsv;
     struct ddraw_surface *prev = surface;
 
     TRACE("surface %p, attachment %p, detach_iface %p.\n", surface, attachment, detach_iface);
@@ -2183,8 +2184,8 @@ static HRESULT ddraw_surface_delete_attached_surface(struct ddraw_surface *surfa
      * QueryInterface(). Some applications, SCP - Containment Breach in
      * particular, modify the QueryInterface() pointer in the surface vtbl
      * but don't cleanup properly after the relevant dll is unloaded. */
-    if (attachment->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER
-            && wined3d_device_get_depth_stencil_view(surface->ddraw->wined3d_device) == attachment->wined3d_rtv)
+    dsv = wined3d_device_context_get_depth_stencil_view(surface->ddraw->immediate_context);
+    if (attachment->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER && dsv == attachment->wined3d_rtv)
         wined3d_device_context_set_depth_stencil_view(surface->ddraw->immediate_context, NULL);
     wined3d_mutex_unlock();
 
