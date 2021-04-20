@@ -490,13 +490,13 @@ static inline BOOL is_callable(jsdisp_t *obj)
     return is_class(obj, JSCLASS_FUNCTION);
 }
 
-static HRESULT stringify(stringify_ctx_t *ctx, jsval_t val);
+static HRESULT stringify(stringify_ctx_t *ctx, jsdisp_t *object, const WCHAR *name);
 
 /* ECMA-262 5.1 Edition    15.12.3 (abstract operation JA) */
 static HRESULT stringify_array(stringify_ctx_t *ctx, jsdisp_t *obj)
 {
     unsigned length, i, j;
-    jsval_t val;
+    WCHAR name[16];
     HRESULT hres;
 
     if(is_on_stack(ctx, obj)) {
@@ -526,19 +526,12 @@ static HRESULT stringify_array(stringify_ctx_t *ctx, jsdisp_t *obj)
             }
         }
 
-        hres = jsdisp_get_idx(obj, i, &val);
-        if(SUCCEEDED(hres)) {
-            hres = stringify(ctx, val);
-            if(FAILED(hres))
-                return hres;
-            if(hres == S_FALSE && !append_string(ctx, L"null"))
-                return E_OUTOFMEMORY;
-        }else if(hres == DISP_E_UNKNOWNNAME) {
-            if(!append_string(ctx, L"null"))
-                return E_OUTOFMEMORY;
-        }else {
+        _itow(i, name, ARRAY_SIZE(name));
+        hres = stringify(ctx, obj, name);
+        if(FAILED(hres))
             return hres;
-        }
+        if(hres == S_FALSE && !append_string(ctx, L"null"))
+            return E_OUTOFMEMORY;
     }
 
     if((length && *ctx->gap && !append_char(ctx, '\n')) || !append_char(ctx, ']'))
@@ -552,7 +545,6 @@ static HRESULT stringify_array(stringify_ctx_t *ctx, jsdisp_t *obj)
 static HRESULT stringify_object(stringify_ctx_t *ctx, jsdisp_t *obj)
 {
     DISPID dispid = DISPID_STARTENUM;
-    jsval_t val = jsval_undefined();
     unsigned prop_cnt = 0, i;
     size_t stepback;
     BSTR prop_name;
@@ -570,14 +562,6 @@ static HRESULT stringify_object(stringify_ctx_t *ctx, jsdisp_t *obj)
         return E_OUTOFMEMORY;
 
     while((hres = IDispatchEx_GetNextDispID(&obj->IDispatchEx_iface, fdexEnumDefault, dispid, &dispid)) == S_OK) {
-        jsval_release(val);
-        hres = jsdisp_propget(obj, dispid, &val);
-        if(FAILED(hres))
-            return hres;
-
-        if(is_undefined(val))
-            continue;
-
         stepback = ctx->buf_len;
 
         if(prop_cnt && !append_char(ctx, ',')) {
@@ -601,21 +585,23 @@ static HRESULT stringify_object(stringify_ctx_t *ctx, jsdisp_t *obj)
 
         hres = IDispatchEx_GetMemberName(&obj->IDispatchEx_iface, dispid, &prop_name);
         if(FAILED(hres))
-            break;
+            return hres;
 
         hres = json_quote(ctx, prop_name, SysStringLen(prop_name));
-        SysFreeString(prop_name);
-        if(FAILED(hres))
-            break;
-
-        if(!append_char(ctx, ':') || (*ctx->gap && !append_char(ctx, ' '))) {
-            hres = E_OUTOFMEMORY;
-            break;
+        if(FAILED(hres)) {
+            SysFreeString(prop_name);
+            return hres;
         }
 
-        hres = stringify(ctx, val);
+        if(!append_char(ctx, ':') || (*ctx->gap && !append_char(ctx, ' '))) {
+            SysFreeString(prop_name);
+            return E_OUTOFMEMORY;
+        }
+
+        hres = stringify(ctx, obj, prop_name);
+        SysFreeString(prop_name);
         if(FAILED(hres))
-            break;
+            return hres;
 
         if(hres == S_FALSE) {
             ctx->buf_len = stepback;
@@ -624,9 +610,6 @@ static HRESULT stringify_object(stringify_ctx_t *ctx, jsdisp_t *obj)
 
         prop_cnt++;
     }
-    jsval_release(val);
-    if(FAILED(hres))
-        return hres;
 
     if(prop_cnt && *ctx->gap) {
         if(!append_char(ctx, '\n'))
@@ -648,18 +631,24 @@ static HRESULT stringify_object(stringify_ctx_t *ctx, jsdisp_t *obj)
 }
 
 /* ECMA-262 5.1 Edition    15.12.3 (abstract operation Str) */
-static HRESULT stringify(stringify_ctx_t *ctx, jsval_t val)
+static HRESULT stringify(stringify_ctx_t *ctx, jsdisp_t *object, const WCHAR *name)
 {
-    jsval_t value;
+    jsval_t value, v;
     HRESULT hres;
 
-    if(is_object_instance(val) && get_object(val)) {
+    hres = jsdisp_propget_name(object, name, &value);
+    if(FAILED(hres))
+        return hres == DISP_E_UNKNOWNNAME ? S_FALSE : hres;
+
+    if(is_object_instance(value) && get_object(value)) {
         jsdisp_t *obj;
         DISPID id;
 
-        obj = iface_to_jsdisp(get_object(val));
-        if(!obj)
+        obj = iface_to_jsdisp(get_object(value));
+        if(!obj) {
+            jsval_release(value);
             return S_FALSE;
+        }
 
         hres = jsdisp_get_id(obj, L"toJSON", 0, &id);
         jsdisp_release(obj);
@@ -669,7 +658,9 @@ static HRESULT stringify(stringify_ctx_t *ctx, jsval_t val)
 
     /* FIXME: Support replacer replacer. */
 
-    hres = maybe_to_primitive(ctx->ctx, val, &value);
+    v = value;
+    hres = maybe_to_primitive(ctx->ctx, v, &value);
+    jsval_release(v);
     if(FAILED(hres))
         return hres;
 
@@ -746,6 +737,7 @@ static HRESULT stringify(stringify_ctx_t *ctx, jsval_t val)
 static HRESULT JSON_stringify(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
     stringify_ctx_t stringify_ctx = {ctx, NULL,0,0, NULL,0,0, {0}};
+    jsdisp_t *obj;
     HRESULT hres;
 
     TRACE("\n");
@@ -790,7 +782,12 @@ static HRESULT JSON_stringify(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
         jsval_release(space_val);
     }
 
-    hres = stringify(&stringify_ctx, argv[0]);
+    if(FAILED(hres = create_object(ctx, NULL, &obj)))
+        goto fail;
+    if(FAILED(hres = jsdisp_propput_name(obj, L"", argv[0])))
+        goto fail;
+
+    hres = stringify(&stringify_ctx, obj, L"");
     if(SUCCEEDED(hres) && r) {
         assert(!stringify_ctx.stack_top);
 
@@ -805,6 +802,9 @@ static HRESULT JSON_stringify(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
         }
     }
 
+fail:
+    if(obj)
+        jsdisp_release(obj);
     heap_free(stringify_ctx.buf);
     heap_free(stringify_ctx.stack);
     return hres;
