@@ -673,21 +673,10 @@ static void unload_gssapi_krb5(void)
     libgssapi_krb5_handle = NULL;
 }
 
-static inline gss_cred_id_t credhandle_sspi_to_gss( LSA_SEC_HANDLE cred )
-{
-    if (!cred) return GSS_C_NO_CREDENTIAL;
-    return (gss_cred_id_t)cred;
-}
-
 static inline gss_ctx_id_t ctxthandle_sspi_to_gss( LSA_SEC_HANDLE ctxt )
 {
     if (!ctxt) return GSS_C_NO_CONTEXT;
     return (gss_ctx_id_t)ctxt;
-}
-
-static inline void ctxthandle_gss_to_sspi( gss_ctx_id_t handle, LSA_SEC_HANDLE *ctxt )
-{
-    *ctxt = (LSA_SEC_HANDLE)handle;
 }
 
 static NTSTATUS status_gss_to_sspi( OM_uint32 status )
@@ -746,33 +735,6 @@ static void trace_gss_status( OM_uint32 major_status, OM_uint32 minor_status )
         trace_gss_status_ex( major_status, GSS_C_GSS_CODE );
         trace_gss_status_ex( minor_status, GSS_C_MECH_CODE );
     }
-}
-
-static void expirytime_gss_to_sspi( OM_uint32 expirytime, TimeStamp *timestamp )
-{
-    FILETIME filetime;
-    ULARGE_INTEGER tmp;
-
-    GetSystemTimeAsFileTime( &filetime );
-    FileTimeToLocalFileTime( &filetime, &filetime );
-    tmp.QuadPart = ((ULONGLONG)filetime.dwLowDateTime | (ULONGLONG)filetime.dwHighDateTime << 32) + expirytime;
-    timestamp->LowPart  = tmp.QuadPart;
-    timestamp->HighPart = tmp.QuadPart >> 32;
-}
-
-static ULONG flags_gss_to_asc_ret( ULONG flags )
-{
-    ULONG ret = 0;
-    if (flags & GSS_C_DELEG_FLAG)    ret |= ASC_RET_DELEGATE;
-    if (flags & GSS_C_MUTUAL_FLAG)   ret |= ASC_RET_MUTUAL_AUTH;
-    if (flags & GSS_C_REPLAY_FLAG)   ret |= ASC_RET_REPLAY_DETECT;
-    if (flags & GSS_C_SEQUENCE_FLAG) ret |= ASC_RET_SEQUENCE_DETECT;
-    if (flags & GSS_C_CONF_FLAG)     ret |= ASC_RET_CONFIDENTIALITY;
-    if (flags & GSS_C_INTEG_FLAG)    ret |= ASC_RET_INTEGRITY;
-    if (flags & GSS_C_ANON_FLAG)     ret |= ASC_RET_NULL_SESSION;
-    if (flags & GSS_C_DCE_STYLE)     ret |= ASC_RET_USED_DCE_STYLE;
-    if (flags & GSS_C_IDENTIFY_FLAG) ret |= ASC_RET_IDENTIFY;
-    return ret;
 }
 
 static BOOL is_dce_style_context( gss_ctx_id_t ctxt_handle )
@@ -901,70 +863,20 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
 
 static NTSTATUS NTAPI kerberos_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential, LSA_SEC_HANDLE context,
     SecBufferDesc *input, ULONG context_req, ULONG target_data_rep, LSA_SEC_HANDLE *new_context,
-    SecBufferDesc *output, ULONG *context_attr, TimeStamp *ts_expiry, BOOLEAN *mapped_context, SecBuffer *context_data )
+    SecBufferDesc *output, ULONG *context_attr, TimeStamp *expiry, BOOLEAN *mapped_context, SecBuffer *context_data )
 {
-#ifdef SONAME_LIBGSSAPI_KRB5
-    OM_uint32 ret, minor_status, ret_flags = 0, expiry_time;
-    gss_cred_id_t cred_handle;
-    gss_ctx_id_t ctxt_handle;
-    gss_buffer_desc input_token, output_token;
-    gss_name_t target = GSS_C_NO_NAME;
-    int idx;
+    NTSTATUS status;
 
-    TRACE( "(%lx %lx 0x%08x %u %p %p %p %p %p %p %p)\n", credential, context, context_req,
-           target_data_rep, input, new_context, output, context_attr, ts_expiry,
-           mapped_context, context_data );
+    TRACE( "(%lx %lx 0x%08x %u %p %p %p %p %p %p %p)\n", credential, context, context_req, target_data_rep, input,
+           new_context, output, context_attr, expiry, mapped_context, context_data );
     if (context_req) FIXME( "ignoring flags 0x%08x\n", context_req );
 
     if (!context && !input && !credential) return SEC_E_INVALID_HANDLE;
-    cred_handle = credhandle_sspi_to_gss( credential );
-    ctxt_handle = ctxthandle_sspi_to_gss( context );
 
-    if (!input) input_token.length = 0;
-    else
-    {
-        if ((idx = get_buffer_index( input, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
-        input_token.length = input->pBuffers[idx].cbBuffer;
-        input_token.value  = input->pBuffers[idx].pvBuffer;
-    }
-
-    if ((idx = get_buffer_index( output, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
-    output_token.length = 0;
-    output_token.value  = NULL;
-
-    ret = pgss_accept_sec_context( &minor_status, &ctxt_handle, cred_handle, &input_token, GSS_C_NO_CHANNEL_BINDINGS,
-                                   &target, NULL, &output_token, &ret_flags, &expiry_time, NULL );
-    TRACE( "gss_accept_sec_context returned %08x minor status %08x ret_flags %08x\n", ret, minor_status, ret_flags );
-    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
-    if (ret == GSS_S_COMPLETE || ret == GSS_S_CONTINUE_NEEDED)
-    {
-        if (output_token.length > output->pBuffers[idx].cbBuffer) /* FIXME: check if larger buffer exists */
-        {
-            TRACE( "buffer too small %lu > %u\n", (SIZE_T)output_token.length, output->pBuffers[idx].cbBuffer );
-            pgss_release_buffer( &minor_status, &output_token );
-            pgss_delete_sec_context( &minor_status, &ctxt_handle, GSS_C_NO_BUFFER );
-            return SEC_E_BUFFER_TOO_SMALL;
-        }
-        output->pBuffers[idx].cbBuffer = output_token.length;
-        memcpy( output->pBuffers[idx].pvBuffer, output_token.value, output_token.length );
-        pgss_release_buffer( &minor_status, &output_token );
-
-        ctxthandle_gss_to_sspi( ctxt_handle, new_context );
-        if (context_attr) *context_attr = flags_gss_to_asc_ret( ret_flags );
-        expirytime_gss_to_sspi( expiry_time, ts_expiry );
-    }
-
-    /* we do support user mode SSP/AP functions */
-    *mapped_context = TRUE;
+    status = krb5_funcs->accept_context( credential, context, input, new_context, output, context_attr, expiry );
+    if (!status) *mapped_context = TRUE;
     /* FIXME: initialize context_data */
-
-    return status_gss_to_sspi( ret );
-#else
-    FIXME( "(%lx %lx 0x%08x %u %p %p %p %p %p %p %p)\n", credential, context, context_req,
-           target_data_rep, input, new_context, output, context_attr, ts_expiry,
-           mapped_context, context_data );
-    return SEC_E_UNSUPPORTED_FUNCTION;
-#endif
+    return status;
 }
 
 static NTSTATUS NTAPI kerberos_SpDeleteContext( LSA_SEC_HANDLE context )

@@ -21,6 +21,8 @@
 
 struct krb5_funcs
 {
+    NTSTATUS (CDECL *accept_context)(LSA_SEC_HANDLE, LSA_SEC_HANDLE, SecBufferDesc *, LSA_SEC_HANDLE *,
+                                     SecBufferDesc *, ULONG *, TimeStamp *);
     NTSTATUS (CDECL *acquire_credentials_handle)(const char *, ULONG, const char *, const char *, LSA_SEC_HANDLE *,
                                                  TimeStamp *);
     NTSTATUS (CDECL *delete_context)(LSA_SEC_HANDLE);

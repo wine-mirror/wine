@@ -308,6 +308,68 @@ static void expirytime_gss_to_sspi( OM_uint32 expirytime, TimeStamp *timestamp )
     timestamp->HighPart = time.QuadPart >> 32;
 }
 
+static ULONG flags_gss_to_asc_ret( ULONG flags )
+{
+    ULONG ret = 0;
+    if (flags & GSS_C_DELEG_FLAG)    ret |= ASC_RET_DELEGATE;
+    if (flags & GSS_C_MUTUAL_FLAG)   ret |= ASC_RET_MUTUAL_AUTH;
+    if (flags & GSS_C_REPLAY_FLAG)   ret |= ASC_RET_REPLAY_DETECT;
+    if (flags & GSS_C_SEQUENCE_FLAG) ret |= ASC_RET_SEQUENCE_DETECT;
+    if (flags & GSS_C_CONF_FLAG)     ret |= ASC_RET_CONFIDENTIALITY;
+    if (flags & GSS_C_INTEG_FLAG)    ret |= ASC_RET_INTEGRITY;
+    if (flags & GSS_C_ANON_FLAG)     ret |= ASC_RET_NULL_SESSION;
+    if (flags & GSS_C_DCE_STYLE)     ret |= ASC_RET_USED_DCE_STYLE;
+    if (flags & GSS_C_IDENTIFY_FLAG) ret |= ASC_RET_IDENTIFY;
+    return ret;
+}
+
+NTSTATUS CDECL accept_context( LSA_SEC_HANDLE credential, LSA_SEC_HANDLE context, SecBufferDesc *input,
+                               LSA_SEC_HANDLE *new_context, SecBufferDesc *output, ULONG *context_attr,
+                               TimeStamp *expiry )
+{
+    OM_uint32 ret, minor_status, ret_flags = 0, expiry_time;
+    gss_cred_id_t cred_handle = credhandle_sspi_to_gss( credential );
+    gss_ctx_id_t ctx_handle = ctxhandle_sspi_to_gss( context );
+    gss_buffer_desc input_token, output_token;
+    int idx;
+
+    if (!input) input_token.length = 0;
+    else
+    {
+        if ((idx = get_buffer_index( input, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+        input_token.length = input->pBuffers[idx].cbBuffer;
+        input_token.value  = input->pBuffers[idx].pvBuffer;
+    }
+
+    if ((idx = get_buffer_index( output, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+    output_token.length = 0;
+    output_token.value  = NULL;
+
+    ret = pgss_accept_sec_context( &minor_status, &ctx_handle, cred_handle, &input_token, GSS_C_NO_CHANNEL_BINDINGS,
+                                   NULL, NULL, &output_token, &ret_flags, &expiry_time, NULL );
+    TRACE( "gss_accept_sec_context returned %08x minor status %08x ret_flags %08x\n", ret, minor_status, ret_flags );
+    if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
+    if (ret == GSS_S_COMPLETE || ret == GSS_S_CONTINUE_NEEDED)
+    {
+        if (output_token.length > output->pBuffers[idx].cbBuffer) /* FIXME: check if larger buffer exists */
+        {
+            TRACE( "buffer too small %lu > %u\n", (SIZE_T)output_token.length, output->pBuffers[idx].cbBuffer );
+            pgss_release_buffer( &minor_status, &output_token );
+            pgss_delete_sec_context( &minor_status, &ctx_handle, GSS_C_NO_BUFFER );
+            return SEC_E_BUFFER_TOO_SMALL;
+        }
+        output->pBuffers[idx].cbBuffer = output_token.length;
+        memcpy( output->pBuffers[idx].pvBuffer, output_token.value, output_token.length );
+        pgss_release_buffer( &minor_status, &output_token );
+
+        ctxhandle_gss_to_sspi( ctx_handle, new_context );
+        if (context_attr) *context_attr = flags_gss_to_asc_ret( ret_flags );
+        expirytime_gss_to_sspi( expiry_time, expiry );
+    }
+
+    return status_gss_to_sspi( ret );
+}
+
 static NTSTATUS init_creds( const char *user_at_domain, const char *password )
 {
     krb5_context ctx;
@@ -498,6 +560,7 @@ static NTSTATUS CDECL initialize_context( LSA_SEC_HANDLE credential, LSA_SEC_HAN
 
 static const struct krb5_funcs funcs =
 {
+    accept_context,
     acquire_credentials_handle,
     delete_context,
     free_credentials_handle,
