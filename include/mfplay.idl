@@ -22,13 +22,15 @@ import "evr.idl";
 
 interface IMFNetCredential;
 
+typedef UINT32 MFP_CREATION_OPTIONS;
+
 typedef [v1_enum] enum _MFP_CREATION_OPTIONS
 {
     MFP_OPTION_NONE = 0,
     MFP_OPTION_FREE_THREADED_CALLBACK = 0x1,
     MFP_OPTION_NO_MMCSS = 0x2,
     MFP_OPTION_NO_REMOTE_DESKTOP_OPTIMIZATION = 0x4,
-} MFP_CREATION_OPTIONS;
+} _MFP_CREATION_OPTIONS;
 
 typedef [v1_enum] enum MFP_MEDIAPLAYER_STATE
 {
@@ -179,6 +181,21 @@ typedef struct MFP_ACQUIRE_USER_CREDENTIAL_EVENT
     MFP_CREDENTIAL_FLAGS flags;
     IMFNetCredential *pCredential;
 } MFP_ACQUIRE_USER_CREDENTIAL_EVENT;
+
+cpp_quote("#define __MFP_CAST_EVENT(hdr, tag)                 (((hdr)->eEventType == MFP_EVENT_TYPE_##tag) ? (MFP_##Tag##_EVENT *)(hdr) : NULL)")
+cpp_quote("#define MFP_GET_PLAY_EVENT(hdr)                    __MFP_CAST_EVENT(hdr, PLAY)")
+cpp_quote("#define MFP_GET_PAUSE_EVENT(hdr)                   __MFP_CAST_EVENT(hdr, PAUSE)")
+cpp_quote("#define MFP_GET_STOP_EVENT(hdr)                    __MFP_CAST_EVENT(hdr, STOP)")
+cpp_quote("#define MFP_GET_POSITION_SET_EVENT(hdr)            __MFP_CAST_EVENT(hdr, POSITION_SET)")
+cpp_quote("#define MFP_GET_RATE_SET_EVENT(hdr)                __MFP_CAST_EVENT(hdr, RATE_SET)")
+cpp_quote("#define MFP_GET_MEDIAITEM_CREATED_EVENT(hdr)       __MFP_CAST_EVENT(hdr, MEDIAITEM_CREATED)")
+cpp_quote("#define MFP_GET_MEDIAITEM_SET_EVENT(hdr)           __MFP_CAST_EVENT(hdr, MEDIAITEM_SET)")
+cpp_quote("#define MFP_GET_FRAME_STEP_EVENT(hdr)              __MFP_CAST_EVENT(hdr, FRAME_STEP)")
+cpp_quote("#define MFP_GET_MEDIAITEM_CLEARED_EVENT(hdr)       __MFP_CAST_EVENT(hdr, MEDIAITEM_CLEARED)")
+cpp_quote("#define MFP_GET_MF_EVENT(hdr)                      __MFP_CAST_EVENT(hdr, MF)")
+cpp_quote("#define MFP_GET_ERROR_EVENT(hdr)                   __MFP_CAST_EVENT(hdr, ERROR)")
+cpp_quote("#define MFP_GET_PLAYBACK_ENDED_EVENT(hdr)          __MFP_CAST_EVENT(hdr, PLAYBACK_ENDED)")
+cpp_quote("#define MFP_GET_ACQUIRE_USER_CREDENTIAL_EVENT(hdr) __MFP_CAST_EVENT(hdr, ACQUIRE_USER_CREDENTIAL)")
 
 [
     object,
