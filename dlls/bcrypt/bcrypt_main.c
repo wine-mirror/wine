@@ -1240,24 +1240,6 @@ static NTSTATUS key_symmetric_decrypt( struct key *key, UCHAR *input, ULONG inpu
     return status;
 }
 
-static NTSTATUS key_asymmetric_decrypt( struct key *key, UCHAR *input, ULONG input_len, UCHAR *output,
-        ULONG output_len, ULONG *ret_len )
-{
-    NTSTATUS status;
-
-    if (!(status = key_funcs->key_asymmetric_decrypt( key, input, input_len, output, &output_len )))
-        *ret_len = output_len;
-
-    return status;
-}
-
-static NTSTATUS key_decrypt( struct key *key, UCHAR *input, ULONG input_len, void *padding, UCHAR *iv,
-                             ULONG iv_len, UCHAR *output, ULONG output_len, ULONG *ret_len, ULONG flags )
-{
-    return key_is_symmetric( key ) ? key_symmetric_decrypt( key, input, input_len, padding, iv, iv_len,
-            output, output_len, ret_len, flags ) : key_asymmetric_decrypt( key, input, input_len, output, output_len, ret_len );
-}
-
 static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYPT_KEY_HANDLE *ret_key, UCHAR *input,
                                  ULONG input_len )
 {
@@ -1733,6 +1715,23 @@ NTSTATUS WINAPI BCryptEncrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
     return key_encrypt( key, input, input_len, padding, iv, iv_len, output, output_len, ret_len, flags );
 }
 
+static NTSTATUS key_asymmetric_decrypt( struct key *key, UCHAR *input, ULONG input_len, UCHAR *output,
+                                        ULONG output_len, ULONG *ret_len )
+{
+    NTSTATUS status;
+    if (!(status = key_funcs->key_asymmetric_decrypt( key, input, input_len, output, &output_len )))
+        *ret_len = output_len;
+    return status;
+}
+
+static NTSTATUS key_decrypt( struct key *key, UCHAR *input, ULONG input_len, void *padding, UCHAR *iv,
+                             ULONG iv_len, UCHAR *output, ULONG output_len, ULONG *ret_len, ULONG flags )
+{
+    if (key_is_symmetric( key ))
+        return key_symmetric_decrypt( key, input, input_len, padding, iv, iv_len, output, output_len, ret_len, flags );
+    return key_asymmetric_decrypt( key, input, input_len, output, output_len, ret_len );
+}
+
 NTSTATUS WINAPI BCryptDecrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG input_len, void *padding, UCHAR *iv,
                                ULONG iv_len, UCHAR *output, ULONG output_len, ULONG *ret_len, ULONG flags )
 {
@@ -1742,11 +1741,6 @@ NTSTATUS WINAPI BCryptDecrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
            output_len, ret_len, flags );
 
     if (!key || key->hdr.magic != MAGIC_KEY) return STATUS_INVALID_HANDLE;
-    if (!key_is_symmetric( key ))
-    {
-        FIXME( "decryption with asymmetric keys not yet supported\n" );
-        return STATUS_NOT_IMPLEMENTED;
-    }
     if (flags & ~BCRYPT_BLOCK_PADDING)
     {
         FIXME( "flags %08x not supported\n", flags );
