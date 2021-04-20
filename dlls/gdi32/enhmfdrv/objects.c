@@ -285,6 +285,7 @@ HFONT CDECL EMFDRV_SelectFont( PHYSDEV dev, HFONT hFont, UINT *aa_flags )
     int i;
 
     if (physDev->restoring) goto done;  /* don't output SelectObject records during RestoreDC */
+    if (physDev->modifying_transform) goto done; /* don't output SelectObject records when modifying the world transform */
 
     /* If the object is a stock font object, do not need to create it.
      * See definitions in  wingdi.h for range of stock fonts.
@@ -370,6 +371,7 @@ HPEN CDECL EMFDRV_SelectPen(PHYSDEV dev, HPEN hPen, const struct brush_pattern *
     int i;
 
     if (physDev->restoring) return hPen;  /* don't output SelectObject records during RestoreDC */
+    if (physDev->modifying_transform) return hPen; /* don't output SelectObject records when modifying the world transform */
 
     /* If the object is a stock pen object, do not need to create it.
      * See definitions in  wingdi.h for range of stock pens.

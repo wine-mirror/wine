@@ -5060,7 +5060,6 @@ static void test_emf_text_extents(void)
     ok(ret, "GetTextExtentPoint32W failed, error %d\n", GetLastError());
     ret = GetTextExtentPoint32W(emf_dc, L"W", 1, &size2);
     ok(ret, "GetTextExtentPoint32W failed, error %d\n", GetLastError());
-todo_wine
     ok(size2.cx == size.cx && size2.cy == size.cy, "Expected size %dx%d, got %dx%d\n",
        size.cx, size.cy, size2.cx, size2.cy);
 

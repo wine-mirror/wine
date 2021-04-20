@@ -41,6 +41,7 @@ typedef struct
     HBRUSH     dc_brush;
     HPEN       dc_pen;
     INT        restoring;          /* RestoreDC counter */
+    INT        modifying_transform;/* Counter for functions that can change world transform */
     BOOL       path;
     INT        dev_caps[COLORMGMTCAPS + 1];
 } EMFDRV_PDEVICE;
