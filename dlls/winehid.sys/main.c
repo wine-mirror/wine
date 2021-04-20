@@ -68,6 +68,14 @@ static NTSTATUS WINAPI internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
     }
 }
 
+static NTSTATUS WINAPI driver_pnp(DEVICE_OBJECT *device, IRP *irp)
+{
+    HID_DEVICE_EXTENSION *ext = device->DeviceExtension;
+
+    IoSkipCurrentIrpStackLocation(irp);
+    return IoCallDriver(ext->NextDeviceObject, irp);
+}
+
 static NTSTATUS WINAPI add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *device)
 {
     TRACE("(%p, %p)\n", driver, device);
@@ -81,6 +89,7 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
     TRACE("(%p, %s)\n", driver, debugstr_w(path->Buffer));
 
     driver->MajorFunction[IRP_MJ_INTERNAL_DEVICE_CONTROL] = internal_ioctl;
+    driver->MajorFunction[IRP_MJ_PNP] = driver_pnp;
     driver->DriverExtension->AddDevice = add_device;
 
     memset(&registration, 0, sizeof(registration));
