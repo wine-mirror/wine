@@ -2418,8 +2418,6 @@ struct wined3d_sampler * __cdecl wined3d_device_get_ps_sampler(const struct wine
 HRESULT __cdecl wined3d_device_get_raster_status(const struct wined3d_device *device,
         UINT swapchain_idx, struct wined3d_raster_status *raster_status);
 DWORD __cdecl wined3d_device_get_render_state(const struct wined3d_device *device, enum wined3d_render_state state);
-struct wined3d_rendertarget_view * __cdecl wined3d_device_get_rendertarget_view(const struct wined3d_device *device,
-        unsigned int view_idx);
 BOOL __cdecl wined3d_device_get_software_vertex_processing(const struct wined3d_device *device);
 struct wined3d_state * __cdecl wined3d_device_get_state(struct wined3d_device *device);
 struct wined3d_buffer * __cdecl wined3d_device_get_stream_output(struct wined3d_device *device,
@@ -2564,6 +2562,8 @@ struct wined3d_depth_stencil_state * __cdecl wined3d_device_context_get_depth_st
         const struct wined3d_device_context *context, unsigned int *stencil_ref);
 struct wined3d_rasterizer_state * __cdecl wined3d_device_context_get_rasterizer_state(
         struct wined3d_device_context *context);
+struct wined3d_rendertarget_view * __cdecl wined3d_device_context_get_rendertarget_view(
+        const struct wined3d_device_context *context, unsigned int view_idx);
 struct wined3d_sampler * __cdecl wined3d_device_context_get_sampler(const struct wined3d_device_context *context,
         enum wined3d_shader_type shader_type, unsigned int idx);
 void __cdecl wined3d_device_context_get_scissor_rects(const struct wined3d_device_context *context,

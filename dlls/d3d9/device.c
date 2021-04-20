@@ -1151,7 +1151,7 @@ static HRESULT d3d9_device_reset(struct d3d9_device *device,
             }
         }
 
-        rtv = wined3d_device_get_rendertarget_view(device->wined3d_device, 0);
+        rtv = wined3d_device_context_get_rendertarget_view(device->immediate_context, 0);
         device->render_targets[0] = wined3d_rendertarget_view_get_sub_resource_parent(rtv);
         for (i = 1; i < ARRAY_SIZE(device->render_targets); ++i)
             device->render_targets[i] = NULL;
@@ -2060,7 +2060,7 @@ static HRESULT WINAPI d3d9_device_GetRenderTarget(IDirect3DDevice9Ex *iface, DWO
     }
 
     wined3d_mutex_lock();
-    if ((wined3d_rtv = wined3d_device_get_rendertarget_view(device->wined3d_device, idx)))
+    if ((wined3d_rtv = wined3d_device_context_get_rendertarget_view(device->immediate_context, idx)))
     {
         /* We want the sub resource parent here, since the view itself may be
          * internal to wined3d and may not have a parent. */
@@ -4852,7 +4852,7 @@ HRESULT device_init(struct d3d9_device *device, struct d3d9 *parent, struct wine
      * generation). */
     wined3d_mutex_lock();
     device->render_targets[0] = wined3d_rendertarget_view_get_sub_resource_parent(
-            wined3d_device_get_rendertarget_view(device->wined3d_device, 0));
+            wined3d_device_context_get_rendertarget_view(device->immediate_context, 0));
     wined3d_mutex_unlock();
 
     IDirect3D9Ex_AddRef(&parent->IDirect3D9Ex_iface);

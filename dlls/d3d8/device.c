@@ -1505,7 +1505,7 @@ static HRESULT WINAPI d3d8_device_SetRenderTarget(IDirect3DDevice8 *iface,
         /* If no render target is passed in check the size against the current RT */
         if (!render_target)
         {
-            if (!(original_rtv = wined3d_device_get_rendertarget_view(device->wined3d_device, 0)))
+            if (!(original_rtv = wined3d_device_context_get_rendertarget_view(device->immediate_context, 0)))
             {
                 wined3d_mutex_unlock();
                 return D3DERR_NOTFOUND;
@@ -1570,7 +1570,7 @@ static HRESULT WINAPI d3d8_device_GetRenderTarget(IDirect3DDevice8 *iface, IDire
         return D3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();
-    if ((wined3d_rtv = wined3d_device_get_rendertarget_view(device->wined3d_device, 0)))
+    if ((wined3d_rtv = wined3d_device_context_get_rendertarget_view(device->immediate_context, 0)))
     {
         /* We want the sub resource parent here, since the view itself may be
          * internal to wined3d and may not have a parent. */
@@ -1737,7 +1737,7 @@ static HRESULT WINAPI d3d8_device_SetViewport(IDirect3DDevice8 *iface, const D3D
     TRACE("iface %p, viewport %p.\n", iface, viewport);
 
     wined3d_mutex_lock();
-    if (!(rtv = wined3d_device_get_rendertarget_view(device->wined3d_device, 0)))
+    if (!(rtv = wined3d_device_context_get_rendertarget_view(device->immediate_context, 0)))
     {
         wined3d_mutex_unlock();
         return D3DERR_NOTFOUND;

@@ -1343,7 +1343,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface1_Flip(IDirectDrawSurface *
     if (dst_impl->sub_resource_idx)
         ERR("Invalid sub-resource index %u on surface %p.\n", dst_impl->sub_resource_idx, dst_impl);
     texture = dst_impl->wined3d_texture;
-    rtv = wined3d_device_get_rendertarget_view(dst_impl->ddraw->wined3d_device, 0);
+    rtv = wined3d_device_context_get_rendertarget_view(dst_impl->ddraw->immediate_context, 0);
     dst_ddraw_texture = wined3d_texture_get_parent(dst_impl->wined3d_texture);
     texture_memory = dst_ddraw_texture->texture_memory;
     draw_texture = dst_impl->draw_texture;

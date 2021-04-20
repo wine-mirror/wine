@@ -5391,21 +5391,21 @@ void CDECL wined3d_device_context_issue_query(struct wined3d_device_context *con
         query->state = QUERY_SIGNALLED;
 }
 
-struct wined3d_rendertarget_view * CDECL wined3d_device_get_rendertarget_view(const struct wined3d_device *device,
-        unsigned int view_idx)
+struct wined3d_rendertarget_view * CDECL wined3d_device_context_get_rendertarget_view(
+        const struct wined3d_device_context *context, unsigned int view_idx)
 {
     unsigned int max_rt_count;
 
-    TRACE("device %p, view_idx %u.\n", device, view_idx);
+    TRACE("context %p, view_idx %u.\n", context, view_idx);
 
-    max_rt_count = device->adapter->d3d_info.limits.max_rt_count;
+    max_rt_count = context->device->adapter->d3d_info.limits.max_rt_count;
     if (view_idx >= max_rt_count)
     {
         WARN("Only %u render targets are supported.\n", max_rt_count);
         return NULL;
     }
 
-    return device->cs->c.state->fb.render_targets[view_idx];
+    return context->state->fb.render_targets[view_idx];
 }
 
 struct wined3d_rendertarget_view * CDECL wined3d_device_get_depth_stencil_view(const struct wined3d_device *device)

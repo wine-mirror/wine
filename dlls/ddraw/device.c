@@ -3434,7 +3434,7 @@ static void d3d_device_sync_rendertarget(struct d3d_device *device)
     if (device->hardware_device)
         return;
 
-    if ((rtv = wined3d_device_get_rendertarget_view(device->wined3d_device, 0)))
+    if ((rtv = wined3d_device_context_get_rendertarget_view(device->immediate_context, 0)))
         ddraw_surface_get_draw_texture(wined3d_rendertarget_view_get_parent(rtv), DDRAW_SURFACE_RW);
 
     if ((rtv = wined3d_device_get_depth_stencil_view(device->wined3d_device)))
@@ -5359,7 +5359,7 @@ static HRESULT d3d_device7_SetViewport(IDirect3DDevice7 *iface, D3DVIEWPORT7 *vi
         return DDERR_INVALIDPARAMS;
 
     wined3d_mutex_lock();
-    if (!(rtv = wined3d_device_get_rendertarget_view(device->wined3d_device, 0)))
+    if (!(rtv = wined3d_device_context_get_rendertarget_view(device->immediate_context, 0)))
     {
         wined3d_mutex_unlock();
         return DDERR_INVALIDCAPS;
