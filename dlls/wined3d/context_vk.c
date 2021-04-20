@@ -921,6 +921,9 @@ void wined3d_context_vk_destroy_bo(struct wined3d_context_vk *context_vk, const 
     if (bo->map_ptr)
         VK_CALL(vkUnmapMemory(device_vk->vk_device, bo->vk_memory));
     wined3d_context_vk_destroy_vk_memory(context_vk, bo->vk_memory, bo->command_buffer_id);
+
+    if (bo->command_buffer_id == context_vk->current_command_buffer.id)
+        context_vk->retired_bo_size += bo->size;
 }
 
 void wined3d_context_vk_poll_command_buffers(struct wined3d_context_vk *context_vk)
@@ -1509,9 +1512,14 @@ VkCommandBuffer wined3d_context_vk_get_command_buffer(struct wined3d_context_vk 
     buffer = &context_vk->current_command_buffer;
     if (buffer->vk_command_buffer)
     {
-        TRACE("Returning existing command buffer %p with id 0x%s.\n",
-                buffer->vk_command_buffer, wine_dbgstr_longlong(buffer->id));
-        return buffer->vk_command_buffer;
+        if (context_vk->retired_bo_size > WINED3D_RETIRED_BO_SIZE_THRESHOLD)
+            wined3d_context_vk_submit_command_buffer(context_vk, 0, NULL, NULL, 0, NULL);
+        else
+        {
+            TRACE("Returning existing command buffer %p with id 0x%s.\n",
+                    buffer->vk_command_buffer, wine_dbgstr_longlong(buffer->id));
+            return buffer->vk_command_buffer;
+        }
     }
 
     command_buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -1628,6 +1636,7 @@ void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context
         context_vk->completed_command_buffer_id = 0;
         buffer->id = 1;
     }
+    context_vk->retired_bo_size = 0;
     wined3d_context_vk_cleanup_resources(context_vk);
 }
 

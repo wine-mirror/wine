@@ -2549,6 +2549,7 @@ struct wined3d_context_vk
     VkCommandPool vk_command_pool;
     struct wined3d_command_buffer_vk current_command_buffer;
     uint64_t completed_command_buffer_id;
+    VkDeviceSize retired_bo_size;
 
     struct
     {
@@ -3921,6 +3922,7 @@ struct wined3d_null_views_vk
 #define WINED3D_ALLOCATOR_CHUNK_ORDER_COUNT 15
 #define WINED3D_ALLOCATOR_MIN_BLOCK_SIZE    (WINED3D_ALLOCATOR_CHUNK_SIZE >> (WINED3D_ALLOCATOR_CHUNK_ORDER_COUNT - 1))
 #define WINED3D_SLAB_BO_MIN_OBJECT_ALIGN    16
+#define WINED3D_RETIRED_BO_SIZE_THRESHOLD   (64 * 1024 * 1024)
 
 struct wined3d_allocator_chunk
 {
