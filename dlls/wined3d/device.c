@@ -1876,11 +1876,12 @@ void CDECL wined3d_device_set_vertex_declaration(struct wined3d_device *device,
     wined3d_device_context_set_vertex_declaration(&device->cs->c, declaration);
 }
 
-struct wined3d_vertex_declaration * CDECL wined3d_device_get_vertex_declaration(const struct wined3d_device *device)
+struct wined3d_vertex_declaration * CDECL wined3d_device_context_get_vertex_declaration(
+        const struct wined3d_device_context *context)
 {
-    TRACE("device %p.\n", device);
+    TRACE("context %p.\n", context);
 
-    return device->cs->c.state->vertex_declaration;
+    return context->state->vertex_declaration;
 }
 
 void CDECL wined3d_device_context_set_shader(struct wined3d_device_context *context,
