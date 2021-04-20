@@ -1524,12 +1524,12 @@ void CDECL wined3d_device_set_index_buffer(struct wined3d_device *device,
     wined3d_device_context_set_index_buffer(&device->cs->c, buffer, format_id, offset);
 }
 
-struct wined3d_buffer * CDECL wined3d_device_get_index_buffer(const struct wined3d_device *device,
+struct wined3d_buffer * CDECL wined3d_device_context_get_index_buffer(const struct wined3d_device_context *context,
         enum wined3d_format_id *format, unsigned int *offset)
 {
-    const struct wined3d_state *state = device->cs->c.state;
+    const struct wined3d_state *state = context->state;
 
-    TRACE("device %p, format %p, offset %p.\n", device, format, offset);
+    TRACE("context %p, format %p, offset %p.\n", context, format, offset);
 
     *format = state->index_format;
     if (offset)
