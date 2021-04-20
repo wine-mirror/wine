@@ -368,9 +368,10 @@ static BOOL query_supported_server_ctrls( LDAP *ld )
 {
     char *attrs[] = { (char *)"supportedControl", NULL };
     void *res, *entry;
+    struct bervalU **ctrls = SERVER_CTRLS(ld);
     ULONG ret;
 
-    if (SERVER_CTRLS(ld)) return TRUE;
+    if (ctrls) return TRUE;
 
     ret = map_error( ldap_funcs->fn_ldap_search_ext_s( CTX(ld), (char *)"", LDAP_SCOPE_BASE, (char *)"(objectClass=*)",
                                                        attrs, FALSE, NULL, NULL, NULL, 0, &res ) );
@@ -380,17 +381,14 @@ static BOOL query_supported_server_ctrls( LDAP *ld )
     if (entry)
     {
         ULONG count, i;
-        struct bervalU **ctrls = SERVER_CTRLS(ld);
-
-        *(struct bervalU ***)&SERVER_CTRLS(ld) = ldap_funcs->fn_ldap_get_values_len( CTX(ld), entry, attrs[0] );
-        count = ldap_funcs->fn_ldap_count_values_len( SERVER_CTRLS(ld) );
-        for (i = 0; i < count; i++)
-            TRACE("%u: %s\n", i, debugstr_an( ctrls[i]->bv_val, ctrls[i]->bv_len ));
+        ctrls = ldap_funcs->fn_ldap_get_values_len( CTX(ld), entry, attrs[0] );
+        count = ldap_funcs->fn_ldap_count_values_len( ctrls );
+        for (i = 0; i < count; i++) TRACE("%u: %s\n", i, debugstr_an( ctrls[i]->bv_val, ctrls[i]->bv_len ));
+        *(struct bervalU ***)&SERVER_CTRLS(ld) = ctrls;
     }
 
     ldap_funcs->fn_ldap_msgfree( res );
-
-    return SERVER_CTRLS(ld) != NULL;
+    return ctrls != NULL;
 }
 
 static BOOL is_supported_server_ctrls( LDAP *ld, LDAPControlU **ctrls )
