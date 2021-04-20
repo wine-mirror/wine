@@ -27,6 +27,94 @@
 #include "enhmetafiledrv.h"
 #include "wine/debug.h"
 
+BOOL CDECL EMFDRV_AlphaBlend( PHYSDEV dev_dst, struct bitblt_coords *dst,
+                              PHYSDEV dev_src, struct bitblt_coords *src, BLENDFUNCTION func )
+{
+    unsigned char src_buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
+    BITMAPINFO *src_info = (BITMAPINFO *)src_buffer;
+    UINT bits_size, bmi_size, emr_size, size, bpp;
+    struct gdi_image_bits bits;
+    EMRALPHABLEND *emr;
+    BITMAPINFO *bmi;
+    DC *dc_src;
+    DWORD err;
+    BOOL ret = FALSE;
+
+    dc_src = get_physdev_dc(dev_src);
+    dev_src = GET_DC_PHYSDEV(dc_src, pGetImage);
+    err = dev_src->funcs->pGetImage(dev_src, src_info, &bits, src);
+    if (err)
+    {
+        SetLastError(err);
+        return FALSE;
+    }
+
+    bpp = src_info->bmiHeader.biBitCount;
+    if (bpp <= 8)
+        bmi_size = sizeof(BITMAPINFOHEADER) + (1 << bpp) * sizeof(RGBQUAD);
+    else if (bpp == 16 || bpp == 32)
+        bmi_size = sizeof(BITMAPINFOHEADER) + 3 * sizeof(RGBQUAD);
+    else
+        bmi_size = sizeof(BITMAPINFOHEADER);
+    emr_size = sizeof(EMRALPHABLEND);
+    bits_size = src_info->bmiHeader.biSizeImage;
+    size = emr_size + bmi_size + bits_size;
+
+    emr = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!emr) goto err;
+
+    emr->emr.iType = EMR_ALPHABLEND;
+    emr->emr.nSize = size;
+    emr->rclBounds.left = dst->log_x;
+    emr->rclBounds.top = dst->log_y;
+    emr->rclBounds.right = dst->log_x + dst->log_width - 1;
+    emr->rclBounds.bottom = dst->log_y + dst->log_height - 1;
+    emr->xDest = dst->log_x;
+    emr->yDest = dst->log_y;
+    emr->cxDest = dst->log_width;
+    emr->cyDest = dst->log_height;
+    emr->xSrc = src->log_x;
+    emr->ySrc = src->log_y;
+    emr->cxSrc = src->log_width;
+    emr->cySrc = src->log_height;
+    emr->dwRop = *(DWORD *)&func;
+    GetTransform(dev_src->hdc, 0x204, &emr->xformSrc);
+    emr->crBkColorSrc = GetBkColor(dev_src->hdc);
+    emr->iUsageSrc = DIB_RGB_COLORS;
+    emr->offBmiSrc = emr_size;
+    emr->cbBmiSrc = bmi_size;
+    emr->offBitsSrc = emr_size + bmi_size;
+    emr->cbBitsSrc = bits_size;
+
+    bmi = (BITMAPINFO *)((BYTE *)emr + emr->offBmiSrc);
+    memcpy(bmi, src_info, bmi_size);
+    memcpy((BYTE *)emr + emr->offBitsSrc, bits.ptr, bits_size);
+
+    bmi->bmiHeader.biClrUsed = 0;
+    if (bmi->bmiHeader.biCompression == BI_RGB && bmi->bmiHeader.biBitCount == 16)
+    {
+        bmi->bmiHeader.biCompression = BI_BITFIELDS;
+        ((DWORD *)bmi->bmiColors)[0] = 0xf800;
+        ((DWORD *)bmi->bmiColors)[1] = 0x07e0;
+        ((DWORD *)bmi->bmiColors)[2] = 0x001f;
+    }
+    else if (bmi->bmiHeader.biCompression == BI_RGB && bmi->bmiHeader.biBitCount == 32)
+    {
+        bmi->bmiHeader.biCompression = BI_BITFIELDS;
+        ((DWORD *)bmi->bmiColors)[0] = 0xff0000;
+        ((DWORD *)bmi->bmiColors)[1] = 0x00ff00;
+        ((DWORD *)bmi->bmiColors)[2] = 0x0000ff;
+    }
+
+    ret = EMFDRV_WriteRecord(dev_dst, (EMR *)emr);
+    if (ret) EMFDRV_UpdateBBox(dev_dst, &emr->rclBounds);
+
+err:
+    HeapFree(GetProcessHeap(), 0, emr);
+    if (bits.free) bits.free(&bits);
+    return ret;
+}
+
 BOOL CDECL EMFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 {
     EMRBITBLT emr;

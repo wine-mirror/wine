@@ -5001,15 +5001,13 @@ static void test_emf_AlphaBlend(void)
         ret = BitBlt(hdc_bitmap, 0, 0, bitmap_width, bitmap_height, 0, 0, 0, BLACKNESS);
         ok(ret, "Test %d: BitBlt failed, error %d\n", test_idx, GetLastError());
         ret = GdiAlphaBlend(hdc_emf, 0, 0, bitmap_width, bitmap_height, hdc_bitmap, 0, 0, 400, 400, blend);
-        todo_wine
         ok(ret, "Test %d: GdiAlphaBlend failed, error %d\n", test_idx, GetLastError());
 
         hemf = CloseEnhMetaFile(hdc_emf);
         ok(!!hemf, "Test %d: CloseEnhMetaFile failed, %d\n", test_idx, GetLastError());
 
         sprintf(comment, "test_emf_AlphaBlend() test %d", test_idx);
-        if (ret)
-            ret = compare_emf_bits(hemf, tests[test_idx].bits, tests[test_idx].bits_count, comment, FALSE);
+        ret = compare_emf_bits(hemf, tests[test_idx].bits, tests[test_idx].bits_count, comment, FALSE);
         if (ret)
         {
             dump_emf_bits(hemf, comment);
