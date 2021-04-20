@@ -4459,11 +4459,11 @@ void CDECL wined3d_device_set_predication(struct wined3d_device *device,
     wined3d_device_context_set_predication(&device->cs->c, predicate, value);
 }
 
-struct wined3d_query * CDECL wined3d_device_get_predication(struct wined3d_device *device, BOOL *value)
+struct wined3d_query * CDECL wined3d_device_context_get_predication(struct wined3d_device_context *context, BOOL *value)
 {
-    struct wined3d_state *state = device->cs->c.state;
+    struct wined3d_state *state = context->state;
 
-    TRACE("device %p, value %p.\n", device, value);
+    TRACE("context %p, value %p.\n", context, value);
 
     if (value)
         *value = state->predicate_value;
