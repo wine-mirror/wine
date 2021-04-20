@@ -15292,7 +15292,7 @@ msgstr ""
 #: programs/reg/reg.rc:172
 #, fuzzy
 #| msgid "Error: Invalid key name\n"
-msgid "reg: Invalid system key [%1]\n"
+msgid "reg: Invalid system key\n"
 msgstr "خطأ : اسم المفتاح غير سليم\n"
 
 #: programs/reg/reg.rc:173

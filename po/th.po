@@ -14334,8 +14334,9 @@ msgid ""
 msgstr ""
 
 #: programs/reg/reg.rc:172
-msgid "reg: Invalid system key [%1]\n"
-msgstr ""
+#, fuzzy
+msgid "reg: Invalid system key\n"
+msgstr "แฟ้มตํารา (*.txt).\n"
 
 #: programs/reg/reg.rc:173
 #, fuzzy

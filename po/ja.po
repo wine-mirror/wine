@@ -14545,7 +14545,9 @@ msgid ""
 msgstr ""
 
 #: programs/reg/reg.rc:172
-msgid "reg: Invalid system key [%1]\n"
+#, fuzzy
+#| msgid "reg: Invalid system key [%1]\n"
+msgid "reg: Invalid system key\n"
 msgstr "reg: システム キーが無効です [%1]\n"
 
 #: programs/reg/reg.rc:173
