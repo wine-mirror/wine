@@ -1090,8 +1090,8 @@ static NTSTATUS key_export( struct key *key, const WCHAR *type, UCHAR *output, U
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS key_encrypt( struct key *key,  UCHAR *input, ULONG input_len, void *padding, UCHAR *iv,
-                             ULONG iv_len, UCHAR *output, ULONG output_len, ULONG *ret_len, ULONG flags )
+static NTSTATUS key_symmetric_encrypt( struct key *key,  UCHAR *input, ULONG input_len, void *padding, UCHAR *iv,
+                                       ULONG iv_len, UCHAR *output, ULONG output_len, ULONG *ret_len, ULONG flags )
 {
     ULONG bytes_left = input_len;
     UCHAR *buf, *src, *dst;
@@ -1462,6 +1462,7 @@ NTSTATUS WINAPI BCryptGenerateSymmetricKey( BCRYPT_ALG_HANDLE algorithm, BCRYPT_
     if (!(block_size = get_block_size( alg ))) return STATUS_INVALID_PARAMETER;
 
     if (!(key = heap_alloc_zero( sizeof(*key) ))) return STATUS_NO_MEMORY;
+    InitializeCriticalSection( &key->u.s.cs );
     key->hdr.magic      = MAGIC_KEY;
     key->alg_id         = alg->id;
     key->u.s.mode       = alg->mode;
@@ -1570,6 +1571,7 @@ static NTSTATUS key_duplicate( struct key *key_orig, struct key *key_copy )
         key_copy->u.s.block_size = key_orig->u.s.block_size;
         key_copy->u.s.secret     = buffer;
         key_copy->u.s.secret_len = key_orig->u.s.secret_len;
+        InitializeCriticalSection( &key_copy->u.s.cs );
     }
     else
     {
@@ -1595,6 +1597,7 @@ static void key_destroy( struct key *key )
         key_funcs->key_symmetric_destroy( key );
         heap_free( key->u.s.vector );
         heap_free( key->u.s.secret );
+        DeleteCriticalSection( &key->u.s.cs );
     }
     else
     {
@@ -1696,6 +1699,7 @@ NTSTATUS WINAPI BCryptEncrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
                                ULONG iv_len, UCHAR *output, ULONG output_len, ULONG *ret_len, ULONG flags )
 {
     struct key *key = handle;
+    NTSTATUS ret;
 
     TRACE( "%p, %p, %u, %p, %p, %u, %p, %u, %p, %08x\n", handle, input, input_len, padding, iv, iv_len, output,
            output_len, ret_len, flags );
@@ -1712,15 +1716,10 @@ NTSTATUS WINAPI BCryptEncrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    return key_encrypt( key, input, input_len, padding, iv, iv_len, output, output_len, ret_len, flags );
-}
-
-static NTSTATUS key_decrypt( struct key *key, UCHAR *input, ULONG input_len, void *padding, UCHAR *iv,
-                             ULONG iv_len, UCHAR *output, ULONG output_len, ULONG *ret_len, ULONG flags )
-{
-    if (key_is_symmetric( key ))
-        return key_symmetric_decrypt( key, input, input_len, padding, iv, iv_len, output, output_len, ret_len, flags );
-    return key_funcs->key_asymmetric_decrypt( key, input, input_len, output, output_len, ret_len );
+    EnterCriticalSection( &key->u.s.cs );
+    ret = key_symmetric_encrypt( key, input, input_len, padding, iv, iv_len, output, output_len, ret_len, flags );
+    LeaveCriticalSection( &key->u.s.cs );
+    return ret;
 }
 
 NTSTATUS WINAPI BCryptDecrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG input_len, void *padding, UCHAR *iv,
@@ -1738,7 +1737,16 @@ NTSTATUS WINAPI BCryptDecrypt( BCRYPT_KEY_HANDLE handle, UCHAR *input, ULONG inp
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    return key_decrypt( key, input, input_len, padding, iv, iv_len, output, output_len, ret_len, flags );
+    if (key_is_symmetric( key ))
+    {
+        NTSTATUS ret;
+        EnterCriticalSection( &key->u.s.cs );
+        ret = key_symmetric_decrypt( key, input, input_len, padding, iv, iv_len, output, output_len, ret_len, flags );
+        LeaveCriticalSection( &key->u.s.cs );
+        return ret;
+    }
+
+    return key_funcs->key_asymmetric_decrypt( key, input, input_len, output, output_len, ret_len );
 }
 
 NTSTATUS WINAPI BCryptSetProperty( BCRYPT_HANDLE handle, const WCHAR *prop, UCHAR *value, ULONG size, ULONG flags )
