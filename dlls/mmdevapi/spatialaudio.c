@@ -303,7 +303,9 @@ static HRESULT WINAPI SAORS_GetAvailableDynamicObjectCount(
 {
     SpatialAudioStreamImpl *This = impl_from_ISpatialAudioObjectRenderStream(iface);
     FIXME("(%p)->(%p)\n", This, count);
-    return E_NOTIMPL;
+
+    *count = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI SAORS_GetService(ISpatialAudioObjectRenderStream *iface,
