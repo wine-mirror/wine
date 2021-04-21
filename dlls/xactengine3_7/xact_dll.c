@@ -25,11 +25,30 @@
 #define COBJMACROS
 
 #include "initguid.h"
+#if XACT3_VER < 0x0300
+#include "xact.h"
+#else
 #include "xact3.h"
+#endif
 #include "rpcproxy.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xact3);
+
+#if XACT3_VER < 0x0300
+#define IID_IXACT3Engine IID_IXACTEngine
+#define IXACT3Cue IXACTCue
+#define IXACT3CueVtbl IXACTCueVtbl
+#define IXACT3Engine IXACTEngine
+#define IXACT3EngineVtbl IXACTEngineVtbl
+#define IXACT3Engine_QueryInterface IXACTEngine_QueryInterface
+#define IXACT3SoundBank IXACTSoundBank
+#define IXACT3SoundBankVtbl IXACTSoundBankVtbl
+#define IXACT3Wave IXACTWave
+#define IXACT3WaveVtbl IXACTWaveVtbl
+#define IXACT3WaveBank IXACTWaveBank
+#define IXACT3WaveBankVtbl IXACTWaveBankVtbl
+#endif
 
 static HINSTANCE instance;
 
@@ -84,6 +103,39 @@ static HRESULT WINAPI IXACT3CueImpl_Destroy(IXACT3Cue *iface)
     return S_OK;
 }
 
+#if XACT3_VER < 0x0300
+
+static HRESULT WINAPI IXACT3CueImpl_GetChannelMap(IXACT3Cue *iface,
+        XACTCHANNELMAP *map, DWORD size, DWORD *needed_size)
+{
+    FIXME("(%p)->(%p, %u, %p)\n", iface, map, size, needed_size);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IXACT3CueImpl_SetChannelMap(IXACT3Cue *iface, XACTCHANNELMAP *map)
+{
+    FIXME("(%p)->(%p)\n", iface, map);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IXACT3CueImpl_GetChannelVolume(IXACT3Cue *iface, XACTCHANNELVOLUME *volume)
+{
+    FIXME("(%p)->(%p)\n", iface, volume);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI IXACT3CueImpl_SetChannelVolume(IXACT3Cue *iface, XACTCHANNELVOLUME *volume)
+{
+    FIXME("(%p)->(%p)\n", iface, volume);
+
+    return E_NOTIMPL;
+}
+
+#endif
+
 static HRESULT WINAPI IXACT3CueImpl_SetMatrixCoefficients(IXACT3Cue *iface,
         UINT32 uSrcChannelCount, UINT32 uDstChannelCount,
         float *pMatrixCoefficients)
@@ -136,6 +188,7 @@ static HRESULT WINAPI IXACT3CueImpl_Pause(IXACT3Cue *iface, BOOL fPause)
     return FACTCue_Pause(This->fact_cue, fPause);
 }
 
+#if XACT3_VER >= 0x0205
 static HRESULT WINAPI IXACT3CueImpl_GetProperties(IXACT3Cue *iface,
         XACT_CUE_INSTANCE_PROPERTIES **ppProperties)
 {
@@ -152,7 +205,9 @@ static HRESULT WINAPI IXACT3CueImpl_GetProperties(IXACT3Cue *iface,
     *ppProperties = (XACT_CUE_INSTANCE_PROPERTIES*) fProps;
     return hr;
 }
+#endif
 
+#if XACT3_VER >= 0x0300
 static HRESULT WINAPI IXACT3CueImpl_SetOutputVoices(IXACT3Cue *iface,
         const XAUDIO2_VOICE_SENDS *pSendList)
 {
@@ -170,6 +225,7 @@ static HRESULT WINAPI IXACT3CueImpl_SetOutputVoiceMatrix(IXACT3Cue *iface,
             DestinationChannels, pLevelMatrix);
     return S_OK;
 }
+#endif
 
 static const IXACT3CueVtbl XACT3Cue_Vtbl =
 {
@@ -177,14 +233,24 @@ static const IXACT3CueVtbl XACT3Cue_Vtbl =
     IXACT3CueImpl_Stop,
     IXACT3CueImpl_GetState,
     IXACT3CueImpl_Destroy,
+#if XACT3_VER < 0x0300
+    IXACT3CueImpl_GetChannelMap,
+    IXACT3CueImpl_SetChannelMap,
+    IXACT3CueImpl_GetChannelVolume,
+    IXACT3CueImpl_SetChannelVolume,
+#endif
     IXACT3CueImpl_SetMatrixCoefficients,
     IXACT3CueImpl_GetVariableIndex,
     IXACT3CueImpl_SetVariable,
     IXACT3CueImpl_GetVariable,
     IXACT3CueImpl_Pause,
+#if XACT3_VER >= 0x0205
     IXACT3CueImpl_GetProperties,
+#endif
+#if XACT3_VER >= 0x0300
     IXACT3CueImpl_SetOutputVoices,
     IXACT3CueImpl_SetOutputVoiceMatrix
+#endif
 };
 
 typedef struct _XACT3SoundBankImpl {
@@ -208,6 +274,7 @@ static XACTINDEX WINAPI IXACT3SoundBankImpl_GetCueIndex(IXACT3SoundBank *iface,
     return FACTSoundBank_GetCueIndex(This->fact_soundbank, szFriendlyName);
 }
 
+#if XACT3_VER >= 0x0205
 static HRESULT WINAPI IXACT3SoundBankImpl_GetNumCues(IXACT3SoundBank *iface,
         XACTINDEX *pnNumCues)
 {
@@ -228,6 +295,7 @@ static HRESULT WINAPI IXACT3SoundBankImpl_GetCueProperties(IXACT3SoundBank *ifac
     return FACTSoundBank_GetCueProperties(This->fact_soundbank, nCueIndex,
             (FACTCueProperties*) pProperties);
 }
+#endif
 
 static HRESULT WINAPI IXACT3SoundBankImpl_Prepare(IXACT3SoundBank *iface,
         XACTINDEX nCueIndex, DWORD dwFlags, XACTTIME timeOffset,
@@ -342,14 +410,18 @@ static HRESULT WINAPI IXACT3SoundBankImpl_GetState(IXACT3SoundBank *iface,
 static const IXACT3SoundBankVtbl XACT3SoundBank_Vtbl =
 {
     IXACT3SoundBankImpl_GetCueIndex,
+#if XACT3_VER >= 0x0205
     IXACT3SoundBankImpl_GetNumCues,
     IXACT3SoundBankImpl_GetCueProperties,
+#endif
     IXACT3SoundBankImpl_Prepare,
     IXACT3SoundBankImpl_Play,
     IXACT3SoundBankImpl_Stop,
     IXACT3SoundBankImpl_Destroy,
     IXACT3SoundBankImpl_GetState
 };
+
+#if XACT3_VER >= 0x0205
 
 typedef struct _XACT3WaveImpl {
     IXACT3Wave IXACT3Wave_iface;
@@ -465,6 +537,8 @@ static const IXACT3WaveVtbl XACT3Wave_Vtbl =
     IXACT3WaveImpl_GetProperties
 };
 
+#endif
+
 typedef struct _XACT3WaveBankImpl {
     IXACT3WaveBank IXACT3WaveBank_iface;
 
@@ -487,6 +561,8 @@ static HRESULT WINAPI IXACT3WaveBankImpl_Destroy(IXACT3WaveBank *iface)
     HeapFree(GetProcessHeap(), 0, This);
     return hr;
 }
+
+#if XACT3_VER >= 0x0205
 
 static HRESULT WINAPI IXACT3WaveBankImpl_GetNumWaves(IXACT3WaveBank *iface,
         XACTINDEX *pnNumWaves)
@@ -607,6 +683,8 @@ static HRESULT WINAPI IXACT3WaveBankImpl_Stop(IXACT3WaveBank *iface,
     return FACTWaveBank_Stop(This->fact_wavebank, nWaveIndex, dwFlags);
 }
 
+#endif
+
 static HRESULT WINAPI IXACT3WaveBankImpl_GetState(IXACT3WaveBank *iface,
         DWORD *pdwState)
 {
@@ -620,12 +698,14 @@ static HRESULT WINAPI IXACT3WaveBankImpl_GetState(IXACT3WaveBank *iface,
 static const IXACT3WaveBankVtbl XACT3WaveBank_Vtbl =
 {
     IXACT3WaveBankImpl_Destroy,
+#if XACT3_VER >= 0x0205
     IXACT3WaveBankImpl_GetNumWaves,
     IXACT3WaveBankImpl_GetWaveIndex,
     IXACT3WaveBankImpl_GetWaveProperties,
     IXACT3WaveBankImpl_Prepare,
     IXACT3WaveBankImpl_Play,
     IXACT3WaveBankImpl_Stop,
+#endif
     IXACT3WaveBankImpl_GetState
 };
 
@@ -737,6 +817,8 @@ static HRESULT WINAPI IXACT3EngineImpl_GetRendererDetails(IXACT3Engine *iface,
             nRendererIndex, (FACTRendererDetails*) pRendererDetails);
 }
 
+#if XACT3_VER >= 0x0205
+
 static HRESULT WINAPI IXACT3EngineImpl_GetFinalMixFormat(IXACT3Engine *iface,
         WAVEFORMATEXTENSIBLE *pFinalMixFormat)
 {
@@ -747,6 +829,8 @@ static HRESULT WINAPI IXACT3EngineImpl_GetFinalMixFormat(IXACT3Engine *iface,
     return FACTAudioEngine_GetFinalMixFormat(This->fact_engine,
             (FAudioWaveFormatExtensible*) pFinalMixFormat);
 }
+
+#endif
 
 static void FACTCALL fact_notification_cb(const FACTNotification *notification)
 {
@@ -787,6 +871,7 @@ static HRESULT WINAPI IXACT3EngineImpl_Initialize(IXACT3Engine *iface,
     params.pXAudio2 = NULL;
     params.pMasteringVoice = NULL;
 
+#if XACT3_VER >= 0x0300
     /* FIXME: pXAudio2 and pMasteringVoice are pointers to
      * IXAudio2/IXAudio2MasteringVoice objects. FACT wants pointers to
      * FAudio/FAudioMasteringVoice objects. In Wine's XAudio2 implementation, we
@@ -804,6 +889,7 @@ static HRESULT WINAPI IXACT3EngineImpl_Initialize(IXACT3Engine *iface,
             FIXME("pMasteringVoice parameter not supported!\n");
         }
     }
+#endif
 
     /* Force Windows I/O, do NOT use the FACT default! */
     This->pReadFile = (XACT_READFILE_CALLBACK)
@@ -968,6 +1054,8 @@ static HRESULT WINAPI IXACT3EngineImpl_CreateStreamingWaveBank(IXACT3Engine *ifa
     return S_OK;
 }
 
+#if XACT3_VER >= 0x0205
+
 static HRESULT WINAPI IXACT3EngineImpl_PrepareInMemoryWave(IXACT3Engine *iface,
         DWORD dwFlags, WAVEBANKENTRY entry, DWORD *pdwSeekTable,
         BYTE *pbWaveData, DWORD dwPlayOffset, XACTLOOPCOUNT nLoopCount,
@@ -1026,6 +1114,8 @@ static HRESULT WINAPI IXACT3EngineImpl_PrepareWave(IXACT3Engine *iface,
     return S_OK;
 }
 
+#endif
+
 enum {
     NOTIFY_SoundBank = 0x01,
     NOTIFY_WaveBank  = 0x02,
@@ -1062,17 +1152,22 @@ static inline void unwrap_notificationdesc(FACTNotificationDescription *fd,
     {
         flags = NOTIFY_SoundBank;
     }
+    /* Supports SoundBank, SoundBank, Cue index, Cue instance, WaveBank, Wave instance */
+    else if (xd->type == XACTNOTIFICATIONTYPE_WAVEPLAY || xd->type == XACTNOTIFICATIONTYPE_WAVESTOP)
+    {
+        flags = NOTIFY_SoundBank | NOTIFY_cueIndex | NOTIFY_Cue | NOTIFY_WaveBank | NOTIFY_Wave;
+    }
+#if XACT3_VER >= 0x0205
+    else if (xd->type == XACTNOTIFICATIONTYPE_WAVELOOPED)
+    {
+        flags = NOTIFY_SoundBank | NOTIFY_cueIndex | NOTIFY_Cue | NOTIFY_WaveBank | NOTIFY_Wave;
+    }
     /* Supports WaveBank, Wave index, Wave instance */
     else if (xd->type == XACTNOTIFICATIONTYPE_WAVEPREPARED || xd->type == XACTNOTIFICATIONTYPE_WAVEDESTROYED)
     {
         flags = NOTIFY_WaveBank | NOTIFY_waveIndex | NOTIFY_Wave;
     }
-    /* Supports SoundBank, SoundBank, Cue index, Cue instance, WaveBank, Wave instance */
-    else if (xd->type == XACTNOTIFICATIONTYPE_WAVEPLAY || xd->type == XACTNOTIFICATIONTYPE_WAVESTOP ||
-             xd->type == XACTNOTIFICATIONTYPE_WAVELOOPED)
-    {
-        flags = NOTIFY_SoundBank | NOTIFY_cueIndex | NOTIFY_Cue | NOTIFY_WaveBank | NOTIFY_Wave;
-    }
+#endif
 
     /* We have to unwrap the FACT object first! */
     fd->type = xd->type;
@@ -1080,8 +1175,10 @@ static inline void unwrap_notificationdesc(FACTNotificationDescription *fd,
     fd->pvContext = xd->pvContext;
     if (flags & NOTIFY_cueIndex)
         fd->cueIndex = xd->cueIndex;
+#if XACT3_VER >= 0x0205
     if (flags & NOTIFY_waveIndex)
         fd->waveIndex = xd->waveIndex;
+#endif
 
     if (flags & NOTIFY_Cue && xd->pCue != NULL)
     {
@@ -1104,12 +1201,14 @@ static inline void unwrap_notificationdesc(FACTNotificationDescription *fd,
             fd->pWaveBank = bank->fact_wavebank;
     }
 
+#if XACT3_VER >= 0x0205
     if (flags & NOTIFY_Wave && xd->pWave != NULL)
     {
         XACT3WaveImpl *wave = impl_from_IXACT3Wave(xd->pWave);
         if (wave)
             fd->pWave = wave->fact_wave;
     }
+#endif
 }
 
 static HRESULT WINAPI IXACT3EngineImpl_RegisterNotification(IXACT3Engine *iface,
@@ -1216,16 +1315,20 @@ static const IXACT3EngineVtbl XACT3Engine_Vtbl =
     IXACT3EngineImpl_Release,
     IXACT3EngineImpl_GetRendererCount,
     IXACT3EngineImpl_GetRendererDetails,
+#if XACT3_VER >= 0x0205
     IXACT3EngineImpl_GetFinalMixFormat,
+#endif
     IXACT3EngineImpl_Initialize,
     IXACT3EngineImpl_ShutDown,
     IXACT3EngineImpl_DoWork,
     IXACT3EngineImpl_CreateSoundBank,
     IXACT3EngineImpl_CreateInMemoryWaveBank,
     IXACT3EngineImpl_CreateStreamingWaveBank,
+#if XACT3_VER >= 0x0205
     IXACT3EngineImpl_PrepareWave,
     IXACT3EngineImpl_PrepareInMemoryWave,
     IXACT3EngineImpl_PrepareStreamingWave,
+#endif
     IXACT3EngineImpl_RegisterNotification,
     IXACT3EngineImpl_UnRegisterNotification,
     IXACT3EngineImpl_GetCategory,
