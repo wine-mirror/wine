@@ -2418,8 +2418,6 @@ HRESULT __cdecl wined3d_device_get_raster_status(const struct wined3d_device *de
 DWORD __cdecl wined3d_device_get_render_state(const struct wined3d_device *device, enum wined3d_render_state state);
 BOOL __cdecl wined3d_device_get_software_vertex_processing(const struct wined3d_device *device);
 struct wined3d_state * __cdecl wined3d_device_get_state(struct wined3d_device *device);
-struct wined3d_buffer * __cdecl wined3d_device_get_stream_output(struct wined3d_device *device,
-        UINT idx, UINT *offset);
 struct wined3d_swapchain * __cdecl wined3d_device_get_swapchain(const struct wined3d_device *device,
         UINT swapchain_idx);
 UINT __cdecl wined3d_device_get_swapchain_count(const struct wined3d_device *device);
@@ -2571,6 +2569,8 @@ struct wined3d_shader * __cdecl wined3d_device_context_get_shader(const struct w
         enum wined3d_shader_type type);
 struct wined3d_shader_resource_view * __cdecl wined3d_device_context_get_shader_resource_view(
         const struct wined3d_device_context *context, enum wined3d_shader_type shader_type, unsigned int idx);
+struct wined3d_buffer * __cdecl wined3d_device_context_get_stream_output(struct wined3d_device_context *context,
+        unsigned int idx, unsigned int *offset);
 HRESULT __cdecl wined3d_device_context_get_stream_source(const struct wined3d_device_context *context,
         unsigned int stream_idx, struct wined3d_buffer **buffer, unsigned int *offset, unsigned int *stride);
 struct wined3d_unordered_access_view * __cdecl wined3d_device_context_get_unordered_access_view(
