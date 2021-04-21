@@ -3129,7 +3129,9 @@ static void test_event_queue(void)
     EXPECT_REF(&callback.IMFAsyncCallback_iface, 2);
 
     IMFMediaEventQueue_Release(queue);
-    EXPECT_REF(&callback.IMFAsyncCallback_iface, 1);
+    ret = get_refcount(&callback.IMFAsyncCallback_iface);
+    ok(ret == 1 || broken(ret == 2) /* Vista */,
+       "Unexpected refcount %d, expected 1.\n", ret);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
