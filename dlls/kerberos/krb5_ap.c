@@ -34,7 +34,6 @@
 #include "winternl.h"
 #include "wine/heap.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(kerberos);
@@ -397,8 +396,8 @@ static NTSTATUS NTAPI kerberos_SpDeleteContext( LSA_SEC_HANDLE context )
 static SecPkgInfoW *build_package_info( const SecPkgInfoW *info )
 {
     SecPkgInfoW *ret;
-    DWORD size_name = (strlenW(info->Name) + 1) * sizeof(WCHAR);
-    DWORD size_comment = (strlenW(info->Comment) + 1) * sizeof(WCHAR);
+    DWORD size_name = (wcslen(info->Name) + 1) * sizeof(WCHAR);
+    DWORD size_comment = (wcslen(info->Comment) + 1) * sizeof(WCHAR);
 
     if (!(ret = heap_alloc( sizeof(*ret) + size_name + size_comment ))) return NULL;
     ret->fCapabilities = info->fCapabilities;
