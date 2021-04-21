@@ -339,7 +339,7 @@ static HRESULT WINAPI tempo_IPersistStream_Load(IPersistStream *iface, IStream *
     if (!stream)
         return E_POINTER;
 
-    if ((hr = stream_get_chunk(stream, &chunk) != S_OK))
+    if ((hr = stream_get_chunk(stream, &chunk)) != S_OK)
         return hr;
     if (chunk.id != DMUS_FOURCC_TEMPO_TRACK)
         return DMUS_E_UNSUPPORTED_STREAM;

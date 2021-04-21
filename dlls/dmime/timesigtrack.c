@@ -262,7 +262,7 @@ static HRESULT WINAPI time_IPersistStream_Load(IPersistStream *iface, IStream *s
     if (!stream)
         return E_POINTER;
 
-    if ((hr = stream_get_chunk(stream, &chunk) != S_OK))
+    if ((hr = stream_get_chunk(stream, &chunk)) != S_OK)
         return hr;
 
     if (chunk.id == FOURCC_LIST && chunk.type == DMUS_FOURCC_TIMESIGTRACK_LIST)
