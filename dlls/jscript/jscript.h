@@ -42,9 +42,10 @@
 #define SCRIPTLANGUAGEVERSION_HTML 0x400
 
 /*
- * This is Wine jscript extension for ES5 compatible mode. Allowed only in HTML mode.
+ * This is Wine jscript extension for ES5 and ES6 compatible mode. Allowed only in HTML mode.
  */
 #define SCRIPTLANGUAGEVERSION_ES5  0x102
+#define SCRIPTLANGUAGEVERSION_ES6  0x103
 
 typedef struct _jsval_t jsval_t;
 typedef struct _jsstr_t jsstr_t;
