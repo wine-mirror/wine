@@ -130,7 +130,8 @@ typedef enum {
     JSCLASS_STRING,
     JSCLASS_ARGUMENTS,
     JSCLASS_VBARRAY,
-    JSCLASS_JSON
+    JSCLASS_JSON,
+    JSCLASS_SET,
 } jsclass_t;
 
 jsdisp_t *iface_to_jsdisp(IDispatch*) DECLSPEC_HIDDEN;
@@ -466,6 +467,7 @@ struct _script_ctx_t {
     jsdisp_t *regexp_constr;
     jsdisp_t *string_constr;
     jsdisp_t *vbarray_constr;
+    jsdisp_t *set_prototype;
 };
 
 void script_release(script_ctx_t*) DECLSPEC_HIDDEN;
@@ -478,6 +480,7 @@ static inline void script_addref(script_ctx_t *ctx)
 HRESULT init_global(script_ctx_t*) DECLSPEC_HIDDEN;
 HRESULT init_function_constr(script_ctx_t*,jsdisp_t*) DECLSPEC_HIDDEN;
 HRESULT create_object_prototype(script_ctx_t*,jsdisp_t**) DECLSPEC_HIDDEN;
+HRESULT init_set_constructor(script_ctx_t*) DECLSPEC_HIDDEN;
 
 HRESULT create_activex_constr(script_ctx_t*,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT create_array_constr(script_ctx_t*,jsdisp_t*,jsdisp_t**) DECLSPEC_HIDDEN;

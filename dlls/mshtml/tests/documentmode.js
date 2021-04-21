@@ -115,6 +115,7 @@ sync_test("window_props", function() {
     test_exposed("getSelection", v >= 9);
     test_exposed("onfocusout", v >= 9);
     test_exposed("getComputedStyle", v >= 9);
+    test_exposed("Set", v >= 11);
     if(v >= 9) /* FIXME: native exposes it in all compat modes */
         test_exposed("performance", true);
 });
@@ -596,4 +597,26 @@ sync_test("func_scope", function() {
             ok(false, "expected exception");
         }catch(e) {}
     })(o);
+});
+
+sync_test("set_obj", function() {
+    if(!("Set" in window)) return;
+
+    var s = new Set, r;
+    ok(Object.getPrototypeOf(s) === Set.prototype, "unexpected Set prototype");
+
+    function test_length(name, len) {
+        ok(Set.prototype[name].length === len, "Set.prototype." + name + " = " + Set.prototype[name].length);
+    }
+    test_length("add", 1);
+    test_length("clear", 0);
+    test_length("delete", 1);
+    test_length("forEach", 1);
+    test_length("has", 1);
+    ok(!("entries" in s), "entries are in Set");
+    ok(!("keys" in s), "keys are in Set");
+    ok(!("values" in s), "values are in Set");
+
+    r = Object.prototype.toString.call(s);
+    ok(r === "[object Object]", "toString returned " + r);
 });

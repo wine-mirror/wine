@@ -1114,5 +1114,8 @@ HRESULT init_global(script_ctx_t *ctx)
         return hres;
 
     hres = jsdisp_define_data_property(ctx->global, L"Infinity", const_flags, jsval_number(INFINITY));
-    return hres;
+    if(FAILED(hres))
+        return hres;
+
+    return init_set_constructor(ctx);
 }

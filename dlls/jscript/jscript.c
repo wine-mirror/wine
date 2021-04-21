@@ -483,6 +483,11 @@ static void decrease_state(JScript *This, SCRIPTSTATE state)
                 This->ctx->site = NULL;
             }
 
+            if(This->ctx->set_prototype) {
+                jsdisp_release(This->ctx->set_prototype);
+                This->ctx->set_prototype = NULL;
+            }
+
             if(This->ctx->object_prototype) {
                 jsdisp_release(This->ctx->object_prototype);
                 This->ctx->object_prototype = NULL;
