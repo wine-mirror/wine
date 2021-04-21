@@ -1887,8 +1887,12 @@ static HRESULT visit_function_expression(compiler_ctx_t *ctx, function_expressio
     expr->func_id = ctx->func->func_cnt++;
     ctx->func_tail = ctx->func_tail ? (ctx->func_tail->next = expr) : (ctx->func_head = expr);
 
-    return !expr->identifier || expr->event_target || alloc_variable(ctx, expr->identifier)
-        ? S_OK : E_OUTOFMEMORY;
+    if(!expr->identifier || expr->event_target)
+        return S_OK;
+    if(!expr->is_statement && ctx->parser->script->version >= SCRIPTLANGUAGEVERSION_ES5)
+        return S_OK;
+
+    return alloc_variable(ctx, expr->identifier) ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT visit_expression(compiler_ctx_t *ctx, expression_t *expr)
@@ -2069,7 +2073,15 @@ static HRESULT visit_statement(compiler_ctx_t *ctx, statement_t *stat)
     case STAT_CONTINUE:
     case STAT_EMPTY:
         break;
-    case STAT_EXPR:
+    case STAT_EXPR: {
+        expression_statement_t *expr_stat = (expression_statement_t*)stat;
+        if(expr_stat->expr) {
+            if(expr_stat->expr->type == EXPR_FUNC)
+                ((function_expression_t*)expr_stat->expr)->is_statement = TRUE;
+            hres = visit_expression(ctx, expr_stat->expr);
+        }
+        break;
+    }
     case STAT_RETURN:
     case STAT_THROW: {
         expression_statement_t *expr_stat = (expression_statement_t*)stat;
@@ -2410,7 +2422,8 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
             return hres;
 
         TRACE("[%d] func %s\n", i, debugstr_w(func->funcs[i].name));
-        if(func->funcs[i].name && !func->funcs[i].event_target) {
+        if((ctx->parser->script->version < SCRIPTLANGUAGEVERSION_ES5 || iter->is_statement) &&
+           func->funcs[i].name && !func->funcs[i].event_target) {
             local_ref_t *local_ref = lookup_local(func, func->funcs[i].name);
             func->funcs[i].local_ref = local_ref->ref;
             TRACE("found ref %s %d for %s\n", debugstr_w(local_ref->name), local_ref->ref, debugstr_w(func->funcs[i].name));

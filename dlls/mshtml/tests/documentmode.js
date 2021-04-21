@@ -538,6 +538,7 @@ sync_test("delete_prop", function() {
 });
 
 var func_scope_val = 1;
+var func_scope_val2 = 2;
 
 sync_test("func_scope", function() {
     var func_scope_val = 2;
@@ -571,4 +572,28 @@ sync_test("func_scope", function() {
 
     window = 1;
     ok(window === window.self, "window = " + window);
+
+    ! function func_scope_val2() {};
+    ok(window.func_scope_val2 === 2, "window.func_scope_val2 = " + window.func_scope_val2);
+
+    var o = {};
+    (function(x) {
+        ok(x === o, "x = " + x);
+        ! function x() {};
+        ok(x === o, "x != o");
+    })(o);
+
+    (function(x) {
+        ok(x === o, "x = " + x);
+        1, function x() {};
+        ok(x === o, "x != o");
+    })(o);
+
+    (function() {
+        ! function x() {};
+        try {
+            x();
+            ok(false, "expected exception");
+        }catch(e) {}
+    })(o);
 });

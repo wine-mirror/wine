@@ -302,6 +302,7 @@ typedef struct _function_expression_t {
     const WCHAR *src_str;
     DWORD src_len;
     unsigned func_id;
+    BOOL is_statement;
 
     struct _function_expression_t *next; /* for compiler */
 } function_expression_t;
