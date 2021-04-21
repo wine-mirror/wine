@@ -1270,17 +1270,40 @@ static HRESULT WINAPI media_player_GetIdealVideoSize(IMFPMediaPlayer *iface,
 static HRESULT WINAPI media_player_SetVideoSourceRect(IMFPMediaPlayer *iface,
         MFVideoNormalizedRect const *rect)
 {
-    FIXME("%p, %p.\n", iface, rect);
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
+    IMFVideoDisplayControl *display_control;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, rect);
+
+    if (SUCCEEDED(hr = MFGetService((IUnknown *)player->session, &MR_VIDEO_RENDER_SERVICE,
+            &IID_IMFVideoDisplayControl, (void **)&display_control)))
+    {
+        hr = IMFVideoDisplayControl_SetVideoPosition(display_control, rect, NULL);
+        IMFVideoDisplayControl_Release(display_control);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI media_player_GetVideoSourceRect(IMFPMediaPlayer *iface,
         MFVideoNormalizedRect *rect)
 {
-    FIXME("%p, %p.\n", iface, rect);
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
+    IMFVideoDisplayControl *display_control;
+    HRESULT hr;
+    RECT dest;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, rect);
+
+    if (SUCCEEDED(hr = MFGetService((IUnknown *)player->session, &MR_VIDEO_RENDER_SERVICE,
+            &IID_IMFVideoDisplayControl, (void **)&display_control)))
+    {
+        hr = IMFVideoDisplayControl_GetVideoPosition(display_control, rect, &dest);
+        IMFVideoDisplayControl_Release(display_control);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI media_player_SetAspectRatioMode(IMFPMediaPlayer *iface, DWORD mode)
