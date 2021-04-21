@@ -1213,6 +1213,51 @@ static void test_GetPhysicallyInstalledSystemMemory(void)
        "expected total_memory >= memstatus.ullTotalPhys / 1024\n");
 }
 
+static BOOL compare_ulong64(ULONG64 v1, ULONG64 v2, ULONG64 max_diff)
+{
+    ULONG64 diff = v1 > v2 ? v1 - v2 : v2 - v1;
+
+    return diff <= max_diff;
+}
+
+static void test_GlobalMemoryStatus(void)
+{
+    static const ULONG64 max_diff = 0x200000;
+    MEMORYSTATUSEX memex;
+    MEMORYSTATUS mem;
+    SIZE_T size;
+
+    mem.dwLength = sizeof(mem);
+    GlobalMemoryStatus(&mem);
+    memex.dwLength = sizeof(memex);
+    GlobalMemoryStatusEx(&memex);
+
+    /* Compare values approximately as the available memory may change between
+     * GlobalMemoryStatus() and GlobalMemoryStatusEx() calls. */
+
+    size = min(memex.ullTotalPhys, ~(SIZE_T)0 >> 1);
+    ok(compare_ulong64(mem.dwTotalPhys, size, max_diff), "Got unexpected dwTotalPhys %s, size %s.\n",
+            wine_dbgstr_longlong(mem.dwTotalPhys), wine_dbgstr_longlong(size));
+    size = min(memex.ullAvailPhys, ~(SIZE_T)0 >> 1);
+    ok(compare_ulong64(mem.dwAvailPhys, size, max_diff), "Got unexpected dwAvailPhys %s, size %s.\n",
+            wine_dbgstr_longlong(mem.dwAvailPhys), wine_dbgstr_longlong(size));
+
+    size = min(memex.ullTotalPageFile, ~(SIZE_T)0);
+    ok(compare_ulong64(mem.dwTotalPageFile, size, max_diff),
+            "Got unexpected dwTotalPageFile %s, size %s.\n",
+            wine_dbgstr_longlong(mem.dwTotalPageFile), wine_dbgstr_longlong(size));
+    size = min(memex.ullAvailPageFile, ~(SIZE_T)0);
+    ok(compare_ulong64(mem.dwAvailPageFile, size, max_diff), "Got unexpected dwAvailPageFile %s, size %s.\n",
+            wine_dbgstr_longlong(mem.dwAvailPageFile), wine_dbgstr_longlong(size));
+
+    ok(compare_ulong64(mem.dwTotalVirtual, memex.ullTotalVirtual, max_diff),
+            "Got unexpected dwTotalVirtual %s, ullTotalVirtual %s.\n",
+            wine_dbgstr_longlong(mem.dwTotalVirtual), wine_dbgstr_longlong(memex.ullTotalVirtual));
+    ok(compare_ulong64(mem.dwAvailVirtual, memex.ullAvailVirtual, max_diff),
+            "Got unexpected dwAvailVirtual %s, ullAvailVirtual %s.\n",
+            wine_dbgstr_longlong(mem.dwAvailVirtual), wine_dbgstr_longlong(memex.ullAvailVirtual));
+}
+
 START_TEST(heap)
 {
     int argc;
@@ -1246,6 +1291,7 @@ START_TEST(heap)
 
     test_HeapQueryInformation();
     test_GetPhysicallyInstalledSystemMemory();
+    test_GlobalMemoryStatus();
 
     if (pRtlGetNtGlobalFlags)
     {
