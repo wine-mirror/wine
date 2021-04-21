@@ -61,8 +61,8 @@ const struct krb5_funcs *krb5_funcs = NULL;
     | SECPKG_FLAG_RESTRICTED_TOKENS \
     | SECPKG_FLAG_APPCONTAINER_CHECKS)
 
-static WCHAR kerberos_name_W[] = {'K','e','r','b','e','r','o','s',0};
-static WCHAR kerberos_comment_W[] = {'M','i','c','r','o','s','o','f','t',' ','K','e','r','b','e','r','o','s',' ','V','1','.','0',0};
+static WCHAR kerberos_name_W[] = L"Kerberos";
+static WCHAR kerberos_comment_W[] = L"Microsoft Kerberos V1.0";
 static const SecPkgInfoW infoW =
 {
     KERBEROS_CAPS,
