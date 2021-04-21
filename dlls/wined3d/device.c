@@ -4500,13 +4500,13 @@ void CDECL wined3d_device_context_set_primitive_type(struct wined3d_device_conte
     state->patch_vertex_count = patch_vertex_count;
 }
 
-void CDECL wined3d_device_get_primitive_type(const struct wined3d_device *device,
+void CDECL wined3d_device_context_get_primitive_type(const struct wined3d_device_context *context,
         enum wined3d_primitive_type *primitive_type, unsigned int *patch_vertex_count)
 {
-    const struct wined3d_state *state = device->cs->c.state;
+    const struct wined3d_state *state = context->state;
 
-    TRACE("device %p, primitive_type %p, patch_vertex_count %p.\n",
-            device, primitive_type, patch_vertex_count);
+    TRACE("context %p, primitive_type %p, patch_vertex_count %p.\n",
+            context, primitive_type, patch_vertex_count);
 
     *primitive_type = state->primitive_type;
     if (patch_vertex_count)

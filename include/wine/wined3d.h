@@ -2408,8 +2408,6 @@ struct wined3d_device_context * __cdecl wined3d_device_get_immediate_context(str
 unsigned int __cdecl wined3d_device_get_max_frame_latency(const struct wined3d_device *device);
 float __cdecl wined3d_device_get_npatch_mode(const struct wined3d_device *device);
 struct wined3d_shader * __cdecl wined3d_device_get_pixel_shader(const struct wined3d_device *device);
-void __cdecl wined3d_device_get_primitive_type(const struct wined3d_device *device,
-        enum wined3d_primitive_type *primitive_topology, unsigned int *patch_vertex_count);
 struct wined3d_shader_resource_view * __cdecl wined3d_device_get_ps_resource_view(const struct wined3d_device *device,
         UINT idx);
 struct wined3d_sampler * __cdecl wined3d_device_get_ps_sampler(const struct wined3d_device *device, UINT idx);
@@ -2555,6 +2553,8 @@ struct wined3d_buffer * __cdecl wined3d_device_context_get_index_buffer(const st
         enum wined3d_format_id *format, unsigned int *offset);
 struct wined3d_query * __cdecl wined3d_device_context_get_predication(struct wined3d_device_context *context,
         BOOL *value);
+void __cdecl wined3d_device_context_get_primitive_type(const struct wined3d_device_context *context,
+        enum wined3d_primitive_type *primitive_topology, unsigned int *patch_vertex_count);
 struct wined3d_rasterizer_state * __cdecl wined3d_device_context_get_rasterizer_state(
         struct wined3d_device_context *context);
 struct wined3d_rendertarget_view * __cdecl wined3d_device_context_get_rendertarget_view(
