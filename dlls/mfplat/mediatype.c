@@ -41,6 +41,7 @@ struct media_type
     IMFVideoMediaType IMFVideoMediaType_iface;
     IMFAudioMediaType IMFAudioMediaType_iface;
     MFVIDEOFORMAT *video_format;
+    WAVEFORMATEX *audio_format;
 };
 
 struct stream_desc
@@ -155,6 +156,7 @@ static ULONG WINAPI mediatype_Release(IMFMediaType *iface)
     {
         clear_attributes_object(&media_type->attributes);
         CoTaskMemFree(media_type->video_format);
+        CoTaskMemFree(media_type->audio_format);
         heap_free(media_type);
     }
 
@@ -1369,9 +1371,18 @@ static HRESULT WINAPI audio_mediatype_FreeRepresentation(IMFAudioMediaType *ifac
 
 static const WAVEFORMATEX * WINAPI audio_mediatype_GetAudioFormat(IMFAudioMediaType *iface)
 {
-    FIXME("%p.\n", iface);
+    struct media_type *media_type = impl_from_IMFAudioMediaType(iface);
+    unsigned int size;
+    HRESULT hr;
 
-    return NULL;
+    TRACE("%p.\n", iface);
+
+    CoTaskMemFree(media_type->audio_format);
+    if (FAILED(hr = MFCreateWaveFormatExFromMFMediaType((IMFMediaType *)iface, &media_type->audio_format, &size,
+                    MFWaveFormatExConvertFlag_Normal)))
+        WARN("Failed to create wave format description, hr %#x.\n", hr);
+
+    return media_type->audio_format;
 }
 
 static const IMFAudioMediaTypeVtbl audiomediatypevtbl =
