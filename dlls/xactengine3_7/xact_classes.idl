@@ -28,6 +28,8 @@
     uuid(bc3e0fc6-2e0d-4c45-bc61-d9c328319bd8)
 #elif XACT3_VER == 0x0207
     uuid(cd0d66ec-8057-43f5-acbd-66dfb36fd78c)
+#elif XACT3_VER == 0x0209
+    uuid(343e68e6-8f82-4a8d-a2da-6e9a944b378c)
 #elif XACT3_VER == 0x0300
     uuid(3b80ee2a-b0f5-4780-9e30-90cb39685b03)
 #elif XACT3_VER == 0x0301
