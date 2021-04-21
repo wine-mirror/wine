@@ -324,15 +324,22 @@ static void add_desktop_user( struct desktop *desktop )
 /* remove a user of the desktop and start the close timeout if necessary */
 static void remove_desktop_user( struct desktop *desktop )
 {
+    struct process *process;
     assert( desktop->users > 0 );
     desktop->users--;
 
     /* if we have one remaining user, it has to be the manager of the desktop window */
-    if (desktop->users == 1 && get_top_window_owner( desktop ))
-    {
-        assert( !desktop->close_timeout );
+    if ((process = get_top_window_owner( desktop )) && desktop->users == process->running_threads && !desktop->close_timeout)
         desktop->close_timeout = add_timeout_user( -TICKS_PER_SEC, close_desktop_timeout, desktop );
-    }
+}
+
+/* set the thread default desktop handle */
+void set_thread_default_desktop( struct thread *thread, struct desktop *desktop, obj_handle_t handle )
+{
+    if (thread->desktop) return;  /* nothing to do */
+
+    thread->desktop = handle;
+    if (!thread->process->is_system) add_desktop_user( desktop );
 }
 
 /* set the process default desktop handle */
@@ -340,24 +347,14 @@ void set_process_default_desktop( struct process *process, struct desktop *deskt
                                   obj_handle_t handle )
 {
     struct thread *thread;
-    struct desktop *old_desktop;
 
     if (process->desktop == handle) return;  /* nothing to do */
 
-    if (!(old_desktop = get_desktop_obj( process, process->desktop, 0 ))) clear_error();
     process->desktop = handle;
 
     /* set desktop for threads that don't have one yet */
     LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
-        if (!thread->desktop) thread->desktop = handle;
-
-    if (!process->is_system && desktop != old_desktop)
-    {
-        add_desktop_user( desktop );
-        if (old_desktop) remove_desktop_user( old_desktop );
-    }
-
-    if (old_desktop) release_object( old_desktop );
+        set_thread_default_desktop( thread, desktop, handle );
 }
 
 /* connect a process to its window station */
@@ -413,23 +410,37 @@ done:
 /* close the desktop of a given process */
 void close_process_desktop( struct process *process )
 {
-    struct desktop *desktop;
+    obj_handle_t handle;
 
-    if (process->desktop && (desktop = get_desktop_obj( process, process->desktop, 0 )))
-    {
-        remove_desktop_user( desktop );
-        release_object( desktop );
-    }
-    clear_error();  /* ignore errors */
+    if (!(handle = process->desktop)) return;
+
+    process->desktop = 0;
+    close_handle( process, handle );
 }
 
-/* close the desktop of a given thread */
-void close_thread_desktop( struct thread *thread )
+/* release (and eventually close) the desktop of a given thread */
+void release_thread_desktop( struct thread *thread, int close )
 {
-    obj_handle_t handle = thread->desktop;
+    struct desktop *desktop;
+    obj_handle_t handle;
 
-    thread->desktop = 0;
-    if (handle) close_handle( thread->process, handle );
+    if (!(handle = thread->desktop)) return;
+
+    if (!thread->process->is_system)
+    {
+        if (!(desktop = get_desktop_obj( thread->process, handle, 0 ))) clear_error();  /* ignore errors */
+        else
+        {
+            remove_desktop_user( desktop );
+            release_object( desktop );
+        }
+    }
+
+    if (close)
+    {
+        thread->desktop = 0;
+        close_handle( thread->process, handle );
+    }
 }
 
 /* create a window station */
@@ -624,7 +635,14 @@ DECL_HANDLER(set_thread_desktop)
     if (old_desktop != new_desktop && current->desktop_users > 0)
         set_error( STATUS_DEVICE_BUSY );
     else
+    {
         current->desktop = req->handle;  /* FIXME: should we close the old one? */
+        if (!current->process->is_system && old_desktop != new_desktop)
+        {
+            add_desktop_user( new_desktop );
+            if (old_desktop) remove_desktop_user( old_desktop );
+        }
+    }
 
     if (!current->process->desktop)
         set_process_default_desktop( current->process, new_desktop, req->handle );

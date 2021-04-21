@@ -188,7 +188,8 @@ extern void connect_process_winstation( struct process *process, struct thread *
 extern void set_process_default_desktop( struct process *process, struct desktop *desktop,
                                          obj_handle_t handle );
 extern void close_process_desktop( struct process *process );
-extern void close_thread_desktop( struct thread *thread );
+extern void set_thread_default_desktop( struct thread *thread, struct desktop *desktop, obj_handle_t handle );
+extern void release_thread_desktop( struct thread *thread, int close );
 
 static inline int is_rect_empty( const rectangle_t *rect )
 {

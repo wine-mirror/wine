@@ -306,6 +306,7 @@ static struct context *create_thread_context( struct thread *thread )
 /* create a new thread */
 struct thread *create_thread( int fd, struct process *process, const struct security_descriptor *sd )
 {
+    struct desktop *desktop;
     struct thread *thread;
     int request_pipe[2];
 
@@ -342,7 +343,7 @@ struct thread *create_thread( int fd, struct process *process, const struct secu
     init_thread_structure( thread );
 
     thread->process = (struct process *)grab_object( process );
-    thread->desktop = process->desktop;
+    thread->desktop = 0;
     thread->affinity = process->affinity;
     if (!current) current = thread;
 
@@ -367,6 +368,16 @@ struct thread *create_thread( int fd, struct process *process, const struct secu
     {
         release_object( thread );
         return NULL;
+    }
+
+    if (process->desktop)
+    {
+        if (!(desktop = get_desktop_obj( process, process->desktop, 0 ))) clear_error();  /* ignore errors */
+        else
+        {
+            set_thread_default_desktop( thread, desktop, process->desktop );
+            release_object( desktop );
+        }
     }
 
     set_fd_events( thread->request_fd, POLLIN );  /* start listening to events */
@@ -416,7 +427,7 @@ static void cleanup_thread( struct thread *thread )
     cleanup_clipboard_thread(thread);
     destroy_thread_windows( thread );
     free_msg_queue( thread );
-    close_thread_desktop( thread );
+    release_thread_desktop( thread, 1 );
     for (i = 0; i < MAX_INFLIGHT_FDS; i++)
     {
         if (thread->inflight[i].client != -1)
