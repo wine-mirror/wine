@@ -22,6 +22,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -32,7 +33,7 @@
 #include "ntsecapi.h"
 #include "ntsecpkg.h"
 #include "winternl.h"
-#include "wine/heap.h"
+
 #include "wine/debug.h"
 #include "unixlib.h"
 
@@ -267,7 +268,7 @@ static char *get_str_unixcp( const UNICODE_STRING *str )
 {
     char *ret;
     int len = WideCharToMultiByte( CP_UNIXCP, 0, str->Buffer, str->Length / sizeof(WCHAR), NULL, 0, NULL, NULL );
-    if (!(ret = heap_alloc( len + 1 ))) return NULL;
+    if (!(ret = malloc( len + 1 ))) return NULL;
     WideCharToMultiByte( CP_UNIXCP, 0, str->Buffer, str->Length / sizeof(WCHAR), ret, len, NULL, NULL );
     ret[len] = 0;
     return ret;
@@ -280,7 +281,7 @@ static char *get_username_unixcp( const WCHAR *user, ULONG user_len, const WCHAR
 
     len_user = WideCharToMultiByte( CP_UNIXCP, 0, user, user_len, NULL, 0, NULL, NULL );
     len_domain = WideCharToMultiByte( CP_UNIXCP, 0, domain, domain_len, NULL, 0, NULL, NULL );
-    if (!(ret = heap_alloc( len_user + len_domain + 2 ))) return NULL;
+    if (!(ret = malloc( len_user + len_domain + 2 ))) return NULL;
 
     WideCharToMultiByte( CP_UNIXCP, 0, user, user_len, ret, len_user, NULL, NULL );
     ret[len_user] = '@';
@@ -295,7 +296,7 @@ static char *get_password_unixcp( const WCHAR *passwd, ULONG passwd_len )
     char *ret;
 
     len = WideCharToMultiByte( CP_UNIXCP, WC_NO_BEST_FIT_CHARS, passwd, passwd_len, NULL, 0, NULL, NULL );
-    if (!(ret = heap_alloc( len + 1 ))) return NULL;
+    if (!(ret = malloc( len + 1 ))) return NULL;
     WideCharToMultiByte( CP_UNIXCP, 0, passwd, passwd_len, ret, len, NULL, NULL );
     ret[len] = 0;
     return ret;
@@ -328,9 +329,9 @@ static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
     status = krb5_funcs->acquire_credentials_handle( principal, credential_use, username, password, credential,
                                                      expiry );
 done:
-    heap_free( principal );
-    heap_free( username );
-    heap_free( password );
+    free( principal );
+    free( username );
+    free( password );
     return status;
 }
 
@@ -364,7 +365,7 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
                                              context_attr, expiry );
     if (!status) *mapped_context = TRUE;
     /* FIXME: initialize context_data */
-    heap_free( target );
+    free( target );
     return status;
 }
 
@@ -399,7 +400,7 @@ static SecPkgInfoW *build_package_info( const SecPkgInfoW *info )
     DWORD size_name = (wcslen(info->Name) + 1) * sizeof(WCHAR);
     DWORD size_comment = (wcslen(info->Comment) + 1) * sizeof(WCHAR);
 
-    if (!(ret = heap_alloc( sizeof(*ret) + size_name + size_comment ))) return NULL;
+    if (!(ret = malloc( sizeof(*ret) + size_name + size_comment ))) return NULL;
     ret->fCapabilities = info->fCapabilities;
     ret->wVersion      = info->wVersion;
     ret->wRPCID        = info->wRPCID;
