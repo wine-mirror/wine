@@ -145,8 +145,11 @@ static HRESULT WINAPI HTMLStorage_key(IHTMLStorage *iface, LONG lIndex, BSTR *p)
 static HRESULT WINAPI HTMLStorage_getItem(IHTMLStorage *iface, BSTR bstrKey, VARIANT *p)
 {
     HTMLStorage *This = impl_from_IHTMLStorage(iface);
+
     FIXME("(%p)->(%s %p)\n", This, debugstr_w(bstrKey), p);
-    return E_NOTIMPL;
+
+    V_VT(p) = VT_NULL;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStorage_setItem(IHTMLStorage *iface, BSTR bstrKey, BSTR bstrValue)

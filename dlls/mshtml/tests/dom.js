@@ -412,6 +412,9 @@ sync_test("storage", function() {
        "typeof(window.sessionStorage) = " + typeof(window.sessionStorage));
     ok(typeof(window.localStorage) === "object" || typeof(window.localStorage) === "unknown",
        "typeof(window.localStorage) = " + typeof(window.localStorage));
+
+    var item = sessionStorage.getItem("nonexisting");
+    ok(item === null, "item = " + item);
 });
 
 async_test("animation", function() {
