@@ -34,7 +34,6 @@
 
 #include "wine/test.h"
 
-static HRESULT (WINAPI *pRoActivateInstance)(HSTRING, IInspectable **);
 static HRESULT (WINAPI *pRoGetActivationFactory)(HSTRING, REFIID, void **);
 static HRESULT (WINAPI *pRoInitialize)(RO_INIT_TYPE);
 static void    (WINAPI *pRoUninitialize)(void);
@@ -240,7 +239,6 @@ START_TEST(globalization)
         return; \
     }
 
-    LOAD_FUNCPTR(RoActivateInstance);
     LOAD_FUNCPTR(RoGetActivationFactory);
     LOAD_FUNCPTR(RoInitialize);
     LOAD_FUNCPTR(RoUninitialize);
