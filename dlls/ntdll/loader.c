@@ -2593,7 +2593,7 @@ static NTSTATUS get_env_var( const WCHAR *name, SIZE_T extra, UNICODE_STRING *re
 
     for (;;)
     {
-        ret->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, size );
+        ret->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, size * sizeof(WCHAR) );
         status = RtlQueryEnvironmentVariable( NULL, name, wcslen(name),
                                               ret->Buffer, size - extra - 1, &len );
         if (!status)
