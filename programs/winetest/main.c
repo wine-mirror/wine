@@ -918,6 +918,7 @@ extract_test_proc (HMODULE hModule, LPCSTR lpszType, LPSTR lpszName, LONG_PTR lP
     if (test_filtered_out( lpszName, NULL ))
     {
         nr_of_skips++;
+        if (exclude_tests) xprintf ("    %s=skipped\n", dllname);
         return TRUE;
     }
     extract_test (&wine_tests[nr_of_files], tempdir, lpszName);
