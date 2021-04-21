@@ -8512,20 +8512,17 @@ static void test_ddrawstreamsample_update(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IDirectDrawStreamSample_Update(stream_sample, 0, event, NULL, 0);
-    todo_wine ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
+    ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
 
     ok(WaitForSingleObject(event, 0) == WAIT_TIMEOUT, "Event should not be signaled.\n");
 
-    if (hr == MS_S_PENDING)
-    {
-        media_sample = ammediastream_allocate_sample(&source, test_data, sizeof(test_data));
-        hr = IMemInputPin_Receive(source.source.pMemInputPin, media_sample);
-        ok(hr == S_OK, "Got hr %#x.\n", hr);
-        ref = IMediaSample_Release(media_sample);
-        ok(!ref, "Got outstanding refcount %d.\n", ref);
-    }
+    media_sample = ammediastream_allocate_sample(&source, test_data, sizeof(test_data));
+    hr = IMemInputPin_Receive(source.source.pMemInputPin, media_sample);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ref = IMediaSample_Release(media_sample);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
 
-    todo_wine ok(WaitForSingleObject(event, 0) == 0, "Event should be signaled.\n");
+    ok(WaitForSingleObject(event, 0) == 0, "Event should be signaled.\n");
 
     hr = IDirectDrawStreamSample_Update(stream_sample, SSUPDATE_ASYNC, NULL, NULL, 0);
     ok(hr == MS_S_PENDING, "Got hr %#x.\n", hr);
