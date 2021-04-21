@@ -41,6 +41,7 @@ typedef struct {
     DWORD id;
     DWORD time;
     DWORD interval;
+    enum timer_type type;
     IDispatch *disp;
 
     struct list entry;
@@ -162,7 +163,7 @@ static BOOL queue_timer(thread_data_t *thread_data, task_timer_t *timer)
     return FALSE;
 }
 
-HRESULT set_task_timer(HTMLInnerWindow *window, LONG msec, BOOL interval, IDispatch *disp, LONG *id)
+HRESULT set_task_timer(HTMLInnerWindow *window, LONG msec, enum timer_type timer_type, IDispatch *disp, LONG *id)
 {
     thread_data_t *thread_data;
     task_timer_t *timer;
@@ -184,7 +185,8 @@ HRESULT set_task_timer(HTMLInnerWindow *window, LONG msec, BOOL interval, IDispa
     timer->id = id_cnt++;
     timer->window = window;
     timer->time = tc + msec;
-    timer->interval = interval ? msec : 0;
+    timer->interval = timer_type == TIMER_INTERVAL ? msec : 0;
+    timer->type = timer_type;
     list_init(&timer->entry);
 
     IDispatch_AddRef(disp);
