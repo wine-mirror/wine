@@ -115,6 +115,7 @@ sync_test("window_props", function() {
     test_exposed("getSelection", v >= 9);
     test_exposed("onfocusout", v >= 9);
     test_exposed("getComputedStyle", v >= 9);
+    test_exposed("requestAnimationFrame", v >= 10);
     test_exposed("Set", v >= 11);
     if(v >= 9) /* FIXME: native exposes it in all compat modes */
         test_exposed("performance", true);

@@ -1217,6 +1217,7 @@ ULONGLONG get_time_stamp(void) DECLSPEC_HIDDEN;
 enum timer_type {
     TIMER_TIMEOUT,
     TIMER_INTERVAL,
+    TIMER_ANIMATION_FRAME,
 };
 
 HRESULT set_task_timer(HTMLInnerWindow*,LONG,enum timer_type,IDispatch*,LONG*) DECLSPEC_HIDDEN;

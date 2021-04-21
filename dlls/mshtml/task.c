@@ -218,9 +218,20 @@ HRESULT clear_task_timer(HTMLInnerWindow *window, DWORD id)
     return S_OK;
 }
 
-static void call_timer_disp(IDispatch *disp)
+static const char *debugstr_timer_type(enum timer_type type)
+{
+    switch(type) {
+    case TIMER_TIMEOUT:  return "timeout";
+    case TIMER_INTERVAL: return "interval";
+    case TIMER_ANIMATION_FRAME: return "animation-frame";
+    DEFAULT_UNREACHABLE;
+    }
+}
+
+static void call_timer_disp(IDispatch *disp, enum timer_type timer_type)
 {
     DISPPARAMS dp = {NULL, NULL, 0, 0};
+    VARIANT timestamp;
     EXCEPINFO ei;
     VARIANT res;
     HRESULT hres;
@@ -228,12 +239,19 @@ static void call_timer_disp(IDispatch *disp)
     V_VT(&res) = VT_EMPTY;
     memset(&ei, 0, sizeof(ei));
 
-    TRACE(">>>\n");
+    if(timer_type == TIMER_ANIMATION_FRAME) {
+        dp.cArgs = 1;
+        dp.rgvarg = &timestamp;
+        V_VT(&timestamp) = VT_R8;
+        V_R8(&timestamp) = get_time_stamp();
+    }
+
+    TRACE("%p %s >>>\n", disp, debugstr_timer_type(timer_type));
     hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 0, DISPATCH_METHOD, &dp, &res, &ei, NULL);
     if(hres == S_OK)
-        TRACE("<<<\n");
+        TRACE("%p %s <<<\n", disp, debugstr_timer_type(timer_type));
     else
-        WARN("<<< %08x\n", hres);
+        WARN("%p %s <<< %08x\n", disp, debugstr_timer_type(timer_type), hres);
 
     VariantClear(&res);
 }
@@ -241,6 +259,7 @@ static void call_timer_disp(IDispatch *disp)
 static LRESULT process_timer(void)
 {
     thread_data_t *thread_data;
+    enum timer_type timer_type;
     IDispatch *disp;
     DWORD tc;
     task_timer_t *timer=NULL, *last_timer;
@@ -273,6 +292,7 @@ static LRESULT process_timer(void)
 
         disp = timer->disp;
         IDispatch_AddRef(disp);
+        timer_type = timer->type;
 
         if(timer->interval) {
             timer->time += timer->interval;
@@ -281,7 +301,7 @@ static LRESULT process_timer(void)
             release_task_timer(thread_data->thread_hwnd, timer);
         }
 
-        call_timer_disp(disp);
+        call_timer_disp(disp, timer_type);
 
         IDispatch_Release(disp);
     }while(!list_empty(&thread_data->timer_list));
