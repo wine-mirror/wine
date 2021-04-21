@@ -435,18 +435,62 @@ static HRESULT WINAPI media_item_SetStartStopPosition(IMFPMediaItem *iface, cons
     return E_NOTIMPL;
 }
 
+static HRESULT media_item_get_stream_type(IMFStreamDescriptor *sd, GUID *major)
+{
+    IMFMediaTypeHandler *handler;
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = IMFStreamDescriptor_GetMediaTypeHandler(sd, &handler)))
+    {
+        hr = IMFMediaTypeHandler_GetMajorType(handler, major);
+        IMFMediaTypeHandler_Release(handler);
+    }
+
+    return hr;
+}
+
+static HRESULT media_item_has_stream(struct media_item *item, const GUID *major, BOOL *has_stream, BOOL *is_selected)
+{
+    IMFStreamDescriptor *sd;
+    unsigned int idx = 0;
+    BOOL selected;
+    GUID guid;
+
+    *has_stream = *is_selected = FALSE;
+
+    while (SUCCEEDED(IMFPresentationDescriptor_GetStreamDescriptorByIndex(item->pd, idx++, &selected, &sd)))
+    {
+        if (SUCCEEDED(media_item_get_stream_type(sd, &guid)) && IsEqualGUID(&guid, major))
+        {
+            *has_stream = TRUE;
+            *is_selected = selected;
+        }
+
+        IMFStreamDescriptor_Release(sd);
+
+        if (*has_stream && *is_selected)
+            break;
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI media_item_HasVideo(IMFPMediaItem *iface, BOOL *has_video, BOOL *selected)
 {
-    FIXME("%p, %p, %p.\n", iface, has_video, selected);
+    struct media_item *item = impl_from_IMFPMediaItem(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, has_video, selected);
+
+    return media_item_has_stream(item, &MFMediaType_Video, has_video, selected);
 }
 
 static HRESULT WINAPI media_item_HasAudio(IMFPMediaItem *iface, BOOL *has_audio, BOOL *selected)
 {
-    FIXME("%p, %p, %p.\n", iface, has_audio, selected);
+    struct media_item *item = impl_from_IMFPMediaItem(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, has_audio, selected);
+
+    return media_item_has_stream(item, &MFMediaType_Audio, has_audio, selected);
 }
 
 static HRESULT WINAPI media_item_IsProtected(IMFPMediaItem *iface, BOOL *protected)
@@ -997,20 +1041,6 @@ static HRESULT WINAPI media_player_CreateMediaItemFromObject(IMFPMediaPlayer *if
     else
         hr = media_player_create_item_from_object(player, object, sync, user_data, item);
     LeaveCriticalSection(&player->cs);
-
-    return hr;
-}
-
-static HRESULT media_item_get_stream_type(IMFStreamDescriptor *sd, GUID *major)
-{
-    IMFMediaTypeHandler *handler;
-    HRESULT hr;
-
-    if (SUCCEEDED(hr = IMFStreamDescriptor_GetMediaTypeHandler(sd, &handler)))
-    {
-        hr = IMFMediaTypeHandler_GetMajorType(handler, major);
-        IMFMediaTypeHandler_Release(handler);
-    }
 
     return hr;
 }
