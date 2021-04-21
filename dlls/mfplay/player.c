@@ -1308,17 +1308,39 @@ static HRESULT WINAPI media_player_GetVideoSourceRect(IMFPMediaPlayer *iface,
 
 static HRESULT WINAPI media_player_SetAspectRatioMode(IMFPMediaPlayer *iface, DWORD mode)
 {
-    FIXME("%p, %u.\n", iface, mode);
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
+    IMFVideoDisplayControl *display_control;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u.\n", iface, mode);
+
+    if (SUCCEEDED(hr = MFGetService((IUnknown *)player->session, &MR_VIDEO_RENDER_SERVICE,
+            &IID_IMFVideoDisplayControl, (void **)&display_control)))
+    {
+        hr = IMFVideoDisplayControl_SetAspectRatioMode(display_control, mode);
+        IMFVideoDisplayControl_Release(display_control);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI media_player_GetAspectRatioMode(IMFPMediaPlayer *iface,
         DWORD *mode)
 {
-    FIXME("%p, %p.\n", iface, mode);
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
+    IMFVideoDisplayControl *display_control;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, mode);
+
+    if (SUCCEEDED(hr = MFGetService((IUnknown *)player->session, &MR_VIDEO_RENDER_SERVICE,
+            &IID_IMFVideoDisplayControl, (void **)&display_control)))
+    {
+        hr = IMFVideoDisplayControl_GetAspectRatioMode(display_control, mode);
+        IMFVideoDisplayControl_Release(display_control);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI media_player_GetVideoWindow(IMFPMediaPlayer *iface, HWND *window)
