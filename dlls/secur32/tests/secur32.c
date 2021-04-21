@@ -29,6 +29,8 @@
 #include <schannel.h>
 #include <wincred.h>
 #include <winsock2.h>
+#include <ntsecapi.h>
+#include <winternl.h>
 
 #include "wine/test.h"
 
@@ -464,6 +466,38 @@ static void test_kerberos(void)
         FreeCredentialHandle( &cred );
 }
 
+static void test_ticket_cache(void)
+{
+    KERB_QUERY_TKT_CACHE_REQUEST req = { KerbQueryTicketCacheMessage };
+    KERB_QUERY_TKT_CACHE_RESPONSE *resp;
+    NTSTATUS status;
+    HANDLE lsa;
+    ULONG package, len, i;
+    LSA_STRING name;
+
+    status = LsaConnectUntrusted( &lsa );
+    ok( !status, "got %08x\n", status );
+
+    RtlInitAnsiString( &name, MICROSOFT_KERBEROS_NAME_A );
+    status = LsaLookupAuthenticationPackage( lsa, &name, &package );
+    ok( !status, "got %08x\n", status );
+
+    status = LsaCallAuthenticationPackage( lsa, package, &req, sizeof(req), (void **)&resp, &len, &status );
+    ok( !status, "got %08x\n", status );
+    ok( resp->MessageType == KerbQueryTicketCacheMessage, "got %u\n", resp->MessageType );
+
+    for (i = 0; i < resp->CountOfTickets; i++)
+    {
+        KERB_TICKET_CACHE_INFO *info = &resp->Tickets[i];
+        trace( "ServerName %s\n", wine_dbgstr_wn(info->ServerName.Buffer, info->ServerName.Length/sizeof(WCHAR)) );
+        trace( "RealmName %s\n", wine_dbgstr_wn(info->RealmName.Buffer, info->RealmName.Length/sizeof(WCHAR)) );
+        trace( "EncryptionType %08x\n", info->EncryptionType );
+        trace( "TicketFlags %08x\n", info->TicketFlags );
+    }
+    LsaFreeReturnBuffer( resp );
+    LsaDeregisterLogonProcess( lsa );
+}
+
 START_TEST(secur32)
 {
     secdll = LoadLibraryA("secur32.dll");
@@ -514,4 +548,5 @@ START_TEST(secur32)
     }
 
     test_kerberos();
+    test_ticket_cache();
 }
