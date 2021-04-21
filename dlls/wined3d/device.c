@@ -4488,13 +4488,13 @@ void CDECL wined3d_device_dispatch_compute_indirect(struct wined3d_device *devic
     wined3d_device_context_dispatch_indirect(&device->cs->c, buffer, offset);
 }
 
-void CDECL wined3d_device_set_primitive_type(struct wined3d_device *device,
+void CDECL wined3d_device_context_set_primitive_type(struct wined3d_device_context *context,
         enum wined3d_primitive_type primitive_type, unsigned int patch_vertex_count)
 {
-    struct wined3d_state *state = device->cs->c.state;
+    struct wined3d_state *state = context->state;
 
-    TRACE("device %p, primitive_type %s, patch_vertex_count %u.\n",
-            device, debug_d3dprimitivetype(primitive_type), patch_vertex_count);
+    TRACE("context %p, primitive_type %s, patch_vertex_count %u.\n",
+            context, debug_d3dprimitivetype(primitive_type), patch_vertex_count);
 
     state->primitive_type = primitive_type;
     state->patch_vertex_count = patch_vertex_count;

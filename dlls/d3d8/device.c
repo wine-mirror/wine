@@ -2505,7 +2505,8 @@ static HRESULT WINAPI d3d8_device_DrawPrimitive(IDirect3DDevice8 *iface,
     vertex_count = vertex_count_from_primitive_count(primitive_type, primitive_count);
     wined3d_mutex_lock();
     d3d8_device_upload_sysmem_vertex_buffers(device, start_vertex, vertex_count);
-    wined3d_device_set_primitive_type(device->wined3d_device, wined3d_primitive_type_from_d3d(primitive_type), 0);
+    wined3d_device_context_set_primitive_type(device->immediate_context,
+            wined3d_primitive_type_from_d3d(primitive_type), 0);
     wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     wined3d_device_context_draw(device->immediate_context, start_vertex, vertex_count, 0, 0);
     wined3d_mutex_unlock();
@@ -2535,7 +2536,8 @@ static HRESULT WINAPI d3d8_device_DrawIndexedPrimitive(IDirect3DDevice8 *iface,
     base_vertex_index = device->stateblock_state->base_vertex_index;
     d3d8_device_upload_sysmem_vertex_buffers(device, base_vertex_index + min_vertex_idx, vertex_count);
     d3d8_device_upload_sysmem_index_buffer(device, start_idx, index_count);
-    wined3d_device_set_primitive_type(device->wined3d_device, wined3d_primitive_type_from_d3d(primitive_type), 0);
+    wined3d_device_context_set_primitive_type(device->immediate_context,
+            wined3d_primitive_type_from_d3d(primitive_type), 0);
     wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     wined3d_device_context_draw_indexed(device->immediate_context, base_vertex_index, start_idx, index_count, 0, 0);
     wined3d_mutex_unlock();
@@ -2629,7 +2631,8 @@ static HRESULT WINAPI d3d8_device_DrawPrimitiveUP(IDirect3DDevice8 *iface,
     if (FAILED(hr))
         goto done;
 
-    wined3d_device_set_primitive_type(device->wined3d_device, wined3d_primitive_type_from_d3d(primitive_type), 0);
+    wined3d_device_context_set_primitive_type(device->immediate_context,
+            wined3d_primitive_type_from_d3d(primitive_type), 0);
     wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     wined3d_device_context_draw(device->immediate_context, vb_pos / stride, vtx_count, 0, 0);
     wined3d_stateblock_set_stream_source(device->state, 0, NULL, 0, 0);
@@ -2759,7 +2762,8 @@ static HRESULT WINAPI d3d8_device_DrawIndexedPrimitiveUP(IDirect3DDevice8 *iface
     base_vertex_idx = vb_pos / vertex_stride - min_vertex_idx;
     wined3d_stateblock_set_base_vertex_index(device->state, base_vertex_idx);
 
-    wined3d_device_set_primitive_type(device->wined3d_device, wined3d_primitive_type_from_d3d(primitive_type), 0);
+    wined3d_device_context_set_primitive_type(device->immediate_context,
+            wined3d_primitive_type_from_d3d(primitive_type), 0);
     wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     wined3d_device_context_draw_indexed(device->immediate_context,
             base_vertex_idx, ib_pos / idx_fmt_size, idx_count, 0, 0);

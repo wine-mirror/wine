@@ -2483,8 +2483,6 @@ HRESULT __cdecl wined3d_device_set_npatch_mode(struct wined3d_device *device, fl
 void __cdecl wined3d_device_set_pixel_shader(struct wined3d_device *device, struct wined3d_shader *shader);
 void __cdecl wined3d_device_set_predication(struct wined3d_device *device,
         struct wined3d_query *predicate, BOOL value);
-void __cdecl wined3d_device_set_primitive_type(struct wined3d_device *device,
-        enum wined3d_primitive_type primitive_topology, unsigned int patch_vertex_count);
 void __cdecl wined3d_device_set_ps_resource_view(struct wined3d_device *device,
         UINT idx, struct wined3d_shader_resource_view *view);
 void __cdecl wined3d_device_set_ps_sampler(struct wined3d_device *device, UINT idx, struct wined3d_sampler *sampler);
@@ -2599,6 +2597,8 @@ void __cdecl wined3d_device_context_set_index_buffer(struct wined3d_device_conte
         struct wined3d_buffer *buffer, enum wined3d_format_id format_id, unsigned int offset);
 void __cdecl wined3d_device_context_set_predication(struct wined3d_device_context *context,
         struct wined3d_query *predicate, BOOL value);
+void __cdecl wined3d_device_context_set_primitive_type(struct wined3d_device_context *context,
+        enum wined3d_primitive_type primitive_topology, unsigned int patch_vertex_count);
 void __cdecl wined3d_device_context_set_rasterizer_state(struct wined3d_device_context *context,
         struct wined3d_rasterizer_state *rasterizer_state);
 HRESULT __cdecl wined3d_device_context_set_rendertarget_view(struct wined3d_device_context *context,
