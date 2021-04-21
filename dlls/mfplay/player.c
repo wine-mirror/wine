@@ -1251,9 +1251,20 @@ static HRESULT WINAPI media_player_GetNativeVideoSize(IMFPMediaPlayer *iface,
 static HRESULT WINAPI media_player_GetIdealVideoSize(IMFPMediaPlayer *iface,
         SIZE *min_size, SIZE *max_size)
 {
-    FIXME("%p, %p, %p.\n", iface, min_size, max_size);
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
+    IMFVideoDisplayControl *display_control;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, min_size, max_size);
+
+    if (SUCCEEDED(hr = MFGetService((IUnknown *)player->session, &MR_VIDEO_RENDER_SERVICE,
+            &IID_IMFVideoDisplayControl, (void **)&display_control)))
+    {
+        hr = IMFVideoDisplayControl_GetIdealVideoSize(display_control, min_size, max_size);
+        IMFVideoDisplayControl_Release(display_control);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI media_player_SetVideoSourceRect(IMFPMediaPlayer *iface,

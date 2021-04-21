@@ -122,6 +122,7 @@ static void test_create_player(void)
 
 static void test_shutdown(void)
 {
+    SIZE min_size, max_size;
     IMFPMediaPlayer *player;
     float slowest, fastest;
     HRESULT hr;
@@ -155,6 +156,9 @@ static void test_shutdown(void)
     hr = IMFPMediaPlayer_GetState(player, &state);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
     ok(state == MFP_MEDIAPLAYER_STATE_SHUTDOWN, "Unexpected state %d.\n", state);
+
+    hr = IMFPMediaPlayer_GetIdealVideoSize(player, &min_size, &max_size);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFPMediaPlayer_CreateMediaItemFromURL(player, L"url", TRUE, 0, &item);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
