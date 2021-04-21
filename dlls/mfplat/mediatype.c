@@ -2884,7 +2884,7 @@ HRESULT WINAPI MFCreateWaveFormatExFromMFMediaType(IMFMediaType *mediatype, WAVE
     if (!IsEqualGUID(&major, &MFMediaType_Audio))
         return E_INVALIDARG;
 
-    if (!IsEqualGUID(&subtype, &MFAudioFormat_PCM))
+    if (!IsEqualGUID(&subtype, &MFAudioFormat_PCM) && !IsEqualGUID(&subtype, &MFAudioFormat_Float))
     {
         FIXME("Unsupported audio format %s.\n", debugstr_guid(&subtype));
         return E_NOTIMPL;
@@ -2908,7 +2908,12 @@ HRESULT WINAPI MFCreateWaveFormatExFromMFMediaType(IMFMediaType *mediatype, WAVE
 
     memset(format, 0, *size);
 
-    format->wFormatTag = format_ext ? WAVE_FORMAT_EXTENSIBLE : WAVE_FORMAT_PCM;
+    if (format_ext)
+        format->wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+    else if (IsEqualGUID(&subtype, &MFAudioFormat_Float))
+        format->wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
+    else
+        format->wFormatTag = WAVE_FORMAT_PCM;
 
     if (SUCCEEDED(IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_NUM_CHANNELS, &value)))
         format->nChannels = value;
