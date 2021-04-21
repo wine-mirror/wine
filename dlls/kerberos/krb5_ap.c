@@ -927,23 +927,7 @@ static NTSTATUS NTAPI kerberos_SpQueryContextAttributes( LSA_SEC_HANDLE context,
     X(SECPKG_ATTR_TARGET_INFORMATION);
     case SECPKG_ATTR_SIZES:
     {
-        SecPkgContext_Sizes *sizes = (SecPkgContext_Sizes *)buffer;
-        ULONG size_max_signature = 37, size_security_trailer = 49;
-#ifdef SONAME_LIBGSSAPI_KRB5
-        gss_ctx_id_t ctxt_handle;
-
-        if (!(ctxt_handle = ctxthandle_sspi_to_gss( context ))) return SEC_E_INVALID_HANDLE;
-        if (is_dce_style_context( ctxt_handle ))
-        {
-            size_max_signature = 28;
-            size_security_trailer = 76;
-        }
-#endif
-        sizes->cbMaxToken        = KERBEROS_MAX_BUF;
-        sizes->cbMaxSignature    = size_max_signature;
-        sizes->cbBlockSize       = 1;
-        sizes->cbSecurityTrailer = size_security_trailer;
-        return SEC_E_OK;
+        return krb5_funcs->query_context_attributes( context, attribute, buffer );
     }
     case SECPKG_ATTR_NEGOTIATION_INFO:
     {

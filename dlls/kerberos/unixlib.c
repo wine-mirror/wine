@@ -211,6 +211,13 @@ fail:
     return FALSE;
 }
 
+static BOOL is_dce_style_context( gss_ctx_id_t ctx )
+{
+    OM_uint32 ret, minor_status, flags;
+    ret = pgss_inquire_context( &minor_status, ctx, NULL, NULL, NULL, NULL, &flags, NULL, NULL );
+    return (ret == GSS_S_COMPLETE && (flags & GSS_C_DCE_STYLE));
+}
+
 static int get_buffer_index( SecBufferDesc *desc, DWORD type )
 {
     UINT i;
@@ -587,6 +594,45 @@ static NTSTATUS CDECL make_signature( LSA_SEC_HANDLE context, SecBufferDesc *msg
     return status_gss_to_sspi( ret );
 }
 
+#define KERBEROS_MAX_SIGNATURE        37
+#define KERBEROS_SECURITY_TRAILER     49
+#define KERBEROS_MAX_SIGNATURE_DCE    28
+#define KERBEROS_SECURITY_TRAILER_DCE 76
+
+static NTSTATUS CDECL query_context_attributes( LSA_SEC_HANDLE context, ULONG attr, void *buf )
+{
+    switch (attr)
+    {
+    case SECPKG_ATTR_SIZES:
+    {
+        SecPkgContext_Sizes *sizes = (SecPkgContext_Sizes *)buf;
+        ULONG size_max_signature, size_security_trailer;
+        gss_ctx_id_t ctx  = ctxhandle_sspi_to_gss( context );
+
+        if (is_dce_style_context( ctx ))
+        {
+            size_max_signature = KERBEROS_MAX_SIGNATURE_DCE;
+            size_security_trailer = KERBEROS_SECURITY_TRAILER_DCE;
+        }
+        else
+        {
+            size_max_signature = KERBEROS_MAX_SIGNATURE;
+            size_security_trailer = KERBEROS_SECURITY_TRAILER;
+        }
+        sizes->cbMaxToken        = KERBEROS_MAX_BUF;
+        sizes->cbMaxSignature    = size_max_signature;
+        sizes->cbBlockSize       = 1;
+        sizes->cbSecurityTrailer = size_security_trailer;
+        return SEC_E_OK;
+    }
+    default:
+        FIXME( "unhandled attribute %u\n", attr );
+        break;
+    }
+
+    return SEC_E_UNSUPPORTED_FUNCTION;
+}
+
 static NTSTATUS CDECL verify_signature( LSA_SEC_HANDLE context, SecBufferDesc *msg, ULONG *qop )
 {
     OM_uint32 ret, minor_status;
@@ -618,6 +664,7 @@ static const struct krb5_funcs funcs =
     free_credentials_handle,
     initialize_context,
     make_signature,
+    query_context_attributes,
     verify_signature,
 };
 
