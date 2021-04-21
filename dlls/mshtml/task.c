@@ -380,3 +380,14 @@ thread_data_t *get_thread_data(BOOL create)
 
     return thread_data;
 }
+
+ULONGLONG get_time_stamp(void)
+{
+    FILETIME time;
+
+    /* 1601 to 1970 is 369 years plus 89 leap days */
+    const ULONGLONG time_epoch = (ULONGLONG)(369 * 365 + 89) * 86400 * 1000;
+
+    GetSystemTimeAsFileTime(&time);
+    return (((ULONGLONG)time.dwHighDateTime << 32) + time.dwLowDateTime) / 10000 - time_epoch;
+}

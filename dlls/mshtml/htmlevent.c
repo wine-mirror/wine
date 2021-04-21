@@ -2208,11 +2208,7 @@ static DOMEvent *alloc_event(nsIDOMEvent *nsevent, compat_mode_t compat_mode, ev
 {
     dispex_static_data_t *dispex_data = &DOMEvent_dispex;
     DOMEvent *event = NULL;
-    FILETIME time;
     nsresult nsres;
-
-    /* 1601 to 1970 is 369 years plus 89 leap days */
-    const ULONGLONG time_epoch = (ULONGLONG)(369 * 365 + 89) * 86400 * 1000;
 
     if(check_event_iface(nsevent, &IID_nsIDOMCustomEvent)) {
         DOMCustomEvent *custom_event = heap_alloc_zero(sizeof(*custom_event));
@@ -2247,9 +2243,7 @@ static DOMEvent *alloc_event(nsIDOMEvent *nsevent, compat_mode_t compat_mode, ev
     }
     nsIDOMEvent_AddRef(event->nsevent = nsevent);
 
-    GetSystemTimeAsFileTime(&time);
-    event->time_stamp = (((ULONGLONG)time.dwHighDateTime<<32) + time.dwLowDateTime) / 10000
-        - time_epoch;
+    event->time_stamp = get_time_stamp();
 
     nsres = nsIDOMEvent_QueryInterface(nsevent, &IID_nsIDOMUIEvent, (void**)&event->ui_event);
     if(NS_SUCCEEDED(nsres))
