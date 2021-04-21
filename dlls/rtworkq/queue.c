@@ -24,7 +24,6 @@
 #include "initguid.h"
 #include "rtworkq.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
@@ -220,7 +219,7 @@ static HRESULT unlock_user_queue(DWORD queue)
         {
             if (shared_mt_queue == queue) shared_mt_queue = 0;
             shutdown_queue((struct queue *)entry->obj);
-            heap_free(entry->obj);
+            free(entry->obj);
             entry->obj = next_free_user_queue;
             next_free_user_queue = entry;
         }
@@ -555,7 +554,7 @@ static ULONG WINAPI work_item_Release(IUnknown *iface)
         if (item->reply_result)
             IRtwqAsyncResult_Release(item->reply_result);
         IRtwqAsyncResult_Release(item->result);
-        heap_free(item);
+        free(item);
     }
 
     return refcount;
@@ -574,7 +573,7 @@ static struct work_item * alloc_work_item(struct queue *queue, LONG priority, IR
     DWORD flags = 0, queue_id = 0;
     struct work_item *item;
 
-    item = heap_alloc_zero(sizeof(*item));
+    item = calloc(1, sizeof(*item));
 
     item->IUnknown_iface.lpVtbl = &work_item_vtbl;
     item->result = result;
@@ -898,8 +897,7 @@ static HRESULT alloc_user_queue(const struct queue_desc *desc, DWORD *queue_id)
     if (platform_lock <= 0)
         return RTWQ_E_SHUTDOWN;
 
-    queue = heap_alloc_zero(sizeof(*queue));
-    if (!queue)
+    if (!(queue = calloc(1, sizeof(*queue))))
         return E_OUTOFMEMORY;
 
     init_work_queue(desc, queue);
@@ -914,7 +912,7 @@ static HRESULT alloc_user_queue(const struct queue_desc *desc, DWORD *queue_id)
     else
     {
         LeaveCriticalSection(&queues_section);
-        heap_free(queue);
+        free(queue);
         WARN("Out of user queue handles.\n");
         return E_OUTOFMEMORY;
     }
@@ -988,7 +986,7 @@ static ULONG WINAPI async_result_Release(IRtwqAsyncResult *iface)
             IUnknown_Release(result->state);
         if (result->result.hEvent)
             CloseHandle(result->result.hEvent);
-        heap_free(result);
+        free(result);
 
         RtwqUnlockPlatform();
     }
@@ -1074,8 +1072,7 @@ static HRESULT create_async_result(IUnknown *object, IRtwqAsyncCallback *callbac
     if (!out)
         return E_INVALIDARG;
 
-    result = heap_alloc_zero(sizeof(*result));
-    if (!result)
+    if (!(result = calloc(1, sizeof(*result))))
         return E_OUTOFMEMORY;
 
     RtwqLockPlatform();
@@ -1267,7 +1264,7 @@ static ULONG WINAPI periodic_callback_Release(IRtwqAsyncCallback *iface)
     TRACE("%p, %u.\n", iface, refcount);
 
     if (!refcount)
-        heap_free(callback);
+        free(callback);
 
     return refcount;
 }
@@ -1306,8 +1303,7 @@ static HRESULT create_periodic_callback_obj(RTWQPERIODICCALLBACK callback, IRtwq
 {
     struct periodic_callback *object;
 
-    object = heap_alloc(sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IRtwqAsyncCallback_iface.lpVtbl = &periodic_callback_vtbl;
