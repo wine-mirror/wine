@@ -148,6 +148,169 @@ static NTSTATUS krb5_error_to_status( krb5_error_code err )
     }
 }
 
+static WCHAR *utf8_to_wstr( const char *src )
+{
+    ULONG dstlen, srclen = strlen( src ) + 1;
+    WCHAR *dst;
+
+    RtlUTF8ToUnicodeN( NULL, 0, &dstlen, src, srclen );
+    if ((dst = RtlAllocateHeap( GetProcessHeap(), 0, dstlen )))
+        RtlUTF8ToUnicodeN( dst, dstlen, &dstlen, src, srclen );
+    return dst;
+}
+
+static NTSTATUS copy_tickets_from_cache( krb5_context ctx, krb5_ccache cache, struct ticket_list *list )
+{
+    NTSTATUS status;
+    krb5_cc_cursor cursor;
+    krb5_error_code err;
+    krb5_creds creds;
+    krb5_ticket *ticket;
+    char *name_with_realm, *name_without_realm, *realm_name;
+    WCHAR *realm_nameW, *name_without_realmW;
+
+    if ((err = p_krb5_cc_start_seq_get( ctx, cache, &cursor ))) return krb5_error_to_status( err );
+    for (;;)
+    {
+        if ((err = p_krb5_cc_next_cred( ctx, cache, &cursor, &creds )))
+        {
+            if (err == KRB5_CC_END)
+                status = STATUS_SUCCESS;
+            else
+                status = krb5_error_to_status( err );
+            break;
+        }
+
+        if (p_krb5_is_config_principal( ctx, creds.server ))
+        {
+            p_krb5_free_cred_contents( ctx, &creds );
+            continue;
+        }
+
+        if (list->count == list->allocated)
+        {
+            KERB_TICKET_CACHE_INFO *new_tickets;
+            ULONG new_allocated;
+
+            if (list->allocated)
+            {
+                new_allocated = list->allocated * 2;
+                new_tickets = RtlReAllocateHeap( GetProcessHeap(), 0, list->tickets, sizeof(*new_tickets) * new_allocated );
+            }
+            else
+            {
+                new_allocated = 16;
+                new_tickets = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*new_tickets) * new_allocated );
+            }
+            if (!new_tickets)
+            {
+                p_krb5_free_cred_contents( ctx, &creds );
+                status = STATUS_NO_MEMORY;
+                break;
+            }
+            list->tickets = new_tickets;
+            list->allocated = new_allocated;
+        }
+
+        if ((err = p_krb5_unparse_name_flags( ctx, creds.server, 0, &name_with_realm )))
+        {
+            p_krb5_free_cred_contents( ctx, &creds );
+            status = krb5_error_to_status( err );
+            break;
+        }
+        TRACE( "name_with_realm: %s\n", debugstr_a(name_with_realm) );
+
+        if ((err = p_krb5_unparse_name_flags( ctx, creds.server, KRB5_PRINCIPAL_UNPARSE_NO_REALM,
+                                              &name_without_realm )))
+        {
+            p_krb5_free_unparsed_name( ctx, name_with_realm );
+            p_krb5_free_cred_contents( ctx, &creds );
+            status = krb5_error_to_status( err );
+            break;
+        }
+        TRACE( "name_without_realm: %s\n", debugstr_a(name_without_realm) );
+
+        name_without_realmW = utf8_to_wstr( name_without_realm );
+        RtlInitUnicodeString( &list->tickets[list->count].ServerName, name_without_realmW );
+
+        if (!(realm_name = strchr( name_with_realm, '@' )))
+        {
+            ERR( "wrong name with realm %s\n", debugstr_a(name_with_realm) );
+            realm_name = name_with_realm;
+        }
+        else realm_name++;
+
+        /* realm_name - now contains only realm! */
+        realm_nameW = utf8_to_wstr( realm_name );
+        RtlInitUnicodeString( &list->tickets[list->count].RealmName, realm_nameW );
+
+        if (!creds.times.starttime) creds.times.starttime = creds.times.authtime;
+
+        /* TODO: if krb5_is_config_principal = true */
+        RtlSecondsSince1970ToTime( creds.times.starttime, &list->tickets[list->count].StartTime );
+        RtlSecondsSince1970ToTime( creds.times.endtime, &list->tickets[list->count].EndTime );
+        RtlSecondsSince1970ToTime( creds.times.renew_till, &list->tickets[list->count].RenewTime );
+
+        list->tickets[list->count].TicketFlags = creds.ticket_flags;
+
+        err = p_krb5_decode_ticket( &creds.ticket, &ticket );
+        p_krb5_free_unparsed_name( ctx, name_with_realm );
+        p_krb5_free_unparsed_name( ctx, name_without_realm );
+        p_krb5_free_cred_contents( ctx, &creds );
+        if (err)
+        {
+            status = krb5_error_to_status( err );
+            break;
+        }
+
+        list->tickets[list->count].EncryptionType = ticket->enc_part.enctype;
+        p_krb5_free_ticket( ctx, ticket );
+        list->count++;
+    }
+
+    p_krb5_cc_end_seq_get( ctx, cache, &cursor );
+    return status;
+}
+
+static NTSTATUS CDECL query_ticket_cache( struct ticket_list *list )
+{
+    NTSTATUS status;
+    krb5_error_code err;
+    krb5_context ctx;
+    krb5_cccol_cursor cursor = NULL;
+    krb5_ccache cache;
+
+    list->count     = 0;
+    list->allocated = 0;
+    list->tickets   = NULL;
+
+    if ((err = p_krb5_init_context( &ctx ))) return krb5_error_to_status( err );
+    if ((err = p_krb5_cccol_cursor_new( ctx, &cursor )))
+    {
+        status = krb5_error_to_status( err );
+        goto done;
+    }
+
+    for (;;)
+    {
+        if ((err = p_krb5_cccol_cursor_next( ctx, cursor, &cache )))
+        {
+            status = krb5_error_to_status( err );
+            goto done;
+        }
+        if (!cache) break;
+
+        status = copy_tickets_from_cache( ctx, cache, list );
+        p_krb5_cc_close( ctx, cache );
+        if (status != STATUS_SUCCESS) goto done;
+    }
+
+done:
+    if (cursor) p_krb5_cccol_cursor_free( ctx, &cursor );
+    if (ctx) p_krb5_free_context( ctx );
+    return status;
+}
+
 static void *libgssapi_krb5_handle;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
@@ -841,6 +1004,7 @@ static const struct krb5_funcs funcs =
     initialize_context,
     make_signature,
     query_context_attributes,
+    query_ticket_cache,
     seal_message,
     unseal_message,
     verify_signature,

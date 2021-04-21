@@ -21,18 +21,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <stdarg.h>
-#ifdef HAVE_KRB5_KRB5_H
-#include <krb5/krb5.h>
-#endif
-#ifdef SONAME_LIBGSSAPI_KRB5
-# include <gssapi/gssapi.h>
-# include <gssapi/gssapi_ext.h>
-#endif
-
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -88,94 +77,6 @@ static const SecPkgInfoW infoW =
 static ULONG kerberos_package_id;
 static LSA_DISPATCH_TABLE lsa_dispatch;
 
-#ifdef SONAME_LIBKRB5
-
-static void *libkrb5_handle;
-
-#define MAKE_FUNCPTR(f) static typeof(f) * p_##f
-MAKE_FUNCPTR(krb5_cc_close);
-MAKE_FUNCPTR(krb5_cc_default);
-MAKE_FUNCPTR(krb5_cc_end_seq_get);
-MAKE_FUNCPTR(krb5_cc_initialize);
-MAKE_FUNCPTR(krb5_cc_next_cred);
-MAKE_FUNCPTR(krb5_cc_start_seq_get);
-MAKE_FUNCPTR(krb5_cc_store_cred);
-MAKE_FUNCPTR(krb5_cccol_cursor_free);
-MAKE_FUNCPTR(krb5_cccol_cursor_new);
-MAKE_FUNCPTR(krb5_cccol_cursor_next);
-MAKE_FUNCPTR(krb5_decode_ticket);
-MAKE_FUNCPTR(krb5_free_context);
-MAKE_FUNCPTR(krb5_free_cred_contents);
-MAKE_FUNCPTR(krb5_free_principal);
-MAKE_FUNCPTR(krb5_free_ticket);
-MAKE_FUNCPTR(krb5_free_unparsed_name);
-MAKE_FUNCPTR(krb5_get_init_creds_opt_alloc);
-MAKE_FUNCPTR(krb5_get_init_creds_opt_free);
-MAKE_FUNCPTR(krb5_get_init_creds_opt_set_out_ccache);
-MAKE_FUNCPTR(krb5_get_init_creds_password);
-MAKE_FUNCPTR(krb5_init_context);
-MAKE_FUNCPTR(krb5_is_config_principal);
-MAKE_FUNCPTR(krb5_parse_name_flags);
-MAKE_FUNCPTR(krb5_unparse_name_flags);
-#undef MAKE_FUNCPTR
-
-static void load_krb5(void)
-{
-    if (!(libkrb5_handle = dlopen(SONAME_LIBKRB5, RTLD_NOW)))
-    {
-        WARN("Failed to load %s, Kerberos support will be disabled\n", SONAME_LIBKRB5);
-        return;
-    }
-
-#define LOAD_FUNCPTR(f) \
-    if (!(p_##f = dlsym(libkrb5_handle, #f))) \
-    { \
-        ERR("Failed to load %s\n", #f); \
-        goto fail; \
-    }
-
-    LOAD_FUNCPTR(krb5_cc_close)
-    LOAD_FUNCPTR(krb5_cc_default)
-    LOAD_FUNCPTR(krb5_cc_end_seq_get)
-    LOAD_FUNCPTR(krb5_cc_initialize)
-    LOAD_FUNCPTR(krb5_cc_next_cred)
-    LOAD_FUNCPTR(krb5_cc_start_seq_get)
-    LOAD_FUNCPTR(krb5_cc_store_cred)
-    LOAD_FUNCPTR(krb5_cccol_cursor_free)
-    LOAD_FUNCPTR(krb5_cccol_cursor_new)
-    LOAD_FUNCPTR(krb5_cccol_cursor_next)
-    LOAD_FUNCPTR(krb5_decode_ticket)
-    LOAD_FUNCPTR(krb5_free_context)
-    LOAD_FUNCPTR(krb5_free_cred_contents)
-    LOAD_FUNCPTR(krb5_free_principal)
-    LOAD_FUNCPTR(krb5_free_ticket)
-    LOAD_FUNCPTR(krb5_free_unparsed_name)
-    LOAD_FUNCPTR(krb5_get_init_creds_opt_alloc)
-    LOAD_FUNCPTR(krb5_get_init_creds_opt_free)
-    LOAD_FUNCPTR(krb5_get_init_creds_opt_set_out_ccache)
-    LOAD_FUNCPTR(krb5_get_init_creds_password)
-    LOAD_FUNCPTR(krb5_init_context)
-    LOAD_FUNCPTR(krb5_is_config_principal)
-    LOAD_FUNCPTR(krb5_parse_name_flags)
-    LOAD_FUNCPTR(krb5_unparse_name_flags)
-#undef LOAD_FUNCPTR
-
-    return;
-
-fail:
-    dlclose(libkrb5_handle);
-    libkrb5_handle = NULL;
-}
-
-#else /* SONAME_LIBKRB5 */
-
-static void load_krb5(void)
-{
-    WARN("Kerberos support was not provided at compile time\n");
-}
-
-#endif /* SONAME_LIBKRB5 */
-
 static const char *debugstr_us( const UNICODE_STRING *us )
 {
     if (!us) return "<null>";
@@ -187,7 +88,8 @@ static NTSTATUS NTAPI kerberos_LsaApInitializePackage(ULONG package_id, PLSA_DIS
 {
     char *kerberos_name;
 
-    load_krb5();
+    if (!krb5_funcs && __wine_init_unix_lib( instance, DLL_PROCESS_ATTACH, NULL, &krb5_funcs ))
+        ERR( "no Kerberos support, expect problems\n" );
 
     kerberos_package_id = package_id;
     lsa_dispatch = *dispatch;
@@ -209,179 +111,15 @@ static NTSTATUS NTAPI kerberos_LsaApInitializePackage(ULONG package_id, PLSA_DIS
     return STATUS_SUCCESS;
 }
 
-#ifdef SONAME_LIBKRB5
-
-struct ticket_info
-{
-    ULONG count, allocated;
-    KERB_TICKET_CACHE_INFO *info;
-};
-
-static NTSTATUS krb5_error_to_status(krb5_error_code error)
-{
-    switch (error)
-    {
-    case 0: return STATUS_SUCCESS;
-    default:
-        /* FIXME */
-        return STATUS_UNSUCCESSFUL;
-    }
-}
-
-static void free_ticket_info(struct ticket_info *info)
+static void free_ticket_list( struct ticket_list *list )
 {
     ULONG i;
-
-    for (i = 0; i < info->count; i++)
+    for (i = 0; i < list->count; i++)
     {
-        heap_free(info->info[i].RealmName.Buffer);
-        heap_free(info->info[i].ServerName.Buffer);
+        RtlFreeHeap( GetProcessHeap(), 0, list->tickets[i].RealmName.Buffer );
+        RtlFreeHeap( GetProcessHeap(), 0, list->tickets[i].ServerName.Buffer );
     }
-
-    heap_free(info->info);
-}
-
-static WCHAR *utf8_to_wstr(const char *utf8)
-{
-    int len;
-    WCHAR *wstr;
-
-    len = MultiByteToWideChar(CP_UTF8, 0, utf8, -1, NULL, 0);
-    wstr = heap_alloc(len * sizeof(WCHAR));
-    if (wstr)
-        MultiByteToWideChar(CP_UTF8, 0, utf8, -1, wstr, len);
-
-    return wstr;
-}
-
-static NTSTATUS copy_tickets_from_cache(krb5_context context, krb5_ccache cache, struct ticket_info *info)
-{
-    NTSTATUS status;
-    krb5_cc_cursor cursor;
-    krb5_error_code error;
-    krb5_creds credentials;
-    krb5_ticket *ticket;
-    char *name_with_realm, *name_without_realm, *realm_name;
-    WCHAR *realm_nameW, *name_without_realmW;
-
-    error = p_krb5_cc_start_seq_get(context, cache, &cursor);
-    if (error) return krb5_error_to_status(error);
-
-    for (;;)
-    {
-        error = p_krb5_cc_next_cred(context, cache, &cursor, &credentials);
-        if (error)
-        {
-            if (error == KRB5_CC_END)
-                status = STATUS_SUCCESS;
-            else
-                status = krb5_error_to_status(error);
-            break;
-        }
-
-        if (p_krb5_is_config_principal(context, credentials.server))
-        {
-            p_krb5_free_cred_contents(context, &credentials);
-            continue;
-        }
-
-        if (info->count == info->allocated)
-        {
-            KERB_TICKET_CACHE_INFO *new_info;
-            ULONG new_allocated;
-
-            if (info->allocated)
-            {
-                new_allocated = info->allocated * 2;
-                new_info = heap_realloc(info->info, sizeof(*new_info) * new_allocated);
-            }
-            else
-            {
-                new_allocated = 16;
-                new_info = heap_alloc(sizeof(*new_info) * new_allocated);
-            }
-            if (!new_info)
-            {
-                p_krb5_free_cred_contents(context, &credentials);
-                status = STATUS_NO_MEMORY;
-                break;
-            }
-
-            info->info = new_info;
-            info->allocated = new_allocated;
-        }
-
-        error = p_krb5_unparse_name_flags(context, credentials.server, 0, &name_with_realm);
-        if (error)
-        {
-            p_krb5_free_cred_contents(context, &credentials);
-            status = krb5_error_to_status(error);
-            break;
-        }
-
-        TRACE("name_with_realm: %s\n", debugstr_a(name_with_realm));
-
-        error = p_krb5_unparse_name_flags(context, credentials.server,
-            KRB5_PRINCIPAL_UNPARSE_NO_REALM, &name_without_realm);
-        if (error)
-        {
-            p_krb5_free_unparsed_name(context, name_with_realm);
-            p_krb5_free_cred_contents(context, &credentials);
-            status = krb5_error_to_status(error);
-            break;
-        }
-
-        TRACE("name_without_realm: %s\n", debugstr_a(name_without_realm));
-
-        name_without_realmW = utf8_to_wstr(name_without_realm);
-        RtlInitUnicodeString(&info->info[info->count].ServerName, name_without_realmW);
-
-        realm_name = strchr(name_with_realm, '@');
-        if (!realm_name)
-        {
-            ERR("wrong name with realm %s\n", debugstr_a(name_with_realm));
-            realm_name = name_with_realm;
-        }
-        else
-            realm_name++;
-
-        /* realm_name - now contains only realm! */
-
-        realm_nameW = utf8_to_wstr(realm_name);
-        RtlInitUnicodeString(&info->info[info->count].RealmName, realm_nameW);
-
-        if (!credentials.times.starttime)
-            credentials.times.starttime = credentials.times.authtime;
-
-        /* TODO: if krb5_is_config_principal = true */
-        RtlSecondsSince1970ToTime(credentials.times.starttime, &info->info[info->count].StartTime);
-        RtlSecondsSince1970ToTime(credentials.times.endtime, &info->info[info->count].EndTime);
-        RtlSecondsSince1970ToTime(credentials.times.renew_till, &info->info[info->count].RenewTime);
-
-        info->info[info->count].TicketFlags = credentials.ticket_flags;
-
-        error = p_krb5_decode_ticket(&credentials.ticket, &ticket);
-
-        p_krb5_free_unparsed_name(context, name_with_realm);
-        p_krb5_free_unparsed_name(context, name_without_realm);
-        p_krb5_free_cred_contents(context, &credentials);
-
-        if (error)
-        {
-            status = krb5_error_to_status(error);
-            break;
-        }
-
-        info->info[info->count].EncryptionType = ticket->enc_part.enctype;
-
-        p_krb5_free_ticket(context, ticket);
-
-        info->count++;
-    }
-
-    p_krb5_cc_end_seq_get(context, cache, &cursor);
-
-    return status;
+    RtlFreeHeap( GetProcessHeap(), 0, list->tickets );
 }
 
 static inline void init_client_us(UNICODE_STRING *dst, void *client_ws, const UNICODE_STRING *src)
@@ -391,7 +129,7 @@ static inline void init_client_us(UNICODE_STRING *dst, void *client_ws, const UN
     dst->MaximumLength = src->MaximumLength;
 }
 
-static NTSTATUS copy_to_client(PLSA_CLIENT_REQUEST lsa_req, struct ticket_info *info, void **out, ULONG *out_size)
+static NTSTATUS copy_to_client(PLSA_CLIENT_REQUEST lsa_req, struct ticket_list *list, void **out, ULONG *out_size)
 {
     NTSTATUS status;
     ULONG i;
@@ -399,28 +137,26 @@ static NTSTATUS copy_to_client(PLSA_CLIENT_REQUEST lsa_req, struct ticket_info *
     char *client_resp, *client_ticket, *client_str;
     KERB_QUERY_TKT_CACHE_RESPONSE resp;
 
-    size = sizeof(KERB_QUERY_TKT_CACHE_RESPONSE);
-    if (info->count != 0)
-        size += (info->count - 1) * sizeof(KERB_TICKET_CACHE_INFO);
-
+    size = sizeof(resp);
+    if (list->count) size += (list->count - 1) * sizeof(KERB_TICKET_CACHE_INFO);
     client_str_off = size;
 
-    for (i = 0; i < info->count; i++)
+    for (i = 0; i < list->count; i++)
     {
-        size += info->info[i].RealmName.MaximumLength;
-        size += info->info[i].ServerName.MaximumLength;
+        size += list->tickets[i].RealmName.MaximumLength;
+        size += list->tickets[i].ServerName.MaximumLength;
     }
 
     status = lsa_dispatch.AllocateClientBuffer(lsa_req, size, (void **)&client_resp);
     if (status != STATUS_SUCCESS) return status;
 
     resp.MessageType = KerbQueryTicketCacheMessage;
-    resp.CountOfTickets = info->count;
+    resp.CountOfTickets = list->count;
     size = FIELD_OFFSET(KERB_QUERY_TKT_CACHE_RESPONSE, Tickets);
     status = lsa_dispatch.CopyToClientBuffer(lsa_req, size, client_resp, &resp);
     if (status != STATUS_SUCCESS) goto fail;
 
-    if (!info->count)
+    if (!list->count)
     {
         *out = client_resp;
         *out_size = sizeof(resp);
@@ -432,24 +168,22 @@ static NTSTATUS copy_to_client(PLSA_CLIENT_REQUEST lsa_req, struct ticket_info *
     client_ticket = client_resp + size;
     client_str = client_resp + client_str_off;
 
-    for (i = 0; i < info->count; i++)
+    for (i = 0; i < list->count; i++)
     {
-        KERB_TICKET_CACHE_INFO ticket;
+        KERB_TICKET_CACHE_INFO ticket = list->tickets[i];
 
-        ticket = info->info[i];
+        init_client_us(&ticket.RealmName, client_str, &list->tickets[i].RealmName);
 
-        init_client_us(&ticket.RealmName, client_str, &info->info[i].RealmName);
-
-        size = info->info[i].RealmName.MaximumLength;
-        status = lsa_dispatch.CopyToClientBuffer(lsa_req, size, client_str, info->info[i].RealmName.Buffer);
+        size = ticket.RealmName.MaximumLength;
+        status = lsa_dispatch.CopyToClientBuffer(lsa_req, size, client_str, list->tickets[i].RealmName.Buffer);
         if (status != STATUS_SUCCESS) goto fail;
         client_str += size;
         *out_size += size;
 
-        init_client_us(&ticket.ServerName, client_str, &info->info[i].ServerName);
+        init_client_us(&ticket.ServerName, client_str, &list->tickets[i].ServerName);
 
-        size = info->info[i].ServerName.MaximumLength;
-        status = lsa_dispatch.CopyToClientBuffer(lsa_req, size, client_str, info->info[i].ServerName.Buffer);
+        size = ticket.ServerName.MaximumLength;
+        status = lsa_dispatch.CopyToClientBuffer(lsa_req, size, client_str, list->tickets[i].ServerName.Buffer);
         if (status != STATUS_SUCCESS) goto fail;
         client_str += size;
         *out_size += size;
@@ -469,121 +203,53 @@ fail:
     return status;
 }
 
-static NTSTATUS query_ticket_cache(PLSA_CLIENT_REQUEST lsa_req, void *in, ULONG in_len, void **out, ULONG *out_len)
-{
-    NTSTATUS status;
-    KERB_QUERY_TKT_CACHE_REQUEST *query;
-    struct ticket_info info;
-    krb5_error_code error;
-    krb5_context context = NULL;
-    krb5_cccol_cursor cursor = NULL;
-    krb5_ccache cache;
-
-    if (!in || in_len != sizeof(KERB_QUERY_TKT_CACHE_REQUEST) || !out || !out_len)
-        return STATUS_INVALID_PARAMETER;
-
-    query = (KERB_QUERY_TKT_CACHE_REQUEST *)in;
-
-    if (query->LogonId.HighPart != 0 || query->LogonId.LowPart != 0)
-        return STATUS_ACCESS_DENIED;
-
-    info.count = 0;
-    info.allocated = 0;
-    info.info = NULL;
-
-    error = p_krb5_init_context(&context);
-    if (error)
-    {
-        status = krb5_error_to_status(error);
-        goto done;
-    }
-
-    error = p_krb5_cccol_cursor_new(context, &cursor);
-    if (error)
-    {
-        status = krb5_error_to_status(error);
-        goto done;
-    }
-
-    for (;;)
-    {
-        error = p_krb5_cccol_cursor_next(context, cursor, &cache);
-        if (error)
-        {
-            status = krb5_error_to_status(error);
-            goto done;
-        }
-        if (!cache) break;
-
-        status = copy_tickets_from_cache(context, cache, &info);
-
-        p_krb5_cc_close(context, cache);
-
-        if (status != STATUS_SUCCESS)
-            goto done;
-    }
-
-    status = copy_to_client(lsa_req, &info, out, out_len);
-
-done:
-    if (cursor)
-        p_krb5_cccol_cursor_free(context, &cursor);
-
-    if (context)
-        p_krb5_free_context(context);
-
-    free_ticket_info(&info);
-
-    return status;
-}
-
-#else /* SONAME_LIBKRB5 */
-
-static NTSTATUS query_ticket_cache(PLSA_CLIENT_REQUEST lsa_req, void *in, ULONG in_len, void **out, ULONG *out_len)
-{
-    FIXME("%p,%p,%u,%p,%p: stub\n", lsa_req, in, in_len, out, out_len);
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-#endif /* SONAME_LIBKRB5 */
-
-static NTSTATUS NTAPI kerberos_LsaApCallPackageUntrusted(PLSA_CLIENT_REQUEST request,
-    PVOID in_buffer, PVOID client_buffer_base, ULONG in_buffer_length,
-    PVOID *out_buffer, PULONG out_buffer_length, PNTSTATUS status)
+static NTSTATUS NTAPI kerberos_LsaApCallPackageUntrusted(PLSA_CLIENT_REQUEST req, void *in_buf,
+    void *client_buf_base, ULONG in_buf_len, void **out_buf, ULONG *out_buf_len, NTSTATUS *ret_status)
 {
     KERB_PROTOCOL_MESSAGE_TYPE msg;
 
-    TRACE("%p,%p,%p,%u,%p,%p,%p\n", request, in_buffer, client_buffer_base,
-        in_buffer_length, out_buffer, out_buffer_length, status);
+    TRACE("%p,%p,%p,%u,%p,%p,%p\n", req, in_buf, client_buf_base, in_buf_len, out_buf, out_buf_len, ret_status);
 
-    if (!in_buffer || in_buffer_length < sizeof(msg))
-        return STATUS_INVALID_PARAMETER;
+    if (!in_buf || in_buf_len < sizeof(msg)) return STATUS_INVALID_PARAMETER;
 
-    msg = *(KERB_PROTOCOL_MESSAGE_TYPE *)in_buffer;
-
+    msg = *(KERB_PROTOCOL_MESSAGE_TYPE *)in_buf;
     switch (msg)
     {
     case KerbQueryTicketCacheMessage:
-        *status = query_ticket_cache(request, in_buffer, in_buffer_length, out_buffer, out_buffer_length);
-        break;
+    {
+        KERB_QUERY_TKT_CACHE_REQUEST *query = (KERB_QUERY_TKT_CACHE_REQUEST *)in_buf;
+        struct ticket_list list;
+        NTSTATUS status;
 
+        if (!in_buf || in_buf_len != sizeof(*query) || !out_buf || !out_buf_len) return STATUS_INVALID_PARAMETER;
+        if (query->LogonId.HighPart || query->LogonId.LowPart) return STATUS_ACCESS_DENIED;
+
+        status = krb5_funcs->query_ticket_cache(&list);
+        if (!status)
+        {
+            status = copy_to_client(req, &list, out_buf, out_buf_len);
+            free_ticket_list(&list);
+        }
+        *ret_status = status;
+        break;
+    }
     case KerbRetrieveTicketMessage:
         FIXME("KerbRetrieveTicketMessage stub\n");
-        *status = STATUS_NOT_IMPLEMENTED;
+        *ret_status = STATUS_NOT_IMPLEMENTED;
         break;
 
     case KerbPurgeTicketCacheMessage:
         FIXME("KerbPurgeTicketCacheMessage stub\n");
-        *status = STATUS_NOT_IMPLEMENTED;
+        *ret_status = STATUS_NOT_IMPLEMENTED;
         break;
 
     default: /* All other requests should call LsaApCallPackage */
         WARN("%u => access denied\n", msg);
-        *status = STATUS_ACCESS_DENIED;
+        *ret_status = STATUS_ACCESS_DENIED;
         break;
     }
 
-    return *status;
+    return *ret_status;
 }
 
 static NTSTATUS NTAPI kerberos_SpGetInfo(SecPkgInfoW *info)
