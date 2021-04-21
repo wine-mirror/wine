@@ -580,7 +580,7 @@ static void test_RtlSetEnvironmentVariable(void)
     query_env_var(env, L"cat", NULL);
 
     status = set_env_var(&env, L"cat", NULL);
-    todo_wine ok(!status, "got %#x\n", status);
+    ok(!status, "got %#x\n", status);
 
     status = set_env_var(&env, L"foo", L"meouw");
     ok(!status, "got %#x\n", status);
@@ -591,7 +591,7 @@ static void test_RtlSetEnvironmentVariable(void)
     query_env_var(env, L"foo", NULL);
 
     status = set_env_var(&env, L"horse", NULL);
-    todo_wine ok(!status, "got %#x\n", status);
+    ok(!status, "got %#x\n", status);
     query_env_var(env, L"horse", NULL);
 
     status = set_env_var(&env, L"me=too", L"also");

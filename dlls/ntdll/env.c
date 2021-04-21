@@ -733,7 +733,7 @@ NTSTATUS WINAPI RtlSetEnvironmentVariable(PWSTR* penv, PUNICODE_STRING name,
 {
     INT varlen, len, old_size;
     LPWSTR      p, env;
-    NTSTATUS    nts = STATUS_VARIABLE_NOT_FOUND;
+    NTSTATUS    nts = STATUS_SUCCESS;
 
     TRACE("(%p, %s, %s)\n", penv, debugstr_us(name), debugstr_us(value));
 
@@ -806,7 +806,6 @@ NTSTATUS WINAPI RtlSetEnvironmentVariable(PWSTR* penv, PUNICODE_STRING name,
         memcpy( p, value->Buffer, value->Length );
         p[value->Length / sizeof(WCHAR)] = 0;
     }
-    nts = STATUS_SUCCESS;
 
 done:
     if (!penv) RtlReleasePebLock();
