@@ -1043,29 +1043,23 @@ static HRESULT media_item_create_sink_node(IUnknown *sink, IMFTopologyNode **nod
 static HRESULT media_item_create_topology(struct media_player *player, struct media_item *item, IMFTopology **out)
 {
     IMFTopologyNode *src_node, *sink_node;
+    BOOL selected, video_added = FALSE;
     IMFStreamDescriptor *sd;
     IMFTopology *topology;
     unsigned int idx;
     IUnknown *sink;
-    BOOL selected;
     HRESULT hr;
     GUID major;
 
     if (FAILED(hr = MFCreateTopology(&topology)))
         return hr;
 
-    /* Use first stream if none selected. */
-    if (player->output_window)
-    {
-        FIXME("Video streams are not handled.\n");
-    }
-
     /* Set up branches for all selected streams. */
 
     idx = 0;
     while (SUCCEEDED(IMFPresentationDescriptor_GetStreamDescriptorByIndex(item->pd, idx++, &selected, &sd)))
     {
-        if (!selected)
+        if (!selected || FAILED(media_item_get_stream_type(sd, &major)))
         {
             IMFStreamDescriptor_Release(sd);
             continue;
@@ -1077,10 +1071,16 @@ static HRESULT media_item_create_topology(struct media_player *player, struct me
         {
             /* User sink is attached as-is. */
         }
-        else if (SUCCEEDED(media_item_get_stream_type(sd, &major)) && IsEqualGUID(&major, &MFMediaType_Audio))
+        else if (IsEqualGUID(&major, &MFMediaType_Audio))
         {
             if (FAILED(hr = MFCreateAudioRendererActivate((IMFActivate **)&sink)))
                 WARN("Failed to create SAR activation object, hr %#x.\n", hr);
+        }
+        else if (IsEqualGUID(&major, &MFMediaType_Video) && player->output_window && !video_added)
+        {
+            if (FAILED(hr = MFCreateVideoRendererActivate(player->output_window, (IMFActivate **)&sink)))
+                WARN("Failed to create EVR activation object, hr %#x.\n", hr);
+            video_added = SUCCEEDED(hr);
         }
 
         if (sink)
