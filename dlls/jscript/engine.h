@@ -145,6 +145,8 @@ typedef struct {
     int ref;
 } local_ref_t;
 
+#define INVALID_LOCAL_REF 0x7fffffff
+
 typedef struct _function_code_t {
     BSTR name;
     int local_ref;

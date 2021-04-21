@@ -3039,7 +3039,7 @@ static HRESULT setup_scope(script_ctx_t *ctx, call_frame_t *frame, scope_chain_t
     }
 
     for(i = 0; i < frame->function->func_cnt; i++) {
-        if(frame->function->funcs[i].name && !frame->function->funcs[i].event_target) {
+        if(frame->function->funcs[i].local_ref != INVALID_LOCAL_REF) {
             jsdisp_t *func_obj;
             unsigned off;
 
