@@ -1363,16 +1363,38 @@ static HRESULT WINAPI media_player_UpdateVideo(IMFPMediaPlayer *iface)
 
 static HRESULT WINAPI media_player_SetBorderColor(IMFPMediaPlayer *iface, COLORREF color)
 {
-    FIXME("%p, %#x.\n", iface, color);
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
+    IMFVideoDisplayControl *display_control;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %#x.\n", iface, color);
+
+    if (SUCCEEDED(hr = MFGetService((IUnknown *)player->session, &MR_VIDEO_RENDER_SERVICE,
+            &IID_IMFVideoDisplayControl, (void **)&display_control)))
+    {
+        hr = IMFVideoDisplayControl_SetBorderColor(display_control, color);
+        IMFVideoDisplayControl_Release(display_control);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI media_player_GetBorderColor(IMFPMediaPlayer *iface, COLORREF *color)
 {
-    FIXME("%p, %p.\n", iface, color);
+    struct media_player *player = impl_from_IMFPMediaPlayer(iface);
+    IMFVideoDisplayControl *display_control;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p.\n", iface, color);
+
+    if (SUCCEEDED(hr = MFGetService((IUnknown *)player->session, &MR_VIDEO_RENDER_SERVICE,
+            &IID_IMFVideoDisplayControl, (void **)&display_control)))
+    {
+        hr = IMFVideoDisplayControl_GetBorderColor(display_control, color);
+        IMFVideoDisplayControl_Release(display_control);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI media_player_InsertEffect(IMFPMediaPlayer *iface, IUnknown *effect,
