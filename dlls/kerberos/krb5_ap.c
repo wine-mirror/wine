@@ -1050,119 +1050,14 @@ static NTSTATUS NTAPI kerberos_SpVerifySignature( LSA_SEC_HANDLE context, SecBuf
     return krb5_funcs->verify_signature( context, message, quality_of_protection );
 }
 
-#ifdef SONAME_LIBGSSAPI_KRB5
-static NTSTATUS seal_message_iov( gss_ctx_id_t ctxt_handle, SecBufferDesc *message, ULONG quality_of_protection )
-{
-    gss_iov_buffer_desc iov[4];
-    OM_uint32 ret, minor_status;
-    int token_idx, data_idx, conf_flag, conf_state;
-
-    if (!quality_of_protection)
-        conf_flag = 1; /* confidentiality + integrity */
-    else if (quality_of_protection == SECQOP_WRAP_NO_ENCRYPT)
-        conf_flag = 0; /* only integrity */
-    else
-    {
-        FIXME( "QOP %08x not supported\n", quality_of_protection );
-        return SEC_E_UNSUPPORTED_FUNCTION;
-    }
-
-    /* FIXME: multiple data buffers, read-only buffers */
-    if ((data_idx = get_buffer_index( message, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
-    if ((token_idx = get_buffer_index( message, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
-
-    iov[0].type          = GSS_IOV_BUFFER_TYPE_SIGN_ONLY | GSS_IOV_BUFFER_FLAG_ALLOCATE;
-    iov[0].buffer.length = 0;
-    iov[0].buffer.value  = NULL;
-
-    iov[1].type          = GSS_IOV_BUFFER_TYPE_DATA;
-    iov[1].buffer.length = message->pBuffers[data_idx].cbBuffer;
-    iov[1].buffer.value  = message->pBuffers[data_idx].pvBuffer;
-
-    iov[2].type          = GSS_IOV_BUFFER_TYPE_SIGN_ONLY | GSS_IOV_BUFFER_FLAG_ALLOCATE;
-    iov[2].buffer.length = 0;
-    iov[2].buffer.value  = NULL;
-
-    iov[3].type          = GSS_IOV_BUFFER_TYPE_HEADER | GSS_IOV_BUFFER_FLAG_ALLOCATE;
-    iov[3].buffer.length = 0;
-    iov[3].buffer.value  = NULL;
-
-    ret = pgss_wrap_iov( &minor_status, ctxt_handle, conf_flag, GSS_C_QOP_DEFAULT, &conf_state, iov, 4 );
-    TRACE( "gss_wrap_iov returned %08x minor status %08x\n", ret, minor_status );
-    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
-    if (ret == GSS_S_COMPLETE)
-    {
-        memcpy( message->pBuffers[token_idx].pvBuffer, iov[3].buffer.value, iov[3].buffer.length );
-        message->pBuffers[token_idx].cbBuffer = iov[3].buffer.length;
-        pgss_release_iov_buffer( &minor_status, iov, 4 );
-    }
-
-    return status_gss_to_sspi( ret );
-}
-
-static NTSTATUS seal_message( gss_ctx_id_t ctxt_handle, SecBufferDesc *message, ULONG quality_of_protection )
-{
-    gss_buffer_desc input, output;
-    OM_uint32 ret, minor_status;
-    int token_idx, data_idx, conf_flag, conf_state;
-
-    if (!quality_of_protection)
-        conf_flag = 1; /* confidentiality + integrity */
-    else if (quality_of_protection == SECQOP_WRAP_NO_ENCRYPT)
-        conf_flag = 0; /* only integrity */
-    else
-    {
-        FIXME( "QOP %08x not supported\n", quality_of_protection );
-        return SEC_E_UNSUPPORTED_FUNCTION;
-    }
-
-    /* FIXME: multiple data buffers, read-only buffers */
-    if ((data_idx = get_buffer_index( message, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
-    if ((token_idx = get_buffer_index( message, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
-
-    input.length = message->pBuffers[data_idx].cbBuffer;
-    input.value  = message->pBuffers[data_idx].pvBuffer;
-
-    ret = pgss_wrap( &minor_status, ctxt_handle, conf_flag, GSS_C_QOP_DEFAULT, &input, &conf_state, &output );
-    TRACE( "gss_wrap returned %08x minor status %08x\n", ret, minor_status );
-    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
-    if (ret == GSS_S_COMPLETE)
-    {
-        DWORD len_data = message->pBuffers[data_idx].cbBuffer, len_token = message->pBuffers[token_idx].cbBuffer;
-        if (len_token < output.length - len_data)
-        {
-            TRACE( "buffer too small %lu > %u\n", (SIZE_T)output.length - len_data, len_token );
-            pgss_release_buffer( &minor_status, &output );
-            return SEC_E_BUFFER_TOO_SMALL;
-        }
-        memcpy( message->pBuffers[data_idx].pvBuffer, output.value, len_data );
-        memcpy( message->pBuffers[token_idx].pvBuffer, (char *)output.value + len_data, output.length - len_data );
-        message->pBuffers[token_idx].cbBuffer = output.length - len_data;
-        pgss_release_buffer( &minor_status, &output );
-    }
-
-    return status_gss_to_sspi( ret );
-}
-#endif
-
 static NTSTATUS NTAPI kerberos_SpSealMessage( LSA_SEC_HANDLE context, ULONG quality_of_protection,
     SecBufferDesc *message, ULONG message_seq_no )
 {
-#ifdef SONAME_LIBGSSAPI_KRB5
-    gss_ctx_id_t ctxt_handle;
-
     TRACE( "(%lx 0x%08x %p %u)\n", context, quality_of_protection, message, message_seq_no );
     if (message_seq_no) FIXME( "ignoring message_seq_no %u\n", message_seq_no );
 
     if (!context) return SEC_E_INVALID_HANDLE;
-    ctxt_handle = ctxthandle_sspi_to_gss( context );
-
-    if (is_dce_style_context( ctxt_handle )) return seal_message_iov( ctxt_handle, message, quality_of_protection );
-    return seal_message( ctxt_handle, message, quality_of_protection );
-#else
-    FIXME( "(%lx 0x%08x %p %u)\n", context, quality_of_protection, message, message_seq_no );
-    return SEC_E_UNSUPPORTED_FUNCTION;
-#endif
+    return krb5_funcs->seal_message( context, message, quality_of_protection );
 }
 
 #ifdef SONAME_LIBGSSAPI_KRB5
