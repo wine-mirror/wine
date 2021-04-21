@@ -308,7 +308,7 @@ BOOL WINAPI GetVolumeNameForVolumeMountPointW( LPCWSTR path, LPWSTR volume, DWOR
     /* Take the mount point and get the "nonpersistent name" */
     /* We will then take that and get the volume name        */
     nonpersist_name = (WCHAR *)(input + 1);
-    status = read_nt_symlink( symlink_name, nonpersist_name, i_size - sizeof(*input) );
+    status = read_nt_symlink( symlink_name, nonpersist_name, (i_size - sizeof(*input)) / sizeof(WCHAR) );
     TRACE("read_nt_symlink got stat=%x, for %s, got <%s>\n", status,
             debugstr_w(symlink_name), debugstr_w(nonpersist_name));
     if (status != STATUS_SUCCESS)
