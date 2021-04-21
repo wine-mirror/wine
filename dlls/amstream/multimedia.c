@@ -207,13 +207,18 @@ static HRESULT WINAPI multimedia_stream_Seek(IAMMultiMediaStream *iface, STREAM_
     return IMediaSeeking_SetPositions(This->media_seeking, &seek_time, AM_SEEKING_AbsolutePositioning, NULL, AM_SEEKING_NoPositioning);
 }
 
-static HRESULT WINAPI multimedia_stream_GetEndOfStream(IAMMultiMediaStream *iface, HANDLE *phEOS)
+static HRESULT WINAPI multimedia_stream_GetEndOfStream(IAMMultiMediaStream *iface, HANDLE *eos)
 {
-    struct multimedia_stream *This = impl_from_IAMMultiMediaStream(iface);
+    struct multimedia_stream *mmstream = impl_from_IAMMultiMediaStream(iface);
 
-    FIXME("(%p/%p)->(%p) stub!\n", This, iface, phEOS);
+    TRACE("mmstream %p, eos %p.\n", mmstream, eos);
 
-    return E_NOTIMPL;
+    if (!eos)
+        return E_POINTER;
+
+    *eos = (HANDLE)mmstream->event;
+
+    return S_OK;
 }
 
 static HRESULT create_graph(struct multimedia_stream *mmstream, IGraphBuilder *graph)

@@ -2991,11 +2991,11 @@ static void test_get_end_of_stream_event_handle(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IAMMultiMediaStream_GetEndOfStreamEventHandle(mmstream, NULL);
-    todo_wine ok(hr == E_POINTER, "Got hr %#x.\n", hr);
+    ok(hr == E_POINTER, "Got hr %#x.\n", hr);
 
     event = INVALID_HANDLE_VALUE;
     hr = IAMMultiMediaStream_GetEndOfStreamEventHandle(mmstream, &event);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &rgb32_mt);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
@@ -3013,12 +3013,12 @@ static void test_get_end_of_stream_event_handle(void)
     hr = IPin_EndOfStream(pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    todo_wine ok(WaitForSingleObject(event, 0) == 0, "Event should be signaled.\n");
+    ok(WaitForSingleObject(event, 0) == 0, "Event should be signaled.\n");
 
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    todo_wine ok(WaitForSingleObject(event, 0) == 0, "Event should be signaled.\n");
+    ok(WaitForSingleObject(event, 0) == 0, "Event should be signaled.\n");
 
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
