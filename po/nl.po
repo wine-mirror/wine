@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-04-09 10:15+0200\n"
+"PO-Revision-Date: 2021-04-21 09:20+0200\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -14761,10 +14761,8 @@ msgstr ""
 "\n"
 
 #: programs/reg/reg.rc:172
-#, fuzzy
-#| msgid "reg: Invalid system key [%1]\n"
 msgid "reg: Invalid system key\n"
-msgstr "reg: Foutieve systeemsleutel [%1]\n"
+msgstr "reg: Foutieve systeemsleutel\n"
 
 #: programs/reg/reg.rc:173
 msgid "The file '%1' already exists. Do you want to overwrite it?"
