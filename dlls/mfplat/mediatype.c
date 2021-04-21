@@ -154,6 +154,7 @@ static ULONG WINAPI mediatype_Release(IMFMediaType *iface)
     if (!refcount)
     {
         clear_attributes_object(&media_type->attributes);
+        CoTaskMemFree(media_type->video_format);
         heap_free(media_type);
     }
 
