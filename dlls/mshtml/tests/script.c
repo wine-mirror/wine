@@ -2792,7 +2792,7 @@ typedef struct {
 
     IStream *stream;
     char *data;
-    size_t size;
+    ULONG size;
     char *ptr;
 
     IUri *uri;
@@ -3116,12 +3116,21 @@ static HRESULT WINAPI ProtocolEx_StartEx(IInternetProtocolEx *iface, IUri *uri, 
         This->size = strlen(This->data);
     }else {
         src = FindResourceW(NULL, *path == '/' ? path+1 : path, (const WCHAR*)RT_HTML);
-        ok(src != NULL, "Could not find resource for path %s\n", wine_dbgstr_w(path));
         if(src) {
             This->size = SizeofResource(NULL, src);
             This->data = LoadResource(NULL, src);
         }else {
-            hres = E_FAIL;
+            HANDLE file = CreateFileW(*path == '/' ? path+1 : path, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+                                      FILE_ATTRIBUTE_READONLY, NULL);
+            if(file != INVALID_HANDLE_VALUE) {
+                This->size = GetFileSize(file, NULL);
+                This->data = malloc(This->size);
+                ReadFile(file, This->data, This->size, &This->size, NULL);
+                CloseHandle(file);
+            }else {
+                ok(0, "Could not find %s\n", debugstr_w(path));
+                hres = E_FAIL;
+            }
         }
     }
 
@@ -3559,10 +3568,17 @@ static BOOL check_ie(void)
 
 START_TEST(script)
 {
+    int argc;
+    char **argv;
+
+    argc = winetest_get_mainargs(&argv);
     CoInitialize(NULL);
     container_hwnd = create_container_window();
 
-    if(check_ie()) {
+    if(argc > 2) {
+        init_protocol_handler();
+        run_script_as_http_with_mode(argv[2], NULL, "11");
+    }else if(check_ie()) {
         if(winetest_interactive || ! is_ie_hardened()) {
             if(register_script_engine()) {
                 test_simple_script();
