@@ -2451,7 +2451,8 @@ static NTSTATUS build_dlldata_path( LPCWSTR libname, ACTCTX_SECTION_KEYED_DATA *
         memcpy( p, base + dlldata->paths[i].offset, dlldata->paths[i].len );
         p += dlldata->paths[i].len / sizeof(WCHAR);
     }
-    wcscpy( p, libname );
+    if (p == buffer || p[-1] == '\\') wcscpy( p, libname );
+    else *p = 0;
 
     if (dlldata->flags & DLL_REDIRECT_PATH_EXPAND)
     {
