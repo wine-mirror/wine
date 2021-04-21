@@ -34,12 +34,18 @@
 
 #include "wine/test.h"
 
+
+/* kernel32.dll */
+static INT (WINAPI *pGetUserDefaultGeoName)(LPWSTR, int);
+
+/* combase.dll */
 static HRESULT (WINAPI *pRoGetActivationFactory)(HSTRING, REFIID, void **);
 static HRESULT (WINAPI *pRoInitialize)(RO_INIT_TYPE);
 static void    (WINAPI *pRoUninitialize)(void);
 static HRESULT (WINAPI *pWindowsCreateString)(LPCWSTR, UINT32, HSTRING *);
 static HRESULT (WINAPI *pWindowsDeleteString)(HSTRING);
 static WCHAR  *(WINAPI *pWindowsGetStringRawBuffer)(HSTRING, UINT32 *);
+
 
 static void test_GlobalizationPreferences(void)
 {
@@ -54,11 +60,10 @@ static void test_GlobalizationPreferences(void)
     BOOLEAN found;
     HRESULT hr;
     UINT32 len;
-    WCHAR *buf, locale[LOCALE_NAME_MAX_LENGTH], country[16];
+    WCHAR *buf, locale[LOCALE_NAME_MAX_LENGTH];
     UINT32 i, size;
 
     GetUserDefaultLocaleName(locale, LOCALE_NAME_MAX_LENGTH);
-    GetUserDefaultGeoName(country, 16);
 
     hr = pRoInitialize(RO_INIT_MULTITHREADED);
     ok(hr == S_OK, "RoInitialize failed, hr %#x\n", hr);
@@ -100,9 +105,14 @@ static void test_GlobalizationPreferences(void)
 
     buf = pWindowsGetStringRawBuffer(tmp_str, &len);
     ok(buf != NULL && len > 0, "WindowsGetStringRawBuffer returned buf %p, len %u\n", buf, len);
-    ok(wcslen(country) == len && !memcmp(buf, country, len),
-       "IGlobalizationPreferencesStatics_get_HomeGeographicRegion returned len %u, str %s, expected %s\n",
-       len, wine_dbgstr_w(buf), wine_dbgstr_w(country));
+    if (pGetUserDefaultGeoName)
+    {
+        WCHAR country[16];
+        pGetUserDefaultGeoName(country, ARRAY_SIZE(country));
+        ok(wcslen(country) == len && !memcmp(buf, country, len),
+           "IGlobalizationPreferencesStatics_get_HomeGeographicRegion returned len %u, str %s, expected %s\n",
+           len, wine_dbgstr_w(buf), wine_dbgstr_w(country));
+    }
 
     pWindowsDeleteString(tmp_str);
 
@@ -224,7 +234,7 @@ static void test_GlobalizationPreferences(void)
 
 START_TEST(globalization)
 {
-    HMODULE combase;
+    HMODULE combase, kernel32;
 
     if (!(combase = LoadLibraryW(L"combase.dll")))
     {
@@ -246,6 +256,9 @@ START_TEST(globalization)
     LOAD_FUNCPTR(WindowsDeleteString);
     LOAD_FUNCPTR(WindowsGetStringRawBuffer);
 #undef LOAD_FUNCPTR
+
+    kernel32 = GetModuleHandleA("kernel32");
+    pGetUserDefaultGeoName = (void*)GetProcAddress(kernel32, "GetUserDefaultGeoName");
 
     test_GlobalizationPreferences();
 }
