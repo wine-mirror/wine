@@ -54,8 +54,6 @@ static HINSTANCE instance;
 
 const struct krb5_funcs *krb5_funcs = NULL;
 
-#define KERBEROS_MAX_BUF 12000
-
 #define KERBEROS_CAPS \
     ( SECPKG_FLAG_INTEGRITY \
     | SECPKG_FLAG_PRIVACY \
@@ -600,162 +598,6 @@ static NTSTATUS NTAPI kerberos_SpGetInfo(SecPkgInfoW *info)
     return STATUS_SUCCESS;
 }
 
-#ifdef SONAME_LIBGSSAPI_KRB5
-
-WINE_DECLARE_DEBUG_CHANNEL(winediag);
-static void *libgssapi_krb5_handle;
-
-#define MAKE_FUNCPTR(f) static typeof(f) * p##f
-MAKE_FUNCPTR(gss_accept_sec_context);
-MAKE_FUNCPTR(gss_acquire_cred);
-MAKE_FUNCPTR(gss_delete_sec_context);
-MAKE_FUNCPTR(gss_display_status);
-MAKE_FUNCPTR(gss_get_mic);
-MAKE_FUNCPTR(gss_import_name);
-MAKE_FUNCPTR(gss_init_sec_context);
-MAKE_FUNCPTR(gss_inquire_context);
-MAKE_FUNCPTR(gss_release_buffer);
-MAKE_FUNCPTR(gss_release_cred);
-MAKE_FUNCPTR(gss_release_iov_buffer);
-MAKE_FUNCPTR(gss_release_name);
-MAKE_FUNCPTR(gss_unwrap);
-MAKE_FUNCPTR(gss_unwrap_iov);
-MAKE_FUNCPTR(gss_verify_mic);
-MAKE_FUNCPTR(gss_wrap);
-MAKE_FUNCPTR(gss_wrap_iov);
-#undef MAKE_FUNCPTR
-
-static BOOL load_gssapi_krb5(void)
-{
-    if (!(libgssapi_krb5_handle = dlopen( SONAME_LIBGSSAPI_KRB5, RTLD_NOW )))
-    {
-        ERR_(winediag)( "Failed to load libgssapi_krb5, Kerberos SSP support will not be available.\n" );
-        return FALSE;
-    }
-
-#define LOAD_FUNCPTR(f) \
-    if (!(p##f = dlsym( libgssapi_krb5_handle, #f ))) \
-    { \
-        ERR( "Failed to load %s\n", #f ); \
-        goto fail; \
-    }
-
-    LOAD_FUNCPTR(gss_accept_sec_context)
-    LOAD_FUNCPTR(gss_acquire_cred)
-    LOAD_FUNCPTR(gss_delete_sec_context)
-    LOAD_FUNCPTR(gss_display_status)
-    LOAD_FUNCPTR(gss_get_mic)
-    LOAD_FUNCPTR(gss_import_name)
-    LOAD_FUNCPTR(gss_init_sec_context)
-    LOAD_FUNCPTR(gss_inquire_context)
-    LOAD_FUNCPTR(gss_release_buffer)
-    LOAD_FUNCPTR(gss_release_cred)
-    LOAD_FUNCPTR(gss_release_iov_buffer)
-    LOAD_FUNCPTR(gss_release_name)
-    LOAD_FUNCPTR(gss_unwrap)
-    LOAD_FUNCPTR(gss_unwrap_iov)
-    LOAD_FUNCPTR(gss_verify_mic)
-    LOAD_FUNCPTR(gss_wrap)
-    LOAD_FUNCPTR(gss_wrap_iov)
-#undef LOAD_FUNCPTR
-
-    return TRUE;
-
-fail:
-    dlclose( libgssapi_krb5_handle );
-    libgssapi_krb5_handle = NULL;
-    return FALSE;
-}
-
-static void unload_gssapi_krb5(void)
-{
-    dlclose( libgssapi_krb5_handle );
-    libgssapi_krb5_handle = NULL;
-}
-
-static inline gss_ctx_id_t ctxthandle_sspi_to_gss( LSA_SEC_HANDLE ctxt )
-{
-    if (!ctxt) return GSS_C_NO_CONTEXT;
-    return (gss_ctx_id_t)ctxt;
-}
-
-static NTSTATUS status_gss_to_sspi( OM_uint32 status )
-{
-    switch (status)
-    {
-    case GSS_S_COMPLETE:             return SEC_E_OK;
-    case GSS_S_BAD_MECH:             return SEC_E_SECPKG_NOT_FOUND;
-    case GSS_S_BAD_SIG:              return SEC_E_MESSAGE_ALTERED;
-    case GSS_S_NO_CRED:              return SEC_E_NO_CREDENTIALS;
-    case GSS_S_NO_CONTEXT:           return SEC_E_INVALID_HANDLE;
-    case GSS_S_DEFECTIVE_TOKEN:      return SEC_E_INVALID_TOKEN;
-    case GSS_S_DEFECTIVE_CREDENTIAL: return SEC_E_NO_CREDENTIALS;
-    case GSS_S_CREDENTIALS_EXPIRED:  return SEC_E_CONTEXT_EXPIRED;
-    case GSS_S_CONTEXT_EXPIRED:      return SEC_E_CONTEXT_EXPIRED;
-    case GSS_S_BAD_QOP:              return SEC_E_QOP_NOT_SUPPORTED;
-    case GSS_S_CONTINUE_NEEDED:      return SEC_I_CONTINUE_NEEDED;
-    case GSS_S_DUPLICATE_TOKEN:      return SEC_E_INVALID_TOKEN;
-    case GSS_S_OLD_TOKEN:            return SEC_E_INVALID_TOKEN;
-    case GSS_S_UNSEQ_TOKEN:          return SEC_E_OUT_OF_SEQUENCE;
-    case GSS_S_GAP_TOKEN:            return SEC_E_OUT_OF_SEQUENCE;
-    case GSS_S_FAILURE:              return SEC_E_INTERNAL_ERROR;
-
-    default:
-        FIXME( "couldn't convert status 0x%08x to NTSTATUS\n", status );
-        return SEC_E_INTERNAL_ERROR;
-    }
-}
-
-static void trace_gss_status_ex( OM_uint32 code, int type )
-{
-    OM_uint32 ret, minor_status;
-    gss_buffer_desc buf;
-    OM_uint32 message_context = 0;
-
-    for (;;)
-    {
-        ret = pgss_display_status( &minor_status, code, type, GSS_C_NULL_OID, &message_context, &buf );
-        if (GSS_ERROR(ret))
-        {
-            TRACE( "gss_display_status(0x%08x,%d) returned %08x minor status %08x\n",
-                   code, type, ret, minor_status );
-            return;
-        }
-        TRACE( "GSS-API error: 0x%08x: %s\n", code, debugstr_an(buf.value, buf.length) );
-        pgss_release_buffer( &minor_status, &buf );
-
-        if (!message_context) return;
-    }
-}
-
-static void trace_gss_status( OM_uint32 major_status, OM_uint32 minor_status )
-{
-    if (TRACE_ON(kerberos))
-    {
-        trace_gss_status_ex( major_status, GSS_C_GSS_CODE );
-        trace_gss_status_ex( minor_status, GSS_C_MECH_CODE );
-    }
-}
-
-static BOOL is_dce_style_context( gss_ctx_id_t ctxt_handle )
-{
-    OM_uint32 ret, minor_status, flags;
-    ret = pgss_inquire_context( &minor_status, ctxt_handle, NULL, NULL, NULL, NULL, &flags, NULL, NULL );
-    return (ret == GSS_S_COMPLETE && (flags & GSS_C_DCE_STYLE));
-}
-
-static int get_buffer_index( SecBufferDesc *desc, DWORD type )
-{
-    UINT i;
-    if (!desc) return -1;
-    for (i = 0; i < desc->cBuffers; i++)
-    {
-        if (desc->pBuffers[i].BufferType == type) return i;
-    }
-    return -1;
-}
-#endif /* SONAME_LIBGSSAPI_KRB5 */
-
 static char *get_str_unixcp( const UNICODE_STRING *str )
 {
     char *ret;
@@ -955,20 +797,12 @@ static NTSTATUS NTAPI kerberos_SpInitialize(ULONG_PTR package_id, SECPKG_PARAMET
         WARN( "no Kerberos support\n" );
         return STATUS_UNSUCCESSFUL;
     }
-#ifdef SONAME_LIBGSSAPI_KRB5
-    if (load_gssapi_krb5()) return STATUS_SUCCESS;
-#endif
     return STATUS_SUCCESS;
 }
 
 static NTSTATUS NTAPI kerberos_SpShutdown(void)
 {
     TRACE("\n");
-
-#ifdef SONAME_LIBGSSAPI_KRB5
-    unload_gssapi_krb5();
-#endif
-
     return STATUS_SUCCESS;
 }
 
@@ -1060,93 +894,14 @@ static NTSTATUS NTAPI kerberos_SpSealMessage( LSA_SEC_HANDLE context, ULONG qual
     return krb5_funcs->seal_message( context, message, quality_of_protection );
 }
 
-#ifdef SONAME_LIBGSSAPI_KRB5
-static NTSTATUS unseal_message_iov( gss_ctx_id_t ctxt_handle, SecBufferDesc *message, ULONG *quality_of_protection )
-{
-    gss_iov_buffer_desc iov[4];
-    OM_uint32 ret, minor_status;
-    int token_idx, data_idx, conf_state;
-
-    if ((data_idx = get_buffer_index( message, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
-    if ((token_idx = get_buffer_index( message, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
-
-    iov[0].type          = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
-    iov[0].buffer.length = 0;
-    iov[0].buffer.value  = NULL;
-
-    iov[1].type          = GSS_IOV_BUFFER_TYPE_DATA;
-    iov[1].buffer.length = message->pBuffers[data_idx].cbBuffer;
-    iov[1].buffer.value  = message->pBuffers[data_idx].pvBuffer;
-
-    iov[2].type          = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
-    iov[2].buffer.length = 0;
-    iov[2].buffer.value  = NULL;
-
-    iov[3].type          = GSS_IOV_BUFFER_TYPE_HEADER;
-    iov[3].buffer.length = message->pBuffers[token_idx].cbBuffer;
-    iov[3].buffer.value  = message->pBuffers[token_idx].pvBuffer;
-
-    ret = pgss_unwrap_iov( &minor_status, ctxt_handle, &conf_state, NULL, iov, 4 );
-    TRACE( "gss_unwrap_iov returned %08x minor status %08x\n", ret, minor_status );
-    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
-    if (ret == GSS_S_COMPLETE && quality_of_protection)
-    {
-        *quality_of_protection = (conf_state ? 0 : SECQOP_WRAP_NO_ENCRYPT);
-    }
-    return status_gss_to_sspi( ret );
-}
-
-static NTSTATUS unseal_message( gss_ctx_id_t ctxt_handle, SecBufferDesc *message, ULONG *quality_of_protection )
-{
-    gss_buffer_desc input, output;
-    OM_uint32 ret, minor_status;
-    int token_idx, data_idx, conf_state;
-    DWORD len_data, len_token;
-
-    if ((data_idx = get_buffer_index( message, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
-    if ((token_idx = get_buffer_index( message, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
-
-    len_data = message->pBuffers[data_idx].cbBuffer;
-    len_token = message->pBuffers[token_idx].cbBuffer;
-
-    input.length = len_data + len_token;
-    if (!(input.value = heap_alloc( input.length ))) return SEC_E_INSUFFICIENT_MEMORY;
-    memcpy( input.value, message->pBuffers[data_idx].pvBuffer, len_data );
-    memcpy( (char *)input.value + len_data, message->pBuffers[token_idx].pvBuffer, len_token );
-
-    ret = pgss_unwrap( &minor_status, ctxt_handle, &input, &output, &conf_state, NULL );
-    heap_free( input.value );
-    TRACE( "gss_unwrap returned %08x minor status %08x\n", ret, minor_status );
-    if (GSS_ERROR(ret)) trace_gss_status( ret, minor_status );
-    if (ret == GSS_S_COMPLETE)
-    {
-        if (quality_of_protection) *quality_of_protection = (conf_state ? 0 : SECQOP_WRAP_NO_ENCRYPT);
-        memcpy( message->pBuffers[data_idx].pvBuffer, output.value, len_data );
-        pgss_release_buffer( &minor_status, &output );
-    }
-
-    return status_gss_to_sspi( ret );
-}
-#endif
-
 static NTSTATUS NTAPI kerberos_SpUnsealMessage( LSA_SEC_HANDLE context, SecBufferDesc *message,
     ULONG message_seq_no, ULONG *quality_of_protection )
 {
-#ifdef SONAME_LIBGSSAPI_KRB5
-    gss_ctx_id_t ctxt_handle;
-
     TRACE( "(%lx %p %u %p)\n", context, message, message_seq_no, quality_of_protection );
     if (message_seq_no) FIXME( "ignoring message_seq_no %u\n", message_seq_no );
 
     if (!context) return SEC_E_INVALID_HANDLE;
-    ctxt_handle = ctxthandle_sspi_to_gss( context );
-
-    if (is_dce_style_context( ctxt_handle )) return unseal_message_iov( ctxt_handle, message, quality_of_protection );
-    return unseal_message( ctxt_handle, message, quality_of_protection );
-#else
-    FIXME( "(%lx %p %u %p)\n", context, message, message_seq_no, quality_of_protection );
-    return SEC_E_UNSUPPORTED_FUNCTION;
-#endif
+    return krb5_funcs->unseal_message( context, message, quality_of_protection );
 }
 
 static SECPKG_USER_FUNCTION_TABLE kerberos_user_table =
@@ -1175,7 +930,6 @@ NTSTATUS NTAPI SpUserModeInitialize(ULONG lsa_version, PULONG package_version,
     *package_version = SECPKG_INTERFACE_VERSION;
     *table = &kerberos_user_table;
     *table_count = 1;
-
     return STATUS_SUCCESS;
 }
 

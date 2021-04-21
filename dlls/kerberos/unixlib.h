@@ -34,6 +34,7 @@ struct krb5_funcs
     NTSTATUS (CDECL *make_signature)(LSA_SEC_HANDLE, SecBufferDesc *);
     NTSTATUS (CDECL *query_context_attributes)(LSA_SEC_HANDLE, ULONG, void *);
     NTSTATUS (CDECL *seal_message)(LSA_SEC_HANDLE, SecBufferDesc *, ULONG);
+    NTSTATUS (CDECL *unseal_message)(LSA_SEC_HANDLE, SecBufferDesc *, ULONG *);
     NTSTATUS (CDECL *verify_signature)(LSA_SEC_HANDLE, SecBufferDesc *, ULONG *);
 };
 
