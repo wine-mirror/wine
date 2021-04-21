@@ -1058,8 +1058,11 @@ static HRESULT WINAPI DOMEvent_stopImmediatePropagation(IDOMEvent *iface)
 static HRESULT WINAPI DOMEvent_get_isTrusted(IDOMEvent *iface, VARIANT_BOOL *p)
 {
     DOMEvent *This = impl_from_IDOMEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = variant_bool(This->trusted);
+    return S_OK;
 }
 
 static HRESULT WINAPI DOMEvent_put_cancelBubble(IDOMEvent *iface, VARIANT_BOOL v)
@@ -2294,6 +2297,7 @@ HRESULT create_event_from_nsevent(nsIDOMEvent *nsevent, compat_mode_t compat_mod
     if(!event)
         return E_OUTOFMEMORY;
 
+    event->trusted = TRUE;
     *ret_event = event;
     return S_OK;
 }
@@ -2342,6 +2346,7 @@ HRESULT create_document_event(HTMLDocumentNode *doc, eventid_t event_id, DOMEven
         return E_OUTOFMEMORY;
 
     event->event_id = event_id;
+    event->trusted = TRUE;
     *ret_event = event;
     return S_OK;
 }

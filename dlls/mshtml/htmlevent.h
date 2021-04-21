@@ -86,6 +86,7 @@ typedef struct DOMEvent {
     BOOL prevent_default;
     BOOL stop_propagation;
     BOOL stop_immediate_propagation;
+    BOOL trusted;
     DOM_EVENT_PHASE phase;
 
     IHTMLEventObj *event_obj;

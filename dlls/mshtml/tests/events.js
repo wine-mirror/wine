@@ -316,6 +316,7 @@ sync_test("prevent_default", function() {
     a.addEventListener("click", function(e) {
         calls += "a,";
         ok(e.defaultPrevented === true, "e.defaultPrevented = " + e.defaultPrevented);
+        ok(e.isTrusted === true, "isTrusted = " + e.isTrusted);
     }, true);
 
     calls = "";
@@ -386,12 +387,14 @@ sync_test("init_event", function() {
     ok(e.type === "", "type = " + e.type);
     ok(e.cancelable === false, "cancelable = " + e.cancelable);
     ok(e.bubbles === false, "bubbles = " + e.bubbles);
+    ok(e.isTrusted === false, "isTrusted = " + e.isTrusted);
 
     e.initEvent("test", true, false);
     ok(e.type === "test", "type = " + e.type);
     ok(e.cancelable === false, "cancelable = " + e.cancelable);
     ok(e.bubbles === true, "bubbles = " + e.bubbles);
     ok(e.defaultPrevented === false, "defaultPrevented = " + e.defaultPrevented);
+    ok(e.isTrusted === false, "isTrusted = " + e.isTrusted);
 
     e.preventDefault();
     ok(e.defaultPrevented === false, "defaultPrevented = " + e.defaultPrevented);
@@ -406,6 +409,7 @@ sync_test("init_event", function() {
 
     elem.addEventListener("NewTest", function(event) {
         ok(e === event, "e != event");
+        ok(e.isTrusted === false, "isTrusted = " + e.isTrusted);
 
         e.preventDefault();
         ok(e.defaultPrevented === true, "defaultPrevented = " + e.defaultPrevented);
