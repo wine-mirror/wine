@@ -1015,13 +1015,38 @@ static HRESULT media_item_get_stream_type(IMFStreamDescriptor *sd, GUID *major)
     return hr;
 }
 
+static HRESULT media_item_create_source_node(struct media_item *item, IMFStreamDescriptor *sd,
+        IMFTopologyNode **node)
+{
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, node)))
+    {
+        IMFTopologyNode_SetUnknown(*node, &MF_TOPONODE_SOURCE, (IUnknown *)item->source);
+        IMFTopologyNode_SetUnknown(*node, &MF_TOPONODE_PRESENTATION_DESCRIPTOR, (IUnknown *)item->pd);
+        IMFTopologyNode_SetUnknown(*node, &MF_TOPONODE_STREAM_DESCRIPTOR, (IUnknown *)sd);
+    }
+
+    return hr;
+}
+
+static HRESULT media_item_create_sink_node(IUnknown *sink, IMFTopologyNode **node)
+{
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, node)))
+        IMFTopologyNode_SetObject(*node, sink);
+
+    return hr;
+}
+
 static HRESULT media_item_create_topology(struct media_player *player, struct media_item *item, IMFTopology **out)
 {
     IMFTopologyNode *src_node, *sink_node;
-    IMFActivate *sar_activate;
     IMFStreamDescriptor *sd;
     IMFTopology *topology;
     unsigned int idx;
+    IUnknown *sink;
     BOOL selected;
     HRESULT hr;
     GUID major;
@@ -1029,48 +1054,54 @@ static HRESULT media_item_create_topology(struct media_player *player, struct me
     if (FAILED(hr = MFCreateTopology(&topology)))
         return hr;
 
-    /* FIXME: handle user sinks */
-
     /* Use first stream if none selected. */
     if (player->output_window)
     {
         FIXME("Video streams are not handled.\n");
     }
 
-    /* Set up audio branches for all selected streams. */
+    /* Set up branches for all selected streams. */
 
     idx = 0;
     while (SUCCEEDED(IMFPresentationDescriptor_GetStreamDescriptorByIndex(item->pd, idx++, &selected, &sd)))
     {
-        if (selected && SUCCEEDED(media_item_get_stream_type(sd, &major)) && IsEqualGUID(&major, &MFMediaType_Audio))
+        if (!selected)
         {
-            if (SUCCEEDED(hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &src_node)))
-            {
-                IMFTopologyNode_SetUnknown(src_node, &MF_TOPONODE_SOURCE, (IUnknown *)item->source);
-                IMFTopologyNode_SetUnknown(src_node, &MF_TOPONODE_PRESENTATION_DESCRIPTOR, (IUnknown *)item->pd);
-                IMFTopologyNode_SetUnknown(src_node, &MF_TOPONODE_STREAM_DESCRIPTOR, (IUnknown *)sd);
+            IMFStreamDescriptor_Release(sd);
+            continue;
+        }
 
+        sink = NULL;
+
+        if (SUCCEEDED(IMFStreamDescriptor_GetUnknown(sd, &_MF_CUSTOM_SINK, &IID_IUnknown, (void **)&sink)))
+        {
+            /* User sink is attached as-is. */
+        }
+        else if (SUCCEEDED(media_item_get_stream_type(sd, &major)) && IsEqualGUID(&major, &MFMediaType_Audio))
+        {
+            if (FAILED(hr = MFCreateAudioRendererActivate((IMFActivate **)&sink)))
+                WARN("Failed to create SAR activation object, hr %#x.\n", hr);
+        }
+
+        if (sink)
+        {
+            hr = media_item_create_source_node(item, sd, &src_node);
+            if (SUCCEEDED(hr))
+                hr = media_item_create_sink_node(sink, &sink_node);
+
+            if (SUCCEEDED(hr))
+            {
                 IMFTopology_AddNode(topology, src_node);
-            }
-
-            if (SUCCEEDED(hr = MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &sink_node)))
-            {
-                if (SUCCEEDED(MFCreateAudioRendererActivate(&sar_activate)))
-                {
-                    IMFTopologyNode_SetObject(sink_node, (IUnknown *)sar_activate);
-                    IMFActivate_Release(sar_activate);
-                }
-
                 IMFTopology_AddNode(topology, sink_node);
-            }
-
-            if (src_node && sink_node)
                 IMFTopologyNode_ConnectOutput(src_node, 0, sink_node, 0);
+            }
 
             if (src_node)
                 IMFTopologyNode_Release(src_node);
             if (sink_node)
                 IMFTopologyNode_Release(sink_node);
+
+            IUnknown_Release(sink);
         }
 
         IMFStreamDescriptor_Release(sd);
