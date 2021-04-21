@@ -108,8 +108,10 @@ static void test_GlobalizationPreferences(void)
     if (pGetUserDefaultGeoName)
     {
         WCHAR country[16];
-        pGetUserDefaultGeoName(country, ARRAY_SIZE(country));
-        ok(wcslen(country) == len && !memcmp(buf, country, len),
+        DWORD geolen;
+        geolen = pGetUserDefaultGeoName(country, ARRAY_SIZE(country));
+        ok(broken(geolen == 1) || /* Win10 1709 */
+           (wcslen(country) == len && !memcmp(buf, country, len)),
            "IGlobalizationPreferencesStatics_get_HomeGeographicRegion returned len %u, str %s, expected %s\n",
            len, wine_dbgstr_w(buf), wine_dbgstr_w(country));
     }
