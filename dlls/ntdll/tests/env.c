@@ -24,12 +24,8 @@
 
 static NTSTATUS (WINAPI *pRtlMultiByteToUnicodeN)( LPWSTR dst, DWORD dstlen, LPDWORD reslen,
                                                    LPCSTR src, DWORD srclen );
-static NTSTATUS (WINAPI *pRtlCreateEnvironment)(BOOLEAN, PWSTR*);
-static NTSTATUS (WINAPI *pRtlDestroyEnvironment)(PWSTR);
 static NTSTATUS (WINAPI *pRtlQueryEnvironmentVariable_U)(PWSTR, PUNICODE_STRING, PUNICODE_STRING);
 static NTSTATUS (WINAPI* pRtlQueryEnvironmentVariable)(WCHAR*, WCHAR*, SIZE_T, WCHAR*, SIZE_T, SIZE_T*);
-static void     (WINAPI *pRtlSetCurrentEnvironment)(PWSTR, PWSTR*);
-static NTSTATUS (WINAPI *pRtlSetEnvironmentVariable)(PWSTR*, PUNICODE_STRING, PUNICODE_STRING);
 static NTSTATUS (WINAPI *pRtlExpandEnvironmentStrings_U)(LPWSTR, PUNICODE_STRING, PUNICODE_STRING, PULONG);
 static NTSTATUS (WINAPI *pRtlCreateProcessParameters)(RTL_USER_PROCESS_PARAMETERS**,
                                                       const UNICODE_STRING*, const UNICODE_STRING*,
@@ -167,84 +163,6 @@ static void testQuery(void)
         }
     }
     else win_skip("RtlQueryEnvironmentVariable not available, skipping tests\n");
-}
-
-static void testSetHelper(LPWSTR* env, const char* var, const char* val, NTSTATUS ret, NTSTATUS alt)
-{
-    WCHAR               bvar[256], bval1[256], bval2[256];
-    UNICODE_STRING      uvar;
-    UNICODE_STRING      uval;
-    NTSTATUS            nts;
-
-    uvar.Length = strlen(var) * sizeof(WCHAR);
-    uvar.MaximumLength = uvar.Length + sizeof(WCHAR);
-    uvar.Buffer = bvar;
-    pRtlMultiByteToUnicodeN( bvar, sizeof(bvar), NULL, var, strlen(var)+1 );
-    if (val)
-    {
-        uval.Length = strlen(val) * sizeof(WCHAR);
-        uval.MaximumLength = uval.Length + sizeof(WCHAR);
-        uval.Buffer = bval1;
-        pRtlMultiByteToUnicodeN( bval1, sizeof(bval1), NULL, val, strlen(val)+1 );
-    }
-    nts = pRtlSetEnvironmentVariable(env, &uvar, val ? &uval : NULL);
-    ok(nts == ret || (alt && nts == alt), "Setting var %s=%s (%x/%x)\n", var, val, nts, ret);
-    if (nts == STATUS_SUCCESS)
-    {
-        uval.Length = 0;
-        uval.MaximumLength = sizeof(bval2);
-        uval.Buffer = bval2;
-        nts = pRtlQueryEnvironmentVariable_U(*env, &uvar, &uval);
-        switch (nts)
-        {
-        case STATUS_SUCCESS:
-            ok(lstrcmpW(bval1, bval2) == 0, "Cannot get value written to environment\n");
-            break;
-        case STATUS_VARIABLE_NOT_FOUND:
-            ok(val == NULL ||
-               broken(strchr(var,'=') != NULL), /* variable containing '=' may be set but not found again on NT4 */
-               "Couldn't find variable, but didn't delete it. val = %s\n", val);
-            break;
-        default:
-            ok(0, "Wrong ret %u for %s\n", nts, var);
-            break;
-        }
-    }
-}
-
-static void testSet(void)
-{
-    LPWSTR              env;
-    char                tmp[16];
-    int                 i;
-
-    ok(pRtlCreateEnvironment(FALSE, &env) == STATUS_SUCCESS, "Creating environment\n");
-
-    testSetHelper(&env, "cat", "dog", STATUS_SUCCESS, 0);
-    testSetHelper(&env, "cat", "horse", STATUS_SUCCESS, 0);
-    testSetHelper(&env, "cat", "zz", STATUS_SUCCESS, 0);
-    testSetHelper(&env, "cat", NULL, STATUS_SUCCESS, 0);
-    testSetHelper(&env, "cat", NULL, STATUS_SUCCESS, STATUS_VARIABLE_NOT_FOUND);
-    testSetHelper(&env, "foo", "meouw", STATUS_SUCCESS, 0);
-    testSetHelper(&env, "me=too", "also", STATUS_SUCCESS, STATUS_INVALID_PARAMETER);
-    testSetHelper(&env, "me", "too=also", STATUS_SUCCESS, 0);
-    testSetHelper(&env, "=too", "also", STATUS_SUCCESS, 0);
-    testSetHelper(&env, "=", "also", STATUS_SUCCESS, 0);
-
-    for (i = 0; i < 128; i++)
-    {
-        sprintf(tmp, "zork%03d", i);
-        testSetHelper(&env, tmp, "is alive", STATUS_SUCCESS, 0);
-    }
-
-    for (i = 0; i < 128; i++)
-    {
-        sprintf(tmp, "zork%03d", i);
-        testSetHelper(&env, tmp, NULL, STATUS_SUCCESS, 0);
-    }
-    testSetHelper(&env, "fOo", NULL, STATUS_SUCCESS, 0);
-
-    ok(pRtlDestroyEnvironment(env) == STATUS_SUCCESS, "Destroying environment\n");
 }
 
 static void testExpand(void)
@@ -556,8 +474,8 @@ static NTSTATUS set_env_var(WCHAR **env, const WCHAR *var, const WCHAR *value)
 {
     UNICODE_STRING var_string, value_string;
     RtlInitUnicodeString(&var_string, var);
-    RtlInitUnicodeString(&value_string, value);
-    return RtlSetEnvironmentVariable(env, &var_string, &value_string);
+    if (value) RtlInitUnicodeString(&value_string, value);
+    return RtlSetEnvironmentVariable(env, &var_string, value ? &value_string : NULL);
 }
 
 static void check_env_var_(int line, const char *var, const char *value)
@@ -618,6 +536,83 @@ static void test_RtlSetCurrentEnvironment(void)
     SetEnvironmentVariableA("testenv2", NULL);
 }
 
+static void query_env_var_(int line, WCHAR *env, const WCHAR *var, const WCHAR *value)
+{
+    UNICODE_STRING var_string, value_string;
+    WCHAR value_buffer[9];
+    NTSTATUS status;
+
+    RtlInitUnicodeString(&var_string, var);
+    value_string.Buffer = value_buffer;
+    value_string.MaximumLength = sizeof(value_buffer);
+
+    status = RtlQueryEnvironmentVariable_U(env, &var_string, &value_string);
+    if (value)
+    {
+        ok_(__FILE__, line)(!status, "got %#x\n", status);
+        ok_(__FILE__, line)(value_string.Length/sizeof(WCHAR) == wcslen(value),
+            "wrong size %u\n", value_string.Length/sizeof(WCHAR));
+        ok_(__FILE__, line)(!wcscmp(value_string.Buffer, value), "wrong value %s\n", debugstr_w(value_string.Buffer));
+    }
+    else
+        ok_(__FILE__, line)(status == STATUS_VARIABLE_NOT_FOUND, "got %#x\n", status);
+}
+#define query_env_var(a, b, c) query_env_var_(__LINE__, a, b, c)
+
+static void test_RtlSetEnvironmentVariable(void)
+{
+    NTSTATUS status;
+    WCHAR *env;
+
+    status = RtlCreateEnvironment(FALSE, &env);
+    ok(!status, "got %#x\n", status);
+
+    status = set_env_var(&env, L"cat", L"dog");
+    ok(!status, "got %#x\n", status);
+    query_env_var(env, L"cat", L"dog");
+
+    status = set_env_var(&env, L"cat", L"horse");
+    ok(!status, "got %#x\n", status);
+    query_env_var(env, L"cat", L"horse");
+
+    status = set_env_var(&env, L"cat", NULL);
+    ok(!status, "got %#x\n", status);
+    query_env_var(env, L"cat", NULL);
+
+    status = set_env_var(&env, L"cat", NULL);
+    todo_wine ok(!status, "got %#x\n", status);
+
+    status = set_env_var(&env, L"foo", L"meouw");
+    ok(!status, "got %#x\n", status);
+    query_env_var(env, L"foo", L"meouw");
+
+    status = set_env_var(&env, L"fOo", NULL);
+    ok(!status, "got %#x\n", status);
+    query_env_var(env, L"foo", NULL);
+
+    status = set_env_var(&env, L"horse", NULL);
+    todo_wine ok(!status, "got %#x\n", status);
+    query_env_var(env, L"horse", NULL);
+
+    status = set_env_var(&env, L"me=too", L"also");
+    ok(status == STATUS_INVALID_PARAMETER, "got %#x\n", status);
+
+    status = set_env_var(&env, L"me", L"too=also");
+    ok(!status, "got %#x\n", status);
+    query_env_var(env, L"me", L"too=also");
+
+    status = set_env_var(&env, L"=too", L"also");
+    ok(!status, "got %#x\n", status);
+    query_env_var(env, L"=too", L"also");
+
+    status = set_env_var(&env, L"=", L"also");
+    ok(!status, "got %#x\n", status);
+    query_env_var(env, L"=", L"also");
+
+    status = RtlDestroyEnvironment(env);
+    ok(!status, "got %#x\n", status);
+}
+
 START_TEST(env)
 {
     HMODULE mod = GetModuleHandleA("ntdll.dll");
@@ -625,19 +620,15 @@ START_TEST(env)
     initial_env = NtCurrentTeb()->Peb->ProcessParameters->Environment;
 
     pRtlMultiByteToUnicodeN = (void *)GetProcAddress(mod,"RtlMultiByteToUnicodeN");
-    pRtlCreateEnvironment = (void*)GetProcAddress(mod, "RtlCreateEnvironment");
-    pRtlDestroyEnvironment = (void*)GetProcAddress(mod, "RtlDestroyEnvironment");
     pRtlQueryEnvironmentVariable_U = (void*)GetProcAddress(mod, "RtlQueryEnvironmentVariable_U");
     pRtlQueryEnvironmentVariable = (void*)GetProcAddress(mod, "RtlQueryEnvironmentVariable");
-    pRtlSetCurrentEnvironment = (void*)GetProcAddress(mod, "RtlSetCurrentEnvironment");
-    pRtlSetEnvironmentVariable = (void*)GetProcAddress(mod, "RtlSetEnvironmentVariable");
     pRtlExpandEnvironmentStrings_U = (void*)GetProcAddress(mod, "RtlExpandEnvironmentStrings_U");
     pRtlCreateProcessParameters = (void*)GetProcAddress(mod, "RtlCreateProcessParameters");
     pRtlDestroyProcessParameters = (void*)GetProcAddress(mod, "RtlDestroyProcessParameters");
 
     testQuery();
-    testSet();
     testExpand();
     test_process_params();
     test_RtlSetCurrentEnvironment();
+    test_RtlSetEnvironmentVariable();
 }
