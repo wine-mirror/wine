@@ -77,6 +77,7 @@ struct ddraw_sample
     STREAM_TIME end_time;
     BOOL continuous_update;
     CONDITION_VARIABLE update_cv;
+    HANDLE external_event;
 
     struct list entry;
     HRESULT update_hr;
@@ -91,6 +92,8 @@ static void remove_queued_update(struct ddraw_sample *sample)
     sample->busy = FALSE;
     list_remove(&sample->entry);
     WakeConditionVariable(&sample->update_cv);
+    if (sample->external_event)
+        SetEvent(sample->external_event);
 }
 
 static void flush_update_queue(struct ddraw_stream *stream, HRESULT update_hr)
@@ -1583,12 +1586,6 @@ static HRESULT WINAPI ddraw_sample_Update(IDirectDrawStreamSample *iface,
         return E_NOTIMPL;
     }
 
-    if (event)
-    {
-        FIXME("Event parameter support is not implemented!\n");
-        return E_NOTIMPL;
-    }
-
     EnterCriticalSection(&sample->parent->cs);
 
     if (sample->parent->state != State_Running)
@@ -1612,10 +1609,11 @@ static HRESULT WINAPI ddraw_sample_Update(IDirectDrawStreamSample *iface,
 
     sample->update_hr = MS_S_NOUPDATE;
     sample->busy = TRUE;
+    sample->external_event = event;
     list_add_tail(&sample->parent->update_queue, &sample->entry);
     WakeConditionVariable(&sample->parent->update_queued_cv);
 
-    if (flags & SSUPDATE_ASYNC)
+    if ((flags & SSUPDATE_ASYNC) || event)
     {
         LeaveCriticalSection(&sample->parent->cs);
         return MS_S_PENDING;
