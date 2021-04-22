@@ -3063,10 +3063,16 @@ HRESULT WINAPI MFCreateVideoMediaTypeFromSubtype(const GUID *subtype, IMFVideoMe
     return S_OK;
 }
 
-static void media_type_get_ratio(UINT64 value, UINT32 *numerator, UINT32 *denominator)
+static void media_type_get_ratio(IMFMediaType *media_type, const GUID *attr, UINT32 *numerator,
+        UINT32 *denominator)
 {
-    *numerator = value >> 32;
-    *denominator = value;
+    UINT64 value;
+
+    if (SUCCEEDED(IMFMediaType_GetUINT64(media_type, attr, &value)))
+    {
+        *numerator = value >> 32;
+        *denominator = value;
+    }
 }
 
 /***********************************************************************
@@ -3076,7 +3082,6 @@ HRESULT WINAPI MFCreateMFVideoFormatFromMFMediaType(IMFMediaType *media_type, MF
 {
     UINT32 flags, palette_size = 0, avgrate;
     MFVIDEOFORMAT *format;
-    UINT64 value;
     INT32 stride;
     GUID guid;
 
@@ -3101,14 +3106,11 @@ HRESULT WINAPI MFCreateMFVideoFormatFromMFMediaType(IMFMediaType *media_type, MF
         format->surfaceInfo.Format = guid.Data1;
     }
 
-    if (SUCCEEDED(IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &value)))
-        media_type_get_ratio(value, &format->videoInfo.dwWidth, &format->videoInfo.dwHeight);
-
-    if (SUCCEEDED(IMFMediaType_GetUINT64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, &value)))
-    {
-        media_type_get_ratio(value, &format->videoInfo.PixelAspectRatio.Numerator,
-                &format->videoInfo.PixelAspectRatio.Denominator);
-    }
+    media_type_get_ratio(media_type, &MF_MT_FRAME_SIZE, &format->videoInfo.dwWidth, &format->videoInfo.dwHeight);
+    media_type_get_ratio(media_type, &MF_MT_PIXEL_ASPECT_RATIO, &format->videoInfo.PixelAspectRatio.Numerator,
+            &format->videoInfo.PixelAspectRatio.Denominator);
+    media_type_get_ratio(media_type, &MF_MT_FRAME_RATE, &format->videoInfo.FramesPerSecond.Numerator,
+            &format->videoInfo.FramesPerSecond.Denominator);
 
     IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_CHROMA_SITING, &format->videoInfo.SourceChromaSubsampling);
     IMFMediaType_GetUINT32(media_type, &MF_MT_INTERLACE_MODE, &format->videoInfo.InterlaceMode);
@@ -3116,13 +3118,6 @@ HRESULT WINAPI MFCreateMFVideoFormatFromMFMediaType(IMFMediaType *media_type, MF
     IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_PRIMARIES, &format->videoInfo.ColorPrimaries);
     IMFMediaType_GetUINT32(media_type, &MF_MT_YUV_MATRIX, &format->videoInfo.TransferMatrix);
     IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_LIGHTING, &format->videoInfo.SourceLighting);
-
-    if (SUCCEEDED(IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_RATE, &value)))
-    {
-        media_type_get_ratio(value, &format->videoInfo.FramesPerSecond.Numerator,
-                &format->videoInfo.FramesPerSecond.Denominator);
-    }
-
     IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_NOMINAL_RANGE, &format->videoInfo.NominalRange);
     IMFMediaType_GetBlob(media_type, &MF_MT_GEOMETRIC_APERTURE, (UINT8 *)&format->videoInfo.GeometricAperture,
            sizeof(format->videoInfo.GeometricAperture), NULL);
