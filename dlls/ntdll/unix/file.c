@@ -3290,6 +3290,7 @@ static NTSTATUS nt_to_unix_file_name_no_root( const UNICODE_STRING *nameW, char 
 
     if (prefix_len == name_len)  /* no subdir, plain DOS device */
     {
+        unix_name[pos + ret] = 0;
         *unix_name_ret = unix_name;
         return get_dos_device( unix_name_ret, pos );
     }
