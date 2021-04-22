@@ -263,6 +263,19 @@ static void _test_LocationURL(unsigned line, IWebBrowser2 *wb, const WCHAR *exur
     }
 }
 
+#define test_LocationName(a,b) _test_LocationName(__LINE__,a,b)
+static void _test_LocationName(unsigned line, IWebBrowser2 *wb, const WCHAR *exname)
+{
+    BSTR name = (void*)0xdeadbeef;
+    HRESULT hres;
+
+    hres = IWebBrowser2_get_LocationName(wb, &name);
+    ok_(__FILE__,line) (hres == (*exname ? S_OK : S_FALSE), "get_LocationName failed: %08x\n", hres);
+    ok_(__FILE__,line) (!lstrcmpW(name, exname) || broken(is_http && !lstrcmpW(name, current_url)) /* Win10 2004 */,
+            "expected %s, got %s\n", wine_dbgstr_w(exname), wine_dbgstr_w(name));
+    SysFreeString(name);
+}
+
 #define test_ready_state(a,b) _test_ready_state(__LINE__,a,b)
 static void _test_ready_state(unsigned line, READYSTATE exstate, VARIANT_BOOL expect_busy)
 {
@@ -2800,11 +2813,13 @@ static void test_ConnectionPoint(IWebBrowser2 *unk, BOOL init)
 
 static void test_Navigate2(IWebBrowser2 *webbrowser, const WCHAR *nav_url)
 {
+    const WCHAR *title = L"WineHQ - Run Windows applications on Linux, BSD, Solaris and Mac OS X";
     VARIANT url;
     BOOL is_file;
     HRESULT hres;
 
     test_LocationURL(webbrowser, is_first_load ? L"" : current_url);
+    test_LocationName(webbrowser, is_first_load ? L"" : (is_http ? title : current_url));
     test_ready_state(is_first_load ? READYSTATE_UNINITIALIZED : READYSTATE_COMPLETE, VARIANT_FALSE);
 
     is_http = !memcmp(nav_url, "http:", 5);
