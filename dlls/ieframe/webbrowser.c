@@ -539,8 +539,25 @@ static HRESULT WINAPI WebBrowser_put_Height(IWebBrowser2 *iface, LONG Height)
 static HRESULT WINAPI WebBrowser_get_LocationName(IWebBrowser2 *iface, BSTR *LocationName)
 {
     WebBrowser *This = impl_from_IWebBrowser2(iface);
-    FIXME("(%p)->(%p)\n", This, LocationName);
-    return E_NOTIMPL;
+    IHTMLDocument2 *doc;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, LocationName);
+
+    if(This->doc_host.document &&
+            SUCCEEDED(IUnknown_QueryInterface(This->doc_host.document, &IID_IHTMLDocument2, (void **)&doc))) {
+        hres = IHTMLDocument2_get_title(doc, LocationName);
+        if(hres == S_OK && !SysStringLen(*LocationName)) {
+            SysFreeString(*LocationName);
+            hres = get_location_url(&This->doc_host, LocationName);
+        }
+        IHTMLDocument2_Release(doc);
+    } else {
+        *LocationName = SysAllocString(L"");
+        hres = S_FALSE;
+    }
+
+    return hres;
 }
 
 static HRESULT WINAPI WebBrowser_get_LocationURL(IWebBrowser2 *iface, BSTR *LocationURL)
