@@ -1,5 +1,5 @@
 TESTDLL = windows.media.speech.dll
-IMPORTS = uuid
+IMPORTS = combase uuid
 
 C_SRCS = \
 	speech.c

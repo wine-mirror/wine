@@ -34,13 +34,6 @@
 
 #include "wine/test.h"
 
-static HRESULT (WINAPI *pRoActivateInstance)(HSTRING, IInspectable **);
-static HRESULT (WINAPI *pRoGetActivationFactory)(HSTRING, REFIID, void **);
-static HRESULT (WINAPI *pRoInitialize)(RO_INIT_TYPE);
-static void    (WINAPI *pRoUninitialize)(void);
-static HRESULT (WINAPI *pWindowsCreateString)(LPCWSTR, UINT32, HSTRING *);
-static HRESULT (WINAPI *pWindowsDeleteString)(HSTRING);
-
 static void test_SpeechSynthesizer(void)
 {
     static const WCHAR *speech_synthesizer_name = L"Windows.Media.SpeechSynthesis.SpeechSynthesizer";
@@ -55,13 +48,13 @@ static void test_SpeechSynthesizer(void)
     HRESULT hr;
     UINT32 size;
 
-    hr = pRoInitialize(RO_INIT_MULTITHREADED);
+    hr = RoInitialize(RO_INIT_MULTITHREADED);
     ok(hr == S_OK, "RoInitialize failed, hr %#x\n", hr);
 
-    hr = pWindowsCreateString(speech_synthesizer_name, wcslen(speech_synthesizer_name), &str);
+    hr = WindowsCreateString(speech_synthesizer_name, wcslen(speech_synthesizer_name), &str);
     ok(hr == S_OK, "WindowsCreateString failed, hr %#x\n", hr);
 
-    hr = pRoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
     ok(hr == S_OK, "RoGetActivationFactory failed, hr %#x\n", hr);
 
     hr = IActivationFactory_QueryInterface(factory, &IID_IInspectable, (void **)&inspectable);
@@ -116,9 +109,9 @@ static void test_SpeechSynthesizer(void)
     IInspectable_Release(inspectable);
     IActivationFactory_Release(factory);
 
-    pWindowsDeleteString(str);
+    WindowsDeleteString(str);
 
-    pRoUninitialize();
+    RoUninitialize();
 }
 
 static void test_VoiceInformation(void)
@@ -129,45 +122,22 @@ static void test_VoiceInformation(void)
     HSTRING str;
     HRESULT hr;
 
-    hr = pRoInitialize(RO_INIT_MULTITHREADED);
+    hr = RoInitialize(RO_INIT_MULTITHREADED);
     ok(hr == S_OK, "RoInitialize failed, hr %#x\n", hr);
 
-    hr = pWindowsCreateString(voice_information_name, wcslen(voice_information_name), &str);
+    hr = WindowsCreateString(voice_information_name, wcslen(voice_information_name), &str);
     ok(hr == S_OK, "WindowsCreateString failed, hr %#x\n", hr);
 
-    hr = pRoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
     ok(hr == REGDB_E_CLASSNOTREG, "RoGetActivationFactory returned unexpected hr %#x\n", hr);
 
-    pWindowsDeleteString(str);
+    WindowsDeleteString(str);
 
-    pRoUninitialize();
+    RoUninitialize();
 }
 
 START_TEST(speech)
 {
-    HMODULE combase;
-
-    if (!(combase = LoadLibraryW(L"combase.dll")))
-    {
-        win_skip("Failed to load combase.dll, skipping tests\n");
-        return;
-    }
-
-#define LOAD_FUNCPTR(x) \
-    if (!(p##x = (void*)GetProcAddress(combase, #x))) \
-    { \
-        win_skip("Failed to find %s in combase.dll, skipping tests.\n", #x); \
-        return; \
-    }
-
-    LOAD_FUNCPTR(RoActivateInstance);
-    LOAD_FUNCPTR(RoGetActivationFactory);
-    LOAD_FUNCPTR(RoInitialize);
-    LOAD_FUNCPTR(RoUninitialize);
-    LOAD_FUNCPTR(WindowsCreateString);
-    LOAD_FUNCPTR(WindowsDeleteString);
-#undef LOAD_FUNCPTR
-
     test_SpeechSynthesizer();
     test_VoiceInformation();
 }
