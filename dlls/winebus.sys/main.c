@@ -97,6 +97,7 @@ static const struct product_desc XBOX_CONTROLLERS[] = {
 static DRIVER_OBJECT *driver_obj;
 
 static DEVICE_OBJECT *mouse_obj;
+static DEVICE_OBJECT *keyboard_obj;
 
 /* The root-enumerated device stack. */
 DEVICE_OBJECT *bus_pdo;
@@ -540,6 +541,74 @@ static void mouse_device_create(void)
     IoInvalidateDeviceRelations(bus_pdo, BusRelations);
 }
 
+static NTSTATUS keyboard_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *ret_length)
+{
+    TRACE("buffer %p, length %u.\n", buffer, length);
+
+    *ret_length = sizeof(REPORT_HEADER) + sizeof(REPORT_TAIL);
+    if (length < sizeof(REPORT_HEADER) + sizeof(REPORT_TAIL))
+        return STATUS_BUFFER_TOO_SMALL;
+
+    memcpy(buffer, REPORT_HEADER, sizeof(REPORT_HEADER));
+    memcpy(buffer + sizeof(REPORT_HEADER), REPORT_TAIL, sizeof(REPORT_TAIL));
+    buffer[IDX_HEADER_PAGE] = HID_USAGE_PAGE_GENERIC;
+    buffer[IDX_HEADER_USAGE] = HID_USAGE_GENERIC_KEYBOARD;
+
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS keyboard_get_string(DEVICE_OBJECT *device, DWORD index, WCHAR *buffer, DWORD length)
+{
+    static const WCHAR nameW[] = {'W','i','n','e',' ','H','I','D',' ','k','e','y','b','o','a','r','d',0};
+    if (index != HID_STRING_ID_IPRODUCT)
+        return STATUS_NOT_IMPLEMENTED;
+    if (length < ARRAY_SIZE(nameW))
+        return STATUS_BUFFER_TOO_SMALL;
+    strcpyW(buffer, nameW);
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS keyboard_begin_report_processing(DEVICE_OBJECT *device)
+{
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS keyboard_set_output_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *ret_length)
+{
+    FIXME("id %u, stub!\n", id);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS keyboard_get_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *ret_length)
+{
+    FIXME("id %u, stub!\n", id);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS keyboard_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYTE *report, DWORD length, ULONG_PTR *ret_length)
+{
+    FIXME("id %u, stub!\n", id);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static const platform_vtbl keyboard_vtbl =
+{
+    .get_reportdescriptor = keyboard_get_reportdescriptor,
+    .get_string = keyboard_get_string,
+    .begin_report_processing = keyboard_begin_report_processing,
+    .set_output_report = keyboard_set_output_report,
+    .get_feature_report = keyboard_get_feature_report,
+    .set_feature_report = keyboard_set_feature_report,
+};
+
+static void keyboard_device_create(void)
+{
+    static const WCHAR busidW[] = {'W','I','N','E','K','E','Y','B','O','A','R','D',0};
+
+    keyboard_obj = bus_create_hid_device(busidW, 0, 0, -1, 0, 0, busidW, FALSE, &keyboard_vtbl, 0);
+    IoInvalidateDeviceRelations(bus_pdo, BusRelations);
+}
+
 static NTSTATUS fdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
 {
     static const WCHAR SDL_enabledW[] = {'E','n','a','b','l','e',' ','S','D','L',0};
@@ -554,6 +623,7 @@ static NTSTATUS fdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
         break;
     case IRP_MN_START_DEVICE:
         mouse_device_create();
+        keyboard_device_create();
 
         if (check_bus_option(&SDL_enabled, 1))
         {

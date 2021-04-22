@@ -12,6 +12,7 @@ Wine IOHID device=device_section,IOHID
 Wine libevent device=device_section,LNXEV
 Wine SDL HID device=device_section,SDLJOY
 Wine mouse device=device_section,WINEMOUSE
+Wine keyboard device=device_section,WINEKEYBOARD
 
 [device_section.Services]
 AddService = winehid,0x2,svc_section
