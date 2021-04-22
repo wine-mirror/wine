@@ -32,6 +32,7 @@
 #include "ddk/wdm.h"
 #include "devguid.h"
 #include "ntddmou.h"
+#include "ntddkbd.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hid);
 WINE_DECLARE_DEBUG_CHANNEL(hid_report);

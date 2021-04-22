@@ -23,6 +23,7 @@
 #include <stdarg.h>
 #include "hid.h"
 #include "ntddmou.h"
+#include "ntddkbd.h"
 #include "ddk/hidtypes.h"
 #include "ddk/wdm.h"
 #include "regstr.h"
@@ -399,10 +400,18 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
                 if (!IoRegisterDeviceInterface(device, &GUID_DEVINTERFACE_MOUSE, NULL, &ext->u.pdo.mouse_link_name))
                     ext->u.pdo.is_mouse = TRUE;
             }
+            if (ext->u.pdo.preparsed_data->caps.UsagePage == HID_USAGE_PAGE_GENERIC
+                    && ext->u.pdo.preparsed_data->caps.Usage == HID_USAGE_GENERIC_KEYBOARD)
+            {
+                if (!IoRegisterDeviceInterface(device, &GUID_DEVINTERFACE_KEYBOARD, NULL, &ext->u.pdo.keyboard_link_name))
+                    ext->u.pdo.is_keyboard = TRUE;
+            }
 
             IoSetDeviceInterfaceState(&ext->u.pdo.link_name, TRUE);
             if (ext->u.pdo.is_mouse)
                 IoSetDeviceInterfaceState(&ext->u.pdo.mouse_link_name, TRUE);
+            if (ext->u.pdo.is_keyboard)
+                IoSetDeviceInterfaceState(&ext->u.pdo.keyboard_link_name, TRUE);
             status = STATUS_SUCCESS;
             break;
 
@@ -413,6 +422,8 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
             IoSetDeviceInterfaceState(&ext->u.pdo.link_name, FALSE);
             if (ext->u.pdo.is_mouse)
                 IoSetDeviceInterfaceState(&ext->u.pdo.mouse_link_name, FALSE);
+            if (ext->u.pdo.is_keyboard)
+                IoSetDeviceInterfaceState(&ext->u.pdo.keyboard_link_name, TRUE);
 
             if (ext->u.pdo.thread)
             {

@@ -69,6 +69,8 @@ typedef struct _BASE_DEVICE_EXTENSION
 
             BOOL is_mouse;
             UNICODE_STRING mouse_link_name;
+            BOOL is_keyboard;
+            UNICODE_STRING keyboard_link_name;
         } pdo;
     } u;
 
