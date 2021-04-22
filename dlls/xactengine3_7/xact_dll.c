@@ -843,12 +843,7 @@ static void FACTCALL fact_notification_cb(const FACTNotification *notification)
         return;
     }
 
-    if (notification->type == XACTNOTIFICATIONTYPE_SOUNDBANKDESTROYED)
-    {
-        FIXME("Callback XACTNOTIFICATIONTYPE_SOUNDBANKDESTROYED\n");
-    }
-    else
-        FIXME("Unsupported callback type %d\n", notification->type);
+    FIXME("Unsupported callback type %d\n", notification->type);
 }
 
 static HRESULT WINAPI IXACT3EngineImpl_Initialize(IXACT3Engine *iface,
@@ -1125,6 +1120,38 @@ enum {
     NOTIFY_waveIndex = 0x20
 };
 
+/* these constants don't have the same values across xactengine versions */
+static uint8_t fact_notification_type_from_xact(XACTNOTIFICATIONTYPE type)
+{
+    /* we can't use a switch statement, because the constants are static const
+     * variables, and some compilers can't deal with that */
+#define X(a) if (type == XACTNOTIFICATIONTYPE_##a) return FACTNOTIFICATIONTYPE_##a
+    X(CUEPREPARED);
+    X(CUEPLAY);
+    X(CUESTOP);
+    X(CUEDESTROYED);
+    X(MARKER);
+    X(SOUNDBANKDESTROYED);
+    X(WAVEBANKDESTROYED);
+    X(LOCALVARIABLECHANGED);
+    X(GLOBALVARIABLECHANGED);
+    X(GUICONNECTED);
+    X(GUIDISCONNECTED);
+    X(WAVEPLAY);
+    X(WAVESTOP);
+    X(WAVEBANKPREPARED);
+    X(WAVEBANKSTREAMING_INVALIDCONTENT);
+#if XACT3_VER >= 0x0205
+    X(WAVEPREPARED);
+    X(WAVELOOPED);
+    X(WAVEDESTROYED);
+#endif
+#undef X
+
+    FIXME("unknown type %#x\n", type);
+    return 0;
+}
+
 static inline void unwrap_notificationdesc(FACTNotificationDescription *fd,
         const XACT_NOTIFICATION_DESCRIPTION *xd)
 {
@@ -1134,43 +1161,42 @@ static inline void unwrap_notificationdesc(FACTNotificationDescription *fd,
 
     memset(fd, 0, sizeof(*fd));
 
+    fd->type = fact_notification_type_from_xact(xd->type);
+
+    /* we can't use a switch statement, because the constants are static const
+     * variables, and some compilers can't deal with that */
+
     /* Supports SoundBank, Cue index, Cue instance */
-    if (xd->type == XACTNOTIFICATIONTYPE_CUEPREPARED || xd->type == XACTNOTIFICATIONTYPE_CUEPLAY ||
-        xd->type == XACTNOTIFICATIONTYPE_CUESTOP || xd->type == XACTNOTIFICATIONTYPE_CUEDESTROYED ||
-        xd->type == XACTNOTIFICATIONTYPE_MARKER || xd->type == XACTNOTIFICATIONTYPE_LOCALVARIABLECHANGED)
+    if (fd->type == FACTNOTIFICATIONTYPE_CUEPREPARED || fd->type == FACTNOTIFICATIONTYPE_CUEPLAY ||
+        fd->type == FACTNOTIFICATIONTYPE_CUESTOP || fd->type == FACTNOTIFICATIONTYPE_CUEDESTROYED ||
+        fd->type == FACTNOTIFICATIONTYPE_MARKER || fd->type == FACTNOTIFICATIONTYPE_LOCALVARIABLECHANGED)
     {
         flags = NOTIFY_SoundBank | NOTIFY_cueIndex | NOTIFY_Cue;
     }
     /* Supports WaveBank */
-    else if (xd->type == XACTNOTIFICATIONTYPE_WAVEBANKDESTROYED || xd->type == XACTNOTIFICATIONTYPE_WAVEBANKPREPARED ||
-             xd->type == XACTNOTIFICATIONTYPE_WAVEBANKSTREAMING_INVALIDCONTENT)
+    else if (fd->type == FACTNOTIFICATIONTYPE_WAVEBANKDESTROYED || fd->type == FACTNOTIFICATIONTYPE_WAVEBANKPREPARED ||
+             fd->type == FACTNOTIFICATIONTYPE_WAVEBANKSTREAMING_INVALIDCONTENT)
     {
         flags = NOTIFY_WaveBank;
     }
     /* Supports NOTIFY_SoundBank */
-    else if (xd->type == XACTNOTIFICATIONTYPE_SOUNDBANKDESTROYED)
+    else if (fd->type == FACTNOTIFICATIONTYPE_SOUNDBANKDESTROYED)
     {
         flags = NOTIFY_SoundBank;
     }
     /* Supports SoundBank, SoundBank, Cue index, Cue instance, WaveBank, Wave instance */
-    else if (xd->type == XACTNOTIFICATIONTYPE_WAVEPLAY || xd->type == XACTNOTIFICATIONTYPE_WAVESTOP)
-    {
-        flags = NOTIFY_SoundBank | NOTIFY_cueIndex | NOTIFY_Cue | NOTIFY_WaveBank | NOTIFY_Wave;
-    }
-#if XACT3_VER >= 0x0205
-    else if (xd->type == XACTNOTIFICATIONTYPE_WAVELOOPED)
+    else if (fd->type == FACTNOTIFICATIONTYPE_WAVEPLAY || fd->type == FACTNOTIFICATIONTYPE_WAVESTOP ||
+             fd->type == FACTNOTIFICATIONTYPE_WAVELOOPED)
     {
         flags = NOTIFY_SoundBank | NOTIFY_cueIndex | NOTIFY_Cue | NOTIFY_WaveBank | NOTIFY_Wave;
     }
     /* Supports WaveBank, Wave index, Wave instance */
-    else if (xd->type == XACTNOTIFICATIONTYPE_WAVEPREPARED || xd->type == XACTNOTIFICATIONTYPE_WAVEDESTROYED)
+    else if (fd->type == FACTNOTIFICATIONTYPE_WAVEPREPARED || fd->type == FACTNOTIFICATIONTYPE_WAVEDESTROYED)
     {
         flags = NOTIFY_WaveBank | NOTIFY_waveIndex | NOTIFY_Wave;
     }
-#endif
 
     /* We have to unwrap the FACT object first! */
-    fd->type = xd->type;
     fd->flags = xd->flags;
     fd->pvContext = xd->pvContext;
     if (flags & NOTIFY_cueIndex)
