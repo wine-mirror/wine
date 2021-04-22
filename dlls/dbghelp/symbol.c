@@ -1405,6 +1405,39 @@ BOOL WINAPI SymFromName(HANDLE hProcess, PCSTR Name, PSYMBOL_INFO Symbol)
 }
 
 /***********************************************************************
+ *      SymFromNameW (DBGHELP.@)
+ */
+BOOL WINAPI SymFromNameW(HANDLE process, const WCHAR *name, SYMBOL_INFOW *symbol)
+{
+    SYMBOL_INFO *si;
+    DWORD len;
+    char *tmp;
+    BOOL ret;
+
+    TRACE("(%p, %s, %p)\n", process, debugstr_w(name), symbol);
+
+    len = sizeof(*si) + symbol->MaxNameLen * sizeof(WCHAR);
+    if (!(si = HeapAlloc(GetProcessHeap(), 0, len))) return FALSE;
+
+    len = WideCharToMultiByte(CP_ACP, 0, name, -1, NULL, 0, NULL, NULL);
+    if (!(tmp = HeapAlloc(GetProcessHeap(), 0, len)))
+    {
+        HeapFree(GetProcessHeap(), 0, si);
+        return FALSE;
+    }
+    WideCharToMultiByte(CP_ACP, 0, name, -1, tmp, len, NULL, NULL);
+
+    si->SizeOfStruct = sizeof(*si);
+    si->MaxNameLen = symbol->MaxNameLen;
+    if ((ret = SymFromName(process, tmp, si)))
+        copy_symbolW(symbol, si);
+
+    HeapFree(GetProcessHeap(), 0, tmp);
+    HeapFree(GetProcessHeap(), 0, si);
+    return ret;
+}
+
+/***********************************************************************
  *		SymGetSymFromName64 (DBGHELP.@)
  */
 BOOL WINAPI SymGetSymFromName64(HANDLE hProcess, PCSTR Name, PIMAGEHLP_SYMBOL64 Symbol)
