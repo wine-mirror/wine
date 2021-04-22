@@ -617,6 +617,7 @@ static const struct ISAXErrorHandlerVtbl ConfigFileHandlerErrorVtbl =
 static void init_config(parsed_config_file *config)
 {
     list_init(&config->supported_runtimes);
+    config->private_path = NULL;
 }
 
 static HRESULT parse_config(VARIANT input, parsed_config_file *result)
