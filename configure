@@ -9164,12 +9164,6 @@ if test "x$ac_cv_cflags__fPIC__Wl___export_dynamic" = xyes; then :
 fi
     WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
 
-    LIBWINE_SHAREDLIB="libwine.so"
-
-    LIBWINE_LDFLAGS="-shared -Wl,-soname,libwine.so"
-
-    TOP_INSTALL_LIB="$TOP_INSTALL_LIB libs/wine/libwine.so"
-
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lEGL" >&5
 $as_echo_n "checking for -lEGL... " >&6; }
 if ${ac_cv_lib_soname_EGL+:} false; then :

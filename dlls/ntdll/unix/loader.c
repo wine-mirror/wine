@@ -935,8 +935,6 @@ static void load_libwine(void)
 {
 #ifdef __APPLE__
 #define LIBWINE "libwine.1.dylib"
-#elif defined(__ANDROID__)
-#define LIBWINE "libwine.so"
 #else
 #define LIBWINE "libwine.so.1"
 #endif
