@@ -121,7 +121,7 @@ typedef struct WAVEBANKENTRY
             DWORD Duration : 28;
         } DUMMYSTRUCTNAME;
         DWORD dwFlagsAndDuration;
-    } DUMMYUNIONNAME;
+    };
 
     WAVEBANKMINIWAVEFORMAT Format;
     WAVEBANKREGION PlayRegion;
