@@ -38,14 +38,6 @@
 /* kernel32.dll */
 static INT (WINAPI *pGetUserDefaultGeoName)(LPWSTR, int);
 
-/* combase.dll */
-static HRESULT (WINAPI *pRoGetActivationFactory)(HSTRING, REFIID, void **);
-static HRESULT (WINAPI *pRoInitialize)(RO_INIT_TYPE);
-static void    (WINAPI *pRoUninitialize)(void);
-static HRESULT (WINAPI *pWindowsCreateString)(LPCWSTR, UINT32, HSTRING *);
-static HRESULT (WINAPI *pWindowsDeleteString)(HSTRING);
-static WCHAR  *(WINAPI *pWindowsGetStringRawBuffer)(HSTRING, UINT32 *);
-
 
 static void test_GlobalizationPreferences(void)
 {
@@ -56,28 +48,29 @@ static void test_GlobalizationPreferences(void)
     IActivationFactory *factory = NULL;
     IInspectable *inspectable = NULL, *tmp_inspectable = NULL;
     IAgileObject *agile_object = NULL, *tmp_agile_object = NULL;
+    WCHAR locale[LOCALE_NAME_MAX_LENGTH];
     HSTRING str, tmp_str;
+    const WCHAR *buf;
     BOOLEAN found;
     HRESULT hr;
     UINT32 len;
-    WCHAR *buf, locale[LOCALE_NAME_MAX_LENGTH];
     UINT32 i, size;
 
     GetUserDefaultLocaleName(locale, LOCALE_NAME_MAX_LENGTH);
 
-    hr = pRoInitialize(RO_INIT_MULTITHREADED);
+    hr = RoInitialize(RO_INIT_MULTITHREADED);
     ok(hr == S_OK, "RoInitialize failed, hr %#x\n", hr);
 
-    hr = pWindowsCreateString(class_name, wcslen(class_name), &str);
+    hr = WindowsCreateString(class_name, wcslen(class_name), &str);
     ok(hr == S_OK, "WindowsCreateString failed, hr %#x\n", hr);
 
-    hr = pRoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
     ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "RoGetActivationFactory failed, hr %#x\n", hr);
     if (hr == REGDB_E_CLASSNOTREG)
     {
         win_skip("%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w(class_name));
-        pWindowsDeleteString(str);
-        pRoUninitialize();
+        WindowsDeleteString(str);
+        RoUninitialize();
         return;
     }
 
@@ -103,7 +96,7 @@ static void test_GlobalizationPreferences(void)
     hr = IGlobalizationPreferencesStatics_get_HomeGeographicRegion(preferences_statics, &tmp_str);
     ok(hr == S_OK, "IGlobalizationPreferencesStatics_get_HomeGeographicRegion failed, hr %#x\n", hr);
 
-    buf = pWindowsGetStringRawBuffer(tmp_str, &len);
+    buf = WindowsGetStringRawBuffer(tmp_str, &len);
     ok(buf != NULL && len > 0, "WindowsGetStringRawBuffer returned buf %p, len %u\n", buf, len);
     if (pGetUserDefaultGeoName)
     {
@@ -116,7 +109,7 @@ static void test_GlobalizationPreferences(void)
            len, wine_dbgstr_w(buf), wine_dbgstr_w(country));
     }
 
-    pWindowsDeleteString(tmp_str);
+    WindowsDeleteString(tmp_str);
 
     hr = IGlobalizationPreferencesStatics_get_Languages(preferences_statics, &languages);
     ok(hr == S_OK, "IGlobalizationPreferencesStatics_get_Languages failed, hr %#x\n", hr);
@@ -138,7 +131,7 @@ static void test_GlobalizationPreferences(void)
 
     hr = IVectorView_HSTRING_GetAt(languages, 0, &tmp_str);
     ok(hr == S_OK, "IVectorView_HSTRING_GetAt failed, hr %#x\n", hr);
-    buf = pWindowsGetStringRawBuffer(tmp_str, &len);
+    buf = WindowsGetStringRawBuffer(tmp_str, &len);
     ok(buf != NULL && len > 0, "WindowsGetStringRawBuffer returned buf %p, len %u\n", buf, len);
 
     ok(wcslen(locale) == len && !memcmp(buf, locale, len),
@@ -151,9 +144,9 @@ static void test_GlobalizationPreferences(void)
     ok(hr == S_OK, "IVectorView_HSTRING_IndexOf failed, hr %#x\n", hr);
     ok(i == 0 && found == TRUE, "IVectorView_HSTRING_IndexOf returned size %d, found %d\n", size, found);
 
-    pWindowsDeleteString(tmp_str);
+    WindowsDeleteString(tmp_str);
 
-    hr = pWindowsCreateString(L"deadbeef", 8, &tmp_str);
+    hr = WindowsCreateString(L"deadbeef", 8, &tmp_str);
     ok(hr == S_OK, "WindowsCreateString failed, hr %#x\n", hr);
 
     i = 0xdeadbeef;
@@ -162,7 +155,7 @@ static void test_GlobalizationPreferences(void)
     ok(hr == S_OK, "IVectorView_HSTRING_IndexOf failed, hr %#x\n", hr);
     ok(i == 0 && found == FALSE, "IVectorView_HSTRING_IndexOf returned size %d, found %d\n", size, found);
 
-    pWindowsDeleteString(tmp_str);
+    WindowsDeleteString(tmp_str);
 
     tmp_str = (HSTRING)0xdeadbeef;
     hr = IVectorView_HSTRING_GetAt(languages, size, &tmp_str);
@@ -178,14 +171,14 @@ static void test_GlobalizationPreferences(void)
     ok(hr == S_OK, "IVectorView_HSTRING_GetAt failed, hr %#x\n", hr);
     ok(i == 1, "IVectorView_HSTRING_GetMany returned count %u, expected 1\n", i);
 
-    buf = pWindowsGetStringRawBuffer(tmp_str, &len);
+    buf = WindowsGetStringRawBuffer(tmp_str, &len);
     ok(buf != NULL && len > 0, "WindowsGetStringRawBuffer returned buf %p, len %u\n", buf, len);
 
     ok(wcslen(locale) == len && !memcmp(buf, locale, len),
        "IGlobalizationPreferencesStatics_get_Languages 0 returned len %u, str %s, expected %s\n",
        len, wine_dbgstr_w(buf), wine_dbgstr_w(locale));
 
-    pWindowsDeleteString(tmp_str);
+    WindowsDeleteString(tmp_str);
 
     IVectorView_HSTRING_Release(languages);
 
@@ -229,35 +222,14 @@ static void test_GlobalizationPreferences(void)
     IInspectable_Release(inspectable);
     IActivationFactory_Release(factory);
 
-    pWindowsDeleteString(str);
+    WindowsDeleteString(str);
 
-    pRoUninitialize();
+    RoUninitialize();
 }
 
 START_TEST(globalization)
 {
-    HMODULE combase, kernel32;
-
-    if (!(combase = LoadLibraryW(L"combase.dll")))
-    {
-        win_skip("Failed to load combase.dll, skipping tests\n");
-        return;
-    }
-
-#define LOAD_FUNCPTR(x) \
-    if (!(p##x = (void*)GetProcAddress(combase, #x))) \
-    { \
-        win_skip("Failed to find %s in combase.dll, skipping tests.\n", #x); \
-        return; \
-    }
-
-    LOAD_FUNCPTR(RoGetActivationFactory);
-    LOAD_FUNCPTR(RoInitialize);
-    LOAD_FUNCPTR(RoUninitialize);
-    LOAD_FUNCPTR(WindowsCreateString);
-    LOAD_FUNCPTR(WindowsDeleteString);
-    LOAD_FUNCPTR(WindowsGetStringRawBuffer);
-#undef LOAD_FUNCPTR
+    HMODULE kernel32;
 
     kernel32 = GetModuleHandleA("kernel32");
     pGetUserDefaultGeoName = (void*)GetProcAddress(kernel32, "GetUserDefaultGeoName");
