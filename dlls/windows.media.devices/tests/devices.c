@@ -37,13 +37,6 @@
 
 #include "wine/test.h"
 
-static HRESULT (WINAPI *pRoGetActivationFactory)(HSTRING, REFIID, void **);
-static HRESULT (WINAPI *pRoInitialize)(RO_INIT_TYPE);
-static void    (WINAPI *pRoUninitialize)(void);
-static HRESULT (WINAPI *pWindowsCreateString)(LPCWSTR, UINT32, HSTRING *);
-static HRESULT (WINAPI *pWindowsDeleteString)(HSTRING);
-static WCHAR  *(WINAPI *pWindowsGetStringRawBuffer)(HSTRING, UINT32 *);
-
 static HRESULT (WINAPI *pActivateAudioInterfaceAsync)(const WCHAR *path,
             REFIID riid, PROPVARIANT *params,
             IActivateAudioInterfaceCompletionHandler *done_handler,
@@ -141,12 +134,12 @@ static void test_MediaDeviceStatics(void)
     HRESULT hr;
     DWORD dr;
 
-    hr = pWindowsCreateString(media_device_statics_name, wcslen(media_device_statics_name), &str);
+    hr = WindowsCreateString(media_device_statics_name, wcslen(media_device_statics_name), &str);
     ok(hr == S_OK, "WindowsCreateString failed, hr %#x\n", hr);
 
-    hr = pRoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
     ok(hr == S_OK, "RoGetActivationFactory failed, hr %#x\n", hr);
-    pWindowsDeleteString(str);
+    WindowsDeleteString(str);
 
     /* interface tests */
     hr = IActivationFactory_QueryInterface(factory, &IID_IInspectable, (void **)&inspectable);
@@ -182,12 +175,12 @@ static void test_MediaDeviceStatics(void)
 
     if (g_default_capture_id)
     {
-        ok(wcsstr(pWindowsGetStringRawBuffer(str, NULL), g_default_capture_id) != NULL,
+        ok(wcsstr(WindowsGetStringRawBuffer(str, NULL), g_default_capture_id) != NULL,
                 "Expected to find substring of default capture id in %s\n",
-                wine_dbgstr_w(pWindowsGetStringRawBuffer(str, NULL)));
+                wine_dbgstr_w(WindowsGetStringRawBuffer(str, NULL)));
 
         /* returned id does not work in GetDevice... */
-        hr = IMMDeviceEnumerator_GetDevice(g_mmdevenum, pWindowsGetStringRawBuffer(str, NULL), &mmdev);
+        hr = IMMDeviceEnumerator_GetDevice(g_mmdevenum, WindowsGetStringRawBuffer(str, NULL), &mmdev);
         ok(hr == E_INVALIDARG, "GetDevice gave wrong error: %08x\n", hr);
 
         /* ...but does work in ActivateAudioInterfaceAsync */
@@ -199,7 +192,7 @@ static void test_MediaDeviceStatics(void)
         strcpy(async_activate_test.msg_pfx, "capture_activate");
 
         EnterCriticalSection(&async_activate_test.lock);
-        hr = pActivateAudioInterfaceAsync(pWindowsGetStringRawBuffer(str, NULL),
+        hr = pActivateAudioInterfaceAsync(WindowsGetStringRawBuffer(str, NULL),
                 &IID_IAudioClient2, NULL, &async_activate_done, &async_activate_test.op);
         ok(hr == S_OK, "ActivateAudioInterfaceAsync failed: %08x\n", hr);
         LeaveCriticalSection(&async_activate_test.lock);
@@ -212,7 +205,7 @@ static void test_MediaDeviceStatics(void)
         ok(async_activate_test.result_iface != NULL, "Expected to get WASAPI interface, but got NULL\n");
         IUnknown_Release(async_activate_test.result_iface);
 
-        pWindowsDeleteString(str);
+        WindowsDeleteString(str);
     }
 
     /* test default render device creation */
@@ -223,12 +216,12 @@ static void test_MediaDeviceStatics(void)
 
     if (g_default_render_id)
     {
-        ok(wcsstr(pWindowsGetStringRawBuffer(str, NULL), g_default_render_id) != NULL,
+        ok(wcsstr(WindowsGetStringRawBuffer(str, NULL), g_default_render_id) != NULL,
                 "Expected to find substring of default render id in %s\n",
-                wine_dbgstr_w(pWindowsGetStringRawBuffer(str, NULL)));
+                wine_dbgstr_w(WindowsGetStringRawBuffer(str, NULL)));
 
         /* returned id does not work in GetDevice... */
-        hr = IMMDeviceEnumerator_GetDevice(g_mmdevenum, pWindowsGetStringRawBuffer(str, NULL), &mmdev);
+        hr = IMMDeviceEnumerator_GetDevice(g_mmdevenum, WindowsGetStringRawBuffer(str, NULL), &mmdev);
         ok(hr == E_INVALIDARG, "GetDevice gave wrong error: %08x\n", hr);
 
         /* ...but does work in ActivateAudioInterfaceAsync */
@@ -240,7 +233,7 @@ static void test_MediaDeviceStatics(void)
         strcpy(async_activate_test.msg_pfx, "render_activate");
 
         EnterCriticalSection(&async_activate_test.lock);
-        hr = pActivateAudioInterfaceAsync(pWindowsGetStringRawBuffer(str, NULL),
+        hr = pActivateAudioInterfaceAsync(WindowsGetStringRawBuffer(str, NULL),
                 &IID_IAudioClient2, NULL, &async_activate_done, &async_activate_test.op);
         ok(hr == S_OK, "ActivateAudioInterfaceAsync failed: %08x\n", hr);
         LeaveCriticalSection(&async_activate_test.lock);
@@ -253,7 +246,7 @@ static void test_MediaDeviceStatics(void)
         ok(async_activate_test.result_iface != NULL, "Expected to get WASAPI interface, but got NULL\n");
         IUnknown_Release(async_activate_test.result_iface);
 
-        pWindowsDeleteString(str);
+        WindowsDeleteString(str);
     }
 
     /* cleanup */
@@ -264,30 +257,9 @@ static void test_MediaDeviceStatics(void)
 
 START_TEST(devices)
 {
-    HMODULE combase, mmdevapi;
+    HMODULE mmdevapi;
     IMMDevice *mmdev;
     HRESULT hr;
-
-    if (!(combase = LoadLibraryW(L"combase.dll")))
-    {
-        win_skip("Failed to load combase.dll, skipping tests\n");
-        return;
-    }
-
-#define LOAD_FUNCPTR(x) \
-    if (!(p##x = (void*)GetProcAddress(combase, #x))) \
-    { \
-        win_skip("Failed to find %s in combase.dll, skipping tests.\n", #x); \
-        return; \
-    }
-
-    LOAD_FUNCPTR(RoGetActivationFactory);
-    LOAD_FUNCPTR(RoInitialize);
-    LOAD_FUNCPTR(RoUninitialize);
-    LOAD_FUNCPTR(WindowsCreateString);
-    LOAD_FUNCPTR(WindowsDeleteString);
-    LOAD_FUNCPTR(WindowsGetStringRawBuffer);
-#undef LOAD_FUNCPTR
 
     if (!(mmdevapi = LoadLibraryW(L"mmdevapi.dll")))
     {
@@ -305,7 +277,7 @@ START_TEST(devices)
     LOAD_FUNCPTR(ActivateAudioInterfaceAsync);
 #undef LOAD_FUNCPTR
 
-    hr = pRoInitialize(RO_INIT_MULTITHREADED);
+    hr = RoInitialize(RO_INIT_MULTITHREADED);
     ok(hr == S_OK, "RoInitialize failed, hr %#x\n", hr);
 
     hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL,
@@ -340,5 +312,5 @@ START_TEST(devices)
     CoTaskMemFree(g_default_render_id);
     IMMDeviceEnumerator_Release(g_mmdevenum);
 
-    pRoUninitialize();
+    RoUninitialize();
 }
