@@ -75,7 +75,7 @@
 @ stdcall SymFromIndex(long int64 long ptr)
 @ stdcall SymFromIndexW(long int64 long ptr)
 @ stdcall SymFromName(long str ptr)
-@ stub SymFromNameW
+@ stdcall SymFromNameW(long wstr ptr)
 @ stub SymFromToken
 @ stub SymFromTokenW
 @ stdcall SymFunctionTableAccess(long long)
