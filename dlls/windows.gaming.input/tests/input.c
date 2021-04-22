@@ -34,13 +34,6 @@
 
 #include "wine/test.h"
 
-static HRESULT (WINAPI *pRoActivateInstance)(HSTRING, IInspectable **);
-static HRESULT (WINAPI *pRoGetActivationFactory)(HSTRING, REFIID, void **);
-static HRESULT (WINAPI *pRoInitialize)(RO_INIT_TYPE);
-static void    (WINAPI *pRoUninitialize)(void);
-static HRESULT (WINAPI *pWindowsCreateString)(LPCWSTR, UINT32, HSTRING *);
-static HRESULT (WINAPI *pWindowsDeleteString)(HSTRING);
-
 struct gamepad_event_handler
 {
     IEventHandler_Gamepad IEventHandler_Gamepad_iface;
@@ -119,13 +112,13 @@ static void test_Gamepad(void)
 
     gamepad_event_handler.IEventHandler_Gamepad_iface.lpVtbl = &gamepad_event_handler_vtbl;
 
-    hr = pRoInitialize(RO_INIT_MULTITHREADED);
+    hr = RoInitialize(RO_INIT_MULTITHREADED);
     ok(hr == S_OK, "RoInitialize failed, hr %#x\n", hr);
 
-    hr = pWindowsCreateString(gamepad_name, wcslen(gamepad_name), &str);
+    hr = WindowsCreateString(gamepad_name, wcslen(gamepad_name), &str);
     ok(hr == S_OK, "WindowsCreateString failed, hr %#x\n", hr);
 
-    hr = pRoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
     ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "RoGetActivationFactory failed, hr %#x\n", hr);
     if (hr == REGDB_E_CLASSNOTREG)
     {
@@ -213,9 +206,9 @@ static void test_Gamepad(void)
     IInspectable_Release(inspectable);
     IActivationFactory_Release(factory);
 
-    pWindowsDeleteString(str);
+    WindowsDeleteString(str);
 
-    pRoUninitialize();
+    RoUninitialize();
 }
 
 struct controller_event_handler
@@ -296,13 +289,13 @@ static void test_RawGameController(void)
 
     controller_event_handler.IEventHandler_RawGameController_iface.lpVtbl = &controller_event_handler_vtbl;
 
-    hr = pRoInitialize(RO_INIT_MULTITHREADED);
+    hr = RoInitialize(RO_INIT_MULTITHREADED);
     ok(hr == S_OK || hr == S_FALSE, "RoInitialize failed, hr %#x\n", hr);
 
-    hr = pWindowsCreateString(controller_name, wcslen(controller_name), &str);
+    hr = WindowsCreateString(controller_name, wcslen(controller_name), &str);
     ok(hr == S_OK, "WindowsCreateString failed, hr %#x\n", hr);
 
-    hr = pRoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
     ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "RoGetActivationFactory failed, hr %#x\n", hr);
     if (hr == REGDB_E_CLASSNOTREG)
     {
@@ -390,36 +383,13 @@ static void test_RawGameController(void)
     IInspectable_Release(inspectable);
     IActivationFactory_Release(factory);
 
-    pWindowsDeleteString(str);
+    WindowsDeleteString(str);
 
-    pRoUninitialize();
+    RoUninitialize();
 }
 
 START_TEST(input)
 {
-    HMODULE combase;
-
-    if (!(combase = LoadLibraryW(L"combase.dll")))
-    {
-        win_skip("Failed to load combase.dll, skipping tests\n");
-        return;
-    }
-
-#define LOAD_FUNCPTR(x) \
-    if (!(p##x = (void*)GetProcAddress(combase, #x))) \
-    { \
-        win_skip("Failed to find %s in combase.dll, skipping tests.\n", #x); \
-        return; \
-    }
-
-    LOAD_FUNCPTR(RoActivateInstance);
-    LOAD_FUNCPTR(RoGetActivationFactory);
-    LOAD_FUNCPTR(RoInitialize);
-    LOAD_FUNCPTR(RoUninitialize);
-    LOAD_FUNCPTR(WindowsCreateString);
-    LOAD_FUNCPTR(WindowsDeleteString);
-#undef LOAD_FUNCPTR
-
     test_Gamepad();
     test_RawGameController();
 }
