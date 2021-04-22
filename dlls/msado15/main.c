@@ -184,6 +184,7 @@ static REFIID tid_ids[] = {
     &IID__Connection,
     &IID_Field,
     &IID_Fields,
+    &IID_Properties,
     &IID__Recordset,
     &IID__Stream,
 };

@@ -68,6 +68,8 @@ static void test_Recordset(void)
     ISupportErrorInfo *errorinfo;
     Fields *fields, *fields2;
     Field *field;
+    Properties *props;
+    Property *prop;
     LONG refs, count, state;
     VARIANT missing, val, index;
     CursorLocationEnum location;
@@ -183,6 +185,24 @@ static void test_Recordset(void)
     hr = Fields_get_Item( fields, index, &field );
     ok( hr == S_OK, "got %08x\n", hr );
     SysFreeString( name );
+
+    hr = Field_QueryInterface(field, &IID_Properties, (void**)&props);
+    ok( hr == E_NOINTERFACE, "got %08x\n", hr );
+
+    hr = Field_get_Properties(field, &props);
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    count = -1;
+    hr = Properties_get_Count(props, &count);
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !count, "got %d\n", count );
+
+    V_VT( &index ) = VT_I4;
+    V_I4( &index ) = 1000;
+    hr = Properties_get_Item(props, index, &prop);
+    ok( hr == MAKE_ADO_HRESULT(adErrItemNotFound), "got %08x\n", hr );
+
+    Properties_Release(props);
 
     hr = _Recordset_Open( recordset, missing, missing, adOpenStatic, adLockBatchOptimistic, adCmdUnspecified );
     ok( hr == S_OK, "got %08x\n", hr );
