@@ -70,11 +70,6 @@ RC_SRCS = version.rc
 
 EXTRA_OBJS = unix/version.o
 
-server_EXTRADEFS = \
-	-DBINDIR=\"${bindir}\" \
-	-DBIN_TO_DLLDIR=\"`${MAKEDEP} -R ${bindir} ${dlldir}`\" \
-	-DDLL_TO_BINDIR=\"`${MAKEDEP} -R ${dlldir} ${bindir}`\"
-
 unix_loader_EXTRADEFS = \
 	-DBINDIR=\"${bindir}\" \
 	-DDLL_TO_BINDIR=\"`${MAKEDEP} -R ${dlldir} ${bindir}`\" \
