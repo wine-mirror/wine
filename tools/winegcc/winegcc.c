@@ -904,6 +904,7 @@ no_compat_defines:
         const char *incl_dirs[] = { INCLUDEDIR, "/usr/include", "/usr/local/include" };
         const char *root = opts->isysroot ? opts->isysroot : opts->sysroot ? opts->sysroot : "";
         const char *isystem = gcc_defs ? "-isystem" : "-I";
+        const char *idirafter = gcc_defs ? "-idirafter" : "-I";
 
         if (opts->use_msvcrt)
         {
@@ -915,17 +916,16 @@ no_compat_defines:
             }
             strarray_add(comp_args, "-D__MSVCRT__");
         }
-        if (includedir) strarray_add( comp_args, strmake( "%s%s/wine/windows", isystem, includedir ));
+        if (includedir)
+        {
+            strarray_add( comp_args, strmake( "%s%s/wine/windows", isystem, includedir ));
+            strarray_add( comp_args, strmake( "%s%s", idirafter, includedir ));
+        }
         for (j = 0; j < ARRAY_SIZE(incl_dirs); j++)
         {
             if (j && !strcmp( incl_dirs[0], incl_dirs[j] )) continue;
             strarray_add(comp_args, strmake( "%s%s%s/wine/windows", isystem, root, incl_dirs[j] ));
-        }
-        if (includedir) strarray_add( comp_args, strmake( "%s%s", isystem, includedir ));
-        for (j = 0; j < ARRAY_SIZE(incl_dirs); j++)
-        {
-            if (j && !strcmp( incl_dirs[0], incl_dirs[j] )) continue;
-            strarray_add(comp_args, strmake( "%s%s%s", isystem, root, incl_dirs[j] ));
+            strarray_add(comp_args, strmake( "%s%s%s", idirafter, root, incl_dirs[j] ));
         }
     }
     else if (opts->wine_objdir)
