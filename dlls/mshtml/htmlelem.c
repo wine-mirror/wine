@@ -871,6 +871,23 @@ static HRESULT WINAPI HTMLElement_setAttribute(IHTMLElement *iface, BSTR strAttr
 
     TRACE("(%p)->(%s %s %08x)\n", This, debugstr_w(strAttributeName), debugstr_variant(&AttributeValue), lFlags);
 
+    if(This->dom_element && dispex_compat_mode(&This->node.event_target.dispex) >= COMPAT_MODE_IE8) {
+        nsAString name_str, value_str;
+        nsresult nsres;
+
+        hres = variant_to_nsstr(&AttributeValue, FALSE, &value_str);
+        if(FAILED(hres))
+            return hres;
+
+        nsAString_InitDepend(&name_str, strAttributeName);
+        nsres = nsIDOMElement_SetAttribute(This->dom_element, &name_str, &value_str);
+        nsAString_Finish(&name_str);
+        nsAString_Finish(&value_str);
+        if(NS_FAILED(nsres))
+            WARN("SetAttribute failed: %08x\n", nsres);
+        return map_nsresult(nsres);
+    }
+
     hres = IDispatchEx_GetDispID(&This->node.event_target.dispex.IDispatchEx_iface, strAttributeName,
             (lFlags&ATTRFLAG_CASESENSITIVE ? fdexNameCaseSensitive : fdexNameCaseInsensitive) | fdexNameEnsure, &dispid);
     if(FAILED(hres))
@@ -927,6 +944,17 @@ static HRESULT WINAPI HTMLElement_getAttribute(IHTMLElement *iface, BSTR strAttr
     if(lFlags & ~(ATTRFLAG_CASESENSITIVE|ATTRFLAG_ASSTRING))
         FIXME("Unsupported flags %x\n", lFlags);
 
+    if(This->dom_element && dispex_compat_mode(&This->node.event_target.dispex) >= COMPAT_MODE_IE8) {
+        nsAString name_str, value_str;
+        nsresult nsres;
+
+        nsAString_InitDepend(&name_str, strAttributeName);
+        nsAString_InitDepend(&value_str, NULL);
+        nsres = nsIDOMElement_GetAttribute(This->dom_element, &name_str, &value_str);
+        nsAString_Finish(&name_str);
+        return return_nsstr_variant(nsres, &value_str, 0, AttributeValue);
+    }
+
     hres = IDispatchEx_GetDispID(&This->node.event_target.dispex.IDispatchEx_iface, strAttributeName,
             lFlags&ATTRFLAG_CASESENSITIVE ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &dispid);
     if(hres == DISP_E_UNKNOWNNAME) {
@@ -953,6 +981,9 @@ static HRESULT WINAPI HTMLElement_removeAttribute(IHTMLElement *iface, BSTR strA
     HRESULT hres;
 
     TRACE("(%p)->(%s %x %p)\n", This, debugstr_w(strAttributeName), lFlags, pfSuccess);
+
+    if(dispex_compat_mode(&This->node.event_target.dispex) >= COMPAT_MODE_IE8)
+        return element_remove_attribute(This, strAttributeName);
 
     hres = IDispatchEx_GetDispID(&This->node.event_target.dispex.IDispatchEx_iface, strAttributeName,
             lFlags&ATTRFLAG_CASESENSITIVE ? fdexNameCaseSensitive : fdexNameCaseInsensitive, &id);

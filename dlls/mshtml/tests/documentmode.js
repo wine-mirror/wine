@@ -622,3 +622,33 @@ sync_test("set_obj", function() {
     r = Object.prototype.toString.call(s);
     ok(r === "[object Object]", "toString returned " + r);
 });
+
+sync_test("elem_attr", function() {
+    var v = document.documentMode;
+    var elem = document.createElement("div"), r;
+
+    r = elem.getAttribute("class");
+    ok(r === null, "class attr = " + r);
+    r = elem.getAttribute("className");
+    ok(r === (v < 8 ? "" : null), "className attr = " + r);
+
+    elem.className = "cls";
+    r = elem.getAttribute("class");
+    ok(r === (v < 8 ? null : "cls"), "class attr = " + r);
+    r = elem.getAttribute("className");
+    ok(r === (v < 8 ? "cls" : null), "className attr = " + r);
+
+    elem.setAttribute("class", "cls2");
+    ok(elem.className === (v < 8 ? "cls" : "cls2"), "elem.className = " + elem.className);
+    r = elem.getAttribute("class");
+    ok(r === "cls2", "class attr = " + r);
+    r = elem.getAttribute("className");
+    ok(r === (v < 8 ? "cls" : null), "className attr = " + r);
+
+    elem.setAttribute("className", "cls3");
+    ok(elem.className === (v < 8 ? "cls3" : "cls2"), "elem.className = " + elem.className);
+    r = elem.getAttribute("class");
+    ok(r === "cls2", "class attr = " + r);
+    r = elem.getAttribute("className");
+    ok(r === "cls3", "className attr = " + r);
+});

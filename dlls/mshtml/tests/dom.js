@@ -462,7 +462,6 @@ async_test("animation_frame", function() {
 sync_test("title", function() {
     var elem = document.createElement("div");
     ok(elem.title === "", "div.title = " + elem.title);
-    todo_wine.
     ok(elem.getAttribute("title") === null, "title attribute = " + elem.getAttribute("title"));
     elem.title = "test";
     ok(elem.title === "test", "div.title = " + elem.title);
@@ -473,27 +472,22 @@ sync_test("disabled", function() {
     var elem = document.createElement("div");
     document.body.appendChild(elem);
     ok(elem.disabled === false, "div.disabled = " + elem.disabled);
-    todo_wine.
     ok(elem.getAttribute("disabled") === null, "disabled attribute = " + elem.getAttribute("disabled") + " expected null");
 
     elem.disabled = true;
     ok(elem.disabled === true, "div.disabled = " + elem.disabled);
-    todo_wine.
     ok(elem.getAttribute("disabled") === "", "disabled attribute = " + elem.getAttribute("disabled") + " expected \"\"");
 
     elem.disabled = false;
     ok(elem.disabled === false, "div.disabled = " + elem.disabled);
-    todo_wine.
     ok(elem.getAttribute("disabled") === null, "disabled attribute = " + elem.getAttribute("disabled") + " expected null");
 
     elem.setAttribute("disabled", "false");
     ok(elem.disabled === true, "div.disabled = " + elem.disabled);
-    todo_wine.
     ok(elem.getAttribute("disabled") === "false", "disabled attribute = " + elem.getAttribute("disabled"));
 
     elem.removeAttribute("disabled");
     ok(elem.disabled === false, "div.disabled = " + elem.disabled);
-    todo_wine.
     ok(elem.getAttribute("disabled") === null, "disabled attribute = " + elem.getAttribute("disabled") + " expected null");
 });
 
@@ -508,11 +502,9 @@ sync_test("hasAttribute", function() {
 
     elem.setAttribute("attr2", "abc");
     r = elem.hasAttribute("attr2");
-    todo_wine.
     ok(r === true, "hasAttribute(attr2) returned " + r);
 
     elem.removeAttribute("attr");
     r = elem.hasAttribute("attr");
-    todo_wine.
     ok(r === false, "hasAttribute(attr) returned " + r);
 });
