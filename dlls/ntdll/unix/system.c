@@ -2926,6 +2926,44 @@ NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
             return ret;
         break;
     }
+
+    case SystemSupportedProcessorArchitectures:
+    {
+        HANDLE process;
+        ULONG i;
+        USHORT machine = 0;
+
+        if (!query || query_len < sizeof(HANDLE)) return STATUS_INVALID_PARAMETER;
+        process = *(HANDLE *)query;
+        if (process)
+        {
+            SERVER_START_REQ( get_process_info )
+            {
+                req->handle = wine_server_obj_handle( process );
+                if (!(ret = wine_server_call( req ))) machine = reply->machine;
+            }
+            SERVER_END_REQ;
+            if (ret) return ret;
+        }
+
+        len = (supported_machines_count + 1) * sizeof(ULONG);
+        if (size < len)
+        {
+            ret = STATUS_BUFFER_TOO_SMALL;
+            break;
+        }
+        for (i = 0; i < supported_machines_count; i++)
+        {
+            USHORT flags = 2;  /* supported (?) */
+            if (!i) flags |= 5;  /* native machine (?) */
+            if (supported_machines[i] == machine) flags |= 8;  /* current machine */
+            ((DWORD *)info)[i] = MAKELONG( supported_machines[i], flags );
+        }
+        ((DWORD *)info)[i] = 0;
+        ret = STATUS_SUCCESS;
+        break;
+    }
+
     default:
         FIXME( "(0x%08x,%p,%u,%p,%u,%p) stub\n", class, query, query_len, info, size, ret_size );
         break;

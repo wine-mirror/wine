@@ -2884,6 +2884,119 @@ static void test_query_data_alignment(void)
 #endif
 }
 
+static void test_process_architecture( HANDLE process, USHORT expect_machine, USHORT expect_native )
+{
+    NTSTATUS status;
+    ULONG i, len, buffer[8];
+
+    len = 0xdead;
+    status = pNtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
+                                          &buffer, sizeof(buffer), &len );
+    ok( !status, "failed %x\n", status );
+    ok( !(len & 3), "wrong len %x\n", len );
+    len /= sizeof(DWORD);
+    for (i = 0; i < len - 1; i++)
+    {
+        USHORT flags = HIWORD(buffer[i]);
+        USHORT machine = LOWORD(buffer[i]);
+
+        if (flags & 8)
+            ok( machine == expect_machine, "wrong current machine %x\n", buffer[i]);
+        else
+            ok( machine != expect_machine, "wrong machine %x\n", buffer[i]);
+
+        /* FIXME: not quite sure what the other flags mean,
+         * observed on amd64 Windows: (flags & 7) == 7 for MACHINE_AMD64 and 2 for MACHINE_I386
+         */
+        if (flags & 4)
+            ok( machine == expect_native, "wrong native machine %x\n", buffer[i]);
+        else
+            ok( machine != expect_native, "wrong machine %x\n", buffer[i]);
+    }
+    ok( !buffer[i], "missing terminating null\n" );
+
+    len = i * sizeof(DWORD);
+    status = pNtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
+                                          &buffer, len, &len );
+    ok( status == STATUS_BUFFER_TOO_SMALL, "failed %x\n", status );
+    ok( len == (i + 1) * sizeof(DWORD), "wrong len %u\n", len );
+}
+
+static void test_query_architectures(void)
+{
+#ifdef __i386__
+    USHORT current_machine = IMAGE_FILE_MACHINE_I386;
+    USHORT native_machine = is_wow64 ? IMAGE_FILE_MACHINE_AMD64 : IMAGE_FILE_MACHINE_I386;
+#elif defined __x86_64__
+    USHORT current_machine = IMAGE_FILE_MACHINE_AMD64;
+    USHORT native_machine = IMAGE_FILE_MACHINE_AMD64;
+#elif defined __arm__
+    USHORT current_machine = IMAGE_FILE_MACHINE_ARMNT;
+    USHORT native_machine = is_wow64 ? IMAGE_FILE_MACHINE_ARM64 : IMAGE_FILE_MACHINE_ARMNT;
+#elif defined __aarch64__
+    USHORT current_machine = IMAGE_FILE_MACHINE_ARM64;
+    USHORT native_machine = IMAGE_FILE_MACHINE_ARM64;
+#else
+    USHORT current_machine = 0;
+    USHORT native_machine = 0;
+#endif
+    PROCESS_INFORMATION pi;
+    STARTUPINFOA si = { sizeof(si) };
+    NTSTATUS status;
+    HANDLE process;
+    ULONG len, buffer[8];
+
+    if (!pNtQuerySystemInformationEx) return;
+
+    process = GetCurrentProcess();
+    status = pNtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
+                                          &buffer, sizeof(buffer), &len );
+    if (status == STATUS_INVALID_INFO_CLASS)
+    {
+        win_skip( "SystemSupportedProcessorArchitectures not supported\n" );
+        return;
+    }
+    ok( !status, "failed %x\n", status );
+
+    process = (HANDLE)0xdeadbeef;
+    status = pNtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
+                                          &buffer, sizeof(buffer), &len );
+    ok( status == STATUS_INVALID_HANDLE, "failed %x\n", status );
+    process = (HANDLE)0xdeadbeef;
+    status = pNtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, 3,
+                                          &buffer, sizeof(buffer), &len );
+    ok( status == STATUS_INVALID_PARAMETER || broken(status == STATUS_INVALID_HANDLE),
+        "failed %x\n", status );
+    process = GetCurrentProcess();
+    status = pNtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, 3,
+                                          &buffer, sizeof(buffer), &len );
+    ok( status == STATUS_INVALID_PARAMETER || broken( status == STATUS_SUCCESS),
+        "failed %x\n", status );
+    status = pNtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, NULL, 0,
+                                          &buffer, sizeof(buffer), &len );
+    ok( status == STATUS_INVALID_PARAMETER, "failed %x\n", status );
+
+    test_process_architecture( GetCurrentProcess(), current_machine, native_machine );
+    test_process_architecture( 0, 0, native_machine );
+
+    if (CreateProcessA( "C:\\Program Files\\Internet Explorer\\iexplore.exe", NULL, NULL, NULL,
+                        FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi ))
+    {
+        test_process_architecture( pi.hProcess, native_machine, native_machine );
+        TerminateProcess( pi.hProcess, 0 );
+        CloseHandle( pi.hProcess );
+        CloseHandle( pi.hThread );
+    }
+    if (CreateProcessA( "C:\\Program Files (x86)\\Internet Explorer\\iexplore.exe", NULL, NULL, NULL,
+                        FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi ))
+    {
+        test_process_architecture( pi.hProcess, IMAGE_FILE_MACHINE_I386, native_machine );
+        TerminateProcess( pi.hProcess, 0 );
+        CloseHandle( pi.hProcess );
+        CloseHandle( pi.hThread );
+    }
+}
+
 static void test_thread_lookup(void)
 {
     OBJECT_BASIC_INFORMATION obj_info;
@@ -3145,6 +3258,7 @@ START_TEST(info)
     test_query_cpusetinfo();
     test_query_firmware();
     test_query_data_alignment();
+    test_query_architectures();
 
     /* NtPowerInformation */
     test_query_battery();
