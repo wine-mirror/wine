@@ -112,7 +112,7 @@ typedef union
 
 enum cpu_type
 {
-    CPU_x86, CPU_x86_64, CPU_POWERPC, CPU_ARM, CPU_ARM64
+    CPU_x86, CPU_x86_64, CPU_ARM, CPU_ARM64
 };
 typedef int client_cpu_t;
 
@@ -126,7 +126,6 @@ typedef struct
         struct { unsigned int eip, ebp, esp, eflags, cs, ss; } i386_regs;
         struct { unsigned __int64 rip, rbp, rsp;
                  unsigned int cs, ss, flags, __pad; } x86_64_regs;
-        struct { unsigned int iar, msr, ctr, lr, dar, dsisr, trap, __pad; } powerpc_regs;
         struct { unsigned int sp, lr, pc, cpsr; } arm_regs;
         struct { unsigned __int64 sp, pc, pstate; } arm64_regs;
     } ctl;
@@ -135,7 +134,6 @@ typedef struct
         struct { unsigned int eax, ebx, ecx, edx, esi, edi; } i386_regs;
         struct { unsigned __int64 rax,rbx, rcx, rdx, rsi, rdi,
                                   r8, r9, r10, r11, r12, r13, r14, r15; } x86_64_regs;
-        struct { unsigned int gpr[32], cr, xer; } powerpc_regs;
         struct { unsigned int r[13]; } arm_regs;
         struct { unsigned __int64 x[31]; } arm64_regs;
     } integer;
@@ -149,7 +147,6 @@ typedef struct
         struct { unsigned int ctrl, status, tag, err_off, err_sel, data_off, data_sel, cr0npx;
                  unsigned char regs[80]; } i386_regs;
         struct { struct { unsigned __int64 low, high; } fpregs[32]; } x86_64_regs;
-        struct { double fpr[32], fpscr; } powerpc_regs;
         struct { unsigned __int64 d[32]; unsigned int fpscr; } arm_regs;
         struct { struct { unsigned __int64 low, high; } q[32]; unsigned int fpcr, fpsr; } arm64_regs;
     } fp;
@@ -157,7 +154,6 @@ typedef struct
     {
         struct { unsigned int dr0, dr1, dr2, dr3, dr6, dr7; } i386_regs;
         struct { unsigned __int64 dr0, dr1, dr2, dr3, dr6, dr7; } x86_64_regs;
-        struct { unsigned int dr[8]; } powerpc_regs;
         struct { unsigned int bvr[8], bcr[8], wvr[1], wcr[1]; } arm_regs;
         struct { unsigned __int64 bvr[8], wvr[2]; unsigned int bcr[8], wcr[2]; } arm64_regs;
     } debug;
@@ -6222,7 +6218,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 691
+#define SERVER_PROTOCOL_VERSION 692
 
 /* ### protocol_version end ### */
 

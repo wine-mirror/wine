@@ -70,7 +70,7 @@ static ULONG execute_flags = MEM_EXECUTE_OPTION_DISABLE | (sizeof(void *) > size
                                                            MEM_EXECUTE_OPTION_DISABLE_THUNK_EMULATION |
                                                            MEM_EXECUTE_OPTION_PERMANENT : 0);
 
-static const char * const cpu_names[] = { "x86", "x86_64", "PowerPC", "ARM", "ARM64" };
+static const char * const cpu_names[] = { "x86", "x86_64", "ARM", "ARM64" };
 
 static UINT process_error_mode;
 

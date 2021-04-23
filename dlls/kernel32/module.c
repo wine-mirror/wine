@@ -194,10 +194,7 @@ BOOL WINAPI GetBinaryTypeW( LPCWSTR name, LPDWORD type )
             switch (info.Machine)
             {
             case IMAGE_FILE_MACHINE_I386:
-            case IMAGE_FILE_MACHINE_ARM:
-            case IMAGE_FILE_MACHINE_THUMB:
             case IMAGE_FILE_MACHINE_ARMNT:
-            case IMAGE_FILE_MACHINE_POWERPC:
                 *type = SCS_32BIT_BINARY;
                 return TRUE;
             case IMAGE_FILE_MACHINE_AMD64:

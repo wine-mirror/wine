@@ -154,7 +154,6 @@ static void dump_client_cpu( const char *prefix, const client_cpu_t *code )
 #define CASE(c) case CPU_##c: fprintf( stderr, "%s%s", prefix, #c ); break
         CASE(x86);
         CASE(x86_64);
-        CASE(POWERPC);
         CASE(ARM);
         CASE(ARM64);
         default: fprintf( stderr, "%s%u", prefix, *code ); break;
@@ -695,26 +694,6 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
         if (ctx.flags & SERVER_CTX_YMM_REGISTERS)
             dump_uints( ",ymm_high=", (const unsigned int *)ctx.ymm.ymm_high_regs.ymm_high,
                         sizeof(ctx.ymm.ymm_high_regs) / sizeof(int) );
-        break;
-    case CPU_POWERPC:
-        if (ctx.flags & SERVER_CTX_CONTROL)
-            fprintf( stderr, ",iar=%08x,msr=%08x,ctr=%08x,lr=%08x,dar=%08x,dsisr=%08x,trap=%08x",
-                     ctx.ctl.powerpc_regs.iar, ctx.ctl.powerpc_regs.msr, ctx.ctl.powerpc_regs.ctr,
-                     ctx.ctl.powerpc_regs.lr, ctx.ctl.powerpc_regs.dar, ctx.ctl.powerpc_regs.dsisr,
-                     ctx.ctl.powerpc_regs.trap );
-        if (ctx.flags & SERVER_CTX_INTEGER)
-        {
-            for (i = 0; i < 32; i++) fprintf( stderr, ",gpr%u=%08x", i, ctx.integer.powerpc_regs.gpr[i] );
-            fprintf( stderr, ",cr=%08x,xer=%08x",
-                     ctx.integer.powerpc_regs.cr, ctx.integer.powerpc_regs.xer );
-        }
-        if (ctx.flags & SERVER_CTX_DEBUG_REGISTERS)
-            for (i = 0; i < 8; i++) fprintf( stderr, ",dr%u=%08x", i, ctx.debug.powerpc_regs.dr[i] );
-        if (ctx.flags & SERVER_CTX_FLOATING_POINT)
-        {
-            for (i = 0; i < 32; i++) fprintf( stderr, ",fpr%u=%g", i, ctx.fp.powerpc_regs.fpr[i] );
-            fprintf( stderr, ",fpscr=%g", ctx.fp.powerpc_regs.fpscr );
-        }
         break;
     case CPU_ARM:
         if (ctx.flags & SERVER_CTX_CONTROL)
