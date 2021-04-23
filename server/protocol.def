@@ -915,7 +915,7 @@ typedef struct
     thread_id_t  tid;          /* thread id of the new thread */
     timeout_t    server_start; /* server start time */
     data_size_t  info_size;    /* total size of startup info */
-    unsigned int all_cpus;     /* bitset of supported CPUs */
+    VARARG(machines,ushorts);  /* array of supported machines */
 @END
 
 

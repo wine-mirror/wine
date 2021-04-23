@@ -936,7 +936,8 @@ struct init_first_thread_reply
     thread_id_t  tid;
     timeout_t    server_start;
     data_size_t  info_size;
-    unsigned int all_cpus;
+    /* VARARG(machines,ushorts); */
+    char __pad_28[4];
 };
 
 
@@ -6218,7 +6219,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 692
+#define SERVER_PROTOCOL_VERSION 693
 
 /* ### protocol_version end ### */
 

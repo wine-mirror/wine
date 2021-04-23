@@ -1445,8 +1445,6 @@ DECL_HANDLER(init_first_thread)
         return;
     }
 
-    if (!is_cpu_supported( req->cpu )) return;
-
     current->unix_pid = process->unix_pid = req->unix_pid;
     current->unix_tid = req->unix_tid;
     current->teb      = req->teb;
@@ -1465,7 +1463,8 @@ DECL_HANDLER(init_first_thread)
     reply->tid          = get_thread_id( current );
     reply->info_size    = get_process_startup_info_size( process );
     reply->server_start = server_start_time;
-    reply->all_cpus     = supported_cpus & get_prefix_cpu_mask();
+    set_reply_data( supported_machines,
+                    min( supported_machines_count * sizeof(unsigned short), get_reply_max_size() ));
 }
 
 /* initialize a new thread */

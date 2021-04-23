@@ -239,6 +239,8 @@ extern void generate_startup_debug_events( struct process *process );
 /* registry functions */
 
 extern unsigned int get_prefix_cpu_mask(void);
+extern unsigned int supported_machines_count;
+extern unsigned short supported_machines[8];
 extern void init_registry(void);
 extern void flush_registry(void);
 

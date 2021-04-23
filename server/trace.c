@@ -485,6 +485,21 @@ static void dump_varargs_uints64( const char *prefix, data_size_t size )
     remove_data( size );
 }
 
+static void dump_varargs_ushorts( const char *prefix, data_size_t size )
+{
+    const unsigned short *data = cur_data;
+    data_size_t len = size / sizeof(*data);
+
+    fprintf( stderr, "%s{", prefix );
+    while (len > 0)
+    {
+        fprintf( stderr, "%04x", *data++ );
+        if (--len) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+    remove_data( size );
+}
+
 static void dump_varargs_apc_result( const char *prefix, data_size_t size )
 {
     const apc_result_t *result = cur_data;
@@ -1432,7 +1447,7 @@ static void dump_init_first_thread_reply( const struct init_first_thread_reply *
     fprintf( stderr, ", tid=%04x", req->tid );
     dump_timeout( ", server_start=", &req->server_start );
     fprintf( stderr, ", info_size=%u", req->info_size );
-    fprintf( stderr, ", all_cpus=%08x", req->all_cpus );
+    dump_varargs_ushorts( ", machines=", cur_size );
 }
 
 static void dump_init_thread_request( const struct init_thread_request *req )

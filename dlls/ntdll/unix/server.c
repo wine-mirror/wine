@@ -101,7 +101,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(server);
 
 static const char *server_dir;
 
-unsigned int server_cpus = 0;
+unsigned int supported_machines_count = 0;
+USHORT supported_machines[8] = { 0 };
 BOOL is_wow64 = FALSE;
 BOOL process_exiting = FALSE;
 
@@ -1480,10 +1481,10 @@ void process_exit_wrapper( int status )
  */
 size_t server_init_process(void)
 {
-    static const char *cpu_names[] = { "x86", "x86_64", "ARM", "ARM64" };
     const char *arch = getenv( "WINEARCH" );
     const char *env_socket = getenv( "WINESERVERSOCKET" );
     obj_handle_t version;
+    unsigned int i;
     int ret, reply_pipe;
     struct sigaction sig_act;
     size_t info_size;
@@ -1561,41 +1562,47 @@ size_t server_init_process(void)
         req->wait_fd     = ntdll_get_thread_data()->wait_fd[1];
         req->debug_level = (TRACE_ON(server) != 0);
         req->cpu         = client_cpu;
+        wine_server_set_reply( req, supported_machines, sizeof(supported_machines) );
         ret = wine_server_call( req );
         NtCurrentTeb()->ClientId.UniqueProcess = ULongToHandle(reply->pid);
         NtCurrentTeb()->ClientId.UniqueThread  = ULongToHandle(reply->tid);
         info_size         = reply->info_size;
         server_start_time = reply->server_start;
-        server_cpus       = reply->all_cpus;
+        supported_machines_count = wine_server_reply_size( reply ) / sizeof(*supported_machines);
     }
     SERVER_END_REQ;
     close( reply_pipe );
 
-#ifndef _WIN64
-    is_wow64 = (server_cpus & ((1 << CPU_x86_64) | (1 << CPU_ARM64))) != 0;
-    init_teb64( NtCurrentTeb() );
-#endif
+    if (ret) server_protocol_error( "init_first_thread failed with status %x\n", ret );
 
-    switch (ret)
+    if (!supported_machines_count)
+        fatal_error( "'%s' is a 64-bit installation, it cannot be used with a 32-bit wineserver.\n",
+                     config_dir );
+
+    switch (supported_machines[0])
     {
-    case STATUS_SUCCESS:
-        if (arch)
+    case IMAGE_FILE_MACHINE_AMD64:
+    case IMAGE_FILE_MACHINE_ARM64:
+        if (arch && !strcmp( arch, "win32" ))
+            fatal_error( "WINEARCH set to win32 but '%s' is a 64-bit installation.\n", config_dir );
+        if (!is_win64)
         {
-            if (!strcmp( arch, "win32" ) && (is_win64 || is_wow64))
-                fatal_error( "WINEARCH set to win32 but '%s' is a 64-bit installation.\n", config_dir );
-            if (!strcmp( arch, "win64" ) && !is_win64 && !is_wow64)
-                fatal_error( "WINEARCH set to win64 but '%s' is a 32-bit installation.\n", config_dir );
+            is_wow64 = TRUE;
+            init_teb64( NtCurrentTeb() );
         }
-        return info_size;
-    case STATUS_INVALID_IMAGE_WIN_64:
-        fatal_error( "'%s' is a 32-bit installation, it cannot support 64-bit applications.\n", config_dir );
-    case STATUS_NOT_SUPPORTED:
-        fatal_error( "'%s' is a 64-bit installation, it cannot be used with a 32-bit wineserver.\n", config_dir );
-    case STATUS_INVALID_IMAGE_FORMAT:
-        fatal_error( "wineserver doesn't support the %s architecture\n", cpu_names[client_cpu] );
+        break;
     default:
-        server_protocol_error( "init_first_thread failed with status %x\n", ret );
+        if (is_win64)
+            fatal_error( "'%s' is a 32-bit installation, it cannot support 64-bit applications.\n", config_dir );
+        if (arch && !strcmp( arch, "win64" ))
+            fatal_error( "WINEARCH set to win64 but '%s' is a 32-bit installation.\n", config_dir );
+        break;
     }
+
+    for (i = 0; i < supported_machines_count; i++)
+        if (supported_machines[i] == current_machine) return info_size;
+
+    fatal_error( "wineserver doesn't support the %04x architecture\n", current_machine );
 }
 
 

@@ -1253,7 +1253,7 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
             ULONG_PTR val = 0;
 
             if (handle == GetCurrentProcess()) val = is_wow64;
-            else if (server_cpus & ((1 << CPU_x86_64) | (1 << CPU_ARM64)))
+            else if (is_win64 || is_wow64)
             {
                 SERVER_START_REQ( get_process_info )
                 {
