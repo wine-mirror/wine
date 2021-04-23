@@ -2620,10 +2620,10 @@ static int compare_tcp6_basic_rows(const void *a, const void *b)
     const MIB_TCP6ROW *rowB = b;
     int ret;
 
-    if ((ret = memcmp(&rowA->LocalAddr, &rowB->LocalAddr, sizeof(rowA->LocalAddr)) != 0)) return ret;
+    if ((ret = memcmp(&rowA->LocalAddr, &rowB->LocalAddr, sizeof(rowA->LocalAddr))) != 0) return ret;
     if ((ret = rowA->dwLocalScopeId - rowB->dwLocalScopeId) != 0) return ret;
     if ((ret = rowA->dwLocalPort - rowB->dwLocalPort) != 0) return ret;
-    if ((ret = memcmp(&rowA->RemoteAddr, &rowB->RemoteAddr, sizeof(rowA->RemoteAddr)) != 0)) return ret;
+    if ((ret = memcmp(&rowA->RemoteAddr, &rowB->RemoteAddr, sizeof(rowA->RemoteAddr))) != 0) return ret;
     if ((ret = rowA->dwRemoteScopeId - rowB->dwRemoteScopeId) != 0) return ret;
     return rowA->dwRemotePort - rowB->dwRemotePort;
 }
@@ -2634,10 +2634,10 @@ static int compare_tcp6_owner_rows(const void *a, const void *b)
     const MIB_TCP6ROW_OWNER_PID *rowB = b;
     int ret;
 
-    if ((ret = memcmp(&rowA->ucLocalAddr, &rowB->ucLocalAddr, sizeof(rowA->ucLocalAddr)) != 0)) return ret;
+    if ((ret = memcmp(&rowA->ucLocalAddr, &rowB->ucLocalAddr, sizeof(rowA->ucLocalAddr))) != 0) return ret;
     if ((ret = rowA->dwLocalScopeId - rowB->dwLocalScopeId) != 0) return ret;
     if ((ret = rowA->dwLocalPort - rowB->dwLocalPort) != 0) return ret;
-    if ((ret = memcmp(&rowA->ucRemoteAddr, &rowB->ucRemoteAddr, sizeof(rowA->ucRemoteAddr)) != 0)) return ret;
+    if ((ret = memcmp(&rowA->ucRemoteAddr, &rowB->ucRemoteAddr, sizeof(rowA->ucRemoteAddr))) != 0) return ret;
     if ((ret = rowA->dwRemoteScopeId - rowB->dwRemoteScopeId) != 0) return ret;
     return rowA->dwRemotePort - rowB->dwRemotePort;
 }
@@ -2679,7 +2679,7 @@ static int compare_udp6_rows(const void *a, const void *b)
     const MIB_UDP6ROW *rowB = b;
     int ret;
 
-    if ((ret = memcmp(&rowA->dwLocalAddr, &rowB->dwLocalAddr, sizeof(rowA->dwLocalAddr)) != 0)) return ret;
+    if ((ret = memcmp(&rowA->dwLocalAddr, &rowB->dwLocalAddr, sizeof(rowA->dwLocalAddr))) != 0) return ret;
     if ((ret = rowA->dwLocalScopeId - rowB->dwLocalScopeId) != 0) return ret;
     return rowA->dwLocalPort - rowB->dwLocalPort;
 }
