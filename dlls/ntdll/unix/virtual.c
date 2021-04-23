@@ -2575,11 +2575,23 @@ struct alloc_virtual_heap
 static int CDECL alloc_virtual_heap( void *base, SIZE_T size, void *arg )
 {
     struct alloc_virtual_heap *alloc = arg;
+    void *end = (char *)base + size;
 
     if (is_beyond_limit( base, size, address_space_limit )) address_space_limit = (char *)base + size;
-    if (size < alloc->size) return 0;
     if (is_win64 && base < (void *)0x80000000) return 0;
-    alloc->base = anon_mmap_fixed( (char *)base + size - alloc->size, alloc->size, PROT_READ|PROT_WRITE, 0 );
+    if (preload_reserve_end >= end)
+    {
+        if (preload_reserve_start <= base) return 0;  /* no space in that area */
+        if (preload_reserve_start < end) end = preload_reserve_start;
+    }
+    else if (preload_reserve_end > base)
+    {
+        if (preload_reserve_start <= base) base = preload_reserve_end;
+        else if ((char *)end - (char *)preload_reserve_end >= alloc->size) base = preload_reserve_end;
+        else end = preload_reserve_start;
+    }
+    if ((char *)end - (char *)base < alloc->size) return 0;
+    alloc->base = anon_mmap_fixed( (char *)end - alloc->size, alloc->size, PROT_READ|PROT_WRITE, 0 );
     return (alloc->base != MAP_FAILED);
 }
 
