@@ -5791,6 +5791,11 @@ static void test_hard_link(void)
     ok(GetLastError() == ERROR_ALREADY_EXISTS, "got error %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
+    ret = CreateHardLinkA( "WineTest_File1", "winetest_file1", NULL );
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_ALREADY_EXISTS, "got error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
     ret = CreateHardLinkA( "winetest_file3", "winetest_dir1", NULL );
     ok(!ret, "expected failure\n");
     ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
