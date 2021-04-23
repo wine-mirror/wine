@@ -6649,6 +6649,21 @@ static void test_ShowWindow(void)
     RECT rcMain, rc, rcMinimized, rcClient, rcEmpty, rcMaximized, rcResized, rcNonClient;
     LPARAM ret;
     MONITORINFO mon_info;
+    unsigned int i;
+
+    DWORD test_style[] =
+    {
+        WS_OVERLAPPED | WS_VISIBLE | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_THICKFRAME,
+        WS_OVERLAPPED | WS_VISIBLE | WS_SYSMENU | WS_MINIMIZEBOX | WS_THICKFRAME,
+        WS_OVERLAPPED | WS_VISIBLE | WS_SYSMENU | WS_MAXIMIZEBOX | WS_THICKFRAME,
+        WS_OVERLAPPED | WS_VISIBLE | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
+        WS_OVERLAPPED | WS_VISIBLE | WS_SYSMENU | WS_MINIMIZEBOX,
+        WS_OVERLAPPED | WS_VISIBLE | WS_SYSMENU | WS_MAXIMIZEBOX,
+        WS_OVERLAPPED | WS_VISIBLE | WS_SYSMENU | WS_THICKFRAME,
+        WS_OVERLAPPED | WS_VISIBLE | WS_SYSMENU,
+        WS_OVERLAPPED | WS_VISIBLE | WS_THICKFRAME,
+        WS_OVERLAPPED | WS_VISIBLE
+    };
 
     SetRect(&rcClient, 0, 0, 90, 90);
     rcMain = rcClient;
@@ -6905,6 +6920,50 @@ static void test_ShowWindow(void)
     DestroyWindow(hwnd);
 
     flush_events(TRUE);
+
+    /* test maximize and restore windows without setting WS_CAPTION */
+
+    for (i = 0; i < ARRAY_SIZE(test_style); ++i)
+    {
+        SetRect(&rcMain, 0, 0, 90, 90);
+        OffsetRect(&rcMain, 120, 120);
+        hwnd = CreateWindowExA(0, "MainWindowClass", NULL, test_style[i],
+                               rcMain.left, rcMain.top,
+                               rcMain.right - rcMain.left, rcMain.bottom - rcMain.top,
+                               0, 0, 0, NULL);
+        ok(hwnd != NULL, "Test %u: failed to create window with error %u\n", i, GetLastError());
+
+        GetWindowRect(hwnd, &rcMain);
+        ok(rcMain.left   > mon_info.rcMonitor.left   &&
+           rcMain.right  < mon_info.rcMonitor.right  &&
+           rcMain.top    > mon_info.rcMonitor.top    &&
+           rcMain.bottom < mon_info.rcMonitor.bottom,
+           "Test %u: window should not be fullscreen\n", i);
+
+        rcMaximized = (test_style[i] & WS_MAXIMIZEBOX) ? mon_info.rcWork : mon_info.rcMonitor;
+        AdjustWindowRectEx(&rcMaximized, GetWindowLongA(hwnd, GWL_STYLE) & ~WS_BORDER,
+                           0, GetWindowLongA(hwnd, GWL_EXSTYLE));
+
+        ret = ShowWindow(hwnd, SW_MAXIMIZE);
+        ok(ret, "unexpected ret: %lu\n", ret);
+        style = GetWindowLongA(hwnd, GWL_STYLE);
+        ok(style & WS_MAXIMIZE, "Test %u: window should be maximized\n", i);
+        GetWindowRect(hwnd, &rc);
+        ok(EqualRect(&rcMaximized, &rc), "Test %u: expected %s, got %s\n",
+           i, wine_dbgstr_rect(&rcMaximized), wine_dbgstr_rect(&rc));
+
+        ret = ShowWindow(hwnd, SW_RESTORE);
+        ok(ret, "unexpected ret: %lu\n", ret);
+        style = GetWindowLongA(hwnd, GWL_STYLE);
+        ok(!(style & WS_MAXIMIZE), "Test %u: window should not be maximized\n", i);
+        GetWindowRect(hwnd, &rc);
+        ok(EqualRect(&rcMain, &rc), "Test %u: expected %s, got %s\n",
+           i, wine_dbgstr_rect(&rcMain), wine_dbgstr_rect(&rc));
+
+        DestroyWindow(hwnd);
+
+        flush_events(TRUE);
+    }
 }
 
 static void test_ShowWindow_owned(HWND hwndMain)
