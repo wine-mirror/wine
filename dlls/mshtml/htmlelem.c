@@ -202,6 +202,22 @@ HRESULT elem_string_attr_setter(HTMLElement *elem, const WCHAR *name, const WCHA
     return S_OK;
 }
 
+static VARIANT_BOOL element_has_attribute(HTMLElement *element, const WCHAR *name)
+{
+    nsAString name_str;
+    cpp_bool r;
+    nsresult nsres;
+
+    if(!element->dom_element) {
+        WARN("no DOM element\n");
+        return VARIANT_FALSE;
+    }
+
+    nsAString_InitDepend(&name_str, name);
+    nsres = nsIDOMElement_HasAttribute(element->dom_element, &name_str, &r);
+    return variant_bool(NS_SUCCEEDED(nsres) && r);
+}
+
 HRESULT get_readystate_string(READYSTATE readystate, BSTR *p)
 {
     static const LPCWSTR readystate_strs[] = {
@@ -4453,11 +4469,14 @@ static HRESULT WINAPI HTMLElement6_removeAttributeNode(IHTMLElement6 *iface, IHT
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLElement6_hasAttribute(IHTMLElement6 *iface, BSTR name, VARIANT_BOOL *pfHasAttribute)
+static HRESULT WINAPI HTMLElement6_hasAttribute(IHTMLElement6 *iface, BSTR name, VARIANT_BOOL *p)
 {
     HTMLElement *This = impl_from_IHTMLElement6(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(name), pfHasAttribute);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(name), p);
+
+    *p = element_has_attribute(This, name);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement6_getElementsByTagNameNS(IHTMLElement6 *iface, VARIANT *varNS, BSTR bstrLocalName, IHTMLElementCollection **pelColl)

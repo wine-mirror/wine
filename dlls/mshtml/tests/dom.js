@@ -468,3 +468,23 @@ sync_test("title", function() {
     ok(elem.title === "test", "div.title = " + elem.title);
     ok(elem.getAttribute("title") === "test", "title attribute = " + elem.getAttribute("title"));
 });
+
+sync_test("hasAttribute", function() {
+    document.body.innerHTML = '<div attr="test"></div>';
+    var elem = document.body.firstChild, r;
+
+    r = elem.hasAttribute("attr");
+    ok(r === true, "hasAttribute(attr) returned " + r);
+    r = elem.hasAttribute("attr2");
+    ok(r === false, "hasAttribute(attr2) returned " + r);
+
+    elem.setAttribute("attr2", "abc");
+    r = elem.hasAttribute("attr2");
+    todo_wine.
+    ok(r === true, "hasAttribute(attr2) returned " + r);
+
+    elem.removeAttribute("attr");
+    r = elem.hasAttribute("attr");
+    todo_wine.
+    ok(r === false, "hasAttribute(attr) returned " + r);
+});
