@@ -963,7 +963,7 @@ typedef struct
     timeout_t    end_time;         /* process end time */
     int          exit_code;        /* process exit code */
     int          priority;         /* priority class */
-    client_cpu_t cpu;              /* CPU that this process is running on */
+    unsigned short machine;        /* process architecture */
     VARARG(image,pe_image_info);   /* image info for main exe */
 @END
 

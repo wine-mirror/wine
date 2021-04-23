@@ -53,6 +53,7 @@ struct process
     process_id_t         group_id;        /* group id of the process */
     struct timeout_user *sigkill_timeout; /* timeout for final SIGKILL */
     enum cpu_type        cpu;             /* client CPU type */
+    unsigned short       machine;         /* client machine type */
     int                  unix_pid;        /* Unix pid for final SIGKILL */
     int                  exit_code;       /* process exit code */
     int                  running_threads; /* number of threads running in this process */
@@ -66,7 +67,7 @@ struct process
     unsigned int         is_terminating:1;/* is process terminating? */
     data_size_t          imagelen;        /* length of image path in bytes */
     WCHAR               *image;           /* main exe image full path */
-    struct job          *job;             /* job object ascoicated with this process */
+    struct job          *job;             /* job object associated with this process */
     struct list          job_entry;       /* list entry for job object */
     struct list          asyncs;          /* list of async object owned by the process */
     struct list          locks;           /* list of file locks owned by the process */

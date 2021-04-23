@@ -1010,9 +1010,9 @@ struct get_process_info_reply
     timeout_t    end_time;
     int          exit_code;
     int          priority;
-    client_cpu_t cpu;
+    unsigned short machine;
     /* VARARG(image,pe_image_info); */
-    char __pad_60[4];
+    char __pad_58[6];
 };
 
 
@@ -6219,7 +6219,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 693
+#define SERVER_PROTOCOL_VERSION 694
 
 /* ### protocol_version end ### */
 

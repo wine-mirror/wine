@@ -362,6 +362,7 @@ static void add_process_view( struct thread *thread, struct memory_view *view )
         else if (!(view->image.image_charact & IMAGE_FILE_DLL))
         {
             /* main exe */
+            process->machine = view->image.machine;
             list_add_head( &process->views, &view->entry );
             if (get_view_nt_name( view, &name ) && (process->image = memdup( name.str, name.len )))
                 process->imagelen = name.len;

@@ -1259,7 +1259,8 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
                 {
                     req->handle = wine_server_obj_handle( handle );
                     if (!(ret = wine_server_call( req )))
-                        val = (reply->cpu != CPU_x86_64 && reply->cpu != CPU_ARM64);
+                        val = (reply->machine != IMAGE_FILE_MACHINE_AMD64 &&
+                               reply->machine != IMAGE_FILE_MACHINE_ARM64);
                 }
                 SERVER_END_REQ;
             }

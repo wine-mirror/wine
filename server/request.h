@@ -783,7 +783,7 @@ C_ASSERT( FIELD_OFFSET(struct get_process_info_reply, start_time) == 32 );
 C_ASSERT( FIELD_OFFSET(struct get_process_info_reply, end_time) == 40 );
 C_ASSERT( FIELD_OFFSET(struct get_process_info_reply, exit_code) == 48 );
 C_ASSERT( FIELD_OFFSET(struct get_process_info_reply, priority) == 52 );
-C_ASSERT( FIELD_OFFSET(struct get_process_info_reply, cpu) == 56 );
+C_ASSERT( FIELD_OFFSET(struct get_process_info_reply, machine) == 56 );
 C_ASSERT( sizeof(struct get_process_info_reply) == 64 );
 C_ASSERT( FIELD_OFFSET(struct get_process_debug_info_request, handle) == 12 );
 C_ASSERT( sizeof(struct get_process_debug_info_request) == 16 );
