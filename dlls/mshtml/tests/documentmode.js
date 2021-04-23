@@ -34,6 +34,7 @@ sync_test("elem_props", function() {
     test_exposed("doScroll", v < 11);
     test_exposed("readyState", v < 11);
     test_exposed("clientTop", true);
+    test_exposed("title", true);
     test_exposed("querySelectorAll", v >= 8);
     test_exposed("textContent", v >= 9);
     test_exposed("prefix", v >= 9);

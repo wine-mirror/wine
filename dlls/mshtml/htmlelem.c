@@ -1318,7 +1318,7 @@ static HRESULT WINAPI HTMLElement_put_title(IHTMLElement *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    if(!This->html_element) {
+    if(!This->dom_element) {
         VARIANT *var;
         HRESULT hres;
 
@@ -1331,6 +1331,9 @@ static HRESULT WINAPI HTMLElement_put_title(IHTMLElement *iface, BSTR v)
         V_BSTR(var) = v ? SysAllocString(v) : NULL;
         return S_OK;
     }
+
+    if(!This->html_element)
+        return elem_string_attr_setter(This, L"title", v);
 
     nsAString_InitDepend(&title_str, v);
     nsres = nsIDOMHTMLElement_SetTitle(This->html_element, &title_str);
@@ -1349,7 +1352,7 @@ static HRESULT WINAPI HTMLElement_get_title(IHTMLElement *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->html_element) {
+    if(!This->dom_element) {
         VARIANT *var;
         HRESULT hres;
 
@@ -1365,6 +1368,9 @@ static HRESULT WINAPI HTMLElement_get_title(IHTMLElement *iface, BSTR *p)
 
         return S_OK;
     }
+
+    if(!This->html_element)
+        return elem_string_attr_getter(This, L"title", FALSE, p);
 
     nsAString_Init(&title_str, NULL);
     nsres = nsIDOMHTMLElement_GetTitle(This->html_element, &title_str);

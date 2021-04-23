@@ -458,3 +458,13 @@ async_test("animation_frame", function() {
     });
     ok(typeof(id) === "number", "id = " + id);
 });
+
+sync_test("title", function() {
+    var elem = document.createElement("div");
+    ok(elem.title === "", "div.title = " + elem.title);
+    todo_wine.
+    ok(elem.getAttribute("title") === null, "title attribute = " + elem.getAttribute("title"));
+    elem.title = "test";
+    ok(elem.title === "test", "div.title = " + elem.title);
+    ok(elem.getAttribute("title") === "test", "title attribute = " + elem.getAttribute("title"));
+});
