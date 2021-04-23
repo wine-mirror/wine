@@ -469,6 +469,34 @@ sync_test("title", function() {
     ok(elem.getAttribute("title") === "test", "title attribute = " + elem.getAttribute("title"));
 });
 
+sync_test("disabled", function() {
+    var elem = document.createElement("div");
+    document.body.appendChild(elem);
+    ok(elem.disabled === false, "div.disabled = " + elem.disabled);
+    todo_wine.
+    ok(elem.getAttribute("disabled") === null, "disabled attribute = " + elem.getAttribute("disabled") + " expected null");
+
+    elem.disabled = true;
+    ok(elem.disabled === true, "div.disabled = " + elem.disabled);
+    todo_wine.
+    ok(elem.getAttribute("disabled") === "", "disabled attribute = " + elem.getAttribute("disabled") + " expected \"\"");
+
+    elem.disabled = false;
+    ok(elem.disabled === false, "div.disabled = " + elem.disabled);
+    todo_wine.
+    ok(elem.getAttribute("disabled") === null, "disabled attribute = " + elem.getAttribute("disabled") + " expected null");
+
+    elem.setAttribute("disabled", "false");
+    ok(elem.disabled === true, "div.disabled = " + elem.disabled);
+    todo_wine.
+    ok(elem.getAttribute("disabled") === "false", "disabled attribute = " + elem.getAttribute("disabled"));
+
+    elem.removeAttribute("disabled");
+    ok(elem.disabled === false, "div.disabled = " + elem.disabled);
+    todo_wine.
+    ok(elem.getAttribute("disabled") === null, "disabled attribute = " + elem.getAttribute("disabled") + " expected null");
+});
+
 sync_test("hasAttribute", function() {
     document.body.innerHTML = '<div attr="test"></div>';
     var elem = document.body.firstChild, r;

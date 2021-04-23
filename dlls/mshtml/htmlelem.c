@@ -218,6 +218,22 @@ static VARIANT_BOOL element_has_attribute(HTMLElement *element, const WCHAR *nam
     return variant_bool(NS_SUCCEEDED(nsres) && r);
 }
 
+static HRESULT element_remove_attribute(HTMLElement *element, const WCHAR *name)
+{
+    nsAString name_str;
+    nsresult nsres;
+
+    if(!element->dom_element) {
+        WARN("no DOM element\n");
+        return S_OK;
+    }
+
+    nsAString_InitDepend(&name_str, name);
+    nsres = nsIDOMElement_RemoveAttribute(element->dom_element, &name_str);
+    nsAString_Finish(&name_str);
+    return map_nsresult(nsres);
+}
+
 HRESULT get_readystate_string(READYSTATE readystate, BSTR *p)
 {
     static const LPCWSTR readystate_strs[] = {
@@ -3775,49 +3791,26 @@ static HRESULT WINAPI HTMLElement3_get_hideFocus(IHTMLElement3 *iface, VARIANT_B
 static HRESULT WINAPI HTMLElement3_put_disabled(IHTMLElement3 *iface, VARIANT_BOOL v)
 {
     HTMLElement *This = impl_from_IHTMLElement3(iface);
-    VARIANT *var;
-    HRESULT hres;
 
     TRACE("(%p)->(%x)\n", This, v);
 
     if(This->node.vtbl->put_disabled)
         return This->node.vtbl->put_disabled(&This->node, v);
 
-    hres = dispex_get_dprop_ref(&This->node.event_target.dispex, L"disabled", TRUE, &var);
-    if(FAILED(hres))
-        return hres;
-
-    VariantClear(var);
-    V_VT(var) = VT_BOOL;
-    V_BOOL(var) = v;
-    return S_OK;
+    if(!v) return element_remove_attribute(This, L"disabled");
+    return elem_string_attr_setter(This, L"disabled", L"");
 }
 
 static HRESULT WINAPI HTMLElement3_get_disabled(IHTMLElement3 *iface, VARIANT_BOOL *p)
 {
     HTMLElement *This = impl_from_IHTMLElement3(iface);
-    VARIANT *var;
-    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
     if(This->node.vtbl->get_disabled)
         return This->node.vtbl->get_disabled(&This->node, p);
 
-    hres = dispex_get_dprop_ref(&This->node.event_target.dispex, L"disabled", FALSE, &var);
-    if(hres == DISP_E_UNKNOWNNAME) {
-        *p = VARIANT_FALSE;
-        return S_OK;
-    }
-    if(FAILED(hres))
-        return hres;
-
-    if(V_VT(var) != VT_BOOL) {
-        FIXME("value is %s\n", debugstr_variant(var));
-        return E_NOTIMPL;
-    }
-
-    *p = V_BOOL(var);
+    *p = variant_bool(element_has_attribute(This, L"disabled"));
     return S_OK;
 }
 
