@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-03-29 11:49+0200\n"
+"PO-Revision-Date: 2021-04-23 10:59+0200\n"
 "Last-Translator: Julian Rüger <jr98@gmx.net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -3968,7 +3968,7 @@ msgstr ""
 
 #: dlls/jscript/jscript.rc:74
 msgid "Cannot define property '|': object is not extensible"
-msgstr ""
+msgstr "Eigenschaft '|' kann nicht definiert werden: Objekt nicht erweiterbar"
 
 #: dlls/jscript/jscript.rc:75
 msgid "Cannot redefine non-configurable property '|'"
@@ -14574,10 +14574,8 @@ msgstr ""
 "\n"
 
 #: programs/reg/reg.rc:116
-#, fuzzy
-#| msgid "The operation completed successfully\n"
 msgid "reg: The operation completed successfully\n"
-msgstr "Der Vorgang wurde erfolgreich abgeschlossen\n"
+msgstr "reg: Der Vorgang wurde erfolgreich abgeschlossen\n"
 
 #: programs/reg/reg.rc:117
 msgid "reg: Invalid registry key\n"
@@ -14592,12 +14590,8 @@ msgid "reg: Unable to access remote machine\n"
 msgstr "reg: Auf den Remoterechner kann nicht zugegriffen werden\n"
 
 #: programs/reg/reg.rc:120
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
 msgid "reg: Unable to find the specified registry value\n"
-msgstr ""
-"reg: Das System konnte den angegebenen Schlüssel oder Wert nicht finden\n"
+msgstr "reg: Der angegebene Wert wurde nicht gefunden\n"
 
 #: programs/reg/reg.rc:121
 msgid "reg: Unsupported registry data type [%1]\n"
@@ -14620,10 +14614,8 @@ msgid "The registry value '%1' already exists. Do you want to overwrite it?"
 msgstr "Der Wert '%1' existiert bereits. Möchten Sie ihn ersetzen?"
 
 #: programs/reg/reg.rc:129
-#, fuzzy
-#| msgid "The registry operation was cancelled\n"
 msgid "reg: The registry operation was cancelled\n"
-msgstr "Der Registrierungsvorgang wurde abgebrochen\n"
+msgstr "reg: Der Registrierungsvorgang wurde abgebrochen\n"
 
 #: programs/reg/reg.rc:130 programs/regedit/regedit.rc:239
 msgid "(Default)"
@@ -14776,28 +14768,20 @@ msgstr ""
 "\n"
 
 #: programs/reg/reg.rc:172
-#, fuzzy
-#| msgid "reg: Invalid system key [%1]\n"
 msgid "reg: Invalid system key\n"
-msgstr "reg: Ungültiger Systemschlüssel [%1]\n"
+msgstr "reg: Ungültiger Systemschlüssel\n"
 
 #: programs/reg/reg.rc:173
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "Die Datei '%1' existiert bereits. Möchten Sie sie ersetzen?"
 
 #: programs/reg/reg.rc:174
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
 msgid "reg: Unable to find the specified registry key\n"
-msgstr ""
-"reg: Das System konnte den angegebenen Schlüssel oder Wert nicht finden\n"
+msgstr "reg: Der angegebene Schlüssel wurde nicht gefunden\n"
 
 #: programs/reg/reg.rc:175
-#, fuzzy
-#| msgid "reg: Unable to open the registry key '%1'.\n"
 msgid "reg: Unable to import the registry key '%1'\n"
-msgstr "reg: Der Schlüssel '%1' konnte nicht geöffnet werden.\n"
+msgstr "reg: Der Schlüssel '%1' konnte nicht importiert werden\n"
 
 #: programs/reg/reg.rc:179
 msgid ""
@@ -14808,6 +14792,12 @@ msgid ""
 "     Access the registry using the 64-bit view.\n"
 "\n"
 msgstr ""
+"  /reg:32\n"
+"     Registrierungszugriff unter Verwendung der 32-Bit-Ansicht.\n"
+"\n"
+"  /reg:64\n"
+"     Registrierungszugriff unter Verwendung der 64-Bit-Ansicht.\n"
+"\n"
 
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
