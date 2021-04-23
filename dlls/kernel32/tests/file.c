@@ -1954,6 +1954,7 @@ static void test_MoveFileA(void)
     char tempdir[MAX_PATH];
     char source[MAX_PATH], dest[MAX_PATH];
     static const char prefix[] = "pfx";
+    WIN32_FIND_DATAA find_data;
     HANDLE hfile;
     HANDLE hmapfile;
     DWORD ret;
@@ -2023,8 +2024,71 @@ static void test_MoveFileA(void)
     ok(ret, "MoveFileA: failed, error %d\n", GetLastError());
 
     lstrcatA(tempdir, "Remove Me");
+
+    /* test renaming a file "Remove Me" to itself but in lowercase "me" */
+    lstrcpyA(source, tempdir);
+    tempdir[lstrlenA(tempdir) - 2] = 'm';
+
+    hfile = CreateFileA(source, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 0, 0);
+    ok(hfile != INVALID_HANDLE_VALUE, "failed to create %s\n", source);
+    CloseHandle(hfile);
+
+    ret = MoveFileA(source, tempdir);
+    ok(ret, "MoveFileA: failed, error %d\n", GetLastError());
+
+    hfile = FindFirstFileA(tempdir, &find_data);
+    ok(hfile != INVALID_HANDLE_VALUE, "FindFirstFileA: failed, error %d\n", GetLastError());
+    if (hfile != INVALID_HANDLE_VALUE)
+    {
+        todo_wine ok(!lstrcmpA(strrchr(tempdir, '\\') + 1, find_data.cFileName),
+           "MoveFile failed to change casing on same file: got %s\n", find_data.cFileName);
+    }
+    CloseHandle(hfile);
+
+    /* test renaming another file "Remove Be" to "Remove Me", which replaces the existing "Remove me" */
+    tempdir[lstrlenA(tempdir) - 2] = 'B';
+
+    hfile = CreateFileA(tempdir, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 0, 0);
+    ok(hfile != INVALID_HANDLE_VALUE, "failed to create %s\n", tempdir);
+    CloseHandle(hfile);
+
+    ret = MoveFileA(tempdir, source);
+    ok(!ret, "MoveFileA: expected failure\n");
+    ok(GetLastError() == ERROR_ALREADY_EXISTS, "MoveFileA: expected ERROR_ALREADY_EXISTS, got %d\n", GetLastError());
+    ret = MoveFileExA(tempdir, source, MOVEFILE_REPLACE_EXISTING);
+    ok(ret, "MoveFileExA: failed, error %d\n", GetLastError());
+
+    tempdir[lstrlenA(tempdir) - 2] = 'm';
+
+    hfile = FindFirstFileA(tempdir, &find_data);
+    ok(hfile != INVALID_HANDLE_VALUE, "FindFirstFileA: failed, error %d\n", GetLastError());
+    if (hfile != INVALID_HANDLE_VALUE)
+    {
+        ok(!lstrcmpA(strrchr(source, '\\') + 1, find_data.cFileName),
+           "MoveFile failed to change casing on existing target file: got %s\n", find_data.cFileName);
+    }
+    CloseHandle(hfile);
+
+    ret = DeleteFileA(tempdir);
+    ok(ret, "DeleteFileA: error %d\n", GetLastError());
+
+    /* now test a directory from "Remove me" to uppercase "Me" */
     ret = CreateDirectoryA(tempdir, NULL);
     ok(ret == TRUE, "CreateDirectoryA failed\n");
+
+    lstrcpyA(source, tempdir);
+    tempdir[lstrlenA(tempdir) - 2] = 'M';
+    ret = MoveFileA(source, tempdir);
+    ok(ret, "MoveFileA: failed, error %d\n", GetLastError());
+
+    hfile = FindFirstFileA(tempdir, &find_data);
+    ok(hfile != INVALID_HANDLE_VALUE, "FindFirstFileA: failed, error %d\n", GetLastError());
+    if (hfile != INVALID_HANDLE_VALUE)
+    {
+        todo_wine ok(!lstrcmpA(strrchr(tempdir, '\\') + 1, find_data.cFileName),
+           "MoveFile failed to change casing on same directory: got %s\n", find_data.cFileName);
+    }
+    CloseHandle(hfile);
 
     lstrcpyA(source, dest);
     lstrcpyA(dest, tempdir);
