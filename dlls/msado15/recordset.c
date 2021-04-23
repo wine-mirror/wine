@@ -48,6 +48,7 @@ struct recordset
     CursorTypeEnum     cursor_type;
     IRowset           *row_set;
     EditModeEnum      editmode;
+    VARIANT            filter;
 };
 
 struct fields
@@ -1588,14 +1589,30 @@ static HRESULT WINAPI recordset_get_EditMode( _Recordset *iface, EditModeEnum *m
 
 static HRESULT WINAPI recordset_get_Filter( _Recordset *iface, VARIANT *criteria )
 {
-    FIXME( "%p, %p\n", iface, criteria );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+    TRACE( "%p, %p\n", iface, criteria );
+
+    if (!criteria) return MAKE_ADO_HRESULT( adErrInvalidArgument );
+
+    VariantCopy(criteria, &recordset->filter);
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_put_Filter( _Recordset *iface, VARIANT criteria )
 {
-    FIXME( "%p, %s\n", iface, debugstr_variant(&criteria) );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+    TRACE( "%p, %s\n", recordset, debugstr_variant(&criteria) );
+
+    if (V_VT(&criteria) != VT_I2 && V_VT(&criteria) != VT_I4 && V_VT(&criteria) != VT_BSTR)
+        return MAKE_ADO_HRESULT( adErrInvalidArgument );
+
+    if (V_VT(&criteria) == VT_BSTR && recordset->state == adStateOpen)
+    {
+        FIXME("Validating fields not preformed\n");
+    }
+
+    VariantCopy(&recordset->filter, &criteria);
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_get_PageCount( _Recordset *iface, ADO_LONGPTR *count )
@@ -2131,6 +2148,7 @@ HRESULT Recordset_create( void **obj )
     recordset->cursor_type = adOpenForwardOnly;
     recordset->row_set = NULL;
     recordset->editmode = adEditNone;
+    VariantInit( &recordset->filter );
 
     *obj = &recordset->Recordset_iface;
     TRACE( "returning iface %p\n", *obj );
