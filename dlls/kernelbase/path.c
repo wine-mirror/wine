@@ -1902,14 +1902,14 @@ BOOL WINAPI PathIsUNCServerW(const WCHAR *path)
 
 void WINAPI PathRemoveBlanksA(char *path)
 {
-    char *start;
+    char *start, *first;
 
     TRACE("%s\n", wine_dbgstr_a(path));
 
     if (!path || !*path)
         return;
 
-    start = path;
+    start = first = path;
 
     while (*path == ' ')
         path = CharNextA(path);
@@ -1917,7 +1917,7 @@ void WINAPI PathRemoveBlanksA(char *path)
     while (*path)
         *start++ = *path++;
 
-    if (start != path)
+    if (start != first)
         while (start[-1] == ' ')
             start--;
 
@@ -1926,12 +1926,14 @@ void WINAPI PathRemoveBlanksA(char *path)
 
 void WINAPI PathRemoveBlanksW(WCHAR *path)
 {
-    WCHAR *start = path;
+    WCHAR *start, *first;
 
     TRACE("%s\n", wine_dbgstr_w(path));
 
     if (!path || !*path)
         return;
+
+    start = first = path;
 
     while (*path == ' ')
         path++;
@@ -1939,7 +1941,7 @@ void WINAPI PathRemoveBlanksW(WCHAR *path)
     while (*path)
         *start++ = *path++;
 
-    if (start != path)
+    if (start != first)
         while (start[-1] == ' ')
             start--;
 
