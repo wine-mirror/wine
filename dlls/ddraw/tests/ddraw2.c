@@ -1342,9 +1342,9 @@ static void test_depth_blit(const GUID *device_guid)
     hr = IDirectDrawSurface_GetSurfaceDesc(ds1, &ddsd_existing);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     ddsd_new.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    ddsd_new.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
     if (is_software_device_type(device_guid))
         ddsd_new.ddsCaps.dwCaps |= DDSCAPS_SYSTEMMEMORY;
-    ddsd_new.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
     ddsd_new.dwWidth = ddsd_existing.dwWidth;
     ddsd_new.dwHeight = ddsd_existing.dwHeight;
     ddsd_new.ddpfPixelFormat = ddsd_existing.ddpfPixelFormat;
