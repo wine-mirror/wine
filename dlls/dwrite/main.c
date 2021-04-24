@@ -1590,6 +1590,7 @@ static HRESULT create_system_path_list(WCHAR ***ret, unsigned int *ret_count)
         index++;
     }
 
+    heap_free(value);
     heap_free(name);
 
     *ret = paths;
