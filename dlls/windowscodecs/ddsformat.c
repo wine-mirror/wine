@@ -169,6 +169,18 @@ typedef struct DdsEncoder {
     BOOL committed;
 } DdsEncoder;
 
+typedef struct DdsFrameEncode {
+    IWICBitmapFrameEncode IWICBitmapFrameEncode_iface;
+    LONG ref;
+    DdsEncoder *parent;
+    BOOL initialized;
+    BOOL frame_created;
+    UINT width;
+    UINT height;
+    double dpi_x;
+    double dpi_y;
+} DdsFrameEncode;
+
 static struct dds_format {
     DDS_PIXELFORMAT pixel_format;
     const GUID *wic_format;
@@ -696,6 +708,11 @@ static inline DdsFrameDecode *impl_from_IWICDdsFrameDecode(IWICDdsFrameDecode *i
 static inline DdsEncoder *impl_from_IWICBitmapEncoder(IWICBitmapEncoder *iface)
 {
     return CONTAINING_RECORD(iface, DdsEncoder, IWICBitmapEncoder_iface);
+}
+
+static inline DdsFrameEncode *impl_from_IWICBitmapFrameEncode(IWICBitmapFrameEncode *iface)
+{
+    return CONTAINING_RECORD(iface, DdsFrameEncode, IWICBitmapFrameEncode_iface);
 }
 
 static HRESULT WINAPI DdsFrameDecode_QueryInterface(IWICBitmapFrameDecode *iface, REFIID iid,
@@ -1482,6 +1499,185 @@ static const IWICWineDecoderVtbl DdsDecoder_Wine_Vtbl = {
     DdsDecoder_Wine_Initialize
 };
 
+static HRESULT WINAPI DdsFrameEncode_QueryInterface(IWICBitmapFrameEncode *iface, REFIID iid, void **ppv)
+{
+    DdsFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_IWICBitmapFrameEncode, iid))
+    {
+        *ppv = &This->IWICBitmapFrameEncode_iface;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI DdsFrameEncode_AddRef(IWICBitmapFrameEncode *iface)
+{
+    DdsFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI DdsFrameEncode_Release(IWICBitmapFrameEncode *iface)
+{
+    DdsFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) refcount=%u\n", iface, ref);
+
+    if (ref == 0)
+    {
+        IWICBitmapEncoder_Release(&This->parent->IWICBitmapEncoder_iface);
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI DdsFrameEncode_Initialize(IWICBitmapFrameEncode *iface,
+                                                IPropertyBag2 *encoderOptions)
+{
+    FIXME("(%p,%p): stub\n", iface, encoderOptions);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DdsFrameEncode_SetSize(IWICBitmapFrameEncode *iface,
+                                             UINT width, UINT height)
+{
+    DdsFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
+    HRESULT hr;
+
+    TRACE("(%p,%u,%u)\n", iface, width, height);
+
+    EnterCriticalSection(&This->parent->lock);
+
+    if (!This->initialized || This->frame_created)
+    {
+        hr = WINCODEC_ERR_WRONGSTATE;
+    }
+    else
+    {
+        This->width = width;
+        This->height = height;
+        hr = S_OK;
+    }
+
+    LeaveCriticalSection(&This->parent->lock);
+
+    return hr;
+}
+
+static HRESULT WINAPI DdsFrameEncode_SetResolution(IWICBitmapFrameEncode *iface,
+                                                   double dpiX, double dpiY)
+{
+    DdsFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
+    HRESULT hr;
+
+    TRACE("(%p,%0.2f,%0.2f)\n", iface, dpiX, dpiY);
+
+    EnterCriticalSection(&This->parent->lock);
+
+    if (!This->initialized || This->frame_created)
+    {
+        hr = WINCODEC_ERR_WRONGSTATE;
+    }
+    else
+    {
+        This->dpi_x = dpiX;
+        This->dpi_y = dpiY;
+        hr = S_OK;
+    }
+
+    LeaveCriticalSection(&This->parent->lock);
+
+    return hr;
+}
+
+static HRESULT WINAPI DdsFrameEncode_SetPixelFormat(IWICBitmapFrameEncode *iface,
+                                                    WICPixelFormatGUID *pixelFormat)
+{
+    FIXME("(%p,%s): stub\n", iface, debugstr_guid(pixelFormat));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DdsFrameEncode_SetColorContexts(IWICBitmapFrameEncode *iface,
+                                                      UINT count, IWICColorContext **colorContext)
+{
+    FIXME("(%p,%u,%p): stub\n", iface, count, colorContext);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DdsFrameEncode_SetPalette(IWICBitmapFrameEncode *iface,
+                                                IWICPalette *palette)
+{
+    FIXME("(%p,%p): stub\n", iface, palette);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DdsFrameEncode_SetThumbnail(IWICBitmapFrameEncode *iface,
+                                                  IWICBitmapSource *thumbnail)
+{
+    TRACE("(%p,%p)\n", iface, thumbnail);
+    return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+}
+
+static HRESULT WINAPI DdsFrameEncode_WritePixels(IWICBitmapFrameEncode *iface,
+                                                 UINT lineCount, UINT stride, UINT bufferSize, BYTE *pixels)
+{
+    FIXME("(%p,%u,%u,%u,%p): stub\n", iface, lineCount, stride, bufferSize, pixels);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DdsFrameEncode_WriteSource(IWICBitmapFrameEncode *iface,
+                                                 IWICBitmapSource *bitmapSource, WICRect *rc)
+{
+    FIXME("(%p,%p,%s): stub\n", iface, bitmapSource, debug_wic_rect(rc));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DdsFrameEncode_Commit(IWICBitmapFrameEncode *iface)
+{
+    FIXME("(%p): stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DdsFrameEncode_GetMetadataQueryWriter(IWICBitmapFrameEncode *iface,
+                                                            IWICMetadataQueryWriter **metadataQueryWriter)
+{
+    FIXME("(%p,%p): stub\n", iface, metadataQueryWriter);
+    return E_NOTIMPL;
+}
+
+static const IWICBitmapFrameEncodeVtbl DdsFrameEncode_Vtbl = {
+    DdsFrameEncode_QueryInterface,
+    DdsFrameEncode_AddRef,
+    DdsFrameEncode_Release,
+    DdsFrameEncode_Initialize,
+    DdsFrameEncode_SetSize,
+    DdsFrameEncode_SetResolution,
+    DdsFrameEncode_SetPixelFormat,
+    DdsFrameEncode_SetColorContexts,
+    DdsFrameEncode_SetPalette,
+    DdsFrameEncode_SetThumbnail,
+    DdsFrameEncode_WritePixels,
+    DdsFrameEncode_WriteSource,
+    DdsFrameEncode_Commit,
+    DdsFrameEncode_GetMetadataQueryWriter
+};
+
 HRESULT DdsDecoder_CreateInstance(REFIID iid, void** ppv)
 {
     DdsDecoder *This;
@@ -1628,10 +1824,42 @@ static HRESULT WINAPI DdsEncoder_SetPreview(IWICBitmapEncoder *iface, IWICBitmap
 }
 
 static HRESULT WINAPI DdsEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
-                                                   IWICBitmapFrameEncode **ppIFrameEncode, IPropertyBag2 **ppIEncoderOptions)
+                                                IWICBitmapFrameEncode **frameEncode, IPropertyBag2 **encoderOptions)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, ppIFrameEncode, ppIEncoderOptions);
-    return E_NOTIMPL;
+    DdsEncoder *This = impl_from_IWICBitmapEncoder(iface);
+    DdsFrameEncode *result;
+    HRESULT hr;
+
+    TRACE("(%p,%p,%p)\n", iface, frameEncode, encoderOptions);
+
+    EnterCriticalSection(&This->lock);
+
+    if (!This->stream)
+    {
+        hr = WINCODEC_ERR_WRONGSTATE;
+        goto end;
+    }
+
+    result = HeapAlloc(GetProcessHeap(), 0, sizeof(*result));
+    if (!result)
+    {
+        hr = E_OUTOFMEMORY;
+        goto end;
+    }
+
+    result->IWICBitmapFrameEncode_iface.lpVtbl = &DdsFrameEncode_Vtbl;
+    result->ref = 1;
+    result->parent = This;
+    result->initialized = FALSE;
+    result->frame_created = FALSE;
+    IWICBitmapEncoder_AddRef(iface);
+
+    *frameEncode = &result->IWICBitmapFrameEncode_iface;
+    hr = S_OK;
+
+end:
+    LeaveCriticalSection(&This->lock);
+    return hr;
 }
 
 static HRESULT WINAPI DdsEncoder_Commit(IWICBitmapEncoder *iface)
