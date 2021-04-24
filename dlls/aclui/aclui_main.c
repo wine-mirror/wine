@@ -120,7 +120,10 @@ static void add_user(struct security_page *page, PSID sid)
         return;
 
     if (!(new_array = realloc(page->users, (page->user_count + 1) * sizeof(*page->users))))
+    {
+        free(name);
         return;
+    }
     page->users = new_array;
     user = &page->users[page->user_count++];
 
