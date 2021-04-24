@@ -183,7 +183,7 @@ static HRESULT STDMETHODCALLTYPE hstring_vector_GetMany(IVectorView_HSTRING *ifa
 
     TRACE("iface %p, start_index %#x, items %p, count %p.\n", iface, start_index, items, count);
 
-    memset(items, 0, items_size * sizeof(HSTRING *));
+    memset(items, 0, items_size * sizeof(*items));
 
     for (i = start_index; i < impl->count && i < start_index + items_size; ++i)
         if (FAILED(hr = WindowsDuplicateString(impl->values[i], items + i - start_index)))
