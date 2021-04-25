@@ -3604,7 +3604,7 @@ NTSTATUS get_full_path( const WCHAR *name, const WCHAR *curdir, WCHAR **path )
     }
     else if (IS_SEPARATOR(name[0]))  /* absolute path */
     {
-        root[4] = curdir[0];
+        root[4] = curdir[4];
         prefix = root;
     }
     else if (name[0] && name[1] == ':')  /* drive letter */
