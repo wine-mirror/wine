@@ -621,6 +621,8 @@ static void test_sampling(void)
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
+        winetest_push_context("Test %u", i);
+
         ID3D11DeviceContext_ClearRenderTargetView(test_context.immediate_context, test_context.rtv, red);
         todo_wine ps_code = compile_shader_flags(tests[i], "ps_4_0", D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY);
         if (ps_code)
@@ -629,10 +631,12 @@ static void test_sampling(void)
 
             v = get_color_vec4(&test_context, 0, 0);
             todo_wine ok(compare_vec4(&v, 0.25f, 0.0f, 0.25f, 0.0f, 0),
-                    "Test %u: Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", i, v.x, v.y, v.z, v.w);
+                    "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v.x, v.y, v.z, v.w);
 
             ID3D10Blob_Release(ps_code);
         }
+
+        winetest_pop_context();
     }
 
     ID3D11Texture2D_Release(texture);
@@ -641,30 +645,29 @@ static void test_sampling(void)
     release_test_context(&test_context);
 }
 
-static void check_type_desc(const char *prefix, const D3D11_SHADER_TYPE_DESC *type,
-        const D3D11_SHADER_TYPE_DESC *expect)
+static void check_type_desc(const D3D11_SHADER_TYPE_DESC *type, const D3D11_SHADER_TYPE_DESC *expect)
 {
-    ok(type->Class == expect->Class, "%s: got class %#x.\n", prefix, type->Class);
-    ok(type->Type == expect->Type, "%s: got type %#x.\n", prefix, type->Type);
-    ok(type->Rows == expect->Rows, "%s: got %u rows.\n", prefix, type->Rows);
-    ok(type->Columns == expect->Columns, "%s: got %u columns.\n", prefix, type->Columns);
-    ok(type->Elements == expect->Elements, "%s: got %u elements.\n", prefix, type->Elements);
-    ok(type->Members == expect->Members, "%s: got %u members.\n", prefix, type->Members);
-    ok(type->Offset == expect->Offset, "%s: got %u members.\n", prefix, type->Members);
-    ok(!strcmp(type->Name, expect->Name), "%s: got name %s.\n", prefix, debugstr_a(type->Name));
+    ok(type->Class == expect->Class, "Got class %#x.\n", type->Class);
+    ok(type->Type == expect->Type, "Got type %#x.\n", type->Type);
+    ok(type->Rows == expect->Rows, "Got %u rows.\n", type->Rows);
+    ok(type->Columns == expect->Columns, "Got %u columns.\n", type->Columns);
+    ok(type->Elements == expect->Elements, "Got %u elements.\n", type->Elements);
+    ok(type->Members == expect->Members, "Got %u members.\n", type->Members);
+    ok(type->Offset == expect->Offset, "Got %u members.\n", type->Members);
+    ok(!strcmp(type->Name, expect->Name), "Got name %s.\n", debugstr_a(type->Name));
 }
 
-static void check_resource_binding(const char *prefix, const D3D11_SHADER_INPUT_BIND_DESC *desc,
+static void check_resource_binding(const D3D11_SHADER_INPUT_BIND_DESC *desc,
         const D3D11_SHADER_INPUT_BIND_DESC *expect)
 {
-    ok(!strcmp(desc->Name, expect->Name), "%s: got name %s.\n", prefix, debugstr_a(desc->Name));
-    ok(desc->Type == expect->Type, "%s: got type %#x.\n", prefix, desc->Type);
-    ok(desc->BindPoint == expect->BindPoint, "%s: got bind point %u.\n", prefix, desc->BindPoint);
-    ok(desc->BindCount == expect->BindCount, "%s: got bind count %u.\n", prefix, desc->BindCount);
-    ok(desc->uFlags == expect->uFlags, "%s: got flags %#x.\n", prefix, desc->uFlags);
-    ok(desc->ReturnType == expect->ReturnType, "%s: got return type %#x.\n", prefix, desc->ReturnType);
-    ok(desc->Dimension == expect->Dimension, "%s: got dimension %#x.\n", prefix, desc->Dimension);
-    ok(desc->NumSamples == expect->NumSamples, "%s: got multisample count %u.\n", prefix, desc->NumSamples);
+    ok(!strcmp(desc->Name, expect->Name), "Got name %s.\n", debugstr_a(desc->Name));
+    ok(desc->Type == expect->Type, "Got type %#x.\n", desc->Type);
+    ok(desc->BindPoint == expect->BindPoint, "Got bind point %u.\n", desc->BindPoint);
+    ok(desc->BindCount == expect->BindCount, "Got bind count %u.\n", desc->BindCount);
+    ok(desc->uFlags == expect->uFlags, "Got flags %#x.\n", desc->uFlags);
+    ok(desc->ReturnType == expect->ReturnType, "Got return type %#x.\n", desc->ReturnType);
+    ok(desc->Dimension == expect->Dimension, "Got dimension %#x.\n", desc->Dimension);
+    ok(desc->NumSamples == expect->NumSamples, "Got multisample count %u.\n", desc->NumSamples);
 }
 
 static void test_reflection(void)
@@ -679,7 +682,6 @@ static void test_reflection(void)
     D3D11_SHADER_DESC shader_desc;
     ID3D10Blob *code = NULL;
     unsigned int i, j, k;
-    char prefix[40];
     ULONG refcount;
     HRESULT hr;
 
@@ -841,57 +843,66 @@ static void test_reflection(void)
 
     for (i = 0; i < ARRAY_SIZE(vs_buffers); ++i)
     {
+        winetest_push_context("Buffer %u", i);
+
         cbuffer = reflection->lpVtbl->GetConstantBufferByIndex(reflection, i);
         hr = cbuffer->lpVtbl->GetDesc(cbuffer, &buffer_desc);
-        ok(hr == S_OK, "Test %u: got hr %#x.\n", i, hr);
-        ok(!strcmp(buffer_desc.Name, vs_buffers[i].desc.Name),
-                "Test %u: got name %s.\n", i, debugstr_a(buffer_desc.Name));
-        ok(buffer_desc.Type == vs_buffers[i].desc.Type, "Test %u: got type %#x.\n", i, buffer_desc.Type);
-        ok(buffer_desc.Variables == vs_buffers[i].desc.Variables,
-                "Test %u: got %u variables.\n", i, buffer_desc.Variables);
-        ok(buffer_desc.Size == vs_buffers[i].desc.Size, "Test %u: got size %u.\n", i, buffer_desc.Size);
-        ok(buffer_desc.uFlags == vs_buffers[i].desc.uFlags, "Test %u: got flags %#x.\n", i, buffer_desc.uFlags);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        ok(!strcmp(buffer_desc.Name, vs_buffers[i].desc.Name), "Got name %s.\n", debugstr_a(buffer_desc.Name));
+        ok(buffer_desc.Type == vs_buffers[i].desc.Type, "Got type %#x.\n", buffer_desc.Type);
+        ok(buffer_desc.Variables == vs_buffers[i].desc.Variables, "Got %u variables.\n", buffer_desc.Variables);
+        ok(buffer_desc.Size == vs_buffers[i].desc.Size, "Got size %u.\n", buffer_desc.Size);
+        ok(buffer_desc.uFlags == vs_buffers[i].desc.uFlags, "Got flags %#x.\n", buffer_desc.uFlags);
 
         for (j = 0; j < buffer_desc.Variables; ++j)
         {
             const struct shader_variable *expect = &vs_buffers[i].vars[j];
 
+            winetest_push_context("Variable %u", j);
+
             var = cbuffer->lpVtbl->GetVariableByIndex(cbuffer, j);
             hr = var->lpVtbl->GetDesc(var, &var_desc);
-            ok(hr == S_OK, "Test %u, %u: got hr %#x.\n", i, j, hr);
-            ok(!strcmp(var_desc.Name, expect->var_desc.Name),
-                    "Test %u, %u: got name %s.\n", i, j, debugstr_a(var_desc.Name));
-            ok(var_desc.StartOffset == expect->var_desc.StartOffset, "Test %u, %u: got offset %u.\n",
-                    i, j, var_desc.StartOffset);
-            ok(var_desc.Size == expect->var_desc.Size, "Test %u, %u: got size %u.\n", i, j, var_desc.Size);
-            ok(var_desc.uFlags == expect->var_desc.uFlags, "Test %u, %u: got flags %#x.\n", i, j, var_desc.uFlags);
-            ok(!var_desc.DefaultValue, "Test %u, %u: got default value %p.\n", i, j, var_desc.DefaultValue);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            ok(!strcmp(var_desc.Name, expect->var_desc.Name), "Got name %s.\n", debugstr_a(var_desc.Name));
+            ok(var_desc.StartOffset == expect->var_desc.StartOffset, "Got offset %u.\n", var_desc.StartOffset);
+            ok(var_desc.Size == expect->var_desc.Size, "Got size %u.\n", var_desc.Size);
+            ok(var_desc.uFlags == expect->var_desc.uFlags, "Got flags %#x.\n", var_desc.uFlags);
+            ok(!var_desc.DefaultValue, "Got default value %p.\n", var_desc.DefaultValue);
 
             type = var->lpVtbl->GetType(var);
             hr = type->lpVtbl->GetDesc(type, &type_desc);
-            ok(hr == S_OK, "Test %u, %u: got hr %#x.\n", i, j, hr);
-            sprintf(prefix, "Test %u, %u", i, j);
-            check_type_desc(prefix, &type_desc, &expect->type_desc);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            check_type_desc(&type_desc, &expect->type_desc);
 
             for (k = 0; k < type_desc.Members; ++k)
             {
+                winetest_push_context("Field %u", k);
+
                 field = type->lpVtbl->GetMemberTypeByIndex(type, k);
                 hr = field->lpVtbl->GetDesc(field, &type_desc);
-                ok(hr == S_OK, "Test %u, %u, %u: got hr %#x.\n", i, j, k, hr);
-                sprintf(prefix, "Test %u, %u, %u", i, j, k);
-                check_type_desc(prefix, &type_desc, &vs_buffers[i].vars[j].field_types[k]);
+                ok(hr == S_OK, "Got hr %#x.\n", hr);
+                check_type_desc(&type_desc, &vs_buffers[i].vars[j].field_types[k]);
+
+                winetest_pop_context();
             }
+
+            winetest_pop_context();
         }
+
+        winetest_pop_context();
     }
 
     for (i = 0; i < ARRAY_SIZE(vs_bindings); ++i)
     {
         D3D11_SHADER_INPUT_BIND_DESC desc;
 
+        winetest_push_context("Binding %u", i);
+
         hr = reflection->lpVtbl->GetResourceBindingDesc(reflection, i, &desc);
-        ok(hr == S_OK, "Test %u: got hr %#x.\n", i, hr);
-        sprintf(prefix, "Test %u", i);
-        check_resource_binding(prefix, &desc, &vs_bindings[i]);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        check_resource_binding(&desc, &vs_bindings[i]);
+
+        winetest_pop_context();
     }
 
     ID3D10Blob_Release(code);
@@ -912,10 +923,13 @@ static void test_reflection(void)
     {
         D3D11_SHADER_INPUT_BIND_DESC desc;
 
+        winetest_push_context("Binding %u", i);
+
         hr = reflection->lpVtbl->GetResourceBindingDesc(reflection, i, &desc);
-        ok(hr == S_OK, "Test %u: got hr %#x.\n", i, hr);
-        sprintf(prefix, "Test %u", i);
-        check_resource_binding(prefix, &desc, &ps_bindings[i]);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+        check_resource_binding(&desc, &ps_bindings[i]);
+
+        winetest_pop_context();
     }
 
     ID3D10Blob_Release(code);
@@ -923,18 +937,18 @@ static void test_reflection(void)
     ok(!refcount, "Got unexpected refcount %u.\n", refcount);
 }
 
-static void check_parameter_desc(const char *prefix, const D3D11_SIGNATURE_PARAMETER_DESC *desc,
+static void check_parameter_desc(const D3D11_SIGNATURE_PARAMETER_DESC *desc,
         const D3D11_SIGNATURE_PARAMETER_DESC *expect)
 {
-    ok(!strcmp(desc->SemanticName, expect->SemanticName), "%s: got name %s.\n", prefix, debugstr_a(desc->SemanticName));
-    ok(desc->SemanticIndex == expect->SemanticIndex, "%s: got index %u.\n", prefix, desc->SemanticIndex);
-    ok(desc->Register == expect->Register, "%s: got register %u.\n", prefix, desc->Register);
-    ok(desc->SystemValueType == expect->SystemValueType, "%s: got sysval %u.\n", prefix, desc->SystemValueType);
-    ok(desc->ComponentType == expect->ComponentType, "%s: got data type %u.\n", prefix, desc->ComponentType);
-    ok(desc->Mask == expect->Mask, "%s: got mask %#x.\n", prefix, desc->Mask);
+    ok(!strcmp(desc->SemanticName, expect->SemanticName), "Got name %s.\n", debugstr_a(desc->SemanticName));
+    ok(desc->SemanticIndex == expect->SemanticIndex, "Got index %u.\n", desc->SemanticIndex);
+    ok(desc->Register == expect->Register, "Got register %u.\n", desc->Register);
+    ok(desc->SystemValueType == expect->SystemValueType, "Got sysval %u.\n", desc->SystemValueType);
+    ok(desc->ComponentType == expect->ComponentType, "Got data type %u.\n", desc->ComponentType);
+    ok(desc->Mask == expect->Mask, "Got mask %#x.\n", desc->Mask);
     todo_wine_if(desc->ReadWriteMask != expect->ReadWriteMask)
-        ok(desc->ReadWriteMask == expect->ReadWriteMask, "%s: got used mask %#x.\n", prefix, desc->ReadWriteMask);
-    ok(desc->Stream == expect->Stream, "%s: got stream %u.\n", prefix, desc->Stream);
+        ok(desc->ReadWriteMask == expect->ReadWriteMask, "Got used mask %#x.\n", desc->ReadWriteMask);
+    ok(desc->Stream == expect->Stream, "Got stream %u.\n", desc->Stream);
 }
 
 static void test_semantic_reflection(void)
@@ -944,7 +958,6 @@ static void test_semantic_reflection(void)
     D3D11_SHADER_DESC shader_desc;
     ID3D10Blob *code = NULL;
     unsigned int i, j;
-    char prefix[40];
     ULONG refcount;
     HRESULT hr;
 
@@ -1117,41 +1130,50 @@ static void test_semantic_reflection(void)
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
+        winetest_push_context("Test %u", i);
+
         todo_wine code = compile_shader_flags(tests[i].source, tests[i].target,
                 tests[i].legacy ? D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY : 0);
         if (!code)
+        {
+            winetest_pop_context();
             continue;
+        }
 
         hr = pD3DReflect(ID3D10Blob_GetBufferPointer(code), ID3D10Blob_GetBufferSize(code),
                 &IID_ID3D11ShaderReflection, (void **)&reflection);
-        ok(hr == S_OK, "Test %u: got hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
 
         hr = reflection->lpVtbl->GetDesc(reflection, &shader_desc);
-        ok(hr == S_OK, "Test %u: got hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
         todo_wine ok(shader_desc.InputParameters == tests[i].input_count,
-                "Test %u: got %u input parameters.\n", i, shader_desc.InputParameters);
+                "Got %u input parameters.\n", shader_desc.InputParameters);
         todo_wine ok(shader_desc.OutputParameters == tests[i].output_count,
-                "Test %u: got %u output parameters.\n", i, shader_desc.OutputParameters);
+                "Got %u output parameters.\n", shader_desc.OutputParameters);
 
         for (j = 0; j < shader_desc.InputParameters; ++j)
         {
+            winetest_push_context("Input %u", j);
             hr = reflection->lpVtbl->GetInputParameterDesc(reflection, j, &desc);
-            ok(hr == S_OK, "Test %u, %u: got hr %#x.\n", i, j, hr);
-            sprintf(prefix, "Test %u, input %u", i, j);
-            check_parameter_desc(prefix, &desc, &tests[i].inputs[j]);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            check_parameter_desc(&desc, &tests[i].inputs[j]);
+            winetest_pop_context();
         }
 
         for (j = 0; j < shader_desc.OutputParameters; ++j)
         {
+            winetest_push_context("Output %u", j);
             hr = reflection->lpVtbl->GetOutputParameterDesc(reflection, j, &desc);
-            ok(hr == S_OK, "Test %u, %u: got hr %#x.\n", i, j, hr);
-            sprintf(prefix, "Test %u, output %u", i, j);
-            check_parameter_desc(prefix, &desc, &tests[i].outputs[j]);
+            ok(hr == S_OK, "Got hr %#x.\n", hr);
+            check_parameter_desc(&desc, &tests[i].outputs[j]);
+            winetest_pop_context();
         }
 
         ID3D10Blob_Release(code);
         refcount = reflection->lpVtbl->Release(reflection);
         ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+
+        winetest_pop_context();
     }
 }
 
