@@ -96,6 +96,9 @@ extern void __winetest_cdecl winetest_skip( const char *msg, ... ) __WINE_PRINTF
 extern void __winetest_cdecl winetest_win_skip( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
 extern void __winetest_cdecl winetest_trace( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
 
+extern void __winetest_cdecl winetest_push_context( const char *fmt, ... ) __WINE_PRINTF_ATTR(1, 2);
+extern void winetest_pop_context(void);
+
 #ifdef WINETEST_NO_LINE_NUMBERS
 # define subtest_(file, line)  (winetest_set_location(file, 0), 0) ? (void)0 : winetest_subtest
 # define ignore_exceptions_(file, line)  (winetest_set_location(file, 0), 0) ? (void)0 : winetest_ignore_exceptions
@@ -246,6 +249,8 @@ struct tls_data
     int todo_do_loop;
     char *str_pos;                   /* position in debug buffer */
     char strings[2000];              /* buffer for debug strings */
+    char context[8][128];            /* data to print before messages */
+    unsigned int context_count;      /* number of context prefixes */
 };
 static DWORD tls_index;
 
@@ -298,8 +303,11 @@ const char *winetest_elapsed(void)
 static void winetest_vprintf( const char *msg, __winetest_va_list args )
 {
     struct tls_data *data = get_tls_data();
+    unsigned int i;
 
     printf( "%s:%d:%s ", data->current_file, data->current_line, winetest_elapsed() );
+    for (i = 0; i < data->context_count; ++i)
+        printf( "%s: ", data->context[i] );
     vprintf( msg, args );
 }
 
@@ -482,6 +490,29 @@ void winetest_end_todo(void)
 {
     struct tls_data *data = get_tls_data();
     data->todo_level >>= 1;
+}
+
+void __winetest_cdecl winetest_push_context( const char *fmt, ... )
+{
+    struct tls_data *data = get_tls_data();
+    __winetest_va_list valist;
+
+    if (data->context_count < ARRAY_SIZE(data->context))
+    {
+        __winetest_va_start(valist, fmt);
+        vsnprintf( data->context[data->context_count], sizeof(data->context[data->context_count]), fmt, valist );
+        __winetest_va_end(valist);
+        data->context[data->context_count][sizeof(data->context[data->context_count]) - 1] = 0;
+    }
+    ++data->context_count;
+}
+
+void winetest_pop_context(void)
+{
+    struct tls_data *data = get_tls_data();
+
+    if (data->context_count)
+        --data->context_count;
 }
 
 int winetest_get_mainargs( char*** pargv )
