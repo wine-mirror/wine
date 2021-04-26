@@ -3315,7 +3315,7 @@ static void output_module( struct makefile *make )
         add_install_rule( make, make->module, strmake( "%s%s", make->module, dll_ext ),
                           strmake( "p$(dlldir)/%s%s", make->module, dll_ext ));
         add_install_rule( make, make->module, strmake( "%s.fake", make->module ),
-                          strmake( "d$(dlldir)/fakedlls/%s", make->module ));
+                          strmake( "d%s/%s", pe_dir, make->module ));
         output( "%s%s %s.fake:", module_path, dll_ext, module_path );
     }
     else

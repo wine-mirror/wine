@@ -474,9 +474,6 @@ static void *load_fake_dll( const WCHAR *name, SIZE_T *size )
         if ((res = read_file( ptr, &data, size ))) break;
         ptr = prepend( file + pos, path, lstrlenW(path) );
         if ((res = read_file( ptr, &data, size ))) break;
-        ptr = prepend( file + pos, L"\\fakedlls", 9 );
-        ptr = prepend( ptr, path, lstrlenW(path) );
-        if ((res = read_file( ptr, &data, size ))) break;
     }
 
 done:
@@ -1041,9 +1038,6 @@ static BOOL create_wildcard_dlls( const WCHAR *dirname, const WCHAR *wildcard, B
         swprintf( file, maxlen, L"%s%s", path, pe_dir );
         install_lib_dir( dest, file, wildcard, NULL, delete );
         lstrcpyW( file, path );
-        install_lib_dir( dest, file, wildcard, NULL, delete );
-        lstrcpyW( file, path );
-        lstrcatW( file, L"\\fakedlls" );
         install_lib_dir( dest, file, wildcard, NULL, delete );
     }
     HeapFree( GetProcessHeap(), 0, file );
