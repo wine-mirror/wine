@@ -43,6 +43,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
+#ifdef __i386__
+static const char pe_dir[] = "\\i386-windows";
+#elif defined __x86_64__
+static const char pe_dir[] = "\\x86_64-windows";
+#elif defined __arm__
+static const char pe_dir[] = "\\arm-windows";
+#elif defined __aarch64__
+static const char pe_dir[] = "\\aarch64-windows";
+#else
+static const char pe_dir[] = "";
+#endif
+
 /* dlls that shouldn't be configured anything other than builtin; list must be sorted*/
 static const char * const builtin_only[] =
 {
@@ -331,6 +343,8 @@ static void load_library_list( HWND dialog )
     {
         sprintf( var, "WINEDLLDIR%u", i++ );
         if (!GetEnvironmentVariableA( var, path, MAX_PATH )) break;
+        load_library_list_from_dir( dialog, path, FALSE );
+        strcat( path, pe_dir );
         load_library_list_from_dir( dialog, path, FALSE );
     }
 
