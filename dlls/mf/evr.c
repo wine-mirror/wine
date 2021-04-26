@@ -80,6 +80,7 @@ struct video_renderer
     IMediaEventSink IMediaEventSink_iface;
     IMFAttributes IMFAttributes_iface;
     IMFQualityAdvise IMFQualityAdvise_iface;
+    IMFRateSupport IMFRateSupport_iface;
     LONG refcount;
 
     IMFMediaEventQueue *event_queue;
@@ -148,6 +149,11 @@ static struct video_renderer *impl_from_IMFAttributes(IMFAttributes *iface)
 static struct video_renderer *impl_from_IMFQualityAdvise(IMFQualityAdvise *iface)
 {
     return CONTAINING_RECORD(iface, struct video_renderer, IMFQualityAdvise_iface);
+}
+
+static struct video_renderer *impl_from_IMFRateSupport(IMFRateSupport *iface)
+{
+    return CONTAINING_RECORD(iface, struct video_renderer, IMFRateSupport_iface);
 }
 
 static struct video_stream *impl_from_IMFStreamSink(IMFStreamSink *iface)
@@ -1086,6 +1092,10 @@ static HRESULT WINAPI video_renderer_sink_QueryInterface(IMFMediaSink *iface, RE
     else if (IsEqualIID(riid, &IID_IMFQualityAdvise))
     {
         *obj = &renderer->IMFQualityAdvise_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFRateSupport))
+    {
+        *obj = &renderer->IMFRateSupport_iface;
     }
     else
     {
@@ -2028,6 +2038,10 @@ static HRESULT WINAPI video_renderer_get_service_GetService(IMFGetService *iface
         if (renderer->device_manager)
             hr = IUnknown_QueryInterface(renderer->device_manager, riid, obj);
     }
+    else if (IsEqualGUID(service, &MF_RATE_CONTROL_SERVICE) && IsEqualIID(riid, &IID_IMFRateSupport))
+    {
+        hr = IMFVideoRenderer_QueryInterface(&renderer->IMFVideoRenderer_iface, riid, obj);
+    }
     else
     {
         FIXME("Unsupported service %s.\n", debugstr_guid(service));
@@ -2642,6 +2656,58 @@ static const IMFQualityAdviseVtbl video_renderer_quality_advise_vtbl =
     video_renderer_quality_advise_DropTime,
 };
 
+static HRESULT WINAPI video_renderer_rate_support_QueryInterface(IMFRateSupport *iface, REFIID riid, void **out)
+{
+    struct video_renderer *renderer = impl_from_IMFRateSupport(iface);
+    return IMFMediaSink_QueryInterface(&renderer->IMFMediaSink_iface, riid, out);
+}
+
+static ULONG WINAPI video_renderer_rate_support_AddRef(IMFRateSupport *iface)
+{
+    struct video_renderer *renderer = impl_from_IMFRateSupport(iface);
+    return IMFMediaSink_AddRef(&renderer->IMFMediaSink_iface);
+}
+
+static ULONG WINAPI video_renderer_rate_support_Release(IMFRateSupport *iface)
+{
+    struct video_renderer *renderer = impl_from_IMFRateSupport(iface);
+    return IMFMediaSink_Release(&renderer->IMFMediaSink_iface);
+}
+
+static HRESULT WINAPI video_renderer_rate_support_GetSlowestRate(IMFRateSupport *iface, MFRATE_DIRECTION direction,
+        BOOL thin, float *rate)
+{
+    FIXME("%p, %d, %d, %p.\n", iface, direction, thin, rate);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_renderer_rate_support_GetFastestRate(IMFRateSupport *iface, MFRATE_DIRECTION direction,
+        BOOL thin, float *rate)
+{
+    FIXME("%p, %d, %d, %p.\n", iface, direction, thin, rate);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_renderer_rate_support_IsRateSupported(IMFRateSupport *iface, BOOL thin, float rate,
+        float *nearest_supported_rate)
+{
+    FIXME("%p, %d, %f, %p.\n", iface, thin, rate, nearest_supported_rate);
+
+    return E_NOTIMPL;
+}
+
+static const IMFRateSupportVtbl video_renderer_rate_support_vtbl =
+{
+    video_renderer_rate_support_QueryInterface,
+    video_renderer_rate_support_AddRef,
+    video_renderer_rate_support_Release,
+    video_renderer_rate_support_GetSlowestRate,
+    video_renderer_rate_support_GetFastestRate,
+    video_renderer_rate_support_IsRateSupported,
+};
+
 static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, IUnknown **obj)
 {
     struct video_renderer *object;
@@ -2664,6 +2730,7 @@ static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, 
     object->IMediaEventSink_iface.lpVtbl = &media_event_sink_vtbl;
     object->IMFAttributes_iface.lpVtbl = &video_renderer_attributes_vtbl;
     object->IMFQualityAdvise_iface.lpVtbl = &video_renderer_quality_advise_vtbl;
+    object->IMFRateSupport_iface.lpVtbl = &video_renderer_rate_support_vtbl;
     object->refcount = 1;
     InitializeCriticalSection(&object->cs);
 
