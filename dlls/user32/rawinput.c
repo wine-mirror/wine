@@ -408,29 +408,24 @@ UINT WINAPI GetRawInputDeviceList(RAWINPUTDEVICELIST *devices, UINT *device_coun
 
     if (!devices)
     {
-        *device_count = 2 + rawinput_devices_count;
+        *device_count = rawinput_devices_count;
         return 0;
     }
 
-    if (*device_count < 2 + rawinput_devices_count)
+    if (*device_count < rawinput_devices_count)
     {
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
-        *device_count = 2 + rawinput_devices_count;
+        *device_count = rawinput_devices_count;
         return ~0U;
     }
 
-    devices[0].hDevice = WINE_MOUSE_HANDLE;
-    devices[0].dwType = RIM_TYPEMOUSE;
-    devices[1].hDevice = WINE_KEYBOARD_HANDLE;
-    devices[1].dwType = RIM_TYPEKEYBOARD;
-
     for (i = 0; i < rawinput_devices_count; ++i)
     {
-        devices[2 + i].hDevice = rawinput_devices[i].handle;
-        devices[2 + i].dwType = rawinput_devices[i].info.dwType;
+        devices[i].hDevice = rawinput_devices[i].handle;
+        devices[i].dwType = rawinput_devices[i].info.dwType;
     }
 
-    return 2 + rawinput_devices_count;
+    return rawinput_devices_count;
 }
 
 /***********************************************************************
