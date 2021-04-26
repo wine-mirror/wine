@@ -4224,10 +4224,12 @@ static void test_evr(void)
     DWORD flags, count, value;
     IMFActivate *activate;
     HWND window, window2;
+    IMFRateSupport *rs;
     LONG sample_count;
     IMFSample *sample;
     IUnknown *unk;
     UINT64 window3;
+    float rate;
     HRESULT hr;
     GUID guid;
 
@@ -4509,6 +4511,50 @@ todo_wine
 
     hr = IMFMediaSink_SetPresentationClock(sink, clock);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFRateSupport, (void **)&rs);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    rate = 1.0f;
+    hr = IMFRateSupport_GetSlowestRate(rs, MFRATE_FORWARD, FALSE, &rate);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(rate == 0.0f, "Unexpected rate %f.\n", rate);
+
+    rate = 1.0f;
+    hr = IMFRateSupport_GetSlowestRate(rs, MFRATE_REVERSE, FALSE, &rate);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(rate == 0.0f, "Unexpected rate %f.\n", rate);
+
+    rate = 1.0f;
+    hr = IMFRateSupport_GetSlowestRate(rs, MFRATE_FORWARD, TRUE, &rate);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(rate == 0.0f, "Unexpected rate %f.\n", rate);
+
+    rate = 1.0f;
+    hr = IMFRateSupport_GetSlowestRate(rs, MFRATE_REVERSE, TRUE, &rate);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(rate == 0.0f, "Unexpected rate %f.\n", rate);
+
+    hr = IMFRateSupport_GetFastestRate(rs, MFRATE_FORWARD, FALSE, &rate);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFRateSupport_GetFastestRate(rs, MFRATE_REVERSE, FALSE, &rate);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFRateSupport_GetFastestRate(rs, MFRATE_FORWARD, TRUE, &rate);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFRateSupport_GetFastestRate(rs, MFRATE_REVERSE, TRUE, &rate);
+    ok(hr == MF_E_INVALIDREQUEST, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaSink_Shutdown(sink);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFRateSupport_GetSlowestRate(rs, MFRATE_FORWARD, FALSE, &rate);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFRateSupport_GetFastestRate(rs, MFRATE_FORWARD, FALSE, &rate);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     IMFPresentationClock_Release(clock);
 

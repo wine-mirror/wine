@@ -2677,17 +2677,26 @@ static ULONG WINAPI video_renderer_rate_support_Release(IMFRateSupport *iface)
 static HRESULT WINAPI video_renderer_rate_support_GetSlowestRate(IMFRateSupport *iface, MFRATE_DIRECTION direction,
         BOOL thin, float *rate)
 {
-    FIXME("%p, %d, %d, %p.\n", iface, direction, thin, rate);
+    struct video_renderer *renderer = impl_from_IMFRateSupport(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %d, %d, %p.\n", iface, direction, thin, rate);
+
+    if (renderer->flags & EVR_SHUT_DOWN)
+        return MF_E_SHUTDOWN;
+
+    *rate = 0.0f;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI video_renderer_rate_support_GetFastestRate(IMFRateSupport *iface, MFRATE_DIRECTION direction,
         BOOL thin, float *rate)
 {
-    FIXME("%p, %d, %d, %p.\n", iface, direction, thin, rate);
+    struct video_renderer *renderer = impl_from_IMFRateSupport(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %d, %d, %p.\n", iface, direction, thin, rate);
+
+    return renderer->flags & EVR_SHUT_DOWN ? MF_E_SHUTDOWN : MF_E_INVALIDREQUEST;
 }
 
 static HRESULT WINAPI video_renderer_rate_support_IsRateSupported(IMFRateSupport *iface, BOOL thin, float rate,
