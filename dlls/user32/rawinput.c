@@ -38,10 +38,13 @@
 #include "user_private.h"
 
 #include "initguid.h"
+#include "devpkey.h"
 #include "ntddmou.h"
 #include "ntddkbd.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(rawinput);
+
+DEFINE_DEVPROPKEY(DEVPROPKEY_HID_HANDLE, 0xbc62e415, 0xf4fe, 0x405c, 0x8e, 0xda, 0x63, 0x6f, 0xb5, 0x9f, 0x08, 0x98, 2);
 
 struct device
 {
@@ -92,17 +95,27 @@ static BOOL array_reserve(void **elements, unsigned int *capacity, unsigned int 
 
 static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
 {
+    SP_DEVINFO_DATA device_data = {sizeof(device_data)};
     SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail;
     struct device *device;
+    UINT32 handle;
     HANDLE file;
-    DWORD size;
+    DWORD size, type;
 
-    SetupDiGetDeviceInterfaceDetailW(set, iface, NULL, 0, &size, NULL);
+    SetupDiGetDeviceInterfaceDetailW(set, iface, NULL, 0, &size, &device_data);
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
     {
         ERR("Failed to get device path, error %#x.\n", GetLastError());
         return FALSE;
     }
+
+    if (!SetupDiGetDevicePropertyW(set, &device_data, &DEVPROPKEY_HID_HANDLE, &type, (BYTE *)&handle, sizeof(handle), NULL, 0) ||
+        type != DEVPROP_TYPE_UINT32)
+    {
+        ERR("Failed to get device handle, error %#x.\n", GetLastError());
+        return NULL;
+    }
+
     if (!(detail = malloc(size)))
     {
         ERR("Failed to allocate memory.\n");
@@ -111,7 +124,7 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
     detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
     SetupDiGetDeviceInterfaceDetailW(set, iface, detail, size, NULL, NULL);
 
-    TRACE("Found HID device %s.\n", debugstr_w(detail->DevicePath));
+    TRACE("Found device %x / %s.\n", handle, debugstr_w(detail->DevicePath));
 
     file = CreateFileW(detail->DevicePath, GENERIC_READ | GENERIC_WRITE,
             FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
