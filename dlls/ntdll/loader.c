@@ -2616,7 +2616,11 @@ static NTSTATUS get_env_var( const WCHAR *name, SIZE_T extra, UNICODE_STRING *re
             return status;
         }
         RtlFreeHeap( GetProcessHeap(), 0, ret->Buffer );
-        if (status != STATUS_BUFFER_TOO_SMALL) return status;
+        if (status != STATUS_BUFFER_TOO_SMALL)
+        {
+            ret->Buffer = NULL;
+            return status;
+        }
         size = len + 1 + extra;
     }
 }
