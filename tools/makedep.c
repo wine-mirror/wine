@@ -148,7 +148,6 @@ static struct strarray enable_tests;
 static struct strarray cmdline_vars;
 static struct strarray subdirs;
 static struct strarray disabled_dirs;
-static struct strarray cross_import_libs;
 static struct strarray delay_import_libs;
 static struct strarray top_install_lib;
 static struct strarray top_install_dev;
@@ -2129,26 +2128,6 @@ static struct makefile *get_parent_makefile( struct makefile *make )
 
 
 /*******************************************************************
- *         needs_cross_lib
- */
-static int needs_cross_lib( const struct makefile *make )
-{
-    const char *name;
-    if (!crosstarget) return 0;
-    if (make->importlib) name = make->importlib;
-    else if (make->staticlib)
-    {
-        name = replace_extension( make->staticlib, ".a", "" );
-        if (!strncmp( name, "lib", 3 )) name += 3;
-    }
-    else return 0;
-    if (strarray_exists( &cross_import_libs, name )) return 1;
-    if (delay_load_flag && strarray_exists( &delay_import_libs, name )) return 1;
-    return 0;
-}
-
-
-/*******************************************************************
  *         needs_delay_lib
  */
 static int needs_delay_lib( const struct makefile *make )
@@ -2683,8 +2662,8 @@ static struct strarray output_importlib_symlinks( const struct makefile *make )
     int i, count = 0;
 
     ext[count++] = (*dll_ext && !make->implib_objs.count) ? "def" : "a";
+    if (crosstarget) ext[count++] = "cross.a";
     if (needs_delay_lib( make )) ext[count++] = "delay.a";
-    if (needs_cross_lib( make )) ext[count++] = "cross.a";
 
     for (i = 0; i < count; i++)
     {
@@ -3125,10 +3104,8 @@ static void output_source_default( struct makefile *make, struct incl_file *sour
                       find_src_file( make, replace_extension( source->name, ".c", ".spec" )));
     int need_cross = (crosstarget &&
                       !(source->file->flags & FLAG_C_UNIX) &&
-                      (make->is_cross ||
-                       ((source->file->flags & FLAG_C_IMPLIB) &&
-                        (needs_cross_lib( make ) || needs_delay_lib( make ))) ||
-                       (make->staticlib && needs_cross_lib( make ))));
+                      (make->is_cross || (make->module && make->staticlib) ||
+                       (source->file->flags & FLAG_C_IMPLIB)));
     int need_obj = ((*dll_ext || !(source->file->flags & FLAG_C_UNIX)) &&
                     (!need_cross ||
                      (source->file->flags & FLAG_C_IMPLIB) ||
@@ -3449,14 +3426,12 @@ static void output_module( struct makefile *make )
                               strmake( "lib%s.a", make->importlib ),
                               strmake( "d$(dlldir)/lib%s.a", make->importlib ));
         }
-        if (crosstarget && (needs_cross_lib( make ) || needs_delay_lib( make )))
+        if (crosstarget)
         {
             struct strarray cross_files = strarray_replace_extension( &make->implib_objs, ".o", ".cross.o" );
-            if (needs_cross_lib( make ))
-            {
-                strarray_add( &make->clean_files, strmake( "lib%s.cross.a", make->importlib ));
-                output_filename( strmake( "%s.cross.a", importlib_path ));
-            }
+
+            strarray_add( &make->clean_files, strmake( "lib%s.cross.a", make->importlib ));
+            output_filename( strmake( "%s.cross.a", importlib_path ));
             if (needs_delay_lib( make ))
             {
                 strarray_add( &make->clean_files, strmake( "lib%s.delay.a", make->importlib ));
@@ -3472,6 +3447,9 @@ static void output_module( struct makefile *make )
             output_filename( spec_file );
             output_filenames_obj_dir( make, cross_files );
             output( "\n" );
+            add_install_rule( make, make->importlib,
+                              strmake( "lib%s.cross.a", make->importlib ),
+                              strmake( "d%s/lib%s.a", pe_dir, make->importlib ));
         }
         if (needs_implib_symlink( make ))
             strarray_addall( &top_makefile->clean_files, output_importlib_symlinks( make ));
@@ -3502,7 +3480,7 @@ static void output_static_lib( struct makefile *make )
     output( " && %s $@\n", ranlib );
     add_install_rule( make, make->staticlib, make->staticlib,
                       strmake( "d$(dlldir)/%s", make->staticlib ));
-    if (needs_cross_lib( make ))
+    if (crosstarget && make->module)
     {
         char *name = replace_extension( make->staticlib, ".a", ".cross.a" );
 
@@ -3514,6 +3492,8 @@ static void output_static_lib( struct makefile *make )
                 tools_path( make, "winebuild" ), crosstarget );
         output_filenames_obj_dir( make, make->crossobj_files );
         output( "\n" );
+        add_install_rule( make, make->staticlib, name,
+                          strmake( "d%s/%s", pe_dir, make->staticlib ));
     }
 }
 
@@ -4300,16 +4280,6 @@ static void load_sources( struct makefile *make )
     LIST_FOR_EACH_ENTRY( file, &make->sources, struct incl_file, entry ) get_dependencies( file, file );
 
     make->is_cross = crosstarget && make->use_msvcrt;
-
-    if (make->is_cross)
-    {
-        strarray_addall_uniq( &cross_import_libs, make->imports );
-        strarray_addall_uniq( &cross_import_libs, make->extra_imports );
-        if (make->is_win16) strarray_add_uniq( &cross_import_libs, "kernel" );
-        strarray_add_uniq( &cross_import_libs, "winecrt0" );
-        strarray_add_uniq( &cross_import_libs, "kernel32" );
-        strarray_add_uniq( &cross_import_libs, "ntdll" );
-    }
 
     if (!*dll_ext || make->is_cross)
         for (i = 0; i < make->delayimports.count; i++)
