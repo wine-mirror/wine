@@ -47,6 +47,7 @@ enum video_stream_flags
 {
     EVR_STREAM_PREROLLING = 0x1,
     EVR_STREAM_PREROLLED = 0x2,
+    EVR_STREAM_SAMPLE_NEEDED = 0x4,
 };
 
 struct video_renderer;
@@ -1825,13 +1826,19 @@ static ULONG WINAPI video_renderer_clock_sink_Release(IMFClockStateSink *iface)
 static HRESULT WINAPI video_renderer_clock_sink_OnClockStart(IMFClockStateSink *iface, MFTIME systime, LONGLONG offset)
 {
     struct video_renderer *renderer = impl_from_IMFClockStateSink(iface);
+    unsigned int state, request_sample;
     size_t i;
 
     TRACE("%p, %s, %s.\n", iface, debugstr_time(systime), debugstr_time(offset));
 
     EnterCriticalSection(&renderer->cs);
 
-    if (renderer->state == EVR_STATE_STOPPED)
+    state = renderer->state;
+
+    /* Update sink state before sending sample requests, to avoid potentially receiving new sample in stopped state */
+    renderer->state = EVR_STATE_RUNNING;
+
+    if (state == EVR_STATE_STOPPED)
     {
         IMFTransform_ProcessMessage(renderer->mixer, MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, 0);
         IMFVideoPresenter_ProcessMessage(renderer->presenter, MFVP_MESSAGE_BEGINSTREAMING, 0);
@@ -1840,18 +1847,18 @@ static HRESULT WINAPI video_renderer_clock_sink_OnClockStart(IMFClockStateSink *
         {
             struct video_stream *stream = renderer->streams[i];
 
-            IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamSinkStarted, &GUID_NULL, S_OK, NULL);
-
             EnterCriticalSection(&stream->cs);
-            if (!(stream->flags & EVR_STREAM_PREROLLED))
+            request_sample = !(stream->flags & EVR_STREAM_PREROLLED) || (stream->flags & EVR_STREAM_SAMPLE_NEEDED);
+            stream->flags |= EVR_STREAM_PREROLLED;
+            stream->flags &= ~EVR_STREAM_SAMPLE_NEEDED;
+            LeaveCriticalSection(&stream->cs);
+
+            IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamSinkStarted, &GUID_NULL, S_OK, NULL);
+            if (request_sample)
                 IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamSinkRequestSample,
                         &GUID_NULL, S_OK, NULL);
-            stream->flags |= EVR_STREAM_PREROLLED;
-            LeaveCriticalSection(&stream->cs);
         }
     }
-
-    renderer->state = EVR_STATE_RUNNING;
 
     IMFVideoPresenter_OnClockStart(renderer->presenter, systime, offset);
 
@@ -1886,7 +1893,7 @@ static HRESULT WINAPI video_renderer_clock_sink_OnClockStop(IMFClockStateSink *i
             IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamSinkStopped, &GUID_NULL, S_OK, NULL);
 
             EnterCriticalSection(&stream->cs);
-            stream->flags &= ~EVR_STREAM_PREROLLED;
+            stream->flags &= ~(EVR_STREAM_PREROLLED | EVR_STREAM_SAMPLE_NEEDED);
             LeaveCriticalSection(&stream->cs);
         }
         renderer->state = EVR_STATE_STOPPED;
@@ -2184,10 +2191,16 @@ static HRESULT WINAPI video_renderer_event_sink_Notify(IMediaEventSink *iface, L
         idx = param1;
         if (idx >= renderer->stream_count)
             hr = MF_E_INVALIDSTREAMNUMBER;
-        else
+        else if (renderer->state == EVR_STATE_RUNNING)
         {
             hr = IMFMediaEventQueue_QueueEventParamVar(renderer->streams[idx]->event_queue,
                 MEStreamSinkRequestSample, &GUID_NULL, S_OK, NULL);
+        }
+        else
+        {
+            /* Mixer asks for more input right after preroll too, before renderer finished running state transition.
+               Mark such streams here, and issue requests later in OnClockStart(). */
+            renderer->streams[idx]->flags |= EVR_STREAM_SAMPLE_NEEDED;
         }
     }
     else if (event == EC_DISPLAY_CHANGED)
