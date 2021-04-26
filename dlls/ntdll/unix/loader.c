@@ -237,9 +237,26 @@ static char *build_path( const char *dir, const char *name )
 
     memcpy( ret, dir, len );
     if (len && ret[len - 1] != '/') ret[len++] = '/';
+    if (name[0] == '/') name++;
     strcpy( ret + len, name );
     return ret;
 }
+
+
+static const char *get_pe_dir( WORD machine )
+{
+    if (!machine) machine = current_machine;
+
+    switch(machine)
+    {
+    case IMAGE_FILE_MACHINE_I386:  return "/i386-windows";
+    case IMAGE_FILE_MACHINE_AMD64: return "/x86_64-windows";
+    case IMAGE_FILE_MACHINE_ARMNT: return "/arm-windows";
+    case IMAGE_FILE_MACHINE_ARM64: return "/aarch64-windows";
+    default: return "";
+    }
+}
+
 
 static void set_dll_path(void)
 {
@@ -1257,6 +1274,7 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
     unsigned int i, pos, namepos, namelen, maxlen = 0;
     unsigned int len = nt_name->Length / sizeof(WCHAR);
     char *ptr = NULL, *file, *ext = NULL;
+    const char *pe_dir = get_pe_dir( machine );
     OBJECT_ATTRIBUTES attr;
     NTSTATUS status = STATUS_DLL_NOT_FOUND;
     BOOL found_image = FALSE;
@@ -1268,7 +1286,7 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
     InitializeObjectAttributes( &attr, nt_name, 0, 0, NULL );
 
     if (build_dir) maxlen = strlen(build_dir) + sizeof("/programs/") + len;
-    maxlen = max( maxlen, dll_path_maxlen + 1 ) + len + sizeof(".so");
+    maxlen = max( maxlen, dll_path_maxlen + 1 ) + len + sizeof("/aarch64-windows") + sizeof(".so");
 
     if (!(file = malloc( maxlen ))) return STATUS_NO_MEMORY;
 
@@ -1310,8 +1328,16 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
 
     for (i = 0; dll_paths[i]; i++)
     {
+        ptr = file + pos;
+        file[pos + len + 1] = 0;
+        ptr = prepend( ptr, pe_dir, strlen(pe_dir) );
+        ptr = prepend( ptr, dll_paths[i], strlen(dll_paths[i]) );
+        status = open_builtin_file( ptr, &attr, module, size_ptr, image_info, machine, prefer_native );
+        /* use so dir for unix lib */
+        ptr = file + pos;
         file[pos + len + 1] = 0;
         ptr = prepend( file + pos, dll_paths[i], strlen(dll_paths[i]) );
+        if (status != STATUS_DLL_NOT_FOUND) goto done;
         status = open_builtin_file( ptr, &attr, module, size_ptr, image_info, machine, prefer_native );
         if (status == STATUS_IMAGE_MACHINE_TYPE_MISMATCH) found_image = TRUE;
         else if (status != STATUS_DLL_NOT_FOUND) goto done;
@@ -1652,13 +1678,26 @@ static void load_ntdll(void)
     UNICODE_STRING str;
     void *module;
     SIZE_T size = 0;
-    char *name = build_path( dll_dir, "ntdll.dll.so" );
+    char *name;
+
+    if (!build_dir)
+    {
+        char *dir = build_path( dll_dir, get_pe_dir(current_machine) );
+        name = build_path( dir, "ntdll.dll.so" );
+        free( dir );
+    }
+    else name = build_path( build_dir, "dlls/ntdll/ntdll.dll.so" );
 
     init_unicode_string( &str, path );
     InitializeObjectAttributes( &attr, &str, 0, 0, NULL );
     name[strlen(name) - 3] = 0;  /* remove .so */
     status = open_builtin_file( name, &attr, &module, &size, &info, current_machine, FALSE );
     if (status == STATUS_IMAGE_NOT_AT_BASE) relocate_ntdll( module );
+    else if (status == STATUS_DLL_NOT_FOUND)
+    {
+        free( name );
+        name = build_path( dll_dir, "ntdll.dll.so" );
+    }
     else if (status) fatal_error( "failed to load %s error %x\n", name, status );
     free( name );
     load_ntdll_functions( module );
