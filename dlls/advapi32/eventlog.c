@@ -674,6 +674,15 @@ ULONG WINAPI StopTraceA( TRACEHANDLE session, LPCSTR session_name, PEVENT_TRACE_
 }
 
 /******************************************************************************
+ * QueryTraceA [ADVAPI32.@]
+ */
+ULONG WINAPI QueryTraceA( TRACEHANDLE handle, LPCSTR sessionname, PEVENT_TRACE_PROPERTIES properties )
+{
+    FIXME("%s %s %p: stub\n", wine_dbgstr_longlong(handle), debugstr_a(sessionname), properties);
+    return ERROR_WMI_INSTANCE_NOT_FOUND;
+}
+
+/******************************************************************************
  * QueryTraceW [ADVAPI32.@]
  */
 ULONG WINAPI QueryTraceW( TRACEHANDLE handle, LPCWSTR sessionname, PEVENT_TRACE_PROPERTIES properties )

@@ -6,7 +6,7 @@
 @ stdcall FlushTraceW(int64 wstr ptr) advapi32.FlushTraceW
 @ stdcall -ret64 OpenTraceA(ptr) advapi32.OpenTraceA
 @ stdcall QueryAllTracesA(ptr long ptr) advapi32.QueryAllTracesA
-@ stub QueryTraceA
+@ stdcall QueryTraceA(int64 str ptr) advapi32.QueryTraceA
 @ stdcall QueryTraceW(int64 wstr ptr) advapi32.QueryTraceW
 @ stdcall StartTraceA(ptr str ptr) advapi32.StartTraceA
 @ stdcall StopTraceA(int64 str ptr) advapi32.StopTraceA
