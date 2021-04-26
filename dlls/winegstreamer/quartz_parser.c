@@ -597,8 +597,8 @@ static uint64_t scale_uint64(uint64_t value, uint32_t numerator, uint32_t denomi
         return 0;
 
     i.QuadPart = value;
-    low.QuadPart = i.u.LowPart * numerator;
-    high.QuadPart = i.u.HighPart * numerator + low.u.HighPart;
+    low.QuadPart = (ULONGLONG)i.u.LowPart * numerator;
+    high.QuadPart = (ULONGLONG)i.u.HighPart * numerator + low.u.HighPart;
     low.u.HighPart = 0;
 
     if (high.u.HighPart >= denominator)
