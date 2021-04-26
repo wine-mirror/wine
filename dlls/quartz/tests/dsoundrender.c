@@ -737,7 +737,7 @@ static HRESULT send_frame(IMemInputPin *sink)
     params->sink = sink;
     params->sample = sample;
     thread = CreateThread(NULL, 0, frame_thread, params, 0, NULL);
-    ret = WaitForSingleObject(thread, 500);
+    ret = WaitForSingleObject(thread, 2000);
     todo_wine_if (ret) ok(!ret, "Wait failed.\n");
     GetExitCodeThread(thread, &ret);
     CloseHandle(thread);
