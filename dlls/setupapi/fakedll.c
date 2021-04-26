@@ -40,6 +40,23 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
+#ifdef __i386__
+static const WCHAR pe_dir[] = L"\\i386-windows";
+static const char current_arch[] = "x86";
+#elif defined __x86_64__
+static const WCHAR pe_dir[] = L"\\x86_64-windows";
+static const char current_arch[] = "amd64";
+#elif defined __arm__
+static const WCHAR pe_dir[] = L"\\arm-windows";
+static const char current_arch[] = "arm";
+#elif defined __aarch64__
+static const WCHAR pe_dir[] = L"\\aarch64-windows";
+static const char current_arch[] = "arm64";
+#else
+static const WCHAR pe_dir[] = L"";
+static const char current_arch[] = "none";
+#endif
+
 static const char builtin_signature[] = "Wine builtin DLL";
 static const char fakedll_signature[] = "Wine placeholder DLL";
 
@@ -414,7 +431,7 @@ static void *load_fake_dll( const WCHAR *name, SIZE_T *size )
     len = lstrlenW( name );
     if (build_dir) maxlen = lstrlenW(build_dir) + ARRAY_SIZE(L"\\programs") + len + 1;
     while ((path = enum_load_path( i++ ))) maxlen = max( maxlen, lstrlenW(path) );
-    maxlen += ARRAY_SIZE(L"\\fakedlls") + len + ARRAY_SIZE(L".fake");
+    maxlen += ARRAY_SIZE(pe_dir) + len + ARRAY_SIZE(L".fake");
 
     if (!(file = HeapAlloc( GetProcessHeap(), 0, maxlen * sizeof(WCHAR) ))) return NULL;
 
@@ -452,6 +469,9 @@ static void *load_fake_dll( const WCHAR *name, SIZE_T *size )
     file[pos + len + 1] = 0;
     for (i = 0; (path = enum_load_path( i )); i++)
     {
+        ptr = prepend( file + pos, pe_dir, lstrlenW(pe_dir) );
+        ptr = prepend( ptr, path, lstrlenW(path) );
+        if ((res = read_file( ptr, &data, size ))) break;
         ptr = prepend( file + pos, path, lstrlenW(path) );
         if ((res = read_file( ptr, &data, size ))) break;
         ptr = prepend( file + pos, L"\\fakedlls", 9 );
@@ -709,17 +729,6 @@ struct dll_data
 
 static BOOL CALLBACK register_manifest( HMODULE module, const WCHAR *type, WCHAR *res_name, LONG_PTR arg )
 {
-#ifdef __i386__
-    static const char current_arch[] = "x86";
-#elif defined __x86_64__
-    static const char current_arch[] = "amd64";
-#elif defined __arm__
-    static const char current_arch[] = "arm";
-#elif defined __aarch64__
-    static const char current_arch[] = "arm64";
-#else
-    static const char current_arch[] = "none";
-#endif
     const struct dll_data *dll_data = (const struct dll_data*)arg;
     WCHAR *dest = NULL;
     DWORD dest_len = 0;
@@ -1007,7 +1016,7 @@ static BOOL create_wildcard_dlls( const WCHAR *dirname, const WCHAR *wildcard, B
 
     if (build_dir) maxlen = lstrlenW(build_dir) + ARRAY_SIZE(L"\\programs") + 1;
     for (i = 0; (path = enum_load_path(i)); i++) maxlen = max( maxlen, lstrlenW(path) );
-    maxlen += 2 * max_dll_name_len + 2 + 10; /* ".dll.fake" */
+    maxlen += 2 * max_dll_name_len + 2 + ARRAY_SIZE(pe_dir) + 10; /* ".dll.fake" */
     if (!(file = HeapAlloc( GetProcessHeap(), 0, maxlen * sizeof(WCHAR) ))) return FALSE;
 
     if (!(dest = HeapAlloc( GetProcessHeap(), 0, (lstrlenW(dirname) + max_dll_name_len) * sizeof(WCHAR) )))
@@ -1029,6 +1038,8 @@ static BOOL create_wildcard_dlls( const WCHAR *dirname, const WCHAR *wildcard, B
     }
     for (i = 0; (path = enum_load_path( i )); i++)
     {
+        swprintf( file, maxlen, L"%s%s", path, pe_dir );
+        install_lib_dir( dest, file, wildcard, NULL, delete );
         lstrcpyW( file, path );
         install_lib_dir( dest, file, wildcard, NULL, delete );
         lstrcpyW( file, path );
