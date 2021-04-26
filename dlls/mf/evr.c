@@ -591,19 +591,14 @@ static ULONG WINAPI video_stream_get_service_Release(IMFGetService *iface)
     return IMFStreamSink_Release(&stream->IMFStreamSink_iface);
 }
 
-static HRESULT WINAPI video_stream_get_service_GetService(IMFGetService *iface, REFGUID service, REFIID riid, void **obj)
+static HRESULT WINAPI video_stream_get_service(struct video_stream *stream, REFGUID service, REFIID riid, void **obj)
 {
-    struct video_stream *stream = impl_from_stream_IMFGetService(iface);
     HRESULT hr = S_OK;
-
-    TRACE("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
 
     if (IsEqualGUID(service, &MR_VIDEO_ACCELERATION_SERVICE))
     {
         if (IsEqualIID(riid, &IID_IMFVideoSampleAllocator))
         {
-            EnterCriticalSection(&stream->cs);
-
             if (!stream->allocator)
             {
                 hr = MFCreateVideoSampleAllocator(&IID_IMFVideoSampleAllocator, (void **)&stream->allocator);
@@ -613,9 +608,11 @@ static HRESULT WINAPI video_stream_get_service_GetService(IMFGetService *iface, 
             if (SUCCEEDED(hr))
                 hr = IMFVideoSampleAllocator_QueryInterface(stream->allocator, riid, obj);
 
-            LeaveCriticalSection(&stream->cs);
-
             return hr;
+        }
+        else if (IsEqualIID(riid, &IID_IDirect3DDeviceManager9) && stream->parent->device_manager)
+        {
+            return IUnknown_QueryInterface(stream->parent->device_manager, riid, obj);
         }
 
         return E_NOINTERFACE;
@@ -624,6 +621,23 @@ static HRESULT WINAPI video_stream_get_service_GetService(IMFGetService *iface, 
     FIXME("Unsupported service %s.\n", debugstr_guid(service));
 
     return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_stream_get_service_GetService(IMFGetService *iface, REFGUID service, REFIID riid, void **obj)
+{
+    struct video_stream *stream = impl_from_stream_IMFGetService(iface);
+    HRESULT hr;
+
+    TRACE("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
+
+    EnterCriticalSection(&stream->cs);
+    if (!stream->parent)
+        hr = MF_E_STREAMSINK_REMOVED;
+    else
+        hr = video_stream_get_service(stream, service, riid, obj);
+    LeaveCriticalSection(&stream->cs);
+
+    return hr;
 }
 
 static const IMFGetServiceVtbl video_stream_get_service_vtbl =
@@ -1992,6 +2006,8 @@ static HRESULT WINAPI video_renderer_get_service_GetService(IMFGetService *iface
 
     TRACE("%p, %s, %s, %p.\n", iface, debugstr_guid(service), debugstr_guid(riid), obj);
 
+    EnterCriticalSection(&renderer->cs);
+
     if (IsEqualGUID(service, &MR_VIDEO_MIXER_SERVICE))
     {
         hr = IMFTransform_QueryInterface(renderer->mixer, &IID_IMFGetService, (void **)&gs);
@@ -2000,10 +2016,17 @@ static HRESULT WINAPI video_renderer_get_service_GetService(IMFGetService *iface
     {
         hr = IMFVideoPresenter_QueryInterface(renderer->presenter, &IID_IMFGetService, (void **)&gs);
     }
+    else if (IsEqualGUID(service, &MR_VIDEO_ACCELERATION_SERVICE) && IsEqualIID(riid, &IID_IDirect3DDeviceManager9))
+    {
+        if (renderer->device_manager)
+            hr = IUnknown_QueryInterface(renderer->device_manager, riid, obj);
+    }
     else
     {
         FIXME("Unsupported service %s.\n", debugstr_guid(service));
     }
+
+    LeaveCriticalSection(&renderer->cs);
 
     if (gs)
     {
