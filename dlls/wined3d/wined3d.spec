@@ -104,7 +104,7 @@
 @ cdecl wined3d_device_set_cs_uav(ptr long ptr long)
 @ cdecl wined3d_device_set_cursor_position(ptr long long long)
 @ cdecl wined3d_device_set_cursor_properties(ptr long long ptr long)
-@ cdecl wined3d_device_set_depth_stencil_state(ptr ptr)
+@ cdecl wined3d_device_set_depth_stencil_state(ptr ptr long)
 @ cdecl wined3d_device_set_depth_stencil_view(ptr ptr)
 @ cdecl wined3d_device_set_dialog_box_mode(ptr long)
 @ cdecl wined3d_device_set_domain_shader(ptr ptr)
