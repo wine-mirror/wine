@@ -50,6 +50,7 @@ struct device
 {
     SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail;
     HANDLE file;
+    HANDLE handle;
     RID_DEVICE_INFO info;
     PHIDP_PREPARSED_DATA data;
 };
@@ -100,7 +101,7 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
     struct device *device;
     UINT32 handle;
     HANDLE file;
-    DWORD size, type;
+    DWORD i, size, type;
 
     SetupDiGetDeviceInterfaceDetailW(set, iface, NULL, 0, &size, &device_data);
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
@@ -114,6 +115,15 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
     {
         ERR("Failed to get device handle, error %#x.\n", GetLastError());
         return NULL;
+    }
+
+    for (i = 0; i < rawinput_devices_count; ++i)
+    {
+        if (rawinput_devices[i].handle == UlongToHandle(handle))
+        {
+            TRACE("Updating device %x / %s\n", handle, debugstr_w(rawinput_devices[i].detail->DevicePath));
+            return rawinput_devices + i;
+        }
     }
 
     if (!(detail = malloc(size)))
@@ -147,6 +157,7 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
     device = &rawinput_devices[rawinput_devices_count++];
     device->detail = detail;
     device->file = file;
+    device->handle = ULongToHandle(handle);
     device->info.cbSize = sizeof(RID_DEVICE_INFO);
     device->data = NULL;
 
@@ -241,6 +252,20 @@ static void find_devices(void)
     SetupDiDestroyDeviceInfoList(set);
 
     LeaveCriticalSection(&rawinput_devices_cs);
+}
+
+
+static struct device *find_device_from_handle(HANDLE handle)
+{
+    UINT i;
+    for (i = 0; i < rawinput_devices_count; ++i)
+        if (rawinput_devices[i].handle == handle)
+            return rawinput_devices + i;
+    find_devices();
+    for (i = 0; i < rawinput_devices_count; ++i)
+        if (rawinput_devices[i].handle == handle)
+            return rawinput_devices + i;
+    return NULL;
 }
 
 
@@ -401,7 +426,7 @@ UINT WINAPI GetRawInputDeviceList(RAWINPUTDEVICELIST *devices, UINT *device_coun
 
     for (i = 0; i < rawinput_devices_count; ++i)
     {
-        devices[2 + i].hDevice = &rawinput_devices[i];
+        devices[2 + i].hDevice = rawinput_devices[i].handle;
         devices[2 + i].dwType = rawinput_devices[i].info.dwType;
     }
 
@@ -671,7 +696,7 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE handle, UINT command, void *data, UINT
     static const RID_DEVICE_INFO_MOUSE mouse_info = {1, 5, 0, FALSE};
 
     RID_DEVICE_INFO info;
-    struct device *device = handle;
+    struct device *device;
     const void *to_copy;
     UINT to_copy_bytes, avail_bytes;
 
@@ -679,6 +704,7 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE handle, UINT command, void *data, UINT
             handle, command, data, data_size);
 
     if (!data_size) return ~0U;
+    if (!(device = find_device_from_handle(handle))) return ~0U;
 
     /* each case below must set:
      *     *data_size: length (meaning defined by command) of data we want to copy
