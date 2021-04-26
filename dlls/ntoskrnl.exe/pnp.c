@@ -38,6 +38,12 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
 WINE_DEFAULT_DEBUG_CHANNEL(plugplay);
 
+static inline const char *debugstr_propkey( const DEVPROPKEY *id )
+{
+    if (!id) return "(null)";
+    return wine_dbg_sprintf( "{%s,%04x}", wine_dbgstr_guid( &id->fmtid ), id->pid );
+}
+
 #define MAX_SERVICE_NAME 260
 
 struct device_interface
@@ -781,6 +787,51 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
         heap_free( broadcast );
     }
     return ret;
+}
+
+/***********************************************************************
+ *           IoSetDevicePropertyData (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoSetDevicePropertyData( DEVICE_OBJECT *device, const DEVPROPKEY *property_key, LCID lcid,
+                                         ULONG flags, DEVPROPTYPE type, ULONG size, void *data )
+{
+    SP_DEVINFO_DATA sp_device = {sizeof(sp_device)};
+    WCHAR device_instance_id[MAX_DEVICE_ID_LEN];
+    NTSTATUS status;
+    HDEVINFO set;
+
+    TRACE( "device %p, property_key %s, lcid %#x, flags %#x, type %#x, size %u, data %p.\n",
+           device, debugstr_propkey(property_key), lcid, flags, type, size, data );
+
+    /* flags is always treated as PLUGPLAY_PROPERTY_PERSISTENT starting with Win 8 / 2012 */
+
+    if (lcid != LOCALE_NEUTRAL) FIXME( "only LOCALE_NEUTRAL is supported\n" );
+
+    if ((status = get_device_instance_id( device, device_instance_id ))) return status;
+
+    if ((set = SetupDiCreateDeviceInfoList( &GUID_NULL, NULL )) == INVALID_HANDLE_VALUE)
+    {
+        ERR( "Failed to create device list, error %#x.\n", GetLastError() );
+        return GetLastError();
+    }
+
+    if (!SetupDiOpenDeviceInfoW( set, device_instance_id, NULL, 0, &sp_device ))
+    {
+        ERR( "Failed to open device, error %#x.\n", GetLastError() );
+        SetupDiDestroyDeviceInfoList( set );
+        return GetLastError();
+    }
+
+    if (!SetupDiSetDevicePropertyW( set, &sp_device, property_key, type, data, size, 0 ))
+    {
+        ERR( "Failed to set property, error %#x.\n", GetLastError() );
+        SetupDiDestroyDeviceInfoList( set );
+        return GetLastError();
+    }
+
+    SetupDiDestroyDeviceInfoList( set );
+
+    return STATUS_SUCCESS;
 }
 
 /***********************************************************************

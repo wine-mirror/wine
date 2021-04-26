@@ -465,6 +465,7 @@
 @ stdcall IoReuseIrp(ptr long)
 @ stub IoSetCompletionRoutineEx
 @ stdcall IoSetDeviceInterfaceState(ptr long)
+@ stdcall IoSetDevicePropertyData(ptr ptr long long long long ptr)
 @ stub IoSetDeviceToVerify
 @ stub IoSetFileOrigin
 @ stub IoSetHardErrorOrVerifyDevice
