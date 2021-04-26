@@ -775,6 +775,7 @@ AR
 BISON
 FLEX
 TOOLSDIR
+ARCH
 TARGETFLAGS
 LD
 CPPBIN
@@ -5869,6 +5870,19 @@ then
 --enable-win64 should be used in the 64-bit build tree, --with-wine64 in the 32-bit Wow64 build tree." "$LINENO" 5
     test "x$libdir" != "x\${exec_prefix}/lib" || libdir="\${exec_prefix}/lib64"
 fi
+
+case $host_cpu in
+  *i[3456789]86*) ARCH="i386"
+ ;;
+  *x86_64*)         ARCH="x86_64"
+ ;;
+  *aarch64*)        ARCH="aarch64"
+ ;;
+  *arm*)            ARCH="arm"
+ ;;
+  *)                ARCH=""
+ ;;
+esac
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for the directory containing the Wine tools" >&5
 $as_echo_n "checking for the directory containing the Wine tools... " >&6; }

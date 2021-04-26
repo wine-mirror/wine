@@ -158,6 +158,8 @@ static const char *tools_ext;
 static const char *exe_ext;
 static const char *dll_ext;
 static const char *man_ext;
+static const char *arch;
+static const char *pe_dir;
 static const char *crosstarget;
 static const char *crossdebug;
 static const char *fontforge;
@@ -3321,7 +3323,7 @@ static void output_module( struct makefile *make )
         }
         strarray_add( &make->all_targets, strmake( "%s", make->module ));
         add_install_rule( make, make->module, strmake( "%s", make->module ),
-                          strmake( "c$(dlldir)/%s", make->module ));
+                          strmake( "c%s/%s", pe_dir, make->module ));
         debug_file = get_debug_file( make, make->module );
         output( "%s:", module_path );
     }
@@ -4434,6 +4436,7 @@ int main( int argc, char *argv[] )
     exe_ext      = get_expanded_make_variable( top_makefile, "EXEEXT" );
     man_ext      = get_expanded_make_variable( top_makefile, "api_manext" );
     dll_ext      = (exe_ext && !strcmp( exe_ext, ".exe" )) ? "" : ".so";
+    arch         = get_expanded_make_variable( top_makefile, "ARCH" );
     crosstarget  = get_expanded_make_variable( top_makefile, "CROSSTARGET" );
     crossdebug   = get_expanded_make_variable( top_makefile, "CROSSDEBUG" );
     fontforge    = get_expanded_make_variable( top_makefile, "FONTFORGE" );
@@ -4454,6 +4457,10 @@ int main( int argc, char *argv[] )
     if (!exe_ext) exe_ext = "";
     if (!tools_ext) tools_ext = "";
     if (!man_ext) man_ext = "3w";
+    if (arch)
+        pe_dir = strmake( "$(dlldir)/%s-windows", arch );
+    else
+        pe_dir = "$(dlldir)";
 
     top_makefile->src_dir = root_src_dir;
     subdirs = get_expanded_make_var_array( top_makefile, "SUBDIRS" );

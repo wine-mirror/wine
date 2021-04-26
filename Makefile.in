@@ -32,6 +32,7 @@ nlsdir          = ${datadir}/wine/nls
 dlldir          = ${libdir}/wine
 srcdir          = @srcdir@
 SHELL           = /bin/sh
+ARCH            = @ARCH@
 CC              = @CC@
 CXX             = @CXX@
 CPPBIN          = @CPPBIN@
