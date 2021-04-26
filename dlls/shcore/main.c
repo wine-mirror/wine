@@ -695,20 +695,54 @@ static HRESULT WINAPI memstream_SetSize(IStream *iface, ULARGE_INTEGER new_size)
     return S_OK;
 }
 
-static HRESULT WINAPI shstream_CopyTo(IStream *iface, IStream *pstm, ULARGE_INTEGER size, ULARGE_INTEGER *read_len, ULARGE_INTEGER *written)
+static HRESULT WINAPI shstream_CopyTo(IStream *iface, IStream *dest, ULARGE_INTEGER size,
+        ULARGE_INTEGER *read_len, ULARGE_INTEGER *written)
 {
     struct shstream *stream = impl_from_IStream(iface);
+    ULARGE_INTEGER total_read, total_written;
+    HRESULT hr = S_OK;
+    BYTE buffer[0x400];
 
-    TRACE("(%p)\n", stream);
+    TRACE("(%p, %p, %s, %p, %p)\n", stream, dest, wine_dbgstr_longlong(size.QuadPart), read_len, written);
+
+    if (!dest)
+        return E_POINTER;
+
+    total_read.QuadPart = 0;
+    total_written.QuadPart = 0;
+
+    while (size.QuadPart > 0)
+    {
+        ULONG chunk_size = size.QuadPart >= sizeof(buffer) ? sizeof(buffer) : size.u.LowPart;
+        ULONG chunk_read, chunk_written;
+
+        hr = IStream_Read(iface, buffer, chunk_size, &chunk_read);
+        if (FAILED(hr))
+            break;
+
+        total_read.QuadPart += chunk_read;
+
+        if (chunk_read)
+        {
+            hr = IStream_Write(dest, buffer, chunk_read, &chunk_written);
+            if (FAILED(hr))
+                break;
+
+            total_written.QuadPart += chunk_written;
+        }
+
+        if (chunk_read != chunk_size)
+            size.QuadPart = 0;
+        else
+            size.QuadPart -= chunk_read;
+    }
 
     if (read_len)
-        read_len->QuadPart = 0;
-
+        read_len->QuadPart = total_read.QuadPart;
     if (written)
-        written->QuadPart = 0;
+        written->QuadPart = total_written.QuadPart;
 
-    /* TODO implement */
-    return E_NOTIMPL;
+    return hr;
 }
 
 static HRESULT WINAPI shstream_Commit(IStream *iface, DWORD flags)
