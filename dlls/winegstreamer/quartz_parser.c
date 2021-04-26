@@ -875,7 +875,7 @@ static HRESULT parser_init_stream(struct strmbase_filter *iface)
      * it transitions from stopped -> paused. */
 
     seeking = &filter->sources[0]->seek;
-    if (seeking->llStop && seeking->llStop != seeking->llDuration)
+    if (seeking->llStop)
         stop_flags = AM_SEEKING_AbsolutePositioning;
     unix_funcs->wg_parser_stream_seek(filter->sources[0]->wg_stream, seeking->dRate,
             seeking->llCurrent, seeking->llStop, AM_SEEKING_AbsolutePositioning, stop_flags);
