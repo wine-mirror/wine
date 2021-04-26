@@ -31,6 +31,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
+#ifdef __i386__
+static const WCHAR pe_dir[] = L"\\i386-windows";
+#elif defined __x86_64__
+static const WCHAR pe_dir[] = L"\\x86_64-windows";
+#elif defined __arm__
+static const WCHAR pe_dir[] = L"\\arm-windows";
+#elif defined __aarch64__
+static const WCHAR pe_dir[] = L"\\aarch64-windows";
+#else
+static const WCHAR pe_dir[] = L"";
+#endif
+
 static inline BOOL is_sepA(char ch) {return ch == '/' || ch == '\\';}
 static inline BOOL is_sep(WCHAR ch) {return ch == '/' || ch == '\\';}
 
@@ -694,6 +706,7 @@ WCHAR *get_dos_file_name(const WCHAR *filename)
 BOOL search_dll_path(const struct process *process, const WCHAR *name, BOOL (*match)(void*, HANDLE, const WCHAR*), void *param)
 {
     const WCHAR *env;
+    WCHAR *p, *end;
     size_t len, i;
     HANDLE file;
     WCHAR *buf;
@@ -703,7 +716,6 @@ BOOL search_dll_path(const struct process *process, const WCHAR *name, BOOL (*ma
 
     if ((env = process_getenv(process, L"WINEBUILDDIR")))
     {
-        WCHAR *p, *end;
         const WCHAR dllsW[] = { '\\','d','l','l','s','\\' };
         const WCHAR programsW[] = { '\\','p','r','o','g','r','a','m','s','\\' };
         const WCHAR dot_dllW[] = {'.','d','l','l',0};
@@ -755,8 +767,19 @@ BOOL search_dll_path(const struct process *process, const WCHAR *name, BOOL (*ma
         WCHAR env_name[64];
         swprintf(env_name, ARRAY_SIZE(env_name), L"WINEDLLDIR%u", i);
         if (!(env = process_getenv(process, env_name))) return FALSE;
-        len = wcslen(env) + wcslen(name) + 2;
+        len = wcslen(env) + wcslen(pe_dir) + wcslen(name) + 2;
         if (!(buf = heap_alloc(len * sizeof(WCHAR)))) return FALSE;
+        if (!(p = wcsrchr(name, '.')) || lstrcmpW(p, L".so"))
+        {
+            swprintf(buf, len, L"%s%s\\%s", env, pe_dir, name);
+            file = CreateFileW(buf, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+            if (file != INVALID_HANDLE_VALUE)
+            {
+                ret = match(param, file, buf);
+                CloseHandle(file);
+                if (ret) goto found;
+            }
+        }
         swprintf(buf, len, L"%s\\%s", env, name);
         file = CreateFileW(buf, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
         if (file != INVALID_HANDLE_VALUE)
