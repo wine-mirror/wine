@@ -46,6 +46,8 @@
 #include "wine/heap.h"
 #include "wine/test.h"
 
+#define XML_E_UNEXPECTED_ATTRIBUTE 0xC00CE56C
+
 /* undef the #define in msxml2 so that we can access all versions */
 #undef CLSID_DOMDocument
 
@@ -8529,10 +8531,11 @@ static void test_createProcessingInstruction(void)
     static const char xml3_wine[] = "<?xml version=\"1.0\" standalone=\"yes\"?>\n<test/>\n";
     IXMLDOMProcessingInstruction *pi;
     IXMLDOMDocument *doc;
-    IXMLDOMNode *node;
+    IXMLDOMNode *node, *item;
+    IXMLDOMNamedNodeMap *node_map;
     IXMLDOMElement *element;
     WCHAR buff[10];
-    BSTR xml;
+    BSTR xml, bstr;
     VARIANT var;
     HRESULT hr;
     IStream *stream;
@@ -8542,6 +8545,10 @@ static void test_createProcessingInstruction(void)
     char *p;
 
     doc = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_createProcessingInstruction(doc, _bstr_("xml"), _bstr_("version=\"1.0\" encoding=\"windows-1252\" dummy=\"value\""), &pi);
+todo_wine
+    ok(hr == XML_E_UNEXPECTED_ATTRIBUTE, "got 0x%08x\n", hr);
 
     /* test for BSTR handling, pass broken BSTR */
     memcpy(&buff[2], L"test", 5 * sizeof(WCHAR));
@@ -8561,6 +8568,38 @@ static void test_createProcessingInstruction(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IXMLDOMDocument_appendChild(doc, node, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMNode_get_attributes(node, &node_map);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    item = (void *)0xdeadbeef;
+    hr = IXMLDOMNamedNodeMap_getNamedItem(node_map, _bstr_("xml"), &item);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(!item, "got %p\n", item);
+
+    item = NULL;
+    hr = IXMLDOMNamedNodeMap_getNamedItem(node_map, _bstr_("encoding"), &item);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    ok(item != NULL, "got NULL\n");
+
+if (hr == S_OK)
+{
+    hr = IXMLDOMNode_get_nodeName(item, &bstr);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(bstr, L"encoding"), "got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    VariantInit(&var);
+    hr = IXMLDOMNode_get_nodeValue(item, &var);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(V_VT(&var) == VT_BSTR, "got %u\n", V_VT(&var));
+    ok(!lstrcmpW(V_BSTR(&var), L"windows-1252"), "got %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+}
+
+    IXMLDOMNamedNodeMap_Release(node_map);
     IXMLDOMNode_Release(node);
     IXMLDOMProcessingInstruction_Release(pi);
 
