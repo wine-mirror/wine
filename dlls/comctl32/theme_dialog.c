@@ -63,13 +63,7 @@ LRESULT CALLBACK THEMING_DialogSubclassProc (HWND hWnd, UINT msg,
 	OpenThemeData( hWnd, themeClass );
 	InvalidateRect( hWnd, NULL, TRUE );
 	return 0;
-	
-    case WM_SYSCOLORCHANGE:
-	if (!doTheming) return THEMING_CallOriginalClass (hWnd, msg, wParam, lParam);
-        /* Do nothing. When themed, a WM_THEMECHANGED will be received, too,
-   	 * which will do the repaint. */
-        break;
-        
+
     case WM_ERASEBKGND:
 	if (!doTheming) return THEMING_CallOriginalClass (hWnd, msg, wParam, lParam);
         {

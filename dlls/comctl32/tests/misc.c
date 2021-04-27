@@ -21,7 +21,6 @@
 #include <stdio.h>
 #include <windows.h>
 #include <commctrl.h>
-#include <uxtheme.h>
 
 #include "wine/test.h"
 #include "v6util.h"
@@ -40,9 +39,8 @@ static BOOL (WINAPI * pStr_SetPtrW)(LPWSTR, LPCWSTR);
 static BOOL (WINAPI *pSetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR);
 static BOOL (WINAPI *pRemoveWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR);
 static LRESULT (WINAPI *pDefSubclassProc)(HWND, UINT, WPARAM, LPARAM);
-static BOOL (WINAPI *pIsThemeActive)(void);
 
-static HMODULE hComctl32, hUxtheme;
+static HMODULE hComctl32;
 
 /* For message tests */
 enum seq_index
@@ -107,9 +105,6 @@ static BOOL init_functions_v6(void)
     COMCTL32_GET_PROC(410, SetWindowSubclass)
     COMCTL32_GET_PROC(412, RemoveWindowSubclass)
     COMCTL32_GET_PROC(413, DefSubclassProc)
-
-    hUxtheme = LoadLibraryA("uxtheme.dll");
-    pIsThemeActive = (void *)GetProcAddress(hUxtheme, "IsThemeActive");
 
     return TRUE;
 }
@@ -630,7 +625,6 @@ static INT_PTR CALLBACK wm_syscolorchange_dlg_proc(HWND hwnd, UINT message, WPAR
 static void test_WM_SYSCOLORCHANGE(void)
 {
     HWND parent, dialog;
-    BOOL todo;
     struct
     {
         DLGTEMPLATE tmplate;
@@ -652,8 +646,7 @@ static void test_WM_SYSCOLORCHANGE(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     SendMessageW(dialog, WM_SYSCOLORCHANGE, 0, 0);
-    todo = pIsThemeActive && pIsThemeActive();
-    ok_sequence(sequences, CHILD_SEQ_INDEX, wm_syscolorchange_seq, "test dialog WM_SYSCOLORCHANGE", todo);
+    ok_sequence(sequences, CHILD_SEQ_INDEX, wm_syscolorchange_seq, "test dialog WM_SYSCOLORCHANGE", FALSE);
 
     EndDialog(dialog, 0);
     DestroyWindow(parent);
@@ -687,5 +680,4 @@ START_TEST(misc)
 
     unload_v6_module(ctx_cookie, hCtx);
     FreeLibrary(hComctl32);
-    FreeLibrary(hUxtheme);
 }
