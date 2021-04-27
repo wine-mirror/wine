@@ -2837,16 +2837,29 @@ static PEB *init_peb( void *ptr )
 
 
 /* set some initial values in a new TEB */
-static void init_teb( TEB *teb, PEB *peb )
+static TEB *init_teb( void *ptr, PEB *peb )
 {
-    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
+    struct ntdll_thread_data *thread_data;
+    TEB *teb;
+    TEB64 *teb64 = ptr;
+    TEB32 *teb32 = (TEB32 *)((char *)ptr + teb_offset);
 
-#ifndef _WIN64
-    TEB64 *teb64 = (TEB64 *)((char *)teb - teb_offset);
-
+#ifdef _WIN64
+    teb = (TEB *)teb64;
+    teb32->Peb = PtrToUlong( (char *)peb - page_size );
+    teb32->Tib.Self = PtrToUlong( teb32 );
+    teb32->Tib.ExceptionList = ~0u;
+    teb32->ActivationContextStackPointer = PtrToUlong( &teb32->ActivationContextStack );
+    teb32->ActivationContextStack.FrameListCache.Flink =
+        teb32->ActivationContextStack.FrameListCache.Blink =
+            PtrToUlong( &teb32->ActivationContextStack.FrameListCache );
+    teb32->StaticUnicodeString.Buffer = PtrToUlong( teb32->StaticUnicodeBuffer );
+    teb32->StaticUnicodeString.MaximumLength = sizeof( teb32->StaticUnicodeBuffer );
+#else
+    teb = (TEB *)teb32;
     teb64->Peb = PtrToUlong( (char *)peb + page_size );
     teb64->Tib.Self = PtrToUlong( teb64 );
-    teb64->Tib.ExceptionList = PtrToUlong( teb );
+    teb64->Tib.ExceptionList = PtrToUlong( teb32 );
     teb64->ActivationContextStackPointer = PtrToUlong( &teb64->ActivationContextStack );
     teb64->ActivationContextStack.FrameListCache.Flink =
         teb64->ActivationContextStack.FrameListCache.Blink =
@@ -2862,11 +2875,13 @@ static void init_teb( TEB *teb, PEB *peb )
     InitializeListHead( &teb->ActivationContextStack.FrameListCache );
     teb->StaticUnicodeString.Buffer = teb->StaticUnicodeBuffer;
     teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
+    thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     thread_data->request_fd = -1;
     thread_data->reply_fd   = -1;
     thread_data->wait_fd[0] = -1;
     thread_data->wait_fd[1] = -1;
     list_add_head( &teb_list, &thread_data->entry );
+    return teb;
 }
 
 
@@ -2896,11 +2911,10 @@ TEB *virtual_alloc_first_teb(void)
                              MEM_RESERVE | MEM_TOP_DOWN, PAGE_READWRITE );
     teb_block_pos = 30;
     ptr = (char *)teb_block + 30 * block_size;
-    teb = (TEB *)((char *)ptr + teb_offset);
     data_size = 2 * block_size;
     NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&ptr, 0, &data_size, MEM_COMMIT, PAGE_READWRITE );
     peb = init_peb( (char *)teb_block + 31 * block_size );
-    init_teb( teb, peb );
+    teb = init_teb( ptr, peb );
     *(ULONG_PTR *)&peb->CloudFileFlags = get_image_address();
     return teb;
 }
@@ -2943,8 +2957,7 @@ NTSTATUS virtual_alloc_teb( TEB **ret_teb )
         NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&ptr, 0, &block_size,
                                  MEM_COMMIT, PAGE_READWRITE );
     }
-    *ret_teb = teb = (TEB *)((char *)ptr + teb_offset);
-    init_teb( teb, NtCurrentTeb()->Peb );
+    *ret_teb = teb = init_teb( ptr, NtCurrentTeb()->Peb );
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
 
     if ((status = signal_alloc_thread( teb )))
@@ -2964,7 +2977,7 @@ NTSTATUS virtual_alloc_teb( TEB **ret_teb )
 void virtual_free_teb( TEB *teb )
 {
     struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
-    void *ptr;
+    void *ptr = teb;
     SIZE_T size;
     sigset_t sigset;
 
@@ -2982,7 +2995,7 @@ void virtual_free_teb( TEB *teb )
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
     list_remove( &thread_data->entry );
-    ptr = (char *)teb - teb_offset;
+    if (!is_win64) ptr = (char *)ptr - teb_offset;
     *(void **)ptr = next_free_teb;
     next_free_teb = ptr;
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );

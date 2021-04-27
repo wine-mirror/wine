@@ -70,16 +70,10 @@ static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
 }
 
 static const SIZE_T page_size = 0x1000;
+static const SIZE_T teb_size = 0x3000;  /* TEB64 + TEB32 */
 static const SIZE_T signal_stack_mask = 0xffff;
-#ifdef _WIN64
-static const SIZE_T teb_size = 0x2000;
-static const SIZE_T teb_offset = 0;
-static const SIZE_T signal_stack_size = 0x10000 - 0x2000;
-#else
-static const SIZE_T teb_size = 0x3000;  /* TEB64 + TEB */
-static const SIZE_T teb_offset = 0x2000;
 static const SIZE_T signal_stack_size = 0x10000 - 0x3000;
-#endif
+static const LONG teb_offset = 0x2000;
 
 /* callbacks to PE ntdll from the Unix side */
 extern void     (WINAPI *pDbgUiRemoteBreakin)( void *arg ) DECLSPEC_HIDDEN;
@@ -298,7 +292,7 @@ static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
 
 static inline void *get_signal_stack(void)
 {
-    return (char *)NtCurrentTeb() + teb_size - teb_offset;
+    return (void *)(((ULONG_PTR)NtCurrentTeb() & ~signal_stack_mask) + teb_size);
 }
 
 static inline void mutex_lock( pthread_mutex_t *mutex )

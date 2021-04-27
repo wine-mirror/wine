@@ -1459,6 +1459,7 @@ static void init_teb64( TEB *teb )
     teb->WowTebOffset  = -teb_offset;
     teb64->ClientId.UniqueProcess = PtrToUlong( teb->ClientId.UniqueProcess );
     teb64->ClientId.UniqueThread  = PtrToUlong( teb->ClientId.UniqueThread );
+    teb64->WowTebOffset           = teb_offset;
 #endif
 }
 
