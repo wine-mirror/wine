@@ -941,7 +941,7 @@ static size_t rpcrt4_ip_tcp_get_top_of_tower(unsigned char *tower_data,
         ret = getaddrinfo("0.0.0.0", endpoint, &hints, &ai);
         if (ret)
         {
-            ERR("getaddrinfo failed: %s\n", gai_strerror(ret));
+            ERR("getaddrinfo failed, error %u\n", WSAGetLastError());
             return 0;
         }
     }
@@ -1147,8 +1147,8 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
   ret = getaddrinfo(Connection->NetworkAddr, Connection->Endpoint, &hints, &ai);
   if (ret)
   {
-    ERR("getaddrinfo for %s:%s failed: %s\n", Connection->NetworkAddr,
-      Connection->Endpoint, gai_strerror(ret));
+    ERR("getaddrinfo for %s:%s failed, error %u\n", Connection->NetworkAddr,
+            Connection->Endpoint, WSAGetLastError());
     return RPC_S_SERVER_UNAVAILABLE;
   }
 
@@ -1228,8 +1228,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
     ret = getaddrinfo(NULL, endpoint ? endpoint : "0", &hints, &ai);
     if (ret)
     {
-        ERR("getaddrinfo for port %s failed: %s\n", endpoint,
-            gai_strerror(ret));
+        ERR("getaddrinfo for port %s failed, error %u\n", endpoint, WSAGetLastError());
         if ((ret == EAI_SERVICE) || (ret == EAI_NONAME))
             return RPC_S_INVALID_ENDPOINT_FORMAT;
         return RPC_S_CANT_CREATE_ENDPOINT;
@@ -1293,7 +1292,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
                           NI_NUMERICSERV);
         if (ret)
         {
-            WARN("getnameinfo failed: %s\n", gai_strerror(ret));
+            WARN("getnameinfo failed, error %u\n", WSAGetLastError());
             closesocket(sock);
             status = RPC_S_CANT_CREATE_ENDPOINT;
             continue;
