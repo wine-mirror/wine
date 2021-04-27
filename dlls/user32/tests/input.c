@@ -53,6 +53,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
+#include "winreg.h"
 #include "ddk/hidsdi.h"
 
 #include "wine/test.h"
@@ -3034,8 +3035,11 @@ static void test_get_async_key_state(void)
 
 static void test_keyboard_layout_name(void)
 {
+    WCHAR klid[KL_NAMELENGTH], tmpklid[KL_NAMELENGTH], layout_path[MAX_PATH], value[5];
+    HKL layout, tmplayout, layouts[64];
+    DWORD status, value_size;
+    int i, len;
     BOOL ret;
-    char klid[KL_NAMELENGTH];
 
     if (0) /* crashes on native system */
         ret = GetKeyboardLayoutNameA(NULL);
@@ -3045,12 +3049,49 @@ static void test_keyboard_layout_name(void)
     ok(!ret, "got %d\n", ret);
     ok(GetLastError() == ERROR_NOACCESS, "got %d\n", GetLastError());
 
-    if (GetKeyboardLayout(0) != (HKL)(ULONG_PTR)0x04090409) return;
+    layout = GetKeyboardLayout(0);
 
-    klid[0] = 0;
-    ret = GetKeyboardLayoutNameA(klid);
-    ok(ret, "GetKeyboardLayoutNameA failed %u\n", GetLastError());
-    ok(!strcmp(klid, "00000409"), "expected 00000409, got %s\n", klid);
+    len = GetKeyboardLayoutList(ARRAY_SIZE(layouts), layouts);
+    ok(len > 0, "GetKeyboardLayoutList returned %d\n", len);
+
+    for (i = len - 1; i >= 0; --i)
+    {
+        UINT id = (UINT_PTR)layouts[i];
+        ActivateKeyboardLayout(layouts[i], 0);
+        GetKeyboardLayoutNameW(klid);
+
+        if (id & 0x80000000)
+        {
+            todo_wine ok((id >> 28) == 0xf, "hkl high bits %#x, expected 0xf\n", id >> 28);
+
+            value_size = sizeof(value);
+            wcscpy(layout_path, L"System\\CurrentControlSet\\Control\\Keyboard Layouts\\");
+            wcscat(layout_path, klid);
+            status = RegGetValueW(HKEY_LOCAL_MACHINE, layout_path, L"Layout Id", RRF_RT_REG_SZ, NULL, (void *)&value, &value_size);
+            todo_wine ok(!status, "RegGetValueW returned %x\n", status);
+            ok(value_size == 5 * sizeof(WCHAR), "RegGetValueW returned size %d\n", value_size);
+
+            swprintf(tmpklid, KL_NAMELENGTH, L"%04X", (id >> 16) & 0x0fff);
+            todo_wine ok(!wcsicmp(value, tmpklid), "RegGetValueW returned %s, expected %s\n", debugstr_w(value), debugstr_w(tmpklid));
+        }
+        else
+        {
+            swprintf(tmpklid, KL_NAMELENGTH, L"%08X", id >> 16);
+            ok(!wcsicmp(klid, tmpklid), "GetKeyboardLayoutNameW returned %s, expected %s\n", debugstr_w(klid), debugstr_w(tmpklid));
+        }
+
+        ActivateKeyboardLayout(layout, 0);
+        tmplayout = LoadKeyboardLayoutW(klid, KLF_ACTIVATE);
+
+        /* The low word of HKL is the selected user lang and may be different as LoadKeyboardLayoutW also selects the default lang from the layout */
+        ok(((UINT_PTR)tmplayout & ~0xffff) == ((UINT_PTR)layouts[i] & ~0xffff), "GetKeyboardLayout returned %p, expected %p\n", tmplayout, layouts[i]);
+
+        /* The layout name only depends on the keyboard layout: the high word of HKL. */
+        GetKeyboardLayoutNameW(tmpklid);
+        ok(!wcsicmp(klid, tmpklid), "GetKeyboardLayoutNameW returned %s, expected %s\n", debugstr_w(tmpklid), debugstr_w(klid));
+    }
+
+    ActivateKeyboardLayout(layout, 0);
 }
 
 static void test_key_names(void)
