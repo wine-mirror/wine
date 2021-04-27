@@ -1797,17 +1797,26 @@ void init_registry(void)
 {
     static const WCHAR HKLM[] = { 'M','a','c','h','i','n','e' };
     static const WCHAR HKU_default[] = { 'U','s','e','r','\\','.','D','e','f','a','u','l','t' };
-    static const WCHAR classes[] = {'S','o','f','t','w','a','r','e','\\',
-                                    'C','l','a','s','s','e','s','\\',
-                                    'W','o','w','6','4','3','2','N','o','d','e'};
+    static const WCHAR classes_i386[] = {'S','o','f','t','w','a','r','e','\\',
+                                         'C','l','a','s','s','e','s','\\',
+                                         'W','o','w','6','4','3','2','N','o','d','e'};
+    static const WCHAR classes_amd64[] = {'S','o','f','t','w','a','r','e','\\',
+                                          'C','l','a','s','s','e','s','\\',
+                                          'W','o','w','6','4','6','4','N','o','d','e'};
+    static const WCHAR classes_arm[] = {'S','o','f','t','w','a','r','e','\\',
+                                        'C','l','a','s','s','e','s','\\',
+                                        'W','o','w','A','A','3','2','N','o','d','e'};
+    static const WCHAR classes_arm64[] = {'S','o','f','t','w','a','r','e','\\',
+                                          'C','l','a','s','s','e','s','\\',
+                                          'W','o','w','A','A','6','4','N','o','d','e'};
     static const struct unicode_str root_name = { NULL, 0 };
     static const struct unicode_str HKLM_name = { HKLM, sizeof(HKLM) };
     static const struct unicode_str HKU_name = { HKU_default, sizeof(HKU_default) };
-    static const struct unicode_str classes_name = { classes, sizeof(classes) };
 
     WCHAR *current_user_path;
     struct unicode_str current_user_str;
     struct key *key, *hklm, *hkcu;
+    unsigned int i;
     char *p;
 
     /* switch to the config dir */
@@ -1854,10 +1863,19 @@ void init_registry(void)
     free( current_user_path );
     load_init_registry_from_file( "user.reg", hkcu );
 
-    /* set the shared flag on Software\Classes\Wow6432Node */
-    if (prefix_type == PREFIX_64BIT)
+    /* set the shared flag on Software\Classes\Wow6432Node for all platforms */
+    for (i = 1; i < supported_machines_count; i++)
     {
-        if ((key = create_key_recursive( hklm, &classes_name, current_time )))
+        struct unicode_str name;
+
+        switch (supported_machines[i])
+        {
+        case IMAGE_FILE_MACHINE_I386:  name.str = classes_i386;  name.len = sizeof(classes_i386);  break;
+        case IMAGE_FILE_MACHINE_ARMNT: name.str = classes_arm;   name.len = sizeof(classes_arm);   break;
+        case IMAGE_FILE_MACHINE_AMD64: name.str = classes_amd64; name.len = sizeof(classes_amd64); break;
+        case IMAGE_FILE_MACHINE_ARM64: name.str = classes_arm64; name.len = sizeof(classes_arm64); break;
+        }
+        if ((key = create_key_recursive( hklm, &name, current_time )))
         {
             key->flags |= KEY_WOWSHARE;
             release_object( key );
@@ -1876,7 +1894,16 @@ void init_registry(void)
     if (!mkdir( "drive_c/windows", 0777 ))
     {
         mkdir( "drive_c/windows/system32", 0777 );
-        if (prefix_type == PREFIX_64BIT) mkdir( "drive_c/windows/syswow64", 0777 );
+        for (i = 1; i < supported_machines_count; i++)
+        {
+            switch (supported_machines[i])
+            {
+            case IMAGE_FILE_MACHINE_I386:  mkdir( "drive_c/windows/syswow64", 0777 ); break;
+            case IMAGE_FILE_MACHINE_ARMNT: mkdir( "drive_c/windows/sysarm32", 0777 ); break;
+            case IMAGE_FILE_MACHINE_AMD64: mkdir( "drive_c/windows/sysx8664", 0777 ); break;
+            case IMAGE_FILE_MACHINE_ARM64: mkdir( "drive_c/windows/sysarm64", 0777 ); break;
+            }
+        }
     }
 
     /* go back to the server dir */
