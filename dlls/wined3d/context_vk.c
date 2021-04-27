@@ -2004,19 +2004,36 @@ static void wined3d_context_vk_update_blend_state(const struct wined3d_context_v
     }
 }
 
+static VkFormat vk_format_from_component_type(enum wined3d_component_type component_type)
+{
+    switch (component_type)
+    {
+        case WINED3D_TYPE_UINT:
+            return VK_FORMAT_R32G32B32A32_UINT;
+        case WINED3D_TYPE_INT:
+            return VK_FORMAT_R32G32B32A32_SINT;
+        case WINED3D_TYPE_UNKNOWN:
+        case WINED3D_TYPE_FLOAT:
+            return VK_FORMAT_R32G32B32A32_SFLOAT;
+    }
+    return VK_FORMAT_UNDEFINED;
+}
+
 static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_context_vk *context_vk,
-        const struct wined3d_state *state, VkPipelineLayout vk_pipeline_layout)
+        const struct wined3d_state *state, VkPipelineLayout vk_pipeline_layout, uint32_t *null_buffer_binding)
 {
     unsigned int i, attribute_count, binding_count, divisor_count, stage_count;
     const struct wined3d_d3d_info *d3d_info = context_vk->c.d3d_info;
     struct wined3d_graphics_pipeline_key_vk *key;
     VkPipelineShaderStageCreateInfo *stage;
     struct wined3d_stream_info stream_info;
+    struct wined3d_shader *vertex_shader;
     VkPrimitiveTopology vk_topology;
     VkShaderModule module;
     bool update = false;
     uint32_t mask;
 
+    *null_buffer_binding = ~0u;
     key = &context_vk->graphics.pipeline_key_vk;
 
     if (context_vk->c.shader_update_mask & ~(1u << WINED3D_SHADER_TYPE_COMPUTE))
@@ -2041,14 +2058,15 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
             || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_STREAMSRC)
             || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX)))
     {
+        VkVertexInputAttributeDescription *a;
+        VkVertexInputBindingDescription *b;
+
         wined3d_stream_info_from_declaration(&stream_info, state, d3d_info);
         divisor_count = 0;
         for (i = 0, mask = 0, attribute_count = 0, binding_count = 0; i < ARRAY_SIZE(stream_info.elements); ++i)
         {
             VkVertexInputBindingDivisorDescriptionEXT *d;
             struct wined3d_stream_info_element *e;
-            VkVertexInputAttributeDescription *a;
-            VkVertexInputBindingDescription *b;
             uint32_t binding;
 
             if (!(stream_info.use_map & (1u << i)))
@@ -2077,6 +2095,55 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
                 d = &key->divisors[divisor_count++];
                 d->binding = binding;
                 d->divisor = e->divisor;
+            }
+        }
+
+        vertex_shader = state->shader[WINED3D_SHADER_TYPE_VERTEX];
+        if (vertex_shader && (mask = ~stream_info.use_map & vertex_shader->reg_maps.input_registers))
+        {
+            struct wined3d_shader_signature_element *element;
+            struct wined3d_shader_signature *signature;
+            uint32_t null_binding, location;
+
+            for (i = 0; i < ARRAY_SIZE(state->streams); ++i)
+            {
+                if (!state->streams[i].buffer)
+                {
+                    null_binding = i;
+                    break;
+                }
+            }
+
+            if (i == ARRAY_SIZE(state->streams))
+            {
+                ERR("No streams left for a null buffer binding.\n");
+            }
+            else
+            {
+                signature = &vertex_shader->input_signature;
+                for (i = 0; i < signature->element_count; ++i)
+                {
+                    element = &signature->elements[i];
+                    location = element->register_idx;
+
+                    if (!(mask & (1u << location)) || element->sysval_semantic)
+                        continue;
+                    mask &= ~(1u << location);
+
+                    a = &key->attributes[attribute_count++];
+                    a->location = location;
+                    a->binding = null_binding;
+                    a->format = vk_format_from_component_type(element->component_type);
+                    a->offset = 0;
+                }
+
+                if (mask != (~stream_info.use_map & vertex_shader->reg_maps.input_registers))
+                {
+                    b = &key->bindings[binding_count++];
+                    *null_buffer_binding = b->binding = null_binding;
+                    b->stride = 0;
+                    b->inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+                }
             }
         }
 
@@ -2991,6 +3058,7 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
     VkSampleCountFlagBits sample_count;
     VkCommandBuffer vk_command_buffer;
     struct wined3d_buffer *buffer;
+    uint32_t null_buffer_binding;
     unsigned int i;
 
     if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL))
@@ -3120,8 +3188,8 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
         return VK_NULL_HANDLE;
     }
 
-    if (wined3d_context_vk_update_graphics_pipeline_key(context_vk, state, context_vk->graphics.vk_pipeline_layout)
-            || !context_vk->graphics.vk_pipeline)
+    if (wined3d_context_vk_update_graphics_pipeline_key(context_vk, state, context_vk->graphics.vk_pipeline_layout,
+            &null_buffer_binding) || !context_vk->graphics.vk_pipeline)
     {
         if (!(context_vk->graphics.vk_pipeline = wined3d_context_vk_get_graphics_pipeline(context_vk)))
         {
@@ -3131,6 +3199,12 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
 
         VK_CALL(vkCmdBindPipeline(vk_command_buffer,
                 VK_PIPELINE_BIND_POINT_GRAPHICS, context_vk->graphics.vk_pipeline));
+        if (null_buffer_binding != ~0u)
+        {
+            VkDeviceSize offset = 0;
+            VK_CALL(vkCmdBindVertexBuffers(vk_command_buffer, null_buffer_binding, 1,
+                    &device_vk->null_resources_vk.buffer_info.buffer, &offset));
+        }
     }
 
     if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_STENCIL_REF) && dsv)

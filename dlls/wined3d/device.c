@@ -652,7 +652,7 @@ bool wined3d_device_vk_create_null_resources(struct wined3d_device_vk *device_vk
     vk_info = context_vk->vk_info;
 
     usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT
-            | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+            | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
     memory_type = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     if (!wined3d_context_vk_create_bo(context_vk, 16, usage, memory_type, &r->bo))
         return false;
