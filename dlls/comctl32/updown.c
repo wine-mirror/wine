@@ -966,7 +966,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
             theme = GetWindowTheme (hwnd);
             CloseThemeData (theme);
             OpenThemeData (hwnd, L"Spin");
-            InvalidateRect (hwnd, NULL, FALSE);
+            InvalidateRect (hwnd, NULL, TRUE);
             break;
 
 	case WM_TIMER:

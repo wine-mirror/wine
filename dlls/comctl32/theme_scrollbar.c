@@ -547,6 +547,7 @@ LRESULT CALLBACK THEMING_ScrollbarSubclassProc (HWND hwnd, UINT msg,
             theme = GetWindowTheme(hwnd);
             CloseThemeData(theme);
             OpenThemeData(hwnd, themeClass);
+            InvalidateRect(hwnd, NULL, TRUE);
             break;
 
         case WM_SYSCOLORCHANGE:

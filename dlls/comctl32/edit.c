@@ -5097,6 +5097,7 @@ static LRESULT CALLBACK EDIT_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
     case WM_THEMECHANGED:
         CloseThemeData(GetWindowTheme(hwnd));
         OpenThemeData(hwnd, WC_EDITW);
+        InvalidateRect(hwnd, NULL, TRUE);
         break;
 
     default:

@@ -3106,6 +3106,7 @@ static LRESULT theme_changed(const TAB_INFO *infoPtr)
     HTHEME theme = GetWindowTheme (infoPtr->hwnd);
     CloseThemeData (theme);
     OpenThemeData (infoPtr->hwnd, themeClass);
+    InvalidateRect (infoPtr->hwnd, NULL, TRUE);
     return 0;
 }
 

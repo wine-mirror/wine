@@ -1720,6 +1720,7 @@ static LRESULT theme_changed (const TRACKBAR_INFO* infoPtr)
     HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
     CloseThemeData (theme);
     OpenThemeData (infoPtr->hwndSelf, themeClass);
+    InvalidateRect (infoPtr->hwndSelf, NULL, FALSE);
     return 0;
 }
 

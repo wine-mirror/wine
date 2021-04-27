@@ -1698,6 +1698,7 @@ static LRESULT CALLBACK COMBO_WindowProc( HWND hwnd, UINT message, WPARAM wParam
         theme = GetWindowTheme( hwnd );
         CloseThemeData( theme );
         OpenThemeData( hwnd, WC_COMBOBOXW );
+        InvalidateRect( hwnd, NULL, TRUE );
         break;
 
     case WM_PRINTCLIENT:

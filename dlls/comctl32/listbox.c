@@ -3136,6 +3136,7 @@ static LRESULT CALLBACK LISTBOX_WindowProc( HWND hwnd, UINT msg, WPARAM wParam, 
         theme = GetWindowTheme( hwnd );
         CloseThemeData( theme );
         OpenThemeData( hwnd, WC_LISTBOXW );
+        InvalidateRect( hwnd, NULL, TRUE );
         break;
 
     default:

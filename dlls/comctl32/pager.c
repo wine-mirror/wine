@@ -966,6 +966,12 @@ PAGER_Timer (PAGER_INFO* infoPtr, INT nTimerId)
     return 0;
 }
 
+static LRESULT PAGER_ThemeChanged (const PAGER_INFO* infoPtr)
+{
+    InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
+    return 0;
+}
+
 static LRESULT
 PAGER_EraseBackground (const PAGER_INFO* infoPtr, HDC hdc)
 {
@@ -1552,6 +1558,9 @@ PAGER_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_COMMAND:
             return SendMessageW (infoPtr->hwndNotify, uMsg, wParam, lParam);
+
+        case WM_THEMECHANGED:
+            return PAGER_ThemeChanged (infoPtr);
 
         default:
             return DefWindowProcW (hwnd, uMsg, wParam, lParam);

@@ -615,7 +615,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
             dwExStyle |= WS_EX_STATICEDGE;
         SetWindowLongW (hwnd, GWL_EXSTYLE, dwExStyle);
         
-        InvalidateRect (hwnd, NULL, FALSE);
+        InvalidateRect (hwnd, NULL, TRUE);
         return 0;
     }
 

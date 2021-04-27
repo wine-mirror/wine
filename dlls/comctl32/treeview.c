@@ -5633,6 +5633,7 @@ static LRESULT TREEVIEW_ThemeChanged(const TREEVIEW_INFO *infoPtr)
     HTHEME theme = GetWindowTheme (infoPtr->hwnd);
     CloseThemeData (theme);
     OpenThemeData (infoPtr->hwnd, themeClass);
+    InvalidateRect (infoPtr->hwnd, NULL, TRUE);
     return 0;
 }
 

@@ -534,6 +534,7 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
         theme = GetWindowTheme( hWnd );
         CloseThemeData( theme );
         OpenThemeData( hWnd, WC_BUTTONW );
+        InvalidateRect( hWnd, NULL, TRUE );
         break;
 
     case WM_ERASEBKGND:

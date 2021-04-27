@@ -6556,6 +6556,7 @@ static LRESULT theme_changed (HWND hwnd)
     HTHEME theme = GetWindowTheme (hwnd);
     CloseThemeData (theme);
     OpenThemeData (hwnd, themeClass);
+    InvalidateRect (hwnd, NULL, TRUE);
     return 0;
 }
 

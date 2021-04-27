@@ -2697,6 +2697,7 @@ static LRESULT theme_changed (const MONTHCAL_INFO* infoPtr)
     HTHEME theme = GetWindowTheme (infoPtr->hwndSelf);
     CloseThemeData (theme);
     OpenThemeData (infoPtr->hwndSelf, themeClass);
+    InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
     return 0;
 }
 

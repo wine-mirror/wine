@@ -9345,6 +9345,7 @@ static LRESULT LISTVIEW_ThemeChanged(const LISTVIEW_INFO *infoPtr)
     HTHEME theme = GetWindowTheme(infoPtr->hwndSelf);
     CloseThemeData(theme);
     OpenThemeData(infoPtr->hwndSelf, themeClass);
+    InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
     return 0;
 }
 

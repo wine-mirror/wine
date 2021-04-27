@@ -462,6 +462,7 @@ static LRESULT IPADDRESS_ThemeChanged (const IPADDRESS_INFO *infoPtr)
     HTHEME theme = GetWindowTheme (infoPtr->Self);
     CloseThemeData (theme);
     theme = OpenThemeData (theme, WC_EDITW);
+    InvalidateRect (infoPtr->Self, NULL, TRUE);
     return 0;
 }
 
