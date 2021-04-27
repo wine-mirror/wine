@@ -3916,15 +3916,15 @@ msgstr "La compilation conditionnelle est désactivée"
 msgid "Expected '@'"
 msgstr "« @ » attendu"
 
-#: dlls/jscript/jscript.rc:79
+#: dlls/jscript/jscript.rc:80
 msgid "Microsoft JScript compilation error"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:80
+#: dlls/jscript/jscript.rc:81
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:81 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:82 dlls/vbscript/vbscript.rc:64
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
@@ -4033,6 +4033,12 @@ msgid "Cannot modify non-writable property '|'"
 msgstr ""
 
 #: dlls/jscript/jscript.rc:77
+#, fuzzy
+#| msgid "'[object]' is not a date object"
+msgid "'this' is not a Map object"
+msgstr "« [objet] » n'est pas un objet de type date"
+
+#: dlls/jscript/jscript.rc:78
 msgid "Property cannot have both accessors and a value"
 msgstr ""
 

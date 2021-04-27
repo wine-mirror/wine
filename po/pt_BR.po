@@ -3871,15 +3871,15 @@ msgstr "Compilação condicional está desligada"
 msgid "Expected '@'"
 msgstr "Esperado '@'"
 
-#: dlls/jscript/jscript.rc:79
+#: dlls/jscript/jscript.rc:80
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript erro de compilação"
 
-#: dlls/jscript/jscript.rc:80
+#: dlls/jscript/jscript.rc:81
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript erro de execução"
 
-#: dlls/jscript/jscript.rc:81 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:82 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Erro de execução desconhecido"
 
@@ -3984,6 +3984,12 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "Não pode modificar propriedade não gravável '|'"
 
 #: dlls/jscript/jscript.rc:77
+#, fuzzy
+#| msgid "'[object]' is not a date object"
+msgid "'this' is not a Map object"
+msgstr "'[object]' não é um objeto de data"
+
+#: dlls/jscript/jscript.rc:78
 msgid "Property cannot have both accessors and a value"
 msgstr "Propriedade não pode ter ambos acessores e valor"
 

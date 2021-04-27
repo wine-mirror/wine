@@ -3811,15 +3811,15 @@ msgstr "条件编译已关闭"
 msgid "Expected '@'"
 msgstr "期望 '@'"
 
-#: dlls/jscript/jscript.rc:79
+#: dlls/jscript/jscript.rc:80
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript 编译错误"
 
-#: dlls/jscript/jscript.rc:80
+#: dlls/jscript/jscript.rc:81
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript 运行时错误"
 
-#: dlls/jscript/jscript.rc:81 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:82 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "未知运行时错误"
 
@@ -3922,6 +3922,12 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "无法更改不可写的属性“|”"
 
 #: dlls/jscript/jscript.rc:77
+#, fuzzy
+#| msgid "'[object]' is not a date object"
+msgid "'this' is not a Map object"
+msgstr "'[object]' 不是日期对象"
+
+#: dlls/jscript/jscript.rc:78
 msgid "Property cannot have both accessors and a value"
 msgstr "属性不能同时包含存取器和值"
 

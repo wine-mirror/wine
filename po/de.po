@@ -3866,15 +3866,15 @@ msgstr "Bedingte Kompilierung ist ausgeschaltet"
 msgid "Expected '@'"
 msgstr "'@' erwartet"
 
-#: dlls/jscript/jscript.rc:79
+#: dlls/jscript/jscript.rc:80
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript Übersetzungsfehler"
 
-#: dlls/jscript/jscript.rc:80
+#: dlls/jscript/jscript.rc:81
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript Laufzeitfehler"
 
-#: dlls/jscript/jscript.rc:81 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:82 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Unbekannter Laufzeitfehler"
 
@@ -3980,6 +3980,12 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "Nicht-schreibbare Eigenschaft '|' kann nicht geändert werden"
 
 #: dlls/jscript/jscript.rc:77
+#, fuzzy
+#| msgid "'[object]' is not a date object"
+msgid "'this' is not a Map object"
+msgstr "'[Objekt]' ist kein Datums-Objekt"
+
+#: dlls/jscript/jscript.rc:78
 msgid "Property cannot have both accessors and a value"
 msgstr "Eigenschaft kann nicht sowohl Accessoren als auch einen Wert haben"
 

@@ -3865,15 +3865,15 @@ msgstr "Şartlı derleme kapatıldı"
 msgid "Expected '@'"
 msgstr "Beklenen '@'"
 
-#: dlls/jscript/jscript.rc:79
+#: dlls/jscript/jscript.rc:80
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript derleme hatası"
 
-#: dlls/jscript/jscript.rc:80
+#: dlls/jscript/jscript.rc:81
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript çalışma zamanı hatası"
 
-#: dlls/jscript/jscript.rc:81 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:82 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Bilinmeyen çalışma zamanı hatası"
 
@@ -3978,6 +3978,12 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "'|' yazılamayan nesnesi değiştirilemiyor"
 
 #: dlls/jscript/jscript.rc:77
+#, fuzzy
+#| msgid "'[object]' is not a date object"
+msgid "'this' is not a Map object"
+msgstr "'[object]' bir tarih nesnesi değil"
+
+#: dlls/jscript/jscript.rc:78
 msgid "Property cannot have both accessors and a value"
 msgstr "Nesnenin erişimcisi ve değeri birden olamaz"
 

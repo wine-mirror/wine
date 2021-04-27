@@ -3856,15 +3856,15 @@ msgstr "条件コンパイルはオフにされています"
 msgid "Expected '@'"
 msgstr "'@'を期待していました"
 
-#: dlls/jscript/jscript.rc:79
+#: dlls/jscript/jscript.rc:80
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript コンパイル エラー"
 
-#: dlls/jscript/jscript.rc:80
+#: dlls/jscript/jscript.rc:81
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript 実行時エラー"
 
-#: dlls/jscript/jscript.rc:81 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:82 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "未知の実行時エラー"
 
@@ -3969,6 +3969,12 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "書換不可のプロパティ '|' は変更できません"
 
 #: dlls/jscript/jscript.rc:77
+#, fuzzy
+#| msgid "'[object]' is not a date object"
+msgid "'this' is not a Map object"
+msgstr "'[object]' は日付オブジェクトではありません"
+
+#: dlls/jscript/jscript.rc:78
 msgid "Property cannot have both accessors and a value"
 msgstr "プロパティはアクセサーと値の両方になることはできません"
 

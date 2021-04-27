@@ -16,8 +16,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
+#include <math.h>
+
 #include "jscript.h"
 
+#include "wine/rbtree.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
@@ -28,6 +32,9 @@ typedef struct {
 
 typedef struct {
     jsdisp_t dispex;
+    struct wine_rb_tree map;
+    struct list entries;
+    size_t size;
 } MapInstance;
 
 static HRESULT Set_add(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
@@ -123,6 +130,83 @@ static HRESULT Set_constructor(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
     }
 }
 
+struct jsval_map_entry {
+    struct wine_rb_entry entry;
+    jsval_t key;
+    jsval_t value;
+
+    /*
+     * We need to maintain a list as well to support traversal in forEach.
+     * If the entry is removed while being processed by forEach, it's
+     * still kept in the list and released later, when it's safe.
+     */
+    struct list list_entry;
+    unsigned int ref;
+    BOOL deleted;
+};
+
+static int jsval_map_compare(const void *k, const struct wine_rb_entry *e)
+{
+    const struct jsval_map_entry *entry = WINE_RB_ENTRY_VALUE(e, const struct jsval_map_entry, entry);
+    const jsval_t *key = k;
+
+    if(jsval_type(entry->key) != jsval_type(*key))
+        return (int)jsval_type(entry->key) - (int)jsval_type(*key);
+
+    switch(jsval_type(*key)) {
+    case JSV_UNDEFINED:
+    case JSV_NULL:
+        return 0;
+    case JSV_OBJECT:
+        if(get_object(*key) == get_object(entry->key)) return 0;
+        return get_object(*key) < get_object(entry->key) ? -1 : 1;
+    case JSV_STRING:
+        return jsstr_cmp(get_string(*key), get_string(entry->key));
+    case JSV_NUMBER:
+        if(get_number(*key) == get_number(entry->key)) return 0;
+        if(isnan(get_number(*key))) return isnan(get_number(entry->key)) ? 0 : -1;
+        if(isnan(get_number(entry->key))) return 1;
+        return get_number(*key) < get_number(entry->key) ? -1 : 1;
+    case JSV_BOOL:
+        if(get_bool(*key) == get_bool(entry->key)) return 0;
+        return get_bool(*key) ? 1 : -1;
+    default:
+        assert(0);
+        return 0;
+    }
+}
+
+static MapInstance *get_map_this(vdisp_t *jsthis)
+{
+    if(!(jsthis->flags & VDISP_JSDISP) || !is_class(jsthis->u.jsdisp, JSCLASS_MAP)) {
+        WARN("not a Map object passed as 'this'\n");
+        return NULL;
+    }
+
+    return CONTAINING_RECORD(jsthis->u.jsdisp, MapInstance, dispex);
+}
+
+static struct jsval_map_entry *get_map_entry(MapInstance *map, jsval_t key)
+{
+    struct wine_rb_entry *entry;
+    if(!(entry = wine_rb_get(&map->map, &key))) return NULL;
+    return CONTAINING_RECORD(entry, struct jsval_map_entry, entry);
+}
+
+static void grab_map_entry(struct jsval_map_entry *entry)
+{
+    entry->ref++;
+}
+
+static void release_map_entry(struct jsval_map_entry *entry)
+{
+    if(--entry->ref) return;
+    jsval_release(entry->key);
+    jsval_release(entry->value);
+    list_remove(&entry->list_entry);
+    heap_free(entry);
+}
+
 static HRESULT Map_clear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
@@ -154,8 +238,45 @@ static HRESULT Map_get(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned 
 static HRESULT Map_set(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    FIXME("%p\n", jsthis);
-    return E_NOTIMPL;
+    jsval_t key = argc >= 1 ? argv[0] : jsval_undefined();
+    jsval_t value = argc >= 2 ? argv[1] : jsval_undefined();
+    struct jsval_map_entry *entry;
+    MapInstance *map;
+    HRESULT hres;
+
+    if(!(map = get_map_this(jsthis))) return JS_E_MAP_EXPECTED;
+
+    TRACE("%p (%s %s)\n", map, debugstr_jsval(key), debugstr_jsval(value));
+
+    if((entry = get_map_entry(map, key))) {
+        jsval_t val;
+        hres = jsval_copy(value, &val);
+        if(FAILED(hres))
+            return hres;
+
+        jsval_release(entry->value);
+        entry->value = val;
+    }else {
+        if(!(entry = heap_alloc_zero(sizeof(*entry)))) return E_OUTOFMEMORY;
+
+        hres = jsval_copy(key, &entry->key);
+        if(SUCCEEDED(hres)) {
+            hres = jsval_copy(value, &entry->value);
+            if(FAILED(hres))
+                jsval_release(entry->key);
+        }
+        if(FAILED(hres)) {
+            heap_free(entry);
+            return hres;
+        }
+        grab_map_entry(entry);
+        wine_rb_put(&map->map, &entry->key, &entry->entry);
+        list_add_tail(&map->entries, &entry->list_entry);
+        map->size++;
+    }
+
+    if(r) *r = jsval_undefined();
+    return S_OK;
 }
 
 static HRESULT Map_has(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
@@ -172,6 +293,19 @@ static HRESULT Map_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigne
     return E_NOTIMPL;
 }
 
+static void Map_destructor(jsdisp_t *dispex)
+{
+    MapInstance *map = (MapInstance*)dispex;
+
+    while(!list_empty(&map->entries)) {
+        struct jsval_map_entry *entry = LIST_ENTRY(list_head(&map->entries),
+                                                   struct jsval_map_entry, list_entry);
+        assert(!entry->deleted);
+        release_map_entry(entry);
+    }
+
+    heap_free(map);
+}
 static const builtin_prop_t Map_prototype_props[] = {
     {L"clear",      Map_clear,     PROPF_METHOD},
     {L"delete" ,    Map_delete,    PROPF_METHOD|1},
@@ -194,7 +328,7 @@ static const builtin_info_t Map_info = {
     JSCLASS_MAP,
     {NULL, Map_value, 0},
     0, NULL,
-    NULL,
+    Map_destructor,
     NULL
 };
 
@@ -215,6 +349,8 @@ static HRESULT Map_constructor(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
         if(FAILED(hres))
             return hres;
 
+        wine_rb_init(&map->map, jsval_map_compare);
+        list_init(&map->entries);
         *r = jsval_obj(&map->dispex);
         return S_OK;
 
