@@ -167,8 +167,6 @@ static inline WCHAR *gai_strerrorW(int errcode)
 
 #ifdef USE_WS_PREFIX
 # define WS_gai_strerror WINELIB_NAME_AW(gai_strerror)
-#elif defined(WINE_NO_UNICODE_MACROS)
-# define gai_strerror gai_strerrorA
 #else
 # define gai_strerror WINELIB_NAME_AW(gai_strerror)
 #endif
