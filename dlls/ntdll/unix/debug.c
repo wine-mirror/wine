@@ -294,6 +294,5 @@ void dbg_init(void)
 {
     setbuf( stdout, NULL );
     setbuf( stderr, NULL );
-    ntdll_get_thread_data()->debug_info = &initial_info;
     init_done = TRUE;
 }
