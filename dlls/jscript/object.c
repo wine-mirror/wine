@@ -48,6 +48,7 @@ static HRESULT Object_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
         L"[object Object]",
         L"[object Object]",
         L"[object Object]",
+        L"[object Object]",
         L"[object Object]"
     };
 

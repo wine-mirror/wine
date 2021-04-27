@@ -26,6 +26,10 @@ typedef struct {
     jsdisp_t dispex;
 } SetInstance;
 
+typedef struct {
+    jsdisp_t dispex;
+} MapInstance;
+
 static HRESULT Set_add(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
@@ -119,6 +123,107 @@ static HRESULT Set_constructor(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
     }
 }
 
+static HRESULT Map_clear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    FIXME("%p\n", jsthis);
+    return E_NOTIMPL;
+}
+
+static HRESULT Map_delete(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    FIXME("%p\n", jsthis);
+    return E_NOTIMPL;
+}
+
+static HRESULT Map_forEach(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    FIXME("%p\n", jsthis);
+    return E_NOTIMPL;
+}
+
+static HRESULT Map_get(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    FIXME("%p\n", jsthis);
+    return E_NOTIMPL;
+}
+
+static HRESULT Map_set(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    FIXME("%p\n", jsthis);
+    return E_NOTIMPL;
+}
+
+static HRESULT Map_has(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    FIXME("%p\n", jsthis);
+    return E_NOTIMPL;
+}
+
+static HRESULT Map_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static const builtin_prop_t Map_prototype_props[] = {
+    {L"clear",      Map_clear,     PROPF_METHOD},
+    {L"delete" ,    Map_delete,    PROPF_METHOD|1},
+    {L"forEach",    Map_forEach,   PROPF_METHOD|1},
+    {L"get",        Map_get,       PROPF_METHOD|1},
+    {L"has",        Map_has,       PROPF_METHOD|1},
+    {L"set",        Map_set,       PROPF_METHOD|2},
+};
+
+static const builtin_info_t Map_prototype_info = {
+    JSCLASS_OBJECT,
+    {NULL, Map_value, 0},
+    ARRAY_SIZE(Map_prototype_props),
+    Map_prototype_props,
+    NULL,
+    NULL
+};
+
+static const builtin_info_t Map_info = {
+    JSCLASS_MAP,
+    {NULL, Map_value, 0},
+    0, NULL,
+    NULL,
+    NULL
+};
+
+static HRESULT Map_constructor(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    MapInstance *map;
+    HRESULT hres;
+
+    switch(flags) {
+    case DISPATCH_CONSTRUCT:
+        TRACE("\n");
+
+        if(!(map = heap_alloc_zero(sizeof(*map))))
+            return E_OUTOFMEMORY;
+
+        hres = init_dispex(&map->dispex, ctx, &Map_info, ctx->map_prototype);
+        if(FAILED(hres))
+            return hres;
+
+        *r = jsval_obj(&map->dispex);
+        return S_OK;
+
+    default:
+        FIXME("unimplemented flags %x\n", flags);
+        return E_NOTIMPL;
+    }
+}
+
 HRESULT init_set_constructor(script_ctx_t *ctx)
 {
     jsdisp_t *constructor;
@@ -137,6 +242,21 @@ HRESULT init_set_constructor(script_ctx_t *ctx)
         return hres;
 
     hres = jsdisp_define_data_property(ctx->global, L"Set", PROPF_WRITABLE,
+                                       jsval_obj(constructor));
+    jsdisp_release(constructor);
+    if(FAILED(hres))
+        return hres;
+
+    hres = create_dispex(ctx, &Map_prototype_info, ctx->object_prototype, &ctx->map_prototype);
+    if(FAILED(hres))
+        return hres;
+
+    hres = create_builtin_constructor(ctx, Map_constructor, L"Map", NULL,
+                                      PROPF_CONSTR, ctx->map_prototype, &constructor);
+    if(FAILED(hres))
+        return hres;
+
+    hres = jsdisp_define_data_property(ctx->global, L"Map", PROPF_WRITABLE,
                                        jsval_obj(constructor));
     jsdisp_release(constructor);
     return hres;

@@ -117,6 +117,7 @@ sync_test("window_props", function() {
     test_exposed("onfocusout", v >= 9);
     test_exposed("getComputedStyle", v >= 9);
     test_exposed("requestAnimationFrame", v >= 10);
+    test_exposed("Map", v >= 11);
     test_exposed("Set", v >= 11);
     if(v >= 9) /* FIXME: native exposes it in all compat modes */
         test_exposed("performance", true);
@@ -618,6 +619,29 @@ sync_test("set_obj", function() {
     ok(!("entries" in s), "entries are in Set");
     ok(!("keys" in s), "keys are in Set");
     ok(!("values" in s), "values are in Set");
+
+    r = Object.prototype.toString.call(s);
+    ok(r === "[object Object]", "toString returned " + r);
+});
+
+sync_test("map_obj", function() {
+    if(!("Map" in window)) return;
+
+    var s = new Map, r;
+    ok(Object.getPrototypeOf(s) === Map.prototype, "unexpected Map prototype");
+
+    function test_length(name, len) {
+        ok(Map.prototype[name].length === len, "Map.prototype." + name + " = " + Map.prototype[name].length);
+    }
+    test_length("clear", 0);
+    test_length("delete", 1);
+    test_length("forEach", 1);
+    test_length("get", 1);
+    test_length("has", 1);
+    test_length("set", 2);
+    ok(!("entries" in s), "entries are in Map");
+    ok(!("keys" in s), "keys are in Map");
+    ok(!("values" in s), "values are in Map");
 
     r = Object.prototype.toString.call(s);
     ok(r === "[object Object]", "toString returned " + r);
