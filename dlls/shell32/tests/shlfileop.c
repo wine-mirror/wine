@@ -22,7 +22,6 @@
 #include <stdio.h>
 
 #define COBJMACROS
-#define WINE_NOWINSOCK
 #include <windows.h>
 #include "shellapi.h"
 #include "shlobj.h"

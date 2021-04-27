@@ -517,8 +517,6 @@ sub output_header($$$) {
     print OUT " */\n";
     print OUT "\n";
 
-    print OUT "#define WINE_NOWINSOCK\n";
-    print OUT "\n";
     foreach my $test (@tests) {
 	my @includes = $tests->get_section($test_dir, $test, "include");
 	foreach my $include (@includes) {

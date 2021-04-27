@@ -102,6 +102,7 @@
 
 #ifndef _WINSOCK2API_
 #define _WINSOCK2API_
+#define _WINSOCKAPI_
 
 #include <windows.h>
 

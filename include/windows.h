@@ -59,10 +59,7 @@
 #include <rpc.h>
 #include <shellapi.h>
 #include <winperf.h>
-
-#ifndef WINE_NOWINSOCK
 #include <winsock.h>
-#endif /* WINE_NOWINSOCK */
 
 #ifndef NOCRYPT
 #include <wincrypt.h>
