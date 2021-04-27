@@ -8586,8 +8586,7 @@ todo_wine
     hr = GetHGlobalFromStream(stream, &global);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     p = GlobalLock(global);
-    p[GlobalSize(global)] = 0;
-    ok(!strcmp(p, xml2) || !strcmp(p, xml2_wine), "got %s\n", wine_dbgstr_a(p));
+    ok(!memcmp(p, xml2, sizeof(xml2) - 1) || !memcmp(p, xml2_wine, sizeof(xml2_wine) - 1), "got %s\n", wine_dbgstr_a(p));
     GlobalUnlock(global);
 
     /* Verify the result after load+save */
@@ -8609,8 +8608,7 @@ todo_wine
     hr = GetHGlobalFromStream(stream, &global);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     p = GlobalLock(global);
-    p[GlobalSize(global)] = 0;
-    ok(!strcmp(p, xml2) || !strcmp(p, xml2_wine), "got %s\n", wine_dbgstr_a(p));
+    ok(!memcmp(p, xml2, sizeof(xml2) - 1) || !memcmp(p, xml2_wine, sizeof(xml2_wine) - 1), "got %s\n", wine_dbgstr_a(p));
     GlobalUnlock(global);
 
     IStream_Release(stream);
@@ -8631,8 +8629,7 @@ todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     p = GlobalLock(global);
-    p[GlobalSize(global)] = 0;
-    ok(!strcmp(p, xml3) || !strcmp(p, xml3_wine), "got %s\n", wine_dbgstr_a(p));
+    ok(!memcmp(p, xml3, sizeof(xml3) - 1) || !memcmp(p, xml3_wine, sizeof(xml3_wine) - 1), "got %s\n", wine_dbgstr_a(p));
     GlobalUnlock(global);
 
     IStream_Release(stream);
