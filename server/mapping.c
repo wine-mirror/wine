@@ -349,6 +349,18 @@ struct memory_view *get_exe_view( struct process *process )
     return LIST_ENTRY( list_head( &process->views ), struct memory_view, entry );
 }
 
+static void set_process_machine( struct process *process, struct memory_view *view )
+{
+    unsigned short machine = view->image.machine;
+
+    if (machine == IMAGE_FILE_MACHINE_I386 && (view->image.image_flags & IMAGE_FLAGS_ComPlusNativeReady))
+    {
+        if (is_machine_supported( IMAGE_FILE_MACHINE_AMD64 )) machine = IMAGE_FILE_MACHINE_AMD64;
+        else if (is_machine_supported( IMAGE_FILE_MACHINE_ARM64 )) machine = IMAGE_FILE_MACHINE_ARM64;
+    }
+    process->machine = machine;
+}
+
 /* add a view to the process list */
 static void add_process_view( struct thread *thread, struct memory_view *view )
 {
@@ -362,7 +374,7 @@ static void add_process_view( struct thread *thread, struct memory_view *view )
         else if (!(view->image.image_charact & IMAGE_FILE_DLL))
         {
             /* main exe */
-            process->machine = view->image.machine;
+            set_process_machine( process, view );
             list_add_head( &process->views, &view->entry );
             if (get_view_nt_name( view, &name ) && (process->image = memdup( name.str, name.len )))
                 process->imagelen = name.len;
