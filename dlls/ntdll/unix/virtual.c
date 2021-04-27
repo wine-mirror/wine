@@ -2818,13 +2818,21 @@ NTSTATUS virtual_create_builtin_view( void *module, const UNICODE_STRING *nt_nam
 
 
 /* set some initial values in the new PEB */
-static void init_peb( PEB *peb )
+static PEB *init_peb( void *ptr )
 {
-    peb->OSMajorVersion = 6;
-    peb->OSMinorVersion = 1;
-    peb->OSBuildNumber  = 0x1db1;
-    peb->OSPlatformId   = VER_PLATFORM_WIN32_NT;
-    peb->SessionId      = 1;
+    PEB32 *peb32 = ptr;
+    PEB64 *peb64 = (PEB64 *)((char *)ptr + page_size);
+
+    peb32->OSMajorVersion = peb64->OSMajorVersion = 6;
+    peb32->OSMinorVersion = peb64->OSMinorVersion = 1;
+    peb32->OSBuildNumber  = peb64->OSBuildNumber  = 0x1db1;
+    peb32->OSPlatformId   = peb64->OSPlatformId   = VER_PLATFORM_WIN32_NT;
+    peb32->SessionId      = peb64->SessionId      = 1;
+#ifdef _WIN64
+    return (PEB *)peb64;
+#else
+    return (PEB *)peb32;
+#endif
 }
 
 
@@ -2872,7 +2880,6 @@ TEB *virtual_alloc_first_teb(void)
     void *ptr;
     NTSTATUS status;
     SIZE_T data_size = page_size;
-    SIZE_T peb_size = page_size * (is_win64 ? 1 : 2);
     SIZE_T block_size = signal_stack_mask + 1;
     SIZE_T total = 32 * block_size;
 
@@ -2888,12 +2895,11 @@ TEB *virtual_alloc_first_teb(void)
     NtAllocateVirtualMemory( NtCurrentProcess(), &teb_block, 0, &total,
                              MEM_RESERVE | MEM_TOP_DOWN, PAGE_READWRITE );
     teb_block_pos = 30;
-    ptr = ((char *)teb_block + 30 * block_size);
+    ptr = (char *)teb_block + 30 * block_size;
     teb = (TEB *)((char *)ptr + teb_offset);
-    peb = (PEB *)((char *)teb_block + 32 * block_size - peb_size);
-    NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&ptr, 0, &block_size, MEM_COMMIT, PAGE_READWRITE );
-    NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&peb, 0, &peb_size, MEM_COMMIT, PAGE_READWRITE );
-    init_peb( peb );
+    data_size = 2 * block_size;
+    NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&ptr, 0, &data_size, MEM_COMMIT, PAGE_READWRITE );
+    peb = init_peb( (char *)teb_block + 31 * block_size );
     init_teb( teb, peb );
     *(ULONG_PTR *)&peb->CloudFileFlags = get_image_address();
     return teb;
