@@ -2818,7 +2818,7 @@ static BOOL enum_face_charsets( const struct gdi_font_family *family, struct gdi
 
     for (i = 0; i < count; i++)
     {
-        if (!face->scalable && face->fs.fsCsb[0] == 0)  /* OEM bitmap */
+        if (face->fs.fsCsb[0] == 0)  /* OEM */
         {
             elf.elfLogFont.lfCharSet = ntm.ntmTm.tmCharSet = OEM_CHARSET;
             load_script_name( IDS_OEM_DOS - IDS_FIRST_SCRIPT, elf.elfScript );
