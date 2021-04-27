@@ -244,6 +244,21 @@ extern unsigned short supported_machines[8];
 extern void init_registry(void);
 extern void flush_registry(void);
 
+static inline int is_machine_32bit( unsigned short machine )
+{
+    return machine == IMAGE_FILE_MACHINE_I386 || machine == IMAGE_FILE_MACHINE_ARMNT;
+}
+static inline int is_machine_64bit( unsigned short machine )
+{
+    return machine == IMAGE_FILE_MACHINE_AMD64 || machine == IMAGE_FILE_MACHINE_ARM64;
+}
+static inline int is_machine_supported( unsigned short machine )
+{
+    unsigned int i;
+    for (i = 0; i < supported_machines_count; i++) if (supported_machines[i] == machine) return 1;
+    return 0;
+}
+
 /* signal functions */
 
 extern void start_watchdog(void);

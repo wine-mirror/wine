@@ -642,7 +642,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     off_t pos;
     int size, opt_size;
     size_t mz_size, clr_va, clr_size;
-    unsigned int i, cpu_mask = get_supported_cpu_mask();
+    unsigned int i;
 
     /* load the headers */
 
@@ -671,17 +671,9 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     switch (nt.opt.hdr32.Magic)
     {
     case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
-        switch (nt.FileHeader.Machine)
-        {
-        case IMAGE_FILE_MACHINE_I386:
-            if (cpu_mask & (CPU_FLAG(CPU_x86) | CPU_FLAG(CPU_x86_64))) break;
-            return STATUS_INVALID_IMAGE_FORMAT;
-        case IMAGE_FILE_MACHINE_ARMNT:
-            if (cpu_mask & (CPU_FLAG(CPU_ARM) | CPU_FLAG(CPU_ARM64))) break;
-            return STATUS_INVALID_IMAGE_FORMAT;
-        default:
-            return STATUS_INVALID_IMAGE_FORMAT;
-        }
+        if (!is_machine_32bit( nt.FileHeader.Machine )) return STATUS_INVALID_IMAGE_FORMAT;
+        if (!is_machine_supported( nt.FileHeader.Machine )) return STATUS_INVALID_IMAGE_FORMAT;
+
         clr_va = nt.opt.hdr32.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress;
         clr_size = nt.opt.hdr32.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size;
 
@@ -710,18 +702,10 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         break;
 
     case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
-        if (!(cpu_mask & CPU_64BIT_MASK)) return STATUS_INVALID_IMAGE_WIN_64;
-        switch (nt.FileHeader.Machine)
-        {
-        case IMAGE_FILE_MACHINE_AMD64:
-            if (cpu_mask & (CPU_FLAG(CPU_x86) | CPU_FLAG(CPU_x86_64))) break;
-            return STATUS_INVALID_IMAGE_FORMAT;
-        case IMAGE_FILE_MACHINE_ARM64:
-            if (cpu_mask & (CPU_FLAG(CPU_ARM) | CPU_FLAG(CPU_ARM64))) break;
-            return STATUS_INVALID_IMAGE_FORMAT;
-        default:
-            return STATUS_INVALID_IMAGE_FORMAT;
-        }
+        if (!is_machine_64bit( supported_machines[0] )) return STATUS_INVALID_IMAGE_WIN_64;
+        if (!is_machine_64bit( nt.FileHeader.Machine )) return STATUS_INVALID_IMAGE_FORMAT;
+        if (!is_machine_supported( nt.FileHeader.Machine )) return STATUS_INVALID_IMAGE_FORMAT;
+
         clr_va = nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].VirtualAddress;
         clr_size = nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size;
 
