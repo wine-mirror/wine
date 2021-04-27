@@ -29,6 +29,166 @@
 
 typedef USHORT ADDRESS_FAMILY;
 
+typedef struct WS(sockaddr)
+{
+    unsigned short sa_family;
+    char sa_data[14];
+} SOCKADDR, *PSOCKADDR, *LPSOCKADDR;
+
+#ifndef USE_WS_PREFIX
+#define AF_UNSPEC                  0
+#define AF_UNIX                    1
+#define AF_INET                    2
+#define AF_IMPLINK                 3
+#define AF_PUP                     4
+#define AF_CHAOS                   5
+#define AF_NS                      6
+#define AF_IPX                     AF_NS
+#define AF_ISO                     7
+#define AF_OSI                     AF_ISO
+#define AF_ECMA                    8
+#define AF_DATAKIT                 9
+#define AF_CCITT                   10
+#define AF_SNA                     11
+#define AF_DECnet                  12
+#define AF_DLI                     13
+#define AF_LAT                     14
+#define AF_HYLINK                  15
+#define AF_APPLETALK               16
+#define AF_NETBIOS                 17
+#define AF_VOICEVIEW               18
+#define AF_FIREFOX                 19
+#define AF_UNKNOWN1                20
+#define AF_BAN                     21
+#define AF_ATM                     22
+#define AF_INET6                   23
+#define AF_CLUSTER                 24
+#define AF_12844                   25
+#define AF_IRDA                    26
+#define AF_MAX                     27
+#else /* USE_WS_PREFIX */
+#define WS_AF_UNSPEC               0
+#define WS_AF_UNIX                 1
+#define WS_AF_INET                 2
+#define WS_AF_IMPLINK              3
+#define WS_AF_PUP                  4
+#define WS_AF_CHAOS                5
+#define WS_AF_NS                   6
+#define WS_AF_IPX                  WS_AF_NS
+#define WS_AF_ISO                  7
+#define WS_AF_OSI                  WS_AF_ISO
+#define WS_AF_ECMA                 8
+#define WS_AF_DATAKIT              9
+#define WS_AF_CCITT                10
+#define WS_AF_SNA                  11
+#define WS_AF_DECnet               12
+#define WS_AF_DLI                  13
+#define WS_AF_LAT                  14
+#define WS_AF_HYLINK               15
+#define WS_AF_APPLETALK            16
+#define WS_AF_NETBIOS              17
+#define WS_AF_VOICEVIEW            18
+#define WS_AF_FIREFOX              19
+#define WS_AF_UNKNOWN1             20
+#define WS_AF_BAN                  21
+#define WS_AF_ATM                  22
+#define WS_AF_INET6                23
+#define WS_AF_CLUSTER              24
+#define WS_AF_12844                25
+#define WS_AF_IRDA                 26
+#define WS_AF_MAX                  27
+#endif /* USE_WS_PREFIX */
+
+#ifndef USE_WS_PREFIX
+#define IPPROTO_IP 0
+#else
+#define WS_IPPROTO_IP 0
+#endif
+
+typedef enum
+{
+    WS(IPPROTO_ICMP)    = 1,
+    WS(IPPROTO_IGMP)    = 2,
+    WS(IPPROTO_GGP)     = 3,
+    WS(IPPROTO_IPV4)    = 4,
+    WS(IPPROTO_TCP)     = 6,
+    WS(IPPROTO_UDP)     = 17,
+    WS(IPPROTO_IDP)     = 22,
+    WS(IPPROTO_IPV6)    = 41,
+    WS(IPPROTO_ICMPV6)  = 58,
+    WS(IPPROTO_ND)      = 77,
+    WS(IPPROTO_RAW)     = 255,
+    WS(IPPROTO_MAX)     = 256,
+} IPPROTO;
+
+#ifndef USE_WS_PREFIX
+#define INADDR_ANY          ((ULONG)0x00000000)
+#define INADDR_LOOPBACK     0x7f000001
+#define INADDR_BROADCAST    ((ULONG)0xffffffff)
+#define INADDR_NONE         0xffffffff
+#else
+#define WS_INADDR_ANY       ((ULONG)0x00000000)
+#define WS_INADDR_LOOPBACK  0x7f000001
+#define WS_INADDR_BROADCAST ((ULONG)0xffffffff)
+#define WS_INADDR_NONE      0xffffffff
+#endif
+
+#ifndef USE_WS_PREFIX
+#define IN_CLASSA_NSHIFT            24
+#define IN_CLASSA_MAX               128
+#define IN_CLASSA_NET               0xff000000
+#define IN_CLASSA_HOST              0x00ffffff
+#define IN_CLASSA(i)                (((LONG)(i) & 0x80000000) == 0)
+#define IN_CLASSB_NSHIFT            16
+#define IN_CLASSB_MAX               65536
+#define IN_CLASSB_NET               0xffff0000
+#define IN_CLASSB_HOST              0x0000ffff
+#define IN_CLASSB(i)                (((LONG)(i) & 0xc0000000) == 0x80000000)
+#define IN_CLASSC_NSHIFT            8
+#define IN_CLASSC_NET               0xffffff00
+#define IN_CLASSC_HOST              0x000000ff
+#define IN_CLASSC(i)                (((LONG)(i) & 0xe0000000) == 0xc0000000)
+#else
+#define WS_IN_CLASSA_NSHIFT         24
+#define WS_IN_CLASSA_MAX            128
+#define WS_IN_CLASSA_NET            0xff000000
+#define WS_IN_CLASSA_HOST           0x00ffffff
+#define WS_IN_CLASSA(i)             (((LONG)(i) & 0x80000000) == 0)
+#define WS_IN_CLASSB_NSHIFT         16
+#define WS_IN_CLASSB_MAX            65536
+#define WS_IN_CLASSB_NET            0xffff0000
+#define WS_IN_CLASSB_HOST           0x0000ffff
+#define WS_IN_CLASSB(i)             (((LONG)(i) & 0xc0000000) == 0x80000000)
+#define WS_IN_CLASSC_NSHIFT         8
+#define WS_IN_CLASSC_NET            0xffffff00
+#define WS_IN_CLASSC_HOST           0x000000ff
+#define WS_IN_CLASSC(i)             (((LONG)(i) & 0xe0000000) == 0xc0000000)
+#endif /* USE_WS_PREFIX */
+
+#ifndef USE_WS_PREFIX
+#define SO_BSP_STATE                0x1009
+#define SO_RANDOMIZE_PORT           0x3005
+#define SO_PORT_SCALABILITY         0x3006
+#define SO_REUSE_UNICASTPORT        0x3007
+#define SO_REUSE_MULTICASTPORT      0x3008
+#define TCP_NODELAY                 0x0001
+#else
+#define WS_SO_BSP_STATE             0x1009
+#define WS_SO_RANDOMIZE_PORT        0x3005
+#define WS_SO_PORT_SCALABILITY      0x3006
+#define WS_SO_REUSE_UNICASTPORT     0x3007
+#define WS_SO_REUSE_MULTICASTPORT   0x3008
+#define WS_TCP_NODELAY              0x0001
+#endif
+
+typedef struct WS(sockaddr_in)
+{
+    short sin_family;
+    unsigned short sin_port;
+    struct WS(in_addr) sin_addr;
+    char sin_zero[8];
+} SOCKADDR_IN, *PSOCKADDR_IN, *LPSOCKADDR_IN;
+
 #ifndef __CSADDR_DEFINED__
 #define __CSADDR_DEFINED__
 

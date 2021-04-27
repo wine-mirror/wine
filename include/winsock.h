@@ -21,9 +21,7 @@
  */
 
 #ifdef __WINESRC__
-# ifndef __WINE_WINSOCK2__
-#  error Please use Winsock2 in Wine
-# endif
+# error Please use winsock2 in Wine
 #endif
 
 #ifndef __WINE_WINSOCKAPI_STDLIB_H
@@ -168,12 +166,7 @@ extern "C" {
 #define AF_FIREFOX                 19
 #define AF_UNKNOWN1                20
 #define AF_BAN                     21
-#define AF_ATM                     22
-#define AF_INET6                   23
-#define AF_CLUSTER                 24
-#define AF_12844                   25
-#define AF_IRDA                    26
-#define AF_MAX                     27
+#define AF_MAX                     22
 #define PF_UNSPEC                  AF_UNSPEC
 #define PF_UNIX                    AF_UNIX
 #define PF_INET                    AF_INET
@@ -223,12 +216,7 @@ extern "C" {
 #define WS_AF_FIREFOX              19
 #define WS_AF_UNKNOWN1             20
 #define WS_AF_BAN                  21
-#define WS_AF_ATM                  22
-#define WS_AF_INET6                23
-#define WS_AF_CLUSTER              24
-#define WS_AF_12844                25
-#define WS_AF_IRDA                 26
-#define WS_AF_MAX                  27
+#define WS_AF_MAX                  22
 #endif /* USE_WS_PREFIX */
 
 /*
@@ -257,12 +245,9 @@ extern "C" {
 #define IPPROTO_ICMP               1
 #define IPPROTO_IGMP               2
 #define IPPROTO_GGP                3
-#define IPPROTO_IPIP               4
 #define IPPROTO_TCP                6
 #define IPPROTO_UDP                17
 #define IPPROTO_IDP                22
-#define IPPROTO_IPV6               41
-#define IPPROTO_ICMPV6             58
 #define IPPROTO_ND                 77
 #define IPPROTO_RAW                255
 #define IPPROTO_MAX                256
@@ -271,12 +256,9 @@ extern "C" {
 #define WS_IPPROTO_ICMP            1
 #define WS_IPPROTO_IGMP            2
 #define WS_IPPROTO_GGP             3
-#define WS_IPPROTO_IPIP            4
 #define WS_IPPROTO_TCP             6
 #define WS_IPPROTO_UDP             17
 #define WS_IPPROTO_IDP             22
-#define WS_IPPROTO_IPV6            41
-#define WS_IPPROTO_ICMPV6          58
 #define WS_IPPROTO_ND              77
 #define WS_IPPROTO_RAW             255
 #define WS_IPPROTO_MAX             256
@@ -468,32 +450,11 @@ typedef struct WS(timeval)
         } \
     } \
 } while(0)
-#define __WS_FD_SET1(fd, set, cast) do { \
+
+#define __WS_FD_SET(fd, set, cast) do { \
     if (((cast*)(set))->fd_count < FD_SETSIZE) \
         ((cast*)(set))->fd_array[((cast*)(set))->fd_count++]=(fd); \
 } while(0)
-/* This version checks if the filedesc is already in the list, and appends it
- * only if it's not the case
- */
-#define __WS_FD_SET2(fd, set, cast) do { \
-    unsigned int __i; \
-    for (__i = 0; __i < ((cast*)(set))->fd_count ; __i++) \
-    { \
-        if (((cast*)(set))->fd_array[__i]==(fd)) \
-            break; \
-    } \
-    if (__i == ((cast*)(set))->fd_count && ((cast*)(set))->fd_count < FD_SETSIZE) \
-    { \
-        ((cast*)(set))->fd_count++; \
-        ((cast*)(set))->fd_array[__i]=(fd);\
-    } \
-} while(0)
-
-#ifndef __WINE_WINSOCK2__
-#define __WS_FD_SET(fd, set, cast) __WS_FD_SET1((fd),(set), cast)
-#else
-#define __WS_FD_SET(fd, set, cast) __WS_FD_SET2((fd),(set), cast)
-#endif
 
 #ifndef USE_WS_PREFIX
 #define FD_CLR(fd, set)      __WS_FD_CLR((fd),(set), fd_set)
@@ -613,13 +574,11 @@ typedef struct WS(sockaddr_in)
  * Multicast group information
  */
 
-#if !defined(__WINE_WINSOCK2__)
 struct WS(ip_mreq)
 {
     struct WS(in_addr) imr_multiaddr;
     struct WS(in_addr) imr_interface;
 };
-#endif
 
 /*
  * WSAStartup
@@ -672,12 +631,6 @@ typedef struct WS(WSAData)
 #define SO_RCVTIMEO                0x1006
 #define SO_ERROR                   0x1007
 #define SO_TYPE                    0x1008
-#define SO_BSP_STATE               0x1009
-
-#define SO_RANDOMIZE_PORT          0x3005
-#define SO_PORT_SCALABILITY        0x3006
-#define SO_REUSE_UNICASTPORT       0x3007
-#define SO_REUSE_MULTICASTPORT     0x3008
 
 #define IOCPARM_MASK               0x7f
 #define IOC_VOID                   0x20000000
@@ -711,12 +664,6 @@ typedef struct WS(WSAData)
 #define WS_SO_RCVTIMEO             0x1006
 #define WS_SO_ERROR                0x1007
 #define WS_SO_TYPE                 0x1008
-#define WS_SO_BSP_STATE            0x1009
-
-#define WS_SO_RANDOMIZE_PORT       0x3005
-#define WS_SO_PORT_SCALABILITY     0x3006
-#define WS_SO_REUSE_UNICASTPORT    0x3007
-#define WS_SO_REUSE_MULTICASTPORT  0x3008
 
 #define WS_IOCPARM_MASK            0x7f
 #define WS_IOC_VOID                0x20000000
@@ -737,31 +684,26 @@ typedef struct WS(WSAData)
 #define WS_TCP_NODELAY             1
 #endif
 
-/* IPPROTO_IP options */
-#ifndef __WINE_WINSOCK2__    /* WinSock2 has different values for the IP_ constants */
-# ifndef USE_WS_PREFIX
-#  define IP_OPTIONS             1
-#  define IP_MULTICAST_IF        2
-#  define IP_MULTICAST_TTL       3
-#  define IP_MULTICAST_LOOP      4
-#  define IP_ADD_MEMBERSHIP      5
-#  define IP_DROP_MEMBERSHIP     6
-#  define IP_TTL                 7
-#  define IP_TOS                 8
-#  define IP_DONTFRAGMENT        9
-#  define IP_RECEIVE_BROADCAST   22
-# else
-#  define WS_IP_OPTIONS           1
-#  define WS_IP_MULTICAST_IF      2
-#  define WS_IP_MULTICAST_TTL     3
-#  define WS_IP_MULTICAST_LOOP    4
-#  define WS_IP_ADD_MEMBERSHIP    5
-#  define WS_IP_DROP_MEMBERSHIP   6
-#  define WS_IP_TTL               7
-#  define WS_IP_TOS               8
-#  define WS_IP_DONTFRAGMENT      9
-#  define WS_IP_RECEIVE_BROADCAST 22
-# endif
+#ifndef USE_WS_PREFIX
+# define IP_OPTIONS                 1
+# define IP_MULTICAST_IF            2
+# define IP_MULTICAST_TTL           3
+# define IP_MULTICAST_LOOP          4
+# define IP_ADD_MEMBERSHIP          5
+# define IP_DROP_MEMBERSHIP         6
+# define IP_TTL                     7
+# define IP_TOS                     8
+# define IP_DONTFRAGMENT            9
+#else
+# define WS_IP_OPTIONS              1
+# define WS_IP_MULTICAST_IF         2
+# define WS_IP_MULTICAST_TTL        3
+# define WS_IP_MULTICAST_LOOP       4
+# define WS_IP_ADD_MEMBERSHIP       5
+# define WS_IP_DROP_MEMBERSHIP      6
+# define WS_IP_TTL                  7
+# define WS_IP_TOS                  8
+# define WS_IP_DONTFRAGMENT         9
 #endif
 
 
@@ -797,8 +739,6 @@ typedef struct WS(WSAData)
 #define MSG_OOB                    0x0001
 #define MSG_PEEK                   0x0002
 #define MSG_DONTROUTE              0x0004
-#define MSG_WAITALL                0x0008
-#define MSG_INTERRUPT              0x0010
 #define MSG_PARTIAL                0x8000
 #define MSG_MAXIOVLEN              16
 #else /* USE_WS_PREFIX */
@@ -807,8 +747,6 @@ typedef struct WS(WSAData)
 #define WS_MSG_OOB                 0x0001
 #define WS_MSG_PEEK                0x0002
 #define WS_MSG_DONTROUTE           0x0004
-#define WS_MSG_WAITALL             0x0008
-#define WS_MSG_INTERRUPT           0x0010
 #define WS_MSG_PARTIAL             0x8000
 #define WS_MSG_MAXIOVLEN           16
 #endif /* USE_WS_PREFIX */
@@ -832,15 +770,6 @@ typedef struct WS(WSAData)
 #define FD_ACCEPT                  0x00000008
 #define FD_CONNECT                 0x00000010
 #define FD_CLOSE                   0x00000020
-
-/* internal per-socket flags */
-#ifdef __WINESRC__
-#define FD_WINE_LISTENING          0x10000000
-#define FD_WINE_NONBLOCKING        0x20000000
-#define FD_WINE_CONNECTED          0x40000000
-#define FD_WINE_RAW                0x80000000
-#define FD_WINE_INTERNAL           0xFFFF0000
-#endif
 
 /*
  * All Windows Sockets error constants are biased by WSABASEERR from
@@ -905,17 +834,6 @@ typedef struct WS(WSAData)
 #define WSAVERNOTSUPPORTED         (WSABASEERR+92)
 #define WSANOTINITIALISED          (WSABASEERR+93)
 #define WSAEDISCON                 (WSABASEERR+101)
-#define WSAENOMORE                 (WSABASEERR+102)
-#define WSAECANCELLED              (WSABASEERR+103)
-#define WSAEINVALIDPROCTABLE       (WSABASEERR+104)
-#define WSAEINVALIDPROVIDER        (WSABASEERR+105)
-#define WSAEPROVIDERFAILEDINIT     (WSABASEERR+106)
-#define WSASYSCALLFAILURE          (WSABASEERR+107)
-#define WSASERVICE_NOT_FOUND       (WSABASEERR+108)
-#define WSATYPE_NOT_FOUND          (WSABASEERR+109)
-#define WSA_E_NO_MORE              (WSABASEERR+110)
-#define WSA_E_CANCELLED            (WSABASEERR+111)
-#define WSAEREFUSED                (WSABASEERR+112)
 
 /*
  * Error return codes from gethostbyname() and gethostbyaddr()
@@ -1007,7 +925,6 @@ typedef struct WS(WSAData)
  * Remember to keep this section in sync with the
  * "Winsock Function Typedefs" section in winsock2.h.
  */
-#if !defined(__WINE_WINSOCK2__) || WS_API_PROTOTYPES
 HANDLE WINAPI WSAAsyncGetHostByAddr(HWND,WS(u_int),const char*,int,int,char*,int);
 HANDLE WINAPI WSAAsyncGetHostByName(HWND,WS(u_int),const char*,char*,int);
 HANDLE WINAPI WSAAsyncGetProtoByName(HWND,WS(u_int),const char*,char*,int);
@@ -1058,16 +975,10 @@ SOCKET WINAPI WS(socket)(int,int,int);
 int WINAPI WS(gethostname)(char*,int);
 #endif
 
-#endif /* !defined(__WINE_WINSOCK2__) || WS_API_PROTOTYPES */
-
 #ifdef __cplusplus
 }
 #endif
 
-#ifndef __WINE_WINSOCK2__
 #undef WS
-#undef WS_API_PROTOTYPES
-#undef WS_API_TYPEDEFS
-#endif
 
 #endif  /* _WINSOCKAPI_ */

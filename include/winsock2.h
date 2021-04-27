@@ -17,12 +17,117 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
- *
- * FIXME: Still missing required Winsock 2 definitions.
  */
+
+#ifndef __WINE_WINSOCKAPI_STDLIB_H
+#define __WINE_WINSOCKAPI_STDLIB_H
+
+/*
+ * This section defines the items that conflict with the Unix headers.
+ */
+#ifndef USE_WS_PREFIX
+/* We are not using the WS_ prefix we risk getting conflicts for
+ * everything related to select.
+ */
+# ifdef FD_CLR
+/* Too late, the Unix version of stdlib.h was included before winsock.h.
+ * This means select and all the related stuff is already defined and we
+ * cannot override types and function prototypes.
+ * All we can do is disable all these symbols so that they are not used
+ * inadvertently.
+ */
+#  include <sys/types.h>
+#  undef FD_SETSIZE
+#  undef FD_CLR
+#  undef FD_SET
+#  undef FD_ZERO
+#  undef FD_ISSET
+
+#  define FD_SETSIZE Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
+#  define FD_CLR     Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
+#  define FD_SET     Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
+#  define FD_ZERO    Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
+#  define FD_ISSET   Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
+#  define fd_set     Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
+#  define select     Include_winsock_h_before_stdlib_h_or_use_the_MSVCRT_library
+# elif defined(RLIM_INFINITY)
+/* On Darwin stdlib.h includes sys/resource.h which defines timeval but not the fd_set macros */
+#  define fd_set unix_fd_set
+#  include <sys/types.h>
+#  include <time.h>
+#  include <stdlib.h>
+#  undef fd_set
+#  undef FD_SETSIZE
+#  undef FD_CLR
+#  undef FD_SET
+#  undef FD_ZERO
+#  undef FD_ISSET
+#  define select     Include_winsock_h_before_sys_types_h_or_use_the_MSVCRT_library
+#  define timeval    Include_winsock_h_before_sys_types_h_or_use_the_MSVCRT_library
+# else  /* FD_CLR */
+/* stdlib.h has not been included yet so it's not too late. Include it now
+ * making sure that none of the select symbols is affected. Then we can
+ * define them with our own values.
+ */
+#  define fd_set unix_fd_set
+#  define timeval unix_timeval
+#  define select unix_select
+#  define socklen_t unix_socklen_t
+#  define u_long unix_u_long
+#  include <sys/types.h>
+#  include <time.h>
+#  include <stdlib.h>
+#  undef fd_set
+#  undef timeval
+#  undef select
+#  undef socklen_t
+#  undef u_long
+#  undef FD_SETSIZE
+#  undef FD_CLR
+#  undef FD_SET
+#  undef FD_ZERO
+#  undef FD_ISSET
+#  undef _TIMEVAL_DEFINED
+
+#  define WS_DEFINE_SELECT
+# endif /* FD_CLR */
+
+#else
+# define WS_DEFINE_SELECT
+# include <sys/types.h>
+# include <stdlib.h>
+#endif /* !USE_WS_PREFIX */
+
+#endif /* __WINE_WINSOCKAPI_STDLIB_H */
 
 #ifndef _WINSOCK2API_
 #define _WINSOCK2API_
+
+#include <windows.h>
+
+#ifdef USE_WS_PREFIX
+# define WS(x)    WS_##x
+#else
+# define WS(x)    x
+#endif
+
+#ifdef USE_WS_PREFIX
+typedef unsigned char  WS_u_char;
+typedef unsigned short WS_u_short;
+typedef unsigned int   WS_u_int;
+typedef ULONG          WS_u_long;
+#elif (defined(_MSC_VER) || defined(__MINGW32__) || defined(__WATCOMC__)) && !defined(_BSDTYPES_DEFINED)
+/* MinGW doesn't define the u_xxx types */
+typedef unsigned char  u_char;
+typedef unsigned short u_short;
+typedef unsigned int   u_int;
+typedef ULONG          u_long;
+#define _BSDTYPES_DEFINED
+#else
+#define u_long ULONG  /* make sure we don't use the system u_long */
+#endif
+
+typedef UINT_PTR SOCKET;
 
 /*
  * Setup phase
@@ -43,18 +148,36 @@
 #define WS_API_TYPEDEFS            INCL_WINSOCK_API_TYPEDEFS
 #endif
 
-#define __WINE_WINSOCK2__
-#include <winsock.h>
-#undef  __WINE_WINSOCK2__
-
 #include <ws2def.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */
 
+#define INVALID_SOCKET             (SOCKET)(~0)
+#define SOCKET_ERROR               (-1)
 
 #ifndef USE_WS_PREFIX
+#define SOL_SOCKET                 0xffff
+#define SO_DEBUG                   0x0001
+#define SO_ACCEPTCONN              0x0002
+#define SO_REUSEADDR               0x0004
+#define SO_EXCLUSIVEADDRUSE        ((u_int)(~SO_REUSEADDR))
+#define SO_KEEPALIVE               0x0008
+#define SO_DONTROUTE               0x0010
+#define SO_BROADCAST               0x0020
+#define SO_USELOOPBACK             0x0040
+#define SO_LINGER                  0x0080
+#define SO_OOBINLINE               0x0100
+#define SO_DONTLINGER              ((u_int)(~SO_LINGER))
+#define SO_SNDBUF                  0x1001
+#define SO_RCVBUF                  0x1002
+#define SO_SNDLOWAT                0x1003
+#define SO_RCVLOWAT                0x1004
+#define SO_SNDTIMEO                0x1005
+#define SO_RCVTIMEO                0x1006
+#define SO_ERROR                   0x1007
+#define SO_TYPE                    0x1008
 #define SO_GROUP_ID                0x2001
 #define SO_GROUP_PRIORITY          0x2002
 #define SO_MAX_MSG_SIZE            0x2003
@@ -64,6 +187,26 @@ extern "C" {
 #define PVD_CONFIG                 0x3001
 #define SO_CONDITIONAL_ACCEPT      0x3002
 #else
+#define WS_SOL_SOCKET              0xffff
+#define WS_SO_DEBUG                0x0001
+#define WS_SO_ACCEPTCONN           0x0002
+#define WS_SO_REUSEADDR            0x0004
+#define WS_SO_EXCLUSIVEADDRUSE     ((WS_u_int)(~WS_SO_REUSEADDR))
+#define WS_SO_KEEPALIVE            0x0008
+#define WS_SO_DONTROUTE            0x0010
+#define WS_SO_BROADCAST            0x0020
+#define WS_SO_USELOOPBACK          0x0040
+#define WS_SO_LINGER               0x0080
+#define WS_SO_OOBINLINE            0x0100
+#define WS_SO_DONTLINGER           ((WS_u_int)(~WS_SO_LINGER))
+#define WS_SO_SNDBUF               0x1001
+#define WS_SO_RCVBUF               0x1002
+#define WS_SO_SNDLOWAT             0x1003
+#define WS_SO_RCVLOWAT             0x1004
+#define WS_SO_SNDTIMEO             0x1005
+#define WS_SO_RCVTIMEO             0x1006
+#define WS_SO_ERROR                0x1007
+#define WS_SO_TYPE                 0x1008
 #define WS_SO_GROUP_ID             0x2001
 #define WS_SO_GROUP_PRIORITY       0x2002
 #define WS_SO_MAX_MSG_SIZE         0x2003
@@ -95,7 +238,31 @@ extern "C" {
 /* protocol families */
 
 #ifndef USE_WS_PREFIX
+#define PF_APPLETALK               AF_APPLETALK
+#define PF_BAN                     AF_BAN
+#define PF_CCITT                   AF_CCITT
+#define PF_CHAOS                   AF_CHAOS
+#define PF_DATAKIT                 AF_DATAKIT
+#define PF_DECnet                  AF_DECnet
+#define PF_DLI                     AF_DLI
+#define PF_ECMA                    AF_ECMA
+#define PF_FIREFOX                 AF_FIREFOX
+#define PF_HYLINK                  AF_HYLINK
+#define PF_IMPLINK                 AF_IMPLINK
+#define PF_INET                    AF_INET
 #define PF_INET6                   AF_INET6
+#define PF_IPX                     AF_IPX
+#define PF_ISO                     AF_ISO
+#define PF_LAT                     AF_LAT
+#define PF_MAX                     AF_MAX
+#define PF_NS                      AF_NS
+#define PF_OSI                     AF_OSI
+#define PF_PUP                     AF_PUP
+#define PF_SNA                     AF_SNA
+#define PF_UNIX                    AF_UNIX
+#define PF_UNKNOWN1                AF_UNKNOWN1
+#define PF_UNSPEC                  AF_UNSPEC
+#define PF_VOICEVIEW               AF_VOICEVIEW
 #endif
 
 /* option flags per socket */
@@ -112,10 +279,22 @@ extern "C" {
 #define FD_ROUTING_INTERFACE_CHANGE_BIT 8
 #define FD_ADDRESS_LIST_CHANGE_BIT 9
 
+#define FD_READ                     0x00000001
+#define FD_WRITE                    0x00000002
+#define FD_OOB                      0x00000004
+#define FD_ACCEPT                   0x00000008
+#define FD_CONNECT                  0x00000010
+#define FD_CLOSE                    0x00000020
 #define FD_QOS                      0x00000040
 #define FD_GROUP_QOS                0x00000080
 #define FD_ROUTING_INTERFACE_CHANGE 0x00000100
 #define FD_ADDRESS_LIST_CHANGE      0x00000200
+
+#ifdef __WINESRC__
+#define FD_WINE_LISTENING           0x10000000
+#define FD_WINE_NONBLOCKING         0x20000000
+#define FD_WINE_CONNECTED           0x40000000
+#endif
 
 /* Constants for LPCONDITIONPROC */
 #define CF_ACCEPT                  0x0000
@@ -164,10 +343,22 @@ extern "C" {
 #define WS_IOC_OUT                 0x40000000
 #define WS_IOC_IN                  0x80000000
 #define WS_IOC_INOUT               (WS_IOC_IN|WS_IOC_OUT)
+#define WS_IOCPARM_MASK            0x7f
+#define WS__IO(x,y)                (WS_IOC_VOID | ((x) << 8) | (y))
+#define WS__IOR(x,y,t)             (WS_IOC_OUT | (((UINT)sizeof(t) & WS_IOCPARM_MASK) << 16) | ((x) << 8) | (y))
+#define WS__IOW(x,y,t)             (WS_IOC_IN | (((UINT)sizeof(t) & WS_IOCPARM_MASK) << 16) | ((x) << 8) | (y))
 #define _WSAIO(x,y)                (WS_IOC_VOID|(x)|(y))
 #define _WSAIOR(x,y)               (WS_IOC_OUT|(x)|(y))
 #define _WSAIOW(x,y)               (WS_IOC_IN|(x)|(y))
 #define _WSAIORW(x,y)              (WS_IOC_INOUT|(x)|(y))
+#define WS_FIONREAD                           WS__IOR('f', 127, ULONG)
+#define WS_FIONBIO                            WS__IOW('f', 126, ULONG)
+#define WS_FIOASYNC                           WS__IOW('f', 125, ULONG)
+#define WS_SIOCSHIWAT                         WS__IOW('s',  0, ULONG)
+#define WS_SIOCGHIWAT                         WS__IOR('s',  1, ULONG)
+#define WS_SIOCSLOWAT                         WS__IOW('s',  2, ULONG)
+#define WS_SIOCGLOWAT                         WS__IOR('s',  3, ULONG)
+#define WS_SIOCATMARK                         WS__IOR('s',  7, ULONG)
 #define WS_SIO_ASSOCIATE_HANDLE               _WSAIOW(WS_IOC_WS2,1)
 #define WS_SIO_ENABLE_CIRCULAR_QUEUEING       _WSAIO(WS_IOC_WS2,2)
 #define WS_SIO_FIND_ROUTE                     _WSAIOR(WS_IOC_WS2,3)
@@ -200,10 +391,22 @@ extern "C" {
 #define IOC_OUT                    0x40000000
 #define IOC_IN                     0x80000000
 #define IOC_INOUT                  (IOC_IN|IOC_OUT)
+#define IOCPARM_MASK               0x7f
+#define _IO(x,y)                   (IOC_VOID | ((x) << 8) | (y))
+#define _IOR(x,y,t)                (IOC_OUT | (((UINT)sizeof(t) & IOCPARM_MASK) << 16) | ((x) << 8) | (y))
+#define _IOW(x,y,t)                (IOC_IN | (((UINT)sizeof(t) & IOCPARM_MASK) << 16) | ((x) << 8) | (y))
 #define _WSAIO(x,y)                (IOC_VOID|(x)|(y))
 #define _WSAIOR(x,y)               (IOC_OUT|(x)|(y))
 #define _WSAIOW(x,y)               (IOC_IN|(x)|(y))
 #define _WSAIORW(x,y)              (IOC_INOUT|(x)|(y))
+#define FIONREAD                   _IOR('f', 127, ULONG)
+#define FIONBIO                    _IOW('f', 126, ULONG)
+#define FIOASYNC                   _IOW('f', 125, ULONG)
+#define SIOCSHIWAT                 _IOW('s',  0, ULONG)
+#define SIOCGHIWAT                 _IOR('s',  1, ULONG)
+#define SIOCSLOWAT                 _IOW('s',  2, ULONG)
+#define SIOCGLOWAT                 _IOR('s',  3, ULONG)
+#define SIOCATMARK                 _IOR('s',  7, ULONG)
 #define SIO_ASSOCIATE_HANDLE       _WSAIOW(IOC_WS2,1)
 #define SIO_ENABLE_CIRCULAR_QUEUEING _WSAIO(IOC_WS2,2)
 #define SIO_FIND_ROUTE             _WSAIOR(IOC_WS2,3)
@@ -223,6 +426,28 @@ extern "C" {
 #define SIO_ADDRESS_LIST_CHANGE    _WSAIO(IOC_WS2,23)
 #define SIO_QUERY_TARGET_PNP_HANDLE _WSAIOR(IOC_WS2,24)
 #define SIO_GET_INTERFACE_LIST     _IOR ('t', 127, ULONG)
+#endif /* USE_WS_PREFIX */
+
+#ifndef USE_WS_PREFIX
+#define SOMAXCONN                  0x7fffffff
+
+#define MSG_OOB                    0x0001
+#define MSG_PEEK                   0x0002
+#define MSG_DONTROUTE              0x0004
+#define MSG_WAITALL                0x0008
+#define MSG_INTERRUPT              0x0010
+#define MSG_PARTIAL                0x8000
+#define MSG_MAXIOVLEN              16
+#else /* USE_WS_PREFIX */
+#define WS_SOMAXCONN               0x7fffffff
+
+#define WS_MSG_OOB                 0x0001
+#define WS_MSG_PEEK                0x0002
+#define WS_MSG_DONTROUTE           0x0004
+#define WS_MSG_WAITALL             0x0008
+#define WS_MSG_INTERRUPT           0x0010
+#define WS_MSG_PARTIAL             0x8000
+#define WS_MSG_MAXIOVLEN           16
 #endif /* USE_WS_PREFIX */
 
 /* Constants for WSAIoctl() */
@@ -284,6 +509,8 @@ extern "C" {
 #include <guiddef.h>
 #endif
 
+#define MAXGETHOSTSTRUCT 1024
+
 #define MAX_PROTOCOL_CHAIN         7
 #define BASE_PROTOCOL              1
 #define LAYERED_PROTOCOL           0
@@ -328,12 +555,123 @@ typedef struct _WSAPROTOCOLCHAIN
 
 #define SECURITY_PROTOCOL_NONE              0x0000
 
+#ifndef _TIMEVAL_DEFINED
+#define _TIMEVAL_DEFINED
+typedef struct WS(timeval)
+{
+    LONG tv_sec;
+    LONG tv_usec;
+} TIMEVAL, *PTIMEVAL, *LPTIMEVAL;
+#endif
+
+#ifdef WS_DEFINE_SELECT
+
+#define __WS_FD_CLR(fd, set, cast) do { \
+    unsigned int __i; \
+    for (__i = 0; __i < ((cast*)(set))->fd_count; __i++) \
+    { \
+        if (((cast*)(set))->fd_array[__i] == fd) \
+        { \
+            while (__i < ((cast*)(set))->fd_count-1) \
+            { \
+                ((cast*)(set))->fd_array[__i] = \
+                    ((cast*)(set))->fd_array[__i+1]; \
+                __i++; \
+            } \
+            ((cast*)(set))->fd_count--; \
+            break; \
+        } \
+    } \
+} while (0)
+
+#define __WS_FD_SET(fd, set, cast) do { \
+    unsigned int __i; \
+    for (__i = 0; __i < ((cast*)(set))->fd_count; __i++) \
+    { \
+        if (((cast*)(set))->fd_array[__i] == (fd)) \
+            break; \
+    } \
+    if (__i == ((cast*)(set))->fd_count && ((cast*)(set))->fd_count < FD_SETSIZE) \
+    { \
+        ((cast*)(set))->fd_count++; \
+        ((cast*)(set))->fd_array[__i]=(fd);\
+    } \
+} while (0)
+
+#ifndef USE_WS_PREFIX
+
+# ifndef FD_SETSIZE
+#  define FD_SETSIZE    64
+# endif
+
+# define FD_CLR(fd, set)      __WS_FD_CLR((fd), (set), fd_set)
+# define FD_SET(fd, set)      __WS_FD_SET((fd), (set), fd_set)
+# define FD_ZERO(set)         (((fd_set*)(set))->fd_count=0)
+# define FD_ISSET(fd, set)    __WSAFDIsSet((SOCKET)(fd), (fd_set*)(set))
+
+#else
+
+# ifndef WS_FD_SETSIZE
+#  define WS_FD_SETSIZE 64
+# endif
+
+# define WS_FD_CLR(fd, set)   __WS_FD_CLR((fd), (set), WS_fd_set)
+# define WS_FD_SET(fd, set)   __WS_FD_SET((fd), (set), WS_fd_set)
+# define WS_FD_ZERO(set)      (((WS_fd_set*)(set))->fd_count=0)
+# define WS_FD_ISSET(fd, set) __WSAFDIsSet((SOCKET)(fd), (WS_fd_set*)(set))
+
+#endif
+
+typedef struct WS(fd_set)
+{
+    WS(u_int) fd_count;
+    SOCKET fd_array[WS(FD_SETSIZE)];
+} WS(fd_set), FD_SET, *PFD_SET, *LPFD_SET;
+
+#endif
+
 typedef struct /*WS(pollfd)*/
 {
     SOCKET fd;
     SHORT events;
     SHORT revents;
 } WSAPOLLFD;
+
+typedef struct WS(hostent)
+{
+    char *h_name;
+    char **h_aliases;
+    short h_addrtype;
+    short h_length;
+    char **h_addr_list;
+#define h_addr h_addr_list[0]
+} HOSTENT, *PHOSTENT, *LPHOSTENT;
+
+typedef struct WS(servent)
+{
+    char *s_name;
+    char **s_aliases;
+#ifdef _WIN64
+    char *s_proto;
+    short s_port;
+#else
+    short s_port;
+    char *s_proto;
+#endif
+} SERVENT, *PSERVENT, *LPSERVENT;
+
+typedef struct WS(protoent)
+{
+    char *p_name;
+    char **p_aliases;
+    short p_proto;
+} PROTOENT, *PPROTOENT, *LPPROTOENT;
+
+typedef struct WS(linger)
+{
+    WS(u_short) l_onoff;
+    WS(u_short) l_linger;
+} LINGER, *PLINGER, *LPLINGER;
 
 #define WSAPROTOCOL_LEN  255
 typedef struct _WSAPROTOCOL_INFOA
@@ -440,6 +778,17 @@ DECL_WINELIB_TYPE_AW(LPWSASERVICECLASSINFO)
 #define LPWSAEVENT    LPHANDLE
 #define WSAOVERLAPPED OVERLAPPED
 typedef struct _OVERLAPPED* LPWSAOVERLAPPED;
+
+#ifndef USE_WS_PREFIX
+#define h_errno                    WSAGetLastError()
+#else
+#define WS_h_errno                 WSAGetLastError()
+#endif
+
+#define WSAHOST_NOT_FOUND          (WSABASEERR + 1001)
+#define WSATRY_AGAIN               (WSABASEERR + 1002)
+#define WSANO_RECOVERY             (WSABASEERR + 1003)
+#define WSANO_DATA                 (WSABASEERR + 1004)
 
 #define WSA_IO_PENDING             (ERROR_IO_PENDING)
 #define WSA_IO_INCOMPLETE          (ERROR_IO_INCOMPLETE)
@@ -628,6 +977,75 @@ typedef struct _WSACOMPLETION {
     } Parameters;
 } WSACOMPLETION, *PWSACOMPLETION, *LPWSACOMPLETION;
 
+#define WSADESCRIPTION_LEN      256
+#define WSASYS_STATUS_LEN       128
+
+typedef struct WSAData
+{
+    WORD wVersion;
+    WORD wHighVersion;
+#ifdef _WIN64
+    WORD iMaxSockets;
+    WORD iMaxUdpDg;
+    char *lpVendorInfo;
+    char szDescription[WSADESCRIPTION_LEN+1];
+    char szSystemStatus[WSASYS_STATUS_LEN+1];
+#else
+    char szDescription[WSADESCRIPTION_LEN+1];
+    char szSystemStatus[WSASYS_STATUS_LEN+1];
+    WORD iMaxSockets;
+    WORD iMaxUdpDg;
+    char *lpVendorInfo;
+#endif
+} WSADATA, *LPWSADATA;
+
+#ifndef USE_WS_PREFIX
+
+#undef htonl
+#undef htons
+#undef ntohl
+#undef ntohs
+
+#ifdef WORDS_BIGENDIAN
+
+static inline u_short __wine_ushort_noop(u_short s)
+{
+    return s;
+}
+static inline ULONG __wine_ulong_noop(ULONG l)
+{
+    return l;
+}
+#define htonl __wine_ulong_noop
+#define htons __wine_ushort_noop
+#define ntohl __wine_ulong_noop
+#define ntohs __wine_ushort_noop
+
+#else /* WORDS_BIGENDIAN */
+
+static inline u_short __wine_ushort_swap(u_short s)
+{
+    return (s >> 8) | (s << 8);
+}
+static inline ULONG __wine_ulong_swap(ULONG l)
+{
+    return ((ULONG)__wine_ushort_swap((u_short)l) << 16) | __wine_ushort_swap((u_short)(l >> 16));
+}
+#define htonl __wine_ulong_swap
+#define htons __wine_ushort_swap
+#define ntohl __wine_ulong_swap
+#define ntohs __wine_ushort_swap
+
+#endif /* WORDS_BIGENDIAN */
+#endif /* USE_WS_PREFIX */
+
+#define WSAMAKEASYNCREPLY(size, error) MAKELONG(size, error)
+#define WSAMAKESELECTREPLY(flags, error) MAKELONG(flags, error)
+#define WSAGETASYNCBUFLEN(x) LOWORD(x)
+#define WSAGETASYNCERROR(x) HIWORD(x)
+#define WSAGETSELECTEVENT(x) LOWORD(x)
+#define WSAGETSELECTERROR(x) HIWORD(x)
+
 /*
  * Winsock Function Typedefs
  *
@@ -695,11 +1113,55 @@ typedef SOCKET (WINAPI *LPFN_SOCKET)(int,int,int);
  * "Winsock2 Function Typedefs" section below.
  */
 #if WS_API_PROTOTYPES
+int WINAPI __WSAFDIsSet(SOCKET, WS(fd_set) *);
+
+SOCKET WINAPI WS(accept)(SOCKET, struct WS(sockaddr) *, int *);
+int WINAPI WS(bind)(SOCKET, const struct WS(sockaddr) *, int);
+int WINAPI WS(closesocket)(SOCKET);
+int WINAPI WS(connect)(SOCKET, const struct WS(sockaddr) *, int);
+struct WS(hostent) * WINAPI WS(gethostbyaddr)(const char *, int, int);
+struct WS(hostent) * WINAPI WS(gethostbyname)(const char *);
+#if defined(__MINGW32__) || defined(_MSC_VER) || defined(__WINE_USE_MSVCRT)
+/* gethostname is defined in unistd.h */
+int WINAPI WS(gethostname)(char *, int);
+#endif
+int WINAPI WS(getpeername)(SOCKET, struct WS(sockaddr) *, int *);
+struct WS(protoent) * WINAPI WS(getprotobyname)(const char *);
+struct WS(protoent) * WINAPI WS(getprotobynumber)(int);
+struct WS(servent) * WINAPI WS(getservbyname)(const char *, const char *);
+struct WS(servent) * WINAPI WS(getservbyport)(int, const char *);
+int WINAPI WS(getsockname)(SOCKET, struct WS(sockaddr) *, int *);
+int WINAPI WS(getsockopt)(SOCKET, int, int, char *, int *);
+ULONG WINAPI WS(inet_addr)(const char *);
+char * WINAPI WS(inet_ntoa)(struct WS(in_addr));
+int WINAPI WS(ioctlsocket)(SOCKET, LONG, WS(u_long) *);
+int WINAPI WS(listen)(SOCKET, int);
+int WINAPI WS(recv)(SOCKET, char *, int, int);
+int WINAPI WS(recvfrom)(SOCKET, char *, int, int, struct WS(sockaddr) *, int *);
+#ifdef WS_DEFINE_SELECT
+int WINAPI WS(select)(int, WS(fd_set) *, WS(fd_set) *, WS(fd_set) *, const struct WS(timeval) *);
+#endif
+int WINAPI WS(send)(SOCKET, const char *, int, int);
+int WINAPI WS(sendto)(SOCKET, const char *, int, int, const struct WS(sockaddr) *, int);
+int WINAPI WS(setsockopt)(SOCKET, int, int, const char *, int);
+int WINAPI WS(shutdown)(SOCKET, int);
+SOCKET WINAPI WS(socket)(int, int, int);
+
 int WINAPI GetHostNameW(WCHAR *, int);
 SOCKET WINAPI WSAAccept(SOCKET,struct WS(sockaddr)*,LPINT,LPCONDITIONPROC,DWORD_PTR);
 INT WINAPI WSAAddressToStringA(LPSOCKADDR,DWORD,LPWSAPROTOCOL_INFOA,LPSTR,LPDWORD);
 INT WINAPI WSAAddressToStringW(LPSOCKADDR,DWORD,LPWSAPROTOCOL_INFOW,LPWSTR,LPDWORD);
 #define WSAAddressToString         WINELIB_NAME_AW(WSAAddressToString)
+HANDLE WINAPI WSAAsyncGetHostByAddr(HWND, WS(u_int), const char *, int, int, char *, int);
+HANDLE WINAPI WSAAsyncGetHostByName(HWND, WS(u_int), const char *, char *, int);
+HANDLE WINAPI WSAAsyncGetProtoByName(HWND, WS(u_int), const char *, char *, int);
+HANDLE WINAPI WSAAsyncGetProtoByNumber(HWND, WS(u_int), int, char *, int);
+HANDLE WINAPI WSAAsyncGetServByName(HWND, WS(u_int), const char *, const char *, char *, int);
+HANDLE WINAPI WSAAsyncGetServByPort(HWND, WS(u_int), int, const char *, char *, int);
+int WINAPI WSAAsyncSelect(SOCKET, HWND, WS(u_int), LONG);
+int WINAPI WSACancelAsyncRequest(HANDLE);
+int WINAPI WSACancelBlockingCall(void);
+int WINAPI WSACleanup(void);
 BOOL WINAPI WSACloseEvent(WSAEVENT);
 int WINAPI WSAConnect(SOCKET,const struct WS(sockaddr)*,int,LPWSABUF,LPWSABUF,LPQOS,LPQOS);
 WSAEVENT WINAPI WSACreateEvent(void);
@@ -714,6 +1176,7 @@ int WINAPI WSAEnumProtocolsA(LPINT,LPWSAPROTOCOL_INFOA,LPDWORD);
 int WINAPI WSAEnumProtocolsW(LPINT,LPWSAPROTOCOL_INFOW,LPDWORD);
 #define WSAEnumProtocols           WINELIB_NAME_AW(WSAEnumProtocols)
 int WINAPI WSAEventSelect(SOCKET,WSAEVENT,LONG);
+int WINAPI WSAGetLastError(void);
 BOOL WINAPI WSAGetOverlappedResult(SOCKET,LPWSAOVERLAPPED,LPDWORD,BOOL,LPDWORD);
 BOOL WINAPI WSAGetQOSByName(SOCKET,LPWSABUF,LPQOS);
 INT WINAPI WSAGetServiceClassInfoA(LPGUID,LPGUID,LPDWORD,LPWSASERVICECLASSINFOA);
@@ -728,6 +1191,7 @@ int WINAPI WSAInstallServiceClassA(LPWSASERVICECLASSINFOA);
 int WINAPI WSAInstallServiceClassW(LPWSASERVICECLASSINFOW);
 #define WSAInstallServiceClass     WINELIB_NAME_AW(WSAInstallServiceClass)
 int WINAPI WSAIoctl(SOCKET,DWORD,LPVOID,DWORD,LPVOID,DWORD,LPDWORD,LPWSAOVERLAPPED,LPWSAOVERLAPPED_COMPLETION_ROUTINE);
+BOOL WINAPI WSAIsBlocking(void);
 SOCKET WINAPI WSAJoinLeaf(SOCKET,const struct WS(sockaddr)*,int,LPWSABUF,LPWSABUF,LPQOS,LPQOS,DWORD);
 INT WINAPI WSALookupServiceBeginA(LPWSAQUERYSETA,DWORD,LPHANDLE);
 INT WINAPI WSALookupServiceBeginW(LPWSAQUERYSETW,DWORD,LPHANDLE);
@@ -749,16 +1213,20 @@ BOOL WINAPI WSAResetEvent(WSAEVENT);
 int WINAPI WSASend(SOCKET,LPWSABUF,DWORD,LPDWORD,DWORD,LPWSAOVERLAPPED,LPWSAOVERLAPPED_COMPLETION_ROUTINE);
 int WINAPI WSASendDisconnect(SOCKET,LPWSABUF);
 int WINAPI WSASendTo(SOCKET,LPWSABUF,DWORD,LPDWORD,DWORD,const struct WS(sockaddr)*,int,LPWSAOVERLAPPED,LPWSAOVERLAPPED_COMPLETION_ROUTINE);
+FARPROC WINAPI WSASetBlockingHook(FARPROC);
 BOOL WINAPI WSASetEvent(WSAEVENT);
+void WINAPI WSASetLastError(int);
 INT WINAPI WSASetServiceA(LPWSAQUERYSETA,WSAESETSERVICEOP,DWORD);
 INT WINAPI WSASetServiceW(LPWSAQUERYSETW,WSAESETSERVICEOP,DWORD);
 #define WSASetService   WINELIB_NAME_AW(WSASetService)
 SOCKET WINAPI WSASocketA(int,int,int,LPWSAPROTOCOL_INFOA,GROUP,DWORD);
 SOCKET WINAPI WSASocketW(int,int,int,LPWSAPROTOCOL_INFOW,GROUP,DWORD);
 #define WSASocket WINELIB_NAME_AW(WSASocket)
+int WINAPI WSAStartup(WORD,WSADATA*);
 INT WINAPI WSAStringToAddressA(LPSTR,INT,LPWSAPROTOCOL_INFOA,LPSOCKADDR,LPINT);
 INT WINAPI WSAStringToAddressW(LPWSTR,INT,LPWSAPROTOCOL_INFOW,LPSOCKADDR,LPINT);
 #define WSAStringToAddress WINELIB_NAME_AW(WSAStringToAddress)
+int WINAPI WSAUnhookBlockingHook(void);
 DWORD WINAPI WSAWaitForMultipleEvents(DWORD,const WSAEVENT*,BOOL,DWORD,BOOL);
 #endif /* WS_API_PROTOTYPES */
 

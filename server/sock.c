@@ -96,32 +96,6 @@
 #include "request.h"
 #include "user.h"
 
-/* From winsock.h */
-#define FD_MAX_EVENTS              10
-#define FD_READ_BIT                0
-#define FD_WRITE_BIT               1
-#define FD_OOB_BIT                 2
-#define FD_ACCEPT_BIT              3
-#define FD_CONNECT_BIT             4
-#define FD_CLOSE_BIT               5
-
-/*
- * Define flags to be used with the WSAAsyncSelect() call.
- */
-#define FD_READ                    0x00000001
-#define FD_WRITE                   0x00000002
-#define FD_OOB                     0x00000004
-#define FD_ACCEPT                  0x00000008
-#define FD_CONNECT                 0x00000010
-#define FD_CLOSE                   0x00000020
-
-/* internal per-socket flags */
-#define FD_WINE_LISTENING          0x10000000
-#define FD_WINE_NONBLOCKING        0x20000000
-#define FD_WINE_CONNECTED          0x40000000
-#define FD_WINE_RAW                0x80000000
-#define FD_WINE_INTERNAL           0xFFFF0000
-
 struct accept_req
 {
     struct list entry;
@@ -988,7 +962,7 @@ static int get_unix_protocol( int protocol )
         case WS_IPPROTO_ICMP: return IPPROTO_ICMP;
         case WS_IPPROTO_IGMP: return IPPROTO_IGMP;
         case WS_IPPROTO_IP: return IPPROTO_IP;
-        case WS_IPPROTO_IPIP: return IPPROTO_IPIP;
+        case WS_IPPROTO_IPV4: return IPPROTO_IPIP;
         case WS_IPPROTO_IPV6: return IPPROTO_IPV6;
         case WS_IPPROTO_RAW: return IPPROTO_RAW;
         case WS_IPPROTO_TCP: return IPPROTO_TCP;
