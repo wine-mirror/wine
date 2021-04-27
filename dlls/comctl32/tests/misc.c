@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <windows.h>
 #include <commctrl.h>
+#include <uxtheme.h>
 
 #include "wine/test.h"
 #include "v6util.h"
@@ -39,8 +40,9 @@ static BOOL (WINAPI * pStr_SetPtrW)(LPWSTR, LPCWSTR);
 static BOOL (WINAPI *pSetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR);
 static BOOL (WINAPI *pRemoveWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR);
 static LRESULT (WINAPI *pDefSubclassProc)(HWND, UINT, WPARAM, LPARAM);
+static BOOL (WINAPI *pIsThemeActive)(void);
 
-static HMODULE hComctl32 = 0;
+static HMODULE hComctl32, hUxtheme;
 
 /* For message tests */
 enum seq_index
@@ -105,6 +107,9 @@ static BOOL init_functions_v6(void)
     COMCTL32_GET_PROC(410, SetWindowSubclass)
     COMCTL32_GET_PROC(412, RemoveWindowSubclass)
     COMCTL32_GET_PROC(413, DefSubclassProc)
+
+    hUxtheme = LoadLibraryA("uxtheme.dll");
+    pIsThemeActive = (void *)GetProcAddress(hUxtheme, "IsThemeActive");
 
     return TRUE;
 }
@@ -604,6 +609,56 @@ static void test_WM_THEMECHANGED(void)
     DestroyWindow(parent);
 }
 
+static const struct message wm_syscolorchange_seq[] =
+{
+    {WM_SYSCOLORCHANGE, sent | wparam | lparam},
+    {0},
+};
+
+static INT_PTR CALLBACK wm_syscolorchange_dlg_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    struct message msg = {0};
+
+    msg.message = message;
+    msg.flags = sent | wparam | lparam;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+    add_message(sequences, CHILD_SEQ_INDEX, &msg);
+    return FALSE;
+}
+
+static void test_WM_SYSCOLORCHANGE(void)
+{
+    HWND parent, dialog;
+    BOOL todo;
+    struct
+    {
+        DLGTEMPLATE tmplate;
+        WORD menu;
+        WORD class;
+        WORD title;
+    } temp = {{0}};
+
+    parent = CreateWindowExA(0, WC_STATICA, "parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100,
+                             200, 200, 0, 0, 0, NULL);
+    ok(!!parent, "CreateWindowExA failed, error %d\n", GetLastError());
+
+    temp.tmplate.style = WS_CHILD | WS_VISIBLE;
+    temp.tmplate.cx = 50;
+    temp.tmplate.cy = 50;
+    dialog = CreateDialogIndirectParamA(NULL, &temp.tmplate, parent, wm_syscolorchange_dlg_proc, 0);
+    ok(!!dialog, "CreateDialogIndirectParamA failed, error %d\n", GetLastError());
+    flush_events();
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    SendMessageW(dialog, WM_SYSCOLORCHANGE, 0, 0);
+    todo = pIsThemeActive && pIsThemeActive();
+    ok_sequence(sequences, CHILD_SEQ_INDEX, wm_syscolorchange_seq, "test dialog WM_SYSCOLORCHANGE", todo);
+
+    EndDialog(dialog, 0);
+    DestroyWindow(parent);
+}
+
 START_TEST(misc)
 {
     ULONG_PTR ctx_cookie;
@@ -628,7 +683,9 @@ START_TEST(misc)
     test_builtin_classes();
     test_LoadIconWithScaleDown();
     test_WM_THEMECHANGED();
+    test_WM_SYSCOLORCHANGE();
 
     unload_v6_module(ctx_cookie, hCtx);
     FreeLibrary(hComctl32);
+    FreeLibrary(hUxtheme);
 }
