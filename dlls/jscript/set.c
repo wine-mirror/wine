@@ -335,6 +335,16 @@ static HRESULT Map_has(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned 
     return S_OK;
 }
 
+static HRESULT Map_get_size(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
+{
+    MapInstance *map = (MapInstance*)jsthis;
+
+    TRACE("%p\n", map);
+
+    *r = jsval_number(map->size);
+    return S_OK;
+}
+
 static HRESULT Map_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
@@ -364,6 +374,10 @@ static const builtin_prop_t Map_prototype_props[] = {
     {L"set",        Map_set,       PROPF_METHOD|2},
 };
 
+static const builtin_prop_t Map_props[] = {
+    {L"size",       NULL,0,        Map_get_size, builtin_set_const},
+};
+
 static const builtin_info_t Map_prototype_info = {
     JSCLASS_OBJECT,
     {NULL, Map_value, 0},
@@ -376,7 +390,8 @@ static const builtin_info_t Map_prototype_info = {
 static const builtin_info_t Map_info = {
     JSCLASS_MAP,
     {NULL, Map_value, 0},
-    0, NULL,
+    ARRAY_SIZE(Map_props),
+    Map_props,
     Map_destructor,
     NULL
 };
