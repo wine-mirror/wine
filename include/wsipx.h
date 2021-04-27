@@ -25,7 +25,7 @@
 # define WS(x)    x
 #endif
 
-typedef struct WS_sockaddr_ipx
+typedef struct WS(sockaddr_ipx)
 {
     short sa_family;
     char sa_netnum[4];
