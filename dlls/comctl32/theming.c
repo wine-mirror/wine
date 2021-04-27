@@ -26,7 +26,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "comctl32.h"
-#include "uxtheme.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(theming);
@@ -95,8 +94,6 @@ static const WNDPROC subclassProcs[NUM_SUBCLASSES] = {
 void THEMING_Initialize (void)
 {
     unsigned int i;
-
-    if (!IsThemeActive()) return;
 
     atSubclassProp = GlobalAddAtomW (L"CC32ThemingSubCl");
     atRefDataProp = GlobalAddAtomW (L"CC32ThemingData");

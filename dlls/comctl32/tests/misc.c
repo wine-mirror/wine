@@ -580,7 +580,7 @@ static void test_WM_THEMECHANGED(void)
         {TRACKBAR_CLASSA, wm_themechanged_paint_seq},
         {WC_TREEVIEWA, wm_themechanged_paint_erase_seq, 1, {0x1128}},
         {UPDOWN_CLASSA, wm_themechanged_paint_erase_seq},
-        {WC_SCROLLBARA, wm_themechanged_paint_erase_seq, 1, {SBM_GETSCROLLINFO}, TRUE},
+        {WC_SCROLLBARA, wm_themechanged_paint_erase_seq, 1, {SBM_GETSCROLLINFO}},
     };
 
     parent = CreateWindowExA(0, WC_STATICA, "parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100,
