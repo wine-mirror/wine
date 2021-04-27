@@ -24,6 +24,7 @@
 
 #include "wine/test.h"
 #include "v6util.h"
+#include "msg.h"
 
 static PVOID (WINAPI * pAlloc)(LONG);
 static PVOID (WINAPI * pReAlloc)(PVOID, LONG);
@@ -35,7 +36,20 @@ static BOOL (WINAPI * pStr_SetPtrA)(LPSTR, LPCSTR);
 static INT (WINAPI * pStr_GetPtrW)(LPCWSTR, LPWSTR, INT);
 static BOOL (WINAPI * pStr_SetPtrW)(LPWSTR, LPCWSTR);
 
+static BOOL (WINAPI *pSetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR);
+static BOOL (WINAPI *pRemoveWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR);
+static LRESULT (WINAPI *pDefSubclassProc)(HWND, UINT, WPARAM, LPARAM);
+
 static HMODULE hComctl32 = 0;
+
+/* For message tests */
+enum seq_index
+{
+    CHILD_SEQ_INDEX,
+    NUM_MSG_SEQUENCES
+};
+
+static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
 static char testicon_data[] =
 {
@@ -77,6 +91,40 @@ static BOOL InitFunctionPtrs(void)
     COMCTL32_GET_PROC(236, Str_SetPtrW)
 
     return TRUE;
+}
+
+static BOOL init_functions_v6(void)
+{
+    hComctl32 = LoadLibraryA("comctl32.dll");
+    if (!hComctl32)
+    {
+        trace("Could not load comctl32.dll version 6\n");
+        return FALSE;
+    }
+
+    COMCTL32_GET_PROC(410, SetWindowSubclass)
+    COMCTL32_GET_PROC(412, RemoveWindowSubclass)
+    COMCTL32_GET_PROC(413, DefSubclassProc)
+
+    return TRUE;
+}
+
+/* try to make sure pending X events have been processed before continuing */
+static void flush_events(void)
+{
+    MSG msg;
+    int diff = 200;
+    int min_timeout = 100;
+    DWORD time = GetTickCount() + diff;
+
+    while (diff > 0)
+    {
+        if (MsgWaitForMultipleObjects(0, NULL, FALSE, min_timeout, QS_ALLINPUT) == WAIT_TIMEOUT)
+            break;
+        while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+            DispatchMessageA(&msg);
+        diff = time - GetTickCount();
+    }
 }
 
 static void test_GetPtrAW(void)
@@ -406,6 +454,156 @@ static void test_comctl32_classes(BOOL v6)
     check_class("SysLink", v6, CS_GLOBALCLASS, 0, FALSE);
 }
 
+struct wm_themechanged_test
+{
+    const char *class;
+    const struct message *expected_msg;
+    int ignored_msg_count;
+    DWORD ignored_msgs[16];
+    BOOL todo;
+};
+
+static BOOL ignore_message(UINT msg)
+{
+    /* these are always ignored */
+    return (msg >= 0xc000 ||
+            msg == WM_GETICON ||
+            msg == WM_GETOBJECT ||
+            msg == WM_TIMECHANGE ||
+            msg == WM_DISPLAYCHANGE ||
+            msg == WM_DEVICECHANGE ||
+            msg == WM_DWMNCRENDERINGCHANGED ||
+            msg == WM_WININICHANGE ||
+            msg == WM_CHILDACTIVATE);
+}
+
+static LRESULT CALLBACK test_wm_themechanged_proc(HWND hwnd, UINT message, WPARAM wParam,
+                                                  LPARAM lParam, UINT_PTR id, DWORD_PTR ref_data)
+{
+    const struct wm_themechanged_test *test = (const struct wm_themechanged_test *)ref_data;
+    static int defwndproc_counter = 0;
+    struct message msg = {0};
+    LRESULT ret;
+    int i;
+
+    if (ignore_message(message))
+        return pDefSubclassProc(hwnd, message, wParam, lParam);
+
+    /* Extra messages to be ignored for a test case */
+    for (i = 0; i < test->ignored_msg_count; ++i)
+    {
+        if (message == test->ignored_msgs[i])
+            return pDefSubclassProc(hwnd, message, wParam, lParam);
+    }
+
+    msg.message = message;
+    msg.flags = sent | wparam | lparam;
+    if (defwndproc_counter)
+        msg.flags |= defwinproc;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+    add_message(sequences, CHILD_SEQ_INDEX, &msg);
+
+    if (message == WM_NCDESTROY)
+        pRemoveWindowSubclass(hwnd, test_wm_themechanged_proc, 0);
+
+    ++defwndproc_counter;
+    ret = pDefSubclassProc(hwnd, message, wParam, lParam);
+    --defwndproc_counter;
+
+    return ret;
+}
+
+static HWND create_control(const char *class, DWORD style, HWND parent, DWORD_PTR data)
+{
+    HWND hwnd;
+
+    if (parent)
+        style |= WS_CHILD;
+    hwnd = CreateWindowExA(0, class, "test", style, 0, 0, 50, 20, parent, 0, 0, NULL);
+    ok(!!hwnd, "Failed to create %s style %#x parent %p\n", class, style, parent);
+    pSetWindowSubclass(hwnd, test_wm_themechanged_proc, 0, data);
+    return hwnd;
+}
+
+static const struct message wm_themechanged_paint_erase_seq[] =
+{
+    {WM_THEMECHANGED, sent | wparam | lparam},
+    {WM_PAINT, sent | wparam | lparam},
+    {WM_ERASEBKGND, sent | defwinproc},
+    {0},
+};
+
+static const struct message wm_themechanged_paint_seq[] =
+{
+    {WM_THEMECHANGED, sent | wparam | lparam},
+    {WM_PAINT, sent | wparam | lparam},
+    {0},
+};
+
+static const struct message wm_themechanged_no_paint_seq[] =
+{
+    {WM_THEMECHANGED, sent | wparam | lparam},
+    {0},
+};
+
+static void test_WM_THEMECHANGED(void)
+{
+    HWND parent, child;
+    char buffer[64];
+    int i;
+
+    static const struct wm_themechanged_test tests[] =
+    {
+        {ANIMATE_CLASSA, wm_themechanged_no_paint_seq},
+        {WC_BUTTONA, wm_themechanged_paint_erase_seq, 2, {WM_GETTEXT, WM_GETTEXTLENGTH}, TRUE},
+        {WC_COMBOBOXA, wm_themechanged_paint_erase_seq, 1, {WM_CTLCOLOREDIT}, TRUE},
+        {WC_COMBOBOXEXA, wm_themechanged_no_paint_seq},
+        {DATETIMEPICK_CLASSA, wm_themechanged_paint_erase_seq, 0, {0}, TRUE},
+        {WC_EDITA, wm_themechanged_paint_erase_seq, 7, {WM_GETTEXTLENGTH, WM_GETFONT, EM_GETSEL, EM_GETRECT, EM_CHARFROMPOS, EM_LINEFROMCHAR, EM_POSFROMCHAR}, TRUE},
+        {WC_HEADERA, wm_themechanged_paint_erase_seq, 0, {0}, TRUE},
+        {HOTKEY_CLASSA, wm_themechanged_no_paint_seq},
+        {WC_IPADDRESSA, wm_themechanged_paint_erase_seq, 1, {WM_CTLCOLOREDIT}, TRUE},
+        {WC_LISTBOXA, wm_themechanged_paint_erase_seq, 0, {0}, TRUE},
+        {WC_LISTVIEWA, wm_themechanged_paint_erase_seq, 0, {0}, TRUE},
+        {MONTHCAL_CLASSA, wm_themechanged_paint_erase_seq, 0, {0}, TRUE},
+        {WC_NATIVEFONTCTLA, wm_themechanged_no_paint_seq},
+        {WC_PAGESCROLLERA, wm_themechanged_paint_erase_seq, 0, {0}, TRUE},
+        {PROGRESS_CLASSA, wm_themechanged_paint_erase_seq, 3, {WM_STYLECHANGING, WM_STYLECHANGED, WM_NCPAINT}, TRUE},
+        {REBARCLASSNAMEA, wm_themechanged_no_paint_seq, 1, {WM_WINDOWPOSCHANGING}},
+        {WC_STATICA, wm_themechanged_paint_erase_seq, 2, {WM_GETTEXT, WM_GETTEXTLENGTH}, TRUE},
+        {STATUSCLASSNAMEA, wm_themechanged_paint_erase_seq, 0, {0}, TRUE},
+        {"SysLink", wm_themechanged_no_paint_seq},
+        {WC_TABCONTROLA, wm_themechanged_paint_erase_seq, 0, {0}, TRUE},
+        {TOOLBARCLASSNAMEA, wm_themechanged_paint_erase_seq, 1, {WM_WINDOWPOSCHANGING}, TRUE},
+        {TOOLTIPS_CLASSA, wm_themechanged_no_paint_seq},
+        {TRACKBAR_CLASSA, wm_themechanged_paint_seq, 0, {0}, TRUE},
+        {WC_TREEVIEWA, wm_themechanged_paint_erase_seq, 1, {0x1128}, TRUE},
+        {UPDOWN_CLASSA, wm_themechanged_paint_erase_seq, 0, {0}, TRUE},
+        {WC_SCROLLBARA, wm_themechanged_paint_erase_seq, 1, {SBM_GETSCROLLINFO}, TRUE},
+    };
+
+    parent = CreateWindowExA(0, WC_STATICA, "parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100,
+                             200, 200, 0, 0, 0, NULL);
+    ok(!!parent, "Failed to create parent window\n");
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        child = create_control(tests[i].class, WS_VISIBLE, parent, (DWORD_PTR)&tests[i]);
+        flush_events();
+        flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+        SendMessageW(child, WM_THEMECHANGED, 0, 0);
+        flush_events();
+
+        sprintf(buffer, "Test %d class %s WM_THEMECHANGED", i, tests[i].class);
+        ok_sequence(sequences, CHILD_SEQ_INDEX, tests[i].expected_msg, buffer, tests[i].todo);
+        DestroyWindow(child);
+    }
+
+    DestroyWindow(parent);
+}
+
 START_TEST(misc)
 {
     ULONG_PTR ctx_cookie;
@@ -416,15 +614,21 @@ START_TEST(misc)
 
     test_GetPtrAW();
     test_Alloc();
-
     test_comctl32_classes(FALSE);
+
+    FreeLibrary(hComctl32);
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
         return;
+    if(!init_functions_v6())
+        return;
+    init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
     test_comctl32_classes(TRUE);
     test_builtin_classes();
     test_LoadIconWithScaleDown();
+    test_WM_THEMECHANGED();
 
     unload_v6_module(ctx_cookie, hCtx);
+    FreeLibrary(hComctl32);
 }
