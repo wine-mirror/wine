@@ -207,11 +207,30 @@ static void release_map_entry(struct jsval_map_entry *entry)
     heap_free(entry);
 }
 
+static void delete_map_entry(MapInstance *map, struct jsval_map_entry *entry)
+{
+    map->size--;
+    wine_rb_remove(&map->map, &entry->entry);
+    entry->deleted = TRUE;
+    release_map_entry(entry);
+}
+
 static HRESULT Map_clear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    FIXME("%p\n", jsthis);
-    return E_NOTIMPL;
+    MapInstance *map;
+
+    if(!(map = get_map_this(jsthis))) return JS_E_MAP_EXPECTED;
+
+    TRACE("%p\n", map);
+
+    while(!list_empty(&map->entries)) {
+        struct jsval_map_entry *entry = LIST_ENTRY(list_head(&map->entries), struct jsval_map_entry, list_entry);
+        delete_map_entry(map, entry);
+    }
+
+    if(r) *r = jsval_undefined();
+    return S_OK;
 }
 
 static HRESULT Map_delete(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
