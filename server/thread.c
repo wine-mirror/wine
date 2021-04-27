@@ -296,7 +296,7 @@ static struct context *create_thread_context( struct thread *thread )
     if (!(context = alloc_object( &context_ops ))) return NULL;
     context->status = STATUS_PENDING;
     memset( &context->regs, 0, sizeof(context->regs) );
-    context->regs.cpu = thread->process->cpu;
+    context->regs.machine = thread->process->machine;
     return context;
 }
 
@@ -1293,7 +1293,7 @@ void kill_thread( struct thread *thread, int violent_death )
 /* copy parts of a context structure */
 static void copy_context( context_t *to, const context_t *from, unsigned int flags )
 {
-    assert( to->cpu == from->cpu );
+    assert( to->machine == from->machine );
     if (flags & SERVER_CTX_CONTROL) to->ctl = from->ctl;
     if (flags & SERVER_CTX_INTEGER) to->integer = from->integer;
     if (flags & SERVER_CTX_SEGMENTS) to->seg = from->seg;
@@ -1305,14 +1305,14 @@ static void copy_context( context_t *to, const context_t *from, unsigned int fla
 
 /* return the context flags that correspond to system regs */
 /* (system regs are the ones we can't access on the client side) */
-static unsigned int get_context_system_regs( enum cpu_type cpu )
+static unsigned int get_context_system_regs( unsigned short machine )
 {
-    switch (cpu)
+    switch (machine)
     {
-    case CPU_x86:     return SERVER_CTX_DEBUG_REGISTERS;
-    case CPU_x86_64:  return SERVER_CTX_DEBUG_REGISTERS;
-    case CPU_ARM:     return SERVER_CTX_DEBUG_REGISTERS;
-    case CPU_ARM64:   return SERVER_CTX_DEBUG_REGISTERS;
+    case IMAGE_FILE_MACHINE_I386:  return SERVER_CTX_DEBUG_REGISTERS;
+    case IMAGE_FILE_MACHINE_AMD64: return SERVER_CTX_DEBUG_REGISTERS;
+    case IMAGE_FILE_MACHINE_ARMNT: return SERVER_CTX_DEBUG_REGISTERS;
+    case IMAGE_FILE_MACHINE_ARM64: return SERVER_CTX_DEBUG_REGISTERS;
     }
     return 0;
 }
@@ -1619,7 +1619,8 @@ DECL_HANDLER(select)
     if (get_req_data_size() - sizeof(*result) - req->size == sizeof(context_t))
     {
         const context_t *context = (const context_t *)((const char *)(result + 1) + req->size);
-        if ((current->context && current->context->status != STATUS_PENDING) || context->cpu != current->process->cpu)
+        if ((current->context && current->context->status != STATUS_PENDING) ||
+            context->machine != current->process->machine)
         {
             set_error( STATUS_INVALID_PARAMETER );
             return;
@@ -1627,7 +1628,7 @@ DECL_HANDLER(select)
 
         if (!current->context && !(current->context = create_thread_context( current ))) return;
         copy_context( &current->context->regs, context,
-                      context->flags & ~(current->context->regs.flags | get_context_system_regs(current->process->cpu)) );
+                      context->flags & ~(current->context->regs.flags | get_context_system_regs(current->process->machine)) );
         current->context->status = STATUS_SUCCESS;
         current->suspend_cookie = req->cookie;
         wake_up( &current->context->obj, 0 );
@@ -1701,7 +1702,7 @@ DECL_HANDLER(select)
     {
         if (current->context->regs.flags)
         {
-            unsigned int system_flags = get_context_system_regs(current->process->cpu) &
+            unsigned int system_flags = get_context_system_regs(current->process->machine) &
                                         current->context->regs.flags;
             if (system_flags) set_thread_context( current, &current->context->regs, system_flags );
             set_reply_data( &current->context->regs, sizeof(context_t) );
@@ -1841,12 +1842,12 @@ DECL_HANDLER(get_thread_context)
     if ((thread_context = (struct context *)get_handle_obj( current->process, req->handle, 0, &context_ops )))
     {
         close_handle( current->process, req->handle ); /* avoid extra server call */
-        system_flags = get_context_system_regs( thread_context->regs.cpu );
+        system_flags = get_context_system_regs( thread_context->regs.machine );
     }
     else if ((thread = get_thread_from_handle( req->handle, THREAD_GET_CONTEXT )))
     {
         clear_error();
-        system_flags = get_context_system_regs( thread->process->cpu );
+        system_flags = get_context_system_regs( thread->process->machine );
         if (thread->state == RUNNING)
         {
             reply->self = (thread == current);
@@ -1862,7 +1863,7 @@ DECL_HANDLER(get_thread_context)
             {
                 assert( reply->self );
                 memset( context, 0, sizeof(context_t) );
-                context->cpu = thread->process->cpu;
+                context->machine = thread->process->machine;
                 if (req->flags & system_flags)
                 {
                     get_thread_context( thread, context, req->flags & system_flags );
@@ -1879,7 +1880,7 @@ DECL_HANDLER(get_thread_context)
     if (!thread_context->status && (context = set_reply_data_size( sizeof(context_t) )))
     {
         memset( context, 0, sizeof(context_t) );
-        context->cpu = thread_context->regs.cpu;
+        context->machine = thread_context->regs.machine;
         copy_context( context, &thread_context->regs, req->flags );
         context->flags = req->flags;
     }
@@ -1906,9 +1907,9 @@ DECL_HANDLER(set_thread_context)
     reply->self = (thread == current);
 
     if (thread->state == TERMINATED) set_error( STATUS_UNSUCCESSFUL );
-    else if (context->cpu == thread->process->cpu)
+    else if (context->machine == thread->process->machine)
     {
-        unsigned int system_flags = get_context_system_regs(context->cpu) & context->flags;
+        unsigned int system_flags = get_context_system_regs( context->machine ) & context->flags;
 
         if (thread != current) stop_thread( thread );
         else if (system_flags) set_thread_context( thread, context, system_flags );
@@ -1918,10 +1919,11 @@ DECL_HANDLER(set_thread_context)
             thread->context->regs.flags |= context->flags;
         }
     }
-    else if (context->cpu == CPU_x86_64 && thread->process->cpu == CPU_x86)
+    else if (context->machine == IMAGE_FILE_MACHINE_AMD64 &&
+             thread->process->machine == IMAGE_FILE_MACHINE_I386)
     {
         /* convert the WoW64 context */
-        unsigned int system_flags = get_context_system_regs( context->cpu ) & context->flags;
+        unsigned int system_flags = get_context_system_regs( context->machine ) & context->flags;
         if (system_flags)
         {
             set_thread_context( thread, context, system_flags );

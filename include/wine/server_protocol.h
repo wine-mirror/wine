@@ -119,7 +119,7 @@ typedef int client_cpu_t;
 
 typedef struct
 {
-    client_cpu_t     cpu;
+    unsigned int     machine;
     unsigned int     flags;
     union
     {
@@ -6219,7 +6219,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 694
+#define SERVER_PROTOCOL_VERSION 695
 
 /* ### protocol_version end ### */
 

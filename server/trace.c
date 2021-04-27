@@ -616,11 +616,10 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
     memset( &ctx, 0, sizeof(ctx) );
     memcpy( &ctx, context, size );
 
-    fprintf( stderr,"%s{", prefix );
-    dump_client_cpu( "cpu=", &ctx.cpu );
-    switch (ctx.cpu)
+    switch (ctx.machine)
     {
-    case CPU_x86:
+    case IMAGE_FILE_MACHINE_I386:
+        fprintf( stderr, "%s{machine=i386", prefix );
         if (ctx.flags & SERVER_CTX_CONTROL)
             fprintf( stderr, ",eip=%08x,esp=%08x,ebp=%08x,eflags=%08x,cs=%04x,ss=%04x",
                      ctx.ctl.i386_regs.eip, ctx.ctl.i386_regs.esp, ctx.ctl.i386_regs.ebp,
@@ -658,7 +657,8 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
             dump_uints( ",ymm_high=", (const unsigned int *)ctx.ymm.ymm_high_regs.ymm_high,
                         sizeof(ctx.ymm.ymm_high_regs) / sizeof(int) );
         break;
-    case CPU_x86_64:
+    case IMAGE_FILE_MACHINE_AMD64:
+        fprintf( stderr, "%s{machine=x86_64", prefix );
         if (ctx.flags & SERVER_CTX_CONTROL)
         {
             dump_uint64( ",rip=", &ctx.ctl.x86_64_regs.rip );
@@ -710,7 +710,8 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
             dump_uints( ",ymm_high=", (const unsigned int *)ctx.ymm.ymm_high_regs.ymm_high,
                         sizeof(ctx.ymm.ymm_high_regs) / sizeof(int) );
         break;
-    case CPU_ARM:
+    case IMAGE_FILE_MACHINE_ARMNT:
+        fprintf( stderr, "%s{machine=arm", prefix );
         if (ctx.flags & SERVER_CTX_CONTROL)
             fprintf( stderr, ",sp=%08x,lr=%08x,pc=%08x,cpsr=%08x",
                      ctx.ctl.arm_regs.sp, ctx.ctl.arm_regs.lr,
@@ -735,7 +736,8 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
             fprintf( stderr, ",fpscr=%08x", ctx.fp.arm_regs.fpscr );
         }
         break;
-    case CPU_ARM64:
+    case IMAGE_FILE_MACHINE_ARM64:
+        fprintf( stderr, "%s{machine=arm64", prefix );
         if (ctx.flags & SERVER_CTX_CONTROL)
         {
             dump_uint64( ",sp=", &ctx.ctl.arm64_regs.sp );
@@ -773,6 +775,9 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
             }
             fprintf( stderr, ",fpcr=%08x,fpsr=%08x", ctx.fp.arm64_regs.fpcr, ctx.fp.arm64_regs.fpsr );
         }
+        break;
+    default:
+        fprintf( stderr, "%s{machine=%04x", prefix, ctx.machine );
         break;
     }
     fputc( '}', stderr );

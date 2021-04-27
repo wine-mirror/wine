@@ -135,7 +135,7 @@ typedef int client_cpu_t;
 /* context data */
 typedef struct
 {
-    client_cpu_t     cpu;        /* cpu type */
+    unsigned int     machine;    /* machine type */
     unsigned int     flags;      /* SERVER_CTX_* flags */
     union
     {

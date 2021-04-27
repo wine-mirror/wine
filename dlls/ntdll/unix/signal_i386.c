@@ -1022,7 +1022,7 @@ NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
     DWORD flags = from->ContextFlags & ~CONTEXT_i386;  /* get rid of CPU id */
 
     memset( to, 0, sizeof(*to) );
-    to->cpu = CPU_x86;
+    to->machine = IMAGE_FILE_MACHINE_I386;
 
     if (flags & CONTEXT_CONTROL)
     {
@@ -1092,7 +1092,7 @@ NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
  */
 NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
 {
-    if (from->cpu != CPU_x86) return STATUS_INVALID_PARAMETER;
+    if (from->machine != IMAGE_FILE_MACHINE_I386) return STATUS_INVALID_PARAMETER;
 
     to->ContextFlags = CONTEXT_i386 | (to->ContextFlags & 0x40);
     if (from->flags & SERVER_CTX_CONTROL)

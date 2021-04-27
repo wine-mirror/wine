@@ -591,9 +591,9 @@ void get_thread_context( struct thread *thread, context_t *context, unsigned int
             goto done;
         }
     }
-    switch (context->cpu)
+    switch (context->machine)
     {
-    case CPU_x86:
+    case IMAGE_FILE_MACHINE_I386:
         context->debug.i386_regs.dr0 = data[0];
         context->debug.i386_regs.dr1 = data[1];
         context->debug.i386_regs.dr2 = data[2];
@@ -601,7 +601,7 @@ void get_thread_context( struct thread *thread, context_t *context, unsigned int
         context->debug.i386_regs.dr6 = data[6];
         context->debug.i386_regs.dr7 = data[7];
         break;
-    case CPU_x86_64:
+    case IMAGE_FILE_MACHINE_AMD64:
         context->debug.x86_64_regs.dr0 = data[0];
         context->debug.x86_64_regs.dr1 = data[1];
         context->debug.x86_64_regs.dr2 = data[2];
@@ -631,9 +631,9 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
     /* force all breakpoint lengths to 1, workaround for kernel bug 200965 */
     ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), 0x11110055 );
 
-    switch (context->cpu)
+    switch (context->machine)
     {
-    case CPU_x86:
+    case IMAGE_FILE_MACHINE_I386:
         /* Linux 2.6.33+ does DR0-DR3 alignment validation, so it has to know LEN bits first */
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->debug.i386_regs.dr7 & 0xffff0000 ) == -1) goto error;
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(0), context->debug.i386_regs.dr0 ) == -1) goto error;
@@ -646,7 +646,7 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->debug.i386_regs.dr7 ) == -1) goto error;
         thread->system_regs |= SERVER_CTX_DEBUG_REGISTERS;
         break;
-    case CPU_x86_64:
+    case IMAGE_FILE_MACHINE_AMD64:
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(7), context->debug.x86_64_regs.dr7 & 0xffff0000 ) == -1) goto error;
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(0), context->debug.x86_64_regs.dr0 ) == -1) goto error;
         if (ptrace( PTRACE_POKEUSER, pid, DR_OFFSET(1), context->debug.x86_64_regs.dr1 ) == -1) goto error;

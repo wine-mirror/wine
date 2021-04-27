@@ -1642,7 +1642,7 @@ NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
     DWORD flags = from->ContextFlags & ~CONTEXT_AMD64;  /* get rid of CPU id */
 
     memset( to, 0, sizeof(*to) );
-    to->cpu = CPU_x86_64;
+    to->machine = IMAGE_FILE_MACHINE_AMD64;
 
     if (flags & CONTEXT_CONTROL)
     {
@@ -1707,7 +1707,7 @@ NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
  */
 NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
 {
-    if (from->cpu == CPU_x86)
+    if (from->machine == IMAGE_FILE_MACHINE_I386)
     {
         /* convert the WoW64 context */
         to->ContextFlags = CONTEXT_AMD64;
@@ -1766,7 +1766,7 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
         return STATUS_SUCCESS;
     }
 
-    if (from->cpu != CPU_x86_64) return STATUS_INVALID_PARAMETER;
+    if (from->machine != IMAGE_FILE_MACHINE_AMD64) return STATUS_INVALID_PARAMETER;
 
     to->ContextFlags = CONTEXT_AMD64 | (to->ContextFlags & 0x40);
     if (from->flags & SERVER_CTX_CONTROL)
