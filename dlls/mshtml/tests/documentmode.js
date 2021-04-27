@@ -627,7 +627,7 @@ sync_test("set_obj", function() {
 sync_test("map_obj", function() {
     if(!("Map" in window)) return;
 
-    var s = new Map, r;
+    var s = new Map, r, i;
     ok(Object.getPrototypeOf(s) === Map.prototype, "unexpected Map prototype");
 
     function test_length(name, len) {
@@ -642,9 +642,117 @@ sync_test("map_obj", function() {
     ok(!("entries" in s), "entries are in Map");
     ok(!("keys" in s), "keys are in Map");
     ok(!("values" in s), "values are in Map");
+    todo_wine.
+    ok("size" in Map.prototype, "size is not in Map.prototype");
 
     r = Object.prototype.toString.call(s);
     ok(r === "[object Object]", "toString returned " + r);
+
+    r = s.get("test");
+    ok(r === undefined, "get(test) returned " + r);
+    r = s.has("test");
+    ok(r === false, "has(test) returned " + r);
+    ok(s.size === 0, "size = " + s.size + " expected 0");
+
+    r = s.set("test", 1);
+    ok(r === undefined, "set returned " + r);
+    ok(s.size === 1, "size = " + s.size + " expected 1");
+    r = s.get("test");
+    ok(r === 1, "get(test) returned " + r);
+    r = s.has("test");
+    ok(r === true, "has(test) returned " + r);
+
+    s.size = 100;
+    ok(s.size === 1, "size = " + s.size + " expected 1");
+
+    s.set("test", 2);
+    r = s.get("test");
+    ok(r === 2, "get(test) returned " + r);
+    r = s.has("test");
+    ok(r === true, "has(test) returned " + r);
+
+    r = s["delete"]("test"); /* using s.delete() would break parsing in quirks mode */
+    ok(r === true, "delete(test) returned " + r);
+    ok(s.size === 0, "size = " + s.size + " expected 0");
+    r = s["delete"]("test");
+    ok(r === false, "delete(test) returned " + r);
+
+    var test_keys = [undefined, null, NaN, 3, "str", false, true, {}];
+    for(i in test_keys) {
+        r = s.set(test_keys[i], test_keys[i] + 1);
+        ok(r === undefined, "set(test) returned " + r);
+    }
+    ok(s.size === test_keys.length, "size = " + s.size + " expected " + test_keys.length);
+    for(i in test_keys) {
+        r = s.get(test_keys[i]);
+        if(isNaN(test_keys[i]))
+            ok(isNaN(r), "get(" + test_keys[i] + ") returned " + r);
+        else
+            ok(r === test_keys[i] + 1, "get(" + test_keys[i] + ") returned " + r);
+    }
+
+    var calls = [];
+    i = 0;
+    r = s.forEach(function(value, key) {
+        if(isNaN(test_keys[i])) {
+            ok(isNaN(key), "key = " + key + " expected NaN");
+            ok(isNaN(value), "value = " + value + " expected NaN");
+        }else {
+            ok(key === test_keys[i], "key = " + key + " expected " + test_keys[i]);
+            ok(value === key + 1, "value = " + value);
+        }
+        i++;
+    });
+    ok(i === test_keys.length, "i = " + i);
+    ok(r === undefined, "forEach returned " + r);
+
+    s.set(3, "test2")
+    calls = [];
+    i = 0;
+    s.forEach(function(value, key) {
+        if(isNaN(test_keys[i]))
+            ok(isNaN(key), "key = " + key + " expected " + test_keys[i]);
+        else
+            ok(key === test_keys[i], "key = " + key + " expected " + test_keys[i]);
+        i++;
+    });
+    ok(i === test_keys.length, "i = " + i);
+
+    r = s.clear();
+    ok(r === undefined, "clear returned " + r);
+    ok(s.size === 0, "size = " + s.size + " expected 0");
+    r = s.get(test_keys[0]);
+    ok(r === undefined, "get returned " + r);
+
+    s = new Map();
+    s.set(1, 10);
+    s.set(2, 20);
+    s.set(3, 30);
+    i = true;
+    s.forEach(function() {
+        ok(i, "unexpected call");
+        s.clear();
+        i = false;
+    });
+
+    s = new Map();
+    s.set(1, 10);
+    s.set(2, 20);
+    s.set(3, 30);
+    i = 0;
+    s.forEach(function(value, key) {
+        i += key + value;
+        r = s["delete"](key);
+        ok(r === true, "delete returned " + r);
+    });
+    ok(i === 66, "i = " + i);
+
+    try {
+        Map.prototype.set.call({}, 1, 2);
+        ok(false, "expected exception");
+    }catch(e) {
+        ok(e.number === 0xa13fc - 0x80000000, "e.number = " + e.number);
+    }
 });
 
 sync_test("elem_attr", function() {
