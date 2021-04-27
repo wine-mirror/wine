@@ -147,20 +147,6 @@ static void dump_ioctl_code( const char *prefix, const ioctl_code_t *code )
     }
 }
 
-static void dump_client_cpu( const char *prefix, const client_cpu_t *code )
-{
-    switch (*code)
-    {
-#define CASE(c) case CPU_##c: fprintf( stderr, "%s%s", prefix, #c ); break
-        CASE(x86);
-        CASE(x86_64);
-        CASE(ARM);
-        CASE(ARM64);
-        default: fprintf( stderr, "%s%u", prefix, *code ); break;
-#undef CASE
-    }
-}
-
 static void dump_apc_call( const char *prefix, const apc_call_t *call )
 {
     fprintf( stderr, "%s{", prefix );
@@ -1370,7 +1356,7 @@ static void dump_new_process_request( const struct new_process_request *req )
     fprintf( stderr, ", flags=%08x", req->flags );
     fprintf( stderr, ", socket_fd=%d", req->socket_fd );
     fprintf( stderr, ", access=%08x", req->access );
-    dump_client_cpu( ", cpu=", &req->cpu );
+    fprintf( stderr, ", machine=%04x", req->machine );
     fprintf( stderr, ", info_size=%u", req->info_size );
     fprintf( stderr, ", handles_size=%u", req->handles_size );
     dump_varargs_object_attributes( ", objattr=", cur_size );
@@ -1443,7 +1429,6 @@ static void dump_init_first_thread_request( const struct init_first_thread_reque
     dump_uint64( ", ldt_copy=", &req->ldt_copy );
     fprintf( stderr, ", reply_fd=%d", req->reply_fd );
     fprintf( stderr, ", wait_fd=%d", req->wait_fd );
-    dump_client_cpu( ", cpu=", &req->cpu );
 }
 
 static void dump_init_first_thread_reply( const struct init_first_thread_reply *req )

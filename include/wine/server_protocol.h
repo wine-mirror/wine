@@ -110,13 +110,6 @@ typedef union
 } debug_event_t;
 
 
-enum cpu_type
-{
-    CPU_x86, CPU_x86_64, CPU_ARM, CPU_ARM64
-};
-typedef int client_cpu_t;
-
-
 typedef struct
 {
     unsigned int     machine;
@@ -832,7 +825,8 @@ struct new_process_request
     unsigned int flags;
     int          socket_fd;
     unsigned int access;
-    client_cpu_t cpu;
+    unsigned short machine;
+    char __pad_38[2];
     data_size_t  info_size;
     data_size_t  handles_size;
     /* VARARG(objattr,object_attributes); */
@@ -926,8 +920,6 @@ struct init_first_thread_request
     client_ptr_t ldt_copy;
     int          reply_fd;
     int          wait_fd;
-    client_cpu_t cpu;
-    char __pad_60[4];
 };
 struct init_first_thread_reply
 {
@@ -6219,7 +6211,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 695
+#define SERVER_PROTOCOL_VERSION 696
 
 /* ### protocol_version end ### */
 

@@ -1561,7 +1561,6 @@ size_t server_init_process(void)
         req->reply_fd    = reply_pipe;
         req->wait_fd     = ntdll_get_thread_data()->wait_fd[1];
         req->debug_level = (TRACE_ON(server) != 0);
-        req->cpu         = client_cpu;
         wine_server_set_reply( req, supported_machines, sizeof(supported_machines) );
         ret = wine_server_call( req );
         NtCurrentTeb()->ClientId.UniqueProcess = ULongToHandle(reply->pid);

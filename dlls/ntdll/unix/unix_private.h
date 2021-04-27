@@ -28,16 +28,12 @@
 #include "wine/list.h"
 
 #ifdef __i386__
-static const enum cpu_type client_cpu = CPU_x86;
 static const WORD current_machine = IMAGE_FILE_MACHINE_I386;
 #elif defined(__x86_64__)
-static const enum cpu_type client_cpu = CPU_x86_64;
 static const WORD current_machine = IMAGE_FILE_MACHINE_AMD64;
 #elif defined(__arm__)
-static const enum cpu_type client_cpu = CPU_ARM;
 static const WORD current_machine = IMAGE_FILE_MACHINE_ARMNT;
 #elif defined(__aarch64__)
-static const enum cpu_type client_cpu = CPU_ARM64;
 static const WORD current_machine = IMAGE_FILE_MACHINE_ARM64;
 #endif
 

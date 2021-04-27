@@ -1769,34 +1769,6 @@ static WCHAR *format_user_registry_path( const SID *sid, struct unicode_str *pat
     return ascii_to_unicode_str( buffer, path );
 }
 
-/* get the cpu architectures that can be supported in the current prefix */
-unsigned int get_prefix_cpu_mask(void)
-{
-    /* Allowed server/client/prefix combinations:
-     *
-     *              prefix
-     *            32     64
-     *  server +------+------+ client
-     *         |  ok  | fail | 32
-     *      32 +------+------+---
-     *         | fail | fail | 64
-     *      ---+------+------+---
-     *         |  ok  |  ok  | 32
-     *      64 +------+------+---
-     *         | fail |  ok  | 64
-     *      ---+------+------+---
-     */
-    switch (prefix_type)
-    {
-    case PREFIX_64BIT:
-        /* 64-bit prefix requires 64-bit server */
-        return sizeof(void *) > sizeof(int) ? ~0 : 0;
-    case PREFIX_32BIT:
-    default:
-        return ~CPU_64BIT_MASK;  /* only 32-bit cpus supported on 32-bit prefix */
-    }
-}
-
 static void init_supported_machines(void)
 {
     unsigned int count = 0;
@@ -2072,7 +2044,7 @@ void flush_registry(void)
 /* determine if the thread is wow64 (32-bit client running on 64-bit prefix) */
 static int is_wow64_thread( struct thread *thread )
 {
-    return (prefix_type == PREFIX_64BIT && !(CPU_FLAG(thread->process->cpu) & CPU_64BIT_MASK));
+    return (is_machine_64bit( supported_machines[0] ) && !is_machine_64bit( thread->process->machine ));
 }
 
 

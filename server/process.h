@@ -52,7 +52,6 @@ struct process
     process_id_t         id;              /* id of the process */
     process_id_t         group_id;        /* group id of the process */
     struct timeout_user *sigkill_timeout; /* timeout for final SIGKILL */
-    enum cpu_type        cpu;             /* client CPU type */
     unsigned short       machine;         /* client machine type */
     int                  unix_pid;        /* Unix pid for final SIGKILL */
     int                  exit_code;       /* process exit code */
@@ -89,9 +88,6 @@ struct process
     const struct rawinput_device *rawinput_kbd;   /* rawinput keyboard device, if any */
     struct list          kernel_object;   /* list of kernel object pointers */
 };
-
-#define CPU_FLAG(cpu) (1 << (cpu))
-#define CPU_64BIT_MASK (CPU_FLAG(CPU_x86_64) | CPU_FLAG(CPU_ARM64))
 
 /* process functions */
 

@@ -53,18 +53,6 @@
 #include "security.h"
 
 
-#ifdef __i386__
-static const unsigned int supported_cpus = CPU_FLAG(CPU_x86);
-#elif defined(__x86_64__)
-static const unsigned int supported_cpus = CPU_FLAG(CPU_x86_64) | CPU_FLAG(CPU_x86);
-#elif defined(__arm__)
-static const unsigned int supported_cpus = CPU_FLAG(CPU_ARM);
-#elif defined(__aarch64__)
-static const unsigned int supported_cpus = CPU_FLAG(CPU_ARM64) | CPU_FLAG(CPU_ARM);
-#else
-#error Unsupported CPU
-#endif
-
 /* thread queues */
 
 struct thread_wait
@@ -1326,21 +1314,6 @@ struct token *thread_get_impersonation_token( struct thread *thread )
         return thread->process->token;
 }
 
-/* check if a cpu type can be supported on this server */
-int is_cpu_supported( enum cpu_type cpu )
-{
-    unsigned int prefix_cpu_mask = get_prefix_cpu_mask();
-
-    if (supported_cpus & prefix_cpu_mask & CPU_FLAG(cpu)) return 1;
-    if (!(supported_cpus & prefix_cpu_mask))
-        set_error( STATUS_NOT_SUPPORTED );
-    else if (supported_cpus & CPU_FLAG(cpu))
-        set_error( STATUS_INVALID_IMAGE_WIN_64 );  /* server supports it but not the prefix */
-    else
-        set_error( STATUS_INVALID_IMAGE_FORMAT );
-    return 0;
-}
-
 /* create a new thread */
 DECL_HANDLER(new_thread)
 {
@@ -1444,7 +1417,6 @@ DECL_HANDLER(init_first_thread)
     current->teb      = req->teb;
     process->peb      = req->peb;
     process->ldt_copy = req->ldt_copy;
-    process->cpu      = req->cpu;
 
     if (!process->parent_id)
         process->affinity = current->affinity = get_thread_affinity( current );

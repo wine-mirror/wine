@@ -125,13 +125,6 @@ typedef union
     } unload_dll;
 } debug_event_t;
 
-/* supported CPU types */
-enum cpu_type
-{
-    CPU_x86, CPU_x86_64, CPU_ARM, CPU_ARM64
-};
-typedef int client_cpu_t;
-
 /* context data */
 typedef struct
 {
@@ -846,7 +839,7 @@ typedef struct
     unsigned int flags;          /* process creation flags */
     int          socket_fd;      /* file descriptor for process socket */
     unsigned int access;         /* access rights for process object */
-    client_cpu_t cpu;            /* CPU that the new process will use */
+    unsigned short machine;      /* architecture that the new process will use */
     data_size_t  info_size;      /* size of startup info */
     data_size_t  handles_size;   /* length of explicit handles list */
     VARARG(objattr,object_attributes);   /* object attributes */
@@ -909,7 +902,6 @@ typedef struct
     client_ptr_t ldt_copy;     /* address of LDT copy (in process address space) */
     int          reply_fd;     /* fd for reply pipe */
     int          wait_fd;      /* fd for blocking calls pipe */
-    client_cpu_t cpu;          /* CPU that this thread is running on */
 @REPLY
     process_id_t pid;          /* process id of the new thread's process */
     thread_id_t  tid;          /* thread id of the new thread */

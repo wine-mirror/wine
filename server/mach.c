@@ -240,7 +240,7 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
 
 
 #ifdef __x86_64__
-    if (thread->process->cpu == CPU_x86_64)
+    if (thread->process->machine == IMAGE_FILE_MACHINE_AMD64)
     {
         /* Mac OS doesn't allow setting the global breakpoint flags */
         dr7 = (context->debug.x86_64_regs.dr7 & ~0xaa) | ((context->debug.x86_64_regs.dr7 & 0xaa) >> 1);
