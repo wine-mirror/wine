@@ -252,8 +252,42 @@ static HRESULT Map_delete(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsign
 static HRESULT Map_forEach(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    FIXME("%p\n", jsthis);
-    return E_NOTIMPL;
+    jsval_t callback = argc ? argv[0] : jsval_undefined();
+    struct jsval_map_entry *entry;
+    MapInstance *map;
+    HRESULT hres;
+
+    if(!(map = get_map_this(jsthis))) return JS_E_MAP_EXPECTED;
+
+    TRACE("%p (%s)\n", map, debugstr_jsval(argc >= 1 ? argv[0] : jsval_undefined()));
+
+    if(!is_object_instance(callback) || !get_object(callback)) {
+        FIXME("invalid callback %s\n", debugstr_jsval(callback));
+        return E_FAIL;
+    }
+
+    if(argc > 1) {
+        FIXME("Unsupported argument\n");
+        return E_NOTIMPL;
+    }
+
+    LIST_FOR_EACH_ENTRY(entry, &map->entries, struct jsval_map_entry, list_entry) {
+        jsval_t args[2], v;
+        if(entry->deleted)
+            continue;
+        args[0] = entry->value;
+        args[1] = entry->key;
+        grab_map_entry(entry);
+        hres = disp_call_value(ctx, get_object(argv[0]), NULL, DISPATCH_METHOD,
+                               ARRAY_SIZE(args), args, &v);
+        release_map_entry(entry);
+        if(FAILED(hres))
+            return hres;
+        jsval_release(v);
+    }
+
+    if(r) *r = jsval_undefined();
+    return S_OK;
 }
 
 static HRESULT Map_get(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
