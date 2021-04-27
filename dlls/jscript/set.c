@@ -322,8 +322,17 @@ static HRESULT Map_set(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned 
 static HRESULT Map_has(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    FIXME("%p\n", jsthis);
-    return E_NOTIMPL;
+    jsval_t key = argc >= 1 ? argv[0] : jsval_undefined();
+    struct jsval_map_entry *entry;
+    MapInstance *map;
+
+    if(!(map = get_map_this(jsthis))) return JS_E_MAP_EXPECTED;
+
+    TRACE("%p (%s)\n", map, debugstr_jsval(key));
+
+    entry = get_map_entry(map, key);
+    if(r) *r = jsval_bool(!!entry);
+    return S_OK;
 }
 
 static HRESULT Map_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
