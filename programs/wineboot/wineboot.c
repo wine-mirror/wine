@@ -1327,7 +1327,7 @@ static HWND show_wait_window(void)
     return hwnd;
 }
 
-static HANDLE start_rundll32( const WCHAR *inf_path, BOOL wow64 )
+static HANDLE start_rundll32( const WCHAR *inf_path, WORD machine )
 {
     WCHAR app[MAX_PATH + ARRAY_SIZE(L"\\rundll32.exe" )];
     STARTUPINFOW si;
@@ -1338,13 +1338,9 @@ static HANDLE start_rundll32( const WCHAR *inf_path, BOOL wow64 )
     memset( &si, 0, sizeof(si) );
     si.cb = sizeof(si);
 
-    if (wow64)
-    {
-        if (!GetSystemWow64DirectoryW( app, MAX_PATH )) return 0;  /* not on 64-bit */
-    }
-    else GetSystemDirectoryW( app, MAX_PATH );
-
+    if (!GetSystemWow64Directory2W( app, MAX_PATH, machine )) return 0;
     lstrcatW( app, L"\\rundll32.exe" );
+    TRACE( "machine %x starting %s\n", machine, debugstr_w(app) );
 
     len = lstrlenW(app) + ARRAY_SIZE(L" setupapi,InstallHinfSection DefaultInstall 128 ") + lstrlenW(inf_path);
 
@@ -1352,7 +1348,7 @@ static HANDLE start_rundll32( const WCHAR *inf_path, BOOL wow64 )
 
     lstrcpyW( buffer, app );
     lstrcatW( buffer, L" setupapi,InstallHinfSection" );
-    lstrcatW( buffer, wow64 ? L" Wow64Install" : L" DefaultInstall" );
+    lstrcatW( buffer, machine != IMAGE_FILE_MACHINE_TARGET_HOST ? L" Wow64Install" : L" DefaultInstall" );
     lstrcatW( buffer, L" 128 " );
     lstrcatW( buffer, inf_path );
 
@@ -1477,10 +1473,14 @@ static void update_wineprefix( BOOL force )
 
     if (update_timestamp( config_dir, st.st_mtime ) || force)
     {
-        HANDLE process;
+        ULONG machines[8];
+        HANDLE process = 0;
         DWORD count = 0;
 
-        if ((process = start_rundll32( inf_path, FALSE )))
+        if (NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
+                                        machines, sizeof(machines), NULL )) machines[0] = 0;
+
+        if ((process = start_rundll32( inf_path, IMAGE_FILE_MACHINE_TARGET_HOST )))
         {
             HWND hwnd = show_wait_window();
             for (;;)
@@ -1490,7 +1490,9 @@ static void update_wineprefix( BOOL force )
                 if (res == WAIT_OBJECT_0)
                 {
                     CloseHandle( process );
-                    if (count++ || !(process = start_rundll32( inf_path, TRUE ))) break;
+                    if (HIWORD(machines[count]) & 4 /* native machine */) count++;
+                    if (!machines[count]) break;
+                    if (!(process = start_rundll32( inf_path, LOWORD(machines[count++]) ))) break;
                 }
                 else while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
             }
