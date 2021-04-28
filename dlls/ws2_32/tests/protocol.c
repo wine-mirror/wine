@@ -20,6 +20,8 @@
 
 #include <stdarg.h>
 
+#include <ntstatus.h>
+#define WIN32_NO_STATUS
 #include <windef.h>
 #include <winbase.h>
 #include <winsock2.h>
@@ -37,6 +39,9 @@ static int (WINAPI *pGetAddrInfoExW)(const WCHAR *name, const WCHAR *servname, D
 static int   (WINAPI *pGetAddrInfoExOverlappedResult)(OVERLAPPED *overlapped);
 static int (WINAPI *pGetHostNameW)(WCHAR *name, int len);
 static const char *(WINAPI *p_inet_ntop)(int family, void *addr, char *string, ULONG size);
+static const WCHAR *(WINAPI *pInetNtopW)(int family, void *addr, WCHAR *string, ULONG size);
+static int (WINAPI *p_inet_pton)(int family, const char *string, void *addr);
+static int (WINAPI *pInetPtonW)(int family, WCHAR *string, void *addr);
 
 /* TCP and UDP over IP fixed set of service flags */
 #define TCPIP_SERVICE_FLAGS (XP1_GUARANTEED_DELIVERY \
@@ -620,6 +625,622 @@ static void test_WSAAsyncGetServByName(void)
     wait_for_async_message(hwnd, ret);
 
     DestroyWindow(hwnd);
+}
+
+static DWORD WINAPI inet_ntoa_thread_proc(void *param)
+{
+    ULONG addr;
+    const char *str;
+    HANDLE *event = param;
+
+    addr = inet_addr("4.3.2.1");
+    ok(addr == htonl(0x04030201), "expected 0x04030201, got %08x\n", addr);
+    str = inet_ntoa(*(struct in_addr *)&addr);
+    ok(!strcmp(str, "4.3.2.1"), "expected 4.3.2.1, got %s\n", str);
+
+    SetEvent(event[0]);
+    WaitForSingleObject(event[1], 3000);
+
+    return 0;
+}
+
+static void test_inet_ntoa(void)
+{
+    ULONG addr;
+    const char *str;
+    HANDLE thread, event[2];
+    DWORD tid;
+
+    addr = inet_addr("1.2.3.4");
+    ok(addr == htonl(0x01020304), "expected 0x01020304, got %08x\n", addr);
+    str = inet_ntoa(*(struct in_addr *)&addr);
+    ok(!strcmp(str, "1.2.3.4"), "expected 1.2.3.4, got %s\n", str);
+
+    event[0] = CreateEventW(NULL, TRUE, FALSE, NULL);
+    event[1] = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    thread = CreateThread(NULL, 0, inet_ntoa_thread_proc, event, 0, &tid);
+    WaitForSingleObject(event[0], 3000);
+
+    ok(!strcmp(str, "1.2.3.4"), "expected 1.2.3.4, got %s\n", str);
+
+    SetEvent(event[1]);
+    WaitForSingleObject(thread, 3000);
+
+    CloseHandle(event[0]);
+    CloseHandle(event[1]);
+    CloseHandle(thread);
+}
+
+static void test_inet_pton(void)
+{
+    static const struct
+    {
+        int family, ret;
+        DWORD err;
+        const char *printable, *collapsed, *raw_data;
+    }
+    tests[] =
+    {
+        /* 0 */
+        {AF_UNSPEC, -1, WSAEFAULT, NULL, NULL, NULL},
+        {AF_INET,   -1, WSAEFAULT, NULL, NULL, NULL},
+        {AF_INET6,  -1, WSAEFAULT, NULL, NULL, NULL},
+        {AF_UNSPEC, -1, WSAEAFNOSUPPORT, "127.0.0.1", NULL, NULL},
+        {AF_INET,    1, 0, "127.0.0.1", "127.0.0.1", "\x7f\x00\x00\x01"},
+        {AF_INET6,   0, 0, "127.0.0.1", "127.0.0.1", NULL},
+        {AF_INET,    0, 0, "::1/128", NULL, NULL},
+        {AF_INET6,   0, 0, "::1/128", NULL, NULL},
+        {AF_UNSPEC, -1, WSAEAFNOSUPPORT, "broken", NULL, NULL},
+        {AF_INET,    0, 0, "broken", NULL, NULL},
+        /* 10 */
+        {AF_INET6,   0, 0, "broken", NULL, NULL},
+        {AF_UNSPEC, -1, WSAEAFNOSUPPORT, "177.32.45.20", NULL, NULL},
+        {AF_INET,    1, 0, "177.32.45.20", "177.32.45.20", "\xb1\x20\x2d\x14"},
+        {AF_INET6,   0, 0, "177.32.45.20", NULL, NULL},
+        {AF_INET,    0, 0, "2607:f0d0:1002:51::4", NULL, NULL},
+        {AF_INET6,   1, 0, "2607:f0d0:1002:51::4", "2607:f0d0:1002:51::4",
+                "\x26\x07\xf0\xd0\x10\x02\x00\x51\x00\x00\x00\x00\x00\x00\x00\x04"},
+        {AF_INET,    0, 0, "::177.32.45.20", NULL, NULL},
+        {AF_INET6,   1, 0, "::177.32.45.20", "::177.32.45.20",
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xb1\x20\x2d\x14"},
+        {AF_INET,    0, 0, "fe80::0202:b3ff:fe1e:8329", NULL, NULL},
+        {AF_INET6,   1, 0, "fe80::0202:b3ff:fe1e:8329", "fe80::202:b3ff:fe1e:8329",
+                "\xfe\x80\x00\x00\x00\x00\x00\x00\x02\x02\xb3\xff\xfe\x1e\x83\x29"},
+        /* 20 */
+        {AF_INET6,   1, 0, "fe80::202:b3ff:fe1e:8329", "fe80::202:b3ff:fe1e:8329",
+                "\xfe\x80\x00\x00\x00\x00\x00\x00\x02\x02\xb3\xff\xfe\x1e\x83\x29"},
+        {AF_INET,    0, 0, "a", NULL, NULL},
+        {AF_INET,    0, 0, "a.b", NULL, NULL},
+        {AF_INET,    0, 0, "a.b.c",  NULL, NULL},
+        {AF_INET,    0, 0, "a.b.c.d", NULL, NULL},
+        {AF_INET6,   1, 0, "2001:cdba:0000:0000:0000:0000:3257:9652", "2001:cdba::3257:9652",
+                "\x20\x01\xcd\xba\x00\x00\x00\x00\x00\x00\x00\x00\x32\x57\x96\x52"},
+        {AF_INET6,   1, 0, "2001:cdba::3257:9652", "2001:cdba::3257:9652",
+                "\x20\x01\xcd\xba\x00\x00\x00\x00\x00\x00\x00\x00\x32\x57\x96\x52"},
+        {AF_INET6,   1, 0, "2001:cdba:0:0:0:0:3257:9652", "2001:cdba::3257:9652",
+                "\x20\x01\xcd\xba\x00\x00\x00\x00\x00\x00\x00\x00\x32\x57\x96\x52"},
+        {AF_INET,    0, 0, "0x12345678", NULL, NULL},
+        {AF_INET6,   0, 0, "::1:2:3:4:5:6:7", NULL, NULL}, /* windows bug */
+        /* 30 */
+        {AF_INET6,   1, 0, "::5efe:1.2.3.4", "::5efe:1.2.3.4",
+                "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x5e\xfe\x01\x02\x03\x04"},
+        {AF_INET6,   1, 0, "::ffff:0:1.2.3.4", "::ffff:0:1.2.3.4",
+                "\x00\x00\x00\x00\x00\x00\x00\x00\xff\xff\x00\x00\x01\x02\x03\x04"},
+    };
+    int i, ret;
+    DWORD err;
+    char buffer[64],str[64];
+    WCHAR printableW[64], collapsedW[64];
+    const char *ptr;
+    const WCHAR *ptrW;
+
+    /* inet_ntop and inet_pton became available in Vista and Win2008 */
+    if (!p_inet_ntop)
+    {
+        win_skip("inet_ntop is not available\n");
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        WSASetLastError(0xdeadbeef);
+        ret = p_inet_pton(tests[i].family, tests[i].printable, buffer);
+        ok(ret == tests[i].ret, "Test [%d]: Expected %d, got %d\n", i, tests[i].ret, ret);
+        err = WSAGetLastError();
+        if (tests[i].ret == -1)
+            ok(tests[i].err == err, "Test [%d]: Expected 0x%x, got 0x%x\n", i, tests[i].err, err);
+        else
+            ok(err == 0xdeadbeef, "Test [%d]: Expected 0xdeadbeef, got 0x%x\n", i, err);
+        if (tests[i].ret != 1) continue;
+        ok(memcmp(buffer, tests[i].raw_data,
+            tests[i].family == AF_INET ? sizeof(struct in_addr) : sizeof(struct in6_addr)) == 0,
+            "Test [%d]: Expected binary data differs\n", i);
+
+        /* Test the result from Pton with Ntop */
+        strcpy (str, "deadbeef");
+        ptr = p_inet_ntop(tests[i].family, buffer, str, sizeof(str));
+        ok(ptr != NULL, "Test [%d]: Failed with NULL\n", i);
+        ok(ptr == str, "Test [%d]: Pointers differ (%p != %p)\n", i, ptr, str);
+        ok(strcmp(ptr, tests[i].collapsed) == 0, "Test [%d]: Expected '%s', got '%s'\n",
+            i, tests[i].collapsed, ptr);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        if (tests[i].printable)
+            MultiByteToWideChar(CP_ACP, 0, tests[i].printable, -1, printableW, ARRAY_SIZE(printableW));
+        WSASetLastError(0xdeadbeef);
+        ret = pInetPtonW(tests[i].family, tests[i].printable ? printableW : NULL, buffer);
+        ok(ret == tests[i].ret, "Test [%d]: Expected %d, got %d\n", i, tests[i].ret, ret);
+        err = WSAGetLastError();
+        if (tests[i].ret == -1)
+            ok(tests[i].err == err, "Test [%d]: Expected 0x%x, got 0x%x\n", i, tests[i].err, err);
+        else if (tests[i].ret == 0)
+            ok(err == WSAEINVAL || broken(err == 0xdeadbeef) /* win2008 */,
+               "Test [%d]: Expected WSAEINVAL, got 0x%x\n", i, err);
+        else
+            ok(err == 0xdeadbeef, "Test [%d]: Expected 0xdeadbeef, got 0x%x\n", i, err);
+        if (tests[i].ret != 1) continue;
+        ok(memcmp(buffer, tests[i].raw_data,
+           tests[i].family == AF_INET ? sizeof(struct in_addr) : sizeof(struct in6_addr)) == 0,
+           "Test [%d]: Expected binary data differs\n", i);
+
+        /* Test the result from Pton with Ntop */
+        printableW[0] = 0xdead;
+        ptrW = pInetNtopW(tests[i].family, buffer, printableW, ARRAY_SIZE(printableW));
+        ok(ptrW != NULL, "Test [%d]: Failed with NULL\n", i);
+        ok(ptrW == printableW, "Test [%d]: Pointers differ (%p != %p)\n", i, ptrW, printableW);
+
+        MultiByteToWideChar(CP_ACP, 0, tests[i].collapsed, -1, collapsedW, ARRAY_SIZE(collapsedW));
+        ok(!wcscmp(ptrW, collapsedW), "Test [%d]: Expected '%s', got '%s'\n",
+            i, tests[i].collapsed, wine_dbgstr_w(ptrW));
+    }
+}
+
+static void test_addr_to_print(void)
+{
+    char dst[16];
+    char dst6[64];
+    const char *pdst;
+    struct in_addr in;
+    struct in6_addr in6;
+
+    u_long addr0_Num = 0x00000000;
+    const char *addr0_Str = "0.0.0.0";
+    u_long addr1_Num = 0x20201015;
+    const char *addr1_Str = "21.16.32.32";
+    u_char addr2_Num[16] = {0,0,0,0,0,0,0,0,0,0,0xff,0xfe,0xcC,0x98,0xbd,0x74};
+    const char *addr2_Str = "::fffe:cc98:bd74";
+    u_char addr3_Num[16] = {0x20,0x30,0xa4,0xb1};
+    const char *addr3_Str = "2030:a4b1::";
+    u_char addr4_Num[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0xcC,0x98,0xbd,0x74};
+    const char *addr4_Str = "::204.152.189.116";
+
+    /* Test IPv4 addresses */
+    in.s_addr = addr0_Num;
+
+    pdst = inet_ntoa(*((struct in_addr *)&in.s_addr));
+    ok(pdst != NULL, "inet_ntoa failed %s\n", dst);
+    ok(!strcmp(pdst, addr0_Str),"Address %s != %s\n", pdst, addr0_Str);
+
+    /* Test that inet_ntoa and inet_ntop return the same value */
+    in.S_un.S_addr = addr1_Num;
+    pdst = inet_ntoa(*((struct in_addr *)&in.s_addr));
+    ok(pdst != NULL, "inet_ntoa failed %s\n", dst);
+    ok(!strcmp(pdst, addr1_Str),"Address %s != %s\n", pdst, addr1_Str);
+
+    /* inet_ntop became available in Vista and Win2008 */
+    if (!p_inet_ntop)
+    {
+        win_skip("InetNtop not present, not executing tests\n");
+        return;
+    }
+
+    /* Second part of test */
+    pdst = p_inet_ntop(AF_INET, &in.s_addr, dst, sizeof(dst));
+    ok(pdst != NULL, "InetNtop failed %s\n", dst);
+    ok(!strcmp(pdst, addr1_Str),"Address %s != %s\n", pdst, addr1_Str);
+
+    /* Test invalid parm conditions */
+    pdst = p_inet_ntop(1, (void *)&in.s_addr, dst, sizeof(dst));
+    ok(pdst == NULL, "The pointer should not be returned (%p)\n", pdst);
+    ok(WSAGetLastError() == WSAEAFNOSUPPORT, "Should be WSAEAFNOSUPPORT\n");
+
+    /* Test Null destination */
+    pdst = NULL;
+    pdst = p_inet_ntop(AF_INET, &in.s_addr, NULL, sizeof(dst));
+    ok(pdst == NULL, "The pointer should not be returned (%p)\n", pdst);
+    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER || WSAGetLastError() == WSAEINVAL /* Win7 */,
+       "Should be STATUS_INVALID_PARAMETER or WSAEINVAL not 0x%x\n", WSAGetLastError());
+
+    /* Test zero length passed */
+    WSASetLastError(0);
+    pdst = NULL;
+    pdst = p_inet_ntop(AF_INET, &in.s_addr, dst, 0);
+    ok(pdst == NULL, "The pointer should not be returned (%p)\n", pdst);
+    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER || WSAGetLastError() == WSAEINVAL /* Win7 */,
+       "Should be STATUS_INVALID_PARAMETER or WSAEINVAL not 0x%x\n", WSAGetLastError());
+
+    /* Test length one shorter than the address length */
+    WSASetLastError(0);
+    pdst = NULL;
+    pdst = p_inet_ntop(AF_INET, &in.s_addr, dst, 6);
+    ok(pdst == NULL, "The pointer should not be returned (%p)\n", pdst);
+    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER || WSAGetLastError() == WSAEINVAL /* Win7 */,
+       "Should be STATUS_INVALID_PARAMETER or WSAEINVAL not 0x%x\n", WSAGetLastError());
+
+    /* Test longer length is ok */
+    WSASetLastError(0);
+    pdst = NULL;
+    pdst = p_inet_ntop(AF_INET, &in.s_addr, dst, sizeof(dst)+1);
+    ok(pdst != NULL, "The pointer should  be returned (%p)\n", pdst);
+    ok(!strcmp(pdst, addr1_Str),"Address %s != %s\n", pdst, addr1_Str);
+
+    /* Test the IPv6 addresses */
+
+    /* Test an zero prefixed IPV6 address */
+    memcpy(in6.u.Byte, addr2_Num, sizeof(addr2_Num));
+    pdst = p_inet_ntop(AF_INET6, &in6.s6_addr, dst6, sizeof(dst6));
+    ok(pdst != NULL, "InetNtop failed %s\n", dst6);
+    ok(!strcmp(pdst, addr2_Str),"Address %s != %s\n", pdst, addr2_Str);
+
+    /* Test an zero suffixed IPV6 address */
+    memcpy(in6.s6_addr, addr3_Num, sizeof(addr3_Num));
+    pdst = p_inet_ntop(AF_INET6, &in6.s6_addr, dst6, sizeof(dst6));
+    ok(pdst != NULL, "InetNtop failed %s\n", dst6);
+    ok(!strcmp(pdst, addr3_Str),"Address %s != %s\n", pdst, addr3_Str);
+
+    /* Test the IPv6 address contains the IPv4 address in IPv4 notation */
+    memcpy(in6.s6_addr, addr4_Num, sizeof(addr4_Num));
+    pdst = p_inet_ntop(AF_INET6, &in6.s6_addr, dst6, sizeof(dst6));
+    ok(pdst != NULL, "InetNtop failed %s\n", dst6);
+    ok(!strcmp(pdst, addr4_Str),"Address %s != %s\n", pdst, addr4_Str);
+
+    /* Test invalid parm conditions */
+    memcpy(in6.u.Byte, addr2_Num, sizeof(addr2_Num));
+
+    /* Test Null destination */
+    pdst = NULL;
+    pdst = p_inet_ntop(AF_INET6, &in6.s6_addr, NULL, sizeof(dst6));
+    ok(pdst == NULL, "The pointer should not be returned (%p)\n", pdst);
+    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER || WSAGetLastError() == WSAEINVAL /* Win7 */,
+       "Should be STATUS_INVALID_PARAMETER or WSAEINVAL not 0x%x\n", WSAGetLastError());
+
+    /* Test zero length passed */
+    WSASetLastError(0);
+    pdst = NULL;
+    pdst = p_inet_ntop(AF_INET6, &in6.s6_addr, dst6, 0);
+    ok(pdst == NULL, "The pointer should not be returned (%p)\n", pdst);
+    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER || WSAGetLastError() == WSAEINVAL /* Win7 */,
+       "Should be STATUS_INVALID_PARAMETER or WSAEINVAL not 0x%x\n", WSAGetLastError());
+
+    /* Test length one shorter than the address length */
+    WSASetLastError(0);
+    pdst = NULL;
+    pdst = p_inet_ntop(AF_INET6, &in6.s6_addr, dst6, 16);
+    ok(pdst == NULL, "The pointer should not be returned (%p)\n", pdst);
+    ok(WSAGetLastError() == STATUS_INVALID_PARAMETER || WSAGetLastError() == WSAEINVAL /* Win7 */,
+       "Should be STATUS_INVALID_PARAMETER or WSAEINVAL not 0x%x\n", WSAGetLastError());
+
+    /* Test longer length is ok */
+    WSASetLastError(0);
+    pdst = NULL;
+    pdst = p_inet_ntop(AF_INET6, &in6.s6_addr, dst6, 18);
+    ok(pdst != NULL, "The pointer should be returned (%p)\n", pdst);
+}
+
+static void test_WSAAddressToString(void)
+{
+    static struct
+    {
+        ULONG address;
+        USHORT port;
+        char output[32];
+    }
+    ipv4_tests[] =
+    {
+        { 0, 0, "0.0.0.0" },
+        { 0xffffffff, 0, "255.255.255.255" },
+        { 0, 0xffff, "0.0.0.0:65535" },
+        { 0xffffffff, 0xffff, "255.255.255.255:65535" },
+    };
+    static struct
+    {
+        USHORT address[8];
+        ULONG scope;
+        USHORT port;
+        char output[64];
+    }
+    ipv6_tests[] =
+    {
+        { { 0, 0, 0, 0, 0, 0, 0, 0x100 }, 0, 0, "::1" },
+        { { 0xab20, 0, 0, 0, 0, 0, 0, 0x100 }, 0, 0, "20ab::1" },
+        { { 0xab20, 0, 0, 0, 0, 0, 0, 0x120 }, 0, 0xfa81, "[20ab::2001]:33274" },
+        { { 0xab20, 0, 0, 0, 0, 0, 0, 0x120 }, 0x1234, 0xfa81, "[20ab::2001%4660]:33274" },
+        { { 0xab20, 0, 0, 0, 0, 0, 0, 0x120 }, 0x1234, 0, "20ab::2001%4660" },
+    };
+    SOCKADDR_IN sockaddr;
+    SOCKADDR_IN6 sockaddr6;
+    char output[64];
+    WCHAR outputW[64], expected_outputW[64];
+    SOCKET v6;
+    INT ret;
+    DWORD len;
+    int i, j;
+
+    len = 0;
+    sockaddr.sin_family = AF_INET;
+    sockaddr.sin_addr.s_addr = 0;
+    sockaddr.sin_port = 0;
+    WSASetLastError( 0xdeadbeef );
+    ret = WSAAddressToStringA( (SOCKADDR *)&sockaddr, sizeof(sockaddr), NULL, output, &len );
+    ok( ret == SOCKET_ERROR, "WSAAddressToStringA() returned %d, expected SOCKET_ERROR\n", ret );
+    ok( WSAGetLastError() == WSAEFAULT, "WSAAddressToStringA() gave error %d, expected WSAEFAULT\n", WSAGetLastError() );
+    ok( len == 8, "WSAAddressToStringA() gave length %d, expected 8\n", len );
+
+    len = 0;
+    sockaddr.sin_family = AF_INET;
+    sockaddr.sin_addr.s_addr = 0;
+    sockaddr.sin_port = 0;
+    WSASetLastError( 0xdeadbeef );
+    ret = WSAAddressToStringW( (SOCKADDR *)&sockaddr, sizeof(sockaddr), NULL, NULL, &len );
+    ok( ret == SOCKET_ERROR, "got %d\n", ret );
+    ok( WSAGetLastError() == WSAEFAULT, "got %08x\n", WSAGetLastError() );
+    ok( len == 8, "got %u\n", len );
+
+    len = ARRAY_SIZE(outputW);
+    memset( outputW, 0, sizeof(outputW) );
+    ret = WSAAddressToStringW( (SOCKADDR *)&sockaddr, sizeof(sockaddr), NULL, outputW, &len );
+    ok( !ret, "WSAAddressToStringW() returned %d\n", ret );
+    ok( len == 8, "got %u\n", len );
+    ok( !wcscmp(outputW, L"0.0.0.0"), "got %s\n", wine_dbgstr_w(outputW) );
+
+    for (i = 0; i < 2; i++)
+    {
+        for (j = 0; j < ARRAY_SIZE(ipv4_tests); j++)
+        {
+            sockaddr.sin_family = AF_INET;
+            sockaddr.sin_addr.s_addr = ipv4_tests[j].address;
+            sockaddr.sin_port = ipv4_tests[j].port;
+
+            if (i == 0)
+            {
+                len = sizeof(output);
+                memset(output, 0, len);
+                ret = WSAAddressToStringA( (SOCKADDR *)&sockaddr, sizeof(sockaddr), NULL, output, &len );
+                ok( !ret, "ipv4_tests[%d] failed unexpectedly: %d\n", j, WSAGetLastError() );
+                ok( !strcmp( output, ipv4_tests[j].output ),
+                    "ipv4_tests[%d]: got address %s, expected %s\n",
+                    j, wine_dbgstr_a(output), wine_dbgstr_a(ipv4_tests[j].output) );
+                ok( len == strlen(ipv4_tests[j].output) + 1,
+                    "ipv4_tests[%d]: got length %d, expected %d\n",
+                    j, len, strlen(ipv4_tests[j].output) + 1 );
+            }
+            else
+            {
+                len = sizeof(outputW);
+                memset(outputW, 0, len);
+                ret = WSAAddressToStringW( (SOCKADDR *)&sockaddr, sizeof(sockaddr), NULL, outputW, &len );
+                MultiByteToWideChar( CP_ACP, 0, ipv4_tests[j].output, -1,
+                                     expected_outputW, ARRAY_SIZE(expected_outputW) );
+                ok( !ret, "ipv4_tests[%d] failed unexpectedly: %d\n", j, WSAGetLastError() );
+                ok( !wcscmp( outputW, expected_outputW ),
+                    "ipv4_tests[%d]: got address %s, expected %s\n",
+                    j, wine_dbgstr_w(outputW), wine_dbgstr_w(expected_outputW) );
+                ok( len == wcslen(expected_outputW) + 1,
+                    "ipv4_tests[%d]: got length %d, expected %d\n",
+                    j, len, wcslen(expected_outputW) + 1 );
+            }
+        }
+
+        /* check to see if IPv6 is available */
+        v6 = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+        if (v6 == INVALID_SOCKET) {
+            skip("Could not create IPv6 socket (LastError: %d; %d expected if IPv6 not available).\n",
+                WSAGetLastError(), WSAEAFNOSUPPORT);
+            continue;
+        }
+        closesocket(v6);
+
+        for (j = 0; j < ARRAY_SIZE(ipv6_tests); j++)
+        {
+            sockaddr6.sin6_family = AF_INET6;
+            sockaddr6.sin6_scope_id = ipv6_tests[j].scope;
+            sockaddr6.sin6_port = ipv6_tests[j].port;
+            memcpy( sockaddr6.sin6_addr.s6_addr, ipv6_tests[j].address, sizeof(ipv6_tests[j].address) );
+
+            if (i == 0)
+            {
+                len = sizeof(output);
+                ret = WSAAddressToStringA( (SOCKADDR *)&sockaddr6, sizeof(sockaddr6), NULL, output, &len );
+                ok( !ret, "ipv6_tests[%d] failed unexpectedly: %d\n", j, WSAGetLastError() );
+                ok( !strcmp( output, ipv6_tests[j].output ),
+                    "ipv6_tests[%d]: gave address %s, expected %s\n",
+                    j, wine_dbgstr_a(output), wine_dbgstr_a(ipv6_tests[j].output) );
+                ok( len == strlen(ipv6_tests[j].output) + 1,
+                    "ipv6_tests[%d]: got length %d, expected %d\n",
+                    j, len, strlen(ipv6_tests[j].output) + 1 );
+            }
+            else
+            {
+                len = sizeof(outputW);
+                ret = WSAAddressToStringW( (SOCKADDR *)&sockaddr6, sizeof(sockaddr6), NULL, outputW, &len );
+                MultiByteToWideChar( CP_ACP, 0, ipv6_tests[j].output, -1,
+                                     expected_outputW, ARRAY_SIZE(expected_outputW) );
+                ok( !ret, "ipv6_tests[%d] failed unexpectedly: %d\n", j, WSAGetLastError() );
+                ok( !wcscmp( outputW, expected_outputW ),
+                    "ipv6_tests[%d]: got address %s, expected %s\n",
+                    j, wine_dbgstr_w(outputW), wine_dbgstr_w(expected_outputW) );
+                ok( len == wcslen(expected_outputW) + 1,
+                    "ipv6_tests[%d]: got length %d, expected %d\n",
+                    j, len, wcslen(expected_outputW) + 1 );
+            }
+        }
+    }
+}
+
+static void test_WSAStringToAddress(void)
+{
+    static struct
+    {
+        char input[32];
+        ULONG address;
+        USHORT port;
+        int error;
+    }
+    ipv4_tests[] =
+    {
+        { "0.0.0.0", 0 },
+        { "127.127.127.127", 0x7f7f7f7f },
+        { "255.255.255.255", 0xffffffff },
+        { "127.127.127.127:65535", 0x7f7f7f7f, 65535 },
+        { "255.255.255.255:65535", 0xffffffff, 65535 },
+        { "2001::1", 0xd1070000, 0, WSAEINVAL },
+        { "1.2.3.", 0, 0, WSAEINVAL },
+        { "", 0, 0, WSAEINVAL },
+    };
+    static struct
+    {
+        char input[64];
+        USHORT address[8];
+        USHORT port;
+        int error;
+    }
+    ipv6_tests[] =
+    {
+        { "::1", { 0, 0, 0, 0, 0, 0, 0, 0x100 } },
+        { "[::1]", { 0, 0, 0, 0, 0, 0, 0, 0x100 } },
+        { "[::1]:65535", { 0, 0, 0, 0, 0, 0, 0, 0x100 }, 0xffff },
+        { "2001::1", { 0x120, 0, 0, 0, 0, 0, 0, 0x100 } },
+        { "::1]:65535", { 0, 0, 0, 0, 0, 0, 0, 0x100 }, 0, WSAEINVAL },
+        { "001::1", { 0x100, 0, 0, 0, 0, 0, 0, 0x100 } },
+        { "::1:2:3:4:5:6:7", { 0, 0, 0x100, 0x200, 0x300, 0x400, 0x500, 0x600 }, 0, WSAEINVAL }, /* Windows bug */
+        { "1.2.3.4", { 0x201, 0x3, 0, 0, 0, 0, 0, 0 }, 0, WSAEINVAL },
+        { "1:2:3:", { 0x100, 0x200, 0x300, 0, 0, 0, 0 }, 0, WSAEINVAL },
+        { "", { 0, 0, 0, 0, 0, 0, 0, 0 }, 0, WSAEINVAL },
+    };
+
+    WCHAR inputW[64];
+    INT len, ret, expected_len, expected_ret;
+    short expected_family;
+    SOCKADDR_IN sockaddr;
+    SOCKADDR_IN6 sockaddr6;
+    int i, j;
+
+    len = 0;
+    WSASetLastError( 0 );
+    ret = WSAStringToAddressA( ipv4_tests[0].input, AF_INET, NULL, (SOCKADDR *)&sockaddr, &len );
+    ok( ret == SOCKET_ERROR, "WSAStringToAddressA() returned %d, expected SOCKET_ERROR\n", ret );
+    ok( WSAGetLastError() == WSAEFAULT, "WSAStringToAddress() gave error %d, expected WSAEFAULT\n", WSAGetLastError() );
+    ok( len >= sizeof(sockaddr) || broken(len == 0) /* xp */,
+        "WSAStringToAddress() gave length %d, expected at least %d\n", len, sizeof(sockaddr) );
+
+    for (i = 0; i < 2; i++)
+    {
+        for (j = 0; j < ARRAY_SIZE(ipv4_tests); j++)
+        {
+            len = sizeof(sockaddr) + 10;
+            expected_len = ipv4_tests[j].error ? len : sizeof(sockaddr);
+            memset( &sockaddr, 0xab, sizeof(sockaddr) );
+
+            WSASetLastError( 0 );
+            if (i == 0)
+            {
+                ret = WSAStringToAddressA( ipv4_tests[j].input, AF_INET, NULL, (SOCKADDR *)&sockaddr, &len );
+            }
+            else
+            {
+                MultiByteToWideChar( CP_ACP, 0, ipv4_tests[j].input, -1, inputW, ARRAY_SIZE(inputW) );
+                ret = WSAStringToAddressW( inputW, AF_INET, NULL, (SOCKADDR *)&sockaddr, &len );
+            }
+            expected_ret = ipv4_tests[j].error ? SOCKET_ERROR : 0;
+            expected_family = ipv4_tests[j].error ? 0 : AF_INET;
+            ok( ret == expected_ret,
+                "WSAStringToAddress(%s) returned %d, expected %d\n",
+                wine_dbgstr_a( ipv4_tests[j].input ), ret, expected_ret );
+            ok( WSAGetLastError() == ipv4_tests[j].error,
+                "WSAStringToAddress(%s) gave error %d, expected %d\n",
+                wine_dbgstr_a( ipv4_tests[j].input ), WSAGetLastError(), ipv4_tests[j].error );
+            ok( sockaddr.sin_family == expected_family,
+                "WSAStringToAddress(%s) gave family %d, expected %d\n",
+                wine_dbgstr_a( ipv4_tests[j].input ), sockaddr.sin_family, expected_family );
+            ok( sockaddr.sin_addr.s_addr == ipv4_tests[j].address,
+                "WSAStringToAddress(%s) gave address %08x, expected %08x\n",
+                wine_dbgstr_a( ipv4_tests[j].input ), sockaddr.sin_addr.s_addr, ipv4_tests[j].address );
+            ok( sockaddr.sin_port == ipv4_tests[j].port,
+                "WSAStringToAddress(%s) gave port %04x, expected %04x\n",
+                wine_dbgstr_a( ipv4_tests[j].input ), sockaddr.sin_port, ipv4_tests[j].port );
+            ok( len == expected_len,
+                "WSAStringToAddress(%s) gave length %d, expected %d\n",
+                wine_dbgstr_a( ipv4_tests[j].input ), len, expected_len );
+        }
+
+        for (j = 0; j < ARRAY_SIZE(ipv6_tests); j++)
+        {
+            len = sizeof(sockaddr6) + 10;
+            expected_len = ipv6_tests[j].error ? len : sizeof(sockaddr6);
+            memset( &sockaddr6, 0xab, sizeof(sockaddr6) );
+
+            WSASetLastError( 0 );
+            if (i == 0)
+            {
+                ret = WSAStringToAddressA( ipv6_tests[j].input, AF_INET6, NULL, (SOCKADDR *)&sockaddr6, &len );
+            }
+            else
+            {
+                MultiByteToWideChar( CP_ACP, 0, ipv6_tests[j].input, -1, inputW, ARRAY_SIZE(inputW) );
+                ret = WSAStringToAddressW( inputW, AF_INET6, NULL, (SOCKADDR *)&sockaddr6, &len );
+            }
+            if (j == 0 && ret == SOCKET_ERROR)
+            {
+                win_skip("IPv6 not supported\n");
+                break;
+            }
+            expected_ret = ipv6_tests[j].error ? SOCKET_ERROR : 0;
+            expected_family = ipv6_tests[j].error ? 0 : AF_INET6;
+            ok( ret == expected_ret,
+                "WSAStringToAddress(%s) returned %d, expected %d\n",
+                wine_dbgstr_a( ipv6_tests[j].input ), ret, expected_ret );
+            ok( WSAGetLastError() == ipv6_tests[j].error,
+                "WSAStringToAddress(%s) gave error %d, expected %d\n",
+                wine_dbgstr_a( ipv6_tests[j].input ), WSAGetLastError(), ipv6_tests[j].error );
+            ok( sockaddr6.sin6_family == expected_family,
+                "WSAStringToAddress(%s) gave family %d, expected %d\n",
+                wine_dbgstr_a( ipv4_tests[j].input ), sockaddr6.sin6_family, expected_family );
+            ok( memcmp(&sockaddr6.sin6_addr, ipv6_tests[j].address, sizeof(sockaddr6.sin6_addr)) == 0,
+                "WSAStringToAddress(%s) gave address %x:%x:%x:%x:%x:%x:%x:%x, expected %x:%x:%x:%x:%x:%x:%x:%x\n",
+                wine_dbgstr_a( ipv6_tests[j].input ),
+                sockaddr6.sin6_addr.s6_words[0], sockaddr6.sin6_addr.s6_words[1],
+                sockaddr6.sin6_addr.s6_words[2], sockaddr6.sin6_addr.s6_words[3],
+                sockaddr6.sin6_addr.s6_words[4], sockaddr6.sin6_addr.s6_words[5],
+                sockaddr6.sin6_addr.s6_words[6], sockaddr6.sin6_addr.s6_words[7],
+                ipv6_tests[j].address[0], ipv6_tests[j].address[1],
+                ipv6_tests[j].address[2], ipv6_tests[j].address[3],
+                ipv6_tests[j].address[4], ipv6_tests[j].address[5],
+                ipv6_tests[j].address[6], ipv6_tests[j].address[7] );
+            ok( sockaddr6.sin6_scope_id == 0,
+                "WSAStringToAddress(%s) gave scope %d, expected 0\n",
+                wine_dbgstr_a( ipv6_tests[j].input ), sockaddr6.sin6_scope_id );
+            ok( sockaddr6.sin6_port == ipv6_tests[j].port,
+                "WSAStringToAddress(%s) gave port %04x, expected %04x\n",
+                wine_dbgstr_a( ipv6_tests[j].input ), sockaddr6.sin6_port, ipv6_tests[j].port );
+            ok( sockaddr6.sin6_flowinfo == 0,
+                "WSAStringToAddress(%s) gave flowinfo %d, expected 0\n",
+                wine_dbgstr_a( ipv6_tests[j].input ), sockaddr6.sin6_flowinfo );
+            ok( len == expected_len,
+                "WSAStringToAddress(%s) gave length %d, expected %d\n",
+                wine_dbgstr_a( ipv6_tests[j].input ), len, expected_len );
+        }
+    }
+}
+
+static void test_inet_addr(void)
+{
+    u_long addr;
+
+    addr = inet_addr(NULL);
+    ok(addr == INADDR_NONE, "inet_addr succeeded unexpectedly\n");
 }
 
 /* Tests used in both getaddrinfo and GetAddrInfoW */
@@ -1670,6 +2291,9 @@ START_TEST( protocol )
     pGetAddrInfoExW = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "GetAddrInfoExW");
     pGetHostNameW = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "GetHostNameW");
     p_inet_ntop = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "inet_ntop");
+    pInetNtopW = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "InetNtopW");
+    p_inet_pton = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "inet_pton");
+    pInetPtonW = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "InetPtonW");
 
     if (WSAStartup( version, &data )) return;
 
@@ -1682,6 +2306,13 @@ START_TEST( protocol )
     test_WSALookupService();
     test_WSAAsyncGetServByPort();
     test_WSAAsyncGetServByName();
+
+    test_inet_ntoa();
+    test_inet_pton();
+    test_addr_to_print();
+    test_WSAAddressToString();
+    test_WSAStringToAddress();
+    test_inet_addr();
 
     test_GetAddrInfoW();
     test_GetAddrInfoExW();
