@@ -159,6 +159,7 @@ static const char *dll_ext;
 static const char *man_ext;
 static const char *arch;
 static const char *pe_dir;
+static const char *so_dir;
 static const char *crosstarget;
 static const char *crossdebug;
 static const char *fontforge;
@@ -2613,7 +2614,7 @@ static int cmp_string_length( const char **a, const char **b )
 static void output_uninstall_rules( struct makefile *make )
 {
     static const char *dirs_order[] =
-        { "$(includedir)", "$(mandir)", "$(fontdir)", "$(datadir)", "$(dlldir)" };
+        { "$(includedir)", "$(mandir)", "$(fontdir)", "$(nlsdir)", "$(datadir)", "$(dlldir)" };
 
     struct strarray uninstall_dirs = empty_strarray;
     unsigned int i, j;
@@ -3313,7 +3314,7 @@ static void output_module( struct makefile *make )
         strarray_add( &make->all_targets, strmake( "%s%s", make->module, dll_ext ));
         strarray_add( &make->all_targets, strmake( "%s.fake", make->module ));
         add_install_rule( make, make->module, strmake( "%s%s", make->module, dll_ext ),
-                          strmake( "p$(dlldir)/%s%s", make->module, dll_ext ));
+                          strmake( "p%s/%s%s", so_dir, make->module, dll_ext ));
         add_install_rule( make, make->module, strmake( "%s.fake", make->module ),
                           strmake( "d%s/%s", pe_dir, make->module ));
         output( "%s%s %s.fake:", module_path, dll_ext, module_path );
@@ -3368,7 +3369,7 @@ static void output_module( struct makefile *make )
         strarray_addall( &unix_libs, add_unix_libraries( make, &unix_deps ));
 
         strarray_add( &make->all_targets, unix_lib );
-        add_install_rule( make, make->module, unix_lib, strmake( "p$(dlldir)/%s", unix_lib ));
+        add_install_rule( make, make->module, unix_lib, strmake( "p%s/%s", so_dir, unix_lib ));
         output( "%s:", obj_dir_path( make, unix_lib ));
         if (spec_file) output_filename( spec_file );
         output_filenames_obj_dir( make, make->unixobj_files );
@@ -3402,7 +3403,7 @@ static void output_module( struct makefile *make )
             output( "\n" );
             add_install_rule( make, make->importlib,
                               strmake( "lib%s.def", make->importlib ),
-                              strmake( "d$(dlldir)/lib%s.def", make->importlib ));
+                              strmake( "d%s/lib%s.def", so_dir, make->importlib ));
         }
         else
         {
@@ -3424,7 +3425,7 @@ static void output_module( struct makefile *make )
             output( "\n" );
             add_install_rule( make, make->importlib,
                               strmake( "lib%s.a", make->importlib ),
-                              strmake( "d$(dlldir)/lib%s.a", make->importlib ));
+                              strmake( "d%s/lib%s.a", so_dir, make->importlib ));
         }
         if (crosstarget)
         {
@@ -3478,8 +3479,7 @@ static void output_static_lib( struct makefile *make )
     output_filenames_obj_dir( make, make->object_files );
     output_filenames_obj_dir( make, make->unixobj_files );
     output( " && %s $@\n", ranlib );
-    add_install_rule( make, make->staticlib, make->staticlib,
-                      strmake( "d$(dlldir)/%s", make->staticlib ));
+    add_install_rule( make, make->staticlib, make->staticlib, strmake( "d%s/%s", so_dir, make->staticlib ));
     if (crosstarget && make->module)
     {
         char *name = replace_extension( make->staticlib, ".a", ".cross.a" );
@@ -4428,9 +4428,12 @@ int main( int argc, char *argv[] )
     if (!tools_ext) tools_ext = "";
     if (!man_ext) man_ext = "3w";
     if (arch)
+    {
+        so_dir = strmake( "$(dlldir)/%s-unix", arch );
         pe_dir = strmake( "$(dlldir)/%s-windows", arch );
+    }
     else
-        pe_dir = "$(dlldir)";
+        so_dir = pe_dir = "$(dlldir)";
 
     top_makefile->src_dir = root_src_dir;
     subdirs = get_expanded_make_var_array( top_makefile, "SUBDIRS" );

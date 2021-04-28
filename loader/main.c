@@ -112,6 +112,17 @@ static void *try_dlopen( const char *dir, const char *name )
 
 static void *load_ntdll( char *argv0 )
 {
+#ifdef __i386__
+#define SO_DIR "i386-unix/"
+#elif defined(__x86_64__)
+#define SO_DIR "x86_64-unix/"
+#elif defined(__arm__)
+#define SO_DIR "arm-unix/"
+#elif defined(__aarch64__)
+#define SO_DIR "aarch64-unix/"
+#else
+#define SO_DIR ""
+#endif
     const char *self = get_self_exe( argv0 );
     char *path, *p;
     void *handle = NULL;
@@ -123,7 +134,7 @@ static void *load_ntdll( char *argv0 )
             handle = try_dlopen( p, "dlls/ntdll/ntdll.so" );
             free( p );
         }
-        else handle = try_dlopen( path, BIN_TO_DLLDIR "/ntdll.so" );
+        else handle = try_dlopen( path, BIN_TO_DLLDIR "/" SO_DIR "ntdll.so" );
         free( path );
     }
 
@@ -132,13 +143,14 @@ static void *load_ntdll( char *argv0 )
         path = strdup( path );
         for (p = strtok( path, ":" ); p; p = strtok( NULL, ":" ))
         {
-            handle = try_dlopen( p, "ntdll.so" );
+            handle = try_dlopen( p, SO_DIR "ntdll.so" );
+            if (!handle) handle = try_dlopen( p, "ntdll.so" );
             if (handle) break;
         }
         free( path );
     }
 
-    if (!handle && !self) handle = try_dlopen( DLLDIR, "ntdll.so" );
+    if (!handle && !self) handle = try_dlopen( DLLDIR, SO_DIR "ntdll.so" );
 
     return handle;
 }

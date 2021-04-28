@@ -91,6 +91,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
 
+#ifdef __i386__
+static const char so_dir[] = "/i386-unix";
+#elif defined(__x86_64__)
+static const char so_dir[] = "/x86_64-unix";
+#elif defined(__arm__)
+static const char so_dir[] = "/arm-unix";
+#elif defined(__aarch64__)
+static const char so_dir[] = "/aarch64-unix";
+#else
+static const char so_dir[] = "";
+#endif
+
 void     (WINAPI *pDbgUiRemoteBreakin)( void *arg ) = NULL;
 NTSTATUS (WINAPI *pKiRaiseUserExceptionDispatcher)(void) = NULL;
 void     (WINAPI *pKiUserApcDispatcher)(CONTEXT*,ULONG_PTR,ULONG_PTR,ULONG_PTR,PNTAPCFUNC) = NULL;
@@ -114,6 +126,7 @@ static const BOOL use_preloader = FALSE;
 static char *argv0;
 static const char *bin_dir;
 static const char *dll_dir;
+static const char *ntdll_dir;
 static SIZE_T dll_path_maxlen;
 static int *p___wine_main_argc;
 static char ***p___wine_main_argv;
@@ -331,11 +344,12 @@ static void init_paths( char *argv[] )
 
     argv0 = strdup( argv[0] );
 
-    if (!dladdr( init_paths, &info ) || !(dll_dir = realpath_dirname( info.dli_fname )))
+    if (!dladdr( init_paths, &info ) || !(ntdll_dir = realpath_dirname( info.dli_fname )))
         fatal_error( "cannot get path to ntdll.so\n" );
 
-    if (!(build_dir = remove_tail( dll_dir, "/dlls/ntdll" )))
+    if (!(build_dir = remove_tail( ntdll_dir, "/dlls/ntdll" )))
     {
+        if (!(dll_dir = remove_tail( ntdll_dir, so_dir ))) dll_dir = ntdll_dir;
 #if (defined(__linux__) && !defined(__ANDROID__)) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
         bin_dir = realpath_dirname( "/proc/self/exe" );
 #elif defined (__FreeBSD__) || defined(__DragonFly__)
@@ -1349,6 +1363,14 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
         ptr = prepend( ptr, dll_paths[i], strlen(dll_paths[i]) );
         status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info, machine, prefer_native );
         /* use so dir for unix lib */
+        ptr = file + pos;
+        ptr = prepend( ptr, so_dir, strlen(so_dir) );
+        ptr = prepend( ptr, dll_paths[i], strlen(dll_paths[i]) );
+        if (status != STATUS_DLL_NOT_FOUND) goto done;
+        strcpy( file + pos + len + 1, ".so" );
+        status = open_builtin_so_file( ptr, &attr, module, image_info, prefer_native );
+        if (status != STATUS_DLL_NOT_FOUND) goto done;
+        file[pos + len + 1] = 0;
         ptr = prepend( file + pos, dll_paths[i], strlen(dll_paths[i]) );
         if (status != STATUS_DLL_NOT_FOUND) goto done;
         status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info, machine, prefer_native );
@@ -1725,12 +1747,13 @@ static void load_ntdll(void)
     init_unicode_string( &str, path );
     InitializeObjectAttributes( &attr, &str, 0, 0, NULL );
 
-    name = malloc( strlen( dll_dir ) + strlen( pe_dir ) + sizeof("/ntdll.dll.so") );
-    sprintf( name, "%s%s/ntdll.dll", dll_dir, build_dir ? "" : pe_dir );
+    name = malloc( strlen( ntdll_dir ) + strlen( pe_dir ) + sizeof("/ntdll.dll.so") );
+    if (build_dir) sprintf( name, "%s/ntdll.dll", ntdll_dir );
+    else sprintf( name, "%s%s/ntdll.dll", dll_dir, pe_dir );
     status = open_builtin_pe_file( name, &attr, &module, &size, &info, current_machine, FALSE );
     if (status == STATUS_DLL_NOT_FOUND)
     {
-        sprintf( name, "%s/ntdll.dll.so", dll_dir );
+        sprintf( name, "%s/ntdll.dll.so", ntdll_dir );
         status = open_builtin_so_file( name, &attr, &module, &info, FALSE );
     }
     if (status == STATUS_IMAGE_NOT_AT_BASE) relocate_ntdll( module );
