@@ -392,6 +392,7 @@ DECL_HANDLER(get_job_info);
 DECL_HANDLER(terminate_job);
 DECL_HANDLER(suspend_process);
 DECL_HANDLER(resume_process);
+DECL_HANDLER(get_next_thread);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -671,6 +672,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_terminate_job,
     (req_handler)req_suspend_process,
     (req_handler)req_resume_process,
+    (req_handler)req_get_next_thread,
 };
 
 C_ASSERT( sizeof(abstime_t) == 8 );
@@ -2226,6 +2228,14 @@ C_ASSERT( FIELD_OFFSET(struct suspend_process_request, handle) == 12 );
 C_ASSERT( sizeof(struct suspend_process_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct resume_process_request, handle) == 12 );
 C_ASSERT( sizeof(struct resume_process_request) == 16 );
+C_ASSERT( FIELD_OFFSET(struct get_next_thread_request, process) == 12 );
+C_ASSERT( FIELD_OFFSET(struct get_next_thread_request, last) == 16 );
+C_ASSERT( FIELD_OFFSET(struct get_next_thread_request, access) == 20 );
+C_ASSERT( FIELD_OFFSET(struct get_next_thread_request, attributes) == 24 );
+C_ASSERT( FIELD_OFFSET(struct get_next_thread_request, flags) == 28 );
+C_ASSERT( sizeof(struct get_next_thread_request) == 32 );
+C_ASSERT( FIELD_OFFSET(struct get_next_thread_reply, handle) == 8 );
+C_ASSERT( sizeof(struct get_next_thread_reply) == 16 );
 
 #endif  /* WANT_REQUEST_HANDLERS */
 

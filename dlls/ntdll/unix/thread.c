@@ -1382,3 +1382,31 @@ ULONG WINAPI NtGetCurrentProcessorNumber(void)
     /* fallback to the first processor */
     return 0;
 }
+
+
+/******************************************************************************
+ *              NtGetNextThread  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtGetNextThread( HANDLE process, HANDLE thread, ACCESS_MASK access, ULONG attributes,
+                                 ULONG flags, HANDLE *handle )
+{
+    HANDLE ret_handle = 0;
+    NTSTATUS ret;
+
+    TRACE( "process %p, thread %p, access %#x, attributes %#x, flags %#x, handle %p.\n",
+            process, thread, access, attributes, flags, handle );
+
+    SERVER_START_REQ( get_next_thread )
+    {
+        req->process = wine_server_obj_handle( process );
+        req->last = wine_server_obj_handle( thread );
+        req->access = access;
+        req->attributes = attributes;
+        req->flags = flags;
+        if (!(ret = wine_server_call( req ))) ret_handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+
+    *handle = ret_handle;
+    return ret;
+}

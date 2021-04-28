@@ -3687,3 +3687,15 @@ struct handle_info
 @REQ(resume_process)
     obj_handle_t handle;       /* process handle */
 @END
+
+
+/* Iterate thread list for process */
+@REQ(get_next_thread)
+    obj_handle_t process;      /* process handle */
+    obj_handle_t last;         /* thread handle to start with */
+    unsigned int access;       /* desired access for returned handle */
+    unsigned int attributes;   /* returned handle attributes */
+    unsigned int flags;        /* controls iteration direction */
+@REPLY
+    obj_handle_t handle;       /* next thread handle */
+@END

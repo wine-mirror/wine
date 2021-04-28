@@ -223,6 +223,7 @@
 @ stdcall -norelay -syscall NtGetContextThread(long ptr)
 @ stdcall -syscall NtGetCurrentProcessorNumber()
 # @ stub NtGetDevicePowerState
+@ stdcall -syscall NtGetNextThread(ptr ptr long long long ptr)
 @ stdcall -syscall NtGetNlsSectionPtr(long long long ptr ptr)
 @ stub NtGetPlugPlayEvent
 @ stdcall NtGetTickCount()

@@ -1925,3 +1925,52 @@ DECL_HANDLER(get_selector_entry)
         release_object( thread );
     }
 }
+
+/* Iterate thread list for process. Use global thread list to also
+ * return terminated but not yet destroyed threads. */
+DECL_HANDLER(get_next_thread)
+{
+    struct thread *thread;
+    struct process *process;
+    struct list *ptr;
+
+    if (req->flags > 1)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
+    if (!(process = get_process_from_handle( req->process, PROCESS_QUERY_INFORMATION )))
+        return;
+
+    if (!req->last)
+    {
+        ptr = req->flags ? list_tail( &thread_list ) : list_head( &thread_list );
+    }
+    else if ((thread = get_thread_from_handle( req->last, 0 )))
+    {
+        ptr = req->flags ? list_prev( &thread_list, &thread->entry )
+                         : list_next( &thread_list, &thread->entry );
+        release_object( thread );
+    }
+    else
+    {
+        release_object( process );
+        return;
+    }
+
+    while (ptr)
+    {
+        thread = LIST_ENTRY( ptr, struct thread, entry );
+        if (thread->process == process)
+        {
+            reply->handle = alloc_handle( current->process, thread, req->access, req->attributes );
+            release_object( process );
+            return;
+        }
+        ptr = req->flags ? list_prev( &thread_list, &thread->entry )
+                         : list_next( &thread_list, &thread->entry );
+    }
+    set_error( STATUS_NO_MORE_ENTRIES );
+    release_object( process );
+}
