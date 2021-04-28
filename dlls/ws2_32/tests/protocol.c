@@ -24,6 +24,7 @@
 #include <winbase.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <iphlpapi.h>
 
 #include "wine/test.h"
 
@@ -33,6 +34,7 @@ static int (WINAPI *pGetAddrInfoExW)(const WCHAR *name, const WCHAR *servname, D
         struct timeval *timeout, OVERLAPPED *overlapped,
         LPLOOKUPSERVICE_COMPLETION_ROUTINE completion_routine, HANDLE *handle);
 static int   (WINAPI *pGetAddrInfoExOverlappedResult)(OVERLAPPED *overlapped);
+static int (WINAPI *pGetHostNameW)(WCHAR *name, int len);
 static const char *(WINAPI *p_inet_ntop)(int family, void *addr, char *string, ULONG size);
 
 /* TCP and UDP over IP fixed set of service flags */
@@ -1088,6 +1090,255 @@ static void test_getaddrinfo(void)
     ok(ret == WSATYPE_NOT_FOUND, "got %d\n", ret);
 }
 
+static void test_dns(void)
+{
+    struct hostent *h;
+    union
+    {
+        char *chr;
+        void *mem;
+    } addr;
+    char **ptr;
+    int count;
+
+    h = gethostbyname("");
+    ok(h != NULL, "gethostbyname(\"\") failed with %d\n", h_errno);
+
+    /* Use an address with valid alias names if possible */
+    h = gethostbyname("source.winehq.org");
+    if (!h)
+    {
+        skip("Can't test the hostent structure because gethostbyname failed\n");
+        return;
+    }
+
+    /* The returned struct must be allocated in a very strict way. First we need to
+     * count how many aliases there are because they must be located right after
+     * the struct hostent size. Knowing the amount of aliases we know the exact
+     * location of the first IP returned. Rule valid for >= XP, for older OS's
+     * it's somewhat the opposite. */
+    addr.mem = h + 1;
+    if (h->h_addr_list == addr.mem) /* <= W2K */
+    {
+        win_skip("Skipping hostent tests since this OS is unsupported\n");
+        return;
+    }
+
+    ok(h->h_aliases == addr.mem,
+       "hostent->h_aliases should be in %p, it is in %p\n", addr.mem, h->h_aliases);
+
+    for (ptr = h->h_aliases, count = 1; *ptr; ptr++) count++;
+    addr.chr += sizeof(*ptr) * count;
+    ok(h->h_addr_list == addr.mem,
+       "hostent->h_addr_list should be in %p, it is in %p\n", addr.mem, h->h_addr_list);
+
+    for (ptr = h->h_addr_list, count = 1; *ptr; ptr++) count++;
+
+    addr.chr += sizeof(*ptr) * count;
+    ok(h->h_addr_list[0] == addr.mem,
+       "hostent->h_addr_list[0] should be in %p, it is in %p\n", addr.mem, h->h_addr_list[0]);
+}
+
+static void test_gethostbyname(void)
+{
+    struct hostent *he;
+    struct in_addr **addr_list;
+    char name[256], first_ip[16];
+    int ret, i, count;
+    MIB_IPFORWARDTABLE *routes = NULL;
+    IP_ADAPTER_INFO *adapters = NULL, *k;
+    DWORD adap_size = 0, route_size = 0;
+    BOOL found_default = FALSE;
+    BOOL local_ip = FALSE;
+
+    ret = gethostname(name, sizeof(name));
+    ok(ret == 0, "gethostname() call failed: %d\n", WSAGetLastError());
+
+    he = gethostbyname(name);
+    ok(he != NULL, "gethostbyname(\"%s\") failed: %d\n", name, WSAGetLastError());
+    addr_list = (struct in_addr **)he->h_addr_list;
+    strcpy(first_ip, inet_ntoa(*addr_list[0]));
+
+    if (winetest_debug > 1) trace("List of local IPs:\n");
+    for (count = 0; addr_list[count] != NULL; count++)
+    {
+        char *ip = inet_ntoa(*addr_list[count]);
+        if (!strcmp(ip, "127.0.0.1"))
+            local_ip = TRUE;
+        if (winetest_debug > 1) trace("%s\n", ip);
+    }
+
+    if (local_ip)
+    {
+        ok(count == 1, "expected 127.0.0.1 to be the only IP returned\n");
+        skip("Only the loopback address is present, skipping tests\n");
+        return;
+    }
+
+    ret = GetAdaptersInfo(NULL, &adap_size);
+    ok(ret  == ERROR_BUFFER_OVERFLOW, "GetAdaptersInfo failed with a different error: %d\n", ret);
+    ret = GetIpForwardTable(NULL, &route_size, FALSE);
+    ok(ret == ERROR_INSUFFICIENT_BUFFER, "GetIpForwardTable failed with a different error: %d\n", ret);
+
+    adapters = HeapAlloc(GetProcessHeap(), 0, adap_size);
+    routes = HeapAlloc(GetProcessHeap(), 0, route_size);
+
+    ret = GetAdaptersInfo(adapters, &adap_size);
+    ok(ret  == NO_ERROR, "GetAdaptersInfo failed, error: %d\n", ret);
+    ret = GetIpForwardTable(routes, &route_size, FALSE);
+    ok(ret == NO_ERROR, "GetIpForwardTable failed, error: %d\n", ret);
+
+    /* This test only has meaning if there is more than one IP configured */
+    if (adapters->Next == NULL && count == 1)
+    {
+        skip("Only one IP is present, skipping tests\n");
+        goto cleanup;
+    }
+
+    for (i = 0; !found_default && i < routes->dwNumEntries; i++)
+    {
+        /* default route (ip 0.0.0.0) ? */
+        if (routes->table[i].dwForwardDest) continue;
+
+        for (k = adapters; k != NULL; k = k->Next)
+        {
+            char *ip;
+
+            if (k->Index != routes->table[i].dwForwardIfIndex) continue;
+
+            /* the first IP returned from gethostbyname must be a default route */
+            ip = k->IpAddressList.IpAddress.String;
+            if (!strcmp(first_ip, ip))
+            {
+                found_default = TRUE;
+                break;
+            }
+        }
+    }
+    ok(found_default, "failed to find the first IP from gethostbyname!\n");
+
+cleanup:
+    HeapFree(GetProcessHeap(), 0, adapters);
+    HeapFree(GetProcessHeap(), 0, routes);
+}
+
+static void test_gethostbyname_hack(void)
+{
+    struct hostent *he;
+    char name[256];
+    static BYTE loopback[] = {127, 0, 0, 1};
+    static BYTE magic_loopback[] = {127, 12, 34, 56};
+    int ret;
+
+    ret = gethostname(name, 256);
+    ok(ret == 0, "gethostname() call failed: %d\n", WSAGetLastError());
+
+    he = gethostbyname("localhost");
+    ok(he != NULL, "gethostbyname(\"localhost\") failed: %d\n", h_errno);
+    if (he->h_length != 4)
+    {
+        skip("h_length is %d, not IPv4, skipping test.\n", he->h_length);
+        return;
+    }
+    ok(!memcmp(he->h_addr_list[0], loopback, he->h_length),
+       "gethostbyname(\"localhost\") returned %u.%u.%u.%u\n",
+       he->h_addr_list[0][0], he->h_addr_list[0][1], he->h_addr_list[0][2],
+       he->h_addr_list[0][3]);
+
+    if (!strcmp(name, "localhost"))
+    {
+        skip("hostname seems to be \"localhost\", skipping test.\n");
+        return;
+    }
+
+    he = gethostbyname(name);
+    ok(he != NULL, "gethostbyname(\"%s\") failed: %d\n", name, h_errno);
+    if (he->h_length != 4)
+    {
+        skip("h_length is %d, not IPv4, skipping test.\n", he->h_length);
+        return;
+    }
+
+    if (he->h_addr_list[0][0] == 127)
+    {
+        ok(memcmp(he->h_addr_list[0], magic_loopback, he->h_length) == 0,
+           "gethostbyname(\"%s\") returned %u.%u.%u.%u not 127.12.34.56\n",
+           name, he->h_addr_list[0][0], he->h_addr_list[0][1],
+           he->h_addr_list[0][2], he->h_addr_list[0][3]);
+    }
+
+    gethostbyname("nonexistent.winehq.org");
+    /* Don't check for the return value, as some braindead ISPs will kindly
+     * resolve nonexistent host names to addresses of the ISP's spam pages. */
+}
+
+static void test_gethostname(void)
+{
+    struct hostent *he;
+    char name[256];
+    int ret, len;
+
+    WSASetLastError(0xdeadbeef);
+    ret = gethostname(NULL, 256);
+    ok(ret == -1, "gethostname() returned %d\n", ret);
+    ok(WSAGetLastError() == WSAEFAULT, "gethostname with null buffer "
+            "failed with %d, expected %d\n", WSAGetLastError(), WSAEFAULT);
+
+    ret = gethostname(name, sizeof(name));
+    ok(ret == 0, "gethostname() call failed: %d\n", WSAGetLastError());
+    he = gethostbyname(name);
+    ok(he != NULL, "gethostbyname(\"%s\") failed: %d\n", name, WSAGetLastError());
+
+    len = strlen(name);
+    WSASetLastError(0xdeadbeef);
+    strcpy(name, "deadbeef");
+    ret = gethostname(name, len);
+    ok(ret == -1, "gethostname() returned %d\n", ret);
+    ok(!strcmp(name, "deadbeef"), "name changed unexpected!\n");
+    ok(WSAGetLastError() == WSAEFAULT, "gethostname with insufficient length "
+            "failed with %d, expected %d\n", WSAGetLastError(), WSAEFAULT);
+
+    len++;
+    ret = gethostname(name, len);
+    ok(ret == 0, "gethostname() call failed: %d\n", WSAGetLastError());
+    he = gethostbyname(name);
+    ok(he != NULL, "gethostbyname(\"%s\") failed: %d\n", name, WSAGetLastError());
+}
+
+static void test_GetHostNameW(void)
+{
+    WCHAR name[256];
+    int ret, len;
+
+    if (!pGetHostNameW)
+    {
+        win_skip("GetHostNameW() not present\n");
+        return;
+    }
+
+    WSASetLastError(0xdeadbeef);
+    ret = pGetHostNameW(NULL, 256);
+    ok(ret == -1, "GetHostNameW() returned %d\n", ret);
+    ok(WSAGetLastError() == WSAEFAULT, "GetHostNameW with null buffer "
+            "failed with %d, expected %d\n", WSAGetLastError(), WSAEFAULT);
+
+    ret = pGetHostNameW(name, sizeof(name));
+    ok(ret == 0, "GetHostNameW() call failed: %d\n", WSAGetLastError());
+
+    len = wcslen(name);
+    WSASetLastError(0xdeadbeef);
+    wcscpy(name, L"deadbeef");
+    ret = pGetHostNameW(name, len);
+    ok(ret == -1, "GetHostNameW() returned %d\n", ret);
+    ok(!wcscmp(name, L"deadbeef"), "name changed unexpected!\n");
+    ok(WSAGetLastError() == WSAEFAULT, "GetHostNameW with insufficient length "
+            "failed with %d, expected %d\n", WSAGetLastError(), WSAEFAULT);
+
+    len++;
+    ret = pGetHostNameW(name, len);
+    ok(ret == 0, "GetHostNameW() call failed: %d\n", WSAGetLastError());
+}
+
 START_TEST( protocol )
 {
     WSADATA data;
@@ -1096,6 +1347,7 @@ START_TEST( protocol )
     pFreeAddrInfoExW = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "FreeAddrInfoExW");
     pGetAddrInfoExOverlappedResult = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "GetAddrInfoExOverlappedResult");
     pGetAddrInfoExW = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "GetAddrInfoExW");
+    pGetHostNameW = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "GetHostNameW");
     p_inet_ntop = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "inet_ntop");
 
     if (WSAStartup( version, &data )) return;
@@ -1108,4 +1360,10 @@ START_TEST( protocol )
     test_GetAddrInfoW();
     test_GetAddrInfoExW();
     test_getaddrinfo();
+
+    test_dns();
+    test_gethostbyname();
+    test_gethostbyname_hack();
+    test_gethostname();
+    test_GetHostNameW();
 }
