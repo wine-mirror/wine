@@ -97,6 +97,15 @@ public class WineActivity extends Activity
         return null;
     }
 
+    private String get_so_dir( String abi )
+    {
+        if (abi.equals( "x86" )) return "/i386-unix";
+        if (abi.equals( "x86_64" )) return "/x86_64-unix";
+        if (abi.equals( "armeabi-v7a" )) return "/arm-unix";
+        if (abi.equals( "arm64-v8a" )) return "/aarch64-unix";
+        return "";
+    }
+
     private void loadWine( String cmdline )
     {
         copyAssetFiles();
@@ -138,7 +147,7 @@ public class WineActivity extends Activity
 
         createProgressDialog( 0, "Setting up the Windows environment..." );
 
-        System.load( dlldir.toString() + "/ntdll.so" );
+        System.load( dlldir.toString() + get_so_dir(wine_abi) + "/ntdll.so" );
         prefix.mkdirs();
 
         runWine( cmdline, env );
