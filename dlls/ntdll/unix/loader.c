@@ -1435,38 +1435,58 @@ NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename,
 
 
 /***************************************************************************
+ *	get_machine_wow64_dir
+ *
+ * cf. GetSystemWow64Directory2.
+ */
+const WCHAR *get_machine_wow64_dir( WORD machine )
+{
+    static const WCHAR system32[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\','s','y','s','t','e','m','3','2','\\',0};
+    static const WCHAR syswow64[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\','s','y','s','w','o','w','6','4','\\',0};
+    static const WCHAR sysarm32[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\','s','y','s','a','r','m','3','2','\\',0};
+    static const WCHAR sysx8664[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\','s','y','s','x','8','6','6','4','\\',0};
+    static const WCHAR sysarm64[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\','s','y','s','a','r','m','6','4','\\',0};
+
+    if (machine == supported_machines[0]) machine = IMAGE_FILE_MACHINE_TARGET_HOST;
+
+    switch (machine)
+    {
+    case IMAGE_FILE_MACHINE_TARGET_HOST: return system32;
+    case IMAGE_FILE_MACHINE_I386:        return syswow64;
+    case IMAGE_FILE_MACHINE_ARMNT:       return sysarm32;
+    case IMAGE_FILE_MACHINE_AMD64:       return sysx8664;
+    case IMAGE_FILE_MACHINE_ARM64:       return sysarm64;
+    default: return NULL;
+    }
+}
+
+
+/***************************************************************************
  *	is_builtin_path
+ *
+ * Check if path is inside a system directory, to support loading builtins
+ * when the corresponding file doesn't exist yet.
  */
 BOOL is_builtin_path( const UNICODE_STRING *path, WORD *machine )
 {
-    static const WCHAR wow64W[] = {'\\','?','?','\\','c',':','\\','w','i','n','d','o','w','s','\\',
-                                   's','y','s','w','o','w','6','4'};
-    unsigned int len;
+    unsigned int i, len = path->Length / sizeof(WCHAR), dirlen;
+    const WCHAR *sysdir, *p = path->Buffer;
 
     /* only fake builtin existence during prefix bootstrap */
     if (!is_prefix_bootstrap) return FALSE;
 
-    *machine = current_machine;
-    if (path->Length > wcslen(system_dir) * sizeof(WCHAR) &&
-        !wcsnicmp( path->Buffer, system_dir, wcslen(system_dir) ))
+    for (i = 0; i < supported_machines_count; i++)
     {
-        if (is_wow64) *machine = IMAGE_FILE_MACHINE_AMD64;
-        goto found;
-    }
-    if ((is_win64 || is_wow64) && path->Length > sizeof(wow64W) &&
-        !wcsnicmp( path->Buffer, wow64W, ARRAY_SIZE(wow64W) ))
-    {
-        *machine = IMAGE_FILE_MACHINE_I386;
-        goto found;
+        sysdir = get_machine_wow64_dir( supported_machines[i] );
+        dirlen = wcslen( sysdir );
+        if (len <= dirlen) continue;
+        if (wcsnicmp( p, sysdir, dirlen )) continue;
+        /* check for remaining path components */
+        for (p += dirlen, len -= dirlen; len; p++, len--) if (*p == '\\') return FALSE;
+        *machine = supported_machines[i];
+        return TRUE;
     }
     return FALSE;
-
-found:
-    /* check that there are no other path components */
-    len = wcslen(system_dir);
-    while (len < path->Length / sizeof(WCHAR) && path->Buffer[len] == '\\') len++;
-    while (len < path->Length / sizeof(WCHAR) && path->Buffer[len] != '\\') len++;
-    return (len == path->Length / sizeof(WCHAR));
 }
 
 
@@ -1585,15 +1605,15 @@ failed:
  */
 NTSTATUS load_start_exe( WCHAR **image, void **module )
 {
-    static const WCHAR startW[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
-        's','y','s','t','e','m','3','2','\\','s','t','a','r','t','.','e','x','e',0};
-    static const WCHAR startwow64W[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
-        's','y','s','w','o','w','6','4','\\','s','t','a','r','t','.','e','x','e',0};
+    static const WCHAR startW[] = {'s','t','a','r','t','.','e','x','e',0};
+    WCHAR buffer[sizeof("\\??\\C:\\windows\\system32\\start.exe")];
     UNICODE_STRING nt_name;
     NTSTATUS status;
     SIZE_T size;
 
-    init_unicode_string( &nt_name, is_wow64 ? startwow64W : startW );
+    wcscpy( buffer, get_machine_wow64_dir( current_machine ));
+    wcscat( buffer, startW );
+    init_unicode_string( &nt_name, buffer );
     status = find_builtin_dll( &nt_name, module, &size, &main_image_info, current_machine, FALSE );
     if (status)
     {
