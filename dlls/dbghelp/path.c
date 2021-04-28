@@ -33,14 +33,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
 #ifdef __i386__
 static const WCHAR pe_dir[] = L"\\i386-windows";
+static const WCHAR so_dir[] = L"\\i386-unix";
 #elif defined __x86_64__
 static const WCHAR pe_dir[] = L"\\x86_64-windows";
+static const WCHAR so_dir[] = L"\\x86_64-unix";
 #elif defined __arm__
 static const WCHAR pe_dir[] = L"\\arm-windows";
+static const WCHAR so_dir[] = L"\\arm-unix";
 #elif defined __aarch64__
 static const WCHAR pe_dir[] = L"\\aarch64-windows";
+static const WCHAR so_dir[] = L"\\aarch64-unix";
 #else
 static const WCHAR pe_dir[] = L"";
+static const WCHAR so_dir[] = L"";
 #endif
 
 static inline BOOL is_sepA(char ch) {return ch == '/' || ch == '\\';}
@@ -769,16 +774,16 @@ BOOL search_dll_path(const struct process *process, const WCHAR *name, BOOL (*ma
         if (!(env = process_getenv(process, env_name))) return FALSE;
         len = wcslen(env) + wcslen(pe_dir) + wcslen(name) + 2;
         if (!(buf = heap_alloc(len * sizeof(WCHAR)))) return FALSE;
-        if (!(p = wcsrchr(name, '.')) || lstrcmpW(p, L".so"))
-        {
+        if ((p = wcsrchr(name, '.')) && !lstrcmpW(p, L".so"))
+            swprintf(buf, len, L"%s%s\\%s", env, so_dir, name);
+        else
             swprintf(buf, len, L"%s%s\\%s", env, pe_dir, name);
-            file = CreateFileW(buf, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-            if (file != INVALID_HANDLE_VALUE)
-            {
-                ret = match(param, file, buf);
-                CloseHandle(file);
-                if (ret) goto found;
-            }
+        file = CreateFileW(buf, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (file != INVALID_HANDLE_VALUE)
+        {
+            ret = match(param, file, buf);
+            CloseHandle(file);
+            if (ret) goto found;
         }
         swprintf(buf, len, L"%s\\%s", env, name);
         file = CreateFileW(buf, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
