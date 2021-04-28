@@ -942,7 +942,7 @@ double CDECL asin( double x )
         if (isnan(x))
         {
 #ifdef __i386__
-            return math_error(_DOMAIN, "sqrt", x, 0, x);
+            return math_error(_DOMAIN, "asin", x, 0, x);
 #else
             return x;
 #endif
