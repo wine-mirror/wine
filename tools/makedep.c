@@ -3525,14 +3525,12 @@ static void output_shared_lib( struct makefile *make )
     output_filenames( all_libs );
     output_filename( "$(LDFLAGS)" );
     output( "\n" );
-    add_install_rule( make, make->sharedlib, make->sharedlib,
-                      strmake( "p$(libdir)/%s", make->sharedlib ));
+    add_install_rule( make, make->sharedlib, make->sharedlib, strmake( "p%s/%s", so_dir, make->sharedlib ));
     for (i = 1; i < names.count; i++)
     {
         output( "%s: %s\n", obj_dir_path( make, names.str[i] ), obj_dir_path( make, names.str[i-1] ));
         output_symlink_rule( names.str[i-1], obj_dir_path( make, names.str[i] ), 0 );
-        add_install_rule( make, names.str[i], names.str[i-1],
-                          strmake( "y$(libdir)/%s", names.str[i] ));
+        add_install_rule( make, names.str[i], names.str[i-1], strmake( "y%s/%s", so_dir, names.str[i] ));
     }
     strarray_addall( &make->all_targets, names );
 }

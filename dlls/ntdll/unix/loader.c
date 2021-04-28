@@ -977,7 +977,7 @@ static void load_libwine(void)
     void *handle;
 
     if (build_dir) path = build_path( build_dir, "libs/wine/" LIBWINE );
-    else path = build_path( dll_dir, "../" LIBWINE );
+    else path = build_path( ntdll_dir, LIBWINE );
 
     handle = dlopen( path, RTLD_NOW );
     free( path );
