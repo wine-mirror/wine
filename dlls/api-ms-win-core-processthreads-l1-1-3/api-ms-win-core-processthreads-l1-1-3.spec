@@ -7,4 +7,4 @@
 @ stub SetProcessInformation
 @ stdcall SetThreadDescription(ptr wstr) kernel32.SetThreadDescription
 @ stdcall SetThreadIdealProcessor(long long) kernel32.SetThreadIdealProcessor
-@ stub SetThreadSelectedCpuSets
+@ stdcall SetThreadSelectedCpuSets(ptr ptr long) kernel32.SetThreadSelectedCpuSets
