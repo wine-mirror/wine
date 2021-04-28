@@ -27,7 +27,6 @@
 #include <windows.h>
 #include <winternl.h>
 #include <ws2tcpip.h>
-#include <ws2spi.h>
 #include <wsipx.h>
 #include <wsnwlink.h>
 #include <mswsock.h>
@@ -62,7 +61,6 @@
 
 /* Function pointers */
 static int   (WINAPI *pWSAPoll)(WSAPOLLFD *,ULONG,INT);
-static int   (WINAPI *pWSCGetProviderInfo)(LPGUID,WSC_PROVIDER_INFO_TYPE,PBYTE,size_t*,DWORD,LPINT);
 
 /* Function pointers from ntdll */
 static DWORD (WINAPI *pNtClose)(HANDLE);
@@ -1091,7 +1089,6 @@ static void Init (void)
     HMODULE hws2_32 = GetModuleHandleA("ws2_32.dll"), ntdll;
 
     pWSAPoll = (void *)GetProcAddress(hws2_32, "WSAPoll");
-    pWSCGetProviderInfo = (void *)GetProcAddress(hws2_32, "WSCGetProviderInfo");
 
     ntdll = LoadLibraryA("ntdll.dll");
     if (ntdll)
@@ -7689,123 +7686,6 @@ static void test_address_list_query(void)
     closesocket(s);
 }
 
-static void test_WSAEnumNameSpaceProvidersA(void)
-{
-    LPWSANAMESPACE_INFOA name = NULL;
-    DWORD ret, error, blen = 0;
-
-    SetLastError(0xdeadbeef);
-    ret = WSAEnumNameSpaceProvidersA(&blen, name);
-    error = WSAGetLastError();
-todo_wine
-    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
-todo_wine
-    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
-
-    /* Invalid parameter tests */
-    SetLastError(0xdeadbeef);
-    ret = WSAEnumNameSpaceProvidersA(NULL, name);
-    error = WSAGetLastError();
-todo_wine
-    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
-todo_wine
-    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
-
-    SetLastError(0xdeadbeef);
-    ret = WSAEnumNameSpaceProvidersA(NULL, NULL);
-    error = WSAGetLastError();
-todo_wine
-    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
-todo_wine
-    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
-
-    SetLastError(0xdeadbeef);
-    ret = WSAEnumNameSpaceProvidersA(&blen, NULL);
-    error = WSAGetLastError();
-todo_wine
-    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
-todo_wine
-    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
-
-    name = HeapAlloc(GetProcessHeap(), 0, blen);
-
-    ret = WSAEnumNameSpaceProvidersA(&blen, name);
-todo_wine
-    ok(ret > 0, "Expected more than zero name space providers\n");
-
-    HeapFree(GetProcessHeap(), 0, name);
-}
-
-static void test_WSAEnumNameSpaceProvidersW(void)
-{
-    LPWSANAMESPACE_INFOW name = NULL;
-    DWORD ret, error, blen = 0, i;
-
-    SetLastError(0xdeadbeef);
-    ret = WSAEnumNameSpaceProvidersW(&blen, name);
-    error = WSAGetLastError();
-todo_wine
-    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
-todo_wine
-    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
-
-    /* Invalid parameter tests */
-    SetLastError(0xdeadbeef);
-    ret = WSAEnumNameSpaceProvidersW(NULL, name);
-    error = WSAGetLastError();
-todo_wine
-    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
-todo_wine
-    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
-
-    SetLastError(0xdeadbeef);
-    ret = WSAEnumNameSpaceProvidersW(NULL, NULL);
-    error = WSAGetLastError();
-todo_wine
-    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
-todo_wine
-    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
-
-    SetLastError(0xdeadbeef);
-    ret = WSAEnumNameSpaceProvidersW(&blen, NULL);
-    error = WSAGetLastError();
-todo_wine
-    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
-todo_wine
-    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
-
-    name = HeapAlloc(GetProcessHeap(), 0, blen);
-
-    ret = WSAEnumNameSpaceProvidersW(&blen, name);
-todo_wine
-    ok(ret > 0, "Expected more than zero name space providers\n");
-
-    if (winetest_debug > 1)
-    {
-        for (i = 0;i < ret; i++)
-        {
-            trace("Name space Identifier (%p): %s\n", name[i].lpszIdentifier,
-                   wine_dbgstr_w(name[i].lpszIdentifier));
-            switch (name[i].dwNameSpace)
-            {
-                case NS_DNS:
-                    trace("\tName space ID: NS_DNS (%u)\n", name[i].dwNameSpace);
-                    break;
-                case NS_NLA:
-                    trace("\tName space ID: NS_NLA (%u)\n", name[i].dwNameSpace);
-                    break;
-                default:
-                    trace("\tName space ID: Unknown (%u)\n", name[i].dwNameSpace);
-                    break;
-            }
-            trace("\tActive:  %d\n", name[i].fActive);
-            trace("\tVersion: %d\n", name[i].dwVersion);
-        }
-    }
-
-    HeapFree(GetProcessHeap(), 0, name);
-}
-
 static void sync_read(SOCKET src, SOCKET dst)
 {
     int ret;
@@ -8438,101 +8318,6 @@ static void test_iocp(void)
     closesocket(dst);
 }
 
-static void test_WSCGetProviderInfo(void)
-{
-    int ret;
-    int errcode;
-    GUID provider = {};
-    char info[1];
-    size_t len = 0;
-
-    if (!pWSCGetProviderInfo) {
-        skip("WSCGetProviderInfo is not available.\n");
-        return;
-    }
-
-    ret = pWSCGetProviderInfo(NULL, -1, NULL, NULL, 0, NULL);
-    ok(ret == SOCKET_ERROR, "got %d, expected SOCKET_ERROR\n", ret);
-
-    errcode = 0xdeadbeef;
-    ret = pWSCGetProviderInfo(NULL, ProviderInfoLspCategories, (PBYTE)&info, &len, 0, &errcode);
-    ok(ret == SOCKET_ERROR, "got %d, expected SOCKET_ERROR\n", ret);
-    ok(errcode == WSAEFAULT, "got %d, expected WSAEFAULT\n", errcode);
-
-    errcode = 0xdeadbeef;
-    ret = pWSCGetProviderInfo(&provider, -1, (PBYTE)&info, &len, 0, &errcode);
-    ok(ret == SOCKET_ERROR, "got %d, expected SOCKET_ERROR\n", ret);
-    ok(errcode == WSANO_RECOVERY, "got %d, expected WSANO_RECOVERY\n", errcode);
-
-    errcode = 0xdeadbeef;
-    ret = pWSCGetProviderInfo(&provider, ProviderInfoLspCategories, NULL, &len, 0, &errcode);
-    ok(ret == SOCKET_ERROR, "got %d, expected SOCKET_ERROR\n", ret);
-    ok(errcode == WSANO_RECOVERY, "got %d, expected WSANO_RECOVERY\n", errcode);
-
-    errcode = 0xdeadbeef;
-    ret = pWSCGetProviderInfo(&provider, ProviderInfoLspCategories, (PBYTE)&info, NULL, 0, &errcode);
-    ok(ret == SOCKET_ERROR, "got %d, expected SOCKET_ERROR\n", ret);
-    ok(errcode == WSANO_RECOVERY, "got %d, expected WSANO_RECOVERY\n", errcode);
-
-    errcode = 0xdeadbeef;
-    ret = pWSCGetProviderInfo(&provider, ProviderInfoLspCategories, (PBYTE)&info, &len, 0, &errcode);
-    ok(ret == SOCKET_ERROR, "got %d, expected SOCKET_ERROR\n", ret);
-    ok(errcode == WSANO_RECOVERY, "got %d, expected WSANO_RECOVERY\n", errcode);
-}
-
-static void test_WSCGetProviderPath(void)
-{
-    GUID provider = {};
-    WCHAR buffer[256];
-    INT ret, err, len;
-
-    ret = WSCGetProviderPath(NULL, NULL, NULL, NULL);
-    ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
-
-    ret = WSCGetProviderPath(&provider, NULL, NULL, NULL);
-    ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
-
-    ret = WSCGetProviderPath(NULL, buffer, NULL, NULL);
-    ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
-
-    len = -1;
-    ret = WSCGetProviderPath(NULL, NULL, &len, NULL);
-    ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
-    ok(len == -1, "Got unexpected len %d.\n", len);
-
-    err = 0;
-    ret = WSCGetProviderPath(NULL, NULL, NULL, &err);
-    ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
-    ok(err == WSAEFAULT, "Got unexpected error %d.\n", err);
-
-    err = 0;
-    ret = WSCGetProviderPath(&provider, NULL, NULL, &err);
-    ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
-    ok(err == WSAEFAULT, "Got unexpected error %d.\n", err);
-
-    err = 0;
-    len = -1;
-    ret = WSCGetProviderPath(&provider, NULL, &len, &err);
-    ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
-    ok(err == WSAEINVAL, "Got unexpected error %d.\n", err);
-    ok(len == -1, "Got unexpected len %d.\n", len);
-
-    err = 0;
-    len = 256;
-    ret = WSCGetProviderPath(&provider, NULL, &len, &err);
-    todo_wine ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
-    todo_wine ok(err == WSAEINVAL, "Got unexpected error %d.\n", err);
-    ok(len == 256, "Got unexpected len %d.\n", len);
-
-    /* Valid pointers and length but invalid GUID */
-    err = 0;
-    len = 256;
-    ret = WSCGetProviderPath(&provider, buffer, &len, &err);
-    todo_wine ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
-    todo_wine ok(err == WSAEINVAL, "Got unexpected error %d.\n", err);
-    ok(len == 256, "Got unexpected len %d.\n", len);
-}
-
 static void test_wsaioctl(void)
 {
     unsigned int i, count;
@@ -8640,14 +8425,8 @@ START_TEST( sock )
     test_sioRoutingInterfaceQuery();
     test_sioAddressListChange();
 
-    test_WSAEnumNameSpaceProvidersA();
-    test_WSAEnumNameSpaceProvidersW();
-
     test_completion_port();
     test_address_list_query();
-
-    test_WSCGetProviderInfo();
-    test_WSCGetProviderPath();
 
     /* this is an io heavy test, do it at the end so the kernel doesn't start dropping packets */
     test_send();

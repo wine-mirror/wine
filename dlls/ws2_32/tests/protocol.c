@@ -26,6 +26,7 @@
 #include <winbase.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <ws2spi.h>
 #include <mswsock.h>
 #include <iphlpapi.h>
 
@@ -42,6 +43,7 @@ static const char *(WINAPI *p_inet_ntop)(int family, void *addr, char *string, U
 static const WCHAR *(WINAPI *pInetNtopW)(int family, void *addr, WCHAR *string, ULONG size);
 static int (WINAPI *p_inet_pton)(int family, const char *string, void *addr);
 static int (WINAPI *pInetPtonW)(int family, WCHAR *string, void *addr);
+static int (WINAPI *pWSCGetProviderInfo)(GUID *provider, WSC_PROVIDER_INFO_TYPE type, BYTE *info, size_t *size, DWORD flags, INT *err);
 
 /* TCP and UDP over IP fixed set of service flags */
 #define TCPIP_SERVICE_FLAGS (XP1_GUARANTEED_DELIVERY \
@@ -2281,6 +2283,219 @@ static void test_GetHostNameW(void)
     ok(ret == 0, "GetHostNameW() call failed: %d\n", WSAGetLastError());
 }
 
+static void test_WSAEnumNameSpaceProvidersA(void)
+{
+    WSANAMESPACE_INFOA *name = NULL;
+    DWORD ret, error, len = 0;
+
+    SetLastError(0xdeadbeef);
+    ret = WSAEnumNameSpaceProvidersA(&len, name);
+    error = WSAGetLastError();
+todo_wine
+    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+todo_wine
+    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+
+    /* Invalid parameter tests */
+    SetLastError(0xdeadbeef);
+    ret = WSAEnumNameSpaceProvidersA(NULL, name);
+    error = WSAGetLastError();
+todo_wine
+    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+todo_wine
+    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = WSAEnumNameSpaceProvidersA(NULL, NULL);
+    error = WSAGetLastError();
+todo_wine
+    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+todo_wine
+    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = WSAEnumNameSpaceProvidersA(&len, NULL);
+    error = WSAGetLastError();
+todo_wine
+    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+todo_wine
+    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+
+    name = HeapAlloc(GetProcessHeap(), 0, len);
+
+    ret = WSAEnumNameSpaceProvidersA(&len, name);
+todo_wine
+    ok(ret > 0, "Expected more than zero name space providers\n");
+
+    HeapFree(GetProcessHeap(), 0, name);
+}
+
+static void test_WSAEnumNameSpaceProvidersW(void)
+{
+    WSANAMESPACE_INFOW *name = NULL;
+    DWORD ret, error, len = 0, i;
+
+    SetLastError(0xdeadbeef);
+    ret = WSAEnumNameSpaceProvidersW(&len, name);
+    error = WSAGetLastError();
+todo_wine
+    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+todo_wine
+    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+
+    /* Invalid parameter tests */
+    SetLastError(0xdeadbeef);
+    ret = WSAEnumNameSpaceProvidersW(NULL, name);
+    error = WSAGetLastError();
+todo_wine
+    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+todo_wine
+    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = WSAEnumNameSpaceProvidersW(NULL, NULL);
+    error = WSAGetLastError();
+todo_wine
+    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+todo_wine
+    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = WSAEnumNameSpaceProvidersW(&len, NULL);
+    error = WSAGetLastError();
+todo_wine
+    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+todo_wine
+    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+
+    name = HeapAlloc(GetProcessHeap(), 0, len);
+
+    ret = WSAEnumNameSpaceProvidersW(&len, name);
+todo_wine
+    ok(ret > 0, "Expected more than zero name space providers\n");
+
+    if (winetest_debug > 1)
+    {
+        for (i = 0; i < ret; i++)
+        {
+            trace("Name space Identifier (%p): %s\n", name[i].lpszIdentifier,
+                   wine_dbgstr_w(name[i].lpszIdentifier));
+            switch (name[i].dwNameSpace)
+            {
+                case NS_DNS:
+                    trace("\tName space ID: NS_DNS (%u)\n", name[i].dwNameSpace);
+                    break;
+                case NS_NLA:
+                    trace("\tName space ID: NS_NLA (%u)\n", name[i].dwNameSpace);
+                    break;
+                default:
+                    trace("\tName space ID: Unknown (%u)\n", name[i].dwNameSpace);
+                    break;
+            }
+            trace("\tActive:  %d\n", name[i].fActive);
+            trace("\tVersion: %d\n", name[i].dwVersion);
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, name);
+}
+
+static void test_WSCGetProviderInfo(void)
+{
+    int ret;
+    int errcode;
+    GUID provider = {0};
+    BYTE info[1];
+    size_t len = 0;
+
+    if (!pWSCGetProviderInfo)
+    {
+        skip("WSCGetProviderInfo is not available.\n");
+        return;
+    }
+
+    ret = pWSCGetProviderInfo(NULL, -1, NULL, NULL, 0, NULL);
+    ok(ret == SOCKET_ERROR, "got %d, expected SOCKET_ERROR\n", ret);
+
+    errcode = 0xdeadbeef;
+    ret = pWSCGetProviderInfo(NULL, ProviderInfoLspCategories, info, &len, 0, &errcode);
+    ok(ret == SOCKET_ERROR, "got %d, expected SOCKET_ERROR\n", ret);
+    ok(errcode == WSAEFAULT, "got %d, expected WSAEFAULT\n", errcode);
+
+    errcode = 0xdeadbeef;
+    ret = pWSCGetProviderInfo(&provider, -1, info, &len, 0, &errcode);
+    ok(ret == SOCKET_ERROR, "got %d, expected SOCKET_ERROR\n", ret);
+    ok(errcode == WSANO_RECOVERY, "got %d, expected WSANO_RECOVERY\n", errcode);
+
+    errcode = 0xdeadbeef;
+    ret = pWSCGetProviderInfo(&provider, ProviderInfoLspCategories, NULL, &len, 0, &errcode);
+    ok(ret == SOCKET_ERROR, "got %d, expected SOCKET_ERROR\n", ret);
+    ok(errcode == WSANO_RECOVERY, "got %d, expected WSANO_RECOVERY\n", errcode);
+
+    errcode = 0xdeadbeef;
+    ret = pWSCGetProviderInfo(&provider, ProviderInfoLspCategories, info, NULL, 0, &errcode);
+    ok(ret == SOCKET_ERROR, "got %d, expected SOCKET_ERROR\n", ret);
+    ok(errcode == WSANO_RECOVERY, "got %d, expected WSANO_RECOVERY\n", errcode);
+
+    errcode = 0xdeadbeef;
+    ret = pWSCGetProviderInfo(&provider, ProviderInfoLspCategories, info, &len, 0, &errcode);
+    ok(ret == SOCKET_ERROR, "got %d, expected SOCKET_ERROR\n", ret);
+    ok(errcode == WSANO_RECOVERY, "got %d, expected WSANO_RECOVERY\n", errcode);
+}
+
+static void test_WSCGetProviderPath(void)
+{
+    GUID provider = {0};
+    WCHAR buffer[256];
+    INT ret, err, len;
+
+    ret = WSCGetProviderPath(NULL, NULL, NULL, NULL);
+    ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
+
+    ret = WSCGetProviderPath(&provider, NULL, NULL, NULL);
+    ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
+
+    ret = WSCGetProviderPath(NULL, buffer, NULL, NULL);
+    ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
+
+    len = -1;
+    ret = WSCGetProviderPath(NULL, NULL, &len, NULL);
+    ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
+    ok(len == -1, "Got unexpected len %d.\n", len);
+
+    err = 0;
+    ret = WSCGetProviderPath(NULL, NULL, NULL, &err);
+    ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
+    ok(err == WSAEFAULT, "Got unexpected error %d.\n", err);
+
+    err = 0;
+    ret = WSCGetProviderPath(&provider, NULL, NULL, &err);
+    ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
+    ok(err == WSAEFAULT, "Got unexpected error %d.\n", err);
+
+    err = 0;
+    len = -1;
+    ret = WSCGetProviderPath(&provider, NULL, &len, &err);
+    ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
+    ok(err == WSAEINVAL, "Got unexpected error %d.\n", err);
+    ok(len == -1, "Got unexpected len %d.\n", len);
+
+    err = 0;
+    len = 256;
+    ret = WSCGetProviderPath(&provider, NULL, &len, &err);
+    todo_wine ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
+    todo_wine ok(err == WSAEINVAL, "Got unexpected error %d.\n", err);
+    ok(len == 256, "Got unexpected len %d.\n", len);
+
+    /* Valid pointers and length but invalid GUID */
+    err = 0;
+    len = 256;
+    ret = WSCGetProviderPath(&provider, buffer, &len, &err);
+    todo_wine ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
+    todo_wine ok(err == WSAEINVAL, "Got unexpected error %d.\n", err);
+    ok(len == 256, "Got unexpected len %d.\n", len);
+}
+
 START_TEST( protocol )
 {
     WSADATA data;
@@ -2294,6 +2509,7 @@ START_TEST( protocol )
     pInetNtopW = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "InetNtopW");
     p_inet_pton = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "inet_pton");
     pInetPtonW = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "InetPtonW");
+    pWSCGetProviderInfo = (void *)GetProcAddress(GetModuleHandleA("ws2_32"), "WSCGetProviderInfo");
 
     if (WSAStartup( version, &data )) return;
 
@@ -2323,4 +2539,9 @@ START_TEST( protocol )
     test_gethostbyname_hack();
     test_gethostname();
     test_GetHostNameW();
+
+    test_WSAEnumNameSpaceProvidersA();
+    test_WSAEnumNameSpaceProvidersW();
+    test_WSCGetProviderInfo();
+    test_WSCGetProviderPath();
 }
