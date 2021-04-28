@@ -44,9 +44,6 @@
 
 #define NUM_UDP_PEERS 3    /* Number of UDP sockets to create and test > 1 */
 
-#define NUM_THREADS 3      /* Number of threads to run getservbyname */
-#define NUM_QUERIES 250    /* Number of getservbyname queries per thread */
-
 #define SERVERIP "127.0.0.1"   /* IP to bind to */
 #define SERVERPORT 9374        /* Port number to bind to */
 
@@ -2132,68 +2129,6 @@ static void test_UDP(void)
         n_recv = recvfrom ( peer[0].s, buf, sizeof(buf), 0,(struct sockaddr *) &peer[0].peer, &ss );
         ok ( n_recv == sizeof(buf), "UDP: recvfrom() received wrong amount of data or socket error: %d\n", n_recv );
         ok ( memcmp ( &peer[0].peer.sin_port, buf, sizeof(peer[0].addr.sin_port) ) == 0, "UDP: port numbers do not match\n" );
-    }
-}
-
-static DWORD WINAPI do_getservbyname( void *param )
-{
-    struct {
-        const char *name;
-        const char *proto;
-        int port;
-    } serv[2] = { {"domain", "udp", 53}, {"telnet", "tcp", 23} };
-
-    HANDLE *starttest = param;
-    int i, j;
-    struct servent *pserv[2];
-
-    ok ( WaitForSingleObject ( *starttest, TEST_TIMEOUT * 1000 ) != WAIT_TIMEOUT,
-         "test_getservbyname: timeout waiting for start signal\n" );
-
-    /* ensure that necessary buffer resizes are completed */
-    for ( j = 0; j < 2; j++) {
-        pserv[j] = getservbyname ( serv[j].name, serv[j].proto );
-    }
-
-    for ( i = 0; i < NUM_QUERIES / 2; i++ ) {
-        for ( j = 0; j < 2; j++ ) {
-            pserv[j] = getservbyname ( serv[j].name, serv[j].proto );
-            ok ( pserv[j] != NULL || broken(pserv[j] == NULL) /* win8, fixed in win81 */,
-                 "getservbyname could not retrieve information for %s: %d\n", serv[j].name, WSAGetLastError() );
-            if ( !pserv[j] ) continue;
-            ok ( pserv[j]->s_port == htons(serv[j].port),
-                 "getservbyname returned the wrong port for %s: %d\n", serv[j].name, ntohs(pserv[j]->s_port) );
-            ok ( !strcmp ( pserv[j]->s_proto, serv[j].proto ),
-                 "getservbyname returned the wrong protocol for %s: %s\n", serv[j].name, pserv[j]->s_proto );
-            ok ( !strcmp ( pserv[j]->s_name, serv[j].name ),
-                 "getservbyname returned the wrong name for %s: %s\n", serv[j].name, pserv[j]->s_name );
-        }
-
-        ok ( pserv[0] == pserv[1] || broken(pserv[0] != pserv[1]) /* win8, fixed in win81 */,
-             "getservbyname: winsock resized servent buffer when not necessary\n" );
-    }
-
-    return 0;
-}
-
-static void test_getservbyname(void)
-{
-    int i;
-    HANDLE starttest, thread[NUM_THREADS];
-    DWORD thread_id[NUM_THREADS];
-
-    starttest = CreateEventA ( NULL, 1, 0, "test_getservbyname_starttest" );
-
-    /* create threads */
-    for ( i = 0; i < NUM_THREADS; i++ ) {
-        thread[i] = CreateThread ( NULL, 0, do_getservbyname, &starttest, 0, &thread_id[i] );
-    }
-
-    /* signal threads to start */
-    SetEvent ( starttest );
-
-    for ( i = 0; i < NUM_THREADS; i++) {
-        WaitForSingleObject ( thread[i], TEST_TIMEOUT * 1000 );
     }
 }
 
@@ -7534,107 +7469,6 @@ static void test_synchronous_WSAIoctl(void)
     CloseHandle( previous_port );
 }
 
-#define WM_ASYNCCOMPLETE (WM_USER + 100)
-static HWND create_async_message_window(void)
-{
-    static const char class_name[] = "ws2_32 async message window class";
-
-    WNDCLASSEXA wndclass;
-    HWND hWnd;
-
-    wndclass.cbSize         = sizeof(wndclass);
-    wndclass.style          = CS_HREDRAW | CS_VREDRAW;
-    wndclass.lpfnWndProc    = DefWindowProcA;
-    wndclass.cbClsExtra     = 0;
-    wndclass.cbWndExtra     = 0;
-    wndclass.hInstance      = GetModuleHandleA(NULL);
-    wndclass.hIcon          = LoadIconA(NULL, (LPCSTR)IDI_APPLICATION);
-    wndclass.hIconSm        = LoadIconA(NULL, (LPCSTR)IDI_APPLICATION);
-    wndclass.hCursor        = LoadCursorA(NULL, (LPCSTR)IDC_ARROW);
-    wndclass.hbrBackground  = (HBRUSH)(COLOR_WINDOW + 1);
-    wndclass.lpszClassName  = class_name;
-    wndclass.lpszMenuName   = NULL;
-
-    RegisterClassExA(&wndclass);
-
-    hWnd = CreateWindowA(class_name, "ws2_32 async message window", WS_OVERLAPPEDWINDOW,
-                        0, 0, 500, 500, NULL, NULL, GetModuleHandleA(NULL), NULL);
-    ok(!!hWnd, "failed to create window\n");
-
-    return hWnd;
-}
-
-static void wait_for_async_message(HWND hwnd, HANDLE handle)
-{
-    BOOL ret;
-    MSG msg;
-
-    while ((ret = GetMessageA(&msg, 0, 0, 0)) &&
-           !(msg.hwnd == hwnd && msg.message == WM_ASYNCCOMPLETE))
-    {
-        TranslateMessage(&msg);
-        DispatchMessageA(&msg);
-    }
-
-    ok(ret, "did not expect WM_QUIT message\n");
-    ok(msg.wParam == (WPARAM)handle, "expected wParam = %p, got %lx\n", handle, msg.wParam);
-}
-
-static void test_WSAAsyncGetServByPort(void)
-{
-    HWND hwnd = create_async_message_window();
-    HANDLE ret;
-    char buffer[MAXGETHOSTSTRUCT];
-
-    /* FIXME: The asynchronous window messages should be tested. */
-
-    /* Parameters are not checked when initiating the asynchronous operation.  */
-    ret = WSAAsyncGetServByPort(NULL, 0, 0, NULL, NULL, 0);
-    ok(ret != NULL, "WSAAsyncGetServByPort returned NULL\n");
-
-    ret = WSAAsyncGetServByPort(hwnd, WM_ASYNCCOMPLETE, 0, NULL, NULL, 0);
-    ok(ret != NULL, "WSAAsyncGetServByPort returned NULL\n");
-    wait_for_async_message(hwnd, ret);
-
-    ret = WSAAsyncGetServByPort(hwnd, WM_ASYNCCOMPLETE, htons(80), NULL, NULL, 0);
-    ok(ret != NULL, "WSAAsyncGetServByPort returned NULL\n");
-    wait_for_async_message(hwnd, ret);
-
-    ret = WSAAsyncGetServByPort(hwnd, WM_ASYNCCOMPLETE, htons(80), NULL, buffer, MAXGETHOSTSTRUCT);
-    ok(ret != NULL, "WSAAsyncGetServByPort returned NULL\n");
-    wait_for_async_message(hwnd, ret);
-
-    DestroyWindow(hwnd);
-}
-
-static void test_WSAAsyncGetServByName(void)
-{
-    HWND hwnd = create_async_message_window();
-    HANDLE ret;
-    char buffer[MAXGETHOSTSTRUCT];
-
-    /* FIXME: The asynchronous window messages should be tested. */
-
-    /* Parameters are not checked when initiating the asynchronous operation.  */
-    ret = WSAAsyncGetServByName(hwnd, WM_ASYNCCOMPLETE, "", NULL, NULL, 0);
-    ok(ret != NULL, "WSAAsyncGetServByName returned NULL\n");
-    wait_for_async_message(hwnd, ret);
-
-    ret = WSAAsyncGetServByName(hwnd, WM_ASYNCCOMPLETE, "", "", buffer, MAXGETHOSTSTRUCT);
-    ok(ret != NULL, "WSAAsyncGetServByName returned NULL\n");
-    wait_for_async_message(hwnd, ret);
-
-    ret = WSAAsyncGetServByName(hwnd, WM_ASYNCCOMPLETE, "http", NULL, NULL, 0);
-    ok(ret != NULL, "WSAAsyncGetServByName returned NULL\n");
-    wait_for_async_message(hwnd, ret);
-
-    ret = WSAAsyncGetServByName(hwnd, WM_ASYNCCOMPLETE, "http", "tcp", buffer, MAXGETHOSTSTRUCT);
-    ok(ret != NULL, "WSAAsyncGetServByName returned NULL\n");
-    wait_for_async_message(hwnd, ret);
-
-    DestroyWindow(hwnd);
-}
-
 /*
  * Provide consistent initialization for the AcceptEx IOCP tests.
  */
@@ -8506,157 +8340,6 @@ static void test_inet_ntoa(void)
     CloseHandle(event[0]);
     CloseHandle(event[1]);
     CloseHandle(thread);
-}
-
-static void test_WSALookupService(void)
-{
-    char buffer[4096], strbuff[128];
-    WSAQUERYSETW *qs = NULL;
-    HANDLE hnd;
-    PNLA_BLOB netdata;
-    int ret;
-    DWORD error, offset, bsize;
-
-    qs = (WSAQUERYSETW *)buffer;
-    memset(qs, 0, sizeof(*qs));
-
-    /* invalid parameter tests */
-    ret = WSALookupServiceBeginW(NULL, 0, &hnd);
-    error = WSAGetLastError();
-    ok(ret == SOCKET_ERROR, "WSALookupServiceBeginW should have failed\n");
-todo_wine
-    ok(error == WSAEFAULT, "expected 10014, got %d\n", error);
-
-    ret = WSALookupServiceBeginW(qs, 0, NULL);
-    error = WSAGetLastError();
-    ok(ret == SOCKET_ERROR, "WSALookupServiceBeginW should have failed\n");
-todo_wine
-    ok(error == WSAEFAULT, "expected 10014, got %d\n", error);
-
-    ret = WSALookupServiceBeginW(qs, 0, &hnd);
-    ok(ret == SOCKET_ERROR, "WSALookupServiceBeginW should have failed\n");
-    todo_wine ok(WSAGetLastError() == ERROR_INVALID_PARAMETER
-            || broken(WSAGetLastError() == WSASERVICE_NOT_FOUND) /* win10 1809 */,
-            "got error %u\n", WSAGetLastError());
-
-    ret = WSALookupServiceEnd(NULL);
-    error = WSAGetLastError();
-todo_wine
-    ok(ret == SOCKET_ERROR, "WSALookupServiceEnd should have failed\n");
-todo_wine
-    ok(error == ERROR_INVALID_HANDLE, "expected 6, got %d\n", error);
-
-    /* standard network list query */
-    qs->dwSize = sizeof(*qs);
-    hnd = (HANDLE)0xdeadbeef;
-    ret = WSALookupServiceBeginW(qs, LUP_RETURN_ALL | LUP_DEEP, &hnd);
-    error = WSAGetLastError();
-    if(ret && error == ERROR_INVALID_PARAMETER)
-    {
-        win_skip("the current WSALookupServiceBeginW test is not supported in win <= 2000\n");
-        return;
-    }
-
-todo_wine
-    ok(!ret, "WSALookupServiceBeginW failed unexpectedly with error %d\n", error);
-todo_wine
-    ok(hnd != (HANDLE)0xdeadbeef, "Handle was not filled\n");
-
-    offset = 0;
-    do
-    {
-        memset(qs, 0, sizeof(*qs));
-        bsize = sizeof(buffer);
-
-        if (WSALookupServiceNextW(hnd, 0, &bsize, qs) == SOCKET_ERROR)
-        {
-            ok(WSAGetLastError() == WSA_E_NO_MORE, "got error %u\n", WSAGetLastError());
-            break;
-        }
-
-        if (winetest_debug <= 1) continue;
-
-        WideCharToMultiByte(CP_ACP, 0, qs->lpszServiceInstanceName, -1,
-                            strbuff, sizeof(strbuff), NULL, NULL);
-        trace("Network Name: %s\n", strbuff);
-
-        /* network data is written in the blob field */
-        if (qs->lpBlob)
-        {
-            /* each network may have multiple NLA_BLOB information structures */
-            do
-            {
-                netdata = (PNLA_BLOB) &qs->lpBlob->pBlobData[offset];
-                switch (netdata->header.type)
-                {
-                    case NLA_RAW_DATA:
-                        trace("\tNLA Data Type: NLA_RAW_DATA\n");
-                        break;
-                    case NLA_INTERFACE:
-                        trace("\tNLA Data Type: NLA_INTERFACE\n");
-                        trace("\t\tType: %d\n", netdata->data.interfaceData.dwType);
-                        trace("\t\tSpeed: %d\n", netdata->data.interfaceData.dwSpeed);
-                        trace("\t\tAdapter Name: %s\n", netdata->data.interfaceData.adapterName);
-                        break;
-                    case NLA_802_1X_LOCATION:
-                        trace("\tNLA Data Type: NLA_802_1X_LOCATION\n");
-                        trace("\t\tInformation: %s\n", netdata->data.locationData.information);
-                        break;
-                    case NLA_CONNECTIVITY:
-                        switch (netdata->data.connectivity.type)
-                        {
-                            case NLA_NETWORK_AD_HOC:
-                                trace("\t\tNetwork Type: AD HOC\n");
-                                break;
-                            case NLA_NETWORK_MANAGED:
-                                trace("\t\tNetwork Type: Managed\n");
-                                break;
-                            case NLA_NETWORK_UNMANAGED:
-                                trace("\t\tNetwork Type: Unmanaged\n");
-                                break;
-                            case NLA_NETWORK_UNKNOWN:
-                                trace("\t\tNetwork Type: Unknown\n");
-                        }
-                        switch (netdata->data.connectivity.internet)
-                        {
-                            case NLA_INTERNET_NO:
-                                trace("\t\tInternet connectivity: No\n");
-                                break;
-                            case NLA_INTERNET_YES:
-                                trace("\t\tInternet connectivity: Yes\n");
-                                break;
-                            case NLA_INTERNET_UNKNOWN:
-                                trace("\t\tInternet connectivity: Unknown\n");
-                                break;
-                        }
-                        break;
-                    case NLA_ICS:
-                        trace("\tNLA Data Type: NLA_ICS\n");
-                        trace("\t\tSpeed: %d\n",
-                               netdata->data.ICS.remote.speed);
-                        trace("\t\tType: %d\n",
-                               netdata->data.ICS.remote.type);
-                        trace("\t\tState: %d\n",
-                               netdata->data.ICS.remote.state);
-                        WideCharToMultiByte(CP_ACP, 0, netdata->data.ICS.remote.machineName, -1,
-                            strbuff, sizeof(strbuff), NULL, NULL);
-                        trace("\t\tMachine Name: %s\n", strbuff);
-                        WideCharToMultiByte(CP_ACP, 0, netdata->data.ICS.remote.sharedAdapterName, -1,
-                            strbuff, sizeof(strbuff), NULL, NULL);
-                        trace("\t\tShared Adapter Name: %s\n", strbuff);
-                        break;
-                    default:
-                        trace("\tNLA Data Type: Unknown\n");
-                        break;
-                }
-            }
-            while (offset);
-        }
-    }
-    while (1);
-
-    ret = WSALookupServiceEnd(hnd);
-    ok(!ret, "WSALookupServiceEnd failed unexpectedly\n");
 }
 
 static void test_WSAEnumNameSpaceProvidersA(void)
@@ -9581,7 +9264,6 @@ START_TEST( sock )
 
     test_UDP();
 
-    test_getservbyname();
     test_WSASocket();
     test_WSADuplicateSocket();
     test_WSAEnumNetworkEvents();
@@ -9617,12 +9299,9 @@ START_TEST( sock )
     test_sioRoutingInterfaceQuery();
     test_sioAddressListChange();
 
-    test_WSALookupService();
     test_WSAEnumNameSpaceProvidersA();
     test_WSAEnumNameSpaceProvidersW();
 
-    test_WSAAsyncGetServByPort();
-    test_WSAAsyncGetServByName();
     test_completion_port();
     test_address_list_query();
 
