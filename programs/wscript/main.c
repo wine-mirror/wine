@@ -393,6 +393,10 @@ static BOOL set_host_properties(const WCHAR *prop)
         wshInteractive = VARIANT_FALSE;
     else if(wcsicmp(prop, L"nologo") == 0)
         WINE_FIXME("ignored %s switch\n", debugstr_w(L"nologo"));
+    else if(wcsicmp(prop, L"d") == 0)
+        WINE_FIXME("ignoring /d\n");
+    else if(wcsicmp(prop, L"u") == 0)
+        WINE_FIXME("ignoring /u\n");
     else
     {
         WINE_FIXME("unsupported switch %s\n", debugstr_w(prop));
