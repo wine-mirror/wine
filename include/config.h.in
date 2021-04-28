@@ -1172,9 +1172,6 @@
 /* Define if Xrandr has the XRRGetProviderResources function */
 #undef HAVE_XRRGETPROVIDERRESOURCES
 
-/* Define to 1 if you have the `y0' function. */
-#undef HAVE_Y0
-
 /* Define to 1 if you have the `y1' function. */
 #undef HAVE_Y1
 

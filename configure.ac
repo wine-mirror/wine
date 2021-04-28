@@ -2706,7 +2706,6 @@ AC_CHECK_FUNCS(\
 	tgammaf \
 	trunc \
 	truncf \
-	y0 \
 	y1 \
 	yn
 )

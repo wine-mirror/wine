@@ -2696,18 +2696,50 @@ double CDECL _jn(int n, double num)
 /*********************************************************************
  *		_y0 (MSVCRT.@)
  */
-double CDECL _y0(double num)
+double CDECL _y0(double x)
 {
-  double retval;
+    static const double tpi = 6.36619772367581382433e-01,
+        u00  = -7.38042951086872317523e-02,
+        u01  =  1.76666452509181115538e-01,
+        u02  = -1.38185671945596898896e-02,
+        u03  =  3.47453432093683650238e-04,
+        u04  = -3.81407053724364161125e-06,
+        u05  =  1.95590137035022920206e-08,
+        u06  = -3.98205194132103398453e-11,
+        v01  =  1.27304834834123699328e-02,
+        v02  =  7.60068627350353253702e-05,
+        v03  =  2.59150851840457805467e-07,
+        v04  =  4.41110311332675467403e-10;
 
-  if (!isfinite(num)) *_errno() = EDOM;
-  retval = unix_funcs->y0( num );
-  if (_fpclass(retval) == _FPCLASS_NINF)
-  {
-    *_errno() = EDOM;
-    retval = NAN;
-  }
-  return retval;
+    double z, u, v;
+    unsigned int ix, lx;
+
+    ix = *(ULONGLONG*)&x >> 32;
+    lx = *(ULONGLONG*)&x;
+
+    /* y0(nan)=nan, y0(<0)=nan, y0(0)=-inf, y0(inf)=0 */
+    if ((ix << 1 | lx) == 0)
+        return math_error(_OVERFLOW, "_y0", x, 0, -INFINITY);
+    if (isnan(x))
+        return x;
+    if (ix >> 31)
+        return math_error(_DOMAIN, "_y0", x, 0, 0 / (x - x));
+    if (ix >= 0x7ff00000)
+        return 1 / x;
+
+    if (ix >= 0x40000000) {  /* x >= 2 */
+        /* large ulp errors near zeros: 3.958, 7.086,.. */
+        return j0_y0_approx(ix, x, TRUE);
+    }
+
+    if (ix >= 0x3e400000) {  /* x >= 2**-27 */
+        /* large ulp error near the first zero, x ~= 0.89 */
+        z = x * x;
+        u = u00 + z * (u01 + z * (u02 + z * (u03 + z * (u04 + z * (u05 + z * u06)))));
+        v = 1.0 + z * (v01 + z * (v02 + z * (v03 + z * v04)));
+        return u / v + tpi * (j0(x) * log(x));
+    }
+    return u00 + tpi * log(x);
 }
 
 /*********************************************************************
