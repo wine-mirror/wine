@@ -14615,6 +14615,12 @@ msgid ""
 "\n"
 msgstr ""
 
+#: programs/reg/reg.rc:180
+#, fuzzy
+#| msgid "Error: Unable to terminate process \"%1\".\n"
+msgid "reg: Unable to access or create the specified registry key\n"
+msgstr "Chyba: Nemožno ukončiť proces \"%1\".\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Registry"

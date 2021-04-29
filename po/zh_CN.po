@@ -14371,6 +14371,13 @@ msgid ""
 "\n"
 msgstr ""
 
+#: programs/reg/reg.rc:180
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to access or create the specified registry key\n"
+msgstr "reg：系统无法找到指定的注册表键或值\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "注册表(&R)"

@@ -14389,6 +14389,12 @@ msgid ""
 "\n"
 msgstr ""
 
+#: programs/reg/reg.rc:180
+#, fuzzy
+#| msgid "reg: Unable to open the registry key '%1'.\n"
+msgid "reg: Unable to access or create the specified registry key\n"
+msgstr "reg: රෙජිස්තරයේ යතුර '%1' අරින්න බැහැ.\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "රෙජිස්තරය (&R)"

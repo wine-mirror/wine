@@ -14320,6 +14320,11 @@ msgid ""
 "\n"
 msgstr ""
 
+#: programs/reg/reg.rc:180
+#, fuzzy
+msgid "reg: Unable to access or create the specified registry key\n"
+msgstr "Μη έγγυρος(οι) χαρακτήρας(ες) στο μονοπάτι.\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr ""

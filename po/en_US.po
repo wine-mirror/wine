@@ -14710,6 +14710,10 @@ msgstr ""
 "     Access the registry using the 64-bit view.\n"
 "\n"
 
+#: programs/reg/reg.rc:180
+msgid "reg: Unable to access or create the specified registry key\n"
+msgstr "reg: Unable to access or create the specified registry key\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Registry"

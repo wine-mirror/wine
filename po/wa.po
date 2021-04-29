@@ -14239,6 +14239,11 @@ msgid ""
 "\n"
 msgstr ""
 
+#: programs/reg/reg.rc:180
+#, fuzzy
+msgid "reg: Unable to access or create the specified registry key\n"
+msgstr "Fitchîs tekse (*.txt).\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr ""

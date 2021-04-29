@@ -14453,6 +14453,12 @@ msgid ""
 "\n"
 msgstr ""
 
+#: programs/reg/reg.rc:180
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "reg: Unable to access or create the specified registry key\n"
+msgstr "Ĉu vi estas certa pri forigo de '%1'?"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Registrejo"

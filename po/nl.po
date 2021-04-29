@@ -14798,6 +14798,12 @@ msgstr ""
 "     Open de 64-bits weergave van het register.\n"
 "\n"
 
+#: programs/reg/reg.rc:180
+#, fuzzy
+#| msgid "reg: Unable to find the specified registry key\n"
+msgid "reg: Unable to access or create the specified registry key\n"
+msgstr "reg: Kan de gegeven registersleutel niet vinden\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Registerbestand"

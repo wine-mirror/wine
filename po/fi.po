@@ -14686,6 +14686,12 @@ msgstr ""
 "     Käytä rekisterin 64-bittistä näkymää.\n"
 "\n"
 
+#: programs/reg/reg.rc:180
+#, fuzzy
+#| msgid "reg: Unable to find the specified registry key\n"
+msgid "reg: Unable to access or create the specified registry key\n"
+msgstr "reg: Annettua rekisteriavainta ei löydy\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Rekisteri"

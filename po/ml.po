@@ -14015,6 +14015,10 @@ msgid ""
 "\n"
 msgstr ""
 
+#: programs/reg/reg.rc:180
+msgid "reg: Unable to access or create the specified registry key\n"
+msgstr ""
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr ""

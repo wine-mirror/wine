@@ -14542,6 +14542,13 @@ msgid ""
 "\n"
 msgstr ""
 
+#: programs/reg/reg.rc:180
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to access or create the specified registry key\n"
+msgstr "reg: 시스템에서 지정한 레지스트리 키 또는 값을 찾을 수 없습니다\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "레지스트리(&R)"

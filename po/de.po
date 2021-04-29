@@ -14805,6 +14805,12 @@ msgstr ""
 "     Registrierungszugriff unter Verwendung der 64-Bit-Ansicht.\n"
 "\n"
 
+#: programs/reg/reg.rc:180
+#, fuzzy
+#| msgid "reg: Unable to find the specified registry key\n"
+msgid "reg: Unable to access or create the specified registry key\n"
+msgstr "reg: Der angegebene Schlüssel wurde nicht gefunden\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Registrierung"

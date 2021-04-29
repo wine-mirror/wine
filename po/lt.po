@@ -14720,6 +14720,12 @@ msgstr ""
 "     Prieiga prie registro naudojant 64-bitų rodinį.\n"
 "\n"
 
+#: programs/reg/reg.rc:180
+#, fuzzy
+#| msgid "reg: Unable to find the specified registry key\n"
+msgid "reg: Unable to access or create the specified registry key\n"
+msgstr "reg: Nepavyko rasti nurodyto registro rakto\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "R&egistras"

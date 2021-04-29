@@ -14647,6 +14647,15 @@ msgid ""
 "\n"
 msgstr ""
 
+#: programs/reg/reg.rc:180
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to access or create the specified registry key\n"
+msgstr ""
+"reg: O sistema foi incapaz de encontrar a chave de registo ou valor "
+"especificado\n"
+
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
 msgstr "&Registro"
