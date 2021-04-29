@@ -32,8 +32,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntlm);
 
+static HINSTANCE instance;
 static ULONG ntlm_package_id;
 static LSA_DISPATCH_TABLE lsa_dispatch;
+
+const struct ntlm_funcs *ntlm_funcs = NULL;
 
 #define NTLM_CAPS \
     ( SECPKG_FLAG_INTEGRITY \
@@ -75,6 +78,12 @@ static NTSTATUS NTAPI ntlm_LsaApInitializePackage( ULONG package_id, LSA_DISPATC
     TRACE( "%08x, %p, %s, %s, %p\n", package_id, dispatch, debugstr_as(database), debugstr_as(confidentiality),
            package_name );
 
+    if (!ntlm_funcs && __wine_init_unix_lib( instance, DLL_PROCESS_ATTACH, NULL, &ntlm_funcs ))
+    {
+        ERR( "no NTLM support, expect problems\n" );
+        return STATUS_UNSUCCESSFUL;
+    }
+
     if (!(str = dispatch->AllocateLsaHeap( sizeof(*str) + sizeof("NTLM" )))) return STATUS_NO_MEMORY;
     ptr = (char *)(str + 1);
     memcpy( ptr, "NTLM", sizeof("NTLM") );
@@ -90,7 +99,13 @@ static NTSTATUS NTAPI ntlm_LsaApInitializePackage( ULONG package_id, LSA_DISPATC
 static NTSTATUS NTAPI ntlm_SpInitialize( ULONG_PTR package_id, SECPKG_PARAMETERS *params,
                                          LSA_SECPKG_FUNCTION_TABLE *lsa_function_table )
 {
-    FIXME( "%lu, %p, %p\n", package_id, params, lsa_function_table );
+    TRACE( "%lu, %p, %p\n", package_id, params, lsa_function_table );
+
+    if (!ntlm_funcs && __wine_init_unix_lib( instance, DLL_PROCESS_ATTACH, NULL, &ntlm_funcs ))
+    {
+        ERR( "no NTLM support, expect problems\n" );
+        return STATUS_UNSUCCESSFUL;
+    }
     return STATUS_SUCCESS;
 }
 
@@ -185,4 +200,18 @@ NTSTATUS NTAPI SpUserModeInitialize( ULONG lsa_version, ULONG *package_version, 
     *table = &ntlm_user_table;
     *table_count = 1;
     return STATUS_SUCCESS;
+}
+
+BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
+{
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        instance = hinst;
+        DisableThreadLibraryCalls( hinst );
+        break;
+    case DLL_PROCESS_DETACH:
+        break;
+    }
+    return TRUE;
 }

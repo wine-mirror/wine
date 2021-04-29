@@ -1,4 +1,4 @@
-@ stub DllMain
+@ stdcall -private DllMain(long long ptr)
 @ stub LsaApCallPackage
 @ stub LsaApCallPackagePassthrough
 @ stub LsaApCallPackageUntrusted

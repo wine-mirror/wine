@@ -3,4 +3,5 @@ MODULE    = msv1_0.dll
 EXTRADLLFLAGS = -mno-cygwin
 
 C_SRCS = \
-	main.c
+	main.c \
+	unixlib.c
