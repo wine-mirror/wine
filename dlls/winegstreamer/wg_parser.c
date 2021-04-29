@@ -1553,7 +1553,6 @@ static HRESULT CDECL wg_parser_connect(struct wg_parser *parser, uint64_t file_s
     {
         struct wg_parser_stream *stream = parser->streams[i];
 
-        stream->duration = query_duration(stream->their_src);
         while (!stream->has_caps && !parser->error)
             pthread_cond_wait(&parser->init_cond, &parser->mutex);
         if (parser->error)
@@ -1561,6 +1560,12 @@ static HRESULT CDECL wg_parser_connect(struct wg_parser *parser, uint64_t file_s
             pthread_mutex_unlock(&parser->mutex);
             return E_FAIL;
         }
+        /* GStreamer doesn't actually provide any guarantees about when duration
+         * is available, even for seekable streams. However, many elements (e.g.
+         * avidemux, wavparse, qtdemux) in practice record duration before
+         * fixing caps, so as a heuristic, wait until we get caps before trying
+         * to query for duration. */
+        stream->duration = query_duration(stream->their_src);
     }
 
     pthread_mutex_unlock(&parser->mutex);

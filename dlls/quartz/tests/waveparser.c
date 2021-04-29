@@ -929,7 +929,7 @@ static void test_seeking(void)
     duration = 0xdeadbeef;
     hr = IMediaSeeking_GetDuration(seeking, &duration);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(duration > 0, "Got duration %s.\n", wine_dbgstr_longlong(duration));
+    ok(duration > 0, "Got duration %s.\n", wine_dbgstr_longlong(duration));
 
     stop = current = 0xdeadbeef;
     hr = IMediaSeeking_GetStopPosition(seeking, &stop);
