@@ -1,0 +1,3 @@
+MODULE    = msv1_0.dll
+
+EXTRADLLFLAGS = -mno-cygwin

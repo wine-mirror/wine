@@ -1471,6 +1471,7 @@ enable_msscript_ocx
 enable_mssign32
 enable_mssip32
 enable_mstask
+enable_msv1_0
 enable_msvcirt
 enable_msvcm80
 enable_msvcm90
@@ -20820,6 +20821,7 @@ wine_fn_config_makefile dlls/mssign32 enable_mssign32
 wine_fn_config_makefile dlls/mssip32 enable_mssip32
 wine_fn_config_makefile dlls/mstask enable_mstask
 wine_fn_config_makefile dlls/mstask/tests enable_tests
+wine_fn_config_makefile dlls/msv1_0 enable_msv1_0
 wine_fn_config_makefile dlls/msvcirt enable_msvcirt
 wine_fn_config_makefile dlls/msvcirt/tests enable_tests
 wine_fn_config_makefile dlls/msvcm80 enable_msvcm80
