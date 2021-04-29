@@ -6775,6 +6775,7 @@ static void test_device_context_state(void)
         0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x00000020, 0x00050050, 0x00000008, 0x0100086a,
         0x0400009b, 0x00000001, 0x00000001, 0x00000001, 0x0100003e,
     };
+    static const struct vec4 constant = {1.257f, 1.885f, 2.513f, 3.770f};
 
     ID3DDeviceContextState *context_state, *previous_context_state, *tmp_context_state, *context_state2;
     UINT ib_offset, vb_offset, vb_stride, so_offset, offset, stride, sample_mask, stencil_ref, count;
@@ -6814,7 +6815,6 @@ static void test_device_context_state(void)
     ID3D11Texture2D *texture;
     enum DXGI_FORMAT format;
     float blend_factor[4];
-    struct vec4 constant;
     DWORD data_size;
     BOOL pred_value;
     ULONG refcount;
