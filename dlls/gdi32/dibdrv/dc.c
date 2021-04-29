@@ -876,7 +876,7 @@ static BOOL CDECL windrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT b
     BOOL ret;
 
     lock_surface( physdev );
-    dev = GET_NEXT_PHYSDEV( dev, pArc );
+    dev = GET_NEXT_PHYSDEV( dev, pArcTo );
     ret = dev->funcs->pArcTo( dev, left, top, right, bottom, xstart, ystart, xend, yend );
     unlock_surface( physdev );
     return ret;

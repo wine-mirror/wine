@@ -365,7 +365,7 @@ BOOL CDECL EMFDRV_ScaleWindowExtEx( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
 
 DWORD CDECL EMFDRV_SetLayout( PHYSDEV dev, DWORD layout )
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetMapMode );
+    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSetLayout );
     EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     EMRSETLAYOUT emr;
     DWORD ret;
