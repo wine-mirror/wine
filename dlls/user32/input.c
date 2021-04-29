@@ -880,7 +880,7 @@ INT WINAPI ToUnicode(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
 INT WINAPI ToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
                         WCHAR *str, int size, UINT flags, HKL layout )
 {
-    BOOL shift, ctrl, numlock;
+    BOOL shift, ctrl, alt, numlock;
     WCHAR buffer[2];
     INT len;
 
@@ -890,6 +890,7 @@ INT WINAPI ToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
     if (!state) return 0;
     if ((len = USER_Driver->pToUnicodeEx( virt, scan, state, str, size, flags, layout )) >= -1) return len;
 
+    alt = state[VK_MENU] & 0x80;
     shift = state[VK_SHIFT] & 0x80;
     ctrl = state[VK_CONTROL] & 0x80;
     numlock = state[VK_NUMLOCK] & 0x01;
@@ -934,7 +935,7 @@ INT WINAPI ToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
             break;
         }
     }
-    else /* Control codes */
+    else if (!alt) /* Control codes */
     {
         switch (virt)
         {
@@ -948,6 +949,7 @@ INT WINAPI ToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
             break;
         }
     }
+    else buffer[0] = 0;
     buffer[1] = 0;
     len = wcslen( buffer );
     lstrcpynW( str, buffer, size );
