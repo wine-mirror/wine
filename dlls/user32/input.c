@@ -898,6 +898,7 @@ INT WINAPI ToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
     /* FIXME: English keyboard layout specific */
 
     if (scan & 0x8000) buffer[0] = 0; /* key up */
+    else if (virt == VK_ESCAPE) buffer[0] = VK_ESCAPE;
     else if (!ctrl)
     {
         switch (virt)
@@ -943,6 +944,8 @@ INT WINAPI ToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
         case VK_OEM_5:     buffer[0] = 0x1c; break;
         case VK_OEM_6:     buffer[0] = 0x1d; break;
         case VK_SUBTRACT:  buffer[0] = 0x1e; break;
+        case VK_RETURN:    buffer[0] = shift ? 0 : '\n'; break;
+        case VK_SPACE:     buffer[0] = ' '; break;
         default:
             if (virt >= 'A' && virt <= 'Z') buffer[0] = virt - 'A' + 1;
             else buffer[0] = 0;
