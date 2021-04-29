@@ -172,14 +172,6 @@ static void test_RtlQueryPerformanceCounter(void)
             "unexpected QpcBypassEnabled %x, expected 0x83\n", usd->u3.s.QpcBypassEnabled );
         ok( usd->QpcFrequency == 10000000, "unexpected QpcFrequency %I64d, expected 10000000\n", usd->QpcFrequency );
         ok( !usd->u3.s.QpcShift, "unexpected QpcShift %d, expected 0\n", usd->u3.s.QpcShift );
-        ok( usd->QpcInterruptTimeIncrement == ((ULONGLONG)1 << 63),
-            "unexpected QpcInterruptTimeIncrement %I64x, expected 1<<63\n", usd->QpcInterruptTimeIncrement );
-        ok( usd->QpcInterruptTimeIncrementShift == 1,
-            "unexpected QpcInterruptTimeIncrementShift %d, expected 1\n", usd->QpcInterruptTimeIncrementShift );
-        ok( usd->QpcSystemTimeIncrement == ((ULONGLONG)1 << 63),
-            "unexpected QpcSystemTimeIncrement %I64x, expected 1<<63\n", usd->QpcSystemTimeIncrement );
-        ok( usd->QpcSystemTimeIncrementShift == 1,
-            "unexpected QpcSystemTimeIncrementShift %d, expected 1\n", usd->QpcSystemTimeIncrementShift );
 
         hsd = NULL;
         status = pNtQuerySystemInformation( SystemHypervisorSharedPageInformation, &hsd, sizeof(void *), &len );
@@ -201,10 +193,6 @@ static void test_RtlQueryPerformanceCounter(void)
     else
     {
         ok( usd->u3.s.QpcShift == 10, "unexpected QpcShift %d, expected 10\n", usd->u3.s.QpcShift );
-        ok( usd->QpcInterruptTimeIncrementShift == 2,
-            "unexpected QpcInterruptTimeIncrementShift %d, expected 2\n", usd->QpcInterruptTimeIncrementShift );
-        ok( usd->QpcSystemTimeIncrementShift == 2,
-            "unexpected QpcSystemTimeIncrementShift %d, expected 2\n", usd->QpcSystemTimeIncrementShift );
 
         tsc0 = __rdtsc();
         ret = pRtlQueryPerformanceCounter( &counter );
