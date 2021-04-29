@@ -87,6 +87,28 @@ NTSTATUS WINAPI RtlWow64GetProcessMachines( HANDLE process, USHORT *current_ret,
 
 
 /**********************************************************************
+ *           RtlWow64IsWowGuestMachineSupported  (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlWow64IsWowGuestMachineSupported( USHORT machine, BOOLEAN *supported )
+{
+    ULONG i, machines[8];
+    HANDLE process = 0;
+    NTSTATUS status;
+
+    status = NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
+                                         machines, sizeof(machines), NULL );
+    if (status) return status;
+    *supported = FALSE;
+    for (i = 0; machines[i]; i++)
+    {
+        if (HIWORD(machines[i]) & 4 /* native machine */) continue;
+        if (machine == LOWORD(machines[i])) *supported = TRUE;
+    }
+    return status;
+}
+
+
+/**********************************************************************
  *           RtlCreateUserProcess  (NTDLL.@)
  */
 NTSTATUS WINAPI RtlCreateUserProcess( UNICODE_STRING *path, ULONG attributes,

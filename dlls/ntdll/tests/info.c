@@ -27,6 +27,7 @@ static NTSTATUS (WINAPI * pNtSetSystemInformation)(SYSTEM_INFORMATION_CLASS, PVO
 static NTSTATUS (WINAPI * pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
 static USHORT   (WINAPI * pRtlWow64GetCurrentMachine)(void);
 static NTSTATUS (WINAPI * pRtlWow64GetProcessMachines)(HANDLE,WORD*,WORD*);
+static NTSTATUS (WINAPI * pRtlWow64IsWowGuestMachineSupported)(USHORT,BOOLEAN*);
 static NTSTATUS (WINAPI * pNtQuerySystemInformationEx)(SYSTEM_INFORMATION_CLASS, void*, ULONG, void*, ULONG, ULONG*);
 static NTSTATUS (WINAPI * pNtPowerInformation)(POWER_INFORMATION_LEVEL, PVOID, ULONG, PVOID, ULONG);
 static NTSTATUS (WINAPI * pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
@@ -86,6 +87,7 @@ static BOOL InitFunctionPtrs(void)
     NTDLL_GET_PROC(RtlGetNativeSystemInformation);
     NTDLL_GET_PROC(RtlWow64GetCurrentMachine);
     NTDLL_GET_PROC(RtlWow64GetProcessMachines);
+    NTDLL_GET_PROC(RtlWow64IsWowGuestMachineSupported);
     NTDLL_GET_PROC(NtPowerInformation);
     NTDLL_GET_PROC(NtQueryInformationProcess);
     NTDLL_GET_PROC(NtQueryInformationThread);
@@ -3016,6 +3018,30 @@ static void test_query_architectures(void)
     {
         USHORT machine = pRtlWow64GetCurrentMachine();
         ok( machine == current_machine, "wrong machine %x / %x\n", machine, current_machine );
+    }
+    if (pRtlWow64IsWowGuestMachineSupported)
+    {
+        BOOLEAN ret = 0xcc;
+        status = pRtlWow64IsWowGuestMachineSupported( IMAGE_FILE_MACHINE_I386, &ret );
+        ok( !status, "failed %x\n", status );
+        ok( ret == (native_machine == IMAGE_FILE_MACHINE_AMD64 ||
+                    native_machine == IMAGE_FILE_MACHINE_ARM64), "wrong result %u\n", ret );
+        ret = 0xcc;
+        status = pRtlWow64IsWowGuestMachineSupported( IMAGE_FILE_MACHINE_ARMNT, &ret );
+        ok( !status, "failed %x\n", status );
+        ok( ret == (native_machine == IMAGE_FILE_MACHINE_ARM64), "wrong result %u\n", ret );
+        ret = 0xcc;
+        status = pRtlWow64IsWowGuestMachineSupported( IMAGE_FILE_MACHINE_AMD64, &ret );
+        ok( !status, "failed %x\n", status );
+        ok( !ret, "wrong result %u\n", ret );
+        ret = 0xcc;
+        status = pRtlWow64IsWowGuestMachineSupported( IMAGE_FILE_MACHINE_ARM64, &ret );
+        ok( !status, "failed %x\n", status );
+        ok( !ret, "wrong result %u\n", ret );
+        ret = 0xcc;
+        status = pRtlWow64IsWowGuestMachineSupported( 0xdead, &ret );
+        ok( !status, "failed %x\n", status );
+        ok( !ret, "wrong result %u\n", ret );
     }
 }
 
