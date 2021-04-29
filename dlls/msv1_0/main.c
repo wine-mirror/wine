@@ -18,6 +18,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -29,6 +30,7 @@
 #include "rpc.h"
 
 #include "wine/debug.h"
+#include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntlm);
 
@@ -66,6 +68,12 @@ static inline const char *debugstr_as( const STRING *str )
 {
     if (!str) return "<null>";
     return debugstr_an( str->Buffer, str->Length );
+}
+
+static inline const char *debugstr_us( const UNICODE_STRING *str )
+{
+    if (!str) return "<null>";
+    return debugstr_wn( str->Buffer, str->Length / sizeof(WCHAR) );
 }
 
 static NTSTATUS NTAPI ntlm_LsaApInitializePackage( ULONG package_id, LSA_DISPATCH_TABLE *dispatch,
@@ -116,6 +124,164 @@ static NTSTATUS NTAPI ntlm_SpGetInfo( SecPkgInfoW *info )
     return STATUS_SUCCESS;
 }
 
+static char *get_username_arg( const WCHAR *user, int user_len )
+{
+    static const char arg[] = "--username=";
+    int len = sizeof(arg);
+    char *ret;
+
+    len += WideCharToMultiByte( CP_UNIXCP, WC_NO_BEST_FIT_CHARS, user, user_len, NULL, 0, NULL, NULL );
+    if (!(ret = malloc( len ))) return NULL;
+    memcpy( ret, arg, sizeof(arg) - 1 );
+    WideCharToMultiByte( CP_UNIXCP, WC_NO_BEST_FIT_CHARS, user, user_len, ret + sizeof(arg) - 1,
+                         len - sizeof(arg) + 1, NULL, NULL );
+    ret[len - 1] = 0;
+    return ret;
+}
+
+static char *get_domain_arg( const WCHAR *domain, int domain_len )
+{
+    static const char arg[] = "--domain=";
+    int len = sizeof(arg);
+    char *ret;
+
+    len += WideCharToMultiByte( CP_UNIXCP, WC_NO_BEST_FIT_CHARS, domain, domain_len, NULL, 0, NULL, NULL );
+    if (!(ret = malloc( len ))) return NULL;
+    memcpy( ret, arg, sizeof(arg) - 1 );
+    WideCharToMultiByte( CP_UNIXCP, WC_NO_BEST_FIT_CHARS, domain, domain_len, ret + sizeof(arg) - 1,
+                         len - sizeof(arg) + 1, NULL, NULL );
+    ret[len - 1] = 0;
+    return ret;
+}
+
+static NTSTATUS NTAPI ntlm_SpAcquireCredentialsHandle( UNICODE_STRING *principal, ULONG cred_use, LUID *logon_id,
+                                                       void *auth_data, void *get_key_fn, void *get_key_arg,
+                                                       LSA_SEC_HANDLE *handle, TimeStamp *expiry )
+{
+    SECURITY_STATUS status = SEC_E_INSUFFICIENT_MEMORY;
+    struct ntlm_cred *cred = NULL;
+    WCHAR *domain = NULL, *user = NULL, *password = NULL;
+    SEC_WINNT_AUTH_IDENTITY_W *id = NULL;
+
+    TRACE( "%s, 0x%08x, %p, %p, %p, %p, %p, %p\n", debugstr_us(principal), cred_use, logon_id, auth_data,
+           get_key_fn, get_key_arg, cred, expiry );
+
+    switch (cred_use)
+    {
+    case SECPKG_CRED_INBOUND:
+        if (!(cred = malloc( sizeof(*cred) ))) return SEC_E_INSUFFICIENT_MEMORY;
+        cred->mode         = MODE_SERVER;
+        cred->username_arg = NULL;
+        cred->domain_arg   = NULL;
+        cred->password     = NULL;
+        cred->password_len = 0;
+        cred->no_cached_credentials = 0;
+
+        *handle = (LSA_SEC_HANDLE)cred;
+        status = SEC_E_OK;
+        break;
+
+    case SECPKG_CRED_OUTBOUND:
+        if (!(cred = malloc( sizeof(*cred) ))) return SEC_E_INSUFFICIENT_MEMORY;
+
+        cred->mode         = MODE_CLIENT;
+        cred->username_arg = NULL;
+        cred->domain_arg   = NULL;
+        cred->password     = NULL;
+        cred->password_len = 0;
+        cred->no_cached_credentials = 0;
+
+        if ((id = auth_data))
+        {
+            int domain_len = 0, user_len = 0, password_len = 0;
+            if (id->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI)
+            {
+                if (id->DomainLength)
+                {
+                    domain_len = MultiByteToWideChar( CP_ACP, 0, (char *)id->Domain, id->DomainLength, NULL, 0 );
+                    if (!(domain = malloc( sizeof(WCHAR) * domain_len ))) goto done;
+                    MultiByteToWideChar( CP_ACP, 0, (char *)id->Domain, id->DomainLength, domain, domain_len );
+                }
+                if (id->UserLength)
+               {
+                    user_len = MultiByteToWideChar( CP_ACP, 0, (char *)id->User, id->UserLength, NULL, 0 );
+                    if (!(user = malloc( sizeof(WCHAR) * user_len ))) goto done;
+                    MultiByteToWideChar( CP_ACP, 0, (char *)id->User, id->UserLength, user, user_len );
+                }
+                if (id->PasswordLength)
+                {
+                    password_len = MultiByteToWideChar( CP_ACP, 0,(char *)id->Password, id->PasswordLength, NULL, 0 );
+                    if (!(password = malloc( sizeof(WCHAR) * password_len ))) goto done;
+                    MultiByteToWideChar( CP_ACP, 0, (char *)id->Password, id->PasswordLength, password, password_len );
+                }
+            }
+            else
+            {
+                domain = id->Domain;
+                domain_len = id->DomainLength;
+                user = id->User;
+                user_len = id->UserLength;
+                password = id->Password;
+                password_len = id->PasswordLength;
+            }
+
+            TRACE( "username is %s\n", debugstr_wn(user, user_len) );
+            TRACE( "domain name is %s\n", debugstr_wn(domain, domain_len) );
+
+            cred->username_arg = get_username_arg( user, user_len );
+            cred->domain_arg   = get_domain_arg( domain, domain_len );
+            if (password_len)
+            {
+                cred->password_len = WideCharToMultiByte( CP_UNIXCP, WC_NO_BEST_FIT_CHARS, password, password_len,
+                                                          NULL, 0, NULL, NULL );
+                if (!(cred->password = malloc( cred->password_len ))) goto done;
+                WideCharToMultiByte( CP_UNIXCP, WC_NO_BEST_FIT_CHARS, password, password_len, cred->password,
+                                     cred->password_len, NULL, NULL );
+            }
+        }
+
+        *handle = (LSA_SEC_HANDLE)cred;
+        status = SEC_E_OK;
+        break;
+
+    case SECPKG_CRED_BOTH:
+        FIXME( "SECPKG_CRED_BOTH not supported\n" );
+        status = SEC_E_UNSUPPORTED_FUNCTION;
+        break;
+
+    default:
+        status = SEC_E_UNKNOWN_CREDENTIALS;
+        break;
+    }
+
+done:
+    if (id && (id->Flags & SEC_WINNT_AUTH_IDENTITY_ANSI))
+    {
+        free( domain );
+        free( user );
+        free( password );
+    }
+    if (status != SEC_E_OK) free( cred );
+    return status;
+}
+
+static NTSTATUS NTAPI ntlm_SpFreeCredentialsHandle( LSA_SEC_HANDLE handle )
+{
+    struct ntlm_cred *cred = (struct ntlm_cred *)handle;
+
+    TRACE( "%lx\n", handle );
+
+    if (!cred) return SEC_E_OK;
+
+    cred->mode = MODE_INVALID;
+    if (cred->password) memset( cred->password, 0, cred->password_len );
+    free( cred->password );
+    free( cred->username_arg );
+    free( cred->domain_arg );
+    free( cred );
+    return SEC_E_OK;
+}
+
 static SECPKG_FUNCTION_TABLE ntlm_table =
 {
     ntlm_LsaApInitializePackage,
@@ -130,9 +296,9 @@ static SECPKG_FUNCTION_TABLE ntlm_table =
     NULL, /* SpShutdown */
     ntlm_SpGetInfo,
     NULL, /* AcceptCredentials */
-    NULL, /* SpAcquireCredentialsHandle */
+    ntlm_SpAcquireCredentialsHandle,
     NULL, /* SpQueryCredentialsAttributes */
-    NULL, /* SpFreeCredentialsHandle */
+    ntlm_SpFreeCredentialsHandle,
     NULL, /* SaveCredentials */
     NULL, /* GetCredentials */
     NULL, /* DeleteCredentials */
