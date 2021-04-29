@@ -952,70 +952,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsProcessorFeaturePresent ( DWORD feature )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsWow64Process2( HANDLE process, USHORT *machine, USHORT *native_machine )
 {
-    BOOL wow64;
-    SYSTEM_INFO si;
-
-    TRACE( "(%p,%p,%p)\n", process, machine, native_machine );
-
-    if (!IsWow64Process( process, &wow64 ))
-        return FALSE;
-
-    if (wow64)
-    {
-        if (process != GetCurrentProcess())
-        {
-#if defined(__i386__) || defined(__x86_64__)
-            *machine = IMAGE_FILE_MACHINE_I386;
-#else
-            FIXME("not implemented for other process\n");
-            *machine = IMAGE_FILE_MACHINE_UNKNOWN;
-#endif
-        }
-        else
-        {
-            IMAGE_NT_HEADERS *nt;
-            nt = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress );
-            *machine = nt->FileHeader.Machine;
-        }
-
-        if (!native_machine) return TRUE;
-
-        GetNativeSystemInfo( &si );
-    }
-    else
-    {
-        *machine = IMAGE_FILE_MACHINE_UNKNOWN;
-
-        if (!native_machine) return TRUE;
-
-#ifdef _WIN64
-        GetSystemInfo( &si );
-#else
-        GetNativeSystemInfo( &si );
-#endif
-    }
-
-    switch (si.u.s.wProcessorArchitecture)
-    {
-    case PROCESSOR_ARCHITECTURE_INTEL:
-        *native_machine = IMAGE_FILE_MACHINE_I386;
-        break;
-    case PROCESSOR_ARCHITECTURE_ARM:
-        *native_machine = IMAGE_FILE_MACHINE_ARMNT;
-        break;
-    case PROCESSOR_ARCHITECTURE_AMD64:
-        *native_machine = IMAGE_FILE_MACHINE_AMD64;
-        break;
-    case PROCESSOR_ARCHITECTURE_ARM64:
-        *native_machine = IMAGE_FILE_MACHINE_ARM64;
-        break;
-    default:
-        FIXME("unknown architecture %u\n", si.u.s.wProcessorArchitecture);
-        *native_machine = IMAGE_FILE_MACHINE_UNKNOWN;
-        break;
-    }
-
-    return TRUE;
+    return set_ntstatus( RtlWow64GetProcessMachines( process, machine, native_machine ));
 }
 
 

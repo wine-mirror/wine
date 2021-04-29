@@ -74,13 +74,20 @@ SIZE_T WINAPI GetLargePageMinimum(void)
  */
 void WINAPI DECLSPEC_HOTPATCH GetNativeSystemInfo( SYSTEM_INFO *si )
 {
+    USHORT current_machine, native_machine;
+
     GetSystemInfo( si );
-    if (!is_wow64) return;
-    switch (si->u.s.wProcessorArchitecture)
+    RtlWow64GetProcessMachines( GetCurrentProcess(), &current_machine, &native_machine );
+    if (!current_machine) return;
+    switch (native_machine)
     {
-    case PROCESSOR_ARCHITECTURE_INTEL:
+    case PROCESSOR_ARCHITECTURE_AMD64:
         si->u.s.wProcessorArchitecture = PROCESSOR_ARCHITECTURE_AMD64;
         si->dwProcessorType = PROCESSOR_AMD_X8664;
+        break;
+    case PROCESSOR_ARCHITECTURE_ARM64:
+        si->u.s.wProcessorArchitecture = PROCESSOR_ARCHITECTURE_ARM64;
+        si->dwProcessorType = 0;
         break;
     default:
         FIXME( "Add the proper information for %d in wow64 mode\n", si->u.s.wProcessorArchitecture );
