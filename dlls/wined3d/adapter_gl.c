@@ -4755,6 +4755,7 @@ struct wined3d_view_gl_destroy_ctx
 {
     struct wined3d_device *device;
     const struct wined3d_gl_view *gl_view;
+    struct wined3d_bo_user *bo_user;
     struct wined3d_bo_gl *counter_bo;
     void *object;
     struct wined3d_view_gl_destroy_ctx *free;
@@ -4787,13 +4788,15 @@ static void wined3d_view_gl_destroy_object(void *object)
         checkGLcall("delete resources");
         context_release(context);
     }
+    if (ctx->bo_user)
+        list_remove(&ctx->bo_user->entry);
 
     heap_free(ctx->object);
     heap_free(ctx->free);
 }
 
-static void wined3d_view_gl_destroy(struct wined3d_device *device,
-        const struct wined3d_gl_view *gl_view, struct wined3d_bo_gl *counter_bo, void *object)
+static void wined3d_view_gl_destroy(struct wined3d_device *device, const struct wined3d_gl_view *gl_view,
+        struct wined3d_bo_user *bo_user, struct wined3d_bo_gl *counter_bo, void *object)
 {
     struct wined3d_view_gl_destroy_ctx *ctx, c;
 
@@ -4801,6 +4804,7 @@ static void wined3d_view_gl_destroy(struct wined3d_device *device,
         ctx = &c;
     ctx->device = device;
     ctx->gl_view = gl_view;
+    ctx->bo_user = bo_user;
     ctx->counter_bo = counter_bo;
     ctx->object = object;
     ctx->free = ctx != &c ? ctx : NULL;
@@ -4813,21 +4817,16 @@ static void wined3d_view_gl_destroy(struct wined3d_device *device,
 static void adapter_gl_destroy_rendertarget_view(struct wined3d_rendertarget_view *view)
 {
     struct wined3d_rendertarget_view_gl *view_gl = wined3d_rendertarget_view_gl(view);
-    struct wined3d_device *device = view_gl->v.resource->device;
-    unsigned int swapchain_count = device->swapchain_count;
+    struct wined3d_resource *resource = view_gl->v.resource;
 
     TRACE("view_gl %p.\n", view_gl);
 
-    /* Take a reference to the device, in case releasing the view's resource
-     * would cause the device to be destroyed. However, swapchain resources
-     * don't take a reference to the device, and we wouldn't want to increment
-     * the refcount on a device that's in the process of being destroyed. */
-    if (swapchain_count)
-        wined3d_device_incref(device);
+    /* Take a reference to the resource, in case releasing the resource
+     * would cause the device to be destroyed. */
+    wined3d_resource_incref(resource);
     wined3d_rendertarget_view_cleanup(&view_gl->v);
-    wined3d_view_gl_destroy(device, &view_gl->gl_view, NULL, view_gl);
-    if (swapchain_count)
-        wined3d_device_decref(device);
+    wined3d_view_gl_destroy(resource->device, &view_gl->gl_view, NULL, NULL, view_gl);
+    wined3d_resource_decref(resource);
 }
 
 static HRESULT adapter_gl_create_shader_resource_view(const struct wined3d_view_desc *desc,
@@ -4859,22 +4858,20 @@ static HRESULT adapter_gl_create_shader_resource_view(const struct wined3d_view_
 static void adapter_gl_destroy_shader_resource_view(struct wined3d_shader_resource_view *view)
 {
     struct wined3d_shader_resource_view_gl *view_gl = wined3d_shader_resource_view_gl(view);
-    struct wined3d_device *device = view_gl->v.resource->device;
-    unsigned int swapchain_count = device->swapchain_count;
+    struct wined3d_resource *resource = view_gl->v.resource;
 
     TRACE("view_gl %p.\n", view_gl);
 
-    /* Take a reference to the device, in case releasing the view's resource
-     * would cause the device to be destroyed. However, swapchain resources
-     * don't take a reference to the device, and we wouldn't want to increment
-     * the refcount on a device that's in the process of being destroyed. */
-    if (swapchain_count)
-        wined3d_device_incref(device);
-    list_remove(&view_gl->bo_user.entry);
+    /* Take a reference to the resource. There are two reasons for this:
+     *  - Releasing the resource could in turn cause the device to be
+     *    destroyed, but we still need the device for
+     *    wined3d_view_vk_destroy().
+     *  - We shouldn't free buffer resources until after we've removed the
+     *    view from its bo_user list. */
+    wined3d_resource_incref(resource);
     wined3d_shader_resource_view_cleanup(&view_gl->v);
-    wined3d_view_gl_destroy(device, &view_gl->gl_view, NULL, view_gl);
-    if (swapchain_count)
-        wined3d_device_decref(device);
+    wined3d_view_gl_destroy(resource->device, &view_gl->gl_view, &view_gl->bo_user, NULL, view_gl);
+    wined3d_resource_decref(resource);
 }
 
 static HRESULT adapter_gl_create_unordered_access_view(const struct wined3d_view_desc *desc,
@@ -4906,22 +4903,20 @@ static HRESULT adapter_gl_create_unordered_access_view(const struct wined3d_view
 static void adapter_gl_destroy_unordered_access_view(struct wined3d_unordered_access_view *view)
 {
     struct wined3d_unordered_access_view_gl *view_gl = wined3d_unordered_access_view_gl(view);
-    struct wined3d_device *device = view_gl->v.resource->device;
-    unsigned int swapchain_count = device->swapchain_count;
+    struct wined3d_resource *resource = view_gl->v.resource;
 
     TRACE("view_gl %p.\n", view_gl);
 
-    /* Take a reference to the device, in case releasing the view's resource
-     * would cause the device to be destroyed. However, swapchain resources
-     * don't take a reference to the device, and we wouldn't want to increment
-     * the refcount on a device that's in the process of being destroyed. */
-    if (swapchain_count)
-        wined3d_device_incref(device);
-    list_remove(&view_gl->bo_user.entry);
+    /* Take a reference to the resource. There are two reasons for this:
+     *  - Releasing the resource could in turn cause the device to be
+     *    destroyed, but we still need the device for
+     *    wined3d_view_vk_destroy().
+     *  - We shouldn't free buffer resources until after we've removed the
+     *    view from its bo_user list. */
+    wined3d_resource_incref(resource);
     wined3d_unordered_access_view_cleanup(&view_gl->v);
-    wined3d_view_gl_destroy(device, &view_gl->gl_view, &view_gl->counter_bo, view_gl);
-    if (swapchain_count)
-        wined3d_device_decref(device);
+    wined3d_view_gl_destroy(resource->device, &view_gl->gl_view, &view_gl->bo_user, &view_gl->counter_bo, view_gl);
+    wined3d_resource_decref(resource);
 }
 
 static HRESULT adapter_gl_create_sampler(struct wined3d_device *device, const struct wined3d_sampler_desc *desc,
