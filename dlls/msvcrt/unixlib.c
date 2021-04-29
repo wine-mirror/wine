@@ -953,19 +953,6 @@ static float CDECL unix_tgammaf(float x)
 }
 
 /*********************************************************************
- *      y1
- */
-static double CDECL unix_y1(double num)
-{
-#ifdef HAVE_Y1
-    return y1(num);
-#else
-    FIXME("not implemented\n");
-    return 0;
-#endif
-}
-
-/*********************************************************************
  *      yn
  */
 static double CDECL unix_yn(int order, double num)
@@ -1066,7 +1053,6 @@ static const struct unix_funcs funcs =
     unix_tgammaf,
     unix_trunc,
     unix_truncf,
-    unix_y1,
     unix_yn
 };
 

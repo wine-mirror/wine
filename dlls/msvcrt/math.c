@@ -2971,18 +2971,44 @@ double CDECL _y0(double x)
 /*********************************************************************
  *		_y1 (MSVCRT.@)
  */
-double CDECL _y1(double num)
+double CDECL _y1(double x)
 {
-  double retval;
+    static const double tpi = 6.36619772367581382433e-01,
+        u00 =  -1.96057090646238940668e-01,
+        u01 = 5.04438716639811282616e-02,
+        u02 = -1.91256895875763547298e-03,
+        u03 = 2.35252600561610495928e-05,
+        u04 = -9.19099158039878874504e-08,
+        v00 = 1.99167318236649903973e-02,
+        v01 = 2.02552581025135171496e-04,
+        v02 = 1.35608801097516229404e-06,
+        v03 = 6.22741452364621501295e-09,
+        v04 = 1.66559246207992079114e-11;
 
-  if (!isfinite(num)) *_errno() = EDOM;
-  retval = unix_funcs->y1( num );
-  if (_fpclass(retval) == _FPCLASS_NINF)
-  {
-    *_errno() = EDOM;
-    retval = NAN;
-  }
-  return retval;
+    double z, u, v;
+    unsigned int ix, lx;
+
+    ix = *(ULONGLONG*)&x >> 32;
+    lx = *(ULONGLONG*)&x;
+
+    /* y1(nan)=nan, y1(<0)=nan, y1(0)=-inf, y1(inf)=0 */
+    if ((ix << 1 | lx) == 0)
+        return math_error(_OVERFLOW, "_y1", x, 0, -INFINITY);
+    if (isnan(x))
+        return x;
+    if (ix >> 31)
+        return math_error(_DOMAIN, "_y1", x, 0, 0 / (x - x));
+    if (ix >= 0x7ff00000)
+        return 1 / x;
+
+    if (ix >= 0x40000000)  /* x >= 2 */
+        return j1_y1_approx(ix, x, TRUE, 0);
+    if (ix < 0x3c900000)  /* x < 2**-54 */
+        return -tpi / x;
+    z = x * x;
+    u = u00 + z * (u01 + z * (u02 + z * (u03 + z * u04)));
+    v = 1 + z * (v00 + z * (v01 + z * (v02 + z * (v03 + z * v04))));
+    return x * (u / v) + tpi * (j1(x) * log(x) - 1 / x);
 }
 
 /*********************************************************************

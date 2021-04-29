@@ -2705,7 +2705,6 @@ AC_CHECK_FUNCS(\
 	tgammaf \
 	trunc \
 	truncf \
-	y1 \
 	yn
 )
 LIBS="$ac_save_LIBS"

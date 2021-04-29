@@ -109,7 +109,6 @@ struct unix_funcs
     float           (CDECL *tgammaf)(float x);
     double          (CDECL *trunc)(double x);
     float           (CDECL *truncf)(float x);
-    double          (CDECL *y1)(double num);
     double          (CDECL *yn)(int order, double num);
 };
 
