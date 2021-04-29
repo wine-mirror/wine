@@ -1722,8 +1722,7 @@ void CDECL wined3d_device_context_get_scissor_rects(const struct wined3d_device_
 
     TRACE("context %p, rect_count %p, rects %p.\n", context, rect_count, rects);
 
-    count = rect_count ? min(*rect_count, state->scissor_rect_count) : 1;
-    if (count && rects)
+    if (rects && (count = rect_count ? min(*rect_count, state->scissor_rect_count) : 1))
         memcpy(rects, state->scissor_rects, count * sizeof(*rects));
     if (rect_count)
         *rect_count = state->scissor_rect_count;
