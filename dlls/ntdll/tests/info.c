@@ -3097,7 +3097,7 @@ static void test_wow64(void)
         ok( (char *)teb64 + 0x2000 == (char *)NtCurrentTeb(), "unexpected diff %p / %p\n",
             teb64, NtCurrentTeb() );
         ok( (char *)teb64 + teb64->WowTebOffset == (char *)NtCurrentTeb() ||
-            broken( NtCurrentTeb()->WowTebOffset == 1 ),  /* vista */
+            broken( !teb64->WowTebOffset || teb64->WowTebOffset == 1 ),  /* pre-win10 */
             "wrong WowTebOffset %x (%p/%p)\n", teb64->WowTebOffset, teb64, NtCurrentTeb() );
         ok( !teb64->GdiBatchCount, "GdiBatchCount set %x\n", teb64->GdiBatchCount );
         ok( teb64->Tib.ExceptionList == PtrToUlong( NtCurrentTeb() ), "wrong Tib.ExceptionList %s / %p\n",
