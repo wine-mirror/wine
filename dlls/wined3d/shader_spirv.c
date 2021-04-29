@@ -1019,6 +1019,7 @@ static void shader_spirv_destroy(struct wined3d_shader *shader)
         shader_spirv_invalidate_contexts_graphics_program_variant(&device_vk->d, variant_vk);
         VK_CALL(vkDestroyShaderModule(device_vk->vk_device, variant_vk->vk_module, NULL));
     }
+    heap_free(program_vk->variants);
     vkd3d_shader_free_scan_descriptor_info(&program_vk->descriptor_info);
 
     shader->backend_data = NULL;
