@@ -2500,7 +2500,7 @@ class VkGenerator(object):
 
         f.write("#endif /* __WINE_VULKAN_THUNKS_H */\n")
 
-    def generate_loader_thunks_c(self, f, prefix):
+    def generate_loader_thunks_c(self, f):
         self._generate_copyright(f)
 
         f.write("#include \"vulkan_loader.h\"\n\n")
@@ -2513,14 +2513,14 @@ class VkGenerator(object):
             if vk_func.loader_thunk_type != ThunkType.PUBLIC:
                 continue
 
-            f.write(vk_func.loader_thunk(prefix=prefix))
+            f.write(vk_func.loader_thunk())
 
         f.write("static const struct vulkan_func vk_device_dispatch_table[] =\n{\n")
         for vk_func in self.registry.device_funcs:
             if not vk_func.is_required():
                 continue
 
-            f.write("    {{\"{0}\", &{1}{0}}},\n".format(vk_func.name, prefix))
+            f.write("    {{\"{0}\", &{0}}},\n".format(vk_func.name))
         f.write("};\n\n")
 
         f.write("static const struct vulkan_func vk_phys_dev_dispatch_table[] =\n{\n")
@@ -2528,7 +2528,7 @@ class VkGenerator(object):
             if not vk_func.is_required():
                 continue
 
-            f.write("    {{\"{0}\", &{1}{0}}},\n".format(vk_func.name, prefix))
+            f.write("    {{\"{0}\", &{0}}},\n".format(vk_func.name))
         f.write("};\n\n")
 
         f.write("static const struct vulkan_func vk_instance_dispatch_table[] =\n{\n")
@@ -2536,7 +2536,7 @@ class VkGenerator(object):
             if not vk_func.is_required():
                 continue
 
-            f.write("    {{\"{0}\", &{1}{0}}},\n".format(vk_func.name, prefix))
+            f.write("    {{\"{0}\", &{0}}},\n".format(vk_func.name))
         f.write("};\n\n")
 
         f.write("void *wine_vk_get_device_proc_addr(const char *name)\n")
@@ -2581,7 +2581,7 @@ class VkGenerator(object):
         f.write("    return NULL;\n")
         f.write("}\n")
 
-    def generate_loader_thunks_h(self, f, prefix):
+    def generate_loader_thunks_h(self, f):
         self._generate_copyright(f)
 
         f.write("#ifndef __WINE_VULKAN_LOADER_THUNKS_H\n")
@@ -2597,17 +2597,6 @@ class VkGenerator(object):
 
             f.write("    {0};\n".format(vk_func.pfn(conv=False, call_conv="WINAPI")))
         f.write("};\n\n")
-
-        # Generate prototypes for device and instance functions requiring a custom implementation.
-        f.write("/* Functions for which we have custom implementations outside of the thunks. */\n")
-        for vk_func in self.registry.funcs.values():
-            if not vk_func.is_required():
-                continue
-            if vk_func.loader_thunk_type == ThunkType.PUBLIC:
-                continue
-
-            f.write("{0};\n".format(vk_func.prototype("WINAPI", prefix=prefix)))
-        f.write("\n")
 
         f.write("#endif /* __WINE_VULKAN_LOADER_THUNKS_H */\n")
 
@@ -2769,9 +2758,9 @@ class VkGenerator(object):
 
     def generate_vulkan_spec(self, f):
         self._generate_copyright(f, spec_file=True)
-        f.write("@ stdcall -private vk_icdGetInstanceProcAddr(ptr str) wine_vk_icdGetInstanceProcAddr\n")
-        f.write("@ stdcall -private vk_icdGetPhysicalDeviceProcAddr(ptr str) wine_vk_icdGetPhysicalDeviceProcAddr\n")
-        f.write("@ stdcall -private vk_icdNegotiateLoaderICDInterfaceVersion(ptr) wine_vk_icdNegotiateLoaderICDInterfaceVersion\n")
+        f.write("@ stdcall -private vk_icdGetInstanceProcAddr(ptr str)\n")
+        f.write("@ stdcall -private vk_icdGetPhysicalDeviceProcAddr(ptr str)\n")
+        f.write("@ stdcall -private vk_icdNegotiateLoaderICDInterfaceVersion(ptr)\n")
 
         # Export symbols for all Vulkan Core functions.
         for func in self.registry.funcs.values():
@@ -2781,7 +2770,7 @@ class VkGenerator(object):
             # We support all Core functions except for VK_KHR_display* APIs.
             # Create stubs for unsupported Core functions.
             if func.is_required():
-                f.write(func.spec(prefix="wine_"))
+                f.write(func.spec())
             else:
                 f.write("@ stub {0}\n".format(func.name))
 
@@ -2799,7 +2788,7 @@ class VkGenerator(object):
             # We support all Core functions except for VK_KHR_display* APIs.
             # Create stubs for unsupported Core functions.
             if func.is_required():
-                f.write(func.spec(symbol="winevulkan.wine_" + func.name))
+                f.write(func.spec(symbol="winevulkan." + func.name))
             else:
                 f.write("@ stub {0}\n".format(func.name))
 
@@ -3430,10 +3419,10 @@ def main():
         generator.generate_thunks_c(f, "unix_")
 
     with open(WINE_VULKAN_LOADER_THUNKS_H, "w") as f:
-        generator.generate_loader_thunks_h(f, "wine_")
+        generator.generate_loader_thunks_h(f)
 
     with open(WINE_VULKAN_LOADER_THUNKS_C, "w") as f:
-        generator.generate_loader_thunks_c(f, "wine_")
+        generator.generate_loader_thunks_c(f)
 
     with open(WINE_VULKAN_JSON, "w") as f:
         generate_vulkan_json(f)

@@ -21,8 +21,6 @@
 #define __WINE_VULKAN_LOADER_H
 
 #include "wine/debug.h"
-
-#define VK_NO_PROTOTYPES
 #include "wine/vulkan.h"
 #include "wine/vulkan_driver.h"
 

@@ -60,7 +60,7 @@ static void *wine_vk_find_struct_(void *s, VkStructureType t)
     return NULL;
 }
 
-VkResult WINAPI wine_vkEnumerateInstanceLayerProperties(uint32_t *count, VkLayerProperties *properties)
+VkResult WINAPI vkEnumerateInstanceLayerProperties(uint32_t *count, VkLayerProperties *properties)
 {
     TRACE("%p, %p\n", count, properties);
 
@@ -71,11 +71,11 @@ VkResult WINAPI wine_vkEnumerateInstanceLayerProperties(uint32_t *count, VkLayer
 static const struct vulkan_func vk_global_dispatch_table[] =
 {
     /* These functions must call wine_vk_init_once() before accessing vk_funcs. */
-    {"vkCreateInstance", &wine_vkCreateInstance},
-    {"vkEnumerateInstanceExtensionProperties", &wine_vkEnumerateInstanceExtensionProperties},
-    {"vkEnumerateInstanceLayerProperties", &wine_vkEnumerateInstanceLayerProperties},
-    {"vkEnumerateInstanceVersion", &wine_vkEnumerateInstanceVersion},
-    {"vkGetInstanceProcAddr", &wine_vkGetInstanceProcAddr},
+    {"vkCreateInstance", &vkCreateInstance},
+    {"vkEnumerateInstanceExtensionProperties", &vkEnumerateInstanceExtensionProperties},
+    {"vkEnumerateInstanceLayerProperties", &vkEnumerateInstanceLayerProperties},
+    {"vkEnumerateInstanceVersion", &vkEnumerateInstanceVersion},
+    {"vkGetInstanceProcAddr", &vkGetInstanceProcAddr},
 };
 
 static void *wine_vk_get_global_proc_addr(const char *name)
@@ -93,7 +93,7 @@ static void *wine_vk_get_global_proc_addr(const char *name)
     return NULL;
 }
 
-PFN_vkVoidFunction WINAPI wine_vkGetInstanceProcAddr(VkInstance instance, const char *name)
+PFN_vkVoidFunction WINAPI vkGetInstanceProcAddr(VkInstance instance, const char *name)
 {
     void *func;
 
@@ -130,7 +130,7 @@ PFN_vkVoidFunction WINAPI wine_vkGetInstanceProcAddr(VkInstance instance, const 
     return NULL;
 }
 
-PFN_vkVoidFunction WINAPI wine_vkGetDeviceProcAddr(VkDevice device, const char *name)
+PFN_vkVoidFunction WINAPI vkGetDeviceProcAddr(VkDevice device, const char *name)
 {
     void *func;
     TRACE("%p, %s\n", device, debugstr_a(name));
@@ -171,14 +171,14 @@ PFN_vkVoidFunction WINAPI wine_vkGetDeviceProcAddr(VkDevice device, const char *
     return NULL;
 }
 
-void * WINAPI wine_vk_icdGetPhysicalDeviceProcAddr(VkInstance instance, const char *name)
+void * WINAPI vk_icdGetPhysicalDeviceProcAddr(VkInstance instance, const char *name)
 {
     TRACE("%p, %s\n", instance, debugstr_a(name));
 
     return wine_vk_get_phys_dev_proc_addr(name);
 }
 
-void * WINAPI wine_vk_icdGetInstanceProcAddr(VkInstance instance, const char *name)
+void * WINAPI vk_icdGetInstanceProcAddr(VkInstance instance, const char *name)
 {
     TRACE("%p, %s\n", instance, debugstr_a(name));
 
@@ -187,10 +187,10 @@ void * WINAPI wine_vk_icdGetInstanceProcAddr(VkInstance instance, const char *na
      * Vulkan API. One of them in our case should forward to the other, so just forward
      * to the older vkGetInstanceProcAddr.
      */
-    return wine_vkGetInstanceProcAddr(instance, name);
+    return vkGetInstanceProcAddr(instance, name);
 }
 
-VkResult WINAPI wine_vk_icdNegotiateLoaderICDInterfaceVersion(uint32_t *supported_version)
+VkResult WINAPI vk_icdNegotiateLoaderICDInterfaceVersion(uint32_t *supported_version)
 {
     uint32_t req_version;
 
@@ -230,7 +230,7 @@ static BOOL  wine_vk_init_once(void)
     return InitOnceExecuteOnce(&init_once, wine_vk_init, NULL, NULL);
 }
 
-VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
+VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
         const VkAllocationCallbacks *allocator, VkInstance *instance)
 {
     TRACE("create_info %p, allocator %p, instance %p\n", create_info, allocator, instance);
@@ -241,7 +241,7 @@ VkResult WINAPI wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     return unix_funcs->p_vkCreateInstance(create_info, allocator, instance);
 }
 
-VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_name,
+VkResult WINAPI vkEnumerateInstanceExtensionProperties(const char *layer_name,
         uint32_t *count, VkExtensionProperties *properties)
 {
     TRACE("%p, %p, %p\n", layer_name, count, properties);
@@ -261,7 +261,7 @@ VkResult WINAPI wine_vkEnumerateInstanceExtensionProperties(const char *layer_na
     return unix_funcs->p_vkEnumerateInstanceExtensionProperties(layer_name, count, properties);
 }
 
-VkResult WINAPI wine_vkEnumerateInstanceVersion(uint32_t *version)
+VkResult WINAPI vkEnumerateInstanceVersion(uint32_t *version)
 {
     TRACE("%p\n", version);
 
@@ -343,7 +343,7 @@ static void fill_luid_property(VkPhysicalDeviceProperties2 *properties2)
             id->deviceNodeMask);
 }
 
-void WINAPI wine_vkGetPhysicalDeviceProperties2(VkPhysicalDevice phys_dev,
+void WINAPI vkGetPhysicalDeviceProperties2(VkPhysicalDevice phys_dev,
         VkPhysicalDeviceProperties2 *properties2)
 {
     TRACE("%p, %p\n", phys_dev, properties2);
@@ -352,7 +352,7 @@ void WINAPI wine_vkGetPhysicalDeviceProperties2(VkPhysicalDevice phys_dev,
     fill_luid_property(properties2);
 }
 
-void WINAPI wine_vkGetPhysicalDeviceProperties2KHR(VkPhysicalDevice phys_dev,
+void WINAPI vkGetPhysicalDeviceProperties2KHR(VkPhysicalDevice phys_dev,
         VkPhysicalDeviceProperties2 *properties2)
 {
     TRACE("%p, %p\n", phys_dev, properties2);
