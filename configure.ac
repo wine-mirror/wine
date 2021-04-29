@@ -2678,7 +2678,6 @@ AC_CHECK_FUNCS(\
 	lgammaf \
 	llrint \
 	llrintf \
-	llround \
 	log1p \
 	log1pf \
 	log2 \

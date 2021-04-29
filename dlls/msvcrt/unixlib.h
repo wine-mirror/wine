@@ -62,7 +62,6 @@ struct unix_funcs
     float           (CDECL *lgammaf)(float x);
     __int64         (CDECL *llrint)(double x);
     __int64         (CDECL *llrintf)(float x);
-    __int64         (CDECL *llround)(double x);
     double          (CDECL *log)(double x);
     float           (CDECL *logf)(float x);
     double          (CDECL *log10)(double x);

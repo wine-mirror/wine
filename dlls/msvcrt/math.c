@@ -4376,10 +4376,17 @@ __msvcrt_long CDECL lroundf(float x)
 
 /*********************************************************************
  *      llround (MSVCR120.@)
+ *
+ * Copied from musl: src/math/llround.c
  */
 __int64 CDECL llround(double x)
 {
-    return unix_funcs->llround( x );
+    double d = round(x);
+    if (d != (double)(__int64)d) {
+        *_errno() = EDOM;
+        return 0;
+    }
+    return d;
 }
 
 /*********************************************************************

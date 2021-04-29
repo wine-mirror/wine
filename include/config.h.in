@@ -459,9 +459,6 @@
 /* Define to 1 if you have the `llrintf' function. */
 #undef HAVE_LLRINTF
 
-/* Define to 1 if you have the `llround' function. */
-#undef HAVE_LLROUND
-
 /* Define to 1 if you have the `log1p' function. */
 #undef HAVE_LOG1P
 
