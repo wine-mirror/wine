@@ -2684,7 +2684,6 @@ AC_CHECK_FUNCS(\
 	log2f \
 	lrint \
 	lrintf \
-	lround \
 	nearbyint \
 	nearbyintf \
 	nexttoward \

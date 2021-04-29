@@ -4360,10 +4360,17 @@ float CDECL roundf(float x)
 
 /*********************************************************************
  *      lround (MSVCR120.@)
+ *
+ * Copied from musl: src/math/lround.c
  */
 __msvcrt_long CDECL lround(double x)
 {
-    return unix_funcs->lround( x );
+    double d = round(x);
+    if (d != (double)(__msvcrt_long)d) {
+        *_errno() = EDOM;
+        return 0;
+    }
+    return d;
 }
 
 /*********************************************************************

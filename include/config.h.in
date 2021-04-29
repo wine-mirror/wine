@@ -477,9 +477,6 @@
 /* Define to 1 if you have the `lrintf' function. */
 #undef HAVE_LRINTF
 
-/* Define to 1 if you have the `lround' function. */
-#undef HAVE_LROUND
-
 /* Define to 1 if you have the `lstat' function. */
 #undef HAVE_LSTAT
 
