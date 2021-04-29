@@ -41,6 +41,73 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ntlm);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+#define INITIAL_BUFFER_SIZE 200
+
+static SECURITY_STATUS read_line( struct ntlm_ctx *ctx, unsigned int *offset )
+{
+    char *newline;
+
+    if (!ctx->com_buf)
+    {
+        if (!(ctx->com_buf = RtlAllocateHeap( GetProcessHeap(), 0, INITIAL_BUFFER_SIZE )))
+            return SEC_E_INSUFFICIENT_MEMORY;
+        ctx->com_buf_size = INITIAL_BUFFER_SIZE;
+        ctx->com_buf_offset = 0;
+    }
+
+    do
+    {
+        ssize_t size;
+        if (ctx->com_buf_offset + INITIAL_BUFFER_SIZE > ctx->com_buf_size)
+        {
+            char *buf = RtlReAllocateHeap( GetProcessHeap(), 0, ctx->com_buf, ctx->com_buf_size + INITIAL_BUFFER_SIZE );
+            if (!buf) return SEC_E_INSUFFICIENT_MEMORY;
+            ctx->com_buf_size += INITIAL_BUFFER_SIZE;
+            ctx->com_buf = buf;
+        }
+        size = read( ctx->pipe_in,  ctx->com_buf +  ctx->com_buf_offset,  ctx->com_buf_size -  ctx->com_buf_offset );
+        if (size <= 0) return SEC_E_INTERNAL_ERROR;
+
+        ctx->com_buf_offset += size;
+        newline = memchr( ctx->com_buf, '\n',  ctx->com_buf_offset );
+    } while (!newline);
+
+    /* if there's a newline character, and we read more than that newline, we have to store the offset so we can
+       preserve the additional data */
+    if (newline != ctx->com_buf + ctx->com_buf_offset) *offset = (ctx->com_buf + ctx->com_buf_offset) - (newline + 1);
+    else *offset = 0;
+
+    *newline = 0;
+    return SEC_E_OK;
+}
+
+static SECURITY_STATUS CDECL ntlm_chat( struct ntlm_ctx *ctx, char *buf, unsigned int buflen, unsigned int *retlen )
+{
+    SECURITY_STATUS status = SEC_E_OK;
+    unsigned int offset;
+
+    write( ctx->pipe_out, buf, strlen(buf) );
+    write( ctx->pipe_out, "\n", 1 );
+
+    if ((status = read_line( ctx, &offset )) != SEC_E_OK) return status;
+    *retlen = strlen( ctx->com_buf );
+
+    if (*retlen > buflen) return SEC_E_BUFFER_TOO_SMALL;
+    if (*retlen < 2) return SEC_E_ILLEGAL_MESSAGE;
+    if (!strncmp( ctx->com_buf, "ERR", 3 )) return SEC_E_INVALID_TOKEN;
+
+    memcpy( buf, ctx->com_buf, *retlen + 1 );
+
+    if (!offset) ctx->com_buf_offset = 0;
+    else
+    {
+        memmove( ctx->com_buf, ctx->com_buf + ctx->com_buf_offset, offset );
+        ctx->com_buf_offset = offset;
+    }
+
+    return SEC_E_OK;
+}
+
 static void CDECL ntlm_cleanup( struct ntlm_ctx *ctx )
 {
     if (!ctx || (ctx->mode != MODE_CLIENT && ctx->mode != MODE_SERVER)) return;
@@ -172,6 +239,7 @@ static BOOL check_version( void )
 
 static const struct ntlm_funcs funcs =
 {
+    ntlm_chat,
     ntlm_cleanup,
     ntlm_fork,
 };
