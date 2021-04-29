@@ -19656,7 +19656,6 @@ for ac_func in \
 	rint \
 	rintf \
 	round \
-	roundf \
 	tgamma \
 	tgammaf \
 	trunc \

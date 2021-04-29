@@ -95,7 +95,6 @@ struct unix_funcs
     double          (CDECL *rint)(double x);
     float           (CDECL *rintf)(float x);
     double          (CDECL *round)(double x);
-    float           (CDECL *roundf)(float x);
     double          (CDECL *sin)(double x);
     float           (CDECL *sinf)(float x);
     double          (CDECL *sinh)(double x);

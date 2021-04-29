@@ -2699,7 +2699,6 @@ AC_CHECK_FUNCS(\
 	rint \
 	rintf \
 	round \
-	roundf \
 	tgamma \
 	tgammaf \
 	trunc \

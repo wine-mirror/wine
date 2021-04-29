@@ -4329,10 +4329,33 @@ double CDECL round(double x)
 
 /*********************************************************************
  *      roundf (MSVCR120.@)
+ *
+ * Copied from musl: src/math/roundf.c
  */
 float CDECL roundf(float x)
 {
-    return unix_funcs->roundf(x);
+    static const float toint = 1 / FLT_EPSILON;
+
+    unsigned int ix = *(unsigned int*)&x;
+    int e = ix >> 23 & 0xff;
+    float y;
+
+    if (e >= 0x7f + 23)
+        return x;
+    if (ix >> 31)
+        x = -x;
+    if (e < 0x7f - 1)
+        return 0 * *(float*)&ix;
+    y = fp_barrierf(x + toint) - toint - x;
+    if (y > 0.5f)
+        y = y + x - 1;
+    else if (y <= -0.5f)
+        y = y + x + 1;
+    else
+        y = y + x;
+    if (ix >> 31)
+        y = -y;
+    return y;
 }
 
 /*********************************************************************
