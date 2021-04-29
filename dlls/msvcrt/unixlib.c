@@ -778,18 +778,6 @@ static int CDECL unix_lround(double x)
 }
 
 /*********************************************************************
- *      lroundf
- */
-static int CDECL unix_lroundf(float x)
-{
-#ifdef HAVE_LROUNDF
-    return lroundf(x);
-#else
-    return unix_lround(x);
-#endif
-}
-
-/*********************************************************************
  *      sin
  */
 static double CDECL unix_sin( double x )
@@ -957,7 +945,6 @@ static const struct unix_funcs funcs =
     unix_lrint,
     unix_lrintf,
     unix_lround,
-    unix_lroundf,
     unix_modf,
     unix_modff,
     unix_nearbyint,

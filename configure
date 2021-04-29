@@ -19642,7 +19642,6 @@ for ac_func in \
 	lrint \
 	lrintf \
 	lround \
-	lroundf \
 	nearbyint \
 	nearbyintf \
 	nexttoward \
