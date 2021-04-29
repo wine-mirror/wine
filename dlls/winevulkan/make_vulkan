@@ -3413,10 +3413,10 @@ def main():
         generator.generate_vulkan_driver_h(f)
 
     with open(WINE_VULKAN_THUNKS_H, "w") as f:
-        generator.generate_thunks_h(f, "unix_")
+        generator.generate_thunks_h(f, "wine_")
 
     with open(WINE_VULKAN_THUNKS_C, "w") as f:
-        generator.generate_thunks_c(f, "unix_")
+        generator.generate_thunks_c(f, "wine_")
 
     with open(WINE_VULKAN_LOADER_THUNKS_H, "w") as f:
         generator.generate_loader_thunks_h(f)
