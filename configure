@@ -19631,7 +19631,6 @@ for ac_func in \
 	expm1f \
 	fma \
 	fmaf \
-	j1 \
 	jn \
 	lgamma \
 	lgammaf \

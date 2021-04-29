@@ -57,7 +57,6 @@ struct unix_funcs
     float           (CDECL *frexpf)(float x, int *exp);
     double          (CDECL *hypot)(double x, double y);
     float           (CDECL *hypotf)(float x, float y);
-    double          (CDECL *j1)(double num);
     double          (CDECL *jn)(int n, double num);
     double          (CDECL *ldexp)(double x, int exp);
     double          (CDECL *lgamma)(double x);

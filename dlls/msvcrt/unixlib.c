@@ -402,19 +402,6 @@ static float CDECL unix_hypotf(float x, float y)
 }
 
 /*********************************************************************
- *      j1
- */
-static double CDECL unix_j1(double num)
-{
-#ifdef HAVE_J1
-    return j1(num);
-#else
-    FIXME("not implemented\n");
-    return 0;
-#endif
-}
-
-/*********************************************************************
  *      jn
  */
 static double CDECL unix_jn(int n, double num)
@@ -1027,7 +1014,6 @@ static const struct unix_funcs funcs =
     unix_frexpf,
     unix_hypot,
     unix_hypotf,
-    unix_j1,
     unix_jn,
     unix_ldexp,
     unix_lgamma,

@@ -2674,7 +2674,6 @@ AC_CHECK_FUNCS(\
 	expm1f \
 	fma \
 	fmaf \
-	j1 \
 	jn \
 	lgamma \
 	lgammaf \
