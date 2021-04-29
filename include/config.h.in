@@ -288,9 +288,6 @@
 /* Define to 1 if you have the `isnan' function. */
 #undef HAVE_ISNAN
 
-/* Define to 1 if you have the `jn' function. */
-#undef HAVE_JN
-
 /* Define to 1 if you have the <jpeglib.h> header file. */
 #undef HAVE_JPEGLIB_H
 

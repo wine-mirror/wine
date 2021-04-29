@@ -2912,11 +2912,133 @@ double CDECL _j1(double x)
 
 /*********************************************************************
  *		_jn (MSVCRT.@)
+ *
+ * Copied from musl: src/math/jn.c
  */
-double CDECL _jn(int n, double num)
+double CDECL _jn(int n, double x)
 {
-  /* FIXME: errno handling */
-  return unix_funcs->jn( n, num );
+    static const double invsqrtpi = 5.64189583547756279280e-01;
+
+    unsigned int ix, lx;
+    int nm1, i, sign;
+    double a, b, temp;
+
+    ix = *(ULONGLONG*)&x >> 32;
+    lx = *(ULONGLONG*)&x;
+    sign = ix >> 31;
+    ix &= 0x7fffffff;
+
+    if ((ix | (lx | -lx) >> 31) > 0x7ff00000) /* nan */
+        return x;
+
+    if (n == 0)
+        return _j0(x);
+    if (n < 0) {
+        nm1 = -(n + 1);
+        x = -x;
+        sign ^= 1;
+    } else {
+        nm1 = n-1;
+    }
+    if (nm1 == 0)
+        return j1(x);
+
+    sign &= n;  /* even n: 0, odd n: signbit(x) */
+    x = fabs(x);
+    if ((ix | lx) == 0 || ix == 0x7ff00000)  /* if x is 0 or inf */
+        b = 0.0;
+    else if (nm1 < x) {
+        if (ix >= 0x52d00000) { /* x > 2**302 */
+            switch(nm1 & 3) {
+            case 0:
+                temp = -cos(x) + sin(x);
+                break;
+            case 1:
+                temp = -cos(x) - sin(x);
+                break;
+            case 2:
+                temp =  cos(x) - sin(x);
+                break;
+            default:
+                temp =  cos(x) + sin(x);
+                break;
+            }
+            b = invsqrtpi * temp / sqrt(x);
+        } else {
+            a = _j0(x);
+            b = _j1(x);
+            for (i = 0; i < nm1; ) {
+                i++;
+                temp = b;
+                b = b * (2.0 * i / x) - a; /* avoid underflow */
+                a = temp;
+            }
+        }
+    } else {
+        if (ix < 0x3e100000) { /* x < 2**-29 */
+            if (nm1 > 32)  /* underflow */
+                b = 0.0;
+            else {
+                temp = x * 0.5;
+                b = temp;
+                a = 1.0;
+                for (i = 2; i <= nm1 + 1; i++) {
+                    a *= (double)i; /* a = n! */
+                    b *= temp;      /* b = (x/2)^n */
+                }
+                b = b / a;
+            }
+        } else {
+            double t, q0, q1, w, h, z, tmp, nf;
+            int k;
+
+            nf = nm1 + 1.0;
+            w = 2 * nf / x;
+            h = 2 / x;
+            z = w + h;
+            q0 = w;
+            q1 = w * z - 1.0;
+            k = 1;
+            while (q1 < 1.0e9) {
+                k += 1;
+                z += h;
+                tmp = z * q1 - q0;
+                q0 = q1;
+                q1 = tmp;
+            }
+            for (t = 0.0, i = k; i >= 0; i--)
+                t = 1 / (2 * (i + nf) / x - t);
+            a = t;
+            b = 1.0;
+            tmp = nf * log(fabs(w));
+            if (tmp < 7.09782712893383973096e+02) {
+                for (i = nm1; i > 0; i--) {
+                    temp = b;
+                    b = b * (2.0 * i) / x - a;
+                    a = temp;
+                }
+            } else {
+                for (i = nm1; i > 0; i--) {
+                    temp = b;
+                    b = b * (2.0 * i) / x - a;
+                    a = temp;
+                    /* scale b to avoid spurious overflow */
+                    if (b > 0x1p500) {
+                        a /= b;
+                        t /= b;
+                        b  = 1.0;
+                    }
+                }
+            }
+            z = j0(x);
+            w = j1(x);
+            if (fabs(z) >= fabs(w))
+                b = t * z / b;
+            else
+                b = t * w / a;
+        }
+    }
+    return sign ? -b : b;
 }
 
 /*********************************************************************
