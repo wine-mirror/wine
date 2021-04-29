@@ -3135,19 +3135,71 @@ double CDECL _y1(double x)
 
 /*********************************************************************
  *		_yn (MSVCRT.@)
+ *
+ * Copied from musl: src/math/jn.c
  */
-double CDECL _yn(int order, double num)
+double CDECL _yn(int n, double x)
 {
-  double retval;
+    static const double invsqrtpi = 5.64189583547756279280e-01;
 
-  if (!isfinite(num)) *_errno() = EDOM;
-  retval = unix_funcs->yn( order, num );
-  if (_fpclass(retval) == _FPCLASS_NINF)
-  {
-    *_errno() = EDOM;
-    retval = NAN;
-  }
-  return retval;
+    unsigned int ix, lx, ib;
+    int nm1, sign, i;
+    double a, b, temp;
+
+    ix = *(ULONGLONG*)&x >> 32;
+    lx = *(ULONGLONG*)&x;
+    sign = ix >> 31;
+    ix &= 0x7fffffff;
+
+    if ((ix | (lx | -lx) >> 31) > 0x7ff00000) /* nan */
+        return x;
+    if (sign && (ix | lx) != 0) /* x < 0 */
+        return math_error(_DOMAIN, "_y1", x, 0, 0 / (x - x));
+    if (ix == 0x7ff00000)
+        return 0.0;
+
+    if (n == 0)
+        return y0(x);
+    if (n < 0) {
+        nm1 = -(n + 1);
+        sign = n & 1;
+    } else {
+        nm1 = n - 1;
+        sign = 0;
+    }
+    if (nm1 == 0)
+        return sign ? -y1(x) : y1(x);
+
+    if (ix >= 0x52d00000) { /* x > 2**302 */
+        switch(nm1 & 3) {
+        case 0:
+            temp = -sin(x) - cos(x);
+            break;
+        case 1:
+            temp = -sin(x) + cos(x);
+            break;
+        case 2:
+            temp = sin(x) + cos(x);
+            break;
+        default:
+            temp = sin(x) - cos(x);
+            break;
+        }
+        b = invsqrtpi * temp / sqrt(x);
+    } else {
+        a = y0(x);
+        b = y1(x);
+        /* quit if b is -inf */
+        ib = *(ULONGLONG*)&b >> 32;
+        for (i = 0; i < nm1 && ib != 0xfff00000;) {
+            i++;
+            temp = b;
+            b = (2.0 * i / x) * b - a;
+            ib = *(ULONGLONG*)&b >> 32;
+            a = temp;
+        }
+    }
+    return sign ? -b : b;
 }
 
 #if _MSVCR_VER>=120

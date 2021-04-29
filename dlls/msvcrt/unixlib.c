@@ -939,19 +939,6 @@ static float CDECL unix_tgammaf(float x)
 #endif
 }
 
-/*********************************************************************
- *      yn
- */
-static double CDECL unix_yn(int order, double num)
-{
-#ifdef HAVE_YN
-    return yn(order,num);
-#else
-    FIXME("not implemented\n");
-    return 0;
-#endif
-}
-
 static const struct unix_funcs funcs =
 {
     unix_acosh,
@@ -1038,8 +1025,7 @@ static const struct unix_funcs funcs =
     unix_tgamma,
     unix_tgammaf,
     unix_trunc,
-    unix_truncf,
-    unix_yn
+    unix_truncf
 };
 
 NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
