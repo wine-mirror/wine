@@ -112,46 +112,39 @@ static LPCWSTR find_arg_start(LPCWSTR cmdline)
     return s;
 }
 
-static void reexec_self(void)
+static void reexec_self( WORD machine )
 {
-    /* restart current process as 32-bit or 64-bit with same command line */
-#ifndef _WIN64
-    BOOL wow64;
-#endif
-    WCHAR systemdir[MAX_PATH];
+    WCHAR app[MAX_PATH];
     LPCWSTR args;
     WCHAR *cmdline;
+    ULONG i, machines[8];
+    HANDLE process = 0;
     STARTUPINFOW si = {0};
     PROCESS_INFORMATION pi;
+    void *cookie;
 
-#ifdef _WIN64
-    TRACE("restarting as 32-bit\n");
-    GetSystemWow64DirectoryW(systemdir, MAX_PATH);
-#else
-    TRACE("restarting as 64-bit\n");
+    NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
+                                machines, sizeof(machines), NULL );
+    for (i = 0; machines[i]; i++) if (LOWORD(machines[i]) == machine) break;
+    if (!machines[i]) return;
+    if (HIWORD(machines[i]) & 4 /* native machine */) machine = IMAGE_FILE_MACHINE_TARGET_HOST;
+    if (!GetSystemWow64Directory2W( app, MAX_PATH, machine )) return;
+    wcscat( app, L"\\regsvr32.exe" );
 
-    if (!IsWow64Process(GetCurrentProcess(), &wow64) || !wow64)
-    {
-        TRACE("not running in wow64, can't restart as 64-bit\n");
-        return;
-    }
-
-    GetWindowsDirectoryW(systemdir, MAX_PATH);
-    wcscat(systemdir, L"\\SysNative");
-#endif
+    TRACE( "restarting as %s\n", debugstr_w(app) );
 
     args = find_arg_start(GetCommandLineW());
 
     cmdline = HeapAlloc(GetProcessHeap(), 0,
-        (wcslen(systemdir)+wcslen(L"\\regsvr32.exe")+wcslen(args)+1)*sizeof(WCHAR));
+                        (wcslen(app)+wcslen(args)+1)*sizeof(WCHAR));
 
-    wcscpy(cmdline, systemdir);
-    wcscat(cmdline, L"\\regsvr32.exe");
+    wcscpy(cmdline, app);
     wcscat(cmdline, args);
 
     si.cb = sizeof(si);
 
-    if (CreateProcessW(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+    Wow64DisableWow64FsRedirection(&cookie);
+    if (CreateProcessW(app, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
     {
         DWORD exit_code;
         WaitForSingleObject(pi.hProcess, INFINITE);
@@ -162,15 +155,9 @@ static void reexec_self(void)
     {
         WINE_TRACE("failed to restart, err=%d\n", GetLastError());
     }
-
+    Wow64RevertWow64FsRedirection(cookie);
     HeapFree(GetProcessHeap(), 0, cmdline);
 }
-
-#ifdef _WIN64
-# define ALT_MACHINE IMAGE_FILE_MACHINE_I386
-#else
-# define ALT_MACHINE IMAGE_FILE_MACHINE_AMD64
-#endif
 
 /**
  * Loads procedure.
@@ -193,7 +180,7 @@ static VOID *LoadProc(const WCHAR* strDll, const char* procName, HMODULE* DllHan
             (module = LoadLibraryExW(strDll, 0, LOAD_LIBRARY_AS_IMAGE_RESOURCE)))
         {
             IMAGE_NT_HEADERS *nt = RtlImageNtHeader( (HMODULE)((ULONG_PTR)module & ~3) );
-            if (nt->FileHeader.Machine == ALT_MACHINE) reexec_self();
+            reexec_self( nt->FileHeader.Machine );
         }
         output_write(STRING_DLL_LOAD_FAILED, strDll);
         ExitProcess(LOADLIBRARY_FAILED);
