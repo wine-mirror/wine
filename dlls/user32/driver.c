@@ -286,7 +286,7 @@ static BOOL CDECL nulldrv_RegisterHotKey( HWND hwnd, UINT modifiers, UINT vk )
 static INT CDECL nulldrv_ToUnicodeEx( UINT virt, UINT scan, const BYTE *state, LPWSTR str,
                                       int size, UINT flags, HKL layout )
 {
-    return 0;
+    return -2; /* use default implementation */
 }
 
 static BOOL CDECL nulldrv_UnloadKeyboardLayout( HKL layout )

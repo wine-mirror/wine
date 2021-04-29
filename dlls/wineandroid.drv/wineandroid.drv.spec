@@ -7,7 +7,6 @@
 @ cdecl GetKeyNameText(long ptr long) ANDROID_GetKeyNameText
 @ cdecl GetKeyboardLayout(long) ANDROID_GetKeyboardLayout
 @ cdecl MapVirtualKeyEx(long long long) ANDROID_MapVirtualKeyEx
-@ cdecl ToUnicodeEx(long long ptr ptr long long long) ANDROID_ToUnicodeEx
 @ cdecl VkKeyScanEx(long long) ANDROID_VkKeyScanEx
 @ cdecl SetCursor(long) ANDROID_SetCursor
 @ cdecl ChangeDisplaySettingsEx(ptr ptr long long long) ANDROID_ChangeDisplaySettingsEx
