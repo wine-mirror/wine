@@ -1068,6 +1068,7 @@
 @ stdcall RtlWalkHeap(long ptr)
 @ stdcall RtlWow64EnableFsRedirection(long)
 @ stdcall RtlWow64EnableFsRedirectionEx(long ptr)
+@ stdcall RtlWow64GetProcessMachines(long ptr ptr)
 @ stdcall -arch=x86_64 RtlWow64GetThreadContext(long ptr)
 @ stdcall -arch=x86_64 RtlWow64SetThreadContext(long ptr)
 @ stub RtlWriteMemoryStream

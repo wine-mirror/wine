@@ -25,6 +25,7 @@
 static NTSTATUS (WINAPI * pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
 static NTSTATUS (WINAPI * pNtSetSystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG);
 static NTSTATUS (WINAPI * pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
+static NTSTATUS (WINAPI * pRtlWow64GetProcessMachines)(HANDLE,WORD*,WORD*);
 static NTSTATUS (WINAPI * pNtQuerySystemInformationEx)(SYSTEM_INFORMATION_CLASS, void*, ULONG, void*, ULONG, ULONG*);
 static NTSTATUS (WINAPI * pNtPowerInformation)(POWER_INFORMATION_LEVEL, PVOID, ULONG, PVOID, ULONG);
 static NTSTATUS (WINAPI * pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
@@ -82,6 +83,7 @@ static BOOL InitFunctionPtrs(void)
     NTDLL_GET_PROC(NtQuerySystemInformation);
     NTDLL_GET_PROC(NtSetSystemInformation);
     NTDLL_GET_PROC(RtlGetNativeSystemInformation);
+    NTDLL_GET_PROC(RtlWow64GetProcessMachines);
     NTDLL_GET_PROC(NtPowerInformation);
     NTDLL_GET_PROC(NtQueryInformationProcess);
     NTDLL_GET_PROC(NtQueryInformationThread);
@@ -2920,6 +2922,18 @@ static void test_process_architecture( HANDLE process, USHORT expect_machine, US
                                           &buffer, len, &len );
     ok( status == STATUS_BUFFER_TOO_SMALL, "failed %x\n", status );
     ok( len == (i + 1) * sizeof(DWORD), "wrong len %u\n", len );
+
+    if (pRtlWow64GetProcessMachines)
+    {
+        USHORT current = 0xdead, native = 0xbeef;
+        status = pRtlWow64GetProcessMachines( process, &current, &native );
+        ok( !status, "failed %x\n", status );
+        if (expect_machine == expect_native)
+            ok( current == 0, "wrong current machine %x / %x\n", current, expect_machine );
+        else
+            ok( current == expect_machine, "wrong current machine %x / %x\n", current, expect_machine );
+        ok( native == expect_native, "wrong native machine %x / %x\n", native, expect_native );
+    }
 }
 
 static void test_query_architectures(void)
