@@ -50,6 +50,18 @@ PEB * WINAPI RtlGetCurrentPeb(void)
 
 
 /**********************************************************************
+ *           RtlWow64GetCurrentMachine  (NTDLL.@)
+ */
+USHORT WINAPI RtlWow64GetCurrentMachine(void)
+{
+    USHORT current, native;
+
+    RtlWow64GetProcessMachines( GetCurrentProcess(), &current, &native );
+    return current ? current : native;
+}
+
+
+/**********************************************************************
  *           RtlWow64GetProcessMachines  (NTDLL.@)
  */
 NTSTATUS WINAPI RtlWow64GetProcessMachines( HANDLE process, USHORT *current_ret, USHORT *native_ret )

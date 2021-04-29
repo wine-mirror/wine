@@ -25,6 +25,7 @@
 static NTSTATUS (WINAPI * pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
 static NTSTATUS (WINAPI * pNtSetSystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG);
 static NTSTATUS (WINAPI * pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
+static USHORT   (WINAPI * pRtlWow64GetCurrentMachine)(void);
 static NTSTATUS (WINAPI * pRtlWow64GetProcessMachines)(HANDLE,WORD*,WORD*);
 static NTSTATUS (WINAPI * pNtQuerySystemInformationEx)(SYSTEM_INFORMATION_CLASS, void*, ULONG, void*, ULONG, ULONG*);
 static NTSTATUS (WINAPI * pNtPowerInformation)(POWER_INFORMATION_LEVEL, PVOID, ULONG, PVOID, ULONG);
@@ -83,6 +84,7 @@ static BOOL InitFunctionPtrs(void)
     NTDLL_GET_PROC(NtQuerySystemInformation);
     NTDLL_GET_PROC(NtSetSystemInformation);
     NTDLL_GET_PROC(RtlGetNativeSystemInformation);
+    NTDLL_GET_PROC(RtlWow64GetCurrentMachine);
     NTDLL_GET_PROC(RtlWow64GetProcessMachines);
     NTDLL_GET_PROC(NtPowerInformation);
     NTDLL_GET_PROC(NtQueryInformationProcess);
@@ -3008,6 +3010,12 @@ static void test_query_architectures(void)
         TerminateProcess( pi.hProcess, 0 );
         CloseHandle( pi.hProcess );
         CloseHandle( pi.hThread );
+    }
+
+    if (pRtlWow64GetCurrentMachine)
+    {
+        USHORT machine = pRtlWow64GetCurrentMachine();
+        ok( machine == current_machine, "wrong machine %x / %x\n", machine, current_machine );
     }
 }
 
