@@ -754,18 +754,6 @@ static float CDECL unix_rintf(float x)
 }
 
 /*********************************************************************
- *      round
- */
-static double CDECL unix_round(double x)
-{
-#ifdef HAVE_ROUND
-    return round(x);
-#else
-    return unix_rint(x);
-#endif
-}
-
-/*********************************************************************
  *      sin
  */
 static double CDECL unix_sin( double x )
@@ -948,7 +936,6 @@ static const struct unix_funcs funcs =
     unix_remquof,
     unix_rint,
     unix_rintf,
-    unix_round,
     unix_sin,
     unix_sinf,
     unix_sinh,

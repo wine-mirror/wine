@@ -690,9 +690,6 @@
 /* Define to 1 if you have the `rintf' function. */
 #undef HAVE_RINTF
 
-/* Define to 1 if you have the `round' function. */
-#undef HAVE_ROUND
-
 /* Define to 1 if you have the <sasl/sasl.h> header file. */
 #undef HAVE_SASL_SASL_H
 
