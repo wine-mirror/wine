@@ -829,6 +829,213 @@ done:
     return status;
 }
 
+static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, LSA_SEC_HANDLE ctx_handle,
+                                                   SecBufferDesc *input, ULONG ctx_req, ULONG data_rep,
+                                                   LSA_SEC_HANDLE *new_ctx_handle, SecBufferDesc *output,
+                                                   ULONG *ctx_attr, TimeStamp *expiry, BOOLEAN *mapped_ctx,
+                                                   SecBuffer *ctx_data )
+{
+    NTSTATUS status = SEC_E_INSUFFICIENT_MEMORY;
+    struct ntlm_ctx *ctx = NULL;
+    char *buf, *bin, *want_flags = NULL;
+    unsigned int len, bin_len;
+
+    TRACE( "%lx, %lx, %08x, %u, %p, %p, %p, %p, %p, %p, %p\n", cred_handle, ctx_handle, ctx_req, data_rep, input,
+           new_ctx_handle, output, ctx_attr, expiry, mapped_ctx, ctx_data );
+    if (ctx_req) FIXME( "ignoring flags %08x\n", ctx_req );
+
+    if (!(buf = malloc( NTLM_MAX_BUF ))) return SEC_E_INSUFFICIENT_MEMORY;
+    if (!(bin = malloc( NTLM_MAX_BUF ))) goto done;
+
+    if (!ctx_handle)
+    {
+        struct ntlm_cred *cred = (struct ntlm_cred *)cred_handle;
+        char *argv[3];
+
+        if (!cred || cred->mode != MODE_SERVER)
+        {
+            status = SEC_E_INVALID_HANDLE;
+            goto done;
+        }
+
+        if (!input || input->cBuffers < 1)
+        {
+            status = SEC_E_INCOMPLETE_MESSAGE;
+            goto done;
+        }
+
+        if (input->pBuffers[0].cbBuffer > NTLM_MAX_BUF)
+        {
+            status = SEC_E_INVALID_TOKEN;
+            goto done;
+        }
+        else bin_len = input->pBuffers[0].cbBuffer;
+
+        argv[0] = (char *)"ntlm_auth";
+        argv[1] = (char *)"--helper-protocol=squid-2.5-ntlmssp";
+        argv[2] = NULL;
+        if ((status = ntlm_funcs->fork( argv, &ctx )) != SEC_E_OK) goto done;
+        ctx->mode = MODE_SERVER;
+
+        if (!(want_flags = malloc( 73 )))
+        {
+            status = SEC_E_INSUFFICIENT_MEMORY;
+            goto done;
+        }
+        strcpy( want_flags, "SF" );
+        if (ctx_req & ASC_REQ_CONFIDENTIALITY) strcat( want_flags, " NTLMSSP_FEATURE_SEAL" );
+        if (ctx_req & ASC_REQ_CONNECTION)
+        {
+            strcat( want_flags, " NTLMSSP_FEATURE_SESSION_KEY" );
+            ctx->attrs |= ASC_RET_CONNECTION;
+        }
+        if (ctx_req & ASC_REQ_INTEGRITY) strcat( want_flags, " NTLMSSP_FEATURE_SIGN" );
+        if (ctx_req & ASC_REQ_ALLOCATE_MEMORY) FIXME( "ASC_REQ_ALLOCATE_MEMORY\n" );
+        if (ctx_req & ASC_REQ_EXTENDED_ERROR) FIXME( "ASC_REQ_EXTENDED_ERROR\n" );
+        if (ctx_req & ASC_REQ_MUTUAL_AUTH) FIXME( "ASC_REQ_MUTUAL_AUTH\n" );
+        if (ctx_req & ASC_REQ_REPLAY_DETECT) FIXME( "ASC_REQ_REPLAY_DETECT\n" );
+        if (ctx_req & ASC_REQ_SEQUENCE_DETECT) FIXME( "ASC_REQ_SEQUENCE_DETECT\n" );
+        if (ctx_req & ASC_REQ_STREAM) FIXME( "ASC_REQ_STREAM\n" );
+
+        if (strlen( want_flags ) > 3)
+        {
+            TRACE( "want flags are %s\n", debugstr_a(want_flags) );
+            strcpy( buf, want_flags );
+            if ((status = ntlm_funcs->chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
+            if (!strncmp( buf, "BH", 2 )) ERR( "ntlm_auth doesn't understand new command set\n" );
+        }
+
+        memcpy( bin, input->pBuffers[0].pvBuffer, bin_len );
+        strcpy( buf, "YR " );
+        encode_base64( bin, bin_len, buf + 3 );
+
+        if ((status = ntlm_funcs->chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
+        TRACE( "ntlm_auth returned %s\n", buf );
+        if (strncmp( buf, "TT ", 3))
+        {
+            status = SEC_E_INTERNAL_ERROR;
+            goto done;
+        }
+        bin_len = decode_base64( buf + 3, len - 3, bin );
+
+        if (!output || output->cBuffers < 1)
+        {
+            status = SEC_E_INSUFFICIENT_MEMORY;
+            goto done;
+        }
+        output->pBuffers[0].cbBuffer = bin_len;
+        output->pBuffers[0].BufferType = SECBUFFER_DATA;
+        memcpy( output->pBuffers[0].pvBuffer, bin, bin_len );
+
+        *new_ctx_handle = (LSA_SEC_HANDLE)ctx;
+        status = SEC_I_CONTINUE_NEEDED;
+    }
+    else
+    {
+        if (!input || input->cBuffers < 1)
+        {
+            status = SEC_E_INCOMPLETE_MESSAGE;
+            goto done;
+        }
+
+        ctx = (struct ntlm_ctx *)ctx_handle;
+        if (!ctx || ctx->mode != MODE_SERVER)
+        {
+            status = SEC_E_INVALID_HANDLE;
+            goto done;
+        }
+
+        if (input->pBuffers[0].cbBuffer > NTLM_MAX_BUF)
+        {
+            status = SEC_E_INVALID_TOKEN;
+            goto done;
+        }
+        else bin_len = input->pBuffers[0].cbBuffer;
+        memcpy( bin, input->pBuffers[0].pvBuffer, bin_len );
+
+        strcpy( buf, "KK " );
+        encode_base64( bin, bin_len, buf + 3 );
+
+        TRACE( "client sent %s\n", debugstr_a(buf) );
+        if ((status = ntlm_funcs->chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
+        TRACE( "ntlm_auth returned %s\n", debugstr_a(buf) );
+
+        /* At this point, we get a NA if the user didn't authenticate, but a BH if ntlm_auth could not
+         * connect to winbindd. Apart from running Wine as root, there is no way to fix this for now,
+         * so just handle this as a failed login. */
+        if (strncmp( buf, "AF ", 3 ))
+        {
+            if (!strncmp( buf, "NA ", 3 ))
+            {
+                status = SEC_E_LOGON_DENIED;
+                goto done;
+            }
+            else
+            {
+                const char err_v3[] = "BH NT_STATUS_ACCESS_DENIED";
+                const char err_v4[] = "BH NT_STATUS_UNSUCCESSFUL";
+
+                if ((len >= strlen(err_v3) && !strncmp( buf, err_v3, strlen(err_v3) )) ||
+                    (len >= strlen(err_v4) && !strncmp( buf, err_v4, strlen(err_v4) )))
+                {
+                    TRACE( "connection to winbindd failed\n" );
+                    status = SEC_E_LOGON_DENIED;
+                }
+                else status = SEC_E_INTERNAL_ERROR;
+                goto done;
+            }
+        }
+        output->pBuffers[0].cbBuffer = 0;
+
+        strcpy( buf, "GF" );
+        if ((status = ntlm_funcs->chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
+        if (len < 3) ctx->flags = 0;
+        else sscanf( buf + 3, "%x", &ctx->flags );
+
+        strcpy( buf, "GK" );
+        if ((status = ntlm_funcs->chat( ctx, buf, NTLM_MAX_BUF, &len )) != SEC_E_OK) goto done;
+
+        if (!strncmp( buf, "BH", 2 )) TRACE( "no key negotiated\n" );
+        else if (!strncmp( buf, "GK ", 3 ))
+        {
+            bin_len = decode_base64( buf + 3, len - 3, bin );
+            TRACE( "session key is %s\n", debugstr_a(buf + 3) );
+            memcpy( ctx->session_key, bin, bin_len );
+        }
+
+        if (len < 3) memset( ctx->session_key, 0 , 16 );
+        else
+        {
+            if (!strncmp( buf, "BH ", 3 ))
+            {
+                TRACE( "helper sent %s\n", debugstr_a(buf + 3) );
+                /*FIXME: generate dummy session key = MD4(MD4(password))*/
+                memset( ctx->session_key, 0 , 16 );
+            }
+            else if (!strncmp( buf, "GK ", 3 ))
+            {
+                bin_len = decode_base64( buf + 3, len - 3, bin );
+                TRACE( "session key is %s\n", debugstr_a(buf + 3) );
+                memcpy( ctx->session_key, bin, 16 );
+            }
+        }
+        arc4_init( &ctx->crypt.ntlm.arc4info, ctx->session_key, 16 );
+        ctx->crypt.ntlm.seq_no = 0;
+
+        *new_ctx_handle = (LSA_SEC_HANDLE)ctx;
+        status = SEC_E_OK;
+    }
+
+done:
+    if (status != SEC_E_OK && status != SEC_I_CONTINUE_NEEDED) ntlm_funcs->cleanup( ctx );
+    free( buf );
+    free( bin );
+    free( want_flags );
+
+    TRACE( "returning %08x\n", status );
+    return status;
+}
+
 static NTSTATUS NTAPI ntlm_SpDeleteContext( LSA_SEC_HANDLE handle )
 {
     struct ntlm_ctx *ctx = (struct ntlm_ctx *)handle;
@@ -861,7 +1068,7 @@ static SECPKG_FUNCTION_TABLE ntlm_table =
     NULL, /* GetCredentials */
     NULL, /* DeleteCredentials */
     ntlm_SpInitLsaModeContext,
-    NULL, /* SpAcceptLsaModeContext */
+    ntlm_SpAcceptLsaModeContext,
     ntlm_SpDeleteContext,
     NULL, /* ApplyControlToken */
     NULL, /* GetUserInfo */
