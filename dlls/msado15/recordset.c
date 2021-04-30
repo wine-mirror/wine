@@ -1417,6 +1417,48 @@ static HRESULT WINAPI recordset_MoveLast( _Recordset *iface )
     return S_OK;
 }
 
+static HRESULT create_command_text(IUnknown *session, BSTR command, ICommandText **cmd_text)
+{
+    HRESULT hr;
+    IOpenRowset *openrowset;
+    ICommandText *command_text;
+    ICommand *cmd;
+    IDBCreateCommand *create_command;
+
+    hr = IUnknown_QueryInterface(session, &IID_IOpenRowset, (void**)&openrowset);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IOpenRowset_QueryInterface(openrowset, &IID_IDBCreateCommand, (void**)&create_command);
+    IOpenRowset_Release(openrowset);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IDBCreateCommand_CreateCommand(create_command, NULL, &IID_IUnknown, (IUnknown **)&cmd);
+    IDBCreateCommand_Release(create_command);
+    if (FAILED(hr))
+        return hr;
+
+    hr = ICommand_QueryInterface(cmd, &IID_ICommandText, (void**)&command_text);
+    ICommand_Release(cmd);
+    if (FAILED(hr))
+    {
+        FIXME("Currently only ICommandText interface is support\n");
+        return hr;
+    }
+
+    hr = ICommandText_SetCommandText(command_text, &DBGUID_DEFAULT, command);
+    if (FAILED(hr))
+    {
+        ICommandText_Release(command_text);
+        return hr;
+    }
+
+    *cmd_text = command_text;
+
+    return S_OK;
+}
+
 static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT active_connection,
                                       CursorTypeEnum cursor_type, LockTypeEnum lock_type, LONG options )
 {
