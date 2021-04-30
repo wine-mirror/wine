@@ -2673,6 +2673,7 @@ test_shlmenu(void) {
 
 	src_menu = CreatePopupMenu ();
 	ok (src_menu != NULL, "CreatePopupMenu() failed, error %d\n", GetLastError ());
+
 	dst_menu = CreatePopupMenu ();
 	ok (dst_menu != NULL, "CreatePopupMenu() failed, error %d\n", GetLastError ());
 	bres = InsertMenuA (src_menu, -1, MF_BYPOSITION | MF_STRING, 10, "item1");
@@ -2690,6 +2691,16 @@ test_shlmenu(void) {
 	ok (bres, "GetMenuItemInfoA failed, error %d\n", GetLastError ());
 	ok (item_info.wID == 133, "got %d\n", item_info.wID);
 	DestroyMenu (dst_menu);
+
+	/* integer overflow: Shell_MergeMenus() return value is wrong, but items are still added */
+	dst_menu = CreatePopupMenu ();
+	ok (dst_menu != NULL, "CreatePopupMenu() failed, error %d\n", GetLastError ());
+	hres = Shell_MergeMenus (dst_menu, src_menu, 0, -1, 133, MM_SUBMENUSHAVEIDS);
+	ok (hres == -1, "got %d\n", hres);
+	count = GetMenuItemCount (dst_menu);
+	ok (count == 2, "got %d\n", count);
+	DestroyMenu (dst_menu);
+
 	DestroyMenu (src_menu);
 }
 
