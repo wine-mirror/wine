@@ -563,7 +563,6 @@ static void SECUR32_initializeProviders(void)
     TRACE("\n");
     /* First load built-in providers */
     SECUR32_initSchannelSP();
-    SECUR32_initNTLMSP();
     /* Load SSP/AP packages (Kerberos and others) */
     load_auth_packages();
     /* Load the Negotiate provider last so apps stumble over the working NTLM
