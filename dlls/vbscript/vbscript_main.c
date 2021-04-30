@@ -303,14 +303,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 }
 
 /***********************************************************************
- *          DllCanUnloadNow (vbscript.@)
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
-/***********************************************************************
  *          DllRegisterServer (vbscript.@)
  */
 HRESULT WINAPI DllRegisterServer(void)

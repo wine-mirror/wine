@@ -157,15 +157,6 @@ BOOL WINAPI DllMain( HINSTANCE dll, DWORD reason, LPVOID reserved )
     return TRUE;
 }
 
-/******************************************************************
- *              DllCanUnloadNow
- */
-HRESULT WINAPI DllCanUnloadNow( void )
-{
-    TRACE( "()\n" );
-    return S_FALSE;
-}
-
 /***********************************************************************
  *          DllRegisterServer
  */

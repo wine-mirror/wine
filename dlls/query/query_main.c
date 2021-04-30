@@ -46,11 +46,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
 HRESULT WINAPI DllRegisterServer(void)
 {
     FIXME("\n");

@@ -147,11 +147,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 }
 
 
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
 /***********************************************************************
  *		DllRegisterServer (INFOSOFT.@)
  */

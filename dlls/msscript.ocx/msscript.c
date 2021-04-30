@@ -4090,15 +4090,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 }
 
 /***********************************************************************
- *          DllCanUnloadNow (msscript.ocx.@)
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    TRACE("\n");
-    return S_FALSE;
-}
-
-/***********************************************************************
  *          DllRegisterServer (msscript.ocx.@)
  */
 HRESULT WINAPI DllRegisterServer(void)

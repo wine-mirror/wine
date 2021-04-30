@@ -59,11 +59,6 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
     return TRUE;
 }
 
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
 HRESULT WINAPI DllRegisterServer(void)
 {
     return __wine_register_resources( mfinstance );

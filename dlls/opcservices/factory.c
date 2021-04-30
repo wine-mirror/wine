@@ -482,11 +482,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
 static HINSTANCE OPC_hInstance;
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD reason, void *reserved)

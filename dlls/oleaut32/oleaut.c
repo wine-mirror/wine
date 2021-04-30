@@ -1080,22 +1080,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
     return OLEAUTPS_DllGetClassObject(rclsid, iid, ppv);
 }
 
-/***********************************************************************
- *		DllCanUnloadNow (OLEAUT32.@)
- *
- * Determine if this dll can be unloaded from the callers address space.
- *
- * PARAMS
- *  None.
- *
- * RETURNS
- *  Always returns S_FALSE. This dll cannot be unloaded.
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
 /*****************************************************************************
  *              DllMain         [OLEAUT32.@]
  */

@@ -778,21 +778,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **out)
 }
 
 
-/*******************************************************************************
- * DllCanUnloadNow [DDRAW.@]  Determines whether the DLL is in use.
- *
- * RETURNS
- *    Success: S_OK
- *    Failure: S_FALSE
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    TRACE("\n");
-
-    return S_FALSE;
-}
-
-
 HRESULT WINAPI DllRegisterServer(void)
 {
     return __wine_register_resources( instance );

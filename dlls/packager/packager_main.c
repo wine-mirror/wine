@@ -648,11 +648,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **obj)
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_OK;
-}
-
 HRESULT WINAPI DllRegisterServer(void)
 {
     return __wine_register_resources(g_instance);

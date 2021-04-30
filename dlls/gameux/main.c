@@ -37,11 +37,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(gameux);
 
 static HINSTANCE instance;
 
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
     TRACE("(%p, %d, %p)\n", hInstDLL, fdwReason, lpv);

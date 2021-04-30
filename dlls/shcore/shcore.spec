@@ -3,7 +3,7 @@
 @ stub CreateRandomAccessStreamOnFile
 @ stub CreateRandomAccessStreamOverStream
 @ stub CreateStreamOverRandomAccessStream
-@ stub DllCanUnloadNow
+@ stdcall -private DllCanUnloadNow()
 @ stub DllGetActivationFactory
 @ stub DllGetClassObject
 @ stdcall GetCurrentProcessExplicitAppUserModelID(ptr)

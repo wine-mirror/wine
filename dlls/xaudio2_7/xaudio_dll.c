@@ -98,11 +98,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, void *pReserved)
     return TRUE;
 }
 
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
 HRESULT WINAPI DllRegisterServer(void)
 {
     TRACE("\n");

@@ -678,14 +678,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **obj)
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
-/******************************************************************
- *              DllCanUnloadNow (DSDMO.@)
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
 /***********************************************************************
  *              DllRegisterServer (DSDMO.@)
  */

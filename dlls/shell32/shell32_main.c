@@ -1170,14 +1170,6 @@ HRESULT WINAPI DllInstall(BOOL bInstall, LPCWSTR cmdline)
 }
 
 /***********************************************************************
- *              DllCanUnloadNow (SHELL32.@)
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
-/***********************************************************************
  *		DllRegisterServer (SHELL32.@)
  */
 HRESULT WINAPI DllRegisterServer(void)

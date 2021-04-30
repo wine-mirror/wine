@@ -568,14 +568,6 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID fImpLoad)
     return TRUE;
 }
 
-/*************************************************************************
- *              DllCanUnloadNow (MSCTF.@)
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
 /***********************************************************************
  *              DllGetClassObject (MSCTF.@)
  */

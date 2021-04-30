@@ -1,7 +1,7 @@
 /*
- *	exported dll functions for comcat.dll
+ * DllCanUnloadNow default implementation
  *
- * Copyright (C) 2002-2003 John K. Hohm
+ * Copyright 2021 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,22 +19,12 @@
  */
 
 #include <stdarg.h>
-
+#define COBJMACROS
 #include "windef.h"
 #include "winbase.h"
+#include "objbase.h"
 
-/***********************************************************************
- *		DllRegisterServer (COMCAT.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
+HRESULT WINAPI DllCanUnloadNow(void)
 {
-    return S_OK;
-}
-
-/***********************************************************************
- *		DllUnregisterServer (COMCAT.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return S_OK;
+    return S_FALSE;
 }

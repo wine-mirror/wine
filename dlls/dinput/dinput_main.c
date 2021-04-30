@@ -1665,14 +1665,6 @@ static const IClassFactoryVtbl DICF_Vtbl = {
 static IClassFactoryImpl DINPUT_CF = {{&DICF_Vtbl}, 1 };
 
 /***********************************************************************
- *		DllCanUnloadNow (DINPUT.@)
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
-/***********************************************************************
  *		DllGetClassObject (DINPUT.@)
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)

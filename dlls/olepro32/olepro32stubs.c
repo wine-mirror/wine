@@ -49,14 +49,6 @@ HRESULT WINAPI DllRegisterServer(void)
 }
 
 /***********************************************************************
- *		DllCanUnloadNow (OLEPRO32.255)
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-	return S_FALSE;
-}
-
-/***********************************************************************
  *		DllGetClassObject (OLEPRO32.@)
  */
 HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID riid, LPVOID* ppv )

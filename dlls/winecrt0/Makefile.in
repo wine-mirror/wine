@@ -5,6 +5,7 @@ C_SRCS = \
 	crt_fltused.c \
 	debug.c \
 	delay_load.c \
+	dll_canunload.c \
 	dll_main.c \
 	exception.c \
 	exe16_entry.c \

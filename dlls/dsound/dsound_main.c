@@ -760,19 +760,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 }
 
 
-/*******************************************************************************
- * DllCanUnloadNow [DSOUND.4]
- * Determines whether the DLL is in use.
- *
- * RETURNS
- *    Can unload now: S_OK
- *    Cannot unload now (the DLL is still active): S_FALSE
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
 #define INIT_GUID(guid, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8)      \
         guid.Data1 = l; guid.Data2 = w1; guid.Data3 = w2;               \
         guid.Data4[0] = b1; guid.Data4[1] = b2; guid.Data4[2] = b3;     \

@@ -250,14 +250,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 }
 
 /***********************************************************************
- *          DllCanUnloadNow (wshom.ocx.@)
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
-/***********************************************************************
  *          DllRegisterServer (wshom.ocx.@)
  */
 HRESULT WINAPI DllRegisterServer(void)

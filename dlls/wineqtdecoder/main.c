@@ -255,9 +255,3 @@ HRESULT WINAPI DllUnregisterServer(void)
     IFilterMapper2_Release(mapper);
     return S_OK;
 }
-
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    TRACE(".\n");
-    return S_FALSE;
-}

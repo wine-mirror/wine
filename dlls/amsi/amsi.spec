@@ -7,7 +7,7 @@
 @ stub AmsiUacScan
 @ stub AmsiUacUninitialize
 @ stdcall AmsiUninitialize(ptr)
-@ stub DllCanUnloadNow
+@ stdcall -private DllCanUnloadNow()
 @ stub DllGetClassObject
 @ stub DllRegisterServer
 @ stub DllUnregisterServer

@@ -173,11 +173,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
 typedef HRESULT (*FnCreateInstance)(REFIID riid, LPVOID *ppobj);
 
 typedef struct {

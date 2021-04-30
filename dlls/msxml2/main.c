@@ -39,14 +39,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstance, DWORD reason, LPVOID reserved)
 }
 
 /***********************************************************************
- *		DllCanUnloadNow (MSXML2.@)
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
-/***********************************************************************
  *		DllRegisterServer (MSXML2.@)
  */
 HRESULT WINAPI DllRegisterServer(void)

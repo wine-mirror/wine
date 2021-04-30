@@ -891,11 +891,6 @@ HRESULT WINAPI DllUnregisterServer(void)
     return __wine_unregister_resources( MSCOREE_hInstance );
 }
 
-HRESULT WINAPI DllCanUnloadNow(VOID)
-{
-    return S_FALSE;
-}
-
 void WINAPI CoEEShutDownCOM(void)
 {
     FIXME("stub.\n");

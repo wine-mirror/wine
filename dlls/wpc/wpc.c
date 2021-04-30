@@ -190,15 +190,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 }
 
 /***********************************************************************
- *          DllCanUnloadNow (wpc.@)
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    TRACE("\n");
-    return S_FALSE;
-}
-
-/***********************************************************************
  *          DllRegisterServer (wpc.@)
  */
 HRESULT WINAPI DllRegisterServer(void)

@@ -2028,8 +2028,3 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, void **obj)
     *obj = NULL;
     return CLASS_E_CLASSNOTAVAILABLE;
 }
-
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}

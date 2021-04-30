@@ -544,11 +544,3 @@ HRESULT WINAPI DllUnregisterServer(void)
 {
     return __wine_unregister_resources( atl_instance );
 }
-
-/***********************************************************************
- *              DllCanUnloadNow (ATL.@)
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}

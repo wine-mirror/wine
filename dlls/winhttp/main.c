@@ -156,14 +156,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     return IClassFactory_QueryInterface( cf, riid, ppv );
 }
 
-/******************************************************************
- *              DllCanUnloadNow (winhttp.@)
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
 /***********************************************************************
  *          DllRegisterServer (winhttp.@)
  */

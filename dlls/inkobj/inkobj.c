@@ -19,16 +19,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(inkobj);
 
-static LONG INKOBJ_refCount;
-
-/*****************************************************
- *    DllCanUnloadNow (INKOBJ.@)
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return (INKOBJ_refCount != 0)? S_FALSE : S_OK;
-}
-
 /*****************************************************
  *    DllGetClassObject [INKOBJ.@]
  */

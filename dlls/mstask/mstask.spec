@@ -12,8 +12,8 @@
 @ stub SASetNSAccountInformation
 @ stub SetNetScheduleAccountInformation
 @ stub _ConvertAtJobsToTasks@0
-@ stub _DllCanUnloadNow@0
-@ stub _DllGetClassObject@12
+@ stdcall -private _DllCanUnloadNow@0() DllCanUnloadNow
+@ stdcall -private _DllGetClassObject@12(ptr ptr ptr) DllGetClassObject
 @ stub _GetNetScheduleAccountInformation@12
 @ stdcall _NetrJobAdd@12(wstr ptr ptr) NetrJobAdd_wrapper
 @ stdcall _NetrJobDel@12(wstr long long) NetrJobDel_wrapper

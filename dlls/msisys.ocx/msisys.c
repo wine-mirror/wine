@@ -33,18 +33,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msisys);
 
 
 /***********************************************************************
- *		DllCanUnloadNow (MSISYS.@)
- *
- * RETURNS
- *    Success: S_OK
- *    Failure: S_FALSE
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-	return S_FALSE;
-}
-
-/***********************************************************************
  *		DllGetClassObject (MSISYS.@)
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID pclsid, REFIID piid, LPVOID *ppv)

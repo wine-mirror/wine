@@ -44,11 +44,3 @@ HRESULT WINAPI DllUnregisterServer(void)
     FIXME("stub\n");
     return S_FALSE;
 }
-
-/***********************************************************************
- *              DllCanUnloadNow (ITIRCL.@)
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}

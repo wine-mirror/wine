@@ -137,15 +137,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, LPVOID *out)
 }
 
 /***********************************************************************
- *          DllCanUnloadNow (dhtmled.ocx.@)
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    TRACE("()\n");
-    return S_FALSE;
-}
-
-/***********************************************************************
  *          DllRegisterServer (dhtmled.ocx.@)
  */
 HRESULT WINAPI DllRegisterServer(void)

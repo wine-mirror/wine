@@ -139,14 +139,6 @@ static const IClassFactoryVtbl DSCF_Vtbl =
 };
 
 
-/***********************************************************************
- *              DllCanUnloadNow (QEDIT.@)
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
 /*******************************************************************************
  * DllGetClassObject [QEDIT.@]
  * Retrieves class object from a DLL object

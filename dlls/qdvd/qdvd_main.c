@@ -134,8 +134,3 @@ HRESULT WINAPI DllUnregisterServer(void)
 {
     return __wine_unregister_resources(qdvd_instance);
 }
-
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}

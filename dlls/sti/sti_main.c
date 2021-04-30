@@ -159,14 +159,6 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
     return STI_DllGetClassObject( rclsid, iid, ppv );
 }
 
-/******************************************************************************
- *           DllCanUnloadNow   (STI.@)
- */
-HRESULT WINAPI DllCanUnloadNow( void )
-{
-    return S_FALSE;
-}
-
 /***********************************************************************
  *           DllRegisterServer (STI.@)
  */

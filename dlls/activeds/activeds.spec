@@ -22,7 +22,7 @@
 26 stub PropVariantToAdsType2
 27 stub ConvertSecDescriptorToVariant
 28 stub ConvertSecurityDescriptorToSecDes
-#@ stub DllCanUnloadNow
+@ stdcall -private DllCanUnloadNow()
 @ stdcall -private DllGetClassObject(ptr ptr ptr)
 #@ stub DllRegisterServer
 #@ stub DllUnregisterServer

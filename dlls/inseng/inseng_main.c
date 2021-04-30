@@ -385,14 +385,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 }
 
 /***********************************************************************
- *              DllCanUnloadNow (INSENG.@)
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
-/***********************************************************************
  *		DllRegisterServer (INSENG.@)
  */
 HRESULT WINAPI DllRegisterServer(void)

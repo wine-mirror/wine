@@ -200,14 +200,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 }
 
 /***********************************************************************
- *              DllCanUnloadNow (AMSTREAM.@)
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
-/***********************************************************************
  *		DllRegisterServer (AMSTREAM.@)
  */
 HRESULT WINAPI DllRegisterServer(void)

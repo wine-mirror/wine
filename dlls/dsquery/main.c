@@ -215,14 +215,6 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
 }
 
 /***********************************************************************
- *		DllCanUnloadNow (DSQUERY.@)
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
-/***********************************************************************
  *		DllGetClassObject (DSQUERY.@)
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **out)

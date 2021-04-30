@@ -418,12 +418,6 @@ const CLSID* SchemaCache_version(MSXML_VERSION v)
     }
 }
 
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
-
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID reserved)
 {
     MSXML_hInstance = hInstDLL;

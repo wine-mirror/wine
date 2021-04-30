@@ -490,16 +490,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
-/******************************************************************
- *              DllCanUnloadNow (MSHTML.@)
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    TRACE("()\n");
-    /* The cost of keeping this DLL in memory is small. */
-    return S_FALSE;
-}
-
 /***********************************************************************
  *          RunHTMLApplication (MSHTML.@)
  *

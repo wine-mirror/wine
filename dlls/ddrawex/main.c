@@ -207,15 +207,6 @@ static HRESULT ddrawex_factory_create(IUnknown *outer_unknown, REFIID riid, void
 }
 
 /*******************************************************************************
- * DllCanUnloadNow [DDRAWEX.@]  Determines whether the DLL is in use.
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
-
-/*******************************************************************************
  * DllGetClassObject [DDRAWEX.@]
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **out)

@@ -58,14 +58,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 }
 
 /***********************************************************************
- *             DllCanUnloadNow (HLINK.@)
- */
-HRESULT WINAPI DllCanUnloadNow( void )
-{
-    return S_FALSE;
-}
-
-/***********************************************************************
  *             HlinkCreateFromMoniker (HLINK.@)
  */
 HRESULT WINAPI HlinkCreateFromMoniker( IMoniker *pimkTrgt, LPCWSTR pwzLocation,

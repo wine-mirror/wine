@@ -1,4 +1,4 @@
-@ stub -private DllCanUnloadNow
+@ stdcall -private DllCanUnloadNow()
 @ stdcall -private DllMain(long long ptr)
 @ stub WIMApplyImage
 @ stub WIMCaptureImage

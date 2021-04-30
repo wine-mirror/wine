@@ -51,17 +51,6 @@ HRESULT WINAPI DllRegisterServer(void)
 
 
 /******************************************************************
- *		DllCanUnloadNow (DPNHPAST.@)
- *
- *
- */
-HRESULT WINAPI DllCanUnloadNow(void)
-{
-    return S_FALSE;
-}
-
-
-/******************************************************************
  *		DllGetClassObject (DPNHPAST.@)
  *
  *
