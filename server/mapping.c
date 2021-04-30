@@ -1268,9 +1268,7 @@ DECL_HANDLER(is_same_mapping)
     struct memory_view *view2 = find_mapped_view( current->process, req->base2 );
 
     if (!view1 || !view2) return;
-    if (!view1->fd || !view2->fd ||
-        !(view1->flags & SEC_IMAGE) || !(view2->flags & SEC_IMAGE) ||
-        !is_same_file_fd( view1->fd, view2->fd ))
+    if (!view1->fd || !view2->fd || !(view1->flags & SEC_IMAGE) || !is_same_file_fd( view1->fd, view2->fd ))
         set_error( STATUS_NOT_SAME_DEVICE );
 }
 
