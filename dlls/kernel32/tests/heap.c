@@ -1223,9 +1223,9 @@ static BOOL compare_ulong64(ULONG64 v1, ULONG64 v2, ULONG64 max_diff)
 static void test_GlobalMemoryStatus(void)
 {
     static const ULONG64 max_diff = 0x200000;
+    SIZE_T size, size_broken;
     MEMORYSTATUSEX memex;
     MEMORYSTATUS mem;
-    SIZE_T size;
 
     mem.dwLength = sizeof(mem);
     GlobalMemoryStatus(&mem);
@@ -1236,10 +1236,16 @@ static void test_GlobalMemoryStatus(void)
      * GlobalMemoryStatus() and GlobalMemoryStatusEx() calls. */
 
     size = min(memex.ullTotalPhys, ~(SIZE_T)0 >> 1);
-    ok(compare_ulong64(mem.dwTotalPhys, size, max_diff), "Got unexpected dwTotalPhys %s, size %s.\n",
+    size_broken = min(memex.ullTotalPhys, ~(SIZE_T)0);
+    ok(compare_ulong64(mem.dwTotalPhys, size, max_diff)
+            || broken(compare_ulong64(mem.dwTotalPhys, size_broken, max_diff)) /* Win <= 8.1 with RAM size > 4GB */,
+            "Got unexpected dwTotalPhys %s, size %s.\n",
             wine_dbgstr_longlong(mem.dwTotalPhys), wine_dbgstr_longlong(size));
     size = min(memex.ullAvailPhys, ~(SIZE_T)0 >> 1);
-    ok(compare_ulong64(mem.dwAvailPhys, size, max_diff), "Got unexpected dwAvailPhys %s, size %s.\n",
+    size_broken = min(memex.ullAvailPhys, ~(SIZE_T)0);
+    ok(compare_ulong64(mem.dwAvailPhys, size, max_diff)
+            || broken(compare_ulong64(mem.dwAvailPhys, size_broken, max_diff)) /* Win <= 8.1 with RAM size > 4GB */,
+            "Got unexpected dwAvailPhys %s, size %s.\n",
             wine_dbgstr_longlong(mem.dwAvailPhys), wine_dbgstr_longlong(size));
 
     size = min(memex.ullTotalPageFile, ~(SIZE_T)0);
