@@ -255,7 +255,7 @@ static UINT CDECL nulldrv_GetKeyboardLayoutList( INT size, HKL *layouts )
 
 static INT CDECL nulldrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
 {
-    return 0;
+    return -1; /* use default implementation */
 }
 
 static HKL CDECL nulldrv_GetKeyboardLayout( DWORD thread_id )

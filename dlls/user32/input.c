@@ -853,6 +853,43 @@ static const UINT kbd_en_vk2char[] =
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
+static const WCHAR *kbd_en_vscname[] =
+{
+    0, L"Esc", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, L"Backspace", L"Tab",
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, L"Enter", L"Ctrl", 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, L"Shift", 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, L"Right Shift", L"Num *", L"Alt", L"Space", L"Caps Lock", L"F1", L"F2", L"F3", L"F4", L"F5",
+    L"F6", L"F7", L"F8", L"F9", L"F10", L"Pause", L"Scroll Lock", L"Num 7", L"Num 8", L"Num 9", L"Num -", L"Num 4", L"Num 5", L"Num 6", L"Num +", L"Num 1",
+    L"Num 2", L"Num 3", L"Num 0", L"Num Del", L"Sys Req", 0, 0, L"F11", L"F12", 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, L"F13", L"F14", L"F15", L"F16",
+    L"F17", L"F18", L"F19", L"F20", L"F21", L"F22", L"F23", L"F24", 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    /* extended */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, L"Num Enter", L"Right Ctrl", 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, L"Num /", 0, L"Prnt Scrn", L"Right Alt", 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, L"Num Lock", L"Break", L"Home", L"Up", L"Page Up", 0, L"Left", 0, L"Right", 0, L"End",
+    L"Down", L"Page Down", L"Insert", L"Delete", L"<00>", 0, L"Help", 0, 0, 0, 0, L"Left Windows", L"Right Windows", L"Application", 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+};
+
 
 /******************************************************************************
  *		MapVirtualKeyExW (USER32.@)
@@ -1007,10 +1044,52 @@ INT WINAPI GetKeyNameTextA(LONG lParam, LPSTR lpBuffer, INT nSize)
 /****************************************************************************
  *		GetKeyNameTextW (USER32.@)
  */
-INT WINAPI GetKeyNameTextW(LONG lParam, LPWSTR lpBuffer, INT nSize)
+INT WINAPI GetKeyNameTextW( LONG lparam, LPWSTR buffer, INT size )
 {
-    if (!lpBuffer || !nSize) return 0;
-    return USER_Driver->pGetKeyNameText( lParam, lpBuffer, nSize );
+    INT code = ((lparam >> 16) & 0x1ff), vkey, len;
+    UINT vsc2vk_size, vscname_size;
+    const WCHAR *const *vscname;
+    const UINT *vsc2vk;
+    WCHAR tmp[2];
+
+    TRACE_(keyboard)( "lparam %d, buffer %p, size %d.\n", lparam, buffer, size );
+
+    if (!buffer || !size) return 0;
+    if ((len = USER_Driver->pGetKeyNameText( lparam, buffer, size )) >= 0) return len;
+
+    /* FIXME: English keyboard layout specific */
+
+    vsc2vk = kbd_en_vsc2vk;
+    vsc2vk_size = ARRAYSIZE(kbd_en_vsc2vk);
+    vscname = kbd_en_vscname;
+    vscname_size = ARRAYSIZE(kbd_en_vscname);
+
+    if (lparam & 0x2000000)
+    {
+        switch ((vkey = vsc2vk[code]))
+        {
+        case VK_RSHIFT:
+        case VK_RCONTROL:
+        case VK_RMENU:
+            for (code = 0; code < vsc2vk_size; ++code)
+                if (vsc2vk[code] == (vkey - 1)) break;
+            break;
+        }
+    }
+
+    if (code >= vscname_size) buffer[0] = 0;
+    else if (vscname[code]) lstrcpynW( buffer, vscname[code], size );
+    else
+    {
+        vkey = MapVirtualKeyW( code & 0xff, MAPVK_VSC_TO_VK );
+        tmp[0] = MapVirtualKeyW( vkey, MAPVK_VK_TO_CHAR );
+        tmp[1] = 0;
+        lstrcpynW( buffer, tmp, size );
+    }
+    len = wcslen( buffer );
+
+    TRACE_(keyboard)( "ret %d, str %s.\n", len, debugstr_w(buffer) );
+    return len;
 }
 
 /****************************************************************************
