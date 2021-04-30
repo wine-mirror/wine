@@ -1096,6 +1096,8 @@ static void test_demangle_datatype(void)
             "class CDB_GEN_BIG_ENUM_FLAG<enum CDB_WYSIWYG_BITS_ENUM,32256>",TRUE},
         { "?AV?$CDB_GEN_BIG_ENUM_FLAG@W4CDB_WYSIWYG_BITS_ENUM@@$01@@@",
             "?AV?$CDB_GEN_BIG_ENUM_FLAG@W4CDB_WYSIWYG_BITS_ENUM@@$01@@@", FALSE},
+        { "P8test@@AACXZ", "signed char (__cdecl test::*)(void)", TRUE},
+        { "P8test@@BACXZ", "signed char (__cdecl test::*)(void)const ", TRUE},
     };
     int i, num_test = ARRAY_SIZE(demangle);
 
