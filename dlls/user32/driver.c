@@ -275,7 +275,7 @@ static HKL CDECL nulldrv_LoadKeyboardLayout( LPCWSTR name, UINT flags )
 
 static UINT CDECL nulldrv_MapVirtualKeyEx( UINT code, UINT type, HKL layout )
 {
-    return 0;
+    return -1; /* use default implementation */
 }
 
 static BOOL CDECL nulldrv_RegisterHotKey( HWND hwnd, UINT modifiers, UINT vk )
