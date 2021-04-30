@@ -1336,8 +1336,8 @@ BOOL WINAPI BlockInput(BOOL fBlockIt)
  */
 UINT WINAPI GetKeyboardLayoutList( INT size, HKL *layouts )
 {
-    WCHAR klid[KL_NAMELENGTH];
-    UINT count, tmp, i = 0;
+    WCHAR klid[KL_NAMELENGTH], value[5];
+    DWORD value_size, count, tmp, i = 0;
     HKEY hkey;
     HKL layout;
 
@@ -1360,6 +1360,10 @@ UINT WINAPI GetKeyboardLayoutList( INT size, HKL *layouts )
         while (!RegEnumKeyW( hkey, i++, klid, ARRAY_SIZE(klid) ))
         {
             tmp = wcstoul( klid, NULL, 16 );
+            value_size = sizeof(value);
+            if (!RegGetValueW( hkey, klid, L"Layout Id", RRF_RT_REG_SZ, NULL, (void *)&value, &value_size ))
+                tmp = MAKELONG( LOWORD( tmp ), 0xf000 | (wcstoul( value, NULL, 16 ) & 0xfff) );
+
             if (layout == UlongToHandle( tmp )) continue;
 
             count++;
