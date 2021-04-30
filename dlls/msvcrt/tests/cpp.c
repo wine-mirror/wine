@@ -1100,25 +1100,6 @@ static void test_demangle_datatype(void)
     }
 }
 
-/* Compare two strings treating multiple spaces (' ', ascii 0x20) in s2 
-   as single space. Needed for test_demangle as __unDName() returns sometimes
-   two spaces instead of one in some older native msvcrt dlls. */
-static int strcmp_space(const char *s1, const char *s2)
-{
-    const char* s2start = s2;
-    do {
-        while (*s1 == *s2 && *s1) {
-            s1++;
-            s2++;
-        }
-        if (*s2 == ' ' && s2 > s2start && *(s2 - 1) == ' ')
-            s2++;
-        else
-            break;
-    } while (*s1 && *s2);
-    return *s1 - *s2;
-}
-
 static void test_demangle(void)
 {
     static struct {const char* in; const char* out; const char *broken; unsigned int flags;} test[] = {
@@ -1314,11 +1295,11 @@ static void test_demangle(void)
 	name = p__unDName(0, test[i].in, 0, malloc, free, test[i].flags);
         ok(name != NULL, "%u: unDName failed\n", i);
         if (!name) continue;
-        ok( !strcmp_space(test[i].out, name) ||
-            broken(test[i].broken && !strcmp_space(test[i].broken, name)),
+        ok( !strcmp(test[i].out, name) ||
+            broken(test[i].broken && !strcmp(test[i].broken, name)),
            "%u: Got name \"%s\"\n", i, name );
-        ok( !strcmp_space(test[i].out, name) ||
-            broken(test[i].broken && !strcmp_space(test[i].broken, name)),
+        ok( !strcmp(test[i].out, name) ||
+            broken(test[i].broken && !strcmp(test[i].broken, name)),
            "%u: Expected \"%s\"\n", i, test[i].out );
         free(name);
     }
