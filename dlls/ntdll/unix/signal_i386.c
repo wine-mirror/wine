@@ -847,7 +847,7 @@ static inline void save_context( struct xcontext *xcontext, const ucontext_t *si
         context->ContextFlags |= CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS;
         memcpy( context->ExtendedRegisters, fpux, sizeof(*fpux) );
         if (!fpu) fpux_to_fpu( &context->FloatSave, fpux );
-        if ((cpu_info.FeatureSet & CPU_FEATURE_AVX) && (xs = XState_sig(fpux)))
+        if ((cpu_info.ProcessorFeatureBits & CPU_FEATURE_AVX) && (xs = XState_sig(fpux)))
         {
             context_init_xstate( context, xs );
             xcontext->host_compaction_mask = xs->CompactionMask;
@@ -975,11 +975,11 @@ void signal_restore_full_cpu_context(void)
 {
     struct syscall_xsave *xsave = get_syscall_xsave( get_syscall_frame() );
 
-    if (cpu_info.FeatureSet & CPU_FEATURE_XSAVE)
+    if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_XSAVE)
     {
         __asm__ volatile( "xrstor %0" : : "m"(*xsave), "a" (7), "d" (0) );
     }
-    else if (cpu_info.FeatureSet & CPU_FEATURE_FXSR)
+    else if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_FXSR)
     {
         __asm__ volatile( "fxrstor %0" : : "m"(xsave->u.xsave) );
     }
@@ -1230,7 +1230,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     else if (flags & CONTEXT_FLOATING_POINT)
     {
         struct syscall_xsave *xsave = get_syscall_xsave( frame );
-        if (cpu_info.FeatureSet & CPU_FEATURE_FXSR)
+        if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_FXSR)
         {
             fpu_to_fpux( &xsave->u.xsave, &context->FloatSave );
         }
@@ -1240,7 +1240,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         }
         xsave->xstate.mask |= XSTATE_MASK_LEGACY_FLOATING_POINT;
     }
-    if ((cpu_info.FeatureSet & CPU_FEATURE_AVX) && (xs = xstate_from_context( context )))
+    if ((cpu_info.ProcessorFeatureBits & CPU_FEATURE_AVX) && (xs = xstate_from_context( context )))
     {
         struct syscall_xsave *xsave = get_syscall_xsave( frame );
         CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
@@ -1326,7 +1326,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         }
         if (needed_flags & CONTEXT_FLOATING_POINT)
         {
-            if (!(cpu_info.FeatureSet & CPU_FEATURE_FXSR))
+            if (!(cpu_info.ProcessorFeatureBits & CPU_FEATURE_FXSR))
             {
                 context->FloatSave = xsave->u.fsave;
             }
@@ -1385,7 +1385,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
             x86_thread_data()->dr6 = context->Dr6;
             x86_thread_data()->dr7 = context->Dr7;
         }
-        if ((cpu_info.FeatureSet & CPU_FEATURE_AVX) && (xstate = xstate_from_context( context )))
+        if ((cpu_info.ProcessorFeatureBits & CPU_FEATURE_AVX) && (xstate = xstate_from_context( context )))
         {
             struct syscall_xsave *xsave = get_syscall_xsave( frame );
             CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
@@ -2573,9 +2573,9 @@ void *signal_init_syscalls(void)
 
     if (xstate_compaction_enabled)
         syscall_dispatcher = __wine_syscall_dispatcher_xsavec;
-    else if (cpu_info.FeatureSet & CPU_FEATURE_XSAVE)
+    else if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_XSAVE)
         syscall_dispatcher = __wine_syscall_dispatcher_xsave;
-    else if (cpu_info.FeatureSet & CPU_FEATURE_FXSR)
+    else if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_FXSR)
         syscall_dispatcher = __wine_syscall_dispatcher_fxsave;
     else
         syscall_dispatcher = __wine_syscall_dispatcher;

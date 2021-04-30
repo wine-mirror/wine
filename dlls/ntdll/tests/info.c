@@ -208,8 +208,9 @@ static void test_query_cpu(void)
     ok( sizeof(sci) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
 
     /* Check if we have some return values */
-    if (winetest_debug > 1) trace("Processor FeatureSet : %08x\n", sci.FeatureSet);
-    ok( sci.FeatureSet != 0, "Expected some features for this processor, got %08x\n", sci.FeatureSet);
+    if (winetest_debug > 1) trace("Processor FeatureSet : %08x\n", sci.ProcessorFeatureBits);
+    ok( sci.ProcessorFeatureBits != 0, "Expected some features for this processor, got %08x\n",
+        sci.ProcessorFeatureBits);
 }
 
 static void test_query_performance(void)

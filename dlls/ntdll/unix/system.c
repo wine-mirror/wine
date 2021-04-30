@@ -241,14 +241,14 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
     unsigned int regs[4], regs2[4], regs3[4];
 
 #if defined(__i386__)
-    info->Architecture = PROCESSOR_ARCHITECTURE_INTEL;
+    info->ProcessorArchitecture = PROCESSOR_ARCHITECTURE_INTEL;
 #elif defined(__x86_64__)
-    info->Architecture = PROCESSOR_ARCHITECTURE_AMD64;
+    info->ProcessorArchitecture = PROCESSOR_ARCHITECTURE_AMD64;
 #endif
 
     /* We're at least a 386 */
-    info->FeatureSet = CPU_FEATURE_VME | CPU_FEATURE_X86 | CPU_FEATURE_PGE;
-    info->Level = 3;
+    info->ProcessorFeatureBits = CPU_FEATURE_VME | CPU_FEATURE_X86 | CPU_FEATURE_PGE;
+    info->ProcessorLevel = 3;
 
     if (!have_cpuid()) return;
 
@@ -256,35 +256,35 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
     if (regs[0]>=0x00000001)   /* Check for supported cpuid version */
     {
         do_cpuid( 0x00000001, 0, regs2 ); /* get cpu features */
-        if (regs2[3] & (1 << 3 )) info->FeatureSet |= CPU_FEATURE_PSE;
-        if (regs2[3] & (1 << 4 )) info->FeatureSet |= CPU_FEATURE_TSC;
-        if (regs2[3] & (1 << 6 )) info->FeatureSet |= CPU_FEATURE_PAE;
-        if (regs2[3] & (1 << 8 )) info->FeatureSet |= CPU_FEATURE_CX8;
-        if (regs2[3] & (1 << 11)) info->FeatureSet |= CPU_FEATURE_SEP;
-        if (regs2[3] & (1 << 12)) info->FeatureSet |= CPU_FEATURE_MTRR;
-        if (regs2[3] & (1 << 15)) info->FeatureSet |= CPU_FEATURE_CMOV;
-        if (regs2[3] & (1 << 16)) info->FeatureSet |= CPU_FEATURE_PAT;
-        if (regs2[3] & (1 << 23)) info->FeatureSet |= CPU_FEATURE_MMX;
-        if (regs2[3] & (1 << 24)) info->FeatureSet |= CPU_FEATURE_FXSR;
-        if (regs2[3] & (1 << 25)) info->FeatureSet |= CPU_FEATURE_SSE;
-        if (regs2[3] & (1 << 26)) info->FeatureSet |= CPU_FEATURE_SSE2;
-        if (regs2[2] & (1 << 0 )) info->FeatureSet |= CPU_FEATURE_SSE3;
-        if (regs2[2] & (1 << 9 )) info->FeatureSet |= CPU_FEATURE_SSSE3;
-        if (regs2[2] & (1 << 13)) info->FeatureSet |= CPU_FEATURE_CX128;
-        if (regs2[2] & (1 << 19)) info->FeatureSet |= CPU_FEATURE_SSE41;
-        if (regs2[2] & (1 << 20)) info->FeatureSet |= CPU_FEATURE_SSE42;
-        if (regs2[2] & (1 << 27)) info->FeatureSet |= CPU_FEATURE_XSAVE;
-        if (regs2[2] & (1 << 28)) info->FeatureSet |= CPU_FEATURE_AVX;
+        if (regs2[3] & (1 << 3 )) info->ProcessorFeatureBits |= CPU_FEATURE_PSE;
+        if (regs2[3] & (1 << 4 )) info->ProcessorFeatureBits |= CPU_FEATURE_TSC;
+        if (regs2[3] & (1 << 6 )) info->ProcessorFeatureBits |= CPU_FEATURE_PAE;
+        if (regs2[3] & (1 << 8 )) info->ProcessorFeatureBits |= CPU_FEATURE_CX8;
+        if (regs2[3] & (1 << 11)) info->ProcessorFeatureBits |= CPU_FEATURE_SEP;
+        if (regs2[3] & (1 << 12)) info->ProcessorFeatureBits |= CPU_FEATURE_MTRR;
+        if (regs2[3] & (1 << 15)) info->ProcessorFeatureBits |= CPU_FEATURE_CMOV;
+        if (regs2[3] & (1 << 16)) info->ProcessorFeatureBits |= CPU_FEATURE_PAT;
+        if (regs2[3] & (1 << 23)) info->ProcessorFeatureBits |= CPU_FEATURE_MMX;
+        if (regs2[3] & (1 << 24)) info->ProcessorFeatureBits |= CPU_FEATURE_FXSR;
+        if (regs2[3] & (1 << 25)) info->ProcessorFeatureBits |= CPU_FEATURE_SSE;
+        if (regs2[3] & (1 << 26)) info->ProcessorFeatureBits |= CPU_FEATURE_SSE2;
+        if (regs2[2] & (1 << 0 )) info->ProcessorFeatureBits |= CPU_FEATURE_SSE3;
+        if (regs2[2] & (1 << 9 )) info->ProcessorFeatureBits |= CPU_FEATURE_SSSE3;
+        if (regs2[2] & (1 << 13)) info->ProcessorFeatureBits |= CPU_FEATURE_CX128;
+        if (regs2[2] & (1 << 19)) info->ProcessorFeatureBits |= CPU_FEATURE_SSE41;
+        if (regs2[2] & (1 << 20)) info->ProcessorFeatureBits |= CPU_FEATURE_SSE42;
+        if (regs2[2] & (1 << 27)) info->ProcessorFeatureBits |= CPU_FEATURE_XSAVE;
+        if (regs2[2] & (1 << 28)) info->ProcessorFeatureBits |= CPU_FEATURE_AVX;
         if((regs2[3] & (1 << 26)) && (regs2[3] & (1 << 24)) && have_sse_daz_mode()) /* has SSE2 and FXSAVE/FXRSTOR */
-            info->FeatureSet |= CPU_FEATURE_DAZ;
+            info->ProcessorFeatureBits |= CPU_FEATURE_DAZ;
 
         if (regs[0] >= 0x00000007)
         {
             do_cpuid( 0x00000007, 0, regs3 ); /* get extended features */
-            if (regs3[1] & (1 << 5)) info->FeatureSet |= CPU_FEATURE_AVX2;
+            if (regs3[1] & (1 << 5)) info->ProcessorFeatureBits |= CPU_FEATURE_AVX2;
         }
 
-        if (info->FeatureSet & CPU_FEATURE_XSAVE)
+        if (info->ProcessorFeatureBits & CPU_FEATURE_XSAVE)
         {
             do_cpuid( 0x0000000d, 1, regs3 ); /* get XSAVE details */
             if (regs3[0] & 2) xstate_compaction_enabled = TRUE;
@@ -292,53 +292,53 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
 
         if (regs[1] == AUTH && regs[3] == ENTI && regs[2] == CAMD)
         {
-            info->Level = (regs2[0] >> 8) & 0xf; /* family */
-            if (info->Level == 0xf)  /* AMD says to add the extended family to the family if family is 0xf */
-                info->Level += (regs2[0] >> 20) & 0xff;
+            info->ProcessorLevel = (regs2[0] >> 8) & 0xf; /* family */
+            if (info->ProcessorLevel == 0xf)  /* AMD says to add the extended family to the family if family is 0xf */
+                info->ProcessorLevel += (regs2[0] >> 20) & 0xff;
 
             /* repack model and stepping to make a "revision" */
-            info->Revision  = ((regs2[0] >> 16) & 0xf) << 12; /* extended model */
-            info->Revision |= ((regs2[0] >> 4 ) & 0xf) << 8;  /* model          */
-            info->Revision |= regs2[0] & 0xf;                 /* stepping       */
+            info->ProcessorRevision  = ((regs2[0] >> 16) & 0xf) << 12; /* extended model */
+            info->ProcessorRevision |= ((regs2[0] >> 4 ) & 0xf) << 8;  /* model          */
+            info->ProcessorRevision |= regs2[0] & 0xf;                 /* stepping       */
 
             do_cpuid( 0x80000000, 0, regs );  /* get vendor cpuid level */
             if (regs[0] >= 0x80000001)
             {
                 do_cpuid( 0x80000001, 0, regs2 );  /* get vendor features */
-                if (regs2[2] & (1 << 2))   info->FeatureSet |= CPU_FEATURE_VIRT;
-                if (regs2[3] & (1 << 20))  info->FeatureSet |= CPU_FEATURE_NX;
-                if (regs2[3] & (1 << 27))  info->FeatureSet |= CPU_FEATURE_TSC;
-                if (regs2[3] & (1u << 31)) info->FeatureSet |= CPU_FEATURE_3DNOW;
+                if (regs2[2] & (1 << 2))   info->ProcessorFeatureBits |= CPU_FEATURE_VIRT;
+                if (regs2[3] & (1 << 20))  info->ProcessorFeatureBits |= CPU_FEATURE_NX;
+                if (regs2[3] & (1 << 27))  info->ProcessorFeatureBits |= CPU_FEATURE_TSC;
+                if (regs2[3] & (1u << 31)) info->ProcessorFeatureBits |= CPU_FEATURE_3DNOW;
             }
         }
         else if (regs[1] == GENU && regs[3] == INEI && regs[2] == NTEL)
         {
-            info->Level = ((regs2[0] >> 8) & 0xf) + ((regs2[0] >> 20) & 0xff); /* family + extended family */
-            if(info->Level == 15) info->Level = 6;
+            info->ProcessorLevel = ((regs2[0] >> 8) & 0xf) + ((regs2[0] >> 20) & 0xff); /* family + extended family */
+            if(info->ProcessorLevel == 15) info->ProcessorLevel = 6;
 
             /* repack model and stepping to make a "revision" */
-            info->Revision  = ((regs2[0] >> 16) & 0xf) << 12; /* extended model */
-            info->Revision |= ((regs2[0] >> 4 ) & 0xf) << 8;  /* model          */
-            info->Revision |= regs2[0] & 0xf;                 /* stepping       */
+            info->ProcessorRevision  = ((regs2[0] >> 16) & 0xf) << 12; /* extended model */
+            info->ProcessorRevision |= ((regs2[0] >> 4 ) & 0xf) << 8;  /* model          */
+            info->ProcessorRevision |= regs2[0] & 0xf;                 /* stepping       */
 
-            if(regs2[2] & (1 << 5))  info->FeatureSet |= CPU_FEATURE_VIRT;
-            if(regs2[3] & (1 << 21)) info->FeatureSet |= CPU_FEATURE_DS;
+            if(regs2[2] & (1 << 5))  info->ProcessorFeatureBits |= CPU_FEATURE_VIRT;
+            if(regs2[3] & (1 << 21)) info->ProcessorFeatureBits |= CPU_FEATURE_DS;
 
             do_cpuid( 0x80000000, 0, regs );  /* get vendor cpuid level */
             if (regs[0] >= 0x80000001)
             {
                 do_cpuid( 0x80000001, 0, regs2 );  /* get vendor features */
-                if (regs2[3] & (1 << 20)) info->FeatureSet |= CPU_FEATURE_NX;
-                if (regs2[3] & (1 << 27)) info->FeatureSet |= CPU_FEATURE_TSC;
+                if (regs2[3] & (1 << 20)) info->ProcessorFeatureBits |= CPU_FEATURE_NX;
+                if (regs2[3] & (1 << 27)) info->ProcessorFeatureBits |= CPU_FEATURE_TSC;
             }
         }
         else
         {
-            info->Level = (regs2[0] >> 8) & 0xf; /* family */
+            info->ProcessorLevel = (regs2[0] >> 8) & 0xf; /* family */
 
             /* repack model and stepping to make a "revision" */
-            info->Revision = ((regs2[0] >> 4 ) & 0xf) << 8;  /* model    */
-            info->Revision |= regs2[0] & 0xf;                /* stepping */
+            info->ProcessorRevision = ((regs2[0] >> 4 ) & 0xf) << 8;  /* model    */
+            info->ProcessorRevision |= regs2[0] & 0xf;                /* stepping */
         }
     }
 }
@@ -367,18 +367,18 @@ static inline void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
             if ((s = strchr( value,'\n' ))) *s = 0;
             if (!strcmp( line, "CPU architecture" ))
             {
-                info->Level = atoi(value);
+                info->ProcessorLevel = atoi(value);
                 continue;
             }
             if (!strcmp( line, "CPU revision" ))
             {
-                info->Revision = atoi(value);
+                info->ProcessorRevision = atoi(value);
                 continue;
             }
             if (!strcmp( line, "Features" ))
             {
-                if (strstr(value, "crc32")) info->FeatureSet |= CPU_FEATURE_ARM_V8_CRC32;
-                if (strstr(value, "aes"))   info->FeatureSet |= CPU_FEATURE_ARM_V8_CRYPTO;
+                if (strstr(value, "crc32")) info->ProcessorFeatureBits |= CPU_FEATURE_ARM_V8_CRC32;
+                if (strstr(value, "aes"))   info->ProcessorFeatureBits |= CPU_FEATURE_ARM_V8_CRYPTO;
                 continue;
             }
         }
@@ -391,15 +391,15 @@ static inline void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
 
     valsize = sizeof(buf);
     if (!sysctlbyname("hw.machine_arch", &buf, &valsize, NULL, 0) && sscanf(buf, "armv%i", &value) == 1)
-        info->Level = value;
+        info->ProcessorLevel = value;
 
     valsize = sizeof(value);
     if (!sysctlbyname("hw.floatingpoint", &value, &valsize, NULL, 0))
-        info->FeatureSet |= CPU_FEATURE_ARM_VFP_32;
+        info->ProcessorFeatureBits |= CPU_FEATURE_ARM_VFP_32;
 #else
     FIXME("CPU Feature detection not implemented.\n");
 #endif
-    info->Architecture = PROCESSOR_ARCHITECTURE_ARM;
+    info->ProcessorArchitecture = PROCESSOR_ARCHITECTURE_ARM;
 }
 
 #elif defined(__aarch64__)
@@ -426,18 +426,18 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
             if ((s = strchr( value,'\n' ))) *s = 0;
             if (!strcmp( line, "CPU architecture" ))
             {
-                info->Level = atoi(value);
+                info->ProcessorLevel = atoi(value);
                 continue;
             }
             if (!strcmp( line, "CPU revision" ))
             {
-                info->Revision = atoi(value);
+                info->ProcessorRevision = atoi(value);
                 continue;
             }
             if (!strcmp( line, "Features" ))
             {
-                if (strstr(value, "crc32")) info->FeatureSet |= CPU_FEATURE_ARM_V8_CRC32;
-                if (strstr(value, "aes"))   info->FeatureSet |= CPU_FEATURE_ARM_V8_CRYPTO;
+                if (strstr(value, "crc32")) info->ProcessorFeatureBits |= CPU_FEATURE_ARM_V8_CRC32;
+                if (strstr(value, "aes"))   info->ProcessorFeatureBits |= CPU_FEATURE_ARM_V8_CRYPTO;
                 continue;
             }
         }
@@ -446,8 +446,8 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
 #else
     FIXME("CPU Feature detection not implemented.\n");
 #endif
-    info->Level = max(info->Level, 8);
-    info->Architecture = PROCESSOR_ARCHITECTURE_ARM64;
+    info->ProcessorLevel = max(info->ProcessorLevel, 8);
+    info->ProcessorArchitecture = PROCESSOR_ARCHITECTURE_ARM64;
 }
 
 #endif /* End architecture specific feature detection for CPUs */
@@ -488,7 +488,8 @@ void init_cpu_info(void)
     NtCurrentTeb()->Peb->NumberOfProcessors = num;
     get_cpuinfo( &cpu_info );
     TRACE( "<- CPU arch %d, level %d, rev %d, features 0x%x\n",
-           cpu_info.Architecture, cpu_info.Level, cpu_info.Revision, cpu_info.FeatureSet );
+           cpu_info.ProcessorArchitecture, cpu_info.ProcessorLevel, cpu_info.ProcessorRevision,
+           cpu_info.ProcessorFeatureBits );
 }
 
 static BOOL grow_logical_proc_buf( SYSTEM_LOGICAL_PROCESSOR_INFORMATION **pdata, DWORD *max_len )

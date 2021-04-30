@@ -2129,11 +2129,11 @@ typedef struct _SYSTEM_BASIC_INFORMATION {
 /* System Information Class 0x01 */
 
 typedef struct _SYSTEM_CPU_INFORMATION {
-    WORD Architecture;
-    WORD Level;
-    WORD Revision;       /* combination of CPU model and stepping */
-    WORD Reserved;       /* always zero */
-    DWORD FeatureSet;    /* see bit flags below */
+    USHORT ProcessorArchitecture;
+    USHORT ProcessorLevel;
+    USHORT ProcessorRevision;
+    USHORT MaximumProcessors;
+    ULONG  ProcessorFeatureBits;
 } SYSTEM_CPU_INFORMATION, *PSYSTEM_CPU_INFORMATION;
 
 /* definitions of bits in the Feature set for the x86 processors */

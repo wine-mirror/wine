@@ -109,7 +109,7 @@ void WINAPI DECLSPEC_HOTPATCH GetSystemInfo( SYSTEM_INFO *si )
                                                  &cpu_info, sizeof(cpu_info), NULL )))
         return;
 
-    si->u.s.wProcessorArchitecture  = cpu_info.Architecture;
+    si->u.s.wProcessorArchitecture  = cpu_info.ProcessorArchitecture;
     si->u.s.wReserved               = 0;
     si->dwPageSize                  = basic_info.PageSize;
     si->lpMinimumApplicationAddress = basic_info.LowestUserAddress;
@@ -117,13 +117,13 @@ void WINAPI DECLSPEC_HOTPATCH GetSystemInfo( SYSTEM_INFO *si )
     si->dwActiveProcessorMask       = basic_info.ActiveProcessorsAffinityMask;
     si->dwNumberOfProcessors        = basic_info.NumberOfProcessors;
     si->dwAllocationGranularity     = basic_info.AllocationGranularity;
-    si->wProcessorLevel             = cpu_info.Level;
-    si->wProcessorRevision          = cpu_info.Revision;
+    si->wProcessorLevel             = cpu_info.ProcessorLevel;
+    si->wProcessorRevision          = cpu_info.ProcessorRevision;
 
-    switch (cpu_info.Architecture)
+    switch (cpu_info.ProcessorArchitecture)
     {
     case PROCESSOR_ARCHITECTURE_INTEL:
-        switch (cpu_info.Level)
+        switch (cpu_info.ProcessorLevel)
         {
         case 3:  si->dwProcessorType = PROCESSOR_INTEL_386;     break;
         case 4:  si->dwProcessorType = PROCESSOR_INTEL_486;     break;
@@ -133,7 +133,7 @@ void WINAPI DECLSPEC_HOTPATCH GetSystemInfo( SYSTEM_INFO *si )
         }
         break;
     case PROCESSOR_ARCHITECTURE_PPC:
-        switch (cpu_info.Level)
+        switch (cpu_info.ProcessorLevel)
         {
         case 1:  si->dwProcessorType = PROCESSOR_PPC_601;       break;
         case 3:
@@ -148,7 +148,7 @@ void WINAPI DECLSPEC_HOTPATCH GetSystemInfo( SYSTEM_INFO *si )
         si->dwProcessorType = PROCESSOR_AMD_X8664;
         break;
     case PROCESSOR_ARCHITECTURE_ARM:
-        switch (cpu_info.Level)
+        switch (cpu_info.ProcessorLevel)
         {
         case 4:  si->dwProcessorType = PROCESSOR_ARM_7TDMI;     break;
         default: si->dwProcessorType = PROCESSOR_ARM920;
@@ -158,7 +158,7 @@ void WINAPI DECLSPEC_HOTPATCH GetSystemInfo( SYSTEM_INFO *si )
         si->dwProcessorType = 0;
         break;
     default:
-        FIXME( "Unknown processor architecture %x\n", cpu_info.Architecture );
+        FIXME( "Unknown processor architecture %x\n", cpu_info.ProcessorArchitecture );
         si->dwProcessorType = 0;
         break;
     }
