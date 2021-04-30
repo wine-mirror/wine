@@ -168,7 +168,11 @@ static RTL_OSVERSIONINFOEXW current_version;
 
 static BOOL CALLBACK init_current_version(PINIT_ONCE init_once, PVOID parameter, PVOID *context)
 {
-    /*ACTIVATION_CONTEXT_COMPATIBILITY_INFORMATION*/DWORD *acci;
+    struct acci
+    {
+        DWORD ElementCount;
+        COMPATIBILITY_CONTEXT_ELEMENT Elements[1];
+    } *acci;
     const struct version_info *ver;
     SIZE_T req;
     int idx;
@@ -201,13 +205,12 @@ static BOOL CALLBACK init_current_version(PINIT_ONCE init_once, PVOID parameter,
     {
         do
         {
-            COMPATIBILITY_CONTEXT_ELEMENT *elements = (COMPATIBILITY_CONTEXT_ELEMENT*)(acci + 1);
-            DWORD i, count = *acci;
+            DWORD i;
 
-            for (i = 0; i < count; i++)
+            for (i = 0; i < acci->ElementCount; i++)
             {
-                if (elements[i].Type == ACTCTX_COMPATIBILITY_ELEMENT_TYPE_OS &&
-                    IsEqualGUID(&elements[i].Id, &version_data[idx].guid))
+                if (acci->Elements[i].Type == ACTCTX_COMPATIBILITY_ELEMENT_TYPE_OS &&
+                    IsEqualGUID(&acci->Elements[i].Id, &version_data[idx].guid))
                 {
                     ver = &version_data[idx].info;
 
