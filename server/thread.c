@@ -1639,21 +1639,13 @@ DECL_HANDLER(select)
 
     select_on( &select_op, op_size, req->cookie, req->flags, req->timeout );
 
-    while (get_error() == STATUS_USER_APC)
+    if (get_error() == STATUS_USER_APC)
     {
         apc = thread_dequeue_apc( current, 0 );
-        if ((reply->apc_handle = alloc_handle( current->process, apc, SYNCHRONIZE, 0 )))
-        {
-            reply->call = apc->call;
-            release_object( apc );
-            break;
-        }
-        apc->executed = 1;
-        wake_up( &apc->obj, 0 );
+        reply->call = apc->call;
         release_object( apc );
     }
-
-    if (get_error() == STATUS_KERNEL_APC)
+    else if (get_error() == STATUS_KERNEL_APC)
     {
         apc = thread_dequeue_apc( current, 1 );
         if ((reply->apc_handle = alloc_handle( current->process, apc, SYNCHRONIZE, 0 )))
