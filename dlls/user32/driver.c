@@ -300,14 +300,7 @@ static void CDECL nulldrv_UnregisterHotKey( HWND hwnd, UINT modifiers, UINT vk )
 
 static SHORT CDECL nulldrv_VkKeyScanEx( WCHAR ch, HKL layout )
 {
-    static const short ctrl_vks[] = {
-        0x332, 0x241, 0x242, 0x003, 0x244, 0x245, 0x246, 0x247,
-        0x008, 0x009, 0x20d, 0x24b, 0x24c, 0x00d, 0x24e, 0x24f,
-        0x250, 0x251, 0x252, 0x253, 0x254, 0x255, 0x256, 0x257,
-        0x258, 0x259, 0x25a, 0x01b, 0x2dc, 0x2dd, 0x336, 0x3bd
-    };
-
-    return ch < ARRAY_SIZE(ctrl_vks) ? ctrl_vks[ch] : -1;
+    return -256; /* use default implementation */
 }
 
 static void CDECL nulldrv_DestroyCursorIcon( HCURSOR cursor )
