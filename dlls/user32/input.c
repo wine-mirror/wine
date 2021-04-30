@@ -77,6 +77,43 @@ static WORD get_key_state(void)
 }
 
 
+/***********************************************************************
+ *           get_locale_kbd_layout
+ */
+static HKL get_locale_kbd_layout(void)
+{
+    ULONG_PTR layout;
+    LANGID langid;
+
+    /* FIXME:
+     *
+     * layout = main_key_tab[kbd_layout].lcid;
+     *
+     * Winword uses return value of GetKeyboardLayout as a codepage
+     * to translate ANSI keyboard messages to unicode. But we have
+     * a problem with it: for instance Polish keyboard layout is
+     * identical to the US one, and therefore instead of the Polish
+     * locale id we return the US one.
+     */
+
+    layout = GetUserDefaultLCID();
+
+    /*
+     * Microsoft Office expects this value to be something specific
+     * for Japanese and Korean Windows with an IME the value is 0xe001
+     * We should probably check to see if an IME exists and if so then
+     * set this word properly.
+     */
+    langid = PRIMARYLANGID( LANGIDFROMLCID( layout ) );
+    if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
+        layout = MAKELONG( layout, 0xe001 ); /* IME */
+    else
+        layout = MAKELONG( layout, layout );
+
+    return (HKL)layout;
+}
+
+
 /**********************************************************************
  *		set_capture_window
  */
@@ -1297,11 +1334,45 @@ BOOL WINAPI BlockInput(BOOL fBlockIt)
  * Return number of values available if either input parm is
  *  0, per MS documentation.
  */
-UINT WINAPI GetKeyboardLayoutList(INT nBuff, HKL *layouts)
+UINT WINAPI GetKeyboardLayoutList( INT size, HKL *layouts )
 {
-    TRACE_(keyboard)( "(%d, %p)\n", nBuff, layouts );
+    WCHAR klid[KL_NAMELENGTH];
+    UINT count, tmp, i = 0;
+    HKEY hkey;
+    HKL layout;
 
-    return USER_Driver->pGetKeyboardLayoutList( nBuff, layouts );
+    TRACE_(keyboard)( "size %d, layouts %p.\n", size, layouts );
+
+    if ((count = USER_Driver->pGetKeyboardLayoutList( size, layouts )) != ~0) return count;
+
+    layout = get_locale_kbd_layout();
+    count = 0;
+
+    count++;
+    if (size && layouts)
+    {
+        layouts[count - 1] = layout;
+        if (count == size) return count;
+    }
+
+    if (!RegOpenKeyW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\Keyboard Layouts", &hkey ))
+    {
+        while (!RegEnumKeyW( hkey, i++, klid, ARRAY_SIZE(klid) ))
+        {
+            tmp = wcstoul( klid, NULL, 16 );
+            if (layout == UlongToHandle( tmp )) continue;
+
+            count++;
+            if (size && layouts)
+            {
+                layouts[count - 1] = UlongToHandle( tmp );
+                if (count == size) break;
+            }
+        }
+        RegCloseKey( hkey );
+    }
+
+    return count;
 }
 
 

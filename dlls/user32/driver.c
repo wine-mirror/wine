@@ -198,59 +198,7 @@ static void CDECL nulldrv_Beep(void)
 
 static UINT CDECL nulldrv_GetKeyboardLayoutList( INT size, HKL *layouts )
 {
-    HKEY hKeyKeyboard;
-    DWORD rc;
-    INT count = 0;
-    ULONG_PTR baselayout;
-    LANGID langid;
-
-    baselayout = GetUserDefaultLCID();
-    langid = PRIMARYLANGID(LANGIDFROMLCID(baselayout));
-    if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
-        baselayout = MAKELONG( baselayout, 0xe001 ); /* IME */
-    else
-        baselayout |= baselayout << 16;
-
-    /* Enumerate the Registry */
-    rc = RegOpenKeyW(HKEY_LOCAL_MACHINE,L"System\\CurrentControlSet\\Control\\Keyboard Layouts",&hKeyKeyboard);
-    if (rc == ERROR_SUCCESS)
-    {
-        do {
-            WCHAR szKeyName[9];
-            HKL layout;
-            rc = RegEnumKeyW(hKeyKeyboard, count, szKeyName, 9);
-            if (rc == ERROR_SUCCESS)
-            {
-                layout = (HKL)(ULONG_PTR)wcstoul(szKeyName,NULL,16);
-                if (baselayout != 0 && layout == (HKL)baselayout)
-                    baselayout = 0; /* found in the registry do not add again */
-                if (size && layouts)
-                {
-                    if (count >= size ) break;
-                    layouts[count] = layout;
-                }
-                count ++;
-            }
-        } while (rc == ERROR_SUCCESS);
-        RegCloseKey(hKeyKeyboard);
-    }
-
-    /* make sure our base layout is on the list */
-    if (baselayout != 0)
-    {
-        if (size && layouts)
-        {
-            if (count < size)
-            {
-                layouts[count] = (HKL)baselayout;
-                count++;
-            }
-        }
-        else
-            count++;
-    }
-
-    return count;
+    return ~0; /* use default implementation */
 }
 
 static INT CDECL nulldrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
