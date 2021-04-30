@@ -108,9 +108,6 @@ static void* (__cdecl *p__RTDynamicCast)(void*,int,void*,void*,int);
 static char* (__cdecl *p__unDName)(char*,const char*,int,void*,void*,unsigned short int);
 
 
-/* _very_ early native versions have serious RTTI bugs, so we check */
-static void* bAncientVersion;
-
 /* Emulate a __thiscall */
 #ifdef __i386__
 
@@ -172,7 +169,6 @@ static BOOL InitFunctionPtrs(void)
     SET(p__unDName,"__unDName");
 
     /* Extremely early versions export logic_error, and crash in RTTI */
-    SETNOFAIL(bAncientVersion, "??0logic_error@@QAE@ABQBD@Z");
     if (sizeof(void *) > sizeof(int))  /* 64-bit initialization */
     {
         SETNOFAIL(poperator_new, "??_U@YAPEAX_K@Z");
@@ -433,7 +429,7 @@ static void test_exception(void)
   name = call_func1(pexception_what, &e);
   ok(e.name == name, "Bad exception name from vtable e::what()\n");
 
-  if (p__RTtypeid && !bAncientVersion)
+  if (p__RTtypeid)
   {
     /* Check the rtti */
     type_info *ti = p__RTtypeid(&e);
@@ -556,7 +552,7 @@ static void test_bad_typeid(void)
   name = call_func1(pbad_typeid_what, &e);
   ok(e.name == name, "Bad bad_typeid name from vtable e::what()\n");
 
-  if (p__RTtypeid && !bAncientVersion)
+  if (p__RTtypeid)
   {
     /* Check the rtti */
     type_info *ti = p__RTtypeid(&e);
@@ -684,7 +680,7 @@ static void test_bad_cast(void)
   name = call_func1(pbad_cast_what, &e);
   ok(e.name == name, "Bad bad_cast name from vtable e::what()\n");
 
-  if (p__RTtypeid && !bAncientVersion)
+  if (p__RTtypeid)
   {
     /* Check the rtti */
     type_info *ti = p__RTtypeid(&e);
@@ -786,7 +782,7 @@ static void test___non_rtti_object(void)
   name = call_func1(p__non_rtti_object_what, &e);
   ok(e.name == name, "Bad __non_rtti_object name from vtable e::what()\n");
 
-  if (p__RTtypeid && !bAncientVersion)
+  if (p__RTtypeid)
   {
     /* Check the rtti */
     type_info *ti = p__RTtypeid(&e);
@@ -969,8 +965,7 @@ static void test_rtti(void)
   char *base = (char*)GetModuleHandleW(NULL);
 #endif
 
-  if (bAncientVersion ||
-      !p__RTCastToVoid || !p__RTtypeid || !pexception_ctor || !pbad_typeid_ctor
+  if (!p__RTCastToVoid || !p__RTtypeid || !pexception_ctor || !pbad_typeid_ctor
       || !p__RTDynamicCast || !pexception_dtor || !pbad_typeid_dtor)
     return;
 
