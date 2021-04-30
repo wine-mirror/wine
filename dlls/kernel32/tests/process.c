@@ -3857,7 +3857,7 @@ static void test_GetSystemCpuSetInformation(void)
     ok(ret && GetLastError() == 0xdeadbeef, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
     ok(size == expected_size, "Got unexpected size %u.\n", size);
 
-    ok(!memcmp(info, info_nt, expected_size), "Info does not match NtQuerySystemInformationEx().");
+    ok(!memcmp(info, info_nt, expected_size), "Info does not match NtQuerySystemInformationEx().\n");
 
     heap_free(info_nt);
     heap_free(info);
