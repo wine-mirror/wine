@@ -1375,12 +1375,67 @@ static NTSTATUS NTAPI ntlm_SpMakeSignature( LSA_SEC_HANDLE handle, ULONG qop, Se
     return create_signature( ctx, ctx->flags, msg, idx, SIGN_SEND, TRUE );
 }
 
+static NTSTATUS verify_signature( struct ntlm_ctx *ctx, unsigned int flags, SecBufferDesc *msg, int idx )
+{
+    NTSTATUS status;
+    unsigned int i;
+    SecBufferDesc desc;
+    SecBuffer *buf;
+    char sig[16];
+
+    if (!(buf = malloc( msg->cBuffers * sizeof(*buf) ))) return SEC_E_INSUFFICIENT_MEMORY;
+    desc.ulVersion = SECBUFFER_VERSION;
+    desc.cBuffers  = msg->cBuffers;
+    desc.pBuffers  = buf;
+
+    for (i = 0; i < msg->cBuffers; i++)
+    {
+        if (msg->pBuffers[i].BufferType == SECBUFFER_TOKEN)
+        {
+            buf[i].BufferType = SECBUFFER_TOKEN;
+            buf[i].cbBuffer   = 16;
+            buf[i].pvBuffer   = sig;
+        }
+        else
+        {
+            buf[i].BufferType = msg->pBuffers[i].BufferType;
+            buf[i].cbBuffer   = msg->pBuffers[i].cbBuffer;
+            buf[i].pvBuffer   = msg->pBuffers[i].pvBuffer;
+        }
+    }
+
+    if ((status = create_signature( ctx, flags, &desc, idx, SIGN_RECV, TRUE )) == SEC_E_OK)
+    {
+        if (memcmp( (char *)buf[idx].pvBuffer + 8, (char *)msg->pBuffers[idx].pvBuffer + 8, 8 ))
+            status = SEC_E_MESSAGE_ALTERED;
+    }
+
+    free( buf );
+    return status;
+}
+
+static NTSTATUS NTAPI ntlm_SpVerifySignature( LSA_SEC_HANDLE handle, SecBufferDesc *msg, ULONG msg_seq_no, ULONG *qop )
+{
+    struct ntlm_ctx *ctx = (struct ntlm_ctx *)handle;
+    int idx;
+
+    TRACE( "%lx, %p, %u, %p\n", handle, msg, msg_seq_no, qop );
+    if (msg_seq_no) FIXME( "ignoring message sequence number %u\n", msg_seq_no );
+
+    if (!handle) return SEC_E_INVALID_HANDLE;
+    if (!msg || !msg->pBuffers || msg->cBuffers < 2 || (idx = get_buffer_index( msg, SECBUFFER_TOKEN )) == -1)
+        return SEC_E_INVALID_TOKEN;
+    if (msg->pBuffers[idx].cbBuffer < 16) return SEC_E_BUFFER_TOO_SMALL;
+
+    return verify_signature( ctx, ctx->flags, msg, idx );
+}
+
 static SECPKG_USER_FUNCTION_TABLE ntlm_user_table =
 {
     ntlm_SpInstanceInit,
     NULL, /* SpInitUserModeContext */
     ntlm_SpMakeSignature,
-    NULL, /* SpVerifySignature */
+    ntlm_SpVerifySignature,
     NULL, /* SpSealMessage */
     NULL, /* SpUnsealMessage */
     NULL, /* SpGetContextToken */
