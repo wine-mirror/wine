@@ -523,6 +523,26 @@ static void arc4_init( struct arc4_info *info, const char *key, unsigned int len
     }
 }
 
+static void arc4_process( struct arc4_info *info, char *buf, unsigned int len )
+{
+    char *state = info->state;
+    unsigned int x = info->x, y = info->y, a, b;
+
+    while (len--)
+    {
+        x = (x + 1) & 0xff;
+        a = state[x];
+        y = (y + a) & 0xff;
+        b = state[y];
+        state[x] = b;
+        state[y] = a;
+        *buf++ ^= state[(a + b) & 0xff];
+    }
+
+    info->x = x;
+    info->y = y;
+}
+
 static int get_buffer_index( SecBufferDesc *desc, ULONG type )
 {
     int idx;
@@ -1178,11 +1198,188 @@ static NTSTATUS NTAPI ntlm_SpInstanceInit( ULONG version, SECPKG_DLL_FUNCTIONS *
     return STATUS_SUCCESS;
 }
 
+struct hmac_md5_ctx
+{
+    struct md5_ctx ctx;
+    char outer_padding[64];
+};
+
+static void hmac_md5_init( struct hmac_md5_ctx *ctx, const char *key, unsigned int key_len )
+{
+    char inner_padding[64], tmp_key[16];
+    unsigned int i;
+
+    if (key_len > 64)
+    {
+        struct md5_ctx tmp_ctx;
+
+        MD5Init( &tmp_ctx );
+        MD5Update( &tmp_ctx, key, key_len );
+        MD5Final( &tmp_ctx );
+        memcpy( tmp_key, tmp_ctx.digest, 16 );
+
+        key = tmp_key;
+        key_len = 16;
+    }
+
+    memset( inner_padding, 0, 64 );
+    memset( ctx->outer_padding, 0, 64 );
+    memcpy( inner_padding, key, key_len );
+    memcpy( ctx->outer_padding, key, key_len );
+
+    for (i = 0; i < 64; i++)
+    {
+        inner_padding[i] ^= 0x36;
+        ctx->outer_padding[i] ^= 0x5c;
+    }
+
+    MD5Init( &ctx->ctx );
+    MD5Update( &ctx->ctx, inner_padding, 64 );
+}
+
+static void hmac_md5_update( struct hmac_md5_ctx *ctx, const char *buf, unsigned int len )
+{
+    MD5Update( &ctx->ctx, buf, len );
+}
+
+static void hmac_md5_final( struct hmac_md5_ctx *ctx, char *digest )
+{
+    struct md5_ctx outer_ctx;
+    char inner_digest[16];
+
+    MD5Final( &ctx->ctx );
+    memcpy( inner_digest, ctx->ctx.digest, 16 );
+
+    MD5Init( &outer_ctx );
+    MD5Update( &outer_ctx, ctx->outer_padding, 64 );
+    MD5Update( &outer_ctx, inner_digest, 16 );
+    MD5Final( &outer_ctx );
+
+    memcpy( digest, outer_ctx.digest, 16 );
+}
+
+static SECURITY_STATUS create_signature( struct ntlm_ctx *ctx, unsigned int flags, SecBufferDesc *msg, int idx,
+                                         enum sign_direction dir, BOOL encrypt )
+{
+    unsigned int i, sign_version = 1;
+    char *sig = msg->pBuffers[idx].pvBuffer;
+
+    if (flags & FLAG_NEGOTIATE_NTLM2 && flags & FLAG_NEGOTIATE_SIGN)
+    {
+        char digest[16], seq_no[4];
+        struct hmac_md5_ctx hmac_md5;
+
+        if (dir == SIGN_SEND)
+        {
+            seq_no[0] = (ctx->crypt.ntlm2.send_seq_no >>  0) & 0xff;
+            seq_no[1] = (ctx->crypt.ntlm2.send_seq_no >>  8) & 0xff;
+            seq_no[2] = (ctx->crypt.ntlm2.send_seq_no >> 16) & 0xff;
+            seq_no[3] = (ctx->crypt.ntlm2.send_seq_no >> 24) & 0xff;
+            ctx->crypt.ntlm2.send_seq_no++;
+
+            hmac_md5_init( &hmac_md5, ctx->crypt.ntlm2.send_sign_key, 16 );
+        }
+        else
+        {
+            seq_no[0] = (ctx->crypt.ntlm2.recv_seq_no >>  0) & 0xff;
+            seq_no[1] = (ctx->crypt.ntlm2.recv_seq_no >>  8) & 0xff;
+            seq_no[2] = (ctx->crypt.ntlm2.recv_seq_no >> 16) & 0xff;
+            seq_no[3] = (ctx->crypt.ntlm2.recv_seq_no >> 24) & 0xff;
+            ctx->crypt.ntlm2.recv_seq_no++;
+
+            hmac_md5_init( &hmac_md5, ctx->crypt.ntlm2.recv_sign_key, 16 );
+        }
+
+        hmac_md5_update( &hmac_md5, seq_no, 4 );
+        for (i = 0; i < msg->cBuffers; ++i)
+        {
+            if (msg->pBuffers[i].BufferType & SECBUFFER_DATA)
+                hmac_md5_update( &hmac_md5, msg->pBuffers[i].pvBuffer, msg->pBuffers[i].cbBuffer );
+        }
+        hmac_md5_final( &hmac_md5, digest );
+
+        if (encrypt && flags & FLAG_NEGOTIATE_KEY_EXCHANGE)
+        {
+            if (dir == SIGN_SEND)
+                arc4_process( &ctx->crypt.ntlm2.send_arc4info, digest, 8 );
+            else
+                arc4_process( &ctx->crypt.ntlm2.recv_arc4info, digest, 8 );
+        }
+
+        sig[0] = (sign_version >>  0) & 0xff;
+        sig[1] = (sign_version >>  8) & 0xff;
+        sig[2] = (sign_version >> 16) & 0xff;
+        sig[3] = (sign_version >> 24) & 0xff;
+        memcpy( sig + 4, digest, 8 );
+        memcpy( sig + 12, seq_no, 4 );
+
+        msg->pBuffers[idx].cbBuffer = 16;
+        return SEC_E_OK;
+    }
+
+    if (flags & FLAG_NEGOTIATE_SIGN)
+    {
+        unsigned int crc = 0;
+
+        for (i = 0; i < msg->cBuffers; ++i)
+        {
+            if (msg->pBuffers[i].BufferType & SECBUFFER_DATA)
+                crc = RtlComputeCrc32( crc, msg->pBuffers[i].pvBuffer, msg->pBuffers[i].cbBuffer );
+        }
+
+        sig[0] = (sign_version >>  0) & 0xff;
+        sig[1] = (sign_version >>  8) & 0xff;
+        sig[2] = (sign_version >> 16) & 0xff;
+        sig[3] = (sign_version >> 24) & 0xff;
+        memset( sig + 4, 0, 4 );
+        sig[8] = (crc >>  0) & 0xff;
+        sig[9] = (crc >>  8) & 0xff;
+        sig[10] = (crc >> 16) & 0xff;
+        sig[11] = (crc >> 24) & 0xff;
+        sig[12] = (ctx->crypt.ntlm.seq_no >>  0) & 0xff;
+        sig[13] = (ctx->crypt.ntlm.seq_no >>  8) & 0xff;
+        sig[14] = (ctx->crypt.ntlm.seq_no >> 16) & 0xff;
+        sig[15] = (ctx->crypt.ntlm.seq_no >> 24) & 0xff;
+        ctx->crypt.ntlm.seq_no++;
+
+        if (encrypt) arc4_process( &ctx->crypt.ntlm.arc4info, sig + 4, 12 );
+        return SEC_E_OK;
+    }
+
+    if (flags & FLAG_NEGOTIATE_ALWAYS_SIGN || !flags)
+    {
+        /* create dummy signature */
+        memset( msg->pBuffers[idx].pvBuffer, 0, 16 );
+        memset( msg->pBuffers[idx].pvBuffer, 1, 1 );
+        msg->pBuffers[idx].cbBuffer = 16;
+        return SEC_E_OK;
+    }
+
+    return SEC_E_UNSUPPORTED_FUNCTION;
+}
+
+static NTSTATUS NTAPI ntlm_SpMakeSignature( LSA_SEC_HANDLE handle, ULONG qop, SecBufferDesc *msg, ULONG msg_seq_no )
+{
+    struct ntlm_ctx *ctx = (struct ntlm_ctx *)handle;
+    int idx;
+
+    TRACE( "%lx, 0x%08x, %p, %u\n", handle, qop, msg, msg_seq_no );
+    if (qop) FIXME( "ignoring quality of protection %08x\n", qop );
+    if (msg_seq_no) FIXME( "ignoring message sequence number %u\n", msg_seq_no );
+
+    if (!handle) return SEC_E_INVALID_HANDLE;
+    if (!msg || !msg->pBuffers || msg->cBuffers < 2 || (idx = get_buffer_index( msg, SECBUFFER_TOKEN )) == -1)
+        return SEC_E_INVALID_TOKEN;
+    if (msg->pBuffers[idx].cbBuffer < 16) return SEC_E_BUFFER_TOO_SMALL;
+
+    return create_signature( ctx, ctx->flags, msg, idx, SIGN_SEND, TRUE );
+}
+
 static SECPKG_USER_FUNCTION_TABLE ntlm_user_table =
 {
     ntlm_SpInstanceInit,
     NULL, /* SpInitUserModeContext */
-    NULL, /* SpMakeSignature */
+    ntlm_SpMakeSignature,
     NULL, /* SpVerifySignature */
     NULL, /* SpSealMessage */
     NULL, /* SpUnsealMessage */
