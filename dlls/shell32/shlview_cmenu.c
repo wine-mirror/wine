@@ -174,14 +174,14 @@ static HRESULT WINAPI ItemMenu_QueryContextMenu(
             mi.fMask = MIIM_ID | MIIM_STRING | MIIM_FTYPE;
             mi.dwTypeData = str;
             mi.cch = 255;
-            GetMenuItemInfoW(hmenu, FCIDM_SHVIEW_EXPLORE, MF_BYCOMMAND, &mi);
+            GetMenuItemInfoW(hmenu, FCIDM_SHVIEW_EXPLORE + idCmdFirst, MF_BYCOMMAND, &mi);
             RemoveMenu(hmenu, FCIDM_SHVIEW_EXPLORE + idCmdFirst, MF_BYCOMMAND);
 
             mi.cbSize = sizeof(mi);
             mi.fMask = MIIM_ID | MIIM_TYPE | MIIM_STATE | MIIM_STRING;
             mi.dwTypeData = str;
             mi.fState = MFS_ENABLED;
-            mi.wID = FCIDM_SHVIEW_EXPLORE;
+            mi.wID = FCIDM_SHVIEW_EXPLORE + idCmdFirst;
             mi.fType = MFT_STRING;
             InsertMenuItemW(hmenu, (uFlags & CMF_EXPLORE) ? 1 : 2, MF_BYPOSITION, &mi);
         }
@@ -189,7 +189,7 @@ static HRESULT WINAPI ItemMenu_QueryContextMenu(
         SetMenuDefaultItem(hmenu, 0, MF_BYPOSITION);
 
         if(uFlags & ~CMF_CANRENAME)
-            RemoveMenu(hmenu, FCIDM_SHVIEW_RENAME, MF_BYCOMMAND);
+            RemoveMenu(hmenu, FCIDM_SHVIEW_RENAME + idCmdFirst, MF_BYCOMMAND);
         else
         {
             UINT enable = MF_BYCOMMAND;
@@ -205,7 +205,7 @@ static HRESULT WINAPI ItemMenu_QueryContextMenu(
                 enable |= (attr & SFGAO_CANRENAME) ? MFS_ENABLED : MFS_DISABLED;
             }
 
-            EnableMenuItem(hmenu, FCIDM_SHVIEW_RENAME, enable);
+            EnableMenuItem(hmenu, FCIDM_SHVIEW_RENAME + idCmdFirst, enable);
         }
 
         return MAKE_HRESULT(SEVERITY_SUCCESS, 0, uIDMax-idCmdFirst);
