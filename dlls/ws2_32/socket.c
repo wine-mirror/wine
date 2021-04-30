@@ -1514,20 +1514,10 @@ static void free_per_thread_data(void)
 /***********************************************************************
  *		DllMain (WS2_32.init)
  */
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
+BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
 {
-    TRACE("%p 0x%x %p\n", hInstDLL, fdwReason, fImpLoad);
-    switch (fdwReason) {
-    case DLL_PROCESS_ATTACH:
-        break;
-    case DLL_PROCESS_DETACH:
-        if (fImpLoad) break;
+    if (reason == DLL_THREAD_DETACH)
         free_per_thread_data();
-        break;
-    case DLL_THREAD_DETACH:
-        free_per_thread_data();
-        break;
-    }
     return TRUE;
 }
 
