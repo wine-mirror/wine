@@ -1430,14 +1430,85 @@ static NTSTATUS NTAPI ntlm_SpVerifySignature( LSA_SEC_HANDLE handle, SecBufferDe
     return verify_signature( ctx, ctx->flags, msg, idx );
 }
 
+static NTSTATUS NTAPI ntlm_SpSealMessage( LSA_SEC_HANDLE handle, ULONG qop, SecBufferDesc *msg, ULONG msg_seq_no )
+{
+    int token_idx, data_idx;
+    struct ntlm_ctx *ctx;
+
+    TRACE( "%lx, %08x, %p %u\n", handle, qop, msg, msg_seq_no );
+    if (qop) FIXME( "ignoring quality of protection %08x\n", qop );
+    if (msg_seq_no) FIXME( "ignoring message sequence number %u\n", msg_seq_no );
+
+    if (!handle) return SEC_E_INVALID_HANDLE;
+
+    if (!msg || !msg->pBuffers || msg->cBuffers < 2 ||
+        (token_idx = get_buffer_index( msg, SECBUFFER_TOKEN )) == -1 ||
+        (data_idx = get_buffer_index( msg, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
+
+    if (msg->pBuffers[token_idx].cbBuffer < 16) return SEC_E_BUFFER_TOO_SMALL;
+
+    ctx = (struct ntlm_ctx *)handle;
+    if (ctx->flags & FLAG_NEGOTIATE_NTLM2 && ctx->flags & FLAG_NEGOTIATE_SEAL)
+    {
+        create_signature( ctx, ctx->flags, msg, token_idx, SIGN_SEND, FALSE );
+
+        arc4_process( &ctx->crypt.ntlm2.send_arc4info, msg->pBuffers[data_idx].pvBuffer,
+                      msg->pBuffers[data_idx].cbBuffer );
+        if (ctx->flags & FLAG_NEGOTIATE_KEY_EXCHANGE)
+            arc4_process( &ctx->crypt.ntlm2.send_arc4info, (char *)msg->pBuffers[token_idx].pvBuffer + 4, 8 );
+    }
+    else
+    {
+        char *sig = msg->pBuffers[token_idx].pvBuffer;
+
+        create_signature( ctx, ctx->flags | FLAG_NEGOTIATE_SIGN, msg, token_idx, SIGN_SEND, FALSE );
+
+        arc4_process( &ctx->crypt.ntlm.arc4info, msg->pBuffers[data_idx].pvBuffer, msg->pBuffers[data_idx].cbBuffer );
+        arc4_process( &ctx->crypt.ntlm.arc4info, sig + 4, 12 );
+
+        if (ctx->flags & FLAG_NEGOTIATE_ALWAYS_SIGN || !ctx->flags) memset( sig + 4, 0, 4 );
+    }
+
+    return SEC_E_OK;
+}
+
+static NTSTATUS NTAPI ntlm_SpUnsealMessage( LSA_SEC_HANDLE handle, SecBufferDesc *msg, ULONG msg_seq_no, ULONG *qop )
+{
+    int token_idx, data_idx;
+    struct ntlm_ctx *ctx;
+
+    TRACE( "%lx, %p, %u, %p\n", handle, msg, msg_seq_no, qop );
+    if (msg_seq_no) FIXME( "ignoring message sequence number %u\n", msg_seq_no );
+
+    if (!handle) return SEC_E_INVALID_HANDLE;
+
+    if (!msg || !msg->pBuffers || msg->cBuffers < 2 ||
+        (token_idx = get_buffer_index( msg, SECBUFFER_TOKEN )) == -1 ||
+        (data_idx = get_buffer_index( msg, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
+
+    if (msg->pBuffers[token_idx].cbBuffer < 16) return SEC_E_BUFFER_TOO_SMALL;
+
+    ctx = (struct ntlm_ctx *)handle;
+    if (ctx->flags & FLAG_NEGOTIATE_NTLM2 && ctx->flags & FLAG_NEGOTIATE_SEAL)
+        arc4_process( &ctx->crypt.ntlm2.recv_arc4info, msg->pBuffers[data_idx].pvBuffer,
+                      msg->pBuffers[data_idx].cbBuffer );
+    else
+        arc4_process( &ctx->crypt.ntlm.arc4info, msg->pBuffers[data_idx].pvBuffer,
+                      msg->pBuffers[data_idx].cbBuffer);
+
+    /* make sure we use a session key for the signature check, SealMessage always does that,
+       even in the dummy case */
+    return verify_signature( ctx, ctx->flags | FLAG_NEGOTIATE_SIGN, msg, token_idx );
+}
+
 static SECPKG_USER_FUNCTION_TABLE ntlm_user_table =
 {
     ntlm_SpInstanceInit,
     NULL, /* SpInitUserModeContext */
     ntlm_SpMakeSignature,
     ntlm_SpVerifySignature,
-    NULL, /* SpSealMessage */
-    NULL, /* SpUnsealMessage */
+    ntlm_SpSealMessage,
+    ntlm_SpUnsealMessage,
     NULL, /* SpGetContextToken */
     NULL, /* SpQueryContextAttributes */
     NULL, /* SpCompleteAuthToken */
