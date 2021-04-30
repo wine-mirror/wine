@@ -50,8 +50,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(xact3);
 #define IXACT3WaveBankVtbl IXACTWaveBankVtbl
 #endif
 
-static HINSTANCE instance;
-
 typedef struct _XACT3CueImpl {
     IXACT3Cue IXACT3Cue_iface;
     FACTCue *fact_cue;
@@ -1465,7 +1463,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, void *pReserved)
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
-        instance = hinstDLL;
         DisableThreadLibraryCalls( hinstDLL );
 
 #ifdef HAVE_FAUDIOLINKEDVERSION
@@ -1487,14 +1484,4 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 
     FIXME("Unknown class %s\n", debugstr_guid(rclsid));
     return CLASS_E_CLASSNOTAVAILABLE;
-}
-
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources(instance);
-}
-
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources(instance);
 }

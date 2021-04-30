@@ -40,20 +40,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dxof);
 
-static HINSTANCE instance;
-
-/* For the moment, do nothing here. */
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
-{
-    switch(fdwReason) {
-        case DLL_PROCESS_ATTACH:
-            instance = hInstDLL;
-            DisableThreadLibraryCalls(hInstDLL);
-	    break;
-    }
-    return TRUE;
-}
-
 /******************************************************************************
  * DirectX File ClassFactory
  */
@@ -217,20 +203,4 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 
     *ppv = &(factory->IClassFactory_iface);
     return S_OK;
-}
-
-/***********************************************************************
- *		DllRegisterServer (D3DXOF.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( instance );
-}
-
-/***********************************************************************
- *		DllUnregisterServer (D3DXOF.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( instance );
 }

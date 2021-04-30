@@ -1,8 +1,8 @@
 @ stdcall -private DllCanUnloadNow()
 @ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stub DllInstall
-@ stub DllRegisterServer
-@ stub DllUnregisterServer
+@ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()
 @ stub DsBrowseForContainerA
 @ stub DsBrowseForContainerW
 @ stub DsGetFriendlyClassName

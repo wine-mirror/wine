@@ -27,21 +27,3 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
     FIXME("Not implemented. Requested class was:%s\n", debugstr_guid(rclsid));
     return CLASS_E_CLASSNOTAVAILABLE;
 }
-
-/*****************************************************
- *    DllRegisterServer (INKOBJ.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    FIXME("Not implemented.\n");
-    return E_UNEXPECTED; /* unable to register */
-}
-
-/*****************************************************
- *    DllUnregisterServer (INKOBJ.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    FIXME("Not implemented.\n");
-    return E_UNEXPECTED; /* unable to register */
-}

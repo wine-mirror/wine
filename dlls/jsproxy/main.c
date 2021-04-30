@@ -33,8 +33,6 @@
 #include "wine/debug.h"
 #include "wine/heap.h"
 
-static HINSTANCE instance;
-
 WINE_DEFAULT_DEBUG_CHANNEL(jsproxy);
 
 static CRITICAL_SECTION cs_jsproxy;
@@ -45,24 +43,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": cs_jsproxy") }
 };
 static CRITICAL_SECTION cs_jsproxy = { &critsect_debug, -1, 0, 0, 0, 0 };
-
-/******************************************************************
- *      DllMain (jsproxy.@)
- */
-BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
-{
-    switch (reason)
-    {
-    case DLL_PROCESS_ATTACH:
-        instance = hinst;
-        DisableThreadLibraryCalls( hinst );
-        break;
-
-    case DLL_PROCESS_DETACH:
-        break;
-    }
-    return TRUE;
-}
 
 static inline WCHAR *strdupAW( const char *src, int len )
 {

@@ -6,8 +6,7 @@ EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 C_SRCS = \
 	factory.c \
 	service.c \
-	wiadevmgr.c \
-	wiaservc_main.c
+	wiadevmgr.c
 
 IDL_SRCS = wiaservc.idl
 

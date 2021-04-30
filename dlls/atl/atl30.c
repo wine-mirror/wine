@@ -32,8 +32,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(atl);
 
-extern HINSTANCE atl_instance;
-
 #define ATLVer1Size FIELD_OFFSET(_ATL_MODULEW, dwAtlBuildVer)
 
 HRESULT WINAPI AtlModuleInit(_ATL_MODULEW* pM, _ATL_OBJMAP_ENTRYW* p, HINSTANCE h)
@@ -527,20 +525,4 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, LPVOID *ppvObject)
 
     FIXME("Not supported class %s\n", debugstr_guid(clsid));
     return CLASS_E_CLASSNOTAVAILABLE;
-}
-
-/***********************************************************************
- *              DllRegisterServer (ATL.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( atl_instance );
-}
-
-/***********************************************************************
- *              DllUnRegisterServer (ATL.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( atl_instance );
 }

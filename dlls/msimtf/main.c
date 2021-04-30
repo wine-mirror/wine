@@ -35,23 +35,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(msimtf);
 
 extern HRESULT ActiveIMMApp_Constructor(IUnknown *punkOuter, IUnknown **ppOut);
 
-static HINSTANCE msimtf_instance;
-
-/******************************************************************
- *              DllMain (msimtf.@)
- */
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
-{
-    switch(fdwReason)
-    {
-    case DLL_PROCESS_ATTACH:
-        msimtf_instance = hInstDLL;
-        DisableThreadLibraryCalls(hInstDLL);
-        break;
-    }
-    return TRUE;
-}
-
 typedef struct {
     IClassFactory IClassFactory_iface;
 
@@ -142,20 +125,4 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 
     FIXME("(%s %s %p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
-}
-
-/***********************************************************************
- *          DllRegisterServer (msimtf.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( msimtf_instance );
-}
-
-/***********************************************************************
- *          DllUnregisterServer (msimtf.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( msimtf_instance );
 }

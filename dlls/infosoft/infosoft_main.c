@@ -37,20 +37,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(infosoft);
 
-static HINSTANCE instance;
-
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
-{
-    switch(fdwReason)
-    {
-    case DLL_PROCESS_ATTACH:
-        instance = hInstDLL;
-        DisableThreadLibraryCalls(hInstDLL);
-        break;
-    }
-    return TRUE;
-}
-
 DECLSPEC_HIDDEN extern HRESULT WINAPI wb_Constructor(IUnknown*, REFIID, LPVOID *);
 
 typedef HRESULT (CALLBACK *LPFNCREATEINSTANCE)(IUnknown*, REFIID, LPVOID*);
@@ -144,21 +130,4 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
         return CLASS_E_CLASSNOTAVAILABLE;
 
     return IClassFactory_QueryInterface(pcf, iid, ppv);
-}
-
-
-/***********************************************************************
- *		DllRegisterServer (INFOSOFT.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( instance );
-}
-
-/***********************************************************************
- *		DllUnregisterServer (INFOSOFT.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( instance );
 }

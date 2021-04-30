@@ -1,7 +1,7 @@
 /*
- *	exported dll functions for comcat.dll
+ * DllRegisterServer default implementation
  *
- * Copyright (C) 2002-2003 John K. Hohm
+ * Copyright 2021 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,22 +19,29 @@
  */
 
 #include <stdarg.h>
-
+#define COBJMACROS
 #include "windef.h"
 #include "winbase.h"
+#include "olectl.h"
+#include "rpcproxy.h"
 
-/***********************************************************************
- *		DllRegisterServer (COMCAT.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
+static inline void *image_base(void)
 {
-    return S_OK;
+#if defined(__MINGW32__) || defined(_MSC_VER)
+    extern IMAGE_DOS_HEADER __ImageBase;
+    return (void *)&__ImageBase;
+#else
+    extern IMAGE_NT_HEADERS __wine_spec_nt_header;
+    return (void *)((__wine_spec_nt_header.OptionalHeader.ImageBase + 0xffff) & ~0xffff);
+#endif
 }
 
-/***********************************************************************
- *		DllUnregisterServer (COMCAT.@)
- */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( image_base() );
+}
+
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    return S_OK;
+    return __wine_unregister_resources( image_base() );
 }

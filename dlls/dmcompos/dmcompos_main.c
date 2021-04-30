@@ -38,7 +38,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmcompos);
 
-static HINSTANCE instance;
 LONG DMCOMPOS_refCount = 0;
 
 typedef struct {
@@ -137,20 +136,6 @@ static IClassFactoryImpl Template_CF = {{&classfactory_vtbl}, create_direct_musi
 static IClassFactoryImpl SignPostTrack_CF = {{&classfactory_vtbl}, create_dmsignposttrack};
 
 /******************************************************************
- *		DllMain
- *
- *
- */
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
-	if (fdwReason == DLL_PROCESS_ATTACH) 	{
-            instance = hinstDLL;
-            DisableThreadLibraryCalls(hinstDLL);
-	}
-	return TRUE;
-}
-
-
-/******************************************************************
  *		DllCanUnloadNow (DMCOMPOS.@)
  *
  *
@@ -192,25 +177,3 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv) {
     WARN("(%s, %s, %p): no interface found.\n", debugstr_dmguid(rclsid), debugstr_dmguid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
 }
-
-/***********************************************************************
- *		DllRegisterServer (DMCOMPOS.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( instance );
-}
-
-/***********************************************************************
- *		DllUnregisterServer (DMCOMPOS.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( instance );
-}
-
-/******************************************************************
- *		Helper functions
- *
- *
- */

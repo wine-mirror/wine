@@ -37,8 +37,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dpnet);
 
-static HINSTANCE instance;
-
 static BOOL winsock_loaded = FALSE;
 
 static BOOL WINAPI winsock_startup(INIT_ONCE *once, void *param, void **context)
@@ -68,7 +66,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
     switch(fdwReason)
     {
         case DLL_PROCESS_ATTACH:
-            instance = hInstDLL;
             DisableThreadLibraryCalls(hInstDLL);
             break;
 
@@ -183,20 +180,4 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 
     FIXME("(%s,%s,%p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
-}
-
-/***********************************************************************
- *		DllRegisterServer (DPNET.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( instance );
-}
-
-/***********************************************************************
- *		DllUnregisterServer (DPNET.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( instance );
 }

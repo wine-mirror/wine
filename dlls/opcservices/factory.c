@@ -481,28 +481,3 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
     WARN("Unsupported class %s.\n", debugstr_guid(clsid));
     return E_NOTIMPL;
 }
-
-static HINSTANCE OPC_hInstance;
-
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD reason, void *reserved)
-{
-    OPC_hInstance = hInstDLL;
-
-    switch (reason)
-    {
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls(hInstDLL);
-        break;
-    }
-    return TRUE;
-}
-
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( OPC_hInstance );
-}
-
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( OPC_hInstance );
-}

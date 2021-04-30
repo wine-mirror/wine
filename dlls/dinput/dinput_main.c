@@ -1680,22 +1680,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
-/***********************************************************************
- *		DllRegisterServer (DINPUT.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( DINPUT_instance );
-}
-
-/***********************************************************************
- *		DllUnregisterServer (DINPUT.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( DINPUT_instance );
-}
-
 /******************************************************************************
  *	DInput hook thread
  */

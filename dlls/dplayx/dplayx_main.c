@@ -68,10 +68,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 
-static HINSTANCE instance;
-
 /* This is a globally exported variable at ordinal 6 of DPLAYX.DLL */
-DWORD gdwDPlaySPRefCount = 0; /* FIXME: Should it be initialized here? */
+DWORD gdwDPlaySPRefCount = 0;
 
 
 BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
@@ -82,7 +80,6 @@ BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
   switch ( fdwReason )
   {
     case DLL_PROCESS_ATTACH:
-        instance = hinstDLL;
         DisableThreadLibraryCalls(hinstDLL);
         /* First instance perform construction of global processor data */
         return DPLAYX_ConstructData();
@@ -113,20 +110,4 @@ HRESULT WINAPI DllCanUnloadNow(void)
   TRACE( ": returning 0x%08x\n", hr );
 
   return hr;
-}
-
-/***********************************************************************
- *		DllRegisterServer (DPLAYX.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( instance );
-}
-
-/***********************************************************************
- *		DllUnregisterServer (DPLAYX.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( instance );
 }

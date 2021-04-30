@@ -44,31 +44,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
-static HINSTANCE mfinstance;
-
-BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
-{
-    switch (reason)
-    {
-        case DLL_PROCESS_ATTACH:
-            mfinstance = instance;
-            DisableThreadLibraryCalls(instance);
-            break;
-    }
-
-    return TRUE;
-}
-
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( mfinstance );
-}
-
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( mfinstance );
-}
-
 struct stream_response
 {
     struct list entry;

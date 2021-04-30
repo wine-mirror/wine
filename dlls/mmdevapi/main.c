@@ -44,8 +44,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 
-static HINSTANCE instance;
-
 DriverFuncs drvs;
 
 const WCHAR drv_keyW[] = L"Software\\Wine\\Drivers";
@@ -160,7 +158,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     switch (fdwReason)
     {
         case DLL_PROCESS_ATTACH:
-            instance = hinstDLL;
             DisableThreadLibraryCalls(hinstDLL);
             break;
         case DLL_PROCESS_DETACH:
@@ -290,22 +287,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     WARN("(%s, %s, %p): no class found.\n", debugstr_guid(rclsid),
          debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
-}
-
-/***********************************************************************
- *		DllRegisterServer (MMDEVAPI.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( instance );
-}
-
-/***********************************************************************
- *		DllUnregisterServer (MMDEVAPI.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( instance );
 }
 
 struct activate_async_op {

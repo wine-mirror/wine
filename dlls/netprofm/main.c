@@ -29,20 +29,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(netprofm);
 
-static HINSTANCE instance;
-
-BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
-{
-    switch (reason)
-    {
-        case DLL_PROCESS_ATTACH:
-            instance = hinst;
-            DisableThreadLibraryCalls( hinst );
-            break;
-    }
-    return TRUE;
-}
-
 struct netprofm_cf
 {
     IClassFactory IClassFactory_iface;
@@ -129,20 +115,4 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
     }
     if (!cf) return CLASS_E_CLASSNOTAVAILABLE;
     return IClassFactory_QueryInterface( cf, iid, ppv );
-}
-
-/***********************************************************************
- *      DllRegisterServer (NETPROFM.@)
- */
-HRESULT WINAPI DllRegisterServer( void )
-{
-    return __wine_register_resources( instance );
-}
-
-/***********************************************************************
- *      DllUnregisterServer (NETPROFM.@)
- */
-HRESULT WINAPI DllUnregisterServer( void )
-{
-    return __wine_unregister_resources( instance );
 }

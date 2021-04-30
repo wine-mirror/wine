@@ -25,7 +25,8 @@
 #include "windef.h"
 #include "winbase.h"
 #include "ole2.h"
-
+#include "shobjidl.h"
+#include "initguid.h"
 #include "gameux.h"
 #include "gameux_private.h"
 

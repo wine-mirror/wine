@@ -155,13 +155,3 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, LPVOID *out)
 
     return IClassFactory_QueryInterface(&factory->IClassFactory_iface, iid, out);
 }
-
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( windowscodecs_module );
-}
-
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( windowscodecs_module );
-}

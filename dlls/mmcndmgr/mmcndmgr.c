@@ -33,8 +33,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmc);
 
-static HINSTANCE MMC_hInstance;
-
 static HRESULT WINAPI mmcversion_QueryInterface(IMMCVersionInfo *iface, REFIID riid, void **ppv)
 {
     TRACE("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
@@ -154,27 +152,4 @@ HRESULT WINAPI DllGetClassObject( REFCLSID riid, REFIID iid, LPVOID *ppv )
 
     FIXME("Unsupported interface %s\n", debugstr_guid(riid));
     return CLASS_E_CLASSNOTAVAILABLE;
- }
-
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( MMC_hInstance );
-}
-
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( MMC_hInstance );
-}
-
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    TRACE("(%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
-
-    switch (fdwReason)
-    {
-    case DLL_PROCESS_ATTACH:
-        MMC_hInstance = hinstDLL;
-        break;
-    }
-    return TRUE;
 }

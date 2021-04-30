@@ -155,19 +155,3 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     if (!cf) return CLASS_E_CLASSNOTAVAILABLE;
     return IClassFactory_QueryInterface( cf, riid, ppv );
 }
-
-/***********************************************************************
- *          DllRegisterServer (winhttp.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( winhttp_instance );
-}
-
-/***********************************************************************
- *          DllUnregisterServer (winhttp.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( winhttp_instance );
-}

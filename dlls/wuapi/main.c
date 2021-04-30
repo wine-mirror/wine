@@ -113,20 +113,6 @@ static wucf updatescf = { { &wucf_vtbl }, AutomaticUpdates_create };
 static wucf sysinfocf = { { &wucf_vtbl }, SystemInformation_create };
 static wucf installercf = { { &wucf_vtbl }, UpdateInstaller_create };
 
-static HINSTANCE instance;
-
-BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID lpv )
-{
-    switch(reason)
-    {
-    case DLL_PROCESS_ATTACH:
-        instance = hinst;
-        DisableThreadLibraryCalls( hinst );
-        break;
-    }
-    return TRUE;
-}
-
 HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
 {
     IClassFactory *cf = NULL;
@@ -151,20 +137,4 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
     }
     if (!cf) return CLASS_E_CLASSNOTAVAILABLE;
     return IClassFactory_QueryInterface( cf, iid, ppv );
-}
-
-/***********************************************************************
- *		DllRegisterServer (WUAPI.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( instance );
-}
-
-/***********************************************************************
- *		DllUnregisterServer (WUAPI.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( instance );
 }

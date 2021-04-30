@@ -26,5 +26,5 @@
 @ stub CryptExtOpenSTRW
 @ stdcall -private DllCanUnloadNow()
 @ stub DllGetClassObject
-@ stub DllRegisterServer
-@ stub DllUnregisterServer
+@ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()

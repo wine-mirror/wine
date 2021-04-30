@@ -46,12 +46,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
-HRESULT WINAPI DllRegisterServer(void)
-{
-    FIXME("\n");
-    return S_OK;
-}
-
 HRESULT WINAPI CIState( WCHAR const *pwcsCat, WCHAR const *pwcsMachine, CI_STATE *pCiState)
 {
     FIXME("%s %s %p\n", debugstr_w(pwcsCat), debugstr_w(pwcsMachine), pCiState);

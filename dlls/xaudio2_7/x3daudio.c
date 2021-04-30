@@ -33,21 +33,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(xaudio2);
 #endif
 
-#ifdef X3DAUDIO1_VER
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, void *pReserved)
-{
-    TRACE("(%p, %d, %p)\n", hinstDLL, reason, pReserved);
-
-    switch (reason)
-    {
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls( hinstDLL );
-        break;
-    }
-    return TRUE;
-}
-#endif /* X3DAUDIO1_VER */
-
 #if XAUDIO2_VER >= 8
 HRESULT CDECL X3DAudioInitialize(UINT32 chanmask, float speedofsound,
         X3DAUDIO_HANDLE handle)

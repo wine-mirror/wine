@@ -33,35 +33,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cdosys);
 
-static HINSTANCE instance;
-
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD reason, LPVOID lpv)
-{
-    TRACE("(%p, %d, %p)\n", hInstDLL, reason, lpv);
-
-    switch (reason)
-    {
-    case DLL_PROCESS_ATTACH:
-        instance = hInstDLL;
-        DisableThreadLibraryCalls(hInstDLL);
-        break;
-    }
-    return TRUE;
-}
-
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **obj)
 {
     FIXME("(%s, %s, %p) stub!\n", debugstr_guid(rclsid), debugstr_guid(riid), obj);
 
     return CLASS_E_CLASSNOTAVAILABLE;
-}
-
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( instance );
-}
-
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( instance );
 }

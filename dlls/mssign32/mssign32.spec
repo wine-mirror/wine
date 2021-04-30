@@ -1,5 +1,5 @@
-@ stub DllRegisterServer
-@ stub DllUnregisterServer
+@ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()
 @ stub FreeCryptProvFromCert
 @ stub GetCryptProvFromCert
 @ stdcall PvkFreeCryptProv(ptr wstr long wstr)

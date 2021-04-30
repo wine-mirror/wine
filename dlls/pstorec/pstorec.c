@@ -355,18 +355,6 @@ HRESULT WINAPI PStoreCreateInstance( IPStore** ppProvider,
     return S_OK;
 }
 
-HRESULT WINAPI DllRegisterServer(void)
-{
-    FIXME("\n");
-    return S_OK;
-}
-
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    FIXME("\n");
-    return S_OK;
-}
-
 /***********************************************************************
  *             DllGetClassObject (PSTOREC.@)
  */

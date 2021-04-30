@@ -53,8 +53,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(adsldp);
 DEFINE_GUID(CLSID_LDAP,0x228d9a81,0xc302,0x11cf,0x9a,0xa4,0x00,0xaa,0x00,0x4a,0x56,0x91);
 DEFINE_GUID(CLSID_LDAPNamespace,0x228d9a82,0xc302,0x11cf,0x9a,0xa4,0x00,0xaa,0x00,0x4a,0x56,0x91);
 
-static HMODULE adsldp_hinst;
-
 static HRESULT LDAPNamespace_create(REFIID riid, void **obj);
 
 typedef struct
@@ -2113,29 +2111,4 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, LPVOID *obj)
 
     FIXME("class %s/%s is not implemented\n", debugstr_guid(clsid), debugstr_guid(iid));
     return CLASS_E_CLASSNOTAVAILABLE;
-}
-
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources(adsldp_hinst);
-}
-
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources(adsldp_hinst);
-}
-
-BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
-{
-    TRACE("%p,%u,%p\n", hinst, reason, reserved);
-
-    switch (reason)
-    {
-    case DLL_PROCESS_ATTACH:
-        adsldp_hinst = hinst;
-        DisableThreadLibraryCalls(hinst);
-        break;
-    }
-
-    return TRUE;
 }

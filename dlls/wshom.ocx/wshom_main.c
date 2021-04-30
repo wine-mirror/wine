@@ -26,8 +26,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wshom);
 
-static HINSTANCE wshom_instance;
-
 static inline struct provideclassinfo *impl_from_IProvideClassInfo(IProvideClassInfo *iface)
 {
     return CONTAINING_RECORD(iface, struct provideclassinfo, IProvideClassInfo_iface);
@@ -223,8 +221,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     switch(fdwReason)
     {
     case DLL_PROCESS_ATTACH:
-        wshom_instance = hInstDLL;
-        DisableThreadLibraryCalls(wshom_instance);
+        DisableThreadLibraryCalls(hInstDLL);
         break;
     case DLL_PROCESS_DETACH:
         if (lpv) break;
@@ -247,22 +244,4 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 
     FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
-}
-
-/***********************************************************************
- *          DllRegisterServer (wshom.ocx.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    TRACE("()\n");
-    return __wine_register_resources(wshom_instance);
-}
-
-/***********************************************************************
- *          DllUnregisterServer (wshom.ocx.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    TRACE("()\n");
-    return __wine_unregister_resources(wshom_instance);
 }

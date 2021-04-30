@@ -2373,24 +2373,6 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
 }
 
 /***********************************************************************
- *      DllRegisterServer (scrobj.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    TRACE("()\n");
-    return __wine_register_resources(scrobj_instance);
-}
-
-/***********************************************************************
- *      DllUnregisterServer (scrobj.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    TRACE("()\n");
-    return __wine_unregister_resources(scrobj_instance);
-}
-
-/***********************************************************************
  *      DllInstall (scrobj.@)
  */
 HRESULT WINAPI DllInstall(BOOL install, const WCHAR *arg)

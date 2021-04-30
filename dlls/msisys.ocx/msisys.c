@@ -41,23 +41,3 @@ HRESULT WINAPI DllGetClassObject(REFCLSID pclsid, REFIID piid, LPVOID *ppv)
 
 	return CLASS_E_CLASSNOTAVAILABLE;
 }
-
-/***********************************************************************
- *		DllRegisterServer (MSISYS.@)
- */
-
-HRESULT WINAPI DllRegisterServer( void )
-{
-	FIXME( "(): stub\n" );
-	return E_FAIL;
-}
-
-/***********************************************************************
- *		DllUnregisterServer (MSISYS.@)
- */
-
-HRESULT WINAPI DllUnregisterServer( void )
-{
-	FIXME( "(): stub\n" );
-	return E_FAIL;
-}

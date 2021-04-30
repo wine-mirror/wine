@@ -32,8 +32,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dpvoice);
 
-static HINSTANCE DPVOICE_hInstance;
-
 typedef struct
 {
     IClassFactory IClassFactory_iface;
@@ -105,23 +103,6 @@ HRESULT WINAPI DirectPlayVoiceCreate(LPCGUID pIID, void **ppvInterface)
     return E_NOTIMPL;
 }
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
-
-    switch (fdwReason)
-    {
-        case DLL_PROCESS_ATTACH:
-            DPVOICE_hInstance = hinstDLL;
-            DisableThreadLibraryCalls(hinstDLL);
-            break;
-        default:
-            break;
-    }
-
-    return TRUE;
-}
-
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 {
     int i = 0;
@@ -141,14 +122,4 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 
     FIXME("(%s,%s,%p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
-}
-
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( DPVOICE_hInstance );
-}
-
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( DPVOICE_hInstance );
 }

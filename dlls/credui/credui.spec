@@ -16,6 +16,6 @@
 @ stdcall CredUnPackAuthenticationBufferW(long ptr long ptr ptr ptr ptr ptr ptr)
 @ stdcall -private DllCanUnloadNow()
 @ stub DllGetClassObject
-@ stub DllRegisterServer
-@ stub DllUnregisterServer
+@ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()
 @ stdcall SspiPromptForCredentialsW(wstr ptr long wstr ptr ptr ptr long)

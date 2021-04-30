@@ -33,8 +33,6 @@
 #include "wine/debug.h"
 #include "wine/heap.h"
 
-static HINSTANCE instance;
-
 WINE_DEFAULT_DEBUG_CHANNEL(dssenh);
 
 #define MAGIC_KEY (('K' << 24) | ('E' << 16) | ('Y' << 8) | '0')
@@ -1030,34 +1028,4 @@ BOOL WINAPI CPVerifySignature( HCRYPTPROV hprov, HCRYPTHASH hhash, const BYTE *s
     }
 
     return !BCryptVerifySignature( key->handle, NULL, hash->value, hash->len, (UCHAR *)sig, siglen, 0 );
-}
-
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
-
-    switch (fdwReason)
-    {
-    case DLL_PROCESS_ATTACH:
-        instance = hinstDLL;
-        DisableThreadLibraryCalls(hinstDLL);
-        break;
-    }
-    return TRUE;
-}
-
-/*****************************************************
- *    DllRegisterServer (DSSENH.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( instance );
-}
-
-/*****************************************************
- *    DllUnregisterServer (DSSENH.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( instance );
 }

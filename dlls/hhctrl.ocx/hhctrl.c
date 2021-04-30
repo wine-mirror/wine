@@ -588,19 +588,3 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     FIXME("(%s %s %p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
 }
-
-/***********************************************************************
- *		DllRegisterServer (HHCTRL.OCX.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( hhctrl_hinstance );
-}
-
-/***********************************************************************
- *		DllUnregisterServer (HHCTRL.OCX.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( hhctrl_hinstance );
-}

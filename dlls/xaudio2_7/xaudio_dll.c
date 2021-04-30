@@ -77,8 +77,6 @@ __ASM_GLOBAL_FUNC( call_on_voice_processing_pass_start,
                    "ret" )
 #endif
 
-static HINSTANCE instance;
-
 static XA2VoiceImpl *impl_from_IXAudio2Voice(IXAudio2Voice *iface);
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, void *pReserved)
@@ -88,7 +86,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, void *pReserved)
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
-        instance = hinstDLL;
         DisableThreadLibraryCalls( hinstDLL );
 #ifdef HAVE_FAUDIOLINKEDVERSION
         TRACE("Using FAudio version %d\n", FAudioLinkedVersion() );
@@ -96,18 +93,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, void *pReserved)
         break;
     }
     return TRUE;
-}
-
-HRESULT WINAPI DllRegisterServer(void)
-{
-    TRACE("\n");
-    return __wine_register_resources(instance);
-}
-
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    TRACE("\n");
-    return __wine_unregister_resources(instance);
 }
 
 /* Effect Wrapping */

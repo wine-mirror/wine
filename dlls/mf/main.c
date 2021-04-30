@@ -34,7 +34,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
-static HINSTANCE mf_instance;
 extern const GUID CLSID_FileSchemePlugin;
 
 struct activate_object
@@ -1046,35 +1045,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **obj)
 
     WARN("%s: class not found.\n", debugstr_guid(rclsid));
     return CLASS_E_CLASSNOTAVAILABLE;
-}
-
-/***********************************************************************
- *          DllRegisterServer (mf.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( mf_instance );
-}
-
-/***********************************************************************
- *          DllUnregisterServer (mf.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( mf_instance );
-}
-
-BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
-{
-    switch (reason)
-    {
-        case DLL_PROCESS_ATTACH:
-            mf_instance = instance;
-            DisableThreadLibraryCalls(instance);
-            break;
-    }
-
-    return TRUE;
 }
 
 static HRESULT prop_string_vector_append(PROPVARIANT *vector, unsigned int *capacity, BOOL unique, const WCHAR *str)

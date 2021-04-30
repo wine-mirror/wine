@@ -39,8 +39,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msctf);
 
-static HINSTANCE MSCTF_hinstance;
-
 typedef struct
 {
     DWORD id;
@@ -557,7 +555,6 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD fdwReason, LPVOID fImpLoad)
     switch (fdwReason)
     {
         case DLL_PROCESS_ATTACH:
-            MSCTF_hinstance = hinst;
             tlsIndex = TlsAlloc();
             break;
         case DLL_PROCESS_DETACH:
@@ -585,22 +582,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, LPVOID *ppvOut)
         }
     FIXME("CLSID %s not supported\n", debugstr_guid(clsid));
     return CLASS_E_CLASSNOTAVAILABLE;
-}
-
-/***********************************************************************
- *		DllRegisterServer (MSCTF.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( MSCTF_hinstance );
-}
-
-/***********************************************************************
- *		DllUnregisterServer (MSCTF.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( MSCTF_hinstance );
 }
 
 /***********************************************************************

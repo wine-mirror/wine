@@ -431,13 +431,6 @@ HRESULT WINAPI StringFromIID(REFIID riid, LPOLESTR*);
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID * ppv) DECLSPEC_HIDDEN;
 HRESULT WINAPI DllCanUnloadNow(void) DECLSPEC_HIDDEN;
 
-/* shouldn't be here, but is nice for type checking */
-#ifdef __WINESRC__
-HRESULT WINAPI DllRegisterServer(void) DECLSPEC_HIDDEN;
-HRESULT WINAPI DllUnregisterServer(void) DECLSPEC_HIDDEN;
-#endif
-
-
 /*****************************************************************************
  *	Data Object
  */

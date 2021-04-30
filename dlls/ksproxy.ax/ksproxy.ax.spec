@@ -1,7 +1,7 @@
 @ stdcall -private DllCanUnloadNow()
 @ stub DllGetClassObject
-@ stub DllRegisterServer
-@ stub DllUnregisterServer
+@ stdcall -private DllRegisterServer()
+@ stdcall -private DllUnregisterServer()
 @ stub KsGetMediaType
 @ stub KsGetMediaTypeCount
 @ stub KsGetMultiplePinFactoryItems

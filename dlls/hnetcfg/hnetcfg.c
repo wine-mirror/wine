@@ -32,8 +32,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(hnetcfg);
 
-static HINSTANCE instance;
-
 typedef HRESULT (*fnCreateInstance)( IUnknown *pUnkOuter, LPVOID *ppObj );
 
 typedef struct
@@ -124,7 +122,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID reserved)
 
     switch(fdwReason) {
         case DLL_PROCESS_ATTACH:
-            instance = hInstDLL;
             DisableThreadLibraryCalls(hInstDLL);
             break;
         case DLL_PROCESS_DETACH:
@@ -164,20 +161,4 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
 
     if (!cf) return CLASS_E_CLASSNOTAVAILABLE;
     return IClassFactory_QueryInterface( cf, iid, ppv );
-}
-
-/***********************************************************************
- *		DllRegisterServer (HNETCFG.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( instance );
-}
-
-/***********************************************************************
- *		DllUnregisterServer (HNETCFG.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( instance );
 }

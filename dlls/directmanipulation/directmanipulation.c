@@ -30,34 +30,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(manipulation);
 
-static HINSTANCE dm_instance;
-
-BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
-{
-    TRACE("(%p, %u, %p)\n", instance, reason, reserved);
-
-    switch (reason)
-    {
-        case DLL_PROCESS_ATTACH:
-            dm_instance = instance;
-            DisableThreadLibraryCalls(instance);
-            break;
-    }
-
-    return TRUE;
-}
-
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( dm_instance );
-}
-
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( dm_instance );
-}
-
-
 struct directmanipulation
 {
     IDirectManipulationManager2 IDirectManipulationManager2_iface;

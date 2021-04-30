@@ -36,23 +36,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dx8vb);
 
-static HINSTANCE instance_dx8vb;
-
-BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
-{
-    TRACE("(0x%p, %d, %p)\n", instance, reason, reserved);
-
-    switch (reason)
-    {
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(instance);
-            instance_dx8vb = instance;
-            break;
-    }
-
-    return TRUE;
-}
-
 typedef struct {
     IClassFactory IClassFactory_iface;
 
@@ -177,14 +160,4 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 
     *ppv = &factory->IClassFactory_iface;
     return S_OK;
-}
-
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources(instance_dx8vb);
-}
-
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources(instance_dx8vb);
 }

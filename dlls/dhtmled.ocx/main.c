@@ -96,8 +96,6 @@ static const IClassFactoryVtbl ClassFactoryVtbl = {
     ClassFactory_LockServer
 };
 
-static HINSTANCE dhtmled_instance;
-
 /******************************************************************
  *          DllMain (dhtmled.ocx.@)
  */
@@ -109,7 +107,6 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, VOID *reserved)
     {
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls(instance);
-            dhtmled_instance = instance;
             break;
         case DLL_PROCESS_DETACH:
             if (reserved) break;
@@ -134,22 +131,4 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, LPVOID *out)
 
     FIXME("no class for %s\n", debugstr_guid(clsid));
     return CLASS_E_CLASSNOTAVAILABLE;
-}
-
-/***********************************************************************
- *          DllRegisterServer (dhtmled.ocx.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    TRACE("()\n");
-    return __wine_register_resources(dhtmled_instance);
-}
-
-/***********************************************************************
- *          DllUnregisterServer (dhtmled.ocx.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    TRACE("()\n");
-    return __wine_unregister_resources(dhtmled_instance);
 }

@@ -31,8 +31,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsquery);
 
-static HINSTANCE instance;
-
 /******************************************************************
  *      IClassFactory implementation
  */
@@ -197,24 +195,6 @@ static HRESULT CommonQuery_create(IUnknown *outer, REFIID riid, void **out)
 }
 
 /***********************************************************************
- *		DllMain
- */
-BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
-{
-    TRACE("(%p, %u, %p)\n", inst, reason, reserved);
-
-    switch (reason)
-    {
-        case DLL_PROCESS_ATTACH:
-            instance = inst;
-            DisableThreadLibraryCalls(inst);
-            break;
-    }
-
-    return TRUE;
-}
-
-/***********************************************************************
  *		DllGetClassObject (DSQUERY.@)
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **out)
@@ -244,20 +224,4 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **out)
     FIXME("%s: no class found\n", debugstr_guid(rclsid));
     *out = NULL;
     return CLASS_E_CLASSNOTAVAILABLE;
-}
-
-/***********************************************************************
- *		DllRegisterServer (DSQUERY.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( instance );
-}
-
-/***********************************************************************
- *		DllUnregisterServer (DSQUERY.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( instance );
 }

@@ -26,8 +26,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wpc);
 
-static HINSTANCE wpc_instance;
-
 static HRESULT WINAPI WindowsParentalControls_QueryInterface(IWindowsParentalControls *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(riid, &IID_IUnknown)) {
@@ -158,23 +156,6 @@ static const IClassFactoryVtbl WPCFactoryVtbl = {
 
 static IClassFactory WPCFactory = { &WPCFactoryVtbl };
 
-/******************************************************************
- *              DllMain
- */
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
-{
-    TRACE("(%p %d %p)\n", hInstDLL, fdwReason, lpv);
-
-    switch(fdwReason) {
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls(hInstDLL);
-        wpc_instance = hInstDLL;
-        break;
-    }
-
-    return TRUE;
-}
-
 /***********************************************************************
  *		DllGetClassObject	(wpc.@)
  */
@@ -187,22 +168,4 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 
     FIXME("Unknown object %s (iface %s)\n", debugstr_guid(rclsid), debugstr_guid(riid));
     return CLASS_E_CLASSNOTAVAILABLE;
-}
-
-/***********************************************************************
- *          DllRegisterServer (wpc.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    TRACE("()\n");
-    return __wine_register_resources(wpc_instance);
-}
-
-/***********************************************************************
- *          DllUnregisterServer (wpc.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    TRACE("()\n");
-    return __wine_unregister_resources(wpc_instance);
 }

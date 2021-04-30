@@ -26,23 +26,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(objsel);
 
 LONG dll_refs = 0;
-static HINSTANCE hInstance;
-
-/***********************************************************************
- *		DllEntryPoint
- */
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
-{
-    switch(fdwReason)
-    {
-        case DLL_PROCESS_ATTACH:
-            hInstance = hinstDLL;
-            DisableThreadLibraryCalls(hInstance);
-            break;
-    }
-    return TRUE;
-}
-
 
 /***********************************************************************
  *		DllGetClassObject (OBJSEL.@)
@@ -67,24 +50,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 HRESULT WINAPI DllCanUnloadNow(void)
 {
     return dll_refs != 0 ? S_FALSE : S_OK;
-}
-
-
-/***********************************************************************
- *		DllRegisterServer (OBJSEL.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( hInstance );
-}
-
-
-/***********************************************************************
- *		DllUnregisterServer (OBJSEL.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( hInstance );
 }
 
 

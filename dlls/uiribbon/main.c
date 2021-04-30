@@ -39,23 +39,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(uiribbon);
 
-static HINSTANCE instance;
-
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    TRACE("(0x%p, %d, %p)\n", hInstDLL, fdwReason, lpvReserved);
-
-    switch (fdwReason)
-    {
-        case DLL_PROCESS_ATTACH:
-            instance = hInstDLL;
-            DisableThreadLibraryCalls(hInstDLL);
-            break;
-    }
-
-    return TRUE;
-}
-
 typedef struct {
     IClassFactory IClassFactory_iface;
 
@@ -195,14 +178,4 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 
     *ppv = &(factory->IClassFactory_iface);
     return S_OK;
-}
-
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( instance );
-}
-
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( instance );
 }

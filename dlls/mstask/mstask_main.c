@@ -32,23 +32,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mstask);
 
-static HINSTANCE hInst;
 LONG dll_ref = 0;
-
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    TRACE("(%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
-
-    switch (fdwReason)
-    {
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hinstDLL);
-            hInst = hinstDLL;
-            break;
-    }
-
-    return TRUE;
-}
 
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
@@ -65,16 +49,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 HRESULT WINAPI DllCanUnloadNow(void)
 {
     return dll_ref != 0 ? S_FALSE : S_OK;
-}
-
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( hInst );
-}
-
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( hInst );
 }
 
 DWORD WINAPI NetrJobAdd_wrapper(ATSVC_HANDLE server_name, LPAT_INFO info, LPDWORD jobid)

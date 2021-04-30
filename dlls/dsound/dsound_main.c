@@ -92,7 +92,6 @@ const WCHAR wine_vxd_drv[] = L"winemm.vxd";
 
 /* All default settings, you most likely don't want to touch these, see wiki on UsefulRegistryKeys */
 int ds_hel_buflen = 32768 * 2;
-static HINSTANCE instance;
 
 /*
  * Get a config key from either the app-specific or the default config
@@ -775,7 +774,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
-        instance = hInstDLL;
         DisableThreadLibraryCalls(hInstDLL);
         /* Increase refcount on dsound by 1 */
         GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCWSTR)hInstDLL, &hInstDLL);
@@ -787,20 +785,4 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
         break;
     }
     return TRUE;
-}
-
-/***********************************************************************
- *		DllRegisterServer (DSOUND.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( instance );
-}
-
-/***********************************************************************
- *		DllUnregisterServer (DSOUND.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( instance );
 }

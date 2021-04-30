@@ -467,19 +467,3 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID reserved)
     }
     return TRUE;
 }
-
-/***********************************************************************
- *		DllRegisterServer (MSXML3.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( MSXML_hInstance );
-}
-
-/***********************************************************************
- *		DllUnregisterServer (MSXML3.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( MSXML_hInstance );
-}

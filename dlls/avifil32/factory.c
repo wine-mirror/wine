@@ -207,19 +207,3 @@ BOOL WINAPI DllMain(HINSTANCE hInstDll, DWORD fdwReason, LPVOID lpvReserved)
 
   return TRUE;
 }
-
-/***********************************************************************
- *		DllRegisterServer (AVIFIL32.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources( AVIFILE_hModule );
-}
-
-/***********************************************************************
- *		DllUnregisterServer (AVIFIL32.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources( AVIFILE_hModule );
-}

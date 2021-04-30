@@ -33,8 +33,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(packager);
 
-static HINSTANCE g_instance;
-
 struct Package {
     IOleObject IOleObject_iface;
     IPersistStorage IPersistStorage_iface;
@@ -646,28 +644,4 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **obj)
     FIXME("Unknown CLSID: %s\n", wine_dbgstr_guid(clsid));
 
     return CLASS_E_CLASSNOTAVAILABLE;
-}
-
-HRESULT WINAPI DllRegisterServer(void)
-{
-    return __wine_register_resources(g_instance);
-}
-
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources(g_instance);
-}
-
-BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
-{
-    TRACE("(%p, %u, %p)\n", instance, reason, reserved);
-
-    switch(reason){
-        case DLL_PROCESS_ATTACH:
-            g_instance = instance;
-            DisableThreadLibraryCalls(instance);
-            break;
-    }
-
-    return TRUE;
 }
