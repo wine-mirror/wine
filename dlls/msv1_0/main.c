@@ -765,7 +765,8 @@ static NTSTATUS NTAPI ntlm_SpInitLsaModeContext( LSA_SEC_HANDLE cred_handle, LSA
 
     if (ctx_req & ISC_REQ_ALLOCATE_MEMORY)
     {
-        if (!(output->pBuffers[idx].pvBuffer = malloc( bin_len )))
+        /* freed with secur32.FreeContextBuffer */
+        if (!(output->pBuffers[idx].pvBuffer = RtlAllocateHeap( GetProcessHeap(), 0, bin_len )))
         {
             status = SEC_E_INSUFFICIENT_MEMORY;
             goto done;
