@@ -8524,6 +8524,55 @@ static void test_bind(void)
     closesocket(s);
 }
 
+/* Test calling methods on a socket which is currently connecting. */
+static void test_connecting_socket(void)
+{
+    const struct sockaddr_in invalid_addr =
+    {
+        .sin_family = AF_INET,
+        .sin_addr.s_addr = inet_addr("192.0.2.0"),
+        .sin_port = 255
+    };
+    struct sockaddr_in addr;
+    char buffer[4];
+    SOCKET client;
+    int ret, len;
+
+    client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(client != -1, "failed to create socket, error %u\n", WSAGetLastError());
+    set_blocking(client, FALSE);
+
+    ret = connect(client, (struct sockaddr *)&invalid_addr, sizeof(invalid_addr));
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == WSAEWOULDBLOCK, "got %u\n", WSAGetLastError());
+
+    len = sizeof(addr);
+    ret = getsockname(client, (struct sockaddr *)&addr, &len);
+    ok(!ret, "got error %u\n", WSAGetLastError());
+    ok(addr.sin_family == AF_INET, "got family %u\n", addr.sin_family);
+    ok(addr.sin_port, "expected nonzero port\n");
+
+    len = sizeof(addr);
+    ret = getpeername(client, (struct sockaddr *)&addr, &len);
+    todo_wine ok(!ret, "got error %u\n", WSAGetLastError());
+    if (!ret)
+    {
+        ok(addr.sin_family == AF_INET, "got family %u\n", addr.sin_family);
+        ok(addr.sin_addr.s_addr == inet_addr("192.0.2.0"), "got address %#08x\n", addr.sin_addr.s_addr);
+        ok(addr.sin_port == 255, "expected nonzero port\n");
+    }
+
+    ret = recv(client, buffer, sizeof(buffer), 0);
+    ok(ret == -1, "got %d\n", ret);
+    todo_wine ok(WSAGetLastError() == WSAENOTCONN, "got %u\n", WSAGetLastError());
+
+    ret = send(client, "data", 5, 0);
+    ok(ret == -1, "got %d\n", ret);
+    todo_wine ok(WSAGetLastError() == WSAENOTCONN, "got %u\n", WSAGetLastError());
+
+    closesocket(client);
+}
+
 START_TEST( sock )
 {
     int i;
@@ -8578,6 +8627,7 @@ START_TEST( sock )
     test_completion_port();
     test_address_list_query();
     test_bind();
+    test_connecting_socket();
 
     /* this is an io heavy test, do it at the end so the kernel doesn't start dropping packets */
     test_send();
