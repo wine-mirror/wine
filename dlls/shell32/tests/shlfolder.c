@@ -4385,7 +4385,15 @@ static void test_contextmenu(IContextMenu *menu, BOOL background)
             ok(hr == S_OK || hr == E_NOTIMPL || hr == E_INVALIDARG,
                     "Got unexpected hr %#x for ID %d, string %s.\n", hr, mii.wID, debugstr_a(mii.dwTypeData));
             if (hr == S_OK)
+            {
                 trace("Got ID %d, verb %s, string %s.\n", mii.wID, debugstr_a(buf), debugstr_a(mii.dwTypeData));
+                if (!strcmp(buf, "copy"))
+                    ok(mii.wID == 64 - 0x7000 + FCIDM_SHVIEW_COPY, "wrong menu wID %d\n", mii.wID);
+                else if (!strcmp(buf, "paste"))
+                    ok(mii.wID == 64 - 0x7000 + FCIDM_SHVIEW_INSERT, "wrong menu wID %d\n", mii.wID);
+                else if (!strcmp(buf, "properties"))
+                    ok(mii.wID == 64 - 0x7000 + FCIDM_SHVIEW_PROPERTIES, "wrong menu wID %d\n", mii.wID);
+            }
             else
                 trace("Got ID %d, hr %#x, string %s.\n", mii.wID, hr, debugstr_a(mii.dwTypeData));
         }

@@ -45,6 +45,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
+#define FCIDM_BASE 0x7000
+
 typedef struct
 {
     IContextMenu3 IContextMenu3_iface;
@@ -142,6 +144,37 @@ static ULONG WINAPI ContextMenu_Release(IContextMenu3 *iface)
     return ref;
 }
 
+static UINT max_menu_id(HMENU hmenu, UINT offset, UINT last)
+{
+    int i;
+    UINT max_id = 0;
+
+    for (i = GetMenuItemCount(hmenu) - 1; i >= 0; i--)
+    {
+        MENUITEMINFOW item;
+        memset(&item, 0, sizeof(MENUITEMINFOW));
+        item.cbSize = sizeof(MENUITEMINFOW);
+        item.fMask =  MIIM_ID | MIIM_SUBMENU | MIIM_TYPE;
+        if (!GetMenuItemInfoW(hmenu, i, TRUE, &item))
+            continue;
+        if (!(item.fType & MFT_SEPARATOR))
+        {
+            if (item.hSubMenu)
+            {
+                UINT submenu_max_id = max_menu_id(item.hSubMenu, offset, last);
+                if (max_id < submenu_max_id)
+                    max_id = submenu_max_id;
+            }
+            if (item.wID + offset <= last)
+            {
+                if (max_id <= item.wID + offset)
+                    max_id = item.wID + offset + 1;
+            }
+        }
+    }
+    return max_id;
+}
+
 static HRESULT WINAPI ItemMenu_QueryContextMenu(
 	IContextMenu3 *iface,
 	HMENU hmenu,
@@ -162,7 +195,8 @@ static HRESULT WINAPI ItemMenu_QueryContextMenu(
         if(uFlags & CMF_EXPLORE)
             RemoveMenu(hmenures, FCIDM_SHVIEW_OPEN, MF_BYCOMMAND);
 
-        uIDMax = Shell_MergeMenus(hmenu, GetSubMenu(hmenures, 0), indexMenu, idCmdFirst, idCmdLast, MM_SUBMENUSHAVEIDS);
+        Shell_MergeMenus(hmenu, GetSubMenu(hmenures, 0), indexMenu, idCmdFirst - FCIDM_BASE, idCmdLast, MM_SUBMENUSHAVEIDS);
+        uIDMax = max_menu_id(GetSubMenu(hmenures, 0), idCmdFirst - FCIDM_BASE, idCmdLast);
 
         DestroyMenu(hmenures);
 
@@ -174,14 +208,14 @@ static HRESULT WINAPI ItemMenu_QueryContextMenu(
             mi.fMask = MIIM_ID | MIIM_STRING | MIIM_FTYPE;
             mi.dwTypeData = str;
             mi.cch = 255;
-            GetMenuItemInfoW(hmenu, FCIDM_SHVIEW_EXPLORE + idCmdFirst, MF_BYCOMMAND, &mi);
-            RemoveMenu(hmenu, FCIDM_SHVIEW_EXPLORE + idCmdFirst, MF_BYCOMMAND);
+            GetMenuItemInfoW(hmenu, FCIDM_SHVIEW_EXPLORE - FCIDM_BASE + idCmdFirst, MF_BYCOMMAND, &mi);
+            RemoveMenu(hmenu, FCIDM_SHVIEW_EXPLORE - FCIDM_BASE + idCmdFirst, MF_BYCOMMAND);
 
             mi.cbSize = sizeof(mi);
             mi.fMask = MIIM_ID | MIIM_TYPE | MIIM_STATE | MIIM_STRING;
             mi.dwTypeData = str;
             mi.fState = MFS_ENABLED;
-            mi.wID = FCIDM_SHVIEW_EXPLORE + idCmdFirst;
+            mi.wID = FCIDM_SHVIEW_EXPLORE - FCIDM_BASE + idCmdFirst;
             mi.fType = MFT_STRING;
             InsertMenuItemW(hmenu, (uFlags & CMF_EXPLORE) ? 1 : 2, MF_BYPOSITION, &mi);
         }
@@ -189,7 +223,7 @@ static HRESULT WINAPI ItemMenu_QueryContextMenu(
         SetMenuDefaultItem(hmenu, 0, MF_BYPOSITION);
 
         if(uFlags & ~CMF_CANRENAME)
-            RemoveMenu(hmenu, FCIDM_SHVIEW_RENAME + idCmdFirst, MF_BYCOMMAND);
+            RemoveMenu(hmenu, FCIDM_SHVIEW_RENAME - FCIDM_BASE + idCmdFirst, MF_BYCOMMAND);
         else
         {
             UINT enable = MF_BYCOMMAND;
@@ -205,7 +239,7 @@ static HRESULT WINAPI ItemMenu_QueryContextMenu(
                 enable |= (attr & SFGAO_CANRENAME) ? MFS_ENABLED : MFS_DISABLED;
             }
 
-            EnableMenuItem(hmenu, FCIDM_SHVIEW_RENAME + idCmdFirst, enable);
+            EnableMenuItem(hmenu, FCIDM_SHVIEW_RENAME - FCIDM_BASE + idCmdFirst, enable);
         }
 
         return MAKE_HRESULT(SEVERITY_SUCCESS, 0, uIDMax-idCmdFirst);
@@ -738,7 +772,7 @@ static HRESULT WINAPI ItemMenu_InvokeCommand(
 
     if (IS_INTRESOURCE(lpcmi->lpVerb))
     {
-        switch(LOWORD(lpcmi->lpVerb))
+        switch(LOWORD(lpcmi->lpVerb) + FCIDM_BASE)
         {
         case FCIDM_SHVIEW_EXPLORE:
             TRACE("Verb FCIDM_SHVIEW_EXPLORE\n");
@@ -830,7 +864,7 @@ static HRESULT WINAPI ItemMenu_GetCommandString(IContextMenu3 *iface, UINT_PTR c
 
     case GCS_VERBA:
     case GCS_VERBW:
-        switch (cmdid)
+        switch (cmdid + FCIDM_BASE)
         {
         case FCIDM_SHVIEW_OPEN:
             cmdW = openW;
@@ -1059,8 +1093,9 @@ static HRESULT WINAPI BackgroundMenu_QueryContextMenu(
     }
     else
     {
-        idMax = Shell_MergeMenus (hMenu, GetSubMenu(hMyMenu,0), indexMenu,
-                                  idCmdFirst, idCmdLast, MM_SUBMENUSHAVEIDS);
+        Shell_MergeMenus (hMenu, GetSubMenu(hMyMenu,0), indexMenu,
+                          idCmdFirst - FCIDM_BASE, idCmdLast, MM_SUBMENUSHAVEIDS);
+        idMax = max_menu_id(GetSubMenu(hMyMenu, 0), idCmdFirst - FCIDM_BASE, idCmdLast);
         hr =  MAKE_HRESULT(SEVERITY_SUCCESS, FACILITY_NULL, idMax-idCmdFirst);
     }
     DestroyMenu(hMyMenu);
@@ -1228,7 +1263,7 @@ static HRESULT WINAPI BackgroundMenu_InvokeCommand(
     }
     else
     {
-        switch (LOWORD(lpcmi->lpVerb))
+        switch (LOWORD(lpcmi->lpVerb) + FCIDM_BASE)
         {
 	    case FCIDM_SHVIEW_REFRESH:
 	        if (view) IShellView_Refresh(view);
