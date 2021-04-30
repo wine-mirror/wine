@@ -1047,6 +1047,80 @@ static NTSTATUS NTAPI ntlm_SpDeleteContext( LSA_SEC_HANDLE handle )
     return SEC_E_OK;
 }
 
+static SecPkgInfoW *build_package_info( const SecPkgInfoW *info )
+{
+    SecPkgInfoW *ret;
+    DWORD size_name = (wcslen(info->Name) + 1) * sizeof(WCHAR);
+    DWORD size_comment = (wcslen(info->Comment) + 1) * sizeof(WCHAR);
+
+    if (!(ret = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*ret) + size_name + size_comment ))) return NULL;
+    ret->fCapabilities = info->fCapabilities;
+    ret->wVersion      = info->wVersion;
+    ret->wRPCID        = info->wRPCID;
+    ret->cbMaxToken    = info->cbMaxToken;
+    ret->Name          = (SEC_WCHAR *)(ret + 1);
+    memcpy( ret->Name, info->Name, size_name );
+    ret->Comment       = (SEC_WCHAR *)((char *)ret->Name + size_name);
+    memcpy( ret->Comment, info->Comment, size_comment );
+    return ret;
+}
+
+static NTSTATUS NTAPI ntlm_SpQueryContextAttributes( LSA_SEC_HANDLE handle, ULONG attr, void *buf )
+{
+    TRACE( "%lx, %u, %p\n", handle, attr, buf );
+
+    if (!handle) return SEC_E_INVALID_HANDLE;
+
+    switch (attr)
+    {
+#define X(x) case (x) : FIXME(#x" stub\n"); break
+    X(SECPKG_ATTR_ACCESS_TOKEN);
+    X(SECPKG_ATTR_AUTHORITY);
+    X(SECPKG_ATTR_DCE_INFO);
+    X(SECPKG_ATTR_KEY_INFO);
+    X(SECPKG_ATTR_LIFESPAN);
+    X(SECPKG_ATTR_NAMES);
+    X(SECPKG_ATTR_NATIVE_NAMES);
+    X(SECPKG_ATTR_PACKAGE_INFO);
+    X(SECPKG_ATTR_PASSWORD_EXPIRY);
+    X(SECPKG_ATTR_SESSION_KEY);
+    X(SECPKG_ATTR_STREAM_SIZES);
+    X(SECPKG_ATTR_TARGET_INFORMATION);
+    case SECPKG_ATTR_FLAGS:
+    {
+        SecPkgContext_Flags *flags = (SecPkgContext_Flags *)buf;
+        struct ntlm_ctx *ctx = (struct ntlm_ctx *)handle;
+
+        flags->Flags = 0;
+        if (ctx->flags & FLAG_NEGOTIATE_SIGN) flags->Flags |= ISC_RET_INTEGRITY;
+        if (ctx->flags & FLAG_NEGOTIATE_SEAL) flags->Flags |= ISC_RET_CONFIDENTIALITY;
+        return SEC_E_OK;
+    }
+    case SECPKG_ATTR_SIZES:
+    {
+        SecPkgContext_Sizes *sizes = (SecPkgContext_Sizes *)buf;
+        sizes->cbMaxToken        = NTLM_MAX_BUF;
+        sizes->cbMaxSignature    = 16;
+        sizes->cbBlockSize       = 0;
+        sizes->cbSecurityTrailer = 16;
+        return SEC_E_OK;
+    }
+    case SECPKG_ATTR_NEGOTIATION_INFO:
+    {
+        SecPkgContext_NegotiationInfoW *info = (SecPkgContext_NegotiationInfoW *)buf;
+        if (!(info->PackageInfo = build_package_info( &ntlm_package_info ))) return SEC_E_INSUFFICIENT_MEMORY;
+        info->NegotiationState = SECPKG_NEGOTIATION_COMPLETE;
+        return SEC_E_OK;
+    }
+#undef X
+    default:
+        FIXME( "unknown attribute %u\n", attr );
+        break;
+    }
+
+    return SEC_E_UNSUPPORTED_FUNCTION;
+}
+
 static SECPKG_FUNCTION_TABLE ntlm_table =
 {
     ntlm_LsaApInitializePackage,
@@ -1073,7 +1147,7 @@ static SECPKG_FUNCTION_TABLE ntlm_table =
     NULL, /* ApplyControlToken */
     NULL, /* GetUserInfo */
     NULL, /* GetExtendedInformation */
-    NULL, /* SpQueryContextAttributes */
+    ntlm_SpQueryContextAttributes,
     NULL, /* SpAddCredentials */
     NULL, /* SetExtendedInformation */
     NULL, /* SetContextAttributes */
