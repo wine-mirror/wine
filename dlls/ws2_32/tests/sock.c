@@ -8373,6 +8373,71 @@ static void test_wsaioctl(void)
     closesocket(s);
 }
 
+static void test_bind(void)
+{
+    const struct sockaddr_in invalid_addr = {.sin_family = AF_INET, .sin_addr.s_addr = inet_addr("192.0.2.0")};
+    const struct sockaddr_in bind_addr = {.sin_family = AF_INET, .sin_addr.s_addr = htonl(INADDR_LOOPBACK)};
+    struct sockaddr addr;
+    SOCKET s, s2;
+    int ret, len;
+
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+    WSASetLastError(0xdeadbeef);
+    ret = bind(s, NULL, 0);
+    ok(ret == -1, "expected failure\n");
+    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+    addr.sa_family = 0xdead;
+    WSASetLastError(0xdeadbeef);
+    ret = bind(s, &addr, sizeof(addr));
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEAFNOSUPPORT, "got error %u\n", WSAGetLastError());
+
+    WSASetLastError(0xdeadbeef);
+    ret = bind(s, (const struct sockaddr *)&bind_addr, sizeof(bind_addr) - 1);
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+    WSASetLastError(0xdeadbeef);
+    ret = bind(s, (const struct sockaddr *)&invalid_addr, sizeof(invalid_addr));
+    ok(ret == -1, "expected failure\n");
+    todo_wine ok(WSAGetLastError() == WSAEADDRNOTAVAIL, "got error %u\n", WSAGetLastError());
+
+    WSASetLastError(0xdeadbeef);
+    ret = bind(s, (const struct sockaddr *)&bind_addr, sizeof(bind_addr));
+    ok(!ret, "expected success\n");
+    ok(!WSAGetLastError() || WSAGetLastError() == 0xdeadbeef /* win <7 */, "got error %u\n", WSAGetLastError());
+
+    WSASetLastError(0xdeadbeef);
+    ret = bind(s, (const struct sockaddr *)&bind_addr, sizeof(bind_addr));
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
+
+    len = sizeof(addr);
+    ret = getsockname(s, &addr, &len);
+    ok(!ret, "got error %u\n", WSAGetLastError());
+
+    s2 = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+    WSASetLastError(0xdeadbeef);
+    ret = bind(s2, &addr, sizeof(addr));
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEADDRINUSE, "got error %u\n", WSAGetLastError());
+
+    closesocket(s2);
+    closesocket(s);
+
+    s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+    WSASetLastError(0xdeadbeef);
+    ret = bind(s, (const struct sockaddr *)&bind_addr, sizeof(bind_addr));
+    ok(!ret, "expected success\n");
+    ok(!WSAGetLastError() || WSAGetLastError() == 0xdeadbeef /* win <7 */, "got error %u\n", WSAGetLastError());
+
+    closesocket(s);
+}
+
 START_TEST( sock )
 {
     int i;
@@ -8427,6 +8492,7 @@ START_TEST( sock )
 
     test_completion_port();
     test_address_list_query();
+    test_bind();
 
     /* this is an io heavy test, do it at the end so the kernel doesn't start dropping packets */
     test_send();
