@@ -81,16 +81,16 @@ void WINAPI DECLSPEC_HOTPATCH GetNativeSystemInfo( SYSTEM_INFO *si )
     if (!current_machine) return;
     switch (native_machine)
     {
-    case PROCESSOR_ARCHITECTURE_AMD64:
+    case IMAGE_FILE_MACHINE_AMD64:
         si->u.s.wProcessorArchitecture = PROCESSOR_ARCHITECTURE_AMD64;
         si->dwProcessorType = PROCESSOR_AMD_X8664;
         break;
-    case PROCESSOR_ARCHITECTURE_ARM64:
+    case IMAGE_FILE_MACHINE_ARM64:
         si->u.s.wProcessorArchitecture = PROCESSOR_ARCHITECTURE_ARM64;
         si->dwProcessorType = 0;
         break;
     default:
-        FIXME( "Add the proper information for %d in wow64 mode\n", si->u.s.wProcessorArchitecture );
+        FIXME( "Add the proper information for %x in wow64 mode\n", native_machine );
     }
 }
 
