@@ -1174,7 +1174,7 @@ HRESULT WINAPI DllInstall(BOOL bInstall, LPCWSTR cmdline)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    HRESULT hr = __wine_register_resources( shell32_hInstance );
+    HRESULT hr = __wine_register_resources();
     if (SUCCEEDED(hr)) hr = SHELL_RegisterShellFolders();
     return hr;
 }
@@ -1184,7 +1184,7 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    return __wine_unregister_resources( shell32_hInstance );
+    return __wine_unregister_resources();
 }
 
 /***********************************************************************

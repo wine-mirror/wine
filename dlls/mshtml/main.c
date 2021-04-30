@@ -662,7 +662,7 @@ HRESULT WINAPI DllRegisterServer(void)
 {
     HRESULT hres;
 
-    hres = __wine_register_resources( hInst );
+    hres = __wine_register_resources();
     if(SUCCEEDED(hres))
         hres = register_server(TRUE);
     return hres;
@@ -673,7 +673,7 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    HRESULT hres = __wine_unregister_resources( hInst );
+    HRESULT hres = __wine_unregister_resources();
     if(SUCCEEDED(hres)) hres = register_server(FALSE);
     return hres;
 }

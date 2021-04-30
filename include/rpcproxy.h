@@ -203,8 +203,8 @@ RPCRTAPI HRESULT RPC_ENTRY
 RPCRTAPI HRESULT RPC_ENTRY
   NdrDllUnregisterProxy( HMODULE hDll, const ProxyFileInfo **pProxyFileList, const CLSID *pclsid );
 
-HRESULT __cdecl __wine_register_resources( HMODULE module ) DECLSPEC_HIDDEN;
-HRESULT __cdecl __wine_unregister_resources( HMODULE module ) DECLSPEC_HIDDEN;
+HRESULT __cdecl __wine_register_resources(void) DECLSPEC_HIDDEN;
+HRESULT __cdecl __wine_unregister_resources(void) DECLSPEC_HIDDEN;
 
 #define CSTDSTUBBUFFERRELEASE(pFactory) \
 ULONG WINAPI CStdStubBuffer_Release(IRpcStubBuffer *This) \
@@ -289,8 +289,8 @@ ULONG WINAPI CStdStubBuffer2_Release(IRpcStubBuffer *This) \
 #endif
 
 #ifdef WINE_REGISTER_DLL
-# define WINE_DO_REGISTER_DLL(pfl, clsid) return __wine_register_resources( hProxyDll )
-# define WINE_DO_UNREGISTER_DLL(pfl, clsid) return __wine_unregister_resources( hProxyDll )
+# define WINE_DO_REGISTER_DLL(pfl, clsid) return __wine_register_resources()
+# define WINE_DO_UNREGISTER_DLL(pfl, clsid) return __wine_unregister_resources()
 #else
 # define WINE_DO_REGISTER_DLL(pfl, clsid)   return NdrDllRegisterProxy( hProxyDll, (pfl), (clsid) )
 # define WINE_DO_UNREGISTER_DLL(pfl, clsid) return NdrDllUnregisterProxy( hProxyDll, (pfl), (clsid) )
