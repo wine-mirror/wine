@@ -1061,6 +1061,7 @@ static inline struct list *get_apc_queue( struct thread *thread, enum apc_type t
     switch(type)
     {
     case APC_NONE:
+        return NULL;
     case APC_USER:
     case APC_TIMER:
         return &thread->user_apc;
@@ -1111,12 +1112,12 @@ static int queue_apc( struct process *process, struct thread *thread, struct thr
             }
         }
         if (!thread) return 0;  /* nothing found */
-        queue = get_apc_queue( thread, apc->call.type );
+        if (!(queue = get_apc_queue( thread, apc->call.type ))) return 1;
     }
     else
     {
         if (thread->state == TERMINATED) return 0;
-        queue = get_apc_queue( thread, apc->call.type );
+        if (!(queue = get_apc_queue( thread, apc->call.type ))) return 1;
         /* send signal for system APCs if needed */
         if (queue == &thread->system_apc && list_empty( queue ) && !is_in_apc_wait( thread ))
         {
@@ -1640,13 +1641,8 @@ DECL_HANDLER(select)
 
     while (get_error() == STATUS_USER_APC)
     {
-        if (!(apc = thread_dequeue_apc( current, 0 )))
-            break;
-        /* Optimization: ignore APC_NONE calls, they are only used to
-         * wake up a thread, but since we got here the thread woke up already.
-         */
-        if (apc->call.type != APC_NONE &&
-            (reply->apc_handle = alloc_handle( current->process, apc, SYNCHRONIZE, 0 )))
+        apc = thread_dequeue_apc( current, 0 );
+        if ((reply->apc_handle = alloc_handle( current->process, apc, SYNCHRONIZE, 0 )))
         {
             reply->call = apc->call;
             release_object( apc );

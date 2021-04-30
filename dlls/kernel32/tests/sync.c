@@ -2738,6 +2738,8 @@ static void test_QueueUserAPC(void)
 
     ret = pNtQueueApcThread(thread, call_user_apc, (ULONG_PTR)user_apc, 0, 0);
     ok(ret == STATUS_UNSUCCESSFUL, "got %#x\n", ret);
+    ret = pNtQueueApcThread(thread, NULL, 0, 0, 0);
+    ok(ret == STATUS_UNSUCCESSFUL, "got %#x\n", ret);
 
     SetLastError(0xdeadbeef);
     ret = QueueUserAPC(user_apc, thread, 0);
@@ -2745,6 +2747,16 @@ static void test_QueueUserAPC(void)
     ok(GetLastError() == ERROR_GEN_FAILURE, "got %u\n", GetLastError());
 
     CloseHandle(thread);
+
+    ret = QueueUserAPC(user_apc, GetCurrentThread(), 0);
+    ok(ret, "QueueUserAPC failed err %u\n", GetLastError());
+    ret = SleepEx( 100, TRUE );
+    ok( ret == WAIT_IO_COMPLETION, "SleepEx returned %u\n", ret);
+
+    ret = pNtQueueApcThread( GetCurrentThread(), NULL, 0, 0, 0 );
+    ok( !ret, "got %#x\n", ret);
+    ret = SleepEx( 100, TRUE );
+    ok( ret == WAIT_OBJECT_0, "SleepEx returned %u\n", ret);
 }
 
 START_TEST(sync)

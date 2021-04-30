@@ -126,15 +126,12 @@ static void timer_callback( void *private )
     {
         apc_call_t data;
 
+        assert (timer->callback);
         memset( &data, 0, sizeof(data) );
-        if (timer->callback)
-        {
-            data.type            = APC_TIMER;
-            data.user.timer.func = timer->callback;
-            data.user.timer.time = timer->when;
-            data.user.timer.arg  = timer->arg;
-        }
-        else data.type = APC_NONE;  /* wake up only */
+        data.type            = APC_TIMER;
+        data.user.timer.func = timer->callback;
+        data.user.timer.time = timer->when;
+        data.user.timer.arg  = timer->arg;
 
         if (!thread_queue_apc( NULL, timer->thread, &timer->obj, &data ))
         {
