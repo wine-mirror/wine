@@ -44,65 +44,6 @@ typedef struct _SecurePackage
     SecureProvider *provider;
 } SecurePackage;
 
-typedef enum _helper_mode {
-    NTLM_SERVER,
-    NTLM_CLIENT,
-    NUM_HELPER_MODES
-} HelperMode;
-
-typedef struct tag_arc4_info {
-    unsigned char x, y;
-    unsigned char state[256];
-} arc4_info;
-
-typedef struct _NegoHelper {
-    pid_t helper_pid;
-    HelperMode mode;
-    int pipe_in;
-    int pipe_out;
-    int major;
-    int minor;
-    int micro;
-    char *com_buf;
-    int com_buf_size;
-    int com_buf_offset;
-    BYTE *session_key;
-    ULONG neg_flags;
-    struct {
-        struct {
-            ULONG seq_num;
-            arc4_info *a4i;
-        } ntlm;
-        struct {
-            BYTE *send_sign_key;
-            BYTE *send_seal_key;
-            BYTE *recv_sign_key;
-            BYTE *recv_seal_key;
-            ULONG send_seq_no;
-            ULONG recv_seq_no;
-            arc4_info *send_a4i;
-            arc4_info *recv_a4i;
-        } ntlm2;
-    } crypt;
-} NegoHelper, *PNegoHelper;
-
-typedef struct _NtlmCredentials
-{
-    HelperMode mode;
-
-    /* these are all in the Unix codepage */
-    char *username_arg;
-    char *domain_arg;
-    char *password; /* not nul-terminated */
-    int pwlen;
-    int no_cached_credentials; /* don't try to use cached Samba credentials */
-} NtlmCredentials, *PNtlmCredentials;
-
-typedef enum _sign_direction {
-    NTLM_SEND,
-    NTLM_RECV
-} SignDirection;
-
 /* Allocates space for and initializes a new provider.  If fnTableA or fnTableW
  * is non-NULL, assumes the provider is built-in, and if moduleName is non-NULL,
  * means must load the LSA/user mode functions tables from external SSP/AP module.
@@ -136,59 +77,10 @@ PSTR  SECUR32_AllocMultiByteFromWide(PCWSTR str) DECLSPEC_HIDDEN;
 /* Initialization functions for built-in providers */
 void SECUR32_initSchannelSP(void) DECLSPEC_HIDDEN;
 void SECUR32_initNegotiateSP(void) DECLSPEC_HIDDEN;
-void SECUR32_initNTLMSP(void) DECLSPEC_HIDDEN;
 void load_auth_packages(void) DECLSPEC_HIDDEN;
 
 /* Cleanup functions for built-in providers */
 void SECUR32_deinitSchannelSP(void) DECLSPEC_HIDDEN;
-
-/* Functions from dispatcher.c used elsewhere in the code */
-SECURITY_STATUS fork_helper(PNegoHelper *new_helper, const char *prog,
-        char * const argv[]) DECLSPEC_HIDDEN;
-
-SECURITY_STATUS run_helper(PNegoHelper helper, char *buffer,
-        unsigned int max_buflen, int *buflen) DECLSPEC_HIDDEN;
-
-void cleanup_helper(PNegoHelper helper) DECLSPEC_HIDDEN;
-
-void check_version(PNegoHelper helper) DECLSPEC_HIDDEN;
-
-/* Functions from base64_codec.c used elsewhere */
-SECURITY_STATUS encodeBase64(PBYTE in_buf, int in_len, char* out_buf,
-        int max_len, int *out_len) DECLSPEC_HIDDEN;
-
-SECURITY_STATUS decodeBase64(char *in_buf, int in_len, BYTE *out_buf,
-        int max_len, int *out_len) DECLSPEC_HIDDEN;
-
-/* Functions from util.c */
-SECURITY_STATUS SECUR32_CreateNTLM1SessionKey(PBYTE password, int len, PBYTE session_key) DECLSPEC_HIDDEN;
-SECURITY_STATUS SECUR32_CreateNTLM2SubKeys(PNegoHelper helper) DECLSPEC_HIDDEN;
-arc4_info *SECUR32_arc4Alloc(void) DECLSPEC_HIDDEN;
-void SECUR32_arc4Init(arc4_info *a4i, const BYTE *key, unsigned int keyLen) DECLSPEC_HIDDEN;
-void SECUR32_arc4Process(arc4_info *a4i, BYTE *inoutString, unsigned int length) DECLSPEC_HIDDEN;
-void SECUR32_arc4Cleanup(arc4_info *a4i) DECLSPEC_HIDDEN;
-
-/* NTLMSSP flags indicating the negotiated features */
-#define NTLMSSP_NEGOTIATE_UNICODE                   0x00000001
-#define NTLMSSP_NEGOTIATE_OEM                       0x00000002
-#define NTLMSSP_REQUEST_TARGET                      0x00000004
-#define NTLMSSP_NEGOTIATE_SIGN                      0x00000010
-#define NTLMSSP_NEGOTIATE_SEAL                      0x00000020
-#define NTLMSSP_NEGOTIATE_DATAGRAM_STYLE            0x00000040
-#define NTLMSSP_NEGOTIATE_LM_SESSION_KEY            0x00000080
-#define NTLMSSP_NEGOTIATE_NTLM                      0x00000200
-#define NTLMSSP_NEGOTIATE_DOMAIN_SUPPLIED           0x00001000
-#define NTLMSSP_NEGOTIATE_WORKSTATION_SUPPLIED      0x00002000
-#define NTLMSSP_NEGOTIATE_LOCAL_CALL                0x00004000
-#define NTLMSSP_NEGOTIATE_ALWAYS_SIGN               0x00008000
-#define NTLMSSP_NEGOTIATE_TARGET_TYPE_DOMAIN        0x00010000
-#define NTLMSSP_NEGOTIATE_TARGET_TYPE_SERVER        0x00020000
-#define NTLMSSP_NEGOTIATE_NTLM2                     0x00080000
-#define NTLMSSP_NEGOTIATE_TARGET_INFO               0x00800000
-#define NTLMSSP_NEGOTIATE_128                       0x20000000
-#define NTLMSSP_NEGOTIATE_KEY_EXCHANGE              0x40000000
-#define NTLMSSP_NEGOTIATE_56                        0x80000000
-
 
 /* schannel internal interface */
 typedef struct schan_imp_session_opaque *schan_imp_session;

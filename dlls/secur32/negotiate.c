@@ -58,6 +58,17 @@ struct sec_handle
     SecHandle       handle_ntlm;
 };
 
+/* matches layout from msv1_0 */
+struct ntlm_cred
+{
+    int   mode;
+    char *username_arg;
+    char *domain_arg;
+    char *password;
+    int   password_len;
+    int   no_cached_credentials; /* don't try to use cached Samba credentials */
+};
+
 /***********************************************************************
  *              AcquireCredentialsHandleW
  */
@@ -92,7 +103,7 @@ static SECURITY_STATUS SEC_ENTRY nego_AcquireCredentialsHandleW(
                 fCredentialUse, pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, &cred->handle_ntlm, ptsExpiry );
         if (ret == SEC_E_OK)
         {
-            NtlmCredentials *ntlm_cred = (NtlmCredentials *)cred->handle_ntlm.dwLower;
+            struct ntlm_cred *ntlm_cred = (struct ntlm_cred *)cred->handle_ntlm.dwLower;
             ntlm_cred->no_cached_credentials = (pAuthData == NULL);
             cred->ntlm = package->provider;
         }

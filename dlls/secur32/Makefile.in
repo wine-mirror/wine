@@ -1,21 +1,16 @@
 MODULE    = secur32.dll
 IMPORTLIB = secur32
-IMPORTS   = netapi32 advapi32
+IMPORTS   = advapi32
 DELAYIMPORTS = crypt32
 EXTRAINCL = $(GNUTLS_CFLAGS)
 EXTRALIBS = $(SECURITY_LIBS)
 
 C_SRCS = \
-	base64_codec.c \
-	dispatcher.c \
-	hmac_md5.c \
 	lsa.c \
 	negotiate.c \
-	ntlm.c \
 	schannel.c \
 	schannel_gnutls.c \
 	schannel_macosx.c \
 	secur32.c \
 	thunks.c \
-	util.c \
 	wrapper.c
