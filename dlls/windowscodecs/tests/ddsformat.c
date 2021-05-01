@@ -1287,11 +1287,9 @@ static void test_dds_encoder_initialize(void)
     if (!encoder) goto end;
 
     hr = IWICBitmapEncoder_Initialize(encoder, NULL, WICBitmapEncoderNoCache);
-    todo_wine
     ok(hr == E_INVALIDARG, "Initialize got unexpected hr %#x\n", hr);
 
     hr = IWICBitmapEncoder_Initialize(encoder, (IStream *)stream, WICBitmapEncoderNoCache);
-    todo_wine
     ok(hr == S_OK, "Initialize failed, hr %#x\n", hr);
 
     IWICBitmapEncoder_Release(encoder);
@@ -1302,11 +1300,9 @@ static void test_dds_encoder_initialize(void)
     if (!encoder) goto end;
 
     hr = IWICBitmapEncoder_Initialize(encoder, (IStream *)stream, WICBitmapEncoderNoCache);
-    todo_wine
     ok(hr == S_OK, "Initialize failed, hr %#x\n", hr);
 
     hr = IWICBitmapEncoder_Initialize(encoder, (IStream *)stream, WICBitmapEncoderNoCache);
-    todo_wine
     ok(hr == WINCODEC_ERR_WRONGSTATE, "Initialize got unexpected hr %#x\n", hr);
 
 end:

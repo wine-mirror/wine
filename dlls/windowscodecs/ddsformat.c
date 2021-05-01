@@ -1754,10 +1754,35 @@ static ULONG WINAPI DdsEncoder_Release(IWICBitmapEncoder *iface)
 }
 
 static HRESULT WINAPI DdsEncoder_Initialize(IWICBitmapEncoder *iface,
-                                               IStream *pIStream, WICBitmapEncoderCacheOption cacheOption)
+                                            IStream *stream, WICBitmapEncoderCacheOption cacheOption)
 {
-    FIXME("(%p,%p,%u): stub\n", iface, pIStream, cacheOption);
-    return E_NOTIMPL;
+    DdsEncoder *This = impl_from_IWICBitmapEncoder(iface);
+    HRESULT hr;
+
+    TRACE("(%p,%p,%u)\n", iface, stream, cacheOption);
+
+    if (cacheOption != WICBitmapEncoderNoCache)
+        FIXME("Cache option %#x is not supported.\n", cacheOption);
+
+    if (!stream) return E_INVALIDARG;
+
+    EnterCriticalSection(&This->lock);
+
+    if (This->stream)
+    {
+        hr = WINCODEC_ERR_WRONGSTATE;
+        goto end;
+    }
+
+    This->stream = stream;
+    IStream_AddRef(stream);
+
+    hr = S_OK;
+
+end:
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
 }
 
 static HRESULT WINAPI DdsEncoder_GetContainerFormat(IWICBitmapEncoder *iface, GUID *format)
