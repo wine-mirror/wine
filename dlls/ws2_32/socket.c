@@ -609,7 +609,6 @@ int num_startup;
 static FARPROC blocking_hook = (FARPROC)WSA_DefaultBlockingHook;
 
 /* function prototypes */
-static struct WS_protoent *WS_create_pe( const char *name, char **aliases, int prot );
 static struct WS_servent *WS_dup_se(const struct servent* p_se);
 static int ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, int *size);
 
@@ -1577,21 +1576,6 @@ static struct WS_servent *check_buffer_se(int size)
     if (!ptb->se_buffer) SetLastError(WSAENOBUFS);
     return ptb->se_buffer;
 }
-
-static struct WS_protoent *check_buffer_pe(int size)
-{
-    struct per_thread_data * ptb = get_per_thread_data();
-    if (ptb->pe_buffer)
-    {
-        if (ptb->pe_len >= size ) return ptb->pe_buffer;
-        HeapFree( GetProcessHeap(), 0, ptb->pe_buffer );
-    }
-    ptb->pe_buffer = HeapAlloc( GetProcessHeap(), 0, (ptb->pe_len = size) );
-    if (!ptb->pe_buffer) SetLastError(WSAENOBUFS);
-    return ptb->pe_buffer;
-}
-
-/* ----------------------------------- i/o APIs */
 
 static inline BOOL supported_pf(int pf)
 {
@@ -5737,79 +5721,6 @@ SOCKET WINAPI WS_socket(int af, int type, int protocol)
 }
 
 
-static const struct { int prot; const char *names[3]; } protocols[] =
-{
-    {   0, { "ip", "IP" }},
-    {   1, { "icmp", "ICMP" }},
-    {   3, { "ggp", "GGP" }},
-    {   6, { "tcp", "TCP" }},
-    {   8, { "egp", "EGP" }},
-    {  12, { "pup", "PUP" }},
-    {  17, { "udp", "UDP" }},
-    {  20, { "hmp", "HMP" }},
-    {  22, { "xns-idp", "XNS-IDP" }},
-    {  27, { "rdp", "RDP" }},
-    {  41, { "ipv6", "IPv6" }},
-    {  43, { "ipv6-route", "IPv6-Route" }},
-    {  44, { "ipv6-frag", "IPv6-Frag" }},
-    {  50, { "esp", "ESP" }},
-    {  51, { "ah", "AH" }},
-    {  58, { "ipv6-icmp", "IPv6-ICMP" }},
-    {  59, { "ipv6-nonxt", "IPv6-NoNxt" }},
-    {  60, { "ipv6-opts", "IPv6-Opts" }},
-    {  66, { "rvd", "RVD" }},
-};
-
-/***********************************************************************
- *		getprotobyname		(WS2_32.53)
- */
-struct WS_protoent* WINAPI WS_getprotobyname(const char* name)
-{
-    struct WS_protoent* retval = NULL;
-    unsigned int i;
-
-    for (i = 0; i < ARRAY_SIZE(protocols); i++)
-    {
-        if (_strnicmp( protocols[i].names[0], name, -1 )) continue;
-        retval = WS_create_pe( protocols[i].names[0], (char **)protocols[i].names + 1,
-                               protocols[i].prot );
-        break;
-    }
-    if (!retval)
-    {
-        WARN( "protocol %s not found\n", debugstr_a(name) );
-        SetLastError(WSANO_DATA);
-    }
-    TRACE( "%s ret %p\n", debugstr_a(name), retval );
-    return retval;
-}
-
-
-/***********************************************************************
- *		getprotobynumber	(WS2_32.54)
- */
-struct WS_protoent* WINAPI WS_getprotobynumber(int number)
-{
-    struct WS_protoent* retval = NULL;
-    unsigned int i;
-
-    for (i = 0; i < ARRAY_SIZE(protocols); i++)
-    {
-        if (protocols[i].prot != number) continue;
-        retval = WS_create_pe( protocols[i].names[0], (char **)protocols[i].names + 1,
-                               protocols[i].prot );
-        break;
-    }
-    if (!retval)
-    {
-        WARN( "protocol %d not found\n", number );
-        SetLastError(WSANO_DATA);
-    }
-    TRACE("%i ret %p\n", number, retval);
-    return retval;
-}
-
-
 /***********************************************************************
  *		getservbyname		(WS2_32.55)
  */
@@ -6311,20 +6222,6 @@ static int list_dup(char** l_src, char** l_to, int item_size)
    }
    l_to[i] = NULL;
    return p - (char *)l_to;
-}
-
-static struct WS_protoent *WS_create_pe( const char *name, char **aliases, int prot )
-{
-    struct WS_protoent *ret;
-    unsigned int size = sizeof(*ret) + strlen(name) + sizeof(char *) + list_size(aliases, 0);
-
-    if (!(ret = check_buffer_pe( size ))) return NULL;
-    ret->p_proto = prot;
-    ret->p_name = (char *)(ret + 1);
-    strcpy( ret->p_name, name );
-    ret->p_aliases = (char **)ret->p_name + strlen(name) / sizeof(char *) + 1;
-    list_dup( aliases, ret->p_aliases, 0 );
-    return ret;
 }
 
 /* ----- servent */

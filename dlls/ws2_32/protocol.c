@@ -1388,3 +1388,147 @@ int WINAPI GetHostNameW( WCHAR *name, int namelen )
     MultiByteToWideChar( CP_ACP, 0, buf, -1, name, namelen );
     return 0;
 }
+
+
+static int list_size( char **list, int item_size )
+{
+    int i, size = 0;
+    if (list)
+    {
+        for (i = 0; list[i]; i++)
+            size += (item_size ? item_size : strlen(list[i]) + 1);
+        size += (i + 1) * sizeof(char *);
+    }
+    return size;
+}
+
+static int list_dup( char **src, char **dst, int item_size )
+{
+    char *p;
+    int i;
+
+    for (i = 0; src[i]; i++)
+        ;
+    p = (char *)(dst + i + 1);
+
+    for (i = 0; src[i]; i++)
+    {
+        int count = item_size ? item_size : strlen(src[i]) + 1;
+        memcpy( p, src[i], count );
+        dst[i] = p;
+        p += count;
+    }
+    dst[i] = NULL;
+    return p - (char *)dst;
+}
+
+static const struct
+{
+    int prot;
+    const char *names[3];
+}
+protocols[] =
+{
+    { 0, {"ip", "IP"}},
+    { 1, {"icmp", "ICMP"}},
+    { 3, {"ggp", "GGP"}},
+    { 6, {"tcp", "TCP"}},
+    { 8, {"egp", "EGP"}},
+    {12, {"pup", "PUP"}},
+    {17, {"udp", "UDP"}},
+    {20, {"hmp", "HMP"}},
+    {22, {"xns-idp", "XNS-IDP"}},
+    {27, {"rdp", "RDP"}},
+    {41, {"ipv6", "IPv6"}},
+    {43, {"ipv6-route", "IPv6-Route"}},
+    {44, {"ipv6-frag", "IPv6-Frag"}},
+    {50, {"esp", "ESP"}},
+    {51, {"ah", "AH"}},
+    {58, {"ipv6-icmp", "IPv6-ICMP"}},
+    {59, {"ipv6-nonxt", "IPv6-NoNxt"}},
+    {60, {"ipv6-opts", "IPv6-Opts"}},
+    {66, {"rvd", "RVD"}},
+};
+
+static struct WS_protoent *get_protoent_buffer( unsigned int size )
+{
+    struct per_thread_data *data = get_per_thread_data();
+
+    if (data->pe_buffer)
+    {
+        if (data->pe_len >= size) return data->pe_buffer;
+        HeapFree( GetProcessHeap(), 0, data->pe_buffer );
+    }
+    data->pe_len = size;
+    data->pe_buffer = HeapAlloc( GetProcessHeap(), 0, size );
+    if (!data->pe_buffer) SetLastError( WSAENOBUFS );
+    return data->pe_buffer;
+}
+
+static struct WS_protoent *create_protoent( const char *name, char **aliases, int prot )
+{
+    struct WS_protoent *ret;
+    unsigned int size = sizeof(*ret) + strlen( name ) + sizeof(char *) + list_size( aliases, 0 );
+
+    if (!(ret = get_protoent_buffer( size ))) return NULL;
+    ret->p_proto = prot;
+    ret->p_name = (char *)(ret + 1);
+    strcpy( ret->p_name, name );
+    ret->p_aliases = (char **)ret->p_name + strlen( name ) / sizeof(char *) + 1;
+    list_dup( aliases, ret->p_aliases, 0 );
+    return ret;
+}
+
+
+/***********************************************************************
+ *      getprotobyname   (ws2_32.53)
+ */
+struct WS_protoent * WINAPI WS_getprotobyname( const char *name )
+{
+    struct WS_protoent *retval = NULL;
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(protocols); i++)
+    {
+        if (!_strnicmp( protocols[i].names[0], name, -1 ))
+        {
+            retval = create_protoent( protocols[i].names[0], (char **)protocols[i].names + 1,
+                                      protocols[i].prot );
+            break;
+        }
+    }
+    if (!retval)
+    {
+        WARN( "protocol %s not found\n", debugstr_a(name) );
+        SetLastError( WSANO_DATA );
+    }
+    TRACE( "%s ret %p\n", debugstr_a(name), retval );
+    return retval;
+}
+
+
+/***********************************************************************
+ *      getprotobynumber   (ws2_32.54)
+ */
+struct WS_protoent * WINAPI WS_getprotobynumber( int number )
+{
+    struct WS_protoent *retval = NULL;
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(protocols); i++)
+    {
+        if (protocols[i].prot == number)
+        {
+            retval = create_protoent( protocols[i].names[0], (char **)protocols[i].names + 1,
+                                      protocols[i].prot );
+            break;
+        }
+    }
+    if (!retval)
+    {
+        WARN( "protocol %d not found\n", number );
+        SetLastError( WSANO_DATA );
+    }
+    TRACE( "%d ret %p\n", number, retval );
+    return retval;
+}
