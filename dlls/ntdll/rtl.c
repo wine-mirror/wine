@@ -37,6 +37,7 @@
 #include "ntdll_misc.h"
 #include "in6addr.h"
 #include "ddk/ntddk.h"
+#include "ddk/ntifs.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 WINE_DECLARE_DEBUG_CHANNEL(debugstr);
@@ -2164,4 +2165,13 @@ NTSTATUS WINAPI RtlQueryPackageIdentity(HANDLE token, WCHAR *fullname, SIZE_T *f
 {
     FIXME("(%p, %p, %p, %p, %p, %p): stub\n", token, fullname, fullname_size, appid, appid_size, packaged);
     return STATUS_NOT_FOUND;
+}
+
+/*********************************************************************
+ *           RtlQueryProcessPlaceholderCompatibilityMode [NTDLL.@]
+ */
+char WINAPI RtlQueryProcessPlaceholderCompatibilityMode(void)
+{
+    FIXME("stub\n");
+    return PHCM_APPLICATION_DEFAULT;
 }
