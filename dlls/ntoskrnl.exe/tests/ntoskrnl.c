@@ -1537,7 +1537,8 @@ static void test_hid_device(void)
 
     todo_wine ok(found, "didn't find device\n");
 
-    file = CreateFileA(iface_detail->DevicePath, FILE_READ_ACCESS, 0, NULL, OPEN_EXISTING, 0, NULL);
+    file = CreateFileA(iface_detail->DevicePath, FILE_READ_ACCESS,
+            FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
     ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
 
     CloseHandle(file);
