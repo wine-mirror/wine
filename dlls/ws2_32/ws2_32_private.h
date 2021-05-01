@@ -152,8 +152,15 @@
 #include "wine/unicode.h"
 #include "wine/heap.h"
 
-int convert_af_u2w( int family ) DECLSPEC_HIDDEN;
-int convert_af_w2u( int family ) DECLSPEC_HIDDEN;
+#define DECLARE_CRITICAL_SECTION(cs) \
+    static CRITICAL_SECTION cs; \
+    static CRITICAL_SECTION_DEBUG cs##_debug = \
+    { 0, 0, &cs, { &cs##_debug.ProcessLocksList, &cs##_debug.ProcessLocksList }, \
+      0, 0, { (DWORD_PTR)(__FILE__ ": " # cs) }}; \
+    static CRITICAL_SECTION cs = { &cs##_debug, -1, 0, 0, 0, 0 }
+
+static const char magic_loopback_addr[] = {127, 12, 34, 56};
+
 int convert_eai_u2w( int ret ) DECLSPEC_HIDDEN;
 int convert_socktype_u2w( int type ) DECLSPEC_HIDDEN;
 int convert_socktype_w2u( int type ) DECLSPEC_HIDDEN;
@@ -163,5 +170,23 @@ int ws_sockaddr_u2ws( const struct sockaddr *unix_addr, struct WS_sockaddr *win_
 const char *debugstr_sockaddr( const struct WS_sockaddr *addr ) DECLSPEC_HIDDEN;
 
 UINT sock_get_error( int err ) DECLSPEC_HIDDEN;
+
+struct per_thread_data
+{
+    int opentype;
+    struct WS_hostent *he_buffer;
+    struct WS_servent *se_buffer;
+    struct WS_protoent *pe_buffer;
+    struct pollfd *fd_cache;
+    unsigned int fd_count;
+    int he_len;
+    int se_len;
+    int pe_len;
+    char ntoa_buffer[16]; /* 4*3 digits + 3 '.' + 1 '\0' */
+};
+
+extern int num_startup;
+
+struct per_thread_data *get_per_thread_data(void) DECLSPEC_HIDDEN;
 
 #endif
