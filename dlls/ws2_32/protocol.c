@@ -854,6 +854,93 @@ void WINAPI FreeAddrInfoExW( ADDRINFOEXW *ai )
 }
 
 
+static const int ws_niflag_map[][2] =
+{
+    MAP_OPTION( NI_NOFQDN ),
+    MAP_OPTION( NI_NUMERICHOST ),
+    MAP_OPTION( NI_NAMEREQD ),
+    MAP_OPTION( NI_NUMERICSERV ),
+    MAP_OPTION( NI_DGRAM ),
+};
+
+static int convert_niflag_w2u( int winflags )
+{
+    unsigned int i;
+    int unixflags = 0;
+
+    for (i = 0; i < ARRAY_SIZE(ws_niflag_map); i++)
+    {
+        if (ws_niflag_map[i][0] & winflags)
+        {
+            unixflags |= ws_niflag_map[i][1];
+            winflags &= ~ws_niflag_map[i][0];
+        }
+    }
+    if (winflags)
+        FIXME("Unhandled windows NI_xxx flags 0x%x\n", winflags);
+    return unixflags;
+}
+
+
+/***********************************************************************
+ *      getnameinfo   (ws2_32.@)
+ */
+int WINAPI WS_getnameinfo( const SOCKADDR *addr, WS_socklen_t addr_len, char *host,
+                           DWORD host_len, char *serv, DWORD serv_len, int flags )
+{
+#ifdef HAVE_GETNAMEINFO
+    int ret;
+    union generic_unix_sockaddr uaddr;
+    unsigned int uaddr_len;
+
+    TRACE( "addr %s, addr_len %d, host %p, host_len %u, serv %p, serv_len %d, flags %#x\n",
+           debugstr_sockaddr(addr), addr_len, host, host_len, serv, serv_len, flags );
+
+    uaddr_len = ws_sockaddr_ws2u( addr, addr_len, &uaddr );
+    if (!uaddr_len)
+    {
+        SetLastError( WSAEFAULT );
+        return WSA_NOT_ENOUGH_MEMORY;
+    }
+    ret = getnameinfo( &uaddr.addr, uaddr_len, host, host_len, serv, serv_len, convert_niflag_w2u(flags) );
+    return convert_eai_u2w( ret );
+#else
+    FIXME( "getnameinfo() failed, not found during buildtime.\n" );
+    return EAI_FAIL;
+#endif
+}
+
+
+/***********************************************************************
+ *      GetNameInfoW   (ws2_32.@)
+ */
+int WINAPI GetNameInfoW( const SOCKADDR *addr, WS_socklen_t addr_len, WCHAR *host,
+                         DWORD host_len, WCHAR *serv, DWORD serv_len, int flags )
+{
+    int ret;
+    char *hostA = NULL, *servA = NULL;
+
+    if (host && (!(hostA = HeapAlloc( GetProcessHeap(), 0, host_len ))))
+        return EAI_MEMORY;
+    if (serv && (!(servA = HeapAlloc( GetProcessHeap(), 0, serv_len ))))
+    {
+        HeapFree( GetProcessHeap(), 0, hostA );
+        return EAI_MEMORY;
+    }
+
+    ret = WS_getnameinfo( addr, addr_len, hostA, host_len, servA, serv_len, flags );
+    if (!ret)
+    {
+        if (host) MultiByteToWideChar( CP_ACP, 0, hostA, -1, host, host_len );
+        if (serv) MultiByteToWideChar( CP_ACP, 0, servA, -1, serv, serv_len );
+    }
+
+    HeapFree( GetProcessHeap(), 0, hostA );
+    HeapFree( GetProcessHeap(), 0, servA );
+    return ret;
+}
+
+
 static UINT host_errno_from_unix( int err )
 {
     WARN( "%d\n", err );

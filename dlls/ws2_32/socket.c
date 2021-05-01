@@ -235,12 +235,6 @@ static unsigned int if_addr_cache_size;
 static SOCKET *socket_list;
 static unsigned int socket_list_size;
 
-union generic_unix_sockaddr
-{
-    struct sockaddr addr;
-    char data[128];  /* should be big enough for all families */
-};
-
 const char *debugstr_sockaddr( const struct WS_sockaddr *a )
 {
     if (!a) return "(nil)";
@@ -715,15 +709,6 @@ static const int ws_socktype_map[][2] =
     MAP_OPTION( SOCK_STREAM ),
     MAP_OPTION( SOCK_RAW ),
     {FROM_PROTOCOL_INFO, FROM_PROTOCOL_INFO},
-};
-
-static const int ws_niflag_map[][2] =
-{
-    MAP_OPTION( NI_NOFQDN ),
-    MAP_OPTION( NI_NUMERICHOST ),
-    MAP_OPTION( NI_NAMEREQD ),
-    MAP_OPTION( NI_NUMERICSERV ),
-    MAP_OPTION( NI_DGRAM ),
 };
 
 static const int ws_poll_map[][2] =
@@ -1633,8 +1618,8 @@ static inline BOOL supported_pf(int pf)
 /* Returns the length of the converted address if successful, 0 if it was too
  * small to start with or unknown family or invalid address buffer.
  */
-static unsigned int ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int wsaddrlen,
-                                     union generic_unix_sockaddr *uaddr)
+unsigned int ws_sockaddr_ws2u( const struct WS_sockaddr *wsaddr, int wsaddrlen,
+                               union generic_unix_sockaddr *uaddr )
 {
     unsigned int uaddrlen = 0;
 
@@ -5858,70 +5843,6 @@ struct WS_servent* WINAPI WS_getservbyname(const char *name, const char *proto)
     HeapFree( GetProcessHeap(), 0, name_str );
     TRACE( "%s, %s ret %p\n", debugstr_a(name), debugstr_a(proto), retval );
     return retval;
-}
-
-static int convert_niflag_w2u(int winflags) {
-    unsigned int i;
-    int unixflags = 0;
-
-    for (i = 0; i < ARRAY_SIZE(ws_niflag_map); i++)
-        if (ws_niflag_map[i][0] & winflags) {
-            unixflags |= ws_niflag_map[i][1];
-            winflags &= ~ws_niflag_map[i][0];
-        }
-    if (winflags)
-        FIXME("Unhandled windows NI_xxx flags 0x%x\n", winflags);
-    return unixflags;
-}
-
-int WINAPI WS_getnameinfo(const SOCKADDR *sa, WS_socklen_t salen, PCHAR host,
-                          DWORD hostlen, PCHAR serv, DWORD servlen, INT flags)
-{
-#ifdef HAVE_GETNAMEINFO
-    int ret;
-    union generic_unix_sockaddr sa_u;
-    unsigned int size;
-
-    TRACE("%s %d %p %d %p %d %d\n", debugstr_sockaddr(sa), salen, host, hostlen,
-          serv, servlen, flags);
-
-    size = ws_sockaddr_ws2u(sa, salen, &sa_u);
-    if (!size)
-    {
-        SetLastError(WSAEFAULT);
-        return WSA_NOT_ENOUGH_MEMORY;
-    }
-    ret = getnameinfo(&sa_u.addr, size, host, hostlen, serv, servlen, convert_niflag_w2u(flags));
-    return convert_eai_u2w(ret);
-#else
-    FIXME("getnameinfo() failed, not found during buildtime.\n");
-    return EAI_FAIL;
-#endif
-}
-
-int WINAPI GetNameInfoW(const SOCKADDR *sa, WS_socklen_t salen, PWCHAR host,
-                        DWORD hostlen, PWCHAR serv, DWORD servlen, INT flags)
-{
-    int ret;
-    char *hostA = NULL, *servA = NULL;
-
-    if (host && (!(hostA = HeapAlloc(GetProcessHeap(), 0, hostlen)))) return EAI_MEMORY;
-    if (serv && (!(servA = HeapAlloc(GetProcessHeap(), 0, servlen))))
-    {
-        HeapFree(GetProcessHeap(), 0, hostA);
-        return EAI_MEMORY;
-    }
-
-    ret = WS_getnameinfo(sa, salen, hostA, hostlen, servA, servlen, flags);
-    if (!ret)
-    {
-        if (host) MultiByteToWideChar(CP_ACP, 0, hostA, -1, host, hostlen);
-        if (serv) MultiByteToWideChar(CP_ACP, 0, servA, -1, serv, servlen);
-    }
-
-    HeapFree(GetProcessHeap(), 0, hostA);
-    HeapFree(GetProcessHeap(), 0, servA);
-    return ret;
 }
 
 /***********************************************************************

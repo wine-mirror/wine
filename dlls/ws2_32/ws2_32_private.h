@@ -161,11 +161,19 @@
 
 static const char magic_loopback_addr[] = {127, 12, 34, 56};
 
+union generic_unix_sockaddr
+{
+    struct sockaddr addr;
+    char data[128]; /* should be big enough for all families */
+};
+
 int convert_eai_u2w( int ret ) DECLSPEC_HIDDEN;
 int convert_socktype_u2w( int type ) DECLSPEC_HIDDEN;
 int convert_socktype_w2u( int type ) DECLSPEC_HIDDEN;
 int ws_sockaddr_u2ws( const struct sockaddr *unix_addr, struct WS_sockaddr *win_addr,
                       int *win_addr_len ) DECLSPEC_HIDDEN;
+unsigned int ws_sockaddr_ws2u( const struct WS_sockaddr *win_addr, int win_addr_len,
+                               union generic_unix_sockaddr *unix_addr ) DECLSPEC_HIDDEN;
 
 const char *debugstr_sockaddr( const struct WS_sockaddr *addr ) DECLSPEC_HIDDEN;
 
