@@ -827,9 +827,9 @@ static void test_dds_decoder_image_parameters(void)
         hr = init_decoder(decoder, stream, test_data[i].init_hr, i, test_data[i].wine_init);
         if (hr != S_OK) {
             if (test_data[i].expected_parameters.Dimension == WICDdsTextureCube) {
-                win_skip("Cube map is not supported\n");
+                win_skip("Test %u: Cube map is not supported\n", i);
             } else {
-                win_skip("Uncompressed DDS image is not supported\n");
+                win_skip("Test %u: Uncompressed DDS image is not supported\n", i);
             }
             goto next;
         }
@@ -1240,9 +1240,9 @@ static void test_dds_decoder(void)
         hr = init_decoder(decoder, stream, test_data[i].init_hr, i, test_data[i].wine_init);
         if (hr != S_OK) {
             if (test_data[i].expected_parameters.Dimension == WICDdsTextureCube) {
-                win_skip("Cube map is not supported\n");
+                win_skip("Test %u: Cube map is not supported\n", i);
             } else {
-                win_skip("Uncompressed DDS image is not supported\n");
+                win_skip("Test %u: Uncompressed DDS image is not supported\n", i);
             }
             goto next;
         }
