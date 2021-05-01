@@ -1532,3 +1532,124 @@ struct WS_protoent * WINAPI WS_getprotobynumber( int number )
     TRACE( "%d ret %p\n", number, retval );
     return retval;
 }
+
+
+static char *strdup_lower( const char *str )
+{
+    char *ret = HeapAlloc( GetProcessHeap(), 0, strlen(str) + 1 );
+    int i;
+
+    if (ret)
+    {
+        for (i = 0; str[i]; i++) ret[i] = tolower( str[i] );
+        ret[i] = 0;
+    }
+    else SetLastError( WSAENOBUFS );
+    return ret;
+}
+
+static struct WS_servent *get_servent_buffer( int size )
+{
+    struct per_thread_data *data = get_per_thread_data();
+    if (data->se_buffer)
+    {
+        if (data->se_len >= size) return data->se_buffer;
+        HeapFree( GetProcessHeap(), 0, data->se_buffer );
+    }
+    data->se_len = size;
+    data->se_buffer = HeapAlloc( GetProcessHeap(), 0, size );
+    if (!data->se_buffer) SetLastError( WSAENOBUFS );
+    return data->se_buffer;
+}
+
+static struct WS_servent *servent_from_unix( const struct servent *p_se )
+{
+    char *p;
+    struct WS_servent *p_to;
+
+    int size = (sizeof(*p_se) +
+                strlen(p_se->s_proto) + 1 +
+                strlen(p_se->s_name) + 1 +
+                list_size(p_se->s_aliases, 0));
+
+    if (!(p_to = get_servent_buffer( size ))) return NULL;
+    p_to->s_port = p_se->s_port;
+
+    p = (char *)(p_to + 1);
+    p_to->s_name = p;
+    strcpy( p, p_se->s_name );
+    p += strlen(p) + 1;
+
+    p_to->s_proto = p;
+    strcpy( p, p_se->s_proto );
+    p += strlen(p) + 1;
+
+    p_to->s_aliases = (char **)p;
+    list_dup( p_se->s_aliases, p_to->s_aliases, 0 );
+    return p_to;
+}
+
+
+/***********************************************************************
+ *      getservbyname   (ws2_32.55)
+ */
+struct WS_servent * WINAPI WS_getservbyname( const char *name, const char *proto )
+{
+    struct WS_servent *retval = NULL;
+    struct servent *serv;
+    char *name_str;
+    char *proto_str = NULL;
+
+    if (!(name_str = strdup_lower( name ))) return NULL;
+
+    if (proto && *proto)
+    {
+        if (!(proto_str = strdup_lower( proto )))
+        {
+            HeapFree( GetProcessHeap(), 0, name_str );
+            return NULL;
+        }
+    }
+
+    EnterCriticalSection( &csWSgetXXXbyYYY );
+    serv = getservbyname( name_str, proto_str );
+    if (serv)
+        retval = servent_from_unix( serv );
+    else
+        SetLastError( WSANO_DATA );
+    LeaveCriticalSection( &csWSgetXXXbyYYY );
+
+    HeapFree( GetProcessHeap(), 0, proto_str );
+    HeapFree( GetProcessHeap(), 0, name_str );
+    TRACE( "%s, %s ret %p\n", debugstr_a(name), debugstr_a(proto), retval );
+    return retval;
+}
+
+
+/***********************************************************************
+ *      getservbyport   (ws2_32.56)
+ */
+struct WS_servent * WINAPI WS_getservbyport( int port, const char *proto )
+{
+    struct WS_servent *retval = NULL;
+#ifdef HAVE_GETSERVBYPORT
+    struct servent *serv;
+    char *proto_str = NULL;
+
+    if (proto && *proto)
+    {
+        if (!(proto_str = strdup_lower( proto ))) return NULL;
+    }
+
+    EnterCriticalSection( &csWSgetXXXbyYYY );
+    if ((serv = getservbyport( port, proto_str )))
+        retval = servent_from_unix( serv );
+    else
+        SetLastError( WSANO_DATA );
+    LeaveCriticalSection( &csWSgetXXXbyYYY );
+
+    HeapFree( GetProcessHeap(), 0, proto_str );
+#endif
+    TRACE( "%d (i.e. port %d), %s ret %p\n", port, (int)ntohl(port), debugstr_a(proto), retval );
+    return retval;
+}

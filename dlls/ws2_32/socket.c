@@ -225,7 +225,6 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                           LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine,
                           LPWSABUF lpControlBuffer );
 
-DECLARE_CRITICAL_SECTION(csWSgetXXXbyYYY);
 DECLARE_CRITICAL_SECTION(cs_if_addr_cache);
 DECLARE_CRITICAL_SECTION(cs_socket_list);
 
@@ -609,7 +608,6 @@ int num_startup;
 static FARPROC blocking_hook = (FARPROC)WSA_DefaultBlockingHook;
 
 /* function prototypes */
-static struct WS_servent *WS_dup_se(const struct servent* p_se);
 static int ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, int *size);
 
 int WSAIOCTL_GetInterfaceCount(void);
@@ -1340,22 +1338,6 @@ static int convert_sockopt(INT *level, INT *optname)
   return 0;
 }
 
-/* ----------------------------------- Per-thread info (or per-process?) */
-
-static char *strdup_lower(const char *str)
-{
-    int i;
-    char *ret = HeapAlloc( GetProcessHeap(), 0, strlen(str) + 1 );
-
-    if (ret)
-    {
-        for (i = 0; str[i]; i++) ret[i] = tolower(str[i]);
-        ret[i] = 0;
-    }
-    else SetLastError(WSAENOBUFS);
-    return ret;
-}
-
 /* Utility: get the SO_RCVTIMEO or SO_SNDTIMEO socket option
  * from an fd and return the value converted to milli seconds
  * or 0 if there is an infinite time out */
@@ -1562,19 +1544,6 @@ INT WINAPI WSAGetLastError(void)
  */
 void WINAPI WSASetLastError(INT iError) {
     SetLastError(iError);
-}
-
-static struct WS_servent *check_buffer_se(int size)
-{
-    struct per_thread_data * ptb = get_per_thread_data();
-    if (ptb->se_buffer)
-    {
-        if (ptb->se_len >= size ) return ptb->se_buffer;
-        HeapFree( GetProcessHeap(), 0, ptb->se_buffer );
-    }
-    ptb->se_buffer = HeapAlloc( GetProcessHeap(), 0, (ptb->se_len = size) );
-    if (!ptb->se_buffer) SetLastError(WSAENOBUFS);
-    return ptb->se_buffer;
 }
 
 static inline BOOL supported_pf(int pf)
@@ -5722,68 +5691,6 @@ SOCKET WINAPI WS_socket(int af, int type, int protocol)
 
 
 /***********************************************************************
- *		getservbyname		(WS2_32.55)
- */
-struct WS_servent* WINAPI WS_getservbyname(const char *name, const char *proto)
-{
-    struct WS_servent* retval = NULL;
-    struct servent*     serv;
-    char *name_str;
-    char *proto_str = NULL;
-
-    if (!(name_str = strdup_lower(name))) return NULL;
-
-    if (proto && *proto)
-    {
-        if (!(proto_str = strdup_lower(proto)))
-        {
-            HeapFree( GetProcessHeap(), 0, name_str );
-            return NULL;
-        }
-    }
-
-    EnterCriticalSection( &csWSgetXXXbyYYY );
-    serv = getservbyname(name_str, proto_str);
-    if( serv != NULL )
-    {
-        retval = WS_dup_se(serv);
-    }
-    else SetLastError(WSANO_DATA);
-    LeaveCriticalSection( &csWSgetXXXbyYYY );
-    HeapFree( GetProcessHeap(), 0, proto_str );
-    HeapFree( GetProcessHeap(), 0, name_str );
-    TRACE( "%s, %s ret %p\n", debugstr_a(name), debugstr_a(proto), retval );
-    return retval;
-}
-
-/***********************************************************************
- *		getservbyport		(WS2_32.56)
- */
-struct WS_servent* WINAPI WS_getservbyport(int port, const char *proto)
-{
-    struct WS_servent* retval = NULL;
-#ifdef HAVE_GETSERVBYPORT
-    struct servent*     serv;
-    char *proto_str = NULL;
-
-    if (proto && *proto)
-    {
-        if (!(proto_str = strdup_lower(proto))) return NULL;
-    }
-    EnterCriticalSection( &csWSgetXXXbyYYY );
-    if( (serv = getservbyport(port, proto_str)) != NULL ) {
-        retval = WS_dup_se(serv);
-    }
-    else SetLastError(WSANO_DATA);
-    LeaveCriticalSection( &csWSgetXXXbyYYY );
-    HeapFree( GetProcessHeap(), 0, proto_str );
-#endif
-    TRACE("%d (i.e. port %d), %s ret %p\n", port, (int)ntohl(port), debugstr_a(proto), retval);
-    return retval;
-}
-
-
-/***********************************************************************
  *		WSAEnumNetworkEvents (WS2_32.36)
  */
 int WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEvent, LPWSANETWORKEVENTS lpEvent)
@@ -6184,73 +6091,6 @@ INT WINAPI WSAUnhookBlockingHook(void)
 {
     blocking_hook = (FARPROC)WSA_DefaultBlockingHook;
     return 0;
-}
-
-
-/* ----------------------------------- end of API stuff */
-
-/* ----------------------------------- helper functions -
- *
- * TODO: Merge WS_dup_..() stuff into one function that
- * would operate with a generic structure containing internal
- * pointers (via a template of some kind).
- */
-
-static int list_size(char** l, int item_size)
-{
-  int i,j = 0;
-  if(l)
-  { for(i=0;l[i];i++)
-	j += (item_size) ? item_size : strlen(l[i]) + 1;
-    j += (i + 1) * sizeof(char*); }
-  return j;
-}
-
-static int list_dup(char** l_src, char** l_to, int item_size)
-{
-   char *p;
-   int i;
-
-   for (i = 0; l_src[i]; i++) ;
-   p = (char *)(l_to + i + 1);
-   for (i = 0; l_src[i]; i++)
-   {
-       int count = ( item_size ) ? item_size : strlen(l_src[i]) + 1;
-       memcpy(p, l_src[i], count);
-       l_to[i] = p;
-       p += count;
-   }
-   l_to[i] = NULL;
-   return p - (char *)l_to;
-}
-
-/* ----- servent */
-
-static struct WS_servent *WS_dup_se(const struct servent* p_se)
-{
-    char *p;
-    struct WS_servent *p_to;
-
-    int size = (sizeof(*p_se) +
-                strlen(p_se->s_proto) + 1 +
-                strlen(p_se->s_name) + 1 +
-                list_size(p_se->s_aliases, 0));
-
-    if (!(p_to = check_buffer_se(size))) return NULL;
-    p_to->s_port = p_se->s_port;
-
-    p = (char *)(p_to + 1);
-    p_to->s_name = p;
-    strcpy(p, p_se->s_name);
-    p += strlen(p) + 1;
-
-    p_to->s_proto = p;
-    strcpy(p, p_se->s_proto);
-    p += strlen(p) + 1;
-
-    p_to->s_aliases = (char **)p;
-    list_dup(p_se->s_aliases, p_to->s_aliases, 0);
-    return p_to;
 }
 
 
