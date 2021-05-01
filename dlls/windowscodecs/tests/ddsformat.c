@@ -500,6 +500,31 @@ static IWICBitmapDecoder *create_decoder(void)
     return decoder;
 }
 
+static IWICBitmapEncoder *create_encoder(void)
+{
+    IWICBitmapEncoder *encoder = NULL;
+    GUID guidresult;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_WICDdsEncoder, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IWICBitmapEncoder, (void **)&encoder);
+    if (hr != S_OK)
+    {
+        win_skip("DDS encoder is not supported\n");
+        return NULL;
+    }
+
+    memset(&guidresult, 0, sizeof(guidresult));
+
+    hr = IWICBitmapEncoder_GetContainerFormat(encoder, &guidresult);
+    ok(hr == S_OK, "GetContainerFormat failed, hr %#x\n", hr);
+
+    ok(IsEqualGUID(&guidresult, &GUID_ContainerFormatDds),
+       "Got unexpected container format %s\n", debugstr_guid(&guidresult));
+
+    return encoder;
+}
+
 static HRESULT init_decoder(IWICBitmapDecoder *decoder, IWICStream *stream, HRESULT expected, int index, BOOL wine_init)
 {
     HRESULT hr;
@@ -1231,6 +1256,69 @@ static void test_dds_decoder(void)
     }
 }
 
+static void test_dds_encoder_initialize(void)
+{
+    IWICBitmapEncoder *encoder = NULL;
+    IWICStream *stream = NULL;
+    BYTE buffer[1];
+    HRESULT hr;
+
+    encoder = create_encoder();
+    if (!encoder) goto end;
+
+    stream = create_stream(buffer, sizeof(buffer));
+    if (!stream) goto end;
+
+    /* initialize with invalid cache option */
+
+    hr = IWICBitmapEncoder_Initialize(encoder, (IStream *)stream, 0xdeadbeef);
+    todo_wine
+    ok(hr == WINCODEC_ERR_UNSUPPORTEDOPERATION, "Initialize got unexpected hr %#x\n", hr);
+
+    hr = IWICBitmapEncoder_Initialize(encoder, (IStream *)stream, WICBitmapEncoderNoCache);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Initialize got unexpected hr %#x\n", hr);
+
+    IWICBitmapEncoder_Release(encoder);
+
+    /* initialize with null stream */
+
+    encoder = create_encoder();
+    if (!encoder) goto end;
+
+    hr = IWICBitmapEncoder_Initialize(encoder, NULL, WICBitmapEncoderNoCache);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Initialize got unexpected hr %#x\n", hr);
+
+    hr = IWICBitmapEncoder_Initialize(encoder, (IStream *)stream, WICBitmapEncoderNoCache);
+    todo_wine
+    ok(hr == S_OK, "Initialize failed, hr %#x\n", hr);
+
+    IWICBitmapEncoder_Release(encoder);
+
+    /* regularly initialize */
+
+    encoder = create_encoder();
+    if (!encoder) goto end;
+
+    hr = IWICBitmapEncoder_Initialize(encoder, (IStream *)stream, WICBitmapEncoderNoCache);
+    todo_wine
+    ok(hr == S_OK, "Initialize failed, hr %#x\n", hr);
+
+    hr = IWICBitmapEncoder_Initialize(encoder, (IStream *)stream, WICBitmapEncoderNoCache);
+    todo_wine
+    ok(hr == WINCODEC_ERR_WRONGSTATE, "Initialize got unexpected hr %#x\n", hr);
+
+end:
+    if (stream) IWICStream_Release(stream);
+    if (encoder) IWICBitmapEncoder_Release(encoder);
+}
+
+static void test_dds_encoder(void)
+{
+    test_dds_encoder_initialize();
+}
+
 START_TEST(ddsformat)
 {
     HRESULT hr;
@@ -1242,6 +1330,7 @@ START_TEST(ddsformat)
     if (hr != S_OK) goto end;
 
     test_dds_decoder();
+    test_dds_encoder();
 
 end:
     if (factory) IWICImagingFactory_Release(factory);
