@@ -912,7 +912,7 @@ static void rebuild_argv(void)
  */
 static void prepend_argv( const char **args, int count )
 {
-    char **new_argv = malloc( (main_argc + count) * sizeof(*new_argv) );
+    char **new_argv;
     char *p, *end;
     BOOL write_strings = FALSE;
     int i, total = 0, new_argc = main_argc + count - 1;

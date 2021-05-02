@@ -3298,7 +3298,12 @@ static NTSTATUS nt_to_unix_file_name_no_root( const UNICODE_STRING *nameW, char 
 
     /* check if prefix exists (except for DOS drives to avoid extra stat calls) */
 
-    if (wcschr( prefix, '/' )) return STATUS_OBJECT_PATH_NOT_FOUND;
+    if (wcschr( prefix, '/' ))
+    {
+        free( unix_name );
+        return STATUS_OBJECT_PATH_NOT_FOUND;
+    }
+
     if (prefix_len != 2 || prefix[1] != ':')
     {
         unix_name[pos] = 0;
