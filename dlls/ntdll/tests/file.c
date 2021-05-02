@@ -2319,7 +2319,7 @@ static void test_file_link_information(void)
            "Link did not change casing on existing target file: got %s\n", wine_dbgstr_w(find_data.cFileName));
     }
 
-    CloseHandle( handle );
+    FindClose( handle );
     HeapFree( GetProcessHeap(), 0, fli );
     delete_object( oldpath );
     delete_object( newpath );
@@ -2904,7 +2904,7 @@ static void test_file_link_information(void)
            "Link did not change casing on same file: got %s\n", wine_dbgstr_w(find_data.cFileName));
     }
 
-    CloseHandle( handle );
+    FindClose( handle );
     HeapFree( GetProcessHeap(), 0, fli );
     delete_object( oldpath );
 }
