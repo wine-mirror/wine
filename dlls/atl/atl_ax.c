@@ -1404,22 +1404,52 @@ HRESULT WINAPI AtlAxGetControl(HWND hWnd, IUnknown **pUnk)
  *           AtlAxDialogBoxW              [atl100.35]
  *
  */
-INT_PTR WINAPI AtlAxDialogBoxW(HINSTANCE hInstance, LPCWSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogProc,
-        LPARAM dwInitParam)
+INT_PTR WINAPI AtlAxDialogBoxW(HINSTANCE instance, const WCHAR *name,
+        HWND owner, DLGPROC proc, LPARAM param)
 {
-    FIXME("(%p %s %p %p %lx)\n", hInstance, debugstr_w(lpTemplateName), hWndParent, lpDialogProc, dwInitParam);
-    return 0;
+    HRSRC resource;
+    HGLOBAL global;
+    DLGTEMPLATE *template;
+    INT_PTR ret;
+
+    TRACE("instance %p, name %s, owner %p, proc %p, param %#Ix\n",
+            instance, debugstr_w(name), owner, proc, param);
+
+    if (!(resource = FindResourceW(instance, name, (const WCHAR *)RT_DIALOG)))
+        return 0;
+
+    if (!(global = LoadResource(instance, resource)))
+        return 0;
+
+    if (!(template = AX_ConvertDialogTemplate(LockResource(global))))
+        return 0;
+
+    ret = DialogBoxIndirectParamW(instance, template, owner, proc, param);
+    HeapFree(GetProcessHeap(), 0, template);
+    return ret;
 }
 
 /***********************************************************************
  *           AtlAxDialogBoxA              [atl100.36]
  *
  */
-INT_PTR WINAPI AtlAxDialogBoxA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND hWndParent, DLGPROC lpDialogProc,
-        LPARAM dwInitParam)
+INT_PTR WINAPI AtlAxDialogBoxA(HINSTANCE instance, const char *name,
+        HWND owner, DLGPROC proc, LPARAM param)
 {
-    FIXME("(%p %s %p %p %lx)\n", hInstance, debugstr_a(lpTemplateName), hWndParent, lpDialogProc, dwInitParam);
-    return 0;
+    WCHAR *nameW;
+    int len;
+    INT_PTR ret;
+
+    if (IS_INTRESOURCE(name))
+        return AtlAxDialogBoxW(instance, (const WCHAR *)name, owner, proc, param);
+
+    len = MultiByteToWideChar(CP_ACP, 0, name, -1, NULL, 0);
+    if (!(nameW = malloc(len * sizeof(WCHAR))))
+        return 0;
+    MultiByteToWideChar(CP_ACP, 0, name, -1, nameW, len);
+    ret = AtlAxDialogBoxW(instance, nameW, owner, proc, param);
+    free(nameW);
+    return ret;
 }
 
 /***********************************************************************
