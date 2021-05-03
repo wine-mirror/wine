@@ -15,7 +15,7 @@
 @ stub ShowGameInviteUIForUser
 @ stub ShowGameInviteUIWithContext
 @ stub ShowGameInviteUIWithContextForUser
-@ stub ShowPlayerPickerUI
+@ stdcall ShowPlayerPickerUI(ptr ptr long ptr long long long ptr ptr)
 @ stub ShowPlayerPickerUIForUser
 @ stub ShowProfileCardUI
 @ stub ShowProfileCardUIForUser

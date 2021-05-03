@@ -1,7 +1,7 @@
 @ stdcall ProcessPendingGameUI(long) gamingtcui.ProcessPendingGameUI
 @ stub ShowChangeFriendRelationshipUI
 @ stub ShowGameInviteUI
-@ stub ShowPlayerPickerUI
+@ stdcall ShowPlayerPickerUI(ptr ptr long ptr long long long ptr ptr) gamingtcui.ShowPlayerPickerUI
 @ stub ShowProfileCardUI
 @ stub ShowTitleAchievementsUI
 @ stub TryCancelPendingGameUI
