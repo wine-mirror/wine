@@ -1943,16 +1943,6 @@ HKL CDECL X11DRV_ActivateKeyboardLayout(HKL hkl, UINT flags)
         return 0;
     }
 
-    if (flags)
-        FIXME("flags %x not supported\n",flags);
-
-    if (hkl == (HKL)HKL_NEXT || hkl == (HKL)HKL_PREV)
-    {
-        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-        FIXME("HKL_NEXT and HKL_PREV not supported\n");
-        return 0;
-    }
-
     if (!match_x11_keyboard_layout(hkl))
     {
         SetLastError(ERROR_CALL_NOT_IMPLEMENTED);

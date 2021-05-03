@@ -1316,6 +1316,15 @@ HKL WINAPI ActivateKeyboardLayout( HKL layout, UINT flags )
 
     TRACE_(keyboard)( "layout %p, flags %x\n", layout, flags );
 
+    if (flags) FIXME_(keyboard)( "flags %x not supported\n", flags );
+
+    if (layout == (HKL)HKL_NEXT || layout == (HKL)HKL_PREV)
+    {
+        SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+        FIXME_(keyboard)( "HKL_NEXT and HKL_PREV not supported\n" );
+        return 0;
+    }
+
     if ((old_layout = USER_Driver->pActivateKeyboardLayout( layout, flags )) != (HKL)~0)
         return old_layout;
 
