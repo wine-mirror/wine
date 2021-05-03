@@ -1467,6 +1467,24 @@ static Window get_dummy_parent(void)
 
 
 /**********************************************************************
+ *		create_dummy_client_window
+ */
+Window create_dummy_client_window(void)
+{
+    XSetWindowAttributes attr;
+
+    attr.colormap = default_colormap;
+    attr.bit_gravity = NorthWestGravity;
+    attr.win_gravity = NorthWestGravity;
+    attr.backing_store = NotUseful;
+    attr.border_pixel = 0;
+
+    return XCreateWindow( gdi_display, get_dummy_parent(), 0, 0, 1, 1, 0,
+                          default_visual.depth, InputOutput, default_visual.visual,
+                          CWBitGravity | CWWinGravity | CWBackingStore | CWColormap | CWBorderPixel, &attr );
+}
+
+/**********************************************************************
  *		create_client_window
  */
 Window create_client_window( HWND hwnd, const XVisualInfo *visual )

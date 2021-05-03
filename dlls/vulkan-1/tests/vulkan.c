@@ -437,7 +437,102 @@ static void test_private_data(VkPhysicalDevice vk_physical_device)
     vkDestroyDevice(vk_device, NULL);
 }
 
-static void for_each_device(void (*test_func)(VkPhysicalDevice))
+static const char *test_null_hwnd_extensions[] =
+{
+    "VK_KHR_surface",
+    "VK_KHR_win32_surface",
+};
+
+static void test_null_hwnd(VkInstance vk_instance, VkPhysicalDevice vk_physical_device)
+{
+    PFN_vkGetPhysicalDeviceSurfacePresentModesKHR pvkGetPhysicalDeviceSurfacePresentModesKHR;
+    VkDeviceGroupPresentModeFlagsKHR present_mode_flags;
+    VkWin32SurfaceCreateInfoKHR surface_create_info;
+    VkSurfaceCapabilitiesKHR surf_caps;
+    VkSurfaceFormatKHR *formats;
+    uint32_t queue_family_index;
+    VkPresentModeKHR *modes;
+    VkSurfaceKHR surface;
+    VkDevice vk_device;
+    uint32_t count;
+    VkRect2D rect;
+    VkBool32 bval;
+    VkResult vr;
+
+    pvkGetPhysicalDeviceSurfacePresentModesKHR = (void *)vkGetInstanceProcAddr(vk_instance,
+            "vkGetPhysicalDeviceSurfacePresentModesKHR");
+    surface_create_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+    surface_create_info.pNext = NULL;
+    surface_create_info.flags = 0;
+    surface_create_info.hinstance = NULL;
+    surface_create_info.hwnd = NULL;
+
+    bval = find_queue_family(vk_physical_device, VK_QUEUE_GRAPHICS_BIT, &queue_family_index);
+    ok(bval, "Could not find presentation queue.\n");
+
+    surface = 0xdeadbeef;
+    vr = vkCreateWin32SurfaceKHR(vk_instance, &surface_create_info, NULL, &surface);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    ok(surface != 0xdeadbeef, "Surface not created.\n");
+
+    count = 0;
+    vr = vkGetPhysicalDeviceSurfaceFormatsKHR(vk_physical_device, surface, &count, NULL);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    ok(count, "Got zero count.\n");
+    formats = heap_alloc(sizeof(*formats) * count);
+    vr = vkGetPhysicalDeviceSurfaceFormatsKHR(vk_physical_device, surface, &count, formats);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    heap_free(formats);
+
+    vr = vkGetPhysicalDeviceSurfaceSupportKHR(vk_physical_device, queue_family_index, surface, &bval);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+
+    vr = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vk_physical_device, surface, &surf_caps);
+    ok(vr, "vkGetPhysicalDeviceSurfaceCapabilitiesKHR succeeded.\n");
+
+    count = 0;
+    vr = pvkGetPhysicalDeviceSurfacePresentModesKHR(vk_physical_device, surface, &count, NULL);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    ok(count, "Got zero count.\n");
+    modes = heap_alloc(sizeof(*modes) * count);
+    vr = pvkGetPhysicalDeviceSurfacePresentModesKHR(vk_physical_device, surface, &count, modes);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    heap_free(modes);
+
+    count = 0;
+    vr = vkGetPhysicalDevicePresentRectanglesKHR(vk_physical_device, surface, &count, NULL);
+    ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    ok(count == 1, "Got unexpected count %u.\n", count);
+    memset(&rect, 0xcc, sizeof(rect));
+    vr = vkGetPhysicalDevicePresentRectanglesKHR(vk_physical_device, surface, &count, &rect);
+    if (vr == VK_SUCCESS) /* Fails on AMD, succeeds on Nvidia. */
+    {
+        ok(count == 1, "Got unexpected count %u.\n", count);
+        ok(!rect.offset.x && !rect.offset.y && !rect.extent.width && !rect.extent.height,
+                "Got unexpected rect %d, %d, %u, %u.\n",
+                rect.offset.x, rect.offset.y, rect.extent.width, rect.extent.height);
+    }
+
+    if ((vr = create_device(vk_physical_device, 0, NULL, NULL, &vk_device)) < 0)
+    {
+        skip("Failed to create device, vr %d.\n", vr);
+        vkDestroySurfaceKHR(vk_instance, surface, NULL);
+        return;
+    }
+
+    if (0)
+    {
+        /* Causes access violation on Windows. */
+        vr = vkGetDeviceGroupSurfacePresentModesKHR(vk_device, surface, &present_mode_flags);
+        ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+    }
+
+    vkDestroyDevice(vk_device, NULL);
+    vkDestroySurfaceKHR(vk_instance, surface, NULL);
+}
+
+static void for_each_device_instance(uint32_t extension_count, const char * const *enabled_extensions,
+        void (*test_func_instance)(VkInstance, VkPhysicalDevice), void (*test_func)(VkPhysicalDevice))
 {
     VkPhysicalDevice *vk_physical_devices;
     VkInstance vk_instance;
@@ -445,7 +540,7 @@ static void for_each_device(void (*test_func)(VkPhysicalDevice))
     uint32_t count;
     VkResult vr;
 
-    if ((vr = create_instance_skip(0, NULL, &vk_instance)) < 0)
+    if ((vr = create_instance_skip(extension_count, enabled_extensions, &vk_instance)) < 0)
         return;
     ok(vr == VK_SUCCESS, "Got unexpected VkResult %d.\n", vr);
 
@@ -463,11 +558,21 @@ static void for_each_device(void (*test_func)(VkPhysicalDevice))
     ok(vr == VK_SUCCESS, "Got unexpected VkResult %d.\n", vr);
 
     for (i = 0; i < count; ++i)
-        test_func(vk_physical_devices[i]);
+    {
+        if (test_func_instance)
+            test_func_instance(vk_instance, vk_physical_devices[i]);
+        else
+            test_func(vk_physical_devices[i]);
+    }
 
     heap_free(vk_physical_devices);
 
     vkDestroyInstance(vk_instance, NULL);
+}
+
+static void for_each_device(void (*test_func)(VkPhysicalDevice))
+{
+    for_each_device_instance(0, NULL, NULL, test_func);
 }
 
 START_TEST(vulkan)
@@ -481,4 +586,5 @@ START_TEST(vulkan)
     test_unsupported_instance_extensions();
     for_each_device(test_unsupported_device_extensions);
     for_each_device(test_private_data);
+    for_each_device_instance(ARRAY_SIZE(test_null_hwnd_extensions), test_null_hwnd_extensions, test_null_hwnd, NULL);
 }

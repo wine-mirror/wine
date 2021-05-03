@@ -62,6 +62,7 @@ struct wine_vk_surface
     LONG ref;
     Window window;
     VkSurfaceKHR surface; /* native surface */
+    HWND hwnd;
 };
 
 typedef struct VkXlibSurfaceCreateInfoKHR
@@ -255,14 +256,18 @@ static VkResult X11DRV_vkCreateSwapchainKHR(VkDevice device,
         const VkSwapchainCreateInfoKHR *create_info,
         const VkAllocationCallbacks *allocator, VkSwapchainKHR *swapchain)
 {
+    struct wine_vk_surface *x11_surface = surface_from_handle(create_info->surface);
     VkSwapchainCreateInfoKHR create_info_host;
     TRACE("%p %p %p %p\n", device, create_info, allocator, swapchain);
 
     if (allocator)
         FIXME("Support for allocation callbacks not implemented yet\n");
 
+    if (!x11_surface->hwnd)
+        return VK_ERROR_SURFACE_LOST_KHR;
+
     create_info_host = *create_info;
-    create_info_host.surface = surface_from_handle(create_info->surface)->surface;
+    create_info_host.surface = x11_surface->surface;
 
     return pvkCreateSwapchainKHR(device, &create_info_host, NULL /* allocator */, swapchain);
 }
@@ -281,7 +286,7 @@ static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
         FIXME("Support for allocation callbacks not implemented yet\n");
 
     /* TODO: support child window rendering. */
-    if (GetAncestor(create_info->hwnd, GA_PARENT) != GetDesktopWindow())
+    if (create_info->hwnd && GetAncestor(create_info->hwnd, GA_PARENT) != GetDesktopWindow())
     {
         FIXME("Application requires child window rendering, which is not implemented yet!\n");
         return VK_ERROR_INCOMPATIBLE_DRIVER;
@@ -292,8 +297,10 @@ static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
     x11_surface->ref = 1;
+    x11_surface->hwnd = create_info->hwnd;
+    x11_surface->window = x11_surface->hwnd ? create_client_window(create_info->hwnd, &default_visual)
+                                            : create_dummy_client_window();
 
-    x11_surface->window = create_client_window(create_info->hwnd, &default_visual);
     if (!x11_surface->window)
     {
         ERR("Failed to allocate client window for hwnd=%p\n", create_info->hwnd);
@@ -316,13 +323,16 @@ static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
         goto err;
     }
 
-    EnterCriticalSection(&context_section);
-    if (!XFindContext(gdi_display, (XID)create_info->hwnd, vulkan_hwnd_context, (char **)&prev))
+    if (x11_surface->hwnd)
     {
-        wine_vk_surface_release(prev);
+        EnterCriticalSection(&context_section);
+        if (!XFindContext(gdi_display, (XID)create_info->hwnd, vulkan_hwnd_context, (char **)&prev))
+        {
+            wine_vk_surface_release(prev);
+        }
+        XSaveContext(gdi_display, (XID)create_info->hwnd, vulkan_hwnd_context, (char *)wine_vk_surface_grab(x11_surface));
+        LeaveCriticalSection(&context_section);
     }
-    XSaveContext(gdi_display, (XID)create_info->hwnd, vulkan_hwnd_context, (char *)wine_vk_surface_grab(x11_surface));
-    LeaveCriticalSection(&context_section);
 
     *surface = (uintptr_t)x11_surface;
 
@@ -456,6 +466,15 @@ static VkResult X11DRV_vkGetPhysicalDevicePresentRectanglesKHR(VkPhysicalDevice 
 
     TRACE("%p, 0x%s, %p, %p\n", phys_dev, wine_dbgstr_longlong(surface), count, rects);
 
+    if (!x11_surface->hwnd)
+    {
+        if (rects)
+            return VK_ERROR_SURFACE_LOST_KHR;
+
+        *count = 1;
+        return VK_SUCCESS;
+    }
+
     return pvkGetPhysicalDevicePresentRectanglesKHR(phys_dev, x11_surface->surface, count, rects);
 }
 
@@ -484,6 +503,9 @@ static VkResult X11DRV_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevic
     struct wine_vk_surface *x11_surface = surface_from_handle(surface);
 
     TRACE("%p, 0x%s, %p\n", phys_dev, wine_dbgstr_longlong(surface), capabilities);
+
+    if (!x11_surface->hwnd)
+        return VK_ERROR_SURFACE_LOST_KHR;
 
     return pvkGetPhysicalDeviceSurfaceCapabilitiesKHR(phys_dev, x11_surface->surface, capabilities);
 }
