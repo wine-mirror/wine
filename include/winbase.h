@@ -679,6 +679,7 @@ typedef struct _PROCESS_INFORMATION{
 #define PROFILE_USER                      0x10000000
 #define PROFILE_KERNEL                    0x20000000
 #define PROFILE_SERVER                    0x40000000
+#define CREATE_IGNORE_SYSTEM_DEFAULT      0x80000000
 
 #define STACK_SIZE_PARAM_IS_A_RESERVATION 0x00010000
 
