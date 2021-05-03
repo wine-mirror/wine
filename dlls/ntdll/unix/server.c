@@ -103,6 +103,7 @@ static const char *server_dir;
 
 unsigned int supported_machines_count = 0;
 USHORT supported_machines[8] = { 0 };
+USHORT native_machine = 0;
 BOOL is_wow64 = FALSE;
 BOOL process_exiting = FALSE;
 
@@ -1579,10 +1580,9 @@ size_t server_init_process(void)
         fatal_error( "'%s' is a 64-bit installation, it cannot be used with a 32-bit wineserver.\n",
                      config_dir );
 
-    switch (supported_machines[0])
+    native_machine = supported_machines[0];
+    if (is_machine_64bit( native_machine ))
     {
-    case IMAGE_FILE_MACHINE_AMD64:
-    case IMAGE_FILE_MACHINE_ARM64:
         if (arch && !strcmp( arch, "win32" ))
             fatal_error( "WINEARCH set to win32 but '%s' is a 64-bit installation.\n", config_dir );
         if (!is_win64)
@@ -1590,13 +1590,13 @@ size_t server_init_process(void)
             is_wow64 = TRUE;
             init_teb64( NtCurrentTeb() );
         }
-        break;
-    default:
+    }
+    else
+    {
         if (is_win64)
             fatal_error( "'%s' is a 32-bit installation, it cannot support 64-bit applications.\n", config_dir );
         if (arch && !strcmp( arch, "win64" ))
             fatal_error( "WINEARCH set to win64 but '%s' is a 32-bit installation.\n", config_dir );
-        break;
     }
 
     for (i = 0; i < supported_machines_count; i++)

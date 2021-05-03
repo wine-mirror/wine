@@ -4469,7 +4469,7 @@ void virtual_fill_image_information( const pe_image_info_t *pe_info, SECTION_IMA
     info->ImageFileSize               = pe_info->file_size;
     info->CheckSum                    = pe_info->checksum;
 #ifndef _WIN64 /* don't return 64-bit values to 32-bit processes */
-    if (pe_info->machine == IMAGE_FILE_MACHINE_AMD64 || pe_info->machine == IMAGE_FILE_MACHINE_ARM64)
+    if (is_machine_64bit( pe_info->machine ))
     {
         info->TransferAddress = (void *)0x81231234;  /* sic */
         info->MaximumStackSize = 0x100000;
