@@ -467,8 +467,7 @@ IShellFolder_fnCreateViewObject (IShellFolder2 * iface, HWND hwndOwner,
         if (IsEqualIID (riid, &IID_IDropTarget)) {
             hr = IShellFolder2_QueryInterface (iface, &IID_IDropTarget, ppvOut);
         } else if (IsEqualIID (riid, &IID_IContextMenu)) {
-            FIXME ("IContextMenu not implemented\n");
-            hr = E_NOTIMPL;
+            hr = BackgroundMenu_Constructor((IShellFolder*)iface, FALSE, riid, ppvOut);
         } else if (IsEqualIID (riid, &IID_IShellView)) {
             pShellView = IShellView_Constructor ((IShellFolder *) iface);
             if (pShellView) {

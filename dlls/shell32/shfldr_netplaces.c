@@ -321,11 +321,6 @@ static HRESULT WINAPI ISF_NetworkPlaces_fnCreateViewObject (IShellFolder2 * ifac
         WARN ("IDropTarget not implemented\n");
         hr = E_NOTIMPL;
     }
-    else if (IsEqualIID (riid, &IID_IContextMenu))
-    {
-        WARN ("IContextMenu not implemented\n");
-        hr = E_NOTIMPL;
-    }
     else if (IsEqualIID (riid, &IID_IShellView))
     {
         pShellView = IShellView_Constructor ((IShellFolder *) iface);
@@ -334,6 +329,11 @@ static HRESULT WINAPI ISF_NetworkPlaces_fnCreateViewObject (IShellFolder2 * ifac
             hr = IShellView_QueryInterface (pShellView, riid, ppvOut);
             IShellView_Release (pShellView);
         }
+    }
+    else
+    {
+        FIXME ("invalid/unsupported interface %s\n", shdebugstr_guid (riid));
+        hr = E_NOINTERFACE;
     }
     TRACE ("-- (%p)->(interface=%p)\n", This, ppvOut);
     return hr;

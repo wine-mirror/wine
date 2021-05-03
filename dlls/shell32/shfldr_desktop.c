@@ -428,8 +428,7 @@ static HRESULT WINAPI ISF_Desktop_fnCreateViewObject (IShellFolder2 * iface,
     }
     else if (IsEqualIID (riid, &IID_IContextMenu))
     {
-        WARN ("IContextMenu not implemented\n");
-        hr = E_NOTIMPL;
+        hr = BackgroundMenu_Constructor((IShellFolder*)iface, TRUE, riid, ppvOut);
     }
     else if (IsEqualIID (riid, &IID_IShellView))
     {

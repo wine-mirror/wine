@@ -524,15 +524,15 @@ static HRESULT WINAPI ISF_ControlPanel_fnCreateViewObject(IShellFolder2 *iface, 
 	if (IsEqualIID(riid, &IID_IDropTarget)) {
 	    WARN("IDropTarget not implemented\n");
 	    hr = E_NOTIMPL;
-	} else if (IsEqualIID(riid, &IID_IContextMenu)) {
-	    WARN("IContextMenu not implemented\n");
-	    hr = E_NOTIMPL;
 	} else if (IsEqualIID(riid, &IID_IShellView)) {
 	    pShellView = IShellView_Constructor((IShellFolder *) iface);
 	    if (pShellView) {
 		hr = IShellView_QueryInterface(pShellView, riid, ppvOut);
 		IShellView_Release(pShellView);
 	    }
+	} else {
+	    FIXME("invalid/unsupported interface %s\n", shdebugstr_guid(riid));
+	    hr = E_NOINTERFACE;
 	}
     }
     TRACE("--(%p)->(interface=%p)\n", This, ppvOut);
