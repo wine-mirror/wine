@@ -490,6 +490,8 @@ static HRESULT WINAPI RecycleBin_CreateViewObject(IShellFolder2 *iface, HWND hwn
         *ppv = tmp;
         return ret;
     }
+    else
+        FIXME("invalid/unsupported interface %s\n", debugstr_guid(riid));
 
     return E_NOINTERFACE;
 }

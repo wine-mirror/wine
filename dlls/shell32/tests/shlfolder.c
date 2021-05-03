@@ -4471,6 +4471,77 @@ static void test_GetUIObject(void)
     Cleanup();
 }
 
+static void test_CreateViewObject_contextmenu(void)
+{
+    IShellFolder *desktop;
+    IShellFolder *folder;
+    IContextMenu *cmenu;
+    WCHAR path[MAX_PATH];
+    LPITEMIDLIST pidl;
+    HRESULT hr;
+    DWORD ret;
+
+    hr = CoCreateInstance(&CLSID_ControlPanel, NULL, CLSCTX_INPROC_SERVER, &IID_IShellFolder, (void**)&folder);
+    ok(SUCCEEDED(hr), "got 0x%08x\n", hr);
+    hr = IShellFolder_CreateViewObject(folder, NULL, &IID_IContextMenu, (void**)&cmenu);
+    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+    if (SUCCEEDED(hr))
+        IContextMenu_Release(cmenu);
+    IShellFolder_Release(folder);
+
+    hr = CoCreateInstance(&CLSID_MyComputer, NULL, CLSCTX_INPROC_SERVER, &IID_IShellFolder, (void**)&folder);
+    ok(SUCCEEDED(hr), "got 0x%08x\n", hr);
+    hr = IShellFolder_CreateViewObject(folder, NULL, &IID_IContextMenu, (void**)&cmenu);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (SUCCEEDED(hr))
+        IContextMenu_Release(cmenu);
+    IShellFolder_Release(folder);
+
+    hr = CoCreateInstance(&CLSID_NetworkPlaces, NULL, CLSCTX_INPROC_SERVER, &IID_IShellFolder, (void**)&folder);
+    ok(SUCCEEDED(hr), "got 0x%08x\n", hr);
+    hr = IShellFolder_CreateViewObject(folder, NULL, &IID_IContextMenu, (void**)&cmenu);
+    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+    if (SUCCEEDED(hr))
+        IContextMenu_Release(cmenu);
+    IShellFolder_Release(folder);
+
+    hr = CoCreateInstance(&CLSID_Printers, NULL, CLSCTX_INPROC_SERVER, &IID_IShellFolder, (void**)&folder);
+    ok(SUCCEEDED(hr), "got 0x%08x\n", hr);
+    hr = IShellFolder_CreateViewObject(folder, NULL, &IID_IContextMenu, (void**)&cmenu);
+    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+    if (SUCCEEDED(hr))
+        IContextMenu_Release(cmenu);
+    IShellFolder_Release(folder);
+
+    hr = CoCreateInstance(&CLSID_RecycleBin, NULL, CLSCTX_INPROC_SERVER, &IID_IShellFolder, (void**)&folder);
+    ok(SUCCEEDED(hr), "got 0x%08x\n", hr);
+    hr = IShellFolder_CreateViewObject(folder, NULL, &IID_IContextMenu, (void**)&cmenu);
+    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+    if (SUCCEEDED(hr))
+        IContextMenu_Release(cmenu);
+    IShellFolder_Release(folder);
+
+    hr = SHGetDesktopFolder(&desktop);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IShellFolder_CreateViewObject(desktop, NULL, &IID_IContextMenu, (void**)&cmenu);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (SUCCEEDED(hr))
+        IContextMenu_Release(cmenu);
+    ret = GetCurrentDirectoryW(MAX_PATH, path);
+    ok(ret, "got %d\n", GetLastError());
+    hr = IShellFolder_ParseDisplayName(desktop, NULL, NULL, path, NULL, &pidl, 0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IShellFolder_BindToObject(desktop, pidl, NULL, &IID_IShellFolder, (void**)&folder);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IShellFolder_CreateViewObject(folder, NULL, &IID_IContextMenu, (void**)&cmenu);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (SUCCEEDED(hr))
+        IContextMenu_Release(cmenu);
+    IShellFolder_Release(folder);
+    ILFree(pidl);
+    IShellFolder_Release(desktop);
+}
+
 #define verify_pidl(i,p) r_verify_pidl(__LINE__, i, p)
 static void r_verify_pidl(unsigned l, LPCITEMIDLIST pidl, const WCHAR *path)
 {
@@ -5313,6 +5384,7 @@ START_TEST(shlfolder)
     test_ShellItemArrayEnumItems();
     test_desktop_IPersist();
     test_GetUIObject();
+    test_CreateViewObject_contextmenu();
     test_SHSimpleIDListFromPath();
     test_ParseDisplayNamePBC();
     test_SHGetNameFromIDList();

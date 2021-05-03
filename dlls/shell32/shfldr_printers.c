@@ -195,7 +195,10 @@ static HRESULT WINAPI IShellFolder_Printers_fnCreateViewObject(IShellFolder2 *if
         }
     }
     else
-        WARN("unsupported interface %s\n", shdebugstr_guid (riid));
+    {
+        FIXME("unsupported interface %s\n", shdebugstr_guid (riid));
+        hr = E_NOINTERFACE;
+    }
 
     return hr;
 }

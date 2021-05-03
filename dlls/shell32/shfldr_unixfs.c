@@ -1117,6 +1117,8 @@ static HRESULT WINAPI ShellFolder2_CreateViewObject(IShellFolder2* iface, HWND h
         }
     } else if (IsEqualIID(&IID_IDropTarget, riid)) {
         hr = IShellFolder2_QueryInterface(iface, &IID_IDropTarget, ppv);
+    } else if (IsEqualIID(&IID_IContextMenu, riid)) {
+        hr = BackgroundMenu_Constructor((IShellFolder*)iface, FALSE, riid, ppv);
     }
 
     return hr;
