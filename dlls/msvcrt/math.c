@@ -87,14 +87,6 @@ static inline float fp_barrierf(float x)
     return y;
 }
 
-#if _MSVCR_VER>=120
-static inline double fp_barrier(double x)
-{
-    volatile double y = x;
-    return y;
-}
-#endif
-
 static inline double CDECL ret_nan( BOOL update_sw )
 {
     double x = 1.0;
@@ -4330,32 +4322,26 @@ short CDECL _dclass(double x)
 /*********************************************************************
  *      round (MSVCR120.@)
  *
- * Copied from musl: src/math/round.c
+ * Based on musl implementation: src/math/round.c
  */
 double CDECL round(double x)
 {
-    static const double toint = 1 / DBL_EPSILON;
+    ULONGLONG llx = *(ULONGLONG*)&x, tmp;
+    int e = (llx >> 52 & 0x7ff) - 0x3ff;
 
-    ULONGLONG llx = *(ULONGLONG*)&x;
-    int e = llx >> 52 & 0x7ff;
-    double y;
-
-    if (e >= 0x3ff + 52)
+    if (e >= 52)
         return x;
-    if (llx >> 63)
-        x = -x;
-    if (e < 0x3ff - 1)
-        return 0 * *(double*)&llx;
-    y = fp_barrier(x + toint) - toint - x;
-    if (y > 0.5)
-        y = y + x - 1;
-    else if (y <= -0.5)
-        y = y + x + 1;
-    else
-        y = y + x;
-    if (llx >> 63)
-        y = -y;
-    return y;
+    if (e < -1)
+        return 0 * x;
+    else if (e == -1)
+        return signbit(x) ? -1 : 1;
+
+    tmp = 0x000fffffffffffffULL >> e;
+    if (!(llx & tmp))
+        return x;
+    llx += 0x0008000000000000ULL >> e;
+    llx &= ~tmp;
+    return *(double*)&llx;
 }
 
 /*********************************************************************
