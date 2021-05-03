@@ -8553,6 +8553,16 @@ HRESULT WINAPI CreatePropertyStore(IPropertyStore **store)
     return S_OK;
 }
 
+struct shared_dxgi_manager
+{
+    IMFDXGIDeviceManager *manager;
+    unsigned int token;
+    unsigned int locks;
+};
+
+static struct shared_dxgi_manager shared_dm;
+static CRITICAL_SECTION shared_dm_cs = { NULL, -1, 0, 0, 0, 0 };
+
 enum dxgi_device_handle_flags
 {
     DXGI_DEVICE_HANDLE_FLAG_OPEN = 0x1,
@@ -8904,6 +8914,9 @@ static const IMFDXGIDeviceManagerVtbl dxgi_device_manager_vtbl =
     dxgi_device_manager_UnlockDevice,
 };
 
+/***********************************************************************
+ *      MFCreateDXGIDeviceManager (mfplat.@)
+ */
 HRESULT WINAPI MFCreateDXGIDeviceManager(UINT *token, IMFDXGIDeviceManager **manager)
 {
     struct dxgi_device_manager *object;
@@ -8926,6 +8939,58 @@ HRESULT WINAPI MFCreateDXGIDeviceManager(UINT *token, IMFDXGIDeviceManager **man
 
     *token = object->token;
     *manager = &object->IMFDXGIDeviceManager_iface;
+
+    return S_OK;
+}
+
+/***********************************************************************
+ *      MFLockDXGIDeviceManager (mfplat.@)
+ */
+HRESULT WINAPI MFLockDXGIDeviceManager(UINT *token, IMFDXGIDeviceManager **manager)
+{
+    HRESULT hr = S_OK;
+
+    TRACE("%p, %p.\n", token, manager);
+
+    EnterCriticalSection(&shared_dm_cs);
+
+    if (!shared_dm.manager)
+        hr = MFCreateDXGIDeviceManager(&shared_dm.token, &shared_dm.manager);
+
+    if (SUCCEEDED(hr))
+    {
+        *manager = shared_dm.manager;
+        IMFDXGIDeviceManager_AddRef(*manager);
+        shared_dm.locks++;
+
+        if (token) *token = shared_dm.token;
+    }
+
+    LeaveCriticalSection(&shared_dm_cs);
+
+    return hr;
+}
+
+/***********************************************************************
+ *      MFUnlockDXGIDeviceManager (mfplat.@)
+ */
+HRESULT WINAPI MFUnlockDXGIDeviceManager(void)
+{
+    TRACE("\n");
+
+    EnterCriticalSection(&shared_dm_cs);
+
+    if (shared_dm.manager)
+    {
+        IMFDXGIDeviceManager_Release(shared_dm.manager);
+        if (!--shared_dm.locks)
+        {
+            shared_dm.manager = NULL;
+            shared_dm.token = 0;
+        }
+    }
+
+    LeaveCriticalSection(&shared_dm_cs);
 
     return S_OK;
 }

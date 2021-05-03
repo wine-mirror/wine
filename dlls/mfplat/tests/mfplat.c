@@ -262,6 +262,8 @@ static HRESULT (WINAPI *pMFCreateDXGISurfaceBuffer)(REFIID riid, IUnknown *surfa
         IMFMediaBuffer **buffer);
 static HRESULT (WINAPI *pMFCreateVideoMediaTypeFromSubtype)(const GUID *subtype, IMFVideoMediaType **media_type);
 static HRESULT (WINAPI *pMFLockSharedWorkQueue)(const WCHAR *name, LONG base_priority, DWORD *taskid, DWORD *queue);
+static HRESULT (WINAPI *pMFLockDXGIDeviceManager)(UINT *token, IMFDXGIDeviceManager **manager);
+static HRESULT (WINAPI *pMFUnlockDXGIDeviceManager)(void);
 
 static HWND create_window(void)
 {
@@ -935,6 +937,7 @@ static void init_functions(void)
     X(MFCreateVideoSampleAllocatorEx);
     X(MFGetPlaneSize);
     X(MFGetStrideForBitmapInfoHeader);
+    X(MFLockDXGIDeviceManager);
     X(MFLockSharedWorkQueue);
     X(MFMapDX9FormatToDXGIFormat);
     X(MFMapDXGIFormatToDX9Format);
@@ -947,6 +950,7 @@ static void init_functions(void)
     X(MFTRegisterLocalByCLSID);
     X(MFTUnregisterLocal);
     X(MFTUnregisterLocalByCLSID);
+    X(MFUnlockDXGIDeviceManager);
 
     if ((mod = LoadLibraryA("d3d11.dll")))
     {
@@ -7168,6 +7172,40 @@ static void test_MFllMulDiv(void)
     }
 }
 
+static void test_shared_dxgi_device_manager(void)
+{
+    IMFDXGIDeviceManager *manager;
+    HRESULT hr;
+    UINT token;
+
+    if (!pMFLockDXGIDeviceManager)
+    {
+        win_skip("Shared DXGI device manager is not supported.\n");
+        return;
+    }
+
+    hr = pMFUnlockDXGIDeviceManager();
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    manager = NULL;
+    hr = pMFLockDXGIDeviceManager(NULL, &manager);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(!!manager, "Unexpected instance.\n");
+
+    hr = pMFLockDXGIDeviceManager(&token, &manager);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    EXPECT_REF(manager, 3);
+
+    hr = pMFUnlockDXGIDeviceManager();
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    EXPECT_REF(manager, 2);
+
+    hr = pMFUnlockDXGIDeviceManager();
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+}
+
 START_TEST(mfplat)
 {
     char **argv;
@@ -7233,6 +7271,7 @@ START_TEST(mfplat)
     test_sample_allocator();
     test_MFMapDX9FormatToDXGIFormat();
     test_MFllMulDiv();
+    test_shared_dxgi_device_manager();
 
     CoUninitialize();
 }

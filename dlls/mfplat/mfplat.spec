@@ -131,6 +131,7 @@
 @ stdcall MFInvokeCallback(ptr)
 @ stub MFJoinIoPort
 @ stdcall MFJoinWorkQueue(long long ptr) rtworkq.RtwqJoinWorkQueue
+@ stdcall MFLockDXGIDeviceManager(ptr ptr)
 @ stdcall MFLockPlatform() rtworkq.RtwqLockPlatform
 @ stdcall MFLockSharedWorkQueue(wstr long ptr ptr) rtworkq.RtwqLockSharedWorkQueue
 @ stdcall MFLockWorkQueue(long) rtworkq.RtwqLockWorkQueue
@@ -171,6 +172,7 @@
 @ stub MFTraceFuncEnter
 @ stub MFUnblockThread
 @ stdcall MFUnjoinWorkQueue(long long) rtworkq.RtwqUnjoinWorkQueue
+@ stdcall MFUnlockDXGIDeviceManager()
 @ stdcall MFUnlockPlatform() rtworkq.RtwqUnlockPlatform
 @ stdcall MFUnlockWorkQueue(long) rtworkq.RtwqUnlockWorkQueue
 @ stdcall MFUnwrapMediaType(ptr ptr)
