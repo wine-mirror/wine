@@ -176,6 +176,6 @@
 @ stdcall MFUnwrapMediaType(ptr ptr)
 @ stub MFValidateMediaTypeSize
 @ stdcall MFWrapMediaType(ptr ptr ptr ptr)
-@ stub MFllMulDiv
+@ stdcall -ret64 MFllMulDiv(int64 int64 int64 int64)
 @ stub PropVariantFromStream
 @ stub PropVariantToStream

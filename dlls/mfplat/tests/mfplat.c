@@ -20,6 +20,7 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <limits.h>
 
 #define COBJMACROS
 
@@ -7130,6 +7131,43 @@ static void test_MFLockSharedWorkQueue(void)
     ok(hr == S_OK, "Failed to shut down, hr %#x.\n", hr);
 }
 
+static void test_MFllMulDiv(void)
+{
+    /* (a * b + d) / c */
+    static const struct muldivtest
+    {
+        LONGLONG a;
+        LONGLONG b;
+        LONGLONG c;
+        LONGLONG d;
+        LONGLONG result;
+    }
+    muldivtests[] =
+    {
+        { 0, 0, 0, 0, _I64_MAX },
+        { 1000000, 1000000, 2, 0, 500000000000 },
+        { _I64_MAX, 3, _I64_MAX, 0, 3 },
+        { _I64_MAX, 3, _I64_MAX, 1, 3 },
+        { -10000, 3, 100, 0, -300 },
+        { 2, 0, 3, 5, 1 },
+        { 2, 1, 1, -3, -1 },
+        /* a * b product does not fit in uint64_t */
+        { _I64_MAX, 4, 8, 0, _I64_MAX / 2 },
+        /* Large a * b product, large denominator */
+        { _I64_MAX, 4, 0x100000000, 0, 0x1ffffffff },
+    };
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(muldivtests); ++i)
+    {
+        LONGLONG result;
+
+        result = MFllMulDiv(muldivtests[i].a, muldivtests[i].b, muldivtests[i].c, muldivtests[i].d);
+        ok(result == muldivtests[i].result, "%u: unexpected result %s, expected %s.\n", i,
+                wine_dbgstr_longlong(result), wine_dbgstr_longlong(muldivtests[i].result));
+    }
+}
+
 START_TEST(mfplat)
 {
     char **argv;
@@ -7194,6 +7232,7 @@ START_TEST(mfplat)
     test_dxgi_surface_buffer();
     test_sample_allocator();
     test_MFMapDX9FormatToDXGIFormat();
+    test_MFllMulDiv();
 
     CoUninitialize();
 }

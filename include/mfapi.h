@@ -552,6 +552,7 @@ HRESULT WINAPI MFTEnumEx(GUID category, UINT32 flags, const MFT_REGISTER_TYPE_IN
 HRESULT WINAPI MFInitAttributesFromBlob(IMFAttributes *attributes, const UINT8 *buffer, UINT size);
 HRESULT WINAPI MFInitMediaTypeFromWaveFormatEx(IMFMediaType *mediatype, const WAVEFORMATEX *format, UINT32 size);
 HRESULT WINAPI MFInvokeCallback(IMFAsyncResult *result);
+LONGLONG WINAPI MFllMulDiv(LONGLONG val, LONGLONG num, LONGLONG denom, LONGLONG factor);
 HRESULT WINAPI MFLockPlatform(void);
 HRESULT WINAPI MFLockSharedWorkQueue(const WCHAR *name, LONG base_priority, DWORD *taskid, DWORD *queue);
 DXGI_FORMAT WINAPI MFMapDX9FormatToDXGIFormat(DWORD format);

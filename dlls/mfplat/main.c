@@ -19,6 +19,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <math.h>
+#include <limits.h>
 
 #define COBJMACROS
 #define NONAMELESSUNION
@@ -8927,4 +8928,184 @@ HRESULT WINAPI MFCreateDXGIDeviceManager(UINT *token, IMFDXGIDeviceManager **man
     *manager = &object->IMFDXGIDeviceManager_iface;
 
     return S_OK;
+}
+
+
+/*
+ * MFllMulDiv implementation is derived from gstreamer utility functions code (gstutils.c),
+ * released under LGPL2. Full authors list follows.
+ * ===================================================================================
+ * Copyright (C) 1999,2000 Erik Walthinsen <omega@cse.ogi.edu>
+ *                    2000 Wim Taymans <wtay@chello.be>
+ *                    2002 Thomas Vander Stichele <thomas@apestaart.org>
+ *                    2004 Wim Taymans <wim@fluendo.com>
+ *                    2015 Jan Schmidt <jan@centricular.com>
+ * ===================================================================================
+ */
+
+static void llmult128(ULARGE_INTEGER *c1, ULARGE_INTEGER *c0, LONGLONG val, LONGLONG num)
+{
+    ULARGE_INTEGER a1, b0, v, n;
+
+    v.QuadPart = llabs(val);
+    n.QuadPart = llabs(num);
+
+    /* do 128 bits multiply
+     *                   nh   nl
+     *                *  vh   vl
+     *                ----------
+     * a0 =              vl * nl
+     * a1 =         vl * nh
+     * b0 =         vh * nl
+     * b1 =  + vh * nh
+     *       -------------------
+     *        c1h  c1l  c0h  c0l
+     *
+     * "a0" is optimized away, result is stored directly in c0.  "b1" is
+     * optimized away, result is stored directly in c1.
+     */
+    c0->QuadPart = (ULONGLONG)v.LowPart * n.LowPart;
+    a1.QuadPart = (ULONGLONG)v.LowPart * n.HighPart;
+    b0.QuadPart = (ULONGLONG)v.HighPart * n.LowPart;
+
+    /* add the high word of a0 to the low words of a1 and b0 using c1 as
+     * scrach space to capture the carry.  the low word of the result becomes
+     * the final high word of c0 */
+    c1->QuadPart = (ULONGLONG)c0->HighPart + a1.LowPart + b0.LowPart;
+    c0->HighPart = c1->LowPart;
+
+    /* add the carry from the result above (found in the high word of c1) and
+     * the high words of a1 and b0 to b1, the result is c1. */
+    c1->QuadPart = (ULONGLONG)v.HighPart * n.HighPart + c1->HighPart + a1.HighPart + b0.HighPart;
+}
+
+static ULONGLONG lldiv128(ULARGE_INTEGER c1, ULARGE_INTEGER c0, LONGLONG denom)
+{
+    ULARGE_INTEGER q1, q0, rhat;
+    ULARGE_INTEGER v, cmp1, cmp2;
+    unsigned int s = 0;
+
+    v.QuadPart = llabs(denom);
+
+    /* 64bit numerator */
+    if (c1.QuadPart == 0)
+        return c0.QuadPart / v.QuadPart;
+
+    /* 96bit numerator, 32bit denominator */
+    if (v.HighPart == 0 && c1.HighPart == 0)
+    {
+        ULONGLONG low = c0.LowPart, high = c0.HighPart + ((ULONGLONG)c1.LowPart << 32);
+        low += (high % v.LowPart) << 32;
+        return ((high / v.LowPart) << 32) + (low / v.LowPart);
+    }
+
+    /* 128bit numerator, 32bit denominator */
+    if (v.HighPart == 0)
+        return UI64_MAX;
+
+    /* count number of leading zeroes */
+    BitScanReverse(&s, v.HighPart);
+    s = 31 - s;
+
+    if (s)
+    {
+        /* normalize divisor and dividend */
+        v.QuadPart <<= s;
+        c1.QuadPart = (c1.QuadPart << s) | (c0.HighPart >> (32 - s));
+        c0.QuadPart <<= s;
+    }
+
+    q1.QuadPart = c1.QuadPart / v.HighPart;
+    rhat.QuadPart = c1.QuadPart - q1.QuadPart * v.HighPart;
+
+    cmp1.HighPart = rhat.LowPart;
+    cmp1.LowPart = c0.HighPart;
+    cmp2.QuadPart = q1.QuadPart * v.LowPart;
+
+    while (q1.HighPart || cmp2.QuadPart > cmp1.QuadPart)
+    {
+        q1.QuadPart--;
+        rhat.QuadPart += v.HighPart;
+        if (rhat.HighPart)
+            break;
+        cmp1.HighPart = rhat.LowPart;
+        cmp2.QuadPart -= v.LowPart;
+    }
+    c1.HighPart = c1.LowPart;
+    c1.LowPart = c0.HighPart;
+    c1.QuadPart -= q1.QuadPart * v.QuadPart;
+    q0.QuadPart = c1.QuadPart / v.HighPart;
+    rhat.QuadPart = c1.QuadPart - q0.QuadPart * v.HighPart;
+
+    cmp1.HighPart = rhat.LowPart;
+    cmp1.LowPart = c0.LowPart;
+    cmp2.QuadPart = q0.QuadPart * v.LowPart;
+
+    while (q0.HighPart || cmp2.QuadPart > cmp1.QuadPart)
+    {
+        q0.QuadPart--;
+        rhat.QuadPart += v.HighPart;
+        if (rhat.HighPart)
+            break;
+        cmp1.HighPart = rhat.LowPart;
+        cmp2.QuadPart -= v.LowPart;
+    }
+    q0.HighPart += q1.LowPart;
+
+    return q0.QuadPart;
+}
+
+/***********************************************************************
+ *      MFllMulDiv (mfplat.@)
+ */
+LONGLONG WINAPI MFllMulDiv(LONGLONG val, LONGLONG num, LONGLONG denom, LONGLONG factor)
+{
+#define LLOVERFLOW (sign ? I64_MIN : I64_MAX)
+    unsigned int sign, factor_sign, denom_sign;
+    ULARGE_INTEGER c1, c0;
+    ULONGLONG ret;
+
+    TRACE("%s, %s, %s, %s.\n", wine_dbgstr_longlong(val), wine_dbgstr_longlong(num),
+            wine_dbgstr_longlong(denom), wine_dbgstr_longlong(factor));
+
+    /* compute 128-bit numerator product */
+    llmult128(&c1, &c0, val, num);
+
+    sign = (val < 0) ^ (num < 0);
+    factor_sign = factor < 0;
+    denom_sign = denom < 0;
+
+    factor = llabs(factor);
+    if (sign == factor_sign)
+    {
+        if (UI64_MAX - c0.QuadPart < factor)
+        {
+            if (c1.QuadPart == UI64_MAX) return LLOVERFLOW;
+            c1.QuadPart++;
+        }
+        c0.QuadPart += factor;
+    }
+    else
+    {
+        if (c0.QuadPart >= factor)
+            c0.QuadPart -= factor;
+        else
+        {
+            if (c1.QuadPart)
+                c1.QuadPart--;
+            else
+                sign = !sign;
+
+            c0.QuadPart = factor - c0.QuadPart;
+        }
+    }
+
+    if (c1.QuadPart >= denom) return LLOVERFLOW;
+
+    /* compute quotient, fits in 64 bits */
+    ret = lldiv128(c1, c0, denom);
+    sign ^= denom_sign;
+    if (ret >= I64_MAX) return LLOVERFLOW;
+    return sign ? -(LONGLONG)ret : ret;
+#undef LLOVERFLOW
 }
