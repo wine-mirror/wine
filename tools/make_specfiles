@@ -484,6 +484,10 @@ my @dll_groups =
   "ext-ms-win-uxtheme-themes-l1-1-0",
  ],
  [
+  "gamingtcui",
+  "api-ms-win-gaming-tcui-l1-1-0",
+ ],
+ [
   "bthprops.cpl",
   "irprops.cpl",
  ],

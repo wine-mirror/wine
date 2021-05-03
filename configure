@@ -1100,6 +1100,7 @@ enable_api_ms_win_eventing_controller_l1_1_0
 enable_api_ms_win_eventing_legacy_l1_1_0
 enable_api_ms_win_eventing_provider_l1_1_0
 enable_api_ms_win_eventlog_legacy_l1_1_0
+enable_api_ms_win_gaming_tcui_l1_1_0
 enable_api_ms_win_gdi_dpiinfo_l1_1_0
 enable_api_ms_win_mm_joystick_l1_1_0
 enable_api_ms_win_mm_misc_l1_1_1
@@ -1364,6 +1365,7 @@ enable_fontsub
 enable_fusion
 enable_fwpuclnt
 enable_gameux
+enable_gamingtcui
 enable_gdi32
 enable_gdiplus
 enable_glu32
@@ -20304,6 +20306,7 @@ wine_fn_config_makefile dlls/api-ms-win-eventing-controller-l1-1-0 enable_api_ms
 wine_fn_config_makefile dlls/api-ms-win-eventing-legacy-l1-1-0 enable_api_ms_win_eventing_legacy_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-eventing-provider-l1-1-0 enable_api_ms_win_eventing_provider_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-eventlog-legacy-l1-1-0 enable_api_ms_win_eventlog_legacy_l1_1_0
+wine_fn_config_makefile dlls/api-ms-win-gaming-tcui-l1-1-0 enable_api_ms_win_gaming_tcui_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-gdi-dpiinfo-l1-1-0 enable_api_ms_win_gdi_dpiinfo_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-mm-joystick-l1-1-0 enable_api_ms_win_mm_joystick_l1_1_0
 wine_fn_config_makefile dlls/api-ms-win-mm-misc-l1-1-1 enable_api_ms_win_mm_misc_l1_1_1
@@ -20647,6 +20650,7 @@ wine_fn_config_makefile dlls/fusion/tests enable_tests
 wine_fn_config_makefile dlls/fwpuclnt enable_fwpuclnt
 wine_fn_config_makefile dlls/gameux enable_gameux
 wine_fn_config_makefile dlls/gameux/tests enable_tests
+wine_fn_config_makefile dlls/gamingtcui enable_gamingtcui
 wine_fn_config_makefile dlls/gdi.exe16 enable_win16
 wine_fn_config_makefile dlls/gdi32 enable_gdi32
 wine_fn_config_makefile dlls/gdi32/tests enable_tests
