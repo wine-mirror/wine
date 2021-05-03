@@ -189,7 +189,7 @@ void USER_unload_driver(void)
 
 static HKL CDECL nulldrv_ActivateKeyboardLayout( HKL layout, UINT flags )
 {
-    return 0;
+    return (HKL)~0; /* use default implementation */
 }
 
 static void CDECL nulldrv_Beep(void)
