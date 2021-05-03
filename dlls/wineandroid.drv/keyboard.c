@@ -879,26 +879,6 @@ UINT CDECL ANDROID_MapVirtualKeyEx( UINT code, UINT maptype, HKL hkl )
 
 
 /***********************************************************************
- *           ANDROID_GetKeyboardLayout
- */
-HKL CDECL ANDROID_GetKeyboardLayout( DWORD thread_id )
-{
-    ULONG_PTR layout = GetUserDefaultLCID();
-    LANGID langid;
-    static int once;
-
-    langid = PRIMARYLANGID(LANGIDFROMLCID( layout ));
-    if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
-        layout = MAKELONG( layout, 0xe001 ); /* IME */
-    else
-        layout |= layout << 16;
-
-    if (!once++) FIXME( "returning %lx\n", layout );
-    return (HKL)layout;
-}
-
-
-/***********************************************************************
  *           ANDROID_VkKeyScanEx
  */
 SHORT CDECL ANDROID_VkKeyScanEx( WCHAR ch, HKL hkl )
