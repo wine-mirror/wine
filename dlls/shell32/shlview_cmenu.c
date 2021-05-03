@@ -828,6 +828,10 @@ static HRESULT WINAPI ItemMenu_InvokeCommand(
         TRACE("Verb is %s\n",debugstr_a(lpcmi->lpVerb));
         if (strcmp(lpcmi->lpVerb,"delete")==0)
             DoDelete(This);
+        else if (strcmp(lpcmi->lpVerb,"copy")==0)
+            DoCopyOrCut(This, lpcmi->hwnd, FALSE);
+        else if (strcmp(lpcmi->lpVerb,"cut")==0)
+            DoCopyOrCut(This, lpcmi->hwnd, TRUE);
         else if (strcmp(lpcmi->lpVerb,"properties")==0)
             DoOpenProperties(This, lpcmi->hwnd);
         else {
@@ -1256,6 +1260,10 @@ static HRESULT WINAPI BackgroundMenu_InvokeCommand(
         {
 	    if (hWnd) SendMessageA(hWnd, WM_COMMAND, MAKEWPARAM(FCIDM_SHVIEW_REPORTVIEW, 0), 0);
         }
+        else if (!strcmp(lpcmi->lpVerb, "paste"))
+        {
+            DoPaste(This);
+        }
         else
         {
             FIXME("please report: unknown verb %s\n", debugstr_a(lpcmi->lpVerb));
@@ -1306,27 +1314,66 @@ static HRESULT WINAPI BackgroundMenu_GetCommandString(
 	LPSTR lpszName,
 	UINT uMaxNameLen)
 {
-        ContextMenu *This = impl_from_IContextMenu3(iface);
+    static const WCHAR pasteW[] = {'p','a','s','t','e',0};
+    static const WCHAR propertiesW[] = {'p','r','o','p','e','r','t','i','e','s',0};
+    ContextMenu *This = impl_from_IContextMenu3(iface);
+    const WCHAR *cmdW = NULL;
+    HRESULT hr = E_FAIL;
 
-	TRACE("(%p)->(idcom=%lx flags=%x %p name=%p len=%x)\n",This, idCommand, uFlags, lpReserved, lpszName, uMaxNameLen);
+    TRACE("(%p)->(idcom=%lx flags=%x %p name=%p len=%x)\n",This, idCommand, uFlags, lpReserved, lpszName, uMaxNameLen);
 
-	/* test the existence of the menu items, the file dialog enables
-	   the buttons according to this */
-	if (uFlags == GCS_VALIDATEA)
-	{
-	  if(HIWORD(idCommand))
-	  {
-	    if (!strcmp((LPSTR)idCommand, CMDSTR_VIEWLISTA) ||
-	        !strcmp((LPSTR)idCommand, CMDSTR_VIEWDETAILSA) ||
-	        !strcmp((LPSTR)idCommand, CMDSTR_NEWFOLDERA))
-	    {
-	      return S_OK;
-	    }
-	  }
-	}
+    switch (uFlags)
+    {
+    case GCS_HELPTEXTA:
+    case GCS_HELPTEXTW:
+        hr = E_NOTIMPL;
+        break;
 
-	FIXME("unknown command string\n");
-	return E_FAIL;
+    case GCS_VERBA:
+    case GCS_VERBW:
+        switch (idCommand + FCIDM_BASE)
+        {
+        case FCIDM_SHVIEW_INSERT:
+            cmdW = pasteW;
+            break;
+        case FCIDM_SHVIEW_PROPERTIES:
+            cmdW = propertiesW;
+            break;
+        }
+
+        if (!cmdW)
+        {
+            hr = E_INVALIDARG;
+            break;
+        }
+
+        if (uFlags == GCS_VERBA)
+            WideCharToMultiByte(CP_ACP, 0, cmdW, -1, lpszName, uMaxNameLen, NULL, NULL);
+        else
+            lstrcpynW((WCHAR *)lpszName, cmdW, uMaxNameLen);
+        TRACE("name %s\n", uFlags == GCS_VERBA ? debugstr_a(lpszName) : debugstr_w((WCHAR *)lpszName));
+        hr = S_OK;
+        break;
+
+    case GCS_VALIDATEA:
+    case GCS_VALIDATEW:
+        /* test the existence of the menu items, the file dialog enables
+           the buttons according to this */
+        if (HIWORD(idCommand))
+        {
+            if (!strcmp((LPSTR)idCommand, CMDSTR_VIEWLISTA) ||
+                !strcmp((LPSTR)idCommand, CMDSTR_VIEWDETAILSA) ||
+                !strcmp((LPSTR)idCommand, CMDSTR_NEWFOLDERA))
+                hr = S_OK;
+            else
+            {
+                FIXME("unknown command string %s\n", uFlags == GCS_VALIDATEA ? debugstr_a((LPSTR)idCommand) : debugstr_w((WCHAR*)idCommand));
+                hr = E_FAIL;
+            }
+        }
+        break;
+    }
+    return hr;
 }
 
 static const IContextMenu3Vtbl BackgroundContextMenuVtbl =
