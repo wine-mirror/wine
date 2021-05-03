@@ -2,7 +2,7 @@
 @ stub CheckGamingPrivilegeSilentlyForUser
 @ stub CheckGamingPrivilegeWithUI
 @ stub CheckGamingPrivilegeWithUIForUser
-@ stub ProcessPendingGameUI
+@ stdcall ProcessPendingGameUI(long)
 @ stub ShowChangeFriendRelationshipUI
 @ stub ShowChangeFriendRelationshipUIForUser
 @ stub ShowCustomizeUserProfileUI

@@ -1,4 +1,4 @@
-@ stub ProcessPendingGameUI
+@ stdcall ProcessPendingGameUI(long) gamingtcui.ProcessPendingGameUI
 @ stub ShowChangeFriendRelationshipUI
 @ stub ShowGameInviteUI
 @ stub ShowPlayerPickerUI
