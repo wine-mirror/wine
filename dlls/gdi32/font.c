@@ -4009,10 +4009,13 @@ static void init_font_options(void)
        This looks roughly similar to Windows Native with the same registry value.
        MS GDI seems to be rasterizing the outline at a different rate than FreeType. */
     gamma = 1000 * gamma / 1400;
-    for (i = 0; i < 256; i++)
+    if (gamma != 1000)
     {
-        font_gamma_ramp.encode[i] = pow( i / 255., 1000. / gamma ) * 255. + .5;
-        font_gamma_ramp.decode[i] = pow( i / 255., gamma / 1000. ) * 255. + .5;
+        for (i = 0; i < 256; i++)
+        {
+            font_gamma_ramp.encode[i] = pow( i / 255., 1000. / gamma ) * 255. + .5;
+            font_gamma_ramp.decode[i] = pow( i / 255., gamma / 1000. ) * 255. + .5;
+        }
     }
     font_gamma_ramp.gamma = gamma;
     TRACE("gamma %d\n", font_gamma_ramp.gamma);
