@@ -2161,7 +2161,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
 
     switch (class)
     {
-    case SystemBasicInformation:
+    case SystemBasicInformation:  /* 0 */
     {
         SYSTEM_BASIC_INFORMATION sbi;
 
@@ -2176,7 +2176,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         break;
     }
 
-    case SystemCpuInformation:
+    case SystemCpuInformation:  /* 1 */
         if (size >= (len = sizeof(cpu_info)))
         {
             if (!info) ret = STATUS_ACCESS_VIOLATION;
@@ -2185,7 +2185,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         else ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
 
-    case SystemPerformanceInformation:
+    case SystemPerformanceInformation:  /* 2 */
     {
         SYSTEM_PERFORMANCE_INFORMATION spi;
         static BOOL fixme_written = FALSE;
@@ -2205,7 +2205,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         break;
     }
 
-    case SystemTimeOfDayInformation:
+    case SystemTimeOfDayInformation:  /* 3 */
     {
         struct tm *tm;
         time_t now;
@@ -2230,7 +2230,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         break;
     }
 
-    case SystemProcessInformation:
+    case SystemProcessInformation:  /* 5 */
     {
         unsigned int process_count, i, j;
         char *buffer = NULL;
@@ -2333,7 +2333,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         break;
     }
 
-    case SystemProcessorPerformanceInformation:
+    case SystemProcessorPerformanceInformation:  /* 8 */
     {
         SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi = NULL;
         unsigned int cpus = 0;
@@ -2435,7 +2435,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         break;
     }
 
-    case SystemModuleInformation:
+    case SystemModuleInformation:  /* 11 */
     {
         /* FIXME: return some fake info for now */
         static const char *fake_modules[] =
@@ -2469,42 +2469,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         break;
     }
 
-    case SystemModuleInformationEx:
-    {
-        /* FIXME: return some fake info for now */
-        static const char *fake_modules[] =
-        {
-            "\\SystemRoot\\system32\\ntoskrnl.exe",
-            "\\SystemRoot\\system32\\hal.dll",
-            "\\SystemRoot\\system32\\drivers\\mountmgr.sys"
-        };
-
-        ULONG i;
-        RTL_PROCESS_MODULE_INFORMATION_EX *module_info = info;
-
-        len = sizeof(*module_info) * ARRAY_SIZE(fake_modules) + sizeof(module_info->NextOffset);
-        if (len <= size)
-        {
-            memset( info, 0, len );
-            for (i = 0; i < ARRAY_SIZE(fake_modules); i++)
-            {
-                SYSTEM_MODULE *sm = &module_info[i].BaseInfo;
-                sm->ImageBaseAddress = (char *)0x10000000 + 0x200000 * i;
-                sm->ImageSize = 0x200000;
-                sm->LoadOrderIndex = i;
-                sm->LoadCount = 1;
-                strcpy( (char *)sm->Name, fake_modules[i] );
-                sm->NameOffset = strrchr( fake_modules[i], '\\' ) - fake_modules[i] + 1;
-                module_info[i].NextOffset = sizeof(*module_info);
-            }
-            module_info[ARRAY_SIZE(fake_modules)].NextOffset = 0;
-        }
-        else ret = STATUS_INFO_LENGTH_MISMATCH;
-
-        break;
-    }
-
-    case SystemHandleInformation:
+    case SystemHandleInformation:  /* 16 */
     {
         struct handle_info *handle_info;
         DWORD i, num_handles;
@@ -2555,7 +2520,145 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         break;
     }
 
-    case SystemExtendedHandleInformation:
+    case SystemFileCacheInformation:  /* 21 */
+    {
+        SYSTEM_CACHE_INFORMATION sci = { 0 };
+
+        len = sizeof(sci);
+        if (size >= len)
+        {
+            if (!info) ret = STATUS_ACCESS_VIOLATION;
+            else memcpy( info, &sci, len);
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        FIXME("info_class SYSTEM_CACHE_INFORMATION\n");
+        break;
+    }
+
+    case SystemInterruptInformation: /* 23 */
+    {
+        len = NtCurrentTeb()->Peb->NumberOfProcessors * sizeof(SYSTEM_INTERRUPT_INFORMATION);
+        if (size >= len)
+        {
+            if (!info) ret = STATUS_ACCESS_VIOLATION;
+            else
+            {
+#ifdef HAVE_GETRANDOM
+                int ret;
+                do
+                {
+                    ret = getrandom( info, len, 0 );
+                }
+                while (ret == -1 && errno == EINTR);
+
+                if (ret == -1 && errno == ENOSYS) read_dev_urandom( info, len );
+#else
+                read_dev_urandom( info, len );
+#endif
+            }
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+    }
+
+    case SystemTimeAdjustmentInformation:  /* 28 */
+    {
+        SYSTEM_TIME_ADJUSTMENT_QUERY query = { 156250, 156250, TRUE };
+
+        len = sizeof(query);
+        if (size == len)
+        {
+            if (!info) ret = STATUS_ACCESS_VIOLATION;
+            else memcpy( info, &query, len );
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+    }
+
+    case SystemKernelDebuggerInformation:  /* 35 */
+    {
+        SYSTEM_KERNEL_DEBUGGER_INFORMATION skdi;
+
+        skdi.DebuggerEnabled = FALSE;
+        skdi.DebuggerNotPresent = TRUE;
+        len = sizeof(skdi);
+        if (size >= len)
+        {
+            if (!info) ret = STATUS_ACCESS_VIOLATION;
+            else memcpy( info, &skdi, len);
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+    }
+
+    case SystemRegistryQuotaInformation:  /* 37 */
+    {
+        /* Something to do with the size of the registry             *
+         * Since we don't have a size limitation, fake it            *
+         * This is almost certainly wrong.                           *
+         * This sets each of the three words in the struct to 32 MB, *
+         * which is enough to make the IE 5 installer happy.         */
+        SYSTEM_REGISTRY_QUOTA_INFORMATION srqi;
+
+        srqi.RegistryQuotaAllowed = 0x2000000;
+        srqi.RegistryQuotaUsed = 0x200000;
+        srqi.Reserved1 = (void*)0x200000;
+        len = sizeof(srqi);
+
+        if (size >= len)
+        {
+            if (!info) ret = STATUS_ACCESS_VIOLATION;
+            else
+            {
+                FIXME("SystemRegistryQuotaInformation: faking max registry size of 32 MB\n");
+                memcpy( info, &srqi, len);
+            }
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+    }
+
+    case SystemCurrentTimeZoneInformation:  /* 44 */
+    {
+        RTL_DYNAMIC_TIME_ZONE_INFORMATION tz;
+
+        get_timezone_info( &tz );
+        len = sizeof(RTL_TIME_ZONE_INFORMATION);
+        if (size >= len)
+        {
+            if (!info) ret = STATUS_ACCESS_VIOLATION;
+            else memcpy( info, &tz, len);
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+    }
+
+    case SystemExtendedProcessInformation:  /* 57 */
+        FIXME("SystemExtendedProcessInformation, size %u, info %p, stub!\n", size, info);
+        memset( info, 0, size );
+        ret = STATUS_SUCCESS;
+        break;
+
+    case SystemRecommendedSharedDataAlignment:  /* 58 */
+    {
+        len = sizeof(DWORD);
+        if (size >= len)
+        {
+            if (!info) ret = STATUS_ACCESS_VIOLATION;
+            else
+            {
+#ifdef __arm__
+                *((DWORD *)info) = 32;
+#else
+                *((DWORD *)info) = 64;
+#endif
+            }
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+    }
+
+    case SystemExtendedHandleInformation:  /* 64 */
     {
         struct handle_info *handle_info;
         DWORD i, num_handles;
@@ -2607,120 +2710,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         break;
     }
 
-    case SystemFileCacheInformation:
-    {
-        SYSTEM_CACHE_INFORMATION sci = { 0 };
-
-        len = sizeof(sci);
-        if (size >= len)
-        {
-            if (!info) ret = STATUS_ACCESS_VIOLATION;
-            else memcpy( info, &sci, len);
-        }
-        else ret = STATUS_INFO_LENGTH_MISMATCH;
-        FIXME("info_class SYSTEM_CACHE_INFORMATION\n");
-        break;
-    }
-
-    case SystemInterruptInformation:
-    {
-        len = NtCurrentTeb()->Peb->NumberOfProcessors * sizeof(SYSTEM_INTERRUPT_INFORMATION);
-        if (size >= len)
-        {
-            if (!info) ret = STATUS_ACCESS_VIOLATION;
-            else
-            {
-#ifdef HAVE_GETRANDOM
-                int ret;
-                do
-                {
-                    ret = getrandom( info, len, 0 );
-                }
-                while (ret == -1 && errno == EINTR);
-
-                if (ret == -1 && errno == ENOSYS) read_dev_urandom( info, len );
-#else
-                read_dev_urandom( info, len );
-#endif
-            }
-        }
-        else ret = STATUS_INFO_LENGTH_MISMATCH;
-        break;
-    }
-
-    case SystemTimeAdjustmentInformation:
-    {
-        SYSTEM_TIME_ADJUSTMENT_QUERY query = { 156250, 156250, TRUE };
-
-        len = sizeof(query);
-        if (size == len)
-        {
-            if (!info) ret = STATUS_ACCESS_VIOLATION;
-            else memcpy( info, &query, len );
-        }
-        else ret = STATUS_INFO_LENGTH_MISMATCH;
-        break;
-    }
-
-    case SystemKernelDebuggerInformation:
-    {
-        SYSTEM_KERNEL_DEBUGGER_INFORMATION skdi;
-
-        skdi.DebuggerEnabled = FALSE;
-        skdi.DebuggerNotPresent = TRUE;
-        len = sizeof(skdi);
-        if (size >= len)
-        {
-            if (!info) ret = STATUS_ACCESS_VIOLATION;
-            else memcpy( info, &skdi, len);
-        }
-        else ret = STATUS_INFO_LENGTH_MISMATCH;
-        break;
-    }
-
-    case SystemRegistryQuotaInformation:
-    {
-        /* Something to do with the size of the registry             *
-         * Since we don't have a size limitation, fake it            *
-         * This is almost certainly wrong.                           *
-         * This sets each of the three words in the struct to 32 MB, *
-         * which is enough to make the IE 5 installer happy.         */
-        SYSTEM_REGISTRY_QUOTA_INFORMATION srqi;
-
-        srqi.RegistryQuotaAllowed = 0x2000000;
-        srqi.RegistryQuotaUsed = 0x200000;
-        srqi.Reserved1 = (void*)0x200000;
-        len = sizeof(srqi);
-
-        if (size >= len)
-        {
-            if (!info) ret = STATUS_ACCESS_VIOLATION;
-            else
-            {
-                FIXME("SystemRegistryQuotaInformation: faking max registry size of 32 MB\n");
-                memcpy( info, &srqi, len);
-            }
-        }
-        else ret = STATUS_INFO_LENGTH_MISMATCH;
-        break;
-    }
-
-    case SystemCurrentTimeZoneInformation:
-    {
-        RTL_DYNAMIC_TIME_ZONE_INFORMATION tz;
-
-        get_timezone_info( &tz );
-        len = sizeof(RTL_TIME_ZONE_INFORMATION);
-        if (size >= len)
-        {
-            if (!info) ret = STATUS_ACCESS_VIOLATION;
-            else memcpy( info, &tz, len);
-        }
-        else ret = STATUS_INFO_LENGTH_MISMATCH;
-        break;
-    }
-
-    case SystemLogicalProcessorInformation:
+    case SystemLogicalProcessorInformation:  /* 73 */
     {
         SYSTEM_LOGICAL_PROCESSOR_INFORMATION *buf;
 
@@ -2747,29 +2737,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         break;
     }
 
-    case SystemCpuSetInformation:
-        return NtQuerySystemInformationEx(class, NULL, 0, info, size, ret_size);
-
-    case SystemRecommendedSharedDataAlignment:
-    {
-        len = sizeof(DWORD);
-        if (size >= len)
-        {
-            if (!info) ret = STATUS_ACCESS_VIOLATION;
-            else
-            {
-#ifdef __arm__
-                *((DWORD *)info) = 32;
-#else
-                *((DWORD *)info) = 64;
-#endif
-            }
-        }
-        else ret = STATUS_INFO_LENGTH_MISMATCH;
-        break;
-    }
-
-    case SystemFirmwareTableInformation:
+    case SystemFirmwareTableInformation:  /* 76 */
     {
         SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti = info;
         len = FIELD_OFFSET(SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer);
@@ -2792,7 +2760,42 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         break;
     }
 
-    case SystemDynamicTimeZoneInformation:
+    case SystemModuleInformationEx:  /* 77 */
+    {
+        /* FIXME: return some fake info for now */
+        static const char *fake_modules[] =
+        {
+            "\\SystemRoot\\system32\\ntoskrnl.exe",
+            "\\SystemRoot\\system32\\hal.dll",
+            "\\SystemRoot\\system32\\drivers\\mountmgr.sys"
+        };
+
+        ULONG i;
+        RTL_PROCESS_MODULE_INFORMATION_EX *module_info = info;
+
+        len = sizeof(*module_info) * ARRAY_SIZE(fake_modules) + sizeof(module_info->NextOffset);
+        if (len <= size)
+        {
+            memset( info, 0, len );
+            for (i = 0; i < ARRAY_SIZE(fake_modules); i++)
+            {
+                SYSTEM_MODULE *sm = &module_info[i].BaseInfo;
+                sm->ImageBaseAddress = (char *)0x10000000 + 0x200000 * i;
+                sm->ImageSize = 0x200000;
+                sm->LoadOrderIndex = i;
+                sm->LoadCount = 1;
+                strcpy( (char *)sm->Name, fake_modules[i] );
+                sm->NameOffset = strrchr( fake_modules[i], '\\' ) - fake_modules[i] + 1;
+                module_info[i].NextOffset = sizeof(*module_info);
+            }
+            module_info[ARRAY_SIZE(fake_modules)].NextOffset = 0;
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+
+        break;
+    }
+
+    case SystemDynamicTimeZoneInformation:  /* 102 */
     {
         RTL_DYNAMIC_TIME_ZONE_INFORMATION tz;
 
@@ -2807,28 +2810,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         break;
     }
 
-    case SystemExtendedProcessInformation:
-        FIXME("SystemExtendedProcessInformation, size %u, info %p, stub!\n", size, info);
-        memset( info, 0, size );
-        ret = STATUS_SUCCESS;
-        break;
-
-    /* Wine extensions */
-
-    case SystemWineVersionInformation:
-    {
-        static const char version[] = PACKAGE_VERSION;
-        extern const char wine_build[];
-        struct utsname buf;
-
-        uname( &buf );
-        len = strlen(version) + strlen(wine_build) + strlen(buf.sysname) + strlen(buf.release) + 4;
-        snprintf( info, size, "%s%c%s%c%s%c%s", version, 0, wine_build, 0, buf.sysname, 0, buf.release );
-        if (size < len) ret = STATUS_INFO_LENGTH_MISMATCH;
-        break;
-    }
-
-    case SystemCodeIntegrityInformation:
+    case SystemCodeIntegrityInformation:  /* 103 */
     {
         SYSTEM_CODEINTEGRITY_INFORMATION *integrity_info = info;
 
@@ -2840,6 +2822,24 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
             integrity_info->CodeIntegrityOptions = CODEINTEGRITY_OPTION_ENABLED;
         else
             ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+    }
+
+    case SystemCpuSetInformation:  /* 175 */
+        return NtQuerySystemInformationEx(class, NULL, 0, info, size, ret_size);
+
+    /* Wine extensions */
+
+    case SystemWineVersionInformation:  /* 1000 */
+    {
+        static const char version[] = PACKAGE_VERSION;
+        extern const char wine_build[];
+        struct utsname buf;
+
+        uname( &buf );
+        len = strlen(version) + strlen(wine_build) + strlen(buf.sysname) + strlen(buf.release) + 4;
+        snprintf( info, size, "%s%c%s%c%s%c%s", version, 0, wine_build, 0, buf.sysname, 0, buf.release );
+        if (size < len) ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
     }
 
