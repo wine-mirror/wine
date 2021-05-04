@@ -69,7 +69,8 @@
 #include "wine/exception.h"
 #include "unix_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(seh);
+WINE_DEFAULT_DEBUG_CHANNEL(thread);
+WINE_DECLARE_DEBUG_CHANNEL(seh);
 
 #ifndef PTHREAD_STACK_MIN
 #define PTHREAD_STACK_MIN 16384
@@ -443,12 +444,12 @@ NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL 
     if (first_chance) call_user_exception_dispatcher( rec, context, pKiUserExceptionDispatcher );
 
     if (rec->ExceptionFlags & EH_STACK_INVALID)
-        ERR("Exception frame is not in stack limits => unable to dispatch exception.\n");
+        ERR_(seh)("Exception frame is not in stack limits => unable to dispatch exception.\n");
     else if (rec->ExceptionCode == STATUS_NONCONTINUABLE_EXCEPTION)
-        ERR("Process attempted to continue execution after noncontinuable exception.\n");
+        ERR_(seh)("Process attempted to continue execution after noncontinuable exception.\n");
     else
-        ERR("Unhandled exception code %x flags %x addr %p\n",
-            rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
+        ERR_(seh)("Unhandled exception code %x flags %x addr %p\n",
+                  rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
 
     NtTerminateProcess( NtCurrentProcess(), rec->ExceptionCode );
     return STATUS_SUCCESS;
