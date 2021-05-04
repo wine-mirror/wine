@@ -686,8 +686,7 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE handle, UINT command, void *data, UINT
 {
     RID_DEVICE_INFO info;
     struct device *device;
-    const void *to_copy;
-    UINT to_copy_bytes, avail_bytes;
+    DWORD len, data_len;
 
     TRACE("handle %p, command %#x, data %p, data_size %p.\n",
             handle, command, data, data_size);
@@ -703,45 +702,26 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE handle, UINT command, void *data, UINT
         return ~0U;
     }
 
-    /* each case below must set:
-     *     *data_size: length (meaning defined by command) of data we want to copy
-     *     avail_bytes: number of bytes available in user buffer
-     *     to_copy_bytes: number of bytes we want to copy into user buffer
-     *     to_copy: pointer to data we want to copy into user buffer
-     */
+    data_len = *data_size;
     switch (command)
     {
     case RIDI_DEVICENAME:
-        /* for RIDI_DEVICENAME, data_size is in characters, not bytes */
-        avail_bytes = *data_size * sizeof(WCHAR);
-        *data_size = wcslen(device->detail->DevicePath) + 1;
-        to_copy = device->detail->DevicePath;
-        to_copy_bytes = *data_size * sizeof(WCHAR);
+        if ((len = wcslen(device->detail->DevicePath) + 1) <= data_len && data)
+            memcpy(data, device->detail->DevicePath, len * sizeof(WCHAR));
+        *data_size = len;
         break;
 
     case RIDI_DEVICEINFO:
-        avail_bytes = *data_size;
-        info.cbSize = sizeof(info);
-        info = device->info;
-        to_copy_bytes = sizeof(info);
-        *data_size = to_copy_bytes;
-        to_copy = &info;
+        if ((len = sizeof(info)) <= data_len && data)
+            memcpy(data, &device->info, len);
+        *data_size = len;
         break;
 
     case RIDI_PREPARSEDDATA:
-        avail_bytes = *data_size;
-        if (device->info.dwType != RIM_TYPEHID)
-        {
-            to_copy_bytes = 0;
-            *data_size = 0;
-            to_copy = NULL;
-        }
-        else
-        {
-            to_copy_bytes = ((WINE_HIDP_PREPARSED_DATA*)device->data)->dwSize;
-            *data_size = to_copy_bytes;
-            to_copy = device->data;
-        }
+        len = device->data ? ((WINE_HIDP_PREPARSED_DATA*)device->data)->dwSize : 0;
+        if (device->data && len <= data_len && data)
+            memcpy(data, device->data, len);
+        *data_size = len;
         break;
 
     default:
@@ -753,13 +733,11 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE handle, UINT command, void *data, UINT
     if (!data)
         return 0;
 
-    if (avail_bytes < to_copy_bytes)
+    if (data_len < len)
     {
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return ~0U;
     }
-
-    memcpy(data, to_copy, to_copy_bytes);
 
     return *data_size;
 }
