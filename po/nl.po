@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-04-21 09:20+0200\n"
+"PO-Revision-Date: 2021-05-04 16:50+0200\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -571,7 +571,7 @@ msgstr "Opslaan als..."
 
 #: dlls/comdlg32/comdlg32.rc:193 dlls/comdlg32/comdlg32.rc:146
 msgid "Save As"
-msgstr "&Opslaan als"
+msgstr "Opslaan als"
 
 #: dlls/comdlg32/comdlg32.rc:202 dlls/comdlg32/comdlg32.rc:211
 #: dlls/comdlg32/comdlg32.rc:358 dlls/comdlg32/comdlg32.rc:55
@@ -3985,10 +3985,8 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "Kan onschrijfbare eigenschap '|' niet veranderen"
 
 #: dlls/jscript/jscript.rc:77
-#, fuzzy
-#| msgid "'[object]' is not a date object"
 msgid "'this' is not a Map object"
-msgstr "'[object]' is geen datum object"
+msgstr "'this' is geen Map object"
 
 #: dlls/jscript/jscript.rc:78
 msgid "Property cannot have both accessors and a value"
@@ -14799,10 +14797,8 @@ msgstr ""
 "\n"
 
 #: programs/reg/reg.rc:180
-#, fuzzy
-#| msgid "reg: Unable to find the specified registry key\n"
 msgid "reg: Unable to access or create the specified registry key\n"
-msgstr "reg: Kan de gegeven registersleutel niet vinden\n"
+msgstr "reg: Kan de gegeven registersleutel niet openen of aanmaken\n"
 
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
