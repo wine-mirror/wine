@@ -5067,6 +5067,23 @@ static void test_scissor(void)
     color = get_texture_color(test_context.backbuffer, 320, 420);
     ok(compare_color(color, 0xff0000ff, 1), "Got unexpected color 0x%08x.\n", color);
 
+    set_viewport(device, -1.0f, 0.0f, 641, 480, 0.0f, 1.0f);
+    SetRect(&scissor_rect, -1, 0, 640, 480);
+    ID3D10Device_RSSetScissorRects(device, 1, &scissor_rect);
+    ID3D10Device_ClearRenderTargetView(device, test_context.backbuffer_rtv, red);
+    check_texture_color(test_context.backbuffer, 0xff0000ff, 1);
+    draw_color_quad(&test_context, &green);
+    color = get_texture_color(test_context.backbuffer, 320, 60);
+    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(test_context.backbuffer, 80, 240);
+    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(test_context.backbuffer, 320, 240);
+    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(test_context.backbuffer, 560, 240);
+    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(test_context.backbuffer, 320, 420);
+    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+
     ID3D10RasterizerState_Release(rs);
     release_test_context(&test_context);
 }
