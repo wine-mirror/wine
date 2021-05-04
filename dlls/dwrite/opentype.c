@@ -2649,8 +2649,7 @@ HRESULT opentype_get_font_facename(struct file_stream_desc *stream_desc, WCHAR *
             {
                 *nameW = 0;
                 IDWriteLocalizedStrings_GetString(lfnames, index, nameW, length + 1);
-                wcsncpy(lfname, nameW, LF_FACESIZE);
-                lfname[LF_FACESIZE-1] = 0;
+                lstrcpynW(lfname, nameW, LF_FACESIZE);
                 heap_free(nameW);
             }
         }
