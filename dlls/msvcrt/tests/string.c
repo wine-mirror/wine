@@ -33,6 +33,7 @@
 
 /* make it use a definition from string.h */
 #undef strncpy
+#undef wcsncpy
 #include "winbase.h"
 #include "winnls.h"
 #include "winuser.h"

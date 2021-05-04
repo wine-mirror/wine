@@ -2888,9 +2888,11 @@ static inline LPSTR WINAPI lstrcatA( LPSTR dst, LPCSTR src )
     return strcat( dst, src );
 }
 
-/* strncpy doesn't do what you think, don't use it */
+/* strncpy/wcsncpy don't do what you think, don't use them */
 #undef strncpy
+#undef wcsncpy
 #define strncpy(d,s,n) error do_not_use_strncpy_use_lstrcpynA_or_memcpy_instead
+#define wcsncpy(d,s,n) error do_not_use_wcsncpy_use_lstrcpynW_or_memcpy_instead
 
 #endif /* !defined(__WINESRC__) || defined(WINE_NO_INLINE_STRING) */
 

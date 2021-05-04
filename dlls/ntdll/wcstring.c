@@ -241,6 +241,7 @@ int __cdecl wcsncmp( LPCWSTR str1, LPCWSTR str2, size_t n )
 /*********************************************************************
  *           wcsncpy    (NTDLL.@)
  */
+#undef wcsncpy
 LPWSTR __cdecl wcsncpy( LPWSTR s1, LPCWSTR s2, size_t n )
 {
     WCHAR *ret = s1;
