@@ -3837,78 +3837,6 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
     } /* end switch(level) */
 }
 
-/***********************************************************************
- *		htonl			(WS2_32.8)
- */
-WS_u_long WINAPI WS_htonl(WS_u_long hostlong)
-{
-    return htonl(hostlong);
-}
-
-
-/***********************************************************************
- *		htons			(WS2_32.9)
- */
-WS_u_short WINAPI WS_htons(WS_u_short hostshort)
-{
-    return htons(hostshort);
-}
-
-/***********************************************************************
- *		WSAHtonl		(WS2_32.46)
- *  From MSDN description of error codes, this function should also
- *  check if WinSock has been initialized and the socket is a valid
- *  socket. But why? This function only translates a host byte order
- *  u_long into a network byte order u_long...
- */
-int WINAPI WSAHtonl(SOCKET s, WS_u_long hostlong, WS_u_long *lpnetlong)
-{
-    if (lpnetlong)
-    {
-        *lpnetlong = htonl(hostlong);
-        return 0;
-    }
-    SetLastError(WSAEFAULT);
-    return SOCKET_ERROR;
-}
-
-/***********************************************************************
- *		WSAHtons		(WS2_32.47)
- *  From MSDN description of error codes, this function should also
- *  check if WinSock has been initialized and the socket is a valid
- *  socket. But why? This function only translates a host byte order
- *  u_short into a network byte order u_short...
- */
-int WINAPI WSAHtons(SOCKET s, WS_u_short hostshort, WS_u_short *lpnetshort)
-{
-
-    if (lpnetshort)
-    {
-        *lpnetshort = htons(hostshort);
-        return 0;
-    }
-    SetLastError(WSAEFAULT);
-    return SOCKET_ERROR;
-}
-
-
-/***********************************************************************
- *		ntohl			(WS2_32.14)
- */
-WS_u_long WINAPI WS_ntohl(WS_u_long netlong)
-{
-    return ntohl(netlong);
-}
-
-
-/***********************************************************************
- *		ntohs			(WS2_32.15)
- */
-WS_u_short WINAPI WS_ntohs(WS_u_short netshort)
-{
-    return ntohs(netshort);
-}
-
 
 static const char *debugstr_wsaioctl(DWORD code)
 {
@@ -6544,31 +6472,6 @@ INT WINAPI WSALookupServiceNextW( HANDLE lookup, DWORD flags, LPDWORD len, LPWSA
     return SOCKET_ERROR;
 }
 
-/***********************************************************************
- *              WSANtohl                                   (WS2_32.64)
- */
-INT WINAPI WSANtohl( SOCKET s, WS_u_long netlong, WS_u_long* lphostlong )
-{
-    TRACE( "(%04lx 0x%08x %p)\n", s, netlong, lphostlong );
-
-    if (!lphostlong) return WSAEFAULT;
-
-    *lphostlong = ntohl( netlong );
-    return 0;
-}
-
-/***********************************************************************
- *              WSANtohs                                   (WS2_32.65)
- */
-INT WINAPI WSANtohs( SOCKET s, WS_u_short netshort, WS_u_short* lphostshort )
-{
-    TRACE( "(%04lx 0x%08x %p)\n", s, netshort, lphostshort );
-
-    if (!lphostshort) return WSAEFAULT;
-
-    *lphostshort = ntohs( netshort );
-    return 0;
-}
 
 /***********************************************************************
  *              WSAProviderConfigChange                     (WS2_32.66)

@@ -2022,3 +2022,93 @@ WS_u_long WINAPI WS_inet_addr( const char *cp )
     if (!cp) return INADDR_NONE;
     return inet_addr( cp );
 }
+
+
+/***********************************************************************
+ *      htonl   (ws2_32.8)
+ */
+WS_u_long WINAPI WS_htonl( WS_u_long hostlong )
+{
+    return htonl( hostlong );
+}
+
+
+/***********************************************************************
+ *      htons   (ws2_32.9)
+ */
+WS_u_short WINAPI WS_htons( WS_u_short hostshort )
+{
+    return htons( hostshort );
+}
+
+
+/***********************************************************************
+ *      WSAHtonl   (ws2_32.@)
+ */
+int WINAPI WSAHtonl( SOCKET s, WS_u_long hostlong, WS_u_long *netlong )
+{
+    if (netlong)
+    {
+        *netlong = htonl( hostlong );
+        return 0;
+    }
+    SetLastError( WSAEFAULT );
+    return -1;
+}
+
+
+/***********************************************************************
+ *      WSAHtons   (ws2_32.@)
+ */
+int WINAPI WSAHtons( SOCKET s, WS_u_short hostshort, WS_u_short *netshort )
+{
+    if (netshort)
+    {
+        *netshort = htons( hostshort );
+        return 0;
+    }
+    SetLastError( WSAEFAULT );
+    return -1;
+}
+
+
+/***********************************************************************
+ *      ntohl   (ws2_32.14)
+ */
+WS_u_long WINAPI WS_ntohl( WS_u_long netlong )
+{
+    return ntohl( netlong );
+}
+
+
+/***********************************************************************
+ *      ntohs   (ws2_32.15)
+ */
+WS_u_short WINAPI WS_ntohs( WS_u_short netshort )
+{
+    return ntohs( netshort );
+}
+
+
+/***********************************************************************
+ *      WSANtohl   (ws2_32.@)
+ */
+int WINAPI WSANtohl( SOCKET s, WS_u_long netlong, WS_u_long *hostlong )
+{
+    if (!hostlong) return WSAEFAULT;
+
+    *hostlong = ntohl( netlong );
+    return 0;
+}
+
+
+/***********************************************************************
+ *      WSANtohs   (ws2_32.@)
+ */
+int WINAPI WSANtohs( SOCKET s, WS_u_short netshort, WS_u_short *hostshort )
+{
+    if (!hostshort) return WSAEFAULT;
+
+    *hostshort = ntohs( netshort );
+    return 0;
+}
