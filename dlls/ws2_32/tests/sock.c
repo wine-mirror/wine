@@ -8573,6 +8573,149 @@ static void test_connecting_socket(void)
     closesocket(client);
 }
 
+static DWORD map_status( NTSTATUS status )
+{
+    static const struct
+    {
+        NTSTATUS status;
+        DWORD error;
+    }
+    errors[] =
+    {
+        {STATUS_PENDING,                    ERROR_IO_INCOMPLETE},
+
+        {STATUS_BUFFER_OVERFLOW,            WSAEMSGSIZE},
+
+        {STATUS_NOT_IMPLEMENTED,            WSAEOPNOTSUPP},
+        {STATUS_ACCESS_VIOLATION,           WSAEFAULT},
+        {STATUS_PAGEFILE_QUOTA,             WSAENOBUFS},
+        {STATUS_INVALID_HANDLE,             WSAENOTSOCK},
+        {STATUS_NO_SUCH_DEVICE,             WSAENETDOWN},
+        {STATUS_NO_SUCH_FILE,               WSAENETDOWN},
+        {STATUS_NO_MEMORY,                  WSAENOBUFS},
+        {STATUS_CONFLICTING_ADDRESSES,      WSAENOBUFS},
+        {STATUS_ACCESS_DENIED,              WSAEACCES},
+        {STATUS_BUFFER_TOO_SMALL,           WSAEFAULT},
+        {STATUS_OBJECT_TYPE_MISMATCH,       WSAENOTSOCK},
+        {STATUS_OBJECT_NAME_NOT_FOUND,      WSAENETDOWN},
+        {STATUS_OBJECT_PATH_NOT_FOUND,      WSAENETDOWN},
+        {STATUS_SHARING_VIOLATION,          WSAEADDRINUSE},
+        {STATUS_QUOTA_EXCEEDED,             WSAENOBUFS},
+        {STATUS_TOO_MANY_PAGING_FILES,      WSAENOBUFS},
+        {STATUS_INSUFFICIENT_RESOURCES,     WSAENOBUFS},
+        {STATUS_WORKING_SET_QUOTA,          WSAENOBUFS},
+        {STATUS_DEVICE_NOT_READY,           WSAEWOULDBLOCK},
+        {STATUS_PIPE_DISCONNECTED,          WSAESHUTDOWN},
+        {STATUS_IO_TIMEOUT,                 WSAETIMEDOUT},
+        {STATUS_NOT_SUPPORTED,              WSAEOPNOTSUPP},
+        {STATUS_REMOTE_NOT_LISTENING,       WSAECONNREFUSED},
+        {STATUS_BAD_NETWORK_PATH,           WSAENETUNREACH},
+        {STATUS_NETWORK_BUSY,               WSAENETDOWN},
+        {STATUS_INVALID_NETWORK_RESPONSE,   WSAENETDOWN},
+        {STATUS_UNEXPECTED_NETWORK_ERROR,   WSAENETDOWN},
+        {STATUS_REQUEST_NOT_ACCEPTED,       WSAEWOULDBLOCK},
+        {STATUS_CANCELLED,                  ERROR_OPERATION_ABORTED},
+        {STATUS_COMMITMENT_LIMIT,           WSAENOBUFS},
+        {STATUS_LOCAL_DISCONNECT,           WSAECONNABORTED},
+        {STATUS_REMOTE_DISCONNECT,          WSAECONNRESET},
+        {STATUS_REMOTE_RESOURCES,           WSAENOBUFS},
+        {STATUS_LINK_FAILED,                WSAECONNRESET},
+        {STATUS_LINK_TIMEOUT,               WSAETIMEDOUT},
+        {STATUS_INVALID_CONNECTION,         WSAENOTCONN},
+        {STATUS_INVALID_ADDRESS,            WSAEADDRNOTAVAIL},
+        {STATUS_INVALID_BUFFER_SIZE,        WSAEMSGSIZE},
+        {STATUS_INVALID_ADDRESS_COMPONENT,  WSAEADDRNOTAVAIL},
+        {STATUS_TOO_MANY_ADDRESSES,         WSAENOBUFS},
+        {STATUS_ADDRESS_ALREADY_EXISTS,     WSAEADDRINUSE},
+        {STATUS_CONNECTION_DISCONNECTED,    WSAECONNRESET},
+        {STATUS_CONNECTION_RESET,           WSAECONNRESET},
+        {STATUS_TRANSACTION_ABORTED,        WSAECONNABORTED},
+        {STATUS_CONNECTION_REFUSED,         WSAECONNREFUSED},
+        {STATUS_GRACEFUL_DISCONNECT,        WSAEDISCON},
+        {STATUS_CONNECTION_ACTIVE,          WSAEISCONN},
+        {STATUS_NETWORK_UNREACHABLE,        WSAENETUNREACH},
+        {STATUS_HOST_UNREACHABLE,           WSAEHOSTUNREACH},
+        {STATUS_PROTOCOL_UNREACHABLE,       WSAENETUNREACH},
+        {STATUS_PORT_UNREACHABLE,           WSAECONNRESET},
+        {STATUS_REQUEST_ABORTED,            WSAEINTR},
+        {STATUS_CONNECTION_ABORTED,         WSAECONNABORTED},
+        {STATUS_DATATYPE_MISALIGNMENT_ERROR,WSAEFAULT},
+        {STATUS_HOST_DOWN,                  WSAEHOSTDOWN},
+        {0x80070000 | ERROR_IO_INCOMPLETE,  ERROR_IO_INCOMPLETE},
+        {0xc0010000 | ERROR_IO_INCOMPLETE,  ERROR_IO_INCOMPLETE},
+        {0xc0070000 | ERROR_IO_INCOMPLETE,  ERROR_IO_INCOMPLETE},
+    };
+
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(errors); ++i)
+    {
+        if (errors[i].status == status)
+            return errors[i].error;
+    }
+
+    return NT_SUCCESS(status) ? RtlNtStatusToDosErrorNoTeb(status) : WSAEINVAL;
+}
+
+static void test_WSAGetOverlappedResult(void)
+{
+    OVERLAPPED overlapped = {0};
+    DWORD size, flags;
+    NTSTATUS status;
+    unsigned int i;
+    SOCKET s;
+    BOOL ret;
+
+    static const NTSTATUS ranges[][2] =
+    {
+        {0x0, 0x10000},
+        {0x40000000, 0x40001000},
+        {0x80000000, 0x80001000},
+        {0x80070000, 0x80080000},
+        {0xc0000000, 0xc0001000},
+        {0xc0070000, 0xc0080000},
+        {0xd0000000, 0xd0001000},
+        {0xd0070000, 0xd0080000},
+    };
+
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+    for (i = 0; i < ARRAY_SIZE(ranges); ++i)
+    {
+        for (status = ranges[i][0]; status < ranges[i][1]; ++status)
+        {
+            BOOL expect_ret = NT_SUCCESS(status) && status != STATUS_PENDING;
+            DWORD expect = map_status(status);
+
+            overlapped.Internal = status;
+            WSASetLastError(0xdeadbeef);
+            ret = WSAGetOverlappedResult(s, &overlapped, &size, FALSE, &flags);
+            todo_wine_if (expect_ret && status)
+                ok(ret == expect_ret, "status %#x: expected %d, got %d\n", status, expect_ret, ret);
+            if (ret)
+            {
+                ok(WSAGetLastError() == expect /* >= win10 1809 */
+                        || !WSAGetLastError() /* < win10 1809 */
+                        || WSAGetLastError() == 0xdeadbeef, /* < win7 */
+                        "status %#x: expected error %u, got %u\n", status, expect, WSAGetLastError());
+            }
+            else
+            {
+                todo_wine_if (!NT_SUCCESS(status)
+                        && LOWORD(status) != WSAEINVAL
+                        && status != STATUS_CANCELLED
+                        && status != (0x80070000 | ERROR_IO_INCOMPLETE)
+                        && status != (0xc0070000 | ERROR_IO_INCOMPLETE))
+                    ok(WSAGetLastError() == expect
+                            || (status == (0xc0070000 | ERROR_IO_INCOMPLETE) && WSAGetLastError() == WSAEINVAL), /* < win8 */
+                            "status %#x: expected error %u, got %u\n", status, expect, WSAGetLastError());
+            }
+        }
+    }
+
+    closesocket(s);
+}
+
 START_TEST( sock )
 {
     int i;
@@ -8628,6 +8771,7 @@ START_TEST( sock )
     test_address_list_query();
     test_bind();
     test_connecting_socket();
+    test_WSAGetOverlappedResult();
 
     /* this is an io heavy test, do it at the end so the kernel doesn't start dropping packets */
     test_send();
