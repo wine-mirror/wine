@@ -60,7 +60,7 @@ ULONG WINAPI RtlNtStatusToDosErrorNoTeb( NTSTATUS status )
 
     ret = map_status( status );
     if (ret == ERROR_MR_MID_NOT_FOUND && status != STATUS_MESSAGE_NOT_FOUND)
-        FIXME( "no mapping for %08x\n", status );
+        WARN( "no mapping for %08x\n", status );
     return ret;
 }
 
