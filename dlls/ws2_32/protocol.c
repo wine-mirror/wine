@@ -1653,3 +1653,372 @@ struct WS_servent * WINAPI WS_getservbyport( int port, const char *proto )
     TRACE( "%d (i.e. port %d), %s ret %p\n", port, (int)ntohl(port), debugstr_a(proto), retval );
     return retval;
 }
+
+
+/***********************************************************************
+ *      inet_ntoa   (ws2_32.12)
+ */
+char * WINAPI WS_inet_ntoa( struct WS_in_addr in )
+{
+    unsigned int long_ip = ntohl( in.WS_s_addr );
+    struct per_thread_data *data = get_per_thread_data();
+
+    sprintf( data->ntoa_buffer, "%u.%u.%u.%u",
+             (long_ip >> 24) & 0xff,
+             (long_ip >> 16) & 0xff,
+             (long_ip >> 8) & 0xff,
+             long_ip & 0xff );
+
+    return data->ntoa_buffer;
+}
+
+
+/***********************************************************************
+ *      inet_ntop   (ws2_32.@)
+ */
+const char * WINAPI WS_inet_ntop( int family, void *addr, char *buffer, SIZE_T len )
+{
+    NTSTATUS status;
+    ULONG size = min( len, (ULONG)-1 );
+
+    TRACE( "family %d, addr %p, buffer %p, len %ld\n", family, addr, buffer, len );
+    if (!buffer)
+    {
+        SetLastError( STATUS_INVALID_PARAMETER );
+        return NULL;
+    }
+
+    switch (family)
+    {
+    case WS_AF_INET:
+    {
+        status = RtlIpv4AddressToStringExA( (IN_ADDR *)addr, 0, buffer, &size );
+        break;
+    }
+    case WS_AF_INET6:
+    {
+        status = RtlIpv6AddressToStringExA( (IN6_ADDR *)addr, 0, 0, buffer, &size );
+        break;
+    }
+    default:
+        SetLastError( WSAEAFNOSUPPORT );
+        return NULL;
+    }
+
+    if (status == STATUS_SUCCESS) return buffer;
+    SetLastError( STATUS_INVALID_PARAMETER );
+    return NULL;
+}
+
+/***********************************************************************
+ *      inet_pton   (ws2_32.@)
+ */
+int WINAPI WS_inet_pton( int family, const char *addr, void *buffer )
+{
+    NTSTATUS status;
+    const char *terminator;
+
+    TRACE( "family %d, addr %s, buffer %p\n", family, debugstr_a(addr), buffer );
+
+    if (!addr || !buffer)
+    {
+        SetLastError( WSAEFAULT );
+        return -1;
+    }
+
+    switch (family)
+    {
+    case WS_AF_INET:
+        status = RtlIpv4StringToAddressA(addr, TRUE, &terminator, buffer);
+        break;
+    case WS_AF_INET6:
+        status = RtlIpv6StringToAddressA(addr, &terminator, buffer);
+        break;
+    default:
+        SetLastError( WSAEAFNOSUPPORT );
+        return -1;
+    }
+
+    return (status == STATUS_SUCCESS && *terminator == 0);
+}
+
+/***********************************************************************
+ *      InetPtonW   (ws2_32.@)
+ */
+int WINAPI InetPtonW( int family, const WCHAR *addr, void *buffer )
+{
+    char *addrA;
+    int len;
+    INT ret;
+
+    TRACE( "family %d, addr %s, buffer %p\n", family, debugstr_w(addr), buffer );
+
+    if (!addr)
+    {
+        SetLastError(WSAEFAULT);
+        return SOCKET_ERROR;
+    }
+
+    len = WideCharToMultiByte( CP_ACP, 0, addr, -1, NULL, 0, NULL, NULL );
+    if (!(addrA = HeapAlloc( GetProcessHeap(), 0, len )))
+    {
+        SetLastError( WSA_NOT_ENOUGH_MEMORY );
+        return -1;
+    }
+    WideCharToMultiByte( CP_ACP, 0, addr, -1, addrA, len, NULL, NULL );
+
+    ret = WS_inet_pton( family, addrA, buffer );
+    if (!ret) SetLastError( WSAEINVAL );
+
+    HeapFree( GetProcessHeap(), 0, addrA );
+    return ret;
+}
+
+/***********************************************************************
+ *      InetNtopW   (ws2_32.@)
+ */
+const WCHAR * WINAPI InetNtopW( int family, void *addr, WCHAR *buffer, SIZE_T len )
+{
+    char bufferA[WS_INET6_ADDRSTRLEN];
+    PWSTR ret = NULL;
+
+    TRACE( "family %d, addr %p, buffer %p, len %ld\n", family, addr, buffer, len );
+
+    if (WS_inet_ntop( family, addr, bufferA, sizeof(bufferA) ))
+    {
+        if (MultiByteToWideChar( CP_ACP, 0, bufferA, -1, buffer, len ))
+            ret = buffer;
+        else
+            SetLastError( ERROR_INVALID_PARAMETER );
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *      WSAStringToAddressA   (ws2_32.@)
+ */
+int WINAPI WSAStringToAddressA( char *string, int family, WSAPROTOCOL_INFOA *protocol_info,
+                                struct WS_sockaddr *addr, int *addr_len )
+{
+    NTSTATUS status;
+
+    TRACE( "string %s, family %u\n", debugstr_a(string), family );
+
+    if (!addr || !addr_len) return -1;
+
+    if (!string)
+    {
+        SetLastError( WSAEINVAL );
+        return -1;
+    }
+
+    if (protocol_info)
+        FIXME( "ignoring protocol_info\n" );
+
+    switch (family)
+    {
+    case WS_AF_INET:
+    {
+        struct WS_sockaddr_in *addr4 = (struct WS_sockaddr_in *)addr;
+
+        if (*addr_len < sizeof(struct WS_sockaddr_in))
+        {
+            *addr_len = sizeof(struct WS_sockaddr_in);
+            SetLastError( WSAEFAULT );
+            return -1;
+        }
+        memset( addr, 0, sizeof(struct WS_sockaddr_in) );
+
+        status = RtlIpv4StringToAddressExA( string, FALSE, &addr4->sin_addr, &addr4->sin_port );
+        if (status != STATUS_SUCCESS)
+        {
+            SetLastError( WSAEINVAL );
+            return -1;
+        }
+        addr4->sin_family = WS_AF_INET;
+        *addr_len = sizeof(struct WS_sockaddr_in);
+        return 0;
+    }
+    case WS_AF_INET6:
+    {
+        struct WS_sockaddr_in6 *addr6 = (struct WS_sockaddr_in6 *)addr;
+
+        if (*addr_len < sizeof(struct WS_sockaddr_in6))
+        {
+            *addr_len = sizeof(struct WS_sockaddr_in6);
+            SetLastError( WSAEFAULT );
+            return -1;
+        }
+        memset( addr, 0, sizeof(struct WS_sockaddr_in6) );
+
+        status = RtlIpv6StringToAddressExA( string, &addr6->sin6_addr, &addr6->sin6_scope_id, &addr6->sin6_port );
+        if (status != STATUS_SUCCESS)
+        {
+            SetLastError( WSAEINVAL );
+            return -1;
+        }
+        addr6->sin6_family = WS_AF_INET6;
+        *addr_len = sizeof(struct WS_sockaddr_in6);
+        return 0;
+    }
+    default:
+        /* According to MSDN, only AF_INET and AF_INET6 are supported. */
+        TRACE( "Unsupported address family specified: %d.\n", family );
+        SetLastError( WSAEINVAL );
+        return -1;
+    }
+}
+
+
+/***********************************************************************
+ *      WSAStringToAddressW   (ws2_32.@)
+ */
+int WINAPI WSAStringToAddressW( WCHAR *string, int family, WSAPROTOCOL_INFOW *protocol_info,
+                                struct WS_sockaddr *addr, int *addr_len )
+{
+    WSAPROTOCOL_INFOA infoA;
+    WSAPROTOCOL_INFOA *protocol_infoA = NULL;
+    int sizeA, ret;
+    char *stringA;
+
+    TRACE( "string %s, family %u\n", debugstr_w(string), family );
+
+    if (!addr || !addr_len) return -1;
+
+    if (protocol_info)
+    {
+        protocol_infoA = &infoA;
+        memcpy( protocol_infoA, protocol_info, FIELD_OFFSET( WSAPROTOCOL_INFOA, szProtocol ) );
+
+        if (!WideCharToMultiByte( CP_ACP, 0, protocol_info->szProtocol, -1, protocol_infoA->szProtocol,
+                                  sizeof(protocol_infoA->szProtocol), NULL, NULL ))
+        {
+            SetLastError( WSAEINVAL );
+            return -1;
+        }
+    }
+
+    if (!string)
+    {
+        SetLastError( WSAEINVAL );
+        return -1;
+    }
+
+    sizeA = WideCharToMultiByte( CP_ACP, 0, string, -1, NULL, 0, NULL, NULL );
+    if (!(stringA = HeapAlloc( GetProcessHeap(), 0, sizeA )))
+    {
+        SetLastError( WSA_NOT_ENOUGH_MEMORY );
+        return -1;
+    }
+    WideCharToMultiByte( CP_ACP, 0, string, -1, stringA, sizeA, NULL, NULL );
+    ret = WSAStringToAddressA( stringA, family, protocol_infoA, addr, addr_len );
+    HeapFree( GetProcessHeap(), 0, stringA );
+    return ret;
+}
+
+
+/***********************************************************************
+ *      WSAAddressToStringA   (ws2_32.@)
+ */
+int WINAPI WSAAddressToStringA( struct WS_sockaddr *addr, DWORD addr_len,
+                                WSAPROTOCOL_INFOA *info, char *string, DWORD *string_len )
+{
+    char buffer[54]; /* 32 digits + 7':' + '[' + '%" + 5 digits + ']:' + 5 digits + '\0' */
+    DWORD size;
+
+    TRACE( "addr %s\n", debugstr_sockaddr(addr) );
+
+    if (!addr) return SOCKET_ERROR;
+    if (!string || !string_len) return SOCKET_ERROR;
+
+    switch (addr->sa_family)
+    {
+    case WS_AF_INET:
+    {
+        const struct WS_sockaddr_in *addr4 = (const struct WS_sockaddr_in *)addr;
+        unsigned int long_ip = ntohl( addr4->sin_addr.WS_s_addr );
+        char *p;
+
+        if (addr_len < sizeof(struct WS_sockaddr_in)) return -1;
+        sprintf( buffer, "%u.%u.%u.%u:%u",
+                 (long_ip >> 24) & 0xff,
+                 (long_ip >> 16) & 0xff,
+                 (long_ip >> 8) & 0xff,
+                 long_ip & 0xff,
+                 ntohs( addr4->sin_port ) );
+
+        p = strchr( buffer, ':' );
+        if (!addr4->sin_port) *p = 0;
+        break;
+    }
+    case WS_AF_INET6:
+    {
+        struct WS_sockaddr_in6 *addr6 = (struct WS_sockaddr_in6 *)addr;
+        size_t len;
+
+        buffer[0] = 0;
+        if (addr_len < sizeof(struct WS_sockaddr_in6)) return -1;
+        if (addr6->sin6_port)
+            strcpy( buffer, "[" );
+        len = strlen( buffer );
+        if (!WS_inet_ntop( WS_AF_INET6, &addr6->sin6_addr, &buffer[len], sizeof(buffer) - len ))
+        {
+            SetLastError( WSAEINVAL );
+            return -1;
+        }
+        if (addr6->sin6_scope_id)
+            sprintf( buffer + strlen( buffer ), "%%%u", addr6->sin6_scope_id );
+        if (addr6->sin6_port)
+            sprintf( buffer + strlen( buffer ), "]:%u", ntohs( addr6->sin6_port ) );
+        break;
+    }
+
+    default:
+        SetLastError( WSAEINVAL );
+        return -1;
+    }
+
+    size = strlen( buffer ) + 1;
+
+    if (*string_len < size)
+    {
+        *string_len = size;
+        SetLastError( WSAEFAULT );
+        return -1;
+    }
+
+    TRACE( "=> %s, %u bytes\n", debugstr_a(buffer), size );
+    *string_len = size;
+    strcpy( string, buffer );
+    return 0;
+}
+
+
+/***********************************************************************
+ *      WSAAddressToStringW   (ws2_32.@)
+ */
+int WINAPI WSAAddressToStringW( struct WS_sockaddr *addr, DWORD addr_len,
+                                WSAPROTOCOL_INFOW *info, WCHAR *string, DWORD *string_len )
+{
+    INT ret;
+    char buf[54]; /* 32 digits + 7':' + '[' + '%" + 5 digits + ']:' + 5 digits + '\0' */
+
+    TRACE( "(%p, %d, %p, %p, %p)\n", addr, addr_len, info, string, string_len );
+
+    if ((ret = WSAAddressToStringA( addr, addr_len, NULL, buf, string_len ))) return ret;
+
+    MultiByteToWideChar( CP_ACP, 0, buf, *string_len, string, *string_len );
+    TRACE( "=> %s, %u chars\n", debugstr_w(string), *string_len );
+    return 0;
+}
+
+
+/***********************************************************************
+ *      inet_addr   (ws2_32.11)
+ */
+WS_u_long WINAPI WS_inet_addr( const char *cp )
+{
+    if (!cp) return INADDR_NONE;
+    return inet_addr( cp );
+}
