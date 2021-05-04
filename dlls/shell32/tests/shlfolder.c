@@ -4479,46 +4479,38 @@ static void test_CreateViewObject_contextmenu(void)
     LPITEMIDLIST pidl;
     HRESULT hr;
     DWORD ret;
+    int i;
 
-    hr = CoCreateInstance(&CLSID_ControlPanel, NULL, CLSCTX_INPROC_SERVER, &IID_IShellFolder, (void**)&folder);
-    ok(SUCCEEDED(hr), "got 0x%08x\n", hr);
-    hr = IShellFolder_CreateViewObject(folder, NULL, &IID_IContextMenu, (void**)&cmenu);
-    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
-    if (SUCCEEDED(hr))
-        IContextMenu_Release(cmenu);
-    IShellFolder_Release(folder);
+    static const CLSID *folders[] =
+    {
+        &CLSID_MyComputer,
+        &CLSID_MyDocuments,
+        &CLSID_ControlPanel,
+        &CLSID_NetworkPlaces,
+        &CLSID_Printers,
+        &CLSID_RecycleBin
+    };
 
-    hr = CoCreateInstance(&CLSID_MyComputer, NULL, CLSCTX_INPROC_SERVER, &IID_IShellFolder, (void**)&folder);
-    ok(SUCCEEDED(hr), "got 0x%08x\n", hr);
-    hr = IShellFolder_CreateViewObject(folder, NULL, &IID_IContextMenu, (void**)&cmenu);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    if (SUCCEEDED(hr))
-        IContextMenu_Release(cmenu);
-    IShellFolder_Release(folder);
+    for (i = 0; i < ARRAY_SIZE(folders); i++)
+    {
+        hr = CoCreateInstance(folders[i], NULL, CLSCTX_INPROC_SERVER, &IID_IShellFolder, (void**)&folder);
+        if (hr != S_OK)
+        {
+            win_skip("Failed to create folder %s, hr %#x.\n", wine_dbgstr_guid(folders[i]), hr);
+            continue;
+        }
 
-    hr = CoCreateInstance(&CLSID_NetworkPlaces, NULL, CLSCTX_INPROC_SERVER, &IID_IShellFolder, (void**)&folder);
-    ok(SUCCEEDED(hr), "got 0x%08x\n", hr);
-    hr = IShellFolder_CreateViewObject(folder, NULL, &IID_IContextMenu, (void**)&cmenu);
-    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
-    if (SUCCEEDED(hr))
-        IContextMenu_Release(cmenu);
-    IShellFolder_Release(folder);
-
-    hr = CoCreateInstance(&CLSID_Printers, NULL, CLSCTX_INPROC_SERVER, &IID_IShellFolder, (void**)&folder);
-    ok(SUCCEEDED(hr), "got 0x%08x\n", hr);
-    hr = IShellFolder_CreateViewObject(folder, NULL, &IID_IContextMenu, (void**)&cmenu);
-    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
-    if (SUCCEEDED(hr))
-        IContextMenu_Release(cmenu);
-    IShellFolder_Release(folder);
-
-    hr = CoCreateInstance(&CLSID_RecycleBin, NULL, CLSCTX_INPROC_SERVER, &IID_IShellFolder, (void**)&folder);
-    ok(SUCCEEDED(hr), "got 0x%08x\n", hr);
-    hr = IShellFolder_CreateViewObject(folder, NULL, &IID_IContextMenu, (void**)&cmenu);
-    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
-    if (SUCCEEDED(hr))
-        IContextMenu_Release(cmenu);
-    IShellFolder_Release(folder);
+        hr = IShellFolder_CreateViewObject(folder, NULL, &IID_IContextMenu, (void**)&cmenu);
+        if (IsEqualIID(folders[i], &CLSID_MyDocuments))
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+        else if (IsEqualIID(folders[i], &CLSID_MyComputer))
+            ok(hr == S_OK || broken(hr == E_NOINTERFACE /* win10 */), "got 0x%08x\n", hr);
+        else
+            ok(hr == E_NOINTERFACE || broken(FAILED(hr)), "got 0x%08x for %s\n", hr, wine_dbgstr_guid(folders[i]));
+        if (SUCCEEDED(hr))
+            IContextMenu_Release(cmenu);
+        IShellFolder_Release(folder);
+    }
 
     hr = SHGetDesktopFolder(&desktop);
     ok(hr == S_OK, "got 0x%08x\n", hr);
