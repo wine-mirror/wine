@@ -75,7 +75,7 @@ static void test_DnsQuery(void)
 
     trace("target %s, port %d\n", wine_dbgstr_w(rec->Data.Srv.pNameTarget), rec->Data.Srv.wPort);
 
-    wcsncpy(name, rec->Data.Srv.pNameTarget, ARRAY_SIZE(name));
+    lstrcpynW(name, rec->Data.Srv.pNameTarget, ARRAY_SIZE(name));
     DnsRecordListFree(rec, DnsFreeRecordList);
 
     /* IPv4 */
