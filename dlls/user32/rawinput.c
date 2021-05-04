@@ -226,6 +226,8 @@ static void find_devices(void)
 
         device->info.dwType = RIM_TYPEMOUSE;
         device->info.u.mouse = mouse_info;
+        HidD_FreePreparsedData(device->data);
+        device->data = NULL;
     }
 
     SetupDiDestroyDeviceInfoList(set);
@@ -241,6 +243,8 @@ static void find_devices(void)
 
         device->info.dwType = RIM_TYPEKEYBOARD;
         device->info.u.keyboard = keyboard_info;
+        HidD_FreePreparsedData(device->data);
+        device->data = NULL;
     }
 
     SetupDiDestroyDeviceInfoList(set);
