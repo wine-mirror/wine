@@ -517,7 +517,7 @@ static HRESULT WINAPI filter_JoinFilterGraph(IMediaStreamFilter *iface,
     EnterCriticalSection(&filter->cs);
 
     if (name)
-        wcsncpy(filter->name, name, ARRAY_SIZE(filter->name));
+        lstrcpynW(filter->name, name, ARRAY_SIZE(filter->name));
     else
         filter->name[0] = 0;
     filter->graph = graph;
