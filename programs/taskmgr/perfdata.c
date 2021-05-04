@@ -328,7 +328,7 @@ BOOL PerfDataGetImageName(ULONG Index, LPWSTR lpImageName, int nMaxCount)
     EnterCriticalSection(&PerfDataCriticalSection);
 
     if (Index < ProcessCount) {
-        wcsncpy(lpImageName, pPerfData[Index].ImageName, nMaxCount);
+        lstrcpynW(lpImageName, pPerfData[Index].ImageName, nMaxCount);
         if (pPerfData[Index].Wow64Process &&
             nMaxCount - lstrlenW(lpImageName) > 4 /* =lstrlenW(proc32W) */)
             lstrcatW(lpImageName, proc32W);
@@ -363,7 +363,7 @@ BOOL PerfDataGetUserName(ULONG Index, LPWSTR lpUserName, int nMaxCount)
     EnterCriticalSection(&PerfDataCriticalSection);
 
     if (Index < ProcessCount) {
-        wcsncpy(lpUserName, pPerfData[Index].UserName, nMaxCount);
+        lstrcpynW(lpUserName, pPerfData[Index].UserName, nMaxCount);
         bSuccessful = TRUE;
     } else {
         bSuccessful = FALSE;
