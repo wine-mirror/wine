@@ -587,6 +587,19 @@ static void test_thread_handle_close(void)
     ok(ret, "ret = %d\n", ret);
 }
 
+static void test_thread_suspended(void)
+{
+    HANDLE hThread;
+    DWORD ret;
+
+    hThread = (HANDLE)_beginthreadex(NULL, 0, test_thread_func_ex, NULL, CREATE_SUSPENDED, NULL);
+    ok(hThread != NULL, "_beginthreadex failed (%d)\n", errno);
+    ret = ResumeThread(hThread);
+    ok(ret == 1, "suspend count = %d\n", ret);
+    ret = WaitForSingleObject(hThread, 200);
+    ok(ret == WAIT_OBJECT_0, "ret = %d\n", ret);
+}
+
 static int __cdecl _lfind_s_comp(void *ctx, const void *l, const void *r)
 {
     *(int *)ctx = 0xdeadc0de;
@@ -684,5 +697,6 @@ START_TEST(misc)
     test_qsort_s();
     test_math_functions();
     test_thread_handle_close();
+    test_thread_suspended();
     test__lfind_s();
 }
