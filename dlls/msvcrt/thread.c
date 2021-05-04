@@ -103,7 +103,6 @@ static DWORD CALLBACK _beginthread_trampoline(LPVOID arg)
 
     local_trampoline.start_address(local_trampoline.arglist);
     _endthread();
-    return 0;
 }
 
 /*********************************************************************
