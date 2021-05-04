@@ -2204,6 +2204,11 @@ static bool wined3d_context_vk_update_graphics_pipeline_key(struct wined3d_conte
             key->scissor.extent.width = key->viewport.width;
             key->scissor.extent.height = key->viewport.height;
         }
+        /* Scissor offsets need to be non-negative (VUID-VkPipelineViewportStateCreateInfo-x-02821) */
+        if (key->scissor.offset.x < 0)
+            key->scissor.offset.x = 0;
+        if (key->scissor.offset.y < 0)
+            key->scissor.offset.y = 0;
         key->viewport.y += key->viewport.height;
         key->viewport.height = -key->viewport.height;
 
