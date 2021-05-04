@@ -696,8 +696,16 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE handle, UINT command, void *data, UINT
     TRACE("handle %p, command %#x, data %p, data_size %p.\n",
             handle, command, data, data_size);
 
-    if (!data_size) return ~0U;
-    if (!(device = find_device_from_handle(handle))) return ~0U;
+    if (!data_size)
+    {
+        SetLastError(ERROR_NOACCESS);
+        return ~0U;
+    }
+    if (!(device = find_device_from_handle(handle)))
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return ~0U;
+    }
 
     /* each case below must set:
      *     *data_size: length (meaning defined by command) of data we want to copy
@@ -769,6 +777,7 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE handle, UINT command, void *data, UINT
 
     default:
         FIXME("command %#x not supported\n", command);
+        SetLastError(ERROR_INVALID_PARAMETER);
         return ~0U;
     }
 
@@ -776,7 +785,10 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE handle, UINT command, void *data, UINT
         return 0;
 
     if (avail_bytes < to_copy_bytes)
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return ~0U;
+    }
 
     memcpy(data, to_copy, to_copy_bytes);
 

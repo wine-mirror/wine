@@ -1834,6 +1834,43 @@ static void test_GetRawInputDeviceList(void)
     ret = pGetRawInputDeviceList(devices, &devcount, sizeof(devices[0]));
     ok(ret > 0, "expected non-zero\n");
 
+    if (devcount)
+    {
+        RID_DEVICE_INFO info;
+        UINT size;
+
+        SetLastError( 0xdeadbeef );
+        ret = pGetRawInputDeviceInfoW( UlongToHandle( 0xdeadbeef ), RIDI_DEVICEINFO, NULL, NULL );
+        ok( ret == ~0U, "GetRawInputDeviceInfoW returned %#x, expected ~0.\n", ret );
+        ok( GetLastError() == ERROR_NOACCESS, "GetRawInputDeviceInfoW last error %#x, expected 0xdeadbeef.\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        size = 0xdeadbeef;
+        ret = pGetRawInputDeviceInfoW( UlongToHandle( 0xdeadbeef ), RIDI_DEVICEINFO, NULL, &size );
+        ok( ret == ~0U, "GetRawInputDeviceInfoW returned %#x, expected ~0.\n", ret );
+        ok( size == 0xdeadbeef, "GetRawInputDeviceInfoW returned size %#x, expected 0.\n", size );
+        ok( GetLastError() == ERROR_INVALID_HANDLE, "GetRawInputDeviceInfoW last error %#x, expected 0xdeadbeef.\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        size = 0xdeadbeef;
+        ret = pGetRawInputDeviceInfoW( devices[0].hDevice, 0xdeadbeef, NULL, &size );
+        ok( ret == ~0U, "GetRawInputDeviceInfoW returned %#x, expected ~0.\n", ret );
+        ok( size == 0xdeadbeef, "GetRawInputDeviceInfoW returned size %#x, expected 0.\n", size );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "GetRawInputDeviceInfoW last error %#x, expected 0xdeadbeef.\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        ret = pGetRawInputDeviceInfoW( devices[0].hDevice, RIDI_DEVICEINFO, &info, NULL );
+        ok( ret == ~0U, "GetRawInputDeviceInfoW returned %#x, expected ~0.\n", ret );
+        ok( GetLastError() == ERROR_NOACCESS, "GetRawInputDeviceInfoW last error %#x, expected 0xdeadbeef.\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        size = 0;
+        ret = pGetRawInputDeviceInfoW( devices[0].hDevice, RIDI_DEVICEINFO, &info, &size );
+        ok( ret == ~0U, "GetRawInputDeviceInfoW returned %#x, expected ~0.\n", ret );
+        ok( size == sizeof(info), "GetRawInputDeviceInfoW returned size %#x, expected %#x.\n", size, sizeof(info) );
+        ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetRawInputDeviceInfoW last error %#x, expected 0xdeadbeef.\n", GetLastError() );
+    }
+
     for(i = 0; i < devcount; ++i)
     {
         WCHAR name[128];
