@@ -2112,3 +2112,340 @@ int WINAPI WSANtohs( SOCKET s, WS_u_short netshort, WS_u_short *hostshort )
     *hostshort = ntohs( netshort );
     return 0;
 }
+
+
+/***********************************************************************
+ *      WSAInstallServiceClassA   (ws2_32.@)
+ */
+int WINAPI WSAInstallServiceClassA( WSASERVICECLASSINFOA *info )
+{
+    FIXME( "Request to install service %s\n", debugstr_a(info->lpszServiceClassName) );
+    SetLastError( WSAEACCES );
+    return -1;
+}
+
+
+/***********************************************************************
+ *      WSAInstallServiceClassW   (ws2_32.@)
+ */
+int WINAPI WSAInstallServiceClassW( WSASERVICECLASSINFOW *info )
+{
+    FIXME( "Request to install service %s\n", debugstr_w(info->lpszServiceClassName) );
+    SetLastError( WSAEACCES );
+    return -1;
+}
+
+
+/***********************************************************************
+ *      WSARemoveServiceClass   (ws2_32.@)
+ */
+int WINAPI WSARemoveServiceClass( GUID *info )
+{
+    FIXME( "Request to remove service %s\n", debugstr_guid(info) );
+    SetLastError( WSATYPE_NOT_FOUND );
+    return -1;
+}
+
+
+/***********************************************************************
+ *      WSAGetServiceClassInfoA   (ws2_32.@)
+ */
+int WINAPI WSAGetServiceClassInfoA( GUID *provider, GUID *service, DWORD *len,
+                                    WSASERVICECLASSINFOA *info )
+{
+    FIXME( "(%s %s %p %p) Stub!\n", debugstr_guid(provider), debugstr_guid(service), len, info );
+    SetLastError( WSA_NOT_ENOUGH_MEMORY );
+    return -1;
+}
+
+
+/***********************************************************************
+ *      WSAGetServiceClassInfoW   (ws2_32.@)
+ */
+int WINAPI WSAGetServiceClassInfoW( GUID *provider, GUID *service, DWORD *len,
+                                    WSASERVICECLASSINFOW *info )
+{
+    FIXME( "(%s %s %p %p) Stub!\n", debugstr_guid(provider), debugstr_guid(service), len, info );
+    SetLastError( WSA_NOT_ENOUGH_MEMORY );
+    return -1;
+}
+
+
+/***********************************************************************
+ *      WSAGetServiceClassNameByClassIdA   (ws2_32.@)
+ */
+int WINAPI WSAGetServiceClassNameByClassIdA( GUID *class, char *service, DWORD *len )
+{
+    FIXME( "(%s %p %p) Stub!\n", debugstr_guid(class), service, len );
+    SetLastError( WSA_NOT_ENOUGH_MEMORY );
+    return -1;
+}
+
+
+/***********************************************************************
+ *      WSAGetServiceClassNameByClassIdW   (ws2_32.@)
+ */
+int WINAPI WSAGetServiceClassNameByClassIdW( GUID *class, WCHAR *service, DWORD *len )
+{
+    FIXME( "(%s %p %p) Stub!\n", debugstr_guid(class), service, len );
+    SetLastError( WSA_NOT_ENOUGH_MEMORY );
+    return -1;
+}
+
+
+/***********************************************************************
+ *      WSALookupServiceBeginA   (ws2_32.@)
+ */
+int WINAPI WSALookupServiceBeginA( WSAQUERYSETA *query, DWORD flags, HANDLE *lookup )
+{
+    FIXME( "(%p 0x%08x %p) Stub!\n", query, flags, lookup );
+    SetLastError( WSA_NOT_ENOUGH_MEMORY );
+    return -1;
+}
+
+
+/***********************************************************************
+ *      WSALookupServiceBeginW   (ws2_32.@)
+ */
+int WINAPI WSALookupServiceBeginW( WSAQUERYSETW *query, DWORD flags, HANDLE *lookup )
+{
+    FIXME( "(%p 0x%08x %p) Stub!\n", query, flags, lookup );
+    SetLastError( WSA_NOT_ENOUGH_MEMORY );
+    return -1;
+}
+
+
+/***********************************************************************
+ *      WSALookupServiceEnd   (ws2_32.@)
+ */
+int WINAPI WSALookupServiceEnd( HANDLE lookup )
+{
+    FIXME("(%p) Stub!\n", lookup );
+    return 0;
+}
+
+
+/***********************************************************************
+ *      WSALookupServiceNextA   (ws2_32.@)
+ */
+int WINAPI WSALookupServiceNextA( HANDLE lookup, DWORD flags, DWORD *len, WSAQUERYSETA *results )
+{
+    FIXME( "(%p 0x%08x %p %p) Stub!\n", lookup, flags, len, results );
+    SetLastError( WSA_E_NO_MORE );
+    return -1;
+}
+
+
+/***********************************************************************
+ *      WSALookupServiceNextW   (ws2_32.@)
+ */
+int WINAPI WSALookupServiceNextW( HANDLE lookup, DWORD flags, DWORD *len, WSAQUERYSETW *results )
+{
+    FIXME( "(%p 0x%08x %p %p) Stub!\n", lookup, flags, len, results );
+    SetLastError( WSA_E_NO_MORE );
+    return -1;
+}
+
+
+/***********************************************************************
+ *      WSASetServiceA   (ws2_32.@)
+ */
+int WINAPI WSASetServiceA( WSAQUERYSETA *query, WSAESETSERVICEOP operation, DWORD flags )
+{
+    FIXME( "(%p 0x%08x 0x%08x) Stub!\n", query, operation, flags );
+    return 0;
+}
+
+
+/***********************************************************************
+ *      WSASetServiceW   (ws2_32.@)
+ */
+int WINAPI WSASetServiceW( WSAQUERYSETW *query, WSAESETSERVICEOP operation, DWORD flags )
+{
+    FIXME( "(%p 0x%08x 0x%08x) Stub!\n", query, operation, flags );
+    return 0;
+}
+
+
+/***********************************************************************
+ *      WSAEnumNameSpaceProvidersA   (ws2_32.@)
+ */
+int WINAPI WSAEnumNameSpaceProvidersA( DWORD *len, WSANAMESPACE_INFOA *buffer )
+{
+    FIXME( "(%p %p) Stub!\n", len, buffer );
+    return 0;
+}
+
+
+/***********************************************************************
+ *      WSAEnumNameSpaceProvidersW   (ws2_32.@)
+ */
+int WINAPI WSAEnumNameSpaceProvidersW( DWORD *len, WSANAMESPACE_INFOW *buffer )
+{
+    FIXME( "(%p %p) Stub!\n", len, buffer );
+    return 0;
+}
+
+
+/***********************************************************************
+ *      WSAProviderConfigChange   (ws2_32.@)
+ */
+int WINAPI WSAProviderConfigChange( HANDLE *handle, OVERLAPPED *overlapped,
+                                    LPWSAOVERLAPPED_COMPLETION_ROUTINE completion )
+{
+    FIXME( "(%p %p %p) Stub!\n", handle, overlapped, completion );
+    return -1;
+}
+
+
+/***********************************************************************
+ *      WSANSPIoctl   (ws2_32.@)
+ */
+int WINAPI WSANSPIoctl( HANDLE lookup, DWORD code, void *in_buffer,
+                        DWORD in_size, void *out_buffer, DWORD out_size,
+                        DWORD *ret_size, WSACOMPLETION *completion )
+{
+    FIXME( "(%p, 0x%08x, %p, 0x%08x, %p, 0x%08x, %p, %p) Stub!\n", lookup, code,
+           in_buffer, in_size, out_buffer, out_size, ret_size, completion );
+    SetLastError( WSA_NOT_ENOUGH_MEMORY );
+    return -1;
+}
+
+
+/***********************************************************************
+ *      WSCEnableNSProvider   (ws2_32.@)
+ */
+int WINAPI WSCEnableNSProvider( GUID *provider, BOOL enable )
+{
+    FIXME( "(%s 0x%08x) Stub!\n", debugstr_guid(provider), enable );
+    return 0;
+}
+
+
+/***********************************************************************
+ *      WSCGetProviderInfo   (ws2_32.@)
+ */
+int WINAPI WSCGetProviderInfo( GUID *provider, WSC_PROVIDER_INFO_TYPE info_type,
+                               BYTE *info, size_t *len, DWORD flags, int *errcode )
+{
+    FIXME( "(%s 0x%08x %p %p 0x%08x %p) Stub!\n",
+           debugstr_guid(provider), info_type, info, len, flags, errcode );
+
+    if (!errcode)
+        return -1;
+
+    if (!provider)
+    {
+        *errcode = WSAEFAULT;
+        return -1;
+    }
+
+    *errcode = WSANO_RECOVERY;
+    return -1;
+}
+
+
+/***********************************************************************
+ *      WSCGetProviderPath   (ws2_32.@)
+ */
+int WINAPI WSCGetProviderPath( GUID *provider, WCHAR *path, int *len, int *errcode )
+{
+    FIXME( "(%s %p %p %p) Stub!\n", debugstr_guid(provider), path, len, errcode );
+
+    if (!provider || !len)
+    {
+        if (errcode)
+            *errcode = WSAEFAULT;
+        return -1;
+    }
+
+    if (*len <= 0)
+    {
+        if (errcode)
+            *errcode = WSAEINVAL;
+        return -1;
+    }
+
+    return 0;
+}
+
+
+/***********************************************************************
+ *      WSCInstallNameSpace   (ws2_32.@)
+ */
+int WINAPI WSCInstallNameSpace( WCHAR *identifier, WCHAR *path, DWORD namespace,
+                                DWORD version, GUID *provider )
+{
+    FIXME( "(%s %s 0x%08x 0x%08x %s) Stub!\n", debugstr_w(identifier), debugstr_w(path),
+           namespace, version, debugstr_guid(provider) );
+    return 0;
+}
+
+
+/***********************************************************************
+ *      WSCUnInstallNameSpace   (ws2_32.@)
+ */
+int WINAPI WSCUnInstallNameSpace( GUID *provider )
+{
+    FIXME( "(%s) Stub!\n", debugstr_guid(provider) );
+    return NO_ERROR;
+}
+
+
+/***********************************************************************
+ *      WSCWriteProviderOrder   (ws2_32.@)
+ */
+int WINAPI WSCWriteProviderOrder( DWORD *entry, DWORD number )
+{
+    FIXME( "(%p 0x%08x) Stub!\n", entry, number );
+    return 0;
+}
+
+
+/***********************************************************************
+ *      WSCInstallProvider   (ws2_32.@)
+ */
+int WINAPI WSCInstallProvider( GUID *provider, const WCHAR *path,
+                               WSAPROTOCOL_INFOW *protocol_info, DWORD count, int *err )
+{
+    FIXME( "(%s, %s, %p, %d, %p): stub !\n", debugstr_guid(provider),
+           debugstr_w(path), protocol_info, count, err );
+    *err = 0;
+    return 0;
+}
+
+
+/***********************************************************************
+ *      WSCDeinstallProvider   (ws2_32.@)
+ */
+int WINAPI WSCDeinstallProvider( GUID *provider, int *err )
+{
+    FIXME( "(%s, %p): stub !\n", debugstr_guid(provider), err );
+    *err = 0;
+    return 0;
+}
+
+
+/***********************************************************************
+ *      WSCSetApplicationCategory   (ws2_32.@)
+ */
+int WINAPI WSCSetApplicationCategory( const WCHAR *path, DWORD len, const WCHAR *extra, DWORD extralen,
+                                      DWORD lspcat, DWORD *prev_lspcat, int *err )
+{
+    FIXME( "(%s %d %s %d %d %p) Stub!\n", debugstr_w(path), len, debugstr_w(extra),
+           extralen, lspcat, prev_lspcat );
+    return 0;
+}
+
+
+/***********************************************************************
+ *      WSCEnumProtocols   (ws2_32.@)
+ */
+int WINAPI WSCEnumProtocols( int *protocols, WSAPROTOCOL_INFOW *info, DWORD *len, int *err )
+{
+    int ret = WSAEnumProtocolsW( protocols, info, len );
+
+    if (ret == SOCKET_ERROR) *err = WSAENOBUFS;
+
+    return ret;
+}
