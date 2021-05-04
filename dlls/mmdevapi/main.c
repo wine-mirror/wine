@@ -404,8 +404,7 @@ static HRESULT get_mmdevice_by_activatepath(const WCHAR *path, IMMDevice **mmdev
     } else if (!memcmp(path, MMDEV_PATH_PREFIX, sizeof(MMDEV_PATH_PREFIX) - sizeof(WCHAR))) {
         WCHAR device_id[56]; /* == strlen("{0.0.1.00000000}.{fd47d9cc-4218-4135-9ce2-0c195c87405b}") + 1 */
 
-        wcsncpy(device_id, path + (ARRAY_SIZE(MMDEV_PATH_PREFIX) - 1), ARRAY_SIZE(device_id));
-        device_id[ARRAY_SIZE(device_id) - 1] = 0;
+        lstrcpynW(device_id, path + (ARRAY_SIZE(MMDEV_PATH_PREFIX) - 1), ARRAY_SIZE(device_id));
 
         hr = IMMDeviceEnumerator_GetDevice(devenum, device_id, mmdev);
     } else {
