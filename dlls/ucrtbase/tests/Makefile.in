@@ -2,9 +2,12 @@ TESTDLL   = ucrtbase.dll
 IMPORTS   = ucrtbase
 EXTRADEFS = -fno-builtin
 
-C_SRCS = \
+SOURCES = \
 	cpp.c \
 	misc.c \
 	printf.c \
 	scanf.c \
-	string.c
+	string.c \
+	thread.c \
+	threaddll.c \
+	threaddll.spec
