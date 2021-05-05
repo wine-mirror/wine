@@ -728,8 +728,10 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
     case WM_INPUTLANGCHANGE:
         {
+            struct user_thread_info *info = get_user_thread_info();
             int count = 0;
             HWND *win_array = WIN_ListChildren( hwnd );
+            info->kbd_layout = (HKL)lParam;
 
             if (!win_array)
                 break;

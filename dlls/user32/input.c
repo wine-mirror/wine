@@ -1316,6 +1316,7 @@ INT WINAPI ToAsciiEx( UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
  */
 HKL WINAPI ActivateKeyboardLayout( HKL layout, UINT flags )
 {
+    struct user_thread_info *info = get_user_thread_info();
     HKL old_layout;
 
     TRACE_(keyboard)( "layout %p, flags %x\n", layout, flags );
@@ -1330,7 +1331,10 @@ HKL WINAPI ActivateKeyboardLayout( HKL layout, UINT flags )
     }
 
     if ((old_layout = USER_Driver->pActivateKeyboardLayout( layout, flags )) != (HKL)~0)
+    {
+        if (old_layout) info->kbd_layout = layout;
         return old_layout;
+    }
 
     return get_locale_kbd_layout();
 }
