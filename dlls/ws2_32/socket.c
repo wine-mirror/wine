@@ -829,7 +829,7 @@ static NTSTATUS sock_get_ntstatus( int err )
         case EPROTOTYPE:        return STATUS_NOT_SUPPORTED;
         case ENOPROTOOPT:       return STATUS_INVALID_PARAMETER;
         case EOPNOTSUPP:        return STATUS_NOT_SUPPORTED;
-        case EADDRINUSE:        return STATUS_ADDRESS_ALREADY_ASSOCIATED;
+        case EADDRINUSE:        return STATUS_SHARING_VIOLATION;
         case EADDRNOTAVAIL:     return STATUS_INVALID_PARAMETER;
         case ECONNREFUSED:      return STATUS_CONNECTION_REFUSED;
         case ESHUTDOWN:         return STATUS_PIPE_DISCONNECTED;
@@ -956,7 +956,7 @@ static NTSTATUS sock_error_to_ntstatus( DWORD err )
     case WSAEPROTOTYPE:        return STATUS_NOT_SUPPORTED;
     case WSAENOPROTOOPT:       return STATUS_INVALID_PARAMETER;
     case WSAEOPNOTSUPP:        return STATUS_NOT_SUPPORTED;
-    case WSAEADDRINUSE:        return STATUS_ADDRESS_ALREADY_ASSOCIATED;
+    case WSAEADDRINUSE:        return STATUS_SHARING_VIOLATION;
     case WSAEADDRNOTAVAIL:     return STATUS_INVALID_PARAMETER;
     case WSAECONNREFUSED:      return STATUS_CONNECTION_REFUSED;
     case WSAESHUTDOWN:         return STATUS_PIPE_DISCONNECTED;
@@ -989,7 +989,7 @@ static DWORD NtStatusToWSAError( DWORD status )
     case STATUS_CONNECTION_RESET:           return WSAECONNRESET;
     case STATUS_CONNECTION_ABORTED:         return WSAECONNABORTED;
     case STATUS_CANCELLED:                  return WSA_OPERATION_ABORTED;
-    case STATUS_ADDRESS_ALREADY_ASSOCIATED: return WSAEADDRINUSE;
+    case STATUS_SHARING_VIOLATION:          return WSAEADDRINUSE;
     case STATUS_IO_TIMEOUT:
     case STATUS_TIMEOUT:                    return WSAETIMEDOUT;
     case STATUS_NO_MEMORY:                  return WSAEFAULT;
