@@ -1152,6 +1152,13 @@ static HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, str
     wined3d_desc.scissor = desc->ScissorEnable;
     wined3d_desc.line_antialias = desc->AntialiasedLineEnable;
 
+    if (desc->MultisampleEnable)
+    {
+        static unsigned int once;
+        if (!once++)
+            FIXME("Ignoring MultisampleEnable %#x.\n", desc->MultisampleEnable);
+    }
+
     /* We cannot fail after creating a wined3d_rasterizer_state object. It
      * would lead to double free. */
     if (FAILED(hr = wined3d_rasterizer_state_create(device->wined3d_device, &wined3d_desc,
