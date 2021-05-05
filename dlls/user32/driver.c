@@ -108,7 +108,6 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(ActivateKeyboardLayout);
         GET_USER_FUNC(Beep);
         GET_USER_FUNC(GetKeyNameText);
-        GET_USER_FUNC(GetKeyboardLayout);
         GET_USER_FUNC(GetKeyboardLayoutList);
         GET_USER_FUNC(GetKeyboardLayoutName);
         GET_USER_FUNC(LoadKeyboardLayout);
@@ -204,11 +203,6 @@ static UINT CDECL nulldrv_GetKeyboardLayoutList( INT size, HKL *layouts )
 static INT CDECL nulldrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
 {
     return -1; /* use default implementation */
-}
-
-static HKL CDECL nulldrv_GetKeyboardLayout( DWORD thread_id )
-{
-    return (HKL)~0; /* use default implementation */
 }
 
 static BOOL CDECL nulldrv_GetKeyboardLayoutName( LPWSTR name )
@@ -427,7 +421,6 @@ static USER_DRIVER null_driver =
     nulldrv_ActivateKeyboardLayout,
     nulldrv_Beep,
     nulldrv_GetKeyNameText,
-    nulldrv_GetKeyboardLayout,
     nulldrv_GetKeyboardLayoutList,
     nulldrv_GetKeyboardLayoutName,
     nulldrv_LoadKeyboardLayout,
@@ -500,11 +493,6 @@ static void CDECL loaderdrv_Beep(void)
 static INT CDECL loaderdrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
 {
     return load_driver()->pGetKeyNameText( lparam, buffer, size );
-}
-
-static HKL CDECL loaderdrv_GetKeyboardLayout( DWORD thread_id )
-{
-    return load_driver()->pGetKeyboardLayout( thread_id );
 }
 
 static UINT CDECL loaderdrv_GetKeyboardLayoutList( INT size, HKL *layouts )
@@ -642,7 +630,6 @@ static USER_DRIVER lazy_load_driver =
     loaderdrv_ActivateKeyboardLayout,
     loaderdrv_Beep,
     loaderdrv_GetKeyNameText,
-    loaderdrv_GetKeyboardLayout,
     loaderdrv_GetKeyboardLayoutList,
     loaderdrv_GetKeyboardLayoutName,
     loaderdrv_LoadKeyboardLayout,

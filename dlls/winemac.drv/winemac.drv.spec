@@ -14,7 +14,6 @@
 @ cdecl DestroyWindow(long) macdrv_DestroyWindow
 @ cdecl EnumDisplaySettingsEx(ptr long ptr long) macdrv_EnumDisplaySettingsEx
 @ cdecl GetCursorPos(ptr) macdrv_GetCursorPos
-@ cdecl GetKeyboardLayout(long) macdrv_GetKeyboardLayout
 @ cdecl GetKeyboardLayoutList(long ptr) macdrv_GetKeyboardLayoutList
 @ cdecl GetKeyboardLayoutName(ptr) macdrv_GetKeyboardLayoutName
 @ cdecl GetKeyNameText(long ptr long) macdrv_GetKeyNameText

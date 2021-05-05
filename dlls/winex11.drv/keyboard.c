@@ -1890,23 +1890,6 @@ static BOOL match_x11_keyboard_layout(HKL hkl)
 
 
 /***********************************************************************
- *		GetKeyboardLayout (X11DRV.@)
- */
-HKL CDECL X11DRV_GetKeyboardLayout(DWORD dwThreadid)
-{
-    if (!dwThreadid || dwThreadid == GetCurrentThreadId())
-    {
-        struct x11drv_thread_data *thread_data = x11drv_thread_data();
-        if (thread_data && thread_data->kbd_layout) return thread_data->kbd_layout;
-    }
-    else
-        FIXME("couldn't return keyboard layout for thread %04x\n", dwThreadid);
-
-    return get_locale_kbd_layout();
-}
-
-
-/***********************************************************************
  *		LoadKeyboardLayout (X11DRV.@)
  */
 HKL CDECL X11DRV_LoadKeyboardLayout(LPCWSTR name, UINT flags)
@@ -1932,9 +1915,8 @@ BOOL CDECL X11DRV_UnloadKeyboardLayout(HKL hkl)
  */
 BOOL CDECL X11DRV_ActivateKeyboardLayout(HKL hkl, UINT flags)
 {
-    struct x11drv_thread_data *thread_data = x11drv_init_thread_data();
-
     FIXME("%p, %04x: semi-stub!\n", hkl, flags);
+
     if (flags & KLF_SETFORPROCESS)
     {
         SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -1949,7 +1931,6 @@ BOOL CDECL X11DRV_ActivateKeyboardLayout(HKL hkl, UINT flags)
         return FALSE;
     }
 
-    thread_data->kbd_layout = hkl;
     return TRUE;
 }
 
@@ -1967,7 +1948,7 @@ BOOL X11DRV_MappingNotify( HWND dummy, XEvent *event )
     hwnd = GetFocus();
     if (!hwnd) hwnd = GetActiveWindow();
     PostMessageW(hwnd, WM_INPUTLANGCHANGEREQUEST,
-                 0 /*FIXME*/, (LPARAM)X11DRV_GetKeyboardLayout(0));
+                 0 /*FIXME*/, (LPARAM)GetKeyboardLayout(0));
     return TRUE;
 }
 
@@ -2215,7 +2196,7 @@ INT CDECL X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
   scanCode = lParam >> 16;
   scanCode &= 0x1ff;  /* keep "extended-key" flag with code */
 
-  vkey = X11DRV_MapVirtualKeyEx(scanCode, MAPVK_VSC_TO_VK_EX, X11DRV_GetKeyboardLayout(0));
+  vkey = X11DRV_MapVirtualKeyEx(scanCode, MAPVK_VSC_TO_VK_EX, GetKeyboardLayout(0));
 
   /*  handle "don't care" bit (0x02000000) */
   if (!(lParam & 0x02000000)) {
@@ -2238,7 +2219,7 @@ INT CDECL X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
     }
   }
 
-  ansi = X11DRV_MapVirtualKeyEx(vkey, MAPVK_VK_TO_CHAR, X11DRV_GetKeyboardLayout(0));
+  ansi = X11DRV_MapVirtualKeyEx(vkey, MAPVK_VK_TO_CHAR, GetKeyboardLayout(0));
   TRACE("scan 0x%04x, vkey 0x%04X, ANSI 0x%04x\n", scanCode, vkey, ansi);
 
   /* first get the name of the "regular" keys which is the Upper case

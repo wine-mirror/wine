@@ -395,8 +395,6 @@ static const struct {
     { VK_VOLUME_UP | 0x100,     "Volume Up" },
 };
 
-HKL CDECL macdrv_GetKeyboardLayout(DWORD);
-
 static BOOL char_matches_string(WCHAR wchar, UniChar *string, BOOL ignore_diacritics)
 {
     BOOL ret;
@@ -1299,18 +1297,6 @@ INT CDECL macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
 
 
 /***********************************************************************
- *              GetKeyboardLayout (MACDRV.@)
- */
-HKL CDECL macdrv_GetKeyboardLayout(DWORD thread_id)
-{
-    if (thread_id && thread_id != GetCurrentThreadId())
-        FIXME("couldn't return keyboard layout for thread %04x\n", thread_id);
-
-    return macdrv_init_thread_data()->active_keyboard_layout;
-}
-
-
-/***********************************************************************
  *     GetKeyboardLayoutList (MACDRV.@)
  */
 UINT CDECL macdrv_GetKeyboardLayoutList(INT size, HKL *list)
@@ -1349,7 +1335,7 @@ BOOL CDECL macdrv_GetKeyboardLayoutName(LPWSTR name)
     static const WCHAR formatW[] = {'%','0','8','x',0};
     DWORD layout;
 
-    layout = HandleToUlong(macdrv_GetKeyboardLayout(0));
+    layout = HandleToUlong(GetKeyboardLayout(0));
     if (HIWORD(layout) == LOWORD(layout)) layout = LOWORD(layout);
     sprintfW(name, formatW, layout);
     TRACE("returning %s\n", debugstr_w(name));

@@ -1083,11 +1083,14 @@ UINT WINAPI GetKBCodePage(void)
  */
 HKL WINAPI GetKeyboardLayout(DWORD thread_id)
 {
-    HKL layout;
+    struct user_thread_info *thread = get_user_thread_info();
+    HKL layout = thread->kbd_layout;
 
-    if ((layout = USER_Driver->pGetKeyboardLayout( thread_id )) != (HKL)~0) return layout;
+    if (thread_id && thread_id != GetCurrentThreadId())
+        FIXME( "couldn't return keyboard layout for thread %04x\n", thread_id );
 
-    return get_locale_kbd_layout();
+    if (!layout) return get_locale_kbd_layout();
+    return layout;
 }
 
 /****************************************************************************
