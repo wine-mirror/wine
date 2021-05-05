@@ -272,7 +272,7 @@ static NTSTATUS CDECL key_asymmetric_duplicate( struct key *key_orig, struct key
 }
 
 static NTSTATUS CDECL key_asymmetric_decrypt( struct key *key, UCHAR *input, ULONG input_len,
-        UCHAR *output, ULONG *output_len )
+        UCHAR *output, ULONG output_len, ULONG *ret_len )
 {
     FIXME( "not implemented on Mac\n" );
     return STATUS_NOT_IMPLEMENTED;
