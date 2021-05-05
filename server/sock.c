@@ -1459,7 +1459,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
     case IOCTL_AFD_ADDRESS_LIST_CHANGE:
         if ((sock->state & FD_WINE_NONBLOCKING) && async_is_blocking( async ))
         {
-            set_win32_error( WSAEWOULDBLOCK );
+            set_error( STATUS_DEVICE_NOT_READY );
             return 0;
         }
         if (!sock_get_ifchange( sock )) return 0;
@@ -1630,7 +1630,7 @@ static void ifchange_poll_event( struct fd *fd, int event )
     unix_fd = socket( PF_NETLINK, SOCK_RAW, NETLINK_ROUTE );
     if (unix_fd == -1)
     {
-        set_win32_error( sock_get_error( errno ));
+        set_error( sock_get_ntstatus( errno ));
         return NULL;
     }
     fcntl( unix_fd, F_SETFL, O_NONBLOCK ); /* make socket nonblocking */
@@ -1641,7 +1641,7 @@ static void ifchange_poll_event( struct fd *fd, int event )
     if (bind( unix_fd, (struct sockaddr *)&addr, sizeof(addr) ) == -1)
     {
         close( unix_fd );
-        set_win32_error( sock_get_error( errno ));
+        set_error( sock_get_ntstatus( errno ));
         return NULL;
     }
     if (!(ifchange = alloc_object( &ifchange_ops )))
