@@ -816,7 +816,7 @@ static NTSTATUS sock_get_ntstatus( int err )
         case EINVAL:            return STATUS_INVALID_PARAMETER;
         case ENFILE:
         case EMFILE:            return STATUS_TOO_MANY_OPENED_FILES;
-        case EWOULDBLOCK:       return STATUS_CANT_WAIT;
+        case EWOULDBLOCK:       return STATUS_DEVICE_NOT_READY;
         case EINPROGRESS:       return STATUS_PENDING;
         case EALREADY:          return STATUS_NETWORK_BUSY;
         case ENOTSOCK:          return STATUS_OBJECT_TYPE_MISMATCH;
@@ -943,7 +943,7 @@ static NTSTATUS sock_error_to_ntstatus( DWORD err )
     case WSAEFAULT:            return STATUS_NO_MEMORY;
     case WSAEINVAL:            return STATUS_INVALID_PARAMETER;
     case WSAEMFILE:            return STATUS_TOO_MANY_OPENED_FILES;
-    case WSAEWOULDBLOCK:       return STATUS_CANT_WAIT;
+    case WSAEWOULDBLOCK:       return STATUS_DEVICE_NOT_READY;
     case WSAEINPROGRESS:       return STATUS_PENDING;
     case WSAEALREADY:          return STATUS_NETWORK_BUSY;
     case WSAENOTSOCK:          return STATUS_OBJECT_TYPE_MISMATCH;
@@ -995,7 +995,7 @@ static DWORD NtStatusToWSAError( DWORD status )
     case STATUS_NO_MEMORY:                  return WSAEFAULT;
     case STATUS_ACCESS_DENIED:              return WSAEACCES;
     case STATUS_TOO_MANY_OPENED_FILES:      return WSAEMFILE;
-    case STATUS_CANT_WAIT:                  return WSAEWOULDBLOCK;
+    case STATUS_DEVICE_NOT_READY:           return WSAEWOULDBLOCK;
     case STATUS_BUFFER_OVERFLOW:            return WSAEMSGSIZE;
     case STATUS_NOT_SUPPORTED:              return WSAEOPNOTSUPP;
     case STATUS_HOST_UNREACHABLE:           return WSAEHOSTUNREACH;
