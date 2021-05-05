@@ -778,6 +778,16 @@ bool wined3d_device_vk_create_null_views(struct wined3d_device_vk *device_vk, st
     v->vk_info_1d.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
     TRACE("Created 1D image view 0x%s.\n", wine_dbgstr_longlong(v->vk_info_1d.imageView));
 
+    view_desc.viewType = VK_IMAGE_VIEW_TYPE_1D_ARRAY;
+    if ((vr = VK_CALL(vkCreateImageView(device_vk->vk_device, &view_desc, NULL, &v->vk_info_1d_array.imageView))) < 0)
+    {
+        ERR("Failed to create 1D image view, vr %s.\n", wined3d_debug_vkresult(vr));
+        goto fail;
+    }
+    v->vk_info_1d_array.sampler = VK_NULL_HANDLE;
+    v->vk_info_1d_array.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    TRACE("Created 1D array image view 0x%s.\n", wine_dbgstr_longlong(v->vk_info_1d_array.imageView));
+
     view_desc.image = r->image_2d.vk_image;
     view_desc.viewType = VK_IMAGE_VIEW_TYPE_2D;
     if ((vr = VK_CALL(vkCreateImageView(device_vk->vk_device, &view_desc, NULL, &v->vk_info_2d.imageView))) < 0)
@@ -858,6 +868,8 @@ fail:
         VK_CALL(vkDestroyImageView(device_vk->vk_device, v->vk_info_2dms.imageView, NULL));
     if (v->vk_info_2d.imageView)
         VK_CALL(vkDestroyImageView(device_vk->vk_device, v->vk_info_2d.imageView, NULL));
+    if (v->vk_info_1d_array.imageView)
+        VK_CALL(vkDestroyImageView(device_vk->vk_device, v->vk_info_1d_array.imageView, NULL));
     if (v->vk_info_1d.imageView)
         VK_CALL(vkDestroyImageView(device_vk->vk_device, v->vk_info_1d.imageView, NULL));
     if (v->vk_view_buffer_float)
@@ -877,6 +889,7 @@ void wined3d_device_vk_destroy_null_views(struct wined3d_device_vk *device_vk, s
     wined3d_context_vk_destroy_vk_image_view(context_vk, v->vk_info_3d.imageView, id);
     wined3d_context_vk_destroy_vk_image_view(context_vk, v->vk_info_2dms.imageView, id);
     wined3d_context_vk_destroy_vk_image_view(context_vk, v->vk_info_2d.imageView, id);
+    wined3d_context_vk_destroy_vk_image_view(context_vk, v->vk_info_1d_array.imageView, id);
     wined3d_context_vk_destroy_vk_image_view(context_vk, v->vk_info_1d.imageView, id);
 
     wined3d_context_vk_destroy_vk_buffer_view(context_vk, v->vk_view_buffer_float, id);
