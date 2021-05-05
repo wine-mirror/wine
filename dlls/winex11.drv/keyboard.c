@@ -1930,9 +1930,8 @@ BOOL CDECL X11DRV_UnloadKeyboardLayout(HKL hkl)
 /***********************************************************************
  *		ActivateKeyboardLayout (X11DRV.@)
  */
-HKL CDECL X11DRV_ActivateKeyboardLayout(HKL hkl, UINT flags)
+BOOL CDECL X11DRV_ActivateKeyboardLayout(HKL hkl, UINT flags)
 {
-    HKL oldHkl = 0;
     struct x11drv_thread_data *thread_data = x11drv_init_thread_data();
 
     FIXME("%p, %04x: semi-stub!\n", hkl, flags);
@@ -1940,22 +1939,18 @@ HKL CDECL X11DRV_ActivateKeyboardLayout(HKL hkl, UINT flags)
     {
         SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
         FIXME("KLF_SETFORPROCESS not supported\n");
-        return 0;
+        return FALSE;
     }
 
     if (!match_x11_keyboard_layout(hkl))
     {
         SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
         FIXME("setting keyboard of different locales not supported\n");
-        return 0;
+        return FALSE;
     }
 
-    oldHkl = thread_data->kbd_layout;
-    if (!oldHkl) oldHkl = get_locale_kbd_layout();
-
     thread_data->kbd_layout = hkl;
-
-    return oldHkl;
+    return TRUE;
 }
 
 

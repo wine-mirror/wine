@@ -187,9 +187,9 @@ void USER_unload_driver(void)
  * These are fallbacks for entry points that are not implemented in the real driver.
  */
 
-static HKL CDECL nulldrv_ActivateKeyboardLayout( HKL layout, UINT flags )
+static BOOL CDECL nulldrv_ActivateKeyboardLayout( HKL layout, UINT flags )
 {
-    return (HKL)~0; /* use default implementation */
+    return TRUE;
 }
 
 static void CDECL nulldrv_Beep(void)
@@ -487,7 +487,7 @@ static USER_DRIVER null_driver =
  * Each entry point simply loads the real driver and chains to it.
  */
 
-static HKL CDECL loaderdrv_ActivateKeyboardLayout( HKL layout, UINT flags )
+static BOOL CDECL loaderdrv_ActivateKeyboardLayout( HKL layout, UINT flags )
 {
     return load_driver()->pActivateKeyboardLayout( layout, flags );
 }

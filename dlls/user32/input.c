@@ -1330,13 +1330,14 @@ HKL WINAPI ActivateKeyboardLayout( HKL layout, UINT flags )
         return 0;
     }
 
-    if ((old_layout = USER_Driver->pActivateKeyboardLayout( layout, flags )) != (HKL)~0)
-    {
-        if (old_layout) info->kbd_layout = layout;
-        return old_layout;
-    }
+    if (!USER_Driver->pActivateKeyboardLayout( layout, flags ))
+        return 0;
 
-    return get_locale_kbd_layout();
+    old_layout = info->kbd_layout;
+    info->kbd_layout = layout;
+
+    if (!old_layout) return get_locale_kbd_layout();
+    return old_layout;
 }
 
 /**********************************************************************

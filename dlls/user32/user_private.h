@@ -62,7 +62,7 @@ enum wine_internal_message
 
 typedef struct tagUSER_DRIVER {
     /* keyboard functions */
-    HKL    (CDECL *pActivateKeyboardLayout)(HKL, UINT);
+    BOOL   (CDECL *pActivateKeyboardLayout)(HKL, UINT);
     void   (CDECL *pBeep)(void);
     INT    (CDECL *pGetKeyNameText)(LONG, LPWSTR, INT);
     HKL    (CDECL *pGetKeyboardLayout)(DWORD);

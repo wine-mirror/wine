@@ -1163,16 +1163,16 @@ void macdrv_process_text_input(UINT vkey, UINT scan, UINT repeat, const BYTE *ke
 /***********************************************************************
  *              ActivateKeyboardLayout (MACDRV.@)
  */
-HKL CDECL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)
+BOOL CDECL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)
 {
-    HKL oldHkl = 0;
+    BOOL ret = FALSE;
     struct macdrv_thread_data *thread_data = macdrv_init_thread_data();
     struct layout *layout;
 
     TRACE("hkl %p flags %04x\n", hkl, flags);
 
     if (hkl == thread_data->active_keyboard_layout)
-        return hkl;
+        return TRUE;
 
     EnterCriticalSection(&layout_list_section);
     update_layout_list();
@@ -1183,7 +1183,7 @@ HKL CDECL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)
         {
             if (macdrv_select_input_source(layout->input_source))
             {
-                oldHkl = thread_data->active_keyboard_layout;
+                ret = TRUE;
                 if (thread_data->keyboard_layout_uchr)
                     CFRelease(thread_data->keyboard_layout_uchr);
 
@@ -1199,7 +1199,7 @@ HKL CDECL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)
     }
     LeaveCriticalSection(&layout_list_section);
 
-    return oldHkl;
+    return ret;
 }
 
 
