@@ -462,7 +462,7 @@ static void fill_accept_output( struct accept_req *req )
             return;
         }
 
-        set_win32_error( sock_get_error( errno ) );
+        set_error( sock_get_ntstatus( errno ) );
         free( out_data );
         return;
     }
@@ -481,7 +481,7 @@ static void fill_accept_output( struct accept_req *req )
         if (getsockname( fd, &unix_addr.addr, &unix_len ) < 0 ||
             (win_len = sockaddr_from_unix( &unix_addr, win_addr, req->local_len - sizeof(int) )) < 0)
         {
-            set_win32_error( sock_get_error( errno ) );
+            set_error( sock_get_ntstatus( errno ) );
             free( out_data );
             return;
         }
@@ -494,7 +494,7 @@ static void fill_accept_output( struct accept_req *req )
     if (getpeername( fd, &unix_addr.addr, &unix_len ) < 0 ||
         (win_len = sockaddr_from_unix( &unix_addr, win_addr, remote_len - sizeof(int) )) < 0)
     {
-        set_win32_error( sock_get_error( errno ) );
+        set_error( sock_get_ntstatus( errno ) );
         free( out_data );
         return;
     }
@@ -1105,7 +1105,7 @@ static int accept_new_fd( struct sock *sock )
     if (acceptfd != -1)
         fcntl( acceptfd, F_SETFL, O_NONBLOCK );
     else
-        set_win32_error( sock_get_error( errno ));
+        set_error( sock_get_ntstatus( errno ));
     return acceptfd;
 }
 
@@ -1290,7 +1290,7 @@ static int sock_get_ntstatus( int err )
         case EINVAL:            return STATUS_INVALID_PARAMETER;
         case ENFILE:
         case EMFILE:            return STATUS_TOO_MANY_OPENED_FILES;
-        case EWOULDBLOCK:       return STATUS_CANT_WAIT;
+        case EWOULDBLOCK:       return STATUS_DEVICE_NOT_READY;
         case EINPROGRESS:       return STATUS_PENDING;
         case EALREADY:          return STATUS_NETWORK_BUSY;
         case ENOTSOCK:          return STATUS_OBJECT_TYPE_MISMATCH;
@@ -1387,7 +1387,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             struct accept_req *req;
 
             if (sock->state & FD_WINE_NONBLOCKING) return 0;
-            if (get_error() != (0xc0010000 | WSAEWOULDBLOCK)) return 0;
+            if (get_error() != STATUS_DEVICE_NOT_READY) return 0;
 
             if (!(req = alloc_accept_req( sock, NULL, async, NULL ))) return 0;
             list_add_tail( &sock->accept_list, &req->entry );
@@ -1435,7 +1435,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (acceptsock->accept_recv_req)
         {
             release_object( acceptsock );
-            set_win32_error( WSAEINVAL );
+            set_error( STATUS_INVALID_PARAMETER );
             return 0;
         }
 
