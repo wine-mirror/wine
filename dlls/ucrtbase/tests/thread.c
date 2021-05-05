@@ -132,6 +132,39 @@ static void test_thread_library_reference(char *thread_dll,
     CloseHandle(detach_event);
 }
 
+static BOOL handler_called;
+
+void CDECL test_invalid_parameter_handler(const wchar_t *expression,
+                                            const wchar_t *function_name,
+                                            const wchar_t *file_name,
+                                            unsigned line_number,
+                                            uintptr_t reserved)
+{
+    handler_called = TRUE;
+}
+
+static void test_thread_invalid_params(void)
+{
+    uintptr_t hThread;
+    _invalid_parameter_handler old = _set_invalid_parameter_handler(test_invalid_parameter_handler);
+
+    errno = 0;
+    handler_called = FALSE;
+    hThread = _beginthreadex(NULL, 0, NULL, NULL, 0, NULL);
+    ok(hThread == 0, "_beginthreadex unexpected ret: %d\n", hThread);
+    ok(errno == EINVAL, "_beginthreadex unexpected errno: %d\n", errno);
+    ok(handler_called, "Expected invalid_parameter_handler to be called\n");
+
+    errno = 0;
+    handler_called = FALSE;
+    hThread = _beginthread(NULL, 0, NULL);
+    ok(hThread == -1, "_beginthread unexpected ret: %d\n", hThread);
+    ok(errno == EINVAL, "_beginthread unexpected errno: %d\n", errno);
+    ok(handler_called, "Expected invalid_parameter_handler to be called\n");
+
+    _set_invalid_parameter_handler(old);
+}
+
 START_TEST(thread)
 {
     BOOL ret;
@@ -144,4 +177,6 @@ START_TEST(thread)
 
     ret = DeleteFileA(thread_dll);
     ok(ret, "Failed to remove the test dll, err: %u", GetLastError());
+
+    test_thread_invalid_params();
 }
