@@ -55,6 +55,8 @@ static struct
 
 static const WCHAR separatorsW[] = {',',' ','\t',0};
 
+static HANDLE std_key;
+static HANDLE app_key;
 static BOOL init_done;
 
 
@@ -221,6 +223,9 @@ static void init_load_order(void)
     WCHAR *entry, *next, *order;
     const char *overrides = getenv( "WINEDLLOVERRIDES" );
 
+    /* @@ Wine registry key: HKCU\Software\Wine\DllOverrides */
+    open_hkcu_key( "Software\\Wine\\DllOverrides", &std_key );
+
     init_done = TRUE;
 
     if (!overrides) return;
@@ -264,37 +269,16 @@ static inline enum loadorder get_env_load_order( const WCHAR *module )
 
 
 /***************************************************************************
- *	get_standard_key
- *
- * Return a handle to the standard DllOverrides registry section.
- */
-static HANDLE get_standard_key(void)
-{
-    static HANDLE std_key = (HANDLE)-1;
-
-    if (std_key == (HANDLE)-1)
-    {
-        /* @@ Wine registry key: HKCU\Software\Wine\DllOverrides */
-        if (open_hkcu_key( "Software\\Wine\\DllOverrides", &std_key )) std_key = 0;
-    }
-    return std_key;
-}
-
-
-/***************************************************************************
- *	get_app_key
+ *	open_app_key
  *
  * Get the registry key for the app-specific DllOverrides list.
  */
-static HANDLE get_app_key( const WCHAR *app_name )
+static HANDLE open_app_key( const WCHAR *app_name )
 {
     static const WCHAR dlloverridesW[] = {'\\','D','l','l','O','v','e','r','r','i','d','e','s',0};
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
-    HANDLE root;
-    static HANDLE app_key = (HANDLE)-1;
-
-    if (app_key != (HANDLE)-1) return app_key;
+    HANDLE root, app_key = 0;
 
     if (!open_hkcu_key( "Software\\Wine\\AppDefaults", &root ))
     {
@@ -306,7 +290,7 @@ static HANDLE get_app_key( const WCHAR *app_name )
         InitializeObjectAttributes( &attr, &nameW, 0, root, NULL );
 
         /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe\DllOverrides */
-        if (NtOpenKey( &app_key, KEY_ALL_ACCESS, &attr )) app_key = 0;
+        NtOpenKey( &app_key, KEY_ALL_ACCESS, &attr );
         NtClose( root );
         free( nameW.Buffer );
     }
@@ -373,6 +357,18 @@ static enum loadorder get_load_order_value( HANDLE std_key, HANDLE app_key, WCHA
 
 
 /***************************************************************************
+ *	set_load_order_app_name
+ */
+void set_load_order_app_name( const WCHAR *app_name )
+{
+    const WCHAR *p;
+
+    if ((p = wcsrchr( app_name, '\\' ))) app_name = p + 1;
+    app_key = open_app_key( app_name );
+}
+
+
+/***************************************************************************
  *	get_load_order   (internal)
  *
  * Return the loadorder of a module.
@@ -382,21 +378,12 @@ enum loadorder get_load_order( const UNICODE_STRING *nt_name )
 {
     static const WCHAR prefixW[] = {'\\','?','?','\\'};
     enum loadorder ret = LO_INVALID;
-    HANDLE std_key, app_key = 0;
     const WCHAR *path = nt_name->Buffer;
     const WCHAR *p, *app_name = NULL;
     WCHAR *module, *basename;
     int len;
 
     if (!init_done) init_load_order();
-    std_key = get_standard_key();
-
-    if (NtCurrentTeb()->Peb->ImageBaseAddress)
-    {
-        app_name = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
-        if ((p = wcsrchr( app_name, '\\' ))) app_name = p + 1;
-        app_key = get_app_key( app_name );
-    }
 
     if (!wcsncmp( path, prefixW, 4 )) path += 4;
 

@@ -410,6 +410,7 @@ enum loadorder
     LO_DEFAULT          /* nothing specified, use default strategy */
 };
 
+extern void set_load_order_app_name( const WCHAR *app_name ) DECLSPEC_HIDDEN;
 extern enum loadorder get_load_order( const UNICODE_STRING *nt_name ) DECLSPEC_HIDDEN;
 
 static inline size_t ntdll_wcslen( const WCHAR *str )
