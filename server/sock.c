@@ -1303,7 +1303,7 @@ static int sock_get_ntstatus( int err )
         case EPROTOTYPE:        return STATUS_NOT_SUPPORTED;
         case ENOPROTOOPT:       return STATUS_INVALID_PARAMETER;
         case EOPNOTSUPP:        return STATUS_NOT_SUPPORTED;
-        case EADDRINUSE:        return STATUS_ADDRESS_ALREADY_ASSOCIATED;
+        case EADDRINUSE:        return STATUS_SHARING_VIOLATION;
         case EADDRNOTAVAIL:     return STATUS_INVALID_PARAMETER;
         case ECONNREFUSED:      return STATUS_CONNECTION_REFUSED;
         case ESHUTDOWN:         return STATUS_PIPE_DISCONNECTED;
