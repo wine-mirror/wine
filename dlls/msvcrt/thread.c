@@ -54,6 +54,9 @@ thread_data_t *CDECL msvcrt_get_thread_data(void)
         ptr->random_seed = 1;
         ptr->locinfo = MSVCRT_locale->locinfo;
         ptr->mbcinfo = MSVCRT_locale->mbcinfo;
+#if _MSVCR_VER >= 140
+        ptr->module = NULL;
+#endif
     }
     SetLastError( err );
     return ptr;
@@ -76,8 +79,7 @@ void CDECL _endthread(void)
   } else
       WARN("tls=%p tls->handle=%p\n", tls, tls ? tls->handle : INVALID_HANDLE_VALUE);
 
-  /* FIXME */
-  ExitThread(0);
+  _endthreadex(0);
 }
 
 /*********************************************************************
@@ -88,7 +90,17 @@ void CDECL _endthreadex(
 {
   TRACE("(%d)\n", retval);
 
-  /* FIXME */
+#if _MSVCR_VER >= 140
+  {
+      thread_data_t *tls = TlsGetValue(msvcrt_tls_index);
+
+      if (tls && tls->module != NULL)
+          FreeLibraryAndExitThread(tls->module, retval);
+      else
+          WARN("tls=%p tls->module=%p\n", tls, tls ? tls->module : NULL);
+  }
+#endif
+
   ExitThread(retval);
 }
 
@@ -103,6 +115,15 @@ static DWORD CALLBACK _beginthread_trampoline(LPVOID arg)
     memcpy(&local_trampoline,arg,sizeof(local_trampoline));
     data->handle = local_trampoline.thread;
     free(arg);
+
+#if _MSVCR_VER >= 140
+    if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+                (void*)local_trampoline.start_address, &data->module))
+    {
+        data->module = NULL;
+        WARN("failed to get module for the start_address: %d\n", GetLastError());
+    }
+#endif
 
     local_trampoline.start_address(local_trampoline.arglist);
     _endthread();
@@ -162,6 +183,18 @@ static DWORD CALLBACK _beginthreadex_trampoline(LPVOID arg)
     memcpy(&local_trampoline, arg, sizeof(local_trampoline));
     data->handle = local_trampoline.thread;
     free(arg);
+
+#if _MSVCR_VER >= 140
+    {
+        thread_data_t *data = msvcrt_get_thread_data();
+        if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
+                    (void*)local_trampoline.start_address_ex, &data->module))
+        {
+            data->module = NULL;
+            WARN("failed to get module for the start_address: %d\n", GetLastError());
+        }
+    }
+#endif
 
     retval = local_trampoline.start_address_ex(local_trampoline.arglist);
     _endthreadex(retval);
