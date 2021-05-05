@@ -126,7 +126,6 @@
 @ cdecl wined3d_device_set_ps_resource_view(ptr long ptr)
 @ cdecl wined3d_device_set_ps_sampler(ptr long ptr)
 @ cdecl wined3d_device_set_rasterizer_state(ptr ptr)
-@ cdecl wined3d_device_set_render_state(ptr long long)
 @ cdecl wined3d_device_set_rendertarget_view(ptr long ptr long)
 @ cdecl wined3d_device_set_scissor_rects(ptr long ptr)
 @ cdecl wined3d_device_set_software_vertex_processing(ptr long)

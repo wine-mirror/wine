@@ -2484,8 +2484,6 @@ void __cdecl wined3d_device_set_ps_resource_view(struct wined3d_device *device,
 void __cdecl wined3d_device_set_ps_sampler(struct wined3d_device *device, UINT idx, struct wined3d_sampler *sampler);
 void __cdecl wined3d_device_set_rasterizer_state(struct wined3d_device *device,
         struct wined3d_rasterizer_state *rasterizer_state);
-void __cdecl wined3d_device_set_render_state(struct wined3d_device *device,
-        enum wined3d_render_state state, DWORD value);
 HRESULT __cdecl wined3d_device_set_rendertarget_view(struct wined3d_device *device,
         unsigned int view_idx, struct wined3d_rendertarget_view *view, BOOL set_viewport);
 void __cdecl wined3d_device_set_scissor_rects(struct wined3d_device *device,
