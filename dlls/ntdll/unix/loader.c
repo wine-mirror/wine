@@ -1625,22 +1625,20 @@ failed:
 NTSTATUS load_start_exe( WCHAR **image, void **module )
 {
     static const WCHAR startW[] = {'s','t','a','r','t','.','e','x','e',0};
-    WCHAR buffer[sizeof("\\??\\C:\\windows\\system32\\start.exe")];
     UNICODE_STRING nt_name;
     NTSTATUS status;
     SIZE_T size;
 
-    wcscpy( buffer, get_machine_wow64_dir( current_machine ));
-    wcscat( buffer, startW );
-    init_unicode_string( &nt_name, buffer );
+    *image = malloc( sizeof("\\??\\C:\\windows\\system32\\start.exe") * sizeof(WCHAR) );
+    wcscpy( *image, get_machine_wow64_dir( current_machine ));
+    wcscat( *image, startW );
+    init_unicode_string( &nt_name, *image );
     status = find_builtin_dll( &nt_name, module, &size, &main_image_info, current_machine, FALSE );
     if (status)
     {
         MESSAGE( "wine: failed to load start.exe: %x\n", status );
         NtTerminateProcess( GetCurrentProcess(), status );
     }
-    *image = malloc( sizeof(startW) );
-    memcpy( *image, startW, sizeof(startW) );
     return status;
 }
 
