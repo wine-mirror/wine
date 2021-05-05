@@ -179,7 +179,7 @@ struct d3d11_swapchain
     struct wined3d_swapchain *wined3d_swapchain;
     struct wined3d_swapchain_state_parent state_parent;
     IWineDXGIDevice *device;
-    IDXGIFactory *factory;
+    IWineDXGIFactory *factory;
 
     IDXGIOutput *target;
 };

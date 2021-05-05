@@ -248,7 +248,7 @@ static ULONG STDMETHODCALLTYPE d3d11_swapchain_Release(IDXGISwapChain1 *iface)
             IDXGIOutput_Release(swapchain->target);
         }
         if (swapchain->factory)
-            IDXGIFactory_Release(swapchain->factory);
+            IWineDXGIFactory_Release(swapchain->factory);
         wined3d_swapchain_decref(swapchain->wined3d_swapchain);
         if (device)
             IWineDXGIDevice_Release(device);
@@ -302,7 +302,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetParent(IDXGISwapChain1 *ifac
         return E_NOINTERFACE;
     }
 
-    return IDXGIFactory_QueryInterface(swapchain->factory, riid, parent);
+    return IWineDXGIFactory_QueryInterface(swapchain->factory, riid, parent);
 }
 
 /* IDXGIDeviceSubObject methods */
@@ -585,7 +585,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetContainingOutput(IDXGISwapCh
     }
 
     window = d3d11_swapchain_get_hwnd(swapchain);
-    return dxgi_get_output_from_window(swapchain->factory, window, output);
+    return dxgi_get_output_from_window((IDXGIFactory *)swapchain->factory, window, output);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetFrameStatistics(IDXGISwapChain1 *iface,
@@ -849,8 +849,8 @@ HRESULT d3d11_swapchain_init(struct d3d11_swapchain *swapchain, struct dxgi_devi
         if (desc->backbuffer_format == WINED3DFMT_UNKNOWN)
             return E_INVALIDARG;
 
-        if (FAILED(hr = IWineDXGIAdapter_GetParent(device->adapter, &IID_IDXGIFactory,
-                (void **)&swapchain->factory)))
+        if (FAILED(hr = IWineDXGIAdapter_GetParent(device->adapter,
+                &IID_IWineDXGIFactory, (void **)&swapchain->factory)))
         {
             WARN("Failed to get adapter parent, hr %#x.\n", hr);
             return hr;
@@ -914,7 +914,7 @@ cleanup:
     wined3d_private_store_cleanup(&swapchain->private_store);
     wined3d_mutex_unlock();
     if (swapchain->factory)
-        IDXGIFactory_Release(swapchain->factory);
+        IWineDXGIFactory_Release(swapchain->factory);
     if (swapchain->device)
         IWineDXGIDevice_Release(swapchain->device);
     return hr;
