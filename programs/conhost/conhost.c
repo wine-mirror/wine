@@ -2375,6 +2375,9 @@ static NTSTATUS screen_buffer_ioctl( struct screen_buffer *screen_buffer, unsign
         TRACE( "set %x mode\n", screen_buffer->mode );
         return STATUS_SUCCESS;
 
+    case IOCTL_CONDRV_IS_UNIX:
+        return screen_buffer->console->is_unix ? STATUS_SUCCESS : STATUS_NOT_SUPPORTED;
+
     case IOCTL_CONDRV_WRITE_CONSOLE:
         if (in_size % sizeof(WCHAR) || *out_size) return STATUS_INVALID_PARAMETER;
         return write_console( screen_buffer, in_data, in_size / sizeof(WCHAR) );
@@ -2451,6 +2454,9 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
         console->mode = *(unsigned int *)in_data;
         TRACE( "set %x mode\n", console->mode );
         return STATUS_SUCCESS;
+
+    case IOCTL_CONDRV_IS_UNIX:
+        return console->is_unix ? STATUS_SUCCESS : STATUS_NOT_SUPPORTED;
 
     case IOCTL_CONDRV_READ_CONSOLE:
         if (in_size || *out_size % sizeof(WCHAR)) return STATUS_INVALID_PARAMETER;
