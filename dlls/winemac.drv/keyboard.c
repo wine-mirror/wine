@@ -1054,6 +1054,8 @@ void macdrv_keyboard_changed(const macdrv_event *event)
 
     macdrv_compute_keyboard_layout(thread_data);
 
+    ActivateKeyboardLayout(thread_data->active_keyboard_layout, 0);
+
     SendMessageW(GetActiveWindow(), WM_CANCELMODE, 0, 0);
 }
 
@@ -1168,6 +1170,9 @@ HKL CDECL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)
     struct layout *layout;
 
     TRACE("hkl %p flags %04x\n", hkl, flags);
+
+    if (hkl == thread_data->active_keyboard_layout)
+        return hkl;
 
     EnterCriticalSection(&layout_list_section);
     update_layout_list();

@@ -384,6 +384,7 @@ struct macdrv_thread_data *macdrv_init_thread_data(void)
     set_queue_display_fd(macdrv_get_event_queue_fd(data->queue));
     TlsSetValue(thread_data_tls_index, data);
 
+    ActivateKeyboardLayout(data->active_keyboard_layout, 0);
     return data;
 }
 
