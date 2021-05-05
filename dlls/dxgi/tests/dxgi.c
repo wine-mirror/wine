@@ -5465,8 +5465,8 @@ static void test_object_wrapping(void)
 
     hr = IDXGIAdapter_GetDesc(&wrapper.IDXGIAdapter_iface, &desc);
     ok(hr == S_OK, "Failed to get adapter desc, hr %#x.\n", hr);
-    todo_wine ok(!wrapper.factory.wrapped_adapter_count,
-            "Got unexpected wrapped adapter count %u.\n", wrapper.factory.wrapped_adapter_count);
+    ok(!wrapper.factory.wrapped_adapter_count, "Got unexpected wrapped adapter count %u.\n",
+            wrapper.factory.wrapped_adapter_count);
     ok(!wrapper.wrapped_output_count, "Got unexpected wrapped output count %u.\n", wrapper.wrapped_output_count);
 
     refcount = IDXGIAdapter_Release(&wrapper.IDXGIAdapter_iface);

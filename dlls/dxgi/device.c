@@ -428,13 +428,20 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_factory_create_swapchain(IWineDX
     struct dxgi_device *device = impl_from_IWineDXGISwapChainFactory(iface);
     struct wined3d_swapchain_desc wined3d_desc;
     struct IDXGIOutput *containing_output;
+    struct dxgi_factory *dxgi_factory;
     struct d3d11_swapchain *object;
     HRESULT hr;
 
     TRACE("iface %p, factory %p, window %p, desc %p, fullscreen_desc %p, output %p, swapchain %p.\n",
             iface, factory, window, desc, fullscreen_desc, output, swapchain);
 
-    if (FAILED(hr = dxgi_get_output_from_window(factory, window, &containing_output)))
+    if (!(dxgi_factory = unsafe_impl_from_IDXGIFactory(factory)))
+    {
+        WARN("Factory %p is not a valid dxgi factory.\n", factory);
+        return E_FAIL;
+    }
+
+    if (FAILED(hr = dxgi_get_output_from_window(&dxgi_factory->IWineDXGIFactory_iface, window, &containing_output)))
     {
         WARN("Failed to get output from window %p, hr %#x.\n", window, hr);
         return hr;
@@ -544,7 +551,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     }
 
     window = dxgi_factory_get_device_window(dxgi_factory);
-    if (FAILED(hr = dxgi_get_output_from_window(factory, window, &output)))
+    if (FAILED(hr = dxgi_get_output_from_window(&dxgi_factory->IWineDXGIFactory_iface, window, &output)))
     {
         ERR("Failed to get output from window %p.\n", window);
         wined3d_device_decref(device->wined3d_device);

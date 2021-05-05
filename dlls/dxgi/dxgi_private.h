@@ -96,7 +96,7 @@ void wined3d_display_mode_from_dxgi1(struct wined3d_display_mode *wined3d_mode,
 DXGI_USAGE dxgi_usage_from_wined3d_bind_flags(unsigned int wined3d_bind_flags) DECLSPEC_HIDDEN;
 unsigned int wined3d_bind_flags_from_dxgi_usage(DXGI_USAGE usage) DECLSPEC_HIDDEN;
 unsigned int dxgi_swapchain_flags_from_wined3d(unsigned int wined3d_flags) DECLSPEC_HIDDEN;
-HRESULT dxgi_get_output_from_window(IDXGIFactory *factory, HWND window, IDXGIOutput **dxgi_output)
+HRESULT dxgi_get_output_from_window(IWineDXGIFactory *factory, HWND window, IDXGIOutput **dxgi_output)
         DECLSPEC_HIDDEN;
 HRESULT wined3d_swapchain_desc_from_dxgi(struct wined3d_swapchain_desc *wined3d_desc,
         IDXGIOutput *dxgi_containing_output, HWND window, const DXGI_SWAP_CHAIN_DESC1 *dxgi_desc,
