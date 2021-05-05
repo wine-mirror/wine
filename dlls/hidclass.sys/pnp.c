@@ -245,6 +245,8 @@ static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
     else
         pdo_ext->u.pdo.rawinput_handle = alloc_rawinput_handle();
 
+    IoInvalidateDeviceRelations(fdo_ext->u.fdo.hid_ext.PhysicalDeviceObject, BusRelations);
+
     if ((status = IoSetDevicePropertyData(child_pdo, &DEVPROPKEY_HID_HANDLE, LOCALE_NEUTRAL,
                                           PLUGPLAY_PROPERTY_PERSISTENT, DEVPROP_TYPE_UINT32,
                                           sizeof(pdo_ext->u.pdo.rawinput_handle), &pdo_ext->u.pdo.rawinput_handle)))
@@ -253,8 +255,6 @@ static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
         IoDeleteDevice(child_pdo);
         return;
     }
-
-    IoInvalidateDeviceRelations(fdo_ext->u.fdo.hid_ext.PhysicalDeviceObject, BusRelations);
 
     pdo_ext->u.pdo.poll_interval = DEFAULT_POLL_INTERVAL;
 
