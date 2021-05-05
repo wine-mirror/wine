@@ -653,6 +653,7 @@
 @ stdcall RtlFindClearBits(ptr long long)
 @ stdcall RtlFindClearBitsAndSet(ptr long long)
 @ stdcall RtlFindClearRuns(ptr ptr long long)
+@ stdcall RtlFindExportedRoutineByName(ptr str)
 @ stdcall RtlFindLastBackwardRunClear(ptr long ptr)
 @ stdcall RtlFindLastBackwardRunSet(ptr long ptr)
 @ stdcall RtlFindLeastSignificantBit(int64)

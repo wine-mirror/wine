@@ -33,6 +33,7 @@ static DWORD64 (WINAPI *pGetEnabledXStateFeatures)(void);
 static NTSTATUS (WINAPI *pRtlCreateUserStack)(SIZE_T, SIZE_T, ULONG, SIZE_T, SIZE_T, INITIAL_TEB *);
 static ULONG64 (WINAPI *pRtlGetEnabledExtendedFeatures)(ULONG64);
 static NTSTATUS (WINAPI *pRtlFreeUserStack)(void *);
+static void * (WINAPI *pRtlFindExportedRoutineByName)(HMODULE,const char*);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 static NTSTATUS (WINAPI *pNtAllocateVirtualMemoryEx)(HANDLE, PVOID *, SIZE_T *, ULONG, ULONG,
                                                      MEM_EXTENDED_PARAMETER *, ULONG);
@@ -996,6 +997,16 @@ static void test_syscalls(void)
     }
     perform_relocations( ptr, delta );
     pNtClose = (void *)GetProcAddress( module, "NtClose" );
+
+    if (pRtlFindExportedRoutineByName)
+    {
+        void *func = pRtlFindExportedRoutineByName( module, "NtClose" );
+        ok( func == (void *)pNtClose, "wrong ptr %p / %p\n", func, pNtClose );
+        func = pRtlFindExportedRoutineByName( ptr, "NtClose" );
+        ok( (char *)func - (char *)pNtClose == delta, "wrong ptr %p / %p\n", func, pNtClose );
+    }
+    else win_skip( "RtlFindExportedRoutineByName not supported\n" );
+
     if (!memcmp( pNtClose, (char *)pNtClose + delta, 32 ))
     {
         pNtClose = (void *)((char *)pNtClose + delta);
@@ -1041,6 +1052,7 @@ START_TEST(virtual)
     mod = GetModuleHandleA("ntdll.dll");
     pRtlCreateUserStack = (void *)GetProcAddress(mod, "RtlCreateUserStack");
     pRtlFreeUserStack = (void *)GetProcAddress(mod, "RtlFreeUserStack");
+    pRtlFindExportedRoutineByName = (void *)GetProcAddress(mod, "RtlFindExportedRoutineByName");
     pRtlGetEnabledExtendedFeatures = (void *)GetProcAddress(mod, "RtlGetEnabledExtendedFeatures");
     pNtAllocateVirtualMemoryEx = (void *)GetProcAddress(mod, "NtAllocateVirtualMemoryEx");
 
