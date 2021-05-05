@@ -28,6 +28,11 @@ static inline DXGI_MODE_SCANLINE_ORDER dxgi_mode_scanline_order_from_wined3d(enu
     return (DXGI_MODE_SCANLINE_ORDER)ordering;
 }
 
+static inline DXGI_MODE_ROTATION dxgi_mode_rotation_from_wined3d(enum wined3d_display_rotation rotation)
+{
+    return (DXGI_MODE_ROTATION)rotation;
+}
+
 static void dxgi_mode_from_wined3d(DXGI_MODE_DESC *mode, const struct wined3d_display_mode *wined3d_mode)
 {
     mode->Width = wined3d_mode->width;
@@ -318,7 +323,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDesc(IDXGIOutput6 *iface, DXGI_O
     memcpy(desc->DeviceName, wined3d_desc.device_name, sizeof(desc->DeviceName));
     desc->DesktopCoordinates = wined3d_desc.desktop_rect;
     desc->AttachedToDesktop = wined3d_desc.attached_to_desktop;
-    desc->Rotation = rotation;
+    desc->Rotation = dxgi_mode_rotation_from_wined3d(rotation);
     desc->Monitor = wined3d_desc.monitor;
 
     return S_OK;
@@ -631,7 +636,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDesc1(IDXGIOutput6 *iface,
     memcpy(desc->DeviceName, wined3d_desc.device_name, sizeof(desc->DeviceName));
     desc->DesktopCoordinates = wined3d_desc.desktop_rect;
     desc->AttachedToDesktop = wined3d_desc.attached_to_desktop;
-    desc->Rotation = rotation;
+    desc->Rotation = dxgi_mode_rotation_from_wined3d(rotation);
     desc->Monitor = wined3d_desc.monitor;
 
     /* FIXME: fill this from monitor EDID */
