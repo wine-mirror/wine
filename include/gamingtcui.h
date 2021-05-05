@@ -28,6 +28,7 @@ extern "C"
 {
 #endif
 
+typedef void (WINAPI *GameUICompletionRoutine)(HRESULT return_code, void *context);
 typedef void (WINAPI *PlayerPickerUICompletionRoutine)(HRESULT return_code, void *context,
         const HSTRING *selected_xuids, size_t count);
 
@@ -35,6 +36,7 @@ HRESULT WINAPI ProcessPendingGameUI(BOOL wait_for_completion);
 HRESULT WINAPI ShowPlayerPickerUI(HSTRING prompt_display_text, const HSTRING *xuids, size_t xuid_count,
         const HSTRING *preselected_xuids, size_t preselected_xuid_count, size_t min_selection_count,
         size_t max_selection_count, PlayerPickerUICompletionRoutine completion_routine, void *context);
+HRESULT WINAPI ShowProfileCardUI(HSTRING target_user_xuid, GameUICompletionRoutine completion_routine, void *context);
 
 #ifdef __cplusplus
 }

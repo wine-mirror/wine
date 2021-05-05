@@ -2,6 +2,6 @@
 @ stub ShowChangeFriendRelationshipUI
 @ stub ShowGameInviteUI
 @ stdcall ShowPlayerPickerUI(ptr ptr long ptr long long long ptr ptr) gamingtcui.ShowPlayerPickerUI
-@ stub ShowProfileCardUI
+@ stdcall ShowProfileCardUI(ptr ptr ptr) gamingtcui.ShowProfileCardUI
 @ stub ShowTitleAchievementsUI
 @ stub TryCancelPendingGameUI

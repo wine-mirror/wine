@@ -48,3 +48,14 @@ HRESULT WINAPI ShowPlayerPickerUI(HSTRING prompt_display_text, const HSTRING *xu
 
     return S_OK;
 }
+
+HRESULT WINAPI ShowProfileCardUI(HSTRING target_user_xuid, GameUICompletionRoutine completion_routine, void *context)
+{
+    FIXME("target_user_xuid %p, completion_routine %p, context %p stub.\n",
+            target_user_xuid, completion_routine, context);
+
+    if (completion_routine)
+        completion_routine(S_OK, context);
+
+    return S_OK;
+}
