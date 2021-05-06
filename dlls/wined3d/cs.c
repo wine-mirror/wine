@@ -2229,6 +2229,9 @@ static void wined3d_cs_issue_query(struct wined3d_device_context *context,
     struct wined3d_cs *cs = wined3d_cs_from_context(context);
     struct wined3d_cs_query_issue *op;
 
+    if (flags & WINED3DISSUE_END)
+        ++query->counter_main;
+
     op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_QUERY_ISSUE;
     op->query = query;
@@ -2236,6 +2239,11 @@ static void wined3d_cs_issue_query(struct wined3d_device_context *context,
 
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
     cs->queries_flushed = FALSE;
+
+    if (flags & WINED3DISSUE_BEGIN)
+        query->state = QUERY_BUILDING;
+    else
+        query->state = QUERY_SIGNALLED;
 }
 
 static void wined3d_cs_exec_preload_resource(struct wined3d_cs *cs, const void *data)
