@@ -416,7 +416,7 @@ static void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_cont
             }
 
             if (src_location == WINED3D_LOCATION_DRAWABLE)
-                FIXME("WINED3D_LOCATION_DRAWABLE not supported for the source of a typeless resolve.");
+                FIXME("WINED3D_LOCATION_DRAWABLE not supported for the source of a typeless resolve.\n");
 
             device->blitter->ops->blitter_blit(device->blitter, WINED3D_BLIT_OP_RAW_BLIT, context,
                     src_texture, src_sub_resource_idx, src_location, src_rect,
@@ -554,7 +554,7 @@ static void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_cont
     if (dst_texture != dst_save_texture)
     {
         if (dst_location == WINED3D_LOCATION_DRAWABLE)
-            FIXME("WINED3D_LOCATION_DRAWABLE not supported for the destination of a typeless resolve.");
+            FIXME("WINED3D_LOCATION_DRAWABLE not supported for the destination of a typeless resolve.\n");
 
         device->blitter->ops->blitter_blit(device->blitter, WINED3D_BLIT_OP_RAW_BLIT, context,
                 dst_texture, 0, dst_location, dst_rect,
