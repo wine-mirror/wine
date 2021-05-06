@@ -249,17 +249,17 @@ static void CDECL nulldrv_SetCursor( HCURSOR cursor )
 
 static BOOL CDECL nulldrv_GetCursorPos( LPPOINT pt )
 {
-    return FALSE;
+    return TRUE;
 }
 
 static BOOL CDECL nulldrv_SetCursorPos( INT x, INT y )
 {
-    return FALSE;
+    return TRUE;
 }
 
 static BOOL CDECL nulldrv_ClipCursor( LPCRECT clip )
 {
-    return FALSE;
+    return TRUE;
 }
 
 static void CDECL nulldrv_UpdateClipboard(void)
