@@ -58,6 +58,7 @@ static const WCHAR separatorsW[] = {',',' ','\t',0};
 static HANDLE std_key;
 static HANDLE app_key;
 static BOOL init_done;
+static BOOL main_exe_loaded;
 
 
 /***************************************************************************
@@ -365,6 +366,7 @@ void set_load_order_app_name( const WCHAR *app_name )
 
     if ((p = wcsrchr( app_name, '\\' ))) app_name = p + 1;
     app_key = open_app_key( app_name );
+    main_exe_loaded = TRUE;
 }
 
 
@@ -379,7 +381,7 @@ enum loadorder get_load_order( const UNICODE_STRING *nt_name )
     static const WCHAR prefixW[] = {'\\','?','?','\\'};
     enum loadorder ret = LO_INVALID;
     const WCHAR *path = nt_name->Buffer;
-    const WCHAR *p, *app_name = NULL;
+    const WCHAR *p;
     WCHAR *module, *basename;
     int len;
 
@@ -418,7 +420,7 @@ enum loadorder get_load_order( const UNICODE_STRING *nt_name )
         goto done;
 
     /* if loading the main exe with an explicit path, try native first */
-    if (!app_name && basename != module+1)
+    if (!main_exe_loaded && basename != module+1)
     {
         ret = LO_NATIVE_BUILTIN;
         TRACE( "got main exe default %s for %s\n", debugstr_loadorder(ret), debugstr_w(path) );
