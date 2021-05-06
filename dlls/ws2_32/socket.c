@@ -816,8 +816,8 @@ static NTSTATUS sock_get_ntstatus( int err )
         case EINVAL:            return STATUS_INVALID_PARAMETER;
         case ENFILE:
         case EMFILE:            return STATUS_TOO_MANY_OPENED_FILES;
+        case EINPROGRESS:
         case EWOULDBLOCK:       return STATUS_DEVICE_NOT_READY;
-        case EINPROGRESS:       return STATUS_PENDING;
         case EALREADY:          return STATUS_NETWORK_BUSY;
         case ENOTSOCK:          return STATUS_OBJECT_TYPE_MISMATCH;
         case EDESTADDRREQ:      return STATUS_INVALID_PARAMETER;
@@ -858,8 +858,8 @@ UINT sock_get_error( int err )
 	case EFAULT:		return WSAEFAULT;
 	case EINVAL:		return WSAEINVAL;
 	case EMFILE:		return WSAEMFILE;
+	case EINPROGRESS:
 	case EWOULDBLOCK:	return WSAEWOULDBLOCK;
-	case EINPROGRESS:	return WSAEINPROGRESS;
 	case EALREADY:		return WSAEALREADY;
 	case EBADF:
 	case ENOTSOCK:		return WSAENOTSOCK;
@@ -943,8 +943,8 @@ static NTSTATUS sock_error_to_ntstatus( DWORD err )
     case WSAEFAULT:            return STATUS_ACCESS_VIOLATION;
     case WSAEINVAL:            return STATUS_INVALID_PARAMETER;
     case WSAEMFILE:            return STATUS_TOO_MANY_OPENED_FILES;
+    case WSAEINPROGRESS:
     case WSAEWOULDBLOCK:       return STATUS_DEVICE_NOT_READY;
-    case WSAEINPROGRESS:       return STATUS_PENDING;
     case WSAEALREADY:          return STATUS_NETWORK_BUSY;
     case WSAENOTSOCK:          return STATUS_OBJECT_TYPE_MISMATCH;
     case WSAEDESTADDRREQ:      return STATUS_INVALID_PARAMETER;
@@ -2958,7 +2958,7 @@ int WINAPI WS_connect(SOCKET s, const struct WS_sockaddr* name, int namelen)
         if (ret == 0)
             goto connect_success;
 
-        if (ret == WSAEINPROGRESS)
+        if (ret == WSAEWOULDBLOCK)
         {
             /* tell wineserver that a connection is in progress */
             _enable_event(SOCKET2HANDLE(s), FD_CONNECT|FD_READ|FD_WRITE,
@@ -3047,7 +3047,7 @@ static BOOL WINAPI WS2_ConnectEx(SOCKET s, const struct WS_sockaddr* name, int n
         if (WSASend(s, &wsabuf, sendBuf ? 1 : 0, sent, 0, ov, NULL) != SOCKET_ERROR)
             goto connection_success;
     }
-    else if (ret == WSAEINPROGRESS)
+    else if (ret == WSAEWOULDBLOCK)
     {
         struct ws2_async *wsa;
         DWORD size;
