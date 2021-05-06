@@ -2593,7 +2593,7 @@ static void test_get_next_thread(void)
     thread = CreateThread( NULL, 0, test_get_next_thread_proc, event, 0, &thread_id );
 
     status = pNtGetNextThread(hprocess, NULL, THREAD_QUERY_LIMITED_INFORMATION, OBJ_INHERIT, 0, NULL);
-    ok(status == STATUS_ACCESS_VIOLATION, "Got unexected status %#x.\n", status);
+    ok(status == STATUS_ACCESS_VIOLATION, "Got unexpected status %#x.\n", status);
 
     found = FALSE;
     prev = NULL;
