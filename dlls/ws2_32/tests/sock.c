@@ -8690,8 +8690,7 @@ static void test_WSAGetOverlappedResult(void)
             overlapped.Internal = status;
             WSASetLastError(0xdeadbeef);
             ret = WSAGetOverlappedResult(s, &overlapped, &size, FALSE, &flags);
-            todo_wine_if (expect_ret && status)
-                ok(ret == expect_ret, "status %#x: expected %d, got %d\n", status, expect_ret, ret);
+            ok(ret == expect_ret, "status %#x: expected %d, got %d\n", status, expect_ret, ret);
             if (ret)
             {
                 ok(WSAGetLastError() == expect /* >= win10 1809 */
