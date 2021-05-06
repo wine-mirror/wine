@@ -4697,6 +4697,7 @@ struct wined3d_device_context_ops
         unsigned int sub_resource_idx);
     void (*issue_query)(struct wined3d_device_context *context, struct wined3d_query *query, unsigned int flags);
     void (*flush)(struct wined3d_device_context *context);
+    void (*acquire_resource)(struct wined3d_device_context *context, struct wined3d_resource *resource);
 };
 
 struct wined3d_device_context
