@@ -176,7 +176,7 @@ START_TEST(thread)
     test_thread_library_reference(thread_dll, use_beginthreadex, thread_exit_endthreadex);
 
     ret = DeleteFileA(thread_dll);
-    ok(ret, "Failed to remove the test dll, err: %u", GetLastError());
+    ok(ret, "Failed to remove the test dll, err: %u\n", GetLastError());
 
     test_thread_invalid_params();
 }
