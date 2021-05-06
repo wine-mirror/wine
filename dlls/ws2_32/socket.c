@@ -812,7 +812,7 @@ static NTSTATUS sock_get_ntstatus( int err )
         case EBUSY:             return STATUS_DEVICE_BUSY;
         case EPERM:
         case EACCES:            return STATUS_ACCESS_DENIED;
-        case EFAULT:            return STATUS_NO_MEMORY;
+        case EFAULT:            return STATUS_ACCESS_VIOLATION;
         case EINVAL:            return STATUS_INVALID_PARAMETER;
         case ENFILE:
         case EMFILE:            return STATUS_TOO_MANY_OPENED_FILES;
@@ -940,7 +940,7 @@ static NTSTATUS sock_error_to_ntstatus( DWORD err )
     case 0:                    return STATUS_SUCCESS;
     case WSAEBADF:             return STATUS_INVALID_HANDLE;
     case WSAEACCES:            return STATUS_ACCESS_DENIED;
-    case WSAEFAULT:            return STATUS_NO_MEMORY;
+    case WSAEFAULT:            return STATUS_ACCESS_VIOLATION;
     case WSAEINVAL:            return STATUS_INVALID_PARAMETER;
     case WSAEMFILE:            return STATUS_TOO_MANY_OPENED_FILES;
     case WSAEWOULDBLOCK:       return STATUS_DEVICE_NOT_READY;
@@ -992,7 +992,7 @@ static DWORD NtStatusToWSAError( DWORD status )
     case STATUS_SHARING_VIOLATION:          return WSAEADDRINUSE;
     case STATUS_IO_TIMEOUT:
     case STATUS_TIMEOUT:                    return WSAETIMEDOUT;
-    case STATUS_NO_MEMORY:                  return WSAEFAULT;
+    case STATUS_ACCESS_VIOLATION:           return WSAEFAULT;
     case STATUS_ACCESS_DENIED:              return WSAEACCES;
     case STATUS_TOO_MANY_OPENED_FILES:      return WSAEMFILE;
     case STATUS_DEVICE_NOT_READY:           return WSAEWOULDBLOCK;
