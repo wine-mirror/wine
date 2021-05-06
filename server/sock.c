@@ -1286,7 +1286,7 @@ static int sock_get_ntstatus( int err )
         case EBUSY:             return STATUS_DEVICE_BUSY;
         case EPERM:
         case EACCES:            return STATUS_ACCESS_DENIED;
-        case EFAULT:            return STATUS_NO_MEMORY;
+        case EFAULT:            return STATUS_ACCESS_VIOLATION;
         case EINVAL:            return STATUS_INVALID_PARAMETER;
         case ENFILE:
         case EMFILE:            return STATUS_TOO_MANY_OPENED_FILES;
