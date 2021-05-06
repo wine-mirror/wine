@@ -269,6 +269,7 @@ static bool fbo_blitter_supported(enum wined3d_blit_op blit_op, const struct win
 {
     const struct wined3d_format *src_format = src_resource->format;
     const struct wined3d_format *dst_format = dst_resource->format;
+    bool src_ds, dst_ds;
 
     if ((wined3d_settings.offscreen_rendering_mode != ORM_FBO) || !gl_info->fbo_ops.glBlitFramebuffer)
         return false;
@@ -278,6 +279,16 @@ static bool fbo_blitter_supported(enum wined3d_blit_op blit_op, const struct win
         return false;
 
     if (src_resource->type != WINED3D_RTYPE_TEXTURE_2D)
+        return false;
+
+    /* We can't copy between depth/stencil and colour attachments. One notable
+     * way we can end up here is when copying between typeless resources with
+     * formats like R16_TYPELESS, which can end up using either a
+     * depth/stencil or a colour format on the OpenGL side, depending on the
+     * resource's bind flags. */
+    src_ds = src_format->depth_size || src_format->stencil_size;
+    dst_ds = dst_format->depth_size || dst_format->stencil_size;
+    if (src_ds != dst_ds)
         return false;
 
     switch (blit_op)
