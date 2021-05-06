@@ -115,6 +115,25 @@ static HKL get_locale_kbd_layout(void)
 
 
 /**********************************************************************
+ *		keyboard_init
+ */
+void keyboard_init(void)
+{
+    WCHAR layout[KL_NAMELENGTH];
+    HKEY hkey;
+
+    if (RegCreateKeyExW( HKEY_CURRENT_USER, L"Keyboard Layout\\Preload", 0, NULL, 0,
+                         KEY_ALL_ACCESS, NULL, &hkey, NULL ))
+        return;
+
+    if (GetKeyboardLayoutNameW( layout ))
+        RegSetValueExW( hkey, L"1", 0, REG_SZ, (const BYTE *)layout, sizeof(layout) );
+
+    RegCloseKey( hkey );
+}
+
+
+/**********************************************************************
  *		set_capture_window
  */
 BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret )

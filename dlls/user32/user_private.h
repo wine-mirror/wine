@@ -242,6 +242,8 @@ struct hardware_msg_data;
 extern BOOL rawinput_from_hardware_message(RAWINPUT *rawinput, const struct hardware_msg_data *msg_data);
 extern struct rawinput_thread_data *rawinput_thread_data(void);
 
+extern void keyboard_init(void) DECLSPEC_HIDDEN;
+
 extern void CLIPBOARD_ReleaseOwner( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL FOCUS_MouseActivate( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret ) DECLSPEC_HIDDEN;

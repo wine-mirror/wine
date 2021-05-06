@@ -1563,43 +1563,6 @@ static HKL get_locale_kbd_layout(void)
     return (HKL)layout;
 }
 
-/***********************************************************************
- *     GetKeyboardLayoutName (X11DRV.@)
- */
-static BOOL CDECL X11DRV_GetKeyboardLayoutName(LPWSTR name)
-{
-    static const WCHAR formatW[] = {'%','0','8','x',0};
-    DWORD layout;
-
-    layout = HandleToUlong( get_locale_kbd_layout() );
-    if (HIWORD(layout) == LOWORD(layout)) layout = LOWORD(layout);
-    sprintfW(name, formatW, layout);
-    TRACE("returning %s\n", debugstr_w(name));
-    return TRUE;
-}
-
-static void set_kbd_layout_preload_key(void)
-{
-    static const WCHAR preload[] =
-        {'K','e','y','b','o','a','r','d',' ','L','a','y','o','u','t','\\','P','r','e','l','o','a','d',0};
-    static const WCHAR one[] = {'1',0};
-
-    HKEY hkey;
-    WCHAR layout[KL_NAMELENGTH];
-
-    if (RegCreateKeyExW(HKEY_CURRENT_USER, preload, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, NULL))
-        return;
-
-    if (!RegQueryValueExW(hkey, one, NULL, NULL, NULL, NULL))
-    {
-        RegCloseKey(hkey);
-        return;
-    }
-    if (X11DRV_GetKeyboardLayoutName(layout))
-        RegSetValueExW(hkey, one, 0, REG_SZ, (const BYTE *)layout, sizeof(layout));
-
-    RegCloseKey(hkey);
-}
 
 /**********************************************************************
  *		X11DRV_InitKeyboard
@@ -1633,8 +1596,6 @@ void X11DRV_InitKeyboard( Display *display )
         { 0, 0 }
     };
     int vkey_range;
-
-    set_kbd_layout_preload_key();
 
     EnterCriticalSection( &kbd_section );
     XDisplayKeycodes(display, &min_keycode, &max_keycode);

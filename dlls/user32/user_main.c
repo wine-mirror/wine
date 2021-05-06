@@ -331,6 +331,7 @@ static BOOL process_attach(void)
     /* Setup palette function pointers */
     palette_init();
 
+    keyboard_init();
     return TRUE;
 }
 
