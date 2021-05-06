@@ -2548,11 +2548,13 @@ done:
     wined3d_resource_release(resource);
 }
 
-void wined3d_device_context_emit_update_sub_resource(struct wined3d_device_context *context,
+static void wined3d_cs_update_sub_resource(struct wined3d_device_context *context,
         struct wined3d_resource *resource, unsigned int sub_resource_idx, const struct wined3d_box *box,
         const void *data, unsigned int row_pitch, unsigned int slice_pitch)
 {
     struct wined3d_cs_update_sub_resource *op;
+
+    wined3d_resource_wait_idle(resource);
 
     op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_MAP);
     op->opcode = WINED3D_CS_OP_UPDATE_SUB_RESOURCE;
@@ -2823,6 +2825,7 @@ static const struct wined3d_device_context_ops wined3d_cs_st_ops =
     wined3d_cs_st_push_constants,
     wined3d_cs_map,
     wined3d_cs_unmap,
+    wined3d_cs_update_sub_resource,
     wined3d_cs_issue_query,
     wined3d_cs_flush,
     wined3d_cs_acquire_resource,
@@ -2949,6 +2952,7 @@ static const struct wined3d_device_context_ops wined3d_cs_mt_ops =
     wined3d_cs_mt_push_constants,
     wined3d_cs_map,
     wined3d_cs_unmap,
+    wined3d_cs_update_sub_resource,
     wined3d_cs_issue_query,
     wined3d_cs_flush,
     wined3d_cs_acquire_resource,

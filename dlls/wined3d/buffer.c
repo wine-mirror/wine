@@ -1047,7 +1047,7 @@ static void wined3d_buffer_init_data(struct wined3d_buffer *buffer,
     if (buffer->flags & WINED3D_BUFFER_USE_BO)
     {
         wined3d_box_set(&box, 0, 0, resource->size, 1, 0, 1);
-        wined3d_device_context_emit_update_sub_resource(&device->cs->c, resource,
+        device->cs->c.ops->update_sub_resource(&device->cs->c, resource,
                 0, &box, data->data, data->row_pitch, data->slice_pitch);
     }
     else

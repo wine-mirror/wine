@@ -4380,7 +4380,7 @@ HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct
         for (i = 0; i < sub_count; ++i)
         {
             wined3d_texture_get_level_box(*texture, i % (*texture)->level_count, &box);
-            wined3d_device_context_emit_update_sub_resource(&device->cs->c, &(*texture)->resource,
+            device->cs->c.ops->update_sub_resource(&device->cs->c, &(*texture)->resource,
                     i, &box, data[i].data, data[i].row_pitch, data[i].slice_pitch);
         }
     }
