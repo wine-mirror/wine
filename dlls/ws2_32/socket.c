@@ -5737,7 +5737,7 @@ BOOL WINAPI WSAGetOverlappedResult( SOCKET s, LPWSAOVERLAPPED lpOverlapped,
     if ( lpdwFlags )
         *lpdwFlags = lpOverlapped->u.s.Offset;
 
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    SetLastError( NtStatusToWSAError(status) );
     return !status;
 }
 

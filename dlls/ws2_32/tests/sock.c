@@ -8701,14 +8701,9 @@ static void test_WSAGetOverlappedResult(void)
             }
             else
             {
-                todo_wine_if (!NT_SUCCESS(status)
-                        && LOWORD(status) != WSAEINVAL
-                        && status != STATUS_CANCELLED
-                        && status != (0x80070000 | ERROR_IO_INCOMPLETE)
-                        && status != (0xc0070000 | ERROR_IO_INCOMPLETE))
-                    ok(WSAGetLastError() == expect
-                            || (status == (0xc0070000 | ERROR_IO_INCOMPLETE) && WSAGetLastError() == WSAEINVAL), /* < win8 */
-                            "status %#x: expected error %u, got %u\n", status, expect, WSAGetLastError());
+                ok(WSAGetLastError() == expect
+                        || (status == (0xc0070000 | ERROR_IO_INCOMPLETE) && WSAGetLastError() == WSAEINVAL), /* < win8 */
+                        "status %#x: expected error %u, got %u\n", status, expect, WSAGetLastError());
             }
         }
     }
