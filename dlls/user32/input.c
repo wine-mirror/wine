@@ -1110,7 +1110,9 @@ BOOL WINAPI GetKeyboardLayoutNameA(LPSTR pszKLID)
  */
 BOOL WINAPI GetKeyboardLayoutNameW( WCHAR *name )
 {
-    DWORD tmp;
+    WCHAR klid[KL_NAMELENGTH], value[5];
+    DWORD value_size, tmp, i = 0;
+    HKEY hkey;
     HKL layout;
 
     TRACE_(keyboard)( "name %p\n", name );
@@ -1125,6 +1127,25 @@ BOOL WINAPI GetKeyboardLayoutNameW( WCHAR *name )
     tmp = HandleToUlong( layout );
     if (HIWORD( tmp ) == LOWORD( tmp )) tmp = LOWORD( tmp );
     swprintf( name, KL_NAMELENGTH, L"%08X", tmp );
+
+    if (!RegOpenKeyW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\Keyboard Layouts", &hkey ))
+    {
+        while (!RegEnumKeyW( hkey, i++, klid, ARRAY_SIZE(klid) ))
+        {
+            value_size = sizeof(value);
+            if (!RegGetValueW( hkey, klid, L"Layout Id", RRF_RT_REG_SZ, NULL, (void *)&value, &value_size ))
+                tmp = 0xf000 | (wcstoul( value, NULL, 16 ) & 0xfff);
+            else
+                tmp = wcstoul( klid, NULL, 16 );
+
+            if (HIWORD( layout ) == tmp)
+            {
+                lstrcpynW( name, klid, KL_NAMELENGTH );
+                break;
+            }
+        }
+        RegCloseKey( hkey );
+    }
 
     TRACE_(keyboard)( "ret %s\n", debugstr_w( name ) );
     return TRUE;
