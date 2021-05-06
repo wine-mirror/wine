@@ -395,6 +395,24 @@ static void dump_irp_params( const char *prefix, const irp_params_t *data )
     }
 }
 
+static void dump_rawinput( const char *prefix, const union rawinput *rawinput )
+{
+    switch (rawinput->type)
+    {
+    case RIM_TYPEMOUSE:
+        fprintf( stderr, "%s{type=MOUSE,x=%d,y=%d,data=%08x}", prefix, rawinput->mouse.x,
+                 rawinput->mouse.y, rawinput->mouse.data );
+        break;
+    case RIM_TYPEKEYBOARD:
+        fprintf( stderr, "%s{type=KEYBOARD,message=%04x,vkey=%04hx,scan=%04hx}", prefix,
+                 rawinput->kbd.message, rawinput->kbd.vkey, rawinput->kbd.scan );
+        break;
+    default:
+        fprintf( stderr, "%s{type=%04x}", prefix, rawinput->type );
+        break;
+    }
+}
+
 static void dump_hw_input( const char *prefix, const hw_input_t *input )
 {
     switch (input->type)
@@ -415,6 +433,11 @@ static void dump_hw_input( const char *prefix, const hw_input_t *input )
     case INPUT_HARDWARE:
         fprintf( stderr, "%s{type=HARDWARE,msg=%04x", prefix, input->hw.msg );
         dump_uint64( ",lparam=", &input->hw.lparam );
+        switch (input->hw.msg)
+        {
+        case WM_INPUT_DEVICE_CHANGE:
+            dump_rawinput( ",rawinput=", &input->hw.rawinput );
+        }
         fputc( '}', stderr );
         break;
     default:

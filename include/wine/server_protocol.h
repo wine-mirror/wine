@@ -262,30 +262,32 @@ struct hw_msg_source
     unsigned int    origin;
 };
 
+union rawinput
+{
+    int type;
+    struct
+    {
+        int            type;
+        unsigned int   message;
+        unsigned short vkey;
+        unsigned short scan;
+    } kbd;
+    struct
+    {
+        int            type;
+        int            x;
+        int            y;
+        unsigned int   data;
+    } mouse;
+};
+
 struct hardware_msg_data
 {
     lparam_t             info;
     unsigned int         hw_id;
     unsigned int         flags;
     struct hw_msg_source source;
-    union
-    {
-        int type;
-        struct
-        {
-            int            type;
-            unsigned int   message;
-            unsigned short vkey;
-            unsigned short scan;
-        } kbd;
-        struct
-        {
-            int            type;
-            int            x;
-            int            y;
-            unsigned int   data;
-        } mouse;
-    } rawinput;
+    union rawinput       rawinput;
 };
 
 struct callback_msg_data
@@ -330,6 +332,7 @@ typedef union
         int            type;
         unsigned int   msg;
         lparam_t       lparam;
+        union rawinput rawinput;
     } hw;
 } hw_input_t;
 
@@ -6233,7 +6236,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 698
+#define SERVER_PROTOCOL_VERSION 699
 
 /* ### protocol_version end ### */
 
