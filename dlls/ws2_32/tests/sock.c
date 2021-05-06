@@ -160,52 +160,16 @@ static int        client_id;
 static SOCKET setup_server_socket(struct sockaddr_in *addr, int *len);
 static SOCKET setup_connector_socket(struct sockaddr_in *addr, int len, BOOL nonblock);
 
-static void tcp_socketpair(SOCKET *src, SOCKET *dst)
-{
-    SOCKET server = INVALID_SOCKET;
-    struct sockaddr_in addr;
-    int len;
-    int ret;
-
-    *src = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    ok(*src != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
-
-    server = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    ok(server != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
-
-    memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    ret = bind(server, (struct sockaddr*)&addr, sizeof(addr));
-    ok(!ret, "failed to bind socket, error %u\n", WSAGetLastError());
-
-    len = sizeof(addr);
-    ret = getsockname(server, (struct sockaddr*)&addr, &len);
-    ok(!ret, "failed to get address, error %u\n", WSAGetLastError());
-
-    ret = listen(server, 1);
-    ok(!ret, "failed to listen, error %u\n", WSAGetLastError());
-
-    ret = connect(*src, (struct sockaddr*)&addr, sizeof(addr));
-    ok(!ret, "failed to connect, error %u\n", WSAGetLastError());
-
-    len = sizeof(addr);
-    *dst = accept(server, (struct sockaddr*)&addr, &len);
-    ok(*dst != INVALID_SOCKET, "failed to accept, error %u\n", WSAGetLastError());
-
-    closesocket(server);
-}
-
-static void tcp_socketpair_ovl(SOCKET *src, SOCKET *dst)
+static void tcp_socketpair_flags(SOCKET *src, SOCKET *dst, DWORD flags)
 {
     SOCKET server = INVALID_SOCKET;
     struct sockaddr_in addr;
     int len, ret;
 
-    *src = WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
+    *src = WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, flags);
     ok(*src != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
 
-    server = WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
+    server = WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, flags);
     ok(server != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
 
     memset(&addr, 0, sizeof(addr));
@@ -229,6 +193,11 @@ static void tcp_socketpair_ovl(SOCKET *src, SOCKET *dst)
     ok(*dst != INVALID_SOCKET, "failed to accept socket, error %u\n", WSAGetLastError());
 
     closesocket(server);
+}
+
+static void tcp_socketpair(SOCKET *src, SOCKET *dst)
+{
+    tcp_socketpair_flags(src, dst, WSA_FLAG_OVERLAPPED);
 }
 
 static void set_so_opentype ( BOOL overlapped )
@@ -8377,29 +8346,29 @@ static void test_iocp(void)
     SOCKET src, dst;
     int i;
 
-    tcp_socketpair_ovl(&src, &dst);
+    tcp_socketpair(&src, &dst);
     sync_read(src, dst);
     iocp_async_read(src, dst);
     closesocket(src);
     closesocket(dst);
 
-    tcp_socketpair_ovl(&src, &dst);
+    tcp_socketpair(&src, &dst);
     iocp_async_read_thread(src, dst);
     closesocket(src);
     closesocket(dst);
 
     for (i = 0; i <= 2; i++)
     {
-        tcp_socketpair_ovl(&src, &dst);
+        tcp_socketpair(&src, &dst);
         iocp_async_read_closesocket(src, i);
         closesocket(dst);
     }
 
-    tcp_socketpair_ovl(&src, &dst);
+    tcp_socketpair(&src, &dst);
     iocp_async_closesocket(src);
     closesocket(dst);
 
-    tcp_socketpair_ovl(&src, &dst);
+    tcp_socketpair(&src, &dst);
     iocp_async_read_thread_closesocket(src);
     closesocket(dst);
 }
