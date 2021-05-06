@@ -1307,7 +1307,7 @@ static int sock_get_ntstatus( int err )
         case EADDRNOTAVAIL:     return STATUS_INVALID_PARAMETER;
         case ECONNREFUSED:      return STATUS_CONNECTION_REFUSED;
         case ESHUTDOWN:         return STATUS_PIPE_DISCONNECTED;
-        case ENOTCONN:          return STATUS_CONNECTION_DISCONNECTED;
+        case ENOTCONN:          return STATUS_INVALID_CONNECTION;
         case ETIMEDOUT:         return STATUS_IO_TIMEOUT;
         case ENETUNREACH:       return STATUS_NETWORK_UNREACHABLE;
         case EHOSTUNREACH:      return STATUS_HOST_UNREACHABLE;
