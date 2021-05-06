@@ -1029,7 +1029,7 @@ static HRESULT WINAPI video_mixer_transform_ProcessMessage(IMFTransform *iface, 
     HRESULT hr = S_OK;
     unsigned int i;
 
-    TRACE("%p, %u, %#lx.\n", iface, message, param);
+    TRACE("%p, %#x, %#lx.\n", iface, message, param);
 
     switch (message)
     {
