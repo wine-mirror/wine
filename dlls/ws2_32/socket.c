@@ -833,7 +833,7 @@ static NTSTATUS sock_get_ntstatus( int err )
         case EADDRNOTAVAIL:     return STATUS_INVALID_PARAMETER;
         case ECONNREFUSED:      return STATUS_CONNECTION_REFUSED;
         case ESHUTDOWN:         return STATUS_PIPE_DISCONNECTED;
-        case ENOTCONN:          return STATUS_CONNECTION_DISCONNECTED;
+        case ENOTCONN:          return STATUS_INVALID_CONNECTION;
         case ETIMEDOUT:         return STATUS_IO_TIMEOUT;
         case ENETUNREACH:       return STATUS_NETWORK_UNREACHABLE;
         case ENETDOWN:          return STATUS_NETWORK_BUSY;
@@ -960,7 +960,7 @@ static NTSTATUS sock_error_to_ntstatus( DWORD err )
     case WSAEADDRNOTAVAIL:     return STATUS_INVALID_PARAMETER;
     case WSAECONNREFUSED:      return STATUS_CONNECTION_REFUSED;
     case WSAESHUTDOWN:         return STATUS_PIPE_DISCONNECTED;
-    case WSAENOTCONN:          return STATUS_CONNECTION_DISCONNECTED;
+    case WSAENOTCONN:          return STATUS_INVALID_CONNECTION;
     case WSAETIMEDOUT:         return STATUS_IO_TIMEOUT;
     case WSAENETUNREACH:       return STATUS_NETWORK_UNREACHABLE;
     case WSAENETDOWN:          return STATUS_NETWORK_BUSY;
@@ -985,7 +985,7 @@ static DWORD NtStatusToWSAError( DWORD status )
     case STATUS_NETWORK_BUSY:               return WSAEALREADY;
     case STATUS_NETWORK_UNREACHABLE:        return WSAENETUNREACH;
     case STATUS_CONNECTION_REFUSED:         return WSAECONNREFUSED;
-    case STATUS_CONNECTION_DISCONNECTED:    return WSAENOTCONN;
+    case STATUS_INVALID_CONNECTION:         return WSAENOTCONN;
     case STATUS_CONNECTION_RESET:           return WSAECONNRESET;
     case STATUS_CONNECTION_ABORTED:         return WSAECONNABORTED;
     case STATUS_CANCELLED:                  return WSA_OPERATION_ABORTED;
