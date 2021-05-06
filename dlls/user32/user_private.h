@@ -66,7 +66,6 @@ typedef struct tagUSER_DRIVER {
     void   (CDECL *pBeep)(void);
     INT    (CDECL *pGetKeyNameText)(LONG, LPWSTR, INT);
     UINT   (CDECL *pGetKeyboardLayoutList)(INT, HKL *);
-    BOOL   (CDECL *pGetKeyboardLayoutName)(LPWSTR);
     HKL    (CDECL *pLoadKeyboardLayout)(LPCWSTR, UINT);
     UINT   (CDECL *pMapVirtualKeyEx)(UINT, UINT, HKL);
     BOOL   (CDECL *pRegisterHotKey)(HWND, UINT, UINT);

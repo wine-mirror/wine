@@ -1108,14 +1108,26 @@ BOOL WINAPI GetKeyboardLayoutNameA(LPSTR pszKLID)
 /****************************************************************************
  *		GetKeyboardLayoutNameW (USER32.@)
  */
-BOOL WINAPI GetKeyboardLayoutNameW(LPWSTR pwszKLID)
+BOOL WINAPI GetKeyboardLayoutNameW( WCHAR *name )
 {
-    if (!pwszKLID)
+    DWORD tmp;
+    HKL layout;
+
+    TRACE_(keyboard)( "name %p\n", name );
+
+    if (!name)
     {
-        SetLastError(ERROR_NOACCESS);
+        SetLastError( ERROR_NOACCESS );
         return FALSE;
     }
-    return USER_Driver->pGetKeyboardLayoutName(pwszKLID);
+
+    layout = GetKeyboardLayout( 0 );
+    tmp = HandleToUlong( layout );
+    if (HIWORD( tmp ) == LOWORD( tmp )) tmp = LOWORD( tmp );
+    swprintf( name, KL_NAMELENGTH, L"%08X", tmp );
+
+    TRACE_(keyboard)( "ret %s\n", debugstr_w( name ) );
+    return TRUE;
 }
 
 /****************************************************************************

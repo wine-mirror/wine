@@ -7,7 +7,6 @@
 @ cdecl ActivateKeyboardLayout(long long) X11DRV_ActivateKeyboardLayout
 @ cdecl Beep() X11DRV_Beep
 @ cdecl GetKeyNameText(long ptr long) X11DRV_GetKeyNameText
-@ cdecl GetKeyboardLayoutName(ptr) X11DRV_GetKeyboardLayoutName
 @ cdecl LoadKeyboardLayout(wstr long) X11DRV_LoadKeyboardLayout
 @ cdecl MapVirtualKeyEx(long long long) X11DRV_MapVirtualKeyEx
 @ cdecl ToUnicodeEx(long long ptr ptr long long long) X11DRV_ToUnicodeEx

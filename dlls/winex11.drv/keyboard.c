@@ -1566,7 +1566,7 @@ static HKL get_locale_kbd_layout(void)
 /***********************************************************************
  *     GetKeyboardLayoutName (X11DRV.@)
  */
-BOOL CDECL X11DRV_GetKeyboardLayoutName(LPWSTR name)
+static BOOL CDECL X11DRV_GetKeyboardLayoutName(LPWSTR name)
 {
     static const WCHAR formatW[] = {'%','0','8','x',0};
     DWORD layout;

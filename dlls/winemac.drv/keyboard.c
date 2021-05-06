@@ -1327,21 +1327,6 @@ UINT CDECL macdrv_GetKeyboardLayoutList(INT size, HKL *list)
     return count;
 }
 
-/***********************************************************************
- *              GetKeyboardLayoutName (MACDRV.@)
- */
-BOOL CDECL macdrv_GetKeyboardLayoutName(LPWSTR name)
-{
-    static const WCHAR formatW[] = {'%','0','8','x',0};
-    DWORD layout;
-
-    layout = HandleToUlong(GetKeyboardLayout(0));
-    if (HIWORD(layout) == LOWORD(layout)) layout = LOWORD(layout);
-    sprintfW(name, formatW, layout);
-    TRACE("returning %s\n", debugstr_w(name));
-    return TRUE;
-}
-
 
 /***********************************************************************
  *              MapVirtualKeyEx (MACDRV.@)
