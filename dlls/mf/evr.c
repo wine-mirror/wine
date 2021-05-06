@@ -439,12 +439,12 @@ static void video_stream_end_of_stream(struct video_stream *stream)
 }
 
 static HRESULT WINAPI video_stream_sink_PlaceMarker(IMFStreamSink *iface, MFSTREAMSINK_MARKER_TYPE marker_type,
-        const PROPVARIANT *marker_value, const PROPVARIANT *context_value)
+        const PROPVARIANT *marker_value, const PROPVARIANT *context)
 {
     struct video_stream *stream = impl_from_IMFStreamSink(iface);
     HRESULT hr = S_OK;
 
-    TRACE("%p, %d, %p, %p.\n", iface, marker_type, marker_value, context_value);
+    TRACE("%p, %d, %p, %p.\n", iface, marker_type, marker_value, context);
 
     EnterCriticalSection(&stream->cs);
     if (!stream->parent)
@@ -453,6 +453,7 @@ static HRESULT WINAPI video_stream_sink_PlaceMarker(IMFStreamSink *iface, MFSTRE
     {
         if (marker_type == MFSTREAMSINK_MARKER_ENDOFSEGMENT)
             video_stream_end_of_stream(stream);
+        IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamSinkMarker, &GUID_NULL, S_OK, context);
     }
     LeaveCriticalSection(&stream->cs);
 
