@@ -80,6 +80,7 @@ static const WCHAR PropertyNormalizeAttributeValuesW[] = {'N','o','r','m','a','l
  * We need to preserve this when reloading a document,
  * and also need access to it from the libxml backend. */
 typedef struct {
+    LONG refs;
     MSXML_VERSION version;
     VARIANT_BOOL preserving;
     IXMLDOMSchemaCollection2* schemaCache;
@@ -290,6 +291,7 @@ static domdoc_properties *create_properties(MSXML_VERSION version)
 {
     domdoc_properties *properties = heap_alloc(sizeof(domdoc_properties));
 
+    properties->refs = 1;
     list_init(&properties->selectNsList);
     properties->preserving = VARIANT_FALSE;
     properties->schemaCache = NULL;
@@ -316,6 +318,7 @@ static domdoc_properties* copy_properties(domdoc_properties const* properties)
 
     if (pcopy)
     {
+        pcopy->refs = 1;
         pcopy->version = properties->version;
         pcopy->preserving = properties->preserving;
         pcopy->schemaCache = properties->schemaCache;
@@ -345,9 +348,31 @@ static domdoc_properties* copy_properties(domdoc_properties const* properties)
     return pcopy;
 }
 
-static void free_properties(domdoc_properties* properties)
+static domdoc_properties * properties_add_ref(domdoc_properties *properties)
 {
-    if (properties)
+    LONG ref;
+
+    if (!properties) return NULL;
+
+    ref = InterlockedIncrement(&properties->refs);
+    TRACE("%p, %d.\n", properties, ref);
+    return properties;
+}
+
+static void properties_release(domdoc_properties *properties)
+{
+    LONG ref;
+
+    if (!properties) return;
+
+    ref = InterlockedDecrement(&properties->refs);
+
+    TRACE("%p, %d.\n", properties, ref);
+
+    if (ref < 0)
+        WARN("negative refcount, expect troubles\n");
+
+    if (ref == 0)
     {
         if (properties->schemaCache)
             IXMLDOMSchemaCollection2_Release(properties->schemaCache);
@@ -622,7 +647,7 @@ LONG xmldoc_release_refs(xmlDocPtr doc, LONG refs)
             xmlFreeNode( orphan->node );
             heap_free( orphan );
         }
-        free_properties(priv->properties);
+        properties_release(priv->properties);
         heap_free(doc->_private);
 
         xmlFreeDoc(doc);
@@ -679,10 +704,16 @@ static HRESULT attach_xmldoc(domdoc *This, xmlDocPtr xml )
 
     if(This->node.node)
     {
+        properties_release(properties_from_xmlDocPtr(get_doc(This)));
         priv_from_xmlDocPtr(get_doc(This))->properties = NULL;
         if (xmldoc_release(get_doc(This)) != 0)
+        {
+            /* The xmlDocPtr object can no longer use the properties of this
+             * domdoc object. So give it its own copy.
+             */
             priv_from_xmlDocPtr(get_doc(This))->properties =
                 copy_properties(This->properties);
+        }
     }
 
     This->node.node = (xmlNodePtr) xml;
@@ -690,7 +721,10 @@ static HRESULT attach_xmldoc(domdoc *This, xmlDocPtr xml )
     if(This->node.node)
     {
         xmldoc_add_ref(get_doc(This));
-        priv_from_xmlDocPtr(get_doc(This))->properties = This->properties;
+        /* Only attach new xmlDocPtr objects, i.e. ones for which properties
+         * is still NULL.
+         */
+        priv_from_xmlDocPtr(get_doc(This))->properties = properties_add_ref(This->properties);
     }
 
     return S_OK;
@@ -975,6 +1009,7 @@ static ULONG WINAPI domdoc_Release( IXMLDOMDocument3 *iface )
         for (eid = 0; eid < EVENTID_LAST; eid++)
             if (This->events[eid]) IDispatch_Release(This->events[eid]);
 
+        properties_release(This->properties);
         release_namespaces(This);
         heap_free(This);
     }
@@ -3675,7 +3710,7 @@ HRESULT get_domdoc_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document)
     doc->async = VARIANT_TRUE;
     doc->validating = 0;
     doc->resolving = 0;
-    doc->properties = properties_from_xmlDocPtr(xmldoc);
+    doc->properties = properties_add_ref(properties_from_xmlDocPtr(xmldoc));
     doc->error = S_OK;
     doc->site = NULL;
     doc->base_uri = NULL;
@@ -3714,7 +3749,7 @@ HRESULT DOMDocument_create(MSXML_VERSION version, void **ppObj)
     hr = get_domdoc_from_xmldoc(xmldoc, (IXMLDOMDocument3**)ppObj);
     if(FAILED(hr))
     {
-        free_properties(properties_from_xmlDocPtr(xmldoc));
+        properties_release(properties_from_xmlDocPtr(xmldoc));
         heap_free(xmldoc->_private);
         xmlFreeDoc(xmldoc);
         return hr;
