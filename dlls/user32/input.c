@@ -1323,8 +1323,11 @@ INT WINAPI ToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
         case VK_OEM_4:     buffer[0] = 0x1b; break;
         case VK_OEM_5:     buffer[0] = 0x1c; break;
         case VK_OEM_6:     buffer[0] = 0x1d; break;
-        case VK_SUBTRACT:  buffer[0] = 0x1e; break;
+        case '6':          buffer[0] = shift ? 0x1e : 0; break;
+        case VK_OEM_MINUS: buffer[0] = shift ? 0x1f : 0; break;
+        case VK_BACK:      buffer[0] = 0x7f; break;
         case VK_RETURN:    buffer[0] = shift ? 0 : '\n'; break;
+        case '2':          buffer[0] = shift ? 0xffff : 0xf000; break;
         case VK_SPACE:     buffer[0] = ' '; break;
         default:
             if (virt >= 'A' && virt <= 'Z') buffer[0] = virt - 'A' + 1;
@@ -1335,6 +1338,7 @@ INT WINAPI ToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
     else buffer[0] = 0;
     buffer[1] = 0;
     len = wcslen( buffer );
+    if (buffer[0] == 0xffff) buffer[0] = 0;
     lstrcpynW( str, buffer, size );
 
     TRACE_(keyboard)( "ret %d, str %s.\n", len, debugstr_w(str) );
