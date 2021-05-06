@@ -1221,8 +1221,8 @@ static unsigned int sock_get_error( int err )
         case EFAULT:            return WSAEFAULT;
         case EINVAL:            return WSAEINVAL;
         case EMFILE:            return WSAEMFILE;
+        case EINPROGRESS:
         case EWOULDBLOCK:       return WSAEWOULDBLOCK;
-        case EINPROGRESS:       return WSAEINPROGRESS;
         case EALREADY:          return WSAEALREADY;
         case ENOTSOCK:          return WSAENOTSOCK;
         case EDESTADDRREQ:      return WSAEDESTADDRREQ;
@@ -1290,8 +1290,8 @@ static int sock_get_ntstatus( int err )
         case EINVAL:            return STATUS_INVALID_PARAMETER;
         case ENFILE:
         case EMFILE:            return STATUS_TOO_MANY_OPENED_FILES;
+        case EINPROGRESS:
         case EWOULDBLOCK:       return STATUS_DEVICE_NOT_READY;
-        case EINPROGRESS:       return STATUS_PENDING;
         case EALREADY:          return STATUS_NETWORK_BUSY;
         case ENOTSOCK:          return STATUS_OBJECT_TYPE_MISMATCH;
         case EDESTADDRREQ:      return STATUS_INVALID_PARAMETER;
