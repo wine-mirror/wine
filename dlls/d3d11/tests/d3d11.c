@@ -28306,7 +28306,7 @@ static void test_format_compatibility(void)
             y = j / 4;
             colour = get_readback_color(&rb, x, y, 0);
             expected = test_data[i].success ? bitmap_data[j] : initial_data[j];
-            todo_wine_if(test_data[i].src_ds || test_data[i].dst_ds)
+            todo_wine_if(!test_data[i].dst_ds && test_data[i].src_format == DXGI_FORMAT_R16_TYPELESS)
                 ok(colour == expected, "Test %u: Got unexpected colour 0x%08x at (%u, %u), expected 0x%08x.\n",
                         i, colour, x, y, expected);
         }

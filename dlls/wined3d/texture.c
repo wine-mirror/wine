@@ -6082,12 +6082,19 @@ static DWORD raw_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit
     unsigned int src_level, src_layer, dst_level, dst_layer;
     struct wined3d_blitter *next;
     GLuint src_name, dst_name;
+    bool src_ds, dst_ds;
     DWORD location;
+
+    src_ds = src_texture->resource.format->depth_size || src_texture->resource.format->stencil_size;
+    dst_ds = dst_texture->resource.format->depth_size || dst_texture->resource.format->stencil_size;
 
     /* If we would need to copy from a renderbuffer or drawable, we'd probably
      * be better off using the FBO blitter directly, since we'd need to use it
-     * to copy the resource contents to the texture anyway. */
-    if (op != WINED3D_BLIT_OP_RAW_BLIT
+     * to copy the resource contents to the texture anyway.
+     *
+     * We also can't copy between depth/stencil and colour resources, since
+     * the formats are considered incompatible in OpenGL. */
+    if (op != WINED3D_BLIT_OP_RAW_BLIT || (src_ds != dst_ds)
             || (src_texture->resource.format->id == dst_texture->resource.format->id
             && (!(src_location & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB))
             || !(dst_location & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB)))))
