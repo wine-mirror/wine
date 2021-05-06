@@ -48,6 +48,7 @@ enum video_stream_flags
     EVR_STREAM_PREROLLING = 0x1,
     EVR_STREAM_PREROLLED = 0x2,
     EVR_STREAM_SAMPLE_NEEDED = 0x4,
+    EVR_STREAM_STARTED = 0x8,
 };
 
 struct video_renderer;
@@ -406,6 +407,12 @@ static HRESULT WINAPI video_stream_sink_ProcessSample(IMFStreamSink *iface, IMFS
     }
     else if (stream->parent->state == EVR_STATE_RUNNING || stream->flags & EVR_STREAM_PREROLLING)
     {
+        if (!(stream->flags & EVR_STREAM_STARTED))
+        {
+            IMFTransform_ProcessMessage(stream->parent->mixer, MFT_MESSAGE_NOTIFY_START_OF_STREAM, stream->id);
+            stream->flags |= EVR_STREAM_STARTED;
+        }
+
         if (SUCCEEDED(IMFTransform_ProcessInput(stream->parent->mixer, stream->id, sample, 0)))
             IMFVideoPresenter_ProcessMessage(stream->parent->presenter, MFVP_MESSAGE_PROCESSINPUTNOTIFY, 0);
 
@@ -422,12 +429,34 @@ static HRESULT WINAPI video_stream_sink_ProcessSample(IMFStreamSink *iface, IMFS
     return hr;
 }
 
+static void video_stream_end_of_stream(struct video_stream *stream)
+{
+    if (!(stream->flags & EVR_STREAM_STARTED))
+        return;
+
+    IMFTransform_ProcessMessage(stream->parent->mixer, MFT_MESSAGE_NOTIFY_END_OF_STREAM, stream->id);
+    stream->flags &= ~EVR_STREAM_STARTED;
+}
+
 static HRESULT WINAPI video_stream_sink_PlaceMarker(IMFStreamSink *iface, MFSTREAMSINK_MARKER_TYPE marker_type,
         const PROPVARIANT *marker_value, const PROPVARIANT *context_value)
 {
-    FIXME("%p, %d, %p, %p.\n", iface, marker_type, marker_value, context_value);
+    struct video_stream *stream = impl_from_IMFStreamSink(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %d, %p, %p.\n", iface, marker_type, marker_value, context_value);
+
+    EnterCriticalSection(&stream->cs);
+    if (!stream->parent)
+        hr = MF_E_STREAMSINK_REMOVED;
+    else
+    {
+        if (marker_type == MFSTREAMSINK_MARKER_ENDOFSEGMENT)
+            video_stream_end_of_stream(stream);
+    }
+    LeaveCriticalSection(&stream->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI video_stream_sink_Flush(IMFStreamSink *iface)
