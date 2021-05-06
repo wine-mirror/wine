@@ -9034,7 +9034,7 @@ static void llmult128(ULARGE_INTEGER *c1, ULARGE_INTEGER *c0, LONGLONG val, LONG
     b0.QuadPart = (ULONGLONG)v.HighPart * n.LowPart;
 
     /* add the high word of a0 to the low words of a1 and b0 using c1 as
-     * scrach space to capture the carry.  the low word of the result becomes
+     * scratch space to capture the carry. the low word of the result becomes
      * the final high word of c0 */
     c1->QuadPart = (ULONGLONG)c0->HighPart + a1.LowPart + b0.LowPart;
     c0->HighPart = c1->LowPart;
