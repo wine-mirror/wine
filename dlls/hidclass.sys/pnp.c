@@ -30,6 +30,7 @@
 #include "ddk/hidtypes.h"
 #include "ddk/wdm.h"
 #include "regstr.h"
+#include "winuser.h"
 #include "wine/debug.h"
 #include "wine/asm.h"
 #include "wine/list.h"
@@ -101,6 +102,30 @@ static UINT32 alloc_rawinput_handle(void)
 {
     static LONG counter = WINE_KEYBOARD_HANDLE + 1;
     return InterlockedIncrement(&counter);
+}
+
+/* make sure bRawData can hold UsagePage and Usage without requiring additional allocation */
+C_ASSERT(offsetof(RAWINPUT, data.hid.bRawData[2 * sizeof(USAGE)]) < sizeof(RAWINPUT));
+
+static void send_wm_input_device_change(BASE_DEVICE_EXTENSION *ext, LPARAM param)
+{
+    RAWINPUT rawinput;
+    INPUT input;
+
+    rawinput.header.dwType = RIM_TYPEHID;
+    rawinput.header.dwSize = offsetof(RAWINPUT, data.hid.bRawData[2 * sizeof(USAGE)]);
+    rawinput.header.hDevice = ULongToHandle(ext->u.pdo.rawinput_handle);
+    rawinput.header.wParam = param;
+    rawinput.data.hid.dwCount = 0;
+    rawinput.data.hid.dwSizeHid = 0;
+    ((USAGE *)rawinput.data.hid.bRawData)[0] = ext->u.pdo.preparsed_data->caps.UsagePage;
+    ((USAGE *)rawinput.data.hid.bRawData)[1] = ext->u.pdo.preparsed_data->caps.Usage;
+
+    input.type = INPUT_HARDWARE;
+    input.u.hi.uMsg = WM_INPUT_DEVICE_CHANGE;
+    input.u.hi.wParamH = 0;
+    input.u.hi.wParamL = 0;
+    __wine_send_input(0, &input, &rawinput);
 }
 
 static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *bus_pdo)
@@ -262,6 +287,8 @@ static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
             sizeof(HID_XFER_PACKET) + pdo_ext->u.pdo.preparsed_data->caps.InputReportByteLength);
 
     HID_StartDeviceThread(child_pdo);
+
+    send_wm_input_device_change(pdo_ext, GIDC_ARRIVAL);
 }
 
 static NTSTATUS fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
@@ -432,6 +459,8 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
         case IRP_MN_REMOVE_DEVICE:
         {
             IRP *queued_irp;
+
+            send_wm_input_device_change(ext, GIDC_REMOVAL);
 
             IoSetDeviceInterfaceState(&ext->u.pdo.link_name, FALSE);
             if (ext->u.pdo.is_mouse)
