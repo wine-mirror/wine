@@ -5373,7 +5373,6 @@ HRESULT CDECL wined3d_device_context_map(struct wined3d_device_context *context,
     }
 
     flags = sanitise_map_flags(resource, flags);
-    wined3d_resource_wait_idle(resource);
 
     return context->ops->map(context, resource, sub_resource_idx, map_desc, box, flags);
 }

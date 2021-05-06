@@ -2303,6 +2303,8 @@ static HRESULT wined3d_cs_map(struct wined3d_device_context *context, struct win
      * increasing the map count would be visible to applications. */
     wined3d_not_from_cs(cs);
 
+    wined3d_resource_wait_idle(resource);
+
     op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_MAP);
     op->opcode = WINED3D_CS_OP_MAP;
     op->resource = resource;
