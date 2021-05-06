@@ -13000,13 +13000,20 @@ static BOOL glsl_blitter_supported(enum wined3d_blit_op blit_op, const struct wi
     const struct wined3d_resource *dst_resource = &dst_texture->t.resource;
     const struct wined3d_format *src_format = src_resource->format;
     const struct wined3d_format *dst_format = dst_resource->format;
+    bool src_ds, dst_ds;
     BOOL decompress;
 
     if (blit_op == WINED3D_BLIT_OP_RAW_BLIT && dst_format->id == src_format->id)
     {
-        if (dst_format->depth_size || dst_format->stencil_size)
+        src_ds = src_format->depth_size || src_format->stencil_size;
+        dst_ds = dst_format->depth_size || dst_format->stencil_size;
+        /* We could in principle support raw depth/stencil <-> colour blits as
+         * well in some cases, but note that typeless formats like e.g.
+         * R16_TYPELESS may use a normalised GL format for depth/stencil
+         * resources, and a floating-point format for colour resources, */
+        if (src_ds && dst_ds)
             blit_op = WINED3D_BLIT_OP_DEPTH_BLIT;
-        else
+        else if (!src_ds && !dst_ds)
             blit_op = WINED3D_BLIT_OP_COLOR_BLIT;
     }
 
