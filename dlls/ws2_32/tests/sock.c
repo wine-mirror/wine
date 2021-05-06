@@ -8679,6 +8679,199 @@ static void test_WSAGetOverlappedResult(void)
     closesocket(s);
 }
 
+struct nonblocking_async_recv_params
+{
+    SOCKET client;
+    HANDLE event;
+};
+
+static DWORD CALLBACK nonblocking_async_recv_thread(void *arg)
+{
+    const struct nonblocking_async_recv_params *params = arg;
+    OVERLAPPED overlapped = {0};
+    DWORD flags = 0, size;
+    char buffer[5];
+    WSABUF wsabuf;
+    int ret;
+
+    overlapped.hEvent = params->event;
+    wsabuf.buf = buffer;
+    wsabuf.len = sizeof(buffer);
+    memset(buffer, 0, sizeof(buffer));
+    ret = WSARecv(params->client, &wsabuf, 1, NULL, &flags, &overlapped, NULL);
+    todo_wine_if (!params->event) ok(!ret, "got %d\n", ret);
+    ret = GetOverlappedResult((HANDLE)params->client, &overlapped, &size, FALSE);
+    ok(ret, "got error %u\n", GetLastError());
+    todo_wine ok(size == 4, "got size %u\n", size);
+    todo_wine_if (!params->event) ok(!strcmp(buffer, "data"), "got %s\n", debugstr_an(buffer, size));
+
+    return 0;
+}
+
+static void test_nonblocking_async_recv(void)
+{
+    struct nonblocking_async_recv_params params;
+    OVERLAPPED overlapped = {0};
+    SOCKET client, server;
+    DWORD flags = 0, size;
+    HANDLE thread, event;
+    char buffer[5];
+    WSABUF wsabuf;
+    int ret;
+
+    event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    wsabuf.buf = buffer;
+    wsabuf.len = sizeof(buffer);
+
+    tcp_socketpair(&client, &server);
+    set_blocking(client, FALSE);
+    set_blocking(server, FALSE);
+
+    WSASetLastError(0xdeadbeef);
+    ret = recv(client, buffer, sizeof(buffer), 0);
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
+
+    WSASetLastError(0xdeadbeef);
+    overlapped.Internal = 0xdeadbeef;
+    ret = WSARecv(client, &wsabuf, 1, &size, &flags, NULL, NULL);
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
+    ok(overlapped.Internal == 0xdeadbeef, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+
+    /* Overlapped, with a NULL event. */
+
+    overlapped.hEvent = NULL;
+
+    memset(buffer, 0, sizeof(buffer));
+    WSASetLastError(0xdeadbeef);
+    ret = WSARecv(client, &wsabuf, 1, NULL, &flags, &overlapped, NULL);
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
+    ret = WaitForSingleObject((HANDLE)client, 0);
+    ok(ret == WAIT_TIMEOUT, "expected timeout\n");
+
+    ret = send(server, "data", 4, 0);
+    ok(ret == 4, "got %d\n", ret);
+
+    ret = WaitForSingleObject((HANDLE)client, 1000);
+    ok(!ret, "wait timed out\n");
+    ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, FALSE);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(size == 4, "got size %u\n", size);
+    ok(!strcmp(buffer, "data"), "got %s\n", debugstr_an(buffer, size));
+
+    /* Overlapped, with a non-NULL event. */
+
+    overlapped.hEvent = event;
+
+    memset(buffer, 0, sizeof(buffer));
+    WSASetLastError(0xdeadbeef);
+    ret = WSARecv(client, &wsabuf, 1, NULL, &flags, &overlapped, NULL);
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
+    ret = WaitForSingleObject(event, 0);
+    ok(ret == WAIT_TIMEOUT, "expected timeout\n");
+
+    ret = send(server, "data", 4, 0);
+    ok(ret == 4, "got %d\n", ret);
+
+    ret = WaitForSingleObject(event, 1000);
+    ok(!ret, "wait timed out\n");
+    ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, FALSE);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(size == 4, "got size %u\n", size);
+    ok(!strcmp(buffer, "data"), "got %s\n", debugstr_an(buffer, size));
+
+    /* With data already in the pipe; usually this does return 0 (but not
+     * reliably). */
+
+    ret = send(server, "data", 4, 0);
+    ok(ret == 4, "got %d\n", ret);
+
+    memset(buffer, 0, sizeof(buffer));
+    ret = WSARecv(client, &wsabuf, 1, NULL, &flags, &overlapped, NULL);
+    ok(!ret || WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
+    ret = WaitForSingleObject(event, 1000);
+    ok(!ret, "wait timed out\n");
+    ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, FALSE);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(size == 4, "got size %u\n", size);
+    ok(!strcmp(buffer, "data"), "got %s\n", debugstr_an(buffer, size));
+
+    closesocket(client);
+    closesocket(server);
+
+    /* With a non-overlapped socket, WSARecv() always blocks when passed an
+     * overlapped structure, but returns WSAEWOULDBLOCK otherwise. */
+
+    tcp_socketpair_flags(&client, &server, 0);
+    set_blocking(client, FALSE);
+    set_blocking(server, FALSE);
+
+    WSASetLastError(0xdeadbeef);
+    ret = recv(client, buffer, sizeof(buffer), 0);
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
+
+    WSASetLastError(0xdeadbeef);
+    overlapped.Internal = 0xdeadbeef;
+    ret = WSARecv(client, &wsabuf, 1, &size, &flags, NULL, NULL);
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
+    ok(overlapped.Internal == 0xdeadbeef, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+
+    /* Overlapped, with a NULL event. */
+
+    params.client = client;
+    params.event = NULL;
+    thread = CreateThread(NULL, 0, nonblocking_async_recv_thread, &params, 0, NULL);
+
+    ret = WaitForSingleObject(thread, 200);
+    todo_wine ok(ret == WAIT_TIMEOUT, "expected timeout\n");
+
+    ret = send(server, "data", 4, 0);
+    ok(ret == 4, "got %d\n", ret);
+
+    ret = WaitForSingleObject(thread, 200);
+    ok(!ret, "wait timed out\n");
+    CloseHandle(thread);
+
+    /* Overlapped, with a non-NULL event. */
+
+    params.client = client;
+    params.event = event;
+    thread = CreateThread(NULL, 0, nonblocking_async_recv_thread, &params, 0, NULL);
+
+    ret = WaitForSingleObject(thread, 200);
+    todo_wine ok(ret == WAIT_TIMEOUT, "expected timeout\n");
+
+    ret = send(server, "data", 4, 0);
+    ok(ret == 4, "got %d\n", ret);
+
+    ret = WaitForSingleObject(thread, 200);
+    ok(!ret, "wait timed out\n");
+    CloseHandle(thread);
+
+    /* With data already in the pipe. */
+
+    ret = send(server, "data", 4, 0);
+    ok(ret == 4, "got %d\n", ret);
+
+    memset(buffer, 0, sizeof(buffer));
+    ret = WSARecv(client, &wsabuf, 1, NULL, &flags, &overlapped, NULL);
+    ok(!ret, "got %d\n", ret);
+    ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, FALSE);
+    todo_wine ok(ret, "got error %u\n", GetLastError());
+    ok(size == 4, "got size %u\n", size);
+    todo_wine ok(!strcmp(buffer, "data"), "got %s\n", debugstr_an(buffer, size));
+
+    closesocket(client);
+    closesocket(server);
+
+    CloseHandle(overlapped.hEvent);
+}
+
 START_TEST( sock )
 {
     int i;
@@ -8735,6 +8928,7 @@ START_TEST( sock )
     test_bind();
     test_connecting_socket();
     test_WSAGetOverlappedResult();
+    test_nonblocking_async_recv();
 
     /* this is an io heavy test, do it at the end so the kernel doesn't start dropping packets */
     test_send();
