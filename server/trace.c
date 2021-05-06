@@ -407,6 +407,11 @@ static void dump_rawinput( const char *prefix, const union rawinput *rawinput )
         fprintf( stderr, "%s{type=KEYBOARD,message=%04x,vkey=%04hx,scan=%04hx}", prefix,
                  rawinput->kbd.message, rawinput->kbd.vkey, rawinput->kbd.scan );
         break;
+    case RIM_TYPEHID:
+        fprintf( stderr, "%s{type=HID,device=%04x,param=%04x,page=%04hx,usage=%04hx}",
+                 prefix, rawinput->hid.device, rawinput->hid.param, rawinput->hid.usage_page,
+                 rawinput->hid.usage );
+        break;
     default:
         fprintf( stderr, "%s{type=%04x}", prefix, rawinput->type );
         break;

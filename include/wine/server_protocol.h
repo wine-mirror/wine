@@ -279,6 +279,14 @@ union rawinput
         int            y;
         unsigned int   data;
     } mouse;
+    struct
+    {
+        int            type;
+        unsigned int   device;
+        unsigned int   param;
+        unsigned short usage_page;
+        unsigned short usage;
+    } hid;
 };
 
 struct hardware_msg_data
@@ -6236,7 +6244,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 699
+#define SERVER_PROTOCOL_VERSION 700
 
 /* ### protocol_version end ### */
 

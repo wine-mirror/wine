@@ -295,6 +295,14 @@ union rawinput
         int            y;       /* y coordinate */
         unsigned int   data;    /* mouse data */
     } mouse;
+    struct
+    {
+        int            type;    /* RIM_TYPEHID */
+        unsigned int   device;  /* rawinput device index */
+        unsigned int   param;   /* rawinput message param */
+        unsigned short usage_page;/* HID usage page */
+        unsigned short usage;   /* HID usage */
+    } hid;
 };
 
 struct hardware_msg_data
