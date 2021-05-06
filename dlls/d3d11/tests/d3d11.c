@@ -32226,8 +32226,12 @@ static void test_deferred_context_state(void)
 {
     ID3D11Buffer *green_buffer, *blue_buffer, *ret_buffer;
     ID3D11DeviceContext *immediate, *deferred;
+    ID3D11ShaderResourceView *srv, *ret_srv;
     struct d3d11_test_context test_context;
+    ID3D11RenderTargetView *rtv, *ret_rtv;
+    D3D11_TEXTURE2D_DESC texture_desc;
     ID3D11CommandList *list1, *list2;
+    ID3D11Texture2D *texture;
     ID3D11Device *device;
     HRESULT hr;
 
@@ -32287,6 +32291,32 @@ static void test_deferred_context_state(void)
     ID3D11DeviceContext_PSGetConstantBuffers(immediate, 0, 1, &ret_buffer);
     ok(!ret_buffer, "Got unexpected buffer %p.\n", ret_buffer);
 
+    /* Test unbinding an SRV when using the same resource as RTV. */
+
+    ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
+    texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv);
+    ok(hr == S_OK, "Failed to create view, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)texture, NULL, &srv);
+    ok(hr == S_OK, "Failed to create view, hr %#x.\n", hr);
+
+    ID3D11DeviceContext_PSSetShaderResources(deferred, 0, 1, &srv);
+    ID3D11DeviceContext_PSGetShaderResources(deferred, 0, 1, &ret_srv);
+    ok(ret_srv == srv, "Got unexpected SRV %p.\n", ret_srv);
+    ID3D11ShaderResourceView_Release(ret_srv);
+
+    ID3D11DeviceContext_OMSetRenderTargets(deferred, 1, &rtv, NULL);
+    ID3D11DeviceContext_OMGetRenderTargets(deferred, 1, &ret_rtv, NULL);
+    ok(ret_rtv == rtv, "Got unexpected RTV %p.\n", ret_rtv);
+    ID3D11RenderTargetView_Release(ret_rtv);
+    ID3D11DeviceContext_PSGetShaderResources(deferred, 0, 1, &ret_srv);
+    ok(!ret_srv, "Got unexpected SRV %p.\n", ret_srv);
+
+    ID3D11ShaderResourceView_Release(srv);
+    ID3D11RenderTargetView_Release(rtv);
+    ID3D11Texture2D_Release(texture);
     ID3D11CommandList_Release(list2);
     ID3D11CommandList_Release(list1);
     ID3D11DeviceContext_Release(deferred);
