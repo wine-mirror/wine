@@ -3964,10 +3964,8 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "Kirjoitussuojattua ominaisuutta '|' ei voi muokata"
 
 #: dlls/jscript/jscript.rc:77
-#, fuzzy
-#| msgid "'[object]' is not a date object"
 msgid "'this' is not a Map object"
-msgstr "'[objekti]' ei ole päivämääräobjekti"
+msgstr "'this' ei ole Map-objekti"
 
 #: dlls/jscript/jscript.rc:78
 msgid "Property cannot have both accessors and a value"
@@ -14653,10 +14651,8 @@ msgstr ""
 "\n"
 
 #: programs/reg/reg.rc:172
-#, fuzzy
-#| msgid "reg: Invalid system key [%1]\n"
 msgid "reg: Invalid system key\n"
-msgstr "reg: Järjestelmäavain [%1] ei kelpaa\n"
+msgstr "reg: Järjestelmäavain ei kelpaa\n"
 
 #: programs/reg/reg.rc:173
 msgid "The file '%1' already exists. Do you want to overwrite it?"
@@ -14687,10 +14683,8 @@ msgstr ""
 "\n"
 
 #: programs/reg/reg.rc:180
-#, fuzzy
-#| msgid "reg: Unable to find the specified registry key\n"
 msgid "reg: Unable to access or create the specified registry key\n"
-msgstr "reg: Annettua rekisteriavainta ei löydy\n"
+msgstr "reg: Annetun rekisteriavaimen käyttö tai luonti ei onnistu\n"
 
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
