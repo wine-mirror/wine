@@ -23,6 +23,7 @@
 #include "wine/port.h"
 
 #include <stdarg.h>
+#include <pthread.h>
 #ifdef HAVE_SECURITY_SECURITY_H
 #include <Security/Security.h>
 #define GetCurrentThread GetCurrentThread_Mac
@@ -190,9 +191,8 @@ struct mac_session {
     SSLContextRef context;
     struct schan_transport *transport;
     enum schan_mode mode;
-    CRITICAL_SECTION cs;
+    pthread_mutex_t mutex;
 };
-
 
 enum {
     schan_proto_SSL,
@@ -760,8 +760,7 @@ BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cre
     if (!s)
         return FALSE;
 
-    InitializeCriticalSection(&s->cs);
-    s->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": mac_session.cs");
+    pthread_mutex_init(&s->mutex, NULL);
 
     status = SSLNewContext(cred->credential_use == SECPKG_CRED_INBOUND, &s->context);
     if (status != noErr)
@@ -826,7 +825,7 @@ void schan_imp_dispose_session(schan_imp_session session)
     status = SSLDisposeContext(s->context);
     if (status != noErr)
         ERR("Failed to dispose of session context: %d\n", status);
-    DeleteCriticalSection(&s->cs);
+    pthread_mutex_destroy(&s->mutex);
     heap_free(s);
 }
 
@@ -1124,13 +1123,13 @@ SECURITY_STATUS schan_imp_send(schan_imp_session session, const void *buffer,
 
     TRACE("(%p/%p, %p, %p/%lu)\n", s, s->context, buffer, length, *length);
 
-    EnterCriticalSection(&s->cs);
+    pthread_mutex_lock(&s->mutex);
     s->mode = schan_mode_WRITE;
 
     status = SSLWrite(s->context, buffer, *length, length);
 
     s->mode = schan_mode_NONE;
-    LeaveCriticalSection(&s->cs);
+    pthread_mutex_unlock(&s->mutex);
 
     if (status == noErr)
         TRACE("Wrote %lu bytes\n", *length);
@@ -1161,13 +1160,13 @@ SECURITY_STATUS schan_imp_recv(schan_imp_session session, void *buffer,
 
     TRACE("(%p/%p, %p, %p/%lu)\n", s, s->context, buffer, length, *length);
 
-    EnterCriticalSection(&s->cs);
+    pthread_mutex_lock(&s->mutex);
     s->mode = schan_mode_READ;
 
     status = SSLRead(s->context, buffer, *length, length);
 
     s->mode = schan_mode_NONE;
-    LeaveCriticalSection(&s->cs);
+    pthread_mutex_unlock(&s->mutex);
 
     if (status == noErr || status == errSSLClosedGraceful)
         TRACE("Read %lu bytes\n", *length);
