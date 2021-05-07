@@ -462,9 +462,19 @@ static HRESULT WINAPI video_stream_sink_PlaceMarker(IMFStreamSink *iface, MFSTRE
 
 static HRESULT WINAPI video_stream_sink_Flush(IMFStreamSink *iface)
 {
-    FIXME("%p.\n", iface);
+    struct video_stream *stream = impl_from_IMFStreamSink(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p.\n", iface);
+
+    EnterCriticalSection(&stream->cs);
+    if (!stream->parent)
+        hr = MF_E_STREAMSINK_REMOVED;
+    else if (SUCCEEDED(hr = IMFTransform_ProcessMessage(stream->parent->mixer, MFT_MESSAGE_COMMAND_FLUSH, 0)))
+        hr = IMFVideoPresenter_ProcessMessage(stream->parent->presenter, MFVP_MESSAGE_FLUSH, 0);
+    LeaveCriticalSection(&stream->cs);
+
+    return hr;
 }
 
 static const IMFStreamSinkVtbl video_stream_sink_vtbl =
