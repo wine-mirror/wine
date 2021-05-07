@@ -1529,6 +1529,8 @@ static void test_user_agent(void)
         if(i < 8 && i != 1)
             ok(!strcmp(ua, str2), "unexpected UA for version %u %s, expected %s\n",
                i, wine_dbgstr_a(ua), wine_dbgstr_a(str2));
+        if (winetest_debug > 1)
+            trace("version=%u user-agent=%s\n", i, wine_dbgstr_a(ua));
 
         p += check_prefix(p, "Mozilla/");
         p += check_prefix(p, i < 9 ? "4.0 (" : "5.0 (");
@@ -1544,6 +1546,7 @@ static void test_user_agent(void)
         }else if(sizeof(void*) == 8) {
             p += check_prefix(p, "Win64; ");
 #ifdef __x86_64__
+            todo_wine
             p += check_prefix(p, "x64; ");
 #endif
         }
@@ -1559,12 +1562,17 @@ static void test_user_agent(void)
         }
         if(i == 11) {
             p += check_prefix(p, "; rv:11.0) like Gecko");
+        }else if (i >= 9) {
+            p += check_prefix(p, ")");
         }else {
-            if(i != 1)
-                ok(*p == ';' || *p == ')', "unexpected suffix %s for version %u\n",
-                   wine_dbgstr_a(p), i);
-            if(i < 9)
-                p = strchr(p, ')');
+#ifdef __x86_64__
+            todo_wine
+#endif
+            /* This assumes that either p points at some property before
+             * '; .NET', or that there is more than one such occurence.
+             */
+            ok(strstr(p, "; .NET") != NULL, "no '; .NET' in %s\n", wine_dbgstr_a(p));
+            p = strchr(p, ')');
             p += check_prefix(p, ")");
         }
 
