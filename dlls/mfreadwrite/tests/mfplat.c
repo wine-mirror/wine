@@ -362,6 +362,8 @@ static HRESULT WINAPI test_source_CreatePresentationDescriptor(IMFMediaSource *i
             ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
             hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFAudioFormat_PCM);
             ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+            hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_BITS_PER_SAMPLE, 32);
+            ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
 
             hr = MFCreateStreamDescriptor(i, 1, &media_type, &sds[i]);
             ok(hr == S_OK, "Failed to create stream descriptor, hr %#x.\n", hr);
@@ -897,6 +899,7 @@ static void test_source_reader_from_media_source(void)
     struct async_callback *callback;
     IMFSourceReader *reader;
     IMFMediaSource *source;
+    IMFMediaType *media_type;
     HRESULT hr;
     DWORD actual_index, stream_flags;
     IMFSample *sample;
@@ -1039,6 +1042,55 @@ static void test_source_reader_from_media_source(void)
     ok(timestamp == 0, "Unexpected timestamp.\n");
     ok(!sample, "Expected sample object.\n");
 
+    IMFSourceReader_Release(reader);
+    IMFMediaSource_Release(source);
+
+    /* Request a non-native bit depth. */
+    source = create_test_source(1);
+    ok(!!source, "Failed to create test source.\n");
+
+    hr = MFCreateSourceReaderFromMediaSource(source, NULL, &reader);
+    ok(hr == S_OK, "Failed to create source reader, hr %#x.\n", hr);
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFAudioFormat_PCM);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_BITS_PER_SAMPLE, 16);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, media_type);
+todo_wine
+    ok(hr == MF_E_TOPO_CODEC_NOT_FOUND, "Unexpected success setting current media type, hr %#x.\n", hr);
+
+    IMFMediaType_Release(media_type);
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "Failed to create media type, hr %#x.\n", hr);
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFAudioFormat_PCM);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_BITS_PER_SAMPLE, 32);
+    ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
+
+    hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, media_type);
+    ok(hr == S_OK, "Failed to set current media type, hr %#x.\n", hr);
+
+    hr = IMFSourceReader_SetStreamSelection(reader, 0, TRUE);
+    ok(hr == S_OK, "Failed to select a stream, hr %#x.\n", hr);
+
+    hr = IMFSourceReader_ReadSample(reader, 0, 0, &actual_index, &stream_flags, &timestamp, &sample);
+    ok(hr == S_OK, "Failed to get a sample, hr %#x.\n", hr);
+    ok(actual_index == 0, "Unexpected stream index %u\n", actual_index);
+    ok(!stream_flags, "Unexpected stream flags %#x.\n", stream_flags);
+    ok(timestamp == 123, "Unexpected timestamp.\n");
+    ok(!!sample, "Expected sample object.\n");
+    IMFSample_Release(sample);
+
+    IMFMediaType_Release(media_type);
     IMFSourceReader_Release(reader);
     IMFMediaSource_Release(source);
 
