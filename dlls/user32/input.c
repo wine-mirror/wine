@@ -1540,13 +1540,27 @@ BOOL WINAPI UnregisterHotKey(HWND hwnd,INT id)
  */
 HKL WINAPI LoadKeyboardLayoutW( const WCHAR *name, UINT flags )
 {
-    DWORD tmp;
+    WCHAR layout_path[MAX_PATH], value[5];
+    DWORD value_size, tmp;
+    HKEY hkey;
     HKL layout;
 
     FIXME_(keyboard)( "name %s, flags %x, semi-stub!\n", debugstr_w( name ), flags );
 
     tmp = wcstoul( name, NULL, 16 );
     layout = UlongToHandle( tmp );
+
+    wcscpy( layout_path, L"System\\CurrentControlSet\\Control\\Keyboard Layouts\\" );
+    wcscat( layout_path, name );
+
+    if (!RegOpenKeyW( HKEY_LOCAL_MACHINE, layout_path, &hkey ))
+    {
+        value_size = sizeof(value);
+        if (!RegGetValueW( hkey, NULL, L"Layout Id", RRF_RT_REG_SZ, NULL, (void *)&value, &value_size ))
+            layout = UlongToHandle( MAKELONG( LOWORD( tmp ), 0xf000 | (wcstoul( value, NULL, 16 ) & 0xfff) ) );
+
+        RegCloseKey( hkey );
+    }
 
     if ((flags & KLF_ACTIVATE) && ActivateKeyboardLayout( layout, 0 )) return layout;
 
