@@ -281,6 +281,15 @@ static void *get_ip(const CONTEXT *ctx)
 #endif
 }
 
+static void set_ip(CONTEXT *ctx, void *ip)
+{
+#ifdef __i386__
+    ctx->Eip = (DWORD_PTR)ip;
+#elif defined(__x86_64__)
+    ctx->Rip = (DWORD_PTR)ip;
+#endif
+}
+
 #define fetch_thread_context(a) fetch_thread_context_(__LINE__,a)
 static void fetch_thread_context_(unsigned line, struct debuggee_thread *thread)
 {
@@ -1220,9 +1229,9 @@ static void test_debug_children(const char *name, DWORD flag, BOOL debug_child, 
     ok(ret, "DeleteFileA failed, last error %d.\n", GetLastError());
 }
 
-static void wait_debugger(HANDLE event)
+static void wait_debugger(HANDLE event, unsigned int cnt)
 {
-    WaitForSingleObject(event, INFINITE);
+    while (cnt--) WaitForSingleObject(event, INFINITE);
     ExitProcess(0);
 }
 
@@ -1348,11 +1357,11 @@ static void test_debugger(const char *argv0)
     char *cmd;
     BOOL ret;
 
-    event = CreateEventW(&sa, TRUE, FALSE, NULL);
+    event = CreateEventW(&sa, FALSE, FALSE, NULL);
     ok(event != NULL, "CreateEvent failed: %u\n", GetLastError());
 
     cmd = heap_alloc(strlen(argv0) + strlen(arguments) + 16);
-    sprintf(cmd, "%s%s%x\n", argv0, arguments, (DWORD)(DWORD_PTR)event);
+    sprintf(cmd, "%s%s%x %u\n", argv0, arguments, (DWORD)(DWORD_PTR)event, OP_BP ? 3 : 1);
 
     memset(&si, 0, sizeof(si));
     si.cb = sizeof(si);
@@ -1737,6 +1746,161 @@ static void test_debugger(const char *argv0)
         }
     }
 
+    if (OP_BP)
+    {
+        CONTEXT orig_context;
+        char instr, *ip;
+
+        /* main thread sleeps inside ntdll waiting for the event. set breakpoint there and make sure
+         * ntdll can handle that. */
+        SuspendThread(ctx.main_thread->handle);
+
+        fetch_thread_context(ctx.main_thread);
+        ret = ReadProcessMemory(pi.hProcess, get_ip(&ctx.main_thread->ctx), &instr, 1, NULL);
+        ok(ret, "ReadProcessMemory failed: %u\n", GetLastError());
+
+        orig_context = ctx.main_thread->ctx;
+        ip = get_ip(&ctx.main_thread->ctx);
+
+#if defined(__i386__)
+        ctx.main_thread->ctx.Eax = 101;
+        ctx.main_thread->ctx.Ebx = 102;
+        ctx.main_thread->ctx.Ecx = 103;
+        ctx.main_thread->ctx.Edx = 104;
+        ctx.main_thread->ctx.Esi = 105;
+        ctx.main_thread->ctx.Edi = 106;
+#elif defined(__x86_64__)
+        ctx.main_thread->ctx.Rax = 101;
+        ctx.main_thread->ctx.Rbx = 102;
+        ctx.main_thread->ctx.Rcx = 103;
+        ctx.main_thread->ctx.Rdx = 104;
+        ctx.main_thread->ctx.Rsi = 105;
+        ctx.main_thread->ctx.Rdi = 106;
+        ctx.main_thread->ctx.R8  = 107;
+        ctx.main_thread->ctx.R9  = 108;
+        ctx.main_thread->ctx.R10 = 109;
+        ctx.main_thread->ctx.R11 = 110;
+        ctx.main_thread->ctx.R12 = 111;
+        ctx.main_thread->ctx.R13 = 112;
+        ctx.main_thread->ctx.R14 = 113;
+        ctx.main_thread->ctx.R15 = 114;
+#endif
+        set_thread_context(&ctx, ctx.main_thread);
+
+        fetch_thread_context(ctx.main_thread);
+#if defined(__i386__)
+        /* win2k8 do not preserve eax, rcx and edx; newer versions do */
+        ok(ctx.main_thread->ctx.Ebx == 102, "Ebx = %x\n", ctx.main_thread->ctx.Ebx);
+        ok(ctx.main_thread->ctx.Esi == 105, "Esi = %x\n", ctx.main_thread->ctx.Esi);
+        ok(ctx.main_thread->ctx.Edi == 106, "Edi = %x\n", ctx.main_thread->ctx.Edi);
+#elif defined(__x86_64__)
+        ok(ctx.main_thread->ctx.Rax == 101,   "Rax = %x\n", ctx.main_thread->ctx.Rax);
+        ok(ctx.main_thread->ctx.Rbx == 102, "Rbx = %x\n", ctx.main_thread->ctx.Rbx);
+        ok(ctx.main_thread->ctx.Rcx == 103, "Rcx = %x\n", ctx.main_thread->ctx.Rcx);
+        ok(ctx.main_thread->ctx.Rdx == 104, "Rdx = %x\n", ctx.main_thread->ctx.Rdx);
+        ok(ctx.main_thread->ctx.Rsi == 105, "Rsi = %x\n", ctx.main_thread->ctx.Rsi);
+        ok(ctx.main_thread->ctx.Rdi == 106, "Rdi = %x\n", ctx.main_thread->ctx.Rdi);
+        ok(ctx.main_thread->ctx.R8  == 107, "R8 = %x\n",  ctx.main_thread->ctx.R8);
+        ok(ctx.main_thread->ctx.R9  == 108, "R9 = %x\n",  ctx.main_thread->ctx.R9);
+        ok(ctx.main_thread->ctx.R10 == 109, "R10 = %x\n", ctx.main_thread->ctx.R10);
+        ok(ctx.main_thread->ctx.R11 == 110, "R11 = %x\n", ctx.main_thread->ctx.R11);
+        ok(ctx.main_thread->ctx.R12 == 111, "R12 = %x\n", ctx.main_thread->ctx.R12);
+        ok(ctx.main_thread->ctx.R13 == 112, "R13 = %x\n", ctx.main_thread->ctx.R13);
+        ok(ctx.main_thread->ctx.R14 == 113, "R14 = %x\n", ctx.main_thread->ctx.R14);
+        ok(ctx.main_thread->ctx.R15 == 114, "R15 = %x\n", ctx.main_thread->ctx.R15);
+#endif
+
+        byte = OP_BP;
+        ret = WriteProcessMemory(pi.hProcess, ip, &byte, 1, NULL);
+        ok(ret, "WriteProcessMemory failed: %u\n", GetLastError());
+
+        SetEvent(event);
+        ResumeThread(ctx.main_thread->handle);
+
+        next_event(&ctx, 2000);
+        ok(ctx.ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
+        ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode = %x\n",
+           ctx.ev.u.Exception.ExceptionRecord.ExceptionCode);
+        ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress == ip,
+           "ExceptionAddress = %p\n", ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress);
+
+        fetch_thread_context(ctx.main_thread);
+        ok(get_ip(&ctx.main_thread->ctx) == ip + 1, "unexpected instruction pointer %p\n", get_ip(&ctx.main_thread->ctx));
+
+#if defined(__i386__)
+        ok(ctx.main_thread->ctx.Eax == 0,   "Eax = %x\n", ctx.main_thread->ctx.Eax);
+        ok(ctx.main_thread->ctx.Ebx == 102, "Ebx = %x\n", ctx.main_thread->ctx.Ebx);
+        ok(ctx.main_thread->ctx.Ecx != 103, "Ecx = %x\n", ctx.main_thread->ctx.Ecx);
+        ok(ctx.main_thread->ctx.Edx != 104, "Edx = %x\n", ctx.main_thread->ctx.Edx);
+        ok(ctx.main_thread->ctx.Esi == 105, "Esi = %x\n", ctx.main_thread->ctx.Esi);
+        ok(ctx.main_thread->ctx.Edi == 106, "Edi = %x\n", ctx.main_thread->ctx.Edi);
+#elif defined(__x86_64__)
+        ok(ctx.main_thread->ctx.Rax == 0,   "Rax = %x\n", ctx.main_thread->ctx.Rax);
+        ok(ctx.main_thread->ctx.Rbx == 102, "Rbx = %x\n", ctx.main_thread->ctx.Rbx);
+        ok(ctx.main_thread->ctx.Rcx != 103, "Rcx = %x\n", ctx.main_thread->ctx.Rcx);
+        ok(ctx.main_thread->ctx.Rdx != 104, "Rdx = %x\n", ctx.main_thread->ctx.Rdx);
+        ok(ctx.main_thread->ctx.Rsi == 105, "Rsi = %x\n", ctx.main_thread->ctx.Rsi);
+        ok(ctx.main_thread->ctx.Rdi == 106, "Rdi = %x\n", ctx.main_thread->ctx.Rdi);
+        ok(ctx.main_thread->ctx.R8  != 107, "R8 = %x\n",  ctx.main_thread->ctx.R8);
+        ok(ctx.main_thread->ctx.R9  != 108, "R9 = %x\n",  ctx.main_thread->ctx.R9);
+        ok(ctx.main_thread->ctx.R10 != 109, "R10 = %x\n", ctx.main_thread->ctx.R10);
+        ok(ctx.main_thread->ctx.R11 != 110, "R11 = %x\n", ctx.main_thread->ctx.R11);
+        ok(ctx.main_thread->ctx.R12 == 111, "R12 = %x\n", ctx.main_thread->ctx.R12);
+        ok(ctx.main_thread->ctx.R13 == 112, "R13 = %x\n", ctx.main_thread->ctx.R13);
+        ok(ctx.main_thread->ctx.R14 == 113, "R14 = %x\n", ctx.main_thread->ctx.R14);
+        ok(ctx.main_thread->ctx.R15 == 114, "R15 = %x\n", ctx.main_thread->ctx.R15);
+#endif
+
+        ctx.main_thread->ctx = orig_context;
+        set_ip(&ctx.main_thread->ctx, ip);
+        set_thread_context(&ctx, ctx.main_thread);
+
+        ret = WriteProcessMemory(pi.hProcess, ip, &instr, 1, NULL);
+        ok(ret, "WriteProcessMemory failed: %u\n", GetLastError());
+
+        memset(buf + 10, 0x90, 10); /* nop */
+        ret = WriteProcessMemory(pi.hProcess, mem + 10, buf + 10, 10, NULL);
+        ok(ret, "WriteProcessMemory failed: %u\n", GetLastError());
+
+        next_event(&ctx, POLL_EVENT_TIMEOUT);
+
+        /* try single step while debugee is in a syscall */
+        fetch_thread_context(ctx.main_thread);
+        orig_context = ctx.main_thread->ctx;
+        ip = get_ip(&ctx.main_thread->ctx);
+
+#if defined(__i386__)
+        ctx.main_thread->ctx.EFlags |= 0x100;
+        ctx.main_thread->ctx.Eip = (ULONG_PTR)mem + 10;
+#elif defined(__x86_64__)
+        ctx.main_thread->ctx.EFlags |= 0x100;
+        ctx.main_thread->ctx.Rip = (ULONG64)mem + 10;
+#endif
+        set_thread_context(&ctx, ctx.main_thread);
+
+        SetEvent(event);
+
+        next_event(&ctx, WAIT_EVENT_TIMEOUT);
+        if (sizeof(void*) != 4 || ctx.ev.u.Exception.ExceptionRecord.ExceptionCode != EXCEPTION_BREAKPOINT)
+        {
+            ok(ctx.ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT, "dwDebugEventCode = %d\n", ctx.ev.dwDebugEventCode);
+            ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_SINGLE_STEP, "ExceptionCode = %x\n",
+               ctx.ev.u.Exception.ExceptionRecord.ExceptionCode);
+            ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress == mem + 10 ||
+               ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress == mem + 11,
+               "ExceptionAddress = %p expected %p\n", ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress, mem + 10);
+
+            fetch_thread_context(ctx.main_thread);
+            ok(get_ip(&ctx.main_thread->ctx) == ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress,
+               "ip = %p\n", get_ip(&ctx.main_thread->ctx));
+
+        }
+        else win_skip("got breakpoint instead of single step exception\n");
+
+        ctx.main_thread->ctx = orig_context;
+        set_thread_context(&ctx, ctx.main_thread);
+    }
+
     SetEvent(event);
 
     do
@@ -1988,9 +2152,10 @@ START_TEST(debugger)
     }
     else if (myARGC >= 4 && !strcmp(myARGV[2], "wait"))
     {
-        DWORD event;
+        DWORD event, cnt = 1;
         sscanf(myARGV[3], "%x", &event);
-        wait_debugger((HANDLE)(DWORD_PTR)event);
+        if (myARGC >= 5) cnt = atoi(myARGV[4]);
+        wait_debugger((HANDLE)(DWORD_PTR)event, cnt);
     }
     else
     {
