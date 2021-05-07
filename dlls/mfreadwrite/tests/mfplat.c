@@ -1062,7 +1062,6 @@ static void test_source_reader_from_media_source(void)
     ok(hr == S_OK, "Failed to set attribute, hr %#x.\n", hr);
 
     hr = IMFSourceReader_SetCurrentMediaType(reader, 0, NULL, media_type);
-todo_wine
     ok(hr == MF_E_TOPO_CODEC_NOT_FOUND, "Unexpected success setting current media type, hr %#x.\n", hr);
 
     IMFMediaType_Release(media_type);

@@ -1578,7 +1578,7 @@ static HRESULT source_reader_set_compatible_media_type(struct source_reader *rea
         return MF_E_INVALIDMEDIATYPE;
 
     /* No need for a decoder or type change. */
-    if (flags & MF_MEDIATYPE_EQUAL_FORMAT_TYPES)
+    if (flags & MF_MEDIATYPE_EQUAL_FORMAT_DATA)
         return S_OK;
 
     if (FAILED(hr = source_reader_get_source_type_handler(reader, index, &type_handler)))
@@ -1586,7 +1586,7 @@ static HRESULT source_reader_set_compatible_media_type(struct source_reader *rea
 
     while (!type_set && IMFMediaTypeHandler_GetMediaTypeByIndex(type_handler, i++, &native_type) == S_OK)
     {
-        static const DWORD compare_flags = MF_MEDIATYPE_EQUAL_MAJOR_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_TYPES;
+        static const DWORD compare_flags = MF_MEDIATYPE_EQUAL_MAJOR_TYPES | MF_MEDIATYPE_EQUAL_FORMAT_DATA;
 
         if (SUCCEEDED(IMFMediaType_IsEqual(native_type, type, &flags)) && (flags & compare_flags) == compare_flags)
         {
