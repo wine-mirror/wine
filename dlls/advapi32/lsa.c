@@ -237,6 +237,22 @@ NTSTATUS WINAPI LsaEnumerateAccountRights(
 }
 
 /******************************************************************************
+ * LsaEnumerateAccounts [ADVAPI32.@]
+ *
+ */
+NTSTATUS WINAPI LsaEnumerateAccounts(
+    LSA_HANDLE policy,
+    PLSA_ENUMERATION_HANDLE context,
+    PVOID *buffer,
+    ULONG maxlen,
+    PULONG count)
+{
+    FIXME("(%p,%p,%p,%d,%p) stub\n", policy, context, buffer, maxlen, count);
+    if (count) *count = 0;
+    return STATUS_NO_MORE_ENTRIES;
+}
+
+/******************************************************************************
  * LsaEnumerateAccountsWithUserRight [ADVAPI32.@]
  *
  */

@@ -452,7 +452,7 @@
 @ stub LsaDelete
 @ stdcall LsaDeleteTrustedDomain(ptr ptr)
 @ stdcall LsaEnumerateAccountRights(ptr ptr ptr ptr)
-@ stub LsaEnumerateAccounts
+@ stdcall LsaEnumerateAccounts(ptr ptr ptr long ptr)
 @ stdcall LsaEnumerateAccountsWithUserRight(ptr ptr ptr ptr)
 @ stub LsaEnumeratePrivileges
 @ stub LsaEnumeratePrivilegesOfAccount
