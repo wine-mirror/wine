@@ -821,13 +821,6 @@ static void test_SPI_SETBORDER( void )                 /*      6 */
             "Control Panel\\Desktop\\WindowMetrics","CaptionWidth", dpi);
     ncmsave.iCaptionWidth = CaptionWidth;
 
-    /* These tests hang when XFree86 4.0 for Windows is running (tested on
-     *  WinNT, SP2, Cygwin/XFree 4.1.0. Skip the test when XFree86 is
-     * running.
-     */
-    if (FindWindowA( NULL, "Cygwin/XFree86" ))
-        return;
-
     trace("testing SPI_{GET,SET}BORDER\n");
 
     SetLastError(0xdeadbeef);
@@ -1126,13 +1119,6 @@ static void test_SPI_SETICONTITLEWRAP( void )          /*     26 */
     const UINT vals[]={TRUE,FALSE};
     unsigned int i;
     ICONMETRICSA im;
-
-    /* These tests hang when XFree86 4.0 for Windows is running (tested on
-     * WinNT, SP2, Cygwin/XFree 4.1.0. Skip the test when XFree86 is
-     * running.
-     */
-    if (FindWindowA( NULL, "Cygwin/XFree86" ))
-        return;
 
     trace("testing SPI_{GET,SET}ICONTITLEWRAP\n");
     SetLastError(0xdeadbeef);
