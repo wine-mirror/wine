@@ -488,6 +488,11 @@ static DWORD WINAPI test_stack_size_thread(void *ptr)
     ExitThread(0);
 }
 
+static DWORD WINAPI test_stack_size_dummy_thread(void *ptr)
+{
+    return 0;
+}
+
 static void test_RtlCreateUserStack(void)
 {
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( NtCurrentTeb()->Peb->ImageBaseAddress );
@@ -564,6 +569,14 @@ static void test_RtlCreateUserStack(void)
     thread = CreateThread(NULL, 0x3ff000, test_stack_size_thread, &args, STACK_SIZE_PARAM_IS_A_RESERVATION, NULL);
     WaitForSingleObject(thread, INFINITE);
     CloseHandle(thread);
+
+    if (is_win64)
+    {
+        thread = CreateThread(NULL, 0x80000000, test_stack_size_dummy_thread, NULL, STACK_SIZE_PARAM_IS_A_RESERVATION, NULL);
+        ok(thread != NULL, "CreateThread with huge stack failed\n");
+        WaitForSingleObject(thread, INFINITE);
+        CloseHandle(thread);
+    }
 
     args.expect_committed = default_commit < 0x2000 ? 0x2000 : default_commit;
     args.expect_reserved = 0x100000;
