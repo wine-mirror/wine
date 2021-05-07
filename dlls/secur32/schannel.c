@@ -17,9 +17,8 @@
  *
  * This file implements the schannel provider, or, the SSL/TLS implementations.
  */
-#include "config.h"
-#include "wine/port.h"
 
+#include <assert.h>
 #include <stdarg.h>
 #include <errno.h>
 
@@ -28,6 +27,7 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winnls.h"
+#include "lmcons.h"
 #include "sspi.h"
 #include "schannel.h"
 #include "secur32_priv.h"
@@ -37,7 +37,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 
-#if defined(SONAME_LIBGNUTLS) || defined (HAVE_SECURITY_SECURITY_H)
+const struct schan_funcs *schan_funcs = NULL;
 
 #define SCHAN_INVALID_HANDLE ~0UL
 
@@ -56,7 +56,7 @@ struct schan_handle
 
 struct schan_context
 {
-    schan_imp_session session;
+    schan_session session;
     struct schan_transport transport;
     ULONG req_ctx_attr;
     const CERT_CONTEXT *cert;
@@ -242,7 +242,7 @@ static void read_config(void)
 
     RegCloseKey(protocols_key);
 
-    config_enabled_protocols = enabled & schan_imp_enabled_protocols();
+    config_enabled_protocols = enabled & schan_funcs->get_enabled_protocols();
     config_default_disabled_protocols = default_disabled;
     config_read = TRUE;
 
@@ -389,6 +389,116 @@ static SECURITY_STATUS get_cert(const SCHANNEL_CRED *cred, CERT_CONTEXT const **
     return status;
 }
 
+static WCHAR *get_key_container_path(const CERT_CONTEXT *ctx)
+{
+    static const WCHAR rsabaseW[] =
+        {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\','C','r','y','p','t','o','\\','R','S','A','\\',0};
+    CERT_KEY_CONTEXT keyctx;
+    DWORD size = sizeof(keyctx), prov_size = 0;
+    CRYPT_KEY_PROV_INFO *prov;
+    WCHAR username[UNLEN + 1], *ret = NULL;
+    DWORD len = ARRAY_SIZE(username);
+
+    if (CertGetCertificateContextProperty(ctx, CERT_KEY_CONTEXT_PROP_ID, &keyctx, &size))
+    {
+        char *str;
+        if (!CryptGetProvParam(keyctx.hCryptProv, PP_CONTAINER, NULL, &size, 0)) return NULL;
+        if (!(str = RtlAllocateHeap(GetProcessHeap(), 0, size))) return NULL;
+        if (!CryptGetProvParam(keyctx.hCryptProv, PP_CONTAINER, (BYTE *)str, &size, 0)) return NULL;
+
+        len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+        if (!(ret = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(rsabaseW) + len * sizeof(WCHAR))))
+        {
+            RtlFreeHeap(GetProcessHeap(), 0, str);
+            return NULL;
+        }
+        strcpyW(ret, rsabaseW);
+        MultiByteToWideChar(CP_ACP, 0, str, -1, ret + strlenW(ret), len);
+        RtlFreeHeap(GetProcessHeap(), 0, str);
+    }
+    else if (CertGetCertificateContextProperty(ctx, CERT_KEY_PROV_INFO_PROP_ID, NULL, &prov_size))
+    {
+        if (!(prov = RtlAllocateHeap(GetProcessHeap(), 0, prov_size))) return NULL;
+        if (!CertGetCertificateContextProperty(ctx, CERT_KEY_PROV_INFO_PROP_ID, prov, &prov_size))
+        {
+            RtlFreeHeap(GetProcessHeap(), 0, prov);
+            return NULL;
+        }
+        if (!(ret = RtlAllocateHeap(GetProcessHeap(), 0,
+                                    sizeof(rsabaseW) + strlenW(prov->pwszContainerName) * sizeof(WCHAR))))
+        {
+            RtlFreeHeap(GetProcessHeap(), 0, prov);
+            return NULL;
+        }
+        strcpyW(ret, rsabaseW);
+        strcatW(ret, prov->pwszContainerName);
+        RtlFreeHeap(GetProcessHeap(), 0, prov);
+    }
+
+    if (!ret && GetUserNameW(username, &len) && (ret = RtlAllocateHeap(GetProcessHeap(), 0,
+                                                                       sizeof(rsabaseW) + len * sizeof(WCHAR))))
+    {
+        strcpyW(ret, rsabaseW);
+        strcatW(ret, username);
+    }
+
+    return ret;
+}
+
+#define MAX_LEAD_BYTES 8
+static BYTE *get_key_blob(const CERT_CONTEXT *ctx, DWORD *size)
+{
+    static const WCHAR keyexchangeW[] =
+        {'K','e','y','E','x','c','h','a','n','g','e','K','e','y','P','a','i','r',0};
+    static const WCHAR signatureW[] =
+        {'S','i','g','n','a','t','u','r','e','K','e','y','P','a','i','r',0};
+    BYTE *buf, *ret = NULL;
+    DATA_BLOB blob_in, blob_out;
+    DWORD spec = 0, type, len;
+    WCHAR *path;
+    HKEY hkey;
+
+    if (!(path = get_key_container_path(ctx))) return NULL;
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, path, 0, KEY_READ, &hkey))
+    {
+        RtlFreeHeap(GetProcessHeap(), 0, path);
+        return NULL;
+    }
+    RtlFreeHeap(GetProcessHeap(), 0, path);
+
+    if (!RegQueryValueExW(hkey, keyexchangeW, 0, &type, NULL, &len)) spec = AT_KEYEXCHANGE;
+    else if (!RegQueryValueExW(hkey, signatureW, 0, &type, NULL, &len)) spec = AT_SIGNATURE;
+    else
+    {
+        RegCloseKey(hkey);
+        return NULL;
+    }
+
+    if (!(buf = RtlAllocateHeap(GetProcessHeap(), 0, len + MAX_LEAD_BYTES)))
+    {
+        RegCloseKey(hkey);
+        return NULL;
+    }
+
+    if (!RegQueryValueExW(hkey, (spec == AT_KEYEXCHANGE) ? keyexchangeW : signatureW, 0, &type, buf, &len))
+    {
+        blob_in.pbData = buf;
+        blob_in.cbData = len;
+        if (CryptUnprotectData(&blob_in, NULL, NULL, NULL, NULL, 0, &blob_out))
+        {
+            assert(blob_in.cbData >= blob_out.cbData);
+            memcpy(buf, blob_out.pbData, blob_out.cbData);
+            LocalFree(blob_out.pbData);
+            *size = blob_out.cbData + MAX_LEAD_BYTES;
+            ret = buf;
+        }
+    }
+    else RtlFreeHeap(GetProcessHeap(), 0, buf);
+
+    RegCloseKey(hkey);
+    return ret;
+}
+
 static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schanCred,
  PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
@@ -397,6 +507,7 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schan
     ULONG_PTR handle;
     SECURITY_STATUS status = SEC_E_OK;
     const CERT_CONTEXT *cert = NULL;
+    DATA_BLOB key_blob = {0};
 
     TRACE("schanCred %p, phCredential %p, ptsExpiry %p\n", schanCred, phCredential, ptsExpiry);
 
@@ -426,20 +537,17 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schan
         return SEC_E_NO_AUTHENTICATING_AUTHORITY;
     }
 
-    creds = heap_alloc(sizeof(*creds));
-    if (!creds) return SEC_E_INSUFFICIENT_MEMORY;
+    if (!(creds = heap_alloc(sizeof(*creds)))) return SEC_E_INSUFFICIENT_MEMORY;
+    creds->credential_use = SECPKG_CRED_OUTBOUND;
+    creds->enabled_protocols = enabled_protocols;
+
+    if (cert && !(key_blob.pbData = get_key_blob(cert, &key_blob.cbData))) goto fail;
+    if (!schan_funcs->allocate_certificate_credentials(creds, cert, &key_blob)) goto fail;
+    RtlFreeHeap(GetProcessHeap(), 0, key_blob.pbData);
 
     handle = schan_alloc_handle(creds, SCHAN_HANDLE_CRED);
     if (handle == SCHAN_INVALID_HANDLE) goto fail;
 
-    creds->credential_use = SECPKG_CRED_OUTBOUND;
-    if (!schan_imp_allocate_certificate_credentials(creds, cert))
-    {
-        schan_free_handle(handle, SCHAN_HANDLE_CRED);
-        goto fail;
-    }
-
-    creds->enabled_protocols = enabled_protocols;
     phCredential->dwLower = handle;
     phCredential->dwUpper = 0;
 
@@ -454,6 +562,7 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schan
 
 fail:
     heap_free(creds);
+    RtlFreeHeap(GetProcessHeap(), 0, key_blob.pbData);
     return SEC_E_INTERNAL_ERROR;
 }
 
@@ -542,10 +651,8 @@ static SECURITY_STATUS SEC_ENTRY schan_FreeCredentialsHandle(
     creds = schan_free_handle(phCredential->dwLower, SCHAN_HANDLE_CRED);
     if (!creds) return SEC_E_INVALID_HANDLE;
 
-    if (creds->credential_use == SECPKG_CRED_OUTBOUND)
-        schan_imp_free_certificate_credentials(creds);
+    if (creds->credential_use == SECPKG_CRED_OUTBOUND) schan_funcs->free_certificate_credentials(creds);
     heap_free(creds);
-
     return SEC_E_OK;
 }
 
@@ -599,7 +706,7 @@ static void schan_resize_current_buffer(const struct schan_buffers *s, SIZE_T mi
     b->pvBuffer = new_data;
 }
 
-char *schan_get_buffer(const struct schan_transport *t, struct schan_buffers *s, SIZE_T *count)
+static char * CDECL schan_get_buffer(const struct schan_transport *t, struct schan_buffers *s, SIZE_T *count)
 {
     SIZE_T max_count;
     PSecBuffer buffer;
@@ -672,7 +779,7 @@ char *schan_get_buffer(const struct schan_transport *t, struct schan_buffers *s,
  *  another errno-style error value on failure
  *
  */
-int schan_pull(struct schan_transport *t, void *buff, size_t *buff_len)
+static int CDECL schan_pull(struct schan_transport *t, void *buff, size_t *buff_len)
 {
     char *b;
     SIZE_T local_len = *buff_len;
@@ -711,7 +818,7 @@ int schan_pull(struct schan_transport *t, void *buff, size_t *buff_len)
  *  another errno-style error value on failure
  *
  */
-int schan_push(struct schan_transport *t, const void *buff, size_t *buff_len)
+static int CDECL schan_push(struct schan_transport *t, const void *buff, size_t *buff_len)
 {
     char *b;
     SIZE_T local_len = *buff_len;
@@ -733,7 +840,7 @@ int schan_push(struct schan_transport *t, const void *buff, size_t *buff_len)
     return 0;
 }
 
-schan_imp_session schan_session_for_transport(struct schan_transport* t)
+static schan_session CDECL schan_get_session_for_transport(struct schan_transport* t)
 {
     return t->ctx->session;
 }
@@ -845,7 +952,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
             return SEC_E_INTERNAL_ERROR;
         }
 
-        if (!schan_imp_create_session(&ctx->session, cred))
+        if (!schan_funcs->create_session(&ctx->session, cred))
         {
             schan_free_handle(handle, SCHAN_HANDLE_CTX);
             heap_free(ctx);
@@ -858,7 +965,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
             ctx->header_size = HEADER_SIZE_TLS;
 
         ctx->transport.ctx = ctx;
-        schan_imp_set_session_transport(ctx->session, &ctx->transport);
+        schan_funcs->set_session_transport(ctx->session, &ctx->transport);
 
         if (pszTargetName && *pszTargetName)
         {
@@ -868,7 +975,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
             if (target)
             {
                 WideCharToMultiByte( CP_UNIXCP, 0, pszTargetName, -1, target, len, NULL, NULL );
-                schan_imp_set_session_target( ctx->session, target );
+                schan_funcs->set_session_target( ctx->session, target );
                 heap_free( target );
             }
         }
@@ -876,13 +983,13 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
         if (pInput && (idx = schan_find_sec_buffer_idx(pInput, 0, SECBUFFER_APPLICATION_PROTOCOLS)) != -1)
         {
             buffer = &pInput->pBuffers[idx];
-            schan_imp_set_application_protocols(ctx->session, buffer->pvBuffer, buffer->cbBuffer);
+            schan_funcs->set_application_protocols(ctx->session, buffer->pvBuffer, buffer->cbBuffer);
         }
 
         if (pInput && (idx = schan_find_sec_buffer_idx(pInput, 0, SECBUFFER_DTLS_MTU)) != -1)
         {
             buffer = &pInput->pBuffers[idx];
-            if (buffer->cbBuffer >= sizeof(WORD)) schan_imp_set_dtls_mtu(ctx->session, *(WORD *)buffer->pvBuffer);
+            if (buffer->cbBuffer >= sizeof(WORD)) schan_funcs->set_dtls_mtu(ctx->session, *(WORD *)buffer->pvBuffer);
             else WARN("invalid buffer size %u\n", buffer->cbBuffer);
         }
 
@@ -935,7 +1042,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     init_schan_buffers(&ctx->transport.out, pOutput, schan_init_sec_ctx_get_next_output_buffer);
 
     /* Perform the TLS handshake */
-    ret = schan_imp_handshake(ctx->session);
+    ret = schan_funcs->handshake(ctx->session);
 
     out_buffers = &ctx->transport.out;
     if (out_buffers->current_buffer_idx != -1)
@@ -1027,18 +1134,33 @@ static void *get_alg_name(ALG_ID id, BOOL wide)
 
 static SECURITY_STATUS ensure_remote_cert(struct schan_context *ctx)
 {
-    HCERTSTORE cert_store;
+    HCERTSTORE store;
+    PCCERT_CONTEXT cert = NULL;
     SECURITY_STATUS status;
+    struct schan_cert_list list;
 
-    if(ctx->cert)
-        return SEC_E_OK;
-
-    cert_store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
-    if(!cert_store)
+    if (ctx->cert) return SEC_E_OK;
+    if (!(store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL)))
         return GetLastError();
 
-    status = schan_imp_get_session_peer_certificate(ctx->session, cert_store, &ctx->cert);
-    CertCloseStore(cert_store, 0);
+    if ((status = schan_funcs->get_session_peer_certificate(ctx->session, &list)) == SEC_E_OK)
+    {
+        unsigned int i;
+        for (i = 0; i < list.count; i++)
+        {
+            if (!CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING, list.certs[i].pbData,
+                                                  list.certs[i].cbData, CERT_STORE_ADD_REPLACE_EXISTING,
+                                                  i ? NULL : &cert))
+            {
+                if (i) CertFreeCertificateContext(cert);
+                return GetLastError();
+            }
+        }
+        RtlFreeHeap(GetProcessHeap(), 0, list.certs);
+    }
+
+    ctx->cert = cert;
+    CertCloseStore(store, 0);
     return status;
 }
 
@@ -1059,13 +1181,13 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
         case SECPKG_ATTR_STREAM_SIZES:
         {
             SecPkgContext_ConnectionInfo info;
-            status = schan_imp_get_connection_info(ctx->session, &info);
+            status = schan_funcs->get_connection_info(ctx->session, &info);
             if (status == SEC_E_OK)
             {
                 SecPkgContext_StreamSizes *stream_sizes = buffer;
                 SIZE_T mac_size = info.dwHashStrength;
-                unsigned int block_size = schan_imp_get_session_cipher_block_size(ctx->session);
-                unsigned int message_size = schan_imp_get_max_message_size(ctx->session);
+                unsigned int block_size = schan_funcs->get_session_cipher_block_size(ctx->session);
+                unsigned int message_size = schan_funcs->get_max_message_size(ctx->session);
 
                 TRACE("Using header size %lu mac bytes %lu, message size %u, block size %u\n",
                       ctx->header_size, mac_size, message_size, block_size);
@@ -1083,12 +1205,12 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
         case SECPKG_ATTR_KEY_INFO:
         {
             SecPkgContext_ConnectionInfo conn_info;
-            status = schan_imp_get_connection_info(ctx->session, &conn_info);
+            status = schan_funcs->get_connection_info(ctx->session, &conn_info);
             if (status == SEC_E_OK)
             {
                 SecPkgContext_KeyInfoW *info = buffer;
                 info->KeySize = conn_info.dwCipherStrength;
-                info->SignatureAlgorithm = schan_imp_get_key_signature_algorithm(ctx->session);
+                info->SignatureAlgorithm = schan_funcs->get_key_signature_algorithm(ctx->session);
                 info->EncryptAlgorithm = conn_info.aiCipher;
                 info->sSignatureAlgorithmName = get_alg_name(info->SignatureAlgorithm, TRUE);
                 info->sEncryptAlgorithmName = get_alg_name(info->EncryptAlgorithm, TRUE);
@@ -1109,7 +1231,7 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
         case SECPKG_ATTR_CONNECTION_INFO:
         {
             SecPkgContext_ConnectionInfo *info = buffer;
-            return schan_imp_get_connection_info(ctx->session, info);
+            return schan_funcs->get_connection_info(ctx->session, info);
         }
         case SECPKG_ATTR_ENDPOINT_BINDINGS:
         {
@@ -1154,12 +1276,12 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
         case SECPKG_ATTR_UNIQUE_BINDINGS:
         {
             SecPkgContext_Bindings *bindings = buffer;
-            return schan_imp_get_unique_channel_binding(ctx->session, bindings);
+            return schan_funcs->get_unique_channel_binding(ctx->session, bindings);
         }
         case SECPKG_ATTR_APPLICATION_PROTOCOL:
         {
             SecPkgContext_ApplicationProtocol *protocol = buffer;
-            return schan_imp_get_application_protocol(ctx->session, protocol);
+            return schan_funcs->get_application_protocol(ctx->session, protocol);
         }
 
         default:
@@ -1289,7 +1411,7 @@ static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle
         init_schan_buffers(&ctx->transport.out, message, schan_encrypt_message_get_next_buffer_token);
 
     length = data_size;
-    status = schan_imp_send(ctx->session, data, &length);
+    status = schan_funcs->send(ctx->session, data, &length);
 
     TRACE("Sent %ld bytes.\n", length);
 
@@ -1422,7 +1544,7 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
     while (received < data_size)
     {
         SIZE_T length = data_size - received;
-        status = schan_imp_recv(ctx->session, data + received, &length);
+        status = schan_funcs->recv(ctx->session, data + received, &length);
 
         if (status == SEC_I_RENEGOTIATE)
             break;
@@ -1478,11 +1600,9 @@ static SECURITY_STATUS SEC_ENTRY schan_DeleteSecurityContext(PCtxtHandle context
     ctx = schan_free_handle(context_handle->dwLower, SCHAN_HANDLE_CTX);
     if (!ctx) return SEC_E_INVALID_HANDLE;
 
-    if (ctx->cert)
-        CertFreeCertificateContext(ctx->cert);
-    schan_imp_dispose_session(ctx->session);
+    if (ctx->cert) CertFreeCertificateContext(ctx->cert);
+    schan_funcs->dispose_session(ctx->session);
     heap_free(ctx);
-
     return SEC_E_OK;
 }
 
@@ -1552,6 +1672,14 @@ static const WCHAR schannelComment[] = { 'S','c','h','a','n','n','e','l',' ',
  'S','e','c','u','r','i','t','y',' ','P','a','c','k','a','g','e',0 };
 static const WCHAR schannelDllName[] = { 's','c','h','a','n','n','e','l','.','d','l','l',0 };
 
+const struct schan_callbacks schan_callbacks =
+{
+    schan_get_buffer,
+    schan_get_session_for_transport,
+    schan_pull,
+    schan_push,
+};
+
 void SECUR32_initSchannelSP(void)
 {
     /* This is what Windows reports.  This shouldn't break any applications
@@ -1578,8 +1706,11 @@ void SECUR32_initSchannelSP(void)
     };
     SecureProvider *provider;
 
-    if (!schan_imp_init())
+    if (!schan_funcs && __wine_init_unix_lib(hsecur32, DLL_PROCESS_ATTACH, &schan_callbacks, &schan_funcs))
+    {
+        ERR( "no schannel support, expect problems\n" );
         return;
+    }
 
     schan_handle_table = heap_alloc(64 * sizeof(*schan_handle_table));
     if (!schan_handle_table)
@@ -1597,13 +1728,11 @@ void SECUR32_initSchannelSP(void)
     }
 
     SECUR32_addPackages(provider, ARRAY_SIZE(info), NULL, info);
-
     return;
 
 fail:
     heap_free(schan_handle_table);
     schan_handle_table = NULL;
-    schan_imp_deinit();
     return;
 }
 
@@ -1620,7 +1749,7 @@ void SECUR32_deinitSchannelSP(void)
         if (schan_handle_table[i].type == SCHAN_HANDLE_CTX)
         {
             struct schan_context *ctx = schan_free_handle(i, SCHAN_HANDLE_CTX);
-            schan_imp_dispose_session(ctx->session);
+            schan_funcs->dispose_session(ctx->session);
             heap_free(ctx);
         }
     }
@@ -1631,21 +1760,12 @@ void SECUR32_deinitSchannelSP(void)
         {
             struct schan_credentials *cred;
             cred = schan_free_handle(i, SCHAN_HANDLE_CRED);
-            schan_imp_free_certificate_credentials(cred);
+            schan_funcs->free_certificate_credentials(cred);
             heap_free(cred);
         }
     }
     heap_free(schan_handle_table);
-    schan_imp_deinit();
+
+    __wine_init_unix_lib(hsecur32, DLL_PROCESS_DETACH, NULL, NULL);
+    schan_funcs = NULL;
 }
-
-#else /* SONAME_LIBGNUTLS || HAVE_SECURITY_SECURITY_H */
-
-void SECUR32_initSchannelSP(void)
-{
-    ERR("TLS library not found, SSL connections will fail\n");
-}
-
-void SECUR32_deinitSchannelSP(void) {}
-
-#endif /* SONAME_LIBGNUTLS || HAVE_SECURITY_SECURITY_H */

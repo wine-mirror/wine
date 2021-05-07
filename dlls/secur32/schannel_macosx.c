@@ -19,6 +19,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include "config.h"
 #include "wine/port.h"
 
@@ -33,16 +37,21 @@
 #undef LoadResource
 #endif
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "sspi.h"
 #include "schannel.h"
+#include "winternl.h"
 #include "secur32_priv.h"
 #include "wine/debug.h"
 
 #ifdef HAVE_SECURITY_SECURITY_H
 
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
+
+static const struct schan_callbacks *callbacks;
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1060
 /* Defined in <Security/CipherSuite.h> in the 10.6 SDK or later. */
@@ -444,7 +453,7 @@ static const struct cipher_suite* get_cipher_suite(SSLCipherSuite cipher_suite)
 }
 
 
-static DWORD schan_get_session_protocol(struct mac_session* s)
+static DWORD get_session_protocol(struct mac_session* s)
 {
     SSLProtocol protocol;
     int status;
@@ -473,7 +482,7 @@ static DWORD schan_get_session_protocol(struct mac_session* s)
     }
 }
 
-static ALG_ID schan_get_cipher_algid(const struct cipher_suite* c)
+static ALG_ID get_cipher_algid(const struct cipher_suite* c)
 {
     TRACE("(%#x)\n", (unsigned int)c->suite);
 
@@ -503,7 +512,7 @@ static ALG_ID schan_get_cipher_algid(const struct cipher_suite* c)
     }
 }
 
-static unsigned int schan_get_cipher_key_size(const struct cipher_suite* c)
+static unsigned int get_cipher_key_size(const struct cipher_suite* c)
 {
     TRACE("(%#x)\n", (unsigned int)c->suite);
 
@@ -533,7 +542,7 @@ static unsigned int schan_get_cipher_key_size(const struct cipher_suite* c)
     }
 }
 
-static ALG_ID schan_get_mac_algid(const struct cipher_suite* c)
+static ALG_ID get_mac_algid(const struct cipher_suite* c)
 {
     TRACE("(%#x)\n", (unsigned int)c->suite);
 
@@ -551,7 +560,7 @@ static ALG_ID schan_get_mac_algid(const struct cipher_suite* c)
     }
 }
 
-static unsigned int schan_get_mac_key_size(const struct cipher_suite* c)
+static unsigned int get_mac_key_size(const struct cipher_suite* c)
 {
     TRACE("(%#x)\n", (unsigned int)c->suite);
 
@@ -569,7 +578,7 @@ static unsigned int schan_get_mac_key_size(const struct cipher_suite* c)
     }
 }
 
-static ALG_ID schan_get_kx_algid(const struct cipher_suite* c)
+static ALG_ID get_kx_algid(const struct cipher_suite* c)
 {
     TRACE("(%#x)\n", (unsigned int)c->suite);
 
@@ -608,7 +617,7 @@ static ALG_ID schan_get_kx_algid(const struct cipher_suite* c)
 }
 
 
-/* schan_pull_adapter
+/* pull_adapter
  *      Callback registered with SSLSetIOFuncs as the read function for a
  *      session.  Reads data from the session connection.  Conforms to the
  *      SSLReadFunc type.
@@ -629,8 +638,7 @@ static ALG_ID schan_get_kx_algid(const struct cipher_suite* c)
  *          more data to be read.
  *      other error code for failure.
  */
-static OSStatus schan_pull_adapter(SSLConnectionRef transport, void *buff,
-                                   SIZE_T *buff_len)
+static OSStatus pull_adapter(SSLConnectionRef transport, void *buff, SIZE_T *buff_len)
 {
     struct mac_session *s = (struct mac_session*)transport;
     size_t requested = *buff_len;
@@ -645,7 +653,7 @@ static OSStatus schan_pull_adapter(SSLConnectionRef transport, void *buff,
         return noErr;
     }
 
-    status = schan_pull(s->transport, buff, buff_len);
+    status = callbacks->pull(s->transport, buff, buff_len);
     if (status == 0)
     {
         if (*buff_len == 0)
@@ -678,7 +686,7 @@ static OSStatus schan_pull_adapter(SSLConnectionRef transport, void *buff,
     return ret;
 }
 
-/* schan_push_adapter
+/* push_adapter
  *      Callback registered with SSLSetIOFuncs as the write function for a
  *      session.  Writes data to the session connection.  Conforms to the
  *      SSLWriteFunc type.
@@ -695,8 +703,7 @@ static OSStatus schan_pull_adapter(SSLConnectionRef transport, void *buff,
  *          caller should try again.
  *      other error code for failure.
  */
-static OSStatus schan_push_adapter(SSLConnectionRef transport, const void *buff,
-                                       SIZE_T *buff_len)
+static OSStatus push_adapter(SSLConnectionRef transport, const void *buff, SIZE_T *buff_len)
 {
     struct mac_session *s = (struct mac_session*)transport;
     int status;
@@ -710,7 +717,7 @@ static OSStatus schan_push_adapter(SSLConnectionRef transport, const void *buff,
         return noErr;
     }
 
-    status = schan_push(s->transport, buff, buff_len);
+    status = callbacks->push(s->transport, buff, buff_len);
     if (status == 0)
     {
         TRACE("Pushed %lu bytes\n", *buff_len);
@@ -743,12 +750,12 @@ static const struct {
 
 static DWORD supported_protocols;
 
-DWORD schan_imp_enabled_protocols(void)
+static DWORD CDECL schan_get_enabled_protocols(void)
 {
     return supported_protocols;
 }
 
-BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cred)
+static BOOL CDECL schan_create_session(schan_session *session, schan_credentials *cred)
 {
     struct mac_session *s;
     unsigned i;
@@ -756,9 +763,7 @@ BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cre
 
     TRACE("(%p)\n", session);
 
-    s = heap_alloc(sizeof(*s));
-    if (!s)
-        return FALSE;
+    if (!(s = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(*s)))) return FALSE;
 
     pthread_mutex_init(&s->mutex, NULL);
 
@@ -796,7 +801,7 @@ BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cre
         }
     }
 
-    status = SSLSetIOFuncs(s->context, schan_pull_adapter, schan_push_adapter);
+    status = SSLSetIOFuncs(s->context, pull_adapter, push_adapter);
     if (status != noErr)
     {
         ERR("Failed to set session I/O funcs: %d\n", status);
@@ -807,15 +812,15 @@ BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cre
 
     TRACE("    -> %p/%p\n", s, s->context);
 
-    *session = (schan_imp_session)s;
+    *session = (schan_session)s;
     return TRUE;
 
 fail:
-    heap_free(s);
+    RtlFreeHeap(GetProcessHeap(), 0, s);
     return FALSE;
 }
 
-void schan_imp_dispose_session(schan_imp_session session)
+static void CDECL schan_dispose_session(schan_session session)
 {
     struct mac_session *s = (struct mac_session*)session;
     int status;
@@ -826,11 +831,10 @@ void schan_imp_dispose_session(schan_imp_session session)
     if (status != noErr)
         ERR("Failed to dispose of session context: %d\n", status);
     pthread_mutex_destroy(&s->mutex);
-    heap_free(s);
+    RtlFreeHeap(GetProcessHeap(), 0, s);
 }
 
-void schan_imp_set_session_transport(schan_imp_session session,
-                                     struct schan_transport *t)
+static void CDECL schan_set_session_transport(schan_session session, struct schan_transport *t)
 {
     struct mac_session *s = (struct mac_session*)session;
 
@@ -839,7 +843,7 @@ void schan_imp_set_session_transport(schan_imp_session session,
     s->transport = t;
 }
 
-void schan_imp_set_session_target(schan_imp_session session, const char *target)
+static void CDECL schan_set_session_target(schan_session session, const char *target)
 {
     struct mac_session *s = (struct mac_session*)session;
 
@@ -848,7 +852,7 @@ void schan_imp_set_session_target(schan_imp_session session, const char *target)
     SSLSetPeerDomainName( s->context, target, strlen(target) );
 }
 
-SECURITY_STATUS schan_imp_handshake(schan_imp_session session)
+static SECURITY_STATUS CDECL schan_handshake(schan_session session)
 {
     struct mac_session *s = (struct mac_session*)session;
     int status;
@@ -885,7 +889,7 @@ SECURITY_STATUS schan_imp_handshake(schan_imp_session session)
     return SEC_E_OK;
 }
 
-unsigned int schan_imp_get_session_cipher_block_size(schan_imp_session session)
+static unsigned int CDECL schan_get_session_cipher_block_size(schan_session session)
 {
     struct mac_session* s = (struct mac_session*)session;
     SSLCipherSuite cipherSuite;
@@ -934,13 +938,13 @@ unsigned int schan_imp_get_session_cipher_block_size(schan_imp_session session)
     }
 }
 
-unsigned int schan_imp_get_max_message_size(schan_imp_session session)
+static unsigned int CDECL schan_get_max_message_size(schan_session session)
 {
     FIXME("Returning 1 << 14.\n");
     return 1 << 14;
 }
 
-ALG_ID schan_imp_get_key_signature_algorithm(schan_imp_session session)
+static ALG_ID CDECL schan_get_key_signature_algorithm(schan_session session)
 {
     struct mac_session* s = (struct mac_session*)session;
     SSLCipherSuite cipherSuite;
@@ -1002,8 +1006,7 @@ ALG_ID schan_imp_get_key_signature_algorithm(schan_imp_session session)
     }
 }
 
-SECURITY_STATUS schan_imp_get_connection_info(schan_imp_session session,
-                                              SecPkgContext_ConnectionInfo *info)
+static SECURITY_STATUS CDECL schan_get_connection_info(schan_session session, SecPkgContext_ConnectionInfo *info)
 {
     struct mac_session* s = (struct mac_session*)session;
     SSLCipherSuite cipherSuite;
@@ -1026,46 +1029,44 @@ SECURITY_STATUS schan_imp_get_connection_info(schan_imp_session session,
         return SEC_E_INTERNAL_ERROR;
     }
 
-    info->dwProtocol = schan_get_session_protocol(s);
-    info->aiCipher = schan_get_cipher_algid(c);
-    info->dwCipherStrength = schan_get_cipher_key_size(c);
-    info->aiHash = schan_get_mac_algid(c);
-    info->dwHashStrength = schan_get_mac_key_size(c);
-    info->aiExch = schan_get_kx_algid(c);
+    info->dwProtocol = get_session_protocol(s);
+    info->aiCipher = get_cipher_algid(c);
+    info->dwCipherStrength = get_cipher_key_size(c);
+    info->aiHash = get_mac_algid(c);
+    info->dwHashStrength = get_mac_key_size(c);
+    info->aiExch = get_kx_algid(c);
     /* FIXME: info->dwExchStrength? */
     info->dwExchStrength = 0;
 
     return SEC_E_OK;
 }
 
-SECURITY_STATUS schan_imp_get_unique_channel_binding(schan_imp_session session,
-                                                     SecPkgContext_Bindings *bindings)
+static SECURITY_STATUS CDECL schan_get_unique_channel_binding(schan_session session, SecPkgContext_Bindings *bindings)
 {
     FIXME("SECPKG_ATTR_UNIQUE_BINDINGS is unsupported on MacOS\n");
     return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
 #ifndef HAVE_SSLCOPYPEERCERTIFICATES
-static void schan_imp_cf_release(const void *arg, void *ctx)
+static void cf_release(const void *arg, void *ctx)
 {
     CFRelease(arg);
 }
 #endif
 
-SECURITY_STATUS schan_imp_get_session_peer_certificate(schan_imp_session session, HCERTSTORE store,
-                                                       PCCERT_CONTEXT *ret_cert)
+static SECURITY_STATUS CDECL schan_get_session_peer_certificate(schan_session session, struct schan_cert_list *list)
 {
-    struct mac_session* s = (struct mac_session*)session;
+    struct mac_session *s = (struct mac_session *)session;
     SECURITY_STATUS ret = SEC_E_OK;
-    PCCERT_CONTEXT cert = NULL;
-    SecCertificateRef mac_cert;
+    SecCertificateRef cert;
     CFArrayRef cert_array;
     int status;
-    CFIndex cnt, i;
+    unsigned int size;
+    CFIndex i;
     CFDataRef data;
-    BOOL res;
+    BYTE *ptr;
 
-    TRACE("(%p/%p, %p)\n", s, s->context, cert);
+    TRACE("(%p/%p, %p)\n", s, s->context, list);
 
 #ifdef HAVE_SSLCOPYPEERCERTIFICATES
     status = SSLCopyPeerCertificates(s->context, &cert_array);
@@ -1078,45 +1079,55 @@ SECURITY_STATUS schan_imp_get_session_peer_certificate(schan_imp_session session
         return SEC_E_INTERNAL_ERROR;
     }
 
-    cnt = CFArrayGetCount(cert_array);
-    for (i=0; i < cnt; i++) {
-        if (!(mac_cert = (SecCertificateRef)CFArrayGetValueAtIndex(cert_array, i)) ||
-            (SecKeychainItemExport(mac_cert, kSecFormatX509Cert, 0, NULL, &data) != noErr))
+    list->count = CFArrayGetCount(cert_array);
+    size = list->count * sizeof(list->certs[0]);
+
+    for (i = 0; i < list->count; i++)
+    {
+        if (!(cert = (SecCertificateRef)CFArrayGetValueAtIndex(cert_array, i)) ||
+            (SecKeychainItemExport(cert, kSecFormatX509Cert, 0, NULL, &data) != noErr))
         {
             WARN("Couldn't extract certificate data\n");
             ret = SEC_E_INTERNAL_ERROR;
-            break;
+            goto done;
         }
-
-        res = CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING, CFDataGetBytePtr(data), CFDataGetLength(data),
-                                               CERT_STORE_ADD_REPLACE_EXISTING, i ? NULL : &cert);
+        size += CFDataGetLength(data);
         CFRelease(data);
-        if (!res)
-        {
-            ret = GetLastError();
-            WARN("CertAddEncodedCertificateToStore failed: %x\n", ret);
-            break;
-        }
     }
 
+    if (!(list->certs = RtlAllocateHeap(GetProcessHeap(), 0, size)))
+    {
+        ret = SEC_E_INSUFFICIENT_MEMORY;
+        goto done;
+    }
+
+    ptr = (BYTE *)&list->certs[list->count];
+    for (i = 0; i < list->count; i++)
+    {
+        if (!(cert = (SecCertificateRef)CFArrayGetValueAtIndex(cert_array, i)) ||
+            (SecKeychainItemExport(cert, kSecFormatX509Cert, 0, NULL, &data) != noErr))
+        {
+            WARN("Couldn't extract certificate data\n");
+            ret = SEC_E_INTERNAL_ERROR;
+            goto done;
+        }
+        list->certs[i].cbData = CFDataGetLength(data);
+        list->certs[i].pbData = ptr;
+        memcpy(list->certs[i].pbData, CFDataGetBytePtr(data), CFDataGetLength(data));
+        ptr += CFDataGetLength(data);
+        CFRelease(data);
+    }
+
+done:
 #ifndef HAVE_SSLCOPYPEERCERTIFICATES
     /* This is why SSLGetPeerCertificates was deprecated */
-    CFArrayApplyFunction(cert_array, CFRangeMake(0, CFArrayGetCount(cert_array)),
-                         schan_imp_cf_release, NULL);
+    CFArrayApplyFunction(cert_array, CFRangeMake(0, CFArrayGetCount(cert_array)), cf_release, NULL);
 #endif
     CFRelease(cert_array);
-    if (ret != SEC_E_OK) {
-        if(cert)
-            CertFreeCertificateContext(cert);
-        return ret;
-    }
-
-    *ret_cert = cert;
-    return SEC_E_OK;
+    return ret;
 }
 
-SECURITY_STATUS schan_imp_send(schan_imp_session session, const void *buffer,
-                               SIZE_T *length)
+static SECURITY_STATUS CDECL schan_send(schan_session session, const void *buffer, SIZE_T *length)
 {
     struct mac_session* s = (struct mac_session*)session;
     int status;
@@ -1152,8 +1163,7 @@ SECURITY_STATUS schan_imp_send(schan_imp_session session, const void *buffer,
     return SEC_E_OK;
 }
 
-SECURITY_STATUS schan_imp_recv(schan_imp_session session, void *buffer,
-                               SIZE_T *length)
+static SECURITY_STATUS CDECL schan_recv(schan_session session, void *buffer, SIZE_T *length)
 {
     struct mac_session* s = (struct mac_session*)session;
     int status;
@@ -1189,36 +1199,37 @@ SECURITY_STATUS schan_imp_recv(schan_imp_session session, void *buffer,
     return SEC_E_OK;
 }
 
-BOOL schan_imp_allocate_certificate_credentials(schan_credentials *c, const CERT_CONTEXT *cert)
+static BOOL CDECL schan_allocate_certificate_credentials(schan_credentials *c, const CERT_CONTEXT *cert,
+                                                         const DATA_BLOB *key_blob)
 {
     if (cert) FIXME("no support for certificate credentials on this platform\n");
     c->credentials = NULL;
     return TRUE;
 }
 
-void schan_imp_free_certificate_credentials(schan_credentials *c)
+static void CDECL schan_free_certificate_credentials(schan_credentials *c)
 {
 }
 
-void schan_imp_set_application_protocols(schan_imp_session session, unsigned char *buffer, unsigned int buflen)
+static void CDECL schan_set_application_protocols(schan_session session, unsigned char *buffer, unsigned int buflen)
 {
     FIXME("no support for application protocols on this platform\n");
 }
 
-SECURITY_STATUS schan_imp_get_application_protocol(schan_imp_session session,
-                                                   SecPkgContext_ApplicationProtocol *protocol)
+static SECURITY_STATUS CDECL schan_get_application_protocol(schan_session session,
+                                                            SecPkgContext_ApplicationProtocol *protocol)
 {
     FIXME("no support for application protocols on this platform\n");
     return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
-SECURITY_STATUS schan_imp_set_dtls_mtu(schan_imp_session session, unsigned int mtu)
+static SECURITY_STATUS CDECL schan_set_dtls_mtu(schan_session session, unsigned int mtu)
 {
     FIXME("no support for setting dtls mtu on this platform\n");
     return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
-BOOL schan_imp_init(void)
+static void ssl_init(void)
 {
     TRACE("()\n");
 
@@ -1245,13 +1256,38 @@ BOOL schan_imp_init(void)
         }
     }
 #endif
-
-    return TRUE;
 }
 
-void schan_imp_deinit(void)
+static const struct schan_funcs funcs =
 {
-    TRACE("()\n");
+    schan_allocate_certificate_credentials,
+    schan_create_session,
+    schan_dispose_session,
+    schan_free_certificate_credentials,
+    schan_get_application_protocol,
+    schan_get_connection_info,
+    schan_get_enabled_protocols,
+    schan_get_key_signature_algorithm,
+    schan_get_max_message_size,
+    schan_get_session_cipher_block_size,
+    schan_get_session_peer_certificate,
+    schan_get_unique_channel_binding,
+    schan_handshake,
+    schan_recv,
+    schan_send,
+    schan_set_application_protocols,
+    schan_set_dtls_mtu,
+    schan_set_session_target,
+    schan_set_session_transport,
+};
+
+NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
+{
+    if (reason != DLL_PROCESS_ATTACH) return STATUS_SUCCESS;
+    ssl_init();
+    callbacks = ptr_in;
+    *(const struct schan_funcs **)ptr_out = &funcs;
+    return STATUS_SUCCESS;
 }
 
 #endif /* HAVE_SECURITY_SECURITY_H */

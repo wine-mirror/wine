@@ -40,6 +40,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 
+HINSTANCE hsecur32;
+
 /**
  *  Type definitions
  */
@@ -1246,6 +1248,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
+        hsecur32 = hinstDLL;
         DisableThreadLibraryCalls(hinstDLL);
         SECUR32_initializeProviders();
         break;
