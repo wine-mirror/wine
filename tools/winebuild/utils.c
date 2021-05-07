@@ -360,9 +360,50 @@ void spawn( struct strarray args )
     }
 }
 
+static const char *find_clang_tool( const struct strarray clang, const char *tool )
+{
+    const char *out = get_temp_file_name( "print_tool", ".out" );
+    struct strarray args;
+    int sout = -1;
+    char *path, *p;
+    struct stat st;
+    size_t cnt;
+
+    args = strarray_copy( clang );
+    strarray_add_one( &args, strmake( "-print-prog-name=%s", tool ) );
+    if (verbose) strarray_add_one( &args, "-v" );
+
+    sout = dup( fileno(stdout) );
+    freopen( out, "w", stdout );
+    spawn( args );
+    if (sout >= 0)
+    {
+        dup2( sout, fileno(stdout) );
+        close( sout );
+    }
+
+    if (stat(out, &st) || !st.st_size) return NULL;
+
+    path = xmalloc(st.st_size + 1);
+    sout = open(out, O_RDONLY);
+    if (sout == -1) return NULL;
+    cnt = read(sout, path, st.st_size);
+    close(sout);
+    path[cnt] = 0;
+    if ((p = strchr(path, '\n'))) *p = 0;
+    /* clang returns passed command instead of full path if the tool could not be found */
+    if (!strcmp(path, tool))
+    {
+        free( path );
+        return NULL;
+    }
+    return path;
+}
+
 /* find a build tool in the path, trying the various names */
 struct strarray find_tool( const char *name, const char * const *names )
 {
+    struct strarray ret = empty_strarray;
     const char *file;
     const char *alt_names[2];
 
@@ -375,25 +416,42 @@ struct strarray find_tool( const char *name, const char * const *names )
 
     while (*names)
     {
-        if ((file = find_binary( target_alias, *names ))
-            || (names == alt_names && (file = find_binary( "llvm", *names ))))
-        {
-            struct strarray ret = empty_strarray;
-            strarray_add_one( &ret, file );
-            return ret;
-        }
+        if ((file = find_binary( target_alias, *names ))) break;
         names++;
     }
-    fatal_error( "cannot find the '%s' tool\n", name );
+
+    if (!file && names == alt_names + 1)
+    {
+        if (cc_command.count) file = find_clang_tool( cc_command, "lld-link" );
+        if (!file && !(file = find_binary( "llvm", name )))
+        {
+            struct strarray clang = empty_strarray;
+            strarray_add_one( &clang, "clang" );
+            file = find_clang_tool( clang, strmake( "llvm-%s", name ));
+        }
+    }
+    if (!file) fatal_error( "cannot find the '%s' tool\n", name );
+
+    strarray_add_one( &ret, file );
+    return ret;
 }
 
 /* find a link tool in the path */
 struct strarray find_link_tool(void)
 {
     struct strarray ret = empty_strarray;
-    const char *file;
-    if (!(file = find_binary( NULL, "lld-link" )))
-        fatal_error( "cannot find the 'lld-link tool\n" );
+    const char *file = NULL;
+
+    if (cc_command.count) file = find_clang_tool( cc_command, "lld-link" );
+    if (!file) file = find_binary( NULL, "lld-link" );
+    if (!file)
+    {
+        struct strarray clang = empty_strarray;
+        strarray_add_one( &clang, "clang" );
+        file = find_clang_tool( clang, "lld-link" );
+    }
+
+    if (!file) fatal_error( "cannot find the 'lld-link' tool\n" );
     strarray_add_one( &ret, file );
     return ret;
 }
