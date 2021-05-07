@@ -3063,6 +3063,33 @@ HRESULT WINAPI MFCreateVideoMediaTypeFromSubtype(const GUID *subtype, IMFVideoMe
     return S_OK;
 }
 
+/***********************************************************************
+ *      MFCreateAudioMediaType (mfplat.@)
+ */
+HRESULT WINAPI MFCreateAudioMediaType(const WAVEFORMATEX *format, IMFAudioMediaType **media_type)
+{
+    struct media_type *object;
+    HRESULT hr;
+
+    TRACE("%p, %p.\n", format, media_type);
+
+    if (!media_type)
+        return E_INVALIDARG;
+
+    if (FAILED(hr = create_media_type(&object)))
+        return hr;
+
+    if (FAILED(hr = MFInitMediaTypeFromWaveFormatEx(&object->IMFMediaType_iface, format, sizeof(*format) + format->cbSize)))
+    {
+        IMFMediaType_Release(&object->IMFMediaType_iface);
+        return hr;
+    }
+
+    *media_type = &object->IMFAudioMediaType_iface;
+
+    return S_OK;
+}
+
 static void media_type_get_ratio(IMFMediaType *media_type, const GUID *attr, UINT32 *numerator,
         UINT32 *denominator)
 {

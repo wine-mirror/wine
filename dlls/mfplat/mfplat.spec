@@ -43,7 +43,7 @@
 @ stdcall MFCreateAlignedMemoryBuffer(long long ptr)
 @ stdcall MFCreateAsyncResult(ptr ptr ptr ptr) rtworkq.RtwqCreateAsyncResult
 @ stdcall MFCreateAttributes(ptr long)
-@ stub MFCreateAudioMediaType
+@ stdcall MFCreateAudioMediaType(ptr ptr)
 @ stdcall MFCreateCollection(ptr)
 @ stdcall MFCreateDXGIDeviceManager(ptr ptr)
 @ stdcall MFCreateDXGISurfaceBuffer(ptr ptr long long ptr)

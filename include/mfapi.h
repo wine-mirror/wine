@@ -508,6 +508,7 @@ HRESULT WINAPI MFCreate2DMediaBuffer(DWORD width, DWORD height, DWORD fourcc, BO
 HRESULT WINAPI MFCreateAlignedMemoryBuffer(DWORD max_length, DWORD alignment, IMFMediaBuffer **buffer);
 HRESULT WINAPI MFCreateAttributes(IMFAttributes **attributes, UINT32 size);
 HRESULT WINAPI MFCreateAsyncResult(IUnknown *object, IMFAsyncCallback *callback, IUnknown *state, IMFAsyncResult **result);
+HRESULT WINAPI MFCreateAudioMediaType(const WAVEFORMATEX *audioformat, IMFAudioMediaType **mediatype);
 HRESULT WINAPI MFCreateCollection(IMFCollection **collection);
 HRESULT WINAPI MFCreateDXGIDeviceManager(UINT *token, IMFDXGIDeviceManager **manager);
 HRESULT WINAPI MFCreateDXGISurfaceBuffer(REFIID riid, IUnknown *surface, UINT subresource, BOOL bottomup,
