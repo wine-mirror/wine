@@ -162,45 +162,34 @@ static void read_config(void)
     DWORD res;
 
     static BOOL config_read = FALSE;
-
-    static const WCHAR protocol_config_key_name[] = {
-        'S','Y','S','T','E','M','\\',
-        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-        'C','o','n','t','r','o','l','\\',
-        'S','e','c','u','r','i','t','y','P','r','o','v','i','d','e','r','s','\\',
-        'S','C','H','A','N','N','E','L','\\',
-        'P','r','o','t','o','c','o','l','s',0 };
-
-    static const WCHAR clientW[] = {'\\','C','l','i','e','n','t',0};
-    static const WCHAR enabledW[] = {'e','n','a','b','l','e','d',0};
-    static const WCHAR disabledbydefaultW[] = {'D','i','s','a','b','l','e','d','B','y','D','e','f','a','u','l','t',0};
-
     static const struct {
         WCHAR key_name[20];
         DWORD prot_client_flag;
         BOOL enabled; /* If no config is present, enable the protocol */
         BOOL disabled_by_default; /* Disable if caller asks for default protocol set */
     } protocol_config_keys[] = {
-        {{'S','S','L',' ','2','.','0',0}, SP_PROT_SSL2_CLIENT, FALSE, TRUE}, /* NOTE: TRUE, TRUE on Windows */
-        {{'S','S','L',' ','3','.','0',0}, SP_PROT_SSL3_CLIENT, TRUE, FALSE},
-        {{'T','L','S',' ','1','.','0',0}, SP_PROT_TLS1_0_CLIENT, TRUE, FALSE},
-        {{'T','L','S',' ','1','.','1',0}, SP_PROT_TLS1_1_CLIENT, TRUE, FALSE /* NOTE: not enabled by default on Windows */ },
-        {{'T','L','S',' ','1','.','2',0}, SP_PROT_TLS1_2_CLIENT, TRUE, FALSE /* NOTE: not enabled by default on Windows */ },
-        {{'D','T','L','S',' ','1','.','0',0}, SP_PROT_DTLS1_0_CLIENT, TRUE, TRUE },
-        {{'D','T','L','S',' ','1','.','2',0}, SP_PROT_DTLS1_2_CLIENT, TRUE, TRUE },
+        { L"SSL 2.0", SP_PROT_SSL2_CLIENT, FALSE, TRUE }, /* NOTE: TRUE, TRUE on Windows */
+        { L"SSL 3.0", SP_PROT_SSL3_CLIENT, TRUE, FALSE },
+        { L"TLS 1.0", SP_PROT_TLS1_0_CLIENT, TRUE, FALSE },
+        { L"TLS 1.1", SP_PROT_TLS1_1_CLIENT, TRUE, FALSE /* NOTE: not enabled by default on Windows */ },
+        { L"TLS 1.2", SP_PROT_TLS1_2_CLIENT, TRUE, FALSE /* NOTE: not enabled by default on Windows */ },
+        { L"DTLS 1.0", SP_PROT_DTLS1_0_CLIENT, TRUE, TRUE },
+        { L"DTLS 1.2", SP_PROT_DTLS1_2_CLIENT, TRUE, TRUE },
     };
 
     /* No need for thread safety */
     if(config_read)
         return;
 
-    res = RegOpenKeyExW(HKEY_LOCAL_MACHINE, protocol_config_key_name, 0, KEY_READ, &protocols_key);
+    res = RegOpenKeyExW(HKEY_LOCAL_MACHINE,
+                        L"SYSTEM\\CurrentControlSet\\Control\\SecurityProviders\\SCHANNEL\\Protocols", 0, KEY_READ,
+                        &protocols_key);
     if(res == ERROR_SUCCESS) {
         DWORD type, size, value;
 
         for(i = 0; i < ARRAY_SIZE(protocol_config_keys); i++) {
             wcscpy(subkey_name, protocol_config_keys[i].key_name);
-            wcscat(subkey_name, clientW);
+            wcscat(subkey_name, L"\\Client");
             res = RegOpenKeyExW(protocols_key, subkey_name, 0, KEY_READ, &key);
             if(res != ERROR_SUCCESS) {
                 if(protocol_config_keys[i].enabled)
@@ -211,7 +200,7 @@ static void read_config(void)
             }
 
             size = sizeof(value);
-            res = RegQueryValueExW(key, enabledW, NULL, &type, (BYTE*)&value, &size);
+            res = RegQueryValueExW(key, L"enabled", NULL, &type, (BYTE *)&value, &size);
             if(res == ERROR_SUCCESS) {
                 if(type == REG_DWORD && value)
                     enabled |= protocol_config_keys[i].prot_client_flag;
@@ -220,7 +209,7 @@ static void read_config(void)
             }
 
             size = sizeof(value);
-            res = RegQueryValueExW(key, disabledbydefaultW, NULL, &type, (BYTE*)&value, &size);
+            res = RegQueryValueExW(key, L"DisabledByDefault", NULL, &type, (BYTE *)&value, &size);
             if(res == ERROR_SUCCESS) {
                 if(type != REG_DWORD || value)
                     default_disabled |= protocol_config_keys[i].prot_client_flag;
@@ -391,8 +380,6 @@ static SECURITY_STATUS get_cert(const SCHANNEL_CRED *cred, CERT_CONTEXT const **
 
 static WCHAR *get_key_container_path(const CERT_CONTEXT *ctx)
 {
-    static const WCHAR rsabaseW[] =
-        {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\','C','r','y','p','t','o','\\','R','S','A','\\',0};
     CERT_KEY_CONTEXT keyctx;
     DWORD size = sizeof(keyctx), prov_size = 0;
     CRYPT_KEY_PROV_INFO *prov;
@@ -407,12 +394,12 @@ static WCHAR *get_key_container_path(const CERT_CONTEXT *ctx)
         if (!CryptGetProvParam(keyctx.hCryptProv, PP_CONTAINER, (BYTE *)str, &size, 0)) return NULL;
 
         len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-        if (!(ret = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(rsabaseW) + len * sizeof(WCHAR))))
+        if (!(ret = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(L"Software\\Wine\\Crypto\\RSA\\") + len * sizeof(WCHAR))))
         {
             RtlFreeHeap(GetProcessHeap(), 0, str);
             return NULL;
         }
-        wcscpy(ret, rsabaseW);
+        wcscpy(ret, L"Software\\Wine\\Crypto\\RSA\\");
         MultiByteToWideChar(CP_ACP, 0, str, -1, ret + wcslen(ret), len);
         RtlFreeHeap(GetProcessHeap(), 0, str);
     }
@@ -425,20 +412,20 @@ static WCHAR *get_key_container_path(const CERT_CONTEXT *ctx)
             return NULL;
         }
         if (!(ret = RtlAllocateHeap(GetProcessHeap(), 0,
-                                    sizeof(rsabaseW) + wcslen(prov->pwszContainerName) * sizeof(WCHAR))))
+                                    sizeof(L"Software\\Wine\\Crypto\\RSA\\") + wcslen(prov->pwszContainerName) * sizeof(WCHAR))))
         {
             RtlFreeHeap(GetProcessHeap(), 0, prov);
             return NULL;
         }
-        wcscpy(ret, rsabaseW);
+        wcscpy(ret, L"Software\\Wine\\Crypto\\RSA\\");
         wcscat(ret, prov->pwszContainerName);
         RtlFreeHeap(GetProcessHeap(), 0, prov);
     }
 
-    if (!ret && GetUserNameW(username, &len) && (ret = RtlAllocateHeap(GetProcessHeap(), 0,
-                                                                       sizeof(rsabaseW) + len * sizeof(WCHAR))))
+    if (!ret && GetUserNameW(username, &len) &&
+        (ret = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(L"Software\\Wine\\Crypto\\RSA\\") + len * sizeof(WCHAR))))
     {
-        wcscpy(ret, rsabaseW);
+        wcscpy(ret, L"Software\\Wine\\Crypto\\RSA\\");
         wcscat(ret, username);
     }
 
@@ -448,10 +435,6 @@ static WCHAR *get_key_container_path(const CERT_CONTEXT *ctx)
 #define MAX_LEAD_BYTES 8
 static BYTE *get_key_blob(const CERT_CONTEXT *ctx, DWORD *size)
 {
-    static const WCHAR keyexchangeW[] =
-        {'K','e','y','E','x','c','h','a','n','g','e','K','e','y','P','a','i','r',0};
-    static const WCHAR signatureW[] =
-        {'S','i','g','n','a','t','u','r','e','K','e','y','P','a','i','r',0};
     BYTE *buf, *ret = NULL;
     DATA_BLOB blob_in, blob_out;
     DWORD spec = 0, type, len;
@@ -466,8 +449,8 @@ static BYTE *get_key_blob(const CERT_CONTEXT *ctx, DWORD *size)
     }
     RtlFreeHeap(GetProcessHeap(), 0, path);
 
-    if (!RegQueryValueExW(hkey, keyexchangeW, 0, &type, NULL, &len)) spec = AT_KEYEXCHANGE;
-    else if (!RegQueryValueExW(hkey, signatureW, 0, &type, NULL, &len)) spec = AT_SIGNATURE;
+    if (!RegQueryValueExW(hkey, L"KeyExchangeKeyPair", 0, &type, NULL, &len)) spec = AT_KEYEXCHANGE;
+    else if (!RegQueryValueExW(hkey, L"SignatureKeyPair", 0, &type, NULL, &len)) spec = AT_SIGNATURE;
     else
     {
         RegCloseKey(hkey);
@@ -480,7 +463,8 @@ static BYTE *get_key_blob(const CERT_CONTEXT *ctx, DWORD *size)
         return NULL;
     }
 
-    if (!RegQueryValueExW(hkey, (spec == AT_KEYEXCHANGE) ? keyexchangeW : signatureW, 0, &type, buf, &len))
+    if (!RegQueryValueExW(hkey, (spec == AT_KEYEXCHANGE) ? L"KeyExchangeKeyPair" : L"SignatureKeyPair", 0,
+                          &type, buf, &len))
     {
         blob_in.pbData = buf;
         blob_in.cbData = len;
@@ -1112,15 +1096,15 @@ static void *get_alg_name(ALG_ID id, BOOL wide)
         const char* name;
         const WCHAR nameW[8];
     } alg_name_map[] = {
-        { CALG_ECDSA,      "ECDSA", {'E','C','D','S','A',0} },
-        { CALG_RSA_SIGN,   "RSA",   {'R','S','A',0} },
-        { CALG_DES,        "DES",   {'D','E','S',0} },
-        { CALG_RC2,        "RC2",   {'R','C','2',0} },
-        { CALG_3DES,       "3DES",  {'3','D','E','S',0} },
-        { CALG_AES_128,    "AES",   {'A','E','S',0} },
-        { CALG_AES_192,    "AES",   {'A','E','S',0} },
-        { CALG_AES_256,    "AES",   {'A','E','S',0} },
-        { CALG_RC4,        "RC4",   {'R','C','4',0} },
+        { CALG_ECDSA,      "ECDSA", L"ECDSA" },
+        { CALG_RSA_SIGN,   "RSA",   L"RSA" },
+        { CALG_DES,        "DES",   L"DES" },
+        { CALG_RC2,        "RC2",   L"RC2" },
+        { CALG_3DES,       "3DES",  L"3DES" },
+        { CALG_AES_128,    "AES",   L"AES" },
+        { CALG_AES_192,    "AES",   L"AES" },
+        { CALG_AES_256,    "AES",   L"AES" },
+        { CALG_RC4,        "RC4",   L"RC4" },
     };
     unsigned i;
 
@@ -1668,10 +1652,6 @@ static const SecurityFunctionTableW schanTableW = {
     NULL, /* SetContextAttributesW */
 };
 
-static const WCHAR schannelComment[] = { 'S','c','h','a','n','n','e','l',' ',
- 'S','e','c','u','r','i','t','y',' ','P','a','c','k','a','g','e',0 };
-static const WCHAR schannelDllName[] = { 's','c','h','a','n','n','e','l','.','d','l','l',0 };
-
 const struct schan_callbacks schan_callbacks =
 {
     schan_get_buffer,
@@ -1701,8 +1681,7 @@ void SECUR32_initSchannelSP(void)
               *schannel = (SEC_WCHAR *)SCHANNEL_NAME_W;
     const SecPkgInfoW info[] = {
         { caps, version, UNISP_RPC_ID, maxToken, uniSPName, uniSPName },
-        { caps, version, UNISP_RPC_ID, maxToken, schannel,
-            (SEC_WCHAR *)schannelComment },
+        { caps, version, UNISP_RPC_ID, maxToken, schannel, (SEC_WCHAR *)L"Schannel Security Package" },
     };
     SecureProvider *provider;
 
@@ -1720,7 +1699,7 @@ void SECUR32_initSchannelSP(void)
     }
     schan_handle_table_size = 64;
 
-    provider = SECUR32_addProvider(&schanTableA, &schanTableW, schannelDllName);
+    provider = SECUR32_addProvider(&schanTableA, &schanTableW, L"schannel.dll");
     if (!provider)
     {
         ERR("Failed to add schannel provider.\n");

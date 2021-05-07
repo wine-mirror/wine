@@ -863,14 +863,11 @@ static BOOL load_package(const WCHAR *name, struct lsa_package *package, ULONG p
 
 void load_auth_packages(void)
 {
-    static const WCHAR LSA_KEY[] = { 'S','y','s','t','e','m','\\',
-        'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-        'C','o','n','t','r','o','l','\\','L','s','a',0 };
     DWORD err, i;
     HKEY root;
     SecureProvider *provider;
 
-    err = RegOpenKeyExW(HKEY_LOCAL_MACHINE, LSA_KEY, 0, KEY_READ, &root);
+    err = RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\Lsa", 0, KEY_READ, &root);
     if (err != ERROR_SUCCESS) return;
 
     i = 0;

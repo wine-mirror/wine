@@ -540,15 +540,6 @@ static void _tryLoadProvider(PWSTR moduleName)
         WARN("failed to load %s\n", debugstr_w(moduleName));
 }
 
-static const WCHAR securityProvidersKeyW[] = {
- 'S','Y','S','T','E','M','\\','C','u','r','r','e','n','t','C','o','n','t','r',
- 'o','l','S','e','t','\\','C','o','n','t','r','o','l','\\','S','e','c','u','r',
- 'i','t','y','P','r','o','v','i','d','e','r','s','\0'
- };
-static const WCHAR securityProvidersW[] = {
- 'S','e','c','u','r','i','t','y','P','r','o','v','i','d','e','r','s',0
- };
- 
 static void SECUR32_initializeProviders(void)
 {
     HKEY key;
@@ -564,15 +555,14 @@ static void SECUR32_initializeProviders(void)
      * application reported on wine-users on 2006-09-12 working. */
     SECUR32_initNegotiateSP();
     /* Now load providers from registry */
-    apiRet = RegOpenKeyExW(HKEY_LOCAL_MACHINE, securityProvidersKeyW, 0,
-     KEY_READ, &key);
+    apiRet = RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"SYSTEM\\CurrentControlSet\\Control\\SecurityProviders", 0,
+                           KEY_READ, &key);
     if (apiRet == ERROR_SUCCESS)
     {
         WCHAR securityPkgNames[MAX_PATH]; /* arbitrary len */
         DWORD size = sizeof(securityPkgNames), type;
 
-        apiRet = RegQueryValueExW(key, securityProvidersW, NULL, &type,
-         (PBYTE)securityPkgNames, &size);
+        apiRet = RegQueryValueExW(key, L"SecurityProviders", NULL, &type, (PBYTE)securityPkgNames, &size);
         if (apiRet == ERROR_SUCCESS && type == REG_SZ)
         {
             WCHAR *ptr;
@@ -994,17 +984,15 @@ BOOLEAN WINAPI GetComputerObjectNameW(
                     DWORD len = domainInfo->Name.Length + size + 3;
                     if (lpNameBuffer && *nSize >= len)
                     {
-                        static const WCHAR bs[] = { '\\', 0 };
-                        static const WCHAR ds[] = { '$', 0 };
                         if (domainInfo->Name.Buffer)
                         {
                             lstrcpyW(lpNameBuffer, domainInfo->Name.Buffer);
-                            lstrcatW(lpNameBuffer, bs);
+                            lstrcatW(lpNameBuffer, L"\\");
                         }
                         else
                             *lpNameBuffer = 0;
                         lstrcatW(lpNameBuffer, name);
-                        lstrcatW(lpNameBuffer, ds);
+                        lstrcatW(lpNameBuffer, L"$");
                         status = TRUE;
                     }
                     else	/* just requesting length required */
@@ -1023,10 +1011,6 @@ BOOLEAN WINAPI GetComputerObjectNameW(
             break;
         case NameFullyQualifiedDN:
         {
-            static const WCHAR cnW[] = { 'C','N','=',0 };
-            static const WCHAR ComputersW[] = { 'C','N','=','C','o','m','p','u','t','e','r','s',0 };
-            static const WCHAR dcW[] = { 'D','C','=',0 };
-            static const WCHAR commaW[] = { ',',0 };
             WCHAR name[MAX_COMPUTERNAME_LENGTH + 1];
             DWORD len, size;
             WCHAR *suffix;
@@ -1038,14 +1022,14 @@ BOOLEAN WINAPI GetComputerObjectNameW(
                 break;
             }
 
-            len = wcslen(cnW) + size + 1 + wcslen(ComputersW) + 1 + wcslen(dcW);
+            len = wcslen(L"CN=") + size + 1 + wcslen(L"CN=Computers") + 1 + wcslen(L"DC=");
             if (domainInfo->DnsDomainName.Buffer)
             {
                 suffix = wcsrchr(domainInfo->DnsDomainName.Buffer, '.');
                 if (suffix)
                 {
                     *suffix++ = 0;
-                    len += 1 + wcslen(dcW) + wcslen(suffix);
+                    len += 1 + wcslen(L"DC=") + wcslen(suffix);
                 }
                 len += wcslen(domainInfo->DnsDomainName.Buffer);
             }
@@ -1054,19 +1038,19 @@ BOOLEAN WINAPI GetComputerObjectNameW(
 
             if (lpNameBuffer && *nSize > len)
             {
-                lstrcpyW(lpNameBuffer, cnW);
+                lstrcpyW(lpNameBuffer, L"CN=");
                 lstrcatW(lpNameBuffer, name);
-                lstrcatW(lpNameBuffer, commaW);
-                lstrcatW(lpNameBuffer, ComputersW);
+                lstrcatW(lpNameBuffer, L",");
+                lstrcatW(lpNameBuffer, L"CN=Computers");
                 if (domainInfo->DnsDomainName.Buffer)
                 {
-                    lstrcatW(lpNameBuffer, commaW);
-                    lstrcatW(lpNameBuffer, dcW);
+                    lstrcatW(lpNameBuffer, L",");
+                    lstrcatW(lpNameBuffer, L"DC=");
                     lstrcatW(lpNameBuffer, domainInfo->DnsDomainName.Buffer);
                     if (suffix)
                     {
-                        lstrcatW(lpNameBuffer, commaW);
-                        lstrcatW(lpNameBuffer, dcW);
+                        lstrcatW(lpNameBuffer, L",");
+                        lstrcatW(lpNameBuffer, L"DC=");
                         lstrcatW(lpNameBuffer, suffix);
                     }
                 }
