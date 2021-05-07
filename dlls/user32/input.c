@@ -1540,7 +1540,16 @@ BOOL WINAPI UnregisterHotKey(HWND hwnd,INT id)
  */
 HKL WINAPI LoadKeyboardLayoutW( const WCHAR *name, UINT flags )
 {
+    DWORD tmp;
+    HKL layout;
+
     FIXME_(keyboard)( "name %s, flags %x, semi-stub!\n", debugstr_w( name ), flags );
+
+    tmp = wcstoul( name, NULL, 16 );
+    layout = UlongToHandle( tmp );
+
+    if ((flags & KLF_ACTIVATE) && ActivateKeyboardLayout( layout, 0 )) return layout;
+
     /* FIXME: semi-stub: returning default layout */
     return get_locale_kbd_layout();
 }
