@@ -161,7 +161,7 @@ NTSTATUS WINAPI NtCreateThread( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRI
  */
 NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
                                   HANDLE process, PRTL_THREAD_START_ROUTINE start, void *param,
-                                  ULONG flags, SIZE_T zero_bits, SIZE_T stack_commit,
+                                  ULONG flags, ULONG_PTR zero_bits, SIZE_T stack_commit,
                                   SIZE_T stack_reserve, PS_ATTRIBUTE_LIST *attr_list )
 {
     sigset_t sigset;
@@ -185,12 +185,13 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
 
         memset( &call, 0, sizeof(call) );
 
-        call.create_thread.type    = APC_CREATE_THREAD;
-        call.create_thread.flags   = flags;
-        call.create_thread.func    = wine_server_client_ptr( start );
-        call.create_thread.arg     = wine_server_client_ptr( param );
-        call.create_thread.reserve = stack_reserve;
-        call.create_thread.commit  = stack_commit;
+        call.create_thread.type      = APC_CREATE_THREAD;
+        call.create_thread.flags     = flags;
+        call.create_thread.func      = wine_server_client_ptr( start );
+        call.create_thread.arg       = wine_server_client_ptr( param );
+        call.create_thread.zero_bits = zero_bits;
+        call.create_thread.reserve   = stack_reserve;
+        call.create_thread.commit    = stack_commit;
         status = server_queue_process_apc( process, &call, &result );
         if (status != STATUS_SUCCESS) return status;
 

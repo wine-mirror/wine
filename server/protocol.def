@@ -580,6 +580,7 @@ typedef union
         unsigned int     flags;     /* creation flags */
         client_ptr_t     func;      /* void (__stdcall *func)(void*);  start function */
         client_ptr_t     arg;       /* argument for start function */
+        mem_size_t       zero_bits; /* number of zero high bits for thread stack */
         mem_size_t       reserve;   /* reserve size for thread stack */
         mem_size_t       commit;    /* commit size for thread stack */
     } create_thread;

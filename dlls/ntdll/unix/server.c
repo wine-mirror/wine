@@ -550,6 +550,7 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result, BOO
         CLIENT_ID id;
         HANDLE handle;
         TEB *teb;
+        ULONG_PTR zero_bits = call->create_thread.zero_bits;
         SIZE_T reserve = call->create_thread.reserve;
         SIZE_T commit = call->create_thread.commit;
         void *func = wine_server_get_ptr( call->create_thread.func );
@@ -570,7 +571,7 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result, BOO
             attr->Attributes[1].ReturnLength = NULL;
             result->create_thread.status = NtCreateThreadEx( &handle, THREAD_ALL_ACCESS, NULL,
                                                              NtCurrentProcess(), func, arg,
-                                                             call->create_thread.flags, 0,
+                                                             call->create_thread.flags, zero_bits,
                                                              commit, reserve, attr );
             result->create_thread.handle = wine_server_obj_handle( handle );
             result->create_thread.pid = HandleToULong(id.UniqueProcess);

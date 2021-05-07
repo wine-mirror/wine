@@ -564,6 +564,7 @@ typedef union
         unsigned int     flags;
         client_ptr_t     func;
         client_ptr_t     arg;
+        mem_size_t       zero_bits;
         mem_size_t       reserve;
         mem_size_t       commit;
     } create_thread;
@@ -6232,7 +6233,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 697
+#define SERVER_PROTOCOL_VERSION 698
 
 /* ### protocol_version end ### */
 

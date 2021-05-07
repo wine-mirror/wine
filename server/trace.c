@@ -216,6 +216,7 @@ static void dump_apc_call( const char *prefix, const apc_call_t *call )
     case APC_CREATE_THREAD:
         dump_uint64( "APC_CREATE_THREAD,func=", &call->create_thread.func );
         dump_uint64( ",arg=", &call->create_thread.arg );
+        dump_uint64( ",zero_bits=", &call->create_thread.zero_bits );
         dump_uint64( ",reserve=", &call->create_thread.reserve );
         dump_uint64( ",commit=", &call->create_thread.commit );
         fprintf( stderr, ",flags=%x", call->create_thread.flags );
