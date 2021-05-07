@@ -159,6 +159,7 @@ static char *get_domain_arg( const WCHAR *domain, int domain_len )
     return ret;
 }
 
+#define WINE_NO_CACHED_CREDENTIALS 0x10000000
 static NTSTATUS NTAPI ntlm_SpAcquireCredentialsHandle( UNICODE_STRING *principal, ULONG cred_use, LUID *logon_id,
                                                        void *auth_data, void *get_key_fn, void *get_key_arg,
                                                        LSA_SEC_HANDLE *handle, TimeStamp *expiry )
@@ -171,7 +172,7 @@ static NTSTATUS NTAPI ntlm_SpAcquireCredentialsHandle( UNICODE_STRING *principal
     TRACE( "%s, 0x%08x, %p, %p, %p, %p, %p, %p\n", debugstr_us(principal), cred_use, logon_id, auth_data,
            get_key_fn, get_key_arg, cred, expiry );
 
-    switch (cred_use)
+    switch (cred_use & ~SECPKG_CRED_RESERVED)
     {
     case SECPKG_CRED_INBOUND:
         if (!(cred = malloc( sizeof(*cred) ))) return SEC_E_INSUFFICIENT_MEMORY;
@@ -194,7 +195,7 @@ static NTSTATUS NTAPI ntlm_SpAcquireCredentialsHandle( UNICODE_STRING *principal
         cred->domain_arg   = NULL;
         cred->password     = NULL;
         cred->password_len = 0;
-        cred->no_cached_credentials = 0;
+        cred->no_cached_credentials = (cred_use & WINE_NO_CACHED_CREDENTIALS);
 
         if ((id = auth_data))
         {

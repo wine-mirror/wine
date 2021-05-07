@@ -58,16 +58,7 @@ struct sec_handle
     SecHandle       handle_ntlm;
 };
 
-/* matches layout from msv1_0 */
-struct ntlm_cred
-{
-    int   mode;
-    char *username_arg;
-    char *domain_arg;
-    char *password;
-    int   password_len;
-    int   no_cached_credentials; /* don't try to use cached Samba credentials */
-};
+#define WINE_NO_CACHED_CREDENTIALS 0x10000000
 
 /***********************************************************************
  *              AcquireCredentialsHandleW
@@ -99,14 +90,11 @@ static SECURITY_STATUS SEC_ENTRY nego_AcquireCredentialsHandleW(
 
     if ((package = SECUR32_findPackageW( ntlmW )))
     {
+        ULONG cred_use = pAuthData ? fCredentialUse : fCredentialUse | WINE_NO_CACHED_CREDENTIALS;
+
         ret = package->provider->fnTableW.AcquireCredentialsHandleW( pszPrincipal, ntlmW,
-                fCredentialUse, pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, &cred->handle_ntlm, ptsExpiry );
-        if (ret == SEC_E_OK)
-        {
-            struct ntlm_cred *ntlm_cred = (struct ntlm_cred *)cred->handle_ntlm.dwLower;
-            ntlm_cred->no_cached_credentials = (pAuthData == NULL);
-            cred->ntlm = package->provider;
-        }
+                cred_use, pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, &cred->handle_ntlm, ptsExpiry );
+        if (ret == SEC_E_OK) cred->ntlm = package->provider;
     }
 
     if (cred->krb || cred->ntlm)
