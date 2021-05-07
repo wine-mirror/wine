@@ -1954,6 +1954,8 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params(void)
     if (!status)
     {
         if (main_image_info.ImageCharacteristics & IMAGE_FILE_DLL) status = STATUS_INVALID_IMAGE_FORMAT;
+        if (main_image_info.ImageFlags & IMAGE_FLAGS_ComPlusNativeReady)
+            main_image_info.Machine = native_machine;
         if (main_image_info.Machine != current_machine) status = STATUS_INVALID_IMAGE_FORMAT;
     }
 
