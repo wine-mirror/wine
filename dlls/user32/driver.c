@@ -109,11 +109,9 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(Beep);
         GET_USER_FUNC(GetKeyNameText);
         GET_USER_FUNC(GetKeyboardLayoutList);
-        GET_USER_FUNC(LoadKeyboardLayout);
         GET_USER_FUNC(MapVirtualKeyEx);
         GET_USER_FUNC(RegisterHotKey);
         GET_USER_FUNC(ToUnicodeEx);
-        GET_USER_FUNC(UnloadKeyboardLayout);
         GET_USER_FUNC(UnregisterHotKey);
         GET_USER_FUNC(VkKeyScanEx);
         GET_USER_FUNC(DestroyCursorIcon);
@@ -204,11 +202,6 @@ static INT CDECL nulldrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
     return -1; /* use default implementation */
 }
 
-static HKL CDECL nulldrv_LoadKeyboardLayout( LPCWSTR name, UINT flags )
-{
-    return 0;
-}
-
 static UINT CDECL nulldrv_MapVirtualKeyEx( UINT code, UINT type, HKL layout )
 {
     return -1; /* use default implementation */
@@ -223,11 +216,6 @@ static INT CDECL nulldrv_ToUnicodeEx( UINT virt, UINT scan, const BYTE *state, L
                                       int size, UINT flags, HKL layout )
 {
     return -2; /* use default implementation */
-}
-
-static BOOL CDECL nulldrv_UnloadKeyboardLayout( HKL layout )
-{
-    return 0;
 }
 
 static void CDECL nulldrv_UnregisterHotKey( HWND hwnd, UINT modifiers, UINT vk )
@@ -416,11 +404,9 @@ static USER_DRIVER null_driver =
     nulldrv_Beep,
     nulldrv_GetKeyNameText,
     nulldrv_GetKeyboardLayoutList,
-    nulldrv_LoadKeyboardLayout,
     nulldrv_MapVirtualKeyEx,
     nulldrv_RegisterHotKey,
     nulldrv_ToUnicodeEx,
-    nulldrv_UnloadKeyboardLayout,
     nulldrv_UnregisterHotKey,
     nulldrv_VkKeyScanEx,
     /* cursor/icon functions */
@@ -493,11 +479,6 @@ static UINT CDECL loaderdrv_GetKeyboardLayoutList( INT size, HKL *layouts )
     return load_driver()->pGetKeyboardLayoutList( size, layouts );
 }
 
-static HKL CDECL loaderdrv_LoadKeyboardLayout( LPCWSTR name, UINT flags )
-{
-    return load_driver()->pLoadKeyboardLayout( name, flags );
-}
-
 static UINT CDECL loaderdrv_MapVirtualKeyEx( UINT code, UINT type, HKL layout )
 {
     return load_driver()->pMapVirtualKeyEx( code, type, layout );
@@ -512,11 +493,6 @@ static INT CDECL loaderdrv_ToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
                                   int size, UINT flags, HKL layout )
 {
     return load_driver()->pToUnicodeEx( virt, scan, state, str, size, flags, layout );
-}
-
-static BOOL CDECL loaderdrv_UnloadKeyboardLayout( HKL layout )
-{
-    return load_driver()->pUnloadKeyboardLayout( layout );
 }
 
 static void CDECL loaderdrv_UnregisterHotKey( HWND hwnd, UINT modifiers, UINT vk )
@@ -619,11 +595,9 @@ static USER_DRIVER lazy_load_driver =
     loaderdrv_Beep,
     loaderdrv_GetKeyNameText,
     loaderdrv_GetKeyboardLayoutList,
-    loaderdrv_LoadKeyboardLayout,
     loaderdrv_MapVirtualKeyEx,
     loaderdrv_RegisterHotKey,
     loaderdrv_ToUnicodeEx,
-    loaderdrv_UnloadKeyboardLayout,
     loaderdrv_UnregisterHotKey,
     loaderdrv_VkKeyScanEx,
     /* cursor/icon functions */

@@ -1851,27 +1851,6 @@ static BOOL match_x11_keyboard_layout(HKL hkl)
 
 
 /***********************************************************************
- *		LoadKeyboardLayout (X11DRV.@)
- */
-HKL CDECL X11DRV_LoadKeyboardLayout(LPCWSTR name, UINT flags)
-{
-    FIXME("%s, %04x: semi-stub! Returning default layout.\n", debugstr_w(name), flags);
-    return get_locale_kbd_layout();
-}
-
-
-/***********************************************************************
- *		UnloadKeyboardLayout (X11DRV.@)
- */
-BOOL CDECL X11DRV_UnloadKeyboardLayout(HKL hkl)
-{
-    FIXME("%p: stub!\n", hkl);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
-
-/***********************************************************************
  *		ActivateKeyboardLayout (X11DRV.@)
  */
 BOOL CDECL X11DRV_ActivateKeyboardLayout(HKL hkl, UINT flags)

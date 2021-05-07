@@ -1538,11 +1538,11 @@ BOOL WINAPI UnregisterHotKey(HWND hwnd,INT id)
 /***********************************************************************
  *		LoadKeyboardLayoutW (USER32.@)
  */
-HKL WINAPI LoadKeyboardLayoutW(LPCWSTR pwszKLID, UINT Flags)
+HKL WINAPI LoadKeyboardLayoutW( const WCHAR *name, UINT flags )
 {
-    TRACE_(keyboard)("(%s, %d)\n", debugstr_w(pwszKLID), Flags);
-
-    return USER_Driver->pLoadKeyboardLayout(pwszKLID, Flags);
+    FIXME_(keyboard)( "name %s, flags %x, semi-stub!\n", debugstr_w( name ), flags );
+    /* FIXME: semi-stub: returning default layout */
+    return get_locale_kbd_layout();
 }
 
 /***********************************************************************
@@ -1565,11 +1565,11 @@ HKL WINAPI LoadKeyboardLayoutA(LPCSTR pwszKLID, UINT Flags)
 /***********************************************************************
  *		UnloadKeyboardLayout (USER32.@)
  */
-BOOL WINAPI UnloadKeyboardLayout(HKL hkl)
+BOOL WINAPI UnloadKeyboardLayout( HKL layout )
 {
-    TRACE_(keyboard)("(%p)\n", hkl);
-
-    return USER_Driver->pUnloadKeyboardLayout(hkl);
+    FIXME_(keyboard)( "layout %p, stub!\n", layout );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
 }
 
 typedef struct __TRACKINGLIST {
