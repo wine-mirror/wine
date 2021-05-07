@@ -1074,35 +1074,28 @@ static struct file_view *find_view( const void *addr, size_t size )
 
 
 /***********************************************************************
- *           zero_bits_win_to_64
- *
- * Convert from Windows hybrid 32bit-based / bitmask to 64bit-based format
+ *           get_zero_bits_mask
  */
-static inline unsigned short zero_bits_win_to_64( ULONG_PTR zero_bits )
+static inline UINT_PTR get_zero_bits_mask( ULONG_PTR zero_bits )
 {
-    unsigned short zero_bits_64;
+    unsigned int shift;
 
-    if (zero_bits == 0) return 0;
-    if (zero_bits < 32) return 32 + zero_bits;
-    zero_bits_64 = 63;
+    if (zero_bits == 0) return ~(UINT_PTR)0;
+
+    if (zero_bits < 32) shift = 32 + zero_bits;
+    else
+    {
+        shift = 63;
 #ifdef _WIN64
-    if (zero_bits >> 32) { zero_bits_64 -= 32; zero_bits >>= 32; }
+        if (zero_bits >> 32) { shift -= 32; zero_bits >>= 32; }
 #endif
-    if (zero_bits >> 16) { zero_bits_64 -= 16; zero_bits >>= 16; }
-    if (zero_bits >> 8) { zero_bits_64 -= 8; zero_bits >>= 8; }
-    if (zero_bits >> 4) { zero_bits_64 -= 4; zero_bits >>= 4; }
-    if (zero_bits >> 2) { zero_bits_64 -= 2; zero_bits >>= 2; }
-    if (zero_bits >> 1) { zero_bits_64 -= 1; }
-    return zero_bits_64;
-}
-
-
-/***********************************************************************
- *           get_zero_bits_64_mask
- */
-static inline UINT_PTR get_zero_bits_64_mask( USHORT zero_bits_64 )
-{
-    return (UINT_PTR)((~(UINT64)0) >> zero_bits_64);
+        if (zero_bits >> 16) { shift -= 16; zero_bits >>= 16; }
+        if (zero_bits >> 8) { shift -= 8; zero_bits >>= 8; }
+        if (zero_bits >> 4) { shift -= 4; zero_bits >>= 4; }
+        if (zero_bits >> 2) { shift -= 2; zero_bits >>= 2; }
+        if (zero_bits >> 1) { shift -= 1; }
+    }
+    return (UINT_PTR)((~(UINT64)0) >> shift);
 }
 
 
@@ -1849,7 +1842,7 @@ static NTSTATUS map_fixed_area( void *base, size_t size, unsigned int vprot )
  * virtual_mutex must be held by caller.
  */
 static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
-                          int top_down, unsigned int vprot, unsigned short zero_bits_64 )
+                          int top_down, unsigned int vprot, ULONG_PTR zero_bits )
 {
     void *ptr;
     NTSTATUS status;
@@ -1869,7 +1862,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
 
         alloc.size = size;
         alloc.top_down = top_down;
-        alloc.limit = (void*)(get_zero_bits_64_mask( zero_bits_64 ) & (UINT_PTR)user_space_limit);
+        alloc.limit = (void*)(get_zero_bits_mask( zero_bits ) & (UINT_PTR)user_space_limit);
 
         if (mmap_enum_reserved_areas( alloc_reserved_area_callback, &alloc, top_down ))
         {
@@ -1880,7 +1873,7 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
             goto done;
         }
 
-        if (zero_bits_64)
+        if (zero_bits)
         {
             if (!(ptr = map_free_area( address_space_start, alloc.limit, size,
                                        top_down, get_unix_prot(vprot) )))
@@ -2376,7 +2369,7 @@ static NTSTATUS get_mapping_info( HANDLE handle, ACCESS_MASK access, unsigned in
  * Map a PE image section into memory.
  */
 static NTSTATUS virtual_map_image( HANDLE mapping, ACCESS_MASK access, void **addr_ptr, SIZE_T *size_ptr,
-                                   unsigned short zero_bits_64, HANDLE shared_file, ULONG alloc_type,
+                                   ULONG_PTR zero_bits, HANDLE shared_file, ULONG alloc_type,
                                    pe_image_info_t *image_info, WCHAR *filename, BOOL is_builtin )
 {
     unsigned int vprot = SEC_IMAGE | SEC_FILE | VPROT_COMMITTED | VPROT_READ | VPROT_EXEC | VPROT_WRITECOPY;
@@ -2405,9 +2398,9 @@ static NTSTATUS virtual_map_image( HANDLE mapping, ACCESS_MASK access, void **ad
     if ((ULONG_PTR)base != image_info->base) base = NULL;
 
     if ((char *)base >= (char *)address_space_start)  /* make sure the DOS area remains free */
-        status = map_view( &view, base, size, alloc_type & MEM_TOP_DOWN, vprot, zero_bits_64 );
+        status = map_view( &view, base, size, alloc_type & MEM_TOP_DOWN, vprot, zero_bits );
 
-    if (status) status = map_view( &view, NULL, size, alloc_type & MEM_TOP_DOWN, vprot, zero_bits_64 );
+    if (status) status = map_view( &view, NULL, size, alloc_type & MEM_TOP_DOWN, vprot, zero_bits );
     if (status) goto done;
 
     status = map_image_into_view( view, filename, unix_fd, base, image_info->header_size,
@@ -2446,7 +2439,7 @@ done:
  *
  * Map a file section into memory.
  */
-static NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsigned short zero_bits_64,
+static NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_PTR zero_bits,
                                      SIZE_T commit_size, const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr,
                                      ULONG alloc_type, ULONG protect )
 {
@@ -2495,7 +2488,7 @@ static NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsigned sh
         /* check if we can replace that mapping with the builtin */
         res = load_builtin( image_info, filename, addr_ptr, size_ptr );
         if (res == STATUS_IMAGE_ALREADY_LOADED)
-            res = virtual_map_image( handle, access, addr_ptr, size_ptr, zero_bits_64, shared_file,
+            res = virtual_map_image( handle, access, addr_ptr, size_ptr, zero_bits, shared_file,
                                      alloc_type, image_info, filename, FALSE );
         if (shared_file) NtClose( shared_file );
         free( image_info );
@@ -2530,7 +2523,7 @@ static NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, unsigned sh
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
 
-    res = map_view( &view, base, size, alloc_type & MEM_TOP_DOWN, vprot, zero_bits_64 );
+    res = map_view( &view, base, size, alloc_type & MEM_TOP_DOWN, vprot, zero_bits );
     if (res) goto done;
 
     TRACE( "handle=%p size=%lx offset=%x%08x\n", handle, size, offset.u.HighPart, offset.u.LowPart );
@@ -3047,7 +3040,6 @@ NTSTATUS virtual_clear_tls_index( ULONG index )
 NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR zero_bits, SIZE_T reserve_size,
                                      SIZE_T commit_size, SIZE_T *pthread_size )
 {
-    unsigned short zero_bits_64 = zero_bits_win_to_64( zero_bits );
     struct file_view *view;
     NTSTATUS status;
     sigset_t sigset;
@@ -3064,7 +3056,7 @@ NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR zero_bits, SI
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
 
     if ((status = map_view( &view, NULL, size + extra_size, FALSE,
-                            VPROT_READ | VPROT_WRITE | VPROT_COMMITTED, zero_bits_64 )) != STATUS_SUCCESS)
+                            VPROT_READ | VPROT_WRITE | VPROT_COMMITTED, zero_bits )) != STATUS_SUCCESS)
         goto done;
 
 #ifdef VALGRIND_STACK_REGISTER
@@ -3653,7 +3645,6 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG_PTR z
     sigset_t sigset;
     SIZE_T size = *size_ptr;
     NTSTATUS status = STATUS_SUCCESS;
-    unsigned short zero_bits_64 = zero_bits_win_to_64( zero_bits );
 
     TRACE("%p %p %08lx %x %08x\n", process, *ret, size, type, protect );
 
@@ -3736,7 +3727,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG_PTR z
 
             if (vprot & VPROT_WRITECOPY) status = STATUS_INVALID_PAGE_PROTECTION;
             else if (is_dos_memory) status = allocate_dos_memory( &view, vprot );
-            else status = map_view( &view, base, size, type & MEM_TOP_DOWN, vprot, zero_bits_64 );
+            else status = map_view( &view, base, size, type & MEM_TOP_DOWN, vprot, zero_bits );
 
             if (status == STATUS_SUCCESS) base = view->base;
         }
@@ -4320,7 +4311,6 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     NTSTATUS res;
     SIZE_T mask = granularity_mask;
     LARGE_INTEGER offset;
-    unsigned short zero_bits_64 = zero_bits_win_to_64( zero_bits );
 
     offset.QuadPart = offset_ptr ? offset_ptr->QuadPart : 0;
 
@@ -4378,7 +4368,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         return result.map_view.status;
     }
 
-    return virtual_map_section( handle, addr_ptr, zero_bits_64, commit_size,
+    return virtual_map_section( handle, addr_ptr, zero_bits, commit_size,
                                 offset_ptr, size_ptr, alloc_type, protect );
 }
 
