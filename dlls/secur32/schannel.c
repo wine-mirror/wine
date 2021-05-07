@@ -25,15 +25,15 @@
 #define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "winreg.h"
 #include "winnls.h"
 #include "lmcons.h"
 #include "sspi.h"
 #include "schannel.h"
-#include "secur32_priv.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
+#include "secur32_priv.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 
@@ -199,8 +199,8 @@ static void read_config(void)
         DWORD type, size, value;
 
         for(i = 0; i < ARRAY_SIZE(protocol_config_keys); i++) {
-            strcpyW(subkey_name, protocol_config_keys[i].key_name);
-            strcatW(subkey_name, clientW);
+            wcscpy(subkey_name, protocol_config_keys[i].key_name);
+            wcscat(subkey_name, clientW);
             res = RegOpenKeyExW(protocols_key, subkey_name, 0, KEY_READ, &key);
             if(res != ERROR_SUCCESS) {
                 if(protocol_config_keys[i].enabled)
@@ -412,8 +412,8 @@ static WCHAR *get_key_container_path(const CERT_CONTEXT *ctx)
             RtlFreeHeap(GetProcessHeap(), 0, str);
             return NULL;
         }
-        strcpyW(ret, rsabaseW);
-        MultiByteToWideChar(CP_ACP, 0, str, -1, ret + strlenW(ret), len);
+        wcscpy(ret, rsabaseW);
+        MultiByteToWideChar(CP_ACP, 0, str, -1, ret + wcslen(ret), len);
         RtlFreeHeap(GetProcessHeap(), 0, str);
     }
     else if (CertGetCertificateContextProperty(ctx, CERT_KEY_PROV_INFO_PROP_ID, NULL, &prov_size))
@@ -425,21 +425,21 @@ static WCHAR *get_key_container_path(const CERT_CONTEXT *ctx)
             return NULL;
         }
         if (!(ret = RtlAllocateHeap(GetProcessHeap(), 0,
-                                    sizeof(rsabaseW) + strlenW(prov->pwszContainerName) * sizeof(WCHAR))))
+                                    sizeof(rsabaseW) + wcslen(prov->pwszContainerName) * sizeof(WCHAR))))
         {
             RtlFreeHeap(GetProcessHeap(), 0, prov);
             return NULL;
         }
-        strcpyW(ret, rsabaseW);
-        strcatW(ret, prov->pwszContainerName);
+        wcscpy(ret, rsabaseW);
+        wcscat(ret, prov->pwszContainerName);
         RtlFreeHeap(GetProcessHeap(), 0, prov);
     }
 
     if (!ret && GetUserNameW(username, &len) && (ret = RtlAllocateHeap(GetProcessHeap(), 0,
                                                                        sizeof(rsabaseW) + len * sizeof(WCHAR))))
     {
-        strcpyW(ret, rsabaseW);
-        strcatW(ret, username);
+        wcscpy(ret, rsabaseW);
+        wcscat(ret, username);
     }
 
     return ret;

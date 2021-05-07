@@ -23,10 +23,9 @@
 #include "sspi.h"
 #include "rpc.h"
 #include "wincred.h"
-#include "secur32_priv.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
+#include "secur32_priv.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 

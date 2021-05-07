@@ -5,6 +5,8 @@ DELAYIMPORTS = crypt32
 EXTRAINCL = $(GNUTLS_CFLAGS)
 EXTRALIBS = $(SECURITY_LIBS) $(PTHREAD_LIBS)
 
+EXTRADLLFLAGS = -mno-cygwin
+
 C_SRCS = \
 	lsa.c \
 	negotiate.c \

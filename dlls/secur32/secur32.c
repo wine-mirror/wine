@@ -16,6 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 #include <assert.h>
 #include <stdarg.h>
 
@@ -28,7 +29,6 @@
 #include "winternl.h"
 #include "shlwapi.h"
 #include "sspi.h"
-#include "secur32_priv.h"
 #include "secext.h"
 #include "ntsecapi.h"
 #include "thunks.h"
@@ -36,7 +36,7 @@
 
 #include "wine/list.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
+#include "secur32_priv.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 
@@ -174,18 +174,10 @@ PSecurityFunctionTableW WINAPI InitSecurityInterfaceW(void)
     return &securityFunctionTableW;
 }
 
-static PWSTR SECUR32_strdupW(PCWSTR str)
+static WCHAR *SECUR32_strdupW(const WCHAR *str)
 {
-    PWSTR ret;
-
-    if (str)
-    {
-        ret = heap_alloc((lstrlenW(str) + 1) * sizeof(WCHAR));
-        if (ret)
-            lstrcpyW(ret, str);
-    }
-    else
-        ret = NULL;
+    WCHAR *ret = NULL;
+    if (str && (ret = heap_alloc((wcslen(str) + 1) * sizeof(WCHAR)))) wcscpy(ret, str);
     return ret;
 }
 
@@ -595,7 +587,7 @@ static void SECUR32_initializeProviders(void)
                     ;
                 if (*comma == ',')
                     *comma = '\0';
-                for (; *ptr && isspaceW(*ptr) && ptr < securityPkgNames + size;
+                for (; *ptr && iswspace(*ptr) && ptr < securityPkgNames + size;
                      ptr++)
                     ;
                 if (*ptr)
@@ -1046,16 +1038,16 @@ BOOLEAN WINAPI GetComputerObjectNameW(
                 break;
             }
 
-            len = strlenW(cnW) + size + 1 + strlenW(ComputersW) + 1 + strlenW(dcW);
+            len = wcslen(cnW) + size + 1 + wcslen(ComputersW) + 1 + wcslen(dcW);
             if (domainInfo->DnsDomainName.Buffer)
             {
-                suffix = strrchrW(domainInfo->DnsDomainName.Buffer, '.');
+                suffix = wcsrchr(domainInfo->DnsDomainName.Buffer, '.');
                 if (suffix)
                 {
                     *suffix++ = 0;
-                    len += 1 + strlenW(dcW) + strlenW(suffix);
+                    len += 1 + wcslen(dcW) + wcslen(suffix);
                 }
-                len += strlenW(domainInfo->DnsDomainName.Buffer);
+                len += wcslen(domainInfo->DnsDomainName.Buffer);
             }
             else
                 suffix = NULL;
