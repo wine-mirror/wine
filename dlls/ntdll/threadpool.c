@@ -783,7 +783,7 @@ NTSTATUS WINAPI RtlCreateTimerQueue(PHANDLE NewTimerQueue)
         RtlFreeHeap(GetProcessHeap(), 0, q);
         return status;
     }
-    status = RtlCreateUserThread(GetCurrentProcess(), NULL, FALSE, NULL, 0, 0,
+    status = RtlCreateUserThread(GetCurrentProcess(), NULL, FALSE, 0, 0, 0,
                                  timer_queue_thread_proc, q, &q->thread, NULL);
     if (status != STATUS_SUCCESS)
     {
@@ -1141,7 +1141,7 @@ static NTSTATUS tp_new_worker_thread( struct threadpool *pool )
     HANDLE thread;
     NTSTATUS status;
 
-    status = RtlCreateUserThread( GetCurrentProcess(), NULL, FALSE, NULL, 0, 0,
+    status = RtlCreateUserThread( GetCurrentProcess(), NULL, FALSE, 0, 0, 0,
                                   threadpool_worker_proc, pool, &thread, NULL );
     if (status == STATUS_SUCCESS)
     {
@@ -1176,7 +1176,7 @@ static NTSTATUS tp_timerqueue_lock( struct threadpool_object *timer )
     if (!timerqueue.thread_running)
     {
         HANDLE thread;
-        status = RtlCreateUserThread( GetCurrentProcess(), NULL, FALSE, NULL, 0, 0,
+        status = RtlCreateUserThread( GetCurrentProcess(), NULL, FALSE, 0, 0, 0,
                                       timerqueue_thread_proc, NULL, &thread, NULL );
         if (status == STATUS_SUCCESS)
         {
@@ -1454,7 +1454,7 @@ static NTSTATUS tp_waitqueue_lock( struct threadpool_object *wait )
         goto out;
     }
 
-    status = RtlCreateUserThread( GetCurrentProcess(), NULL, FALSE, NULL, 0, 0,
+    status = RtlCreateUserThread( GetCurrentProcess(), NULL, FALSE, 0, 0, 0,
                                   waitqueue_thread_proc, bucket, &thread, NULL );
     if (status == STATUS_SUCCESS)
     {
@@ -1592,7 +1592,7 @@ static NTSTATUS tp_ioqueue_lock( struct threadpool_object *io, HANDLE file )
         HANDLE thread;
 
         if (!(status = RtlCreateUserThread( GetCurrentProcess(), NULL, FALSE,
-                NULL, 0, 0, ioqueue_thread_proc, NULL, &thread, NULL )))
+                                            0, 0, 0, ioqueue_thread_proc, NULL, &thread, NULL )))
         {
             ioqueue.thread_running = TRUE;
             NtClose( thread );

@@ -84,7 +84,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateRemoteThreadEx( HANDLE process, SECURITY_A
     else stack_commit = stack;
 
     if (!set_ntstatus( RtlCreateUserThread( process, sa ? sa->lpSecurityDescriptor : NULL, TRUE,
-                                            NULL, stack_reserve, stack_commit,
+                                            0, stack_reserve, stack_commit,
                                             (PRTL_THREAD_START_ROUTINE)start, param, &handle, &client_id )))
         return 0;
 

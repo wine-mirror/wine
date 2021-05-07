@@ -562,7 +562,7 @@
 @ stdcall RtlCreateUserProcess(ptr long ptr ptr ptr long long long long ptr)
 @ stub RtlCreateUserSecurityObject
 @ stdcall RtlCreateUserStack(long long long long long ptr)
-@ stdcall RtlCreateUserThread(long ptr long ptr long long ptr ptr ptr ptr)
+@ stdcall RtlCreateUserThread(long ptr long long long long ptr ptr ptr ptr)
 @ stdcall RtlCustomCPToUnicodeN(ptr ptr long ptr str long)
 @ stub RtlCutoverTimeToSystemTime
 @ stdcall RtlDeNormalizeProcessParams(ptr)

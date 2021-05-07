@@ -150,7 +150,7 @@ void WINAPI RtlUserThreadStart( PRTL_THREAD_START_ROUTINE entry, void *arg )
  *              RtlCreateUserThread   (NTDLL.@)
  */
 NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
-                                     BOOLEAN suspended, PVOID stack_addr,
+                                     BOOLEAN suspended, ULONG zero_bits,
                                      SIZE_T stack_reserve, SIZE_T stack_commit,
                                      PRTL_THREAD_START_ROUTINE start, void *param,
                                      HANDLE *handle_ptr, CLIENT_ID *id )
@@ -181,7 +181,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, SECURITY_DESCRIPTOR *descr,
     if (actctx) flags |= THREAD_CREATE_FLAGS_CREATE_SUSPENDED;
 
     status = NtCreateThreadEx( &handle, THREAD_ALL_ACCESS, &attr, process, start, param,
-                               flags, 0, stack_commit, stack_reserve, attr_list );
+                               flags, zero_bits, stack_commit, stack_reserve, attr_list );
     if (!status)
     {
         if (actctx)
