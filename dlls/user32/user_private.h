@@ -198,6 +198,7 @@ struct user_thread_info
     ULONG_PTR                     GetMessageExtraInfoVal; /* Value for GetMessageExtraInfo */
     struct user_key_state_info   *key_state;              /* Cache of global key state */
     HKL                           kbd_layout;             /* Current keyboard layout */
+    DWORD                         kbd_layout_id;          /* Current keyboard layout ID */
     HWND                          top_window;             /* Desktop window */
     HWND                          msg_window;             /* HWND_MESSAGE parent window */
     struct rawinput_thread_data  *rawinput;               /* RawInput thread local data / buffer */

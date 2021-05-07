@@ -1129,6 +1129,7 @@ BOOL WINAPI GetKeyboardLayoutNameA(LPSTR pszKLID)
  */
 BOOL WINAPI GetKeyboardLayoutNameW( WCHAR *name )
 {
+    struct user_thread_info *info = get_user_thread_info();
     WCHAR klid[KL_NAMELENGTH], value[5];
     DWORD value_size, tmp, i = 0;
     HKEY hkey;
@@ -1140,6 +1141,12 @@ BOOL WINAPI GetKeyboardLayoutNameW( WCHAR *name )
     {
         SetLastError( ERROR_NOACCESS );
         return FALSE;
+    }
+
+    if (info->kbd_layout_id)
+    {
+        swprintf( name, KL_NAMELENGTH, L"%08X", info->kbd_layout_id );
+        return TRUE;
     }
 
     layout = GetKeyboardLayout( 0 );
@@ -1165,6 +1172,8 @@ BOOL WINAPI GetKeyboardLayoutNameW( WCHAR *name )
         }
         RegCloseKey( hkey );
     }
+
+    info->kbd_layout_id = wcstoul( name, NULL, 16 );
 
     TRACE_(keyboard)( "ret %s\n", debugstr_w( name ) );
     return TRUE;
@@ -1394,6 +1403,7 @@ HKL WINAPI ActivateKeyboardLayout( HKL layout, UINT flags )
 
     old_layout = info->kbd_layout;
     info->kbd_layout = layout;
+    if (old_layout != layout) info->kbd_layout_id = 0;
 
     if (!old_layout) return get_locale_kbd_layout();
     return old_layout;
