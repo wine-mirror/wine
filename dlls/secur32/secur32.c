@@ -174,56 +174,10 @@ PSecurityFunctionTableW WINAPI InitSecurityInterfaceW(void)
     return &securityFunctionTableW;
 }
 
-static WCHAR *SECUR32_strdupW(const WCHAR *str)
+static WCHAR *strdupW( const WCHAR *str )
 {
     WCHAR *ret = NULL;
-    if (str && (ret = heap_alloc((wcslen(str) + 1) * sizeof(WCHAR)))) wcscpy(ret, str);
-    return ret;
-}
-
-PWSTR SECUR32_AllocWideFromMultiByte(PCSTR str)
-{
-    PWSTR ret;
-
-    if (str)
-    {
-        int charsNeeded = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-
-        if (charsNeeded)
-        {
-            ret = heap_alloc(charsNeeded * sizeof(WCHAR));
-            if (ret)
-                MultiByteToWideChar(CP_ACP, 0, str, -1, ret, charsNeeded);
-        }
-        else
-            ret = NULL;
-    }
-    else
-        ret = NULL;
-    return ret;
-}
-
-PSTR SECUR32_AllocMultiByteFromWide(PCWSTR str)
-{
-    PSTR ret;
-
-    if (str)
-    {
-        int charsNeeded = WideCharToMultiByte(CP_ACP, 0, str, -1, NULL, 0,
-         NULL, NULL);
-
-        if (charsNeeded)
-        {
-            ret = heap_alloc(charsNeeded);
-            if (ret)
-                WideCharToMultiByte(CP_ACP, 0, str, -1, ret, charsNeeded,
-                 NULL, NULL);
-        }
-        else
-            ret = NULL;
-    }
-    else
-        ret = NULL;
+    if (str && (ret = malloc( (wcslen(str) + 1) * sizeof(WCHAR) ))) wcscpy( ret, str );
     return ret;
 }
 
@@ -369,6 +323,17 @@ static void _makeFnTableW(PSecurityFunctionTableW fnTableW,
     }
 }
 
+static WCHAR *strdupAW( const char *str )
+{
+    WCHAR *ret = NULL;
+    if (str)
+    {
+        int len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
+        if ((ret = malloc( len * sizeof(WCHAR) ))) MultiByteToWideChar( CP_ACP, 0, str, -1, ret, len );
+    }
+    return ret;
+}
+
 static void _copyPackageInfo(PSecPkgInfoW info, const SecPkgInfoA *inInfoA,
  const SecPkgInfoW *inInfoW)
 {
@@ -380,13 +345,13 @@ static void _copyPackageInfo(PSecPkgInfoW info, const SecPkgInfoA *inInfoA,
         memcpy(info, inInfoW ? inInfoW : (const SecPkgInfoW *)inInfoA, sizeof(*info));
         if (inInfoW)
         {
-            info->Name = SECUR32_strdupW(inInfoW->Name);
-            info->Comment = SECUR32_strdupW(inInfoW->Comment);
+            info->Name = strdupW(inInfoW->Name);
+            info->Comment = strdupW(inInfoW->Comment);
         }
         else
         {
-            info->Name = SECUR32_AllocWideFromMultiByte(inInfoA->Name);
-            info->Comment = SECUR32_AllocWideFromMultiByte(inInfoA->Comment);
+            info->Name = strdupAW(inInfoA->Name);
+            info->Comment = strdupAW(inInfoA->Comment);
         }
     }
 }
@@ -400,8 +365,7 @@ SecureProvider *SECUR32_addProvider(const SecurityFunctionTableA *fnTableA,
 
     if (!providerTable)
     {
-        providerTable = heap_alloc(sizeof(SecureProviderTable));
-        if (!providerTable)
+        if (!(providerTable = malloc(sizeof(*ret))))
         {
             LeaveCriticalSection(&cs);
             return NULL;
@@ -410,8 +374,7 @@ SecureProvider *SECUR32_addProvider(const SecurityFunctionTableA *fnTableA,
         list_init(&providerTable->table);
     }
 
-    ret = heap_alloc(sizeof(SecureProvider));
-    if (!ret)
+    if (!(ret = malloc(sizeof(*ret))))
     {
         LeaveCriticalSection(&cs);
         return NULL;
@@ -422,17 +385,17 @@ SecureProvider *SECUR32_addProvider(const SecurityFunctionTableA *fnTableA,
 
     if (fnTableA || fnTableW)
     {
-        ret->moduleName = moduleName ? SECUR32_strdupW(moduleName) : NULL;
+        ret->moduleName = moduleName ? strdupW(moduleName) : NULL;
         _makeFnTableA(&ret->fnTableA, fnTableA, fnTableW);
         _makeFnTableW(&ret->fnTableW, fnTableA, fnTableW);
         ret->loaded = !moduleName;
     }
     else
     {
-        ret->moduleName = SECUR32_strdupW(moduleName);
+        ret->moduleName = strdupW(moduleName);
         ret->loaded = FALSE;
     }
-    
+
     LeaveCriticalSection(&cs);
     return ret;
 }
@@ -449,8 +412,7 @@ void SECUR32_addPackages(SecureProvider *provider, ULONG toAdd,
 
     if (!packageTable)
     {
-        packageTable = heap_alloc(sizeof(SecurePackageTable));
-        if (!packageTable)
+        if (!(packageTable = malloc(sizeof(*packageTable))))
         {
             LeaveCriticalSection(&cs);
             return;
@@ -459,19 +421,17 @@ void SECUR32_addPackages(SecureProvider *provider, ULONG toAdd,
         packageTable->numPackages = 0;
         list_init(&packageTable->table);
     }
-        
+
     for (i = 0; i < toAdd; i++)
     {
-        SecurePackage *package = heap_alloc(sizeof(SecurePackage));
-        if (!package)
-            continue;
+        SecurePackage *package;
+
+        if (!(package = malloc(sizeof(*package)))) continue;
 
         list_add_tail(&packageTable->table, &package->entry);
 
         package->provider = provider;
-        _copyPackageInfo(&package->infoW,
-            infoA ? &infoA[i] : NULL,
-            infoW ? &infoW[i] : NULL);
+        _copyPackageInfo(&package->infoW, infoA ? &infoA[i] : NULL, infoW ? &infoW[i] : NULL);
     }
     packageTable->numPackages += toAdd;
 
@@ -599,14 +559,11 @@ SecurePackage *SECUR32_findPackageW(PCWSTR packageName)
         LIST_FOR_EACH_ENTRY(ret, &packageTable->table, SecurePackage, entry)
         {
             matched = !lstrcmpiW(ret->infoW.Name, packageName);
-	    if (matched)
-		break;
+            if (matched) break;
         }
-        
-	if (!matched)
-		return NULL;
+        if (!matched) return NULL;
 
-	if (ret->provider && !ret->provider->loaded)
+        if (ret->provider && !ret->provider->loaded)
         {
             ret->provider->lib = LoadLibraryW(ret->provider->moduleName);
             if (ret->provider->lib)
@@ -668,28 +625,26 @@ static void SECUR32_freeProviders(void)
         LIST_FOR_EACH_ENTRY_SAFE(package, package_next, &packageTable->table,
                                  SecurePackage, entry)
         {
-            heap_free(package->infoW.Name);
-            heap_free(package->infoW.Comment);
-            heap_free(package);
+            free(package->infoW.Name);
+            free(package->infoW.Comment);
+            free(package);
         }
 
-        heap_free(packageTable);
+        free(packageTable);
         packageTable = NULL;
     }
 
     if (providerTable)
     {
         SecureProvider *provider, *provider_next;
-        LIST_FOR_EACH_ENTRY_SAFE(provider, provider_next, &providerTable->table,
-                                 SecureProvider, entry)
+        LIST_FOR_EACH_ENTRY_SAFE(provider, provider_next, &providerTable->table, SecureProvider, entry)
         {
-            heap_free(provider->moduleName);
-            if (provider->lib)
-                FreeLibrary(provider->lib);
-            heap_free(provider);
+            free(provider->moduleName);
+            if (provider->lib) FreeLibrary(provider->lib);
+            free(provider);
         }
 
-        heap_free(providerTable);
+        free(providerTable);
         providerTable = NULL;
     }
 
@@ -704,9 +659,9 @@ static void SECUR32_freeProviders(void)
  * The sample ssp seems to use LocalAlloc/LocalFee, but there doesn't seem to
  * be any guarantee, nor is there an alloc function in secur32.
  */
-SECURITY_STATUS WINAPI FreeContextBuffer(PVOID pv)
+SECURITY_STATUS WINAPI FreeContextBuffer( void *pv )
 {
-    heap_free(pv);
+    RtlFreeHeap( GetProcessHeap(), 0, pv );
     return SEC_E_OK;
 }
 
@@ -738,8 +693,8 @@ SECURITY_STATUS WINAPI EnumerateSecurityPackagesW(PULONG pcPackages,
         }
         if (bytesNeeded)
         {
-            *ppPackageInfo = heap_alloc(bytesNeeded);
-            if (*ppPackageInfo)
+            /* freed with FeeContextBuffer */
+            if ((*ppPackageInfo = RtlAllocateHeap(GetProcessHeap(), 0, bytesNeeded)))
             {
                 ULONG i = 0;
                 PWSTR nextString;
@@ -803,8 +758,8 @@ static PSecPkgInfoA thunk_PSecPkgInfoWToA(ULONG cPackages,
                 bytesNeeded += WideCharToMultiByte(CP_ACP, 0, info[i].Comment,
                  -1, NULL, 0, NULL, NULL);
         }
-        ret = heap_alloc(bytesNeeded);
-        if (ret)
+        /* freed with FreeContextBuffer */
+        if ((ret = RtlAllocateHeap(GetProcessHeap(), 0, bytesNeeded)))
         {
             PSTR nextString;
 
@@ -895,7 +850,7 @@ SECURITY_STATUS WINAPI EnumerateSecurityPackagesA(PULONG pcPackages,
  *  nSize returns the number of characters written when lpNameBuffer is not
  *  NULL or the size of the buffer needed to hold the name when the buffer
  *  is too short or lpNameBuffer is NULL.
- * 
+ *
  *  It the buffer is too short, ERROR_INSUFFICIENT_BUFFER error will be set.
  */
 BOOLEAN WINAPI GetComputerObjectNameA(
@@ -908,8 +863,7 @@ BOOLEAN WINAPI GetComputerObjectNameA(
     TRACE("(%d %p %p)\n", NameFormat, lpNameBuffer, nSize);
 
     if (lpNameBuffer) {
-        bufferW = heap_alloc(sizeW * sizeof(WCHAR));
-        if (bufferW == NULL) {
+        if (!(bufferW = malloc(sizeW * sizeof(WCHAR)))) {
             SetLastError(ERROR_NOT_ENOUGH_MEMORY);
             return FALSE;
         }
@@ -922,7 +876,7 @@ BOOLEAN WINAPI GetComputerObjectNameA(
     }
     else
         *nSize = sizeW;
-    heap_free(bufferW);
+    free(bufferW);
     return rc;
 }
 
@@ -1115,7 +1069,7 @@ BOOLEAN WINAPI GetUserNameExA(
     ULONG sizeW = *nSize;
     TRACE("(%d %p %p)\n", NameFormat, lpNameBuffer, nSize);
     if (lpNameBuffer) {
-        bufferW = heap_alloc(sizeW * sizeof(WCHAR));
+        bufferW = malloc(sizeW * sizeof(WCHAR));
         if (bufferW == NULL) {
             SetLastError(ERROR_NOT_ENOUGH_MEMORY);
             return FALSE;
@@ -1138,7 +1092,7 @@ BOOLEAN WINAPI GetUserNameExA(
     }
     else
         *nSize = sizeW;
-    heap_free(bufferW);
+    free(bufferW);
     return rc;
 }
 

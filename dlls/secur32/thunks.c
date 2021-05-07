@@ -58,6 +58,18 @@ SECURITY_STATUS SEC_ENTRY thunk_AcquireCredentialsHandleA(
     return ret;
 }
 
+static char *strdupWA( const WCHAR *str )
+{
+    char *ret = NULL;
+    if (str)
+    {
+        int len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
+        if ((ret = RtlAllocateHeap( GetProcessHeap(), 0, len )))
+            WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
+    }
+    return ret;
+}
+
 SECURITY_STATUS SEC_ENTRY thunk_AcquireCredentialsHandleW(
  SEC_WCHAR *pszPrincipal, SEC_WCHAR *pszPackage, ULONG fCredentialsUse,
  PLUID pvLogonID, PVOID pAuthData, SEC_GET_KEY_FN pGetKeyFn,
@@ -70,15 +82,14 @@ SECURITY_STATUS SEC_ENTRY thunk_AcquireCredentialsHandleW(
      pvGetKeyArgument, phCredential, ptsExpiry);
     if (pszPackage)
     {
-        PSTR principal, package;
+        char *principal, *package;
 
-        principal = SECUR32_AllocMultiByteFromWide(pszPrincipal);
-        package = SECUR32_AllocMultiByteFromWide(pszPackage);
+        principal = strdupWA(pszPrincipal);
+        package = strdupWA(pszPackage);
         ret = AcquireCredentialsHandleA(principal, package, fCredentialsUse,
-         pvLogonID, pAuthData, pGetKeyFn, pvGetKeyArgument, phCredential,
-         ptsExpiry);
-        heap_free(principal);
-        heap_free(package);
+         pvLogonID, pAuthData, pGetKeyFn, pvGetKeyArgument, phCredential, ptsExpiry);
+        RtlFreeHeap(GetProcessHeap(), 0, principal);
+        RtlFreeHeap(GetProcessHeap(), 0, package);
     }
     else
         ret = SEC_E_SECPKG_NOT_FOUND;
@@ -103,24 +114,20 @@ SECURITY_STATUS SEC_ENTRY thunk_QueryCredentialsAttributesA(
         {
             if (package->provider->fnTableW.QueryCredentialsAttributesW)
             {
-                ret = package->provider->fnTableW.QueryCredentialsAttributesW(
-                 cred, ulAttribute, pBuffer);
+                ret = package->provider->fnTableW.QueryCredentialsAttributesW( cred, ulAttribute, pBuffer);
                 if (ret == SEC_E_OK)
                 {
                     switch (ulAttribute)
                     {
                         case SECPKG_CRED_ATTR_NAMES:
                         {
-                            PSecPkgCredentials_NamesW names =
-                             (PSecPkgCredentials_NamesW)pBuffer;
+                            PSecPkgCredentials_NamesW names = (PSecPkgCredentials_NamesW)pBuffer;
                             SEC_WCHAR *oldUser = names->sUserName;
 
                             if (oldUser)
                             {
-                                names->sUserName =
-                                 (PWSTR)SECUR32_AllocMultiByteFromWide(oldUser);
-                                package->provider->fnTableW.FreeContextBuffer(
-                                 oldUser);
+                                names->sUserName = (WCHAR *)strdupWA(oldUser);
+                                package->provider->fnTableW.FreeContextBuffer(oldUser);
                             }
                             break;
                         }
@@ -141,6 +148,18 @@ SECURITY_STATUS SEC_ENTRY thunk_QueryCredentialsAttributesA(
     return ret;
 }
 
+static WCHAR *strdupAW( const char *str )
+{
+    WCHAR *ret = NULL;
+    if (str)
+    {
+        int len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
+        if ((ret = RtlAllocateHeap( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+            MultiByteToWideChar( CP_ACP, 0, str, -1, ret, len );
+    }
+    return ret;
+}
+
 SECURITY_STATUS SEC_ENTRY thunk_QueryCredentialsAttributesW(
  PCredHandle phCredential, ULONG ulAttribute, void *pBuffer)
 {
@@ -156,24 +175,20 @@ SECURITY_STATUS SEC_ENTRY thunk_QueryCredentialsAttributesW(
         {
             if (package->provider->fnTableA.QueryCredentialsAttributesA)
             {
-                ret = package->provider->fnTableA.QueryCredentialsAttributesA(
-                 cred, ulAttribute, pBuffer);
+                ret = package->provider->fnTableA.QueryCredentialsAttributesA(cred, ulAttribute, pBuffer);
                 if (ret == SEC_E_OK)
                 {
                     switch (ulAttribute)
                     {
                         case SECPKG_CRED_ATTR_NAMES:
                         {
-                            PSecPkgCredentials_NamesA names =
-                             (PSecPkgCredentials_NamesA)pBuffer;
+                            PSecPkgCredentials_NamesA names = (PSecPkgCredentials_NamesA)pBuffer;
                             SEC_CHAR *oldUser = names->sUserName;
 
                             if (oldUser)
                             {
-                                names->sUserName =
-                                 (PSTR)SECUR32_AllocWideFromMultiByte(oldUser);
-                                package->provider->fnTableA.FreeContextBuffer(
-                                 oldUser);
+                                names->sUserName = (char *)strdupAW(oldUser);
+                                package->provider->fnTableA.FreeContextBuffer(oldUser);
                             }
                             break;
                         }
@@ -254,13 +269,13 @@ SECURITY_STATUS SEC_ENTRY thunk_InitializeSecurityContextW(
         {
             if (package->provider->fnTableA.InitializeSecurityContextA)
             {
-                PSTR target = SECUR32_AllocMultiByteFromWide(pszTargetName);
+                char *target = strdupWA(pszTargetName);
 
                 ret = package->provider->fnTableA.InitializeSecurityContextA(
                  phCredential, phContext, target, fContextReq, Reserved1,
                  TargetDataRep, pInput, Reserved2, phNewContext, pOutput,
                  pfContextAttr, ptsExpiry);
-                heap_free(target);
+                RtlFreeHeap(GetProcessHeap(), 0, target);
             }
             else
                 ret = SEC_E_UNSUPPORTED_FUNCTION;
@@ -332,14 +347,14 @@ SECURITY_STATUS SEC_ENTRY thunk_AddCredentialsW(PCredHandle hCredentials,
         {
             if (package->provider->fnTableA.AddCredentialsA)
             {
-                PSTR szPrincipal = SECUR32_AllocMultiByteFromWide(pszPrincipal);
-                PSTR szPackage = SECUR32_AllocMultiByteFromWide(pszPackage);
+                char *szPrincipal = strdupWA(pszPrincipal);
+                char *szPackage = strdupWA(pszPackage);
 
                 ret = package->provider->fnTableA.AddCredentialsA(
                  cred, szPrincipal, szPackage, fCredentialUse, pAuthData,
                  pGetKeyFn, pvGetKeyArgument, ptsExpiry);
-                heap_free(szPrincipal);
-                heap_free(szPackage);
+                RtlFreeHeap(GetProcessHeap(), 0, szPrincipal);
+                RtlFreeHeap(GetProcessHeap(), 0, szPackage);
             }
             else
                 ret = SEC_E_UNSUPPORTED_FUNCTION;
@@ -373,17 +388,15 @@ static PSecPkgInfoA _copyPackageInfoFlatWToA(const SecPkgInfoW *infoW)
              NULL, 0, NULL, NULL);
             bytesNeeded += commentLen;
         }
-        ret = heap_alloc(bytesNeeded);
-        if (ret)
+        if ((ret = RtlAllocateHeap(GetProcessHeap(), 0, bytesNeeded)))
         {
-            PSTR nextString = (PSTR)((PBYTE)ret + sizeof(SecPkgInfoA));
+            char *nextString = (char *)ret + sizeof(SecPkgInfoA);
 
             memcpy(ret, infoW, sizeof(SecPkgInfoA));
             if (infoW->Name)
             {
                 ret->Name = nextString;
-                WideCharToMultiByte(CP_ACP, 0, infoW->Name, -1, nextString,
-                 nameLen, NULL, NULL);
+                WideCharToMultiByte(CP_ACP, 0, infoW->Name, -1, nextString, nameLen, NULL, NULL);
                 nextString += nameLen;
             }
             else
@@ -391,8 +404,7 @@ static PSecPkgInfoA _copyPackageInfoFlatWToA(const SecPkgInfoW *infoW)
             if (infoW->Comment)
             {
                 ret->Comment = nextString;
-                WideCharToMultiByte(CP_ACP, 0, infoW->Comment, -1, nextString,
-                 nameLen, NULL, NULL);
+                WideCharToMultiByte(CP_ACP, 0, infoW->Comment, -1, nextString, nameLen, NULL, NULL);
             }
             else
                 ret->Comment = NULL;
@@ -419,22 +431,19 @@ static SECURITY_STATUS thunk_ContextAttributesWToA(SecurePackage *package,
 
                 if (oldUser)
                 {
-                    names->sUserName =
-                     (PWSTR)SECUR32_AllocMultiByteFromWide(oldUser);
+                    names->sUserName = (WCHAR *)strdupWA(oldUser);
                     package->provider->fnTableW.FreeContextBuffer(oldUser);
                 }
                 break;
             }
             case SECPKG_ATTR_AUTHORITY:
             {
-                PSecPkgContext_AuthorityW names =
-                 (PSecPkgContext_AuthorityW)pBuffer;
+                PSecPkgContext_AuthorityW names = (PSecPkgContext_AuthorityW)pBuffer;
                 SEC_WCHAR *oldAuth = names->sAuthorityName;
 
                 if (oldAuth)
                 {
-                    names->sAuthorityName =
-                     (PWSTR)SECUR32_AllocMultiByteFromWide(oldAuth);
+                    names->sAuthorityName = (WCHAR *)strdupWA(oldAuth);
                     package->provider->fnTableW.FreeContextBuffer(oldAuth);
                 }
                 break;
@@ -447,24 +456,19 @@ static SECURITY_STATUS thunk_ContextAttributesWToA(SecurePackage *package,
 
                 if (oldSigAlgName)
                 {
-                    info->sSignatureAlgorithmName =
-                     (PWSTR)SECUR32_AllocMultiByteFromWide(oldSigAlgName);
-                    package->provider->fnTableW.FreeContextBuffer(
-                     oldSigAlgName);
+                    info->sSignatureAlgorithmName = (WCHAR *)strdupWA(oldSigAlgName);
+                    package->provider->fnTableW.FreeContextBuffer(oldSigAlgName);
                 }
                 if (oldEncAlgName)
                 {
-                    info->sEncryptAlgorithmName =
-                     (PWSTR)SECUR32_AllocMultiByteFromWide(oldEncAlgName);
-                    package->provider->fnTableW.FreeContextBuffer(
-                     oldEncAlgName);
+                    info->sEncryptAlgorithmName = (WCHAR *)strdupWA(oldEncAlgName);
+                    package->provider->fnTableW.FreeContextBuffer(oldEncAlgName);
                 }
                 break;
             }
             case SECPKG_ATTR_PACKAGE_INFO:
             {
-                PSecPkgContext_PackageInfoW info =
-                 (PSecPkgContext_PackageInfoW)pBuffer;
+                PSecPkgContext_PackageInfoW info = (PSecPkgContext_PackageInfoW)pBuffer;
                 PSecPkgInfoW oldPkgInfo = info->PackageInfo;
 
                 if (oldPkgInfo)
@@ -477,8 +481,7 @@ static SECURITY_STATUS thunk_ContextAttributesWToA(SecurePackage *package,
             }
             case SECPKG_ATTR_NEGOTIATION_INFO:
             {
-                PSecPkgContext_NegotiationInfoW info =
-                 (PSecPkgContext_NegotiationInfoW)pBuffer;
+                PSecPkgContext_NegotiationInfoW info = (PSecPkgContext_NegotiationInfoW)pBuffer;
                 PSecPkgInfoW oldPkgInfo = info->PackageInfo;
 
                 if (oldPkgInfo)
@@ -491,35 +494,30 @@ static SECURITY_STATUS thunk_ContextAttributesWToA(SecurePackage *package,
             }
             case SECPKG_ATTR_NATIVE_NAMES:
             {
-                PSecPkgContext_NativeNamesW names =
-                 (PSecPkgContext_NativeNamesW)pBuffer;
-                PWSTR oldClient = names->sClientName;
-                PWSTR oldServer = names->sServerName;
+                PSecPkgContext_NativeNamesW names = (PSecPkgContext_NativeNamesW)pBuffer;
+                WCHAR *oldClient = names->sClientName;
+                WCHAR *oldServer = names->sServerName;
 
                 if (oldClient)
                 {
-                    names->sClientName = (PWSTR)SECUR32_AllocMultiByteFromWide(
-                     oldClient);
+                    names->sClientName = (WCHAR *)strdupWA(oldClient);
                     package->provider->fnTableW.FreeContextBuffer(oldClient);
                 }
                 if (oldServer)
                 {
-                    names->sServerName = (PWSTR)SECUR32_AllocMultiByteFromWide(
-                     oldServer);
+                    names->sServerName = (WCHAR *)strdupWA(oldServer);
                     package->provider->fnTableW.FreeContextBuffer(oldServer);
                 }
                 break;
             }
             case SECPKG_ATTR_CREDENTIAL_NAME:
             {
-                PSecPkgContext_CredentialNameW name =
-                 (PSecPkgContext_CredentialNameW)pBuffer;
-                PWSTR oldCred = name->sCredentialName;
+                PSecPkgContext_CredentialNameW name = (PSecPkgContext_CredentialNameW)pBuffer;
+                WCHAR *oldCred = name->sCredentialName;
 
                 if (oldCred)
                 {
-                    name->sCredentialName =
-                     (PWSTR)SECUR32_AllocMultiByteFromWide(oldCred);
+                    name->sCredentialName = (WCHAR *)strdupWA(oldCred);
                     package->provider->fnTableW.FreeContextBuffer(oldCred);
                 }
                 break;
@@ -560,11 +558,9 @@ SECURITY_STATUS SEC_ENTRY thunk_QueryContextAttributesA(PCtxtHandle phContext,
         {
             if (package->provider->fnTableW.QueryContextAttributesW)
             {
-                ret = package->provider->fnTableW.QueryContextAttributesW(
-                 ctxt, ulAttribute, pBuffer);
+                ret = package->provider->fnTableW.QueryContextAttributesW( ctxt, ulAttribute, pBuffer);
                 if (ret == SEC_E_OK)
-                    ret = thunk_ContextAttributesWToA(package, ulAttribute,
-                     pBuffer);
+                    ret = thunk_ContextAttributesWToA(package, ulAttribute, pBuffer);
             }
             else
                 ret = SEC_E_UNSUPPORTED_FUNCTION;
@@ -588,27 +584,23 @@ static PSecPkgInfoW _copyPackageInfoFlatAToW(const SecPkgInfoA *infoA)
 
         if (infoA->Name)
         {
-            nameLen = MultiByteToWideChar(CP_ACP, 0, infoA->Name, -1,
-             NULL, 0);
+            nameLen = MultiByteToWideChar(CP_ACP, 0, infoA->Name, -1, NULL, 0);
             bytesNeeded += nameLen * sizeof(WCHAR);
         }
         if (infoA->Comment)
         {
-            commentLen = MultiByteToWideChar(CP_ACP, 0, infoA->Comment, -1,
-             NULL, 0);
+            commentLen = MultiByteToWideChar(CP_ACP, 0, infoA->Comment, -1, NULL, 0);
             bytesNeeded += commentLen * sizeof(WCHAR);
         }
-        ret = heap_alloc(bytesNeeded);
-        if (ret)
+        if ((ret = RtlAllocateHeap(GetProcessHeap(), 0, bytesNeeded)))
         {
-            PWSTR nextString = (PWSTR)((PBYTE)ret + sizeof(SecPkgInfoW));
+            WCHAR *nextString = (WCHAR *)(char *)ret + sizeof(SecPkgInfoW);
 
             memcpy(ret, infoA, sizeof(SecPkgInfoA));
             if (infoA->Name)
             {
                 ret->Name = nextString;
-                MultiByteToWideChar(CP_ACP, 0, infoA->Name, -1, nextString,
-                 nameLen);
+                MultiByteToWideChar(CP_ACP, 0, infoA->Name, -1, nextString, nameLen);
                 nextString += nameLen;
             }
             else
@@ -616,8 +608,7 @@ static PSecPkgInfoW _copyPackageInfoFlatAToW(const SecPkgInfoA *infoA)
             if (infoA->Comment)
             {
                 ret->Comment = nextString;
-                MultiByteToWideChar(CP_ACP, 0, infoA->Comment, -1, nextString,
-                 commentLen);
+                MultiByteToWideChar(CP_ACP, 0, infoA->Comment, -1, nextString, commentLen);
             }
             else
                 ret->Comment = NULL;
@@ -644,22 +635,19 @@ static SECURITY_STATUS thunk_ContextAttributesAToW(SecurePackage *package,
 
                 if (oldUser)
                 {
-                    names->sUserName =
-                     (PSTR)SECUR32_AllocWideFromMultiByte(oldUser);
+                    names->sUserName = (char *)strdupAW(oldUser);
                     package->provider->fnTableW.FreeContextBuffer(oldUser);
                 }
                 break;
             }
             case SECPKG_ATTR_AUTHORITY:
             {
-                PSecPkgContext_AuthorityA names =
-                 (PSecPkgContext_AuthorityA)pBuffer;
+                PSecPkgContext_AuthorityA names = (PSecPkgContext_AuthorityA)pBuffer;
                 SEC_CHAR *oldAuth = names->sAuthorityName;
 
                 if (oldAuth)
                 {
-                    names->sAuthorityName =
-                     (PSTR)SECUR32_AllocWideFromMultiByte(oldAuth);
+                    names->sAuthorityName = (char *)strdupAW(oldAuth);
                     package->provider->fnTableW.FreeContextBuffer(oldAuth);
                 }
                 break;
@@ -672,25 +660,19 @@ static SECURITY_STATUS thunk_ContextAttributesAToW(SecurePackage *package,
 
                 if (oldSigAlgName)
                 {
-                    info->sSignatureAlgorithmName =
-                     (PSTR)SECUR32_AllocWideFromMultiByte(oldSigAlgName);
-                    package->provider->fnTableW.FreeContextBuffer(
-                     oldSigAlgName);
+                    info->sSignatureAlgorithmName = (char *)strdupAW(oldSigAlgName);
+                    package->provider->fnTableW.FreeContextBuffer(oldSigAlgName);
                 }
                 if (oldEncAlgName)
                 {
-                    info->sEncryptAlgorithmName =
-                     (PSTR)SECUR32_AllocWideFromMultiByte(
-                     oldEncAlgName);
-                    package->provider->fnTableW.FreeContextBuffer(
-                     oldEncAlgName);
+                    info->sEncryptAlgorithmName = (char *)strdupAW(oldEncAlgName);
+                    package->provider->fnTableW.FreeContextBuffer(oldEncAlgName);
                 }
                 break;
             }
             case SECPKG_ATTR_PACKAGE_INFO:
             {
-                PSecPkgContext_PackageInfoA info =
-                 (PSecPkgContext_PackageInfoA)pBuffer;
+                PSecPkgContext_PackageInfoA info = (PSecPkgContext_PackageInfoA)pBuffer;
                 PSecPkgInfoA oldPkgInfo = info->PackageInfo;
 
                 if (oldPkgInfo)
@@ -703,8 +685,7 @@ static SECURITY_STATUS thunk_ContextAttributesAToW(SecurePackage *package,
             }
             case SECPKG_ATTR_NEGOTIATION_INFO:
             {
-                PSecPkgContext_NegotiationInfoA info =
-                 (PSecPkgContext_NegotiationInfoA)pBuffer;
+                PSecPkgContext_NegotiationInfoA info = (PSecPkgContext_NegotiationInfoA)pBuffer;
                 PSecPkgInfoA oldPkgInfo = info->PackageInfo;
 
                 if (oldPkgInfo)
@@ -717,35 +698,30 @@ static SECURITY_STATUS thunk_ContextAttributesAToW(SecurePackage *package,
             }
             case SECPKG_ATTR_NATIVE_NAMES:
             {
-                PSecPkgContext_NativeNamesA names =
-                 (PSecPkgContext_NativeNamesA)pBuffer;
-                PSTR oldClient = names->sClientName;
-                PSTR oldServer = names->sServerName;
+                PSecPkgContext_NativeNamesA names = (PSecPkgContext_NativeNamesA)pBuffer;
+                char *oldClient = names->sClientName;
+                char *oldServer = names->sServerName;
 
                 if (oldClient)
                 {
-                    names->sClientName = (PSTR)SECUR32_AllocWideFromMultiByte(
-                     oldClient);
+                    names->sClientName = (char *)strdupAW(oldClient);
                     package->provider->fnTableW.FreeContextBuffer(oldClient);
                 }
                 if (oldServer)
                 {
-                    names->sServerName = (PSTR)SECUR32_AllocWideFromMultiByte(
-                     oldServer);
+                    names->sServerName = (char *)strdupAW(oldServer);
                     package->provider->fnTableW.FreeContextBuffer(oldServer);
                 }
                 break;
             }
             case SECPKG_ATTR_CREDENTIAL_NAME:
             {
-                PSecPkgContext_CredentialNameA name =
-                 (PSecPkgContext_CredentialNameA)pBuffer;
-                PSTR oldCred = name->sCredentialName;
+                PSecPkgContext_CredentialNameA name = (PSecPkgContext_CredentialNameA)pBuffer;
+                char *oldCred = name->sCredentialName;
 
                 if (oldCred)
                 {
-                    name->sCredentialName =
-                     (PSTR)SECUR32_AllocWideFromMultiByte(oldCred);
+                    name->sCredentialName = (char *)strdupAW(oldCred);
                     package->provider->fnTableW.FreeContextBuffer(oldCred);
                 }
                 break;
@@ -786,11 +762,9 @@ SECURITY_STATUS SEC_ENTRY thunk_QueryContextAttributesW(PCtxtHandle phContext,
         {
             if (package->provider->fnTableA.QueryContextAttributesA)
             {
-                ret = package->provider->fnTableA.QueryContextAttributesA(
-                 ctxt, ulAttribute, pBuffer);
+                ret = package->provider->fnTableA.QueryContextAttributesA(ctxt, ulAttribute, pBuffer);
                 if (ret == SEC_E_OK)
-                    ret = thunk_ContextAttributesAToW(package, ulAttribute,
-                     pBuffer);
+                    ret = thunk_ContextAttributesAToW(package, ulAttribute, pBuffer);
             }
             else
                 ret = SEC_E_UNSUPPORTED_FUNCTION;
@@ -819,11 +793,9 @@ SECURITY_STATUS SEC_ENTRY thunk_SetContextAttributesA(PCtxtHandle phContext,
             if (package->provider->fnTableW.SetContextAttributesW)
             {
                 /* TODO: gotta validate size too! */
-                ret = thunk_ContextAttributesWToA(package, ulAttribute,
-                 pBuffer);
+                ret = thunk_ContextAttributesWToA(package, ulAttribute, pBuffer);
                 if (ret == SEC_E_OK)
-                    ret = package->provider->fnTableW.SetContextAttributesW(
-                     ctxt, ulAttribute, pBuffer, cbBuffer);
+                    ret = package->provider->fnTableW.SetContextAttributesW(ctxt, ulAttribute, pBuffer, cbBuffer);
             }
             else
                 ret = SEC_E_UNSUPPORTED_FUNCTION;
@@ -852,11 +824,9 @@ SECURITY_STATUS SEC_ENTRY thunk_SetContextAttributesW(PCtxtHandle phContext,
             if (package->provider->fnTableA.SetContextAttributesA)
             {
                 /* TODO: gotta validate size too! */
-                ret = thunk_ContextAttributesAToW(package, ulAttribute,
-                 pBuffer);
+                ret = thunk_ContextAttributesAToW(package, ulAttribute, pBuffer);
                 if (ret == SEC_E_OK)
-                    ret = package->provider->fnTableA.SetContextAttributesA(
-                     ctxt, ulAttribute, pBuffer, cbBuffer);
+                    ret = package->provider->fnTableA.SetContextAttributesA(ctxt, ulAttribute, pBuffer, cbBuffer);
             }
             else
                 ret = SEC_E_UNSUPPORTED_FUNCTION;
@@ -876,11 +846,9 @@ SECURITY_STATUS SEC_ENTRY thunk_ImportSecurityContextA(
     SECURITY_STATUS ret;
     UNICODE_STRING package;
 
-    TRACE("%s %p %p %p\n", debugstr_a(pszPackage), pPackedContext, Token,
-     phContext);
+    TRACE("%s %p %p %p\n", debugstr_a(pszPackage), pPackedContext, Token, phContext);
     RtlCreateUnicodeStringFromAsciiz(&package, pszPackage);
-    ret = ImportSecurityContextW(package.Buffer, pPackedContext, Token,
-     phContext);
+    ret = ImportSecurityContextW(package.Buffer, pPackedContext, Token, phContext);
     RtlFreeUnicodeString(&package);
     return ret;
 }
@@ -890,11 +858,10 @@ SECURITY_STATUS SEC_ENTRY thunk_ImportSecurityContextW(
  PCtxtHandle phContext)
 {
     SECURITY_STATUS ret;
-    PSTR package = SECUR32_AllocMultiByteFromWide(pszPackage);
+    char *package = strdupWA(pszPackage);
 
-    TRACE("%s %p %p %p\n", debugstr_w(pszPackage), pPackedContext, Token,
-     phContext);
+    TRACE("%s %p %p %p\n", debugstr_w(pszPackage), pPackedContext, Token, phContext);
     ret = ImportSecurityContextA(package, pPackedContext, Token, phContext);
-    heap_free(package);
+    RtlFreeHeap(GetProcessHeap(), 0, package);
     return ret;
 }

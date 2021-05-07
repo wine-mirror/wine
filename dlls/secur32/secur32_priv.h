@@ -23,9 +23,8 @@
 
 #include <sys/types.h>
 #include <limits.h>
-#include "wine/heap.h"
-#include "wine/list.h"
 #include "schannel.h"
+#include "wine/list.h"
 
 extern HINSTANCE hsecur32 DECLSPEC_HIDDEN;
 
@@ -70,11 +69,6 @@ SecurePackage *SECUR32_findPackageW(PCWSTR packageName) DECLSPEC_HIDDEN;
 /* Tries to find the package named packageName.  (Thunks to _findPackageW)
  */
 SecurePackage *SECUR32_findPackageA(PCSTR packageName) DECLSPEC_HIDDEN;
-
-/* A few string helpers; will return NULL if str is NULL.  Free return with
- * HeapFree */
-PWSTR SECUR32_AllocWideFromMultiByte(PCSTR str) DECLSPEC_HIDDEN;
-PSTR  SECUR32_AllocMultiByteFromWide(PCWSTR str) DECLSPEC_HIDDEN;
 
 /* Initialization functions for built-in providers */
 void SECUR32_initSchannelSP(void) DECLSPEC_HIDDEN;
