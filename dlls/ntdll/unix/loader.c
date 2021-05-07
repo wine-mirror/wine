@@ -1871,7 +1871,7 @@ static void start_main_thread(void)
     if (p___wine_main_argv) *p___wine_main_argv = main_argv;
     if (p___wine_main_wargv) *p___wine_main_wargv = main_wargv;
     set_load_order_app_name( main_wargv[0] );
-    virtual_alloc_thread_stack( &stack, 0, 0, NULL );
+    virtual_alloc_thread_stack( &stack, is_win64 ? 0x7fffffff : 0, 0, 0, NULL );
     teb->Tib.StackBase = stack.StackBase;
     teb->Tib.StackLimit = stack.StackLimit;
     teb->DeallocationStack = stack.DeallocationStack;

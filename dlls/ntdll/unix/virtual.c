@@ -3044,9 +3044,10 @@ NTSTATUS virtual_clear_tls_index( ULONG index )
 /***********************************************************************
  *           virtual_alloc_thread_stack
  */
-NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, SIZE_T reserve_size, SIZE_T commit_size,
-                                     SIZE_T *pthread_size )
+NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR zero_bits, SIZE_T reserve_size,
+                                     SIZE_T commit_size, SIZE_T *pthread_size )
 {
+    unsigned short zero_bits_64 = zero_bits_win_to_64( zero_bits );
     struct file_view *view;
     NTSTATUS status;
     sigset_t sigset;
@@ -3063,7 +3064,7 @@ NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, SIZE_T reserve_size, SI
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
 
     if ((status = map_view( &view, NULL, size + extra_size, FALSE,
-                            VPROT_READ | VPROT_WRITE | VPROT_COMMITTED, 33 )) != STATUS_SUCCESS)
+                            VPROT_READ | VPROT_WRITE | VPROT_COMMITTED, zero_bits_64 )) != STATUS_SUCCESS)
         goto done;
 
 #ifdef VALGRIND_STACK_REGISTER

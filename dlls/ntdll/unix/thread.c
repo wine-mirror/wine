@@ -178,6 +178,9 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
     INITIAL_TEB stack;
     NTSTATUS status;
 
+    if (zero_bits > 21 && zero_bits < 32) return STATUS_INVALID_PARAMETER_3;
+    if (!is_win64 && !is_wow64 && zero_bits >= 32) return STATUS_INVALID_PARAMETER_3;
+
     if (process != NtCurrentProcess())
     {
         apc_call_t call;
@@ -244,7 +247,7 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
 
     if ((status = virtual_alloc_teb( &teb ))) goto done;
 
-    if ((status = virtual_alloc_thread_stack( &stack, stack_reserve, stack_commit, &extra_stack )))
+    if ((status = virtual_alloc_thread_stack( &stack, zero_bits, stack_reserve, stack_commit, &extra_stack )))
     {
         virtual_free_teb( teb );
         goto done;
