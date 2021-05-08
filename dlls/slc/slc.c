@@ -74,5 +74,10 @@ HRESULT WINAPI SLOpen(HSLC *handle)
 {
     FIXME("(%p) stub\n", handle );
 
+    if (!handle)
+        return E_INVALIDARG;
+
+    *handle = (HSLC)0xdeadbeef;
+
     return S_OK;
 }
