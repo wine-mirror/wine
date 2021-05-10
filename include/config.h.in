@@ -471,9 +471,6 @@
 /* Define to 1 if you have the `log2f' function. */
 #undef HAVE_LOG2F
 
-/* Define to 1 if you have the `lrintf' function. */
-#undef HAVE_LRINTF
-
 /* Define to 1 if you have the `lstat' function. */
 #undef HAVE_LSTAT
 

@@ -556,18 +556,6 @@ static float CDECL unix_logbf( float x )
 }
 
 /*********************************************************************
- *      lrintf
- */
-static int CDECL unix_lrintf(float x)
-{
-#ifdef HAVE_LRINTF
-    return lrintf(x);
-#else
-    return x >= 0 ? floorf(x + 0.5) : ceilf(x - 0.5);
-#endif
-}
-
-/*********************************************************************
  *      modf
  */
 static double CDECL unix_modf( double x, double *iptr )
@@ -882,7 +870,6 @@ static const struct unix_funcs funcs =
     unix_log2f,
     unix_logb,
     unix_logbf,
-    unix_lrintf,
     unix_modf,
     unix_modff,
     unix_nearbyint,

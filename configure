@@ -19642,7 +19642,6 @@ for ac_func in \
 	log1pf \
 	log2 \
 	log2f \
-	lrintf \
 	nearbyint \
 	nearbyintf \
 	nexttoward \

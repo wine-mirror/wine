@@ -72,7 +72,6 @@ struct unix_funcs
     float           (CDECL *log2f)(float x);
     double          (CDECL *logb)(double x);
     float           (CDECL *logbf)(float x);
-    int             (CDECL *lrintf)(float x);
     double          (CDECL *modf)(double x, double *iptr);
     float           (CDECL *modff)(float x, float *iptr);
     double          (CDECL *nearbyint)(double num);

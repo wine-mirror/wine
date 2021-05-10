@@ -4356,7 +4356,15 @@ __msvcrt_long CDECL lrint(double x)
  */
 __msvcrt_long CDECL lrintf(float x)
 {
-    return unix_funcs->lrintf( x );
+    float f;
+
+    f = rintf(x);
+    if ((f < 0 && f != (float)(__msvcrt_long)f)
+            || (f >= 0 && f != (float)(__msvcrt_ulong)f)) {
+        *_errno() = EDOM;
+        return 0;
+    }
+    return f;
 }
 
 /*********************************************************************
