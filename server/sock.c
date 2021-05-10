@@ -838,8 +838,10 @@ static void sock_reselect_async( struct fd *fd, struct async_queue *queue )
 {
     struct sock *sock = get_fd_user( fd );
 
-    /* ignore reselect on ifchange queue */
-    if (&sock->ifchange_q != queue)
+    /* Don't reselect the ifchange queue; we always ask for POLLIN.
+     * Don't reselect an uninitialized socket; we can't call set_fd_events() on
+     * a pseudo-fd. */
+    if (queue != &sock->ifchange_q && sock->type)
         sock_reselect( sock );
 }
 
