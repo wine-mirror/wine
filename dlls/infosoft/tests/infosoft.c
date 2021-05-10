@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <ole2.h>
 #include "indexsrv.h"
+#include "cierror.h"
 
 #include "wine/test.h"
 
@@ -141,7 +142,7 @@ static wordsink_impl wordsink = { { &wsvt } };
 
 static HRESULT WINAPI fillbuf_none(TEXT_SOURCE *ts)
 {
-    return E_FAIL;
+    return WBREAK_E_END_OF_TEXT;
 }
 
 static HRESULT WINAPI fillbuf_many(TEXT_SOURCE *ts)
@@ -154,7 +155,7 @@ static HRESULT WINAPI fillbuf_many(TEXT_SOURCE *ts)
         ts->awcBuffer += ts->iCur;
 
     if (!ts->awcBuffer[0])
-        return E_FAIL;
+        return WBREAK_E_END_OF_TEXT;
 
     for( i=0; ts->awcBuffer[i] && ts->awcBuffer[i] != ' '; i++)
         ;
