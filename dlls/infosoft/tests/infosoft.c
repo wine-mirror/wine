@@ -152,7 +152,7 @@ static HRESULT WINAPI fillbuf_many(TEXT_SOURCE *ts)
     if (ts->awcBuffer == NULL)
         ts->awcBuffer = teststring;
     else
-        ts->awcBuffer += ts->iCur;
+        ts->awcBuffer += ts->iEnd;
 
     if (!ts->awcBuffer[0])
         return WBREAK_E_END_OF_TEXT;
