@@ -3,6 +3,7 @@ DELAYIMPORTS = ws2_32
 EXTRALIBS = $(PCAP_LIBS)
 
 C_SRCS = \
+	unixlib.c \
 	wpcap.c
 
 RC_SRCS = version.rc

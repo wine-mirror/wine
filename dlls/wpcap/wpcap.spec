@@ -75,4 +75,4 @@
 @ cdecl pcap_stats(ptr ptr) wine_pcap_stats
 @ stub pcap_stats_ex
 @ cdecl pcap_strerror(long) msvcrt.strerror
-@ cdecl wsockinit() wine_wsockinit
+@ cdecl wsockinit()
