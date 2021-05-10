@@ -70,11 +70,20 @@ static ULONG WINAPI ws_Release(IWordSink *iface)
 static HRESULT WINAPI ws_PutWord(IWordSink *iface, ULONG cwc, const WCHAR *pwcInBuf,
                                  ULONG cwcSrcLen, ULONG cwcSrcPos)
 {
-    ok(testres[wordnum].len == cwcSrcLen, "wrong length\n");
-    ok(!cwcSrcPos ||(testres[wordnum].ofs == cwcSrcPos), "wrong offset\n");
-    ok(!memcmp(testres[wordnum].data, pwcInBuf, cwcSrcLen), "wrong data\n");
+    HRESULT rc = S_OK;
+    if (wordnum < ARRAY_SIZE(testres))
+    {
+        ok(testres[wordnum].len == cwcSrcLen, "wrong length\n");
+        ok(!cwcSrcPos ||(testres[wordnum].ofs == cwcSrcPos), "wrong offset\n");
+        ok(!memcmp(testres[wordnum].data, pwcInBuf, cwcSrcLen), "wrong data\n");
+    }
+    else
+    {
+        ok(0, "found too many words: %d\n", wordnum + 1);
+        rc = E_FAIL;
+    }
     wordnum++;
-    return S_OK;
+    return rc;
 }
 
 static HRESULT WINAPI ws_PutAltWord(IWordSink *iface, ULONG cwc, const WCHAR *pwcInBuf,
