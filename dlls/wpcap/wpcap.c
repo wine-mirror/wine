@@ -26,29 +26,12 @@
 #define USE_WS_PREFIX
 #include "winsock2.h"
 
-#include "wine/heap.h"
 #include "wine/debug.h"
 #include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wpcap);
 
 const struct pcap_funcs *pcap_funcs = NULL;
-
-static inline WCHAR *heap_strdupAtoW(const char *str)
-{
-    LPWSTR ret = NULL;
-
-    if(str) {
-        DWORD len;
-
-        len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-        ret = heap_alloc(len*sizeof(WCHAR));
-        if(ret)
-            MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-    }
-
-    return ret;
-}
 
 int CDECL wine_pcap_activate( void *handle )
 {
@@ -124,6 +107,17 @@ void CDECL wine_pcap_dump( unsigned char *user, const void *hdr, const unsigned 
     pcap_funcs->dump( user, hdr, packet );
 }
 
+static inline WCHAR *strdupAW( const char *str )
+{
+    WCHAR *ret = NULL;
+    if (str)
+    {
+        int len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
+        if ((ret = malloc( len * sizeof(WCHAR) ))) MultiByteToWideChar( CP_ACP, 0, str, -1, ret, len );
+    }
+    return ret;
+}
+
 void * CDECL wine_pcap_dump_open( void *handle, const char *filename )
 {
     void *dumper;
@@ -132,15 +126,15 @@ void * CDECL wine_pcap_dump_open( void *handle, const char *filename )
 
     TRACE( "%p, %s\n", handle, debugstr_a(filename) );
 
-    if (!(filenameW = heap_strdupAtoW( filename ))) return NULL;
+    if (!(filenameW = strdupAW( filename ))) return NULL;
     unix_path = wine_get_unix_file_name( filenameW );
-    heap_free( filenameW );
+    free( filenameW );
     if (!unix_path) return NULL;
 
     TRACE( "unix_path %s\n", debugstr_a(unix_path) );
 
     dumper = pcap_funcs->dump_open( handle, unix_path );
-    heap_free( unix_path );
+    RtlFreeHeap( GetProcessHeap(), 0, unix_path );
     return dumper;
 }
 
