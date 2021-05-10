@@ -31,9 +31,12 @@ struct handler_callback
 
 struct pcap_funcs
 {
+    int (CDECL *activate)( void * );
     void (CDECL *breakloop)( void * );
+    int (CDECL *can_set_rfmon)( void * );
     void (CDECL *close)( void * );
     int (CDECL *compile)( void *, void *, const char *, int, unsigned int );
+    void * (CDECL *create)( const char *, char * );
     int (CDECL *datalink)( void * );
     int (CDECL *datalink_name_to_val)( const char * );
     const char * (CDECL *datalink_val_to_description)( int );
@@ -43,12 +46,16 @@ struct pcap_funcs
     void (CDECL *dump)( unsigned char *, const void *, const unsigned char * );
     void * (CDECL *dump_open)( void *, const char * );
     int (CDECL *findalldevs)( struct pcap_if_hdr **, char * );
+    void (CDECL *free_datalinks)( int * );
+    void (CDECL *free_tstamp_types)( int * );
     void (CDECL *freealldevs)( struct pcap_if_hdr * );
     void (CDECL *freecode)( void * );
+    int (CDECL *get_tstamp_precision)( void * );
     char * (CDECL *geterr)( void * );
     int (CDECL *getnonblock)( void *, char * );
     const char * (CDECL *lib_version)( void );
     int (CDECL *list_datalinks)( void *, int ** );
+    int (CDECL *list_tstamp_types)( void *, int ** );
     int (CDECL *lookupnet)( const char *, unsigned int *, unsigned int *, char * );
     int (CDECL *loop)( void *, int, void (CALLBACK *)(unsigned char *, const void *, const unsigned char *),
                        unsigned char * );
@@ -58,11 +65,22 @@ struct pcap_funcs
     int (CDECL *next_ex)( void *, void **, const unsigned char ** );
     void * (CDECL *open_live)( const char *, int, int, int, char * );
     int (CDECL *sendpacket)( void *, const unsigned char *, int );
+    int (CDECL *set_buffer_size)( void *, int );
     int (CDECL *set_datalink)( void *, int );
+    int (CDECL *set_promisc)( void *, int );
+    int (CDECL *set_rfmon)( void *, int );
+    int (CDECL *set_snaplen)( void *, int );
+    int (CDECL *set_timeout)( void *, int );
+    int (CDECL *set_tstamp_precision)( void *, int );
+    int (CDECL *set_tstamp_type)( void *, int );
     int (CDECL *setfilter)( void *, void * );
     int (CDECL *setnonblock)( void *, int, char * );
     int (CDECL *snapshot)( void * );
     int (CDECL *stats)( void *, void * );
+    const char * (CDECL *statustostr)( int );
+    int (CDECL *tstamp_type_name_to_val)( const char * );
+    const char * (CDECL *tstamp_type_val_to_description)( int );
+    const char * (CDECL *tstamp_type_val_to_name)( int );
 };
 
 struct pcap_callbacks

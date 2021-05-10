@@ -6,10 +6,13 @@
 @ stub eproto_db
 @ stub getservent
 @ stub install_bpf_program
+@ cdecl pcap_activate(ptr) wine_pcap_activate
 @ cdecl pcap_breakloop(ptr) wine_pcap_breakloop
+@ cdecl pcap_can_set_rfmon(ptr) wine_pcap_can_set_rfmon
 @ cdecl pcap_close(ptr) wine_pcap_close
 @ cdecl pcap_compile(ptr ptr str long long) wine_pcap_compile
 @ stub pcap_compile_nopcap
+@ cdecl pcap_create(str ptr) wine_pcap_create
 @ stub pcap_createsrcstr
 @ cdecl pcap_datalink(ptr) wine_pcap_datalink
 @ cdecl pcap_datalink_name_to_val(str) wine_pcap_datalink_name_to_val
@@ -26,15 +29,19 @@
 @ stub pcap_fileno
 @ cdecl pcap_findalldevs(ptr ptr) wine_pcap_findalldevs
 @ cdecl pcap_findalldevs_ex(ptr ptr ptr ptr) wine_pcap_findalldevs_ex
+@ cdecl pcap_free_datalinks(ptr) wine_pcap_free_datalinks
+@ cdecl pcap_free_tstamp_types(ptr) wine_pcap_free_tstamp_types
 @ cdecl pcap_freealldevs(ptr) wine_pcap_freealldevs
 @ cdecl pcap_freecode(ptr) wine_pcap_freecode
 @ cdecl pcap_get_airpcap_handle(ptr) wine_pcap_get_airpcap_handle
+@ cdecl pcap_get_tstamp_precision(ptr) wine_pcap_get_tstamp_precision
 @ cdecl pcap_geterr(ptr) wine_pcap_geterr
 @ stub pcap_getevent
 @ cdecl pcap_getnonblock(ptr ptr) wine_pcap_getnonblock
 @ stub pcap_is_swapped
 @ cdecl pcap_lib_version() wine_pcap_lib_version
 @ cdecl pcap_list_datalinks(ptr ptr) wine_pcap_list_datalinks
+@ cdecl pcap_list_tstamp_types(ptr ptr) wine_pcap_list_tstamp_types
 @ stub pcap_live_dump
 @ stub pcap_live_dump_ended
 @ cdecl pcap_lookupdev(ptr) wine_pcap_lookupdev
@@ -63,7 +70,14 @@
 @ stub pcap_sendqueue_destroy
 @ stub pcap_sendqueue_queue
 @ stub pcap_sendqueue_transmit
+@ cdecl pcap_set_buffer_size(ptr long) wine_pcap_set_buffer_size
 @ cdecl pcap_set_datalink(ptr long) wine_pcap_set_datalink
+@ cdecl pcap_set_promisc(ptr long) wine_pcap_set_promisc
+@ cdecl pcap_set_rfmon(ptr long) wine_pcap_set_rfmon
+@ cdecl pcap_set_snaplen(ptr long) wine_pcap_set_snaplen
+@ cdecl pcap_set_timeout(ptr long) wine_pcap_set_timeout
+@ cdecl pcap_set_tstamp_precision(ptr long) wine_pcap_set_tstamp_precision
+@ cdecl pcap_set_tstamp_type(ptr long) wine_pcap_set_tstamp_type
 @ cdecl pcap_setbuff(ptr long) wine_pcap_setbuff
 @ cdecl pcap_setfilter(ptr ptr) wine_pcap_setfilter
 @ stub pcap_setmintocopy
@@ -74,5 +88,9 @@
 @ cdecl pcap_snapshot(ptr) wine_pcap_snapshot
 @ cdecl pcap_stats(ptr ptr) wine_pcap_stats
 @ stub pcap_stats_ex
+@ cdecl pcap_statustostr(long) wine_pcap_statustostr
 @ cdecl pcap_strerror(long) msvcrt.strerror
+@ cdecl pcap_tstamp_type_name_to_val(str) wine_pcap_tstamp_type_name_to_val
+@ cdecl pcap_tstamp_type_val_to_description(long) wine_pcap_tstamp_type_val_to_description
+@ cdecl pcap_tstamp_type_val_to_name(long) wine_pcap_tstamp_type_val_to_name
 @ cdecl wsockinit()

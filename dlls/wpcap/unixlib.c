@@ -40,9 +40,19 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static const struct pcap_callbacks *callbacks;
 
+static int CDECL wrap_activate( void *handle )
+{
+    return pcap_activate( handle );
+}
+
 static void CDECL wrap_breakloop( void *handle )
 {
     return pcap_breakloop( handle );
+}
+
+static int CDECL wrap_can_set_rfmon( void *handle )
+{
+    return pcap_can_set_rfmon( handle );
 }
 
 static void CDECL wrap_close( void *handle )
@@ -53,6 +63,11 @@ static void CDECL wrap_close( void *handle )
 static int CDECL wrap_compile( void *handle, void *program, const char *buf, int optimize, unsigned int mask )
 {
     return pcap_compile( handle, program, buf, optimize, mask );
+}
+
+static void * CDECL wrap_create( const char *src, char *errbuf )
+{
+    return pcap_create( src, errbuf );
 }
 
 static int CDECL wrap_datalink( void *handle )
@@ -114,6 +129,16 @@ static int CDECL wrap_findalldevs( struct pcap_if_hdr **devs, char *errbuf )
     return ret;
 }
 
+static void CDECL wrap_free_datalinks( int *links )
+{
+    pcap_free_datalinks( links );
+}
+
+static void CDECL wrap_free_tstamp_types( int *types )
+{
+    pcap_free_tstamp_types( types );
+}
+
 static void CDECL wrap_freealldevs( struct pcap_if_hdr *devs )
 {
     pcap_freealldevs( (pcap_if_t *)devs );
@@ -122,6 +147,11 @@ static void CDECL wrap_freealldevs( struct pcap_if_hdr *devs )
 static void CDECL wrap_freecode( void *program )
 {
     return pcap_freecode( program );
+}
+
+static int CDECL wrap_get_tstamp_precision( void *handle )
+{
+    return pcap_get_tstamp_precision( handle );
 }
 
 static char * CDECL wrap_geterr( void *handle )
@@ -142,6 +172,11 @@ static const char * CDECL wrap_lib_version( void )
 static int CDECL wrap_list_datalinks( void *handle, int **buf )
 {
     return pcap_list_datalinks( handle, buf );
+}
+
+static int CDECL wrap_list_tstamp_types( void *handle, int **types )
+{
+    return pcap_list_tstamp_types( handle, types );
 }
 
 static int CDECL wrap_lookupnet( const char *device, unsigned int *net, unsigned int *mask, char *errbuf )
@@ -193,9 +228,44 @@ static int CDECL wrap_sendpacket( void *handle, const unsigned char *buf, int si
     return pcap_sendpacket( handle, buf, size );
 }
 
+static int CDECL wrap_set_buffer_size( void *handle, int size )
+{
+    return pcap_set_buffer_size( handle, size );
+}
+
 static int CDECL wrap_set_datalink( void *handle, int link )
 {
     return pcap_set_datalink( handle, link );
+}
+
+static int CDECL wrap_set_promisc( void *handle, int enable )
+{
+    return pcap_set_promisc( handle, enable );
+}
+
+static int CDECL wrap_set_rfmon( void *handle, int enable )
+{
+    return pcap_set_rfmon( handle, enable );
+}
+
+static int CDECL wrap_set_snaplen( void *handle, int len )
+{
+    return pcap_set_snaplen( handle, len );
+}
+
+static int CDECL wrap_set_timeout( void *handle, int timeout )
+{
+    return pcap_set_timeout( handle, timeout );
+}
+
+static int CDECL wrap_set_tstamp_precision( void *handle, int precision )
+{
+    return pcap_set_tstamp_precision( handle, precision );
+}
+
+static int CDECL wrap_set_tstamp_type( void *handle, int type )
+{
+    return pcap_set_tstamp_type( handle, type );
 }
 
 static int CDECL wrap_setfilter( void *handle, void *program )
@@ -218,11 +288,34 @@ static int CDECL wrap_stats( void *handle, void *stats )
     return pcap_stats( handle, stats );
 }
 
+static const char * CDECL wrap_statustostr( int status )
+{
+    return pcap_statustostr( status );
+}
+
+static int CDECL wrap_tstamp_type_name_to_val( const char *name )
+{
+    return pcap_tstamp_type_name_to_val( name );
+}
+
+static const char * CDECL wrap_tstamp_type_val_to_description( int val )
+{
+    return pcap_tstamp_type_val_to_description( val );
+}
+
+static const char * CDECL wrap_tstamp_type_val_to_name( int val )
+{
+    return pcap_tstamp_type_val_to_name( val );
+}
+
 static const struct pcap_funcs funcs =
 {
+    wrap_activate,
     wrap_breakloop,
+    wrap_can_set_rfmon,
     wrap_close,
     wrap_compile,
+    wrap_create,
     wrap_datalink,
     wrap_datalink_name_to_val,
     wrap_datalink_val_to_description,
@@ -231,12 +324,16 @@ static const struct pcap_funcs funcs =
     wrap_dump,
     wrap_dump_open,
     wrap_findalldevs,
+    wrap_free_datalinks,
+    wrap_free_tstamp_types,
     wrap_freealldevs,
     wrap_freecode,
+    wrap_get_tstamp_precision,
     wrap_geterr,
     wrap_getnonblock,
     wrap_lib_version,
     wrap_list_datalinks,
+    wrap_list_tstamp_types,
     wrap_lookupnet,
     wrap_loop,
     wrap_major_version,
@@ -245,11 +342,22 @@ static const struct pcap_funcs funcs =
     wrap_next_ex,
     wrap_open_live,
     wrap_sendpacket,
+    wrap_set_buffer_size,
     wrap_set_datalink,
+    wrap_set_promisc,
+    wrap_set_rfmon,
+    wrap_set_snaplen,
+    wrap_set_timeout,
+    wrap_set_tstamp_precision,
+    wrap_set_tstamp_type,
     wrap_setfilter,
     wrap_setnonblock,
     wrap_snapshot,
     wrap_stats,
+    wrap_statustostr,
+    wrap_tstamp_type_name_to_val,
+    wrap_tstamp_type_val_to_description,
+    wrap_tstamp_type_val_to_name,
 };
 
 NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
