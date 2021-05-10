@@ -730,18 +730,6 @@ static float CDECL unix_remquof(float x, float y, int *quo)
 }
 
 /*********************************************************************
- *      rint
- */
-static double CDECL unix_rint(double x)
-{
-#ifdef HAVE_RINT
-    return rint(x);
-#else
-    return x >= 0 ? floor(x + 0.5) : ceil(x - 0.5);
-#endif
-}
-
-/*********************************************************************
  *      rintf
  */
 static float CDECL unix_rintf(float x)
@@ -934,7 +922,6 @@ static const struct unix_funcs funcs =
     unix_remainderf,
     unix_remquo,
     unix_remquof,
-    unix_rint,
     unix_rintf,
     unix_sin,
     unix_sinf,

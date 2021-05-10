@@ -87,6 +87,14 @@ static inline float fp_barrierf(float x)
     return y;
 }
 
+#if _MSVCR_VER>=120
+static inline double fp_barrier(double x)
+{
+    volatile double y = x;
+    return y;
+}
+#endif
+
 static inline double CDECL ret_nan( BOOL update_sw )
 {
     double x = 1.0;
@@ -4273,10 +4281,33 @@ float CDECL log2f(float x)
 
 /*********************************************************************
  *      rint (MSVCR120.@)
+ *
+ * Copied from musl: src/math/rint.c
  */
 double CDECL rint(double x)
 {
-    return unix_funcs->rint(x);
+    static const double toint = 1 / DBL_EPSILON;
+
+    ULONGLONG llx = *(ULONGLONG*)&x;
+    int e = llx >> 52 & 0x7ff;
+    int s = llx >> 63;
+    unsigned cw;
+    double y;
+
+    if (e >= 0x3ff+52)
+        return x;
+    cw = _controlfp(0, 0);
+    if ((cw & _MCW_PC) != _PC_53)
+        _controlfp(_PC_53, _MCW_PC);
+    if (s)
+        y = fp_barrier(x - toint) + toint;
+    else
+        y = fp_barrier(x + toint) - toint;
+    if ((cw & _MCW_PC) != _PC_53)
+        _controlfp(cw, _MCW_PC);
+    if (y == 0)
+        return s ? -0.0 : 0;
+    return y;
 }
 
 /*********************************************************************
