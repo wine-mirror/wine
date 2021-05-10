@@ -5894,19 +5894,21 @@ static void test_AcceptEx(void)
     struct sockaddr_in bindAddress, peerAddress, *readBindAddress, *readRemoteAddress;
     int socklen, optlen;
     GUID acceptExGuid = WSAID_ACCEPTEX, getAcceptExGuid = WSAID_GETACCEPTEXSOCKADDRS;
+    GUID connectex_guid = WSAID_CONNECTEX;
     LPFN_ACCEPTEX pAcceptEx = NULL;
     LPFN_GETACCEPTEXSOCKADDRS pGetAcceptExSockaddrs = NULL;
+    LPFN_CONNECTEX pConnectEx = NULL;
     fd_set fds_accept, fds_send;
     static const struct timeval timeout = {1, 0};
     DWORD bytesReturned, connect_time;
     char buffer[1024], ipbuffer[32];
-    OVERLAPPED overlapped;
+    OVERLAPPED overlapped = {0}, overlapped2 = {0};
     int iret, localSize = sizeof(struct sockaddr_in), remoteSize = localSize;
     BOOL bret;
     DWORD dwret;
 
-    memset(&overlapped, 0, sizeof(overlapped));
     overlapped.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    overlapped2.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
 
     listener = socket(AF_INET, SOCK_STREAM, 0);
     ok(listener != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
@@ -5934,6 +5936,10 @@ static void test_AcceptEx(void)
     iret = WSAIoctl(listener, SIO_GET_EXTENSION_FUNCTION_POINTER, &getAcceptExGuid, sizeof(getAcceptExGuid),
         &pGetAcceptExSockaddrs, sizeof(pGetAcceptExSockaddrs), &bytesReturned, NULL, NULL);
     ok(!iret, "Failed to get GetAcceptExSockaddrs, error %u\n", WSAGetLastError());
+
+    iret = WSAIoctl(listener, SIO_GET_EXTENSION_FUNCTION_POINTER, &connectex_guid, sizeof(connectex_guid),
+            &pConnectEx, sizeof(pConnectEx), &bytesReturned, NULL, NULL);
+    ok(!iret, "Failed to get ConnectEx, error %u\n", WSAGetLastError());
 
     overlapped.Internal = 0xdeadbeef;
     bret = pAcceptEx(INVALID_SOCKET, acceptor, buffer, sizeof(buffer) - 2*(sizeof(struct sockaddr_in) + 16),
@@ -6119,6 +6125,7 @@ todo_wine
     ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING, "AcceptEx returned %d + errno %d\n", bret, WSAGetLastError());
     ok(overlapped.Internal == STATUS_PENDING, "got %08x\n", (ULONG)overlapped.Internal);
 
+    /* try to accept into the same socket twice */
     overlapped.Internal = 0xdeadbeef;
     bret = pAcceptEx(listener, acceptor, buffer, 0,
         sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
@@ -6127,6 +6134,7 @@ todo_wine
        "AcceptEx on already pending socket returned %d + errno %d\n", bret, WSAGetLastError());
     ok(overlapped.Internal == STATUS_PENDING, "got %08x\n", (ULONG)overlapped.Internal);
 
+    /* try to connect a socket that's being accepted into */
     iret = connect(acceptor,  (struct sockaddr*)&bindAddress, sizeof(bindAddress));
     todo_wine ok(iret == SOCKET_ERROR && WSAGetLastError() == WSAEINVAL,
        "connecting to acceptex acceptor succeeded? return %d + errno %d\n", iret, WSAGetLastError());
@@ -6147,6 +6155,11 @@ todo_wine
         ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING, "AcceptEx returned %d + errno %d\n", bret, WSAGetLastError());
         ok(overlapped.Internal == STATUS_PENDING, "got %08x\n", (ULONG)overlapped.Internal);
     }
+
+    bret = pConnectEx(acceptor, (struct sockaddr *)&bindAddress, sizeof(bindAddress),
+            NULL, 0, &bytesReturned, &overlapped2);
+    ok(!bret, "expected failure\n");
+    ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
 
     connector = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(connector != -1, "failed to create socket, error %u\n", WSAGetLastError());
@@ -6390,7 +6403,8 @@ todo_wine
     bret = GetOverlappedResult((HANDLE)listener, &overlapped, &bytesReturned, FALSE);
     ok(!bret && GetLastError() == ERROR_OPERATION_ABORTED, "GetOverlappedResult failed, error %d\n", GetLastError());
 
-    WSACloseEvent(overlapped.hEvent);
+    CloseHandle(overlapped.hEvent);
+    CloseHandle(overlapped2.hEvent);
     closesocket(acceptor);
     closesocket(connector2);
 }
