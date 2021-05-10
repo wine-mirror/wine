@@ -684,9 +684,6 @@
 /* Define to 1 if you have the `res_getservers' function. */
 #undef HAVE_RES_GETSERVERS
 
-/* Define to 1 if you have the `rintf' function. */
-#undef HAVE_RINTF
-
 /* Define to 1 if you have the <sasl/sasl.h> header file. */
 #undef HAVE_SASL_SASL_H
 

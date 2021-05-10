@@ -730,18 +730,6 @@ static float CDECL unix_remquof(float x, float y, int *quo)
 }
 
 /*********************************************************************
- *      rintf
- */
-static float CDECL unix_rintf(float x)
-{
-#ifdef HAVE_RINTF
-    return rintf(x);
-#else
-    return x >= 0 ? floorf(x + 0.5) : ceilf(x - 0.5);
-#endif
-}
-
-/*********************************************************************
  *      sin
  */
 static double CDECL unix_sin( double x )
@@ -922,7 +910,6 @@ static const struct unix_funcs funcs =
     unix_remainderf,
     unix_remquo,
     unix_remquof,
-    unix_rintf,
     unix_sin,
     unix_sinf,
     unix_sinh,

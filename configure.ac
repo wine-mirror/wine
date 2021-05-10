@@ -2692,7 +2692,6 @@ AC_CHECK_FUNCS(\
 	remainderf \
 	remquo \
 	remquof \
-	rintf \
 	tgamma \
 	tgammaf \
 	trunc \

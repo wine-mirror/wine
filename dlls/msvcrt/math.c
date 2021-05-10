@@ -4312,10 +4312,27 @@ double CDECL rint(double x)
 
 /*********************************************************************
  *      rintf (MSVCR120.@)
+ *
+ * Copied from musl: src/math/rintf.c
  */
 float CDECL rintf(float x)
 {
-    return unix_funcs->rintf(x);
+    static const float toint = 1 / FLT_EPSILON;
+
+    unsigned int ix = *(unsigned int*)&x;
+    int e = ix >> 23 & 0xff;
+    int s = ix >> 31;
+    float y;
+
+    if (e >= 0x7f + 23)
+        return x;
+    if (s)
+        y = fp_barrierf(x - toint) + toint;
+    else
+        y = fp_barrierf(x + toint) - toint;
+    if (y == 0)
+        return s ? -0.0f : 0.0f;
+    return y;
 }
 
 /*********************************************************************
