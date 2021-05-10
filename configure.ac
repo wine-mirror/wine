@@ -2682,7 +2682,6 @@ AC_CHECK_FUNCS(\
 	log1pf \
 	log2 \
 	log2f \
-	lrint \
 	lrintf \
 	nearbyint \
 	nearbyintf \
