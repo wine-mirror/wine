@@ -9044,6 +9044,61 @@ static void test_nonblocking_async_recv(void)
     CloseHandle(overlapped.hEvent);
 }
 
+static void test_empty_recv(void)
+{
+    OVERLAPPED overlapped = {0};
+    SOCKET client, server;
+    DWORD size, flags = 0;
+    char buffer[5];
+    WSABUF wsabuf;
+    int ret;
+
+    overlapped.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+    tcp_socketpair(&client, &server);
+
+    WSASetLastError(0xdeadbeef);
+    ret = WSARecv(client, NULL, 0, NULL, &flags, &overlapped, NULL);
+    ok(ret == -1, "expected failure\n");
+    todo_wine ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
+
+    wsabuf.buf = buffer;
+    wsabuf.len = 0;
+    WSASetLastError(0xdeadbeef);
+    ret = WSARecv(client, &wsabuf, 0, NULL, &flags, &overlapped, NULL);
+    ok(ret == -1, "expected failure\n");
+    todo_wine ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
+
+    WSASetLastError(0xdeadbeef);
+    ret = WSARecv(client, &wsabuf, 1, NULL, &flags, &overlapped, NULL);
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
+
+    ret = send(server, "data", 5, 0);
+    ok(ret == 5, "got %d\n", ret);
+
+    ret = WaitForSingleObject(overlapped.hEvent, 1000);
+    ok(!ret, "wait failed\n");
+    ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, FALSE);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(!size, "got size %u\n", size);
+
+    WSASetLastError(0xdeadbeef);
+    ret = WSARecv(client, &wsabuf, 1, &size, &flags, &overlapped, NULL);
+    ok(!ret, "got error %u\n", WSAGetLastError());
+    ok(!size, "got size %u\n", size);
+
+    ret = recv(client, NULL, 0, 0);
+    ok(!ret, "got %d\n", ret);
+
+    ret = recv(client, buffer, sizeof(buffer), 0);
+    ok(ret == 5, "got %d\n", ret);
+    ok(!strcmp(buffer, "data"), "got %s\n", debugstr_an(buffer, ret));
+
+    closesocket(client);
+    closesocket(server);
+    CloseHandle(overlapped.hEvent);
+}
+
 START_TEST( sock )
 {
     int i;
@@ -9101,6 +9156,7 @@ START_TEST( sock )
     test_connecting_socket();
     test_WSAGetOverlappedResult();
     test_nonblocking_async_recv();
+    test_empty_recv();
 
     /* this is an io heavy test, do it at the end so the kernel doesn't start dropping packets */
     test_send();
