@@ -19636,7 +19636,6 @@ for ac_func in \
 	fmaf \
 	lgamma \
 	lgammaf \
-	llrint \
 	llrintf \
 	log1p \
 	log1pf \
