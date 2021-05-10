@@ -968,6 +968,25 @@ typedef struct VkSubresourceLayout_host
 } VkSubresourceLayout_host;
 
 
+typedef struct VkImageViewAddressPropertiesNVX_host
+{
+    VkStructureType sType;
+    void *pNext;
+    VkDeviceAddress deviceAddress;
+    VkDeviceSize size;
+} VkImageViewAddressPropertiesNVX_host;
+
+
+typedef struct VkImageViewHandleInfoNVX_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkImageView imageView;
+    VkDescriptorType descriptorType;
+    VkSampler sampler;
+} VkImageViewHandleInfoNVX_host;
+
+
 typedef struct VkImageFormatProperties_host
 {
     VkExtent3D maxExtent;
@@ -1933,6 +1952,16 @@ struct vulkan_device_funcs
 #else
     void (*p_vkGetImageSubresourceLayout)(VkDevice, VkImage, const VkImageSubresource *, VkSubresourceLayout *);
 #endif
+#if defined(USE_STRUCT_CONVERSION)
+    VkResult (*p_vkGetImageViewAddressNVX)(VkDevice, VkImageView, VkImageViewAddressPropertiesNVX_host *);
+#else
+    VkResult (*p_vkGetImageViewAddressNVX)(VkDevice, VkImageView, VkImageViewAddressPropertiesNVX *);
+#endif
+#if defined(USE_STRUCT_CONVERSION)
+    uint32_t (*p_vkGetImageViewHandleNVX)(VkDevice, const VkImageViewHandleInfoNVX_host *);
+#else
+    uint32_t (*p_vkGetImageViewHandleNVX)(VkDevice, const VkImageViewHandleInfoNVX *);
+#endif
     VkResult (*p_vkGetMemoryHostPointerPropertiesEXT)(VkDevice, VkExternalMemoryHandleTypeFlagBits, const void *, VkMemoryHostPointerPropertiesEXT *);
     VkResult (*p_vkGetPerformanceParameterINTEL)(VkDevice, VkPerformanceParameterTypeINTEL, VkPerformanceValueINTEL *);
     VkResult (*p_vkGetPipelineCacheData)(VkDevice, VkPipelineCache, size_t *, void *);
@@ -2415,6 +2444,8 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkGetImageSparseMemoryRequirements2) \
     USE_VK_FUNC(vkGetImageSparseMemoryRequirements2KHR) \
     USE_VK_FUNC(vkGetImageSubresourceLayout) \
+    USE_VK_FUNC(vkGetImageViewAddressNVX) \
+    USE_VK_FUNC(vkGetImageViewHandleNVX) \
     USE_VK_FUNC(vkGetMemoryHostPointerPropertiesEXT) \
     USE_VK_FUNC(vkGetPerformanceParameterINTEL) \
     USE_VK_FUNC(vkGetPipelineCacheData) \

@@ -131,6 +131,13 @@ CORE_EXTENSIONS = [
     "VK_KHR_win32_surface",
 ]
 
+# Some experimental extensions are used by shipping applications so their API is extremely unlikely
+# to change in a backwards-incompatible way. Allow translation of those extensions with WineVulkan.
+ALLOWED_X_EXTENSIONS = [
+    "VK_NVX_binary_import",
+    "VK_NVX_image_view_handle",
+]
+
 # Functions part of our winevulkan graphics driver interface.
 # DRIVER_VERSION should be bumped on any change to driver interface
 # in FUNCTION_OVERRIDES
@@ -3095,7 +3102,7 @@ class VkRegistry(object):
             # Disable highly experimental extensions as the APIs are unstable and can
             # change between minor Vulkan revisions until API is final and becomes KHR
             # or NV.
-            if "KHX" in ext_name or "NVX" in ext_name:
+            if ("KHX" in ext_name or "NVX" in ext_name) and ext_name not in ALLOWED_X_EXTENSIONS:
                 LOGGER.debug("Skipping experimental extension: {0}".format(ext_name))
                 skipped_exts.append(ext_name)
                 return

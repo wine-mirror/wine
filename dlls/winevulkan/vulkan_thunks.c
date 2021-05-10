@@ -1514,6 +1514,35 @@ static inline void convert_VkSubresourceLayout_host_to_win(const VkSubresourceLa
     out->depthPitch = in->depthPitch;
 }
 
+static inline void convert_VkImageViewAddressPropertiesNVX_win_to_host(const VkImageViewAddressPropertiesNVX *in, VkImageViewAddressPropertiesNVX_host *out)
+{
+    if (!in) return;
+
+    out->pNext = in->pNext;
+    out->sType = in->sType;
+}
+
+static inline void convert_VkImageViewAddressPropertiesNVX_host_to_win(const VkImageViewAddressPropertiesNVX_host *in, VkImageViewAddressPropertiesNVX *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->deviceAddress = in->deviceAddress;
+    out->size = in->size;
+}
+
+static inline void convert_VkImageViewHandleInfoNVX_win_to_host(const VkImageViewHandleInfoNVX *in, VkImageViewHandleInfoNVX_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->imageView = in->imageView;
+    out->descriptorType = in->descriptorType;
+    out->sampler = in->sampler;
+}
+
 static inline void convert_VkImageFormatProperties_host_to_win(const VkImageFormatProperties_host *in, VkImageFormatProperties *out)
 {
     if (!in) return;
@@ -6294,6 +6323,41 @@ void WINAPI wine_vkGetImageSubresourceLayout(VkDevice device, VkImage image, con
 #endif
 }
 
+static VkResult WINAPI wine_vkGetImageViewAddressNVX(VkDevice device, VkImageView imageView, VkImageViewAddressPropertiesNVX *pProperties)
+{
+#if defined(USE_STRUCT_CONVERSION)
+    VkResult result;
+    VkImageViewAddressPropertiesNVX_host pProperties_host;
+    TRACE("%p, 0x%s, %p\n", device, wine_dbgstr_longlong(imageView), pProperties);
+
+    convert_VkImageViewAddressPropertiesNVX_win_to_host(pProperties, &pProperties_host);
+    result = device->funcs.p_vkGetImageViewAddressNVX(device->device, imageView, &pProperties_host);
+
+    convert_VkImageViewAddressPropertiesNVX_host_to_win(&pProperties_host, pProperties);
+    return result;
+#else
+    TRACE("%p, 0x%s, %p\n", device, wine_dbgstr_longlong(imageView), pProperties);
+    return device->funcs.p_vkGetImageViewAddressNVX(device->device, imageView, pProperties);
+#endif
+}
+
+static uint32_t WINAPI wine_vkGetImageViewHandleNVX(VkDevice device, const VkImageViewHandleInfoNVX *pInfo)
+{
+#if defined(USE_STRUCT_CONVERSION)
+    uint32_t result;
+    VkImageViewHandleInfoNVX_host pInfo_host;
+    TRACE("%p, %p\n", device, pInfo);
+
+    convert_VkImageViewHandleInfoNVX_win_to_host(pInfo, &pInfo_host);
+    result = device->funcs.p_vkGetImageViewHandleNVX(device->device, &pInfo_host);
+
+    return result;
+#else
+    TRACE("%p, %p\n", device, pInfo);
+    return device->funcs.p_vkGetImageViewHandleNVX(device->device, pInfo);
+#endif
+}
+
 static VkResult WINAPI wine_vkGetMemoryHostPointerPropertiesEXT(VkDevice device, VkExternalMemoryHandleTypeFlagBits handleType, const void *pHostPointer, VkMemoryHostPointerPropertiesEXT *pMemoryHostPointerProperties)
 {
     TRACE("%p, %#x, %p, %p\n", device, handleType, pHostPointer, pMemoryHostPointerProperties);
@@ -7221,6 +7285,7 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_vulkan_memory_model",
     "VK_KHR_workgroup_memory_explicit_layout",
     "VK_KHR_zero_initialize_workgroup_memory",
+    "VK_NVX_image_view_handle",
     "VK_NV_clip_space_w_scaling",
     "VK_NV_compute_shader_derivatives",
     "VK_NV_cooperative_matrix",
@@ -7628,6 +7693,8 @@ const struct unix_funcs loader_funcs =
     &wine_vkGetImageSparseMemoryRequirements2,
     &wine_vkGetImageSparseMemoryRequirements2KHR,
     &wine_vkGetImageSubresourceLayout,
+    &wine_vkGetImageViewAddressNVX,
+    &wine_vkGetImageViewHandleNVX,
     &wine_vkGetMemoryHostPointerPropertiesEXT,
     &wine_vkGetPerformanceParameterINTEL,
     &wine_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT,

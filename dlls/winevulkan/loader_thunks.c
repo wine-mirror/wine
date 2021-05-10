@@ -1443,6 +1443,16 @@ void WINAPI vkGetImageSubresourceLayout(VkDevice device, VkImage image, const Vk
     unix_funcs->p_vkGetImageSubresourceLayout(device, image, pSubresource, pLayout);
 }
 
+VkResult WINAPI vkGetImageViewAddressNVX(VkDevice device, VkImageView imageView, VkImageViewAddressPropertiesNVX *pProperties)
+{
+    return unix_funcs->p_vkGetImageViewAddressNVX(device, imageView, pProperties);
+}
+
+uint32_t WINAPI vkGetImageViewHandleNVX(VkDevice device, const VkImageViewHandleInfoNVX *pInfo)
+{
+    return unix_funcs->p_vkGetImageViewHandleNVX(device, pInfo);
+}
+
 VkResult WINAPI vkGetMemoryHostPointerPropertiesEXT(VkDevice device, VkExternalMemoryHandleTypeFlagBits handleType, const void *pHostPointer, VkMemoryHostPointerPropertiesEXT *pMemoryHostPointerProperties)
 {
     return unix_funcs->p_vkGetMemoryHostPointerPropertiesEXT(device, handleType, pHostPointer, pMemoryHostPointerProperties);
@@ -2222,6 +2232,8 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetImageSparseMemoryRequirements2", &vkGetImageSparseMemoryRequirements2},
     {"vkGetImageSparseMemoryRequirements2KHR", &vkGetImageSparseMemoryRequirements2KHR},
     {"vkGetImageSubresourceLayout", &vkGetImageSubresourceLayout},
+    {"vkGetImageViewAddressNVX", &vkGetImageViewAddressNVX},
+    {"vkGetImageViewHandleNVX", &vkGetImageViewHandleNVX},
     {"vkGetMemoryHostPointerPropertiesEXT", &vkGetMemoryHostPointerPropertiesEXT},
     {"vkGetPerformanceParameterINTEL", &vkGetPerformanceParameterINTEL},
     {"vkGetPipelineCacheData", &vkGetPipelineCacheData},
