@@ -1087,7 +1087,6 @@ static int init_socket( struct sock *sock, int family, int type, int protocol, u
         return -1;
     }
     sock_reselect( sock );
-    clear_error();
     return 0;
 }
 
@@ -1354,7 +1353,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 
     assert( sock->obj.ops == &sock_ops );
 
-    if (get_unix_fd( fd ) == -1 && code != IOCTL_AFD_CREATE) return 0;
+    if (code != IOCTL_AFD_CREATE && get_unix_fd( fd ) < 0) return 0;
 
     switch(code)
     {
