@@ -453,9 +453,6 @@
 /* Define to 1 if you have the <linux/videodev2.h> header file. */
 #undef HAVE_LINUX_VIDEODEV2_H
 
-/* Define to 1 if you have the `llrintf' function. */
-#undef HAVE_LLRINTF
-
 /* Define to 1 if you have the `log1p' function. */
 #undef HAVE_LOG1P
 

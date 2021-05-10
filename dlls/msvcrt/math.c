@@ -4388,7 +4388,15 @@ __int64 CDECL llrint(double x)
  */
 __int64 CDECL llrintf(float x)
 {
-    return unix_funcs->llrintf( x );
+    float f;
+
+    f = rintf(x);
+    if ((f < 0 && f != (float)(__int64)f)
+            || (f >= 0 && f != (float)(unsigned __int64)f)) {
+        *_errno() = EDOM;
+        return 0;
+    }
+    return f;
 }
 
 /*********************************************************************

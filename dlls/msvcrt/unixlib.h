@@ -60,7 +60,6 @@ struct unix_funcs
     double          (CDECL *ldexp)(double x, int exp);
     double          (CDECL *lgamma)(double x);
     float           (CDECL *lgammaf)(float x);
-    __int64         (CDECL *llrintf)(float x);
     double          (CDECL *log)(double x);
     float           (CDECL *logf)(float x);
     double          (CDECL *log10)(double x);

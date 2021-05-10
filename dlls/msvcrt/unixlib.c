@@ -436,18 +436,6 @@ static float CDECL unix_lgammaf(float x)
 }
 
 /*********************************************************************
- *      llrintf
- */
-static __int64 CDECL unix_llrintf(float x)
-{
-#ifdef HAVE_LLRINTF
-    return llrintf(x);
-#else
-    return x >= 0 ? floorf(x + 0.5) : ceilf(x - 0.5);
-#endif
-}
-
-/*********************************************************************
  *      log
  */
 static double CDECL unix_log( double x )
@@ -846,7 +834,6 @@ static const struct unix_funcs funcs =
     unix_ldexp,
     unix_lgamma,
     unix_lgammaf,
-    unix_llrintf,
     unix_log,
     unix_logf,
     unix_log10,
