@@ -161,6 +161,7 @@ typedef struct DdsFrameDecode {
 
 typedef struct DdsEncoder {
     IWICBitmapEncoder IWICBitmapEncoder_iface;
+    IWICDdsEncoder IWICDdsEncoder_iface;
     LONG ref;
     CRITICAL_SECTION lock;
     IStream *stream;
@@ -708,6 +709,11 @@ static inline DdsFrameDecode *impl_from_IWICDdsFrameDecode(IWICDdsFrameDecode *i
 static inline DdsEncoder *impl_from_IWICBitmapEncoder(IWICBitmapEncoder *iface)
 {
     return CONTAINING_RECORD(iface, DdsEncoder, IWICBitmapEncoder_iface);
+}
+
+static inline DdsEncoder *impl_from_IWICDdsEncoder(IWICDdsEncoder *iface)
+{
+    return CONTAINING_RECORD(iface, DdsEncoder, IWICDdsEncoder_iface);
 }
 
 static inline DdsFrameEncode *impl_from_IWICBitmapFrameEncode(IWICBitmapFrameEncode *iface)
@@ -1705,6 +1711,57 @@ HRESULT DdsDecoder_CreateInstance(REFIID iid, void** ppv)
     return ret;
 }
 
+static HRESULT WINAPI DdsEncoder_Dds_QueryInterface(IWICDdsEncoder *iface, REFIID iid,
+                                                    void **ppv)
+{
+    DdsEncoder *This = impl_from_IWICDdsEncoder(iface);
+    return IWICBitmapEncoder_QueryInterface(&This->IWICBitmapEncoder_iface, iid, ppv);
+}
+
+static ULONG WINAPI DdsEncoder_Dds_AddRef(IWICDdsEncoder *iface)
+{
+    DdsEncoder *This = impl_from_IWICDdsEncoder(iface);
+    return IWICBitmapEncoder_AddRef(&This->IWICBitmapEncoder_iface);
+}
+
+static ULONG WINAPI DdsEncoder_Dds_Release(IWICDdsEncoder *iface)
+{
+    DdsEncoder *This = impl_from_IWICDdsEncoder(iface);
+    return IWICBitmapEncoder_Release(&This->IWICBitmapEncoder_iface);
+}
+
+static HRESULT WINAPI DdsEncoder_Dds_SetParameters(IWICDdsEncoder *iface,
+                                                   WICDdsParameters *parameters)
+{
+    FIXME("(%p,%p): stub.\n", iface, parameters);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DdsEncoder_Dds_GetParameters(IWICDdsEncoder *iface,
+                                                   WICDdsParameters *parameters)
+{
+    FIXME("(%p,%p): stub.\n", iface, parameters);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DdsEncoder_Dds_CreateNewFrame(IWICDdsEncoder *iface,
+                                                    IWICBitmapFrameEncode **frameEncode,
+                                                    UINT *arrayIndex, UINT *mipLevel, UINT *sliceIndex)
+{
+    FIXME("(%p,%p,%p,%p,%p): stub.\n", iface, frameEncode, arrayIndex, mipLevel, sliceIndex);
+    return E_NOTIMPL;
+}
+
+static const IWICDdsEncoderVtbl DdsEncoder_Dds_Vtbl =
+{
+    DdsEncoder_Dds_QueryInterface,
+    DdsEncoder_Dds_AddRef,
+    DdsEncoder_Dds_Release,
+    DdsEncoder_Dds_SetParameters,
+    DdsEncoder_Dds_GetParameters,
+    DdsEncoder_Dds_CreateNewFrame
+};
+
 static HRESULT WINAPI DdsEncoder_QueryInterface(IWICBitmapEncoder *iface, REFIID iid,
                                                    void **ppv)
 {
@@ -1716,8 +1773,9 @@ static HRESULT WINAPI DdsEncoder_QueryInterface(IWICBitmapEncoder *iface, REFIID
     if (IsEqualIID(&IID_IUnknown, iid) ||
         IsEqualIID(&IID_IWICBitmapEncoder, iid)) {
         *ppv = &This->IWICBitmapEncoder_iface;
-    }
-    else {
+    } else if (IsEqualIID(&IID_IWICDdsEncoder, iid)) {
+        *ppv = &This->IWICDdsEncoder_iface;
+    } else {
         *ppv = NULL;
         return E_NOINTERFACE;
     }
@@ -1929,6 +1987,7 @@ HRESULT DdsEncoder_CreateInstance( REFIID iid, void **ppv)
     if (!This) return E_OUTOFMEMORY;
 
     This->IWICBitmapEncoder_iface.lpVtbl = &DdsEncoder_Vtbl;
+    This->IWICDdsEncoder_iface.lpVtbl = &DdsEncoder_Dds_Vtbl;
     This->ref = 1;
     This->stream = NULL;
     This->frame_count = 0;

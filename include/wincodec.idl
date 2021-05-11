@@ -1198,6 +1198,25 @@ interface IWICDdsDecoder : IUnknown
 
 [
     object,
+    uuid(5cacdb4c-407e-41b3-b936-d0f010cd6732)
+]
+interface IWICDdsEncoder : IUnknown
+{
+    HRESULT SetParameters(
+        [in] WICDdsParameters *parameters);
+
+    HRESULT GetParameters(
+        [out] WICDdsParameters *parameters);
+
+    HRESULT CreateNewFrame(
+        [out] IWICBitmapFrameEncode **frameEncode,
+        [out, optional] UINT *arrayIndex,
+        [out, optional] UINT *mipLevel,
+        [out, optional] UINT *sliceIndex);
+};
+
+[
+    object,
     uuid(3d4c0c61-18a4-41e4-bd80-481a4fc9f464)
 ]
 interface IWICDdsFrameDecode : IUnknown
