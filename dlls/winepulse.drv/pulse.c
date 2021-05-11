@@ -32,6 +32,7 @@
 #define WIN32_NO_STATUS
 #include "winternl.h"
 
+#include "mmdeviceapi.h"
 #include "initguid.h"
 #include "audioclient.h"
 
