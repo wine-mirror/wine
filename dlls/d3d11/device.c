@@ -337,12 +337,6 @@ static inline struct d3d11_device_context *impl_from_ID3D11DeviceContext1(ID3D11
     return CONTAINING_RECORD(iface, struct d3d11_device_context, ID3D11DeviceContext1_iface);
 }
 
-static inline struct d3d_device *device_from_immediate_ID3D11DeviceContext1(ID3D11DeviceContext1 *iface)
-{
-    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
-    return CONTAINING_RECORD(context, struct d3d_device, immediate_context);
-}
-
 static HRESULT STDMETHODCALLTYPE d3d11_device_context_QueryInterface(ID3D11DeviceContext1 *iface,
         REFIID iid, void **out)
 {
@@ -375,14 +369,13 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_context_QueryInterface(ID3D11Devic
 static ULONG STDMETHODCALLTYPE d3d11_device_context_AddRef(ID3D11DeviceContext1 *iface)
 {
     struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
     ULONG refcount = InterlockedIncrement(&context->refcount);
 
     TRACE("%p increasing refcount to %u.\n", context, refcount);
 
     if (refcount == 1)
     {
-        ID3D11Device2_AddRef(&device->ID3D11Device2_iface);
+        ID3D11Device2_AddRef(&context->device->ID3D11Device2_iface);
     }
 
     return refcount;
@@ -391,14 +384,13 @@ static ULONG STDMETHODCALLTYPE d3d11_device_context_AddRef(ID3D11DeviceContext1 
 static ULONG STDMETHODCALLTYPE d3d11_device_context_Release(ID3D11DeviceContext1 *iface)
 {
     struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
     ULONG refcount = InterlockedDecrement(&context->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", context, refcount);
 
     if (!refcount)
     {
-        ID3D11Device2_Release(&device->ID3D11Device2_iface);
+        ID3D11Device2_Release(&context->device->ID3D11Device2_iface);
     }
 
     return refcount;
@@ -449,11 +441,11 @@ static void d3d11_device_context_set_constant_buffers(ID3D11DeviceContext1 *ifac
 
 static void STDMETHODCALLTYPE d3d11_device_context_GetDevice(ID3D11DeviceContext1 *iface, ID3D11Device **device)
 {
-    struct d3d_device *device_object = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    *device = (ID3D11Device *)&device_object->ID3D11Device2_iface;
+    *device = (ID3D11Device *)&context->device->ID3D11Device2_iface;
     ID3D11Device_AddRef(*device);
 }
 
@@ -2827,8 +2819,9 @@ static void STDMETHODCALLTYPE d3d11_device_context_CSGetConstantBuffers1(ID3D11D
 static void STDMETHODCALLTYPE d3d11_device_context_SwapDeviceContextState(ID3D11DeviceContext1 *iface,
         ID3DDeviceContextState *state, ID3DDeviceContextState **prev)
 {
-    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext1(iface);
+    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
     struct d3d_device_context_state *state_impl, *prev_impl;
+    struct d3d_device *device = context->device;
     struct wined3d_state *wined3d_state;
 
     TRACE("iface %p, state %p, prev %p.\n", iface, state, prev);
@@ -3095,6 +3088,7 @@ static void d3d11_device_context_init(struct d3d11_device_context *context, stru
     context->ID3D11Multithread_iface.lpVtbl = &d3d11_multithread_vtbl;
     context->refcount = 1;
 
+    context->device = device;
     ID3D11Device2_AddRef(&device->ID3D11Device2_iface);
 
     wined3d_private_store_init(&context->private_store);

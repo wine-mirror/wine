@@ -548,6 +548,7 @@ struct d3d11_device_context
     LONG refcount;
 
     struct wined3d_device_context *wined3d_context;
+    struct d3d_device *device;
 
     struct wined3d_private_store private_store;
 };
