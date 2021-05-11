@@ -76,6 +76,20 @@ static void WINAPI pulse_broadcast(void)
     pthread_cond_broadcast(&pulse_cond);
 }
 
+/* Following pulseaudio design here, mainloop has the lock taken whenever
+ * it is handling something for pulse, and the lock is required whenever
+ * doing any pa_* call that can affect the state in any way
+ *
+ * pa_cond_wait is used when waiting on results, because the mainloop needs
+ * the same lock taken to affect the state
+ *
+ * This is basically the same as the pa_threaded_mainloop implementation,
+ * but that cannot be used because it uses pthread_create directly
+ *
+ * pa_threaded_mainloop_(un)lock -> pthread_mutex_(un)lock
+ * pa_threaded_mainloop_signal -> pthread_cond_broadcast
+ * pa_threaded_mainloop_wait -> pthread_cond_wait
+ */
 static int pulse_poll_func(struct pollfd *ufds, unsigned long nfds, int timeout, void *userdata)
 {
     int r;
@@ -83,6 +97,18 @@ static int pulse_poll_func(struct pollfd *ufds, unsigned long nfds, int timeout,
     r = poll(ufds, nfds, timeout);
     pulse_lock();
     return r;
+}
+
+static void WINAPI pulse_main_loop(void)
+{
+    int ret;
+    pulse_ml = pa_mainloop_new();
+    pa_mainloop_set_poll_func(pulse_ml, pulse_poll_func, NULL);
+    pulse_lock();
+    pulse_broadcast();
+    pa_mainloop_run(pulse_ml, &ret);
+    pulse_unlock();
+    pa_mainloop_free(pulse_ml);
 }
 
 static void pulse_contextcallback(pa_context *c, void *userdata)
@@ -116,6 +142,50 @@ static void pulse_stream_state(pa_stream *s, void *user)
     pa_stream_state_t state = pa_stream_get_state(s);
     TRACE("Stream state changed to %i\n", state);
     pulse_broadcast();
+}
+
+static HRESULT WINAPI pulse_connect(const char *name, pa_context **ctx)
+{
+    if (pulse_ctx && PA_CONTEXT_IS_GOOD(pa_context_get_state(pulse_ctx))) {
+        *ctx = pulse_ctx;
+        return S_OK;
+    }
+    if (pulse_ctx)
+        pa_context_unref(pulse_ctx);
+
+    pulse_ctx = pa_context_new(pa_mainloop_get_api(pulse_ml), name);
+    if (!pulse_ctx) {
+        ERR("Failed to create context\n");
+        return E_FAIL;
+    }
+
+    pa_context_set_state_callback(pulse_ctx, pulse_contextcallback, NULL);
+
+    TRACE("libpulse protocol version: %u. API Version %u\n", pa_context_get_protocol_version(pulse_ctx), PA_API_VERSION);
+    if (pa_context_connect(pulse_ctx, NULL, 0, NULL) < 0)
+        goto fail;
+
+    /* Wait for connection */
+    while (pulse_cond_wait()) {
+        pa_context_state_t state = pa_context_get_state(pulse_ctx);
+
+        if (state == PA_CONTEXT_FAILED || state == PA_CONTEXT_TERMINATED)
+            goto fail;
+
+        if (state == PA_CONTEXT_READY)
+            break;
+    }
+
+    TRACE("Connected to server %s with protocol version: %i.\n",
+        pa_context_get_server(pulse_ctx),
+        pa_context_get_server_protocol_version(pulse_ctx));
+    *ctx = pulse_ctx;
+    return S_OK;
+
+fail:
+    pa_context_unref(pulse_ctx);
+    pulse_ctx = NULL;
+    return E_FAIL;
 }
 
 static DWORD pulse_channel_map_to_channel_mask(const pa_channel_map *map)
@@ -412,6 +482,8 @@ static const struct unix_funcs unix_funcs =
     pulse_unlock,
     pulse_cond_wait,
     pulse_broadcast,
+    pulse_main_loop,
+    pulse_connect,
     pulse_test_connect,
 };
 
@@ -430,6 +502,15 @@ NTSTATUS CDECL __wine_init_unix_lib(HMODULE module, DWORD reason, const void *pt
 
         *(const struct unix_funcs **)ptr_out = &unix_funcs;
         break;
+    case DLL_PROCESS_DETACH:
+        if (pulse_ctx)
+        {
+            pa_context_disconnect(pulse_ctx);
+            pa_context_unref(pulse_ctx);
+        }
+        if (pulse_ml)
+            pa_mainloop_quit(pulse_ml, 0);
+
     }
 
     return STATUS_SUCCESS;

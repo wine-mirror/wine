@@ -33,5 +33,7 @@ struct unix_funcs
     void (WINAPI *unlock)(void);
     int (WINAPI *cond_wait)(void);
     void (WINAPI *broadcast)(void);
+    void (WINAPI *main_loop)(void);
+    HRESULT (WINAPI *connect)(const char *name, pa_context **ret);
     HRESULT (WINAPI *test_connect)(const char *name, struct pulse_config *config);
 };

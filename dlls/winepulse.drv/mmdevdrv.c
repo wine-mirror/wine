@@ -23,7 +23,6 @@
 #define _GNU_SOURCE
 
 #include "config.h"
-#include <poll.h>
 
 #include <stdarg.h>
 #include <unistd.h>
@@ -74,9 +73,6 @@ enum DriverPriority {
 
 static struct pulse_config pulse_config;
 
-static pa_context *pulse_ctx;
-static pa_mainloop *pulse_ml;
-
 static HANDLE pulse_thread;
 static struct list g_sessions = LIST_INIT(g_sessions);
 
@@ -95,14 +91,7 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
         if (__wine_init_unix_lib(dll, reason, NULL, &pulse))
             return FALSE;
     } else if (reason == DLL_PROCESS_DETACH) {
-        if (pulse_thread)
-           SetThreadPriority(pulse_thread, 0);
-        if (pulse_ctx) {
-            pa_context_disconnect(pulse_ctx);
-            pa_context_unref(pulse_ctx);
-        }
-        if (pulse_ml)
-            pa_mainloop_quit(pulse_ml, 0);
+        __wine_init_unix_lib(dll, reason, NULL, NULL);
         if (pulse_thread) {
             WaitForSingleObject(pulse_thread, INFINITE);
             CloseHandle(pulse_thread);
@@ -244,65 +233,9 @@ static inline ACImpl *impl_from_IAudioStreamVolume(IAudioStreamVolume *iface)
     return CONTAINING_RECORD(iface, ACImpl, IAudioStreamVolume_iface);
 }
 
-/* Following pulseaudio design here, mainloop has the lock taken whenever
- * it is handling something for pulse, and the lock is required whenever
- * doing any pa_* call that can affect the state in any way
- *
- * pa_cond_wait is used when waiting on results, because the mainloop needs
- * the same lock taken to affect the state
- *
- * This is basically the same as the pa_threaded_mainloop implementation,
- * but that cannot be used because it uses pthread_create directly
- *
- * pa_threaded_mainloop_(un)lock -> pthread_mutex_(un)lock
- * pa_threaded_mainloop_signal -> pthread_cond_broadcast
- * pa_threaded_mainloop_wait -> pthread_cond_wait
- */
-
-static int pulse_poll_func(struct pollfd *ufds, unsigned long nfds, int timeout, void *userdata) {
-    int r;
-    pulse->unlock();
-    r = poll(ufds, nfds, timeout);
-    pulse->lock();
-    return r;
-}
-
 static DWORD CALLBACK pulse_mainloop_thread(void *tmp) {
-    int ret;
-    pulse_ml = pa_mainloop_new();
-    pa_mainloop_set_poll_func(pulse_ml, pulse_poll_func, NULL);
-    pulse->lock();
-    pulse->broadcast();
-    pa_mainloop_run(pulse_ml, &ret);
-    pulse->unlock();
-    pa_mainloop_free(pulse_ml);
-    return ret;
-}
-
-static void pulse_contextcallback(pa_context *c, void *userdata)
-{
-    switch (pa_context_get_state(c)) {
-        default:
-            FIXME("Unhandled state: %i\n", pa_context_get_state(c));
-            return;
-
-        case PA_CONTEXT_CONNECTING:
-        case PA_CONTEXT_UNCONNECTED:
-        case PA_CONTEXT_AUTHORIZING:
-        case PA_CONTEXT_SETTING_NAME:
-        case PA_CONTEXT_TERMINATED:
-            TRACE("State change to %i\n", pa_context_get_state(c));
-            return;
-
-        case PA_CONTEXT_READY:
-            TRACE("Ready\n");
-            break;
-
-        case PA_CONTEXT_FAILED:
-            WARN("Context failed: %s\n", pa_strerror(pa_context_errno(c)));
-            break;
-    }
-    pulse->broadcast();
+    pulse->main_loop();
+    return 0;
 }
 
 static void pulse_stream_state(pa_stream *s, void *user)
@@ -350,73 +283,6 @@ static char *get_application_name(void)
         return NULL;
     WideCharToMultiByte(CP_UNIXCP, 0, name, -1, str, len, NULL, NULL);
     return str;
-}
-
-static HRESULT pulse_connect(void)
-{
-    int len;
-    WCHAR path[MAX_PATH], *name;
-    char *str;
-
-    if (!pulse_thread)
-    {
-        if (!(pulse_thread = CreateThread(NULL, 0, pulse_mainloop_thread, NULL, 0, NULL)))
-        {
-            ERR("Failed to create mainloop thread.\n");
-            return E_FAIL;
-        }
-        SetThreadPriority(pulse_thread, THREAD_PRIORITY_TIME_CRITICAL);
-        pulse->cond_wait();
-    }
-
-    if (pulse_ctx && PA_CONTEXT_IS_GOOD(pa_context_get_state(pulse_ctx)))
-        return S_OK;
-    if (pulse_ctx)
-        pa_context_unref(pulse_ctx);
-
-    GetModuleFileNameW(NULL, path, ARRAY_SIZE(path));
-    name = strrchrW(path, '\\');
-    if (!name)
-        name = path;
-    else
-        name++;
-    len = WideCharToMultiByte(CP_UNIXCP, 0, name, -1, NULL, 0, NULL, NULL);
-    str = pa_xmalloc(len);
-    WideCharToMultiByte(CP_UNIXCP, 0, name, -1, str, len, NULL, NULL);
-    TRACE("Name: %s\n", str);
-    pulse_ctx = pa_context_new(pa_mainloop_get_api(pulse_ml), str);
-    pa_xfree(str);
-    if (!pulse_ctx) {
-        ERR("Failed to create context\n");
-        return E_FAIL;
-    }
-
-    pa_context_set_state_callback(pulse_ctx, pulse_contextcallback, NULL);
-
-    TRACE("libpulse protocol version: %u. API Version %u\n", pa_context_get_protocol_version(pulse_ctx), PA_API_VERSION);
-    if (pa_context_connect(pulse_ctx, NULL, 0, NULL) < 0)
-        goto fail;
-
-    /* Wait for connection */
-    while (pulse->cond_wait()) {
-        pa_context_state_t state = pa_context_get_state(pulse_ctx);
-
-        if (state == PA_CONTEXT_FAILED || state == PA_CONTEXT_TERMINATED)
-            goto fail;
-
-        if (state == PA_CONTEXT_READY)
-            break;
-    }
-
-    TRACE("Connected to server %s with protocol version: %i.\n",
-        pa_context_get_server(pulse_ctx),
-        pa_context_get_server_protocol_version(pulse_ctx));
-    return S_OK;
-
-fail:
-    pa_context_unref(pulse_ctx);
-    pulse_ctx = NULL;
-    return E_FAIL;
 }
 
 static HRESULT pulse_stream_valid(ACImpl *This) {
@@ -831,7 +697,7 @@ static DWORD WINAPI pulse_timer_cb(void *user)
     return 0;
 }
 
-static HRESULT pulse_stream_connect(ACImpl *This, UINT32 period_bytes) {
+static HRESULT pulse_stream_connect(ACImpl *This, pa_context *pulse_ctx, UINT32 period_bytes) {
     int ret;
     char buffer[64];
     static LONG number;
@@ -1318,6 +1184,8 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         const GUID *sessionguid)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
+    pa_context *pulse_ctx;
+    char *name;
     HRESULT hr = S_OK;
     UINT32 bufsize_bytes;
 
@@ -1348,15 +1216,29 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 
     pulse->lock();
 
-    hr = pulse_connect();
-    if (FAILED(hr)) {
-        pulse->unlock();
-        return hr;
-    }
-
     if (This->stream) {
         pulse->unlock();
         return AUDCLNT_E_ALREADY_INITIALIZED;
+    }
+
+    if (!pulse_thread)
+    {
+        if (!(pulse_thread = CreateThread(NULL, 0, pulse_mainloop_thread, NULL, 0, NULL)))
+        {
+            ERR("Failed to create mainloop thread.\n");
+            pulse->unlock();
+            return E_FAIL;
+        }
+        SetThreadPriority(pulse_thread, THREAD_PRIORITY_TIME_CRITICAL);
+        pulse->cond_wait();
+    }
+
+    name = get_application_name();
+    hr = pulse->connect(name, &pulse_ctx);
+    free(name);
+    if (FAILED(hr)) {
+        pulse->unlock();
+        return hr;
     }
 
     hr = pulse_spec_from_waveformat(This, fmt);
@@ -1378,7 +1260,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 
     This->share = mode;
     This->flags = flags;
-    hr = pulse_stream_connect(This, This->period_bytes);
+    hr = pulse_stream_connect(This, pulse_ctx, This->period_bytes);
     if (SUCCEEDED(hr)) {
         UINT32 unalign;
         const pa_buffer_attr *attr = pa_stream_get_buffer_attr(This->stream);
