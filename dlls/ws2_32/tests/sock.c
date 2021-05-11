@@ -5727,13 +5727,11 @@ static void test_ConnectEx(void)
     SOCKET connector = INVALID_SOCKET;
     struct sockaddr_in address, conaddress;
     int addrlen;
-    OVERLAPPED overlapped, *olp;
+    OVERLAPPED overlapped;
     LPFN_CONNECTEX pConnectEx;
     GUID connectExGuid = WSAID_CONNECTEX;
-    HANDLE io_port;
     DWORD bytesReturned;
     char buffer[1024];
-    ULONG_PTR key;
     BOOL bret;
     DWORD dwret;
     int iret;
@@ -5853,31 +5851,15 @@ static void test_ConnectEx(void)
 
     address.sin_port = htons(1);
 
-    io_port = CreateIoCompletionPort((HANDLE)connector, NULL, 125, 0);
-    ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
-
-    bret = SetFileCompletionNotificationModes((HANDLE)connector, FILE_SKIP_COMPLETION_PORT_ON_SUCCESS);
-    ok(bret, "Got unexpected bret %#x, GetLastError() %u.\n", bret, GetLastError());
-
     bret = pConnectEx(connector, (struct sockaddr*)&address, addrlen, NULL, 0, &bytesReturned, &overlapped);
     ok(bret == FALSE && GetLastError() == ERROR_IO_PENDING, "ConnectEx to bad destination failed: "
         "returned %d + errno %d\n", bret, GetLastError());
     dwret = WaitForSingleObject(overlapped.hEvent, 15000);
     ok(dwret == WAIT_OBJECT_0, "Waiting for connect event failed with %d + errno %d\n", dwret, GetLastError());
 
-    bytesReturned = 0xdeadbeef;
-    bret = GetQueuedCompletionStatus( io_port, &bytesReturned, &key, &olp, 200 );
-    ok(!bret && GetLastError() == ERROR_CONNECTION_REFUSED, "Got unexpected bret %#x, GetLastError() %u.\n",
-            bret, GetLastError());
-    ok(key == 125, "Key is %lu\n", key);
-    ok(!bytesReturned, "Number of bytes transferred is %u\n", bytesReturned);
-    ok(olp == &overlapped, "Overlapped structure is at %p\n", olp);
-
     bret = GetOverlappedResult((HANDLE)connector, &overlapped, &bytesReturned, FALSE);
     ok(bret == FALSE && GetLastError() == ERROR_CONNECTION_REFUSED,
        "Connecting to a disconnected host returned error %d - %d\n", bret, WSAGetLastError());
-
-    CloseHandle(io_port);
 
     WSACloseEvent(overlapped.hEvent);
     closesocket(connector);
@@ -7860,6 +7842,255 @@ static void test_completion_port(void)
     CloseHandle(io_port);
 }
 
+static void test_connect_completion_port(void)
+{
+    OVERLAPPED overlapped = {0}, *overlapped_ptr;
+    GUID connectex_guid = WSAID_CONNECTEX;
+    SOCKET connector, listener, acceptor;
+    struct sockaddr_in addr, destaddr;
+    LPFN_CONNECTEX pConnectEx;
+    int ret, addrlen;
+    ULONG_PTR key;
+    HANDLE port;
+    DWORD size;
+
+    overlapped.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+
+    listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(listener != -1, "failed to create socket, error %u\n", WSAGetLastError());
+
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    ret = bind(listener, (struct sockaddr *)&addr, sizeof(addr));
+    ok(!ret, "failed to bind, error %u\n", WSAGetLastError());
+    addrlen = sizeof(destaddr);
+    ret = getsockname(listener, (struct sockaddr *)&destaddr, &addrlen);
+    ok(!ret, "failed to get address, error %u\n", WSAGetLastError());
+
+    ret = listen(listener, 1);
+    ok(!ret, "failed to listen, error %u\n", WSAGetLastError());
+
+    connector = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(connector != -1, "failed to create socket, error %u\n", WSAGetLastError());
+
+    ret = WSAIoctl(connector, SIO_GET_EXTENSION_FUNCTION_POINTER, &connectex_guid, sizeof(connectex_guid),
+            &pConnectEx, sizeof(pConnectEx), &size, NULL, NULL);
+    ok(!ret, "Failed to get ConnectEx, error %u\n", WSAGetLastError());
+
+    /* connect() does not queue completion. */
+
+    port = CreateIoCompletionPort((HANDLE)connector, NULL, 0, 0);
+    ok(!!port, "failed to create port, error %u\n", GetLastError());
+
+    ret = connect(connector, (struct sockaddr *)&destaddr, sizeof(destaddr));
+    ok(!ret, "failed to connect, error %u\n", WSAGetLastError());
+    acceptor = accept(listener, NULL, NULL);
+    ok(acceptor != -1, "failed to accept, error %u\n", WSAGetLastError());
+    closesocket(acceptor);
+
+    ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == WAIT_TIMEOUT, "got error %u\n", GetLastError());
+
+    closesocket(connector);
+    CloseHandle(port);
+
+    connector = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(connector != -1, "failed to create socket, error %u\n", WSAGetLastError());
+    port = CreateIoCompletionPort((HANDLE)connector, NULL, 0, 0);
+    ok(!!port, "failed to create port, error %u\n", GetLastError());
+    set_blocking(connector, FALSE);
+
+    ret = connect(connector, (struct sockaddr *)&destaddr, sizeof(destaddr));
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
+    acceptor = accept(listener, NULL, NULL);
+    ok(acceptor != -1, "failed to accept, error %u\n", WSAGetLastError());
+    closesocket(acceptor);
+
+    ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == WAIT_TIMEOUT, "got error %u\n", GetLastError());
+
+    closesocket(connector);
+    CloseHandle(port);
+
+    /* ConnectEx() queues completion. */
+
+    connector = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(connector != -1, "failed to create socket, error %u\n", WSAGetLastError());
+    port = CreateIoCompletionPort((HANDLE)connector, NULL, 0, 0);
+    ok(!!port, "failed to create port, error %u\n", GetLastError());
+    ret = bind(connector, (struct sockaddr *)&addr, sizeof(addr));
+    ok(!ret, "failed to bind, error %u\n", WSAGetLastError());
+
+    ret = pConnectEx(connector, (struct sockaddr *)&destaddr, sizeof(destaddr),
+            NULL, 0, &size, &overlapped);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_IO_PENDING, "got error %u\n", GetLastError());
+    ret = WaitForSingleObject(overlapped.hEvent, 1000);
+    ok(!ret, "wait failed\n");
+    ret = GetOverlappedResult((HANDLE)connector, &overlapped, &size, FALSE);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(!size, "got %u bytes\n", size);
+    acceptor = accept(listener, NULL, NULL);
+    ok(acceptor != -1, "failed to accept, error %u\n", WSAGetLastError());
+    closesocket(acceptor);
+
+    size = 0xdeadbeef;
+    key = 0xdeadbeef;
+    overlapped_ptr = NULL;
+    ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(!key, "got key %#Ix\n", key);
+    ok(!size, "got %u bytes\n", size);
+    ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
+
+    closesocket(connector);
+    CloseHandle(port);
+
+    /* Test ConnectEx() with a non-empty buffer. */
+
+    connector = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(connector != -1, "failed to create socket, error %u\n", WSAGetLastError());
+    port = CreateIoCompletionPort((HANDLE)connector, NULL, 0, 0);
+    ok(!!port, "failed to create port, error %u\n", GetLastError());
+    ret = bind(connector, (struct sockaddr *)&addr, sizeof(addr));
+    ok(!ret, "failed to bind, error %u\n", WSAGetLastError());
+
+    ret = pConnectEx(connector, (struct sockaddr *)&destaddr, sizeof(destaddr),
+            (void *)"one", 3, &size, &overlapped);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_IO_PENDING, "got error %u\n", GetLastError());
+    ret = WaitForSingleObject(overlapped.hEvent, 1000);
+    ok(!ret, "wait failed\n");
+    ret = GetOverlappedResult((HANDLE)connector, &overlapped, &size, FALSE);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(size == 3, "got %u bytes\n", size);
+    acceptor = accept(listener, NULL, NULL);
+    ok(acceptor != -1, "failed to accept, error %u\n", WSAGetLastError());
+    closesocket(acceptor);
+
+    size = 0xdeadbeef;
+    key = 0xdeadbeef;
+    overlapped_ptr = NULL;
+    ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(!key, "got key %#Ix\n", key);
+    ok(size == 3, "got %u bytes\n", size);
+    ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
+
+    closesocket(connector);
+    CloseHandle(port);
+
+    /* Suppress completion by setting the low bit. */
+
+    connector = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(connector != -1, "failed to create socket, error %u\n", WSAGetLastError());
+    port = CreateIoCompletionPort((HANDLE)connector, NULL, 0, 0);
+    ok(!!port, "failed to create port, error %u\n", GetLastError());
+    ret = bind(connector, (struct sockaddr *)&addr, sizeof(addr));
+    ok(!ret, "failed to bind, error %u\n", WSAGetLastError());
+
+    overlapped.hEvent = (HANDLE)((ULONG_PTR)overlapped.hEvent | 1);
+
+    ret = pConnectEx(connector, (struct sockaddr *)&destaddr, sizeof(destaddr),
+            NULL, 0, &size, &overlapped);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_IO_PENDING, "got error %u\n", GetLastError());
+    ret = WaitForSingleObject(overlapped.hEvent, 1000);
+    ok(!ret, "wait failed\n");
+    ret = GetOverlappedResult((HANDLE)connector, &overlapped, &size, FALSE);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(!size, "got %u bytes\n", size);
+    acceptor = accept(listener, NULL, NULL);
+    ok(acceptor != -1, "failed to accept, error %u\n", WSAGetLastError());
+    closesocket(acceptor);
+
+    ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == WAIT_TIMEOUT, "got error %u\n", GetLastError());
+
+    closesocket(connector);
+    CloseHandle(port);
+
+    overlapped.hEvent = (HANDLE)((ULONG_PTR)overlapped.hEvent & ~1);
+
+    /* Skip completion on success. */
+
+    connector = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(connector != -1, "failed to create socket, error %u\n", WSAGetLastError());
+    port = CreateIoCompletionPort((HANDLE)connector, NULL, 0, 0);
+    ok(!!port, "failed to create port, error %u\n", GetLastError());
+    ret = SetFileCompletionNotificationModes((HANDLE)connector, FILE_SKIP_COMPLETION_PORT_ON_SUCCESS);
+    ok(ret, "got error %u\n", GetLastError());
+    ret = bind(connector, (struct sockaddr *)&addr, sizeof(addr));
+    ok(!ret, "failed to bind, error %u\n", WSAGetLastError());
+
+    ret = pConnectEx(connector, (struct sockaddr *)&destaddr, sizeof(destaddr),
+            NULL, 0, &size, &overlapped);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_IO_PENDING, "got error %u\n", GetLastError());
+    ret = WaitForSingleObject(overlapped.hEvent, 1000);
+    ok(!ret, "wait failed\n");
+    ret = GetOverlappedResult((HANDLE)connector, &overlapped, &size, FALSE);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(!size, "got %u bytes\n", size);
+    acceptor = accept(listener, NULL, NULL);
+    ok(acceptor != -1, "failed to accept, error %u\n", WSAGetLastError());
+    closesocket(acceptor);
+
+    size = 0xdeadbeef;
+    key = 0xdeadbeef;
+    overlapped_ptr = NULL;
+    ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(!key, "got key %#Ix\n", key);
+    ok(!size, "got %u bytes\n", size);
+    ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
+
+    closesocket(connector);
+    CloseHandle(port);
+
+    closesocket(listener);
+
+    /* Connect to an invalid address. */
+
+    connector = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(connector != -1, "failed to create socket, error %u\n", WSAGetLastError());
+    port = CreateIoCompletionPort((HANDLE)connector, NULL, 0, 0);
+    ok(!!port, "failed to create port, error %u\n", GetLastError());
+    ret = SetFileCompletionNotificationModes((HANDLE)connector, FILE_SKIP_COMPLETION_PORT_ON_SUCCESS);
+    ok(ret, "got error %u\n", GetLastError());
+    ret = bind(connector, (struct sockaddr *)&addr, sizeof(addr));
+    ok(!ret, "failed to bind, error %u\n", WSAGetLastError());
+
+    ret = pConnectEx(connector, (struct sockaddr *)&destaddr, sizeof(destaddr),
+            NULL, 0, &size, &overlapped);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_IO_PENDING, "got error %u\n", GetLastError());
+    ret = WaitForSingleObject(overlapped.hEvent, 15000);
+    ok(!ret, "wait failed\n");
+    ret = GetOverlappedResult((HANDLE)connector, &overlapped, &size, FALSE);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_CONNECTION_REFUSED, "got error %u\n", GetLastError());
+    ok(!size, "got %u bytes\n", size);
+
+    size = 0xdeadbeef;
+    key = 0xdeadbeef;
+    overlapped_ptr = NULL;
+    ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_CONNECTION_REFUSED, "got error %u\n", GetLastError());
+    ok(!key, "got key %#Ix\n", key);
+    ok(!size, "got %u bytes\n", size);
+    ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
+
+    closesocket(connector);
+    CloseHandle(port);
+}
+
 static void test_address_list_query(void)
 {
     SOCKET_ADDRESS_LIST *address_list;
@@ -9155,6 +9386,7 @@ START_TEST( sock )
     test_sioAddressListChange();
 
     test_completion_port();
+    test_connect_completion_port();
     test_address_list_query();
     test_bind();
     test_connecting_socket();
