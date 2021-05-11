@@ -5387,7 +5387,7 @@ void CDECL wined3d_device_context_issue_query(struct wined3d_device_context *con
 {
     TRACE("context %p, query %p, flags %#x.\n", context, query, flags);
 
-    query->device->cs->c.ops->issue_query(context, query, flags);
+    context->ops->issue_query(context, query, flags);
 }
 
 struct wined3d_rendertarget_view * CDECL wined3d_device_context_get_rendertarget_view(
