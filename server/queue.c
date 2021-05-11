@@ -1685,6 +1685,8 @@ static int queue_rawinput_message( struct process* process, void *arg )
         device = &entry->device;
     if (!device) return 0;
 
+    if (raw_msg->message == WM_INPUT_DEVICE_CHANGE && !(device->flags & RIDEV_DEVNOTIFY)) return 0;
+
     if (process != raw_msg->foreground->process)
     {
         if (!(device->flags & RIDEV_INPUTSINK)) goto done;
