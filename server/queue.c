@@ -1489,11 +1489,11 @@ static user_handle_t find_hardware_message_window( struct desktop *desktop, stru
     return win;
 }
 
-static struct rawinput_device_entry *find_rawinput_device( unsigned short usage_page, unsigned short usage )
+static struct rawinput_device_entry *find_rawinput_device( struct process *process, unsigned short usage_page, unsigned short usage )
 {
     struct rawinput_device_entry *e;
 
-    LIST_FOR_EACH_ENTRY( e, &current->process->rawinput_devices, struct rawinput_device_entry, entry )
+    LIST_FOR_EACH_ENTRY( e, &process->rawinput_devices, struct rawinput_device_entry, entry )
     {
         if (e->device.usage_page != usage_page || e->device.usage != usage) continue;
         return e;
@@ -1506,7 +1506,7 @@ static void update_rawinput_device(const struct rawinput_device *device)
 {
     struct rawinput_device_entry *e;
 
-    if (!(e = find_rawinput_device( device->usage_page, device->usage )))
+    if (!(e = find_rawinput_device( current->process, device->usage_page, device->usage )))
     {
         if (!(e = mem_alloc( sizeof(*e) ))) return;
         list_add_tail( &current->process->rawinput_devices, &e->entry );
@@ -1669,6 +1669,7 @@ struct rawinput_message
 static int queue_rawinput_message( struct process* process, void *arg )
 {
     const struct rawinput_message* raw_msg = arg;
+    const struct rawinput_device_entry *entry;
     const struct rawinput_device *device = NULL;
     struct desktop *target_desktop = NULL;
     struct thread *target_thread = NULL;
@@ -1679,6 +1680,8 @@ static int queue_rawinput_message( struct process* process, void *arg )
         device = process->rawinput_mouse;
     else if (raw_msg->data.rawinput.type == RIM_TYPEKEYBOARD)
         device = process->rawinput_kbd;
+    else if ((entry = find_rawinput_device( process, raw_msg->data.rawinput.hid.usage_page, raw_msg->data.rawinput.hid.usage )))
+        device = &entry->device;
     if (!device) return 0;
 
     if (process != raw_msg->foreground->process)
@@ -3296,9 +3299,9 @@ DECL_HANDLER(update_rawinput_devices)
         update_rawinput_device(&devices[i]);
     }
 
-    e = find_rawinput_device( 1, 2 );
+    e = find_rawinput_device( current->process, 1, 2 );
     current->process->rawinput_mouse = e ? &e->device : NULL;
-    e = find_rawinput_device( 1, 6 );
+    e = find_rawinput_device( current->process, 1, 6 );
     current->process->rawinput_kbd   = e ? &e->device : NULL;
 }
 
