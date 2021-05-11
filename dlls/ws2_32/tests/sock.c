@@ -5730,7 +5730,7 @@ static void test_ConnectEx(void)
     OVERLAPPED overlapped, *olp;
     LPFN_CONNECTEX pConnectEx;
     GUID connectExGuid = WSAID_CONNECTEX;
-    HANDLE previous_port, io_port;
+    HANDLE io_port;
     DWORD bytesReturned;
     char buffer[1024];
     ULONG_PTR key;
@@ -5853,10 +5853,7 @@ static void test_ConnectEx(void)
 
     address.sin_port = htons(1);
 
-    previous_port = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
-    ok( previous_port != NULL, "Failed to create completion port %u\n", GetLastError());
-
-    io_port = CreateIoCompletionPort((HANDLE)connector, previous_port, 125, 0);
+    io_port = CreateIoCompletionPort((HANDLE)connector, NULL, 125, 0);
     ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
 
     bret = SetFileCompletionNotificationModes((HANDLE)connector, FILE_SKIP_COMPLETION_PORT_ON_SUCCESS);
@@ -5884,8 +5881,6 @@ static void test_ConnectEx(void)
 
     WSACloseEvent(overlapped.hEvent);
     closesocket(connector);
-
-    CloseHandle(previous_port);
 }
 
 static void test_AcceptEx(void)
@@ -7068,7 +7063,7 @@ todo_wine
 
 static void test_synchronous_WSAIoctl(void)
 {
-    HANDLE previous_port, io_port;
+    HANDLE io_port;
     WSAOVERLAPPED overlapped, *olp;
     SOCKET socket;
     ULONG on;
@@ -7077,13 +7072,10 @@ static void test_synchronous_WSAIoctl(void)
     BOOL ret;
     int res;
 
-    previous_port = CreateIoCompletionPort( INVALID_HANDLE_VALUE, NULL, 0, 0 );
-    ok( previous_port != NULL, "failed to create completion port %u\n", GetLastError() );
-
     socket = WSASocketW( AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED );
     ok( socket != INVALID_SOCKET, "failed to create socket %d\n", WSAGetLastError() );
 
-    io_port = CreateIoCompletionPort( (HANDLE)socket, previous_port, 0, 0 );
+    io_port = CreateIoCompletionPort( (HANDLE)socket, NULL, 0, 0 );
     ok( io_port != NULL, "failed to create completion port %u\n", GetLastError() );
 
     on = 1;
@@ -7096,7 +7088,6 @@ static void test_synchronous_WSAIoctl(void)
 
     CloseHandle( io_port );
     closesocket( socket );
-    CloseHandle( previous_port );
 }
 
 /*
@@ -7131,7 +7122,7 @@ static SOCKET setup_iocp_src(struct sockaddr_in *bindAddress)
 
 static void test_completion_port(void)
 {
-    HANDLE previous_port, io_port;
+    HANDLE io_port;
     WSAOVERLAPPED ov, *olp;
     SOCKET src, dest, dup, connector = INVALID_SOCKET;
     WSAPROTOCOL_INFOA info;
@@ -7148,8 +7139,8 @@ static void test_completion_port(void)
     fd_set fds_recv;
 
     memset(buf, 0, sizeof(buf));
-    previous_port = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
-    ok( previous_port != NULL, "Failed to create completion port %u\n", GetLastError());
+    io_port = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
+    ok( io_port != NULL, "Failed to create completion port %u\n", GetLastError());
 
     memset(&ov, 0, sizeof(ov));
 
@@ -7164,7 +7155,7 @@ static void test_completion_port(void)
     iret = setsockopt (src, SOL_SOCKET, SO_LINGER, (char *) &ling, sizeof(ling));
     ok(!iret, "Failed to set linger %d\n", GetLastError());
 
-    io_port = CreateIoCompletionPort( (HANDLE)dest, previous_port, 125, 0 );
+    io_port = CreateIoCompletionPort( (HANDLE)dest, io_port, 125, 0 );
     ok(io_port != NULL, "Failed to create completion port %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -7218,7 +7209,7 @@ static void test_completion_port(void)
     iret = setsockopt (src, SOL_SOCKET, SO_LINGER, (char *) &ling, sizeof(ling));
     ok(!iret, "Failed to set linger %d\n", GetLastError());
 
-    io_port = CreateIoCompletionPort((HANDLE)dest, previous_port, 125, 0);
+    io_port = CreateIoCompletionPort((HANDLE)dest, io_port, 125, 0);
     ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
 
     set_blocking(dest, FALSE);
@@ -7263,7 +7254,7 @@ static void test_completion_port(void)
     ok(!iret, "WSASend failed - %d, last error %u\n", iret, GetLastError());
     ok(num_bytes == sizeof(buf), "Managed to send %d\n", num_bytes);
 
-    io_port = CreateIoCompletionPort((HANDLE)dest, previous_port, 125, 0);
+    io_port = CreateIoCompletionPort((HANDLE)dest, io_port, 125, 0);
     ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
     set_blocking(dest, FALSE);
 
@@ -7336,7 +7327,7 @@ static void test_completion_port(void)
     iret = setsockopt (src, SOL_SOCKET, SO_LINGER, (char *) &ling, sizeof(ling));
     ok(!iret, "Failed to set linger %d\n", GetLastError());
 
-    io_port = CreateIoCompletionPort((HANDLE)dest, previous_port, 125, 0);
+    io_port = CreateIoCompletionPort((HANDLE)dest, io_port, 125, 0);
     ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
     set_blocking(dest, FALSE);
 
@@ -7374,7 +7365,7 @@ static void test_completion_port(void)
     dest = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(dest != INVALID_SOCKET, "socket() failed\n");
 
-    io_port = CreateIoCompletionPort((HANDLE)dest, previous_port, 125, 0);
+    io_port = CreateIoCompletionPort((HANDLE)dest, io_port, 125, 0);
     ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
     set_blocking(dest, FALSE);
 
@@ -7421,7 +7412,7 @@ static void test_completion_port(void)
     ok(bret == FALSE, "AcceptEx returned %d\n", bret);
     ok(GetLastError() == ERROR_IO_PENDING, "Last error was %d\n", GetLastError());
 
-    io_port = CreateIoCompletionPort((HANDLE)src, previous_port, 125, 0);
+    io_port = CreateIoCompletionPort((HANDLE)src, io_port, 125, 0);
     ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
 
     closesocket(src);
@@ -7457,7 +7448,7 @@ static void test_completion_port(void)
 
     SetLastError(0xdeadbeef);
 
-    io_port = CreateIoCompletionPort((HANDLE)src, previous_port, 125, 0);
+    io_port = CreateIoCompletionPort((HANDLE)src, io_port, 125, 0);
     ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
 
     bret = pAcceptEx(src, dest, buf, sizeof(buf) - 2*(sizeof(struct sockaddr_in) + 16),
@@ -7499,7 +7490,7 @@ static void test_completion_port(void)
 
     SetLastError(0xdeadbeef);
 
-    io_port = CreateIoCompletionPort((HANDLE)src, previous_port, 125, 0);
+    io_port = CreateIoCompletionPort((HANDLE)src, io_port, 125, 0);
     ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
 
     WSADuplicateSocketA( src, GetCurrentProcessId(), &info );
@@ -7557,7 +7548,7 @@ static void test_completion_port(void)
 
     SetLastError(0xdeadbeef);
 
-    io_port = CreateIoCompletionPort((HANDLE)src, previous_port, 125, 0);
+    io_port = CreateIoCompletionPort((HANDLE)src, io_port, 125, 0);
     ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
 
     WSADuplicateSocketA( src, GetCurrentProcessId(), &info );
@@ -7623,7 +7614,7 @@ static void test_completion_port(void)
 
     SetLastError(0xdeadbeef);
 
-    io_port = CreateIoCompletionPort((HANDLE)src, previous_port, 125, 0);
+    io_port = CreateIoCompletionPort((HANDLE)src, io_port, 125, 0);
     ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
 
     WSADuplicateSocketA( src, GetCurrentProcessId(), &info );
@@ -7678,7 +7669,7 @@ static void test_completion_port(void)
 
     SetLastError(0xdeadbeef);
 
-    io_port = CreateIoCompletionPort((HANDLE)src, previous_port, 125, 0);
+    io_port = CreateIoCompletionPort((HANDLE)src, io_port, 125, 0);
     ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
 
     closesocket(src);
@@ -7702,10 +7693,10 @@ static void test_completion_port(void)
     connector = socket(AF_INET, SOCK_STREAM, 0);
     ok(connector != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
 
-    io_port = CreateIoCompletionPort((HANDLE)src, previous_port, 125, 0);
+    io_port = CreateIoCompletionPort((HANDLE)src, io_port, 125, 0);
     ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
 
-    io_port = CreateIoCompletionPort((HANDLE)dest, previous_port, 236, 0);
+    io_port = CreateIoCompletionPort((HANDLE)dest, io_port, 236, 0);
     ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
 
     bret = pAcceptEx(src, dest, buf, sizeof(buf) - 2*(sizeof(struct sockaddr_in) + 16),
@@ -7759,10 +7750,10 @@ static void test_completion_port(void)
     connector = socket(AF_INET, SOCK_STREAM, 0);
     ok(connector != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
 
-    io_port = CreateIoCompletionPort((HANDLE)src, previous_port, 125, 0);
+    io_port = CreateIoCompletionPort((HANDLE)src, io_port, 125, 0);
     ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
 
-    io_port = CreateIoCompletionPort((HANDLE)dest, previous_port, 236, 0);
+    io_port = CreateIoCompletionPort((HANDLE)dest, io_port, 236, 0);
     ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
 
     bret = pAcceptEx(src, dest, buf, sizeof(buf) - 2*(sizeof(struct sockaddr_in) + 16),
@@ -7821,10 +7812,10 @@ static void test_completion_port(void)
     connector = socket(AF_INET, SOCK_STREAM, 0);
     ok(connector != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
 
-    io_port = CreateIoCompletionPort((HANDLE)src, previous_port, 125, 0);
+    io_port = CreateIoCompletionPort((HANDLE)src, io_port, 125, 0);
     ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
 
-    io_port = CreateIoCompletionPort((HANDLE)dest, previous_port, 236, 0);
+    io_port = CreateIoCompletionPort((HANDLE)dest, io_port, 236, 0);
     ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
 
     bret = pAcceptEx(src, dest, buf, sizeof(buf) - 2*(sizeof(struct sockaddr_in) + 16),
@@ -7864,10 +7855,9 @@ static void test_completion_port(void)
     ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %u\n", num_bytes);
     ok(!olp, "Overlapped structure is at %p\n", olp);
 
-
     closesocket(src);
     closesocket(connector);
-    CloseHandle(previous_port);
+    CloseHandle(io_port);
 }
 
 static void test_address_list_query(void)
