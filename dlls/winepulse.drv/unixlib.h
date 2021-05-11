@@ -16,10 +16,22 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+struct pulse_config
+{
+    struct
+    {
+        WAVEFORMATEXTENSIBLE format;
+        REFERENCE_TIME def_period;
+        REFERENCE_TIME min_period;
+    } modes[2];
+    unsigned int speakers_mask;
+};
+
 struct unix_funcs
 {
     void (WINAPI *lock)(void);
     void (WINAPI *unlock)(void);
     int (WINAPI *cond_wait)(void);
     void (WINAPI *broadcast)(void);
+    HRESULT (WINAPI *test_connect)(const char *name, struct pulse_config *config);
 };
