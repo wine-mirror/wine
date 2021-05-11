@@ -868,14 +868,21 @@ static DWORD parse_ace_flag( const WCHAR *string )
     return 0;
 }
 
-static DWORD parse_ace_right( const WCHAR *string )
+static DWORD parse_ace_right( const WCHAR **string_ptr )
 {
+    const WCHAR *string = *string_ptr;
     unsigned int i;
+
+    if (string[0] == '0' && string[1] == 'x')
+        return wcstoul( string, (WCHAR **)string_ptr, 16 );
 
     for (i = 0; i < ARRAY_SIZE(ace_rights); ++i)
     {
         if (!wcsncmp( string, ace_rights[i].str, 2 ))
+        {
+            *string_ptr += 2;
             return ace_rights[i].value;
+        }
     }
     return 0;
 }
@@ -908,30 +915,11 @@ static DWORD parse_ace_rights( const WCHAR **string_ptr )
     while (*string == ' ')
         string++;
 
-    if (string[0] == '0' && string[1] == 'x')
+    while (*string != ';')
     {
-        const WCHAR *p = string;
-
-        while (*p && *p != ';')
-            p++;
-
-        if (p - string <= 10 /* 8 hex digits + "0x" */ )
-        {
-            rights = wcstoul( string, NULL, 16 );
-            string = p;
-        }
-        else
-            WARN("Invalid rights string format: %s\n", debugstr_wn(string, p - string));
-    }
-    else
-    {
-        while (*string != ';')
-        {
-            DWORD right = parse_ace_right( string );
-            if (!right) return 0;
-            rights |= right;
-            string += 2;
-        }
+        DWORD right = parse_ace_right( &string );
+        if (!right) return 0;
+        rights |= right;
     }
 
     *string_ptr = string;

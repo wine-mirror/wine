@@ -4212,6 +4212,10 @@ static void test_ConvertStringSecurityDescriptor(void)
         { "D:(A;;KAKRKWKX;;;WD)",            SDDL_REVISION_1, TRUE },
         { "D:(A;;0xFFFFFFFF;;;WD)",          SDDL_REVISION_1, TRUE },
         { "S:(AU;;0xFFFFFFFF;;;WD)",         SDDL_REVISION_1, TRUE },
+        { "S:(AU;;0xDeAdBeEf;;;WD)",         SDDL_REVISION_1, TRUE },
+        { "S:(AU;;GR0xFFFFFFFF;;;WD)",       SDDL_REVISION_1, TRUE },
+        { "S:(AU;;0xFFFFFFFFGR;;;WD)",       SDDL_REVISION_1, TRUE },
+        { "S:(AU;;0xFFFFFGR;;;WD)",          SDDL_REVISION_1, TRUE },
         /* test ACE string access right error case */
         { "D:(A;;ROB;;;WD)",                 SDDL_REVISION_1, FALSE, ERROR_INVALID_ACL },
         /* test behaviour with empty strings */
