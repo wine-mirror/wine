@@ -24,7 +24,6 @@
 
 #include "config.h"
 #include <poll.h>
-#include <pthread.h>
 
 #include <stdarg.h>
 #include <unistd.h>
@@ -57,7 +56,11 @@
 #include "endpointvolume.h"
 #include "audiopolicy.h"
 
+#include "unixlib.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(pulse);
+
+static const struct unix_funcs *pulse;
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
@@ -76,8 +79,6 @@ static pa_context *pulse_ctx;
 static pa_mainloop *pulse_ml;
 
 static HANDLE pulse_thread;
-static pthread_mutex_t pulse_lock;
-static pthread_cond_t pulse_cond = PTHREAD_COND_INITIALIZER;
 static struct list g_sessions = LIST_INIT(g_sessions);
 
 static UINT g_phys_speakers_mask = 0;
@@ -97,15 +98,9 @@ static UINT8 mult_ulaw_sample(UINT8, float);
 BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
 {
     if (reason == DLL_PROCESS_ATTACH) {
-        pthread_mutexattr_t attr;
-
         DisableThreadLibraryCalls(dll);
-
-        pthread_mutexattr_init(&attr);
-        pthread_mutexattr_setprotocol(&attr, PTHREAD_PRIO_INHERIT);
-
-        if (pthread_mutex_init(&pulse_lock, &attr) != 0)
-            pthread_mutex_init(&pulse_lock, NULL);
+        if (__wine_init_unix_lib(dll, reason, NULL, &pulse))
+            return FALSE;
     } else if (reason == DLL_PROCESS_DETACH) {
         if (pulse_thread)
            SetThreadPriority(pulse_thread, 0);
@@ -273,9 +268,9 @@ static inline ACImpl *impl_from_IAudioStreamVolume(IAudioStreamVolume *iface)
 
 static int pulse_poll_func(struct pollfd *ufds, unsigned long nfds, int timeout, void *userdata) {
     int r;
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
     r = poll(ufds, nfds, timeout);
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     return r;
 }
 
@@ -283,10 +278,10 @@ static DWORD CALLBACK pulse_mainloop_thread(void *tmp) {
     int ret;
     pulse_ml = pa_mainloop_new();
     pa_mainloop_set_poll_func(pulse_ml, pulse_poll_func, NULL);
-    pthread_mutex_lock(&pulse_lock);
-    pthread_cond_broadcast(&pulse_cond);
+    pulse->lock();
+    pulse->broadcast();
     pa_mainloop_run(pulse_ml, &ret);
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
     pa_mainloop_free(pulse_ml);
     return ret;
 }
@@ -314,14 +309,14 @@ static void pulse_contextcallback(pa_context *c, void *userdata)
             WARN("Context failed: %s\n", pa_strerror(pa_context_errno(c)));
             break;
     }
-    pthread_cond_broadcast(&pulse_cond);
+    pulse->broadcast();
 }
 
 static void pulse_stream_state(pa_stream *s, void *user)
 {
     pa_stream_state_t state = pa_stream_get_state(s);
     TRACE("Stream state changed to %i\n", state);
-    pthread_cond_broadcast(&pulse_cond);
+    pulse->broadcast();
 }
 
 static const enum pa_channel_position pulse_pos_from_wfx[] = {
@@ -553,7 +548,7 @@ static HRESULT pulse_connect(void)
             return E_FAIL;
         }
         SetThreadPriority(pulse_thread, THREAD_PRIORITY_TIME_CRITICAL);
-        pthread_cond_wait(&pulse_cond, &pulse_lock);
+        pulse->cond_wait();
     }
 
     if (pulse_ctx && PA_CONTEXT_IS_GOOD(pa_context_get_state(pulse_ctx)))
@@ -585,7 +580,7 @@ static HRESULT pulse_connect(void)
         goto fail;
 
     /* Wait for connection */
-    while (pthread_cond_wait(&pulse_cond, &pulse_lock)) {
+    while (pulse->cond_wait()) {
         pa_context_state_t state = pa_context_get_state(pulse_ctx);
 
         if (state == PA_CONTEXT_FAILED || state == PA_CONTEXT_TERMINATED)
@@ -862,7 +857,7 @@ static void dump_attr(const pa_buffer_attr *attr) {
 static void pulse_op_cb(pa_stream *s, int success, void *user) {
     TRACE("Success: %i\n", success);
     *(int*)user = success;
-    pthread_cond_broadcast(&pulse_cond);
+    pulse->broadcast();
 }
 
 static void pulse_attr_update(pa_stream *s, void *user) {
@@ -1028,10 +1023,10 @@ static DWORD WINAPI pulse_timer_cb(void *user)
     int success;
     pa_operation *o;
 
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     delay.QuadPart = -This->mmdev_period_usec * 10;
     pa_stream_get_time(This->stream, &This->last_time);
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
 
     while(!This->please_quit){
         pa_usec_t now, adv_usec = 0;
@@ -1039,7 +1034,7 @@ static DWORD WINAPI pulse_timer_cb(void *user)
 
         NtDelayExecution(FALSE, &delay);
 
-        pthread_mutex_lock(&pulse_lock);
+        pulse->lock();
 
         delay.QuadPart = -This->mmdev_period_usec * 10;
 
@@ -1047,7 +1042,7 @@ static DWORD WINAPI pulse_timer_cb(void *user)
         if (o)
         {
             while (pa_operation_get_state(o) == PA_OPERATION_RUNNING)
-                pthread_cond_wait(&pulse_cond, &pulse_lock);
+                pulse->cond_wait();
             pa_operation_unref(o);
         }
         err = pa_stream_get_time(This->stream, &now);
@@ -1106,7 +1101,7 @@ static DWORD WINAPI pulse_timer_cb(void *user)
                 This, (int)adv_usec,
                 (int)(This->held_bytes/ pa_frame_size(&This->ss)), (unsigned int)(-delay.QuadPart / 10));
 
-        pthread_mutex_unlock(&pulse_lock);
+        pulse->unlock();
     }
 
     return 0;
@@ -1120,7 +1115,7 @@ static HRESULT pulse_stream_connect(ACImpl *This, UINT32 period_bytes) {
     if (This->stream) {
         pa_stream_disconnect(This->stream);
         while (pa_stream_get_state(This->stream) == PA_STREAM_READY)
-            pthread_cond_wait(&pulse_cond, &pulse_lock);
+            pulse->cond_wait();
         pa_stream_unref(This->stream);
     }
     ret = InterlockedIncrement(&number);
@@ -1153,7 +1148,7 @@ static HRESULT pulse_stream_connect(ACImpl *This, UINT32 period_bytes) {
         return AUDCLNT_E_ENDPOINT_CREATE_FAILED;
     }
     while (pa_stream_get_state(This->stream) == PA_STREAM_CREATING)
-        pthread_cond_wait(&pulse_cond, &pulse_lock);
+        pulse->cond_wait();
     if (pa_stream_get_state(This->stream) != PA_STREAM_READY)
         return AUDCLNT_E_ENDPOINT_CREATE_FAILED;
 
@@ -1202,9 +1197,9 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, const WCHAR ***ids, GUID **
 int WINAPI AUDDRV_GetPriority(void)
 {
     HRESULT hr;
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     hr = pulse_test_connect();
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
     return SUCCEEDED(hr) ? Priority_Preferred : Priority_Unavailable;
 }
 
@@ -1303,16 +1298,16 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
                 WaitForSingleObject(This->timer, INFINITE);
                 CloseHandle(This->timer);
             }
-            pthread_mutex_lock(&pulse_lock);
+            pulse->lock();
             if (PA_STREAM_IS_GOOD(pa_stream_get_state(This->stream))) {
                 pa_stream_disconnect(This->stream);
                 while (PA_STREAM_IS_GOOD(pa_stream_get_state(This->stream)))
-                    pthread_cond_wait(&pulse_cond, &pulse_lock);
+                    pulse->cond_wait();
             }
             pa_stream_unref(This->stream);
             This->stream = NULL;
             list_remove(&This->entry);
-            pthread_mutex_unlock(&pulse_lock);
+            pulse->unlock();
         }
         IUnknown_Release(This->marshal);
         IMMDevice_Release(This->parent);
@@ -1625,16 +1620,16 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         return E_INVALIDARG;
     }
 
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
 
     hr = pulse_connect();
     if (FAILED(hr)) {
-        pthread_mutex_unlock(&pulse_lock);
+        pulse->unlock();
         return hr;
     }
 
     if (This->stream) {
-        pthread_mutex_unlock(&pulse_lock);
+        pulse->unlock();
         return AUDCLNT_E_ALREADY_INITIALIZED;
     }
 
@@ -1711,7 +1706,7 @@ exit:
             This->stream = NULL;
         }
     }
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
     return hr;
 }
 
@@ -1726,11 +1721,11 @@ static HRESULT WINAPI AudioClient_GetBufferSize(IAudioClient3 *iface,
     if (!out)
         return E_POINTER;
 
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     hr = pulse_stream_valid(This);
     if (SUCCEEDED(hr))
         *out = This->bufsize_frames;
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
 
     return hr;
 }
@@ -1748,10 +1743,10 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,
     if (!latency)
         return E_POINTER;
 
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     hr = pulse_stream_valid(This);
     if (FAILED(hr)) {
-        pthread_mutex_unlock(&pulse_lock);
+        pulse->unlock();
         return hr;
     }
     attr = pa_stream_get_buffer_attr(This->stream);
@@ -1763,7 +1758,7 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,
     *latency *= lat;
     *latency /= This->ss.rate;
     *latency += pulse_def_period[0];
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
     TRACE("Latency: %u ms\n", (DWORD)(*latency / 10000));
     return S_OK;
 }
@@ -1796,10 +1791,10 @@ static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient3 *iface,
     if (!out)
         return E_POINTER;
 
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     hr = pulse_stream_valid(This);
     if (FAILED(hr)) {
-        pthread_mutex_unlock(&pulse_lock);
+        pulse->unlock();
         return hr;
     }
 
@@ -1807,7 +1802,7 @@ static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient3 *iface,
         ACImpl_GetRenderPad(This, out);
     else
         ACImpl_GetCapturePad(This, out);
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
 
     TRACE("%p Pad: %u ms (%u)\n", This, MulDiv(*out, 1000, This->ss.rate), *out);
     return S_OK;
@@ -2011,20 +2006,20 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
 
     TRACE("(%p)\n", This);
 
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     hr = pulse_stream_valid(This);
     if (FAILED(hr)) {
-        pthread_mutex_unlock(&pulse_lock);
+        pulse->unlock();
         return hr;
     }
 
     if ((This->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK) && !This->event) {
-        pthread_mutex_unlock(&pulse_lock);
+        pulse->unlock();
         return AUDCLNT_E_EVENTHANDLE_NOT_SET;
     }
 
     if (This->started) {
-        pthread_mutex_unlock(&pulse_lock);
+        pulse->unlock();
         return AUDCLNT_E_NOT_STOPPED;
     }
 
@@ -2034,7 +2029,7 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
         o = pa_stream_cork(This->stream, 0, pulse_op_cb, &success);
         if (o) {
             while(pa_operation_get_state(o) == PA_OPERATION_RUNNING)
-                pthread_cond_wait(&pulse_cond, &pulse_lock);
+                pulse->cond_wait();
             pa_operation_unref(o);
         } else
             success = 0;
@@ -2051,7 +2046,7 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
             SetThreadPriority(This->timer, THREAD_PRIORITY_TIME_CRITICAL);
         }
     }
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
     return hr;
 }
 
@@ -2064,15 +2059,15 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)
 
     TRACE("(%p)\n", This);
 
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     hr = pulse_stream_valid(This);
     if (FAILED(hr)) {
-        pthread_mutex_unlock(&pulse_lock);
+        pulse->unlock();
         return hr;
     }
 
     if (!This->started) {
-        pthread_mutex_unlock(&pulse_lock);
+        pulse->unlock();
         return S_FALSE;
     }
 
@@ -2080,7 +2075,7 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)
         o = pa_stream_cork(This->stream, 1, pulse_op_cb, &success);
         if (o) {
             while(pa_operation_get_state(o) == PA_OPERATION_RUNNING)
-                pthread_cond_wait(&pulse_cond, &pulse_lock);
+                pulse->cond_wait();
             pa_operation_unref(o);
         } else
             success = 0;
@@ -2090,7 +2085,7 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)
     if (SUCCEEDED(hr)) {
         This->started = FALSE;
     }
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
     return hr;
 }
 
@@ -2101,20 +2096,20 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient3 *iface)
 
     TRACE("(%p)\n", This);
 
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     hr = pulse_stream_valid(This);
     if (FAILED(hr)) {
-        pthread_mutex_unlock(&pulse_lock);
+        pulse->unlock();
         return hr;
     }
 
     if (This->started) {
-        pthread_mutex_unlock(&pulse_lock);
+        pulse->unlock();
         return AUDCLNT_E_NOT_STOPPED;
     }
 
     if (This->locked) {
-        pthread_mutex_unlock(&pulse_lock);
+        pulse->unlock();
         return AUDCLNT_E_BUFFER_OPERATION_PENDING;
     }
 
@@ -2125,7 +2120,7 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient3 *iface)
             pa_operation *o = pa_stream_flush(This->stream, pulse_op_cb, &success);
             if (o) {
                 while(pa_operation_get_state(o) == PA_OPERATION_RUNNING)
-                    pthread_cond_wait(&pulse_cond, &pulse_lock);
+                    pulse->cond_wait();
                 pa_operation_unref(o);
             }
         }
@@ -2144,7 +2139,7 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient3 *iface)
         }
         list_move_tail(&This->packet_free_head, &This->packet_filled_head);
     }
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
 
     return hr;
 }
@@ -2160,10 +2155,10 @@ static HRESULT WINAPI AudioClient_SetEventHandle(IAudioClient3 *iface,
     if (!event)
         return E_INVALIDARG;
 
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     hr = pulse_stream_valid(This);
     if (FAILED(hr)) {
-        pthread_mutex_unlock(&pulse_lock);
+        pulse->unlock();
         return hr;
     }
 
@@ -2173,7 +2168,7 @@ static HRESULT WINAPI AudioClient_SetEventHandle(IAudioClient3 *iface,
         hr = HRESULT_FROM_WIN32(ERROR_INVALID_NAME);
     else
         This->event = event;
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
     return hr;
 }
 
@@ -2189,9 +2184,9 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
         return E_POINTER;
     *ppv = NULL;
 
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     hr = pulse_stream_valid(This);
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
     if (FAILED(hr))
         return hr;
 
@@ -2409,19 +2404,19 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
         return E_POINTER;
     *data = NULL;
 
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     hr = pulse_stream_valid(This);
     if (FAILED(hr) || This->locked) {
-        pthread_mutex_unlock(&pulse_lock);
+        pulse->unlock();
         return FAILED(hr) ? hr : AUDCLNT_E_OUT_OF_ORDER;
     }
     if (!frames) {
-        pthread_mutex_unlock(&pulse_lock);
+        pulse->unlock();
         return S_OK;
     }
 
     if(This->held_bytes / pa_frame_size(&This->ss) + frames > This->bufsize_frames){
-        pthread_mutex_unlock(&pulse_lock);
+        pulse->unlock();
         return AUDCLNT_E_BUFFER_TOO_LARGE;
     }
 
@@ -2437,7 +2432,7 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
 
     silence_buffer(This->ss.format, *data, bytes);
 
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
 
     return hr;
 }
@@ -2465,15 +2460,15 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
 
     TRACE("(%p)->(%u, %x)\n", This, written_frames, flags);
 
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     if (!This->locked || !written_frames) {
         This->locked = 0;
-        pthread_mutex_unlock(&pulse_lock);
+        pulse->unlock();
         return written_frames ? AUDCLNT_E_OUT_OF_ORDER : S_OK;
     }
 
     if(written_frames * pa_frame_size(&This->ss) > (This->locked >= 0 ? This->locked : -This->locked)){
-        pthread_mutex_unlock(&pulse_lock);
+        pulse->unlock();
         return AUDCLNT_E_INVALID_SIZE;
     }
 
@@ -2500,7 +2495,7 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
 
     TRACE("Released %u, held %zu\n", written_frames, This->held_bytes / pa_frame_size(&This->ss));
 
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
 
     return S_OK;
 }
@@ -2569,10 +2564,10 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
     if (!frames || !flags)
         return E_POINTER;
 
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     hr = pulse_stream_valid(This);
     if (FAILED(hr) || This->locked) {
-        pthread_mutex_unlock(&pulse_lock);
+        pulse->unlock();
         return FAILED(hr) ? hr : AUDCLNT_E_OUT_OF_ORDER;
     }
 
@@ -2595,7 +2590,7 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
     else
         *frames = 0;
     This->locked = *frames;
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
     return *frames ? S_OK : AUDCLNT_S_BUFFER_EMPTY;
 }
 
@@ -2606,13 +2601,13 @@ static HRESULT WINAPI AudioCaptureClient_ReleaseBuffer(
 
     TRACE("(%p)->(%u)\n", This, done);
 
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     if (!This->locked && done) {
-        pthread_mutex_unlock(&pulse_lock);
+        pulse->unlock();
         return AUDCLNT_E_OUT_OF_ORDER;
     }
     if (done && This->locked != done) {
-        pthread_mutex_unlock(&pulse_lock);
+        pulse->unlock();
         return AUDCLNT_E_INVALID_SIZE;
     }
     if (done) {
@@ -2626,7 +2621,7 @@ static HRESULT WINAPI AudioCaptureClient_ReleaseBuffer(
         list_add_tail(&This->packet_free_head, &packet->entry);
     }
     This->locked = 0;
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
     return S_OK;
 }
 
@@ -2639,13 +2634,13 @@ static HRESULT WINAPI AudioCaptureClient_GetNextPacketSize(
     if (!frames)
         return E_POINTER;
 
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     ACImpl_GetCapturePad(This, NULL);
     if (This->locked_ptr)
         *frames = This->period_bytes / pa_frame_size(&This->ss);
     else
         *frames = 0;
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
     return S_OK;
 }
 
@@ -2705,14 +2700,14 @@ static HRESULT WINAPI AudioClock_GetFrequency(IAudioClock *iface, UINT64 *freq)
 
     TRACE("(%p)->(%p)\n", This, freq);
 
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     hr = pulse_stream_valid(This);
     if (SUCCEEDED(hr)) {
         *freq = This->ss.rate;
         if (This->share == AUDCLNT_SHAREMODE_SHARED)
             *freq *= pa_frame_size(&This->ss);
     }
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
     return hr;
 }
 
@@ -2727,10 +2722,10 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
     if (!pos)
         return E_POINTER;
 
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     hr = pulse_stream_valid(This);
     if (FAILED(hr)) {
-        pthread_mutex_unlock(&pulse_lock);
+        pulse->unlock();
         return hr;
     }
 
@@ -2744,7 +2739,7 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
         *pos = This->clock_lastpos;
     else
         This->clock_lastpos = *pos;
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
 
     TRACE("%p Position: %u\n", This, (unsigned)*pos);
 
@@ -2893,7 +2888,7 @@ static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
     if (count != This->ss.channels)
         return E_INVALIDARG;
 
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     hr = pulse_stream_valid(This);
     if (FAILED(hr))
         goto out;
@@ -2902,7 +2897,7 @@ static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
         This->vol[i] = levels[i];
 
 out:
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
     return hr;
 }
 
@@ -2921,7 +2916,7 @@ static HRESULT WINAPI AudioStreamVolume_GetAllVolumes(
     if (count != This->ss.channels)
         return E_INVALIDARG;
 
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     hr = pulse_stream_valid(This);
     if (FAILED(hr))
         goto out;
@@ -2930,7 +2925,7 @@ static HRESULT WINAPI AudioStreamVolume_GetAllVolumes(
         levels[i] = This->vol[i];
 
 out:
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
     return hr;
 }
 
@@ -3071,7 +3066,7 @@ static HRESULT WINAPI AudioSessionControl_GetState(IAudioSessionControl2 *iface,
     if (!state)
         return NULL_PTR_ERR;
 
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     if (list_empty(&This->session->clients)) {
         *state = AudioSessionStateExpired;
         goto out;
@@ -3085,7 +3080,7 @@ static HRESULT WINAPI AudioSessionControl_GetState(IAudioSessionControl2 *iface,
     *state = AudioSessionStateInactive;
 
 out:
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
     return S_OK;
 }
 
@@ -3460,9 +3455,9 @@ static HRESULT WINAPI SimpleAudioVolume_SetMasterVolume(
 
     TRACE("PulseAudio does not support session volume control\n");
 
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     session->master_vol = level;
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
 
     return S_OK;
 }
@@ -3596,9 +3591,9 @@ static HRESULT WINAPI ChannelAudioVolume_SetChannelVolume(
 
     TRACE("PulseAudio does not support session volume control\n");
 
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     session->channel_vols[index] = level;
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
 
     return S_OK;
 }
@@ -3644,10 +3639,10 @@ static HRESULT WINAPI ChannelAudioVolume_SetAllVolumes(
 
     TRACE("PulseAudio does not support session volume control\n");
 
-    pthread_mutex_lock(&pulse_lock);
+    pulse->lock();
     for(i = 0; i < count; ++i)
         session->channel_vols[i] = levels[i];
-    pthread_mutex_unlock(&pulse_lock);
+    pulse->unlock();
     return S_OK;
 }
 
