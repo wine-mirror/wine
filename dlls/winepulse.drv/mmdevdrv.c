@@ -148,6 +148,7 @@ struct ACImpl {
 
     LONG ref;
     EDataFlow dataflow;
+    UINT32 channel_count;
     DWORD flags;
     AUDCLNT_SHAREMODE share;
     HANDLE event, timer;
@@ -1170,7 +1171,7 @@ static HRESULT pulse_spec_from_waveformat(ACImpl *This, const WAVEFORMATEX *fmt)
         WARN("Unhandled tag %x\n", fmt->wFormatTag);
         return AUDCLNT_E_UNSUPPORTED_FORMAT;
     }
-    This->ss.channels = This->map.channels;
+    This->channel_count = This->ss.channels = This->map.channels;
     if (!pa_channel_map_valid(&This->map) || This->ss.format == PA_SAMPLE_INVALID) {
         ERR("Invalid format! Channel spec valid: %i, format: %i\n", pa_channel_map_valid(&This->map), This->ss.format);
         return AUDCLNT_E_UNSUPPORTED_FORMAT;
@@ -2470,7 +2471,7 @@ static HRESULT WINAPI AudioStreamVolume_GetChannelCount(
     if (!out)
         return E_POINTER;
 
-    *out = This->ss.channels;
+    *out = This->channel_count;
 
     return S_OK;
 }
@@ -2492,7 +2493,7 @@ static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
     if (!levels)
         return E_POINTER;
 
-    if (count != This->ss.channels)
+    if (count != This->channel_count)
         return E_INVALIDARG;
 
     pulse->lock();
@@ -2520,7 +2521,7 @@ static HRESULT WINAPI AudioStreamVolume_GetAllVolumes(
     if (!levels)
         return E_POINTER;
 
-    if (count != This->ss.channels)
+    if (count != This->channel_count)
         return E_INVALIDARG;
 
     pulse->lock();
@@ -2548,13 +2549,13 @@ static HRESULT WINAPI AudioStreamVolume_SetChannelVolume(
     if (level < 0.f || level > 1.f)
         return E_INVALIDARG;
 
-    if (index >= This->ss.channels)
+    if (index >= This->channel_count)
         return E_INVALIDARG;
 
-    hr = AudioStreamVolume_GetAllVolumes(iface, This->ss.channels, volumes);
+    hr = AudioStreamVolume_GetAllVolumes(iface, This->channel_count, volumes);
     volumes[index] = level;
     if (SUCCEEDED(hr))
-        hr = AudioStreamVolume_SetAllVolumes(iface, This->ss.channels, volumes);
+        hr = AudioStreamVolume_SetAllVolumes(iface, This->channel_count, volumes);
     return hr;
 }
 
@@ -2570,10 +2571,10 @@ static HRESULT WINAPI AudioStreamVolume_GetChannelVolume(
     if (!level)
         return E_POINTER;
 
-    if (index >= This->ss.channels)
+    if (index >= This->channel_count)
         return E_INVALIDARG;
 
-    hr = AudioStreamVolume_GetAllVolumes(iface, This->ss.channels, volumes);
+    hr = AudioStreamVolume_GetAllVolumes(iface, This->channel_count, volumes);
     if (SUCCEEDED(hr))
         *level = volumes[index];
     return hr;
