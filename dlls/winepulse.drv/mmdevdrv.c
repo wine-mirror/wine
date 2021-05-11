@@ -127,13 +127,6 @@ typedef struct _AudioSessionWrapper {
     AudioSession *session;
 } AudioSessionWrapper;
 
-typedef struct _ACPacket {
-    struct list entry;
-    UINT64 qpcpos;
-    BYTE *data;
-    UINT32 discont;
-} ACPacket;
-
 struct ACImpl {
     IAudioClient3 IAudioClient3_iface;
     IAudioRenderClient IAudioRenderClient_iface;
@@ -220,34 +213,6 @@ static DWORD CALLBACK pulse_mainloop_thread(void *tmp) {
     pulse->main_loop();
     return 0;
 }
-
-static void pulse_stream_state(pa_stream *s, void *user)
-{
-    pa_stream_state_t state = pa_stream_get_state(s);
-    TRACE("Stream state changed to %i\n", state);
-    pulse->broadcast();
-}
-
-static const enum pa_channel_position pulse_pos_from_wfx[] = {
-    PA_CHANNEL_POSITION_FRONT_LEFT,
-    PA_CHANNEL_POSITION_FRONT_RIGHT,
-    PA_CHANNEL_POSITION_FRONT_CENTER,
-    PA_CHANNEL_POSITION_LFE,
-    PA_CHANNEL_POSITION_REAR_LEFT,
-    PA_CHANNEL_POSITION_REAR_RIGHT,
-    PA_CHANNEL_POSITION_FRONT_LEFT_OF_CENTER,
-    PA_CHANNEL_POSITION_FRONT_RIGHT_OF_CENTER,
-    PA_CHANNEL_POSITION_REAR_CENTER,
-    PA_CHANNEL_POSITION_SIDE_LEFT,
-    PA_CHANNEL_POSITION_SIDE_RIGHT,
-    PA_CHANNEL_POSITION_TOP_CENTER,
-    PA_CHANNEL_POSITION_TOP_FRONT_LEFT,
-    PA_CHANNEL_POSITION_TOP_FRONT_CENTER,
-    PA_CHANNEL_POSITION_TOP_FRONT_RIGHT,
-    PA_CHANNEL_POSITION_TOP_REAR_LEFT,
-    PA_CHANNEL_POSITION_TOP_REAR_CENTER,
-    PA_CHANNEL_POSITION_TOP_REAR_RIGHT
-};
 
 static char *get_application_name(void)
 {
@@ -419,24 +384,10 @@ write:
     return pa_stream_write(This->pulse_stream->stream, buffer, bytes, NULL, 0, PA_SEEK_RELATIVE);
 }
 
-static void dump_attr(const pa_buffer_attr *attr) {
-    TRACE("maxlength: %u\n", attr->maxlength);
-    TRACE("minreq: %u\n", attr->minreq);
-    TRACE("fragsize: %u\n", attr->fragsize);
-    TRACE("tlength: %u\n", attr->tlength);
-    TRACE("prebuf: %u\n", attr->prebuf);
-}
-
 static void pulse_op_cb(pa_stream *s, int success, void *user) {
     TRACE("Success: %i\n", success);
     *(int*)user = success;
     pulse->broadcast();
-}
-
-static void pulse_attr_update(pa_stream *s, void *user) {
-    const pa_buffer_attr *attr = pa_stream_get_buffer_attr(s);
-    TRACE("New attributes or device moved:\n");
-    dump_attr(attr);
 }
 
 static void pulse_write(ACImpl *This)
@@ -481,21 +432,6 @@ static void pulse_write(ACImpl *This)
     This->pulse_stream->pa_offs_bytes += to_write;
     This->pulse_stream->pa_offs_bytes %= This->pulse_stream->real_bufsize_bytes;
     This->pulse_stream->pa_held_bytes -= to_write;
-}
-
-static void pulse_underflow_callback(pa_stream *s, void *userdata)
-{
-    ACImpl *This = userdata;
-    WARN("%p: Underflow\n", userdata);
-    This->pulse_stream->just_underran = TRUE;
-    /* re-sync */
-    This->pulse_stream->pa_offs_bytes = This->pulse_stream->lcl_offs_bytes;
-    This->pulse_stream->pa_held_bytes = This->pulse_stream->held_bytes;
-}
-
-static void pulse_started_callback(pa_stream *s, void *userdata)
-{
-    TRACE("%p: (Re)started playing\n", userdata);
 }
 
 static void pulse_read(ACImpl *This)
@@ -678,58 +614,6 @@ static DWORD WINAPI pulse_timer_cb(void *user)
     }
 
     return 0;
-}
-
-static HRESULT pulse_stream_connect(ACImpl *This, pa_context *pulse_ctx, UINT32 period_bytes) {
-    int ret;
-    char buffer[64];
-    static LONG number;
-    pa_buffer_attr attr;
-    if (This->pulse_stream->stream) {
-        pa_stream_disconnect(This->pulse_stream->stream);
-        while (pa_stream_get_state(This->pulse_stream->stream) == PA_STREAM_READY)
-            pulse->cond_wait();
-        pa_stream_unref(This->pulse_stream->stream);
-    }
-    ret = InterlockedIncrement(&number);
-    sprintf(buffer, "audio stream #%i", ret);
-    This->pulse_stream->stream = pa_stream_new(pulse_ctx, buffer, &This->pulse_stream->ss, &This->pulse_stream->map);
-
-    if (!This->pulse_stream->stream) {
-        WARN("pa_stream_new returned error %i\n", pa_context_errno(pulse_ctx));
-        return AUDCLNT_E_ENDPOINT_CREATE_FAILED;
-    }
-
-    pa_stream_set_state_callback(This->pulse_stream->stream, pulse_stream_state, This);
-    pa_stream_set_buffer_attr_callback(This->pulse_stream->stream, pulse_attr_update, This);
-    pa_stream_set_moved_callback(This->pulse_stream->stream, pulse_attr_update, This);
-
-    /* PulseAudio will fill in correct values */
-    attr.minreq = attr.fragsize = period_bytes;
-    attr.tlength = period_bytes * 3;
-    attr.maxlength = This->pulse_stream->bufsize_frames * pa_frame_size(&This->pulse_stream->ss);
-    attr.prebuf = pa_frame_size(&This->pulse_stream->ss);
-    dump_attr(&attr);
-    if (This->dataflow == eRender)
-        ret = pa_stream_connect_playback(This->pulse_stream->stream, NULL, &attr,
-        PA_STREAM_START_CORKED|PA_STREAM_START_UNMUTED|PA_STREAM_ADJUST_LATENCY, NULL, NULL);
-    else
-        ret = pa_stream_connect_record(This->pulse_stream->stream, NULL, &attr,
-        PA_STREAM_START_CORKED|PA_STREAM_START_UNMUTED|PA_STREAM_ADJUST_LATENCY);
-    if (ret < 0) {
-        WARN("Returns %i\n", ret);
-        return AUDCLNT_E_ENDPOINT_CREATE_FAILED;
-    }
-    while (pa_stream_get_state(This->pulse_stream->stream) == PA_STREAM_CREATING)
-        pulse->cond_wait();
-    if (pa_stream_get_state(This->pulse_stream->stream) != PA_STREAM_READY)
-        return AUDCLNT_E_ENDPOINT_CREATE_FAILED;
-
-    if (This->dataflow == eRender) {
-        pa_stream_set_underflow_callback(This->pulse_stream->stream, pulse_underflow_callback, This);
-        pa_stream_set_started_callback(This->pulse_stream->stream, pulse_started_callback, This);
-    }
-    return S_OK;
 }
 
 HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, const WCHAR ***ids, GUID **keys,
@@ -936,32 +820,6 @@ static WAVEFORMATEX *clone_format(const WAVEFORMATEX *fmt)
     return ret;
 }
 
-static DWORD get_channel_mask(unsigned int channels)
-{
-    switch(channels) {
-    case 0:
-        return 0;
-    case 1:
-        return KSAUDIO_SPEAKER_MONO;
-    case 2:
-        return KSAUDIO_SPEAKER_STEREO;
-    case 3:
-        return KSAUDIO_SPEAKER_STEREO | SPEAKER_LOW_FREQUENCY;
-    case 4:
-        return KSAUDIO_SPEAKER_QUAD;    /* not _SURROUND */
-    case 5:
-        return KSAUDIO_SPEAKER_QUAD | SPEAKER_LOW_FREQUENCY;
-    case 6:
-        return KSAUDIO_SPEAKER_5POINT1; /* not 5POINT1_SURROUND */
-    case 7:
-        return KSAUDIO_SPEAKER_5POINT1 | SPEAKER_BACK_CENTER;
-    case 8:
-        return KSAUDIO_SPEAKER_7POINT1_SURROUND; /* Vista deprecates 7POINT1 */
-    }
-    FIXME("Unknown speaker configuration: %u\n", channels);
-    return 0;
-}
-
 static void session_init_vols(AudioSession *session, UINT channels)
 {
     if (session->channel_count < channels) {
@@ -1041,129 +899,21 @@ static HRESULT get_audio_session(const GUID *sessionguid,
     return S_OK;
 }
 
-static HRESULT pulse_spec_from_waveformat(ACImpl *This, const WAVEFORMATEX *fmt)
-{
-    pa_channel_map_init(&This->pulse_stream->map);
-    This->pulse_stream->ss.rate = fmt->nSamplesPerSec;
-    This->pulse_stream->ss.format = PA_SAMPLE_INVALID;
-
-    switch(fmt->wFormatTag) {
-    case WAVE_FORMAT_IEEE_FLOAT:
-        if (!fmt->nChannels || fmt->nChannels > 2 || fmt->wBitsPerSample != 32)
-            break;
-        This->pulse_stream->ss.format = PA_SAMPLE_FLOAT32LE;
-        pa_channel_map_init_auto(&This->pulse_stream->map, fmt->nChannels, PA_CHANNEL_MAP_ALSA);
-        break;
-    case WAVE_FORMAT_PCM:
-        if (!fmt->nChannels || fmt->nChannels > 2)
-            break;
-        if (fmt->wBitsPerSample == 8)
-            This->pulse_stream->ss.format = PA_SAMPLE_U8;
-        else if (fmt->wBitsPerSample == 16)
-            This->pulse_stream->ss.format = PA_SAMPLE_S16LE;
-        else
-            return AUDCLNT_E_UNSUPPORTED_FORMAT;
-        pa_channel_map_init_auto(&This->pulse_stream->map, fmt->nChannels, PA_CHANNEL_MAP_ALSA);
-        break;
-    case WAVE_FORMAT_EXTENSIBLE: {
-        WAVEFORMATEXTENSIBLE *wfe = (WAVEFORMATEXTENSIBLE*)fmt;
-        DWORD mask = wfe->dwChannelMask;
-        DWORD i = 0, j;
-        if (fmt->cbSize != (sizeof(*wfe) - sizeof(*fmt)) && fmt->cbSize != sizeof(*wfe))
-            break;
-        if (IsEqualGUID(&wfe->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT) &&
-            (!wfe->Samples.wValidBitsPerSample || wfe->Samples.wValidBitsPerSample == 32) &&
-            fmt->wBitsPerSample == 32)
-            This->pulse_stream->ss.format = PA_SAMPLE_FLOAT32LE;
-        else if (IsEqualGUID(&wfe->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)) {
-            DWORD valid = wfe->Samples.wValidBitsPerSample;
-            if (!valid)
-                valid = fmt->wBitsPerSample;
-            if (!valid || valid > fmt->wBitsPerSample)
-                break;
-            switch (fmt->wBitsPerSample) {
-                case 8:
-                    if (valid == 8)
-                        This->pulse_stream->ss.format = PA_SAMPLE_U8;
-                    break;
-                case 16:
-                    if (valid == 16)
-                        This->pulse_stream->ss.format = PA_SAMPLE_S16LE;
-                    break;
-                case 24:
-                    if (valid == 24)
-                        This->pulse_stream->ss.format = PA_SAMPLE_S24LE;
-                    break;
-                case 32:
-                    if (valid == 24)
-                        This->pulse_stream->ss.format = PA_SAMPLE_S24_32LE;
-                    else if (valid == 32)
-                        This->pulse_stream->ss.format = PA_SAMPLE_S32LE;
-                    break;
-                default:
-                    return AUDCLNT_E_UNSUPPORTED_FORMAT;
-            }
-        }
-        This->pulse_stream->map.channels = fmt->nChannels;
-        if (!mask || (mask & (SPEAKER_ALL|SPEAKER_RESERVED)))
-            mask = get_channel_mask(fmt->nChannels);
-        for (j = 0; j < ARRAY_SIZE(pulse_pos_from_wfx) && i < fmt->nChannels; ++j) {
-            if (mask & (1 << j))
-                This->pulse_stream->map.map[i++] = pulse_pos_from_wfx[j];
-        }
-
-        /* Special case for mono since pulse appears to map it differently */
-        if (mask == SPEAKER_FRONT_CENTER)
-            This->pulse_stream->map.map[0] = PA_CHANNEL_POSITION_MONO;
-
-        if (i < fmt->nChannels || (mask & SPEAKER_RESERVED)) {
-            This->pulse_stream->map.channels = 0;
-            ERR("Invalid channel mask: %i/%i and %x(%x)\n", i, fmt->nChannels, mask, wfe->dwChannelMask);
-            break;
-        }
-        break;
-        }
-    case WAVE_FORMAT_ALAW:
-    case WAVE_FORMAT_MULAW:
-        if (fmt->wBitsPerSample != 8) {
-            FIXME("Unsupported bpp %u for LAW\n", fmt->wBitsPerSample);
-            return AUDCLNT_E_UNSUPPORTED_FORMAT;
-        }
-        if (fmt->nChannels != 1 && fmt->nChannels != 2) {
-            FIXME("Unsupported channels %u for LAW\n", fmt->nChannels);
-            return AUDCLNT_E_UNSUPPORTED_FORMAT;
-        }
-        This->pulse_stream->ss.format = fmt->wFormatTag == WAVE_FORMAT_MULAW ? PA_SAMPLE_ULAW : PA_SAMPLE_ALAW;
-        pa_channel_map_init_auto(&This->pulse_stream->map, fmt->nChannels, PA_CHANNEL_MAP_ALSA);
-        break;
-    default:
-        WARN("Unhandled tag %x\n", fmt->wFormatTag);
-        return AUDCLNT_E_UNSUPPORTED_FORMAT;
-    }
-    This->channel_count = This->pulse_stream->ss.channels = This->pulse_stream->map.channels;
-    if (!pa_channel_map_valid(&This->pulse_stream->map) || This->pulse_stream->ss.format == PA_SAMPLE_INVALID) {
-        ERR("Invalid format! Channel spec valid: %i, format: %i\n", pa_channel_map_valid(&This->pulse_stream->map), This->pulse_stream->ss.format);
-        return AUDCLNT_E_UNSUPPORTED_FORMAT;
-    }
-    return S_OK;
-}
-
 static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         AUDCLNT_SHAREMODE mode, DWORD flags, REFERENCE_TIME duration,
         REFERENCE_TIME period, const WAVEFORMATEX *fmt,
         const GUID *sessionguid)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    pa_context *pulse_ctx;
     char *name;
     HRESULT hr = S_OK;
-    UINT32 bufsize_bytes;
 
     TRACE("(%p)->(%x, %x, %s, %s, %p, %s)\n", This, mode, flags,
           wine_dbgstr_longlong(duration), wine_dbgstr_longlong(period), fmt, debugstr_guid(sessionguid));
 
     if (!fmt)
         return E_POINTER;
+    dump_fmt(fmt);
 
     if (mode != AUDCLNT_SHAREMODE_SHARED && mode != AUDCLNT_SHAREMODE_EXCLUSIVE)
         return E_INVALIDARG;
@@ -1204,92 +954,19 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     }
 
     name = get_application_name();
-    hr = pulse->connect(name, &pulse_ctx);
+    hr = pulse->create_stream(name, This->dataflow, mode, flags, duration, period, fmt,
+                              &This->channel_count, &This->pulse_stream);
     free(name);
-    if (FAILED(hr)) {
-        pulse->unlock();
-        return hr;
-    }
-
-    if (!(This->pulse_stream = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This->pulse_stream))))
-        return E_OUTOFMEMORY;
-
-    This->pulse_stream->dataflow = This->dataflow;
-
-    hr = pulse_spec_from_waveformat(This, fmt);
-    TRACE("Obtaining format returns %08x\n", hr);
-    dump_fmt(fmt);
-
-    if (FAILED(hr))
-        goto exit;
-
-    period = pulse_config.modes[This->dataflow == eCapture].def_period;
-    if (duration < 3 * period)
-        duration = 3 * period;
-
-    This->pulse_stream->period_bytes = pa_frame_size(&This->pulse_stream->ss) * MulDiv(period, This->pulse_stream->ss.rate, 10000000);
-
-    This->pulse_stream->bufsize_frames = ceil((duration / 10000000.) * fmt->nSamplesPerSec);
-    bufsize_bytes = This->pulse_stream->bufsize_frames * pa_frame_size(&This->pulse_stream->ss);
-    This->pulse_stream->mmdev_period_usec = period / 10;
-
-    This->pulse_stream->share = mode;
-    This->pulse_stream->flags = flags;
-    hr = pulse_stream_connect(This, pulse_ctx, This->pulse_stream->period_bytes);
     if (SUCCEEDED(hr)) {
-        UINT32 unalign;
-        const pa_buffer_attr *attr = pa_stream_get_buffer_attr(This->pulse_stream->stream);
-        This->pulse_stream->attr = *attr;
-        /* Update frames according to new size */
-        dump_attr(attr);
-        if (This->dataflow == eRender) {
-            This->pulse_stream->real_bufsize_bytes = This->pulse_stream->bufsize_frames * 2 * pa_frame_size(&This->pulse_stream->ss);
-            This->pulse_stream->local_buffer = HeapAlloc(GetProcessHeap(), 0, This->pulse_stream->real_bufsize_bytes);
-            if(!This->pulse_stream->local_buffer)
-                hr = E_OUTOFMEMORY;
+        hr = get_audio_session(sessionguid, This->parent, This->channel_count, &This->session);
+        if (SUCCEEDED(hr)) {
+            list_add_tail(&This->session->clients, &This->entry);
         } else {
-            UINT32 i, capture_packets;
-
-            if ((unalign = bufsize_bytes % This->pulse_stream->period_bytes))
-                bufsize_bytes += This->pulse_stream->period_bytes - unalign;
-            This->pulse_stream->bufsize_frames = bufsize_bytes / pa_frame_size(&This->pulse_stream->ss);
-            This->pulse_stream->real_bufsize_bytes = bufsize_bytes;
-
-            capture_packets = This->pulse_stream->real_bufsize_bytes / This->pulse_stream->period_bytes;
-
-            This->pulse_stream->local_buffer = HeapAlloc(GetProcessHeap(), 0, This->pulse_stream->real_bufsize_bytes + capture_packets * sizeof(ACPacket));
-            if (!This->pulse_stream->local_buffer)
-                hr = E_OUTOFMEMORY;
-            else {
-                ACPacket *cur_packet = (ACPacket*)((char*)This->pulse_stream->local_buffer + This->pulse_stream->real_bufsize_bytes);
-                BYTE *data = This->pulse_stream->local_buffer;
-                silence_buffer(This->pulse_stream->ss.format, This->pulse_stream->local_buffer, This->pulse_stream->real_bufsize_bytes);
-                list_init(&This->pulse_stream->packet_free_head);
-                list_init(&This->pulse_stream->packet_filled_head);
-                for (i = 0; i < capture_packets; ++i, ++cur_packet) {
-                    list_add_tail(&This->pulse_stream->packet_free_head, &cur_packet->entry);
-                    cur_packet->data = data;
-                    data += This->pulse_stream->period_bytes;
-                }
-            }
+            pulse->release_stream(This->pulse_stream, NULL);
+            This->pulse_stream = NULL;
         }
     }
-    if (SUCCEEDED(hr))
-        hr = get_audio_session(sessionguid, This->parent, fmt->nChannels, &This->session);
-    if (SUCCEEDED(hr))
-        list_add_tail(&This->session->clients, &This->entry);
 
-exit:
-    if (FAILED(hr)) {
-        HeapFree(GetProcessHeap(), 0, This->pulse_stream->local_buffer);
-        This->pulse_stream->local_buffer = NULL;
-        if (This->pulse_stream->stream) {
-            pa_stream_disconnect(This->pulse_stream->stream);
-            pa_stream_unref(This->pulse_stream->stream);
-        }
-        HeapFree(GetProcessHeap(), 0, This->pulse_stream);
-        This->pulse_stream = NULL;
-    }
     pulse->unlock();
     return hr;
 }

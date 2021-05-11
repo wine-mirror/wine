@@ -29,6 +29,14 @@ struct pulse_config
     unsigned int speakers_mask;
 };
 
+typedef struct _ACPacket
+{
+    struct list entry;
+    UINT64 qpcpos;
+    BYTE *data;
+    UINT32 discont;
+} ACPacket;
+
 struct pulse_stream
 {
     EDataFlow dataflow;
@@ -64,7 +72,10 @@ struct unix_funcs
     int (WINAPI *cond_wait)(void);
     void (WINAPI *broadcast)(void);
     void (WINAPI *main_loop)(void);
-    HRESULT (WINAPI *connect)(const char *name, pa_context **ret);
+    HRESULT (WINAPI *create_stream)(const char *name, EDataFlow dataflow, AUDCLNT_SHAREMODE mode,
+                                    DWORD flags, REFERENCE_TIME duration, REFERENCE_TIME period,
+                                    const WAVEFORMATEX *fmt, UINT32 *channel_count,
+                                    struct pulse_stream **ret);
     void (WINAPI *release_stream)(struct pulse_stream *stream, HANDLE timer);
     HRESULT (WINAPI *test_connect)(const char *name, struct pulse_config *config);
 };
