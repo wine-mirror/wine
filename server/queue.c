@@ -1662,6 +1662,7 @@ struct rawinput_message
     struct desktop          *desktop;
     struct hw_msg_source     source;
     unsigned int             time;
+    unsigned int             message;
     struct hardware_msg_data data;
 };
 
@@ -1697,7 +1698,7 @@ static int queue_rawinput_message( struct process* process, void *arg )
         goto done;
 
     msg->win    = device->target;
-    msg->msg    = WM_INPUT;
+    msg->msg    = raw_msg->message;
     msg->wparam = wparam;
     msg->lparam = 0;
     memcpy( msg->data, &raw_msg->data, sizeof(raw_msg->data) );
@@ -1773,6 +1774,7 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
         raw_msg.desktop    = desktop;
         raw_msg.source     = source;
         raw_msg.time       = time;
+        raw_msg.message    = WM_INPUT;
 
         msg_data = &raw_msg.data;
         msg_data->info                = input->mouse.info;
@@ -1907,6 +1909,7 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
         raw_msg.desktop    = desktop;
         raw_msg.source     = source;
         raw_msg.time       = time;
+        raw_msg.message    = WM_INPUT;
 
         msg_data = &raw_msg.data;
         msg_data->info                 = input->kbd.info;
