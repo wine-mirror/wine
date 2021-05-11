@@ -1190,6 +1190,12 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
 
     *actual_glyph_count = 0;
 
+    if (!context.u.subst.glyphs || !context.u.subst.glyph_props || !context.glyph_infos)
+    {
+        hr = E_OUTOFMEMORY;
+        goto failed;
+    }
+
     scriptprops = &dwritescripts_properties[context.script];
     hr = shape_get_glyphs(&context, scriptprops->scripttags);
     if (SUCCEEDED(hr))
@@ -1199,6 +1205,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphs(IDWriteTextAnalyzer2 *iface,
         memcpy(glyph_props, context.u.subst.glyph_props, context.glyph_count * sizeof(*glyph_props));
     }
 
+failed:
     heap_free(context.u.subst.glyph_props);
     heap_free(context.u.subst.glyphs);
     heap_free(context.glyph_infos);
@@ -1261,12 +1268,19 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2
     context.user_features.features = features;
     context.user_features.range_lengths = feature_range_lengths;
     context.user_features.range_count = feature_ranges;
-    context.glyph_infos = heap_alloc_zero(sizeof(*context.glyph_infos) * glyph_count);
+    context.glyph_infos = heap_calloc(glyph_count, sizeof(*context.glyph_infos));
     context.table = &context.cache->gpos;
+
+    if (!context.glyph_infos)
+    {
+        hr = E_OUTOFMEMORY;
+        goto failed;
+    }
 
     scriptprops = &dwritescripts_properties[context.script];
     hr = shape_get_positions(&context, scriptprops->scripttags);
 
+failed:
     heap_free(context.glyph_infos);
 
     return hr;
@@ -1331,12 +1345,19 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
     context.user_features.features = features;
     context.user_features.range_lengths = feature_range_lengths;
     context.user_features.range_count = feature_ranges;
-    context.glyph_infos = heap_alloc_zero(sizeof(*context.glyph_infos) * glyph_count);
+    context.glyph_infos = heap_calloc(glyph_count, sizeof(*context.glyph_infos));
     context.table = &context.cache->gpos;
+
+    if (!context.glyph_infos)
+    {
+        hr = E_OUTOFMEMORY;
+        goto failed;
+    }
 
     scriptprops = &dwritescripts_properties[context.script];
     hr = shape_get_positions(&context, scriptprops->scripttags);
 
+failed:
     heap_free(context.glyph_infos);
 
     return hr;
@@ -1805,7 +1826,8 @@ static HRESULT WINAPI dwritetextanalyzer2_CheckTypographicFeature(IDWriteTextAna
 
     context.cache = fontface_get_shaping_cache(font_obj);
     context.language_tag = get_opentype_language(locale);
-    context.glyph_infos = heap_calloc(glyph_count, sizeof(*context.glyph_infos));
+    if (!(context.glyph_infos = heap_calloc(glyph_count, sizeof(*context.glyph_infos))))
+        return E_OUTOFMEMORY;
 
     props = &dwritescripts_properties[sa.script];
 
@@ -2355,7 +2377,7 @@ static HRESULT WINAPI fontfallbackbuilder_AddMapping(IDWriteFontFallbackBuilder 
     mapping->ranges = heap_calloc(ranges_count, sizeof(*mapping->ranges));
     memcpy(mapping->ranges, ranges, sizeof(*mapping->ranges) * ranges_count);
     mapping->ranges_count = ranges_count;
-    mapping->families = heap_alloc_zero(sizeof(*mapping->families) * families_count);
+    mapping->families = heap_calloc(families_count, sizeof(*mapping->families));
     mapping->families_count = families_count;
     for (i = 0; i < families_count; i++)
         mapping->families[i] = heap_strdupW(target_families[i]);
