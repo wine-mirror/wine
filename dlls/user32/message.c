@@ -2289,11 +2289,14 @@ static void accept_hardware_message( UINT hw_id )
 static BOOL process_rawinput_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data )
 {
     struct rawinput_thread_data *thread_data = rawinput_thread_data();
-    if (!rawinput_from_hardware_message( thread_data->buffer, msg_data ))
-        return FALSE;
 
-    thread_data->hw_id = hw_id;
-    msg->lParam = (LPARAM)hw_id;
+    if (msg->message == WM_INPUT)
+    {
+        if (!rawinput_from_hardware_message( thread_data->buffer, msg_data )) return FALSE;
+        thread_data->hw_id = hw_id;
+        msg->lParam = (LPARAM)hw_id;
+    }
+
     msg->pt = point_phys_to_win_dpi( msg->hwnd, msg->pt );
     return TRUE;
 }
@@ -2613,7 +2616,7 @@ static BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardwar
     /* hardware messages are always in physical coords */
     context = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
 
-    if (msg->message == WM_INPUT)
+    if (msg->message == WM_INPUT || msg->message == WM_INPUT_DEVICE_CHANGE)
         ret = process_rawinput_message( msg, hw_id, msg_data );
     else if (is_keyboard_message( msg->message ))
         ret = process_keyboard_message( msg, hw_id, hwnd_filter, first, last, remove );
