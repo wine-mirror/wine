@@ -1430,7 +1430,7 @@ BOOL WINAPI GetXStateFeaturesMask( CONTEXT *context, DWORD64 *feature_mask )
  */
 void * WINAPI LocateXStateFeature( CONTEXT *context, DWORD feature_id, DWORD *length )
 {
-    if (!(context->ContextFlags & CONTEXT_X86))
+    if (!(context->ContextFlags & CONTEXT_i386))
         return NULL;
 
     if (feature_id >= 2)
@@ -1456,7 +1456,7 @@ void * WINAPI LocateXStateFeature( CONTEXT *context, DWORD feature_id, DWORD *le
  */
 BOOL WINAPI SetXStateFeaturesMask( CONTEXT *context, DWORD64 feature_mask )
 {
-    if (!(context->ContextFlags & CONTEXT_X86))
+    if (!(context->ContextFlags & CONTEXT_i386))
         return FALSE;
 
     if (feature_mask & 0x3)
@@ -1474,7 +1474,7 @@ BOOL WINAPI SetXStateFeaturesMask( CONTEXT *context, DWORD64 feature_mask )
  */
 BOOL WINAPI GetXStateFeaturesMask( CONTEXT *context, DWORD64 *feature_mask )
 {
-    if (!(context->ContextFlags & CONTEXT_X86))
+    if (!(context->ContextFlags & CONTEXT_i386))
         return FALSE;
 
     *feature_mask = (context->ContextFlags & CONTEXT_EXTENDED_REGISTERS) == CONTEXT_EXTENDED_REGISTERS
