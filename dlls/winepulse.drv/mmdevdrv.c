@@ -868,24 +868,9 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
     TRACE("(%p) Refcount now %u\n", This, ref);
     if (!ref) {
         if (This->pulse_stream) {
-            if(This->timer) {
-                This->pulse_stream->please_quit = TRUE;
-                WaitForSingleObject(This->timer, INFINITE);
-                CloseHandle(This->timer);
-            }
-
-            pulse->lock();
-            if (PA_STREAM_IS_GOOD(pa_stream_get_state(This->pulse_stream->stream))) {
-                pa_stream_disconnect(This->pulse_stream->stream);
-                while (PA_STREAM_IS_GOOD(pa_stream_get_state(This->pulse_stream->stream)))
-                    pulse->cond_wait();
-            }
-            pa_stream_unref(This->pulse_stream->stream);
-            HeapFree(GetProcessHeap(), 0, This->pulse_stream->tmp_buffer);
-            HeapFree(GetProcessHeap(), 0, This->pulse_stream->peek_buffer);
-            HeapFree(GetProcessHeap(), 0, This->pulse_stream->local_buffer);
-            HeapFree(GetProcessHeap(), 0, This->pulse_stream);
+            pulse->release_stream(This->pulse_stream, This->timer);
             This->pulse_stream = NULL;
+            pulse->lock();
             list_remove(&This->entry);
             pulse->unlock();
         }

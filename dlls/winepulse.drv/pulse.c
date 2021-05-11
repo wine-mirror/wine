@@ -477,6 +477,29 @@ fail:
     return E_FAIL;
 }
 
+static void WINAPI pulse_release_stream(struct pulse_stream *stream, HANDLE timer)
+{
+    if(timer) {
+        stream->please_quit = TRUE;
+        NtWaitForSingleObject(timer, FALSE, NULL);
+        NtClose(timer);
+    }
+
+    pulse_lock();
+    if (PA_STREAM_IS_GOOD(pa_stream_get_state(stream->stream))) {
+        pa_stream_disconnect(stream->stream);
+        while (PA_STREAM_IS_GOOD(pa_stream_get_state(stream->stream)))
+            pulse_cond_wait();
+    }
+    pa_stream_unref(stream->stream);
+    pulse_unlock();
+
+    RtlFreeHeap(GetProcessHeap(), 0, stream->tmp_buffer);
+    RtlFreeHeap(GetProcessHeap(), 0, stream->peek_buffer);
+    RtlFreeHeap(GetProcessHeap(), 0, stream->local_buffer);
+    RtlFreeHeap(GetProcessHeap(), 0, stream);
+}
+
 static const struct unix_funcs unix_funcs =
 {
     pulse_lock,
@@ -485,6 +508,7 @@ static const struct unix_funcs unix_funcs =
     pulse_broadcast,
     pulse_main_loop,
     pulse_connect,
+    pulse_release_stream,
     pulse_test_connect,
 };
 

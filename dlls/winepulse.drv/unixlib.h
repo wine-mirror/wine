@@ -65,5 +65,6 @@ struct unix_funcs
     void (WINAPI *broadcast)(void);
     void (WINAPI *main_loop)(void);
     HRESULT (WINAPI *connect)(const char *name, pa_context **ret);
+    void (WINAPI *release_stream)(struct pulse_stream *stream, HANDLE timer);
     HRESULT (WINAPI *test_connect)(const char *name, struct pulse_config *config);
 };
