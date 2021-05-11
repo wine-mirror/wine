@@ -1672,8 +1672,8 @@ static int queue_rawinput_message( struct process* process, void *arg )
     const struct rawinput_message* raw_msg = arg;
     const struct rawinput_device_entry *entry;
     const struct rawinput_device *device = NULL;
-    struct desktop *target_desktop = NULL;
-    struct thread *target_thread = NULL;
+    struct desktop *target_desktop = NULL, *desktop = NULL;
+    struct thread *target_thread = NULL, *foreground = NULL;
     struct message *msg;
     int wparam = RIM_INPUT;
 
@@ -1687,12 +1687,18 @@ static int queue_rawinput_message( struct process* process, void *arg )
 
     if (raw_msg->message == WM_INPUT_DEVICE_CHANGE && !(device->flags & RIDEV_DEVNOTIFY)) return 0;
 
-    if (process != raw_msg->foreground->process)
+    if (raw_msg->desktop) desktop = (struct desktop *)grab_object( raw_msg->desktop );
+    else if (!(desktop = get_desktop_obj( process, process->desktop, 0 ))) goto done;
+
+    if (raw_msg->foreground) foreground = (struct thread *)grab_object( raw_msg->foreground );
+    else if (!(foreground = get_foreground_thread( desktop, 0 ))) goto done;
+
+    if (process != foreground->process)
     {
         if (!(device->flags & RIDEV_INPUTSINK)) goto done;
         if (!(target_thread = get_window_thread( device->target ))) goto done;
         if (!(target_desktop = get_thread_desktop( target_thread, 0 ))) goto done;
-        if (target_desktop != raw_msg->desktop) goto done;
+        if (target_desktop != desktop) goto done;
         wparam = RIM_INPUTSINK;
     }
 
@@ -1705,11 +1711,13 @@ static int queue_rawinput_message( struct process* process, void *arg )
     msg->lparam = 0;
     memcpy( msg->data, &raw_msg->data, sizeof(raw_msg->data) );
 
-    queue_hardware_message( raw_msg->desktop, msg, 1 );
+    queue_hardware_message( desktop, msg, 1 );
 
 done:
     if (target_thread) release_object( target_thread );
     if (target_desktop) release_object( target_desktop );
+    if (foreground) release_object( foreground );
+    if (desktop) release_object( desktop );
     return 0;
 }
 
