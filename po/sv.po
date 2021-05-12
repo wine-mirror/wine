@@ -14808,8 +14808,10 @@ msgid "reg: Unsupported registry data type [%1]\n"
 msgstr "reg: Ej stödd typ [%1] i registret\n"
 
 #: programs/reg/reg.rc:122
-msgid "reg: The option [/d] must be followed by a valid integer\n"
-msgstr "reg: Flaggan [/d] måste följas av ett giltigt heltal\n"
+#, fuzzy
+#| msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
+msgid "reg: The option [/d] must be followed by a valid numeric value\n"
+msgstr "reg: Flaggan [/d] måste följas av ett giltigt hexadecimalt värde\n"
 
 #: programs/reg/reg.rc:123
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"

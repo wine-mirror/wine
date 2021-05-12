@@ -14375,8 +14375,10 @@ msgid "reg: Unsupported registry data type [%1]\n"
 msgstr "reg : 지원되지 않는 레지스트리 데이터 유형 [%1]\n"
 
 #: programs/reg/reg.rc:122
-msgid "reg: The option [/d] must be followed by a valid integer\n"
-msgstr "reg : 옵션 [/d] 다음에 유효한 정수가 있어야 합니다\n"
+#, fuzzy
+#| msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
+msgid "reg: The option [/d] must be followed by a valid numeric value\n"
+msgstr "reg : 옵션 [/d] 다음에 유효한 16 진수 값이 있어야 합니다\n"
 
 #: programs/reg/reg.rc:123
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"

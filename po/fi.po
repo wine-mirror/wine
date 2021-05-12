@@ -14484,8 +14484,10 @@ msgid "reg: Unsupported registry data type [%1]\n"
 msgstr "reg: Rekisterin tietotyypille [%1] ei ole tukea\n"
 
 #: programs/reg/reg.rc:122
-msgid "reg: The option [/d] must be followed by a valid integer\n"
-msgstr "reg: Valitsinta [/d] täytyy seurata kelpo kokonaisluku\n"
+#, fuzzy
+#| msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
+msgid "reg: The option [/d] must be followed by a valid numeric value\n"
+msgstr "reg: Valitsinta [/d] täytyy seurata kelpo heksadesimaaliarvo\n"
 
 #: programs/reg/reg.rc:123
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"

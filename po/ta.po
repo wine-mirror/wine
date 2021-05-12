@@ -13773,7 +13773,7 @@ msgid "reg: Unsupported registry data type [%1]\n"
 msgstr ""
 
 #: programs/reg/reg.rc:122
-msgid "reg: The option [/d] must be followed by a valid integer\n"
+msgid "reg: The option [/d] must be followed by a valid numeric value\n"
 msgstr ""
 
 #: programs/reg/reg.rc:123

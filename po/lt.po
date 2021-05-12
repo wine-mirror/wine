@@ -14523,8 +14523,10 @@ msgid "reg: Unsupported registry data type [%1]\n"
 msgstr "reg: Nepalaikomas registro duomenų tipas [%1]\n"
 
 #: programs/reg/reg.rc:122
-msgid "reg: The option [/d] must be followed by a valid integer\n"
-msgstr "reg: Už parametro [/d] privalo būti tinkamas sveikasis skaičius\n"
+#, fuzzy
+#| msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
+msgid "reg: The option [/d] must be followed by a valid numeric value\n"
+msgstr "reg: Už parametro [/d] privalo būti tinkama šešioliktainė reikšmė\n"
 
 #: programs/reg/reg.rc:123
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
