@@ -98,7 +98,7 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
 {
     SP_DEVINFO_DATA device_data = {sizeof(device_data)};
     SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail;
-    struct device *device;
+    struct device *device = NULL;
     UINT32 handle;
     HANDLE file;
     DWORD i, size, type;
@@ -117,15 +117,6 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
         return NULL;
     }
 
-    for (i = 0; i < rawinput_devices_count; ++i)
-    {
-        if (rawinput_devices[i].handle == UlongToHandle(handle))
-        {
-            TRACE("Updating device %x / %s\n", handle, debugstr_w(rawinput_devices[i].detail->DevicePath));
-            return rawinput_devices + i;
-        }
-    }
-
     if (!(detail = malloc(size)))
     {
         ERR("Failed to allocate memory.\n");
@@ -133,8 +124,6 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
     }
     detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
     SetupDiGetDeviceInterfaceDetailW(set, iface, detail, size, NULL, NULL);
-
-    TRACE("Found device %x / %s.\n", handle, debugstr_w(detail->DevicePath));
 
     file = CreateFileW(detail->DevicePath, GENERIC_READ | GENERIC_WRITE,
             FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
@@ -145,8 +134,24 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
         return NULL;
     }
 
-    if (!array_reserve((void **)&rawinput_devices, &rawinput_devices_max,
-            rawinput_devices_count + 1, sizeof(*rawinput_devices)))
+    for (i = 0; i < rawinput_devices_count && !device; ++i)
+        if (rawinput_devices[i].handle == UlongToHandle(handle))
+            device = rawinput_devices + i;
+
+    if (device)
+    {
+        TRACE("Updating device %x / %s.\n", handle, debugstr_w(detail->DevicePath));
+        HidD_FreePreparsedData(device->data);
+        CloseHandle(device->file);
+        free(device->detail);
+    }
+    else if (array_reserve((void **)&rawinput_devices, &rawinput_devices_max,
+                           rawinput_devices_count + 1, sizeof(*rawinput_devices)))
+    {
+        device = &rawinput_devices[rawinput_devices_count++];
+        TRACE("Adding device %x / %s.\n", handle, debugstr_w(detail->DevicePath));
+    }
+    else
     {
         ERR("Failed to allocate memory.\n");
         CloseHandle(file);
@@ -154,7 +159,6 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
         return NULL;
     }
 
-    device = &rawinput_devices[rawinput_devices_count++];
     device->detail = detail;
     device->file = file;
     device->handle = ULongToHandle(handle);
@@ -226,8 +230,6 @@ static void find_devices(void)
 
         device->info.dwType = RIM_TYPEMOUSE;
         device->info.u.mouse = mouse_info;
-        HidD_FreePreparsedData(device->data);
-        device->data = NULL;
     }
 
     SetupDiDestroyDeviceInfoList(set);
@@ -243,8 +245,6 @@ static void find_devices(void)
 
         device->info.dwType = RIM_TYPEKEYBOARD;
         device->info.u.keyboard = keyboard_info;
-        HidD_FreePreparsedData(device->data);
-        device->data = NULL;
     }
 
     SetupDiDestroyDeviceInfoList(set);
