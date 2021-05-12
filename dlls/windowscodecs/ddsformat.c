@@ -168,6 +168,7 @@ typedef struct DdsEncoder {
     UINT frame_count;
     BOOL uncommitted_frame;
     BOOL committed;
+    dds_info info;
 } DdsEncoder;
 
 typedef struct DdsFrameEncode {
@@ -1740,8 +1741,39 @@ static HRESULT WINAPI DdsEncoder_Dds_SetParameters(IWICDdsEncoder *iface,
 static HRESULT WINAPI DdsEncoder_Dds_GetParameters(IWICDdsEncoder *iface,
                                                    WICDdsParameters *parameters)
 {
-    FIXME("(%p,%p): stub.\n", iface, parameters);
-    return E_NOTIMPL;
+    DdsEncoder *This = impl_from_IWICDdsEncoder(iface);
+    HRESULT hr;
+
+    TRACE("(%p,%p)\n", iface, parameters);
+
+    if (!parameters) return E_INVALIDARG;
+
+    EnterCriticalSection(&This->lock);
+
+    if (!This->stream)
+    {
+        hr = WINCODEC_ERR_WRONGSTATE;
+        goto end;
+    }
+
+    parameters->Width      = This->info.width;
+    parameters->Height     = This->info.height;
+    parameters->Depth      = This->info.depth;
+    parameters->MipLevels  = This->info.mip_levels;
+    parameters->ArraySize  = This->info.array_size;
+    parameters->DxgiFormat = This->info.format;
+    parameters->Dimension  = This->info.dimension;
+    parameters->AlphaMode  = This->info.alpha_mode;
+
+    TRACE("(%p,%p) -> (%dx%d depth=%u mipLevels=%u arraySize=%u dxgiFormat=%#x dimension=%#x alphaMode=%#x)\n",
+          iface, parameters, parameters->Width, parameters->Height, parameters->Depth, parameters->MipLevels,
+          parameters->ArraySize, parameters->DxgiFormat, parameters->Dimension, parameters->AlphaMode);
+
+    hr = S_OK;
+
+end:
+    LeaveCriticalSection(&This->lock);
+    return hr;
 }
 
 static HRESULT WINAPI DdsEncoder_Dds_CreateNewFrame(IWICDdsEncoder *iface,
@@ -1834,6 +1866,20 @@ static HRESULT WINAPI DdsEncoder_Initialize(IWICBitmapEncoder *iface,
 
     This->stream = stream;
     IStream_AddRef(stream);
+
+    This->info.width = 1;
+    This->info.height = 1;
+    This->info.depth = 1;
+    This->info.mip_levels = 1;
+    This->info.array_size = 1;
+    This->info.frame_count = 1;
+    This->info.data_offset = 0;
+    This->info.bytes_per_block = get_bytes_per_block_from_format(DXGI_FORMAT_BC3_UNORM);
+    This->info.format = DXGI_FORMAT_BC3_UNORM;
+    This->info.dimension = WICDdsTexture2D;
+    This->info.alpha_mode = WICDdsAlphaModeUnknown;
+    This->info.pixel_format = &GUID_WICPixelFormatUndefined;
+    This->info.pixel_format_bpp = 0;
 
     hr = S_OK;
 

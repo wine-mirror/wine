@@ -1317,11 +1317,9 @@ static void test_dds_encoder_params(IWICBitmapEncoder *encoder, IWICDdsEncoder *
     HRESULT hr;
 
     hr = IWICDdsEncoder_GetParameters(dds_encoder, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "GetParameters got unexpected hr %#x\n", hr);
 
     hr = IWICDdsEncoder_GetParameters(dds_encoder, &params);
-    todo_wine
     ok(hr == S_OK, "GetParameters failed, hr %#x\n", hr);
     if (hr != S_OK) return;
 
