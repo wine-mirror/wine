@@ -487,6 +487,30 @@ static UINT get_bytes_per_block_from_format(DXGI_FORMAT format)
     }
 }
 
+static UINT get_frame_count(UINT depth, UINT mip_levels, UINT array_size, WICDdsDimension dimension)
+{
+    UINT frame_count, i;
+
+    if (depth == 1)
+    {
+        frame_count = mip_levels;
+    }
+    else
+    {
+        frame_count = 0;
+        for (i = 0; i < mip_levels; i++)
+        {
+            frame_count += depth;
+            if (depth > 1) depth /= 2;
+        }
+    }
+
+    frame_count *= array_size;
+    if (dimension == WICDdsTextureCube) frame_count *= 6;
+
+    return frame_count;
+}
+
 static const GUID *dxgi_format_to_wic_format(DXGI_FORMAT dxgi_format)
 {
     UINT i;
@@ -512,8 +536,6 @@ static BOOL is_compressed(DXGI_FORMAT format)
 
 static void get_dds_info(dds_info* info, DDS_HEADER *header, DDS_HEADER_DXT10 *header_dxt10)
 {
-    int i;
-    UINT depth;
     struct dds_format *format_info;
 
     info->width = header->width;
@@ -554,21 +576,7 @@ static void get_dds_info(dds_info* info, DDS_HEADER *header, DDS_HEADER_DXT10 *h
         info->bytes_per_block = get_bytes_per_block_from_format(info->format);
     }
 
-    /* get frame count */
-
-    if (info->depth == 1) {
-        info->frame_count = info->array_size * info->mip_levels;
-    } else {
-        info->frame_count = 0;
-        depth = info->depth;
-        for (i = 0; i < info->mip_levels; i++)
-        {
-            info->frame_count += depth;
-            if (depth > 1) depth /= 2;
-        }
-        info->frame_count *= info->array_size;
-    }
-    if (info->dimension == WICDdsTextureCube) info->frame_count *= 6;
+    info->frame_count = get_frame_count(info->depth, info->mip_levels, info->array_size, info->dimension);
 }
 
 static void decode_block(const BYTE *block_data, UINT block_count, DXGI_FORMAT format,
@@ -1734,8 +1742,39 @@ static ULONG WINAPI DdsEncoder_Dds_Release(IWICDdsEncoder *iface)
 static HRESULT WINAPI DdsEncoder_Dds_SetParameters(IWICDdsEncoder *iface,
                                                    WICDdsParameters *parameters)
 {
-    FIXME("(%p,%p): stub.\n", iface, parameters);
-    return E_NOTIMPL;
+    DdsEncoder *This = impl_from_IWICDdsEncoder(iface);
+    HRESULT hr;
+
+    TRACE("(%p,%p)\n", iface, parameters);
+
+    if (!parameters) return E_INVALIDARG;
+
+    EnterCriticalSection(&This->lock);
+
+    if (!This->stream)
+    {
+        hr = WINCODEC_ERR_WRONGSTATE;
+        goto end;
+    }
+
+    This->info.width      = parameters->Width;
+    This->info.height     = parameters->Height;
+    This->info.depth      = parameters->Depth;
+    This->info.mip_levels = parameters->MipLevels;
+    This->info.array_size = parameters->ArraySize;
+    This->info.format     = parameters->DxgiFormat;
+    This->info.dimension  = parameters->Dimension;
+    This->info.alpha_mode = parameters->AlphaMode;
+
+    This->info.bytes_per_block = get_bytes_per_block_from_format(This->info.format);
+    This->info.frame_count = get_frame_count(This->info.depth, This->info.mip_levels,
+                                             This->info.array_size, This->info.dimension);
+
+    hr = S_OK;
+
+end:
+    LeaveCriticalSection(&This->lock);
+    return hr;
 }
 
 static HRESULT WINAPI DdsEncoder_Dds_GetParameters(IWICDdsEncoder *iface,

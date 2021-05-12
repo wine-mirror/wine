@@ -1334,11 +1334,9 @@ static void test_dds_encoder_params(IWICBitmapEncoder *encoder, IWICDdsEncoder *
     ok(params.AlphaMode  == WICDdsAlphaModeUnknown, "Got unexpected AlphaMode %#x\n",  params.AlphaMode);
 
     hr = IWICDdsEncoder_SetParameters(dds_encoder, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "SetParameters got unexpected hr %#x\n", hr);
 
     hr = IWICDdsEncoder_SetParameters(dds_encoder, &params_set);
-    todo_wine
     ok(hr == S_OK, "SetParameters failed, hr %#x\n", hr);
     if (hr != S_OK) return;
 
