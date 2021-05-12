@@ -112,8 +112,8 @@ struct sock
     struct fd          *fd;          /* socket file descriptor */
     unsigned int        state;       /* status bits */
     unsigned int        mask;        /* event mask */
+    unsigned int        pending_events; /* pending FD_* events which have not yet been reported to the application */
     unsigned int        hmask;       /* held (blocked) events */
-    unsigned int        pmask;       /* pending events */
     unsigned int        flags;       /* socket flags */
     int                 polling;     /* is socket being polled? */
     unsigned short      proto;       /* socket protocol */
@@ -386,7 +386,7 @@ static int sock_reselect( struct sock *sock )
 /* wake anybody waiting on the socket event or send the associated message */
 static void sock_wake_up( struct sock *sock )
 {
-    unsigned int events = sock->pmask & sock->mask;
+    unsigned int events = sock->pending_events & sock->mask;
     int i;
 
     if ( !events ) return;
@@ -402,13 +402,13 @@ static void sock_wake_up( struct sock *sock )
         for (i = 0; i < FD_MAX_EVENTS; i++)
         {
             int event = event_bitorder[i];
-            if (sock->pmask & (1 << event))
+            if (sock->pending_events & (1 << event))
             {
                 lparam_t lparam = (1 << event) | (sock->errors[event] << 16);
                 post_message( sock->window, sock->message, sock->wparam, lparam );
             }
         }
-        sock->pmask = 0;
+        sock->pending_events = 0;
         sock_reselect( sock );
     }
 }
@@ -616,7 +616,7 @@ static void post_socket_event( struct sock *sock, unsigned int event_bit, unsign
 {
     unsigned int event = (1 << event_bit);
 
-    sock->pmask |= event;
+    sock->pending_events |= event;
     sock->hmask |= event;
     sock->errors[event_bit] = error;
 }
@@ -745,7 +745,7 @@ static void sock_dump( struct object *obj, int verbose )
     assert( obj->ops == &sock_ops );
     fprintf( stderr, "Socket fd=%p, state=%x, mask=%x, pending=%x, held=%x\n",
             sock->fd, sock->state,
-            sock->mask, sock->pmask, sock->hmask );
+            sock->mask, sock->pending_events, sock->hmask );
 }
 
 static int sock_get_poll_events( struct fd *fd )
@@ -893,7 +893,7 @@ static struct sock *create_socket(void)
     sock->state   = 0;
     sock->mask    = 0;
     sock->hmask   = 0;
-    sock->pmask   = 0;
+    sock->pending_events = 0;
     sock->polling = 0;
     sock->flags   = 0;
     sock->proto   = 0;
@@ -1143,7 +1143,7 @@ static struct sock *accept_socket( struct sock *sock )
         }
     }
     clear_error();
-    sock->pmask &= ~FD_ACCEPT;
+    sock->pending_events &= ~FD_ACCEPT;
     sock->hmask &= ~FD_ACCEPT;
     sock_reselect( sock );
     return acceptsock;
@@ -1180,7 +1180,7 @@ static int accept_into_socket( struct sock *sock, struct sock *acceptsock )
 
     acceptsock->state  |= FD_WINE_CONNECTED|FD_READ|FD_WRITE;
     acceptsock->hmask   = 0;
-    acceptsock->pmask   = 0;
+    acceptsock->pending_events = 0;
     acceptsock->polling = 0;
     acceptsock->proto   = sock->proto;
     acceptsock->type    = sock->type;
@@ -1193,7 +1193,7 @@ static int accept_into_socket( struct sock *sock, struct sock *acceptsock )
     acceptsock->fd = newfd;
 
     clear_error();
-    sock->pmask &= ~FD_ACCEPT;
+    sock->pending_events &= ~FD_ACCEPT;
     sock->hmask &= ~FD_ACCEPT;
     sock_reselect( sock );
 
@@ -1801,7 +1801,7 @@ DECL_HANDLER(get_socket_event)
                                                 FILE_READ_ATTRIBUTES, &sock_ops ))) return;
     if (get_unix_fd( sock->fd ) == -1) return;
     reply->mask  = sock->mask;
-    reply->pmask = sock->pmask;
+    reply->pmask = sock->pending_events;
     reply->state = sock->state;
     set_reply_data( sock->errors, min( get_reply_max_size(), sizeof(sock->errors) ));
 
@@ -1817,7 +1817,7 @@ DECL_HANDLER(get_socket_event)
                 release_object( cevent );
             }
         }
-        sock->pmask = 0;
+        sock->pending_events = 0;
         sock_reselect( sock );
     }
     release_object( &sock->obj );
@@ -1835,7 +1835,7 @@ DECL_HANDLER(enable_socket_event)
     if (get_unix_fd( sock->fd ) == -1) return;
 
     /* for event-based notification, windows erases stale events */
-    sock->pmask &= ~req->mask;
+    sock->pending_events &= ~req->mask;
 
     sock->hmask &= ~req->mask;
     sock->state |= req->sstate;
