@@ -1815,7 +1815,7 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
 
     for (i = 0; i < WINED3D_MAX_COMBINED_SAMPLERS; ++i)
     {
-        wined3d_cs_emit_set_texture(device->cs, i, state->textures[i]);
+        wined3d_device_context_emit_set_texture(context, i, state->textures[i]);
         for (j = 0; j < WINED3D_HIGHEST_SAMPLER_STATE + 1; ++j)
         {
             wined3d_cs_emit_set_sampler_state(device->cs, i, j, state->sampler_states[i][j]);
@@ -3960,7 +3960,7 @@ static void wined3d_device_set_texture(struct wined3d_device *device,
 
     if (texture)
         wined3d_texture_incref(texture);
-    wined3d_cs_emit_set_texture(device->cs, stage, texture);
+    wined3d_device_context_emit_set_texture(&device->cs->c, stage, texture);
     if (prev)
         wined3d_texture_decref(prev);
 
