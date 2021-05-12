@@ -104,6 +104,43 @@ static NTSTATUS copy_packet_into_buffer(HID_XFER_PACKET *packet, BYTE* buffer, U
         return STATUS_BUFFER_OVERFLOW;
 }
 
+static void hid_device_send_input(DEVICE_OBJECT *device, HID_XFER_PACKET *packet)
+{
+    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    RAWINPUT *rawinput;
+    UCHAR *report, id;
+    ULONG data_size;
+    INPUT input;
+
+    data_size = offsetof(RAWINPUT, data.hid.bRawData) + packet->reportBufferLen;
+    if (!(id = ext->u.pdo.preparsed_data->reports[0].reportID)) data_size += 1;
+
+    if (!(rawinput = HeapAlloc(GetProcessHeap(), 0, data_size)))
+    {
+        ERR("Failed to allocate rawinput data!\n");
+        return;
+    }
+
+    rawinput->header.dwType = RIM_TYPEHID;
+    rawinput->header.dwSize = data_size;
+    rawinput->header.hDevice = ULongToHandle(ext->u.pdo.rawinput_handle);
+    rawinput->header.wParam = RIM_INPUT;
+    rawinput->data.hid.dwCount = 1;
+    rawinput->data.hid.dwSizeHid = data_size - offsetof(RAWINPUT, data.hid.bRawData);
+
+    report = rawinput->data.hid.bRawData;
+    if (!id) *report++ = 0;
+    memcpy(report, packet->reportBuffer, packet->reportBufferLen);
+
+    input.type = INPUT_HARDWARE;
+    input.u.hi.uMsg = WM_INPUT;
+    input.u.hi.wParamH = 0;
+    input.u.hi.wParamL = 0;
+    __wine_send_input(0, &input, rawinput);
+
+    HeapFree(GetProcessHeap(), 0, rawinput);
+}
+
 static void HID_Device_processQueue(DEVICE_OBJECT *device)
 {
     IRP *irp;
@@ -175,6 +212,7 @@ static DWORD CALLBACK hid_device_thread(void *args)
             if (irp_status.u.Status == STATUS_SUCCESS)
             {
                 RingBuffer_Write(ext->u.pdo.ring_buffer, packet);
+                hid_device_send_input(device, packet);
                 HID_Device_processQueue(device);
             }
 
@@ -215,6 +253,7 @@ static DWORD CALLBACK hid_device_thread(void *args)
                 else
                     packet->reportId = 0;
                 RingBuffer_Write(ext->u.pdo.ring_buffer, packet);
+                hid_device_send_input(device, packet);
                 HID_Device_processQueue(device);
             }
 
