@@ -157,7 +157,7 @@ static ULONG WINAPI mediatype_Release(IMFMediaType *iface)
         clear_attributes_object(&media_type->attributes);
         CoTaskMemFree(media_type->video_format);
         CoTaskMemFree(media_type->audio_format);
-        heap_free(media_type);
+        free(media_type);
     }
 
     return refcount;
@@ -1435,13 +1435,12 @@ static HRESULT create_media_type(struct media_type **ret)
     struct media_type *object;
     HRESULT hr;
 
-    object = heap_alloc_zero(sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = init_attributes_object(&object->attributes, 0)))
     {
-        heap_free(object);
+        free(object);
         return hr;
     }
     object->IMFMediaType_iface.lpVtbl = &mediatypevtbl;
@@ -1519,11 +1518,11 @@ static ULONG WINAPI stream_descriptor_Release(IMFStreamDescriptor *iface)
             if (stream_desc->media_types[i])
                 IMFMediaType_Release(stream_desc->media_types[i]);
         }
-        heap_free(stream_desc->media_types);
+        free(stream_desc->media_types);
         if (stream_desc->current_type)
             IMFMediaType_Release(stream_desc->current_type);
         clear_attributes_object(&stream_desc->attributes);
-        heap_free(stream_desc);
+        free(stream_desc);
     }
 
     return refcount;
@@ -2052,19 +2051,18 @@ HRESULT WINAPI MFCreateStreamDescriptor(DWORD identifier, DWORD count,
     if (!count)
         return E_INVALIDARG;
 
-    object = heap_alloc_zero(sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = init_attributes_object(&object->attributes, 0)))
     {
-        heap_free(object);
+        free(object);
         return hr;
     }
     object->IMFStreamDescriptor_iface.lpVtbl = &streamdescriptorvtbl;
     object->IMFMediaTypeHandler_iface.lpVtbl = &mediatypehandlervtbl;
     object->identifier = identifier;
-    object->media_types = heap_alloc(count * sizeof(*object->media_types));
+    object->media_types = calloc(count, sizeof(*object->media_types));
     if (!object->media_types)
     {
         IMFStreamDescriptor_Release(&object->IMFStreamDescriptor_iface);
@@ -2127,8 +2125,8 @@ static ULONG WINAPI presentation_descriptor_Release(IMFPresentationDescriptor *i
                 IMFStreamDescriptor_Release(presentation_desc->descriptors[i].descriptor);
         }
         clear_attributes_object(&presentation_desc->attributes);
-        heap_free(presentation_desc->descriptors);
-        heap_free(presentation_desc);
+        free(presentation_desc->descriptors);
+        free(presentation_desc);
     }
 
     return refcount;
@@ -2491,8 +2489,7 @@ static HRESULT WINAPI presentation_descriptor_Clone(IMFPresentationDescriptor *i
 
     TRACE("%p, %p.\n", iface, descriptor);
 
-    object = heap_alloc_zero(sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     presentation_descriptor_init(object, presentation_desc->count);
@@ -2563,8 +2560,7 @@ static HRESULT presentation_descriptor_init(struct presentation_desc *object, DW
     if (FAILED(hr = init_attributes_object(&object->attributes, 0)))
         return hr;
     object->IMFPresentationDescriptor_iface.lpVtbl = &presentationdescriptorvtbl;
-    object->descriptors = heap_alloc_zero(count * sizeof(*object->descriptors));
-    if (!object->descriptors)
+    if (!(object->descriptors = calloc(count, sizeof(*object->descriptors))))
     {
         IMFPresentationDescriptor_Release(&object->IMFPresentationDescriptor_iface);
         return E_OUTOFMEMORY;
@@ -2595,13 +2591,12 @@ HRESULT WINAPI MFCreatePresentationDescriptor(DWORD count, IMFStreamDescriptor *
             return E_INVALIDARG;
     }
 
-    object = heap_alloc_zero(sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = presentation_descriptor_init(object, count)))
     {
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -2818,7 +2813,7 @@ HRESULT WINAPI MFWrapMediaType(IMFMediaType *original, REFGUID major, REFGUID su
     if (FAILED(hr = MFGetAttributesAsBlobSize((IMFAttributes *)original, &size)))
         return hr;
 
-    if (!(buffer = heap_alloc(size)))
+    if (!(buffer = malloc(size)))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = MFGetAttributesAsBlob((IMFAttributes *)original, buffer, size)))
@@ -2839,7 +2834,7 @@ HRESULT WINAPI MFWrapMediaType(IMFMediaType *original, REFGUID major, REFGUID su
     *ret = mediatype;
 
 failed:
-    heap_free(buffer);
+    free(buffer);
 
     return hr;
 }

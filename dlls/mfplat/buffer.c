@@ -141,9 +141,9 @@ static ULONG WINAPI memory_buffer_Release(IMFMediaBuffer *iface)
             clear_attributes_object(&buffer->dxgi_surface.attributes);
         }
         DeleteCriticalSection(&buffer->cs);
-        heap_free(buffer->_2d.linear_buffer);
-        heap_free(buffer->data);
-        heap_free(buffer);
+        free(buffer->_2d.linear_buffer);
+        free(buffer->data);
+        free(buffer);
     }
 
     return refcount;
@@ -278,7 +278,7 @@ static HRESULT WINAPI memory_1d_2d_buffer_Lock(IMFMediaBuffer *iface, BYTE **dat
         hr = MF_E_INVALIDREQUEST;
     else if (!buffer->_2d.linear_buffer)
     {
-        if (!(buffer->_2d.linear_buffer = heap_alloc(ALIGN_SIZE(buffer->_2d.plane_size, MF_64_BYTE_ALIGNMENT))))
+        if (!(buffer->_2d.linear_buffer = malloc(ALIGN_SIZE(buffer->_2d.plane_size, MF_64_BYTE_ALIGNMENT))))
             hr = E_OUTOFMEMORY;
     }
 
@@ -310,7 +310,7 @@ static HRESULT WINAPI memory_1d_2d_buffer_Unlock(IMFMediaBuffer *iface)
         MFCopyImage(buffer->data, buffer->_2d.pitch, buffer->_2d.linear_buffer, buffer->_2d.width,
                 buffer->_2d.width, buffer->_2d.height);
 
-        heap_free(buffer->_2d.linear_buffer);
+        free(buffer->_2d.linear_buffer);
         buffer->_2d.linear_buffer = NULL;
     }
 
@@ -349,7 +349,7 @@ static HRESULT WINAPI d3d9_surface_buffer_Lock(IMFMediaBuffer *iface, BYTE **dat
     {
         D3DLOCKED_RECT rect;
 
-        if (!(buffer->_2d.linear_buffer = heap_alloc(ALIGN_SIZE(buffer->_2d.plane_size, MF_64_BYTE_ALIGNMENT))))
+        if (!(buffer->_2d.linear_buffer = malloc(ALIGN_SIZE(buffer->_2d.plane_size, MF_64_BYTE_ALIGNMENT))))
             hr = E_OUTOFMEMORY;
 
         if (SUCCEEDED(hr))
@@ -401,7 +401,7 @@ static HRESULT WINAPI d3d9_surface_buffer_Unlock(IMFMediaBuffer *iface)
             IDirect3DSurface9_UnlockRect(buffer->d3d9_surface.surface);
         }
 
-        heap_free(buffer->_2d.linear_buffer);
+        free(buffer->_2d.linear_buffer);
         buffer->_2d.linear_buffer = NULL;
     }
 
@@ -928,7 +928,7 @@ static HRESULT WINAPI dxgi_surface_buffer_Lock(IMFMediaBuffer *iface, BYTE **dat
         hr = MF_E_INVALIDREQUEST;
     else if (!buffer->_2d.linear_buffer)
     {
-        if (!(buffer->_2d.linear_buffer = heap_alloc(ALIGN_SIZE(buffer->_2d.plane_size, MF_64_BYTE_ALIGNMENT))))
+        if (!(buffer->_2d.linear_buffer = malloc(ALIGN_SIZE(buffer->_2d.plane_size, MF_64_BYTE_ALIGNMENT))))
             hr = E_OUTOFMEMORY;
 
         if (SUCCEEDED(hr))
@@ -974,7 +974,7 @@ static HRESULT WINAPI dxgi_surface_buffer_Unlock(IMFMediaBuffer *iface)
                 buffer->_2d.linear_buffer, buffer->_2d.width, buffer->_2d.width, buffer->_2d.height);
         dxgi_surface_buffer_unmap(buffer);
 
-        heap_free(buffer->_2d.linear_buffer);
+        free(buffer->_2d.linear_buffer);
         buffer->_2d.linear_buffer = NULL;
     }
 
@@ -1225,8 +1225,7 @@ static const IMFDXGIBufferVtbl dxgi_buffer_vtbl =
 static HRESULT memory_buffer_init(struct buffer *buffer, DWORD max_length, DWORD alignment,
         const IMFMediaBufferVtbl *vtbl)
 {
-    buffer->data = heap_alloc_zero(ALIGN_SIZE(max_length, alignment));
-    if (!buffer->data)
+    if (!(buffer->data = calloc(1, ALIGN_SIZE(max_length, alignment))))
         return E_OUTOFMEMORY;
 
     buffer->IMFMediaBuffer_iface.lpVtbl = vtbl;
@@ -1248,14 +1247,13 @@ static HRESULT create_1d_buffer(DWORD max_length, DWORD alignment, IMFMediaBuffe
 
     *buffer = NULL;
 
-    object = heap_alloc_zero(sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     hr = memory_buffer_init(object, max_length, alignment, &memory_1d_buffer_vtbl);
     if (FAILED(hr))
     {
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -1291,8 +1289,7 @@ static HRESULT create_2d_buffer(DWORD width, DWORD height, DWORD fourcc, BOOL bo
     if (FAILED(hr = MFGetPlaneSize(fourcc, width, height, &plane_size)))
         return hr;
 
-    object = heap_alloc_zero(sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     switch (fourcc)
@@ -1326,7 +1323,7 @@ static HRESULT create_2d_buffer(DWORD width, DWORD height, DWORD fourcc, BOOL bo
 
     if (FAILED(hr = memory_buffer_init(object, max_length, MF_1_BYTE_ALIGNMENT, &memory_1d_2d_buffer_vtbl)))
     {
-        heap_free(object);
+        free(object);
         return hr;
     }
 
@@ -1360,8 +1357,7 @@ static HRESULT create_d3d9_surface_buffer(IUnknown *surface, BOOL bottom_up, IMF
     if (!(stride = mf_format_get_stride(&subtype, desc.Width, &is_yuv)))
         return MF_E_INVALIDMEDIATYPE;
 
-    object = heap_alloc_zero(sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMFMediaBuffer_iface.lpVtbl = &d3d9_surface_1d_buffer_vtbl;
@@ -1412,8 +1408,7 @@ static HRESULT create_dxgi_surface_buffer(IUnknown *surface, unsigned int sub_re
         return MF_E_INVALIDMEDIATYPE;
     }
 
-    object = heap_alloc_zero(sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
     {
         ID3D11Texture2D_Release(texture);
         return E_OUTOFMEMORY;
