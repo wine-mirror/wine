@@ -612,50 +612,40 @@ static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
     return event;
 }
 
+static void post_socket_event( struct sock *sock, unsigned int event_bit, unsigned int error )
+{
+    unsigned int event = (1 << event_bit);
+
+    sock->pmask |= event;
+    sock->hmask |= event;
+    sock->errors[event_bit] = error;
+}
+
 static void sock_dispatch_events( struct sock *sock, int prevstate, int event, int error )
 {
     if (prevstate & FD_CONNECT)
     {
-        sock->pmask |= FD_CONNECT;
-        sock->hmask |= FD_CONNECT;
-        sock->errors[FD_CONNECT_BIT] = sock_get_error( error );
+        post_socket_event( sock, FD_CONNECT_BIT, sock_get_error( error ) );
         goto end;
     }
     if (prevstate & FD_WINE_LISTENING)
     {
-        sock->pmask |= FD_ACCEPT;
-        sock->hmask |= FD_ACCEPT;
-        sock->errors[FD_ACCEPT_BIT] = sock_get_error( error );
+        post_socket_event( sock, FD_ACCEPT_BIT, sock_get_error( error ) );
         goto end;
     }
 
     if (event & POLLIN)
-    {
-        sock->pmask |= FD_READ;
-        sock->hmask |= FD_READ;
-        sock->errors[FD_READ_BIT] = 0;
-    }
+        post_socket_event( sock, FD_READ_BIT, 0 );
 
     if (event & POLLOUT)
-    {
-        sock->pmask |= FD_WRITE;
-        sock->hmask |= FD_WRITE;
-        sock->errors[FD_WRITE_BIT] = 0;
-    }
+        post_socket_event( sock, FD_WRITE_BIT, 0 );
 
     if (event & POLLPRI)
-    {
-        sock->pmask |= FD_OOB;
-        sock->hmask |= FD_OOB;
-        sock->errors[FD_OOB_BIT] = 0;
-    }
+        post_socket_event( sock, FD_OOB_BIT, 0 );
 
     if (event & (POLLERR|POLLHUP))
-    {
-        sock->pmask |= FD_CLOSE;
-        sock->hmask |= FD_CLOSE;
-        sock->errors[FD_CLOSE_BIT] = sock_get_error( error );
-    }
+        post_socket_event( sock, FD_CLOSE_BIT, sock_get_error( error ) );
+
 end:
     sock_wake_up( sock );
 }
