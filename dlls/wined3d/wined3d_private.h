@@ -4773,10 +4773,10 @@ static inline void wined3d_cs_finish(struct wined3d_cs *cs, enum wined3d_cs_queu
     cs->c.ops->finish(&cs->c, queue_id);
 }
 
-static inline void wined3d_cs_push_constants(struct wined3d_cs *cs, enum wined3d_push_constants p,
-        unsigned int start_idx, unsigned int count, const void *constants)
+static inline void wined3d_device_context_push_constants(struct wined3d_device_context *context,
+        enum wined3d_push_constants p, unsigned int start_idx, unsigned int count, const void *constants)
 {
-    cs->c.ops->push_constants(&cs->c, p, start_idx, count, constants);
+    context->ops->push_constants(context, p, start_idx, count, constants);
 }
 
 void wined3d_device_context_emit_blt_sub_resource(struct wined3d_device_context *context,

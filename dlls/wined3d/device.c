@@ -1799,18 +1799,18 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
         }
     }
 
-    wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_VS_F,
+    wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_VS_F,
             0, WINED3D_MAX_VS_CONSTS_F, state->vs_consts_f);
-    wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_VS_I,
+    wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_VS_I,
             0, WINED3D_MAX_CONSTS_I, state->vs_consts_i);
-    wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_VS_B,
+    wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_VS_B,
             0, WINED3D_MAX_CONSTS_B, state->vs_consts_b);
 
-    wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_PS_F,
+    wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_PS_F,
             0, WINED3D_MAX_PS_CONSTS_F, state->ps_consts_f);
-    wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_PS_I,
+    wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_PS_I,
             0, WINED3D_MAX_CONSTS_I, state->ps_consts_i);
-    wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_PS_B,
+    wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_PS_B,
             0, WINED3D_MAX_CONSTS_B, state->ps_consts_b);
 
     for (i = 0; i < WINED3D_MAX_COMBINED_SAMPLERS; ++i)
@@ -2573,7 +2573,7 @@ static void wined3d_device_set_vs_consts_b(struct wined3d_device *device,
             TRACE("Set BOOL constant %u to %#x.\n", start_idx + i, constants[i]);
     }
 
-    wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_VS_B, start_idx, count, constants);
+    wined3d_device_context_push_constants(&device->cs->c, WINED3D_PUSH_CONSTANTS_VS_B, start_idx, count, constants);
 }
 
 static void wined3d_device_set_vs_consts_i(struct wined3d_device *device,
@@ -2591,7 +2591,7 @@ static void wined3d_device_set_vs_consts_i(struct wined3d_device *device,
             TRACE("Set ivec4 constant %u to %s.\n", start_idx + i, debug_ivec4(&constants[i]));
     }
 
-    wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_VS_I, start_idx, count, constants);
+    wined3d_device_context_push_constants(&device->cs->c, WINED3D_PUSH_CONSTANTS_VS_I, start_idx, count, constants);
 }
 
 static void wined3d_device_set_vs_consts_f(struct wined3d_device *device,
@@ -2609,7 +2609,7 @@ static void wined3d_device_set_vs_consts_f(struct wined3d_device *device,
             TRACE("Set vec4 constant %u to %s.\n", start_idx + i, debug_vec4(&constants[i]));
     }
 
-    wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_VS_F, start_idx, count, constants);
+    wined3d_device_context_push_constants(&device->cs->c, WINED3D_PUSH_CONSTANTS_VS_F, start_idx, count, constants);
 }
 
 void CDECL wined3d_device_set_pixel_shader(struct wined3d_device *device, struct wined3d_shader *shader)
@@ -2671,7 +2671,7 @@ static void wined3d_device_set_ps_consts_b(struct wined3d_device *device,
             TRACE("Set BOOL constant %u to %#x.\n", start_idx + i, constants[i]);
     }
 
-    wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_PS_B, start_idx, count, constants);
+    wined3d_device_context_push_constants(&device->cs->c, WINED3D_PUSH_CONSTANTS_PS_B, start_idx, count, constants);
 }
 
 static void wined3d_device_set_ps_consts_i(struct wined3d_device *device,
@@ -2689,7 +2689,7 @@ static void wined3d_device_set_ps_consts_i(struct wined3d_device *device,
             TRACE("Set ivec4 constant %u to %s.\n", start_idx + i, debug_ivec4(&constants[i]));
     }
 
-    wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_PS_I, start_idx, count, constants);
+    wined3d_device_context_push_constants(&device->cs->c, WINED3D_PUSH_CONSTANTS_PS_I, start_idx, count, constants);
 }
 
 static void wined3d_device_set_ps_consts_f(struct wined3d_device *device,
@@ -2707,7 +2707,7 @@ static void wined3d_device_set_ps_consts_f(struct wined3d_device *device,
             TRACE("Set vec4 constant %u to %s.\n", start_idx + i, debug_vec4(&constants[i]));
     }
 
-    wined3d_cs_push_constants(device->cs, WINED3D_PUSH_CONSTANTS_PS_F, start_idx, count, constants);
+    wined3d_device_context_push_constants(&device->cs->c, WINED3D_PUSH_CONSTANTS_PS_F, start_idx, count, constants);
 }
 
 void CDECL wined3d_device_set_hull_shader(struct wined3d_device *device, struct wined3d_shader *shader)
