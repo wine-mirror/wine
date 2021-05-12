@@ -14268,10 +14268,10 @@ msgid "reg: The option [/d] must be followed by a valid string\n"
 msgstr "reg: [/d] විකල්පයට පස්සේ වලංගු අනුලකුණු වැලක් තියෙන්න ඕනේ\n"
 
 #: programs/reg/reg.rc:135
-msgid ""
-"reg: Unable to delete all registry values in '%1'. An unexpected error "
-"occurred.\n"
-msgstr ""
+#, fuzzy
+#| msgid "regedit: Unable to delete the registry key '%1'.\n"
+msgid "reg: Unable to delete all registry values in '%1'\n"
+msgstr "regedit: රෙජිස්තරයෙ යතුර '%1' මකන්න බැහැ.\n"
 
 #: programs/reg/reg.rc:136
 msgid ""

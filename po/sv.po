@@ -14850,12 +14850,10 @@ msgid "reg: The option [/d] must be followed by a valid string\n"
 msgstr "reg: Flaggan [/d] måste följas av en giltig sträng\n"
 
 #: programs/reg/reg.rc:135
-msgid ""
-"reg: Unable to delete all registry values in '%1'. An unexpected error "
-"occurred.\n"
-msgstr ""
-"reg: Kan inte ta bort alla registervärden i '%1'. Ett oväntat fel "
-"inträffade.\n"
+#, fuzzy
+#| msgid "regedit: Unable to delete the registry key '%1'.\n"
+msgid "reg: Unable to delete all registry values in '%1'\n"
+msgstr "regedit: Kan inte ta bort registernyckeln '%1'.\n"
 
 #: programs/reg/reg.rc:136
 msgid ""

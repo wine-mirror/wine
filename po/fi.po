@@ -14524,12 +14524,10 @@ msgid "reg: The option [/d] must be followed by a valid string\n"
 msgstr "reg: Valitsinta [/d] täytyy seurata kelpo merkkijono\n"
 
 #: programs/reg/reg.rc:135
-msgid ""
-"reg: Unable to delete all registry values in '%1'. An unexpected error "
-"occurred.\n"
-msgstr ""
-"reg: Kaikkien arvojen poistaminen kohteesta '%1' ei onnistu. Tapahtui "
-"odottamaton virhe.\n"
+#, fuzzy
+#| msgid "regedit: Unable to delete the registry key '%1'.\n"
+msgid "reg: Unable to delete all registry values in '%1'\n"
+msgstr "regedit: Rekisteriavainta '%1' ei voida poistaa.\n"
 
 #: programs/reg/reg.rc:136
 msgid ""

@@ -14160,10 +14160,10 @@ msgid "reg: The option [/d] must be followed by a valid string\n"
 msgstr "reg: A la opción [/d] ha siguila una cadena válida\n"
 
 #: programs/reg/reg.rc:135
-msgid ""
-"reg: Unable to delete all registry values in '%1'. An unexpected error "
-"occurred.\n"
-msgstr ""
+#, fuzzy
+#| msgid "reg: Invalid syntax. "
+msgid "reg: Unable to delete all registry values in '%1'\n"
+msgstr "reg: La sintaxis nun ye válida. "
 
 #: programs/reg/reg.rc:136
 msgid ""

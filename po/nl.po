@@ -14634,12 +14634,10 @@ msgid "reg: The option [/d] must be followed by a valid string\n"
 msgstr "reg: De optie [/d] moet gevolgd worden door tekenreeks\n"
 
 #: programs/reg/reg.rc:135
-msgid ""
-"reg: Unable to delete all registry values in '%1'. An unexpected error "
-"occurred.\n"
-msgstr ""
-"reg: Onmogelijk om alle registerwaardes in '%1' te verwijderen. Er is een "
-"onverwachte fout opgetreden.\n"
+#, fuzzy
+#| msgid "regedit: Unable to delete the registry key '%1'.\n"
+msgid "reg: Unable to delete all registry values in '%1'\n"
+msgstr "regedit: Kan de registersleutel '%1' niet verwijderen.\n"
 
 #: programs/reg/reg.rc:136
 msgid ""

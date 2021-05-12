@@ -14556,12 +14556,10 @@ msgid "reg: The option [/d] must be followed by a valid string\n"
 msgstr "reg: після параметра [/d] повинно бути вказано рядок\n"
 
 #: programs/reg/reg.rc:135
-msgid ""
-"reg: Unable to delete all registry values in '%1'. An unexpected error "
-"occurred.\n"
-msgstr ""
-"reg: неможливо видалити всі значення реєстру в '%1'. Сталася неочікувана "
-"помилка.\n"
+#, fuzzy
+#| msgid "regedit: Unable to delete the registry key '%1'.\n"
+msgid "reg: Unable to delete all registry values in '%1'\n"
+msgstr "regedit: Неможливо видалити ключ реєстру '%1'.\n"
 
 #: programs/reg/reg.rc:136
 msgid ""

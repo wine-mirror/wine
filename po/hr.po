@@ -14655,10 +14655,10 @@ msgid "reg: The option [/d] must be followed by a valid string\n"
 msgstr ""
 
 #: programs/reg/reg.rc:135
-msgid ""
-"reg: Unable to delete all registry values in '%1'. An unexpected error "
-"occurred.\n"
-msgstr ""
+#, fuzzy
+#| msgid "Could not open the file."
+msgid "reg: Unable to delete all registry values in '%1'\n"
+msgstr "Datoteka se ne može otvoriti."
 
 #: programs/reg/reg.rc:136
 msgid ""

@@ -14543,12 +14543,10 @@ msgid "reg: The option [/d] must be followed by a valid string\n"
 msgstr "reg: /d オプションのあとに正しい文字列を指定してください\n"
 
 #: programs/reg/reg.rc:135
-msgid ""
-"reg: Unable to delete all registry values in '%1'. An unexpected error "
-"occurred.\n"
-msgstr ""
-"reg: '%1' にある一部のレジストリ値を削除できません。予期しないエラーが発生し"
-"ました。\n"
+#, fuzzy
+#| msgid "regedit: Unable to delete the registry key '%1'.\n"
+msgid "reg: Unable to delete all registry values in '%1'\n"
+msgstr "regedit: レジストリ キー '%1' を削除できません。\n"
 
 #: programs/reg/reg.rc:136
 msgid ""

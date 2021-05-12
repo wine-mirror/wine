@@ -14417,12 +14417,10 @@ msgid "reg: The option [/d] must be followed by a valid string\n"
 msgstr "reg : 옵션 [/d] 다음에 유효한 문자열이 있어야 합니다\n"
 
 #: programs/reg/reg.rc:135
-msgid ""
-"reg: Unable to delete all registry values in '%1'. An unexpected error "
-"occurred.\n"
-msgstr ""
-"reg: '%1'의 모든 레지스트리 값을 제거할 수 없습니다. 예기치 않은 오류가 발생"
-"했습니다.\n"
+#, fuzzy
+#| msgid "regedit: Unable to delete the registry key '%1'.\n"
+msgid "reg: Unable to delete all registry values in '%1'\n"
+msgstr "regedit: 레지스트리 '%1'을(를) 지울 수 없습니다.\n"
 
 #: programs/reg/reg.rc:136
 msgid ""

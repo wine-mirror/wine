@@ -14776,10 +14776,10 @@ msgid "reg: The option [/d] must be followed by a valid string\n"
 msgstr ""
 
 #: programs/reg/reg.rc:135
-msgid ""
-"reg: Unable to delete all registry values in '%1'. An unexpected error "
-"occurred.\n"
-msgstr ""
+#, fuzzy
+#| msgid "regedit: Unable to delete the registry key '%1'.\n"
+msgid "reg: Unable to delete all registry values in '%1'\n"
+msgstr "regedit: No se puede borrar la clave de registro '%1'.\n"
 
 #: programs/reg/reg.rc:136
 msgid ""

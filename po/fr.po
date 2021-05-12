@@ -15098,12 +15098,10 @@ msgstr ""
 "reg : l'option [/d] doit être suivie d'une chaîne de caractères valide\n"
 
 #: programs/reg/reg.rc:135
-msgid ""
-"reg: Unable to delete all registry values in '%1'. An unexpected error "
-"occurred.\n"
-msgstr ""
-"reg : impossible d'effacer toutes les valeurs de registre dans « %1 ». Une "
-"erreur inattendue est survenue.\n"
+#, fuzzy
+#| msgid "regedit: Unable to delete the registry class '%1'.\n"
+msgid "reg: Unable to delete all registry values in '%1'\n"
+msgstr "regedit : impossible d'effacer la classe de registre « %1 ».\n"
 
 #: programs/reg/reg.rc:136
 msgid ""

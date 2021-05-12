@@ -14249,10 +14249,10 @@ msgid "reg: The option [/d] must be followed by a valid string\n"
 msgstr "reg：选项 [/d] 后必须紧跟一个有效的字符串\n"
 
 #: programs/reg/reg.rc:135
-msgid ""
-"reg: Unable to delete all registry values in '%1'. An unexpected error "
-"occurred.\n"
-msgstr "reg：无法删除“%1”中的所有注册表值。发生了未预期的错误。\n"
+#, fuzzy
+#| msgid "regedit: Unable to delete the registry key '%1'.\n"
+msgid "reg: Unable to delete all registry values in '%1'\n"
+msgstr "regedit：无法删除注册表键“%1”。\n"
 
 #: programs/reg/reg.rc:136
 msgid ""
