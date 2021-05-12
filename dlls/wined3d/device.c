@@ -1748,7 +1748,7 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
     TRACE("device %p, state %p.\n", device, state);
 
     device->cs->c.state = state;
-    wined3d_cs_emit_set_feature_level(device->cs, state->feature_level);
+    wined3d_device_context_emit_set_feature_level(context, state->feature_level);
 
     for (i = 0; i < WINED3D_MAX_RENDER_TARGETS; ++i)
     {

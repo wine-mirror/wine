@@ -2055,15 +2055,16 @@ static void wined3d_cs_exec_set_feature_level(struct wined3d_cs *cs, const void 
     cs->state.feature_level = op->level;
 }
 
-void wined3d_cs_emit_set_feature_level(struct wined3d_cs *cs, enum wined3d_feature_level level)
+void wined3d_device_context_emit_set_feature_level(struct wined3d_device_context *context,
+        enum wined3d_feature_level level)
 {
     struct wined3d_cs_set_feature_level *op;
 
-    op = wined3d_device_context_require_space(&cs->c, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_SET_FEATURE_LEVEL;
     op->level = level;
 
-    wined3d_device_context_submit(&cs->c, WINED3D_CS_QUEUE_DEFAULT);
+    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
 static const struct
