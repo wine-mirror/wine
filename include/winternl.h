@@ -3588,6 +3588,25 @@ typedef enum _DEBUGOBJECTINFOCLASS
     MaxDebugObjectInfoClass
 } DEBUGOBJECTINFOCLASS, *PDEBUGOBJECTINFOCLASS;
 
+
+typedef struct _WOW64_CPURESERVED
+{
+    USHORT          Flags;
+    USHORT          Machine;
+    /* CONTEXT context */
+    /* CONTEXT_EX *context_ex */
+} WOW64_CPURESERVED, *PWOW64_CPURESERVED;
+
+typedef struct _WOW64_CPU_AREA_INFO
+{
+    void              *Context;
+    void              *ContextEx;
+    void              *ContextFlagsLocation;
+    WOW64_CPURESERVED *CpuReserved;
+    ULONG              ContextFlag;
+    USHORT             Machine;
+} WOW64_CPU_AREA_INFO, *PWOW64_CPU_AREA_INFO;
+
 /***********************************************************************
  * Function declarations
  */
@@ -4249,10 +4268,6 @@ NTSYSAPI NTSTATUS  WINAPI RtlWow64EnableFsRedirection(BOOLEAN);
 NTSYSAPI NTSTATUS  WINAPI RtlWow64EnableFsRedirectionEx(ULONG,ULONG*);
 NTSYSAPI USHORT    WINAPI RtlWow64GetCurrentMachine(void);
 NTSYSAPI NTSTATUS  WINAPI RtlWow64GetProcessMachines(HANDLE,USHORT*,USHORT*);
-#ifdef __x86_64__
-NTSYSAPI NTSTATUS  WINAPI RtlWow64GetThreadContext(HANDLE, WOW64_CONTEXT *);
-NTSYSAPI NTSTATUS  WINAPI RtlWow64SetThreadContext(HANDLE, const WOW64_CONTEXT *);
-#endif
 NTSYSAPI NTSTATUS  WINAPI RtlWow64IsWowGuestMachineSupported(USHORT,BOOLEAN*);
 NTSYSAPI NTSTATUS  WINAPI RtlWriteRegistryValue(ULONG,PCWSTR,PCWSTR,ULONG,PVOID,ULONG);
 NTSYSAPI NTSTATUS  WINAPI RtlZombifyActivationContext(HANDLE);
@@ -4262,6 +4277,12 @@ NTSYSAPI NTSTATUS  WINAPI RtlpWaitForCriticalSection(RTL_CRITICAL_SECTION *);
 NTSYSAPI NTSTATUS  WINAPI RtlpUnWaitCriticalSection(RTL_CRITICAL_SECTION *);
 NTSYSAPI NTSTATUS  WINAPI vDbgPrintEx(ULONG,ULONG,LPCSTR,__ms_va_list);
 NTSYSAPI NTSTATUS  WINAPI vDbgPrintExWithPrefix(LPCSTR,ULONG,ULONG,LPCSTR,__ms_va_list);
+
+#ifdef _WIN64
+NTSYSAPI NTSTATUS  WINAPI RtlWow64GetCpuAreaInfo(WOW64_CPURESERVED*,ULONG,WOW64_CPU_AREA_INFO*);
+NTSYSAPI NTSTATUS  WINAPI RtlWow64GetThreadContext(HANDLE,WOW64_CONTEXT*);
+NTSYSAPI NTSTATUS  WINAPI RtlWow64SetThreadContext(HANDLE,const WOW64_CONTEXT*);
+#endif
 
 #if defined(__x86_64__) || defined(__i386__)
 NTSYSAPI NTSTATUS  WINAPI RtlCopyExtendedContext(CONTEXT_EX*,ULONG,CONTEXT_EX*);

@@ -25,6 +25,7 @@
 static NTSTATUS (WINAPI * pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
 static NTSTATUS (WINAPI * pNtSetSystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG);
 static NTSTATUS (WINAPI * pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
+static NTSTATUS (WINAPI * pRtlWow64GetCpuAreaInfo)( WOW64_CPURESERVED *cpu, ULONG reserved, WOW64_CPU_AREA_INFO *info );
 static USHORT   (WINAPI * pRtlWow64GetCurrentMachine)(void);
 static NTSTATUS (WINAPI * pRtlWow64GetProcessMachines)(HANDLE,WORD*,WORD*);
 static NTSTATUS (WINAPI * pRtlWow64IsWowGuestMachineSupported)(USHORT,BOOLEAN*);
@@ -85,6 +86,7 @@ static BOOL InitFunctionPtrs(void)
     NTDLL_GET_PROC(NtQuerySystemInformation);
     NTDLL_GET_PROC(NtSetSystemInformation);
     NTDLL_GET_PROC(RtlGetNativeSystemInformation);
+    NTDLL_GET_PROC(RtlWow64GetCpuAreaInfo);
     NTDLL_GET_PROC(RtlWow64GetCurrentMachine);
     NTDLL_GET_PROC(RtlWow64GetProcessMachines);
     NTDLL_GET_PROC(RtlWow64IsWowGuestMachineSupported);
@@ -3133,7 +3135,56 @@ static void test_thread_info(void)
 
 static void test_wow64(void)
 {
-#ifndef _WIN64
+#ifdef _WIN64
+    if (pRtlWow64GetCpuAreaInfo)
+    {
+        static const struct
+        {
+            USHORT machine;
+            NTSTATUS expect;
+            ULONG align, size, offset, flag;
+        } tests[] =
+        {
+            { IMAGE_FILE_MACHINE_I386,  0,  4, 0x2cc, 0x00, 0x00010000 },
+            { IMAGE_FILE_MACHINE_AMD64, 0, 16, 0x4d0, 0x30, 0x00100000 },
+            { IMAGE_FILE_MACHINE_ARMNT, 0,  8, 0x1a0, 0x00, 0x00200000 },
+            { IMAGE_FILE_MACHINE_ARM64, 0, 16, 0x390, 0x00, 0x00400000 },
+            { IMAGE_FILE_MACHINE_ARM,   STATUS_INVALID_PARAMETER },
+            { IMAGE_FILE_MACHINE_THUMB, STATUS_INVALID_PARAMETER },
+        };
+        USHORT buffer[2048];
+        WOW64_CPURESERVED *cpu;
+        WOW64_CPU_AREA_INFO info;
+        ULONG i, j;
+        NTSTATUS status;
+#define ALIGN(ptr,align) ((void *)(((ULONG_PTR)(ptr) + (align) - 1) & ~((align) - 1)))
+
+        for (i = 0; i < ARRAY_SIZE(tests); i++)
+        {
+            for (j = 0; j < 8; j++)
+            {
+                cpu = (WOW64_CPURESERVED *)(buffer + j);
+                cpu->Flags = 0;
+                cpu->Machine = tests[i].machine;
+                status = pRtlWow64GetCpuAreaInfo( cpu, 0, &info );
+                ok( status == tests[i].expect, "%u:%u: failed %x\n", i, j, status );
+                if (status) continue;
+                ok( info.Context == ALIGN( cpu + 1, tests[i].align ), "%u:%u: wrong offset %u\n",
+                    i, j, (ULONG)((char *)info.Context - (char *)cpu) );
+                ok( info.ContextEx == ALIGN( (char *)info.Context + tests[i].size, sizeof(void*) ),
+                    "%u:%u: wrong ex offset %u\n", i, j, (ULONG)((char *)info.ContextEx - (char *)cpu) );
+                ok( info.ContextFlagsLocation == (char *)info.Context + tests[i].offset,
+                    "%u:%u: wrong flags offset %u\n",
+                    i, j, (ULONG)((char *)info.ContextFlagsLocation - (char *)info.Context) );
+                ok( info.CpuReserved == cpu, "%u:%u: wrong cpu %p / %p\n", info.CpuReserved, cpu );
+                ok( info.ContextFlag == tests[i].flag, "%u:%u: wrong flag %08x\n", i, j, info.ContextFlag );
+                ok( info.Machine == tests[i].machine, "%u:%u: wrong machine %x\n", i, j, info.Machine );
+            }
+        }
+#undef ALIGN
+    }
+    else win_skip( "RtlWow64GetCpuAreaInfo not supported\n" );
+#else
     if (is_wow64)
     {
         PEB64 *peb64;
