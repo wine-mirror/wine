@@ -1310,9 +1310,90 @@ end:
     if (encoder) IWICBitmapEncoder_Release(encoder);
 }
 
+static void test_dds_encoder_params(IWICBitmapEncoder *encoder, IWICDdsEncoder *dds_encoder)
+{
+    WICDdsParameters params, params_set = { 4, 4, 4, 3, 1,   DXGI_FORMAT_BC1_UNORM,
+                                            WICDdsTexture3D, WICDdsAlphaModePremultiplied };
+    HRESULT hr;
+
+    hr = IWICDdsEncoder_GetParameters(dds_encoder, NULL);
+    todo_wine
+    ok(hr == E_INVALIDARG, "GetParameters got unexpected hr %#x\n", hr);
+
+    hr = IWICDdsEncoder_GetParameters(dds_encoder, &params);
+    todo_wine
+    ok(hr == S_OK, "GetParameters failed, hr %#x\n", hr);
+    if (hr != S_OK) return;
+
+    /* default DDS parameters for encoder */
+    ok(params.Width      == 1, "Got unexpected Width %u\n",     params.Width);
+    ok(params.Height     == 1, "Got unexpected Height %u\n",    params.Height);
+    ok(params.Depth      == 1, "Got unexpected Depth %u\n",     params.Depth);
+    ok(params.MipLevels  == 1, "Got unexpected MipLevels %u\n", params.MipLevels);
+    ok(params.ArraySize  == 1, "Got unexpected ArraySize %u\n", params.ArraySize);
+    ok(params.DxgiFormat == DXGI_FORMAT_BC3_UNORM,  "Got unexpected DxgiFormat %#x\n", params.DxgiFormat);
+    ok(params.Dimension  == WICDdsTexture2D,        "Got unexpected Dimension %#x\n",  params.Dimension);
+    ok(params.AlphaMode  == WICDdsAlphaModeUnknown, "Got unexpected AlphaMode %#x\n",  params.AlphaMode);
+
+    hr = IWICDdsEncoder_SetParameters(dds_encoder, NULL);
+    todo_wine
+    ok(hr == E_INVALIDARG, "SetParameters got unexpected hr %#x\n", hr);
+
+    hr = IWICDdsEncoder_SetParameters(dds_encoder, &params_set);
+    todo_wine
+    ok(hr == S_OK, "SetParameters failed, hr %#x\n", hr);
+    if (hr != S_OK) return;
+
+    IWICDdsEncoder_GetParameters(dds_encoder, &params);
+
+    ok(params.Width == params_set.Width,
+       "Expected Width %u, got %u\n",       params_set.Width,      params.Width);
+    ok(params.Height == params_set.Height,
+       "Expected Height %u, got %u\n",      params_set.Height,     params.Height);
+    ok(params.Depth == params_set.Depth,
+       "Expected Depth %u, got %u\n",       params_set.Depth,      params.Depth);
+    ok(params.MipLevels == params_set.MipLevels,
+       "Expected MipLevels %u, got %u\n",   params_set.MipLevels,  params.MipLevels);
+    ok(params.ArraySize == params_set.ArraySize,
+       "Expected ArraySize %u, got %u\n",   params_set.ArraySize,  params.ArraySize);
+    ok(params.DxgiFormat == params_set.DxgiFormat,
+       "Expected DxgiFormat %u, got %#x\n", params_set.DxgiFormat, params.DxgiFormat);
+    ok(params.Dimension == params_set.Dimension,
+       "Expected Dimension %u, got %#x\n",  params_set.Dimension,  params.Dimension);
+    ok(params.AlphaMode == params_set.AlphaMode,
+       "Expected AlphaMode %u, got %#x\n",  params_set.AlphaMode,  params.AlphaMode);
+}
+
 static void test_dds_encoder(void)
 {
+    IWICDdsEncoder *dds_encoder = NULL;
+    IWICBitmapEncoder *encoder = NULL;
+    IWICStream *stream = NULL;
+    BYTE buffer[1024];
+    HRESULT hr;
+
     test_dds_encoder_initialize();
+
+    encoder = create_encoder();
+    if (!encoder) goto end;
+
+    stream = create_stream(buffer, sizeof(buffer));
+    if (!stream) goto end;
+
+    hr = IWICBitmapEncoder_Initialize(encoder, (IStream *)stream, WICBitmapEncoderNoCache);
+    ok(hr == S_OK, "Initialize failed, hr %#x\n", hr);
+    if (hr != S_OK) goto end;
+
+    hr = IWICBitmapEncoder_QueryInterface(encoder, &IID_IWICDdsEncoder, (void **)&dds_encoder);
+    ok(hr == S_OK, "QueryInterface failed, hr %#x\n", hr);
+    if (hr != S_OK) goto end;
+
+    test_dds_encoder_params(encoder, dds_encoder);
+
+end:
+    if (dds_encoder) IWICDdsEncoder_Release(dds_encoder);
+    if (stream) IWICStream_Release(stream);
+    if (encoder) IWICBitmapEncoder_Release(encoder);
 }
 
 START_TEST(ddsformat)
