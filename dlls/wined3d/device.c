@@ -1707,7 +1707,7 @@ static void wined3d_device_set_sampler_state(struct wined3d_device *device,
     }
 
     device->cs->c.state->sampler_states[sampler_idx][state] = value;
-    wined3d_cs_emit_set_sampler_state(device->cs, sampler_idx, state, value);
+    wined3d_device_context_emit_set_sampler_state(&device->cs->c, sampler_idx, state, value);
 }
 
 void CDECL wined3d_device_set_scissor_rects(struct wined3d_device *device, unsigned int rect_count,
@@ -1818,7 +1818,7 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
         wined3d_device_context_emit_set_texture(context, i, state->textures[i]);
         for (j = 0; j < WINED3D_HIGHEST_SAMPLER_STATE + 1; ++j)
         {
-            wined3d_cs_emit_set_sampler_state(device->cs, i, j, state->sampler_states[i][j]);
+            wined3d_device_context_emit_set_sampler_state(context, i, j, state->sampler_states[i][j]);
         }
     }
 

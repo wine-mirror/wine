@@ -1741,7 +1741,7 @@ DWORD CDECL wined3d_texture_set_lod(struct wined3d_texture *texture, DWORD lod)
         wined3d_texture_gl(texture)->texture_rgb.base_level = ~0u;
         wined3d_texture_gl(texture)->texture_srgb.base_level = ~0u;
         if (resource->bind_count)
-            wined3d_cs_emit_set_sampler_state(device->cs, texture->sampler, WINED3D_SAMP_MAX_MIP_LEVEL,
+            wined3d_device_context_emit_set_sampler_state(&device->cs->c, texture->sampler, WINED3D_SAMP_MAX_MIP_LEVEL,
                     device->cs->c.state->sampler_states[texture->sampler][WINED3D_SAMP_MAX_MIP_LEVEL]);
     }
 
