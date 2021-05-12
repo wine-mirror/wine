@@ -5229,9 +5229,6 @@ GpStatus gdip_format_string(HDC hdc,
     hotkeyprefix_count = 0;
 
     for(i = 0, j = 0; i < length; i++){
-        /* FIXME: This makes the indexes passed to callback inaccurate. */
-        if(!iswprint(string[i]) && (string[i] != '\n'))
-            continue;
 
         /* FIXME: tabs should be handled using tabstops from stringformat */
         if (string[i] == '\t')
