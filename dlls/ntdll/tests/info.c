@@ -68,7 +68,6 @@ static inline DWORD_PTR get_affinity_mask(DWORD num_cpus)
     p ## func = (void*)GetProcAddress(hntdll, #func); \
     if(!p ## func) { \
       trace("GetProcAddress(%s) failed\n", #func); \
-      return FALSE; \
     } \
   } while(0)
 
@@ -77,13 +76,14 @@ static inline DWORD_PTR get_affinity_mask(DWORD num_cpus)
 #define FIRM 0x4649524D
 #define RSMB 0x52534D42
 
-static BOOL InitFunctionPtrs(void)
+static void InitFunctionPtrs(void)
 {
     /* All needed functions are NT based, so using GetModuleHandle is a good check */
     HMODULE hntdll = GetModuleHandleA("ntdll");
     HMODULE hkernel32 = GetModuleHandleA("kernel32");
 
     NTDLL_GET_PROC(NtQuerySystemInformation);
+    NTDLL_GET_PROC(NtQuerySystemInformationEx);
     NTDLL_GET_PROC(NtSetSystemInformation);
     NTDLL_GET_PROC(RtlGetNativeSystemInformation);
     NTDLL_GET_PROC(RtlWow64GetCpuAreaInfo);
@@ -105,24 +105,14 @@ static BOOL InitFunctionPtrs(void)
     NTDLL_GET_PROC(NtQueryObject);
     NTDLL_GET_PROC(NtCreateDebugObject);
     NTDLL_GET_PROC(NtSetInformationDebugObject);
+    NTDLL_GET_PROC(NtGetCurrentProcessorNumber);
     NTDLL_GET_PROC(DbgUiConvertStateChangeStructure);
-
-    /* not present before XP */
-    pNtGetCurrentProcessorNumber = (void *) GetProcAddress(hntdll, "NtGetCurrentProcessorNumber");
 
     pIsWow64Process = (void *)GetProcAddress(hkernel32, "IsWow64Process");
     if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
 
     pGetSystemDEPPolicy = (void *)GetProcAddress(hkernel32, "GetSystemDEPPolicy");
-
-    /* starting with Win7 */
-    pNtQuerySystemInformationEx = (void *) GetProcAddress(hntdll, "NtQuerySystemInformationEx");
-    if (!pNtQuerySystemInformationEx)
-        win_skip("NtQuerySystemInformationEx() is not supported, some tests will be skipped.\n");
-
     pGetLogicalProcessorInformationEx = (void *) GetProcAddress(hkernel32, "GetLogicalProcessorInformationEx");
-
-    return TRUE;
 }
 
 static void test_query_basic(void)
