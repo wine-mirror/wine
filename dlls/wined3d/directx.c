@@ -601,6 +601,7 @@ static const struct wined3d_gpu_description gpu_description_table[] =
     {HW_VENDOR_INTEL,      CARD_INTEL_HD620,               "Intel(R) HD Graphics 620",                                  DRIVER_INTEL_HD4000,  3072},
     {HW_VENDOR_INTEL,      CARD_INTEL_HD630_1,             "Intel(R) HD Graphics 630",                                  DRIVER_INTEL_HD4000,  3072},
     {HW_VENDOR_INTEL,      CARD_INTEL_HD630_2,             "Intel(R) HD Graphics 630",                                  DRIVER_INTEL_HD4000,  3072},
+    {HW_VENDOR_INTEL,      CARD_INTEL_UHD630,              "Intel(R) UHD Graphics 630",                                 DRIVER_INTEL_HD4000,  3072},
 };
 
 static const struct driver_version_information *get_driver_version_info(enum wined3d_display_driver driver,
