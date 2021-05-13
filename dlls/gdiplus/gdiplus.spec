@@ -201,7 +201,7 @@
 201 stdcall GdipEnumerateMetafileSrcRectDestPoints(ptr ptr ptr long ptr long ptr ptr ptr)
 202 stub GdipEnumerateMetafileSrcRectDestPointsI
 203 stdcall GdipEnumerateMetafileSrcRectDestRect(ptr ptr ptr ptr long ptr ptr ptr)
-204 stub GdipEnumerateMetafileSrcRectDestRectI
+204 stdcall GdipEnumerateMetafileSrcRectDestRectI(ptr ptr ptr ptr long ptr ptr ptr)
 205 stdcall GdipFillClosedCurve2(ptr ptr ptr long float long)
 206 stdcall GdipFillClosedCurve2I(ptr ptr ptr long float long)
 207 stdcall GdipFillClosedCurve(ptr ptr ptr long)

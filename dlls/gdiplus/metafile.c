@@ -3666,6 +3666,25 @@ GpStatus WINGDIPAPI GdipEnumerateMetafileSrcRectDestRect( GpGraphics *graphics,
     return GdipEnumerateMetafileSrcRectDestPoints(graphics, metafile, points, 3,
         src, srcUnit, callback, cb_data, attrs);
 }
+GpStatus WINGDIPAPI GdipEnumerateMetafileSrcRectDestRectI( GpGraphics * graphics,
+	GDIPCONST GpMetafile *metafile, GDIPCONST Rect *destRect,
+	GDIPCONST Rect *srcRect, Unit srcUnit, EnumerateMetafileProc callback,
+	VOID *cb_data, GDIPCONST GpImageAttributes *attrs )
+{
+    GpRectF destRectF, srcRectF;
+
+    destRectF.X = destRect->X;
+    destRectF.Y = destRect->Y;
+    destRectF.Width = destRect->Width;
+    destRectF.Height = destRect->Height;
+
+    srcRectF.X = srcRect->X;
+    srcRectF.Y = srcRect->Y;
+    srcRectF.Width = srcRect->Width;
+    srcRectF.Height = srcRect->Height;
+
+    return GdipEnumerateMetafileSrcRectDestRect( graphics, metafile, &destRectF, &srcRectF, srcUnit, callback, cb_data, attrs);
+}
 
 GpStatus WINGDIPAPI GdipEnumerateMetafileDestRect(GpGraphics *graphics,
     GDIPCONST GpMetafile *metafile, GDIPCONST GpRectF *dest,
