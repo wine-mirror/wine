@@ -583,7 +583,7 @@ static void release_display_device_init_mutex( HANDLE mutex )
 }
 
 /* Wait until graphics driver is loaded by explorer */
-static void wait_graphics_driver_ready(void)
+void wait_graphics_driver_ready(void)
 {
     static BOOL ready = FALSE;
 

@@ -55,7 +55,7 @@ static BOOL load_desktop_driver( HWND hwnd, HMODULE *module )
     USER_CheckNotLock();
 
     strcpy( driver_load_error, "The explorer process failed to start." );  /* default error */
-    SendMessageW( hwnd, WM_NULL, 0, 0 );  /* wait for the desktop process to be ready */
+    wait_graphics_driver_ready();
 
     guid_atom = HandleToULong( GetPropW( hwnd, L"__wine_display_device_guid" ));
     lstrcpyW( key, L"System\\CurrentControlSet\\Control\\Video\\{" );
