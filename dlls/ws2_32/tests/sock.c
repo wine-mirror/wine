@@ -4391,35 +4391,35 @@ static void test_oob_events(struct event_test_ctx *ctx)
     ret = send(client, "a", 1, MSG_OOB);
     ok(ret == 1, "got %d\n", ret);
 
-    check_events_todo_msg(ctx, FD_OOB, 0, 200);
-    check_events_todo(ctx, 0, 0, 0);
+    check_events(ctx, FD_OOB, 0, 200);
+    check_events(ctx, 0, 0, 0);
     select_events(ctx, server, FD_ACCEPT | FD_CLOSE | FD_CONNECT | FD_OOB | FD_READ);
     if (ctx->is_message)
-        check_events_todo_msg(ctx, FD_OOB, 0, 200);
-    check_events_todo(ctx, 0, 0, 0);
+        check_events(ctx, FD_OOB, 0, 200);
+    check_events(ctx, 0, 0, 0);
     select_events(ctx, server, 0);
     select_events(ctx, server, FD_ACCEPT | FD_CLOSE | FD_CONNECT | FD_OOB | FD_READ);
     if (ctx->is_message)
-        check_events_todo_msg(ctx, FD_OOB, 0, 200);
-    check_events_todo(ctx, 0, 0, 0);
+        check_events(ctx, FD_OOB, 0, 200);
+    check_events(ctx, 0, 0, 0);
 
     ret = send(client, "b", 1, MSG_OOB);
     ok(ret == 1, "got %d\n", ret);
 
     if (!ctx->is_message)
-        check_events(ctx, FD_OOB, 0, 200);
-    check_events_todo(ctx, 0, 0, 0);
+        check_events_todo_event(ctx, FD_OOB, 0, 200);
+    check_events(ctx, 0, 0, 0);
 
     ret = recv(server, buffer, 1, MSG_OOB);
     ok(ret == 1, "got %d\n", ret);
 
     check_events_todo(ctx, FD_OOB, 0, 200);
-    check_events_todo_msg(ctx, 0, 0, 0);
+    check_events(ctx, 0, 0, 0);
 
     ret = recv(server, buffer, 1, MSG_OOB);
     todo_wine ok(ret == 1, "got %d\n", ret);
 
-    check_events_todo_msg(ctx, 0, 0, 0);
+    check_events(ctx, 0, 0, 0);
 
     /* Send data while we're not selecting. */
 
@@ -4428,7 +4428,7 @@ static void test_oob_events(struct event_test_ctx *ctx)
     ok(ret == 1, "got %d\n", ret);
     select_events(ctx, server, FD_ACCEPT | FD_CLOSE | FD_CONNECT | FD_OOB | FD_READ);
 
-    check_events_todo_msg(ctx, FD_OOB, 0, 200);
+    check_events(ctx, FD_OOB, 0, 200);
 
     ret = recv(server, buffer, 1, MSG_OOB);
     ok(ret == 1, "got %d\n", ret);

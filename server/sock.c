@@ -627,9 +627,12 @@ static void post_socket_event( struct sock *sock, unsigned int event_bit, unsign
 {
     unsigned int event = (1 << event_bit);
 
-    sock->pending_events |= event;
-    sock->reported_events |= event;
-    sock->errors[event_bit] = error;
+    if (!(sock->reported_events & event))
+    {
+        sock->pending_events |= event;
+        sock->reported_events |= event;
+        sock->errors[event_bit] = error;
+    }
 }
 
 static void sock_dispatch_events( struct sock *sock, int prevstate, int event, int error )
