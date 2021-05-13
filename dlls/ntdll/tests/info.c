@@ -3133,6 +3133,9 @@ static void test_wow64(void)
     void *redir;
     SIZE_T res;
     TEB teb;
+    PEB peb;
+    TEB32 teb32;
+    PEB32 peb32;
 
     Wow64DisableWow64FsRedirection( &redir );
 
@@ -3161,13 +3164,38 @@ static void test_wow64(void)
             ok( (char *)teb.Tib.ExceptionList == (char *)info.TebBaseAddress + 0x2000,
                 "wrong Tib.ExceptionList %p / %p\n",
                 (char *)teb.Tib.ExceptionList, (char *)info.TebBaseAddress + 0x2000 );
+            if (!ReadProcessMemory( pi.hProcess, teb.Tib.ExceptionList, &teb32, sizeof(teb32), &res )) res = 0;
+            ok( res == sizeof(teb32), "wrong len %lx\n", res );
+            ok( (char *)ULongToPtr(teb32.Peb) == (char *)teb.Peb + 0x1000 ||
+                broken( ULongToPtr(teb32.Peb) != teb.Peb ), /* vista */
+                "wrong peb %p / %p\n", ULongToPtr(teb32.Peb), teb.Peb );
         }
 
         status = pNtQueryInformationProcess( pi.hProcess, ProcessBasicInformation,
                                              &proc_info, sizeof(proc_info), NULL );
         ok( !status, "ProcessBasicInformation failed %x\n", status );
-        todo_wine_if( sizeof(void *) > sizeof(int) )
         ok( proc_info.PebBaseAddress == teb.Peb, "wrong peb %p / %p\n", proc_info.PebBaseAddress, teb.Peb );
+
+        if (!ReadProcessMemory( pi.hProcess, proc_info.PebBaseAddress, &peb, sizeof(peb), &res )) res = 0;
+        ok( res == sizeof(peb), "wrong len %lx\n", res );
+        ok( !peb.BeingDebugged, "BeingDebugged is %u\n", peb.BeingDebugged );
+        if (!is_wow64)
+        {
+            if (!ReadProcessMemory( pi.hProcess, ULongToPtr(teb32.Peb), &peb32, sizeof(peb32), &res )) res = 0;
+            ok( res == sizeof(peb32), "wrong len %lx\n", res );
+            ok( !peb32.BeingDebugged, "BeingDebugged is %u\n", peb32.BeingDebugged );
+        }
+
+        ok( DebugActiveProcess( pi.dwProcessId ), "debugging failed\n" );
+        if (!ReadProcessMemory( pi.hProcess, proc_info.PebBaseAddress, &peb, sizeof(peb), &res )) res = 0;
+        ok( res == sizeof(peb), "wrong len %lx\n", res );
+        ok( peb.BeingDebugged == 1, "BeingDebugged is %u\n", peb.BeingDebugged );
+        if (!is_wow64)
+        {
+            if (!ReadProcessMemory( pi.hProcess, ULongToPtr(teb32.Peb), &peb32, sizeof(peb32), &res )) res = 0;
+            ok( res == sizeof(peb32), "wrong len %lx\n", res );
+            ok( peb32.BeingDebugged == 1, "BeingDebugged is %u\n", peb32.BeingDebugged );
+        }
 
         TerminateProcess( pi.hProcess, 0 );
         CloseHandle( pi.hProcess );
@@ -3196,7 +3224,6 @@ static void test_wow64(void)
                                              &proc_info, sizeof(proc_info), NULL );
         ok( !status, "ProcessBasicInformation failed %x\n", status );
         if (is_wow64)
-            todo_wine
             ok( !proc_info.PebBaseAddress ||
                 broken( (char *)proc_info.PebBaseAddress >= (char *)0x7f000000 ), /* vista */
                 "wrong peb %p\n", proc_info.PebBaseAddress );

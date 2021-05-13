@@ -999,6 +999,13 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
                             pbi.BasePriority = reply->priority;
                             pbi.UniqueProcessId = reply->pid;
                             pbi.InheritedFromUniqueProcessId = reply->ppid;
+                            if (is_wow64)
+                            {
+                                if (reply->machine != native_machine)
+                                    pbi.PebBaseAddress = (PEB *)((char *)pbi.PebBaseAddress + 0x1000);
+                                else
+                                    pbi.PebBaseAddress = NULL;
+                            }
                         }
                     }
                     SERVER_END_REQ;

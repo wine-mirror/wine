@@ -2813,8 +2813,8 @@ NTSTATUS virtual_create_builtin_view( void *module, const UNICODE_STRING *nt_nam
 /* set some initial values in the new PEB */
 static PEB *init_peb( void *ptr )
 {
-    PEB32 *peb32 = ptr;
-    PEB64 *peb64 = (PEB64 *)((char *)ptr + page_size);
+    PEB64 *peb64 = ptr;
+    PEB32 *peb32 = (PEB32 *)((char *)ptr + page_size);
 
     peb32->OSMajorVersion = peb64->OSMajorVersion = 6;
     peb32->OSMinorVersion = peb64->OSMinorVersion = 1;
@@ -2839,7 +2839,7 @@ static TEB *init_teb( void *ptr, PEB *peb, BOOL is_wow )
 
 #ifdef _WIN64
     teb = (TEB *)teb64;
-    teb32->Peb = PtrToUlong( (char *)peb - page_size );
+    teb32->Peb = PtrToUlong( (char *)peb + page_size );
     teb32->Tib.Self = PtrToUlong( teb32 );
     teb32->Tib.ExceptionList = ~0u;
     teb32->ActivationContextStackPointer = PtrToUlong( &teb32->ActivationContextStack );
@@ -2853,7 +2853,7 @@ static TEB *init_teb( void *ptr, PEB *peb, BOOL is_wow )
     if (is_wow) teb64->WowTebOffset = teb_offset;
 #else
     teb = (TEB *)teb32;
-    teb64->Peb = PtrToUlong( (char *)peb + page_size );
+    teb64->Peb = PtrToUlong( (char *)peb - page_size );
     teb64->Tib.Self = PtrToUlong( teb64 );
     teb64->Tib.ExceptionList = PtrToUlong( teb32 );
     teb64->ActivationContextStackPointer = PtrToUlong( &teb64->ActivationContextStack );

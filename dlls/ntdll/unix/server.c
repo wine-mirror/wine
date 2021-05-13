@@ -1638,7 +1638,7 @@ void server_init_process_done(void)
     SERVER_START_REQ( init_process_done )
     {
         req->teb      = wine_server_client_ptr( teb );
-        req->peb      = wine_server_client_ptr( NtCurrentTeb()->Peb );
+        req->peb      = NtCurrentTeb64() ? NtCurrentTeb64()->Peb : wine_server_client_ptr( peb );
 #ifdef __i386__
         req->ldt_copy = wine_server_client_ptr( &__wine_ldt_copy );
 #endif
