@@ -49,6 +49,7 @@ struct pulse_stream
     DWORD flags;
     AUDCLNT_SHAREMODE share;
     HANDLE event;
+    float vol[PA_CHANNELS_MAX];
 
     INT32 locked;
     UINT32 bufsize_frames, real_bufsize_bytes, period_bytes;
@@ -79,5 +80,6 @@ struct unix_funcs
     void (WINAPI *release_stream)(struct pulse_stream *stream, HANDLE timer);
     void (WINAPI *read)(struct pulse_stream *stream);
     HRESULT (WINAPI *stop)(struct pulse_stream *stream);
+    void (WINAPI *set_volumes)(struct pulse_stream *stream, const float *volumes);
     HRESULT (WINAPI *test_connect)(const char *name, struct pulse_config *config);
 };

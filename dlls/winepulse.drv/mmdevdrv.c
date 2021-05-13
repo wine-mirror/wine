@@ -264,7 +264,7 @@ static int write_buffer(const ACImpl *This, BYTE *buffer, UINT32 bytes)
     channels = This->pulse_stream->ss.channels;
     for (i = 0; i < channels; i++)
     {
-        vol[i] = This->vol[i] * This->session->master_vol * This->session->channel_vols[i];
+        vol[i] = This->pulse_stream->vol[i] * This->session->master_vol * This->session->channel_vols[i];
         adjust |= vol[i] != 1.0f;
     }
     if (!adjust) goto write;
@@ -524,6 +524,11 @@ static DWORD WINAPI pulse_timer_cb(void *user)
     }
 
     return 0;
+}
+
+static void set_stream_volumes(ACImpl *This)
+{
+    pulse->set_volumes(This->pulse_stream, This->vol);
 }
 
 HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, const WCHAR ***ids, GUID **keys,
@@ -870,6 +875,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     if (SUCCEEDED(hr)) {
         hr = get_audio_session(sessionguid, This->parent, This->channel_count, &This->session);
         if (SUCCEEDED(hr)) {
+            set_stream_volumes(This);
             list_add_tail(&This->session->clients, &This->entry);
         } else {
             pulse->release_stream(This->pulse_stream, NULL);
@@ -2038,6 +2044,7 @@ static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
     for (i = 0; i < count; ++i)
         This->vol[i] = levels[i];
 
+    set_stream_volumes(This);
 out:
     pulse->unlock();
     return hr;

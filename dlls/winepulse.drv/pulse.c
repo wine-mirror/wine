@@ -755,7 +755,7 @@ static HRESULT WINAPI pulse_create_stream(const char *name, EDataFlow dataflow, 
                                           struct pulse_stream **ret)
 {
     struct pulse_stream *stream;
-    unsigned int bufsize_bytes;
+    unsigned int i, bufsize_bytes;
     HRESULT hr;
 
     if (FAILED(hr = pulse_connect(name)))
@@ -765,6 +765,8 @@ static HRESULT WINAPI pulse_create_stream(const char *name, EDataFlow dataflow, 
         return E_OUTOFMEMORY;
 
     stream->dataflow = dataflow;
+    for (i = 0; i < ARRAY_SIZE(stream->vol); ++i)
+        stream->vol[i] = 1.f;
 
     hr = pulse_spec_from_waveformat(stream, fmt);
     TRACE("Obtaining format returns %08x\n", hr);
@@ -1002,6 +1004,14 @@ static HRESULT WINAPI pulse_stop(struct pulse_stream *stream)
     return hr;
 }
 
+static void WINAPI pulse_set_volumes(struct pulse_stream *stream, const float *volumes)
+{
+    unsigned int i;
+
+    for (i = 0; i < stream->ss.channels; i++)
+        stream->vol[i] = volumes[i];
+}
+
 static const struct unix_funcs unix_funcs =
 {
     pulse_lock,
@@ -1013,6 +1023,7 @@ static const struct unix_funcs unix_funcs =
     pulse_release_stream,
     pulse_read,
     pulse_stop,
+    pulse_set_volumes,
     pulse_test_connect,
 };
 
