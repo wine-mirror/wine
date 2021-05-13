@@ -1525,7 +1525,7 @@ static void wined3d_device_set_material(struct wined3d_device *device, const str
     TRACE("device %p, material %p.\n", device, material);
 
     device->cs->c.state->material = *material;
-    wined3d_cs_emit_set_material(device->cs, material);
+    wined3d_device_context_emit_set_material(&device->cs->c, material);
 }
 
 void CDECL wined3d_device_set_index_buffer(struct wined3d_device *device,
@@ -1840,7 +1840,7 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
         wined3d_device_context_emit_set_clip_plane(context, i, state->clip_planes + i);
     }
 
-    wined3d_cs_emit_set_material(device->cs, &state->material);
+    wined3d_device_context_emit_set_material(context, &state->material);
 
     wined3d_device_context_emit_set_viewports(context, state->viewport_count, state->viewports);
     wined3d_device_context_emit_set_scissor_rects(context, state->scissor_rect_count, state->scissor_rects);

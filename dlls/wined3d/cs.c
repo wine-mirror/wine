@@ -1957,15 +1957,16 @@ static void wined3d_cs_exec_set_material(struct wined3d_cs *cs, const void *data
     device_invalidate_state(cs->c.device, STATE_MATERIAL);
 }
 
-void wined3d_cs_emit_set_material(struct wined3d_cs *cs, const struct wined3d_material *material)
+void wined3d_device_context_emit_set_material(struct wined3d_device_context *context,
+        const struct wined3d_material *material)
 {
     struct wined3d_cs_set_material *op;
 
-    op = wined3d_device_context_require_space(&cs->c, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_SET_MATERIAL;
     op->material = *material;
 
-    wined3d_device_context_submit(&cs->c, WINED3D_CS_QUEUE_DEFAULT);
+    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
 static void wined3d_cs_exec_set_light(struct wined3d_cs *cs, const void *data)
