@@ -1469,7 +1469,7 @@ static void wined3d_device_set_light_enable(struct wined3d_device *device, UINT 
     }
 
     wined3d_light_state_enable_light(light_state, &device->adapter->d3d_info, light_info, enable);
-    wined3d_cs_emit_set_light_enable(device->cs, light_idx, enable);
+    wined3d_device_context_emit_set_light_enable(&device->cs->c, light_idx, enable);
 }
 
 static HRESULT wined3d_device_set_clip_plane(struct wined3d_device *device,
@@ -1850,7 +1850,7 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
         LIST_FOR_EACH_ENTRY(light, &state->light_state.light_map[i], struct wined3d_light_info, entry)
         {
             wined3d_device_set_light(device, light->OriginalIndex, &light->OriginalParms);
-            wined3d_cs_emit_set_light_enable(device->cs, light->OriginalIndex, light->glIndex != -1);
+            wined3d_device_context_emit_set_light_enable(context, light->OriginalIndex, light->glIndex != -1);
         }
     }
 

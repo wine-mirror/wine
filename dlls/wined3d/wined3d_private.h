@@ -4749,7 +4749,6 @@ void wined3d_cs_emit_reset_state(struct wined3d_cs *cs) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_color_key(struct wined3d_cs *cs, struct wined3d_texture *texture,
         WORD flags, const struct wined3d_color_key *color_key) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_light(struct wined3d_cs *cs, const struct wined3d_light_info *light) DECLSPEC_HIDDEN;
-void wined3d_cs_emit_set_light_enable(struct wined3d_cs *cs, unsigned int idx, BOOL enable) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_render_state(struct wined3d_cs *cs,
         enum wined3d_render_state state, DWORD value) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_stream_source_freq(struct wined3d_cs *cs, UINT stream_idx,
@@ -4800,6 +4799,8 @@ void wined3d_device_context_emit_set_feature_level(struct wined3d_device_context
         enum wined3d_feature_level level) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_index_buffer(struct wined3d_device_context *context, struct wined3d_buffer *buffer,
         enum wined3d_format_id format_id, unsigned int offset) DECLSPEC_HIDDEN;
+void wined3d_device_context_emit_set_light_enable(struct wined3d_device_context *context, unsigned int idx,
+        BOOL enable) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_material(struct wined3d_device_context *context,
         const struct wined3d_material *material) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_predication(struct wined3d_device_context *context,

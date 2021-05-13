@@ -2039,16 +2039,16 @@ static void wined3d_cs_exec_set_light_enable(struct wined3d_cs *cs, const void *
     }
 }
 
-void wined3d_cs_emit_set_light_enable(struct wined3d_cs *cs, unsigned int idx, BOOL enable)
+void wined3d_device_context_emit_set_light_enable(struct wined3d_device_context *context, unsigned int idx, BOOL enable)
 {
     struct wined3d_cs_set_light_enable *op;
 
-    op = wined3d_device_context_require_space(&cs->c, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_SET_LIGHT_ENABLE;
     op->idx = idx;
     op->enable = enable;
 
-    wined3d_device_context_submit(&cs->c, WINED3D_CS_QUEUE_DEFAULT);
+    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
 static void wined3d_cs_exec_set_feature_level(struct wined3d_cs *cs, const void *data)
