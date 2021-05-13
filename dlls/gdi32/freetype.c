@@ -1540,9 +1540,10 @@ static UINT parse_aa_pattern( FcPattern *pattern )
 
 static FcPattern *create_family_pattern( const char *name, FcPattern **cached )
 {
-    FcPattern *ret = NULL, *tmp, *pattern = pFcPatternCreate();
+    FcPattern *ret = NULL, *tmp, *pattern;
     FcResult result;
     if (*cached) return *cached;
+    pattern = pFcPatternCreate();
     pFcPatternAddString( pattern, FC_FAMILY, (const FcChar8 *)name );
     pFcPatternAddString( pattern, FC_NAMELANG, (const FcChar8 *)"en-us" );
     pFcPatternAddString( pattern, FC_PRGNAME, (const FcChar8 *)"wine" );
