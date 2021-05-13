@@ -901,6 +901,22 @@ BOOL get_thread_times(int unix_pid, int unix_tid, LARGE_INTEGER *kernel_time, LA
 #endif
 }
 
+static BOOL is_process_wow64( const CLIENT_ID *id )
+{
+    HANDLE handle;
+    ULONG_PTR info;
+    BOOL ret = FALSE;
+
+    if (id->UniqueProcess == ULongToHandle(GetCurrentProcessId())) return is_wow64;
+    if (!NtOpenProcess( &handle, PROCESS_QUERY_LIMITED_INFORMATION, NULL, id ))
+    {
+        if (!NtQueryInformationProcess( handle, ProcessWow64Information, &info, sizeof(info), NULL ))
+            ret = !!info;
+        NtClose( handle );
+    }
+    return ret;
+}
+
 /******************************************************************************
  *              NtQueryInformationThread  (NTDLL.@)
  */
@@ -935,6 +951,13 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
         SERVER_END_REQ;
         if (status == STATUS_SUCCESS)
         {
+            if (is_wow64)
+            {
+                if (is_process_wow64( &info.ClientId ))
+                    info.TebBaseAddress = (char *)info.TebBaseAddress + teb_offset;
+                else
+                    info.TebBaseAddress = NULL;
+            }
             if (data) memcpy( data, &info, min( length, sizeof(info) ));
             if (ret_len) *ret_len = min( length, sizeof(info) );
         }

@@ -3144,7 +3144,6 @@ static void test_wow64(void)
         ok( !status, "ThreadBasicInformation failed %x\n", status );
         if (!ReadProcessMemory( pi.hProcess, info.TebBaseAddress, &teb, sizeof(teb), &res )) res = 0;
         ok( res == sizeof(teb), "wrong len %lx\n", res );
-        todo_wine_if( sizeof(void *) > sizeof(int) )
         ok( teb.Tib.Self == info.TebBaseAddress, "wrong teb %p / %p\n", teb.Tib.Self, info.TebBaseAddress );
         if (is_wow64)
         {
@@ -3156,11 +3155,9 @@ static void test_wow64(void)
         else
         {
             ok( !teb.GdiBatchCount, "GdiBatchCount set\n" );
-            todo_wine
             ok( teb.WowTebOffset == 0x2000 ||
                 broken( !teb.WowTebOffset || teb.WowTebOffset == 1 ),  /* pre-win10 */
                 "wrong teb offset %d\n", teb.WowTebOffset );
-            todo_wine
             ok( (char *)teb.Tib.ExceptionList == (char *)info.TebBaseAddress + 0x2000,
                 "wrong Tib.ExceptionList %p / %p\n",
                 (char *)teb.Tib.ExceptionList, (char *)info.TebBaseAddress + 0x2000 );
@@ -3193,7 +3190,7 @@ static void test_wow64(void)
             ok( !teb.WowTebOffset || broken( teb.WowTebOffset == 1 ),  /* vista */
                 "wrong teb offset %d\n", teb.WowTebOffset );
         }
-        else todo_wine ok( !info.TebBaseAddress, "got teb %p\n", info.TebBaseAddress );
+        else ok( !info.TebBaseAddress, "got teb %p\n", info.TebBaseAddress );
 
         status = pNtQueryInformationProcess( pi.hProcess, ProcessBasicInformation,
                                              &proc_info, sizeof(proc_info), NULL );

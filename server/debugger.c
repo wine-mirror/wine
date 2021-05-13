@@ -134,7 +134,7 @@ static const struct object_ops debug_obj_ops =
 /* get a pointer to TEB->ArbitraryUserPointer in the client address space */
 static client_ptr_t get_teb_user_ptr( struct thread *thread )
 {
-    unsigned int ptr_size = is_machine_64bit( thread->process->machine ) ? 8 : 4;
+    unsigned int ptr_size = is_machine_64bit( supported_machines[0] ) ? 8 : 4;
     return thread->teb + 5 * ptr_size;
 }
 
