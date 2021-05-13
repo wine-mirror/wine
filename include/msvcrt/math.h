@@ -166,7 +166,20 @@ static inline float fmodf(float x, float y) { return fmod(x, y); }
 
 static inline int   _finitef(float x) { return _finite(x); }
 static inline int   _isnanf(float x) { return _isnan(x); }
-static inline int   _fpclassf(float x) { return _fpclass(x); }
+
+static inline int   _fpclassf(float x)
+{
+    unsigned int ix = *(int*)&x;
+    double d = x;
+
+    /* construct denormal double */
+    if (!(ix >> 23 & 0xff) && (ix << 1))
+    {
+        unsigned __int64 id = (((unsigned __int64)ix >> 31) << 63) | 1;
+        d = *(double*)&id;
+    }
+    return _fpclass(d);
+}
 
 #endif
 
