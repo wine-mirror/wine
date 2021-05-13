@@ -4757,8 +4757,6 @@ void wined3d_cs_emit_set_render_state(struct wined3d_cs *cs,
         enum wined3d_render_state state, DWORD value) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_stream_source_freq(struct wined3d_cs *cs, UINT stream_idx,
         UINT frequency, UINT flags) DECLSPEC_HIDDEN;
-void wined3d_cs_emit_set_transform(struct wined3d_cs *cs, enum wined3d_transform_state state,
-        const struct wined3d_matrix *matrix) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_unload_resource(struct wined3d_cs *cs, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void wined3d_cs_init_object(struct wined3d_cs *cs,
         void (*callback)(void *object), void *object) DECLSPEC_HIDDEN;
@@ -4828,6 +4826,8 @@ void wined3d_device_context_emit_set_texture(struct wined3d_device_context *cont
         struct wined3d_texture *texture) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_texture_state(struct wined3d_device_context *context, unsigned int stage,
         enum wined3d_texture_stage_state state, unsigned int value) DECLSPEC_HIDDEN;
+void wined3d_device_context_emit_set_transform(struct wined3d_device_context *context,
+        enum wined3d_transform_state state, const struct wined3d_matrix *matrix) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_unordered_access_view(struct wined3d_device_context *context,
         enum wined3d_pipeline pipeline, unsigned int view_idx, struct wined3d_unordered_access_view *view,
         unsigned int initial_count) DECLSPEC_HIDDEN;

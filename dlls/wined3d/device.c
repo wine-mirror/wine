@@ -1330,7 +1330,7 @@ static void wined3d_device_set_transform(struct wined3d_device *device,
     }
 
     device->cs->c.state->transforms[state] = *matrix;
-    wined3d_cs_emit_set_transform(device->cs, state, matrix);
+    wined3d_device_context_emit_set_transform(&device->cs->c, state, matrix);
 }
 
 static void wined3d_device_get_transform(const struct wined3d_device *device,
@@ -1832,7 +1832,7 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
 
     for (i = 0; i < WINED3D_HIGHEST_TRANSFORM_STATE + 1; ++i)
     {
-        wined3d_cs_emit_set_transform(device->cs, i, state->transforms + i);
+        wined3d_device_context_emit_set_transform(context, i, state->transforms + i);
     }
 
     for (i = 0; i < WINED3D_MAX_CLIP_DISTANCES; ++i)
