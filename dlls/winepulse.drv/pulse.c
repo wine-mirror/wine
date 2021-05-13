@@ -851,6 +851,106 @@ static void WINAPI pulse_release_stream(struct pulse_stream *stream, HANDLE time
     RtlFreeHeap(GetProcessHeap(), 0, stream);
 }
 
+static void WINAPI pulse_read(struct pulse_stream *stream)
+{
+    size_t bytes = pa_stream_readable_size(stream->stream);
+
+    TRACE("Readable total: %zu, fragsize: %u\n", bytes, pa_stream_get_buffer_attr(stream->stream)->fragsize);
+
+    bytes += stream->peek_len - stream->peek_ofs;
+
+    while (bytes >= stream->period_bytes)
+    {
+        BYTE *dst = NULL, *src;
+        size_t src_len, copy, rem = stream->period_bytes;
+
+        if (stream->started)
+        {
+            LARGE_INTEGER stamp, freq;
+            ACPacket *p, *next;
+
+            if (!(p = (ACPacket*)list_head(&stream->packet_free_head)))
+            {
+                p = (ACPacket*)list_head(&stream->packet_filled_head);
+                if (!p) return;
+                if (!p->discont) {
+                    next = (ACPacket*)p->entry.next;
+                    next->discont = 1;
+                } else
+                    p = (ACPacket*)list_tail(&stream->packet_filled_head);
+            }
+            else
+            {
+                stream->held_bytes += stream->period_bytes;
+            }
+            NtQueryPerformanceCounter(&stamp, &freq);
+            p->qpcpos = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
+            p->discont = 0;
+            list_remove(&p->entry);
+            list_add_tail(&stream->packet_filled_head, &p->entry);
+
+            dst = p->data;
+        }
+
+        while (rem)
+        {
+            if (stream->peek_len)
+            {
+                copy = min(rem, stream->peek_len - stream->peek_ofs);
+
+                if (dst)
+                {
+                    memcpy(dst, stream->peek_buffer + stream->peek_ofs, copy);
+                    dst += copy;
+                }
+
+                rem -= copy;
+                stream->peek_ofs += copy;
+                if(stream->peek_len == stream->peek_ofs)
+                    stream->peek_len = stream->peek_ofs = 0;
+
+            }
+            else if (pa_stream_peek(stream->stream, (const void**)&src, &src_len) == 0 && src_len)
+            {
+                copy = min(rem, src_len);
+
+                if (dst) {
+                    if(src)
+                        memcpy(dst, src, copy);
+                    else
+                        silence_buffer(stream->ss.format, dst, copy);
+
+                    dst += copy;
+                }
+
+                rem -= copy;
+
+                if (copy < src_len)
+                {
+                    if (src_len > stream->peek_buffer_len)
+                    {
+                        RtlFreeHeap(GetProcessHeap(), 0, stream->peek_buffer);
+                        stream->peek_buffer = RtlAllocateHeap(GetProcessHeap(), 0, src_len);
+                        stream->peek_buffer_len = src_len;
+                    }
+
+                    if(src)
+                        memcpy(stream->peek_buffer, src + copy, src_len - copy);
+                    else
+                        silence_buffer(stream->ss.format, stream->peek_buffer, src_len - copy);
+
+                    stream->peek_len = src_len - copy;
+                    stream->peek_ofs = 0;
+                }
+
+                pa_stream_drop(stream->stream);
+            }
+        }
+
+        bytes -= stream->period_bytes;
+    }
+}
+
 static const struct unix_funcs unix_funcs =
 {
     pulse_lock,
@@ -860,6 +960,7 @@ static const struct unix_funcs unix_funcs =
     pulse_main_loop,
     pulse_create_stream,
     pulse_release_stream,
+    pulse_read,
     pulse_test_connect,
 };
 

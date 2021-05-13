@@ -434,96 +434,6 @@ static void pulse_write(ACImpl *This)
     This->pulse_stream->pa_held_bytes -= to_write;
 }
 
-static void pulse_read(ACImpl *This)
-{
-    size_t bytes = pa_stream_readable_size(This->pulse_stream->stream);
-
-    TRACE("Readable total: %zu, fragsize: %u\n", bytes, pa_stream_get_buffer_attr(This->pulse_stream->stream)->fragsize);
-
-    bytes += This->pulse_stream->peek_len - This->pulse_stream->peek_ofs;
-
-    while (bytes >= This->pulse_stream->period_bytes) {
-        BYTE *dst = NULL, *src;
-        size_t src_len, copy, rem = This->pulse_stream->period_bytes;
-
-        if (This->pulse_stream->started) {
-            LARGE_INTEGER stamp, freq;
-            ACPacket *p, *next;
-
-            if (!(p = (ACPacket*)list_head(&This->pulse_stream->packet_free_head))) {
-                p = (ACPacket*)list_head(&This->pulse_stream->packet_filled_head);
-                if (!p) return;
-                if (!p->discont) {
-                    next = (ACPacket*)p->entry.next;
-                    next->discont = 1;
-                } else
-                    p = (ACPacket*)list_tail(&This->pulse_stream->packet_filled_head);
-            } else {
-                This->pulse_stream->held_bytes += This->pulse_stream->period_bytes;
-            }
-            QueryPerformanceCounter(&stamp);
-            QueryPerformanceFrequency(&freq);
-            p->qpcpos = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
-            p->discont = 0;
-            list_remove(&p->entry);
-            list_add_tail(&This->pulse_stream->packet_filled_head, &p->entry);
-
-            dst = p->data;
-        }
-
-        while (rem) {
-            if (This->pulse_stream->peek_len) {
-                copy = min(rem, This->pulse_stream->peek_len - This->pulse_stream->peek_ofs);
-
-                if (dst) {
-                    memcpy(dst, This->pulse_stream->peek_buffer + This->pulse_stream->peek_ofs, copy);
-                    dst += copy;
-                }
-
-                rem -= copy;
-                This->pulse_stream->peek_ofs += copy;
-                if(This->pulse_stream->peek_len == This->pulse_stream->peek_ofs)
-                    This->pulse_stream->peek_len = This->pulse_stream->peek_ofs = 0;
-
-            } else if (pa_stream_peek(This->pulse_stream->stream, (const void**)&src, &src_len) == 0 && src_len) {
-
-                copy = min(rem, src_len);
-
-                if (dst) {
-                    if(src)
-                        memcpy(dst, src, copy);
-                    else
-                        silence_buffer(This->pulse_stream->ss.format, dst, copy);
-
-                    dst += copy;
-                }
-
-                rem -= copy;
-
-                if (copy < src_len) {
-                    if (src_len > This->pulse_stream->peek_buffer_len) {
-                        HeapFree(GetProcessHeap(), 0, This->pulse_stream->peek_buffer);
-                        This->pulse_stream->peek_buffer = HeapAlloc(GetProcessHeap(), 0, src_len);
-                        This->pulse_stream->peek_buffer_len = src_len;
-                    }
-
-                    if(src)
-                        memcpy(This->pulse_stream->peek_buffer, src + copy, src_len - copy);
-                    else
-                        silence_buffer(This->pulse_stream->ss.format, This->pulse_stream->peek_buffer, src_len - copy);
-
-                    This->pulse_stream->peek_len = src_len - copy;
-                    This->pulse_stream->peek_ofs = 0;
-                }
-
-                pa_stream_drop(This->pulse_stream->stream);
-            }
-        }
-
-        bytes -= This->pulse_stream->period_bytes;
-    }
-}
-
 static DWORD WINAPI pulse_timer_cb(void *user)
 {
     LARGE_INTEGER delay;
@@ -595,7 +505,7 @@ static DWORD WINAPI pulse_timer_cb(void *user)
                     This->pulse_stream->lcl_offs_bytes %= This->pulse_stream->real_bufsize_bytes;
                     This->pulse_stream->held_bytes -= adv_bytes;
                 }else if(This->dataflow == eCapture){
-                    pulse_read(This);
+                    pulse->read(This->pulse_stream);
                 }
             }else{
                 This->pulse_stream->last_time = now;

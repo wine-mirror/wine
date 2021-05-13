@@ -77,5 +77,6 @@ struct unix_funcs
                                     const WAVEFORMATEX *fmt, UINT32 *channel_count,
                                     struct pulse_stream **ret);
     void (WINAPI *release_stream)(struct pulse_stream *stream, HANDLE timer);
+    void (WINAPI *read)(struct pulse_stream *stream);
     HRESULT (WINAPI *test_connect)(const char *name, struct pulse_config *config);
 };
