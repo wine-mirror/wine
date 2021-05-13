@@ -2369,10 +2369,13 @@ int CDECL fesetexceptflag(const fexcept_t *status, int excepts)
     fegetenv(&env);
 #if _MSVCR_VER>=140 && (defined(__i386__) || defined(__x86_64__))
     env._Fe_stat &= ~fenv_encode(excepts, excepts);
-    env._Fe_stat |= fenv_encode(*status & excepts, *status & excepts);
+    env._Fe_stat |= *status & fenv_encode(excepts, excepts);
+#elif _MSVCR_VER>=140
+    env._Fe_stat &= ~fenv_encode(0, excepts);
+    env._Fe_stat |= *status & fenv_encode(0, excepts);
 #else
     env._Fe_stat &= ~excepts;
-    env._Fe_stat |= (*status & excepts);
+    env._Fe_stat |= *status & excepts;
 #endif
     return fesetenv(&env);
 }
@@ -2418,7 +2421,15 @@ int CDECL feclearexcept(int flags)
  */
 int CDECL fegetexceptflag(fexcept_t *status, int excepts)
 {
+#if _MSVCR_VER>=140 && defined(__i386__)
+    unsigned int x87, sse;
+    _statusfp2(&x87, &sse);
+    *status = fenv_encode(x87 & excepts, sse & excepts);
+#elif _MSVCR_VER>=140
+    *status = fenv_encode(0, _statusfp() & excepts);
+#else
     *status = _statusfp() & excepts;
+#endif
     return 0;
 }
 #endif
