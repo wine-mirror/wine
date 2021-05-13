@@ -2227,6 +2227,16 @@ int CDECL fegetenv(fenv_t *env)
 }
 
 /*********************************************************************
+ *		feupdateenv (MSVCR120.@)
+ */
+int CDECL feupdateenv(const fenv_t *env)
+{
+    fenv_t set = *env;
+    set._Fe_stat |= _statusfp();
+    return fesetenv(&set);
+}
+
+/*********************************************************************
  *      fetestexcept (MSVCR120.@)
  */
 int CDECL fetestexcept(int flags)

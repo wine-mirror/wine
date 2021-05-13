@@ -1821,7 +1821,7 @@
 @ cdecl fesetexceptflag(ptr long) msvcr120.fesetexceptflag
 @ cdecl fesetround(long) msvcr120.fesetround
 @ cdecl fetestexcept(long) msvcr120.fetestexcept
-@ stub feupdateenv
+@ cdecl feupdateenv(ptr) msvcr120.feupdateenv
 @ cdecl fflush(ptr) msvcr120.fflush
 @ cdecl fgetc(ptr) msvcr120.fgetc
 @ cdecl fgetpos(ptr ptr) msvcr120.fgetpos
