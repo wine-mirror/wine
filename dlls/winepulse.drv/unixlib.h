@@ -78,5 +78,6 @@ struct unix_funcs
                                     struct pulse_stream **ret);
     void (WINAPI *release_stream)(struct pulse_stream *stream, HANDLE timer);
     void (WINAPI *read)(struct pulse_stream *stream);
+    HRESULT (WINAPI *stop)(struct pulse_stream *stream);
     HRESULT (WINAPI *test_connect)(const char *name, struct pulse_config *config);
 };

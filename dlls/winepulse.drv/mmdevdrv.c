@@ -1223,40 +1223,12 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
 static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    HRESULT hr = S_OK;
-    pa_operation *o;
-    int success;
-
     TRACE("(%p)\n", This);
 
-    pulse->lock();
-    hr = pulse_stream_valid(This);
-    if (FAILED(hr)) {
-        pulse->unlock();
-        return hr;
-    }
+    if (!This->pulse_stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
 
-    if (!This->pulse_stream->started) {
-        pulse->unlock();
-        return S_FALSE;
-    }
-
-    if (This->dataflow == eRender) {
-        o = pa_stream_cork(This->pulse_stream->stream, 1, pulse_op_cb, &success);
-        if (o) {
-            while(pa_operation_get_state(o) == PA_OPERATION_RUNNING)
-                pulse->cond_wait();
-            pa_operation_unref(o);
-        } else
-            success = 0;
-        if (!success)
-            hr = E_FAIL;
-    }
-    if (SUCCEEDED(hr)) {
-        This->pulse_stream->started = FALSE;
-    }
-    pulse->unlock();
-    return hr;
+    return pulse->stop(This->pulse_stream);
 }
 
 static HRESULT WINAPI AudioClient_Reset(IAudioClient3 *iface)

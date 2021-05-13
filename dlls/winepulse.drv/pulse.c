@@ -200,9 +200,21 @@ static void pulse_started_callback(pa_stream *s, void *userdata)
     TRACE("%p: (Re)started playing\n", userdata);
 }
 
+static void pulse_op_cb(pa_stream *s, int success, void *user)
+{
+    TRACE("Success: %i\n", success);
+    *(int*)user = success;
+    pulse_broadcast();
+}
+
 static void silence_buffer(pa_sample_format_t format, BYTE *buffer, UINT32 bytes)
 {
     memset(buffer, format == PA_SAMPLE_U8 ? 0x80 : 0, bytes);
+}
+
+static BOOL pulse_stream_valid(struct pulse_stream *stream)
+{
+    return pa_stream_get_state(stream->stream) == PA_STREAM_READY;
 }
 
 static HRESULT pulse_connect(const char *name)
@@ -951,6 +963,45 @@ static void WINAPI pulse_read(struct pulse_stream *stream)
     }
 }
 
+static HRESULT WINAPI pulse_stop(struct pulse_stream *stream)
+{
+    HRESULT hr = S_OK;
+    pa_operation *o;
+    int success;
+
+    pulse_lock();
+    if (!pulse_stream_valid(stream))
+    {
+        pulse_unlock();
+        return AUDCLNT_E_DEVICE_INVALIDATED;
+    }
+
+    if (!stream->started)
+    {
+        pulse_unlock();
+        return S_FALSE;
+    }
+
+    if (stream->dataflow == eRender)
+    {
+        o = pa_stream_cork(stream->stream, 1, pulse_op_cb, &success);
+        if (o)
+        {
+            while(pa_operation_get_state(o) == PA_OPERATION_RUNNING)
+                pulse_cond_wait();
+            pa_operation_unref(o);
+        }
+        else
+            success = 0;
+        if (!success)
+            hr = E_FAIL;
+    }
+    if (SUCCEEDED(hr))
+        stream->started = FALSE;
+    pulse_unlock();
+    return hr;
+}
+
 static const struct unix_funcs unix_funcs =
 {
     pulse_lock,
@@ -961,6 +1012,7 @@ static const struct unix_funcs unix_funcs =
     pulse_create_stream,
     pulse_release_stream,
     pulse_read,
+    pulse_stop,
     pulse_test_connect,
 };
 
