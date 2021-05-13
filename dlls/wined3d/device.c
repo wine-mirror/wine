@@ -1493,7 +1493,7 @@ static HRESULT wined3d_device_set_clip_plane(struct wined3d_device *device,
 
     clip_planes[plane_idx] = *plane;
 
-    wined3d_cs_emit_set_clip_plane(device->cs, plane_idx, plane);
+    wined3d_device_context_emit_set_clip_plane(&device->cs->c, plane_idx, plane);
 
     return WINED3D_OK;
 }
@@ -1837,7 +1837,7 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
 
     for (i = 0; i < WINED3D_MAX_CLIP_DISTANCES; ++i)
     {
-        wined3d_cs_emit_set_clip_plane(device->cs, i, state->clip_planes + i);
+        wined3d_device_context_emit_set_clip_plane(context, i, state->clip_planes + i);
     }
 
     wined3d_cs_emit_set_material(device->cs, &state->material);
