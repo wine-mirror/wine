@@ -413,7 +413,7 @@ static void sock_wake_up( struct sock *sock )
         for (i = 0; i < FD_MAX_EVENTS; i++)
         {
             int event = event_bitorder[i];
-            if (sock->pending_events & (1 << event))
+            if (events & (1 << event))
             {
                 lparam_t lparam = (1 << event) | (sock->errors[event] << 16);
                 post_message( sock->window, sock->message, sock->wparam, lparam );

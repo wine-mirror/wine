@@ -4177,7 +4177,7 @@ static void test_connect_events(struct event_test_ctx *ctx)
     server = accept(listener, NULL, NULL);
     ok(server != -1, "failed to accept, error %u\n", WSAGetLastError());
 
-    check_events_todo_msg(ctx, FD_WRITE, 0, 200);
+    check_events(ctx, FD_WRITE, 0, 200);
 
     select_events(ctx, client, FD_ACCEPT | FD_CLOSE | FD_CONNECT | FD_OOB | FD_READ | FD_WRITE);
 
