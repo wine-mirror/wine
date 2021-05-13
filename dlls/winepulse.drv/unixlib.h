@@ -81,6 +81,6 @@ struct unix_funcs
     void (WINAPI *read)(struct pulse_stream *stream);
     HRESULT (WINAPI *stop)(struct pulse_stream *stream);
     void (WINAPI *set_volumes)(struct pulse_stream *stream, float master_volume,
-                               const float *volumes);
+                               const float *volumes, const float *session_volumes);
     HRESULT (WINAPI *test_connect)(const char *name, struct pulse_config *config);
 };

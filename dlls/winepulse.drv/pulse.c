@@ -1005,12 +1005,12 @@ static HRESULT WINAPI pulse_stop(struct pulse_stream *stream)
 }
 
 static void WINAPI pulse_set_volumes(struct pulse_stream *stream, float master_volume,
-                                     const float *volumes)
+                                     const float *volumes, const float *session_volumes)
 {
     unsigned int i;
 
     for (i = 0; i < stream->ss.channels; i++)
-        stream->vol[i] = volumes[i] * master_volume;
+        stream->vol[i] = volumes[i] * master_volume * session_volumes[i];
 }
 
 static const struct unix_funcs unix_funcs =

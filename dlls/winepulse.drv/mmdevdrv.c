@@ -248,7 +248,7 @@ static void silence_buffer(pa_sample_format_t format, BYTE *buffer, UINT32 bytes
 
 static int write_buffer(const ACImpl *This, BYTE *buffer, UINT32 bytes)
 {
-    float vol[PA_CHANNELS_MAX];
+    const float *vol = This->pulse_stream->vol;
     BOOL adjust = FALSE;
     UINT32 i, channels;
     BYTE *end;
@@ -263,10 +263,7 @@ static int write_buffer(const ACImpl *This, BYTE *buffer, UINT32 bytes)
     /* Adjust the buffer based on the volume for each channel */
     channels = This->pulse_stream->ss.channels;
     for (i = 0; i < channels; i++)
-    {
-        vol[i] = This->pulse_stream->vol[i] * This->session->channel_vols[i];
         adjust |= vol[i] != 1.0f;
-    }
     if (!adjust) goto write;
 
     end = buffer + bytes;
@@ -528,7 +525,8 @@ static DWORD WINAPI pulse_timer_cb(void *user)
 
 static void set_stream_volumes(ACImpl *This)
 {
-    pulse->set_volumes(This->pulse_stream, This->session->master_vol, This->vol);
+    pulse->set_volumes(This->pulse_stream, This->session->master_vol, This->vol,
+                       This->session->channel_vols);
 }
 
 HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, const WCHAR ***ids, GUID **keys,
@@ -2728,6 +2726,7 @@ static HRESULT WINAPI ChannelAudioVolume_SetChannelVolume(
 {
     AudioSessionWrapper *This = impl_from_IChannelAudioVolume(iface);
     AudioSession *session = This->session;
+    ACImpl *client;
 
     TRACE("(%p)->(%d, %f, %s)\n", session, index, level,
             wine_dbgstr_guid(context));
@@ -2745,6 +2744,8 @@ static HRESULT WINAPI ChannelAudioVolume_SetChannelVolume(
 
     pulse->lock();
     session->channel_vols[index] = level;
+    LIST_FOR_EACH_ENTRY(client, &This->session->clients, ACImpl, entry)
+        set_stream_volumes(client);
     pulse->unlock();
 
     return S_OK;
@@ -2775,6 +2776,7 @@ static HRESULT WINAPI ChannelAudioVolume_SetAllVolumes(
 {
     AudioSessionWrapper *This = impl_from_IChannelAudioVolume(iface);
     AudioSession *session = This->session;
+    ACImpl *client;
     int i;
 
     TRACE("(%p)->(%d, %p, %s)\n", session, count, levels,
@@ -2794,6 +2796,8 @@ static HRESULT WINAPI ChannelAudioVolume_SetAllVolumes(
     pulse->lock();
     for(i = 0; i < count; ++i)
         session->channel_vols[i] = levels[i];
+    LIST_FOR_EACH_ENTRY(client, &This->session->clients, ACImpl, entry)
+        set_stream_volumes(client);
     pulse->unlock();
     return S_OK;
 }
