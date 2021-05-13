@@ -1445,7 +1445,7 @@ static void wined3d_device_set_light(struct wined3d_device *device,
             FIXME("Unrecognized light type %#x.\n", light->type);
     }
 
-    wined3d_cs_emit_set_light(device->cs, object);
+    wined3d_device_context_emit_set_light(&device->cs->c, object);
 }
 
 static void wined3d_device_set_light_enable(struct wined3d_device *device, UINT light_idx, BOOL enable)
