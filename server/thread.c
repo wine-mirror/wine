@@ -1407,17 +1407,8 @@ DECL_HANDLER(init_first_thread)
 
     if (!init_thread( current, req->reply_fd, req->wait_fd )) return;
 
-    if (!is_valid_address(req->teb) || !is_valid_address(req->peb))
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        return;
-    }
-
     current->unix_pid = process->unix_pid = req->unix_pid;
     current->unix_tid = req->unix_tid;
-    current->teb      = req->teb;
-    process->peb      = req->peb;
-    process->ldt_copy = req->ldt_copy;
 
     if (!process->parent_id)
         process->affinity = current->affinity = get_thread_affinity( current );

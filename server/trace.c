@@ -1440,6 +1440,9 @@ static void dump_get_startup_info_reply( const struct get_startup_info_reply *re
 
 static void dump_init_process_done_request( const struct init_process_done_request *req )
 {
+    dump_uint64( " teb=", &req->teb );
+    dump_uint64( ", peb=", &req->peb );
+    dump_uint64( ", ldt_copy=", &req->ldt_copy );
 }
 
 static void dump_init_process_done_reply( const struct init_process_done_reply *req )
@@ -1453,9 +1456,6 @@ static void dump_init_first_thread_request( const struct init_first_thread_reque
     fprintf( stderr, " unix_pid=%d", req->unix_pid );
     fprintf( stderr, ", unix_tid=%d", req->unix_tid );
     fprintf( stderr, ", debug_level=%d", req->debug_level );
-    dump_uint64( ", teb=", &req->teb );
-    dump_uint64( ", peb=", &req->peb );
-    dump_uint64( ", ldt_copy=", &req->ldt_copy );
     fprintf( stderr, ", reply_fd=%d", req->reply_fd );
     fprintf( stderr, ", wait_fd=%d", req->wait_fd );
 }

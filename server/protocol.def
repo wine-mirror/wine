@@ -898,6 +898,9 @@ typedef struct
 
 /* Signal the end of the process initialization */
 @REQ(init_process_done)
+    client_ptr_t teb;          /* TEB of new thread (in process address space) */
+    client_ptr_t peb;          /* PEB of new process (in process address space) */
+    client_ptr_t ldt_copy;     /* address of LDT copy (in process address space) */
 @REPLY
     client_ptr_t entry;        /* process entry point */
     int          suspend;      /* is process suspended? */
@@ -909,9 +912,6 @@ typedef struct
     int          unix_pid;     /* Unix pid of new process */
     int          unix_tid;     /* Unix tid of new thread */
     int          debug_level;  /* new debug level */
-    client_ptr_t teb;          /* TEB of new thread (in process address space) */
-    client_ptr_t peb;          /* PEB of new process (in process address space) */
-    client_ptr_t ldt_copy;     /* address of LDT copy (in process address space) */
     int          reply_fd;     /* fd for reply pipe */
     int          wait_fd;      /* fd for blocking calls pipe */
 @REPLY

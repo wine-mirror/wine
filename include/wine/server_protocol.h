@@ -910,6 +910,9 @@ struct init_process_done_request
 {
     struct request_header __header;
     char __pad_12[4];
+    client_ptr_t teb;
+    client_ptr_t peb;
+    client_ptr_t ldt_copy;
 };
 struct init_process_done_reply
 {
@@ -927,9 +930,6 @@ struct init_first_thread_request
     int          unix_pid;
     int          unix_tid;
     int          debug_level;
-    client_ptr_t teb;
-    client_ptr_t peb;
-    client_ptr_t ldt_copy;
     int          reply_fd;
     int          wait_fd;
 };
@@ -6244,7 +6244,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 700
+#define SERVER_PROTOCOL_VERSION 701
 
 /* ### protocol_version end ### */
 

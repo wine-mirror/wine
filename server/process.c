@@ -1254,6 +1254,10 @@ DECL_HANDLER(init_process_done)
     }
     if (!(image_info = get_view_image_info( view, &base ))) return;
 
+    current->teb      = req->teb;
+    process->peb      = req->peb;
+    process->ldt_copy = req->ldt_copy;
+
     process->start_time = current_time;
     current->entry_point = image_info->entry_point;
 

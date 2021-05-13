@@ -1556,11 +1556,6 @@ size_t server_init_process(void)
     {
         req->unix_pid    = getpid();
         req->unix_tid    = get_unix_tid();
-        req->teb         = wine_server_client_ptr( NtCurrentTeb() );
-        req->peb         = wine_server_client_ptr( NtCurrentTeb()->Peb );
-#ifdef __i386__
-        req->ldt_copy    = wine_server_client_ptr( &__wine_ldt_copy );
-#endif
         req->reply_fd    = reply_pipe;
         req->wait_fd     = ntdll_get_thread_data()->wait_fd[1];
         req->debug_level = (TRACE_ON(server) != 0);
@@ -1640,6 +1635,11 @@ void server_init_process_done(void)
     /* Signal the parent process to continue */
     SERVER_START_REQ( init_process_done )
     {
+        req->teb      = wine_server_client_ptr( NtCurrentTeb() );
+        req->peb      = wine_server_client_ptr( NtCurrentTeb()->Peb );
+#ifdef __i386__
+        req->ldt_copy = wine_server_client_ptr( &__wine_ldt_copy );
+#endif
         status = wine_server_call( req );
         suspend = reply->suspend;
         entry = wine_server_get_ptr( reply->entry );
