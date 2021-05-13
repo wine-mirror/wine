@@ -64,8 +64,6 @@ struct dsound_render
     DWORD buf_size;
     DWORD last_playpos, writepos;
 
-    REFERENCE_TIME play_time;
-
     LONG volume;
     LONG pan;
 };
@@ -122,10 +120,9 @@ static void DSoundRender_UpdatePositions(struct dsound_render *This, DWORD *seqw
         old_writepos += This->buf_size;
 
     IDirectSoundBuffer_GetCurrentPosition(This->dsbuffer, &playpos, &writepos);
-    if (old_playpos > playpos) {
+    if (old_playpos > playpos)
         adv = This->buf_size + playpos - old_playpos;
-        This->play_time += time_from_pos(This, This->buf_size);
-    } else
+    else
         adv = playpos - old_playpos;
     This->last_playpos = playpos;
     if (adv) {
