@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-04-30 09:04+0300\n"
+"PO-Revision-Date: 2021-05-13 19:49+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -14523,10 +14523,8 @@ msgid "reg: Unsupported registry data type [%1]\n"
 msgstr "reg: Nepalaikomas registro duomenų tipas [%1]\n"
 
 #: programs/reg/reg.rc:122
-#, fuzzy
-#| msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
 msgid "reg: The option [/d] must be followed by a valid numeric value\n"
-msgstr "reg: Už parametro [/d] privalo būti tinkama šešioliktainė reikšmė\n"
+msgstr "reg: Už parametro [/d] privalo būti tinkama skaitinė reikšmė\n"
 
 #: programs/reg/reg.rc:123
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
@@ -14565,10 +14563,8 @@ msgid "reg: The option [/d] must be followed by a valid string\n"
 msgstr "reg: Už parametro [/d] privalo būti tinkama eilutė\n"
 
 #: programs/reg/reg.rc:135
-#, fuzzy
-#| msgid "regedit: Unable to delete the registry key '%1'.\n"
 msgid "reg: Unable to delete all registry values in '%1'\n"
-msgstr "regedit: Nepavyko pašalinti registro rakto „%1“.\n"
+msgstr "reg: Nepavyko pašalinti visų „%1“ registro reikšmių\n"
 
 #: programs/reg/reg.rc:136
 msgid ""
