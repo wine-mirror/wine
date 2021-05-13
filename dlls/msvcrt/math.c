@@ -2399,12 +2399,13 @@ int CDECL fesetenv(const fenv_t *env)
         case _RC_DOWN:          fenv.control_word |= 0x400; break;
     }
 
-    fenv.status_word &= ~0x3d;
-    if (env->_Fe_stat & FE_INVALID) fenv.status_word |= 0x1;
-    if (env->_Fe_stat & FE_DIVBYZERO) fenv.status_word |= 0x4;
-    if (env->_Fe_stat & FE_OVERFLOW) fenv.status_word |= 0x8;
-    if (env->_Fe_stat & FE_UNDERFLOW) fenv.status_word |= 0x10;
-    if (env->_Fe_stat & FE_INEXACT) fenv.status_word |= 0x20;
+    fenv.status_word &= ~0x3f;
+    if (env->_Fe_stat & _SW_INVALID) fenv.status_word |= 0x1;
+    if (env->_Fe_stat & _SW_DENORMAL) fenv.status_word |= 0x2;
+    if (env->_Fe_stat & _SW_ZERODIVIDE) fenv.status_word |= 0x4;
+    if (env->_Fe_stat & _SW_OVERFLOW) fenv.status_word |= 0x8;
+    if (env->_Fe_stat & _SW_UNDERFLOW) fenv.status_word |= 0x10;
+    if (env->_Fe_stat & _SW_INEXACT) fenv.status_word |= 0x20;
 
     __asm__ __volatile__( "fldenv %0" : : "m" (fenv) : "st", "st(1)",
             "st(2)", "st(3)", "st(4)", "st(5)", "st(6)", "st(7)" );
@@ -2413,7 +2414,7 @@ int CDECL fesetenv(const fenv_t *env)
     {
         DWORD fpword;
         __asm__ __volatile__( "stmxcsr %0" : "=m" (fpword) );
-        fpword &= ~0x7e80;
+        fpword &= ~0x7ebf;
         if (env->_Fe_ctl & _EM_INVALID) fpword |= 0x80;
         if (env->_Fe_ctl & _EM_ZERODIVIDE) fpword |= 0x200;
         if (env->_Fe_ctl & _EM_OVERFLOW) fpword |= 0x400;
@@ -2425,6 +2426,12 @@ int CDECL fesetenv(const fenv_t *env)
             case _RC_UP:   fpword |= 0x4000; break;
             case _RC_DOWN: fpword |= 0x2000; break;
         }
+        if (env->_Fe_stat & _SW_INVALID) fpword |= 0x1;
+        if (env->_Fe_stat & _SW_DENORMAL) fpword |= 0x2;
+        if (env->_Fe_stat & _SW_ZERODIVIDE) fpword |= 0x4;
+        if (env->_Fe_stat & _SW_OVERFLOW) fpword |= 0x8;
+        if (env->_Fe_stat & _SW_UNDERFLOW) fpword |= 0x10;
+        if (env->_Fe_stat & _SW_INEXACT) fpword |= 0x20;
         __asm__ __volatile__( "ldmxcsr %0" : : "m" (fpword) );
     }
 
