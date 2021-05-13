@@ -1054,7 +1054,7 @@ static void WINAPI pulse_write(struct pulse_stream *stream)
     stream->pa_held_bytes -= to_write;
 }
 
-static void WINAPI pulse_read(struct pulse_stream *stream)
+static void pulse_read(struct pulse_stream *stream)
 {
     size_t bytes = pa_stream_readable_size(stream->stream);
 
@@ -1154,6 +1154,109 @@ static void WINAPI pulse_read(struct pulse_stream *stream)
     }
 }
 
+static void WINAPI pulse_timer_loop(struct pulse_stream *stream)
+{
+    LARGE_INTEGER delay;
+    UINT32 adv_bytes;
+    int success;
+    pa_operation *o;
+
+    pulse_lock();
+    delay.QuadPart = -stream->mmdev_period_usec * 10;
+    pa_stream_get_time(stream->stream, &stream->last_time);
+    pulse_unlock();
+
+    while (!stream->please_quit)
+    {
+        pa_usec_t now, adv_usec = 0;
+        int err;
+
+        NtDelayExecution(FALSE, &delay);
+
+        pulse_lock();
+
+        delay.QuadPart = -stream->mmdev_period_usec * 10;
+
+        o = pa_stream_update_timing_info(stream->stream, pulse_op_cb, &success);
+        if (o)
+        {
+            while (pa_operation_get_state(o) == PA_OPERATION_RUNNING)
+                pulse_cond_wait();
+            pa_operation_unref(o);
+        }
+        err = pa_stream_get_time(stream->stream, &now);
+        if (err == 0)
+        {
+            TRACE("got now: %s, last time: %s\n", wine_dbgstr_longlong(now), wine_dbgstr_longlong(stream->last_time));
+            if (stream->started && (stream->dataflow == eCapture || stream->held_bytes))
+            {
+                if(stream->just_underran)
+                {
+                    stream->last_time = now;
+                    stream->just_started = TRUE;
+                }
+
+                if (stream->just_started)
+                {
+                    /* let it play out a period to absorb some latency and get accurate timing */
+                    pa_usec_t diff = now - stream->last_time;
+
+                    if (diff > stream->mmdev_period_usec)
+                    {
+                        stream->just_started = FALSE;
+                        stream->last_time = now;
+                    }
+                }
+                else
+                {
+                    INT32 adjust = stream->last_time + stream->mmdev_period_usec - now;
+
+                    adv_usec = now - stream->last_time;
+
+                    if(adjust > ((INT32)(stream->mmdev_period_usec / 2)))
+                        adjust = stream->mmdev_period_usec / 2;
+                    else if(adjust < -((INT32)(stream->mmdev_period_usec / 2)))
+                        adjust = -1 * stream->mmdev_period_usec / 2;
+
+                    delay.QuadPart = -(stream->mmdev_period_usec + adjust) * 10;
+
+                    stream->last_time += stream->mmdev_period_usec;
+                }
+
+                if (stream->dataflow == eRender)
+                {
+                    pulse_write(stream);
+
+                    /* regardless of what PA does, advance one period */
+                    adv_bytes = min(stream->period_bytes, stream->held_bytes);
+                    stream->lcl_offs_bytes += adv_bytes;
+                    stream->lcl_offs_bytes %= stream->real_bufsize_bytes;
+                    stream->held_bytes -= adv_bytes;
+                }
+                else if(stream->dataflow == eCapture)
+                {
+                    pulse_read(stream);
+                }
+            }
+            else
+            {
+                stream->last_time = now;
+                delay.QuadPart = -stream->mmdev_period_usec * 10;
+            }
+        }
+
+        if (stream->event)
+            NtSetEvent(stream->event, NULL);
+
+        TRACE("%p after update, adv usec: %d, held: %u, delay usec: %u\n",
+                stream, (int)adv_usec,
+                (int)(stream->held_bytes/ pa_frame_size(&stream->ss)),
+                (unsigned int)(-delay.QuadPart / 10));
+
+        pulse_unlock();
+    }
+}
+
 static HRESULT WINAPI pulse_stop(struct pulse_stream *stream)
 {
     HRESULT hr = S_OK;
@@ -1212,8 +1315,8 @@ static const struct unix_funcs unix_funcs =
     pulse_create_stream,
     pulse_release_stream,
     pulse_write,
-    pulse_read,
     pulse_stop,
+    pulse_timer_loop,
     pulse_set_volumes,
     pulse_test_connect,
 };
