@@ -58,6 +58,9 @@ static const REFERENCE_TIME DefaultPeriod = 100000;
 static pthread_mutex_t pulse_mutex;
 static pthread_cond_t pulse_cond = PTHREAD_COND_INITIALIZER;
 
+UINT8 mult_alaw_sample(UINT8, float);
+UINT8 mult_ulaw_sample(UINT8, float);
+
 static void WINAPI pulse_lock(void)
 {
     pthread_mutex_lock(&pulse_mutex);
@@ -865,6 +868,192 @@ static void WINAPI pulse_release_stream(struct pulse_stream *stream, HANDLE time
     RtlFreeHeap(GetProcessHeap(), 0, stream);
 }
 
+static int write_buffer(const struct pulse_stream *stream, BYTE *buffer, UINT32 bytes)
+{
+    const float *vol = stream->vol;
+    UINT32 i, channels, mute = 0;
+    BOOL adjust = FALSE;
+    BYTE *end;
+
+    if (!bytes) return 0;
+
+    /* Adjust the buffer based on the volume for each channel */
+    channels = stream->ss.channels;
+    for (i = 0; i < channels; i++)
+    {
+        adjust |= vol[i] != 1.0f;
+        if (vol[i] == 0.0f)
+            mute++;
+    }
+    if (mute == channels)
+    {
+        silence_buffer(stream->ss.format, buffer, bytes);
+        goto write;
+    }
+    if (!adjust) goto write;
+
+    end = buffer + bytes;
+    switch (stream->ss.format)
+    {
+#ifndef WORDS_BIGENDIAN
+#define PROCESS_BUFFER(type) do         \
+{                                       \
+    type *p = (type*)buffer;            \
+    do                                  \
+    {                                   \
+        for (i = 0; i < channels; i++)  \
+            p[i] = p[i] * vol[i];       \
+        p += i;                         \
+    } while ((BYTE*)p != end);          \
+} while (0)
+    case PA_SAMPLE_S16LE:
+        PROCESS_BUFFER(INT16);
+        break;
+    case PA_SAMPLE_S32LE:
+        PROCESS_BUFFER(INT32);
+        break;
+    case PA_SAMPLE_FLOAT32LE:
+        PROCESS_BUFFER(float);
+        break;
+#undef PROCESS_BUFFER
+    case PA_SAMPLE_S24_32LE:
+    {
+        UINT32 *p = (UINT32*)buffer;
+        do
+        {
+            for (i = 0; i < channels; i++)
+            {
+                p[i] = (INT32)((INT32)(p[i] << 8) * vol[i]);
+                p[i] >>= 8;
+            }
+            p += i;
+        } while ((BYTE*)p != end);
+        break;
+    }
+    case PA_SAMPLE_S24LE:
+    {
+        /* do it 12 bytes at a time until it is no longer possible */
+        UINT32 *q = (UINT32*)buffer;
+        BYTE *p;
+
+        i = 0;
+        while (end - (BYTE*)q >= 12)
+        {
+            UINT32 v[4], k;
+            v[0] = q[0] << 8;
+            v[1] = q[1] << 16 | (q[0] >> 16 & ~0xff);
+            v[2] = q[2] << 24 | (q[1] >> 8  & ~0xff);
+            v[3] = q[2] & ~0xff;
+            for (k = 0; k < 4; k++)
+            {
+                v[k] = (INT32)((INT32)v[k] * vol[i]);
+                if (++i == channels) i = 0;
+            }
+            *q++ = v[0] >> 8  | (v[1] & ~0xff) << 16;
+            *q++ = v[1] >> 16 | (v[2] & ~0xff) << 8;
+            *q++ = v[2] >> 24 | (v[3] & ~0xff);
+        }
+        p = (BYTE*)q;
+        while (p != end)
+        {
+            UINT32 v = (INT32)((INT32)(p[0] << 8 | p[1] << 16 | p[2] << 24) * vol[i]);
+            *p++ = v >> 8  & 0xff;
+            *p++ = v >> 16 & 0xff;
+            *p++ = v >> 24;
+            if (++i == channels) i = 0;
+        }
+        break;
+    }
+#endif
+    case PA_SAMPLE_U8:
+    {
+        UINT8 *p = (UINT8*)buffer;
+        do
+        {
+            for (i = 0; i < channels; i++)
+                p[i] = (int)((p[i] - 128) * vol[i]) + 128;
+            p += i;
+        } while ((BYTE*)p != end);
+        break;
+    }
+    case PA_SAMPLE_ALAW:
+    {
+        UINT8 *p = (UINT8*)buffer;
+        do
+        {
+            for (i = 0; i < channels; i++)
+                p[i] = mult_alaw_sample(p[i], vol[i]);
+            p += i;
+        } while ((BYTE*)p != end);
+        break;
+    }
+    case PA_SAMPLE_ULAW:
+    {
+        UINT8 *p = (UINT8*)buffer;
+        do
+        {
+            for (i = 0; i < channels; i++)
+                p[i] = mult_ulaw_sample(p[i], vol[i]);
+            p += i;
+        } while ((BYTE*)p != end);
+        break;
+    }
+    default:
+        TRACE("Unhandled format %i, not adjusting volume.\n", stream->ss.format);
+        break;
+    }
+
+write:
+    return pa_stream_write(stream->stream, buffer, bytes, NULL, 0, PA_SEEK_RELATIVE);
+}
+
+static void WINAPI pulse_write(struct pulse_stream *stream)
+{
+    /* write as much data to PA as we can */
+    UINT32 to_write;
+    BYTE *buf = stream->local_buffer + stream->pa_offs_bytes;
+    UINT32 bytes = pa_stream_writable_size(stream->stream);
+
+    if (stream->just_underran)
+    {
+        /* prebuffer with silence if needed */
+        if(stream->pa_held_bytes < bytes){
+            to_write = bytes - stream->pa_held_bytes;
+            TRACE("prebuffering %u frames of silence\n",
+                    (int)(to_write / pa_frame_size(&stream->ss)));
+            buf = RtlAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, to_write);
+            pa_stream_write(stream->stream, buf, to_write, NULL, 0, PA_SEEK_RELATIVE);
+            RtlFreeHeap(GetProcessHeap(), 0, buf);
+        }
+
+        stream->just_underran = FALSE;
+    }
+
+    buf = stream->local_buffer + stream->pa_offs_bytes;
+    TRACE("held: %u, avail: %u\n",
+            stream->pa_held_bytes, bytes);
+    bytes = min(stream->pa_held_bytes, bytes);
+
+    if (stream->pa_offs_bytes + bytes > stream->real_bufsize_bytes)
+    {
+        to_write = stream->real_bufsize_bytes - stream->pa_offs_bytes;
+        TRACE("writing small chunk of %u bytes\n", to_write);
+        write_buffer(stream, buf, to_write);
+        stream->pa_held_bytes -= to_write;
+        to_write = bytes - to_write;
+        stream->pa_offs_bytes = 0;
+        buf = stream->local_buffer;
+    }
+    else
+        to_write = bytes;
+
+    TRACE("writing main chunk of %u bytes\n", to_write);
+    write_buffer(stream, buf, to_write);
+    stream->pa_offs_bytes += to_write;
+    stream->pa_offs_bytes %= stream->real_bufsize_bytes;
+    stream->pa_held_bytes -= to_write;
+}
+
 static void WINAPI pulse_read(struct pulse_stream *stream)
 {
     size_t bytes = pa_stream_readable_size(stream->stream);
@@ -1022,6 +1211,7 @@ static const struct unix_funcs unix_funcs =
     pulse_main_loop,
     pulse_create_stream,
     pulse_release_stream,
+    pulse_write,
     pulse_read,
     pulse_stop,
     pulse_set_volumes,

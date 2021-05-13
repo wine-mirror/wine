@@ -20,6 +20,10 @@
 
 #include <windef.h>
 
+#if 0
+#pragma makedep unix
+#endif
+
 
 /**********************************************************************
  * A-law and u-law sample manipulation functions
