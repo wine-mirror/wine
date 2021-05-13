@@ -20,7 +20,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
-#if defined(USE_STRUCT_CONVERSION)
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkAcquireNextImageInfoKHR_win_to_host(const VkAcquireNextImageInfoKHR *in, VkAcquireNextImageInfoKHR_host *out)
 {
     if (!in) return;
@@ -33,7 +33,9 @@ static inline void convert_VkAcquireNextImageInfoKHR_win_to_host(const VkAcquire
     out->fence = in->fence;
     out->deviceMask = in->deviceMask;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkAcquireProfilingLockInfoKHR_win_to_host(const VkAcquireProfilingLockInfoKHR *in, VkAcquireProfilingLockInfoKHR_host *out)
 {
     if (!in) return;
@@ -43,7 +45,9 @@ static inline void convert_VkAcquireProfilingLockInfoKHR_win_to_host(const VkAcq
     out->flags = in->flags;
     out->timeout = in->timeout;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkDescriptorSetAllocateInfo_win_to_host(const VkDescriptorSetAllocateInfo *in, VkDescriptorSetAllocateInfo_host *out)
 {
     if (!in) return;
@@ -54,7 +58,9 @@ static inline void convert_VkDescriptorSetAllocateInfo_win_to_host(const VkDescr
     out->descriptorSetCount = in->descriptorSetCount;
     out->pSetLayouts = in->pSetLayouts;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkMemoryAllocateInfo_win_to_host(const VkMemoryAllocateInfo *in, VkMemoryAllocateInfo_host *out)
 {
     if (!in) return;
@@ -64,7 +70,9 @@ static inline void convert_VkMemoryAllocateInfo_win_to_host(const VkMemoryAlloca
     out->allocationSize = in->allocationSize;
     out->memoryTypeIndex = in->memoryTypeIndex;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkCommandBufferInheritanceInfo_host *convert_VkCommandBufferInheritanceInfo_array_win_to_host(const VkCommandBufferInheritanceInfo *in, uint32_t count)
 {
     VkCommandBufferInheritanceInfo_host *out;
@@ -94,7 +102,9 @@ static inline void free_VkCommandBufferInheritanceInfo_array(VkCommandBufferInhe
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkCommandBufferBeginInfo_win_to_host(const VkCommandBufferBeginInfo *in, VkCommandBufferBeginInfo_host *out)
 {
     if (!in) return;
@@ -109,7 +119,9 @@ static inline void free_VkCommandBufferBeginInfo(VkCommandBufferBeginInfo_host *
 {
     free_VkCommandBufferInheritanceInfo_array((VkCommandBufferInheritanceInfo_host *)in->pInheritanceInfo, 1);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkBindAccelerationStructureMemoryInfoNV_host *convert_VkBindAccelerationStructureMemoryInfoNV_array_win_to_host(const VkBindAccelerationStructureMemoryInfoNV *in, uint32_t count)
 {
     VkBindAccelerationStructureMemoryInfoNV_host *out;
@@ -138,7 +150,9 @@ static inline void free_VkBindAccelerationStructureMemoryInfoNV_array(VkBindAcce
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkBindBufferMemoryInfo_host *convert_VkBindBufferMemoryInfo_array_win_to_host(const VkBindBufferMemoryInfo *in, uint32_t count)
 {
     VkBindBufferMemoryInfo_host *out;
@@ -165,7 +179,9 @@ static inline void free_VkBindBufferMemoryInfo_array(VkBindBufferMemoryInfo_host
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkBindImageMemoryInfo_host *convert_VkBindImageMemoryInfo_array_win_to_host(const VkBindImageMemoryInfo *in, uint32_t count)
 {
     VkBindImageMemoryInfo_host *out;
@@ -192,7 +208,9 @@ static inline void free_VkBindImageMemoryInfo_array(VkBindImageMemoryInfo_host *
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkAccelerationStructureBuildGeometryInfoKHR_host *convert_VkAccelerationStructureBuildGeometryInfoKHR_array_win_to_host(const VkAccelerationStructureBuildGeometryInfoKHR *in, uint32_t count)
 {
     VkAccelerationStructureBuildGeometryInfoKHR_host *out;
@@ -225,7 +243,9 @@ static inline void free_VkAccelerationStructureBuildGeometryInfoKHR_array(VkAcce
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkConditionalRenderingBeginInfoEXT_win_to_host(const VkConditionalRenderingBeginInfoEXT *in, VkConditionalRenderingBeginInfoEXT_host *out)
 {
     if (!in) return;
@@ -236,7 +256,9 @@ static inline void convert_VkConditionalRenderingBeginInfoEXT_win_to_host(const 
     out->offset = in->offset;
     out->flags = in->flags;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkRenderPassBeginInfo_win_to_host(const VkRenderPassBeginInfo *in, VkRenderPassBeginInfo_host *out)
 {
     if (!in) return;
@@ -249,7 +271,9 @@ static inline void convert_VkRenderPassBeginInfo_win_to_host(const VkRenderPassB
     out->clearValueCount = in->clearValueCount;
     out->pClearValues = in->pClearValues;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkBlitImageInfo2KHR_win_to_host(const VkBlitImageInfo2KHR *in, VkBlitImageInfo2KHR_host *out)
 {
     if (!in) return;
@@ -264,7 +288,9 @@ static inline void convert_VkBlitImageInfo2KHR_win_to_host(const VkBlitImageInfo
     out->pRegions = in->pRegions;
     out->filter = in->filter;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkGeometryTrianglesNV_win_to_host(const VkGeometryTrianglesNV *in, VkGeometryTrianglesNV_host *out)
 {
     if (!in) return;
@@ -283,7 +309,9 @@ static inline void convert_VkGeometryTrianglesNV_win_to_host(const VkGeometryTri
     out->transformData = in->transformData;
     out->transformOffset = in->transformOffset;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkGeometryAABBNV_win_to_host(const VkGeometryAABBNV *in, VkGeometryAABBNV_host *out)
 {
     if (!in) return;
@@ -295,7 +323,9 @@ static inline void convert_VkGeometryAABBNV_win_to_host(const VkGeometryAABBNV *
     out->stride = in->stride;
     out->offset = in->offset;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkGeometryDataNV_win_to_host(const VkGeometryDataNV *in, VkGeometryDataNV_host *out)
 {
     if (!in) return;
@@ -303,7 +333,9 @@ static inline void convert_VkGeometryDataNV_win_to_host(const VkGeometryDataNV *
     convert_VkGeometryTrianglesNV_win_to_host(&in->triangles, &out->triangles);
     convert_VkGeometryAABBNV_win_to_host(&in->aabbs, &out->aabbs);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkGeometryNV_host *convert_VkGeometryNV_array_win_to_host(const VkGeometryNV *in, uint32_t count)
 {
     VkGeometryNV_host *out;
@@ -330,7 +362,9 @@ static inline void free_VkGeometryNV_array(VkGeometryNV_host *in, uint32_t count
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkAccelerationStructureInfoNV_win_to_host(const VkAccelerationStructureInfoNV *in, VkAccelerationStructureInfoNV_host *out)
 {
     if (!in) return;
@@ -348,7 +382,9 @@ static inline void free_VkAccelerationStructureInfoNV(VkAccelerationStructureInf
 {
     free_VkGeometryNV_array((VkGeometryNV_host *)in->pGeometries, in->geometryCount);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkCopyAccelerationStructureInfoKHR_win_to_host(const VkCopyAccelerationStructureInfoKHR *in, VkCopyAccelerationStructureInfoKHR_host *out)
 {
     if (!in) return;
@@ -359,7 +395,9 @@ static inline void convert_VkCopyAccelerationStructureInfoKHR_win_to_host(const 
     out->dst = in->dst;
     out->mode = in->mode;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkCopyAccelerationStructureToMemoryInfoKHR_win_to_host(const VkCopyAccelerationStructureToMemoryInfoKHR *in, VkCopyAccelerationStructureToMemoryInfoKHR_host *out)
 {
     if (!in) return;
@@ -370,7 +408,9 @@ static inline void convert_VkCopyAccelerationStructureToMemoryInfoKHR_win_to_hos
     out->dst = in->dst;
     out->mode = in->mode;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkBufferCopy_host *convert_VkBufferCopy_array_win_to_host(const VkBufferCopy *in, uint32_t count)
 {
     VkBufferCopy_host *out;
@@ -395,7 +435,9 @@ static inline void free_VkBufferCopy_array(VkBufferCopy_host *in, uint32_t count
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkBufferCopy2KHR_host *convert_VkBufferCopy2KHR_array_win_to_host(const VkBufferCopy2KHR *in, uint32_t count)
 {
     VkBufferCopy2KHR_host *out;
@@ -422,7 +464,9 @@ static inline void free_VkBufferCopy2KHR_array(VkBufferCopy2KHR_host *in, uint32
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkCopyBufferInfo2KHR_win_to_host(const VkCopyBufferInfo2KHR *in, VkCopyBufferInfo2KHR_host *out)
 {
     if (!in) return;
@@ -439,7 +483,9 @@ static inline void free_VkCopyBufferInfo2KHR(VkCopyBufferInfo2KHR_host *in)
 {
     free_VkBufferCopy2KHR_array((VkBufferCopy2KHR_host *)in->pRegions, in->regionCount);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkBufferImageCopy_host *convert_VkBufferImageCopy_array_win_to_host(const VkBufferImageCopy *in, uint32_t count)
 {
     VkBufferImageCopy_host *out;
@@ -467,7 +513,9 @@ static inline void free_VkBufferImageCopy_array(VkBufferImageCopy_host *in, uint
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkBufferImageCopy2KHR_host *convert_VkBufferImageCopy2KHR_array_win_to_host(const VkBufferImageCopy2KHR *in, uint32_t count)
 {
     VkBufferImageCopy2KHR_host *out;
@@ -497,7 +545,9 @@ static inline void free_VkBufferImageCopy2KHR_array(VkBufferImageCopy2KHR_host *
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkCopyBufferToImageInfo2KHR_win_to_host(const VkCopyBufferToImageInfo2KHR *in, VkCopyBufferToImageInfo2KHR_host *out)
 {
     if (!in) return;
@@ -515,7 +565,9 @@ static inline void free_VkCopyBufferToImageInfo2KHR(VkCopyBufferToImageInfo2KHR_
 {
     free_VkBufferImageCopy2KHR_array((VkBufferImageCopy2KHR_host *)in->pRegions, in->regionCount);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkCopyImageInfo2KHR_win_to_host(const VkCopyImageInfo2KHR *in, VkCopyImageInfo2KHR_host *out)
 {
     if (!in) return;
@@ -529,7 +581,9 @@ static inline void convert_VkCopyImageInfo2KHR_win_to_host(const VkCopyImageInfo
     out->regionCount = in->regionCount;
     out->pRegions = in->pRegions;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkCopyImageToBufferInfo2KHR_win_to_host(const VkCopyImageToBufferInfo2KHR *in, VkCopyImageToBufferInfo2KHR_host *out)
 {
     if (!in) return;
@@ -547,7 +601,9 @@ static inline void free_VkCopyImageToBufferInfo2KHR(VkCopyImageToBufferInfo2KHR_
 {
     free_VkBufferImageCopy2KHR_array((VkBufferImageCopy2KHR_host *)in->pRegions, in->regionCount);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkCopyMemoryToAccelerationStructureInfoKHR_win_to_host(const VkCopyMemoryToAccelerationStructureInfoKHR *in, VkCopyMemoryToAccelerationStructureInfoKHR_host *out)
 {
     if (!in) return;
@@ -558,7 +614,9 @@ static inline void convert_VkCopyMemoryToAccelerationStructureInfoKHR_win_to_hos
     out->dst = in->dst;
     out->mode = in->mode;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkCuLaunchInfoNVX_win_to_host(const VkCuLaunchInfoNVX *in, VkCuLaunchInfoNVX_host *out)
 {
     if (!in) return;
@@ -578,7 +636,32 @@ static inline void convert_VkCuLaunchInfoNVX_win_to_host(const VkCuLaunchInfoNVX
     out->extraCount = in->extraCount;
     out->pExtras = in->pExtras;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+static inline VkCommandBuffer *convert_VkCommandBuffer_array_win_to_host(const VkCommandBuffer *in, uint32_t count)
+{
+    VkCommandBuffer *out;
+    unsigned int i;
+
+    if (!in) return NULL;
+
+    out = malloc(count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i] = in[i]->command_buffer;
+    }
+
+    return out;
+}
+
+static inline void free_VkCommandBuffer_array(VkCommandBuffer *in, uint32_t count)
+{
+    if (!in) return;
+
+    free(in);
+}
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkIndirectCommandsStreamNV_host *convert_VkIndirectCommandsStreamNV_array_win_to_host(const VkIndirectCommandsStreamNV *in, uint32_t count)
 {
     VkIndirectCommandsStreamNV_host *out;
@@ -602,7 +685,9 @@ static inline void free_VkIndirectCommandsStreamNV_array(VkIndirectCommandsStrea
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkGeneratedCommandsInfoNV_win_to_host(const VkGeneratedCommandsInfoNV *in, VkGeneratedCommandsInfoNV_host *out)
 {
     if (!in) return;
@@ -628,7 +713,9 @@ static inline void free_VkGeneratedCommandsInfoNV(VkGeneratedCommandsInfoNV_host
 {
     free_VkIndirectCommandsStreamNV_array((VkIndirectCommandsStreamNV_host *)in->pStreams, in->streamCount);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkBufferMemoryBarrier_host *convert_VkBufferMemoryBarrier_array_win_to_host(const VkBufferMemoryBarrier *in, uint32_t count)
 {
     VkBufferMemoryBarrier_host *out;
@@ -659,7 +746,9 @@ static inline void free_VkBufferMemoryBarrier_array(VkBufferMemoryBarrier_host *
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkImageMemoryBarrier_host *convert_VkImageMemoryBarrier_array_win_to_host(const VkImageMemoryBarrier *in, uint32_t count)
 {
     VkImageMemoryBarrier_host *out;
@@ -691,7 +780,9 @@ static inline void free_VkImageMemoryBarrier_array(VkImageMemoryBarrier_host *in
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkBufferMemoryBarrier2KHR_host *convert_VkBufferMemoryBarrier2KHR_array_win_to_host(const VkBufferMemoryBarrier2KHR *in, uint32_t count)
 {
     VkBufferMemoryBarrier2KHR_host *out;
@@ -724,7 +815,9 @@ static inline void free_VkBufferMemoryBarrier2KHR_array(VkBufferMemoryBarrier2KH
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkImageMemoryBarrier2KHR_host *convert_VkImageMemoryBarrier2KHR_array_win_to_host(const VkImageMemoryBarrier2KHR *in, uint32_t count)
 {
     VkImageMemoryBarrier2KHR_host *out;
@@ -758,7 +851,9 @@ static inline void free_VkImageMemoryBarrier2KHR_array(VkImageMemoryBarrier2KHR_
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkDependencyInfoKHR_win_to_host(const VkDependencyInfoKHR *in, VkDependencyInfoKHR_host *out)
 {
     if (!in) return;
@@ -779,7 +874,9 @@ static inline void free_VkDependencyInfoKHR(VkDependencyInfoKHR_host *in)
     free_VkBufferMemoryBarrier2KHR_array((VkBufferMemoryBarrier2KHR_host *)in->pBufferMemoryBarriers, in->bufferMemoryBarrierCount);
     free_VkImageMemoryBarrier2KHR_array((VkImageMemoryBarrier2KHR_host *)in->pImageMemoryBarriers, in->imageMemoryBarrierCount);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkDescriptorImageInfo_host *convert_VkDescriptorImageInfo_array_win_to_host(const VkDescriptorImageInfo *in, uint32_t count)
 {
     VkDescriptorImageInfo_host *out;
@@ -804,7 +901,9 @@ static inline void free_VkDescriptorImageInfo_array(VkDescriptorImageInfo_host *
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkDescriptorBufferInfo_host *convert_VkDescriptorBufferInfo_array_win_to_host(const VkDescriptorBufferInfo *in, uint32_t count)
 {
     VkDescriptorBufferInfo_host *out;
@@ -829,7 +928,9 @@ static inline void free_VkDescriptorBufferInfo_array(VkDescriptorBufferInfo_host
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkWriteDescriptorSet_host *convert_VkWriteDescriptorSet_array_win_to_host(const VkWriteDescriptorSet *in, uint32_t count)
 {
     VkWriteDescriptorSet_host *out;
@@ -868,7 +969,9 @@ static inline void free_VkWriteDescriptorSet_array(VkWriteDescriptorSet_host *in
     }
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkResolveImageInfo2KHR_win_to_host(const VkResolveImageInfo2KHR *in, VkResolveImageInfo2KHR_host *out)
 {
     if (!in) return;
@@ -882,7 +985,9 @@ static inline void convert_VkResolveImageInfo2KHR_win_to_host(const VkResolveIma
     out->regionCount = in->regionCount;
     out->pRegions = in->pRegions;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkPerformanceMarkerInfoINTEL_win_to_host(const VkPerformanceMarkerInfoINTEL *in, VkPerformanceMarkerInfoINTEL_host *out)
 {
     if (!in) return;
@@ -891,7 +996,9 @@ static inline void convert_VkPerformanceMarkerInfoINTEL_win_to_host(const VkPerf
     out->pNext = in->pNext;
     out->marker = in->marker;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkPerformanceOverrideInfoINTEL_win_to_host(const VkPerformanceOverrideInfoINTEL *in, VkPerformanceOverrideInfoINTEL_host *out)
 {
     if (!in) return;
@@ -902,7 +1009,9 @@ static inline void convert_VkPerformanceOverrideInfoINTEL_win_to_host(const VkPe
     out->enable = in->enable;
     out->parameter = in->parameter;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkStridedDeviceAddressRegionKHR_win_to_host(const VkStridedDeviceAddressRegionKHR *in, VkStridedDeviceAddressRegionKHR_host *out)
 {
     if (!in) return;
@@ -911,7 +1020,9 @@ static inline void convert_VkStridedDeviceAddressRegionKHR_win_to_host(const VkS
     out->stride = in->stride;
     out->size = in->size;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkDependencyInfoKHR_host *convert_VkDependencyInfoKHR_array_win_to_host(const VkDependencyInfoKHR *in, uint32_t count)
 {
     VkDependencyInfoKHR_host *out;
@@ -949,7 +1060,9 @@ static inline void free_VkDependencyInfoKHR_array(VkDependencyInfoKHR_host *in, 
     }
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkAccelerationStructureCreateInfoKHR_win_to_host(const VkAccelerationStructureCreateInfoKHR *in, VkAccelerationStructureCreateInfoKHR_host *out)
 {
     if (!in) return;
@@ -963,7 +1076,9 @@ static inline void convert_VkAccelerationStructureCreateInfoKHR_win_to_host(cons
     out->type = in->type;
     out->deviceAddress = in->deviceAddress;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkAccelerationStructureCreateInfoNV_win_to_host(const VkAccelerationStructureCreateInfoNV *in, VkAccelerationStructureCreateInfoNV_host *out)
 {
     if (!in) return;
@@ -973,7 +1088,9 @@ static inline void convert_VkAccelerationStructureCreateInfoNV_win_to_host(const
     out->compactedSize = in->compactedSize;
     convert_VkAccelerationStructureInfoNV_win_to_host(&in->info, &out->info);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkBufferCreateInfo_win_to_host(const VkBufferCreateInfo *in, VkBufferCreateInfo_host *out)
 {
     if (!in) return;
@@ -987,7 +1104,9 @@ static inline void convert_VkBufferCreateInfo_win_to_host(const VkBufferCreateIn
     out->queueFamilyIndexCount = in->queueFamilyIndexCount;
     out->pQueueFamilyIndices = in->pQueueFamilyIndices;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkBufferViewCreateInfo_win_to_host(const VkBufferViewCreateInfo *in, VkBufferViewCreateInfo_host *out)
 {
     if (!in) return;
@@ -1000,7 +1119,9 @@ static inline void convert_VkBufferViewCreateInfo_win_to_host(const VkBufferView
     out->offset = in->offset;
     out->range = in->range;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkPipelineShaderStageCreateInfo_win_to_host(const VkPipelineShaderStageCreateInfo *in, VkPipelineShaderStageCreateInfo_host *out)
 {
     if (!in) return;
@@ -1013,7 +1134,9 @@ static inline void convert_VkPipelineShaderStageCreateInfo_win_to_host(const VkP
     out->pName = in->pName;
     out->pSpecializationInfo = in->pSpecializationInfo;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkComputePipelineCreateInfo_host *convert_VkComputePipelineCreateInfo_array_win_to_host(const VkComputePipelineCreateInfo *in, uint32_t count)
 {
     VkComputePipelineCreateInfo_host *out;
@@ -1042,7 +1165,9 @@ static inline void free_VkComputePipelineCreateInfo_array(VkComputePipelineCreat
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkCuFunctionCreateInfoNVX_win_to_host(const VkCuFunctionCreateInfoNVX *in, VkCuFunctionCreateInfoNVX_host *out)
 {
     if (!in) return;
@@ -1052,7 +1177,9 @@ static inline void convert_VkCuFunctionCreateInfoNVX_win_to_host(const VkCuFunct
     out->module = in->module;
     out->pName = in->pName;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkDescriptorUpdateTemplateCreateInfo_win_to_host(const VkDescriptorUpdateTemplateCreateInfo *in, VkDescriptorUpdateTemplateCreateInfo_host *out)
 {
     if (!in) return;
@@ -1068,7 +1195,9 @@ static inline void convert_VkDescriptorUpdateTemplateCreateInfo_win_to_host(cons
     out->pipelineLayout = in->pipelineLayout;
     out->set = in->set;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkFramebufferCreateInfo_win_to_host(const VkFramebufferCreateInfo *in, VkFramebufferCreateInfo_host *out)
 {
     if (!in) return;
@@ -1083,7 +1212,9 @@ static inline void convert_VkFramebufferCreateInfo_win_to_host(const VkFramebuff
     out->height = in->height;
     out->layers = in->layers;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkPipelineShaderStageCreateInfo_host *convert_VkPipelineShaderStageCreateInfo_array_win_to_host(const VkPipelineShaderStageCreateInfo *in, uint32_t count)
 {
     VkPipelineShaderStageCreateInfo_host *out;
@@ -1112,7 +1243,9 @@ static inline void free_VkPipelineShaderStageCreateInfo_array(VkPipelineShaderSt
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkGraphicsPipelineCreateInfo_host *convert_VkGraphicsPipelineCreateInfo_array_win_to_host(const VkGraphicsPipelineCreateInfo *in, uint32_t count)
 {
     VkGraphicsPipelineCreateInfo_host *out;
@@ -1159,7 +1292,9 @@ static inline void free_VkGraphicsPipelineCreateInfo_array(VkGraphicsPipelineCre
     }
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkImageViewCreateInfo_win_to_host(const VkImageViewCreateInfo *in, VkImageViewCreateInfo_host *out)
 {
     if (!in) return;
@@ -1173,7 +1308,9 @@ static inline void convert_VkImageViewCreateInfo_win_to_host(const VkImageViewCr
     out->components = in->components;
     out->subresourceRange = in->subresourceRange;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkIndirectCommandsLayoutTokenNV_host *convert_VkIndirectCommandsLayoutTokenNV_array_win_to_host(const VkIndirectCommandsLayoutTokenNV *in, uint32_t count)
 {
     VkIndirectCommandsLayoutTokenNV_host *out;
@@ -1210,7 +1347,9 @@ static inline void free_VkIndirectCommandsLayoutTokenNV_array(VkIndirectCommands
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkIndirectCommandsLayoutCreateInfoNV_win_to_host(const VkIndirectCommandsLayoutCreateInfoNV *in, VkIndirectCommandsLayoutCreateInfoNV_host *out)
 {
     if (!in) return;
@@ -1229,7 +1368,9 @@ static inline void free_VkIndirectCommandsLayoutCreateInfoNV(VkIndirectCommandsL
 {
     free_VkIndirectCommandsLayoutTokenNV_array((VkIndirectCommandsLayoutTokenNV_host *)in->pTokens, in->tokenCount);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkRayTracingPipelineCreateInfoKHR_host *convert_VkRayTracingPipelineCreateInfoKHR_array_win_to_host(const VkRayTracingPipelineCreateInfoKHR *in, uint32_t count)
 {
     VkRayTracingPipelineCreateInfoKHR_host *out;
@@ -1271,7 +1412,9 @@ static inline void free_VkRayTracingPipelineCreateInfoKHR_array(VkRayTracingPipe
     }
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkRayTracingPipelineCreateInfoNV_host *convert_VkRayTracingPipelineCreateInfoNV_array_win_to_host(const VkRayTracingPipelineCreateInfoNV *in, uint32_t count)
 {
     VkRayTracingPipelineCreateInfoNV_host *out;
@@ -1310,15 +1453,20 @@ static inline void free_VkRayTracingPipelineCreateInfoNV_array(VkRayTracingPipel
     }
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkSwapchainCreateInfoKHR_win_to_host(const VkSwapchainCreateInfoKHR *in, VkSwapchainCreateInfoKHR_host *out)
+#else
+static inline void convert_VkSwapchainCreateInfoKHR_win_to_host(const VkSwapchainCreateInfoKHR *in, VkSwapchainCreateInfoKHR *out)
+#endif /* USE_STRUCT_CONVERSION */
 {
     if (!in) return;
 
     out->sType = in->sType;
     out->pNext = in->pNext;
     out->flags = in->flags;
-    out->surface = in->surface;
+    out->surface = wine_surface_from_handle(in->surface)->driver_surface;
     out->minImageCount = in->minImageCount;
     out->imageFormat = in->imageFormat;
     out->imageColorSpace = in->imageColorSpace;
@@ -1335,6 +1483,7 @@ static inline void convert_VkSwapchainCreateInfoKHR_win_to_host(const VkSwapchai
     out->oldSwapchain = in->oldSwapchain;
 }
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkDebugMarkerObjectNameInfoEXT_win_to_host(const VkDebugMarkerObjectNameInfoEXT *in, VkDebugMarkerObjectNameInfoEXT_host *out)
 {
     if (!in) return;
@@ -1345,7 +1494,9 @@ static inline void convert_VkDebugMarkerObjectNameInfoEXT_win_to_host(const VkDe
     out->object = in->object;
     out->pObjectName = in->pObjectName;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkDebugMarkerObjectTagInfoEXT_win_to_host(const VkDebugMarkerObjectTagInfoEXT *in, VkDebugMarkerObjectTagInfoEXT_host *out)
 {
     if (!in) return;
@@ -1358,7 +1509,9 @@ static inline void convert_VkDebugMarkerObjectTagInfoEXT_win_to_host(const VkDeb
     out->tagSize = in->tagSize;
     out->pTag = in->pTag;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkMappedMemoryRange_host *convert_VkMappedMemoryRange_array_win_to_host(const VkMappedMemoryRange *in, uint32_t count)
 {
     VkMappedMemoryRange_host *out;
@@ -1385,7 +1538,9 @@ static inline void free_VkMappedMemoryRange_array(VkMappedMemoryRange_host *in, 
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkAccelerationStructureBuildGeometryInfoKHR_win_to_host(const VkAccelerationStructureBuildGeometryInfoKHR *in, VkAccelerationStructureBuildGeometryInfoKHR_host *out)
 {
     if (!in) return;
@@ -1402,7 +1557,9 @@ static inline void convert_VkAccelerationStructureBuildGeometryInfoKHR_win_to_ho
     out->ppGeometries = in->ppGeometries;
     out->scratchData = in->scratchData;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkAccelerationStructureBuildSizesInfoKHR_win_to_host(const VkAccelerationStructureBuildSizesInfoKHR *in, VkAccelerationStructureBuildSizesInfoKHR_host *out)
 {
     if (!in) return;
@@ -1413,7 +1570,9 @@ static inline void convert_VkAccelerationStructureBuildSizesInfoKHR_win_to_host(
     out->updateScratchSize = in->updateScratchSize;
     out->buildScratchSize = in->buildScratchSize;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkAccelerationStructureDeviceAddressInfoKHR_win_to_host(const VkAccelerationStructureDeviceAddressInfoKHR *in, VkAccelerationStructureDeviceAddressInfoKHR_host *out)
 {
     if (!in) return;
@@ -1422,7 +1581,9 @@ static inline void convert_VkAccelerationStructureDeviceAddressInfoKHR_win_to_ho
     out->pNext = in->pNext;
     out->accelerationStructure = in->accelerationStructure;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkAccelerationStructureMemoryRequirementsInfoNV_win_to_host(const VkAccelerationStructureMemoryRequirementsInfoNV *in, VkAccelerationStructureMemoryRequirementsInfoNV_host *out)
 {
     if (!in) return;
@@ -1432,7 +1593,9 @@ static inline void convert_VkAccelerationStructureMemoryRequirementsInfoNV_win_t
     out->type = in->type;
     out->accelerationStructure = in->accelerationStructure;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkMemoryRequirements_host_to_win(const VkMemoryRequirements_host *in, VkMemoryRequirements *out)
 {
     if (!in) return;
@@ -1441,7 +1604,9 @@ static inline void convert_VkMemoryRequirements_host_to_win(const VkMemoryRequir
     out->alignment = in->alignment;
     out->memoryTypeBits = in->memoryTypeBits;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkMemoryRequirements2KHR_win_to_host(const VkMemoryRequirements2KHR *in, VkMemoryRequirements2KHR_host *out)
 {
     if (!in) return;
@@ -1449,7 +1614,9 @@ static inline void convert_VkMemoryRequirements2KHR_win_to_host(const VkMemoryRe
     out->pNext = in->pNext;
     out->sType = in->sType;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkMemoryRequirements2KHR_host_to_win(const VkMemoryRequirements2KHR_host *in, VkMemoryRequirements2KHR *out)
 {
     if (!in) return;
@@ -1458,7 +1625,9 @@ static inline void convert_VkMemoryRequirements2KHR_host_to_win(const VkMemoryRe
     out->pNext = in->pNext;
     convert_VkMemoryRequirements_host_to_win(&in->memoryRequirements, &out->memoryRequirements);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkBufferDeviceAddressInfo_win_to_host(const VkBufferDeviceAddressInfo *in, VkBufferDeviceAddressInfo_host *out)
 {
     if (!in) return;
@@ -1467,7 +1636,9 @@ static inline void convert_VkBufferDeviceAddressInfo_win_to_host(const VkBufferD
     out->pNext = in->pNext;
     out->buffer = in->buffer;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkBufferMemoryRequirementsInfo2_win_to_host(const VkBufferMemoryRequirementsInfo2 *in, VkBufferMemoryRequirementsInfo2_host *out)
 {
     if (!in) return;
@@ -1476,7 +1647,9 @@ static inline void convert_VkBufferMemoryRequirementsInfo2_win_to_host(const VkB
     out->pNext = in->pNext;
     out->buffer = in->buffer;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkMemoryRequirements2_win_to_host(const VkMemoryRequirements2 *in, VkMemoryRequirements2_host *out)
 {
     if (!in) return;
@@ -1484,7 +1657,9 @@ static inline void convert_VkMemoryRequirements2_win_to_host(const VkMemoryRequi
     out->pNext = in->pNext;
     out->sType = in->sType;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkMemoryRequirements2_host_to_win(const VkMemoryRequirements2_host *in, VkMemoryRequirements2 *out)
 {
     if (!in) return;
@@ -1493,7 +1668,9 @@ static inline void convert_VkMemoryRequirements2_host_to_win(const VkMemoryRequi
     out->pNext = in->pNext;
     convert_VkMemoryRequirements_host_to_win(&in->memoryRequirements, &out->memoryRequirements);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkDeviceMemoryOpaqueCaptureAddressInfo_win_to_host(const VkDeviceMemoryOpaqueCaptureAddressInfo *in, VkDeviceMemoryOpaqueCaptureAddressInfo_host *out)
 {
     if (!in) return;
@@ -1502,7 +1679,9 @@ static inline void convert_VkDeviceMemoryOpaqueCaptureAddressInfo_win_to_host(co
     out->pNext = in->pNext;
     out->memory = in->memory;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkGeneratedCommandsMemoryRequirementsInfoNV_win_to_host(const VkGeneratedCommandsMemoryRequirementsInfoNV *in, VkGeneratedCommandsMemoryRequirementsInfoNV_host *out)
 {
     if (!in) return;
@@ -1514,7 +1693,9 @@ static inline void convert_VkGeneratedCommandsMemoryRequirementsInfoNV_win_to_ho
     out->indirectCommandsLayout = in->indirectCommandsLayout;
     out->maxSequencesCount = in->maxSequencesCount;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkImageMemoryRequirementsInfo2_win_to_host(const VkImageMemoryRequirementsInfo2 *in, VkImageMemoryRequirementsInfo2_host *out)
 {
     if (!in) return;
@@ -1523,7 +1704,9 @@ static inline void convert_VkImageMemoryRequirementsInfo2_win_to_host(const VkIm
     out->pNext = in->pNext;
     out->image = in->image;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkImageSparseMemoryRequirementsInfo2_win_to_host(const VkImageSparseMemoryRequirementsInfo2 *in, VkImageSparseMemoryRequirementsInfo2_host *out)
 {
     if (!in) return;
@@ -1532,7 +1715,9 @@ static inline void convert_VkImageSparseMemoryRequirementsInfo2_win_to_host(cons
     out->pNext = in->pNext;
     out->image = in->image;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkSubresourceLayout_host_to_win(const VkSubresourceLayout_host *in, VkSubresourceLayout *out)
 {
     if (!in) return;
@@ -1543,7 +1728,9 @@ static inline void convert_VkSubresourceLayout_host_to_win(const VkSubresourceLa
     out->arrayPitch = in->arrayPitch;
     out->depthPitch = in->depthPitch;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkImageViewAddressPropertiesNVX_win_to_host(const VkImageViewAddressPropertiesNVX *in, VkImageViewAddressPropertiesNVX_host *out)
 {
     if (!in) return;
@@ -1551,7 +1738,9 @@ static inline void convert_VkImageViewAddressPropertiesNVX_win_to_host(const VkI
     out->pNext = in->pNext;
     out->sType = in->sType;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkImageViewAddressPropertiesNVX_host_to_win(const VkImageViewAddressPropertiesNVX_host *in, VkImageViewAddressPropertiesNVX *out)
 {
     if (!in) return;
@@ -1561,7 +1750,9 @@ static inline void convert_VkImageViewAddressPropertiesNVX_host_to_win(const VkI
     out->deviceAddress = in->deviceAddress;
     out->size = in->size;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkImageViewHandleInfoNVX_win_to_host(const VkImageViewHandleInfoNVX *in, VkImageViewHandleInfoNVX_host *out)
 {
     if (!in) return;
@@ -1572,7 +1763,9 @@ static inline void convert_VkImageViewHandleInfoNVX_win_to_host(const VkImageVie
     out->descriptorType = in->descriptorType;
     out->sampler = in->sampler;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkImageFormatProperties_host_to_win(const VkImageFormatProperties_host *in, VkImageFormatProperties *out)
 {
     if (!in) return;
@@ -1583,7 +1776,9 @@ static inline void convert_VkImageFormatProperties_host_to_win(const VkImageForm
     out->sampleCounts = in->sampleCounts;
     out->maxResourceSize = in->maxResourceSize;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkImageFormatProperties2_win_to_host(const VkImageFormatProperties2 *in, VkImageFormatProperties2_host *out)
 {
     if (!in) return;
@@ -1591,7 +1786,9 @@ static inline void convert_VkImageFormatProperties2_win_to_host(const VkImageFor
     out->pNext = in->pNext;
     out->sType = in->sType;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkImageFormatProperties2_host_to_win(const VkImageFormatProperties2_host *in, VkImageFormatProperties2 *out)
 {
     if (!in) return;
@@ -1600,7 +1797,9 @@ static inline void convert_VkImageFormatProperties2_host_to_win(const VkImageFor
     out->pNext = in->pNext;
     convert_VkImageFormatProperties_host_to_win(&in->imageFormatProperties, &out->imageFormatProperties);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkMemoryHeap_static_array_host_to_win(const VkMemoryHeap_host *in, VkMemoryHeap *out, uint32_t count)
 {
     unsigned int i;
@@ -1613,7 +1812,9 @@ static inline void convert_VkMemoryHeap_static_array_host_to_win(const VkMemoryH
         out[i].flags = in[i].flags;
     }
 }
+#endif /* USE_STRUCT_CONVERSION) */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkPhysicalDeviceMemoryProperties_host_to_win(const VkPhysicalDeviceMemoryProperties_host *in, VkPhysicalDeviceMemoryProperties *out)
 {
     if (!in) return;
@@ -1623,7 +1824,9 @@ static inline void convert_VkPhysicalDeviceMemoryProperties_host_to_win(const Vk
     out->memoryHeapCount = in->memoryHeapCount;
     convert_VkMemoryHeap_static_array_host_to_win(in->memoryHeaps, out->memoryHeaps, VK_MAX_MEMORY_HEAPS);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkPhysicalDeviceMemoryProperties2_win_to_host(const VkPhysicalDeviceMemoryProperties2 *in, VkPhysicalDeviceMemoryProperties2_host *out)
 {
     if (!in) return;
@@ -1631,7 +1834,9 @@ static inline void convert_VkPhysicalDeviceMemoryProperties2_win_to_host(const V
     out->pNext = in->pNext;
     out->sType = in->sType;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkPhysicalDeviceMemoryProperties2_host_to_win(const VkPhysicalDeviceMemoryProperties2_host *in, VkPhysicalDeviceMemoryProperties2 *out)
 {
     if (!in) return;
@@ -1640,7 +1845,9 @@ static inline void convert_VkPhysicalDeviceMemoryProperties2_host_to_win(const V
     out->pNext = in->pNext;
     convert_VkPhysicalDeviceMemoryProperties_host_to_win(&in->memoryProperties, &out->memoryProperties);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkPhysicalDeviceLimits_host_to_win(const VkPhysicalDeviceLimits_host *in, VkPhysicalDeviceLimits *out)
 {
     if (!in) return;
@@ -1752,7 +1959,9 @@ static inline void convert_VkPhysicalDeviceLimits_host_to_win(const VkPhysicalDe
     out->optimalBufferCopyRowPitchAlignment = in->optimalBufferCopyRowPitchAlignment;
     out->nonCoherentAtomSize = in->nonCoherentAtomSize;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkPhysicalDeviceProperties_host_to_win(const VkPhysicalDeviceProperties_host *in, VkPhysicalDeviceProperties *out)
 {
     if (!in) return;
@@ -1767,7 +1976,9 @@ static inline void convert_VkPhysicalDeviceProperties_host_to_win(const VkPhysic
     convert_VkPhysicalDeviceLimits_host_to_win(&in->limits, &out->limits);
     out->sparseProperties = in->sparseProperties;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkPhysicalDeviceProperties2_win_to_host(const VkPhysicalDeviceProperties2 *in, VkPhysicalDeviceProperties2_host *out)
 {
     if (!in) return;
@@ -1775,7 +1986,9 @@ static inline void convert_VkPhysicalDeviceProperties2_win_to_host(const VkPhysi
     out->pNext = in->pNext;
     out->sType = in->sType;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkPhysicalDeviceProperties2_host_to_win(const VkPhysicalDeviceProperties2_host *in, VkPhysicalDeviceProperties2 *out)
 {
     if (!in) return;
@@ -1784,16 +1997,22 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win(const VkPhysi
     out->pNext = in->pNext;
     convert_VkPhysicalDeviceProperties_host_to_win(&in->properties, &out->properties);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win_to_host(const VkPhysicalDeviceSurfaceInfo2KHR *in, VkPhysicalDeviceSurfaceInfo2KHR_host *out)
+#else
+static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win_to_host(const VkPhysicalDeviceSurfaceInfo2KHR *in, VkPhysicalDeviceSurfaceInfo2KHR *out)
+#endif /* USE_STRUCT_CONVERSION */
 {
     if (!in) return;
 
     out->sType = in->sType;
     out->pNext = in->pNext;
-    out->surface = in->surface;
+    out->surface = wine_surface_from_handle(in->surface)->driver_surface;
 }
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkPipelineExecutableInfoKHR_win_to_host(const VkPipelineExecutableInfoKHR *in, VkPipelineExecutableInfoKHR_host *out)
 {
     if (!in) return;
@@ -1803,7 +2022,9 @@ static inline void convert_VkPipelineExecutableInfoKHR_win_to_host(const VkPipel
     out->pipeline = in->pipeline;
     out->executableIndex = in->executableIndex;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkPipelineInfoKHR_win_to_host(const VkPipelineInfoKHR *in, VkPipelineInfoKHR_host *out)
 {
     if (!in) return;
@@ -1812,7 +2033,9 @@ static inline void convert_VkPipelineInfoKHR_win_to_host(const VkPipelineInfoKHR
     out->pNext = in->pNext;
     out->pipeline = in->pipeline;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkSparseMemoryBind_host *convert_VkSparseMemoryBind_array_win_to_host(const VkSparseMemoryBind *in, uint32_t count)
 {
     VkSparseMemoryBind_host *out;
@@ -1839,7 +2062,9 @@ static inline void free_VkSparseMemoryBind_array(VkSparseMemoryBind_host *in, ui
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkSparseBufferMemoryBindInfo_host *convert_VkSparseBufferMemoryBindInfo_array_win_to_host(const VkSparseBufferMemoryBindInfo *in, uint32_t count)
 {
     VkSparseBufferMemoryBindInfo_host *out;
@@ -1870,7 +2095,9 @@ static inline void free_VkSparseBufferMemoryBindInfo_array(VkSparseBufferMemoryB
     }
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkSparseImageOpaqueMemoryBindInfo_host *convert_VkSparseImageOpaqueMemoryBindInfo_array_win_to_host(const VkSparseImageOpaqueMemoryBindInfo *in, uint32_t count)
 {
     VkSparseImageOpaqueMemoryBindInfo_host *out;
@@ -1901,7 +2128,9 @@ static inline void free_VkSparseImageOpaqueMemoryBindInfo_array(VkSparseImageOpa
     }
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkSparseImageMemoryBind_host *convert_VkSparseImageMemoryBind_array_win_to_host(const VkSparseImageMemoryBind *in, uint32_t count)
 {
     VkSparseImageMemoryBind_host *out;
@@ -1929,7 +2158,9 @@ static inline void free_VkSparseImageMemoryBind_array(VkSparseImageMemoryBind_ho
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkSparseImageMemoryBindInfo_host *convert_VkSparseImageMemoryBindInfo_array_win_to_host(const VkSparseImageMemoryBindInfo *in, uint32_t count)
 {
     VkSparseImageMemoryBindInfo_host *out;
@@ -1960,7 +2191,9 @@ static inline void free_VkSparseImageMemoryBindInfo_array(VkSparseImageMemoryBin
     }
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkBindSparseInfo_host *convert_VkBindSparseInfo_array_win_to_host(const VkBindSparseInfo *in, uint32_t count)
 {
     VkBindSparseInfo_host *out;
@@ -2002,7 +2235,46 @@ static inline void free_VkBindSparseInfo_array(VkBindSparseInfo_host *in, uint32
     }
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+static inline VkSubmitInfo *convert_VkSubmitInfo_array_win_to_host(const VkSubmitInfo *in, uint32_t count)
+{
+    VkSubmitInfo *out;
+    unsigned int i;
+
+    if (!in) return NULL;
+
+    out = malloc(count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i].sType = in[i].sType;
+        out[i].pNext = in[i].pNext;
+        out[i].waitSemaphoreCount = in[i].waitSemaphoreCount;
+        out[i].pWaitSemaphores = in[i].pWaitSemaphores;
+        out[i].pWaitDstStageMask = in[i].pWaitDstStageMask;
+        out[i].commandBufferCount = in[i].commandBufferCount;
+        out[i].pCommandBuffers = convert_VkCommandBuffer_array_win_to_host(in[i].pCommandBuffers, in[i].commandBufferCount);
+        out[i].signalSemaphoreCount = in[i].signalSemaphoreCount;
+        out[i].pSignalSemaphores = in[i].pSignalSemaphores;
+    }
+
+    return out;
+}
+
+static inline void free_VkSubmitInfo_array(VkSubmitInfo *in, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        free_VkCommandBuffer_array((VkCommandBuffer *)in[i].pCommandBuffers, in[i].commandBufferCount);
+    }
+    free(in);
+}
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkSemaphoreSubmitInfoKHR_host *convert_VkSemaphoreSubmitInfoKHR_array_win_to_host(const VkSemaphoreSubmitInfoKHR *in, uint32_t count)
 {
     VkSemaphoreSubmitInfoKHR_host *out;
@@ -2030,10 +2302,43 @@ static inline void free_VkSemaphoreSubmitInfoKHR_array(VkSemaphoreSubmitInfoKHR_
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+static inline VkCommandBufferSubmitInfoKHR *convert_VkCommandBufferSubmitInfoKHR_array_win_to_host(const VkCommandBufferSubmitInfoKHR *in, uint32_t count)
+{
+    VkCommandBufferSubmitInfoKHR *out;
+    unsigned int i;
+
+    if (!in) return NULL;
+
+    out = malloc(count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i].sType = in[i].sType;
+        out[i].pNext = in[i].pNext;
+        out[i].commandBuffer = in[i].commandBuffer->command_buffer;
+        out[i].deviceMask = in[i].deviceMask;
+    }
+
+    return out;
+}
+
+static inline void free_VkCommandBufferSubmitInfoKHR_array(VkCommandBufferSubmitInfoKHR *in, uint32_t count)
+{
+    if (!in) return;
+
+    free(in);
+}
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkSubmitInfo2KHR_host *convert_VkSubmitInfo2KHR_array_win_to_host(const VkSubmitInfo2KHR *in, uint32_t count)
 {
     VkSubmitInfo2KHR_host *out;
+#else
+static inline VkSubmitInfo2KHR *convert_VkSubmitInfo2KHR_array_win_to_host(const VkSubmitInfo2KHR *in, uint32_t count)
+{
+    VkSubmitInfo2KHR *out;
+#endif /* USE_STRUCT_CONVERSION */
     unsigned int i;
 
     if (!in) return NULL;
@@ -2045,17 +2350,29 @@ static inline VkSubmitInfo2KHR_host *convert_VkSubmitInfo2KHR_array_win_to_host(
         out[i].pNext = in[i].pNext;
         out[i].flags = in[i].flags;
         out[i].waitSemaphoreInfoCount = in[i].waitSemaphoreInfoCount;
+#if defined(USE_STRUCT_CONVERSION)
         out[i].pWaitSemaphoreInfos = convert_VkSemaphoreSubmitInfoKHR_array_win_to_host(in[i].pWaitSemaphoreInfos, in[i].waitSemaphoreInfoCount);
+#else
+        out[i].pWaitSemaphoreInfos = in[i].pWaitSemaphoreInfos;
+#endif /* USE_STRUCT_CONVERSION */
         out[i].commandBufferInfoCount = in[i].commandBufferInfoCount;
-        out[i].pCommandBufferInfos = in[i].pCommandBufferInfos;
+        out[i].pCommandBufferInfos = convert_VkCommandBufferSubmitInfoKHR_array_win_to_host(in[i].pCommandBufferInfos, in[i].commandBufferInfoCount);
         out[i].signalSemaphoreInfoCount = in[i].signalSemaphoreInfoCount;
+#if defined(USE_STRUCT_CONVERSION)
         out[i].pSignalSemaphoreInfos = convert_VkSemaphoreSubmitInfoKHR_array_win_to_host(in[i].pSignalSemaphoreInfos, in[i].signalSemaphoreInfoCount);
+#else
+        out[i].pSignalSemaphoreInfos = in[i].pSignalSemaphoreInfos;
+#endif /* USE_STRUCT_CONVERSION */
     }
 
     return out;
 }
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline void free_VkSubmitInfo2KHR_array(VkSubmitInfo2KHR_host *in, uint32_t count)
+#else
+static inline void free_VkSubmitInfo2KHR_array(VkSubmitInfo2KHR *in, uint32_t count)
+#endif /* USE_STRUCT_CONVERSION */
 {
     unsigned int i;
 
@@ -2063,12 +2380,18 @@ static inline void free_VkSubmitInfo2KHR_array(VkSubmitInfo2KHR_host *in, uint32
 
     for (i = 0; i < count; i++)
     {
+#if defined(USE_STRUCT_CONVERSION)
         free_VkSemaphoreSubmitInfoKHR_array((VkSemaphoreSubmitInfoKHR_host *)in[i].pWaitSemaphoreInfos, in[i].waitSemaphoreInfoCount);
+#endif /* USE_STRUCT_CONVERSION */
+        free_VkCommandBufferSubmitInfoKHR_array((VkCommandBufferSubmitInfoKHR *)in[i].pCommandBufferInfos, in[i].commandBufferInfoCount);
+#if defined(USE_STRUCT_CONVERSION)
         free_VkSemaphoreSubmitInfoKHR_array((VkSemaphoreSubmitInfoKHR_host *)in[i].pSignalSemaphoreInfos, in[i].signalSemaphoreInfoCount);
+#endif /* USE_STRUCT_CONVERSION */
     }
     free(in);
 }
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkDebugUtilsObjectNameInfoEXT_win_to_host(const VkDebugUtilsObjectNameInfoEXT *in, VkDebugUtilsObjectNameInfoEXT_host *out)
 {
     if (!in) return;
@@ -2079,7 +2402,9 @@ static inline void convert_VkDebugUtilsObjectNameInfoEXT_win_to_host(const VkDeb
     out->objectHandle = in->objectHandle;
     out->pObjectName = in->pObjectName;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkDebugUtilsObjectTagInfoEXT_win_to_host(const VkDebugUtilsObjectTagInfoEXT *in, VkDebugUtilsObjectTagInfoEXT_host *out)
 {
     if (!in) return;
@@ -2092,7 +2417,9 @@ static inline void convert_VkDebugUtilsObjectTagInfoEXT_win_to_host(const VkDebu
     out->tagSize = in->tagSize;
     out->pTag = in->pTag;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkSemaphoreSignalInfo_win_to_host(const VkSemaphoreSignalInfo *in, VkSemaphoreSignalInfo_host *out)
 {
     if (!in) return;
@@ -2102,7 +2429,9 @@ static inline void convert_VkSemaphoreSignalInfo_win_to_host(const VkSemaphoreSi
     out->semaphore = in->semaphore;
     out->value = in->value;
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkDebugUtilsObjectNameInfoEXT_host *convert_VkDebugUtilsObjectNameInfoEXT_array_win_to_host(const VkDebugUtilsObjectNameInfoEXT *in, uint32_t count)
 {
     VkDebugUtilsObjectNameInfoEXT_host *out;
@@ -2129,7 +2458,9 @@ static inline void free_VkDebugUtilsObjectNameInfoEXT_array(VkDebugUtilsObjectNa
 
     free(in);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined (USE_STRUCT_CONVERSION)
 static inline void convert_VkDebugUtilsMessengerCallbackDataEXT_win_to_host(const VkDebugUtilsMessengerCallbackDataEXT *in, VkDebugUtilsMessengerCallbackDataEXT_host *out)
 {
     if (!in) return;
@@ -2152,7 +2483,9 @@ static inline void free_VkDebugUtilsMessengerCallbackDataEXT(VkDebugUtilsMesseng
 {
     free_VkDebugUtilsObjectNameInfoEXT_array((VkDebugUtilsObjectNameInfoEXT_host *)in->pObjects, in->objectCount);
 }
+#endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkCopyDescriptorSet_host *convert_VkCopyDescriptorSet_array_win_to_host(const VkCopyDescriptorSet *in, uint32_t count)
 {
     VkCopyDescriptorSet_host *out;
@@ -2183,8 +2516,30 @@ static inline void free_VkCopyDescriptorSet_array(VkCopyDescriptorSet_host *in, 
 
     free(in);
 }
-
 #endif /* USE_STRUCT_CONVERSION */
+
+static inline VkPhysicalDevice *convert_VkPhysicalDevice_array_win_to_host(const VkPhysicalDevice *in, uint32_t count)
+{
+    VkPhysicalDevice *out;
+    unsigned int i;
+
+    if (!in) return NULL;
+
+    out = malloc(count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i] = in[i]->phys_dev;
+    }
+
+    return out;
+}
+
+static inline void free_VkPhysicalDevice_array(VkPhysicalDevice *in, uint32_t count)
+{
+    if (!in) return;
+
+    free(in);
+}
 
 VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCreateInfo *out_struct)
 {
@@ -2310,7 +2665,7 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             out->sType = in->sType;
             out->pNext = NULL;
             out->physicalDeviceCount = in->physicalDeviceCount;
-            out->pPhysicalDevices = in->pPhysicalDevices;
+            out->pPhysicalDevices = convert_VkPhysicalDevice_array_win_to_host(in->pPhysicalDevices, in->physicalDeviceCount);
 
             out_header->pNext = (VkBaseOutStructure *)out;
             out_header = out_header->pNext;
@@ -3791,6 +4146,18 @@ void free_VkDeviceCreateInfo_struct_chain(VkDeviceCreateInfo *s)
     while (header)
     {
         void *prev = header;
+
+        switch (header->sType)
+        {
+            case VK_STRUCTURE_TYPE_DEVICE_GROUP_DEVICE_CREATE_INFO:
+            {
+                VkDeviceGroupDeviceCreateInfo *structure = (VkDeviceGroupDeviceCreateInfo *) header;
+                free_VkPhysicalDevice_array((VkPhysicalDevice *)structure->pPhysicalDevices, structure->physicalDeviceCount);
+                break;
+            }
+            default:
+                break;
+        }
         header = header->pNext;
         free(prev);
     }
@@ -3906,6 +4273,12 @@ void free_VkInstanceCreateInfo_struct_chain(VkInstanceCreateInfo *s)
     while (header)
     {
         void *prev = header;
+
+        switch (header->sType)
+        {
+            default:
+                break;
+        }
         header = header->pNext;
         free(prev);
     }
@@ -4711,6 +5084,17 @@ static void WINAPI wine_vkCmdEndTransformFeedbackEXT(VkCommandBuffer commandBuff
 {
     TRACE("%p, %u, %u, %p, %p\n", commandBuffer, firstCounterBuffer, counterBufferCount, pCounterBuffers, pCounterBufferOffsets);
     commandBuffer->device->funcs.p_vkCmdEndTransformFeedbackEXT(commandBuffer->command_buffer, firstCounterBuffer, counterBufferCount, pCounterBuffers, pCounterBufferOffsets);
+}
+
+void WINAPI wine_vkCmdExecuteCommands(VkCommandBuffer commandBuffer, uint32_t commandBufferCount, const VkCommandBuffer *pCommandBuffers)
+{
+    VkCommandBuffer *pCommandBuffers_host;
+    TRACE("%p, %u, %p\n", commandBuffer, commandBufferCount, pCommandBuffers);
+
+    pCommandBuffers_host = convert_VkCommandBuffer_array_win_to_host(pCommandBuffers, commandBufferCount);
+    commandBuffer->device->funcs.p_vkCmdExecuteCommands(commandBuffer->command_buffer, commandBufferCount, pCommandBuffers_host);
+
+    free_VkCommandBuffer_array(pCommandBuffers_host, commandBufferCount);
 }
 
 static void WINAPI wine_vkCmdExecuteGeneratedCommandsNV(VkCommandBuffer commandBuffer, VkBool32 isPreprocessed, const VkGeneratedCommandsInfoNV *pGeneratedCommandsInfo)
@@ -5718,17 +6102,26 @@ VkResult WINAPI wine_vkCreateShaderModule(VkDevice device, const VkShaderModuleC
     return device->funcs.p_vkCreateShaderModule(device->device, pCreateInfo, NULL, pShaderModule);
 }
 
-VkResult thunk_vkCreateSwapchainKHR(VkDevice device, const VkSwapchainCreateInfoKHR *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSwapchainKHR *pSwapchain)
+VkResult WINAPI wine_vkCreateSwapchainKHR(VkDevice device, const VkSwapchainCreateInfoKHR *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSwapchainKHR *pSwapchain)
 {
 #if defined(USE_STRUCT_CONVERSION)
     VkResult result;
     VkSwapchainCreateInfoKHR_host pCreateInfo_host;
+    TRACE("%p, %p, %p, %p\n", device, pCreateInfo, pAllocator, pSwapchain);
+
     convert_VkSwapchainCreateInfoKHR_win_to_host(pCreateInfo, &pCreateInfo_host);
     result = device->funcs.p_vkCreateSwapchainKHR(device->device, &pCreateInfo_host, NULL, pSwapchain);
 
     return result;
 #else
-    return device->funcs.p_vkCreateSwapchainKHR(device->device, pCreateInfo, NULL, pSwapchain);
+    VkResult result;
+    VkSwapchainCreateInfoKHR pCreateInfo_host;
+    TRACE("%p, %p, %p, %p\n", device, pCreateInfo, pAllocator, pSwapchain);
+
+    convert_VkSwapchainCreateInfoKHR_win_to_host(pCreateInfo, &pCreateInfo_host);
+    result = device->funcs.p_vkCreateSwapchainKHR(device->device, &pCreateInfo_host, NULL, pSwapchain);
+
+    return result;
 #endif
 }
 
@@ -6726,7 +7119,12 @@ VkResult thunk_vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice physi
 
     return result;
 #else
-    return physicalDevice->instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilities2KHR(physicalDevice->phys_dev, pSurfaceInfo, pSurfaceCapabilities);
+    VkResult result;
+    VkPhysicalDeviceSurfaceInfo2KHR pSurfaceInfo_host;
+    convert_VkPhysicalDeviceSurfaceInfo2KHR_win_to_host(pSurfaceInfo, &pSurfaceInfo_host);
+    result = physicalDevice->instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilities2KHR(physicalDevice->phys_dev, &pSurfaceInfo_host, pSurfaceCapabilities);
+
+    return result;
 #endif
 }
 
@@ -6735,17 +7133,26 @@ VkResult thunk_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice physic
     return physicalDevice->instance->funcs.p_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice->phys_dev, wine_surface_from_handle(surface)->driver_surface, pSurfaceCapabilities);
 }
 
-VkResult thunk_vkGetPhysicalDeviceSurfaceFormats2KHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR *pSurfaceInfo, uint32_t *pSurfaceFormatCount, VkSurfaceFormat2KHR *pSurfaceFormats)
+VkResult WINAPI wine_vkGetPhysicalDeviceSurfaceFormats2KHR(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceSurfaceInfo2KHR *pSurfaceInfo, uint32_t *pSurfaceFormatCount, VkSurfaceFormat2KHR *pSurfaceFormats)
 {
 #if defined(USE_STRUCT_CONVERSION)
     VkResult result;
     VkPhysicalDeviceSurfaceInfo2KHR_host pSurfaceInfo_host;
+    TRACE("%p, %p, %p, %p\n", physicalDevice, pSurfaceInfo, pSurfaceFormatCount, pSurfaceFormats);
+
     convert_VkPhysicalDeviceSurfaceInfo2KHR_win_to_host(pSurfaceInfo, &pSurfaceInfo_host);
     result = physicalDevice->instance->funcs.p_vkGetPhysicalDeviceSurfaceFormats2KHR(physicalDevice->phys_dev, &pSurfaceInfo_host, pSurfaceFormatCount, pSurfaceFormats);
 
     return result;
 #else
-    return physicalDevice->instance->funcs.p_vkGetPhysicalDeviceSurfaceFormats2KHR(physicalDevice->phys_dev, pSurfaceInfo, pSurfaceFormatCount, pSurfaceFormats);
+    VkResult result;
+    VkPhysicalDeviceSurfaceInfo2KHR pSurfaceInfo_host;
+    TRACE("%p, %p, %p, %p\n", physicalDevice, pSurfaceInfo, pSurfaceFormatCount, pSurfaceFormats);
+
+    convert_VkPhysicalDeviceSurfaceInfo2KHR_win_to_host(pSurfaceInfo, &pSurfaceInfo_host);
+    result = physicalDevice->instance->funcs.p_vkGetPhysicalDeviceSurfaceFormats2KHR(physicalDevice->phys_dev, &pSurfaceInfo_host, pSurfaceFormatCount, pSurfaceFormats);
+
+    return result;
 #endif
 }
 
@@ -7004,6 +7411,19 @@ static VkResult WINAPI wine_vkQueueSetPerformanceConfigurationINTEL(VkQueue queu
     return queue->device->funcs.p_vkQueueSetPerformanceConfigurationINTEL(queue->queue, configuration);
 }
 
+VkResult WINAPI wine_vkQueueSubmit(VkQueue queue, uint32_t submitCount, const VkSubmitInfo *pSubmits, VkFence fence)
+{
+    VkResult result;
+    VkSubmitInfo *pSubmits_host;
+    TRACE("%p, %u, %p, 0x%s\n", queue, submitCount, pSubmits, wine_dbgstr_longlong(fence));
+
+    pSubmits_host = convert_VkSubmitInfo_array_win_to_host(pSubmits, submitCount);
+    result = queue->device->funcs.p_vkQueueSubmit(queue->queue, submitCount, pSubmits_host, fence);
+
+    free_VkSubmitInfo_array(pSubmits_host, submitCount);
+    return result;
+}
+
 static VkResult WINAPI wine_vkQueueSubmit2KHR(VkQueue queue, uint32_t submitCount, const VkSubmitInfo2KHR *pSubmits, VkFence fence)
 {
 #if defined(USE_STRUCT_CONVERSION)
@@ -7017,8 +7437,15 @@ static VkResult WINAPI wine_vkQueueSubmit2KHR(VkQueue queue, uint32_t submitCoun
     free_VkSubmitInfo2KHR_array(pSubmits_host, submitCount);
     return result;
 #else
+    VkResult result;
+    VkSubmitInfo2KHR *pSubmits_host;
     TRACE("%p, %u, %p, 0x%s\n", queue, submitCount, pSubmits, wine_dbgstr_longlong(fence));
-    return queue->device->funcs.p_vkQueueSubmit2KHR(queue->queue, submitCount, pSubmits, fence);
+
+    pSubmits_host = convert_VkSubmitInfo2KHR_array_win_to_host(pSubmits, submitCount);
+    result = queue->device->funcs.p_vkQueueSubmit2KHR(queue->queue, submitCount, pSubmits_host, fence);
+
+    free_VkSubmitInfo2KHR_array(pSubmits_host, submitCount);
+    return result;
 #endif
 }
 
