@@ -752,9 +752,6 @@ static void test_source_reader(void)
     if (SUCCEEDED(hr))
         IMFMediaType_Release(mediatype);
 
-    hr = IMFSourceReader_GetNativeMediaType(reader, MF_SOURCE_READER_FIRST_AUDIO_STREAM, 1, &mediatype);
-    ok(hr == MF_E_NO_MORE_TYPES, "Unexpected hr %#x.\n", hr);
-
     /* Current media type. */
     hr = IMFSourceReader_GetCurrentMediaType(reader, MF_SOURCE_READER_FIRST_VIDEO_STREAM, &mediatype);
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
