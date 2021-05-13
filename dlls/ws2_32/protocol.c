@@ -568,6 +568,7 @@ struct getaddrinfo_args
     ADDRINFOEXW **result;
     char *nodename;
     char *servname;
+    struct WS_addrinfo *hints;
 };
 
 static void WINAPI getaddrinfo_callback(TP_CALLBACK_INSTANCE *instance, void *context)
@@ -579,7 +580,7 @@ static void WINAPI getaddrinfo_callback(TP_CALLBACK_INSTANCE *instance, void *co
     struct WS_addrinfo *res;
     int ret;
 
-    ret = WS_getaddrinfo( args->nodename, args->servname, NULL, &res );
+    ret = WS_getaddrinfo( args->nodename, args->servname, args->hints, &res );
     if (res)
     {
         *args->result = addrinfo_list_AtoW(res);
@@ -660,12 +661,21 @@ static int WS_getaddrinfoW( const WCHAR *nodename, const WCHAR *servname,
             goto end;
         }
 
-        if (!(args = HeapAlloc( GetProcessHeap(), 0, sizeof(*args) ))) goto end;
+        if (!(args = HeapAlloc( GetProcessHeap(), 0, sizeof(*args) + sizeof(*args->hints) ))) goto end;
         args->overlapped = overlapped;
         args->completion_routine = completion_routine;
         args->result = res;
         args->nodename = nodenameA;
         args->servname = servnameA;
+        if (hints)
+        {
+            args->hints = (struct WS_addrinfo *)(args + 1);
+            args->hints->ai_flags    = hints->ai_flags;
+            args->hints->ai_family   = hints->ai_family;
+            args->hints->ai_socktype = hints->ai_socktype;
+            args->hints->ai_protocol = hints->ai_protocol;
+        }
+        else args->hints = NULL;
 
         overlapped->Internal = WSAEINPROGRESS;
         if (!TrySubmitThreadpoolCallback( getaddrinfo_callback, args, NULL ))
@@ -714,14 +724,12 @@ int WINAPI GetAddrInfoExW( const WCHAR *name, const WCHAR *servname, DWORD names
         FIXME( "Unsupported namespace %u\n", namespace );
     if (namespace_id)
         FIXME( "Unsupported namespace_id %s\n", debugstr_guid(namespace_id) );
-    if (hints)
-        FIXME( "Unsupported hints\n" );
     if (timeout)
         FIXME( "Unsupported timeout\n" );
     if (handle)
         FIXME( "Unsupported cancel handle\n" );
 
-    ret = WS_getaddrinfoW( name, servname, NULL, result, overlapped, completion_routine );
+    ret = WS_getaddrinfoW( name, servname, (struct WS_addrinfo *)hints, result, overlapped, completion_routine );
     if (ret) return ret;
     if (handle) *handle = (HANDLE)0xdeadbeef;
     return 0;

@@ -1599,7 +1599,7 @@ static void test_GetAddrInfoExW(void)
     static const WCHAR localhost[] = {'l','o','c','a','l','h','o','s','t',0};
     static const WCHAR winehq[] = {'t','e','s','t','.','w','i','n','e','h','q','.','o','r','g',0};
     static const WCHAR nxdomain[] = {'n','x','d','o','m','a','i','n','.','w','i','n','e','h','q','.','o','r','g',0};
-    ADDRINFOEXW *result;
+    ADDRINFOEXW *result, hints;
     OVERLAPPED overlapped;
     HANDLE event;
     int ret;
@@ -1664,6 +1664,28 @@ static void test_GetAddrInfoExW(void)
     ok(!result->ai_blob, "ai_blob != NULL\n");
     ok(!result->ai_bloblen, "ai_bloblen != 0\n");
     ok(!result->ai_provider, "ai_provider = %s\n", wine_dbgstr_guid(result->ai_provider));
+    pFreeAddrInfoExW(result);
+
+    /* hints */
+    result = (void *)0xdeadbeef;
+    memset(&overlapped, 0xcc, sizeof(overlapped));
+    ResetEvent(event);
+    overlapped.hEvent = event;
+    WSASetLastError(0xdeadbeef);
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_flags = AI_ALL | AI_V4MAPPED;
+    hints.ai_family = AF_INET6;
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_protocol = IPPROTO_UDP;
+    ret = pGetAddrInfoExW(winehq, NULL, NS_ALL, NULL, &hints, &result, NULL, &overlapped, NULL, NULL);
+    ok(ret == ERROR_IO_PENDING, "GetAddrInfoExW failed with %d\n", WSAGetLastError());
+    ok(WSAGetLastError() == ERROR_IO_PENDING, "expected 11001, got %d\n", WSAGetLastError());
+    ret = overlapped.Internal;
+    ok(ret == WSAEINPROGRESS || ret == ERROR_SUCCESS, "overlapped.Internal = %u\n", ret);
+    ok(WaitForSingleObject(event, 1000) == WAIT_OBJECT_0, "wait failed\n");
+    ret = pGetAddrInfoExOverlappedResult(&overlapped);
+    ok(!ret, "overlapped result is %d\n", ret);
+    ok(result != NULL, "result == NULL\n");
     pFreeAddrInfoExW(result);
 
     result = (void *)0xdeadbeef;
