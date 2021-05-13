@@ -4073,7 +4073,7 @@ static void test_parent_process_attribute(unsigned int level, HANDLE read_pipe)
     }
 
     memset(&si, 0, sizeof(si));
-    si.StartupInfo.cb = sizeof(si.StartupInfo);
+    si.StartupInfo.cb = sizeof(si);
 
     if (level)
     {
@@ -4221,7 +4221,7 @@ static void test_handle_list_attribute(BOOL child, HANDLE handle1, HANDLE handle
             "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
 
     memset(&si, 0, sizeof(si));
-    si.StartupInfo.cb = sizeof(si.StartupInfo);
+    si.StartupInfo.cb = sizeof(si);
     si.lpAttributeList = heap_alloc(size);
     ret = pInitializeProcThreadAttributeList(si.lpAttributeList, 1, 0, &size);
     ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
