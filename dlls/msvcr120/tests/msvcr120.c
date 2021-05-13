@@ -186,6 +186,7 @@ static int (CDECL *p_fegetexceptflag)(fexcept_t*,int);
 static int (CDECL *p_fesetexceptflag)(const fexcept_t*,int);
 static int (CDECL *p_fetestexcept)(int);
 static int (CDECL *p_feclearexcept)(int);
+static int (CDECL *p_feupdateenv)(fenv_t*);
 static int (CDECL *p__clearfp)(void);
 static _locale_t (__cdecl *p_wcreate_locale)(int, const wchar_t *);
 static void (__cdecl *p_free_locale)(_locale_t);
@@ -265,6 +266,7 @@ static BOOL init(void)
     SET(p_fesetexceptflag, "fesetexceptflag");
     SET(p_fetestexcept, "fetestexcept");
     SET(p_feclearexcept, "feclearexcept");
+    SET(p_feupdateenv, "feupdateenv");
 
     SET(p__clearfp, "_clearfp");
     SET(p_vsscanf, "vsscanf");
@@ -945,6 +947,22 @@ static void test_feenv(void)
     ok(!ret, "feclearexceptflag returned %x\n", ret);
     except = p_fetestexcept(FE_ALL_EXCEPT);
     ok(!except, "expected 0, got %lx\n", except);
+
+    p__clearfp();
+    except = FE_DIVBYZERO;
+    ret = p_fesetexceptflag(&except, FE_DIVBYZERO);
+    ok(!ret, "fesetexceptflag returned %x\n", ret);
+    ret = p_fegetenv(&env);
+    ok(!ret, "fegetenv returned %x\n", ret);
+    p__clearfp();
+    except = FE_INVALID;
+    ret = p_fesetexceptflag(&except, FE_INVALID);
+    ok(!ret, "fesetexceptflag returned %x\n", ret);
+    ret = p_feupdateenv(&env);
+    ok(!ret, "feupdateenv returned %x\n", ret);
+    ret = _statusfp();
+    ok(ret == (_EM_ZERODIVIDE | _EM_INVALID), "_statusfp returned %x\n", ret);
+    p__clearfp();
 }
 
 static void test__wcreate_locale(void)
