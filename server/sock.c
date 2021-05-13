@@ -1780,7 +1780,8 @@ DECL_HANDLER(set_socket_event)
     if (get_unix_fd( sock->fd ) == -1) return;
     old_event = sock->event;
     sock->mask    = req->mask;
-    sock->reported_events &= ~req->mask; /* re-enable held events */
+    if (req->window)
+        sock->reported_events &= ~req->mask; /* re-enable held events */
     sock->event   = NULL;
     sock->window  = req->window;
     sock->message = req->msg;
