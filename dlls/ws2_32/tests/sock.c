@@ -4413,7 +4413,7 @@ static void test_oob_events(struct event_test_ctx *ctx)
     ret = recv(server, buffer, 1, MSG_OOB);
     ok(ret == 1, "got %d\n", ret);
 
-    check_events_todo_msg(ctx, FD_OOB, 0, 200);
+    check_events_todo(ctx, FD_OOB, 0, 200);
     check_events_todo_msg(ctx, 0, 0, 0);
 
     ret = recv(server, buffer, 1, MSG_OOB);

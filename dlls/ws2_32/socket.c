@@ -2110,14 +2110,14 @@ static NTSTATUS WS2_async_recv( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS stat
         if (result >= 0)
         {
             status = STATUS_SUCCESS;
-            _enable_event( wsa->hSocket, FD_READ, 0, 0 );
+            _enable_event( wsa->hSocket, (wsa->flags & WS_MSG_OOB) ? FD_OOB : FD_READ, 0, 0 );
         }
         else
         {
             if (errno == EAGAIN)
             {
                 status = STATUS_PENDING;
-                _enable_event( wsa->hSocket, FD_READ, 0, 0 );
+                _enable_event( wsa->hSocket, (wsa->flags & WS_MSG_OOB) ? FD_OOB : FD_READ, 0, 0 );
             }
             else
             {
@@ -6180,7 +6180,7 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
             }
             else NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)ws2_async_apc,
                                    (ULONG_PTR)wsa, (ULONG_PTR)iosb, 0 );
-            _enable_event(SOCKET2HANDLE(s), FD_READ, 0, 0);
+            _enable_event(SOCKET2HANDLE(s), (wsa->flags & WS_MSG_OOB) ? FD_OOB : FD_READ, 0, 0);
             return 0;
         }
 
@@ -6209,13 +6209,13 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
             {
                 err = WSAETIMEDOUT;
                 /* a timeout is not fatal */
-                _enable_event(SOCKET2HANDLE(s), FD_READ, 0, 0);
+                _enable_event(SOCKET2HANDLE(s), (wsa->flags & WS_MSG_OOB) ? FD_OOB : FD_READ, 0, 0);
                 goto error;
             }
         }
         else
         {
-            _enable_event(SOCKET2HANDLE(s), FD_READ, 0, 0);
+            _enable_event(SOCKET2HANDLE(s), (wsa->flags & WS_MSG_OOB) ? FD_OOB : FD_READ, 0, 0);
             err = WSAEWOULDBLOCK;
             goto error;
         }
@@ -6224,7 +6224,7 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     TRACE(" -> %i bytes\n", n);
     if (wsa != &localwsa) HeapFree( GetProcessHeap(), 0, wsa );
     release_sock_fd( s, fd );
-    _enable_event(SOCKET2HANDLE(s), FD_READ, 0, 0);
+    _enable_event(SOCKET2HANDLE(s), (wsa->flags & WS_MSG_OOB) ? FD_OOB : FD_READ, 0, 0);
     SetLastError(ERROR_SUCCESS);
 
     return 0;
