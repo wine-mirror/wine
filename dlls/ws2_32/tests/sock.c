@@ -4463,6 +4463,11 @@ static void test_close_events(struct event_test_ctx *ctx)
         check_events_todo_msg(ctx, FD_CLOSE, 0, 200);
     check_events(ctx, 0, 0, 0);
 
+    ret = recv(server, buffer, 5, 0);
+    ok(!ret, "got %d\n", ret);
+
+    check_events(ctx, 0, 0, 0);
+
     closesocket(server);
 
     /* Test shutdown(remote end, SD_SEND). */
