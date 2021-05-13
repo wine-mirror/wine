@@ -1815,7 +1815,7 @@
 @ cdecl fegetround() msvcr120.fegetround
 @ stub feholdexcept
 @ cdecl feof(ptr) msvcr120.feof
-@ stub feraiseexcept
+@ cdecl feraiseexcept(long) msvcr120.feraiseexcept
 @ cdecl ferror(ptr) msvcr120.ferror
 @ cdecl fesetenv(ptr) msvcr120.fesetenv
 @ cdecl fesetexceptflag(ptr long) msvcr120.fesetexceptflag

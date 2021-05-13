@@ -2262,6 +2262,18 @@ int CDECL fesetexceptflag(const fexcept_t *status, int excepts)
 }
 
 /*********************************************************************
+ *      feraiseexcept (MSVCR120.@)
+ */
+int CDECL feraiseexcept(int flags)
+{
+    fenv_t env;
+
+    fegetenv(&env);
+    env._Fe_stat |= (flags & FE_ALL_EXCEPT);
+    return fesetenv(&env);
+}
+
+/*********************************************************************
  *      feclearexcept (MSVCR120.@)
  */
 int CDECL feclearexcept(int flags)

@@ -2149,7 +2149,7 @@
 @ cdecl fegetround()
 @ stub feholdexcept
 @ cdecl feof(ptr)
-@ stub feraiseexcept
+@ cdecl feraiseexcept(long)
 @ cdecl ferror(ptr)
 @ cdecl fesetenv(ptr)
 @ cdecl fesetexceptflag(ptr long)
