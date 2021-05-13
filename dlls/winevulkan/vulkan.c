@@ -1067,61 +1067,6 @@ void WINAPI wine_vkGetDeviceQueue2(VkDevice device, const VkDeviceQueueInfo2 *in
     *queue = wine_vk_device_find_queue(device, info);
 }
 
-VkResult WINAPI wine_vkQueueSubmit(VkQueue queue, uint32_t count,
-        const VkSubmitInfo *submits, VkFence fence)
-{
-    VkSubmitInfo *submits_host;
-    VkResult res;
-    VkCommandBuffer *command_buffers;
-    unsigned int i, j, num_command_buffers;
-
-    TRACE("%p %u %p 0x%s\n", queue, count, submits, wine_dbgstr_longlong(fence));
-
-    if (count == 0)
-    {
-        return queue->device->funcs.p_vkQueueSubmit(queue->queue, 0, NULL, fence);
-    }
-
-    submits_host = calloc(count, sizeof(*submits_host));
-    if (!submits_host)
-    {
-        ERR("Unable to allocate memory for submit buffers!\n");
-        return VK_ERROR_OUT_OF_HOST_MEMORY;
-    }
-
-    for (i = 0; i < count; i++)
-    {
-        memcpy(&submits_host[i], &submits[i], sizeof(*submits_host));
-
-        num_command_buffers = submits[i].commandBufferCount;
-        command_buffers = calloc(num_command_buffers, sizeof(*command_buffers));
-        if (!command_buffers)
-        {
-            ERR("Unable to allocate memory for command buffers!\n");
-            res = VK_ERROR_OUT_OF_HOST_MEMORY;
-            goto done;
-        }
-
-        for (j = 0; j < num_command_buffers; j++)
-        {
-            command_buffers[j] = submits[i].pCommandBuffers[j]->command_buffer;
-        }
-        submits_host[i].pCommandBuffers = command_buffers;
-    }
-
-    res = queue->device->funcs.p_vkQueueSubmit(queue->queue, count, submits_host, fence);
-
-done:
-    for (i = 0; i < count; i++)
-    {
-        free((void *)submits_host[i].pCommandBuffers);
-    }
-    free(submits_host);
-
-    TRACE("Returning %d\n", res);
-    return res;
-}
-
 VkResult WINAPI wine_vkCreateCommandPool(VkDevice device, const VkCommandPoolCreateInfo *info,
         const VkAllocationCallbacks *allocator, VkCommandPool *command_pool)
 {

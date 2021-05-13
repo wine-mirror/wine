@@ -2317,6 +2317,43 @@ static inline void free_VkBindSparseInfo_array(VkBindSparseInfo_host *in, uint32
 }
 #endif /* USE_STRUCT_CONVERSION */
 
+static inline VkSubmitInfo *convert_VkSubmitInfo_array_win_to_host(const VkSubmitInfo *in, uint32_t count)
+{
+    VkSubmitInfo *out;
+    unsigned int i;
+
+    if (!in) return NULL;
+
+    out = malloc(count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i].sType = in[i].sType;
+        out[i].pNext = in[i].pNext;
+        out[i].waitSemaphoreCount = in[i].waitSemaphoreCount;
+        out[i].pWaitSemaphores = in[i].pWaitSemaphores;
+        out[i].pWaitDstStageMask = in[i].pWaitDstStageMask;
+        out[i].commandBufferCount = in[i].commandBufferCount;
+        out[i].pCommandBuffers = convert_VkCommandBuffer_array_win_to_host(in[i].pCommandBuffers, in[i].commandBufferCount);
+        out[i].signalSemaphoreCount = in[i].signalSemaphoreCount;
+        out[i].pSignalSemaphores = in[i].pSignalSemaphores;
+    }
+
+    return out;
+}
+
+static inline void free_VkSubmitInfo_array(VkSubmitInfo *in, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        free_VkCommandBuffer_array((VkCommandBuffer *)in[i].pCommandBuffers, in[i].commandBufferCount);
+    }
+    free(in);
+}
+
 #if defined(USE_STRUCT_CONVERSION)
 static inline VkSemaphoreSubmitInfoKHR_host *convert_VkSemaphoreSubmitInfoKHR_array_win_to_host(const VkSemaphoreSubmitInfoKHR *in, uint32_t count)
 {
@@ -7460,6 +7497,19 @@ static VkResult WINAPI wine_vkQueueSetPerformanceConfigurationINTEL(VkQueue queu
 {
     TRACE("%p, 0x%s\n", queue, wine_dbgstr_longlong(configuration));
     return queue->device->funcs.p_vkQueueSetPerformanceConfigurationINTEL(queue->queue, configuration);
+}
+
+VkResult WINAPI wine_vkQueueSubmit(VkQueue queue, uint32_t submitCount, const VkSubmitInfo *pSubmits, VkFence fence)
+{
+    VkResult result;
+    VkSubmitInfo *pSubmits_host;
+    TRACE("%p, %u, %p, 0x%s\n", queue, submitCount, pSubmits, wine_dbgstr_longlong(fence));
+
+    pSubmits_host = convert_VkSubmitInfo_array_win_to_host(pSubmits, submitCount);
+    result = queue->device->funcs.p_vkQueueSubmit(queue->queue, submitCount, pSubmits_host, fence);
+
+    free_VkSubmitInfo_array(pSubmits_host, submitCount);
+    return result;
 }
 
 static VkResult WINAPI wine_vkQueueSubmit2KHR(VkQueue queue, uint32_t submitCount, const VkSubmitInfo2KHR *pSubmits, VkFence fence)
