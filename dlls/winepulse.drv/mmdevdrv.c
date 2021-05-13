@@ -249,21 +249,25 @@ static void silence_buffer(pa_sample_format_t format, BYTE *buffer, UINT32 bytes
 static int write_buffer(const ACImpl *This, BYTE *buffer, UINT32 bytes)
 {
     const float *vol = This->pulse_stream->vol;
+    UINT32 i, channels, mute = 0;
     BOOL adjust = FALSE;
-    UINT32 i, channels;
     BYTE *end;
 
     if (!bytes) return 0;
-    if (This->session->mute)
-    {
-        silence_buffer(This->pulse_stream->ss.format, buffer, bytes);
-        goto write;
-    }
 
     /* Adjust the buffer based on the volume for each channel */
     channels = This->pulse_stream->ss.channels;
     for (i = 0; i < channels; i++)
+    {
         adjust |= vol[i] != 1.0f;
+        if (vol[i] == 0.0f)
+            mute++;
+    }
+    if (mute == channels)
+    {
+        silence_buffer(This->pulse_stream->ss.format, buffer, bytes);
+        goto write;
+    }
     if (!adjust) goto write;
 
     end = buffer + bytes;
@@ -525,7 +529,8 @@ static DWORD WINAPI pulse_timer_cb(void *user)
 
 static void set_stream_volumes(ACImpl *This)
 {
-    pulse->set_volumes(This->pulse_stream, This->session->master_vol, This->vol,
+    float master_vol = This->session->mute ? 0.0f : This->session->master_vol;
+    pulse->set_volumes(This->pulse_stream, master_vol, This->vol,
                        This->session->channel_vols);
 }
 
@@ -2633,13 +2638,18 @@ static HRESULT WINAPI SimpleAudioVolume_SetMute(ISimpleAudioVolume *iface,
 {
     AudioSessionWrapper *This = impl_from_ISimpleAudioVolume(iface);
     AudioSession *session = This->session;
+    ACImpl *client;
 
     TRACE("(%p)->(%u, %s)\n", session, mute, debugstr_guid(context));
 
     if (context)
         FIXME("Notifications not supported yet\n");
 
+    pulse->lock();
     session->mute = mute;
+    LIST_FOR_EACH_ENTRY(client, &This->session->clients, ACImpl, entry)
+        set_stream_volumes(client);
+    pulse->unlock();
 
     return S_OK;
 }
