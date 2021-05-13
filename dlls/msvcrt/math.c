@@ -4934,9 +4934,9 @@ double CDECL _except1(DWORD fpe, _FP_OPERATION_CODE op, double arg, double res, 
 {
     ULONG_PTR exception_arg;
     DWORD exception = 0;
-    fenv_t env;
     DWORD fpword = 0;
     WORD operation;
+    int raise = 0;
 
     TRACE("(%x %x %lf %lf %x %p)\n", fpe, op, arg, res, cw, unk);
 
@@ -4946,49 +4946,47 @@ double CDECL _except1(DWORD fpe, _FP_OPERATION_CODE op, double arg, double res, 
     operation = op << 5;
     exception_arg = (ULONG_PTR)&operation;
 
-    fegetenv(&env);
-
     if (fpe & 0x1) { /* overflow */
         if ((fpe == 0x1 && (cw & 0x8)) || (fpe==0x11 && (cw & 0x28))) {
             /* 32-bit version also sets SW_INEXACT here */
-            env._Fe_stat |= FE_OVERFLOW;
-            if (fpe & 0x10) env._Fe_stat |= FE_INEXACT;
+            raise |= FE_OVERFLOW;
+            if (fpe & 0x10) raise |= FE_INEXACT;
             res = signbit(res) ? -INFINITY : INFINITY;
         } else {
             exception = EXCEPTION_FLT_OVERFLOW;
         }
     } else if (fpe & 0x2) { /* underflow */
         if ((fpe == 0x2 && (cw & 0x10)) || (fpe==0x12 && (cw & 0x30))) {
-            env._Fe_stat |= FE_UNDERFLOW;
-            if (fpe & 0x10) env._Fe_stat |= FE_INEXACT;
+            raise |= FE_UNDERFLOW;
+            if (fpe & 0x10) raise |= FE_INEXACT;
             res = signbit(res) ? -0.0 : 0.0;
         } else {
             exception = EXCEPTION_FLT_UNDERFLOW;
         }
     } else if (fpe & 0x4) { /* zerodivide */
         if ((fpe == 0x4 && (cw & 0x4)) || (fpe==0x14 && (cw & 0x24))) {
-            env._Fe_stat |= FE_DIVBYZERO;
-            if (fpe & 0x10) env._Fe_stat |= FE_INEXACT;
+            raise |= FE_DIVBYZERO;
+            if (fpe & 0x10) raise |= FE_INEXACT;
         } else {
             exception = EXCEPTION_FLT_DIVIDE_BY_ZERO;
         }
     } else if (fpe & 0x8) { /* invalid */
         if (fpe == 0x8 && (cw & 0x1)) {
-            env._Fe_stat |= FE_INVALID;
+            raise |= FE_INVALID;
         } else {
             exception = EXCEPTION_FLT_INVALID_OPERATION;
         }
     } else if (fpe & 0x10) { /* inexact */
         if (fpe == 0x10 && (cw & 0x20)) {
-            env._Fe_stat |= FE_INEXACT;
+            raise |= FE_INEXACT;
         } else {
             exception = EXCEPTION_FLT_INEXACT_RESULT;
         }
     }
 
     if (exception)
-        env._Fe_stat = 0;
-    fesetenv(&env);
+        raise = 0;
+    feraiseexcept(raise);
     if (exception)
         RaiseException(exception, 0, 1, &exception_arg);
 
