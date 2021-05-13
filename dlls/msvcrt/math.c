@@ -4750,12 +4750,8 @@ double CDECL acosh(double x)
 {
     if (x < 1)
     {
-        fenv_t env;
-
         *_errno() = EDOM;
-        fegetenv(&env);
-        env._Fe_stat |= FE_INVALID;
-        fesetenv(&env);
+        feraiseexcept(FE_INVALID);
         return NAN;
     }
     return unix_funcs->acosh( x );
@@ -4768,12 +4764,8 @@ float CDECL acoshf(float x)
 {
     if (x < 1)
     {
-        fenv_t env;
-
         *_errno() = EDOM;
-        fegetenv(&env);
-        env._Fe_stat |= FE_INVALID;
-        fesetenv(&env);
+        feraiseexcept(FE_INVALID);
         return NAN;
     }
     return unix_funcs->acoshf( x );
@@ -4787,14 +4779,9 @@ double CDECL atanh(double x)
     double ret;
 
     if (x > 1 || x < -1) {
-        fenv_t env;
-
         *_errno() = EDOM;
-
         /* on Linux atanh returns -NAN in this case */
-        fegetenv(&env);
-        env._Fe_stat |= FE_INVALID;
-        fesetenv(&env);
+        feraiseexcept(FE_INVALID);
         return NAN;
     }
     ret = unix_funcs->atanh( x );
@@ -4811,13 +4798,8 @@ float CDECL atanhf(float x)
     float ret;
 
     if (x > 1 || x < -1) {
-        fenv_t env;
-
         *_errno() = EDOM;
-
-        fegetenv(&env);
-        env._Fe_stat |= FE_INVALID;
-        fesetenv(&env);
+        feraiseexcept(FE_INVALID);
         return NAN;
     }
 
