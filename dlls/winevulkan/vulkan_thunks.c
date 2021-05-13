@@ -668,6 +668,29 @@ static inline void convert_VkCuLaunchInfoNVX_win_to_host(const VkCuLaunchInfoNVX
 }
 #endif /* USE_STRUCT_CONVERSION */
 
+static inline VkCommandBuffer *convert_VkCommandBuffer_array_win_to_host(const VkCommandBuffer *in, uint32_t count)
+{
+    VkCommandBuffer *out;
+    unsigned int i;
+
+    if (!in) return NULL;
+
+    out = malloc(count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i] = in[i]->command_buffer;
+    }
+
+    return out;
+}
+
+static inline void free_VkCommandBuffer_array(VkCommandBuffer *in, uint32_t count)
+{
+    if (!in) return;
+
+    free(in);
+}
+
 #if defined(USE_STRUCT_CONVERSION)
 static inline VkIndirectCommandsStreamNV_host *convert_VkIndirectCommandsStreamNV_array_win_to_host(const VkIndirectCommandsStreamNV *in, uint32_t count)
 {
@@ -5112,6 +5135,17 @@ static void WINAPI wine_vkCmdEndTransformFeedbackEXT(VkCommandBuffer commandBuff
 {
     TRACE("%p, %u, %u, %p, %p\n", commandBuffer, firstCounterBuffer, counterBufferCount, pCounterBuffers, pCounterBufferOffsets);
     commandBuffer->device->funcs.p_vkCmdEndTransformFeedbackEXT(commandBuffer->command_buffer, firstCounterBuffer, counterBufferCount, pCounterBuffers, pCounterBufferOffsets);
+}
+
+void WINAPI wine_vkCmdExecuteCommands(VkCommandBuffer commandBuffer, uint32_t commandBufferCount, const VkCommandBuffer *pCommandBuffers)
+{
+    VkCommandBuffer *pCommandBuffers_host;
+    TRACE("%p, %u, %p\n", commandBuffer, commandBufferCount, pCommandBuffers);
+
+    pCommandBuffers_host = convert_VkCommandBuffer_array_win_to_host(pCommandBuffers, commandBufferCount);
+    commandBuffer->device->funcs.p_vkCmdExecuteCommands(commandBuffer->command_buffer, commandBufferCount, pCommandBuffers_host);
+
+    free_VkCommandBuffer_array(pCommandBuffers_host, commandBufferCount);
 }
 
 static void WINAPI wine_vkCmdExecuteGeneratedCommandsNV(VkCommandBuffer commandBuffer, VkBool32 isPreprocessed, const VkGeneratedCommandsInfoNV *pGeneratedCommandsInfo)
