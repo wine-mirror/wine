@@ -2236,9 +2236,14 @@ static void test_GetRawInputBuffer(void)
     UINT size, count, rawinput_size;
     HWND hwnd;
     BOOL ret;
+    POINT pt;
 
     if (is_wow64) rawinput_size = sizeof(RAWINPUT64);
     else rawinput_size = sizeof(RAWINPUT);
+
+    SetCursorPos(300, 300);
+    GetCursorPos(&pt);
+    ok(pt.x == 300 && pt.y == 300, "Unexpected cursor position pos %dx%d\n", pt.x, pt.y);
 
     hwnd = CreateWindowA("static", "static", WS_VISIBLE | WS_POPUP,
                          100, 100, 100, 100, 0, NULL, NULL, NULL);
