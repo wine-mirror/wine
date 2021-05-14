@@ -4455,12 +4455,12 @@ static void test_close_events(struct event_test_ctx *ctx)
     check_events(ctx, 0, 0, 0);
     select_events(ctx, server, FD_ACCEPT | FD_CLOSE | FD_CONNECT | FD_OOB | FD_READ);
     if (ctx->is_message)
-        check_events_todo_msg(ctx, FD_CLOSE, 0, 200);
+        check_events(ctx, FD_CLOSE, 0, 200);
     check_events(ctx, 0, 0, 0);
     select_events(ctx, server, 0);
     select_events(ctx, server, FD_ACCEPT | FD_CLOSE | FD_CONNECT | FD_OOB | FD_READ);
     if (ctx->is_message)
-        check_events_todo_msg(ctx, FD_CLOSE, 0, 200);
+        check_events(ctx, FD_CLOSE, 0, 200);
     check_events(ctx, 0, 0, 0);
 
     ret = recv(server, buffer, 5, 0);
@@ -4553,7 +4553,7 @@ static void test_close_events(struct event_test_ctx *ctx)
 
     check_events(ctx, 0, 0, 200);
     select_events(ctx, server, FD_ACCEPT | FD_CLOSE | FD_CONNECT | FD_OOB | FD_READ);
-    check_events_todo_event(ctx, FD_CLOSE, 0, 200);
+    check_events_todo(ctx, FD_CLOSE, 0, 200);
 
     closesocket(server);
 }

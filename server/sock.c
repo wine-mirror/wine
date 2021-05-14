@@ -786,8 +786,7 @@ static int sock_get_poll_events( struct fd *fd )
     else if (smask & FD_READ || (sock->state & FD_WINE_LISTENING && mask & FD_ACCEPT))
         ev |= POLLIN | POLLPRI;
     /* We use POLLIN with 0 bytes recv() as FD_CLOSE indication for stream sockets. */
-    else if (sock->type == WS_SOCK_STREAM && (sock->state & FD_READ) && (mask & FD_CLOSE) &&
-              !(sock->reported_events & FD_READ))
+    else if (sock->type == WS_SOCK_STREAM && (mask & FD_CLOSE) && !(sock->reported_events & FD_READ))
         ev |= POLLIN;
 
     if (async_queued( &sock->write_q ))
