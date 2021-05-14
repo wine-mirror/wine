@@ -234,11 +234,45 @@ float CDECL _copysignf( float x, float y )
 
 /*********************************************************************
  *      _nextafterf (MSVCRT.@)
+ *
+ * Copied from musl: src/math/nextafterf.c
  */
-float CDECL _nextafterf( float num, float next )
+float CDECL _nextafterf( float x, float y )
 {
-    if (!isfinite(num) || !isfinite(next)) *_errno() = EDOM;
-    return unix_funcs->nextafterf( num, next );
+    unsigned int ix = *(unsigned int*)&x;
+    unsigned int iy = *(unsigned int*)&y;
+    unsigned int ax, ay, e;
+
+    if (isnan(x) || isnan(y))
+        return x + y;
+    if (x == y) {
+        if (_fpclassf(y) & (_FPCLASS_ND | _FPCLASS_PD | _FPCLASS_NZ | _FPCLASS_PZ ))
+            *_errno() = ERANGE;
+        return y;
+    }
+    ax = ix & 0x7fffffff;
+    ay = iy & 0x7fffffff;
+    if (ax == 0) {
+        if (ay == 0)
+            return y;
+        ix = (iy & 0x80000000) | 1;
+    } else if (ax > ay || ((ix ^ iy) & 0x80000000))
+        ix--;
+    else
+        ix++;
+    e = ix & 0x7f800000;
+    /* raise overflow if ix is infinite and x is finite */
+    if (e == 0x7f800000) {
+        fp_barrierf(x + x);
+        *_errno() = ERANGE;
+    }
+    /* raise underflow if ix is subnormal or zero */
+    y = *(float*)&ix;
+    if (e == 0) {
+        fp_barrierf(x * x + y * y);
+        *_errno() = ERANGE;
+    }
+    return y;
 }
 
 /*********************************************************************
