@@ -1548,7 +1548,8 @@ HKL WINAPI LoadKeyboardLayoutW( const WCHAR *name, UINT flags )
     FIXME_(keyboard)( "name %s, flags %x, semi-stub!\n", debugstr_w( name ), flags );
 
     tmp = wcstoul( name, NULL, 16 );
-    layout = UlongToHandle( tmp );
+    if (HIWORD( tmp )) layout = UlongToHandle( tmp );
+    else layout = UlongToHandle( MAKELONG( LOWORD( tmp ), LOWORD( tmp ) ) );
 
     wcscpy( layout_path, L"System\\CurrentControlSet\\Control\\Keyboard Layouts\\" );
     wcscat( layout_path, name );
