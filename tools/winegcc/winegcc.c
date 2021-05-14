@@ -324,6 +324,19 @@ static char* get_temp_file(const char* prefix, const char* suffix)
     return tmp;
 }
 
+static int is_pe_target( const struct options *opts )
+{
+    switch(opts->target_platform)
+    {
+    case PLATFORM_MINGW:
+    case PLATFORM_CYGWIN:
+    case PLATFORM_WINDOWS:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 enum tool
 {
     TOOL_CC,
@@ -1103,7 +1116,7 @@ static void build(struct options* opts)
     int generate_app_loader = 1;
     const char *crt_lib = NULL, *entry_point = NULL;
     int fake_module = 0;
-    int is_pe = (opts->target_platform == PLATFORM_WINDOWS || opts->target_platform == PLATFORM_CYGWIN || opts->target_platform == PLATFORM_MINGW);
+    int is_pe = is_pe_target( opts );
     unsigned int j;
 
     /* NOTE: for the files array we'll use the following convention:
@@ -2089,6 +2102,8 @@ int main(int argc, char **argv)
 
     if (opts.processor == proc_cpp) linking = 0;
     if (linking == -1) error("Static linking is not supported\n");
+
+    if (!opts.wine_objdir && is_pe_target( &opts )) opts.use_msvcrt = 1;
 
     if (opts.files->size == 0) forward(&opts);
     else if (linking) build(&opts);
