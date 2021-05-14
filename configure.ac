@@ -2681,7 +2681,6 @@ AC_CHECK_FUNCS(\
 	log2 \
 	log2f \
 	nearbyint \
-	nearbyintf \
 	nexttoward \
 	nexttowardf \
 	remainder \

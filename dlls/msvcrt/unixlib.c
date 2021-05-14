@@ -560,18 +560,6 @@ static double CDECL unix_nearbyint(double num)
 }
 
 /*********************************************************************
- *      nearbyintf
- */
-static float CDECL unix_nearbyintf(float num)
-{
-#ifdef HAVE_NEARBYINTF
-    return nearbyintf(num);
-#else
-    return unix_nearbyint(num);
-#endif
-}
-
-/*********************************************************************
  *      nextafter
  */
 static double CDECL unix_nextafter(double num, double next)
@@ -847,7 +835,6 @@ static const struct unix_funcs funcs =
     unix_modf,
     unix_modff,
     unix_nearbyint,
-    unix_nearbyintf,
     unix_nextafter,
     unix_nextafterf,
     unix_nexttoward,

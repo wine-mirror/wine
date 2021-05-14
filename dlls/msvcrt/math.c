@@ -3426,10 +3426,19 @@ double CDECL nearbyint(double num)
 
 /*********************************************************************
  *		_nearbyintf (MSVCR120.@)
+ *
+ * Based on musl: src/math/nearbyteintf.c
  */
-float CDECL nearbyintf(float num)
+float CDECL nearbyintf(float x)
 {
-    return unix_funcs->nearbyintf( num );
+    fenv_t env;
+
+    fegetenv(&env);
+    _control87(_MCW_EM, _MCW_EM);
+    x = rintf(x);
+    feclearexcept(FE_INEXACT);
+    feupdateenv(&env);
+    return x;
 }
 
 /*********************************************************************
