@@ -4566,36 +4566,35 @@ int WINAPI WS_ioctlsocket(SOCKET s, LONG cmd, WS_u_long *argp)
     return WSAIoctl( s, cmd, argp, sizeof(WS_u_long), argp, sizeof(WS_u_long), &ret_size, NULL, NULL );
 }
 
+
 /***********************************************************************
- *		listen		(WS2_32.13)
+ *      listen   (ws2_32.13)
  */
-int WINAPI WS_listen(SOCKET s, int backlog)
+int WINAPI WS_listen( SOCKET s, int backlog )
 {
-    int fd = get_sock_fd( s, FILE_READ_DATA, NULL ), ret = SOCKET_ERROR;
+    struct afd_listen_params params = {.backlog = backlog};
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    int fd, bound;
 
-    TRACE("socket %04lx, backlog %d\n", s, backlog);
-    if (fd != -1)
+    TRACE( "socket %#lx, backlog %d\n", s, backlog );
+
+    if ((fd = get_sock_fd( s, FILE_READ_DATA, NULL )) == -1)
+        return -1;
+    bound = is_fd_bound( fd, NULL, NULL );
+    release_sock_fd( s, fd );
+    if (bound <= 0)
     {
-        int bound = is_fd_bound(fd, NULL, NULL);
-
-        if (bound <= 0)
-        {
-            SetLastError(bound == -1 ? wsaErrno() : WSAEINVAL);
-        }
-        else if (listen(fd, backlog) == 0)
-        {
-            _enable_event(SOCKET2HANDLE(s), FD_ACCEPT,
-                          FD_WINE_LISTENING,
-                          FD_CONNECT|FD_WINE_CONNECTED);
-            ret = 0;
-        }
-        else
-            SetLastError(wsaErrno());
-        release_sock_fd( s, fd );
+        SetLastError( bound ? wsaErrno() : WSAEINVAL );
+        return -1;
     }
 
-    return ret;
+    status = NtDeviceIoControlFile( SOCKET2HANDLE(s), NULL, NULL, NULL, &io,
+            IOCTL_AFD_LISTEN, &params, sizeof(params), NULL, 0 );
+    SetLastError( NtStatusToWSAError( status ) );
+    return status ? -1 : 0;
 }
+
 
 /***********************************************************************
  *		recv			(WS2_32.16)
