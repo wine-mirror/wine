@@ -2763,6 +2763,10 @@ static void test_rawinput(const char* argv0)
         {
         case 14:
         case 15:
+            DestroyWindow(hwnd);
+            hwnd = CreateWindowA("static", "static", WS_VISIBLE | WS_POPUP,
+                                 pt.x - 50, pt.y - 50, 100, 100, 0, NULL, NULL, NULL);
+            ok(hwnd != 0, "CreateWindow failed\n");
             SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE);
             SetForegroundWindow(hwnd);
             empty_message_queue();
