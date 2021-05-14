@@ -87,13 +87,11 @@ static inline float fp_barrierf(float x)
     return y;
 }
 
-#if _MSVCR_VER>=120
 static inline double fp_barrier(double x)
 {
     volatile double y = x;
     return y;
 }
-#endif
 
 static inline double CDECL ret_nan( BOOL update_sw )
 {
@@ -3482,13 +3480,46 @@ float CDECL MSVCRT_nexttowardf(float num, double next)
 
 /*********************************************************************
  *		_nextafter (MSVCRT.@)
+ *
+ * Copied from musl: src/math/nextafter.c
  */
-double CDECL _nextafter(double num, double next)
+double CDECL _nextafter(double x, double y)
 {
-  double retval;
-  if (!isfinite(num) || !isfinite(next)) *_errno() = EDOM;
-  retval = unix_funcs->nextafter(num,next);
-  return retval;
+    ULONGLONG llx = *(ULONGLONG*)&x;
+    ULONGLONG lly = *(ULONGLONG*)&y;
+    ULONGLONG ax, ay;
+    int e;
+
+    if (isnan(x) || isnan(y))
+        return x + y;
+    if (llx == lly) {
+        if (_fpclass(y) & (_FPCLASS_ND | _FPCLASS_PD | _FPCLASS_NZ | _FPCLASS_PZ ))
+            *_errno() = ERANGE;
+        return y;
+    }
+    ax = llx & -1ULL / 2;
+    ay = lly & -1ULL / 2;
+    if (ax == 0) {
+        if (ay == 0)
+            return y;
+        llx = (lly & 1ULL << 63) | 1;
+    } else if (ax > ay || ((llx ^ lly) & 1ULL << 63))
+        llx--;
+    else
+        llx++;
+    e = llx >> 52 & 0x7ff;
+    /* raise overflow if llx is infinite and x is finite */
+    if (e == 0x7ff) {
+        fp_barrier(x + x);
+        *_errno() = ERANGE;
+    }
+    /* raise underflow if llx is subnormal or zero */
+    y = *(double*)&llx;
+    if (e == 0) {
+        fp_barrier(x * x + y * y);
+        *_errno() = ERANGE;
+    }
+    return y;
 }
 
 /*********************************************************************
