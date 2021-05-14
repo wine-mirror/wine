@@ -548,18 +548,6 @@ static float CDECL unix_modff( float x, float *iptr )
 }
 
 /*********************************************************************
- *      nearbyint
- */
-static double CDECL unix_nearbyint(double num)
-{
-#ifdef HAVE_NEARBYINT
-    return nearbyint(num);
-#else
-    return num >= 0 ? floor(num + 0.5) : ceil(num - 0.5);
-#endif
-}
-
-/*********************************************************************
  *      nextafter
  */
 static double CDECL unix_nextafter(double num, double next)
@@ -834,7 +822,6 @@ static const struct unix_funcs funcs =
     unix_logbf,
     unix_modf,
     unix_modff,
-    unix_nearbyint,
     unix_nextafter,
     unix_nextafterf,
     unix_nexttoward,

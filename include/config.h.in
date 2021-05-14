@@ -501,9 +501,6 @@
 /* Define if MTLDevice protocol has registryID property. */
 #undef HAVE_MTLDEVICE_REGISTRYID
 
-/* Define to 1 if you have the `nearbyint' function. */
-#undef HAVE_NEARBYINT
-
 /* Define to 1 if you have the <netdb.h> header file. */
 #undef HAVE_NETDB_H
 

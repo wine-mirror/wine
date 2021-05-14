@@ -3418,10 +3418,19 @@ double CDECL _yn(int n, double x)
 
 /*********************************************************************
  *		_nearbyint (MSVCR120.@)
+ *
+ * Based on musl: src/math/nearbyteint.c
  */
-double CDECL nearbyint(double num)
+double CDECL nearbyint(double x)
 {
-    return unix_funcs->nearbyint( num );
+    fenv_t env;
+
+    fegetenv(&env);
+    _control87(_MCW_EM, _MCW_EM);
+    x = rint(x);
+    feclearexcept(FE_INEXACT);
+    feupdateenv(&env);
+    return x;
 }
 
 /*********************************************************************
