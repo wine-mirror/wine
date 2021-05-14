@@ -2560,7 +2560,6 @@ UINT CDECL X11DRV_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
     struct x11drv_win_data *data = get_win_data( hwnd );
 
     if (!data || !data->whole_window) goto done;
-    if (IsRectEmpty( rect )) goto done;
     if (style & WS_MINIMIZE)
     {
         if (((rect->left != -32000 || rect->top != -32000)) && hide_icon( data ))

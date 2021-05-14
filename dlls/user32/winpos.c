@@ -1044,7 +1044,7 @@ static BOOL show_window( HWND hwnd, INT cmd )
     BOOL wasVisible = (style & WS_VISIBLE) != 0;
     BOOL showFlag = TRUE;
     RECT newPos = {0, 0, 0, 0};
-    UINT swp = 0;
+    UINT new_swp, swp = 0;
 
     TRACE("hwnd=%p, cmd=%d, wasVisible %d\n", hwnd, cmd, wasVisible);
 
@@ -1117,7 +1117,9 @@ static BOOL show_window( HWND hwnd, INT cmd )
         if (!IsWindow( hwnd )) goto done;
     }
 
-    swp = USER_Driver->pShowWindow( hwnd, cmd, &newPos, swp );
+    if (IsRectEmpty( &newPos )) new_swp = swp;
+    else new_swp = USER_Driver->pShowWindow( hwnd, cmd, &newPos, swp );
+    swp = new_swp;
 
     parent = GetAncestor( hwnd, GA_PARENT );
     if (parent && !IsWindowVisible( parent ) && !(swp & SWP_STATECHANGED))
