@@ -548,19 +548,6 @@ static float CDECL unix_modff( float x, float *iptr )
 }
 
 /*********************************************************************
- *      nexttowardf
- */
-static float CDECL unix_nexttowardf(float num, double next)
-{
-#ifdef HAVE_NEXTTOWARDF
-    return nexttowardf(num, next);
-#else
-    FIXME("not implemented\n");
-    return 0;
-#endif
-}
-
-/*********************************************************************
  *      pow
  */
 static double CDECL unix_pow( double x, double y )
@@ -793,7 +780,6 @@ static const struct unix_funcs funcs =
     unix_logbf,
     unix_modf,
     unix_modff,
-    unix_nexttowardf,
     unix_pow,
     unix_powf,
     unix_remainder,

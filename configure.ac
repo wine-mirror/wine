@@ -2680,7 +2680,6 @@ AC_CHECK_FUNCS(\
 	log1pf \
 	log2 \
 	log2f \
-	nexttowardf \
 	remainder \
 	remainderf \
 	remquo \
