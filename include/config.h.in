@@ -567,9 +567,6 @@
 /* Define to 1 if you have the <net/route.h> header file. */
 #undef HAVE_NET_ROUTE_H
 
-/* Define to 1 if you have the `nexttoward' function. */
-#undef HAVE_NEXTTOWARD
-
 /* Define to 1 if you have the `nexttowardf' function. */
 #undef HAVE_NEXTTOWARDF
 

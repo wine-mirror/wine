@@ -3487,13 +3487,7 @@ float CDECL nearbyintf(float x)
  */
 double CDECL MSVCRT_nexttoward(double num, double next)
 {
-    double ret = unix_funcs->nexttoward(num, next);
-    if (!(_fpclass(ret) & (_FPCLASS_PN | _FPCLASS_NN
-            | _FPCLASS_SNAN | _FPCLASS_QNAN)) && !isinf(num))
-    {
-        *_errno() = ERANGE;
-    }
-    return ret;
+    return _nextafter(num, next);
 }
 
 /*********************************************************************
