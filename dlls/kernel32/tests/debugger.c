@@ -1864,7 +1864,7 @@ static void test_debugger(const char *argv0)
 
         next_event(&ctx, POLL_EVENT_TIMEOUT);
 
-        /* try single step while debugee is in a syscall */
+        /* try single step while debuggee is in a syscall */
         fetch_thread_context(ctx.main_thread);
         orig_context = ctx.main_thread->ctx;
         ip = get_ip(&ctx.main_thread->ctx);
