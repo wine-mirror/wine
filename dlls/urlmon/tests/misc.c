@@ -1569,7 +1569,7 @@ static void test_user_agent(void)
             todo_wine
 #endif
             /* This assumes that either p points at some property before
-             * '; .NET', or that there is more than one such occurence.
+             * '; .NET', or that there is more than one such occurrence.
              */
             ok(strstr(p, "; .NET") != NULL, "no '; .NET' in %s\n", wine_dbgstr_a(p));
             p = strchr(p, ')');
