@@ -920,7 +920,7 @@ static void wined3d_texture_update_map_binding(struct wined3d_texture *texture)
     texture->update_map_binding = 0;
 }
 
-void wined3d_texture_set_map_binding(struct wined3d_texture *texture, DWORD map_binding)
+static void wined3d_texture_set_map_binding(struct wined3d_texture *texture, DWORD map_binding)
 {
     texture->update_map_binding = map_binding;
     if (!texture->resource.map_count)
