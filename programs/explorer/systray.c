@@ -900,7 +900,7 @@ void initialize_systray( HMODULE graphics_driver, BOOL using_root, BOOL arg_enab
     WNDCLASSEXW class;
     static const WCHAR classname[] = {'S','h','e','l','l','_','T','r','a','y','W','n','d',0};
 
-    if (using_root) wine_notify_icon = (void *)GetProcAddress( graphics_driver, "wine_notify_icon" );
+    if (using_root && graphics_driver) wine_notify_icon = (void *)GetProcAddress( graphics_driver, "wine_notify_icon" );
 
     icon_cx = GetSystemMetrics( SM_CXSMICON ) + 2*ICON_BORDER;
     icon_cy = GetSystemMetrics( SM_CYSMICON ) + 2*ICON_BORDER;
