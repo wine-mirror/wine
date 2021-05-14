@@ -400,12 +400,11 @@ static void sock_wake_up( struct sock *sock )
     unsigned int events = sock->pending_events & sock->mask;
     int i;
 
-    if ( !events ) return;
-
     if (sock->event)
     {
         if (debug_level) fprintf(stderr, "signalling events %x ptr %p\n", events, sock->event );
-        set_event( sock->event );
+        if (events)
+            set_event( sock->event );
     }
     if (sock->window)
     {
