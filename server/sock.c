@@ -1357,11 +1357,11 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 
     assert( sock->obj.ops == &sock_ops );
 
-    if (code != IOCTL_AFD_CREATE && get_unix_fd( fd ) < 0) return 0;
+    if (code != IOCTL_AFD_WINE_CREATE && get_unix_fd( fd ) < 0) return 0;
 
     switch(code)
     {
-    case IOCTL_AFD_CREATE:
+    case IOCTL_AFD_WINE_CREATE:
     {
         const struct afd_create_params *params = get_req_data();
 
@@ -1374,7 +1374,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         return 0;
     }
 
-    case IOCTL_AFD_ACCEPT:
+    case IOCTL_AFD_WINE_ACCEPT:
     {
         struct sock *acceptsock;
         obj_handle_t handle;
@@ -1409,7 +1409,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         return 0;
     }
 
-    case IOCTL_AFD_ACCEPT_INTO:
+    case IOCTL_AFD_WINE_ACCEPT_INTO:
     {
         static const int access = FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES | FILE_READ_DATA;
         const struct afd_accept_into_params *params = get_req_data();
@@ -1459,7 +1459,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         return 1;
     }
 
-    case IOCTL_AFD_ADDRESS_LIST_CHANGE:
+    case IOCTL_AFD_WINE_ADDRESS_LIST_CHANGE:
         if ((sock->state & FD_WINE_NONBLOCKING) && async_is_blocking( async ))
         {
             set_error( STATUS_DEVICE_NOT_READY );

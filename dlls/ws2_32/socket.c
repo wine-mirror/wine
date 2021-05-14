@@ -2341,7 +2341,7 @@ SOCKET WINAPI WS_accept( SOCKET s, struct WS_sockaddr *addr, int *len )
 
     if (!(sync_event = CreateEventW( NULL, TRUE, FALSE, NULL ))) return INVALID_SOCKET;
     status = NtDeviceIoControlFile( SOCKET2HANDLE(s), (HANDLE)((ULONG_PTR)sync_event | 0), NULL, NULL, &io,
-                                    IOCTL_AFD_ACCEPT, NULL, 0, &accept_handle, sizeof(accept_handle) );
+                                    IOCTL_AFD_WINE_ACCEPT, NULL, 0, &accept_handle, sizeof(accept_handle) );
     if (status == STATUS_PENDING)
     {
         if (WaitForSingleObject( sync_event, INFINITE ) == WAIT_FAILED)
@@ -2416,7 +2416,7 @@ static BOOL WINAPI WS2_AcceptEx( SOCKET listener, SOCKET acceptor, void *dest, D
     }
 
     status = NtDeviceIoControlFile( SOCKET2HANDLE(listener), overlapped->hEvent, NULL, cvalue,
-                                    (IO_STATUS_BLOCK *)overlapped, IOCTL_AFD_ACCEPT_INTO, &params, sizeof(params),
+                                    (IO_STATUS_BLOCK *)overlapped, IOCTL_AFD_WINE_ACCEPT_INTO, &params, sizeof(params),
                                     dest, recv_len + local_len + remote_len );
 
     if (ret_len) *ret_len = overlapped->InternalHigh;
@@ -4507,7 +4507,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         SetLastError(WSAEOPNOTSUPP);
         return SOCKET_ERROR;
     case WS_SIO_ADDRESS_LIST_CHANGE:
-        code = IOCTL_AFD_ADDRESS_LIST_CHANGE;
+        code = IOCTL_AFD_WINE_ADDRESS_LIST_CHANGE;
         status = WSAEOPNOTSUPP;
         break;
     default:
@@ -5921,7 +5921,7 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
     create_params.protocol = protocol;
     create_params.flags = flags & ~(WSA_FLAG_NO_HANDLE_INHERIT | WSA_FLAG_OVERLAPPED);
     if ((status = NtDeviceIoControlFile(handle, NULL, NULL, NULL, &io,
-            IOCTL_AFD_CREATE, &create_params, sizeof(create_params), NULL, 0)))
+            IOCTL_AFD_WINE_CREATE, &create_params, sizeof(create_params), NULL, 0)))
     {
         WARN("Failed to initialize socket, status %#x.\n", status);
         err = RtlNtStatusToDosError( status );
