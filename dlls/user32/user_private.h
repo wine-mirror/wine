@@ -105,7 +105,7 @@ typedef struct tagUSER_DRIVER {
     LRESULT (CDECL *pSysCommand)(HWND,WPARAM,LPARAM);
     BOOL    (CDECL *pUpdateLayeredWindow)(HWND,const UPDATELAYEREDWINDOWINFO *,const RECT *);
     LRESULT (CDECL *pWindowMessage)(HWND,UINT,WPARAM,LPARAM);
-    void   (CDECL *pWindowPosChanging)(HWND,HWND,UINT,const RECT *,const RECT *,RECT *,struct window_surface**);
+    BOOL   (CDECL *pWindowPosChanging)(HWND,HWND,UINT,const RECT *,const RECT *,RECT *,struct window_surface**);
     void   (CDECL *pWindowPosChanged)(HWND,HWND,UINT,const RECT *,const RECT *,const RECT *,const RECT *,struct window_surface*);
     /* system parameters */
     BOOL   (CDECL *pSystemParametersInfo)(UINT,UINT,void*,UINT);
@@ -242,6 +242,7 @@ extern BOOL rawinput_from_hardware_message(RAWINPUT *rawinput, const struct hard
 extern struct rawinput_thread_data *rawinput_thread_data(void);
 
 extern void keyboard_init(void) DECLSPEC_HIDDEN;
+extern void create_offscreen_window_surface( const RECT *visible_rect, struct window_surface **surface ) DECLSPEC_HIDDEN;
 
 extern void CLIPBOARD_ReleaseOwner( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL FOCUS_MouseActivate( HWND hwnd ) DECLSPEC_HIDDEN;

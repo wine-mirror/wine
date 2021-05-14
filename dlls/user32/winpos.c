@@ -2115,8 +2115,16 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
         window_surface_add_ref( new_surface );
     }
     visible_rect = *window_rect;
-    USER_Driver->pWindowPosChanging( hwnd, insert_after, swp_flags,
-                                     window_rect, client_rect, &visible_rect, &new_surface );
+    if (!(ret = USER_Driver->pWindowPosChanging( hwnd, insert_after, swp_flags,
+                                                 window_rect, client_rect, &visible_rect, &new_surface )))
+    {
+        if (IsRectEmpty( window_rect )) visible_rect = *window_rect;
+        else
+        {
+            visible_rect = get_virtual_screen_rect();
+            IntersectRect( &visible_rect, &visible_rect, window_rect );
+        }
+    }
 
     WIN_GetRectangles( hwnd, COORDS_SCREEN, &old_window_rect, NULL );
     if (IsRectEmpty( &valid_rects[0] )) valid_rects = NULL;
@@ -2126,6 +2134,17 @@ BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
         if (new_surface) window_surface_release( new_surface );
         return FALSE;
     }
+
+    /* create or update window surface for top-level windows if the driver doesn't implement WindowPosChanging */
+    if (!ret && new_surface && !IsRectEmpty( &visible_rect ) &&
+        (!(GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED) ||
+           GetLayeredWindowAttributes( hwnd, NULL, NULL, NULL )))
+    {
+        window_surface_release( new_surface );
+        if ((new_surface = win->surface)) window_surface_add_ref( new_surface );
+        create_offscreen_window_surface( &visible_rect, &new_surface );
+    }
+
     old_visible_rect = win->visible_rect;
     old_client_rect = win->client_rect;
     old_surface = win->surface;

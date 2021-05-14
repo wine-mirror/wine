@@ -376,10 +376,11 @@ static LRESULT CDECL nulldrv_WindowMessage( HWND hwnd, UINT msg, WPARAM wparam, 
     return 0;
 }
 
-static void CDECL nulldrv_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
+static BOOL CDECL nulldrv_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
                                              const RECT *window_rect, const RECT *client_rect,
                                              RECT *visible_rect, struct window_surface **surface )
 {
+    return FALSE;
 }
 
 static void CDECL nulldrv_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,

@@ -2318,7 +2318,7 @@ static inline BOOL get_surface_rect( const RECT *visible_rect, RECT *surface_rec
 /***********************************************************************
  *		WindowPosChanging   (X11DRV.@)
  */
-void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
+BOOL CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
                                      const RECT *window_rect, const RECT *client_rect, RECT *visible_rect,
                                      struct window_surface **surface )
 {
@@ -2328,7 +2328,7 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
     COLORREF key;
     BOOL layered = GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED;
 
-    if (!data && !(data = X11DRV_create_win_data( hwnd, window_rect, client_rect ))) return;
+    if (!data && !(data = X11DRV_create_win_data( hwnd, window_rect, client_rect ))) return TRUE;
 
     /* check if we need to switch the window to managed */
     if (!data->managed && data->whole_window && is_window_managed( hwnd, swp_flags, window_rect ))
@@ -2336,7 +2336,7 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
         TRACE( "making win %p/%lx managed\n", hwnd, data->whole_window );
         release_win_data( data );
         unmap_window( hwnd );
-        if (!(data = get_win_data( hwnd ))) return;
+        if (!(data = get_win_data( hwnd ))) return TRUE;
         data->managed = TRUE;
     }
 
@@ -2377,6 +2377,7 @@ void CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flag
 
 done:
     release_win_data( data );
+    return TRUE;
 }
 
 
