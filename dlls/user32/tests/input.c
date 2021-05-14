@@ -4167,6 +4167,13 @@ static void test_OemKeyScan(void)
     WCHAR oem, wchr;
     char oem_char;
 
+    BOOL us_kbd = (GetKeyboardLayout(0) == (HKL)(ULONG_PTR)0x04090409);
+    if (!us_kbd)
+    {
+        skip("skipping test with inconsistent results on non-us keyboard\n");
+        return;
+    }
+
     for (oem = 0; oem < 0x200; oem++)
     {
         ret = OemKeyScan( oem );
