@@ -356,7 +356,7 @@ static void CDECL nulldrv_SetWindowText( HWND hwnd, LPCWSTR text )
 
 static UINT CDECL nulldrv_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
 {
-    return swp;
+    return ~0; /* use default implementation */
 }
 
 static LRESULT CDECL nulldrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )

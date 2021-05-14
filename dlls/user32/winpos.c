@@ -1118,7 +1118,16 @@ static BOOL show_window( HWND hwnd, INT cmd )
     }
 
     if (IsRectEmpty( &newPos )) new_swp = swp;
-    else new_swp = USER_Driver->pShowWindow( hwnd, cmd, &newPos, swp );
+    else if ((new_swp = USER_Driver->pShowWindow( hwnd, cmd, &newPos, swp )) == ~0)
+    {
+        if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD) new_swp = swp;
+        else if (IsIconic( hwnd ) && (newPos.left != -32000 || newPos.top != -32000))
+        {
+            OffsetRect( &newPos, -32000 - newPos.left, -32000 - newPos.top );
+            new_swp = swp & ~(SWP_NOMOVE | SWP_NOCLIENTMOVE);
+        }
+        else new_swp = swp;
+    }
     swp = new_swp;
 
     parent = GetAncestor( hwnd, GA_PARENT );
