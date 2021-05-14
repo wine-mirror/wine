@@ -1354,10 +1354,11 @@ static struct accept_req *alloc_accept_req( struct sock *sock, struct sock *acce
 static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 {
     struct sock *sock = get_fd_user( fd );
+    int unix_fd;
 
     assert( sock->obj.ops == &sock_ops );
 
-    if (code != IOCTL_AFD_WINE_CREATE && get_unix_fd( fd ) < 0) return 0;
+    if (code != IOCTL_AFD_WINE_CREATE && (unix_fd = get_unix_fd( fd )) < 0) return 0;
 
     switch(code)
     {
@@ -1457,6 +1458,32 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         sock_reselect( sock );
         set_error( STATUS_PENDING );
         return 1;
+    }
+
+    case IOCTL_AFD_LISTEN:
+    {
+        const struct afd_listen_params *params = get_req_data();
+
+        if (get_req_data_size() < sizeof(*params))
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return 0;
+        }
+
+        if (listen( unix_fd, params->backlog ) < 0)
+        {
+            set_error( sock_get_ntstatus( errno ) );
+            return 0;
+        }
+
+        sock->pending_events &= ~FD_ACCEPT;
+        sock->reported_events &= ~FD_ACCEPT;
+        sock->state |= FD_WINE_LISTENING;
+        sock->state &= ~(FD_CONNECT | FD_WINE_CONNECTED);
+
+        /* we may already be selecting for FD_ACCEPT */
+        sock_reselect( sock );
+        return 0;
     }
 
     case IOCTL_AFD_WINE_ADDRESS_LIST_CHANGE:
