@@ -453,7 +453,7 @@ async_test("animation_frame", function() {
     var id = requestAnimationFrame(function(x) {
         ok(this === window, "this != window");
         ok(typeof(x) === "number", "x = " + x);
-        ok(arguments.length === 1, "arguments.lenght = " + arguments.length);
+        ok(arguments.length === 1, "arguments.length = " + arguments.length);
         next_test();
     });
     ok(typeof(id) === "number", "id = " + id);
