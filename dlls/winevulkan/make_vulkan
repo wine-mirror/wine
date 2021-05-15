@@ -1720,7 +1720,7 @@ class VkParam(object):
     def needs_unwrapping(self):
         """ Returns if parameter needs unwrapping of handle. """
 
-        # Wrapped handle parameters are handled seperately, only look for wrapped handles in structs
+        # Wrapped handle parameters are handled separately, only look for wrapped handles in structs
         if self.is_struct():
             return self.struct.needs_unwrapping()
 
