@@ -64,8 +64,10 @@ static BOOL create_backup(const char *filename)
     HANDLE handle;
     DWORD rc, attribs;
 
-    DeleteFileA(filename);
     handle = OpenEventLogA(NULL, "Application");
+    ok(handle != NULL, "OpenEventLogA(Application) failed : %d\n", GetLastError());
+
+    DeleteFileA(filename);
     rc = BackupEventLogA(handle, filename);
     if (!rc && GetLastError() == ERROR_PRIVILEGE_NOT_HELD)
     {
@@ -160,6 +162,7 @@ static void test_info(void)
     ok(GetLastError() == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
     handle = OpenEventLogA(NULL, "Application");
+    ok(handle != NULL, "OpenEventLogA(Application) failed : %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pGetEventLogInformation(handle, EVENTLOG_FULL_INFO, NULL, 0, NULL);
@@ -216,6 +219,7 @@ static void test_count(void)
     ok(count == 0xdeadbeef, "Expected count to stay unchanged\n");
 
     handle = OpenEventLogA(NULL, "Application");
+    ok(handle != NULL, "OpenEventLogA(Application) failed : %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = GetNumberOfEventLogRecords(handle, NULL);
@@ -270,6 +274,7 @@ static void test_oldest(void)
     ok(oldest == 0xdeadbeef, "Expected oldest to stay unchanged\n");
 
     handle = OpenEventLogA(NULL, "Application");
+    ok(handle != NULL, "OpenEventLogA(Application) failed : %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = GetOldestEventLogRecord(handle, NULL);
@@ -322,6 +327,7 @@ static void test_backup(void)
     ok(GetFileAttributesA(backup) == INVALID_FILE_ATTRIBUTES, "Expected no backup file\n");
 
     handle = OpenEventLogA(NULL, "Application");
+    ok(handle != NULL, "OpenEventLogA(Application) failed : %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = BackupEventLogA(handle, NULL);
@@ -433,6 +439,7 @@ static void test_read(void)
     HeapFree(GetProcessHeap(), 0, buf);
 
     handle = OpenEventLogA(NULL, "Application");
+    ok(handle != NULL, "OpenEventLogA(Application) failed : %d\n", GetLastError());
 
     /* Show that we need the proper dwFlags with a (for the rest) proper call */
     buf = HeapAlloc(GetProcessHeap(), 0, sizeof(EVENTLOGRECORD));
