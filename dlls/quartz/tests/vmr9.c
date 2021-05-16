@@ -28,7 +28,6 @@
 #include "d3d9.h"
 #include "vmr9.h"
 #include "wmcodecdsp.h"
-#include "wine/heap.h"
 #include "wine/strmbase.h"
 #include "wine/test.h"
 
@@ -976,13 +975,13 @@ static DWORD WINAPI frame_thread(void *arg)
     hr = IMemInputPin_Receive(params->sink, params->sample);
     if (winetest_debug > 1) trace("%04x: Returned %#x.\n", GetCurrentThreadId(), hr);
     IMediaSample_Release(params->sample);
-    heap_free(params);
+    free(params);
     return hr;
 }
 
 static HANDLE send_frame_time(IMemInputPin *sink, REFERENCE_TIME start_time, DWORD color)
 {
-    struct frame_thread_params *params = heap_alloc(sizeof(*params));
+    struct frame_thread_params *params = malloc(sizeof(*params));
     IMemAllocator *allocator;
     REFERENCE_TIME end_time;
     IMediaSample *sample;
