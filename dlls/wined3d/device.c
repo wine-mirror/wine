@@ -1675,7 +1675,7 @@ static void wined3d_device_set_render_state(struct wined3d_device *device,
     else
     {
         device->cs->c.state->render_states[state] = value;
-        wined3d_cs_emit_set_render_state(device->cs, state, value);
+        wined3d_device_context_emit_set_render_state(&device->cs->c, state, value);
     }
 
     if (state == WINED3D_RS_POINTSIZE && value == WINED3D_RESZ_CODE)
@@ -1854,7 +1854,7 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
 
     for (i = 0; i < WINEHIGHEST_RENDER_STATE + 1; ++i)
     {
-        wined3d_cs_emit_set_render_state(device->cs, i, state->render_states[i]);
+        wined3d_device_context_emit_set_render_state(context, i, state->render_states[i]);
     }
 
     wined3d_device_context_emit_set_blend_state(context, state->blend_state, &state->blend_factor, state->sample_mask);

@@ -4808,6 +4808,8 @@ void wined3d_device_context_emit_set_predication(struct wined3d_device_context *
         struct wined3d_query *predicate, BOOL value) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_rasterizer_state(struct wined3d_device_context *context,
         struct wined3d_rasterizer_state *rasterizer_state) DECLSPEC_HIDDEN;
+void wined3d_device_context_emit_set_render_state(struct wined3d_device_context *context,
+        enum wined3d_render_state state, unsigned int value) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_rendertarget_view(struct wined3d_device_context *context, unsigned int view_idx,
         struct wined3d_rendertarget_view *view) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_sampler(struct wined3d_device_context *context, enum wined3d_shader_type type,

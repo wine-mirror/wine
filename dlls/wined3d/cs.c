@@ -1767,16 +1767,17 @@ static void wined3d_cs_exec_set_render_state(struct wined3d_cs *cs, const void *
     device_invalidate_state(cs->c.device, STATE_RENDER(op->state));
 }
 
-void wined3d_cs_emit_set_render_state(struct wined3d_cs *cs, enum wined3d_render_state state, DWORD value)
+void wined3d_device_context_emit_set_render_state(struct wined3d_device_context *context,
+        enum wined3d_render_state state, unsigned int value)
 {
     struct wined3d_cs_set_render_state *op;
 
-    op = wined3d_device_context_require_space(&cs->c, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_SET_RENDER_STATE;
     op->state = state;
     op->value = value;
 
-    wined3d_device_context_submit(&cs->c, WINED3D_CS_QUEUE_DEFAULT);
+    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
 static void wined3d_cs_exec_set_texture_state(struct wined3d_cs *cs, const void *data)
