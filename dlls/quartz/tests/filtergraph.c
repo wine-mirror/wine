@@ -28,19 +28,6 @@
 
 static const GUID testguid = {0xabbccdde};
 
-typedef struct TestFilterImpl
-{
-    IBaseFilter IBaseFilter_iface;
-
-    LONG refCount;
-    CRITICAL_SECTION csFilter;
-    FILTER_STATE state;
-    FILTER_INFO filterInfo;
-    CLSID clsid;
-    IPin **ppPins;
-    UINT nPins;
-} TestFilterImpl;
-
 static BOOL compare_time(ULONGLONG x, ULONGLONG y, unsigned int max_diff)
 {
     ULONGLONG diff = x > y ? x - y : y - x;
