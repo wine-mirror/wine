@@ -1348,15 +1348,13 @@ static void wined3d_device_get_transform(const struct wined3d_device *device,
  * stateblock problems. When capturing the state block, I duplicate the
  * hashmap, but when recording, just build a chain pretty much of commands to
  * be replayed. */
-static void wined3d_device_set_light(struct wined3d_device *device,
-        UINT light_idx, const struct wined3d_light *light)
+static void wined3d_device_context_set_light(struct wined3d_device_context *context,
+        unsigned int light_idx, const struct wined3d_light *light)
 {
     struct wined3d_light_info *object = NULL;
     float rho;
 
-    TRACE("device %p, light_idx %u, light %p.\n", device, light_idx, light);
-
-    if (FAILED(wined3d_light_state_set_light(&device->cs->c.state->light_state, light_idx, light, &object)))
+    if (FAILED(wined3d_light_state_set_light(&context->state->light_state, light_idx, light, &object)))
         return;
 
     /* Initialize the object. */
@@ -1445,7 +1443,7 @@ static void wined3d_device_set_light(struct wined3d_device *device,
             FIXME("Unrecognized light type %#x.\n", light->type);
     }
 
-    wined3d_device_context_emit_set_light(&device->cs->c, object);
+    wined3d_device_context_emit_set_light(context, object);
 }
 
 static void wined3d_device_set_light_enable(struct wined3d_device *device, UINT light_idx, BOOL enable)
@@ -1459,7 +1457,7 @@ static void wined3d_device_set_light_enable(struct wined3d_device *device, UINT 
     if (!(light_info = wined3d_light_state_get_light(light_state, light_idx)))
     {
         TRACE("Light enabled requested but light not defined, so defining one!\n");
-        wined3d_device_set_light(device, light_idx, &WINED3D_default_light);
+        wined3d_device_context_set_light(&device->cs->c, light_idx, &WINED3D_default_light);
 
         if (!(light_info = wined3d_light_state_get_light(light_state, light_idx)))
         {
@@ -1849,7 +1847,7 @@ void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3
     {
         LIST_FOR_EACH_ENTRY(light, &state->light_state.light_map[i], struct wined3d_light_info, entry)
         {
-            wined3d_device_set_light(device, light->OriginalIndex, &light->OriginalParms);
+            wined3d_device_context_set_light(context, light->OriginalIndex, &light->OriginalParms);
             wined3d_device_context_emit_set_light_enable(context, light->OriginalIndex, light->glIndex != -1);
         }
     }
@@ -4046,7 +4044,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
             LIST_FOR_EACH_ENTRY(light, &state->light_state->light_map[i], struct wined3d_light_info, entry)
             {
-                wined3d_device_set_light(device, light->OriginalIndex, &light->OriginalParms);
+                wined3d_device_context_set_light(context, light->OriginalIndex, &light->OriginalParms);
                 wined3d_device_set_light_enable(device, light->OriginalIndex, light->glIndex != -1);
             }
         }
