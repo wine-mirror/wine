@@ -1737,15 +1737,14 @@ void CDECL wined3d_device_context_get_scissor_rects(const struct wined3d_device_
         *rect_count = state->scissor_rect_count;
 }
 
-void CDECL wined3d_device_set_state(struct wined3d_device *device, struct wined3d_state *state)
+void CDECL wined3d_device_context_set_state(struct wined3d_device_context *context, struct wined3d_state *state)
 {
-    struct wined3d_device_context *context = &device->cs->c;
     const struct wined3d_light_info *light;
     unsigned int i, j;
 
-    TRACE("device %p, state %p.\n", device, state);
+    TRACE("context %p, state %p.\n", context, state);
 
-    device->cs->c.state = state;
+    context->state = state;
     wined3d_device_context_emit_set_feature_level(context, state->feature_level);
 
     for (i = 0; i < WINED3D_MAX_RENDER_TARGETS; ++i)

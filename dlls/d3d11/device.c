@@ -2839,7 +2839,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_SwapDeviceContextState(ID3D11
     state_impl = impl_from_ID3DDeviceContextState(state);
     if (!(wined3d_state = d3d_device_context_state_get_wined3d_state(state_impl, device)))
         ERR("Failed to get wined3d state for device context state %p.\n", state_impl);
-    wined3d_device_set_state(device->wined3d_device, wined3d_state);
+    wined3d_device_context_set_state(context->wined3d_context, wined3d_state);
 
     if (prev)
         ID3DDeviceContextState_AddRef(*prev = &prev_impl->ID3DDeviceContextState_iface);

@@ -2489,7 +2489,6 @@ HRESULT __cdecl wined3d_device_set_rendertarget_view(struct wined3d_device *devi
 void __cdecl wined3d_device_set_scissor_rects(struct wined3d_device *device,
         unsigned int rect_count, const RECT *rect);
 void __cdecl wined3d_device_set_software_vertex_processing(struct wined3d_device *device, BOOL software);
-void __cdecl wined3d_device_set_state(struct wined3d_device *device, struct wined3d_state *state);
 void __cdecl wined3d_device_set_stream_output(struct wined3d_device *device, UINT idx,
         struct wined3d_buffer *buffer, UINT offset);
 HRESULT __cdecl wined3d_device_set_stream_source(struct wined3d_device *device,
@@ -2609,6 +2608,7 @@ void __cdecl wined3d_device_context_set_shader(struct wined3d_device_context *co
         enum wined3d_shader_type type, struct wined3d_shader *shader);
 void __cdecl wined3d_device_context_set_shader_resource_view(struct wined3d_device_context *context,
         enum wined3d_shader_type type, unsigned int idx, struct wined3d_shader_resource_view *view);
+void __cdecl wined3d_device_context_set_state(struct wined3d_device_context *context, struct wined3d_state *state);
 void __cdecl wined3d_device_context_set_stream_output(struct wined3d_device_context *context, unsigned int idx,
         struct wined3d_buffer *buffer, unsigned int offset);
 HRESULT __cdecl wined3d_device_context_set_stream_source(struct wined3d_device_context *context,
