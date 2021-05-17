@@ -28,6 +28,7 @@
 #include "mfmediaengine.h"
 #include "mferror.h"
 #include "dxgi.h"
+#include "d3d11.h"
 
 #include "wine/debug.h"
 
@@ -82,6 +83,30 @@ enum media_engine_flags
     FLAGS_ENGINE_HAS_VIDEO = 0x1000,
     FLAGS_ENGINE_FIRST_FRAME = 0x2000,
     FLAGS_ENGINE_IS_ENDED = 0x4000,
+    FLAGS_ENGINE_NEW_FRAME = 0x8000,
+};
+
+struct vec3
+{
+    float x, y, z;
+};
+
+struct color
+{
+    float r, g, b, a;
+};
+
+static const struct vec3 fullquad[] =
+{
+    {-1.0f, -1.0f, 0.0f},
+    {-1.0f,  1.0f, 0.0f},
+    { 1.0f, -1.0f, 0.0f},
+    { 1.0f,  1.0f, 0.0f},
+};
+
+struct rect
+{
+    float left, top, right, bottom;
 };
 
 struct media_engine
@@ -118,9 +143,269 @@ struct media_engine
         BYTE *buffer;
         UINT buffer_size;
         DXGI_FORMAT output_format;
+
+        struct
+        {
+            ID3D11Buffer *vb;
+            ID3D11Buffer *ps_cb;
+            ID3D11Texture2D *source;
+            ID3D11ShaderResourceView *srv;
+            ID3D11SamplerState *sampler;
+            ID3D11InputLayout *input_layout;
+            ID3D11VertexShader *vs;
+            ID3D11PixelShader *ps;
+            struct vec3 quad[4];
+            struct
+            {
+                struct rect dst;
+                struct rect src;
+                struct color backcolor;
+            } cb;
+        } d3d11;
     } video_frame;
     CRITICAL_SECTION cs;
 };
+
+static void media_engine_release_video_frame_resources(struct media_engine *engine)
+{
+    if (engine->video_frame.d3d11.vb)
+        ID3D11Buffer_Release(engine->video_frame.d3d11.vb);
+    if (engine->video_frame.d3d11.ps_cb)
+        ID3D11Buffer_Release(engine->video_frame.d3d11.ps_cb);
+    if (engine->video_frame.d3d11.source)
+        ID3D11Texture2D_Release(engine->video_frame.d3d11.source);
+    if (engine->video_frame.d3d11.srv)
+        ID3D11ShaderResourceView_Release(engine->video_frame.d3d11.srv);
+    if (engine->video_frame.d3d11.sampler)
+        ID3D11SamplerState_Release(engine->video_frame.d3d11.sampler);
+    if (engine->video_frame.d3d11.input_layout)
+        ID3D11InputLayout_Release(engine->video_frame.d3d11.input_layout);
+    if (engine->video_frame.d3d11.vs)
+        ID3D11VertexShader_Release(engine->video_frame.d3d11.vs);
+    if (engine->video_frame.d3d11.ps)
+        ID3D11PixelShader_Release(engine->video_frame.d3d11.ps);
+
+    memset(&engine->video_frame.d3d11, 0, sizeof(engine->video_frame.d3d11));
+    memcpy(engine->video_frame.d3d11.quad, fullquad, sizeof(fullquad));
+}
+
+static HRESULT media_engine_lock_d3d_device(struct media_engine *engine, ID3D11Device **device)
+{
+    HRESULT hr;
+
+    if (!engine->device_manager)
+    {
+        FIXME("Device manager wasn't set.\n");
+        return E_UNEXPECTED;
+    }
+
+    if (!engine->device_handle)
+    {
+        if (FAILED(hr = IMFDXGIDeviceManager_OpenDeviceHandle(engine->device_manager, &engine->device_handle)))
+        {
+            WARN("Failed to open device handle, hr %#x.\n", hr);
+            return hr;
+        }
+    }
+
+    hr = IMFDXGIDeviceManager_LockDevice(engine->device_manager, engine->device_handle, &IID_ID3D11Device,
+            (void **)device, TRUE);
+    if (hr == MF_E_DXGI_NEW_VIDEO_DEVICE)
+    {
+        IMFDXGIDeviceManager_CloseDeviceHandle(engine->device_manager, engine->device_handle);
+        engine->device_handle = NULL;
+
+        media_engine_release_video_frame_resources(engine);
+
+        if (FAILED(hr = IMFDXGIDeviceManager_OpenDeviceHandle(engine->device_manager, &engine->device_handle)))
+        {
+            WARN("Failed to open a device handle, hr %#x.\n", hr);
+            return hr;
+        }
+        hr = IMFDXGIDeviceManager_LockDevice(engine->device_manager, engine->device_handle, &IID_ID3D11Device,
+                (void **)device, TRUE);
+    }
+
+    return hr;
+}
+
+static void media_engine_unlock_d3d_device(struct media_engine *engine, ID3D11Device *device)
+{
+    ID3D11Device_Release(device);
+    IMFDXGIDeviceManager_UnlockDevice(engine->device_manager, engine->device_handle, FALSE);
+}
+
+static HRESULT media_engine_create_d3d11_video_frame_resources(struct media_engine *engine, ID3D11Device *device)
+{
+    static const D3D11_INPUT_ELEMENT_DESC layout_desc[] =
+    {
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    };
+    static const DWORD vs_code[] =
+    {
+#if 0
+        float4 main(float4 position : POSITION) : SV_POSITION
+        {
+            return position;
+        }
+#endif
+        0x43425844, 0xa7a2f22d, 0x83ff2560, 0xe61638bd, 0x87e3ce90, 0x00000001, 0x000000d8, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x49534f50, 0x4e4f4954, 0xababab00,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x52444853, 0x0000003c, 0x00010040,
+        0x0000000f, 0x0300005f, 0x001010f2, 0x00000000, 0x04000067, 0x001020f2, 0x00000000, 0x00000001,
+        0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0100003e,
+    };
+    static const DWORD ps_code[] =
+    {
+#if 0
+        Texture2D t;
+        SamplerState s;
+        float4 dst;
+        float4 src;
+        float4 backcolor;
+
+        float4 main(float4 position : SV_POSITION) : SV_TARGET
+        {
+            float2 p;
+
+            if (position.x < dst.x || position.x > dst.z) return backcolor;
+            if (position.y < dst.y || position.y > dst.w) return backcolor;
+            p.x = (position.x - dst.x) / (dst.z - dst.x);
+            p.y = 1.0f - (position.y - dst.y) / (dst.w - dst.y);
+            p.x = src.x + p.x * (src.z - src.x);
+            p.y = src.y + p.y * (src.w - src.y);
+            return t.Sample(s, p);
+        }
+#endif
+        0x43425844, 0x5892e3b1, 0x24c17f7c, 0x9999f143, 0x49667872, 0x00000001, 0x0000032c, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f, 0x004e4f49,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x45475241, 0xabab0054, 0x52444853, 0x00000290, 0x00000040,
+        0x000000a4, 0x04000059, 0x00208e46, 0x00000000, 0x00000003, 0x0300005a, 0x00106000, 0x00000000,
+        0x04001858, 0x00107000, 0x00000000, 0x00005555, 0x04002064, 0x00101032, 0x00000000, 0x00000001,
+        0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000002, 0x08000031, 0x00100012, 0x00000000,
+        0x0010100a, 0x00000000, 0x0020800a, 0x00000000, 0x00000000, 0x08000031, 0x00100022, 0x00000000,
+        0x0020802a, 0x00000000, 0x00000000, 0x0010100a, 0x00000000, 0x0700003c, 0x00100012, 0x00000000,
+        0x0010001a, 0x00000000, 0x0010000a, 0x00000000, 0x0304001f, 0x0010000a, 0x00000000, 0x06000036,
+        0x001020f2, 0x00000000, 0x00208e46, 0x00000000, 0x00000002, 0x0100003e, 0x01000015, 0x08000031,
+        0x00100012, 0x00000000, 0x0010101a, 0x00000000, 0x0020801a, 0x00000000, 0x00000000, 0x08000031,
+        0x00100022, 0x00000000, 0x0020803a, 0x00000000, 0x00000000, 0x0010101a, 0x00000000, 0x0700003c,
+        0x00100012, 0x00000000, 0x0010001a, 0x00000000, 0x0010000a, 0x00000000, 0x0304001f, 0x0010000a,
+        0x00000000, 0x06000036, 0x001020f2, 0x00000000, 0x00208e46, 0x00000000, 0x00000002, 0x0100003e,
+        0x01000015, 0x09000000, 0x00100032, 0x00000000, 0x00101046, 0x00000000, 0x80208046, 0x00000041,
+        0x00000000, 0x00000000, 0x0a000000, 0x001000c2, 0x00000000, 0x80208406, 0x00000041, 0x00000000,
+        0x00000000, 0x00208ea6, 0x00000000, 0x00000000, 0x0700000e, 0x00100032, 0x00000000, 0x00100046,
+        0x00000000, 0x00100ae6, 0x00000000, 0x08000000, 0x00100022, 0x00000000, 0x8010001a, 0x00000041,
+        0x00000000, 0x00004001, 0x3f800000, 0x0a000000, 0x001000c2, 0x00000000, 0x80208406, 0x00000041,
+        0x00000000, 0x00000001, 0x00208ea6, 0x00000000, 0x00000001, 0x0a000032, 0x00100012, 0x00000001,
+        0x0010000a, 0x00000000, 0x0010002a, 0x00000000, 0x0020800a, 0x00000000, 0x00000001, 0x0a000032,
+        0x00100022, 0x00000001, 0x0010001a, 0x00000000, 0x0010003a, 0x00000000, 0x0020801a, 0x00000000,
+        0x00000001, 0x09000045, 0x001020f2, 0x00000000, 0x00100046, 0x00000001, 0x00107e46, 0x00000000,
+        0x00106000, 0x00000000, 0x0100003e,
+    };
+    D3D11_SUBRESOURCE_DATA resource_data;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    D3D11_SAMPLER_DESC sampler_desc;
+    D3D11_BUFFER_DESC buffer_desc;
+    HRESULT hr;
+
+    if (engine->video_frame.d3d11.source)
+        return S_OK;
+
+    /* Default vertex buffer, updated on first transfer call. */
+    buffer_desc.ByteWidth = sizeof(engine->video_frame.d3d11.quad);
+    buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = 0;
+    buffer_desc.StructureByteStride = 0;
+
+    resource_data.pSysMem = engine->video_frame.d3d11.quad;
+    resource_data.SysMemPitch = 0;
+    resource_data.SysMemSlicePitch = 0;
+
+    if (FAILED(hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &resource_data, &engine->video_frame.d3d11.vb)))
+    {
+        WARN("Failed to create a vertex buffer, hr %#x.\n", hr);
+        goto failed;
+    }
+
+    buffer_desc.ByteWidth = sizeof(engine->video_frame.d3d11.cb);
+    buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+
+    if (FAILED(hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &engine->video_frame.d3d11.ps_cb)))
+    {
+        WARN("Failed to create a buffer, hr %#x.\n", hr);
+        goto failed;
+    }
+
+    /* Source texture. */
+    texture_desc.Width = engine->video_frame.size.cx;
+    texture_desc.Height = engine->video_frame.size.cy;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = engine->video_frame.output_format;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+
+    if (FAILED(hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &engine->video_frame.d3d11.source)))
+    {
+        WARN("Failed to create source texture, hr %#x.\n", hr);
+        goto failed;
+    }
+
+    if (FAILED(hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)engine->video_frame.d3d11.source,
+            NULL, &engine->video_frame.d3d11.srv)))
+    {
+        WARN("Failed to create SRV, hr %#x.\n", hr);
+        goto failed;
+    }
+
+    /* Sampler state. */
+    memset(&sampler_desc, 0, sizeof(sampler_desc));
+    sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    sampler_desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampler_desc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sampler_desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+
+    if (FAILED(hr = ID3D11Device_CreateSamplerState(device, &sampler_desc, &engine->video_frame.d3d11.sampler)))
+    {
+        WARN("Failed to create a sampler state, hr %#x.\n", hr);
+        goto failed;
+    }
+
+    /* Input layout */
+    if (FAILED(hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc), vs_code, sizeof(vs_code),
+            &engine->video_frame.d3d11.input_layout)))
+    {
+        WARN("Failed to create input layout, hr %#x.\n", hr);
+        goto failed;
+    }
+
+    /* Shaders */
+    if (FAILED(hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &engine->video_frame.d3d11.vs)))
+    {
+        WARN("Failed to create the vertex shader, hr %#x.\n", hr);
+        goto failed;
+    }
+
+    if (FAILED(hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &engine->video_frame.d3d11.ps)))
+    {
+        WARN("Failed to create the pixel shader, hr %#x.\n", hr);
+        goto failed;
+    }
+
+failed:
+
+    return hr;
+}
 
 struct range
 {
@@ -762,7 +1047,7 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
     UINT64 duration;
     HRESULT hr;
 
-    memset(&engine->video_frame, 0, sizeof(engine->video_frame));
+    media_engine_release_video_frame_resources(engine);
 
     if (FAILED(hr = IMFMediaSource_CreatePresentationDescriptor(source, &pd)))
         return hr;
@@ -979,6 +1264,7 @@ static void free_media_engine(struct media_engine *engine)
         IMFAttributes_Release(engine->attributes);
     if (engine->resolver)
         IMFSourceResolver_Release(engine->resolver);
+    media_engine_release_video_frame_resources(engine);
     if (engine->device_manager)
     {
         IMFDXGIDeviceManager_CloseDeviceHandle(engine->device_manager, engine->device_handle);
@@ -1638,13 +1924,249 @@ static HRESULT WINAPI media_engine_Shutdown(IMFMediaEngine *iface)
     return hr;
 }
 
-static HRESULT WINAPI media_engine_TransferVideoFrame(IMFMediaEngine *iface, IUnknown *surface,
-                                                      const MFVideoNormalizedRect *src,
-                                                      const RECT *dst, const MFARGB *color)
+static void set_rect(struct rect *rect, float left, float top, float right, float bottom)
 {
-    FIXME("(%p, %p, %p, %p, %p): stub.\n", iface, surface, src, dst, color);
+    rect->left = left;
+    rect->top = top;
+    rect->right = right;
+    rect->bottom = bottom;
+}
 
-    return E_NOTIMPL;
+static void media_engine_adjust_destination_for_ratio(const struct media_engine *engine,
+        struct rect *src_n, struct rect *dst)
+{
+    float dst_width = dst->right - dst->left, dst_height = dst->bottom - dst->top;
+    D3D11_TEXTURE2D_DESC source_desc;
+    float src_width, src_height;
+    struct rect src;
+
+    ID3D11Texture2D_GetDesc(engine->video_frame.d3d11.source, &source_desc);
+    set_rect(&src, src_n->left * source_desc.Width, src_n->top * source_desc.Height,
+            src_n->right * source_desc.Width, src_n->bottom * source_desc.Height);
+
+    src_width = src.right - src.left;
+    src_height = src.bottom - src.top;
+
+    if (src_width * dst_height > dst_width * src_height)
+    {
+        /* src is "wider" than dst. */
+        float dst_center = (dst->top + dst->bottom) / 2.0f;
+        float scaled_height = src_height * dst_width / src_width;
+
+        dst->top = dst_center - scaled_height / 2.0f;
+        dst->bottom = dst->top + scaled_height;
+    }
+    else if (src_width * dst_height < dst_width * src_height)
+    {
+        /* src is "taller" than dst. */
+        float dst_center = (dst->left + dst->right) / 2.0f;
+        float scaled_width = src_width * dst_height / src_height;
+
+        dst->left = dst_center - scaled_width / 2.0f;
+        dst->right = dst->left + scaled_width;
+    }
+}
+
+static void media_engine_update_d3d11_frame_surface(ID3D11DeviceContext *context, struct media_engine *engine)
+{
+    D3D11_TEXTURE2D_DESC surface_desc;
+
+    if (!(engine->flags & FLAGS_ENGINE_NEW_FRAME))
+        return;
+
+    ID3D11Texture2D_GetDesc(engine->video_frame.d3d11.source, &surface_desc);
+
+    switch (surface_desc.Format)
+    {
+    case DXGI_FORMAT_B8G8R8A8_UNORM:
+        surface_desc.Width *= 4;
+        break;
+    default:
+        FIXME("Unsupported format %#x.\n", surface_desc.Format);
+        surface_desc.Width = 0;
+    }
+
+    if (engine->video_frame.buffer_size == surface_desc.Width * surface_desc.Height)
+    {
+        ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)engine->video_frame.d3d11.source,
+                0, NULL, engine->video_frame.buffer, surface_desc.Width, 0);
+    }
+
+    media_engine_set_flag(engine, FLAGS_ENGINE_NEW_FRAME, FALSE);
+}
+
+static HRESULT media_engine_transfer_to_d3d11_texture(struct media_engine *engine, ID3D11Texture2D *texture,
+        const MFVideoNormalizedRect *src_rect, const RECT *dst_rect, const MFARGB *color)
+{
+    static const float black[] = {0.0f, 0.0f, 0.0f, 0.0f};
+    ID3D11Device *device, *dst_device;
+    ID3D11DeviceContext *context;
+    ID3D11RenderTargetView *rtv;
+    unsigned int stride, offset;
+    D3D11_TEXTURE2D_DESC desc;
+    BOOL device_mismatch;
+    struct vec3 quad[4];
+    D3D11_VIEWPORT vp;
+    struct rect src, dst;
+    struct color backcolor;
+    HRESULT hr;
+    RECT rect;
+
+    if (FAILED(hr = media_engine_lock_d3d_device(engine, &device)))
+        return hr;
+
+    if (FAILED(hr = media_engine_create_d3d11_video_frame_resources(engine, device)))
+    {
+        WARN("Failed to create d3d resources, hr %#x.\n", hr);
+        goto done;
+    }
+
+    ID3D11Texture2D_GetDevice(texture, &dst_device);
+    device_mismatch = device != dst_device;
+    ID3D11Device_Release(dst_device);
+
+    if (device_mismatch)
+    {
+        WARN("Destination target from different device.\n");
+        hr = E_UNEXPECTED;
+        goto done;
+    }
+
+    ID3D11Texture2D_GetDesc(texture, &desc);
+
+    if (FAILED(hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtv)))
+    {
+        WARN("Failed to create an rtv, hr %#x.\n", hr);
+        goto done;
+    }
+
+    ID3D11Device_GetImmediateContext(device, &context);
+
+    /* Whole destination is cleared, regardless of specified rectangle. */
+    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, black);
+
+    if (dst_rect)
+    {
+        rect.left = max(0, dst_rect->left);
+        rect.top = max(0, dst_rect->top);
+        rect.right = min(desc.Width, dst_rect->right);
+        rect.bottom = min(desc.Height, dst_rect->bottom);
+
+        quad[0].x = 2.0f * rect.left / desc.Width - 1.0f;
+        quad[0].y = -2.0f * rect.bottom / desc.Height + 1.0f;
+
+        quad[1].x = quad[0].x;
+        quad[1].y = -2.0f * rect.top / desc.Height + 1.0f;
+
+        quad[2].x = 2.0f * rect.right / desc.Width - 1.0f;
+        quad[2].y = quad[0].y;
+
+        quad[3].x = quad[2].x;
+        quad[3].y = quad[1].y;
+
+        set_rect(&dst, dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom);
+    }
+    else
+    {
+        memcpy(quad, fullquad, sizeof(quad));
+        set_rect(&dst, 0.0f, 0.0f, desc.Width, desc.Height);
+    }
+
+    if (src_rect)
+        memcpy(&src, src_rect, sizeof(src));
+    else
+        set_rect(&src, 0.0f, 0.0f, 1.0f, 1.0f);
+
+    media_engine_adjust_destination_for_ratio(engine, &src, &dst);
+
+    if (memcmp(quad, engine->video_frame.d3d11.quad, sizeof(quad)))
+    {
+        memcpy(engine->video_frame.d3d11.quad, quad, sizeof(quad));
+        ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)engine->video_frame.d3d11.vb, 0, NULL, quad, 0, 0);
+    }
+
+    if (color)
+    {
+        backcolor.r = color->rgbRed / 255.0f;
+        backcolor.g = color->rgbGreen / 255.0f;
+        backcolor.b = color->rgbBlue / 255.0f;
+        backcolor.a = color->rgbAlpha / 255.0f;
+    }
+    else
+        memcpy(&backcolor, black, sizeof(backcolor));
+
+    if (memcmp(&dst, &engine->video_frame.d3d11.cb.dst, sizeof(dst)) ||
+            memcmp(&src, &engine->video_frame.d3d11.cb.src, sizeof(src)) ||
+            memcmp(&backcolor, &engine->video_frame.d3d11.cb.backcolor, sizeof(backcolor)))
+    {
+        memcpy(&engine->video_frame.d3d11.cb.dst, &dst, sizeof(dst));
+        memcpy(&engine->video_frame.d3d11.cb.src, &src, sizeof(src));
+        memcpy(&engine->video_frame.d3d11.cb.backcolor, &backcolor, sizeof(backcolor));
+
+        ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)engine->video_frame.d3d11.ps_cb, 0, NULL,
+                &engine->video_frame.d3d11.cb, 0, 0);
+    }
+
+    /* Update with new frame contents */
+    media_engine_update_d3d11_frame_surface(context, engine);
+
+    vp.TopLeftX = 0.0f;
+    vp.TopLeftY = 0.0f;
+    vp.Width = desc.Width;
+    vp.Height = desc.Height;
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+    ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
+
+    ID3D11DeviceContext_IASetInputLayout(context, engine->video_frame.d3d11.input_layout);
+    ID3D11DeviceContext_IASetPrimitiveTopology(context, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    stride = sizeof(*quad);
+    offset = 0;
+    ID3D11DeviceContext_IASetVertexBuffers(context, 0, 1, &engine->video_frame.d3d11.vb, &stride, &offset);
+    ID3D11DeviceContext_VSSetShader(context, engine->video_frame.d3d11.vs, NULL, 0);
+    ID3D11DeviceContext_PSSetShader(context, engine->video_frame.d3d11.ps, NULL, 0);
+    ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &engine->video_frame.d3d11.srv);
+    ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &engine->video_frame.d3d11.ps_cb);
+    ID3D11DeviceContext_PSSetSamplers(context, 0, 1, &engine->video_frame.d3d11.sampler);
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
+
+    ID3D11DeviceContext_Draw(context, 4, 0);
+
+    ID3D11RenderTargetView_Release(rtv);
+    ID3D11DeviceContext_Release(context);
+
+done:
+    media_engine_unlock_d3d_device(engine, device);
+
+    return hr;
+}
+
+static HRESULT WINAPI media_engine_TransferVideoFrame(IMFMediaEngine *iface, IUnknown *surface,
+        const MFVideoNormalizedRect *src_rect, const RECT *dst_rect, const MFARGB *color)
+{
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
+    ID3D11Texture2D *texture;
+    HRESULT hr = E_NOINTERFACE;
+
+    TRACE("%p, %p, %s, %s, %p.\n", iface, surface, src_rect ? wine_dbg_sprintf("(%f,%f)-(%f,%f)",
+            src_rect->left, src_rect->top, src_rect->right, src_rect->bottom) : "(null)",
+            wine_dbgstr_rect(dst_rect), color);
+
+    EnterCriticalSection(&engine->cs);
+
+    if (SUCCEEDED(IUnknown_QueryInterface(surface, &IID_ID3D11Texture2D, (void **)&texture)))
+    {
+        hr = media_engine_transfer_to_d3d11_texture(engine, texture, src_rect, dst_rect, color);
+        ID3D11Texture2D_Release(texture);
+    }
+    else
+    {
+        FIXME("Unsupported destination type.\n");
+    }
+
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_engine_OnVideoStreamTick(IMFMediaEngine *iface, LONGLONG *pts)
@@ -1811,7 +2333,10 @@ static HRESULT WINAPI media_engine_grabber_callback_OnProcessSample(IMFSampleGra
             engine->video_frame.buffer_size = buffer_size;
     }
     if (engine->video_frame.buffer)
+    {
         memcpy(engine->video_frame.buffer, buffer, buffer_size);
+        engine->flags |= FLAGS_ENGINE_NEW_FRAME;
+    }
 
     LeaveCriticalSection(&engine->cs);
 
