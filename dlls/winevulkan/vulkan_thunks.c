@@ -2641,7 +2641,6 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
         switch (in_header->sType)
         {
         case VK_STRUCTURE_TYPE_LOADER_DEVICE_CREATE_INFO:
-        case VK_STRUCTURE_TYPE_LOADER_INSTANCE_CREATE_INFO:
             break;
 
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_FEATURES_NV:
@@ -4264,7 +4263,6 @@ VkResult convert_VkInstanceCreateInfo_struct_chain(const void *pNext, VkInstance
     {
         switch (in_header->sType)
         {
-        case VK_STRUCTURE_TYPE_LOADER_DEVICE_CREATE_INFO:
         case VK_STRUCTURE_TYPE_LOADER_INSTANCE_CREATE_INFO:
             break;
 

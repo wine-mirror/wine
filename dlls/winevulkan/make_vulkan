@@ -256,10 +256,11 @@ FUNCTION_OVERRIDES = {
     "vkDebugMarkerSetObjectTagEXT" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.PRIVATE},
 }
 
-STRUCT_CHAIN_CONVERSIONS = [
-    "VkDeviceCreateInfo",
-    "VkInstanceCreateInfo",
-]
+STRUCT_CHAIN_CONVERSIONS = {
+    # Ignore to not confuse host loader.
+    "VkDeviceCreateInfo": ["VK_STRUCTURE_TYPE_LOADER_DEVICE_CREATE_INFO"],
+    "VkInstanceCreateInfo": ["VK_STRUCTURE_TYPE_LOADER_INSTANCE_CREATE_INFO"],
+}
 
 
 class Direction(Enum):
@@ -2417,9 +2418,10 @@ class FreeFunction(object):
 
 
 class StructChainConversionFunction(object):
-    def __init__(self, direction, struct):
+    def __init__(self, direction, struct, ignores):
         self.direction = direction
         self.struct = struct
+        self.ignores = ignores
         self.type = struct.name
 
         self.name = "convert_{0}_struct_chain".format(self.type)
@@ -2444,9 +2446,8 @@ class StructChainConversionFunction(object):
         body += "        switch (in_header->sType)\n"
         body += "        {\n"
 
-        # Ignore to not confuse host loader.
-        body += "        case VK_STRUCTURE_TYPE_LOADER_DEVICE_CREATE_INFO:\n"
-        body += "        case VK_STRUCTURE_TYPE_LOADER_INSTANCE_CREATE_INFO:\n"
+        for i in self.ignores:
+            body += "        case {0}:\n".format(i)
         body += "            break;\n\n"
 
         for e in self.struct.struct_extensions:
@@ -2454,6 +2455,9 @@ class StructChainConversionFunction(object):
                 continue
 
             stype = next(x for x in e.members if x.name == "sType")
+
+            if stype.values in self.ignores:
+                continue
 
             body += "        case {0}:\n".format(stype.values)
             body += "        {\n"
@@ -2604,7 +2608,7 @@ class VkGenerator(object):
 
         for struct in self.registry.structs:
             if struct.name in STRUCT_CHAIN_CONVERSIONS:
-                self.struct_chain_conversions.append(StructChainConversionFunction(Direction.INPUT, struct))
+                self.struct_chain_conversions.append(StructChainConversionFunction(Direction.INPUT, struct, STRUCT_CHAIN_CONVERSIONS[struct.name]))
                 self.struct_chain_conversions.append(FreeStructChainFunction(struct))
                 # Once we decide to support pNext chains conversion everywhere, move this under get_conversions
                 for e in struct.struct_extensions:
