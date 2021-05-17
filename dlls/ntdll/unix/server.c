@@ -104,8 +104,10 @@ static const char *server_dir;
 unsigned int supported_machines_count = 0;
 USHORT supported_machines[8] = { 0 };
 USHORT native_machine = 0;
-BOOL is_wow64 = FALSE;
 BOOL process_exiting = FALSE;
+#ifndef _WIN64
+BOOL is_wow64 = FALSE;
+#endif
 
 timeout_t server_start_time = 0;  /* time of server startup */
 

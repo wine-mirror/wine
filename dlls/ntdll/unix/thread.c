@@ -233,7 +233,9 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
     NTSTATUS status;
 
     if (zero_bits > 21 && zero_bits < 32) return STATUS_INVALID_PARAMETER_3;
-    if (!is_win64 && !is_wow64 && zero_bits >= 32) return STATUS_INVALID_PARAMETER_3;
+#ifndef _WIN64
+    if (!is_wow64 && zero_bits >= 32) return STATUS_INVALID_PARAMETER_3;
+#endif
 
     if (process != NtCurrentProcess())
     {
@@ -950,6 +952,7 @@ BOOL get_thread_times(int unix_pid, int unix_tid, LARGE_INTEGER *kernel_time, LA
 #endif
 }
 
+#ifndef _WIN64
 static BOOL is_process_wow64( const CLIENT_ID *id )
 {
     HANDLE handle;
@@ -965,6 +968,7 @@ static BOOL is_process_wow64( const CLIENT_ID *id )
     }
     return ret;
 }
+#endif
 
 /******************************************************************************
  *              NtQueryInformationThread  (NTDLL.@)
@@ -1000,6 +1004,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
         SERVER_END_REQ;
         if (status == STATUS_SUCCESS)
         {
+#ifndef _WIN64
             if (is_wow64)
             {
                 if (is_process_wow64( &info.ClientId ))
@@ -1007,6 +1012,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
                 else
                     info.TebBaseAddress = NULL;
             }
+#endif
             if (data) memcpy( data, &info, min( length, sizeof(info) ));
             if (ret_len) *ret_len = min( length, sizeof(info) );
         }

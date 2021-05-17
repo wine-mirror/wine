@@ -999,6 +999,7 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
                             pbi.BasePriority = reply->priority;
                             pbi.UniqueProcessId = reply->pid;
                             pbi.InheritedFromUniqueProcessId = reply->ppid;
+#ifndef _WIN64
                             if (is_wow64)
                             {
                                 if (reply->machine != native_machine)
@@ -1006,6 +1007,7 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
                                 else
                                     pbi.PebBaseAddress = NULL;
                             }
+#endif
                         }
                     }
                     SERVER_END_REQ;
@@ -1260,20 +1262,17 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
         if (size != len) ret = STATUS_INFO_LENGTH_MISMATCH;
         else if (!info) ret = STATUS_ACCESS_VIOLATION;
         else if (!handle) ret = STATUS_INVALID_HANDLE;
+        else if (handle == GetCurrentProcess()) *(ULONG_PTR *)info = !!NtCurrentTeb()->WowTebOffset;
         else
         {
             ULONG_PTR val = 0;
 
-            if (handle == GetCurrentProcess()) val = is_wow64;
-            else if (is_win64 || is_wow64)
+            SERVER_START_REQ( get_process_info )
             {
-                SERVER_START_REQ( get_process_info )
-                {
-                    req->handle = wine_server_obj_handle( handle );
-                    if (!(ret = wine_server_call( req ))) val = (reply->machine != native_machine);
-                }
-                SERVER_END_REQ;
+                req->handle = wine_server_obj_handle( handle );
+                if (!(ret = wine_server_call( req ))) val = (reply->machine != native_machine);
             }
+            SERVER_END_REQ;
             *(ULONG_PTR *)info = val;
         }
         break;
