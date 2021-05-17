@@ -1447,22 +1447,6 @@ static int init_thread_pipe(void)
 
 
 /***********************************************************************
- *           init_teb64
- *
- * Initialize the 64-bit part of the TEB for WoW64 threads.
- */
-static void init_teb64( TEB *teb )
-{
-#ifndef _WIN64
-    TEB64 *teb64 = (TEB64 *)((char *)teb - teb_offset);
-
-    if (!is_wow64) return;
-    teb64->ClientId.UniqueProcess = PtrToUlong( teb->ClientId.UniqueProcess );
-    teb64->ClientId.UniqueThread  = PtrToUlong( teb->ClientId.UniqueThread );
-#endif
-}
-
-/***********************************************************************
  *           process_exit_wrapper
  *
  * Close server socket and exit process normally.
@@ -1488,6 +1472,7 @@ size_t server_init_process(void)
     int ret, reply_pipe;
     struct sigaction sig_act;
     size_t info_size;
+    DWORD pid, tid;
 
     server_pid = -1;
     if (env_socket)
@@ -1558,8 +1543,8 @@ size_t server_init_process(void)
         req->debug_level = (TRACE_ON(server) != 0);
         wine_server_set_reply( req, supported_machines, sizeof(supported_machines) );
         ret = wine_server_call( req );
-        NtCurrentTeb()->ClientId.UniqueProcess = ULongToHandle(reply->pid);
-        NtCurrentTeb()->ClientId.UniqueThread  = ULongToHandle(reply->tid);
+        pid               = reply->pid;
+        tid               = reply->tid;
         info_size         = reply->info_size;
         server_start_time = reply->server_start;
         supported_machines_count = wine_server_reply_size( reply ) / sizeof(*supported_machines);
@@ -1578,13 +1563,11 @@ size_t server_init_process(void)
     {
         if (arch && !strcmp( arch, "win32" ))
             fatal_error( "WINEARCH set to win32 but '%s' is a 64-bit installation.\n", config_dir );
-        if (!is_win64)
-        {
-            is_wow64 = TRUE;
-            NtCurrentTeb()->GdiBatchCount = PtrToUlong( (char *)NtCurrentTeb() - teb_offset );
-            NtCurrentTeb()->WowTebOffset  = -teb_offset;
-            init_teb64( NtCurrentTeb() );
-        }
+#ifndef _WIN64
+        is_wow64 = TRUE;
+        NtCurrentTeb()->GdiBatchCount = PtrToUlong( (char *)NtCurrentTeb() - teb_offset );
+        NtCurrentTeb()->WowTebOffset  = -teb_offset;
+#endif
     }
     else
     {
@@ -1593,6 +1576,8 @@ size_t server_init_process(void)
         if (arch && !strcmp( arch, "win64" ))
             fatal_error( "WINEARCH set to win64 but '%s' is a 32-bit installation.\n", config_dir );
     }
+
+    set_thread_id( NtCurrentTeb(), pid, tid );
 
     for (i = 0; i < supported_machines_count; i++)
         if (supported_machines[i] == current_machine) return info_size;
@@ -1675,12 +1660,9 @@ void server_init_thread( void *entry_point, BOOL *suspend )
         req->wait_fd   = ntdll_get_thread_data()->wait_fd[1];
         wine_server_call( req );
         *suspend = reply->suspend;
-        NtCurrentTeb()->ClientId.UniqueProcess = ULongToHandle(reply->pid);
-        NtCurrentTeb()->ClientId.UniqueThread  = ULongToHandle(reply->tid);
     }
     SERVER_END_REQ;
     close( reply_pipe );
-    init_teb64( NtCurrentTeb() );
 }
 
 

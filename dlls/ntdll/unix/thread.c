@@ -120,6 +120,28 @@ static void start_thread( TEB *teb )
 
 
 /***********************************************************************
+ *           set_thread_id
+ */
+void set_thread_id( TEB *teb, DWORD pid, DWORD tid )
+{
+    teb->ClientId.UniqueProcess = ULongToHandle( pid );
+    teb->ClientId.UniqueThread  = ULongToHandle( tid );
+    if (teb->WowTebOffset)
+    {
+#ifdef _WIN64
+        TEB32 *teb32 = (TEB32 *)((char *)teb + teb->WowTebOffset);
+        teb32->ClientId.UniqueProcess = pid;
+        teb32->ClientId.UniqueThread  = tid;
+#else
+        TEB64 *teb64 = (TEB64 *)((char *)teb + teb->WowTebOffset);
+        teb64->ClientId.UniqueProcess = pid;
+        teb64->ClientId.UniqueThread  = tid;
+#endif
+    }
+}
+
+
+/***********************************************************************
  *           update_attr_list
  *
  * Update the output attributes.
@@ -173,7 +195,6 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
     DWORD tid = 0;
     int request_pipe[2];
     SIZE_T extra_stack = PTHREAD_STACK_MIN;
-    CLIENT_ID client_id;
     TEB *teb;
     INITIAL_TEB stack;
     NTSTATUS status;
@@ -200,6 +221,7 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
 
         if (result.create_thread.status == STATUS_SUCCESS)
         {
+            CLIENT_ID client_id;
             TEB *teb = wine_server_get_ptr( result.create_thread.teb );
             *handle = wine_server_ptr_handle( result.create_thread.handle );
             client_id.UniqueProcess = ULongToHandle( result.create_thread.pid );
@@ -253,9 +275,7 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
         goto done;
     }
 
-    client_id.UniqueProcess = ULongToHandle( GetCurrentProcessId() );
-    client_id.UniqueThread  = ULongToHandle( tid );
-    teb->ClientId = client_id;
+    set_thread_id( teb, GetCurrentProcessId(), tid );
 
     teb->Tib.StackBase = stack.StackBase;
     teb->Tib.StackLimit = stack.StackLimit;
@@ -289,7 +309,7 @@ done:
         close( request_pipe[1] );
         return status;
     }
-    if (attr_list) update_attr_list( attr_list, &client_id, teb );
+    if (attr_list) update_attr_list( attr_list, &teb->ClientId, teb );
     return STATUS_SUCCESS;
 }
 
