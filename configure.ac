@@ -2663,7 +2663,6 @@ AC_CHECK_FUNCS(\
 	atanh \
 	atanhf \
 	cbrt \
-	cbrtf \
 	erf \
 	erfc \
 	erfcf \

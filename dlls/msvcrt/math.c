@@ -4505,10 +4505,38 @@ double CDECL cbrt(double x)
 
 /*********************************************************************
  *      cbrtf (MSVCR120.@)
+ *
+ * Copied from musl: src/math/cbrtf.c
  */
 float CDECL cbrtf(float x)
 {
-    return unix_funcs->cbrtf( x );
+    static const unsigned B1 = 709958130, B2 = 642849266;
+
+    double r,T;
+    union {float f; UINT32 i;} u = {x};
+    UINT32 hx = u.i & 0x7fffffff;
+
+    if (hx >= 0x7f800000)
+        return x + x;
+
+    if (hx < 0x00800000) {  /* zero or subnormal? */
+        if (hx == 0)
+            return x;
+        u.f = x * 0x1p24f;
+        hx = u.i & 0x7fffffff;
+        hx = hx / 3 + B2;
+    } else
+        hx = hx / 3 + B1;
+    u.i &= 0x80000000;
+    u.i |= hx;
+
+    T = u.f;
+    r = T * T * T;
+    T = T * (x + x + r) / (x + r + r);
+
+    r = T * T * T;
+    T = T * (x + x + r) / (x + r + r);
+    return T;
 }
 
 /*********************************************************************

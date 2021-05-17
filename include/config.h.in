@@ -70,9 +70,6 @@
 /* Define to 1 if you have the `cbrt' function. */
 #undef HAVE_CBRT
 
-/* Define to 1 if you have the `cbrtf' function. */
-#undef HAVE_CBRTF
-
 /* Define to 1 if you have the `clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 
