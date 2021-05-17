@@ -4981,10 +4981,24 @@ __int64 CDECL llroundf(float x)
 
 /*********************************************************************
  *      trunc (MSVCR120.@)
+ *
+ * Copied from musl: src/math/trunc.c
  */
 double CDECL trunc(double x)
 {
-    return unix_funcs->trunc(x);
+    union {double f; UINT64 i;} u = {x};
+    int e = (u.i >> 52 & 0x7ff) - 0x3ff + 12;
+    UINT64 m;
+
+    if (e >= 52 + 12)
+        return x;
+    if (e < 12)
+        e = 1;
+    m = -1ULL >> e;
+    if ((u.i & m) == 0)
+        return x;
+    u.i &= ~m;
+    return u.f;
 }
 
 /*********************************************************************

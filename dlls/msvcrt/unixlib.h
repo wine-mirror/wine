@@ -82,7 +82,6 @@ struct unix_funcs
     float           (CDECL *tanhf)(float x);
     double          (CDECL *tgamma)(double x);
     float           (CDECL *tgammaf)(float x);
-    double          (CDECL *trunc)(double x);
 };
 
 #endif /* __UNIXLIB_H */

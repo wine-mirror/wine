@@ -2683,8 +2683,7 @@ AC_CHECK_FUNCS(\
 	remquo \
 	remquof \
 	tgamma \
-	tgammaf \
-	trunc
+	tgammaf
 )
 LIBS="$ac_save_LIBS"
 

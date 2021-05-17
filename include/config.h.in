@@ -1010,9 +1010,6 @@
 /* Define to 1 if you have the <tiffio.h> header file. */
 #undef HAVE_TIFFIO_H
 
-/* Define to 1 if you have the `trunc' function. */
-#undef HAVE_TRUNC
-
 /* Define to 1 if you have the `udev' library (-ludev). */
 #undef HAVE_UDEV
 
