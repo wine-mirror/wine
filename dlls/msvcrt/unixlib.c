@@ -122,18 +122,6 @@ static float CDECL unix_atanhf(float x)
 }
 
 /*********************************************************************
- *      cbrt
- */
-static double CDECL unix_cbrt(double x)
-{
-#ifdef HAVE_CBRT
-    return cbrt(x);
-#else
-    return x < 0 ? -pow(-x, 1.0 / 3.0) : pow(x, 1.0 / 3.0);
-#endif
-}
-
-/*********************************************************************
  *      ceil
  */
 static double CDECL unix_ceil( double x )
@@ -725,7 +713,6 @@ static const struct unix_funcs funcs =
     unix_asinhf,
     unix_atanh,
     unix_atanhf,
-    unix_cbrt,
     unix_ceil,
     unix_ceilf,
     unix_cos,

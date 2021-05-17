@@ -19622,7 +19622,6 @@ for ac_func in \
 	asinhf \
 	atanh \
 	atanhf \
-	cbrt \
 	erf \
 	erfc \
 	erfcf \
