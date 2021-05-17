@@ -1199,7 +1199,7 @@ static void test_flushing(IPin *pin, IMemInputPin *input, IMediaControl *control
     thread = send_frame(input);
     ok(WaitForSingleObject(thread, 100) == WAIT_TIMEOUT, "Thread should block in Receive().\n");
 
-    hr = IMediaControl_GetState(control, 0, &state);
+    hr = IMediaControl_GetState(control, 1000, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IPin_BeginFlush(pin);
@@ -1453,7 +1453,8 @@ static void test_sample_time(IPin *pin, IMemInputPin *input, IMediaControl *cont
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     hr = join_thread(thread);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    /* If the frame makes it to Receive() in time to be rendered, we get S_OK. */
+    ok(hr == S_OK || hr == VFW_E_WRONG_STATE, "Got hr %#x.\n", hr);
 }
 
 static void test_current_image(IBaseFilter *filter, IMemInputPin *input,
