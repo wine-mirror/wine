@@ -4012,9 +4012,8 @@ static void test_EnumDynamicTimeZoneInformation(void)
 {
     LSTATUS status;
     HKEY key, subkey;
-    WCHAR name[32];
+    WCHAR name[128];
     WCHAR keyname[128];
-    WCHAR displayname[128];
     WCHAR sysdir[MAX_PATH];
     DWORD index, ret, gle, size;
     DYNAMIC_TIME_ZONE_INFORMATION bogus_dtzi, dtzi;
@@ -4058,6 +4057,7 @@ static void test_EnumDynamicTimeZoneInformation(void)
     index = 0;
     while (!(status = RegEnumKeyW(key, index, keyname, ARRAY_SIZE(keyname))))
     {
+        winetest_push_context("%s" , wine_dbgstr_w(keyname));
         subkey = NULL;
         status = RegOpenKeyExW(key, keyname, 0, KEY_QUERY_VALUE, &subkey);
         ok(status == ERROR_SUCCESS, "got %d\n", status);
@@ -4079,31 +4079,57 @@ static void test_EnumDynamicTimeZoneInformation(void)
         {
             size = sizeof(name);
             memset(name, 0, sizeof(name));
+            status = pRegGetValueW(subkey, NULL, L"Std", RRF_RT_REG_SZ, NULL, name, &size);
+            ok(status == ERROR_SUCCESS, "status %d Std %s\n", status,
+               wine_dbgstr_w(name));
+            ok(*name, "Std name is empty\n");
             if (pRegLoadMUIStringW)
+            {
+                size = sizeof(name);
+                memset(name, 0, sizeof(name));
                 status = pRegLoadMUIStringW(subkey, L"MUI_Std", name, size, &size, 0, sysdir);
-            else
-                status = pRegGetValueW(subkey, NULL, L"Std", RRF_RT_REG_SZ, NULL, name, &size);
-            ok(status == ERROR_SUCCESS, "status %d name %s\n", status, wine_dbgstr_w(name));
-            ok(!memcmp(&dtzi.StandardName, name, size),
-                "expected %s, got %s\n", wine_dbgstr_w(name), wine_dbgstr_w(dtzi.StandardName));
+                ok(status == ERROR_SUCCESS, "status %d MUI_Std %s\n",
+                   status, wine_dbgstr_w(name));
+                ok(*name, "MUI_Std name is empty\n");
+            }
+            ok(!memcmp(&dtzi.StandardName, name, size), "expected %s, got %s\n",
+               wine_dbgstr_w(name), wine_dbgstr_w(dtzi.StandardName));
 
             size = sizeof(name);
             memset(name, 0, sizeof(name));
+            status = pRegGetValueW(subkey, NULL, L"Dlt", RRF_RT_REG_SZ, NULL, name, &size);
+            ok(status == ERROR_SUCCESS, "status %d %s Dlt %s\n",
+               status, wine_dbgstr_w(keyname), wine_dbgstr_w(name));
+            ok(*name, "Dlt name is empty\n");
             if (pRegLoadMUIStringW)
+            {
+                size = sizeof(name);
+                memset(name, 0, sizeof(name));
                 status = pRegLoadMUIStringW(subkey, L"MUI_Dlt", name, size, &size, 0, sysdir);
-            else
-                status = pRegGetValueW(subkey, NULL, L"Dlt", RRF_RT_REG_SZ, NULL, name, &size);
-            ok(status == ERROR_SUCCESS, "status %d name %s\n", status, wine_dbgstr_w(name));
-            ok(!memcmp(&dtzi.DaylightName, name, size),
-                "expected %s, got %s\n", wine_dbgstr_w(name), wine_dbgstr_w(dtzi.DaylightName));
+                ok(status == ERROR_SUCCESS, "status %d %s MUI_Dlt %s\n",
+                   status, wine_dbgstr_w(keyname), wine_dbgstr_w(name));
+                ok(*name, "MUI_Dlt name is empty\n");
+            }
+            ok(!memcmp(&dtzi.DaylightName, name, size), "expected %s, got %s\n",
+               wine_dbgstr_w(name), wine_dbgstr_w(dtzi.DaylightName));
 
-            size = sizeof(displayname);
-            memset(displayname, 0, sizeof(displayname));
+            size = sizeof(name);
+            memset(name, 0, sizeof(name));
+            status = pRegGetValueW(subkey, NULL, L"Display", RRF_RT_REG_SZ, NULL, name, &size);
+            ok(status == ERROR_SUCCESS, "status %d %s Display %s\n",
+               status, wine_dbgstr_w(keyname), wine_dbgstr_w(name));
+            ok(*name, "Display name is empty\n");
             if (pRegLoadMUIStringW)
-                status = pRegLoadMUIStringW(subkey, L"MUI_Display", displayname, size, &size, 0, sysdir);
-            else
-                status = pRegGetValueW(subkey, NULL, L"Display", RRF_RT_REG_SZ, NULL, displayname, &size);
-            todo_wine ok(status == ERROR_SUCCESS, "status %d displayname %s\n", status, wine_dbgstr_w(displayname));
+            {
+                size = sizeof(name);
+                memset(name, 0, sizeof(name));
+                status = pRegLoadMUIStringW(subkey, L"MUI_Display", name, size, &size, 0, sysdir);
+                /* recently added time zones may not have MUI strings */
+                todo_wine ok((status == ERROR_SUCCESS && *name) ||
+                   broken(status == ERROR_RESOURCE_TYPE_NOT_FOUND) /* Win10 1809 32-bit */ ||
+                   broken(status == ERROR_MUI_FILE_NOT_FOUND) /* Win10 1809 64-bit */,
+                   "status %d MUI_Display %s\n", status, wine_dbgstr_w(name));
+            }
         }
         else
         {
@@ -4132,6 +4158,7 @@ static void test_EnumDynamicTimeZoneInformation(void)
             "expected %s, got %s\n",
             dbgstr_SYSTEMTIME(&tz_data.dlt_date), dbgstr_SYSTEMTIME(&dtzi.DaylightDate));
 
+        winetest_pop_context();
         RegCloseKey(subkey);
         index++;
     }
