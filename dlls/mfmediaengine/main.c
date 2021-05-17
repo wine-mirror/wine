@@ -93,6 +93,8 @@ struct media_engine
     LONG refcount;
     IMFMediaEngineNotify *callback;
     IMFAttributes *attributes;
+    IMFDXGIDeviceManager *device_manager;
+    HANDLE device_handle;
     enum media_engine_mode mode;
     unsigned int flags;
     double playback_rate;
@@ -974,6 +976,11 @@ static void free_media_engine(struct media_engine *engine)
         IMFAttributes_Release(engine->attributes);
     if (engine->resolver)
         IMFSourceResolver_Release(engine->resolver);
+    if (engine->device_manager)
+    {
+        IMFDXGIDeviceManager_CloseDeviceHandle(engine->device_manager, engine->device_handle);
+        IMFDXGIDeviceManager_Release(engine->device_manager);
+    }
     SysFreeString(engine->current_source);
     DeleteCriticalSection(&engine->cs);
     free(engine->video_frame.buffer);
@@ -1877,6 +1884,9 @@ static HRESULT init_media_engine(DWORD flags, IMFAttributes *attributes, struct 
             (void **)&engine->callback);
     if (FAILED(hr))
         return hr;
+
+    IMFAttributes_GetUnknown(attributes, &MF_MEDIA_ENGINE_DXGI_MANAGER, &IID_IMFDXGIDeviceManager,
+            (void **)&engine->device_manager);
 
     if (FAILED(hr = MFCreateMediaSession(NULL, &engine->session)))
         return hr;
