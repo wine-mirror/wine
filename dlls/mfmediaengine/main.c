@@ -84,14 +84,6 @@ enum media_engine_flags
     FLAGS_ENGINE_IS_ENDED = 0x4000,
 };
 
-struct video_frame
-{
-    LONGLONG pts;
-    SIZE size;
-    SIZE ratio;
-    TOPOID node_id;
-};
-
 struct media_engine
 {
     IMFMediaEngine IMFMediaEngine_iface;
@@ -115,7 +107,15 @@ struct media_engine
     IMFPresentationClock *clock;
     IMFSourceResolver *resolver;
     BSTR current_source;
-    struct video_frame video_frame;
+    struct
+    {
+        LONGLONG pts;
+        SIZE size;
+        SIZE ratio;
+        TOPOID node_id;
+        BYTE *buffer;
+        UINT buffer_size;
+    } video_frame;
     CRITICAL_SECTION cs;
 };
 
@@ -976,6 +976,7 @@ static void free_media_engine(struct media_engine *engine)
         IMFSourceResolver_Release(engine->resolver);
     SysFreeString(engine->current_source);
     DeleteCriticalSection(&engine->cs);
+    free(engine->video_frame.buffer);
     free(engine);
 }
 
@@ -1781,7 +1782,7 @@ static HRESULT WINAPI media_engine_grabber_callback_OnSetPresentationClock(IMFSa
 
 static HRESULT WINAPI media_engine_grabber_callback_OnProcessSample(IMFSampleGrabberSinkCallback *iface,
         REFGUID major_type, DWORD sample_flags, LONGLONG sample_time, LONGLONG sample_duration,
-        const BYTE *buffer, DWORD sample_size)
+        const BYTE *buffer, DWORD buffer_size)
 {
     struct media_engine *engine = impl_from_IMFSampleGrabberSinkCallback(iface);
 
@@ -1793,6 +1794,14 @@ static HRESULT WINAPI media_engine_grabber_callback_OnProcessSample(IMFSampleGra
         media_engine_set_flag(engine, FLAGS_ENGINE_FIRST_FRAME, TRUE);
     }
     engine->video_frame.pts = sample_time;
+    if (engine->video_frame.buffer_size < buffer_size)
+    {
+        free(engine->video_frame.buffer);
+        if ((engine->video_frame.buffer = malloc(buffer_size)))
+            engine->video_frame.buffer_size = buffer_size;
+    }
+    if (engine->video_frame.buffer)
+        memcpy(engine->video_frame.buffer, buffer, buffer_size);
 
     LeaveCriticalSection(&engine->cs);
 
