@@ -117,6 +117,7 @@ static void test_WsOpenChannel(void)
 {
     HRESULT hr;
     WS_CHANNEL *channel;
+    WS_CHANNEL_STATE state;
     WS_ENDPOINT_ADDRESS addr;
 
     hr = WsCreateChannel( WS_CHANNEL_TYPE_REQUEST, WS_HTTP_CHANNEL_BINDING, NULL, 0, NULL, &channel, NULL );
@@ -141,11 +142,21 @@ static void test_WsOpenChannel(void)
     hr = WsOpenChannel( channel, &addr, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
+    state = 0xdeadbeef;
+    hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_STATE, &state, sizeof(state), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( state == WS_CHANNEL_STATE_OPEN, "got %u\n", state );
+
     hr = WsOpenChannel( channel, &addr, NULL, NULL );
     ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
 
     hr = WsCloseChannel( channel, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
+
+    state = 0xdeadbeef;
+    hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_STATE, &state, sizeof(state), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( state == WS_CHANNEL_STATE_CLOSED, "got %u\n", state );
 
     hr = WsCloseChannel( channel, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );

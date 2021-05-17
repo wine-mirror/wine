@@ -672,6 +672,11 @@ HRESULT WINAPI WsGetChannelProperty( WS_CHANNEL *handle, WS_CHANNEL_PROPERTY_ID 
         else *(WS_ENCODING *)buf = channel->encoding;
         break;
 
+    case WS_CHANNEL_PROPERTY_STATE:
+        if (!buf || size != sizeof(channel->state)) hr = E_INVALIDARG;
+        else *(WS_CHANNEL_STATE *)buf = channel->state;
+        break;
+
     default:
         hr = prop_get( channel->prop, channel->prop_count, id, buf, size );
     }
