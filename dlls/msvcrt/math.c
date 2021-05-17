@@ -4989,10 +4989,24 @@ double CDECL trunc(double x)
 
 /*********************************************************************
  *      truncf (MSVCR120.@)
+ *
+ * Copied from musl: src/math/truncf.c
  */
 float CDECL truncf(float x)
 {
-    return unix_funcs->truncf(x);
+    union {float f; UINT32 i;} u = {x};
+    int e = (u.i >> 23 & 0xff) - 0x7f + 9;
+    UINT32 m;
+
+    if (e >= 23 + 9)
+        return x;
+    if (e < 9)
+        e = 1;
+    m = -1U >> e;
+    if ((u.i & m) == 0)
+        return x;
+    u.i &= ~m;
+    return u.f;
 }
 
 /*********************************************************************

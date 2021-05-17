@@ -1013,9 +1013,6 @@
 /* Define to 1 if you have the `trunc' function. */
 #undef HAVE_TRUNC
 
-/* Define to 1 if you have the `truncf' function. */
-#undef HAVE_TRUNCF
-
 /* Define to 1 if you have the `udev' library (-ludev). */
 #undef HAVE_UDEV
 

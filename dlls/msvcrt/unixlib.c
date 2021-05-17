@@ -649,18 +649,6 @@ static double CDECL unix_trunc(double x)
 }
 
 /*********************************************************************
- *      truncf
- */
-static float CDECL unix_truncf(float x)
-{
-#ifdef HAVE_TRUNCF
-    return truncf(x);
-#else
-    return unix_trunc(x);
-#endif
-}
-
-/*********************************************************************
  *      tgammaf
  */
 static float CDECL unix_tgammaf(float x)
@@ -735,7 +723,6 @@ static const struct unix_funcs funcs =
     unix_tgamma,
     unix_tgammaf,
     unix_trunc,
-    unix_truncf
 };
 
 NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
