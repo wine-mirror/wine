@@ -757,8 +757,7 @@ fail:
 static HRESULT media_stream_init_desc(struct media_stream *stream)
 {
     IMFMediaTypeHandler *type_handler = NULL;
-    IMFMediaType **stream_types = NULL;
-    IMFMediaType *stream_type = NULL;
+    IMFMediaType *stream_types[6];
     struct wg_format format;
     DWORD type_count = 0;
     unsigned int i;
@@ -783,8 +782,6 @@ static HRESULT media_stream_init_desc(struct media_stream *stream)
         GUID base_subtype;
 
         IMFMediaType_GetGUID(base_type, &MF_MT_SUBTYPE, &base_subtype);
-
-        stream_types = malloc(sizeof(IMFMediaType *) * (ARRAY_SIZE(video_types) + 1));
 
         stream_types[0] = base_type;
         type_count = 1;
@@ -816,8 +813,6 @@ static HRESULT media_stream_init_desc(struct media_stream *stream)
             WG_AUDIO_FORMAT_F32LE,
         };
 
-        stream_types = malloc( sizeof(IMFMediaType *) * (ARRAY_SIZE(audio_types) + 1) );
-
         stream_types[0] = mf_media_type_from_wg_format(&format);
         type_count = 1;
 
@@ -833,13 +828,11 @@ static HRESULT media_stream_init_desc(struct media_stream *stream)
     }
     else
     {
-        stream_type = mf_media_type_from_wg_format(&format);
-        if (stream_type)
-        {
-            stream_types = &stream_type;
+        if ((stream_types[0] = mf_media_type_from_wg_format(&format)))
             type_count = 1;
-        }
     }
+
+    assert(type_count < ARRAY_SIZE(stream_types));
 
     if (!type_count)
     {
@@ -861,8 +854,6 @@ done:
         IMFMediaTypeHandler_Release(type_handler);
     for (i = 0; i < type_count; i++)
         IMFMediaType_Release(stream_types[i]);
-    if (stream_types != &stream_type)
-        free(stream_types);
     return hr;
 }
 
