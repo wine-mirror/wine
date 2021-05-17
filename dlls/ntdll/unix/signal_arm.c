@@ -993,6 +993,11 @@ static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry,
     context->Sp = (DWORD)teb->Tib.StackBase;
     context->Pc = (DWORD)pRtlUserThreadStart;
     if (context->Pc & 1) context->Cpsr |= 0x20; /* thumb mode */
+    if (NtCurrentTeb64())
+    {
+        WOW64_CPURESERVED *cpu = ULongToPtr( NtCurrentTeb64()->TlsSlots[WOW64_TLS_CPURESERVED] );
+        memcpy( cpu + 1, context, sizeof(*context) );
+    }
 }
 
 

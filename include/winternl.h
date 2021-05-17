@@ -978,6 +978,7 @@ typedef struct _TEB64
 } TEB64;
 
 /* reserved TEB64 TLS slots for Wow64 */
+#define WOW64_TLS_CPURESERVED  1
 #define WOW64_TLS_FILESYSREDIR 8
 
 

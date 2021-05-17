@@ -120,6 +120,22 @@ static void start_thread( TEB *teb )
 
 
 /***********************************************************************
+ *           get_machine_context_size
+ */
+static SIZE_T get_machine_context_size( USHORT machine )
+{
+    switch (machine)
+    {
+    case IMAGE_FILE_MACHINE_I386:  return sizeof(I386_CONTEXT);
+    case IMAGE_FILE_MACHINE_ARMNT: return sizeof(ARM_CONTEXT);
+    case IMAGE_FILE_MACHINE_AMD64: return sizeof(AMD64_CONTEXT);
+    case IMAGE_FILE_MACHINE_ARM64: return sizeof(ARM64_NT_CONTEXT);
+    default: return 0;
+    }
+}
+
+
+/***********************************************************************
  *           set_thread_id
  */
 void set_thread_id( TEB *teb, DWORD pid, DWORD tid )
@@ -155,18 +171,23 @@ NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR zero_bits, SIZE_T reserve_size,
 
     if (teb->WowTebOffset && !(status = virtual_alloc_thread_stack( &stack64, 0, 0x40000, 0x40000, NULL )))
     {
+        SIZE_T cpusize = sizeof(WOW64_CPURESERVED) +
+            ((get_machine_context_size( main_image_info.Machine ) + 7) & ~7) + sizeof(ULONG64);
+        WOW64_CPURESERVED *cpu = (WOW64_CPURESERVED *)(((ULONG_PTR)stack64.StackBase - cpusize) & ~15);
 #ifdef _WIN64
         TEB32 *teb32 = (TEB32 *)((char *)teb + teb->WowTebOffset);
         teb32->Tib.StackBase = PtrToUlong( stack.StackBase );
         teb32->Tib.StackLimit = PtrToUlong( stack.StackLimit );
         teb32->DeallocationStack = PtrToUlong( stack.DeallocationStack );
+        stack64.StackBase = teb->TlsSlots[WOW64_TLS_CPURESERVED] = cpu;
         stack = stack64;
 #else
         TEB64 *teb64 = (TEB64 *)((char *)teb + teb->WowTebOffset);
-        teb64->Tib.StackBase = PtrToUlong( stack64.StackBase );
+        teb64->Tib.StackBase = teb64->TlsSlots[WOW64_TLS_CPURESERVED] = PtrToUlong( cpu );
         teb64->Tib.StackLimit = PtrToUlong( stack64.StackLimit );
         teb64->DeallocationStack = PtrToUlong( stack64.DeallocationStack );
 #endif
+        cpu->Machine = main_image_info.Machine;
     }
     teb->Tib.StackBase = stack.StackBase;
     teb->Tib.StackLimit = stack.StackLimit;
