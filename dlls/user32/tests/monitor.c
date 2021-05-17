@@ -333,6 +333,7 @@ static void test_ChangeDisplaySettingsEx(void)
     DISPLAY_DEVICEA dd;
     POINTL position;
     DEVMODEW dmW;
+    BOOL found;
     LONG res;
     int i;
 
@@ -732,7 +733,7 @@ static void test_ChangeDisplaySettingsEx(void)
         ok(count == old_count - 1, "Expect monitor count %d, got %d\n", old_count - 1, count);
     }
 
-    /* Test changing each adapter to every available mode */
+    /* Test changing each adapter to different width, height, frequency and depth */
     position.x = 0;
     position.y = 0;
     for (device = 0; device < device_count; ++device)
@@ -741,6 +742,42 @@ static void test_ChangeDisplaySettingsEx(void)
         dm.dmSize = sizeof(dm);
         for (mode = 0; EnumDisplaySettingsExA(devices[device].name, mode, &dm, 0); ++mode)
         {
+            if (mode == 0)
+            {
+                dm2 = dm;
+            }
+            else
+            {
+                found = FALSE;
+                if (dm2.dmPelsWidth && dm.dmPelsWidth != dm2.dmPelsWidth)
+                {
+                    dm2.dmPelsWidth = 0;
+                    found = TRUE;
+                }
+                if (dm2.dmPelsHeight && dm.dmPelsHeight != dm2.dmPelsHeight)
+                {
+                    dm2.dmPelsHeight = 0;
+                    found = TRUE;
+                }
+                if (dm2.dmDisplayFrequency && dm.dmDisplayFrequency != dm2.dmDisplayFrequency)
+                {
+                    dm2.dmDisplayFrequency = 0;
+                    found = TRUE;
+                }
+                if (dm2.dmBitsPerPel && dm.dmBitsPerPel != dm2.dmBitsPerPel)
+                {
+                    dm2.dmBitsPerPel = 0;
+                    found = TRUE;
+                }
+
+                if (!dm2.dmPelsWidth && !dm2.dmPelsHeight && !dm2.dmDisplayFrequency
+                        && !dm2.dmBitsPerPel)
+                    break;
+
+                if (!found)
+                    continue;
+            }
+
             dm.dmPosition = position;
             dm.dmFields |= DM_POSITION;
             res = ChangeDisplaySettingsExA(devices[device].name, &dm, NULL, CDS_RESET, NULL);
