@@ -6,6 +6,7 @@ EXTRADLLFLAGS = -mconsole -municode -mno-cygwin
 
 C_SRCS = \
 	add.c \
+	copy.c \
 	delete.c \
 	export.c \
 	import.c \
