@@ -117,6 +117,7 @@ struct media_engine
         TOPOID node_id;
         BYTE *buffer;
         UINT buffer_size;
+        DXGI_FORMAT output_format;
     } video_frame;
     CRITICAL_SECTION cs;
 };
@@ -746,6 +747,8 @@ static HRESULT media_engine_create_video_renderer(struct media_engine *engine, I
     }
 
     IMFActivate_Release(activate);
+
+    engine->video_frame.output_format = output_format;
 
     return hr;
 }
