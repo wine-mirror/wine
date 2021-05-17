@@ -300,25 +300,25 @@ const char *winetest_elapsed(void)
     return wine_dbg_sprintf( "%.3f", (now - winetest_start_time) / 1000.0);
 }
 
-static void winetest_vprintf( const char *msg, __winetest_va_list args )
+static void __winetest_cdecl winetest_printf( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
+static void __winetest_cdecl winetest_printf( const char *msg, ... )
+{
+    struct tls_data *data = get_tls_data();
+    __winetest_va_list valist;
+
+    printf( "%s:%d:%s ", data->current_file, data->current_line, winetest_elapsed() );
+    __winetest_va_start( valist, msg );
+    vprintf( msg, valist );
+    __winetest_va_end( valist );
+}
+static void __winetest_cdecl winetest_print_context( const char *msgtype )
 {
     struct tls_data *data = get_tls_data();
     unsigned int i;
 
-    printf( "%s:%d:%s ", data->current_file, data->current_line, winetest_elapsed() );
+    winetest_printf( "%s", msgtype );
     for (i = 0; i < data->context_count; ++i)
         printf( "%s: ", data->context[i] );
-    vprintf( msg, args );
-}
-
-static void __winetest_cdecl winetest_printf( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
-static void __winetest_cdecl winetest_printf( const char *msg, ... )
-{
-    __winetest_va_list valist;
-
-    __winetest_va_start( valist, msg );
-    winetest_vprintf( msg, valist );
-    __winetest_va_end( valist );
 }
 
 void winetest_subtest( const char* name )
@@ -371,7 +371,7 @@ int winetest_vok( int condition, const char *msg, __winetest_va_list args )
     {
         if (condition)
         {
-            winetest_printf( "Test succeeded inside todo block: " );
+            winetest_print_context( "Test succeeded inside todo block: " );
             vprintf(msg, args);
             InterlockedIncrement(&todo_failures);
             return 0;
@@ -383,7 +383,7 @@ int winetest_vok( int condition, const char *msg, __winetest_va_list args )
             {
                 if (winetest_debug > 0)
                 {
-                    winetest_printf( "Test marked todo: " );
+                    winetest_print_context( "Test marked todo: " );
                     vprintf(msg, args);
                 }
                 InterlockedIncrement(&todo_successes);
@@ -397,7 +397,7 @@ int winetest_vok( int condition, const char *msg, __winetest_va_list args )
     {
         if (!condition)
         {
-            winetest_printf( "Test failed: " );
+            winetest_print_context( "Test failed: " );
             vprintf(msg, args);
             InterlockedIncrement(&failures);
             return 0;
@@ -407,7 +407,7 @@ int winetest_vok( int condition, const char *msg, __winetest_va_list args )
             if (winetest_report_success ||
                 (winetest_time && GetTickCount() >= winetest_last_time + 1000))
             {
-                winetest_printf( "Test succeeded\n" );
+                winetest_printf("Test succeeded\n");
             }
             InterlockedIncrement(&successes);
             return 1;
@@ -432,8 +432,9 @@ void __winetest_cdecl winetest_trace( const char *msg, ... )
         return;
     if (winetest_add_line() < winetest_mute_threshold)
     {
+        winetest_print_context( "" );
         __winetest_va_start(valist, msg);
-        winetest_vprintf( msg, valist );
+        vprintf( msg, valist );
         __winetest_va_end(valist);
     }
     else
@@ -444,7 +445,7 @@ void winetest_vskip( const char *msg, __winetest_va_list args )
 {
     if (winetest_add_line() < winetest_mute_threshold)
     {
-        winetest_printf( "Tests skipped: " );
+        winetest_print_context( "Tests skipped: " );
         vprintf(msg, args);
         InterlockedIncrement(&skipped);
     }
