@@ -4061,7 +4061,7 @@ static void test_create_device_from_clipper1(void)
     surface_desc.dwSize = sizeof(surface_desc);
     hr = IDirectDrawSurface_GetSurfaceDesc(surface, &surface_desc);
     ok(hr == DD_OK, "Cannot get surface desc structure (hr = %x).\n", hr);
-    todo_wine ok(surface_desc.ddpfPixelFormat.dwRGBBitCount == 16, "Expected 16bpp, got %ubpp.\n",
+    ok(surface_desc.ddpfPixelFormat.dwRGBBitCount == 16, "Expected 16bpp, got %ubpp.\n",
             surface_desc.ddpfPixelFormat.dwRGBBitCount);
 
     hr = IDirectDraw2_RestoreDisplayMode(ddraw);
@@ -4240,7 +4240,7 @@ static void test_create_device_from_clipper2(void)
     surface_desc.dwSize = sizeof(surface_desc);
     hr = IDirectDrawSurface_GetSurfaceDesc(surface, &surface_desc);
     ok(hr == DD_OK, "Cannot get surface desc structure (hr = %x).\n", hr);
-    todo_wine ok(surface_desc.ddpfPixelFormat.dwRGBBitCount == 16, "Expected 16bpp, got %ubpp.\n",
+    ok(surface_desc.ddpfPixelFormat.dwRGBBitCount == 16, "Expected 16bpp, got %ubpp.\n",
             surface_desc.ddpfPixelFormat.dwRGBBitCount);
 
     hr = IDirectDraw2_RestoreDisplayMode(ddraw);
@@ -4418,7 +4418,7 @@ static void test_create_device_from_clipper3(void)
     surface_desc.dwSize = sizeof(surface_desc);
     hr = IDirectDrawSurface_GetSurfaceDesc(surface, &surface_desc);
     ok(hr == DD_OK, "Cannot get surface desc structure (hr = %x).\n", hr);
-    todo_wine ok(surface_desc.ddpfPixelFormat.dwRGBBitCount == 16, "Expected 16bpp, got %ubpp.\n",
+    ok(surface_desc.ddpfPixelFormat.dwRGBBitCount == 16, "Expected 16bpp, got %ubpp.\n",
             surface_desc.ddpfPixelFormat.dwRGBBitCount);
 
     hr = IDirectDraw2_RestoreDisplayMode(ddraw);

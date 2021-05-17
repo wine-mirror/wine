@@ -45,6 +45,16 @@ struct x11drv_display_setting
     DEVMODEW desired_mode;
 };
 
+struct x11drv_display_depth
+{
+    struct list entry;
+    ULONG_PTR display_id;
+    DWORD depth;
+};
+
+/* Display device emulated depth list, protected by modes_section */
+static struct list x11drv_display_depth_list = LIST_INIT(x11drv_display_depth_list);
+
 /* All Windows drivers seen so far either support 32 bit depths, or 24 bit depths, but never both. So if we have
  * a 32 bit framebuffer, report 32 bit bpps, otherwise 24 bit ones.
  */
@@ -405,6 +415,54 @@ static int mode_compare(const void *p1, const void *p2)
     return a->u1.s2.dmDisplayOrientation - b->u1.s2.dmDisplayOrientation;
 }
 
+static void set_display_depth(ULONG_PTR display_id, DWORD depth)
+{
+    struct x11drv_display_depth *display_depth;
+
+    EnterCriticalSection(&modes_section);
+    LIST_FOR_EACH_ENTRY(display_depth, &x11drv_display_depth_list, struct x11drv_display_depth, entry)
+    {
+        if (display_depth->display_id == display_id)
+        {
+            display_depth->depth = depth;
+            LeaveCriticalSection(&modes_section);
+            return;
+        }
+    }
+
+    display_depth = heap_alloc(sizeof(*display_depth));
+    if (!display_depth)
+    {
+        ERR("Failed to allocate memory.\n");
+        LeaveCriticalSection(&modes_section);
+        return;
+    }
+
+    display_depth->display_id = display_id;
+    display_depth->depth = depth;
+    list_add_head(&x11drv_display_depth_list, &display_depth->entry);
+    LeaveCriticalSection(&modes_section);
+}
+
+static DWORD get_display_depth(ULONG_PTR display_id)
+{
+    struct x11drv_display_depth *display_depth;
+    DWORD depth;
+
+    EnterCriticalSection(&modes_section);
+    LIST_FOR_EACH_ENTRY(display_depth, &x11drv_display_depth_list, struct x11drv_display_depth, entry)
+    {
+        if (display_depth->display_id == display_id)
+        {
+            depth = display_depth->depth;
+            LeaveCriticalSection(&modes_section);
+            return depth;
+        }
+    }
+    LeaveCriticalSection(&modes_section);
+    return screen_bpp;
+}
+
 /***********************************************************************
  *		EnumDisplaySettingsEx  (X11DRV.@)
  *
@@ -434,6 +492,10 @@ BOOL CDECL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmo
             ERR("Failed to get %s current display settings.\n", wine_dbgstr_w(name));
             return FALSE;
         }
+
+        if (!is_detached_mode(devmode))
+            devmode->dmBitsPerPel = get_display_depth(id);
+
         goto done;
     }
 
@@ -842,6 +904,8 @@ static LONG apply_display_settings(struct x11drv_display_setting *displays, INT 
               full_mode->u1.s2.dmDisplayOrientation);
 
         ret = handler.set_current_mode(displays[display_idx].id, full_mode);
+        if (attached_mode && ret == DISP_CHANGE_SUCCESSFUL)
+            set_display_depth(displays[display_idx].id, full_mode->dmBitsPerPel);
         free_full_mode(full_mode);
         if (ret != DISP_CHANGE_SUCCESSFUL)
             return ret;

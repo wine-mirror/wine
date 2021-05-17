@@ -297,8 +297,6 @@ static void _expect_dm(INT line, const DEVMODEA *expected, const CHAR *device, D
 
     ok_(__FILE__, line)((dm.dmFields & expected->dmFields) == expected->dmFields,
             "Device %s test %d expect dmFields to contain %#x, got %#x\n", device, test, expected->dmFields, dm.dmFields);
-    /* Wine doesn't support changing color depth yet */
-    todo_wine_if(expected->dmFields & DM_BITSPERPEL && expected->dmBitsPerPel != 32 && expected->dmBitsPerPel != 24)
     ok_(__FILE__, line)(!(expected->dmFields & DM_BITSPERPEL) || dm.dmBitsPerPel == expected->dmBitsPerPel,
             "Device %s test %d expect dmBitsPerPel %u, got %u\n", device, test, expected->dmBitsPerPel, dm.dmBitsPerPel);
     ok_(__FILE__, line)(!(expected->dmFields & DM_PELSWIDTH) || dm.dmPelsWidth == expected->dmPelsWidth,
@@ -696,7 +694,6 @@ static void test_ChangeDisplaySettingsEx(void)
             dm.dmSize = sizeof(dm);
             res = EnumDisplaySettingsA(devices[device].name, ENUM_CURRENT_SETTINGS, &dm);
             ok(res, "Device %s EnumDisplaySettingsA failed, error %#x.\n", devices[device].name, GetLastError());
-            todo_wine_if(depths[test] != 32)
             ok(dm.dmBitsPerPel == depths[test], "Device %s expect dmBitsPerPel %u, got %u.\n",
                devices[device].name, depths[test], dm.dmBitsPerPel);
             /* 2008 resets to the resolution in the registry. Newer versions of Windows doesn't
