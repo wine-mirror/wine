@@ -1809,7 +1809,10 @@ DECL_HANDLER(set_socket_event)
     old_event = sock->event;
     sock->mask    = req->mask;
     if (req->window)
-        sock->reported_events &= ~req->mask; /* re-enable held events */
+    {
+        sock->pending_events &= ~req->mask;
+        sock->reported_events &= ~req->mask;
+    }
     sock->event   = NULL;
     sock->window  = req->window;
     sock->message = req->msg;
