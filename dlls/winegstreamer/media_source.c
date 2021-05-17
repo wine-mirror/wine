@@ -933,13 +933,7 @@ static HRESULT WINAPI media_source_rate_support_GetSlowestRate(IMFRateSupport *i
 {
     TRACE("%p, %d, %d, %p.\n", iface, direction, thin, rate);
 
-    if (direction == MFRATE_REVERSE)
-        return MF_E_REVERSE_UNSUPPORTED;
-
-    if (thin)
-        return MF_E_THINNING_UNSUPPORTED;
-
-    *rate = 1.0f;
+    *rate = direction == MFRATE_FORWARD ? 1.0f : -1.0f;
 
     return S_OK;
 }
@@ -948,31 +942,21 @@ static HRESULT WINAPI media_source_rate_support_GetFastestRate(IMFRateSupport *i
 {
     TRACE("%p, %d, %d, %p.\n", iface, direction, thin, rate);
 
-    if (direction == MFRATE_REVERSE)
-        return MF_E_REVERSE_UNSUPPORTED;
-
-    if (thin)
-        return MF_E_THINNING_UNSUPPORTED;
-
-    *rate = 1.0f;
+    *rate = direction == MFRATE_FORWARD ? 1.0f : -1.0f;
 
     return S_OK;
 }
 
 static HRESULT WINAPI media_source_rate_support_IsRateSupported(IMFRateSupport *iface, BOOL thin, float rate, float *nearest_support_rate)
 {
+    const float supported_rate = rate >= 0.0f ? 1.0f : -1.0f;
+
     TRACE("%p, %d, %f, %p.\n", iface, thin, rate, nearest_support_rate);
 
-    if (rate < 0.0f)
-        return MF_E_REVERSE_UNSUPPORTED;
-
-    if (thin)
-        return MF_E_THINNING_UNSUPPORTED;
-
     if (nearest_support_rate)
-        *nearest_support_rate = 1.0f;
+        *nearest_support_rate = supported_rate;
 
-    return rate == 1.0f ? S_OK : MF_E_UNSUPPORTED_RATE;
+    return rate == supported_rate ? S_OK : MF_E_UNSUPPORTED_RATE;
 }
 
 static const IMFRateSupportVtbl media_source_rate_support_vtbl =
