@@ -13610,6 +13610,7 @@ START_TEST(domdoc)
         return;
     }
 
+    test_createProcessingInstruction();
     test_load_with_site();
     test_domdoc();
     test_persiststream();
@@ -13651,7 +13652,6 @@ START_TEST(domdoc)
     test_default_properties();
     test_selectSingleNode();
     test_events();
-    test_createProcessingInstruction();
     test_put_nodeTypedValue();
     test_get_xml();
     test_insertBefore();
