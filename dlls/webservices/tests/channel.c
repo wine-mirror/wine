@@ -436,7 +436,8 @@ static void test_WsResetListener(void)
 struct listener_info
 {
     int                 port;
-    HANDLE              wait;
+    HANDLE              ready;
+    HANDLE              done;
     WS_CHANNEL_BINDING  binding;
     WS_CHANNEL_TYPE     type;
     void                (*server_func)( WS_CHANNEL * );
@@ -485,6 +486,9 @@ static void client_message_read_write( const struct listener_info *info )
     HRESULT hr;
     DWORD err;
 
+    err = WaitForSingleObject( info->ready, 3000 );
+    ok( err == WAIT_OBJECT_0, "wait failed %u\n", err );
+
     hr = WsCreateChannel( info->type, info->binding, NULL, 0, NULL, &channel, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -527,7 +531,7 @@ static void client_message_read_write( const struct listener_info *info )
     hr = WsWriteMessageEnd( channel, msg, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    err = WaitForSingleObject( info->wait, 3000 );
+    err = WaitForSingleObject( info->done, 3000 );
     ok( err == WAIT_OBJECT_0, "wait failed %u\n", err );
 
     hr = WsCloseChannel( channel, NULL, NULL );
@@ -623,6 +627,9 @@ static void client_duplex_session( const struct listener_info *info )
     HRESULT hr;
     DWORD err;
 
+    err = WaitForSingleObject( info->ready, 3000 );
+    ok( err == WAIT_OBJECT_0, "wait failed %u\n", err );
+
     hr = WsCreateChannel( info->type, info->binding, NULL, 0, NULL, &channel, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -654,7 +661,7 @@ static void client_duplex_session( const struct listener_info *info )
     hr = WsSendMessage( channel, msg2, &desc, WS_WRITE_REQUIRED_VALUE, &val, sizeof(val), NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    err = WaitForSingleObject( info->wait, 3000 );
+    err = WaitForSingleObject( info->done, 3000 );
     ok( err == WAIT_OBJECT_0, "wait failed %u\n", err );
 
     hr = WsShutdownSessionChannel( channel, NULL, NULL );
@@ -715,6 +722,9 @@ static void client_accept_channel( const struct listener_info *info )
     HRESULT hr;
     DWORD err;
 
+    err = WaitForSingleObject( info->ready, 3000 );
+    ok( err == WAIT_OBJECT_0, "wait failed %u\n", err );
+
     hr = WsAcceptChannel( NULL, NULL, NULL, NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 
@@ -755,7 +765,7 @@ static void client_accept_channel( const struct listener_info *info )
     hr = WsSendMessage( channel, msg, &desc, WS_WRITE_REQUIRED_VALUE, &val, sizeof(val), NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    err = WaitForSingleObject( info->wait, 3000 );
+    err = WaitForSingleObject( info->done, 3000 );
     ok( err == WAIT_OBJECT_0, "wait failed %u\n", err );
 
     hr = WsCloseChannel( channel, NULL, NULL );
@@ -817,6 +827,10 @@ static void client_request_reply( const struct listener_info *info )
     WS_MESSAGE_DESCRIPTION req_desc, reply_desc;
     INT32 val_in = -1, val_out = 0;
     HRESULT hr;
+    DWORD err;
+
+    err = WaitForSingleObject( info->ready, 3000 );
+    ok( err == WAIT_OBJECT_0, "wait failed %u\n", err );
 
     hr = WsCreateChannel( info->type, info->binding, NULL, 0, NULL, &channel, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -851,6 +865,9 @@ static void client_request_reply( const struct listener_info *info )
                          &reply_desc, WS_READ_REQUIRED_VALUE, NULL, &val_out, sizeof(val_out), NULL, NULL );
     ok( val_out == -1, "got %d\n", val_out );
 
+    err = WaitForSingleObject( info->done, 3000 );
+    ok( err == WAIT_OBJECT_0, "wait failed %u\n", err );
+
     hr = WsCloseChannel( channel, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -880,14 +897,14 @@ static DWORD CALLBACK listener_proc( void *arg )
     hr = WsCreateChannelForListener( listener, NULL, 0, &channel, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
-    SetEvent( info->wait );
+    SetEvent( info->ready );
 
     hr = WsAcceptChannel( listener, channel, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     info->server_func( channel );
 
-    SetEvent( info->wait );
+    SetEvent( info->done );
 
     hr = WsCloseChannel( channel, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -902,12 +919,8 @@ static DWORD CALLBACK listener_proc( void *arg )
 
 static HANDLE start_listener( struct listener_info *info )
 {
-    DWORD err;
     HANDLE thread = CreateThread( NULL, 0, listener_proc, info, 0, NULL );
     ok( thread != NULL, "failed to create listener thread %u\n", GetLastError() );
-
-    err = WaitForSingleObject( info->wait, 3000 );
-    ok( err == WAIT_OBJECT_0, "failed to start listener %u\n", err );
     return thread;
 }
 
@@ -1077,7 +1090,8 @@ START_TEST(channel)
     test_WsResetListener();
 
     info.port = 7533;
-    info.wait = CreateEventW( NULL, 0, 0, NULL );
+    info.ready = CreateEventW( NULL, 0, 0, NULL );
+    info.done = CreateEventW( NULL, 0, 0, NULL );
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
