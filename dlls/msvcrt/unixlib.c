@@ -122,14 +122,6 @@ static float CDECL unix_atanhf(float x)
 }
 
 /*********************************************************************
- *      ceil
- */
-static double CDECL unix_ceil( double x )
-{
-    return ceil( x );
-}
-
-/*********************************************************************
  *      ceilf
  */
 static float CDECL unix_ceilf( float x )
@@ -713,7 +705,6 @@ static const struct unix_funcs funcs =
     unix_asinhf,
     unix_atanh,
     unix_atanhf,
-    unix_ceil,
     unix_ceilf,
     unix_cos,
     unix_cosf,
