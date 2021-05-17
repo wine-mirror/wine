@@ -142,6 +142,40 @@ void set_thread_id( TEB *teb, DWORD pid, DWORD tid )
 
 
 /***********************************************************************
+ *           init_thread_stack
+ */
+NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR zero_bits, SIZE_T reserve_size,
+                            SIZE_T commit_size, SIZE_T *pthread_size )
+{
+    INITIAL_TEB stack, stack64;
+    NTSTATUS status;
+
+    if ((status = virtual_alloc_thread_stack( &stack, zero_bits, reserve_size, commit_size, pthread_size )))
+        return status;
+
+    if (teb->WowTebOffset && !(status = virtual_alloc_thread_stack( &stack64, 0, 0x40000, 0x40000, NULL )))
+    {
+#ifdef _WIN64
+        TEB32 *teb32 = (TEB32 *)((char *)teb + teb->WowTebOffset);
+        teb32->Tib.StackBase = PtrToUlong( stack.StackBase );
+        teb32->Tib.StackLimit = PtrToUlong( stack.StackLimit );
+        teb32->DeallocationStack = PtrToUlong( stack.DeallocationStack );
+        stack = stack64;
+#else
+        TEB64 *teb64 = (TEB64 *)((char *)teb + teb->WowTebOffset);
+        teb64->Tib.StackBase = PtrToUlong( stack64.StackBase );
+        teb64->Tib.StackLimit = PtrToUlong( stack64.StackLimit );
+        teb64->DeallocationStack = PtrToUlong( stack64.DeallocationStack );
+#endif
+    }
+    teb->Tib.StackBase = stack.StackBase;
+    teb->Tib.StackLimit = stack.StackLimit;
+    teb->DeallocationStack = stack.DeallocationStack;
+    return status;
+}
+
+
+/***********************************************************************
  *           update_attr_list
  *
  * Update the output attributes.
@@ -196,7 +230,6 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
     int request_pipe[2];
     SIZE_T extra_stack = PTHREAD_STACK_MIN;
     TEB *teb;
-    INITIAL_TEB stack;
     NTSTATUS status;
 
     if (zero_bits > 21 && zero_bits < 32) return STATUS_INVALID_PARAMETER_3;
@@ -269,17 +302,13 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
 
     if ((status = virtual_alloc_teb( &teb ))) goto done;
 
-    if ((status = virtual_alloc_thread_stack( &stack, zero_bits, stack_reserve, stack_commit, &extra_stack )))
+    if ((status = init_thread_stack( teb, zero_bits, stack_reserve, stack_commit, &extra_stack )))
     {
         virtual_free_teb( teb );
         goto done;
     }
 
     set_thread_id( teb, GetCurrentProcessId(), tid );
-
-    teb->Tib.StackBase = stack.StackBase;
-    teb->Tib.StackLimit = stack.StackLimit;
-    teb->DeallocationStack = stack.DeallocationStack;
 
     thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     thread_data->request_fd  = request_pipe[1];

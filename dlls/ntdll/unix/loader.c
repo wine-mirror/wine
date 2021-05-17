@@ -1853,7 +1853,6 @@ static struct unix_funcs unix_funcs =
 static void start_main_thread(void)
 {
     NTSTATUS status;
-    INITIAL_TEB stack;
     TEB *teb = virtual_alloc_first_teb();
 
     signal_init_threading();
@@ -1871,10 +1870,7 @@ static void start_main_thread(void)
     if (p___wine_main_argv) *p___wine_main_argv = main_argv;
     if (p___wine_main_wargv) *p___wine_main_wargv = main_wargv;
     set_load_order_app_name( main_wargv[0] );
-    virtual_alloc_thread_stack( &stack, is_win64 ? 0x7fffffff : 0, 0, 0, NULL );
-    teb->Tib.StackBase = stack.StackBase;
-    teb->Tib.StackLimit = stack.StackLimit;
-    teb->DeallocationStack = stack.DeallocationStack;
+    init_thread_stack( teb, is_win64 ? 0x7fffffff : 0, 0, 0, NULL );
     NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
     load_ntdll();
     status = p__wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );

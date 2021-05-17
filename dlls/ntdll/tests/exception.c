@@ -3745,18 +3745,20 @@ static void test_thread_context(void)
 
 static void test_wow64_context(void)
 {
-    char cmdline[] = "C:\\windows\\syswow64\\notepad.exe";
+    THREAD_BASIC_INFORMATION info;
     PROCESS_INFORMATION pi;
     STARTUPINFOA si = {0};
     WOW64_CONTEXT ctx;
     NTSTATUS ret;
+    SIZE_T res;
+    TEB teb;
 
     memset(&ctx, 0x55, sizeof(ctx));
     ctx.ContextFlags = WOW64_CONTEXT_ALL;
     ret = pRtlWow64GetThreadContext( GetCurrentThread(), &ctx );
     ok(ret == STATUS_INVALID_PARAMETER || broken(ret == STATUS_PARTIAL_COPY), "got %#x\n", ret);
 
-    CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
+    CreateProcessA("C:\\windows\\syswow64\\notepad.exe", NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
 
     ret = pRtlWow64GetThreadContext( pi.hThread, &ctx );
     ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
@@ -3774,6 +3776,25 @@ static void test_wow64_context(void)
 
     ret = pRtlWow64SetThreadContext( pi.hThread, &ctx );
     ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+
+    pNtQueryInformationThread( pi.hThread, ThreadBasicInformation, &info, sizeof(info), NULL );
+    if (!ReadProcessMemory( pi.hProcess, info.TebBaseAddress, &teb, sizeof(teb), &res )) res = 0;
+    ok( res == sizeof(teb), "wrong len %lx\n", res );
+
+    if (teb.WowTebOffset > 1)
+    {
+        TEB32 teb32;
+        if (!ReadProcessMemory( pi.hProcess, (char *)info.TebBaseAddress + teb.WowTebOffset,
+                                &teb32, sizeof(teb32), &res )) res = 0;
+        ok( res == sizeof(teb32), "wrong len %lx\n", res );
+
+        ok( ((ctx.Esp + 0xfff) & ~0xfff) == teb32.Tib.StackBase,
+            "esp is not at top of stack: %08x / %08x\n", ctx.Esp, teb32.Tib.StackBase );
+        ok( ULongToPtr( teb32.Tib.StackBase ) <= teb.DeallocationStack ||
+            ULongToPtr( teb32.DeallocationStack ) >= teb.Tib.StackBase,
+            "stacks overlap %08x-%08x / %p-%p\n", teb32.DeallocationStack, teb32.Tib.StackBase,
+            teb.DeallocationStack, teb.Tib.StackBase );
+    }
 
     pNtTerminateProcess(pi.hProcess, 0);
 }

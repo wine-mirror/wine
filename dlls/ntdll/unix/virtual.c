@@ -2997,6 +2997,21 @@ void virtual_free_teb( TEB *teb )
         size = 0;
         NtFreeVirtualMemory( GetCurrentProcess(), &thread_data->start_stack, &size, MEM_RELEASE );
     }
+    if (teb->WowTebOffset)
+    {
+#ifdef _WIN64
+        TEB32 *teb32 = (TEB32 *)((char *)teb + teb->WowTebOffset);
+        void *addr = ULongToPtr( teb32->DeallocationStack );
+#else
+        TEB64 *teb64 = (TEB64 *)((char *)teb + teb->WowTebOffset);
+        void *addr = ULongToPtr( teb64->DeallocationStack );
+#endif
+        if (addr)
+        {
+            size = 0;
+            NtFreeVirtualMemory( GetCurrentProcess(), &addr, &size, MEM_RELEASE );
+        }
+    }
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
     list_remove( &thread_data->entry );

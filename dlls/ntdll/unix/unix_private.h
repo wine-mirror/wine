@@ -173,6 +173,8 @@ extern void server_init_thread( void *entry_point, BOOL *suspend ) DECLSPEC_HIDD
 extern int server_pipe( int fd[2] ) DECLSPEC_HIDDEN;
 
 extern void set_thread_id( TEB *teb, DWORD pid, DWORD tid ) DECLSPEC_HIDDEN;
+extern NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR zero_bits, SIZE_T reserve_size,
+                                   SIZE_T commit_size, SIZE_T *pthread_size ) DECLSPEC_HIDDEN;
 extern NTSTATUS context_to_server( context_t *to, const CONTEXT *from ) DECLSPEC_HIDDEN;
 extern NTSTATUS context_from_server( CONTEXT *to, const context_t *from ) DECLSPEC_HIDDEN;
 extern void DECLSPEC_NORETURN abort_thread( int status ) DECLSPEC_HIDDEN;
