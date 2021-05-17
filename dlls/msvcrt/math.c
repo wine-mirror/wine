@@ -827,10 +827,31 @@ float CDECL ceilf( float x )
 
 /*********************************************************************
  *      floorf (MSVCRT.@)
+ *
+ * Copied from musl: src/math/floorf.c
  */
 float CDECL floorf( float x )
 {
-  return unix_funcs->floorf(x);
+    union {float f; UINT32 i;} u = {x};
+    int e = (int)(u.i >> 23 & 0xff) - 0x7f;
+    UINT32 m;
+
+    if (e >= 23)
+        return x;
+    if (e >= 0) {
+        m = 0x007fffff >> e;
+        if ((u.i & m) == 0)
+            return x;
+        if (u.i >> 31)
+            u.i += m;
+        u.i &= ~m;
+    } else {
+        if (u.i >> 31 == 0)
+            return 0;
+        else if (u.i << 1)
+            return -1;
+    }
+    return u.f;
 }
 
 /*********************************************************************

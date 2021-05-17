@@ -282,14 +282,6 @@ static double CDECL unix_floor( double x )
 }
 
 /*********************************************************************
- *      floorf
- */
-static float CDECL unix_floorf( float x )
-{
-    return floorf( x );
-}
-
-/*********************************************************************
  *      fma
  */
 static double CDECL unix_fma( double x, double y, double z )
@@ -712,7 +704,6 @@ static const struct unix_funcs funcs =
     unix_expm1,
     unix_expm1f,
     unix_floor,
-    unix_floorf,
     unix_fma,
     unix_fmaf,
     unix_fmod,
