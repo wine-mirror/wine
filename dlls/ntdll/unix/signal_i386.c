@@ -992,171 +992,6 @@ void signal_restore_full_cpu_context(void)
 
 
 /***********************************************************************
- *           get_server_context_flags
- *
- * Convert CPU-specific flags to generic server flags
- */
-static unsigned int get_server_context_flags( DWORD flags )
-{
-    unsigned int ret = 0;
-
-    flags &= ~CONTEXT_i386;  /* get rid of CPU id */
-    if (flags & CONTEXT_CONTROL) ret |= SERVER_CTX_CONTROL;
-    if (flags & CONTEXT_INTEGER) ret |= SERVER_CTX_INTEGER;
-    if (flags & CONTEXT_SEGMENTS) ret |= SERVER_CTX_SEGMENTS;
-    if (flags & CONTEXT_FLOATING_POINT) ret |= SERVER_CTX_FLOATING_POINT;
-    if (flags & CONTEXT_DEBUG_REGISTERS) ret |= SERVER_CTX_DEBUG_REGISTERS;
-    if (flags & CONTEXT_EXTENDED_REGISTERS) ret |= SERVER_CTX_EXTENDED_REGISTERS;
-    if (flags & CONTEXT_XSTATE) ret |= SERVER_CTX_YMM_REGISTERS;
-    return ret;
-}
-
-
-/***********************************************************************
- *           context_to_server
- *
- * Convert a register context to the server format.
- */
-NTSTATUS context_to_server( context_t *to, const CONTEXT *from )
-{
-    DWORD flags = from->ContextFlags & ~CONTEXT_i386;  /* get rid of CPU id */
-
-    memset( to, 0, sizeof(*to) );
-    to->machine = IMAGE_FILE_MACHINE_I386;
-
-    if (flags & CONTEXT_CONTROL)
-    {
-        to->flags |= SERVER_CTX_CONTROL;
-        to->ctl.i386_regs.ebp    = from->Ebp;
-        to->ctl.i386_regs.esp    = from->Esp;
-        to->ctl.i386_regs.eip    = from->Eip;
-        to->ctl.i386_regs.cs     = from->SegCs;
-        to->ctl.i386_regs.ss     = from->SegSs;
-        to->ctl.i386_regs.eflags = from->EFlags;
-    }
-    if (flags & CONTEXT_INTEGER)
-    {
-        to->flags |= SERVER_CTX_INTEGER;
-        to->integer.i386_regs.eax = from->Eax;
-        to->integer.i386_regs.ebx = from->Ebx;
-        to->integer.i386_regs.ecx = from->Ecx;
-        to->integer.i386_regs.edx = from->Edx;
-        to->integer.i386_regs.esi = from->Esi;
-        to->integer.i386_regs.edi = from->Edi;
-    }
-    if (flags & CONTEXT_SEGMENTS)
-    {
-        to->flags |= SERVER_CTX_SEGMENTS;
-        to->seg.i386_regs.ds = from->SegDs;
-        to->seg.i386_regs.es = from->SegEs;
-        to->seg.i386_regs.fs = from->SegFs;
-        to->seg.i386_regs.gs = from->SegGs;
-    }
-    if (flags & CONTEXT_FLOATING_POINT)
-    {
-        to->flags |= SERVER_CTX_FLOATING_POINT;
-        to->fp.i386_regs.ctrl     = from->FloatSave.ControlWord;
-        to->fp.i386_regs.status   = from->FloatSave.StatusWord;
-        to->fp.i386_regs.tag      = from->FloatSave.TagWord;
-        to->fp.i386_regs.err_off  = from->FloatSave.ErrorOffset;
-        to->fp.i386_regs.err_sel  = from->FloatSave.ErrorSelector;
-        to->fp.i386_regs.data_off = from->FloatSave.DataOffset;
-        to->fp.i386_regs.data_sel = from->FloatSave.DataSelector;
-        to->fp.i386_regs.cr0npx   = from->FloatSave.Cr0NpxState;
-        memcpy( to->fp.i386_regs.regs, from->FloatSave.RegisterArea, sizeof(to->fp.i386_regs.regs) );
-    }
-    if (flags & CONTEXT_DEBUG_REGISTERS)
-    {
-        to->flags |= SERVER_CTX_DEBUG_REGISTERS;
-        to->debug.i386_regs.dr0 = from->Dr0;
-        to->debug.i386_regs.dr1 = from->Dr1;
-        to->debug.i386_regs.dr2 = from->Dr2;
-        to->debug.i386_regs.dr3 = from->Dr3;
-        to->debug.i386_regs.dr6 = from->Dr6;
-        to->debug.i386_regs.dr7 = from->Dr7;
-    }
-    if (flags & CONTEXT_EXTENDED_REGISTERS)
-    {
-        to->flags |= SERVER_CTX_EXTENDED_REGISTERS;
-        memcpy( to->ext.i386_regs, from->ExtendedRegisters, sizeof(to->ext.i386_regs) );
-    }
-    xstate_to_server( to, xstate_from_context( from ) );
-    return STATUS_SUCCESS;
-}
-
-
-/***********************************************************************
- *           context_from_server
- *
- * Convert a register context from the server format.
- */
-NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
-{
-    if (from->machine != IMAGE_FILE_MACHINE_I386) return STATUS_INVALID_PARAMETER;
-
-    to->ContextFlags = CONTEXT_i386 | (to->ContextFlags & 0x40);
-    if (from->flags & SERVER_CTX_CONTROL)
-    {
-        to->ContextFlags |= CONTEXT_CONTROL;
-        to->Ebp    = from->ctl.i386_regs.ebp;
-        to->Esp    = from->ctl.i386_regs.esp;
-        to->Eip    = from->ctl.i386_regs.eip;
-        to->SegCs  = from->ctl.i386_regs.cs;
-        to->SegSs  = from->ctl.i386_regs.ss;
-        to->EFlags = from->ctl.i386_regs.eflags;
-    }
-    if (from->flags & SERVER_CTX_INTEGER)
-    {
-        to->ContextFlags |= CONTEXT_INTEGER;
-        to->Eax = from->integer.i386_regs.eax;
-        to->Ebx = from->integer.i386_regs.ebx;
-        to->Ecx = from->integer.i386_regs.ecx;
-        to->Edx = from->integer.i386_regs.edx;
-        to->Esi = from->integer.i386_regs.esi;
-        to->Edi = from->integer.i386_regs.edi;
-    }
-    if (from->flags & SERVER_CTX_SEGMENTS)
-    {
-        to->ContextFlags |= CONTEXT_SEGMENTS;
-        to->SegDs = from->seg.i386_regs.ds;
-        to->SegEs = from->seg.i386_regs.es;
-        to->SegFs = from->seg.i386_regs.fs;
-        to->SegGs = from->seg.i386_regs.gs;
-    }
-    if (from->flags & SERVER_CTX_FLOATING_POINT)
-    {
-        to->ContextFlags |= CONTEXT_FLOATING_POINT;
-        to->FloatSave.ControlWord   = from->fp.i386_regs.ctrl;
-        to->FloatSave.StatusWord    = from->fp.i386_regs.status;
-        to->FloatSave.TagWord       = from->fp.i386_regs.tag;
-        to->FloatSave.ErrorOffset   = from->fp.i386_regs.err_off;
-        to->FloatSave.ErrorSelector = from->fp.i386_regs.err_sel;
-        to->FloatSave.DataOffset    = from->fp.i386_regs.data_off;
-        to->FloatSave.DataSelector  = from->fp.i386_regs.data_sel;
-        to->FloatSave.Cr0NpxState   = from->fp.i386_regs.cr0npx;
-        memcpy( to->FloatSave.RegisterArea, from->fp.i386_regs.regs, sizeof(to->FloatSave.RegisterArea) );
-    }
-    if (from->flags & SERVER_CTX_DEBUG_REGISTERS)
-    {
-        to->ContextFlags |= CONTEXT_DEBUG_REGISTERS;
-        to->Dr0 = from->debug.i386_regs.dr0;
-        to->Dr1 = from->debug.i386_regs.dr1;
-        to->Dr2 = from->debug.i386_regs.dr2;
-        to->Dr3 = from->debug.i386_regs.dr3;
-        to->Dr6 = from->debug.i386_regs.dr6;
-        to->Dr7 = from->debug.i386_regs.dr7;
-    }
-    if (from->flags & SERVER_CTX_EXTENDED_REGISTERS)
-    {
-        to->ContextFlags |= CONTEXT_EXTENDED_REGISTERS;
-        memcpy( to->ExtendedRegisters, from->ext.i386_regs, sizeof(to->ExtendedRegisters) );
-    }
-    xstate_from_server( xstate_from_context( to ), from );
-    return STATUS_SUCCESS;
-}
-
-
-/***********************************************************************
  *              NtSetContextThread  (NTDLL.@)
  *              ZwSetContextThread  (NTDLL.@)
  */
@@ -1179,9 +1014,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 
     if (!self)
     {
-        context_t server_context;
-        context_to_server( &server_context, context );
-        ret = set_thread_context( handle, &server_context, &self );
+        ret = set_thread_context( handle, context, &self, IMAGE_FILE_MACHINE_I386 );
         if (ret || !self) return ret;
         if (flags & CONTEXT_DEBUG_REGISTERS)
         {
@@ -1284,11 +1117,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 
     if (!self)
     {
-        context_t server_context;
-        unsigned int server_flags = get_server_context_flags( context->ContextFlags );
-
-        if ((ret = get_thread_context( handle, &server_context, server_flags, &self ))) return ret;
-        if ((ret = context_from_server( context, &server_context ))) return ret;
+        if ((ret = get_thread_context( handle, context, &self, IMAGE_FILE_MACHINE_I386 ))) return ret;
         needed_flags &= ~context->ContextFlags;
     }
 

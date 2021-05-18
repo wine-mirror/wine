@@ -636,7 +636,7 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
     if (context)
     {
         suspend_context = TRUE;
-        context_to_server( &server_context, context );
+        context_to_server( &server_context, context, current_machine );
     }
 
     do
@@ -670,7 +670,7 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
 
                     if (xs)
                         mask = xs->Mask;
-                    context_from_server( context, &server_context );
+                    context_from_server( context, &server_context, current_machine );
                     context->ContextFlags |= context_flags;
                     if (xs)
                         xs->Mask |= mask;

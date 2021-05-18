@@ -60,6 +60,7 @@
 #endif
 
 #define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "winternl.h"
@@ -83,6 +84,629 @@ static inline int get_unix_exit_code( NTSTATUS status )
     /* prevent a nonzero exit code to end up truncated to zero in unix */
     if (status && !(status & 0xff)) return 1;
     return status;
+}
+
+
+/***********************************************************************
+ *           get_server_context_flags
+ */
+static unsigned int get_server_context_flags( const void *context, USHORT machine )
+{
+    unsigned int flags, ret = 0;
+
+    switch (machine)
+    {
+    case IMAGE_FILE_MACHINE_I386:
+        flags = ((const I386_CONTEXT *)context)->ContextFlags & ~CONTEXT_i386;
+        if (flags & CONTEXT_I386_CONTROL) ret |= SERVER_CTX_CONTROL;
+        if (flags & CONTEXT_I386_INTEGER) ret |= SERVER_CTX_INTEGER;
+        if (flags & CONTEXT_I386_SEGMENTS) ret |= SERVER_CTX_SEGMENTS;
+        if (flags & CONTEXT_I386_FLOATING_POINT) ret |= SERVER_CTX_FLOATING_POINT;
+        if (flags & CONTEXT_I386_DEBUG_REGISTERS) ret |= SERVER_CTX_DEBUG_REGISTERS;
+        if (flags & CONTEXT_I386_EXTENDED_REGISTERS) ret |= SERVER_CTX_EXTENDED_REGISTERS;
+        if (flags & CONTEXT_I386_XSTATE) ret |= SERVER_CTX_YMM_REGISTERS;
+        break;
+    case IMAGE_FILE_MACHINE_AMD64:
+        flags = ((const AMD64_CONTEXT *)context)->ContextFlags & ~CONTEXT_AMD64;
+        if (flags & CONTEXT_AMD64_CONTROL) ret |= SERVER_CTX_CONTROL;
+        if (flags & CONTEXT_AMD64_INTEGER) ret |= SERVER_CTX_INTEGER;
+        if (flags & CONTEXT_AMD64_SEGMENTS) ret |= SERVER_CTX_SEGMENTS;
+        if (flags & CONTEXT_AMD64_FLOATING_POINT) ret |= SERVER_CTX_FLOATING_POINT;
+        if (flags & CONTEXT_AMD64_DEBUG_REGISTERS) ret |= SERVER_CTX_DEBUG_REGISTERS;
+        if (flags & CONTEXT_AMD64_XSTATE) ret |= SERVER_CTX_YMM_REGISTERS;
+        break;
+    case IMAGE_FILE_MACHINE_ARMNT:
+        flags = ((const ARM_CONTEXT *)context)->ContextFlags & ~CONTEXT_ARM;
+        if (flags & CONTEXT_ARM_CONTROL) ret |= SERVER_CTX_CONTROL;
+        if (flags & CONTEXT_ARM_INTEGER) ret |= SERVER_CTX_INTEGER;
+        if (flags & CONTEXT_ARM_FLOATING_POINT) ret |= SERVER_CTX_FLOATING_POINT;
+        if (flags & CONTEXT_ARM_DEBUG_REGISTERS) ret |= SERVER_CTX_DEBUG_REGISTERS;
+        break;
+    case IMAGE_FILE_MACHINE_ARM64:
+        flags = ((const ARM64_NT_CONTEXT *)context)->ContextFlags & ~CONTEXT_ARM64;
+        if (flags & CONTEXT_ARM64_CONTROL) ret |= SERVER_CTX_CONTROL;
+        if (flags & CONTEXT_ARM64_INTEGER) ret |= SERVER_CTX_INTEGER;
+        if (flags & CONTEXT_ARM64_FLOATING_POINT) ret |= SERVER_CTX_FLOATING_POINT;
+        if (flags & CONTEXT_ARM64_DEBUG_REGISTERS) ret |= SERVER_CTX_DEBUG_REGISTERS;
+        break;
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *           context_to_server
+ *
+ * Convert a register context to the server format.
+ */
+NTSTATUS context_to_server( context_t *to, const void *src, USHORT machine )
+{
+    DWORD i, flags;
+
+    memset( to, 0, sizeof(*to) );
+    to->machine = machine;
+
+    switch (machine)
+    {
+    case IMAGE_FILE_MACHINE_I386:
+    {
+        const I386_CONTEXT *from = src;
+
+        flags = from->ContextFlags & ~CONTEXT_i386;
+        if (flags & CONTEXT_I386_CONTROL)
+        {
+            to->flags |= SERVER_CTX_CONTROL;
+            to->ctl.i386_regs.ebp    = from->Ebp;
+            to->ctl.i386_regs.esp    = from->Esp;
+            to->ctl.i386_regs.eip    = from->Eip;
+            to->ctl.i386_regs.cs     = from->SegCs;
+            to->ctl.i386_regs.ss     = from->SegSs;
+            to->ctl.i386_regs.eflags = from->EFlags;
+        }
+        if (flags & CONTEXT_I386_INTEGER)
+        {
+            to->flags |= SERVER_CTX_INTEGER;
+            to->integer.i386_regs.eax = from->Eax;
+            to->integer.i386_regs.ebx = from->Ebx;
+            to->integer.i386_regs.ecx = from->Ecx;
+            to->integer.i386_regs.edx = from->Edx;
+            to->integer.i386_regs.esi = from->Esi;
+            to->integer.i386_regs.edi = from->Edi;
+        }
+        if (flags & CONTEXT_I386_SEGMENTS)
+        {
+            to->flags |= SERVER_CTX_SEGMENTS;
+            to->seg.i386_regs.ds = from->SegDs;
+            to->seg.i386_regs.es = from->SegEs;
+            to->seg.i386_regs.fs = from->SegFs;
+            to->seg.i386_regs.gs = from->SegGs;
+        }
+        if (flags & CONTEXT_I386_FLOATING_POINT)
+        {
+            to->flags |= SERVER_CTX_FLOATING_POINT;
+            to->fp.i386_regs.ctrl     = from->FloatSave.ControlWord;
+            to->fp.i386_regs.status   = from->FloatSave.StatusWord;
+            to->fp.i386_regs.tag      = from->FloatSave.TagWord;
+            to->fp.i386_regs.err_off  = from->FloatSave.ErrorOffset;
+            to->fp.i386_regs.err_sel  = from->FloatSave.ErrorSelector;
+            to->fp.i386_regs.data_off = from->FloatSave.DataOffset;
+            to->fp.i386_regs.data_sel = from->FloatSave.DataSelector;
+            to->fp.i386_regs.cr0npx   = from->FloatSave.Cr0NpxState;
+            memcpy( to->fp.i386_regs.regs, from->FloatSave.RegisterArea, sizeof(to->fp.i386_regs.regs) );
+        }
+        if (flags & CONTEXT_I386_DEBUG_REGISTERS)
+        {
+            to->flags |= SERVER_CTX_DEBUG_REGISTERS;
+            to->debug.i386_regs.dr0 = from->Dr0;
+            to->debug.i386_regs.dr1 = from->Dr1;
+            to->debug.i386_regs.dr2 = from->Dr2;
+            to->debug.i386_regs.dr3 = from->Dr3;
+            to->debug.i386_regs.dr6 = from->Dr6;
+            to->debug.i386_regs.dr7 = from->Dr7;
+        }
+        if (flags & CONTEXT_I386_EXTENDED_REGISTERS)
+        {
+            to->flags |= SERVER_CTX_EXTENDED_REGISTERS;
+            memcpy( to->ext.i386_regs, from->ExtendedRegisters, sizeof(to->ext.i386_regs) );
+        }
+        if (flags & CONTEXT_I386_XSTATE)
+        {
+            const CONTEXT_EX *xctx = (const CONTEXT_EX *)(from + 1);
+            const XSTATE *xs = (const XSTATE *)((const char *)xctx + xctx->XState.Offset);
+
+            to->flags |= SERVER_CTX_YMM_REGISTERS;
+            if (xs->Mask & 4)
+                memcpy( &to->ymm.ymm_high_regs.ymm_high, &xs->YmmContext, sizeof(xs->YmmContext) );
+        }
+        return STATUS_SUCCESS;
+    }
+
+    case IMAGE_FILE_MACHINE_AMD64:
+    {
+        const AMD64_CONTEXT *from = src;
+
+        flags = from->ContextFlags & ~CONTEXT_AMD64;
+        if (flags & CONTEXT_AMD64_CONTROL)
+        {
+            to->flags |= SERVER_CTX_CONTROL;
+            to->ctl.x86_64_regs.rbp   = from->Rbp;
+            to->ctl.x86_64_regs.rip   = from->Rip;
+            to->ctl.x86_64_regs.rsp   = from->Rsp;
+            to->ctl.x86_64_regs.cs    = from->SegCs;
+            to->ctl.x86_64_regs.ss    = from->SegSs;
+            to->ctl.x86_64_regs.flags = from->EFlags;
+        }
+        if (flags & CONTEXT_AMD64_INTEGER)
+        {
+            to->flags |= SERVER_CTX_INTEGER;
+            to->integer.x86_64_regs.rax = from->Rax;
+            to->integer.x86_64_regs.rcx = from->Rcx;
+            to->integer.x86_64_regs.rdx = from->Rdx;
+            to->integer.x86_64_regs.rbx = from->Rbx;
+            to->integer.x86_64_regs.rsi = from->Rsi;
+            to->integer.x86_64_regs.rdi = from->Rdi;
+            to->integer.x86_64_regs.r8  = from->R8;
+            to->integer.x86_64_regs.r9  = from->R9;
+            to->integer.x86_64_regs.r10 = from->R10;
+            to->integer.x86_64_regs.r11 = from->R11;
+            to->integer.x86_64_regs.r12 = from->R12;
+            to->integer.x86_64_regs.r13 = from->R13;
+            to->integer.x86_64_regs.r14 = from->R14;
+            to->integer.x86_64_regs.r15 = from->R15;
+        }
+        if (flags & CONTEXT_AMD64_SEGMENTS)
+        {
+            to->flags |= SERVER_CTX_SEGMENTS;
+            to->seg.x86_64_regs.ds = from->SegDs;
+            to->seg.x86_64_regs.es = from->SegEs;
+            to->seg.x86_64_regs.fs = from->SegFs;
+            to->seg.x86_64_regs.gs = from->SegGs;
+        }
+        if (flags & CONTEXT_AMD64_FLOATING_POINT)
+        {
+            to->flags |= SERVER_CTX_FLOATING_POINT;
+            memcpy( to->fp.x86_64_regs.fpregs, &from->u.FltSave, sizeof(to->fp.x86_64_regs.fpregs) );
+        }
+        if (flags & CONTEXT_AMD64_DEBUG_REGISTERS)
+        {
+            to->flags |= SERVER_CTX_DEBUG_REGISTERS;
+            to->debug.x86_64_regs.dr0 = from->Dr0;
+            to->debug.x86_64_regs.dr1 = from->Dr1;
+            to->debug.x86_64_regs.dr2 = from->Dr2;
+            to->debug.x86_64_regs.dr3 = from->Dr3;
+            to->debug.x86_64_regs.dr6 = from->Dr6;
+            to->debug.x86_64_regs.dr7 = from->Dr7;
+        }
+        if (flags & CONTEXT_AMD64_XSTATE)
+        {
+            const CONTEXT_EX *xctx = (const CONTEXT_EX *)(from + 1);
+            const XSTATE *xs = (const XSTATE *)((const char *)xctx + xctx->XState.Offset);
+
+            to->flags |= SERVER_CTX_YMM_REGISTERS;
+            if (xs->Mask & 4)
+                memcpy( &to->ymm.ymm_high_regs.ymm_high, &xs->YmmContext, sizeof(xs->YmmContext) );
+        }
+        return STATUS_SUCCESS;
+    }
+
+    case IMAGE_FILE_MACHINE_ARMNT:
+    {
+        const ARM_CONTEXT *from = src;
+
+        flags = from->ContextFlags & ~CONTEXT_ARM;
+        if (flags & CONTEXT_ARM_CONTROL)
+        {
+            to->flags |= SERVER_CTX_CONTROL;
+            to->ctl.arm_regs.sp   = from->Sp;
+            to->ctl.arm_regs.lr   = from->Lr;
+            to->ctl.arm_regs.pc   = from->Pc;
+            to->ctl.arm_regs.cpsr = from->Cpsr;
+        }
+        if (flags & CONTEXT_ARM_INTEGER)
+        {
+            to->flags |= SERVER_CTX_INTEGER;
+            to->integer.arm_regs.r[0]  = from->R0;
+            to->integer.arm_regs.r[1]  = from->R1;
+            to->integer.arm_regs.r[2]  = from->R2;
+            to->integer.arm_regs.r[3]  = from->R3;
+            to->integer.arm_regs.r[4]  = from->R4;
+            to->integer.arm_regs.r[5]  = from->R5;
+            to->integer.arm_regs.r[6]  = from->R6;
+            to->integer.arm_regs.r[7]  = from->R7;
+            to->integer.arm_regs.r[8]  = from->R8;
+            to->integer.arm_regs.r[9]  = from->R9;
+            to->integer.arm_regs.r[10] = from->R10;
+            to->integer.arm_regs.r[11] = from->R11;
+            to->integer.arm_regs.r[12] = from->R12;
+        }
+        if (flags & CONTEXT_ARM_FLOATING_POINT)
+        {
+            to->flags |= SERVER_CTX_FLOATING_POINT;
+            for (i = 0; i < 32; i++) to->fp.arm_regs.d[i] = from->u.D[i];
+            to->fp.arm_regs.fpscr = from->Fpscr;
+        }
+        if (flags & CONTEXT_ARM_DEBUG_REGISTERS)
+        {
+            to->flags |= SERVER_CTX_DEBUG_REGISTERS;
+            for (i = 0; i < ARM_MAX_BREAKPOINTS; i++) to->debug.arm_regs.bvr[i] = from->Bvr[i];
+            for (i = 0; i < ARM_MAX_BREAKPOINTS; i++) to->debug.arm_regs.bcr[i] = from->Bcr[i];
+            for (i = 0; i < ARM_MAX_WATCHPOINTS; i++) to->debug.arm_regs.wvr[i] = from->Wvr[i];
+            for (i = 0; i < ARM_MAX_WATCHPOINTS; i++) to->debug.arm_regs.wcr[i] = from->Wcr[i];
+        }
+        return STATUS_SUCCESS;
+    }
+
+    case IMAGE_FILE_MACHINE_ARM64:
+    {
+        const ARM64_NT_CONTEXT *from = src;
+
+        flags = from->ContextFlags & ~CONTEXT_ARM64;
+        if (flags & CONTEXT_ARM64_CONTROL)
+        {
+            to->flags |= SERVER_CTX_CONTROL;
+            to->integer.arm64_regs.x[29] = from->u.s.Fp;
+            to->integer.arm64_regs.x[30] = from->u.s.Lr;
+            to->ctl.arm64_regs.sp     = from->Sp;
+            to->ctl.arm64_regs.pc     = from->Pc;
+            to->ctl.arm64_regs.pstate = from->Cpsr;
+        }
+        if (flags & CONTEXT_ARM64_INTEGER)
+        {
+            to->flags |= SERVER_CTX_INTEGER;
+            for (i = 0; i <= 28; i++) to->integer.arm64_regs.x[i] = from->u.X[i];
+        }
+        if (flags & CONTEXT_ARM64_FLOATING_POINT)
+        {
+            to->flags |= SERVER_CTX_FLOATING_POINT;
+            for (i = 0; i < 32; i++)
+            {
+                to->fp.arm64_regs.q[i].low = from->V[i].s.Low;
+                to->fp.arm64_regs.q[i].high = from->V[i].s.High;
+            }
+            to->fp.arm64_regs.fpcr = from->Fpcr;
+            to->fp.arm64_regs.fpsr = from->Fpsr;
+        }
+        if (flags & CONTEXT_ARM64_DEBUG_REGISTERS)
+        {
+            to->flags |= SERVER_CTX_DEBUG_REGISTERS;
+            for (i = 0; i < ARM64_MAX_BREAKPOINTS; i++) to->debug.arm64_regs.bcr[i] = from->Bcr[i];
+            for (i = 0; i < ARM64_MAX_BREAKPOINTS; i++) to->debug.arm64_regs.bvr[i] = from->Bvr[i];
+            for (i = 0; i < ARM64_MAX_WATCHPOINTS; i++) to->debug.arm64_regs.wcr[i] = from->Wcr[i];
+            for (i = 0; i < ARM64_MAX_WATCHPOINTS; i++) to->debug.arm64_regs.wvr[i] = from->Wvr[i];
+        }
+        return STATUS_SUCCESS;
+    }
+
+    default:
+        return STATUS_INVALID_PARAMETER;
+    }
+}
+
+
+/***********************************************************************
+ *           context_from_server
+ *
+ * Convert a register context from the server format.
+ */
+NTSTATUS context_from_server( void *dst, const context_t *from, USHORT machine )
+{
+    DWORD i;
+
+    /* special case for WoW64 (FIXME) */
+    if (machine == IMAGE_FILE_MACHINE_AMD64 && from->machine == IMAGE_FILE_MACHINE_I386)
+    {
+        AMD64_CONTEXT *to = dst;
+
+        to->ContextFlags = CONTEXT_AMD64;
+        if (from->flags & SERVER_CTX_CONTROL)
+        {
+            to->ContextFlags |= CONTEXT_AMD64_CONTROL;
+            to->Rbp    = from->ctl.i386_regs.ebp;
+            to->Rip    = from->ctl.i386_regs.eip;
+            to->Rsp    = from->ctl.i386_regs.esp;
+            to->SegCs  = from->ctl.i386_regs.cs;
+            to->SegSs  = from->ctl.i386_regs.ss;
+            to->EFlags = from->ctl.i386_regs.eflags;
+        }
+
+        if (from->flags & SERVER_CTX_INTEGER)
+        {
+            to->ContextFlags |= CONTEXT_AMD64_INTEGER;
+            to->Rax = from->integer.i386_regs.eax;
+            to->Rcx = from->integer.i386_regs.ecx;
+            to->Rdx = from->integer.i386_regs.edx;
+            to->Rbx = from->integer.i386_regs.ebx;
+            to->Rsi = from->integer.i386_regs.esi;
+            to->Rdi = from->integer.i386_regs.edi;
+            to->R8  = 0;
+            to->R9  = 0;
+            to->R10 = 0;
+            to->R11 = 0;
+            to->R12 = 0;
+            to->R13 = 0;
+            to->R14 = 0;
+            to->R15 = 0;
+        }
+        if (from->flags & SERVER_CTX_SEGMENTS)
+        {
+            to->ContextFlags |= CONTEXT_AMD64_SEGMENTS;
+            to->SegDs = from->seg.i386_regs.ds;
+            to->SegEs = from->seg.i386_regs.es;
+            to->SegFs = from->seg.i386_regs.fs;
+            to->SegGs = from->seg.i386_regs.gs;
+        }
+        if (from->flags & SERVER_CTX_FLOATING_POINT)
+        {
+            to->ContextFlags |= CONTEXT_AMD64_FLOATING_POINT;
+            memset(&to->u.FltSave, 0, sizeof(to->u.FltSave));
+        }
+        if (from->flags & SERVER_CTX_DEBUG_REGISTERS)
+        {
+            to->ContextFlags |= CONTEXT_AMD64_DEBUG_REGISTERS;
+            to->Dr0 = from->debug.i386_regs.dr0;
+            to->Dr1 = from->debug.i386_regs.dr1;
+            to->Dr2 = from->debug.i386_regs.dr2;
+            to->Dr3 = from->debug.i386_regs.dr3;
+            to->Dr6 = from->debug.i386_regs.dr6;
+            to->Dr7 = from->debug.i386_regs.dr7;
+        }
+        return STATUS_SUCCESS;
+    }
+
+    if (from->machine != machine) return STATUS_INVALID_PARAMETER;
+
+    switch (machine)
+    {
+    case IMAGE_FILE_MACHINE_I386:
+    {
+        I386_CONTEXT *to = dst;
+
+        to->ContextFlags = CONTEXT_i386 | (to->ContextFlags & CONTEXT_I386_XSTATE);
+        if (from->flags & SERVER_CTX_CONTROL)
+        {
+            to->ContextFlags |= CONTEXT_I386_CONTROL;
+            to->Ebp    = from->ctl.i386_regs.ebp;
+            to->Esp    = from->ctl.i386_regs.esp;
+            to->Eip    = from->ctl.i386_regs.eip;
+            to->SegCs  = from->ctl.i386_regs.cs;
+            to->SegSs  = from->ctl.i386_regs.ss;
+            to->EFlags = from->ctl.i386_regs.eflags;
+        }
+        if (from->flags & SERVER_CTX_INTEGER)
+        {
+            to->ContextFlags |= CONTEXT_I386_INTEGER;
+            to->Eax = from->integer.i386_regs.eax;
+            to->Ebx = from->integer.i386_regs.ebx;
+            to->Ecx = from->integer.i386_regs.ecx;
+            to->Edx = from->integer.i386_regs.edx;
+            to->Esi = from->integer.i386_regs.esi;
+            to->Edi = from->integer.i386_regs.edi;
+        }
+        if (from->flags & SERVER_CTX_SEGMENTS)
+        {
+            to->ContextFlags |= CONTEXT_I386_SEGMENTS;
+            to->SegDs = from->seg.i386_regs.ds;
+            to->SegEs = from->seg.i386_regs.es;
+            to->SegFs = from->seg.i386_regs.fs;
+            to->SegGs = from->seg.i386_regs.gs;
+        }
+        if (from->flags & SERVER_CTX_FLOATING_POINT)
+        {
+            to->ContextFlags |= CONTEXT_I386_FLOATING_POINT;
+            to->FloatSave.ControlWord   = from->fp.i386_regs.ctrl;
+            to->FloatSave.StatusWord    = from->fp.i386_regs.status;
+            to->FloatSave.TagWord       = from->fp.i386_regs.tag;
+            to->FloatSave.ErrorOffset   = from->fp.i386_regs.err_off;
+            to->FloatSave.ErrorSelector = from->fp.i386_regs.err_sel;
+            to->FloatSave.DataOffset    = from->fp.i386_regs.data_off;
+            to->FloatSave.DataSelector  = from->fp.i386_regs.data_sel;
+            to->FloatSave.Cr0NpxState   = from->fp.i386_regs.cr0npx;
+            memcpy( to->FloatSave.RegisterArea, from->fp.i386_regs.regs, sizeof(to->FloatSave.RegisterArea) );
+        }
+        if (from->flags & SERVER_CTX_DEBUG_REGISTERS)
+        {
+            to->ContextFlags |= CONTEXT_I386_DEBUG_REGISTERS;
+            to->Dr0 = from->debug.i386_regs.dr0;
+            to->Dr1 = from->debug.i386_regs.dr1;
+            to->Dr2 = from->debug.i386_regs.dr2;
+            to->Dr3 = from->debug.i386_regs.dr3;
+            to->Dr6 = from->debug.i386_regs.dr6;
+            to->Dr7 = from->debug.i386_regs.dr7;
+        }
+        if (from->flags & SERVER_CTX_EXTENDED_REGISTERS)
+        {
+            to->ContextFlags |= CONTEXT_I386_EXTENDED_REGISTERS;
+            memcpy( to->ExtendedRegisters, from->ext.i386_regs, sizeof(to->ExtendedRegisters) );
+        }
+        if (from->flags & SERVER_CTX_YMM_REGISTERS &&
+            (to->ContextFlags & CONTEXT_I386_XSTATE) == CONTEXT_I386_XSTATE)
+        {
+            CONTEXT_EX *xctx = (CONTEXT_EX *)(to + 1);
+            XSTATE *xs = (XSTATE *)((char *)xctx + xctx->XState.Offset);
+
+            xs->Mask &= ~4;
+            if (user_shared_data->XState.CompactionEnabled) xs->CompactionMask = 0x8000000000000004;
+            for (i = 0; i < ARRAY_SIZE( from->ymm.ymm_high_regs.ymm_high); i++)
+            {
+                if (!from->ymm.ymm_high_regs.ymm_high[i].low && !from->ymm.ymm_high_regs.ymm_high[i].high)
+                    continue;
+                memcpy( &xs->YmmContext, &from->ymm.ymm_high_regs, sizeof(xs->YmmContext) );
+                xs->Mask |= 4;
+                break;
+            }
+        }
+        return STATUS_SUCCESS;
+    }
+
+    case IMAGE_FILE_MACHINE_AMD64:
+    {
+        AMD64_CONTEXT *to = dst;
+
+        to->ContextFlags = CONTEXT_AMD64 | (to->ContextFlags & CONTEXT_AMD64_XSTATE);
+        if (from->flags & SERVER_CTX_CONTROL)
+        {
+            to->ContextFlags |= CONTEXT_AMD64_CONTROL;
+            to->Rbp    = from->ctl.x86_64_regs.rbp;
+            to->Rip    = from->ctl.x86_64_regs.rip;
+            to->Rsp    = from->ctl.x86_64_regs.rsp;
+            to->SegCs  = from->ctl.x86_64_regs.cs;
+            to->SegSs  = from->ctl.x86_64_regs.ss;
+            to->EFlags = from->ctl.x86_64_regs.flags;
+        }
+
+        if (from->flags & SERVER_CTX_INTEGER)
+        {
+            to->ContextFlags |= CONTEXT_AMD64_INTEGER;
+            to->Rax = from->integer.x86_64_regs.rax;
+            to->Rcx = from->integer.x86_64_regs.rcx;
+            to->Rdx = from->integer.x86_64_regs.rdx;
+            to->Rbx = from->integer.x86_64_regs.rbx;
+            to->Rsi = from->integer.x86_64_regs.rsi;
+            to->Rdi = from->integer.x86_64_regs.rdi;
+            to->R8  = from->integer.x86_64_regs.r8;
+            to->R9  = from->integer.x86_64_regs.r9;
+            to->R10 = from->integer.x86_64_regs.r10;
+            to->R11 = from->integer.x86_64_regs.r11;
+            to->R12 = from->integer.x86_64_regs.r12;
+            to->R13 = from->integer.x86_64_regs.r13;
+            to->R14 = from->integer.x86_64_regs.r14;
+            to->R15 = from->integer.x86_64_regs.r15;
+        }
+        if (from->flags & SERVER_CTX_SEGMENTS)
+        {
+            to->ContextFlags |= CONTEXT_AMD64_SEGMENTS;
+            to->SegDs = from->seg.x86_64_regs.ds;
+            to->SegEs = from->seg.x86_64_regs.es;
+            to->SegFs = from->seg.x86_64_regs.fs;
+            to->SegGs = from->seg.x86_64_regs.gs;
+        }
+        if (from->flags & SERVER_CTX_FLOATING_POINT)
+        {
+            to->ContextFlags |= CONTEXT_AMD64_FLOATING_POINT;
+            memcpy( &to->u.FltSave, from->fp.x86_64_regs.fpregs, sizeof(from->fp.x86_64_regs.fpregs) );
+            to->MxCsr = to->u.FltSave.MxCsr;
+        }
+        if (from->flags & SERVER_CTX_DEBUG_REGISTERS)
+        {
+            to->ContextFlags |= CONTEXT_AMD64_DEBUG_REGISTERS;
+            to->Dr0 = from->debug.x86_64_regs.dr0;
+            to->Dr1 = from->debug.x86_64_regs.dr1;
+            to->Dr2 = from->debug.x86_64_regs.dr2;
+            to->Dr3 = from->debug.x86_64_regs.dr3;
+            to->Dr6 = from->debug.x86_64_regs.dr6;
+            to->Dr7 = from->debug.x86_64_regs.dr7;
+        }
+        if (from->flags & SERVER_CTX_YMM_REGISTERS &&
+            (to->ContextFlags & CONTEXT_AMD64_XSTATE) == CONTEXT_AMD64_XSTATE)
+        {
+            CONTEXT_EX *xctx = (CONTEXT_EX *)(to + 1);
+            XSTATE *xs = (XSTATE *)((char *)xctx + xctx->XState.Offset);
+
+            xs->Mask &= ~4;
+            if (user_shared_data->XState.CompactionEnabled) xs->CompactionMask = 0x8000000000000004;
+            for (i = 0; i < ARRAY_SIZE( from->ymm.ymm_high_regs.ymm_high); i++)
+            {
+                if (!from->ymm.ymm_high_regs.ymm_high[i].low && !from->ymm.ymm_high_regs.ymm_high[i].high)
+                    continue;
+                memcpy( &xs->YmmContext, &from->ymm.ymm_high_regs, sizeof(xs->YmmContext) );
+                xs->Mask |= 4;
+                break;
+            }
+        }
+        return STATUS_SUCCESS;
+    }
+
+    case IMAGE_FILE_MACHINE_ARMNT:
+    {
+        ARM_CONTEXT *to = dst;
+
+        to->ContextFlags = CONTEXT_ARM;
+        if (from->flags & SERVER_CTX_CONTROL)
+        {
+            to->ContextFlags |= CONTEXT_ARM_CONTROL;
+            to->Sp   = from->ctl.arm_regs.sp;
+            to->Lr   = from->ctl.arm_regs.lr;
+            to->Pc   = from->ctl.arm_regs.pc;
+            to->Cpsr = from->ctl.arm_regs.cpsr;
+        }
+        if (from->flags & SERVER_CTX_INTEGER)
+        {
+            to->ContextFlags |= CONTEXT_ARM_INTEGER;
+            to->R0  = from->integer.arm_regs.r[0];
+            to->R1  = from->integer.arm_regs.r[1];
+            to->R2  = from->integer.arm_regs.r[2];
+            to->R3  = from->integer.arm_regs.r[3];
+            to->R4  = from->integer.arm_regs.r[4];
+            to->R5  = from->integer.arm_regs.r[5];
+            to->R6  = from->integer.arm_regs.r[6];
+            to->R7  = from->integer.arm_regs.r[7];
+            to->R8  = from->integer.arm_regs.r[8];
+            to->R9  = from->integer.arm_regs.r[9];
+            to->R10 = from->integer.arm_regs.r[10];
+            to->R11 = from->integer.arm_regs.r[11];
+            to->R12 = from->integer.arm_regs.r[12];
+        }
+        if (from->flags & SERVER_CTX_FLOATING_POINT)
+        {
+            to->ContextFlags |= CONTEXT_ARM_FLOATING_POINT;
+            for (i = 0; i < 32; i++) to->u.D[i] = from->fp.arm_regs.d[i];
+            to->Fpscr = from->fp.arm_regs.fpscr;
+        }
+        if (from->flags & SERVER_CTX_DEBUG_REGISTERS)
+        {
+            to->ContextFlags |= CONTEXT_ARM_DEBUG_REGISTERS;
+            for (i = 0; i < ARM_MAX_BREAKPOINTS; i++) to->Bvr[i] = from->debug.arm_regs.bvr[i];
+            for (i = 0; i < ARM_MAX_BREAKPOINTS; i++) to->Bcr[i] = from->debug.arm_regs.bcr[i];
+            for (i = 0; i < ARM_MAX_WATCHPOINTS; i++) to->Wvr[i] = from->debug.arm_regs.wvr[i];
+            for (i = 0; i < ARM_MAX_WATCHPOINTS; i++) to->Wcr[i] = from->debug.arm_regs.wcr[i];
+        }
+        return STATUS_SUCCESS;
+    }
+
+    case IMAGE_FILE_MACHINE_ARM64:
+    {
+        ARM64_NT_CONTEXT *to = dst;
+
+        to->ContextFlags = CONTEXT_ARM64;
+        if (from->flags & SERVER_CTX_CONTROL)
+        {
+            to->ContextFlags |= CONTEXT_ARM64_CONTROL;
+            to->u.s.Fp = from->integer.arm64_regs.x[29];
+            to->u.s.Lr = from->integer.arm64_regs.x[30];
+            to->Sp     = from->ctl.arm64_regs.sp;
+            to->Pc     = from->ctl.arm64_regs.pc;
+            to->Cpsr   = from->ctl.arm64_regs.pstate;
+        }
+        if (from->flags & SERVER_CTX_INTEGER)
+        {
+            to->ContextFlags |= CONTEXT_ARM64_INTEGER;
+            for (i = 0; i <= 28; i++) to->u.X[i] = from->integer.arm64_regs.x[i];
+        }
+        if (from->flags & SERVER_CTX_FLOATING_POINT)
+        {
+            to->ContextFlags |= CONTEXT_ARM64_FLOATING_POINT;
+            for (i = 0; i < 32; i++)
+            {
+                to->V[i].s.Low = from->fp.arm64_regs.q[i].low;
+                to->V[i].s.High = from->fp.arm64_regs.q[i].high;
+            }
+            to->Fpcr = from->fp.arm64_regs.fpcr;
+            to->Fpsr = from->fp.arm64_regs.fpsr;
+        }
+        if (from->flags & SERVER_CTX_DEBUG_REGISTERS)
+        {
+            to->ContextFlags |= CONTEXT_ARM64_DEBUG_REGISTERS;
+            for (i = 0; i < ARM64_MAX_BREAKPOINTS; i++) to->Bcr[i] = from->debug.arm64_regs.bcr[i];
+            for (i = 0; i < ARM64_MAX_BREAKPOINTS; i++) to->Bvr[i] = from->debug.arm64_regs.bvr[i];
+            for (i = 0; i < ARM64_MAX_WATCHPOINTS; i++) to->Wcr[i] = from->debug.arm64_regs.wcr[i];
+            for (i = 0; i < ARM64_MAX_WATCHPOINTS; i++) to->Wvr[i] = from->debug.arm64_regs.wvr[i];
+        }
+        return STATUS_SUCCESS;
+    }
+
+    default:
+        return STATUS_INVALID_PARAMETER;
+    }
 }
 
 
@@ -667,14 +1291,16 @@ NTSTATUS WINAPI NtQueueApcThread( HANDLE handle, PNTAPCFUNC func, ULONG_PTR arg1
 /***********************************************************************
  *              set_thread_context
  */
-NTSTATUS set_thread_context( HANDLE handle, const context_t *context, BOOL *self )
+NTSTATUS set_thread_context( HANDLE handle, const void *context, BOOL *self, USHORT machine )
 {
+    context_t server_context;
     NTSTATUS ret;
 
+    context_to_server( &server_context, context, machine );
     SERVER_START_REQ( set_thread_context )
     {
         req->handle  = wine_server_obj_handle( handle );
-        wine_server_add_data( req, context, sizeof(*context) );
+        wine_server_add_data( req, &server_context, sizeof(server_context) );
         ret = wine_server_call( req );
         *self = reply->self;
     }
@@ -687,15 +1313,17 @@ NTSTATUS set_thread_context( HANDLE handle, const context_t *context, BOOL *self
 /***********************************************************************
  *              get_thread_context
  */
-NTSTATUS get_thread_context( HANDLE handle, context_t *context, unsigned int flags, BOOL *self )
+NTSTATUS get_thread_context( HANDLE handle, void *context, BOOL *self, USHORT machine )
 {
     NTSTATUS ret;
+    context_t server_context;
+    unsigned int flags = get_server_context_flags( context, machine );
 
     SERVER_START_REQ( get_thread_context )
     {
         req->handle  = wine_server_obj_handle( handle );
         req->flags   = flags;
-        wine_server_set_reply( req, context, sizeof(*context) );
+        wine_server_set_reply( req, &server_context, sizeof(server_context) );
         ret = wine_server_call( req );
         *self = reply->self;
         handle = wine_server_ptr_handle( reply->handle );
@@ -710,182 +1338,15 @@ NTSTATUS get_thread_context( HANDLE handle, context_t *context, unsigned int fla
         {
             req->handle  = wine_server_obj_handle( handle );
             req->flags   = flags;
-            wine_server_set_reply( req, context, sizeof(*context) );
+            wine_server_set_reply( req, &server_context, sizeof(server_context) );
             ret = wine_server_call( req );
         }
         SERVER_END_REQ;
     }
+    if (!ret) ret = context_from_server( context, &server_context, machine );
     return ret;
 }
 
-
-#ifdef __x86_64__
-
-/***********************************************************************
- *           wow64_get_server_context_flags
- */
-static unsigned int wow64_get_server_context_flags( DWORD flags )
-{
-    unsigned int ret = 0;
-
-    flags &= ~WOW64_CONTEXT_i386;  /* get rid of CPU id */
-    if (flags & WOW64_CONTEXT_CONTROL) ret |= SERVER_CTX_CONTROL;
-    if (flags & WOW64_CONTEXT_INTEGER) ret |= SERVER_CTX_INTEGER;
-    if (flags & WOW64_CONTEXT_SEGMENTS) ret |= SERVER_CTX_SEGMENTS;
-    if (flags & WOW64_CONTEXT_FLOATING_POINT) ret |= SERVER_CTX_FLOATING_POINT;
-    if (flags & WOW64_CONTEXT_DEBUG_REGISTERS) ret |= SERVER_CTX_DEBUG_REGISTERS;
-    if (flags & WOW64_CONTEXT_EXTENDED_REGISTERS) ret |= SERVER_CTX_EXTENDED_REGISTERS;
-    return ret;
-}
-
-/***********************************************************************
- *           wow64_context_from_server
- */
-static NTSTATUS wow64_context_from_server( WOW64_CONTEXT *to, const context_t *from )
-{
-    if (from->machine != IMAGE_FILE_MACHINE_I386) return STATUS_INVALID_PARAMETER;
-
-    to->ContextFlags = WOW64_CONTEXT_i386 | (to->ContextFlags & 0x40);
-    if (from->flags & SERVER_CTX_CONTROL)
-    {
-        to->ContextFlags |= WOW64_CONTEXT_CONTROL;
-        to->Ebp    = from->ctl.i386_regs.ebp;
-        to->Esp    = from->ctl.i386_regs.esp;
-        to->Eip    = from->ctl.i386_regs.eip;
-        to->SegCs  = from->ctl.i386_regs.cs;
-        to->SegSs  = from->ctl.i386_regs.ss;
-        to->EFlags = from->ctl.i386_regs.eflags;
-    }
-    if (from->flags & SERVER_CTX_INTEGER)
-    {
-        to->ContextFlags |= WOW64_CONTEXT_INTEGER;
-        to->Eax = from->integer.i386_regs.eax;
-        to->Ebx = from->integer.i386_regs.ebx;
-        to->Ecx = from->integer.i386_regs.ecx;
-        to->Edx = from->integer.i386_regs.edx;
-        to->Esi = from->integer.i386_regs.esi;
-        to->Edi = from->integer.i386_regs.edi;
-    }
-    if (from->flags & SERVER_CTX_SEGMENTS)
-    {
-        to->ContextFlags |= WOW64_CONTEXT_SEGMENTS;
-        to->SegDs = from->seg.i386_regs.ds;
-        to->SegEs = from->seg.i386_regs.es;
-        to->SegFs = from->seg.i386_regs.fs;
-        to->SegGs = from->seg.i386_regs.gs;
-    }
-    if (from->flags & SERVER_CTX_FLOATING_POINT)
-    {
-        to->ContextFlags |= WOW64_CONTEXT_FLOATING_POINT;
-        to->FloatSave.ControlWord   = from->fp.i386_regs.ctrl;
-        to->FloatSave.StatusWord    = from->fp.i386_regs.status;
-        to->FloatSave.TagWord       = from->fp.i386_regs.tag;
-        to->FloatSave.ErrorOffset   = from->fp.i386_regs.err_off;
-        to->FloatSave.ErrorSelector = from->fp.i386_regs.err_sel;
-        to->FloatSave.DataOffset    = from->fp.i386_regs.data_off;
-        to->FloatSave.DataSelector  = from->fp.i386_regs.data_sel;
-        to->FloatSave.Cr0NpxState   = from->fp.i386_regs.cr0npx;
-        memcpy( to->FloatSave.RegisterArea, from->fp.i386_regs.regs, sizeof(to->FloatSave.RegisterArea) );
-    }
-    if (from->flags & SERVER_CTX_DEBUG_REGISTERS)
-    {
-        to->ContextFlags |= WOW64_CONTEXT_DEBUG_REGISTERS;
-        to->Dr0 = from->debug.i386_regs.dr0;
-        to->Dr1 = from->debug.i386_regs.dr1;
-        to->Dr2 = from->debug.i386_regs.dr2;
-        to->Dr3 = from->debug.i386_regs.dr3;
-        to->Dr6 = from->debug.i386_regs.dr6;
-        to->Dr7 = from->debug.i386_regs.dr7;
-    }
-    if (from->flags & SERVER_CTX_EXTENDED_REGISTERS)
-    {
-        to->ContextFlags |= WOW64_CONTEXT_EXTENDED_REGISTERS;
-        memcpy( to->ExtendedRegisters, from->ext.i386_regs, sizeof(to->ExtendedRegisters) );
-    }
-    if ((to->ContextFlags & WOW64_CONTEXT_XSTATE) == WOW64_CONTEXT_XSTATE)
-    {
-        CONTEXT_EX *c_ex = (CONTEXT_EX *)(to + 1);
-
-        xstate_from_server( (XSTATE *)((BYTE *)c_ex + c_ex->XState.Offset), from );
-    }
-    return STATUS_SUCCESS;
-}
-
-/***********************************************************************
- *           wow64_context_to_server
- */
-static void wow64_context_to_server( context_t *to, const WOW64_CONTEXT *from )
-{
-    DWORD flags = from->ContextFlags & ~WOW64_CONTEXT_i386;  /* get rid of CPU id */
-
-    memset( to, 0, sizeof(*to) );
-    to->machine = IMAGE_FILE_MACHINE_I386;
-
-    if (flags & WOW64_CONTEXT_CONTROL)
-    {
-        to->flags |= SERVER_CTX_CONTROL;
-        to->ctl.i386_regs.ebp    = from->Ebp;
-        to->ctl.i386_regs.esp    = from->Esp;
-        to->ctl.i386_regs.eip    = from->Eip;
-        to->ctl.i386_regs.cs     = from->SegCs;
-        to->ctl.i386_regs.ss     = from->SegSs;
-        to->ctl.i386_regs.eflags = from->EFlags;
-    }
-    if (flags & WOW64_CONTEXT_INTEGER)
-    {
-        to->flags |= SERVER_CTX_INTEGER;
-        to->integer.i386_regs.eax = from->Eax;
-        to->integer.i386_regs.ebx = from->Ebx;
-        to->integer.i386_regs.ecx = from->Ecx;
-        to->integer.i386_regs.edx = from->Edx;
-        to->integer.i386_regs.esi = from->Esi;
-        to->integer.i386_regs.edi = from->Edi;
-    }
-    if (flags & WOW64_CONTEXT_SEGMENTS)
-    {
-        to->flags |= SERVER_CTX_SEGMENTS;
-        to->seg.i386_regs.ds = from->SegDs;
-        to->seg.i386_regs.es = from->SegEs;
-        to->seg.i386_regs.fs = from->SegFs;
-        to->seg.i386_regs.gs = from->SegGs;
-    }
-    if (flags & WOW64_CONTEXT_FLOATING_POINT)
-    {
-        to->flags |= SERVER_CTX_FLOATING_POINT;
-        to->fp.i386_regs.ctrl     = from->FloatSave.ControlWord;
-        to->fp.i386_regs.status   = from->FloatSave.StatusWord;
-        to->fp.i386_regs.tag      = from->FloatSave.TagWord;
-        to->fp.i386_regs.err_off  = from->FloatSave.ErrorOffset;
-        to->fp.i386_regs.err_sel  = from->FloatSave.ErrorSelector;
-        to->fp.i386_regs.data_off = from->FloatSave.DataOffset;
-        to->fp.i386_regs.data_sel = from->FloatSave.DataSelector;
-        to->fp.i386_regs.cr0npx   = from->FloatSave.Cr0NpxState;
-        memcpy( to->fp.i386_regs.regs, from->FloatSave.RegisterArea, sizeof(to->fp.i386_regs.regs) );
-    }
-    if (flags & WOW64_CONTEXT_DEBUG_REGISTERS)
-    {
-        to->flags |= SERVER_CTX_DEBUG_REGISTERS;
-        to->debug.i386_regs.dr0 = from->Dr0;
-        to->debug.i386_regs.dr1 = from->Dr1;
-        to->debug.i386_regs.dr2 = from->Dr2;
-        to->debug.i386_regs.dr3 = from->Dr3;
-        to->debug.i386_regs.dr6 = from->Dr6;
-        to->debug.i386_regs.dr7 = from->Dr7;
-    }
-    if (flags & WOW64_CONTEXT_EXTENDED_REGISTERS)
-    {
-        to->flags |= SERVER_CTX_EXTENDED_REGISTERS;
-        memcpy( to->ext.i386_regs, from->ExtendedRegisters, sizeof(to->ext.i386_regs) );
-    }
-    if (flags & WOW64_CONTEXT_XSTATE)
-    {
-        CONTEXT_EX *c_ex = (CONTEXT_EX *)(from + 1);
-
-        xstate_to_server( to, (XSTATE *)((BYTE *)c_ex + c_ex->XState.Offset) );
-    }
-}
-
-#endif /* __x86_64__ */
 
 BOOL get_thread_times(int unix_pid, int unix_tid, LARGE_INTEGER *kernel_time, LARGE_INTEGER *user_time)
 {
@@ -1217,14 +1678,9 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
 #ifdef __x86_64__
         BOOL self;
         WOW64_CONTEXT *context = data;
-        context_t server_context;
-        unsigned int server_flags;
 
         if (length != sizeof(*context)) return STATUS_INFO_LENGTH_MISMATCH;
-        server_flags = wow64_get_server_context_flags( context->ContextFlags );
-        if ((status = get_thread_context( handle, &server_context, server_flags, &self ))) return status;
-        if (self) return STATUS_INVALID_PARAMETER;
-        status = wow64_context_from_server( context, &server_context );
+        if ((status = get_thread_context( handle, context, &self, IMAGE_FILE_MACHINE_I386 ))) return status;
         if (ret_len && !status) *ret_len = sizeof(*context);
         return status;
 #else
@@ -1417,11 +1873,9 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
 #ifdef __x86_64__
         BOOL self;
         const WOW64_CONTEXT *context = data;
-        context_t server_context;
 
         if (length != sizeof(*context)) return STATUS_INFO_LENGTH_MISMATCH;
-        wow64_context_to_server( &server_context, context );
-        return set_thread_context( handle, &server_context, &self );
+        return set_thread_context( handle, context, &self, IMAGE_FILE_MACHINE_I386 );
 #else
         return STATUS_INVALID_INFO_CLASS;
 #endif

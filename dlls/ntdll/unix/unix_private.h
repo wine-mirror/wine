@@ -177,15 +177,15 @@ extern int server_pipe( int fd[2] ) DECLSPEC_HIDDEN;
 extern void set_thread_id( TEB *teb, DWORD pid, DWORD tid ) DECLSPEC_HIDDEN;
 extern NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR zero_bits, SIZE_T reserve_size,
                                    SIZE_T commit_size, SIZE_T *pthread_size ) DECLSPEC_HIDDEN;
-extern NTSTATUS context_to_server( context_t *to, const CONTEXT *from ) DECLSPEC_HIDDEN;
-extern NTSTATUS context_from_server( CONTEXT *to, const context_t *from ) DECLSPEC_HIDDEN;
+extern NTSTATUS context_to_server( context_t *to, const void *src, USHORT machine ) DECLSPEC_HIDDEN;
+extern NTSTATUS context_from_server( void *dst, const context_t *from, USHORT machine ) DECLSPEC_HIDDEN;
 extern void DECLSPEC_NORETURN abort_thread( int status ) DECLSPEC_HIDDEN;
 extern void DECLSPEC_NORETURN abort_process( int status ) DECLSPEC_HIDDEN;
 extern void DECLSPEC_NORETURN exit_process( int status ) DECLSPEC_HIDDEN;
 extern void wait_suspend( CONTEXT *context ) DECLSPEC_HIDDEN;
 extern NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_chance ) DECLSPEC_HIDDEN;
-extern NTSTATUS set_thread_context( HANDLE handle, const context_t *context, BOOL *self ) DECLSPEC_HIDDEN;
-extern NTSTATUS get_thread_context( HANDLE handle, context_t *context, unsigned int flags, BOOL *self ) DECLSPEC_HIDDEN;
+extern NTSTATUS set_thread_context( HANDLE handle, const void *context, BOOL *self, USHORT machine ) DECLSPEC_HIDDEN;
+extern NTSTATUS get_thread_context( HANDLE handle, void *context, BOOL *self, USHORT machine ) DECLSPEC_HIDDEN;
 extern NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_attributes **ret,
                                          data_size_t *ret_len ) DECLSPEC_HIDDEN;
 
@@ -357,42 +357,6 @@ static inline void context_init_xstate( CONTEXT *context, void *xstate_buffer )
     xctx->All.Offset = -(LONG)sizeof(CONTEXT);
     context->ContextFlags |= 0x40;
 }
-
-static inline void xstate_to_server( context_t *to, const XSTATE *xs )
-{
-    if (!xs)
-        return;
-
-    to->flags |= SERVER_CTX_YMM_REGISTERS;
-    if (xs->Mask & 4)
-        memcpy(&to->ymm.ymm_high_regs.ymm_high, &xs->YmmContext, sizeof(xs->YmmContext));
-    else
-        memset(&to->ymm.ymm_high_regs.ymm_high, 0, sizeof(xs->YmmContext));
-}
-
-static inline void xstate_from_server_( XSTATE *xs, const context_t *from, BOOL compaction_enabled)
-{
-    if (!xs)
-        return;
-
-    xs->Mask = 0;
-    xs->CompactionMask = compaction_enabled ? 0x8000000000000004 : 0;
-
-    if (from->flags & SERVER_CTX_YMM_REGISTERS)
-    {
-        unsigned long *src = (unsigned long *)&from->ymm.ymm_high_regs.ymm_high;
-        unsigned int i;
-
-        for (i = 0; i < sizeof(xs->YmmContext) / sizeof(unsigned long); ++i)
-            if (src[i])
-            {
-                memcpy( &xs->YmmContext, &from->ymm.ymm_high_regs.ymm_high, sizeof(xs->YmmContext) );
-                xs->Mask = 4;
-                break;
-            }
-    }
-}
-#define xstate_from_server( xs, from ) xstate_from_server_( xs, from, user_shared_data->XState.CompactionEnabled )
 
 #else
 static inline XSTATE *xstate_from_context( const CONTEXT *context )
