@@ -894,17 +894,47 @@ static void close_channel( struct channel *channel )
     channel->state = WS_CHANNEL_STATE_CLOSED;
 }
 
+struct close_channel
+{
+    struct task      task;
+    struct channel  *channel;
+    WS_ASYNC_CONTEXT ctx;
+};
+
+static void close_channel_proc( struct task *task )
+{
+    struct close_channel *c = (struct close_channel *)task;
+
+    close_channel( c->channel );
+
+    TRACE( "calling %p(S_OK)\n", c->ctx.callback );
+    c->ctx.callback( S_OK, WS_LONG_CALLBACK, c->ctx.callbackState );
+    TRACE( "%p returned\n", c->ctx.callback );
+}
+
+static HRESULT queue_close_channel( struct channel *channel, const WS_ASYNC_CONTEXT *ctx )
+{
+    struct close_channel *c;
+
+    if (!(c = heap_alloc( sizeof(*c) ))) return E_OUTOFMEMORY;
+    c->task.proc = close_channel_proc;
+    c->channel   = channel;
+    c->ctx       = *ctx;
+    return queue_task( &channel->send_q, &c->task );
+}
+
 /**************************************************************************
  *          WsCloseChannel		[webservices.@]
  */
 HRESULT WINAPI WsCloseChannel( WS_CHANNEL *handle, const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
 {
     struct channel *channel = (struct channel *)handle;
-    HRESULT hr = S_OK;
+    WS_ASYNC_CONTEXT ctx_local;
+    struct async async;
+    HRESULT hr;
 
     TRACE( "%p %p %p\n", handle, ctx, error );
     if (error) FIXME( "ignoring error parameter\n" );
-    if (ctx) FIXME( "ignoring ctx parameter\n" );
 
     if (!channel) return E_INVALIDARG;
 
@@ -916,7 +946,13 @@ HRESULT WINAPI WsCloseChannel( WS_CHANNEL *handle, const WS_ASYNC_CONTEXT *ctx, 
         return E_INVALIDARG;
     }
 
-    close_channel( channel );
+    if (!ctx) async_init( &async, &ctx_local );
+    hr = queue_close_channel( channel, ctx ? ctx : &ctx_local );
+    if (!ctx)
+    {
+        if (hr == WS_S_ASYNC) hr = async_wait( &async );
+        CloseHandle( async.done );
+    }
 
     LeaveCriticalSection( &channel->cs );
     TRACE( "returning %08x\n", hr );
