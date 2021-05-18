@@ -71,6 +71,7 @@ static BOOL   (WINAPI *pQueryFullProcessImageNameA)(HANDLE hProcess, DWORD dwFla
 static BOOL   (WINAPI *pQueryFullProcessImageNameW)(HANDLE hProcess, DWORD dwFlags, LPWSTR lpExeName, PDWORD lpdwSize);
 static DWORD  (WINAPI *pK32GetProcessImageFileNameA)(HANDLE,LPSTR,DWORD);
 static HANDLE (WINAPI *pCreateJobObjectW)(LPSECURITY_ATTRIBUTES sa, LPCWSTR name);
+static HANDLE (WINAPI *pOpenJobObjectA)(DWORD access, BOOL inherit, LPCSTR name);
 static BOOL   (WINAPI *pAssignProcessToJobObject)(HANDLE job, HANDLE process);
 static BOOL   (WINAPI *pIsProcessInJob)(HANDLE process, HANDLE job, PBOOL result);
 static BOOL   (WINAPI *pTerminateJobObject)(HANDLE job, UINT exit_code);
@@ -257,6 +258,7 @@ static BOOL init(void)
     pQueryFullProcessImageNameW = (void *) GetProcAddress(hkernel32, "QueryFullProcessImageNameW");
     pK32GetProcessImageFileNameA = (void *) GetProcAddress(hkernel32, "K32GetProcessImageFileNameA");
     pCreateJobObjectW = (void *)GetProcAddress(hkernel32, "CreateJobObjectW");
+    pOpenJobObjectA = (void *)GetProcAddress(hkernel32, "OpenJobObjectA");
     pAssignProcessToJobObject = (void *)GetProcAddress(hkernel32, "AssignProcessToJobObject");
     pIsProcessInJob = (void *)GetProcAddress(hkernel32, "IsProcessInJob");
     pTerminateJobObject = (void *)GetProcAddress(hkernel32, "TerminateJobObject");
@@ -2976,19 +2978,30 @@ static void test_jobInheritance(HANDLE job)
     wait_and_close_child_process(&pi);
 }
 
-static void test_BreakawayOk(HANDLE job)
+static void test_BreakawayOk(HANDLE parent_job)
 {
     JOBOBJECT_EXTENDED_LIMIT_INFORMATION limit_info;
     PROCESS_INFORMATION pi;
     STARTUPINFOA si = {0};
     char buffer[MAX_PATH + 23];
-    BOOL ret, out;
+    BOOL ret, out, nested_jobs;
+    HANDLE job;
 
     if (!pIsProcessInJob)
     {
         win_skip("IsProcessInJob not available.\n");
         return;
     }
+
+    job = pCreateJobObjectW(NULL, NULL);
+    ok(!!job, "CreateJobObjectW error %u\n", GetLastError());
+
+    ret = pAssignProcessToJobObject(job, GetCurrentProcess());
+    ok(ret || broken(!ret && GetLastError() == ERROR_ACCESS_DENIED) /* before Win 8. */,
+            "AssignProcessToJobObject error %u\n", GetLastError());
+    nested_jobs = ret;
+    if (!ret)
+        win_skip("Nested jobs are not supported.\n");
 
     sprintf(buffer, "\"%s\" process exit", selfname);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, CREATE_BREAKAWAY_FROM_JOB, NULL, NULL, &si, &pi);
@@ -3001,14 +3014,40 @@ static void test_BreakawayOk(HANDLE job)
         wait_and_close_child_process(&pi);
     }
 
+    if (nested_jobs)
+    {
+        limit_info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_BREAKAWAY_OK;
+        ret = pSetInformationJobObject(job, JobObjectExtendedLimitInformation, &limit_info, sizeof(limit_info));
+        ok(ret, "SetInformationJobObject error %u\n", GetLastError());
+
+        sprintf(buffer, "\"%s\" process exit", selfname);
+        ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, CREATE_BREAKAWAY_FROM_JOB, NULL, NULL, &si, &pi);
+        ok(ret, "CreateProcessA error %u\n", GetLastError());
+
+        ret = pIsProcessInJob(pi.hProcess, job, &out);
+        ok(ret, "IsProcessInJob error %u\n", GetLastError());
+        ok(!out, "IsProcessInJob returned out=%u\n", out);
+
+        ret = pIsProcessInJob(pi.hProcess, parent_job, &out);
+        ok(ret, "IsProcessInJob error %u\n", GetLastError());
+        ok(out, "IsProcessInJob returned out=%u\n", out);
+
+        TerminateProcess(pi.hProcess, 0);
+        wait_and_close_child_process(&pi);
+    }
+
     limit_info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_BREAKAWAY_OK;
-    ret = pSetInformationJobObject(job, JobObjectExtendedLimitInformation, &limit_info, sizeof(limit_info));
+    ret = pSetInformationJobObject(parent_job, JobObjectExtendedLimitInformation, &limit_info, sizeof(limit_info));
     ok(ret, "SetInformationJobObject error %u\n", GetLastError());
 
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, CREATE_BREAKAWAY_FROM_JOB, NULL, NULL, &si, &pi);
     ok(ret, "CreateProcessA error %u\n", GetLastError());
 
     ret = pIsProcessInJob(pi.hProcess, job, &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(!out, "IsProcessInJob returned out=%u\n", out);
+
+    ret = pIsProcessInJob(pi.hProcess, parent_job, &out);
     ok(ret, "IsProcessInJob error %u\n", GetLastError());
     ok(!out, "IsProcessInJob returned out=%u\n", out);
 
@@ -4309,6 +4348,135 @@ static void test_dead_process(void)
     CloseHandle(pi.hThread);
 }
 
+static void test_nested_jobs_child(unsigned int index)
+{
+    HANDLE job, job_parent, job_other;
+    PROCESS_INFORMATION pi;
+    char job_name[32];
+    BOOL ret, out;
+
+    sprintf(job_name, "test_nested_jobs_%u", index);
+    job = pOpenJobObjectA(JOB_OBJECT_ASSIGN_PROCESS | JOB_OBJECT_SET_ATTRIBUTES | JOB_OBJECT_QUERY
+            | JOB_OBJECT_TERMINATE, FALSE, job_name);
+    ok(!!job, "OpenJobObjectA error %u\n", GetLastError());
+
+    sprintf(job_name, "test_nested_jobs_%u", !index);
+    job_other = pOpenJobObjectA(JOB_OBJECT_ASSIGN_PROCESS | JOB_OBJECT_SET_ATTRIBUTES | JOB_OBJECT_QUERY
+            | JOB_OBJECT_TERMINATE, FALSE, job_name);
+    ok(!!job_other, "OpenJobObjectA error %u\n", GetLastError());
+
+    job_parent = pCreateJobObjectW(NULL, NULL);
+    ok(!!job_parent, "CreateJobObjectA error %u\n", GetLastError());
+
+    ret = pAssignProcessToJobObject(job_parent, GetCurrentProcess());
+    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+
+    create_process("wait", &pi);
+
+    ret = pAssignProcessToJobObject(job_parent, pi.hProcess);
+    ok(ret || broken(!ret && GetLastError() == ERROR_ACCESS_DENIED) /* Supported since Windows 8. */,
+            "AssignProcessToJobObject error %u\n", GetLastError());
+    if (!ret)
+    {
+        win_skip("Nested jobs are not supported.\n");
+        goto done;
+    }
+    ret = pAssignProcessToJobObject(job, pi.hProcess);
+    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+
+    out = FALSE;
+    ret = pIsProcessInJob(pi.hProcess, NULL, &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(out, "IsProcessInJob returned out=%u\n", out);
+
+    out = FALSE;
+    ret = pIsProcessInJob(pi.hProcess, job, &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(out, "IsProcessInJob returned out=%u\n", out);
+
+    out = TRUE;
+    ret = pIsProcessInJob(GetCurrentProcess(), job, &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(!out, "IsProcessInJob returned out=%u\n", out);
+
+    out = FALSE;
+    ret = pIsProcessInJob(pi.hProcess, job, &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(out, "IsProcessInJob returned out=%u\n", out);
+
+    ret = pAssignProcessToJobObject(job, GetCurrentProcess());
+    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+
+    TerminateProcess(pi.hProcess, 0);
+    wait_child_process(pi.hProcess);
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+    create_process("wait", &pi);
+    out = FALSE;
+    ret = pIsProcessInJob(pi.hProcess, job, &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(out, "IsProcessInJob returned out=%u\n", out);
+
+    out = FALSE;
+    ret = pIsProcessInJob(pi.hProcess, job_parent, &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(out, "IsProcessInJob returned out=%u\n", out);
+
+    if (index)
+    {
+        ret = pAssignProcessToJobObject(job_other, GetCurrentProcess());
+        ok(!ret, "AssignProcessToJobObject succeded\n");
+        ok(GetLastError() == ERROR_ACCESS_DENIED, "Got unexpected error %u.\n", GetLastError());
+    }
+done:
+    TerminateProcess(pi.hProcess, 0);
+    wait_child_process(pi.hProcess);
+
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+    CloseHandle(job_parent);
+    CloseHandle(job);
+    CloseHandle(job_other);
+}
+
+static void test_nested_jobs(void)
+{
+    PROCESS_INFORMATION info[2];
+    char buffer[MAX_PATH + 26];
+    STARTUPINFOA si = {0};
+    HANDLE job1, job2;
+    unsigned int i;
+
+    if (!pIsProcessInJob)
+    {
+        win_skip("IsProcessInJob not available.\n");
+        return;
+    }
+
+    job1 = pCreateJobObjectW(NULL, L"test_nested_jobs_0");
+    ok(!!job1, "CreateJobObjectW failed, error %u.\n", GetLastError());
+    job2 = pCreateJobObjectW(NULL, L"test_nested_jobs_1");
+    ok(!!job2, "CreateJobObjectW failed, error %u.\n", GetLastError());
+
+    sprintf(buffer, "\"%s\" process nested_jobs 0", selfname);
+    ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &info[0]),
+            "CreateProcess failed\n");
+    wait_child_process(info[0].hProcess);
+    sprintf(buffer, "\"%s\" process nested_jobs 1", selfname);
+    ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &info[1]),
+        "CreateProcess failed\n");
+    wait_child_process(info[1].hProcess);
+    for (i = 0; i < 2; ++i)
+    {
+        CloseHandle(info[i].hProcess);
+        CloseHandle(info[i].hThread);
+    }
+
+    CloseHandle(job1);
+    CloseHandle(job2);
+}
+
 START_TEST(process)
 {
     HANDLE job, hproc, h, h2;
@@ -4384,6 +4552,11 @@ START_TEST(process)
             test_handle_list_attribute(TRUE, h, h2);
             return;
         }
+        else if (!strcmp(myARGV[2], "nested_jobs") && myARGC >= 4)
+        {
+            test_nested_jobs_child(atoi(myARGV[3]));
+            return;
+        }
 
         ok(0, "Unexpected command %s\n", myARGV[2]);
         return;
@@ -4452,6 +4625,7 @@ START_TEST(process)
     test_CompletionPort();
     test_KillOnJobClose();
     test_WaitForJobObject();
+    test_nested_jobs();
     job = test_AddSelfToJob();
     test_jobInheritance(job);
     test_BreakawayOk(job);
