@@ -2786,12 +2786,16 @@ static void test_QueryInformationJobObject(void)
 static void test_CompletionPort(void)
 {
     JOBOBJECT_ASSOCIATE_COMPLETION_PORT port_info;
-    PROCESS_INFORMATION pi;
+    PROCESS_INFORMATION pi, pi2;
     HANDLE job, port;
     BOOL ret;
 
     job = pCreateJobObjectW(NULL, NULL);
     ok(job != NULL, "CreateJobObject error %u\n", GetLastError());
+
+    create_process("wait", &pi2);
+    ret = pAssignProcessToJobObject(job, pi2.hProcess);
+    ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
 
     port = pCreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 1);
     ok(port != NULL, "CreateIoCompletionPort error %u\n", GetLastError());
@@ -2806,12 +2810,19 @@ static void test_CompletionPort(void)
     ret = pAssignProcessToJobObject(job, pi.hProcess);
     ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
 
+    test_completion(port, JOB_OBJECT_MSG_NEW_PROCESS, (DWORD_PTR)job, pi2.dwProcessId, 0);
     test_completion(port, JOB_OBJECT_MSG_NEW_PROCESS, (DWORD_PTR)job, pi.dwProcessId, 0);
 
     TerminateProcess(pi.hProcess, 0);
     wait_child_process(pi.hProcess);
 
     test_completion(port, JOB_OBJECT_MSG_EXIT_PROCESS, (DWORD_PTR)job, pi.dwProcessId, 0);
+    TerminateProcess(pi2.hProcess, 0);
+    wait_child_process(pi2.hProcess);
+    CloseHandle(pi2.hProcess);
+    CloseHandle(pi2.hThread);
+
+    test_completion(port, JOB_OBJECT_MSG_EXIT_PROCESS, (DWORD_PTR)job, pi2.dwProcessId, 0);
     test_completion(port, JOB_OBJECT_MSG_ACTIVE_PROCESS_ZERO, (DWORD_PTR)job, 0, 100);
 
     CloseHandle(pi.hProcess);
@@ -4350,10 +4361,15 @@ static void test_dead_process(void)
 
 static void test_nested_jobs_child(unsigned int index)
 {
-    HANDLE job, job_parent, job_other;
+    JOBOBJECT_ASSOCIATE_COMPLETION_PORT port_info;
+    HANDLE job, job_parent, job_other, port;
     PROCESS_INFORMATION pi;
+    OVERLAPPED *overlapped;
     char job_name[32];
+    ULONG_PTR value;
+    DWORD dead_pid;
     BOOL ret, out;
+    DWORD key;
 
     sprintf(job_name, "test_nested_jobs_%u", index);
     job = pOpenJobObjectA(JOB_OBJECT_ASSIGN_PROCESS | JOB_OBJECT_SET_ATTRIBUTES | JOB_OBJECT_QUERY
@@ -4412,6 +4428,20 @@ static void test_nested_jobs_child(unsigned int index)
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
 
+    dead_pid = pi.dwProcessId;
+
+    port = pCreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 1);
+    ok(!!port, "CreateIoCompletionPort error %u\n", GetLastError());
+
+    port_info.CompletionPort = port;
+    port_info.CompletionKey = job;
+    ret = pSetInformationJobObject(job, JobObjectAssociateCompletionPortInformation, &port_info, sizeof(port_info));
+    ok(ret, "SetInformationJobObject error %u\n", GetLastError());
+    port_info.CompletionKey = job_parent;
+    ret = pSetInformationJobObject(job_parent, JobObjectAssociateCompletionPortInformation,
+            &port_info, sizeof(port_info));
+    ok(ret, "SetInformationJobObject error %u\n", GetLastError());
+
     create_process("wait", &pi);
     out = FALSE;
     ret = pIsProcessInJob(pi.hProcess, job, &out);
@@ -4423,12 +4453,42 @@ static void test_nested_jobs_child(unsigned int index)
     ok(ret, "IsProcessInJob error %u\n", GetLastError());
     ok(out, "IsProcessInJob returned out=%u\n", out);
 
+    /* The first already dead child process still shows up randomly. */
+    do
+    {
+        ret = GetQueuedCompletionStatus(port, &key, &value, &overlapped, 0);
+    } while (ret && (ULONG_PTR)overlapped == dead_pid);
+
+    ok(ret, "GetQueuedCompletionStatus: %x\n", GetLastError());
+    ok(key == JOB_OBJECT_MSG_NEW_PROCESS, "unexpected key %x\n", key);
+    ok((HANDLE)value == job, "unexpected value %p\n", (void *)value);
+    ok((ULONG_PTR)overlapped == GetCurrentProcessId(), "unexpected pid %#x\n", (DWORD)(DWORD_PTR)overlapped);
+
+    do
+    {
+        ret = GetQueuedCompletionStatus(port, &key, &value, &overlapped, 0);
+    } while (ret && (ULONG_PTR)overlapped == dead_pid);
+
+    ok(ret, "GetQueuedCompletionStatus: %x\n", GetLastError());
+    ok(key == JOB_OBJECT_MSG_NEW_PROCESS, "unexpected key %x\n", key);
+    ok((HANDLE)value == job_parent, "unexpected value %p\n", (void *)value);
+    ok((ULONG_PTR)overlapped == GetCurrentProcessId(), "unexpected pid %#x\n", (DWORD)(DWORD_PTR)overlapped);
+
+    test_completion(port, JOB_OBJECT_MSG_NEW_PROCESS, (DWORD_PTR)job, pi.dwProcessId, 0);
+    test_completion(port, JOB_OBJECT_MSG_NEW_PROCESS, (DWORD_PTR)job_parent, pi.dwProcessId, 0);
+
+    ret = GetQueuedCompletionStatus(port, &key, &value, &overlapped, 0);
+    ok(!ret, "GetQueuedCompletionStatus succeeded.\n");
+
     if (index)
     {
         ret = pAssignProcessToJobObject(job_other, GetCurrentProcess());
         ok(!ret, "AssignProcessToJobObject succeded\n");
         ok(GetLastError() == ERROR_ACCESS_DENIED, "Got unexpected error %u.\n", GetLastError());
     }
+
+    CloseHandle(port);
+
 done:
     TerminateProcess(pi.hProcess, 0);
     wait_child_process(pi.hProcess);

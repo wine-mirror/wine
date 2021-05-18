@@ -255,6 +255,25 @@ static void add_job_completion( struct job *job, apc_param_t msg, apc_param_t pi
         add_completion( job->completion_port, job->completion_key, pid, STATUS_SUCCESS, msg );
 }
 
+static void add_job_completion_existing_processes( struct job *job, struct job *completion_job )
+{
+    struct process *process;
+    struct job *j;
+
+    assert( completion_job->obj.ops == &job_ops );
+
+    LIST_FOR_EACH_ENTRY( j, &job->child_job_list, struct job, parent_job_entry )
+    {
+        add_job_completion_existing_processes( j, completion_job );
+    }
+
+    LIST_FOR_EACH_ENTRY( process, &job->process_list, struct process, job_entry )
+    {
+        if (process->running_threads)
+            add_job_completion( completion_job, JOB_OBJECT_MSG_NEW_PROCESS, get_process_id( process ));
+    }
+}
+
 static int process_in_job( struct job *job, struct process *process )
 {
     struct job *j;
@@ -1715,6 +1734,8 @@ DECL_HANDLER(set_job_completion_port)
     {
         job->completion_port = get_completion_obj( current->process, req->port, IO_COMPLETION_MODIFY_STATE );
         job->completion_key = req->key;
+
+        add_job_completion_existing_processes( job, job );
     }
     else
         set_error( STATUS_INVALID_PARAMETER );
