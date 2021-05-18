@@ -875,9 +875,26 @@ static HRESULT WINAPI class_object_GetMethod(
 {
     struct class_object *co = impl_from_IWbemClassObject( iface );
     IWbemClassObject *in, *out;
+    struct table *table;
+    unsigned int i;
     HRESULT hr;
 
     TRACE("%p, %s, %08x, %p, %p\n", iface, debugstr_w(wszName), lFlags, ppInSignature, ppOutSignature);
+
+    if (ppInSignature) *ppInSignature = NULL;
+    if (ppOutSignature) *ppOutSignature = NULL;
+
+    table = get_view_table( impl_from_IEnumWbemClassObject( co->iter )->query->view, co->index );
+
+    for (i = 0; i < table->num_cols; ++i)
+    {
+        if (is_method( table, i ) && !lstrcmpiW( table->columns[i].name, wszName )) break;
+    }
+    if (i == table->num_cols)
+    {
+        FIXME("Method %s not found in class %s.\n", debugstr_w(wszName), debugstr_w(co->name));
+        return WBEM_E_NOT_FOUND;
+    }
 
     hr = create_signature( co->name, wszName, PARAM_IN, &in );
     if (hr != S_OK) return hr;

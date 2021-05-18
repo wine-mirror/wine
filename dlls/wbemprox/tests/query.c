@@ -460,7 +460,7 @@ static void test_Win32_Process( IWbemServices *services, BOOL use_full_path )
                                         WBEM_FLAVOR_ORIGIN_PROPAGATED;
     WCHAR full_path[MAX_COMPUTERNAME_LENGTH + ARRAY_SIZE( L"\\\\%s\\ROOT\\CIMV2:" )];
     BSTR class, method;
-    IWbemClassObject *process, *sig_in, *out;
+    IWbemClassObject *process, *sig_in, *sig_out, *out;
     IWbemQualifierSet *qualifiers;
     VARIANT retval, val;
     SAFEARRAY *names;
@@ -504,8 +504,15 @@ static void test_Win32_Process( IWbemServices *services, BOOL use_full_path )
     }
     SafeArrayDestroy( names );
 
+    sig_in = (void *)0xdeadbeef;
+    sig_out = (void *)0xdeadbeef;
+    hr = IWbemClassObject_GetMethod( process, L"unknown", 0, &sig_in, &sig_out );
+    ok( hr == WBEM_E_NOT_FOUND, "Got unexpected hr %#x\n", hr );
+    ok( !sig_in, "Got unexpected sig_in %p.\n", sig_in );
+    ok( !sig_out, "Got unexpected sig_out %p.\n", sig_out );
+
     sig_in = (void*)0xdeadbeef;
-    hr = IWbemClassObject_GetMethod( process, L"GetOwner", 0, &sig_in, NULL );
+    hr = IWbemClassObject_GetMethod( process, L"getowner", 0, &sig_in, NULL );
     ok( hr == S_OK, "failed to get GetOwner method %08x\n", hr );
     ok( !sig_in, "sig_in != NULL\n");
     IWbemClassObject_Release( process );
