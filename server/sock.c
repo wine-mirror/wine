@@ -106,6 +106,14 @@ struct accept_req
     unsigned int recv_len, local_len;
 };
 
+struct connect_req
+{
+    struct async *async;
+    struct iosb *iosb;
+    struct sock *sock;
+    unsigned int addr_len, send_len, send_cursor;
+};
+
 struct sock
 {
     struct object       obj;         /* object header */
@@ -141,10 +149,12 @@ struct sock
     struct async_queue  write_q;     /* queue for asynchronous writes */
     struct async_queue  ifchange_q;  /* queue for interface change notifications */
     struct async_queue  accept_q;    /* queue for asynchronous accepts */
+    struct async_queue  connect_q;   /* queue for asynchronous connects */
     struct object      *ifchange_obj; /* the interface change notification object */
     struct list         ifchange_entry; /* entry in ifchange notification list */
     struct list         accept_list; /* list of pending accept requests */
     struct accept_req  *accept_recv_req; /* pending accept-into request which will recv on this socket */
+    struct connect_req *connect_req; /* pending connection request */
 };
 
 static void sock_dump( struct object *obj, int verbose );
@@ -558,6 +568,58 @@ static void complete_async_accept_recv( struct accept_req *req )
     fill_accept_output( req );
 }
 
+static void free_connect_req( void *private )
+{
+    struct connect_req *req = private;
+
+    req->sock->connect_req = NULL;
+    release_object( req->async );
+    release_object( req->iosb );
+    release_object( req->sock );
+    free( req );
+}
+
+static void complete_async_connect( struct sock *sock )
+{
+    struct connect_req *req = sock->connect_req;
+    const char *in_buffer;
+    struct iosb *iosb;
+    size_t len;
+    int ret;
+
+    if (debug_level) fprintf( stderr, "completing connect request for socket %p\n", sock );
+
+    sock->pending_events &= ~(FD_CONNECT | FD_READ | FD_WRITE);
+    sock->reported_events &= ~(FD_CONNECT | FD_READ | FD_WRITE);
+    sock->state |= FD_WINE_CONNECTED;
+    sock->state &= ~(FD_CONNECT | FD_WINE_LISTENING);
+
+    if (!req->send_len)
+    {
+        set_error( STATUS_SUCCESS );
+        return;
+    }
+
+    iosb = req->iosb;
+    in_buffer = (const char *)iosb->in_data + sizeof(struct afd_connect_params) + req->addr_len;
+    len = req->send_len - req->send_cursor;
+
+    ret = send( get_unix_fd( sock->fd ), in_buffer + req->send_cursor, len, 0 );
+    if (ret < 0 && errno != EWOULDBLOCK)
+        set_error( sock_get_ntstatus( errno ) );
+    else if (ret == len)
+    {
+        iosb->result = req->send_len;
+        iosb->status = STATUS_SUCCESS;
+        set_error( STATUS_ALERTED );
+    }
+    else
+    {
+        req->send_cursor += ret;
+        set_error( STATUS_PENDING );
+    }
+}
+
 static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
 {
     if (event & (POLLIN | POLLPRI))
@@ -581,6 +643,13 @@ static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
             if (get_error() != STATUS_PENDING)
                 async_terminate( sock->accept_recv_req->async, get_error() );
         }
+    }
+
+    if ((event & POLLOUT) && sock->connect_req && sock->connect_req->iosb->status == STATUS_PENDING)
+    {
+        complete_async_connect( sock );
+        if (get_error() != STATUS_PENDING)
+            async_terminate( sock->connect_req->async, get_error() );
     }
 
     if (is_fd_overlapped( sock->fd ))
@@ -617,6 +686,9 @@ static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
 
         if (sock->accept_recv_req && sock->accept_recv_req->iosb->status == STATUS_PENDING)
             async_terminate( sock->accept_recv_req->async, status );
+
+        if (sock->connect_req)
+            async_terminate( sock->connect_req->async, status );
     }
 
     return event;
@@ -865,6 +937,9 @@ static int sock_close_handle( struct object *obj, struct process *process, obj_h
 
         LIST_FOR_EACH_ENTRY_SAFE( req, next, &sock->accept_list, struct accept_req, entry )
             async_terminate( req->async, STATUS_CANCELLED );
+
+        if (sock->connect_req)
+            async_terminate( sock->connect_req->async, STATUS_CANCELLED );
     }
 
     return 1;
@@ -887,6 +962,7 @@ static void sock_destroy( struct object *obj )
     free_async_queue( &sock->write_q );
     free_async_queue( &sock->ifchange_q );
     free_async_queue( &sock->accept_q );
+    free_async_queue( &sock->connect_q );
     if (sock->event) release_object( sock->event );
     if (sock->fd)
     {
@@ -919,10 +995,12 @@ static struct sock *create_socket(void)
     sock->deferred = NULL;
     sock->ifchange_obj = NULL;
     sock->accept_recv_req = NULL;
+    sock->connect_req = NULL;
     init_async_queue( &sock->read_q );
     init_async_queue( &sock->write_q );
     init_async_queue( &sock->ifchange_q );
     init_async_queue( &sock->accept_q );
+    init_async_queue( &sock->connect_q );
     memset( sock->errors, 0, sizeof(sock->errors) );
     list_init( &sock->accept_list );
     return sock;
@@ -1318,6 +1396,7 @@ static int sock_get_ntstatus( int err )
         case EPIPE:
         case ECONNRESET:        return STATUS_CONNECTION_RESET;
         case ECONNABORTED:      return STATUS_CONNECTION_ABORTED;
+        case EISCONN:           return STATUS_CONNECTION_ACTIVE;
 
         case 0:                 return STATUS_SUCCESS;
         default:
@@ -1484,6 +1563,79 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         /* we may already be selecting for FD_ACCEPT */
         sock_reselect( sock );
         return 0;
+    }
+
+    case IOCTL_AFD_WINE_CONNECT:
+    {
+        const struct afd_connect_params *params = get_req_data();
+        const struct sockaddr *addr;
+        struct connect_req *req;
+        int send_len, ret;
+
+        if (get_req_data_size() < sizeof(*params) ||
+            get_req_data_size() - sizeof(*params) < params->addr_len)
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return 0;
+        }
+        send_len = get_req_data_size() - sizeof(*params) - params->addr_len;
+        addr = (const struct sockaddr *)(params + 1);
+
+        if (sock->accept_recv_req)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return 0;
+        }
+
+        if (sock->connect_req)
+        {
+            set_error( params->synchronous ? STATUS_INVALID_PARAMETER : STATUS_CONNECTION_ACTIVE );
+            return 0;
+        }
+
+        ret = connect( unix_fd, addr, params->addr_len );
+        if (ret < 0 && errno != EINPROGRESS)
+        {
+            set_error( sock_get_ntstatus( errno ) );
+            return 0;
+        }
+
+        sock->pending_events &= ~(FD_CONNECT | FD_READ | FD_WRITE);
+        sock->reported_events &= ~(FD_CONNECT | FD_READ | FD_WRITE);
+
+        if (!ret)
+        {
+            sock->state |= FD_WINE_CONNECTED | FD_READ | FD_WRITE;
+            sock->state &= ~FD_CONNECT;
+
+            if (!send_len) return 1;
+        }
+
+        if (!(req = mem_alloc( sizeof(*req) )))
+            return 0;
+
+        sock->state |= FD_CONNECT;
+
+        if (params->synchronous && (sock->state & FD_WINE_NONBLOCKING))
+        {
+            sock_reselect( sock );
+            set_error( STATUS_DEVICE_NOT_READY );
+            return 0;
+        }
+
+        req->async = (struct async *)grab_object( async );
+        req->iosb = async_get_iosb( async );
+        req->sock = (struct sock *)grab_object( sock );
+        req->addr_len = params->addr_len;
+        req->send_len = send_len;
+        req->send_cursor = 0;
+
+        async_set_completion_callback( async, free_connect_req, req );
+        sock->connect_req = req;
+        queue_async( &sock->connect_q, async );
+        sock_reselect( sock );
+        set_error( STATUS_PENDING );
+        return 1;
     }
 
     case IOCTL_AFD_WINE_ADDRESS_LIST_CHANGE:

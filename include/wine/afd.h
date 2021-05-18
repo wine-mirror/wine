@@ -36,6 +36,7 @@ struct afd_listen_params
 #define IOCTL_AFD_WINE_CREATE               CTL_CODE(FILE_DEVICE_NETWORK, 200, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_AFD_WINE_ACCEPT               CTL_CODE(FILE_DEVICE_NETWORK, 201, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_AFD_WINE_ACCEPT_INTO          CTL_CODE(FILE_DEVICE_NETWORK, 202, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define IOCTL_AFD_WINE_CONNECT              CTL_CODE(FILE_DEVICE_NETWORK, 203, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 #define IOCTL_AFD_WINE_ADDRESS_LIST_CHANGE  CTL_CODE(FILE_DEVICE_NETWORK, 323, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
@@ -49,6 +50,14 @@ struct afd_accept_into_params
 {
     obj_handle_t accept_handle;
     unsigned int recv_len, local_len;
+};
+
+struct afd_connect_params
+{
+    int addr_len;
+    int synchronous;
+    /* VARARG(addr, struct sockaddr, addr_len); */
+    /* VARARG(data, bytes); */
 };
 
 #endif
