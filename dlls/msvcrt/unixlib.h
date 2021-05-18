@@ -66,7 +66,6 @@ struct unix_funcs
     float           (CDECL *powf)(float x, float y);
     double          (CDECL *remainder)(double x, double y);
     float           (CDECL *remainderf)(float x, float y);
-    float           (CDECL *remquof)(float x, float y, int *quo);
     double          (CDECL *sin)(double x);
     float           (CDECL *sinf)(float x);
     double          (CDECL *sinh)(double x);

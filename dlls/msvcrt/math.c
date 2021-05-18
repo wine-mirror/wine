@@ -5581,12 +5581,86 @@ end:
 
 /*********************************************************************
  *      remquof (MSVCR120.@)
+ *
+ * Copied from musl: src/math/remquof.c
  */
 float CDECL remquof(float x, float y, int *quo)
 {
-    if(!isfinite(x)) *_errno() = EDOM;
-    if(isnan(y) || y==0.0f) *_errno() = EDOM;
-    return unix_funcs->remquof( x, y, quo );
+    UINT32 uxi = *(UINT32*)&x;
+    UINT32 uyi = *(UINT32*)&y;
+    int ex = uxi >> 23 & 0xff;
+    int ey = uyi >> 23 & 0xff;
+    int sx = uxi >> 31;
+    int sy = uyi>> 31;
+    UINT32 q, i;
+
+    *quo = 0;
+    if (y == 0 || isinf(x)) *_errno() = EDOM;
+    if (uyi << 1 == 0 || isnan(y) || ex == 0xff)
+        return (x * y) / (x * y);
+    if (uxi << 1 == 0)
+        return x;
+
+    /* normalize x and y */
+    if (!ex) {
+        for (i = uxi << 9; i >> 31 == 0; ex--, i <<= 1);
+        uxi <<= -ex + 1;
+    } else {
+        uxi &= -1U >> 9;
+        uxi |= 1U << 23;
+    }
+    if (!ey) {
+        for (i = uyi << 9; i >> 31 == 0; ey--, i <<= 1);
+        uyi <<= -ey + 1;
+    } else {
+        uyi &= -1U >> 9;
+        uyi |= 1U << 23;
+    }
+
+    q = 0;
+    if (ex < ey) {
+        if (ex + 1 == ey)
+            goto end;
+        return x;
+    }
+
+    /* x mod y */
+    for (; ex > ey; ex--) {
+        i = uxi - uyi;
+        if (i >> 31 == 0) {
+            uxi = i;
+            q++;
+        }
+        uxi <<= 1;
+        q <<= 1;
+    }
+    i = uxi - uyi;
+    if (i >> 31 == 0) {
+        uxi = i;
+        q++;
+    }
+    if (uxi == 0)
+        ex = -30;
+    else
+        for (; uxi >> 23 == 0; uxi <<= 1, ex--);
+end:
+    /* scale result and decide between |x| and |x|-|y| */
+    if (ex > 0) {
+        uxi -= 1U << 23;
+        uxi |= (UINT32)ex << 23;
+    } else {
+        uxi >>= -ex + 1;
+    }
+    x = *(float*)&uxi;
+    if (sy)
+        y = -y;
+    if (ex == ey || (ex + 1 == ey && (2 * x > y || (2 * x == y && q % 2)))) {
+        x -= y;
+        q++;
+    }
+    q &= 0x7fffffff;
+    *quo = sx ^ sy ? -(int)q : (int)q;
+    return sx ? -x : x;
 }
 
 /*********************************************************************
