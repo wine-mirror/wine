@@ -337,38 +337,20 @@ static void SYSPARAMS_NonClientMetrics32ATo32W( const NONCLIENTMETRICSA* lpnm32A
 
 /* Helper functions to retrieve monitors info */
 
-struct monitor_info
+static BOOL CALLBACK get_virtual_screen_proc( HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lp )
 {
-    int count;
-    RECT primary_rect;
-    RECT virtual_rect;
-};
+    RECT *virtual_rect = (RECT *)lp;
 
-static BOOL CALLBACK monitor_info_proc( HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lp )
-{
-    MONITORINFO mi;
-    struct monitor_info *info = (struct monitor_info *)lp;
-    info->count++;
-    UnionRect( &info->virtual_rect, &info->virtual_rect, rect );
-    mi.cbSize = sizeof(mi);
-    if (GetMonitorInfoW( monitor, &mi ) && (mi.dwFlags & MONITORINFOF_PRIMARY))
-        info->primary_rect = mi.rcMonitor;
+    UnionRect( virtual_rect, virtual_rect, rect );
     return TRUE;
-}
-
-static void get_monitors_info( struct monitor_info *info )
-{
-    info->count = 0;
-    SetRectEmpty( &info->primary_rect );
-    SetRectEmpty( &info->virtual_rect );
-    EnumDisplayMonitors( 0, NULL, monitor_info_proc, (LPARAM)info );
 }
 
 RECT get_virtual_screen_rect(void)
 {
-    struct monitor_info info;
-    get_monitors_info( &info );
-    return info.virtual_rect;
+    RECT rect = {0};
+
+    EnumDisplayMonitors( 0, NULL, get_virtual_screen_proc, (LPARAM)&rect );
+    return rect;
 }
 
 static BOOL CALLBACK get_primary_monitor_proc( HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lp )
@@ -2527,7 +2509,6 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
  */
 INT WINAPI GetSystemMetrics( INT index )
 {
-    struct monitor_info info;
     NONCLIENTMETRICSW ncm;
     MINIMIZEDMETRICS mm;
     ICONMETRICSW im;
@@ -2743,17 +2724,17 @@ INT WINAPI GetSystemMetrics( INT index )
         rect = get_primary_monitor_rect();
         return rect.bottom - rect.top;
     case SM_XVIRTUALSCREEN:
-        get_monitors_info( &info );
-        return info.virtual_rect.left;
+        rect = get_virtual_screen_rect();
+        return rect.left;
     case SM_YVIRTUALSCREEN:
-        get_monitors_info( &info );
-        return info.virtual_rect.top;
+        rect = get_virtual_screen_rect();
+        return rect.top;
     case SM_CXVIRTUALSCREEN:
-        get_monitors_info( &info );
-        return info.virtual_rect.right - info.virtual_rect.left;
+        rect = get_virtual_screen_rect();
+        return rect.right - rect.left;
     case SM_CYVIRTUALSCREEN:
-        get_monitors_info( &info );
-        return info.virtual_rect.bottom - info.virtual_rect.top;
+        rect = get_virtual_screen_rect();
+        return rect.bottom - rect.top;
     case SM_CMONITORS:
         return get_monitor_count();
     case SM_SAMEDISPLAYFORMAT:
