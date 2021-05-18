@@ -3064,116 +3064,74 @@ int WINAPI WSAConnect( SOCKET s, const struct WS_sockaddr* name, int namelen,
     return WS_connect( s, name, namelen );
 }
 
-/***********************************************************************
- *             ConnectEx
- */
-static BOOL WINAPI WS2_ConnectEx(SOCKET s, const struct WS_sockaddr* name, int namelen,
-                          PVOID sendBuf, DWORD sendBufLen, LPDWORD sent, LPOVERLAPPED ov)
+
+static BOOL WINAPI WS2_ConnectEx( SOCKET s, const struct WS_sockaddr *name, int namelen,
+                                  void *send_buffer, DWORD send_len, DWORD *ret_len, OVERLAPPED *overlapped )
 {
-    int fd, ret, status;
+    union generic_unix_sockaddr uaddr;
+    unsigned int uaddrlen = ws_sockaddr_ws2u(name, namelen, &uaddr);
+    struct afd_connect_params *params;
+    void *cvalue = NULL;
+    NTSTATUS status;
+    int fd, ret;
 
-    if (!ov)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
+    TRACE( "socket %#lx, ptr %p %s, length %d, send_buffer %p, send_len %u, overlapped %p\n",
+           s, name, debugstr_sockaddr(name), namelen, send_buffer, send_len, overlapped );
+
+    if ((fd = get_sock_fd( s, FILE_READ_DATA, NULL )) == -1)
         return FALSE;
-    }
 
-    fd = get_sock_fd( s, FILE_READ_DATA, NULL );
-    if (fd == -1) return FALSE;
-
-    TRACE("socket %04lx, ptr %p %s, length %d, sendptr %p, len %d, ov %p\n",
-          s, name, debugstr_sockaddr(name), namelen, sendBuf, sendBufLen, ov);
-
-    ret = is_fd_bound(fd, NULL, NULL);
-    if (ret <= 0)
+    if ((ret = is_fd_bound( fd, NULL, NULL )) <= 0)
     {
-        SetLastError(ret == -1 ? wsaErrno() : WSAEINVAL);
+        SetLastError( ret ? wsaErrno() : WSAEINVAL );
         release_sock_fd( s, fd );
         return FALSE;
     }
+    release_sock_fd( s, fd );
 
-    ret = do_connect(fd, name, namelen);
-    if (ret == 0)
+    if (!overlapped)
     {
-        WSABUF wsabuf;
-
-        _enable_event(SOCKET2HANDLE(s), FD_CONNECT|FD_READ|FD_WRITE,
-                            FD_WINE_CONNECTED|FD_READ|FD_WRITE,
-                            FD_CONNECT|FD_WINE_LISTENING);
-
-        wsabuf.len = sendBufLen;
-        wsabuf.buf = (char*) sendBuf;
-
-        /* WSASend takes care of completion if need be */
-        if (WSASend(s, &wsabuf, sendBuf ? 1 : 0, sent, 0, ov, NULL) != SOCKET_ERROR)
-            goto connection_success;
+        SetLastError( WSA_INVALID_PARAMETER );
+        return FALSE;
     }
-    else if (ret == WSAEWOULDBLOCK)
+
+    if (!((ULONG_PTR)overlapped->hEvent & 1)) cvalue = overlapped;
+    overlapped->Internal = STATUS_PENDING;
+    overlapped->InternalHigh = 0;
+
+    if (!uaddrlen)
     {
-        struct ws2_async *wsa;
-        DWORD size;
+        SetLastError( WSAEFAULT );
+        return SOCKET_ERROR;
+    }
 
-        ULONG_PTR cvalue = (((ULONG_PTR)ov->hEvent & 1) == 0) ? (ULONG_PTR)ov : 0;
-
-        _enable_event(SOCKET2HANDLE(s), FD_CONNECT|FD_READ|FD_WRITE,
-                      FD_CONNECT,
-                      FD_WINE_CONNECTED|FD_WINE_LISTENING);
-
-        size = offsetof( struct ws2_async, iovec[1] ) + sendBufLen;
-
-        /* Indirectly call WSASend */
-        if (!(wsa = (struct ws2_async *)alloc_async_io( size, WS2_async_send )))
+    if (name->sa_family == WS_AF_INET)
+    {
+        struct sockaddr_in *in4 = (struct sockaddr_in *)&uaddr;
+        if (!memcmp( &in4->sin_addr, magic_loopback_addr, sizeof(magic_loopback_addr) ))
         {
-            SetLastError(WSAEFAULT);
-        }
-        else
-        {
-            IO_STATUS_BLOCK *iosb = (IO_STATUS_BLOCK *)ov;
-            iosb->u.Status = STATUS_PENDING;
-            iosb->Information = 0;
-
-            wsa->hSocket     = SOCKET2HANDLE(s);
-            wsa->addr        = NULL;
-            wsa->addrlen.val = 0;
-            wsa->flags       = 0;
-            wsa->lpFlags     = &wsa->flags;
-            wsa->control     = NULL;
-            wsa->n_iovecs    = sendBuf ? 1 : 0;
-            wsa->first_iovec = 0;
-            wsa->completion_func = NULL;
-            wsa->iovec[0].iov_base = &wsa->iovec[1];
-            wsa->iovec[0].iov_len  = sendBufLen;
-
-            if (sendBufLen)
-                memcpy( wsa->iovec[0].iov_base, sendBuf, sendBufLen );
-
-            status = register_async( ASYNC_TYPE_WRITE, wsa->hSocket, &wsa->io, ov->hEvent,
-                                      NULL, (void *)cvalue, iosb );
-            if (status != STATUS_PENDING) HeapFree(GetProcessHeap(), 0, wsa);
-
-            /* If the connect already failed */
-            if (status == STATUS_PIPE_DISCONNECTED)
-            {
-                ov->Internal = sock_error_to_ntstatus( get_sock_error( s, FD_CONNECT_BIT  ));
-                ov->InternalHigh = 0;
-                if (cvalue) WS_AddCompletion( s, cvalue, ov->Internal, ov->InternalHigh, TRUE );
-                if (ov->hEvent) NtSetEvent( ov->hEvent, NULL );
-                status = STATUS_PENDING;
-            }
-            SetLastError( NtStatusToWSAError(status) );
+            TRACE("Replacing magic address 127.12.34.56 with INADDR_LOOPBACK.\n");
+            in4->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
         }
     }
-    else
+
+    if (!(params = HeapAlloc( GetProcessHeap(), 0, sizeof(*params) + uaddrlen + send_len )))
     {
-        SetLastError(ret);
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return SOCKET_ERROR;
     }
+    params->addr_len = uaddrlen;
+    params->synchronous = FALSE;
+    memcpy( params + 1, &uaddr, uaddrlen );
+    memcpy( (char *)(params + 1) + uaddrlen, send_buffer, send_len );
 
-    release_sock_fd( s, fd );
-    return FALSE;
-
-connection_success:
-    release_sock_fd( s, fd );
-    return TRUE;
+    status = NtDeviceIoControlFile( SOCKET2HANDLE(s), overlapped->hEvent, NULL, cvalue,
+                                    (IO_STATUS_BLOCK *)overlapped, IOCTL_AFD_WINE_CONNECT,
+                                    params, sizeof(*params) + uaddrlen + send_len, NULL, 0 );
+    HeapFree( GetProcessHeap(), 0, params );
+    if (ret_len) *ret_len = overlapped->InternalHigh;
+    SetLastError( NtStatusToWSAError( status ) );
+    return !status;
 }
 
 /***********************************************************************
