@@ -2680,7 +2680,6 @@ AC_CHECK_FUNCS(\
 	log2f \
 	remainder \
 	remainderf \
-	remquo \
 	remquof \
 	tgamma \
 	tgammaf

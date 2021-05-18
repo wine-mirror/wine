@@ -5496,12 +5496,87 @@ float CDECL remainderf(float x, float y)
 
 /*********************************************************************
  *      remquo (MSVCR120.@)
+ *
+ * Copied from musl: src/math/remquo.c
  */
 double CDECL remquo(double x, double y, int *quo)
 {
-    if(!isfinite(x)) *_errno() = EDOM;
-    if(isnan(y) || y==0.0) *_errno() = EDOM;
-    return unix_funcs->remquo( x, y, quo );
+    UINT64 uxi = *(UINT64*)&x;
+    UINT64 uyi = *(UINT64*)&y;
+    int ex = uxi >> 52 & 0x7ff;
+    int ey = uyi >> 52 & 0x7ff;
+    int sx = uxi >> 63;
+    int sy = uyi >> 63;
+    UINT32 q;
+    UINT64 i;
+
+    *quo = 0;
+    if (y == 0 || isinf(x)) *_errno() = EDOM;
+    if (uyi << 1 == 0 || isnan(y) || ex == 0x7ff)
+        return (x * y) / (x * y);
+    if (uxi << 1 == 0)
+        return x;
+
+    /* normalize x and y */
+    if (!ex) {
+        for (i = uxi << 12; i >> 63 == 0; ex--, i <<= 1);
+        uxi <<= -ex + 1;
+    } else {
+        uxi &= -1ULL >> 12;
+        uxi |= 1ULL << 52;
+    }
+    if (!ey) {
+        for (i = uyi << 12; i >> 63 == 0; ey--, i <<= 1);
+        uyi <<= -ey + 1;
+    } else {
+        uyi &= -1ULL >> 12;
+        uyi |= 1ULL << 52;
+    }
+
+    q = 0;
+    if (ex < ey) {
+        if (ex+1 == ey)
+            goto end;
+        return x;
+    }
+
+    /* x mod y */
+    for (; ex > ey; ex--) {
+        i = uxi - uyi;
+        if (i >> 63 == 0) {
+            uxi = i;
+            q++;
+        }
+        uxi <<= 1;
+        q <<= 1;
+    }
+    i = uxi - uyi;
+    if (i >> 63 == 0) {
+        uxi = i;
+        q++;
+    }
+    if (uxi == 0)
+        ex = -60;
+    else
+        for (; uxi >> 52 == 0; uxi <<= 1, ex--);
+end:
+    /* scale result and decide between |x| and |x|-|y| */
+    if (ex > 0) {
+        uxi -= 1ULL << 52;
+        uxi |= (UINT64)ex << 52;
+    } else {
+        uxi >>= -ex + 1;
+    }
+    x = *(double*)&uxi;
+    if (sy)
+        y = -y;
+    if (ex == ey || (ex + 1 == ey && (2 * x > y || (2 * x == y && q % 2)))) {
+        x -= y;
+        q++;
+    }
+    q &= 0x7fffffff;
+    *quo = sx ^ sy ? -(int)q : (int)q;
+    return sx ? -x : x;
 }
 
 /*********************************************************************

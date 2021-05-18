@@ -502,19 +502,6 @@ static float CDECL unix_remainderf(float x, float y)
 }
 
 /*********************************************************************
- *      remquo
- */
-static double CDECL unix_remquo(double x, double y, int *quo)
-{
-#ifdef HAVE_REMQUO
-    return remquo(x, y, quo);
-#else
-    FIXME( "not implemented\n" );
-    return 0;
-#endif
-}
-
-/*********************************************************************
  *      remquof
  */
 static float CDECL unix_remquof(float x, float y, int *quo)
@@ -662,7 +649,6 @@ static const struct unix_funcs funcs =
     unix_powf,
     unix_remainder,
     unix_remainderf,
-    unix_remquo,
     unix_remquof,
     unix_sin,
     unix_sinf,

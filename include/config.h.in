@@ -636,9 +636,6 @@
 /* Define to 1 if you have the `remainderf' function. */
 #undef HAVE_REMAINDERF
 
-/* Define to 1 if you have the `remquo' function. */
-#undef HAVE_REMQUO
-
 /* Define to 1 if you have the `remquof' function. */
 #undef HAVE_REMQUOF
 
