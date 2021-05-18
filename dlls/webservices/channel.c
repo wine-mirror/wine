@@ -1177,18 +1177,52 @@ static HRESULT open_channel( struct channel *channel, const WS_ENDPOINT_ADDRESS 
     return hr;
 }
 
+struct open_channel
+{
+    struct task                task;
+    struct channel            *channel;
+    const WS_ENDPOINT_ADDRESS *endpoint;
+    WS_ASYNC_CONTEXT           ctx;
+};
+
+static void open_channel_proc( struct task *task )
+{
+    struct open_channel *o = (struct open_channel *)task;
+    HRESULT hr;
+
+    hr = open_channel( o->channel, o->endpoint );
+
+    TRACE( "calling %p(%08x)\n", o->ctx.callback, hr );
+    o->ctx.callback( hr, WS_LONG_CALLBACK, o->ctx.callbackState );
+    TRACE( "%p returned\n", o->ctx.callback );
+}
+
+static HRESULT queue_open_channel( struct channel *channel, const WS_ENDPOINT_ADDRESS *endpoint,
+                                   const WS_ASYNC_CONTEXT *ctx )
+{
+    struct open_channel *o;
+
+    if (!(o = heap_alloc( sizeof(*o) ))) return E_OUTOFMEMORY;
+    o->task.proc = open_channel_proc;
+    o->channel   = channel;
+    o->endpoint  = endpoint;
+    o->ctx       = *ctx;
+    return queue_task( &channel->send_q, &o->task );
+}
+
 /**************************************************************************
  *          WsOpenChannel		[webservices.@]
  */
-HRESULT WINAPI WsOpenChannel( WS_CHANNEL *handle, const WS_ENDPOINT_ADDRESS *endpoint,
-                              const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
+HRESULT WINAPI WsOpenChannel( WS_CHANNEL *handle, const WS_ENDPOINT_ADDRESS *endpoint, const WS_ASYNC_CONTEXT *ctx,
+                              WS_ERROR *error )
 {
     struct channel *channel = (struct channel *)handle;
+    WS_ASYNC_CONTEXT ctx_local;
+    struct async async;
     HRESULT hr;
 
     TRACE( "%p %p %p %p\n", handle, endpoint, ctx, error );
     if (error) FIXME( "ignoring error parameter\n" );
-    if (ctx) FIXME( "ignoring ctx parameter\n" );
 
     if (!channel || !endpoint) return E_INVALIDARG;
 
@@ -1205,7 +1239,13 @@ HRESULT WINAPI WsOpenChannel( WS_CHANNEL *handle, const WS_ENDPOINT_ADDRESS *end
         return WS_E_INVALID_OPERATION;
     }
 
-    hr = open_channel( channel, endpoint );
+    if (!ctx) async_init( &async, &ctx_local );
+    hr = queue_open_channel( channel, endpoint, ctx ? ctx : &ctx_local );
+    if (!ctx)
+    {
+        if (hr == WS_S_ASYNC) hr = async_wait( &async );
+        CloseHandle( async.done );
+    }
 
     LeaveCriticalSection( &channel->cs );
     TRACE( "returning %08x\n", hr );
