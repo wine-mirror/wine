@@ -1280,6 +1280,8 @@ static void free_per_thread_data(void)
 
     if (!ptb) return;
 
+    CloseHandle( ptb->sync_event );
+
     /* delete scratch buffers */
     HeapFree( GetProcessHeap(), 0, ptb->he_buffer );
     HeapFree( GetProcessHeap(), 0, ptb->se_buffer );
@@ -1288,6 +1290,16 @@ static void free_per_thread_data(void)
 
     HeapFree( GetProcessHeap(), 0, ptb );
     NtCurrentTeb()->WinSockData = NULL;
+}
+
+static HANDLE get_sync_event(void)
+{
+    struct per_thread_data *data;
+
+    if (!(data = get_per_thread_data())) return NULL;
+    if (!data->sync_event)
+        data->sync_event = CreateEventW( NULL, TRUE, FALSE, NULL );
+    return data->sync_event;
 }
 
 /***********************************************************************
@@ -2339,19 +2351,15 @@ SOCKET WINAPI WS_accept( SOCKET s, struct WS_sockaddr *addr, int *len )
 
     TRACE("%#lx\n", s);
 
-    if (!(sync_event = CreateEventW( NULL, TRUE, FALSE, NULL ))) return INVALID_SOCKET;
+    if (!(sync_event = get_sync_event())) return INVALID_SOCKET;
     status = NtDeviceIoControlFile( SOCKET2HANDLE(s), (HANDLE)((ULONG_PTR)sync_event | 0), NULL, NULL, &io,
                                     IOCTL_AFD_WINE_ACCEPT, NULL, 0, &accept_handle, sizeof(accept_handle) );
     if (status == STATUS_PENDING)
     {
         if (WaitForSingleObject( sync_event, INFINITE ) == WAIT_FAILED)
-        {
-            CloseHandle( sync_event );
             return SOCKET_ERROR;
-        }
         status = io.u.Status;
     }
-    CloseHandle( sync_event );
     if (status)
     {
         WARN("failed; status %#x\n", status);

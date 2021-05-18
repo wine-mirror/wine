@@ -181,6 +181,7 @@ UINT sock_get_error( int err ) DECLSPEC_HIDDEN;
 
 struct per_thread_data
 {
+    HANDLE sync_event; /* event to wait on for synchronous ioctls */
     int opentype;
     struct WS_hostent *he_buffer;
     struct WS_servent *se_buffer;
