@@ -453,6 +453,10 @@ static void test_Win32_Baseboard( IWbemServices *services )
     SysFreeString( wql );
 }
 
+static void test_Win32_Process_created_process(void)
+{
+}
+
 static void test_Win32_Process( IWbemServices *services, BOOL use_full_path )
 {
     static const LONG expected_flavor = WBEM_FLAVOR_FLAG_PROPAGATE_TO_INSTANCE |
@@ -460,15 +464,19 @@ static void test_Win32_Process( IWbemServices *services, BOOL use_full_path )
                                         WBEM_FLAVOR_ORIGIN_PROPAGATED;
     WCHAR full_path[MAX_COMPUTERNAME_LENGTH + ARRAY_SIZE( L"\\\\%s\\ROOT\\CIMV2:" )];
     BSTR class, method;
-    IWbemClassObject *process, *sig_in, *sig_out, *out;
+    IWbemClassObject *process, *sig_in, *sig_out, *out, *params;
+    WCHAR cmdlineW[MAX_PATH + 64 + 1];
     IWbemQualifierSet *qualifiers;
     VARIANT retval, val;
     SAFEARRAY *names;
     LONG bound, i;
     DWORD full_path_len = 0;
+    ULONG refcount;
     LONG flavor;
     CIMTYPE type;
     HRESULT hr;
+    DWORD ret;
+    HANDLE h;
 
     if (use_full_path)
     {
@@ -510,6 +518,109 @@ static void test_Win32_Process( IWbemServices *services, BOOL use_full_path )
     ok( hr == WBEM_E_NOT_FOUND, "Got unexpected hr %#x\n", hr );
     ok( !sig_in, "Got unexpected sig_in %p.\n", sig_in );
     ok( !sig_out, "Got unexpected sig_out %p.\n", sig_out );
+
+    sig_in = (void *)0xdeadbeef;
+    sig_out = (void *)0xdeadbeef;
+    hr = IWbemClassObject_GetMethod( process, L"Create", 0, &sig_in, &sig_out );
+    ok( hr == S_OK, "Got unexpected hr %#x\n", hr );
+    ok( !!sig_in, "Got unexpected sig_in %p.\n", sig_in );
+    ok( !!sig_out, "Got unexpected sig_out %p.\n", sig_out );
+
+    hr = IWbemClassObject_SpawnInstance( sig_in, 0, &params );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    out = NULL;
+    class = SysAllocString( L"Win32_Process" );
+    method = SysAllocString( L"Create" );
+    hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, params, &out, NULL );
+    ok( hr == S_OK, "failed to execute method %08x\n", hr );
+    SysFreeString( method );
+    SysFreeString( class );
+
+    VariantInit( &retval );
+    hr = IWbemClassObject_Get( out, L"ReturnValue", 0, &retval, &type, NULL );
+    ok( hr == S_OK, "failed to get return value %08x\n", hr );
+    ok( V_VT( &retval ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &retval ) );
+    ok( V_I4( &retval ) == 21, "unexpected error %u\n", V_I4( &retval ) );
+
+    IWbemClassObject_Release( out );
+
+    V_VT( &val ) = VT_BSTR;
+    V_BSTR( &val ) = SysAllocString( L"unknown" );
+    hr = IWbemClassObject_Put( params, L"CommandLine", 0, &val, 0 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    VariantClear( &val );
+
+    out = NULL;
+    class = SysAllocString( L"Win32_Process" );
+    method = SysAllocString( L"Create" );
+    hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, params, &out, NULL );
+    ok( hr == S_OK, "failed to execute method %08x\n", hr );
+    SysFreeString( method );
+    SysFreeString( class );
+
+    VariantInit( &retval );
+    hr = IWbemClassObject_Get( out, L"ReturnValue", 0, &retval, &type, NULL );
+    ok( hr == S_OK, "failed to get return value %08x\n", hr );
+    ok( V_VT( &retval ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &retval ) );
+    ok( V_I4( &retval ) == 9, "unexpected error %u\n", V_I4( &retval ) );
+
+    VariantInit( &retval );
+    V_VT( &retval ) = VT_I4;
+    hr = IWbemClassObject_Get( out, L"ProcessId", 0, &retval, &type, NULL );
+    ok( hr == S_OK, "failed to get return value %08x\n", hr );
+    todo_wine ok( V_VT( &retval ) == VT_NULL && type == CIM_UINT32, "unexpected variant type 0x%x, type %u\n",
+            V_VT( &retval ), type );
+
+    IWbemClassObject_Release( out );
+
+    ret = GetModuleFileNameW( NULL, cmdlineW, MAX_PATH + 1 );
+    ok( ret < MAX_PATH + 1, "Got unexpected ret %u.\n", ret );
+    lstrcatW( cmdlineW, L" query created_process");
+    V_VT( &val ) = VT_BSTR;
+    V_BSTR( &val ) = SysAllocString( cmdlineW );
+    hr = IWbemClassObject_Put( params, L"CommandLine", 0, &val, 0 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    VariantClear( &val );
+
+    out = NULL;
+    class = SysAllocString( L"Win32_Process" );
+    method = SysAllocString( L"Create" );
+    hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, params, &out, NULL );
+    ok( hr == S_OK, "failed to execute method %08x\n", hr );
+    SysFreeString( method );
+    SysFreeString( class );
+
+    VariantInit( &retval );
+    hr = IWbemClassObject_Get( out, L"ReturnValue", 0, &retval, &type, NULL );
+    ok( hr == S_OK, "failed to get return value %08x\n", hr );
+    ok( V_VT( &retval ) == VT_I4, "unexpected variant type 0x%x\n", V_VT( &retval ) );
+    ok( !V_I4( &retval ), "unexpected error %u\n", V_I4( &retval ) );
+
+    VariantInit( &retval );
+    V_VT( &retval ) = VT_I4;
+    hr = IWbemClassObject_Get( out, L"ProcessId", 0, &retval, &type, NULL );
+    ok( hr == S_OK, "failed to get return value %08x\n", hr );
+    ok( V_VT( &retval ) == VT_I4 && type == CIM_UINT32, "unexpected variant type 0x%x, type %u\n",
+            V_VT( &retval ), type );
+    ok( !!V_UI4( &retval ), "unexpected zero pid\n" );
+
+    IWbemClassObject_Release( out );
+
+    h = OpenProcess( SYNCHRONIZE, FALSE, V_UI4( &retval ));
+    ok( !!h, "failed to open process %#x.\n", V_UI4( &retval ));
+
+    ret = WaitForSingleObject( h, INFINITE );
+    ok( ret == WAIT_OBJECT_0, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError() );
+    CloseHandle( h );
+
+    refcount = IWbemClassObject_Release( params );
+    ok( !refcount, "Got unexpected refcount %u.\n", refcount );
+
+    refcount = IWbemClassObject_Release( sig_in );
+    ok( !refcount, "Got unexpected refcount %u.\n", refcount );
+    refcount = IWbemClassObject_Release( sig_out );
+    ok( !refcount, "Got unexpected refcount %u.\n", refcount );
 
     sig_in = (void*)0xdeadbeef;
     hr = IWbemClassObject_GetMethod( process, L"getowner", 0, &sig_in, NULL );
@@ -1956,7 +2067,17 @@ START_TEST(query)
     IWbemLocator *locator;
     IWbemServices *services;
     DWORD authn_svc;
+    char **argv;
     HRESULT hr;
+    int argc;
+
+    argc = winetest_get_mainargs( &argv );
+    if (argc >= 3)
+    {
+        if (!strcmp( argv[2], "created_process" ))
+            test_Win32_Process_created_process();
+        return;
+    }
 
     CoInitialize( NULL );
     CoInitializeSecurity( NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_DEFAULT,

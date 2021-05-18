@@ -312,6 +312,7 @@ static const struct column col_process[] =
     { L"ThreadCount",     CIM_UINT32 },
     { L"WorkingSetSize",  CIM_UINT64 },
     /* methods */
+    { L"Create",          CIM_FLAG_ARRAY|COL_FLAG_METHOD },
     { L"GetOwner",        CIM_FLAG_ARRAY|COL_FLAG_METHOD },
 };
 static const struct column col_processor[] =
@@ -725,6 +726,7 @@ struct record_process
     UINT32       thread_count;
     UINT64       workingsetsize;
     /* methods */
+    class_method *create;
     class_method *get_owner;
 };
 struct record_processor
@@ -892,6 +894,9 @@ static const struct record_param data_param[] =
     { L"StdRegProv", L"CreateKey", 1, L"hDefKey", CIM_SINT32, 0x80000002 },
     { L"StdRegProv", L"CreateKey", 1, L"sSubKeyName", CIM_STRING },
     { L"StdRegProv", L"CreateKey", -1, L"ReturnValue", CIM_UINT32 },
+    { L"StdRegProv", L"DeleteKey", 1, L"hDefKey", CIM_SINT32, 0x80000002 },
+    { L"StdRegProv", L"DeleteKey", 1, L"sSubKeyName", CIM_STRING },
+    { L"StdRegProv", L"DeleteKey", -1, L"ReturnValue", CIM_UINT32 },
     { L"StdRegProv", L"EnumKey", 1, L"hDefKey", CIM_SINT32, 0x80000002 },
     { L"StdRegProv", L"EnumKey", 1, L"sSubKeyName", CIM_STRING },
     { L"StdRegProv", L"EnumKey", -1, L"ReturnValue", CIM_UINT32 },
@@ -916,13 +921,14 @@ static const struct record_param data_param[] =
     { L"StdRegProv", L"SetDWORDValue", 1, L"sValueName", CIM_STRING },
     { L"StdRegProv", L"SetDWORDValue", 1, L"uValue", CIM_UINT32 },
     { L"StdRegProv", L"SetDWORDValue", -1, L"ReturnValue", CIM_UINT32 },
-    { L"StdRegProv", L"DeleteKey", 1, L"hDefKey", CIM_SINT32, 0x80000002 },
-    { L"StdRegProv", L"DeleteKey", 1, L"sSubKeyName", CIM_STRING },
-    { L"StdRegProv", L"DeleteKey", -1, L"ReturnValue", CIM_UINT32 },
     { L"SystemRestore", L"Disable", 1, L"Drive", CIM_STRING },
     { L"SystemRestore", L"Disable", -1, L"ReturnValue", CIM_UINT32 },
     { L"SystemRestore", L"Enable", 1, L"Drive", CIM_STRING },
     { L"SystemRestore", L"Enable", -1, L"ReturnValue", CIM_UINT32 },
+    { L"Win32_Process", L"Create", 1, L"CommandLine", CIM_STRING },
+    { L"Win32_Process", L"Create", 1, L"CurrentDirectory", CIM_STRING },
+    { L"Win32_Process", L"Create", -1, L"ProcessId", CIM_UINT32 },
+    { L"Win32_Process", L"Create", -1, L"ReturnValue", CIM_UINT32 },
     { L"Win32_Process", L"GetOwner", -1, L"ReturnValue", CIM_UINT32 },
     { L"Win32_Process", L"GetOwner", -1, L"User", CIM_STRING },
     { L"Win32_Process", L"GetOwner", -1, L"Domain", CIM_STRING },
@@ -3162,6 +3168,8 @@ static enum fill_status fill_process( struct table *table, const struct expr *co
         rec->pprocess_id    = entry.th32ParentProcessID;
         rec->thread_count   = entry.cntThreads;
         rec->workingsetsize = 0;
+        /* methods */
+        rec->create         = process_create;
         rec->get_owner      = process_get_owner;
         if (!match_row( table, row, cond, &status ))
         {
