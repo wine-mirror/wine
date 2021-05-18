@@ -45,7 +45,6 @@ struct unix_funcs
     float           (CDECL *expm1f)(float x);
     double          (CDECL *fma)(double x, double y, double z);
     float           (CDECL *fmaf)(float x, float y, float z);
-    float           (CDECL *fmodf)(float x, float y);
     double          (CDECL *frexp)(double x, int *exp);
     float           (CDECL *frexpf)(float x, int *exp);
     double          (CDECL *hypot)(double x, double y);

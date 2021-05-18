@@ -620,12 +620,70 @@ float CDECL expf( float x )
 
 /*********************************************************************
  *      fmodf (MSVCRT.@)
+ *
+ * Copied from musl: src/math/fmodf.c
  */
 float CDECL fmodf( float x, float y )
 {
-  float ret = unix_funcs->fmodf( x, y );
-  if (!isfinite(x) || !isfinite(y)) return math_error(_DOMAIN, "fmodf", x, 0, ret);
-  return ret;
+    UINT32 xi = *(UINT32*)&x;
+    UINT32 yi = *(UINT32*)&y;
+    int ex = xi>>23 & 0xff;
+    int ey = yi>>23 & 0xff;
+    UINT32 sx = xi & 0x80000000;
+    UINT32 i;
+
+    if (isinf(x)) return math_error(_DOMAIN, "fmodf", x, y, (x * y) / (x * y));
+    if (yi << 1 == 0 || isnan(y) || ex == 0xff)
+        return (x * y) / (x * y);
+    if (xi << 1 <= yi << 1) {
+        if (xi << 1 == yi << 1)
+            return 0 * x;
+        return x;
+    }
+
+    /* normalize x and y */
+    if (!ex) {
+        for (i = xi << 9; i >> 31 == 0; ex--, i <<= 1);
+        xi <<= -ex + 1;
+    } else {
+        xi &= -1U >> 9;
+        xi |= 1U << 23;
+    }
+    if (!ey) {
+        for (i = yi << 9; i >> 31 == 0; ey--, i <<= 1);
+        yi <<= -ey + 1;
+    } else {
+        yi &= -1U >> 9;
+        yi |= 1U << 23;
+    }
+
+    /* x mod y */
+    for (; ex > ey; ex--) {
+        i = xi - yi;
+        if (i >> 31 == 0) {
+            if (i == 0)
+                return 0 * x;
+            xi = i;
+        }
+        xi <<= 1;
+    }
+    i = xi - yi;
+    if (i >> 31 == 0) {
+        if (i == 0)
+            return 0 * x;
+        xi = i;
+    }
+    for (; xi>>23 == 0; xi <<= 1, ex--);
+
+    /* scale result up */
+    if (ex > 0) {
+        xi -= 1U << 23;
+        xi |= (UINT32)ex << 23;
+    } else {
+        xi >>= -ex + 1;
+    }
+    xi |= sx;
+    return *(float*)&xi;
 }
 
 /*********************************************************************
@@ -633,9 +691,9 @@ float CDECL fmodf( float x, float y )
  */
 float CDECL logf( float x )
 {
-  float ret = unix_funcs->logf( x );
-  if (x < 0.0) return math_error(_DOMAIN, "logf", x, 0, ret);
-  if (x == 0.0) return math_error(_SING, "logf", x, 0, ret);
+    float ret = unix_funcs->logf( x );
+    if (x < 0.0) return math_error(_DOMAIN, "logf", x, 0, ret);
+    if (x == 0.0) return math_error(_SING, "logf", x, 0, ret);
   return ret;
 }
 
