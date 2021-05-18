@@ -2352,8 +2352,8 @@ SOCKET WINAPI WS_accept( SOCKET s, struct WS_sockaddr *addr, int *len )
     TRACE("%#lx\n", s);
 
     if (!(sync_event = get_sync_event())) return INVALID_SOCKET;
-    status = NtDeviceIoControlFile( SOCKET2HANDLE(s), (HANDLE)((ULONG_PTR)sync_event | 0), NULL, NULL, &io,
-                                    IOCTL_AFD_WINE_ACCEPT, NULL, 0, &accept_handle, sizeof(accept_handle) );
+    status = NtDeviceIoControlFile( (HANDLE)s, sync_event, NULL, NULL, &io, IOCTL_AFD_WINE_ACCEPT,
+                                    NULL, 0, &accept_handle, sizeof(accept_handle) );
     if (status == STATUS_PENDING)
     {
         if (WaitForSingleObject( sync_event, INFINITE ) == WAIT_FAILED)
