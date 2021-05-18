@@ -371,6 +371,22 @@ RECT get_virtual_screen_rect(void)
     return info.virtual_rect;
 }
 
+static BOOL CALLBACK get_monitor_count_proc( HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lp )
+{
+    INT *count = (INT *)lp;
+
+    ++(*count);
+    return TRUE;
+}
+
+static INT get_monitor_count(void)
+{
+    INT count = 0;
+
+    EnumDisplayMonitors( 0, NULL, get_monitor_count_proc, (LPARAM)&count );
+    return count;
+}
+
 static BOOL get_primary_adapter(WCHAR *name)
 {
     DISPLAY_DEVICEW dd;
@@ -2717,8 +2733,7 @@ INT WINAPI GetSystemMetrics( INT index )
         get_monitors_info( &info );
         return info.virtual_rect.bottom - info.virtual_rect.top;
     case SM_CMONITORS:
-        get_monitors_info( &info );
-        return info.count;
+        return get_monitor_count();
     case SM_SAMEDISPLAYFORMAT:
         return 1;
     case SM_IMMENABLED:
