@@ -371,6 +371,27 @@ RECT get_virtual_screen_rect(void)
     return info.virtual_rect;
 }
 
+static BOOL CALLBACK get_primary_monitor_proc( HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lp )
+{
+    RECT *primary_rect = (RECT *)lp;
+
+    if (!rect->top && !rect->left && rect->right && rect->bottom)
+    {
+        *primary_rect = *rect;
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static RECT get_primary_monitor_rect(void)
+{
+    RECT rect = {0};
+
+    EnumDisplayMonitors( 0, NULL, get_primary_monitor_proc, (LPARAM)&rect );
+    return rect;
+}
+
 static BOOL CALLBACK get_monitor_count_proc( HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lp )
 {
     INT *count = (INT *)lp;
@@ -2510,6 +2531,7 @@ INT WINAPI GetSystemMetrics( INT index )
     NONCLIENTMETRICSW ncm;
     MINIMIZEDMETRICS mm;
     ICONMETRICSW im;
+    RECT rect;
     UINT ret;
     HDC hdc;
 
@@ -2715,11 +2737,11 @@ INT WINAPI GetSystemMetrics( INT index )
     case SM_MOUSEWHEELPRESENT:
         return 1;
     case SM_CXSCREEN:
-        get_monitors_info( &info );
-        return info.primary_rect.right - info.primary_rect.left;
+        rect = get_primary_monitor_rect();
+        return rect.right - rect.left;
     case SM_CYSCREEN:
-        get_monitors_info( &info );
-        return info.primary_rect.bottom - info.primary_rect.top;
+        rect = get_primary_monitor_rect();
+        return rect.bottom - rect.top;
     case SM_XVIRTUALSCREEN:
         get_monitors_info( &info );
         return info.virtual_rect.left;
