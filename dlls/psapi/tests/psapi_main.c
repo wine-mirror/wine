@@ -161,7 +161,6 @@ static void test_EnumProcessModules(void)
 
         ret = GetModuleFileNameExA(pi.hProcess, hMod, name, sizeof(name));
         ok(ret, "got error %u\n", GetLastError());
-todo_wine
         ok(!strcmp(name, buffer), "got %s\n", name);
 
         ret = GetModuleInformation(pi.hProcess, hMod, &info, sizeof(info));

@@ -782,7 +782,7 @@ static BOOL init_module_iterator( struct module_iterator *iter, HANDLE process )
         DWORD ldr_data32, first_module;
         PEB32 *peb32;
 
-        peb32 = (PEB32 *)(DWORD_PTR)pbi.PebBaseAddress;
+        peb32 = (PEB32 *)((char *)pbi.PebBaseAddress + 0x1000);
         if (!ReadProcessMemory( process, &peb32->LdrData, &ldr_data32, sizeof(ldr_data32), NULL ))
             return FALSE;
         ldr_data32_ptr = (PEB_LDR_DATA32 *)(DWORD_PTR) ldr_data32;
