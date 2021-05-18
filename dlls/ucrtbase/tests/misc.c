@@ -1371,6 +1371,172 @@ static void test_thread_storage(void)
             "can't find se_translator in thread storage\n");
 }
 
+static unsigned long fenv_encode(unsigned int e)
+{
+    ok(!(e & ~FE_ALL_EXCEPT), "incorrect argument: %x\n", e);
+
+#if defined(__i386__)
+    return e<<24 | e<<16 | e;
+#else
+    return e<<24 | e;
+#endif
+}
+
+static void test_fenv(void)
+{
+#if defined(__i386__) || defined(__x86_64__)
+    static const int tests[] = {
+        0,
+        FE_INEXACT,
+        FE_UNDERFLOW,
+        FE_OVERFLOW,
+        FE_DIVBYZERO,
+        FE_INVALID,
+        FE_ALL_EXCEPT,
+    };
+    static const struct {
+        fexcept_t except;
+        unsigned int flag;
+        unsigned int get;
+        fexcept_t expect;
+    } tests2[] = {
+        /* except                   flag                     get             expect */
+        { 0,                        0,                       0,              0 },
+        { FE_ALL_EXCEPT,            FE_INEXACT,              0,              0 },
+        { FE_ALL_EXCEPT,            FE_INEXACT,              FE_ALL_EXCEPT,  FE_INEXACT },
+        { FE_ALL_EXCEPT,            FE_INEXACT,              FE_INEXACT,     FE_INEXACT },
+        { FE_ALL_EXCEPT,            FE_INEXACT,              FE_OVERFLOW,    0 },
+        { FE_ALL_EXCEPT,            FE_ALL_EXCEPT,           FE_ALL_EXCEPT,  FE_ALL_EXCEPT },
+        { FE_ALL_EXCEPT,            FE_ALL_EXCEPT,           FE_INEXACT,     FE_INEXACT },
+        { FE_ALL_EXCEPT,            FE_ALL_EXCEPT,           0,              0 },
+        { FE_ALL_EXCEPT,            FE_ALL_EXCEPT,           ~0,             FE_ALL_EXCEPT },
+        { FE_ALL_EXCEPT,            FE_ALL_EXCEPT,           ~FE_ALL_EXCEPT, 0 },
+        { FE_INEXACT,               FE_ALL_EXCEPT,           FE_ALL_EXCEPT,  FE_INEXACT },
+        { FE_INEXACT,               FE_UNDERFLOW,            FE_ALL_EXCEPT,  0 },
+        { FE_UNDERFLOW,             FE_INEXACT,              FE_ALL_EXCEPT,  0 },
+        { FE_INEXACT|FE_UNDERFLOW,  FE_UNDERFLOW,            FE_ALL_EXCEPT,  FE_UNDERFLOW },
+        { FE_UNDERFLOW,             FE_INEXACT|FE_UNDERFLOW, FE_ALL_EXCEPT,  FE_UNDERFLOW },
+    };
+    fenv_t env, env2;
+    fexcept_t except;
+    int i, ret, flags;
+
+    _clearfp();
+
+    ret = fegetenv(&env);
+    ok(!ret, "fegetenv returned %x\n", ret);
+    if (env._Fe_ctl >> 24 != (env._Fe_ctl & 0xff))
+    {
+        win_skip("fenv_t format not supported (too old ucrtbase)\n");
+        return;
+    }
+    fesetround(FE_UPWARD);
+    ok(!env._Fe_stat, "env._Fe_stat = %lx\n", env._Fe_stat);
+    ret = fegetenv(&env2);
+    ok(!ret, "fegetenv returned %x\n", ret);
+    ok(env._Fe_ctl != env2._Fe_ctl, "fesetround didn't change _Fe_ctl (%lx).", env._Fe_ctl);
+    ret = fesetenv(&env);
+    ok(!ret, "fesetenv returned %x\n", ret);
+    ret = fegetround();
+    ok(ret == FE_TONEAREST, "Got unexpected round mode %#x.\n", ret);
+
+    except = fenv_encode(FE_ALL_EXCEPT);
+    ret = fesetexceptflag(&except, FE_INEXACT|FE_UNDERFLOW);
+    ok(!ret, "fesetexceptflag returned %x\n", ret);
+    except = fetestexcept(FE_ALL_EXCEPT);
+    ok(except == (FE_INEXACT|FE_UNDERFLOW), "expected %x, got %lx\n", FE_INEXACT|FE_UNDERFLOW, except);
+
+    ret = feclearexcept(~FE_ALL_EXCEPT);
+    ok(!ret, "feclearexceptflag returned %x\n", ret);
+    except = fetestexcept(FE_ALL_EXCEPT);
+    ok(except == (FE_INEXACT|FE_UNDERFLOW), "expected %x, got %lx\n", FE_INEXACT|FE_UNDERFLOW, except);
+
+    /* no crash, but no-op */
+    ret = fesetexceptflag(NULL, 0);
+    ok(!ret, "fesetexceptflag returned %x\n", ret);
+    except = fetestexcept(FE_ALL_EXCEPT);
+    ok(except == (FE_INEXACT|FE_UNDERFLOW), "expected %x, got %lx\n", FE_INEXACT|FE_UNDERFLOW, except);
+
+    /* zero clears all */
+    except = 0;
+    ret = fesetexceptflag(&except, FE_ALL_EXCEPT);
+    ok(!ret, "fesetexceptflag returned %x\n", ret);
+    except = fetestexcept(FE_ALL_EXCEPT);
+    ok(!except, "expected 0, got %lx\n", except);
+
+    ret = fetestexcept(FE_ALL_EXCEPT);
+    ok(!ret, "fetestexcept returned %x\n", ret);
+
+    flags = 0;
+    /* adding bits with flags */
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
+        except = fenv_encode(FE_ALL_EXCEPT);
+        ret = fesetexceptflag(&except, tests[i]);
+        ok(!ret, "Test %d: fesetexceptflag returned %x\n", i, ret);
+
+        ret = fetestexcept(tests[i]);
+        ok(ret == tests[i], "Test %d: expected %x, got %x\n", i, tests[i], ret);
+
+        flags |= tests[i];
+        ret = fetestexcept(FE_ALL_EXCEPT);
+        ok(ret == flags, "Test %d: expected %x, got %x\n", i, flags, ret);
+
+        except = ~0;
+        ret = fegetexceptflag(&except, ~0);
+        ok(!ret, "Test %d: fegetexceptflag returned %x.\n", i, ret);
+        ok(except == fenv_encode(flags),
+                "Test %d: expected %x, got %lx\n", i, flags, except);
+
+        except = ~0;
+        ret = fegetexceptflag(&except, tests[i]);
+        ok(!ret, "Test %d: fegetexceptflag returned %x.\n", i, ret);
+        ok(except == fenv_encode(tests[i]),
+                "Test %d: expected %x, got %lx\n", i, tests[i], except);
+    }
+
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
+        ret = feclearexcept(tests[i]);
+        ok(!ret, "Test %d: feclearexceptflag returned %x\n", i, ret);
+
+        flags &= ~tests[i];
+        except = fetestexcept(tests[i]);
+        ok(!except, "Test %d: expected %x, got %lx\n", i, flags, except);
+    }
+
+    except = fetestexcept(FE_ALL_EXCEPT);
+    ok(!except, "expected 0, got %lx\n", except);
+
+    /* setting bits with except */
+    for(i=0; i<ARRAY_SIZE(tests); i++) {
+        except = fenv_encode(tests[i]);
+        ret = fesetexceptflag(&except, FE_ALL_EXCEPT);
+        ok(!ret, "Test %d: fesetexceptflag returned %x\n", i, ret);
+
+        ret = fetestexcept(tests[i]);
+        ok(ret == tests[i], "Test %d: expected %x, got %x\n", i, tests[i], ret);
+
+        ret = fetestexcept(FE_ALL_EXCEPT);
+        ok(ret == tests[i], "Test %d: expected %x, got %x\n", i, tests[i], ret);
+    }
+
+    for(i=0; i<ARRAY_SIZE(tests2); i++) {
+        _clearfp();
+
+        except = fenv_encode(tests2[i].except);
+        ret = fesetexceptflag(&except, tests2[i].flag);
+        ok(!ret, "Test %d: fesetexceptflag returned %x\n", i, ret);
+
+        ret = fetestexcept(tests2[i].get);
+        ok(ret == tests2[i].expect, "Test %d: expected %lx, got %x\n", i, tests2[i].expect, ret);
+    }
+
+    ret = feclearexcept(FE_ALL_EXCEPT);
+    ok(!ret, "feclearexceptflag returned %x\n", ret);
+    except = fetestexcept(FE_ALL_EXCEPT);
+    ok(!except, "expected 0, got %lx\n", except);
+#endif
+}
+
 START_TEST(misc)
 {
     int arg_c;
@@ -1411,4 +1577,5 @@ START_TEST(misc)
     test__o_malloc();
     test_clock();
     test_thread_storage();
+    test_fenv();
 }
