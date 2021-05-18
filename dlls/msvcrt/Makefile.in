@@ -38,6 +38,7 @@ C_SRCS = \
 	process.c \
 	scanf.c \
 	scheduler.c \
+	sincos.c \
 	string.c \
 	thread.c \
 	time.c \
