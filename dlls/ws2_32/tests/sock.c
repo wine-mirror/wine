@@ -4159,7 +4159,7 @@ static void test_connect_events(struct event_test_ctx *ctx)
     if (ctx->is_message)
         check_events(ctx, FD_WRITE, 0, 200);
     else
-        check_events_todo(ctx, FD_CONNECT, FD_WRITE, 200);
+        check_events(ctx, FD_CONNECT, FD_WRITE, 200);
 
     closesocket(client);
     closesocket(server);
@@ -6117,25 +6117,8 @@ todo_wine
 
     /* try to connect a socket that's being accepted into */
     iret = connect(acceptor,  (struct sockaddr*)&bindAddress, sizeof(bindAddress));
-    todo_wine ok(iret == SOCKET_ERROR && WSAGetLastError() == WSAEINVAL,
+    ok(iret == SOCKET_ERROR && WSAGetLastError() == WSAEINVAL,
        "connecting to acceptex acceptor succeeded? return %d + errno %d\n", iret, WSAGetLastError());
-    if (!iret || (iret == SOCKET_ERROR && WSAGetLastError() == WSAEWOULDBLOCK)) {
-        /* We need to cancel this call, otherwise things fail */
-        closesocket(acceptor);
-        acceptor = socket(AF_INET, SOCK_STREAM, 0);
-        ok(acceptor != INVALID_SOCKET, "failed to create socket, error %u\n", GetLastError());
-
-        bret = CancelIo((HANDLE) listener);
-        ok(bret, "Failed to cancel failed test. Bailing...\n");
-        if (!bret) return;
-
-        overlapped.Internal = 0xdeadbeef;
-        bret = pAcceptEx(listener, acceptor, buffer, 0,
-            sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
-            &bytesReturned, &overlapped);
-        ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING, "AcceptEx returned %d + errno %d\n", bret, WSAGetLastError());
-        ok(overlapped.Internal == STATUS_PENDING, "got %08x\n", (ULONG)overlapped.Internal);
-    }
 
     bret = pConnectEx(acceptor, (struct sockaddr *)&bindAddress, sizeof(bindAddress),
             NULL, 0, &bytesReturned, &overlapped2);

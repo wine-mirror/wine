@@ -1145,13 +1145,6 @@ static void _get_sock_errors(SOCKET s, int *events)
     SERVER_END_REQ;
 }
 
-static int get_sock_error(SOCKET s, unsigned int bit)
-{
-    int events[FD_MAX_EVENTS];
-    _get_sock_errors(s, events);
-    return events[bit];
-}
-
 static int _get_fd_type(int fd)
 {
     int sock_type = -1;
@@ -2976,81 +2969,64 @@ int WINAPI WS_closesocket(SOCKET s)
     return res;
 }
 
-static int do_connect(int fd, const struct WS_sockaddr* name, int namelen)
+
+/***********************************************************************
+ *      connect   (ws2_32.4)
+ */
+int WINAPI WS_connect( SOCKET s, const struct WS_sockaddr *addr, int len )
 {
     union generic_unix_sockaddr uaddr;
-    unsigned int uaddrlen = ws_sockaddr_ws2u(name, namelen, &uaddr);
+    unsigned int uaddrlen = ws_sockaddr_ws2u( addr, len, &uaddr );
+    struct afd_connect_params *params;
+    IO_STATUS_BLOCK io;
+    HANDLE sync_event;
+    NTSTATUS status;
+
+    TRACE( "socket %#lx, addr %s, len %d\n", s, debugstr_sockaddr(addr), len );
 
     if (!uaddrlen)
-        return WSAEFAULT;
-
-    if (name->sa_family == WS_AF_INET)
     {
-        struct sockaddr_in *in4 = (struct sockaddr_in*) &uaddr;
-        if (memcmp(&in4->sin_addr, magic_loopback_addr, 4) == 0)
+        SetLastError( WSAEFAULT );
+        return -1;
+    }
+
+    if (addr->sa_family == WS_AF_INET)
+    {
+        struct sockaddr_in *in4 = (struct sockaddr_in *)&uaddr;
+        if (!memcmp(&in4->sin_addr, magic_loopback_addr, sizeof(magic_loopback_addr)))
         {
-            /* Trying to connect to magic replace-loopback address,
-                * assuming we really want to connect to localhost */
-            TRACE("Trying to connect to magic IP address, using "
-                    "INADDR_LOOPBACK instead.\n");
+            TRACE("Replacing magic address 127.12.34.56 with INADDR_LOOPBACK.\n");
             in4->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
         }
     }
 
-    if (connect(fd, &uaddr.addr, uaddrlen) == 0)
-        return 0;
+    if (!(sync_event = get_sync_event())) return -1;
 
-    return wsaErrno();
-}
-
-/***********************************************************************
- *		connect		(WS2_32.4)
- */
-int WINAPI WS_connect(SOCKET s, const struct WS_sockaddr* name, int namelen)
-{
-    int fd = get_sock_fd( s, FILE_READ_DATA, NULL );
-
-    TRACE("socket %04lx, ptr %p %s, length %d\n", s, name, debugstr_sockaddr(name), namelen);
-
-    if (fd != -1)
+    if (!(params = HeapAlloc( GetProcessHeap(), 0, sizeof(*params) + uaddrlen )))
     {
-        BOOL is_blocking;
-        int ret = do_connect(fd, name, namelen);
-        if (ret == 0)
-            goto connect_success;
-
-        if (ret == WSAEWOULDBLOCK)
-        {
-            /* tell wineserver that a connection is in progress */
-            _enable_event(SOCKET2HANDLE(s), FD_CONNECT|FD_READ|FD_WRITE,
-                          FD_CONNECT,
-                          FD_WINE_CONNECTED|FD_WINE_LISTENING);
-            ret = sock_is_blocking( s, &is_blocking );
-            if (!ret)
-            {
-                if (is_blocking)
-                {
-                    do_block(fd, POLLIN | POLLOUT, -1);
-                    _sync_sock_state(s); /* let wineserver notice connection */
-                    /* retrieve any error codes from it */
-                    if (!(ret = get_sock_error(s, FD_CONNECT_BIT))) goto connect_success;
-                }
-                else ret = WSAEWOULDBLOCK;
-            }
-        }
-        release_sock_fd( s, fd );
-        SetLastError(ret);
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return -1;
     }
-    return SOCKET_ERROR;
+    params->addr_len = uaddrlen;
+    params->synchronous = TRUE;
+    memcpy(params + 1, &uaddr, uaddrlen);
 
-connect_success:
-    release_sock_fd( s, fd );
-    _enable_event(SOCKET2HANDLE(s), FD_CONNECT|FD_READ|FD_WRITE,
-                  FD_WINE_CONNECTED|FD_READ|FD_WRITE,
-                  FD_CONNECT|FD_WINE_LISTENING);
-    TRACE("\tconnected %04lx\n", s);
+    status = NtDeviceIoControlFile( (HANDLE)s, sync_event, NULL, NULL, &io, IOCTL_AFD_WINE_CONNECT,
+                                    params, sizeof(*params) + uaddrlen, NULL, 0);
+    HeapFree( GetProcessHeap(), 0, params );
+    if (status == STATUS_PENDING)
+    {
+        if (WaitForSingleObject( sync_event, INFINITE ) == WAIT_FAILED) return -1;
+        status = io.u.Status;
+    }
+    if (status)
+    {
+        SetLastError( NtStatusToWSAError( status ) );
+        return -1;
+    }
     return 0;
 }
+
 
 /***********************************************************************
  *              WSAConnect             (WS2_32.30)
