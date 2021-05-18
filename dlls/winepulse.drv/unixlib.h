@@ -86,5 +86,6 @@ struct unix_funcs
                                             DWORD flags);
     void (WINAPI *set_volumes)(struct pulse_stream *stream, float master_volume,
                                const float *volumes, const float *session_volumes);
+    HRESULT (WINAPI *set_event_handle)(struct pulse_stream *stream, HANDLE event);
     HRESULT (WINAPI *test_connect)(const char *name, struct pulse_config *config);
 };

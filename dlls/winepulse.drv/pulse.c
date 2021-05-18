@@ -1541,6 +1541,24 @@ static void WINAPI pulse_set_volumes(struct pulse_stream *stream, float master_v
         stream->vol[i] = volumes[i] * master_volume * session_volumes[i];
 }
 
+static HRESULT WINAPI pulse_set_event_handle(struct pulse_stream *stream, HANDLE event)
+{
+    HRESULT hr = S_OK;
+
+    pulse_lock();
+    if (!pulse_stream_valid(stream))
+        hr = AUDCLNT_E_DEVICE_INVALIDATED;
+    else if (!(stream->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK))
+        hr = AUDCLNT_E_EVENTHANDLE_NOT_EXPECTED;
+    else if (stream->event)
+        hr = HRESULT_FROM_WIN32(ERROR_INVALID_NAME);
+    else
+        stream->event = event;
+    pulse_unlock();
+
+    return hr;
+}
+
 static const struct unix_funcs unix_funcs =
 {
     pulse_lock,
@@ -1556,6 +1574,7 @@ static const struct unix_funcs unix_funcs =
     pulse_get_render_buffer,
     pulse_release_render_buffer,
     pulse_set_volumes,
+    pulse_set_event_handle,
     pulse_test_connect,
 };
 

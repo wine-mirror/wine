@@ -943,28 +943,15 @@ static HRESULT WINAPI AudioClient_SetEventHandle(IAudioClient3 *iface,
         HANDLE event)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    HRESULT hr;
 
     TRACE("(%p)->(%p)\n", This, event);
 
     if (!event)
         return E_INVALIDARG;
+    if (!This->pulse_stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
 
-    pulse->lock();
-    hr = pulse_stream_valid(This);
-    if (FAILED(hr)) {
-        pulse->unlock();
-        return hr;
-    }
-
-    if (!(This->pulse_stream->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK))
-        hr = AUDCLNT_E_EVENTHANDLE_NOT_EXPECTED;
-    else if (This->pulse_stream->event)
-        hr = HRESULT_FROM_WIN32(ERROR_INVALID_NAME);
-    else
-        This->pulse_stream->event = event;
-    pulse->unlock();
-    return hr;
+    return pulse->set_event_handle(This->pulse_stream, event);
 }
 
 static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
