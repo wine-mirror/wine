@@ -820,14 +820,45 @@ static HRESULT shutdown_session( struct channel *channel )
     }
 }
 
+struct shutdown_session
+{
+    struct task      task;
+    struct channel  *channel;
+    WS_ASYNC_CONTEXT ctx;
+};
+
+static void shutdown_session_proc( struct task *task )
+{
+    struct shutdown_session *s = (struct shutdown_session *)task;
+    HRESULT hr;
+
+    hr = shutdown_session( s->channel );
+
+    TRACE( "calling %p(%08x)\n", s->ctx.callback, hr );
+    s->ctx.callback( hr, WS_LONG_CALLBACK, s->ctx.callbackState );
+    TRACE( "%p returned\n", s->ctx.callback );
+}
+
+static HRESULT queue_shutdown_session( struct channel *channel, const WS_ASYNC_CONTEXT *ctx )
+{
+    struct shutdown_session *s;
+
+    if (!(s = heap_alloc( sizeof(*s) ))) return E_OUTOFMEMORY;
+    s->task.proc = shutdown_session_proc;
+    s->channel   = channel;
+    s->ctx       = *ctx;
+    return queue_task( &channel->send_q, &s->task );
+}
+
 HRESULT WINAPI WsShutdownSessionChannel( WS_CHANNEL *handle, const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
 {
     struct channel *channel = (struct channel *)handle;
+    WS_ASYNC_CONTEXT ctx_local;
+    struct async async;
     HRESULT hr;
 
     TRACE( "%p %p %p\n", handle, ctx, error );
     if (error) FIXME( "ignoring error parameter\n" );
-    if (ctx) FIXME( "ignoring ctx parameter\n" );
 
     if (!channel) return E_INVALIDARG;
 
@@ -844,7 +875,13 @@ HRESULT WINAPI WsShutdownSessionChannel( WS_CHANNEL *handle, const WS_ASYNC_CONT
         return WS_E_INVALID_OPERATION;
     }
 
-    hr = shutdown_session( channel );
+    if (!ctx) async_init( &async, &ctx_local );
+    hr = queue_shutdown_session( channel, ctx ? ctx : &ctx_local );
+    if (!ctx)
+    {
+        if (hr == WS_S_ASYNC) hr = async_wait( &async );
+        CloseHandle( async.done );
+    }
 
     LeaveCriticalSection( &channel->cs );
     TRACE( "returning %08x\n", hr );
