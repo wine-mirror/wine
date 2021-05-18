@@ -1211,6 +1211,13 @@ static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
 
     unix_funcs->wg_parser_disconnect(source->wg_parser);
 
+    if (source->read_thread)
+    {
+        source->read_thread_shutdown = true;
+        WaitForSingleObject(source->read_thread, INFINITE);
+        CloseHandle(source->read_thread);
+    }
+
     if (source->pres_desc)
         IMFPresentationDescriptor_Release(source->pres_desc);
     if (source->event_queue)
@@ -1232,13 +1239,6 @@ static HRESULT WINAPI media_source_Shutdown(IMFMediaSource *iface)
             IMFMediaSource_Release(&stream->parent_source->IMFMediaSource_iface);
 
         IMFMediaStream_Release(&stream->IMFMediaStream_iface);
-    }
-
-    if (source->read_thread)
-    {
-        source->read_thread_shutdown = true;
-        WaitForSingleObject(source->read_thread, INFINITE);
-        CloseHandle(source->read_thread);
     }
 
     unix_funcs->wg_parser_destroy(source->wg_parser);
