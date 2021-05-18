@@ -290,10 +290,37 @@ static void clear_queue( struct queue *queue )
     queue->ready   = NULL;
 }
 
-static void reset_channel( struct channel *channel )
+static void abort_channel( struct channel *channel )
 {
     clear_queue( &channel->send_q );
     clear_queue( &channel->recv_q );
+}
+
+/**************************************************************************
+ *          WsAbortChannel		[webservices.@]
+ */
+HRESULT WINAPI WsAbortChannel( WS_CHANNEL *handle, WS_ERROR *error )
+{
+    struct channel *channel = (struct channel *)handle;
+
+    TRACE( "%p %p\n", handle, error );
+
+    EnterCriticalSection( &channel->cs );
+
+    if (channel->magic != CHANNEL_MAGIC)
+    {
+        LeaveCriticalSection( &channel->cs );
+        return E_INVALIDARG;
+    }
+
+    abort_channel( channel );
+
+    LeaveCriticalSection( &channel->cs );
+    return S_OK;
+}
+
+static void reset_channel( struct channel *channel )
+{
     channel->state         = WS_CHANNEL_STATE_CREATED;
     channel->session_state = SESSION_STATE_UNINITIALIZED;
     clear_addr( &channel->addr );
@@ -352,6 +379,7 @@ static void free_props( struct channel *channel )
 
 static void free_channel( struct channel *channel )
 {
+    abort_channel( channel );
     reset_channel( channel );
 
     WsFreeWriter( channel->writer );
@@ -631,7 +659,10 @@ HRESULT WINAPI WsResetChannel( WS_CHANNEL *handle, WS_ERROR *error )
     if (channel->state != WS_CHANNEL_STATE_CREATED && channel->state != WS_CHANNEL_STATE_CLOSED)
         hr = WS_E_INVALID_OPERATION;
     else
+    {
+        abort_channel( channel );
         reset_channel( channel );
+    }
 
     LeaveCriticalSection( &channel->cs );
     TRACE( "returning %08x\n", hr );
@@ -2520,13 +2551,4 @@ HRESULT channel_accept_udp( SOCKET socket, HANDLE wait, HANDLE cancel, WS_CHANNE
 
     LeaveCriticalSection( &channel->cs );
     return hr;
-}
-
-/**************************************************************************
- *          WsAbortChannel		[webservices.@]
- */
-HRESULT WINAPI WsAbortChannel( WS_CHANNEL *handle, WS_ERROR *error )
-{
-    FIXME( "%p %p: stub!\n", handle, error );
-    return E_NOTIMPL;
 }
