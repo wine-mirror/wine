@@ -261,6 +261,7 @@ extern void update_window_state( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void wait_graphics_driver_ready(void) DECLSPEC_HIDDEN;
 extern void *get_hook_proc( void *proc, const WCHAR *module, HMODULE *free_module ) DECLSPEC_HIDDEN;
 extern RECT get_virtual_screen_rect(void) DECLSPEC_HIDDEN;
+extern RECT get_primary_monitor_rect(void) DECLSPEC_HIDDEN;
 extern LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;
 extern DWORD get_input_codepage( void ) DECLSPEC_HIDDEN;
 extern BOOL map_wparam_AtoW( UINT message, WPARAM *wparam, enum wm_char_mapping mapping ) DECLSPEC_HIDDEN;

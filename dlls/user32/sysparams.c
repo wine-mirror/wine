@@ -366,7 +366,7 @@ static BOOL CALLBACK get_primary_monitor_proc( HMONITOR monitor, HDC hdc, LPRECT
     return TRUE;
 }
 
-static RECT get_primary_monitor_rect(void)
+RECT get_primary_monitor_rect(void)
 {
     RECT rect = {0};
 
@@ -1818,9 +1818,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         spi_idx = SPI_SETWORKAREA_IDX;
         if (!spi_loaded[spi_idx])
         {
-            SetRect( &work_area, 0, 0,
-                     GetSystemMetrics( SM_CXSCREEN ),
-                     GetSystemMetrics( SM_CYSCREEN ) );
+            work_area = get_primary_monitor_rect();
             EnumDisplayMonitors( 0, NULL, enum_monitors, (LPARAM)&work_area );
             spi_loaded[spi_idx] = TRUE;
         }

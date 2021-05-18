@@ -740,7 +740,7 @@ MINMAXINFO WINPOS_GetMinMaxInfo( HWND hwnd )
 
     if ((monitor = MonitorFromWindow( hwnd, MONITOR_DEFAULTTOPRIMARY )))
     {
-        RECT rc_work;
+        RECT rc_work, rc_primary;
         MONITORINFO mon_info;
 
         mon_info.cbSize = sizeof(mon_info);
@@ -754,8 +754,9 @@ MINMAXINFO WINPOS_GetMinMaxInfo( HWND hwnd )
                 rc_work = mon_info.rcWork;
         }
 
-        if (MinMax.ptMaxSize.x == GetSystemMetrics(SM_CXSCREEN) + 2 * xinc &&
-            MinMax.ptMaxSize.y == GetSystemMetrics(SM_CYSCREEN) + 2 * yinc)
+        rc_primary = get_primary_monitor_rect();
+        if (MinMax.ptMaxSize.x == (rc_primary.right - rc_primary.left) + 2 * xinc &&
+            MinMax.ptMaxSize.y == (rc_primary.bottom - rc_primary.top) + 2 * yinc)
         {
             MinMax.ptMaxSize.x = (rc_work.right - rc_work.left) + 2 * xinc;
             MinMax.ptMaxSize.y = (rc_work.bottom - rc_work.top) + 2 * yinc;

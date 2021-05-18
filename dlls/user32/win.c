@@ -855,8 +855,7 @@ BOOL WIN_GetRectangles( HWND hwnd, enum coords_relative relative, RECT *rectWind
         }
         else
         {
-            rect.right  = GetSystemMetrics(SM_CXSCREEN);
-            rect.bottom = GetSystemMetrics(SM_CYSCREEN);
+            rect = get_primary_monitor_rect();
         }
         if (rectWindow) *rectWindow = rect;
         if (rectClient) *rectClient = rect;
