@@ -3026,7 +3026,7 @@ static DWORD WINAPI handler( EXCEPTION_RECORD *rec, ULONG64 frame,
     todo_wine ok( context->SegEs == context->SegSs,
         "%u: es %#x does not match ss %#x\n", entry, context->SegEs, context->SegSs );
     todo_wine ok( context->SegGs == context->SegSs,
-        "%u: ds %#x does not match ss %#x\n", entry, context->SegGs, context->SegSs );
+        "%u: gs %#x does not match ss %#x\n", entry, context->SegGs, context->SegSs );
 
     todo_wine ok( context->SegFs && context->SegFs != context->SegSs,
         "%u: got fs %#x\n", entry, context->SegFs );
