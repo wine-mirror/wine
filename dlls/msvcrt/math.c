@@ -1266,12 +1266,70 @@ double CDECL exp( double x )
 
 /*********************************************************************
  *		fmod (MSVCRT.@)
+ *
+ * Copied from musl: src/math/fmod.c
  */
 double CDECL fmod( double x, double y )
 {
-  double ret = unix_funcs->fmod( x, y );
-  if (!isfinite(x) || !isfinite(y)) return math_error(_DOMAIN, "fmod", x, y, ret);
-  return ret;
+    UINT64 xi = *(UINT64*)&x;
+    UINT64 yi = *(UINT64*)&y;
+    int ex = xi >> 52 & 0x7ff;
+    int ey = yi >> 52 & 0x7ff;
+    int sx = xi >> 63;
+    UINT64 i;
+
+    if (isinf(x)) return math_error(_DOMAIN, "fmod", x, y, (x * y) / (x * y));
+    if (yi << 1 == 0 || isnan(y) || ex == 0x7ff)
+        return (x * y) / (x * y);
+    if (xi << 1 <= yi << 1) {
+        if (xi << 1 == yi << 1)
+            return 0 * x;
+        return x;
+    }
+
+    /* normalize x and y */
+    if (!ex) {
+        for (i = xi << 12; i >> 63 == 0; ex--, i <<= 1);
+        xi <<= -ex + 1;
+    } else {
+        xi &= -1ULL >> 12;
+        xi |= 1ULL << 52;
+    }
+    if (!ey) {
+        for (i = yi << 12; i >> 63 == 0; ey--, i <<= 1);
+        yi <<= -ey + 1;
+    } else {
+        yi &= -1ULL >> 12;
+        yi |= 1ULL << 52;
+    }
+
+    /* x mod y */
+    for (; ex > ey; ex--) {
+        i = xi - yi;
+        if (i >> 63 == 0) {
+            if (i == 0)
+                return 0 * x;
+            xi = i;
+        }
+        xi <<= 1;
+    }
+    i = xi - yi;
+    if (i >> 63 == 0) {
+        if (i == 0)
+            return 0 * x;
+        xi = i;
+    }
+    for (; xi >> 52 == 0; xi <<= 1, ex--);
+
+    /* scale result */
+    if (ex > 0) {
+        xi -= 1ULL << 52;
+        xi |= (UINT64)ex << 52;
+    } else {
+        xi >>= -ex + 1;
+    }
+    xi |= (UINT64)sx << 63;
+    return *(double*)&xi;
 }
 
 /*********************************************************************
