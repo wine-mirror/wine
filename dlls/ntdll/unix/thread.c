@@ -1666,7 +1666,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
 
     case ThreadWow64Context:
     {
-#ifdef __x86_64__
+#ifdef _WIN64
         BOOL self;
         WOW64_CONTEXT *context = data;
 
@@ -1861,7 +1861,7 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
 
     case ThreadWow64Context:
     {
-#ifdef __x86_64__
+#ifdef _WIN64
         BOOL self;
         const WOW64_CONTEXT *context = data;
 

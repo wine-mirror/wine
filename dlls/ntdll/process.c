@@ -142,6 +142,24 @@ NTSTATUS WINAPI RtlWow64GetCpuAreaInfo( WOW64_CPURESERVED *cpu, ULONG reserved, 
     return STATUS_INVALID_PARAMETER;
 }
 
+
+/******************************************************************************
+ *              RtlWow64GetThreadContext  (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlWow64GetThreadContext( HANDLE handle, WOW64_CONTEXT *context )
+{
+    return NtQueryInformationThread( handle, ThreadWow64Context, context, sizeof(*context), NULL );
+}
+
+
+/******************************************************************************
+ *              RtlWow64SetThreadContext  (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlWow64SetThreadContext( HANDLE handle, const WOW64_CONTEXT *context )
+{
+    return NtSetInformationThread( handle, ThreadWow64Context, context, sizeof(*context) );
+}
+
 #endif
 
 /**********************************************************************
