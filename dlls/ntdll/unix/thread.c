@@ -139,7 +139,7 @@ static unsigned int get_server_context_flags( const void *context, USHORT machin
  *
  * Convert a register context to the server format.
  */
-NTSTATUS context_to_server( context_t *to, const void *src, USHORT machine )
+static NTSTATUS context_to_server( context_t *to, const void *src, USHORT machine )
 {
     DWORD i, flags;
 
@@ -388,7 +388,7 @@ NTSTATUS context_to_server( context_t *to, const void *src, USHORT machine )
  *
  * Convert a register context from the server format.
  */
-NTSTATUS context_from_server( void *dst, const context_t *from, USHORT machine )
+static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT machine )
 {
     DWORD i;
 
@@ -1052,9 +1052,12 @@ void exit_process( int status )
 void wait_suspend( CONTEXT *context )
 {
     int saved_errno = errno;
+    context_t server_context;
 
+    context_to_server( &server_context, context, current_machine );
     /* wait with 0 timeout, will only return once the thread is no longer suspended */
-    server_select( NULL, 0, SELECT_INTERRUPTIBLE, 0, context, NULL, NULL );
+    server_select( NULL, 0, SELECT_INTERRUPTIBLE, 0, &server_context, NULL, NULL );
+    context_from_server( context, &server_context, current_machine );
     errno = saved_errno;
 }
 
@@ -1095,22 +1098,15 @@ NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_c
 
     if (handle)
     {
-        struct xcontext exception_context;
-        DECLSPEC_ALIGN(64) XSTATE xs;
-        XSTATE *src_xs;
+        context_t server_context;
 
         select_op.wait.op = SELECT_WAIT;
         select_op.wait.handles[0] = handle;
 
-        exception_context.c = *context;
-        if ((src_xs = xstate_from_context( context )))
-        {
-            context_init_xstate( &exception_context.c, &xs );
-            memcpy( &xs, src_xs, sizeof(xs) );
-        }
+        context_to_server( &server_context, context, current_machine );
 
         server_select( &select_op, offsetof( select_op_t, wait.handles[1] ), SELECT_INTERRUPTIBLE,
-                       TIMEOUT_INFINITE, &exception_context.c, NULL, NULL );
+                       TIMEOUT_INFINITE, &server_context, NULL, NULL );
 
         SERVER_START_REQ( get_exception_status )
         {
@@ -1118,12 +1114,7 @@ NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_c
             ret = wine_server_call( req );
         }
         SERVER_END_REQ;
-        if (ret >= 0)
-        {
-            *context = exception_context.c;
-            if (src_xs)
-                memcpy( src_xs, &xs, sizeof(xs) );
-        }
+        if (ret >= 0) context_from_server( context, &server_context, current_machine );
     }
 
     pthread_sigmask( SIG_SETMASK, &old_set, NULL );

@@ -620,24 +620,18 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result, BOO
  *              server_select
  */
 unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT flags,
-                            timeout_t abs_timeout, CONTEXT *context, pthread_mutex_t *mutex,
+                            timeout_t abs_timeout, context_t *context, pthread_mutex_t *mutex,
                             user_apc_t *user_apc )
 {
     unsigned int ret;
     int cookie;
     obj_handle_t apc_handle = 0;
-    context_t server_context;
-    BOOL suspend_context = FALSE;
+    BOOL suspend_context = !!context;
     apc_call_t call;
     apc_result_t result;
     sigset_t old_set;
 
     memset( &result, 0, sizeof(result) );
-    if (context)
-    {
-        suspend_context = TRUE;
-        context_to_server( &server_context, context, current_machine );
-    }
 
     do
     {
@@ -655,26 +649,13 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
                 wine_server_add_data( req, select_op, size );
                 if (suspend_context)
                 {
-                    wine_server_add_data( req, &server_context, sizeof(server_context) );
+                    wine_server_add_data( req, context, sizeof(*context) );
                     suspend_context = FALSE; /* server owns the context now */
                 }
-                if (context) wine_server_set_reply( req, &server_context, sizeof(server_context) );
+                if (context) wine_server_set_reply( req, context, sizeof(*context) );
                 ret = server_call_unlocked( req );
                 apc_handle  = reply->apc_handle;
                 call        = reply->call;
-                if (wine_server_reply_size( reply ))
-                {
-                    DWORD context_flags = context->ContextFlags; /* unchanged registers are still available */
-                    XSTATE *xs = xstate_from_context( context );
-                    ULONG64 mask;
-
-                    if (xs)
-                        mask = xs->Mask;
-                    context_from_server( context, &server_context, current_machine );
-                    context->ContextFlags |= context_flags;
-                    if (xs)
-                        xs->Mask |= mask;
-                }
             }
             SERVER_END_REQ;
 
