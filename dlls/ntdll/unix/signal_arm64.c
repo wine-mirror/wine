@@ -481,6 +481,42 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 }
 
 
+/***********************************************************************
+ *              set_thread_wow64_context
+ */
+NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size )
+{
+    BOOL self;
+    USHORT machine;
+
+    switch (size)
+    {
+    case sizeof(I386_CONTEXT): machine = IMAGE_FILE_MACHINE_I386; break;
+    case sizeof(ARM_CONTEXT): machine = IMAGE_FILE_MACHINE_ARMNT; break;
+    default: return STATUS_INFO_LENGTH_MISMATCH;
+    }
+    return set_thread_context( handle, ctx, &self, machine );
+}
+
+
+/***********************************************************************
+ *              get_thread_wow64_context
+ */
+NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
+{
+    BOOL self;
+    USHORT machine;
+
+    switch (size)
+    {
+    case sizeof(I386_CONTEXT): machine = IMAGE_FILE_MACHINE_I386; break;
+    case sizeof(ARM_CONTEXT): machine = IMAGE_FILE_MACHINE_ARMNT; break;
+    default: return STATUS_INFO_LENGTH_MISMATCH;
+    }
+    return get_thread_context( handle, ctx, &self, machine );
+}
+
+
 /* Note, unwind_builtin_dll above has hardcoded assumptions on how this
  * function stores things on the stack; if modified, modify that one in
  * sync as well. */

@@ -1665,19 +1665,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
     }
 
     case ThreadWow64Context:
-    {
-#ifdef _WIN64
-        BOOL self;
-        WOW64_CONTEXT *context = data;
-
-        if (length != sizeof(*context)) return STATUS_INFO_LENGTH_MISMATCH;
-        if ((status = get_thread_context( handle, context, &self, IMAGE_FILE_MACHINE_I386 ))) return status;
-        if (ret_len && !status) *ret_len = sizeof(*context);
-        return status;
-#else
-        return STATUS_INVALID_INFO_CLASS;
-#endif
-    }
+        return get_thread_wow64_context( handle, data, length );
 
     case ThreadHideFromDebugger:
         if (length != sizeof(BOOLEAN)) return STATUS_INFO_LENGTH_MISMATCH;
@@ -1860,17 +1848,7 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
     }
 
     case ThreadWow64Context:
-    {
-#ifdef _WIN64
-        BOOL self;
-        const WOW64_CONTEXT *context = data;
-
-        if (length != sizeof(*context)) return STATUS_INFO_LENGTH_MISMATCH;
-        return set_thread_context( handle, context, &self, IMAGE_FILE_MACHINE_I386 );
-#else
-        return STATUS_INVALID_INFO_CLASS;
-#endif
-    }
+        return set_thread_wow64_context( handle, data, length );
 
     case ThreadEnableAlignmentFaultFixup:
         if (length != sizeof(BOOLEAN)) return STATUS_INFO_LENGTH_MISMATCH;
