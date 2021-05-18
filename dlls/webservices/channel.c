@@ -771,6 +771,34 @@ static HRESULT send_byte( SOCKET socket, BYTE byte )
     return S_OK;
 }
 
+struct async
+{
+    HRESULT hr;
+    HANDLE  done;
+};
+
+static void CALLBACK async_callback( HRESULT hr, WS_CALLBACK_MODEL model, void *state )
+{
+    struct async *async = state;
+    async->hr = hr;
+    SetEvent( async->done );
+}
+
+static void async_init( struct async *async, WS_ASYNC_CONTEXT *ctx )
+{
+    async->done = CreateEventW( NULL, FALSE, FALSE, NULL );
+    async->hr = E_FAIL;
+    ctx->callback = async_callback;
+    ctx->callbackState = async;
+}
+
+static HRESULT async_wait( struct async *async )
+{
+    DWORD err;
+    if ((err = WaitForSingleObject( async->done, INFINITE )) == WAIT_OBJECT_0) return async->hr;
+    return HRESULT_FROM_WIN32( err );
+}
+
 static HRESULT shutdown_session( struct channel *channel )
 {
     HRESULT hr;
@@ -2154,6 +2182,8 @@ HRESULT WINAPI WsReceiveMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_M
                                  void *value, ULONG size, ULONG *index, const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
 {
     struct channel *channel = (struct channel *)handle;
+    WS_ASYNC_CONTEXT ctx_local;
+    struct async async;
     HRESULT hr;
 
     TRACE( "%p %p %p %u %08x %08x %p %p %u %p %p %p\n", handle, msg, desc, count, option, read_option, heap,
@@ -2170,10 +2200,14 @@ HRESULT WINAPI WsReceiveMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_M
         return E_INVALIDARG;
     }
 
-    if (ctx)
-        hr = queue_receive_message( channel, msg, desc, count, option, read_option, heap, value, size, index, ctx );
-    else
-        hr = receive_message( channel, msg, desc, count, option, read_option, heap, value, size, index );
+    if (!ctx) async_init( &async, &ctx_local );
+    hr = queue_receive_message( channel, msg, desc, count, option, read_option, heap, value, size, index,
+                                ctx ? ctx : &ctx_local );
+    if (!ctx)
+    {
+        if (hr == WS_S_ASYNC) hr = async_wait( &async );
+        CloseHandle( async.done );
+    }
 
     LeaveCriticalSection( &channel->cs );
     TRACE( "returning %08x\n", hr );
@@ -2266,6 +2300,8 @@ HRESULT WINAPI WsRequestReply( WS_CHANNEL *handle, WS_MESSAGE *request, const WS
                                WS_HEAP *heap, void *value, ULONG size, const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
 {
     struct channel *channel = (struct channel *)handle;
+    WS_ASYNC_CONTEXT ctx_local;
+    struct async async;
     HRESULT hr;
 
     TRACE( "%p %p %p %08x %p %u %p %p %08x %p %p %u %p %p\n", handle, request, request_desc, write_option,
@@ -2287,12 +2323,14 @@ HRESULT WINAPI WsRequestReply( WS_CHANNEL *handle, WS_MESSAGE *request, const WS
         return WS_E_INVALID_OPERATION;
     }
 
-    if (ctx)
-        hr = queue_request_reply( channel, request, request_desc, write_option, request_body, request_size, reply,
-                                  reply_desc, read_option, heap, value, size, ctx );
-    else
-        hr = request_reply( channel, request, request_desc, write_option, request_body, request_size, reply,
-                            reply_desc, read_option, heap, value, size );
+    if (!ctx) async_init( &async, &ctx_local );
+    hr = queue_request_reply( channel, request, request_desc, write_option, request_body, request_size, reply,
+                              reply_desc, read_option, heap, value, size, ctx ? ctx : &ctx_local );
+    if (!ctx)
+    {
+        if (hr == WS_S_ASYNC) hr = async_wait( &async );
+        CloseHandle( async.done );
+    }
 
     LeaveCriticalSection( &channel->cs );
     TRACE( "returning %08x\n", hr );
