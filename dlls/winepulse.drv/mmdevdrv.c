@@ -908,54 +908,23 @@ static HRESULT WINAPI AudioClient_GetDevicePeriod(IAudioClient3 *iface,
 static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    HRESULT hr = S_OK;
-    int success;
-    pa_operation *o;
+    HRESULT hr;
 
     TRACE("(%p)\n", This);
 
-    pulse->lock();
-    hr = pulse_stream_valid(This);
-    if (FAILED(hr)) {
-        pulse->unlock();
+    if (!This->pulse_stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
+
+    hr = pulse->start(This->pulse_stream);
+    if (FAILED(hr))
         return hr;
+
+    if (!This->timer) {
+        This->timer = CreateThread(NULL, 0, pulse_timer_cb, This, 0, NULL);
+        SetThreadPriority(This->timer, THREAD_PRIORITY_TIME_CRITICAL);
     }
 
-    if ((This->pulse_stream->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK) && !This->pulse_stream->event) {
-        pulse->unlock();
-        return AUDCLNT_E_EVENTHANDLE_NOT_SET;
-    }
-
-    if (This->pulse_stream->started) {
-        pulse->unlock();
-        return AUDCLNT_E_NOT_STOPPED;
-    }
-
-    pulse->write(This->pulse_stream);
-
-    if (pa_stream_is_corked(This->pulse_stream->stream)) {
-        o = pa_stream_cork(This->pulse_stream->stream, 0, pulse_op_cb, &success);
-        if (o) {
-            while(pa_operation_get_state(o) == PA_OPERATION_RUNNING)
-                pulse->cond_wait();
-            pa_operation_unref(o);
-        } else
-            success = 0;
-        if (!success)
-            hr = E_FAIL;
-    }
-
-    if (SUCCEEDED(hr)) {
-        This->pulse_stream->started = TRUE;
-        This->pulse_stream->just_started = TRUE;
-
-        if(!This->timer) {
-            This->timer = CreateThread(NULL, 0, pulse_timer_cb, This, 0, NULL);
-            SetThreadPriority(This->timer, THREAD_PRIORITY_TIME_CRITICAL);
-        }
-    }
-    pulse->unlock();
-    return hr;
+    return S_OK;
 }
 
 static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)

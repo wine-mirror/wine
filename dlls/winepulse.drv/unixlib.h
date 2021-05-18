@@ -78,7 +78,7 @@ struct unix_funcs
                                     const WAVEFORMATEX *fmt, UINT32 *channel_count,
                                     struct pulse_stream **ret);
     void (WINAPI *release_stream)(struct pulse_stream *stream, HANDLE timer);
-    void (WINAPI *write)(struct pulse_stream *stream);
+    HRESULT (WINAPI *start)(struct pulse_stream *stream);
     HRESULT (WINAPI *stop)(struct pulse_stream *stream);
     void (WINAPI *timer_loop)(struct pulse_stream *stream);
     void (WINAPI *set_volumes)(struct pulse_stream *stream, float master_volume,

@@ -1007,7 +1007,7 @@ write:
     return pa_stream_write(stream->stream, buffer, bytes, NULL, 0, PA_SEEK_RELATIVE);
 }
 
-static void WINAPI pulse_write(struct pulse_stream *stream)
+static void pulse_write(struct pulse_stream *stream)
 {
     /* write as much data to PA as we can */
     UINT32 to_write;
@@ -1257,6 +1257,57 @@ static void WINAPI pulse_timer_loop(struct pulse_stream *stream)
     }
 }
 
+static HRESULT WINAPI pulse_start(struct pulse_stream *stream)
+{
+    HRESULT hr = S_OK;
+    int success;
+    pa_operation *o;
+
+    pulse_lock();
+    if (!pulse_stream_valid(stream))
+    {
+        pulse_unlock();
+        return hr;
+    }
+
+    if ((stream->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK) && !stream->event)
+    {
+        pulse_unlock();
+        return AUDCLNT_E_EVENTHANDLE_NOT_SET;
+    }
+
+    if (stream->started)
+    {
+        pulse_unlock();
+        return AUDCLNT_E_NOT_STOPPED;
+    }
+
+    pulse_write(stream);
+
+    if (pa_stream_is_corked(stream->stream))
+    {
+        o = pa_stream_cork(stream->stream, 0, pulse_op_cb, &success);
+        if (o)
+        {
+            while(pa_operation_get_state(o) == PA_OPERATION_RUNNING)
+                pulse_cond_wait();
+            pa_operation_unref(o);
+        }
+        else
+            success = 0;
+        if (!success)
+            hr = E_FAIL;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        stream->started = TRUE;
+        stream->just_started = TRUE;
+    }
+    pulse_unlock();
+    return hr;
+}
+
 static HRESULT WINAPI pulse_stop(struct pulse_stream *stream)
 {
     HRESULT hr = S_OK;
@@ -1314,7 +1365,7 @@ static const struct unix_funcs unix_funcs =
     pulse_main_loop,
     pulse_create_stream,
     pulse_release_stream,
-    pulse_write,
+    pulse_start,
     pulse_stop,
     pulse_timer_loop,
     pulse_set_volumes,
