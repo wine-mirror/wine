@@ -33,6 +33,7 @@ C_SRCS = \
 	onexit.c \
 	process.c \
 	scanf.c \
+	sincos.c \
 	string.c \
 	thread.c \
 	time.c \
