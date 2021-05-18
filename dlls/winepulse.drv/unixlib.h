@@ -81,6 +81,7 @@ struct unix_funcs
     HRESULT (WINAPI *stop)(struct pulse_stream *stream);
     HRESULT (WINAPI *reset)(struct pulse_stream *stream);
     void (WINAPI *timer_loop)(struct pulse_stream *stream);
+    HRESULT (WINAPI *get_render_buffer)(struct pulse_stream *stream, UINT32 frames, BYTE **data);
     void (WINAPI *set_volumes)(struct pulse_stream *stream, float master_volume,
                                const float *volumes, const float *session_volumes);
     HRESULT (WINAPI *test_connect)(const char *name, struct pulse_config *config);

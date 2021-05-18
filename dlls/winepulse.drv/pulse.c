@@ -1406,6 +1406,67 @@ static HRESULT WINAPI pulse_reset(struct pulse_stream *stream)
     return S_OK;
 }
 
+static void alloc_tmp_buffer(struct pulse_stream *stream, UINT32 bytes)
+{
+    if (stream->tmp_buffer_bytes >= bytes)
+        return;
+
+    RtlFreeHeap(GetProcessHeap(), 0, stream->tmp_buffer);
+    stream->tmp_buffer = RtlAllocateHeap(GetProcessHeap(), 0, bytes);
+    stream->tmp_buffer_bytes = bytes;
+}
+
+static HRESULT WINAPI pulse_get_render_buffer(struct pulse_stream *stream, UINT32 frames, BYTE **data)
+{
+    size_t bytes;
+    UINT32 wri_offs_bytes;
+
+    pulse_lock();
+    if (!pulse_stream_valid(stream))
+    {
+        pulse_unlock();
+        return AUDCLNT_E_DEVICE_INVALIDATED;
+    }
+
+    if (stream->locked)
+    {
+        pulse_unlock();
+        return AUDCLNT_E_OUT_OF_ORDER;
+    }
+
+    if (!frames)
+    {
+        pulse_unlock();
+        *data = NULL;
+        return S_OK;
+    }
+
+    if (stream->held_bytes / pa_frame_size(&stream->ss) + frames > stream->bufsize_frames)
+    {
+        pulse_unlock();
+        return AUDCLNT_E_BUFFER_TOO_LARGE;
+    }
+
+    bytes = frames * pa_frame_size(&stream->ss);
+    wri_offs_bytes = (stream->lcl_offs_bytes + stream->held_bytes) % stream->real_bufsize_bytes;
+    if (wri_offs_bytes + bytes > stream->real_bufsize_bytes)
+    {
+        alloc_tmp_buffer(stream, bytes);
+        *data = stream->tmp_buffer;
+        stream->locked = -bytes;
+    }
+    else
+    {
+        *data = stream->local_buffer + wri_offs_bytes;
+        stream->locked = bytes;
+    }
+
+    silence_buffer(stream->ss.format, *data, bytes);
+
+    pulse_unlock();
+    return S_OK;
+}
+
 static void WINAPI pulse_set_volumes(struct pulse_stream *stream, float master_volume,
                                      const float *volumes, const float *session_volumes)
 {
@@ -1427,6 +1488,7 @@ static const struct unix_funcs unix_funcs =
     pulse_stop,
     pulse_reset,
     pulse_timer_loop,
+    pulse_get_render_buffer,
     pulse_set_volumes,
     pulse_test_connect,
 };

@@ -1180,61 +1180,20 @@ static ULONG WINAPI AudioRenderClient_Release(IAudioRenderClient *iface)
     return AudioClient_Release(&This->IAudioClient3_iface);
 }
 
-static void alloc_tmp_buffer(ACImpl *This, UINT32 bytes)
-{
-    if(This->pulse_stream->tmp_buffer_bytes >= bytes)
-        return;
-
-    HeapFree(GetProcessHeap(), 0, This->pulse_stream->tmp_buffer);
-    This->pulse_stream->tmp_buffer = HeapAlloc(GetProcessHeap(), 0, bytes);
-    This->pulse_stream->tmp_buffer_bytes = bytes;
-}
-
 static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
         UINT32 frames, BYTE **data)
 {
     ACImpl *This = impl_from_IAudioRenderClient(iface);
-    size_t bytes = frames * pa_frame_size(&This->pulse_stream->ss);
-    HRESULT hr = S_OK;
-    UINT32 wri_offs_bytes;
 
     TRACE("(%p)->(%u, %p)\n", This, frames, data);
 
     if (!data)
         return E_POINTER;
+    if (!This->pulse_stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
     *data = NULL;
 
-    pulse->lock();
-    hr = pulse_stream_valid(This);
-    if (FAILED(hr) || This->pulse_stream->locked) {
-        pulse->unlock();
-        return FAILED(hr) ? hr : AUDCLNT_E_OUT_OF_ORDER;
-    }
-    if (!frames) {
-        pulse->unlock();
-        return S_OK;
-    }
-
-    if(This->pulse_stream->held_bytes / pa_frame_size(&This->pulse_stream->ss) + frames > This->pulse_stream->bufsize_frames){
-        pulse->unlock();
-        return AUDCLNT_E_BUFFER_TOO_LARGE;
-    }
-
-    wri_offs_bytes = (This->pulse_stream->lcl_offs_bytes + This->pulse_stream->held_bytes) % This->pulse_stream->real_bufsize_bytes;
-    if(wri_offs_bytes + bytes > This->pulse_stream->real_bufsize_bytes){
-        alloc_tmp_buffer(This, bytes);
-        *data = This->pulse_stream->tmp_buffer;
-        This->pulse_stream->locked = -bytes;
-    }else{
-        *data = This->pulse_stream->local_buffer + wri_offs_bytes;
-        This->pulse_stream->locked = bytes;
-    }
-
-    silence_buffer(This->pulse_stream->ss.format, *data, bytes);
-
-    pulse->unlock();
-
-    return hr;
+    return pulse->get_render_buffer(This->pulse_stream, frames, data);
 }
 
 static void pulse_wrap_buffer(ACImpl *This, BYTE *buffer, UINT32 written_bytes)
