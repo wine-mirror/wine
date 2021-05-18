@@ -238,11 +238,6 @@ static HRESULT pulse_stream_valid(ACImpl *This) {
     return S_OK;
 }
 
-static void silence_buffer(pa_sample_format_t format, BYTE *buffer, UINT32 bytes)
-{
-    memset(buffer, format == PA_SAMPLE_U8 ? 0x80 : 0, bytes);
-}
-
 static DWORD WINAPI pulse_timer_cb(void *user)
 {
     ACImpl *This = user;
@@ -1196,67 +1191,17 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
     return pulse->get_render_buffer(This->pulse_stream, frames, data);
 }
 
-static void pulse_wrap_buffer(ACImpl *This, BYTE *buffer, UINT32 written_bytes)
-{
-    UINT32 wri_offs_bytes = (This->pulse_stream->lcl_offs_bytes + This->pulse_stream->held_bytes) % This->pulse_stream->real_bufsize_bytes;
-    UINT32 chunk_bytes = This->pulse_stream->real_bufsize_bytes - wri_offs_bytes;
-
-    if(written_bytes <= chunk_bytes){
-        memcpy(This->pulse_stream->local_buffer + wri_offs_bytes, buffer, written_bytes);
-    }else{
-        memcpy(This->pulse_stream->local_buffer + wri_offs_bytes, buffer, chunk_bytes);
-        memcpy(This->pulse_stream->local_buffer, buffer + chunk_bytes,
-                written_bytes - chunk_bytes);
-    }
-}
-
 static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
         IAudioRenderClient *iface, UINT32 written_frames, DWORD flags)
 {
     ACImpl *This = impl_from_IAudioRenderClient(iface);
-    UINT32 written_bytes = written_frames * pa_frame_size(&This->pulse_stream->ss);
-    BYTE *buffer;
 
     TRACE("(%p)->(%u, %x)\n", This, written_frames, flags);
 
-    pulse->lock();
-    if (!This->pulse_stream->locked || !written_frames) {
-        This->pulse_stream->locked = 0;
-        pulse->unlock();
-        return written_frames ? AUDCLNT_E_OUT_OF_ORDER : S_OK;
-    }
+    if (!This->pulse_stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
 
-    if(written_frames * pa_frame_size(&This->pulse_stream->ss) > (This->pulse_stream->locked >= 0 ? This->pulse_stream->locked : -This->pulse_stream->locked)){
-        pulse->unlock();
-        return AUDCLNT_E_INVALID_SIZE;
-    }
-
-    if(This->pulse_stream->locked >= 0)
-        buffer = This->pulse_stream->local_buffer + (This->pulse_stream->lcl_offs_bytes + This->pulse_stream->held_bytes) % This->pulse_stream->real_bufsize_bytes;
-    else
-        buffer = This->pulse_stream->tmp_buffer;
-
-    if(flags & AUDCLNT_BUFFERFLAGS_SILENT)
-        silence_buffer(This->pulse_stream->ss.format, buffer, written_bytes);
-
-    if(This->pulse_stream->locked < 0)
-        pulse_wrap_buffer(This, buffer, written_bytes);
-
-    This->pulse_stream->held_bytes += written_bytes;
-    This->pulse_stream->pa_held_bytes += written_bytes;
-    if(This->pulse_stream->pa_held_bytes > This->pulse_stream->real_bufsize_bytes){
-        This->pulse_stream->pa_offs_bytes += This->pulse_stream->pa_held_bytes - This->pulse_stream->real_bufsize_bytes;
-        This->pulse_stream->pa_offs_bytes %= This->pulse_stream->real_bufsize_bytes;
-        This->pulse_stream->pa_held_bytes = This->pulse_stream->real_bufsize_bytes;
-    }
-    This->pulse_stream->clock_written += written_bytes;
-    This->pulse_stream->locked = 0;
-
-    TRACE("Released %u, held %zu\n", written_frames, This->pulse_stream->held_bytes / pa_frame_size(&This->pulse_stream->ss));
-
-    pulse->unlock();
-
-    return S_OK;
+    return pulse->release_render_buffer(This->pulse_stream, written_frames, flags);
 }
 
 static const IAudioRenderClientVtbl AudioRenderClient_Vtbl = {

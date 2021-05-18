@@ -1467,6 +1467,71 @@ static HRESULT WINAPI pulse_get_render_buffer(struct pulse_stream *stream, UINT3
     return S_OK;
 }
 
+static void pulse_wrap_buffer(struct pulse_stream *stream, BYTE *buffer, UINT32 written_bytes)
+{
+    UINT32 wri_offs_bytes = (stream->lcl_offs_bytes + stream->held_bytes) % stream->real_bufsize_bytes;
+    UINT32 chunk_bytes = stream->real_bufsize_bytes - wri_offs_bytes;
+
+    if (written_bytes <= chunk_bytes)
+    {
+        memcpy(stream->local_buffer + wri_offs_bytes, buffer, written_bytes);
+    }
+    else
+    {
+        memcpy(stream->local_buffer + wri_offs_bytes, buffer, chunk_bytes);
+        memcpy(stream->local_buffer, buffer + chunk_bytes, written_bytes - chunk_bytes);
+    }
+}
+
+static HRESULT WINAPI pulse_release_render_buffer(struct pulse_stream *stream, UINT32 written_frames,
+                                                  DWORD flags)
+{
+    UINT32 written_bytes;
+    BYTE *buffer;
+
+    pulse_lock();
+    if (!stream->locked || !written_frames)
+    {
+        stream->locked = 0;
+        pulse_unlock();
+        return written_frames ? AUDCLNT_E_OUT_OF_ORDER : S_OK;
+    }
+
+    if (written_frames * pa_frame_size(&stream->ss) > (stream->locked >= 0 ? stream->locked : -stream->locked))
+    {
+        pulse_unlock();
+        return AUDCLNT_E_INVALID_SIZE;
+    }
+
+    if (stream->locked >= 0)
+        buffer = stream->local_buffer + (stream->lcl_offs_bytes + stream->held_bytes) % stream->real_bufsize_bytes;
+    else
+        buffer = stream->tmp_buffer;
+
+    written_bytes = written_frames * pa_frame_size(&stream->ss);
+    if (flags & AUDCLNT_BUFFERFLAGS_SILENT)
+        silence_buffer(stream->ss.format, buffer, written_bytes);
+
+    if (stream->locked < 0)
+        pulse_wrap_buffer(stream, buffer, written_bytes);
+
+    stream->held_bytes += written_bytes;
+    stream->pa_held_bytes += written_bytes;
+    if (stream->pa_held_bytes > stream->real_bufsize_bytes)
+    {
+        stream->pa_offs_bytes += stream->pa_held_bytes - stream->real_bufsize_bytes;
+        stream->pa_offs_bytes %= stream->real_bufsize_bytes;
+        stream->pa_held_bytes = stream->real_bufsize_bytes;
+    }
+    stream->clock_written += written_bytes;
+    stream->locked = 0;
+
+    TRACE("Released %u, held %zu\n", written_frames, stream->held_bytes / pa_frame_size(&stream->ss));
+
+    pulse_unlock();
+    return S_OK;
+}
+
 static void WINAPI pulse_set_volumes(struct pulse_stream *stream, float master_volume,
                                      const float *volumes, const float *session_volumes)
 {
@@ -1489,6 +1554,7 @@ static const struct unix_funcs unix_funcs =
     pulse_reset,
     pulse_timer_loop,
     pulse_get_render_buffer,
+    pulse_release_render_buffer,
     pulse_set_volumes,
     pulse_test_connect,
 };
