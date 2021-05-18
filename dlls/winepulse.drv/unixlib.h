@@ -71,7 +71,6 @@ struct unix_funcs
     void (WINAPI *lock)(void);
     void (WINAPI *unlock)(void);
     int (WINAPI *cond_wait)(void);
-    void (WINAPI *broadcast)(void);
     void (WINAPI *main_loop)(void);
     HRESULT (WINAPI *create_stream)(const char *name, EDataFlow dataflow, AUDCLNT_SHAREMODE mode,
                                     DWORD flags, REFERENCE_TIME duration, REFERENCE_TIME period,
@@ -80,6 +79,7 @@ struct unix_funcs
     void (WINAPI *release_stream)(struct pulse_stream *stream, HANDLE timer);
     HRESULT (WINAPI *start)(struct pulse_stream *stream);
     HRESULT (WINAPI *stop)(struct pulse_stream *stream);
+    HRESULT (WINAPI *reset)(struct pulse_stream *stream);
     void (WINAPI *timer_loop)(struct pulse_stream *stream);
     void (WINAPI *set_volumes)(struct pulse_stream *stream, float master_volume,
                                const float *volumes, const float *session_volumes);

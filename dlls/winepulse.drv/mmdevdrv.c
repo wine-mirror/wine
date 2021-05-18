@@ -243,12 +243,6 @@ static void silence_buffer(pa_sample_format_t format, BYTE *buffer, UINT32 bytes
     memset(buffer, format == PA_SAMPLE_U8 ? 0x80 : 0, bytes);
 }
 
-static void pulse_op_cb(pa_stream *s, int success, void *user) {
-    TRACE("Success: %i\n", success);
-    *(int*)user = success;
-    pulse->broadcast();
-}
-
 static DWORD WINAPI pulse_timer_cb(void *user)
 {
     ACImpl *This = user;
@@ -941,56 +935,13 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)
 static HRESULT WINAPI AudioClient_Reset(IAudioClient3 *iface)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    HRESULT hr = S_OK;
 
     TRACE("(%p)\n", This);
 
-    pulse->lock();
-    hr = pulse_stream_valid(This);
-    if (FAILED(hr)) {
-        pulse->unlock();
-        return hr;
-    }
+    if (!This->pulse_stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
 
-    if (This->pulse_stream->started) {
-        pulse->unlock();
-        return AUDCLNT_E_NOT_STOPPED;
-    }
-
-    if (This->pulse_stream->locked) {
-        pulse->unlock();
-        return AUDCLNT_E_BUFFER_OPERATION_PENDING;
-    }
-
-    if (This->dataflow == eRender) {
-        /* If there is still data in the render buffer it needs to be removed from the server */
-        int success = 0;
-        if (This->pulse_stream->held_bytes) {
-            pa_operation *o = pa_stream_flush(This->pulse_stream->stream, pulse_op_cb, &success);
-            if (o) {
-                while(pa_operation_get_state(o) == PA_OPERATION_RUNNING)
-                    pulse->cond_wait();
-                pa_operation_unref(o);
-            }
-        }
-        if (success || !This->pulse_stream->held_bytes){
-            This->pulse_stream->clock_lastpos = This->pulse_stream->clock_written = 0;
-            This->pulse_stream->pa_offs_bytes = This->pulse_stream->lcl_offs_bytes = This->pulse_stream->held_bytes = This->pulse_stream->pa_held_bytes = 0;
-        }
-    } else {
-        ACPacket *p;
-        This->pulse_stream->clock_written += This->pulse_stream->held_bytes;
-        This->pulse_stream->held_bytes = 0;
-
-        if ((p = This->pulse_stream->locked_ptr)) {
-            This->pulse_stream->locked_ptr = NULL;
-            list_add_tail(&This->pulse_stream->packet_free_head, &p->entry);
-        }
-        list_move_tail(&This->pulse_stream->packet_free_head, &This->pulse_stream->packet_filled_head);
-    }
-    pulse->unlock();
-
-    return hr;
+    return pulse->reset(This->pulse_stream);
 }
 
 static HRESULT WINAPI AudioClient_SetEventHandle(IAudioClient3 *iface,

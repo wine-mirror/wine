@@ -76,7 +76,7 @@ static int WINAPI pulse_cond_wait(void)
     return pthread_cond_wait(&pulse_cond, &pulse_mutex);
 }
 
-static void WINAPI pulse_broadcast(void)
+static void pulse_broadcast(void)
 {
     pthread_cond_broadcast(&pulse_cond);
 }
@@ -1347,6 +1347,65 @@ static HRESULT WINAPI pulse_stop(struct pulse_stream *stream)
     return hr;
 }
 
+static HRESULT WINAPI pulse_reset(struct pulse_stream *stream)
+{
+    pulse_lock();
+    if (!pulse_stream_valid(stream))
+    {
+        pulse_unlock();
+        return AUDCLNT_E_DEVICE_INVALIDATED;
+    }
+
+    if (stream->started)
+    {
+        pulse_unlock();
+        return AUDCLNT_E_NOT_STOPPED;
+    }
+
+    if (stream->locked)
+    {
+        pulse_unlock();
+        return AUDCLNT_E_BUFFER_OPERATION_PENDING;
+    }
+
+    if (stream->dataflow == eRender)
+    {
+        /* If there is still data in the render buffer it needs to be removed from the server */
+        int success = 0;
+        if (stream->held_bytes)
+        {
+            pa_operation *o = pa_stream_flush(stream->stream, pulse_op_cb, &success);
+            if (o)
+            {
+                while (pa_operation_get_state(o) == PA_OPERATION_RUNNING)
+                    pulse_cond_wait();
+                pa_operation_unref(o);
+            }
+        }
+        if (success || !stream->held_bytes)
+        {
+            stream->clock_lastpos = stream->clock_written = 0;
+            stream->pa_offs_bytes = stream->lcl_offs_bytes = 0;
+            stream->held_bytes = stream->pa_held_bytes = 0;
+        }
+    }
+    else
+    {
+        ACPacket *p;
+        stream->clock_written += stream->held_bytes;
+        stream->held_bytes = 0;
+
+        if ((p = stream->locked_ptr))
+        {
+            stream->locked_ptr = NULL;
+            list_add_tail(&stream->packet_free_head, &p->entry);
+        }
+        list_move_tail(&stream->packet_free_head, &stream->packet_filled_head);
+    }
+    pulse_unlock();
+    return S_OK;
+}
+
 static void WINAPI pulse_set_volumes(struct pulse_stream *stream, float master_volume,
                                      const float *volumes, const float *session_volumes)
 {
@@ -1361,12 +1420,12 @@ static const struct unix_funcs unix_funcs =
     pulse_lock,
     pulse_unlock,
     pulse_cond_wait,
-    pulse_broadcast,
     pulse_main_loop,
     pulse_create_stream,
     pulse_release_stream,
     pulse_start,
     pulse_stop,
+    pulse_reset,
     pulse_timer_loop,
     pulse_set_volumes,
     pulse_test_connect,
