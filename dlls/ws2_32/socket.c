@@ -2290,7 +2290,7 @@ static NTSTATUS WS2_async_shutdown( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS 
 
         switch ( wsa->type )
         {
-        case ASYNC_TYPE_READ:   err = shutdown( fd, 0 );  break;
+        case ASYNC_TYPE_READ:   break;
         case ASYNC_TYPE_WRITE:  err = shutdown( fd, 1 );  break;
         }
         status = err ? wsaErrStatus() : STATUS_SUCCESS;
@@ -5550,7 +5550,7 @@ int WINAPI WS_shutdown(SOCKET s, int how)
     }
     else /* non-overlapped mode */
     {
-        if ( shutdown( fd, how ) )
+        if (how != SD_RECEIVE && shutdown( fd, SHUT_WR ))
         {
             err = wsaErrno();
             goto error;
