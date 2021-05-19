@@ -627,33 +627,15 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,
         REFERENCE_TIME *latency)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    const pa_buffer_attr *attr;
-    REFERENCE_TIME lat;
-    HRESULT hr;
 
     TRACE("(%p)->(%p)\n", This, latency);
 
     if (!latency)
         return E_POINTER;
+    if (!This->pulse_stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
 
-    pulse->lock();
-    hr = pulse_stream_valid(This);
-    if (FAILED(hr)) {
-        pulse->unlock();
-        return hr;
-    }
-    attr = pa_stream_get_buffer_attr(This->pulse_stream->stream);
-    if (This->dataflow == eRender){
-        lat = attr->minreq / pa_frame_size(&This->pulse_stream->ss);
-    }else
-        lat = attr->fragsize / pa_frame_size(&This->pulse_stream->ss);
-    *latency = 10000000;
-    *latency *= lat;
-    *latency /= This->pulse_stream->ss.rate;
-    *latency += pulse_config.modes[0].def_period;
-    pulse->unlock();
-    TRACE("Latency: %u ms\n", (DWORD)(*latency / 10000));
-    return S_OK;
+    return pulse->get_latency(This->pulse_stream, latency);
 }
 
 static void ACImpl_GetRenderPad(ACImpl *This, UINT32 *out)

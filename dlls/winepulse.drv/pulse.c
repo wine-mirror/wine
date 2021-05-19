@@ -1546,6 +1546,27 @@ static HRESULT WINAPI pulse_get_buffer_size(struct pulse_stream *stream, UINT32 
     return hr;
 }
 
+static HRESULT WINAPI pulse_get_latency(struct pulse_stream *stream, REFERENCE_TIME *latency)
+{
+    const pa_buffer_attr *attr;
+    REFERENCE_TIME lat;
+
+    pulse_lock();
+    if (!pulse_stream_valid(stream)) {
+        pulse_unlock();
+        return AUDCLNT_E_DEVICE_INVALIDATED;
+    }
+    attr = pa_stream_get_buffer_attr(stream->stream);
+    if (stream->dataflow == eRender)
+        lat = attr->minreq / pa_frame_size(&stream->ss);
+    else
+        lat = attr->fragsize / pa_frame_size(&stream->ss);
+    *latency = (lat * 10000000) / stream->ss.rate + pulse_def_period[0];
+    pulse_unlock();
+    TRACE("Latency: %u ms\n", (DWORD)(*latency / 10000));
+    return S_OK;
+}
+
 static void WINAPI pulse_set_volumes(struct pulse_stream *stream, float master_volume,
                                      const float *volumes, const float *session_volumes)
 {
@@ -1588,6 +1609,7 @@ static const struct unix_funcs unix_funcs =
     pulse_get_render_buffer,
     pulse_release_render_buffer,
     pulse_get_buffer_size,
+    pulse_get_latency,
     pulse_set_volumes,
     pulse_set_event_handle,
     pulse_test_connect,
