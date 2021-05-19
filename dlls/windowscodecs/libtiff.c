@@ -29,6 +29,7 @@
 #include <unistd.h>
 #endif
 #ifdef HAVE_TIFFIO_H
+#include <stdint.h>
 #include <tiffio.h>
 #endif
 
@@ -253,9 +254,9 @@ static inline struct tiff_decoder *impl_from_decoder(struct decoder* iface)
 
 static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
 {
-    uint16 photometric, bps, samples, planar;
-    uint16 extra_sample_count, extra_sample, *extra_samples;
-    uint16 *red, *green, *blue;
+    uint16_t photometric, bps, samples, planar;
+    uint16_t extra_sample_count, extra_sample, *extra_samples;
+    uint16_t *red, *green, *blue;
     UINT resolution_unit;
     float xres=0.0, yres=0.0;
     int ret, i;
@@ -1282,32 +1283,32 @@ static HRESULT CDECL tiff_encoder_create_frame(struct encoder* iface, const stru
 
     This->format = &formats[i];
 
-    pTIFFSetField(This->tiff, TIFFTAG_PHOTOMETRIC, (uint16)This->format->photometric);
-    pTIFFSetField(This->tiff, TIFFTAG_PLANARCONFIG, (uint16)1);
-    pTIFFSetField(This->tiff, TIFFTAG_BITSPERSAMPLE, (uint16)This->format->bps);
-    pTIFFSetField(This->tiff, TIFFTAG_SAMPLESPERPIXEL, (uint16)This->format->samples);
+    pTIFFSetField(This->tiff, TIFFTAG_PHOTOMETRIC, (uint16_t)This->format->photometric);
+    pTIFFSetField(This->tiff, TIFFTAG_PLANARCONFIG, (uint16_t)1);
+    pTIFFSetField(This->tiff, TIFFTAG_BITSPERSAMPLE, (uint16_t)This->format->bps);
+    pTIFFSetField(This->tiff, TIFFTAG_SAMPLESPERPIXEL, (uint16_t)This->format->samples);
 
     if (This->format->extra_sample)
     {
-        uint16 extra_samples;
+        uint16_t extra_samples;
         extra_samples = This->format->extra_sample_type;
 
-        pTIFFSetField(This->tiff, TIFFTAG_EXTRASAMPLES, (uint16)1, &extra_samples);
+        pTIFFSetField(This->tiff, TIFFTAG_EXTRASAMPLES, (uint16_t)1, &extra_samples);
     }
 
-    pTIFFSetField(This->tiff, TIFFTAG_IMAGEWIDTH, (uint32)frame->width);
-    pTIFFSetField(This->tiff, TIFFTAG_IMAGELENGTH, (uint32)frame->height);
+    pTIFFSetField(This->tiff, TIFFTAG_IMAGEWIDTH, (uint32_t)frame->width);
+    pTIFFSetField(This->tiff, TIFFTAG_IMAGELENGTH, (uint32_t)frame->height);
 
     if (frame->dpix != 0.0 && frame->dpiy != 0.0)
     {
-        pTIFFSetField(This->tiff, TIFFTAG_RESOLUTIONUNIT, (uint16)2); /* Inch */
+        pTIFFSetField(This->tiff, TIFFTAG_RESOLUTIONUNIT, (uint16_t)2); /* Inch */
         pTIFFSetField(This->tiff, TIFFTAG_XRESOLUTION, (float)frame->dpix);
         pTIFFSetField(This->tiff, TIFFTAG_YRESOLUTION, (float)frame->dpiy);
     }
 
     if (This->format->bpp <= 8 && frame->num_colors && This->format->indexed)
     {
-        uint16 red[256], green[256], blue[256];
+        uint16_t red[256], green[256], blue[256];
         UINT i;
 
         for (i = 0; i < frame->num_colors; i++)
