@@ -2050,6 +2050,7 @@ static HRESULT receive_sized_envelope( struct channel *channel )
     HRESULT hr;
 
     if ((hr = receive_bytes( channel, &type, 1 )) != S_OK) return hr;
+    if (type == FRAME_RECORD_TYPE_END) return WS_S_END;
     if (type != FRAME_RECORD_TYPE_SIZED_ENVELOPE) return WS_E_INVALID_FORMAT;
     if ((hr = receive_size( channel, &size )) != S_OK) return hr;
     if ((hr = receive_message_sized( channel, size )) != S_OK) return hr;
