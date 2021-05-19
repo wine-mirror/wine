@@ -86,6 +86,7 @@ struct unix_funcs
                                             DWORD flags);
     HRESULT (WINAPI *get_capture_buffer)(struct pulse_stream *stream, BYTE **data, UINT32 *frames,
                                          DWORD *flags, UINT64 *devpos, UINT64 *qpcpos);
+    HRESULT (WINAPI *release_capture_buffer)(struct pulse_stream *stream, BOOL done);
     HRESULT (WINAPI *get_buffer_size)(struct pulse_stream *stream, UINT32 *out);
     HRESULT (WINAPI *get_latency)(struct pulse_stream *stream, REFERENCE_TIME *latency);
     HRESULT (WINAPI *get_current_padding)(struct pulse_stream *stream, UINT32 *out);

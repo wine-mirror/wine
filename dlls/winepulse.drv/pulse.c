@@ -1591,6 +1591,35 @@ static HRESULT WINAPI pulse_get_capture_buffer(struct pulse_stream *stream, BYTE
     return *frames ? S_OK : AUDCLNT_S_BUFFER_EMPTY;
 }
 
+static HRESULT WINAPI pulse_release_capture_buffer(struct pulse_stream *stream, BOOL done)
+{
+    pulse_lock();
+    if (!stream->locked && done)
+    {
+        pulse_unlock();
+        return AUDCLNT_E_OUT_OF_ORDER;
+    }
+    if (done && stream->locked != done)
+    {
+        pulse_unlock();
+        return AUDCLNT_E_INVALID_SIZE;
+    }
+    if (done)
+    {
+        ACPacket *packet = stream->locked_ptr;
+        stream->locked_ptr = NULL;
+        stream->held_bytes -= stream->period_bytes;
+        if (packet->discont)
+            stream->clock_written += 2 * stream->period_bytes;
+        else
+            stream->clock_written += stream->period_bytes;
+        list_add_tail(&stream->packet_free_head, &packet->entry);
+    }
+    stream->locked = 0;
+    pulse_unlock();
+    return S_OK;
+}
+
 static HRESULT WINAPI pulse_get_buffer_size(struct pulse_stream *stream, UINT32 *out)
 {
     HRESULT hr = S_OK;
@@ -1687,6 +1716,7 @@ static const struct unix_funcs unix_funcs =
     pulse_get_render_buffer,
     pulse_release_render_buffer,
     pulse_get_capture_buffer,
+    pulse_release_capture_buffer,
     pulse_get_buffer_size,
     pulse_get_latency,
     pulse_get_current_padding,

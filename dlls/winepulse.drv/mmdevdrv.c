@@ -1222,28 +1222,10 @@ static HRESULT WINAPI AudioCaptureClient_ReleaseBuffer(
 
     TRACE("(%p)->(%u)\n", This, done);
 
-    pulse->lock();
-    if (!This->pulse_stream->locked && done) {
-        pulse->unlock();
-        return AUDCLNT_E_OUT_OF_ORDER;
-    }
-    if (done && This->pulse_stream->locked != done) {
-        pulse->unlock();
-        return AUDCLNT_E_INVALID_SIZE;
-    }
-    if (done) {
-        ACPacket *packet = This->pulse_stream->locked_ptr;
-        This->pulse_stream->locked_ptr = NULL;
-        This->pulse_stream->held_bytes -= This->pulse_stream->period_bytes;
-        if (packet->discont)
-            This->pulse_stream->clock_written += 2 * This->pulse_stream->period_bytes;
-        else
-            This->pulse_stream->clock_written += This->pulse_stream->period_bytes;
-        list_add_tail(&This->pulse_stream->packet_free_head, &packet->entry);
-    }
-    This->pulse_stream->locked = 0;
-    pulse->unlock();
-    return S_OK;
+    if (!This->pulse_stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
+
+    return pulse->release_capture_buffer(This->pulse_stream, done);
 }
 
 static HRESULT WINAPI AudioCaptureClient_GetNextPacketSize(
