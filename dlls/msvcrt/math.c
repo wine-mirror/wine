@@ -5304,7 +5304,45 @@ static double erfc2(uint32_t ix, double x)
  */
 double CDECL erf(double x)
 {
-    return unix_funcs->erf( x );
+    static const double efx8 =  1.02703333676410069053e+00,
+                 pp0  =  1.28379167095512558561e-01,
+                 pp1  = -3.25042107247001499370e-01,
+                 pp2  = -2.84817495755985104766e-02,
+                 pp3  = -5.77027029648944159157e-03,
+                 pp4  = -2.37630166566501626084e-05,
+                 qq1  =  3.97917223959155352819e-01,
+                 qq2  =  6.50222499887672944485e-02,
+                 qq3  =  5.08130628187576562776e-03,
+                 qq4  =  1.32494738004321644526e-04,
+                 qq5  = -3.96022827877536812320e-06;
+
+    double r, s, z, y;
+    UINT32 ix;
+    int sign;
+
+    ix = *(UINT64*)&x >> 32;
+    sign = ix >> 31;
+    ix &= 0x7fffffff;
+    if (ix >= 0x7ff00000) {
+        /* erf(nan)=nan, erf(+-inf)=+-1 */
+        return 1 - 2 * sign + 1 / x;
+    }
+    if (ix < 0x3feb0000) { /* |x| < 0.84375 */
+        if (ix < 0x3e300000) { /* |x| < 2**-28 */
+            /* avoid underflow */
+            return 0.125 * (8 * x + efx8 * x);
+        }
+        z = x * x;
+        r = pp0 + z * (pp1 + z * (pp2 + z * (pp3 + z * pp4)));
+        s = 1.0 + z * (qq1 + z * (qq2 + z * (qq3 + z * (qq4 + z * qq5))));
+        y = r / s;
+        return x + x * y;
+    }
+    if (ix < 0x40180000) /* 0.84375 <= |x| < 6 */
+        y = 1 - erfc2(ix, x);
+    else
+        y = 1 - DBL_MIN;
+    return sign ? -y : y;
 }
 
 static float erfc1f(float x)

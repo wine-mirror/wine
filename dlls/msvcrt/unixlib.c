@@ -154,26 +154,6 @@ static float CDECL unix_coshf( float x )
 }
 
 /*********************************************************************
- *      erf
- */
-static double CDECL unix_erf(double x)
-{
-#ifdef HAVE_ERF
-    return erf(x);
-#else
-    /* Abramowitz and Stegun approximation, maximum error: 1.5*10^-7 */
-    double t, y;
-    int sign = signbit(x);
-
-    if (sign) x = -x;
-    t = 1 / (1 + 0.3275911 * x);
-    y = ((((1.061405429*t - 1.453152027)*t + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t;
-    y = 1.0 - y*exp(-x*x);
-    return sign ? -y : y;
-#endif
-}
-
-/*********************************************************************
  *      exp
  */
 static double CDECL unix_exp( double x )
@@ -541,7 +521,6 @@ static const struct unix_funcs funcs =
     unix_cosf,
     unix_cosh,
     unix_coshf,
-    unix_erf,
     unix_exp,
     unix_expf,
     unix_exp2,
