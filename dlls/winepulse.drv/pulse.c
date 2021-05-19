@@ -1416,6 +1416,23 @@ static void alloc_tmp_buffer(struct pulse_stream *stream, UINT32 bytes)
     stream->tmp_buffer_bytes = bytes;
 }
 
+static UINT32 pulse_render_padding(struct pulse_stream *stream)
+{
+    return stream->held_bytes / pa_frame_size(&stream->ss);
+}
+
+static UINT32 pulse_capture_padding(struct pulse_stream *stream)
+{
+    ACPacket *packet = stream->locked_ptr;
+    if (!packet && !list_empty(&stream->packet_filled_head))
+    {
+        packet = (ACPacket*)list_head(&stream->packet_filled_head);
+        stream->locked_ptr = packet;
+        list_remove(&packet->entry);
+    }
+    return stream->held_bytes / pa_frame_size(&stream->ss);
+}
+
 static HRESULT WINAPI pulse_get_render_buffer(struct pulse_stream *stream, UINT32 frames, BYTE **data)
 {
     size_t bytes;
@@ -1567,6 +1584,25 @@ static HRESULT WINAPI pulse_get_latency(struct pulse_stream *stream, REFERENCE_T
     return S_OK;
 }
 
+static HRESULT WINAPI pulse_get_current_padding(struct pulse_stream *stream, UINT32 *out)
+{
+    pulse_lock();
+    if (!pulse_stream_valid(stream))
+    {
+        pulse_unlock();
+        return AUDCLNT_E_DEVICE_INVALIDATED;
+    }
+
+    if (stream->dataflow == eRender)
+        *out = pulse_render_padding(stream);
+    else
+        *out = pulse_capture_padding(stream);
+    pulse_unlock();
+
+    TRACE("%p Pad: %u ms (%u)\n", stream, muldiv(*out, 1000, stream->ss.rate), *out);
+    return S_OK;
+}
+
 static void WINAPI pulse_set_volumes(struct pulse_stream *stream, float master_volume,
                                      const float *volumes, const float *session_volumes)
 {
@@ -1610,6 +1646,7 @@ static const struct unix_funcs unix_funcs =
     pulse_release_render_buffer,
     pulse_get_buffer_size,
     pulse_get_latency,
+    pulse_get_current_padding,
     pulse_set_volumes,
     pulse_set_event_handle,
     pulse_test_connect,

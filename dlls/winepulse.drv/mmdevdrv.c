@@ -638,11 +638,6 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,
     return pulse->get_latency(This->pulse_stream, latency);
 }
 
-static void ACImpl_GetRenderPad(ACImpl *This, UINT32 *out)
-{
-    *out = This->pulse_stream->held_bytes / pa_frame_size(&This->pulse_stream->ss);
-}
-
 static void ACImpl_GetCapturePad(ACImpl *This, UINT32 *out)
 {
     ACPacket *packet = This->pulse_stream->locked_ptr;
@@ -659,28 +654,15 @@ static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient3 *iface,
         UINT32 *out)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    HRESULT hr;
 
     TRACE("(%p)->(%p)\n", This, out);
 
     if (!out)
         return E_POINTER;
+    if (!This->pulse_stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
 
-    pulse->lock();
-    hr = pulse_stream_valid(This);
-    if (FAILED(hr)) {
-        pulse->unlock();
-        return hr;
-    }
-
-    if (This->dataflow == eRender)
-        ACImpl_GetRenderPad(This, out);
-    else
-        ACImpl_GetCapturePad(This, out);
-    pulse->unlock();
-
-    TRACE("%p Pad: %u ms (%u)\n", This, MulDiv(*out, 1000, This->pulse_stream->ss.rate), *out);
-    return S_OK;
+    return pulse->get_current_padding(This->pulse_stream, out);
 }
 
 static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient3 *iface,
