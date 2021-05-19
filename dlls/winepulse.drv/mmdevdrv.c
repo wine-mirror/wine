@@ -1200,48 +1200,19 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
         UINT64 *qpcpos)
 {
     ACImpl *This = impl_from_IAudioCaptureClient(iface);
-    HRESULT hr;
-    ACPacket *packet;
 
     TRACE("(%p)->(%p, %p, %p, %p, %p)\n", This, data, frames, flags,
             devpos, qpcpos);
 
     if (!data)
        return E_POINTER;
-
     *data = NULL;
-
     if (!frames || !flags)
         return E_POINTER;
+    if (!This->pulse_stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
 
-    pulse->lock();
-    hr = pulse_stream_valid(This);
-    if (FAILED(hr) || This->pulse_stream->locked) {
-        pulse->unlock();
-        return FAILED(hr) ? hr : AUDCLNT_E_OUT_OF_ORDER;
-    }
-
-    ACImpl_GetCapturePad(This, NULL);
-    if ((packet = This->pulse_stream->locked_ptr)) {
-        *frames = This->pulse_stream->period_bytes / pa_frame_size(&This->pulse_stream->ss);
-        *flags = 0;
-        if (packet->discont)
-            *flags |= AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY;
-        if (devpos) {
-            if (packet->discont)
-                *devpos = (This->pulse_stream->clock_written + This->pulse_stream->period_bytes) / pa_frame_size(&This->pulse_stream->ss);
-            else
-                *devpos = This->pulse_stream->clock_written / pa_frame_size(&This->pulse_stream->ss);
-        }
-        if (qpcpos)
-            *qpcpos = packet->qpcpos;
-        *data = packet->data;
-    }
-    else
-        *frames = 0;
-    This->pulse_stream->locked = *frames;
-    pulse->unlock();
-    return *frames ? S_OK : AUDCLNT_S_BUFFER_EMPTY;
+    return pulse->get_capture_buffer(This->pulse_stream, data, frames, flags, devpos, qpcpos);
 }
 
 static HRESULT WINAPI AudioCaptureClient_ReleaseBuffer(

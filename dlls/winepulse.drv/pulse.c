@@ -1549,6 +1549,48 @@ static HRESULT WINAPI pulse_release_render_buffer(struct pulse_stream *stream, U
     return S_OK;
 }
 
+static HRESULT WINAPI pulse_get_capture_buffer(struct pulse_stream *stream, BYTE **data,
+        UINT32 *frames, DWORD *flags, UINT64 *devpos, UINT64 *qpcpos)
+{
+    ACPacket *packet;
+
+    pulse_lock();
+    if (!pulse_stream_valid(stream))
+    {
+        pulse_unlock();
+        return AUDCLNT_E_DEVICE_INVALIDATED;
+    }
+    if (stream->locked)
+    {
+        pulse_unlock();
+        return AUDCLNT_E_OUT_OF_ORDER;
+    }
+
+    pulse_capture_padding(stream);
+    if ((packet = stream->locked_ptr))
+    {
+        *frames = stream->period_bytes / pa_frame_size(&stream->ss);
+        *flags = 0;
+        if (packet->discont)
+            *flags |= AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY;
+        if (devpos)
+        {
+            if (packet->discont)
+                *devpos = (stream->clock_written + stream->period_bytes) / pa_frame_size(&stream->ss);
+            else
+                *devpos = stream->clock_written / pa_frame_size(&stream->ss);
+        }
+        if (qpcpos)
+            *qpcpos = packet->qpcpos;
+        *data = packet->data;
+    }
+    else
+        *frames = 0;
+    stream->locked = *frames;
+    pulse_unlock();
+    return *frames ? S_OK : AUDCLNT_S_BUFFER_EMPTY;
+}
+
 static HRESULT WINAPI pulse_get_buffer_size(struct pulse_stream *stream, UINT32 *out)
 {
     HRESULT hr = S_OK;
@@ -1644,6 +1686,7 @@ static const struct unix_funcs unix_funcs =
     pulse_timer_loop,
     pulse_get_render_buffer,
     pulse_release_render_buffer,
+    pulse_get_capture_buffer,
     pulse_get_buffer_size,
     pulse_get_latency,
     pulse_get_current_padding,
