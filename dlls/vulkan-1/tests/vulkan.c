@@ -455,7 +455,6 @@ static void test_null_hwnd(VkInstance vk_instance, VkPhysicalDevice vk_physical_
     uint32_t queue_family_index;
     VkPresentModeKHR *modes;
     VkSurfaceKHR surface;
-    VkDevice vk_device;
     uint32_t count;
     VkRect2D rect;
     VkBool32 bval;
@@ -506,6 +505,8 @@ static void test_null_hwnd(VkInstance vk_instance, VkPhysicalDevice vk_physical_
 
     if (pvkGetPhysicalDevicePresentRectanglesKHR)
     {
+        VkDevice vk_device;
+
         count = 0;
         vr = pvkGetPhysicalDevicePresentRectanglesKHR(vk_physical_device, surface, &count, NULL);
         ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
@@ -526,6 +527,15 @@ static void test_null_hwnd(VkInstance vk_instance, VkPhysicalDevice vk_physical_
             vkDestroySurfaceKHR(vk_instance, surface, NULL);
             return;
         }
+
+        if (0)
+        {
+            /* Causes access violation on Windows. */
+            vr = vkGetDeviceGroupSurfacePresentModesKHR(vk_device, surface, &present_mode_flags);
+            ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
+        }
+
+        vkDestroyDevice(vk_device, NULL);
     }
     else
     {
@@ -535,14 +545,6 @@ static void test_null_hwnd(VkInstance vk_instance, VkPhysicalDevice vk_physical_
         win_skip("pvkGetPhysicalDevicePresentRectanglesKHR is no available.\n");
     }
 
-    if (0)
-    {
-        /* Causes access violation on Windows. */
-        vr = vkGetDeviceGroupSurfacePresentModesKHR(vk_device, surface, &present_mode_flags);
-        ok(vr == VK_SUCCESS, "Got unexpected vr %d.\n", vr);
-    }
-
-    vkDestroyDevice(vk_device, NULL);
     vkDestroySurfaceKHR(vk_instance, surface, NULL);
 }
 
