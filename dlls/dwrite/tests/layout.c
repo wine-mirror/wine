@@ -6384,6 +6384,111 @@ static void test_layout_range_length(void)
     IDWriteFactory_Release(factory);
 }
 
+static void test_HitTestTextRange(void)
+{
+    DWRITE_HIT_TEST_METRICS metrics[10];
+    IDWriteInlineObject *inlineobj;
+    DWRITE_LINE_METRICS line;
+    IDWriteTextFormat *format;
+    IDWriteTextLayout *layout;
+    DWRITE_TEXT_RANGE range;
+    IDWriteFactory *factory;
+    unsigned int count;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"ru", &format);
+    ok(hr == S_OK, "Failed to create text format, hr %#x.\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, L"string", 6, format, 100.0f, 100.0f, &layout);
+    ok(hr == S_OK, "Failed to create text layout, hr %#x.\n", hr);
+
+    /* Start index exceeding layout text length, dummy range returned. */
+    count = 0;
+    hr = IDWriteTextLayout_HitTestTextRange(layout, 7, 10, 0.0f, 0.0f, metrics, ARRAY_SIZE(metrics), &count);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+if (SUCCEEDED(hr))
+{
+    ok(count == 1, "Unexpected metrics count %u.\n", count);
+    ok(metrics[0].textPosition == 6 && metrics[0].length == 0, "Unexpected metrics range %u, %u.\n",
+            metrics[0].textPosition, metrics[0].length);
+    ok(!!metrics[0].isText, "Expected text range.\n");
+}
+    /* Length exceeding layout text length, trimmed. */
+    count = 0;
+    hr = IDWriteTextLayout_HitTestTextRange(layout, 0, 10, 0.0f, 0.0f, metrics, ARRAY_SIZE(metrics), &count);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+if (SUCCEEDED(hr))
+{
+    ok(count == 1, "Unexpected metrics count %u.\n", count);
+    ok(metrics[0].textPosition == 0 && metrics[0].length == 6, "Unexpected metrics range %u, %u.\n",
+            metrics[0].textPosition, metrics[0].length);
+    ok(!!metrics[0].isText, "Expected text range.\n");
+}
+    /* Change font size for second half. */
+    range.startPosition = 3;
+    range.length = 3;
+    hr = IDWriteTextLayout_SetFontSize(layout, 20.0f, range);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    count = 0;
+    hr = IDWriteTextLayout_HitTestTextRange(layout, 0, 6, 0.0f, 0.0f, metrics, ARRAY_SIZE(metrics), &count);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+if (SUCCEEDED(hr))
+{
+    ok(count == 1, "Unexpected metrics count %u.\n", count);
+    ok(metrics[0].textPosition == 0 && metrics[0].length == 6, "Unexpected metrics range %u, %u.\n",
+            metrics[0].textPosition, metrics[0].length);
+    ok(!!metrics[0].isText, "Expected text range.\n");
+
+    hr = IDWriteTextLayout_GetLineMetrics(layout, &line, 1, &count);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(line.height == metrics[0].height, "Unexpected range height.\n");
+}
+    /* With inline object. */
+    hr = IDWriteFactory_CreateEllipsisTrimmingSign(factory, format, &inlineobj);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IDWriteTextLayout_SetInlineObject(layout, inlineobj, range);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    count = 0;
+    hr = IDWriteTextLayout_HitTestTextRange(layout, 0, 6, 0.0f, 0.0f, metrics, ARRAY_SIZE(metrics), &count);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+if (SUCCEEDED(hr))
+{
+    ok(count == 2, "Unexpected metrics count %u.\n", count);
+    ok(metrics[0].textPosition == 0 && metrics[0].length == 3, "Unexpected metrics range %u, %u.\n",
+            metrics[0].textPosition, metrics[0].length);
+    ok(!!metrics[0].isText, "Expected text range.\n");
+    ok(metrics[1].textPosition == 3 && metrics[1].length == 3, "Unexpected metrics range %u, %u.\n",
+            metrics[1].textPosition, metrics[1].length);
+    ok(!metrics[1].isText, "Unexpected text range.\n");
+}
+    count = 0;
+    hr = IDWriteTextLayout_HitTestTextRange(layout, 7, 10, 0.0f, 0.0f, metrics, ARRAY_SIZE(metrics), &count);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+if (SUCCEEDED(hr))
+{
+    ok(count == 1, "Unexpected metrics count %u.\n", count);
+    ok(metrics[0].textPosition == 6 && metrics[0].length == 0, "Unexpected metrics range %u, %u.\n",
+            metrics[0].textPosition, metrics[0].length);
+    ok(!metrics[0].isText, "Unexpected text range.\n");
+}
+    IDWriteInlineObject_Release(inlineobj);
+    IDWriteTextLayout_Release(layout);
+    IDWriteTextFormat_Release(format);
+
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(layout)
 {
     IDWriteFactory *factory;
@@ -6438,6 +6543,7 @@ START_TEST(layout)
     test_automatic_font_axes();
     test_text_format_axes();
     test_layout_range_length();
+    test_HitTestTextRange();
 
     IDWriteFactory_Release(factory);
 }
