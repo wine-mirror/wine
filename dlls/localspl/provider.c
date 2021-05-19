@@ -2506,6 +2506,37 @@ static BOOL WINAPI fpXcvData(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData,
     return TRUE;
 }
 
+static BOOL WINAPI fpAddForm( HANDLE printer, DWORD level, BYTE *form )
+{
+    FIXME( "(%p, %d, %p): stub\n", printer, level, form );
+    return TRUE;
+}
+
+static BOOL WINAPI fpDeleteForm( HANDLE printer, WCHAR *name )
+{
+    FIXME( "(%p, %s): stub\n", printer, debugstr_w( name ) );
+    return TRUE;
+}
+
+static BOOL WINAPI fpGetForm( HANDLE printer, WCHAR *name, DWORD level, BYTE *form, DWORD size, DWORD *needed )
+{
+    FIXME( "(%p, %s, %d, %p, %d, %p): stub\n", printer, debugstr_w( name ), level, form, size, needed );
+    return FALSE;
+}
+
+static BOOL WINAPI fpSetForm( HANDLE printer, WCHAR *name, DWORD level, BYTE *form )
+{
+    FIXME( "(%p, %s, %d, %p): stub\n", printer, debugstr_w( name ), level, form );
+    return FALSE;
+}
+
+static BOOL WINAPI fpEnumForms( HANDLE printer, DWORD level, BYTE *form, DWORD size, DWORD *needed, DWORD *count )
+{
+    FIXME( "(%p, %d, %p, %d, %p, %p): stub\n", printer, level, form, size, needed, count );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
 static const PRINTPROVIDOR backend = {
         fpOpenPrinter,
         NULL,   /* fpSetJob */
@@ -2539,11 +2570,11 @@ static const PRINTPROVIDOR backend = {
         NULL,   /* fpSetPrinterData */
         NULL,   /* fpWaitForPrinterChange */
         fpClosePrinter,
-        NULL,   /* fpAddForm */
-        NULL,   /* fpDeleteForm */
-        NULL,   /* fpGetForm */
-        NULL,   /* fpSetForm */
-        NULL,   /* fpEnumForms */
+        fpAddForm,
+        fpDeleteForm,
+        fpGetForm,
+        fpSetForm,
+        fpEnumForms,
         fpEnumMonitors,
         fpEnumPorts,
         fpAddPort,
