@@ -2272,64 +2272,6 @@ static NTSTATUS WS2_async_send( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS stat
     return status;
 }
 
-/***********************************************************************
- *              WS2_async_shutdown      (INTERNAL)
- *
- * Handler for shutdown() operations on overlapped sockets.
- */
-static NTSTATUS WS2_async_shutdown( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status )
-{
-    struct ws2_async_shutdown *wsa = user;
-    int fd, err = 1;
-
-    switch (status)
-    {
-    case STATUS_ALERTED:
-        if ((status = wine_server_handle_to_fd( wsa->hSocket, 0, &fd, NULL ) ))
-            break;
-
-        switch ( wsa->type )
-        {
-        case ASYNC_TYPE_READ:   break;
-        case ASYNC_TYPE_WRITE:  err = shutdown( fd, 1 );  break;
-        }
-        status = err ? wsaErrStatus() : STATUS_SUCCESS;
-        close( fd );
-        break;
-    }
-    iosb->u.Status = status;
-    iosb->Information = 0;
-    release_async_io( &wsa->io );
-    return status;
-}
-
-/***********************************************************************
- *  WS2_register_async_shutdown         (INTERNAL)
- *
- * Helper function for WS_shutdown() on overlapped sockets.
- */
-static int WS2_register_async_shutdown( SOCKET s, int type )
-{
-    struct ws2_async_shutdown *wsa;
-    NTSTATUS status;
-
-    TRACE("socket %04lx type %d\n", s, type);
-
-    wsa = (struct ws2_async_shutdown *)alloc_async_io( sizeof(*wsa), WS2_async_shutdown );
-    if ( !wsa )
-        return WSAEFAULT;
-
-    wsa->hSocket = SOCKET2HANDLE(s);
-    wsa->type    = type;
-
-    status = register_async( type, wsa->hSocket, &wsa->io, 0, NULL, NULL, &wsa->iosb );
-    if (status != STATUS_PENDING)
-    {
-        HeapFree( GetProcessHeap(), 0, wsa );
-        return NtStatusToWSAError( status );
-    }
-    return 0;
-}
 
 /***********************************************************************
  *		accept		(WS2_32.1)
@@ -5512,73 +5454,23 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
     return SOCKET_ERROR;
 }
 
+
 /***********************************************************************
- *		shutdown		(WS2_32.22)
+ *      shutdown   (ws2_32.22)
  */
-int WINAPI WS_shutdown(SOCKET s, int how)
+int WINAPI WS_shutdown( SOCKET s, int how )
 {
-    int fd, err = WSAENOTSOCK;
-    unsigned int options = 0, clear_flags = 0;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
 
-    fd = get_sock_fd( s, 0, &options );
-    TRACE("socket %04lx, how 0x%x, options 0x%x\n", s, how, options );
+    TRACE( "socket %#lx, how %u\n", s, how );
 
-    if (fd == -1)
-        return SOCKET_ERROR;
-
-    switch( how )
-    {
-    case SD_RECEIVE: /* drop receives */
-        clear_flags |= FD_READ;
-        break;
-    case SD_SEND: /* drop sends */
-        clear_flags |= FD_WRITE;
-        break;
-    case SD_BOTH: /* drop all */
-        clear_flags |= FD_READ|FD_WRITE;
-        /*fall through */
-    default:
-        clear_flags |= FD_WINE_LISTENING;
-    }
-
-    if (!(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
-    {
-        switch ( how )
-        {
-        case SD_RECEIVE:
-            err = WS2_register_async_shutdown( s, ASYNC_TYPE_READ );
-            break;
-        case SD_SEND:
-            err = WS2_register_async_shutdown( s, ASYNC_TYPE_WRITE );
-            break;
-        case SD_BOTH:
-        default:
-            err = WS2_register_async_shutdown( s, ASYNC_TYPE_READ );
-            if (!err) err = WS2_register_async_shutdown( s, ASYNC_TYPE_WRITE );
-            break;
-        }
-        if (err) goto error;
-    }
-    else /* non-overlapped mode */
-    {
-        if (how != SD_RECEIVE && shutdown( fd, SHUT_WR ))
-        {
-            err = wsaErrno();
-            goto error;
-        }
-    }
-
-    release_sock_fd( s, fd );
-    _enable_event( SOCKET2HANDLE(s), 0, 0, clear_flags );
-    if ( how > 1) WSAAsyncSelect( s, 0, 0, 0 );
-    return 0;
-
-error:
-    release_sock_fd( s, fd );
-    _enable_event( SOCKET2HANDLE(s), 0, 0, clear_flags );
-    SetLastError( err );
-    return SOCKET_ERROR;
+    status = NtDeviceIoControlFile( (HANDLE)s, NULL, NULL, NULL, &io,
+                                    IOCTL_AFD_WINE_SHUTDOWN, &how, sizeof(how), NULL, 0 );
+    SetLastError( NtStatusToWSAError( status ) );
+    return status ? -1 : 0;
 }
+
 
 /***********************************************************************
  *		socket		(WS2_32.23)

@@ -6405,12 +6405,12 @@ static void test_shutdown(void)
     WSASetLastError(0xdeadbeef);
     ret = shutdown(client, SD_SEND);
     ok(ret == -1, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAENOTCONN, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAENOTCONN, "got error %u\n", WSAGetLastError());
 
     WSASetLastError(0xdeadbeef);
     ret = shutdown(client, SD_RECEIVE);
     ok(ret == -1, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAENOTCONN, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAENOTCONN, "got error %u\n", WSAGetLastError());
 
     ret = connect(client, (struct sockaddr *)&server_addr, sizeof(server_addr));
     ok(!ret, "failed to connect, error %u\n", WSAGetLastError());
@@ -6425,8 +6425,8 @@ static void test_shutdown(void)
 
     WSASetLastError(0xdeadbeef);
     ret = shutdown(client, SD_SEND);
-    todo_wine ok(!ret, "expected success\n");
-    todo_wine ok(!WSAGetLastError() || WSAGetLastError() == 0xdeadbeef /* < 7 */, "got error %u\n", WSAGetLastError());
+    ok(!ret, "expected success\n");
+    ok(!WSAGetLastError() || WSAGetLastError() == 0xdeadbeef /* < 7 */, "got error %u\n", WSAGetLastError());
 
     WSASetLastError(0xdeadbeef);
     ret = send(client, "test", 5, 0);
@@ -6501,7 +6501,7 @@ static void test_shutdown(void)
     WSASetLastError(0xdeadbeef);
     ret = shutdown(client, 0xdeadbeef);
     ok(ret == -1, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
 
     closesocket(client);
     closesocket(server);
@@ -6628,12 +6628,12 @@ static void test_shutdown(void)
     WSASetLastError(0xdeadbeef);
     ret = shutdown(listener, SD_SEND);
     ok(ret == -1, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAENOTCONN, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAENOTCONN, "got error %u\n", WSAGetLastError());
 
     WSASetLastError(0xdeadbeef);
     ret = shutdown(listener, SD_RECEIVE);
-    todo_wine ok(ret == -1, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAENOTCONN, "got error %u\n", WSAGetLastError());
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAENOTCONN, "got error %u\n", WSAGetLastError());
 
     closesocket(listener);
 
@@ -6671,8 +6671,8 @@ static void test_shutdown(void)
 
     WSASetLastError(0xdeadbeef);
     ret = shutdown(client, SD_SEND);
-    todo_wine ok(!ret, "expected success\n");
-    todo_wine ok(!WSAGetLastError() || WSAGetLastError() == 0xdeadbeef /* < 7 */, "got error %u\n", WSAGetLastError());
+    ok(!ret, "expected success\n");
+    ok(!WSAGetLastError() || WSAGetLastError() == 0xdeadbeef /* < 7 */, "got error %u\n", WSAGetLastError());
 
     WSASetLastError(0xdeadbeef);
     ret = sendto(client, "test", 5, 0, (struct sockaddr *)&server_addr, sizeof(server_addr));
