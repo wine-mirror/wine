@@ -135,6 +135,7 @@ struct sock
     unsigned int        reported_events;
     unsigned int        flags;       /* socket flags */
     int                 polling;     /* is socket being polled? */
+    int                 wr_shutdown_pending; /* is a write shutdown pending? */
     unsigned short      proto;       /* socket protocol */
     unsigned short      type;        /* socket type */
     unsigned short      family;      /* socket family */
@@ -912,6 +913,9 @@ static void sock_reselect_async( struct fd *fd, struct async_queue *queue )
 {
     struct sock *sock = get_fd_user( fd );
 
+    if (sock->wr_shutdown_pending && list_empty( &sock->write_q.queue ))
+        shutdown( get_unix_fd( sock->fd ), SHUT_WR );
+
     /* Don't reselect the ifchange queue; we always ask for POLLIN.
      * Don't reselect an uninitialized socket; we can't call set_fd_events() on
      * a pseudo-fd. */
@@ -983,6 +987,7 @@ static struct sock *create_socket(void)
     sock->pending_events = 0;
     sock->reported_events = 0;
     sock->polling = 0;
+    sock->wr_shutdown_pending = 0;
     sock->flags   = 0;
     sock->proto   = 0;
     sock->type    = 0;
@@ -1635,6 +1640,55 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         queue_async( &sock->connect_q, async );
         sock_reselect( sock );
         set_error( STATUS_PENDING );
+        return 1;
+    }
+
+    case IOCTL_AFD_WINE_SHUTDOWN:
+    {
+        unsigned int how;
+
+        if (get_req_data_size() < sizeof(int))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return 0;
+        }
+        how = *(int *)get_req_data();
+
+        if (how > SD_BOTH)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return 0;
+        }
+
+        if (sock->type == WS_SOCK_STREAM && !(sock->state & FD_WINE_CONNECTED))
+        {
+            set_error( STATUS_INVALID_CONNECTION );
+            return 0;
+        }
+
+        if (how != SD_SEND)
+        {
+            sock->state &= ~FD_READ;
+        }
+        if (how != SD_RECEIVE)
+        {
+            sock->state &= ~FD_WRITE;
+            if (list_empty( &sock->write_q.queue ))
+                shutdown( unix_fd, SHUT_WR );
+            else
+                sock->wr_shutdown_pending = 1;
+        }
+
+        if (how == SD_BOTH)
+        {
+            if (sock->event) release_object( sock->event );
+            sock->event = NULL;
+            sock->window = 0;
+            sock->mask = 0;
+            sock->state |= FD_WINE_NONBLOCKING;
+        }
+
+        sock_reselect( sock );
         return 1;
     }
 
