@@ -135,6 +135,10 @@ extern "C" {
 #define FORM_BUILTIN 1
 #define FORM_PRINTER 2
 
+#define STRING_NONE     1
+#define STRING_MUIDLL   2
+#define STRING_LANGPAIR 4
+
 #define PORT_TYPE_WRITE        1
 #define PORT_TYPE_READ         2
 #define PORT_TYPE_REDIRECTED   4
