@@ -119,6 +119,7 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/list.h"
+#include "wine/heap.h"
 #include "winnls.h"
 
 #include "ddk/winsplp.h"
@@ -443,6 +444,61 @@ static DEVMODEA *DEVMODEdupWtoA( const DEVMODEW *dmW )
     return dmA;
 }
 
+static void packed_string_WtoA( WCHAR *strW )
+{
+    DWORD len = strlenW( strW ), size = (len + 1) * sizeof(WCHAR), ret;
+    char *str;
+
+    if (!len) return;
+    str = heap_alloc( size );
+    ret = WideCharToMultiByte( CP_ACP, 0, strW, len, str, size - 1, NULL, NULL );
+    memcpy( strW, str, ret );
+    memset( (BYTE *)strW + ret, 0, size - ret );
+    heap_free( str );
+}
+
+/*********************************************************************
+ *                 packed_struct_WtoA
+ *
+ * Convert a packed struct from W to A overwriting the unicode strings
+ * with their ansi equivalents.
+ */
+static void packed_struct_WtoA( BYTE *data, const DWORD *string_info )
+{
+    WCHAR *strW;
+
+    string_info++; /* sizeof */
+    while (*string_info != ~0u)
+    {
+        strW = *(WCHAR **)(data + *string_info);
+        if (strW) packed_string_WtoA( strW );
+        string_info++;
+    }
+}
+
+static inline const DWORD *form_string_info( DWORD level )
+{
+    static const DWORD info_1[] =
+    {
+        sizeof( FORM_INFO_1W ),
+        FIELD_OFFSET( FORM_INFO_1W, pName ),
+        ~0u
+    };
+    static const DWORD info_2[] =
+    {
+        sizeof( FORM_INFO_2W ),
+        FIELD_OFFSET( FORM_INFO_2W, pName ),
+        FIELD_OFFSET( FORM_INFO_2W, pMuiDll ),
+        FIELD_OFFSET( FORM_INFO_2W, pDisplayName ),
+        ~0u
+    };
+
+    if (level == 1) return info_1;
+    if (level == 2) return info_2;
+
+    SetLastError( ERROR_INVALID_LEVEL );
+    return NULL;
+}
 
 /******************************************************************
  * verify, that the filename is a local file
@@ -3894,12 +3950,21 @@ BOOL WINAPI StartPagePrinter(HANDLE hPrinter)
 /*****************************************************************************
  *          GetFormA  [WINSPOOL.@]
  */
-BOOL WINAPI GetFormA(HANDLE hPrinter, LPSTR pFormName, DWORD Level,
-                 LPBYTE pForm, DWORD cbBuf, LPDWORD pcbNeeded)
+BOOL WINAPI GetFormA( HANDLE printer, char *name, DWORD level, BYTE *form, DWORD size, DWORD *needed )
 {
-    FIXME("(%p,%s,%d,%p,%d,%p): stub\n",hPrinter,pFormName,
-         Level,pForm,cbBuf,pcbNeeded);
-    return FALSE;
+    UNICODE_STRING nameW;
+    const DWORD *string_info = form_string_info( level );
+    BOOL ret;
+
+    if (!string_info) return FALSE;
+
+    asciitounicode( &nameW, name );
+
+    ret = GetFormW( printer, nameW.Buffer, level, form, size, needed );
+    if (ret) packed_struct_WtoA( form, string_info );
+
+    RtlFreeUnicodeString( &nameW );
+    return ret;
 }
 
 /*****************************************************************************
