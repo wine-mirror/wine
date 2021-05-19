@@ -174,18 +174,6 @@ static double CDECL unix_erf(double x)
 }
 
 /*********************************************************************
- *      erff
- */
-static float CDECL unix_erff(float x)
-{
-#ifdef HAVE_ERFF
-    return erff(x);
-#else
-    return unix_erf(x);
-#endif
-}
-
-/*********************************************************************
  *      erfc
  */
 static double CDECL unix_erfc(double x)
@@ -567,7 +555,6 @@ static const struct unix_funcs funcs =
     unix_coshf,
     unix_erf,
     unix_erfc,
-    unix_erff,
     unix_exp,
     unix_expf,
     unix_exp2,

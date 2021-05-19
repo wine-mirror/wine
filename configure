@@ -19624,7 +19624,6 @@ for ac_func in \
 	atanhf \
 	erf \
 	erfc \
-	erff \
 	exp2 \
 	exp2f \
 	expm1 \

@@ -116,9 +116,6 @@
 /* Define to 1 if you have the `erfc' function. */
 #undef HAVE_ERFC
 
-/* Define to 1 if you have the `erff' function. */
-#undef HAVE_ERFF
-
 /* Define to 1 if you have the `exp2' function. */
 #undef HAVE_EXP2
 

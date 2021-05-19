@@ -5306,10 +5306,50 @@ static float erfc2f(UINT32 ix, float x)
 
 /*********************************************************************
  *      erff (MSVCR120.@)
+ *
+ * Copied from musl: src/math/erff.c
  */
 float CDECL erff(float x)
 {
-    return unix_funcs->erff( x );
+    static const float efx8 =  1.0270333290e+00,
+                 pp0  =  1.2837916613e-01,
+                 pp1  = -3.2504209876e-01,
+                 pp2  = -2.8481749818e-02,
+                 pp3  = -5.7702702470e-03,
+                 pp4  = -2.3763017452e-05,
+                 qq1  =  3.9791721106e-01,
+                 qq2  =  6.5022252500e-02,
+                 qq3  =  5.0813062117e-03,
+                 qq4  =  1.3249473704e-04,
+                 qq5  = -3.9602282413e-06;
+
+    float r, s, z, y;
+    UINT32 ix;
+    int sign;
+
+    ix = *(UINT32*)&x;
+    sign = ix >> 31;
+    ix &= 0x7fffffff;
+    if (ix >= 0x7f800000) {
+        /* erf(nan)=nan, erf(+-inf)=+-1 */
+        return 1 - 2 * sign + 1 / x;
+    }
+    if (ix < 0x3f580000) { /* |x| < 0.84375 */
+        if (ix < 0x31800000) { /* |x| < 2**-28 */
+            /*avoid underflow */
+            return 0.125f * (8 * x + efx8 * x);
+        }
+        z = x * x;
+        r = pp0 + z * (pp1 + z * (pp2 + z * (pp3 + z * pp4)));
+        s = 1 + z * (qq1 + z * (qq2 + z * (qq3 + z * (qq4 + z * qq5))));
+        y = r / s;
+        return x + x * y;
+    }
+    if (ix < 0x40c00000) /* |x| < 6 */
+        y = 1 - erfc2f(ix, x);
+    else
+        y = 1 - FLT_MIN;
+    return sign ? -y : y;
 }
 
 /*********************************************************************
