@@ -43,6 +43,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(pulse);
 
+typedef struct _ACPacket
+{
+    struct list entry;
+    UINT64 qpcpos;
+    BYTE *data;
+    UINT32 discont;
+} ACPacket;
+
 static pa_context *pulse_ctx;
 static pa_mainloop *pulse_ml;
 
@@ -1674,6 +1682,18 @@ static HRESULT WINAPI pulse_get_current_padding(struct pulse_stream *stream, UIN
     return S_OK;
 }
 
+static HRESULT WINAPI pulse_get_next_packet_size(struct pulse_stream *stream, UINT32 *frames)
+{
+    pulse_lock();
+    pulse_capture_padding(stream);
+    if (stream->locked_ptr)
+        *frames = stream->period_bytes / pa_frame_size(&stream->ss);
+    else
+        *frames = 0;
+    pulse_unlock();
+    return S_OK;
+}
+
 static void WINAPI pulse_set_volumes(struct pulse_stream *stream, float master_volume,
                                      const float *volumes, const float *session_volumes)
 {
@@ -1720,6 +1740,7 @@ static const struct unix_funcs unix_funcs =
     pulse_get_buffer_size,
     pulse_get_latency,
     pulse_get_current_padding,
+    pulse_get_next_packet_size,
     pulse_set_volumes,
     pulse_set_event_handle,
     pulse_test_connect,

@@ -638,18 +638,6 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,
     return pulse->get_latency(This->pulse_stream, latency);
 }
 
-static void ACImpl_GetCapturePad(ACImpl *This, UINT32 *out)
-{
-    ACPacket *packet = This->pulse_stream->locked_ptr;
-    if (!packet && !list_empty(&This->pulse_stream->packet_filled_head)) {
-        packet = (ACPacket*)list_head(&This->pulse_stream->packet_filled_head);
-        This->pulse_stream->locked_ptr = packet;
-        list_remove(&packet->entry);
-    }
-    if (out)
-        *out = This->pulse_stream->held_bytes / pa_frame_size(&This->pulse_stream->ss);
-}
-
 static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient3 *iface,
         UINT32 *out)
 {
@@ -1234,17 +1222,13 @@ static HRESULT WINAPI AudioCaptureClient_GetNextPacketSize(
     ACImpl *This = impl_from_IAudioCaptureClient(iface);
 
     TRACE("(%p)->(%p)\n", This, frames);
+
     if (!frames)
         return E_POINTER;
+    if (!This->pulse_stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
 
-    pulse->lock();
-    ACImpl_GetCapturePad(This, NULL);
-    if (This->pulse_stream->locked_ptr)
-        *frames = This->pulse_stream->period_bytes / pa_frame_size(&This->pulse_stream->ss);
-    else
-        *frames = 0;
-    pulse->unlock();
-    return S_OK;
+    return pulse->get_next_packet_size(This->pulse_stream, frames);
 }
 
 static const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl =
