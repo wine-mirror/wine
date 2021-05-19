@@ -7457,12 +7457,20 @@ BOOL WINAPI DeletePrintProvidorW(LPWSTR pName, LPWSTR pEnvironment, LPWSTR pPrin
 /******************************************************************************
  *      EnumFormsA (WINSPOOL.@)
  */
-BOOL WINAPI EnumFormsA( HANDLE hPrinter, DWORD Level, LPBYTE pForm,
-    DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcReturned )
+BOOL WINAPI EnumFormsA( HANDLE printer, DWORD level, BYTE *form, DWORD size, DWORD *needed, DWORD *count )
 {
-    FIXME("%p %x %p %x %p %p\n", hPrinter, Level, pForm, cbBuf, pcbNeeded, pcReturned);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    const DWORD *string_info = form_string_info( level );
+    BOOL ret;
+    DWORD i;
+
+    if (!string_info) return FALSE;
+
+    ret = EnumFormsW( printer, level, form, size, needed, count );
+    if (ret)
+        for (i = 0; i < *count; i++)
+            packed_struct_WtoA( form + i * string_info[0], string_info );
+
+    return ret;
 }
 
 /******************************************************************************
