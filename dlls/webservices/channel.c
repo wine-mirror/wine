@@ -1460,7 +1460,7 @@ static HRESULT open_http_request( struct channel *channel, HINTERNET *req )
     return HRESULT_FROM_WIN32( GetLastError() );
 }
 
-static HRESULT send_message( struct channel *channel, WS_MESSAGE *msg )
+static HRESULT send_message_bytes( struct channel *channel, WS_MESSAGE *msg )
 {
     WS_XML_WRITER *writer;
     WS_BYTES buf;
@@ -1529,7 +1529,7 @@ HRESULT channel_send_message( WS_CHANNEL *handle, WS_MESSAGE *msg )
         return WS_E_INVALID_OPERATION;
     }
 
-    hr = send_message( channel, msg );
+    hr = send_message_bytes( channel, msg );
 
     LeaveCriticalSection( &channel->cs );
     return hr;
@@ -1561,8 +1561,8 @@ static HRESULT CALLBACK dict_cb( void *state, const WS_XML_STRING *str, BOOL *fo
     return hr;
 }
 
-static CALLBACK HRESULT write_callback( void *state, const WS_BYTES *buf, ULONG count,
-                                        const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
+static CALLBACK HRESULT write_callback( void *state, const WS_BYTES *buf, ULONG count, const WS_ASYNC_CONTEXT *ctx,
+                                        WS_ERROR *error )
 {
     SOCKET socket = *(SOCKET *)state;
     if (send( socket, (const char *)buf->bytes, buf->length, 0 ) < 0)
@@ -1634,6 +1634,59 @@ static HRESULT write_message( struct channel *channel, WS_MESSAGE *msg, const WS
     return WsWriteEnvelopeEnd( msg, NULL );
 }
 
+static HRESULT send_message( struct channel *channel, WS_MESSAGE *msg, const WS_MESSAGE_DESCRIPTION *desc,
+                             WS_WRITE_OPTION option, const void *body, ULONG size )
+{
+    HRESULT hr;
+    WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
+    if ((hr = WsAddressMessage( msg, &channel->addr, NULL )) != S_OK) return hr;
+    if ((hr = message_set_action( msg, desc->action )) != S_OK) return hr;
+    if ((hr = init_writer( channel )) != S_OK) return hr;
+    if ((hr = write_message( channel, msg, desc->bodyElementDescription, option, body, size )) != S_OK) return hr;
+    return send_message_bytes( channel, msg );
+}
+
+struct send_message
+{
+    struct task                   task;
+    struct channel               *channel;
+    WS_MESSAGE                   *msg;
+    const WS_MESSAGE_DESCRIPTION *desc;
+    WS_WRITE_OPTION               option;
+    const void                   *body;
+    ULONG                         size;
+    WS_ASYNC_CONTEXT              ctx;
+};
+
+static void send_message_proc( struct task *task )
+{
+    struct send_message *s = (struct send_message *)task;
+    HRESULT hr;
+
+    hr = send_message( s->channel, s->msg, s->desc, s->option, s->body, s->size );
+
+    TRACE( "calling %p(%08x)\n", s->ctx.callback, hr );
+    s->ctx.callback( hr, WS_LONG_CALLBACK, s->ctx.callbackState );
+    TRACE( "%p returned\n", s->ctx.callback );
+}
+
+static HRESULT queue_send_message( struct channel *channel, WS_MESSAGE *msg, const WS_MESSAGE_DESCRIPTION *desc,
+                                   WS_WRITE_OPTION option, const void *body, ULONG size, const WS_ASYNC_CONTEXT *ctx )
+{
+    struct send_message *s;
+
+    if (!(s = heap_alloc( sizeof(*s) ))) return E_OUTOFMEMORY;
+    s->task.proc = send_message_proc;
+    s->channel   = channel;
+    s->msg       = msg;
+    s->desc      = desc;
+    s->option    = option;
+    s->body      = body;
+    s->size      = size;
+    s->ctx       = *ctx;
+    return queue_task( &channel->send_q, &s->task );
+}
+
 /**************************************************************************
  *          WsSendMessage		[webservices.@]
  */
@@ -1642,11 +1695,12 @@ HRESULT WINAPI WsSendMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_MESS
                               WS_ERROR *error )
 {
     struct channel *channel = (struct channel *)handle;
+    WS_ASYNC_CONTEXT ctx_local;
+    struct async async;
     HRESULT hr;
 
     TRACE( "%p %p %p %08x %p %u %p %p\n", handle, msg, desc, option, body, size, ctx, error );
     if (error) FIXME( "ignoring error parameter\n" );
-    if (ctx) FIXME( "ignoring ctx parameter\n" );
 
     if (!channel || !msg || !desc) return E_INVALIDARG;
 
@@ -1663,15 +1717,14 @@ HRESULT WINAPI WsSendMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_MESS
         return WS_E_INVALID_OPERATION;
     }
 
-    if ((hr = WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL )) != S_OK) goto done;
-    if ((hr = WsAddressMessage( msg, &channel->addr, NULL )) != S_OK) goto done;
-    if ((hr = message_set_action( msg, desc->action )) != S_OK) goto done;
+    if (!ctx) async_init( &async, &ctx_local );
+    hr = queue_send_message( channel, msg, desc, option, body, size, ctx ? ctx : &ctx_local );
+    if (!ctx)
+    {
+        if (hr == WS_S_ASYNC) hr = async_wait( &async );
+        CloseHandle( async.done );
+    }
 
-    if ((hr = init_writer( channel )) != S_OK) goto done;
-    if ((hr = write_message( channel, msg, desc->bodyElementDescription, option, body, size )) != S_OK) goto done;
-    hr = send_message( channel, msg );
-
-done:
     LeaveCriticalSection( &channel->cs );
     TRACE( "returning %08x\n", hr );
     return hr;
@@ -1715,7 +1768,7 @@ HRESULT WINAPI WsSendReplyMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS
 
     if ((hr = init_writer( channel )) != S_OK) goto done;
     if ((hr = write_message( channel, msg, desc->bodyElementDescription, option, body, size )) != S_OK) goto done;
-    hr = send_message( channel, msg );
+    hr = send_message_bytes( channel, msg );
 
 done:
     LeaveCriticalSection( &channel->cs );
@@ -2341,7 +2394,7 @@ static HRESULT request_reply( struct channel *channel, WS_MESSAGE *request,
     if ((hr = init_writer( channel )) != S_OK) return hr;
     if ((hr = write_message( channel, request, request_desc->bodyElementDescription, write_option, request_body,
                              request_size )) != S_OK) return hr;
-    if ((hr = send_message( channel, request )) != S_OK) return hr;
+    if ((hr = send_message_bytes( channel, request )) != S_OK) return hr;
 
     return receive_message( channel, reply, &reply_desc, 1, WS_RECEIVE_OPTIONAL_MESSAGE, read_option, heap,
                             value, size, NULL );
@@ -2585,7 +2638,7 @@ HRESULT WINAPI WsWriteMessageEnd( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_
         return WS_E_INVALID_OPERATION;
     }
 
-    if ((hr = WsWriteEnvelopeEnd( msg, NULL )) == S_OK) hr = send_message( channel, msg );
+    if ((hr = WsWriteEnvelopeEnd( msg, NULL )) == S_OK) hr = send_message_bytes( channel, msg );
 
     LeaveCriticalSection( &channel->cs );
     TRACE( "returning %08x\n", hr );
