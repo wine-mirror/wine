@@ -5474,13 +5474,16 @@ float CDECL _scalbf(float num, __msvcrt_long power)
 
 /*********************************************************************
  *      remainder (MSVCR120.@)
+ *
+ * Copied from musl: src/math/remainder.c
  */
 double CDECL remainder(double x, double y)
 {
-    /* this matches 64-bit Windows.  32-bit Windows is slightly different */
-    if(!isfinite(x)) *_errno() = EDOM;
-    if(isnan(y) || y==0.0) *_errno() = EDOM;
-    return unix_funcs->remainder( x, y );
+    int q;
+#if _MSVCR_VER == 120 && defined(__x86_64__)
+    if (isnan(x) || isnan(y)) *_errno() = EDOM;
+#endif
+    return remquo(x, y, &q);
 }
 
 /*********************************************************************

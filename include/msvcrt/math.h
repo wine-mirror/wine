@@ -73,6 +73,8 @@ _ACRTIMP double __cdecl fmod(double, double);
 _ACRTIMP double __cdecl fmin(double, double);
 _ACRTIMP double __cdecl fmax(double, double);
 _ACRTIMP double __cdecl erf(double);
+_ACRTIMP double __cdecl remquo(double, double, int*);
+_ACRTIMP float __cdecl remquof(float, float, int*);
 
 _ACRTIMP double __cdecl _hypot(double, double);
 _ACRTIMP double __cdecl _j0(double);

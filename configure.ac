@@ -2678,7 +2678,6 @@ AC_CHECK_FUNCS(\
 	log1pf \
 	log2 \
 	log2f \
-	remainder \
 	remainderf \
 	tgamma \
 	tgammaf
