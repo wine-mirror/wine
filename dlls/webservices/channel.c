@@ -2652,18 +2652,58 @@ HRESULT WINAPI WsReadMessageEnd( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_A
     return hr;
 }
 
+static HRESULT write_message_start( struct channel *channel, WS_MESSAGE *msg )
+{
+    HRESULT hr;
+    if ((hr = init_writer( channel )) != S_OK) return hr;
+    if ((hr = WsAddressMessage( msg, &channel->addr, NULL )) != S_OK) return hr;
+    return WsWriteEnvelopeStart( msg, channel->writer, NULL, NULL, NULL );
+}
+
+struct write_message_start
+{
+    struct task      task;
+    struct channel  *channel;
+    WS_MESSAGE      *msg;
+    WS_ASYNC_CONTEXT ctx;
+};
+
+static void write_message_start_proc( struct task *task )
+{
+    struct write_message_start *w = (struct write_message_start *)task;
+    HRESULT hr;
+
+    hr = write_message_start( w->channel, w->msg );
+
+    TRACE( "calling %p(%08x)\n", w->ctx.callback, hr );
+    w->ctx.callback( hr, WS_LONG_CALLBACK, w->ctx.callbackState );
+    TRACE( "%p returned\n", w->ctx.callback );
+}
+
+static HRESULT queue_write_message_start( struct channel *channel, WS_MESSAGE *msg, const WS_ASYNC_CONTEXT *ctx )
+{
+    struct write_message_start *w;
+
+    if (!(w = heap_alloc( sizeof(*w) ))) return E_OUTOFMEMORY;
+    w->task.proc = write_message_start_proc;
+    w->channel   = channel;
+    w->msg       = msg;
+    w->ctx       = *ctx;
+    return queue_task( &channel->send_q, &w->task );
+}
+
 /**************************************************************************
  *          WsWriteMessageStart		[webservices.@]
  */
-HRESULT WINAPI WsWriteMessageStart( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_ASYNC_CONTEXT *ctx,
-                                    WS_ERROR *error )
+HRESULT WINAPI WsWriteMessageStart( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
 {
     struct channel *channel = (struct channel *)handle;
+    WS_ASYNC_CONTEXT ctx_local;
+    struct async async;
     HRESULT hr;
 
     TRACE( "%p %p %p %p\n", handle, msg, ctx, error );
     if (error) FIXME( "ignoring error parameter\n" );
-    if (ctx) FIXME( "ignoring ctx parameter\n" );
 
     if (!channel || !msg) return E_INVALIDARG;
 
@@ -2680,11 +2720,14 @@ HRESULT WINAPI WsWriteMessageStart( WS_CHANNEL *handle, WS_MESSAGE *msg, const W
         return WS_E_INVALID_OPERATION;
     }
 
-    if ((hr = init_writer( channel )) != S_OK) goto done;
-    if ((hr = WsAddressMessage( msg, &channel->addr, NULL )) != S_OK) goto done;
-    hr = WsWriteEnvelopeStart( msg, channel->writer, NULL, NULL, NULL );
+    if (!ctx) async_init( &async, &ctx_local );
+    hr = queue_write_message_start( channel, msg, ctx ? ctx : &ctx_local );
+    if (!ctx)
+    {
+        if (hr == WS_S_ASYNC) hr = async_wait( &async );
+        CloseHandle( async.done );
+    }
 
-done:
     LeaveCriticalSection( &channel->cs );
     TRACE( "returning %08x\n", hr );
     return hr;
