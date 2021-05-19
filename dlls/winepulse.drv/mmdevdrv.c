@@ -1283,19 +1283,13 @@ static ULONG WINAPI AudioClock_Release(IAudioClock *iface)
 static HRESULT WINAPI AudioClock_GetFrequency(IAudioClock *iface, UINT64 *freq)
 {
     ACImpl *This = impl_from_IAudioClock(iface);
-    HRESULT hr;
 
     TRACE("(%p)->(%p)\n", This, freq);
 
-    pulse->lock();
-    hr = pulse_stream_valid(This);
-    if (SUCCEEDED(hr)) {
-        *freq = This->pulse_stream->ss.rate;
-        if (This->pulse_stream->share == AUDCLNT_SHAREMODE_SHARED)
-            *freq *= pa_frame_size(&This->pulse_stream->ss);
-    }
-    pulse->unlock();
-    return hr;
+    if (!This->pulse_stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
+
+    return pulse->get_frequency(This->pulse_stream, freq);
 }
 
 static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,

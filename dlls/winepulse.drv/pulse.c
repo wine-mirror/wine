@@ -1694,6 +1694,22 @@ static HRESULT WINAPI pulse_get_next_packet_size(struct pulse_stream *stream, UI
     return S_OK;
 }
 
+static HRESULT WINAPI pulse_get_frequency(struct pulse_stream *stream, UINT64 *freq)
+{
+    pulse_lock();
+    if (!pulse_stream_valid(stream))
+    {
+        pulse_unlock();
+        return AUDCLNT_E_DEVICE_INVALIDATED;
+    }
+
+    *freq = stream->ss.rate;
+    if (stream->share == AUDCLNT_SHAREMODE_SHARED)
+        *freq *= pa_frame_size(&stream->ss);
+    pulse_unlock();
+    return S_OK;
+}
+
 static void WINAPI pulse_set_volumes(struct pulse_stream *stream, float master_volume,
                                      const float *volumes, const float *session_volumes)
 {
@@ -1741,6 +1757,7 @@ static const struct unix_funcs unix_funcs =
     pulse_get_latency,
     pulse_get_current_padding,
     pulse_get_next_packet_size,
+    pulse_get_frequency,
     pulse_set_volumes,
     pulse_set_event_handle,
     pulse_test_connect,

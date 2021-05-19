@@ -83,6 +83,7 @@ struct unix_funcs
     HRESULT (WINAPI *get_latency)(struct pulse_stream *stream, REFERENCE_TIME *latency);
     HRESULT (WINAPI *get_current_padding)(struct pulse_stream *stream, UINT32 *out);
     HRESULT (WINAPI *get_next_packet_size)(struct pulse_stream *stream, UINT32 *frames);
+    HRESULT (WINAPI *get_frequency)(struct pulse_stream *stream, UINT64 *freq);
     void (WINAPI *set_volumes)(struct pulse_stream *stream, float master_volume,
                                const float *volumes, const float *session_volumes);
     HRESULT (WINAPI *set_event_handle)(struct pulse_stream *stream, HANDLE event);
