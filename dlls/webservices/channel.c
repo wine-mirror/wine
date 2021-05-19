@@ -2581,18 +2581,53 @@ HRESULT WINAPI WsReadMessageStart( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS
     return hr;
 }
 
+static HRESULT read_message_end( WS_MESSAGE *msg )
+{
+    return WsReadEnvelopeEnd( msg, NULL );
+}
+
+struct read_message_end
+{
+    struct task      task;
+    WS_MESSAGE      *msg;
+    WS_ASYNC_CONTEXT ctx;
+};
+
+static void read_message_end_proc( struct task *task )
+{
+    struct read_message_end *r = (struct read_message_end *)task;
+    HRESULT hr;
+
+    hr = read_message_end( r->msg );
+
+    TRACE( "calling %p(%08x)\n", r->ctx.callback, hr );
+    r->ctx.callback( hr, WS_LONG_CALLBACK, r->ctx.callbackState );
+    TRACE( "%p returned\n", r->ctx.callback );
+}
+
+static HRESULT queue_read_message_end( struct channel *channel, WS_MESSAGE *msg, const WS_ASYNC_CONTEXT *ctx )
+{
+    struct read_message_end *r;
+
+    if (!(r = heap_alloc( sizeof(*r) ))) return E_OUTOFMEMORY;
+    r->task.proc = read_message_end_proc;
+    r->msg       = msg;
+    r->ctx       = *ctx;
+    return queue_task( &channel->recv_q, &r->task );
+}
+
 /**************************************************************************
  *          WsReadMessageEnd		[webservices.@]
  */
-HRESULT WINAPI WsReadMessageEnd( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_ASYNC_CONTEXT *ctx,
-                                 WS_ERROR *error )
+HRESULT WINAPI WsReadMessageEnd( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
 {
     struct channel *channel = (struct channel *)handle;
+    WS_ASYNC_CONTEXT ctx_local;
+    struct async async;
     HRESULT hr;
 
     TRACE( "%p %p %p %p\n", handle, msg, ctx, error );
     if (error) FIXME( "ignoring error parameter\n" );
-    if (ctx) FIXME( "ignoring ctx parameter\n" );
 
     if (!channel || !msg) return E_INVALIDARG;
 
@@ -2604,7 +2639,13 @@ HRESULT WINAPI WsReadMessageEnd( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_A
         return E_INVALIDARG;
     }
 
-    hr = WsReadEnvelopeEnd( msg, NULL );
+    if (!ctx) async_init( &async, &ctx_local );
+    hr = queue_read_message_end( channel, msg, ctx ? ctx : &ctx_local );
+    if (!ctx)
+    {
+        if (hr == WS_S_ASYNC) hr = async_wait( &async );
+        CloseHandle( async.done );
+    }
 
     LeaveCriticalSection( &channel->cs );
     TRACE( "returning %08x\n", hr );
