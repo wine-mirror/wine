@@ -84,6 +84,7 @@ struct unix_funcs
     HRESULT (WINAPI *get_render_buffer)(struct pulse_stream *stream, UINT32 frames, BYTE **data);
     HRESULT (WINAPI *release_render_buffer)(struct pulse_stream *stream, UINT32 written_frames,
                                             DWORD flags);
+    HRESULT (WINAPI *get_buffer_size)(struct pulse_stream *stream, UINT32 *out);
     void (WINAPI *set_volumes)(struct pulse_stream *stream, float master_volume,
                                const float *volumes, const float *session_volumes);
     HRESULT (WINAPI *set_event_handle)(struct pulse_stream *stream, HANDLE event);

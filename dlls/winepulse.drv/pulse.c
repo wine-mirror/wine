@@ -1532,6 +1532,20 @@ static HRESULT WINAPI pulse_release_render_buffer(struct pulse_stream *stream, U
     return S_OK;
 }
 
+static HRESULT WINAPI pulse_get_buffer_size(struct pulse_stream *stream, UINT32 *out)
+{
+    HRESULT hr = S_OK;
+
+    pulse_lock();
+    if (!pulse_stream_valid(stream))
+        hr = AUDCLNT_E_DEVICE_INVALIDATED;
+    else
+        *out = stream->bufsize_frames;
+    pulse_unlock();
+
+    return hr;
+}
+
 static void WINAPI pulse_set_volumes(struct pulse_stream *stream, float master_volume,
                                      const float *volumes, const float *session_volumes)
 {
@@ -1573,6 +1587,7 @@ static const struct unix_funcs unix_funcs =
     pulse_timer_loop,
     pulse_get_render_buffer,
     pulse_release_render_buffer,
+    pulse_get_buffer_size,
     pulse_set_volumes,
     pulse_set_event_handle,
     pulse_test_connect,

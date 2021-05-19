@@ -612,20 +612,15 @@ static HRESULT WINAPI AudioClient_GetBufferSize(IAudioClient3 *iface,
         UINT32 *out)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    HRESULT hr;
 
     TRACE("(%p)->(%p)\n", This, out);
 
     if (!out)
         return E_POINTER;
+    if (!This->pulse_stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
 
-    pulse->lock();
-    hr = pulse_stream_valid(This);
-    if (SUCCEEDED(hr))
-        *out = This->pulse_stream->bufsize_frames;
-    pulse->unlock();
-
-    return hr;
+    return pulse->get_buffer_size(This->pulse_stream, out);
 }
 
 static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,
