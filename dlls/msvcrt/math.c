@@ -5488,13 +5488,16 @@ double CDECL remainder(double x, double y)
 
 /*********************************************************************
  *      remainderf (MSVCR120.@)
+ *
+ * Copied from musl: src/math/remainderf.c
  */
 float CDECL remainderf(float x, float y)
 {
-    /* this matches 64-bit Windows.  32-bit Windows is slightly different */
-    if(!isfinite(x)) *_errno() = EDOM;
-    if(isnan(y) || y==0.0f) *_errno() = EDOM;
-    return unix_funcs->remainderf( x, y );
+    int q;
+#if _MSVCR_VER == 120 && defined(__x86_64__)
+    if (isnan(x) || isnan(y)) *_errno() = EDOM;
+#endif
+    return remquof(x, y, &q);
 }
 
 /*********************************************************************

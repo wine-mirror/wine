@@ -476,19 +476,6 @@ static float CDECL unix_powf( float x, float y )
 }
 
 /*********************************************************************
- *      remainderf
- */
-static float CDECL unix_remainderf(float x, float y)
-{
-#ifdef HAVE_REMAINDERF
-    return remainderf(x, y);
-#else
-    FIXME( "not implemented\n" );
-    return 0;
-#endif
-}
-
-/*********************************************************************
  *      sin
  */
 static double CDECL unix_sin( double x )
@@ -621,7 +608,6 @@ static const struct unix_funcs funcs =
     unix_logbf,
     unix_pow,
     unix_powf,
-    unix_remainderf,
     unix_sin,
     unix_sinf,
     unix_sinh,
