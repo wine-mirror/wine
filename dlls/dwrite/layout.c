@@ -1471,11 +1471,6 @@ static inline IUnknown *layout_get_effect_from_pos(struct dwrite_textlayout *lay
     return ((struct layout_range_iface*)h)->iface;
 }
 
-static inline BOOL layout_is_erun_rtl(const struct layout_effective_run *erun)
-{
-    return erun->run->u.regular.run.bidiLevel & 1;
-}
-
 /* A set of parameters that additionally splits resulting runs. It happens after shaping and all text processing,
    no glyph changes are possible. It's understandable for drawing effects, because DrawGlyphRun() reports them as
    one of the arguments, but it also happens for decorations, so every effective run has uniform
@@ -1594,7 +1589,7 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
 
     /* Check if run direction matches paragraph direction, if it doesn't adjust by
        run width */
-    if (layout_is_erun_rtl(run) ^ is_rtl)
+    if (is_run_rtl(run) ^ is_rtl)
         run->origin.x = is_rtl ? origin_x - run->width : origin_x + run->width;
     else
         run->origin.x = origin_x;
