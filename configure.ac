@@ -2664,7 +2664,6 @@ AC_CHECK_FUNCS(\
 	atanhf \
 	erf \
 	erfc \
-	erfcf \
 	erff \
 	exp2 \
 	exp2f \

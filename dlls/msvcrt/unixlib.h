@@ -35,7 +35,6 @@ struct unix_funcs
     float           (CDECL *coshf)(float x);
     double          (CDECL *erf)(double x);
     double          (CDECL *erfc)(double x);
-    float           (CDECL *erfcf)(float x);
     float           (CDECL *erff)(float x);
     double          (CDECL *exp)(double x);
     float           (CDECL *expf)(float x);
