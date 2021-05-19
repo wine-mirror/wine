@@ -310,10 +310,10 @@ BOOL HCR_GetDefaultIconA(LPCSTR szClass, LPSTR szDest, DWORD len, int* picon_idx
 	  RegCloseKey(hkey);
 	}
 
-    if (ret)
-        TRACE("-- %s %i\n", szDest, *picon_idx);
-    else
-        TRACE("-- not found\n");
+	if (ret)
+	  TRACE("-- %s %i\n", szDest, *picon_idx);
+	else
+	  TRACE("-- not found\n");
 
 	return ret;
 }
