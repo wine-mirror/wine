@@ -2714,8 +2714,44 @@ static BOOL WINAPI fpDeleteForm( HANDLE printer, WCHAR *name )
 
 static BOOL WINAPI fpGetForm( HANDLE printer, WCHAR *name, DWORD level, BYTE *form, DWORD size, DWORD *needed )
 {
-    FIXME( "(%p, %s, %d, %p, %d, %p): stub\n", printer, debugstr_w( name ), level, form, size, needed );
-    return FALSE;
+    size_t struct_size = form_struct_size( level );
+    const struct builtin_form *builtin = NULL;
+    WCHAR *strings = NULL;
+    BYTE *base = form;
+    DWORD i;
+
+    TRACE( "(%p, %s, %d, %p, %d, %p)\n", printer, debugstr_w( name ), level, form, size, needed );
+
+    *needed = 0;
+
+    if (!struct_size) return FALSE;
+
+    for (i = 0; i < ARRAY_SIZE(builtin_forms); i++)
+    {
+        if (!wcscmp( name, builtin_forms[i].name ))
+        {
+            builtin = builtin_forms + i;
+            break;
+        }
+    }
+
+    if (!builtin)
+    {
+        SetLastError( ERROR_INVALID_FORM_NAME );
+        return FALSE;
+    }
+
+    *needed = struct_size;
+    if (*needed < size) strings = (WCHAR *)(form + *needed);
+
+    fill_builtin_form_info( &base, &strings, builtin, level, size, needed );
+
+    if (*needed > size)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return FALSE;
+    }
+    return TRUE;
 }
 
 static BOOL WINAPI fpSetForm( HANDLE printer, WCHAR *name, DWORD level, BYTE *form )
