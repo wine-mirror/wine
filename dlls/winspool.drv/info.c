@@ -7415,6 +7415,18 @@ BOOL WINAPI EnumFormsW( HANDLE printer, DWORD level, BYTE *form, DWORD size, DWO
         return FALSE;
     }
 
+    if (!needed || !count)
+    {
+        SetLastError( RPC_X_NULL_REF_POINTER );
+        return FALSE;
+    }
+
+    if (!form && size)
+    {
+        SetLastError( ERROR_INVALID_USER_BUFFER );
+        return FALSE;
+    }
+
     return backend->fpEnumForms( handle, level, form, size, needed, count );
 }
 

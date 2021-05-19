@@ -81,7 +81,7 @@ static struct list xcv_handles = LIST_INIT( xcv_handles );
 static const WCHAR WinNT_CV_PortsW[] = L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Ports";
 static const WCHAR WinNT_CV_WindowsW[] = L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows";
 
-static HINSTANCE LOCALSPL_hInstance;
+HINSTANCE localspl_instance;
 
 /*****************************************************
  *      DllMain
@@ -94,7 +94,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     {
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls( hinstDLL );
-            LOCALSPL_hInstance = hinstDLL;
+            localspl_instance = hinstDLL;
             break;
     }
     return TRUE;
@@ -185,8 +185,8 @@ static DWORD get_ports_from_reg(DWORD level, LPBYTE pPorts, DWORD cbBuf, LPDWORD
     }
 
     /* "+1" for '\0' */
-    reslen_MonitorW = LoadStringW(LOCALSPL_hInstance, IDS_LOCALMONITOR, res_MonitorW, IDS_LOCALMONITOR_MAXLEN) + 1;  
-    reslen_PortW = LoadStringW(LOCALSPL_hInstance, IDS_LOCALPORT, res_PortW, IDS_LOCALPORT_MAXLEN) + 1;  
+    reslen_MonitorW = LoadStringW(localspl_instance, IDS_LOCALMONITOR, res_MonitorW, IDS_LOCALMONITOR_MAXLEN) + 1;
+    reslen_PortW = LoadStringW(localspl_instance, IDS_LOCALPORT, res_PortW, IDS_LOCALPORT_MAXLEN) + 1;
 
     res = RegOpenKeyW(HKEY_LOCAL_MACHINE, WinNT_CV_PortsW, &hroot);
     if (res == ERROR_SUCCESS) {

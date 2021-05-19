@@ -26,6 +26,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winreg.h"
+#include "winnls.h"
 #include "winspool.h"
 #include "winuser.h"
 #include "ddk/winddiui.h"
@@ -37,6 +38,132 @@
 #include "localspl_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(localspl);
+
+static const struct builtin_form
+{
+    const WCHAR *name;
+    SIZEL size;
+    DWORD res_id;
+} builtin_forms[] =
+{
+    { L"Letter", { 215900, 279400 }, IDS_FORM_LETTER },
+    { L"Letter Small", { 215900, 279400 }, IDS_FORM_LETTER_SMALL },
+    { L"Tabloid", { 279400, 431800 }, IDS_FORM_TABLOID },
+    { L"Ledger", { 431800, 279400 }, IDS_FORM_LEDGER },
+    { L"Legal", { 215900, 355600 }, IDS_FORM_LEGAL },
+    { L"Statement", { 139700, 215900 }, IDS_FORM_STATEMENT },
+    { L"Executive", { 184150, 266700 }, IDS_FORM_EXECUTIVE },
+    { L"A3", { 297000, 420000 }, IDS_FORM_A3 },
+    { L"A4", { 210000, 297000 }, IDS_FORM_A4 },
+    { L"A4 Small", { 210000, 297000 }, IDS_FORM_A4_SMALL },
+    { L"A5", { 148000, 210000 }, IDS_FORM_A5 },
+    { L"B4 (JIS)", { 257000, 364000 }, IDS_FORM_B4_JIS },
+    { L"B5 (JIS)", { 182000, 257000 }, IDS_FORM_B5_JIS },
+    { L"Folio", { 215900, 330200 }, IDS_FORM_FOLIO },
+    { L"Quarto", { 215000, 275000 }, IDS_FORM_QUARTO },
+    { L"10x14", { 254000, 355600 }, IDS_FORM_10x14 },
+    { L"11x17", { 279400, 431800 }, IDS_FORM_11x17 },
+    { L"Note", { 215900, 279400 }, IDS_FORM_NOTE },
+    { L"Envelope #9", { 98425, 225425 }, IDS_FORM_ENVELOPE_9 },
+    { L"Envelope #10", { 104775, 241300 }, IDS_FORM_ENVELOPE_10 },
+    { L"Envelope #11", { 114300, 263525 }, IDS_FORM_ENVELOPE_11 },
+    { L"Envelope #12", { 120650, 279400 }, IDS_FORM_ENVELOPE_12 },
+    { L"Envelope #14", { 127000, 292100 }, IDS_FORM_ENVELOPE_14 },
+    { L"C size sheet", { 431800, 558800 }, IDS_FORM_C_SIZE_SHEET },
+    { L"D size sheet", { 558800, 863600 }, IDS_FORM_D_SIZE_SHEET },
+    { L"E size sheet", { 863600, 1117600 }, IDS_FORM_E_SIZE_SHEET },
+    { L"Envelope DL", { 110000, 220000 }, IDS_FORM_ENVELOPE_DL },
+    { L"Envelope C5", { 162000, 229000 }, IDS_FORM_ENVELOPE_C5 },
+    { L"Envelope C3", { 324000, 458000 }, IDS_FORM_ENVELOPE_C3 },
+    { L"Envelope C4", { 229000, 324000 }, IDS_FORM_ENVELOPE_C4 },
+    { L"Envelope C6", { 114000, 162000 }, IDS_FORM_ENVELOPE_C6 },
+    { L"Envelope C65", { 114000, 229000 }, IDS_FORM_ENVELOPE_C65 },
+    { L"Envelope B4", { 250000, 353000 }, IDS_FORM_ENVELOPE_B4 },
+    { L"Envelope B5", { 176000, 250000 }, IDS_FORM_ENVELOPE_B5 },
+    { L"Envelope B6", { 176000, 125000 }, IDS_FORM_ENVELOPE_B6 },
+    { L"Envelope", { 110000, 230000 }, IDS_FORM_ENVELOPE },
+    { L"Envelope Monarch", { 98425, 190500 }, IDS_FORM_ENVELOPE_MONARCH },
+    { L"6 3/4 Envelope", { 92075, 165100 }, IDS_FORM_6_34_ENVELOPE },
+    { L"US Std Fanfold", { 377825, 279400 }, IDS_FORM_US_STD_FANFOLD },
+    { L"German Std Fanfold", { 215900, 304800 }, IDS_FORM_GERMAN_STD_FANFOLD },
+    { L"German Legal Fanfold", { 215900, 330200 }, IDS_FORM_GERMAN_LEGAL_FANFOLD },
+    { L"B4 (ISO)", { 250000, 353000 }, IDS_FORM_B4_ISO },
+    { L"Japanese Postcard", { 100000, 148000 }, IDS_FORM_JAPANESE_POSTCARD },
+    { L"9x11", { 228600, 279400 }, IDS_FORM_9x11 },
+    { L"10x11", { 254000, 279400 }, IDS_FORM_10x11 },
+    { L"15x11", { 381000, 279400 }, IDS_FORM_15x11 },
+    { L"Envelope Invite", { 220000, 220000 }, IDS_FORM_ENVELOPE_INVITE },
+    { L"Letter Extra", { 241300, 304800 }, IDS_FORM_LETTER_EXTRA },
+    { L"Legal Extra", { 241300, 381000 }, IDS_FORM_LEGAL_EXTRA },
+    { L"Tabloid Extra", { 304800, 457200 }, IDS_FORM_TABLOID_EXTRA },
+    { L"A4 Extra", { 235458, 322326 }, IDS_FORM_A4_EXTRA },
+    { L"Letter Transverse", { 215900, 279400 }, IDS_FORM_LETTER_TRANSVERSE },
+    { L"A4 Transverse", { 210000, 297000 }, IDS_FORM_A4_TRANSVERSE },
+    { L"Letter Extra Transverse", { 241300, 304800 }, IDS_FORM_LETTER_EXTRA_TRANSVERSE },
+    { L"Super A", { 227000, 356000 }, IDS_FORM_SUPER_A },
+    { L"Super B", { 305000, 487000 }, IDS_FORM_SUPER_B },
+    { L"Letter Plus", { 215900, 322326 }, IDS_FORM_LETTER_PLUS },
+    { L"A4 Plus", { 210000, 330000 }, IDS_FORM_A4_PLUS },
+    { L"A5 Transverse", { 148000, 210000 }, IDS_FORM_A5_TRANSVERSE },
+    { L"B5 (JIS) Transverse", { 182000, 257000 }, IDS_FORM_B5_JIS_TRANSVERSE },
+    { L"A3 Extra", { 322000, 445000 }, IDS_FORM_A3_EXTRA },
+    { L"A5 Extra", { 174000, 235000 }, IDS_FORM_A5_EXTRA },
+    { L"B5 (ISO) Extra", { 201000, 276000 }, IDS_FORM_B5_ISO_EXTRA },
+    { L"A2", { 420000, 594000 }, IDS_FORM_A2 },
+    { L"A3 Transverse", { 297000, 420000 }, IDS_FORM_A3_TRANSVERSE },
+    { L"A3 Extra Transverse", { 322000, 445000 }, IDS_FORM_A3_EXTRA_TRANSVERSE },
+    { L"Japanese Double Postcard", { 200000, 148000 }, IDS_FORM_JAPANESE_DOUBLE_POSTCARD },
+    { L"A6", { 105000, 148000 }, IDS_FORM_A6 },
+    { L"Japanese Envelope Kaku #2", { 240000, 332000 }, IDS_FORM_JAPANESE_ENVELOPE_KAKU_2 },
+    { L"Japanese Envelope Kaku #3", { 216000, 277000 }, IDS_FORM_JAPANESE_ENVELOPE_KAKU_3 },
+    { L"Japanese Envelope Chou #3", { 120000, 235000 }, IDS_FORM_JAPANESE_ENVELOPE_CHOU_3 },
+    { L"Japanese Envelope Chou #4", { 90000, 205000 }, IDS_FORM_JAPANESE_ENVELOPE_CHOU_4 },
+    { L"Letter Rotated", { 279400, 215900 }, IDS_FORM_LETTER_ROTATED },
+    { L"A3 Rotated", { 420000, 297000 }, IDS_FORM_A3_ROTATED },
+    { L"A4 Rotated", { 297000, 210000 }, IDS_FORM_A4_ROTATED },
+    { L"A5 Rotated", { 210000, 148000 }, IDS_FORM_A5_ROTATED },
+    { L"B4 (JIS) Rotated", { 364000, 257000 }, IDS_FORM_B4_JIS_ROTATED },
+    { L"B5 (JIS) Rotated", { 257000, 182000 }, IDS_FORM_B5_JIS_ROTATED },
+    { L"Japanese Postcard Rotated", { 148000, 100000 }, IDS_FORM_JAPANESE_POSTCARD_ROTATED },
+    { L"Double Japan Postcard Rotated", { 148000, 200000 }, IDS_FORM_DOUBLE_JAPAN_POSTCARD_ROTATED },
+    { L"A6 Rotated", { 148000, 105000 }, IDS_FORM_A6_ROTATED },
+    { L"Japan Envelope Kaku #2 Rotated", { 332000, 240000 }, IDS_FORM_JAPAN_ENVELOPE_KAKU_2_ROTATED },
+    { L"Japan Envelope Kaku #3 Rotated", { 277000, 216000 }, IDS_FORM_JAPAN_ENVELOPE_KAKU_3_ROTATED },
+    { L"Japan Envelope Chou #3 Rotated", { 235000, 120000 }, IDS_FORM_JAPAN_ENVELOPE_CHOU_3_ROTATED },
+    { L"Japan Envelope Chou #4 Rotated", { 205000, 90000 }, IDS_FORM_JAPAN_ENVELOPE_CHOU_4_ROTATED },
+    { L"B6 (JIS)", { 128000, 182000 }, IDS_FORM_B6_JIS },
+    { L"B6 (JIS) Rotated", { 182000, 128000 }, IDS_FORM_B6_JIS_ROTATED },
+    { L"12x11", { 304932, 279521 }, IDS_FORM_12x11 },
+    { L"Japan Envelope You #4", { 105000, 235000 }, IDS_FORM_JAPAN_ENVELOPE_YOU_4 },
+    { L"Japan Envelope You #4 Rotated", { 235000, 105000 }, IDS_FORM_JAPAN_ENVELOPE_YOU_4_ROTATED },
+    { L"PRC 16K", { 188000, 260000 }, IDS_FORM_PRC_16K },
+    { L"PRC 32K", { 130000, 184000 }, IDS_FORM_PRC_32K },
+    { L"PRC 32K(Big)", { 140000, 203000 }, IDS_FORM_PRC_32K_BIG },
+    { L"PRC Envelope #1", { 102000, 165000 }, IDS_FORM_PRC_ENVELOPE_1 },
+    { L"PRC Envelope #2", { 102000, 176000 }, IDS_FORM_PRC_ENVELOPE_2 },
+    { L"PRC Envelope #3", { 125000, 176000 }, IDS_FORM_PRC_ENVELOPE_3 },
+    { L"PRC Envelope #4", { 110000, 208000 }, IDS_FORM_PRC_ENVELOPE_4 },
+    { L"PRC Envelope #5", { 110000, 220000 }, IDS_FORM_PRC_ENVELOPE_5 },
+    { L"PRC Envelope #6", { 120000, 230000 }, IDS_FORM_PRC_ENVELOPE_6 },
+    { L"PRC Envelope #7", { 160000, 230000 }, IDS_FORM_PRC_ENVELOPE_7 },
+    { L"PRC Envelope #8", { 120000, 309000 }, IDS_FORM_PRC_ENVELOPE_8 },
+    { L"PRC Envelope #9", { 229000, 324000 }, IDS_FORM_PRC_ENVELOPE_9 },
+    { L"PRC Envelope #10", { 324000, 458000 }, IDS_FORM_PRC_ENVELOPE_10 },
+    { L"PRC 16K Rotated", { 260000, 188000 }, IDS_FORM_PRC_16K_ROTATED },
+    { L"PRC 32K Rotated", { 184000, 130000 }, IDS_FORM_PRC_32K_ROTATED },
+    { L"PRC 32K(Big) Rotated", { 203000, 140000 }, IDS_FORM_PRC_32K_BIG_ROTATED },
+    { L"PRC Envelope #1 Rotated", { 165000, 102000 }, IDS_FORM_PRC_ENVELOPE_1_ROTATED },
+    { L"PRC Envelope #2 Rotated", { 176000, 102000 }, IDS_FORM_PRC_ENVELOPE_2_ROTATED },
+    { L"PRC Envelope #3 Rotated", { 176000, 125000 }, IDS_FORM_PRC_ENVELOPE_3_ROTATED },
+    { L"PRC Envelope #4 Rotated", { 208000, 110000 }, IDS_FORM_PRC_ENVELOPE_4_ROTATED },
+    { L"PRC Envelope #5 Rotated", { 220000, 110000 }, IDS_FORM_PRC_ENVELOPE_5_ROTATED },
+    { L"PRC Envelope #6 Rotated", { 230000, 120000 }, IDS_FORM_PRC_ENVELOPE_6_ROTATED },
+    { L"PRC Envelope #7 Rotated", { 230000, 160000 }, IDS_FORM_PRC_ENVELOPE_7_ROTATED },
+    { L"PRC Envelope #8 Rotated", { 309000, 120000 }, IDS_FORM_PRC_ENVELOPE_8_ROTATED },
+    { L"PRC Envelope #9 Rotated", { 324000, 229000 }, IDS_FORM_PRC_ENVELOPE_9_ROTATED },
+    { L"PRC Envelope #10 Rotated", { 458000, 324000 }, IDS_FORM_PRC_ENVELOPE_10_ROTATED }
+};
+
 
 /* ############################### */
 
@@ -2506,6 +2633,73 @@ static BOOL WINAPI fpXcvData(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData,
     return TRUE;
 }
 
+static inline size_t form_struct_size( DWORD level )
+{
+    if (level == 1) return sizeof(FORM_INFO_1W);
+    if (level == 2) return sizeof(FORM_INFO_2W);
+
+    SetLastError( ERROR_INVALID_LEVEL );
+    return 0;
+}
+
+static void fill_builtin_form_info( BYTE **base, WCHAR **strings, const struct builtin_form *form, DWORD level,
+                                    DWORD size, DWORD *used )
+{
+    FORM_INFO_2W *info = *(FORM_INFO_2W**)base;
+    DWORD name_len = lstrlenW( form->name ) + 1, res_len, keyword_len, total_size;
+    static const WCHAR dll_name[] = L"localspl.dll";
+    const WCHAR *resource;
+
+    total_size = name_len * sizeof(WCHAR);
+
+    if (level > 1)
+    {
+        keyword_len = WideCharToMultiByte( CP_ACP, 0, form->name, -1, NULL, 0, NULL, NULL );
+        keyword_len = (keyword_len + 1) & ~1;
+        total_size += keyword_len;
+        res_len = LoadStringW( localspl_instance, form->res_id, (WCHAR *)&resource, 0 );
+        if (res_len && resource[res_len - 1]) res_len++;
+        total_size += (res_len + ARRAY_SIZE(dll_name)) * sizeof(WCHAR);
+    }
+
+    if (*used + total_size <= size)
+    {
+        info->Flags = FORM_BUILTIN;
+        info->pName = memcpy( *strings, form->name, name_len * sizeof(WCHAR) );
+        *strings += name_len;
+        info->Size = form->size;
+        info->ImageableArea.left = info->ImageableArea.top = 0;
+        info->ImageableArea.right = info->Size.cx;
+        info->ImageableArea.bottom = info->Size.cy;
+        if (level > 1)
+        {
+            info->pKeyword = (char *)*strings;
+            WideCharToMultiByte( CP_ACP, 0, form->name, -1, (char *)info->pKeyword, keyword_len, NULL, NULL );
+            *strings += keyword_len / sizeof(WCHAR);
+            info->StringType = STRING_MUIDLL;
+            info->pMuiDll = memcpy( *strings, dll_name, sizeof(dll_name) );
+            *strings += ARRAY_SIZE(dll_name);
+            info->dwResourceId = form->res_id;
+            if (res_len)
+            {
+                info->StringType |= STRING_LANGPAIR;
+                info->pDisplayName = memcpy( *strings, resource, (res_len - 1) * sizeof(WCHAR) );
+                info->pDisplayName[res_len - 1] = '\0';
+                *strings += res_len;
+                info->wLangId = GetUserDefaultLangID();
+            }
+            else
+            {
+                info->pDisplayName = NULL;
+                info->wLangId = 0;
+            }
+        }
+    }
+
+    *base += form_struct_size( level );
+    *used += total_size;
+}
+
 static BOOL WINAPI fpAddForm( HANDLE printer, DWORD level, BYTE *form )
 {
     FIXME( "(%p, %d, %p): stub\n", printer, level, form );
@@ -2532,9 +2726,31 @@ static BOOL WINAPI fpSetForm( HANDLE printer, WCHAR *name, DWORD level, BYTE *fo
 
 static BOOL WINAPI fpEnumForms( HANDLE printer, DWORD level, BYTE *form, DWORD size, DWORD *needed, DWORD *count )
 {
-    FIXME( "(%p, %d, %p, %d, %p, %p): stub\n", printer, level, form, size, needed, count );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    DWORD num = ARRAY_SIZE(builtin_forms), i;
+    WCHAR *strings = NULL;
+    BYTE *base = form;
+    size_t struct_size = form_struct_size( level );
+
+    TRACE( "(%p, %d, %p, %d, %p, %p)\n", printer, level, form, size, needed, count );
+
+    *count = *needed = 0;
+
+    if (!struct_size) return FALSE;
+
+    *needed = num * struct_size;
+    if (*needed < size) strings = (WCHAR *)(form + *needed);
+
+    for (i = 0; i < ARRAY_SIZE(builtin_forms); i++)
+        fill_builtin_form_info( &base, &strings, builtin_forms + i, level, size, needed );
+
+    if (*needed > size)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return FALSE;
+    }
+
+    *count = i;
+    return TRUE;
 }
 
 static const PRINTPROVIDOR backend = {

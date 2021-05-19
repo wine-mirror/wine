@@ -6984,6 +6984,571 @@ msgstr "Nieprawidłowe wywołanie.\n"
 msgid "Resource is not currently available.\n"
 msgstr "Zasób jest obecnie niedostępny.\n"
 
+#: dlls/localspl/localspl.rc:37
+#, fuzzy
+#| msgctxt "Drive letter"
+#| msgid "Letter"
+msgid "Letter"
+msgstr "Litera"
+
+#: dlls/localspl/localspl.rc:38
+#, fuzzy
+#| msgctxt "Drive letter"
+#| msgid "Letter"
+msgid "Letter Small"
+msgstr "Litera"
+
+#: dlls/localspl/localspl.rc:39
+#, fuzzy
+#| msgid "&Table"
+msgid "Tabloid"
+msgstr "&Tabela"
+
+#: dlls/localspl/localspl.rc:40
+msgid "Ledger"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:41
+msgid "Legal"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:42
+#, fuzzy
+#| msgid "State"
+msgid "Statement"
+msgstr "Stan"
+
+#: dlls/localspl/localspl.rc:43
+#, fuzzy
+#| msgid "&Execute..."
+msgid "Executive"
+msgstr "Urucho&m..."
+
+#: dlls/localspl/localspl.rc:44
+#, fuzzy
+#| msgctxt "All key"
+#| msgid "A"
+msgid "A3"
+msgstr "A"
+
+#: dlls/localspl/localspl.rc:45
+#, fuzzy
+#| msgctxt "All key"
+#| msgid "A"
+msgid "A4"
+msgstr "A"
+
+#: dlls/localspl/localspl.rc:46
+#, fuzzy
+#| msgid "Small"
+msgid "A4 Small"
+msgstr "Małe"
+
+#: dlls/localspl/localspl.rc:47
+#, fuzzy
+#| msgctxt "All key"
+#| msgid "A"
+msgid "A5"
+msgstr "A"
+
+#: dlls/localspl/localspl.rc:48
+msgid "B4 (JIS)"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:49
+msgid "B5 (JIS)"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:50
+msgid "Folio"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:51
+msgid "Quarto"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:52
+msgid "10x14"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:53
+msgid "11x17"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:54
+#, fuzzy
+#| msgid "Notepad"
+msgid "Note"
+msgstr "Notatnik"
+
+#: dlls/localspl/localspl.rc:55
+msgid "Envelope #9"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:56
+msgid "Envelope #10"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:57
+msgid "Envelope #11"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:58
+msgid "Envelope #12"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:59
+msgid "Envelope #14"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:60
+msgid "C size sheet"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:61
+msgid "D size sheet"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:62
+msgid "E size sheet"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:63
+msgid "Envelope DL"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:64
+msgid "Envelope C5"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:65
+msgid "Envelope C3"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:66
+msgid "Envelope C4"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:67
+msgid "Envelope C6"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:68
+msgid "Envelope C65"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:69
+msgid "Envelope B4"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:70
+msgid "Envelope B5"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:71
+msgid "Envelope B6"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:72
+#, fuzzy
+#| msgid "PKCS 7 Enveloped"
+msgid "Envelope"
+msgstr "Opakowany certyfikat PKCS 7"
+
+#: dlls/localspl/localspl.rc:73
+msgid "Envelope Monarch"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:74
+#, fuzzy
+#| msgid "PKCS 7 Enveloped"
+msgid "6 3/4 Envelope"
+msgstr "Opakowany certyfikat PKCS 7"
+
+#: dlls/localspl/localspl.rc:75
+msgid "US Std Fanfold"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:76
+msgid "German Std Fanfold"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:77
+msgid "German Legal Fanfold"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:78
+msgid "B4 (ISO)"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:79
+#, fuzzy
+#| msgid "Japanese"
+msgid "Japanese Postcard"
+msgstr "Japoński"
+
+#: dlls/localspl/localspl.rc:80
+msgid "9x11"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:81
+msgid "10x11"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:82
+msgid "15x11"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:83
+msgid "Envelope Invite"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:84
+#, fuzzy
+#| msgctxt "Drive letter"
+#| msgid "Letter"
+msgid "Letter Extra"
+msgstr "Litera"
+
+#: dlls/localspl/localspl.rc:85
+msgid "Legal Extra"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:86
+msgid "Tabloid Extra"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:87
+#, fuzzy
+#| msgid "E&xtras"
+msgid "A4 Extra"
+msgstr "&Dodatki"
+
+#: dlls/localspl/localspl.rc:88
+#, fuzzy
+#| msgctxt "object state"
+#| msgid "traversed"
+msgid "Letter Transverse"
+msgstr "przestawiony"
+
+#: dlls/localspl/localspl.rc:89
+#, fuzzy
+#| msgctxt "object state"
+#| msgid "traversed"
+msgid "A4 Transverse"
+msgstr "przestawiony"
+
+#: dlls/localspl/localspl.rc:90
+msgid "Letter Extra Transverse"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:91
+msgid "Super A"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:92
+msgid "Super B"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:93
+#, fuzzy
+#| msgctxt "Drive letter"
+#| msgid "Letter"
+msgid "Letter Plus"
+msgstr "Litera"
+
+#: dlls/localspl/localspl.rc:94
+msgid "A4 Plus"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:95
+#, fuzzy
+#| msgctxt "object state"
+#| msgid "traversed"
+msgid "A5 Transverse"
+msgstr "przestawiony"
+
+#: dlls/localspl/localspl.rc:96
+msgid "B5 (JIS) Transverse"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:97
+#, fuzzy
+#| msgid "E&xtras"
+msgid "A3 Extra"
+msgstr "&Dodatki"
+
+#: dlls/localspl/localspl.rc:98
+#, fuzzy
+#| msgid "E&xtras"
+msgid "A5 Extra"
+msgstr "&Dodatki"
+
+#: dlls/localspl/localspl.rc:99
+msgid "B5 (ISO) Extra"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:100
+#, fuzzy
+#| msgctxt "All key"
+#| msgid "A"
+msgid "A2"
+msgstr "A"
+
+#: dlls/localspl/localspl.rc:101
+#, fuzzy
+#| msgctxt "object state"
+#| msgid "traversed"
+msgid "A3 Transverse"
+msgstr "przestawiony"
+
+#: dlls/localspl/localspl.rc:102
+msgid "A3 Extra Transverse"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:103
+msgid "Japanese Double Postcard"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:104
+#, fuzzy
+#| msgctxt "All key"
+#| msgid "A"
+msgid "A6"
+msgstr "A"
+
+#: dlls/localspl/localspl.rc:105
+msgid "Japanese Envelope Kaku #2"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:106
+msgid "Japanese Envelope Kaku #3"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:107
+msgid "Japanese Envelope Chou #3"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:108
+msgid "Japanese Envelope Chou #4"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:109
+msgid "Letter Rotated"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:110
+msgid "A3 Rotated"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:111
+msgid "A4 Rotated"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:112
+msgid "A5 Rotated"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:113
+msgid "B4 (JIS) Rotated"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:114
+msgid "B5 (JIS) Rotated"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:115
+msgid "Japanese Postcard Rotated"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:116
+msgid "Double Japan Postcard Rotated"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:117
+msgid "A6 Rotated"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:118
+msgid "Japan Envelope Kaku #2 Rotated"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:119
+msgid "Japan Envelope Kaku #3 Rotated"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:120
+msgid "Japan Envelope Chou #3 Rotated"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:121
+msgid "Japan Envelope Chou #4 Rotated"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:122
+msgid "B6 (JIS)"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:123
+msgid "B6 (JIS) Rotated"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:124
+msgid "12x11"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:125
+msgid "Japan Envelope You #4"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:126
+msgid "Japan Envelope You #4 Rotated"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:127
+msgid "PRC 16K"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:128
+msgid "PRC 32K"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:129
+msgid "PRC 32K(Big)"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:130
+#, fuzzy
+#| msgid "PKCS 7 Enveloped"
+msgid "PRC Envelope #1"
+msgstr "Opakowany certyfikat PKCS 7"
+
+#: dlls/localspl/localspl.rc:131
+#, fuzzy
+#| msgid "PKCS 7 Enveloped"
+msgid "PRC Envelope #2"
+msgstr "Opakowany certyfikat PKCS 7"
+
+#: dlls/localspl/localspl.rc:132
+#, fuzzy
+#| msgid "PKCS 7 Enveloped"
+msgid "PRC Envelope #3"
+msgstr "Opakowany certyfikat PKCS 7"
+
+#: dlls/localspl/localspl.rc:133
+#, fuzzy
+#| msgid "PKCS 7 Enveloped"
+msgid "PRC Envelope #4"
+msgstr "Opakowany certyfikat PKCS 7"
+
+#: dlls/localspl/localspl.rc:134
+#, fuzzy
+#| msgid "PKCS 7 Enveloped"
+msgid "PRC Envelope #5"
+msgstr "Opakowany certyfikat PKCS 7"
+
+#: dlls/localspl/localspl.rc:135
+#, fuzzy
+#| msgid "PKCS 7 Enveloped"
+msgid "PRC Envelope #6"
+msgstr "Opakowany certyfikat PKCS 7"
+
+#: dlls/localspl/localspl.rc:136
+#, fuzzy
+#| msgid "PKCS 7 Enveloped"
+msgid "PRC Envelope #7"
+msgstr "Opakowany certyfikat PKCS 7"
+
+#: dlls/localspl/localspl.rc:137
+#, fuzzy
+#| msgid "PKCS 7 Enveloped"
+msgid "PRC Envelope #8"
+msgstr "Opakowany certyfikat PKCS 7"
+
+#: dlls/localspl/localspl.rc:138
+#, fuzzy
+#| msgid "PKCS 7 Enveloped"
+msgid "PRC Envelope #9"
+msgstr "Opakowany certyfikat PKCS 7"
+
+#: dlls/localspl/localspl.rc:139
+#, fuzzy
+#| msgid "PKCS 7 Enveloped"
+msgid "PRC Envelope #10"
+msgstr "Opakowany certyfikat PKCS 7"
+
+#: dlls/localspl/localspl.rc:140
+msgid "PRC 16K Rotated"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:141
+msgid "PRC 32K Rotated"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:142
+msgid "PRC 32K(Big) Rotated"
+msgstr ""
+
+#: dlls/localspl/localspl.rc:143
+#, fuzzy
+#| msgid "PKCS 7 Enveloped"
+msgid "PRC Envelope #1 Rotated"
+msgstr "Opakowany certyfikat PKCS 7"
+
+#: dlls/localspl/localspl.rc:144
+#, fuzzy
+#| msgid "PKCS 7 Enveloped"
+msgid "PRC Envelope #2 Rotated"
+msgstr "Opakowany certyfikat PKCS 7"
+
+#: dlls/localspl/localspl.rc:145
+#, fuzzy
+#| msgid "PKCS 7 Enveloped"
+msgid "PRC Envelope #3 Rotated"
+msgstr "Opakowany certyfikat PKCS 7"
+
+#: dlls/localspl/localspl.rc:146
+#, fuzzy
+#| msgid "PKCS 7 Enveloped"
+msgid "PRC Envelope #4 Rotated"
+msgstr "Opakowany certyfikat PKCS 7"
+
+#: dlls/localspl/localspl.rc:147
+#, fuzzy
+#| msgid "PKCS 7 Enveloped"
+msgid "PRC Envelope #5 Rotated"
+msgstr "Opakowany certyfikat PKCS 7"
+
+#: dlls/localspl/localspl.rc:148
+#, fuzzy
+#| msgid "PKCS 7 Enveloped"
+msgid "PRC Envelope #6 Rotated"
+msgstr "Opakowany certyfikat PKCS 7"
+
+#: dlls/localspl/localspl.rc:149
+#, fuzzy
+#| msgid "PKCS 7 Enveloped"
+msgid "PRC Envelope #7 Rotated"
+msgstr "Opakowany certyfikat PKCS 7"
+
+#: dlls/localspl/localspl.rc:150
+#, fuzzy
+#| msgid "PKCS 7 Enveloped"
+msgid "PRC Envelope #8 Rotated"
+msgstr "Opakowany certyfikat PKCS 7"
+
+#: dlls/localspl/localspl.rc:151
+#, fuzzy
+#| msgid "PKCS 7 Enveloped"
+msgid "PRC Envelope #9 Rotated"
+msgstr "Opakowany certyfikat PKCS 7"
+
+#: dlls/localspl/localspl.rc:152
+#, fuzzy
+#| msgid "PKCS 7 Enveloped"
+msgid "PRC Envelope #10 Rotated"
+msgstr "Opakowany certyfikat PKCS 7"
+
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
 msgid "Local Port"

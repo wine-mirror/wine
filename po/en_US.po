@@ -6967,6 +6967,470 @@ msgstr "Invalid call.\n"
 msgid "Resource is not currently available.\n"
 msgstr "Resource is not currently available.\n"
 
+#: dlls/localspl/localspl.rc:37
+msgid "Letter"
+msgstr "Letter"
+
+#: dlls/localspl/localspl.rc:38
+msgid "Letter Small"
+msgstr "Letter Small"
+
+#: dlls/localspl/localspl.rc:39
+msgid "Tabloid"
+msgstr "Tabloid"
+
+#: dlls/localspl/localspl.rc:40
+msgid "Ledger"
+msgstr "Ledger"
+
+#: dlls/localspl/localspl.rc:41
+msgid "Legal"
+msgstr "Legal"
+
+#: dlls/localspl/localspl.rc:42
+msgid "Statement"
+msgstr "Statement"
+
+#: dlls/localspl/localspl.rc:43
+msgid "Executive"
+msgstr "Executive"
+
+#: dlls/localspl/localspl.rc:44
+msgid "A3"
+msgstr "A3"
+
+#: dlls/localspl/localspl.rc:45
+msgid "A4"
+msgstr "A4"
+
+#: dlls/localspl/localspl.rc:46
+msgid "A4 Small"
+msgstr "A4 Small"
+
+#: dlls/localspl/localspl.rc:47
+msgid "A5"
+msgstr "A5"
+
+#: dlls/localspl/localspl.rc:48
+msgid "B4 (JIS)"
+msgstr "B4 (JIS)"
+
+#: dlls/localspl/localspl.rc:49
+msgid "B5 (JIS)"
+msgstr "B5 (JIS)"
+
+#: dlls/localspl/localspl.rc:50
+msgid "Folio"
+msgstr "Folio"
+
+#: dlls/localspl/localspl.rc:51
+msgid "Quarto"
+msgstr "Quarto"
+
+#: dlls/localspl/localspl.rc:52
+msgid "10x14"
+msgstr "10x14"
+
+#: dlls/localspl/localspl.rc:53
+msgid "11x17"
+msgstr "11x17"
+
+#: dlls/localspl/localspl.rc:54
+msgid "Note"
+msgstr "Note"
+
+#: dlls/localspl/localspl.rc:55
+msgid "Envelope #9"
+msgstr "Envelope #9"
+
+#: dlls/localspl/localspl.rc:56
+msgid "Envelope #10"
+msgstr "Envelope #10"
+
+#: dlls/localspl/localspl.rc:57
+msgid "Envelope #11"
+msgstr "Envelope #11"
+
+#: dlls/localspl/localspl.rc:58
+msgid "Envelope #12"
+msgstr "Envelope #12"
+
+#: dlls/localspl/localspl.rc:59
+msgid "Envelope #14"
+msgstr "Envelope #14"
+
+#: dlls/localspl/localspl.rc:60
+msgid "C size sheet"
+msgstr "C size sheet"
+
+#: dlls/localspl/localspl.rc:61
+msgid "D size sheet"
+msgstr "D size sheet"
+
+#: dlls/localspl/localspl.rc:62
+msgid "E size sheet"
+msgstr "E size sheet"
+
+#: dlls/localspl/localspl.rc:63
+msgid "Envelope DL"
+msgstr "Envelope DL"
+
+#: dlls/localspl/localspl.rc:64
+msgid "Envelope C5"
+msgstr "Envelope C5"
+
+#: dlls/localspl/localspl.rc:65
+msgid "Envelope C3"
+msgstr "Envelope C3"
+
+#: dlls/localspl/localspl.rc:66
+msgid "Envelope C4"
+msgstr "Envelope C4"
+
+#: dlls/localspl/localspl.rc:67
+msgid "Envelope C6"
+msgstr "Envelope C6"
+
+#: dlls/localspl/localspl.rc:68
+msgid "Envelope C65"
+msgstr "Envelope C65"
+
+#: dlls/localspl/localspl.rc:69
+msgid "Envelope B4"
+msgstr "Envelope B4"
+
+#: dlls/localspl/localspl.rc:70
+msgid "Envelope B5"
+msgstr "Envelope B5"
+
+#: dlls/localspl/localspl.rc:71
+msgid "Envelope B6"
+msgstr "Envelope B6"
+
+#: dlls/localspl/localspl.rc:72
+msgid "Envelope"
+msgstr "Envelope"
+
+#: dlls/localspl/localspl.rc:73
+msgid "Envelope Monarch"
+msgstr "Envelope Monarch"
+
+#: dlls/localspl/localspl.rc:74
+msgid "6 3/4 Envelope"
+msgstr "6 3/4 Envelope"
+
+#: dlls/localspl/localspl.rc:75
+msgid "US Std Fanfold"
+msgstr "US Std Fanfold"
+
+#: dlls/localspl/localspl.rc:76
+msgid "German Std Fanfold"
+msgstr "German Std Fanfold"
+
+#: dlls/localspl/localspl.rc:77
+msgid "German Legal Fanfold"
+msgstr "German Legal Fanfold"
+
+#: dlls/localspl/localspl.rc:78
+msgid "B4 (ISO)"
+msgstr "B4 (ISO)"
+
+#: dlls/localspl/localspl.rc:79
+msgid "Japanese Postcard"
+msgstr "Japanese Postcard"
+
+#: dlls/localspl/localspl.rc:80
+msgid "9x11"
+msgstr "9x11"
+
+#: dlls/localspl/localspl.rc:81
+msgid "10x11"
+msgstr "10x11"
+
+#: dlls/localspl/localspl.rc:82
+msgid "15x11"
+msgstr "15x11"
+
+#: dlls/localspl/localspl.rc:83
+msgid "Envelope Invite"
+msgstr "Envelope Invite"
+
+#: dlls/localspl/localspl.rc:84
+msgid "Letter Extra"
+msgstr "Letter Extra"
+
+#: dlls/localspl/localspl.rc:85
+msgid "Legal Extra"
+msgstr "Legal Extra"
+
+#: dlls/localspl/localspl.rc:86
+msgid "Tabloid Extra"
+msgstr "Tabloid Extra"
+
+#: dlls/localspl/localspl.rc:87
+msgid "A4 Extra"
+msgstr "A4 Extra"
+
+#: dlls/localspl/localspl.rc:88
+msgid "Letter Transverse"
+msgstr "Letter Transverse"
+
+#: dlls/localspl/localspl.rc:89
+msgid "A4 Transverse"
+msgstr "A4 Transverse"
+
+#: dlls/localspl/localspl.rc:90
+msgid "Letter Extra Transverse"
+msgstr "Letter Extra Transverse"
+
+#: dlls/localspl/localspl.rc:91
+msgid "Super A"
+msgstr "Super A"
+
+#: dlls/localspl/localspl.rc:92
+msgid "Super B"
+msgstr "Super B"
+
+#: dlls/localspl/localspl.rc:93
+msgid "Letter Plus"
+msgstr "Letter Plus"
+
+#: dlls/localspl/localspl.rc:94
+msgid "A4 Plus"
+msgstr "A4 Plus"
+
+#: dlls/localspl/localspl.rc:95
+msgid "A5 Transverse"
+msgstr "A5 Transverse"
+
+#: dlls/localspl/localspl.rc:96
+msgid "B5 (JIS) Transverse"
+msgstr "B5 (JIS) Transverse"
+
+#: dlls/localspl/localspl.rc:97
+msgid "A3 Extra"
+msgstr "A3 Extra"
+
+#: dlls/localspl/localspl.rc:98
+msgid "A5 Extra"
+msgstr "A5 Extra"
+
+#: dlls/localspl/localspl.rc:99
+msgid "B5 (ISO) Extra"
+msgstr "B5 (ISO) Extra"
+
+#: dlls/localspl/localspl.rc:100
+msgid "A2"
+msgstr "A2"
+
+#: dlls/localspl/localspl.rc:101
+msgid "A3 Transverse"
+msgstr "A3 Transverse"
+
+#: dlls/localspl/localspl.rc:102
+msgid "A3 Extra Transverse"
+msgstr "A3 Extra Transverse"
+
+#: dlls/localspl/localspl.rc:103
+msgid "Japanese Double Postcard"
+msgstr "Japanese Double Postcard"
+
+#: dlls/localspl/localspl.rc:104
+msgid "A6"
+msgstr "A6"
+
+#: dlls/localspl/localspl.rc:105
+msgid "Japanese Envelope Kaku #2"
+msgstr "Japanese Envelope Kaku #2"
+
+#: dlls/localspl/localspl.rc:106
+msgid "Japanese Envelope Kaku #3"
+msgstr "Japanese Envelope Kaku #3"
+
+#: dlls/localspl/localspl.rc:107
+msgid "Japanese Envelope Chou #3"
+msgstr "Japanese Envelope Chou #3"
+
+#: dlls/localspl/localspl.rc:108
+msgid "Japanese Envelope Chou #4"
+msgstr "Japanese Envelope Chou #4"
+
+#: dlls/localspl/localspl.rc:109
+msgid "Letter Rotated"
+msgstr "Letter Rotated"
+
+#: dlls/localspl/localspl.rc:110
+msgid "A3 Rotated"
+msgstr "A3 Rotated"
+
+#: dlls/localspl/localspl.rc:111
+msgid "A4 Rotated"
+msgstr "A4 Rotated"
+
+#: dlls/localspl/localspl.rc:112
+msgid "A5 Rotated"
+msgstr "A5 Rotated"
+
+#: dlls/localspl/localspl.rc:113
+msgid "B4 (JIS) Rotated"
+msgstr "B4 (JIS) Rotated"
+
+#: dlls/localspl/localspl.rc:114
+msgid "B5 (JIS) Rotated"
+msgstr "B5 (JIS) Rotated"
+
+#: dlls/localspl/localspl.rc:115
+msgid "Japanese Postcard Rotated"
+msgstr "Japanese Postcard Rotated"
+
+#: dlls/localspl/localspl.rc:116
+msgid "Double Japan Postcard Rotated"
+msgstr "Double Japan Postcard Rotated"
+
+#: dlls/localspl/localspl.rc:117
+msgid "A6 Rotated"
+msgstr "A6 Rotated"
+
+#: dlls/localspl/localspl.rc:118
+msgid "Japan Envelope Kaku #2 Rotated"
+msgstr "Japan Envelope Kaku #2 Rotated"
+
+#: dlls/localspl/localspl.rc:119
+msgid "Japan Envelope Kaku #3 Rotated"
+msgstr "Japan Envelope Kaku #3 Rotated"
+
+#: dlls/localspl/localspl.rc:120
+msgid "Japan Envelope Chou #3 Rotated"
+msgstr "Japan Envelope Chou #3 Rotated"
+
+#: dlls/localspl/localspl.rc:121
+msgid "Japan Envelope Chou #4 Rotated"
+msgstr "Japan Envelope Chou #4 Rotated"
+
+#: dlls/localspl/localspl.rc:122
+msgid "B6 (JIS)"
+msgstr "B6 (JIS)"
+
+#: dlls/localspl/localspl.rc:123
+msgid "B6 (JIS) Rotated"
+msgstr "B6 (JIS) Rotated"
+
+#: dlls/localspl/localspl.rc:124
+msgid "12x11"
+msgstr "12x11"
+
+#: dlls/localspl/localspl.rc:125
+msgid "Japan Envelope You #4"
+msgstr "Japan Envelope You #4"
+
+#: dlls/localspl/localspl.rc:126
+msgid "Japan Envelope You #4 Rotated"
+msgstr "Japan Envelope You #4 Rotated"
+
+#: dlls/localspl/localspl.rc:127
+msgid "PRC 16K"
+msgstr "PRC 16K"
+
+#: dlls/localspl/localspl.rc:128
+msgid "PRC 32K"
+msgstr "PRC 32K"
+
+#: dlls/localspl/localspl.rc:129
+msgid "PRC 32K(Big)"
+msgstr "PRC 32K(Big)"
+
+#: dlls/localspl/localspl.rc:130
+msgid "PRC Envelope #1"
+msgstr "PRC Envelope #1"
+
+#: dlls/localspl/localspl.rc:131
+msgid "PRC Envelope #2"
+msgstr "PRC Envelope #2"
+
+#: dlls/localspl/localspl.rc:132
+msgid "PRC Envelope #3"
+msgstr "PRC Envelope #3"
+
+#: dlls/localspl/localspl.rc:133
+msgid "PRC Envelope #4"
+msgstr "PRC Envelope #4"
+
+#: dlls/localspl/localspl.rc:134
+msgid "PRC Envelope #5"
+msgstr "PRC Envelope #5"
+
+#: dlls/localspl/localspl.rc:135
+msgid "PRC Envelope #6"
+msgstr "PRC Envelope #6"
+
+#: dlls/localspl/localspl.rc:136
+msgid "PRC Envelope #7"
+msgstr "PRC Envelope #7"
+
+#: dlls/localspl/localspl.rc:137
+msgid "PRC Envelope #8"
+msgstr "PRC Envelope #8"
+
+#: dlls/localspl/localspl.rc:138
+msgid "PRC Envelope #9"
+msgstr "PRC Envelope #9"
+
+#: dlls/localspl/localspl.rc:139
+msgid "PRC Envelope #10"
+msgstr "PRC Envelope #10"
+
+#: dlls/localspl/localspl.rc:140
+msgid "PRC 16K Rotated"
+msgstr "PRC 16K Rotated"
+
+#: dlls/localspl/localspl.rc:141
+msgid "PRC 32K Rotated"
+msgstr "PRC 32K Rotated"
+
+#: dlls/localspl/localspl.rc:142
+msgid "PRC 32K(Big) Rotated"
+msgstr "PRC 32K(Big) Rotated"
+
+#: dlls/localspl/localspl.rc:143
+msgid "PRC Envelope #1 Rotated"
+msgstr "PRC Envelope #1 Rotated"
+
+#: dlls/localspl/localspl.rc:144
+msgid "PRC Envelope #2 Rotated"
+msgstr "PRC Envelope #2 Rotated"
+
+#: dlls/localspl/localspl.rc:145
+msgid "PRC Envelope #3 Rotated"
+msgstr "PRC Envelope #3 Rotated"
+
+#: dlls/localspl/localspl.rc:146
+msgid "PRC Envelope #4 Rotated"
+msgstr "PRC Envelope #4 Rotated"
+
+#: dlls/localspl/localspl.rc:147
+msgid "PRC Envelope #5 Rotated"
+msgstr "PRC Envelope #5 Rotated"
+
+#: dlls/localspl/localspl.rc:148
+msgid "PRC Envelope #6 Rotated"
+msgstr "PRC Envelope #6 Rotated"
+
+#: dlls/localspl/localspl.rc:149
+msgid "PRC Envelope #7 Rotated"
+msgstr "PRC Envelope #7 Rotated"
+
+#: dlls/localspl/localspl.rc:150
+msgid "PRC Envelope #8 Rotated"
+msgstr "PRC Envelope #8 Rotated"
+
+#: dlls/localspl/localspl.rc:151
+msgid "PRC Envelope #9 Rotated"
+msgstr "PRC Envelope #9 Rotated"
+
+#: dlls/localspl/localspl.rc:152
+msgid "PRC Envelope #10 Rotated"
+msgstr "PRC Envelope #10 Rotated"
+
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
 msgid "Local Port"
