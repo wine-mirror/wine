@@ -1738,12 +1738,13 @@ HRESULT WINAPI WsSendReplyMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS
                                    const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
 {
     struct channel *channel = (struct channel *)handle;
-    GUID req_id;
+    WS_ASYNC_CONTEXT ctx_local;
+    struct async async;
+    GUID id;
     HRESULT hr;
 
     TRACE( "%p %p %p %08x %p %u %p %p %p\n", handle, msg, desc, option, body, size, request, ctx, error );
     if (error) FIXME( "ignoring error parameter\n" );
-    if (ctx) FIXME( "ignoring ctx parameter\n" );
 
     if (!channel || !msg || !desc || !request) return E_INVALIDARG;
 
@@ -1760,15 +1761,16 @@ HRESULT WINAPI WsSendReplyMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS
         return WS_E_INVALID_OPERATION;
     }
 
-    if ((hr = WsInitializeMessage( msg, WS_REPLY_MESSAGE, NULL, NULL )) != S_OK) goto done;
-    if ((hr = WsAddressMessage( msg, &channel->addr, NULL )) != S_OK) goto done;
-    if ((hr = message_set_action( msg, desc->action )) != S_OK) goto done;
-    if ((hr = message_get_id( request, &req_id )) != S_OK) goto done;
-    if ((hr = message_set_request_id( msg, &req_id )) != S_OK) goto done;
+    if ((hr = message_get_id( request, &id )) != S_OK) goto done;
+    if ((hr = message_set_request_id( msg, &id )) != S_OK) goto done;
 
-    if ((hr = init_writer( channel )) != S_OK) goto done;
-    if ((hr = write_message( channel, msg, desc->bodyElementDescription, option, body, size )) != S_OK) goto done;
-    hr = send_message_bytes( channel, msg );
+    if (!ctx) async_init( &async, &ctx_local );
+    hr = queue_send_message( channel, msg, desc, option, body, size, ctx ? ctx : &ctx_local );
+    if (!ctx)
+    {
+        if (hr == WS_S_ASYNC) hr = async_wait( &async );
+        CloseHandle( async.done );
+    }
 
 done:
     LeaveCriticalSection( &channel->cs );
@@ -2387,14 +2389,9 @@ static HRESULT request_reply( struct channel *channel, WS_MESSAGE *request,
                               WS_HEAP *heap, void *value, ULONG size )
 {
     HRESULT hr;
-    WsInitializeMessage( request, WS_REQUEST_MESSAGE, NULL, NULL );
-    if ((hr = WsAddressMessage( request, &channel->addr, NULL )) != S_OK) return hr;
-    if ((hr = message_set_action( request, request_desc->action )) != S_OK) return hr;
 
-    if ((hr = init_writer( channel )) != S_OK) return hr;
-    if ((hr = write_message( channel, request, request_desc->bodyElementDescription, write_option, request_body,
-                             request_size )) != S_OK) return hr;
-    if ((hr = send_message_bytes( channel, request )) != S_OK) return hr;
+    if ((hr = send_message( channel, request, request_desc, write_option, request_body, request_size )) != S_OK)
+        return hr;
 
     return receive_message( channel, reply, &reply_desc, 1, WS_RECEIVE_OPTIONAL_MESSAGE, read_option, heap,
                             value, size, NULL );
