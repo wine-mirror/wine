@@ -6732,7 +6732,7 @@ static void test_DisconnectEx(void)
     WSASetLastError(0xdeadbeef);
     ret = pDisconnectEx(client, &overlapped, 0, 0);
     ok(!ret, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAENOTCONN, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAENOTCONN, "got error %u\n", WSAGetLastError());
 
     ret = connect(client, (struct sockaddr *)&server_addr, sizeof(server_addr));
     ok(!ret, "failed to connect, error %u\n", WSAGetLastError());
@@ -6741,18 +6741,15 @@ static void test_DisconnectEx(void)
 
     WSASetLastError(0xdeadbeef);
     ret = pDisconnectEx(client, &overlapped, 0, 0);
-    todo_wine ok(!ret, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
+    ok(!ret, "expected failure\n");
+    ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
 
-    if (WSAGetLastError() == ERROR_IO_PENDING)
-    {
-        ret = WaitForSingleObject(overlapped.hEvent, 1000);
-        ok(!ret, "wait timed out\n");
-        size = 0xdeadbeef;
-        ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, FALSE);
-        ok(ret, "got error %u\n", GetLastError());
-        ok(!size, "got size %u\n", size);
-    }
+    ret = WaitForSingleObject(overlapped.hEvent, 1000);
+    ok(!ret, "wait timed out\n");
+    size = 0xdeadbeef;
+    ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, FALSE);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(!size, "got size %u\n", size);
 
     ret = connect(client, (struct sockaddr *)&server_addr, sizeof(server_addr));
     ok(ret == -1, "expected failure\n");
@@ -6805,8 +6802,8 @@ static void test_DisconnectEx(void)
 
     WSASetLastError(0xdeadbeef);
     ret = pDisconnectEx(client, NULL, 0, 0);
-    todo_wine ok(ret, "expected success\n");
-    todo_wine ok(!WSAGetLastError() || WSAGetLastError() == 0xdeadbeef /* < 7 */, "got error %u\n", WSAGetLastError());
+    ok(ret, "expected success\n");
+    ok(!WSAGetLastError() || WSAGetLastError() == 0xdeadbeef /* < 7 */, "got error %u\n", WSAGetLastError());
 
     ret = connect(client, (struct sockaddr *)&server_addr, sizeof(server_addr));
     ok(ret == -1, "expected failure\n");
@@ -8552,18 +8549,16 @@ static void test_shutdown_completion_port(void)
 
     SetLastError(0xdeadbeef);
     ret = pDisconnectEx(client, &overlapped, 0, 0);
-    todo_wine ok(!ret, "expected failure\n");
-    todo_wine ok(GetLastError() == ERROR_IO_PENDING, "got error %u\n", GetLastError());
-    if (GetLastError() == ERROR_IO_PENDING)
-    {
-        ret = WaitForSingleObject(overlapped.hEvent, 1000);
-        ok(!ret, "wait failed\n");
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_IO_PENDING, "got error %u\n", GetLastError());
 
-        size = 0xdeadbeef;
-        ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, TRUE);
-        ok(ret, "got error %u\n", GetLastError());
-        ok(!size, "got %u bytes\n", size);
-    }
+    ret = WaitForSingleObject(overlapped.hEvent, 1000);
+    ok(!ret, "wait failed\n");
+
+    size = 0xdeadbeef;
+    ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, TRUE);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(!size, "got %u bytes\n", size);
 
     size = 0xdeadbeef;
     key = 0xdeadbeef;
@@ -8617,18 +8612,16 @@ static void test_shutdown_completion_port(void)
 
     SetLastError(0xdeadbeef);
     ret = pDisconnectEx(client, &overlapped, 0, 0);
-    todo_wine ok(!ret, "expected failure\n");
-    todo_wine ok(GetLastError() == ERROR_IO_PENDING, "got error %u\n", GetLastError());
-    if (GetLastError() == ERROR_IO_PENDING)
-    {
-        ret = WaitForSingleObject(overlapped.hEvent, 1000);
-        ok(!ret, "wait failed\n");
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_IO_PENDING, "got error %u\n", GetLastError());
 
-        size = 0xdeadbeef;
-        ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, TRUE);
-        ok(ret, "got error %u\n", GetLastError());
-        ok(!size, "got %u bytes\n", size);
-    }
+    ret = WaitForSingleObject(overlapped.hEvent, 1000);
+    ok(!ret, "wait failed\n");
+
+    size = 0xdeadbeef;
+    ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, TRUE);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(!size, "got %u bytes\n", size);
 
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
     ok(!ret, "expected failure\n");

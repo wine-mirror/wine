@@ -3110,23 +3110,34 @@ static BOOL WINAPI WS2_ConnectEx( SOCKET s, const struct WS_sockaddr *name, int 
     return !status;
 }
 
-/***********************************************************************
- *             DisconnectEx
- */
-static BOOL WINAPI WS2_DisconnectEx( SOCKET s, LPOVERLAPPED ov, DWORD flags, DWORD reserved )
+
+static BOOL WINAPI WS2_DisconnectEx( SOCKET s, OVERLAPPED *overlapped, DWORD flags, DWORD reserved )
 {
-    TRACE( "socket %04lx, ov %p, flags 0x%x, reserved 0x%x\n", s, ov, flags, reserved );
+    IO_STATUS_BLOCK iosb, *piosb = &iosb;
+    void *cvalue = NULL;
+    int how = SD_SEND;
+    HANDLE event = 0;
+    NTSTATUS status;
+
+    TRACE( "socket %#lx, overlapped %p, flags %#x, reserved %#x\n", s, overlapped, flags, reserved );
 
     if (flags & TF_REUSE_SOCKET)
         FIXME( "Reusing socket not supported yet\n" );
 
-    if (ov)
+    if (overlapped)
     {
-        ov->Internal = STATUS_PENDING;
-        ov->InternalHigh = 0;
+        piosb = (IO_STATUS_BLOCK *)overlapped;
+        if (!((ULONG_PTR)overlapped->hEvent & 1)) cvalue = overlapped;
+        event = overlapped->hEvent;
+        overlapped->Internal = STATUS_PENDING;
+        overlapped->InternalHigh = 0;
     }
 
-    return !WS_shutdown( s, SD_BOTH );
+    status = NtDeviceIoControlFile( (HANDLE)s, event, NULL, cvalue, piosb,
+                                    IOCTL_AFD_WINE_SHUTDOWN, &how, sizeof(how), NULL, 0 );
+    if (!status && overlapped) status = STATUS_PENDING;
+    SetLastError( NtStatusToWSAError( status ) );
+    return !status;
 }
 
 /***********************************************************************
