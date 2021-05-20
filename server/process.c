@@ -1106,6 +1106,8 @@ DECL_HANDLER(new_process)
     struct thread *parent_thread = current;
     int socket_fd = thread_get_inflight_fd( current, req->socket_fd );
     const obj_handle_t *handles = NULL;
+    const obj_handle_t *job_handles = NULL;
+    unsigned int i, job_handle_count;
     struct job *job;
 
     if (socket_fd == -1)
@@ -1178,6 +1180,31 @@ DECL_HANDLER(new_process)
         info_ptr = (const char *)info_ptr + req->handles_size;
         info->data_size -= req->handles_size;
     }
+
+    if ((req->jobs_size & 3) || req->jobs_size > info->data_size)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        close( socket_fd );
+        goto done;
+    }
+    if (req->jobs_size)
+    {
+        job_handles = info_ptr;
+        info_ptr = (const char *)info_ptr + req->jobs_size;
+        info->data_size -= req->jobs_size;
+    }
+
+    job_handle_count = req->jobs_size / sizeof(*handles);
+    for (i = 0; i < job_handle_count; ++i)
+    {
+        if (!(job = get_job_obj( current->process, job_handles[i], JOB_OBJECT_ASSIGN_PROCESS )))
+        {
+            close( socket_fd );
+            goto done;
+        }
+        release_object( job );
+    }
+
     info->info_size = min( req->info_size, info->data_size );
 
     if (req->info_size < sizeof(*info->data))

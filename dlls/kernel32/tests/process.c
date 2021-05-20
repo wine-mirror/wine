@@ -4540,6 +4540,9 @@ static void test_nested_jobs(void)
 static void test_job_list_attribute(void)
 {
     PPROC_THREAD_ATTRIBUTE_LIST attrs;
+    char buffer[MAX_PATH + 19];
+    PROCESS_INFORMATION pi;
+    STARTUPINFOEXA si;
     HANDLE jobs[2];
     SIZE_T size;
     BOOL ret;
@@ -4585,6 +4588,30 @@ static void test_job_list_attribute(void)
     ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs,
             sizeof(*jobs) * 2, NULL, NULL);
     ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+
+    ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs,
+            sizeof(*jobs), NULL, NULL);
+
+    memset(&si, 0, sizeof(si));
+    si.StartupInfo.cb = sizeof(si);
+    si.lpAttributeList = attrs;
+    sprintf(buffer, "\"%s\" process wait", selfname);
+
+    ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT, NULL, NULL,
+            (STARTUPINFOA *)&si, &pi);
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected ret %#x, GetLastError() %u.\n",
+            ret, GetLastError());
+
+    ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs + 1,
+            sizeof(*jobs), NULL, NULL);
+    ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT, NULL, NULL,
+            (STARTUPINFOA *)&si, &pi);
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected ret %#x, GetLastError() %u.\n",
+            ret, GetLastError());
 
     pDeleteProcThreadAttributeList(attrs);
     heap_free(attrs);

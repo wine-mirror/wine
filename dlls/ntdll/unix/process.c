@@ -628,9 +628,9 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
     UNICODE_STRING redir, path = {0};
     OBJECT_ATTRIBUTES attr, empty_attr = { sizeof(empty_attr) };
     SIZE_T i, attr_count = (ps_attr->TotalLength - sizeof(ps_attr->TotalLength)) / sizeof(PS_ATTRIBUTE);
-    const PS_ATTRIBUTE *handles_attr = NULL;
-    data_size_t handles_size;
-    obj_handle_t *handles;
+    const PS_ATTRIBUTE *handles_attr = NULL, *jobs_attr = NULL;
+    data_size_t handles_size, jobs_size;
+    obj_handle_t *handles, *jobs;
 
     for (i = 0; i < attr_count; i++)
     {
@@ -652,6 +652,9 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
         case PS_ATTRIBUTE_HANDLE_LIST:
             if (process_flags & PROCESS_CREATE_FLAGS_INHERIT_HANDLES)
                 handles_attr = &ps_attr->Attributes[i];
+            break;
+        case PS_ATTRIBUTE_JOB_LIST:
+            jobs_attr = &ps_attr->Attributes[i];
             break;
         default:
             if (ps_attr->Attributes[i].Attribute & PS_ATTRIBUTE_INPUT)
@@ -690,6 +693,13 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
         goto done;
     }
 
+    if ((status = alloc_handle_list( jobs_attr, &jobs, &jobs_size )))
+    {
+        free( objattr );
+        free( handles );
+        goto done;
+    }
+
     /* create the socket for the new process */
 
     if (socketpair( PF_UNIX, SOCK_STREAM, 0, socketfd ) == -1)
@@ -697,6 +707,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
         status = STATUS_TOO_MANY_OPENED_FILES;
         free( objattr );
         free( handles );
+        free( jobs );
         goto done;
     }
 #ifdef SO_PASSCRED
@@ -722,8 +733,10 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
         req->access         = process_access;
         req->info_size      = startup_info_size;
         req->handles_size   = handles_size;
+        req->jobs_size      = jobs_size;
         wine_server_add_data( req, objattr, attr_len );
         wine_server_add_data( req, handles, handles_size );
+        wine_server_add_data( req, jobs, jobs_size );
         wine_server_add_data( req, startup_info, startup_info_size );
         wine_server_add_data( req, params->Environment, env_size );
         if (!(status = wine_server_call( req )))
@@ -736,6 +749,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
     SERVER_END_REQ;
     free( objattr );
     free( handles );
+    free( jobs );
 
     if (status)
     {

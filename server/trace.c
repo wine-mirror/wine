@@ -1388,8 +1388,10 @@ static void dump_new_process_request( const struct new_process_request *req )
     fprintf( stderr, ", machine=%04x", req->machine );
     fprintf( stderr, ", info_size=%u", req->info_size );
     fprintf( stderr, ", handles_size=%u", req->handles_size );
+    fprintf( stderr, ", jobs_size=%u", req->jobs_size );
     dump_varargs_object_attributes( ", objattr=", cur_size );
     dump_varargs_uints( ", handles=", min(cur_size,req->handles_size) );
+    dump_varargs_uints( ", jobs=", min(cur_size,req->jobs_size) );
     dump_varargs_startup_info( ", info=", min(cur_size,req->info_size) );
     dump_varargs_unicode_str( ", env=", cur_size );
 }
@@ -5329,6 +5331,7 @@ static const struct
     { "CANT_OPEN_ANONYMOUS",         STATUS_CANT_OPEN_ANONYMOUS },
     { "CHILD_MUST_BE_VOLATILE",      STATUS_CHILD_MUST_BE_VOLATILE },
     { "CONNECTION_ABORTED",          STATUS_CONNECTION_ABORTED },
+    { "CONNECTION_ACTIVE",           STATUS_CONNECTION_ACTIVE },
     { "CONNECTION_REFUSED",          STATUS_CONNECTION_REFUSED },
     { "CONNECTION_RESET",            STATUS_CONNECTION_RESET },
     { "DEBUGGER_INACTIVE",           STATUS_DEBUGGER_INACTIVE },

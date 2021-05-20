@@ -854,8 +854,10 @@ typedef struct
     unsigned short machine;      /* architecture that the new process will use */
     data_size_t  info_size;      /* size of startup info */
     data_size_t  handles_size;   /* length of explicit handles list */
+    data_size_t  jobs_size;      /* length of jobs list */
     VARARG(objattr,object_attributes);   /* object attributes */
     VARARG(handles,uints,handles_size);  /* handles list */
+    VARARG(jobs,uints,jobs_size);        /* jobs list */
     VARARG(info,startup_info,info_size); /* startup information */
     VARARG(env,unicode_str);     /* environment for new process */
 @REPLY
