@@ -209,7 +209,7 @@ static int (__cdecl *p__ismbblead)(unsigned int);
 
 static MSVCRT_long (__cdecl *p__Xtime_diff_to_millis2)(const xtime*, const xtime*);
 static int (__cdecl *p_xtime_get)(xtime*, int);
-static _Cvtvec* (__cdecl *p__Getcvt)(_Cvtvec*);
+static _Cvtvec (__cdecl *p__Getcvt)(void);
 static void (CDECL *p__Call_once)(int *once, void (CDECL *func)(void));
 static void (CDECL *p__Call_onceEx)(int *once, void (CDECL *func)(void*), void *argv);
 static void (CDECL *p__Do_call)(void *this);
@@ -930,7 +930,7 @@ static void test__Getcvt(void)
     _Cvtvec cvtvec;
     int i;
 
-    p__Getcvt(&cvtvec);
+    cvtvec = p__Getcvt();
     ok(cvtvec.page == 0, "cvtvec.page = %d\n", cvtvec.page);
     ok(cvtvec.mb_max == 1, "cvtvec.mb_max = %d\n", cvtvec.mb_max);
     todo_wine ok(cvtvec.unk == 1, "cvtvec.unk = %d\n", cvtvec.unk);
@@ -941,7 +941,7 @@ static void test__Getcvt(void)
         win_skip("_Getcvt tests\n");
         return;
     }
-    p__Getcvt(&cvtvec);
+    cvtvec = p__Getcvt();
     ok(cvtvec.page == 936, "cvtvec.page = %d\n", cvtvec.page);
     ok(cvtvec.mb_max == 2, "cvtvec.mb_max = %d\n", cvtvec.mb_max);
     ok(cvtvec.unk == 0, "cvtvec.unk = %d\n", cvtvec.unk);
@@ -955,7 +955,7 @@ static void test__Getcvt(void)
     }
 
     p__setmbcp(936);
-    p__Getcvt(&cvtvec);
+    cvtvec = p__Getcvt();
     ok(cvtvec.page == 936, "cvtvec.page = %d\n", cvtvec.page);
     ok(cvtvec.mb_max == 2, "cvtvec.mb_max = %d\n", cvtvec.mb_max);
     ok(cvtvec.unk == 0, "cvtvec.unk = %d\n", cvtvec.unk);

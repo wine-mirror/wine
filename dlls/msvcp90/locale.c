@@ -735,9 +735,11 @@ _Ctypevec* __thiscall _Locinfo__Getctype(const _Locinfo *this, _Ctypevec *ret)
 }
 
 /* _Getcvt */
-#if _MSVCP_VER < 110
+#if _MSVCP_VER < 110 && defined(__i386__)
+/* Work around a gcc bug */
 ULONGLONG __cdecl _Getcvt(void)
 {
+    C_ASSERT(sizeof(_Cvtvec) == sizeof(ULONGLONG));
     union {
         _Cvtvec cvtvec;
         ULONGLONG ull;
@@ -749,20 +751,32 @@ ULONGLONG __cdecl _Getcvt(void)
     ret.cvtvec.handle = ___lc_handle_func()[LC_CTYPE];
     return ret.ull;
 }
-#else
-_Cvtvec* __cdecl _Getcvt(_Cvtvec *ret)
+#elif _MSVCP_VER < 110
+_Cvtvec __cdecl _Getcvt(void)
 {
+    _Cvtvec ret;
+
+    TRACE("\n");
+
+    ret.page = ___lc_codepage_func();
+    ret.handle = ___lc_handle_func()[LC_CTYPE];
+    return ret;
+}
+#else
+_Cvtvec __cdecl _Getcvt(void)
+{
+    _Cvtvec ret;
     int i;
 
     TRACE("\n");
 
-    memset(ret, 0, sizeof(*ret));
-    ret->page = ___lc_codepage_func();
-    ret->mb_max = ___mb_cur_max_func();
+    memset(&ret, 0, sizeof(ret));
+    ret.page = ___lc_codepage_func();
+    ret.mb_max = ___mb_cur_max_func();
 
-    if(ret->mb_max > 1) {
+    if(ret.mb_max > 1) {
         for(i=0; i<256; i++)
-            if(_ismbblead(i)) ret->isleadbyte[i/8] |= 1 << (i&7);
+            if(_ismbblead(i)) ret.isleadbyte[i/8] |= 1 << (i&7);
     }
     return ret;
 }
@@ -773,14 +787,14 @@ _Cvtvec* __cdecl _Getcvt(_Cvtvec *ret)
 DEFINE_THISCALL_WRAPPER(_Locinfo__Getcvt, 8)
 _Cvtvec* __thiscall _Locinfo__Getcvt(const _Locinfo *this, _Cvtvec *ret)
 {
-#if _MSVCP_VER < 110
-    ULONGLONG ull = _Getcvt();
-    memcpy(ret, &ull, sizeof(ull));
+#if _MSVCP_VER < 110 && defined(__i386__)
+    ULONGLONG cvtvec;
 #else
     _Cvtvec cvtvec;
-    _Getcvt(&cvtvec);
-    memcpy(ret, &cvtvec, sizeof(cvtvec));
 #endif
+
+    cvtvec = _Getcvt();
+    memcpy(ret, &cvtvec, sizeof(cvtvec));
     return ret;
 }
 

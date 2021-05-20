@@ -5063,7 +5063,7 @@
 # extern _FZero
 @ cdecl -ret64 _Getcoll()
 @ cdecl _Getctype(ptr)
-@ cdecl -ret64 _Getcvt()
+@ cdecl -norelay _Getcvt()
 @ extern _Hugeval
 @ extern _Inf
 @ stub _LCosh
