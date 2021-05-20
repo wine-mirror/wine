@@ -182,7 +182,7 @@ static inline void print_dword(const char *title, DWORD value)
 static inline void print_longlong(const char *title, ULONGLONG value)
 {
     printf("  %-34s 0x", title);
-    if(value >> 32)
+    if (sizeof(value) > sizeof(unsigned long) && value >> 32)
         printf("%lx%08lx\n", (unsigned long)(value >> 32), (unsigned long)value);
     else
         printf("%lx\n", (unsigned long)value);
