@@ -669,20 +669,23 @@ static _Collvec* getcoll(_Collvec *ret)
 }
 
 /* _Getcoll */
-#if defined(__i386__) || _MSVCP_VER<110
+#if defined(__i386__)
+/* Work around a gcc bug */
 ULONGLONG __cdecl _Getcoll(void)
 {
+    C_ASSERT(sizeof(_Collvec) == sizeof(ULONGLONG));
     ULONGLONG ret;
-
-    C_ASSERT(sizeof(_Collvec) <= sizeof(ULONGLONG));
 
     getcoll((_Collvec*)&ret);
     return ret;
 }
 #else
-_Collvec* __cdecl _Getcoll(_Collvec *ret)
+_Collvec __cdecl _Getcoll(void)
 {
-    return getcoll(ret);
+    _Collvec ret;
+
+    getcoll(&ret);
+    return ret;
 }
 #endif
 

@@ -6500,7 +6500,7 @@
 @ stub _FSinh
 @ extern _FSnan
 # extern _FXbig
-@ cdecl -ret64 _Getcoll()
+@ cdecl -norelay _Getcoll()
 @ cdecl _Getctype(ptr)
 @ cdecl -norelay _Getcvt()
 @ cdecl _Getdateorder()

@@ -2915,7 +2915,7 @@
 @ extern _FSnan
 # extern _FXbig
 @ stub _GetLocaleForCP
-@ cdecl -ret64 _Getcoll()
+@ cdecl -norelay _Getcoll()
 @ cdecl _Getctype(ptr)
 @ cdecl -norelay _Getcvt()
 @ cdecl _Getdateorder()

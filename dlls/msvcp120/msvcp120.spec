@@ -3721,7 +3721,7 @@
 @ stub _FXp_sqrtx
 @ stub _FXp_subx
 # extern _FZero
-@ cdecl -ret64 _Getcoll()
+@ cdecl -norelay _Getcoll()
 @ cdecl _Getctype(ptr)
 @ cdecl -norelay _Getcvt()
 @ cdecl _Getdateorder()
