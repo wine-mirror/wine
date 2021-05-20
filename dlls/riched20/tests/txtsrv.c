@@ -650,9 +650,30 @@ static BOOL init_texthost(ITextServices **txtserv, ITextHost **ret)
     return TRUE;
 }
 
+static void fill_reobject_struct(REOBJECT *reobj, LONG cp, LPOLEOBJECT poleobj,
+        LPSTORAGE pstg, LPOLECLIENTSITE polesite, LONG sizel_cx,
+        LONG sizel_cy, DWORD aspect, DWORD flags, DWORD user)
+{
+    reobj->cbStruct = sizeof(*reobj);
+    reobj->clsid = CLSID_NULL;
+    reobj->cp = cp;
+    reobj->poleobj = poleobj;
+    reobj->pstg = pstg;
+    reobj->polesite = polesite;
+    reobj->sizel.cx = sizel_cx;
+    reobj->sizel.cy = sizel_cy;
+    reobj->dvaspect = aspect;
+    reobj->dwFlags = flags;
+    reobj->dwUser = user;
+}
+
 static void test_TxGetText(void)
 {
+    const WCHAR *expected_string;
+    IOleClientSite *clientsite;
     ITextServices *txtserv;
+    IRichEditOle *reole;
+    REOBJECT reobject;
     ITextHost *host;
     HRESULT hres;
     BSTR rettext;
@@ -663,6 +684,24 @@ static void test_TxGetText(void)
     hres = ITextServices_TxGetText(txtserv, &rettext);
     ok(hres == S_OK, "ITextServices_TxGetText failed (result = %x)\n", hres);
     SysFreeString(rettext);
+
+    hres = ITextServices_TxSetText(txtserv, L"abcdefg");
+    ok(hres == S_OK, "Got hres: %#x.\n", hres);
+    hres = ITextServices_QueryInterface(txtserv, &IID_IRichEditOle, (void **)&reole);
+    ok(hres == S_OK, "Got hres: %#x.\n", hres);
+    hres = IRichEditOle_GetClientSite(reole, &clientsite);
+    ok(hres == S_OK, "Got hres: %#x.\n", hres);
+    expected_string = L"abc\xfffc""defg";
+    fill_reobject_struct(&reobject, 3, NULL, NULL, clientsite, 10, 10, DVASPECT_CONTENT, 0, 1);
+    hres = IRichEditOle_InsertObject(reole, &reobject);
+    ok(hres == S_OK, "Got hres: %#x.\n", hres);
+    hres = ITextServices_TxGetText(txtserv, &rettext);
+    ok(hres == S_OK, "Got hres: %#x.\n", hres);
+    ok(lstrlenW(rettext) == lstrlenW(expected_string), "Got wrong length: %d.\n", lstrlenW(rettext));
+    todo_wine ok(!lstrcmpW(rettext, expected_string), "Got wrong content: %s.\n", debugstr_w(rettext));
+    SysFreeString(rettext);
+    IOleClientSite_Release(clientsite);
+    IRichEditOle_Release(reole);
 
     ITextServices_Release(txtserv);
     ITextHost_Release(host);
