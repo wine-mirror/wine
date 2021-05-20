@@ -4537,15 +4537,22 @@ static void test_nested_jobs(void)
     CloseHandle(job2);
 }
 
-static void test_job_list_attribute(void)
+static void test_job_list_attribute(HANDLE parent_job)
 {
+    JOBOBJECT_BASIC_ACCOUNTING_INFORMATION job_info;
+    JOBOBJECT_EXTENDED_LIMIT_INFORMATION limit_info;
+    JOBOBJECT_ASSOCIATE_COMPLETION_PORT port_info;
     PPROC_THREAD_ATTRIBUTE_LIST attrs;
     char buffer[MAX_PATH + 19];
     PROCESS_INFORMATION pi;
+    OVERLAPPED *overlapped;
+    HANDLE jobs[2], port;
     STARTUPINFOEXA si;
-    HANDLE jobs[2];
+    ULONG_PTR value;
+    BOOL ret, out;
+    HANDLE tmp;
     SIZE_T size;
-    BOOL ret;
+    DWORD key;
 
     if (!pInitializeProcThreadAttributeList)
     {
@@ -4613,8 +4620,253 @@ static void test_job_list_attribute(void)
     ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "Got unexpected ret %#x, GetLastError() %u.\n",
             ret, GetLastError());
 
+    ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, &parent_job,
+            sizeof(parent_job), NULL, NULL);
+    ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT, NULL, NULL,
+            (STARTUPINFOA *)&si, &pi);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+
+    ret = pIsProcessInJob(pi.hProcess, parent_job, &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(out, "IsProcessInJob returned out=%u\n", out);
+
+    TerminateProcess(pi.hProcess, 0);
+    wait_and_close_child_process(&pi);
+
+    jobs[0] = pCreateJobObjectW(NULL, NULL);
+    ok(!!jobs[0], "CreateJobObjectA error %u\n", GetLastError());
+    jobs[1] = pCreateJobObjectW(NULL, NULL);
+    ok(!!jobs[1], "CreateJobObjectA error %u\n", GetLastError());
+
+    /* Breakaway works for the inherited job only. */
+    limit_info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_BREAKAWAY_OK;
+    ret = pSetInformationJobObject(parent_job, JobObjectExtendedLimitInformation, &limit_info, sizeof(limit_info));
+    ok(ret, "SetInformationJobObject error %u\n", GetLastError());
+    limit_info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_BREAKAWAY_OK
+            | JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK;
+    ret = pSetInformationJobObject(jobs[1], JobObjectExtendedLimitInformation, &limit_info, sizeof(limit_info));
+    ok(ret, "SetInformationJobObject error %u\n", GetLastError());
+
+    ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs + 1,
+            sizeof(*jobs), NULL, NULL);
+    ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT
+            | CREATE_BREAKAWAY_FROM_JOB, NULL, NULL, (STARTUPINFOA *)&si, &pi);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+
+    ret = pIsProcessInJob(pi.hProcess, parent_job, &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(!out, "IsProcessInJob returned out=%u\n", out);
+
+    ret = pIsProcessInJob(pi.hProcess, jobs[1], &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(out, "IsProcessInJob returned out=%u\n", out);
+
+    ret = pIsProcessInJob(pi.hProcess, jobs[0], &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(!out, "IsProcessInJob returned out=%u\n", out);
+
+    TerminateProcess(pi.hProcess, 0);
+    wait_and_close_child_process(&pi);
+
+    CloseHandle(jobs[1]);
+    jobs[1] = pCreateJobObjectW(NULL, NULL);
+    ok(!!jobs[1], "CreateJobObjectA error %u\n", GetLastError());
+
+    ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs + 1,
+            sizeof(*jobs), NULL, NULL);
+    ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT,
+            NULL, NULL, (STARTUPINFOA *)&si, &pi);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+
+    ret = pIsProcessInJob(pi.hProcess, parent_job, &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(out, "IsProcessInJob returned out=%u\n", out);
+
+    ret = pIsProcessInJob(pi.hProcess, jobs[1], &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(out, "IsProcessInJob returned out=%u\n", out);
+
+    ret = pIsProcessInJob(pi.hProcess, jobs[0], &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(!out, "IsProcessInJob returned out=%u\n", out);
+
+    TerminateProcess(pi.hProcess, 0);
+    wait_and_close_child_process(&pi);
+
+    ret = pQueryInformationJobObject(jobs[0], JobObjectBasicAccountingInformation, &job_info,
+            sizeof(job_info), NULL);
+    ok(ret, "QueryInformationJobObject error %u\n", GetLastError());
+    ok(!job_info.TotalProcesses, "Got unexpected TotalProcesses %u.\n", job_info.TotalProcesses);
+    ok(!job_info.ActiveProcesses, "Got unexpected ActiveProcesses %u.\n", job_info.ActiveProcesses);
+
+    ret = pQueryInformationJobObject(jobs[1], JobObjectBasicAccountingInformation, &job_info,
+            sizeof(job_info), NULL);
+    ok(ret, "QueryInformationJobObject error %u\n", GetLastError());
+    ok(job_info.TotalProcesses == 1, "Got unexpected TotalProcesses %u.\n", job_info.TotalProcesses);
+    ok(!job_info.ActiveProcesses || job_info.ActiveProcesses == 1, "Got unexpected ActiveProcesses %u.\n",
+            job_info.ActiveProcesses);
+
+    /* Fails due to the second job already has the parent other than the first job in the list. */
+    ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs,
+            2 * sizeof(*jobs), NULL, NULL);
+
+    port = pCreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 1);
+    ok(!!port, "CreateIoCompletionPort error %u\n", GetLastError());
+
+    port_info.CompletionPort = port;
+    port_info.CompletionKey = jobs[0];
+    ret = pSetInformationJobObject(jobs[0], JobObjectAssociateCompletionPortInformation, &port_info, sizeof(port_info));
+    ok(ret, "SetInformationJobObject error %u\n", GetLastError());
+
+    ret = GetQueuedCompletionStatus(port, &key, &value, &overlapped, 0);
+    ok(!ret, "GetQueuedCompletionStatus succeeded.\n");
+
+    ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT, NULL, NULL,
+            (STARTUPINFOA *)&si, &pi);
+    ok(!ret && GetLastError() == ERROR_ACCESS_DENIED, "Got unexpected ret %#x, GetLastError() %u.\n",
+            ret, GetLastError());
+
+    ret = GetQueuedCompletionStatus(port, &key, &value, &overlapped, 100);
+    ok(ret, "GetQueuedCompletionStatus: %x\n", GetLastError());
+    ok(key == JOB_OBJECT_MSG_NEW_PROCESS, "unexpected key %x\n", key);
+    ok((HANDLE)value == jobs[0], "unexpected value %p\n", (void *)value);
+    ok(!!overlapped, "Got zero pid.\n");
+
+    ret = GetQueuedCompletionStatus(port, &key, &value, &overlapped, 100);
+    ok(ret, "GetQueuedCompletionStatus: %x\n", GetLastError());
+    ok(key == JOB_OBJECT_MSG_EXIT_PROCESS, "unexpected key %x\n", key);
+    ok((HANDLE)value == jobs[0], "unexpected value %p\n", (void *)value);
+    ok(!!overlapped, "Got zero pid.\n");
+
+    ret = GetQueuedCompletionStatus(port, &key, &value, &overlapped, 100);
+    ok(ret, "GetQueuedCompletionStatus: %x\n", GetLastError());
+    ok(key == JOB_OBJECT_MSG_ACTIVE_PROCESS_ZERO, "unexpected key %x\n", key);
+    ok((HANDLE)value == jobs[0], "unexpected value %p\n", (void *)value);
+    ok(!overlapped, "Got unexpected overlapped %p.\n", overlapped);
+
+    ret = GetQueuedCompletionStatus(port, &key, &value, &overlapped, 0);
+    ok(!ret, "GetQueuedCompletionStatus succeeded.\n");
+
+    CloseHandle(port);
+
+    /* The first job got updated even though the process creation failed. */
+    ret = pQueryInformationJobObject(jobs[0], JobObjectBasicAccountingInformation, &job_info,
+            sizeof(job_info), NULL);
+    ok(ret, "QueryInformationJobObject error %u\n", GetLastError());
+    ok(job_info.TotalProcesses == 1, "Got unexpected TotalProcesses %u.\n", job_info.TotalProcesses);
+    ok(!job_info.ActiveProcesses, "Got unexpected ActiveProcesses %u.\n", job_info.ActiveProcesses);
+
+    ret = pQueryInformationJobObject(jobs[1], JobObjectBasicAccountingInformation, &job_info,
+            sizeof(job_info), NULL);
+    ok(ret, "QueryInformationJobObject error %u\n", GetLastError());
+    ok(job_info.TotalProcesses == 1, "Got unexpected TotalProcesses %u.\n", job_info.TotalProcesses);
+    ok(!job_info.ActiveProcesses, "Got unexpected ActiveProcesses %u.\n", job_info.ActiveProcesses);
+
+    /* Check that the first job actually got the job_parent as parent. */
+    ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs,
+            sizeof(*jobs), NULL, NULL);
+    ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT
+            | CREATE_BREAKAWAY_FROM_JOB, NULL, NULL, (STARTUPINFOA *)&si, &pi);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+
+    ret = pIsProcessInJob(pi.hProcess, parent_job, &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(out, "IsProcessInJob returned out=%u\n", out);
+
+    ret = pIsProcessInJob(pi.hProcess, jobs[0], &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(out, "IsProcessInJob returned out=%u\n", out);
+
+    TerminateProcess(pi.hProcess, 0);
+    wait_and_close_child_process(&pi);
+
+    tmp = jobs[0];
+    jobs[0] = jobs[1];
+    jobs[1] = tmp;
+
+    ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs,
+            2 * sizeof(*jobs), NULL, NULL);
+    ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT, NULL, NULL,
+            (STARTUPINFOA *)&si, &pi);
+    ok(!ret && GetLastError() == ERROR_ACCESS_DENIED, "Got unexpected ret %#x, GetLastError() %u.\n",
+            ret, GetLastError());
+
+    CloseHandle(jobs[0]);
+    CloseHandle(jobs[1]);
+
+    jobs[0] = pCreateJobObjectW(NULL, NULL);
+    ok(!!jobs[0], "CreateJobObjectA error %u\n", GetLastError());
+    jobs[1] = pCreateJobObjectW(NULL, NULL);
+    ok(!!jobs[1], "CreateJobObjectA error %u\n", GetLastError());
+
+    /* Create the job chain successfully and check the job chain. */
+    ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs,
+            2 * sizeof(*jobs), NULL, NULL);
+    ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT,
+            NULL, NULL, (STARTUPINFOA *)&si, &pi);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+
+    ret = pIsProcessInJob(pi.hProcess, parent_job, &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(out, "IsProcessInJob returned out=%u\n", out);
+
+    ret = pIsProcessInJob(pi.hProcess, jobs[0], &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(out, "IsProcessInJob returned out=%u\n", out);
+
+    ret = pIsProcessInJob(pi.hProcess, jobs[1], &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(out, "IsProcessInJob returned out=%u\n", out);
+
+    TerminateProcess(pi.hProcess, 0);
+    wait_and_close_child_process(&pi);
+
+    ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs + 1,
+            sizeof(*jobs), NULL, NULL);
+    ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, EXTENDED_STARTUPINFO_PRESENT
+            | CREATE_BREAKAWAY_FROM_JOB, NULL, NULL, (STARTUPINFOA *)&si, &pi);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+
+    ret = pIsProcessInJob(pi.hProcess, parent_job, &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(out, "IsProcessInJob returned out=%u\n", out);
+
+    ret = pIsProcessInJob(pi.hProcess, jobs[0], &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(out, "IsProcessInJob returned out=%u\n", out);
+
+    ret = pIsProcessInJob(pi.hProcess, jobs[1], &out);
+    ok(ret, "IsProcessInJob error %u\n", GetLastError());
+    ok(out, "IsProcessInJob returned out=%u\n", out);
+
+    TerminateProcess(pi.hProcess, 0);
+    wait_and_close_child_process(&pi);
+
+    CloseHandle(jobs[0]);
+    CloseHandle(jobs[1]);
+
     pDeleteProcThreadAttributeList(attrs);
     heap_free(attrs);
+
+    limit_info.BasicLimitInformation.LimitFlags = 0;
+    ret = pSetInformationJobObject(parent_job, JobObjectExtendedLimitInformation, &limit_info, sizeof(limit_info));
+    ok(ret, "SetInformationJobObject error %u\n", GetLastError());
 }
 
 START_TEST(process)
@@ -4768,7 +5020,7 @@ START_TEST(process)
     test_nested_jobs();
     job = test_AddSelfToJob();
     test_jobInheritance(job);
-    test_job_list_attribute();
+    test_job_list_attribute(job);
     test_BreakawayOk(job);
     CloseHandle(job);
 }

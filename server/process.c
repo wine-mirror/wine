@@ -1276,6 +1276,18 @@ DECL_HANDLER(new_process)
         job = job->parent;
     }
 
+    for (i = 0; i < job_handle_count; ++i)
+    {
+        job = get_job_obj( current->process, job_handles[i], JOB_OBJECT_ASSIGN_PROCESS );
+        add_job_process( job, process );
+        release_object( job );
+        if (get_error())
+        {
+            release_job_process( process );
+            goto done;
+        }
+    }
+
     /* connect to the window station */
     connect_process_winstation( process, parent_thread, parent );
 
