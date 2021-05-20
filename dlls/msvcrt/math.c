@@ -1897,15 +1897,36 @@ __int64 CDECL _abs64( __int64 n )
     return n >= 0 ? n : -n;
 }
 
+/* Copied from musl: src/math/ilogb.c */
+static int __ilogb(double x)
+{
+    union { double f; UINT64 i; } u = { x };
+    int e = u.i >> 52 & 0x7ff;
+
+    if (!e)
+    {
+        u.i <<= 12;
+        if (u.i == 0) return FP_ILOGB0;
+        /* subnormal x */
+        for (e = -0x3ff; u.i >> 63 == 0; e--, u.i <<= 1);
+        return e;
+    }
+    if (e == 0x7ff) return u.i << 12 ? FP_ILOGBNAN : INT_MAX;
+    return e - 0x3ff;
+}
+
 /*********************************************************************
  *		_logb (MSVCRT.@)
+ *
+ * Copied from musl: src/math/logb.c
  */
-double CDECL _logb(double num)
+double CDECL _logb(double x)
 {
-  double ret = unix_funcs->logb(num);
-  if (isnan(num)) return math_error(_DOMAIN, "_logb", num, 0, ret);
-  if (!num) return math_error(_SING, "_logb", num, 0, ret);
-  return ret;
+    if (!isfinite(x))
+        return x * x;
+    if (x == 0)
+        return math_error(_SING, "_logb", x, 0, -1 / (x * x));
+    return __ilogb(x);
 }
 
 /*********************************************************************
@@ -6149,24 +6170,10 @@ double CDECL MSVCR120_creal(_Dcomplex z)
 
 /*********************************************************************
  *      ilogb (MSVCR120.@)
- *
- * Copied from musl: src/math/ilogb.c
  */
 int CDECL ilogb(double x)
 {
-    union { double f; UINT64 i; } u = { x };
-    int e = u.i >> 52 & 0x7ff;
-
-    if (!e)
-    {
-        u.i <<= 12;
-        if (u.i == 0) return FP_ILOGB0;
-        /* subnormal x */
-        for (e = -0x3ff; u.i >> 63 == 0; e--, u.i <<= 1);
-        return e;
-    }
-    if (e == 0x7ff) return u.i << 12 ? FP_ILOGBNAN : INT_MAX;
-    return e - 0x3ff;
+    return __ilogb(x);
 }
 
 /*********************************************************************
