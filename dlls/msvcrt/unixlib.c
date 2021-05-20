@@ -404,14 +404,6 @@ static float CDECL unix_powf( float x, float y )
 }
 
 /*********************************************************************
- *      sin
- */
-static double CDECL unix_sin( double x )
-{
-    return sin( x );
-}
-
-/*********************************************************************
  *      sinf
  */
 static float CDECL unix_sinf( float x )
@@ -530,7 +522,6 @@ static const struct unix_funcs funcs =
     unix_log2f,
     unix_pow,
     unix_powf,
-    unix_sin,
     unix_sinf,
     unix_sinh,
     unix_sinhf,
