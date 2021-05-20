@@ -3230,12 +3230,25 @@ static void _check_reobject_struct(IRichEditOle *reole, LONG index, DWORD flags,
   ok_(__FILE__,line)(reobj.dwUser == user, "got wrong user-defined value.\n");
 }
 
+#define INSERT_REOBJECT(reole,reobj,cp,user) \
+  _insert_reobject(reole, reobj, cp, user, __LINE__)
+static void _insert_reobject(IRichEditOle *reole, REOBJECT *reobj, LONG cp, DWORD user, int line)
+{
+  IOleClientSite *clientsite;
+  HRESULT hr;
+  hr = IRichEditOle_GetClientSite(reole, &clientsite);
+  ok_(__FILE__,line)(hr == S_OK, "IRichEditOle_GetClientSite got hr %#x.\n", hr);
+  fill_reobject_struct(reobj, cp, NULL, NULL, clientsite, 10, 10, DVASPECT_CONTENT, 0, user);
+  hr = IRichEditOle_InsertObject(reole, reobj);
+  ok_(__FILE__,line)(hr == S_OK, "IRichEditOle_InsertObject got hr %#x.\n", hr);
+  IOleClientSite_Release(clientsite);
+}
+
 static void test_InsertObject(void)
 {
   static CHAR test_text1[] = "abcdefg";
   IRichEditOle *reole = NULL;
   ITextDocument *doc = NULL;
-  IOleClientSite *clientsite;
   REOBJECT reo1, reo2, reo3, received_reo;
   HRESULT hr;
   HWND hwnd;
@@ -3249,36 +3262,21 @@ static void test_InsertObject(void)
 
   /* insert object1 in (0, 1)*/
   SendMessageA(hwnd, EM_SETSEL, 0, 1);
-  hr = IRichEditOle_GetClientSite(reole, &clientsite);
-  ok(hr == S_OK, "IRichEditOle_GetClientSite failed: 0x%08x\n", hr);
-  fill_reobject_struct(&reo1, REO_CP_SELECTION, NULL, NULL, clientsite, 10, 10, DVASPECT_CONTENT, 0, 1);
-  hr = IRichEditOle_InsertObject(reole, &reo1);
-  ok(hr == S_OK, "IRichEditOle_InsertObject failed: 0x%08x\n", hr);
+  INSERT_REOBJECT(reole, &reo1, REO_CP_SELECTION, 1);
   count = IRichEditOle_GetObjectCount(reole);
   ok(count == 1, "got wrong object count: %d\n", count);
-  IOleClientSite_Release(clientsite);
 
   /* insert object2 in (2, 3)*/
   SendMessageA(hwnd, EM_SETSEL, 2, 3);
-  hr = IRichEditOle_GetClientSite(reole, &clientsite);
-  ok(hr == S_OK, "IRichEditOle_GetClientSite failed: 0x%08x\n", hr);
-  fill_reobject_struct(&reo2, REO_CP_SELECTION, NULL, NULL, clientsite, 10, 10, DVASPECT_CONTENT, 0, 2);
-  hr = IRichEditOle_InsertObject(reole, &reo2);
-  ok(hr == S_OK, "IRichEditOle_InsertObject failed: 0x%08x\n", hr);
+  INSERT_REOBJECT(reole, &reo2, REO_CP_SELECTION, 2);
   count = IRichEditOle_GetObjectCount(reole);
   ok(count == 2, "got wrong object count: %d\n", count);
-  IOleClientSite_Release(clientsite);
 
   /* insert object3 in (1, 2)*/
   SendMessageA(hwnd, EM_SETSEL, 1, 2);
-  hr = IRichEditOle_GetClientSite(reole, &clientsite);
-  ok(hr == S_OK, "IRichEditOle_GetClientSite failed: 0x%08x\n", hr);
-  fill_reobject_struct(&reo3, REO_CP_SELECTION, NULL, NULL, clientsite, 10, 10, DVASPECT_CONTENT, 0, 3);
-  hr = IRichEditOle_InsertObject(reole, &reo3);
-  ok(hr == S_OK, "IRichEditOle_InsertObject failed: 0x%08x\n", hr);
+  INSERT_REOBJECT(reole, &reo3, REO_CP_SELECTION, 3);
   count = IRichEditOle_GetObjectCount(reole);
   ok(count == 3, "got wrong object count: %d\n", count);
-  IOleClientSite_Release(clientsite);
 
   /* tests below show that order of rebject (from 0 to 2) is: reo1,reo3,reo2 */
   CHECK_REOBJECT_STRUCT(reole, 0, REO_GETOBJ_ALL_INTERFACES, 0, NULL, NULL, reo1.polesite, 1);
