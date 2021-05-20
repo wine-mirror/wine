@@ -1802,12 +1802,41 @@ static double __cos(double x, double y)
 
 /*********************************************************************
  *		cos (MSVCRT.@)
+ *
+ * Copied from musl: src/math/cos.c
  */
 double CDECL cos( double x )
 {
-  double ret = unix_funcs->cos( x );
-  if (!isfinite(x)) return math_error(_DOMAIN, "cos", x, 0, ret);
-  return ret;
+    double y[2];
+    UINT32 ix;
+    unsigned n;
+
+    ix = *(ULONGLONG*)&x >> 32;
+    ix &= 0x7fffffff;
+
+    /* |x| ~< pi/4 */
+    if (ix <= 0x3fe921fb) {
+        if (ix < 0x3e46a09e) { /* |x| < 2**-27 * sqrt(2) */
+            /* raise inexact if x!=0 */
+            fp_barrier(x + 0x1p120f);
+            return 1.0;
+        }
+        return __cos(x, 0);
+    }
+
+    /* cos(Inf or NaN) is NaN */
+    if (isinf(x)) return math_error(_DOMAIN, "cos", x, 0, x - x);
+    if (ix >= 0x7ff00000)
+        return x - x;
+
+    /* argument reduction */
+    n = __rem_pio2(x, y);
+    switch (n & 3) {
+    case 0: return __cos(y[0], y[1]);
+    case 1: return -__sin(y[0], y[1], 1);
+    case 2: return -__cos(y[0], y[1]);
+    default: return __sin(y[0], y[1], 1);
+    }
 }
 
 /*********************************************************************
