@@ -2159,8 +2159,8 @@ static HRESULT WINAPI VBSAXContentHandler_startElement(IVBSAXContentHandler *ifa
 
     TRACE("(%p)->(%p %p %p %p)\n", This, namespaceURI, localName, QName, attrs);
 
-    if (!namespaceURI || !localName || !QName)
-        return E_POINTER;
+    if (!namespaceURI || !*namespaceURI || !localName || !QName)
+        return E_INVALIDARG;
 
     TRACE("(%s %s %s)\n", debugstr_w(*namespaceURI), debugstr_w(*localName), debugstr_w(*QName));
 

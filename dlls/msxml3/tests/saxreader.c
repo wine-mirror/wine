@@ -3852,7 +3852,6 @@ static void test_mxwriter_startendelement(void)
     bstr_ab = SysAllocString(L"a:b");
 
     hr = IVBSAXContentHandler_startElement(vb_content, &bstr_null, &bstr_empty, &bstr_b, NULL);
-todo_wine
     ok(hr == E_INVALIDARG, "got %08x\n", hr);
 
     hr = IVBSAXContentHandler_startElement(vb_content, &bstr_empty, &bstr_b, &bstr_empty, NULL);
@@ -3862,7 +3861,6 @@ todo_wine
     hr = IMXWriter_get_output(writer, &dest);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-todo_wine
     ok(!lstrcmpW(L"<>", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
@@ -3873,7 +3871,6 @@ todo_wine
     hr = IMXWriter_get_output(writer, &dest);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-todo_wine
     ok(!lstrcmpW(L"<><b>", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
@@ -3899,7 +3896,6 @@ todo_wine
     hr = IMXWriter_get_output(writer, &dest);
     ok(hr == S_OK, "got %08x\n", hr);
     ok(V_VT(&dest) == VT_BSTR, "got %d\n", V_VT(&dest));
-todo_wine
     ok(!lstrcmpW(L"<><b></b>", V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
