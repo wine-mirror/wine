@@ -31,6 +31,27 @@ static ITaskScheduler *test_task_scheduler;
 
 static const WCHAR does_not_existW[] = {'\\','\\','d','o','e','s','_','n','o','t','_','e','x','i','s','t',0};
 
+
+HRESULT taskscheduler_delete(ITaskScheduler *scheduler, const WCHAR *name)
+{
+    HRESULT hr;
+    int i = 0;
+
+    while (1)
+    {
+        hr = ITaskScheduler_Delete(scheduler, name);
+        if (hr != HRESULT_FROM_WIN32(ERROR_SHARING_VIOLATION)) break;
+        if (++i == 5) break;
+
+        /* The task scheduler locked the file to load the task (see
+         * ITaskScheduler_Activate()). It should be done soon.
+         */
+        trace("Got a sharing violation deleting %s, retrying...\n", wine_dbgstr_w(name));
+        Sleep(100);
+    }
+    return hr;
+}
+
 static void test_NewWorkItem(void)
 {
     HRESULT hres;
@@ -225,7 +246,7 @@ static void test_Enum(void)
     ok(hr == S_OK, "got %#x\n", hr);
 
     /* cleanup after previous runs */
-    ITaskScheduler_Delete(scheduler, Task1);
+    taskscheduler_delete(scheduler, Task1);
 
     hr = ITaskScheduler_NewWorkItem(scheduler, Task1, &CLSID_CTask, &IID_ITask, (IUnknown **)&task);
     ok(hr == S_OK, "got %#x\n", hr);
@@ -291,7 +312,7 @@ static void test_Enum(void)
 
     IEnumWorkItems_Release(tasks);
 
-    hr = ITaskScheduler_Delete(scheduler, Task1);
+    hr = taskscheduler_delete(scheduler, Task1);
     ok(hr == S_OK, "got %#x\n", hr);
 
     ITaskScheduler_Release(scheduler);
@@ -494,11 +515,11 @@ static void test_task_storage(void)
 
     test_save_task_curfile(task);
 
-    hr = ITaskScheduler_Delete(scheduler, Task1);
+    hr = taskscheduler_delete(scheduler, Task1);
     ok(hr == S_OK, "got %#x\n", hr);
-    hr = ITaskScheduler_Delete(scheduler, Task2);
+    hr = taskscheduler_delete(scheduler, Task2);
     ok(hr == S_OK, "got %#x\n", hr);
-    hr = ITaskScheduler_Delete(scheduler, Task3);
+    hr = taskscheduler_delete(scheduler, Task3);
     ok(hr == S_OK, "got %#x\n", hr);
 
     ITask_Release(task);

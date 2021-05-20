@@ -29,6 +29,9 @@ static ITaskScheduler *scheduler;
 static const WCHAR task_name[] = {'T','e','s','t','i','n','g',0};
 static const WCHAR empty[] = {0};
 
+extern HRESULT taskscheduler_delete(ITaskScheduler*, const WCHAR*);
+
+
 static LPCWSTR path_resolve_name(LPCWSTR base_name)
 {
     static WCHAR buffer[MAX_PATH];
@@ -552,7 +555,7 @@ static void test_Run(void)
     HRESULT hr, status;
 
     /* cleanup after previous runs */
-    ITaskScheduler_Delete(scheduler, wine_test_runW);
+    taskscheduler_delete(scheduler, wine_test_runW);
 
     hr = ITaskScheduler_NewWorkItem(scheduler, wine_test_runW, &CLSID_CTask,
                                     &IID_ITask, (IUnknown **)&task);
@@ -679,7 +682,7 @@ static void test_Run(void)
     else
         ITask_Release(task);
 
-    hr = ITaskScheduler_Delete(scheduler, wine_test_runW);
+    hr = taskscheduler_delete(scheduler, wine_test_runW);
     ok(hr == S_OK, "got %#x\n", hr);
 }
 
