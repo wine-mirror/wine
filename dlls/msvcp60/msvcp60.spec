@@ -4275,7 +4275,7 @@
 @ extern _FSnan _FSnan
 # extern _FXbig
 @ cdecl -norelay _Getcoll()
-@ cdecl _Getctype(ptr)
+@ cdecl -norelay _Getctype()
 @ cdecl -norelay _Getcvt()
 @ extern _Hugeval _Hugeval
 @ extern _Inf _Inf

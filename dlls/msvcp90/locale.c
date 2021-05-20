@@ -698,8 +698,9 @@ _Collvec* __thiscall _Locinfo__Getcoll(const _Locinfo *this, _Collvec *ret)
 }
 
 /* _Getctype */
-_Ctypevec* __cdecl _Getctype(_Ctypevec *ret)
+_Ctypevec __cdecl _Getctype(void)
 {
+    _Ctypevec ret;
     short *table;
 #if _MSVCP_VER >= 110
     wchar_t *name;
@@ -708,24 +709,24 @@ _Ctypevec* __cdecl _Getctype(_Ctypevec *ret)
 
     TRACE("\n");
 
-    ret->page = ___lc_codepage_func();
+    ret.page = ___lc_codepage_func();
 #if _MSVCP_VER < 110
-    ret->handle = ___lc_handle_func()[LC_COLLATE];
+    ret.handle = ___lc_handle_func()[LC_COLLATE];
 #else
     if((name = ___lc_locale_name_func()[LC_COLLATE])) {
         size = wcslen(name)+1;
-        ret->name = malloc(size*sizeof(*name));
-        if(!ret->name) throw_exception(EXCEPTION_BAD_ALLOC, NULL);
-        memcpy(ret->name, name, size*sizeof(*name));
+        ret.name = malloc(size*sizeof(*name));
+        if(!ret.name) throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+        memcpy(ret.name, name, size*sizeof(*name));
     } else {
-        ret->name = NULL;
+        ret.name = NULL;
     }
 #endif
-    ret->delfl = TRUE;
+    ret.delfl = TRUE;
     table = malloc(sizeof(short[256]));
     if(!table) throw_exception(EXCEPTION_BAD_ALLOC, NULL);
     memcpy(table, __pctype_func(), sizeof(short[256]));
-    ret->table = table;
+    ret.table = table;
     return ret;
 }
 
@@ -734,7 +735,8 @@ _Ctypevec* __cdecl _Getctype(_Ctypevec *ret)
 DEFINE_THISCALL_WRAPPER(_Locinfo__Getctype, 8)
 _Ctypevec* __thiscall _Locinfo__Getctype(const _Locinfo *this, _Ctypevec *ret)
 {
-    return _Getctype(ret);
+    *ret = _Getctype();
+    return ret;
 }
 
 /* _Getcvt */

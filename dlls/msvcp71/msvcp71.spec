@@ -5116,7 +5116,7 @@
 # extern _FXbig
 # extern _FZero
 @ cdecl -norelay _Getcoll()
-@ cdecl _Getctype(ptr)
+@ cdecl -norelay _Getctype()
 @ cdecl -norelay _Getcvt()
 @ cdecl _Getwctype(long ptr)
 @ cdecl _Getwctypes(ptr ptr ptr ptr)

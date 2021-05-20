@@ -100,7 +100,7 @@ static BYTE (__cdecl *p_short_eq)(const void*, const void*);
 static char* (__cdecl *p_Copy_s)(char*, size_t, const char*, size_t);
 
 static unsigned short (__cdecl *p_wctype)(const char*);
-static MSVCP__Ctypevec* (__cdecl *p__Getctype)(MSVCP__Ctypevec*);
+static MSVCP__Ctypevec (__cdecl *p__Getctype)(void);
 static MSVCP__Collvec (__cdecl *p__Getcoll)(void);
 static wctrans_t (__cdecl *p_wctrans)(const char*);
 static wint_t (__cdecl *p_towctrans)(wint_t, wctrans_t);
@@ -584,7 +584,7 @@ static void test__Getctype(void)
     MSVCP__Ctypevec ret;
     _locale_t locale;
 
-    ok(p__Getctype(&ret) == &ret, "__Getctype returned incorrect pointer\n");
+    ret = p__Getctype();
     ok(ret.handle == 0, "ret.handle = %d\n", ret.handle);
     ok(ret.page == 0, "ret.page = %d\n", ret.page);
     ok(ret.delfl == 1, "ret.delfl = %d\n", ret.delfl);
@@ -594,7 +594,7 @@ static void test__Getctype(void)
     locale = p__get_current_locale();
     locale->locinfo->lc_handle[LC_COLLATE] = 0x1234567;
     p__free_locale(locale);
-    ok(p__Getctype(&ret) == &ret, "__Getctype returned incorrect pointer\n");
+    ret = p__Getctype();
     ok(ret.handle == 0x1234567, "ret.handle = %d\n", ret.handle);
     ok(ret.page == 0, "ret.page = %d\n", ret.page);
     ok(ret.delfl == 1, "ret.delfl = %d\n", ret.delfl);

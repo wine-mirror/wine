@@ -5062,7 +5062,7 @@
 # extern _FXbig
 # extern _FZero
 @ cdecl -norelay _Getcoll()
-@ cdecl _Getctype(ptr)
+@ cdecl -norelay _Getctype()
 @ cdecl -norelay _Getcvt()
 @ extern _Hugeval
 @ extern _Inf

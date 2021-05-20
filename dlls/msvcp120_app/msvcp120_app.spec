@@ -3722,7 +3722,7 @@
 @ stub _FXp_subx
 # extern _FZero
 @ cdecl -norelay _Getcoll() msvcp120._Getcoll
-@ cdecl _Getctype(ptr) msvcp120._Getctype
+@ cdecl -norelay _Getctype() msvcp120._Getctype
 @ cdecl -norelay _Getcvt() msvcp120._Getcvt
 @ cdecl _Getdateorder() msvcp120._Getdateorder
 @ cdecl _Getwctype(long ptr) msvcp120._Getwctype
