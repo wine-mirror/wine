@@ -828,7 +828,7 @@ static BOOL create_job(const WCHAR *job_name, const AT_INFO *info)
     if (!write_reserved_data(hfile))
         goto failed;
 
-    /* Trigegrs */
+    /* Triggers */
     if (!write_trigger(hfile, info))
         goto failed;
 
