@@ -4537,6 +4537,59 @@ static void test_nested_jobs(void)
     CloseHandle(job2);
 }
 
+static void test_job_list_attribute(void)
+{
+    PPROC_THREAD_ATTRIBUTE_LIST attrs;
+    HANDLE jobs[2];
+    SIZE_T size;
+    BOOL ret;
+
+    if (!pInitializeProcThreadAttributeList)
+    {
+        win_skip("No support for ProcThreadAttributeList\n");
+        return;
+    }
+
+    ret = pInitializeProcThreadAttributeList(NULL, 1, 0, &size);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+            "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    attrs = heap_alloc(size);
+
+
+    jobs[0] = (HANDLE)0xdeadbeef;
+    jobs[1] = NULL;
+
+    ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs,
+            sizeof(*jobs), NULL, NULL);
+    if (!ret && GetLastError() == ERROR_NOT_SUPPORTED)
+    {
+        /* Supported since Win10. */
+        win_skip("PROC_THREAD_ATTRIBUTE_JOB_LIST is not supported.\n");
+        pDeleteProcThreadAttributeList(attrs);
+        heap_free(attrs);
+        return;
+    }
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+
+    ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs,
+            3, NULL, NULL);
+    ok(!ret && GetLastError() == ERROR_BAD_LENGTH, "Got unexpected ret %#x, GetLastError() %u.\n",
+            ret, GetLastError());
+
+    ret = pInitializeProcThreadAttributeList(attrs, 1, 0, &size);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+    ret = pUpdateProcThreadAttribute(attrs, 0, PROC_THREAD_ATTRIBUTE_JOB_LIST, jobs,
+            sizeof(*jobs) * 2, NULL, NULL);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
+
+    pDeleteProcThreadAttributeList(attrs);
+    heap_free(attrs);
+}
+
 START_TEST(process)
 {
     HANDLE job, hproc, h, h2;
@@ -4688,6 +4741,7 @@ START_TEST(process)
     test_nested_jobs();
     job = test_AddSelfToJob();
     test_jobInheritance(job);
+    test_job_list_attribute();
     test_BreakawayOk(job);
     CloseHandle(job);
 }

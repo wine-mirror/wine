@@ -1687,6 +1687,14 @@ BOOL WINAPI DECLSPEC_HOTPATCH UpdateProcThreadAttribute( struct _PROC_THREAD_ATT
        }
        break;
 
+    case PROC_THREAD_ATTRIBUTE_JOB_LIST:
+        if ((size / sizeof(HANDLE)) * sizeof(HANDLE) != size)
+        {
+            SetLastError( ERROR_BAD_LENGTH );
+            return FALSE;
+        }
+        break;
+
     default:
         SetLastError( ERROR_NOT_SUPPORTED );
         FIXME( "Unhandled attribute %lu\n", attr & PROC_THREAD_ATTRIBUTE_NUMBER );
