@@ -933,16 +933,17 @@ void CDECL wined3d_device_release_focus_window(struct wined3d_device *device)
 static void device_init_swapchain_state(struct wined3d_device *device, struct wined3d_swapchain *swapchain)
 {
     BOOL ds_enable = swapchain->state.desc.enable_auto_depth_stencil;
+    struct wined3d_device_context *context = &device->cs->c;
     unsigned int i;
 
     for (i = 0; i < device->adapter->d3d_info.limits.max_rt_count; ++i)
     {
-        wined3d_device_set_rendertarget_view(device, i, NULL, FALSE);
+        wined3d_device_context_set_rendertarget_view(context, i, NULL, FALSE);
     }
     if (device->back_buffer_view)
-        wined3d_device_set_rendertarget_view(device, 0, device->back_buffer_view, TRUE);
+        wined3d_device_context_set_rendertarget_view(context, 0, device->back_buffer_view, TRUE);
 
-    wined3d_device_set_depth_stencil_view(device, ds_enable ? device->auto_depth_stencil_view : NULL);
+    wined3d_device_context_set_depth_stencil_view(context, ds_enable ? device->auto_depth_stencil_view : NULL);
 }
 
 void wined3d_device_delete_opengl_contexts_cs(void *object)
@@ -3979,9 +3980,9 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     TRACE("device %p, stateblock %p.\n", device, stateblock);
 
     if (changed->vertexShader)
-        wined3d_device_set_vertex_shader(device, state->vs);
+        wined3d_device_context_set_shader(context, WINED3D_SHADER_TYPE_VERTEX, state->vs);
     if (changed->pixelShader)
-        wined3d_device_set_pixel_shader(device, state->ps);
+        wined3d_device_context_set_shader(context, WINED3D_SHADER_TYPE_PIXEL, state->ps);
 
     for (start = 0; ; start = range.offset + range.size)
     {
@@ -4136,12 +4137,12 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         if ((entry = wine_rb_get(&device->rasterizer_states, &desc)))
         {
             rasterizer_state = WINE_RB_ENTRY_VALUE(entry, struct wined3d_rasterizer_state, entry);
-            wined3d_device_set_rasterizer_state(device, rasterizer_state);
+            wined3d_device_context_set_rasterizer_state(context, rasterizer_state);
         }
         else if (SUCCEEDED(wined3d_rasterizer_state_create(device, &desc, NULL,
                 &wined3d_null_parent_ops, &rasterizer_state)))
         {
-            wined3d_device_set_rasterizer_state(device, rasterizer_state);
+            wined3d_device_context_set_rasterizer_state(context, rasterizer_state);
             if (wine_rb_put(&device->rasterizer_states, &desc, &rasterizer_state->entry) == -1)
             {
                 ERR("Failed to insert rasterizer state.\n");
@@ -4209,12 +4210,14 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         if ((entry = wine_rb_get(&device->blend_states, &desc)))
         {
             blend_state = WINE_RB_ENTRY_VALUE(entry, struct wined3d_blend_state, entry);
-            wined3d_device_set_blend_state(device, blend_state, &colour, state->rs[WINED3D_RS_MULTISAMPLEMASK]);
+            wined3d_device_context_set_blend_state(context, blend_state, &colour,
+                    state->rs[WINED3D_RS_MULTISAMPLEMASK]);
         }
         else if (SUCCEEDED(wined3d_blend_state_create(device, &desc, NULL,
                 &wined3d_null_parent_ops, &blend_state)))
         {
-            wined3d_device_set_blend_state(device, blend_state, &colour, state->rs[WINED3D_RS_MULTISAMPLEMASK]);
+            wined3d_device_context_set_blend_state(context, blend_state, &colour,
+                    state->rs[WINED3D_RS_MULTISAMPLEMASK]);
             if (wine_rb_put(&device->blend_states, &desc, &blend_state->entry) == -1)
             {
                 ERR("Failed to insert blend state.\n");
@@ -4276,12 +4279,12 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         if ((entry = wine_rb_get(&device->depth_stencil_states, &desc)))
         {
             depth_stencil_state = WINE_RB_ENTRY_VALUE(entry, struct wined3d_depth_stencil_state, entry);
-            wined3d_device_set_depth_stencil_state(device, depth_stencil_state, stencil_ref);
+            wined3d_device_context_set_depth_stencil_state(context, depth_stencil_state, stencil_ref);
         }
         else if (SUCCEEDED(wined3d_depth_stencil_state_create(device, &desc, NULL,
                 &wined3d_null_parent_ops, &depth_stencil_state)))
         {
-            wined3d_device_set_depth_stencil_state(device, depth_stencil_state, stencil_ref);
+            wined3d_device_context_set_depth_stencil_state(context, depth_stencil_state, stencil_ref);
             if (wine_rb_put(&device->depth_stencil_states, &desc, &depth_stencil_state->entry) == -1)
             {
                 ERR("Failed to insert depth/stencil state.\n");
@@ -4325,22 +4328,22 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     }
 
     if (changed->indices)
-        wined3d_device_set_index_buffer(device, state->index_buffer, state->index_format, 0);
+        wined3d_device_context_set_index_buffer(context, state->index_buffer, state->index_format, 0);
     wined3d_device_set_base_vertex_index(device, state->base_vertex_index);
     if (changed->vertexDecl)
-        wined3d_device_set_vertex_declaration(device, state->vertex_declaration);
+        wined3d_device_context_set_vertex_declaration(context, state->vertex_declaration);
     if (changed->material)
         wined3d_device_set_material(device, &state->material);
     if (changed->viewport)
-        wined3d_device_set_viewports(device, 1, &state->viewport);
+        wined3d_device_context_set_viewports(context, 1, &state->viewport);
     if (changed->scissorRect)
-        wined3d_device_set_scissor_rects(device, 1, &state->scissor_rect);
+        wined3d_device_context_set_scissor_rects(context, 1, &state->scissor_rect);
 
     map = changed->streamSource;
     while (map)
     {
         i = wined3d_bit_scan(&map);
-        wined3d_device_set_stream_source(device, i, state->streams[i].buffer,
+        wined3d_device_context_set_stream_source(context, i, state->streams[i].buffer,
                 state->streams[i].offset, state->streams[i].stride);
     }
     map = changed->streamFreq;
@@ -5696,9 +5699,10 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         wined3d_device_reset_cb callback, BOOL reset_state)
 {
     const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
+    struct wined3d_device_context *context = &device->cs->c;
     struct wined3d_swapchain_state *swapchain_state;
+    struct wined3d_state *state = context->state;
     struct wined3d_swapchain_desc *current_desc;
-    struct wined3d_state *state = device->cs->c.state;
     struct wined3d_resource *resource, *cursor;
     struct wined3d_rendertarget_view *view;
     struct wined3d_swapchain *swapchain;
@@ -5737,9 +5741,9 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
     for (i = 0; i < d3d_info->limits.max_rt_count; ++i)
     {
-        wined3d_device_set_rendertarget_view(device, i, NULL, FALSE);
+        wined3d_device_context_set_rendertarget_view(context, i, NULL, FALSE);
     }
-    wined3d_device_set_depth_stencil_view(device, NULL);
+    wined3d_device_context_set_depth_stencil_view(context, NULL);
 
     if (reset_state)
     {
@@ -5961,9 +5965,9 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     else
     {
         if ((view = device->back_buffer_view))
-            wined3d_device_set_rendertarget_view(device, 0, view, FALSE);
+            wined3d_device_context_set_rendertarget_view(context, 0, view, FALSE);
         if ((view = device->auto_depth_stencil_view))
-            wined3d_device_set_depth_stencil_view(device, view);
+            wined3d_device_context_set_depth_stencil_view(context, view);
     }
 
     if (reset_state)
