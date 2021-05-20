@@ -1235,14 +1235,6 @@ UINT CDECL wined3d_device_get_available_texture_mem(const struct wined3d_device 
     return min(UINT_MAX, driver_info->vram_bytes - device->adapter->vram_bytes_used);
 }
 
-void CDECL wined3d_device_set_stream_output(struct wined3d_device *device, UINT idx,
-        struct wined3d_buffer *buffer, UINT offset)
-{
-    TRACE("device %p, idx %u, buffer %p, offset %u.\n", device, idx, buffer, offset);
-
-    wined3d_device_context_set_stream_output(&device->cs->c, idx, buffer, offset);
-}
-
 struct wined3d_buffer * CDECL wined3d_device_context_get_stream_output(struct wined3d_device_context *context,
         unsigned int idx, unsigned int *offset)
 {
@@ -1257,15 +1249,6 @@ struct wined3d_buffer * CDECL wined3d_device_context_get_stream_output(struct wi
     if (offset)
         *offset = context->state->stream_output[idx].offset;
     return context->state->stream_output[idx].buffer;
-}
-
-HRESULT CDECL wined3d_device_set_stream_source(struct wined3d_device *device, UINT stream_idx,
-        struct wined3d_buffer *buffer, UINT offset, UINT stride)
-{
-    TRACE("device %p, stream_idx %u, buffer %p, offset %u, stride %u.\n",
-            device, stream_idx, buffer, offset, stride);
-
-    return wined3d_device_context_set_stream_source(&device->cs->c, stream_idx, buffer, offset, stride);
 }
 
 HRESULT CDECL wined3d_device_context_get_stream_source(const struct wined3d_device_context *context,
@@ -1527,15 +1510,6 @@ static void wined3d_device_set_material(struct wined3d_device *device, const str
     wined3d_device_context_emit_set_material(&device->cs->c, material);
 }
 
-void CDECL wined3d_device_set_index_buffer(struct wined3d_device *device,
-        struct wined3d_buffer *buffer, enum wined3d_format_id format_id, unsigned int offset)
-{
-    TRACE("device %p, buffer %p, format %s, offset %u.\n",
-            device, buffer, debug_d3dformat(format_id), offset);
-
-    wined3d_device_context_set_index_buffer(&device->cs->c, buffer, format_id, offset);
-}
-
 struct wined3d_buffer * CDECL wined3d_device_context_get_index_buffer(const struct wined3d_device_context *context,
         enum wined3d_format_id *format, unsigned int *offset)
 {
@@ -1549,27 +1523,11 @@ struct wined3d_buffer * CDECL wined3d_device_context_get_index_buffer(const stru
     return state->index_buffer;
 }
 
-void CDECL wined3d_device_set_base_vertex_index(struct wined3d_device *device, INT base_index)
+static void wined3d_device_set_base_vertex_index(struct wined3d_device *device, int base_index)
 {
     TRACE("device %p, base_index %d.\n", device, base_index);
 
     device->cs->c.state->base_vertex_index = base_index;
-}
-
-void CDECL wined3d_device_set_viewports(struct wined3d_device *device, unsigned int viewport_count,
-        const struct wined3d_viewport *viewports)
-{
-    unsigned int i;
-
-    TRACE("device %p, viewport_count %u, viewports %p.\n", device, viewport_count, viewports);
-
-    for (i = 0; i < viewport_count; ++i)
-    {
-        TRACE("%u: x %.8e, y %.8e, w %.8e, h %.8e, min_z %.8e, max_z %.8e.\n",  i, viewports[i].x, viewports[i].y,
-                viewports[i].width, viewports[i].height, viewports[i].min_z, viewports[i].max_z);
-    }
-
-    wined3d_device_context_set_viewports(&device->cs->c, viewport_count, viewports);
 }
 
 void CDECL wined3d_device_context_get_viewports(const struct wined3d_device_context *context,
@@ -1606,15 +1564,6 @@ static void resolve_depth_buffer(struct wined3d_device *device)
             src_view->resource, src_view->sub_resource_idx, dst_resource->format->id);
 }
 
-void CDECL wined3d_device_set_blend_state(struct wined3d_device *device,
-        struct wined3d_blend_state *blend_state, const struct wined3d_color *blend_factor, unsigned int sample_mask)
-{
-    TRACE("device %p, blend_state %p, blend_factor %s, sample_mask %#x.\n",
-            device, blend_state, debug_color(blend_factor), sample_mask);
-
-    wined3d_device_context_set_blend_state(&device->cs->c, blend_state, blend_factor, sample_mask);
-}
-
 struct wined3d_blend_state * CDECL wined3d_device_context_get_blend_state(const struct wined3d_device_context *context,
         struct wined3d_color *blend_factor, unsigned int *sample_mask)
 {
@@ -1627,14 +1576,6 @@ struct wined3d_blend_state * CDECL wined3d_device_context_get_blend_state(const 
     return state->blend_state;
 }
 
-void CDECL wined3d_device_set_depth_stencil_state(struct wined3d_device *device,
-        struct wined3d_depth_stencil_state *depth_stencil_state, unsigned int stencil_ref)
-{
-    TRACE("device %p, depth_stencil_state %p, stencil_ref %u.\n", device, depth_stencil_state, stencil_ref);
-
-    wined3d_device_context_set_depth_stencil_state(&device->cs->c, depth_stencil_state, stencil_ref);
-}
-
 struct wined3d_depth_stencil_state * CDECL wined3d_device_context_get_depth_stencil_state(
         const struct wined3d_device_context *context, unsigned int *stencil_ref)
 {
@@ -1644,14 +1585,6 @@ struct wined3d_depth_stencil_state * CDECL wined3d_device_context_get_depth_sten
 
     *stencil_ref = state->stencil_ref;
     return state->depth_stencil_state;
-}
-
-void CDECL wined3d_device_set_rasterizer_state(struct wined3d_device *device,
-        struct wined3d_rasterizer_state *rasterizer_state)
-{
-    TRACE("device %p, rasterizer_state %p.\n", device, rasterizer_state);
-
-    wined3d_device_context_set_rasterizer_state(&device->cs->c, rasterizer_state);
 }
 
 struct wined3d_rasterizer_state * CDECL wined3d_device_context_get_rasterizer_state(
@@ -1686,13 +1619,6 @@ static void wined3d_device_set_render_state(struct wined3d_device *device,
     }
 }
 
-DWORD CDECL wined3d_device_get_render_state(const struct wined3d_device *device, enum wined3d_render_state state)
-{
-    TRACE("device %p, state %s (%#x).\n", device, debug_d3drenderstate(state), state);
-
-    return device->cs->c.state->render_states[state];
-}
-
 static void wined3d_device_set_sampler_state(struct wined3d_device *device,
         UINT sampler_idx, enum wined3d_sampler_state state, DWORD value)
 {
@@ -1707,21 +1633,6 @@ static void wined3d_device_set_sampler_state(struct wined3d_device *device,
 
     device->cs->c.state->sampler_states[sampler_idx][state] = value;
     wined3d_device_context_emit_set_sampler_state(&device->cs->c, sampler_idx, state, value);
-}
-
-void CDECL wined3d_device_set_scissor_rects(struct wined3d_device *device, unsigned int rect_count,
-        const RECT *rects)
-{
-    unsigned int i;
-
-    TRACE("device %p, rect_count %u, rects %p.\n", device, rect_count, rects);
-
-    for (i = 0; i < rect_count; ++i)
-    {
-        TRACE("%u: %s\n", i, wine_dbgstr_rect(&rects[i]));
-    }
-
-    wined3d_device_context_set_scissor_rects(&device->cs->c, rect_count, rects);
 }
 
 void CDECL wined3d_device_context_get_scissor_rects(const struct wined3d_device_context *context,
@@ -1874,14 +1785,6 @@ struct wined3d_device_context * CDECL wined3d_device_get_immediate_context(struc
     TRACE("device %p.\n", device);
 
     return &device->cs->c;
-}
-
-void CDECL wined3d_device_set_vertex_declaration(struct wined3d_device *device,
-        struct wined3d_vertex_declaration *declaration)
-{
-    TRACE("device %p, declaration %p.\n", device, declaration);
-
-    wined3d_device_context_set_vertex_declaration(&device->cs->c, declaration);
 }
 
 struct wined3d_vertex_declaration * CDECL wined3d_device_context_get_vertex_declaration(
@@ -2440,28 +2343,6 @@ void CDECL wined3d_device_context_draw_indexed(struct wined3d_device_context *co
             base_vertex_index, start_index, index_count, start_instance, instance_count, true);
 }
 
-void CDECL wined3d_device_set_vertex_shader(struct wined3d_device *device, struct wined3d_shader *shader)
-{
-    TRACE("device %p, shader %p.\n", device, shader);
-
-    return wined3d_device_context_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_VERTEX, shader);
-}
-
-struct wined3d_shader * CDECL wined3d_device_get_vertex_shader(const struct wined3d_device *device)
-{
-    TRACE("device %p.\n", device);
-
-    return device->cs->c.state->shader[WINED3D_SHADER_TYPE_VERTEX];
-}
-
-void CDECL wined3d_device_set_constant_buffer(struct wined3d_device *device,
-        enum wined3d_shader_type type, UINT idx, struct wined3d_buffer *buffer)
-{
-    TRACE("device %p, type %#x, idx %u, buffer %p.\n", device, type, idx, buffer);
-
-    return wined3d_device_context_set_constant_buffer(&device->cs->c, type, idx, buffer);
-}
-
 struct wined3d_buffer * CDECL wined3d_device_context_get_constant_buffer(const struct wined3d_device_context *context,
         enum wined3d_shader_type shader_type, unsigned int idx)
 {
@@ -2476,14 +2357,6 @@ struct wined3d_buffer * CDECL wined3d_device_context_get_constant_buffer(const s
     return context->state->cb[shader_type][idx];
 }
 
-void CDECL wined3d_device_set_vs_resource_view(struct wined3d_device *device,
-        UINT idx, struct wined3d_shader_resource_view *view)
-{
-    TRACE("device %p, idx %u, view %p.\n", device, idx, view);
-
-    wined3d_device_context_set_shader_resource_view(&device->cs->c, WINED3D_SHADER_TYPE_VERTEX, idx, view);
-}
-
 struct wined3d_shader_resource_view * CDECL wined3d_device_context_get_shader_resource_view(
         const struct wined3d_device_context *context, enum wined3d_shader_type shader_type, unsigned int idx)
 {
@@ -2494,33 +2367,6 @@ struct wined3d_shader_resource_view * CDECL wined3d_device_context_get_shader_re
     }
 
     return context->state->shader_resource_view[shader_type][idx];
-}
-
-static struct wined3d_shader_resource_view *wined3d_device_get_shader_resource_view(
-        const struct wined3d_device *device, enum wined3d_shader_type shader_type, unsigned int idx)
-{
-    if (idx >= MAX_SHADER_RESOURCE_VIEWS)
-    {
-        WARN("Invalid view index %u.\n", idx);
-        return NULL;
-    }
-
-    return device->cs->c.state->shader_resource_view[shader_type][idx];
-}
-
-struct wined3d_shader_resource_view * CDECL wined3d_device_get_vs_resource_view(const struct wined3d_device *device,
-        UINT idx)
-{
-    TRACE("device %p, idx %u.\n", device, idx);
-
-    return wined3d_device_get_shader_resource_view(device, WINED3D_SHADER_TYPE_VERTEX, idx);
-}
-
-void CDECL wined3d_device_set_vs_sampler(struct wined3d_device *device, UINT idx, struct wined3d_sampler *sampler)
-{
-    TRACE("device %p, idx %u, sampler %p.\n", device, idx, sampler);
-
-    wined3d_device_context_set_sampler(&device->cs->c, WINED3D_SHADER_TYPE_VERTEX, idx, sampler);
 }
 
 struct wined3d_sampler * CDECL wined3d_device_context_get_sampler(const struct wined3d_device_context *context,
@@ -2535,25 +2381,6 @@ struct wined3d_sampler * CDECL wined3d_device_context_get_sampler(const struct w
     }
 
     return context->state->sampler[shader_type][idx];
-}
-
-static struct wined3d_sampler *wined3d_device_get_sampler(const struct wined3d_device *device,
-        enum wined3d_shader_type shader_type, unsigned int idx)
-{
-    if (idx >= MAX_SAMPLER_OBJECTS)
-    {
-        WARN("Invalid sampler index %u.\n", idx);
-        return NULL;
-    }
-
-    return device->cs->c.state->sampler[shader_type][idx];
-}
-
-struct wined3d_sampler * CDECL wined3d_device_get_vs_sampler(const struct wined3d_device *device, UINT idx)
-{
-    TRACE("device %p, idx %u.\n", device, idx);
-
-    return wined3d_device_get_sampler(device, WINED3D_SHADER_TYPE_VERTEX, idx);
 }
 
 static void wined3d_device_set_vs_consts_b(struct wined3d_device *device,
@@ -2610,50 +2437,6 @@ static void wined3d_device_set_vs_consts_f(struct wined3d_device *device,
     wined3d_device_context_push_constants(&device->cs->c, WINED3D_PUSH_CONSTANTS_VS_F, start_idx, count, constants);
 }
 
-void CDECL wined3d_device_set_pixel_shader(struct wined3d_device *device, struct wined3d_shader *shader)
-{
-    TRACE("device %p, shader %p.\n", device, shader);
-
-    return wined3d_device_context_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_PIXEL, shader);
-}
-
-struct wined3d_shader * CDECL wined3d_device_get_pixel_shader(const struct wined3d_device *device)
-{
-    TRACE("device %p.\n", device);
-
-    return device->cs->c.state->shader[WINED3D_SHADER_TYPE_PIXEL];
-}
-
-void CDECL wined3d_device_set_ps_resource_view(struct wined3d_device *device,
-        UINT idx, struct wined3d_shader_resource_view *view)
-{
-    TRACE("device %p, idx %u, view %p.\n", device, idx, view);
-
-    wined3d_device_context_set_shader_resource_view(&device->cs->c, WINED3D_SHADER_TYPE_PIXEL, idx, view);
-}
-
-struct wined3d_shader_resource_view * CDECL wined3d_device_get_ps_resource_view(const struct wined3d_device *device,
-        UINT idx)
-{
-    TRACE("device %p, idx %u.\n", device, idx);
-
-    return wined3d_device_get_shader_resource_view(device, WINED3D_SHADER_TYPE_PIXEL, idx);
-}
-
-void CDECL wined3d_device_set_ps_sampler(struct wined3d_device *device, UINT idx, struct wined3d_sampler *sampler)
-{
-    TRACE("device %p, idx %u, sampler %p.\n", device, idx, sampler);
-
-    wined3d_device_context_set_sampler(&device->cs->c, WINED3D_SHADER_TYPE_PIXEL, idx, sampler);
-}
-
-struct wined3d_sampler * CDECL wined3d_device_get_ps_sampler(const struct wined3d_device *device, UINT idx)
-{
-    TRACE("device %p, idx %u.\n", device, idx);
-
-    return wined3d_device_get_sampler(device, WINED3D_SHADER_TYPE_PIXEL, idx);
-}
-
 static void wined3d_device_set_ps_consts_b(struct wined3d_device *device,
         unsigned int start_idx, unsigned int count, const BOOL *constants)
 {
@@ -2708,185 +2491,6 @@ static void wined3d_device_set_ps_consts_f(struct wined3d_device *device,
     wined3d_device_context_push_constants(&device->cs->c, WINED3D_PUSH_CONSTANTS_PS_F, start_idx, count, constants);
 }
 
-void CDECL wined3d_device_set_hull_shader(struct wined3d_device *device, struct wined3d_shader *shader)
-{
-    TRACE("device %p, shader %p.\n", device, shader);
-
-    return wined3d_device_context_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_HULL, shader);
-}
-
-struct wined3d_shader * CDECL wined3d_device_get_hull_shader(const struct wined3d_device *device)
-{
-    TRACE("device %p.\n", device);
-
-    return device->cs->c.state->shader[WINED3D_SHADER_TYPE_HULL];
-}
-
-void CDECL wined3d_device_set_hs_resource_view(struct wined3d_device *device,
-        unsigned int idx, struct wined3d_shader_resource_view *view)
-{
-    TRACE("device %p, idx %u, view %p.\n", device, idx, view);
-
-    wined3d_device_context_set_shader_resource_view(&device->cs->c, WINED3D_SHADER_TYPE_HULL, idx, view);
-}
-
-struct wined3d_shader_resource_view * CDECL wined3d_device_get_hs_resource_view(const struct wined3d_device *device,
-        unsigned int idx)
-{
-    TRACE("device %p, idx %u.\n", device, idx);
-
-    return wined3d_device_get_shader_resource_view(device, WINED3D_SHADER_TYPE_HULL, idx);
-}
-
-void CDECL wined3d_device_set_hs_sampler(struct wined3d_device *device,
-        unsigned int idx, struct wined3d_sampler *sampler)
-{
-    TRACE("device %p, idx %u, sampler %p.\n", device, idx, sampler);
-
-    wined3d_device_context_set_sampler(&device->cs->c, WINED3D_SHADER_TYPE_HULL, idx, sampler);
-}
-
-struct wined3d_sampler * CDECL wined3d_device_get_hs_sampler(const struct wined3d_device *device, unsigned int idx)
-{
-    TRACE("device %p, idx %u.\n", device, idx);
-
-    return wined3d_device_get_sampler(device, WINED3D_SHADER_TYPE_HULL, idx);
-}
-
-void CDECL wined3d_device_set_domain_shader(struct wined3d_device *device, struct wined3d_shader *shader)
-{
-    TRACE("device %p, shader %p.\n", device, shader);
-
-    return wined3d_device_context_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_DOMAIN, shader);
-}
-
-struct wined3d_shader * CDECL wined3d_device_get_domain_shader(const struct wined3d_device *device)
-{
-    TRACE("device %p.\n", device);
-
-    return device->cs->c.state->shader[WINED3D_SHADER_TYPE_DOMAIN];
-}
-
-void CDECL wined3d_device_set_ds_resource_view(struct wined3d_device *device,
-        unsigned int idx, struct wined3d_shader_resource_view *view)
-{
-    TRACE("device %p, idx %u, view %p.\n", device, idx, view);
-
-    wined3d_device_context_set_shader_resource_view(&device->cs->c, WINED3D_SHADER_TYPE_DOMAIN, idx, view);
-}
-
-struct wined3d_shader_resource_view * CDECL wined3d_device_get_ds_resource_view(const struct wined3d_device *device,
-        unsigned int idx)
-{
-    TRACE("device %p, idx %u.\n", device, idx);
-
-    return wined3d_device_get_shader_resource_view(device, WINED3D_SHADER_TYPE_DOMAIN, idx);
-}
-
-void CDECL wined3d_device_set_ds_sampler(struct wined3d_device *device,
-        unsigned int idx, struct wined3d_sampler *sampler)
-{
-    TRACE("device %p, idx %u, sampler %p.\n", device, idx, sampler);
-
-    wined3d_device_context_set_sampler(&device->cs->c, WINED3D_SHADER_TYPE_DOMAIN, idx, sampler);
-}
-
-struct wined3d_sampler * CDECL wined3d_device_get_ds_sampler(const struct wined3d_device *device, unsigned int idx)
-{
-    TRACE("device %p, idx %u.\n", device, idx);
-
-    return wined3d_device_get_sampler(device, WINED3D_SHADER_TYPE_DOMAIN, idx);
-}
-
-void CDECL wined3d_device_set_geometry_shader(struct wined3d_device *device, struct wined3d_shader *shader)
-{
-    TRACE("device %p, shader %p.\n", device, shader);
-
-    return wined3d_device_context_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_GEOMETRY, shader);
-}
-
-struct wined3d_shader * CDECL wined3d_device_get_geometry_shader(const struct wined3d_device *device)
-{
-    TRACE("device %p.\n", device);
-
-    return device->cs->c.state->shader[WINED3D_SHADER_TYPE_GEOMETRY];
-}
-
-void CDECL wined3d_device_set_gs_resource_view(struct wined3d_device *device,
-        UINT idx, struct wined3d_shader_resource_view *view)
-{
-    TRACE("device %p, idx %u, view %p.\n", device, idx, view);
-
-    wined3d_device_context_set_shader_resource_view(&device->cs->c, WINED3D_SHADER_TYPE_GEOMETRY, idx, view);
-}
-
-struct wined3d_shader_resource_view * CDECL wined3d_device_get_gs_resource_view(const struct wined3d_device *device,
-        UINT idx)
-{
-    TRACE("device %p, idx %u.\n", device, idx);
-
-    return wined3d_device_get_shader_resource_view(device, WINED3D_SHADER_TYPE_GEOMETRY, idx);
-}
-
-void CDECL wined3d_device_set_gs_sampler(struct wined3d_device *device, UINT idx, struct wined3d_sampler *sampler)
-{
-    TRACE("device %p, idx %u, sampler %p.\n", device, idx, sampler);
-
-    wined3d_device_context_set_sampler(&device->cs->c, WINED3D_SHADER_TYPE_GEOMETRY, idx, sampler);
-}
-
-struct wined3d_sampler * CDECL wined3d_device_get_gs_sampler(const struct wined3d_device *device, UINT idx)
-{
-    TRACE("device %p, idx %u.\n", device, idx);
-
-    return wined3d_device_get_sampler(device, WINED3D_SHADER_TYPE_GEOMETRY, idx);
-}
-
-void CDECL wined3d_device_set_compute_shader(struct wined3d_device *device, struct wined3d_shader *shader)
-{
-    TRACE("device %p, shader %p.\n", device, shader);
-
-    return wined3d_device_context_set_shader(&device->cs->c, WINED3D_SHADER_TYPE_COMPUTE, shader);
-}
-
-struct wined3d_shader * CDECL wined3d_device_get_compute_shader(const struct wined3d_device *device)
-{
-    TRACE("device %p.\n", device);
-
-    return device->cs->c.state->shader[WINED3D_SHADER_TYPE_COMPUTE];
-}
-
-void CDECL wined3d_device_set_cs_resource_view(struct wined3d_device *device,
-        unsigned int idx, struct wined3d_shader_resource_view *view)
-{
-    TRACE("device %p, idx %u, view %p.\n", device, idx, view);
-
-    wined3d_device_context_set_shader_resource_view(&device->cs->c, WINED3D_SHADER_TYPE_COMPUTE, idx, view);
-}
-
-struct wined3d_shader_resource_view * CDECL wined3d_device_get_cs_resource_view(const struct wined3d_device *device,
-        unsigned int idx)
-{
-    TRACE("device %p, idx %u.\n", device, idx);
-
-    return wined3d_device_get_shader_resource_view(device, WINED3D_SHADER_TYPE_COMPUTE, idx);
-}
-
-void CDECL wined3d_device_set_cs_sampler(struct wined3d_device *device,
-        unsigned int idx, struct wined3d_sampler *sampler)
-{
-    TRACE("device %p, idx %u, sampler %p.\n", device, idx, sampler);
-
-    wined3d_device_context_set_sampler(&device->cs->c, WINED3D_SHADER_TYPE_COMPUTE, idx, sampler);
-}
-
-struct wined3d_sampler * CDECL wined3d_device_get_cs_sampler(const struct wined3d_device *device, unsigned int idx)
-{
-    TRACE("device %p, idx %u.\n", device, idx);
-
-    return wined3d_device_get_sampler(device, WINED3D_SHADER_TYPE_COMPUTE, idx);
-}
-
 struct wined3d_unordered_access_view * CDECL wined3d_device_context_get_unordered_access_view(
         const struct wined3d_device_context *context, enum wined3d_pipeline pipeline, unsigned int idx)
 {
@@ -2899,50 +2503,6 @@ struct wined3d_unordered_access_view * CDECL wined3d_device_context_get_unordere
     }
 
     return context->state->unordered_access_view[pipeline][idx];
-}
-
-static struct wined3d_unordered_access_view *wined3d_device_get_pipeline_unordered_access_view(
-        const struct wined3d_device *device, enum wined3d_pipeline pipeline, unsigned int idx)
-{
-    if (idx >= MAX_UNORDERED_ACCESS_VIEWS)
-    {
-        WARN("Invalid UAV index %u.\n", idx);
-        return NULL;
-    }
-
-    return device->cs->c.state->unordered_access_view[pipeline][idx];
-}
-
-void CDECL wined3d_device_set_cs_uav(struct wined3d_device *device, unsigned int idx,
-        struct wined3d_unordered_access_view *uav, unsigned int initial_count)
-{
-    TRACE("device %p, idx %u, uav %p, initial_count %#x.\n", device, idx, uav, initial_count);
-
-    wined3d_device_context_set_unordered_access_view(&device->cs->c, WINED3D_PIPELINE_COMPUTE, idx, uav, initial_count);
-}
-
-struct wined3d_unordered_access_view * CDECL wined3d_device_get_cs_uav(const struct wined3d_device *device,
-        unsigned int idx)
-{
-    TRACE("device %p, idx %u.\n", device, idx);
-
-    return wined3d_device_get_pipeline_unordered_access_view(device, WINED3D_PIPELINE_COMPUTE, idx);
-}
-
-void CDECL wined3d_device_set_unordered_access_view(struct wined3d_device *device,
-        unsigned int idx, struct wined3d_unordered_access_view *uav, unsigned int initial_count)
-{
-    TRACE("device %p, idx %u, uav %p, initial_count %#x.\n", device, idx, uav, initial_count);
-
-    wined3d_device_context_set_unordered_access_view(&device->cs->c, WINED3D_PIPELINE_GRAPHICS, idx, uav, initial_count);
-}
-
-struct wined3d_unordered_access_view * CDECL wined3d_device_get_unordered_access_view(
-        const struct wined3d_device *device, unsigned int idx)
-{
-    TRACE("device %p, idx %u.\n", device, idx);
-
-    return wined3d_device_get_pipeline_unordered_access_view(device, WINED3D_PIPELINE_GRAPHICS, idx);
 }
 
 void CDECL wined3d_device_set_max_frame_latency(struct wined3d_device *device, unsigned int latency)
@@ -4462,14 +4022,6 @@ HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, DWORD rect_cou
     return WINED3D_OK;
 }
 
-void CDECL wined3d_device_set_predication(struct wined3d_device *device,
-        struct wined3d_query *predicate, BOOL value)
-{
-    TRACE("device %p, predicate %p, value %#x.\n", device, predicate, value);
-
-    wined3d_device_context_set_predication(&device->cs->c, predicate, value);
-}
-
 struct wined3d_query * CDECL wined3d_device_context_get_predication(struct wined3d_device_context *context, BOOL *value)
 {
     struct wined3d_state *state = context->state;
@@ -4479,23 +4031,6 @@ struct wined3d_query * CDECL wined3d_device_context_get_predication(struct wined
     if (value)
         *value = state->predicate_value;
     return state->predicate;
-}
-
-void CDECL wined3d_device_dispatch_compute(struct wined3d_device *device,
-        unsigned int group_count_x, unsigned int group_count_y, unsigned int group_count_z)
-{
-    TRACE("device %p, group_count_x %u, group_count_y %u, group_count_z %u.\n",
-            device, group_count_x, group_count_y, group_count_z);
-
-    wined3d_device_context_dispatch(&device->cs->c, group_count_x, group_count_y, group_count_z);
-}
-
-void CDECL wined3d_device_dispatch_compute_indirect(struct wined3d_device *device,
-        struct wined3d_buffer *buffer, unsigned int offset)
-{
-    TRACE("device %p, buffer %p, offset %u.\n", device, buffer, offset);
-
-    wined3d_device_context_dispatch_indirect(&device->cs->c, buffer, offset);
 }
 
 void CDECL wined3d_device_context_set_primitive_type(struct wined3d_device_context *context,
@@ -4523,61 +4058,6 @@ void CDECL wined3d_device_context_get_primitive_type(const struct wined3d_device
         *patch_vertex_count = state->patch_vertex_count;
 
     TRACE("Returning %s.\n", debug_d3dprimitivetype(*primitive_type));
-}
-
-HRESULT CDECL wined3d_device_draw_primitive(struct wined3d_device *device, UINT start_vertex, UINT vertex_count)
-{
-    TRACE("device %p, start_vertex %u, vertex_count %u.\n", device, start_vertex, vertex_count);
-
-    wined3d_device_context_draw(&device->cs->c, start_vertex, vertex_count, 0, 0);
-
-    return WINED3D_OK;
-}
-
-void CDECL wined3d_device_draw_primitive_instanced(struct wined3d_device *device,
-        UINT start_vertex, UINT vertex_count, UINT start_instance, UINT instance_count)
-{
-    TRACE("device %p, start_vertex %u, vertex_count %u, start_instance %u, instance_count %u.\n",
-            device, start_vertex, vertex_count, start_instance, instance_count);
-
-    wined3d_device_context_draw(&device->cs->c, start_vertex, vertex_count, start_instance, instance_count);
-}
-
-void CDECL wined3d_device_draw_primitive_instanced_indirect(struct wined3d_device *device,
-        struct wined3d_buffer *buffer, unsigned int offset)
-{
-    TRACE("device %p, buffer %p, offset %u.\n", device, buffer, offset);
-
-    wined3d_device_context_draw_indirect(&device->cs->c, buffer, offset, false);
-}
-
-void CDECL wined3d_device_draw_indexed_primitive(struct wined3d_device *device, UINT start_idx, UINT index_count)
-{
-    struct wined3d_state *state = device->cs->c.state;
-
-    TRACE("device %p, start_idx %u, index_count %u.\n", device, start_idx, index_count);
-
-    wined3d_device_context_draw_indexed(&device->cs->c, state->base_vertex_index, start_idx, index_count, 0, 0);
-}
-
-void CDECL wined3d_device_draw_indexed_primitive_instanced(struct wined3d_device *device,
-        UINT start_idx, UINT index_count, UINT start_instance, UINT instance_count)
-{
-    struct wined3d_state *state = device->cs->c.state;
-
-    TRACE("device %p, start_idx %u, index_count %u, start_instance %u, instance_count %u.\n",
-            device, start_idx, index_count, start_instance, instance_count);
-
-    wined3d_device_context_draw_indexed(&device->cs->c, state->base_vertex_index,
-            start_idx, index_count, start_instance, instance_count);
-}
-
-void CDECL wined3d_device_draw_indexed_primitive_instanced_indirect(struct wined3d_device *device,
-        struct wined3d_buffer *buffer, unsigned int offset)
-{
-    TRACE("device %p, buffer %p, offset %u.\n", device, buffer, offset);
-
-    wined3d_device_context_draw_indirect(&device->cs->c, buffer, offset, true);
 }
 
 HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
@@ -5413,23 +4893,6 @@ struct wined3d_rendertarget_view * CDECL wined3d_device_context_get_depth_stenci
     TRACE("context %p.\n", context);
 
     return context->state->fb.depth_stencil;
-}
-
-HRESULT CDECL wined3d_device_set_rendertarget_view(struct wined3d_device *device,
-        unsigned int view_idx, struct wined3d_rendertarget_view *view, BOOL set_viewport)
-{
-    TRACE("device %p, view_idx %u, view %p, set_viewport %#x.\n",
-            device, view_idx, view, set_viewport);
-
-    return wined3d_device_context_set_rendertarget_view(&device->cs->c, view_idx, view, set_viewport);
-}
-
-HRESULT CDECL wined3d_device_set_depth_stencil_view(struct wined3d_device *device,
-        struct wined3d_rendertarget_view *view)
-{
-    TRACE("device %p, view %p.\n", device, view);
-
-    return wined3d_device_context_set_depth_stencil_view(&device->cs->c, view);
 }
 
 void CDECL wined3d_device_context_generate_mipmaps(struct wined3d_device_context *context,
