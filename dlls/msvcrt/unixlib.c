@@ -388,14 +388,6 @@ static float CDECL unix_log2f(float x)
 }
 
 /*********************************************************************
- *      logbf
- */
-static float CDECL unix_logbf( float x )
-{
-    return logbf( x );
-}
-
-/*********************************************************************
  *      pow
  */
 static double CDECL unix_pow( double x, double y )
@@ -536,7 +528,6 @@ static const struct unix_funcs funcs =
     unix_log1pf,
     unix_log2,
     unix_log2f,
-    unix_logbf,
     unix_pow,
     unix_powf,
     unix_sin,

@@ -275,15 +275,38 @@ float CDECL _nextafterf( float x, float y )
     return y;
 }
 
+/* Copied from musl: src/math/ilogbf.c */
+static int __ilogbf(float x)
+{
+    union { float f; UINT32 i; } u = { x };
+    int e = u.i >> 23 & 0xff;
+
+    if (!e)
+    {
+        u.i <<= 9;
+        if (u.i == 0) return FP_ILOGB0;
+        /* subnormal x */
+        for (e = -0x7f; u.i >> 31 == 0; e--, u.i <<= 1);
+        return e;
+    }
+    if (e == 0xff) return u.i << 9 ? FP_ILOGBNAN : INT_MAX;
+    return e - 0x7f;
+}
+
 /*********************************************************************
  *      _logbf (MSVCRT.@)
+ *
+ * Copied from musl: src/math/logbf.c
  */
-float CDECL _logbf( float num )
+float CDECL _logbf(float x)
 {
-    float ret = unix_funcs->logbf(num);
-    if (isnan(num)) return math_error(_DOMAIN, "_logbf", num, 0, ret);
-    if (!num) return math_error(_SING, "_logbf", num, 0, ret);
-    return ret;
+    if (!isfinite(x))
+        return x * x;
+    if (x == 0) {
+        *_errno() = ERANGE;
+        return -1 / (x * x);
+    }
+    return __ilogbf(x);
 }
 
 #endif
@@ -6178,23 +6201,9 @@ int CDECL ilogb(double x)
 
 /*********************************************************************
  *      ilogbf (MSVCR120.@)
- *
- * Copied from musl: src/math/ilogbf.c
  */
 int CDECL ilogbf(float x)
 {
-    union { float f; UINT32 i; } u = { x };
-    int e = u.i >> 23 & 0xff;
-
-    if (!e)
-    {
-        u.i <<= 9;
-        if (u.i == 0) return FP_ILOGB0;
-        /* subnormal x */
-        for (e = -0x7f; u.i >> 31 == 0; e--, u.i <<= 1);
-        return e;
-    }
-    if (e == 0xff) return u.i << 9 ? FP_ILOGBNAN : INT_MAX;
-    return e - 0x7f;
+    return __ilogbf(x);
 }
 #endif /* _MSVCR_VER>=120 */
