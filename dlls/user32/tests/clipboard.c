@@ -391,29 +391,30 @@ static void test_RegisterClipboardFormatA(void)
     lstrcpyA(buf, "foo");
     SetLastError(0xdeadbeef);
     len = GetAtomNameA((ATOM)format_id, buf, ARRAY_SIZE(buf));
-    ok(len == 0, "GetAtomNameA should fail\n");
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "err %d\n", GetLastError());
+    ok(len == 0 || lstrcmpA(buf, "my_cool_clipboard_format") != 0,
+       "format_id should not be a valid local atom\n");
+    ok(len != 0 || GetLastError() == ERROR_INVALID_HANDLE,
+       "err %d\n", GetLastError());
 
-todo_wine
-{
     lstrcpyA(buf, "foo");
     SetLastError(0xdeadbeef);
     len = GlobalGetAtomNameA((ATOM)format_id, buf, ARRAY_SIZE(buf));
-    ok(len == 0, "GlobalGetAtomNameA should fail\n");
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "err %d\n", GetLastError());
-}
+    todo_wine ok(len == 0 || lstrcmpA(buf, "my_cool_clipboard_format") != 0,
+       "format_id should not be a valid global atom\n");
+    ok(len != 0 || GetLastError() == ERROR_INVALID_HANDLE,
+       "err %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     atom_id = FindAtomA("my_cool_clipboard_format");
-    ok(atom_id == 0, "FindAtomA should fail\n");
+    ok(atom_id == 0, "FindAtomA should fail, but it returned %x (format_id=%x)\n", atom_id, format_id);
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "err %d\n", GetLastError());
 
-    if (0)
+    todo_wine
     {
     /* this relies on the clipboard and global atom table being different */
     SetLastError(0xdeadbeef);
     atom_id = GlobalFindAtomA("my_cool_clipboard_format");
-    ok(atom_id == 0, "GlobalFindAtomA should fail\n");
+    ok(atom_id == 0, "GlobalFindAtomA should fail, but it returned %x (format_id=%x)\n", atom_id, format_id);
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "err %d\n", GetLastError());
     }
 
