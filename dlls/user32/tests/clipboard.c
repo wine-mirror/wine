@@ -777,10 +777,11 @@ static void test_synthesized(void)
             case CF_LOCALE:
             {
                 UINT *ptr = GlobalLock( data );
+                DWORD layout = LOWORD( GetKeyboardLayout(0) );
                 ok( GlobalSize( data ) == sizeof(*ptr), "%u: size %lu\n", i, GlobalSize( data ));
-                ok( *ptr == GetUserDefaultLCID() ||
+                ok( *ptr == layout ||
                     broken( *ptr == MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT )),
-                    "%u: CF_LOCALE %08x/%08x\n", i, *ptr, GetUserDefaultLCID() );
+                    "%u: CF_LOCALE %04x/%04x\n", i, *ptr, layout );
                 GlobalUnlock( data );
                 break;
             }
