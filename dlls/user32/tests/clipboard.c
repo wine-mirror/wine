@@ -381,7 +381,7 @@ static void test_RegisterClipboardFormatA(void)
     format_id2 = RegisterClipboardFormatA("MY_COOL_CLIPBOARD_FORMAT");
     ok(format_id2 == format_id, "invalid clipboard format id %04x\n", format_id2);
 
-    len = GetClipboardFormatNameA(format_id, buf, 256);
+    len = GetClipboardFormatNameA(format_id, buf, ARRAY_SIZE(buf));
     ok(len == lstrlenA("my_cool_clipboard_format"), "wrong format name length %d\n", len);
     ok(!lstrcmpA(buf, "my_cool_clipboard_format"), "wrong format name \"%s\"\n", buf);
 
@@ -390,7 +390,7 @@ static void test_RegisterClipboardFormatA(void)
 
     lstrcpyA(buf, "foo");
     SetLastError(0xdeadbeef);
-    len = GetAtomNameA((ATOM)format_id, buf, 256);
+    len = GetAtomNameA((ATOM)format_id, buf, ARRAY_SIZE(buf));
     ok(len == 0, "GetAtomNameA should fail\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE, "err %d\n", GetLastError());
 
@@ -398,7 +398,7 @@ todo_wine
 {
     lstrcpyA(buf, "foo");
     SetLastError(0xdeadbeef);
-    len = GlobalGetAtomNameA((ATOM)format_id, buf, 256);
+    len = GlobalGetAtomNameA((ATOM)format_id, buf, ARRAY_SIZE(buf));
     ok(len == 0, "GlobalGetAtomNameA should fail\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE, "err %d\n", GetLastError());
 }
@@ -420,7 +420,7 @@ todo_wine
     for (format_id = 0; format_id < 0x10fff; format_id++)
     {
         SetLastError(0xdeadbeef);
-        len = GetClipboardFormatNameA(format_id, buf, 256);
+        len = GetClipboardFormatNameA(format_id, buf, ARRAY_SIZE(buf));
 
         if (format_id < 0xc000 || format_id > 0xffff)
             ok(!len, "GetClipboardFormatNameA should fail, but it returned %d (%s)\n", len, buf);
@@ -456,7 +456,7 @@ todo_wine
     while ((format_id = EnumClipboardFormats(format_id)))
     {
         ok(IsClipboardFormatAvailable(format_id), "format %04x was listed as available\n", format_id);
-        len = GetClipboardFormatNameA(format_id, buf, 256);
+        len = GetClipboardFormatNameA(format_id, buf, ARRAY_SIZE(buf));
         trace("%04x: %s\n", format_id, len ? buf : "");
     }
 
@@ -1920,12 +1920,12 @@ static void test_GetUpdatedClipboardFormats(void)
     ok( !count, "wrong count %u\n", count );
 
     SetLastError( 0xdeadbeef );
-    r = pGetUpdatedClipboardFormats( formats, 256, NULL );
+    r = pGetUpdatedClipboardFormats( formats, ARRAY_SIZE(formats), NULL );
     ok( !r, "succeeded\n" );
     ok( GetLastError() == ERROR_NOACCESS, "wrong error %u\n", GetLastError() );
 
     count = 0xdeadbeef;
-    r = pGetUpdatedClipboardFormats( formats, 256, &count );
+    r = pGetUpdatedClipboardFormats( formats, ARRAY_SIZE(formats), &count );
     ok( r, "gle %d\n", GetLastError() );
     ok( !count, "wrong count %u\n", count );
 
@@ -1935,7 +1935,7 @@ static void test_GetUpdatedClipboardFormats(void)
     ok( r, "gle %d\n", GetLastError() );
 
     count = 0xdeadbeef;
-    r = pGetUpdatedClipboardFormats( formats, 256, &count );
+    r = pGetUpdatedClipboardFormats( formats, ARRAY_SIZE(formats), &count );
     ok( r, "gle %d\n", GetLastError() );
     ok( !count, "wrong count %u\n", count );
 
@@ -1943,7 +1943,7 @@ static void test_GetUpdatedClipboardFormats(void)
 
     count = 0xdeadbeef;
     memset( formats, 0xcc, sizeof(formats) );
-    r = pGetUpdatedClipboardFormats( formats, 256, &count );
+    r = pGetUpdatedClipboardFormats( formats, ARRAY_SIZE(formats), &count );
     ok( r, "gle %d\n", GetLastError() );
     ok( count == 1, "wrong count %u\n", count );
     ok( formats[0] == CF_UNICODETEXT, "wrong format %u\n", formats[0] );
@@ -1952,7 +1952,7 @@ static void test_GetUpdatedClipboardFormats(void)
     SetClipboardData( CF_TEXT, 0 );
     count = 0xdeadbeef;
     memset( formats, 0xcc, sizeof(formats) );
-    r = pGetUpdatedClipboardFormats( formats, 256, &count );
+    r = pGetUpdatedClipboardFormats( formats, ARRAY_SIZE(formats), &count );
     ok( r, "gle %d\n", GetLastError() );
     ok( count == 2, "wrong count %u\n", count );
     ok( formats[0] == CF_UNICODETEXT, "wrong format %u\n", formats[0] );
@@ -1978,7 +1978,7 @@ static void test_GetUpdatedClipboardFormats(void)
 
     count = 0xdeadbeef;
     memset( formats, 0xcc, sizeof(formats) );
-    r = pGetUpdatedClipboardFormats( formats, 256, &count );
+    r = pGetUpdatedClipboardFormats( formats, ARRAY_SIZE(formats), &count );
     ok( r, "gle %d\n", GetLastError() );
     ok( count == 4, "wrong count %u\n", count );
     ok( formats[0] == CF_UNICODETEXT, "wrong format %u\n", formats[0] );
@@ -2097,7 +2097,7 @@ static void test_string_data_process( int i )
         data = GetClipboardData( CF_UNICODETEXT );
         ok( data != 0, "%u: could not get data\n", i );
         len = GlobalSize( data );
-        len2 = MultiByteToWideChar( CP_ACP, 0, bufferA, test_data[i].len, bufferW, 12 );
+        len2 = MultiByteToWideChar( CP_ACP, 0, bufferA, test_data[i].len, bufferW, ARRAY_SIZE(bufferW) );
         ok( len == len2 * sizeof(WCHAR), "%u: wrong size %u / %u\n", i, len, len2 );
         ok( !memcmp( data, bufferW, len ), "%u: wrong data %s\n", i, wine_dbgstr_wn( data, len2 ));
     }
@@ -2117,7 +2117,7 @@ static void test_string_data_process( int i )
             ok( data != 0, "%u: could not get data\n", i );
             len = GlobalSize( data );
             len2 = WideCharToMultiByte( CP_ACP, 0, bufferW, test_data[i].len / sizeof(WCHAR),
-                                        bufferA, 12, NULL, NULL );
+                                        bufferA, ARRAY_SIZE(bufferA), NULL, NULL );
             bufferA[len2 - 1] = 0;
             ok( len == len2, "%u: wrong size %u / %u\n", i, len, len2 );
             ok( !memcmp( data, bufferA, len ), "%u: wrong data %.*s\n", i, len, (char *)data );
