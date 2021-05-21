@@ -91,7 +91,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH DebugActiveProcess( DWORD pid )
 
     if (!set_ntstatus( DbgUiConnectToDbg() )) return FALSE;
     if (!(process = OpenProcess( PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_SUSPEND_RESUME |
-                                 PROCESS_CREATE_THREAD, FALSE, pid )))
+                                 PROCESS_QUERY_INFORMATION | PROCESS_CREATE_THREAD, FALSE, pid )))
         return FALSE;
     status = DbgUiDebugActiveProcess( process );
     NtClose( process );
