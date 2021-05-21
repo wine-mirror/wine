@@ -9926,6 +9926,80 @@ static void test_empty_recv(void)
     CloseHandle(overlapped.hEvent);
 }
 
+static void test_timeout(void)
+{
+    DWORD timeout, flags = 0, size;
+    OVERLAPPED overlapped = {0};
+    SOCKET client, server;
+    WSABUF wsabuf;
+    int ret, len;
+    char buffer;
+
+    tcp_socketpair(&client, &server);
+    overlapped.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    timeout = 0xdeadbeef;
+    len = sizeof(timeout);
+    WSASetLastError(0xdeadbeef);
+    ret = getsockopt(client, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, &len);
+    ok(!ret, "expected success\n");
+    todo_wine ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+    ok(len == sizeof(timeout), "got size %u\n", len);
+    ok(!timeout, "got timeout %u\n", timeout);
+
+    timeout = 100;
+    WSASetLastError(0xdeadbeef);
+    ret = setsockopt(client, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
+    ok(!ret, "expected success\n");
+    todo_wine ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+
+    timeout = 0xdeadbeef;
+    len = sizeof(timeout);
+    WSASetLastError(0xdeadbeef);
+    ret = getsockopt(client, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, &len);
+    ok(!ret, "expected success\n");
+    todo_wine ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+    todo_wine ok(timeout == 100, "got timeout %u\n", timeout);
+
+    WSASetLastError(0xdeadbeef);
+    ret = recv(client, &buffer, 1, 0);
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == WSAETIMEDOUT, "got error %u\n", WSAGetLastError());
+
+    wsabuf.buf = &buffer;
+    wsabuf.len = 1;
+    WSASetLastError(0xdeadbeef);
+    size = 0xdeadbeef;
+    ret = WSARecv(client, &wsabuf, 1, &size, &flags, NULL, NULL);
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == WSAETIMEDOUT, "got error %u\n", WSAGetLastError());
+    ok(size == 0xdeadbeef, "got size %u\n", size);
+
+    wsabuf.buf = &buffer;
+    wsabuf.len = 1;
+    WSASetLastError(0xdeadbeef);
+    size = 0xdeadbeef;
+    ret = WSARecv(client, &wsabuf, 1, &size, &flags, &overlapped, NULL);
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
+
+    ret = WaitForSingleObject(overlapped.hEvent, 200);
+    ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
+
+    ret = send(server, "a", 1, 0);
+    ok(ret == 1, "got %d\n", ret);
+
+    ret = WaitForSingleObject(overlapped.hEvent, 200);
+    ok(!ret, "got %d\n", ret);
+    ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, FALSE);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(size == 1, "got size %u\n", size);
+
+    closesocket(client);
+    closesocket(server);
+    CloseHandle(overlapped.hEvent);
+}
+
 START_TEST( sock )
 {
     int i;
@@ -9987,6 +10061,7 @@ START_TEST( sock )
     test_WSAGetOverlappedResult();
     test_nonblocking_async_recv();
     test_empty_recv();
+    test_timeout();
 
     /* this is an io heavy test, do it at the end so the kernel doesn't start dropping packets */
     test_send();
