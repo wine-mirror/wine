@@ -1769,6 +1769,16 @@ static void test_so_reuseaddr(void)
 
 #define IP_PKTINFO_LEN (sizeof(WSACMSGHDR) + WSA_CMSG_ALIGN(sizeof(struct in_pktinfo)))
 
+static unsigned int got_ip_pktinfo_apc;
+
+static void WINAPI ip_pktinfo_apc(DWORD error, DWORD size, OVERLAPPED *overlapped, DWORD flags)
+{
+    ok(error == WSAEMSGSIZE, "got error %u\n", error);
+    ok(size == 6, "got size %u\n", size);
+    ok(!flags, "got flags %#x\n", flags);
+    ++got_ip_pktinfo_apc;
+}
+
 static void test_ip_pktinfo(void)
 {
     ULONG addresses[2] = {inet_addr("127.0.0.1"), htonl(INADDR_ANY)};
@@ -1858,14 +1868,20 @@ static void test_ip_pktinfo(void)
         ok(rc == sizeof(msg), "sendto() failed error: %d\n", WSAGetLastError());
         ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
         hdr.Control.len = 1;
-        rc=pWSARecvMsg(s1, &hdr, &dwSize, NULL, NULL);
-        err=WSAGetLastError();
-        ok(rc == SOCKET_ERROR && err == WSAEMSGSIZE && (hdr.dwFlags & MSG_CTRUNC),
-           "WSARecvMsg() failed error: %d (ret: %d, flags: %d)\n", err, rc, hdr.dwFlags);
+        dwSize = 0xdeadbeef;
+        rc = pWSARecvMsg(s1, &hdr, &dwSize, NULL, NULL);
+        ok(rc == -1, "expected failure\n");
+        ok(WSAGetLastError() == WSAEMSGSIZE, "got error %u\n", WSAGetLastError());
+        todo_wine ok(dwSize == sizeof(msg), "got size %u\n", dwSize);
+        ok(hdr.dwFlags == MSG_CTRUNC, "got flags %#x\n", hdr.dwFlags);
         hdr.dwFlags = 0; /* Reset flags */
 
         /* Perform another short control header test, this time with an overlapped receive */
         hdr.Control.len = 1;
+        ov.Internal = 0xdead1;
+        ov.InternalHigh = 0xdead2;
+        ov.Offset = 0xdead3;
+        ov.OffsetHigh = 0xdead4;
         rc=pWSARecvMsg(s1, &hdr, NULL, &ov, NULL);
         err=WSAGetLastError();
         ok(rc != 0 && err == WSA_IO_PENDING, "WSARecvMsg() failed error: %d\n", err);
@@ -1874,12 +1890,43 @@ static void test_ip_pktinfo(void)
         ok(rc == sizeof(msg), "sendto() failed error: %d\n", WSAGetLastError());
         ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
         ok(!WaitForSingleObject(ov.hEvent, 100), "wait failed\n");
-        dwFlags = 0;
-        WSAGetOverlappedResult(s1, &ov, NULL, FALSE, &dwFlags);
-        ok(dwFlags == 0,
-           "WSAGetOverlappedResult() returned unexpected flags %d!\n", dwFlags);
+        ok((NTSTATUS)ov.Internal == STATUS_BUFFER_OVERFLOW, "got status %#x\n", (NTSTATUS)ov.Internal);
+        todo_wine ok(ov.InternalHigh == sizeof(msg), "got size %Iu\n", ov.InternalHigh);
+        ok(ov.Offset == 0xdead3, "got Offset %Iu\n", ov.Offset);
+        ok(ov.OffsetHigh == 0xdead4, "got OffsetHigh %Iu\n", ov.OffsetHigh);
+        dwFlags = 0xdeadbeef;
+        rc = WSAGetOverlappedResult(s1, &ov, &dwSize, FALSE, &dwFlags);
+        ok(!rc, "expected failure\n");
+        ok(WSAGetLastError() == WSAEMSGSIZE, "got error %u\n", WSAGetLastError());
+        todo_wine ok(dwSize == sizeof(msg), "got size %u\n", dwSize);
+        todo_wine ok(dwFlags == 0xdeadbeef, "got flags %#x\n", dwFlags);
         ok(hdr.dwFlags == MSG_CTRUNC,
            "WSARecvMsg() overlapped operation set unexpected flags %d.\n", hdr.dwFlags);
+        hdr.dwFlags = 0; /* Reset flags */
+
+        /* And with an APC. */
+
+        SetLastError(0xdeadbeef);
+        rc = sendto(s2, msg, sizeof(msg), 0, (struct sockaddr *)&s2addr, sizeof(s2addr));
+        ok(rc == sizeof(msg), "sendto() failed error: %d\n", WSAGetLastError());
+        ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
+        hdr.Control.len = 1;
+
+        ov.Internal = 0xdead1;
+        ov.InternalHigh = 0xdead2;
+        ov.Offset = 0xdead3;
+        ov.OffsetHigh = 0xdead4;
+        dwSize = 0xdeadbeef;
+        rc = pWSARecvMsg(s1, &hdr, NULL, &ov, ip_pktinfo_apc);
+        ok(rc == -1, "expected failure\n");
+        todo_wine ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
+
+        rc = SleepEx(1000, TRUE);
+        todo_wine ok(rc == WAIT_IO_COMPLETION, "got %d\n", rc);
+        todo_wine ok(got_ip_pktinfo_apc == 1, "apc was called %u times\n", got_ip_pktinfo_apc);
+        ok(hdr.dwFlags == MSG_CTRUNC, "got flags %#x\n", hdr.dwFlags);
+        got_ip_pktinfo_apc = 0;
+
         hdr.dwFlags = 0; /* Reset flags */
 
         /*
