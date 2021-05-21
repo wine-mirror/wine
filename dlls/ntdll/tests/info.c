@@ -25,7 +25,6 @@
 static NTSTATUS (WINAPI * pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
 static NTSTATUS (WINAPI * pNtSetSystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG);
 static NTSTATUS (WINAPI * pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
-static NTSTATUS (WINAPI * pRtlWow64GetCpuAreaInfo)( WOW64_CPURESERVED *cpu, ULONG reserved, WOW64_CPU_AREA_INFO *info );
 static USHORT   (WINAPI * pRtlWow64GetCurrentMachine)(void);
 static NTSTATUS (WINAPI * pRtlWow64GetProcessMachines)(HANDLE,WORD*,WORD*);
 static NTSTATUS (WINAPI * pRtlWow64IsWowGuestMachineSupported)(USHORT,BOOLEAN*);
@@ -50,6 +49,9 @@ static NTSTATUS (WINAPI * pNtQueryObject)(HANDLE, OBJECT_INFORMATION_CLASS, void
 static NTSTATUS (WINAPI * pNtCreateDebugObject)( HANDLE *, ACCESS_MASK, OBJECT_ATTRIBUTES *, ULONG );
 static NTSTATUS (WINAPI * pNtSetInformationDebugObject)(HANDLE,DEBUGOBJECTINFOCLASS,PVOID,ULONG,ULONG*);
 static NTSTATUS (WINAPI * pDbgUiConvertStateChangeStructure)(DBGUI_WAIT_STATE_CHANGE*,DEBUG_EVENT*);
+#ifdef _WIN64
+static NTSTATUS (WINAPI * pRtlWow64GetCpuAreaInfo)( WOW64_CPURESERVED *cpu, ULONG reserved, WOW64_CPU_AREA_INFO *info );
+#endif
 
 static BOOL is_wow64;
 
@@ -86,7 +88,6 @@ static void InitFunctionPtrs(void)
     NTDLL_GET_PROC(NtQuerySystemInformationEx);
     NTDLL_GET_PROC(NtSetSystemInformation);
     NTDLL_GET_PROC(RtlGetNativeSystemInformation);
-    NTDLL_GET_PROC(RtlWow64GetCpuAreaInfo);
     NTDLL_GET_PROC(RtlWow64GetCurrentMachine);
     NTDLL_GET_PROC(RtlWow64GetProcessMachines);
     NTDLL_GET_PROC(RtlWow64IsWowGuestMachineSupported);
@@ -107,6 +108,9 @@ static void InitFunctionPtrs(void)
     NTDLL_GET_PROC(NtSetInformationDebugObject);
     NTDLL_GET_PROC(NtGetCurrentProcessorNumber);
     NTDLL_GET_PROC(DbgUiConvertStateChangeStructure);
+#ifdef _WIN64
+    NTDLL_GET_PROC(RtlWow64GetCpuAreaInfo);
+#endif
 
     pIsWow64Process = (void *)GetProcAddress(hkernel32, "IsWow64Process");
     if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
