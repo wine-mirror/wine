@@ -154,12 +154,7 @@ void async_terminate( struct async *async, unsigned int status )
 {
     assert( status != STATUS_PENDING );
 
-    if (async->status != STATUS_PENDING)
-    {
-        /* already terminated, just update status */
-        async->status = status;
-        return;
-    }
+    if (async->status != STATUS_PENDING) return; /* already terminated */
 
     async->status = status;
     if (async->iosb && async->iosb->status == STATUS_PENDING) async->iosb->status = status;
@@ -457,7 +452,7 @@ static int cancel_async( struct process *process, struct object *obj, struct thr
 restart:
     LIST_FOR_EACH_ENTRY( async, &process->asyncs, struct async, process_entry )
     {
-        if (async->status == STATUS_CANCELLED) continue;
+        if (async->status != STATUS_PENDING) continue;
         if ((!obj || (async->fd && get_fd_user( async->fd ) == obj)) &&
             (!thread || async->thread == thread) &&
             (!iosb || async->data.iosb == iosb))
