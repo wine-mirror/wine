@@ -75,6 +75,15 @@ static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
     return (struct ntdll_thread_data *)&NtCurrentTeb()->GdiTebBatch;
 }
 
+typedef NTSTATUS async_callback_t( void *user, IO_STATUS_BLOCK *io, NTSTATUS status );
+
+struct async_fileio
+{
+    async_callback_t    *callback;
+    struct async_fileio *next;
+    HANDLE               handle;
+};
+
 static const SIZE_T page_size = 0x1000;
 static const SIZE_T teb_size = 0x3000;  /* TEB64 + TEB32 */
 static const SIZE_T signal_stack_mask = 0xffff;

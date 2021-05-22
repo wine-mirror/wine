@@ -390,12 +390,12 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result, BOO
     case APC_ASYNC_IO:
     {
         IO_STATUS_BLOCK *iosb = wine_server_get_ptr( call->async_io.sb );
-        NTSTATUS (**user)(void *, IO_STATUS_BLOCK *, NTSTATUS) = wine_server_get_ptr( call->async_io.user );
+        struct async_fileio *user = wine_server_get_ptr( call->async_io.user );
         void *saved_frame = get_syscall_frame();
         void *frame;
 
         result->type = call->type;
-        result->async_io.status = (*user)( user, iosb, call->async_io.status );
+        result->async_io.status = user->callback( user, iosb, call->async_io.status );
 
         if ((frame = get_syscall_frame()) != saved_frame)
         {

@@ -4610,15 +4610,6 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
  *                  Asynchronous file I/O                              *
  */
 
-typedef NTSTATUS async_callback_t( void *user, IO_STATUS_BLOCK *io, NTSTATUS status );
-
-struct async_fileio
-{
-    async_callback_t    *callback; /* must be the first field */
-    struct async_fileio *next;
-    HANDLE               handle;
-};
-
 struct async_fileio_read
 {
     struct async_fileio io;
