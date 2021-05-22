@@ -2076,6 +2076,12 @@ unsigned int get_fd_options( struct fd *fd )
     return fd->options;
 }
 
+/* retrieve the completion flags for the fd */
+unsigned int get_fd_comp_flags( struct fd *fd )
+{
+    return fd->comp_flags;
+}
+
 /* check if fd is in overlapped mode */
 int is_fd_overlapped( struct fd *fd )
 {

@@ -257,10 +257,14 @@ extern NTSTATUS serial_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROU
                                         IO_STATUS_BLOCK *io, ULONG code, void *in_buffer,
                                         ULONG in_size, void *out_buffer, ULONG out_size ) DECLSPEC_HIDDEN;
 extern NTSTATUS serial_FlushBuffersFile( int fd ) DECLSPEC_HIDDEN;
+extern NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user, IO_STATUS_BLOCK *io,
+                            ULONG code, void *in_buffer, ULONG in_size, void *out_buffer, ULONG out_size ) DECLSPEC_HIDDEN;
 extern NTSTATUS tape_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
                                       IO_STATUS_BLOCK *io, ULONG code, void *in_buffer,
                                       ULONG in_size, void *out_buffer, ULONG out_size ) DECLSPEC_HIDDEN;
 
+extern struct async_fileio *alloc_fileio( DWORD size, async_callback_t callback, HANDLE handle ) DECLSPEC_HIDDEN;
+extern void release_fileio( struct async_fileio *io ) DECLSPEC_HIDDEN;
 extern NTSTATUS errno_to_status( int err ) DECLSPEC_HIDDEN;
 extern BOOL get_redirect( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *redir ) DECLSPEC_HIDDEN;
 extern NTSTATUS nt_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char **name_ret, UINT disposition ) DECLSPEC_HIDDEN;

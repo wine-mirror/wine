@@ -1479,6 +1479,17 @@ enum server_fd_type
 @END
 
 
+/* Perform a recv on a socket */
+@REQ(recv_socket)
+    async_data_t async;         /* async I/O parameters */
+    unsigned int status;        /* status of initial call */
+    unsigned int total;         /* number of bytes already read */
+@REPLY
+    obj_handle_t wait;          /* handle to wait on for blocking recv */
+    unsigned int options;       /* device open options */
+@END
+
+
 /* Retrieve the next pending console ioctl request */
 @REQ(get_next_console_request)
     obj_handle_t handle;        /* console server handle */

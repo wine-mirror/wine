@@ -653,14 +653,15 @@ static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
             async_terminate( sock->connect_req->async, get_error() );
     }
 
+    if (event & (POLLIN | POLLPRI) && async_waiting( &sock->read_q ))
+    {
+        if (debug_level) fprintf( stderr, "activating read queue for socket %p\n", sock );
+        async_wake_up( &sock->read_q, STATUS_ALERTED );
+        event &= ~(POLLIN | POLLPRI);
+    }
+
     if (is_fd_overlapped( sock->fd ))
     {
-        if (event & (POLLIN|POLLPRI) && async_waiting( &sock->read_q ))
-        {
-            if (debug_level) fprintf( stderr, "activating read queue for socket %p\n", sock );
-            async_wake_up( &sock->read_q, STATUS_ALERTED );
-            event &= ~(POLLIN|POLLPRI);
-        }
         if (event & POLLOUT && async_waiting( &sock->write_q ))
         {
             if (debug_level) fprintf( stderr, "activating write queue for socket %p\n", sock );
@@ -2128,4 +2129,74 @@ DECL_HANDLER(get_socket_info)
     reply->protocol = sock->proto;
 
     release_object( &sock->obj );
+}
+
+DECL_HANDLER(recv_socket)
+{
+    struct sock *sock = (struct sock *)get_handle_obj( current->process, req->async.handle, 0, &sock_ops );
+    unsigned int status = req->status;
+    timeout_t timeout = 0;
+    struct async *async;
+    struct fd *fd;
+
+    if (!sock) return;
+    fd = sock->fd;
+
+    /* recv() returned EWOULDBLOCK, i.e. no data available yet */
+    if (status == STATUS_DEVICE_NOT_READY && !(sock->state & FD_WINE_NONBLOCKING))
+    {
+#ifdef SO_RCVTIMEO
+        struct timeval tv;
+        socklen_t len = sizeof(tv);
+
+        /* Set a timeout on the async if necessary.
+         *
+         * We want to do this *only* if the client gave us STATUS_DEVICE_NOT_READY.
+         * If the client gave us STATUS_PENDING, it expects the async to always
+         * block (it was triggered by WSARecv*() with a valid OVERLAPPED
+         * structure) and for the timeout not to be respected. */
+        if (is_fd_overlapped( fd ) && !getsockopt( get_unix_fd( fd ), SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, &len ))
+            timeout = tv.tv_sec * -10000000 + tv.tv_usec * -10;
+#endif
+
+        status = STATUS_PENDING;
+    }
+
+    /* are we shut down? */
+    if (status == STATUS_PENDING && !(sock->state & FD_READ)) status = STATUS_PIPE_DISCONNECTED;
+
+    sock->pending_events &= ~FD_READ;
+    sock->reported_events &= ~FD_READ;
+
+    if ((async = create_request_async( fd, get_fd_comp_flags( fd ), &req->async )))
+    {
+        int success = 0;
+
+        if (status == STATUS_SUCCESS)
+        {
+            struct iosb *iosb = async_get_iosb( async );
+            iosb->result = req->total;
+            release_object( iosb );
+            success = 1;
+        }
+        else if (status == STATUS_PENDING)
+        {
+            success = 1;
+        }
+        set_error( status );
+
+        if (timeout)
+            async_set_timeout( async, timeout, STATUS_IO_TIMEOUT );
+
+        if (status == STATUS_PENDING)
+            queue_async( &sock->read_q, async );
+
+        /* always reselect; we changed reported_events above */
+        sock_reselect( sock );
+
+        reply->wait = async_handoff( async, success, NULL, 0 );
+        reply->options = get_fd_options( fd );
+        release_object( async );
+    }
+    release_object( sock );
 }

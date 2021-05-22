@@ -4645,7 +4645,7 @@ struct async_irp
 
 static struct async_fileio *fileio_freelist;
 
-static void release_fileio( struct async_fileio *io )
+void release_fileio( struct async_fileio *io )
 {
     for (;;)
     {
@@ -4655,7 +4655,7 @@ static void release_fileio( struct async_fileio *io )
     }
 }
 
-static struct async_fileio *alloc_fileio( DWORD size, async_callback_t callback, HANDLE handle )
+struct async_fileio *alloc_fileio( DWORD size, async_callback_t callback, HANDLE handle )
 {
     /* first free remaining previous fileinfos */
     struct async_fileio *io = InterlockedExchangePointer( (void **)&fileio_freelist, NULL );
@@ -5729,6 +5729,9 @@ NTSTATUS WINAPI NtDeviceIoControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUT
 
     switch (device)
     {
+    case FILE_DEVICE_BEEP:
+        status = sock_ioctl( handle, event, apc, apc_context, io, code, in_buffer, in_size, out_buffer, out_size );
+        break;
     case FILE_DEVICE_DISK:
     case FILE_DEVICE_CD_ROM:
     case FILE_DEVICE_DVD:
