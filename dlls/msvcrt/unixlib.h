@@ -29,7 +29,6 @@ struct unix_funcs
     float           (CDECL *asinhf)(float x);
     double          (CDECL *atanh)(double x);
     float           (CDECL *atanhf)(float x);
-    float           (CDECL *cosf)(float x);
     double          (CDECL *cosh)(double x);
     float           (CDECL *coshf)(float x);
     double          (CDECL *exp)(double x);
