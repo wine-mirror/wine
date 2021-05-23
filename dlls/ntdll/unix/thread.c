@@ -1013,7 +1013,7 @@ void abort_process( int status )
 /***********************************************************************
  *           exit_thread
  */
-static void exit_thread( int status )
+static DECLSPEC_NORETURN void exit_thread( int status )
 {
     static void *prev_teb;
     TEB *teb;
