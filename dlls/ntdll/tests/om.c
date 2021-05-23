@@ -1500,9 +1500,9 @@ static void test_query_object(void)
     GetTempFileNameA(tmp_path, "foo", 0, file1);
     handle = CreateFileA(file1, GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, 0, 0);
     test_object_type(handle, L"File");
-    DeleteFileA( file1 );
     test_file_info( handle );
     pNtClose( handle );
+    DeleteFileA( file1 );
 
     status = pNtCreateIoCompletion( &handle, IO_COMPLETION_ALL_ACCESS, NULL, 0 );
     ok( status == STATUS_SUCCESS, "NtCreateIoCompletion failed %x\n", status);
