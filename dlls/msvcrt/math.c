@@ -1285,14 +1285,80 @@ float CDECL sqrtf( float x )
 #endif
 }
 
+/* Copied from musl: src/math/__tandf.c */
+static float __tandf(double x, int odd)
+{
+    static const double T[] = {
+        0x15554d3418c99f.0p-54,
+        0x1112fd38999f72.0p-55,
+        0x1b54c91d865afe.0p-57,
+        0x191df3908c33ce.0p-58,
+        0x185dadfcecf44e.0p-61,
+        0x1362b9bf971bcd.0p-59,
+    };
+
+    double z, r, w, s, t, u;
+
+    z = x * x;
+    r = T[4] + z * T[5];
+    t = T[2] + z * T[3];
+    w = z * z;
+    s = z * x;
+    u = T[0] + z * T[1];
+    r = (x + s * u) + (s * w) * (t + w * r);
+    return odd ? -1.0 / r : r;
+}
+
 /*********************************************************************
  *      tanf (MSVCRT.@)
+ *
+ * Copied from musl: src/math/tanf.c
  */
 float CDECL tanf( float x )
 {
-  float ret = unix_funcs->tanf(x);
-  if (!isfinite(x)) return math_error(_DOMAIN, "tanf", x, 0, ret);
-  return ret;
+    static const double t1pio2 = 1*M_PI_2,
+        t2pio2 = 2*M_PI_2,
+        t3pio2 = 3*M_PI_2,
+        t4pio2 = 4*M_PI_2;
+
+    double y;
+    UINT32 ix;
+    unsigned n, sign;
+
+    ix = *(UINT32*)&x;
+    sign = ix >> 31;
+    ix &= 0x7fffffff;
+
+    if (ix <= 0x3f490fda) { /* |x| ~<= pi/4 */
+        if (ix < 0x39800000) { /* |x| < 2**-12 */
+            /* raise inexact if x!=0 and underflow if subnormal */
+            fp_barrierf(ix < 0x00800000 ? x / 0x1p120f : x + 0x1p120f);
+            return x;
+        }
+        return __tandf(x, 0);
+    }
+    if (ix <= 0x407b53d1) { /* |x| ~<= 5*pi/4 */
+        if (ix <= 0x4016cbe3) /* |x| ~<= 3pi/4 */
+            return __tandf((sign ? x + t1pio2 : x - t1pio2), 1);
+        else
+            return __tandf((sign ? x + t2pio2 : x - t2pio2), 0);
+    }
+    if (ix <= 0x40e231d5) { /* |x| ~<= 9*pi/4 */
+        if (ix <= 0x40afeddf) /* |x| ~<= 7*pi/4 */
+            return __tandf((sign ? x + t3pio2 : x - t3pio2), 1);
+        else
+            return __tandf((sign ? x + t4pio2 : x - t4pio2), 0);
+    }
+
+    /* tan(Inf or NaN) is NaN */
+    if (isinf(x))
+        return math_error(_DOMAIN, "tanf", x, 0, x - x);
+    if (ix >= 0x7f800000)
+        return x - x;
+
+    /* argument reduction */
+    n = __rem_pio2f(x, &y);
+    return __tandf(y, n & 1);
 }
 
 /*********************************************************************
