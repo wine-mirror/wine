@@ -60,7 +60,6 @@ struct unix_funcs
     float           (CDECL *sinf)(float x);
     double          (CDECL *sinh)(double x);
     float           (CDECL *sinhf)(float x);
-    double          (CDECL *tan)(double x);
     float           (CDECL *tanf)(float x);
     double          (CDECL *tanh)(double x);
     float           (CDECL *tanhf)(float x);

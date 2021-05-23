@@ -420,14 +420,6 @@ static float CDECL unix_sinhf( float x )
 }
 
 /*********************************************************************
- *      tan
- */
-static double CDECL unix_tan( double x )
-{
-    return tan( x );
-}
-
-/*********************************************************************
  *      tanf
  */
 static float CDECL unix_tanf( float x )
@@ -516,7 +508,6 @@ static const struct unix_funcs funcs =
     unix_sinf,
     unix_sinh,
     unix_sinhf,
-    unix_tan,
     unix_tanf,
     unix_tanh,
     unix_tanhf,
