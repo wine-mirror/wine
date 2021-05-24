@@ -30,8 +30,6 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include <pulse/pulseaudio.h>
-
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
@@ -134,7 +132,7 @@ struct ACImpl {
     IUnknown *marshal;
     IMMDevice *parent;
     struct list entry;
-    float vol[PA_CHANNELS_MAX];
+    float *vol;
 
     LONG ref;
     EDataFlow dataflow;
@@ -293,7 +291,6 @@ int WINAPI AUDDRV_GetPriority(void)
 HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient **out)
 {
     ACImpl *This;
-    int i;
     EDataFlow dataflow;
     HRESULT hr;
 
@@ -319,8 +316,6 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     This->IAudioStreamVolume_iface.lpVtbl = &AudioStreamVolume_Vtbl;
     This->dataflow = dataflow;
     This->parent = dev;
-    for (i = 0; i < PA_CHANNELS_MAX; ++i)
-        This->vol[i] = 1.f;
 
     hr = CoCreateFreeThreadedMarshaler((IUnknown*)&This->IAudioClient3_iface, &This->marshal);
     if (hr) {
@@ -533,8 +528,10 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         const GUID *sessionguid)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
+    unsigned int i, channel_count;
+    struct pulse_stream *stream;
     char *name;
-    HRESULT hr = S_OK;
+    HRESULT hr;
 
     TRACE("(%p)->(%x, %x, %s, %s, %p, %s)\n", This, mode, flags,
           wine_dbgstr_longlong(duration), wine_dbgstr_longlong(period), fmt, debugstr_guid(sessionguid));
@@ -583,21 +580,40 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 
     name = get_application_name();
     hr = pulse->create_stream(name, This->dataflow, mode, flags, duration, period, fmt,
-                              &This->channel_count, &This->pulse_stream);
+                              &channel_count, &stream);
     free(name);
-    if (SUCCEEDED(hr)) {
-        hr = get_audio_session(sessionguid, This->parent, This->channel_count, &This->session);
-        if (SUCCEEDED(hr)) {
-            set_stream_volumes(This);
-            list_add_tail(&This->session->clients, &This->entry);
-        } else {
-            pulse->release_stream(This->pulse_stream, NULL);
-            This->pulse_stream = NULL;
-        }
+    if (FAILED(hr))
+    {
+        pulse->unlock();
+        return hr;
     }
 
+    if (!(This->vol = malloc(channel_count * sizeof(*This->vol))))
+    {
+        pulse->release_stream(stream, NULL);
+        pulse->unlock();
+        return E_OUTOFMEMORY;
+    }
+    for (i = 0; i < channel_count; i++)
+        This->vol[i] = 1.f;
+
+    hr = get_audio_session(sessionguid, This->parent, channel_count, &This->session);
+    if (FAILED(hr))
+    {
+        free(This->vol);
+        This->vol = NULL;
+        pulse->unlock();
+        pulse->release_stream(stream, NULL);
+        return E_OUTOFMEMORY;
+    }
+
+    This->pulse_stream = stream;
+    This->channel_count = channel_count;
+    list_add_tail(&This->session->clients, &This->entry);
+    set_stream_volumes(This);
+
     pulse->unlock();
-    return hr;
+    return S_OK;
 }
 
 static HRESULT WINAPI AudioClient_GetBufferSize(IAudioClient3 *iface,
