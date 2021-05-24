@@ -565,6 +565,7 @@ static void update_seeking(struct filter *filter)
 
 static BOOL is_renderer(struct filter *filter)
 {
+    IMediaPosition *media_position;
     IAMFilterMiscFlags *flags;
     BOOL ret = FALSE;
 
@@ -573,6 +574,12 @@ static BOOL is_renderer(struct filter *filter)
         if (IAMFilterMiscFlags_GetMiscFlags(flags) & AM_FILTER_MISC_FLAGS_IS_RENDERER)
             ret = TRUE;
         IAMFilterMiscFlags_Release(flags);
+    }
+    else if (SUCCEEDED(IBaseFilter_QueryInterface(filter->filter, &IID_IMediaPosition, (void **)&media_position)))
+    {
+        if (!has_output_pins(filter->filter))
+            ret = TRUE;
+        IMediaPosition_Release(media_position);
     }
     else
     {

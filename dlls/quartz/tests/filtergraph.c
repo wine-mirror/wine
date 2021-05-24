@@ -4154,7 +4154,7 @@ static void test_ec_complete(void)
     IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
 
     hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     IFilterGraph2_RemoveFilter(graph, &filter1.IBaseFilter_iface);
 
@@ -4174,7 +4174,7 @@ static void test_ec_complete(void)
     IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
 
     hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     IMediaControl_Release(control);
     IMediaEvent_Release(eventsrc);
