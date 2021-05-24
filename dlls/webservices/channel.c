@@ -234,6 +234,9 @@ struct channel
     char                   *read_buf;
     ULONG                   read_buflen;
     ULONG                   read_size;
+    char                   *send_buf;
+    ULONG                   send_buflen;
+    ULONG                   send_size;
     ULONG                   prop_count;
     struct prop             prop[ARRAY_SIZE( channel_props )];
 };
@@ -328,6 +331,7 @@ static void reset_channel( struct channel *channel )
     clear_dict( &channel->dict_recv );
     channel->msg           = NULL;
     channel->read_size     = 0;
+    channel->send_size     = 0;
 
     switch (channel->binding)
     {
@@ -386,6 +390,7 @@ static void free_channel( struct channel *channel )
     WsFreeReader( channel->reader );
 
     heap_free( channel->read_buf );
+    heap_free( channel->send_buf );
     free_props( channel );
 
     channel->send_q.cs.DebugInfo->Spare[0] = 0;
@@ -1262,26 +1267,44 @@ static HRESULT send_message_http( HINTERNET request, BYTE *data, ULONG len )
     return S_OK;
 }
 
-static HRESULT send_bytes( SOCKET socket, BYTE *bytes, int len )
+static ULONG get_max_buffer_size( struct channel *channel )
 {
-    int count = send( socket, (char *)bytes, len, 0 );
-    if (count < 0) return HRESULT_FROM_WIN32( WSAGetLastError() );
-    if (count != len) return WS_E_OTHER;
+    ULONG size;
+    prop_get( channel->prop, channel->prop_count, WS_CHANNEL_PROPERTY_MAX_BUFFERED_MESSAGE_SIZE, &size, sizeof(size) );
+    return size;
+}
+
+static HRESULT write_bytes( struct channel *channel, BYTE *bytes, ULONG len )
+{
+    if (!channel->send_buf)
+    {
+        channel->send_buflen = get_max_buffer_size( channel );
+        if (!(channel->send_buf = heap_alloc( channel->send_buflen ))) return E_OUTOFMEMORY;
+    }
+    if (channel->send_size + len >= channel->send_buflen) return WS_E_QUOTA_EXCEEDED;
+
+    memcpy( channel->send_buf + channel->send_size, bytes, len );
+    channel->send_size += len;
     return S_OK;
 }
 
-static HRESULT send_size( SOCKET socket, ULONG size )
+static inline HRESULT write_byte( struct channel *channel, BYTE byte )
+{
+    return write_bytes( channel, &byte, 1 );
+}
+
+static HRESULT write_size( struct channel *channel, ULONG size )
 {
     HRESULT hr;
-    if (size < 0x80) return send_byte( socket, size );
-    if ((hr = send_byte( socket, (size & 0x7f) | 0x80 )) != S_OK) return hr;
-    if ((size >>= 7) < 0x80) return send_byte( socket, size );
-    if ((hr = send_byte( socket, (size & 0x7f) | 0x80 )) != S_OK) return hr;
-    if ((size >>= 7) < 0x80) return send_byte( socket, size );
-    if ((hr = send_byte( socket, (size & 0x7f) | 0x80 )) != S_OK) return hr;
-    if ((size >>= 7) < 0x80) return send_byte( socket, size );
-    if ((hr = send_byte( socket, (size & 0x7f) | 0x80 )) != S_OK) return hr;
-    if ((size >>= 7) < 0x08) return send_byte( socket, size );
+    if (size < 0x80) return write_byte( channel, size );
+    if ((hr = write_byte( channel, (size & 0x7f) | 0x80 )) != S_OK) return hr;
+    if ((size >>= 7) < 0x80) return write_byte( channel, size );
+    if ((hr = write_byte( channel, (size & 0x7f) | 0x80 )) != S_OK) return hr;
+    if ((size >>= 7) < 0x80) return write_byte( channel, size );
+    if ((hr = write_byte( channel, (size & 0x7f) | 0x80 )) != S_OK) return hr;
+    if ((size >>= 7) < 0x80) return write_byte( channel, size );
+    if ((hr = write_byte( channel, (size & 0x7f) | 0x80 )) != S_OK) return hr;
+    if ((size >>= 7) < 0x08) return write_byte( channel, size );
     return E_INVALIDARG;
 }
 
@@ -1305,15 +1328,15 @@ static ULONG string_table_size( const struct dictionary *dict )
     return size;
 }
 
-static HRESULT send_string_table( SOCKET socket, const struct dictionary *dict )
+static HRESULT write_string_table( struct channel *channel, const struct dictionary *dict )
 {
     ULONG i;
     HRESULT hr;
     for (i = 0; i < dict->dict.stringCount; i++)
     {
         if (dict->sequence[i] != dict->current_sequence) continue;
-        if ((hr = send_size( socket, dict->dict.strings[i].length )) != S_OK) return hr;
-        if ((hr = send_bytes( socket, dict->dict.strings[i].bytes, dict->dict.strings[i].length )) != S_OK) return hr;
+        if ((hr = write_size( channel, dict->dict.strings[i].length )) != S_OK) return hr;
+        if ((hr = write_bytes( channel, dict->dict.strings[i].bytes, dict->dict.strings[i].length )) != S_OK) return hr;
     }
     return S_OK;
 }
@@ -1395,31 +1418,48 @@ static enum known_encoding map_channel_encoding( struct channel *channel )
 #define FRAME_VERSION_MAJOR 1
 #define FRAME_VERSION_MINOR 1
 
-static HRESULT send_preamble( struct channel *channel )
+static HRESULT write_preamble( struct channel *channel )
 {
     unsigned char *url;
     HRESULT hr;
     int len;
 
-    if ((hr = send_byte( channel->u.tcp.socket, FRAME_RECORD_TYPE_VERSION )) != S_OK) return hr;
-    if ((hr = send_byte( channel->u.tcp.socket, FRAME_VERSION_MAJOR )) != S_OK) return hr;
-    if ((hr = send_byte( channel->u.tcp.socket, FRAME_VERSION_MINOR )) != S_OK) return hr;
+    if ((hr = write_byte( channel, FRAME_RECORD_TYPE_VERSION )) != S_OK) return hr;
+    if ((hr = write_byte( channel, FRAME_VERSION_MAJOR )) != S_OK) return hr;
+    if ((hr = write_byte( channel, FRAME_VERSION_MINOR )) != S_OK) return hr;
 
-    if ((hr = send_byte( channel->u.tcp.socket, FRAME_RECORD_TYPE_MODE )) != S_OK) return hr;
-    if ((hr = send_byte( channel->u.tcp.socket, map_channel_type(channel) )) != S_OK) return hr;
+    if ((hr = write_byte( channel, FRAME_RECORD_TYPE_MODE )) != S_OK) return hr;
+    if ((hr = write_byte( channel, map_channel_type(channel) )) != S_OK) return hr;
 
-    if ((hr = send_byte( channel->u.tcp.socket, FRAME_RECORD_TYPE_VIA )) != S_OK) return hr;
+    if ((hr = write_byte( channel, FRAME_RECORD_TYPE_VIA )) != S_OK) return hr;
     if ((hr = string_to_utf8( &channel->addr.url, &url, &len )) != S_OK) return hr;
-    if ((hr = send_size( channel->u.tcp.socket, len )) != S_OK) goto done;
-    if ((hr = send_bytes( channel->u.tcp.socket, url, len )) != S_OK) goto done;
+    if ((hr = write_size( channel, len )) != S_OK) goto done;
+    if ((hr = write_bytes( channel, url, len )) != S_OK) goto done;
 
-    if ((hr = send_byte( channel->u.tcp.socket, FRAME_RECORD_TYPE_KNOWN_ENCODING )) != S_OK) goto done;
-    if ((hr = send_byte( channel->u.tcp.socket, map_channel_encoding(channel) )) != S_OK) goto done;
-    hr = send_byte( channel->u.tcp.socket, FRAME_RECORD_TYPE_PREAMBLE_END );
+    if ((hr = write_byte( channel, FRAME_RECORD_TYPE_KNOWN_ENCODING )) != S_OK) goto done;
+    if ((hr = write_byte( channel, map_channel_encoding(channel) )) != S_OK) goto done;
+    hr = write_byte( channel, FRAME_RECORD_TYPE_PREAMBLE_END );
 
 done:
     heap_free( url );
     return hr;
+}
+
+static HRESULT send_bytes( SOCKET socket, char *bytes, int len )
+{
+    int count = send( socket, bytes, len, 0 );
+    if (count < 0) return HRESULT_FROM_WIN32( WSAGetLastError() );
+    if (count != len) return WS_E_OTHER;
+    return S_OK;
+}
+
+static HRESULT send_preamble( struct channel *channel )
+{
+    HRESULT hr;
+    if ((hr = write_preamble( channel )) != S_OK) return hr;
+    if ((hr = send_bytes( channel->u.tcp.socket, channel->send_buf, channel->send_size )) != S_OK) return hr;
+    channel->send_size = 0;
+    return S_OK;
 }
 
 static HRESULT receive_bytes( struct channel *channel, unsigned char *bytes, int len )
@@ -1441,16 +1481,25 @@ static HRESULT receive_preamble_ack( struct channel *channel )
     return S_OK;
 }
 
-static HRESULT send_sized_envelope( struct channel *channel, BYTE *data, ULONG len )
+static HRESULT write_sized_envelope( struct channel *channel, BYTE *data, ULONG len )
 {
     ULONG table_size = string_table_size( &channel->dict_send );
     HRESULT hr;
 
-    if ((hr = send_byte( channel->u.tcp.socket, FRAME_RECORD_TYPE_SIZED_ENVELOPE )) != S_OK) return hr;
-    if ((hr = send_size( channel->u.tcp.socket, size_length(table_size) + table_size + len )) != S_OK) return hr;
-    if ((hr = send_size( channel->u.tcp.socket, table_size )) != S_OK) return hr;
-    if ((hr = send_string_table( channel->u.tcp.socket, &channel->dict_send )) != S_OK) return hr;
-    return send_bytes( channel->u.tcp.socket, data, len );
+    if ((hr = write_byte( channel, FRAME_RECORD_TYPE_SIZED_ENVELOPE )) != S_OK) return hr;
+    if ((hr = write_size( channel, size_length(table_size) + table_size + len )) != S_OK) return hr;
+    if ((hr = write_size( channel, table_size )) != S_OK) return hr;
+    if ((hr = write_string_table( channel, &channel->dict_send )) != S_OK) return hr;
+    return write_bytes( channel, data, len );
+}
+
+static HRESULT send_sized_envelope( struct channel *channel, BYTE *data, ULONG len )
+{
+    HRESULT hr;
+    if ((hr = write_sized_envelope( channel, data, len )) != S_OK) return hr;
+    if ((hr = send_bytes( channel->u.tcp.socket, channel->send_buf, channel->send_size )) != S_OK) return hr;
+    channel->send_size = 0;
+    return S_OK;
 }
 
 static HRESULT open_http_request( struct channel *channel, HINTERNET *req )
@@ -1880,16 +1929,13 @@ static HRESULT map_http_response_headers( struct channel *channel, WS_MESSAGE *m
 }
 
 #define INITIAL_READ_BUFFER_SIZE 4096
-static HRESULT receive_message_http( struct channel *channel, WS_MESSAGE *msg )
+static HRESULT receive_message_bytes_http( struct channel *channel, WS_MESSAGE *msg )
 {
     DWORD len, bytes_read, offset = 0, size = INITIAL_READ_BUFFER_SIZE;
-    ULONG max_len;
+    ULONG max_len = get_max_buffer_size( channel );
     HRESULT hr;
 
     if ((hr = map_http_response_headers( channel, msg )) != S_OK) return hr;
-
-    prop_get( channel->prop, channel->prop_count, WS_CHANNEL_PROPERTY_MAX_BUFFERED_MESSAGE_SIZE,
-              &max_len, sizeof(max_len) );
 
     if ((hr = resize_read_buffer( channel, size )) != S_OK) return hr;
     channel->read_size = 0;
@@ -2162,7 +2208,7 @@ static HRESULT send_preamble_ack( struct channel *channel )
     return S_OK;
 }
 
-static HRESULT receive_message_session( struct channel *channel )
+static HRESULT receive_message_bytes_session( struct channel *channel )
 {
     HRESULT hr;
 
@@ -2184,7 +2230,7 @@ static HRESULT receive_message_bytes( struct channel *channel, WS_MESSAGE *msg )
     switch (channel->binding)
     {
     case WS_HTTP_CHANNEL_BINDING:
-        return receive_message_http( channel, msg );
+        return receive_message_bytes_http( channel, msg );
 
     case WS_TCP_CHANNEL_BINDING:
         if (channel->type & WS_CHANNEL_TYPE_SESSION)
@@ -2198,7 +2244,7 @@ static HRESULT receive_message_bytes( struct channel *channel, WS_MESSAGE *msg )
                 /* fall through */
 
             case SESSION_STATE_SETUP_COMPLETE:
-                return receive_message_session( channel );
+                return receive_message_bytes_session( channel );
 
             default:
                 ERR( "unhandled session state %u\n", channel->session_state );
