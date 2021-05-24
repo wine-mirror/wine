@@ -1570,29 +1570,47 @@ static HICON CURSORICON_Load(HINSTANCE hInstance, LPCWSTR name,
 }
 
 
+static HBITMAP create_masked_bitmap( int width, int height, const void *and, const void *xor )
+{
+    HDC dc = CreateCompatibleDC( 0 );
+    HBITMAP bitmap;
+
+    const BITMAPINFO bitmap_info =
+    {
+        .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
+        .bmiHeader.biWidth = width,
+        .bmiHeader.biHeight = height * 2,
+        .bmiHeader.biPlanes = 1,
+        .bmiHeader.biBitCount = 1,
+    };
+
+    bitmap = CreateBitmap( width, height * 2, 1, 1, NULL );
+    SetDIBits( dc, bitmap, 0, height, and, &bitmap_info, FALSE );
+    SetDIBits( dc, bitmap, height, height, xor, &bitmap_info, FALSE );
+    DeleteDC( dc );
+    return bitmap;
+}
+
+
 /***********************************************************************
  *		CreateCursor (USER32.@)
  */
-HCURSOR WINAPI CreateCursor( HINSTANCE hInstance,
-                                 INT xHotSpot, INT yHotSpot,
-                                 INT nWidth, INT nHeight,
-                                 LPCVOID lpANDbits, LPCVOID lpXORbits )
+HCURSOR WINAPI CreateCursor( HINSTANCE instance, int hotspot_x, int hotspot_y,
+                             int width, int height, const void *and, const void *xor )
 {
     ICONINFO info;
-    HCURSOR hCursor;
+    HCURSOR cursor;
 
-    TRACE_(cursor)("%dx%d spot=%d,%d xor=%p and=%p\n",
-                    nWidth, nHeight, xHotSpot, yHotSpot, lpXORbits, lpANDbits);
+    TRACE( "hotspot (%d,%d), size %dx%d\n", hotspot_x, hotspot_y, width, height );
 
     info.fIcon = FALSE;
-    info.xHotspot = xHotSpot;
-    info.yHotspot = yHotSpot;
-    info.hbmMask = CreateBitmap( nWidth, nHeight, 1, 1, lpANDbits );
-    info.hbmColor = CreateBitmap( nWidth, nHeight, 1, 1, lpXORbits );
-    hCursor = CreateIconIndirect( &info );
+    info.xHotspot = hotspot_x;
+    info.yHotspot = hotspot_y;
+    info.hbmColor = NULL;
+    info.hbmMask = create_masked_bitmap( width, height, and, xor );
+    cursor = CreateIconIndirect( &info );
     DeleteObject( info.hbmMask );
-    DeleteObject( info.hbmColor );
-    return hCursor;
+    return cursor;
 }
 
 
@@ -1615,33 +1633,34 @@ HCURSOR WINAPI CreateCursor( HINSTANCE hInstance,
  *
  * FIXME: Do we need to resize the bitmaps?
  */
-HICON WINAPI CreateIcon(
-    HINSTANCE hInstance,  /* [in] the application's hInstance */
-    INT       nWidth,     /* [in] the width of the provided bitmaps */
-    INT       nHeight,    /* [in] the height of the provided bitmaps */
-    BYTE      bPlanes,    /* [in] the number of planes in the provided bitmaps */
-    BYTE      bBitsPixel, /* [in] the number of bits per pixel of the lpXORbits bitmap */
-    LPCVOID   lpANDbits,  /* [in] a monochrome bitmap representing the icon's mask */
-    LPCVOID   lpXORbits)  /* [in] the icon's 'color' bitmap */
+HICON WINAPI CreateIcon( HINSTANCE instance, int width, int height, BYTE planes,
+                         BYTE depth, const void *and, const void *xor )
 {
-    ICONINFO iinfo;
-    HICON hIcon;
+    ICONINFO info;
+    HICON icon;
 
-    TRACE_(icon)("%dx%d, planes %d, bpp %d, xor %p, and %p\n",
-                 nWidth, nHeight, bPlanes, bBitsPixel, lpXORbits, lpANDbits);
+    TRACE_(icon)( "%dx%d, planes %d, depth %d\n", width, height, planes, depth );
 
-    iinfo.fIcon = TRUE;
-    iinfo.xHotspot = nWidth / 2;
-    iinfo.yHotspot = nHeight / 2;
-    iinfo.hbmMask = CreateBitmap( nWidth, nHeight, 1, 1, lpANDbits );
-    iinfo.hbmColor = CreateBitmap( nWidth, nHeight, bPlanes, bBitsPixel, lpXORbits );
+    info.fIcon = TRUE;
+    info.xHotspot = width / 2;
+    info.yHotspot = height / 2;
+    if (depth == 1)
+    {
+        info.hbmColor = NULL;
+        info.hbmMask = create_masked_bitmap( width, height, and, xor );
+    }
+    else
+    {
+        info.hbmColor = CreateBitmap( width, height, planes, depth, xor );
+        info.hbmMask = CreateBitmap( width, height, 1, 1, and );
+    }
 
-    hIcon = CreateIconIndirect( &iinfo );
+    icon = CreateIconIndirect( &info );
 
-    DeleteObject( iinfo.hbmMask );
-    DeleteObject( iinfo.hbmColor );
+    DeleteObject( info.hbmMask );
+    DeleteObject( info.hbmColor );
 
-    return hIcon;
+    return icon;
 }
 
 
@@ -2248,19 +2267,14 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
 
         width = bmpXor.bmWidth;
         height = bmpXor.bmHeight;
-        if (bmpXor.bmPlanes * bmpXor.bmBitsPixel != 1 || bmpAnd.bmPlanes * bmpAnd.bmBitsPixel != 1)
-        {
-            color = create_color_bitmap( width, height );
-            mask = CreateBitmap( width, height, 1, 1, NULL );
-        }
-        else mask = CreateBitmap( width, height * 2, 1, 1, NULL );
+        color = create_color_bitmap( width, height );
     }
     else
     {
         width = bmpAnd.bmWidth;
         height = bmpAnd.bmHeight;
-        mask = CreateBitmap( width, height, 1, 1, NULL );
     }
+    mask = CreateBitmap( width, height, 1, 1, NULL );
 
     hdc = CreateCompatibleDC( 0 );
     SelectObject( hdc, mask );
@@ -2270,10 +2284,6 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
     {
         SelectObject( hdc, color );
         stretch_blt_icon( hdc, 0, 0, width, height, iconinfo->hbmColor, width, height );
-    }
-    else if (iconinfo->hbmColor)
-    {
-        stretch_blt_icon( hdc, 0, height, width, height, iconinfo->hbmColor, width, height );
     }
     else height /= 2;
 

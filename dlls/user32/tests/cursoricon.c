@@ -709,7 +709,8 @@ static void test_initial_cursor(void)
     ok(error == 0xdeadbeef, "Last error: 0x%08x\n", error);
 }
 
-static void test_icon_info_dbg(HICON hIcon, UINT exp_cx, UINT exp_cy, UINT exp_mask_cy, UINT exp_bpp, int line)
+static void test_icon_info_(HICON hIcon, UINT exp_cx, UINT exp_cy,
+        UINT exp_mask_cy, UINT exp_bpp, UINT has_color, int line)
 {
     ICONINFO info;
     DWORD ret;
@@ -726,8 +727,7 @@ static void test_icon_info_dbg(HICON hIcon, UINT exp_cx, UINT exp_cy, UINT exp_m
     ret = GetObjectA(info.hbmMask, sizeof(bmMask), &bmMask);
     ok_(__FILE__, line)(ret == sizeof(bmMask), "GetObject(info.hbmMask) failed, ret %u\n", ret);
 
-    if (exp_bpp == 1)
-        ok_(__FILE__, line)(info.hbmColor == 0, "info.hbmColor should be NULL\n");
+    ok_(__FILE__, line)(!!info.hbmColor == has_color, "got hbmColor %p\n", info.hbmColor);
 
     if (info.hbmColor)
     {
@@ -790,7 +790,7 @@ static void test_icon_info_dbg(HICON hIcon, UINT exp_cx, UINT exp_cy, UINT exp_m
     }
 }
 
-#define test_icon_info(a,b,c,d,e) test_icon_info_dbg((a),(b),(c),(d),(e),__LINE__)
+#define test_icon_info(a,b,c,d,e,f) test_icon_info_(a,b,c,d,e,f,__LINE__)
 
 static void test_CreateIcon(void)
 {
@@ -814,12 +814,17 @@ static void test_CreateIcon(void)
 
     hIcon = CreateIcon(0, 16, 16, 1, 1, bmp_bits, bmp_bits);
     ok(hIcon != 0, "CreateIcon failed\n");
-    test_icon_info(hIcon, 16, 16, 32, 1);
+    test_icon_info(hIcon, 16, 16, 32, 1, FALSE);
     DestroyIcon(hIcon);
+
+    hIcon = CreateCursor(0, 8, 8, 16, 16, bmp_bits, bmp_bits);
+    ok(hIcon != 0, "CreateCursor failed\n");
+    test_icon_info(hIcon, 16, 16, 32, 1, FALSE);
+    DestroyCursor(hIcon);
 
     hIcon = CreateIcon(0, 16, 16, 1, display_bpp, bmp_bits, bmp_bits);
     ok(hIcon != 0, "CreateIcon failed\n");
-    test_icon_info(hIcon, 16, 16, 16, display_bpp);
+    test_icon_info(hIcon, 16, 16, 16, display_bpp, TRUE);
     DestroyIcon(hIcon);
 
     hbmMask = CreateBitmap(16, 16, 1, 1, bmp_bits);
@@ -854,7 +859,7 @@ static void test_CreateIcon(void)
     info.hbmColor = hbmColor;
     hIcon = CreateIconIndirect(&info);
     ok(hIcon != 0, "CreateIconIndirect failed\n");
-    test_icon_info(hIcon, 16, 16, 16, display_bpp);
+    test_icon_info(hIcon, 16, 16, 16, display_bpp, TRUE);
     DestroyIcon(hIcon);
 
     DeleteObject(hbmMask);
@@ -871,8 +876,17 @@ static void test_CreateIcon(void)
     SetLastError(0xdeadbeaf);
     hIcon = CreateIconIndirect(&info);
     ok(hIcon != 0, "CreateIconIndirect failed\n");
-    test_icon_info(hIcon, 16, 16, 32, 1);
+    test_icon_info(hIcon, 16, 16, 32, 1, FALSE);
     DestroyIcon(hIcon);
+
+    info.hbmMask = hbmMask;
+    info.hbmColor = hbmMask;
+    SetLastError(0xdeadbeaf);
+    hIcon = CreateIconIndirect(&info);
+    ok(hIcon != 0, "CreateIconIndirect failed\n");
+    test_icon_info(hIcon, 16, 32, 32, 1, TRUE);
+    DestroyIcon(hIcon);
+
     DeleteObject(hbmMask);
 
     for (i = 0; i <= 4; i++)
@@ -888,10 +902,23 @@ static void test_CreateIcon(void)
         SetLastError(0xdeadbeaf);
         hIcon = CreateIconIndirect(&info);
         ok(hIcon != 0, "CreateIconIndirect failed\n");
-        test_icon_info(hIcon, 1, i / 2, max(i,1), 1);
+        test_icon_info(hIcon, 1, i / 2, max(i,1), 1, FALSE);
         DestroyIcon(hIcon);
         DeleteObject(hbmMask);
     }
+
+    hbmMask = CreateBitmap(16, 32, 1, 16, bmp_bits);
+    ok(hbmMask != 0, "CreateBitmap failed\n");
+
+    info.hbmMask = hbmMask;
+    info.hbmColor = 0;
+    SetLastError(0xdeadbeaf);
+    hIcon = CreateIconIndirect(&info);
+    ok(hIcon != 0, "CreateIconIndirect failed\n");
+    test_icon_info(hIcon, 16, 16, 32, 1, FALSE);
+    DestroyIcon(hIcon);
+
+    DeleteObject(hbmMask);
 
     /* test creating an icon from a DIB section */
 
@@ -920,7 +947,7 @@ static void test_CreateIcon(void)
     SetLastError(0xdeadbeaf);
     hIcon = CreateIconIndirect(&info);
     ok(hIcon != 0, "CreateIconIndirect failed\n");
-    test_icon_info(hIcon, 32, 32, 32, 8);
+    test_icon_info(hIcon, 32, 32, 32, 8, TRUE);
     DestroyIcon(hIcon);
     DeleteObject(hbmColor);
 
@@ -938,7 +965,7 @@ static void test_CreateIcon(void)
     SetLastError(0xdeadbeaf);
     hIcon = CreateIconIndirect(&info);
     ok(hIcon != 0, "CreateIconIndirect failed\n");
-    test_icon_info(hIcon, 32, 32, 32, 8);
+    test_icon_info(hIcon, 32, 32, 32, 8, TRUE);
     DestroyIcon(hIcon);
     DeleteObject(hbmColor);
 
@@ -956,7 +983,7 @@ static void test_CreateIcon(void)
     SetLastError(0xdeadbeaf);
     hIcon = CreateIconIndirect(&info);
     ok(hIcon != 0, "CreateIconIndirect failed\n");
-    test_icon_info(hIcon, 32, 32, 32, 8);
+    test_icon_info(hIcon, 32, 32, 32, 8, TRUE);
     DestroyIcon(hIcon);
 
     DeleteObject(hbmMask);
@@ -2662,7 +2689,7 @@ static void test_PrivateExtractIcons(void)
     ok(ret == 1, "PrivateExtractIconsA returned %u\n", ret);
     ok(icon != NULL, "icon == NULL\n");
 
-    test_icon_info(icon, 32, 32, 32, 32);
+    test_icon_info(icon, 32, 32, 32, 32, TRUE);
     DestroyIcon(icon);
 
     DeleteFileA("extract.ico");
