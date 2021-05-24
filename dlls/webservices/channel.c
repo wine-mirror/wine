@@ -1687,7 +1687,6 @@ static HRESULT send_message( struct channel *channel, WS_MESSAGE *msg, const WS_
                              WS_WRITE_OPTION option, const void *body, ULONG size )
 {
     HRESULT hr;
-    WsInitializeMessage( msg, WS_REQUEST_MESSAGE, NULL, NULL );
     if ((hr = WsAddressMessage( msg, &channel->addr, NULL )) != S_OK) return hr;
     if ((hr = message_set_action( msg, desc->action )) != S_OK) return hr;
     if ((hr = init_writer( channel )) != S_OK) return hr;
@@ -1766,6 +1765,8 @@ HRESULT WINAPI WsSendMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_MESS
         return WS_E_INVALID_OPERATION;
     }
 
+    WsInitializeMessage( msg, WS_BLANK_MESSAGE, NULL, NULL );
+
     if (!ctx) async_init( &async, &ctx_local );
     hr = queue_send_message( channel, msg, desc, option, body, size, ctx ? ctx : &ctx_local );
     if (!ctx)
@@ -1810,6 +1811,7 @@ HRESULT WINAPI WsSendReplyMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS
         return WS_E_INVALID_OPERATION;
     }
 
+    WsInitializeMessage( msg, WS_REPLY_MESSAGE, NULL, NULL );
     if ((hr = message_get_id( request, &id )) != S_OK) goto done;
     if ((hr = message_set_request_id( msg, &id )) != S_OK) goto done;
 
@@ -2532,6 +2534,8 @@ HRESULT WINAPI WsRequestReply( WS_CHANNEL *handle, WS_MESSAGE *request, const WS
         LeaveCriticalSection( &channel->cs );
         return WS_E_INVALID_OPERATION;
     }
+
+    WsInitializeMessage( request, WS_REQUEST_MESSAGE, NULL, NULL );
 
     if (!ctx) async_init( &async, &ctx_local );
     hr = queue_request_reply( channel, request, request_desc, write_option, request_body, request_size, reply,

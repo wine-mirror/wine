@@ -611,9 +611,9 @@ static HRESULT write_relatesto_header( WS_XML_WRITER *writer, const WS_XML_STRIN
     return WsWriteEndElement( writer, NULL ); /* </a:RelatesTo> */
 }
 
-static HRESULT write_headers( struct msg *msg, WS_XML_WRITER *writer, const WS_XML_STRING *prefix_env,
-                              const WS_XML_STRING *ns_env, const WS_XML_STRING *prefix_addr,
-                              const WS_XML_STRING *ns_addr )
+static HRESULT write_headers( struct msg *msg, WS_MESSAGE_INITIALIZATION init, WS_XML_WRITER *writer,
+                              const WS_XML_STRING *prefix_env, const WS_XML_STRING *ns_env,
+                              const WS_XML_STRING *prefix_addr, const WS_XML_STRING *ns_addr )
 {
     static const WS_XML_STRING header = {6, (BYTE *)"Header"};
     HRESULT hr;
@@ -625,7 +625,7 @@ static HRESULT write_headers( struct msg *msg, WS_XML_WRITER *writer, const WS_X
     if ((hr = write_action_header( writer, prefix_env, ns_env, prefix_addr, ns_addr, msg->action )) != S_OK)
         return hr;
 
-    if (msg->init == WS_REPLY_MESSAGE)
+    if (init == WS_REPLY_MESSAGE)
     {
         if ((hr = write_relatesto_header( writer, prefix_env, ns_env, prefix_addr, ns_addr, &msg->id_req )) != S_OK)
             return hr;
@@ -637,8 +637,9 @@ static HRESULT write_headers( struct msg *msg, WS_XML_WRITER *writer, const WS_X
     }
     else
     {
-        if ((hr = write_msgid_header( writer, prefix_env, ns_env, prefix_addr, ns_addr, &msg->id )) != S_OK)
-            return hr;
+        if (init == WS_REQUEST_MESSAGE &&
+            (hr = write_msgid_header( writer, prefix_env, ns_env, prefix_addr, ns_addr, &msg->id )) != S_OK) return hr;
+
         if (msg->version_addr == WS_ADDRESSING_VERSION_0_9 &&
             (hr = write_replyto_header( writer, prefix_env, ns_env, prefix_addr, ns_addr )) != S_OK) return hr;
     }
@@ -685,7 +686,7 @@ static HRESULT write_headers_transport( struct msg *msg, WS_XML_WRITER *writer, 
     return hr;
 }
 
-static HRESULT write_envelope_start( struct msg *msg, WS_XML_WRITER *writer )
+static HRESULT write_envelope_start( struct msg *msg, WS_MESSAGE_INITIALIZATION init, WS_XML_WRITER *writer )
 {
     static const WS_XML_STRING envelope = {8, (BYTE *)"Envelope"}, body = {4, (BYTE *)"Body"};
     static const WS_XML_STRING prefix_s = {1, (BYTE *)"s"}, prefix_a = {1, (BYTE *)"a"};
@@ -700,7 +701,7 @@ static HRESULT write_envelope_start( struct msg *msg, WS_XML_WRITER *writer )
     if (msg->version_addr == WS_ADDRESSING_VERSION_TRANSPORT)
         hr = write_headers_transport( msg, writer, prefix_env, ns_env );
     else
-        hr = write_headers( msg, writer, prefix_env, ns_env, prefix_addr, ns_addr );
+        hr = write_headers( msg, init, writer, prefix_env, ns_env, prefix_addr, ns_addr );
     if (hr != S_OK) return hr;
 
     return WsWriteStartElement( writer, prefix_env, &body, ns_env, NULL ); /* <s:Body> */
@@ -713,13 +714,13 @@ static HRESULT write_envelope_end( WS_XML_WRITER *writer )
     return WsWriteEndElement( writer, NULL ); /* </s:Envelope> */
 }
 
-static HRESULT write_envelope( struct msg *msg )
+static HRESULT write_envelope( struct msg *msg, WS_MESSAGE_INITIALIZATION init )
 {
     HRESULT hr;
     if (!msg->writer && (hr = WsCreateWriter( NULL, 0, &msg->writer, NULL )) != S_OK) return hr;
     if (!msg->buf && (hr = WsCreateXmlBuffer( msg->heap, NULL, 0, &msg->buf, NULL )) != S_OK) return hr;
     if ((hr = WsSetOutputToBuffer( msg->writer, msg->buf, NULL, 0, NULL )) != S_OK) return hr;
-    if ((hr = write_envelope_start( msg, msg->writer )) != S_OK) return hr;
+    if ((hr = write_envelope_start( msg, init, msg->writer )) != S_OK) return hr;
     return write_envelope_end( msg->writer );
 }
 
@@ -751,8 +752,8 @@ HRESULT WINAPI WsWriteEnvelopeStart( WS_MESSAGE *handle, WS_XML_WRITER *writer,
     }
 
     if (msg->state != WS_MESSAGE_STATE_INITIALIZED) hr = WS_E_INVALID_OPERATION;
-    else if ((hr = write_envelope( msg )) == S_OK &&
-             (hr = write_envelope_start( msg, writer )) == S_OK)
+    else if ((hr = write_envelope( msg, msg->init )) == S_OK &&
+             (hr = write_envelope_start( msg, msg->init, writer )) == S_OK)
     {
         msg->writer_body = writer;
         msg->state       = WS_MESSAGE_STATE_WRITING;
@@ -1085,7 +1086,7 @@ HRESULT WINAPI WsInitializeMessage( WS_MESSAGE *handle, WS_MESSAGE_INITIALIZATIO
     }
 
     if (msg->state >= WS_MESSAGE_STATE_INITIALIZED) hr = WS_E_INVALID_OPERATION;
-    else if ((hr = write_envelope( msg )) == S_OK)
+    else if ((hr = write_envelope( msg, init )) == S_OK)
     {
         msg->init  = init;
         msg->state = WS_MESSAGE_STATE_INITIALIZED;
@@ -1235,7 +1236,7 @@ HRESULT WINAPI WsSetHeader( WS_MESSAGE *handle, WS_HEADER_TYPE type, WS_TYPE val
     else free_header( msg->header[i] );
 
     msg->header[i] = header;
-    hr = write_envelope( msg );
+    hr = write_envelope( msg, msg->init );
 
 done:
     LeaveCriticalSection( &msg->cs );
@@ -1353,7 +1354,7 @@ HRESULT WINAPI WsRemoveHeader( WS_MESSAGE *handle, WS_HEADER_TYPE type, WS_ERROR
                 break;
             }
         }
-        if (removed) hr = write_envelope( msg );
+        if (removed) hr = write_envelope( msg, msg->init );
     }
 
     LeaveCriticalSection( &msg->cs );
@@ -1730,7 +1731,7 @@ HRESULT WINAPI WsAddCustomHeader( WS_MESSAGE *handle, const WS_ELEMENT_DESCRIPTI
     if ((hr = build_custom_header( msg, desc->elementLocalName, desc->elementNs, desc->type,
                                    desc->typeDescription, option, value, size, &header )) != S_OK) goto done;
     msg->header[msg->header_count++] = header;
-    hr = write_envelope( msg );
+    hr = write_envelope( msg, msg->init );
 
 done:
     LeaveCriticalSection( &msg->cs );
@@ -1833,7 +1834,7 @@ HRESULT WINAPI WsRemoveCustomHeader( WS_MESSAGE *handle, const WS_XML_STRING *na
                 i--;
             }
         }
-        if (removed) hr = write_envelope( msg );
+        if (removed) hr = write_envelope( msg, msg->init );
     }
 
     LeaveCriticalSection( &msg->cs );
