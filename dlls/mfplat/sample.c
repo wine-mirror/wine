@@ -1379,10 +1379,12 @@ static HRESULT sample_allocator_initialize(struct sample_allocator *allocator, u
         unsigned int max_sample_count, IMFAttributes *attributes, IMFMediaType *media_type)
 {
     struct surface_service service;
+    DXGI_FORMAT dxgi_format;
     unsigned int i;
     GUID major, subtype;
     UINT64 frame_size;
     IMFSample *sample;
+    D3D11_USAGE usage;
     HRESULT hr;
 
     if (FAILED(hr = IMFMediaType_GetMajorType(media_type, &major)))
@@ -1400,22 +1402,30 @@ static HRESULT sample_allocator_initialize(struct sample_allocator *allocator, u
     if (sample_count > max_sample_count)
         return E_INVALIDARG;
 
-    allocator->frame_desc.usage = D3D11_USAGE_DEFAULT;
+    usage = D3D11_USAGE_DEFAULT;
     if (attributes)
     {
         IMFAttributes_GetUINT32(attributes, &MF_SA_BUFFERS_PER_SAMPLE, &allocator->frame_desc.buffer_count);
-        IMFAttributes_GetUINT32(attributes, &MF_SA_D3D11_USAGE, &allocator->frame_desc.usage);
+        IMFAttributes_GetUINT32(attributes, &MF_SA_D3D11_USAGE, &usage);
     }
 
-    if (allocator->frame_desc.usage == D3D11_USAGE_IMMUTABLE || allocator->frame_desc.usage > D3D11_USAGE_STAGING)
+    if (usage == D3D11_USAGE_IMMUTABLE || usage > D3D11_USAGE_STAGING)
         return E_INVALIDARG;
 
-    if (allocator->frame_desc.usage == D3D11_USAGE_DEFAULT)
-        allocator->frame_desc.bindflags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
-    else if (allocator->frame_desc.usage == D3D11_USAGE_DYNAMIC)
-        allocator->frame_desc.bindflags = D3D11_BIND_SHADER_RESOURCE;
-    else
-        allocator->frame_desc.bindflags = 0;
+    dxgi_format = MFMapDX9FormatToDXGIFormat(subtype.Data1);
+
+    allocator->frame_desc.bindflags = 0;
+    allocator->frame_desc.usage = D3D11_USAGE_DEFAULT;
+
+    if (dxgi_format == DXGI_FORMAT_B8G8R8A8_UNORM ||
+            dxgi_format == DXGI_FORMAT_B8G8R8X8_UNORM)
+    {
+        allocator->frame_desc.usage = usage;
+        if (allocator->frame_desc.usage == D3D11_USAGE_DEFAULT)
+            allocator->frame_desc.bindflags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+        else if (allocator->frame_desc.usage == D3D11_USAGE_DYNAMIC)
+            allocator->frame_desc.bindflags = D3D11_BIND_SHADER_RESOURCE;
+    }
 
     if (attributes)
         IMFAttributes_GetUINT32(attributes, &MF_SA_D3D11_BINDFLAGS, &allocator->frame_desc.bindflags);
@@ -1427,7 +1437,7 @@ static HRESULT sample_allocator_initialize(struct sample_allocator *allocator, u
     max_sample_count = max(1, max_sample_count);
 
     allocator->frame_desc.d3d9_format = subtype.Data1;
-    allocator->frame_desc.dxgi_format = MFMapDX9FormatToDXGIFormat(allocator->frame_desc.d3d9_format);
+    allocator->frame_desc.dxgi_format = dxgi_format;
     allocator->frame_desc.width = frame_size >> 32;
     allocator->frame_desc.height = frame_size;
     allocator->frame_desc.buffer_count = max(1, allocator->frame_desc.buffer_count);
