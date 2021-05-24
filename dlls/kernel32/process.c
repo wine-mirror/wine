@@ -634,9 +634,32 @@ WORD WINAPI GetActiveProcessorGroupCount(void)
  */
 DWORD WINAPI GetActiveProcessorCount(WORD group)
 {
-    DWORD cpus = system_info.NumberOfProcessors;
+    DWORD cpus = 0;
+    DWORD size = 0;
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *info;
 
-    FIXME("(0x%x): semi-stub, returning %u\n", group, cpus);
+    TRACE("(0x%x)\n", group);
+
+    if (!GetLogicalProcessorInformationEx(RelationGroup, NULL, &size)) return 0;
+    if (!(info = HeapAlloc(GetProcessHeap(), 0, size))) return 0;
+    if (!GetLogicalProcessorInformationEx(RelationGroup, info, &size))
+    {
+        HeapFree(GetProcessHeap(), 0, info);
+        return 0;
+    }
+
+    if (group == ALL_PROCESSOR_GROUPS)
+    {
+        for (group = 0; group < info->Group.ActiveGroupCount; group++)
+            cpus += info->Group.GroupInfo[group].ActiveProcessorCount;
+    }
+    else
+    {
+        if (group < info->Group.ActiveGroupCount)
+            cpus = info->Group.GroupInfo[group].ActiveProcessorCount;
+    }
+
+    HeapFree(GetProcessHeap(), 0, info);
     return cpus;
 }
 
