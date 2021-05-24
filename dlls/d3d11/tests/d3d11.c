@@ -32351,6 +32351,15 @@ static void test_deferred_context_state(void)
     ID3D11DeviceContext_PSGetShaderResources(deferred, 0, 1, &ret_srv);
     ok(!ret_srv, "Got unexpected SRV %p.\n", ret_srv);
 
+    ID3D11DeviceContext_PSSetShaderResources(deferred, 0, 1, &srv);
+    ID3D11DeviceContext_PSGetShaderResources(deferred, 0, 1, &ret_srv);
+    ok(!ret_srv, "Got unexpected SRV %p.\n", ret_srv);
+
+    ID3D11DeviceContext_PSSetShaderResources(immediate, 0, 1, &srv);
+    ID3D11DeviceContext_PSGetShaderResources(immediate, 0, 1, &ret_srv);
+    ok(ret_srv == srv, "Got unexpected SRV %p.\n", ret_srv);
+    ID3D11ShaderResourceView_Release(ret_srv);
+
     ID3D11ShaderResourceView_Release(srv);
     ID3D11RenderTargetView_Release(rtv);
     ID3D11Texture2D_Release(texture);
