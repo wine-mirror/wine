@@ -1389,7 +1389,7 @@ BOOL WINAPI PathCanonicalizeW(WCHAR *buffer, const WCHAR *path)
             {
                 src += 2; /* Skip .\ */
             }
-            else if (src[1] == '.' && (dst == buffer || dst[-1] == '\\'))
+            else if (src[1] == '.' && dst != buffer && dst[-1] == '\\')
             {
                 /* \.. backs up a directory, over the root if it has no \ following X:.
                  * .. is ignored if it would remove a UNC server name or initial \\

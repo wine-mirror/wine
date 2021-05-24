@@ -714,6 +714,15 @@ static void test_PathCombineA(void)
     ok(!lstrcmpA(str, "C:\\"), "Expected C:\\, got %s\n", str);
     ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
 
+    /* try relative paths */
+    /* try forward slashes */
+    SetLastError(0xdeadbeef);
+    lstrcpyA(dest, "control");
+    str = PathCombineA(dest, "../../../one/two/", "*");
+    ok(str == dest, "Expected str == dest, got %p\n", str);
+    ok(!lstrcmpA(str, "../../../one/two/\\*"), "Expected ../../../one/two/\\*, got %s\n", str);
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
+
     memset(too_long, 'a', LONG_LEN);
     too_long[LONG_LEN - 1] = '\0';
 
@@ -1038,6 +1047,22 @@ static void test_PathCanonicalizeA(void)
     ok(!lstrcmpA(dest, "C:\\one/.") ||
        !lstrcmpA(dest, "C:\\one/"), /* Vista */
        "Expected \"C:\\one/.\" or \"C:\\one/\", got \"%s\"\n", dest);
+
+    /* try relative forward slashes */
+    lstrcpyA(dest, "test");
+    SetLastError(0xdeadbeef);
+    res = PathCanonicalizeA(dest, "../../one/two/");
+    ok(res, "Expected success\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(!lstrcmpA(dest, "../../one/two/"), "Expected ../../one/two/, got %s\n", dest);
+
+    /* try relative forward slashes */
+    lstrcpyA(dest, "test");
+    SetLastError(0xdeadbeef);
+    res = PathCanonicalizeA(dest, "../../one/two/\\*");
+    ok(res, "Expected success\n");
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(!lstrcmpA(dest, "../../one/two/\\*"), "Expected ../../one/two/\\*, got %s\n", dest);
 
     /* try forward slashes with change dirs
      * NOTE: if there is a forward slash in between two backslashes,
