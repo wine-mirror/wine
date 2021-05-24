@@ -18,25 +18,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSUNION
 #define COBJMACROS
-#define _GNU_SOURCE
-
-#include "config.h"
 
 #include <stdarg.h>
-#include <unistd.h>
-#include <math.h>
-#include <stdio.h>
-#include <errno.h>
 
 #include "windef.h"
 #include "winbase.h"
-#include "winnls.h"
-#include "winreg.h"
 #include "winternl.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wine/list.h"
 
 #include "ole2.h"
@@ -145,7 +134,7 @@ struct ACImpl {
     AudioSessionWrapper *session_wrapper;
 };
 
-static const WCHAR defaultW[] = {'P','u','l','s','e','a','u','d','i','o',0};
+static const WCHAR defaultW[] = L"Pulseaudio";
 
 static const IAudioClient3Vtbl AudioClient3_Vtbl;
 static const IAudioRenderClientVtbl AudioRenderClient_Vtbl;
@@ -216,7 +205,7 @@ static char *get_application_name(void)
     char *str;
 
     GetModuleFileNameW(NULL, path, ARRAY_SIZE(path));
-    name = strrchrW(path, '\\');
+    name = wcsrchr(path, '\\');
     if (!name)
         name = path;
     else
