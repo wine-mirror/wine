@@ -3430,6 +3430,7 @@ struct handle_info
 
 /* Make the current process a system process */
 @REQ(make_process_system)
+    obj_handle_t handle;          /* handle to the process */
 @REPLY
     obj_handle_t event;           /* event signaled when all user processes have exited */
 @END

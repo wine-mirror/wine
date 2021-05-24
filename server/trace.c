@@ -4181,6 +4181,7 @@ static void dump_get_kernel_object_handle_reply( const struct get_kernel_object_
 
 static void dump_make_process_system_request( const struct make_process_system_request *req )
 {
+    fprintf( stderr, " handle=%04x", req->handle );
 }
 
 static void dump_make_process_system_reply( const struct make_process_system_reply *req )

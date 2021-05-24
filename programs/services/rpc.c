@@ -35,8 +35,6 @@
 #include "services.h"
 #include "svcctl.h"
 
-extern HANDLE CDECL __wine_make_process_system(void);
-
 WINE_DEFAULT_DEBUG_CHANNEL(service);
 
 static const GENERIC_MAPPING g_scm_generic =
@@ -2135,7 +2133,8 @@ DWORD RPC_Init(void)
         return err;
     }
 
-    exit_event = __wine_make_process_system();
+    NtSetInformationProcess( GetCurrentProcess(), ProcessWineMakeProcessSystem,
+                             &exit_event, sizeof(HANDLE *) );
     return ERROR_SUCCESS;
 }
 

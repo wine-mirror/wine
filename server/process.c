@@ -1635,7 +1635,7 @@ DECL_HANDLER(get_process_idle_event)
 /* make the current process a system process */
 DECL_HANDLER(make_process_system)
 {
-    struct process *process = current->process;
+    struct process *process;
     struct thread *thread;
 
     if (!shutdown_event)
@@ -1644,8 +1644,13 @@ DECL_HANDLER(make_process_system)
         release_object( shutdown_event );
     }
 
+    if (!(process = get_process_from_handle( req->handle, PROCESS_SET_INFORMATION ))) return;
+
     if (!(reply->event = alloc_handle( current->process, shutdown_event, SYNCHRONIZE, 0 )))
+    {
+        release_object( process );
         return;
+    }
 
     if (!process->is_system)
     {
@@ -1655,6 +1660,7 @@ DECL_HANDLER(make_process_system)
         if (!--user_processes && !shutdown_stage && master_socket_timeout != TIMEOUT_INFINITE)
             shutdown_timeout = add_timeout_user( master_socket_timeout, server_shutdown_timeout, NULL );
     }
+    release_object( process );
 }
 
 /* create a new job object */

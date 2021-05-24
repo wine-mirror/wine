@@ -1485,6 +1485,17 @@ NTSTATUS WINAPI NtSetInformationProcess( HANDLE handle, PROCESSINFOCLASS class, 
         break;
     }
 
+    case ProcessWineMakeProcessSystem:
+        if (size != sizeof(HANDLE *)) return STATUS_INFO_LENGTH_MISMATCH;
+        SERVER_START_REQ( make_process_system )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            if (!(ret = wine_server_call( req )))
+                *(HANDLE *)info = wine_server_ptr_handle( reply->event );
+        }
+        SERVER_END_REQ;
+        return ret;
+
     default:
         FIXME( "(%p,0x%08x,%p,0x%08x) stub\n", handle, class, info, size );
         ret = STATUS_NOT_IMPLEMENTED;
@@ -1601,25 +1612,6 @@ NTSTATUS WINAPI NtDebugContinue( HANDLE handle, CLIENT_ID *client, NTSTATUS stat
         req->tid    = HandleToULong( client->UniqueThread );
         req->status = status;
         ret = wine_server_call( req );
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-
-/***********************************************************************
- *           __wine_make_process_system   (NTDLL.@)
- *
- * Mark the current process as a system process.
- * Returns the event that is signaled when all non-system processes have exited.
- */
-HANDLE CDECL __wine_make_process_system(void)
-{
-    HANDLE ret = 0;
-
-    SERVER_START_REQ( make_process_system )
-    {
-        if (!wine_server_call( req )) ret = wine_server_ptr_handle( reply->event );
     }
     SERVER_END_REQ;
     return ret;

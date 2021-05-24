@@ -2091,6 +2091,7 @@ C_ASSERT( FIELD_OFFSET(struct get_kernel_object_handle_request, access) == 24 );
 C_ASSERT( sizeof(struct get_kernel_object_handle_request) == 32 );
 C_ASSERT( FIELD_OFFSET(struct get_kernel_object_handle_reply, handle) == 8 );
 C_ASSERT( sizeof(struct get_kernel_object_handle_reply) == 16 );
+C_ASSERT( FIELD_OFFSET(struct make_process_system_request, handle) == 12 );
 C_ASSERT( sizeof(struct make_process_system_request) == 16 );
 C_ASSERT( FIELD_OFFSET(struct make_process_system_reply, event) == 8 );
 C_ASSERT( sizeof(struct make_process_system_reply) == 16 );

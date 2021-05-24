@@ -4917,7 +4917,7 @@ struct get_kernel_object_handle_reply
 struct make_process_system_request
 {
     struct request_header __header;
-    char __pad_12[4];
+    obj_handle_t handle;
 };
 struct make_process_system_reply
 {
@@ -6267,7 +6267,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 703
+#define SERVER_PROTOCOL_VERSION 704
 
 /* ### protocol_version end ### */
 

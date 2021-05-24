@@ -1455,7 +1455,10 @@ typedef enum _PROCESSINFOCLASS {
     ProcessThreadStackAllocation = 41,
     ProcessWorkingSetWatchEx = 42,
     ProcessImageFileNameWin32 = 43,
-    MaxProcessInfoClass
+    MaxProcessInfoClass,
+#ifdef __WINESRC__
+    ProcessWineMakeProcessSystem = 1000,
+#endif
 } PROCESSINFOCLASS, PROCESS_INFORMATION_CLASS;
 
 #define MEM_EXECUTE_OPTION_DISABLE   0x01

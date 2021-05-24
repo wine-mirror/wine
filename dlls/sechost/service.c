@@ -90,8 +90,6 @@ static unsigned int nb_services;
 static HANDLE service_event;
 static BOOL stop_service;
 
-extern HANDLE CDECL __wine_make_process_system(void);
-
 static WCHAR *heap_strdupAtoW( const char *src )
 {
     WCHAR *dst = NULL;
@@ -1845,7 +1843,8 @@ static BOOL service_run_main_thread(void)
     stop_service  = FALSE;
 
     /* FIXME: service_control_dispatcher should be merged into the main thread */
-    wait_handles[0] = __wine_make_process_system();
+    NtSetInformationProcess( GetCurrentProcess(), ProcessWineMakeProcessSystem,
+                             &wait_handles[0], sizeof(HANDLE *) );
     wait_handles[1] = CreateThread( NULL, 0, service_control_dispatcher, disp, 0, NULL );
     wait_handles[2] = service_event;
 
