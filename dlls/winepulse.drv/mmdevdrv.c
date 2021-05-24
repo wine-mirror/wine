@@ -1611,7 +1611,7 @@ static HRESULT WINAPI AudioSessionControl_GetState(IAudioSessionControl2 *iface,
         goto out;
     }
     LIST_FOR_EACH_ENTRY(client, &This->session->clients, ACImpl, entry) {
-        if (client->pulse_stream->started) {
+        if (client->pulse_stream && pulse->is_started(client->pulse_stream)) {
             *state = AudioSessionStateActive;
             goto out;
         }
