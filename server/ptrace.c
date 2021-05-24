@@ -571,14 +571,14 @@ void get_thread_context( struct thread *thread, context_t *context, unsigned int
     /* all other regs are handled on the client side */
     assert( flags == SERVER_CTX_DEBUG_REGISTERS );
 
-    if (!suspend_for_ptrace( thread )) return;
-
     if (!(thread->system_regs & SERVER_CTX_DEBUG_REGISTERS))
     {
         /* caller has initialized everything to 0 already, just return */
         context->flags |= SERVER_CTX_DEBUG_REGISTERS;
-        goto done;
+        return;
     }
+
+    if (!suspend_for_ptrace( thread )) return;
 
     for (i = 0; i < 8; i++)
     {
