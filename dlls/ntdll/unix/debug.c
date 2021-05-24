@@ -292,7 +292,18 @@ int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_
  */
 void dbg_init(void)
 {
+    struct __wine_debug_channel *options, default_option = { default_flags };
+
     setbuf( stdout, NULL );
     setbuf( stderr, NULL );
+
+    if (nb_debug_options == -1) init_options();
+
+    options = (struct __wine_debug_channel *)((char *)NtCurrentTeb()->Peb + (is_win64 ? 2 : 1) * page_size);
+    memcpy( options, debug_options, nb_debug_options * sizeof(*options) );
+    free( debug_options );
+    debug_options = options;
+    options[nb_debug_options] = default_option;
+    ntdll_get_thread_data()->debug_info = (struct debug_info *)(options + nb_debug_options + 1);
     init_done = TRUE;
 }

@@ -2894,7 +2894,6 @@ static TEB *init_teb( void *ptr, PEB *peb, BOOL is_wow )
  */
 TEB *virtual_alloc_first_teb(void)
 {
-    struct ntdll_thread_data *thread_data;
     TEB *teb;
     PEB *peb;
     void *ptr;
@@ -2921,8 +2920,6 @@ TEB *virtual_alloc_first_teb(void)
     peb = init_peb( (char *)teb_block + 31 * block_size );
     teb = init_teb( ptr, peb, FALSE );
     *(ULONG_PTR *)&peb->CloudFileFlags = get_image_address();
-    thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
-    thread_data->debug_info = (struct debug_info *)((char *)teb_block + 31 * block_size + 2 * page_size);
     return teb;
 }
 
