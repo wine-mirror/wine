@@ -638,7 +638,7 @@ DWORD WINAPI GetMaximumProcessorCount(WORD group)
 /***********************************************************************
  *           GetMaximumProcessorGroupCount (KERNEL32.@)
  */
-DWORD WINAPI GetMaximumProcessorGroupCount(void)
+WORD WINAPI GetMaximumProcessorGroupCount(void)
 {
     FIXME("semi-stub, always returning 1\n");
     return 1;
