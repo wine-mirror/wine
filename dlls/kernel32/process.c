@@ -609,8 +609,24 @@ HRESULT WINAPI RegisterApplicationRecoveryCallback(APPLICATION_RECOVERY_CALLBACK
  */
 WORD WINAPI GetActiveProcessorGroupCount(void)
 {
-    FIXME("semi-stub, always returning 1\n");
-    return 1;
+    WORD groups;
+    DWORD size = 0;
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *info;
+
+    TRACE("()\n");
+
+    if (!GetLogicalProcessorInformationEx(RelationGroup, NULL, &size)) return 0;
+    if (!(info = HeapAlloc(GetProcessHeap(), 0, size))) return 0;
+    if (!GetLogicalProcessorInformationEx(RelationGroup, info, &size))
+    {
+        HeapFree(GetProcessHeap(), 0, info);
+        return 0;
+    }
+
+    groups = info->Group.ActiveGroupCount;
+
+    HeapFree(GetProcessHeap(), 0, info);
+    return groups;
 }
 
 /***********************************************************************
