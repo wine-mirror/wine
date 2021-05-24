@@ -2776,6 +2776,21 @@ HANDLE WINAPI LoadImageW( HINSTANCE hinst, LPCWSTR name, UINT type,
     return 0;
 }
 
+
+/* StretchBlt from src to dest; helper for CopyImage(). */
+static void stretch_bitmap( HBITMAP dst, HBITMAP src, int dst_width, int dst_height, int src_width, int src_height )
+{
+    HDC src_dc = CreateCompatibleDC( 0 ), dst_dc = CreateCompatibleDC( 0 );
+
+    SelectObject( src_dc, src );
+    SelectObject( dst_dc, dst );
+    StretchBlt( dst_dc, 0, 0, dst_width, dst_height, src_dc, 0, 0, src_width, src_height, SRCCOPY );
+
+    DeleteDC( src_dc );
+    DeleteDC( dst_dc );
+}
+
+
 /******************************************************************************
  *		CopyImage (USER32.@) Creates new image and copies attributes to it
  *
@@ -2974,23 +2989,84 @@ HANDLE WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
         case IMAGE_ICON:
         case IMAGE_CURSOR:
         {
+            struct cursoricon_frame *frame;
             struct cursoricon_object *icon;
-            HICON res = 0;
             int depth = (flags & LR_MONOCHROME) ? 1 : get_display_bpp();
+            ICONINFO info;
+            HICON res;
+
+            if (!(icon = get_icon_ptr( hnd ))) return 0;
+
+            if (icon->rsrc && (flags & LR_COPYFROMRESOURCE))
+            {
+                hnd = CURSORICON_Load( icon->module, icon->resname, desiredx, desiredy, depth,
+                                       !icon->is_icon, flags );
+                release_user_handle_ptr( icon );
+                if (!(icon = get_icon_ptr( hnd ))) return 0;
+            }
+            frame = get_icon_frame( icon, 0 );
 
             if (flags & LR_DEFAULTSIZE)
             {
                 if (!desiredx) desiredx = GetSystemMetrics( type == IMAGE_ICON ? SM_CXICON : SM_CXCURSOR );
                 if (!desiredy) desiredy = GetSystemMetrics( type == IMAGE_ICON ? SM_CYICON : SM_CYCURSOR );
             }
-
-            if (!(icon = get_icon_ptr( hnd ))) return 0;
-
-            if (icon->rsrc && (flags & LR_COPYFROMRESOURCE))
-                res = CURSORICON_Load( icon->module, icon->resname, desiredx, desiredy, depth,
-                                       !icon->is_icon, flags );
             else
-                res = CopyIcon( hnd ); /* FIXME: change size if necessary */
+            {
+                if (!desiredx) desiredx = frame->width;
+                if (!desiredy) desiredy = frame->height;
+            }
+
+            info.fIcon = icon->is_icon;
+            info.xHotspot = icon->hotspot.x;
+            info.yHotspot = icon->hotspot.y;
+
+            if (desiredx == frame->width && desiredy == frame->height)
+            {
+                info.hbmColor = frame->color;
+                info.hbmMask = frame->mask;
+                res = CreateIconIndirect( &info );
+            }
+            else
+            {
+                if (frame->color)
+                {
+                    if (!(info.hbmColor = create_color_bitmap( desiredx, desiredy )))
+                    {
+                        release_user_handle_ptr( icon );
+                        return 0;
+                    }
+                    stretch_bitmap( info.hbmColor, frame->color, desiredx, desiredy,
+                                    frame->width, frame->height );
+
+                    if (!(info.hbmMask = CreateBitmap( desiredx, desiredy, 1, 1, NULL )))
+                    {
+                        DeleteObject( info.hbmColor );
+                        release_user_handle_ptr( icon );
+                        return 0;
+                    }
+                    stretch_bitmap( info.hbmMask, frame->mask, desiredx, desiredy,
+                                    frame->width, frame->height );
+                }
+                else
+                {
+                    info.hbmColor = NULL;
+
+                    if (!(info.hbmMask = CreateBitmap( desiredx, desiredy * 2, 1, 1, NULL )))
+                    {
+                        release_user_handle_ptr( icon );
+                        return 0;
+                    }
+                    stretch_bitmap( info.hbmColor, frame->color, desiredx, desiredy * 2,
+                                    frame->width, frame->height * 2 );
+                }
+
+                res = CreateIconIndirect( &info );
+
+                DeleteObject( info.hbmColor );
+                DeleteObject( info.hbmMask );
+            }
+
             release_user_handle_ptr( icon );
 
             if (res && (flags & LR_COPYDELETEORG)) DeleteObject( hnd );
