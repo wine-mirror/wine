@@ -32927,6 +32927,51 @@ static void test_deferred_context_map(void)
 
     ID3D11Buffer_Release(buffer2);
     ID3D11Buffer_Release(buffer);
+
+    /* Test UpdateSubresource. */
+
+    for (i = 0; i < ARRAY_SIZE(data); ++i)
+        data[i] = i;
+
+    buffer_desc.ByteWidth = sizeof(data);
+    buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    buffer_desc.CPUAccessFlags = 0;
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &resource_data, &buffer);
+    ok(hr == S_OK, "Failed to create buffer, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &resource_data, &buffer2);
+    ok(hr == S_OK, "Failed to create buffer, hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(data); ++i)
+        data[i] = 2 * i;
+    ID3D11DeviceContext_UpdateSubresource(deferred, (ID3D11Resource *)buffer, 0, NULL, data, 0, 0);
+
+    hr = ID3D11DeviceContext_FinishCommandList(deferred, FALSE, &list);
+    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
+
+    get_buffer_readback(buffer, &rb);
+    for (i = 0; i < ARRAY_SIZE(data); ++i)
+    {
+        value = get_readback_float(&rb, i, 0);
+        ok(value == i, "Got unexpected value %.8e at %u.\n", value, i);
+    }
+    release_resource_readback(&rb);
+
+    ID3D11DeviceContext_ExecuteCommandList(immediate, list, TRUE);
+
+    get_buffer_readback(buffer, &rb);
+    for (i = 0; i < ARRAY_SIZE(data); ++i)
+    {
+        value = get_readback_float(&rb, i, 0);
+        ok(value == 2 * i, "Got unexpected value %.8e at %u.\n", value, i);
+    }
+    release_resource_readback(&rb);
+
+    ID3D11CommandList_Release(list);
+
+    ID3D11Buffer_Release(buffer2);
+    ID3D11Buffer_Release(buffer);
+
     ID3D11DeviceContext_Release(deferred);
     release_test_context(&test_context);
 }
