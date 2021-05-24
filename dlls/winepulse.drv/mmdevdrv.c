@@ -1472,22 +1472,22 @@ static HRESULT WINAPI AudioStreamVolume_SetChannelVolume(
         IAudioStreamVolume *iface, UINT32 index, float level)
 {
     ACImpl *This = impl_from_IAudioStreamVolume(iface);
-    HRESULT hr;
-    float volumes[PA_CHANNELS_MAX];
 
     TRACE("(%p)->(%d, %f)\n", This, index, level);
 
     if (level < 0.f || level > 1.f)
         return E_INVALIDARG;
 
+    if (!This->pulse_stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
     if (index >= This->channel_count)
         return E_INVALIDARG;
 
-    hr = AudioStreamVolume_GetAllVolumes(iface, This->channel_count, volumes);
-    volumes[index] = level;
-    if (SUCCEEDED(hr))
-        hr = AudioStreamVolume_SetAllVolumes(iface, This->channel_count, volumes);
-    return hr;
+    pulse->lock();
+    This->vol[index] = level;
+    set_stream_volumes(This);
+    pulse->unlock();
+    return S_OK;
 }
 
 static HRESULT WINAPI AudioStreamVolume_GetChannelVolume(
