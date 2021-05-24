@@ -546,6 +546,39 @@ static HRESULT init_decoder(IWICBitmapDecoder *decoder, IWICStream *stream, HRES
     return hr;
 }
 
+static void release_encoder(IWICBitmapEncoder *encoder, IWICDdsEncoder *dds_encoder, IWICStream *stream)
+{
+    if (dds_encoder) IWICDdsEncoder_Release(dds_encoder);
+    if (stream) IWICStream_Release(stream);
+    if (encoder) IWICBitmapEncoder_Release(encoder);
+}
+
+static HRESULT create_and_init_encoder(BYTE *image_buffer, UINT buffer_size,
+                                       IWICBitmapEncoder **encoder, IWICDdsEncoder **dds_encoder, IWICStream **stream)
+{
+    HRESULT hr;
+
+    *encoder = create_encoder();
+    if (!*encoder) goto fail;
+
+    *stream = create_stream(image_buffer, buffer_size);
+    if (!*stream) goto fail;
+
+    hr = IWICBitmapEncoder_Initialize(*encoder, (IStream *)*stream, WICBitmapEncoderNoCache);
+    ok(hr == S_OK, "Initialize failed, hr %#x\n", hr);
+    if (hr != S_OK) goto fail;
+
+    hr = IWICBitmapEncoder_QueryInterface(*encoder, &IID_IWICDdsEncoder, (void **)dds_encoder);
+    ok(hr == S_OK, "QueryInterface failed, hr %#x\n", hr);
+    if (hr != S_OK) goto fail;
+
+    return S_OK;
+
+fail:
+    release_encoder(*encoder, *dds_encoder, *stream);
+    return E_FAIL;
+}
+
 static BOOL is_compressed(DXGI_FORMAT format)
 {
     UINT i;
@@ -1310,18 +1343,25 @@ end:
     if (encoder) IWICBitmapEncoder_Release(encoder);
 }
 
-static void test_dds_encoder_params(IWICBitmapEncoder *encoder, IWICDdsEncoder *dds_encoder)
+static void test_dds_encoder_params(void)
 {
     WICDdsParameters params, params_set = { 4, 4, 4, 3, 1,   DXGI_FORMAT_BC1_UNORM,
                                             WICDdsTexture3D, WICDdsAlphaModePremultiplied };
+    IWICDdsEncoder *dds_encoder = NULL;
+    IWICBitmapEncoder *encoder = NULL;
+    IWICStream *stream = NULL;
+    BYTE buffer[1024];
     HRESULT hr;
+
+    hr = create_and_init_encoder(buffer, sizeof(buffer), &encoder, &dds_encoder, &stream);
+    if (hr != S_OK) goto end;
 
     hr = IWICDdsEncoder_GetParameters(dds_encoder, NULL);
     ok(hr == E_INVALIDARG, "GetParameters got unexpected hr %#x\n", hr);
 
     hr = IWICDdsEncoder_GetParameters(dds_encoder, &params);
     ok(hr == S_OK, "GetParameters failed, hr %#x\n", hr);
-    if (hr != S_OK) return;
+    if (hr != S_OK) goto end;
 
     /* default DDS parameters for encoder */
     ok(params.Width      == 1, "Got unexpected Width %u\n",     params.Width);
@@ -1338,7 +1378,7 @@ static void test_dds_encoder_params(IWICBitmapEncoder *encoder, IWICDdsEncoder *
 
     hr = IWICDdsEncoder_SetParameters(dds_encoder, &params_set);
     ok(hr == S_OK, "SetParameters failed, hr %#x\n", hr);
-    if (hr != S_OK) return;
+    if (hr != S_OK) goto end;
 
     IWICDdsEncoder_GetParameters(dds_encoder, &params);
 
@@ -1358,38 +1398,15 @@ static void test_dds_encoder_params(IWICBitmapEncoder *encoder, IWICDdsEncoder *
        "Expected Dimension %u, got %#x\n",  params_set.Dimension,  params.Dimension);
     ok(params.AlphaMode == params_set.AlphaMode,
        "Expected AlphaMode %u, got %#x\n",  params_set.AlphaMode,  params.AlphaMode);
+
+end:
+    release_encoder(encoder, dds_encoder, stream);
 }
 
 static void test_dds_encoder(void)
 {
-    IWICDdsEncoder *dds_encoder = NULL;
-    IWICBitmapEncoder *encoder = NULL;
-    IWICStream *stream = NULL;
-    BYTE buffer[1024];
-    HRESULT hr;
-
     test_dds_encoder_initialize();
-
-    encoder = create_encoder();
-    if (!encoder) goto end;
-
-    stream = create_stream(buffer, sizeof(buffer));
-    if (!stream) goto end;
-
-    hr = IWICBitmapEncoder_Initialize(encoder, (IStream *)stream, WICBitmapEncoderNoCache);
-    ok(hr == S_OK, "Initialize failed, hr %#x\n", hr);
-    if (hr != S_OK) goto end;
-
-    hr = IWICBitmapEncoder_QueryInterface(encoder, &IID_IWICDdsEncoder, (void **)&dds_encoder);
-    ok(hr == S_OK, "QueryInterface failed, hr %#x\n", hr);
-    if (hr != S_OK) goto end;
-
-    test_dds_encoder_params(encoder, dds_encoder);
-
-end:
-    if (dds_encoder) IWICDdsEncoder_Release(dds_encoder);
-    if (stream) IWICStream_Release(stream);
-    if (encoder) IWICBitmapEncoder_Release(encoder);
+    test_dds_encoder_params();
 }
 
 START_TEST(ddsformat)
