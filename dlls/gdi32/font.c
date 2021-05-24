@@ -7881,9 +7881,9 @@ static void update_external_font_keys(void)
     {
         if (type != REG_SZ) goto next;
         if ((tmp = wcsrchr( value, ' ' )) && !facename_compare( tmp, L" (TrueType)", -1 )) *tmp = 0;
-        if ((face = find_face_from_full_name( value )))
+        if ((face = find_face_from_full_name( value )) && !wcsicmp( face->file, path ))
         {
-            if (!wcsicmp( face->file, path )) face->flags |= ADDFONT_EXTERNAL_FOUND;
+            face->flags |= ADDFONT_EXTERNAL_FOUND;
             goto next;
         }
         if (tmp && !*tmp) *tmp = ' ';
