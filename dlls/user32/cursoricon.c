@@ -3024,7 +3024,7 @@ HANDLE WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
                         release_user_handle_ptr( icon );
                         return 0;
                     }
-                    stretch_bitmap( info.hbmColor, frame->color, desiredx, desiredy * 2,
+                    stretch_bitmap( info.hbmMask, frame->mask, desiredx, desiredy * 2,
                                     frame->width, frame->height * 2 );
                 }
 
