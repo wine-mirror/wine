@@ -1352,6 +1352,7 @@ static void test_dds_encoder_params(void)
     IWICStream *stream = NULL;
     BYTE buffer[1024];
     HRESULT hr;
+    UINT i;
 
     hr = create_and_init_encoder(buffer, sizeof(buffer), &encoder, &dds_encoder, &stream);
     if (hr != S_OK) goto end;
@@ -1398,6 +1399,14 @@ static void test_dds_encoder_params(void)
        "Expected Dimension %u, got %#x\n",  params_set.Dimension,  params.Dimension);
     ok(params.AlphaMode == params_set.AlphaMode,
        "Expected AlphaMode %u, got %#x\n",  params_set.AlphaMode,  params.AlphaMode);
+
+    for (i = 0; i < ARRAY_SIZE(test_data); ++i)
+    {
+        hr = IWICDdsEncoder_SetParameters(dds_encoder, &test_data[i].expected_parameters);
+        todo_wine_if(test_data[i].init_hr != S_OK)
+        ok((hr == S_OK && test_data[i].init_hr == S_OK) || hr == WINCODEC_ERR_BADHEADER,
+           "Test %u: SetParameters got unexpected hr %#x\n", i, hr);
+    }
 
 end:
     release_encoder(encoder, dds_encoder, stream);
