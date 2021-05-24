@@ -37,6 +37,16 @@ WINE_DECLARE_DEBUG_CHANNEL(thread);
 
 struct _KUSER_SHARED_DATA *user_shared_data = (void *)0x7ffe0000;
 
+static int nb_debug_options;
+static struct __wine_debug_channel *debug_options;
+
+static void init_options(void)
+{
+    unsigned int offset = page_size * (sizeof(void *) / 4);
+
+    debug_options = (struct __wine_debug_channel *)((char *)NtCurrentTeb()->Peb + offset);
+    while (debug_options[nb_debug_options].name[0]) nb_debug_options++;
+}
 
 /***********************************************************************
  *		__wine_dbg_get_channel_flags  (NTDLL.@)
@@ -45,7 +55,25 @@ struct _KUSER_SHARED_DATA *user_shared_data = (void *)0x7ffe0000;
  */
 unsigned char __cdecl __wine_dbg_get_channel_flags( struct __wine_debug_channel *channel )
 {
-    return unix_funcs->dbg_get_channel_flags( channel );
+    int min, max, pos, res;
+    unsigned char default_flags;
+
+    if (!debug_options) init_options();
+
+    min = 0;
+    max = nb_debug_options - 1;
+    while (min <= max)
+    {
+        pos = (min + max) / 2;
+        res = strcmp( channel->name, debug_options[pos].name );
+        if (!res) return debug_options[pos].flags;
+        if (res < 0) max = pos - 1;
+        else min = pos + 1;
+    }
+    /* no option for this channel */
+    default_flags = debug_options[nb_debug_options].flags;
+    if (channel->flags & (1 << __WINE_DBCL_INIT)) channel->flags = default_flags;
+    return default_flags;
 }
 
 /***********************************************************************
