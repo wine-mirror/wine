@@ -64,6 +64,7 @@ static BOOL (WINAPI *pGetWindowDisplayAffinity)(HWND hwnd, DWORD *affinity);
 static BOOL (WINAPI *pSetWindowDisplayAffinity)(HWND hwnd, DWORD affinity);
 static BOOL (WINAPI *pAdjustWindowRectExForDpi)(LPRECT,DWORD,BOOL,DWORD,UINT);
 static BOOL (WINAPI *pSystemParametersInfoForDpi)(UINT,UINT,void*,UINT,UINT);
+static HICON (WINAPI *pInternalGetWindowIcon)(HWND window, UINT type);
 
 static BOOL test_lbuttondown_flag;
 static DWORD num_gettext_msgs;
@@ -2369,68 +2370,270 @@ todo_wine
     DestroyWindow(mdi_hwndMain);
 }
 
+#define check_icon_size(a, b, c) check_icon_size_(__LINE__, a, b, c)
+static void check_icon_size_( int line, HICON icon, LONG width, LONG height )
+{
+    ICONINFO info = {sizeof(info)};
+    BITMAP bitmap;
+    BOOL ret;
+
+    ret = GetIconInfo( icon, &info );
+    ok_(__FILE__, line)(ret, "failed to get icon info, error %u\n", GetLastError());
+    ret = GetObjectW(info.hbmColor, sizeof(bitmap), &bitmap);
+    ok_(__FILE__, line)(ret, "failed to get bitmap, error %u\n", GetLastError());
+    ok_(__FILE__, line)(bitmap.bmWidth == width, "expected width %d, got %d\n", width, bitmap.bmWidth);
+    ok_(__FILE__, line)(bitmap.bmHeight == height, "expected height %d, got %d\n", height, bitmap.bmHeight);
+}
+
+#define check_internal_icon_size(a, b, c, d) check_internal_icon_size_(__LINE__, a, b, c, d)
+static void check_internal_icon_size_( int line, HANDLE window, UINT type, LONG width, LONG height )
+{
+    HICON icon;
+    BOOL ret;
+
+    icon = pInternalGetWindowIcon( window, type );
+    ok_(__FILE__, line)(icon != 0, "expected nonzero icon\n");
+    check_icon_size_( line, icon, width, height );
+    ret = DestroyIcon( icon );
+    ok_(__FILE__, line)(ret, "failed to destroy icon, error %u\n", GetLastError());
+}
+
+static DWORD WINAPI internal_get_icon_thread(void *arg)
+{
+    HICON icon;
+    BOOL ret;
+
+    icon = pInternalGetWindowIcon( arg, ICON_BIG );
+    ok( icon != 0, "expected nonzero icon\n" );
+    ret = DestroyIcon( icon );
+    ok( ret, "got error %u\n", GetLastError() );
+
+    return 0;
+}
+
 static void test_icons(void)
 {
-    WNDCLASSEXA cls;
+    static const BYTE bitmap_bits[50 * 50 * 4];
+    HICON icon = CreateIcon( 0, 10, 10, 1, 32, bitmap_bits, bitmap_bits );
+    HICON icon2 = CreateIcon( 0, 20, 20, 1, 32, bitmap_bits, bitmap_bits );
+    HICON icon3 = CreateIcon( 0, 30, 30, 1, 32, bitmap_bits, bitmap_bits );
+    HICON icon4 = CreateIcon( 0, 40, 40, 1, 32, bitmap_bits, bitmap_bits );
+    HICON icon5 = CreateIcon( 0, 50, 50, 1, 32, bitmap_bits, bitmap_bits );
+    LONG big_width = GetSystemMetrics( SM_CXICON ), big_height = GetSystemMetrics( SM_CYICON );
+    LONG small_width = GetSystemMetrics( SM_CXSMICON ), small_height = GetSystemMetrics( SM_CYSMICON );
+    WNDCLASSEXA cls = {sizeof(cls)};
+    HICON res, res2;
+    HANDLE thread;
     HWND hwnd;
-    HICON icon = LoadIconA(0, (LPCSTR)IDI_APPLICATION);
-    HICON icon2 = LoadIconA(0, (LPCSTR)IDI_QUESTION);
-    HICON small_icon = LoadImageA(0, (LPCSTR)IDI_APPLICATION, IMAGE_ICON,
-                                  GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED );
-    HICON res;
+    BOOL ret;
 
-    cls.cbSize = sizeof(cls);
-    cls.style = 0;
     cls.lpfnWndProc = DefWindowProcA;
-    cls.cbClsExtra = 0;
-    cls.cbWndExtra = 0;
-    cls.hInstance = 0;
-    cls.hIcon = LoadIconA(0, (LPCSTR)IDI_HAND);
-    cls.hIconSm = small_icon;
-    cls.hCursor = LoadCursorA(0, (LPCSTR)IDC_ARROW);
-    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
-    cls.lpszMenuName = NULL;
+    cls.hIcon = icon4;
+    cls.hIconSm = icon5;
     cls.lpszClassName = "IconWindowClass";
-
     RegisterClassExA(&cls);
 
     hwnd = CreateWindowExA(0, "IconWindowClass", "icon test", 0,
                            100, 100, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, NULL, NULL);
-    assert( hwnd );
+    ok( hwnd != NULL, "failed to create window\n" );
 
     res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_BIG, 0 );
     ok( res == 0, "wrong big icon %p/0\n", res );
+    SetLastError( 0xdeadbeef );
+    res = pInternalGetWindowIcon( hwnd, ICON_BIG );
+    ok( res != 0, "expected nonzero icon\n" );
+    ok( GetLastError() == 0xdeadbeef, "got error %u\n", GetLastError() );
+    check_icon_size( res, 40, 40 );
+    res2 = pInternalGetWindowIcon( hwnd, ICON_BIG );
+    ok( res2 && res2 != res, "got %p\n", res2 );
+    check_icon_size( res2, 40, 40 );
+    ret = DestroyIcon( res2 );
+    ok( ret, "got error %u\n", GetLastError() );
+    ret = DestroyIcon( res );
+    ok( ret, "got error %u\n", GetLastError() );
+
+    res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL, 0 );
+    ok( !res, "wrong small icon %p\n", res );
+    res = pInternalGetWindowIcon( hwnd, ICON_SMALL );
+    ok( res != 0, "expected nonzero icon\n" );
+    check_icon_size( res, 50, 50 );
+    res2 = pInternalGetWindowIcon( hwnd, ICON_SMALL );
+    ok( res2 && res2 != res, "got %p\n", res2 );
+    check_icon_size( res2, 50, 50 );
+    ret = DestroyIcon( res2 );
+    ok( ret, "got error %u\n", GetLastError() );
+    ret = DestroyIcon( res );
+    ok( ret, "got error %u\n", GetLastError() );
+
+    res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL2, 0 );
+    ok( !res, "wrong small2 icon %p\n", res );
+    res = pInternalGetWindowIcon( hwnd, ICON_SMALL2 );
+    ok( res != 0, "expected nonzero icon\n" );
+    check_icon_size( res, 50, 50 );
+    res2 = pInternalGetWindowIcon( hwnd, ICON_SMALL2 );
+    ok( res2 && res2 != res, "got %p\n", res2 );
+    check_icon_size( res2, 50, 50 );
+    ret = DestroyIcon( res2 );
+    ok( ret, "got error %u\n", GetLastError() );
+    ret = DestroyIcon( res );
+    ok( ret, "got error %u\n", GetLastError() );
+
     res = (HICON)SendMessageA( hwnd, WM_SETICON, ICON_BIG, (LPARAM)icon );
     ok( res == 0, "wrong previous big icon %p/0\n", res );
     res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_BIG, 0 );
     ok( res == icon, "wrong big icon after set %p/%p\n", res, icon );
+    res2 = pInternalGetWindowIcon( hwnd, ICON_BIG );
+    ok( res2 && res2 != icon, "got %p\n", res2 );
+    check_icon_size( res2, 10, 10 );
+    ret = DestroyIcon( res2 );
+    ok( ret, "got error %u\n", GetLastError() );
+
     res = (HICON)SendMessageA( hwnd, WM_SETICON, ICON_BIG, (LPARAM)icon2 );
     ok( res == icon, "wrong previous big icon %p/%p\n", res, icon );
     res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_BIG, 0 );
     ok( res == icon2, "wrong big icon after set %p/%p\n", res, icon2 );
+    res2 = pInternalGetWindowIcon( hwnd, ICON_BIG );
+    ok( res2 && res2 != icon2, "got %p\n", res2 );
+    check_icon_size( res2, 20, 20 );
+    ret = DestroyIcon( res2 );
+    ok( ret, "got error %u\n", GetLastError() );
 
     res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL, 0 );
     ok( res == 0, "wrong small icon %p/0\n", res );
+    res2 = pInternalGetWindowIcon( hwnd, ICON_SMALL );
+    ok( res2 != 0, "expected nonzero icon\n" );
+    check_icon_size( res2, small_width, small_height );
+    ret = DestroyIcon( res2 );
+    ok( ret, "got error %u\n", GetLastError() );
+
     res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL2, 0 );
-    ok( (res && res != small_icon && res != icon2) || broken(!res), "wrong small2 icon %p\n", res );
+    ok( res && res != icon3 && res != icon2, "wrong small2 icon %p\n", res );
+    res2 = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL2, 0 );
+    ok( res2 == res, "expected icon to match\n" );
+    check_icon_size( res, small_width, small_height );
+    res2 = pInternalGetWindowIcon( hwnd, ICON_SMALL2 );
+    ok( res2 && res2 != icon3 && res2 != icon2 && res2 != res, "got %p\n", res2 );
+    check_icon_size( res2, small_width, small_height );
+    ret = DestroyIcon( res2 );
+    ok( ret, "got error %u\n", GetLastError() );
+
     res = (HICON)SendMessageA( hwnd, WM_SETICON, ICON_SMALL, (LPARAM)icon );
     ok( res == 0, "wrong previous small icon %p/0\n", res );
     res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL, 0 );
     ok( res == icon, "wrong small icon after set %p/%p\n", res, icon );
+    res2 = pInternalGetWindowIcon( hwnd, ICON_SMALL );
+    ok( res2 && res2 != icon, "got %p\n", res2 );
+    check_icon_size( res2, 10, 10 );
+    ret = DestroyIcon( res2 );
+    ok( ret, "got error %u\n", GetLastError() );
+
     res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL2, 0 );
-    ok( res == icon || broken(!res), "wrong small2 icon after set %p/%p\n", res, icon );
-    res = (HICON)SendMessageA( hwnd, WM_SETICON, ICON_SMALL, (LPARAM)small_icon );
+    ok( res == icon, "wrong small2 icon after set %p/%p\n", res, icon );
+    res2 = pInternalGetWindowIcon( hwnd, ICON_SMALL2 );
+    ok( res2 && res2 != icon && res2 != res, "got %p\n", res2 );
+    check_icon_size( res2, 10, 10 );
+    ret = DestroyIcon( res2 );
+    ok( ret, "got error %u\n", GetLastError() );
+
+    res = (HICON)SendMessageA( hwnd, WM_SETICON, ICON_SMALL, (LPARAM)icon3 );
     ok( res == icon, "wrong previous small icon %p/%p\n", res, icon );
     res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL, 0 );
-    ok( res == small_icon, "wrong small icon after set %p/%p\n", res, small_icon );
+    ok( res == icon3, "wrong small icon after set %p/%p\n", res, icon3 );
+    res2 = pInternalGetWindowIcon( hwnd, ICON_SMALL );
+    ok( res2 && res2 != icon3, "got %p\n", res2 );
+    check_icon_size( res2, 30, 30 );
+    ret = DestroyIcon( res2 );
+    ok( ret, "got error %u\n", GetLastError() );
+
     res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL2, 0 );
-    ok( res == small_icon || broken(!res), "wrong small2 icon after set %p/%p\n", res, small_icon );
+    ok( res == icon3, "wrong small2 icon after set %p/%p\n", res, icon3 );
+    res2 = pInternalGetWindowIcon( hwnd, ICON_SMALL2 );
+    ok( res2 && res2 != icon3 && res2 != res, "got %p\n", res2 );
+    check_icon_size( res2, 30, 30 );
+    ret = DestroyIcon( res2 );
+    ok( ret, "got error %u\n", GetLastError() );
 
     /* make sure the big icon hasn't changed */
     res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_BIG, 0 );
     ok( res == icon2, "wrong big icon after set %p/%p\n", res, icon2 );
+    res2 = pInternalGetWindowIcon( hwnd, ICON_BIG );
+    ok( res2 && res2 != icon2, "got %p\n", res2 );
+    check_icon_size( res2, 20, 20 );
+    ret = DestroyIcon( res2 );
+    ok( ret, "got error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    res = pInternalGetWindowIcon( NULL, ICON_BIG );
+    ok( !res, "got %p\n", res );
+    ok( GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "got error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    res = pInternalGetWindowIcon( hwnd, 0xdeadbeef );
+    ok( !res, "got %p\n", res );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError() );
+
+    thread = CreateThread( NULL, 0, internal_get_icon_thread, hwnd, 0, NULL );
+    ret = WaitForSingleObject( thread, 1000 );
+    ok( !ret, "wait timed out\n" );
+    CloseHandle( thread );
 
     DestroyWindow( hwnd );
+    UnregisterClassA( "IconWindowClass", GetModuleHandleA( NULL ) );
+
+    /* check when the big class icon is missing */
+
+    cls.hIcon = 0;
+    cls.hIconSm = icon5;
+    RegisterClassExA(&cls);
+
+    hwnd = CreateWindowExA(0, "IconWindowClass", "icon test", 0,
+                           100, 100, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, NULL, NULL);
+    ok( hwnd != NULL, "failed to create window\n" );
+
+    check_internal_icon_size( hwnd, ICON_BIG, big_width, big_height );
+    check_internal_icon_size( hwnd, ICON_SMALL, 50, 50 );
+    check_internal_icon_size( hwnd, ICON_SMALL2, 50, 50 );
+
+    DestroyWindow( hwnd );
+    UnregisterClassA( "IconWindowClass", GetModuleHandleA( NULL ) );
+
+    /* and when the small class icon is missing */
+
+    cls.hIcon = icon4;
+    cls.hIconSm = 0;
+    RegisterClassExA(&cls);
+    hwnd = CreateWindowExA(0, "IconWindowClass", "icon test", 0,
+                           100, 100, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, NULL, NULL);
+    ok( hwnd != NULL, "failed to create window\n" );
+
+    check_internal_icon_size( hwnd, ICON_BIG, 40, 40 );
+    check_internal_icon_size( hwnd, ICON_SMALL, small_width, small_width );
+    check_internal_icon_size( hwnd, ICON_SMALL2, small_width, small_width );
+
+    DestroyWindow( hwnd );
+    UnregisterClassA( "IconWindowClass", GetModuleHandleA( NULL ) );
+
+    /* and when both are missing */
+
+    cls.hIcon = 0;
+    cls.hIconSm = 0;
+    RegisterClassExA(&cls);
+    hwnd = CreateWindowExA(0, "IconWindowClass", "icon test", 0,
+                           100, 100, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, NULL, NULL);
+    ok( hwnd != NULL, "failed to create window\n" );
+
+    check_internal_icon_size( hwnd, ICON_BIG, big_width, big_height );
+    check_internal_icon_size( hwnd, ICON_SMALL, big_width, big_height );
+    check_internal_icon_size( hwnd, ICON_SMALL2, big_width, big_height );
+
+    DestroyWindow( hwnd );
+    UnregisterClassA( "IconWindowClass", GetModuleHandleA( NULL ) );
+
+    DestroyIcon( icon );
+    DestroyIcon( icon2 );
+    DestroyIcon( icon3 );
+    DestroyIcon( icon4 );
+    DestroyIcon( icon5 );
 }
 
 static LRESULT WINAPI nccalcsize_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -12027,6 +12230,7 @@ START_TEST(win)
     pSetWindowDisplayAffinity = (void *)GetProcAddress( user32, "SetWindowDisplayAffinity" );
     pAdjustWindowRectExForDpi = (void *)GetProcAddress( user32, "AdjustWindowRectExForDpi" );
     pSystemParametersInfoForDpi = (void *)GetProcAddress( user32, "SystemParametersInfoForDpi" );
+    pInternalGetWindowIcon = (void *)GetProcAddress( user32, "InternalGetWindowIcon" );
 
     if (argc == 4)
     {
