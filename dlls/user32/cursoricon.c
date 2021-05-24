@@ -1667,48 +1667,15 @@ HICON WINAPI CreateIcon( HINSTANCE instance, int width, int height, BYTE planes,
 /***********************************************************************
  *		CopyIcon (USER32.@)
  */
-HICON WINAPI CopyIcon( HICON hIcon )
+HICON WINAPI CopyIcon( HICON icon )
 {
-    struct cursoricon_object *ptrOld, *ptrNew;
-    HICON hNew;
+    ICONINFOEXW info;
 
-    if (!(ptrOld = get_icon_ptr( hIcon )))
-    {
-        SetLastError( ERROR_INVALID_CURSOR_HANDLE );
-        return 0;
-    }
-    if ((hNew = alloc_icon_handle( FALSE, 0 )))
-    {
-        struct cursoricon_frame *frameOld, *frameNew;
+    info.cbSize = sizeof(info);
+    if (!GetIconInfoExW( icon, &info ))
+        return NULL;
 
-        ptrNew = get_icon_ptr( hNew );
-        ptrNew->is_icon = ptrOld->is_icon;
-        ptrNew->hotspot = ptrOld->hotspot;
-        if (!(frameOld = get_icon_frame( ptrOld, 0 )))
-        {
-            release_user_handle_ptr( ptrOld );
-            SetLastError( ERROR_INVALID_CURSOR_HANDLE );
-            return 0;
-        }
-        if (!(frameNew = get_icon_frame( ptrNew, 0 )))
-        {
-            release_icon_frame( ptrOld, frameOld );
-            release_user_handle_ptr( ptrOld );
-            SetLastError( ERROR_INVALID_CURSOR_HANDLE );
-            return 0;
-        }
-        frameNew->delay  = 0;
-        frameNew->width  = frameOld->width;
-        frameNew->height = frameOld->height;
-        frameNew->mask   = copy_bitmap( frameOld->mask );
-        frameNew->color  = copy_bitmap( frameOld->color );
-        frameNew->alpha  = copy_bitmap( frameOld->alpha );
-        release_icon_frame( ptrOld, frameOld );
-        release_icon_frame( ptrNew, frameNew );
-        release_user_handle_ptr( ptrNew );
-    }
-    release_user_handle_ptr( ptrOld );
-    return hNew;
+    return CopyImage( icon, info.fIcon ? IMAGE_ICON : IMAGE_CURSOR, 0, 0, 0 );
 }
 
 
