@@ -1710,6 +1710,39 @@ static HRESULT WINAPI pulse_get_frequency(struct pulse_stream *stream, UINT64 *f
     return S_OK;
 }
 
+static HRESULT WINAPI pulse_get_position(struct pulse_stream *stream, BOOL device, UINT64 *pos, UINT64 *qpctime)
+{
+    pulse_lock();
+    if (!pulse_stream_valid(stream))
+    {
+        pulse_unlock();
+        return AUDCLNT_E_DEVICE_INVALIDATED;
+    }
+
+    *pos = stream->clock_written - stream->held_bytes;
+
+    if (stream->share == AUDCLNT_SHAREMODE_EXCLUSIVE || device)
+        *pos /= pa_frame_size(&stream->ss);
+
+    /* Make time never go backwards */
+    if (*pos < stream->clock_lastpos)
+        *pos = stream->clock_lastpos;
+    else
+        stream->clock_lastpos = *pos;
+    pulse_unlock();
+
+    TRACE("%p Position: %u\n", stream, (unsigned)*pos);
+
+    if (qpctime)
+    {
+        LARGE_INTEGER stamp, freq;
+        NtQueryPerformanceCounter(&stamp, &freq);
+        *qpctime = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
+    }
+
+    return S_OK;
+}
+
 static void WINAPI pulse_set_volumes(struct pulse_stream *stream, float master_volume,
                                      const float *volumes, const float *session_volumes)
 {
@@ -1758,6 +1791,7 @@ static const struct unix_funcs unix_funcs =
     pulse_get_current_padding,
     pulse_get_next_packet_size,
     pulse_get_frequency,
+    pulse_get_position,
     pulse_set_volumes,
     pulse_set_event_handle,
     pulse_test_connect,

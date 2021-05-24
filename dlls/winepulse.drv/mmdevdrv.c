@@ -1296,42 +1296,15 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
         UINT64 *qpctime)
 {
     ACImpl *This = impl_from_IAudioClock(iface);
-    HRESULT hr;
 
     TRACE("(%p)->(%p, %p)\n", This, pos, qpctime);
 
     if (!pos)
         return E_POINTER;
+    if (!This->pulse_stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
 
-    pulse->lock();
-    hr = pulse_stream_valid(This);
-    if (FAILED(hr)) {
-        pulse->unlock();
-        return hr;
-    }
-
-    *pos = This->pulse_stream->clock_written - This->pulse_stream->held_bytes;
-
-    if (This->pulse_stream->share == AUDCLNT_SHAREMODE_EXCLUSIVE)
-        *pos /= pa_frame_size(&This->pulse_stream->ss);
-
-    /* Make time never go backwards */
-    if (*pos < This->pulse_stream->clock_lastpos)
-        *pos = This->pulse_stream->clock_lastpos;
-    else
-        This->pulse_stream->clock_lastpos = *pos;
-    pulse->unlock();
-
-    TRACE("%p Position: %u\n", This, (unsigned)*pos);
-
-    if (qpctime) {
-        LARGE_INTEGER stamp, freq;
-        QueryPerformanceCounter(&stamp);
-        QueryPerformanceFrequency(&freq);
-        *qpctime = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
-    }
-
-    return S_OK;
+    return pulse->get_position(This->pulse_stream, FALSE, pos, qpctime);
 }
 
 static HRESULT WINAPI AudioClock_GetCharacteristics(IAudioClock *iface,
@@ -1382,10 +1355,15 @@ static HRESULT WINAPI AudioClock2_GetDevicePosition(IAudioClock2 *iface,
         UINT64 *pos, UINT64 *qpctime)
 {
     ACImpl *This = impl_from_IAudioClock2(iface);
-    HRESULT hr = AudioClock_GetPosition(&This->IAudioClock_iface, pos, qpctime);
-    if (SUCCEEDED(hr) && This->pulse_stream->share == AUDCLNT_SHAREMODE_SHARED)
-        *pos /= pa_frame_size(&This->pulse_stream->ss);
-    return hr;
+
+    TRACE("(%p)->(%p, %p)\n", This, pos, qpctime);
+
+    if (!pos)
+        return E_POINTER;
+    if (!This->pulse_stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
+
+    return pulse->get_position(This->pulse_stream, TRUE, pos, qpctime);
 }
 
 static const IAudioClock2Vtbl AudioClock2_Vtbl =
