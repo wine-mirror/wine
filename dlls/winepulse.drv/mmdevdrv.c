@@ -230,14 +230,6 @@ static char *get_application_name(void)
     return str;
 }
 
-static HRESULT pulse_stream_valid(ACImpl *This) {
-    if (!This->pulse_stream)
-        return AUDCLNT_E_NOT_INITIALIZED;
-    if (pa_stream_get_state(This->pulse_stream->stream) != PA_STREAM_READY)
-        return AUDCLNT_E_DEVICE_INVALIDATED;
-    return S_OK;
-}
-
 static DWORD WINAPI pulse_timer_cb(void *user)
 {
     ACImpl *This = user;
@@ -905,7 +897,6 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
         void **ppv)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    HRESULT hr;
 
     TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
 
@@ -913,11 +904,8 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
         return E_POINTER;
     *ppv = NULL;
 
-    pulse->lock();
-    hr = pulse_stream_valid(This);
-    pulse->unlock();
-    if (FAILED(hr))
-        return hr;
+    if (!This->pulse_stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
 
     if (IsEqualIID(riid, &IID_IAudioRenderClient)) {
         if (This->dataflow != eRender)
@@ -1436,7 +1424,6 @@ static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
         IAudioStreamVolume *iface, UINT32 count, const float *levels)
 {
     ACImpl *This = impl_from_IAudioStreamVolume(iface);
-    HRESULT hr;
     int i;
 
     TRACE("(%p)->(%d, %p)\n", This, count, levels);
@@ -1444,28 +1431,24 @@ static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
     if (!levels)
         return E_POINTER;
 
+    if (!This->pulse_stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
     if (count != This->channel_count)
         return E_INVALIDARG;
 
     pulse->lock();
-    hr = pulse_stream_valid(This);
-    if (FAILED(hr))
-        goto out;
-
     for (i = 0; i < count; ++i)
         This->vol[i] = levels[i];
 
     set_stream_volumes(This);
-out:
     pulse->unlock();
-    return hr;
+    return S_OK;
 }
 
 static HRESULT WINAPI AudioStreamVolume_GetAllVolumes(
         IAudioStreamVolume *iface, UINT32 count, float *levels)
 {
     ACImpl *This = impl_from_IAudioStreamVolume(iface);
-    HRESULT hr;
     int i;
 
     TRACE("(%p)->(%d, %p)\n", This, count, levels);
@@ -1473,20 +1456,16 @@ static HRESULT WINAPI AudioStreamVolume_GetAllVolumes(
     if (!levels)
         return E_POINTER;
 
+    if (!This->pulse_stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
     if (count != This->channel_count)
         return E_INVALIDARG;
 
     pulse->lock();
-    hr = pulse_stream_valid(This);
-    if (FAILED(hr))
-        goto out;
-
     for (i = 0; i < count; ++i)
         levels[i] = This->vol[i];
-
-out:
     pulse->unlock();
-    return hr;
+    return S_OK;
 }
 
 static HRESULT WINAPI AudioStreamVolume_SetChannelVolume(
