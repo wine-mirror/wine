@@ -4084,16 +4084,8 @@ struct wined3d_resource
 
     struct list resource_list_entry;
 
-    struct
-    {
-        uint32_t srv;
-        uint32_t rtv;
-    }
-    *sub_resource_bind_counts_device;
-    uint32_t srv_full_bind_count_device;
-    uint32_t rtv_full_bind_count_device;
-    uint32_t srv_partial_bind_count_device;
-    uint32_t rtv_partial_bind_count_device;
+    uint32_t srv_bind_count_device;
+    uint32_t rtv_bind_count_device;
 };
 
 static inline ULONG wined3d_resource_incref(struct wined3d_resource *resource)
@@ -6214,120 +6206,57 @@ static inline bool wined3d_rtv_all_subresources(const struct wined3d_rendertarge
     return texture->level_count == 1 && rtv->layer_count == wined3d_bind_layer_count(texture);
 }
 
-static inline void wined3d_srv_bind_count_add(struct wined3d_shader_resource_view *srv, int value)
-{
-    struct wined3d_resource *resource = srv->resource;
-    struct wined3d_texture *texture;
-    unsigned int level, layer;
-
-    if (wined3d_srv_all_subresources(srv))
-    {
-        resource->srv_full_bind_count_device += value;
-        return;
-    }
-
-    resource->srv_partial_bind_count_device += value;
-
-    texture = texture_from_resource(resource);
-
-    if (!resource->sub_resource_bind_counts_device
-            && !(resource->sub_resource_bind_counts_device = heap_alloc_zero(texture->level_count
-            * wined3d_bind_layer_count(texture) * sizeof(*resource->sub_resource_bind_counts_device))))
-        return;
-
-    for (layer = 0; layer < srv->desc.u.texture.layer_count; ++layer)
-        for (level = 0; level < srv->desc.u.texture.level_count; ++level)
-            resource->sub_resource_bind_counts_device[(layer + srv->desc.u.texture.layer_idx)
-                    * texture->level_count + srv->desc.u.texture.level_idx + level].srv += value;
-}
-
 static inline void wined3d_srv_bind_count_inc(struct wined3d_shader_resource_view *srv)
 {
-    wined3d_srv_bind_count_add(srv, 1);
+    ++srv->resource->srv_bind_count_device;
 }
 
 static inline void wined3d_srv_bind_count_dec(struct wined3d_shader_resource_view *srv)
 {
-    wined3d_srv_bind_count_add(srv, -1);
-}
-
-static inline void wined3d_rtv_bind_count_add(struct wined3d_rendertarget_view *rtv, int value)
-{
-    struct wined3d_resource *resource = rtv->resource;
-    struct wined3d_texture *texture;
-    unsigned int layer;
-
-    if (wined3d_rtv_all_subresources(rtv))
-    {
-        resource->rtv_full_bind_count_device += value;
-        return;
-    }
-
-    resource->rtv_partial_bind_count_device += value;
-
-    texture = texture_from_resource(resource);
-
-    if (!resource->sub_resource_bind_counts_device
-            && !(resource->sub_resource_bind_counts_device = heap_alloc_zero(texture->level_count
-            * wined3d_bind_layer_count(texture) * sizeof(*resource->sub_resource_bind_counts_device))))
-        return;
-
-    for (layer = 0; layer < rtv->layer_count; ++layer)
-        resource->sub_resource_bind_counts_device[rtv->sub_resource_idx + layer * texture->level_count].rtv += value;
+    --srv->resource->srv_bind_count_device;
 }
 
 static inline void wined3d_rtv_bind_count_inc(struct wined3d_rendertarget_view *rtv)
 {
-    wined3d_rtv_bind_count_add(rtv, 1);
+    ++rtv->resource->rtv_bind_count_device;
 }
 
 static inline void wined3d_rtv_bind_count_dec(struct wined3d_rendertarget_view *rtv)
 {
-    wined3d_rtv_bind_count_add(rtv, -1);
+    --rtv->resource->rtv_bind_count_device;
 }
 
-static inline bool wined3d_is_srv_rtv_bound(const struct wined3d_shader_resource_view *srv)
+static inline bool wined3d_rtv_overlaps_srv(const struct wined3d_rendertarget_view *rtv,
+        const struct wined3d_shader_resource_view *srv)
 {
-    struct wined3d_resource *resource = srv->resource;
-    struct wined3d_texture *texture;
-    unsigned int level, layer;
+    if (rtv->resource != srv->resource)
+        return false;
 
-    if (!(resource->rtv_full_bind_count_device + resource->rtv_partial_bind_count_device))
-        return FALSE;
+    if (wined3d_srv_all_subresources(srv) || wined3d_rtv_all_subresources(rtv))
+        return true;
 
-    if (resource->rtv_full_bind_count_device || wined3d_srv_all_subresources(srv))
-        return TRUE;
-
-    texture = texture_from_resource(resource);
-
-    for (layer = 0; layer < srv->desc.u.texture.layer_count; ++layer)
-        for (level = 0; level < srv->desc.u.texture.level_count; ++level)
-            if (resource->sub_resource_bind_counts_device[(layer + srv->desc.u.texture.layer_idx)
-                    * texture->level_count + srv->desc.u.texture.level_idx + level].rtv)
-                return TRUE;
-
-    return FALSE;
+    return rtv->sub_resource_idx >= srv->desc.u.texture.level_idx
+            && rtv->sub_resource_idx < srv->desc.u.texture.level_idx + srv->desc.u.texture.level_count
+            && rtv->layer_count >= srv->desc.u.texture.layer_idx;
 }
 
-static inline bool wined3d_is_rtv_srv_bound(const struct wined3d_rendertarget_view *rtv)
+static inline bool wined3d_is_srv_rtv_bound(const struct wined3d_state *state,
+        const struct wined3d_shader_resource_view *srv)
 {
-    struct wined3d_resource *resource = rtv->resource;
-    struct wined3d_texture *texture;
-    unsigned int layer;
+    unsigned int i;
 
-    if (!(resource->srv_full_bind_count_device + resource->srv_partial_bind_count_device))
-        return FALSE;
+    if (!srv->resource->rtv_bind_count_device)
+        return false;
 
-    if (resource->srv_full_bind_count_device || wined3d_rtv_all_subresources(rtv))
-        return TRUE;
+    for (i = 0; i < ARRAY_SIZE(state->fb.render_targets); ++i)
+    {
+        const struct wined3d_rendertarget_view *rtv;
 
-    texture = texture_from_resource(resource);
+        if ((rtv = state->fb.render_targets[i]) && wined3d_rtv_overlaps_srv(rtv, srv))
+            return true;
+    }
 
-    for (layer = 0; layer < rtv->layer_count; ++layer)
-        if (resource->sub_resource_bind_counts_device[rtv->sub_resource_idx + layer * texture->level_count].srv)
-            return TRUE;
-
-    return FALSE;
+    return false;
 }
 
 static inline void wined3d_viewport_get_z_range(const struct wined3d_viewport *vp, float *min_z, float *max_z)

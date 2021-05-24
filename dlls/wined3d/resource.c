@@ -235,7 +235,6 @@ static void wined3d_resource_destroy_object(void *object)
 
     TRACE("resource %p.\n", resource);
 
-    heap_free(resource->sub_resource_bind_counts_device);
     wined3d_resource_free_sysmem(resource);
     context_resource_released(resource->device, resource);
     wined3d_resource_release(resource);

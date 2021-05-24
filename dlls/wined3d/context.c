@@ -335,6 +335,23 @@ void context_update_stream_info(struct wined3d_context *context, const struct wi
     }
 }
 
+static bool is_resource_rtv_bound(const struct wined3d_state *state,
+        const struct wined3d_resource *resource)
+{
+    unsigned int i;
+
+    if (!resource->rtv_bind_count_device)
+        return false;
+
+    for (i = 0; i < ARRAY_SIZE(state->fb.render_targets); ++i)
+    {
+        if (state->fb.render_targets[i] && state->fb.render_targets[i]->resource == resource)
+            return true;
+    }
+
+    return false;
+}
+
 /* Context activation is done by the caller. */
 static void context_preload_texture(struct wined3d_context *context,
         const struct wined3d_state *state, unsigned int idx)
@@ -344,7 +361,7 @@ static void context_preload_texture(struct wined3d_context *context,
     if (!(texture = state->textures[idx]))
         return;
 
-    if ((texture->resource.rtv_full_bind_count_device + texture->resource.rtv_partial_bind_count_device)
+    if (is_resource_rtv_bound(state, &texture->resource)
             || (state->fb.depth_stencil && state->fb.depth_stencil->resource == &texture->resource))
         context->uses_fbo_attached_resources = 1;
 
