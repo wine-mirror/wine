@@ -157,8 +157,6 @@ LPWSTR GetLastErrorText( LPWSTR lpwszBuf, DWORD dwSize );
 
 void OnAbout(void);
 
-BOOL AreDebugChannelsSupported(void);
-
 void ProcessPage_OnSetAffinity(void);
 void ProcessPage_OnDebug(void);
 void ProcessPage_OnEndProcess(void);

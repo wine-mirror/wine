@@ -97,9 +97,6 @@ static void ProcessPageShowContextMenu(DWORD dwProcessId)
 
     if (si.dwNumberOfProcessors < 2)
         RemoveMenu(hSubMenu, ID_PROCESS_PAGE_SETAFFINITY, MF_BYCOMMAND);
-    
-    if (!AreDebugChannelsSupported())
-        RemoveMenu(hSubMenu, ID_PROCESS_PAGE_DEBUGCHANNELS, MF_BYCOMMAND);
 
     switch (dwProcessPriorityClass)    {
     case REALTIME_PRIORITY_CLASS:

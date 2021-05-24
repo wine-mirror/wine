@@ -28,7 +28,6 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <winnt.h>
-#include <dbghelp.h>
 
 #include "taskmgr.h"
 #include "perfdata.h"
@@ -48,35 +47,6 @@
  *      - use more global settings (like having a temporary on/off
  *        setting for a fixme:s or err:s
  */
-
-static DWORD (WINAPI *pSymSetOptions)(DWORD);
-static BOOL  (WINAPI *pSymInitialize)(HANDLE, PSTR, BOOL);
-static DWORD (WINAPI *pSymLoadModule)(HANDLE, HANDLE, PCSTR, PCSTR, DWORD, DWORD);
-static BOOL  (WINAPI *pSymCleanup)(HANDLE);
-static BOOL  (WINAPI *pSymFromName)(HANDLE, PCSTR, PSYMBOL_INFO);
-
-BOOL AreDebugChannelsSupported(void)
-{
-    static HANDLE   hDbgHelp /* = NULL */;
-
-    static const WCHAR    wszDbgHelp[] = {'D','B','G','H','E','L','P','.','D','L','L',0};
-
-    if (hDbgHelp) return TRUE;
-
-    if (!(hDbgHelp = LoadLibraryW(wszDbgHelp))) return FALSE;
-    pSymSetOptions = (void*)GetProcAddress(hDbgHelp, "SymSetOptions");
-    pSymInitialize = (void*)GetProcAddress(hDbgHelp, "SymInitialize");
-    pSymLoadModule = (void*)GetProcAddress(hDbgHelp, "SymLoadModule");
-    pSymFromName   = (void*)GetProcAddress(hDbgHelp, "SymFromName");
-    pSymCleanup    = (void*)GetProcAddress(hDbgHelp, "SymCleanup");
-    if (!pSymSetOptions || !pSymInitialize || !pSymLoadModule || !pSymCleanup || !pSymFromName)
-    {
-        FreeLibrary(hDbgHelp);
-        hDbgHelp = NULL;
-        return FALSE;
-    }
-    return TRUE;
-}
 
 static DWORD    get_selected_pid(void)
 {
@@ -160,27 +130,6 @@ static int change_channel_CB(HANDLE hProcess, void* addr, struct __wine_debug_ch
     return 1;
 }
 
-static void* get_symbol(HANDLE hProcess, const char* name)
-{
-    char                buffer[sizeof(IMAGEHLP_SYMBOL) + 256];
-    SYMBOL_INFO*        si = (SYMBOL_INFO*)buffer;
-    void*               ret = NULL;
-
-    /* also ask for wine extensions (loading symbols from ELF files) */
-    pSymSetOptions(SYMOPT_DEFERRED_LOADS | SYMOPT_PUBLICS_ONLY | 0x40000000);
-    /* FIXME: the TRUE option is due to the fact that dbghelp requires it
-     * when loading an ELF module
-     */
-    if (pSymInitialize(hProcess, NULL, TRUE))
-    {
-        si->SizeOfStruct = sizeof(*si);
-        si->MaxNameLen = sizeof(buffer) - sizeof(IMAGEHLP_SYMBOL);
-        if (pSymFromName(hProcess, name, si))
-            ret = (void*)(ULONG_PTR)si->Address;
-        pSymCleanup(hProcess);
-    }
-    return ret;
-}
 
 typedef int (*EnumChannelCB)(HANDLE, void*, struct __wine_debug_channel*, void*);
 
@@ -193,11 +142,16 @@ typedef int (*EnumChannelCB)(HANDLE, void*, struct __wine_debug_channel*, void*)
 static int enum_channel(HANDLE hProcess, EnumChannelCB ce, void* user)
 {
     struct __wine_debug_channel channel;
+    PROCESS_BASIC_INFORMATION   info;
     int                         ret = 1;
     void*                       addr;
 
-    if (!(addr = get_symbol(hProcess, "libwine.so.1!debug_options"))) return -1;
-
+    NtQueryInformationProcess( hProcess, ProcessBasicInformation, &info, sizeof(info), NULL );
+#ifdef _WIN64
+    addr = (char *)info.PebBaseAddress + 0x2000;
+#else
+    addr = (char *)info.PebBaseAddress + 0x1000;
+#endif
     while (ret && addr && ReadProcessMemory(hProcess, addr, &channel, sizeof(channel), NULL))
     {
         if (!channel.name[0]) break;
