@@ -1494,21 +1494,21 @@ static HRESULT WINAPI AudioStreamVolume_GetChannelVolume(
         IAudioStreamVolume *iface, UINT32 index, float *level)
 {
     ACImpl *This = impl_from_IAudioStreamVolume(iface);
-    float volumes[PA_CHANNELS_MAX];
-    HRESULT hr;
 
     TRACE("(%p)->(%d, %p)\n", This, index, level);
 
     if (!level)
         return E_POINTER;
 
+    if (!This->pulse_stream)
+        return AUDCLNT_E_NOT_INITIALIZED;
     if (index >= This->channel_count)
         return E_INVALIDARG;
 
-    hr = AudioStreamVolume_GetAllVolumes(iface, This->channel_count, volumes);
-    if (SUCCEEDED(hr))
-        *level = volumes[index];
-    return hr;
+    pulse->lock();
+    *level = This->vol[index];
+    pulse->unlock();
+    return S_OK;
 }
 
 static const IAudioStreamVolumeVtbl AudioStreamVolume_Vtbl =
