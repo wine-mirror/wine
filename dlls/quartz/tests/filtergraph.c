@@ -848,6 +848,7 @@ struct testfilter
     ULONG misc_flags;
 
     IMediaSeeking IMediaSeeking_iface;
+    IMediaPosition IMediaPosition_iface;
     LONG seeking_ref;
     DWORD seek_caps;
     BOOL support_testguid, support_media_time;
@@ -1315,6 +1316,10 @@ static HRESULT WINAPI testfilter_QueryInterface(IBaseFilter *iface, REFIID iid, 
     {
         *out = &filter->IMediaSeeking_iface;
     }
+    else if (IsEqualGUID(iid, &IID_IMediaPosition) && filter->IMediaPosition_iface.lpVtbl)
+    {
+        *out = &filter->IMediaPosition_iface;
+    }
     else if (IsEqualGUID(iid, &IID_IReferenceClock) && filter->IReferenceClock_iface.lpVtbl)
     {
         *out = &filter->IReferenceClock_iface;
@@ -1610,7 +1615,7 @@ static HRESULT WINAPI testseek_QueryPreferredFormat(IMediaSeeking *iface, GUID *
 
 static HRESULT WINAPI testseek_GetTimeFormat(IMediaSeeking *iface, GUID *format)
 {
-    ok(0, "Unexpected call.\n");
+    if (winetest_debug > 1) trace("%p->GetTimeFormat()\n", iface);
     return E_NOTIMPL;
 }
 
@@ -1731,6 +1736,141 @@ static const IMediaSeekingVtbl testseek_vtbl =
     testseek_SetRate,
     testseek_GetRate,
     testseek_GetPreroll,
+};
+
+static struct testfilter *impl_from_IMediaPosition(IMediaPosition *iface)
+{
+    return CONTAINING_RECORD(iface, struct testfilter, IMediaPosition_iface);
+}
+
+static HRESULT WINAPI testpos_QueryInterface(IMediaPosition *iface, REFIID iid, void **out)
+{
+    struct testfilter *filter = impl_from_IMediaPosition(iface);
+    return IBaseFilter_QueryInterface(&filter->IBaseFilter_iface, iid, out);
+}
+
+static ULONG WINAPI testpos_AddRef(IMediaPosition *iface)
+{
+    struct testfilter *filter = impl_from_IMediaPosition(iface);
+    return IBaseFilter_AddRef(&filter->IBaseFilter_iface);
+}
+
+static ULONG WINAPI testpos_Release(IMediaPosition *iface)
+{
+    struct testfilter *filter = impl_from_IMediaPosition(iface);
+    return IBaseFilter_Release(&filter->IBaseFilter_iface);
+}
+
+static HRESULT WINAPI testpos_GetTypeInfoCount(IMediaPosition *iface, UINT *count)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testpos_GetTypeInfo(IMediaPosition *iface, UINT index, LCID lcid, ITypeInfo **typeinfo)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testpos_GetIDsOfNames(IMediaPosition *iface, REFIID riid, LPOLESTR *names, UINT count, LCID lcid, DISPID *ids)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testpos_Invoke(IMediaPosition *iface, DISPID id, REFIID iid, LCID lcid, WORD flags, DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *error_arg)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testpos_get_Duration(IMediaPosition *iface, REFTIME *length)
+{
+    if (winetest_debug > 1) trace("%p->get_Duration()\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testpos_put_CurrentPosition(IMediaPosition *iface, REFTIME time)
+{
+    if (winetest_debug > 1) trace("%p->put_CurrentPosition(%f)\n", iface, time);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testpos_get_CurrentPosition(IMediaPosition *iface, REFTIME *time)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testpos_get_StopTime(IMediaPosition *iface, REFTIME *time)
+{
+    if (winetest_debug > 1) trace("%p->get_StopTime()\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testpos_put_StopTime(IMediaPosition *iface, REFTIME time)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testpos_get_PrerollTime(IMediaPosition *iface, REFTIME *time)
+{
+    if (winetest_debug > 1) trace("%p->get_PrerollTime()\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testpos_put_PrerollTime(IMediaPosition *iface, REFTIME time)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testpos_put_Rate(IMediaPosition *iface, double rate)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testpos_get_Rate(IMediaPosition *iface, double *rate)
+{
+    if (winetest_debug > 1) trace("%p->get_Rate()\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testpos_CanSeekForward(IMediaPosition *iface, LONG *can_seek_forward)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testpos_CanSeekBackward(IMediaPosition *iface, LONG *can_seek_backward)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IMediaPositionVtbl testpos_vtbl =
+{
+    testpos_QueryInterface,
+    testpos_AddRef,
+    testpos_Release,
+    testpos_GetTypeInfoCount,
+    testpos_GetTypeInfo,
+    testpos_GetIDsOfNames,
+    testpos_Invoke,
+    testpos_get_Duration,
+    testpos_put_CurrentPosition,
+    testpos_get_CurrentPosition,
+    testpos_get_StopTime,
+    testpos_put_StopTime,
+    testpos_get_PrerollTime,
+    testpos_put_PrerollTime,
+    testpos_put_Rate,
+    testpos_get_Rate,
+    testpos_CanSeekForward,
+    testpos_CanSeekBackward,
 };
 
 static struct testfilter *impl_from_IReferenceClock(IReferenceClock *iface)
@@ -3964,9 +4104,9 @@ static void test_ec_complete(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     /* A filter counts as a renderer if it (1) exposes IAMFilterMiscFlags and
-     * reports itself as a renderer, or (2) exposes IMediaSeeking and has no
-     * output pins. Despite MSDN, QueryInternalConnections() does not seem to
-     * be used. */
+     * reports itself as a renderer, or (2) exposes IMediaSeeking or
+     * IMediaPosition and has no output pins. Despite MSDN,
+     * QueryInternalConnections() does not seem to be used. */
 
     IFilterGraph2_RemoveFilter(graph, &filter1.IBaseFilter_iface);
     IFilterGraph2_RemoveFilter(graph, &filter2.IBaseFilter_iface);
@@ -4010,7 +4150,16 @@ static void test_ec_complete(void)
     ok(filter1.seeking_ref == 0, "Unexpected seeking refcount %d.\n", filter1.seeking_ref);
     IFilterGraph2_RemoveFilter(graph, &filter1.IBaseFilter_iface);
 
+    filter1.IMediaPosition_iface.lpVtbl = &testpos_vtbl;
+    IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
+
+    hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    IFilterGraph2_RemoveFilter(graph, &filter1.IBaseFilter_iface);
+
     filter1.IMediaSeeking_iface.lpVtbl = NULL;
+    filter1.IMediaPosition_iface.lpVtbl = NULL;
     filter1_pin.dir = PINDIR_INPUT;
     filter1.pin_count = 1;
     filter1_pin.QueryInternalConnections_hr = S_OK;
@@ -4018,6 +4167,14 @@ static void test_ec_complete(void)
 
     hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
     ok(hr == E_ABORT, "Got hr %#x.\n", hr);
+
+    IFilterGraph2_RemoveFilter(graph, &filter1.IBaseFilter_iface);
+
+    filter1.IMediaPosition_iface.lpVtbl = &testpos_vtbl;
+    IFilterGraph2_AddFilter(graph, &filter1.IBaseFilter_iface, NULL);
+
+    hr = check_ec_complete(graph, &filter1.IBaseFilter_iface);
+    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     IMediaControl_Release(control);
     IMediaEvent_Release(eventsrc);
