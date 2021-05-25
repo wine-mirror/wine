@@ -1981,6 +1981,7 @@ static void socket_device_dump( struct object *obj, int verbose )
 static struct object *socket_device_lookup_name( struct object *obj, struct unicode_str *name,
                                                  unsigned int attr, struct object *root )
 {
+    if (name) name->len = 0;
     return NULL;
 }
 

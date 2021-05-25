@@ -64,7 +64,7 @@ static void test_open_device(void)
     RtlInitUnicodeString(&string, L"\\Device\\Afd\\foobar");
     InitializeObjectAttributes(&attr, &string, 0, NULL, NULL);
     ret = NtOpenFile(&handle, SYNCHRONIZE, &attr, &io, 0, 0);
-    todo_wine ok(!ret, "got %#x\n", ret);
+    ok(!ret, "got %#x\n", ret);
     CloseHandle(handle);
 
     s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
