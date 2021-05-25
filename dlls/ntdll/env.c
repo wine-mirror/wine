@@ -634,7 +634,7 @@ void WINAPI RtlDestroyProcessParameters( RTL_USER_PROCESS_PARAMETERS *params )
 void init_user_process_params(void)
 {
     WCHAR *env;
-    SIZE_T env_size;
+    SIZE_T size = 0, env_size;
     RTL_USER_PROCESS_PARAMETERS *new_params, *params = NtCurrentTeb()->Peb->ProcessParameters;
     UNICODE_STRING curdir;
 
@@ -671,15 +671,16 @@ void init_user_process_params(void)
     new_params->dwFlags         = params->dwFlags;
     new_params->wShowWindow     = params->wShowWindow;
 
-    NtCurrentTeb()->Peb->ProcessParameters = params = new_params;
+    NtCurrentTeb()->Peb->ProcessParameters = new_params;
+    NtFreeVirtualMemory( GetCurrentProcess(), (void **)&params, &size, MEM_RELEASE );
 
-    if (RtlSetCurrentDirectory_U( &params->CurrentDirectory.DosPath ))
+    if (RtlSetCurrentDirectory_U( &new_params->CurrentDirectory.DosPath ))
     {
         MESSAGE("wine: could not open working directory %s, starting in the Windows directory.\n",
-                debugstr_w( params->CurrentDirectory.DosPath.Buffer ));
+                debugstr_w( new_params->CurrentDirectory.DosPath.Buffer ));
         RtlInitUnicodeString( &curdir, windows_dir );
         RtlSetCurrentDirectory_U( &curdir );
     }
-    set_wow64_environment( &params->Environment );
-    params->EnvironmentSize = RtlSizeHeap( GetProcessHeap(), 0, params->Environment );
+    set_wow64_environment( &new_params->Environment );
+    new_params->EnvironmentSize = RtlSizeHeap( GetProcessHeap(), 0, new_params->Environment );
 }
