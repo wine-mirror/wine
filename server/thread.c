@@ -1071,7 +1071,6 @@ static inline struct list *get_apc_queue( struct thread *thread, enum apc_type t
     case APC_NONE:
         return NULL;
     case APC_USER:
-    case APC_TIMER:
         return &thread->user_apc;
     default:
         return &thread->system_apc;

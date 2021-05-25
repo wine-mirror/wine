@@ -351,30 +351,18 @@ static int wait_select_reply( void *cookie )
 }
 
 
-static void invoke_apc( CONTEXT *context, const user_apc_t *apc )
+/***********************************************************************
+ *              invoke_user_apc
+ */
+static void invoke_user_apc( CONTEXT *context, const user_apc_t *apc )
 {
-    switch( apc->type )
-    {
-    case APC_USER:
-        call_user_apc_dispatcher( context, apc->user.args[0], apc->user.args[1], apc->user.args[2],
-                                  wine_server_get_ptr( apc->user.func ), pKiUserApcDispatcher );
-        break;
-    case APC_TIMER:
-        call_user_apc_dispatcher( context, (ULONG_PTR)wine_server_get_ptr( apc->user.args[1] ),
-                                  (DWORD)apc->timer.time, (DWORD)(apc->timer.time >> 32),
-                                  wine_server_get_ptr( apc->user.func ), pKiUserApcDispatcher );
-        break;
-    default:
-        server_protocol_error( "get_apc_request: bad type %d\n", apc->type );
-        break;
-    }
+    call_user_apc_dispatcher( context, apc->args[0], apc->args[1], apc->args[2],
+                              wine_server_get_ptr( apc->func ), pKiUserApcDispatcher );
 }
 
+
 /***********************************************************************
- *              invoke_apc
- *
- * Invoke a single APC.
- *
+ *              invoke_system_apc
  */
 static void invoke_system_apc( const apc_call_t *call, apc_result_t *result, BOOL self )
 {
@@ -702,7 +690,7 @@ unsigned int server_wait( const select_op_t *select_op, data_size_t size, UINT f
     }
 
     ret = server_select( select_op, size, flags, abs_timeout, NULL, NULL, &apc );
-    if (ret == STATUS_USER_APC) invoke_apc( NULL, &apc );
+    if (ret == STATUS_USER_APC) invoke_user_apc( NULL, &apc );
 
     /* A test on Windows 2000 shows that Windows always yields during
        a wait, but a wait that is hit by an event gets a priority
@@ -723,7 +711,7 @@ NTSTATUS WINAPI NtContinue( CONTEXT *context, BOOLEAN alertable )
     if (alertable)
     {
         status = server_select( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE, 0, NULL, NULL, &apc );
-        if (status == STATUS_USER_APC) invoke_apc( context, &apc );
+        if (status == STATUS_USER_APC) invoke_user_apc( context, &apc );
     }
     status = NtSetContextThread( GetCurrentThread(), context );
     if (!status && (context->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)

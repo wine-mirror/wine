@@ -455,7 +455,6 @@ enum apc_type
 {
     APC_NONE,
     APC_USER,
-    APC_TIMER,
     APC_ASYNC_IO,
     APC_VIRTUAL_ALLOC,
     APC_VIRTUAL_FREE,
@@ -471,24 +470,12 @@ enum apc_type
     APC_BREAK_PROCESS
 };
 
-typedef union
+typedef struct
 {
-    enum apc_type type;
-    struct
-    {
-        enum apc_type    type;
-        int              __pad;
-        client_ptr_t     func;
-        apc_param_t      args[3];
-    } user;
-    struct
-    {
-        enum apc_type    type;
-        int              __pad;
-        client_ptr_t     func;
-        abstime_t        time;
-        client_ptr_t     arg;
-    } timer;
+    enum apc_type    type;
+    int              __pad;
+    client_ptr_t     func;
+    apc_param_t      args[3];
 } user_apc_t;
 
 typedef union
@@ -6300,7 +6287,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 705
+#define SERVER_PROTOCOL_VERSION 706
 
 /* ### protocol_version end ### */
 

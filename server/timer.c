@@ -128,10 +128,11 @@ static void timer_callback( void *private )
 
         assert (timer->callback);
         memset( &data, 0, sizeof(data) );
-        data.type            = APC_TIMER;
-        data.user.timer.func = timer->callback;
-        data.user.timer.time = timer->when;
-        data.user.timer.arg  = timer->arg;
+        data.type         = APC_USER;
+        data.user.func    = timer->callback;
+        data.user.args[0] = timer->arg;
+        data.user.args[1] = (unsigned int)timer->when;
+        data.user.args[2] = timer->when >> 32;
 
         if (!thread_queue_apc( NULL, timer->thread, &timer->obj, &data ))
         {
@@ -165,7 +166,7 @@ static int cancel_timer( struct timer *timer )
     }
     if (timer->thread)
     {
-        thread_cancel_apc( timer->thread, &timer->obj, APC_TIMER );
+        thread_cancel_apc( timer->thread, &timer->obj, APC_USER );
         release_object( timer->thread );
         timer->thread = NULL;
     }

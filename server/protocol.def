@@ -471,7 +471,6 @@ enum apc_type
 {
     APC_NONE,
     APC_USER,
-    APC_TIMER,
     APC_ASYNC_IO,
     APC_VIRTUAL_ALLOC,
     APC_VIRTUAL_FREE,
@@ -487,24 +486,12 @@ enum apc_type
     APC_BREAK_PROCESS
 };
 
-typedef union
+typedef struct
 {
-    enum apc_type type;
-    struct
-    {
-        enum apc_type    type;     /* APC_USER */
-        int              __pad;
-        client_ptr_t     func;     /* void (__stdcall *func)(ULONG_PTR,ULONG_PTR,ULONG_PTR); */
-        apc_param_t      args[3];  /* arguments for user function */
-    } user;
-    struct
-    {
-        enum apc_type    type;     /* APC_TIMER */
-        int              __pad;
-        client_ptr_t     func;     /* void (__stdcall *func)(void*, unsigned int, unsigned int); */
-        abstime_t        time;     /* time of expiration */
-        client_ptr_t     arg;      /* user argument */
-    } timer;
+    enum apc_type    type;     /* APC_USER */
+    int              __pad;
+    client_ptr_t     func;     /* void (__stdcall *func)(ULONG_PTR,ULONG_PTR,ULONG_PTR); */
+    apc_param_t      args[3];  /* arguments for user function */
 } user_apc_t;
 
 typedef union
