@@ -56,18 +56,6 @@ static double CDECL unix_acosh(double x)
 }
 
 /*********************************************************************
- *      acoshf
- */
-static float CDECL unix_acoshf(float x)
-{
-#ifdef HAVE_ACOSHF
-    return acoshf(x);
-#else
-    return unix_acosh(x);
-#endif
-}
-
-/*********************************************************************
  *      asinh
  */
 static double CDECL unix_asinh(double x)
@@ -448,7 +436,6 @@ static float CDECL unix_tgammaf(float x)
 static const struct unix_funcs funcs =
 {
     unix_acosh,
-    unix_acoshf,
     unix_asinh,
     unix_asinhf,
     unix_atanh,

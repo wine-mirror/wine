@@ -6599,16 +6599,26 @@ double CDECL acosh(double x)
 
 /*********************************************************************
  *      acoshf (MSVCR120.@)
+ *
+ * Copied from musl: src/math/acoshf.c
  */
 float CDECL acoshf(float x)
 {
+    UINT32 a = *(UINT32*)&x & 0x7fffffff;
+
     if (x < 1)
     {
         *_errno() = EDOM;
         feraiseexcept(FE_INVALID);
         return NAN;
     }
-    return unix_funcs->acoshf( x );
+
+    if (a < 0x3f800000 + (1 << 23)) /* |x| < 2, up to 2ulp error in [1,1.125] */
+        return log1pf(x - 1 + sqrtf((x - 1) * (x - 1) + 2 * (x - 1)));
+    if (*(UINT32*)&x < 0x3f800000 + (12 << 23)) /* 2 <= x < 0x1p12 */
+        return logf(2 * x - 1 / (x + sqrtf(x * x - 1)));
+    /* x >= 0x1p12 or x <= -2 or nan */
+    return logf(x) + 0.693147180559945309417232121458176568f;
 }
 
 /*********************************************************************
