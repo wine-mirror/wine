@@ -64,6 +64,7 @@ static PSLIST_ENTRY (__fastcall *pRtlInterlockedPushListSList)(PSLIST_HEADER lis
 static PSLIST_ENTRY (WINAPI *pRtlInterlockedPushListSListEx)(PSLIST_HEADER list, PSLIST_ENTRY first,
                                                              PSLIST_ENTRY last, ULONG count);
 static NTSTATUS (WINAPI *pNtQueueApcThread)(HANDLE,PNTAPCFUNC,ULONG_PTR,ULONG_PTR,ULONG_PTR);
+static NTSTATUS (WINAPI *pNtTestAlert)(void);
 
 #ifdef __i386__
 
@@ -2712,8 +2713,11 @@ static DWORD WINAPI thread_proc(LPVOID unused)
     return 0;
 }
 
+static int apc_count;
+
 static void CALLBACK user_apc(ULONG_PTR unused)
 {
+    apc_count++;
 }
 
 static void CALLBACK call_user_apc(ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3)
@@ -2726,6 +2730,7 @@ static void test_QueueUserAPC(void)
 {
     HANDLE thread;
     DWORD tid, ret;
+    NTSTATUS status;
 
     thread = CreateThread(NULL, 0, thread_proc, NULL, CREATE_SUSPENDED, &tid);
     ok(thread != NULL, "CreateThread error %u\n", GetLastError());
@@ -2748,15 +2753,29 @@ static void test_QueueUserAPC(void)
 
     CloseHandle(thread);
 
+    apc_count = 0;
     ret = QueueUserAPC(user_apc, GetCurrentThread(), 0);
     ok(ret, "QueueUserAPC failed err %u\n", GetLastError());
+    ok(!apc_count, "APC count %u\n", apc_count);
     ret = SleepEx( 100, TRUE );
     ok( ret == WAIT_IO_COMPLETION, "SleepEx returned %u\n", ret);
+    ok(apc_count == 1, "APC count %u\n", apc_count);
 
     ret = pNtQueueApcThread( GetCurrentThread(), NULL, 0, 0, 0 );
     ok( !ret, "got %#x\n", ret);
     ret = SleepEx( 100, TRUE );
     ok( ret == WAIT_OBJECT_0, "SleepEx returned %u\n", ret);
+
+    apc_count = 0;
+    ret = QueueUserAPC(user_apc, GetCurrentThread(), 0);
+    ok(ret, "QueueUserAPC failed err %u\n", GetLastError());
+    ok(!apc_count, "APC count %u\n", apc_count);
+    status = pNtTestAlert();
+    ok(!status, "got %x\n", status);
+    ok(apc_count == 1, "APC count %u\n", apc_count);
+    status = pNtTestAlert();
+    ok(!status, "got %x\n", status);
+    ok(apc_count == 1, "APC count %u\n", apc_count);
 }
 
 START_TEST(sync)
@@ -2790,6 +2809,7 @@ START_TEST(sync)
     pRtlInterlockedPushListSList = (void *)GetProcAddress(hntdll, "RtlInterlockedPushListSList");
     pRtlInterlockedPushListSListEx = (void *)GetProcAddress(hntdll, "RtlInterlockedPushListSListEx");
     pNtQueueApcThread = (void *)GetProcAddress(hntdll, "NtQueueApcThread");
+    pNtTestAlert = (void *)GetProcAddress(hntdll, "NtTestAlert");
 
     argc = winetest_get_mainargs( &argv );
     if (argc >= 3)

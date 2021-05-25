@@ -412,7 +412,7 @@
 @ stdcall -syscall NtTerminateJobObject(long long)
 @ stdcall -syscall NtTerminateProcess(long long)
 @ stdcall -syscall NtTerminateThread(long long)
-@ stub NtTestAlert
+@ stdcall -syscall NtTestAlert()
 # @ stub NtTraceEvent
 # @ stub NtTranslateFilePath
 @ stdcall -syscall NtUnloadDriver(ptr)
@@ -1425,7 +1425,7 @@
 @ stdcall -private -syscall ZwTerminateJobObject(long long) NtTerminateJobObject
 @ stdcall -private -syscall ZwTerminateProcess(long long) NtTerminateProcess
 @ stdcall -private -syscall ZwTerminateThread(long long) NtTerminateThread
-@ stub ZwTestAlert
+@ stdcall -private -syscall ZwTestAlert() NtTestAlert
 # @ stub ZwTraceEvent
 # @ stub ZwTranslateFilePath
 @ stdcall -private -syscall ZwUnloadDriver(ptr) NtUnloadDriver

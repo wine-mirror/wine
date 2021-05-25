@@ -1973,7 +1973,7 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
  */
 struct apc_stack_layout * WINAPI setup_user_apc_dispatcher_stack( CONTEXT *context,
                                                                   struct apc_stack_layout *stack,
-                                                                  NSTATUS status )
+                                                                  NTSTATUS status )
 {
     CONTEXT c;
 

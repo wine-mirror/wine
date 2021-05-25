@@ -721,6 +721,20 @@ NTSTATUS WINAPI NtContinue( CONTEXT *context, BOOLEAN alertable )
 
 
 /***********************************************************************
+ *              NtTestAlert  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtTestAlert(void)
+{
+    user_apc_t apc;
+    NTSTATUS status;
+
+    status = server_select( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE, 0, NULL, NULL, &apc );
+    if (status == STATUS_USER_APC) invoke_user_apc( NULL, &apc, STATUS_SUCCESS );
+    return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
  *           server_queue_process_apc
  */
 unsigned int server_queue_process_apc( HANDLE process, const apc_call_t *call, apc_result_t *result )
