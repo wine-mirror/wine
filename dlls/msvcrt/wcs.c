@@ -1910,10 +1910,13 @@ wchar_t * CDECL wcstok_s( wchar_t *str, const wchar_t *delim,
     if (!str) str = *next_token;
 
     while (*str && wcschr( delim, *str )) str++;
-    if (!*str) return NULL;
-    ret = str++;
-    while (*str && !wcschr( delim, *str )) str++;
-    if (*str) *str++ = 0;
+    if (!*str) ret = NULL;
+    else
+    {
+        ret = str++;
+        while (*str && !wcschr( delim, *str )) str++;
+        if (*str) *str++ = 0;
+    }
     *next_token = str;
     return ret;
 }
