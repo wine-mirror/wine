@@ -2656,7 +2656,6 @@ then
 fi
 
 AC_CHECK_FUNCS(\
-	atanh \
 	exp2 \
 	exp2f \
 	expm1 \

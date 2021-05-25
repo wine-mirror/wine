@@ -43,19 +43,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /*********************************************************************
- *      atanh
- */
-static double CDECL unix_atanh(double x)
-{
-#ifdef HAVE_ATANH
-    return atanh(x);
-#else
-    if (-1e-6 < x && x < 1e-6) return x + x*x*x/3;
-    else return (log(1+x) - log(1-x)) / 2;
-#endif
-}
-
-/*********************************************************************
  *      cosh
  */
 static double CDECL unix_cosh( double x )
@@ -381,7 +368,6 @@ static float CDECL unix_tgammaf(float x)
 
 static const struct unix_funcs funcs =
 {
-    unix_atanh,
     unix_cosh,
     unix_coshf,
     unix_exp,

@@ -19616,7 +19616,6 @@ $as_echo "#define HAVE_ISNAN 1" >>confdefs.h
 fi
 
 for ac_func in \
-	atanh \
 	exp2 \
 	exp2f \
 	expm1 \

@@ -6668,21 +6668,38 @@ float CDECL acoshf(float x)
 
 /*********************************************************************
  *      atanh (MSVCR120.@)
+ *
+ * Copied from musl: src/math/atanh.c
  */
 double CDECL atanh(double x)
 {
-    double ret;
+    UINT64 ux = *(UINT64*)&x;
+    int e = ux >> 52 & 0x7ff;
+    int s = ux >> 63;
 
-    if (x > 1 || x < -1) {
+    /* |x| */
+    ux &= (UINT64)-1 / 2;
+    x = *(double*)&ux;
+
+    if (x > 1) {
         *_errno() = EDOM;
-        /* on Linux atanh returns -NAN in this case */
         feraiseexcept(FE_INVALID);
         return NAN;
     }
-    ret = unix_funcs->atanh( x );
 
-    if (!isfinite(ret)) *_errno() = ERANGE;
-    return ret;
+    if (e < 0x3ff - 1) {
+        if (e < 0x3ff - 32) {
+            fp_barrier(x + 0x1p120f);
+            if (e == 0) /* handle underflow */
+                fp_barrier(x * x);
+        } else { /* |x| < 0.5, up to 1.7ulp error */
+            x = 0.5 * log1p(2 * x + 2 * x * x / (1 - x));
+        }
+    } else { /* avoid overflow */
+        x = 0.5 * log1p(2 * (x / (1 - x)));
+        if (isinf(x)) *_errno() = ERANGE;
+    }
+    return s ? -x : x;
 }
 
 /*********************************************************************
