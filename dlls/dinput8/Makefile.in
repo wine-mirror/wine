@@ -6,6 +6,7 @@ EXTRALIBS = $(IOKIT_LIBS) $(FORCEFEEDBACK_LIBS)
 PARENTSRC = ../dinput
 
 C_SRCS = \
+	ansi.c \
 	config.c \
 	data_formats.c \
 	device.c \

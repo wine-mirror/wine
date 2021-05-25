@@ -5,6 +5,7 @@ EXTRADEFS = -DDIRECTINPUT_VERSION=0x0700
 EXTRALIBS = $(IOKIT_LIBS) $(FORCEFEEDBACK_LIBS)
 
 C_SRCS = \
+	ansi.c \
 	config.c \
 	data_formats.c \
 	device.c \
