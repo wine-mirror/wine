@@ -584,12 +584,6 @@ static HRESULT WINAPI SysMouseWImpl_Acquire(LPDIRECTINPUTDEVICE8W iface)
     return DI_OK;
 }
 
-static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
-{
-    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
-    return SysMouseWImpl_Acquire(IDirectInputDevice8W_from_impl(This));
-}
-
 /******************************************************************************
   *     Unacquire : frees the mouse
   */
@@ -617,12 +611,6 @@ static HRESULT WINAPI SysMouseWImpl_Unacquire(LPDIRECTINPUTDEVICE8W iface)
     }
 
     return DI_OK;
-}
-
-static HRESULT WINAPI SysMouseAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
-{
-    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
-    return SysMouseWImpl_Unacquire(IDirectInputDevice8W_from_impl(This));
 }
 
 /******************************************************************************
@@ -677,13 +665,6 @@ static HRESULT WINAPI SysMouseWImpl_GetDeviceData(LPDIRECTINPUTDEVICE8W iface,
     res = IDirectInputDevice2WImpl_GetDeviceData(iface, dodsize, dod, entries, flags);
     if (SUCCEEDED(res)) warp_check( This, FALSE );
     return res;
-}
-
-static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
-        DWORD dodsize, LPDIDEVICEOBJECTDATA dod, LPDWORD entries, DWORD flags)
-{
-    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
-    return SysMouseWImpl_GetDeviceData(IDirectInputDevice8W_from_impl(This), dodsize, dod, entries, flags);
 }
 
 /******************************************************************************
@@ -743,12 +724,6 @@ static HRESULT WINAPI SysMouseWImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface, REF
     }
 
     return DI_OK;
-}
-
-static HRESULT WINAPI SysMouseAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface, REFGUID rguid, LPDIPROPHEADER pdiph)
-{
-    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
-    return SysMouseWImpl_GetProperty(IDirectInputDevice8W_from_impl(This), rguid, pdiph);
 }
 
 /******************************************************************************
@@ -959,12 +934,12 @@ static const IDirectInputDevice8AVtbl SysMouseAvt =
     IDirectInputDevice2AImpl_Release,
     SysMouseAImpl_GetCapabilities,
     IDirectInputDevice2AImpl_EnumObjects,
-    SysMouseAImpl_GetProperty,
+    IDirectInputDevice2AImpl_GetProperty,
     IDirectInputDevice2AImpl_SetProperty,
-    SysMouseAImpl_Acquire,
-    SysMouseAImpl_Unacquire,
+    IDirectInputDevice2AImpl_Acquire,
+    IDirectInputDevice2AImpl_Unacquire,
     SysMouseAImpl_GetDeviceState,
-    SysMouseAImpl_GetDeviceData,
+    IDirectInputDevice2AImpl_GetDeviceData,
     IDirectInputDevice2AImpl_SetDataFormat,
     IDirectInputDevice2AImpl_SetEventNotification,
     IDirectInputDevice2AImpl_SetCooperativeLevel,

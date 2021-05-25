@@ -127,11 +127,6 @@ static inline JoystickImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W 
            JoystickGenericImpl, base), JoystickImpl, generic);
 }
 
-static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl(JoystickImpl *This)
-{
-    return &This->generic.base.IDirectInputDevice8W_iface;
-}
-
 typedef struct _EffectImpl {
     IDirectInputEffect IDirectInputEffect_iface;
     LONG ref;
@@ -1444,12 +1439,6 @@ static HRESULT WINAPI JoystickWImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface, REF
     return DI_OK;
 }
 
-static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface, REFGUID rguid, LPDIPROPHEADER pdiph)
-{
-    JoystickImpl *This = impl_from_IDirectInputDevice8A(iface);
-    return JoystickWImpl_GetProperty(IDirectInputDevice8W_from_impl(This), rguid, pdiph);
-}
-
 static HRESULT osx_set_autocenter(JoystickImpl *This,
         const DIPROPDWORD *header)
 {
@@ -1491,24 +1480,6 @@ static HRESULT WINAPI JoystickWImpl_SetProperty(IDirectInputDevice8W *iface,
     }
 
     return JoystickWGenericImpl_SetProperty(iface, prop, header);
-}
-
-static HRESULT WINAPI JoystickAImpl_SetProperty(IDirectInputDevice8A *iface,
-        const GUID *prop, const DIPROPHEADER *header)
-{
-    JoystickImpl *This = impl_from_IDirectInputDevice8A(iface);
-
-    TRACE("%p %s %p\n", This, debugstr_guid(prop), header);
-
-    switch(LOWORD(prop))
-    {
-    case (DWORD_PTR)DIPROP_AUTOCENTER:
-        return osx_set_autocenter(This, (const DIPROPDWORD *)header);
-    case (DWORD_PTR)DIPROP_FFGAIN:
-        return osx_set_ffgain(This, (const DIPROPDWORD *)header);
-    }
-
-    return JoystickAGenericImpl_SetProperty(iface, prop, header);
 }
 
 static CFUUIDRef effect_win_to_mac(const GUID *effect)
@@ -1576,18 +1547,6 @@ static HRESULT WINAPI JoystickWImpl_CreateEffect(IDirectInputDevice8W *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI JoystickAImpl_CreateEffect(IDirectInputDevice8A *iface,
-        const GUID *type, const DIEFFECT *params, IDirectInputEffect **out,
-        IUnknown *outer)
-{
-    JoystickImpl *This = impl_from_IDirectInputDevice8A(iface);
-
-    TRACE("(%p)->(%s %p %p %p)\n", This, debugstr_guid(type), params, out, outer);
-
-    return JoystickWImpl_CreateEffect(&This->generic.base.IDirectInputDevice8W_iface,
-            type, params, out, outer);
-}
-
 static HRESULT WINAPI JoystickWImpl_SendForceFeedbackCommand(IDirectInputDevice8W *iface,
         DWORD flags)
 {
@@ -1608,16 +1567,6 @@ static HRESULT WINAPI JoystickWImpl_SendForceFeedbackCommand(IDirectInputDevice8
     return S_OK;
 }
 
-static HRESULT WINAPI JoystickAImpl_SendForceFeedbackCommand(IDirectInputDevice8A *iface,
-        DWORD flags)
-{
-    JoystickImpl *This = impl_from_IDirectInputDevice8A(iface);
-
-    TRACE("%p 0x%x\n", This, flags);
-
-    return JoystickWImpl_SendForceFeedbackCommand(&This->generic.base.IDirectInputDevice8W_iface, flags);
-}
-
 const struct dinput_device joystick_osx_device = {
   "Wine OS X joystick driver",
   joydev_enum_deviceA,
@@ -1632,8 +1581,8 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
     IDirectInputDevice2AImpl_Release,
     JoystickAGenericImpl_GetCapabilities,
     IDirectInputDevice2AImpl_EnumObjects,
-    JoystickAImpl_GetProperty,
-    JoystickAImpl_SetProperty,
+    IDirectInputDevice2AImpl_GetProperty,
+    IDirectInputDevice2AImpl_SetProperty,
     IDirectInputDevice2AImpl_Acquire,
     IDirectInputDevice2AImpl_Unacquire,
     JoystickAGenericImpl_GetDeviceState,
@@ -1645,14 +1594,14 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
     JoystickAGenericImpl_GetDeviceInfo,
     IDirectInputDevice2AImpl_RunControlPanel,
     IDirectInputDevice2AImpl_Initialize,
-    JoystickAImpl_CreateEffect,
+    IDirectInputDevice2AImpl_CreateEffect,
     IDirectInputDevice2AImpl_EnumEffects,
     IDirectInputDevice2AImpl_GetEffectInfo,
     IDirectInputDevice2AImpl_GetForceFeedbackState,
-    JoystickAImpl_SendForceFeedbackCommand,
+    IDirectInputDevice2AImpl_SendForceFeedbackCommand,
     IDirectInputDevice2AImpl_EnumCreatedEffectObjects,
     IDirectInputDevice2AImpl_Escape,
-    JoystickAGenericImpl_Poll,
+    IDirectInputDevice2AImpl_Poll,
     IDirectInputDevice2AImpl_SendDeviceData,
     IDirectInputDevice7AImpl_EnumEffectsInFile,
     IDirectInputDevice7AImpl_WriteEffectToFile,

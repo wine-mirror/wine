@@ -114,11 +114,6 @@ static inline JoystickImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W 
            JoystickGenericImpl, base), JoystickImpl, generic);
 }
 
-static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl(JoystickImpl *This)
-{
-    return &This->generic.base.IDirectInputDevice8W_iface;
-}
-
 static const GUID DInput_Wine_Joystick_GUID = { /* 9e573ed9-7734-11d2-8d4a-23903fb6bdf7 */
   0x9e573ed9,
   0x7734,
@@ -703,12 +698,6 @@ static HRESULT WINAPI JoystickLinuxWImpl_Acquire(LPDIRECTINPUTDEVICE8W iface)
     return DI_OK;
 }
 
-static HRESULT WINAPI JoystickLinuxAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
-{
-    JoystickImpl *This = impl_from_IDirectInputDevice8A(iface);
-    return JoystickLinuxWImpl_Acquire(IDirectInputDevice8W_from_impl(This));
-}
-
 /******************************************************************************
   *     GetProperty : get input device properties
   */
@@ -770,12 +759,6 @@ static HRESULT WINAPI JoystickLinuxWImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface
     }
 
     return DI_OK;
-}
-
-static HRESULT WINAPI JoystickLinuxAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface, REFGUID rguid, LPDIPROPHEADER pdiph)
-{
-    JoystickImpl *This = impl_from_IDirectInputDevice8A(iface);
-    return JoystickLinuxWImpl_GetProperty(IDirectInputDevice8W_from_impl(This), rguid, pdiph);
 }
 
 /******************************************************************************
@@ -842,12 +825,6 @@ static HRESULT WINAPI JoystickLinuxWImpl_Unacquire(LPDIRECTINPUTDEVICE8W iface)
     }
 
     return DI_NOEFFECT;
-}
-
-static HRESULT WINAPI JoystickLinuxAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
-{
-    JoystickImpl *This = impl_from_IDirectInputDevice8A(iface);
-    return JoystickLinuxWImpl_Unacquire(IDirectInputDevice8W_from_impl(This));
 }
 
 static void joy_polldev( IDirectInputDevice8W *iface )
@@ -932,10 +909,10 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
         IDirectInputDevice2AImpl_Release,
 	JoystickAGenericImpl_GetCapabilities,
         IDirectInputDevice2AImpl_EnumObjects,
-	JoystickLinuxAImpl_GetProperty,
-	JoystickAGenericImpl_SetProperty,
-	JoystickLinuxAImpl_Acquire,
-	JoystickLinuxAImpl_Unacquire,
+	IDirectInputDevice2AImpl_GetProperty,
+	IDirectInputDevice2AImpl_SetProperty,
+	IDirectInputDevice2AImpl_Acquire,
+	IDirectInputDevice2AImpl_Unacquire,
 	JoystickAGenericImpl_GetDeviceState,
 	IDirectInputDevice2AImpl_GetDeviceData,
 	IDirectInputDevice2AImpl_SetDataFormat,
@@ -952,7 +929,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
 	IDirectInputDevice2AImpl_SendForceFeedbackCommand,
 	IDirectInputDevice2AImpl_EnumCreatedEffectObjects,
 	IDirectInputDevice2AImpl_Escape,
-	JoystickAGenericImpl_Poll,
+	IDirectInputDevice2AImpl_Poll,
 	IDirectInputDevice2AImpl_SendDeviceData,
 	IDirectInputDevice7AImpl_EnumEffectsInFile,
 	IDirectInputDevice7AImpl_WriteEffectToFile,

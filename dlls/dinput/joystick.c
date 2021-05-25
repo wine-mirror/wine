@@ -467,12 +467,6 @@ HRESULT WINAPI JoystickWGenericImpl_SetProperty(LPDIRECTINPUTDEVICE8W iface, REF
     return DI_OK;
 }
 
-HRESULT WINAPI JoystickAGenericImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface, REFGUID rguid, LPCDIPROPHEADER ph)
-{
-    JoystickGenericImpl *This = impl_from_IDirectInputDevice8A(iface);
-    return JoystickWGenericImpl_SetProperty(IDirectInputDevice8W_from_impl(This), rguid, ph);
-}
-
 #define DEBUG_TYPE(x) case (x): str = #x; break
 void _dump_DIDEVCAPS(const DIDEVCAPS *lpDIDevCaps)
 {
@@ -674,12 +668,6 @@ HRESULT WINAPI JoystickWGenericImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface, REF
     return DI_OK;
 }
 
-HRESULT WINAPI JoystickAGenericImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface, REFGUID rguid, LPDIPROPHEADER pdiph)
-{
-    JoystickGenericImpl *This = impl_from_IDirectInputDevice8A(iface);
-    return JoystickWGenericImpl_GetProperty(IDirectInputDevice8W_from_impl(This), rguid, pdiph);
-}
-
 /******************************************************************************
   *     GetDeviceInfo : get information about a device's identity
   */
@@ -786,12 +774,6 @@ HRESULT WINAPI JoystickWGenericImpl_Poll(LPDIRECTINPUTDEVICE8W iface)
 
     This->joy_polldev( iface );
     return DI_OK;
-}
-
-HRESULT WINAPI JoystickAGenericImpl_Poll(LPDIRECTINPUTDEVICE8A iface)
-{
-    JoystickGenericImpl *This = impl_from_IDirectInputDevice8A(iface);
-    return JoystickWGenericImpl_Poll(IDirectInputDevice8W_from_impl(This));
 }
 
 /******************************************************************************
