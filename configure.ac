@@ -2656,7 +2656,6 @@ then
 fi
 
 AC_CHECK_FUNCS(\
-	acosh \
 	asinh \
 	asinhf \
 	atanh \

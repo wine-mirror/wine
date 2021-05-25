@@ -43,19 +43,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /*********************************************************************
- *      acosh
- */
-static double CDECL unix_acosh(double x)
-{
-#ifdef HAVE_ACOSH
-    return acosh(x);
-#else
-    if (!isfinite(x*x)) return log(2) + log(x);
-    return log(x + sqrt(x*x-1));
-#endif
-}
-
-/*********************************************************************
  *      asinh
  */
 static double CDECL unix_asinh(double x)
@@ -435,7 +422,6 @@ static float CDECL unix_tgammaf(float x)
 
 static const struct unix_funcs funcs =
 {
-    unix_acosh,
     unix_asinh,
     unix_asinhf,
     unix_atanh,

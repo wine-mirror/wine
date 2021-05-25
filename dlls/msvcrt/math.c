@@ -6585,16 +6585,26 @@ float CDECL asinhf(float x)
 
 /*********************************************************************
  *      acosh (MSVCR120.@)
+ *
+ * Copied from musl: src/math/acosh.c
  */
 double CDECL acosh(double x)
 {
+    int e = *(UINT64*)&x >> 52 & 0x7ff;
+
     if (x < 1)
     {
         *_errno() = EDOM;
         feraiseexcept(FE_INVALID);
         return NAN;
     }
-    return unix_funcs->acosh( x );
+
+    if (e < 0x3ff + 1) /* |x| < 2, up to 2ulp error in [1,1.125] */
+        return log1p(x - 1 + sqrt((x - 1) * (x - 1) + 2 * (x - 1)));
+    if (e < 0x3ff + 26) /* |x| < 0x1p26 */
+        return log(2 * x - 1 / (x + sqrt(x * x - 1)));
+    /* |x| >= 0x1p26 or nan */
+    return log(x) + 0.693147180559945309417232121458176568;
 }
 
 /*********************************************************************
