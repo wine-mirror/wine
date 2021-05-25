@@ -418,6 +418,24 @@ static void test_wcstok(void)
     ok(!wcscmp(L"words", token), "expected \"words\", got \"%ls\"\n", token);
     token = wcstok(NULL, L" ", NULL);
     ok(!token, "expected NULL, got %p\n", token);
+
+    next = NULL;
+    wcscpy(buffer, input);
+    token = wcstok(buffer, L"=", &next);
+    ok(!wcscmp(token, input), "expected \"%ls\", got \"%ls\"\n", input, token);
+    ok(next == buffer + wcslen(input), "expected %p, got %p\n", buffer + wcslen(input), next);
+    token = wcstok(NULL, L"=", &next);
+    ok(!token, "expected NULL, got \"%ls\"\n", token);
+    ok(next == buffer + wcslen(input), "expected %p, got %p\n", buffer + wcslen(input), next);
+
+    next = NULL;
+    wcscpy(buffer, L"");
+    token = wcstok(buffer, L"=", &next);
+    ok(token == NULL, "expected NULL, got \"%ls\"\n", token);
+    ok(next == buffer, "expected %p, got %p\n", buffer, next);
+    token = wcstok(NULL, L"=", &next);
+    ok(!token, "expected NULL, got \"%ls\"\n", token);
+    ok(next == buffer, "expected %p, got %p\n", buffer, next);
 }
 
 static void test__strnicmp(void)
