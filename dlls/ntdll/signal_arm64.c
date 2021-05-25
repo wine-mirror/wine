@@ -552,10 +552,10 @@ NTSTATUS WINAPI KiUserExceptionDispatcher( EXCEPTION_RECORD *rec, CONTEXT *conte
 /*******************************************************************
  *		KiUserApcDispatcher (NTDLL.@)
  */
-void WINAPI KiUserApcDispatcher( CONTEXT *context, ULONG_PTR ctx, ULONG_PTR arg1, ULONG_PTR arg2,
-                                 PNTAPCFUNC func )
+void WINAPI KiUserApcDispatcher( CONTEXT *context, ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3,
+                                 void (CALLBACK *func)(ULONG_PTR,ULONG_PTR,ULONG_PTR,CONTEXT*) )
 {
-    func( ctx, arg1, arg2 );
+    func( arg1, arg2, arg3, context );
     NtContinue( context, TRUE );
 }
 
