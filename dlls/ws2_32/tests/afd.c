@@ -39,6 +39,43 @@ static void set_blocking(SOCKET s, ULONG blocking)
     ok(!ret, "got error %u\n", WSAGetLastError());
 }
 
+static void test_open_device(void)
+{
+    OBJECT_BASIC_INFORMATION info;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING string;
+    IO_STATUS_BLOCK io;
+    HANDLE handle;
+    SOCKET s;
+    int ret;
+
+    RtlInitUnicodeString(&string, L"\\Device\\Afd");
+    InitializeObjectAttributes(&attr, &string, 0, NULL, NULL);
+    ret = NtOpenFile(&handle, SYNCHRONIZE, &attr, &io, 0, 0);
+    ok(!ret, "got %#x\n", ret);
+    CloseHandle(handle);
+
+    RtlInitUnicodeString(&string, L"\\Device\\Afd\\");
+    InitializeObjectAttributes(&attr, &string, 0, NULL, NULL);
+    ret = NtOpenFile(&handle, SYNCHRONIZE, &attr, &io, 0, 0);
+    ok(!ret, "got %#x\n", ret);
+    CloseHandle(handle);
+
+    RtlInitUnicodeString(&string, L"\\Device\\Afd\\foobar");
+    InitializeObjectAttributes(&attr, &string, 0, NULL, NULL);
+    ret = NtOpenFile(&handle, SYNCHRONIZE, &attr, &io, 0, 0);
+    todo_wine ok(!ret, "got %#x\n", ret);
+    CloseHandle(handle);
+
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ret = NtQueryObject((HANDLE)s, ObjectBasicInformation, &info, sizeof(info), NULL);
+    ok(!ret, "got %#x\n", ret);
+    todo_wine ok(info.Attributes == OBJ_INHERIT, "got attributes %#x\n", info.Attributes);
+    todo_wine ok(info.GrantedAccess == (FILE_GENERIC_READ | FILE_GENERIC_WRITE | WRITE_DAC), "got access %#x\n", info.GrantedAccess);
+
+    closesocket(s);
+}
+
 static void test_recv(void)
 {
     const struct sockaddr_in bind_addr = {.sin_family = AF_INET, .sin_addr.s_addr = htonl(INADDR_LOOPBACK)};
@@ -397,6 +434,7 @@ START_TEST(afd)
 
     WSAStartup(MAKEWORD(2, 2), &data);
 
+    test_open_device();
     test_recv();
 
     WSACleanup();
