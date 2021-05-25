@@ -472,9 +472,16 @@ static void test_hash(const struct hash_test *tests, int testLen)
         ok(result && (hashLen == tests[i].hashLen), "Expected %d hash len, got %d.Error: %x\n",
             tests[i].hashLen, hashLen, GetLastError());
 
+        dataLen = 0xdeadbeef;
+        result = CryptGetHashParam(hHash, HP_HASHVAL, 0, &dataLen, 0);
+        ok(result, "Expected hash value return.\n");
+        ok(dataLen == hashLen, "Expected hash length to match.\n");
+
+        hashLen = 0xdeadbeef;
         result = CryptGetHashParam(hHash, HP_HASHVAL, hashValue, &hashLen, 0);
         ok(result, "Expected hash value return.\n");
 
+        ok(dataLen == hashLen, "Expected hash length to match.\n");
         ok(!memcmp(hashValue, tests[i].hash, tests[i].hashLen), "Incorrect hash output.\n");
 
         result = CryptHashData(hHash, data, dataLen, 0);

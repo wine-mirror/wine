@@ -942,7 +942,7 @@ BOOL WINAPI CPGetHashParam( HCRYPTPROV hprov, HCRYPTHASH hhash, DWORD param, BYT
             SetLastError( ERROR_MORE_DATA );
             return FALSE;
         }
-        memcpy( data, hash->value, hash->len );
+        if (data) memcpy( data, hash->value, hash->len );
         *len = hash->len;
         return TRUE;
 
