@@ -1208,6 +1208,7 @@ static BOOL DoPaste(ContextMenu *This)
 
 	    _ILFreeaPidl(apidl, lpcida->cidl);
 	    SHFree(pidl);
+	    GlobalUnlock(medium.u.hGlobal);
 
 	    /* release the medium*/
 	    ReleaseStgMedium(&medium);
