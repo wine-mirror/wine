@@ -57,8 +57,8 @@ typedef struct
 typedef struct IDirectInputDeviceImpl IDirectInputDeviceImpl;
 struct IDirectInputDeviceImpl
 {
-    IDirectInputDevice8A        IDirectInputDevice8A_iface;
     IDirectInputDevice8W        IDirectInputDevice8W_iface;
+    IDirectInputDevice8A        IDirectInputDevice8A_iface;
     LONG                        ref;
     GUID                        guid;
     CRITICAL_SECTION            crit;
@@ -92,7 +92,7 @@ extern DWORD get_config_key(HKEY, HKEY, const char*, char*, DWORD) DECLSPEC_HIDD
 /* Routines to do DataFormat / WineFormat conversions */
 extern void fill_DataFormat(void *out, DWORD size, const void *in, const DataFormat *df)  DECLSPEC_HIDDEN;
 extern void release_DataFormat(DataFormat *df)  DECLSPEC_HIDDEN;
-extern void queue_event(LPDIRECTINPUTDEVICE8A iface, int inst_id, DWORD data, DWORD time, DWORD seq) DECLSPEC_HIDDEN;
+extern void queue_event( IDirectInputDevice8W *iface, int inst_id, DWORD data, DWORD time, DWORD seq ) DECLSPEC_HIDDEN;
 /* Helper functions to work with data format */
 extern int id_to_object(LPCDIDATAFORMAT df, int id) DECLSPEC_HIDDEN;
 extern int find_property(const DataFormat *df, LPCDIPROPHEADER ph) DECLSPEC_HIDDEN;

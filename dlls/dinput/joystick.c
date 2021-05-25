@@ -68,10 +68,6 @@ static inline JoystickGenericImpl *impl_from_IDirectInputDevice8W(IDirectInputDe
 {
     return CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface), JoystickGenericImpl, base);
 }
-static inline IDirectInputDevice8A *IDirectInputDevice8A_from_impl(JoystickGenericImpl *This)
-{
-    return &This->base.IDirectInputDevice8A_iface;
-}
 static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl(JoystickGenericImpl *This)
 {
     return &This->base.IDirectInputDevice8W_iface;
@@ -788,7 +784,7 @@ HRESULT WINAPI JoystickWGenericImpl_Poll(LPDIRECTINPUTDEVICE8W iface)
         return DIERR_NOTACQUIRED;
     }
 
-    This->joy_polldev(IDirectInputDevice8A_from_impl(This));
+    This->joy_polldev( iface );
     return DI_OK;
 }
 
@@ -814,7 +810,7 @@ HRESULT WINAPI JoystickWGenericImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W iface, 
     }
 
     /* update joystick state */
-    This->joy_polldev(IDirectInputDevice8A_from_impl(This));
+    This->joy_polldev( iface );
 
     /* convert and copy data to user supplied buffer */
     fill_DataFormat(ptr, len, &This->js, &This->base.data_format);

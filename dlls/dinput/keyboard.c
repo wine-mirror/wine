@@ -59,10 +59,6 @@ static inline SysKeyboardImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice
 {
     return CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface), SysKeyboardImpl, base);
 }
-static inline IDirectInputDevice8A *IDirectInputDevice8A_from_impl(SysKeyboardImpl *This)
-{
-    return &This->base.IDirectInputDevice8A_iface;
-}
 static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl(SysKeyboardImpl *This)
 {
     return &This->base.IDirectInputDevice8W_iface;
@@ -103,9 +99,9 @@ static BYTE map_dik_code(DWORD scanCode, DWORD vkCode, DWORD subType, DWORD vers
     return scanCode;
 }
 
-int dinput_keyboard_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam )
+int dinput_keyboard_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam )
 {
-    SysKeyboardImpl *This = impl_from_IDirectInputDevice8A(iface);
+    SysKeyboardImpl *This = impl_from_IDirectInputDevice8W( iface );
     int dik_code, ret = This->base.dwCoopLevel & DISCL_EXCLUSIVE;
     KBDLLHOOKSTRUCT *hook = (KBDLLHOOKSTRUCT *)lparam;
     BYTE new_diks;
@@ -576,7 +572,7 @@ static HRESULT WINAPI SysKeyboardWImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface,
         case (DWORD_PTR) DIPROP_RANGE:
             return DIERR_UNSUPPORTED;
         default:
-            return IDirectInputDevice2AImpl_GetProperty( IDirectInputDevice8A_from_impl(This), rguid, pdiph );
+            return IDirectInputDevice2WImpl_GetProperty( iface, rguid, pdiph );
     }
     return DI_OK;
 }

@@ -797,9 +797,9 @@ static void get_osx_device_elements_props(JoystickImpl *device)
     }
 }
 
-static void poll_osx_device_state(LPDIRECTINPUTDEVICE8A iface)
+static void poll_osx_device_state( IDirectInputDevice8W *iface )
 {
-    JoystickImpl *device = impl_from_IDirectInputDevice8A(iface);
+    JoystickImpl *device = impl_from_IDirectInputDevice8W( iface );
     IOHIDElementRef device_main_element;
     IOHIDDeviceRef hid_device;
 

@@ -313,9 +313,9 @@ const struct dinput_device mouse_device = {
  *	SysMouseA (DInput Mouse support)
  */
 
-void dinput_mouse_rawinput_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam, RAWINPUT *ri )
+void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam, RAWINPUT *ri )
 {
-    SysMouseImpl* This = impl_from_IDirectInputDevice8A( iface );
+    SysMouseImpl *This = impl_from_IDirectInputDevice8W( iface );
     POINT rel, pt;
     DWORD seq;
     int i, wdata = 0;
@@ -397,10 +397,10 @@ void dinput_mouse_rawinput_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPA
 }
 
 /* low-level mouse hook */
-int dinput_mouse_hook( LPDIRECTINPUTDEVICE8A iface, WPARAM wparam, LPARAM lparam )
+int dinput_mouse_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam )
 {
     MSLLHOOKSTRUCT *hook = (MSLLHOOKSTRUCT *)lparam;
-    SysMouseImpl* This = impl_from_IDirectInputDevice8A(iface);
+    SysMouseImpl *This = impl_from_IDirectInputDevice8W( iface );
     int wdata = 0, inst_id = -1, ret = 0;
 
     TRACE("msg %lx @ (%d %d)\n", wparam, hook->pt.x, hook->pt.y);

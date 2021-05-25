@@ -986,10 +986,10 @@ HRESULT _set_action_map(LPDIRECTINPUTDEVICE8W iface, LPDIACTIONFORMATW lpdiaf, L
  *	queue_event - add new event to the ring queue
  */
 
-void queue_event(LPDIRECTINPUTDEVICE8A iface, int inst_id, DWORD data, DWORD time, DWORD seq)
+void queue_event( IDirectInputDevice8W *iface, int inst_id, DWORD data, DWORD time, DWORD seq )
 {
     static ULONGLONG notify_ms = 0;
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
+    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W( iface );
     int next_pos, ofs = id_to_offset(&This->data_format, inst_id);
     ULONGLONG time_ms = GetTickCount64();
 
@@ -1250,8 +1250,8 @@ HRESULT WINAPI IDirectInputDevice2WImpl_QueryInterface(LPDIRECTINPUTDEVICE8W ifa
     IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8W(iface);
 
     TRACE("(%p)->(%s,%p)\n", This, debugstr_guid(riid), ppobj);
-    if (IsEqualGUID(&IID_IUnknown, riid) ||
-        IsEqualGUID(&IID_IDirectInputDeviceA,  riid) ||
+
+    if (IsEqualGUID(&IID_IDirectInputDeviceA, riid) ||
         IsEqualGUID(&IID_IDirectInputDevice2A, riid) ||
         IsEqualGUID(&IID_IDirectInputDevice7A, riid) ||
         IsEqualGUID(&IID_IDirectInputDevice8A, riid))
@@ -1260,7 +1260,9 @@ HRESULT WINAPI IDirectInputDevice2WImpl_QueryInterface(LPDIRECTINPUTDEVICE8W ifa
         *ppobj = IDirectInputDevice8A_from_impl(This);
         return DI_OK;
     }
-    if (IsEqualGUID(&IID_IDirectInputDeviceW,  riid) ||
+
+    if (IsEqualGUID(&IID_IUnknown, riid) ||
+        IsEqualGUID(&IID_IDirectInputDeviceW, riid) ||
         IsEqualGUID(&IID_IDirectInputDevice2W, riid) ||
         IsEqualGUID(&IID_IDirectInputDevice7W, riid) ||
         IsEqualGUID(&IID_IDirectInputDevice8W, riid))
