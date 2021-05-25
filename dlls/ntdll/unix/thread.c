@@ -787,36 +787,67 @@ void set_thread_id( TEB *teb, DWORD pid, DWORD tid )
 NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR zero_bits, SIZE_T reserve_size,
                             SIZE_T commit_size, SIZE_T *pthread_size )
 {
-    INITIAL_TEB stack, stack64;
+    INITIAL_TEB stack;
     NTSTATUS status;
 
-    if ((status = virtual_alloc_thread_stack( &stack, zero_bits, reserve_size, commit_size, pthread_size )))
-        return status;
-
-    if (teb->WowTebOffset && !(status = virtual_alloc_thread_stack( &stack64, 0, 0x40000, 0x40000, NULL )))
+    if (teb->WowTebOffset)
     {
+        WOW64_CPURESERVED *cpu;
         SIZE_T cpusize = sizeof(WOW64_CPURESERVED) +
             ((get_machine_context_size( main_image_info.Machine ) + 7) & ~7) + sizeof(ULONG64);
-        WOW64_CPURESERVED *cpu = (WOW64_CPURESERVED *)(((ULONG_PTR)stack64.StackBase - cpusize) & ~15);
+
 #ifdef _WIN64
         TEB32 *teb32 = (TEB32 *)((char *)teb + teb->WowTebOffset);
+
+        /* 32-bit stack */
+        if ((status = virtual_alloc_thread_stack( &stack, zero_bits, reserve_size, commit_size, NULL )))
+            return status;
         teb32->Tib.StackBase = PtrToUlong( stack.StackBase );
         teb32->Tib.StackLimit = PtrToUlong( stack.StackLimit );
         teb32->DeallocationStack = PtrToUlong( stack.DeallocationStack );
-        stack64.StackBase = teb->TlsSlots[WOW64_TLS_CPURESERVED] = cpu;
-        stack = stack64;
+
+        /* 64-bit stack */
+        if ((status = virtual_alloc_thread_stack( &stack, 0, 0x40000, 0x40000, pthread_size )))
+            return status;
+        cpu = (WOW64_CPURESERVED *)(((ULONG_PTR)stack.StackBase - cpusize) & ~15);
+        cpu->Machine = main_image_info.Machine;
+        teb->Tib.StackBase = teb->TlsSlots[WOW64_TLS_CPURESERVED] = cpu;
+        teb->Tib.StackLimit = stack.StackLimit;
+        teb->DeallocationStack = stack.DeallocationStack;
+
+        if (pthread_size)
+        {
+            struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
+            thread_data->start_stack = stack.StackBase;
+            *pthread_size += (char *)stack.StackBase - (char *)cpu;
+        }
+        return STATUS_SUCCESS;
 #else
         TEB64 *teb64 = (TEB64 *)((char *)teb + teb->WowTebOffset);
-        teb64->Tib.StackBase = teb64->TlsSlots[WOW64_TLS_CPURESERVED] = PtrToUlong( cpu );
-        teb64->Tib.StackLimit = PtrToUlong( stack64.StackLimit );
-        teb64->DeallocationStack = PtrToUlong( stack64.DeallocationStack );
-#endif
+
+        /* 64-bit stack */
+        if ((status = virtual_alloc_thread_stack( &stack, 0, 0x40000, 0x40000, NULL ))) return status;
+
+        cpu = (WOW64_CPURESERVED *)(((ULONG_PTR)stack.StackBase - cpusize) & ~15);
         cpu->Machine = main_image_info.Machine;
+        teb64->Tib.StackBase = teb64->TlsSlots[WOW64_TLS_CPURESERVED] = PtrToUlong( cpu );
+        teb64->Tib.StackLimit = PtrToUlong( stack.StackLimit );
+        teb64->DeallocationStack = PtrToUlong( stack.DeallocationStack );
+#endif
     }
+
+    /* native stack */
+    if ((status = virtual_alloc_thread_stack( &stack, zero_bits, reserve_size, commit_size, pthread_size )))
+        return status;
     teb->Tib.StackBase = stack.StackBase;
     teb->Tib.StackLimit = stack.StackLimit;
     teb->DeallocationStack = stack.DeallocationStack;
-    return status;
+    if (pthread_size)
+    {
+        struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
+        thread_data->start_stack = stack.StackBase;
+    }
+    return STATUS_SUCCESS;
 }
 
 
