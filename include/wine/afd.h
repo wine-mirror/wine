@@ -27,6 +27,20 @@
 
 #define IOCTL_AFD_LISTEN                    CTL_CODE(FILE_DEVICE_BEEP, 0x802, METHOD_NEITHER,  FILE_ANY_ACCESS)
 #define IOCTL_AFD_RECV                      CTL_CODE(FILE_DEVICE_BEEP, 0x805, METHOD_NEITHER,  FILE_ANY_ACCESS)
+#define IOCTL_AFD_POLL                      CTL_CODE(FILE_DEVICE_BEEP, 0x809, METHOD_BUFFERED, FILE_ANY_ACCESS)
+
+#define AFD_POLL_READ           0x0001
+#define AFD_POLL_OOB            0x0002
+#define AFD_POLL_WRITE          0x0004
+#define AFD_POLL_HUP            0x0008
+#define AFD_POLL_RESET          0x0010
+#define AFD_POLL_CLOSE          0x0020
+#define AFD_POLL_CONNECT        0x0040
+#define AFD_POLL_ACCEPT         0x0080
+#define AFD_POLL_CONNECT_ERR    0x0100
+/* I have never seen these reported, but StarCraft Remastered polls for them. */
+#define AFD_POLL_UNK1           0x0200
+#define AFD_POLL_UNK2           0x0400
 
 struct afd_listen_params
 {
@@ -49,6 +63,22 @@ struct afd_recv_params
     int recv_flags;
     int msg_flags;
 };
+
+#include <pshpack4.h>
+struct afd_poll_params
+{
+    LONGLONG timeout;
+    unsigned int count;
+    BOOLEAN unknown;
+    BOOLEAN padding[3];
+    struct
+    {
+        SOCKET socket;
+        int flags;
+        NTSTATUS status;
+    } sockets[1];
+};
+#include <poppack.h>
 
 #define IOCTL_AFD_WINE_CREATE               CTL_CODE(FILE_DEVICE_NETWORK, 200, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_AFD_WINE_ACCEPT               CTL_CODE(FILE_DEVICE_NETWORK, 201, METHOD_BUFFERED, FILE_ANY_ACCESS)

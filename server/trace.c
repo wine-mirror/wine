@@ -1372,6 +1372,38 @@ static void dump_varargs_handle_infos( const char *prefix, data_size_t size )
     fputc( '}', stderr );
 }
 
+static void dump_varargs_poll_socket_input( const char *prefix, data_size_t size )
+{
+    const struct poll_socket_input *input;
+
+    fprintf( stderr, "%s{", prefix );
+    while (size >= sizeof(*input))
+    {
+        input = cur_data;
+        fprintf( stderr, "{socket=%04x,flags=%08x}", input->socket, input->flags );
+        size -= sizeof(*input);
+        remove_data( sizeof(*input) );
+        if (size) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+}
+
+static void dump_varargs_poll_socket_output( const char *prefix, data_size_t size )
+{
+    const struct poll_socket_output *output;
+
+    fprintf( stderr, "%s{", prefix );
+    while (size >= sizeof(*output))
+    {
+        output = cur_data;
+        fprintf( stderr, "{flags=%08x,status=%s}", output->flags, get_status_name( output->status ) );
+        size -= sizeof(*output);
+        remove_data( sizeof(*output) );
+        if (size) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+}
+
 typedef void (*dump_func)( const void *req );
 
 /* Everything below this line is generated automatically by tools/make_requests */
@@ -2105,6 +2137,20 @@ static void dump_recv_socket_reply( const struct recv_socket_reply *req )
 {
     fprintf( stderr, " wait=%04x", req->wait );
     fprintf( stderr, ", options=%08x", req->options );
+}
+
+static void dump_poll_socket_request( const struct poll_socket_request *req )
+{
+    dump_async_data( " async=", &req->async );
+    dump_timeout( ", timeout=", &req->timeout );
+    dump_varargs_poll_socket_input( ", sockets=", cur_size );
+}
+
+static void dump_poll_socket_reply( const struct poll_socket_reply *req )
+{
+    fprintf( stderr, " wait=%04x", req->wait );
+    fprintf( stderr, ", options=%08x", req->options );
+    dump_varargs_poll_socket_output( ", sockets=", cur_size );
 }
 
 static void dump_get_next_console_request_request( const struct get_next_console_request_request *req )
@@ -4555,6 +4601,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_enable_socket_event_request,
     (dump_func)dump_set_socket_deferred_request,
     (dump_func)dump_recv_socket_request,
+    (dump_func)dump_poll_socket_request,
     (dump_func)dump_get_next_console_request_request,
     (dump_func)dump_read_directory_changes_request,
     (dump_func)dump_read_change_request,
@@ -4833,6 +4880,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     NULL,
     (dump_func)dump_recv_socket_reply,
+    (dump_func)dump_poll_socket_reply,
     (dump_func)dump_get_next_console_request_reply,
     NULL,
     (dump_func)dump_read_change_reply,
@@ -5111,6 +5159,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "enable_socket_event",
     "set_socket_deferred",
     "recv_socket",
+    "poll_socket",
     "get_next_console_request",
     "read_directory_changes",
     "read_change",

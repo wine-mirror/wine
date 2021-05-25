@@ -96,6 +96,23 @@
 #include "request.h"
 #include "user.h"
 
+static struct list poll_list = LIST_INIT( poll_list );
+
+struct poll_req
+{
+    struct list entry;
+    struct async *async;
+    struct iosb *iosb;
+    struct timeout_user *timeout;
+    unsigned int count;
+    struct poll_socket_output *output;
+    struct
+    {
+        struct sock *sock;
+        int flags;
+    } sockets[1];
+};
+
 struct accept_req
 {
     struct list entry;
@@ -151,6 +168,7 @@ struct sock
     struct async_queue  ifchange_q;  /* queue for interface change notifications */
     struct async_queue  accept_q;    /* queue for asynchronous accepts */
     struct async_queue  connect_q;   /* queue for asynchronous connects */
+    struct async_queue  poll_q;      /* queue for asynchronous polls */
     struct object      *ifchange_obj; /* the interface change notification object */
     struct list         ifchange_entry; /* entry in ifchange notification list */
     struct list         accept_list; /* list of pending accept requests */
@@ -621,6 +639,106 @@ static void complete_async_connect( struct sock *sock )
     }
 }
 
+static void free_poll_req( void *private )
+{
+    struct poll_req *req = private;
+    unsigned int i;
+
+    if (req->timeout) remove_timeout_user( req->timeout );
+
+    for (i = 0; i < req->count; ++i)
+        release_object( req->sockets[i].sock );
+    release_object( req->async );
+    release_object( req->iosb );
+    list_remove( &req->entry );
+    free( req );
+}
+
+static int is_oobinline( struct sock *sock )
+{
+    int oobinline;
+    socklen_t len = sizeof(oobinline);
+    return !getsockopt( get_unix_fd( sock->fd ), SOL_SOCKET, SO_OOBINLINE, (char *)&oobinline, &len ) && oobinline;
+}
+
+static int get_poll_flags( struct sock *sock, int event )
+{
+    int flags = 0;
+
+    /* A connection-mode socket which has never been connected does not return
+     * write or hangup events, but Linux reports POLLOUT | POLLHUP. */
+    if (sock->type == WS_SOCK_STREAM && !(sock->state & (FD_CONNECT | FD_WINE_CONNECTED | FD_WINE_LISTENING)))
+        event &= ~(POLLOUT | POLLHUP);
+
+    if (event & POLLIN)
+    {
+        if (sock->state & FD_WINE_LISTENING)
+            flags |= AFD_POLL_ACCEPT;
+        else
+            flags |= AFD_POLL_READ;
+    }
+    if (event & POLLPRI)
+        flags |= is_oobinline( sock ) ? AFD_POLL_READ : AFD_POLL_OOB;
+    if (event & POLLOUT)
+        flags |= AFD_POLL_WRITE;
+    if (sock->state & FD_WINE_CONNECTED)
+        flags |= AFD_POLL_CONNECT;
+    if (event & POLLHUP)
+        flags |= AFD_POLL_HUP;
+    if (event & POLLERR)
+        flags |= AFD_POLL_CONNECT_ERR;
+
+    return flags;
+}
+
+static void complete_async_polls( struct sock *sock, int event, int error )
+{
+    int flags = get_poll_flags( sock, event );
+    struct poll_req *req, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE( req, next, &poll_list, struct poll_req, entry )
+    {
+        struct iosb *iosb = req->iosb;
+        unsigned int i;
+
+        if (iosb->status != STATUS_PENDING) continue;
+
+        for (i = 0; i < req->count; ++i)
+        {
+            if (req->sockets[i].sock != sock) continue;
+            if (!(req->sockets[i].flags & flags)) continue;
+
+            if (debug_level)
+                fprintf( stderr, "completing poll for socket %p, wanted %#x got %#x\n",
+                         sock, req->sockets[i].flags, flags );
+
+            req->output[i].flags = req->sockets[i].flags & flags;
+            req->output[i].status = sock_get_ntstatus( error );
+
+            iosb->status = STATUS_SUCCESS;
+            iosb->out_data = req->output;
+            iosb->out_size = req->count * sizeof(*req->output);
+            async_terminate( req->async, STATUS_ALERTED );
+            break;
+        }
+    }
+}
+
+static void async_poll_timeout( void *private )
+{
+    struct poll_req *req = private;
+    struct iosb *iosb = req->iosb;
+
+    req->timeout = NULL;
+
+    if (iosb->status != STATUS_PENDING) return;
+
+    iosb->status = STATUS_TIMEOUT;
+    iosb->out_data = req->output;
+    iosb->out_size = req->count * sizeof(*req->output);
+    async_terminate( req->async, STATUS_ALERTED );
+}
+
 static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
 {
     if (event & (POLLIN | POLLPRI))
@@ -820,6 +938,8 @@ static void sock_poll_event( struct fd *fd, int event )
             event |= POLLHUP;
     }
 
+    complete_async_polls( sock, event, error );
+
     event = sock_dispatch_asyncs( sock, event, error );
     sock_dispatch_events( sock, prevstate, event, error );
 
@@ -835,11 +955,34 @@ static void sock_dump( struct object *obj, int verbose )
             sock->mask, sock->pending_events, sock->reported_events );
 }
 
+static int poll_flags_from_afd( struct sock *sock, int flags )
+{
+    int ev = 0;
+
+    /* A connection-mode socket which has never been connected does
+     * not return write or hangup events, but Linux returns
+     * POLLOUT | POLLHUP. */
+    if (sock->type == WS_SOCK_STREAM && !(sock->state & (FD_CONNECT | FD_WINE_CONNECTED | FD_WINE_LISTENING)))
+        return -1;
+
+    if (flags & (AFD_POLL_READ | AFD_POLL_ACCEPT))
+        ev |= POLLIN;
+    if ((flags & AFD_POLL_HUP) && sock->type == WS_SOCK_STREAM)
+        ev |= POLLIN;
+    if (flags & AFD_POLL_OOB)
+        ev |= is_oobinline( sock ) ? POLLIN : POLLPRI;
+    if (flags & AFD_POLL_WRITE)
+        ev |= POLLOUT;
+
+    return ev;
+}
+
 static int sock_get_poll_events( struct fd *fd )
 {
     struct sock *sock = get_fd_user( fd );
     unsigned int mask = sock->mask & ~sock->reported_events;
     unsigned int smask = sock->state & mask;
+    struct poll_req *req;
     int ev = 0;
 
     assert( sock->obj.ops == &sock_ops );
@@ -868,6 +1011,18 @@ static int sock_get_poll_events( struct fd *fd )
     }
     else if (smask & FD_WRITE)
         ev |= POLLOUT;
+
+    LIST_FOR_EACH_ENTRY( req, &poll_list, struct poll_req, entry )
+    {
+        unsigned int i;
+
+        for (i = 0; i < req->count; ++i)
+        {
+            if (req->sockets[i].sock != sock) continue;
+
+            ev |= poll_flags_from_afd( sock, req->sockets[i].flags );
+        }
+    }
 
     return ev;
 }
@@ -933,18 +1088,45 @@ static struct fd *sock_get_fd( struct object *obj )
 static int sock_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
 {
     struct sock *sock = (struct sock *)obj;
-    struct accept_req *req, *next;
 
     if (sock->obj.handle_count == 1) /* last handle */
     {
+        struct accept_req *accept_req, *accept_next;
+        struct poll_req *poll_req, *poll_next;
+
         if (sock->accept_recv_req)
             async_terminate( sock->accept_recv_req->async, STATUS_CANCELLED );
 
-        LIST_FOR_EACH_ENTRY_SAFE( req, next, &sock->accept_list, struct accept_req, entry )
-            async_terminate( req->async, STATUS_CANCELLED );
+        LIST_FOR_EACH_ENTRY_SAFE( accept_req, accept_next, &sock->accept_list, struct accept_req, entry )
+            async_terminate( accept_req->async, STATUS_CANCELLED );
 
         if (sock->connect_req)
             async_terminate( sock->connect_req->async, STATUS_CANCELLED );
+
+        LIST_FOR_EACH_ENTRY_SAFE( poll_req, poll_next, &poll_list, struct poll_req, entry )
+        {
+            struct iosb *iosb = poll_req->iosb;
+            unsigned int i;
+
+            if (iosb->status != STATUS_PENDING) continue;
+
+            for (i = 0; i < poll_req->count; ++i)
+            {
+                if (poll_req->sockets[i].sock == sock)
+                {
+                    iosb->status = STATUS_SUCCESS;
+                    poll_req->output[i].flags = AFD_POLL_CLOSE;
+                    poll_req->output[i].status = 0;
+                }
+            }
+
+            if (iosb->status != STATUS_PENDING)
+            {
+                iosb->out_data = poll_req->output;
+                iosb->out_size = poll_req->count * sizeof(*poll_req->output);
+                async_terminate( poll_req->async, STATUS_ALERTED );
+            }
+        }
     }
 
     return 1;
@@ -968,6 +1150,7 @@ static void sock_destroy( struct object *obj )
     free_async_queue( &sock->ifchange_q );
     free_async_queue( &sock->accept_q );
     free_async_queue( &sock->connect_q );
+    free_async_queue( &sock->poll_q );
     if (sock->event) release_object( sock->event );
     if (sock->fd)
     {
@@ -1007,6 +1190,7 @@ static struct sock *create_socket(void)
     init_async_queue( &sock->ifchange_q );
     init_async_queue( &sock->accept_q );
     init_async_queue( &sock->connect_q );
+    init_async_queue( &sock->poll_q );
     memset( sock->errors, 0, sizeof(sock->errors) );
     list_init( &sock->accept_list );
     return sock;
@@ -1710,6 +1894,101 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
     }
 }
 
+static int poll_socket( struct sock *poll_sock, struct async *async, timeout_t timeout,
+                        unsigned int count, const struct poll_socket_input *input )
+{
+    struct poll_socket_output *output;
+    struct poll_req *req;
+    unsigned int i, j;
+
+    if (!(output = mem_alloc( count * sizeof(*output) )))
+        return 0;
+    memset( output, 0, count * sizeof(*output) );
+
+    if (!(req = mem_alloc( offsetof( struct poll_req, sockets[count] ) )))
+    {
+        free( output );
+        return 0;
+    }
+
+    req->timeout = NULL;
+    if (timeout && timeout != TIMEOUT_INFINITE &&
+        !(req->timeout = add_timeout_user( timeout, async_poll_timeout, req )))
+    {
+        free( req );
+        free( output );
+        return 0;
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        req->sockets[i].sock = (struct sock *)get_handle_obj( current->process, input[i].socket, 0, &sock_ops );
+        if (!req->sockets[i].sock)
+        {
+            for (j = 0; j < i; ++j) release_object( req->sockets[i].sock );
+            if (req->timeout) remove_timeout_user( req->timeout );
+            free( req );
+            free( output );
+            return 0;
+        }
+        req->sockets[i].flags = input[i].flags;
+    }
+
+    req->count = count;
+    req->async = (struct async *)grab_object( async );
+    req->iosb = async_get_iosb( async );
+    req->output = output;
+
+    list_add_tail( &poll_list, &req->entry );
+    async_set_completion_callback( async, free_poll_req, req );
+    queue_async( &poll_sock->poll_q, async );
+
+    if (!timeout) req->iosb->status = STATUS_SUCCESS;
+
+    for (i = 0; i < count; ++i)
+    {
+        struct sock *sock = req->sockets[i].sock;
+        struct pollfd pollfd;
+        int flags;
+
+        pollfd.fd = get_unix_fd( sock->fd );
+        pollfd.events = poll_flags_from_afd( sock, req->sockets[i].flags );
+        if (pollfd.events < 0 || poll( &pollfd, 1, 0 ) < 0) continue;
+
+        if ((req->sockets[i].flags & AFD_POLL_HUP) && (pollfd.revents & POLLIN) &&
+            sock->type == WS_SOCK_STREAM)
+        {
+            char dummy;
+
+            if (!recv( get_unix_fd( sock->fd ), &dummy, 1, MSG_PEEK ))
+            {
+                pollfd.revents &= ~POLLIN;
+                pollfd.revents |= POLLHUP;
+            }
+        }
+
+        flags = get_poll_flags( sock, pollfd.revents ) & req->sockets[i].flags;
+        if (flags)
+        {
+            req->iosb->status = STATUS_SUCCESS;
+            output[i].flags = flags;
+            output[i].status = sock_get_ntstatus( sock_error( sock->fd ) );
+        }
+    }
+
+    if (req->iosb->status != STATUS_PENDING)
+    {
+        req->iosb->out_data = output;
+        req->iosb->out_size = count * sizeof(*output);
+        async_terminate( req->async, STATUS_ALERTED );
+    }
+
+    for (i = 0; i < req->count; ++i)
+        sock_reselect( req->sockets[i].sock );
+    set_error( STATUS_PENDING );
+    return 1;
+}
+
 #ifdef HAVE_LINUX_RTNETLINK_H
 
 /* only keep one ifchange object around, all sockets waiting for wakeups will look to it */
@@ -2199,5 +2478,26 @@ DECL_HANDLER(recv_socket)
         reply->options = get_fd_options( fd );
         release_object( async );
     }
+    release_object( sock );
+}
+
+DECL_HANDLER(poll_socket)
+{
+    struct sock *sock = (struct sock *)get_handle_obj( current->process, req->async.handle, 0, &sock_ops );
+    const struct poll_socket_input *input = get_req_data();
+    struct async *async;
+    unsigned int count;
+
+    if (!sock) return;
+
+    count = get_req_data_size() / sizeof(*input);
+
+    if ((async = create_request_async( sock->fd, get_fd_comp_flags( sock->fd ), &req->async )))
+    {
+        reply->wait = async_handoff( async, poll_socket( sock, async, req->timeout, count, input ), NULL, 0 );
+        reply->options = get_fd_options( sock->fd );
+        release_object( async );
+    }
+
     release_object( sock );
 }

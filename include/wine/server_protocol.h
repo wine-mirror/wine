@@ -1834,6 +1834,36 @@ struct recv_socket_reply
 };
 
 
+struct poll_socket_input
+{
+    obj_handle_t socket;
+    int flags;
+};
+
+struct poll_socket_output
+{
+    int flags;
+    unsigned int status;
+};
+
+
+struct poll_socket_request
+{
+    struct request_header __header;
+    char __pad_12[4];
+    async_data_t async;
+    timeout_t    timeout;
+    /* VARARG(sockets,poll_socket_input); */
+};
+struct poll_socket_reply
+{
+    struct reply_header __header;
+    obj_handle_t wait;
+    unsigned int options;
+    /* VARARG(sockets,poll_socket_output); */
+};
+
+
 
 struct get_next_console_request_request
 {
@@ -5485,6 +5515,7 @@ enum request
     REQ_enable_socket_event,
     REQ_set_socket_deferred,
     REQ_recv_socket,
+    REQ_poll_socket,
     REQ_get_next_console_request,
     REQ_read_directory_changes,
     REQ_read_change,
@@ -5767,6 +5798,7 @@ union generic_request
     struct enable_socket_event_request enable_socket_event_request;
     struct set_socket_deferred_request set_socket_deferred_request;
     struct recv_socket_request recv_socket_request;
+    struct poll_socket_request poll_socket_request;
     struct get_next_console_request_request get_next_console_request_request;
     struct read_directory_changes_request read_directory_changes_request;
     struct read_change_request read_change_request;
@@ -6047,6 +6079,7 @@ union generic_reply
     struct enable_socket_event_reply enable_socket_event_reply;
     struct set_socket_deferred_reply set_socket_deferred_reply;
     struct recv_socket_reply recv_socket_reply;
+    struct poll_socket_reply poll_socket_reply;
     struct get_next_console_request_reply get_next_console_request_reply;
     struct read_directory_changes_reply read_directory_changes_reply;
     struct read_change_reply read_change_reply;
@@ -6267,7 +6300,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 704
+#define SERVER_PROTOCOL_VERSION 705
 
 /* ### protocol_version end ### */
 
