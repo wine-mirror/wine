@@ -1247,38 +1247,6 @@ ULONG WINAPI IDirectInputDevice2WImpl_AddRef(LPDIRECTINPUTDEVICE8W iface)
     return ref;
 }
 
-HRESULT WINAPI IDirectInputDevice2AImpl_EnumObjects(LPDIRECTINPUTDEVICE8A iface,
-        LPDIENUMDEVICEOBJECTSCALLBACKA lpCallback, LPVOID lpvRef, DWORD dwFlags)
-{
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
-    DIDEVICEOBJECTINSTANCEA ddoi;
-    int i;
-
-    TRACE("(%p)->(%p,%p flags:%08x)\n", This, lpCallback, lpvRef, dwFlags);
-    TRACE("  - flags = ");
-    _dump_EnumObjects_flags(dwFlags);
-    TRACE("\n");
-
-    if (!lpCallback) return DIERR_INVALIDPARAM;
-
-    /* Only the fields till dwFFMaxForce are relevant */
-    memset(&ddoi, 0, sizeof(ddoi));
-    ddoi.dwSize = FIELD_OFFSET(DIDEVICEOBJECTINSTANCEA, dwFFMaxForce);
-
-    for (i = 0; i < This->data_format.wine_df->dwNumObjs; i++)
-    {
-        LPDIOBJECTDATAFORMAT odf = dataformat_to_odf(This->data_format.wine_df, i);
-
-        if (dwFlags != DIDFT_ALL && !(dwFlags & DIDFT_GETTYPE(odf->dwType))) continue;
-        if (IDirectInputDevice_GetObjectInfo(iface, &ddoi, odf->dwType, DIPH_BYID) != DI_OK)
-            continue;
-
-	if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE) break;
-    }
-
-    return DI_OK;
-}
-
 HRESULT WINAPI IDirectInputDevice2WImpl_EnumObjects(LPDIRECTINPUTDEVICE8W iface,
         LPDIENUMDEVICEOBJECTSCALLBACKW lpCallback, LPVOID lpvRef, DWORD dwFlags)
 {

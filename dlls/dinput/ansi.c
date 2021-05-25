@@ -43,6 +43,27 @@ static IDirectInputDevice8W *IDirectInputDevice8W_from_impl( IDirectInputDeviceI
     return &impl->IDirectInputDevice8W_iface;
 }
 
+static void dideviceobjectinstance_wtoa( const DIDEVICEOBJECTINSTANCEW *in, DIDEVICEOBJECTINSTANCEA *out )
+{
+    out->guidType = in->guidType;
+    out->dwOfs = in->dwOfs;
+    out->dwType = in->dwType;
+    out->dwFlags = in->dwFlags;
+    WideCharToMultiByte( CP_ACP, 0, in->tszName, -1, out->tszName, sizeof(out->tszName), NULL, NULL );
+
+    if (out->dwSize <= FIELD_OFFSET( DIDEVICEOBJECTINSTANCEA, dwFFMaxForce )) return;
+
+    out->dwFFMaxForce = in->dwFFMaxForce;
+    out->dwFFForceResolution = in->dwFFForceResolution;
+    out->wCollectionNumber = in->wCollectionNumber;
+    out->wDesignatorIndex = in->wDesignatorIndex;
+    out->wUsagePage = in->wUsagePage;
+    out->wUsage = in->wUsage;
+    out->dwDimension = in->dwDimension;
+    out->wExponent = in->wExponent;
+    out->wReserved = in->wReserved;
+}
+
 HRESULT WINAPI IDirectInputDevice2AImpl_QueryInterface( IDirectInputDevice8A *iface_a, REFIID iid, void **out )
 {
     IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8A( iface_a );
@@ -62,6 +83,33 @@ ULONG WINAPI IDirectInputDevice2AImpl_Release( IDirectInputDevice8A *iface_a )
     IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8A( iface_a );
     IDirectInputDevice8W *iface_w = IDirectInputDevice8W_from_impl( impl );
     return IDirectInputDevice8_Release( iface_w );
+}
+
+struct enum_objects_wtoa_params
+{
+    LPDIENUMDEVICEOBJECTSCALLBACKA callback;
+    void *ref;
+};
+
+static BOOL CALLBACK enum_objects_wtoa_callback( const DIDEVICEOBJECTINSTANCEW *instance_w, void *ref )
+{
+    struct enum_objects_wtoa_params *params = ref;
+    DIDEVICEOBJECTINSTANCEA instance_a = {sizeof(instance_a)};
+
+    dideviceobjectinstance_wtoa( instance_w, &instance_a );
+    return params->callback( &instance_a, params->ref );
+}
+
+HRESULT WINAPI IDirectInputDevice2AImpl_EnumObjects( IDirectInputDevice8A *iface_a, LPDIENUMDEVICEOBJECTSCALLBACKA callback,
+                                                     void *ref, DWORD flags )
+{
+    struct enum_objects_wtoa_params params = {callback, ref};
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8A( iface_a );
+    IDirectInputDevice8W *iface_w = IDirectInputDevice8W_from_impl( impl );
+
+    if (!callback) return DIERR_INVALIDPARAM;
+
+    return IDirectInputDevice8_EnumObjects( iface_w, enum_objects_wtoa_callback, &params, flags );
 }
 
 HRESULT WINAPI IDirectInputDevice2AImpl_GetProperty( IDirectInputDevice8A *iface_a, REFGUID guid, DIPROPHEADER *header )
