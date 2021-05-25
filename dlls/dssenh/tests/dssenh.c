@@ -75,7 +75,7 @@ static void test_acquire_context(void)
     result = CryptAcquireContextA(&hProv, NULL, NULL, PROV_DSS, 0);
     if (!result)
     {
-        todo_wine ok(GetLastError() == NTE_BAD_KEYSET, "Expected NTE_BAD_KEYSET, got %08x\n", GetLastError());
+        ok(GetLastError() == NTE_BAD_KEYSET, "Expected NTE_BAD_KEYSET, got %08x\n", GetLastError());
         SetLastError(0xdeadbeef);
         result = CryptAcquireContextA(&hProv, NULL, NULL, PROV_DSS, CRYPT_NEWKEYSET);
     }
