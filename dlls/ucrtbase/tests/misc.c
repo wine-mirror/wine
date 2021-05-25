@@ -1434,7 +1434,7 @@ static void test_fenv(void)
     ok(!env._Fe_stat, "env._Fe_stat = %lx\n", env._Fe_stat);
     ret = fegetenv(&env2);
     ok(!ret, "fegetenv returned %x\n", ret);
-    ok(env._Fe_ctl != env2._Fe_ctl, "fesetround didn't change _Fe_ctl (%lx).", env._Fe_ctl);
+    ok(env._Fe_ctl != env2._Fe_ctl, "fesetround didn't change _Fe_ctl (%lx).\n", env._Fe_ctl);
     ret = fesetenv(&env);
     ok(!ret, "fesetenv returned %x\n", ret);
     ret = fegetround();
