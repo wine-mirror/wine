@@ -1685,6 +1685,14 @@ static void test_strtok(void)
                 "third call string (%p) \'%s\' return %p\n",
                 teststr, testcases_strtok[i].string, strret);
     }
+
+    strcpy( teststr, "test a=b" );
+    strret = strtok( teststr, " " );
+    ok( strret == teststr, "strret = %p, expected %p\n", strret, teststr );
+    strret = strtok( NULL, "ab=" );
+    ok( !strret, "strret = %p, expected NULL\n", strret );
+    strret = strtok( NULL, "=" );
+    ok( !strret, "strret = %p, expected NULL\n", strret );
 }
 
 static void test_strtol(void)
