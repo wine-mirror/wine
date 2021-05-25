@@ -71,6 +71,19 @@ static void test_acquire_context(void)
 
     /* test base DSS provider (PROV_DSS) */
 
+    SetLastError(0xdeadbeef);
+    result = CryptAcquireContextA(&hProv, NULL, NULL, PROV_DSS, 0);
+    if (!result)
+    {
+        todo_wine ok(GetLastError() == NTE_BAD_KEYSET, "Expected NTE_BAD_KEYSET, got %08x\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        result = CryptAcquireContextA(&hProv, NULL, NULL, PROV_DSS, CRYPT_NEWKEYSET);
+    }
+    ok(result, "CryptAcquireContextA succeeded\n");
+
+    result = CryptReleaseContext(hProv, 0);
+    ok(result, "CryptReleaseContext failed.\n");
+
     result = CryptAcquireContextA(
         &hProv, NULL, MS_DEF_DSS_PROV_A, PROV_DSS, CRYPT_VERIFYCONTEXT);
     if(!result)
