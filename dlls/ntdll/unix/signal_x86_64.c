@@ -1971,7 +1971,9 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 /***********************************************************************
  *           call_user_apc_dispatcher
  */
-struct apc_stack_layout * WINAPI setup_user_apc_dispatcher_stack( CONTEXT *context, struct apc_stack_layout *stack )
+struct apc_stack_layout * WINAPI setup_user_apc_dispatcher_stack( CONTEXT *context,
+                                                                  struct apc_stack_layout *stack,
+                                                                  NSTATUS status )
 {
     CONTEXT c;
 
@@ -1979,7 +1981,7 @@ struct apc_stack_layout * WINAPI setup_user_apc_dispatcher_stack( CONTEXT *conte
     {
         c.ContextFlags = CONTEXT_FULL;
         NtGetContextThread( GetCurrentThread(), &c );
-        c.Rax = STATUS_USER_APC;
+        c.Rax = status;
         context = &c;
     }
     memmove( &stack->context, context, sizeof(stack->context) );
@@ -1990,9 +1992,10 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "movq 0x28(%rsp),%rsi\n\t"       /* func */
                    "movq 0x30(%rsp),%rdi\n\t"       /* dispatcher */
                    "movq %gs:0x30,%rbx\n\t"
-                   "movq %rdx,%r12\n\t"             /* ctx */
-                   "movq %r8,%r13\n\t"              /* arg1 */
-                   "movq %r9,%r14\n\t"              /* arg2 */
+                   "movq %rdx,%r12\n\t"             /* arg1 */
+                   "movq %r8,%r13\n\t"              /* arg2 */
+                   "movq %r9,%r14\n\t"              /* arg3 */
+                   "movq 0x38(%rsp),%r8\n\t"        /* status */
                    "jrcxz 1f\n\t"
                    "movq 0x98(%rcx),%rdx\n\t"        /* context->Rsp */
                    "jmp 2f\n\t"
@@ -2007,9 +2010,9 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "call " __ASM_NAME("setup_user_apc_dispatcher_stack") "\n\t"
                    "movq %rax,%rsp\n\t"
                    "leaq 0x30(%rsp),%rcx\n\t"       /* context */
-                   "movq %r12,%rdx\n\t"             /* ctx */
-                   "movq %r13,%r8\n\t"              /* arg1 */
-                   "movq %r14,%r9\n"                /* arg2 */
+                   "movq %r12,%rdx\n\t"             /* arg1 */
+                   "movq %r13,%r8\n\t"              /* arg2 */
+                   "movq %r14,%r9\n"                /* arg3 */
                    "movq $0,0x328(%rbx)\n\t"        /* amd64_thread_data()->syscall_frame */
                    "movq %rsi,0x20(%rsp)\n\t"       /* func */
                    "movq %rdi,%r10\n\t"

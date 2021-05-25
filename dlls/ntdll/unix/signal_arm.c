@@ -476,21 +476,22 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
  *           call_user_apc_dispatcher
  */
 __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
-                   "mov r5, r1\n\t"           /* ctx */
-                   "mov r6, r2\n\t"           /* arg1 */
-                   "mov r7, r3\n\t"           /* arg2 */
+                   "mov r5, r1\n\t"           /* arg1 */
+                   "mov r6, r2\n\t"           /* arg2 */
+                   "mov r7, r3\n\t"           /* arg3 */
                    "ldr r8, [sp]\n\t"         /* func */
                    "ldr r9, [sp, #4]\n\t"     /* dispatcher */
-                   "mrc p15, 0, r10, c13, c0, 2\n\t"  /* NtCurrentTeb() */
+                   "ldr r10, [sp, #8]\n\t"    /* status */
+                   "mrc p15, 0, r11, c13, c0, 2\n\t"  /* NtCurrentTeb() */
                    "cmp r0, #0\n\t"           /* context_ptr */
                    "beq 1f\n\t"
                    "ldr r0, [r0, #0x38]\n\t"  /* context_ptr->Sp */
                    "sub r0, r0, #0x1c8\n\t"   /* sizeof(CONTEXT) + offsetof(frame,r4) */
                    "mov ip, #0\n\t"
-                   "str ip, [r10, #0x1d8]\n\t"  /* arm_thread_data()->syscall_frame */
+                   "str ip, [r11, #0x1d8]\n\t"  /* arm_thread_data()->syscall_frame */
                    "mov sp, r0\n\t"
                    "b 2f\n"
-                   "1:\tldr r0, [r10, #0x1d8]\n\t"
+                   "1:\tldr r0, [r11, #0x1d8]\n\t"
                    "sub r0, #0x1a0\n\t"
                    "mov sp, r0\n\t"
                    "mov r0, #3\n\t"
@@ -499,14 +500,13 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "mov r1, sp\n\t"
                    "mov r0, #~1\n\t"
                    "bl " __ASM_NAME("NtGetContextThread") "\n\t"
-                   "mov r0, #0xc0\n\t"
-                   "str r0, [sp, #4]\n\t"     /* context.R0 = STATUS_USER_APC */
+                   "str r10, [sp, #4]\n\t"    /* context.R0 = status */
                    "mov r0, sp\n\t"
                    "mov ip, #0\n\t"
-                   "str ip, [r10, #0x1d8]\n\t"
-                   "2:\tmov r1, r5\n\t"       /* ctx */
-                   "mov r2, r6\n\t"           /* arg1 */
-                   "mov r3, r7\n\t"           /* arg2 */
+                   "str ip, [r11, #0x1d8]\n\t"
+                   "2:\tmov r1, r5\n\t"       /* arg1 */
+                   "mov r2, r6\n\t"           /* arg2 */
+                   "mov r3, r7\n\t"           /* arg3 */
                    "push {r8, r9}\n\t"        /* func */
                    "ldr lr, [r0, #0x3c]\n\t"  /* context.Lr */
                    "bx r9" )

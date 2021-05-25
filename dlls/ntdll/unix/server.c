@@ -354,10 +354,10 @@ static int wait_select_reply( void *cookie )
 /***********************************************************************
  *              invoke_user_apc
  */
-static void invoke_user_apc( CONTEXT *context, const user_apc_t *apc )
+static void invoke_user_apc( CONTEXT *context, const user_apc_t *apc, NTSTATUS status )
 {
     call_user_apc_dispatcher( context, apc->args[0], apc->args[1], apc->args[2],
-                              wine_server_get_ptr( apc->func ), pKiUserApcDispatcher );
+                              wine_server_get_ptr( apc->func ), pKiUserApcDispatcher, status );
 }
 
 
@@ -690,7 +690,7 @@ unsigned int server_wait( const select_op_t *select_op, data_size_t size, UINT f
     }
 
     ret = server_select( select_op, size, flags, abs_timeout, NULL, NULL, &apc );
-    if (ret == STATUS_USER_APC) invoke_user_apc( NULL, &apc );
+    if (ret == STATUS_USER_APC) invoke_user_apc( NULL, &apc, ret );
 
     /* A test on Windows 2000 shows that Windows always yields during
        a wait, but a wait that is hit by an event gets a priority
@@ -711,7 +711,7 @@ NTSTATUS WINAPI NtContinue( CONTEXT *context, BOOLEAN alertable )
     if (alertable)
     {
         status = server_select( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE, 0, NULL, NULL, &apc );
-        if (status == STATUS_USER_APC) invoke_user_apc( context, &apc );
+        if (status == STATUS_USER_APC) invoke_user_apc( context, &apc, status );
     }
     status = NtSetContextThread( GetCurrentThread(), context );
     if (!status && (context->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)

@@ -1615,15 +1615,16 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 struct apc_stack_layout
 {
     void         *context_ptr;
-    void         *ctx;
     void         *arg1;
     void         *arg2;
+    void         *arg3;
     void         *func;
     CONTEXT       context;
 };
 
 struct apc_stack_layout * WINAPI setup_user_apc_dispatcher_stack( CONTEXT *context, struct apc_stack_layout *stack,
-        void *ctx, void *arg1, void *arg2, void *func )
+                                                                  void *arg1, void *arg2, void *arg3,
+                                                                  void *func, NTSTATUS status )
 {
     CONTEXT c;
 
@@ -1631,14 +1632,14 @@ struct apc_stack_layout * WINAPI setup_user_apc_dispatcher_stack( CONTEXT *conte
     {
         c.ContextFlags = CONTEXT_FULL;
         NtGetContextThread( GetCurrentThread(), &c );
-        c.Eax = STATUS_USER_APC;
+        c.Eax = status;
         context = &c;
     }
     memmove( &stack->context, context, sizeof(stack->context) );
     stack->context_ptr = &stack->context;
-    stack->ctx = ctx;
     stack->arg1 = arg1;
     stack->arg2 = arg2;
+    stack->arg3 = arg3;
     stack->func = func;
     return stack;
 }
@@ -1663,10 +1664,11 @@ __ASM_GLOBAL_FUNC( call_user_apc_dispatcher,
                    "movl %ebp,%esp\n\t"          /* pop return address */
                    "cmpl %esp,%eax\n\t"
                    "cmovbl %eax,%esp\n\t"
+                   "pushl 24(%ebp)\n\t"          /* status */
                    "pushl 16(%ebp)\n\t"          /* func */
-                   "pushl 12(%ebp)\n\t"          /* arg2 */
-                   "pushl 8(%ebp)\n\t"           /* arg1 */
-                   "pushl 4(%ebp)\n\t"           /* ctx */
+                   "pushl 12(%ebp)\n\t"          /* arg3 */
+                   "pushl 8(%ebp)\n\t"           /* arg2 */
+                   "pushl 4(%ebp)\n\t"           /* arg1 */
                    "pushl %eax\n\t"
                    "pushl %esi\n\t"
                    "call " __ASM_STDCALL("setup_user_apc_dispatcher_stack",24) "\n\t"
