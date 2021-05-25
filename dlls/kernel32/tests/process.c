@@ -4483,7 +4483,7 @@ static void test_nested_jobs_child(unsigned int index)
     if (index)
     {
         ret = pAssignProcessToJobObject(job_other, GetCurrentProcess());
-        ok(!ret, "AssignProcessToJobObject succeded\n");
+        ok(!ret, "AssignProcessToJobObject succeeded\n");
         ok(GetLastError() == ERROR_ACCESS_DENIED, "Got unexpected error %u.\n", GetLastError());
     }
 
