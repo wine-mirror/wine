@@ -1259,6 +1259,8 @@ HRESULT WINAPI IDirectInputDevice2AImpl_EnumObjects(LPDIRECTINPUTDEVICE8A iface,
     _dump_EnumObjects_flags(dwFlags);
     TRACE("\n");
 
+    if (!lpCallback) return DIERR_INVALIDPARAM;
+
     /* Only the fields till dwFFMaxForce are relevant */
     memset(&ddoi, 0, sizeof(ddoi));
     ddoi.dwSize = FIELD_OFFSET(DIDEVICEOBJECTINSTANCEA, dwFFMaxForce);
@@ -1288,6 +1290,8 @@ HRESULT WINAPI IDirectInputDevice2WImpl_EnumObjects(LPDIRECTINPUTDEVICE8W iface,
     TRACE("  - flags = ");
     _dump_EnumObjects_flags(dwFlags);
     TRACE("\n");
+
+    if (!lpCallback) return DIERR_INVALIDPARAM;
 
     /* Only the fields till dwFFMaxForce are relevant */
     memset(&ddoi, 0, sizeof(ddoi));

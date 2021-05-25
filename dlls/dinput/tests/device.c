@@ -84,6 +84,9 @@ static void test_object_info(IDirectInputDeviceA *device, HWND hwnd)
     DWORD cnt = 0;
     DIDEVICEOBJECTDATA buffer[5];
 
+    hr = IDirectInputDevice_EnumObjects(device, NULL, &cnt, DIDFT_ALL);
+    ok(hr == DIERR_INVALIDPARAM, "IDirectInputDevice_EnumObjects returned %08x, expected %08x\n", hr, DIERR_INVALIDPARAM);
+
     hr = IDirectInputDevice_EnumObjects(device, enum_callback, &cnt, DIDFT_ALL);
     ok(SUCCEEDED(hr), "EnumObjects() failed: %08x\n", hr);
 
