@@ -3140,6 +3140,8 @@ static void test_wow64(void)
     PEB peb;
     TEB32 teb32;
     PEB32 peb32;
+    RTL_USER_PROCESS_PARAMETERS params;
+    RTL_USER_PROCESS_PARAMETERS32 params32;
 
     Wow64DisableWow64FsRedirection( &redir );
 
@@ -3188,6 +3190,42 @@ static void test_wow64(void)
             if (!ReadProcessMemory( pi.hProcess, ULongToPtr(teb32.Peb), &peb32, sizeof(peb32), &res )) res = 0;
             ok( res == sizeof(peb32), "wrong len %lx\n", res );
             ok( !peb32.BeingDebugged, "BeingDebugged is %u\n", peb32.BeingDebugged );
+        }
+
+        if (!ReadProcessMemory( pi.hProcess, peb.ProcessParameters, &params, sizeof(params), &res )) res = 0;
+        ok( res == sizeof(params), "wrong len %lx\n", res );
+#define CHECK_STR(name) \
+        ok( (char *)params.name.Buffer >= (char *)peb.ProcessParameters && \
+            (char *)params.name.Buffer < (char *)peb.ProcessParameters + params.Size, \
+            "wrong " #name " ptr %p / %p-%p\n", params.name.Buffer, peb.ProcessParameters, \
+            (char *)peb.ProcessParameters + params.Size )
+        CHECK_STR( ImagePathName );
+        CHECK_STR( CommandLine );
+        CHECK_STR( WindowTitle );
+        CHECK_STR( Desktop );
+        CHECK_STR( ShellInfo );
+#undef CHECK_STR
+        if (!is_wow64)
+        {
+            ok( peb32.ProcessParameters && ULongToPtr(peb32.ProcessParameters) != peb.ProcessParameters,
+                "wrong ptr32 %p / %p\n", ULongToPtr(peb32.ProcessParameters), peb.ProcessParameters );
+            if (!ReadProcessMemory( pi.hProcess, ULongToPtr(peb32.ProcessParameters), &params32, sizeof(params32), &res )) res = 0;
+            ok( res == sizeof(params32), "wrong len %lx\n", res );
+#define CHECK_STR(name) \
+            ok( ULongToPtr(params32.name.Buffer) >= ULongToPtr(peb32.ProcessParameters) && \
+                ULongToPtr(params32.name.Buffer) < ULongToPtr(peb32.ProcessParameters + params32.Size), \
+                "wrong " #name " ptr %x / %x-%x\n", params32.name.Buffer, peb32.ProcessParameters, \
+                peb32.ProcessParameters + params.Size ); \
+            ok( params32.name.Length == params.name.Length, "wrong " #name "len %u / %u\n", \
+                params32.name.Length, params.name.Length )
+            CHECK_STR( ImagePathName );
+            CHECK_STR( CommandLine );
+            CHECK_STR( WindowTitle );
+            CHECK_STR( Desktop );
+            CHECK_STR( ShellInfo );
+#undef CHECK_STR
+            ok( params32.EnvironmentSize == params.EnvironmentSize, "wrong size %u / %lu\n",
+                params32.EnvironmentSize, params.EnvironmentSize );
         }
 
         ok( DebugActiveProcess( pi.dwProcessId ), "debugging failed\n" );

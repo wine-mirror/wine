@@ -2812,25 +2812,6 @@ NTSTATUS virtual_create_builtin_view( void *module, const UNICODE_STRING *nt_nam
 }
 
 
-/* set some initial values in the new PEB */
-static PEB *init_peb( void *ptr )
-{
-    PEB64 *peb64 = ptr;
-    PEB32 *peb32 = (PEB32 *)((char *)ptr + page_size);
-
-    peb32->OSMajorVersion = peb64->OSMajorVersion = 6;
-    peb32->OSMinorVersion = peb64->OSMinorVersion = 1;
-    peb32->OSBuildNumber  = peb64->OSBuildNumber  = 0x1db1;
-    peb32->OSPlatformId   = peb64->OSPlatformId   = VER_PLATFORM_WIN32_NT;
-    peb32->SessionId      = peb64->SessionId      = 1;
-#ifdef _WIN64
-    return (PEB *)peb64;
-#else
-    return (PEB *)peb32;
-#endif
-}
-
-
 /* set some initial values in a new TEB */
 static TEB *init_teb( void *ptr, PEB *peb, BOOL is_wow )
 {
@@ -2917,7 +2898,7 @@ TEB *virtual_alloc_first_teb(void)
     ptr = (char *)teb_block + 30 * block_size;
     data_size = 2 * block_size;
     NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&ptr, 0, &data_size, MEM_COMMIT, PAGE_READWRITE );
-    peb = init_peb( (char *)teb_block + 31 * block_size );
+    peb = (PEB *)((char *)teb_block + 31 * block_size + (is_win64 ? 0 : page_size));
     teb = init_teb( ptr, peb, FALSE );
     *(ULONG_PTR *)&peb->CloudFileFlags = get_image_address();
     return teb;

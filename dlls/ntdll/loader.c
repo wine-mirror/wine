@@ -3695,12 +3695,10 @@ static void init_wow64(void)
 
     if (!NtCurrentTeb64()) return;
     peb64 = UlongToPtr( NtCurrentTeb64()->Peb );
-    peb64->ImageBaseAddress = PtrToUlong( peb->ImageBaseAddress );
     peb64->OSMajorVersion   = peb->OSMajorVersion;
     peb64->OSMinorVersion   = peb->OSMinorVersion;
     peb64->OSBuildNumber    = peb->OSBuildNumber;
     peb64->OSPlatformId     = peb->OSPlatformId;
-    peb64->SessionId        = peb->SessionId;
 
     map_wow64cpu();
 }

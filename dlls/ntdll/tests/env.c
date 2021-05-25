@@ -367,7 +367,7 @@ static void test_process_params(void)
         ok( align(pos, sizeof(void *)) == size ||
             broken( align(pos, 4) == size ), "wrong size %lx/%lx\n", pos, size );
         ok( params->EnvironmentSize == size - ((char *)params->Environment - (char *)params),
-            "wrong len %x/%lx\n", params->EnvironmentSize,
+            "wrong len %lx/%lx\n", params->EnvironmentSize,
             size - ((char *)params->Environment - (char *)params) );
     }
     else ok( broken(TRUE), "environment not inside block\n" ); /* <= win2k3 */
@@ -421,7 +421,7 @@ static void test_process_params(void)
         ok( align(pos, sizeof(void *)) == size ||
             broken( align(pos, 4) == size ), "wrong size %lx/%lx\n", pos, size );
         ok( params->EnvironmentSize == size - ((char *)params->Environment - (char *)params),
-            "wrong len %x/%lx\n", params->EnvironmentSize,
+            "wrong len %lx/%lx\n", params->EnvironmentSize,
             size - ((char *)params->Environment - (char *)params) );
     }
     else ok( broken(TRUE), "environment not inside block\n" );  /* <= win2k3 */
@@ -475,7 +475,7 @@ static void test_process_params(void)
         size = HeapSize( GetProcessHeap(), 0, initial_env );
         ok( size != ~(SIZE_T)0, "env is not a heap block %p / %p\n", cur_params, initial_env );
         ok( cur_params->EnvironmentSize == size,
-            "wrong len %x/%lx\n", cur_params->EnvironmentSize, size );
+            "wrong len %lx/%lx\n", cur_params->EnvironmentSize, size );
     }
 }
 
@@ -526,17 +526,17 @@ static void test_RtlSetCurrentEnvironment(void)
 
     old_env = NtCurrentTeb()->Peb->ProcessParameters->Environment;
     ok(NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize == get_env_length(old_env) * sizeof(WCHAR),
-       "got wrong size %u\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize);
+       "got wrong size %lu\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize);
     ok(NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize == HeapSize( GetProcessHeap(), 0, old_env ),
-       "got wrong size %u\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize);
+       "got wrong size %lu\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize);
 
     RtlSetCurrentEnvironment(env, &prev);
     ok(prev == old_env, "got wrong previous env %p\n", prev);
     ok(NtCurrentTeb()->Peb->ProcessParameters->Environment == env, "got wrong current env\n");
     ok(NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize == get_env_length(env) * sizeof(WCHAR),
-       "got wrong size %u\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize);
+       "got wrong size %lu\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize);
     ok(NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize == HeapSize( GetProcessHeap(), 0, env ),
-       "got wrong size %u\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize);
+       "got wrong size %lu\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize);
 
     check_env_var("testenv1", "unus");
     check_env_var("testenv2", NULL);
@@ -546,14 +546,14 @@ static void test_RtlSetCurrentEnvironment(void)
     env = HeapReAlloc( GetProcessHeap(), 0, env, HeapSize( GetProcessHeap(), 0, env) + 120 );
     RtlSetCurrentEnvironment(env, &prev);
     ok(NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize == HeapSize( GetProcessHeap(), 0, env ),
-       "got wrong size %u\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize);
+       "got wrong size %lu\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize);
 
     RtlSetCurrentEnvironment(old_env, NULL);
     ok(NtCurrentTeb()->Peb->ProcessParameters->Environment == old_env, "got wrong current env\n");
     ok(NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize == get_env_length(old_env) * sizeof(WCHAR),
-       "got wrong size %u\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize);
+       "got wrong size %lu\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize);
     ok(NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize == HeapSize( GetProcessHeap(), 0, old_env ),
-       "got wrong size %u\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize);
+       "got wrong size %lu\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize);
 
     check_env_var("testenv1", "heis");
     check_env_var("testenv2", "dyo");
@@ -562,7 +562,7 @@ static void test_RtlSetCurrentEnvironment(void)
     env = NtCurrentTeb()->Peb->ProcessParameters->Environment;
     size = get_env_length(env) * sizeof(WCHAR);
     ok( NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize == size,
-        "got wrong size %u\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize );
+        "got wrong size %lu\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize );
     ok( size == HeapSize( GetProcessHeap(), 0, env ),
         "got wrong size %lu / %lu\n", size, HeapSize( GetProcessHeap(), 0, env ));
 
@@ -571,7 +571,7 @@ static void test_RtlSetCurrentEnvironment(void)
 
     env = NtCurrentTeb()->Peb->ProcessParameters->Environment;
     ok( NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize == size,
-        "got wrong size %u\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize );
+        "got wrong size %lu\n", NtCurrentTeb()->Peb->ProcessParameters->EnvironmentSize );
     ok( size == HeapSize( GetProcessHeap(), 0, env ),
         "got wrong size %lu / %lu\n", size, HeapSize( GetProcessHeap(), 0, env ));
     ok( size > get_env_length(env) * sizeof(WCHAR), "got wrong size %lu\n", size );

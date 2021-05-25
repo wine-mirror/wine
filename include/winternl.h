@@ -199,8 +199,8 @@ typedef struct _RTL_USER_PROCESS_PARAMETERS
     UNICODE_STRING      ShellInfo;
     UNICODE_STRING      RuntimeInfo;
     RTL_DRIVE_LETTER_CURDIR DLCurrentDirectory[0x20];
-    ULONG               EnvironmentSize;
-    ULONG               EnvironmentVersion;
+    ULONG_PTR           EnvironmentSize;
+    ULONG_PTR           EnvironmentVersion;
     PVOID               PackageDependencyData;
     ULONG               ProcessGroupId;
     ULONG               LoaderThreads;
@@ -583,6 +583,108 @@ typedef struct _ACTIVATION_CONTEXT_STACK64
     ULONG        NextCookieSequenceNumber;
     ULONG64      StackId;
 } ACTIVATION_CONTEXT_STACK64;
+
+typedef struct _CURDIR32
+{
+    UNICODE_STRING32 DosPath;
+    ULONG Handle;
+} CURDIR32;
+
+typedef struct _CURDIR64
+{
+    UNICODE_STRING64 DosPath;
+    ULONG64 Handle;
+} CURDIR64;
+
+typedef struct RTL_DRIVE_LETTER_CURDIR32
+{
+    USHORT              Flags;
+    USHORT              Length;
+    ULONG               TimeStamp;
+    UNICODE_STRING32    DosPath;
+} RTL_DRIVE_LETTER_CURDIR32;
+
+typedef struct RTL_DRIVE_LETTER_CURDIR64
+{
+    USHORT              Flags;
+    USHORT              Length;
+    ULONG               TimeStamp;
+    UNICODE_STRING64    DosPath;
+} RTL_DRIVE_LETTER_CURDIR64;
+
+typedef struct _RTL_USER_PROCESS_PARAMETERS32
+{
+    ULONG               AllocationSize;
+    ULONG               Size;
+    ULONG               Flags;
+    ULONG               DebugFlags;
+    ULONG               ConsoleHandle;
+    ULONG               ConsoleFlags;
+    ULONG               hStdInput;
+    ULONG               hStdOutput;
+    ULONG               hStdError;
+    CURDIR32            CurrentDirectory;
+    UNICODE_STRING32    DllPath;
+    UNICODE_STRING32    ImagePathName;
+    UNICODE_STRING32    CommandLine;
+    ULONG               Environment;
+    ULONG               dwX;
+    ULONG               dwY;
+    ULONG               dwXSize;
+    ULONG               dwYSize;
+    ULONG               dwXCountChars;
+    ULONG               dwYCountChars;
+    ULONG               dwFillAttribute;
+    ULONG               dwFlags;
+    ULONG               wShowWindow;
+    UNICODE_STRING32    WindowTitle;
+    UNICODE_STRING32    Desktop;
+    UNICODE_STRING32    ShellInfo;
+    UNICODE_STRING32    RuntimeInfo;
+    RTL_DRIVE_LETTER_CURDIR32 DLCurrentDirectory[0x20];
+    ULONG               EnvironmentSize;
+    ULONG               EnvironmentVersion;
+    ULONG               PackageDependencyData;
+    ULONG               ProcessGroupId;
+    ULONG               LoaderThreads;
+} RTL_USER_PROCESS_PARAMETERS32;
+
+typedef struct _RTL_USER_PROCESS_PARAMETERS64
+{
+    ULONG               AllocationSize;
+    ULONG               Size;
+    ULONG               Flags;
+    ULONG               DebugFlags;
+    ULONG64             ConsoleHandle;
+    ULONG               ConsoleFlags;
+    ULONG64             hStdInput;
+    ULONG64             hStdOutput;
+    ULONG64             hStdError;
+    CURDIR64            CurrentDirectory;
+    UNICODE_STRING64    DllPath;
+    UNICODE_STRING64    ImagePathName;
+    UNICODE_STRING64    CommandLine;
+    ULONG64             Environment;
+    ULONG               dwX;
+    ULONG               dwY;
+    ULONG               dwXSize;
+    ULONG               dwYSize;
+    ULONG               dwXCountChars;
+    ULONG               dwYCountChars;
+    ULONG               dwFillAttribute;
+    ULONG               dwFlags;
+    ULONG               wShowWindow;
+    UNICODE_STRING64    WindowTitle;
+    UNICODE_STRING64    Desktop;
+    UNICODE_STRING64    ShellInfo;
+    UNICODE_STRING64    RuntimeInfo;
+    RTL_DRIVE_LETTER_CURDIR64 DLCurrentDirectory[0x20];
+    ULONG64             EnvironmentSize;
+    ULONG64             EnvironmentVersion;
+    ULONG64             PackageDependencyData;
+    ULONG               ProcessGroupId;
+    ULONG               LoaderThreads;
+} RTL_USER_PROCESS_PARAMETERS64;
 
 typedef struct _PEB_LDR_DATA32
 {
