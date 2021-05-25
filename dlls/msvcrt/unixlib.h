@@ -24,7 +24,6 @@
 struct unix_funcs
 {
     double          (CDECL *atanh)(double x);
-    float           (CDECL *atanhf)(float x);
     double          (CDECL *cosh)(double x);
     float           (CDECL *coshf)(float x);
     double          (CDECL *exp)(double x);

@@ -34,9 +34,6 @@
 /* Define to 1 if you have the `atanh' function. */
 #undef HAVE_ATANH
 
-/* Define to 1 if you have the `atanhf' function. */
-#undef HAVE_ATANHF
-
 /* Define to 1 if you have the <AudioToolbox/AudioConverter.h> header file. */
 #undef HAVE_AUDIOTOOLBOX_AUDIOCONVERTER_H
 

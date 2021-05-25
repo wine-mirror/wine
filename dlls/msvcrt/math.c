@@ -6687,21 +6687,37 @@ double CDECL atanh(double x)
 
 /*********************************************************************
  *      atanhf (MSVCR120.@)
+ *
+ * Copied from musl: src/math/atanhf.c
  */
 float CDECL atanhf(float x)
 {
-    float ret;
+    UINT32 ux = *(UINT32*)&x;
+    int s = ux >> 31;
 
-    if (x > 1 || x < -1) {
+    /* |x| */
+    ux &= 0x7fffffff;
+    x = *(float*)&ux;
+
+    if (x > 1) {
         *_errno() = EDOM;
         feraiseexcept(FE_INVALID);
         return NAN;
     }
 
-    ret = unix_funcs->atanh( x );
-
-    if (!isfinite(ret)) *_errno() = ERANGE;
-    return ret;
+    if (ux < 0x3f800000 - (1 << 23)) {
+        if (ux < 0x3f800000 - (32 << 23)) {
+            fp_barrierf(x + 0x1p120f);
+            if (ux < (1 << 23)) /* handle underflow */
+                fp_barrierf(x * x);
+        } else { /* |x| < 0.5, up to 1.7ulp error */
+            x = 0.5f * log1pf(2 * x + 2 * x * x / (1 - x));
+        }
+    } else { /* avoid overflow */
+        x = 0.5f * log1pf(2 * (x / (1 - x)));
+        if (isinf(x)) *_errno() = ERANGE;
+    }
+    return s ? -x : x;
 }
 
 #endif /* _MSVCR_VER>=120 */

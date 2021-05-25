@@ -19617,7 +19617,6 @@ fi
 
 for ac_func in \
 	atanh \
-	atanhf \
 	exp2 \
 	exp2f \
 	expm1 \
