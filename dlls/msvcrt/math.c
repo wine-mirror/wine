@@ -6569,10 +6569,28 @@ double CDECL fmin(double x, double y)
 
 /*********************************************************************
  *      asinh (MSVCR120.@)
+ *
+ * Copied from musl: src/math/asinh.c
  */
 double CDECL asinh(double x)
 {
-    return unix_funcs->asinh( x );
+    UINT64 ux = *(UINT64*)&x;
+    int e = ux >> 52 & 0x7ff;
+    int s = ux >> 63;
+
+    /* |x| */
+    ux &= (UINT64)-1 / 2;
+    x = *(double*)&ux;
+
+    if (e >= 0x3ff + 26) /* |x| >= 0x1p26 or inf or nan */
+        x = log(x) + 0.693147180559945309417232121458176568;
+    else if (e >= 0x3ff + 1) /* |x| >= 2 */
+        x = log(2 * x + 1 / (sqrt(x * x + 1) + x));
+    else if (e >= 0x3ff - 26) /* |x| >= 0x1p-26 */
+        x = log1p(x + x * x / (sqrt(x * x + 1) + 1));
+    else /* |x| < 0x1p-26, raise inexact if x != 0 */
+        fp_barrier(x + 0x1p120f);
+    return s ? -x : x;
 }
 
 /*********************************************************************
