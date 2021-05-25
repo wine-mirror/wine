@@ -2657,7 +2657,6 @@ fi
 
 AC_CHECK_FUNCS(\
 	asinh \
-	asinhf \
 	atanh \
 	atanhf \
 	exp2 \
