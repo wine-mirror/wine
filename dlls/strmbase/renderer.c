@@ -246,8 +246,6 @@ static HRESULT renderer_start_stream(struct strmbase_filter *iface, REFERENCE_TI
     filter->stream_start = start;
     SetEvent(filter->state_event);
     SetEvent(filter->run_event);
-    if (filter->sink.pin.peer)
-        filter->eos = FALSE;
     reset_qos(filter);
     if (filter->sink.pin.peer && filter->ops->renderer_start_stream)
         filter->ops->renderer_start_stream(filter);
