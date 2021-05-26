@@ -61,7 +61,7 @@ struct pulse_stream
     INT32 locked;
     UINT32 bufsize_frames, real_bufsize_bytes, period_bytes;
     UINT32 started, peek_ofs, read_offs_bytes, lcl_offs_bytes, pa_offs_bytes;
-    UINT32 tmp_buffer_bytes, held_bytes, peek_len, peek_buffer_len, pa_held_bytes;
+    SIZE_T tmp_buffer_bytes, held_bytes, peek_len, peek_buffer_len, pa_held_bytes;
     BYTE *local_buffer, *tmp_buffer, *peek_buffer;
     void *locked_ptr;
     BOOL please_quit, just_started, just_underran;
@@ -909,7 +909,9 @@ static void WINAPI pulse_release_stream(struct pulse_stream *stream, HANDLE time
     pa_stream_unref(stream->stream);
     pulse_unlock();
 
-    RtlFreeHeap(GetProcessHeap(), 0, stream->tmp_buffer);
+    if (stream->tmp_buffer)
+        NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer,
+                            &stream->tmp_buffer_bytes, MEM_RELEASE);
     free(stream->peek_buffer);
     RtlFreeHeap(GetProcessHeap(), 0, stream->local_buffer);
     free(stream);
@@ -1077,8 +1079,7 @@ static void pulse_write(struct pulse_stream *stream)
     }
 
     buf = stream->local_buffer + stream->pa_offs_bytes;
-    TRACE("held: %u, avail: %u\n",
-            stream->pa_held_bytes, bytes);
+    TRACE("held: %lu, avail: %u\n", stream->pa_held_bytes, bytes);
     bytes = min(stream->pa_held_bytes, bytes);
 
     if (stream->pa_offs_bytes + bytes > stream->real_bufsize_bytes)
@@ -1453,14 +1454,24 @@ static HRESULT WINAPI pulse_reset(struct pulse_stream *stream)
     return S_OK;
 }
 
-static void alloc_tmp_buffer(struct pulse_stream *stream, UINT32 bytes)
+static BOOL alloc_tmp_buffer(struct pulse_stream *stream, SIZE_T bytes)
 {
     if (stream->tmp_buffer_bytes >= bytes)
-        return;
+        return TRUE;
 
-    RtlFreeHeap(GetProcessHeap(), 0, stream->tmp_buffer);
-    stream->tmp_buffer = RtlAllocateHeap(GetProcessHeap(), 0, bytes);
+    if (stream->tmp_buffer)
+    {
+        NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer,
+                            &stream->tmp_buffer_bytes, MEM_RELEASE);
+        stream->tmp_buffer = NULL;
+        stream->tmp_buffer_bytes = 0;
+    }
+    if (NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer,
+                                0, &bytes, MEM_COMMIT, PAGE_READWRITE))
+        return FALSE;
+
     stream->tmp_buffer_bytes = bytes;
+    return TRUE;
 }
 
 static UINT32 pulse_render_padding(struct pulse_stream *stream)
@@ -1515,7 +1526,11 @@ static HRESULT WINAPI pulse_get_render_buffer(struct pulse_stream *stream, UINT3
     wri_offs_bytes = (stream->lcl_offs_bytes + stream->held_bytes) % stream->real_bufsize_bytes;
     if (wri_offs_bytes + bytes > stream->real_bufsize_bytes)
     {
-        alloc_tmp_buffer(stream, bytes);
+        if (!alloc_tmp_buffer(stream, bytes))
+        {
+            pulse_unlock();
+            return E_OUTOFMEMORY;
+        }
         *data = stream->tmp_buffer;
         stream->locked = -bytes;
     }
@@ -1590,7 +1605,7 @@ static HRESULT WINAPI pulse_release_render_buffer(struct pulse_stream *stream, U
     stream->clock_written += written_bytes;
     stream->locked = 0;
 
-    TRACE("Released %u, held %zu\n", written_frames, stream->held_bytes / pa_frame_size(&stream->ss));
+    TRACE("Released %u, held %lu\n", written_frames, stream->held_bytes / pa_frame_size(&stream->ss));
 
     pulse_unlock();
     return S_OK;
