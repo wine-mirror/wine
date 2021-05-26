@@ -1412,10 +1412,61 @@ end:
     release_encoder(encoder, dds_encoder, stream);
 }
 
+static void test_dds_encoder_create_frame(void)
+{
+    WICDdsParameters params = { 4, 4, 1, 3, 1,   DXGI_FORMAT_BC1_UNORM,
+                                WICDdsTexture2D, WICDdsAlphaModePremultiplied };
+    IWICBitmapFrameEncode *frame0 = NULL, *frame1 = NULL;
+    UINT array_index, mip_level, slice_index;
+    IWICDdsEncoder *dds_encoder = NULL;
+    IWICBitmapEncoder *encoder = NULL;
+    IWICStream *stream = NULL;
+    BYTE buffer[1024];
+    HRESULT hr;
+
+    hr = create_and_init_encoder(buffer, sizeof(buffer), &encoder, &dds_encoder, &stream);
+    if (hr != S_OK) goto end;
+    IWICDdsEncoder_SetParameters(dds_encoder, &params);
+
+    hr = IWICBitmapEncoder_CreateNewFrame(encoder, &frame0, NULL);
+    ok(hr == S_OK, "CreateNewFrame failed, hr %#x\n", hr);
+    hr = IWICBitmapEncoder_CreateNewFrame(encoder, &frame1, NULL);
+    todo_wine
+    ok(hr == WINCODEC_ERR_WRONGSTATE, "CreateNewFrame got unexpected hr %#x\n", hr);
+    if (hr == S_OK) IWICBitmapFrameEncode_Release(frame1);
+
+    IWICBitmapFrameEncode_Release(frame0);
+    hr = IWICBitmapEncoder_CreateNewFrame(encoder, &frame1, NULL);
+    todo_wine
+    ok(hr == WINCODEC_ERR_WRONGSTATE, "CreateNewFrame got unexpected hr %#x\n", hr);
+    if (hr == S_OK) IWICBitmapFrameEncode_Release(frame1);
+
+    release_encoder(encoder, dds_encoder, stream);
+
+    create_and_init_encoder(buffer, sizeof(buffer), &encoder, &dds_encoder, &stream);
+    IWICDdsEncoder_SetParameters(dds_encoder, &params);
+    hr = IWICDdsEncoder_CreateNewFrame(dds_encoder, &frame0, &array_index, &mip_level, &slice_index);
+    todo_wine
+    ok(hr == S_OK, "CreateNewFrame failed, hr %#x\n", hr);
+    if (hr == S_OK) IWICBitmapFrameEncode_Release(frame0);
+    release_encoder(encoder, dds_encoder, stream);
+
+    create_and_init_encoder(buffer, sizeof(buffer), &encoder, &dds_encoder, &stream);
+    IWICDdsEncoder_SetParameters(dds_encoder, &params);
+    hr = IWICDdsEncoder_CreateNewFrame(dds_encoder, &frame0, NULL, NULL, NULL);
+    todo_wine
+    ok(hr == S_OK, "CreateNewFrame failed, hr %#x\n", hr);
+    if (hr == S_OK) IWICBitmapFrameEncode_Release(frame0);
+
+end:
+    release_encoder(encoder, dds_encoder, stream);
+}
+
 static void test_dds_encoder(void)
 {
     test_dds_encoder_initialize();
     test_dds_encoder_params();
+    test_dds_encoder_create_frame();
 }
 
 START_TEST(ddsformat)
