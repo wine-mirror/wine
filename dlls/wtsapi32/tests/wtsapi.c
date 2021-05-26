@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <ntstatus.h>
+#define WIN32_NO_STATUS
 #include <stdarg.h>
 #include <stdlib.h>
 #include <windef.h>
@@ -23,25 +25,93 @@
 #include <winternl.h>
 #include <lmcons.h>
 #include <wtsapi32.h>
+#define PSAPI_VERSION 1
+#include <psapi.h>
 
 #include "wine/test.h"
 
+static BOOL (WINAPI *pWTSEnumerateProcessesExW)(HANDLE server, DWORD *level, DWORD session, WCHAR **info, DWORD *count);
+static BOOL (WINAPI *pWTSFreeMemoryExW)(WTS_TYPE_CLASS class, void *memory, ULONG count);
+
+static const SYSTEM_PROCESS_INFORMATION *find_nt_process_info(const SYSTEM_PROCESS_INFORMATION *head, DWORD pid)
+{
+    for (;;)
+    {
+        if ((DWORD)(DWORD_PTR)head->UniqueProcessId == pid)
+            return head;
+        if (!head->NextEntryOffset)
+            break;
+        head = (SYSTEM_PROCESS_INFORMATION *)((char *)head + head->NextEntryOffset);
+    }
+    return NULL;
+}
+
+static void check_wts_process_info(const WTS_PROCESS_INFOW *info, DWORD count)
+{
+    ULONG nt_length = 1024;
+    SYSTEM_PROCESS_INFORMATION *nt_info = malloc(nt_length);
+    WCHAR process_name[MAX_PATH], *process_filepart;
+    BOOL ret, found = FALSE;
+    NTSTATUS status;
+    DWORD i;
+
+    GetModuleFileNameW(NULL, process_name, MAX_PATH);
+    process_filepart = wcsrchr(process_name, '\\') + 1;
+
+    while ((status = NtQuerySystemInformation(SystemProcessInformation, nt_info,
+            nt_length, NULL)) == STATUS_INFO_LENGTH_MISMATCH)
+    {
+        nt_length *= 2;
+        nt_info = realloc(nt_info, nt_length);
+    }
+    ok(!status, "got %#x\n", status);
+
+    for (i = 0; i < count; i++)
+    {
+        char sid_buffer[50];
+        SID_AND_ATTRIBUTES *sid = (SID_AND_ATTRIBUTES *)sid_buffer;
+        const SYSTEM_PROCESS_INFORMATION *nt_process;
+        HANDLE process, token;
+        DWORD size;
+
+        nt_process = find_nt_process_info(nt_info, info[i].ProcessId);
+        ok(!!nt_process, "failed to find pid %#x\n", info[i].ProcessId);
+
+        winetest_push_context("pid %#x", info[i].ProcessId);
+
+        ok(info[i].SessionId == nt_process->SessionId, "expected session id %#x, got %#x\n",
+                nt_process->SessionId, info[i].SessionId);
+
+        ok(!memcmp(info[i].pProcessName, nt_process->ProcessName.Buffer, nt_process->ProcessName.Length),
+                "expected process name %s, got %s\n",
+                debugstr_w(nt_process->ProcessName.Buffer), debugstr_w(info[i].pProcessName));
+
+        if ((process = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, info[i].ProcessId)))
+        {
+            ret = OpenProcessToken(process, TOKEN_QUERY, &token);
+            ok(ret, "failed to open token, error %u\n", GetLastError());
+            ret = GetTokenInformation(token, TokenUser, sid_buffer, sizeof(sid_buffer), &size);
+            ok(ret, "failed to get token user, error %u\n", GetLastError());
+            ok(EqualSid(info[i].pUserSid, sid->Sid), "SID did not match\n");
+            CloseHandle(token);
+            CloseHandle(process);
+        }
+
+        winetest_pop_context();
+
+        found = found || !wcscmp(info[i].pProcessName, process_filepart);
+    }
+
+    ok(found, "did not find current process\n");
+
+    free(nt_info);
+}
+
 static void test_WTSEnumerateProcessesW(void)
 {
-    BOOL found = FALSE, ret;
-    DWORD count, i;
     PWTS_PROCESS_INFOW info;
-    WCHAR *pname, nameW[MAX_PATH];
-
-    GetModuleFileNameW(NULL, nameW, MAX_PATH);
-    for (pname = nameW + lstrlenW(nameW); pname > nameW; pname--)
-    {
-        if(*pname == '/' || *pname == '\\')
-        {
-            pname++;
-            break;
-        }
-    }
+    DWORD count, level;
+    BOOL ret;
 
     info = NULL;
     SetLastError(0xdeadbeef);
@@ -80,15 +150,41 @@ static void test_WTSEnumerateProcessesW(void)
     info = NULL;
     SetLastError(0xdeadbeef);
     ret = WTSEnumerateProcessesW(WTS_CURRENT_SERVER_HANDLE, 0, 1, &info, &count);
-    ok(ret || broken(!ret), /* fails on Win2K with error ERROR_APP_WRONG_OS */
-        "expected WTSEnumerateProcessesW to succeed; failed with %d\n", GetLastError());
-    for(i = 0; ret && i < count; i++)
-    {
-        found = found || !lstrcmpW(pname, info[i].pProcessName);
-    }
-    todo_wine
-    ok(found || broken(!ret), "process name %s not found\n", wine_dbgstr_w(pname));
+    ok(ret, "expected success\n");
+    ok(!GetLastError(), "got error %u\n", GetLastError());
+    check_wts_process_info(info, count);
     WTSFreeMemory(info);
+
+    if (!pWTSEnumerateProcessesExW)
+    {
+        skip("WTSEnumerateProcessesEx is not available\n");
+        return;
+    }
+
+    level = 0;
+
+    SetLastError(0xdeadbeef);
+    count = 0xdeadbeef;
+    ret = pWTSEnumerateProcessesExW(WTS_CURRENT_SERVER_HANDLE, &level, WTS_ANY_SESSION, NULL, &count);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError());
+    ok(count == 0xdeadbeef, "got count %u\n", count);
+
+    info = (void *)0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = pWTSEnumerateProcessesExW(WTS_CURRENT_SERVER_HANDLE, &level, WTS_ANY_SESSION, (WCHAR **)&info, NULL);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %u\n", GetLastError());
+    ok(info == (void *)0xdeadbeef, "got info %p\n", info);
+
+    info = NULL;
+    count = 0;
+    SetLastError(0xdeadbeef);
+    ret = pWTSEnumerateProcessesExW(WTS_CURRENT_SERVER_HANDLE, &level, WTS_ANY_SESSION, (WCHAR **)&info, &count);
+    ok(ret, "expected success\n");
+    ok(!GetLastError(), "got error %u\n", GetLastError());
+    check_wts_process_info(info, count);
+    pWTSFreeMemoryExW(WTSTypeProcessInfoLevel0, info, count);
 }
 
 static void test_WTSQuerySessionInformation(void)
@@ -201,6 +297,9 @@ static void test_WTSQueryUserToken(void)
 
 START_TEST (wtsapi)
 {
+    pWTSEnumerateProcessesExW = (void *)GetProcAddress(GetModuleHandleA("wtsapi32"), "WTSEnumerateProcessesExW");
+    pWTSFreeMemoryExW = (void *)GetProcAddress(GetModuleHandleA("wtsapi32"), "WTSFreeMemoryExW");
+
     test_WTSEnumerateProcessesW();
     test_WTSQuerySessionInformation();
     test_WTSQueryUserToken();
