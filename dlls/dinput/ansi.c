@@ -169,6 +169,25 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SetCooperativeLevel( IDirectInputDevice8
     return IDirectInputDevice8_SetCooperativeLevel( iface_w, window, flags );
 }
 
+HRESULT WINAPI IDirectInputDevice2AImpl_GetObjectInfo( IDirectInputDevice8A *iface_a, DIDEVICEOBJECTINSTANCEA *instance_a,
+                                                       DWORD obj, DWORD how )
+{
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8A( iface_a );
+    IDirectInputDevice8W *iface_w = IDirectInputDevice8W_from_impl( impl );
+    DIDEVICEOBJECTINSTANCEW instance_w = {sizeof(instance_w)};
+    HRESULT hr;
+
+    if (!instance_a) return E_POINTER;
+    if (instance_a->dwSize != sizeof(DIDEVICEOBJECTINSTANCEA) &&
+        instance_a->dwSize != sizeof(DIDEVICEOBJECTINSTANCE_DX3A))
+        return DIERR_INVALIDPARAM;
+
+    hr = IDirectInputDevice8_GetObjectInfo( iface_w, &instance_w, obj, how );
+    dideviceobjectinstance_wtoa( &instance_w, instance_a );
+
+    return hr;
+}
+
 HRESULT WINAPI IDirectInputDevice2AImpl_RunControlPanel( IDirectInputDevice8A *iface_a, HWND owner, DWORD flags )
 {
     IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8A( iface_a );

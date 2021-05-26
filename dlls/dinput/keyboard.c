@@ -463,29 +463,6 @@ static DWORD map_dik_to_scan(DWORD dik_code, DWORD subtype)
   *     GetObjectInfo : get information about a device object such as a button
   *                     or axis
   */
-static HRESULT WINAPI
-SysKeyboardAImpl_GetObjectInfo(
-	LPDIRECTINPUTDEVICE8A iface,
-	LPDIDEVICEOBJECTINSTANCEA pdidoi,
-	DWORD dwObj,
-	DWORD dwHow)
-{
-    SysKeyboardImpl *This = impl_from_IDirectInputDevice8A(iface);
-    HRESULT res;
-    LONG scan;
-
-    res = IDirectInputDevice2AImpl_GetObjectInfo(iface, pdidoi, dwObj, dwHow);
-    if (res != DI_OK) return res;
-
-    scan = map_dik_to_scan(DIDFT_GETINSTANCE(pdidoi->dwType), This->subtype);
-    if (!GetKeyNameTextA((scan & 0x80) << 17 | (scan & 0x7f) << 16,
-                         pdidoi->tszName, sizeof(pdidoi->tszName)))
-        return DIERR_OBJECTNOTFOUND;
-
-    _dump_OBJECTINSTANCEA(pdidoi);
-    return res;
-}
-
 static HRESULT WINAPI SysKeyboardWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface,
 						     LPDIDEVICEOBJECTINSTANCEW pdidoi,
 						     DWORD dwObj,
@@ -691,7 +668,7 @@ static const IDirectInputDevice8AVtbl SysKeyboardAvt =
     IDirectInputDevice2AImpl_SetDataFormat,
     IDirectInputDevice2AImpl_SetEventNotification,
     IDirectInputDevice2AImpl_SetCooperativeLevel,
-    SysKeyboardAImpl_GetObjectInfo,
+    IDirectInputDevice2AImpl_GetObjectInfo,
     SysKeyboardAImpl_GetDeviceInfo,
     IDirectInputDevice2AImpl_RunControlPanel,
     IDirectInputDevice2AImpl_Initialize,

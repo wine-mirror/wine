@@ -574,33 +574,6 @@ HRESULT WINAPI JoystickWGenericImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface,
     return res;
 }
 
-HRESULT WINAPI JoystickAGenericImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8A iface,
-        LPDIDEVICEOBJECTINSTANCEA pdidoi, DWORD dwObj, DWORD dwHow)
-{
-    JoystickGenericImpl *This = impl_from_IDirectInputDevice8A(iface);
-    HRESULT res;
-    DIDEVICEOBJECTINSTANCEW didoiW;
-    DWORD dwSize;
-
-    if (!pdidoi) return E_POINTER;
-    if (pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCEA) &&
-        pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCE_DX3A))
-        return DIERR_INVALIDPARAM;
-
-    didoiW.dwSize = sizeof(didoiW);
-    res = JoystickWGenericImpl_GetObjectInfo(IDirectInputDevice8W_from_impl(This), &didoiW, dwObj, dwHow);
-    if (res != DI_OK) return res;
-
-    dwSize = pdidoi->dwSize;
-    memset(pdidoi, 0, pdidoi->dwSize);
-    memcpy(pdidoi, &didoiW, FIELD_OFFSET(DIDEVICEOBJECTINSTANCEW, tszName));
-    pdidoi->dwSize = dwSize;
-    WideCharToMultiByte(CP_ACP, 0, didoiW.tszName, -1, pdidoi->tszName,
-                        sizeof(pdidoi->tszName), NULL, NULL);
-
-    return res;
-}
-
 /******************************************************************************
   *     GetProperty : get input device properties
   */

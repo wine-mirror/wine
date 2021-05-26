@@ -1439,7 +1439,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
         IDirectInputDevice2AImpl_SetDataFormat,
 	IDirectInputDevice2AImpl_SetEventNotification,
 	IDirectInputDevice2AImpl_SetCooperativeLevel,
-        JoystickAGenericImpl_GetObjectInfo,
+        IDirectInputDevice2AImpl_GetObjectInfo,
 	JoystickAImpl_GetDeviceInfo,
 	IDirectInputDevice2AImpl_RunControlPanel,
 	IDirectInputDevice2AImpl_Initialize,

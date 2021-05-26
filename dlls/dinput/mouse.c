@@ -796,33 +796,6 @@ static HRESULT WINAPI SysMouseWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface,
     return res;
 }
 
-static HRESULT WINAPI SysMouseAImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8A iface,
-        LPDIDEVICEOBJECTINSTANCEA pdidoi, DWORD dwObj, DWORD dwHow)
-{
-    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
-    HRESULT res;
-    DIDEVICEOBJECTINSTANCEW didoiW;
-    DWORD dwSize;
-
-    if (!pdidoi) return E_POINTER;
-    if (pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCEA) &&
-        pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCE_DX3A))
-        return DIERR_INVALIDPARAM;
-
-    didoiW.dwSize = sizeof(didoiW);
-    res = SysMouseWImpl_GetObjectInfo(IDirectInputDevice8W_from_impl(This), &didoiW, dwObj, dwHow);
-    if (res != DI_OK) return res;
-
-    dwSize = pdidoi->dwSize;
-    memset(pdidoi, 0, pdidoi->dwSize);
-    memcpy(pdidoi, &didoiW, FIELD_OFFSET(DIDEVICEOBJECTINSTANCEW, tszName));
-    pdidoi->dwSize = dwSize;
-    WideCharToMultiByte(CP_ACP, 0, didoiW.tszName, -1, pdidoi->tszName,
-                        sizeof(pdidoi->tszName), NULL, NULL);
-
-    return res;
-}
-
 /******************************************************************************
   *     GetDeviceInfo : get information about a device's identity
   */
@@ -949,7 +922,7 @@ static const IDirectInputDevice8AVtbl SysMouseAvt =
     IDirectInputDevice2AImpl_SetDataFormat,
     IDirectInputDevice2AImpl_SetEventNotification,
     IDirectInputDevice2AImpl_SetCooperativeLevel,
-    SysMouseAImpl_GetObjectInfo,
+    IDirectInputDevice2AImpl_GetObjectInfo,
     SysMouseAImpl_GetDeviceInfo,
     IDirectInputDevice2AImpl_RunControlPanel,
     IDirectInputDevice2AImpl_Initialize,

@@ -1447,38 +1447,6 @@ HRESULT WINAPI IDirectInputDevice2WImpl_SetProperty(
     return DI_OK;
 }
 
-HRESULT WINAPI IDirectInputDevice2AImpl_GetObjectInfo(
-	LPDIRECTINPUTDEVICE8A iface,
-	LPDIDEVICEOBJECTINSTANCEA pdidoi,
-	DWORD dwObj,
-	DWORD dwHow)
-{
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
-    DIDEVICEOBJECTINSTANCEW didoiW;
-    HRESULT res;
-
-    if (!pdidoi) return E_POINTER;
-    if (pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCEA) &&
-        pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCE_DX3A))
-        return DIERR_INVALIDPARAM;
-
-    didoiW.dwSize = sizeof(didoiW);
-    res = IDirectInputDevice2WImpl_GetObjectInfo(IDirectInputDevice8W_from_impl(This), &didoiW, dwObj, dwHow);
-    if (res == DI_OK)
-    {
-        DWORD dwSize = pdidoi->dwSize;
-
-        memset(pdidoi, 0, pdidoi->dwSize);
-        pdidoi->dwSize   = dwSize;
-        pdidoi->guidType = didoiW.guidType;
-        pdidoi->dwOfs    = didoiW.dwOfs;
-        pdidoi->dwType   = didoiW.dwType;
-        pdidoi->dwFlags  = didoiW.dwFlags;
-    }
-
-    return res;
-}
-
 HRESULT WINAPI IDirectInputDevice2WImpl_GetObjectInfo(
 	LPDIRECTINPUTDEVICE8W iface,
 	LPDIDEVICEOBJECTINSTANCEW pdidoi,
