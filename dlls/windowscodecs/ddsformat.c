@@ -2043,39 +2043,10 @@ static HRESULT WINAPI DdsEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
                                                 IWICBitmapFrameEncode **frameEncode, IPropertyBag2 **encoderOptions)
 {
     DdsEncoder *This = impl_from_IWICBitmapEncoder(iface);
-    DdsFrameEncode *result;
-    HRESULT hr;
 
     TRACE("(%p,%p,%p)\n", iface, frameEncode, encoderOptions);
 
-    EnterCriticalSection(&This->lock);
-
-    if (!This->stream)
-    {
-        hr = WINCODEC_ERR_WRONGSTATE;
-        goto end;
-    }
-
-    result = HeapAlloc(GetProcessHeap(), 0, sizeof(*result));
-    if (!result)
-    {
-        hr = E_OUTOFMEMORY;
-        goto end;
-    }
-
-    result->IWICBitmapFrameEncode_iface.lpVtbl = &DdsFrameEncode_Vtbl;
-    result->ref = 1;
-    result->parent = This;
-    result->initialized = FALSE;
-    result->frame_created = FALSE;
-    IWICBitmapEncoder_AddRef(iface);
-
-    *frameEncode = &result->IWICBitmapFrameEncode_iface;
-    hr = S_OK;
-
-end:
-    LeaveCriticalSection(&This->lock);
-    return hr;
+    return IWICDdsEncoder_CreateNewFrame(&This->IWICDdsEncoder_iface, frameEncode, NULL, NULL, NULL);
 }
 
 static HRESULT WINAPI DdsEncoder_Commit(IWICBitmapEncoder *iface)

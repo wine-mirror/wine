@@ -1431,15 +1431,11 @@ static void test_dds_encoder_create_frame(void)
     hr = IWICBitmapEncoder_CreateNewFrame(encoder, &frame0, NULL);
     ok(hr == S_OK, "CreateNewFrame failed, hr %#x\n", hr);
     hr = IWICBitmapEncoder_CreateNewFrame(encoder, &frame1, NULL);
-    todo_wine
     ok(hr == WINCODEC_ERR_WRONGSTATE, "CreateNewFrame got unexpected hr %#x\n", hr);
-    if (hr == S_OK) IWICBitmapFrameEncode_Release(frame1);
 
     IWICBitmapFrameEncode_Release(frame0);
     hr = IWICBitmapEncoder_CreateNewFrame(encoder, &frame1, NULL);
-    todo_wine
     ok(hr == WINCODEC_ERR_WRONGSTATE, "CreateNewFrame got unexpected hr %#x\n", hr);
-    if (hr == S_OK) IWICBitmapFrameEncode_Release(frame1);
 
     release_encoder(encoder, dds_encoder, stream);
 
