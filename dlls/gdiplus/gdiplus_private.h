@@ -528,6 +528,8 @@ struct GpFontFamily{
     WCHAR FamilyName[LF_FACESIZE];
     UINT16 em_height, ascent, descent, line_spacing; /* in font units */
     int dpi;
+    BOOL installed;
+    LONG ref;
 };
 
 /* internal use */
