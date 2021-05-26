@@ -78,7 +78,6 @@ const struct unix_funcs *unix_funcs = NULL;
 const WCHAR windows_dir[] = L"C:\\windows";
 /* system directory with trailing backslash */
 const WCHAR system_dir[] = L"C:\\windows\\system32\\";
-const WCHAR syswow64_dir[] = L"C:\\windows\\syswow64\\";
 
 HMODULE kernel32_handle = 0;
 
