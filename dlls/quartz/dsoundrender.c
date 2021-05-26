@@ -605,10 +605,7 @@ static HRESULT dsound_render_start_stream(struct strmbase_filter *iface, REFEREN
     SetEvent(filter->state_event);
 
     if (filter->sink.pin.peer)
-    {
-        filter->eos = FALSE;
         IDirectSoundBuffer_Play(filter->dsbuffer, 0, 0, DSBPLAY_LOOPING);
-    }
 
     return S_OK;
 }
