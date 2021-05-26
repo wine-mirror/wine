@@ -920,7 +920,7 @@ static void test_eos(IPin *pin, IMemInputPin *input, IMediaControl *control)
     hr = IMediaControl_GetState(control, 1000, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ret = check_ec_complete(eventsrc, 0);
-    todo_wine ok(!ret, "Got unexpected EC_COMPLETE.\n");
+    ok(!ret, "Got unexpected EC_COMPLETE.\n");
 
     hr = send_frame(input);
     todo_wine ok(hr == VFW_E_SAMPLE_REJECTED_EOS, "Got hr %#x.\n", hr);
@@ -928,7 +928,7 @@ static void test_eos(IPin *pin, IMemInputPin *input, IMediaControl *control)
     hr = IMediaControl_Run(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ret = check_ec_complete(eventsrc, 0);
-    todo_wine ok(ret == 1, "Expected EC_COMPLETE.\n");
+    ok(ret == 1, "Expected EC_COMPLETE.\n");
 
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#x.\n", hr);

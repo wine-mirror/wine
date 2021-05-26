@@ -461,7 +461,8 @@ static HRESULT dsound_render_sink_eos(struct strmbase_sink *iface)
 
     filter->eos = TRUE;
 
-    if (graph && SUCCEEDED(IFilterGraph_QueryInterface(graph,
+    if (filter->filter.state == State_Running && graph
+            && SUCCEEDED(IFilterGraph_QueryInterface(graph,
             &IID_IMediaEventSink, (void **)&event_sink)))
     {
         IMediaEventSink_Notify(event_sink, EC_COMPLETE, S_OK,
@@ -599,6 +600,8 @@ static HRESULT dsound_render_init_stream(struct strmbase_filter *iface)
 static HRESULT dsound_render_start_stream(struct strmbase_filter *iface, REFERENCE_TIME start)
 {
     struct dsound_render *filter = impl_from_strmbase_filter(iface);
+    IFilterGraph *graph = filter->filter.graph;
+    IMediaEventSink *event_sink;
 
     filter->stream_start = start;
 
@@ -606,6 +609,15 @@ static HRESULT dsound_render_start_stream(struct strmbase_filter *iface, REFEREN
 
     if (filter->sink.pin.peer)
         IDirectSoundBuffer_Play(filter->dsbuffer, 0, 0, DSBPLAY_LOOPING);
+
+    if (filter->eos && graph
+            && SUCCEEDED(IFilterGraph_QueryInterface(graph,
+            &IID_IMediaEventSink, (void **)&event_sink)))
+    {
+        IMediaEventSink_Notify(event_sink, EC_COMPLETE, S_OK,
+                (LONG_PTR)&filter->filter.IBaseFilter_iface);
+        IMediaEventSink_Release(event_sink);
+    }
 
     return S_OK;
 }
