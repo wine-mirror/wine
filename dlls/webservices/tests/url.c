@@ -50,6 +50,8 @@ static void test_WsDecodeUrl(void)
     static const WCHAR url25[] = L"http://host?query%202";
     static const WCHAR url26[] = L"http://host#frag%202";
     static const WCHAR url27[] = L"http://host/%c3%ab/";
+    static const WCHAR url28[] = L"net.tcp://[::1]";
+    static const WCHAR url29[] = L"net.tcp://[::1]:1111";
     static const struct
     {
         const WCHAR        *str;
@@ -97,6 +99,8 @@ static void test_WsDecodeUrl(void)
         { url25, S_OK, WS_URL_HTTP_SCHEME_TYPE, url25 + 7, 4, 80, NULL, 0, NULL, 0, L"query 2", 7 },
         { url26, S_OK, WS_URL_HTTP_SCHEME_TYPE, url26 + 7, 4, 80, NULL, 0, NULL, 0, NULL, 0, L"frag 2", 6 },
         { url27, S_OK, WS_URL_HTTP_SCHEME_TYPE, url27 + 7, 4, 80, NULL, 0, L"/\x00eb/", 3 },
+        { url28, S_OK, WS_URL_NETTCP_SCHEME_TYPE, url28 + 10, 5, 808, NULL, 0, NULL, 0 },
+        { url29, S_OK, WS_URL_NETTCP_SCHEME_TYPE, url29 + 10, 5, 1111, url29 + 16, 4, NULL, 0 },
     };
     WS_HEAP *heap;
     WS_STRING str;

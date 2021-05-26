@@ -169,16 +169,14 @@ static WCHAR *url_decode( WCHAR *str, ULONG len, WS_HEAP *heap, ULONG *ret_len )
 /**************************************************************************
  *          WsDecodeUrl		[webservices.@]
  */
-HRESULT WINAPI WsDecodeUrl( const WS_STRING *str, ULONG flags, WS_HEAP *heap, WS_URL **ret,
-                            WS_ERROR *error )
+HRESULT WINAPI WsDecodeUrl( const WS_STRING *str, ULONG flags, WS_HEAP *heap, WS_URL **ret, WS_ERROR *error )
 {
     HRESULT hr = WS_E_QUOTA_EXCEEDED;
     WCHAR *p, *q, *decoded = NULL;
     WS_HTTP_URL *url = NULL;
     ULONG len, len_decoded, port = 0;
 
-    TRACE( "%s %08x %p %p %p\n", str ? debugstr_wn(str->chars, str->length) : "null", flags,
-           heap, ret, error );
+    TRACE( "%s %08x %p %p %p\n", str ? debugstr_wn(str->chars, str->length) : "null", flags, heap, ret, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!str || !heap) return E_INVALIDARG;
@@ -203,7 +201,15 @@ HRESULT WINAPI WsDecodeUrl( const WS_STRING *str, ULONG flags, WS_HEAP *heap, WS
     if (!--len || *++q != '/') goto done;
 
     p = ++q; len--;
-    while (len && *q != '/' && *q != ':' && *q != '?' && *q != '#') { q++; len--; };
+    if (*q == '[')
+    {
+        while (len && *q != ']') { q++; len--; };
+        if (*q++ != ']') goto done;
+    }
+    else
+    {
+        while (len && *q != '/' && *q != ':' && *q != '?' && *q != '#') { q++; len--; };
+    }
     if (q == p) goto done;
     url->host.length = q - p;
     url->host.chars  = p;
