@@ -604,24 +604,34 @@ HRESULT WINAPI RegisterApplicationRecoveryCallback(APPLICATION_RECOVERY_CALLBACK
     return S_OK;
 }
 
+static SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *get_logical_processor_info(void)
+{
+    DWORD size = 0;
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *info;
+
+    GetLogicalProcessorInformationEx( RelationGroup, NULL, &size );
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return NULL;
+    if (!(info = HeapAlloc( GetProcessHeap(), 0, size ))) return NULL;
+    if (!GetLogicalProcessorInformationEx( RelationGroup, info, &size ))
+    {
+        HeapFree( GetProcessHeap(), 0, info );
+        return NULL;
+    }
+    return info;
+}
+
+
 /***********************************************************************
  *           GetActiveProcessorGroupCount (KERNEL32.@)
  */
 WORD WINAPI GetActiveProcessorGroupCount(void)
 {
     WORD groups;
-    DWORD size = 0;
     SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *info;
 
     TRACE("()\n");
 
-    if (!GetLogicalProcessorInformationEx(RelationGroup, NULL, &size)) return 0;
-    if (!(info = HeapAlloc(GetProcessHeap(), 0, size))) return 0;
-    if (!GetLogicalProcessorInformationEx(RelationGroup, info, &size))
-    {
-        HeapFree(GetProcessHeap(), 0, info);
-        return 0;
-    }
+    if (!(info = get_logical_processor_info())) return 0;
 
     groups = info->Group.ActiveGroupCount;
 
@@ -635,18 +645,11 @@ WORD WINAPI GetActiveProcessorGroupCount(void)
 DWORD WINAPI GetActiveProcessorCount(WORD group)
 {
     DWORD cpus = 0;
-    DWORD size = 0;
     SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *info;
 
     TRACE("(0x%x)\n", group);
 
-    if (!GetLogicalProcessorInformationEx(RelationGroup, NULL, &size)) return 0;
-    if (!(info = HeapAlloc(GetProcessHeap(), 0, size))) return 0;
-    if (!GetLogicalProcessorInformationEx(RelationGroup, info, &size))
-    {
-        HeapFree(GetProcessHeap(), 0, info);
-        return 0;
-    }
+    if (!(info = get_logical_processor_info())) return 0;
 
     if (group == ALL_PROCESSOR_GROUPS)
     {
@@ -669,27 +672,20 @@ DWORD WINAPI GetActiveProcessorCount(WORD group)
 DWORD WINAPI GetMaximumProcessorCount(WORD group)
 {
     DWORD cpus = 0;
-    DWORD size = 0;
     SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *info;
 
     TRACE("(0x%x)\n", group);
 
-    if (!GetLogicalProcessorInformationEx(RelationGroup, NULL, &size)) return 0;
-    if (!(info = HeapAlloc(GetProcessHeap(), 0, size))) return 0;
-    if (!GetLogicalProcessorInformationEx(RelationGroup, info, &size))
-    {
-        HeapFree(GetProcessHeap(), 0, info);
-        return 0;
-    }
+    if (!(info = get_logical_processor_info())) return 0;
 
     if (group == ALL_PROCESSOR_GROUPS)
     {
-        for (group = 0; group < info->Group.ActiveGroupCount; group++)
+        for (group = 0; group < info->Group.MaximumGroupCount; group++)
             cpus += info->Group.GroupInfo[group].MaximumProcessorCount;
     }
     else
     {
-        if (group < info->Group.ActiveGroupCount)
+        if (group < info->Group.MaximumGroupCount)
             cpus = info->Group.GroupInfo[group].MaximumProcessorCount;
     }
 
@@ -703,18 +699,11 @@ DWORD WINAPI GetMaximumProcessorCount(WORD group)
 WORD WINAPI GetMaximumProcessorGroupCount(void)
 {
     WORD groups;
-    DWORD size = 0;
     SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *info;
 
     TRACE("()\n");
 
-    if (!GetLogicalProcessorInformationEx(RelationGroup, NULL, &size)) return 0;
-    if (!(info = HeapAlloc(GetProcessHeap(), 0, size))) return 0;
-    if (!GetLogicalProcessorInformationEx(RelationGroup, info, &size))
-    {
-        HeapFree(GetProcessHeap(), 0, info);
-        return 0;
-    }
+    if (!(info = get_logical_processor_info())) return 0;
 
     groups = info->Group.MaximumGroupCount;
 

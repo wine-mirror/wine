@@ -1832,7 +1832,7 @@ static void test_affinity(void)
     ok(!!pKeRevertToUserAffinityThreadEx, "KeRevertToUserAffinityThreadEx is not available.\n");
 
     count = pKeQueryActiveProcessorCountEx(1);
-    todo_wine ok(!count, "Got unexpected count %u.\n", count);
+    ok(!count, "Got unexpected count %u.\n", count);
 
     cpu_count = pKeQueryActiveProcessorCountEx(0);
     ok(cpu_count, "Got unexpected cpu_count %u.\n", cpu_count);
