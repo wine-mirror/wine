@@ -59,8 +59,9 @@ struct pulse_stream
     BOOL mute;
 
     INT32 locked;
-    UINT32 bufsize_frames, real_bufsize_bytes, period_bytes;
-    UINT32 started, peek_ofs, read_offs_bytes, lcl_offs_bytes, pa_offs_bytes;
+    BOOL started;
+    SIZE_T bufsize_frames, alloc_size, real_bufsize_bytes, period_bytes;
+    SIZE_T peek_ofs, read_offs_bytes, lcl_offs_bytes, pa_offs_bytes;
     SIZE_T tmp_buffer_bytes, held_bytes, peek_len, peek_buffer_len, pa_held_bytes;
     BYTE *local_buffer, *tmp_buffer, *peek_buffer;
     void *locked_ptr;
@@ -843,9 +844,10 @@ static HRESULT WINAPI pulse_create_stream(const char *name, EDataFlow dataflow, 
         /* Update frames according to new size */
         dump_attr(attr);
         if (dataflow == eRender) {
-            stream->real_bufsize_bytes = stream->bufsize_frames * 2 * pa_frame_size(&stream->ss);
-            stream->local_buffer = RtlAllocateHeap(GetProcessHeap(), 0, stream->real_bufsize_bytes);
-            if(!stream->local_buffer)
+            stream->alloc_size = stream->real_bufsize_bytes =
+                stream->bufsize_frames * 2 * pa_frame_size(&stream->ss);
+            if (NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer,
+                                        0, &stream->real_bufsize_bytes, MEM_COMMIT, PAGE_READWRITE))
                 hr = E_OUTOFMEMORY;
         } else {
             UINT32 i, capture_packets;
@@ -857,8 +859,9 @@ static HRESULT WINAPI pulse_create_stream(const char *name, EDataFlow dataflow, 
 
             capture_packets = stream->real_bufsize_bytes / stream->period_bytes;
 
-            stream->local_buffer = RtlAllocateHeap(GetProcessHeap(), 0, stream->real_bufsize_bytes + capture_packets * sizeof(ACPacket));
-            if (!stream->local_buffer)
+            stream->alloc_size = stream->real_bufsize_bytes + capture_packets * sizeof(ACPacket);
+            if (NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer,
+                                        0, &stream->alloc_size, MEM_COMMIT, PAGE_READWRITE))
                 hr = E_OUTOFMEMORY;
             else {
                 ACPacket *cur_packet = (ACPacket*)((char*)stream->local_buffer + stream->real_bufsize_bytes);
@@ -912,8 +915,10 @@ static void WINAPI pulse_release_stream(struct pulse_stream *stream, HANDLE time
     if (stream->tmp_buffer)
         NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer,
                             &stream->tmp_buffer_bytes, MEM_RELEASE);
+    if (stream->local_buffer)
+        NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer,
+                            &stream->alloc_size, MEM_RELEASE);
     free(stream->peek_buffer);
-    RtlFreeHeap(GetProcessHeap(), 0, stream->local_buffer);
     free(stream);
 }
 
