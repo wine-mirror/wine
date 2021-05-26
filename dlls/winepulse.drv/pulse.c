@@ -807,7 +807,7 @@ static HRESULT WINAPI pulse_create_stream(const char *name, EDataFlow dataflow, 
         return hr;
     }
 
-    if (!(stream = RtlAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*stream))))
+    if (!(stream = calloc(1, sizeof(*stream))))
     {
         pulse_unlock();
         return E_OUTOFMEMORY;
@@ -884,7 +884,7 @@ exit:
         if (stream->stream) {
             pa_stream_disconnect(stream->stream);
             pa_stream_unref(stream->stream);
-            RtlFreeHeap(GetProcessHeap(), 0, stream);
+            free(stream);
         }
     }
 
@@ -910,9 +910,9 @@ static void WINAPI pulse_release_stream(struct pulse_stream *stream, HANDLE time
     pulse_unlock();
 
     RtlFreeHeap(GetProcessHeap(), 0, stream->tmp_buffer);
-    RtlFreeHeap(GetProcessHeap(), 0, stream->peek_buffer);
+    free(stream->peek_buffer);
     RtlFreeHeap(GetProcessHeap(), 0, stream->local_buffer);
-    RtlFreeHeap(GetProcessHeap(), 0, stream);
+    free(stream);
 }
 
 static int write_buffer(const struct pulse_stream *stream, BYTE *buffer, UINT32 bytes)
@@ -1068,9 +1068,9 @@ static void pulse_write(struct pulse_stream *stream)
             to_write = bytes - stream->pa_held_bytes;
             TRACE("prebuffering %u frames of silence\n",
                     (int)(to_write / pa_frame_size(&stream->ss)));
-            buf = RtlAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, to_write);
+            buf = calloc(1, to_write);
             pa_stream_write(stream->stream, buf, to_write, NULL, 0, PA_SEEK_RELATIVE);
-            RtlFreeHeap(GetProcessHeap(), 0, buf);
+            free(buf);
         }
 
         stream->just_underran = FALSE;
@@ -1179,8 +1179,8 @@ static void pulse_read(struct pulse_stream *stream)
                 {
                     if (src_len > stream->peek_buffer_len)
                     {
-                        RtlFreeHeap(GetProcessHeap(), 0, stream->peek_buffer);
-                        stream->peek_buffer = RtlAllocateHeap(GetProcessHeap(), 0, src_len);
+                        free(stream->peek_buffer);
+                        stream->peek_buffer = malloc(src_len);
                         stream->peek_buffer_len = src_len;
                     }
 
