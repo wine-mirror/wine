@@ -86,7 +86,6 @@ struct wine_input_absinfo {
 
 /* implemented in effect_linuxinput.c */
 HRESULT linuxinput_create_effect(int* fd, REFGUID rguid, struct list *parent_list_entry, LPDIRECTINPUTEFFECT* peff);
-HRESULT linuxinput_get_info_A(int fd, REFGUID rguid, LPDIEFFECTINFOA info);
 HRESULT linuxinput_get_info_W(int fd, REFGUID rguid, LPDIEFFECTINFOW info);
 
 static HRESULT WINAPI JoystickWImpl_SendForceFeedbackCommand(LPDIRECTINPUTDEVICE8W iface, DWORD dwFlags);
@@ -1251,21 +1250,6 @@ static HRESULT WINAPI JoystickWImpl_EnumEffects(LPDIRECTINPUTDEVICE8W iface,
 /*******************************************************************************
  *      GetEffectInfo - Get information about a particular effect 
  */
-static HRESULT WINAPI JoystickAImpl_GetEffectInfo(LPDIRECTINPUTDEVICE8A iface,
-						  LPDIEFFECTINFOA pdei,
-						  REFGUID guid)
-{
-    JoystickImpl* This = impl_from_IDirectInputDevice8A(iface);
-
-    TRACE("(this=%p,%p,%s)\n", This, pdei, _dump_dinput_GUID(guid));
-
-#ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
-    return linuxinput_get_info_A(This->joyfd, guid, pdei); 
-#else
-    return DI_OK;
-#endif
-}
-
 static HRESULT WINAPI JoystickWImpl_GetEffectInfo(LPDIRECTINPUTDEVICE8W iface,
                                                   LPDIEFFECTINFOW pdei,
                                                   REFGUID guid)
@@ -1445,7 +1429,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
 	IDirectInputDevice2AImpl_Initialize,
 	IDirectInputDevice2AImpl_CreateEffect,
 	JoystickAImpl_EnumEffects,
-	JoystickAImpl_GetEffectInfo,
+	IDirectInputDevice2AImpl_GetEffectInfo,
 	IDirectInputDevice2AImpl_GetForceFeedbackState,
 	IDirectInputDevice2AImpl_SendForceFeedbackCommand,
 	IDirectInputDevice2AImpl_EnumCreatedEffectObjects,

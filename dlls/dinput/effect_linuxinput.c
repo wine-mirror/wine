@@ -852,40 +852,6 @@ DECLSPEC_HIDDEN HRESULT linuxinput_create_effect(
     return DI_OK;
 }
 
-DECLSPEC_HIDDEN HRESULT linuxinput_get_info_A(
-	int fd,
-	REFGUID rguid,
-	LPDIEFFECTINFOA info)
-{
-    DWORD type = typeFromGUID(rguid);
-
-    TRACE("(%d, %s, %p) type=%d\n", fd, _dump_dinput_GUID(rguid), info, type);
-
-    if (!info) return E_POINTER;
-
-    if (info->dwSize != sizeof(DIEFFECTINFOA)) return DIERR_INVALIDPARAM;
-
-    info->guid = *rguid;
-    
-    info->dwEffType = type; 
-    /* the event device API does not support querying for all these things
-     * therefore we assume that we have support for them
-     * that's not as dangerous as it sounds, since drivers are allowed to
-     * ignore parameters they claim to support anyway */
-    info->dwEffType |= DIEFT_DEADBAND | DIEFT_FFATTACK | DIEFT_FFFADE 
-                    | DIEFT_POSNEGCOEFFICIENTS | DIEFT_POSNEGSATURATION
-		    | DIEFT_SATURATION | DIEFT_STARTDELAY; 
-
-    /* again, assume we have support for everything */
-    info->dwStaticParams = DIEP_ALLPARAMS;
-    info->dwDynamicParams = info->dwStaticParams;
-
-    /* yes, this is windows behavior (print the GUID_Name for name) */
-    strcpy(info->tszName, _dump_dinput_GUID(rguid));
-
-    return DI_OK;
-}
-
 DECLSPEC_HIDDEN HRESULT linuxinput_get_info_W(
 	int fd,
 	REFGUID rguid,

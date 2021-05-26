@@ -64,6 +64,15 @@ static void dideviceobjectinstance_wtoa( const DIDEVICEOBJECTINSTANCEW *in, DIDE
     out->wReserved = in->wReserved;
 }
 
+static void dieffectinfo_wtoa( const DIEFFECTINFOW *in, DIEFFECTINFOA *out )
+{
+    out->guid = in->guid;
+    out->dwEffType = in->dwEffType;
+    out->dwStaticParams = in->dwStaticParams;
+    out->dwDynamicParams = in->dwDynamicParams;
+    WideCharToMultiByte( CP_ACP, 0, in->tszName, -1, out->tszName, sizeof(out->tszName), NULL, NULL );
+}
+
 HRESULT WINAPI IDirectInputDevice2AImpl_QueryInterface( IDirectInputDevice8A *iface_a, REFIID iid, void **out )
 {
     IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8A( iface_a );
@@ -208,6 +217,22 @@ HRESULT WINAPI IDirectInputDevice2AImpl_CreateEffect( IDirectInputDevice8A *ifac
     IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8A( iface_a );
     IDirectInputDevice8W *iface_w = IDirectInputDevice8W_from_impl( impl );
     return IDirectInputDevice8_CreateEffect( iface_w, guid, effect, out, outer );
+}
+
+HRESULT WINAPI IDirectInputDevice2AImpl_GetEffectInfo( IDirectInputDevice8A *iface_a, DIEFFECTINFOA *info_a, REFGUID guid )
+{
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8A( iface_a );
+    IDirectInputDevice8W *iface_w = IDirectInputDevice8W_from_impl( impl );
+    DIEFFECTINFOW info_w = {sizeof(info_w)};
+    HRESULT hr;
+
+    if (!info_a) return E_POINTER;
+    if (info_a->dwSize != sizeof(DIEFFECTINFOA)) return DIERR_INVALIDPARAM;
+
+    hr = IDirectInputDevice8_GetEffectInfo( iface_w, &info_w, guid );
+    dieffectinfo_wtoa( &info_w, info_a );
+
+    return hr;
 }
 
 HRESULT WINAPI IDirectInputDevice2AImpl_GetForceFeedbackState( IDirectInputDevice8A *iface_a, DWORD *state )

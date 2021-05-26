@@ -1611,16 +1611,6 @@ HRESULT WINAPI IDirectInputDevice2WImpl_EnumEffects(
     return DI_OK;
 }
 
-HRESULT WINAPI IDirectInputDevice2AImpl_GetEffectInfo(
-	LPDIRECTINPUTDEVICE8A iface,
-	LPDIEFFECTINFOA lpdei,
-	REFGUID rguid)
-{
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
-    FIXME("(%p)->(%p,%s): stub!\n", This, lpdei, debugstr_guid(rguid));
-    return DI_OK;
-}
-
 HRESULT WINAPI IDirectInputDevice2WImpl_GetEffectInfo(
 	LPDIRECTINPUTDEVICE8W iface,
 	LPDIEFFECTINFOW lpdei,
