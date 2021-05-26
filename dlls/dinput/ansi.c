@@ -318,3 +318,16 @@ HRESULT WINAPI IDirectInputDevice7AImpl_EnumEffectsInFile( IDirectInputDevice8A 
 
     return IDirectInputDevice8_EnumEffectsInFile( iface_w, filename_w, callback, ref, flags );
 }
+
+HRESULT WINAPI IDirectInputDevice7AImpl_WriteEffectToFile( IDirectInputDevice8A *iface_a, const char *filename_a, DWORD entries,
+                                                           DIFILEEFFECT *file_effect, DWORD flags )
+{
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8A( iface_a );
+    IDirectInputDevice8W *iface_w = IDirectInputDevice8W_from_impl( impl );
+    WCHAR buffer[MAX_PATH], *filename_w = buffer;
+
+    if (!filename_a) filename_w = NULL;
+    else MultiByteToWideChar( CP_ACP, 0, filename_a, -1, buffer, MAX_PATH );
+
+    return IDirectInputDevice8_WriteEffectToFile( iface_w, filename_w, entries, file_effect, flags );
+}

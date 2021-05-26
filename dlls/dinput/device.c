@@ -1670,18 +1670,6 @@ HRESULT WINAPI IDirectInputDevice7WImpl_EnumEffectsInFile(LPDIRECTINPUTDEVICE8W 
     return DI_OK;
 }
 
-HRESULT WINAPI IDirectInputDevice7AImpl_WriteEffectToFile(LPDIRECTINPUTDEVICE8A iface,
-							  LPCSTR lpszFileName,
-							  DWORD dwEntries,
-							  LPDIFILEEFFECT rgDiFileEft,
-							  DWORD dwFlags)
-{
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
-    FIXME("(%p)->(%s,%08x,%p,%08x): stub !\n", This, lpszFileName, dwEntries, rgDiFileEft, dwFlags);
-    
-    return DI_OK;
-}
-
 HRESULT WINAPI IDirectInputDevice7WImpl_WriteEffectToFile(LPDIRECTINPUTDEVICE8W iface,
 							  LPCWSTR lpszFileName,
 							  DWORD dwEntries,
