@@ -305,3 +305,16 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SendDeviceData( IDirectInputDevice8A *if
     IDirectInputDevice8W *iface_w = IDirectInputDevice8W_from_impl( impl );
     return IDirectInputDevice8_SendDeviceData( iface_w, count, data, inout, flags );
 }
+
+HRESULT WINAPI IDirectInputDevice7AImpl_EnumEffectsInFile( IDirectInputDevice8A *iface_a, const char *filename_a, LPDIENUMEFFECTSINFILECALLBACK callback,
+                                                           void *ref, DWORD flags )
+{
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8A( iface_a );
+    IDirectInputDevice8W *iface_w = IDirectInputDevice8W_from_impl( impl );
+    WCHAR buffer[MAX_PATH], *filename_w = buffer;
+
+    if (!filename_a) filename_w = NULL;
+    else MultiByteToWideChar( CP_ACP, 0, filename_a, -1, buffer, MAX_PATH );
+
+    return IDirectInputDevice8_EnumEffectsInFile( iface_w, filename_w, callback, ref, flags );
+}
