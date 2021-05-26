@@ -1093,80 +1093,6 @@ static HRESULT WINAPI JoystickWImpl_CreateEffect(LPDIRECTINPUTDEVICE8W iface, RE
 /*******************************************************************************
  *	EnumEffects - Enumerate available FF effects
  */
-static HRESULT WINAPI JoystickAImpl_EnumEffects(LPDIRECTINPUTDEVICE8A iface,
-						LPDIENUMEFFECTSCALLBACKA lpCallback,
-						LPVOID pvRef,
-						DWORD dwEffType)
-{
-#ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
-    DIEFFECTINFOA dei; /* feif */
-    DWORD type = DIEFT_GETTYPE(dwEffType);
-    JoystickImpl* This = impl_from_IDirectInputDevice8A(iface);
-
-    TRACE("(this=%p,%p,%d) type=%d\n", This, pvRef, dwEffType, type);
-
-    dei.dwSize = sizeof(DIEFFECTINFOA);          
-
-    if ((type == DIEFT_ALL || type == DIEFT_CONSTANTFORCE)
-	&& test_bit(This->joydev->ffbits, FF_CONSTANT)) {
-	IDirectInputDevice8_GetEffectInfo(iface, &dei, &GUID_ConstantForce);
-	(*lpCallback)(&dei, pvRef);
-    }
-
-    if ((type == DIEFT_ALL || type == DIEFT_PERIODIC)
-	&& test_bit(This->joydev->ffbits, FF_PERIODIC)) {
-	if (test_bit(This->joydev->ffbits, FF_SQUARE)) {
-	    IDirectInputDevice8_GetEffectInfo(iface, &dei, &GUID_Square);
-	    (*lpCallback)(&dei, pvRef);
-	}
-	if (test_bit(This->joydev->ffbits, FF_SINE)) {
-            IDirectInputDevice8_GetEffectInfo(iface, &dei, &GUID_Sine);
-	    (*lpCallback)(&dei, pvRef);
-	}
-	if (test_bit(This->joydev->ffbits, FF_TRIANGLE)) {
-	    IDirectInputDevice8_GetEffectInfo(iface, &dei, &GUID_Triangle);
-	    (*lpCallback)(&dei, pvRef);
-	}
-	if (test_bit(This->joydev->ffbits, FF_SAW_UP)) {
-	    IDirectInputDevice8_GetEffectInfo(iface, &dei, &GUID_SawtoothUp);
-	    (*lpCallback)(&dei, pvRef);
-	}
-	if (test_bit(This->joydev->ffbits, FF_SAW_DOWN)) {
-	    IDirectInputDevice8_GetEffectInfo(iface, &dei, &GUID_SawtoothDown);
-	    (*lpCallback)(&dei, pvRef);
-	}
-    } 
-
-    if ((type == DIEFT_ALL || type == DIEFT_RAMPFORCE)
-	&& test_bit(This->joydev->ffbits, FF_RAMP)) {
-        IDirectInputDevice8_GetEffectInfo(iface, &dei, &GUID_RampForce);
-        (*lpCallback)(&dei, pvRef);
-    }
-
-    if (type == DIEFT_ALL || type == DIEFT_CONDITION) {
-	if (test_bit(This->joydev->ffbits, FF_SPRING)) {
-	    IDirectInputDevice8_GetEffectInfo(iface, &dei, &GUID_Spring);
-	    (*lpCallback)(&dei, pvRef);
-	}
-	if (test_bit(This->joydev->ffbits, FF_DAMPER)) {
-	    IDirectInputDevice8_GetEffectInfo(iface, &dei, &GUID_Damper);
-	    (*lpCallback)(&dei, pvRef);
-	}
-	if (test_bit(This->joydev->ffbits, FF_INERTIA)) {
-	    IDirectInputDevice8_GetEffectInfo(iface, &dei, &GUID_Inertia);
-	    (*lpCallback)(&dei, pvRef);
-	}
-	if (test_bit(This->joydev->ffbits, FF_FRICTION)) {
-	    IDirectInputDevice8_GetEffectInfo(iface, &dei, &GUID_Friction);
-	    (*lpCallback)(&dei, pvRef);
-	}
-    }
-
-#endif
-
-    return DI_OK;
-}
-
 static HRESULT WINAPI JoystickWImpl_EnumEffects(LPDIRECTINPUTDEVICE8W iface,
                                                 LPDIENUMEFFECTSCALLBACKW lpCallback,
                                                 LPVOID pvRef,
@@ -1428,7 +1354,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
 	IDirectInputDevice2AImpl_RunControlPanel,
 	IDirectInputDevice2AImpl_Initialize,
 	IDirectInputDevice2AImpl_CreateEffect,
-	JoystickAImpl_EnumEffects,
+	IDirectInputDevice2AImpl_EnumEffects,
 	IDirectInputDevice2AImpl_GetEffectInfo,
 	IDirectInputDevice2AImpl_GetForceFeedbackState,
 	IDirectInputDevice2AImpl_SendForceFeedbackCommand,

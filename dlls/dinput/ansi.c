@@ -219,6 +219,33 @@ HRESULT WINAPI IDirectInputDevice2AImpl_CreateEffect( IDirectInputDevice8A *ifac
     return IDirectInputDevice8_CreateEffect( iface_w, guid, effect, out, outer );
 }
 
+struct enum_effects_wtoa_params
+{
+    LPDIENUMEFFECTSCALLBACKA callback;
+    void *ref;
+};
+
+static BOOL CALLBACK enum_effects_wtoa_callback( const DIEFFECTINFOW *info_w, void *ref )
+{
+    struct enum_effects_wtoa_params *params = ref;
+    DIEFFECTINFOA info_a = {sizeof(info_a)};
+
+    dieffectinfo_wtoa( info_w, &info_a );
+    return params->callback( &info_a, params->ref );
+}
+
+HRESULT WINAPI IDirectInputDevice2AImpl_EnumEffects( IDirectInputDevice8A *iface_a, LPDIENUMEFFECTSCALLBACKA callback,
+                                                     void *ref, DWORD type )
+{
+    struct enum_effects_wtoa_params params = {callback, ref};
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8A( iface_a );
+    IDirectInputDevice8W *iface_w = IDirectInputDevice8W_from_impl( impl );
+
+    if (!callback) return DIERR_INVALIDPARAM;
+
+    return IDirectInputDevice8_EnumEffects( iface_w, enum_effects_wtoa_callback, &params, type );
+}
+
 HRESULT WINAPI IDirectInputDevice2AImpl_GetEffectInfo( IDirectInputDevice8A *iface_a, DIEFFECTINFOA *info_a, REFGUID guid )
 {
     IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8A( iface_a );

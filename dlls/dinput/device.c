@@ -1587,18 +1587,6 @@ HRESULT WINAPI IDirectInputDevice2WImpl_CreateEffect(LPDIRECTINPUTDEVICE8W iface
     return DIERR_UNSUPPORTED;
 }
 
-HRESULT WINAPI IDirectInputDevice2AImpl_EnumEffects(
-	LPDIRECTINPUTDEVICE8A iface,
-	LPDIENUMEFFECTSCALLBACKA lpCallback,
-	LPVOID lpvRef,
-	DWORD dwFlags)
-{
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
-    FIXME("%p)->(%p,%p,0x%08x): stub!\n", This, lpCallback, lpvRef, dwFlags);
-
-    return DI_OK;
-}
-
 HRESULT WINAPI IDirectInputDevice2WImpl_EnumEffects(
 	LPDIRECTINPUTDEVICE8W iface,
 	LPDIENUMEFFECTSCALLBACKW lpCallback,
