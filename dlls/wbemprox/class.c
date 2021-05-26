@@ -354,6 +354,7 @@ static HRESULT record_get_value( const struct record *record, UINT index, VARIAN
     VARTYPE vartype = to_vartype( record->fields[index].type & CIM_TYPE_MASK );
 
     if (type) *type = record->fields[index].type;
+    if (!var) return S_OK;
 
     if (record->fields[index].type & CIM_FLAG_ARRAY)
     {
