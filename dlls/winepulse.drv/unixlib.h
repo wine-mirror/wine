@@ -33,8 +33,6 @@ struct pulse_config
 
 struct unix_funcs
 {
-    void (WINAPI *lock)(void);
-    void (WINAPI *unlock)(void);
     void (WINAPI *main_loop)(HANDLE event);
     HRESULT (WINAPI *create_stream)(const char *name, EDataFlow dataflow, AUDCLNT_SHAREMODE mode,
                                     DWORD flags, REFERENCE_TIME duration, REFERENCE_TIME period,

@@ -99,12 +99,12 @@ static pthread_cond_t pulse_cond = PTHREAD_COND_INITIALIZER;
 UINT8 mult_alaw_sample(UINT8, float);
 UINT8 mult_ulaw_sample(UINT8, float);
 
-static void WINAPI pulse_lock(void)
+static void pulse_lock(void)
 {
     pthread_mutex_lock(&pulse_mutex);
 }
 
-static void WINAPI pulse_unlock(void)
+static void pulse_unlock(void)
 {
     pthread_mutex_unlock(&pulse_mutex);
 }
@@ -178,13 +178,13 @@ static int pulse_poll_func(struct pollfd *ufds, unsigned long nfds, int timeout,
 static void WINAPI pulse_main_loop(HANDLE event)
 {
     int ret;
+    pulse_lock();
     pulse_ml = pa_mainloop_new();
     pa_mainloop_set_poll_func(pulse_ml, pulse_poll_func, NULL);
     NtSetEvent(event, NULL);
-    pulse_lock();
     pa_mainloop_run(pulse_ml, &ret);
-    pulse_unlock();
     pa_mainloop_free(pulse_ml);
+    pulse_unlock();
 }
 
 static void pulse_contextcallback(pa_context *c, void *userdata)
@@ -799,11 +799,19 @@ static HRESULT WINAPI pulse_create_stream(const char *name, EDataFlow dataflow, 
     unsigned int i, bufsize_bytes;
     HRESULT hr;
 
+    pulse_lock();
+
     if (FAILED(hr = pulse_connect(name)))
+    {
+        pulse_unlock();
         return hr;
+    }
 
     if (!(stream = RtlAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*stream))))
+    {
+        pulse_unlock();
         return E_OUTOFMEMORY;
+    }
 
     stream->dataflow = dataflow;
     for (i = 0; i < ARRAY_SIZE(stream->vol); ++i)
@@ -867,6 +875,9 @@ static HRESULT WINAPI pulse_create_stream(const char *name, EDataFlow dataflow, 
         }
     }
 
+    *channel_count = stream->ss.channels;
+    *ret = stream;
+
 exit:
     if (FAILED(hr)) {
         free(stream->local_buffer);
@@ -875,12 +886,10 @@ exit:
             pa_stream_unref(stream->stream);
             RtlFreeHeap(GetProcessHeap(), 0, stream);
         }
-        return hr;
     }
 
-    *channel_count = stream->ss.channels;
-    *ret = stream;
-    return S_OK;
+    pulse_unlock();
+    return hr;
 }
 
 static void WINAPI pulse_release_stream(struct pulse_stream *stream, HANDLE timer)
@@ -1802,13 +1811,15 @@ static HRESULT WINAPI pulse_set_event_handle(struct pulse_stream *stream, HANDLE
 
 static BOOL WINAPI pulse_is_started(struct pulse_stream *stream)
 {
-    return pulse_stream_valid(stream) && stream->started;
+    BOOL ret;
+    pulse_lock();
+    ret = pulse_stream_valid(stream) && stream->started;
+    pulse_unlock();
+    return ret;
 }
 
 static const struct unix_funcs unix_funcs =
 {
-    pulse_lock,
-    pulse_unlock,
     pulse_main_loop,
     pulse_create_stream,
     pulse_release_stream,
