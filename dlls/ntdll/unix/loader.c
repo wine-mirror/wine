@@ -1458,7 +1458,7 @@ NTSTATUS load_builtin( const pe_image_info_t *image_info, WCHAR *filename,
  *
  * cf. GetSystemWow64Directory2.
  */
-const WCHAR *get_machine_wow64_dir( WORD machine )
+static const WCHAR *get_machine_wow64_dir( WORD machine )
 {
     static const WCHAR system32[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\','s','y','s','t','e','m','3','2','\\',0};
     static const WCHAR syswow64[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\','s','y','s','w','o','w','6','4','\\',0};
