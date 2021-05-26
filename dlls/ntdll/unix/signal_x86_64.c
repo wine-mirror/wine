@@ -1568,7 +1568,7 @@ static void restore_context( const struct xcontext *xcontext, ucontext_t *sigcon
  *
  * Set the new CPU context.
  */
-extern void set_full_cpu_context(void);
+extern void set_full_cpu_context(void) DECLSPEC_HIDDEN;
 __ASM_GLOBAL_FUNC( set_full_cpu_context,
                    "movq %gs:0x30,%rdx\n\t"
                    "movq 0x328(%rdx),%rsp\n\t"      /* amd64_thread_data()->syscall_frame */
@@ -1874,7 +1874,7 @@ NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
 }
 
 
-extern void CDECL raise_func_trampoline( void *dispatcher );
+extern void CDECL raise_func_trampoline( void *dispatcher ) DECLSPEC_HIDDEN;
 
 __ASM_GLOBAL_FUNC( raise_func_trampoline,
                    "jmpq *%r8\n\t")
@@ -1973,6 +1973,9 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
  */
 struct apc_stack_layout * WINAPI setup_user_apc_dispatcher_stack( CONTEXT *context,
                                                                   struct apc_stack_layout *stack,
+                                                                  NTSTATUS status ) DECLSPEC_HIDDEN;
+struct apc_stack_layout * WINAPI setup_user_apc_dispatcher_stack( CONTEXT *context,
+                                                                  struct apc_stack_layout *stack,
                                                                   NTSTATUS status )
 {
     CONTEXT c;
@@ -2051,6 +2054,9 @@ void WINAPI call_raise_user_exception_dispatcher( NTSTATUS (WINAPI *dispatcher)(
 /***********************************************************************
  *           call_user_exception_dispatcher
  */
+struct stack_layout * WINAPI setup_user_exception_dispatcher_stack( EXCEPTION_RECORD *rec, CONTEXT *context,
+                                               NTSTATUS (WINAPI *dispatcher)(EXCEPTION_RECORD*,CONTEXT*),
+                                               struct stack_layout *stack ) DECLSPEC_HIDDEN;
 struct stack_layout * WINAPI setup_user_exception_dispatcher_stack( EXCEPTION_RECORD *rec, CONTEXT *context,
                                                NTSTATUS (WINAPI *dispatcher)(EXCEPTION_RECORD*,CONTEXT*),
                                                struct stack_layout *stack )

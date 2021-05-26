@@ -197,7 +197,7 @@ static inline void do_cpuid(unsigned int ax, unsigned int cx, unsigned int *p)
 }
 
 #ifdef __i386__
-extern int have_cpuid(void);
+extern int have_cpuid(void) DECLSPEC_HIDDEN;
 __ASM_GLOBAL_FUNC( have_cpuid,
                    "pushfl\n\t"
                    "pushfl\n\t"

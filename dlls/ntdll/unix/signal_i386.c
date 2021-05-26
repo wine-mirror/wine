@@ -638,7 +638,7 @@ static int solaris_sigaction( int sig, const struct sigaction *new, struct sigac
 
 #endif
 
-extern void clear_alignment_flag(void);
+extern void clear_alignment_flag(void) DECLSPEC_HIDDEN;
 __ASM_GLOBAL_FUNC( clear_alignment_flag,
                    "pushfl\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
@@ -914,7 +914,7 @@ static inline void restore_context( const struct xcontext *xcontext, ucontext_t 
  *
  * Set the new CPU context.
  */
-extern void set_full_cpu_context(void);
+extern void set_full_cpu_context(void) DECLSPEC_HIDDEN;
 __ASM_GLOBAL_FUNC( set_full_cpu_context,
                    "movl %fs:0x1f8,%ecx\n\t"
                    "movl $0,%fs:0x1f8\n\t"    /* x86_thread_data()->syscall_frame = NULL */
@@ -1622,6 +1622,9 @@ struct apc_stack_layout
     CONTEXT       context;
 };
 
+struct apc_stack_layout * WINAPI setup_user_apc_dispatcher_stack( CONTEXT *context, struct apc_stack_layout *stack,
+                                                                  void *arg1, void *arg2, void *arg3,
+                                                                  void *func, NTSTATUS status ) DECLSPEC_HIDDEN;
 struct apc_stack_layout * WINAPI setup_user_apc_dispatcher_stack( CONTEXT *context, struct apc_stack_layout *stack,
                                                                   void *arg1, void *arg2, void *arg3,
                                                                   void *func, NTSTATUS status )
