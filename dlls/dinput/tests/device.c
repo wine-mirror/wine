@@ -158,6 +158,16 @@ static void test_object_info(IDirectInputDeviceA *device, HWND hwnd)
     hr = IDirectInputDevice_GetDeviceData(device, sizeof(buffer[0]), buffer, &cnt, 0);
     ok(hr == DI_OK, "GetDeviceData() failed: %08x\n", hr);
 
+    hr = IDirectInputDevice_GetObjectInfo(device, NULL, 16, DIPH_BYOFFSET);
+    ok(hr == E_POINTER, "IDirectInputDevice_GetObjectInfo returned %08x, expected %08x\n", hr, E_POINTER);
+
+    obj_info.dwSize = 1;
+    hr = IDirectInputDevice_GetObjectInfo(device, &obj_info, 16, DIPH_BYOFFSET);
+    ok(hr == DIERR_INVALIDPARAM, "IDirectInputDevice_GetObjectInfo returned %08x, expected %08x\n", hr, DIERR_INVALIDPARAM);
+    obj_info.dwSize = 0xdeadbeef;
+    hr = IDirectInputDevice_GetObjectInfo(device, &obj_info, 16, DIPH_BYOFFSET);
+    ok(hr == DIERR_INVALIDPARAM, "IDirectInputDevice_GetObjectInfo returned %08x, expected %08x\n", hr, DIERR_INVALIDPARAM);
+
     /* No need to test devices without axis */
     obj_info.dwSize = sizeof(obj_info);
     hr = IDirectInputDevice_GetObjectInfo(device, &obj_info, 16, DIPH_BYOFFSET);

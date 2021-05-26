@@ -1457,9 +1457,9 @@ HRESULT WINAPI IDirectInputDevice2AImpl_GetObjectInfo(
     DIDEVICEOBJECTINSTANCEW didoiW;
     HRESULT res;
 
-    if (!pdidoi ||
-        (pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCEA) &&
-         pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCE_DX3A)))
+    if (!pdidoi) return E_POINTER;
+    if (pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCEA) &&
+        pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCE_DX3A))
         return DIERR_INVALIDPARAM;
 
     didoiW.dwSize = sizeof(didoiW);
@@ -1492,9 +1492,9 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetObjectInfo(
 
     TRACE("(%p) %d(0x%08x) -> %p\n", This, dwHow, dwObj, pdidoi);
 
-    if (!pdidoi ||
-        (pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCEW) &&
-         pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCE_DX3W)))
+    if (!pdidoi) return E_POINTER;
+    if (pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCEW) &&
+        pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCE_DX3W))
         return DIERR_INVALIDPARAM;
 
     switch (dwHow)

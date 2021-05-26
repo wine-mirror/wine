@@ -802,12 +802,18 @@ static HRESULT WINAPI SysMouseAImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8A iface,
     SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
     HRESULT res;
     DIDEVICEOBJECTINSTANCEW didoiW;
-    DWORD dwSize = pdidoi->dwSize;
+    DWORD dwSize;
+
+    if (!pdidoi) return E_POINTER;
+    if (pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCEA) &&
+        pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCE_DX3A))
+        return DIERR_INVALIDPARAM;
 
     didoiW.dwSize = sizeof(didoiW);
     res = SysMouseWImpl_GetObjectInfo(IDirectInputDevice8W_from_impl(This), &didoiW, dwObj, dwHow);
     if (res != DI_OK) return res;
 
+    dwSize = pdidoi->dwSize;
     memset(pdidoi, 0, pdidoi->dwSize);
     memcpy(pdidoi, &didoiW, FIELD_OFFSET(DIDEVICEOBJECTINSTANCEW, tszName));
     pdidoi->dwSize = dwSize;
