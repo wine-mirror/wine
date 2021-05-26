@@ -928,12 +928,10 @@ static void test_user_shared_data(void)
         struct old_xstate_configuration *xs_old
                 = (struct old_xstate_configuration *)((char *)user_shared_data + 0x3e0);
 
-        memset(&xstate, 0, sizeof(xstate));
-        xstate.EnabledFeatures = xstate.EnabledVolatileFeatures = xs_old->EnabledFeatures;
-        memcpy(&xstate.Size, &xs_old->Size, sizeof(*xs_old) - offsetof(struct old_xstate_configuration, Size));
-        for (i = 0; i < 3; ++i)
-             xstate.AllFeatures[i] = xs_old->Features[i].Size;
-        xstate.AllFeatureSize = 512 + sizeof(XSTATE);
+        ok(feature_mask == xs_old->EnabledFeatures, "Got unexpected xs_old->EnabledFeatures %s.\n",
+                wine_dbgstr_longlong(xs_old->EnabledFeatures));
+        win_skip("Old structure layout.\n");
+        return;
     }
 
     trace("XState EnabledFeatures %s.\n", wine_dbgstr_longlong(xstate.EnabledFeatures));
@@ -960,7 +958,7 @@ static void test_user_shared_data(void)
     for (i = 0; i < ARRAY_SIZE(feature_sizes); ++i)
     {
         ok(xstate.AllFeatures[i] == feature_sizes[i]
-                || broken(!xstate.AllFeatures[i]) /* win10pro */,
+                || broken(!xstate.AllFeatures[i]) /* win10 on Testbot VMs */,
                 "Got unexpected AllFeatures[%u] %u, expected %u.\n", i,
                 xstate.AllFeatures[i], feature_sizes[i]);
         ok(xstate.Features[i].Size == feature_sizes[i], "Got unexpected Features[%u].Size %u, expected %u.\n", i,
