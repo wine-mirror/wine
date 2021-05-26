@@ -35,8 +35,7 @@ struct unix_funcs
 {
     void (WINAPI *lock)(void);
     void (WINAPI *unlock)(void);
-    int (WINAPI *cond_wait)(void);
-    void (WINAPI *main_loop)(void);
+    void (WINAPI *main_loop)(HANDLE event);
     HRESULT (WINAPI *create_stream)(const char *name, EDataFlow dataflow, AUDCLNT_SHAREMODE mode,
                                     DWORD flags, REFERENCE_TIME duration, REFERENCE_TIME period,
                                     const WAVEFORMATEX *fmt, UINT32 *channel_count,

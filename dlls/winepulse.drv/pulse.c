@@ -109,7 +109,7 @@ static void WINAPI pulse_unlock(void)
     pthread_mutex_unlock(&pulse_mutex);
 }
 
-static int WINAPI pulse_cond_wait(void)
+static int pulse_cond_wait(void)
 {
     return pthread_cond_wait(&pulse_cond, &pulse_mutex);
 }
@@ -175,13 +175,13 @@ static int pulse_poll_func(struct pollfd *ufds, unsigned long nfds, int timeout,
     return r;
 }
 
-static void WINAPI pulse_main_loop(void)
+static void WINAPI pulse_main_loop(HANDLE event)
 {
     int ret;
     pulse_ml = pa_mainloop_new();
     pa_mainloop_set_poll_func(pulse_ml, pulse_poll_func, NULL);
+    NtSetEvent(event, NULL);
     pulse_lock();
-    pulse_broadcast();
     pa_mainloop_run(pulse_ml, &ret);
     pulse_unlock();
     pa_mainloop_free(pulse_ml);
@@ -1809,7 +1809,6 @@ static const struct unix_funcs unix_funcs =
 {
     pulse_lock,
     pulse_unlock,
-    pulse_cond_wait,
     pulse_main_loop,
     pulse_create_stream,
     pulse_release_stream,

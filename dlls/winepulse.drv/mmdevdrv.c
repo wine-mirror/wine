@@ -193,8 +193,9 @@ static inline ACImpl *impl_from_IAudioStreamVolume(IAudioStreamVolume *iface)
     return CONTAINING_RECORD(iface, ACImpl, IAudioStreamVolume_iface);
 }
 
-static DWORD CALLBACK pulse_mainloop_thread(void *tmp) {
-    pulse->main_loop();
+static DWORD CALLBACK pulse_mainloop_thread(void *event)
+{
+    pulse->main_loop(event);
     return 0;
 }
 
@@ -557,14 +558,17 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 
     if (!pulse_thread)
     {
-        if (!(pulse_thread = CreateThread(NULL, 0, pulse_mainloop_thread, NULL, 0, NULL)))
+        HANDLE event = CreateEventW(NULL, TRUE, FALSE, NULL);
+        if (!(pulse_thread = CreateThread(NULL, 0, pulse_mainloop_thread, event, 0, NULL)))
         {
             ERR("Failed to create mainloop thread.\n");
             pulse->unlock();
+            CloseHandle(event);
             return E_FAIL;
         }
         SetThreadPriority(pulse_thread, THREAD_PRIORITY_TIME_CRITICAL);
-        pulse->cond_wait();
+        WaitForSingleObject(event, INFINITE);
+        CloseHandle(event);
     }
 
     name = get_application_name();
