@@ -1446,17 +1446,15 @@ static void test_dds_encoder_create_frame(void)
     create_and_init_encoder(buffer, sizeof(buffer), &encoder, &dds_encoder, &stream);
     IWICDdsEncoder_SetParameters(dds_encoder, &params);
     hr = IWICDdsEncoder_CreateNewFrame(dds_encoder, &frame0, &array_index, &mip_level, &slice_index);
-    todo_wine
     ok(hr == S_OK, "CreateNewFrame failed, hr %#x\n", hr);
-    if (hr == S_OK) IWICBitmapFrameEncode_Release(frame0);
+    IWICBitmapFrameEncode_Release(frame0);
     release_encoder(encoder, dds_encoder, stream);
 
     create_and_init_encoder(buffer, sizeof(buffer), &encoder, &dds_encoder, &stream);
     IWICDdsEncoder_SetParameters(dds_encoder, &params);
     hr = IWICDdsEncoder_CreateNewFrame(dds_encoder, &frame0, NULL, NULL, NULL);
-    todo_wine
     ok(hr == S_OK, "CreateNewFrame failed, hr %#x\n", hr);
-    if (hr == S_OK) IWICBitmapFrameEncode_Release(frame0);
+    IWICBitmapFrameEncode_Release(frame0);
 
 end:
     release_encoder(encoder, dds_encoder, stream);
