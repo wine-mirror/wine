@@ -32268,15 +32268,7 @@ static void test_deferred_context_state(void)
     ID3D11Buffer_Release(ret_buffer);
 
     hr = ID3D11DeviceContext_FinishCommandList(deferred, TRUE, &list1);
-    todo_wine ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
-    if (hr != S_OK)
-    {
-        ID3D11DeviceContext_Release(deferred);
-        ID3D11Buffer_Release(blue_buffer);
-        ID3D11Buffer_Release(green_buffer);
-        release_test_context(&test_context);
-        return;
-    }
+    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
 
     ID3D11DeviceContext_PSGetConstantBuffers(deferred, 0, 1, &ret_buffer);
     ok(ret_buffer == blue_buffer, "Got unexpected buffer %p.\n", ret_buffer);
@@ -32297,7 +32289,9 @@ static void test_deferred_context_state(void)
     ID3D11DeviceContext_PSSetConstantBuffers(immediate, 0, 1, &green_buffer);
     ID3D11DeviceContext_ExecuteCommandList(immediate, list1, FALSE);
     ID3D11DeviceContext_PSGetConstantBuffers(immediate, 0, 1, &ret_buffer);
-    ok(!ret_buffer, "Got unexpected buffer %p.\n", ret_buffer);
+    todo_wine ok(!ret_buffer, "Got unexpected buffer %p.\n", ret_buffer);
+    if (ret_buffer)
+        ID3D11Buffer_Release(ret_buffer);
 
     ID3D11CommandList_Release(list2);
     ID3D11CommandList_Release(list1);
@@ -32471,16 +32465,7 @@ static void test_deferred_context_rendering(void)
     ID3D11DeviceContext_ClearRenderTargetView(deferred, test_context.backbuffer_rtv, green);
 
     hr = ID3D11DeviceContext_FinishCommandList(deferred, TRUE, &list1);
-    todo_wine ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
-    if (hr != S_OK)
-    {
-        ID3D11BlendState_Release(red_blend);
-        ID3D11BlendState_Release(green_blend);
-        ID3D11BlendState_Release(blue_blend);
-        ID3D11DeviceContext_Release(deferred);
-        release_test_context(&test_context);
-        return;
-    }
+    ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
 
     hr = ID3D11DeviceContext_FinishCommandList(deferred, TRUE, &list2);
     ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);
@@ -32490,12 +32475,12 @@ static void test_deferred_context_rendering(void)
 
     ID3D11DeviceContext_ExecuteCommandList(immediate, list1, TRUE);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(color == 0xff00ff00, "Got unexpected color %#08x.\n", color);
+    todo_wine ok(color == 0xff00ff00, "Got unexpected color %#08x.\n", color);
 
     ID3D11DeviceContext_ClearRenderTargetView(immediate, test_context.backbuffer_rtv, &white.x);
     ID3D11DeviceContext_ExecuteCommandList(immediate, list1, TRUE);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(color == 0xff00ff00, "Got unexpected color %#08x.\n", color);
+    todo_wine ok(color == 0xff00ff00, "Got unexpected color %#08x.\n", color);
 
     ID3D11DeviceContext_ClearRenderTargetView(immediate, test_context.backbuffer_rtv, &white.x);
     ID3D11DeviceContext_ExecuteCommandList(immediate, list2, TRUE);
@@ -32511,7 +32496,7 @@ static void test_deferred_context_rendering(void)
     ID3D11DeviceContext_ClearRenderTargetView(immediate, test_context.backbuffer_rtv, &white.x);
     ID3D11DeviceContext_ExecuteCommandList(immediate, list2, TRUE);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(color == 0xff00ff00, "Got unexpected color %#08x.\n", color);
+    todo_wine ok(color == 0xff00ff00, "Got unexpected color %#08x.\n", color);
 
     ID3D11CommandList_Release(list2);
     ID3D11CommandList_Release(list1);
@@ -32537,7 +32522,7 @@ static void test_deferred_context_rendering(void)
     ID3D11DeviceContext_ClearRenderTargetView(immediate, rtv, blue);
     ID3D11DeviceContext_ExecuteCommandList(immediate, list1, TRUE);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(color == 0xffff0000, "Got unexpected color %#08x.\n", color);
+    todo_wine ok(color == 0xffff0000, "Got unexpected color %#08x.\n", color);
 
     ID3D11CommandList_Release(list1);
     ID3D11DeviceContext_Release(deferred);
@@ -32571,10 +32556,12 @@ static void test_deferred_context_rendering(void)
     set_viewport(immediate, 0.0f, 0.0f, 640.0f, 480.0f, 0.0f, 1.0f);
     draw_color_quad(&test_context, &white);
     color = get_texture_color(test_context.backbuffer, 320, 240);
-    ok(color == 0xffffffff, "Got unexpected color %#08x.\n", color);
+    todo_wine ok(color == 0xffffffff, "Got unexpected color %#08x.\n", color);
 
     ID3D11DeviceContext_OMGetBlendState(immediate, &ret_blend, blend_factor, &sample_mask);
-    ok(!ret_blend, "Got unexpected blend state %p.\n", ret_blend);
+    todo_wine ok(!ret_blend, "Got unexpected blend state %p.\n", ret_blend);
+    if (ret_blend)
+        ID3D11BlendState_Release(ret_blend);
 
     ID3D11CommandList_Release(list1);
     ID3D11DeviceContext_Release(deferred);

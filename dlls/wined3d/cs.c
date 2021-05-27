@@ -3395,12 +3395,6 @@ HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device
 
     TRACE("context %p, list %p.\n", context, list);
 
-    if (restore)
-    {
-        FIXME("Restoring context state is not implemented.\n");
-        return E_NOTIMPL;
-    }
-
     if (!(object = heap_alloc_zero(sizeof(*object))))
         return E_OUTOFMEMORY;
 
@@ -3429,7 +3423,10 @@ HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device
     deferred->resource_count = 0;
 
     /* This is in fact recorded into a subsequent command list. */
-    wined3d_device_context_reset_state(&deferred->c);
+    if (restore)
+        wined3d_device_context_set_state(&deferred->c, deferred->c.state);
+    else
+        wined3d_device_context_reset_state(&deferred->c);
 
     TRACE("Created command list %p.\n", object);
     *list = object;
