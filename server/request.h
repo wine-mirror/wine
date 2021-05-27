@@ -179,6 +179,7 @@ DECL_HANDLER(enable_socket_event);
 DECL_HANDLER(set_socket_deferred);
 DECL_HANDLER(recv_socket);
 DECL_HANDLER(poll_socket);
+DECL_HANDLER(send_socket);
 DECL_HANDLER(get_next_console_request);
 DECL_HANDLER(read_directory_changes);
 DECL_HANDLER(read_change);
@@ -461,6 +462,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_set_socket_deferred,
     (req_handler)req_recv_socket,
     (req_handler)req_poll_socket,
+    (req_handler)req_send_socket,
     (req_handler)req_get_next_console_request,
     (req_handler)req_read_directory_changes,
     (req_handler)req_read_change,
@@ -1082,6 +1084,13 @@ C_ASSERT( sizeof(struct poll_socket_request) == 64 );
 C_ASSERT( FIELD_OFFSET(struct poll_socket_reply, wait) == 8 );
 C_ASSERT( FIELD_OFFSET(struct poll_socket_reply, options) == 12 );
 C_ASSERT( sizeof(struct poll_socket_reply) == 16 );
+C_ASSERT( FIELD_OFFSET(struct send_socket_request, async) == 16 );
+C_ASSERT( FIELD_OFFSET(struct send_socket_request, status) == 56 );
+C_ASSERT( FIELD_OFFSET(struct send_socket_request, total) == 60 );
+C_ASSERT( sizeof(struct send_socket_request) == 64 );
+C_ASSERT( FIELD_OFFSET(struct send_socket_reply, wait) == 8 );
+C_ASSERT( FIELD_OFFSET(struct send_socket_reply, options) == 12 );
+C_ASSERT( sizeof(struct send_socket_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_next_console_request_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct get_next_console_request_request, signal) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_next_console_request_request, read) == 20 );

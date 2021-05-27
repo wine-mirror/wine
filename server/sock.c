@@ -768,14 +768,11 @@ static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
         event &= ~(POLLIN | POLLPRI);
     }
 
-    if (is_fd_overlapped( sock->fd ))
+    if (event & POLLOUT && async_waiting( &sock->write_q ))
     {
-        if (event & POLLOUT && async_waiting( &sock->write_q ))
-        {
-            if (debug_level) fprintf( stderr, "activating write queue for socket %p\n", sock );
-            async_wake_up( &sock->write_q, STATUS_ALERTED );
-            event &= ~POLLOUT;
-        }
+        if (debug_level) fprintf( stderr, "activating write queue for socket %p\n", sock );
+        async_wake_up( &sock->write_q, STATUS_ALERTED );
+        event &= ~POLLOUT;
     }
 
     if (event & (POLLERR | POLLHUP))
@@ -2506,5 +2503,86 @@ DECL_HANDLER(poll_socket)
         release_object( async );
     }
 
+    release_object( sock );
+}
+
+DECL_HANDLER(send_socket)
+{
+    struct sock *sock = (struct sock *)get_handle_obj( current->process, req->async.handle, 0, &sock_ops );
+    unsigned int status = req->status;
+    timeout_t timeout = 0;
+    struct async *async;
+    struct fd *fd;
+
+    if (!sock) return;
+    fd = sock->fd;
+
+    if (status != STATUS_SUCCESS)
+    {
+        /* send() calls only clear and reselect events if unsuccessful. */
+        sock->pending_events &= ~FD_WRITE;
+        sock->reported_events &= ~FD_WRITE;
+    }
+
+    /* If we had a short write and the socket is nonblocking (and the client is
+     * not trying to force the operation to be asynchronous), return success.
+     * Windows actually refuses to send any data in this case, and returns
+     * EWOULDBLOCK, but we have no way of doing that. */
+    if (status == STATUS_DEVICE_NOT_READY && req->total && (sock->state & FD_WINE_NONBLOCKING))
+        status = STATUS_SUCCESS;
+
+    /* send() returned EWOULDBLOCK or a short write, i.e. cannot send all data yet */
+    if (status == STATUS_DEVICE_NOT_READY && !(sock->state & FD_WINE_NONBLOCKING))
+    {
+#ifdef SO_SNDTIMEO
+        struct timeval tv;
+        socklen_t len = sizeof(tv);
+
+        /* Set a timeout on the async if necessary.
+         *
+         * We want to do this *only* if the client gave us STATUS_DEVICE_NOT_READY.
+         * If the client gave us STATUS_PENDING, it expects the async to always
+         * block (it was triggered by WSASend*() with a valid OVERLAPPED
+         * structure) and for the timeout not to be respected. */
+        if (is_fd_overlapped( fd ) && !getsockopt( get_unix_fd( fd ), SOL_SOCKET, SO_SNDTIMEO, (char *)&tv, &len ))
+            timeout = tv.tv_sec * -10000000 + tv.tv_usec * -10;
+#endif
+
+        status = STATUS_PENDING;
+    }
+
+    /* are we shut down? */
+    if (status == STATUS_PENDING && !(sock->state & FD_WRITE)) status = STATUS_PIPE_DISCONNECTED;
+
+    if ((async = create_request_async( fd, get_fd_comp_flags( fd ), &req->async )))
+    {
+        int success = 0;
+
+        if (status == STATUS_SUCCESS)
+        {
+            struct iosb *iosb = async_get_iosb( async );
+            iosb->result = req->total;
+            release_object( iosb );
+            success = 1;
+        }
+        else if (status == STATUS_PENDING)
+        {
+            success = 1;
+        }
+        set_error( status );
+
+        if (timeout)
+            async_set_timeout( async, timeout, STATUS_IO_TIMEOUT );
+
+        if (status == STATUS_PENDING)
+            queue_async( &sock->write_q, async );
+
+        /* always reselect; we changed reported_events above */
+        sock_reselect( sock );
+
+        reply->wait = async_handoff( async, success, NULL, 0 );
+        reply->options = get_fd_options( fd );
+        release_object( async );
+    }
     release_object( sock );
 }

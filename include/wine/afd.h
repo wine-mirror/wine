@@ -92,6 +92,7 @@ struct afd_poll_params
 #define IOCTL_AFD_WINE_CONNECT              CTL_CODE(FILE_DEVICE_NETWORK, 203, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_AFD_WINE_SHUTDOWN             CTL_CODE(FILE_DEVICE_NETWORK, 204, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_AFD_WINE_RECVMSG              CTL_CODE(FILE_DEVICE_NETWORK, 205, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define IOCTL_AFD_WINE_SENDMSG              CTL_CODE(FILE_DEVICE_NETWORK, 206, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 #define IOCTL_AFD_WINE_ADDRESS_LIST_CHANGE  CTL_CODE(FILE_DEVICE_NETWORK, 323, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
@@ -124,6 +125,16 @@ struct afd_recvmsg_params
     int force_async;
     unsigned int count;
     WSABUF *buffers;
+};
+
+struct afd_sendmsg_params
+{
+    const struct WS(sockaddr) *addr;
+    unsigned int addr_len;
+    unsigned int ws_flags;
+    int force_async;
+    unsigned int count;
+    const WSABUF *buffers;
 };
 
 #endif

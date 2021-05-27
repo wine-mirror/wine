@@ -1502,6 +1502,17 @@ struct poll_socket_output
 @END
 
 
+/* Perform a send on a socket */
+@REQ(send_socket)
+    async_data_t async;         /* async I/O parameters */
+    unsigned int status;        /* status of initial call */
+    unsigned int total;         /* number of bytes already sent */
+@REPLY
+    obj_handle_t wait;          /* handle to wait on for blocking send */
+    unsigned int options;       /* device open options */
+@END
+
+
 /* Retrieve the next pending console ioctl request */
 @REQ(get_next_console_request)
     obj_handle_t handle;        /* console server handle */

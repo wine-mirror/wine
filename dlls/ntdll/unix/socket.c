@@ -89,6 +89,19 @@ static NTSTATUS wait_async( HANDLE handle, BOOL alertable )
     return NtWaitForSingleObject( handle, alertable, NULL );
 }
 
+union unix_sockaddr
+{
+    struct sockaddr addr;
+    struct sockaddr_in in;
+    struct sockaddr_in6 in6;
+#ifdef HAS_IPX
+    struct sockaddr_ipx ipx;
+#endif
+#ifdef HAS_IRDA
+    struct sockaddr_irda irda;
+#endif
+};
+
 struct async_recv_ioctl
 {
     struct async_fileio io;
@@ -98,6 +111,18 @@ struct async_recv_ioctl
     DWORD *ret_flags;
     int unix_flags;
     unsigned int count;
+    struct iovec iov[1];
+};
+
+struct async_send_ioctl
+{
+    struct async_fileio io;
+    const struct WS_sockaddr *addr;
+    int addr_len;
+    int unix_flags;
+    unsigned int sent_len;
+    unsigned int count;
+    unsigned int iov_cursor;
     struct iovec iov[1];
 };
 
@@ -147,18 +172,108 @@ static NTSTATUS sock_errno_to_status( int err )
     }
 }
 
-union unix_sockaddr
+static socklen_t sockaddr_to_unix( const struct WS_sockaddr *wsaddr, int wsaddrlen, union unix_sockaddr *uaddr )
 {
-    struct sockaddr addr;
-    struct sockaddr_in in;
-    struct sockaddr_in6 in6;
+    memset( uaddr, 0, sizeof(*uaddr) );
+
+    switch (wsaddr->sa_family)
+    {
+    case WS_AF_INET:
+    {
+        struct WS_sockaddr_in win = {0};
+
+        if (wsaddrlen < sizeof(win)) return 0;
+        memcpy( &win, wsaddr, sizeof(win) );
+        uaddr->in.sin_family = AF_INET;
+        uaddr->in.sin_port = win.sin_port;
+        memcpy( &uaddr->in.sin_addr, &win.sin_addr, sizeof(win.sin_addr) );
+        return sizeof(uaddr->in);
+    }
+
+    case WS_AF_INET6:
+    {
+        struct WS_sockaddr_in6 win = {0};
+
+        if (wsaddrlen < sizeof(struct WS_sockaddr_in6_old)) return 0;
+        if (wsaddrlen < sizeof(struct WS_sockaddr_in6))
+            memcpy( &win, wsaddr, sizeof(struct WS_sockaddr_in6_old) );
+        else
+            memcpy( &win, wsaddr, sizeof(struct WS_sockaddr_in6) );
+
+        uaddr->in6.sin6_family = AF_INET6;
+        uaddr->in6.sin6_port = win.sin6_port;
+        uaddr->in6.sin6_flowinfo = win.sin6_flowinfo;
+        memcpy( &uaddr->in6.sin6_addr, &win.sin6_addr, sizeof(win.sin6_addr) );
+#ifdef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
+        if (wsaddrlen >= sizeof(struct WS_sockaddr_in6))
+            uaddr->in6.sin6_scope_id = win.sin6_scope_id;
+#endif
+        return sizeof(uaddr->in6);
+    }
+
 #ifdef HAS_IPX
-    struct sockaddr_ipx ipx;
+    case WS_AF_IPX:
+    {
+        struct WS_sockaddr_ipx win = {0};
+
+        if (wsaddrlen < sizeof(win)) return 0;
+        memcpy( &win, wsaddr, sizeof(win) );
+        uaddr->ipx.sipx_family = AF_IPX;
+        memcpy( &uaddr->ipx.sipx_network, win.sa_netnum, sizeof(win.sa_netnum) );
+        memcpy( &uaddr->ipx.sipx_node, win.sa_nodenum, sizeof(win.sa_nodenum) );
+        uaddr->ipx.sipx_port = win.sa_socket;
+        return sizeof(uaddr->ipx);
+    }
 #endif
+
 #ifdef HAS_IRDA
-    struct sockaddr_irda irda;
+    case WS_AF_IRDA:
+    {
+        SOCKADDR_IRDA win = {0};
+        unsigned int lsap_sel;
+
+        if (wsaddrlen < sizeof(win)) return 0;
+        memcpy( &win, wsaddr, sizeof(win) );
+        uaddr->irda.sir_family = AF_IRDA;
+        if (sscanf( win.irdaServiceName, "LSAP-SEL%u", &lsap_sel ) == 1)
+            uaddr->sir_lsap_sel = lsap_sel;
+        else
+        {
+            uaddr->sir_lsap_sel = LSAP_ANY;
+            memcpy( uaddr->irda.sir_name, win.irdaServiceName, sizeof(win.irdaServiceName) );
+        }
+        memcpy( &uaddr->irda.sir_addr, win.irdaDeviceID, sizeof(win.irdaDeviceID) );
+        return sizeof(uaddr->irda);
+    }
 #endif
-};
+
+    case WS_AF_UNSPEC:
+        switch (wsaddrlen)
+        {
+        default: /* likely an ipv4 address */
+        case sizeof(struct WS_sockaddr_in):
+            return sizeof(uaddr->in);
+
+#ifdef HAS_IPX
+        case sizeof(struct WS_sockaddr_ipx):
+            return sizeof(uaddr->ipx);
+#endif
+
+#ifdef HAS_IRDA
+        case sizeof(SOCKADDR_IRDA):
+            return sizeof(uaddr->irda);
+#endif
+
+        case sizeof(struct WS_sockaddr_in6):
+        case sizeof(struct WS_sockaddr_in6_old):
+            return sizeof(uaddr->in6);
+        }
+
+    default:
+        FIXME( "unknown address family %u\n", wsaddr->sa_family );
+        return 0;
+    }
+}
 
 static int sockaddr_from_unix( const union unix_sockaddr *uaddr, struct WS_sockaddr *wsaddr, socklen_t wsaddrlen )
 {
@@ -650,6 +765,161 @@ static NTSTATUS sock_poll( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     return status;
 }
 
+static NTSTATUS try_send( int fd, struct async_send_ioctl *async )
+{
+    union unix_sockaddr unix_addr;
+    struct msghdr hdr;
+    ssize_t ret;
+
+    memset( &hdr, 0, sizeof(hdr) );
+    if (async->addr)
+    {
+        hdr.msg_name = &unix_addr;
+        hdr.msg_namelen = sockaddr_to_unix( async->addr, async->addr_len, &unix_addr );
+        if (!hdr.msg_namelen)
+        {
+            ERR( "failed to convert address\n" );
+            return STATUS_ACCESS_VIOLATION;
+        }
+
+#if defined(HAS_IPX) && defined(SOL_IPX)
+        if (async->addr->sa_family == WS_AF_IPX)
+        {
+            int type;
+            socklen_t len = sizeof(type);
+
+            /* The packet type is stored at the IPX socket level. At least the
+             * linux kernel seems to do something with it in case hdr.msg_name
+             * is NULL. Nonetheless we can use it to store the packet type, and
+             * then we can retrieve it using getsockopt. After that we can set
+             * the IPX type in the sockaddr_ipx structure with the stored value.
+             */
+            if (getsockopt(fd, SOL_IPX, IPX_TYPE, &type, &len) >= 0)
+                unix_addr.ipx.sipx_type = type;
+        }
+#endif
+    }
+
+    hdr.msg_iov = async->iov + async->iov_cursor;
+    hdr.msg_iovlen = async->count - async->iov_cursor;
+
+    while ((ret = sendmsg( fd, &hdr, async->unix_flags )) == -1)
+    {
+        if (errno == EISCONN)
+        {
+            hdr.msg_name = NULL;
+            hdr.msg_namelen = 0;
+        }
+        else if (errno != EINTR)
+        {
+            if (errno != EWOULDBLOCK) WARN( "sendmsg: %s\n", strerror( errno ) );
+            return sock_errno_to_status( errno );
+        }
+    }
+
+    async->sent_len += ret;
+
+    while (async->iov_cursor < async->count && ret >= async->iov[async->iov_cursor].iov_len)
+        ret -= async->iov[async->iov_cursor++].iov_len;
+    if (async->iov_cursor < async->count)
+    {
+        async->iov[async->iov_cursor].iov_base = (char *)async->iov[async->iov_cursor].iov_base + ret;
+        async->iov[async->iov_cursor].iov_len -= ret;
+        return STATUS_DEVICE_NOT_READY;
+    }
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS async_send_proc( void *user, IO_STATUS_BLOCK *io, NTSTATUS status )
+{
+    struct async_send_ioctl *async = user;
+    int fd, needs_close;
+
+    TRACE( "%#x\n", status );
+
+    if (status == STATUS_ALERTED)
+    {
+        if ((status = server_get_unix_fd( async->io.handle, 0, &fd, &needs_close, NULL, NULL )))
+            return status;
+
+        status = try_send( fd, async );
+        TRACE( "got status %#x\n", status );
+
+        if (status == STATUS_DEVICE_NOT_READY)
+            status = STATUS_PENDING;
+
+        if (needs_close) close( fd );
+    }
+    if (status != STATUS_PENDING)
+    {
+        io->Status = status;
+        io->Information = async->sent_len;
+        release_fileio( &async->io );
+    }
+    return status;
+}
+
+static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
+                           IO_STATUS_BLOCK *io, int fd, const WSABUF *buffers, unsigned int count,
+                           const struct WS_sockaddr *addr, unsigned int addr_len, int unix_flags, int force_async )
+{
+    struct async_send_ioctl *async;
+    HANDLE wait_handle;
+    DWORD async_size;
+    NTSTATUS status;
+    unsigned int i;
+    ULONG options;
+
+    async_size = offsetof( struct async_send_ioctl, iov[count] );
+
+    if (!(async = (struct async_send_ioctl *)alloc_fileio( async_size, async_send_proc, handle )))
+        return STATUS_NO_MEMORY;
+
+    async->count = count;
+    for (i = 0; i < count; ++i)
+    {
+        async->iov[i].iov_base = buffers[i].buf;
+        async->iov[i].iov_len = buffers[i].len;
+    }
+    async->unix_flags = unix_flags;
+    async->addr = addr;
+    async->addr_len = addr_len;
+    async->iov_cursor = 0;
+    async->sent_len = 0;
+
+    status = try_send( fd, async );
+
+    if (status != STATUS_SUCCESS && status != STATUS_DEVICE_NOT_READY)
+    {
+        release_fileio( &async->io );
+        return status;
+    }
+
+    if (status == STATUS_DEVICE_NOT_READY && force_async)
+        status = STATUS_PENDING;
+
+    if (!NT_ERROR(status))
+    {
+        io->Status = status;
+        io->Information = async->sent_len;
+    }
+
+    SERVER_START_REQ( send_socket )
+    {
+        req->status = status;
+        req->total  = async->sent_len;
+        req->async  = server_async( handle, &async->io, event, apc, apc_user, io );
+        status = wine_server_call( req );
+        wait_handle = wine_server_ptr_handle( reply->wait );
+        options     = reply->options;
+    }
+    SERVER_END_REQ;
+
+    if (status != STATUS_PENDING) release_fileio( &async->io );
+
+    if (wait_handle) status = wait_async( wait_handle, options & FILE_SYNCHRONOUS_IO_ALERT );
+    return status;
+}
 
 NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user, IO_STATUS_BLOCK *io,
                      ULONG code, void *in_buffer, ULONG in_size, void *out_buffer, ULONG out_size )
@@ -738,6 +1008,32 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 
             status = sock_recv( handle, event, apc, apc_user, io, fd, params->buffers, params->count, params->control,
                                 params->addr, params->addr_len, params->ws_flags, unix_flags, params->force_async );
+            break;
+        }
+
+        case IOCTL_AFD_WINE_SENDMSG:
+        {
+            const struct afd_sendmsg_params *params = in_buffer;
+            int unix_flags = 0;
+
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+                return status;
+
+            if (in_size < sizeof(*params))
+            {
+                status = STATUS_BUFFER_TOO_SMALL;
+                break;
+            }
+
+            if (params->ws_flags & WS_MSG_OOB)
+                unix_flags |= MSG_OOB;
+            if (params->ws_flags & WS_MSG_PARTIAL)
+                WARN( "ignoring MSG_PARTIAL\n" );
+            if (params->ws_flags & ~(WS_MSG_OOB | WS_MSG_PARTIAL))
+                FIXME( "unknown flags %#x\n", params->ws_flags );
+
+            status = sock_send( handle, event, apc, apc_user, io, fd, params->buffers, params->count,
+                                params->addr, params->addr_len, unix_flags, params->force_async );
             break;
         }
 
