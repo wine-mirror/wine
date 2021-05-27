@@ -4078,9 +4078,17 @@ static void STDMETHODCALLTYPE d3d11_device_GetImmediateContext1(ID3D11Device2 *i
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDeferredContext1(ID3D11Device2 *iface, UINT flags,
         ID3D11DeviceContext1 **context)
 {
-    FIXME("iface %p, flags %#x, context %p stub!\n", iface, flags, context);
+    struct d3d_device *device = impl_from_ID3D11Device2(iface);
+    struct d3d11_device_context *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, flags %#x, context %p.\n", iface, flags, context);
+
+    if (FAILED(hr = d3d11_deferred_context_create(device, flags, &object)))
+        return hr;
+
+    *context = &object->ID3D11DeviceContext1_iface;
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateBlendState1(ID3D11Device2 *iface,

@@ -32397,9 +32397,7 @@ static void test_deferred_context_swap_state(void)
     ID3D11DeviceContext1_PSSetConstantBuffers(immediate, 0, 1, &green_buffer);
 
     hr = ID3D11Device1_CreateDeferredContext1(device, 0, &deferred);
-    todo_wine ok(hr == S_OK, "Failed to create deferred context, hr %#x.\n", hr);
-    if (hr != S_OK)
-        goto out;
+    ok(hr == S_OK, "Failed to create deferred context, hr %#x.\n", hr);
 
     feature_level = ID3D11Device1_GetFeatureLevel(device);
     hr = ID3D11Device1_CreateDeviceContextState(device, 0, &feature_level, 1, D3D11_SDK_VERSION,
@@ -32420,7 +32418,6 @@ static void test_deferred_context_swap_state(void)
     ID3DDeviceContextState_Release(state);
     ID3D11DeviceContext1_Release(deferred);
 
-out:
     ID3D11Buffer_Release(green_buffer);
     ID3D11DeviceContext1_Release(immediate);
     ID3D11Device1_Release(device);
