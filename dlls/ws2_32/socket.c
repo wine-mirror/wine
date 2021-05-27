@@ -197,17 +197,6 @@ static struct interface_filter generic_interface_filter = {
 };
 #endif /* LINUX_BOUND_IF */
 
-/*
- * The actual definition of WSASendTo, wrapped in a different function name
- * so that internal calls from ws2_32 itself will not trigger programs like
- * Garena, which hooks WSASendTo/WSARecvFrom calls.
- */
-static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
-                       LPDWORD lpNumberOfBytesSent, DWORD dwFlags,
-                       const struct WS_sockaddr *to, int tolen,
-                       LPWSAOVERLAPPED lpOverlapped,
-                       LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine );
-
 DECLARE_CRITICAL_SECTION(cs_if_addr_cache);
 DECLARE_CRITICAL_SECTION(cs_socket_list);
 
@@ -432,6 +421,25 @@ static BOOL socket_list_add(SOCKET socket)
     LeaveCriticalSection(&cs_socket_list);
     return TRUE;
 }
+
+
+static BOOL socket_list_find( SOCKET socket )
+{
+    unsigned int i;
+
+    EnterCriticalSection( &cs_socket_list );
+    for (i = 0; i < socket_list_size; ++i)
+    {
+        if (socket_list[i] == socket)
+        {
+            LeaveCriticalSection( &cs_socket_list );
+            return TRUE;
+        }
+    }
+    LeaveCriticalSection( &cs_socket_list );
+    return FALSE;
+}
+
 
 static void socket_list_remove(SOCKET socket)
 {
@@ -1996,61 +2004,6 @@ static int WS2_send( int fd, struct ws2_async *wsa, int flags )
 }
 
 /***********************************************************************
- *              WS2_async_send          (INTERNAL)
- *
- * Handler for overlapped send() operations.
- */
-static NTSTATUS WS2_async_send( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status )
-{
-    struct ws2_async *wsa = user;
-    int result = 0, fd;
-
-    switch (status)
-    {
-    case STATUS_ALERTED:
-        if ( wsa->n_iovecs <= wsa->first_iovec )
-        {
-            /* Nothing to do */
-            status = STATUS_SUCCESS;
-            break;
-        }
-        if ((status = wine_server_handle_to_fd( wsa->hSocket, FILE_WRITE_DATA, &fd, NULL ) ))
-            break;
-
-        /* check to see if the data is ready (non-blocking) */
-        result = WS2_send( fd, wsa, convert_flags(wsa->flags) );
-        close( fd );
-
-        if (result >= 0)
-        {
-            if (wsa->first_iovec < wsa->n_iovecs)
-                status = STATUS_PENDING;
-            else
-                status = STATUS_SUCCESS;
-
-            iosb->Information += result;
-        }
-        else if (errno == EAGAIN)
-        {
-            status = STATUS_PENDING;
-        }
-        else
-        {
-            status = wsaErrStatus();
-        }
-        break;
-    }
-    if (status != STATUS_PENDING)
-    {
-        iosb->u.Status = status;
-        if (!wsa->completion_func)
-            release_async_io( &wsa->io );
-    }
-    return status;
-}
-
-
-/***********************************************************************
  *		accept		(WS2_32.1)
  */
 SOCKET WINAPI WS_accept( SOCKET s, struct WS_sockaddr *addr, int *len )
@@ -2491,6 +2444,72 @@ static int WS2_recv_base( SOCKET s, WSABUF *buffers, DWORD buffer_count, DWORD *
 
     status = NtDeviceIoControlFile( (HANDLE)s, event, apc, cvalue, piosb,
                                     IOCTL_AFD_WINE_RECVMSG, &params, sizeof(params), NULL, 0 );
+    if (status == STATUS_PENDING && !overlapped)
+    {
+        if (WaitForSingleObject( event, INFINITE ) == WAIT_FAILED)
+            return -1;
+        status = piosb->u.Status;
+    }
+    if (!status && ret_size) *ret_size = piosb->Information;
+    SetLastError( NtStatusToWSAError( status ) );
+    return status ? -1 : 0;
+}
+
+static int WS2_sendto( SOCKET s, WSABUF *buffers, DWORD buffer_count, DWORD *ret_size, DWORD flags,
+                       const struct WS_sockaddr *addr, int addr_len, OVERLAPPED *overlapped,
+                       LPWSAOVERLAPPED_COMPLETION_ROUTINE completion )
+{
+    IO_STATUS_BLOCK iosb, *piosb = &iosb;
+    struct afd_sendmsg_params params;
+    PIO_APC_ROUTINE apc = NULL;
+    HANDLE event = NULL;
+    void *cvalue = NULL;
+    NTSTATUS status;
+
+    TRACE( "socket %#lx, buffers %p, buffer_count %u, flags %#x, addr %p, "
+           "addr_len %d, overlapped %p, completion %p\n",
+           s, buffers, buffer_count, flags, addr, addr_len, overlapped, completion );
+
+    if (!socket_list_find( s ))
+    {
+        SetLastError( WSAENOTSOCK );
+        return -1;
+    }
+
+    if (!overlapped && !ret_size)
+    {
+        SetLastError( WSAEFAULT );
+        return -1;
+    }
+
+    if (overlapped)
+    {
+        piosb = (IO_STATUS_BLOCK *)overlapped;
+        if (!((ULONG_PTR)overlapped->hEvent & 1)) cvalue = overlapped;
+        event = overlapped->hEvent;
+    }
+    else
+    {
+        if (!(event = get_sync_event())) return -1;
+    }
+    piosb->u.Status = STATUS_PENDING;
+
+    if (completion)
+    {
+        event = NULL;
+        cvalue = completion;
+        apc = socket_apc;
+    }
+
+    params.addr = addr;
+    params.addr_len = addr_len;
+    params.ws_flags = flags;
+    params.force_async = !!overlapped;
+    params.count = buffer_count;
+    params.buffers = buffers;
+
+    status = NtDeviceIoControlFile( (HANDLE)s, event, apc, cvalue, piosb,
+                                    IOCTL_AFD_WINE_SENDMSG, &params, sizeof(params), NULL, 0 );
     if (status == STATUS_PENDING && !overlapped)
     {
         if (WaitForSingleObject( event, INFINITE ) == WAIT_FAILED)
@@ -4725,187 +4744,6 @@ INT WINAPI WSASendDisconnect( SOCKET s, LPWSABUF lpBuffers )
 }
 
 
-static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
-                       LPDWORD lpNumberOfBytesSent, DWORD dwFlags,
-                       const struct WS_sockaddr *to, int tolen,
-                       LPWSAOVERLAPPED lpOverlapped,
-                       LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
-{
-    unsigned int i, options;
-    int n, fd, err, overlapped, flags;
-    struct ws2_async *wsa = NULL, localwsa;
-    int totalLength = 0;
-    DWORD bytes_sent;
-    BOOL is_blocking;
-
-    TRACE("socket %04lx, wsabuf %p, nbufs %d, flags %d, to %p, tolen %d, ovl %p, func %p\n",
-          s, lpBuffers, dwBufferCount, dwFlags,
-          to, tolen, lpOverlapped, lpCompletionRoutine);
-
-    fd = get_sock_fd( s, FILE_WRITE_DATA, &options );
-    TRACE( "fd=%d, options=%x\n", fd, options );
-
-    if ( fd == -1 ) return SOCKET_ERROR;
-
-    if (!lpOverlapped && !lpNumberOfBytesSent)
-    {
-        err = WSAEFAULT;
-        goto error;
-    }
-
-    overlapped = (lpOverlapped || lpCompletionRoutine) &&
-        !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT));
-    if (overlapped || dwBufferCount > 1)
-    {
-        if (!(wsa = (struct ws2_async *)alloc_async_io( offsetof(struct ws2_async, iovec[dwBufferCount]),
-                                                        WS2_async_send )))
-        {
-            err = WSAEFAULT;
-            goto error;
-        }
-    }
-    else
-        wsa = &localwsa;
-
-    wsa->hSocket     = SOCKET2HANDLE(s);
-    wsa->addr        = (struct WS_sockaddr *)to;
-    wsa->addrlen.val = tolen;
-    wsa->flags       = dwFlags;
-    wsa->lpFlags     = &wsa->flags;
-    wsa->control     = NULL;
-    wsa->n_iovecs    = dwBufferCount;
-    wsa->first_iovec = 0;
-    for ( i = 0; i < dwBufferCount; i++ )
-    {
-        wsa->iovec[i].iov_base = lpBuffers[i].buf;
-        wsa->iovec[i].iov_len  = lpBuffers[i].len;
-        totalLength += lpBuffers[i].len;
-    }
-
-    flags = convert_flags(dwFlags);
-    n = WS2_send( fd, wsa, flags );
-    if (n == -1 && errno != EAGAIN)
-    {
-        err = wsaErrno();
-        goto error;
-    }
-
-    if (overlapped)
-    {
-        IO_STATUS_BLOCK *iosb = lpOverlapped ? (IO_STATUS_BLOCK *)lpOverlapped : &wsa->local_iosb;
-        ULONG_PTR cvalue = (lpOverlapped && ((ULONG_PTR)lpOverlapped->hEvent & 1) == 0) ? (ULONG_PTR)lpOverlapped : 0;
-
-        wsa->user_overlapped = lpOverlapped;
-        wsa->completion_func = lpCompletionRoutine;
-        release_sock_fd( s, fd );
-
-        if (n == -1 || n < totalLength)
-        {
-            iosb->u.Status = STATUS_PENDING;
-            iosb->Information = n == -1 ? 0 : n;
-
-            if (wsa->completion_func)
-                err = register_async( ASYNC_TYPE_WRITE, wsa->hSocket, &wsa->io, NULL,
-                                      ws2_async_apc, wsa, iosb );
-            else
-                err = register_async( ASYNC_TYPE_WRITE, wsa->hSocket, &wsa->io, lpOverlapped->hEvent,
-                                      NULL, (void *)cvalue, iosb );
-
-            /* Enable the event only after starting the async. The server will deliver it as soon as
-               the async is done. */
-            _enable_event(SOCKET2HANDLE(s), FD_WRITE, 0, 0);
-
-            if (err != STATUS_PENDING) HeapFree( GetProcessHeap(), 0, wsa );
-            SetLastError(NtStatusToWSAError( err ));
-            return SOCKET_ERROR;
-        }
-
-        iosb->u.Status = STATUS_SUCCESS;
-        iosb->Information = n;
-        if (lpNumberOfBytesSent) *lpNumberOfBytesSent = n;
-        if (!wsa->completion_func)
-        {
-            if (cvalue) WS_AddCompletion( s, cvalue, STATUS_SUCCESS, n, FALSE );
-            if (lpOverlapped->hEvent) SetEvent( lpOverlapped->hEvent );
-            HeapFree( GetProcessHeap(), 0, wsa );
-        }
-        else NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)ws2_async_apc,
-                               (ULONG_PTR)wsa, (ULONG_PTR)iosb, 0 );
-        SetLastError(ERROR_SUCCESS);
-        return 0;
-    }
-
-    if ((err = sock_is_blocking( s, &is_blocking ))) goto error;
-
-    if ( is_blocking )
-    {
-        /* On a blocking non-overlapped stream socket,
-         * sending blocks until the entire buffer is sent. */
-        DWORD timeout_start = GetTickCount();
-
-        bytes_sent = n == -1 ? 0 : n;
-
-        while (wsa->first_iovec < wsa->n_iovecs)
-        {
-            struct pollfd pfd;
-            int poll_timeout = -1;
-            INT64 timeout = get_rcvsnd_timeo(fd, FALSE);
-
-            if (timeout)
-            {
-                timeout -= GetTickCount() - timeout_start;
-                if (timeout < 0) poll_timeout = 0;
-                else poll_timeout = timeout <= INT_MAX ? timeout : INT_MAX;
-            }
-
-            pfd.fd = fd;
-            pfd.events = POLLOUT;
-
-            if (!poll_timeout || !poll( &pfd, 1, poll_timeout ))
-            {
-                err = WSAETIMEDOUT;
-                goto error; /* msdn says a timeout in send is fatal */
-            }
-
-            n = WS2_send( fd, wsa, flags );
-            if (n == -1 && errno != EAGAIN)
-            {
-                err = wsaErrno();
-                goto error;
-            }
-
-            if (n >= 0)
-                bytes_sent += n;
-        }
-    }
-    else  /* non-blocking */
-    {
-        if (n < totalLength)
-            _enable_event(SOCKET2HANDLE(s), FD_WRITE, 0, 0);
-        if (n == -1)
-        {
-            err = WSAEWOULDBLOCK;
-            goto error;
-        }
-        bytes_sent = n;
-    }
-
-    TRACE(" -> %i bytes\n", bytes_sent);
-
-    if (lpNumberOfBytesSent) *lpNumberOfBytesSent = bytes_sent;
-    if (wsa != &localwsa) HeapFree( GetProcessHeap(), 0, wsa );
-    release_sock_fd( s, fd );
-    SetLastError(ERROR_SUCCESS);
-    return 0;
-
-error:
-    if (wsa != &localwsa) HeapFree( GetProcessHeap(), 0, wsa );
-    release_sock_fd( s, fd );
-    WARN(" -> ERROR %d\n", err);
-    SetLastError(err);
-    return SOCKET_ERROR;
-}
-
 /***********************************************************************
  *		WSASendTo		(WS2_32.74)
  */
@@ -4915,6 +4753,7 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                       LPWSAOVERLAPPED lpOverlapped,
                       LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
 {
+    /* Garena hooks WSASendTo(), so we need a wrapper */
     return WS2_sendto( s, lpBuffers, dwBufferCount,
                 lpNumberOfBytesSent, dwFlags,
                 to, tolen,
@@ -5750,6 +5589,7 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                         LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
 
 {
+    /* Garena hooks WSARecvFrom(), so we need a wrapper */
     return WS2_recv_base( s, lpBuffers, dwBufferCount,
                 lpNumberOfBytesRecvd, lpFlags,
                 lpFrom, lpFromlen,

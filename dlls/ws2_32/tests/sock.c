@@ -4301,7 +4301,7 @@ static void test_write_events(struct event_test_ctx *ctx)
     if (!broken(1))
     {
         while (send(server, buffer, buffer_size, 0) == buffer_size);
-        todo_wine ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
+        ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
 
         while (recv(client, buffer, buffer_size, 0) > 0);
         ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
