@@ -3975,51 +3975,119 @@ static void test_fionbio(void)
 
 static void test_keepalive_vals(void)
 {
-    SOCKET sock;
+    OVERLAPPED overlapped = {0}, *overlapped_ptr;
     struct tcp_keepalive kalive;
+    ULONG_PTR key;
+    HANDLE port;
+    SOCKET sock;
+    DWORD size;
     int ret;
-    u_long arg = 0;
 
     sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(sock != INVALID_SOCKET, "Creating the socket failed: %d\n", WSAGetLastError());
+    port = CreateIoCompletionPort((HANDLE)sock, NULL, 123, 0);
 
-    /* broken apps like defcon pass the argp value directly instead of a pointer to it */
-    ret = ioctlsocket(sock, FIONBIO, (u_long *)1);
-    ok(ret == SOCKET_ERROR, "ioctlsocket succeeded unexpectedly\n");
-    ret = WSAGetLastError();
-    ok(ret == WSAEFAULT, "expected WSAEFAULT, got %d instead\n", ret);
-
-    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &arg, 0, NULL, 0, &arg, NULL, NULL);
+    WSASetLastError(0xdeadbeef);
+    size = 0xdeadbeef;
+    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, 0, NULL, 0, &size, NULL, NULL);
     ok(ret == SOCKET_ERROR, "WSAIoctl succeeded unexpectedly\n");
     ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+    todo_wine ok(!size, "got size %u\n", size);
 
-    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, NULL, sizeof(struct tcp_keepalive), NULL, 0, &arg, NULL, NULL);
+    WSASetLastError(0xdeadbeef);
+    size = 0xdeadbeef;
+    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, NULL, sizeof(kalive), NULL, 0, &size, NULL, NULL);
     ok(ret == SOCKET_ERROR, "WSAIoctl succeeded unexpectedly\n");
     ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+    todo_wine ok(!size, "got size %u\n", size);
 
+    WSASetLastError(0xdeadbeef);
+    size = 0xdeadbeef;
     make_keepalive(kalive, 0, 0, 0);
-    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(struct tcp_keepalive), NULL, 0, &arg, NULL, NULL);
+    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(kalive), NULL, 0, &size, NULL, NULL);
     ok(ret == 0, "WSAIoctl failed unexpectedly\n");
+    todo_wine ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+    ok(!size, "got size %u\n", size);
+
+    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(kalive), NULL, 0, NULL, NULL, NULL);
+    todo_wine ok(ret == SOCKET_ERROR, "WSAIoctl succeeded unexpectedly\n");
+    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(kalive), NULL, 0, NULL, &overlapped, NULL);
+    todo_wine ok(ret == SOCKET_ERROR, "WSAIoctl succeeded unexpectedly\n");
+    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+    WSASetLastError(0xdeadbeef);
+    size = 0xdeadbeef;
+    overlapped.Internal = 0xdeadbeef;
+    overlapped.InternalHigh = 0xdeadbeef;
+    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(kalive) - 1, NULL, 0, &size, &overlapped, NULL);
+    ok(ret == SOCKET_ERROR, "WSAIoctl succeeded unexpectedly\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+    ok(size == 0xdeadbeef, "got size %u\n", size);
+    todo_wine ok(overlapped.Internal == STATUS_PENDING, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(overlapped.InternalHigh == 0xdeadbeef, "got size %Iu\n", overlapped.InternalHigh);
+
+    WSASetLastError(0xdeadbeef);
+    size = 0xdeadbeef;
+    overlapped.Internal = 0xdeadbeef;
+    overlapped.InternalHigh = 0xdeadbeef;
+    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(kalive), NULL, 0, &size, &overlapped, NULL);
+    ok(ret == 0, "WSAIoctl failed unexpectedly\n");
+    todo_wine ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+    todo_wine ok(size == 0xdeadbeef, "got size %u\n", size);
+
+    ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(!size, "got size %u\n", size);
+    ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
+    ok(!overlapped.Internal, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(!overlapped.InternalHigh, "got size %Iu\n", overlapped.InternalHigh);
 
     make_keepalive(kalive, 1, 0, 0);
-    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(struct tcp_keepalive), NULL, 0, &arg, NULL, NULL);
+    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(kalive), NULL, 0, &size, NULL, NULL);
     ok(ret == 0, "WSAIoctl failed unexpectedly\n");
 
     make_keepalive(kalive, 1, 1000, 1000);
-    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(struct tcp_keepalive), NULL, 0, &arg, NULL, NULL);
+    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(kalive), NULL, 0, &size, NULL, NULL);
     ok(ret == 0, "WSAIoctl failed unexpectedly\n");
 
     make_keepalive(kalive, 1, 10000, 10000);
-    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(struct tcp_keepalive), NULL, 0, &arg, NULL, NULL);
+    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(kalive), NULL, 0, &size, NULL, NULL);
     ok(ret == 0, "WSAIoctl failed unexpectedly\n");
 
     make_keepalive(kalive, 1, 100, 100);
-    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(struct tcp_keepalive), NULL, 0, &arg, NULL, NULL);
+    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(kalive), NULL, 0, &size, NULL, NULL);
     ok(ret == 0, "WSAIoctl failed unexpectedly\n");
 
     make_keepalive(kalive, 0, 100, 100);
-    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(struct tcp_keepalive), NULL, 0, &arg, NULL, NULL);
+    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(kalive), NULL, 0, &size, NULL, NULL);
     ok(ret == 0, "WSAIoctl failed unexpectedly\n");
+
+    CloseHandle(port);
+    closesocket(sock);
+
+    sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(kalive), NULL, 0, NULL, &overlapped, socket_apc);
+    todo_wine ok(ret == -1, "expected failure\n");
+    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+    apc_count = 0;
+    size = 0xdeadbeef;
+    ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(kalive), NULL, 0, &size, &overlapped, socket_apc);
+    ok(!ret, "expected success\n");
+    ok(!size, "got size %u\n", size);
+
+    ret = SleepEx(0, TRUE);
+    todo_wine ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
+    if (ret == WAIT_IO_COMPLETION)
+    {
+        ok(apc_count == 1, "APC was called %u times\n", apc_count);
+        ok(!apc_error, "got APC error %u\n", apc_error);
+        ok(!apc_size, "got APC size %u\n", apc_size);
+        ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
+    }
 
     closesocket(sock);
 }
