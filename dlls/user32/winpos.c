@@ -217,8 +217,8 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
     {
         UINT swp_flags = SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE;
         if (!bRedraw) swp_flags |= SWP_NOREDRAW;
-        SetWindowPos( hwnd, 0, 0, 0, 0, 0, swp_flags );
         USER_Driver->pSetWindowRgn( hwnd, hrgn, bRedraw );
+        SetWindowPos( hwnd, 0, 0, 0, 0, 0, swp_flags );
         if (hrgn) DeleteObject( hrgn );
     }
     return ret;
