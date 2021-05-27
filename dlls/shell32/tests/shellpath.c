@@ -291,6 +291,18 @@ static const char *getFolderName(int folder)
     }
 }
 
+static LPWSTR wcscasestr( LPCWSTR str, LPCWSTR sub )
+{
+    while (*str)
+    {
+        const WCHAR *p1 = str, *p2 = sub;
+        while (*p1 && *p2 && towlower(*p1) == towlower(*p2)) { p1++; p2++; }
+        if (!*p2) return (WCHAR *)str;
+        str++;
+    }
+    return NULL;
+}
+
 /* Standard CSIDL values (and their flags) uses only two less-significant bytes */
 #define NO_CSIDL 0x10000
 #define WINE_ATTRIBUTES_OPTIONAL 0x20000
@@ -1964,10 +1976,11 @@ static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId
     HRESULT hr;
     int csidl, expectedCsidl, ret;
     KNOWNFOLDER_DEFINITION kfd;
-    IKnownFolder *folder;
+    IKnownFolder *folder, *kf_parent;
     WCHAR sName[1024];
     BOOL found = FALSE;
     unsigned int i;
+    WCHAR *ikf_path, *gkfp_path, *ikf_parent_path;
 
     for (i = 0; i < ARRAY_SIZE(known_folders); ++i)
     {
@@ -2019,10 +2032,57 @@ static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId
 
                     ok_(__FILE__, known_folder->line)(!(kfd.kfdFlags & (~known_folder->definitionFlags)), "invalid known folder flags for %s: 0x%08x expected, but 0x%08x retrieved\n", known_folder->sFolderId, known_folder->definitionFlags, kfd.kfdFlags);
 
+                    gkfp_path = NULL;
+                    hr = pSHGetKnownFolderPath(folderId, KF_FLAG_DEFAULT, NULL, &gkfp_path);
+                    if(SUCCEEDED(hr))
+                    {
+                        ikf_path = NULL;
+                        hr = IKnownFolder_GetPath(folder, KF_FLAG_DEFAULT, &ikf_path);
+                        ok_(__FILE__, known_folder->line)(hr == S_OK, "IKnownFolder::GetPath failed: 0x%08x\n", hr);
+                        ok_(__FILE__, known_folder->line)(ikf_path != NULL, "SHGetKnownFolderPath gave NULL path\n");
+
+                        /* IKnownFolder::GetPath and SHGetKnownFolderPath should be the same */
+                        ok_(__FILE__, known_folder->line)(lstrcmpW(gkfp_path, ikf_path) == 0, "Got different paths: %s vs %s\n",
+                                debugstr_w(gkfp_path), debugstr_w(ikf_path));
+
+                        if(kfd.pszRelativePath)
+                        {
+                            /* RelativePath should be a substring of the path */
+                            ok_(__FILE__, known_folder->line)(wcscasestr(ikf_path, kfd.pszRelativePath) != NULL,
+                                    "KNOWNFOLDER_DEFINITION.pszRelativePath %s is not a substring of full path %s\n",
+                                    debugstr_w(kfd.pszRelativePath), debugstr_w(ikf_path));
+
+                            hr = IKnownFolderManager_GetFolder(mgr, &kfd.fidParent, &kf_parent);
+                            ok_(__FILE__, known_folder->line)(hr == S_OK, "IKnownFolderManager::GetFolder(parent) failed: 0x%08x\n", hr);
+
+                            if(SUCCEEDED(hr))
+                            {
+                                ikf_parent_path = NULL;
+                                hr = IKnownFolder_GetPath(kf_parent, KF_FLAG_DEFAULT, &ikf_parent_path);
+                                ok_(__FILE__, known_folder->line)(hr == S_OK, "IKnownFolder::GetPath(parent) failed: 0x%08x\n", hr);
+
+                                /* Parent path + pszRelativePath should give the full path */
+                                ok_(__FILE__, known_folder->line)(memcmp(ikf_parent_path, ikf_path, lstrlenW(ikf_parent_path) * sizeof(WCHAR)) == 0,
+                                        "Full path %s does not start with parent path %s\n",
+                                        debugstr_w(ikf_path), debugstr_w(ikf_parent_path));
+                                ok_(__FILE__, known_folder->line)(*(ikf_path + lstrlenW(ikf_parent_path)) == '\\',
+                                        "Missing slash\n");
+                                ok_(__FILE__, known_folder->line)(wcsicmp(kfd.pszRelativePath, ikf_path + lstrlenW(ikf_parent_path) + 1) == 0,
+                                        "Full path %s does not end with relative path %s\n",
+                                        debugstr_w(ikf_path), debugstr_w(kfd.pszRelativePath));
+
+                                CoTaskMemFree(ikf_parent_path);
+                                IKnownFolder_Release(kf_parent);
+                            }
+                        }
+
+                        CoTaskMemFree(ikf_path);
+                        CoTaskMemFree(gkfp_path);
+                    }
                     FreeKnownFolderDefinitionFields(&kfd);
                 }
 
-            IKnownFolder_Release(folder);
+                IKnownFolder_Release(folder);
             }
 
             break;
