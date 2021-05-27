@@ -603,8 +603,8 @@ static HRESULT WINAPI video_mixer_transform_GetOutputAvailableType(IMFTransform 
         hr = MF_E_NO_MORE_TYPES;
     else
     {
-        *type = mixer->output.rt_formats[index].media_type;
-        IMFMediaType_AddRef(*type);
+        if (SUCCEEDED(hr = MFCreateMediaType(type)))
+            hr = IMFMediaType_CopyAllItems(mixer->output.rt_formats[index].media_type, (IMFAttributes *)*type);
     }
 
     LeaveCriticalSection(&mixer->cs);

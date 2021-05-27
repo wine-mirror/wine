@@ -1045,9 +1045,11 @@ static void test_default_mixer_type_negotiation(void)
     while (SUCCEEDED(IMFTransform_GetOutputAvailableType(transform, 0, index++, &media_type)))
     {
         UINT64 frame_size;
-        GUID subtype;
+        GUID subtype, major;
         UINT32 value;
 
+        hr = IMFMediaType_GetGUID(media_type, &MF_MT_MAJOR_TYPE, &major);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
         hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &subtype);
         ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
         hr = IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &frame_size);
@@ -1058,6 +1060,15 @@ static void test_default_mixer_type_negotiation(void)
         IMFMediaType_Release(media_type);
     }
     ok(index > 1, "Unexpected number of available types.\n");
+
+    /* Cloned type is returned. */
+    hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(media_type != media_type2, "Unexpected media type instance.\n");
+    IMFMediaType_Release(media_type);
+    IMFMediaType_Release(media_type2);
 
     hr = IMFTransform_QueryInterface(transform, &IID_IMFVideoProcessor, (void **)&processor);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
