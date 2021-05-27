@@ -642,13 +642,19 @@ done:
     return hr;
 }
 
-static int __cdecl rt_formats_sort_compare(const void *left, const void *right)
+static void video_mixer_append_rt_format(struct rt_format *rt_formats, unsigned int *count,
+        const GUID *device, D3DFORMAT format)
 {
-    const struct rt_format *format1 = left, *format2 = right;
+    unsigned int i;
 
-    if (format1->format < format2->format) return -1;
-    if (format1->format > format2->format) return 1;
-    return 0;
+    for (i = 0; i < *count; ++i)
+    {
+        if (rt_formats[i].format == format) return;
+    }
+
+    rt_formats[*count].format = format;
+    rt_formats[*count].device = *device;
+    *count += 1;
 }
 
 static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const DXVA2_VideoDesc *video_desc,
@@ -677,11 +683,7 @@ static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const
             rt_formats = ptr;
 
             for (j = 0; j < format_count; ++j)
-            {
-                rt_formats[count + j].format = formats[j];
-                rt_formats[count + j].device = devices[i];
-            }
-            count += format_count;
+                video_mixer_append_rt_format(rt_formats, &count, &devices[i], formats[j]);
 
             CoTaskMemFree(formats);
         }
@@ -689,18 +691,6 @@ static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const
 
     if (count && !(flags & MFT_SET_TYPE_TEST_ONLY))
     {
-        qsort(rt_formats, count, sizeof(*rt_formats), rt_formats_sort_compare);
-
-        j = 0;
-        for (i = j + 1; i < count; ++i)
-        {
-            if (rt_formats[i].format != rt_formats[j].format)
-            {
-                rt_formats[++j] = rt_formats[i];
-            }
-        }
-        count = j + 1;
-
         memcpy(&subtype, &MFVideoFormat_Base, sizeof(subtype));
         if ((mixer->output.rt_formats = calloc(count, sizeof(*mixer->output.rt_formats))))
         {
