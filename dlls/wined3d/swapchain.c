@@ -2007,14 +2007,11 @@ HRESULT CDECL wined3d_swapchain_resize_buffers(struct wined3d_swapchain *swapcha
 
     if (!width || !height)
     {
+        RECT client_rect;
+
         /* The application is requesting that either the swapchain width or
          * height be set to the corresponding dimension in the window's
          * client rect. */
-
-        RECT client_rect;
-
-        if (!desc->windowed)
-            return WINED3DERR_INVALIDCALL;
 
         if (!GetClientRect(swapchain->state.device_window, &client_rect))
         {

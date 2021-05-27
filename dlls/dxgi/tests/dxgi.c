@@ -4716,7 +4716,7 @@ static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
         flush_events();
         ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDXGISwapChain_ResizeBuffers(swapchain, 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
-        todo_wine_if(!is_d3d12) ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDXGISwapChain_Present(swapchain, 0, flags[i]);
         ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         output = NULL;
@@ -4763,7 +4763,7 @@ static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
         ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         ok(fullscreen, "Test %u: Got unexpected fullscreen status.\n", i);
         hr = IDXGISwapChain_ResizeBuffers(swapchain, 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
-        todo_wine_if(!is_d3d12) ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDXGISwapChain_Present(swapchain, 0, flags[i]);
         ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
 
@@ -4771,7 +4771,7 @@ static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
         /* An invisible window doesn't cause the swapchain to exit fullscreen
          * mode. */
         hr = IDXGISwapChain_ResizeBuffers(swapchain, 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
-        todo_wine_if(!is_d3d12) ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDXGISwapChain_Present(swapchain, 0, flags[i]);
         ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         fullscreen = FALSE;
@@ -4795,7 +4795,7 @@ static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
                 "Test %u: Got unexpected fullscreen status.\n", i);
 
         hr = IDXGISwapChain_ResizeBuffers(swapchain, 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
-        todo_wine_if(!is_d3d12) ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDXGISwapChain_Present(swapchain, 0, flags[i]);
         todo_wine_if(is_d3d12) ok(hr == (is_d3d12 ? DXGI_STATUS_OCCLUDED : S_OK),
                 "Test %u: Got unexpected hr %#x.\n", i, hr);
@@ -4814,7 +4814,7 @@ static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
          * IDXGISwapChain_Present() calls to work, otherwise they will return
          * DXGI_ERROR_INVALID_CALL */
         hr = IDXGISwapChain_ResizeBuffers(swapchain, 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
-        todo_wine_if(!is_d3d12) ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDXGISwapChain_Present(swapchain, 0, flags[i]);
         if (flags[i] == DXGI_PRESENT_TEST)
             todo_wine_if(is_d3d12) ok(hr == (is_d3d12 ? DXGI_STATUS_OCCLUDED : S_OK),
@@ -4830,14 +4830,14 @@ static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
         ShowWindow(occluding_window, SW_SHOW);
 
         hr = IDXGISwapChain_ResizeBuffers(swapchain, 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
-        todo_wine_if(!is_d3d12) ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDXGISwapChain_Present(swapchain, 0, flags[i]);
         /* hr == S_OK on vista and 2008 */
         todo_wine ok(hr == DXGI_STATUS_OCCLUDED || broken(hr == S_OK),
                 "Test %u: Got unexpected hr %#x.\n", i, hr);
 
         hr = IDXGISwapChain_ResizeBuffers(swapchain, 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
-        todo_wine_if(!is_d3d12) ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDXGISwapChain_Present(swapchain, 0, flags[i]);
         if (flags[i] == DXGI_PRESENT_TEST)
         {
@@ -4846,12 +4846,12 @@ static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
             /* IDXGISwapChain_Present() without flags refreshes the occlusion
              * state. */
             hr = IDXGISwapChain_ResizeBuffers(swapchain, 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
-            todo_wine_if(!is_d3d12) ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
             hr = IDXGISwapChain_Present(swapchain, 0, 0);
             todo_wine ok(hr == DXGI_STATUS_OCCLUDED || broken(hr == S_OK),
                     "Test %u: Got unexpected hr %#x.\n", i, hr);
             hr = IDXGISwapChain_ResizeBuffers(swapchain, 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
-            todo_wine_if(!is_d3d12) ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
             hr = IDXGISwapChain_Present(swapchain, 0, DXGI_PRESENT_TEST);
             ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         }
@@ -4867,7 +4867,7 @@ static void test_swapchain_present(IUnknown *device, BOOL is_d3d12)
         DestroyWindow(occluding_window);
         flush_events();
         hr = IDXGISwapChain_ResizeBuffers(swapchain, 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
-        todo_wine_if(!is_d3d12) ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
         hr = IDXGISwapChain_Present(swapchain, 0, flags[i]);
         ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
 
