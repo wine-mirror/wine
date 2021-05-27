@@ -957,8 +957,7 @@ static void test_user_shared_data(void)
 
     for (i = 0; i < ARRAY_SIZE(feature_sizes); ++i)
     {
-        ok(xstate.AllFeatures[i] == feature_sizes[i]
-                || broken(!xstate.AllFeatures[i]) /* win10 on Testbot VMs */,
+        ok(xstate.AllFeatures[i] == feature_sizes[i] || !xstate.AllFeatures[i],
                 "Got unexpected AllFeatures[%u] %u, expected %u.\n", i,
                 xstate.AllFeatures[i], feature_sizes[i]);
         ok(xstate.Features[i].Size == feature_sizes[i], "Got unexpected Features[%u].Size %u, expected %u.\n", i,
