@@ -4502,6 +4502,7 @@ done:
 
 static void test_nested_jobs(void)
 {
+    BOOL ret, already_in_job = TRUE, create_succeeded = FALSE;
     PROCESS_INFORMATION info[2];
     char buffer[MAX_PATH + 26];
     STARTUPINFOA si = {0};
@@ -4513,6 +4514,65 @@ static void test_nested_jobs(void)
         win_skip("IsProcessInJob not available.\n");
         return;
     }
+
+    job1 = pCreateJobObjectW(NULL, NULL);
+    ok(!!job1, "CreateJobObjectW failed, error %u.\n", GetLastError());
+    job2 = pCreateJobObjectW(NULL, NULL);
+    ok(!!job2, "CreateJobObjectW failed, error %u.\n", GetLastError());
+
+    create_succeeded = TRUE;
+    sprintf(buffer, "\"%s\" process wait", selfname);
+    for (i = 0; i < 2; ++i)
+    {
+        ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, CREATE_BREAKAWAY_FROM_JOB, NULL, NULL, &si, &info[i]);
+        if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
+        {
+            create_succeeded = FALSE;
+            break;
+        }
+        ok(ret, "CreateProcessA error %u\n", GetLastError());
+    }
+
+    if (create_succeeded)
+    {
+        ret = pIsProcessInJob(info[0].hProcess, NULL, &already_in_job);
+        ok(ret, "IsProcessInJob error %u\n", GetLastError());
+
+        if (!already_in_job)
+        {
+            ret = pAssignProcessToJobObject(job2, info[1].hProcess);
+            ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+
+            ret = pAssignProcessToJobObject(job1, info[0].hProcess);
+            ok(ret, "AssignProcessToJobObject error %u\n", GetLastError());
+
+            ret = pAssignProcessToJobObject(job2, info[0].hProcess);
+            ok(!ret, "AssignProcessToJobObject succeeded\n");
+            ok(GetLastError() == ERROR_ACCESS_DENIED, "Got unexpected error %u.\n", GetLastError());
+
+            TerminateProcess(info[1].hProcess, 0);
+            wait_child_process(info[1].hProcess);
+            CloseHandle(info[1].hProcess);
+            CloseHandle(info[1].hThread);
+
+            ret = pAssignProcessToJobObject(job2, info[0].hProcess);
+            ok(!ret, "AssignProcessToJobObject succeeded\n");
+            ok(GetLastError() == ERROR_ACCESS_DENIED, "Got unexpected error %u.\n", GetLastError());
+        }
+
+        TerminateProcess(info[0].hProcess, 0);
+        wait_child_process(info[0].hProcess);
+        CloseHandle(info[0].hProcess);
+        CloseHandle(info[0].hThread);
+    }
+
+    if (already_in_job)
+    {
+        win_skip("Test process is already in job, can't test parenting non-empty job.\n");
+    }
+
+    CloseHandle(job1);
+    CloseHandle(job2);
 
     job1 = pCreateJobObjectW(NULL, L"test_nested_jobs_0");
     ok(!!job1, "CreateJobObjectW failed, error %u.\n", GetLastError());

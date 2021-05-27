@@ -311,6 +311,11 @@ static void add_job_process( struct job *job, struct process *process )
         }
         else
         {
+            if (job->total_processes)
+            {
+                set_error( STATUS_ACCESS_DENIED );
+                return;
+            }
             /* transfer reference. */
             job->parent = process->job;
             list_add_tail( &job->parent->child_job_list, &job->parent_job_entry );
