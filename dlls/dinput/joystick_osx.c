@@ -1579,7 +1579,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
     IDirectInputDevice2AImpl_QueryInterface,
     IDirectInputDevice2AImpl_AddRef,
     IDirectInputDevice2AImpl_Release,
-    JoystickAGenericImpl_GetCapabilities,
+    IDirectInputDevice2AImpl_GetCapabilities,
     IDirectInputDevice2AImpl_EnumObjects,
     IDirectInputDevice2AImpl_GetProperty,
     IDirectInputDevice2AImpl_SetProperty,

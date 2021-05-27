@@ -761,12 +761,6 @@ static HRESULT WINAPI SysMouseWImpl_GetCapabilities(LPDIRECTINPUTDEVICE8W iface,
     return DI_OK;
 }
 
-static HRESULT WINAPI SysMouseAImpl_GetCapabilities(LPDIRECTINPUTDEVICE8A iface, LPDIDEVCAPS lpDIDevCaps)
-{
-    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
-    return SysMouseWImpl_GetCapabilities(IDirectInputDevice8W_from_impl(This), lpDIDevCaps);
-}
-
 /******************************************************************************
   *     GetObjectInfo : get information about a device object such as a button
   *                     or axis
@@ -911,7 +905,7 @@ static const IDirectInputDevice8AVtbl SysMouseAvt =
     IDirectInputDevice2AImpl_QueryInterface,
     IDirectInputDevice2AImpl_AddRef,
     IDirectInputDevice2AImpl_Release,
-    SysMouseAImpl_GetCapabilities,
+    IDirectInputDevice2AImpl_GetCapabilities,
     IDirectInputDevice2AImpl_EnumObjects,
     IDirectInputDevice2AImpl_GetProperty,
     IDirectInputDevice2AImpl_SetProperty,

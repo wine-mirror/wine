@@ -542,12 +542,6 @@ HRESULT WINAPI JoystickWGenericImpl_GetCapabilities(LPDIRECTINPUTDEVICE8W iface,
     return DI_OK;
 }
 
-HRESULT WINAPI JoystickAGenericImpl_GetCapabilities(LPDIRECTINPUTDEVICE8A iface, LPDIDEVCAPS lpDIDevCaps)
-{
-    JoystickGenericImpl *This = impl_from_IDirectInputDevice8A(iface);
-    return JoystickWGenericImpl_GetCapabilities(IDirectInputDevice8W_from_impl(This), lpDIDevCaps);
-}
-
 /******************************************************************************
   *     GetObjectInfo : get object info
   */

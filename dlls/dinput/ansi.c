@@ -130,6 +130,13 @@ ULONG WINAPI IDirectInputDevice2AImpl_Release( IDirectInputDevice8A *iface_a )
     return IDirectInputDevice8_Release( iface_w );
 }
 
+HRESULT WINAPI IDirectInputDevice2AImpl_GetCapabilities( IDirectInputDevice8A *iface_a, DIDEVCAPS *caps )
+{
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8A( iface_a );
+    IDirectInputDevice8W *iface_w = IDirectInputDevice8W_from_impl( impl );
+    return IDirectInputDevice8_GetCapabilities( iface_w, caps );
+}
+
 struct enum_objects_wtoa_params
 {
     LPDIENUMDEVICEOBJECTSCALLBACKA callback;

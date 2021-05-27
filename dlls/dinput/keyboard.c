@@ -419,12 +419,6 @@ static HRESULT WINAPI SysKeyboardWImpl_GetCapabilities(LPDIRECTINPUTDEVICE8W ifa
     return DI_OK;
 }
 
-static HRESULT WINAPI SysKeyboardAImpl_GetCapabilities(LPDIRECTINPUTDEVICE8A iface, LPDIDEVCAPS lpDIDevCaps)
-{
-    SysKeyboardImpl *This = impl_from_IDirectInputDevice8A(iface);
-    return SysKeyboardWImpl_GetCapabilities(IDirectInputDevice8W_from_impl(This), lpDIDevCaps);
-}
-
 static DWORD map_dik_to_scan(DWORD dik_code, DWORD subtype)
 {
     if (dik_code == DIK_PAUSE || dik_code == DIK_NUMLOCK) dik_code ^= 0x80;
@@ -657,7 +651,7 @@ static const IDirectInputDevice8AVtbl SysKeyboardAvt =
     IDirectInputDevice2AImpl_QueryInterface,
     IDirectInputDevice2AImpl_AddRef,
     IDirectInputDevice2AImpl_Release,
-    SysKeyboardAImpl_GetCapabilities,
+    IDirectInputDevice2AImpl_GetCapabilities,
     IDirectInputDevice2AImpl_EnumObjects,
     IDirectInputDevice2AImpl_GetProperty,
     IDirectInputDevice2AImpl_SetProperty,
