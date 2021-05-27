@@ -3169,6 +3169,9 @@ struct wined3d_deferred_context
 
     SIZE_T data_size, data_capacity;
     void *data;
+
+    SIZE_T resource_count, resources_capacity;
+    struct wined3d_resource **resources;
 };
 
 static struct wined3d_deferred_context *wined3d_deferred_context_from_context(struct wined3d_device_context *context)
@@ -3256,7 +3259,14 @@ static void wined3d_deferred_context_flush(struct wined3d_device_context *contex
 static void wined3d_deferred_context_acquire_resource(struct wined3d_device_context *context,
         struct wined3d_resource *resource)
 {
-    FIXME("context %p, resource %p, stub!\n", context, resource);
+    struct wined3d_deferred_context *deferred = wined3d_deferred_context_from_context(context);
+
+    if (!wined3d_array_reserve((void **)&deferred->resources, &deferred->resources_capacity,
+            deferred->resource_count + 1, sizeof(*deferred->resources)))
+        return;
+
+    deferred->resources[deferred->resource_count++] = resource;
+    wined3d_resource_incref(resource);
 }
 
 static const struct wined3d_device_context_ops wined3d_deferred_context_ops =
@@ -3301,8 +3311,13 @@ HRESULT CDECL wined3d_deferred_context_create(struct wined3d_device *device, str
 void CDECL wined3d_deferred_context_destroy(struct wined3d_device_context *context)
 {
     struct wined3d_deferred_context *deferred = wined3d_deferred_context_from_context(context);
+    SIZE_T i;
 
     TRACE("context %p.\n", context);
+
+    for (i = 0; i < deferred->resource_count; ++i)
+        wined3d_resource_decref(deferred->resources[i]);
+    heap_free(deferred->resources);
 
     wined3d_state_destroy(deferred->c.state);
     heap_free(deferred->data);
