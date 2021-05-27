@@ -147,8 +147,6 @@ static NTSTATUS sock_errno_to_status( int err )
     }
 }
 
-extern ssize_t CDECL __wine_locked_recvmsg( int fd, struct msghdr *hdr, int flags );
-
 union unix_sockaddr
 {
     struct sockaddr addr;
@@ -349,7 +347,7 @@ static NTSTATUS try_recv( int fd, struct async_recv_ioctl *async, ULONG_PTR *siz
     hdr.msg_control = control_buffer;
     hdr.msg_controllen = sizeof(control_buffer);
 #endif
-    while ((ret = __wine_locked_recvmsg( fd, &hdr, async->unix_flags )) < 0 && errno == EINTR);
+    while ((ret = virtual_locked_recvmsg( fd, &hdr, async->unix_flags )) < 0 && errno == EINTR);
 
     if (ret < 0)
     {
