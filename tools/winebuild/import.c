@@ -1697,41 +1697,44 @@ static void output_syscall_dispatcher( int count, const char *variant )
         output( "\tjmp 2b\n" );
         break;
     case CPU_ARM:
-        output( "\tpush {r5-r11,lr}\n" );
+        output( "\tpush {r4-r11}\n" );
         output( "\tadd r6, sp, #40\n" );  /* stack parameters */
         output( "\tldr r5, 6f+8\n" );
-        output( "\tcmp r4, r5\n" );
+        output( "\tcmp ip, r5\n" );
         output( "\tbcs 5f\n" );
         output( "\tsub sp, sp, #8\n" );
         output( "\tmrc p15, 0, r7, c13, c0, 2\n" ); /* NtCurrentTeb() */
         output( "\tadd r7, #0x1d8\n" );  /* arm_thread_data()->syscall_frame */
-        output( "\tmrs ip, CPSR\n" );
-        output( "\tbfi ip, lr, #5, #1\n" );  /* set thumb bit */
-        output( "\tstr ip, [sp, #4]\n" );
+        output( "\tmrs r0, CPSR\n" );
+        output( "\tbfi r0, lr, #5, #1\n" );  /* set thumb bit */
+        output( "\tstr r0, [sp, #4]\n" );
         output( "\tstr sp, [r7]\n" );  /* syscall frame */
         output( "\tldr r5, 6f+4\n");
         if (UsePIC) output( "1:\tadd r5, pc\n");
-        output( "\tldrb r5, [r5, r4]\n" );  /* syscall args */
-        output( "\tsubs r5, #16\n" );   /* first 4 args are in registers */
-        output( "\tble 3f\n" );
-        output( "\tsub ip, sp, r5\n" );
-        output( "\tand ip, #~7\n" );
-        output( "\tmov sp, ip\n" );
+        output( "\tldrb r5, [r5, ip]\n" );  /* syscall args */
+        output( "\tcmp r5, #16\n" );
+        output( "\tit le\n" );
+        output( "\tmovle r5, #16\n" );
+        output( "\tsub r0, sp, r5\n" );
+        output( "\tand r0, #~7\n" );
+        output( "\tmov sp, r0\n" );
         output( "2:\tsubs r5, r5, #4\n" );
-        output( "\tldr ip, [r6, r5]\n" );
-        output( "\tstr ip, [sp, r5]\n" );
+        output( "\tldr r0, [r6, r5]\n" );
+        output( "\tstr r0, [sp, r5]\n" );
         output( "\tbgt 2b\n" );
-        output( "3:\tldr r5, 6f\n");
+        output( "\tldr r5, 6f\n");
         if (UsePIC) output( "4:\tadd r5, pc\n");
-        output( "\tldr ip, [r5, r4, lsl #2]\n");  /* syscall table */
+        output( "\tldr ip, [r5, ip, lsl #2]\n");  /* syscall table */
+        output( "\tpop {r0-r3}\n" ); /* first 4 args are in registers */
         output( "\tblx ip\n");
         output( "\tmov ip, #0\n" );
         output( "\tstr ip, [r7]\n" );
         output( "\tsub ip, r6, #40\n" );
         output( "\tmov sp, ip\n" );
-        output( "\tpop {r5-r11,pc}\n" );
-        output( "5:\tldr r0, 6f+12\n" );
-        output( "\tpop {r5-r11,pc}\n" );
+        output( "\tpop {r4-r12,pc}\n" );
+        output( "5:\tmovw r0, #0x%x\n", invalid_param & 0xffff );
+        output( "\tmovt r0, #0x%x\n", invalid_param >> 16 );
+        output( "\tpop {r4-r12,pc}\n" );
         if (UsePIC)
         {
             output( "6:\t.long .Lsyscall_table-4b-%u\n", thumb_mode ? 4 : 8 );
@@ -1743,7 +1746,6 @@ static void output_syscall_dispatcher( int count, const char *variant )
             output( "\t.long .Lsyscall_args\n" );
         }
         output( "\t.long %u\n", count );
-        output( "\t.long 0x%x\n", invalid_param );
         break;
     case CPU_ARM64:
         output( "\tcmp x8, %u\n", count );
@@ -1922,22 +1924,12 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tret\n" );
             break;
         case CPU_ARM:
-            output( "\tpush {r4,lr}\n" );
-            output( "\tmov r4, #%u\n", i );
-            if (UsePIC)
-            {
-                output( "\tldr ip, 2f\n");
-                output( "1:\tadd ip, pc\n" );
-            }
-            else
-            {
-                output( "\tmovw ip, :lower16:%s\n", asm_name("__wine_syscall_dispatcher") );
-                output( "\tmovt ip, :upper16:%s\n", asm_name("__wine_syscall_dispatcher") );
-            }
-            output( "\tldr ip, [ip]\n");
-            output( "\tblx ip\n");
-            output( "\tpop {r4,pc}\n" );
-            if (UsePIC) output( "2:\t.long %s-1b-%u\n", asm_name("__wine_syscall_dispatcher"), thumb_mode ? 4 : 8 );
+            output( "\tpush {r0-r3}\n" );
+            output( "\tmovw ip, #%u\n", i );
+            output( "\tmov r3, lr\n" );
+            output( "\tbl %s\n", asm_name("__wine_syscall") );
+            output( "\tadd sp, #16\n" );
+            output( "\tbx ip\n" );
             break;
         case CPU_ARM64:
             output( "\tstp x29, x30, [sp,#-16]!\n" );
@@ -1958,13 +1950,38 @@ void output_syscalls( DLLSPEC *spec )
         output_function_size( name );
     }
 
-    if (target_cpu == CPU_x86 && !UsePIC)
+    switch (target_cpu)
     {
+    case CPU_x86:
+        if (UsePIC) break;
         output( "\t.align %d\n", get_alignment(16) );
         output( "\t%s\n", func_declaration("__wine_syscall") );
         output( "%s:\n", asm_name("__wine_syscall") );
         output( "\tjmp *(%s)\n", asm_name("__wine_syscall_dispatcher") );
         output_function_size( "__wine_syscall" );
+        break;
+    case CPU_ARM:
+        output( "\t.align %d\n", get_alignment(16) );
+        output( "\t%s\n", func_declaration("__wine_syscall") );
+        output( "%s:\n", asm_name("__wine_syscall") );
+        output( "\tpush {r3,lr}\n" );
+        if (UsePIC)
+        {
+            output( "\tldr r0, 2f\n");
+            output( "1:\tadd r0, pc\n" );
+        }
+        else
+        {
+            output( "\tmovw r0, :lower16:%s\n", asm_name("__wine_syscall_dispatcher") );
+            output( "\tmovt r0, :upper16:%s\n", asm_name("__wine_syscall_dispatcher") );
+        }
+        output( "\tldr r0, [r0]\n");
+        output( "\tbx r0\n");
+        if (UsePIC) output( "2:\t.long %s-1b-%u\n", asm_name("__wine_syscall_dispatcher"), thumb_mode ? 4 : 8 );
+        output_function_size( "__wine_syscall" );
+        break;
+    default:
+        break;
     }
     output( "\t.data\n" );
     output( "\t.align %d\n", get_alignment( get_ptr_size() ) );

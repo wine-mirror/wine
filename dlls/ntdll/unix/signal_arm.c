@@ -174,6 +174,7 @@ struct syscall_frame
 {
     DWORD                 pad;
     DWORD                 cpsr;
+    DWORD                 r4;
     DWORD                 r5;
     DWORD                 r6;
     DWORD                 r7;
@@ -181,9 +182,8 @@ struct syscall_frame
     DWORD                 r9;
     DWORD                 r10;
     DWORD                 r11;
-    DWORD                 thunk_addr;
-    DWORD                 r4;
     DWORD                 ret_addr;
+    DWORD                 thunk_addr;
 };
 
 struct arm_thread_data
