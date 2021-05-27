@@ -2452,8 +2452,8 @@ DECL_HANDLER(recv_socket)
     /* are we shut down? */
     if (status == STATUS_PENDING && !(sock->state & FD_READ)) status = STATUS_PIPE_DISCONNECTED;
 
-    sock->pending_events &= ~FD_READ;
-    sock->reported_events &= ~FD_READ;
+    sock->pending_events &= ~(req->oob ? FD_OOB : FD_READ);
+    sock->reported_events &= ~(req->oob ? FD_OOB : FD_READ);
 
     if ((async = create_request_async( fd, get_fd_comp_flags( fd ), &req->async )))
     {

@@ -2124,7 +2124,8 @@ static void dump_set_socket_deferred_request( const struct set_socket_deferred_r
 
 static void dump_recv_socket_request( const struct recv_socket_request *req )
 {
-    dump_async_data( " async=", &req->async );
+    fprintf( stderr, " oob=%d", req->oob );
+    dump_async_data( ", async=", &req->async );
     fprintf( stderr, ", status=%08x", req->status );
     fprintf( stderr, ", total=%08x", req->total );
 }

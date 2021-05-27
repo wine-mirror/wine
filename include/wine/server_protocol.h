@@ -1808,7 +1808,7 @@ struct set_socket_deferred_reply
 struct recv_socket_request
 {
     struct request_header __header;
-    char __pad_12[4];
+    int          oob;
     async_data_t async;
     unsigned int status;
     unsigned int total;
@@ -6287,7 +6287,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 706
+#define SERVER_PROTOCOL_VERSION 707
 
 /* ### protocol_version end ### */
 

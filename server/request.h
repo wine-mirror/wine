@@ -1068,6 +1068,7 @@ C_ASSERT( sizeof(struct enable_socket_event_request) == 32 );
 C_ASSERT( FIELD_OFFSET(struct set_socket_deferred_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct set_socket_deferred_request, deferred) == 16 );
 C_ASSERT( sizeof(struct set_socket_deferred_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct recv_socket_request, oob) == 12 );
 C_ASSERT( FIELD_OFFSET(struct recv_socket_request, async) == 16 );
 C_ASSERT( FIELD_OFFSET(struct recv_socket_request, status) == 56 );
 C_ASSERT( FIELD_OFFSET(struct recv_socket_request, total) == 60 );

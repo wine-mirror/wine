@@ -223,6 +223,7 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
         req->status = status;
         req->total  = information;
         req->async  = server_async( handle, &async->io, event, apc, apc_user, io );
+        req->oob    = !!(unix_flags & MSG_OOB);
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;

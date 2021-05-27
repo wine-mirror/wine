@@ -1468,6 +1468,7 @@ enum server_fd_type
 
 /* Perform a recv on a socket */
 @REQ(recv_socket)
+    int          oob;           /* are we receiving OOB data? */
     async_data_t async;         /* async I/O parameters */
     unsigned int status;        /* status of initial call */
     unsigned int total;         /* number of bytes already read */
