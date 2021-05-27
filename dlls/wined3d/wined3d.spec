@@ -114,6 +114,7 @@
 @ cdecl wined3d_device_context_get_viewports(ptr ptr ptr)
 @ cdecl wined3d_device_context_issue_query(ptr ptr long)
 @ cdecl wined3d_device_context_map(ptr ptr long ptr ptr long)
+@ cdecl wined3d_device_context_reset_state(ptr)
 @ cdecl wined3d_device_context_resolve_sub_resource(ptr ptr long ptr long long)
 @ cdecl wined3d_device_context_set_blend_state(ptr ptr ptr long)
 @ cdecl wined3d_device_context_set_constant_buffer(ptr long long ptr)

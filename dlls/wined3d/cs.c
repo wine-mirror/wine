@@ -359,6 +359,7 @@ struct wined3d_cs_push_constants
 struct wined3d_cs_reset_state
 {
     enum wined3d_cs_op opcode;
+    bool invalidate;
 };
 
 struct wined3d_cs_callback
@@ -2143,18 +2144,27 @@ static void wined3d_cs_mt_push_constants(struct wined3d_device_context *context,
 
 static void wined3d_cs_exec_reset_state(struct wined3d_cs *cs, const void *data)
 {
+    const struct wined3d_cs_reset_state *op = data;
+    unsigned int state;
+
     state_cleanup(&cs->state);
     wined3d_state_reset(&cs->state, &cs->c.device->adapter->d3d_info);
+    if (op->invalidate)
+    {
+        for (state = 0; state <= STATE_HIGHEST; ++state)
+            device_invalidate_state(cs->c.device, state);
+    }
 }
 
-void wined3d_cs_emit_reset_state(struct wined3d_cs *cs)
+void wined3d_device_context_emit_reset_state(struct wined3d_device_context *context, bool invalidate)
 {
     struct wined3d_cs_reset_state *op;
 
-    op = wined3d_device_context_require_space(&cs->c, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_RESET_STATE;
+    op->invalidate = invalidate;
 
-    wined3d_device_context_submit(&cs->c, WINED3D_CS_QUEUE_DEFAULT);
+    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
 static void wined3d_cs_exec_callback(struct wined3d_cs *cs, const void *data)

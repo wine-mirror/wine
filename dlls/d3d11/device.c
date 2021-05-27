@@ -2597,49 +2597,11 @@ static void STDMETHODCALLTYPE d3d11_device_context_CSGetConstantBuffers(ID3D11De
 static void STDMETHODCALLTYPE d3d11_device_context_ClearState(ID3D11DeviceContext1 *iface)
 {
     struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
-    static const float blend_factor[] = {1.0f, 1.0f, 1.0f, 1.0f};
-    unsigned int i, j;
 
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
-    {
-        wined3d_device_context_set_shader(context->wined3d_context, i, NULL);
-        for (j = 0; j < D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT; ++j)
-            wined3d_device_context_set_constant_buffer(context->wined3d_context, i, j, NULL);
-        for (j = 0; j < D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT; ++j)
-            wined3d_device_context_set_shader_resource_view(context->wined3d_context, i, j, NULL);
-        for (j = 0; j < D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT; ++j)
-            wined3d_device_context_set_sampler(context->wined3d_context, i, j, NULL);
-    }
-    for (i = 0; i < D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT; ++i)
-    {
-        wined3d_device_context_set_stream_source(context->wined3d_context, i, NULL, 0, 0);
-    }
-    wined3d_device_context_set_index_buffer(context->wined3d_context, NULL, WINED3DFMT_UNKNOWN, 0);
-    wined3d_device_context_set_vertex_declaration(context->wined3d_context, NULL);
-    wined3d_device_context_set_primitive_type(context->wined3d_context, WINED3D_PT_UNDEFINED, 0);
-    for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
-    {
-        wined3d_device_context_set_rendertarget_view(context->wined3d_context, i, NULL, FALSE);
-    }
-    wined3d_device_context_set_depth_stencil_view(context->wined3d_context, NULL);
-    for (i = 0; i < WINED3D_PIPELINE_COUNT; ++i)
-    {
-        for (j = 0; j < D3D11_PS_CS_UAV_REGISTER_COUNT; ++j)
-            wined3d_device_context_set_unordered_access_view(context->wined3d_context, i, j, NULL, ~0u);
-    }
-    ID3D11DeviceContext1_OMSetDepthStencilState(iface, NULL, 0);
-    ID3D11DeviceContext1_OMSetBlendState(iface, NULL, blend_factor, D3D11_DEFAULT_SAMPLE_MASK);
-    ID3D11DeviceContext1_RSSetViewports(iface, 0, NULL);
-    ID3D11DeviceContext1_RSSetScissorRects(iface, 0, NULL);
-    ID3D11DeviceContext1_RSSetState(iface, NULL);
-    for (i = 0; i < D3D11_SO_BUFFER_SLOT_COUNT; ++i)
-    {
-        wined3d_device_context_set_stream_output(context->wined3d_context, i, NULL, 0);
-    }
-    wined3d_device_context_set_predication(context->wined3d_context, NULL, FALSE);
+    wined3d_device_context_reset_state(context->wined3d_context);
     wined3d_mutex_unlock();
 }
 
