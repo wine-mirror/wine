@@ -3876,7 +3876,104 @@ static void test_fionread_siocatmark(void)
     closesocket(server);
 }
 
-static void test_ioctlsocket(void)
+static void test_fionbio(void)
+{
+    OVERLAPPED overlapped = {0}, *overlapped_ptr;
+    u_long one = 1, zero = 0;
+    HANDLE port, event;
+    ULONG_PTR key;
+    DWORD size;
+    SOCKET s;
+    int ret;
+
+    event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    port = CreateIoCompletionPort((HANDLE)s, NULL, 123, 0);
+
+    WSASetLastError(0xdeadbeef);
+    ret = ioctlsocket(s, FIONBIO, (u_long *)1);
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+    WSASetLastError(0xdeadbeef);
+    ret = WSAIoctl(s, FIONBIO, &one, sizeof(one), NULL, 0, NULL, NULL, NULL);
+    todo_wine ok(ret == -1, "expected failure\n");
+    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+    ret = WSAIoctl(s, FIONBIO, &one, sizeof(one) - 1, NULL, 0, &size, &overlapped, NULL);
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+    size = 0xdeadbeef;
+    WSASetLastError(0xdeadbeef);
+    ret = WSAIoctl(s, FIONBIO, &one, sizeof(one), NULL, 0, &size, NULL, NULL);
+    ok(!ret, "expected success\n");
+    todo_wine ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+    ok(!size, "got size %u\n", size);
+
+    ret = WSAIoctl(s, FIONBIO, &one, sizeof(one) + 1, NULL, 0, &size, NULL, NULL);
+    todo_wine ok(!ret, "got error %u\n", WSAGetLastError());
+
+    overlapped.Internal = 0xdeadbeef;
+    overlapped.InternalHigh = 0xdeadbeef;
+    size = 0xdeadbeef;
+    ret = WSAIoctl(s, FIONBIO, &one, sizeof(one), NULL, 0, &size, &overlapped, NULL);
+    ok(!ret, "expected success\n");
+    ok(!size, "got size %u\n", size);
+
+    ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(!size, "got size %u\n", size);
+    ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
+    ok(!overlapped.Internal, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(!overlapped.InternalHigh, "got size %Iu\n", overlapped.InternalHigh);
+
+    ret = WSAIoctl(s, FIONBIO, &one, sizeof(one), NULL, 0, NULL, &overlapped, NULL);
+    todo_wine ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+    ret = WSAEventSelect(s, event, FD_READ);
+    ok(!ret, "got error %u\n", WSAGetLastError());
+
+    ret = WSAIoctl(s, FIONBIO, &one, sizeof(one), NULL, 0, &size, NULL, NULL);
+    ok(!ret, "got error %u\n", WSAGetLastError());
+
+    size = 0xdeadbeef;
+    ret = WSAIoctl(s, FIONBIO, &zero, sizeof(zero), NULL, 0, &size, NULL, NULL);
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
+    todo_wine ok(!size, "got size %u\n", size);
+
+    CloseHandle(port);
+    closesocket(s);
+    CloseHandle(event);
+
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+    ret = WSAIoctl(s, FIONBIO, &one, sizeof(one), NULL, 0, NULL, &overlapped, socket_apc);
+    todo_wine ok(ret == -1, "expected failure\n");
+    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+    apc_count = 0;
+    size = 0xdeadbeef;
+    ret = WSAIoctl(s, FIONBIO, &one, sizeof(one), NULL, 0, &size, &overlapped, socket_apc);
+    ok(!ret, "expected success\n");
+    ok(!size, "got size %u\n", size);
+
+    ret = SleepEx(0, TRUE);
+    todo_wine ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
+    if (ret == WAIT_IO_COMPLETION)
+    {
+        ok(apc_count == 1, "APC was called %u times\n", apc_count);
+        ok(!apc_error, "got APC error %u\n", apc_error);
+        ok(!apc_size, "got APC size %u\n", apc_size);
+        ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
+    }
+
+    closesocket(s);
+}
+
+static void test_keepalive_vals(void)
 {
     SOCKET sock;
     struct tcp_keepalive kalive;
@@ -7592,35 +7689,6 @@ todo_wine
     closesocket(sock3);
 }
 
-static void test_synchronous_WSAIoctl(void)
-{
-    HANDLE io_port;
-    WSAOVERLAPPED overlapped, *olp;
-    SOCKET socket;
-    ULONG on;
-    ULONG_PTR key;
-    DWORD num_bytes;
-    BOOL ret;
-    int res;
-
-    socket = WSASocketW( AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED );
-    ok( socket != INVALID_SOCKET, "failed to create socket %d\n", WSAGetLastError() );
-
-    io_port = CreateIoCompletionPort( (HANDLE)socket, NULL, 0, 0 );
-    ok( io_port != NULL, "failed to create completion port %u\n", GetLastError() );
-
-    on = 1;
-    memset( &overlapped, 0, sizeof(overlapped) );
-    res = WSAIoctl( socket, FIONBIO, &on, sizeof(on), NULL, 0, &num_bytes, &overlapped, NULL );
-    ok( !res, "WSAIoctl failed %d\n", WSAGetLastError() );
-
-    ret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 10000 );
-    ok( ret, "failed to get completion status %u\n", GetLastError() );
-
-    CloseHandle( io_port );
-    closesocket( socket );
-}
-
 /*
  * Provide consistent initialization for the AcceptEx IOCP tests.
  */
@@ -10171,8 +10239,13 @@ START_TEST( sock )
     test_accept();
     test_getpeername();
     test_getsockname();
+
+    test_address_list_query();
+    test_fionbio();
     test_fionread_siocatmark();
-    test_ioctlsocket();
+    test_keepalive_vals();
+    test_sioRoutingInterfaceQuery();
+    test_sioAddressListChange();
 
     test_WSASendMsg();
     test_WSASendTo();
@@ -10190,13 +10263,9 @@ START_TEST( sock )
     test_shutdown();
     test_DisconnectEx();
 
-    test_sioRoutingInterfaceQuery();
-    test_sioAddressListChange();
-
     test_completion_port();
     test_connect_completion_port();
     test_shutdown_completion_port();
-    test_address_list_query();
     test_bind();
     test_connecting_socket();
     test_WSAGetOverlappedResult();
@@ -10206,7 +10275,6 @@ START_TEST( sock )
 
     /* this is an io heavy test, do it at the end so the kernel doesn't start dropping packets */
     test_send();
-    test_synchronous_WSAIoctl();
     test_wsaioctl();
 
     Exit();
