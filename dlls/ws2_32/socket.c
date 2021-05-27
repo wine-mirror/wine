@@ -498,34 +498,6 @@ struct ws2_async
     struct iovec                        iovec[1];
 };
 
-struct ws2_accept_async
-{
-    struct ws2_async_io io;
-    HANDLE              listen_socket;
-    HANDLE              accept_socket;
-    LPOVERLAPPED        user_overlapped;
-    ULONG_PTR           cvalue;
-    PVOID               buf;      /* buffer to write data to */
-    int                 data_len;
-    int                 local_len;
-    int                 remote_len;
-    struct ws2_async    *read;
-};
-
-struct ws2_transmitfile_async
-{
-    struct ws2_async_io   io;
-    char                  *buffer;
-    HANDLE                file;
-    DWORD                 file_read;
-    DWORD                 file_bytes;
-    DWORD                 bytes_per_send;
-    TRANSMIT_FILE_BUFFERS buffers;
-    DWORD                 flags;
-    LARGE_INTEGER         offset;
-    struct ws2_async      write;
-};
-
 static struct ws2_async_io *async_io_freelist;
 
 static void release_async_io( struct ws2_async_io *io )
@@ -556,32 +528,6 @@ static struct ws2_async_io *alloc_async_io( DWORD size, async_callback_t callbac
     return io;
 }
 
-static NTSTATUS register_async( int type, HANDLE handle, struct ws2_async_io *async, HANDLE event,
-                                PIO_APC_ROUTINE apc, void *apc_context, IO_STATUS_BLOCK *io )
-{
-    NTSTATUS status;
-
-    SERVER_START_REQ( register_async )
-    {
-        req->type              = type;
-        req->async.handle      = wine_server_obj_handle( handle );
-        req->async.user        = wine_server_client_ptr( async );
-        req->async.iosb        = wine_server_client_ptr( io );
-        req->async.event       = wine_server_obj_handle( event );
-        req->async.apc         = wine_server_client_ptr( apc );
-        req->async.apc_context = wine_server_client_ptr( apc_context );
-        status = wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
-    return status;
-}
-
-/****************************************************************/
-
-/* ----------------------------------- internal data */
-
-/* ws_... struct conversion flags */
 
 typedef struct          /* WSAAsyncSelect() control struct */
 {
@@ -607,15 +553,6 @@ int WSAIOCTL_GetInterfaceName(int intNumber, char *intName);
 static void WS_AddCompletion( SOCKET sock, ULONG_PTR CompletionValue, NTSTATUS CompletionStatus, ULONG Information, BOOL force );
 
 #define MAP_OPTION(opt) { WS_##opt, opt }
-
-static const int ws_flags_map[][2] =
-{
-    MAP_OPTION( MSG_OOB ),
-    MAP_OPTION( MSG_PEEK ),
-    MAP_OPTION( MSG_DONTROUTE ),
-    MAP_OPTION( MSG_WAITALL ),
-    { WS_MSG_PARTIAL, 0 },
-};
 
 static const int ws_sock_map[][2] =
 {
@@ -710,50 +647,6 @@ static const int ws_poll_map[][2] =
     { WS_POLLRDBAND, POLLPRI }
 };
 
-static NTSTATUS sock_get_ntstatus( int err )
-{
-    switch ( err )
-    {
-        case EBADF:             return STATUS_INVALID_HANDLE;
-        case EBUSY:             return STATUS_DEVICE_BUSY;
-        case EPERM:
-        case EACCES:            return STATUS_ACCESS_DENIED;
-        case EFAULT:            return STATUS_ACCESS_VIOLATION;
-        case EINVAL:            return STATUS_INVALID_PARAMETER;
-        case ENFILE:
-        case EMFILE:            return STATUS_TOO_MANY_OPENED_FILES;
-        case EINPROGRESS:
-        case EWOULDBLOCK:       return STATUS_DEVICE_NOT_READY;
-        case EALREADY:          return STATUS_NETWORK_BUSY;
-        case ENOTSOCK:          return STATUS_OBJECT_TYPE_MISMATCH;
-        case EDESTADDRREQ:      return STATUS_INVALID_PARAMETER;
-        case EMSGSIZE:          return STATUS_BUFFER_OVERFLOW;
-        case EPROTONOSUPPORT:
-        case ESOCKTNOSUPPORT:
-        case EPFNOSUPPORT:
-        case EAFNOSUPPORT:
-        case EPROTOTYPE:        return STATUS_NOT_SUPPORTED;
-        case ENOPROTOOPT:       return STATUS_INVALID_PARAMETER;
-        case EOPNOTSUPP:        return STATUS_NOT_SUPPORTED;
-        case EADDRINUSE:        return STATUS_SHARING_VIOLATION;
-        case EADDRNOTAVAIL:     return STATUS_INVALID_PARAMETER;
-        case ECONNREFUSED:      return STATUS_CONNECTION_REFUSED;
-        case ESHUTDOWN:         return STATUS_PIPE_DISCONNECTED;
-        case ENOTCONN:          return STATUS_INVALID_CONNECTION;
-        case ETIMEDOUT:         return STATUS_IO_TIMEOUT;
-        case ENETUNREACH:       return STATUS_NETWORK_UNREACHABLE;
-        case ENETDOWN:          return STATUS_NETWORK_BUSY;
-        case EPIPE:
-        case ECONNRESET:        return STATUS_CONNECTION_RESET;
-        case ECONNABORTED:      return STATUS_CONNECTION_ABORTED;
-
-        case 0:                 return STATUS_SUCCESS;
-        default:
-            WARN("Unknown errno %d!\n", err);
-            return STATUS_UNSUCCESSFUL;
-    }
-}
-
 UINT sock_get_error( int err )
 {
 	switch(err)
@@ -828,15 +721,6 @@ static UINT wsaErrno(void)
     WARN("errno %d, (%s).\n", loc_errno, strerror(loc_errno));
 
     return sock_get_error( loc_errno );
-}
-
-/* most ws2 overlapped functions return an ntstatus-based error code */
-static NTSTATUS wsaErrStatus(void)
-{
-    int	loc_errno = errno;
-    WARN("errno %d, (%s).\n", loc_errno, strerror(loc_errno));
-
-    return sock_get_ntstatus(loc_errno);
 }
 
 static NTSTATUS sock_error_to_ntstatus( DWORD err )
@@ -1000,21 +884,6 @@ static void _enable_event( HANDLE s, unsigned int event,
     SERVER_END_REQ;
 }
 
-static DWORD sock_is_blocking(SOCKET s, BOOL *ret)
-{
-    DWORD err;
-    SERVER_START_REQ( get_socket_event )
-    {
-        req->handle  = wine_server_obj_handle( SOCKET2HANDLE(s) );
-        req->service = FALSE;
-        req->c_event = 0;
-        err = NtStatusToWSAError( wine_server_call( req ));
-        *ret = (reply->state & FD_WINE_NONBLOCKING) == 0;
-    }
-    SERVER_END_REQ;
-    return err;
-}
-
 static unsigned int _get_sock_mask(SOCKET s)
 {
     unsigned int ret;
@@ -1028,14 +897,6 @@ static unsigned int _get_sock_mask(SOCKET s)
     }
     SERVER_END_REQ;
     return ret;
-}
-
-static void _sync_sock_state(SOCKET s)
-{
-    BOOL dummy;
-    /* do a dummy wineserver request in order to let
-       the wineserver run through its select loop once */
-    sock_is_blocking(s, &dummy);
 }
 
 static void _get_sock_errors(SOCKET s, int *events)
@@ -1212,33 +1073,6 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
 }
 
 /***********************************************************************
- *          convert_flags()
- *
- * Converts send/recv flags from Windows format.
- * Return the converted flag bits, unsupported flags remain unchanged.
- */
-static int convert_flags(int flags)
-{
-    int i, out;
-    if (!flags) return 0;
-
-    for (out = i = 0; flags && i < ARRAY_SIZE(ws_flags_map); i++)
-    {
-        if (ws_flags_map[i][0] & flags)
-        {
-            out |= ws_flags_map[i][1];
-            flags &= ~ws_flags_map[i][0];
-        }
-    }
-    if (flags)
-    {
-        FIXME("Unknown send/recv flags 0x%x, using anyway...\n", flags);
-        out |= flags;
-    }
-    return out;
-}
-
-/***********************************************************************
  *          convert_sockopt()
  *
  * Converts socket flags from Windows format.
@@ -1324,25 +1158,6 @@ static inline INT64 get_rcvsnd_timeo( int fd, BOOL is_recv)
   if (res < 0)
       return 0;
   return (UINT64)tv.tv_sec * 1000 + tv.tv_usec / 1000;
-}
-
-/* utility: given an fd, will block until one of the events occurs */
-static inline int do_block( int fd, int events, int timeout )
-{
-  struct pollfd pfd;
-  int ret;
-
-  pfd.fd = fd;
-  pfd.events = events;
-
-  while ((ret = poll(&pfd, 1, timeout)) < 0)
-  {
-      if (errno != EINTR)
-          return -1;
-  }
-  if( ret == 0 )
-      return 0;
-  return pfd.revents;
 }
 
 int
@@ -1927,81 +1742,6 @@ static void WINAPI ws2_async_apc( void *arg, IO_STATUS_BLOCK *iosb, ULONG reserv
     release_async_io( &wsa->io );
 }
 
-/***********************************************************************
- *              WS2_send                (INTERNAL)
- *
- * Workhorse for both synchronous and asynchronous send() operations.
- */
-static int WS2_send( int fd, struct ws2_async *wsa, int flags )
-{
-    struct msghdr hdr;
-    union generic_unix_sockaddr unix_addr;
-    int n, ret;
-
-    hdr.msg_name = NULL;
-    hdr.msg_namelen = 0;
-
-    if (wsa->addr)
-    {
-        hdr.msg_name = &unix_addr;
-        hdr.msg_namelen = ws_sockaddr_ws2u( wsa->addr, wsa->addrlen.val, &unix_addr );
-        if ( !hdr.msg_namelen )
-        {
-            errno = EFAULT;
-            return -1;
-        }
-
-#if defined(HAS_IPX) && defined(SOL_IPX)
-        if(wsa->addr->sa_family == WS_AF_IPX)
-        {
-            struct sockaddr_ipx* uipx = (struct sockaddr_ipx*)hdr.msg_name;
-            int val=0;
-            socklen_t len = sizeof(int);
-
-            /* The packet type is stored at the ipx socket level; At least the linux kernel seems
-             *  to do something with it in case hdr.msg_name is NULL. Nonetheless can we use it to store
-             *  the packet type and then we can retrieve it using getsockopt. After that we can set the
-             *  ipx type in the sockaddr_opx structure with the stored value.
-             */
-            if(getsockopt(fd, SOL_IPX, IPX_TYPE, &val, &len) != -1)
-                uipx->sipx_type = val;
-        }
-#endif
-    }
-
-    hdr.msg_iov = wsa->iovec + wsa->first_iovec;
-    hdr.msg_iovlen = wsa->n_iovecs - wsa->first_iovec;
-#ifdef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
-    hdr.msg_accrights = NULL;
-    hdr.msg_accrightslen = 0;
-#else
-    hdr.msg_control = NULL;
-    hdr.msg_controllen = 0;
-    hdr.msg_flags = 0;
-#endif
-
-    while ((ret = sendmsg(fd, &hdr, flags)) == -1)
-    {
-        if (errno == EISCONN)
-        {
-            hdr.msg_name = 0;
-            hdr.msg_namelen = 0;
-            continue;
-        }
-        if (errno != EINTR)
-            return -1;
-    }
-
-    n = ret;
-    while (wsa->first_iovec < wsa->n_iovecs && wsa->iovec[wsa->first_iovec].iov_len <= n)
-        n -= wsa->iovec[wsa->first_iovec++].iov_len;
-    if (wsa->first_iovec < wsa->n_iovecs)
-    {
-        wsa->iovec[wsa->first_iovec].iov_base = (char*)wsa->iovec[wsa->first_iovec].iov_base + n;
-        wsa->iovec[wsa->first_iovec].iov_len -= n;
-    }
-    return ret;
-}
 
 /***********************************************************************
  *		accept		(WS2_32.1)
@@ -2097,280 +1837,53 @@ static BOOL WINAPI WS2_AcceptEx( SOCKET listener, SOCKET acceptor, void *dest, D
     return !status;
 }
 
-/***********************************************************************
- *     WS2_ReadFile                     (INTERNAL)
- *
- * Perform an APC-safe ReadFile operation
- */
-static NTSTATUS WS2_ReadFile(HANDLE hFile, PIO_STATUS_BLOCK io_status, char* buffer, ULONG length,
-                             PLARGE_INTEGER offset)
+
+static BOOL WINAPI WS2_TransmitFile( SOCKET s, HANDLE file, DWORD file_len, DWORD buffer_size,
+                                     OVERLAPPED *overlapped, TRANSMIT_FILE_BUFFERS *buffers, DWORD flags )
 {
-    int result = -1, unix_handle;
-    unsigned int options;
+    struct afd_transmit_params params = {0};
+    IO_STATUS_BLOCK iosb, *piosb = &iosb;
+    HANDLE event = NULL;
+    void *cvalue = NULL;
     NTSTATUS status;
 
-    TRACE( "(%p,%p,0x%08x)\n", hFile, buffer,length );
+    TRACE( "socket %#lx, file %p, file_len %u, buffer_size %u, overlapped %p, buffers %p, flags %#x\n",
+           s, file, file_len, buffer_size, overlapped, buffers, flags );
 
-    status = wine_server_handle_to_fd( hFile, FILE_READ_DATA, &unix_handle, &options );
-    if (status) return status;
-
-    while (result == -1)
-    {
-        if (offset->QuadPart != FILE_USE_FILE_POINTER_POSITION)
-            result = pread( unix_handle, buffer, length, offset->QuadPart );
-        else
-            result = read( unix_handle, buffer, length );
-        if (errno != EINTR)
-            break;
-    }
-
-    if (!result)
-        status = (length ? STATUS_END_OF_FILE : STATUS_SUCCESS);
-    else if (result != -1)
-        status = STATUS_SUCCESS;
-    else if (errno != EAGAIN)
-        status = wsaErrStatus();
-    else
-        status = STATUS_PENDING;
-
-    close( unix_handle );
-    TRACE("= 0x%08x (%d)\n", status, result);
-    if (status == STATUS_SUCCESS || status == STATUS_END_OF_FILE)
-    {
-        io_status->u.Status = status;
-        io_status->Information = result;
-    }
-
-    return status;
-}
-
-/***********************************************************************
- *     WS2_transmitfile_getbuffer       (INTERNAL)
- *
- * Pick the appropriate buffer for a TransmitFile send operation.
- */
-static NTSTATUS WS2_transmitfile_getbuffer( int fd, struct ws2_transmitfile_async *wsa )
-{
-    /* send any incomplete writes from a previous iteration */
-    if (wsa->write.first_iovec < wsa->write.n_iovecs)
-        return STATUS_PENDING;
-
-    /* process the header (if applicable) */
-    if (wsa->buffers.Head)
-    {
-        wsa->write.first_iovec       = 0;
-        wsa->write.n_iovecs          = 1;
-        wsa->write.iovec[0].iov_base = wsa->buffers.Head;
-        wsa->write.iovec[0].iov_len  = wsa->buffers.HeadLength;
-        wsa->buffers.Head            = NULL;
-        return STATUS_PENDING;
-    }
-
-    /* process the main file */
-    if (wsa->file)
-    {
-        DWORD bytes_per_send = wsa->bytes_per_send;
-        IO_STATUS_BLOCK iosb;
-        NTSTATUS status;
-
-        iosb.Information = 0;
-        /* when the size of the transfer is limited ensure that we don't go past that limit */
-        if (wsa->file_bytes != 0)
-            bytes_per_send = min(bytes_per_send, wsa->file_bytes - wsa->file_read);
-        status = WS2_ReadFile( wsa->file, &iosb, wsa->buffer, bytes_per_send, &wsa->offset );
-        if (wsa->offset.QuadPart != FILE_USE_FILE_POINTER_POSITION)
-            wsa->offset.QuadPart += iosb.Information;
-        if (status == STATUS_END_OF_FILE)
-            wsa->file = NULL; /* continue on to the footer */
-        else if (status != STATUS_SUCCESS)
-            return status;
-        else
-        {
-            if (iosb.Information)
-            {
-                wsa->write.first_iovec       = 0;
-                wsa->write.n_iovecs          = 1;
-                wsa->write.iovec[0].iov_base = wsa->buffer;
-                wsa->write.iovec[0].iov_len  = iosb.Information;
-                wsa->file_read += iosb.Information;
-            }
-
-            if (wsa->file_bytes != 0 && wsa->file_read >= wsa->file_bytes)
-                wsa->file = NULL;
-
-            return STATUS_PENDING;
-        }
-    }
-
-    /* send the footer (if applicable) */
-    if (wsa->buffers.Tail)
-    {
-        wsa->write.first_iovec       = 0;
-        wsa->write.n_iovecs          = 1;
-        wsa->write.iovec[0].iov_base = wsa->buffers.Tail;
-        wsa->write.iovec[0].iov_len  = wsa->buffers.TailLength;
-        wsa->buffers.Tail            = NULL;
-        return STATUS_PENDING;
-    }
-
-    return STATUS_SUCCESS;
-}
-
-/***********************************************************************
- *     WS2_transmitfile_base            (INTERNAL)
- *
- * Shared implementation for both synchronous and asynchronous TransmitFile.
- */
-static NTSTATUS WS2_transmitfile_base( int fd, struct ws2_transmitfile_async *wsa )
-{
-    NTSTATUS status;
-
-    status = WS2_transmitfile_getbuffer( fd, wsa );
-    if (status == STATUS_PENDING)
-    {
-        IO_STATUS_BLOCK *iosb = (IO_STATUS_BLOCK *)wsa->write.user_overlapped;
-        int n;
-
-        n = WS2_send( fd, &wsa->write, convert_flags(wsa->write.flags) );
-        if (n >= 0)
-        {
-            if (iosb) iosb->Information += n;
-        }
-        else if (errno != EAGAIN)
-            return wsaErrStatus();
-    }
-
-    return status;
-}
-
-/***********************************************************************
- *     WS2_async_transmitfile           (INTERNAL)
- *
- * Asynchronous callback for overlapped TransmitFile operations.
- */
-static NTSTATUS WS2_async_transmitfile( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status )
-{
-    struct ws2_transmitfile_async *wsa = user;
-    int fd;
-
-    if (status == STATUS_ALERTED)
-    {
-        if (!(status = wine_server_handle_to_fd( wsa->write.hSocket, FILE_WRITE_DATA, &fd, NULL )))
-        {
-            status = WS2_transmitfile_base( fd, wsa );
-            close( fd );
-        }
-        if (status == STATUS_PENDING)
-            return status;
-    }
-
-    iosb->u.Status = status;
-    release_async_io( &wsa->io );
-    return status;
-}
-
-/***********************************************************************
- *     TransmitFile
- */
-static BOOL WINAPI WS2_TransmitFile( SOCKET s, HANDLE h, DWORD file_bytes, DWORD bytes_per_send,
-                                     LPOVERLAPPED overlapped, LPTRANSMIT_FILE_BUFFERS buffers,
-                                     DWORD flags )
-{
-    union generic_unix_sockaddr uaddr;
-    socklen_t uaddrlen = sizeof(uaddr);
-    struct ws2_transmitfile_async *wsa;
-    NTSTATUS status;
-    int fd;
-
-    TRACE("(%lx, %p, %d, %d, %p, %p, %d)\n", s, h, file_bytes, bytes_per_send, overlapped,
-            buffers, flags );
-
-    fd = get_sock_fd( s, FILE_WRITE_DATA, NULL );
-    if (fd == -1) return FALSE;
-
-    if (getpeername( fd, &uaddr.addr, &uaddrlen ) != 0)
-    {
-        release_sock_fd( s, fd );
-        WSASetLastError( WSAENOTCONN );
-        return FALSE;
-    }
-    if (flags)
-        FIXME("Flags are not currently supported (0x%x).\n", flags);
-
-    if (h && GetFileType( h ) != FILE_TYPE_DISK)
-    {
-        FIXME("Non-disk file handles are not currently supported.\n");
-        release_sock_fd( s, fd );
-        WSASetLastError( WSAEOPNOTSUPP );
-        return FALSE;
-    }
-
-    /* set reasonable defaults when requested */
-    if (!bytes_per_send)
-        bytes_per_send = (1 << 16); /* Depends on OS version: PAGE_SIZE, 2*PAGE_SIZE, or 2^16 */
-
-    if (!(wsa = (struct ws2_transmitfile_async *)alloc_async_io( sizeof(*wsa) + bytes_per_send,
-                                                                 WS2_async_transmitfile )))
-    {
-        release_sock_fd( s, fd );
-        WSASetLastError( WSAEFAULT );
-        return FALSE;
-    }
-    if (buffers)
-        wsa->buffers = *buffers;
-    else
-        memset(&wsa->buffers, 0x0, sizeof(wsa->buffers));
-    wsa->buffer                = (char *)(wsa + 1);
-    wsa->file                  = h;
-    wsa->file_read             = 0;
-    wsa->file_bytes            = file_bytes;
-    wsa->bytes_per_send        = bytes_per_send;
-    wsa->flags                 = flags;
-    wsa->offset.QuadPart       = FILE_USE_FILE_POINTER_POSITION;
-    wsa->write.hSocket         = SOCKET2HANDLE(s);
-    wsa->write.addr            = NULL;
-    wsa->write.addrlen.val     = 0;
-    wsa->write.flags           = 0;
-    wsa->write.lpFlags         = &wsa->flags;
-    wsa->write.control         = NULL;
-    wsa->write.n_iovecs        = 0;
-    wsa->write.first_iovec     = 0;
-    wsa->write.user_overlapped = overlapped;
     if (overlapped)
     {
-        IO_STATUS_BLOCK *iosb = (IO_STATUS_BLOCK *)overlapped;
-        int status;
-
-        wsa->offset.u.LowPart  = overlapped->u.s.Offset;
-        wsa->offset.u.HighPart = overlapped->u.s.OffsetHigh;
-        iosb->u.Status = STATUS_PENDING;
-        iosb->Information = 0;
-        status = register_async( ASYNC_TYPE_WRITE, SOCKET2HANDLE(s), &wsa->io,
-                                 overlapped->hEvent, NULL, NULL, iosb );
-        if(status != STATUS_PENDING) HeapFree( GetProcessHeap(), 0, wsa );
-        release_sock_fd( s, fd );
-        WSASetLastError( NtStatusToWSAError(status) );
-        return FALSE;
+        piosb = (IO_STATUS_BLOCK *)overlapped;
+        if (!((ULONG_PTR)overlapped->hEvent & 1)) cvalue = overlapped;
+        event = overlapped->hEvent;
+        overlapped->Internal = STATUS_PENDING;
+        overlapped->InternalHigh = 0;
+        params.offset.u.LowPart = overlapped->u.s.Offset;
+        params.offset.u.HighPart = overlapped->u.s.OffsetHigh;
     }
-
-    do
+    else
     {
-        status = WS2_transmitfile_base( fd, wsa );
-        if (status == STATUS_PENDING)
-        {
-            /* block here */
-            do_block(fd, POLLOUT, -1);
-            _sync_sock_state(s); /* let wineserver notice connection */
-        }
+        if (!(event = get_sync_event())) return -1;
+        params.offset.QuadPart = FILE_USE_FILE_POINTER_POSITION;
     }
-    while (status == STATUS_PENDING);
-    release_sock_fd( s, fd );
 
-    if (status != STATUS_SUCCESS)
-        WSASetLastError( NtStatusToWSAError(status) );
-    HeapFree( GetProcessHeap(), 0, wsa );
-    return (status == STATUS_SUCCESS);
+    params.file = file;
+    params.file_len = file_len;
+    params.buffer_size = buffer_size;
+    if (buffers) params.buffers = *buffers;
+    params.flags = flags;
+
+    status = NtDeviceIoControlFile( (HANDLE)s, event, NULL, cvalue, piosb,
+                                    IOCTL_AFD_WINE_TRANSMIT, &params, sizeof(params), NULL, 0 );
+    if (status == STATUS_PENDING && !overlapped)
+    {
+        if (WaitForSingleObject( event, INFINITE ) == WAIT_FAILED)
+            return FALSE;
+        status = piosb->u.Status;
+    }
+    SetLastError( NtStatusToWSAError( status ) );
+    return !status;
 }
+
 
 /***********************************************************************
  *     GetAcceptExSockaddrs
