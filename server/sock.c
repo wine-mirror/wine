@@ -151,7 +151,6 @@ struct sock
      * any event once until it is reset.) */
     unsigned int        reported_events;
     unsigned int        flags;       /* socket flags */
-    int                 polling;     /* is socket being polled? */
     int                 wr_shutdown_pending; /* is a write shutdown pending? */
     unsigned short      proto;       /* socket protocol */
     unsigned short      type;        /* socket type */
@@ -410,14 +409,6 @@ static int sock_reselect( struct sock *sock )
     if (debug_level)
         fprintf(stderr,"sock_reselect(%p): new mask %x\n", sock, ev);
 
-    if (!sock->polling)  /* FIXME: should find a better way to do this */
-    {
-        /* previously unconnected socket, is this reselect supposed to connect it? */
-        if (!(sock->state & ~FD_WINE_NONBLOCKING)) return 0;
-        /* ok, it is, attach it to the wineserver's main poll loop */
-        sock->polling = 1;
-    }
-    /* update condition mask */
     set_fd_events( sock->fd, ev );
     return ev;
 }
@@ -986,6 +977,15 @@ static int sock_get_poll_events( struct fd *fd )
 
     assert( sock->obj.ops == &sock_ops );
 
+    if (!sock->type) /* not initialized yet */
+        return -1;
+
+    /* A connection-mode Windows socket which has never been connected does not
+     * return any events, but Linux returns POLLOUT | POLLHUP. Hence we need to
+     * return -1 here, to prevent the socket from being polled on at all. */
+    if (sock->type == WS_SOCK_STREAM && !(sock->state & (FD_CONNECT | FD_WINE_CONNECTED | FD_WINE_LISTENING)))
+        return -1;
+
     if (sock->state & FD_CONNECT)
         /* connecting, wait for writable */
         return POLLOUT;
@@ -1169,7 +1169,6 @@ static struct sock *create_socket(void)
     sock->mask    = 0;
     sock->pending_events = 0;
     sock->reported_events = 0;
-    sock->polling = 0;
     sock->wr_shutdown_pending = 0;
     sock->flags   = 0;
     sock->proto   = 0;
@@ -1464,7 +1463,6 @@ static int accept_into_socket( struct sock *sock, struct sock *acceptsock )
     acceptsock->state  |= FD_WINE_CONNECTED|FD_READ|FD_WRITE;
     acceptsock->pending_events = 0;
     acceptsock->reported_events = 0;
-    acceptsock->polling = 0;
     acceptsock->proto   = sock->proto;
     acceptsock->type    = sock->type;
     acceptsock->family  = sock->family;
