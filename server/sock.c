@@ -416,7 +416,6 @@ static int sock_reselect( struct sock *sock )
         if (!(sock->state & ~FD_WINE_NONBLOCKING)) return 0;
         /* ok, it is, attach it to the wineserver's main poll loop */
         sock->polling = 1;
-        allow_fd_caching( sock->fd );
     }
     /* update condition mask */
     set_fd_events( sock->fd, ev );
@@ -1358,7 +1357,11 @@ static int init_socket( struct sock *sock, int family, int type, int protocol, u
     {
         return -1;
     }
-    sock_reselect( sock );
+
+    /* We can't immediately allow caching for a connection-mode socket, since it
+     * might be accepted into (changing the underlying fd object.) */
+    if (sock->type != WS_SOCK_STREAM) allow_fd_caching( sock->fd );
+
     return 0;
 }
 
@@ -1750,6 +1753,9 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         sock->state |= FD_WINE_LISTENING;
         sock->state &= ~(FD_CONNECT | FD_WINE_CONNECTED);
 
+        /* a listening socket can no longer be accepted into */
+        allow_fd_caching( sock->fd );
+
         /* we may already be selecting for FD_ACCEPT */
         sock_reselect( sock );
         return 0;
@@ -1789,6 +1795,9 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             set_error( sock_get_ntstatus( errno ) );
             return 0;
         }
+
+        /* a connected or connecting socket can no longer be accepted into */
+        allow_fd_caching( sock->fd );
 
         sock->pending_events &= ~(FD_CONNECT | FD_READ | FD_WRITE);
         sock->reported_events &= ~(FD_CONNECT | FD_READ | FD_WRITE);
