@@ -10080,9 +10080,10 @@ msgstr "Wine oturumunuzu kapatmak istediğinizden emin misiniz?"
 msgid "Programs"
 msgstr "Programlar"
 
-#: dlls/shell32/shell32.rc:204
-msgid "My Documents"
-msgstr "Belgelerim"
+#: dlls/shell32/shell32.rc:204 dlls/shell32/shell32.rc:219
+#: dlls/shell32/shell32.rc:150 dlls/shell32/shell32.rc:235
+msgid "Documents"
+msgstr "Belgeler"
 
 #: dlls/shell32/shell32.rc:205
 msgid "Favorites"
@@ -10096,13 +10097,13 @@ msgstr "Başlangıç"
 msgid "Start Menu"
 msgstr "Başlat Menüsü"
 
-#: dlls/shell32/shell32.rc:208
-msgid "My Music"
-msgstr "Müziğim"
+#: dlls/shell32/shell32.rc:208 dlls/shell32/shell32.rc:221
+msgid "Music"
+msgstr "Müzik"
 
-#: dlls/shell32/shell32.rc:209
-msgid "My Videos"
-msgstr "Videolarım"
+#: dlls/shell32/shell32.rc:209 dlls/shell32/shell32.rc:223
+msgid "Videos"
+msgstr "Videolar"
 
 #: dlls/shell32/shell32.rc:210
 msgctxt "directory"
@@ -10129,34 +10130,17 @@ msgstr "Geçmiş"
 msgid "Program Files"
 msgstr "Program Dosyaları"
 
-#: dlls/shell32/shell32.rc:217
-msgid "My Pictures"
-msgstr "Resimlerim"
+#: dlls/shell32/shell32.rc:217 dlls/shell32/shell32.rc:222
+msgid "Pictures"
+msgstr "Resimler"
 
 #: dlls/shell32/shell32.rc:218
 msgid "Common Files"
 msgstr "Ortak Dosyalar"
 
-#: dlls/shell32/shell32.rc:219 dlls/shell32/shell32.rc:150
-#: dlls/shell32/shell32.rc:235
-msgid "Documents"
-msgstr "Belgeler"
-
 #: dlls/shell32/shell32.rc:220
 msgid "Administrative Tools"
 msgstr "Yönetim Araçları"
-
-#: dlls/shell32/shell32.rc:221
-msgid "Music"
-msgstr "Müzik"
-
-#: dlls/shell32/shell32.rc:222
-msgid "Pictures"
-msgstr "Resimler"
-
-#: dlls/shell32/shell32.rc:223
-msgid "Videos"
-msgstr "Videolar"
 
 #: dlls/shell32/shell32.rc:216
 msgid "Program Files (x86)"

@@ -10093,9 +10093,10 @@ msgstr "Möchten Sie die aktuelle Wine-Sitzung beenden?"
 msgid "Programs"
 msgstr "Programme"
 
-#: dlls/shell32/shell32.rc:204
-msgid "My Documents"
-msgstr "Meine Dokumente"
+#: dlls/shell32/shell32.rc:204 dlls/shell32/shell32.rc:219
+#: dlls/shell32/shell32.rc:150 dlls/shell32/shell32.rc:235
+msgid "Documents"
+msgstr "Dokumente"
 
 #: dlls/shell32/shell32.rc:205
 msgid "Favorites"
@@ -10109,13 +10110,13 @@ msgstr "Autostart"
 msgid "Start Menu"
 msgstr "Startmenü"
 
-#: dlls/shell32/shell32.rc:208
-msgid "My Music"
-msgstr "Eigene Musik"
+#: dlls/shell32/shell32.rc:208 dlls/shell32/shell32.rc:221
+msgid "Music"
+msgstr "Musik"
 
-#: dlls/shell32/shell32.rc:209
-msgid "My Videos"
-msgstr "Eigene Videos"
+#: dlls/shell32/shell32.rc:209 dlls/shell32/shell32.rc:223
+msgid "Videos"
+msgstr "Videos"
 
 #: dlls/shell32/shell32.rc:210
 msgctxt "directory"
@@ -10142,34 +10143,17 @@ msgstr "Verlauf"
 msgid "Program Files"
 msgstr "Programme"
 
-#: dlls/shell32/shell32.rc:217
-msgid "My Pictures"
-msgstr "Eigene Bilder"
+#: dlls/shell32/shell32.rc:217 dlls/shell32/shell32.rc:222
+msgid "Pictures"
+msgstr "Bilder"
 
 #: dlls/shell32/shell32.rc:218
 msgid "Common Files"
 msgstr "Gemeinsame Dateien"
 
-#: dlls/shell32/shell32.rc:219 dlls/shell32/shell32.rc:150
-#: dlls/shell32/shell32.rc:235
-msgid "Documents"
-msgstr "Dokumente"
-
 #: dlls/shell32/shell32.rc:220
 msgid "Administrative Tools"
 msgstr "Verwaltung"
-
-#: dlls/shell32/shell32.rc:221
-msgid "Music"
-msgstr "Musik"
-
-#: dlls/shell32/shell32.rc:222
-msgid "Pictures"
-msgstr "Bilder"
-
-#: dlls/shell32/shell32.rc:223
-msgid "Videos"
-msgstr "Videos"
 
 #: dlls/shell32/shell32.rc:216
 msgid "Program Files (x86)"

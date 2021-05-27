@@ -10298,9 +10298,10 @@ msgstr "Искате ли да прекратите вашата Wine сесия
 msgid "Programs"
 msgstr ""
 
-#: dlls/shell32/shell32.rc:204
-msgid "My Documents"
-msgstr "Моите документи"
+#: dlls/shell32/shell32.rc:204 dlls/shell32/shell32.rc:219
+#: dlls/shell32/shell32.rc:150 dlls/shell32/shell32.rc:235
+msgid "Documents"
+msgstr ""
 
 #: dlls/shell32/shell32.rc:205
 msgid "Favorites"
@@ -10314,12 +10315,12 @@ msgstr ""
 msgid "Start Menu"
 msgstr ""
 
-#: dlls/shell32/shell32.rc:208
-msgid "My Music"
+#: dlls/shell32/shell32.rc:208 dlls/shell32/shell32.rc:221
+msgid "Music"
 msgstr ""
 
-#: dlls/shell32/shell32.rc:209
-msgid "My Videos"
+#: dlls/shell32/shell32.rc:209 dlls/shell32/shell32.rc:223
+msgid "Videos"
 msgstr ""
 
 #: dlls/shell32/shell32.rc:210
@@ -10348,8 +10349,8 @@ msgstr ""
 msgid "Program Files"
 msgstr ""
 
-#: dlls/shell32/shell32.rc:217
-msgid "My Pictures"
+#: dlls/shell32/shell32.rc:217 dlls/shell32/shell32.rc:222
+msgid "Pictures"
 msgstr ""
 
 #: dlls/shell32/shell32.rc:218
@@ -10357,25 +10358,8 @@ msgstr ""
 msgid "Common Files"
 msgstr "Копиране на файлове..."
 
-#: dlls/shell32/shell32.rc:219 dlls/shell32/shell32.rc:150
-#: dlls/shell32/shell32.rc:235
-msgid "Documents"
-msgstr ""
-
 #: dlls/shell32/shell32.rc:220
 msgid "Administrative Tools"
-msgstr ""
-
-#: dlls/shell32/shell32.rc:221
-msgid "Music"
-msgstr ""
-
-#: dlls/shell32/shell32.rc:222
-msgid "Pictures"
-msgstr ""
-
-#: dlls/shell32/shell32.rc:223
-msgid "Videos"
 msgstr ""
 
 #: dlls/shell32/shell32.rc:216

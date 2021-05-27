@@ -10641,8 +10641,9 @@ msgstr "Želite li da izgasite Wine sesiju?"
 msgid "Programs"
 msgstr ""
 
-#: dlls/shell32/shell32.rc:204
-msgid "My Documents"
+#: dlls/shell32/shell32.rc:204 dlls/shell32/shell32.rc:219
+#: dlls/shell32/shell32.rc:150 dlls/shell32/shell32.rc:235
+msgid "Documents"
 msgstr "Dokumenti"
 
 #: dlls/shell32/shell32.rc:205
@@ -10657,12 +10658,12 @@ msgstr ""
 msgid "Start Menu"
 msgstr "„Start“ meni"
 
-#: dlls/shell32/shell32.rc:208
-msgid "My Music"
+#: dlls/shell32/shell32.rc:208 dlls/shell32/shell32.rc:221
+msgid "Music"
 msgstr "Muzika"
 
-#: dlls/shell32/shell32.rc:209
-msgid "My Videos"
+#: dlls/shell32/shell32.rc:209 dlls/shell32/shell32.rc:223
+msgid "Videos"
 msgstr "Video snimci"
 
 #: dlls/shell32/shell32.rc:210
@@ -10691,8 +10692,8 @@ msgstr "Istorija"
 msgid "Program Files"
 msgstr "Programi"
 
-#: dlls/shell32/shell32.rc:217
-msgid "My Pictures"
+#: dlls/shell32/shell32.rc:217 dlls/shell32/shell32.rc:222
+msgid "Pictures"
 msgstr "Slike"
 
 #: dlls/shell32/shell32.rc:218
@@ -10700,27 +10701,10 @@ msgstr "Slike"
 msgid "Common Files"
 msgstr "Umnožavanje datoteka..."
 
-#: dlls/shell32/shell32.rc:219 dlls/shell32/shell32.rc:150
-#: dlls/shell32/shell32.rc:235
-msgid "Documents"
-msgstr "Dokumenti"
-
 #: dlls/shell32/shell32.rc:220
 #, fuzzy
 msgid "Administrative Tools"
 msgstr "„Start“ meni\\Programi\\Administrativne alatke"
-
-#: dlls/shell32/shell32.rc:221
-msgid "Music"
-msgstr "Muzika"
-
-#: dlls/shell32/shell32.rc:222
-msgid "Pictures"
-msgstr "Slike"
-
-#: dlls/shell32/shell32.rc:223
-msgid "Videos"
-msgstr "Video snimci"
 
 #: dlls/shell32/shell32.rc:216
 msgid "Program Files (x86)"

@@ -10410,9 +10410,10 @@ msgstr "您確定要關閉您的 Wine 工作階段嗎？"
 msgid "Programs"
 msgstr "程式"
 
-#: dlls/shell32/shell32.rc:204
-msgid "My Documents"
-msgstr "我的文件"
+#: dlls/shell32/shell32.rc:204 dlls/shell32/shell32.rc:219
+#: dlls/shell32/shell32.rc:150 dlls/shell32/shell32.rc:235
+msgid "Documents"
+msgstr "文件"
 
 #: dlls/shell32/shell32.rc:205
 msgid "Favorites"
@@ -10426,13 +10427,13 @@ msgstr "啟動"
 msgid "Start Menu"
 msgstr "開始功能表"
 
-#: dlls/shell32/shell32.rc:208
-msgid "My Music"
-msgstr "我的音樂"
+#: dlls/shell32/shell32.rc:208 dlls/shell32/shell32.rc:221
+msgid "Music"
+msgstr "音樂"
 
-#: dlls/shell32/shell32.rc:209
-msgid "My Videos"
-msgstr "我的影片"
+#: dlls/shell32/shell32.rc:209 dlls/shell32/shell32.rc:223
+msgid "Videos"
+msgstr "視訊"
 
 #: dlls/shell32/shell32.rc:210
 msgctxt "directory"
@@ -10459,34 +10460,17 @@ msgstr "歷程"
 msgid "Program Files"
 msgstr "程式檔案"
 
-#: dlls/shell32/shell32.rc:217
-msgid "My Pictures"
-msgstr "我的圖片"
+#: dlls/shell32/shell32.rc:217 dlls/shell32/shell32.rc:222
+msgid "Pictures"
+msgstr "圖片"
 
 #: dlls/shell32/shell32.rc:218
 msgid "Common Files"
 msgstr "共同檔案"
 
-#: dlls/shell32/shell32.rc:219 dlls/shell32/shell32.rc:150
-#: dlls/shell32/shell32.rc:235
-msgid "Documents"
-msgstr "文件"
-
 #: dlls/shell32/shell32.rc:220
 msgid "Administrative Tools"
 msgstr "系統管理工具"
-
-#: dlls/shell32/shell32.rc:221
-msgid "Music"
-msgstr "音樂"
-
-#: dlls/shell32/shell32.rc:222
-msgid "Pictures"
-msgstr "圖片"
-
-#: dlls/shell32/shell32.rc:223
-msgid "Videos"
-msgstr "視訊"
 
 #: dlls/shell32/shell32.rc:216
 msgid "Program Files (x86)"

@@ -10064,9 +10064,10 @@ msgstr "Haluatko lopettaa Wine-istunnon?"
 msgid "Programs"
 msgstr "Ohjelmat"
 
-#: dlls/shell32/shell32.rc:204
-msgid "My Documents"
-msgstr "Omat tiedostot"
+#: dlls/shell32/shell32.rc:204 dlls/shell32/shell32.rc:219
+#: dlls/shell32/shell32.rc:150 dlls/shell32/shell32.rc:235
+msgid "Documents"
+msgstr "Tiedostot"
 
 #: dlls/shell32/shell32.rc:205
 msgid "Favorites"
@@ -10080,13 +10081,13 @@ msgstr "Käynnistys"
 msgid "Start Menu"
 msgstr "Käynnistä-valikko"
 
-#: dlls/shell32/shell32.rc:208
-msgid "My Music"
-msgstr "Omat musiikkitiedostot"
+#: dlls/shell32/shell32.rc:208 dlls/shell32/shell32.rc:221
+msgid "Music"
+msgstr "Musiikki"
 
-#: dlls/shell32/shell32.rc:209
-msgid "My Videos"
-msgstr "Omat videotiedostot"
+#: dlls/shell32/shell32.rc:209 dlls/shell32/shell32.rc:223
+msgid "Videos"
+msgstr "Videot"
 
 #: dlls/shell32/shell32.rc:210
 msgctxt "directory"
@@ -10113,34 +10114,17 @@ msgstr "Historia"
 msgid "Program Files"
 msgstr "Ohjelmatiedostot"
 
-#: dlls/shell32/shell32.rc:217
-msgid "My Pictures"
-msgstr "Omat kuvatiedostot"
+#: dlls/shell32/shell32.rc:217 dlls/shell32/shell32.rc:222
+msgid "Pictures"
+msgstr "Kuvat"
 
 #: dlls/shell32/shell32.rc:218
 msgid "Common Files"
 msgstr "Yhteiset tiedostot"
 
-#: dlls/shell32/shell32.rc:219 dlls/shell32/shell32.rc:150
-#: dlls/shell32/shell32.rc:235
-msgid "Documents"
-msgstr "Tiedostot"
-
 #: dlls/shell32/shell32.rc:220
 msgid "Administrative Tools"
 msgstr "Hallintatyökalut"
-
-#: dlls/shell32/shell32.rc:221
-msgid "Music"
-msgstr "Musiikki"
-
-#: dlls/shell32/shell32.rc:222
-msgid "Pictures"
-msgstr "Kuvat"
-
-#: dlls/shell32/shell32.rc:223
-msgid "Videos"
-msgstr "Videot"
 
 #: dlls/shell32/shell32.rc:216
 msgid "Program Files (x86)"

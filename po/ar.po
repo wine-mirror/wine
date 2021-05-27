@@ -10446,8 +10446,9 @@ msgstr "هل ترغب بإنهاء جلسة واين ؟"
 msgid "Programs"
 msgstr "البرامج"
 
-#: dlls/shell32/shell32.rc:204
-msgid "My Documents"
+#: dlls/shell32/shell32.rc:204 dlls/shell32/shell32.rc:219
+#: dlls/shell32/shell32.rc:150 dlls/shell32/shell32.rc:235
+msgid "Documents"
 msgstr "المستندات"
 
 #: dlls/shell32/shell32.rc:205
@@ -10462,12 +10463,12 @@ msgstr "بدء التشغيل"
 msgid "Start Menu"
 msgstr "قائمة ابدأ"
 
-#: dlls/shell32/shell32.rc:208
-msgid "My Music"
+#: dlls/shell32/shell32.rc:208 dlls/shell32/shell32.rc:221
+msgid "Music"
 msgstr "الصوتيات"
 
-#: dlls/shell32/shell32.rc:209
-msgid "My Videos"
+#: dlls/shell32/shell32.rc:209 dlls/shell32/shell32.rc:223
+msgid "Videos"
 msgstr "المرئيات"
 
 #: dlls/shell32/shell32.rc:210
@@ -10495,34 +10496,17 @@ msgstr "التأريخ"
 msgid "Program Files"
 msgstr "ملفات البرامج"
 
-#: dlls/shell32/shell32.rc:217
-msgid "My Pictures"
+#: dlls/shell32/shell32.rc:217 dlls/shell32/shell32.rc:222
+msgid "Pictures"
 msgstr "الصور"
 
 #: dlls/shell32/shell32.rc:218
 msgid "Common Files"
 msgstr "الشائعات"
 
-#: dlls/shell32/shell32.rc:219 dlls/shell32/shell32.rc:150
-#: dlls/shell32/shell32.rc:235
-msgid "Documents"
-msgstr "المستندات"
-
 #: dlls/shell32/shell32.rc:220
 msgid "Administrative Tools"
 msgstr "أدوات الإدارة"
-
-#: dlls/shell32/shell32.rc:221
-msgid "Music"
-msgstr "الصوتيات"
-
-#: dlls/shell32/shell32.rc:222
-msgid "Pictures"
-msgstr "الصور"
-
-#: dlls/shell32/shell32.rc:223
-msgid "Videos"
-msgstr "المرئيات"
 
 #: dlls/shell32/shell32.rc:216
 msgid "Program Files (x86)"

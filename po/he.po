@@ -10484,9 +10484,10 @@ msgstr "האם ברצונך לכבות את הפעלת ה־Wine שלך?"
 msgid "Programs"
 msgstr ""
 
-#: dlls/shell32/shell32.rc:204
-msgid "My Documents"
-msgstr "המסמכים שלי"
+#: dlls/shell32/shell32.rc:204 dlls/shell32/shell32.rc:219
+#: dlls/shell32/shell32.rc:150 dlls/shell32/shell32.rc:235
+msgid "Documents"
+msgstr "מסמכים"
 
 #: dlls/shell32/shell32.rc:205
 msgid "Favorites"
@@ -10500,13 +10501,13 @@ msgstr ""
 msgid "Start Menu"
 msgstr "תפריט ההתחלה"
 
-#: dlls/shell32/shell32.rc:208
-msgid "My Music"
-msgstr "המוזיקה שלי"
+#: dlls/shell32/shell32.rc:208 dlls/shell32/shell32.rc:221
+msgid "Music"
+msgstr "מוזיקה"
 
-#: dlls/shell32/shell32.rc:209
-msgid "My Videos"
-msgstr "הווידאו שלי"
+#: dlls/shell32/shell32.rc:209 dlls/shell32/shell32.rc:223
+msgid "Videos"
+msgstr "וידאו"
 
 #: dlls/shell32/shell32.rc:210
 msgctxt "directory"
@@ -10533,36 +10534,19 @@ msgstr "היסטוריה"
 msgid "Program Files"
 msgstr "Program Files"
 
-#: dlls/shell32/shell32.rc:217
-msgid "My Pictures"
-msgstr "התמונות שלי"
+#: dlls/shell32/shell32.rc:217 dlls/shell32/shell32.rc:222
+msgid "Pictures"
+msgstr "תמונות"
 
 #: dlls/shell32/shell32.rc:218
 #, fuzzy
 msgid "Common Files"
 msgstr "העתקת קבצים..."
 
-#: dlls/shell32/shell32.rc:219 dlls/shell32/shell32.rc:150
-#: dlls/shell32/shell32.rc:235
-msgid "Documents"
-msgstr "מסמכים"
-
 #: dlls/shell32/shell32.rc:220
 #, fuzzy
 msgid "Administrative Tools"
 msgstr "תפריט ההתחלה\\תכניות\\כלי ניהול"
-
-#: dlls/shell32/shell32.rc:221
-msgid "Music"
-msgstr "מוזיקה"
-
-#: dlls/shell32/shell32.rc:222
-msgid "Pictures"
-msgstr "תמונות"
-
-#: dlls/shell32/shell32.rc:223
-msgid "Videos"
-msgstr "וידאו"
 
 #: dlls/shell32/shell32.rc:216
 msgid "Program Files (x86)"

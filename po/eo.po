@@ -10145,9 +10145,10 @@ msgstr "Ĉu vi volas adiaŭi Wine?"
 msgid "Programs"
 msgstr "Programoj"
 
-#: dlls/shell32/shell32.rc:204
-msgid "My Documents"
-msgstr "Miaj Dokumentoj"
+#: dlls/shell32/shell32.rc:204 dlls/shell32/shell32.rc:219
+#: dlls/shell32/shell32.rc:150 dlls/shell32/shell32.rc:235
+msgid "Documents"
+msgstr "Dokumentoj"
 
 #: dlls/shell32/shell32.rc:205
 msgid "Favorites"
@@ -10161,13 +10162,13 @@ msgstr "Starto"
 msgid "Start Menu"
 msgstr "Starta menuo"
 
-#: dlls/shell32/shell32.rc:208
-msgid "My Music"
-msgstr "Mia Muziko"
+#: dlls/shell32/shell32.rc:208 dlls/shell32/shell32.rc:221
+msgid "Music"
+msgstr "Muziko"
 
-#: dlls/shell32/shell32.rc:209
-msgid "My Videos"
-msgstr "Miaj Videoj"
+#: dlls/shell32/shell32.rc:209 dlls/shell32/shell32.rc:223
+msgid "Videos"
+msgstr "Videoj"
 
 #: dlls/shell32/shell32.rc:210
 msgctxt "directory"
@@ -10194,34 +10195,17 @@ msgstr "Historio"
 msgid "Program Files"
 msgstr "Programaj Dosieroj"
 
-#: dlls/shell32/shell32.rc:217
-msgid "My Pictures"
-msgstr "Miaj Bildoj"
+#: dlls/shell32/shell32.rc:217 dlls/shell32/shell32.rc:222
+msgid "Pictures"
+msgstr "Bildoj"
 
 #: dlls/shell32/shell32.rc:218
 msgid "Common Files"
 msgstr "Komunaj dosieroj"
 
-#: dlls/shell32/shell32.rc:219 dlls/shell32/shell32.rc:150
-#: dlls/shell32/shell32.rc:235
-msgid "Documents"
-msgstr "Dokumentoj"
-
 #: dlls/shell32/shell32.rc:220
 msgid "Administrative Tools"
 msgstr "Administriloj"
-
-#: dlls/shell32/shell32.rc:221
-msgid "Music"
-msgstr "Muziko"
-
-#: dlls/shell32/shell32.rc:222
-msgid "Pictures"
-msgstr "Bildoj"
-
-#: dlls/shell32/shell32.rc:223
-msgid "Videos"
-msgstr "Videoj"
 
 #: dlls/shell32/shell32.rc:216
 msgid "Program Files (x86)"

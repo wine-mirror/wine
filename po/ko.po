@@ -10057,9 +10057,10 @@ msgstr "Wine 세션을 종료하시겠습니까?"
 msgid "Programs"
 msgstr "프로그램"
 
-#: dlls/shell32/shell32.rc:204
-msgid "My Documents"
-msgstr "내 문서"
+#: dlls/shell32/shell32.rc:204 dlls/shell32/shell32.rc:219
+#: dlls/shell32/shell32.rc:150 dlls/shell32/shell32.rc:235
+msgid "Documents"
+msgstr "문서"
 
 #: dlls/shell32/shell32.rc:205
 msgid "Favorites"
@@ -10073,13 +10074,13 @@ msgstr "시작 프로그램"
 msgid "Start Menu"
 msgstr "시작 메뉴"
 
-#: dlls/shell32/shell32.rc:208
-msgid "My Music"
-msgstr "내 음악"
+#: dlls/shell32/shell32.rc:208 dlls/shell32/shell32.rc:221
+msgid "Music"
+msgstr "음악"
 
-#: dlls/shell32/shell32.rc:209
-msgid "My Videos"
-msgstr "내 비디오"
+#: dlls/shell32/shell32.rc:209 dlls/shell32/shell32.rc:223
+msgid "Videos"
+msgstr "비디오"
 
 #: dlls/shell32/shell32.rc:210
 msgctxt "directory"
@@ -10106,34 +10107,17 @@ msgstr "기록"
 msgid "Program Files"
 msgstr "Program Files"
 
-#: dlls/shell32/shell32.rc:217
-msgid "My Pictures"
-msgstr "내 그림"
+#: dlls/shell32/shell32.rc:217 dlls/shell32/shell32.rc:222
+msgid "Pictures"
+msgstr "그림"
 
 #: dlls/shell32/shell32.rc:218
 msgid "Common Files"
 msgstr "Common Files"
 
-#: dlls/shell32/shell32.rc:219 dlls/shell32/shell32.rc:150
-#: dlls/shell32/shell32.rc:235
-msgid "Documents"
-msgstr "문서"
-
 #: dlls/shell32/shell32.rc:220
 msgid "Administrative Tools"
 msgstr "관리 도구"
-
-#: dlls/shell32/shell32.rc:221
-msgid "Music"
-msgstr "음악"
-
-#: dlls/shell32/shell32.rc:222
-msgid "Pictures"
-msgstr "그림"
-
-#: dlls/shell32/shell32.rc:223
-msgid "Videos"
-msgstr "비디오"
 
 #: dlls/shell32/shell32.rc:216
 msgid "Program Files (x86)"

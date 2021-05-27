@@ -10149,9 +10149,10 @@ msgstr "Закончить работу с Wine?"
 msgid "Programs"
 msgstr "Программы"
 
-#: dlls/shell32/shell32.rc:204
-msgid "My Documents"
-msgstr "Мои документы"
+#: dlls/shell32/shell32.rc:204 dlls/shell32/shell32.rc:219
+#: dlls/shell32/shell32.rc:150 dlls/shell32/shell32.rc:235
+msgid "Documents"
+msgstr "Документы"
 
 #: dlls/shell32/shell32.rc:205
 msgid "Favorites"
@@ -10165,13 +10166,13 @@ msgstr "Автозагрузка"
 msgid "Start Menu"
 msgstr "Главное меню"
 
-#: dlls/shell32/shell32.rc:208
-msgid "My Music"
-msgstr "Моя музыка"
+#: dlls/shell32/shell32.rc:208 dlls/shell32/shell32.rc:221
+msgid "Music"
+msgstr "Музыка"
 
-#: dlls/shell32/shell32.rc:209
-msgid "My Videos"
-msgstr "Мои фильмы"
+#: dlls/shell32/shell32.rc:209 dlls/shell32/shell32.rc:223
+msgid "Videos"
+msgstr "Видео"
 
 #: dlls/shell32/shell32.rc:210
 msgctxt "directory"
@@ -10198,34 +10199,17 @@ msgstr "История"
 msgid "Program Files"
 msgstr "Program Files"
 
-#: dlls/shell32/shell32.rc:217
-msgid "My Pictures"
-msgstr "Мои рисунки"
+#: dlls/shell32/shell32.rc:217 dlls/shell32/shell32.rc:222
+msgid "Pictures"
+msgstr "Рисунки"
 
 #: dlls/shell32/shell32.rc:218
 msgid "Common Files"
 msgstr "Common Files"
 
-#: dlls/shell32/shell32.rc:219 dlls/shell32/shell32.rc:150
-#: dlls/shell32/shell32.rc:235
-msgid "Documents"
-msgstr "Документы"
-
 #: dlls/shell32/shell32.rc:220
 msgid "Administrative Tools"
 msgstr "Администрирование"
-
-#: dlls/shell32/shell32.rc:221
-msgid "Music"
-msgstr "Музыка"
-
-#: dlls/shell32/shell32.rc:222
-msgid "Pictures"
-msgstr "Рисунки"
-
-#: dlls/shell32/shell32.rc:223
-msgid "Videos"
-msgstr "Видео"
 
 #: dlls/shell32/shell32.rc:216
 msgid "Program Files (x86)"

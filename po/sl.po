@@ -10544,9 +10544,10 @@ msgstr "Ali želite končati svojo sejo Wine?"
 msgid "Programs"
 msgstr "Programi"
 
-#: dlls/shell32/shell32.rc:204
-msgid "My Documents"
-msgstr "Moji dokumenti"
+#: dlls/shell32/shell32.rc:204 dlls/shell32/shell32.rc:219
+#: dlls/shell32/shell32.rc:150 dlls/shell32/shell32.rc:235
+msgid "Documents"
+msgstr "Dokumenti"
 
 #: dlls/shell32/shell32.rc:205
 msgid "Favorites"
@@ -10560,13 +10561,13 @@ msgstr "Zagon"
 msgid "Start Menu"
 msgstr "Meni Start"
 
-#: dlls/shell32/shell32.rc:208
-msgid "My Music"
-msgstr "Moja glasba"
+#: dlls/shell32/shell32.rc:208 dlls/shell32/shell32.rc:221
+msgid "Music"
+msgstr "Glasba"
 
-#: dlls/shell32/shell32.rc:209
-msgid "My Videos"
-msgstr "Moji videi"
+#: dlls/shell32/shell32.rc:209 dlls/shell32/shell32.rc:223
+msgid "Videos"
+msgstr "Videi"
 
 #: dlls/shell32/shell32.rc:210
 msgctxt "directory"
@@ -10593,34 +10594,17 @@ msgstr "Zgodovina"
 msgid "Program Files"
 msgstr "Programi"
 
-#: dlls/shell32/shell32.rc:217
-msgid "My Pictures"
-msgstr "Moje slike"
+#: dlls/shell32/shell32.rc:217 dlls/shell32/shell32.rc:222
+msgid "Pictures"
+msgstr "Slike"
 
 #: dlls/shell32/shell32.rc:218
 msgid "Common Files"
 msgstr "Skupne datoteke"
 
-#: dlls/shell32/shell32.rc:219 dlls/shell32/shell32.rc:150
-#: dlls/shell32/shell32.rc:235
-msgid "Documents"
-msgstr "Dokumenti"
-
 #: dlls/shell32/shell32.rc:220
 msgid "Administrative Tools"
 msgstr "Skrbniška orodja"
-
-#: dlls/shell32/shell32.rc:221
-msgid "Music"
-msgstr "Glasba"
-
-#: dlls/shell32/shell32.rc:222
-msgid "Pictures"
-msgstr "Slike"
-
-#: dlls/shell32/shell32.rc:223
-msgid "Videos"
-msgstr "Videi"
 
 #: dlls/shell32/shell32.rc:216
 msgid "Program Files (x86)"

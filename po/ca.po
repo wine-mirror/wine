@@ -10110,9 +10110,10 @@ msgstr "Voleu aturar la vostra sessió del Wine?"
 msgid "Programs"
 msgstr "Programes"
 
-#: dlls/shell32/shell32.rc:204
-msgid "My Documents"
-msgstr "Els meus documents"
+#: dlls/shell32/shell32.rc:204 dlls/shell32/shell32.rc:219
+#: dlls/shell32/shell32.rc:150 dlls/shell32/shell32.rc:235
+msgid "Documents"
+msgstr "Documents"
 
 #: dlls/shell32/shell32.rc:205
 msgid "Favorites"
@@ -10126,13 +10127,13 @@ msgstr "Inicialització"
 msgid "Start Menu"
 msgstr "Menú Inicia"
 
-#: dlls/shell32/shell32.rc:208
-msgid "My Music"
-msgstr "La meva música"
+#: dlls/shell32/shell32.rc:208 dlls/shell32/shell32.rc:221
+msgid "Music"
+msgstr "Música"
 
-#: dlls/shell32/shell32.rc:209
-msgid "My Videos"
-msgstr "Els meus vídeos"
+#: dlls/shell32/shell32.rc:209 dlls/shell32/shell32.rc:223
+msgid "Videos"
+msgstr "Vídeos"
 
 #: dlls/shell32/shell32.rc:210
 msgctxt "directory"
@@ -10162,35 +10163,18 @@ msgstr "Història"
 msgid "Program Files"
 msgstr "Program Files"
 
-#: dlls/shell32/shell32.rc:217
-msgid "My Pictures"
-msgstr "Les meves imatges"
+#: dlls/shell32/shell32.rc:217 dlls/shell32/shell32.rc:222
+msgid "Pictures"
+msgstr "Imatges"
 
 # Not translated in Catalan Windows
 #: dlls/shell32/shell32.rc:218
 msgid "Common Files"
 msgstr "Common Files"
 
-#: dlls/shell32/shell32.rc:219 dlls/shell32/shell32.rc:150
-#: dlls/shell32/shell32.rc:235
-msgid "Documents"
-msgstr "Documents"
-
 #: dlls/shell32/shell32.rc:220
 msgid "Administrative Tools"
 msgstr "Eines d'administració"
-
-#: dlls/shell32/shell32.rc:221
-msgid "Music"
-msgstr "Música"
-
-#: dlls/shell32/shell32.rc:222
-msgid "Pictures"
-msgstr "Imatges"
-
-#: dlls/shell32/shell32.rc:223
-msgid "Videos"
-msgstr "Vídeos"
 
 # Not translated in Catalan Windows
 #: dlls/shell32/shell32.rc:216

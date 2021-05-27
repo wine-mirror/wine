@@ -10428,9 +10428,10 @@ msgstr "Vreți să opriți sesiunea de Wine?"
 msgid "Programs"
 msgstr "Programe"
 
-#: dlls/shell32/shell32.rc:204
-msgid "My Documents"
-msgstr "Documentele mele"
+#: dlls/shell32/shell32.rc:204 dlls/shell32/shell32.rc:219
+#: dlls/shell32/shell32.rc:150 dlls/shell32/shell32.rc:235
+msgid "Documents"
+msgstr "Documente"
 
 #: dlls/shell32/shell32.rc:205
 msgid "Favorites"
@@ -10444,12 +10445,14 @@ msgstr ""
 msgid "Start Menu"
 msgstr "Meniu Start"
 
-#: dlls/shell32/shell32.rc:208
-msgid "My Music"
+#: dlls/shell32/shell32.rc:208 dlls/shell32/shell32.rc:221
+#, fuzzy
+msgid "Music"
 msgstr "Muzica mea"
 
-#: dlls/shell32/shell32.rc:209
-msgid "My Videos"
+#: dlls/shell32/shell32.rc:209 dlls/shell32/shell32.rc:223
+#, fuzzy
+msgid "Videos"
 msgstr "Filmele mele"
 
 #: dlls/shell32/shell32.rc:210
@@ -10477,39 +10480,20 @@ msgstr "Istorie"
 msgid "Program Files"
 msgstr ""
 
-#: dlls/shell32/shell32.rc:217
-msgid "My Pictures"
-msgstr ""
+#: dlls/shell32/shell32.rc:217 dlls/shell32/shell32.rc:222
+#, fuzzy
+msgid "Pictures"
+msgstr "Pozele mele"
 
 #: dlls/shell32/shell32.rc:218
 #, fuzzy
 msgid "Common Files"
 msgstr "Nume uzual"
 
-#: dlls/shell32/shell32.rc:219 dlls/shell32/shell32.rc:150
-#: dlls/shell32/shell32.rc:235
-msgid "Documents"
-msgstr "Documente"
-
 #: dlls/shell32/shell32.rc:220
 #, fuzzy
 msgid "Administrative Tools"
 msgstr "Scule administrative"
-
-#: dlls/shell32/shell32.rc:221
-#, fuzzy
-msgid "Music"
-msgstr "Muzica mea"
-
-#: dlls/shell32/shell32.rc:222
-#, fuzzy
-msgid "Pictures"
-msgstr "Pozele mele"
-
-#: dlls/shell32/shell32.rc:223
-#, fuzzy
-msgid "Videos"
-msgstr "Filmele mele"
 
 #: dlls/shell32/shell32.rc:216
 msgid "Program Files (x86)"

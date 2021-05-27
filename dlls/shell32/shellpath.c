@@ -832,9 +832,21 @@ static const WCHAR AppUpdatesFolderW[] = {'A','p','p','U','p','d','a','t','e','s
 static const WCHAR Administrative_ToolsW[] = {'A','d','m','i','n','i','s','t','r','a','t','i','v','e',' ','T','o','o','l','s','\0'};
 static const WCHAR AppDataW[] = {'A','p','p','D','a','t','a','\0'};
 static const WCHAR AppData_RoamingW[] = {'A','p','p','D','a','t','a','\\','R','o','a','m','i','n','g','\0'};
+static const WCHAR AppData_Roaming_Microsoft_Windows_Network_ShortcutsW[] = {'A','p','p','D','a','t','a','\\','R','o','a','m','i','n','g','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','N','e','t','w','o','r','k',' ','S','h','o','r','t','c','u','t','s',0};
+static const WCHAR AppData_Roaming_Microsoft_Windows_Printer_ShortcutsW[] = {'A','p','p','D','a','t','a','\\','R','o','a','m','i','n','g','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','P','r','i','n','t','e','r',' ','S','h','o','r','t','c','u','t','s',0};
+static const WCHAR AppData_Roaming_Microsoft_Windows_RecentW[] = {'A','p','p','D','a','t','a','\\','R','o','a','m','i','n','g','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','R','e','c','e','n','t',0};
+static const WCHAR AppData_Roaming_Microsoft_Windows_SendToW[] = {'A','p','p','D','a','t','a','\\','R','o','a','m','i','n','g','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','S','e','n','d','T','o',0};
+static const WCHAR AppData_Roaming_Microsoft_Windows_Start_MenuW[] = {'A','p','p','D','a','t','a','\\','R','o','a','m','i','n','g','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','S','t','a','r','t',' ','M','e','n','u',0};
+static const WCHAR AppData_Roaming_Microsoft_Windows_Start_Menu_ProgramsW[] = {'A','p','p','D','a','t','a','\\','R','o','a','m','i','n','g','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','S','t','a','r','t',' ','M','e','n','u','\\','P','r','o','g','r','a','m','s',0};
+static const WCHAR AppData_Roaming_Microsoft_Windows_Start_Menu_Programs_StartupW[] = {'A','p','p','D','a','t','a','\\','R','o','a','m','i','n','g','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','S','t','a','r','t',' ','M','e','n','u','\\','P','r','o','g','r','a','m','s','\\','S','t','a','r','t','u','p',0};
+static const WCHAR AppData_Roaming_Microsoft_Windows_Start_Menu_Programs_Administrative_ToolsW[] = {'A','p','p','D','a','t','a','\\','R','o','a','m','i','n','g','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','S','t','a','r','t',' ','M','e','n','u','\\','P','r','o','g','r','a','m','s','\\','A','d','m','i','n','i','s','t','r','a','t','i','v','e',' ','T','o','o','l','s',0};
+static const WCHAR AppData_Roaming_Microsoft_Windows_TemplatesW[] = {'A','p','p','D','a','t','a','\\','R','o','a','m','i','n','g','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','T','e','m','p','l','a','t','e','s',0};
 static const WCHAR AppData_LocalLowW[] = {'A','p','p','D','a','t','a','\\','L','o','c','a','l','L','o','w','\0'};
 static const WCHAR AppData_LocalW[] = {'A','p','p','D','a','t','a','\\','L','o','c','a','l','\0'};
-static const WCHAR Application_DataW[] = {'A','p','p','l','i','c','a','t','i','o','n',' ','D','a','t','a','\0'};
+static const WCHAR AppData_Local_Microsoft_Windows_Burn_BurnW[] = {'A','p','p','D','a','t','a','\\','L','o','c','a','l','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','B','u','r','n','\\','B','u','r','n',0};
+static const WCHAR AppData_Local_Microsoft_Windows_HistoryW[] = {'A','p','p','D','a','t','a','\\','L','o','c','a','l','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','H','i','s','t','o','r','y',0};
+static const WCHAR AppData_Local_Microsoft_Windows_INetCacheW[] = {'A','p','p','D','a','t','a','\\','L','o','c','a','l','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','I','N','e','t','C','a','c','h','e',0};
+static const WCHAR AppData_Local_Microsoft_Windows_INetCookiesW[] = {'A','p','p','D','a','t','a','\\','L','o','c','a','l','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','I','N','e','t','C','o','o','k','i','e','s',0};
 static const WCHAR CacheW[] = {'C','a','c','h','e','\0'};
 static const WCHAR CD_BurningW[] = {'C','D',' ','B','u','r','n','i','n','g','\0'};
 static const WCHAR ChangeRemoveProgramsFolderW[] = {'C','h','a','n','g','e','R','e','m','o','v','e','P','r','o','g','r','a','m','s','F','o','l','d','e','r',0};
@@ -881,19 +893,16 @@ static const WCHAR InternetFolderW[] = {'I','n','t','e','r','n','e','t','F','o',
 static const WCHAR LibrariesW[] = {'L','i','b','r','a','r','i','e','s',0};
 static const WCHAR LinksW[] = {'L','i','n','k','s','\0'};
 static const WCHAR Local_AppDataW[] = {'L','o','c','a','l',' ','A','p','p','D','a','t','a','\0'};
-static const WCHAR Local_Settings_Application_DataW[] = {'L','o','c','a','l',' ','S','e','t','t','i','n','g','s','\\','A','p','p','l','i','c','a','t','i','o','n',' ','D','a','t','a','\0'};
-static const WCHAR Local_Settings_CD_BurningW[] = {'L','o','c','a','l',' ','S','e','t','t','i','n','g','s','\\','A','p','p','l','i','c','a','t','i','o','n',' ','D','a','t','a','\\','M','i','c','r','o','s','o','f','t','\\','C','D',' ','B','u','r','n','i','n','g','\0'};
-static const WCHAR Local_Settings_HistoryW[] = {'L','o','c','a','l',' ','S','e','t','t','i','n','g','s','\\','H','i','s','t','o','r','y','\0'};
-static const WCHAR Local_Settings_Temporary_Internet_FilesW[] = {'L','o','c','a','l',' ','S','e','t','t','i','n','g','s','\\','T','e','m','p','o','r','a','r','y',' ','I','n','t','e','r','n','e','t',' ','F','i','l','e','s','\0'};
 static const WCHAR LocalAppDataLowW[] = {'L','o','c','a','l','A','p','p','D','a','t','a','L','o','w',0};
 static const WCHAR LocalizedResourcesDirW[] = {'L','o','c','a','l','i','z','e','d','R','e','s','o','u','r','c','e','s','D','i','r',0};
 static const WCHAR MAPIFolderW[] = {'M','A','P','I','F','o','l','d','e','r',0};
 static const WCHAR Microsoft_Internet_Explorer_Quick_LaunchW[] = {'M','i','c','r','o','s','o','f','t','\\','I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r','\\','Q','u','i','c','k',' ','L','a','u','n','c','h',0};
 static const WCHAR Microsoft_Windows_Burn_BurnW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','B','u','r','n','\\','B','u','r','n',0};
-static const WCHAR Microsoft_Windows_CookiesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','o','o','k','i','e','s',0};
 static const WCHAR Microsoft_Windows_GameExplorerW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','G','a','m','e','E','x','p','l','o','r','e','r','\0'};
 static const WCHAR Microsoft_Windows_DeviceMetadataStoreW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','D','e','v','i','c','e','M','e','t','a','d','a','t','a','S','t','o','r','e',0};
 static const WCHAR Microsoft_Windows_HistoryW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','H','i','s','t','o','r','y',0};
+static const WCHAR Microsoft_Windows_INetCacheW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','I','N','e','t','C','a','c','h','e',0};
+static const WCHAR Microsoft_Windows_INetCookiesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','I','N','e','t','C','o','o','k','i','e','s',0};
 static const WCHAR Microsoft_Windows_LibrariesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','L','i','b','r','a','r','i','e','s','\0'};
 static const WCHAR Microsoft_Windows_Network_ShortcutsW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','N','e','t','w','o','r','k',' ','S','h','o','r','t','c','u','t','s',0};
 static const WCHAR Microsoft_Windows_Photo_Gallery_Original_ImagesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s',' ','P','h','o','t','o',' ','G','a','l','l','e','r','y','\\','O','r','i','g','i','n','a','l',' ','I','m','a','g','e','s',0};
@@ -907,7 +916,6 @@ static const WCHAR Microsoft_Windows_Start_Menu_ProgramsW[] = {'M','i','c','r','
 static const WCHAR Microsoft_Windows_Start_Menu_Admin_ToolsW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','S','t','a','r','t',' ','M','e','n','u','\\','P','r','o','g','r','a','m','s','\\','A','d','m','i','n','i','s','t','r','a','t','i','v','e',' ','T','o','o','l','s','\0'};
 static const WCHAR Microsoft_Windows_Start_Menu_StartupW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','S','t','a','r','t',' ','M','e','n','u','\\','P','r','o','g','r','a','m','s','\\','S','t','a','r','t','U','p','\0'};
 static const WCHAR Microsoft_Windows_TemplatesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','T','e','m','p','l','a','t','e','s',0};
-static const WCHAR Microsoft_Windows_Temporary_Internet_FilesW[] = {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','T','e','m','p','o','r','a','r','y',' ','I','n','t','e','r','n','e','t',' ','F','i','l','e','s',0};
 static const WCHAR Microsoft_Windows_ThemesW[] =  {'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','T','h','e','m','e','s',0};
 static const WCHAR MoviesW[] = {'M','o','v','i','e','s','\0'};
 static const WCHAR MusicW[] = {'M','u','s','i','c','\0'};
@@ -978,9 +986,6 @@ static const WCHAR Slide_ShowsW[] = {'S','l','i','d','e',' ','S','h','o','w','s'
 static const WCHAR StartUpW[] = {'S','t','a','r','t','U','p','\0'};
 static const WCHAR StartupW[] = {'S','t','a','r','t','u','p','\0'};
 static const WCHAR Start_MenuW[] = {'S','t','a','r','t',' ','M','e','n','u','\0'};
-static const WCHAR Start_Menu_ProgramsW[] = {'S','t','a','r','t',' ','M','e','n','u','\\','P','r','o','g','r','a','m','s','\0'};
-static const WCHAR Start_Menu_Admin_ToolsW[] = {'S','t','a','r','t',' ','M','e','n','u','\\','P','r','o','g','r','a','m','s','\\','A','d','m','i','n','i','s','t','r','a','t','i','v','e',' ','T','o','o','l','s','\0'};
-static const WCHAR Start_Menu_StartupW[] = {'S','t','a','r','t',' ','M','e','n','u','\\','P','r','o','g','r','a','m','s','\\','S','t','a','r','t','U','p','\0'};
 static const WCHAR SyncCenterFolderW[] = {'S','y','n','c','C','e','n','t','e','r','F','o','l','d','e','r',0};
 static const WCHAR SyncResultsFolderW[] = {'S','y','n','c','R','e','s','u','l','t','s','F','o','l','d','e','r',0};
 static const WCHAR SyncSetupFolderW[] = {'S','y','n','c','S','e','t','u','p','F','o','l','d','e','r',0};
@@ -1264,12 +1269,12 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_Programs,
         CSIDL_Type_User,
         ProgramsW,
-        Start_Menu_ProgramsW,
+        AppData_Roaming_Microsoft_Windows_Start_Menu_ProgramsW,
 
         KF_CATEGORY_PERUSER, /* category */
         ProgramsW, /* name */
         NULL, /* description */
-        &GUID_NULL, /* parent */
+        &FOLDERID_StartMenu, /* parent */
         ProgramsW, /* relative path */
         NULL, /* parsing */
         NULL, /* tooltip */
@@ -1329,7 +1334,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         KF_CATEGORY_PERUSER, /* category */
         PersonalW, /* name */
         NULL, /* description */
-        &GUID_NULL, /* parent */
+        &FOLDERID_Profile, /* parent */
         DocumentsW, /* relative path */
         DocumentsParsingNameW, /* parsing */
         NULL, /* tooltip */
@@ -1364,12 +1369,12 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_Startup,
         CSIDL_Type_User,
         StartUpW,
-        Start_Menu_StartupW,
+        AppData_Roaming_Microsoft_Windows_Start_Menu_Programs_StartupW,
 
         KF_CATEGORY_PERUSER, /* category */
         StartupW, /* name */
         NULL, /* description */
-        &GUID_NULL, /* parent */
+        &FOLDERID_Programs, /* parent */
         StartUpW, /* relative path */
         NULL, /* parsing */
         NULL, /* tooltip */
@@ -1384,7 +1389,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_Recent,
         CSIDL_Type_User,
         RecentW,
-        RecentW,
+        AppData_Roaming_Microsoft_Windows_RecentW,
 
         KF_CATEGORY_PERUSER, /* category */
         RecentW, /* name */
@@ -1404,7 +1409,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_SendTo,
         CSIDL_Type_User,
         SendToW,
-        SendToW,
+        AppData_Roaming_Microsoft_Windows_SendToW,
 
         KF_CATEGORY_PERUSER, /* category */
         SendToW, /* name */
@@ -1444,7 +1449,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_StartMenu,
         CSIDL_Type_User,
         Start_MenuW,
-        Start_MenuW,
+        AppData_Roaming_Microsoft_Windows_Start_MenuW,
 
         KF_CATEGORY_PERUSER, /* category */
         Start_MenuW, /* name */
@@ -1576,7 +1581,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_NetHood,
         CSIDL_Type_User,
         NetHoodW,
-        NetHoodW,
+        AppData_Roaming_Microsoft_Windows_Network_ShortcutsW,
 
         KF_CATEGORY_PERUSER, /* category */
         NetHoodW, /* name */
@@ -1601,7 +1606,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         KF_CATEGORY_FIXED, /* category */
         FontsW, /* name */
         NULL, /* description */
-        &GUID_NULL, /* parent */
+        &FOLDERID_Windows, /* parent */
         NULL, /* relative path */
         NULL, /* parsing */
         NULL, /* tooltip */
@@ -1616,7 +1621,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_Templates,
         CSIDL_Type_User,
         TemplatesW,
-        TemplatesW,
+        AppData_Roaming_Microsoft_Windows_TemplatesW,
 
         KF_CATEGORY_PERUSER, /* category */
         TemplatesW, /* name */
@@ -1716,7 +1721,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_RoamingAppData,
         CSIDL_Type_User,
         AppDataW,
-        Application_DataW,
+        AppData_RoamingW,
 
         KF_CATEGORY_PERUSER, /* category */
         AppDataW, /* name */
@@ -1736,7 +1741,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_PrintHood,
         CSIDL_Type_User,
         PrintHoodW,
-        PrintHoodW,
+        AppData_Roaming_Microsoft_Windows_Printer_ShortcutsW,
 
         KF_CATEGORY_PERUSER, /* category */
         PrintHoodW, /* name */
@@ -1756,7 +1761,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_LocalAppData,
         CSIDL_Type_User,
         Local_AppDataW,
-        Local_Settings_Application_DataW,
+        AppData_LocalW,
 
         KF_CATEGORY_PERUSER, /* category */
         Local_AppDataW, /* name */
@@ -1808,13 +1813,13 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_InternetCache,
         CSIDL_Type_User,
         CacheW,
-        Local_Settings_Temporary_Internet_FilesW,
+        AppData_Local_Microsoft_Windows_INetCacheW,
 
         KF_CATEGORY_PERUSER, /* category */
         CacheW, /* name */
         NULL, /* description */
         &FOLDERID_LocalAppData, /* parent */
-        Microsoft_Windows_Temporary_Internet_FilesW, /* relative path */
+        Microsoft_Windows_INetCacheW, /* relative path */
         NULL, /* parsing */
         NULL, /* tooltip */
         NULL, /* localized */
@@ -1828,13 +1833,13 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_Cookies,
         CSIDL_Type_User,
         CookiesW,
-        CookiesW,
+        AppData_Local_Microsoft_Windows_INetCookiesW,
 
         KF_CATEGORY_PERUSER, /* category */
         CookiesW, /* name */
         NULL, /* description */
-        &FOLDERID_RoamingAppData, /* parent */
-        Microsoft_Windows_CookiesW, /* relative path */
+        &FOLDERID_LocalAppData, /* parent */
+        Microsoft_Windows_INetCookiesW, /* relative path */
         NULL, /* parsing */
         NULL, /* tooltip */
         NULL, /* localized */
@@ -1848,7 +1853,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_History,
         CSIDL_Type_User,
         HistoryW,
-        Local_Settings_HistoryW,
+        AppData_Local_Microsoft_Windows_HistoryW,
 
         KF_CATEGORY_PERUSER, /* category */
         HistoryW, /* name */
@@ -2128,7 +2133,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_AdminTools,
         CSIDL_Type_User,
         Administrative_ToolsW,
-        Start_Menu_Admin_ToolsW,
+        AppData_Roaming_Microsoft_Windows_Start_Menu_Programs_Administrative_ToolsW,
 
         KF_CATEGORY_PERUSER, /* category */
         Administrative_ToolsW, /* name */
@@ -2306,7 +2311,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         &FOLDERID_CDBurning,
         CSIDL_Type_User,
         CD_BurningW,
-        Local_Settings_CD_BurningW,
+        AppData_Local_Microsoft_Windows_Burn_BurnW,
 
         KF_CATEGORY_PERUSER, /* category */
         CD_BurningW, /* name */

@@ -10288,9 +10288,10 @@ msgstr "Přejete si ukončit relaci Wine?"
 msgid "Programs"
 msgstr "Programy"
 
-#: dlls/shell32/shell32.rc:204
-msgid "My Documents"
-msgstr "Mé dokumenty"
+#: dlls/shell32/shell32.rc:204 dlls/shell32/shell32.rc:219
+#: dlls/shell32/shell32.rc:150 dlls/shell32/shell32.rc:235
+msgid "Documents"
+msgstr "Dokumenty"
 
 #: dlls/shell32/shell32.rc:205
 msgid "Favorites"
@@ -10304,13 +10305,13 @@ msgstr "Po spuštění"
 msgid "Start Menu"
 msgstr "Nabídka Start"
 
-#: dlls/shell32/shell32.rc:208
-msgid "My Music"
-msgstr "Má hudba"
+#: dlls/shell32/shell32.rc:208 dlls/shell32/shell32.rc:221
+msgid "Music"
+msgstr "Hudba"
 
-#: dlls/shell32/shell32.rc:209
-msgid "My Videos"
-msgstr "Má videa"
+#: dlls/shell32/shell32.rc:209 dlls/shell32/shell32.rc:223
+msgid "Videos"
+msgstr "Videa"
 
 #: dlls/shell32/shell32.rc:210
 msgctxt "directory"
@@ -10337,34 +10338,17 @@ msgstr "Historie"
 msgid "Program Files"
 msgstr "Program Files"
 
-#: dlls/shell32/shell32.rc:217
-msgid "My Pictures"
-msgstr "Mé obrázky"
+#: dlls/shell32/shell32.rc:217 dlls/shell32/shell32.rc:222
+msgid "Pictures"
+msgstr "Obrázky"
 
 #: dlls/shell32/shell32.rc:218
 msgid "Common Files"
 msgstr "Common Files"
 
-#: dlls/shell32/shell32.rc:219 dlls/shell32/shell32.rc:150
-#: dlls/shell32/shell32.rc:235
-msgid "Documents"
-msgstr "Dokumenty"
-
 #: dlls/shell32/shell32.rc:220
 msgid "Administrative Tools"
 msgstr "Nástroje pro správu"
-
-#: dlls/shell32/shell32.rc:221
-msgid "Music"
-msgstr "Hudba"
-
-#: dlls/shell32/shell32.rc:222
-msgid "Pictures"
-msgstr "Obrázky"
-
-#: dlls/shell32/shell32.rc:223
-msgid "Videos"
-msgstr "Videa"
 
 #: dlls/shell32/shell32.rc:216
 msgid "Program Files (x86)"
