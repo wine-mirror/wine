@@ -1891,14 +1891,14 @@ static void test_ip_pktinfo(void)
         ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %d\n", GetLastError());
         ok(!WaitForSingleObject(ov.hEvent, 100), "wait failed\n");
         ok((NTSTATUS)ov.Internal == STATUS_BUFFER_OVERFLOW, "got status %#x\n", (NTSTATUS)ov.Internal);
-        todo_wine ok(ov.InternalHigh == sizeof(msg), "got size %Iu\n", ov.InternalHigh);
+        ok(ov.InternalHigh == sizeof(msg), "got size %Iu\n", ov.InternalHigh);
         ok(ov.Offset == 0xdead3, "got Offset %Iu\n", ov.Offset);
         ok(ov.OffsetHigh == 0xdead4, "got OffsetHigh %Iu\n", ov.OffsetHigh);
         dwFlags = 0xdeadbeef;
         rc = WSAGetOverlappedResult(s1, &ov, &dwSize, FALSE, &dwFlags);
         ok(!rc, "expected failure\n");
         ok(WSAGetLastError() == WSAEMSGSIZE, "got error %u\n", WSAGetLastError());
-        todo_wine ok(dwSize == sizeof(msg), "got size %u\n", dwSize);
+        ok(dwSize == sizeof(msg), "got size %u\n", dwSize);
         todo_wine ok(dwFlags == 0xdeadbeef, "got flags %#x\n", dwFlags);
         ok(hdr.dwFlags == MSG_CTRUNC,
            "WSARecvMsg() overlapped operation set unexpected flags %d.\n", hdr.dwFlags);
@@ -9698,11 +9698,11 @@ static DWORD CALLBACK nonblocking_async_recv_thread(void *arg)
     wsabuf.len = sizeof(buffer);
     memset(buffer, 0, sizeof(buffer));
     ret = WSARecv(params->client, &wsabuf, 1, NULL, &flags, &overlapped, NULL);
-    todo_wine_if (!params->event) ok(!ret, "got %d\n", ret);
+    ok(!ret, "got %d\n", ret);
     ret = GetOverlappedResult((HANDLE)params->client, &overlapped, &size, FALSE);
     ok(ret, "got error %u\n", GetLastError());
-    todo_wine ok(size == 4, "got size %u\n", size);
-    todo_wine_if (!params->event) ok(!strcmp(buffer, "data"), "got %s\n", debugstr_an(buffer, size));
+    ok(size == 4, "got size %u\n", size);
+    ok(!strcmp(buffer, "data"), "got %s\n", debugstr_an(buffer, size));
 
     return 0;
 }
@@ -9827,7 +9827,7 @@ static void test_nonblocking_async_recv(void)
     thread = CreateThread(NULL, 0, nonblocking_async_recv_thread, &params, 0, NULL);
 
     ret = WaitForSingleObject(thread, 200);
-    todo_wine ok(ret == WAIT_TIMEOUT, "expected timeout\n");
+    ok(ret == WAIT_TIMEOUT, "expected timeout\n");
 
     ret = send(server, "data", 4, 0);
     ok(ret == 4, "got %d\n", ret);
@@ -9843,7 +9843,7 @@ static void test_nonblocking_async_recv(void)
     thread = CreateThread(NULL, 0, nonblocking_async_recv_thread, &params, 0, NULL);
 
     ret = WaitForSingleObject(thread, 200);
-    todo_wine ok(ret == WAIT_TIMEOUT, "expected timeout\n");
+    ok(ret == WAIT_TIMEOUT, "expected timeout\n");
 
     ret = send(server, "data", 4, 0);
     ok(ret == 4, "got %d\n", ret);
@@ -9861,9 +9861,9 @@ static void test_nonblocking_async_recv(void)
     ret = WSARecv(client, &wsabuf, 1, NULL, &flags, &overlapped, NULL);
     ok(!ret, "got %d\n", ret);
     ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, FALSE);
-    todo_wine ok(ret, "got error %u\n", GetLastError());
+    ok(ret, "got error %u\n", GetLastError());
     ok(size == 4, "got size %u\n", size);
-    todo_wine ok(!strcmp(buffer, "data"), "got %s\n", debugstr_an(buffer, size));
+    ok(!strcmp(buffer, "data"), "got %s\n", debugstr_an(buffer, size));
 
     closesocket(client);
     closesocket(server);
