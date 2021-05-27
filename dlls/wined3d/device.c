@@ -4888,6 +4888,14 @@ void CDECL wined3d_device_context_issue_query(struct wined3d_device_context *con
     context->ops->issue_query(context, query, flags);
 }
 
+void CDECL wined3d_device_context_execute_command_list(struct wined3d_device_context *context,
+        struct wined3d_command_list *list, bool restore_state)
+{
+    TRACE("context %p, list %p, restore_state %d.\n", context, list, restore_state);
+
+    context->ops->execute_command_list(context, list, restore_state);
+}
+
 struct wined3d_rendertarget_view * CDECL wined3d_device_context_get_rendertarget_view(
         const struct wined3d_device_context *context, unsigned int view_idx)
 {

@@ -4693,6 +4693,8 @@ struct wined3d_device_context_ops
     void (*issue_query)(struct wined3d_device_context *context, struct wined3d_query *query, unsigned int flags);
     void (*flush)(struct wined3d_device_context *context);
     void (*acquire_resource)(struct wined3d_device_context *context, struct wined3d_resource *resource);
+    void (*execute_command_list)(struct wined3d_device_context *context,
+            struct wined3d_command_list *list, bool restore_state);
 };
 
 struct wined3d_device_context

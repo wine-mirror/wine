@@ -2442,6 +2442,8 @@ void __cdecl wined3d_device_context_draw_indexed(struct wined3d_device_context *
         unsigned int start_index, unsigned int index_count, unsigned int start_instance, unsigned int instance_count);
 void __cdecl wined3d_device_context_draw_indirect(struct wined3d_device_context *context,
         struct wined3d_buffer *buffer, unsigned int offset, bool indexed);
+void __cdecl wined3d_device_context_execute_command_list(struct wined3d_device_context *context,
+        struct wined3d_command_list *list, bool restore_state);
 void __cdecl wined3d_device_context_flush(struct wined3d_device_context *context);
 void __cdecl wined3d_device_context_generate_mipmaps(struct wined3d_device_context *context,
         struct wined3d_shader_resource_view *view);

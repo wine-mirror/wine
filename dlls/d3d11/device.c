@@ -448,6 +448,14 @@ static const struct ID3D11CommandListVtbl d3d11_command_list_vtbl =
     d3d11_command_list_GetContextFlags,
 };
 
+static struct d3d11_command_list *unsafe_impl_from_ID3D11CommandList(ID3D11CommandList *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d11_command_list_vtbl);
+    return impl_from_ID3D11CommandList(iface);
+}
+
 static void d3d11_device_context_cleanup(struct d3d11_device_context *context)
 {
     wined3d_private_store_cleanup(&context->private_store);
@@ -1520,7 +1528,14 @@ static void STDMETHODCALLTYPE d3d11_device_context_ResolveSubresource(ID3D11Devi
 static void STDMETHODCALLTYPE d3d11_device_context_ExecuteCommandList(ID3D11DeviceContext1 *iface,
         ID3D11CommandList *command_list, BOOL restore_state)
 {
-    FIXME("iface %p, command_list %p, restore_state %#x stub!\n", iface, command_list, restore_state);
+    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
+    struct d3d11_command_list *list_impl = unsafe_impl_from_ID3D11CommandList(command_list);
+
+    TRACE("iface %p, command_list %p, restore_state %#x.\n", iface, command_list, restore_state);
+
+    wined3d_mutex_lock();
+    wined3d_device_context_execute_command_list(context->wined3d_context, list_impl->wined3d_list, !!restore_state);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_HSSetShaderResources(ID3D11DeviceContext1 *iface,
