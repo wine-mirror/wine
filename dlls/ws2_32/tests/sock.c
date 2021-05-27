@@ -3624,54 +3624,273 @@ static void test_getsockname(void)
     WSACleanup();
 }
 
+static DWORD apc_error, apc_size;
+static OVERLAPPED *apc_overlapped;
+static unsigned int apc_count;
+
+static void WINAPI socket_apc(DWORD error, DWORD size, OVERLAPPED *overlapped, DWORD flags)
+{
+    ok(!flags, "got flags %#x\n", flags);
+    ++apc_count;
+    apc_error = error;
+    apc_size = size;
+    apc_overlapped = overlapped;
+}
+
+#define check_fionread_siocatmark(a, b, c) check_fionread_siocatmark_(__LINE__, a, b, c, FALSE, FALSE)
+#define check_fionread_siocatmark_todo(a, b, c) check_fionread_siocatmark_(__LINE__, a, b, c, TRUE, TRUE)
+#define check_fionread_siocatmark_todo_oob(a, b, c) check_fionread_siocatmark_(__LINE__, a, b, c, FALSE, TRUE)
+static void check_fionread_siocatmark_(int line, SOCKET s, unsigned int normal, unsigned int oob,
+        BOOL todo_normal, BOOL todo_oob)
+{
+    int ret, value;
+    DWORD size;
+
+    value = 0xdeadbeef;
+    WSASetLastError(0xdeadbeef);
+    ret = WSAIoctl(s, FIONREAD, NULL, 0, &value, sizeof(value), &size, NULL, NULL);
+    ok_(__FILE__, line)(!ret, "expected success\n");
+    todo_wine ok_(__FILE__, line)(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+    todo_wine_if (todo_normal) ok_(__FILE__, line)(value == normal, "FIONBIO returned %u\n", value);
+
+    value = 0xdeadbeef;
+    WSASetLastError(0xdeadbeef);
+    ret = WSAIoctl(s, SIOCATMARK, NULL, 0, &value, sizeof(value), &size, NULL, NULL);
+    ok_(__FILE__, line)(!ret, "expected success\n");
+    todo_wine ok_(__FILE__, line)(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+    todo_wine_if (todo_oob) ok_(__FILE__, line)(value == oob, "SIOCATMARK returned %u\n", value);
+}
+
+static void test_fionread_siocatmark(void)
+{
+    const struct sockaddr_in bind_addr = {.sin_family = AF_INET, .sin_addr.s_addr = htonl(INADDR_LOOPBACK)};
+    OVERLAPPED overlapped = {0}, *overlapped_ptr;
+    SOCKET client, server;
+    char buffer[5];
+    int ret, value;
+    ULONG_PTR key;
+    HANDLE port;
+    DWORD size;
+
+    tcp_socketpair(&client, &server);
+    set_blocking(client, FALSE);
+    overlapped.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    WSASetLastError(0xdeadbeef);
+    ret = ioctlsocket(client, FIONREAD, (u_long *)1);
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+    WSASetLastError(0xdeadbeef);
+    ret = ioctlsocket(client, SIOCATMARK, (u_long *)1);
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+    WSASetLastError(0xdeadbeef);
+    ret = WSAIoctl(client, FIONREAD, NULL, 0, &value, sizeof(value), NULL, NULL, NULL);
+    todo_wine ok(ret == -1, "expected failure\n");
+    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+    WSASetLastError(0xdeadbeef);
+    size = 0xdeadbeef;
+    ret = WSAIoctl(client, FIONREAD, NULL, 0, &value, sizeof(value) - 1, &size, NULL, NULL);
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+    ok(size == 0xdeadbeef, "got size %u\n", size);
+
+    WSASetLastError(0xdeadbeef);
+    ret = WSAIoctl(client, SIOCATMARK, NULL, 0, &value, sizeof(value), NULL, NULL, NULL);
+    todo_wine ok(ret == -1, "expected failure\n");
+    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+    WSASetLastError(0xdeadbeef);
+    size = 0xdeadbeef;
+    ret = WSAIoctl(client, SIOCATMARK, NULL, 0, &value, sizeof(value) - 1, &size, NULL, NULL);
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+    ok(size == 0xdeadbeef, "got size %u\n", size);
+
+    check_fionread_siocatmark(client, 0, TRUE);
+
+    port = CreateIoCompletionPort((HANDLE)client, NULL, 123, 0);
+
+    ret = WSAIoctl(client, FIONREAD, NULL, 0, &value, sizeof(value), NULL, &overlapped, NULL);
+    todo_wine ok(ret == -1, "expected failure\n");
+    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+    ret = WSAIoctl(client, SIOCATMARK, NULL, 0, &value, sizeof(value), NULL, &overlapped, NULL);
+    todo_wine ok(ret == -1, "expected failure\n");
+    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+    WSASetLastError(0xdeadbeef);
+    size = 0xdeadbeef;
+    value = 0xdeadbeef;
+    overlapped.Internal = 0xdeadbeef;
+    overlapped.InternalHigh = 0xdeadbeef;
+    ret = WSAIoctl(client, FIONREAD, NULL, 0, &value, sizeof(value), &size, &overlapped, NULL);
+    ok(!ret, "expected success\n");
+    todo_wine ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+    ok(!value, "got %u\n", value);
+    todo_wine ok(size == sizeof(value), "got size %u\n", size);
+    ok(!overlapped.Internal, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(!overlapped.InternalHigh, "got size %Iu\n", overlapped.InternalHigh);
+
+    ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(!size, "got size %u\n", size);
+    ok(key == 123, "got key %Iu\n", key);
+    ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
+
+    WSASetLastError(0xdeadbeef);
+    size = 0xdeadbeef;
+    value = 0xdeadbeef;
+    overlapped.Internal = 0xdeadbeef;
+    overlapped.InternalHigh = 0xdeadbeef;
+    ret = WSAIoctl(client, SIOCATMARK, NULL, 0, &value, sizeof(value), &size, &overlapped, NULL);
+    ok(!ret, "expected success\n");
+    todo_wine ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+    ok(value == TRUE, "got %u\n", value);
+    todo_wine ok(size == sizeof(value), "got size %u\n", size);
+    ok(!overlapped.Internal, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    ok(!overlapped.InternalHigh, "got size %Iu\n", overlapped.InternalHigh);
+
+    ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
+    ok(ret, "got error %u\n", GetLastError());
+    ok(!size, "got size %u\n", size);
+    ok(key == 123, "got key %Iu\n", key);
+    ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
+
+    ret = send(server, "data", 5, 0);
+    ok(ret == 5, "got %d\n", ret);
+
+    check_fionread_siocatmark(client, 5, TRUE);
+
+    ret = send(server, "a", 1, MSG_OOB);
+    ok(ret == 1, "got %d\n", ret);
+
+    check_fionread_siocatmark_todo_oob(client, 5, FALSE);
+
+    ret = send(server, "a", 1, MSG_OOB);
+    ok(ret == 1, "got %d\n", ret);
+
+    check_fionread_siocatmark_todo(client, 5, FALSE);
+
+    ret = recv(client, buffer, 3, 0);
+    ok(ret == 3, "got %d\n", ret);
+
+    check_fionread_siocatmark_todo(client, 2, FALSE);
+
+    ret = recv(client, buffer, 1, MSG_OOB);
+    ok(ret == 1, "got %d\n", ret);
+
+    check_fionread_siocatmark_todo(client, 2, FALSE);
+
+    ret = recv(client, buffer, 5, 0);
+    todo_wine ok(ret == 2, "got %d\n", ret);
+
+    check_fionread_siocatmark(client, 0, FALSE);
+
+    ret = recv(client, buffer, 1, MSG_OOB);
+    todo_wine ok(ret == 1, "got %d\n", ret);
+
+    check_fionread_siocatmark_todo_oob(client, 0, TRUE);
+
+    ret = send(server, "a", 1, MSG_OOB);
+    ok(ret == 1, "got %d\n", ret);
+
+    ret = 1;
+    ret = setsockopt(client, SOL_SOCKET, SO_OOBINLINE, (char *)&ret, sizeof(ret));
+    ok(!ret, "got error %u\n", WSAGetLastError());
+
+    check_fionread_siocatmark_todo_oob(client, 1, FALSE);
+
+    ret = recv(client, buffer, 1, 0);
+    ok(ret == 1, "got %d\n", ret);
+
+    check_fionread_siocatmark(client, 0, TRUE);
+
+    ret = send(server, "a", 1, MSG_OOB);
+    ok(ret == 1, "got %d\n", ret);
+
+    check_fionread_siocatmark(client, 1, TRUE);
+
+    closesocket(client);
+    closesocket(server);
+
+    server = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+    check_fionread_siocatmark(server, 0, TRUE);
+
+    ret = bind(server, (const struct sockaddr *)&bind_addr, sizeof(bind_addr));
+    ok(!ret, "got error %u\n", WSAGetLastError());
+
+    check_fionread_siocatmark(server, 0, TRUE);
+
+    closesocket(server);
+    CloseHandle(overlapped.hEvent);
+
+    /* test with APCs */
+
+    server = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+    ret = WSAIoctl(server, FIONREAD, NULL, 0, &value, sizeof(value), NULL, &overlapped, socket_apc);
+    todo_wine ok(ret == -1, "expected failure\n");
+    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+    ret = WSAIoctl(server, SIOCATMARK, NULL, 0, &value, sizeof(value), NULL, &overlapped, socket_apc);
+    todo_wine ok(ret == -1, "expected failure\n");
+    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+    apc_count = 0;
+    size = 0xdeadbeef;
+    ret = WSAIoctl(server, FIONREAD, NULL, 0, &value, sizeof(value), &size, &overlapped, socket_apc);
+    ok(!ret, "expected success\n");
+    todo_wine ok(size == sizeof(value), "got size %u\n", size);
+
+    ret = SleepEx(0, TRUE);
+    todo_wine ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
+    if (ret == WAIT_IO_COMPLETION)
+    {
+        ok(apc_count == 1, "APC was called %u times\n", apc_count);
+        ok(!apc_error, "got APC error %u\n", apc_error);
+        ok(!apc_size, "got APC size %u\n", apc_size);
+        ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
+    }
+
+    apc_count = 0;
+    size = 0xdeadbeef;
+    ret = WSAIoctl(server, SIOCATMARK, NULL, 0, &value, sizeof(value), &size, &overlapped, socket_apc);
+    ok(!ret, "expected success\n");
+    todo_wine ok(size == sizeof(value), "got size %u\n", size);
+
+    ret = SleepEx(0, TRUE);
+    todo_wine ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
+    if (ret == WAIT_IO_COMPLETION)
+    {
+        ok(apc_count == 1, "APC was called %u times\n", apc_count);
+        ok(!apc_error, "got APC error %u\n", apc_error);
+        ok(!apc_size, "got APC size %u\n", apc_size);
+        ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
+    }
+
+    closesocket(server);
+}
+
 static void test_ioctlsocket(void)
 {
-    SOCKET sock, src, dst;
+    SOCKET sock;
     struct tcp_keepalive kalive;
-    struct sockaddr_in address;
-    int ret, optval;
-    static const LONG cmds[] = {FIONBIO, FIONREAD, SIOCATMARK};
-    UINT i, bytes_rec;
-    char data;
-    WSABUF bufs;
+    int ret;
     u_long arg = 0;
 
     sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(sock != INVALID_SOCKET, "Creating the socket failed: %d\n", WSAGetLastError());
 
-    for(i = 0; i < ARRAY_SIZE(cmds); i++)
-    {
-        /* broken apps like defcon pass the argp value directly instead of a pointer to it */
-        ret = ioctlsocket(sock, cmds[i], (u_long *)1);
-        ok(ret == SOCKET_ERROR, "ioctlsocket succeeded unexpectedly\n");
-        ret = WSAGetLastError();
-        ok(ret == WSAEFAULT, "expected WSAEFAULT, got %d instead\n", ret);
-    }
-
-    /* A fresh and not connected socket has no urgent data, this test shows
-     * that normal(not urgent) data returns a non-zero value for SIOCATMARK. */
-
-    ret = ioctlsocket(sock, SIOCATMARK, &arg);
-    ok(ret != SOCKET_ERROR, "ioctlsocket failed unexpectedly\n");
-    ok(arg, "SIOCATMARK expected a non-zero value\n");
-
-    /* when SO_OOBINLINE is set SIOCATMARK must always return TRUE */
-    optval = 1;
-    ret = setsockopt(sock, SOL_SOCKET, SO_OOBINLINE, (void *)&optval, sizeof(optval));
-    ok(ret != SOCKET_ERROR, "setsockopt failed unexpectedly\n");
-    arg = 0;
-    ret = ioctlsocket(sock, SIOCATMARK, &arg);
-    ok(ret != SOCKET_ERROR, "ioctlsocket failed unexpectedly\n");
-    ok(arg, "SIOCATMARK expected a non-zero value\n");
-
-    /* disable SO_OOBINLINE and get the same old behavior */
-    optval = 0;
-    ret = setsockopt(sock, SOL_SOCKET, SO_OOBINLINE, (void *)&optval, sizeof(optval));
-    ok(ret != SOCKET_ERROR, "setsockopt failed unexpectedly\n");
-    arg = 0;
-    ret = ioctlsocket(sock, SIOCATMARK, &arg);
-    ok(ret != SOCKET_ERROR, "ioctlsocket failed unexpectedly\n");
-    ok(arg, "SIOCATMARK expected a non-zero value\n");
+    /* broken apps like defcon pass the argp value directly instead of a pointer to it */
+    ret = ioctlsocket(sock, FIONBIO, (u_long *)1);
+    ok(ret == SOCKET_ERROR, "ioctlsocket succeeded unexpectedly\n");
+    ret = WSAGetLastError();
+    ok(ret == WSAEFAULT, "expected WSAEFAULT, got %d instead\n", ret);
 
     ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &arg, 0, NULL, 0, &arg, NULL, NULL);
     ok(ret == SOCKET_ERROR, "WSAIoctl succeeded unexpectedly\n");
@@ -3706,85 +3925,6 @@ static void test_ioctlsocket(void)
     ok(ret == 0, "WSAIoctl failed unexpectedly\n");
 
     closesocket(sock);
-
-    sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    ok(sock != INVALID_SOCKET, "Creating the socket failed: %d\n", WSAGetLastError());
-
-    /* test FIONREAD with a fresh and non-connected socket */
-    arg = 0xdeadbeef;
-    ret = ioctlsocket(sock, FIONREAD, &arg);
-    ok(ret == 0, "ioctlsocket failed unexpectedly with error %d\n", WSAGetLastError());
-    ok(arg == 0, "expected 0, got %u\n", arg);
-
-    memset(&address, 0, sizeof(address));
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = inet_addr( SERVERIP );
-    address.sin_port = htons( SERVERPORT );
-    ret = bind(sock, (struct sockaddr *)&address, sizeof(address));
-    ok(ret == 0, "bind failed unexpectedly with error %d\n", WSAGetLastError());
-
-    ret = listen(sock, SOMAXCONN);
-    ok(ret == 0, "listen failed unexpectedly with error %d\n", WSAGetLastError());
-
-    /* test FIONREAD with listening socket */
-    arg = 0xdeadbeef;
-    ret = ioctlsocket(sock, FIONREAD, &arg);
-    ok(ret == 0, "ioctlsocket failed unexpectedly with error %d\n", WSAGetLastError());
-    ok(arg == 0, "expected 0, got %u\n", arg);
-
-    closesocket(sock);
-
-    tcp_socketpair(&src, &dst);
-
-    /* test FIONREAD on TCP sockets */
-    optval = 0xdeadbeef;
-    ret = WSAIoctl(dst, FIONREAD, NULL, 0, &optval, sizeof(optval), &arg, NULL, NULL);
-    ok(ret == 0, "WSAIoctl failed unexpectedly with error %d\n", WSAGetLastError());
-    ok(optval == 0, "FIONREAD should have returned 0 bytes, got %d instead\n", optval);
-
-    optval = 0xdeadbeef;
-    ok(send(src, "TEST", 4, 0) == 4, "failed to send test data\n");
-    Sleep(100);
-    ret = WSAIoctl(dst, FIONREAD, NULL, 0, &optval, sizeof(optval), &arg, NULL, NULL);
-    ok(ret == 0, "WSAIoctl failed unexpectedly with error %d\n", WSAGetLastError());
-    ok(optval == 4, "FIONREAD should have returned 4 bytes, got %d instead\n", optval);
-
-    /* trying to read from an OOB inlined socket with MSG_OOB results in WSAEINVAL */
-    set_blocking(dst, FALSE);
-    i = MSG_OOB;
-    SetLastError(0xdeadbeef);
-    ret = recv(dst, &data, 1, i);
-    ok(ret == SOCKET_ERROR, "expected -1, got %d\n", ret);
-    ret = GetLastError();
-    ok(ret == WSAEWOULDBLOCK, "expected 10035, got %d\n", ret);
-    bufs.len = sizeof(char);
-    bufs.buf = &data;
-    ret = WSARecv(dst, &bufs, 1, &bytes_rec, &i, NULL, NULL);
-    ok(ret == SOCKET_ERROR, "expected -1, got %d\n", ret);
-    ret = GetLastError();
-    ok(ret == WSAEWOULDBLOCK, "expected 10035, got %d\n", ret);
-    optval = 1;
-    ret = setsockopt(dst, SOL_SOCKET, SO_OOBINLINE, (void *)&optval, sizeof(optval));
-    ok(ret != SOCKET_ERROR, "setsockopt failed unexpectedly\n");
-    i = MSG_OOB;
-    SetLastError(0xdeadbeef);
-    ret = recv(dst, &data, 1, i);
-    ok(ret == SOCKET_ERROR, "expected SOCKET_ERROR, got %d\n", ret);
-    ret = GetLastError();
-    ok(ret == WSAEINVAL, "expected 10022, got %d\n", ret);
-    bufs.len = sizeof(char);
-    bufs.buf = &data;
-    ret = WSARecv(dst, &bufs, 1, &bytes_rec, &i, NULL, NULL);
-    ok(ret == SOCKET_ERROR, "expected -1, got %d\n", ret);
-    ret = GetLastError();
-    ok(ret == WSAEINVAL, "expected 10022, got %d\n", ret);
-
-    closesocket(dst);
-    optval = 0xdeadbeef;
-    ret = WSAIoctl(dst, FIONREAD, NULL, 0, &optval, sizeof(optval), &arg, NULL, NULL);
-    ok(ret == SOCKET_ERROR, "WSAIoctl succeeded unexpectedly\n");
-    ok(optval == 0xdeadbeef, "FIONREAD should not have changed last error, got %d instead\n", optval);
-    closesocket(src);
 }
 
 static BOOL drain_pause = FALSE;
@@ -10031,6 +10171,7 @@ START_TEST( sock )
     test_accept();
     test_getpeername();
     test_getsockname();
+    test_fionread_siocatmark();
     test_ioctlsocket();
 
     test_WSASendMsg();
