@@ -43,10 +43,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
-static inline IDirectInputDeviceImpl *impl_from_IDirectInputDevice8A(IDirectInputDevice8A *iface)
-{
-    return CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8A_iface);
-}
 static inline IDirectInputDeviceImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
 {
     return CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface);
@@ -1696,15 +1692,6 @@ HRESULT WINAPI IDirectInputDevice8WImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W ifa
 	X(DIDBAM_HWDEFAULTS)
 #undef X
   
-    return DI_OK;
-}
-
-HRESULT WINAPI IDirectInputDevice8AImpl_GetImageInfo(LPDIRECTINPUTDEVICE8A iface,
-						     LPDIDEVICEIMAGEINFOHEADERA lpdiDevImageInfoHeader)
-{
-    IDirectInputDeviceImpl *This = impl_from_IDirectInputDevice8A(iface);
-    FIXME("(%p)->(%p): stub !\n", This, lpdiDevImageInfoHeader);
-    
     return DI_OK;
 }
 

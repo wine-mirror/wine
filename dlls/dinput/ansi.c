@@ -73,6 +73,42 @@ static void dieffectinfo_wtoa( const DIEFFECTINFOW *in, DIEFFECTINFOA *out )
     WideCharToMultiByte( CP_ACP, 0, in->tszName, -1, out->tszName, sizeof(out->tszName), NULL, NULL );
 }
 
+static void dideviceimageinfo_wtoa( const DIDEVICEIMAGEINFOW *in, DIDEVICEIMAGEINFOA *out )
+{
+    WideCharToMultiByte( CP_ACP, 0, in->tszImagePath, -1, out->tszImagePath,
+                         sizeof(out->tszImagePath), NULL, NULL );
+
+    out->dwFlags = in->dwFlags;
+    out->dwViewID = in->dwViewID;
+    out->rcOverlay = in->rcOverlay;
+    out->dwObjID = in->dwObjID;
+    out->dwcValidPts = in->dwcValidPts;
+    out->rgptCalloutLine[0] = in->rgptCalloutLine[0];
+    out->rgptCalloutLine[1] = in->rgptCalloutLine[1];
+    out->rgptCalloutLine[2] = in->rgptCalloutLine[2];
+    out->rgptCalloutLine[3] = in->rgptCalloutLine[3];
+    out->rgptCalloutLine[4] = in->rgptCalloutLine[4];
+    out->rcCalloutRect = in->rcCalloutRect;
+    out->dwTextAlign = in->dwTextAlign;
+}
+
+static void dideviceimageinfoheader_wtoa( const DIDEVICEIMAGEINFOHEADERW *in, DIDEVICEIMAGEINFOHEADERA *out )
+{
+    DWORD i;
+
+    out->dwcViews = in->dwcViews;
+    out->dwcButtons = in->dwcButtons;
+    out->dwcAxes = in->dwcAxes;
+    out->dwcPOVs = in->dwcPOVs;
+    out->dwBufferUsed = 0;
+
+    for (i = 0; i < in->dwBufferUsed / sizeof(DIDEVICEIMAGEINFOW); ++i)
+    {
+        dideviceimageinfo_wtoa( &in->lprgImageInfoArray[i], &out->lprgImageInfoArray[i] );
+        out->dwBufferUsed += sizeof(DIDEVICEIMAGEINFOA);
+    }
+}
+
 HRESULT WINAPI IDirectInputDevice2AImpl_QueryInterface( IDirectInputDevice8A *iface_a, REFIID iid, void **out )
 {
     IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8A( iface_a );
@@ -330,4 +366,25 @@ HRESULT WINAPI IDirectInputDevice7AImpl_WriteEffectToFile( IDirectInputDevice8A 
     else MultiByteToWideChar( CP_ACP, 0, filename_a, -1, buffer, MAX_PATH );
 
     return IDirectInputDevice8_WriteEffectToFile( iface_w, filename_w, entries, file_effect, flags );
+}
+
+HRESULT WINAPI IDirectInputDevice8AImpl_GetImageInfo( IDirectInputDevice8A *iface_a, DIDEVICEIMAGEINFOHEADERA *header_a )
+{
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8A( iface_a );
+    IDirectInputDevice8W *iface_w = IDirectInputDevice8W_from_impl( impl );
+    DIDEVICEIMAGEINFOHEADERW header_w = {sizeof(header_w), sizeof(DIDEVICEIMAGEINFOW)};
+    HRESULT hr;
+
+    if (!header_a) return E_POINTER;
+    if (header_a->dwSize != sizeof(DIDEVICEIMAGEINFOHEADERA)) return DIERR_INVALIDPARAM;
+    if (header_a->dwSizeImageInfo != sizeof(DIDEVICEIMAGEINFOA)) return DIERR_INVALIDPARAM;
+
+    header_w.dwBufferSize = (header_a->dwBufferSize / sizeof(DIDEVICEIMAGEINFOA)) * sizeof(DIDEVICEIMAGEINFOW);
+    header_w.lprgImageInfoArray = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, header_w.dwBufferSize );
+    if (!header_w.lprgImageInfoArray) return DIERR_OUTOFMEMORY;
+
+    hr = IDirectInputDevice8_GetImageInfo( iface_w, &header_w );
+    dideviceimageinfoheader_wtoa( &header_w, header_a );
+    HeapFree( GetProcessHeap(), 0, header_w.lprgImageInfoArray );
+    return hr;
 }
