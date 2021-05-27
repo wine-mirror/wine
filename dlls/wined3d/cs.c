@@ -3162,3 +3162,149 @@ void wined3d_cs_destroy(struct wined3d_cs *cs)
     heap_free(cs->data);
     heap_free(cs);
 }
+
+struct wined3d_deferred_context
+{
+    struct wined3d_device_context c;
+
+    SIZE_T data_size, data_capacity;
+    void *data;
+};
+
+static struct wined3d_deferred_context *wined3d_deferred_context_from_context(struct wined3d_device_context *context)
+{
+    return CONTAINING_RECORD(context, struct wined3d_deferred_context, c);
+}
+
+static void *wined3d_deferred_context_require_space(struct wined3d_device_context *context,
+        size_t size, enum wined3d_cs_queue_id queue_id)
+{
+    struct wined3d_deferred_context *deferred = wined3d_deferred_context_from_context(context);
+    struct wined3d_cs_packet *packet;
+    size_t header_size, packet_size;
+
+    assert(queue_id == WINED3D_CS_QUEUE_DEFAULT);
+
+    header_size = offsetof(struct wined3d_cs_packet, data[0]);
+    packet_size = offsetof(struct wined3d_cs_packet, data[size]);
+    packet_size = (packet_size + header_size - 1) & ~(header_size - 1);
+
+    if (!wined3d_array_reserve(&deferred->data, &deferred->data_capacity, deferred->data_size + packet_size, 1))
+        return NULL;
+
+    packet = (struct wined3d_cs_packet *)((BYTE *)deferred->data + deferred->data_size);
+    TRACE("size was %zu, adding %zu\n", (size_t)deferred->data_size, packet_size);
+    deferred->data_size += packet_size;
+    packet->size = packet_size - header_size;
+    return &packet->data;
+}
+
+static void wined3d_deferred_context_submit(struct wined3d_device_context *context, enum wined3d_cs_queue_id queue_id)
+{
+    assert(queue_id == WINED3D_CS_QUEUE_DEFAULT);
+
+    /* Nothing to do. */
+}
+
+static void wined3d_deferred_context_finish(struct wined3d_device_context *context, enum wined3d_cs_queue_id queue_id)
+{
+    /* This should not happen; we cannot meaningfully finish a deferred context. */
+    ERR("Ignoring finish() on a deferred context.\n");
+}
+
+static void wined3d_deferred_context_push_constants(struct wined3d_device_context *context,
+        enum wined3d_push_constants p, unsigned int start_idx, unsigned int count, const void *constants)
+{
+    FIXME("context %p, p %#x, start_idx %u, count %u, constants %p, stub!\n", context, p, start_idx, count, constants);
+}
+
+static HRESULT wined3d_deferred_context_map(struct wined3d_device_context *context,
+        struct wined3d_resource *resource, unsigned int sub_resource_idx,
+        struct wined3d_map_desc *map_desc, const struct wined3d_box *box, unsigned int flags)
+{
+    FIXME("context %p, resource %p, sub_resource_idx %u, map_desc %p, box %p, flags %#x, stub!\n",
+            context, resource, sub_resource_idx, map_desc, box, flags);
+    return E_NOTIMPL;
+}
+
+static HRESULT wined3d_deferred_context_unmap(struct wined3d_device_context *context,
+        struct wined3d_resource *resource, unsigned int sub_resource_idx)
+{
+    FIXME("context %p, resource %p, sub_resource_idx %u, stub!\n", context, resource, sub_resource_idx);
+    return E_NOTIMPL;
+}
+
+static void wined3d_deferred_context_update_sub_resource(struct wined3d_device_context *context,
+        struct wined3d_resource *resource, unsigned int sub_resource_idx, const struct wined3d_box *box,
+        const void *data, unsigned int row_pitch, unsigned int slice_pitch)
+{
+    FIXME("context %p, resource %p, sub_resource_idx %u, box %s, data %p, row_pitch %u, slice_pitch %u, stub!\n",
+            context, resource, sub_resource_idx, debug_box(box), data, row_pitch, slice_pitch);
+}
+
+static void wined3d_deferred_context_issue_query(struct wined3d_device_context *context,
+        struct wined3d_query *query, unsigned int flags)
+{
+    FIXME("context %p, query %p, flags %#x, stub!\n", context, query, flags);
+}
+
+static void wined3d_deferred_context_flush(struct wined3d_device_context *context)
+{
+    FIXME("context %p, stub!\n", context);
+}
+
+static void wined3d_deferred_context_acquire_resource(struct wined3d_device_context *context,
+        struct wined3d_resource *resource)
+{
+    FIXME("context %p, resource %p, stub!\n", context, resource);
+}
+
+static const struct wined3d_device_context_ops wined3d_deferred_context_ops =
+{
+    wined3d_deferred_context_require_space,
+    wined3d_deferred_context_submit,
+    wined3d_deferred_context_finish,
+    wined3d_deferred_context_push_constants,
+    wined3d_deferred_context_map,
+    wined3d_deferred_context_unmap,
+    wined3d_deferred_context_update_sub_resource,
+    wined3d_deferred_context_issue_query,
+    wined3d_deferred_context_flush,
+    wined3d_deferred_context_acquire_resource,
+};
+
+HRESULT CDECL wined3d_deferred_context_create(struct wined3d_device *device, struct wined3d_device_context **context)
+{
+    struct wined3d_deferred_context *object;
+    HRESULT hr;
+
+    TRACE("device %p, context %p.\n", device, context);
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = wined3d_state_create(device, &device->cs->c.state->feature_level, 1, &object->c.state)))
+    {
+        heap_free(object);
+        return hr;
+    }
+
+    object->c.ops = &wined3d_deferred_context_ops;
+    object->c.device = device;
+
+    TRACE("Created deferred context %p.\n", object);
+    *context = &object->c;
+
+    return S_OK;
+}
+
+void CDECL wined3d_deferred_context_destroy(struct wined3d_device_context *context)
+{
+    struct wined3d_deferred_context *deferred = wined3d_deferred_context_from_context(context);
+
+    TRACE("context %p.\n", context);
+
+    wined3d_state_destroy(deferred->c.state);
+    heap_free(deferred->data);
+    heap_free(deferred);
+}

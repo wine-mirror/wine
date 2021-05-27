@@ -33,6 +33,9 @@
 @ cdecl wined3d_buffer_get_resource(ptr)
 @ cdecl wined3d_buffer_incref(ptr)
 
+@ cdecl wined3d_deferred_context_create(ptr ptr)
+@ cdecl wined3d_deferred_context_destroy(ptr)
+
 @ cdecl wined3d_depth_stencil_state_create(ptr ptr ptr ptr ptr)
 @ cdecl wined3d_depth_stencil_state_decref(ptr)
 @ cdecl wined3d_depth_stencil_state_get_parent(ptr)

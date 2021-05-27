@@ -547,6 +547,7 @@ struct d3d11_device_context
     ID3D11Multithread ID3D11Multithread_iface;
     LONG refcount;
 
+    D3D11_DEVICE_CONTEXT_TYPE type;
     struct wined3d_device_context *wined3d_context;
     struct d3d_device *device;
 

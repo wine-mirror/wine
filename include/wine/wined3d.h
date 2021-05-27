@@ -2340,6 +2340,9 @@ void * __cdecl wined3d_buffer_get_parent(const struct wined3d_buffer *buffer);
 struct wined3d_resource * __cdecl wined3d_buffer_get_resource(struct wined3d_buffer *buffer);
 ULONG __cdecl wined3d_buffer_incref(struct wined3d_buffer *buffer);
 
+HRESULT __cdecl wined3d_deferred_context_create(struct wined3d_device *device, struct wined3d_device_context **context);
+void __cdecl wined3d_deferred_context_destroy(struct wined3d_device_context *context);
+
 HRESULT __cdecl wined3d_depth_stencil_state_create(struct wined3d_device *device,
         const struct wined3d_depth_stencil_state_desc *desc, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_depth_stencil_state **state);

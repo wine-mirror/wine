@@ -330,6 +330,11 @@ static void d3d_device_context_state_init(struct d3d_device_context_state *state
     d3d_device_context_state_AddRef(&state->ID3DDeviceContextState_iface);
 }
 
+static void d3d11_device_context_cleanup(struct d3d11_device_context *context)
+{
+    wined3d_private_store_cleanup(&context->private_store);
+}
+
 /* ID3D11DeviceContext - immediate context methods */
 
 static inline struct d3d11_device_context *impl_from_ID3D11DeviceContext1(ID3D11DeviceContext1 *iface)
@@ -351,7 +356,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_context_QueryInterface(ID3D11Devic
     {
         *out = &context->ID3D11DeviceContext1_iface;
     }
-    else if (IsEqualGUID(iid, &IID_ID3D11Multithread))
+    else if (context->type == D3D11_DEVICE_CONTEXT_IMMEDIATE && IsEqualGUID(iid, &IID_ID3D11Multithread))
     {
         *out = &context->ID3D11Multithread_iface;
     }
@@ -390,6 +395,12 @@ static ULONG STDMETHODCALLTYPE d3d11_device_context_Release(ID3D11DeviceContext1
 
     if (!refcount)
     {
+        if (context->type != D3D11_DEVICE_CONTEXT_IMMEDIATE)
+        {
+            wined3d_deferred_context_destroy(context->wined3d_context);
+            d3d11_device_context_cleanup(context);
+            heap_free(context);
+        }
         ID3D11Device2_Release(&context->device->ID3D11Device2_iface);
     }
 
@@ -2645,9 +2656,11 @@ static void STDMETHODCALLTYPE d3d11_device_context_Flush(ID3D11DeviceContext1 *i
 
 static D3D11_DEVICE_CONTEXT_TYPE STDMETHODCALLTYPE d3d11_device_context_GetType(ID3D11DeviceContext1 *iface)
 {
+    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
+
     TRACE("iface %p.\n", iface);
 
-    return D3D11_DEVICE_CONTEXT_IMMEDIATE;
+    return context->type;
 }
 
 static UINT STDMETHODCALLTYPE d3d11_device_context_GetContextFlags(ID3D11DeviceContext1 *iface)
@@ -2826,12 +2839,17 @@ static void STDMETHODCALLTYPE d3d11_device_context_SwapDeviceContextState(ID3D11
 
     TRACE("iface %p, state %p, prev %p.\n", iface, state, prev);
 
-    if (!state)
+    if (prev)
+        *prev = NULL;
+
+    if (context->type != D3D11_DEVICE_CONTEXT_IMMEDIATE)
     {
-        if (prev)
-            *prev = NULL;
+        WARN("SwapDeviceContextState is not allowed on a deferred context.\n");
         return;
     }
+
+    if (!state)
+        return;
 
     wined3d_mutex_lock();
 
@@ -3082,21 +3100,18 @@ static const struct ID3D11MultithreadVtbl d3d11_multithread_vtbl =
     d3d11_multithread_GetMultithreadProtected,
 };
 
-static void d3d11_device_context_init(struct d3d11_device_context *context, struct d3d_device *device)
+static void d3d11_device_context_init(struct d3d11_device_context *context, struct d3d_device *device,
+        D3D11_DEVICE_CONTEXT_TYPE type)
 {
     context->ID3D11DeviceContext1_iface.lpVtbl = &d3d11_device_context_vtbl;
     context->ID3D11Multithread_iface.lpVtbl = &d3d11_multithread_vtbl;
     context->refcount = 1;
+    context->type = type;
 
     context->device = device;
     ID3D11Device2_AddRef(&device->ID3D11Device2_iface);
 
     wined3d_private_store_init(&context->private_store);
-}
-
-static void d3d11_device_context_destroy(struct d3d11_device_context *context)
-{
-    wined3d_private_store_cleanup(&context->private_store);
 }
 
 /* ID3D11Device methods */
@@ -3575,13 +3590,49 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateCounter(ID3D11Device2 *iface
     return E_NOTIMPL;
 }
 
+static HRESULT d3d11_deferred_context_create(struct d3d_device *device,
+        UINT flags, struct d3d11_device_context **context)
+{
+    struct d3d11_device_context *object;
+    HRESULT hr;
+
+    if (flags)
+        FIXME("Ignoring flags %#x.\n", flags);
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
+    d3d11_device_context_init(object, device, D3D11_DEVICE_CONTEXT_DEFERRED);
+
+    wined3d_mutex_lock();
+    if (FAILED(hr = wined3d_deferred_context_create(device->wined3d_device, &object->wined3d_context)))
+    {
+        WARN("Failed to create wined3d deferred context, hr %#x.\n", hr);
+        heap_free(object);
+        wined3d_mutex_unlock();
+        return hr;
+    }
+    wined3d_mutex_unlock();
+
+    TRACE("Created deferred context %p.\n", object);
+    *context = object;
+
+    return S_OK;
+}
+
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDeferredContext(ID3D11Device2 *iface, UINT flags,
         ID3D11DeviceContext **context)
 {
-    FIXME("iface %p, flags %#x, context %p stub!\n", iface, flags, context);
+    struct d3d_device *device = impl_from_ID3D11Device2(iface);
+    struct d3d11_device_context *object;
+    HRESULT hr;
 
-    *context = NULL;
-    return E_NOTIMPL;
+    TRACE("iface %p, flags %#x, context %p.\n", iface, flags, context);
+
+    if (FAILED(hr = d3d11_deferred_context_create(device, flags, &object)))
+        return hr;
+
+    *context = (ID3D11DeviceContext *)&object->ID3D11DeviceContext1_iface;
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_OpenSharedResource(ID3D11Device2 *iface, HANDLE resource, REFIID iid,
@@ -4302,7 +4353,7 @@ static ULONG STDMETHODCALLTYPE d3d_device_inner_Release(IUnknown *iface)
             d3d_device_context_state_remove_entry(device->context_states[i], device);
         }
         heap_free(device->context_states);
-        d3d11_device_context_destroy(&device->immediate_context);
+        d3d11_device_context_cleanup(&device->immediate_context);
         if (device->wined3d_device)
         {
             wined3d_mutex_lock();
@@ -6655,7 +6706,7 @@ void d3d_device_init(struct d3d_device *device, void *outer_unknown)
     device->d3d11_only = FALSE;
     device->state = NULL;
 
-    d3d11_device_context_init(&device->immediate_context, device);
+    d3d11_device_context_init(&device->immediate_context, device, D3D11_DEVICE_CONTEXT_IMMEDIATE);
     ID3D11DeviceContext1_Release(&device->immediate_context.ID3D11DeviceContext1_iface);
 
     wine_rb_init(&device->blend_states, d3d_blend_state_compare);
