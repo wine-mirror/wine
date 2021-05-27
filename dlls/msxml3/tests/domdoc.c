@@ -9411,6 +9411,13 @@ static void test_insertBefore(void)
 
     todo_wine EXPECT_REF(elem2, 2);
 
+    /* NULL to element */
+    V_VT(&v) = VT_NULL;
+    node = (void*)0xdeadbeef;
+    hr = IXMLDOMElement_insertBefore(elem1, NULL, v, &node);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(node == (void*)0xdeadbeef, "got %p\n", node);
+
     /* document to element */
     V_VT(&v) = VT_DISPATCH;
     V_DISPATCH(&v) = NULL;

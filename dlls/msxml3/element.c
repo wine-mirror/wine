@@ -309,6 +309,8 @@ static HRESULT WINAPI domelem_insertBefore(
 
     TRACE("(%p)->(%p %s %p)\n", This, newNode, debugstr_variant(&refChild), old_node);
 
+    if (!newNode) return E_INVALIDARG;
+
     hr = IXMLDOMNode_get_nodeType(newNode, &type);
     if (hr != S_OK) return hr;
 
