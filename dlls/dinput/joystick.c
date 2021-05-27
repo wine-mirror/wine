@@ -60,10 +60,6 @@ const GUID DInput_PIDVID_Product_GUID = { /* device_pidvid-0000-0000-0000-504944
     0x00000000, 0x0000, 0x0000, {0x00, 0x00, 0x50, 0x49, 0x44, 0x56, 0x49, 0x44}
 };
 
-static inline JoystickGenericImpl *impl_from_IDirectInputDevice8A(IDirectInputDevice8A *iface)
-{
-    return CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8A_iface), JoystickGenericImpl, base);
-}
 static inline JoystickGenericImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
 {
     return CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface), JoystickGenericImpl, base);
@@ -783,35 +779,6 @@ HRESULT WINAPI JoystickWGenericImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface,
     FIXME("(%p)->(%p,%s,%08x): semi-stub !\n", This, lpdiaf, debugstr_w(lpszUserName), dwFlags);
 
     return _set_action_map(iface, lpdiaf, lpszUserName, dwFlags, This->base.data_format.wine_df);
-}
-
-HRESULT WINAPI JoystickAGenericImpl_SetActionMap(LPDIRECTINPUTDEVICE8A iface,
-                                                 LPDIACTIONFORMATA lpdiaf,
-                                                 LPCSTR lpszUserName,
-                                                 DWORD dwFlags)
-{
-    JoystickGenericImpl *This = impl_from_IDirectInputDevice8A(iface);
-    DIACTIONFORMATW diafW;
-    HRESULT hr;
-    WCHAR *lpszUserNameW = NULL;
-    int username_size;
-
-    diafW.rgoAction = HeapAlloc(GetProcessHeap(), 0, sizeof(DIACTIONW)*lpdiaf->dwNumActions);
-    _copy_diactionformatAtoW(&diafW, lpdiaf);
-
-    if (lpszUserName != NULL)
-    {
-        username_size = MultiByteToWideChar(CP_ACP, 0, lpszUserName, -1, NULL, 0);
-        lpszUserNameW = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*username_size);
-        MultiByteToWideChar(CP_ACP, 0, lpszUserName, -1, lpszUserNameW, username_size);
-    }
-
-    hr = JoystickWGenericImpl_SetActionMap(&This->base.IDirectInputDevice8W_iface, &diafW, lpszUserNameW, dwFlags);
-
-    HeapFree(GetProcessHeap(), 0, diafW.rgoAction);
-    HeapFree(GetProcessHeap(), 0, lpszUserNameW);
-
-    return hr;
 }
 
 /*

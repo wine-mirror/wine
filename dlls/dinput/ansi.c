@@ -521,6 +521,35 @@ HRESULT WINAPI IDirectInputDevice8AImpl_BuildActionMap( IDirectInputDevice8A *if
     return hr;
 }
 
+HRESULT WINAPI IDirectInputDevice8AImpl_SetActionMap( IDirectInputDevice8A *iface_a, DIACTIONFORMATA *format_a,
+                                                      const char *username_a, DWORD flags )
+{
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8A( iface_a );
+    IDirectInputDevice8W *iface_w = IDirectInputDevice8W_from_impl( impl );
+    DIACTIONFORMATW format_w = {sizeof(format_w), sizeof(DIACTIONW)};
+    HRESULT hr;
+    WCHAR *username_w;
+
+    if (!format_a) return E_POINTER;
+    if (format_a->dwSize != sizeof(DIACTIONFORMATA)) return DIERR_INVALIDPARAM;
+    if (format_a->dwActionSize != sizeof(DIACTIONA)) return DIERR_INVALIDPARAM;
+    if (FAILED(hr = string_atow( username_a, &username_w ))) return hr;
+
+    format_w.dwNumActions = format_a->dwNumActions;
+    format_w.rgoAction = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, format_a->dwNumActions * sizeof(DIACTIONW) );
+    if (!format_w.rgoAction) hr = DIERR_OUTOFMEMORY;
+    else
+    {
+        diactionformat_atow( format_a, &format_w );
+        hr = IDirectInputDevice8_SetActionMap( iface_w, &format_w, username_w, flags );
+        diactionformat_wtoa( &format_w, format_a );
+        HeapFree( GetProcessHeap(), 0, format_w.rgoAction );
+    }
+
+    HeapFree( GetProcessHeap(), 0, username_w );
+    return hr;
+}
+
 HRESULT WINAPI IDirectInputDevice8AImpl_GetImageInfo( IDirectInputDevice8A *iface_a, DIDEVICEIMAGEINFOHEADERA *header_a )
 {
     IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8A( iface_a );

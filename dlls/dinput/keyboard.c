@@ -51,10 +51,6 @@ struct SysKeyboardImpl
     DWORD subtype;
 };
 
-static inline SysKeyboardImpl *impl_from_IDirectInputDevice8A(IDirectInputDevice8A *iface)
-{
-    return CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8A_iface), SysKeyboardImpl, base);
-}
 static inline SysKeyboardImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
 {
     return CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface), SysKeyboardImpl, base);
@@ -565,35 +561,6 @@ static HRESULT WINAPI SysKeyboardWImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface,
     return _set_action_map(iface, lpdiaf, lpszUserName, dwFlags, &c_dfDIKeyboard);
 }
 
-static HRESULT WINAPI SysKeyboardAImpl_SetActionMap(LPDIRECTINPUTDEVICE8A iface,
-                                                    LPDIACTIONFORMATA lpdiaf,
-                                                    LPCSTR lpszUserName,
-                                                    DWORD dwFlags)
-{
-    SysKeyboardImpl *This = impl_from_IDirectInputDevice8A(iface);
-    DIACTIONFORMATW diafW;
-    HRESULT hr;
-    WCHAR *lpszUserNameW = NULL;
-    int username_size;
-
-    diafW.rgoAction = HeapAlloc(GetProcessHeap(), 0, sizeof(DIACTIONW)*lpdiaf->dwNumActions);
-    _copy_diactionformatAtoW(&diafW, lpdiaf);
-
-    if (lpszUserName != NULL)
-    {
-        username_size = MultiByteToWideChar(CP_ACP, 0, lpszUserName, -1, NULL, 0);
-        lpszUserNameW = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*username_size);
-        MultiByteToWideChar(CP_ACP, 0, lpszUserName, -1, lpszUserNameW, username_size);
-    }
-
-    hr = SysKeyboardWImpl_SetActionMap(&This->base.IDirectInputDevice8W_iface, &diafW, lpszUserNameW, dwFlags);
-
-    HeapFree(GetProcessHeap(), 0, diafW.rgoAction);
-    HeapFree(GetProcessHeap(), 0, lpszUserNameW);
-
-    return hr;
-}
-
 static const IDirectInputDevice8AVtbl SysKeyboardAvt =
 {
     IDirectInputDevice2AImpl_QueryInterface,
@@ -626,7 +593,7 @@ static const IDirectInputDevice8AVtbl SysKeyboardAvt =
     IDirectInputDevice7AImpl_EnumEffectsInFile,
     IDirectInputDevice7AImpl_WriteEffectToFile,
     IDirectInputDevice8AImpl_BuildActionMap,
-    SysKeyboardAImpl_SetActionMap,
+    IDirectInputDevice8AImpl_SetActionMap,
     IDirectInputDevice8AImpl_GetImageInfo
 };
 
