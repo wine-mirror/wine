@@ -192,6 +192,13 @@ HRESULT WINAPI IDirectInputDevice2AImpl_Unacquire( IDirectInputDevice8A *iface_a
     return IDirectInputDevice8_Unacquire( iface_w );
 }
 
+HRESULT WINAPI IDirectInputDevice2AImpl_GetDeviceState( IDirectInputDevice8A *iface_a, DWORD count, void *data )
+{
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8A( iface_a );
+    IDirectInputDevice8W *iface_w = IDirectInputDevice8W_from_impl( impl );
+    return IDirectInputDevice8_GetDeviceState( iface_w, count, data );
+}
+
 HRESULT WINAPI IDirectInputDevice2AImpl_GetDeviceData( IDirectInputDevice8A *iface_a, DWORD data_size, DIDEVICEOBJECTDATA *data,
                                                        DWORD *entries, DWORD flags )
 {

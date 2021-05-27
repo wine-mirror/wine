@@ -68,10 +68,6 @@ static inline JoystickGenericImpl *impl_from_IDirectInputDevice8W(IDirectInputDe
 {
     return CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface), JoystickGenericImpl, base);
 }
-static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl(JoystickGenericImpl *This)
-{
-    return &This->base.IDirectInputDevice8W_iface;
-}
 
 DWORD typeFromGUID(REFGUID guid)
 {
@@ -772,13 +768,6 @@ HRESULT WINAPI JoystickWGenericImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W iface, 
 
     return DI_OK;
 }
-
-HRESULT WINAPI JoystickAGenericImpl_GetDeviceState(LPDIRECTINPUTDEVICE8A iface, DWORD len, LPVOID ptr)
-{
-    JoystickGenericImpl *This = impl_from_IDirectInputDevice8A(iface);
-    return JoystickWGenericImpl_GetDeviceState(IDirectInputDevice8W_from_impl(This), len, ptr);
-}
-
 
 HRESULT WINAPI JoystickWGenericImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W iface,
                                                    LPDIACTIONFORMATW lpdiaf,

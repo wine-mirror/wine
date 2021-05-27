@@ -59,10 +59,6 @@ static inline SysKeyboardImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice
 {
     return CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface), SysKeyboardImpl, base);
 }
-static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl(SysKeyboardImpl *This)
-{
-    return &This->base.IDirectInputDevice8W_iface;
-}
 
 static BYTE map_dik_code(DWORD scanCode, DWORD vkCode, DWORD subType, DWORD version)
 {
@@ -378,12 +374,6 @@ static HRESULT WINAPI SysKeyboardWImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W ifac
     return DI_OK;
 }
 
-static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(LPDIRECTINPUTDEVICE8A iface, DWORD len, LPVOID ptr)
-{
-    SysKeyboardImpl *This = impl_from_IDirectInputDevice8A(iface);
-    return SysKeyboardWImpl_GetDeviceState(IDirectInputDevice8W_from_impl(This), len, ptr);
-}
-
 /******************************************************************************
   *     GetCapabilities : get the device capabilities
   */
@@ -657,7 +647,7 @@ static const IDirectInputDevice8AVtbl SysKeyboardAvt =
     IDirectInputDevice2AImpl_SetProperty,
     IDirectInputDevice2AImpl_Acquire,
     IDirectInputDevice2AImpl_Unacquire,
-    SysKeyboardAImpl_GetDeviceState,
+    IDirectInputDevice2AImpl_GetDeviceState,
     IDirectInputDevice2AImpl_GetDeviceData,
     IDirectInputDevice2AImpl_SetDataFormat,
     IDirectInputDevice2AImpl_SetEventNotification,

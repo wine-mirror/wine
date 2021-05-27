@@ -87,11 +87,6 @@ static inline SysMouseImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W 
     return CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface), SysMouseImpl, base);
 }
 
-static inline IDirectInputDevice8W *IDirectInputDevice8W_from_impl(SysMouseImpl *This)
-{
-    return &This->base.IDirectInputDevice8W_iface;
-}
-
 static void _dump_mouse_state(const DIMOUSESTATE2 *m_state)
 {
     int i;
@@ -647,12 +642,6 @@ static HRESULT WINAPI SysMouseWImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W iface, 
     return DI_OK;
 }
 
-static HRESULT WINAPI SysMouseAImpl_GetDeviceState(LPDIRECTINPUTDEVICE8A iface, DWORD len, LPVOID ptr)
-{
-    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
-    return SysMouseWImpl_GetDeviceState(IDirectInputDevice8W_from_impl(This), len, ptr);
-}
-
 /******************************************************************************
   *     GetDeviceData : gets buffered input data.
   */
@@ -911,7 +900,7 @@ static const IDirectInputDevice8AVtbl SysMouseAvt =
     IDirectInputDevice2AImpl_SetProperty,
     IDirectInputDevice2AImpl_Acquire,
     IDirectInputDevice2AImpl_Unacquire,
-    SysMouseAImpl_GetDeviceState,
+    IDirectInputDevice2AImpl_GetDeviceState,
     IDirectInputDevice2AImpl_GetDeviceData,
     IDirectInputDevice2AImpl_SetDataFormat,
     IDirectInputDevice2AImpl_SetEventNotification,
