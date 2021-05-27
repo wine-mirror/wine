@@ -4064,7 +4064,7 @@ static inline char * _SHGetFolderUnixPath(const int nFolder)
     HRESULT hr;
 
     hr = SHGetFolderPathW(NULL, nFolder, NULL,
-                          SHGFP_TYPE_DEFAULT, wszTempPath);
+                          SHGFP_TYPE_CURRENT, wszTempPath);
     if (FAILED(hr)) return NULL;
 
     return wine_get_unix_file_name(wszTempPath);
