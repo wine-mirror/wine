@@ -107,7 +107,7 @@ struct wined3d_cs_clear
     enum wined3d_cs_op opcode;
     DWORD flags;
     unsigned int rt_count;
-    struct wined3d_fb_state *fb;
+    struct wined3d_fb_state fb;
     RECT draw_rect;
     struct wined3d_color color;
     float depth;
@@ -684,19 +684,19 @@ static void wined3d_cs_exec_clear(struct wined3d_cs *cs, const void *data)
     const struct wined3d_cs_clear *op = data;
     unsigned int i;
 
-    device->blitter->ops->blitter_clear(device->blitter, device, op->rt_count, op->fb,
+    device->blitter->ops->blitter_clear(device->blitter, device, op->rt_count, &op->fb,
             op->rect_count, op->rects, &op->draw_rect, op->flags, &op->color, op->depth, op->stencil);
 
     if (op->flags & WINED3DCLEAR_TARGET)
     {
         for (i = 0; i < op->rt_count; ++i)
         {
-            if (op->fb->render_targets[i])
-                wined3d_resource_release(op->fb->render_targets[i]->resource);
+            if (op->fb.render_targets[i])
+                wined3d_resource_release(op->fb.render_targets[i]->resource);
         }
     }
     if (op->flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL))
-        wined3d_resource_release(op->fb->depth_stencil->resource);
+        wined3d_resource_release(op->fb.depth_stencil->resource);
 }
 
 void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *rects,
@@ -715,7 +715,7 @@ void wined3d_cs_emit_clear(struct wined3d_cs *cs, DWORD rect_count, const RECT *
     op->opcode = WINED3D_CS_OP_CLEAR;
     op->flags = flags & (WINED3DCLEAR_TARGET | WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL);
     op->rt_count = rt_count;
-    op->fb = &cs->state.fb;
+    op->fb = state->fb;
     SetRect(&op->draw_rect, vp->x, vp->y, vp->x + vp->width, vp->y + vp->height);
     if (state->rasterizer_state && state->rasterizer_state->desc.scissor)
         IntersectRect(&op->draw_rect, &op->draw_rect, &state->scissor_rects[0]);
@@ -746,24 +746,23 @@ void wined3d_device_context_emit_clear_rendertarget_view(struct wined3d_device_c
     struct wined3d_cs_clear *op;
     size_t size;
 
-    size = FIELD_OFFSET(struct wined3d_cs_clear, rects[1]) + sizeof(struct wined3d_fb_state);
+    size = FIELD_OFFSET(struct wined3d_cs_clear, rects[1]);
     op = wined3d_device_context_require_space(context, size, WINED3D_CS_QUEUE_DEFAULT);
-    op->fb = (void *)&op->rects[1];
 
     op->opcode = WINED3D_CS_OP_CLEAR;
     op->flags = flags & (WINED3DCLEAR_TARGET | WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL);
     if (flags & WINED3DCLEAR_TARGET)
     {
         op->rt_count = 1;
-        op->fb->render_targets[0] = view;
-        op->fb->depth_stencil = NULL;
+        op->fb.render_targets[0] = view;
+        op->fb.depth_stencil = NULL;
         op->color = *color;
     }
     else
     {
         op->rt_count = 0;
-        op->fb->render_targets[0] = NULL;
-        op->fb->depth_stencil = view;
+        op->fb.render_targets[0] = NULL;
+        op->fb.depth_stencil = view;
         op->depth = depth;
         op->stencil = stencil;
     }
