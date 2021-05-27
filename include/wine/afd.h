@@ -25,6 +25,12 @@
 #include <winioctl.h>
 #include "wine/server_protocol.h"
 
+#ifdef USE_WS_PREFIX
+# define WS(x)    WS_##x
+#else
+# define WS(x)    x
+#endif
+
 #define IOCTL_AFD_LISTEN                    CTL_CODE(FILE_DEVICE_BEEP, 0x802, METHOD_NEITHER,  FILE_ANY_ACCESS)
 #define IOCTL_AFD_RECV                      CTL_CODE(FILE_DEVICE_BEEP, 0x805, METHOD_NEITHER,  FILE_ANY_ACCESS)
 #define IOCTL_AFD_POLL                      CTL_CODE(FILE_DEVICE_BEEP, 0x809, METHOD_BUFFERED, FILE_ANY_ACCESS)
@@ -85,6 +91,7 @@ struct afd_poll_params
 #define IOCTL_AFD_WINE_ACCEPT_INTO          CTL_CODE(FILE_DEVICE_NETWORK, 202, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_AFD_WINE_CONNECT              CTL_CODE(FILE_DEVICE_NETWORK, 203, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_AFD_WINE_SHUTDOWN             CTL_CODE(FILE_DEVICE_NETWORK, 204, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define IOCTL_AFD_WINE_RECVMSG              CTL_CODE(FILE_DEVICE_NETWORK, 205, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 #define IOCTL_AFD_WINE_ADDRESS_LIST_CHANGE  CTL_CODE(FILE_DEVICE_NETWORK, 323, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
@@ -106,6 +113,17 @@ struct afd_connect_params
     int synchronous;
     /* VARARG(addr, struct sockaddr, addr_len); */
     /* VARARG(data, bytes); */
+};
+
+struct afd_recvmsg_params
+{
+    WSABUF *control;
+    struct WS(sockaddr) *addr;
+    int *addr_len;
+    unsigned int *ws_flags;
+    int force_async;
+    unsigned int count;
+    WSABUF *buffers;
 };
 
 #endif

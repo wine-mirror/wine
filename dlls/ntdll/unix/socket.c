@@ -28,6 +28,32 @@
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+
+#ifdef HAVE_NETIPX_IPX_H
+# include <netipx/ipx.h>
+#elif defined(HAVE_LINUX_IPX_H)
+# ifdef HAVE_ASM_TYPES_H
+#  include <asm/types.h>
+# endif
+# ifdef HAVE_LINUX_TYPES_H
+#  include <linux/types.h>
+# endif
+# include <linux/ipx.h>
+#endif
+#if defined(SOL_IPX) || defined(SO_DEFAULT_HEADERS)
+# define HAS_IPX
+#endif
+
+#ifdef HAVE_LINUX_IRDA_H
+# ifdef HAVE_LINUX_TYPES_H
+#  include <linux/types.h>
+# endif
+# include <linux/irda.h>
+# define HAS_IRDA
+#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -35,6 +61,10 @@
 #include "winioctl.h"
 #define USE_WS_PREFIX
 #include "winsock2.h"
+#include "mswsock.h"
+#include "ws2tcpip.h"
+#include "wsipx.h"
+#include "af_irda.h"
 #include "wine/afd.h"
 
 #include "unix_private.h"
@@ -62,6 +92,10 @@ static NTSTATUS wait_async( HANDLE handle, BOOL alertable )
 struct async_recv_ioctl
 {
     struct async_fileio io;
+    WSABUF *control;
+    struct WS_sockaddr *addr;
+    int *addr_len;
+    DWORD *ret_flags;
     int unix_flags;
     unsigned int count;
     struct iovec iov[1];
@@ -115,15 +149,200 @@ static NTSTATUS sock_errno_to_status( int err )
 
 extern ssize_t CDECL __wine_locked_recvmsg( int fd, struct msghdr *hdr, int flags );
 
+union unix_sockaddr
+{
+    struct sockaddr addr;
+    struct sockaddr_in in;
+    struct sockaddr_in6 in6;
+#ifdef HAS_IPX
+    struct sockaddr_ipx ipx;
+#endif
+#ifdef HAS_IRDA
+    struct sockaddr_irda irda;
+#endif
+};
+
+static int sockaddr_from_unix( const union unix_sockaddr *uaddr, struct WS_sockaddr *wsaddr, socklen_t wsaddrlen )
+{
+    memset( wsaddr, 0, wsaddrlen );
+
+    switch (uaddr->addr.sa_family)
+    {
+    case AF_INET:
+    {
+        struct WS_sockaddr_in win = {0};
+
+        if (wsaddrlen < sizeof(win)) return -1;
+        win.sin_family = WS_AF_INET;
+        win.sin_port = uaddr->in.sin_port;
+        memcpy( &win.sin_addr, &uaddr->in.sin_addr, sizeof(win.sin_addr) );
+        memcpy( wsaddr, &win, sizeof(win) );
+        return sizeof(win);
+    }
+
+    case AF_INET6:
+    {
+        struct WS_sockaddr_in6 win = {0};
+
+        if (wsaddrlen < sizeof(struct WS_sockaddr_in6_old)) return -1;
+        win.sin6_family = WS_AF_INET6;
+        win.sin6_port = uaddr->in6.sin6_port;
+        win.sin6_flowinfo = uaddr->in6.sin6_flowinfo;
+        memcpy( &win.sin6_addr, &uaddr->in6.sin6_addr, sizeof(win.sin6_addr) );
+#ifdef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
+        win.sin6_scope_id = uaddr->in6.sin6_scope_id;
+#endif
+        if (wsaddrlen >= sizeof(struct WS_sockaddr_in6))
+        {
+            memcpy( wsaddr, &win, sizeof(struct WS_sockaddr_in6) );
+            return sizeof(struct WS_sockaddr_in6);
+        }
+        memcpy( wsaddr, &win, sizeof(struct WS_sockaddr_in6_old) );
+        return sizeof(struct WS_sockaddr_in6_old);
+    }
+
+#ifdef HAS_IPX
+    case AF_IPX:
+    {
+        struct WS_sockaddr_ipx win = {0};
+
+        if (wsaddrlen < sizeof(win)) return -1;
+        win.sa_family = WS_AF_IPX;
+        memcpy( win.sa_netnum, &uaddr->ipx.sipx_network, sizeof(win.sa_netnum) );
+        memcpy( win.sa_nodenum, &uaddr->ipx.sipx_node, sizeof(win.sa_nodenum) );
+        win.sa_socket = uaddr->ipx.sipx_port;
+        memcpy( wsaddr, &win, sizeof(win) );
+        return sizeof(win);
+    }
+#endif
+
+#ifdef HAS_IRDA
+    case AF_IRDA:
+    {
+        SOCKADDR_IRDA win;
+
+        if (wsaddrlen < sizeof(win)) return -1;
+        win.irdaAddressFamily = WS_AF_IRDA;
+        memcpy( win.irdaDeviceID, &uaddr->irda.sir_addr, sizeof(win.irdaDeviceID) );
+        if (uaddr->irda.sir_lsap_sel != LSAP_ANY)
+            snprintf( win.irdaServiceName, sizeof(win.irdaServiceName), "LSAP-SEL%u", uaddr->irda.sir_lsap_sel );
+        else
+            memcpy( win.irdaServiceName, uaddr->irda.sir_name, sizeof(win.irdaServiceName) );
+        memcpy( wsaddr, &win, sizeof(win) );
+        return sizeof(win);
+    }
+#endif
+
+    case AF_UNSPEC:
+        return 0;
+
+    default:
+        FIXME( "unknown address family %d\n", uaddr->addr.sa_family );
+        return -1;
+    }
+}
+
+#ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
+#if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)
+static WSACMSGHDR *fill_control_message( int level, int type, WSACMSGHDR *current, ULONG *maxsize, void *data, int len )
+{
+    ULONG msgsize = sizeof(WSACMSGHDR) + WSA_CMSG_ALIGN(len);
+    char *ptr = (char *) current + sizeof(WSACMSGHDR);
+
+    if (msgsize > *maxsize)
+        return NULL;
+    *maxsize -= msgsize;
+    current->cmsg_len = sizeof(WSACMSGHDR) + len;
+    current->cmsg_level = level;
+    current->cmsg_type = type;
+    memcpy(ptr, data, len);
+    return (WSACMSGHDR *)(ptr + WSA_CMSG_ALIGN(len));
+}
+#endif /* defined(IP_PKTINFO) || defined(IP_RECVDSTADDR) */
+
+static int convert_control_headers(struct msghdr *hdr, WSABUF *control)
+{
+#if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)
+    WSACMSGHDR *cmsg_win = (WSACMSGHDR *)control->buf, *ptr;
+    ULONG ctlsize = control->len;
+    struct cmsghdr *cmsg_unix;
+
+    ptr = cmsg_win;
+    for (cmsg_unix = CMSG_FIRSTHDR(hdr); cmsg_unix != NULL; cmsg_unix = CMSG_NXTHDR(hdr, cmsg_unix))
+    {
+        switch (cmsg_unix->cmsg_level)
+        {
+            case IPPROTO_IP:
+                switch (cmsg_unix->cmsg_type)
+                {
+#if defined(IP_PKTINFO)
+                    case IP_PKTINFO:
+                    {
+                        const struct in_pktinfo *data_unix = (struct in_pktinfo *)CMSG_DATA(cmsg_unix);
+                        struct WS_in_pktinfo data_win;
+
+                        memcpy( &data_win.ipi_addr, &data_unix->ipi_addr.s_addr, 4 ); /* 4 bytes = 32 address bits */
+                        data_win.ipi_ifindex = data_unix->ipi_ifindex;
+                        ptr = fill_control_message( WS_IPPROTO_IP, WS_IP_PKTINFO, ptr, &ctlsize,
+                                                    (void *)&data_win, sizeof(data_win) );
+                        if (!ptr) goto error;
+                        break;
+                    }
+#elif defined(IP_RECVDSTADDR)
+                    case IP_RECVDSTADDR:
+                    {
+                        const struct in_addr *addr_unix = (struct in_addr *)CMSG_DATA(cmsg_unix);
+                        struct WS_in_pktinfo data_win;
+
+                        memcpy( &data_win.ipi_addr, &addr_unix->s_addr, 4 ); /* 4 bytes = 32 address bits */
+                        data_win.ipi_ifindex = 0; /* FIXME */
+                        ptr = fill_control_message( WS_IPPROTO_IP, WS_IP_PKTINFO, ptr, &ctlsize,
+                                                    (void *)&data_win, sizeof(data_win) );
+                        if (!ptr) goto error;
+                        break;
+                    }
+#endif /* IP_PKTINFO */
+                    default:
+                        FIXME("Unhandled IPPROTO_IP message header type %d\n", cmsg_unix->cmsg_type);
+                        break;
+                }
+                break;
+
+            default:
+                FIXME("Unhandled message header level %d\n", cmsg_unix->cmsg_level);
+                break;
+        }
+    }
+
+    control->len = (char *)ptr - (char *)cmsg_win;
+    return 1;
+
+error:
+    control->len = 0;
+    return 0;
+#else /* defined(IP_PKTINFO) || defined(IP_RECVDSTADDR) */
+    control->len = 0;
+    return 1;
+#endif /* defined(IP_PKTINFO) || defined(IP_RECVDSTADDR) */
+}
+#endif /* HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS */
+
 static NTSTATUS try_recv( int fd, struct async_recv_ioctl *async, ULONG_PTR *size )
 {
 #ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
     char control_buffer[512];
 #endif
+    union unix_sockaddr unix_addr;
     struct msghdr hdr;
+    NTSTATUS status;
     ssize_t ret;
 
     memset( &hdr, 0, sizeof(hdr) );
+    if (async->addr)
+    {
+        hdr.msg_name = &unix_addr.addr;
+        hdr.msg_namelen = sizeof(unix_addr);
+    }
     hdr.msg_iov = async->iov;
     hdr.msg_iovlen = async->count;
 #ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
@@ -143,8 +362,34 @@ static NTSTATUS try_recv( int fd, struct async_recv_ioctl *async, ULONG_PTR *siz
         return sock_errno_to_status( errno );
     }
 
+    status = (hdr.msg_flags & MSG_TRUNC) ? STATUS_BUFFER_OVERFLOW : STATUS_SUCCESS;
+
+#ifdef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
+    if (async->control)
+    {
+        ERR( "Message control headers cannot be properly supported on this system.\n" );
+        async->control->len = 0;
+    }
+#else
+    if (async->control && !convert_control_headers( &hdr, async->control ))
+    {
+        WARN( "Application passed insufficient room for control headers.\n" );
+        *async->ret_flags |= WS_MSG_CTRUNC;
+        status = STATUS_BUFFER_OVERFLOW;
+    }
+#endif
+
+    /* If this socket is connected, Linux doesn't give us msg_name and
+     * msg_namelen from recvmsg, but it does set msg_namelen to zero.
+     *
+     * MSDN says that the address is ignored for connection-oriented sockets, so
+     * don't try to translate it.
+     */
+    if (async->addr && hdr.msg_namelen)
+        *async->addr_len = sockaddr_from_unix( &unix_addr, async->addr, *async->addr_len );
+
     *size = ret;
-    return (hdr.msg_flags & MSG_TRUNC) ? STATUS_BUFFER_OVERFLOW : STATUS_SUCCESS;
+    return status;
 }
 
 static NTSTATUS async_recv_proc( void *user, IO_STATUS_BLOCK *io, NTSTATUS status )
@@ -178,7 +423,8 @@ static NTSTATUS async_recv_proc( void *user, IO_STATUS_BLOCK *io, NTSTATUS statu
 }
 
 static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user, IO_STATUS_BLOCK *io,
-                           int fd, const WSABUF *buffers, unsigned int count, int unix_flags, int force_async )
+                           int fd, const WSABUF *buffers, unsigned int count, WSABUF *control,
+                           struct WS_sockaddr *addr, int *addr_len, DWORD *ret_flags, int unix_flags, int force_async )
 {
     struct async_recv_ioctl *async;
     ULONG_PTR information;
@@ -187,6 +433,20 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     NTSTATUS status;
     unsigned int i;
     ULONG options;
+
+    if (unix_flags & MSG_OOB)
+    {
+        int oobinline;
+        socklen_t len = sizeof(oobinline);
+        if (!getsockopt( fd, SOL_SOCKET, SO_OOBINLINE, (char *)&oobinline, &len ) && oobinline)
+            return STATUS_INVALID_PARAMETER;
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        if (!virtual_check_buffer_for_write( buffers[i].buf, buffers[i].len ))
+            return STATUS_ACCESS_VIOLATION;
+    }
 
     async_size = offsetof( struct async_recv_ioctl, iov[count] );
 
@@ -200,6 +460,10 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
         async->iov[i].iov_len = buffers[i].len;
     }
     async->unix_flags = unix_flags;
+    async->control = control;
+    async->addr = addr;
+    async->addr_len = addr_len;
+    async->ret_flags = ret_flags;
 
     status = try_recv( fd, async, &information );
 
@@ -392,14 +656,11 @@ static NTSTATUS sock_poll( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
 NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user, IO_STATUS_BLOCK *io,
                      ULONG code, void *in_buffer, ULONG in_size, void *out_buffer, ULONG out_size )
 {
-    int fd, needs_close;
+    int fd, needs_close = FALSE;
     NTSTATUS status;
 
     TRACE( "handle %p, code %#x, in_buffer %p, in_size %u, out_buffer %p, out_size %u\n",
            handle, code, in_buffer, in_size, out_buffer, out_size );
-
-    if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
-        return status;
 
     switch (code)
     {
@@ -420,6 +681,9 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
         {
             const struct afd_recv_params *params = in_buffer;
             int unix_flags = 0;
+
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+                return status;
 
             if (out_size) FIXME( "unexpected output size %u\n", out_size );
 
@@ -448,8 +712,34 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             if (params->msg_flags & AFD_MSG_WAITALL)
                 FIXME( "MSG_WAITALL is not supported\n" );
 
-            status = sock_recv( handle, event, apc, apc_user, io, fd, params->buffers, params->count,
-                                unix_flags, !!(params->recv_flags & AFD_RECV_FORCE_ASYNC) );
+            status = sock_recv( handle, event, apc, apc_user, io, fd, params->buffers, params->count, NULL,
+                                NULL, NULL, NULL, unix_flags, !!(params->recv_flags & AFD_RECV_FORCE_ASYNC) );
+            break;
+        }
+
+        case IOCTL_AFD_WINE_RECVMSG:
+        {
+            struct afd_recvmsg_params *params = in_buffer;
+            int unix_flags = 0;
+
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+                return status;
+
+            if (in_size < sizeof(*params))
+            {
+                status = STATUS_BUFFER_TOO_SMALL;
+                break;
+            }
+
+            if (*params->ws_flags & WS_MSG_OOB)
+                unix_flags |= MSG_OOB;
+            if (*params->ws_flags & WS_MSG_PEEK)
+                unix_flags |= MSG_PEEK;
+            if (*params->ws_flags & WS_MSG_WAITALL)
+                FIXME( "MSG_WAITALL is not supported\n" );
+
+            status = sock_recv( handle, event, apc, apc_user, io, fd, params->buffers, params->count, params->control,
+                                params->addr, params->addr_len, params->ws_flags, unix_flags, params->force_async );
             break;
         }
 
@@ -459,9 +749,17 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 
         default:
         {
-            FIXME( "Unknown ioctl %#x (device %#x, access %#x, function %#x, method %#x)\n",
-                   code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3 );
-            status = STATUS_INVALID_DEVICE_REQUEST;
+            if ((code >> 16) == FILE_DEVICE_NETWORK)
+            {
+                /* Wine-internal ioctl */
+                status = STATUS_BAD_DEVICE_TYPE;
+            }
+            else
+            {
+                FIXME( "Unknown ioctl %#x (device %#x, access %#x, function %#x, method %#x)\n",
+                       code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3 );
+                status = STATUS_INVALID_DEVICE_REQUEST;
+            }
             break;
         }
     }

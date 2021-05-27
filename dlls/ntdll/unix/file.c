@@ -5730,6 +5730,7 @@ NTSTATUS WINAPI NtDeviceIoControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUT
     switch (device)
     {
     case FILE_DEVICE_BEEP:
+    case FILE_DEVICE_NETWORK:
         status = sock_ioctl( handle, event, apc, apc_context, io, code, in_buffer, in_size, out_buffer, out_size );
         break;
     case FILE_DEVICE_DISK:
