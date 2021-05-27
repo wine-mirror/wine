@@ -173,6 +173,7 @@ extern HRESULT WINAPI IDirectInputDevice2WImpl_GetObjectInfo(LPDIRECTINPUTDEVICE
 							     LPDIDEVICEOBJECTINSTANCEW pdidoi,
 							     DWORD dwObj,
 							     DWORD dwHow) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI IDirectInputDevice2AImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8A iface, DIDEVICEINSTANCEA *instance ) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI IDirectInputDevice2AImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface, DWORD dodsize, LPDIDEVICEOBJECTDATA dod,
                                                              LPDWORD entries, DWORD flags) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI IDirectInputDevice2WImpl_GetDeviceData(LPDIRECTINPUTDEVICE8W iface, DWORD dodsize, LPDIDEVICEOBJECTDATA dod,

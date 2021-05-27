@@ -471,18 +471,6 @@ static HRESULT WINAPI SysKeyboardWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface
 /******************************************************************************
   *     GetDeviceInfo : get information about a device's identity
   */
-static HRESULT WINAPI SysKeyboardAImpl_GetDeviceInfo(
-	LPDIRECTINPUTDEVICE8A iface,
-	LPDIDEVICEINSTANCEA pdidi)
-{
-    SysKeyboardImpl *This = impl_from_IDirectInputDevice8A(iface);
-    TRACE("(this=%p,%p)\n", This, pdidi);
-
-    fill_keyboard_dideviceinstanceA(pdidi, This->base.dinput->dwVersion, This->subtype);
-    
-    return DI_OK;
-}
-
 static HRESULT WINAPI SysKeyboardWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface, LPDIDEVICEINSTANCEW pdidi)
 {
     SysKeyboardImpl *This = impl_from_IDirectInputDevice8W(iface);
@@ -653,7 +641,7 @@ static const IDirectInputDevice8AVtbl SysKeyboardAvt =
     IDirectInputDevice2AImpl_SetEventNotification,
     IDirectInputDevice2AImpl_SetCooperativeLevel,
     IDirectInputDevice2AImpl_GetObjectInfo,
-    SysKeyboardAImpl_GetDeviceInfo,
+    IDirectInputDevice2AImpl_GetDeviceInfo,
     IDirectInputDevice2AImpl_RunControlPanel,
     IDirectInputDevice2AImpl_Initialize,
     IDirectInputDevice2AImpl_CreateEffect,

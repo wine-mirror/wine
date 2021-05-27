@@ -136,11 +136,6 @@ struct JoystickImpl
 	int				ff_gain;
 };
 
-static inline JoystickImpl *impl_from_IDirectInputDevice8A(IDirectInputDevice8A *iface)
-{
-    return CONTAINING_RECORD(CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8A_iface),
-           JoystickGenericImpl, base), JoystickImpl, generic);
-}
 static inline JoystickImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
 {
     return CONTAINING_RECORD(CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface),
@@ -1293,26 +1288,6 @@ static HRESULT WINAPI JoystickWImpl_EnumCreatedEffectObjects(LPDIRECTINPUTDEVICE
 /******************************************************************************
   *     GetDeviceInfo : get information about a device's identity
   */
-static HRESULT WINAPI JoystickAImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8A iface,
-                                                  LPDIDEVICEINSTANCEA pdidi)
-{
-    JoystickImpl *This = impl_from_IDirectInputDevice8A(iface);
-
-    TRACE("(%p) %p\n", This, pdidi);
-
-    if (pdidi == NULL) return E_POINTER;
-    if ((pdidi->dwSize != sizeof(DIDEVICEINSTANCE_DX3A)) &&
-        (pdidi->dwSize != sizeof(DIDEVICEINSTANCEA)))
-        return DIERR_INVALIDPARAM;
-
-    fill_joystick_dideviceinstanceA(pdidi, This->generic.base.dinput->dwVersion,
-                                    get_joystick_index(&This->generic.base.guid));
-
-    pdidi->guidInstance = This->generic.base.guid;
-
-    return DI_OK;
-}
-
 static HRESULT WINAPI JoystickWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface,
                                                   LPDIDEVICEINSTANCEW pdidi)
 {
@@ -1350,7 +1325,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
 	IDirectInputDevice2AImpl_SetEventNotification,
 	IDirectInputDevice2AImpl_SetCooperativeLevel,
         IDirectInputDevice2AImpl_GetObjectInfo,
-	JoystickAImpl_GetDeviceInfo,
+	IDirectInputDevice2AImpl_GetDeviceInfo,
 	IDirectInputDevice2AImpl_RunControlPanel,
 	IDirectInputDevice2AImpl_Initialize,
 	IDirectInputDevice2AImpl_CreateEffect,

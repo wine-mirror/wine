@@ -64,6 +64,23 @@ static void dideviceobjectinstance_wtoa( const DIDEVICEOBJECTINSTANCEW *in, DIDE
     out->wReserved = in->wReserved;
 }
 
+static void dideviceinstance_wtoa( const DIDEVICEINSTANCEW *in, DIDEVICEINSTANCEA *out )
+{
+    out->guidInstance = in->guidInstance;
+    out->guidProduct = in->guidProduct;
+    out->dwDevType = in->dwDevType;
+    WideCharToMultiByte( CP_ACP, 0, in->tszInstanceName, -1, out->tszInstanceName,
+                         sizeof(out->tszInstanceName), NULL, NULL );
+    WideCharToMultiByte( CP_ACP, 0, in->tszProductName, -1, out->tszProductName,
+                         sizeof(out->tszProductName), NULL, NULL );
+
+    if (out->dwSize <= FIELD_OFFSET( DIDEVICEINSTANCEA, guidFFDriver )) return;
+
+    out->guidFFDriver = in->guidFFDriver;
+    out->wUsagePage = in->wUsagePage;
+    out->wUsage = in->wUsage;
+}
+
 static void dieffectinfo_wtoa( const DIEFFECTINFOW *in, DIEFFECTINFOA *out )
 {
     out->guid = in->guid;
@@ -243,6 +260,23 @@ HRESULT WINAPI IDirectInputDevice2AImpl_GetObjectInfo( IDirectInputDevice8A *ifa
 
     hr = IDirectInputDevice8_GetObjectInfo( iface_w, &instance_w, obj, how );
     dideviceobjectinstance_wtoa( &instance_w, instance_a );
+
+    return hr;
+}
+
+HRESULT WINAPI IDirectInputDevice2AImpl_GetDeviceInfo( IDirectInputDevice8A *iface_a, DIDEVICEINSTANCEA *instance_a )
+{
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8A( iface_a );
+    IDirectInputDevice8W *iface_w = IDirectInputDevice8W_from_impl( impl );
+    DIDEVICEINSTANCEW instance_w = {sizeof(instance_w)};
+    HRESULT hr;
+
+    if (!instance_a) return E_POINTER;
+    if (instance_a->dwSize != sizeof(DIDEVICEINSTANCEA) && instance_a->dwSize != sizeof(DIDEVICEINSTANCE_DX3A))
+        return DIERR_INVALIDPARAM;
+
+    hr = IDirectInputDevice8_GetDeviceInfo( iface_w, &instance_w );
+    dideviceinstance_wtoa( &instance_w, instance_a );
 
     return hr;
 }

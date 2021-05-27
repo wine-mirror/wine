@@ -640,54 +640,6 @@ HRESULT WINAPI JoystickWGenericImpl_GetProperty(LPDIRECTINPUTDEVICE8W iface, REF
 /******************************************************************************
   *     GetDeviceInfo : get information about a device's identity
   */
-HRESULT WINAPI JoystickAGenericImpl_GetDeviceInfo(
-    LPDIRECTINPUTDEVICE8A iface,
-    LPDIDEVICEINSTANCEA pdidi)
-{
-    JoystickGenericImpl *This = impl_from_IDirectInputDevice8A(iface);
-    DIPROPDWORD pd;
-    DWORD index = 0;
-
-    TRACE("(%p,%p)\n", This, pdidi);
-
-    if (pdidi == NULL) {
-        WARN("invalid pointer\n");
-        return E_POINTER;
-    }
-
-    if ((pdidi->dwSize != sizeof(DIDEVICEINSTANCE_DX3A)) &&
-        (pdidi->dwSize != sizeof(DIDEVICEINSTANCEA))) {
-        WARN("invalid parameter: pdidi->dwSize = %d\n", pdidi->dwSize);
-        return DIERR_INVALIDPARAM;
-    }
-
-    /* Try to get joystick index */
-    pd.diph.dwSize = sizeof(pd);
-    pd.diph.dwHeaderSize = sizeof(pd.diph);
-    pd.diph.dwObj = 0;
-    pd.diph.dwHow = DIPH_DEVICE;
-    if (SUCCEEDED(IDirectInputDevice2_GetProperty(iface, DIPROP_JOYSTICKID, &pd.diph)))
-        index = pd.dwData;
-
-    /* Return joystick */
-    pdidi->guidInstance = This->base.guid;
-    pdidi->guidProduct = This->guidProduct;
-    /* we only support traditional joysticks for now */
-    pdidi->dwDevType = This->devcaps.dwDevType;
-    snprintf(pdidi->tszInstanceName, MAX_PATH, "Joystick %d", index);
-    lstrcpynA(pdidi->tszProductName, This->name, MAX_PATH);
-    if (pdidi->dwSize > sizeof(DIDEVICEINSTANCE_DX3A)) {
-        pdidi->guidFFDriver = GUID_NULL;
-        pdidi->wUsagePage = 0;
-        pdidi->wUsage = 0;
-    }
-
-    return DI_OK;
-}
-
-/******************************************************************************
-  *     GetDeviceInfo : get information about a device's identity
-  */
 HRESULT WINAPI JoystickWGenericImpl_GetDeviceInfo(
     LPDIRECTINPUTDEVICE8W iface,
     LPDIDEVICEINSTANCEW pdidi)

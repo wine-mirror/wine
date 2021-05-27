@@ -116,11 +116,6 @@ struct JoystickImpl
     struct list effects;
 };
 
-static inline JoystickImpl *impl_from_IDirectInputDevice8A(IDirectInputDevice8A *iface)
-{
-    return CONTAINING_RECORD(CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8A_iface),
-           JoystickGenericImpl, base), JoystickImpl, generic);
-}
 static inline JoystickImpl *impl_from_IDirectInputDevice8W(IDirectInputDevice8W *iface)
 {
     return CONTAINING_RECORD(CONTAINING_RECORD(CONTAINING_RECORD(iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface),
@@ -1591,7 +1586,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
     IDirectInputDevice2AImpl_SetEventNotification,
     IDirectInputDevice2AImpl_SetCooperativeLevel,
     IDirectInputDevice2AImpl_GetObjectInfo,
-    JoystickAGenericImpl_GetDeviceInfo,
+    IDirectInputDevice2AImpl_GetDeviceInfo,
     IDirectInputDevice2AImpl_RunControlPanel,
     IDirectInputDevice2AImpl_Initialize,
     IDirectInputDevice2AImpl_CreateEffect,

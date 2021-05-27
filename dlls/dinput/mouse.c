@@ -782,18 +782,6 @@ static HRESULT WINAPI SysMouseWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface,
 /******************************************************************************
   *     GetDeviceInfo : get information about a device's identity
   */
-static HRESULT WINAPI SysMouseAImpl_GetDeviceInfo(
-	LPDIRECTINPUTDEVICE8A iface,
-	LPDIDEVICEINSTANCEA pdidi)
-{
-    SysMouseImpl *This = impl_from_IDirectInputDevice8A(iface);
-    TRACE("(this=%p,%p)\n", This, pdidi);
-
-    fill_mouse_dideviceinstanceA(pdidi, This->base.dinput->dwVersion);
-    
-    return DI_OK;
-}
-
 static HRESULT WINAPI SysMouseWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface, LPDIDEVICEINSTANCEW pdidi)
 {
     SysMouseImpl *This = impl_from_IDirectInputDevice8W(iface);
@@ -906,7 +894,7 @@ static const IDirectInputDevice8AVtbl SysMouseAvt =
     IDirectInputDevice2AImpl_SetEventNotification,
     IDirectInputDevice2AImpl_SetCooperativeLevel,
     IDirectInputDevice2AImpl_GetObjectInfo,
-    SysMouseAImpl_GetDeviceInfo,
+    IDirectInputDevice2AImpl_GetDeviceInfo,
     IDirectInputDevice2AImpl_RunControlPanel,
     IDirectInputDevice2AImpl_Initialize,
     IDirectInputDevice2AImpl_CreateEffect,
