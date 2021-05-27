@@ -330,6 +330,124 @@ static void d3d_device_context_state_init(struct d3d_device_context_state *state
     d3d_device_context_state_AddRef(&state->ID3DDeviceContextState_iface);
 }
 
+/* ID3D11CommandList methods */
+
+static inline struct d3d11_command_list *impl_from_ID3D11CommandList(ID3D11CommandList *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d11_command_list, ID3D11CommandList_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_command_list_QueryInterface(ID3D11CommandList *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_ID3D11CommandList)
+            || IsEqualGUID(iid, &IID_ID3D11DeviceChild)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        ID3D11CommandList_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d3d11_command_list_AddRef(ID3D11CommandList *iface)
+{
+    struct d3d11_command_list *list = impl_from_ID3D11CommandList(iface);
+    ULONG refcount = InterlockedIncrement(&list->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", list, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE d3d11_command_list_Release(ID3D11CommandList *iface)
+{
+    struct d3d11_command_list *list = impl_from_ID3D11CommandList(iface);
+    ULONG refcount = InterlockedDecrement(&list->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", list, refcount);
+
+    if (!refcount)
+    {
+        wined3d_mutex_lock();
+        wined3d_command_list_decref(list->wined3d_list);
+        wined3d_mutex_unlock();
+        wined3d_private_store_cleanup(&list->private_store);
+        ID3D11Device2_Release(list->device);
+        heap_free(list);
+    }
+
+    return refcount;
+}
+
+static void STDMETHODCALLTYPE d3d11_command_list_GetDevice(ID3D11CommandList *iface, ID3D11Device **device)
+{
+    struct d3d11_command_list *list = impl_from_ID3D11CommandList(iface);
+
+    TRACE("iface %p, device %p.\n", iface, device);
+
+    *device = (ID3D11Device *)list->device;
+    ID3D11Device2_AddRef(list->device);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_command_list_GetPrivateData(ID3D11CommandList *iface, REFGUID guid,
+        UINT *data_size, void *data)
+{
+    struct d3d11_command_list *list = impl_from_ID3D11CommandList(iface);
+
+    TRACE("iface %p, guid %s, data_size %p, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return d3d_get_private_data(&list->private_store, guid, data_size, data);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_command_list_SetPrivateData(ID3D11CommandList *iface, REFGUID guid,
+        UINT data_size, const void *data)
+{
+    struct d3d11_command_list *list = impl_from_ID3D11CommandList(iface);
+
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return d3d_set_private_data(&list->private_store, guid, data_size, data);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_command_list_SetPrivateDataInterface(ID3D11CommandList *iface,
+        REFGUID guid, const IUnknown *data)
+{
+    struct d3d11_command_list *list = impl_from_ID3D11CommandList(iface);
+
+    TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
+
+    return d3d_set_private_data_interface(&list->private_store, guid, data);
+}
+
+static UINT STDMETHODCALLTYPE d3d11_command_list_GetContextFlags(ID3D11CommandList *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    return 0;
+}
+
+static const struct ID3D11CommandListVtbl d3d11_command_list_vtbl =
+{
+    /* IUnknown methods */
+    d3d11_command_list_QueryInterface,
+    d3d11_command_list_AddRef,
+    d3d11_command_list_Release,
+    /* ID3D11DeviceChild methods */
+    d3d11_command_list_GetDevice,
+    d3d11_command_list_GetPrivateData,
+    d3d11_command_list_SetPrivateData,
+    d3d11_command_list_SetPrivateDataInterface,
+    /* ID3D11CommandList methods */
+    d3d11_command_list_GetContextFlags,
+};
+
 static void d3d11_device_context_cleanup(struct d3d11_device_context *context)
 {
     wined3d_private_store_cleanup(&context->private_store);
@@ -2635,9 +2753,44 @@ static UINT STDMETHODCALLTYPE d3d11_device_context_GetContextFlags(ID3D11DeviceC
 static HRESULT STDMETHODCALLTYPE d3d11_device_context_FinishCommandList(ID3D11DeviceContext1 *iface,
         BOOL restore, ID3D11CommandList **command_list)
 {
+    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
+    struct d3d11_command_list *object;
+    HRESULT hr;
+
     TRACE("iface %p, restore %#x, command_list %p.\n", iface, restore, command_list);
 
-    return DXGI_ERROR_INVALID_CALL;
+    if (context->type == D3D11_DEVICE_CONTEXT_IMMEDIATE)
+    {
+        WARN("Attempt to record command list on an immediate context; returning DXGI_ERROR_INVALID_CALL.\n");
+        return DXGI_ERROR_INVALID_CALL;
+    }
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    wined3d_mutex_lock();
+
+    if (FAILED(hr = wined3d_deferred_context_record_command_list(context->wined3d_context,
+            !!restore, &object->wined3d_list)))
+    {
+        WARN("Failed to record wined3d command list, hr %#x.\n", hr);
+        heap_free(object);
+        return hr;
+    }
+
+    wined3d_mutex_unlock();
+
+    object->ID3D11CommandList_iface.lpVtbl = &d3d11_command_list_vtbl;
+    object->refcount = 1;
+    object->device = &context->device->ID3D11Device2_iface;
+    wined3d_private_store_init(&object->private_store);
+
+    ID3D11Device2_AddRef(object->device);
+
+    TRACE("Created command list %p.\n", object);
+    *command_list = &object->ID3D11CommandList_iface;
+
+    return S_OK;
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_CopySubresourceRegion1(ID3D11DeviceContext1 *iface,

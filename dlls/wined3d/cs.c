@@ -26,6 +26,59 @@ WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 #define WINED3D_INITIAL_CS_SIZE 4096
 
+struct wined3d_command_list
+{
+    LONG refcount;
+
+    struct wined3d_device *device;
+
+    SIZE_T data_size;
+    void *data;
+
+    SIZE_T resource_count;
+    struct wined3d_resource **resources;
+};
+
+static void wined3d_command_list_destroy_object(void *object)
+{
+    struct wined3d_command_list *list = object;
+
+    TRACE("list %p.\n", list);
+
+    heap_free(list->resources);
+    heap_free(list->data);
+    heap_free(list);
+}
+
+ULONG CDECL wined3d_command_list_incref(struct wined3d_command_list *list)
+{
+    ULONG refcount = InterlockedIncrement(&list->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", list, refcount);
+
+    return refcount;
+}
+
+ULONG CDECL wined3d_command_list_decref(struct wined3d_command_list *list)
+{
+    ULONG refcount = InterlockedDecrement(&list->refcount);
+    struct wined3d_device *device = list->device;
+
+    TRACE("%p decreasing refcount to %u.\n", list, refcount);
+
+    if (!refcount)
+    {
+        SIZE_T i;
+
+        for (i = 0; i < list->resource_count; ++i)
+            wined3d_resource_decref(list->resources[i]);
+
+        wined3d_cs_destroy_object(device->cs, wined3d_command_list_destroy_object, list);
+    }
+
+    return refcount;
+}
+
 enum wined3d_cs_op
 {
     WINED3D_CS_OP_NOP,
@@ -3332,4 +3385,54 @@ void CDECL wined3d_deferred_context_destroy(struct wined3d_device_context *conte
     wined3d_state_destroy(deferred->c.state);
     heap_free(deferred->data);
     heap_free(deferred);
+}
+
+HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device_context *context,
+        bool restore, struct wined3d_command_list **list)
+{
+    struct wined3d_deferred_context *deferred = wined3d_deferred_context_from_context(context);
+    struct wined3d_command_list *object;
+
+    TRACE("context %p, list %p.\n", context, list);
+
+    if (restore)
+    {
+        FIXME("Restoring context state is not implemented.\n");
+        return E_NOTIMPL;
+    }
+
+    if (!(object = heap_alloc_zero(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->refcount = 1;
+    object->device = deferred->c.device;
+
+    if (!(object->data = heap_alloc(deferred->data_size)))
+    {
+        heap_free(object);
+        return E_OUTOFMEMORY;
+    }
+    object->data_size = deferred->data_size;
+    memcpy(object->data, deferred->data, deferred->data_size);
+
+    if (!(object->resources = heap_alloc(deferred->resource_count * sizeof(*object->resources))))
+    {
+        heap_free(object->data);
+        heap_free(object);
+        return E_OUTOFMEMORY;
+    }
+    object->resource_count = deferred->resource_count;
+    memcpy(object->resources, deferred->resources, deferred->resource_count * sizeof(*object->resources));
+    /* Transfer our references to the resources to the command list. */
+
+    deferred->data_size = 0;
+    deferred->resource_count = 0;
+
+    /* This is in fact recorded into a subsequent command list. */
+    wined3d_device_context_reset_state(&deferred->c);
+
+    TRACE("Created command list %p.\n", object);
+    *list = object;
+
+    return S_OK;
 }

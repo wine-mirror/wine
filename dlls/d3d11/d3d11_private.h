@@ -583,6 +583,16 @@ struct d3d_device
     SIZE_T context_state_count;
 };
 
+struct d3d11_command_list
+{
+    ID3D11CommandList ID3D11CommandList_iface;
+    LONG refcount;
+
+    ID3D11Device2 *device;
+    struct wined3d_command_list *wined3d_list;
+    struct wined3d_private_store private_store;
+};
+
 static inline struct d3d_device *impl_from_ID3D11Device(ID3D11Device *iface)
 {
     return CONTAINING_RECORD((ID3D11Device2 *)iface, struct d3d_device, ID3D11Device2_iface);

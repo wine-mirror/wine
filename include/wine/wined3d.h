@@ -2221,6 +2221,7 @@ struct wined3d;
 struct wined3d_adapter;
 struct wined3d_blend_state;
 struct wined3d_buffer;
+struct wined3d_command_list;
 struct wined3d_depth_stencil_state;
 struct wined3d_device;
 struct wined3d_device_context;
@@ -2340,8 +2341,13 @@ void * __cdecl wined3d_buffer_get_parent(const struct wined3d_buffer *buffer);
 struct wined3d_resource * __cdecl wined3d_buffer_get_resource(struct wined3d_buffer *buffer);
 ULONG __cdecl wined3d_buffer_incref(struct wined3d_buffer *buffer);
 
+ULONG __cdecl wined3d_command_list_decref(struct wined3d_command_list *list);
+ULONG __cdecl wined3d_command_list_incref(struct wined3d_command_list *list);
+
 HRESULT __cdecl wined3d_deferred_context_create(struct wined3d_device *device, struct wined3d_device_context **context);
 void __cdecl wined3d_deferred_context_destroy(struct wined3d_device_context *context);
+HRESULT __cdecl wined3d_deferred_context_record_command_list(struct wined3d_device_context *context,
+        bool restore, struct wined3d_command_list **list);
 
 HRESULT __cdecl wined3d_depth_stencil_state_create(struct wined3d_device *device,
         const struct wined3d_depth_stencil_state_desc *desc, void *parent,
