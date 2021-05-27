@@ -23,6 +23,7 @@
 
 #include <winternl.h>
 #include <winioctl.h>
+#include <mswsock.h>
 #include "wine/server_protocol.h"
 
 #ifdef USE_WS_PREFIX
@@ -93,6 +94,7 @@ struct afd_poll_params
 #define IOCTL_AFD_WINE_SHUTDOWN             CTL_CODE(FILE_DEVICE_NETWORK, 204, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_AFD_WINE_RECVMSG              CTL_CODE(FILE_DEVICE_NETWORK, 205, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_AFD_WINE_SENDMSG              CTL_CODE(FILE_DEVICE_NETWORK, 206, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define IOCTL_AFD_WINE_TRANSMIT             CTL_CODE(FILE_DEVICE_NETWORK, 207, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 #define IOCTL_AFD_WINE_ADDRESS_LIST_CHANGE  CTL_CODE(FILE_DEVICE_NETWORK, 323, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
@@ -135,6 +137,16 @@ struct afd_sendmsg_params
     int force_async;
     unsigned int count;
     const WSABUF *buffers;
+};
+
+struct afd_transmit_params
+{
+    HANDLE file;
+    DWORD file_len;
+    DWORD buffer_size;
+    LARGE_INTEGER offset;
+    TRANSMIT_FILE_BUFFERS buffers;
+    DWORD flags;
 };
 
 #endif

@@ -71,6 +71,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 
+#define FILE_USE_FILE_POINTER_POSITION ((LONGLONG)-2)
+
 static async_data_t server_async( HANDLE handle, struct async_fileio *user, HANDLE event,
                                   PIO_APC_ROUTINE apc, void *apc_context, IO_STATUS_BLOCK *io )
 {
@@ -124,6 +126,23 @@ struct async_send_ioctl
     unsigned int count;
     unsigned int iov_cursor;
     struct iovec iov[1];
+};
+
+struct async_transmit_ioctl
+{
+    struct async_fileio io;
+    HANDLE file;
+    char *buffer;
+    unsigned int buffer_size;   /* allocated size of buffer */
+    unsigned int read_len;      /* amount of valid data currently in the buffer */
+    unsigned int head_cursor;   /* amount of header data already sent */
+    unsigned int file_cursor;   /* amount of file data already sent */
+    unsigned int buffer_cursor; /* amount of data currently in the buffer already sent */
+    unsigned int tail_cursor;   /* amount of tail data already sent */
+    unsigned int file_len;      /* total file length to send */
+    DWORD flags;
+    TRANSMIT_FILE_BUFFERS buffers;
+    LARGE_INTEGER offset;
 };
 
 static NTSTATUS sock_errno_to_status( int err )
@@ -921,6 +940,182 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     return status;
 }
 
+static ssize_t do_send( int fd, const void *buffer, size_t len, int flags )
+{
+    ssize_t ret;
+    while ((ret = send( fd, buffer, len, flags )) < 0 && errno == EINTR);
+    if (ret < 0 && errno != EWOULDBLOCK) WARN( "send: %s\n", strerror( errno ) );
+    return ret;
+}
+
+static NTSTATUS try_transmit( int sock_fd, int file_fd, struct async_transmit_ioctl *async )
+{
+    ssize_t ret;
+
+    while (async->head_cursor < async->buffers.HeadLength)
+    {
+        TRACE( "sending %u bytes of header data\n", async->buffers.HeadLength - async->head_cursor );
+        ret = do_send( sock_fd, (char *)async->buffers.Head + async->head_cursor,
+                       async->buffers.HeadLength - async->head_cursor, 0 );
+        if (ret < 0) return sock_errno_to_status( errno );
+        TRACE( "send returned %zd\n", ret );
+        async->head_cursor += ret;
+    }
+
+    while (async->buffer_cursor < async->read_len)
+    {
+        TRACE( "sending %u bytes of file data\n", async->read_len - async->buffer_cursor );
+        ret = do_send( sock_fd, async->buffer + async->buffer_cursor,
+                       async->read_len - async->buffer_cursor, 0 );
+        if (ret < 0) return sock_errno_to_status( errno );
+        TRACE( "send returned %zd\n", ret );
+        async->buffer_cursor += ret;
+        async->file_cursor += ret;
+    }
+
+    if (async->file && async->buffer_cursor == async->read_len)
+    {
+        unsigned int read_size = async->buffer_size;
+
+        if (async->file_len)
+            read_size = min( read_size, async->file_len - async->file_cursor );
+
+        TRACE( "reading %u bytes of file data\n", read_size );
+        do
+        {
+            if (async->offset.QuadPart == FILE_USE_FILE_POINTER_POSITION)
+                ret = read( file_fd, async->buffer, read_size );
+            else
+                ret = pread( file_fd, async->buffer, read_size, async->offset.QuadPart );
+        } while (ret < 0 && errno == EINTR);
+        if (ret < 0) return errno_to_status( errno );
+        TRACE( "read returned %zd\n", ret );
+
+        async->read_len = ret;
+        async->buffer_cursor = 0;
+        if (async->offset.QuadPart != FILE_USE_FILE_POINTER_POSITION)
+            async->offset.QuadPart += ret;
+
+        if (ret < read_size || (async->file_len && async->file_cursor == async->file_len))
+            async->file = NULL;
+        return STATUS_PENDING; /* still more data to send */
+    }
+
+    while (async->tail_cursor < async->buffers.TailLength)
+    {
+        TRACE( "sending %u bytes of tail data\n", async->buffers.TailLength - async->tail_cursor );
+        ret = do_send( sock_fd, (char *)async->buffers.Tail + async->tail_cursor,
+                       async->buffers.TailLength - async->tail_cursor, 0 );
+        if (ret < 0) return sock_errno_to_status( errno );
+        TRACE( "send returned %zd\n", ret );
+        async->tail_cursor += ret;
+    }
+
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS async_transmit_proc( void *user, IO_STATUS_BLOCK *io, NTSTATUS status )
+{
+    int sock_fd, file_fd = -1, sock_needs_close = FALSE, file_needs_close = FALSE;
+    struct async_transmit_ioctl *async = user;
+
+    TRACE( "%#x\n", status );
+
+    if (status == STATUS_ALERTED)
+    {
+        if ((status = server_get_unix_fd( async->io.handle, 0, &sock_fd, &sock_needs_close, NULL, NULL )))
+            return status;
+
+        if (async->file && (status = server_get_unix_fd( async->file, 0, &file_fd, &file_needs_close, NULL, NULL )))
+        {
+            if (sock_needs_close) close( sock_fd );
+            return status;
+        }
+
+        status = try_transmit( sock_fd, file_fd, async );
+        TRACE( "got status %#x\n", status );
+
+        if (status == STATUS_DEVICE_NOT_READY)
+            status = STATUS_PENDING;
+
+        if (sock_needs_close) close( sock_fd );
+        if (file_needs_close) close( file_fd );
+    }
+    if (status != STATUS_PENDING)
+    {
+        io->Status = status;
+        io->Information = async->head_cursor + async->file_cursor + async->tail_cursor;
+        release_fileio( &async->io );
+    }
+    return status;
+}
+
+static NTSTATUS sock_transmit( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
+                               IO_STATUS_BLOCK *io, int fd, const struct afd_transmit_params *params )
+{
+    int file_fd, file_needs_close = FALSE;
+    struct async_transmit_ioctl *async;
+    enum server_fd_type file_type;
+    union unix_sockaddr addr;
+    socklen_t addr_len;
+    HANDLE wait_handle;
+    NTSTATUS status;
+    ULONG options;
+
+    addr_len = sizeof(addr);
+    if (getpeername( fd, &addr.addr, &addr_len ) != 0)
+        return STATUS_INVALID_CONNECTION;
+
+    if (params->file)
+    {
+        if ((status = server_get_unix_fd( params->file, 0, &file_fd, &file_needs_close, &file_type, NULL )))
+            return status;
+        if (file_needs_close) close( file_fd );
+
+        if (file_type != FD_TYPE_FILE)
+        {
+            FIXME( "unsupported file type %#x\n", file_type );
+            return STATUS_NOT_IMPLEMENTED;
+        }
+    }
+
+    if (!(async = (struct async_transmit_ioctl *)alloc_fileio( sizeof(*async), async_transmit_proc, handle )))
+        return STATUS_NO_MEMORY;
+
+    async->file = params->file;
+    async->buffer_size = params->buffer_size ? params->buffer_size : 65536;
+    if (!(async->buffer = malloc( async->buffer_size )))
+    {
+        release_fileio( &async->io );
+        return STATUS_NO_MEMORY;
+    }
+    async->read_len = 0;
+    async->head_cursor = 0;
+    async->file_cursor = 0;
+    async->buffer_cursor = 0;
+    async->tail_cursor = 0;
+    async->file_len = params->file_len;
+    async->flags = params->flags;
+    async->buffers = params->buffers;
+    async->offset = params->offset;
+
+    SERVER_START_REQ( send_socket )
+    {
+        req->status = STATUS_PENDING;
+        req->total  = 0;
+        req->async  = server_async( handle, &async->io, event, apc, apc_user, io );
+        status = wine_server_call( req );
+        wait_handle = wine_server_ptr_handle( reply->wait );
+        options     = reply->options;
+    }
+    SERVER_END_REQ;
+
+    if (status != STATUS_PENDING) release_fileio( &async->io );
+
+    if (wait_handle) status = wait_async( wait_handle, options & FILE_SYNCHRONOUS_IO_ALERT );
+    return status;
+}
+
 NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user, IO_STATUS_BLOCK *io,
                      ULONG code, void *in_buffer, ULONG in_size, void *out_buffer, ULONG out_size )
 {
@@ -1034,6 +1229,23 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 
             status = sock_send( handle, event, apc, apc_user, io, fd, params->buffers, params->count,
                                 params->addr, params->addr_len, unix_flags, params->force_async );
+            break;
+        }
+
+        case IOCTL_AFD_WINE_TRANSMIT:
+        {
+            const struct afd_transmit_params *params = in_buffer;
+
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+                return status;
+
+            if (in_size < sizeof(*params))
+            {
+                return STATUS_BUFFER_TOO_SMALL;
+                break;
+            }
+
+            status = sock_transmit( handle, event, apc, apc_user, io, fd, params );
             break;
         }
 
