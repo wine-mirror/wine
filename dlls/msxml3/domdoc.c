@@ -1210,6 +1210,8 @@ static HRESULT WINAPI domdoc_insertBefore(
 
     TRACE("(%p)->(%p %s %p)\n", This, newChild, debugstr_variant(&refChild), outNewChild);
 
+    if (!newChild) return E_INVALIDARG;
+
     hr = IXMLDOMNode_get_nodeType(newChild, &type);
     if (hr != S_OK) return hr;
 

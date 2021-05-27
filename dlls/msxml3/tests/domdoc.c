@@ -9235,6 +9235,13 @@ static void test_insertBefore(void)
     doc = create_document(&IID_IXMLDOMDocument);
     doc3 = create_document(&IID_IXMLDOMDocument);
 
+    /* NULL to document */
+    V_VT(&v) = VT_NULL;
+    node = (void*)0xdeadbeef;
+    hr = IXMLDOMDocument_insertBefore(doc, NULL, v, &node);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(node == (void*)0xdeadbeef, "got %p\n", node);
+
     /* document to document */
     V_VT(&v) = VT_NULL;
     node = (void*)0xdeadbeef;
