@@ -554,36 +554,6 @@ static HRESULT WINAPI SysKeyboardWImpl_BuildActionMap(LPDIRECTINPUTDEVICE8W ifac
     return  _build_action_map(iface, lpdiaf, lpszUserName, dwFlags, DIKEYBOARD_MASK, &c_dfDIKeyboard);
 }
 
-static HRESULT WINAPI SysKeyboardAImpl_BuildActionMap(LPDIRECTINPUTDEVICE8A iface,
-                                                      LPDIACTIONFORMATA lpdiaf,
-                                                      LPCSTR lpszUserName,
-                                                      DWORD dwFlags)
-{
-    SysKeyboardImpl *This = impl_from_IDirectInputDevice8A(iface);
-    DIACTIONFORMATW diafW;
-    HRESULT hr;
-    WCHAR *lpszUserNameW = NULL;
-    int username_size;
-
-    diafW.rgoAction = HeapAlloc(GetProcessHeap(), 0, sizeof(DIACTIONW)*lpdiaf->dwNumActions);
-    _copy_diactionformatAtoW(&diafW, lpdiaf);
-
-    if (lpszUserName != NULL)
-    {
-        username_size = MultiByteToWideChar(CP_ACP, 0, lpszUserName, -1, NULL, 0);
-        lpszUserNameW = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*username_size);
-        MultiByteToWideChar(CP_ACP, 0, lpszUserName, -1, lpszUserNameW, username_size);
-    }
-
-    hr = SysKeyboardWImpl_BuildActionMap(&This->base.IDirectInputDevice8W_iface, &diafW, lpszUserNameW, dwFlags);
-
-    _copy_diactionformatWtoA(lpdiaf, &diafW);
-    HeapFree(GetProcessHeap(), 0, diafW.rgoAction);
-    HeapFree(GetProcessHeap(), 0, lpszUserNameW);
-
-    return hr;
-}
-
 static HRESULT WINAPI SysKeyboardWImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface,
                                                     LPDIACTIONFORMATW lpdiaf,
                                                     LPCWSTR lpszUserName,
@@ -655,7 +625,7 @@ static const IDirectInputDevice8AVtbl SysKeyboardAvt =
     IDirectInputDevice2AImpl_SendDeviceData,
     IDirectInputDevice7AImpl_EnumEffectsInFile,
     IDirectInputDevice7AImpl_WriteEffectToFile,
-    SysKeyboardAImpl_BuildActionMap,
+    IDirectInputDevice8AImpl_BuildActionMap,
     SysKeyboardAImpl_SetActionMap,
     IDirectInputDevice8AImpl_GetImageInfo
 };

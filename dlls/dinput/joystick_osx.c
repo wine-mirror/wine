@@ -1600,7 +1600,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
     IDirectInputDevice2AImpl_SendDeviceData,
     IDirectInputDevice7AImpl_EnumEffectsInFile,
     IDirectInputDevice7AImpl_WriteEffectToFile,
-    JoystickAGenericImpl_BuildActionMap,
+    IDirectInputDevice8AImpl_BuildActionMap,
     JoystickAGenericImpl_SetActionMap,
     IDirectInputDevice8AImpl_GetImageInfo
 };

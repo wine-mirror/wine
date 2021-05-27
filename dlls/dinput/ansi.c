@@ -90,6 +90,82 @@ static void dieffectinfo_wtoa( const DIEFFECTINFOW *in, DIEFFECTINFOA *out )
     WideCharToMultiByte( CP_ACP, 0, in->tszName, -1, out->tszName, sizeof(out->tszName), NULL, NULL );
 }
 
+static HRESULT string_atow( const char *in, WCHAR **out )
+{
+    int len;
+
+    *out = NULL;
+    if (!in) return DI_OK;
+
+    len = MultiByteToWideChar( CP_ACP, 0, in, -1, NULL, 0 );
+    if (!(*out = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return DIERR_OUTOFMEMORY;
+
+    MultiByteToWideChar( CP_ACP, 0, in, -1, *out, len );
+    return DI_OK;
+}
+
+static void diactionformat_wtoa( const DIACTIONFORMATW *in, DIACTIONFORMATA *out )
+{
+    DWORD i;
+
+    out->dwDataSize = in->dwDataSize;
+    out->dwNumActions = in->dwNumActions;
+
+    for (i = 0; i < in->dwNumActions; ++i)
+    {
+        out->rgoAction[i].uAppData = in->rgoAction[i].uAppData;
+        out->rgoAction[i].dwSemantic = in->rgoAction[i].dwSemantic;
+        out->rgoAction[i].dwFlags = in->rgoAction[i].dwFlags;
+        out->rgoAction[i].guidInstance = in->rgoAction[i].guidInstance;
+        out->rgoAction[i].dwObjID = in->rgoAction[i].dwObjID;
+        out->rgoAction[i].dwHow = in->rgoAction[i].dwHow;
+        out->rgoAction[i].lptszActionName = 0;
+    }
+
+    out->guidActionMap = in->guidActionMap;
+    out->dwGenre = in->dwGenre;
+    out->dwBufferSize = in->dwBufferSize;
+    out->lAxisMin = in->lAxisMin;
+    out->lAxisMax = in->lAxisMax;
+    out->hInstString = in->hInstString;
+    out->ftTimeStamp = in->ftTimeStamp;
+    out->dwCRC = in->dwCRC;
+
+    WideCharToMultiByte( CP_ACP, 0, in->tszActionMap, -1, out->tszActionMap,
+                         sizeof(out->tszActionMap), NULL, NULL );
+}
+
+static void diactionformat_atow( const DIACTIONFORMATA *in, DIACTIONFORMATW *out )
+{
+    DWORD i;
+
+    out->dwDataSize = in->dwDataSize;
+    out->dwNumActions = in->dwNumActions;
+
+    for (i = 0; i < out->dwNumActions; ++i)
+    {
+        out->rgoAction[i].uAppData = in->rgoAction[i].uAppData;
+        out->rgoAction[i].dwSemantic = in->rgoAction[i].dwSemantic;
+        out->rgoAction[i].dwFlags = in->rgoAction[i].dwFlags;
+        out->rgoAction[i].guidInstance = in->rgoAction[i].guidInstance;
+        out->rgoAction[i].dwObjID = in->rgoAction[i].dwObjID;
+        out->rgoAction[i].dwHow = in->rgoAction[i].dwHow;
+        out->rgoAction[i].lptszActionName = 0;
+    }
+
+    out->guidActionMap = in->guidActionMap;
+    out->dwGenre = in->dwGenre;
+    out->dwBufferSize = in->dwBufferSize;
+    out->lAxisMin = in->lAxisMin;
+    out->lAxisMax = in->lAxisMax;
+    out->hInstString = in->hInstString;
+    out->ftTimeStamp = in->ftTimeStamp;
+    out->dwCRC = in->dwCRC;
+
+    MultiByteToWideChar( CP_ACP, 0, in->tszActionMap, -1, out->tszActionMap,
+                         sizeof(out->tszActionMap) / sizeof(WCHAR) );
+}
+
 static void dideviceimageinfo_wtoa( const DIDEVICEIMAGEINFOW *in, DIDEVICEIMAGEINFOA *out )
 {
     WideCharToMultiByte( CP_ACP, 0, in->tszImagePath, -1, out->tszImagePath,
@@ -414,6 +490,35 @@ HRESULT WINAPI IDirectInputDevice7AImpl_WriteEffectToFile( IDirectInputDevice8A 
     else MultiByteToWideChar( CP_ACP, 0, filename_a, -1, buffer, MAX_PATH );
 
     return IDirectInputDevice8_WriteEffectToFile( iface_w, filename_w, entries, file_effect, flags );
+}
+
+HRESULT WINAPI IDirectInputDevice8AImpl_BuildActionMap( IDirectInputDevice8A *iface_a, DIACTIONFORMATA *format_a,
+                                                        const char *username_a, DWORD flags )
+{
+    IDirectInputDeviceImpl *impl = impl_from_IDirectInputDevice8A( iface_a );
+    IDirectInputDevice8W *iface_w = IDirectInputDevice8W_from_impl( impl );
+    DIACTIONFORMATW format_w = {sizeof(format_w), sizeof(DIACTIONW)};
+    HRESULT hr;
+    WCHAR *username_w;
+
+    if (!format_a) return E_POINTER;
+    if (format_a->dwSize != sizeof(DIACTIONFORMATA)) return DIERR_INVALIDPARAM;
+    if (format_a->dwActionSize != sizeof(DIACTIONA)) return DIERR_INVALIDPARAM;
+    if (FAILED(hr = string_atow( username_a, &username_w ))) return hr;
+
+    format_w.dwNumActions = format_a->dwNumActions;
+    format_w.rgoAction = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, format_a->dwNumActions * sizeof(DIACTIONW) );
+    if (!format_w.rgoAction) hr = DIERR_OUTOFMEMORY;
+    else
+    {
+        diactionformat_atow( format_a, &format_w );
+        hr = IDirectInputDevice8_BuildActionMap( iface_w, &format_w, username_w, flags );
+        diactionformat_wtoa( &format_w, format_a );
+        HeapFree( GetProcessHeap(), 0, format_w.rgoAction );
+    }
+
+    HeapFree( GetProcessHeap(), 0, username_w );
+    return hr;
 }
 
 HRESULT WINAPI IDirectInputDevice8AImpl_GetImageInfo( IDirectInputDevice8A *iface_a, DIDEVICEIMAGEINFOHEADERA *header_a )
