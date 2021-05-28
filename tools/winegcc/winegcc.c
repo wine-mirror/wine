@@ -594,6 +594,7 @@ static strarray *get_link_args( struct options *opts, const char *output_name )
         }
         if (!try_link( opts->prefix, link_args, "-Wl,-z,max-page-size=0x1000"))
             strarray_add( flags, "-Wl,-z,max-page-size=0x1000");
+        if (opts->unix_lib) strarray_add( flags, strmake( "-Wl,-soname,%s.so", output_name ));
         break;
     }
 
