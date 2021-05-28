@@ -942,11 +942,11 @@ static void test_default_mixer_type_negotiation(void)
     IDirect3DDeviceManager9 *manager;
     DXVA2_VideoProcessorCaps caps;
     IMFVideoProcessor *processor;
+    GUID subtype, guid, *guids;
     IDirect3DDevice9 *device;
     IMFMediaType *video_type;
     IMFTransform *transform;
     DWORD index, count;
-    GUID guid, *guids;
     IUnknown *unk;
     HWND window;
     HRESULT hr;
@@ -1069,6 +1069,46 @@ static void test_default_mixer_type_negotiation(void)
     ok(media_type != media_type2, "Unexpected media type instance.\n");
     IMFMediaType_Release(media_type);
     IMFMediaType_Release(media_type2);
+
+    /* Minimal valid attribute set for output type. */
+    hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = MFCreateMediaType(&media_type2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaType_GetGUID(media_type, &MF_MT_SUBTYPE, &subtype);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetGUID(media_type2, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFMediaType_SetGUID(media_type2, &MF_MT_SUBTYPE, &subtype);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_SetOutputType(transform, 1, NULL, MFT_SET_TYPE_TEST_ONLY);
+    ok(hr == MF_E_INVALIDSTREAMNUMBER, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_SetOutputType(transform, 0, NULL, MFT_SET_TYPE_TEST_ONLY);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_SetOutputType(transform, 0, media_type2, MFT_SET_TYPE_TEST_ONLY);
+    ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFMediaType_SetUINT32(media_type2, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_SetOutputType(transform, 0, media_type2, MFT_SET_TYPE_TEST_ONLY);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    /* Candidate type have frame size set, mismatching size is accepted. */
+    hr = IMFMediaType_SetUINT64(media_type2, &MF_MT_FRAME_SIZE, (UINT64)64 << 32 | 64);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    hr = IMFTransform_SetOutputType(transform, 0, media_type2, MFT_SET_TYPE_TEST_ONLY);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    IMFMediaType_Release(media_type2);
+    IMFMediaType_Release(media_type);
 
     hr = IMFTransform_QueryInterface(transform, &IID_IMFVideoProcessor, (void **)&processor);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
