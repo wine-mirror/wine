@@ -855,12 +855,22 @@ static void session_shutdown_current_topology(struct media_session *session)
     }
 }
 
+static void session_clear_command_list(struct media_session *session)
+{
+    struct session_op *op, *op2;
+
+    LIST_FOR_EACH_ENTRY_SAFE(op, op2, &session->commands, struct session_op, entry)
+    {
+        list_remove(&op->entry);
+        IUnknown_Release(&op->IUnknown_iface);
+    }
+}
+
 static void session_clear_presentation(struct media_session *session)
 {
     struct media_source *source, *source2;
     struct media_sink *sink, *sink2;
     struct topo_node *node, *node2;
-    struct session_op *op, *op2;
 
     session_shutdown_current_topology(session);
 
@@ -894,12 +904,6 @@ static void session_clear_presentation(struct media_session *session)
         if (sink->event_generator)
             IMFMediaEventGenerator_Release(sink->event_generator);
         heap_free(sink);
-    }
-
-    LIST_FOR_EACH_ENTRY_SAFE(op, op2, &session->commands, struct session_op, entry)
-    {
-        list_remove(&op->entry);
-        IUnknown_Release(&op->IUnknown_iface);
     }
 }
 
@@ -1730,6 +1734,7 @@ static ULONG WINAPI mfsession_Release(IMFMediaSession *iface)
     {
         session_clear_topologies(session);
         session_clear_presentation(session);
+        session_clear_command_list(session);
         if (session->presentation.current_topology)
             IMFTopology_Release(session->presentation.current_topology);
         if (session->event_queue)
@@ -1847,7 +1852,6 @@ static HRESULT WINAPI mfsession_Start(IMFMediaSession *iface, const GUID *format
         hr = session_submit_command(session, op);
 
     IUnknown_Release(&op->IUnknown_iface);
-
     return hr;
 }
 
@@ -1896,6 +1900,7 @@ static HRESULT WINAPI mfsession_Shutdown(IMFMediaSession *iface)
         IMFPresentationClock_Release(session->clock);
         session->clock = NULL;
         session_clear_presentation(session);
+        session_clear_command_list(session);
     }
     LeaveCriticalSection(&session->cs);
 
