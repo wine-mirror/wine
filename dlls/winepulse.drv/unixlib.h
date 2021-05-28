@@ -31,33 +31,181 @@ struct pulse_config
     unsigned int speakers_mask;
 };
 
+struct main_loop_params
+{
+    HANDLE event;
+};
+
+struct create_stream_params
+{
+    const char *name;
+    EDataFlow dataflow;
+    AUDCLNT_SHAREMODE mode;
+    DWORD flags;
+    REFERENCE_TIME duration;
+    const WAVEFORMATEX *fmt;
+    HRESULT result;
+    UINT32 *channel_count;
+    struct pulse_stream **stream;
+};
+
+struct release_stream_params
+{
+    struct pulse_stream *stream;
+    HANDLE timer;
+    HRESULT result;
+};
+
+struct start_params
+{
+    struct pulse_stream *stream;
+    HRESULT result;
+};
+
+struct stop_params
+{
+    struct pulse_stream *stream;
+    HRESULT result;
+};
+
+struct reset_params
+{
+    struct pulse_stream *stream;
+    HRESULT result;
+};
+
+struct timer_loop_params
+{
+    struct pulse_stream *stream;
+};
+
+struct get_render_buffer_params
+{
+    struct pulse_stream *stream;
+    UINT32 frames;
+    HRESULT result;
+    BYTE **data;
+};
+
+struct release_render_buffer_params
+{
+    struct pulse_stream *stream;
+    UINT32 written_frames;
+    DWORD flags;
+    HRESULT result;
+};
+
+struct get_capture_buffer_params
+{
+    struct pulse_stream *stream;
+    HRESULT result;
+    BYTE **data;
+    UINT32 *frames;
+    DWORD *flags;
+    UINT64 *devpos;
+    UINT64 *qpcpos;
+};
+
+struct release_capture_buffer_params
+{
+    struct pulse_stream *stream;
+    BOOL done;
+    HRESULT result;
+};
+
+struct get_buffer_size_params
+{
+    struct pulse_stream *stream;
+    HRESULT result;
+    UINT32 *size;
+};
+
+struct get_latency_params
+{
+    struct pulse_stream *stream;
+    HRESULT result;
+    REFERENCE_TIME *latency;
+};
+
+struct get_current_padding_params
+{
+    struct pulse_stream *stream;
+    HRESULT result;
+    UINT32 *padding;
+};
+
+struct get_next_packet_size_params
+{
+    struct pulse_stream *stream;
+    HRESULT result;
+    UINT32 *frames;
+};
+
+struct get_frequency_params
+{
+    struct pulse_stream *stream;
+    HRESULT result;
+    UINT64 *freq;
+};
+
+struct get_position_params
+{
+    struct pulse_stream *stream;
+    BOOL device;
+    HRESULT result;
+    UINT64 *pos;
+    UINT64 *qpctime;
+};
+
+struct set_volumes_params
+{
+    struct pulse_stream *stream;
+    float master_volume;
+    const float *volumes;
+    const float *session_volumes;
+};
+
+struct set_event_handle_params
+{
+    struct pulse_stream *stream;
+    HANDLE event;
+    HRESULT result;
+};
+
+struct test_connect_params
+{
+    const char *name;
+    HRESULT result;
+    struct pulse_config *config;
+};
+
+struct is_started_params
+{
+    struct pulse_stream *stream;
+    BOOL started;
+};
+
 struct unix_funcs
 {
-    void (WINAPI *main_loop)(HANDLE event);
-    HRESULT (WINAPI *create_stream)(const char *name, EDataFlow dataflow, AUDCLNT_SHAREMODE mode,
-                                    DWORD flags, REFERENCE_TIME duration, REFERENCE_TIME period,
-                                    const WAVEFORMATEX *fmt, UINT32 *channel_count,
-                                    struct pulse_stream **ret);
-    void (WINAPI *release_stream)(struct pulse_stream *stream, HANDLE timer);
-    HRESULT (WINAPI *start)(struct pulse_stream *stream);
-    HRESULT (WINAPI *stop)(struct pulse_stream *stream);
-    HRESULT (WINAPI *reset)(struct pulse_stream *stream);
-    void (WINAPI *timer_loop)(struct pulse_stream *stream);
-    HRESULT (WINAPI *get_render_buffer)(struct pulse_stream *stream, UINT32 frames, BYTE **data);
-    HRESULT (WINAPI *release_render_buffer)(struct pulse_stream *stream, UINT32 written_frames,
-                                            DWORD flags);
-    HRESULT (WINAPI *get_capture_buffer)(struct pulse_stream *stream, BYTE **data, UINT32 *frames,
-                                         DWORD *flags, UINT64 *devpos, UINT64 *qpcpos);
-    HRESULT (WINAPI *release_capture_buffer)(struct pulse_stream *stream, BOOL done);
-    HRESULT (WINAPI *get_buffer_size)(struct pulse_stream *stream, UINT32 *out);
-    HRESULT (WINAPI *get_latency)(struct pulse_stream *stream, REFERENCE_TIME *latency);
-    HRESULT (WINAPI *get_current_padding)(struct pulse_stream *stream, UINT32 *out);
-    HRESULT (WINAPI *get_next_packet_size)(struct pulse_stream *stream, UINT32 *frames);
-    HRESULT (WINAPI *get_frequency)(struct pulse_stream *stream, UINT64 *freq);
-    HRESULT (WINAPI *get_position)(struct pulse_stream *stream, BOOL device, UINT64 *pos, UINT64 *qpctime);
-    void (WINAPI *set_volumes)(struct pulse_stream *stream, float master_volume,
-                               const float *volumes, const float *session_volumes);
-    HRESULT (WINAPI *set_event_handle)(struct pulse_stream *stream, HANDLE event);
-    HRESULT (WINAPI *test_connect)(const char *name, struct pulse_config *config);
-    BOOL (WINAPI *is_started)(struct pulse_stream *stream);
+    void (WINAPI *main_loop)(struct main_loop_params *params);
+    void (WINAPI *create_stream)(struct create_stream_params *params);
+    void (WINAPI *release_stream)(struct release_stream_params *params);
+    void (WINAPI *start)(struct start_params *params);
+    void (WINAPI *stop)(struct stop_params *params);
+    void (WINAPI *reset)(struct reset_params *params);
+    void (WINAPI *timer_loop)(struct timer_loop_params *params);
+    void (WINAPI *get_render_buffer)(struct get_render_buffer_params *params);
+    void (WINAPI *release_render_buffer)(struct release_render_buffer_params *params);
+    void (WINAPI *get_capture_buffer)(struct get_capture_buffer_params *params);
+    void (WINAPI *release_capture_buffer)(struct release_capture_buffer_params *params);
+    void (WINAPI *get_buffer_size)(struct get_buffer_size_params *params);
+    void (WINAPI *get_latency)(struct get_latency_params *params);
+    void (WINAPI *get_current_padding)(struct get_current_padding_params *params);
+    void (WINAPI *get_next_packet_size)(struct get_next_packet_size_params *params);
+    void (WINAPI *get_frequency)(struct get_frequency_params *params);
+    void (WINAPI *get_position)(struct get_position_params *params);
+    void (WINAPI *set_volumes)(struct set_volumes_params *params);
+    void (WINAPI *set_event_handle)(struct set_event_handle_params *params);
+    void (WINAPI *test_connect)(struct test_connect_params *params);
+    void (WINAPI *is_started)(struct is_started_params *params);
 };
