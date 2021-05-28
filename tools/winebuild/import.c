@@ -1421,7 +1421,7 @@ static int cmp_link_name( const void *e1, const void *e2 )
 
 
 /* output dispatcher for system calls */
-static void output_syscall_dispatcher( int count, const char *variant )
+static void output_syscall_dispatcher( const char *variant )
 {
     const unsigned int invalid_param = 0xc000000d; /* STATUS_INVALID_PARAMETER */
     const char *symbol = strmake( "__wine_syscall_dispatcher%s", variant );
@@ -1490,16 +1490,23 @@ static void output_syscall_dispatcher( int count, const char *variant )
         }
         output( "\tleal -0x30(%%ebp),%%ecx\n" );
         output( "\tmovl %%ecx,%%fs:0x1f8\n" );  /* x86_thread_data()->syscall_frame */
-        output( "\tcmpl $%u,%%eax\n", count );
-        output( "\tjae 4f\n" );
+        output( "\tmovl %%eax,%%ecx\n" );
+        output( "\tshrl $8,%%ecx\n" );
+        output( "\tandl $0x30,%%ecx\n" );       /* syscall table number */
+        output( "\tmovl %%eax,%%edx\n" );
+        output( "\tandl $0xfff,%%edx\n" );      /* syscall number */
         if (UsePIC)
         {
-            output( "\tmovl %%eax,%%edx\n" );
             output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
-            output( "1:\tmovzbl .Lsyscall_args-1b(%%eax,%%edx,1),%%ecx\n" );
+            output( "1:\tleal %s-1b(%%eax,%%ecx),%%ebx\n", asm_name("KeServiceDescriptorTable") );
             needs_get_pc_thunk = 1;
         }
-        else output( "\tmovzbl .Lsyscall_args(%%eax),%%ecx\n" );
+        else output( "\tleal %s(%%ecx),%%ebx\n", asm_name("KeServiceDescriptorTable") );
+
+        output( "\tcmpl 8(%%ebx),%%edx\n" );   /* table->ServiceLimit */
+        output( "\tjae 4f\n" );
+        output( "\tmovl 12(%%ebx),%%eax\n" );  /* table->ArgumentTable */
+        output( "\tmovzbl (%%eax,%%edx,1),%%ecx\n" );
         output( "\tsubl %%ecx,%%esp\n" );
         output( "\tshrl $2,%%ecx\n" );
         output( "\tleal 12(%%ebp),%%esi\n" );
@@ -1507,10 +1514,8 @@ static void output_syscall_dispatcher( int count, const char *variant )
         output( "\tmovl %%esp,%%edi\n" );
         output( "\tcld\n" );
         output( "\trep; movsl\n" );
-        if (UsePIC)
-            output( "\tcall *.Lsyscall_table-1b(%%eax,%%edx,4)\n" );
-        else
-            output( "\tcall *.Lsyscall_table(,%%eax,4)\n" );
+        output( "\tmovl (%%ebx),%%eax\n" );    /* table->ServiceTable */
+        output( "\tcall *(%%eax,%%edx,4)\n" );
         output( "2:\tmovl $0,%%fs:0x1f8\n" );
         output( "\tleal -0x2f0(%%ebp),%%ebx\n") ;
         output( "\tandl $~63,%%ebx\n" );
@@ -1645,9 +1650,15 @@ static void output_syscall_dispatcher( int count, const char *variant )
         output( "\tmovq %%gs:0x30,%%rcx\n" );
         output( "\tleaq -0x98(%%rbp),%%rbx\n" );
         output( "\tmovq %%rbx,0x328(%%rcx)\n" );  /* amd64_thread_data()->syscall_frame */
-        output( "\tcmpq $%u,%%r11\n", count );
+        output( "\tmovq %%r11,%%rbx\n" );
+        output( "\tshrl $8,%%ebx\n" );
+        output( "\tandl $0x30,%%ebx\n" );         /* syscall table number */
+        output( "\tleaq %s(%%rip),%%rcx\n", asm_name("KeServiceDescriptorTable") );
+        output( "\tleaq (%%rcx,%%rbx,2),%%rbx\n" );
+        output( "\tandq $0xfff,%%r11\n" );        /* syscall number */
+        output( "\tcmpq 16(%%rbx),%%r11\n" );     /* table->ServiceLimit */
         output( "\tjae 3f\n" );
-        output( "\tleaq .Lsyscall_args(%%rip),%%rcx\n" );
+        output( "\tmovq 24(%%rbx),%%rcx\n" );     /* table->ArgumentTable */
         output( "\tmovzbl (%%rcx,%%r11),%%ecx\n" );
         output( "\tsubq $0x20,%%rcx\n" );
         output( "\tjbe 1f\n" );
@@ -1660,7 +1671,7 @@ static void output_syscall_dispatcher( int count, const char *variant )
         output( "\trep; movsq\n" );
         output( "1:\tmovq %%r10,%%rcx\n" );
         output( "\tsubq $0x20,%%rsp\n" );
-        output( "\tleaq .Lsyscall_table(%%rip),%%r10\n" );
+        output( "\tmovq (%%rbx),%%r10\n" );      /* table->ServiceTable */
         output( "\tcallq *(%%r10,%%r11,8)\n" );
         output( "2:\tmovq %%gs:0x30,%%rcx\n" );
         output( "\tmovq $0,0x328(%%rcx)\n" );
@@ -1699,9 +1710,6 @@ static void output_syscall_dispatcher( int count, const char *variant )
     case CPU_ARM:
         output( "\tpush {r4-r11}\n" );
         output( "\tadd r6, sp, #40\n" );  /* stack parameters */
-        output( "\tldr r5, 6f+8\n" );
-        output( "\tcmp ip, r5\n" );
-        output( "\tbcs 5f\n" );
         output( "\tsub sp, sp, #8\n" );
         output( "\tmrc p15, 0, r7, c13, c0, 2\n" ); /* NtCurrentTeb() */
         output( "\tadd r7, #0x1d8\n" );  /* arm_thread_data()->syscall_frame */
@@ -1709,9 +1717,16 @@ static void output_syscall_dispatcher( int count, const char *variant )
         output( "\tbfi r0, lr, #5, #1\n" );  /* set thumb bit */
         output( "\tstr r0, [sp, #4]\n" );
         output( "\tstr sp, [r7]\n" );  /* syscall frame */
-        output( "\tldr r5, 6f+4\n");
+        output( "\tldr r5, 6f\n");
         if (UsePIC) output( "1:\tadd r5, pc\n");
-        output( "\tldrb r5, [r5, ip]\n" );  /* syscall args */
+        output( "\tubfx r4, ip, #12, #2\n" );  /* syscall table number */
+        output( "\tbfc ip, #12, #20\n" );      /* syscall number */
+        output( "\tadd r4, r5, r4, lsl #4\n" );
+        output( "\tldr r5, [r4, #8]\n" );      /* table->ServiceLimit */
+        output( "\tcmp ip, r5\n" );
+        output( "\tbcs 5f\n" );
+        output( "\tldr r5, [r4, #12]\n" );     /* table->ArgumentTable */
+        output( "\tldrb r5, [r5, ip]\n" );
         output( "\tcmp r5, #16\n" );
         output( "\tit le\n" );
         output( "\tmovle r5, #16\n" );
@@ -1722,34 +1737,24 @@ static void output_syscall_dispatcher( int count, const char *variant )
         output( "\tldr r0, [r6, r5]\n" );
         output( "\tstr r0, [sp, r5]\n" );
         output( "\tbgt 2b\n" );
-        output( "\tldr r5, 6f\n");
-        if (UsePIC) output( "4:\tadd r5, pc\n");
-        output( "\tldr ip, [r5, ip, lsl #2]\n");  /* syscall table */
         output( "\tpop {r0-r3}\n" ); /* first 4 args are in registers */
+        output( "\tldr r5, [r4]\n");     /* table->ServiceTable */
+        output( "\tldr ip, [r5, ip, lsl #2]\n");
         output( "\tblx ip\n");
-        output( "\tmov ip, #0\n" );
+        output( "4:\tmov ip, #0\n" );
         output( "\tstr ip, [r7]\n" );
         output( "\tsub ip, r6, #40\n" );
         output( "\tmov sp, ip\n" );
         output( "\tpop {r4-r12,pc}\n" );
         output( "5:\tmovw r0, #0x%x\n", invalid_param & 0xffff );
         output( "\tmovt r0, #0x%x\n", invalid_param >> 16 );
-        output( "\tpop {r4-r12,pc}\n" );
+        output( "\tb 4b\n" );
         if (UsePIC)
-        {
-            output( "6:\t.long .Lsyscall_table-4b-%u\n", thumb_mode ? 4 : 8 );
-            output( "\t.long .Lsyscall_args-1b-%u\n", thumb_mode ? 4 : 8 );
-        }
+            output( "6:\t.long %s-1b-%u\n", asm_name("KeServiceDescriptorTable"), thumb_mode ? 4 : 8 );
         else
-        {
-            output( "6:\t.long .Lsyscall_table\n" );
-            output( "\t.long .Lsyscall_args\n" );
-        }
-        output( "\t.long %u\n", count );
+            output( "6:\t.long %s\n", asm_name("KeServiceDescriptorTable") );
         break;
     case CPU_ARM64:
-        output( "\tcmp x8, %u\n", count );
-        output( "\tbcs 3f\n" );
         output( "\tstp x29, x30, [sp,#-160]!\n" );
         output_cfi( "\t.cfi_def_cfa_offset 160\n" );
         output_cfi( "\t.cfi_offset 29, -160\n" );
@@ -1771,11 +1776,18 @@ static void output_syscall_dispatcher( int count, const char *variant )
         output( "\tstp x19, x20, [sp, #80]\n" );
         output_cfi( "\t.cfi_offset 19, -80\n" );
         output_cfi( "\t.cfi_offset 20, -72\n" );
+        output( "\tand x20, x8, #0xfff\n" );   /* syscall number */
+        output( "\tubfx x21, x8, #12, #2\n" ); /* syscall table number */
+        output( "\tadrp x16, %s\n", arm64_page(asm_name("KeServiceDescriptorTable")) );
+        output( "\tadd x16, x16, #%s\n", arm64_pageoff(asm_name("KeServiceDescriptorTable")) );
+        output( "\tadd x21, x16, x21, lsl #5\n" );
+        output( "\tldr x16, [x21, #16]\n" );   /* table->ServiceLimit */
+        output( "\tcmp x20, x16\n" );
+        output( "\tbcs 4f\n" );
         output( "\tstp x6, x7, [sp, #64]\n" );
         output( "\tstp x4, x5, [sp, #48]\n" );
         output( "\tstp x2, x3, [sp, #32]\n" );
         output( "\tstp x0, x1, [sp, #16]\n" );
-        output( "\tmov x20, x8\n" );
         output( "\tbl %s\n", asm_name("NtCurrentTeb") );
         output( "\tadd x19, x0, #0x2f8\n" );  /* arm64_thread_data()->syscall_frame */
         output( "\tstr x29, [x19]\n" );
@@ -1783,8 +1795,7 @@ static void output_syscall_dispatcher( int count, const char *variant )
         output( "\tldp x2, x3, [sp, #32]\n" );
         output( "\tldp x4, x5, [sp, #48]\n" );
         output( "\tldp x6, x7, [sp, #64]\n" );
-        output( "\tadrp x16, %s\n", arm64_page(".Lsyscall_args") );
-        output( "\tadd x16, x16, #%s\n", arm64_pageoff(".Lsyscall_args") );
+        output( "\tldr x16, [x21, #24]\n" );   /* table->ArgumentTable */
         output( "\tldrb w9, [x16, x20]\n" );
         output( "\tsubs x9, x9, #64\n" );
         output( "\tbls 2f\n" );
@@ -1796,22 +1807,21 @@ static void output_syscall_dispatcher( int count, const char *variant )
         output( "\tldr x10, [x11, x9]\n" );
         output( "\tstr x10, [sp, x9]\n" );
         output( "\tcbnz x9, 1b\n" );
-        output( "2:\tadrp x16, %s\n", arm64_page(".Lsyscall_table") );
-        output( "\tadd x16, x16, #%s\n", arm64_pageoff(".Lsyscall_table") );
+        output( "2:\tldr x16, [x21]\n" );      /* table->ServiceTable */
         output( "\tldr x16, [x16, x20, lsl 3]\n" );
         output( "\tblr x16\n" );
         output( "\tmov sp, x29\n" );
         output( "\tstr xzr, [x19]\n" );
-        output( "\tldp x19, x20, [sp, #80]\n" );
+        output( "3:\tldp x19, x20, [sp, #80]\n" );
         output( "\tldp x21, x22, [sp, #96]\n" );
         output( "\tldp x23, x24, [sp, #112]\n" );
         output( "\tldp x25, x26, [sp, #128]\n" );
         output( "\tldp x27, x28, [sp, #144]\n" );
         output( "\tldp x29, x30, [sp], #160\n" );
         output( "\tret\n" );
-        output( "3:\tmov x0, #0x%x\n", invalid_param & 0xffff0000 );
+        output( "4:\tmov x0, #0x%x\n", invalid_param & 0xffff0000 );
         output( "\tmovk x0, #0x%x\n", invalid_param & 0x0000ffff );
-        output( "\tret\n" );
+        output( "\tb 3b\n" );
         break;
     default:
         assert(0);
@@ -1842,25 +1852,29 @@ void output_syscalls( DLLSPEC *spec )
 
     if (unix_lib)
     {
-        output_syscall_dispatcher( count, "" );
+        output_syscall_dispatcher( "" );
 
         switch( target_cpu )
         {
         case CPU_x86:
-            output_syscall_dispatcher( count, "_fxsave" );
-            output_syscall_dispatcher( count, "_xsave" );
-            output_syscall_dispatcher( count, "_xsavec" );
+            output_syscall_dispatcher( "_fxsave" );
+            output_syscall_dispatcher( "_xsave" );
+            output_syscall_dispatcher( "_xsavec" );
             break;
         case CPU_x86_64:
-            output_syscall_dispatcher( count, "_xsave" );
-            output_syscall_dispatcher( count, "_xsavec" );
+            output_syscall_dispatcher( "_xsave" );
+            output_syscall_dispatcher( "_xsavec" );
             break;
         default:
             break;
         }
-
         output( "\t.data\n" );
         output( "\t.align %d\n", get_alignment( get_ptr_size() ) );
+        output( "%s\n", asm_globl("KeServiceDescriptorTable") );
+        output( "\t%s .Lsyscall_table, 0, %u, .Lsyscall_args\n", get_asm_ptr_keyword(), count );
+        output( "\t%s 0, 0, 0, 0\n", get_asm_ptr_keyword() );
+        output( "\t%s 0, 0, 0, 0\n", get_asm_ptr_keyword() );
+        output( "\t%s 0, 0, 0, 0\n", get_asm_ptr_keyword() );
         output( ".Lsyscall_table:\n" );
         for (i = 0; i < count; i++)
             output( "\t%s %s\n", get_asm_ptr_keyword(), asm_name( get_link_name( syscalls[i] )));
