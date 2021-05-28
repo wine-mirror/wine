@@ -245,17 +245,12 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysKeyboar
     SysKeyboardImpl* newDevice;
     LPDIDATAFORMAT df = NULL;
     int i, idx = 0;
+    HRESULT hr;
 
-    newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SysKeyboardImpl));
-    if (!newDevice) return DIERR_OUTOFMEMORY;
-
-    newDevice->base.IDirectInputDevice8A_iface.lpVtbl = &SysKeyboardAvt;
-    newDevice->base.IDirectInputDevice8W_iface.lpVtbl = &SysKeyboardWvt;
-    newDevice->base.ref = 1;
-    memcpy(&newDevice->base.guid, rguid, sizeof(*rguid));
-    newDevice->base.dinput = dinput;
-    InitializeCriticalSection(&newDevice->base.crit);
+    if (FAILED(hr = direct_input_device_alloc( sizeof(SysKeyboardImpl), &SysKeyboardWvt, &SysKeyboardAvt, rguid, dinput, (void **)&newDevice )))
+        return hr;
     newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysKeyboardImpl*->base.crit");
+
     newDevice->subtype = get_keyboard_subtype();
 
     /* Create copy of default data format */
@@ -278,7 +273,6 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysKeyboar
     df->dwNumObjs = idx;
 
     newDevice->base.data_format.wine_df = df;
-    IDirectInput_AddRef(&newDevice->base.dinput->IDirectInput7A_iface);
 
     *out = newDevice;
     return DI_OK;

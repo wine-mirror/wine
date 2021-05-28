@@ -451,15 +451,12 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, JoystickIm
     int i, idx = 0;
     int default_axis_map[WINE_JOYSTICK_MAX_AXES + WINE_JOYSTICK_MAX_POVS*2];
     DIDEVICEINSTANCEW ddi;
+    HRESULT hr;
 
-    newDevice = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(JoystickImpl));
-    if (!newDevice) return DIERR_OUTOFMEMORY;
+    if (FAILED(hr = direct_input_device_alloc( sizeof(JoystickImpl), &JoystickWvt, &JoystickAvt, rguid, dinput, (void **)&newDevice )))
+        return hr;
+    newDevice->generic.base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": JoystickImpl*->base.crit");
 
-    newDevice->generic.base.IDirectInputDevice8A_iface.lpVtbl = &JoystickAvt;
-    newDevice->generic.base.IDirectInputDevice8W_iface.lpVtbl = &JoystickWvt;
-    newDevice->generic.base.ref    = 1;
-    newDevice->generic.base.guid   = *rguid;
-    newDevice->generic.base.dinput = dinput;
     newDevice->generic.joy_polldev = joy_polldev;
     newDevice->joyfd       = -1;
     newDevice->joydev      = &joydevs[index];
@@ -473,8 +470,6 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, JoystickIm
        enabled. */
     newDevice->ff_autocenter = 1;
     newDevice->ff_gain = 0xFFFF;
-    InitializeCriticalSection(&newDevice->generic.base.crit);
-    newDevice->generic.base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": JoystickImpl*->base.crit");
 
     /* Count number of available axes - supported Axis & POVs */
     for (i = 0; i < ABS_MAX; i++)
@@ -581,8 +576,6 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, JoystickIm
 
     if (newDevice->joydev->has_ff)
         newDevice->generic.devcaps.dwFlags |= DIDC_FORCEFEEDBACK;
-
-    IDirectInput_AddRef(&newDevice->generic.base.dinput->IDirectInput7A_iface);
 
     *out = newDevice;
     return DI_OK;

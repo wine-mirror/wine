@@ -86,6 +86,10 @@ struct IDirectInputDeviceImpl
     ActionMap                  *action_map;  /* array of mappings */
 };
 
+extern HRESULT direct_input_device_alloc( SIZE_T size, const IDirectInputDevice8WVtbl *vtblw,
+                                          const IDirectInputDevice8AVtbl *vtbla, const GUID *guid,
+                                          IDirectInputImpl *dinput, void **out ) DECLSPEC_HIDDEN;
+
 extern BOOL get_app_key(HKEY*, HKEY*) DECLSPEC_HIDDEN;
 extern DWORD get_config_key(HKEY, HKEY, const char*, char*, DWORD) DECLSPEC_HIDDEN;
 

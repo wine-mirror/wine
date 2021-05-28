@@ -1703,3 +1703,23 @@ HRESULT WINAPI IDirectInputDevice8WImpl_GetImageInfo(LPDIRECTINPUTDEVICE8W iface
     
     return DI_OK;
 }
+
+HRESULT direct_input_device_alloc( SIZE_T size, const IDirectInputDevice8WVtbl *vtblw,
+                                   const IDirectInputDevice8AVtbl *vtbla, const GUID *guid,
+                                   IDirectInputImpl *dinput, void **out )
+{
+    IDirectInputDeviceImpl *This;
+
+    if (!(This = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size ))) return DIERR_OUTOFMEMORY;
+
+    This->IDirectInputDevice8A_iface.lpVtbl = vtbla;
+    This->IDirectInputDevice8W_iface.lpVtbl = vtblw;
+    This->ref = 1;
+    This->guid = *guid;
+    InitializeCriticalSection( &This->crit );
+    This->dinput = dinput;
+    IDirectInput_AddRef( &dinput->IDirectInput7A_iface );
+
+    *out = This;
+    return DI_OK;
+}

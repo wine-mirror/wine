@@ -191,18 +191,13 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysMouseIm
     unsigned i;
     char buffer[20];
     HKEY hkey, appkey;
+    HRESULT hr;
 
-    newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SysMouseImpl));
-    if (!newDevice) return DIERR_OUTOFMEMORY;
-
-    newDevice->base.IDirectInputDevice8A_iface.lpVtbl = &SysMouseAvt;
-    newDevice->base.IDirectInputDevice8W_iface.lpVtbl = &SysMouseWvt;
-    newDevice->base.ref = 1;
-    newDevice->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
-    newDevice->base.guid = *rguid;
-    InitializeCriticalSection(&newDevice->base.crit);
+    if (FAILED(hr = direct_input_device_alloc( sizeof(SysMouseImpl), &SysMouseWvt, &SysMouseAvt, rguid, dinput, (void **)&newDevice )))
+        return hr;
     newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysMouseImpl*->base.crit");
-    newDevice->base.dinput = dinput;
+
+    newDevice->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
 
     get_app_key(&hkey, &appkey);
     if (!get_config_key(hkey, appkey, "MouseWarpOverride", buffer, sizeof(buffer)))
@@ -229,8 +224,6 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysMouseIm
             df->rgodf[i].dwType = DIDFT_MAKEINSTANCE(i) | DIDFT_PSHBUTTON;
 
     newDevice->base.data_format.wine_df = df;
-    IDirectInput_AddRef(&newDevice->base.dinput->IDirectInput7A_iface);
-
     if (dinput->dwVersion >= 0x0800)
     {
         newDevice->base.use_raw_input = TRUE;

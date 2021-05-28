@@ -1120,8 +1120,9 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, JoystickIm
 
     TRACE( "%s %p %p %hu\n", debugstr_guid( rguid ), dinput, out, index );
 
-    newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(JoystickImpl));
-    if (!newDevice) return DIERR_OUTOFMEMORY;
+    if (FAILED(hr = direct_input_device_alloc( sizeof(JoystickImpl), &JoystickWvt, &JoystickAvt, rguid, dinput, (void **)&newDevice )))
+        return hr;
+    newDevice->generic.base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": JoystickImpl*->generic.base.crit");
 
     newDevice->id = index;
 
@@ -1182,14 +1183,6 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, JoystickIm
         WARN("Can't support %d buttons. Clamping down to 128\n", newDevice->generic.devcaps.dwButtons);
         newDevice->generic.devcaps.dwButtons = 128;
     }
-
-    newDevice->generic.base.IDirectInputDevice8A_iface.lpVtbl = &JoystickAvt;
-    newDevice->generic.base.IDirectInputDevice8W_iface.lpVtbl = &JoystickWvt;
-    newDevice->generic.base.ref = 1;
-    newDevice->generic.base.dinput = dinput;
-    newDevice->generic.base.guid = *rguid;
-    InitializeCriticalSection(&newDevice->generic.base.crit);
-    newDevice->generic.base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": JoystickImpl*->generic.base.crit");
 
     /* Create copy of default data format */
     if (!(df = HeapAlloc(GetProcessHeap(), 0, c_dfDIJoystick2.dwSize))) goto FAILED;
@@ -1261,8 +1254,6 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, JoystickIm
 
     /* initialize default properties */
     get_osx_device_elements_props(newDevice);
-
-    IDirectInput_AddRef(&newDevice->generic.base.dinput->IDirectInput7A_iface);
 
     newDevice->generic.devcaps.dwSize = sizeof(newDevice->generic.devcaps);
     newDevice->generic.devcaps.dwFlags |= DIDC_ATTACHED;
