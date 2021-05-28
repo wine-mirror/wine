@@ -49,6 +49,7 @@ struct IDirectInputImpl
     struct list                 device_players; /* device instance guid to player name */
 };
 
+extern const IDirectInput7AVtbl dinput7_a_vtbl DECLSPEC_HIDDEN;
 extern const IDirectInput8AVtbl dinput8_a_vtbl DECLSPEC_HIDDEN;
 
 /* Function called by all devices that Wine supports */
