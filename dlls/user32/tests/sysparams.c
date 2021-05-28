@@ -1500,7 +1500,7 @@ static void test_SPI_SETNONCLIENTMETRICS( void )               /*     44 */
     /* SPI_GETNONCLIENTMETRICS returns some "cooked" values. For instance if 
        the caption font height is higher than the CaptionHeight field,
        the latter is adjusted accordingly. To be able to restore these setting
-       accurately be restore the raw values. */
+       accurately we restore the raw values. */
     Ncmorig.iCaptionWidth = metricfromreg( SPI_METRIC_REGKEY, SPI_CAPTIONWIDTH_VALNAME, real_dpi);
     Ncmorig.iCaptionHeight = metricfromreg( SPI_METRIC_REGKEY, SPI_CAPTIONHEIGHT_VALNAME, dpi);
     Ncmorig.iSmCaptionHeight = metricfromreg( SPI_METRIC_REGKEY, SPI_SMCAPTIONHEIGHT_VALNAME, dpi);
