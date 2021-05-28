@@ -817,6 +817,27 @@ static const struct IXMLDOMProcessingInstructionVtbl dom_pi_vtbl =
     dom_pi_put_data
 };
 
+static xmlAttrPtr node_has_prop(const xmlNode *node, const xmlChar *name)
+{
+    xmlAttrPtr prop;
+
+    /* xmlHasNsProp accepts only nodes of type XML_ELEMENT_NODE,
+     * so we have to look for an attribute in the node by hand.
+     */
+
+    prop = node->properties;
+
+    while (prop)
+    {
+        if (xmlStrEqual(prop->name, name))
+            return prop;
+
+        prop = prop->next;
+    }
+
+    return NULL;
+}
+
 static HRESULT dom_pi_get_qualified_item(const xmlNodePtr node, BSTR name, BSTR uri,
     IXMLDOMNode **item)
 {
@@ -826,10 +847,28 @@ static HRESULT dom_pi_get_qualified_item(const xmlNodePtr node, BSTR name, BSTR 
 
 static HRESULT dom_pi_get_named_item(const xmlNodePtr node, BSTR name, IXMLDOMNode **item)
 {
-    FIXME("(%p)->(%s %p): stub\n", node, debugstr_w(name), item );
-    if (item)
+    xmlChar *nameA;
+    xmlAttrPtr attr;
+
+    TRACE("(%p)->(%s %p)\n", node, debugstr_w(name), item);
+
+    if (!item) return E_POINTER;
+
+    nameA = xmlchar_from_wchar(name);
+    if (!nameA) return E_OUTOFMEMORY;
+
+    attr = node_has_prop(node, nameA);
+    heap_free(nameA);
+
+    if (!attr)
+    {
         *item = NULL;
-    return S_FALSE;
+        return S_FALSE;
+    }
+
+    *item = create_node((xmlNodePtr)attr);
+
+    return S_OK;
 }
 
 static HRESULT dom_pi_set_named_item(xmlNodePtr node, IXMLDOMNode *newItem, IXMLDOMNode **namedItem)

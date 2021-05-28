@@ -8579,13 +8579,9 @@ todo_wine
 
     item = NULL;
     hr = IXMLDOMNamedNodeMap_getNamedItem(node_map, _bstr_("encoding"), &item);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
     ok(item != NULL, "got NULL\n");
 
-if (hr == S_OK)
-{
     hr = IXMLDOMNode_get_nodeName(item, &bstr);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!lstrcmpW(bstr, L"encoding"), "got %s\n", wine_dbgstr_w(bstr));
@@ -8597,7 +8593,6 @@ if (hr == S_OK)
     ok(V_VT(&var) == VT_BSTR, "got %u\n", V_VT(&var));
     ok(!lstrcmpW(V_BSTR(&var), L"windows-1252"), "got %s\n", wine_dbgstr_w(V_BSTR(&var)));
     VariantClear(&var);
-}
 
     IXMLDOMNamedNodeMap_Release(node_map);
     IXMLDOMNode_Release(node);
