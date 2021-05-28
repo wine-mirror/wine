@@ -1124,6 +1124,15 @@ static NTSTATUS CDECL init_unix_lib( void *module, DWORD reason, const void *ptr
 
 
 /***********************************************************************
+ *           __wine_unix_call
+ */
+NTSTATUS CDECL __wine_unix_call( UINT64 handle, unsigned int code, void *args )
+{
+    return ((unixlib_entry_t*)(UINT_PTR)handle)[code]( args );
+}
+
+
+/***********************************************************************
  *           load_so_dll
  */
 static NTSTATUS CDECL load_so_dll( UNICODE_STRING *nt_name, void **module )
