@@ -2187,7 +2187,7 @@ static void test_espassword(void)
     ok(strcmp(buffer, password) == 0, "expected %s, got %s\n", password, buffer);
 
     r = OpenClipboard(hwEdit);
-    ok(r == TRUE, "expected %d, got %d\n", TRUE, r);
+    ok(r == TRUE, "expected %d, got %d le=%u\n", TRUE, r, GetLastError());
     r = EmptyClipboard();
     ok(r == TRUE, "expected %d, got %d\n", TRUE, r);
     r = CloseClipboard();
@@ -3190,7 +3190,7 @@ static void test_paste(void)
     GlobalUnlock(hmem);
 
     r = OpenClipboard(hEdit);
-    ok(r == TRUE, "expected %d, got %d\n", TRUE, r);
+    ok(r == TRUE, "expected %d, got %d le=%u\n", TRUE, r, GetLastError());
     r = EmptyClipboard();
     ok(r == TRUE, "expected %d, got %d\n", TRUE, r);
     hmem_ret = SetClipboardData(CF_TEXT, hmem);
@@ -3213,7 +3213,7 @@ static void test_paste(void)
     GlobalUnlock(hmem);
 
     r = OpenClipboard(hEdit);
-    ok(r == TRUE, "expected %d, got %d\n", TRUE, r);
+    ok(r == TRUE, "expected %d, got %d le=%u\n", TRUE, r, GetLastError());
     r = EmptyClipboard();
     ok(r == TRUE, "expected %d, got %d\n", TRUE, r);
     hmem_ret = SetClipboardData(CF_TEXT, hmem);
