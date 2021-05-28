@@ -1137,6 +1137,8 @@ static HRESULT media_item_create_topology(struct media_player *player, struct me
         IMFStreamDescriptor_Release(sd);
     }
 
+    IMFTopology_SetUINT32(topology, &MF_TOPOLOGY_ENUMERATE_SOURCE_TYPES, TRUE);
+
     *out = topology;
 
     return S_OK;
