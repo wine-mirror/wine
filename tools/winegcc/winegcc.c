@@ -1083,14 +1083,27 @@ static const char *find_libgcc(const strarray *prefix, const strarray *link_tool
 /* add specified library to the list of files */
 static void add_library( struct options *opts, strarray *lib_dirs, strarray *files, const char *library )
 {
-    char *static_lib, *fullname = 0;
+    char *static_lib, *fullname = 0, *unixlib;
 
-    switch(get_lib_type(opts->target_platform, lib_dirs, library, opts->lib_suffix, &fullname))
+    switch(get_lib_type(opts->target_platform, lib_dirs, library, "lib", opts->lib_suffix, &fullname))
     {
     case file_arh:
         strarray_add(files, strmake("-a%s", fullname));
         break;
     case file_dll:
+        if (opts->unix_lib && opts->subsystem && !strcmp(opts->subsystem, "native"))
+        {
+            if (get_lib_type(opts->target_platform, lib_dirs, library, "", ".so", &unixlib) == file_so)
+            {
+                strarray_add(files, strmake("-s%s", unixlib));
+                free(unixlib);
+            }
+            else
+            {
+                strarray_add(files, strmake("-l%s", library));
+            }
+            break;
+        }
         strarray_add(files, strmake("-d%s", fullname));
         if ((static_lib = find_static_lib(fullname)))
         {
@@ -1266,7 +1279,7 @@ static void build(struct options* opts)
     /* set default entry point, if needed */
     if (!opts->entry_point)
     {
-        if (opts->subsystem && !strcmp( opts->subsystem, "native" ))
+        if (opts->subsystem && !opts->unix_lib && !strcmp( opts->subsystem, "native" ))
             entry_point = (is_pe && opts->target_cpu == CPU_x86) ? "DriverEntry@8" : "DriverEntry";
         else if (opts->use_msvcrt && !opts->shared && !opts->win16_app)
             entry_point = opts->unicode_app ? "wmainCRTStartup" : "mainCRTStartup";
