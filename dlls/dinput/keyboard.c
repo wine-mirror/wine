@@ -40,7 +40,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 #define WINE_DINPUT_KEYBOARD_MAX_KEYS 256
 
-static const IDirectInputDevice8AVtbl SysKeyboardAvt;
 static const IDirectInputDevice8WVtbl SysKeyboardWvt;
 
 typedef struct SysKeyboardImpl SysKeyboardImpl;
@@ -247,7 +246,7 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysKeyboar
     int i, idx = 0;
     HRESULT hr;
 
-    if (FAILED(hr = direct_input_device_alloc( sizeof(SysKeyboardImpl), &SysKeyboardWvt, &SysKeyboardAvt, rguid, dinput, (void **)&newDevice )))
+    if (FAILED(hr = direct_input_device_alloc( sizeof(SysKeyboardImpl), &SysKeyboardWvt, rguid, dinput, (void **)&newDevice )))
         return hr;
     newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SysKeyboardImpl*->base.crit");
 
@@ -557,42 +556,6 @@ static HRESULT WINAPI SysKeyboardWImpl_SetActionMap(LPDIRECTINPUTDEVICE8W iface,
 
     return _set_action_map(iface, lpdiaf, lpszUserName, dwFlags, &c_dfDIKeyboard);
 }
-
-static const IDirectInputDevice8AVtbl SysKeyboardAvt =
-{
-    IDirectInputDevice2AImpl_QueryInterface,
-    IDirectInputDevice2AImpl_AddRef,
-    IDirectInputDevice2AImpl_Release,
-    IDirectInputDevice2AImpl_GetCapabilities,
-    IDirectInputDevice2AImpl_EnumObjects,
-    IDirectInputDevice2AImpl_GetProperty,
-    IDirectInputDevice2AImpl_SetProperty,
-    IDirectInputDevice2AImpl_Acquire,
-    IDirectInputDevice2AImpl_Unacquire,
-    IDirectInputDevice2AImpl_GetDeviceState,
-    IDirectInputDevice2AImpl_GetDeviceData,
-    IDirectInputDevice2AImpl_SetDataFormat,
-    IDirectInputDevice2AImpl_SetEventNotification,
-    IDirectInputDevice2AImpl_SetCooperativeLevel,
-    IDirectInputDevice2AImpl_GetObjectInfo,
-    IDirectInputDevice2AImpl_GetDeviceInfo,
-    IDirectInputDevice2AImpl_RunControlPanel,
-    IDirectInputDevice2AImpl_Initialize,
-    IDirectInputDevice2AImpl_CreateEffect,
-    IDirectInputDevice2AImpl_EnumEffects,
-    IDirectInputDevice2AImpl_GetEffectInfo,
-    IDirectInputDevice2AImpl_GetForceFeedbackState,
-    IDirectInputDevice2AImpl_SendForceFeedbackCommand,
-    IDirectInputDevice2AImpl_EnumCreatedEffectObjects,
-    IDirectInputDevice2AImpl_Escape,
-    IDirectInputDevice2AImpl_Poll,
-    IDirectInputDevice2AImpl_SendDeviceData,
-    IDirectInputDevice7AImpl_EnumEffectsInFile,
-    IDirectInputDevice7AImpl_WriteEffectToFile,
-    IDirectInputDevice8AImpl_BuildActionMap,
-    IDirectInputDevice8AImpl_SetActionMap,
-    IDirectInputDevice8AImpl_GetImageInfo
-};
 
 static const IDirectInputDevice8WVtbl SysKeyboardWvt =
 {

@@ -101,7 +101,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 static CFMutableArrayRef device_main_elements = NULL;
 
 typedef struct JoystickImpl JoystickImpl;
-static const IDirectInputDevice8AVtbl JoystickAvt;
 static const IDirectInputDevice8WVtbl JoystickWvt;
 
 struct JoystickImpl
@@ -1120,7 +1119,7 @@ static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, JoystickIm
 
     TRACE( "%s %p %p %hu\n", debugstr_guid( rguid ), dinput, out, index );
 
-    if (FAILED(hr = direct_input_device_alloc( sizeof(JoystickImpl), &JoystickWvt, &JoystickAvt, rguid, dinput, (void **)&newDevice )))
+    if (FAILED(hr = direct_input_device_alloc( sizeof(JoystickImpl), &JoystickWvt, rguid, dinput, (void **)&newDevice )))
         return hr;
     newDevice->generic.base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": JoystickImpl*->generic.base.crit");
 
@@ -1551,42 +1550,6 @@ const struct dinput_device joystick_osx_device = {
   joydev_enum_deviceA,
   joydev_enum_deviceW,
   joydev_create_device
-};
-
-static const IDirectInputDevice8AVtbl JoystickAvt =
-{
-    IDirectInputDevice2AImpl_QueryInterface,
-    IDirectInputDevice2AImpl_AddRef,
-    IDirectInputDevice2AImpl_Release,
-    IDirectInputDevice2AImpl_GetCapabilities,
-    IDirectInputDevice2AImpl_EnumObjects,
-    IDirectInputDevice2AImpl_GetProperty,
-    IDirectInputDevice2AImpl_SetProperty,
-    IDirectInputDevice2AImpl_Acquire,
-    IDirectInputDevice2AImpl_Unacquire,
-    IDirectInputDevice2AImpl_GetDeviceState,
-    IDirectInputDevice2AImpl_GetDeviceData,
-    IDirectInputDevice2AImpl_SetDataFormat,
-    IDirectInputDevice2AImpl_SetEventNotification,
-    IDirectInputDevice2AImpl_SetCooperativeLevel,
-    IDirectInputDevice2AImpl_GetObjectInfo,
-    IDirectInputDevice2AImpl_GetDeviceInfo,
-    IDirectInputDevice2AImpl_RunControlPanel,
-    IDirectInputDevice2AImpl_Initialize,
-    IDirectInputDevice2AImpl_CreateEffect,
-    IDirectInputDevice2AImpl_EnumEffects,
-    IDirectInputDevice2AImpl_GetEffectInfo,
-    IDirectInputDevice2AImpl_GetForceFeedbackState,
-    IDirectInputDevice2AImpl_SendForceFeedbackCommand,
-    IDirectInputDevice2AImpl_EnumCreatedEffectObjects,
-    IDirectInputDevice2AImpl_Escape,
-    IDirectInputDevice2AImpl_Poll,
-    IDirectInputDevice2AImpl_SendDeviceData,
-    IDirectInputDevice7AImpl_EnumEffectsInFile,
-    IDirectInputDevice7AImpl_WriteEffectToFile,
-    IDirectInputDevice8AImpl_BuildActionMap,
-    IDirectInputDevice8AImpl_SetActionMap,
-    IDirectInputDevice8AImpl_GetImageInfo
 };
 
 static const IDirectInputDevice8WVtbl JoystickWvt =
