@@ -286,7 +286,7 @@ static void test_QueryInterface(void)
 
     IDirectInputA *pDI;
     HRESULT hr;
-    IUnknown *pUnk;
+    IUnknown *pUnk, *iface, *tmp_iface;
     int i;
 
     hr = DirectInputCreateA(hInstance, DIRECTINPUT_VERSION, &pDI, NULL);
@@ -323,6 +323,34 @@ static void test_QueryInterface(void)
         ok(hr == E_NOINTERFACE, "[%d] IDirectInput_QueryInterface returned 0x%08x\n", i, hr);
         ok(pUnk == NULL, "[%d] Output interface pointer is %p\n", i, pUnk);
     }
+
+    hr = IUnknown_QueryInterface( pDI, &IID_IDirectInputA, (void **)&iface );
+    ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputA) failed: %08x\n", hr );
+    hr = IUnknown_QueryInterface( pDI, &IID_IDirectInput2A, (void **)&tmp_iface );
+    ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInput2A) failed: %08x\n", hr );
+    ok( tmp_iface == iface, "IID_IDirectInput2A iface differs from IID_IDirectInputA\n" );
+    IUnknown_Release( tmp_iface );
+    hr = IUnknown_QueryInterface( pDI, &IID_IDirectInput7A, (void **)&tmp_iface );
+    ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInput7A) failed: %08x\n", hr );
+    ok( tmp_iface == iface, "IID_IDirectInput7A iface differs from IID_IDirectInputA\n" );
+    IUnknown_Release( tmp_iface );
+    IUnknown_Release( iface );
+
+    hr = IUnknown_QueryInterface( pDI, &IID_IUnknown, (void **)&iface );
+    ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IUnknown) failed: %08x\n", hr );
+    hr = IUnknown_QueryInterface( pDI, &IID_IDirectInputW, (void **)&tmp_iface );
+    ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInputW) failed: %08x\n", hr );
+    ok( tmp_iface == iface, "IID_IDirectInputW iface differs from IID_IUnknown\n" );
+    IUnknown_Release( tmp_iface );
+    hr = IUnknown_QueryInterface( pDI, &IID_IDirectInput2W, (void **)&tmp_iface );
+    ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInput2W) failed: %08x\n", hr );
+    ok( tmp_iface == iface, "IID_IDirectInput2W iface differs from IID_IUnknown\n" );
+    IUnknown_Release( tmp_iface );
+    hr = IUnknown_QueryInterface( pDI, &IID_IDirectInput7W, (void **)&tmp_iface );
+    ok( SUCCEEDED(hr), "IUnknown_QueryInterface(IID_IDirectInput7W) failed: %08x\n", hr );
+    ok( tmp_iface == iface, "IID_IDirectInput7W iface differs from IID_IUnknown\n" );
+    IUnknown_Release( tmp_iface );
+    IUnknown_Release( iface );
 
     IDirectInput_Release(pDI);
 }
