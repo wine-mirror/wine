@@ -564,7 +564,7 @@ UINT WINAPI DECLSPEC_HOTPATCH GetRawInputBuffer(RAWINPUT *data, UINT *data_size,
     struct hardware_msg_data *msg_data;
     struct rawinput_thread_data *thread_data;
     RAWINPUT *rawinput;
-    UINT count = 0, rawinput_size, next_size, overhead;
+    UINT count = 0, remaining, rawinput_size, next_size, overhead;
     BOOL is_wow64;
     int i;
 
@@ -617,12 +617,15 @@ UINT WINAPI DECLSPEC_HOTPATCH GetRawInputBuffer(RAWINPUT *data, UINT *data_size,
     }
     SERVER_END_REQ;
 
+    remaining = *data_size;
     for (i = 0; i < count; ++i)
     {
-        rawinput_from_hardware_message(data, msg_data);
+        data->header.dwSize = remaining;
+        if (!rawinput_from_hardware_message(data, msg_data)) break;
         if (overhead) memmove((char *)&data->data + overhead, &data->data,
                               data->header.dwSize - sizeof(RAWINPUTHEADER));
         data->header.dwSize += overhead;
+        remaining -= data->header.dwSize;
         data = NEXTRAWINPUTBLOCK(data);
         msg_data = (struct hardware_msg_data *)((char *)msg_data + msg_data->size);
     }
