@@ -184,7 +184,7 @@ static HRESULT mousedev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEI
     return S_FALSE;
 }
 
-static SysMouseImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput)
+static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysMouseImpl **out )
 {
     SysMouseImpl* newDevice;
     LPDIDATAFORMAT df = NULL;
@@ -193,7 +193,8 @@ static SysMouseImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput)
     HKEY hkey, appkey;
 
     newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SysMouseImpl));
-    if (!newDevice) return NULL;
+    if (!newDevice) return DIERR_OUTOFMEMORY;
+
     newDevice->base.IDirectInputDevice8A_iface.lpVtbl = &SysMouseAvt;
     newDevice->base.IDirectInputDevice8W_iface.lpVtbl = &SysMouseWvt;
     newDevice->base.ref = 1;
@@ -237,13 +238,14 @@ static SysMouseImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput)
         newDevice->base.raw_device.usUsage = 2; /* HID generic mouse */
     }
 
-    return newDevice;
+    *out = newDevice;
+    return DI_OK;
 
 failed:
     if (df) HeapFree(GetProcessHeap(), 0, df->rgodf);
     HeapFree(GetProcessHeap(), 0, df);
     HeapFree(GetProcessHeap(), 0, newDevice);
-    return NULL;
+    return DIERR_OUTOFMEMORY;
 }
 
 static HRESULT mousedev_create_device(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPVOID *pdev, int unicode)
@@ -254,6 +256,7 @@ static HRESULT mousedev_create_device(IDirectInputImpl *dinput, REFGUID rguid, R
     if (IsEqualGUID(&GUID_SysMouse, rguid)) /* Wine Mouse */
     {
         SysMouseImpl *This;
+        HRESULT hr;
 
         if (riid == NULL)
             ;/* nothing */
@@ -277,10 +280,9 @@ static HRESULT mousedev_create_device(IDirectInputImpl *dinput, REFGUID rguid, R
             return DIERR_NOINTERFACE;
         }
 
-        This = alloc_device(rguid, dinput);
-        TRACE("Created a Mouse device (%p)\n", This);
+        if (FAILED(hr = alloc_device( rguid, dinput, &This ))) return hr;
 
-        if (!This) return DIERR_OUTOFMEMORY;
+        TRACE( "Created a Mouse device (%p)\n", This );
 
         if (unicode)
             *pdev = &This->base.IDirectInputDevice8W_iface;

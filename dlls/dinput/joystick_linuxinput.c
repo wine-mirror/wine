@@ -444,7 +444,7 @@ static HRESULT joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINS
   return S_FALSE;
 }
 
-static JoystickImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput, unsigned short index)
+static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, JoystickImpl **out, unsigned short index )
 {
     JoystickImpl* newDevice;
     LPDIDATAFORMAT df = NULL;
@@ -453,7 +453,7 @@ static JoystickImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput, unsig
     DIDEVICEINSTANCEW ddi;
 
     newDevice = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(JoystickImpl));
-    if (!newDevice) return NULL;
+    if (!newDevice) return DIERR_OUTOFMEMORY;
 
     newDevice->generic.base.IDirectInputDevice8A_iface.lpVtbl = &JoystickAvt;
     newDevice->generic.base.IDirectInputDevice8W_iface.lpVtbl = &JoystickWvt;
@@ -584,14 +584,15 @@ static JoystickImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput, unsig
 
     IDirectInput_AddRef(&newDevice->generic.base.dinput->IDirectInput7A_iface);
 
-    return newDevice;
+    *out = newDevice;
+    return DI_OK;
 
 failed:
     if (df) HeapFree(GetProcessHeap(), 0, df->rgodf);
     HeapFree(GetProcessHeap(), 0, df);
     HeapFree(GetProcessHeap(), 0, newDevice->generic.axis_map);
     HeapFree(GetProcessHeap(), 0, newDevice);
-    return NULL;
+    return DIERR_OUTOFMEMORY;
 }
 
 /******************************************************************************
@@ -630,6 +631,7 @@ static HRESULT joydev_create_device(IDirectInputImpl *dinput, REFGUID rguid, REF
         have_joydevs && index < have_joydevs)
     {
         JoystickImpl *This;
+        HRESULT hr;
 
         if (riid == NULL)
             ;/* nothing */
@@ -653,10 +655,9 @@ static HRESULT joydev_create_device(IDirectInputImpl *dinput, REFGUID rguid, REF
             return DIERR_NOINTERFACE;
         }
 
-        This = alloc_device(rguid, dinput, index);
-        TRACE("Created a Joystick device (%p)\n", This);
+        if (FAILED(hr = alloc_device( rguid, dinput, &This, index ))) return hr;
 
-        if (!This) return DIERR_OUTOFMEMORY;
+        TRACE( "Created a Joystick device (%p)\n", This );
 
         if (unicode)
             *pdev = &This->generic.base.IDirectInputDevice8W_iface;

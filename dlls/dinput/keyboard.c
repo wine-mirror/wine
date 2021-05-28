@@ -240,13 +240,15 @@ static HRESULT keyboarddev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVI
   return S_FALSE;
 }
 
-static SysKeyboardImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput)
+static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, SysKeyboardImpl **out )
 {
     SysKeyboardImpl* newDevice;
     LPDIDATAFORMAT df = NULL;
     int i, idx = 0;
 
     newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SysKeyboardImpl));
+    if (!newDevice) return DIERR_OUTOFMEMORY;
+
     newDevice->base.IDirectInputDevice8A_iface.lpVtbl = &SysKeyboardAvt;
     newDevice->base.IDirectInputDevice8W_iface.lpVtbl = &SysKeyboardWvt;
     newDevice->base.ref = 1;
@@ -278,13 +280,14 @@ static SysKeyboardImpl *alloc_device(REFGUID rguid, IDirectInputImpl *dinput)
     newDevice->base.data_format.wine_df = df;
     IDirectInput_AddRef(&newDevice->base.dinput->IDirectInput7A_iface);
 
-    return newDevice;
+    *out = newDevice;
+    return DI_OK;
 
 failed:
     if (df) HeapFree(GetProcessHeap(), 0, df->rgodf);
     HeapFree(GetProcessHeap(), 0, df);
     HeapFree(GetProcessHeap(), 0, newDevice);
-    return NULL;
+    return DIERR_OUTOFMEMORY;
 }
 
 
@@ -296,6 +299,7 @@ static HRESULT keyboarddev_create_device(IDirectInputImpl *dinput, REFGUID rguid
     if (IsEqualGUID(&GUID_SysKeyboard, rguid)) /* Wine Keyboard */
     {
         SysKeyboardImpl *This;
+        HRESULT hr;
 
         if (riid == NULL)
             ;/* nothing */
@@ -319,10 +323,9 @@ static HRESULT keyboarddev_create_device(IDirectInputImpl *dinput, REFGUID rguid
             return DIERR_NOINTERFACE;
         }
 
-        This = alloc_device(rguid, dinput);
-        TRACE("Created a Keyboard device (%p)\n", This);
+        if (FAILED(hr = alloc_device( rguid, dinput, &This ))) return hr;
 
-        if (!This) return DIERR_OUTOFMEMORY;
+        TRACE( "Created a Keyboard device (%p)\n", This );
 
         if (unicode)
             *pdev = &This->base.IDirectInputDevice8W_iface;

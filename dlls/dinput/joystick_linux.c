@@ -451,8 +451,7 @@ static HRESULT joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINS
     return S_FALSE;
 }
 
-static HRESULT alloc_device(REFGUID rguid, IDirectInputImpl *dinput,
-                            JoystickImpl **pdev, unsigned short index)
+static HRESULT alloc_device( REFGUID rguid, IDirectInputImpl *dinput, JoystickImpl **out, unsigned short index )
 {
     DWORD i;
     JoystickImpl* newDevice;
@@ -461,14 +460,10 @@ static HRESULT alloc_device(REFGUID rguid, IDirectInputImpl *dinput,
     int idx = 0;
     DIDEVICEINSTANCEW ddi;
 
-    TRACE("%s %p %p %hu\n", debugstr_guid(rguid), dinput, pdev, index);
+    TRACE( "%s %p %p %hu\n", debugstr_guid( rguid ), dinput, out, index );
 
     newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(JoystickImpl));
-    if (newDevice == 0) {
-        WARN("out of memory\n");
-        *pdev = 0;
-        return DIERR_OUTOFMEMORY;
-    }
+    if (!newDevice) return DIERR_OUTOFMEMORY;
 
     newDevice->joydev = &joystick_devices[index];
     newDevice->joyfd = -1;
@@ -564,8 +559,7 @@ static HRESULT alloc_device(REFGUID rguid, IDirectInputImpl *dinput,
         _dump_DIDEVCAPS(&newDevice->generic.devcaps);
     }
 
-    *pdev = newDevice;
-
+    *out = newDevice;
     return DI_OK;
 
 FAILED:
@@ -576,8 +570,6 @@ FAILED1:
     release_DataFormat(&newDevice->generic.base.data_format);
     HeapFree(GetProcessHeap(),0,newDevice->generic.axis_map);
     HeapFree(GetProcessHeap(),0,newDevice);
-    *pdev = 0;
-
     return hr;
 }
 
@@ -641,8 +633,9 @@ static HRESULT joydev_create_device(IDirectInputImpl *dinput, REFGUID rguid, REF
             return DIERR_NOINTERFACE;
         }
 
-        hr = alloc_device(rguid, dinput, &This, index);
-        if (!This) return hr;
+        if (FAILED(hr = alloc_device( rguid, dinput, &This, index ))) return hr;
+
+        TRACE( "Created a Joystick device (%p)\n", This );
 
         if (unicode)
             *pdev = &This->generic.base.IDirectInputDevice8W_iface;
