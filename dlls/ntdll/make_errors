@@ -246,7 +246,7 @@ my %error_map = qw(
     STATUS_INVALID_CID                                  ERROR_INVALID_PARAMETER
     STATUS_TIMER_NOT_CANCELED                           ERROR_TIMER_NOT_CANCELED
     STATUS_INVALID_PARAMETER                            ERROR_INVALID_PARAMETER
-    STATUS_NO_SUCH_DEVICE                               ERROR_FILE_NOT_FOUND
+    STATUS_NO_SUCH_DEVICE                               ERROR_NO_SUCH_DEVICE
     STATUS_NO_SUCH_FILE                                 ERROR_FILE_NOT_FOUND
     STATUS_INVALID_DEVICE_REQUEST                       ERROR_INVALID_FUNCTION
     STATUS_END_OF_FILE                                  ERROR_HANDLE_EOF
