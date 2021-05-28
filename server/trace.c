@@ -436,6 +436,7 @@ static void dump_hw_input( const char *prefix, const hw_input_t *input )
         dump_uint64( ",lparam=", &input->hw.lparam );
         switch (input->hw.msg)
         {
+        case WM_INPUT:
         case WM_INPUT_DEVICE_CHANGE:
             dump_rawinput( ",rawinput=", &input->hw.rawinput );
         }

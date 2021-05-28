@@ -267,6 +267,21 @@ static struct device *find_device_from_handle(HANDLE handle)
 }
 
 
+BOOL rawinput_device_get_usages(HANDLE handle, USAGE *usage_page, USAGE *usage)
+{
+    struct device *device;
+
+    *usage_page = *usage = 0;
+
+    if (!(device = find_device_from_handle(handle))) return FALSE;
+    if (device->info.dwType != RIM_TYPEHID) return FALSE;
+
+    *usage_page = device->info.u.hid.usUsagePage;
+    *usage = device->info.u.hid.usUsage;
+    return TRUE;
+}
+
+
 struct rawinput_thread_data *rawinput_thread_data(void)
 {
     struct user_thread_info *thread_info = get_user_thread_info();
@@ -280,6 +295,8 @@ struct rawinput_thread_data *rawinput_thread_data(void)
 
 BOOL rawinput_from_hardware_message(RAWINPUT *rawinput, const struct hardware_msg_data *msg_data)
 {
+    SIZE_T size;
+
     rawinput->header.dwType = msg_data->rawinput.type;
     if (msg_data->rawinput.type == RIM_TYPEMOUSE)
     {
@@ -370,6 +387,19 @@ BOOL rawinput_from_hardware_message(RAWINPUT *rawinput, const struct hardware_ms
 
         rawinput->data.keyboard.Message          = msg_data->rawinput.kbd.message;
         rawinput->data.keyboard.ExtraInformation = msg_data->info;
+    }
+    else if (msg_data->rawinput.type == RIM_TYPEHID)
+    {
+        size = msg_data->size - sizeof(*msg_data);
+        if (size > rawinput->header.dwSize - sizeof(*rawinput)) return FALSE;
+
+        rawinput->header.dwSize  = FIELD_OFFSET( RAWINPUT, data.hid.bRawData ) + size;
+        rawinput->header.hDevice = ULongToHandle( msg_data->rawinput.hid.device );
+        rawinput->header.wParam  = 0;
+
+        rawinput->data.hid.dwCount = 0;
+        rawinput->data.hid.dwSizeHid = 0;
+        memcpy( rawinput->data.hid.bRawData, msg_data + 1, size );
     }
     else
     {

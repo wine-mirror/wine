@@ -1990,6 +1990,7 @@ static void queue_custom_hardware_message( struct desktop *desktop, user_handle_
 
     switch (input->hw.msg)
     {
+    case WM_INPUT:
     case WM_INPUT_DEVICE_CHANGE:
         raw_msg.foreground = NULL;
         raw_msg.desktop    = NULL;

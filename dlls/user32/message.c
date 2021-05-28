@@ -3255,6 +3255,14 @@ NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, const RAWINPUT *r
             hid_usage_page = ((USAGE *)rawinput->data.hid.bRawData)[0];
             hid_usage = ((USAGE *)rawinput->data.hid.bRawData)[1];
         }
+        if (input->u.hi.uMsg == WM_INPUT)
+        {
+            if (!rawinput_device_get_usages( rawinput->header.hDevice, &hid_usage_page, &hid_usage ))
+            {
+                WARN( "unable to get HID usages for device %p\n", rawinput->header.hDevice );
+                return STATUS_INVALID_HANDLE;
+            }
+        }
     }
 
     SERVER_START_REQ( send_hardware_message )
@@ -3284,6 +3292,7 @@ NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, const RAWINPUT *r
             req->input.hw.lparam = MAKELONG( input->u.hi.wParamL, input->u.hi.wParamH );
             switch (input->u.hi.uMsg)
             {
+            case WM_INPUT:
             case WM_INPUT_DEVICE_CHANGE:
                 req->input.hw.rawinput.type = rawinput->header.dwType;
                 switch (rawinput->header.dwType)
