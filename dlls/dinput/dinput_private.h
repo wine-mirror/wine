@@ -49,6 +49,8 @@ struct IDirectInputImpl
     struct list                 device_players; /* device instance guid to player name */
 };
 
+extern const IDirectInput8AVtbl dinput8_a_vtbl DECLSPEC_HIDDEN;
+
 /* Function called by all devices that Wine supports */
 struct dinput_device {
     const char *name;
@@ -78,9 +80,6 @@ extern void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wpar
 
 extern void check_dinput_hooks(LPDIRECTINPUTDEVICE8W, BOOL) DECLSPEC_HIDDEN;
 extern void check_dinput_events(void) DECLSPEC_HIDDEN;
-
-extern void _copy_diactionformatAtoW(LPDIACTIONFORMATW, LPDIACTIONFORMATA) DECLSPEC_HIDDEN;
-extern void _copy_diactionformatWtoA(LPDIACTIONFORMATA, LPDIACTIONFORMATW) DECLSPEC_HIDDEN;
 
 extern HRESULT _configure_devices(IDirectInput8W *iface, LPDICONFIGUREDEVICESCALLBACK lpdiCallback, LPDICONFIGUREDEVICESPARAMSW lpdiCDParams, DWORD dwFlags, LPVOID pvRefData) DECLSPEC_HIDDEN;
 

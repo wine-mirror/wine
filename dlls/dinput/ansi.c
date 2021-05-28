@@ -43,6 +43,22 @@ static IDirectInputDevice8W *IDirectInputDevice8W_from_impl( IDirectInputDeviceI
     return &impl->IDirectInputDevice8W_iface;
 }
 
+static inline IDirectInputDevice8A *IDirectInputDevice8A_from_IDirectInputDevice8W( IDirectInputDevice8W *iface )
+{
+    if (!iface) return NULL;
+    return &CONTAINING_RECORD( iface, IDirectInputDeviceImpl, IDirectInputDevice8W_iface )->IDirectInputDevice8A_iface;
+}
+
+static IDirectInputImpl *impl_from_IDirectInput8A( IDirectInput8A *iface )
+{
+    return CONTAINING_RECORD( iface, IDirectInputImpl, IDirectInput8A_iface );
+}
+
+static IDirectInput8W *IDirectInput8W_from_impl( IDirectInputImpl *impl )
+{
+    return &impl->IDirectInput8W_iface;
+}
+
 static void dideviceobjectinstance_wtoa( const DIDEVICEOBJECTINSTANCEW *in, DIDEVICEOBJECTINSTANCEA *out )
 {
     out->guidType = in->guidType;
@@ -135,14 +151,15 @@ static void diactionformat_wtoa( const DIACTIONFORMATW *in, DIACTIONFORMATA *out
                          sizeof(out->tszActionMap), NULL, NULL );
 }
 
-static void diactionformat_atow( const DIACTIONFORMATA *in, DIACTIONFORMATW *out )
+static HRESULT diactionformat_atow( const DIACTIONFORMATA *in, DIACTIONFORMATW *out, BOOL convert_names )
 {
+    HRESULT hr = DI_OK;
     DWORD i;
 
     out->dwDataSize = in->dwDataSize;
     out->dwNumActions = in->dwNumActions;
 
-    for (i = 0; i < out->dwNumActions; ++i)
+    for (i = 0; i < out->dwNumActions && !FAILED(hr); ++i)
     {
         out->rgoAction[i].uAppData = in->rgoAction[i].uAppData;
         out->rgoAction[i].dwSemantic = in->rgoAction[i].dwSemantic;
@@ -150,8 +167,12 @@ static void diactionformat_atow( const DIACTIONFORMATA *in, DIACTIONFORMATW *out
         out->rgoAction[i].guidInstance = in->rgoAction[i].guidInstance;
         out->rgoAction[i].dwObjID = in->rgoAction[i].dwObjID;
         out->rgoAction[i].dwHow = in->rgoAction[i].dwHow;
-        out->rgoAction[i].lptszActionName = 0;
+        if (!convert_names) out->rgoAction[i].lptszActionName = 0;
+        else if (in->hInstString) out->rgoAction[i].uResIdString = in->rgoAction[i].uResIdString;
+        else hr = string_atow( in->rgoAction[i].lptszActionName, (WCHAR **)&out->rgoAction[i].lptszActionName );
     }
+
+    for (; i < out->dwNumActions; ++i) out->rgoAction[i].lptszActionName = 0;
 
     out->guidActionMap = in->guidActionMap;
     out->dwGenre = in->dwGenre;
@@ -164,6 +185,8 @@ static void diactionformat_atow( const DIACTIONFORMATA *in, DIACTIONFORMATW *out
 
     MultiByteToWideChar( CP_ACP, 0, in->tszActionMap, -1, out->tszActionMap,
                          sizeof(out->tszActionMap) / sizeof(WCHAR) );
+
+    return hr;
 }
 
 static void dideviceimageinfo_wtoa( const DIDEVICEIMAGEINFOW *in, DIDEVICEIMAGEINFOA *out )
@@ -200,6 +223,33 @@ static void dideviceimageinfoheader_wtoa( const DIDEVICEIMAGEINFOHEADERW *in, DI
         dideviceimageinfo_wtoa( &in->lprgImageInfoArray[i], &out->lprgImageInfoArray[i] );
         out->dwBufferUsed += sizeof(DIDEVICEIMAGEINFOA);
     }
+}
+
+static HRESULT diconfiguredevicesparams_atow( const DICONFIGUREDEVICESPARAMSA *in, DICONFIGUREDEVICESPARAMSW *out )
+{
+    const char *name_a = in->lptszUserNames;
+    DWORD len_w, len_a;
+
+    if (!in->lptszUserNames) out->lptszUserNames = NULL;
+    else
+    {
+        while (name_a[0] && name_a[1]) ++name_a;
+        len_a = name_a - in->lptszUserNames + 1;
+        len_w = MultiByteToWideChar( CP_ACP, 0, in->lptszUserNames, len_a, NULL, 0 );
+
+        out->lptszUserNames = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, len_w * sizeof(WCHAR) );
+        if (!out->lptszUserNames) return DIERR_OUTOFMEMORY;
+
+        MultiByteToWideChar( CP_ACP, 0, in->lptszUserNames, len_a, out->lptszUserNames, len_w );
+    }
+
+    out->dwcUsers = in->dwcUsers;
+    out->dwcFormats = in->dwcFormats;
+    out->hwnd = in->hwnd;
+    out->dics = in->dics;
+    out->lpUnkDDSTarget = in->lpUnkDDSTarget;
+
+    return DI_OK;
 }
 
 static HRESULT WINAPI dinput_device_a_QueryInterface( IDirectInputDevice8A *iface_a, REFIID iid, void **out )
@@ -511,7 +561,7 @@ static HRESULT WINAPI dinput_device_a_BuildActionMap( IDirectInputDevice8A *ifac
     if (!format_w.rgoAction) hr = DIERR_OUTOFMEMORY;
     else
     {
-        diactionformat_atow( format_a, &format_w );
+        diactionformat_atow( format_a, &format_w, FALSE );
         hr = IDirectInputDevice8_BuildActionMap( iface_w, &format_w, username_w, flags );
         diactionformat_wtoa( &format_w, format_a );
         HeapFree( GetProcessHeap(), 0, format_w.rgoAction );
@@ -540,7 +590,7 @@ static HRESULT WINAPI dinput_device_a_SetActionMap( IDirectInputDevice8A *iface_
     if (!format_w.rgoAction) hr = DIERR_OUTOFMEMORY;
     else
     {
-        diactionformat_atow( format_a, &format_w );
+        diactionformat_atow( format_a, &format_w, FALSE );
         hr = IDirectInputDevice8_SetActionMap( iface_w, &format_w, username_w, flags );
         diactionformat_wtoa( &format_w, format_a );
         HeapFree( GetProcessHeap(), 0, format_w.rgoAction );
@@ -610,4 +660,195 @@ const IDirectInputDevice8AVtbl dinput_device_a_vtbl =
     dinput_device_a_BuildActionMap,
     dinput_device_a_SetActionMap,
     dinput_device_a_GetImageInfo,
+};
+
+static HRESULT WINAPI dinput8_a_QueryInterface( IDirectInput8A *iface_a, REFIID iid, void **out )
+{
+    IDirectInputImpl *impl = impl_from_IDirectInput8A( iface_a );
+    IDirectInput8W *iface_w = IDirectInput8W_from_impl( impl );
+    return IDirectInput8_QueryInterface( iface_w, iid, out );
+}
+
+static ULONG WINAPI dinput8_a_AddRef( IDirectInput8A *iface_a )
+{
+    IDirectInputImpl *impl = impl_from_IDirectInput8A( iface_a );
+    IDirectInput8W *iface_w = IDirectInput8W_from_impl( impl );
+    return IDirectInput8_AddRef( iface_w );
+}
+
+static ULONG WINAPI dinput8_a_Release( IDirectInput8A *iface_a )
+{
+    IDirectInputImpl *impl = impl_from_IDirectInput8A( iface_a );
+    IDirectInput8W *iface_w = IDirectInput8W_from_impl( impl );
+    return IDirectInput8_Release( iface_w );
+}
+
+static HRESULT WINAPI dinput8_a_CreateDevice( IDirectInput8A *iface_a, REFGUID guid, IDirectInputDevice8A **out, IUnknown *outer )
+{
+    IDirectInputImpl *impl = impl_from_IDirectInput8A( iface_a );
+    IDirectInput8W *iface_w = IDirectInput8W_from_impl( impl );
+    IDirectInputDevice8W *outw;
+    HRESULT hr;
+
+    if (!out) return E_POINTER;
+
+    hr = IDirectInput8_CreateDevice( iface_w, guid, &outw, outer );
+    *out = IDirectInputDevice8A_from_IDirectInputDevice8W( outw );
+    return hr;
+}
+
+struct enum_devices_wtoa_params
+{
+    LPDIENUMDEVICESCALLBACKA callback;
+    void *ref;
+};
+
+static BOOL CALLBACK enum_devices_wtoa_callback( const DIDEVICEINSTANCEW *instance_w, void *data )
+{
+    struct enum_devices_wtoa_params *params = data;
+    DIDEVICEINSTANCEA instance_a = {sizeof(instance_a)};
+
+    dideviceinstance_wtoa( instance_w, &instance_a );
+    return params->callback( &instance_a, params->ref );
+}
+
+static HRESULT WINAPI dinput8_a_EnumDevices( IDirectInput8A *iface_a, DWORD type, LPDIENUMDEVICESCALLBACKA callback,
+                                            void *ref, DWORD flags )
+{
+    struct enum_devices_wtoa_params params = {callback, ref};
+    IDirectInputImpl *impl = impl_from_IDirectInput8A( iface_a );
+    IDirectInput8W *iface_w = IDirectInput8W_from_impl( impl );
+
+    if (!callback) return DIERR_INVALIDPARAM;
+
+    return IDirectInput8_EnumDevices( iface_w, type, enum_devices_wtoa_callback, &params, flags );
+}
+
+static HRESULT WINAPI dinput8_a_GetDeviceStatus( IDirectInput8A *iface_a, REFGUID instance_guid )
+{
+    IDirectInputImpl *impl = impl_from_IDirectInput8A( iface_a );
+    IDirectInput8W *iface_w = IDirectInput8W_from_impl( impl );
+    return IDirectInput8_GetDeviceStatus( iface_w, instance_guid );
+}
+
+static HRESULT WINAPI dinput8_a_RunControlPanel( IDirectInput8A *iface_a, HWND owner, DWORD flags )
+{
+    IDirectInputImpl *impl = impl_from_IDirectInput8A( iface_a );
+    IDirectInput8W *iface_w = IDirectInput8W_from_impl( impl );
+    return IDirectInput8_RunControlPanel( iface_w, owner, flags );
+}
+
+static HRESULT WINAPI dinput8_a_Initialize( IDirectInput8A *iface_a, HINSTANCE instance, DWORD version )
+{
+    IDirectInputImpl *impl = impl_from_IDirectInput8A( iface_a );
+    IDirectInput8W *iface_w = IDirectInput8W_from_impl( impl );
+    return IDirectInput8_Initialize( iface_w, instance, version );
+}
+
+static HRESULT WINAPI dinput8_a_FindDevice( IDirectInput8A *iface_a, REFGUID guid, const char *name_a, GUID *instance_guid )
+{
+    IDirectInputImpl *impl = impl_from_IDirectInput8A( iface_a );
+    IDirectInput8W *iface_w = IDirectInput8W_from_impl( impl );
+    HRESULT hr;
+    WCHAR *name_w;
+
+    if (FAILED(hr = string_atow( name_a, &name_w ))) return hr;
+
+    hr = IDirectInput8_FindDevice( iface_w, guid, name_w, instance_guid );
+    HeapFree( GetProcessHeap(), 0, name_w );
+    return hr;
+}
+
+struct enum_devices_by_semantics_wtoa_params
+{
+    LPDIENUMDEVICESBYSEMANTICSCBA callback;
+    void *ref;
+};
+
+static BOOL CALLBACK enum_devices_by_semantics_wtoa_callback( const DIDEVICEINSTANCEW *instance_w, IDirectInputDevice8W *iface_w,
+                                                              DWORD flags, DWORD remaining, void *data )
+{
+    struct enum_devices_by_semantics_wtoa_params *params = data;
+    IDirectInputDevice8A *iface_a = IDirectInputDevice8A_from_IDirectInputDevice8W( iface_w );
+    DIDEVICEINSTANCEA instance_a = {sizeof(instance_a)};
+
+    dideviceinstance_wtoa( instance_w, &instance_a );
+    return params->callback( &instance_a, iface_a, flags, remaining, params->ref );
+}
+
+static HRESULT WINAPI dinput8_a_EnumDevicesBySemantics( IDirectInput8A *iface_a, const char *username_a, DIACTIONFORMATA *format_a,
+                                                       LPDIENUMDEVICESBYSEMANTICSCBA callback, void *ref, DWORD flags )
+{
+    struct enum_devices_by_semantics_wtoa_params params = {callback, ref};
+    IDirectInputImpl *impl = impl_from_IDirectInput8A( iface_a );
+    DIACTIONFORMATW format_w = {sizeof(format_w), sizeof(DIACTIONW)};
+    IDirectInput8W *iface_w = IDirectInput8W_from_impl( impl );
+    HRESULT hr;
+    WCHAR *username_w;
+
+    if (!callback) return DIERR_INVALIDPARAM;
+    if (FAILED(hr = string_atow( username_a, &username_w ))) return hr;
+
+    format_w.dwNumActions = format_a->dwNumActions;
+    format_w.rgoAction = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, format_a->dwNumActions * sizeof(DIACTIONW) );
+    if (!format_w.rgoAction) hr = DIERR_OUTOFMEMORY;
+    else
+    {
+        diactionformat_atow( format_a, &format_w, FALSE );
+        hr = IDirectInput8_EnumDevicesBySemantics( iface_w, username_w, &format_w, enum_devices_by_semantics_wtoa_callback,
+                                                   &params, flags );
+        HeapFree( GetProcessHeap(), 0, format_w.rgoAction );
+    }
+
+    HeapFree( GetProcessHeap(), 0, username_w );
+    return hr;
+}
+
+static HRESULT WINAPI dinput8_a_ConfigureDevices( IDirectInput8A *iface_a, LPDICONFIGUREDEVICESCALLBACK callback,
+                                                 DICONFIGUREDEVICESPARAMSA *params_a, DWORD flags, void *ref )
+{
+    IDirectInputImpl *impl = impl_from_IDirectInput8A( iface_a );
+    IDirectInput8W *iface_w = IDirectInput8W_from_impl( impl );
+    DICONFIGUREDEVICESPARAMSW params_w = {sizeof(params_w)};
+    DIACTIONFORMATA *format_a = params_a->lprgFormats;
+    DIACTIONFORMATW format_w = {sizeof(format_w), sizeof(DIACTIONW)};
+    HRESULT hr;
+    DWORD i;
+
+    if (!callback) return DIERR_INVALIDPARAM;
+    if (FAILED(hr = diconfiguredevicesparams_atow( params_a, &params_w ))) return hr;
+
+    format_w.dwNumActions = format_a->dwNumActions;
+    format_w.rgoAction = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, format_a->dwNumActions * sizeof(DIACTIONW) );
+    if (!format_w.rgoAction) hr = DIERR_OUTOFMEMORY;
+    else
+    {
+        hr = diactionformat_atow( format_a, &format_w, TRUE );
+        params_w.lprgFormats = &format_w;
+
+        if (SUCCEEDED(hr)) hr = IDirectInput8_ConfigureDevices( iface_w, callback, &params_w, flags, ref );
+
+        if (!format_w.hInstString) for (i = 0; i < format_w.dwNumActions; ++i) HeapFree( GetProcessHeap(), 0, (void *)format_w.rgoAction[i].lptszActionName );
+        HeapFree( GetProcessHeap(), 0, format_w.rgoAction );
+    }
+
+    HeapFree( GetProcessHeap(), 0, params_w.lptszUserNames );
+    return hr;
+}
+
+const IDirectInput8AVtbl dinput8_a_vtbl =
+{
+    /*** IUnknown methods ***/
+    dinput8_a_QueryInterface,
+    dinput8_a_AddRef,
+    dinput8_a_Release,
+    /*** IDirectInput8A methods ***/
+    dinput8_a_CreateDevice,
+    dinput8_a_EnumDevices,
+    dinput8_a_GetDeviceStatus,
+    dinput8_a_RunControlPanel,
+    dinput8_a_Initialize,
+    dinput8_a_FindDevice,
+    dinput8_a_EnumDevicesBySemantics,
+    dinput8_a_ConfigureDevices,
 };
