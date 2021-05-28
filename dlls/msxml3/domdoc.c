@@ -2563,6 +2563,63 @@ static int XMLCALL domdoc_stream_save_closecallback(void *ctx)
     return 0;
 }
 
+static char *xmldoc_encoding(IXMLDOMDocument3 *doc)
+{
+    HRESULT hr;
+    IXMLDOMNode *node;
+    char *encoding = NULL;
+
+    hr = IXMLDOMDocument3_get_firstChild(doc, &node);
+    if (hr == S_OK)
+    {
+        DOMNodeType type;
+
+        hr = IXMLDOMNode_get_nodeType(node, &type);
+        if (hr == S_OK && type == NODE_PROCESSING_INSTRUCTION)
+        {
+            IXMLDOMProcessingInstruction *pi;
+            IXMLDOMNode *item;
+            IXMLDOMNamedNodeMap *node_map;
+
+            hr = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMProcessingInstruction, (void **)&pi);
+            if (hr == S_OK)
+            {
+                hr = IXMLDOMNode_get_attributes(node, &node_map);
+                if (hr == S_OK)
+                {
+                    static const WCHAR encodingW[] = {'e','n','c','o','d','i','n','g',0};
+                    BSTR bstr;
+
+                    bstr = SysAllocString(encodingW);
+                    hr = IXMLDOMNamedNodeMap_getNamedItem(node_map, bstr, &item);
+                    SysFreeString(bstr);
+                    if (hr == S_OK)
+                    {
+                        VARIANT var;
+
+                        hr = IXMLDOMNode_get_nodeValue(item, &var);
+                        if (hr == S_OK)
+                        {
+                            if (V_VT(&var) == VT_BSTR)
+                                encoding = (char *)xmlchar_from_wchar(V_BSTR(&var));
+
+                            VariantClear(&var);
+                        }
+                    }
+
+                    IXMLDOMNamedNodeMap_Release(node_map);
+                }
+
+                IXMLDOMProcessingInstruction_Release(pi);
+            }
+        }
+
+        IXMLDOMNode_Release(node);
+    }
+
+    return encoding;
+}
+
 static HRESULT WINAPI domdoc_save(
     IXMLDOMDocument3 *iface,
     VARIANT destination )
@@ -2601,8 +2658,12 @@ static HRESULT WINAPI domdoc_save(
             ret = IUnknown_QueryInterface(pUnk, &IID_IStream, (void**)&stream);
             if(ret == S_OK)
             {
+                char *encoding = xmldoc_encoding(iface);
+
+                TRACE("using encoding %s\n", encoding ? debugstr_a(encoding) : "default");
                 ctx = xmlSaveToIO(domdoc_stream_save_writecallback,
-                    domdoc_stream_save_closecallback, stream, NULL, XML_SAVE_NO_DECL);
+                    domdoc_stream_save_closecallback, stream, encoding, XML_SAVE_NO_DECL);
+                heap_free(encoding);
 
                 if(!ctx)
                 {
@@ -2616,6 +2677,7 @@ static HRESULT WINAPI domdoc_save(
     case VT_BSTR:
     case VT_BSTR | VT_BYREF:
         {
+            char *encoding;
             /* save with file path */
             HANDLE handle = CreateFileW( (V_VT(&destination) & VT_BYREF)? *V_BSTRREF(&destination) : V_BSTR(&destination),
                                          GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
@@ -2625,8 +2687,12 @@ static HRESULT WINAPI domdoc_save(
                 return E_FAIL;
             }
 
+            encoding = xmldoc_encoding(iface);
+            TRACE("using encoding %s\n", encoding ? debugstr_a(encoding) : "default");
             ctx = xmlSaveToIO(domdoc_save_writecallback, domdoc_save_closecallback,
-                              handle, NULL, XML_SAVE_NO_DECL);
+                              handle, encoding, XML_SAVE_NO_DECL);
+            heap_free(encoding);
+
             if (!ctx)
             {
                 CloseHandle(handle);
