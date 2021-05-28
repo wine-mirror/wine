@@ -3298,11 +3298,14 @@ NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, const RAWINPUT *r
                 switch (rawinput->header.dwType)
                 {
                 case RIM_TYPEHID:
-                    assert( rawinput->data.hid.dwCount <= 1 );
                     req->input.hw.rawinput.hid.device = HandleToUlong( rawinput->header.hDevice );
                     req->input.hw.rawinput.hid.param = rawinput->header.wParam;
                     req->input.hw.rawinput.hid.usage_page = hid_usage_page;
                     req->input.hw.rawinput.hid.usage = hid_usage;
+                    req->input.hw.rawinput.hid.count = rawinput->data.hid.dwCount;
+                    req->input.hw.rawinput.hid.length = rawinput->data.hid.dwSizeHid;
+                    wine_server_add_data( req, rawinput->data.hid.bRawData,
+                                          rawinput->data.hid.dwCount * rawinput->data.hid.dwSizeHid );
                     break;
                 default:
                     assert( 0 );

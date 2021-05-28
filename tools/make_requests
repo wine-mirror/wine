@@ -52,7 +52,7 @@ my %formats =
     "luid_t"        => [  8,   4,  "&dump_luid" ],
     "generic_map_t" => [  16,  4,  "&dump_generic_map" ],
     "ioctl_code_t"  => [  4,   4,  "&dump_ioctl_code" ],
-    "hw_input_t"    => [  32,  8,  "&dump_hw_input" ],
+    "hw_input_t"    => [  40,  8,  "&dump_hw_input" ],
 );
 
 my @requests = ();

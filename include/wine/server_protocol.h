@@ -286,6 +286,8 @@ union rawinput
         unsigned int   param;
         unsigned short usage_page;
         unsigned short usage;
+        unsigned int   count;
+        unsigned int   length;
     } hid;
 };
 
@@ -2763,7 +2765,8 @@ struct send_hardware_message_request
     user_handle_t   win;
     hw_input_t      input;
     unsigned int    flags;
-    char __pad_52[4];
+    /* VARARG(report,bytes); */
+    char __pad_60[4];
 };
 struct send_hardware_message_reply
 {
@@ -6309,7 +6312,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 709
+#define SERVER_PROTOCOL_VERSION 710
 
 /* ### protocol_version end ### */
 

@@ -1995,6 +1995,7 @@ static void queue_custom_hardware_message( struct desktop *desktop, user_handle_
     struct hardware_msg_data *msg_data;
     struct rawinput_message raw_msg;
     struct message *msg;
+    data_size_t report_size = 0;
 
     switch (input->hw.msg)
     {
@@ -2007,9 +2008,21 @@ static void queue_custom_hardware_message( struct desktop *desktop, user_handle_
         raw_msg.message    = input->hw.msg;
         raw_msg.hid_report = NULL;
 
+        if (input->hw.rawinput.type == RIM_TYPEHID)
+        {
+            raw_msg.hid_report = get_req_data();
+            report_size = input->hw.rawinput.hid.length * input->hw.rawinput.hid.count;
+        }
+
+        if (report_size != get_req_data_size())
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return;
+        }
+
         msg_data = &raw_msg.data;
         msg_data->info     = 0;
-        msg_data->size     = sizeof(*msg_data);
+        msg_data->size     = sizeof(*msg_data) + report_size;
         msg_data->flags    = 0;
         msg_data->rawinput = input->hw.rawinput;
 

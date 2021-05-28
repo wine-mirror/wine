@@ -404,9 +404,9 @@ static void dump_rawinput( const char *prefix, const union rawinput *rawinput )
                  rawinput->kbd.message, rawinput->kbd.vkey, rawinput->kbd.scan );
         break;
     case RIM_TYPEHID:
-        fprintf( stderr, "%s{type=HID,device=%04x,param=%04x,page=%04hx,usage=%04hx}",
+        fprintf( stderr, "%s{type=HID,device=%04x,param=%04x,page=%04hx,usage=%04hx,count=%u,length=%u}",
                  prefix, rawinput->hid.device, rawinput->hid.param, rawinput->hid.usage_page,
-                 rawinput->hid.usage );
+                 rawinput->hid.usage, rawinput->hid.count, rawinput->hid.length );
         break;
     default:
         fprintf( stderr, "%s{type=%04x}", prefix, rawinput->type );
@@ -2727,6 +2727,7 @@ static void dump_send_hardware_message_request( const struct send_hardware_messa
     fprintf( stderr, " win=%08x", req->win );
     dump_hw_input( ", input=", &req->input );
     fprintf( stderr, ", flags=%08x", req->flags );
+    dump_varargs_bytes( ", report=", cur_size );
 }
 
 static void dump_send_hardware_message_reply( const struct send_hardware_message_reply *req )

@@ -397,8 +397,8 @@ BOOL rawinput_from_hardware_message(RAWINPUT *rawinput, const struct hardware_ms
         rawinput->header.hDevice = ULongToHandle( msg_data->rawinput.hid.device );
         rawinput->header.wParam  = 0;
 
-        rawinput->data.hid.dwCount = 0;
-        rawinput->data.hid.dwSizeHid = 0;
+        rawinput->data.hid.dwCount = msg_data->rawinput.hid.count;
+        rawinput->data.hid.dwSizeHid = msg_data->rawinput.hid.length;
         memcpy( rawinput->data.hid.bRawData, msg_data + 1, size );
     }
     else

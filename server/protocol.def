@@ -302,6 +302,8 @@ union rawinput
         unsigned int   param;   /* rawinput message param */
         unsigned short usage_page;/* HID usage page */
         unsigned short usage;   /* HID usage */
+        unsigned int   count;   /* HID report count */
+        unsigned int   length;  /* HID report length */
     } hid;
 };
 
@@ -2068,6 +2070,7 @@ enum message_type
     user_handle_t   win;       /* window handle */
     hw_input_t      input;     /* input data */
     unsigned int    flags;     /* flags (see below) */
+    VARARG(report,bytes);      /* HID report data */
 @REPLY
     int             wait;      /* do we need to wait for a reply? */
     int             prev_x;    /* previous cursor position */
