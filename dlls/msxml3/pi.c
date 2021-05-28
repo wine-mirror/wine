@@ -34,6 +34,7 @@
 #include "ole2.h"
 #include "msxml6.h"
 
+#include "xmlparser.h"
 #include "msxml_private.h"
 
 #include "wine/debug.h"
@@ -287,6 +288,138 @@ static HRESULT WINAPI dom_pi_get_nextSibling(
     return node_get_next_sibling(&This->node, domNode);
 }
 
+static HRESULT xml_get_value(xmlChar **p, xmlChar **value)
+{
+    xmlChar *v;
+    int len;
+
+    while (isspace(**p)) *p += 1;
+    if (**p != '=') return XML_E_MISSINGEQUALS;
+    *p += 1;
+
+    while (isspace(**p)) *p += 1;
+    if (**p != '"') return XML_E_MISSINGQUOTE;
+    *p += 1;
+
+    v = *p;
+    while (**p && **p != '"') *p += 1;
+    if (!**p) return XML_E_EXPECTINGCLOSEQUOTE;
+    len = *p - v;
+    if (!len) return XML_E_MISSINGNAME;
+    *p += 1;
+
+    *value = heap_alloc(len + 1);
+    if (!*value) return E_OUTOFMEMORY;
+    memcpy(*value, v, len);
+    *(*value + len) = 0;
+
+    return S_OK;
+}
+
+static void set_prop(xmlNodePtr node, xmlAttrPtr attr)
+{
+    xmlAttrPtr prop;
+
+    if (!node->properties)
+    {
+        node->properties = attr;
+        return;
+    }
+
+    prop = node->properties;
+    while (prop->next) prop = prop->next;
+
+    prop->next = attr;
+}
+
+static HRESULT parse_xml_decl(xmlNodePtr node)
+{
+    xmlChar *version, *encoding, *standalone, *p;
+    xmlAttrPtr attr;
+    HRESULT hr = S_OK;
+
+    if (!node->content) return S_OK;
+
+    version = encoding = standalone = NULL;
+
+    p = node->content;
+
+    while (*p)
+    {
+        while (isspace(*p)) p++;
+        if (!*p) break;
+
+        if (!strncmp((const char *)p, "version", 7))
+        {
+            p += 7;
+            if ((hr = xml_get_value(&p, &version)) != S_OK) goto fail;
+        }
+        else if (!strncmp((const char *)p, "encoding", 8))
+        {
+            p += 8;
+            if ((hr = xml_get_value(&p, &encoding)) != S_OK) goto fail;
+        }
+        else if (!strncmp((const char *)p, "standalone", 10))
+        {
+            p += 10;
+            if ((hr = xml_get_value(&p, &standalone)) != S_OK) goto fail;
+        }
+        else
+        {
+            FIXME("unexpected XML attribute %s\n", debugstr_a((const char *)p));
+            hr = XML_E_UNEXPECTED_ATTRIBUTE;
+            goto fail;
+        }
+    }
+
+    /* xmlSetProp/xmlSetNsProp accept only nodes of type XML_ELEMENT_NODE,
+     * so we have to create and assign attributes to a node by hand.
+     */
+
+    if (version)
+    {
+        attr = xmlSetNsProp(NULL, NULL, (const xmlChar *)"version", version);
+        if (attr)
+        {
+            attr->doc = node->doc;
+            set_prop(node, attr);
+        }
+        else hr = E_OUTOFMEMORY;
+    }
+    if (encoding)
+    {
+        attr = xmlSetNsProp(NULL, NULL, (const xmlChar *)"encoding", encoding);
+        if (attr)
+        {
+            attr->doc = node->doc;
+            set_prop(node, attr);
+        }
+        else hr = E_OUTOFMEMORY;
+    }
+    if (standalone)
+    {
+        attr = xmlSetNsProp(NULL, NULL, (const xmlChar *)"standalone", standalone);
+        if (attr)
+        {
+            attr->doc = node->doc;
+            set_prop(node, attr);
+        }
+        else hr = E_OUTOFMEMORY;
+    }
+
+fail:
+    if (hr != S_OK)
+    {
+        xmlFreePropList(node->properties);
+        node->properties = NULL;
+    }
+
+    heap_free(version);
+    heap_free(encoding);
+    heap_free(standalone);
+    return hr;
+}
+
 static HRESULT WINAPI dom_pi_get_attributes(
     IXMLDOMProcessingInstruction *iface,
     IXMLDOMNamedNodeMap** map)
@@ -307,7 +440,16 @@ static HRESULT WINAPI dom_pi_get_attributes(
 
     if (!strcmpW(name, xmlW))
     {
-        FIXME("created dummy map for <?xml ?>\n");
+        if (!This->node.node->properties)
+        {
+            hr = parse_xml_decl(This->node.node);
+            if (hr != S_OK)
+            {
+                SysFreeString(name);
+                return S_FALSE;
+            }
+        }
+
         *map = create_nodemap(This->node.node, &dom_pi_attr_map);
         SysFreeString(name);
         return S_OK;
