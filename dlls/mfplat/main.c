@@ -44,6 +44,8 @@
 #include "mfmediaengine.h"
 #include "propvarutil.h"
 #include "strsafe.h"
+#undef INITGUID
+#include "evr.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -1518,7 +1520,6 @@ const char *debugstr_attr(const GUID *guid)
         X(EVRConfig_AllowBatching),
         X(MF_TOPOLOGY_DYNAMIC_CHANGE_NOT_ALLOWED),
         X(MF_MT_VIDEO_PROFILE),
-        X(MF_MT_MPEG2_PROFILE),
         X(MF_MT_DV_AAUX_CTRL_PACK_1),
         X(MF_MT_ALPHA_MODE),
         X(MF_MT_MPEG2_TIMECODE),
@@ -1564,6 +1565,7 @@ const char *debugstr_attr(const GUID *guid)
         X(MF_PD_MIME_TYPE),
         X(MF_MT_H264_SUPPORTED_SLICE_MODES),
         X(MF_PD_LAST_MODIFIED_TIME),
+        X(VIDEO_ZOOM_RECT),
         X(MF_PD_PLAYBACK_ELEMENT_ID),
         X(MF_MEDIA_ENGINE_BROWSER_COMPATIBILITY_MODE_IE9),
         X(MF_MT_ALL_SAMPLES_INDEPENDENT),
@@ -1614,6 +1616,7 @@ const char *debugstr_attr(const GUID *guid)
         X(MF_ACTIVATE_CUSTOM_VIDEO_MIXER_CLSID),
         X(MF_MT_MIN_MASTERING_LUMINANCE),
         X(MF_ACTIVATE_CUSTOM_VIDEO_MIXER_ACTIVATE),
+        X(MF_SA_REQUIRED_SAMPLE_COUNT),
         X(MF_ACTIVATE_CUSTOM_VIDEO_MIXER_FLAGS),
         X(MF_ACTIVATE_CUSTOM_VIDEO_PRESENTER_CLSID),
         X(MF_EVENT_STREAM_METADATA_SYSTEMID),
@@ -1638,7 +1641,6 @@ const char *debugstr_attr(const GUID *guid)
         X(MFSampleExtension_3DVideo_SampleFormat),
         X(MF_MT_H264_RESOLUTION_SCALING),
         X(MF_MT_VIDEO_LEVEL),
-        X(MF_MT_MPEG2_LEVEL),
         X(MF_SAMPLEGRABBERSINK_SAMPLE_TIME_OFFSET),
         X(MF_MT_SAMPLE_SIZE),
         X(MF_MT_AAC_PAYLOAD_TYPE),
