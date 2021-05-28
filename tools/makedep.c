@@ -3362,7 +3362,10 @@ static void output_module( struct makefile *make )
         strcat( unix_lib, dll_ext );
 
         if (!strarray_exists( &make->extradllflags, "-nodefaultlibs" ))
+        {
             strarray_add( &unix_imports, "ntdll" );
+            strarray_add( &unix_deps, obj_dir_path( top_makefile, "dlls/ntdll/ntdll.so" ));
+        }
         strarray_add( &unix_imports, "winecrt0" );
 
         strarray_addall( &unix_libs, add_import_libs( make, &unix_deps, unix_imports, 0, 1 ));
