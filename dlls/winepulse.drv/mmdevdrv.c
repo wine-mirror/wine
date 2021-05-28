@@ -21,6 +21,7 @@
 #define COBJMACROS
 
 #include <stdarg.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -46,7 +47,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(pulse);
 
-static const struct unix_funcs *pulse;
+static UINT64 pulse_handle;
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
@@ -81,7 +82,7 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
 {
     if (reason == DLL_PROCESS_ATTACH) {
         DisableThreadLibraryCalls(dll);
-        if (__wine_init_unix_lib(dll, reason, NULL, &pulse))
+        if (__wine_init_unix_lib(dll, reason, NULL, &pulse_handle))
             return FALSE;
     } else if (reason == DLL_PROCESS_DETACH) {
         __wine_init_unix_lib(dll, reason, NULL, NULL);
@@ -202,19 +203,26 @@ static inline ACImpl *impl_from_IAudioStreamVolume(IAudioStreamVolume *iface)
     return CONTAINING_RECORD(iface, ACImpl, IAudioStreamVolume_iface);
 }
 
+static void pulse_call(enum unix_funcs code, void *params)
+{
+    NTSTATUS status;
+    status = __wine_unix_call(pulse_handle, code, params);
+    assert(!status);
+}
+
 static void pulse_release_stream(struct pulse_stream *stream, HANDLE timer)
 {
     struct release_stream_params params;
     params.stream = stream;
     params.timer  = timer;
-    pulse->release_stream(&params);
+    pulse_call(release_stream, &params);
 }
 
 static DWORD CALLBACK pulse_mainloop_thread(void *event)
 {
     struct main_loop_params params;
     params.event = event;
-    pulse->main_loop(&params);
+    pulse_call(main_loop, &params);
     return 0;
 }
 
@@ -242,7 +250,7 @@ static DWORD WINAPI pulse_timer_cb(void *user)
     struct timer_loop_params params;
     ACImpl *This = user;
     params.stream = This->pulse_stream;
-    pulse->timer_loop(&params);
+    pulse_call(timer_loop, &params);
     return 0;
 }
 
@@ -253,7 +261,7 @@ static void set_stream_volumes(ACImpl *This)
     params.master_volume   = This->session->mute ? 0.0f : This->session->master_vol;
     params.volumes         = This->vol;
     params.session_volumes = This->session->channel_vols;
-    pulse->set_volumes(&params);
+    pulse_call(set_volumes, &params);
 }
 
 HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, const WCHAR ***ids, GUID **keys,
@@ -298,7 +306,7 @@ int WINAPI AUDDRV_GetPriority(void)
 
     params.name   = name = get_application_name();
     params.config = &pulse_config;
-    pulse->test_connect(&params);
+    pulse_call(test_connect, &params);
     free(name);
     return SUCCEEDED(params.result) ? Priority_Preferred : Priority_Unavailable;
 }
@@ -605,7 +613,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     params.fmt      = fmt;
     params.stream   = &stream;
     params.channel_count = &channel_count;
-    pulse->create_stream(&params);
+    pulse_call(create_stream, &params);
     free(name);
     if (FAILED(hr = params.result))
     {
@@ -656,7 +664,7 @@ static HRESULT WINAPI AudioClient_GetBufferSize(IAudioClient3 *iface,
 
     params.stream = This->pulse_stream;
     params.size = out;
-    pulse->get_buffer_size(&params);
+    pulse_call(get_buffer_size, &params);
     return params.result;
 }
 
@@ -675,7 +683,7 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,
 
     params.stream  = This->pulse_stream;
     params.latency = latency;
-    pulse->get_latency(&params);
+    pulse_call(get_latency, &params);
     return params.result;
 }
 
@@ -694,7 +702,7 @@ static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient3 *iface,
 
     params.stream  = This->pulse_stream;
     params.padding = out;
-    pulse->get_current_padding(&params);
+    pulse_call(get_current_padding, &params);
     return params.result;
 }
 
@@ -898,7 +906,7 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
         return AUDCLNT_E_NOT_INITIALIZED;
 
     params.stream = This->pulse_stream;
-    pulse->start(&params);
+    pulse_call(start, &params);
     if (FAILED(hr = params.result))
         return hr;
 
@@ -921,7 +929,7 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)
         return AUDCLNT_E_NOT_INITIALIZED;
 
     params.stream = This->pulse_stream;
-    pulse->stop(&params);
+    pulse_call(stop, &params);
     return params.result;
 }
 
@@ -936,7 +944,7 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient3 *iface)
         return AUDCLNT_E_NOT_INITIALIZED;
 
     params.stream = This->pulse_stream;
-    pulse->reset(&params);
+    pulse_call(reset, &params);
     return params.result;
 }
 
@@ -955,7 +963,7 @@ static HRESULT WINAPI AudioClient_SetEventHandle(IAudioClient3 *iface,
 
     params.stream = This->pulse_stream;
     params.event  = event;
-    pulse->set_event_handle(&params);
+    pulse_call(set_event_handle, &params);
     return params.result;
 }
 
@@ -1180,7 +1188,7 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
     params.stream = This->pulse_stream;
     params.frames = frames;
     params.data   = data;
-    pulse->get_render_buffer(&params);
+    pulse_call(get_render_buffer, &params);
     return params.result;
 }
 
@@ -1198,7 +1206,7 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
     params.stream         = This->pulse_stream;
     params.written_frames = written_frames;
     params.flags          = flags;
-    pulse->release_render_buffer(&params);
+    pulse_call(release_render_buffer, &params);
     return params.result;
 }
 
@@ -1271,7 +1279,7 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
     params.flags  = flags;
     params.devpos = devpos;
     params.qpcpos = qpcpos;
-    pulse->get_capture_buffer(&params);
+    pulse_call(get_capture_buffer, &params);
     return params.result;
 }
 
@@ -1288,7 +1296,7 @@ static HRESULT WINAPI AudioCaptureClient_ReleaseBuffer(
 
     params.stream = This->pulse_stream;
     params.done   = done;
-    pulse->release_capture_buffer(&params);
+    pulse_call(release_capture_buffer, &params);
     return params.result;
 }
 
@@ -1307,7 +1315,7 @@ static HRESULT WINAPI AudioCaptureClient_GetNextPacketSize(
 
     params.stream = This->pulse_stream;
     params.frames = frames;
-    pulse->get_next_packet_size(&params);
+    pulse_call(get_next_packet_size, &params);
     return params.result;
 }
 
@@ -1372,7 +1380,7 @@ static HRESULT WINAPI AudioClock_GetFrequency(IAudioClock *iface, UINT64 *freq)
 
     params.stream = This->pulse_stream;
     params.freq   = freq;
-    pulse->get_frequency(&params);
+    pulse_call(get_frequency, &params);
     return params.result;
 }
 
@@ -1393,7 +1401,7 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
     params.device  = FALSE;
     params.pos     = pos;
     params.qpctime = qpctime;
-    pulse->get_position(&params);
+    pulse_call(get_position, &params);
     return params.result;
 }
 
@@ -1458,7 +1466,7 @@ static HRESULT WINAPI AudioClock2_GetDevicePosition(IAudioClock2 *iface,
     params.device  = TRUE;
     params.pos     = pos;
     params.qpctime = qpctime;
-    pulse->get_position(&params);
+    pulse_call(get_position, &params);
     return params.result;
 }
 
@@ -1725,7 +1733,7 @@ static HRESULT WINAPI AudioSessionControl_GetState(IAudioSessionControl2 *iface,
             continue;
 
         params.stream = client->pulse_stream;
-        pulse->is_started(&params);
+        pulse_call(is_started, &params);
         if (params.started) {
             *state = AudioSessionStateActive;
             goto out;

@@ -185,27 +185,27 @@ struct is_started_params
     BOOL started;
 };
 
-struct unix_funcs
+enum unix_funcs
 {
-    void (WINAPI *main_loop)(struct main_loop_params *params);
-    void (WINAPI *create_stream)(struct create_stream_params *params);
-    void (WINAPI *release_stream)(struct release_stream_params *params);
-    void (WINAPI *start)(struct start_params *params);
-    void (WINAPI *stop)(struct stop_params *params);
-    void (WINAPI *reset)(struct reset_params *params);
-    void (WINAPI *timer_loop)(struct timer_loop_params *params);
-    void (WINAPI *get_render_buffer)(struct get_render_buffer_params *params);
-    void (WINAPI *release_render_buffer)(struct release_render_buffer_params *params);
-    void (WINAPI *get_capture_buffer)(struct get_capture_buffer_params *params);
-    void (WINAPI *release_capture_buffer)(struct release_capture_buffer_params *params);
-    void (WINAPI *get_buffer_size)(struct get_buffer_size_params *params);
-    void (WINAPI *get_latency)(struct get_latency_params *params);
-    void (WINAPI *get_current_padding)(struct get_current_padding_params *params);
-    void (WINAPI *get_next_packet_size)(struct get_next_packet_size_params *params);
-    void (WINAPI *get_frequency)(struct get_frequency_params *params);
-    void (WINAPI *get_position)(struct get_position_params *params);
-    void (WINAPI *set_volumes)(struct set_volumes_params *params);
-    void (WINAPI *set_event_handle)(struct set_event_handle_params *params);
-    void (WINAPI *test_connect)(struct test_connect_params *params);
-    void (WINAPI *is_started)(struct is_started_params *params);
+    main_loop,
+    create_stream,
+    release_stream,
+    start,
+    stop,
+    reset,
+    timer_loop,
+    get_render_buffer,
+    release_render_buffer,
+    get_capture_buffer,
+    release_capture_buffer,
+    get_buffer_size,
+    get_latency,
+    get_current_padding,
+    get_next_packet_size,
+    get_frequency,
+    get_position,
+    set_volumes,
+    set_event_handle,
+    test_connect,
+    is_started,
 };
