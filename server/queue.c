@@ -367,6 +367,7 @@ static struct message *alloc_hardware_message( lparam_t info, struct hw_msg_sour
 
     memset( msg_data, 0, sizeof(*msg_data) );
     msg_data->info   = info;
+    msg_data->size   = msg->data_size;
     msg_data->source = source;
     return msg;
 }
@@ -1794,6 +1795,7 @@ static int queue_mouse_message( struct desktop *desktop, user_handle_t win, cons
 
         msg_data = &raw_msg.data;
         msg_data->info                = input->mouse.info;
+        msg_data->size                = sizeof(*msg_data);
         msg_data->flags               = flags;
         msg_data->rawinput.type       = RIM_TYPEMOUSE;
         msg_data->rawinput.mouse.x    = x - desktop->cursor.x;
@@ -1929,6 +1931,7 @@ static int queue_keyboard_message( struct desktop *desktop, user_handle_t win, c
 
         msg_data = &raw_msg.data;
         msg_data->info                 = input->kbd.info;
+        msg_data->size                 = sizeof(*msg_data);
         msg_data->flags                = input->kbd.flags;
         msg_data->rawinput.type        = RIM_TYPEKEYBOARD;
         msg_data->rawinput.kbd.message = message_code;
@@ -1996,6 +1999,7 @@ static void queue_custom_hardware_message( struct desktop *desktop, user_handle_
 
         msg_data = &raw_msg.data;
         msg_data->info     = 0;
+        msg_data->size     = sizeof(*msg_data);
         msg_data->flags    = 0;
         msg_data->rawinput = input->hw.rawinput;
 
@@ -3295,16 +3299,17 @@ DECL_HANDLER(get_rawinput_buffer)
     {
         struct message *msg = LIST_ENTRY( ptr, struct message, entry );
         struct hardware_msg_data *data = msg->data;
+        data_size_t extra_size = data->size - sizeof(*data);
 
         ptr = list_next( &input->msg_list, ptr );
         if (msg->msg != WM_INPUT) continue;
 
-        next_size = req->rawinput_size;
+        next_size = req->rawinput_size + extra_size;
         if (size + next_size > req->buffer_size) break;
-        if (cur + sizeof(*data) > buf + get_reply_max_size()) break;
-        if (cur + sizeof(*data) > buf + buf_size)
+        if (cur + data->size > buf + get_reply_max_size()) break;
+        if (cur + data->size > buf + buf_size)
         {
-            buf_size += buf_size / 2;
+            buf_size += buf_size / 2 + extra_size;
             if (!(tmp = realloc( buf, buf_size )))
             {
                 set_error( STATUS_NO_MEMORY );
@@ -3314,7 +3319,7 @@ DECL_HANDLER(get_rawinput_buffer)
             buf = tmp;
         }
 
-        memcpy(cur, data, sizeof(*data));
+        memcpy( cur, data, data->size );
         list_remove( &msg->entry );
         free_message( msg );
 

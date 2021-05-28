@@ -624,7 +624,7 @@ UINT WINAPI DECLSPEC_HOTPATCH GetRawInputBuffer(RAWINPUT *data, UINT *data_size,
                               data->header.dwSize - sizeof(RAWINPUTHEADER));
         data->header.dwSize += overhead;
         data = NEXTRAWINPUTBLOCK(data);
-        msg_data++;
+        msg_data = (struct hardware_msg_data *)((char *)msg_data + msg_data->size);
     }
 
     if (count == 0 && next_size == 0) *data_size = 0;

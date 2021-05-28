@@ -308,6 +308,8 @@ union rawinput
 struct hardware_msg_data
 {
     lparam_t             info;      /* extra info */
+    data_size_t          size;      /* size of hardware message data */
+    int                  __pad;
     unsigned int         hw_id;     /* unique id */
     unsigned int         flags;     /* hook flags */
     struct hw_msg_source source;    /* message source */

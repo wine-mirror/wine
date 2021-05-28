@@ -292,6 +292,8 @@ union rawinput
 struct hardware_msg_data
 {
     lparam_t             info;
+    data_size_t          size;
+    int                  __pad;
     unsigned int         hw_id;
     unsigned int         flags;
     struct hw_msg_source source;
@@ -6307,7 +6309,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 708
+#define SERVER_PROTOCOL_VERSION 709
 
 /* ### protocol_version end ### */
 
