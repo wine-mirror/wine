@@ -151,7 +151,7 @@ Feil:      Rapporter feil til Wines Bugzilla på https://bugs.winehq.org
            før du sender en feilrapport.
 
 IRC:       Nødhjelp er tilgjengelig på kanalen #WineHQ på
-           irc.freenode.net.
+           irc.libera.chat.
 
 Git:       Wines oppdaterte utvikler-versjon er tilgjengelig gjennom GIT.
            Gå til https://www.winehq.org/git for mer informasjon.

@@ -167,7 +167,7 @@ Fouten: Op https://bugs.winehq.org kunnen fouten gemeld worden aan de Wine
         Bugzilla. Doorzoek eerst de database van bugzilla om te kijken of
         de fout al bekend of gerepareerd is voordat de fout gemeld wordt.
 
-IRC:    Online hulp is beschikbaar in kanaal #WineHQ op irc.freenode.net
+IRC:    Online hulp is beschikbaar in kanaal #WineHQ op irc.libera.chat
 
 Git:    De huidige ontwikkeling van Wine is beschikbaar op Git. Bezoek
         https://www.winehq.org/git voor meer informatie.

@@ -157,7 +157,7 @@ Bugs:   https://bugs.winehq.org 의 Wine Bugzilla에 버그를 보고하십시�
         버그 보고서를 제출하기 전에 같은 문제가 이미 제출된 적이 있는지
         Bugzilla 데이터베이스를 검색해 보시기 바랍니다.
 
-IRC:	irc.freenode.net 의 #WineHQ 채널에서 도움을 받을 수 있습니다.
+IRC:	irc.libera.chat 의 #WineHQ 채널에서 도움을 받을 수 있습니다.
 
 GIT:    Wine 개발 트리는 현재 GIT로 관리되고 있습니다.  더 자세한 정보는
 	https://www.winehq.org/git 를 참조하기 바랍니다.
