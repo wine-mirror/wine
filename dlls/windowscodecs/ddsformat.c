@@ -1651,8 +1651,30 @@ static HRESULT WINAPI DdsFrameEncode_SetResolution(IWICBitmapFrameEncode *iface,
 static HRESULT WINAPI DdsFrameEncode_SetPixelFormat(IWICBitmapFrameEncode *iface,
                                                     WICPixelFormatGUID *pixelFormat)
 {
-    FIXME("(%p,%s): stub\n", iface, debugstr_guid(pixelFormat));
-    return E_NOTIMPL;
+    DdsFrameEncode *This = impl_from_IWICBitmapFrameEncode(iface);
+    HRESULT hr;
+
+    TRACE("(%p,%s)\n", iface, debugstr_guid(pixelFormat));
+
+    EnterCriticalSection(&This->parent->lock);
+
+    if (!This->initialized)
+    {
+        hr = WINCODEC_ERR_NOTINITIALIZED;
+    }
+    else if (This->frame_created)
+    {
+        hr = WINCODEC_ERR_WRONGSTATE;
+    }
+    else
+    {
+        *pixelFormat = GUID_WICPixelFormat32bppBGRA;
+        hr = S_OK;
+    }
+
+    LeaveCriticalSection(&This->parent->lock);
+
+    return hr;
 }
 
 static HRESULT WINAPI DdsFrameEncode_SetColorContexts(IWICBitmapFrameEncode *iface,

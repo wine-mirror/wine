@@ -1519,7 +1519,6 @@ static void test_dds_encoder_pixel_format(void)
         IWICBitmapEncoder_CreateNewFrame(encoder, &frame, NULL);
 
         hr = IWICBitmapFrameEncode_SetPixelFormat(frame, &format);
-        todo_wine
         ok(hr == WINCODEC_ERR_NOTINITIALIZED, "SetPixelFormat got unexpected hr %#x\n", hr);
 
         IWICBitmapFrameEncode_Initialize(frame, NULL);
@@ -1528,11 +1527,9 @@ static void test_dds_encoder_pixel_format(void)
         {
             format = *(test_formats[j]);
             hr = IWICBitmapFrameEncode_SetPixelFormat(frame, &format);
-            todo_wine
             ok(hr == S_OK, "Test %u: SetPixelFormat failed, hr %#x\n", j, hr);
-            if (hr == S_OK)
-                ok(IsEqualGUID(&format, &GUID_WICPixelFormat32bppBGRA),
-                   "Test %u: Got unexpected GUID %s\n", j, debugstr_guid(&format));
+            ok(IsEqualGUID(&format, &GUID_WICPixelFormat32bppBGRA),
+               "Test %u: Got unexpected GUID %s\n", j, debugstr_guid(&format));
         }
 
         IWICBitmapFrameEncode_Release(frame);
