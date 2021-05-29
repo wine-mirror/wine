@@ -3252,7 +3252,7 @@ static void test_InsertObject(void)
   REOBJECT reo1, reo2, reo3, received_reo;
   HRESULT hr;
   HWND hwnd;
-  const WCHAR *expected_string;
+  const WCHAR *expected_string, *string;
   const CHAR *expected_stringA;
   ITextSelection *selection;
   IDataObject *dataobject;
@@ -3465,8 +3465,10 @@ static void test_InsertObject(void)
   formatetc.lindex = -1;
   hr = IDataObject_GetData(dataobject, &formatetc, &stgmedium);
   ok(hr == S_OK, "Got hr %#x.\n", hr);
-  todo_wine ok(lstrlenW(stgmedium.hGlobal) == lstrlenW(expected_string), "Got wrong length: %d.\n", result);
-  todo_wine ok(!lstrcmpW(stgmedium.hGlobal, expected_string), "Got wrong content: %s.\n", debugstr_w(stgmedium.hGlobal));
+  string = GlobalLock(stgmedium.hGlobal);
+  ok(lstrlenW(string) == lstrlenW(expected_string), "Got wrong length: %d.\n", lstrlenW(string));
+  todo_wine ok(!lstrcmpW(string, expected_string), "Got wrong content: %s.\n", debugstr_w(string));
+  GlobalUnlock(stgmedium.hGlobal);
 
   expected_string = L"abc\xfffc""d\xfffc""efg";
   gettextex.cb = sizeof(buffer);
