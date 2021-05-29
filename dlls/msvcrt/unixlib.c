@@ -269,14 +269,6 @@ static float CDECL unix_powf( float x, float y )
 }
 
 /*********************************************************************
- *      tanhf
- */
-static float CDECL unix_tanhf( float x )
-{
-    return tanhf( x );
-}
-
-/*********************************************************************
  *      tgamma
  */
 static double CDECL unix_tgamma(double x)
@@ -327,7 +319,6 @@ static const struct unix_funcs funcs =
     unix_log2f,
     unix_pow,
     unix_powf,
-    unix_tanhf,
     unix_tgamma,
     unix_tgammaf,
 };
