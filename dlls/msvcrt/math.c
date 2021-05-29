@@ -2527,9 +2527,33 @@ double CDECL sin( double x )
  */
 double CDECL sinh( double x )
 {
-  double ret = unix_funcs->sinh( x );
-  if (isnan(x)) return math_error(_DOMAIN, "sinh", x, 0, ret);
-  return ret;
+    UINT64 ux = *(UINT64*)&x;
+    UINT32 w;
+    double t, h, absx;
+
+    h = 0.5;
+    if (ux >> 63)
+        h = -h;
+    /* |x| */
+    ux &= (UINT64)-1 / 2;
+    absx = *(double*)&ux;
+    w = ux >> 32;
+
+    /* |x| < log(DBL_MAX) */
+    if (w < 0x40862e42) {
+        t = __expm1(absx);
+        if (w < 0x3ff00000) {
+            if (w < 0x3ff00000 - (26 << 20))
+                return x;
+            return h * (2 * t - t * t / (t + 1));
+        }
+        return h * (t + t / (t + 1));
+    }
+
+    /* |x| > log(DBL_MAX) or nan */
+    /* note: the result is stored to handle overflow */
+    t = __expo2(absx, 2 * h);
+    return t;
 }
 
 static BOOL sqrt_validate( double *x, BOOL update_sw )

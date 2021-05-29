@@ -269,14 +269,6 @@ static float CDECL unix_powf( float x, float y )
 }
 
 /*********************************************************************
- *      sinh
- */
-static double CDECL unix_sinh( double x )
-{
-    return sinh( x );
-}
-
-/*********************************************************************
  *      sinhf
  */
 static float CDECL unix_sinhf( float x )
@@ -351,7 +343,6 @@ static const struct unix_funcs funcs =
     unix_log2f,
     unix_pow,
     unix_powf,
-    unix_sinh,
     unix_sinhf,
     unix_tanh,
     unix_tanhf,
