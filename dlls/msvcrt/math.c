@@ -2834,9 +2834,47 @@ double CDECL tan( double x )
  */
 double CDECL tanh( double x )
 {
-  double ret = unix_funcs->tanh(x);
-  if (isnan(x)) return math_error(_DOMAIN, "tanh", x, 0, ret);
-  return ret;
+    UINT64 ui = *(UINT64*)&x;
+    UINT32 w;
+    int sign;
+    double t;
+
+    /* x = |x| */
+    sign = ui >> 63;
+    ui &= (UINT64)-1 / 2;
+    x = *(double*)&ui;
+    w = ui >> 32;
+
+    if (w > 0x3fe193ea) {
+        /* |x| > log(3)/2 ~= 0.5493 or nan */
+        if (w > 0x40340000) {
+#if _MSVCR_VER < 140
+            if (isnan(x))
+                return math_error(_DOMAIN, "tanh", x, 0, x);
+#endif
+            /* |x| > 20 or nan */
+            /* note: this branch avoids raising overflow */
+            fp_barrier(x + 0x1p120f);
+            t = 1 - 0 / x;
+        } else {
+            t = __expm1(2 * x);
+            t = 1 - 2 / (t + 2);
+        }
+    } else if (w > 0x3fd058ae) {
+        /* |x| > log(5/3)/2 ~= 0.2554 */
+        t = __expm1(2 * x);
+        t = t / (t + 2);
+    } else if (w >= 0x00100000) {
+        /* |x| >= 0x1p-1022, up to 2ulp error in [0.1,0.2554] */
+        t = __expm1(-2 * x);
+        t = -t / (t + 2);
+    } else {
+        /* |x| is subnormal */
+        /* note: the branch above would not raise underflow in [0x1p-1023,0x1p-1022) */
+        fp_barrier((float)x);
+        t = x;
+    }
+    return sign ? -t : t;
 }
 
 

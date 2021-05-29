@@ -46,7 +46,6 @@ struct unix_funcs
     float           (CDECL *log2f)(float x);
     double          (CDECL *pow)(double x, double y);
     float           (CDECL *powf)(float x, float y);
-    double          (CDECL *tanh)(double x);
     float           (CDECL *tanhf)(float x);
     double          (CDECL *tgamma)(double x);
     float           (CDECL *tgammaf)(float x);
