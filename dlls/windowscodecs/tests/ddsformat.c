@@ -553,9 +553,10 @@ static void release_encoder(IWICBitmapEncoder *encoder, IWICDdsEncoder *dds_enco
     if (encoder) IWICBitmapEncoder_Release(encoder);
 }
 
-static HRESULT create_and_init_encoder(BYTE *image_buffer, UINT buffer_size,
+static HRESULT create_and_init_encoder(BYTE *image_buffer, UINT buffer_size, WICDdsParameters *params,
                                        IWICBitmapEncoder **encoder, IWICDdsEncoder **dds_encoder, IWICStream **stream)
 {
+    IWICDdsEncoder *dds = NULL;
     HRESULT hr;
 
     *encoder = create_encoder();
@@ -568,14 +569,31 @@ static HRESULT create_and_init_encoder(BYTE *image_buffer, UINT buffer_size,
     ok(hr == S_OK, "Initialize failed, hr %#x\n", hr);
     if (hr != S_OK) goto fail;
 
-    hr = IWICBitmapEncoder_QueryInterface(*encoder, &IID_IWICDdsEncoder, (void **)dds_encoder);
+    hr = IWICBitmapEncoder_QueryInterface(*encoder, &IID_IWICDdsEncoder, (void **)&dds);
     ok(hr == S_OK, "QueryInterface failed, hr %#x\n", hr);
     if (hr != S_OK) goto fail;
+
+    if (params)
+    {
+        hr = IWICDdsEncoder_SetParameters(dds, params);
+        ok(hr == S_OK, "SetParameters failed, hr %#x\n", hr);
+        if (hr != S_OK) goto fail;
+    }
+
+    if (dds_encoder)
+    {
+        *dds_encoder = dds;
+    }
+    else
+    {
+        IWICDdsEncoder_Release(dds);
+        dds = NULL;
+    }
 
     return S_OK;
 
 fail:
-    release_encoder(*encoder, *dds_encoder, *stream);
+    release_encoder(*encoder, dds, *stream);
     return E_FAIL;
 }
 
@@ -1354,7 +1372,7 @@ static void test_dds_encoder_params(void)
     HRESULT hr;
     UINT i;
 
-    hr = create_and_init_encoder(buffer, sizeof(buffer), &encoder, &dds_encoder, &stream);
+    hr = create_and_init_encoder(buffer, sizeof(buffer), NULL, &encoder, &dds_encoder, &stream);
     if (hr != S_OK) goto end;
 
     hr = IWICDdsEncoder_GetParameters(dds_encoder, NULL);
@@ -1424,9 +1442,8 @@ static void test_dds_encoder_create_frame(void)
     BYTE buffer[1024];
     HRESULT hr;
 
-    hr = create_and_init_encoder(buffer, sizeof(buffer), &encoder, &dds_encoder, &stream);
+    hr = create_and_init_encoder(buffer, sizeof(buffer), &params, &encoder, &dds_encoder, &stream);
     if (hr != S_OK) goto end;
-    IWICDdsEncoder_SetParameters(dds_encoder, &params);
 
     hr = IWICBitmapEncoder_CreateNewFrame(encoder, &frame0, NULL);
     ok(hr == S_OK, "CreateNewFrame failed, hr %#x\n", hr);
@@ -1439,15 +1456,13 @@ static void test_dds_encoder_create_frame(void)
 
     release_encoder(encoder, dds_encoder, stream);
 
-    create_and_init_encoder(buffer, sizeof(buffer), &encoder, &dds_encoder, &stream);
-    IWICDdsEncoder_SetParameters(dds_encoder, &params);
+    create_and_init_encoder(buffer, sizeof(buffer), &params, &encoder, &dds_encoder, &stream);
     hr = IWICDdsEncoder_CreateNewFrame(dds_encoder, &frame0, &array_index, &mip_level, &slice_index);
     ok(hr == S_OK, "CreateNewFrame failed, hr %#x\n", hr);
     IWICBitmapFrameEncode_Release(frame0);
     release_encoder(encoder, dds_encoder, stream);
 
-    create_and_init_encoder(buffer, sizeof(buffer), &encoder, &dds_encoder, &stream);
-    IWICDdsEncoder_SetParameters(dds_encoder, &params);
+    create_and_init_encoder(buffer, sizeof(buffer), &params, &encoder, &dds_encoder, &stream);
     hr = IWICDdsEncoder_CreateNewFrame(dds_encoder, &frame0, NULL, NULL, NULL);
     ok(hr == S_OK, "CreateNewFrame failed, hr %#x\n", hr);
     IWICBitmapFrameEncode_Release(frame0);
