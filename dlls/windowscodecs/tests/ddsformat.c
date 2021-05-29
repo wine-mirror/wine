@@ -1471,11 +1471,81 @@ end:
     release_encoder(encoder, dds_encoder, stream);
 }
 
+static void test_dds_encoder_pixel_format(void)
+{
+    DXGI_FORMAT image_formats[] = { DXGI_FORMAT_BC1_UNORM, DXGI_FORMAT_BC2_UNORM, DXGI_FORMAT_BC3_UNORM };
+    const WICPixelFormatGUID *test_formats[] =
+    {
+        &GUID_WICPixelFormat8bppIndexed,
+        &GUID_WICPixelFormatBlackWhite,
+        &GUID_WICPixelFormat16bppGray,
+        &GUID_WICPixelFormat8bppAlpha,
+        &GUID_WICPixelFormat16bppBGR555,
+        &GUID_WICPixelFormat16bppBGR565,
+        &GUID_WICPixelFormat24bppBGR,
+        &GUID_WICPixelFormat32bppBGR,
+        &GUID_WICPixelFormat32bppBGRA,
+        &GUID_WICPixelFormat32bppPBGRA,
+        &GUID_WICPixelFormat32bppRGB,
+        &GUID_WICPixelFormat32bppRGBA,
+        &GUID_WICPixelFormat32bppPRGBA,
+        &GUID_WICPixelFormat48bppRGB,
+        &GUID_WICPixelFormat64bppRGB,
+        &GUID_WICPixelFormat64bppRGBA
+    };
+    IWICBitmapFrameEncode *frame = NULL;
+    IWICDdsEncoder *dds_encoder = NULL;
+    IWICBitmapEncoder *encoder = NULL;
+    IWICStream *stream = NULL;
+    WICPixelFormatGUID format;
+    WICDdsParameters params;
+    BYTE buffer[1];
+    HRESULT hr;
+    UINT i, j;
+
+    for (i = 0; i < ARRAY_SIZE(image_formats); ++i)
+    {
+        hr = create_and_init_encoder(buffer, sizeof(buffer), NULL, &encoder, &dds_encoder, &stream);
+        if (hr != S_OK)
+        {
+            release_encoder(encoder, dds_encoder, stream);
+            return;
+        }
+
+        IWICDdsEncoder_GetParameters(dds_encoder, &params);
+        params.DxgiFormat = image_formats[i];
+        IWICDdsEncoder_SetParameters(dds_encoder, &params);
+
+        IWICBitmapEncoder_CreateNewFrame(encoder, &frame, NULL);
+
+        hr = IWICBitmapFrameEncode_SetPixelFormat(frame, &format);
+        todo_wine
+        ok(hr == WINCODEC_ERR_NOTINITIALIZED, "SetPixelFormat got unexpected hr %#x\n", hr);
+
+        IWICBitmapFrameEncode_Initialize(frame, NULL);
+
+        for (j = 0; j < ARRAY_SIZE(test_formats); ++j)
+        {
+            format = *(test_formats[j]);
+            hr = IWICBitmapFrameEncode_SetPixelFormat(frame, &format);
+            todo_wine
+            ok(hr == S_OK, "Test %u: SetPixelFormat failed, hr %#x\n", j, hr);
+            if (hr == S_OK)
+                ok(IsEqualGUID(&format, &GUID_WICPixelFormat32bppBGRA),
+                   "Test %u: Got unexpected GUID %s\n", j, debugstr_guid(&format));
+        }
+
+        IWICBitmapFrameEncode_Release(frame);
+        release_encoder(encoder, dds_encoder, stream);
+    }
+}
+
 static void test_dds_encoder(void)
 {
     test_dds_encoder_initialize();
     test_dds_encoder_params();
     test_dds_encoder_create_frame();
+    test_dds_encoder_pixel_format();
 }
 
 START_TEST(ddsformat)
