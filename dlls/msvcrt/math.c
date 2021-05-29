@@ -1312,9 +1312,30 @@ float CDECL sinf( float x )
  */
 float CDECL sinhf( float x )
 {
-  float ret = unix_funcs->sinhf( x );
-  if (isnan(x)) return math_error(_DOMAIN, "sinhf", x, 0, ret);
-  return ret;
+    UINT32 ui = *(UINT32*)&x;
+    float t, h, absx;
+
+    h = 0.5;
+    if (ui >> 31)
+        h = -h;
+    /* |x| */
+    ui &= 0x7fffffff;
+    absx = *(float*)&ui;
+
+    /* |x| < log(FLT_MAX) */
+    if (ui < 0x42b17217) {
+        t = __expm1f(absx);
+        if (ui < 0x3f800000) {
+            if (ui < 0x3f800000 - (12 << 23))
+                return x;
+            return h * (2 * t - t * t / (t + 1));
+        }
+        return h * (t + t / (t + 1));
+    }
+
+    /* |x| > logf(FLT_MAX) or nan */
+    t = __expo2f(absx, 2 * h);
+    return t;
 }
 
 static BOOL sqrtf_validate( float *x )
