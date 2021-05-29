@@ -98,9 +98,6 @@
 /* Define to 1 if you have the `exp2f' function. */
 #undef HAVE_EXP2F
 
-/* Define to 1 if you have the `expm1f' function. */
-#undef HAVE_EXPM1F
-
 /* Define to 1 if you have the `F3DAudioInitialize8' function. */
 #undef HAVE_F3DAUDIOINITIALIZE8
 

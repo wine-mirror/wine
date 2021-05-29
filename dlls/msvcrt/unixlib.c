@@ -99,18 +99,6 @@ static float CDECL unix_exp2f( float x )
 }
 
 /*********************************************************************
- *      expm1f
- */
-static float CDECL unix_expm1f(float x)
-{
-#ifdef HAVE_EXPM1F
-    return expm1f(x);
-#else
-    return exp(x) - 1;
-#endif
-}
-
-/*********************************************************************
  *      fma
  */
 static double CDECL unix_fma( double x, double y, double z )
@@ -362,7 +350,6 @@ static const struct unix_funcs funcs =
     unix_expf,
     unix_exp2,
     unix_exp2f,
-    unix_expm1f,
     unix_fma,
     unix_fmaf,
     unix_frexp,
