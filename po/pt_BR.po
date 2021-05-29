@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-03-13 17:38-0300\n"
+"PO-Revision-Date: 2021-05-29 15:57-0300\n"
 "Last-Translator: Roberto Augusto Pungartnik <rpungartnik@gmail.com>\n"
 "Language-Team: Portuguese (Brazil)\n"
 "Language: pt_BR\n"
@@ -3973,7 +3973,7 @@ msgstr ""
 
 #: dlls/jscript/jscript.rc:74
 msgid "Cannot define property '|': object is not extensible"
-msgstr ""
+msgstr "Não posso definir porpriedade '|': objeto não é extensível"
 
 #: dlls/jscript/jscript.rc:75
 msgid "Cannot redefine non-configurable property '|'"
@@ -3984,10 +3984,8 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "Não pode modificar propriedade não gravável '|'"
 
 #: dlls/jscript/jscript.rc:77
-#, fuzzy
-#| msgid "'[object]' is not a date object"
 msgid "'this' is not a Map object"
-msgstr "'[object]' não é um objeto de data"
+msgstr "'this' não é um objeto Map"
 
 #: dlls/jscript/jscript.rc:78
 msgid "Property cannot have both accessors and a value"
@@ -6984,569 +6982,468 @@ msgid "Resource is not currently available.\n"
 msgstr "Recurso atualmente não disponível.\n"
 
 #: dlls/localspl/localspl.rc:37
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter"
-msgstr "Letra"
+msgstr "Carta"
 
 #: dlls/localspl/localspl.rc:38
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Small"
-msgstr "Letra"
+msgstr "Carta Pequeno"
 
 #: dlls/localspl/localspl.rc:39
-#, fuzzy
-#| msgid "&Table"
 msgid "Tabloid"
-msgstr "&Tabela"
+msgstr "Tablóide"
 
 #: dlls/localspl/localspl.rc:40
 msgid "Ledger"
-msgstr ""
+msgstr "Tablóide"
 
 #: dlls/localspl/localspl.rc:41
 msgid "Legal"
-msgstr ""
+msgstr "Legal"
 
 #: dlls/localspl/localspl.rc:42
-#, fuzzy
-#| msgid "State"
 msgid "Statement"
-msgstr "Estado"
+msgstr "Meia Carta"
 
 #: dlls/localspl/localspl.rc:43
-#, fuzzy
-#| msgid "&Execute..."
 msgid "Executive"
-msgstr "E&xecutar..."
+msgstr "Ofício"
 
 #: dlls/localspl/localspl.rc:44
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A3"
-msgstr "T"
+msgstr "A3"
 
 #: dlls/localspl/localspl.rc:45
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A4"
-msgstr "T"
+msgstr "A4"
 
 #: dlls/localspl/localspl.rc:46
-#, fuzzy
-#| msgid "Small"
 msgid "A4 Small"
-msgstr "Pequeno"
+msgstr "A4 Pequeno"
 
 #: dlls/localspl/localspl.rc:47
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A5"
-msgstr "T"
+msgstr "A5"
 
 #: dlls/localspl/localspl.rc:48
 msgid "B4 (JIS)"
-msgstr ""
+msgstr "B4 (JIS)"
 
 #: dlls/localspl/localspl.rc:49
 msgid "B5 (JIS)"
-msgstr ""
+msgstr "B5 (JIS)"
 
 #: dlls/localspl/localspl.rc:50
 msgid "Folio"
-msgstr ""
+msgstr "Folio"
 
 #: dlls/localspl/localspl.rc:51
 msgid "Quarto"
-msgstr ""
+msgstr "Quarto"
 
 #: dlls/localspl/localspl.rc:52
 msgid "10x14"
-msgstr ""
+msgstr "10x14"
 
 #: dlls/localspl/localspl.rc:53
 msgid "11x17"
-msgstr ""
+msgstr "11x17"
 
 #: dlls/localspl/localspl.rc:54
-#, fuzzy
-#| msgid "Notepad"
 msgid "Note"
-msgstr "Bloco de Notas"
+msgstr "Nota"
 
 #: dlls/localspl/localspl.rc:55
 msgid "Envelope #9"
-msgstr ""
+msgstr "Envelope #9"
 
 #: dlls/localspl/localspl.rc:56
 msgid "Envelope #10"
-msgstr ""
+msgstr "Envelope #10"
 
 #: dlls/localspl/localspl.rc:57
 msgid "Envelope #11"
-msgstr ""
+msgstr "Envelope #11"
 
 #: dlls/localspl/localspl.rc:58
 msgid "Envelope #12"
-msgstr ""
+msgstr "Envelope #12"
 
 #: dlls/localspl/localspl.rc:59
 msgid "Envelope #14"
-msgstr ""
+msgstr "Envelope #14"
 
 #: dlls/localspl/localspl.rc:60
 msgid "C size sheet"
-msgstr ""
+msgstr "Página tamanho C"
 
 #: dlls/localspl/localspl.rc:61
 msgid "D size sheet"
-msgstr ""
+msgstr "Página tamanho D"
 
 #: dlls/localspl/localspl.rc:62
 msgid "E size sheet"
-msgstr ""
+msgstr "Página tamanho E"
 
 #: dlls/localspl/localspl.rc:63
 msgid "Envelope DL"
-msgstr ""
+msgstr "Envelope DL"
 
 #: dlls/localspl/localspl.rc:64
 msgid "Envelope C5"
-msgstr ""
+msgstr "Envelope C5"
 
 #: dlls/localspl/localspl.rc:65
 msgid "Envelope C3"
-msgstr ""
+msgstr "Envelope C3"
 
 #: dlls/localspl/localspl.rc:66
 msgid "Envelope C4"
-msgstr ""
+msgstr "Envelope C4"
 
 #: dlls/localspl/localspl.rc:67
 msgid "Envelope C6"
-msgstr ""
+msgstr "Envelope C6"
 
 #: dlls/localspl/localspl.rc:68
 msgid "Envelope C65"
-msgstr ""
+msgstr "Envelope C65"
 
 #: dlls/localspl/localspl.rc:69
 msgid "Envelope B4"
-msgstr ""
+msgstr "Envelope B4"
 
 #: dlls/localspl/localspl.rc:70
 msgid "Envelope B5"
-msgstr ""
+msgstr "Envelope B5"
 
 #: dlls/localspl/localspl.rc:71
 msgid "Envelope B6"
-msgstr ""
+msgstr "Envelope B6"
 
 #: dlls/localspl/localspl.rc:72
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "Envelope"
-msgstr "PKCS 7 Envelopado"
+msgstr "Envelope"
 
 #: dlls/localspl/localspl.rc:73
 msgid "Envelope Monarch"
-msgstr ""
+msgstr "Envelope Monarca(US)"
 
 #: dlls/localspl/localspl.rc:74
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "6 3/4 Envelope"
-msgstr "PKCS 7 Envelopado"
+msgstr "Envelope 6 3/4"
 
 #: dlls/localspl/localspl.rc:75
 msgid "US Std Fanfold"
-msgstr ""
+msgstr "US Std Fanfold"
 
 #: dlls/localspl/localspl.rc:76
 msgid "German Std Fanfold"
-msgstr ""
+msgstr "German Std Fanfold"
 
 #: dlls/localspl/localspl.rc:77
 msgid "German Legal Fanfold"
-msgstr ""
+msgstr "German Legal Fanfold"
 
 #: dlls/localspl/localspl.rc:78
 msgid "B4 (ISO)"
-msgstr ""
+msgstr "B4 (ISO)"
 
 #: dlls/localspl/localspl.rc:79
-#, fuzzy
-#| msgid "Japanese"
 msgid "Japanese Postcard"
-msgstr "Japonês"
+msgstr "Cartão Postal Japonês"
 
 #: dlls/localspl/localspl.rc:80
 msgid "9x11"
-msgstr ""
+msgstr "9x11"
 
 #: dlls/localspl/localspl.rc:81
 msgid "10x11"
-msgstr ""
+msgstr "10x11"
 
 #: dlls/localspl/localspl.rc:82
 msgid "15x11"
-msgstr ""
+msgstr "15x11"
 
 #: dlls/localspl/localspl.rc:83
 msgid "Envelope Invite"
-msgstr ""
+msgstr "Envelope Convite"
 
 #: dlls/localspl/localspl.rc:84
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Extra"
-msgstr "Letra"
+msgstr "Carta Extra"
 
 #: dlls/localspl/localspl.rc:85
 msgid "Legal Extra"
-msgstr ""
+msgstr "Legal Extra"
 
 #: dlls/localspl/localspl.rc:86
 msgid "Tabloid Extra"
-msgstr ""
+msgstr "Tablóide Extra"
 
 #: dlls/localspl/localspl.rc:87
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A4 Extra"
-msgstr "E&xtras"
+msgstr "A4 Extra"
 
 #: dlls/localspl/localspl.rc:88
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "Letter Transverse"
-msgstr "percorrido"
+msgstr "Carta Deitado"
 
 #: dlls/localspl/localspl.rc:89
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "A4 Transverse"
-msgstr "percorrido"
+msgstr "A4 Deitado"
 
 #: dlls/localspl/localspl.rc:90
 msgid "Letter Extra Transverse"
-msgstr ""
+msgstr "Letter Extra Invertido"
 
 #: dlls/localspl/localspl.rc:91
 msgid "Super A"
-msgstr ""
+msgstr "Super A"
 
 #: dlls/localspl/localspl.rc:92
 msgid "Super B"
-msgstr ""
+msgstr "Super B"
 
 #: dlls/localspl/localspl.rc:93
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Plus"
-msgstr "Letra"
+msgstr "Carta Plus"
 
 #: dlls/localspl/localspl.rc:94
 msgid "A4 Plus"
-msgstr ""
+msgstr "A4 Plus"
 
 #: dlls/localspl/localspl.rc:95
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "A5 Transverse"
-msgstr "percorrido"
+msgstr "A5 Deitado"
 
 #: dlls/localspl/localspl.rc:96
 msgid "B5 (JIS) Transverse"
-msgstr ""
+msgstr "B5 (JIS) Invertido"
 
 #: dlls/localspl/localspl.rc:97
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A3 Extra"
-msgstr "E&xtras"
+msgstr "A3 Extra"
 
 #: dlls/localspl/localspl.rc:98
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A5 Extra"
-msgstr "E&xtras"
+msgstr "A5 Extra"
 
 #: dlls/localspl/localspl.rc:99
 msgid "B5 (ISO) Extra"
-msgstr ""
+msgstr "B5 (ISO) Extra"
 
 #: dlls/localspl/localspl.rc:100
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A2"
-msgstr "T"
+msgstr "A2"
 
 #: dlls/localspl/localspl.rc:101
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "A3 Transverse"
-msgstr "percorrido"
+msgstr "A3 Deitado"
 
 #: dlls/localspl/localspl.rc:102
 msgid "A3 Extra Transverse"
-msgstr ""
+msgstr "A3 Extra Invertido"
 
 #: dlls/localspl/localspl.rc:103
 msgid "Japanese Double Postcard"
-msgstr ""
+msgstr "Cartão Postal Japonês Duplo"
 
 #: dlls/localspl/localspl.rc:104
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A6"
-msgstr "T"
+msgstr "A6"
 
 #: dlls/localspl/localspl.rc:105
 msgid "Japanese Envelope Kaku #2"
-msgstr ""
+msgstr "Envelope Japonês Kaku #2"
 
 #: dlls/localspl/localspl.rc:106
 msgid "Japanese Envelope Kaku #3"
-msgstr ""
+msgstr "Envelope Japonês Kaku #3"
 
 #: dlls/localspl/localspl.rc:107
 msgid "Japanese Envelope Chou #3"
-msgstr ""
+msgstr "Envelope Japonês Chou #3"
 
 #: dlls/localspl/localspl.rc:108
 msgid "Japanese Envelope Chou #4"
-msgstr ""
+msgstr "Envelope Japonês Chou #4"
 
 #: dlls/localspl/localspl.rc:109
 msgid "Letter Rotated"
-msgstr ""
+msgstr "Carta Rotacionado"
 
 #: dlls/localspl/localspl.rc:110
 msgid "A3 Rotated"
-msgstr ""
+msgstr "A3 Rotacionado"
 
 #: dlls/localspl/localspl.rc:111
 msgid "A4 Rotated"
-msgstr ""
+msgstr "A4 Rotacionado"
 
 #: dlls/localspl/localspl.rc:112
 msgid "A5 Rotated"
-msgstr ""
+msgstr "A5 Rotacionado"
 
 #: dlls/localspl/localspl.rc:113
 msgid "B4 (JIS) Rotated"
-msgstr ""
+msgstr "B4 (JIS) Rotacionado"
 
 #: dlls/localspl/localspl.rc:114
 msgid "B5 (JIS) Rotated"
-msgstr ""
+msgstr "B5 (JIS) Rotacionado"
 
 #: dlls/localspl/localspl.rc:115
 msgid "Japanese Postcard Rotated"
-msgstr ""
+msgstr "Cartão Postal Japonês Rotacionado"
 
 #: dlls/localspl/localspl.rc:116
 msgid "Double Japan Postcard Rotated"
-msgstr ""
+msgstr "Cartão Postal Japonês Duplo Rotacionado"
 
 #: dlls/localspl/localspl.rc:117
 msgid "A6 Rotated"
-msgstr ""
+msgstr "A6 Rotacionado"
 
 #: dlls/localspl/localspl.rc:118
 msgid "Japan Envelope Kaku #2 Rotated"
-msgstr ""
+msgstr "Envelope Japonês Kaku #2 Rotacionado"
 
 #: dlls/localspl/localspl.rc:119
 msgid "Japan Envelope Kaku #3 Rotated"
-msgstr ""
+msgstr "Envelope Japonês Kaku #3 Rotacionado"
 
 #: dlls/localspl/localspl.rc:120
 msgid "Japan Envelope Chou #3 Rotated"
-msgstr ""
+msgstr "Envelope Japonês Chou #3 Rotacionado"
 
 #: dlls/localspl/localspl.rc:121
 msgid "Japan Envelope Chou #4 Rotated"
-msgstr ""
+msgstr "Envelope Japonês Chou #4 Rotacionado"
 
 #: dlls/localspl/localspl.rc:122
 msgid "B6 (JIS)"
-msgstr ""
+msgstr "B6 (JIS)"
 
 #: dlls/localspl/localspl.rc:123
 msgid "B6 (JIS) Rotated"
-msgstr ""
+msgstr "B6 (JIS) Rotacionado"
 
 #: dlls/localspl/localspl.rc:124
 msgid "12x11"
-msgstr ""
+msgstr "12x11"
 
 #: dlls/localspl/localspl.rc:125
 msgid "Japan Envelope You #4"
-msgstr ""
+msgstr "Envelope Japonês You #4"
 
 #: dlls/localspl/localspl.rc:126
 msgid "Japan Envelope You #4 Rotated"
-msgstr ""
+msgstr "Envelope Japonês You #4 Rotacionado"
 
 #: dlls/localspl/localspl.rc:127
 msgid "PRC 16K"
-msgstr ""
+msgstr "PRC 16K"
 
 #: dlls/localspl/localspl.rc:128
 msgid "PRC 32K"
-msgstr ""
+msgstr "PRC 16K"
 
 #: dlls/localspl/localspl.rc:129
 msgid "PRC 32K(Big)"
-msgstr ""
+msgstr "PRC 32K(Grande)"
 
 #: dlls/localspl/localspl.rc:130
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #1"
-msgstr "PKCS 7 Envelopado"
+msgstr "Envelope PRC #1"
 
 #: dlls/localspl/localspl.rc:131
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #2"
-msgstr "PKCS 7 Envelopado"
+msgstr "Envelope PRC #2"
 
 #: dlls/localspl/localspl.rc:132
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #3"
-msgstr "PKCS 7 Envelopado"
+msgstr "Envelope PRC #3"
 
 #: dlls/localspl/localspl.rc:133
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #4"
-msgstr "PKCS 7 Envelopado"
+msgstr "Envelope PRC #4"
 
 #: dlls/localspl/localspl.rc:134
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #5"
-msgstr "PKCS 7 Envelopado"
+msgstr "Envelope PRC #5"
 
 #: dlls/localspl/localspl.rc:135
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #6"
-msgstr "PKCS 7 Envelopado"
+msgstr "Envelope PRC #6"
 
 #: dlls/localspl/localspl.rc:136
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #7"
-msgstr "PKCS 7 Envelopado"
+msgstr "Envelope PRC #7"
 
 #: dlls/localspl/localspl.rc:137
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #8"
-msgstr "PKCS 7 Envelopado"
+msgstr "Envelope PRC #8"
 
 #: dlls/localspl/localspl.rc:138
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #9"
-msgstr "PKCS 7 Envelopado"
+msgstr "Envelope PRC #9"
 
 #: dlls/localspl/localspl.rc:139
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #10"
-msgstr "PKCS 7 Envelopado"
+msgstr "Envelope PRC #10"
 
 #: dlls/localspl/localspl.rc:140
 msgid "PRC 16K Rotated"
-msgstr ""
+msgstr "PRC 16K Rotacionado"
 
 #: dlls/localspl/localspl.rc:141
 msgid "PRC 32K Rotated"
-msgstr ""
+msgstr "PRC 32K Rotacionado"
 
 #: dlls/localspl/localspl.rc:142
 msgid "PRC 32K(Big) Rotated"
-msgstr ""
+msgstr "PRC 32K(Grande) Rotacionado"
 
 #: dlls/localspl/localspl.rc:143
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #1 Rotated"
-msgstr "PKCS 7 Envelopado"
+msgstr "Envelope PRC #1 Invertido"
 
 #: dlls/localspl/localspl.rc:144
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #2 Rotated"
-msgstr "PKCS 7 Envelopado"
+msgstr "Envelope PRC #2 Invertido"
 
 #: dlls/localspl/localspl.rc:145
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #3 Rotated"
-msgstr "PKCS 7 Envelopado"
+msgstr "Envelope PRC #3 Invertido"
 
 #: dlls/localspl/localspl.rc:146
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #4 Rotated"
-msgstr "PKCS 7 Envelopado"
+msgstr "Envelope PRC #4 Invertido"
 
 #: dlls/localspl/localspl.rc:147
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #5 Rotated"
-msgstr "PKCS 7 Envelopado"
+msgstr "Envelope PRC #5 Invertido"
 
 #: dlls/localspl/localspl.rc:148
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #6 Rotated"
-msgstr "PKCS 7 Envelopado"
+msgstr "Envelope PRC #6 Invertido"
 
 #: dlls/localspl/localspl.rc:149
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #7 Rotated"
-msgstr "PKCS 7 Envelopado"
+msgstr "Envelope PRC #7 Invertido"
 
 #: dlls/localspl/localspl.rc:150
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #8 Rotated"
-msgstr "PKCS 7 Envelopado"
+msgstr "Envelope PRC #8 Invertido"
 
 #: dlls/localspl/localspl.rc:151
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #9 Rotated"
-msgstr "PKCS 7 Envelopado"
+msgstr "Envelope PRC #9 Invertido"
 
 #: dlls/localspl/localspl.rc:152
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #10 Rotated"
-msgstr "PKCS 7 Envelopado"
+msgstr "Envelope PRC #10 Invertido"
 
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
@@ -14836,17 +14733,6 @@ msgid "Icons (*.ico)"
 msgstr "Ícones (*.ico)"
 
 #: programs/reg/reg.rc:35
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  REG [operation] [parameters]\n"
-#| "\n"
-#| "Supported operations:\n"
-#| "  ADD | DELETE | IMPORT | EXPORT | QUERY\n"
-#| "\n"
-#| "For help on a specific operation, type:\n"
-#| "  REG [operation] /?\n"
-#| "\n"
 msgid ""
 "Usage:\n"
 "  REG [operation] [parameters]\n"
@@ -14862,7 +14748,7 @@ msgstr ""
 "  REG [operação] [parâmetros]\n"
 "\n"
 "Operações suportadas:\n"
-"  ADD | DELETE | IMPORT | EXPORT | QUERY\n"
+"  ADD | COPY | DELETE | EXPORT | IMPORT | QUERY\n"
 "\n"
 "Para ajuda com alguma operação específica digite:\n"
 "  REG [operação] /?\n"
@@ -14917,6 +14803,55 @@ msgid ""
 "     Modify the registry without prompting for confirmation.\n"
 "\n"
 msgstr ""
+"REG ADD <Chave> [/v nome_valor | /ve] [/t tipo] [/s separador] [/d dados] [/"
+"f]\n"
+"\n"
+"  Adiciona uma chave ao registro ou um valor em uma chave de registro.\n"
+"\n"
+"  <Chave>\n"
+"     Chave de registro a adicionar ou, se alguma destas opções [/v] ou [/ve] "
+"estiver especificada,\n"
+"     a chave para adicionar os novos dados.\n"
+"\n"
+"     Formato: RAIZ\\SubChave\n"
+"\n"
+"     RAIZ: Uma chave de registro pré-definida. Deve ser uma das seguintes:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     SubChave: Caminho completo para a chave de registro dentro da chave "
+"RAIZ definida.\n"
+"\n"
+"  /v <nome_valor>\n"
+"     Nome do valor a ser adicionado ao registro.\n"
+"\n"
+"  /ve\n"
+"     Adiciona um valor sem nome. Esta opção modifica o valor\n"
+"     (Padrão).\n"
+"\n"
+"  /t <tipo>\n"
+"     Tipo do dado para ser adicionao ao registro. Se [/t] for especificado,\n"
+"     <tipo> deve ser uma das opções a seguir:\n"
+"\n"
+"         REG_SZ    | REG_MULTI_SZ | REG_EXPAND_SZ\n"
+"         REG_DWORD | REG_BINARY   | REG_NONE\n"
+"\n"
+"     Se [/t] não estiver especificado, o tipo padrão de dado é REG_SZ.\n"
+"\n"
+"  /s <separador>\n"
+"     Caracter usado para separar textos no tipo REG_MULTI_SZ.\n"
+"     Se [/s] não for especificado, o separador padrão é \\0.\n"
+"\n"
+"  /d <dados>\n"
+"     Dados para adicionar no novo valor de registro.\n"
+"\n"
+"  /f\n"
+"     Modifica o registro sem pedir por confirmação.\n"
+"\n"
 
 #: programs/reg/reg.rc:92
 msgid ""
@@ -14956,6 +14891,46 @@ msgid ""
 "     prompting for confirmation.\n"
 "\n"
 msgstr ""
+"REG DELETE <Chave> [/v nome_valor | /ve | /va] [/f]\n"
+"\n"
+"  Apaga uma chave de registro (incluindo todas as subchaves e valores), ou "
+"apaga\n"
+"  um ou mais valores de uma Chave de Registro.\n"
+"\n"
+"  <Chave>\n"
+"     Chave de registro a ser apagada ou, se uma das opções [/v], [/ve] ou [/"
+"va] estiver\n"
+"     especificada, a chave de registro em que deve apagar um ou mais "
+"valores.\n"
+"\n"
+"     Formato: RAIZ\\SubChave\n"
+"\n"
+"     RAIZ: Uma chave de registro pré-definida. Deve ser uma das seguintes:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     SubChave: Caminho completo para a chave de registro dentro da chave "
+"RAIZ definida.\n"
+"\n"
+"  /v <nome_valor>\n"
+"     Nome da chave de registro para ser apagada.\n"
+"\n"
+"  /ve\n"
+"     Apagar um valore sem nome. Esta opção apara o valor de registro\n"
+"     (Padrão).\n"
+"\n"
+"  /va\n"
+"     Apaga todos os valores de uma chave de registro.\n"
+"\n"
+"  /f\n"
+"     Apaga uma chave de registro (incluindo todas as subchaves e valores) "
+"sem\n"
+"     pedir por confirmação.\n"
+"\n"
 
 #: programs/reg/reg.rc:114
 msgid ""
@@ -14991,18 +14966,50 @@ msgid ""
 "     List all registry entries under <key> and its subkeys.\n"
 "\n"
 msgstr ""
+"REG QUERY <Chave> [/v nome_valor | /ve] [/s]\n"
+"\n"
+"  Busca uma chave de registro especifica e lista todas as subchaves, "
+"valores\n"
+"  e dados dentro desta chave. Use [/s] para buscar recursivamente cada "
+"subchave.\n"
+"\n"
+"  <Chave>\n"
+"    Chave de registro para buscar.\n"
+"\n"
+"     Formato: RAIZ\\SubChave\n"
+"\n"
+"     RAIZ: Uma chave de registro pré-definida. Deve ser uma das seguintes:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     SubChave: Caminho completo para a chave de registro dentro da chave "
+"RAIZ definida.\n"
+"\n"
+"  /v <nome_valor>\n"
+"     Nome do valor de registro para pesquisar. Se nenhum [/v] ou [/ve] "
+"estiver\n"
+"     especificado, todos os valores dentro de <Chave> serão listados.\n"
+"\n"
+"  /ve\n"
+"     Pesquisa por um valor de registro sem nome. Esta opção busca o valor\n"
+"     de registro (Padrão).\n"
+"\n"
+"  /s\n"
+"     Lista todas as entradas de registro dentro de <Chave> e suas "
+"subchaves.\n"
+"\n"
 
 #: programs/reg/reg.rc:116
-#, fuzzy
-#| msgid "The operation completed successfully\n"
 msgid "reg: The operation completed successfully\n"
-msgstr "A operação foi completada com sucesso\n"
+msgstr "reg: A operação foi completada com sucesso\n"
 
 #: programs/reg/reg.rc:117
-#, fuzzy
-#| msgid "reg: Invalid key name\n"
 msgid "reg: Invalid registry key\n"
-msgstr "reg: Nome de chave inválido\n"
+msgstr "reg: Chave de registro inválida\n"
 
 #: programs/reg/reg.rc:118
 msgid "reg: Invalid command line parameters\n"
@@ -15013,23 +15020,16 @@ msgid "reg: Unable to access remote machine\n"
 msgstr "reg: Não foi possível acessar a máquina remota\n"
 
 #: programs/reg/reg.rc:120
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
 msgid "reg: Unable to find the specified registry value\n"
-msgstr ""
-"reg: O sistema foi incapaz de encontrar a chave de registo ou valor "
-"especificado\n"
+msgstr "reg: Não foi possível encontrar o valor especificado\n"
 
 #: programs/reg/reg.rc:121
 msgid "reg: Unsupported registry data type [%1]\n"
 msgstr "reg: Tipo de dado de registro não suportado [%1]\n"
 
 #: programs/reg/reg.rc:122
-#, fuzzy
-#| msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
 msgid "reg: The option [/d] must be followed by a valid numeric value\n"
-msgstr "reg: A opção [/d] precisa ser seguida de um valor hexadecimal válido\n"
+msgstr "reg: A opção [/d] precisa ser seguida de um valor numérico válido\n"
 
 #: programs/reg/reg.rc:123
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
@@ -15044,10 +15044,8 @@ msgid "The registry value '%1' already exists. Do you want to overwrite it?"
 msgstr "O valor do registro '%1' já existe. Deseja sobrescrevê-lo?"
 
 #: programs/reg/reg.rc:129
-#, fuzzy
-#| msgid "The registry operation was cancelled\n"
 msgid "reg: The registry operation was cancelled\n"
-msgstr "A operação de registro foi cancelada\n"
+msgstr "reg: A operação de registro foi cancelada\n"
 
 #: programs/reg/reg.rc:130 programs/regedit/regedit.rc:239
 msgid "(Default)"
@@ -15070,10 +15068,8 @@ msgid "reg: The option [/d] must be followed by a valid string\n"
 msgstr "reg: A opção [/d] precisa ser seguida de uma string válida\n"
 
 #: programs/reg/reg.rc:135
-#, fuzzy
-#| msgid "regedit: Unable to delete the registry key '%1'.\n"
 msgid "reg: Unable to delete all registry values in '%1'\n"
-msgstr "regedit: Não foi possível remover a chave de registro '%1'.\n"
+msgstr "regedit: Não foi possível remover todos os valores em '%1'\n"
 
 #: programs/reg/reg.rc:136
 msgid ""
@@ -15117,6 +15113,13 @@ msgid ""
 "     The name and path of the registry file to import.\n"
 "\n"
 msgstr ""
+"REG IMPORT <Arquivo>\n"
+"\n"
+"  Importa chaves, valores e dados a partir de um arquivo para o registro.\n"
+"\n"
+"  <Arquivo>\n"
+"     Caminho e nome do arquivo de registro para importar.\n"
+"\n"
 
 #: programs/reg/reg.rc:149
 msgid "reg: The file '%1' was not found.\n"
@@ -15160,31 +15163,50 @@ msgid ""
 "     Overwrite <file> without prompting for confirmation.\n"
 "\n"
 msgstr ""
+"REG EXPORT <Chave> <Arquivo> [/y]\n"
+"\n"
+"  Exporta uma chave de registro (incluindo todas as subchaves e valores)\n"
+"  para um arquivo.\n"
+"\n"
+"  <Chave>\n"
+"     A chave de registro para exportar.\n"
+"\n"
+"     Formato: RAIZ\\SubChave\n"
+"\n"
+"     RAIZ: Uma chave de registro pré-definida. Deve ser uma das seguintes:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     SubChave: Caminho completo para a chave de registro dentro da chave "
+"RAIZ definida.\n"
+"\n"
+"  <Arquivo>\n"
+"     Caminho e o nome do arquivo de registro que será criado.\n"
+"     O arquivo deve ter extensão .reg.\n"
+"\n"
+"  /y\n"
+"     Sobrescreve o <Arquivo> sem pedir confirmação.\n"
+"\n"
 
 #: programs/reg/reg.rc:172
-#, fuzzy
-#| msgid "reg: Invalid system key [%1]\n"
 msgid "reg: Invalid system key\n"
-msgstr "reg: Chave de sistema inválido[%1]\n"
+msgstr "reg: Chave de sistema inválida\n"
 
 #: programs/reg/reg.rc:173
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "O arquivo '%1' já existe. Deseja sobrescrevê-lo?"
 
 #: programs/reg/reg.rc:174
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
 msgid "reg: Unable to find the specified registry key\n"
-msgstr ""
-"reg: O sistema foi incapaz de encontrar a chave de registo ou valor "
-"especificado\n"
+msgstr "reg: Não foi possível encontrar a chave de registo especificada\n"
 
 #: programs/reg/reg.rc:175
-#, fuzzy
-#| msgid "reg: Unable to open the registry key '%1'.\n"
 msgid "reg: Unable to import the registry key '%1'\n"
-msgstr "reg: Não foi possível abrir a chave de registro '%1'.\n"
+msgstr "reg: Não foi possível importar a chave de registro '%1'.\n"
 
 #: programs/reg/reg.rc:180
 msgid ""
@@ -15195,15 +15217,17 @@ msgid ""
 "     Access the registry using the 64-bit view.\n"
 "\n"
 msgstr ""
+" /reg:32\n"
+"     Acessa o registro utilizando o modo 32-bits.\n"
+"\n"
+"  /reg:64\n"
+"     Acessa o registro utilizando o modo 64-bits.\n"
+"\n"
 
 #: programs/reg/reg.rc:181
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
 msgid "reg: Unable to access or create the specified registry key\n"
 msgstr ""
-"reg: O sistema foi incapaz de encontrar a chave de registo ou valor "
-"especificado\n"
+"reg: Não foi possível acessar ou criar a chave de registo especificado\n"
 
 #: programs/reg/reg.rc:202
 msgid ""
@@ -15239,6 +15263,39 @@ msgid ""
 "<key2>.\n"
 "\n"
 msgstr ""
+"REG COPY <Chave1> <Chave2> [/s] [/f]\n"
+"\n"
+"  Copia o conteúdo de uma chave de registro especificada para outra "
+"localização.\n"
+"  Por padrão, esta operação copia apenas os valores do registrp. Use [/s] "
+"para\n"
+"  copiar de forma recursiva todas as subchaves e valores.\n"
+"\n"
+"  <Chave1>, <Chave2>\n"
+"     Chave de Registro de origem (<Chave1>) e destino (<Chave2>)\n"
+"     dos dados. Se a <Chave2> não existir, ela será criada.\n"
+"\n"
+"     Formato: RAIZ\\SubChave\n"
+"\n"
+"     RAIZ: Uma chave de registro pré-definida. Deve ser uma das seguintes:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     SubChave: Caminho completo para a chave de registro dentro da RAIZ "
+"definida.\n"
+"\n"
+"  /s\n"
+"     Copia todas as subchaves e valores de <Chave1> para <Chave2>.\n"
+"\n"
+"  /f\n"
+"     Sobreescreve todos os dados em <Chave2> sem pedir por confirmação.\n"
+"     Esta operação nao afeta subchaves e valores que existem somente em  "
+"<Chave2>.\n"
+"\n"
 
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
@@ -15921,37 +15978,6 @@ msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
 msgstr "regsvr32: DLL '%1' desinstalada com sucesso\n"
 
 #: programs/start/start.rc:57
-#, fuzzy
-#| msgid ""
-#| "Start a program, or open a document in the program normally used for "
-#| "files\n"
-#| "with that suffix.\n"
-#| "Usage:\n"
-#| "start [options] program_filename [...]\n"
-#| "start [options] document_filename\n"
-#| "\n"
-#| "Options:\n"
-#| "\"title\"        Specifies the title of the child windows.\n"
-#| "/d directory   Start the program in the specified directory.\n"
-#| "/b             Don't create a new console for the program.\n"
-#| "/i             Start the program with fresh environment variables.\n"
-#| "/min           Start the program minimized.\n"
-#| "/max           Start the program maximized.\n"
-#| "/low           Start the program in the idle priority class.\n"
-#| "/normal        Start the program in the normal priority class.\n"
-#| "/high          Start the program in the high priority class.\n"
-#| "/realtime      Start the program in the realtime priority class.\n"
-#| "/abovenormal   Start the program in the abovenormal priority class.\n"
-#| "/belownormal   Start the program in the belownormal priority class.\n"
-#| "/node n        Start the program on the specified NUMA node.\n"
-#| "/affinity mask Start the program with the specified affinity mask.\n"
-#| "/wait          Wait for the started program to finish, then exit with "
-#| "its\n"
-#| "exit code.\n"
-#| "/unix          Use a Unix filename and start the file like Windows\n"
-#| "Explorer.\n"
-#| "/ProgIDOpen    Open a document using the specified progID.\n"
-#| "/?             Display this help and exit.\n"
 msgid ""
 "Start a program, or open a document in the program normally used for files\n"
 "with that suffix.\n"
@@ -16007,6 +16033,7 @@ msgstr ""
 "               de saída.\n"
 "/unix          Usa o caminho Unix do arquivo e inicia-o como o windows\n"
 "               explorer.\n"
+"/exec         Executa o arquivo especificado(para uso interno do Wine).\n"
 "/ProgIDOpen    Abre um documento usando o progID especificado.\n"
 "/?             Exibe essa ajuda e retorna.\n"
 
