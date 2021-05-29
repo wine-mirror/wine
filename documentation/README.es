@@ -160,7 +160,7 @@ Bugs:   Reporte fallos en el Bugzilla de Wine, https://bugs.winehq.org
         datos de bugzilla para comprobar si su problema es un fallo conocido
         o existe una solución.
 
-IRC:    Se puede obtener ayuda online en el canal #WineHQ de irc.freenode.net.
+IRC:    Se puede obtener ayuda online en el canal #WineHQ de irc.libera.chat.
 
 Git:    El árbol actual de desarrollo de Wine está disponible a través de Git.
         Vaya a https://www.winehq.org/git para más información.

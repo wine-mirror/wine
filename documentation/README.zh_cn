@@ -144,7 +144,7 @@ Bugs:	请向位于 https://bugs.winehq.org 的 Wine Bugzilla 提交 bug。
 	请在提交漏洞报告前先在 bugzilla 数据库中进行搜索，检查
 	先前是否已有类似的已知问题以避免重复，并跟踪这些问题的修复情况。
 
-IRC:	您可以在 irc.freenode.net 的 #WineHQ 频道获取到在线帮助。
+IRC:	您可以在 irc.libera.chat 的 #WineHQ 频道获取到在线帮助。
 
 Git:	当前 Wine 的开发树可经由 Git 获取。
 	请前往 https://www.winehq.org/git 以了解更多信息。
