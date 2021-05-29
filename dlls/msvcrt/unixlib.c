@@ -43,14 +43,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /*********************************************************************
- *      cosh
- */
-static double CDECL unix_cosh( double x )
-{
-    return cosh( x );
-}
-
-/*********************************************************************
  *      coshf
  */
 static float CDECL unix_coshf( float x )
@@ -344,7 +336,6 @@ static float CDECL unix_tgammaf(float x)
 
 static const struct unix_funcs funcs =
 {
-    unix_cosh,
     unix_coshf,
     unix_exp,
     unix_expf,
