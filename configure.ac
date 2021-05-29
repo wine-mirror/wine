@@ -2658,7 +2658,6 @@ fi
 AC_CHECK_FUNCS(\
 	exp2 \
 	exp2f \
-	expm1 \
 	expm1f \
 	fma \
 	fmaf \
