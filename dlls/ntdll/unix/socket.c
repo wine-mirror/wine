@@ -255,10 +255,10 @@ static socklen_t sockaddr_to_unix( const struct WS_sockaddr *wsaddr, int wsaddrl
         memcpy( &win, wsaddr, sizeof(win) );
         uaddr->irda.sir_family = AF_IRDA;
         if (sscanf( win.irdaServiceName, "LSAP-SEL%u", &lsap_sel ) == 1)
-            uaddr->sir_lsap_sel = lsap_sel;
+            uaddr->irda.sir_lsap_sel = lsap_sel;
         else
         {
-            uaddr->sir_lsap_sel = LSAP_ANY;
+            uaddr->irda.sir_lsap_sel = LSAP_ANY;
             memcpy( uaddr->irda.sir_name, win.irdaServiceName, sizeof(win.irdaServiceName) );
         }
         memcpy( &uaddr->irda.sir_addr, win.irdaDeviceID, sizeof(win.irdaDeviceID) );
