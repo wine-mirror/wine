@@ -6581,7 +6581,7 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
     {
         /* Find or create a shader implementing the fixed function pipeline
          * settings, then activate it. */
-        gen_ffp_frag_op(context, state, &settings, FALSE);
+        wined3d_ffp_get_fs_settings(context, state, &settings, FALSE);
         desc = (const struct arbfp_ffp_desc *)find_ffp_frag_shader(&priv->fragment_shaders, &settings);
         if (!desc)
         {
