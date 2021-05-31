@@ -627,7 +627,7 @@ static struct _tagASSEMBLY
         0x23C, /* wLength */
         0x34, /* wValueLength */
         0, /* wType */
-        { 'V','S','_','V','E','R','S','I','O','N','_','I','N','F','O',0,0 }, /* szKey */
+        { L"VS_VERSION_INFO" }, /* szKey */
         /* VS_FIXEDFILEINFO */
         {
             VS_FFI_SIGNATURE, /* dwSignature */
@@ -650,14 +650,14 @@ static struct _tagASSEMBLY
         0x44, /* wLength */
         0, /* wValueLength */
         1, /* wType */
-        { 'V','a','r','F','i','l','e','I','n','f','o',0,0 } /* szKey */
+        { L"VarFileInfo" } /* szKey */
     },
     /* VAR */
     {
         0x24, /* wLength */
         0x4, /* wValueLength */
         0, /* wType */
-        { 'T','r','a','n','s','l','a','t','i','o','n',0,0 }, /* szKey */
+        { L"Translation" }, /* szKey */
         0x4B00000, /* Value */
     },
     /* STRINGFILEINFO */
@@ -665,14 +665,14 @@ static struct _tagASSEMBLY
         0x19C, /* wLength */
         0, /* wValueLength */
         1, /* wType */
-        { 'S','t','r','i','n','g','F','i','l','e','I','n','f','o',0 }, /* szKey */
+        { L"StringFileInfo" }, /* szKey */
     },
     /* STRINGTABLE */
     {
         0x178, /* wLength */
         0, /* wValueLength */
         1, /* wType */
-        { '0','0','0','0','0','4','b','0',0 }, /* szKey */
+        { L"000004b0" }, /* szKey */
     },
     /* STRINGHDR */
     {
@@ -680,56 +680,56 @@ static struct _tagASSEMBLY
         2, /* wValueLength */
         1, /* wType */
     },
-    { 'F','i','l','e','D','e','s','c','r','i','p','t','i','o','n',0,0 }, /* szKey */
-    { ' ',0 }, /* szValue */
+    { L"FileDescription" }, /* szKey */
+    { L" " }, /* szValue */
     /* STRINGHDR */
     {
         0x30, /* wLength */
         8, /* wValueLength */
         1, /* wType */
     },
-    { 'F','i','l','e','V','e','r','s','i','o','n',0,0 }, /* szKey */
-    { '1','.','0','.','0','.','0',0 }, /* szValue */
+    { L"FileVersion" }, /* szKey */
+    { L"1.0.0.0" }, /* szValue */
     /* STRINGHDR */
     {
         0x34, /* wLength */
         9, /* wValueLength */
         1, /* wType */
     },
-    { 'I','n','t','e','r','n','a','l','N','a','m','e',0 }, /* szKey */
-    { 'w','i','n','e','.','d','l','l',0 }, /* szValue */
+    { L"InternalName" }, /* szKey */
+    { L"wine.dll" }, /* szValue */
     /* STRINGHDR */
     {
         0x28, /* wLength */
         2, /* wValueLength */
         1, /* wType */
     },
-    { 'L','e','g','a','l','C','o','p','y','r','i','g','h','t',0 }, /* szKey */
-    { ' ',0 }, /* szValue */
+    { L"LegalCopyright" }, /* szKey */
+    { L" " }, /* szValue */
     /* STRINGHDR */
     {
         0x3C, /* wLength */
         9, /* wValueLength */
         1, /* wType */
     },
-    { 'O','r','i','g','i','n','a','l','F','i','l','e','n','a','m','e',0 }, /* szKey */
-    { 'w','i','n','e','.','d','l','l',0,0 }, /* szValue */
+    { L"OriginalFilename" }, /* szKey */
+    { L"wine.dll" }, /* szValue */
     /* STRINGHDR */
     {
         0x34, /* wLength */
         8, /* wValueLength */
         1, /* wType */
     },
-    { 'P','r','o','d','u','c','t','V','e','r','s','i','o','n',0 }, /* szKey */
-    { '1','.','0','.','0','.','0',0 }, /* szValue */
+    { L"ProductVersion" }, /* szKey */
+    { L"1.0.0.0" }, /* szValue */
     /* STRINGHDR */
     {
         0x38, /* wLength */
         8, /* wValueLength */
         1, /* wType */
     },
-    { 'A','s','s','e','m','b','l','y',' ','V','e','r','s','i','o','n',0 }, /* szKey */
-    { '1','.','0','.','0','.','0',0 }, /* szValue */
+    { L"Assembly Version" }, /* szKey */
+    { L"1.0.0.0" }, /* szValue */
     { 0 }, /* pad */
     /* RELOCATION */
     {
@@ -754,8 +754,6 @@ static BOOL init_functionpointers(void)
     HMODULE hfusion;
     HMODULE hmscoree;
 
-    static const WCHAR szFusion[] = {'f','u','s','i','o','n','.','d','l','l',0};
-
     hmscoree = LoadLibraryA("mscoree.dll");
     if (!hmscoree)
     {
@@ -771,7 +769,7 @@ static BOOL init_functionpointers(void)
         return FALSE;
     }
 
-    hr = pLoadLibraryShim(szFusion, NULL, NULL, &hfusion);
+    hr = pLoadLibraryShim(L"fusion.dll", NULL, NULL, &hfusion);
     if (FAILED(hr))
     {
         win_skip("fusion.dll not available\n");
@@ -842,14 +840,12 @@ static BOOL check_dotnet20(void)
     BOOL ret = FALSE;
     ULONG disp;
 
-    static const WCHAR winedll[] = {'w','i','n','e','.','d','l','l',0};
-
     create_assembly("wine.dll");
 
     hr = pCreateAssemblyCache(&cache, 0);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    hr = IAssemblyCache_InstallAssembly(cache, 0, winedll, NULL);
+    hr = IAssemblyCache_InstallAssembly(cache, 0, L"wine.dll", NULL);
     if (hr == S_OK)
         ret = TRUE;
     else if (hr == CLDB_E_FILE_OLDVER)
@@ -860,7 +856,7 @@ static BOOL check_dotnet20(void)
         ok(0, "Expected S_OK, got %08x\n", hr);
 
     DeleteFileA("wine.dll");
-    IAssemblyCache_UninstallAssembly(cache, 0, winedll, NULL, &disp);
+    IAssemblyCache_UninstallAssembly(cache, 0, L"wine.dll", NULL, &disp);
     IAssemblyCache_Release(cache);
     return ret;
 }
@@ -887,8 +883,6 @@ static void test_CreateAssemblyCacheItem(void)
     IAssemblyCacheItem *item;
     HRESULT hr;
 
-    static const WCHAR wine[] = {'w','i','n','e',0};
-
     hr = pCreateAssemblyCache(&cache, 0);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
@@ -899,7 +893,7 @@ static void test_CreateAssemblyCacheItem(void)
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     IAssemblyCacheItem_Release(item);
 
-    hr = IAssemblyCache_CreateAssemblyCacheItem(cache, 0, NULL, &item, wine);
+    hr = IAssemblyCache_CreateAssemblyCacheItem(cache, 0, NULL, &item, L"wine");
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     IAssemblyCacheItem_Release(item);
 
@@ -926,15 +920,6 @@ static void test_InstallAssembly(void)
     DWORD attr;
     char dllpath[MAX_PATH];
 
-    static const WCHAR empty[] = {0};
-    static const WCHAR noext[] = {'f','i','l','e',0};
-    static const WCHAR badext[] = {'f','i','l','e','.','b','a','d',0};
-    static const WCHAR dllext[] = {'f','i','l','e','.','d','l','l',0};
-    static const WCHAR exeext[] = {'f','i','l','e','.','e','x','e',0};
-    static const WCHAR testdll[] = {'t','e','s','t','.','d','l','l',0};
-    static const WCHAR winedll[] = {'w','i','n','e','.','d','l','l',0};
-    static const WCHAR wine[] = {'w','i','n','e',0};
-
     create_file("test.dll", 100);
     create_assembly("wine.dll");
 
@@ -946,36 +931,36 @@ static void test_InstallAssembly(void)
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
 
     /* empty pszManifestFilePath */
-    hr = IAssemblyCache_InstallAssembly(cache, 0, empty, NULL);
+    hr = IAssemblyCache_InstallAssembly(cache, 0, L"", NULL);
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
 
     /* pszManifestFilePath has no extension */
-    hr = IAssemblyCache_InstallAssembly(cache, 0, noext, NULL);
+    hr = IAssemblyCache_InstallAssembly(cache, 0, L"file", NULL);
     ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME),
        "Expected HRESULT_FROM_WIN32(ERROR_INVALID_NAME), got %08x\n", hr);
 
     /* pszManifestFilePath has bad extension */
-    hr = IAssemblyCache_InstallAssembly(cache, 0, badext, NULL);
+    hr = IAssemblyCache_InstallAssembly(cache, 0, L"file.bad", NULL);
     ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME),
        "Expected HRESULT_FROM_WIN32(ERROR_INVALID_NAME), got %08x\n", hr);
 
     /* pszManifestFilePath has dll extension */
-    hr = IAssemblyCache_InstallAssembly(cache, 0, dllext, NULL);
+    hr = IAssemblyCache_InstallAssembly(cache, 0, L"file.dll", NULL);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
        "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", hr);
 
     /* pszManifestFilePath has exe extension */
-    hr = IAssemblyCache_InstallAssembly(cache, 0, exeext, NULL);
+    hr = IAssemblyCache_InstallAssembly(cache, 0, L"file.exe", NULL);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
        "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", hr);
 
     /* empty file */
-    hr = IAssemblyCache_InstallAssembly(cache, 0, testdll, NULL);
+    hr = IAssemblyCache_InstallAssembly(cache, 0, L"test.dll", NULL);
     ok(hr == COR_E_ASSEMBLYEXPECTED,
        "Expected COR_E_ASSEMBLYEXPECTED, got %08x\n", hr);
 
     /* wine assembly */
-    hr = IAssemblyCache_InstallAssembly(cache, 0, winedll, NULL);
+    hr = IAssemblyCache_InstallAssembly(cache, 0, L"wine.dll", NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     GetWindowsDirectoryA(dllpath, MAX_PATH);
@@ -986,7 +971,7 @@ static void test_InstallAssembly(void)
 
     /* uninstall the assembly from the GAC */
     disp = 0xf00dbad;
-    hr = IAssemblyCache_UninstallAssembly(cache, 0, wine, NULL, &disp);
+    hr = IAssemblyCache_UninstallAssembly(cache, 0, L"wine", NULL, &disp);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(disp == IASSEMBLYCACHE_UNINSTALL_DISPOSITION_UNINSTALLED,
        "Expected IASSEMBLYCACHE_UNINSTALL_DISPOSITION_UNINSTALLED, got %d\n", disp);
@@ -995,7 +980,7 @@ static void test_InstallAssembly(void)
     ok(attr == INVALID_FILE_ATTRIBUTES, "Expected assembly not to exist\n");
 
     disp = 0xf00dbad;
-    hr = IAssemblyCache_UninstallAssembly(cache, 0, wine, NULL, &disp);
+    hr = IAssemblyCache_UninstallAssembly(cache, 0, L"wine", NULL, &disp);
     ok(hr == S_FALSE, "Expected S_FALSE, got %08x\n", hr);
     ok(disp == IASSEMBLYCACHE_UNINSTALL_DISPOSITION_ALREADY_UNINSTALLED,
        "Expected IASSEMBLYCACHE_UNINSTALL_DISPOSITION_ALREADY_UNINSTALLED, got %d\n", disp);
@@ -1023,50 +1008,11 @@ static void test_QueryAssemblyInfo(void)
     DWORD size;
     ULONG disp;
 
-    static const WCHAR empty[] = {0};
-    static const WCHAR commasep[] = {',',' ',0};
-    static const WCHAR winedll[] = {'w','i','n','e','.','d','l','l',0};
-    static const WCHAR wine[] = {'w','i','n','e',0};
-    static const WCHAR ver[] = {
-        'V','e','r','s','i','o','n','=','1','.','0','.','0','.','0',0};
-    static const WCHAR otherver[] = {
-        'V','e','r','s','i','o','n','=','1','.','0','.','0','.','0','0','0','0','0',0};
-    static const WCHAR badver[] = {
-        'V','e','r','s','i','o','n','=','1','.','0','.','0','.','1',0};
-    static const WCHAR culture[] = {
-        'C','u','l','t','u','r','e','=','n','e','u','t','r','a','l',0};
-    static const WCHAR badculture[] = {
-        'C','u','l','t','u','r','e','=','e','n',0};
-    static const WCHAR pubkey[] = {
-        'P','u','b','l','i','c','K','e','y','T','o','k','e','n','=',
-        '2','d','0','3','6','1','7','b','1','c','3','1','e','2','f','5',0};
-    static const WCHAR badpubkey[] = {
-        'P','u','b','l','i','c','K','e','y','T','o','k','e','n','=',
-        'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',0};
-    static const WCHAR badprop[] = {'B','a','d','P','r','o','p','=','b','u','h',0};
-    static const WCHAR msil[] = {
-        '_','M','S','I','L','\\','w','i','n','e','\\',
-        '1','.','0','.','0','.','0','_','_','2','d','0','3','6','1','7','b',
-        '1','c','3','1','e','2','f','5','\\',0};
-    static const WCHAR wine2[] = {
-        'w','i','n','e',',','v','e','r','s','i','o','n','=','1','.','0','.','0','.','1',',',
-        'p','u','b','l','i','c','K','e','y','T','o','k','e','n','=',
-        '2','d','0','3','6','1','7','b','1','c','3','1','e','2','f','5',',',
-        'c','u','l','t','u','r','e','=','n','e','u','t','r','a','l',0};
-    static const WCHAR nullpublickey[] = {
-        'm','s','c','o','r','l','i','b','.','d','l','l',',','v','e','r','s','i','o','n','=','0','.','0','.',
-        '0','.','0',',','c','u','l','t','u','r','e','=','n','e','u','t','r','a','l',',',
-        'p','u','b','l','i','c','K','e','y','T','o','k','e','n','=','n','u','l','l',0};
-    static const WCHAR nullpublickey1[] = {
-        'm','s','c','o','r','l','i','b','.','d','l','l',',',
-        'p','u','b','l','i','c','K','e','y','T','o','k','e','n','=','n','u','L','l',0};
-
     size = MAX_PATH;
     hr = pGetCachePath(ASM_CACHE_GAC, asmpath, &size);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
-    lstrcatW(asmpath, msil);
-    lstrcatW(asmpath, winedll);
+    lstrcatW(asmpath, L"_MSIL\\wine\\1.0.0.0__2d03617b1c31e2f5\\wine.dll");
 
     create_assembly("wine.dll");
 
@@ -1075,7 +1021,7 @@ static void test_QueryAssemblyInfo(void)
 
     /* assembly not installed yet */
     INIT_ASM_INFO();
-    hr = IAssemblyCache_QueryAssemblyInfo(cache, 0, wine, &info);
+    hr = IAssemblyCache_QueryAssemblyInfo(cache, 0, L"wine", &info);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
        "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
@@ -1085,11 +1031,11 @@ static void test_QueryAssemblyInfo(void)
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     ok(info.uliAssemblySizeInKB.u.LowPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
-    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, empty),
+    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, L""),
        "Assembly path was changed\n");
     ok(info.cchBuf == MAX_PATH, "Expected MAX_PATH, got %d\n", info.cchBuf);
 
-    hr = IAssemblyCache_InstallAssembly(cache, 0, winedll, NULL);
+    hr = IAssemblyCache_InstallAssembly(cache, 0, L"wine.dll", NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     /* NULL pszAssemblyName */
@@ -1104,14 +1050,13 @@ static void test_QueryAssemblyInfo(void)
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     ok(info.uliAssemblySizeInKB.u.LowPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
-    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, empty),
+    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, L""),
        "Assembly path was changed\n");
     ok(info.cchBuf == MAX_PATH, "Expected MAX_PATH, got %d\n", info.cchBuf);
 
     /* empty pszAssemblyName */
     INIT_ASM_INFO();
-    hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_VALIDATE,
-                                          empty, &info);
+    hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_VALIDATE, L"", &info);
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
@@ -1120,13 +1065,13 @@ static void test_QueryAssemblyInfo(void)
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     ok(info.uliAssemblySizeInKB.u.LowPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
-    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, empty),
+    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, L""),
        "Assembly path was changed\n");
     ok(info.cchBuf == MAX_PATH, "Expected MAX_PATH, got %d\n", info.cchBuf);
 
     /* no dwFlags */
     INIT_ASM_INFO();
-    hr = IAssemblyCache_QueryAssemblyInfo(cache, 0, wine, &info);
+    hr = IAssemblyCache_QueryAssemblyInfo(cache, 0, L"wine", &info);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
@@ -1143,7 +1088,7 @@ static void test_QueryAssemblyInfo(void)
 
     /* pwzCachePath is full filename */
     INIT_ASM_INFO();
-    hr = IAssemblyCache_QueryAssemblyInfo(cache, 0, winedll, &info);
+    hr = IAssemblyCache_QueryAssemblyInfo(cache, 0, L"wine.dll", &info);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
        "Expected HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
@@ -1153,25 +1098,22 @@ static void test_QueryAssemblyInfo(void)
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     ok(info.uliAssemblySizeInKB.u.LowPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
-    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, empty),
+    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, L""),
        "Assembly path was changed\n");
     ok(info.cchBuf == MAX_PATH, "Expected MAX_PATH, got %d\n", info.cchBuf);
 
     /* NULL pAsmInfo, QUERYASMINFO_FLAG_VALIDATE */
-    hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_VALIDATE,
-                                          wine, NULL);
+    hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_VALIDATE, L"wine", NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     /* NULL pAsmInfo, QUERYASMINFO_FLAG_GETSIZE */
-    hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
-                                          wine, NULL);
+    hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE, L"wine", NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     /* info.cbAssemblyInfo is 0 */
     INIT_ASM_INFO();
     info.cbAssemblyInfo = 0;
-    hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_VALIDATE,
-                                          wine, &info);
+    hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_VALIDATE, L"wine", &info);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
@@ -1189,8 +1131,7 @@ static void test_QueryAssemblyInfo(void)
     /* info.cbAssemblyInfo is 1 */
     INIT_ASM_INFO();
     info.cbAssemblyInfo = 1;
-    hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_VALIDATE,
-                                          wine, &info);
+    hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_VALIDATE, L"wine", &info);
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
     ok(info.cbAssemblyInfo == 1, "Expected 1, got %d\n", info.cbAssemblyInfo);
     ok(info.dwAssemblyFlags == 0, "Expected 0, got %08x\n", info.dwAssemblyFlags);
@@ -1198,15 +1139,14 @@ static void test_QueryAssemblyInfo(void)
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     ok(info.uliAssemblySizeInKB.u.LowPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
-    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, empty),
+    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, L""),
        "Assembly path was changed\n");
     ok(info.cchBuf == MAX_PATH, "Expected MAX_PATH, got %d\n", info.cchBuf);
 
     /* info.cbAssemblyInfo is > sizeof(ASSEMBLY_INFO) */
     INIT_ASM_INFO();
     info.cbAssemblyInfo = sizeof(ASSEMBLY_INFO) * 2;
-    hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
-                                          wine, &info);
+    hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE, L"wine", &info);
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO) * 2,
        "Expected sizeof(ASSEMBLY_INFO) * 2, got %d\n", info.cbAssemblyInfo);
@@ -1215,14 +1155,13 @@ static void test_QueryAssemblyInfo(void)
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     ok(info.uliAssemblySizeInKB.u.LowPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
-    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, empty),
+    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, L""),
        "Assembly path was changed\n");
     ok(info.cchBuf == MAX_PATH, "Expected MAX_PATH, got %d\n", info.cchBuf);
 
     /* QUERYASMINFO_FLAG_GETSIZE */
     INIT_ASM_INFO();
-    hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
-                                          wine, &info);
+    hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE, L"wine", &info);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
@@ -1243,7 +1182,7 @@ static void test_QueryAssemblyInfo(void)
     /* QUERYASMINFO_FLAG_GETSIZE and QUERYASMINFO_FLAG_VALIDATE */
     INIT_ASM_INFO();
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE |
-                                          QUERYASMINFO_FLAG_VALIDATE,wine, &info);
+                                          QUERYASMINFO_FLAG_VALIDATE, L"wine", &info);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
@@ -1264,8 +1203,7 @@ static void test_QueryAssemblyInfo(void)
     /* info.pszCurrentAssemblyPathBuf is NULL */
     INIT_ASM_INFO();
     info.pszCurrentAssemblyPathBuf = NULL;
-    hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
-                                          wine, &info);
+    hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE, L"wine", &info);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
     ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
@@ -1284,15 +1222,14 @@ static void test_QueryAssemblyInfo(void)
     /* info.cchBuf is exactly size of asmpath */
     INIT_ASM_INFO();
     info.cchBuf = lstrlenW(asmpath);
-    hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
-                                          wine, &info);
+    hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE, L"wine", &info);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
     ok(info.dwAssemblyFlags == ASSEMBLYINFO_FLAG_INSTALLED,
        "Expected ASSEMBLYINFO_FLAG_INSTALLED, got %08x\n", info.dwAssemblyFlags);
     ok(info.uliAssemblySizeInKB.u.HighPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
-    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, empty),
+    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, L""),
        "Assembly path was changed\n");
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "Expected E_NOT_SUFFICIENT_BUFFER, got %08x\n", hr);
     todo_wine
@@ -1306,8 +1243,7 @@ static void test_QueryAssemblyInfo(void)
     /* info.cchBuf has room for NULL-terminator */
     INIT_ASM_INFO();
     info.cchBuf = lstrlenW(asmpath) + 1;
-    hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
-                                          wine, &info);
+    hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE, L"wine", &info);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
        "Expected sizeof(ASSEMBLY_INFO), got %d\n", info.cbAssemblyInfo);
@@ -1327,9 +1263,7 @@ static void test_QueryAssemblyInfo(void)
 
     /* display name is "wine, Version=1.0.0.0" */
     INIT_ASM_INFO();
-    lstrcpyW(name, wine);
-    lstrcatW(name, commasep);
-    lstrcatW(name, ver);
+    lstrcpyW(name, L"wine, Version=1.0.0.0");
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
                                           name, &info);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
@@ -1351,9 +1285,7 @@ static void test_QueryAssemblyInfo(void)
 
     /* short buffer, QUERYASMINFO_FLAG_VALIDATE */
     memset(&info, 0, sizeof(info));
-    lstrcpyW(name, wine);
-    lstrcatW(name, commasep);
-    lstrcatW(name, otherver);
+    lstrcpyW(name, L"wine, Version=1.0.0.00000");
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_VALIDATE,
                                           name, &info);
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "got %08x\n", hr);
@@ -1361,9 +1293,7 @@ static void test_QueryAssemblyInfo(void)
 
     /* short buffer, QUERYASMINFO_FLAG_GETSIZE */
     memset(&info, 0, sizeof(info));
-    lstrcpyW(name, wine);
-    lstrcatW(name, commasep);
-    lstrcatW(name, otherver);
+    lstrcpyW(name, L"wine, Version=1.0.0.00000");
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
                                           name, &info);
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "got %08x\n", hr);
@@ -1392,9 +1322,7 @@ static void test_QueryAssemblyInfo(void)
 
     /* display name is "wine, Version=1.0.0.1", versions don't match */
     INIT_ASM_INFO();
-    lstrcpyW(name, wine);
-    lstrcatW(name, commasep);
-    lstrcatW(name, badver);
+    lstrcpyW(name, L"wine, Version=1.0.0.1");
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
                                           name, &info);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
@@ -1406,13 +1334,13 @@ static void test_QueryAssemblyInfo(void)
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     ok(info.uliAssemblySizeInKB.u.LowPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
-    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, empty),
+    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, L""),
        "Assembly path was changed\n");
     ok(info.cchBuf == MAX_PATH, "Expected MAX_PATH, got %d\n", info.cchBuf);
 
     /* display name is "wine,version=1.0.0.1,publicKeyToken=2d03617b1c31e2f5,culture=neutral" */
     INIT_ASM_INFO();
-    lstrcpyW(name, wine2);
+    lstrcpyW(name, L"wine,version=1.0.0.1,publicKeyToken=2d03617b1c31e2f5,culture=neutral");
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
                                           name, &info);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
@@ -1424,27 +1352,25 @@ static void test_QueryAssemblyInfo(void)
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     ok(info.uliAssemblySizeInKB.u.LowPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
-    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, empty),
+    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, L""),
        "Assembly path was changed\n");
     ok(info.cchBuf == MAX_PATH, "Expected MAX_PATH, got %d\n", info.cchBuf);
 
     /* display name is "mscorlib.dll,version=0.0.0.0,culture=neutral,publicKeyToken=null" */
     INIT_ASM_INFO();
-    lstrcpyW(name, nullpublickey);
+    lstrcpyW(name, L"mscorlib.dll,version=0.0.0.0,culture=neutral,publicKeyToken=null");
     hr = IAssemblyCache_QueryAssemblyInfo(cache, 0, name, &info);
     ok(hr == FUSION_E_PRIVATE_ASM_DISALLOWED, "got %08x\n", hr);
 
     /* display name is "mscorlib.dll,publicKeyToken=nuLl" */
     INIT_ASM_INFO();
-    lstrcpyW(name, nullpublickey1);
+    lstrcpyW(name, L"mscorlib.dll,publicKeyToken=nuLl");
     hr = IAssemblyCache_QueryAssemblyInfo(cache, 0, name, &info);
     ok(hr == FUSION_E_PRIVATE_ASM_DISALLOWED, "got %08x\n", hr);
 
     /* display name is "wine, Culture=neutral" */
     INIT_ASM_INFO();
-    lstrcpyW(name, wine);
-    lstrcatW(name, commasep);
-    lstrcatW(name, culture);
+    lstrcpyW(name, L"wine, Culture=neutral");
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
                                           name, &info);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
@@ -1466,9 +1392,7 @@ static void test_QueryAssemblyInfo(void)
 
     /* display name is "wine, Culture=en", cultures don't match */
     INIT_ASM_INFO();
-    lstrcpyW(name, wine);
-    lstrcatW(name, commasep);
-    lstrcatW(name, badculture);
+    lstrcpyW(name, L"wine, Culture=en");
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
                                           name, &info);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
@@ -1480,15 +1404,13 @@ static void test_QueryAssemblyInfo(void)
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     ok(info.uliAssemblySizeInKB.u.LowPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
-    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, empty),
+    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, L""),
        "Assembly path was changed\n");
     ok(info.cchBuf == MAX_PATH, "Expected MAX_PATH, got %d\n", info.cchBuf);
 
     /* display name is "wine, PublicKeyTokens=2d03617b1c31e2f5" */
     INIT_ASM_INFO();
-    lstrcpyW(name, wine);
-    lstrcatW(name, commasep);
-    lstrcatW(name, pubkey);
+    lstrcpyW(name, L"wine, PublicKeyToken=2d03617b1c31e2f5");
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
                                           name, &info);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
@@ -1510,9 +1432,7 @@ static void test_QueryAssemblyInfo(void)
 
     /* display name is "wine, PublicKeyToken=aaaaaaaaaaaaaaaa", pubkeys don't match */
     INIT_ASM_INFO();
-    lstrcpyW(name, wine);
-    lstrcatW(name, commasep);
-    lstrcatW(name, badpubkey);
+    lstrcpyW(name, L"wine, PublicKeyToken=aaaaaaaaaaaaaaaa");
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
                                           name, &info);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND),
@@ -1524,15 +1444,13 @@ static void test_QueryAssemblyInfo(void)
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.HighPart);
     ok(info.uliAssemblySizeInKB.u.LowPart == 0,
        "Expected 0, got %d\n", info.uliAssemblySizeInKB.u.LowPart);
-    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, empty),
+    ok(!lstrcmpW(info.pszCurrentAssemblyPathBuf, L""),
        "Assembly path was changed\n");
     ok(info.cchBuf == MAX_PATH, "Expected MAX_PATH, got %d\n", info.cchBuf);
 
     /* display name is "wine, BadProp=buh", bad property */
     INIT_ASM_INFO();
-    lstrcpyW(name, wine);
-    lstrcatW(name, commasep);
-    lstrcatW(name, badprop);
+    lstrcpyW(name, L"wine, BadProp=buh");
     hr = IAssemblyCache_QueryAssemblyInfo(cache, QUERYASMINFO_FLAG_GETSIZE,
                                           name, &info);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
@@ -1556,9 +1474,7 @@ static void test_QueryAssemblyInfo(void)
     INIT_ASM_INFO();
     info.pszCurrentAssemblyPathBuf = NULL;
     info.cchBuf = 0;
-    lstrcpyW(name, wine);
-    lstrcatW(name, commasep);
-    lstrcatW(name, ver);
+    lstrcpyW(name, L"wine, Version=1.0.0.0");
     hr = IAssemblyCache_QueryAssemblyInfo(cache, 0, name, &info);
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "Expected E_NOT_SUFFICIENT_BUFFER, got %08x\n", hr);
     ok(info.cbAssemblyInfo == sizeof(ASSEMBLY_INFO),
@@ -1568,7 +1484,7 @@ static void test_QueryAssemblyInfo(void)
 
     /* uninstall the assembly from the GAC */
     disp = 0xf00dbad;
-    hr = IAssemblyCache_UninstallAssembly(cache, 0, wine, NULL, &disp);
+    hr = IAssemblyCache_UninstallAssembly(cache, 0, L"wine", NULL, &disp);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     ok(disp == IASSEMBLYCACHE_UNINSTALL_DISPOSITION_UNINSTALLED,
        "Expected IASSEMBLYCACHE_UNINSTALL_DISPOSITION_UNINSTALLED, got %d\n", disp);
