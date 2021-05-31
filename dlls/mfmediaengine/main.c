@@ -2054,15 +2054,19 @@ static HRESULT media_engine_transfer_to_d3d11_texture(struct media_engine *engin
 
         quad[0].x = 2.0f * rect.left / desc.Width - 1.0f;
         quad[0].y = -2.0f * rect.bottom / desc.Height + 1.0f;
+        quad[0].z = 0.0f;
 
         quad[1].x = quad[0].x;
         quad[1].y = -2.0f * rect.top / desc.Height + 1.0f;
+        quad[1].z = 0.0f;
 
         quad[2].x = 2.0f * rect.right / desc.Width - 1.0f;
         quad[2].y = quad[0].y;
+        quad[2].z = 0.0f;
 
         quad[3].x = quad[2].x;
         quad[3].y = quad[1].y;
+        quad[3].z = 0.0f;
 
         set_rect(&dst, dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom);
     }
