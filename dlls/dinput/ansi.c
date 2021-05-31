@@ -92,7 +92,7 @@ static void dideviceobjectinstance_wtoa( const DIDEVICEOBJECTINSTANCEW *in, DIDE
     out->wUsage = in->wUsage;
     out->dwDimension = in->dwDimension;
     out->wExponent = in->wExponent;
-    out->wReserved = in->wReserved;
+    out->wReportId = in->wReportId;
 }
 
 static void dideviceinstance_wtoa( const DIDEVICEINSTANCEW *in, DIDEVICEINSTANCEA *out )
