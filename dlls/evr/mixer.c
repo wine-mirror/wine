@@ -664,6 +664,7 @@ static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const
     unsigned int i, j, format_count, count;
     struct rt_format *rt_formats = NULL, *ptr;
     HRESULT hr = MF_E_INVALIDMEDIATYPE;
+    MFVideoArea aperture;
     D3DFORMAT *formats;
     GUID subtype;
 
@@ -691,29 +692,32 @@ static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const
 
     if (count && !(flags & MFT_SET_TYPE_TEST_ONLY))
     {
+        if (!(mixer->output.rt_formats = calloc(count, sizeof(*mixer->output.rt_formats))))
+        {
+            free(rt_formats);
+            return E_OUTOFMEMORY;
+        }
+
         memcpy(&subtype, &MFVideoFormat_Base, sizeof(subtype));
-        if ((mixer->output.rt_formats = calloc(count, sizeof(*mixer->output.rt_formats))))
+        memset(&aperture, 0, sizeof(aperture));
+        aperture.Area.cx = video_desc->SampleWidth;
+        aperture.Area.cy = video_desc->SampleHeight;
+        for (i = 0; i < count; ++i)
         {
-            for (i = 0; i < count; ++i)
-            {
-                IMFMediaType *rt_media_type;
+            IMFMediaType *rt_media_type;
 
-                subtype.Data1 = rt_formats[i].format;
-                mixer->output.rt_formats[i] = rt_formats[i];
+            subtype.Data1 = rt_formats[i].format;
+            mixer->output.rt_formats[i] = rt_formats[i];
 
-                MFCreateMediaType(&rt_media_type);
-                IMFMediaType_CopyAllItems(media_type, (IMFAttributes *)rt_media_type);
-                IMFMediaType_SetGUID(rt_media_type, &MF_MT_SUBTYPE, &subtype);
+            MFCreateMediaType(&rt_media_type);
+            IMFMediaType_CopyAllItems(media_type, (IMFAttributes *)rt_media_type);
+            IMFMediaType_SetGUID(rt_media_type, &MF_MT_SUBTYPE, &subtype);
+            IMFMediaType_SetBlob(rt_media_type, &MF_MT_GEOMETRIC_APERTURE, (const UINT8 *)&aperture, sizeof(aperture));
+            IMFMediaType_SetBlob(rt_media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (const UINT8 *)&aperture, sizeof(aperture));
 
-                mixer->output.rt_formats[i].media_type = rt_media_type;
-            }
-            mixer->output.rt_formats_count = count;
+            mixer->output.rt_formats[i].media_type = rt_media_type;
         }
-        else
-        {
-            hr = E_OUTOFMEMORY;
-            count = 0;
-        }
+        mixer->output.rt_formats_count = count;
     }
 
     free(rt_formats);
