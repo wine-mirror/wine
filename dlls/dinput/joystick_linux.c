@@ -369,59 +369,7 @@ static void fill_joystick_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, DWORD ver
     lpddi->guidFFDriver = GUID_NULL;
 }
 
-static void fill_joystick_dideviceinstanceA(LPDIDEVICEINSTANCEA lpddi, DWORD version, int id)
-{
-    DIDEVICEINSTANCEW lpddiW;
-    DWORD dwSize = lpddi->dwSize;
-
-    lpddiW.dwSize = sizeof(lpddiW);
-    fill_joystick_dideviceinstanceW(&lpddiW, version, id);
-
-    TRACE("%d %p\n", dwSize, lpddi);
-    memset(lpddi, 0, dwSize);
-
-    /* Convert W->A */
-    lpddi->dwSize = dwSize;
-    lpddi->guidInstance = lpddiW.guidInstance;
-    lpddi->guidProduct = lpddiW.guidProduct;
-    lpddi->dwDevType = lpddiW.dwDevType;
-    strcpy(lpddi->tszInstanceName, joystick_devices[id].name);
-    strcpy(lpddi->tszProductName,  joystick_devices[id].name);
-    lpddi->guidFFDriver = lpddiW.guidFFDriver;
-    lpddi->wUsagePage = lpddiW.wUsagePage;
-    lpddi->wUsage = lpddiW.wUsage;
-}
-
-static HRESULT joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, DWORD version, int id)
-{
-    int fd = -1;
-
-    if (id >= find_joystick_devices()) return E_FAIL;
-
-    if (dwFlags & DIEDFL_FORCEFEEDBACK) {
-        WARN("force feedback not supported\n");
-        return S_FALSE;
-    }
-
-    if ((dwDevType == 0) ||
-	((dwDevType == DIDEVTYPE_JOYSTICK) && (version >= 0x0300 && version < 0x0800)) ||
-	(((dwDevType == DI8DEVCLASS_GAMECTRL) || (dwDevType == DI8DEVTYPE_JOYSTICK)) && (version >= 0x0800))) {
-        /* check whether we have a joystick */
-        if ((fd = open(joystick_devices[id].device, O_RDONLY)) == -1)
-        {
-            WARN("open(%s, O_RDONLY) failed: %s\n", joystick_devices[id].device, strerror(errno));
-            return S_FALSE;
-        }
-        fill_joystick_dideviceinstanceA( lpddi, version, id );
-        close(fd);
-        TRACE("Enumerating the linux Joystick device: %s (%s)\n", joystick_devices[id].device, joystick_devices[id].name);
-        return S_OK;
-    }
-
-    return S_FALSE;
-}
-
-static HRESULT joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, DWORD version, int id)
+static HRESULT joydev_enum_device(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, DWORD version, int id)
 {
     int fd = -1;
 
@@ -616,8 +564,7 @@ static HRESULT joydev_create_device( IDirectInputImpl *dinput, REFGUID rguid, ID
 
 const struct dinput_device joystick_linux_device = {
   "Wine Linux joystick driver",
-  joydev_enum_deviceA,
-  joydev_enum_deviceW,
+  joydev_enum_device,
   joydev_create_device
 };
 
@@ -877,7 +824,6 @@ const struct dinput_device joystick_linux_device = {
   "Wine Linux joystick driver",
   NULL,
   NULL,
-  NULL
 };
 
 #endif  /* HAVE_LINUX_22_JOYSTICK_API */

@@ -93,30 +93,6 @@ static void _dump_mouse_state(const DIMOUSESTATE2 *m_state)
     TRACE(")\n");
 }
 
-static void fill_mouse_dideviceinstanceA(LPDIDEVICEINSTANCEA lpddi, DWORD version) {
-    DWORD dwSize;
-    DIDEVICEINSTANCEA ddi;
-    
-    dwSize = lpddi->dwSize;
-
-    TRACE("%d %p\n", dwSize, lpddi);
-    
-    memset(lpddi, 0, dwSize);
-    memset(&ddi, 0, sizeof(ddi));
-
-    ddi.dwSize = dwSize;
-    ddi.guidInstance = GUID_SysMouse;/* DInput's GUID */
-    ddi.guidProduct = GUID_SysMouse;
-    if (version >= 0x0800)
-        ddi.dwDevType = DI8DEVTYPE_MOUSE | (DI8DEVTYPEMOUSE_TRADITIONAL << 8);
-    else
-        ddi.dwDevType = DIDEVTYPE_MOUSE | (DIDEVTYPEMOUSE_TRADITIONAL << 8);
-    strcpy(ddi.tszInstanceName, "Mouse");
-    strcpy(ddi.tszProductName, "Wine Mouse");
-
-    memcpy(lpddi, &ddi, (dwSize < sizeof(ddi) ? dwSize : sizeof(ddi)));
-}
-
 static void fill_mouse_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, DWORD version) {
     DWORD dwSize;
     DIDEVICEINSTANCEW ddi;
@@ -141,28 +117,7 @@ static void fill_mouse_dideviceinstanceW(LPDIDEVICEINSTANCEW lpddi, DWORD versio
     memcpy(lpddi, &ddi, (dwSize < sizeof(ddi) ? dwSize : sizeof(ddi)));
 }
 
-static HRESULT mousedev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, DWORD version, int id)
-{
-    if (id != 0)
-        return E_FAIL;
-
-    if (dwFlags & DIEDFL_FORCEFEEDBACK)
-        return S_FALSE;
-
-    if ((dwDevType == 0) ||
-	((dwDevType == DIDEVTYPE_MOUSE) && (version < 0x0800)) ||
-	(((dwDevType == DI8DEVCLASS_POINTER) || (dwDevType == DI8DEVTYPE_MOUSE)) && (version >= 0x0800))) {
-	TRACE("Enumerating the mouse device\n");
-	
-	fill_mouse_dideviceinstanceA(lpddi, version);
-	
-	return S_OK;
-    }
-    
-    return S_FALSE;
-}
-
-static HRESULT mousedev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, DWORD version, int id)
+static HRESULT mousedev_enum_device(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, DWORD version, int id)
 {
     if (id != 0)
         return E_FAIL;
@@ -263,8 +218,7 @@ static HRESULT mousedev_create_device( IDirectInputImpl *dinput, REFGUID rguid, 
 
 const struct dinput_device mouse_device = {
     "Wine mouse driver",
-    mousedev_enum_deviceA,
-    mousedev_enum_deviceW,
+    mousedev_enum_device,
     mousedev_create_device
 };
 

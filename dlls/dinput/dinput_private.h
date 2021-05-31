@@ -55,8 +55,7 @@ extern const IDirectInput8AVtbl dinput8_a_vtbl DECLSPEC_HIDDEN;
 /* Function called by all devices that Wine supports */
 struct dinput_device {
     const char *name;
-    HRESULT (*enum_deviceA)(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, DWORD version, int id);
-    HRESULT (*enum_deviceW)(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, DWORD version, int id);
+    HRESULT (*enum_device)(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEW lpddi, DWORD version, int id);
     HRESULT (*create_device)(IDirectInputImpl *dinput, REFGUID rguid, IDirectInputDevice8W **out);
 };
 

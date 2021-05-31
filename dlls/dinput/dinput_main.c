@@ -382,11 +382,11 @@ static HRESULT WINAPI IDirectInputWImpl_EnumDevices(
         return DIERR_NOTINITIALIZED;
 
     for (i = 0; i < ARRAY_SIZE(dinput_devices); i++) {
-        if (!dinput_devices[i]->enum_deviceW) continue;
+        if (!dinput_devices[i]->enum_device) continue;
         for (j = 0, r = S_OK; SUCCEEDED(r); j++) {
             devInstance.dwSize = sizeof(devInstance);
             TRACE("  - checking device %u ('%s')\n", i, dinput_devices[i]->name);
-            r = dinput_devices[i]->enum_deviceW(dwDevType, dwFlags, &devInstance, This->dwVersion, j);
+            r = dinput_devices[i]->enum_device(dwDevType, dwFlags, &devInstance, This->dwVersion, j);
             if (r == S_OK)
                 if (enum_callback_wrapper(lpCallback, &devInstance, pvRef) == DIENUM_STOP)
                     return S_OK;
@@ -825,14 +825,14 @@ static HRESULT WINAPI IDirectInput8WImpl_EnumDevicesBySemantics(
     {
         HRESULT enumSuccess;
 
-        if (!dinput_devices[i]->enum_deviceW) continue;
+        if (!dinput_devices[i]->enum_device) continue;
 
         for (j = 0, enumSuccess = S_OK; SUCCEEDED(enumSuccess); j++)
         {
             TRACE(" - checking device %u ('%s')\n", i, dinput_devices[i]->name);
 
             /* Default behavior is to enumerate attached game controllers */
-            enumSuccess = dinput_devices[i]->enum_deviceW(DI8DEVCLASS_GAMECTRL, DIEDFL_ATTACHEDONLY | dwFlags, &didevi, This->dwVersion, j);
+            enumSuccess = dinput_devices[i]->enum_device(DI8DEVCLASS_GAMECTRL, DIEDFL_ATTACHEDONLY | dwFlags, &didevi, This->dwVersion, j);
             if (enumSuccess == S_OK &&
                 should_enumerate_device(ptszUserName, dwFlags, &This->device_players, &didevi.guidInstance))
             {
@@ -998,13 +998,13 @@ static HRESULT WINAPI JoyConfig8Impl_GetConfig(IDirectInputJoyConfig8 *iface, UI
     /* Enumerate all joysticks in order */
     for (i = 0; i < ARRAY_SIZE(dinput_devices); i++)
     {
-        if (!dinput_devices[i]->enum_deviceA) continue;
+        if (!dinput_devices[i]->enum_device) continue;
 
         for (j = 0, r = S_OK; SUCCEEDED(r); j++)
         {
-            DIDEVICEINSTANCEA dev;
+            DIDEVICEINSTANCEW dev;
             dev.dwSize = sizeof(dev);
-            if ((r = dinput_devices[i]->enum_deviceA(DI8DEVCLASS_GAMECTRL, 0, &dev, di->dwVersion, j)) == S_OK)
+            if ((r = dinput_devices[i]->enum_device(DI8DEVCLASS_GAMECTRL, 0, &dev, di->dwVersion, j)) == S_OK)
             {
                 /* Only take into account the chosen id */
                 if (found == id)
