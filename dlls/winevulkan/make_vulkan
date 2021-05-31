@@ -2800,14 +2800,7 @@ class VkGenerator(object):
                 LOGGER.debug("skipping {0} in vulkan_device_funcs".format(vk_func.name))
                 continue
 
-            if vk_func.needs_conversion():
-                f.write("#if defined(USE_STRUCT_CONVERSION)\n")
-                f.write("    {0};\n".format(vk_func.pfn(conv=True)))
-                f.write("#else\n")
-                f.write("    {0};\n".format(vk_func.pfn(conv=False)))
-                f.write("#endif\n")
-            else:
-                f.write("    {0};\n".format(vk_func.pfn(conv=False)))
+            f.write("    {0};\n".format(vk_func.pfn(conv=vk_func.needs_conversion())))
         f.write("};\n\n")
 
         f.write("/* For use by vkInstance and children */\n")
@@ -2820,14 +2813,7 @@ class VkGenerator(object):
                 LOGGER.debug("skipping {0} in vulkan_instance_funcs".format(vk_func.name))
                 continue
 
-            if vk_func.needs_conversion():
-                f.write("#if defined(USE_STRUCT_CONVERSION)\n")
-                f.write("    {0};\n".format(vk_func.pfn(conv=True)))
-                f.write("#else\n")
-                f.write("    {0};\n".format(vk_func.pfn(conv=False)))
-                f.write("#endif\n")
-            else:
-                f.write("    {0};\n".format(vk_func.pfn(conv=False)))
+            f.write("    {0};\n".format(vk_func.pfn(conv=vk_func.needs_conversion())))
         f.write("};\n\n")
 
         f.write("#define ALL_VK_DEVICE_FUNCS() \\\n")
