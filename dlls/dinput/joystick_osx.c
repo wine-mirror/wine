@@ -1484,7 +1484,7 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
 {
     IDirectInputDevice2WImpl_QueryInterface,
     IDirectInputDevice2WImpl_AddRef,
-    IDirectInputDevice2WImpl_Release,
+    JoystickWGenericImpl_Release,
     JoystickWGenericImpl_GetCapabilities,
     IDirectInputDevice2WImpl_EnumObjects,
     JoystickWImpl_GetProperty,

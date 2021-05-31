@@ -534,6 +534,17 @@ HRESULT WINAPI JoystickWGenericImpl_GetCapabilities(LPDIRECTINPUTDEVICE8W iface,
     return DI_OK;
 }
 
+
+ULONG WINAPI JoystickWGenericImpl_Release(LPDIRECTINPUTDEVICE8W iface)
+{
+    JoystickGenericImpl *This = impl_from_IDirectInputDevice8W(iface);
+    void *axis_map = This->axis_map;
+    ULONG res = IDirectInputDevice2WImpl_Release(iface);
+    if (!res) HeapFree(GetProcessHeap(), 0, axis_map);
+    return res;
+}
+
+
 /******************************************************************************
   *     GetObjectInfo : get object info
   */

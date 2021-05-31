@@ -59,6 +59,8 @@ DWORD joystick_map_pov(const POINTL *p) DECLSPEC_HIDDEN;
 
 BOOL device_disabled_registry(const char* name) DECLSPEC_HIDDEN;
 
+ULONG WINAPI JoystickWGenericImpl_Release(LPDIRECTINPUTDEVICE8W iface);
+
 HRESULT WINAPI JoystickWGenericImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface,
         LPDIDEVICEOBJECTINSTANCEW pdidoi, DWORD dwObj, DWORD dwHow) DECLSPEC_HIDDEN;
 
