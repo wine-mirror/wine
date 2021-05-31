@@ -15884,6 +15884,10 @@ msgstr "Il file specificato esiste già. Vuoi sostituirlo?"
 msgid "reg: Invalid command line parameters\n"
 msgstr "Errore: parametri della linea di comando non validi\n"
 
+#: programs/reg/reg.rc:202
+msgid "reg: The source and destination keys cannot be the same\n"
+msgstr ""
+
 #: programs/reg/reg.rc:131
 #, fuzzy
 #| msgid "Are you sure you want to delete these values?"

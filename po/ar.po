@@ -15843,6 +15843,10 @@ msgstr "الملف المحدد موجود بالفعل ، هل ترغب باس�
 msgid "reg: Invalid command line parameters\n"
 msgstr "خطأ : معاملات سطر الاوامر غير سليمة\n"
 
+#: programs/reg/reg.rc:202
+msgid "reg: The source and destination keys cannot be the same\n"
+msgstr ""
+
 #: programs/reg/reg.rc:131
 #, fuzzy
 #| msgid "Are you sure you want to delete these values?"

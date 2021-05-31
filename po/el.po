@@ -14753,6 +14753,10 @@ msgstr ""
 msgid "reg: Invalid command line parameters\n"
 msgstr "Μη έγγυρος(οι) χαρακτήρας(ες) στο μονοπάτι.\n"
 
+#: programs/reg/reg.rc:202
+msgid "reg: The source and destination keys cannot be the same\n"
+msgstr ""
+
 #: programs/reg/reg.rc:131
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr ""

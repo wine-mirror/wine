@@ -15361,6 +15361,10 @@ msgid "reg: Invalid command line parameters\n"
 msgstr ""
 "Грешка: унесени су непознати или неисправни параметри наредбене линије\n"
 
+#: programs/reg/reg.rc:202
+msgid "reg: The source and destination keys cannot be the same\n"
+msgstr ""
+
 #: programs/reg/reg.rc:131
 #, fuzzy
 msgid "Are you sure you want to delete the registry value '%1'?"

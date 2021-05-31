@@ -197,4 +197,6 @@ STRINGTABLE
 \  /f\n\
 \     Overwrite all registry data in <key2> without prompting for confirmation.\n\
 \     This option does not modify subkeys and values that only exist in <key2>.\n\n"
+
+    STRING_COPY_SRC_DEST_SAME, "reg: The source and destination keys cannot be the same\n"
 }

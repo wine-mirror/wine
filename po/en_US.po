@@ -15172,6 +15172,10 @@ msgstr "The registry value '%1' already exists. Do you want to overwrite it?"
 msgid "reg: Invalid command line parameters\n"
 msgstr "reg: Invalid command line parameters\n"
 
+#: programs/reg/reg.rc:202
+msgid "reg: The source and destination keys cannot be the same\n"
+msgstr "reg: The source and destination keys cannot be the same\n"
+
 #: programs/reg/reg.rc:131
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Are you sure you want to delete the registry value '%1'?"

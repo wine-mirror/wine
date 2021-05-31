@@ -15302,6 +15302,10 @@ msgid "reg: Invalid command line parameters\n"
 msgstr ""
 "Greška: uneseni su nepoznati ili neispravni parametri naredbene linije\n"
 
+#: programs/reg/reg.rc:202
+msgid "reg: The source and destination keys cannot be the same\n"
+msgstr ""
+
 #: programs/reg/reg.rc:131
 #, fuzzy
 #| msgid "Are you sure you want to delete these %1 items?"

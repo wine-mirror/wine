@@ -15346,6 +15346,10 @@ msgstr "Hodnota registru „%1“ již existuje. Chcete ji nahradit?"
 msgid "reg: Invalid command line parameters\n"
 msgstr "Chyba: Neplatné parametry příkazové řádky\n"
 
+#: programs/reg/reg.rc:202
+msgid "reg: The source and destination keys cannot be the same\n"
+msgstr ""
+
 #: programs/reg/reg.rc:131
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Opravdu chcete odstranit hodnotu registru „%1“?"
