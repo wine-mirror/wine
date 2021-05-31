@@ -27,15 +27,17 @@
 #include "enhmetafiledrv.h"
 #include "wine/debug.h"
 
-BOOL CDECL EMFDRV_AlphaBlend( PHYSDEV dev_dst, struct bitblt_coords *dst,
-                              PHYSDEV dev_src, struct bitblt_coords *src, BLENDFUNCTION func )
+/* Generate an EMRBITBLT, EMRSTRETCHBLT or EMRALPHABLEND record depending on the type parameter */
+static BOOL emfdrv_stretchblt( PHYSDEV dev_dst, struct bitblt_coords *dst, PHYSDEV dev_src,
+                               struct bitblt_coords *src, DWORD rop, DWORD type )
 {
     unsigned char src_buffer[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
     BITMAPINFO *src_info = (BITMAPINFO *)src_buffer;
     UINT bits_size, bmi_size, emr_size, size, bpp;
+    EMRSTRETCHBLT *emr_stretchblt;
     struct gdi_image_bits bits;
-    EMRALPHABLEND *emr;
     BITMAPINFO *bmi;
+    EMRBITBLT *emr;
     DC *dc_src;
     DWORD err;
     BOOL ret = FALSE;
@@ -56,14 +58,15 @@ BOOL CDECL EMFDRV_AlphaBlend( PHYSDEV dev_dst, struct bitblt_coords *dst,
         bmi_size = sizeof(BITMAPINFOHEADER) + 3 * sizeof(RGBQUAD);
     else
         bmi_size = sizeof(BITMAPINFOHEADER);
-    emr_size = sizeof(EMRALPHABLEND);
+    /* EMRSTRETCHBLT and EMRALPHABLEND have the same structure */
+    emr_size = type == EMR_BITBLT ? sizeof(EMRBITBLT) : sizeof(EMRSTRETCHBLT);
     bits_size = src_info->bmiHeader.biSizeImage;
     size = emr_size + bmi_size + bits_size;
 
     emr = HeapAlloc(GetProcessHeap(), 0, size);
     if (!emr) goto err;
 
-    emr->emr.iType = EMR_ALPHABLEND;
+    emr->emr.iType = type;
     emr->emr.nSize = size;
     emr->rclBounds.left = dst->log_x;
     emr->rclBounds.top = dst->log_y;
@@ -75,9 +78,13 @@ BOOL CDECL EMFDRV_AlphaBlend( PHYSDEV dev_dst, struct bitblt_coords *dst,
     emr->cyDest = dst->log_height;
     emr->xSrc = src->log_x;
     emr->ySrc = src->log_y;
-    emr->cxSrc = src->log_width;
-    emr->cySrc = src->log_height;
-    emr->dwRop = *(DWORD *)&func;
+    if (type == EMR_STRETCHBLT || type == EMR_ALPHABLEND)
+    {
+        emr_stretchblt = (EMRSTRETCHBLT *)emr;
+        emr_stretchblt->cxSrc = src->log_width;
+        emr_stretchblt->cySrc = src->log_height;
+    }
+    emr->dwRop = rop;
     GetTransform(dev_src->hdc, 0x204, &emr->xformSrc);
     emr->crBkColorSrc = GetBkColor(dev_src->hdc);
     emr->iUsageSrc = DIB_RGB_COLORS;
@@ -113,6 +120,12 @@ err:
     HeapFree(GetProcessHeap(), 0, emr);
     if (bits.free) bits.free(&bits);
     return ret;
+}
+
+BOOL CDECL EMFDRV_AlphaBlend( PHYSDEV dev_dst, struct bitblt_coords *dst,
+                              PHYSDEV dev_src, struct bitblt_coords *src, BLENDFUNCTION func )
+{
+    return emfdrv_stretchblt(dev_dst, dst, dev_src, src, *(DWORD *)&func, EMR_ALPHABLEND);
 }
 
 BOOL CDECL EMFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
@@ -155,106 +168,10 @@ BOOL CDECL EMFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
 BOOL CDECL EMFDRV_StretchBlt( PHYSDEV devDst, struct bitblt_coords *dst,
                               PHYSDEV devSrc, struct bitblt_coords *src, DWORD rop )
 {
-    BOOL ret;
-    PEMRBITBLT pEMR;
-    UINT emrSize;
-    UINT bmiSize;
-    UINT bitsSize;
-    UINT size;
-    BITMAP  BM;
-    WORD nBPP = 0;
-    LPBITMAPINFOHEADER lpBmiH;
-    HBITMAP hBitmap = NULL;
-    DWORD emrType;
-
-    if (devSrc->funcs == devDst->funcs) return FALSE;  /* can't use a metafile DC as source */
-
     if (src->log_width == dst->log_width && src->log_height == dst->log_height)
-    {
-        emrType = EMR_BITBLT;
-        emrSize = sizeof(EMRBITBLT);
-    }
+        return emfdrv_stretchblt(devDst, dst, devSrc, src, rop, EMR_BITBLT);
     else
-    {
-        emrType = EMR_STRETCHBLT;
-        emrSize = sizeof(EMRSTRETCHBLT);
-    }
-
-    hBitmap = GetCurrentObject(devSrc->hdc, OBJ_BITMAP);
-
-    if(sizeof(BITMAP) != GetObjectW(hBitmap, sizeof(BITMAP), &BM))
-        return FALSE;
-
-    nBPP = BM.bmPlanes * BM.bmBitsPixel;
-    if(nBPP > 8) nBPP = 24; /* FIXME Can't get 16bpp to work for some reason */
-    bitsSize = get_dib_stride( BM.bmWidth, nBPP ) * BM.bmHeight;
-    bmiSize = sizeof(BITMAPINFOHEADER) +
-        (nBPP <= 8 ? 1 << nBPP : 0) * sizeof(RGBQUAD);
-
-   size = emrSize + bmiSize + bitsSize;
-
-    pEMR = HeapAlloc(GetProcessHeap(), 0, size);
-    if (!pEMR) return FALSE;
-
-    /* Initialize EMR */
-    pEMR->emr.iType = emrType;
-    pEMR->emr.nSize = size;
-    pEMR->rclBounds.left = dst->log_x;
-    pEMR->rclBounds.top = dst->log_y;
-    pEMR->rclBounds.right = dst->log_x + dst->log_width - 1;
-    pEMR->rclBounds.bottom = dst->log_y + dst->log_height - 1;
-    pEMR->xDest = dst->log_x;
-    pEMR->yDest = dst->log_y;
-    pEMR->cxDest = dst->log_width;
-    pEMR->cyDest = dst->log_height;
-    pEMR->dwRop = rop;
-    pEMR->xSrc = src->log_x;
-    pEMR->ySrc = src->log_y;
-    GetTransform(devSrc->hdc, 0x204, &pEMR->xformSrc);
-    pEMR->crBkColorSrc = GetBkColor(devSrc->hdc);
-    pEMR->iUsageSrc = DIB_RGB_COLORS;
-    pEMR->offBmiSrc = emrSize;
-    pEMR->offBitsSrc = emrSize + bmiSize;
-    pEMR->cbBmiSrc = bmiSize;
-    pEMR->cbBitsSrc = bitsSize;
-    if (emrType == EMR_STRETCHBLT) 
-    {
-        PEMRSTRETCHBLT pEMRStretch = (PEMRSTRETCHBLT)pEMR;
-        pEMRStretch->cxSrc = src->log_width;
-        pEMRStretch->cySrc = src->log_height;
-    }
-
-    /* Initialize BITMAPINFO structure */
-    lpBmiH = (LPBITMAPINFOHEADER)((BYTE*)pEMR + pEMR->offBmiSrc);
-
-    lpBmiH->biSize = sizeof(BITMAPINFOHEADER);
-    lpBmiH->biWidth =  BM.bmWidth;
-    lpBmiH->biHeight = BM.bmHeight;
-    lpBmiH->biPlanes = BM.bmPlanes;
-    lpBmiH->biBitCount = nBPP;
-    /* Assume the bitmap isn't compressed and set the BI_RGB flag. */
-    lpBmiH->biCompression = BI_RGB;
-    lpBmiH->biSizeImage = bitsSize;
-    lpBmiH->biYPelsPerMeter = 0;
-    lpBmiH->biXPelsPerMeter = 0;
-    lpBmiH->biClrUsed   = nBPP <= 8 ? 1 << nBPP : 0;
-    /* Set biClrImportant to 0, indicating that all of the
-       device colors are important. */
-    lpBmiH->biClrImportant = 0;
-
-    /* Initialize bitmap bits */
-    if (GetDIBits(devSrc->hdc, hBitmap, 0, (UINT)lpBmiH->biHeight,
-                  (BYTE*)pEMR + pEMR->offBitsSrc,
-                  (LPBITMAPINFO)lpBmiH, DIB_RGB_COLORS))
-    {
-        ret = EMFDRV_WriteRecord(devDst, (EMR*)pEMR);
-        if (ret) EMFDRV_UpdateBBox(devDst, &(pEMR->rclBounds));
-    }
-    else
-        ret = FALSE;
-
-    HeapFree( GetProcessHeap(), 0, pEMR);
-    return ret;
+        return emfdrv_stretchblt(devDst, dst, devSrc, src, rop, EMR_STRETCHBLT);
 }
 
 INT CDECL EMFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT heightDst,
