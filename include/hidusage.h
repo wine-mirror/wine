@@ -45,6 +45,7 @@ typedef USHORT USAGE, *PUSAGE;
 #define HID_USAGE_GENERIC_GAMEPAD             ((USAGE) 0x05)
 #define HID_USAGE_GENERIC_KEYBOARD            ((USAGE) 0x06)
 #define HID_USAGE_GENERIC_KEYPAD              ((USAGE) 0x07)
+#define HID_USAGE_GENERIC_MULTI_AXIS_CONTROLLER ((USAGE) 0x08)
 #define HID_USAGE_GENERIC_SYSTEM_CTL          ((USAGE) 0x80)
 #define HID_USAGE_GENERIC_X                   ((USAGE) 0x30)
 #define HID_USAGE_GENERIC_Y                   ((USAGE) 0x31)
