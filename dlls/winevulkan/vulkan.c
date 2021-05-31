@@ -70,9 +70,6 @@ static uint32_t wine_vk_count_struct_(void *s, VkStructureType t)
 static const struct vulkan_funcs *vk_funcs;
 static VkResult (*p_vkEnumerateInstanceVersion)(uint32_t *version);
 
-void WINAPI wine_vkGetPhysicalDeviceProperties(VkPhysicalDevice physical_device,
-        VkPhysicalDeviceProperties *properties);
-
 #define WINE_VK_ADD_DISPATCHABLE_MAPPING(instance, object, native_handle) \
     wine_vk_add_handle_mapping((instance), (uint64_t) (uintptr_t) (object), (uint64_t) (uintptr_t) (native_handle), &(object)->mapping)
 #define WINE_VK_ADD_NON_DISPATCHABLE_MAPPING(instance, object, native_handle) \
@@ -694,9 +691,9 @@ VkResult WINAPI wine_vkCreateDevice(VkPhysicalDevice phys_dev,
 
     if (TRACE_ON(vulkan))
     {
-        VkPhysicalDeviceProperties properties;
+        VkPhysicalDeviceProperties_host properties;
 
-        wine_vkGetPhysicalDeviceProperties(phys_dev, &properties);
+        phys_dev->instance->funcs.p_vkGetPhysicalDeviceProperties(phys_dev->phys_dev, &properties);
 
         TRACE("Device name: %s.\n", debugstr_a(properties.deviceName));
         TRACE("Vendor ID: %#x, Device ID: %#x.\n", properties.vendorID, properties.deviceID);
