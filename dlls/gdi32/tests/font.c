@@ -353,7 +353,8 @@ if (0) /* these metrics are scaled too, but with rounding errors */
         ok(otm.otmMacDescent < 0, "otm.otmMacDescent should be < 0\n");
         ok(tm.tmDescent > 0, "tm.tmDescent should be > 0\n");
         ok(otm.otmMacDescent == -tm.tmDescent, "descent %d != %d\n", otm.otmMacDescent, -tm.tmDescent);
-        ok(otm.otmEMSquare == 2048, "expected 2048, got %d\n", otm.otmEMSquare);
+        if (otm.otmTextMetrics.tmPitchAndFamily & TMPF_TRUETYPE)
+            ok(otm.otmEMSquare == 2048, "expected 2048, got %d\n", otm.otmEMSquare);
     }
     else
     {
