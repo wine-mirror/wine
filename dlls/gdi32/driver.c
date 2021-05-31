@@ -460,7 +460,24 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
 
         return pGetSystemMetrics ? pGetSystemMetrics( SM_CYSCREEN ) : 480;
     }
-    case BITSPIXEL:       return 32;
+    case BITSPIXEL:
+    {
+        DEVMODEW devmode;
+        WCHAR *display;
+        DC *dc;
+
+        if (GetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY && pEnumDisplaySettingsW)
+        {
+            dc = get_nulldrv_dc( dev );
+            display = dc->display[0] ? dc->display : NULL;
+            memset( &devmode, 0, sizeof(devmode) );
+            devmode.dmSize = sizeof(devmode);
+            if (pEnumDisplaySettingsW( display, ENUM_CURRENT_SETTINGS, &devmode )
+                && devmode.dmFields & DM_BITSPERPEL && devmode.dmBitsPerPel)
+                return devmode.dmBitsPerPel;
+        }
+        return 32;
+    }
     case PLANES:          return 1;
     case NUMBRUSHES:      return -1;
     case NUMPENS:         return -1;

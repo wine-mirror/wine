@@ -162,8 +162,6 @@ static INT CDECL X11DRV_GetDeviceCaps( PHYSDEV dev, INT cap )
 {
     switch(cap)
     {
-    case BITSPIXEL:
-        return screen_bpp;
     case SIZEPALETTE:
         return palette_size;
     default:

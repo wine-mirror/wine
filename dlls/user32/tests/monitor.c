@@ -2068,7 +2068,6 @@ static void _check_display_dc(INT line, HDC hdc, const DEVMODEA *dm, BOOL allow_
             dm->dmDisplayFrequency, value);
 
     value = GetDeviceCaps(hdc, BITSPIXEL);
-    todo_wine_if(dm->dmBitsPerPel != 32)
     ok_(__FILE__, line)(value == dm->dmBitsPerPel, "Expected BITSPIXEL %d, got %d.\n",
             dm->dmBitsPerPel, value);
 
