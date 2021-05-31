@@ -222,6 +222,7 @@ struct wined3d_d3d_info
     uint32_t shader_color_key : 1;
     uint32_t shader_double_precision : 1;
     uint32_t shader_output_interpolation : 1;
+    uint32_t frag_coord_correction : 1;
     uint32_t viewport_array_index_any_shader : 1;
     uint32_t texture_npot : 1;
     uint32_t texture_npot_conditional : 1;
@@ -1438,7 +1439,7 @@ struct ps_compile_args
     DWORD pointsprite : 1;
     DWORD flatshading : 1;
     DWORD alpha_test_func : 3;
-    DWORD render_offscreen : 1;
+    DWORD y_correction : 1;
     DWORD rt_alpha_swizzle : 8; /* WINED3D_MAX_RENDER_TARGETS, 8 */
     DWORD dual_source_blend : 1;
     DWORD padding : 17;

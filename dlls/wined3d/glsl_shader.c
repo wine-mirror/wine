@@ -4038,7 +4038,7 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
 {
     const struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
     bool y_correction = ins->ctx->reg_maps->shader_version.type == WINED3D_SHADER_TYPE_PIXEL
-            ? !priv->cur_ps_args->render_offscreen : false;
+            ? priv->cur_ps_args->y_correction : false;
     struct wined3d_string_buffer *buffer = ins->ctx->buffer;
     struct glsl_src_param src_param;
     const char *instruction;
@@ -7788,8 +7788,8 @@ static GLuint shader_glsl_generate_fragment_shader(const struct wined3d_context_
         {
             if (context_gl->c.d3d_info->wined3d_creation_flags & WINED3D_PIXEL_CENTER_INTEGER)
                 shader_addline(buffer, "layout(%spixel_center_integer) in vec4 gl_FragCoord;\n",
-                        args->render_offscreen ? "" : "origin_upper_left, ");
-            else if (!args->render_offscreen)
+                        args->y_correction ? "origin_upper_left, " : "");
+            else if (args->y_correction)
                 shader_addline(buffer, "layout(origin_upper_left) in vec4 gl_FragCoord;\n");
         }
         shader_addline(buffer, "vec4 vpos;\n");

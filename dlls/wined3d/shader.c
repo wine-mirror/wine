@@ -3952,7 +3952,6 @@ void find_gs_compile_args(const struct wined3d_state *state, const struct wined3
 void find_ps_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
         BOOL position_transformed, struct ps_compile_args *args, const struct wined3d_context *context)
 {
-    const struct wined3d_gl_info *gl_info = &context->device->adapter->gl_info;
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
     struct wined3d_texture *texture;
     unsigned int i;
@@ -4212,9 +4211,9 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
     if (d3d_info->emulated_flatshading)
         args->flatshading = state->render_states[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT;
 
-    args->render_offscreen = (shader->reg_maps.vpos && gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS])
+    args->y_correction = (shader->reg_maps.vpos && d3d_info->frag_coord_correction)
             || (shader->reg_maps.usesdsy && wined3d_settings.offscreen_rendering_mode != ORM_FBO)
-            ? context->render_offscreen : 1;
+            ? !context->render_offscreen : 0;
 
     for (i = 0; i < ARRAY_SIZE(state->fb.render_targets); ++i)
     {
