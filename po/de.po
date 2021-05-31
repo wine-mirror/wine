@@ -14861,6 +14861,44 @@ msgstr "Symboldateien"
 msgid "Icons (*.ico)"
 msgstr "Symbole (*.ico)"
 
+#: programs/reg/reg.rc:137
+msgid "reg: Invalid syntax. "
+msgstr "reg: Ungültige Syntax. "
+
+#: programs/reg/reg.rc:140
+msgid "Type \"REG %1 /?\" for help.\n"
+msgstr "Geben Sie \"REG %1 /?\" ein, um Hilfe zu erhalten.\n"
+
+#: programs/reg/reg.rc:179
+#, fuzzy
+#| msgid "reg: Unable to find the specified registry key\n"
+msgid "reg: Unable to access or create the specified registry key\n"
+msgstr "reg: Der angegebene Schlüssel wurde nicht gefunden\n"
+
+#: programs/reg/reg.rc:116
+msgid "reg: The operation completed successfully\n"
+msgstr "reg: Der Vorgang wurde erfolgreich abgeschlossen\n"
+
+#: programs/reg/reg.rc:129
+msgid "reg: The registry operation was cancelled\n"
+msgstr "reg: Der Registrierungsvorgang wurde abgebrochen\n"
+
+#: programs/reg/reg.rc:172
+msgid "reg: Unable to find the specified registry key\n"
+msgstr "reg: Der angegebene Schlüssel wurde nicht gefunden\n"
+
+#: programs/reg/reg.rc:120
+msgid "reg: Unable to find the specified registry value\n"
+msgstr "reg: Der angegebene Wert wurde nicht gefunden\n"
+
+#: programs/reg/reg.rc:130 programs/regedit/regedit.rc:239
+msgid "(Default)"
+msgstr "(Standard)"
+
+#: programs/reg/reg.rc:139
+msgid "Type \"REG /?\" for help.\n"
+msgstr "Geben Sie \"REG /?\" ein, um Hilfe zu erhalten.\n"
+
 #: programs/reg/reg.rc:35
 #, fuzzy
 #| msgid ""
@@ -14994,371 +15032,6 @@ msgstr ""
 "     Die Registrierung ohne weitere Bestätigung ändern.\n"
 "\n"
 
-#: programs/reg/reg.rc:92
-msgid ""
-"REG DELETE <key> [/v value_name | /ve | /va] [/f]\n"
-"\n"
-"  Deletes a registry key (including all subkeys and values), or deletes\n"
-"  one or more values from a given registry key.\n"
-"\n"
-"  <key>\n"
-"     The registry key to delete or, if one of [/v], [/ve] or [/va] is\n"
-"     specified, the registry key in which to delete one or more values.\n"
-"\n"
-"     Format: ROOT\\Subkey\n"
-"\n"
-"     ROOT: A predefined registry key. This must be one of the following:\n"
-"\n"
-"         HKEY_LOCAL_MACHINE  | HKLM\n"
-"         HKEY_CURRENT_USER   | HKCU\n"
-"         HKEY_CLASSES_ROOT   | HKCR\n"
-"         HKEY_USERS          | HKU\n"
-"         HKEY_CURRENT_CONFIG | HKCC\n"
-"\n"
-"     Subkey: The full path to a registry key under a given ROOT key.\n"
-"\n"
-"  /v <value_name>\n"
-"     The name of the registry value to delete.\n"
-"\n"
-"  /ve\n"
-"     Delete an unnamed registry value. This option deletes the (Default)\n"
-"     registry value.\n"
-"\n"
-"  /va\n"
-"     Delete all values from a registry key.\n"
-"\n"
-"  /f\n"
-"     Delete a registry key (including all subkeys and values) without\n"
-"     prompting for confirmation.\n"
-"\n"
-msgstr ""
-"REG DELETE <Schlüssel> [/v Wertname | /ve | /va] [/f]\n"
-"\n"
-"  Löscht einen Registrierungsschlüssel (inklusive aller Unterschlüssel und\n"
-"  Werte), oder löscht einen oder mehrere Werte aus dem Schlüssel.\n"
-"\n"
-"  <Schlüssel>\n"
-"     Der zu löschende Schlüssel oder, falls [/v], [/ve] oder [/va]\n"
-"     angegeben wurden, der Schlüssel aus welchem einer oder mehrere Werte\n"
-"     entfernt werden sollen.\n"
-"\n"
-"     Format: ROOT\\Unterschlüssel\n"
-"\n"
-"     ROOT: Ein vorgegebener Hauptschlüssel. Muss einer der folgenden sein:\n"
-"\n"
-"         HKEY_LOCAL_MACHINE  | HKLM\n"
-"         HKEY_CURRENT_USER   | HKCU\n"
-"         HKEY_CLASSES_ROOT   | HKCR\n"
-"         HKEY_USERS          | HKU\n"
-"         HKEY_CURRENT_CONFIG | HKCC\n"
-"\n"
-"     Unterschlüssel: Der volle Pfad zu einem Schlüssel unter dem\n"
-"                     angegebenen ROOT-Schlüssel.\n"
-"\n"
-"  /v <Wertname>\n"
-"     Der Name des zu entfernenden Registrierungswertes.\n"
-"\n"
-"  /ve\n"
-"     Löscht einen unbenannten Wert. Diese Option entfernt den (Standard)-\n"
-"     Registrierungswert.\n"
-"\n"
-"  /va\n"
-"     Entfernt alle Werte aus dem angegebenen Schlüssel.\n"
-"\n"
-"  /f\n"
-"     Löscht den Registrierungsschlüssel (inklusive aller Unterschlüssel und\n"
-"     Werte) ohne weitere Bestätigung.\n"
-"\n"
-
-#: programs/reg/reg.rc:114
-msgid ""
-"REG QUERY <key> [/v value_name | /ve] [/s]\n"
-"\n"
-"  Queries a specified registry key and lists all immediate subkeys, values\n"
-"  and data within that key. Use [/s] to recursively query each subkey.\n"
-"\n"
-"  <key>\n"
-"     The registry key to query.\n"
-"\n"
-"     Format: ROOT\\Subkey\n"
-"\n"
-"     ROOT: A predefined registry key. This must be one of the following:\n"
-"\n"
-"         HKEY_LOCAL_MACHINE  | HKLM\n"
-"         HKEY_CURRENT_USER   | HKCU\n"
-"         HKEY_CLASSES_ROOT   | HKCR\n"
-"         HKEY_USERS          | HKU\n"
-"         HKEY_CURRENT_CONFIG | HKCC\n"
-"\n"
-"     Subkey: The full path to a registry key under a given ROOT key.\n"
-"\n"
-"  /v <value_name>\n"
-"     The name of the registry value to query. If neither [/v] nor [/ve] is\n"
-"     specified, all values under <key> are listed.\n"
-"\n"
-"  /ve\n"
-"     Query an unnamed registry value. This option queries the (Default)\n"
-"     registry value.\n"
-"\n"
-"  /s\n"
-"     List all registry entries under <key> and its subkeys.\n"
-"\n"
-msgstr ""
-"REG QUERY <Schlüssel> [/v Wertname | /ve] [/s]\n"
-"\n"
-"  Fragt einen Registrierungsschlüssel ab und listet alle direkten\n"
-"  Unterschlüssel, Werte und darin enthaltene Daten auf.\n"
-"  Mit [/s] werden rekursiv auch alle Unterschlüssel abgefragt.\n"
-"\n"
-"  <Schlüssel>\n"
-"     Der abzufragende Schlüssel.\n"
-"\n"
-"     Format: ROOT\\Unterschlüssel\n"
-"\n"
-"     ROOT: Ein vorgegebener Hauptschlüssel. Muss einer der folgenden sein:\n"
-"\n"
-"         HKEY_LOCAL_MACHINE  | HKLM\n"
-"         HKEY_CURRENT_USER   | HKCU\n"
-"         HKEY_CLASSES_ROOT   | HKCR\n"
-"         HKEY_USERS          | HKU\n"
-"         HKEY_CURRENT_CONFIG | HKCC\n"
-"\n"
-"     Unterschlüssel: Der volle Pfad zu einem Schlüssel unter dem\n"
-"                     angegebenen ROOT-Schlüssel.\n"
-"\n"
-"  /v <Wertname>\n"
-"     Der Name des abzufragenden Registrierungswertes. Falls weder [/v] noch\n"
-"     [/ve] angegeben wurden, werden alle Werte unter <Schlüssel> auf-\n"
-"     gelistet.\n"
-"\n"
-"  /ve\n"
-"     Fragt einen unbenannten Registrierungswert ab. Diese Option fragt den\n"
-"     Wert (Standard) ab.\n"
-"\n"
-"  /s\n"
-"     Listet alle Einträge unter <Schlüssel> und seinen Unterschlüsseln auf.\n"
-"\n"
-
-#: programs/reg/reg.rc:116
-msgid "reg: The operation completed successfully\n"
-msgstr "reg: Der Vorgang wurde erfolgreich abgeschlossen\n"
-
-#: programs/reg/reg.rc:117
-msgid "reg: Invalid registry key\n"
-msgstr "reg: Ungültiger Registrierungsschlüssel\n"
-
-#: programs/reg/reg.rc:118
-msgid "reg: Invalid command line parameters\n"
-msgstr "reg: Ungültige Befehlszeilenargumente\n"
-
-#: programs/reg/reg.rc:119
-msgid "reg: Unable to access remote machine\n"
-msgstr "reg: Auf den Remoterechner kann nicht zugegriffen werden\n"
-
-#: programs/reg/reg.rc:120
-msgid "reg: Unable to find the specified registry value\n"
-msgstr "reg: Der angegebene Wert wurde nicht gefunden\n"
-
-#: programs/reg/reg.rc:121
-msgid "reg: Unsupported registry data type [%1]\n"
-msgstr "reg: Nicht unterstützter Registrierungsdatentyp [%1]\n"
-
-#: programs/reg/reg.rc:122
-#, fuzzy
-#| msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
-msgid "reg: The option [/d] must be followed by a valid numeric value\n"
-msgstr "reg: Auf die Option [/d] muss ein gültiger Hexadezimalwert folgen\n"
-
-#: programs/reg/reg.rc:123
-msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
-msgstr "reg: Auf die Option [/d] muss ein gültiger Hexadezimalwert folgen\n"
-
-#: programs/reg/reg.rc:124
-msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
-msgstr "reg: Unbehandelter Registrierungsdatentyp [/t 0x%1!x!, /d %2]\n"
-
-#: programs/reg/reg.rc:125
-msgid "The registry value '%1' already exists. Do you want to overwrite it?"
-msgstr "Der Wert '%1' existiert bereits. Möchten Sie ihn ersetzen?"
-
-#: programs/reg/reg.rc:129
-msgid "reg: The registry operation was cancelled\n"
-msgstr "reg: Der Registrierungsvorgang wurde abgebrochen\n"
-
-#: programs/reg/reg.rc:130 programs/regedit/regedit.rc:239
-msgid "(Default)"
-msgstr "(Standard)"
-
-#: programs/reg/reg.rc:131
-msgid "Are you sure you want to delete the registry value '%1'?"
-msgstr "Sind Sie sicher, dass Sie den Wert '%1' löschen möchten?"
-
-#: programs/reg/reg.rc:132
-msgid "Are you sure you want to delete all registry values in '%1'?"
-msgstr "Sind Sie sicher, dass Sie alle Werte in '%1' löschen möchten?"
-
-#: programs/reg/reg.rc:133
-msgid "Are you sure you want to delete the registry key '%1'?"
-msgstr "Sind Sie sicher, dass Sie den Schlüssel '%1' löschen möchten?"
-
-#: programs/reg/reg.rc:134
-msgid "reg: The option [/d] must be followed by a valid string\n"
-msgstr "reg: Auf die Option [/d] muss eine gültige Zeichenkette folgen\n"
-
-#: programs/reg/reg.rc:135
-#, fuzzy
-#| msgid "regedit: Unable to delete the registry key '%1'.\n"
-msgid "reg: Unable to delete all registry values in '%1'\n"
-msgstr "regedit: Der Schlüssel '%1' konnte nicht gelöscht werden.\n"
-
-#: programs/reg/reg.rc:136
-msgid "Search complete. Number of matches found: %1!d!\n"
-msgstr "Suche abgeschlossen. Gefundene Übereinstimmungen: %1!d!\n"
-
-#: programs/reg/reg.rc:137
-msgid "reg: Invalid syntax. "
-msgstr "reg: Ungültige Syntax. "
-
-#: programs/reg/reg.rc:138
-msgid "reg: Invalid option [%1]. "
-msgstr "reg: Ungültige Option [%1]. "
-
-#: programs/reg/reg.rc:139
-msgid "Type \"REG /?\" for help.\n"
-msgstr "Geben Sie \"REG /?\" ein, um Hilfe zu erhalten.\n"
-
-#: programs/reg/reg.rc:140
-msgid "Type \"REG %1 /?\" for help.\n"
-msgstr "Geben Sie \"REG %1 /?\" ein, um Hilfe zu erhalten.\n"
-
-#: programs/reg/reg.rc:141 programs/regedit/regedit.rc:240
-msgid "(value not set)"
-msgstr "(Wert nicht gesetzt)"
-
-#: programs/reg/reg.rc:146
-msgid ""
-"REG IMPORT <file>\n"
-"\n"
-"  Imports keys, values and data from a given file into the registry.\n"
-"\n"
-"  <file>\n"
-"     The name and path of the registry file to import.\n"
-"\n"
-msgstr ""
-"REG IMPORT <Datei>\n"
-"\n"
-"  Importiert Schlüssel, Werte und Daten aus der angegebenen Datei in die\n"
-"  Registrierung.\n"
-"\n"
-"  <Datei>\n"
-"     Der Name und Pfad der zu importierenden Datei.\n"
-"\n"
-
-#: programs/reg/reg.rc:148
-msgid "reg: The file '%1' was not found.\n"
-msgstr "reg: Die Datei '%1' wurde nicht gefunden.\n"
-
-#: programs/reg/reg.rc:149
-msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr "reg: Unbekannte Escape-Sequenz [\\%1!c!]\n"
-
-#: programs/reg/reg.rc:168
-msgid ""
-"REG EXPORT <key> <file> [/y]\n"
-"\n"
-"  Exports a specified registry key (including all subkeys and values)\n"
-"  to a file.\n"
-"\n"
-"  <key>\n"
-"     The registry key to export.\n"
-"\n"
-"     Format: ROOT\\Subkey\n"
-"\n"
-"     ROOT: A predefined registry key. This must be one of the following:\n"
-"\n"
-"         HKEY_LOCAL_MACHINE  | HKLM\n"
-"         HKEY_CURRENT_USER   | HKCU\n"
-"         HKEY_CLASSES_ROOT   | HKCR\n"
-"         HKEY_USERS          | HKU\n"
-"         HKEY_CURRENT_CONFIG | HKCC\n"
-"\n"
-"     Subkey: The full path to a registry key under a given ROOT key.\n"
-"\n"
-"  <file>\n"
-"     The name and path of the registry file that will be created.\n"
-"     This file must have a .reg extension.\n"
-"\n"
-"  /y\n"
-"     Overwrite <file> without prompting for confirmation.\n"
-"\n"
-msgstr ""
-"REG EXPORT <Schlüssel> <Datei> [/y]\n"
-"\n"
-"  Exportiert einen angegebenen Registrierungsschlüssel (inklusive aller\n"
-"  Unterschlüssel und Werte) in eine Datei.\n"
-"\n"
-"  <Schlüssel>\n"
-"     Der zu exportierende Schlüssel.\n"
-"\n"
-"     Format: ROOT\\Unterschlüssel\n"
-"\n"
-"     ROOT: Ein vorgegebener Hauptschlüssel. Muss einer der folgenden sein:\n"
-"\n"
-"         HKEY_LOCAL_MACHINE  | HKLM\n"
-"         HKEY_CURRENT_USER   | HKCU\n"
-"         HKEY_CLASSES_ROOT   | HKCR\n"
-"         HKEY_USERS          | HKU\n"
-"         HKEY_CURRENT_CONFIG | HKCC\n"
-"\n"
-"     Unterschlüssel: Der volle Pfad zu einem Schlüssel unter dem\n"
-"                     angegebenen ROOT-Schlüssel.\n"
-"\n"
-"  <Datei>\n"
-"     Der Name und Pfad der anzulegenden Registrierungsdatei. Die\n"
-"     Endung des Dateinamens muss .reg lauten.\n"
-"\n"
-"  /y\n"
-"     <Datei> ohne weitere Bestätigung überschreiben.\n"
-"\n"
-
-#: programs/reg/reg.rc:170
-msgid "reg: Invalid system key\n"
-msgstr "reg: Ungültiger Systemschlüssel\n"
-
-#: programs/reg/reg.rc:171
-msgid "The file '%1' already exists. Do you want to overwrite it?"
-msgstr "Die Datei '%1' existiert bereits. Möchten Sie sie ersetzen?"
-
-#: programs/reg/reg.rc:172
-msgid "reg: Unable to find the specified registry key\n"
-msgstr "reg: Der angegebene Schlüssel wurde nicht gefunden\n"
-
-#: programs/reg/reg.rc:173
-msgid "reg: Unable to import the registry key '%1'\n"
-msgstr "reg: Der Schlüssel '%1' konnte nicht importiert werden\n"
-
-#: programs/reg/reg.rc:178
-msgid ""
-"  /reg:32\n"
-"     Access the registry using the 32-bit view.\n"
-"\n"
-"  /reg:64\n"
-"     Access the registry using the 64-bit view.\n"
-"\n"
-msgstr ""
-"  /reg:32\n"
-"     Registrierungszugriff unter Verwendung der 32-Bit-Ansicht.\n"
-"\n"
-"  /reg:64\n"
-"     Registrierungszugriff unter Verwendung der 64-Bit-Ansicht.\n"
-"\n"
-
-#: programs/reg/reg.rc:179
-#, fuzzy
-#| msgid "reg: Unable to find the specified registry key\n"
-msgid "reg: Unable to access or create the specified registry key\n"
-msgstr "reg: Der angegebene Schlüssel wurde nicht gefunden\n"
-
 #: programs/reg/reg.rc:200
 #, fuzzy
 #| msgid ""
@@ -15450,6 +15123,333 @@ msgstr ""
 "  /y\n"
 "     <Datei> ohne weitere Bestätigung überschreiben.\n"
 "\n"
+
+#: programs/reg/reg.rc:92
+msgid ""
+"REG DELETE <key> [/v value_name | /ve | /va] [/f]\n"
+"\n"
+"  Deletes a registry key (including all subkeys and values), or deletes\n"
+"  one or more values from a given registry key.\n"
+"\n"
+"  <key>\n"
+"     The registry key to delete or, if one of [/v], [/ve] or [/va] is\n"
+"     specified, the registry key in which to delete one or more values.\n"
+"\n"
+"     Format: ROOT\\Subkey\n"
+"\n"
+"     ROOT: A predefined registry key. This must be one of the following:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Subkey: The full path to a registry key under a given ROOT key.\n"
+"\n"
+"  /v <value_name>\n"
+"     The name of the registry value to delete.\n"
+"\n"
+"  /ve\n"
+"     Delete an unnamed registry value. This option deletes the (Default)\n"
+"     registry value.\n"
+"\n"
+"  /va\n"
+"     Delete all values from a registry key.\n"
+"\n"
+"  /f\n"
+"     Delete a registry key (including all subkeys and values) without\n"
+"     prompting for confirmation.\n"
+"\n"
+msgstr ""
+"REG DELETE <Schlüssel> [/v Wertname | /ve | /va] [/f]\n"
+"\n"
+"  Löscht einen Registrierungsschlüssel (inklusive aller Unterschlüssel und\n"
+"  Werte), oder löscht einen oder mehrere Werte aus dem Schlüssel.\n"
+"\n"
+"  <Schlüssel>\n"
+"     Der zu löschende Schlüssel oder, falls [/v], [/ve] oder [/va]\n"
+"     angegeben wurden, der Schlüssel aus welchem einer oder mehrere Werte\n"
+"     entfernt werden sollen.\n"
+"\n"
+"     Format: ROOT\\Unterschlüssel\n"
+"\n"
+"     ROOT: Ein vorgegebener Hauptschlüssel. Muss einer der folgenden sein:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Unterschlüssel: Der volle Pfad zu einem Schlüssel unter dem\n"
+"                     angegebenen ROOT-Schlüssel.\n"
+"\n"
+"  /v <Wertname>\n"
+"     Der Name des zu entfernenden Registrierungswertes.\n"
+"\n"
+"  /ve\n"
+"     Löscht einen unbenannten Wert. Diese Option entfernt den (Standard)-\n"
+"     Registrierungswert.\n"
+"\n"
+"  /va\n"
+"     Entfernt alle Werte aus dem angegebenen Schlüssel.\n"
+"\n"
+"  /f\n"
+"     Löscht den Registrierungsschlüssel (inklusive aller Unterschlüssel und\n"
+"     Werte) ohne weitere Bestätigung.\n"
+"\n"
+
+#: programs/reg/reg.rc:168
+msgid ""
+"REG EXPORT <key> <file> [/y]\n"
+"\n"
+"  Exports a specified registry key (including all subkeys and values)\n"
+"  to a file.\n"
+"\n"
+"  <key>\n"
+"     The registry key to export.\n"
+"\n"
+"     Format: ROOT\\Subkey\n"
+"\n"
+"     ROOT: A predefined registry key. This must be one of the following:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Subkey: The full path to a registry key under a given ROOT key.\n"
+"\n"
+"  <file>\n"
+"     The name and path of the registry file that will be created.\n"
+"     This file must have a .reg extension.\n"
+"\n"
+"  /y\n"
+"     Overwrite <file> without prompting for confirmation.\n"
+"\n"
+msgstr ""
+"REG EXPORT <Schlüssel> <Datei> [/y]\n"
+"\n"
+"  Exportiert einen angegebenen Registrierungsschlüssel (inklusive aller\n"
+"  Unterschlüssel und Werte) in eine Datei.\n"
+"\n"
+"  <Schlüssel>\n"
+"     Der zu exportierende Schlüssel.\n"
+"\n"
+"     Format: ROOT\\Unterschlüssel\n"
+"\n"
+"     ROOT: Ein vorgegebener Hauptschlüssel. Muss einer der folgenden sein:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Unterschlüssel: Der volle Pfad zu einem Schlüssel unter dem\n"
+"                     angegebenen ROOT-Schlüssel.\n"
+"\n"
+"  <Datei>\n"
+"     Der Name und Pfad der anzulegenden Registrierungsdatei. Die\n"
+"     Endung des Dateinamens muss .reg lauten.\n"
+"\n"
+"  /y\n"
+"     <Datei> ohne weitere Bestätigung überschreiben.\n"
+"\n"
+
+#: programs/reg/reg.rc:146
+msgid ""
+"REG IMPORT <file>\n"
+"\n"
+"  Imports keys, values and data from a given file into the registry.\n"
+"\n"
+"  <file>\n"
+"     The name and path of the registry file to import.\n"
+"\n"
+msgstr ""
+"REG IMPORT <Datei>\n"
+"\n"
+"  Importiert Schlüssel, Werte und Daten aus der angegebenen Datei in die\n"
+"  Registrierung.\n"
+"\n"
+"  <Datei>\n"
+"     Der Name und Pfad der zu importierenden Datei.\n"
+"\n"
+
+#: programs/reg/reg.rc:114
+msgid ""
+"REG QUERY <key> [/v value_name | /ve] [/s]\n"
+"\n"
+"  Queries a specified registry key and lists all immediate subkeys, values\n"
+"  and data within that key. Use [/s] to recursively query each subkey.\n"
+"\n"
+"  <key>\n"
+"     The registry key to query.\n"
+"\n"
+"     Format: ROOT\\Subkey\n"
+"\n"
+"     ROOT: A predefined registry key. This must be one of the following:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Subkey: The full path to a registry key under a given ROOT key.\n"
+"\n"
+"  /v <value_name>\n"
+"     The name of the registry value to query. If neither [/v] nor [/ve] is\n"
+"     specified, all values under <key> are listed.\n"
+"\n"
+"  /ve\n"
+"     Query an unnamed registry value. This option queries the (Default)\n"
+"     registry value.\n"
+"\n"
+"  /s\n"
+"     List all registry entries under <key> and its subkeys.\n"
+"\n"
+msgstr ""
+"REG QUERY <Schlüssel> [/v Wertname | /ve] [/s]\n"
+"\n"
+"  Fragt einen Registrierungsschlüssel ab und listet alle direkten\n"
+"  Unterschlüssel, Werte und darin enthaltene Daten auf.\n"
+"  Mit [/s] werden rekursiv auch alle Unterschlüssel abgefragt.\n"
+"\n"
+"  <Schlüssel>\n"
+"     Der abzufragende Schlüssel.\n"
+"\n"
+"     Format: ROOT\\Unterschlüssel\n"
+"\n"
+"     ROOT: Ein vorgegebener Hauptschlüssel. Muss einer der folgenden sein:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Unterschlüssel: Der volle Pfad zu einem Schlüssel unter dem\n"
+"                     angegebenen ROOT-Schlüssel.\n"
+"\n"
+"  /v <Wertname>\n"
+"     Der Name des abzufragenden Registrierungswertes. Falls weder [/v] noch\n"
+"     [/ve] angegeben wurden, werden alle Werte unter <Schlüssel> auf-\n"
+"     gelistet.\n"
+"\n"
+"  /ve\n"
+"     Fragt einen unbenannten Registrierungswert ab. Diese Option fragt den\n"
+"     Wert (Standard) ab.\n"
+"\n"
+"  /s\n"
+"     Listet alle Einträge unter <Schlüssel> und seinen Unterschlüsseln auf.\n"
+"\n"
+
+#: programs/reg/reg.rc:178
+msgid ""
+"  /reg:32\n"
+"     Access the registry using the 32-bit view.\n"
+"\n"
+"  /reg:64\n"
+"     Access the registry using the 64-bit view.\n"
+"\n"
+msgstr ""
+"  /reg:32\n"
+"     Registrierungszugriff unter Verwendung der 32-Bit-Ansicht.\n"
+"\n"
+"  /reg:64\n"
+"     Registrierungszugriff unter Verwendung der 64-Bit-Ansicht.\n"
+"\n"
+
+#: programs/reg/reg.rc:117
+msgid "reg: Invalid registry key\n"
+msgstr "reg: Ungültiger Registrierungsschlüssel\n"
+
+#: programs/reg/reg.rc:119
+msgid "reg: Unable to access remote machine\n"
+msgstr "reg: Auf den Remoterechner kann nicht zugegriffen werden\n"
+
+#: programs/reg/reg.rc:170
+msgid "reg: Invalid system key\n"
+msgstr "reg: Ungültiger Systemschlüssel\n"
+
+#: programs/reg/reg.rc:138
+msgid "reg: Invalid option [%1]. "
+msgstr "reg: Ungültige Option [%1]. "
+
+#: programs/reg/reg.rc:122
+#, fuzzy
+#| msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
+msgid "reg: The option [/d] must be followed by a valid numeric value\n"
+msgstr "reg: Auf die Option [/d] muss ein gültiger Hexadezimalwert folgen\n"
+
+#: programs/reg/reg.rc:123
+msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
+msgstr "reg: Auf die Option [/d] muss ein gültiger Hexadezimalwert folgen\n"
+
+#: programs/reg/reg.rc:134
+msgid "reg: The option [/d] must be followed by a valid string\n"
+msgstr "reg: Auf die Option [/d] muss eine gültige Zeichenkette folgen\n"
+
+#: programs/reg/reg.rc:124
+msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
+msgstr "reg: Unbehandelter Registrierungsdatentyp [/t 0x%1!x!, /d %2]\n"
+
+#: programs/reg/reg.rc:121
+msgid "reg: Unsupported registry data type [%1]\n"
+msgstr "reg: Nicht unterstützter Registrierungsdatentyp [%1]\n"
+
+#: programs/reg/reg.rc:125
+msgid "The registry value '%1' already exists. Do you want to overwrite it?"
+msgstr "Der Wert '%1' existiert bereits. Möchten Sie ihn ersetzen?"
+
+#: programs/reg/reg.rc:118
+msgid "reg: Invalid command line parameters\n"
+msgstr "reg: Ungültige Befehlszeilenargumente\n"
+
+#: programs/reg/reg.rc:131
+msgid "Are you sure you want to delete the registry value '%1'?"
+msgstr "Sind Sie sicher, dass Sie den Wert '%1' löschen möchten?"
+
+#: programs/reg/reg.rc:132
+msgid "Are you sure you want to delete all registry values in '%1'?"
+msgstr "Sind Sie sicher, dass Sie alle Werte in '%1' löschen möchten?"
+
+#: programs/reg/reg.rc:133
+msgid "Are you sure you want to delete the registry key '%1'?"
+msgstr "Sind Sie sicher, dass Sie den Schlüssel '%1' löschen möchten?"
+
+#: programs/reg/reg.rc:135
+#, fuzzy
+#| msgid "regedit: Unable to delete the registry key '%1'.\n"
+msgid "reg: Unable to delete all registry values in '%1'\n"
+msgstr "regedit: Der Schlüssel '%1' konnte nicht gelöscht werden.\n"
+
+#: programs/reg/reg.rc:171
+msgid "The file '%1' already exists. Do you want to overwrite it?"
+msgstr "Die Datei '%1' existiert bereits. Möchten Sie sie ersetzen?"
+
+#: programs/reg/reg.rc:149
+msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
+msgstr "reg: Unbekannte Escape-Sequenz [\\%1!c!]\n"
+
+#: programs/reg/reg.rc:173
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "reg: Der Schlüssel '%1' konnte nicht importiert werden\n"
+
+#: programs/reg/reg.rc:148
+msgid "reg: The file '%1' was not found.\n"
+msgstr "reg: Die Datei '%1' wurde nicht gefunden.\n"
+
+#: programs/reg/reg.rc:141 programs/regedit/regedit.rc:240
+msgid "(value not set)"
+msgstr "(Wert nicht gesetzt)"
+
+#: programs/reg/reg.rc:136
+msgid "Search complete. Number of matches found: %1!d!\n"
+msgstr "Suche abgeschlossen. Gefundene Übereinstimmungen: %1!d!\n"
 
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"

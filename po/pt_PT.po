@@ -15176,6 +15176,61 @@ msgstr "Ficheiros de ícones"
 msgid "Icons (*.ico)"
 msgstr "Ícones (*.ico)"
 
+#: programs/reg/reg.rc:137
+msgid "reg: Invalid syntax. "
+msgstr "reg: Sintaxe inválida. "
+
+#: programs/reg/reg.rc:140
+msgid "Type \"REG %1 /?\" for help.\n"
+msgstr "Escreva \"REG %1 /?\" para ver ajuda.\n"
+
+#: programs/reg/reg.rc:179
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to access or create the specified registry key\n"
+msgstr ""
+"reg: O sistema foi incapaz de encontrar no Registo a chave ou valor "
+"especificados\n"
+
+#: programs/reg/reg.rc:116
+#, fuzzy
+#| msgid "The operation completed successfully\n"
+msgid "reg: The operation completed successfully\n"
+msgstr "A operação foi completada com sucesso\n"
+
+#: programs/reg/reg.rc:129
+#, fuzzy
+#| msgid "The registry operation was cancelled\n"
+msgid "reg: The registry operation was cancelled\n"
+msgstr "A operação no Registo foi cancelada\n"
+
+#: programs/reg/reg.rc:172
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry key\n"
+msgstr ""
+"reg: O sistema foi incapaz de encontrar no Registo a chave ou valor "
+"especificados\n"
+
+#: programs/reg/reg.rc:120
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry value\n"
+msgstr ""
+"reg: O sistema foi incapaz de encontrar no Registo a chave ou valor "
+"especificados\n"
+
+#: programs/reg/reg.rc:130 programs/regedit/regedit.rc:239
+msgid "(Default)"
+msgstr "(Pré-definido)"
+
+#: programs/reg/reg.rc:139
+msgid "Type \"REG /?\" for help.\n"
+msgstr "Escreva \"REG /?\" para ver ajuda.\n"
+
 #: programs/reg/reg.rc:35
 #, fuzzy
 #| msgid ""
@@ -15259,6 +15314,41 @@ msgid ""
 "\n"
 msgstr ""
 
+#: programs/reg/reg.rc:200
+msgid ""
+"REG COPY <key1> <key2> [/s] [/f]\n"
+"\n"
+"  Copies the contents of a specified registry key to another location.\n"
+"  By default, this operation only copies registry values. Use [/s] to\n"
+"  recursively copy all subkeys and values.\n"
+"\n"
+"  <key1>, <key2>\n"
+"     Registry keys specifying the source (<key1>) and destination (<key2>)\n"
+"     of the data. If <key2> does not exist, it is created.\n"
+"\n"
+"     Format: ROOT\\Subkey\n"
+"\n"
+"     ROOT: A predefined registry key. This must be one of the following:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Subkey: The full path to a registry key under a given ROOT key.\n"
+"\n"
+"  /s\n"
+"     Copy all subkeys and values from <key1> to <key2>.\n"
+"\n"
+"  /f\n"
+"     Overwrite all registry data in <key2> without prompting for "
+"confirmation.\n"
+"     This option does not modify subkeys and values that only exist in "
+"<key2>.\n"
+"\n"
+msgstr ""
+
 #: programs/reg/reg.rc:92
 msgid ""
 "REG DELETE <key> [/v value_name | /ve | /va] [/f]\n"
@@ -15298,6 +15388,48 @@ msgid ""
 "\n"
 msgstr ""
 
+#: programs/reg/reg.rc:168
+msgid ""
+"REG EXPORT <key> <file> [/y]\n"
+"\n"
+"  Exports a specified registry key (including all subkeys and values)\n"
+"  to a file.\n"
+"\n"
+"  <key>\n"
+"     The registry key to export.\n"
+"\n"
+"     Format: ROOT\\Subkey\n"
+"\n"
+"     ROOT: A predefined registry key. This must be one of the following:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Subkey: The full path to a registry key under a given ROOT key.\n"
+"\n"
+"  <file>\n"
+"     The name and path of the registry file that will be created.\n"
+"     This file must have a .reg extension.\n"
+"\n"
+"  /y\n"
+"     Overwrite <file> without prompting for confirmation.\n"
+"\n"
+msgstr ""
+
+#: programs/reg/reg.rc:146
+msgid ""
+"REG IMPORT <file>\n"
+"\n"
+"  Imports keys, values and data from a given file into the registry.\n"
+"\n"
+"  <file>\n"
+"     The name and path of the registry file to import.\n"
+"\n"
+msgstr ""
+
 #: programs/reg/reg.rc:114
 msgid ""
 "REG QUERY <key> [/v value_name | /ve] [/s]\n"
@@ -15333,11 +15465,15 @@ msgid ""
 "\n"
 msgstr ""
 
-#: programs/reg/reg.rc:116
-#, fuzzy
-#| msgid "The operation completed successfully\n"
-msgid "reg: The operation completed successfully\n"
-msgstr "A operação foi completada com sucesso\n"
+#: programs/reg/reg.rc:178
+msgid ""
+"  /reg:32\n"
+"     Access the registry using the 32-bit view.\n"
+"\n"
+"  /reg:64\n"
+"     Access the registry using the 64-bit view.\n"
+"\n"
+msgstr ""
 
 #: programs/reg/reg.rc:117
 #, fuzzy
@@ -15345,27 +15481,19 @@ msgstr "A operação foi completada com sucesso\n"
 msgid "reg: Invalid registry key\n"
 msgstr "reg: Nome de chave inválido\n"
 
-#: programs/reg/reg.rc:118
-msgid "reg: Invalid command line parameters\n"
-msgstr "reg: Parâmetros da linha de comandos inválidos\n"
-
 #: programs/reg/reg.rc:119
 msgid "reg: Unable to access remote machine\n"
 msgstr "reg: Incapaz de aceder à máquina remota\n"
 
-#: programs/reg/reg.rc:120
+#: programs/reg/reg.rc:170
 #, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
-msgid "reg: Unable to find the specified registry value\n"
-msgstr ""
-"reg: O sistema foi incapaz de encontrar no Registo a chave ou valor "
-"especificados\n"
+#| msgid "reg: Invalid system key [%1]\n"
+msgid "reg: Invalid system key\n"
+msgstr "reg: Nome de chave de sistema inválido [%1]\n"
 
-#: programs/reg/reg.rc:121
-#, fuzzy
-msgid "reg: Unsupported registry data type [%1]\n"
-msgstr "reg: Tipo de dados do Registo não suportado.\n"
+#: programs/reg/reg.rc:138
+msgid "reg: Invalid option [%1]. "
+msgstr "reg: Opção inválida [%1]. "
 
 #: programs/reg/reg.rc:122
 #, fuzzy
@@ -15377,23 +15505,26 @@ msgstr "reg: A opção [/d] tem de ser seguida por um valor hexadecimal válido\
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
 msgstr "reg: A opção [/d] tem de ser seguida por um valor hexadecimal válido\n"
 
+#: programs/reg/reg.rc:134
+msgid "reg: The option [/d] must be followed by a valid string\n"
+msgstr "reg: A opção [/d] tem de ser seguida por caracteres válidos\n"
+
 #: programs/reg/reg.rc:124
 msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
 msgstr "reg: Tipo de dados do Registo não controlado [/t 0x%1!x!, /d %2]\n"
+
+#: programs/reg/reg.rc:121
+#, fuzzy
+msgid "reg: Unsupported registry data type [%1]\n"
+msgstr "reg: Tipo de dados do Registo não suportado.\n"
 
 #: programs/reg/reg.rc:125
 msgid "The registry value '%1' already exists. Do you want to overwrite it?"
 msgstr "O valor '%1' já existe no Registo. Deseja substituí-lo?"
 
-#: programs/reg/reg.rc:129
-#, fuzzy
-#| msgid "The registry operation was cancelled\n"
-msgid "reg: The registry operation was cancelled\n"
-msgstr "A operação no Registo foi cancelada\n"
-
-#: programs/reg/reg.rc:130 programs/regedit/regedit.rc:239
-msgid "(Default)"
-msgstr "(Pré-definido)"
+#: programs/reg/reg.rc:118
+msgid "reg: Invalid command line parameters\n"
+msgstr "reg: Parâmetros da linha de comandos inválidos\n"
 
 #: programs/reg/reg.rc:131
 msgid "Are you sure you want to delete the registry value '%1'?"
@@ -15407,108 +15538,19 @@ msgstr "Tem certeza que deseja remover todos os valores do Registo em '%1'?"
 msgid "Are you sure you want to delete the registry key '%1'?"
 msgstr "Tem certeza que deseja remover a chave '%1' do Registo?"
 
-#: programs/reg/reg.rc:134
-msgid "reg: The option [/d] must be followed by a valid string\n"
-msgstr "reg: A opção [/d] tem de ser seguida por caracteres válidos\n"
-
 #: programs/reg/reg.rc:135
 #, fuzzy
 #| msgid "regedit: Unable to delete the registry key '%1'.\n"
 msgid "reg: Unable to delete all registry values in '%1'\n"
 msgstr "regedit: Incapaz de remover a chave '%1' do Registo.\n"
 
-#: programs/reg/reg.rc:136
-msgid "Search complete. Number of matches found: %1!d!\n"
-msgstr "Pesquisa concluída. Número de correspondências encontradas: %1!d!\n"
-
-#: programs/reg/reg.rc:137
-msgid "reg: Invalid syntax. "
-msgstr "reg: Sintaxe inválida. "
-
-#: programs/reg/reg.rc:138
-msgid "reg: Invalid option [%1]. "
-msgstr "reg: Opção inválida [%1]. "
-
-#: programs/reg/reg.rc:139
-msgid "Type \"REG /?\" for help.\n"
-msgstr "Escreva \"REG /?\" para ver ajuda.\n"
-
-#: programs/reg/reg.rc:140
-msgid "Type \"REG %1 /?\" for help.\n"
-msgstr "Escreva \"REG %1 /?\" para ver ajuda.\n"
-
-#: programs/reg/reg.rc:141 programs/regedit/regedit.rc:240
-msgid "(value not set)"
-msgstr "(valor não definido)"
-
-#: programs/reg/reg.rc:146
-msgid ""
-"REG IMPORT <file>\n"
-"\n"
-"  Imports keys, values and data from a given file into the registry.\n"
-"\n"
-"  <file>\n"
-"     The name and path of the registry file to import.\n"
-"\n"
-msgstr ""
-
-#: programs/reg/reg.rc:148
-msgid "reg: The file '%1' was not found.\n"
-msgstr "reg: O ficheiro '%1' não foi encontrado.\n"
-
-#: programs/reg/reg.rc:149
-msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr "reg: Sequência de escape não reconhecida [\\%1!c!]\n"
-
-#: programs/reg/reg.rc:168
-msgid ""
-"REG EXPORT <key> <file> [/y]\n"
-"\n"
-"  Exports a specified registry key (including all subkeys and values)\n"
-"  to a file.\n"
-"\n"
-"  <key>\n"
-"     The registry key to export.\n"
-"\n"
-"     Format: ROOT\\Subkey\n"
-"\n"
-"     ROOT: A predefined registry key. This must be one of the following:\n"
-"\n"
-"         HKEY_LOCAL_MACHINE  | HKLM\n"
-"         HKEY_CURRENT_USER   | HKCU\n"
-"         HKEY_CLASSES_ROOT   | HKCR\n"
-"         HKEY_USERS          | HKU\n"
-"         HKEY_CURRENT_CONFIG | HKCC\n"
-"\n"
-"     Subkey: The full path to a registry key under a given ROOT key.\n"
-"\n"
-"  <file>\n"
-"     The name and path of the registry file that will be created.\n"
-"     This file must have a .reg extension.\n"
-"\n"
-"  /y\n"
-"     Overwrite <file> without prompting for confirmation.\n"
-"\n"
-msgstr ""
-
-#: programs/reg/reg.rc:170
-#, fuzzy
-#| msgid "reg: Invalid system key [%1]\n"
-msgid "reg: Invalid system key\n"
-msgstr "reg: Nome de chave de sistema inválido [%1]\n"
-
 #: programs/reg/reg.rc:171
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "O ficheiro especificado '%1' já existe. Deseja substituí-lo?"
 
-#: programs/reg/reg.rc:172
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
-msgid "reg: Unable to find the specified registry key\n"
-msgstr ""
-"reg: O sistema foi incapaz de encontrar no Registo a chave ou valor "
-"especificados\n"
+#: programs/reg/reg.rc:149
+msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
+msgstr "reg: Sequência de escape não reconhecida [\\%1!c!]\n"
 
 #: programs/reg/reg.rc:173
 #, fuzzy
@@ -15516,59 +15558,17 @@ msgstr ""
 msgid "reg: Unable to import the registry key '%1'\n"
 msgstr "reg: Incapaz de abrir a chave '%1' no Registo.\n"
 
-#: programs/reg/reg.rc:178
-msgid ""
-"  /reg:32\n"
-"     Access the registry using the 32-bit view.\n"
-"\n"
-"  /reg:64\n"
-"     Access the registry using the 64-bit view.\n"
-"\n"
-msgstr ""
+#: programs/reg/reg.rc:148
+msgid "reg: The file '%1' was not found.\n"
+msgstr "reg: O ficheiro '%1' não foi encontrado.\n"
 
-#: programs/reg/reg.rc:179
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
-msgid "reg: Unable to access or create the specified registry key\n"
-msgstr ""
-"reg: O sistema foi incapaz de encontrar no Registo a chave ou valor "
-"especificados\n"
+#: programs/reg/reg.rc:141 programs/regedit/regedit.rc:240
+msgid "(value not set)"
+msgstr "(valor não definido)"
 
-#: programs/reg/reg.rc:200
-msgid ""
-"REG COPY <key1> <key2> [/s] [/f]\n"
-"\n"
-"  Copies the contents of a specified registry key to another location.\n"
-"  By default, this operation only copies registry values. Use [/s] to\n"
-"  recursively copy all subkeys and values.\n"
-"\n"
-"  <key1>, <key2>\n"
-"     Registry keys specifying the source (<key1>) and destination (<key2>)\n"
-"     of the data. If <key2> does not exist, it is created.\n"
-"\n"
-"     Format: ROOT\\Subkey\n"
-"\n"
-"     ROOT: A predefined registry key. This must be one of the following:\n"
-"\n"
-"         HKEY_LOCAL_MACHINE  | HKLM\n"
-"         HKEY_CURRENT_USER   | HKCU\n"
-"         HKEY_CLASSES_ROOT   | HKCR\n"
-"         HKEY_USERS          | HKU\n"
-"         HKEY_CURRENT_CONFIG | HKCC\n"
-"\n"
-"     Subkey: The full path to a registry key under a given ROOT key.\n"
-"\n"
-"  /s\n"
-"     Copy all subkeys and values from <key1> to <key2>.\n"
-"\n"
-"  /f\n"
-"     Overwrite all registry data in <key2> without prompting for "
-"confirmation.\n"
-"     This option does not modify subkeys and values that only exist in "
-"<key2>.\n"
-"\n"
-msgstr ""
+#: programs/reg/reg.rc:136
+msgid "Search complete. Number of matches found: %1!d!\n"
+msgstr "Pesquisa concluída. Número de correspondências encontradas: %1!d!\n"
 
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"

@@ -14567,6 +14567,55 @@ msgstr "图标文件"
 msgid "Icons (*.ico)"
 msgstr "图标 (*.ico)"
 
+#: programs/reg/reg.rc:137
+msgid "reg: Invalid syntax. "
+msgstr "reg: 语法无效。"
+
+#: programs/reg/reg.rc:140
+msgid "Type \"REG %1 /?\" for help.\n"
+msgstr "输入“REG %1 /?”以获取帮助。\n"
+
+#: programs/reg/reg.rc:179
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to access or create the specified registry key\n"
+msgstr "reg：系统无法找到指定的注册表键或值\n"
+
+#: programs/reg/reg.rc:116
+#, fuzzy
+#| msgid "The operation completed successfully\n"
+msgid "reg: The operation completed successfully\n"
+msgstr "操作完成\n"
+
+#: programs/reg/reg.rc:129
+#, fuzzy
+#| msgid "The registry operation was cancelled\n"
+msgid "reg: The registry operation was cancelled\n"
+msgstr "注册表操作已经取消\n"
+
+#: programs/reg/reg.rc:172
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry key\n"
+msgstr "reg：系统无法找到指定的注册表键或值\n"
+
+#: programs/reg/reg.rc:120
+#, fuzzy
+#| msgid ""
+#| "reg: The system was unable to find the specified registry key or value\n"
+msgid "reg: Unable to find the specified registry value\n"
+msgstr "reg：系统无法找到指定的注册表键或值\n"
+
+#: programs/reg/reg.rc:130 programs/regedit/regedit.rc:239
+msgid "(Default)"
+msgstr "(默认)"
+
+#: programs/reg/reg.rc:139
+msgid "Type \"REG /?\" for help.\n"
+msgstr "输入“REG /?”以获取帮助。\n"
+
 #: programs/reg/reg.rc:35
 #, fuzzy
 #| msgid ""
@@ -14650,6 +14699,41 @@ msgid ""
 "\n"
 msgstr ""
 
+#: programs/reg/reg.rc:200
+msgid ""
+"REG COPY <key1> <key2> [/s] [/f]\n"
+"\n"
+"  Copies the contents of a specified registry key to another location.\n"
+"  By default, this operation only copies registry values. Use [/s] to\n"
+"  recursively copy all subkeys and values.\n"
+"\n"
+"  <key1>, <key2>\n"
+"     Registry keys specifying the source (<key1>) and destination (<key2>)\n"
+"     of the data. If <key2> does not exist, it is created.\n"
+"\n"
+"     Format: ROOT\\Subkey\n"
+"\n"
+"     ROOT: A predefined registry key. This must be one of the following:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Subkey: The full path to a registry key under a given ROOT key.\n"
+"\n"
+"  /s\n"
+"     Copy all subkeys and values from <key1> to <key2>.\n"
+"\n"
+"  /f\n"
+"     Overwrite all registry data in <key2> without prompting for "
+"confirmation.\n"
+"     This option does not modify subkeys and values that only exist in "
+"<key2>.\n"
+"\n"
+msgstr ""
+
 #: programs/reg/reg.rc:92
 msgid ""
 "REG DELETE <key> [/v value_name | /ve | /va] [/f]\n"
@@ -14689,6 +14773,48 @@ msgid ""
 "\n"
 msgstr ""
 
+#: programs/reg/reg.rc:168
+msgid ""
+"REG EXPORT <key> <file> [/y]\n"
+"\n"
+"  Exports a specified registry key (including all subkeys and values)\n"
+"  to a file.\n"
+"\n"
+"  <key>\n"
+"     The registry key to export.\n"
+"\n"
+"     Format: ROOT\\Subkey\n"
+"\n"
+"     ROOT: A predefined registry key. This must be one of the following:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Subkey: The full path to a registry key under a given ROOT key.\n"
+"\n"
+"  <file>\n"
+"     The name and path of the registry file that will be created.\n"
+"     This file must have a .reg extension.\n"
+"\n"
+"  /y\n"
+"     Overwrite <file> without prompting for confirmation.\n"
+"\n"
+msgstr ""
+
+#: programs/reg/reg.rc:146
+msgid ""
+"REG IMPORT <file>\n"
+"\n"
+"  Imports keys, values and data from a given file into the registry.\n"
+"\n"
+"  <file>\n"
+"     The name and path of the registry file to import.\n"
+"\n"
+msgstr ""
+
 #: programs/reg/reg.rc:114
 msgid ""
 "REG QUERY <key> [/v value_name | /ve] [/s]\n"
@@ -14724,11 +14850,15 @@ msgid ""
 "\n"
 msgstr ""
 
-#: programs/reg/reg.rc:116
-#, fuzzy
-#| msgid "The operation completed successfully\n"
-msgid "reg: The operation completed successfully\n"
-msgstr "操作完成\n"
+#: programs/reg/reg.rc:178
+msgid ""
+"  /reg:32\n"
+"     Access the registry using the 32-bit view.\n"
+"\n"
+"  /reg:64\n"
+"     Access the registry using the 64-bit view.\n"
+"\n"
+msgstr ""
 
 #: programs/reg/reg.rc:117
 #, fuzzy
@@ -14736,24 +14866,19 @@ msgstr "操作完成\n"
 msgid "reg: Invalid registry key\n"
 msgstr "reg: 无效的键名\n"
 
-#: programs/reg/reg.rc:118
-msgid "reg: Invalid command line parameters\n"
-msgstr "reg: 无效的命令行参数\n"
-
 #: programs/reg/reg.rc:119
 msgid "reg: Unable to access remote machine\n"
 msgstr "reg: 无法访问远程设备\n"
 
-#: programs/reg/reg.rc:120
+#: programs/reg/reg.rc:170
 #, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
-msgid "reg: Unable to find the specified registry value\n"
-msgstr "reg：系统无法找到指定的注册表键或值\n"
+#| msgid "reg: Invalid system key [%1]\n"
+msgid "reg: Invalid system key\n"
+msgstr "regedit: 无效的系统键 [%1]\n"
 
-#: programs/reg/reg.rc:121
-msgid "reg: Unsupported registry data type [%1]\n"
-msgstr "reg: 不受支持的数据类型 [%1]\n"
+#: programs/reg/reg.rc:138
+msgid "reg: Invalid option [%1]. "
+msgstr "reg: 无效的选项 [%1]。"
 
 #: programs/reg/reg.rc:122
 #, fuzzy
@@ -14765,23 +14890,25 @@ msgstr "reg：选项 [/d] 后必须紧跟一个有效的十六进制值\n"
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
 msgstr "reg：选项 [/d] 后必须紧跟一个有效的十六进制值\n"
 
+#: programs/reg/reg.rc:134
+msgid "reg: The option [/d] must be followed by a valid string\n"
+msgstr "reg：选项 [/d] 后必须紧跟一个有效的字符串\n"
+
 #: programs/reg/reg.rc:124
 msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
 msgstr "reg: 未能处理的注册表数据类型 [/t 0x%1!x!, /d %2]\n"
+
+#: programs/reg/reg.rc:121
+msgid "reg: Unsupported registry data type [%1]\n"
+msgstr "reg: 不受支持的数据类型 [%1]\n"
 
 #: programs/reg/reg.rc:125
 msgid "The registry value '%1' already exists. Do you want to overwrite it?"
 msgstr "注册表值 '%1' 已经存在。您想要覆盖它吗?"
 
-#: programs/reg/reg.rc:129
-#, fuzzy
-#| msgid "The registry operation was cancelled\n"
-msgid "reg: The registry operation was cancelled\n"
-msgstr "注册表操作已经取消\n"
-
-#: programs/reg/reg.rc:130 programs/regedit/regedit.rc:239
-msgid "(Default)"
-msgstr "(默认)"
+#: programs/reg/reg.rc:118
+msgid "reg: Invalid command line parameters\n"
+msgstr "reg: 无效的命令行参数\n"
 
 #: programs/reg/reg.rc:131
 msgid "Are you sure you want to delete the registry value '%1'?"
@@ -14795,106 +14922,19 @@ msgstr "您真的要删除 '%1' 下的所有注册表键值吗?"
 msgid "Are you sure you want to delete the registry key '%1'?"
 msgstr "您真的要删除注册表键 '%1' 吗?"
 
-#: programs/reg/reg.rc:134
-msgid "reg: The option [/d] must be followed by a valid string\n"
-msgstr "reg：选项 [/d] 后必须紧跟一个有效的字符串\n"
-
 #: programs/reg/reg.rc:135
 #, fuzzy
 #| msgid "regedit: Unable to delete the registry key '%1'.\n"
 msgid "reg: Unable to delete all registry values in '%1'\n"
 msgstr "regedit：无法删除注册表键“%1”。\n"
 
-#: programs/reg/reg.rc:136
-msgid "Search complete. Number of matches found: %1!d!\n"
-msgstr "搜索完成。找到的匹配项数量: %1!d!\n"
-
-#: programs/reg/reg.rc:137
-msgid "reg: Invalid syntax. "
-msgstr "reg: 语法无效。"
-
-#: programs/reg/reg.rc:138
-msgid "reg: Invalid option [%1]. "
-msgstr "reg: 无效的选项 [%1]。"
-
-#: programs/reg/reg.rc:139
-msgid "Type \"REG /?\" for help.\n"
-msgstr "输入“REG /?”以获取帮助。\n"
-
-#: programs/reg/reg.rc:140
-msgid "Type \"REG %1 /?\" for help.\n"
-msgstr "输入“REG %1 /?”以获取帮助。\n"
-
-#: programs/reg/reg.rc:141 programs/regedit/regedit.rc:240
-msgid "(value not set)"
-msgstr "(没有设值)"
-
-#: programs/reg/reg.rc:146
-msgid ""
-"REG IMPORT <file>\n"
-"\n"
-"  Imports keys, values and data from a given file into the registry.\n"
-"\n"
-"  <file>\n"
-"     The name and path of the registry file to import.\n"
-"\n"
-msgstr ""
-
-#: programs/reg/reg.rc:148
-msgid "reg: The file '%1' was not found.\n"
-msgstr "reg: 找不到文件 '%1'。\n"
-
-#: programs/reg/reg.rc:149
-msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr "reg: 无法识别的转义序列 [\\%1!c!]\n"
-
-#: programs/reg/reg.rc:168
-msgid ""
-"REG EXPORT <key> <file> [/y]\n"
-"\n"
-"  Exports a specified registry key (including all subkeys and values)\n"
-"  to a file.\n"
-"\n"
-"  <key>\n"
-"     The registry key to export.\n"
-"\n"
-"     Format: ROOT\\Subkey\n"
-"\n"
-"     ROOT: A predefined registry key. This must be one of the following:\n"
-"\n"
-"         HKEY_LOCAL_MACHINE  | HKLM\n"
-"         HKEY_CURRENT_USER   | HKCU\n"
-"         HKEY_CLASSES_ROOT   | HKCR\n"
-"         HKEY_USERS          | HKU\n"
-"         HKEY_CURRENT_CONFIG | HKCC\n"
-"\n"
-"     Subkey: The full path to a registry key under a given ROOT key.\n"
-"\n"
-"  <file>\n"
-"     The name and path of the registry file that will be created.\n"
-"     This file must have a .reg extension.\n"
-"\n"
-"  /y\n"
-"     Overwrite <file> without prompting for confirmation.\n"
-"\n"
-msgstr ""
-
-#: programs/reg/reg.rc:170
-#, fuzzy
-#| msgid "reg: Invalid system key [%1]\n"
-msgid "reg: Invalid system key\n"
-msgstr "regedit: 无效的系统键 [%1]\n"
-
 #: programs/reg/reg.rc:171
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "文件 '%1' 已存在。您想要覆盖它吗?"
 
-#: programs/reg/reg.rc:172
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
-msgid "reg: Unable to find the specified registry key\n"
-msgstr "reg：系统无法找到指定的注册表键或值\n"
+#: programs/reg/reg.rc:149
+msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
+msgstr "reg: 无法识别的转义序列 [\\%1!c!]\n"
 
 #: programs/reg/reg.rc:173
 #, fuzzy
@@ -14902,57 +14942,17 @@ msgstr "reg：系统无法找到指定的注册表键或值\n"
 msgid "reg: Unable to import the registry key '%1'\n"
 msgstr "reg: 无法打开注册表键 '%1'。\n"
 
-#: programs/reg/reg.rc:178
-msgid ""
-"  /reg:32\n"
-"     Access the registry using the 32-bit view.\n"
-"\n"
-"  /reg:64\n"
-"     Access the registry using the 64-bit view.\n"
-"\n"
-msgstr ""
+#: programs/reg/reg.rc:148
+msgid "reg: The file '%1' was not found.\n"
+msgstr "reg: 找不到文件 '%1'。\n"
 
-#: programs/reg/reg.rc:179
-#, fuzzy
-#| msgid ""
-#| "reg: The system was unable to find the specified registry key or value\n"
-msgid "reg: Unable to access or create the specified registry key\n"
-msgstr "reg：系统无法找到指定的注册表键或值\n"
+#: programs/reg/reg.rc:141 programs/regedit/regedit.rc:240
+msgid "(value not set)"
+msgstr "(没有设值)"
 
-#: programs/reg/reg.rc:200
-msgid ""
-"REG COPY <key1> <key2> [/s] [/f]\n"
-"\n"
-"  Copies the contents of a specified registry key to another location.\n"
-"  By default, this operation only copies registry values. Use [/s] to\n"
-"  recursively copy all subkeys and values.\n"
-"\n"
-"  <key1>, <key2>\n"
-"     Registry keys specifying the source (<key1>) and destination (<key2>)\n"
-"     of the data. If <key2> does not exist, it is created.\n"
-"\n"
-"     Format: ROOT\\Subkey\n"
-"\n"
-"     ROOT: A predefined registry key. This must be one of the following:\n"
-"\n"
-"         HKEY_LOCAL_MACHINE  | HKLM\n"
-"         HKEY_CURRENT_USER   | HKCU\n"
-"         HKEY_CLASSES_ROOT   | HKCR\n"
-"         HKEY_USERS          | HKU\n"
-"         HKEY_CURRENT_CONFIG | HKCC\n"
-"\n"
-"     Subkey: The full path to a registry key under a given ROOT key.\n"
-"\n"
-"  /s\n"
-"     Copy all subkeys and values from <key1> to <key2>.\n"
-"\n"
-"  /f\n"
-"     Overwrite all registry data in <key2> without prompting for "
-"confirmation.\n"
-"     This option does not modify subkeys and values that only exist in "
-"<key2>.\n"
-"\n"
-msgstr ""
+#: programs/reg/reg.rc:136
+msgid "Search complete. Number of matches found: %1!d!\n"
+msgstr "搜索完成。找到的匹配项数量: %1!d!\n"
 
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"

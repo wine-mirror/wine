@@ -14679,6 +14679,42 @@ msgstr "Piktogramų failai"
 msgid "Icons (*.ico)"
 msgstr "Piktogramos (*.ico)"
 
+#: programs/reg/reg.rc:137
+msgid "reg: Invalid syntax. "
+msgstr "reg: Netinkama sintaksė. "
+
+#: programs/reg/reg.rc:140
+msgid "Type \"REG %1 /?\" for help.\n"
+msgstr "Pagalbai įrašykite „REG %1 /?“.\n"
+
+#: programs/reg/reg.rc:179
+msgid "reg: Unable to access or create the specified registry key\n"
+msgstr "reg: Nepavyko prieiti prie ar sukurti nurodyto registro rakto\n"
+
+#: programs/reg/reg.rc:116
+msgid "reg: The operation completed successfully\n"
+msgstr "reg: Operacija sėkmingai įvykdyta\n"
+
+#: programs/reg/reg.rc:129
+msgid "reg: The registry operation was cancelled\n"
+msgstr "reg: Registro operacija buvo nutraukta\n"
+
+#: programs/reg/reg.rc:172
+msgid "reg: Unable to find the specified registry key\n"
+msgstr "reg: Nepavyko rasti nurodyto registro rakto\n"
+
+#: programs/reg/reg.rc:120
+msgid "reg: Unable to find the specified registry value\n"
+msgstr "reg: Nepavyko rasti nurodytos registro reikšmės\n"
+
+#: programs/reg/reg.rc:130 programs/regedit/regedit.rc:239
+msgid "(Default)"
+msgstr "(numatytoji)"
+
+#: programs/reg/reg.rc:139
+msgid "Type \"REG /?\" for help.\n"
+msgstr "Pagalbai įrašykite „REG /?“.\n"
+
 #: programs/reg/reg.rc:35
 msgid ""
 "Usage:\n"
@@ -14800,6 +14836,72 @@ msgstr ""
 "     Modifikuoti registrą be patvirtinimo klausimo.\n"
 "\n"
 
+#: programs/reg/reg.rc:200
+msgid ""
+"REG COPY <key1> <key2> [/s] [/f]\n"
+"\n"
+"  Copies the contents of a specified registry key to another location.\n"
+"  By default, this operation only copies registry values. Use [/s] to\n"
+"  recursively copy all subkeys and values.\n"
+"\n"
+"  <key1>, <key2>\n"
+"     Registry keys specifying the source (<key1>) and destination (<key2>)\n"
+"     of the data. If <key2> does not exist, it is created.\n"
+"\n"
+"     Format: ROOT\\Subkey\n"
+"\n"
+"     ROOT: A predefined registry key. This must be one of the following:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Subkey: The full path to a registry key under a given ROOT key.\n"
+"\n"
+"  /s\n"
+"     Copy all subkeys and values from <key1> to <key2>.\n"
+"\n"
+"  /f\n"
+"     Overwrite all registry data in <key2> without prompting for "
+"confirmation.\n"
+"     This option does not modify subkeys and values that only exist in "
+"<key2>.\n"
+"\n"
+msgstr ""
+"REG COPY <raktas1> <raktas2> [/s] [/f]\n"
+"\n"
+"  Kopijuoja nurodyto registro rakto turinį į kitą vietą\n"
+"  Standartiškai ši operacija kopijuoja tik registro reikšmes. Naudokite\n"
+"  [/s] rekursyviai nukopijuoti visus porakčius ir reikšmes.\n"
+"\n"
+"  <raktas1>,<raktas2>\n"
+"     Registro raktai nurodantys duomenų šaltinį (<raktas1>) ir\n"
+"     paskirtį (<raktas2>). Jei <raktas2> neegzistuoja, jis bus sukurtas.\n"
+"\n"
+"     Formatas: ŠAKNIS\\Poraktis\n"
+"\n"
+"     ŠAKNIS: Numatytasis registro raktas. Privalo būti vienas iš:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Poraktis: Pilnas kelias iki registro rakto po nurodytu ŠAKNIES raktu.\n"
+"\n"
+"  /s\n"
+"     Kopijuoti visus porakčius ir reikšmes iš <raktas1> į <raktas2>.\n"
+"\n"
+"  /f\n"
+"     Perrašyti visus registro duomenis rakte <raktas2> be patvirtinimo "
+"klausimo.\n"
+"     Šis parametras nemodifikuoja porakčių ir reikšmių, kurie yra tik "
+"<raktas2>.\n"
+"\n"
+
 #: programs/reg/reg.rc:92
 msgid ""
 "REG DELETE <key> [/v value_name | /ve | /va] [/f]\n"
@@ -14876,6 +14978,83 @@ msgstr ""
 "     patvirtinimo klausimo.\n"
 "\n"
 
+#: programs/reg/reg.rc:168
+msgid ""
+"REG EXPORT <key> <file> [/y]\n"
+"\n"
+"  Exports a specified registry key (including all subkeys and values)\n"
+"  to a file.\n"
+"\n"
+"  <key>\n"
+"     The registry key to export.\n"
+"\n"
+"     Format: ROOT\\Subkey\n"
+"\n"
+"     ROOT: A predefined registry key. This must be one of the following:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Subkey: The full path to a registry key under a given ROOT key.\n"
+"\n"
+"  <file>\n"
+"     The name and path of the registry file that will be created.\n"
+"     This file must have a .reg extension.\n"
+"\n"
+"  /y\n"
+"     Overwrite <file> without prompting for confirmation.\n"
+"\n"
+msgstr ""
+"REG EXPORT <raktas> <failas> [/y]\n"
+"\n"
+"  Eksportuoja nurodytą registro raktą (įskaitant visus porakčius ir "
+"reikšmes)\n"
+"  į failą\n"
+"\n"
+"  <raktas>\n"
+"     Registro raktas eksportui.\n"
+"\n"
+"     Formatas: ŠAKNIS\\Poraktis\n"
+"\n"
+"     ŠAKNIS: Numatytasis registro raktas. Privalo būti vienas iš:\n"
+"\n"
+"         HKEY_LOCAL_MACHINE  | HKLM\n"
+"         HKEY_CURRENT_USER   | HKCU\n"
+"         HKEY_CLASSES_ROOT   | HKCR\n"
+"         HKEY_USERS          | HKU\n"
+"         HKEY_CURRENT_CONFIG | HKCC\n"
+"\n"
+"     Poraktis: Pilnas kelias iki registro rakto po nurodytu ŠAKNIES raktu.\n"
+"\n"
+"  <failas>\n"
+"     Registro failo, kuris bus sukurtas, pavadinimas ir kelias.\n"
+"     Failas privalo turėti plėtinį .reg.\n"
+"\n"
+"  /y\n"
+"     Perrašyti <failas> be patvirtinimo klausimo.\n"
+"\n"
+
+#: programs/reg/reg.rc:146
+msgid ""
+"REG IMPORT <file>\n"
+"\n"
+"  Imports keys, values and data from a given file into the registry.\n"
+"\n"
+"  <file>\n"
+"     The name and path of the registry file to import.\n"
+"\n"
+msgstr ""
+"REG IMPORT <failas>\n"
+"\n"
+"  Importuoja raktus, reikšmes ir duomenis iš nurodyto failo į registrą.\n"
+"\n"
+"  <failas>\n"
+"     Registro failo, kuris bus importuotas, pavadinimas ir kelias.\n"
+"\n"
+
 #: programs/reg/reg.rc:114
 msgid ""
 "REG QUERY <key> [/v value_name | /ve] [/s]\n"
@@ -14946,199 +15125,6 @@ msgstr ""
 "     Išvesti visus registro įrašus po raktu <raktas> ir jo porakčiais.\n"
 "\n"
 
-#: programs/reg/reg.rc:116
-msgid "reg: The operation completed successfully\n"
-msgstr "reg: Operacija sėkmingai įvykdyta\n"
-
-#: programs/reg/reg.rc:117
-msgid "reg: Invalid registry key\n"
-msgstr "reg: Netinkamas registro raktas\n"
-
-#: programs/reg/reg.rc:118
-msgid "reg: Invalid command line parameters\n"
-msgstr "reg: Netinkami komandos eilutės parametrai\n"
-
-#: programs/reg/reg.rc:119
-msgid "reg: Unable to access remote machine\n"
-msgstr "reg: Nepavyko prieiti prie nuotolinio kompiuterio\n"
-
-#: programs/reg/reg.rc:120
-msgid "reg: Unable to find the specified registry value\n"
-msgstr "reg: Nepavyko rasti nurodytos registro reikšmės\n"
-
-#: programs/reg/reg.rc:121
-msgid "reg: Unsupported registry data type [%1]\n"
-msgstr "reg: Nepalaikomas registro duomenų tipas [%1]\n"
-
-#: programs/reg/reg.rc:122
-msgid "reg: The option [/d] must be followed by a valid numeric value\n"
-msgstr "reg: Už parametro [/d] privalo būti tinkama skaitinė reikšmė\n"
-
-#: programs/reg/reg.rc:123
-msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
-msgstr "reg: Už parametro [/d] privalo būti tinkama šešioliktainė reikšmė\n"
-
-#: programs/reg/reg.rc:124
-msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
-msgstr "reg: Neapdorojamas registro duomenų tipas [/t 0x%1!x!, /d %2]\n"
-
-#: programs/reg/reg.rc:125
-msgid "The registry value '%1' already exists. Do you want to overwrite it?"
-msgstr "Registro reikšmė „%1“ jau egzistuoja. Ar norite ją perrašyti?"
-
-#: programs/reg/reg.rc:129
-msgid "reg: The registry operation was cancelled\n"
-msgstr "reg: Registro operacija buvo nutraukta\n"
-
-#: programs/reg/reg.rc:130 programs/regedit/regedit.rc:239
-msgid "(Default)"
-msgstr "(numatytoji)"
-
-#: programs/reg/reg.rc:131
-msgid "Are you sure you want to delete the registry value '%1'?"
-msgstr "Ar tikrai norite pašalinti registro reikšmę „%1“?"
-
-#: programs/reg/reg.rc:132
-msgid "Are you sure you want to delete all registry values in '%1'?"
-msgstr "Ar tikrai norite pašalinti visas registro „%1“ reikšmes?"
-
-#: programs/reg/reg.rc:133
-msgid "Are you sure you want to delete the registry key '%1'?"
-msgstr "Ar tikrai norite pašalinti registro raktą „%1“?"
-
-#: programs/reg/reg.rc:134
-msgid "reg: The option [/d] must be followed by a valid string\n"
-msgstr "reg: Už parametro [/d] privalo būti tinkama eilutė\n"
-
-#: programs/reg/reg.rc:135
-msgid "reg: Unable to delete all registry values in '%1'\n"
-msgstr "reg: Nepavyko pašalinti visų „%1“ registro reikšmių\n"
-
-#: programs/reg/reg.rc:136
-msgid "Search complete. Number of matches found: %1!d!\n"
-msgstr "Paieška baigta. Rasta atitikimų: %1!d!\n"
-
-#: programs/reg/reg.rc:137
-msgid "reg: Invalid syntax. "
-msgstr "reg: Netinkama sintaksė. "
-
-#: programs/reg/reg.rc:138
-msgid "reg: Invalid option [%1]. "
-msgstr "reg: Netinkamas parametras [%1]. "
-
-#: programs/reg/reg.rc:139
-msgid "Type \"REG /?\" for help.\n"
-msgstr "Pagalbai įrašykite „REG /?“.\n"
-
-#: programs/reg/reg.rc:140
-msgid "Type \"REG %1 /?\" for help.\n"
-msgstr "Pagalbai įrašykite „REG %1 /?“.\n"
-
-#: programs/reg/reg.rc:141 programs/regedit/regedit.rc:240
-msgid "(value not set)"
-msgstr "(reikšmė nenustatyta)"
-
-#: programs/reg/reg.rc:146
-msgid ""
-"REG IMPORT <file>\n"
-"\n"
-"  Imports keys, values and data from a given file into the registry.\n"
-"\n"
-"  <file>\n"
-"     The name and path of the registry file to import.\n"
-"\n"
-msgstr ""
-"REG IMPORT <failas>\n"
-"\n"
-"  Importuoja raktus, reikšmes ir duomenis iš nurodyto failo į registrą.\n"
-"\n"
-"  <failas>\n"
-"     Registro failo, kuris bus importuotas, pavadinimas ir kelias.\n"
-"\n"
-
-#: programs/reg/reg.rc:148
-msgid "reg: The file '%1' was not found.\n"
-msgstr "reg: Failas „%1“ nerastas.\n"
-
-#: programs/reg/reg.rc:149
-msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
-msgstr "reg: Neatpažinta kaitos seka [\\%1!c!]\n"
-
-#: programs/reg/reg.rc:168
-msgid ""
-"REG EXPORT <key> <file> [/y]\n"
-"\n"
-"  Exports a specified registry key (including all subkeys and values)\n"
-"  to a file.\n"
-"\n"
-"  <key>\n"
-"     The registry key to export.\n"
-"\n"
-"     Format: ROOT\\Subkey\n"
-"\n"
-"     ROOT: A predefined registry key. This must be one of the following:\n"
-"\n"
-"         HKEY_LOCAL_MACHINE  | HKLM\n"
-"         HKEY_CURRENT_USER   | HKCU\n"
-"         HKEY_CLASSES_ROOT   | HKCR\n"
-"         HKEY_USERS          | HKU\n"
-"         HKEY_CURRENT_CONFIG | HKCC\n"
-"\n"
-"     Subkey: The full path to a registry key under a given ROOT key.\n"
-"\n"
-"  <file>\n"
-"     The name and path of the registry file that will be created.\n"
-"     This file must have a .reg extension.\n"
-"\n"
-"  /y\n"
-"     Overwrite <file> without prompting for confirmation.\n"
-"\n"
-msgstr ""
-"REG EXPORT <raktas> <failas> [/y]\n"
-"\n"
-"  Eksportuoja nurodytą registro raktą (įskaitant visus porakčius ir "
-"reikšmes)\n"
-"  į failą\n"
-"\n"
-"  <raktas>\n"
-"     Registro raktas eksportui.\n"
-"\n"
-"     Formatas: ŠAKNIS\\Poraktis\n"
-"\n"
-"     ŠAKNIS: Numatytasis registro raktas. Privalo būti vienas iš:\n"
-"\n"
-"         HKEY_LOCAL_MACHINE  | HKLM\n"
-"         HKEY_CURRENT_USER   | HKCU\n"
-"         HKEY_CLASSES_ROOT   | HKCR\n"
-"         HKEY_USERS          | HKU\n"
-"         HKEY_CURRENT_CONFIG | HKCC\n"
-"\n"
-"     Poraktis: Pilnas kelias iki registro rakto po nurodytu ŠAKNIES raktu.\n"
-"\n"
-"  <failas>\n"
-"     Registro failo, kuris bus sukurtas, pavadinimas ir kelias.\n"
-"     Failas privalo turėti plėtinį .reg.\n"
-"\n"
-"  /y\n"
-"     Perrašyti <failas> be patvirtinimo klausimo.\n"
-"\n"
-
-#: programs/reg/reg.rc:170
-msgid "reg: Invalid system key\n"
-msgstr "reg: Netinkamas sisteminis raktas\n"
-
-#: programs/reg/reg.rc:171
-msgid "The file '%1' already exists. Do you want to overwrite it?"
-msgstr "Failas „%1“ jau egzistuoja. Ar norite jį perrašyti?"
-
-#: programs/reg/reg.rc:172
-msgid "reg: Unable to find the specified registry key\n"
-msgstr "reg: Nepavyko rasti nurodyto registro rakto\n"
-
-#: programs/reg/reg.rc:173
-msgid "reg: Unable to import the registry key '%1'\n"
-msgstr "reg: Nepavyko importuoti registro rakto „%1“.\n"
-
 #: programs/reg/reg.rc:178
 msgid ""
 "  /reg:32\n"
@@ -15155,75 +15141,89 @@ msgstr ""
 "     Prieiga prie registro naudojant 64-bitų rodinį.\n"
 "\n"
 
-#: programs/reg/reg.rc:179
-msgid "reg: Unable to access or create the specified registry key\n"
-msgstr "reg: Nepavyko prieiti prie ar sukurti nurodyto registro rakto\n"
+#: programs/reg/reg.rc:117
+msgid "reg: Invalid registry key\n"
+msgstr "reg: Netinkamas registro raktas\n"
 
-#: programs/reg/reg.rc:200
-msgid ""
-"REG COPY <key1> <key2> [/s] [/f]\n"
-"\n"
-"  Copies the contents of a specified registry key to another location.\n"
-"  By default, this operation only copies registry values. Use [/s] to\n"
-"  recursively copy all subkeys and values.\n"
-"\n"
-"  <key1>, <key2>\n"
-"     Registry keys specifying the source (<key1>) and destination (<key2>)\n"
-"     of the data. If <key2> does not exist, it is created.\n"
-"\n"
-"     Format: ROOT\\Subkey\n"
-"\n"
-"     ROOT: A predefined registry key. This must be one of the following:\n"
-"\n"
-"         HKEY_LOCAL_MACHINE  | HKLM\n"
-"         HKEY_CURRENT_USER   | HKCU\n"
-"         HKEY_CLASSES_ROOT   | HKCR\n"
-"         HKEY_USERS          | HKU\n"
-"         HKEY_CURRENT_CONFIG | HKCC\n"
-"\n"
-"     Subkey: The full path to a registry key under a given ROOT key.\n"
-"\n"
-"  /s\n"
-"     Copy all subkeys and values from <key1> to <key2>.\n"
-"\n"
-"  /f\n"
-"     Overwrite all registry data in <key2> without prompting for "
-"confirmation.\n"
-"     This option does not modify subkeys and values that only exist in "
-"<key2>.\n"
-"\n"
-msgstr ""
-"REG COPY <raktas1> <raktas2> [/s] [/f]\n"
-"\n"
-"  Kopijuoja nurodyto registro rakto turinį į kitą vietą\n"
-"  Standartiškai ši operacija kopijuoja tik registro reikšmes. Naudokite\n"
-"  [/s] rekursyviai nukopijuoti visus porakčius ir reikšmes.\n"
-"\n"
-"  <raktas1>,<raktas2>\n"
-"     Registro raktai nurodantys duomenų šaltinį (<raktas1>) ir\n"
-"     paskirtį (<raktas2>). Jei <raktas2> neegzistuoja, jis bus sukurtas.\n"
-"\n"
-"     Formatas: ŠAKNIS\\Poraktis\n"
-"\n"
-"     ŠAKNIS: Numatytasis registro raktas. Privalo būti vienas iš:\n"
-"\n"
-"         HKEY_LOCAL_MACHINE  | HKLM\n"
-"         HKEY_CURRENT_USER   | HKCU\n"
-"         HKEY_CLASSES_ROOT   | HKCR\n"
-"         HKEY_USERS          | HKU\n"
-"         HKEY_CURRENT_CONFIG | HKCC\n"
-"\n"
-"     Poraktis: Pilnas kelias iki registro rakto po nurodytu ŠAKNIES raktu.\n"
-"\n"
-"  /s\n"
-"     Kopijuoti visus porakčius ir reikšmes iš <raktas1> į <raktas2>.\n"
-"\n"
-"  /f\n"
-"     Perrašyti visus registro duomenis rakte <raktas2> be patvirtinimo "
-"klausimo.\n"
-"     Šis parametras nemodifikuoja porakčių ir reikšmių, kurie yra tik "
-"<raktas2>.\n"
-"\n"
+#: programs/reg/reg.rc:119
+msgid "reg: Unable to access remote machine\n"
+msgstr "reg: Nepavyko prieiti prie nuotolinio kompiuterio\n"
+
+#: programs/reg/reg.rc:170
+msgid "reg: Invalid system key\n"
+msgstr "reg: Netinkamas sisteminis raktas\n"
+
+#: programs/reg/reg.rc:138
+msgid "reg: Invalid option [%1]. "
+msgstr "reg: Netinkamas parametras [%1]. "
+
+#: programs/reg/reg.rc:122
+msgid "reg: The option [/d] must be followed by a valid numeric value\n"
+msgstr "reg: Už parametro [/d] privalo būti tinkama skaitinė reikšmė\n"
+
+#: programs/reg/reg.rc:123
+msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
+msgstr "reg: Už parametro [/d] privalo būti tinkama šešioliktainė reikšmė\n"
+
+#: programs/reg/reg.rc:134
+msgid "reg: The option [/d] must be followed by a valid string\n"
+msgstr "reg: Už parametro [/d] privalo būti tinkama eilutė\n"
+
+#: programs/reg/reg.rc:124
+msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
+msgstr "reg: Neapdorojamas registro duomenų tipas [/t 0x%1!x!, /d %2]\n"
+
+#: programs/reg/reg.rc:121
+msgid "reg: Unsupported registry data type [%1]\n"
+msgstr "reg: Nepalaikomas registro duomenų tipas [%1]\n"
+
+#: programs/reg/reg.rc:125
+msgid "The registry value '%1' already exists. Do you want to overwrite it?"
+msgstr "Registro reikšmė „%1“ jau egzistuoja. Ar norite ją perrašyti?"
+
+#: programs/reg/reg.rc:118
+msgid "reg: Invalid command line parameters\n"
+msgstr "reg: Netinkami komandos eilutės parametrai\n"
+
+#: programs/reg/reg.rc:131
+msgid "Are you sure you want to delete the registry value '%1'?"
+msgstr "Ar tikrai norite pašalinti registro reikšmę „%1“?"
+
+#: programs/reg/reg.rc:132
+msgid "Are you sure you want to delete all registry values in '%1'?"
+msgstr "Ar tikrai norite pašalinti visas registro „%1“ reikšmes?"
+
+#: programs/reg/reg.rc:133
+msgid "Are you sure you want to delete the registry key '%1'?"
+msgstr "Ar tikrai norite pašalinti registro raktą „%1“?"
+
+#: programs/reg/reg.rc:135
+msgid "reg: Unable to delete all registry values in '%1'\n"
+msgstr "reg: Nepavyko pašalinti visų „%1“ registro reikšmių\n"
+
+#: programs/reg/reg.rc:171
+msgid "The file '%1' already exists. Do you want to overwrite it?"
+msgstr "Failas „%1“ jau egzistuoja. Ar norite jį perrašyti?"
+
+#: programs/reg/reg.rc:149
+msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
+msgstr "reg: Neatpažinta kaitos seka [\\%1!c!]\n"
+
+#: programs/reg/reg.rc:173
+msgid "reg: Unable to import the registry key '%1'\n"
+msgstr "reg: Nepavyko importuoti registro rakto „%1“.\n"
+
+#: programs/reg/reg.rc:148
+msgid "reg: The file '%1' was not found.\n"
+msgstr "reg: Failas „%1“ nerastas.\n"
+
+#: programs/reg/reg.rc:141 programs/regedit/regedit.rc:240
+msgid "(value not set)"
+msgstr "(reikšmė nenustatyta)"
+
+#: programs/reg/reg.rc:136
+msgid "Search complete. Number of matches found: %1!d!\n"
+msgstr "Paieška baigta. Rasta atitikimų: %1!d!\n"
 
 #: programs/regedit/regedit.rc:34
 msgid "&Registry"
