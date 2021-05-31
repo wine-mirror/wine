@@ -15072,38 +15072,30 @@ msgid "reg: Unable to delete all registry values in '%1'\n"
 msgstr "regedit: Não foi possível remover todos os valores em '%1'\n"
 
 #: programs/reg/reg.rc:136
-msgid ""
-"reg: Unable to complete the specified operation. An unexpected error "
-"occurred.\n"
-msgstr ""
-"reg: Não foi possível completar a operação especificada. Um erro inesperado "
-"aconteceu.\n"
-
-#: programs/reg/reg.rc:137
 msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr "Busca terminada. Número de ocorrências encontradas: %1!d!\n"
 
-#: programs/reg/reg.rc:138
+#: programs/reg/reg.rc:137
 msgid "reg: Invalid syntax. "
 msgstr "reg: Sintaxe inválida. "
 
-#: programs/reg/reg.rc:139
+#: programs/reg/reg.rc:138
 msgid "reg: Invalid option [%1]. "
 msgstr "reg: Opção inválida [%1]. "
 
-#: programs/reg/reg.rc:140
+#: programs/reg/reg.rc:139
 msgid "Type \"REG /?\" for help.\n"
 msgstr "Digite \"REG /?\" para ajuda.\n"
 
-#: programs/reg/reg.rc:141
+#: programs/reg/reg.rc:140
 msgid "Type \"REG %1 /?\" for help.\n"
 msgstr "Digite \"REG %1 /?\" para ajuda.\n"
 
-#: programs/reg/reg.rc:142 programs/regedit/regedit.rc:240
+#: programs/reg/reg.rc:141 programs/regedit/regedit.rc:240
 msgid "(value not set)"
 msgstr "(valor não dado)"
 
-#: programs/reg/reg.rc:147
+#: programs/reg/reg.rc:146
 msgid ""
 "REG IMPORT <file>\n"
 "\n"
@@ -15121,19 +15113,15 @@ msgstr ""
 "     Caminho e nome do arquivo de registro para importar.\n"
 "\n"
 
-#: programs/reg/reg.rc:149
+#: programs/reg/reg.rc:148
 msgid "reg: The file '%1' was not found.\n"
 msgstr "reg: O arquivo '%1' não foi encontrado.\n"
 
-#: programs/reg/reg.rc:150
-msgid "reg: Unable to open the registry key '%1'.\n"
-msgstr "reg: Não foi possível abrir a chave de registro '%1'.\n"
-
-#: programs/reg/reg.rc:151
+#: programs/reg/reg.rc:149
 msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr "reg: Sequência de escape não reconhecida [\\%1!c!]\n"
 
-#: programs/reg/reg.rc:170
+#: programs/reg/reg.rc:168
 msgid ""
 "REG EXPORT <key> <file> [/y]\n"
 "\n"
@@ -15192,23 +15180,23 @@ msgstr ""
 "     Sobrescreve o <Arquivo> sem pedir confirmação.\n"
 "\n"
 
-#: programs/reg/reg.rc:172
+#: programs/reg/reg.rc:170
 msgid "reg: Invalid system key\n"
 msgstr "reg: Chave de sistema inválida\n"
 
-#: programs/reg/reg.rc:173
+#: programs/reg/reg.rc:171
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "O arquivo '%1' já existe. Deseja sobrescrevê-lo?"
 
-#: programs/reg/reg.rc:174
+#: programs/reg/reg.rc:172
 msgid "reg: Unable to find the specified registry key\n"
 msgstr "reg: Não foi possível encontrar a chave de registo especificada\n"
 
-#: programs/reg/reg.rc:175
+#: programs/reg/reg.rc:173
 msgid "reg: Unable to import the registry key '%1'\n"
 msgstr "reg: Não foi possível importar a chave de registro '%1'.\n"
 
-#: programs/reg/reg.rc:180
+#: programs/reg/reg.rc:178
 msgid ""
 "  /reg:32\n"
 "     Access the registry using the 32-bit view.\n"
@@ -15224,12 +15212,12 @@ msgstr ""
 "     Acessa o registro utilizando o modo 64-bits.\n"
 "\n"
 
-#: programs/reg/reg.rc:181
+#: programs/reg/reg.rc:179
 msgid "reg: Unable to access or create the specified registry key\n"
 msgstr ""
 "reg: Não foi possível acessar ou criar a chave de registo especificado\n"
 
-#: programs/reg/reg.rc:202
+#: programs/reg/reg.rc:200
 msgid ""
 "REG COPY <key1> <key2> [/s] [/f]\n"
 "\n"

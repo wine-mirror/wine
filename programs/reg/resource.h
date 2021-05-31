@@ -45,7 +45,6 @@
 #define STRING_DELETE_SUBKEY          122
 #define STRING_INVALID_STRING         123
 #define STRING_VALUEALL_FAILED        124
-#define STRING_GENERAL_FAILURE        125
 #define STRING_MATCHES_FOUND          126
 #define STRING_INVALID_SYNTAX         127
 #define STRING_INVALID_OPTION         128
@@ -54,7 +53,6 @@
 #define STRING_VALUE_NOT_SET          131
 #define STRING_IMPORT_USAGE           132
 #define STRING_FILE_NOT_FOUND         133
-#define STRING_OPEN_KEY_FAILED        134
 #define STRING_ESCAPE_SEQUENCE        135
 #define STRING_EXPORT_USAGE           136
 #define STRING_INVALID_SYSTEM_KEY     137
