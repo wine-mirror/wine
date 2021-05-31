@@ -5072,6 +5072,84 @@ static void test_emf_text_extents(void)
     ReleaseDC(0, dc);
 }
 
+static const unsigned char MF_SETLAYOUT_BITS[] =
+{
+/*  Winedump output. Note that there is no META_SELECTOBJECT records after META_SETLAYOUT.
+ *
+ *  METAHEADER           00000012
+ *  type 1 header_size 0x12 version 0x300 size 0x54 object_count 0 max_record_size 0xa parameter_count 0
+ *     0001 0009 0300 002a 0000 0000 0005 0000
+ *     0000
+ *  META_SETLAYOUT       0000000a
+ *     0000 0000
+ *  META_SETLAYOUT       0000000a
+ *     0001 0000
+ *  META_SETLAYOUT       0000000a
+ *     0008 0000
+ *  META_SETLAYOUT       0000000a
+ *     0000 8000
+ *  META_SETLAYOUT       0000000a
+ *     0009 0000
+ *  META_SETLAYOUT       0000000a
+ *     0001 8000
+ *  META_EOF             00000006
+ */
+    0x01, 0x00, 0x09, 0x00, 0x00, 0x03, 0x2a, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x49, 0x01,
+    0x00, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00,
+    0x49, 0x01, 0x01, 0x00, 0x00, 0x00, 0x05, 0x00,
+    0x00, 0x00, 0x49, 0x01, 0x08, 0x00, 0x00, 0x00,
+    0x05, 0x00, 0x00, 0x00, 0x49, 0x01, 0x00, 0x00,
+    0x00, 0x80, 0x05, 0x00, 0x00, 0x00, 0x49, 0x01,
+    0x09, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00,
+    0x49, 0x01, 0x01, 0x00, 0x00, 0x80, 0x03, 0x00,
+    0x00, 0x00, 0x00, 0x00
+};
+
+static void test_mf_SetLayout(void)
+{
+    static const DWORD tests[] =
+    {
+        LAYOUT_LTR,
+        LAYOUT_RTL,
+        LAYOUT_BITMAPORIENTATIONPRESERVED,
+        NOMIRRORBITMAP,
+        LAYOUT_RTL | LAYOUT_BITMAPORIENTATIONPRESERVED,
+        LAYOUT_RTL | NOMIRRORBITMAP,
+    };
+    DWORD layout;
+    HMETAFILE mf;
+    int ret, i;
+    HDC mf_dc;
+
+    mf_dc = CreateMetaFileW(NULL);
+    ok(!!mf_dc, "CreateMetaFileW failed, error %d\n", GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context("Test %d", i);
+        layout = SetLayout(mf_dc, tests[i]);
+        ok(layout == LAYOUT_RTL, "Expected %#x, got %#x\n", tests[i], layout);
+        layout = GetLayout(mf_dc);
+        todo_wine ok(layout == GDI_ERROR, "Expected %#x, got %#x\n", GDI_ERROR, layout);
+        winetest_pop_context();
+    }
+
+    mf = CloseMetaFile(mf_dc);
+    ok(!!mf, "CloseMetaFile failed, error %d\n", GetLastError());
+
+    ret = compare_mf_bits(mf, MF_SETLAYOUT_BITS, sizeof(MF_SETLAYOUT_BITS), "mf_SetLayout");
+    ok(!ret, "Bits mismatch\n");
+    if (ret)
+    {
+        dump_mf_bits(mf, "mf_SetLayout");
+        EnumMetaFile(0, mf, mf_enum_proc, 0);
+    }
+
+    DeleteMetaFile(mf);
+}
+
 START_TEST(metafile)
 {
     init_function_pointers();
@@ -5103,6 +5181,7 @@ START_TEST(metafile)
     test_mf_ExtTextOut_on_path();
     test_mf_clipping();
     test_mf_GetPath();
+    test_mf_SetLayout();
 
     /* For metafile conversions */
     test_mf_conversions();

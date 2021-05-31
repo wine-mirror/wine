@@ -85,6 +85,11 @@ INT CDECL MFDRV_OffsetClipRgn( PHYSDEV dev, INT x, INT y )
     return MFDRV_MetaParam2( dev, META_OFFSETCLIPRGN, x, y );
 }
 
+DWORD CDECL MFDRV_SetLayout( PHYSDEV dev, DWORD layout )
+{
+    return MFDRV_MetaParam2( dev, META_SETLAYOUT, HIWORD(layout), LOWORD(layout) );
+}
+
 INT CDECL MFDRV_SetMapMode( PHYSDEV dev, INT mode )
 {
     return MFDRV_MetaParam1( dev, META_SETMAPMODE, mode );
