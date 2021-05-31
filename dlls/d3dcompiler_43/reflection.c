@@ -140,7 +140,7 @@ struct d3dcompiler_shader_reflection
     UINT dynamic_flow_control_count;
     UINT c_control_points;
     D3D_TESSELLATOR_OUTPUT_PRIMITIVE hs_output_primitive;
-    D3D_TESSELLATOR_PARTITIONING hs_prtitioning;
+    D3D_TESSELLATOR_PARTITIONING hs_partitioning;
     D3D_TESSELLATOR_DOMAIN tessellator_domain;
 
     struct d3dcompiler_shader_signature *isgn;
@@ -428,7 +428,7 @@ static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetDesc(ID3D11Sha
     desc->cGSInstanceCount = 0;
     desc->cControlPoints = This->c_control_points;
     desc->HSOutputPrimitive = This->hs_output_primitive;
-    desc->HSPartitioning = This->hs_prtitioning;
+    desc->HSPartitioning = This->hs_partitioning;
     desc->TessellatorDomain = This->tessellator_domain;
     desc->cBarrierInstructions = 0;
     desc->cInterlockedInstructions = 0;
@@ -1184,8 +1184,8 @@ static HRESULT d3dcompiler_parse_stat(struct d3dcompiler_shader_reflection *r, c
     r->hs_output_primitive = read_dword(&ptr);
     TRACE("HSOutputPrimitive: %x\n", r->hs_output_primitive);
 
-    r->hs_prtitioning = read_dword(&ptr);
-    TRACE("HSPartitioning: %x\n", r->hs_prtitioning);
+    r->hs_partitioning = read_dword(&ptr);
+    TRACE("HSPartitioning: %x\n", r->hs_partitioning);
 
     r->tessellator_domain = read_dword(&ptr);
     TRACE("TessellatorDomain: %x\n", r->tessellator_domain);
