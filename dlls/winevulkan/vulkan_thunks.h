@@ -73,6 +73,7 @@ VkResult thunk_vkSetDebugUtilsObjectNameEXT(VkDevice device, const VkDebugUtilsO
 VkResult thunk_vkSetDebugUtilsObjectTagEXT(VkDevice device, const VkDebugUtilsObjectTagInfoEXT *pTagInfo) DECLSPEC_HIDDEN;
 void thunk_vkSubmitDebugUtilsMessageEXT(VkInstance instance, VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData) DECLSPEC_HIDDEN;
 
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkAcquireNextImageInfoKHR_host
 {
     VkStructureType sType;
@@ -83,8 +84,11 @@ typedef struct VkAcquireNextImageInfoKHR_host
     VkFence fence;
     uint32_t deviceMask;
 } VkAcquireNextImageInfoKHR_host;
+#else
+typedef VkAcquireNextImageInfoKHR VkAcquireNextImageInfoKHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkAcquireProfilingLockInfoKHR_host
 {
     VkStructureType sType;
@@ -92,8 +96,11 @@ typedef struct VkAcquireProfilingLockInfoKHR_host
     VkAcquireProfilingLockFlagsKHR flags;
     uint64_t timeout;
 } VkAcquireProfilingLockInfoKHR_host;
+#else
+typedef VkAcquireProfilingLockInfoKHR VkAcquireProfilingLockInfoKHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkCommandBufferAllocateInfo_host
 {
     VkStructureType sType;
@@ -102,8 +109,11 @@ typedef struct VkCommandBufferAllocateInfo_host
     VkCommandBufferLevel level;
     uint32_t commandBufferCount;
 } VkCommandBufferAllocateInfo_host;
+#else
+typedef VkCommandBufferAllocateInfo VkCommandBufferAllocateInfo_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkDescriptorSetAllocateInfo_host
 {
     VkStructureType sType;
@@ -112,8 +122,11 @@ typedef struct VkDescriptorSetAllocateInfo_host
     uint32_t descriptorSetCount;
     const VkDescriptorSetLayout *pSetLayouts;
 } VkDescriptorSetAllocateInfo_host;
+#else
+typedef VkDescriptorSetAllocateInfo VkDescriptorSetAllocateInfo_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkMemoryAllocateInfo_host
 {
     VkStructureType sType;
@@ -121,8 +134,11 @@ typedef struct VkMemoryAllocateInfo_host
     VkDeviceSize allocationSize;
     uint32_t memoryTypeIndex;
 } VkMemoryAllocateInfo_host;
+#else
+typedef VkMemoryAllocateInfo VkMemoryAllocateInfo_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkCommandBufferInheritanceInfo_host
 {
     VkStructureType sType;
@@ -134,8 +150,11 @@ typedef struct VkCommandBufferInheritanceInfo_host
     VkQueryControlFlags queryFlags;
     VkQueryPipelineStatisticFlags pipelineStatistics;
 } VkCommandBufferInheritanceInfo_host;
+#else
+typedef VkCommandBufferInheritanceInfo VkCommandBufferInheritanceInfo_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkCommandBufferBeginInfo_host
 {
     VkStructureType sType;
@@ -143,8 +162,11 @@ typedef struct VkCommandBufferBeginInfo_host
     VkCommandBufferUsageFlags flags;
     const VkCommandBufferInheritanceInfo_host *pInheritanceInfo;
 } VkCommandBufferBeginInfo_host;
+#else
+typedef VkCommandBufferBeginInfo VkCommandBufferBeginInfo_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkBindAccelerationStructureMemoryInfoNV_host
 {
     VkStructureType sType;
@@ -155,8 +177,11 @@ typedef struct VkBindAccelerationStructureMemoryInfoNV_host
     uint32_t deviceIndexCount;
     const uint32_t *pDeviceIndices;
 } VkBindAccelerationStructureMemoryInfoNV_host;
+#else
+typedef VkBindAccelerationStructureMemoryInfoNV VkBindAccelerationStructureMemoryInfoNV_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkBindBufferMemoryInfo_host
 {
     VkStructureType sType;
@@ -165,9 +190,12 @@ typedef struct VkBindBufferMemoryInfo_host
     VkDeviceMemory memory;
     VkDeviceSize memoryOffset;
 } VkBindBufferMemoryInfo_host;
-
 typedef VkBindBufferMemoryInfo VkBindBufferMemoryInfoKHR;
+#else
+typedef VkBindBufferMemoryInfo VkBindBufferMemoryInfo_host;
+#endif
 
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkBindImageMemoryInfo_host
 {
     VkStructureType sType;
@@ -176,9 +204,12 @@ typedef struct VkBindImageMemoryInfo_host
     VkDeviceMemory memory;
     VkDeviceSize memoryOffset;
 } VkBindImageMemoryInfo_host;
-
 typedef VkBindImageMemoryInfo VkBindImageMemoryInfoKHR;
+#else
+typedef VkBindImageMemoryInfo VkBindImageMemoryInfo_host;
+#endif
 
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkAccelerationStructureBuildGeometryInfoKHR_host
 {
     VkStructureType sType;
@@ -193,8 +224,11 @@ typedef struct VkAccelerationStructureBuildGeometryInfoKHR_host
     const VkAccelerationStructureGeometryKHR * const*ppGeometries;
     VkDeviceOrHostAddressKHR scratchData;
 } VkAccelerationStructureBuildGeometryInfoKHR_host;
+#else
+typedef VkAccelerationStructureBuildGeometryInfoKHR VkAccelerationStructureBuildGeometryInfoKHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkConditionalRenderingBeginInfoEXT_host
 {
     VkStructureType sType;
@@ -203,8 +237,11 @@ typedef struct VkConditionalRenderingBeginInfoEXT_host
     VkDeviceSize offset;
     VkConditionalRenderingFlagsEXT flags;
 } VkConditionalRenderingBeginInfoEXT_host;
+#else
+typedef VkConditionalRenderingBeginInfoEXT VkConditionalRenderingBeginInfoEXT_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkRenderPassBeginInfo_host
 {
     VkStructureType sType;
@@ -215,8 +252,11 @@ typedef struct VkRenderPassBeginInfo_host
     uint32_t clearValueCount;
     const VkClearValue *pClearValues;
 } VkRenderPassBeginInfo_host;
+#else
+typedef VkRenderPassBeginInfo VkRenderPassBeginInfo_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkBlitImageInfo2KHR_host
 {
     VkStructureType sType;
@@ -229,8 +269,11 @@ typedef struct VkBlitImageInfo2KHR_host
     const VkImageBlit2KHR *pRegions;
     VkFilter filter;
 } VkBlitImageInfo2KHR_host;
+#else
+typedef VkBlitImageInfo2KHR VkBlitImageInfo2KHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkGeometryTrianglesNV_host
 {
     VkStructureType sType;
@@ -247,8 +290,11 @@ typedef struct VkGeometryTrianglesNV_host
     VkBuffer transformData;
     VkDeviceSize transformOffset;
 } VkGeometryTrianglesNV_host;
+#else
+typedef VkGeometryTrianglesNV VkGeometryTrianglesNV_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkGeometryAABBNV_host
 {
     VkStructureType sType;
@@ -258,15 +304,21 @@ typedef struct VkGeometryAABBNV_host
     uint32_t stride;
     VkDeviceSize offset;
 } VkGeometryAABBNV_host;
+#else
+typedef VkGeometryAABBNV VkGeometryAABBNV_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkGeometryDataNV_host
 {
     VkGeometryTrianglesNV_host triangles;
     VkGeometryAABBNV_host aabbs;
 } VkGeometryDataNV_host;
+#else
+typedef VkGeometryDataNV VkGeometryDataNV_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkGeometryNV_host
 {
     VkStructureType sType;
@@ -275,8 +327,11 @@ typedef struct VkGeometryNV_host
     VkGeometryDataNV_host geometry;
     VkGeometryFlagsKHR flags;
 } VkGeometryNV_host;
+#else
+typedef VkGeometryNV VkGeometryNV_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkAccelerationStructureInfoNV_host
 {
     VkStructureType sType;
@@ -287,8 +342,11 @@ typedef struct VkAccelerationStructureInfoNV_host
     uint32_t geometryCount;
     const VkGeometryNV_host *pGeometries;
 } VkAccelerationStructureInfoNV_host;
+#else
+typedef VkAccelerationStructureInfoNV VkAccelerationStructureInfoNV_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkCopyAccelerationStructureInfoKHR_host
 {
     VkStructureType sType;
@@ -297,8 +355,11 @@ typedef struct VkCopyAccelerationStructureInfoKHR_host
     VkAccelerationStructureKHR dst;
     VkCopyAccelerationStructureModeKHR mode;
 } VkCopyAccelerationStructureInfoKHR_host;
+#else
+typedef VkCopyAccelerationStructureInfoKHR VkCopyAccelerationStructureInfoKHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkCopyAccelerationStructureToMemoryInfoKHR_host
 {
     VkStructureType sType;
@@ -307,16 +368,22 @@ typedef struct VkCopyAccelerationStructureToMemoryInfoKHR_host
     VkDeviceOrHostAddressKHR dst;
     VkCopyAccelerationStructureModeKHR mode;
 } VkCopyAccelerationStructureToMemoryInfoKHR_host;
+#else
+typedef VkCopyAccelerationStructureToMemoryInfoKHR VkCopyAccelerationStructureToMemoryInfoKHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkBufferCopy_host
 {
     VkDeviceSize srcOffset;
     VkDeviceSize dstOffset;
     VkDeviceSize size;
 } VkBufferCopy_host;
+#else
+typedef VkBufferCopy VkBufferCopy_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkBufferCopy2KHR_host
 {
     VkStructureType sType;
@@ -325,8 +392,11 @@ typedef struct VkBufferCopy2KHR_host
     VkDeviceSize dstOffset;
     VkDeviceSize size;
 } VkBufferCopy2KHR_host;
+#else
+typedef VkBufferCopy2KHR VkBufferCopy2KHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkCopyBufferInfo2KHR_host
 {
     VkStructureType sType;
@@ -336,8 +406,11 @@ typedef struct VkCopyBufferInfo2KHR_host
     uint32_t regionCount;
     const VkBufferCopy2KHR_host *pRegions;
 } VkCopyBufferInfo2KHR_host;
+#else
+typedef VkCopyBufferInfo2KHR VkCopyBufferInfo2KHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkBufferImageCopy_host
 {
     VkDeviceSize bufferOffset;
@@ -347,8 +420,11 @@ typedef struct VkBufferImageCopy_host
     VkOffset3D imageOffset;
     VkExtent3D imageExtent;
 } VkBufferImageCopy_host;
+#else
+typedef VkBufferImageCopy VkBufferImageCopy_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkBufferImageCopy2KHR_host
 {
     VkStructureType sType;
@@ -360,8 +436,11 @@ typedef struct VkBufferImageCopy2KHR_host
     VkOffset3D imageOffset;
     VkExtent3D imageExtent;
 } VkBufferImageCopy2KHR_host;
+#else
+typedef VkBufferImageCopy2KHR VkBufferImageCopy2KHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkCopyBufferToImageInfo2KHR_host
 {
     VkStructureType sType;
@@ -372,8 +451,11 @@ typedef struct VkCopyBufferToImageInfo2KHR_host
     uint32_t regionCount;
     const VkBufferImageCopy2KHR_host *pRegions;
 } VkCopyBufferToImageInfo2KHR_host;
+#else
+typedef VkCopyBufferToImageInfo2KHR VkCopyBufferToImageInfo2KHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkCopyImageInfo2KHR_host
 {
     VkStructureType sType;
@@ -385,8 +467,11 @@ typedef struct VkCopyImageInfo2KHR_host
     uint32_t regionCount;
     const VkImageCopy2KHR *pRegions;
 } VkCopyImageInfo2KHR_host;
+#else
+typedef VkCopyImageInfo2KHR VkCopyImageInfo2KHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkCopyImageToBufferInfo2KHR_host
 {
     VkStructureType sType;
@@ -397,8 +482,11 @@ typedef struct VkCopyImageToBufferInfo2KHR_host
     uint32_t regionCount;
     const VkBufferImageCopy2KHR_host *pRegions;
 } VkCopyImageToBufferInfo2KHR_host;
+#else
+typedef VkCopyImageToBufferInfo2KHR VkCopyImageToBufferInfo2KHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkCopyMemoryToAccelerationStructureInfoKHR_host
 {
     VkStructureType sType;
@@ -407,8 +495,11 @@ typedef struct VkCopyMemoryToAccelerationStructureInfoKHR_host
     VkAccelerationStructureKHR dst;
     VkCopyAccelerationStructureModeKHR mode;
 } VkCopyMemoryToAccelerationStructureInfoKHR_host;
+#else
+typedef VkCopyMemoryToAccelerationStructureInfoKHR VkCopyMemoryToAccelerationStructureInfoKHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkCuLaunchInfoNVX_host
 {
     VkStructureType sType;
@@ -426,15 +517,21 @@ typedef struct VkCuLaunchInfoNVX_host
     size_t extraCount;
     const void * const *pExtras;
 } VkCuLaunchInfoNVX_host;
+#else
+typedef VkCuLaunchInfoNVX VkCuLaunchInfoNVX_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkIndirectCommandsStreamNV_host
 {
     VkBuffer buffer;
     VkDeviceSize offset;
 } VkIndirectCommandsStreamNV_host;
+#else
+typedef VkIndirectCommandsStreamNV VkIndirectCommandsStreamNV_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkGeneratedCommandsInfoNV_host
 {
     VkStructureType sType;
@@ -453,8 +550,11 @@ typedef struct VkGeneratedCommandsInfoNV_host
     VkBuffer sequencesIndexBuffer;
     VkDeviceSize sequencesIndexOffset;
 } VkGeneratedCommandsInfoNV_host;
+#else
+typedef VkGeneratedCommandsInfoNV VkGeneratedCommandsInfoNV_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkBufferMemoryBarrier_host
 {
     VkStructureType sType;
@@ -467,8 +567,11 @@ typedef struct VkBufferMemoryBarrier_host
     VkDeviceSize offset;
     VkDeviceSize size;
 } VkBufferMemoryBarrier_host;
+#else
+typedef VkBufferMemoryBarrier VkBufferMemoryBarrier_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkImageMemoryBarrier_host
 {
     VkStructureType sType;
@@ -482,8 +585,11 @@ typedef struct VkImageMemoryBarrier_host
     VkImage image;
     VkImageSubresourceRange subresourceRange;
 } VkImageMemoryBarrier_host;
+#else
+typedef VkImageMemoryBarrier VkImageMemoryBarrier_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkBufferMemoryBarrier2KHR_host
 {
     VkStructureType sType;
@@ -498,8 +604,11 @@ typedef struct VkBufferMemoryBarrier2KHR_host
     VkDeviceSize offset;
     VkDeviceSize size;
 } VkBufferMemoryBarrier2KHR_host;
+#else
+typedef VkBufferMemoryBarrier2KHR VkBufferMemoryBarrier2KHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkImageMemoryBarrier2KHR_host
 {
     VkStructureType sType;
@@ -515,8 +624,11 @@ typedef struct VkImageMemoryBarrier2KHR_host
     VkImage image;
     VkImageSubresourceRange subresourceRange;
 } VkImageMemoryBarrier2KHR_host;
+#else
+typedef VkImageMemoryBarrier2KHR VkImageMemoryBarrier2KHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkDependencyInfoKHR_host
 {
     VkStructureType sType;
@@ -529,24 +641,33 @@ typedef struct VkDependencyInfoKHR_host
     uint32_t imageMemoryBarrierCount;
     const VkImageMemoryBarrier2KHR_host *pImageMemoryBarriers;
 } VkDependencyInfoKHR_host;
+#else
+typedef VkDependencyInfoKHR VkDependencyInfoKHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkDescriptorImageInfo_host
 {
     VkSampler sampler;
     VkImageView imageView;
     VkImageLayout imageLayout;
 } VkDescriptorImageInfo_host;
+#else
+typedef VkDescriptorImageInfo VkDescriptorImageInfo_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkDescriptorBufferInfo_host
 {
     VkBuffer buffer;
     VkDeviceSize offset;
     VkDeviceSize range;
 } VkDescriptorBufferInfo_host;
+#else
+typedef VkDescriptorBufferInfo VkDescriptorBufferInfo_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkWriteDescriptorSet_host
 {
     VkStructureType sType;
@@ -560,8 +681,11 @@ typedef struct VkWriteDescriptorSet_host
     const VkDescriptorBufferInfo_host *pBufferInfo;
     const VkBufferView *pTexelBufferView;
 } VkWriteDescriptorSet_host;
+#else
+typedef VkWriteDescriptorSet VkWriteDescriptorSet_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkResolveImageInfo2KHR_host
 {
     VkStructureType sType;
@@ -573,16 +697,22 @@ typedef struct VkResolveImageInfo2KHR_host
     uint32_t regionCount;
     const VkImageResolve2KHR *pRegions;
 } VkResolveImageInfo2KHR_host;
+#else
+typedef VkResolveImageInfo2KHR VkResolveImageInfo2KHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkPerformanceMarkerInfoINTEL_host
 {
     VkStructureType sType;
     const void *pNext;
     uint64_t marker;
 } VkPerformanceMarkerInfoINTEL_host;
+#else
+typedef VkPerformanceMarkerInfoINTEL VkPerformanceMarkerInfoINTEL_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkPerformanceOverrideInfoINTEL_host
 {
     VkStructureType sType;
@@ -591,16 +721,22 @@ typedef struct VkPerformanceOverrideInfoINTEL_host
     VkBool32 enable;
     uint64_t parameter;
 } VkPerformanceOverrideInfoINTEL_host;
+#else
+typedef VkPerformanceOverrideInfoINTEL VkPerformanceOverrideInfoINTEL_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkStridedDeviceAddressRegionKHR_host
 {
     VkDeviceAddress deviceAddress;
     VkDeviceSize stride;
     VkDeviceSize size;
 } VkStridedDeviceAddressRegionKHR_host;
+#else
+typedef VkStridedDeviceAddressRegionKHR VkStridedDeviceAddressRegionKHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkAccelerationStructureCreateInfoKHR_host
 {
     VkStructureType sType;
@@ -612,8 +748,11 @@ typedef struct VkAccelerationStructureCreateInfoKHR_host
     VkAccelerationStructureTypeKHR type;
     VkDeviceAddress deviceAddress;
 } VkAccelerationStructureCreateInfoKHR_host;
+#else
+typedef VkAccelerationStructureCreateInfoKHR VkAccelerationStructureCreateInfoKHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkAccelerationStructureCreateInfoNV_host
 {
     VkStructureType sType;
@@ -621,8 +760,11 @@ typedef struct VkAccelerationStructureCreateInfoNV_host
     VkDeviceSize compactedSize;
     VkAccelerationStructureInfoNV_host info;
 } VkAccelerationStructureCreateInfoNV_host;
+#else
+typedef VkAccelerationStructureCreateInfoNV VkAccelerationStructureCreateInfoNV_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkBufferCreateInfo_host
 {
     VkStructureType sType;
@@ -634,8 +776,11 @@ typedef struct VkBufferCreateInfo_host
     uint32_t queueFamilyIndexCount;
     const uint32_t *pQueueFamilyIndices;
 } VkBufferCreateInfo_host;
+#else
+typedef VkBufferCreateInfo VkBufferCreateInfo_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkBufferViewCreateInfo_host
 {
     VkStructureType sType;
@@ -646,8 +791,11 @@ typedef struct VkBufferViewCreateInfo_host
     VkDeviceSize offset;
     VkDeviceSize range;
 } VkBufferViewCreateInfo_host;
+#else
+typedef VkBufferViewCreateInfo VkBufferViewCreateInfo_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkPipelineShaderStageCreateInfo_host
 {
     VkStructureType sType;
@@ -658,8 +806,11 @@ typedef struct VkPipelineShaderStageCreateInfo_host
     const char *pName;
     const VkSpecializationInfo *pSpecializationInfo;
 } VkPipelineShaderStageCreateInfo_host;
+#else
+typedef VkPipelineShaderStageCreateInfo VkPipelineShaderStageCreateInfo_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkComputePipelineCreateInfo_host
 {
     VkStructureType sType;
@@ -670,8 +821,11 @@ typedef struct VkComputePipelineCreateInfo_host
     VkPipeline basePipelineHandle;
     int32_t basePipelineIndex;
 } VkComputePipelineCreateInfo_host;
+#else
+typedef VkComputePipelineCreateInfo VkComputePipelineCreateInfo_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkCuFunctionCreateInfoNVX_host
 {
     VkStructureType sType;
@@ -679,8 +833,11 @@ typedef struct VkCuFunctionCreateInfoNVX_host
     VkCuModuleNVX module;
     const char *pName;
 } VkCuFunctionCreateInfoNVX_host;
+#else
+typedef VkCuFunctionCreateInfoNVX VkCuFunctionCreateInfoNVX_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkDescriptorUpdateTemplateCreateInfo_host
 {
     VkStructureType sType;
@@ -694,9 +851,12 @@ typedef struct VkDescriptorUpdateTemplateCreateInfo_host
     VkPipelineLayout pipelineLayout;
     uint32_t set;
 } VkDescriptorUpdateTemplateCreateInfo_host;
-
 typedef VkDescriptorUpdateTemplateCreateInfo VkDescriptorUpdateTemplateCreateInfoKHR;
+#else
+typedef VkDescriptorUpdateTemplateCreateInfo VkDescriptorUpdateTemplateCreateInfo_host;
+#endif
 
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkFramebufferCreateInfo_host
 {
     VkStructureType sType;
@@ -709,8 +869,11 @@ typedef struct VkFramebufferCreateInfo_host
     uint32_t height;
     uint32_t layers;
 } VkFramebufferCreateInfo_host;
+#else
+typedef VkFramebufferCreateInfo VkFramebufferCreateInfo_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkGraphicsPipelineCreateInfo_host
 {
     VkStructureType sType;
@@ -733,8 +896,11 @@ typedef struct VkGraphicsPipelineCreateInfo_host
     VkPipeline basePipelineHandle;
     int32_t basePipelineIndex;
 } VkGraphicsPipelineCreateInfo_host;
+#else
+typedef VkGraphicsPipelineCreateInfo VkGraphicsPipelineCreateInfo_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkImageViewCreateInfo_host
 {
     VkStructureType sType;
@@ -746,8 +912,11 @@ typedef struct VkImageViewCreateInfo_host
     VkComponentMapping components;
     VkImageSubresourceRange subresourceRange;
 } VkImageViewCreateInfo_host;
+#else
+typedef VkImageViewCreateInfo VkImageViewCreateInfo_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkIndirectCommandsLayoutTokenNV_host
 {
     VkStructureType sType;
@@ -766,8 +935,11 @@ typedef struct VkIndirectCommandsLayoutTokenNV_host
     const VkIndexType *pIndexTypes;
     const uint32_t *pIndexTypeValues;
 } VkIndirectCommandsLayoutTokenNV_host;
+#else
+typedef VkIndirectCommandsLayoutTokenNV VkIndirectCommandsLayoutTokenNV_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkIndirectCommandsLayoutCreateInfoNV_host
 {
     VkStructureType sType;
@@ -779,8 +951,11 @@ typedef struct VkIndirectCommandsLayoutCreateInfoNV_host
     uint32_t streamCount;
     const uint32_t *pStreamStrides;
 } VkIndirectCommandsLayoutCreateInfoNV_host;
+#else
+typedef VkIndirectCommandsLayoutCreateInfoNV VkIndirectCommandsLayoutCreateInfoNV_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkRayTracingPipelineCreateInfoKHR_host
 {
     VkStructureType sType;
@@ -798,8 +973,11 @@ typedef struct VkRayTracingPipelineCreateInfoKHR_host
     VkPipeline basePipelineHandle;
     int32_t basePipelineIndex;
 } VkRayTracingPipelineCreateInfoKHR_host;
+#else
+typedef VkRayTracingPipelineCreateInfoKHR VkRayTracingPipelineCreateInfoKHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkRayTracingPipelineCreateInfoNV_host
 {
     VkStructureType sType;
@@ -814,8 +992,11 @@ typedef struct VkRayTracingPipelineCreateInfoNV_host
     VkPipeline basePipelineHandle;
     int32_t basePipelineIndex;
 } VkRayTracingPipelineCreateInfoNV_host;
+#else
+typedef VkRayTracingPipelineCreateInfoNV VkRayTracingPipelineCreateInfoNV_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkSwapchainCreateInfoKHR_host
 {
     VkStructureType sType;
@@ -837,8 +1018,11 @@ typedef struct VkSwapchainCreateInfoKHR_host
     VkBool32 clipped;
     VkSwapchainKHR oldSwapchain;
 } VkSwapchainCreateInfoKHR_host;
+#else
+typedef VkSwapchainCreateInfoKHR VkSwapchainCreateInfoKHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkDebugMarkerObjectNameInfoEXT_host
 {
     VkStructureType sType;
@@ -847,8 +1031,11 @@ typedef struct VkDebugMarkerObjectNameInfoEXT_host
     uint64_t object;
     const char *pObjectName;
 } VkDebugMarkerObjectNameInfoEXT_host;
+#else
+typedef VkDebugMarkerObjectNameInfoEXT VkDebugMarkerObjectNameInfoEXT_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkDebugMarkerObjectTagInfoEXT_host
 {
     VkStructureType sType;
@@ -859,8 +1046,11 @@ typedef struct VkDebugMarkerObjectTagInfoEXT_host
     size_t tagSize;
     const void *pTag;
 } VkDebugMarkerObjectTagInfoEXT_host;
+#else
+typedef VkDebugMarkerObjectTagInfoEXT VkDebugMarkerObjectTagInfoEXT_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkPhysicalDeviceGroupProperties_host
 {
     VkStructureType sType;
@@ -869,9 +1059,12 @@ typedef struct VkPhysicalDeviceGroupProperties_host
     VkPhysicalDevice physicalDevices[VK_MAX_DEVICE_GROUP_SIZE];
     VkBool32 subsetAllocation;
 } VkPhysicalDeviceGroupProperties_host;
-
 typedef VkPhysicalDeviceGroupProperties VkPhysicalDeviceGroupPropertiesKHR;
+#else
+typedef VkPhysicalDeviceGroupProperties VkPhysicalDeviceGroupProperties_host;
+#endif
 
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkMappedMemoryRange_host
 {
     VkStructureType sType;
@@ -880,8 +1073,11 @@ typedef struct VkMappedMemoryRange_host
     VkDeviceSize offset;
     VkDeviceSize size;
 } VkMappedMemoryRange_host;
+#else
+typedef VkMappedMemoryRange VkMappedMemoryRange_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkAccelerationStructureBuildSizesInfoKHR_host
 {
     VkStructureType sType;
@@ -890,16 +1086,22 @@ typedef struct VkAccelerationStructureBuildSizesInfoKHR_host
     VkDeviceSize updateScratchSize;
     VkDeviceSize buildScratchSize;
 } VkAccelerationStructureBuildSizesInfoKHR_host;
+#else
+typedef VkAccelerationStructureBuildSizesInfoKHR VkAccelerationStructureBuildSizesInfoKHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkAccelerationStructureDeviceAddressInfoKHR_host
 {
     VkStructureType sType;
     const void *pNext;
     VkAccelerationStructureKHR accelerationStructure;
 } VkAccelerationStructureDeviceAddressInfoKHR_host;
+#else
+typedef VkAccelerationStructureDeviceAddressInfoKHR VkAccelerationStructureDeviceAddressInfoKHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkAccelerationStructureMemoryRequirementsInfoNV_host
 {
     VkStructureType sType;
@@ -907,61 +1109,82 @@ typedef struct VkAccelerationStructureMemoryRequirementsInfoNV_host
     VkAccelerationStructureMemoryRequirementsTypeNV type;
     VkAccelerationStructureNV accelerationStructure;
 } VkAccelerationStructureMemoryRequirementsInfoNV_host;
+#else
+typedef VkAccelerationStructureMemoryRequirementsInfoNV VkAccelerationStructureMemoryRequirementsInfoNV_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkMemoryRequirements_host
 {
     VkDeviceSize size;
     VkDeviceSize alignment;
     uint32_t memoryTypeBits;
 } VkMemoryRequirements_host;
+#else
+typedef VkMemoryRequirements VkMemoryRequirements_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkMemoryRequirements2KHR_host
 {
     VkStructureType sType;
     void *pNext;
     VkMemoryRequirements_host memoryRequirements;
 } VkMemoryRequirements2KHR_host;
+#else
+typedef VkMemoryRequirements2KHR VkMemoryRequirements2KHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkBufferDeviceAddressInfo_host
 {
     VkStructureType sType;
     const void *pNext;
     VkBuffer buffer;
 } VkBufferDeviceAddressInfo_host;
-
 typedef VkBufferDeviceAddressInfo VkBufferDeviceAddressInfoKHR;
 typedef VkBufferDeviceAddressInfo VkBufferDeviceAddressInfoEXT;
+#else
+typedef VkBufferDeviceAddressInfo VkBufferDeviceAddressInfo_host;
+#endif
 
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkBufferMemoryRequirementsInfo2_host
 {
     VkStructureType sType;
     const void *pNext;
     VkBuffer buffer;
 } VkBufferMemoryRequirementsInfo2_host;
-
 typedef VkBufferMemoryRequirementsInfo2 VkBufferMemoryRequirementsInfo2KHR;
+#else
+typedef VkBufferMemoryRequirementsInfo2 VkBufferMemoryRequirementsInfo2_host;
+#endif
 
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkMemoryRequirements2_host
 {
     VkStructureType sType;
     void *pNext;
     VkMemoryRequirements_host memoryRequirements;
 } VkMemoryRequirements2_host;
-
 typedef VkMemoryRequirements2 VkMemoryRequirements2KHR;
+#else
+typedef VkMemoryRequirements2 VkMemoryRequirements2_host;
+#endif
 
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkDeviceMemoryOpaqueCaptureAddressInfo_host
 {
     VkStructureType sType;
     const void *pNext;
     VkDeviceMemory memory;
 } VkDeviceMemoryOpaqueCaptureAddressInfo_host;
-
 typedef VkDeviceMemoryOpaqueCaptureAddressInfo VkDeviceMemoryOpaqueCaptureAddressInfoKHR;
+#else
+typedef VkDeviceMemoryOpaqueCaptureAddressInfo VkDeviceMemoryOpaqueCaptureAddressInfo_host;
+#endif
 
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkGeneratedCommandsMemoryRequirementsInfoNV_host
 {
     VkStructureType sType;
@@ -971,26 +1194,35 @@ typedef struct VkGeneratedCommandsMemoryRequirementsInfoNV_host
     VkIndirectCommandsLayoutNV indirectCommandsLayout;
     uint32_t maxSequencesCount;
 } VkGeneratedCommandsMemoryRequirementsInfoNV_host;
+#else
+typedef VkGeneratedCommandsMemoryRequirementsInfoNV VkGeneratedCommandsMemoryRequirementsInfoNV_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkImageMemoryRequirementsInfo2_host
 {
     VkStructureType sType;
     const void *pNext;
     VkImage image;
 } VkImageMemoryRequirementsInfo2_host;
-
 typedef VkImageMemoryRequirementsInfo2 VkImageMemoryRequirementsInfo2KHR;
+#else
+typedef VkImageMemoryRequirementsInfo2 VkImageMemoryRequirementsInfo2_host;
+#endif
 
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkImageSparseMemoryRequirementsInfo2_host
 {
     VkStructureType sType;
     const void *pNext;
     VkImage image;
 } VkImageSparseMemoryRequirementsInfo2_host;
-
 typedef VkImageSparseMemoryRequirementsInfo2 VkImageSparseMemoryRequirementsInfo2KHR;
+#else
+typedef VkImageSparseMemoryRequirementsInfo2 VkImageSparseMemoryRequirementsInfo2_host;
+#endif
 
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkSubresourceLayout_host
 {
     VkDeviceSize offset;
@@ -999,8 +1231,11 @@ typedef struct VkSubresourceLayout_host
     VkDeviceSize arrayPitch;
     VkDeviceSize depthPitch;
 } VkSubresourceLayout_host;
+#else
+typedef VkSubresourceLayout VkSubresourceLayout_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkImageViewAddressPropertiesNVX_host
 {
     VkStructureType sType;
@@ -1008,8 +1243,11 @@ typedef struct VkImageViewAddressPropertiesNVX_host
     VkDeviceAddress deviceAddress;
     VkDeviceSize size;
 } VkImageViewAddressPropertiesNVX_host;
+#else
+typedef VkImageViewAddressPropertiesNVX VkImageViewAddressPropertiesNVX_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkImageViewHandleInfoNVX_host
 {
     VkStructureType sType;
@@ -1018,8 +1256,11 @@ typedef struct VkImageViewHandleInfoNVX_host
     VkDescriptorType descriptorType;
     VkSampler sampler;
 } VkImageViewHandleInfoNVX_host;
+#else
+typedef VkImageViewHandleInfoNVX VkImageViewHandleInfoNVX_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkImageFormatProperties_host
 {
     VkExtent3D maxExtent;
@@ -1028,24 +1269,33 @@ typedef struct VkImageFormatProperties_host
     VkSampleCountFlags sampleCounts;
     VkDeviceSize maxResourceSize;
 } VkImageFormatProperties_host;
+#else
+typedef VkImageFormatProperties VkImageFormatProperties_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkImageFormatProperties2_host
 {
     VkStructureType sType;
     void *pNext;
     VkImageFormatProperties_host imageFormatProperties;
 } VkImageFormatProperties2_host;
-
 typedef VkImageFormatProperties2 VkImageFormatProperties2KHR;
+#else
+typedef VkImageFormatProperties2 VkImageFormatProperties2_host;
+#endif
 
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkMemoryHeap_host
 {
     VkDeviceSize size;
     VkMemoryHeapFlags flags;
 } VkMemoryHeap_host;
+#else
+typedef VkMemoryHeap VkMemoryHeap_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkPhysicalDeviceMemoryProperties_host
 {
     uint32_t memoryTypeCount;
@@ -1053,17 +1303,23 @@ typedef struct VkPhysicalDeviceMemoryProperties_host
     uint32_t memoryHeapCount;
     VkMemoryHeap_host memoryHeaps[VK_MAX_MEMORY_HEAPS];
 } VkPhysicalDeviceMemoryProperties_host;
+#else
+typedef VkPhysicalDeviceMemoryProperties VkPhysicalDeviceMemoryProperties_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkPhysicalDeviceMemoryProperties2_host
 {
     VkStructureType sType;
     void *pNext;
     VkPhysicalDeviceMemoryProperties_host memoryProperties;
 } VkPhysicalDeviceMemoryProperties2_host;
-
 typedef VkPhysicalDeviceMemoryProperties2 VkPhysicalDeviceMemoryProperties2KHR;
+#else
+typedef VkPhysicalDeviceMemoryProperties2 VkPhysicalDeviceMemoryProperties2_host;
+#endif
 
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkPhysicalDeviceLimits_host
 {
     uint32_t maxImageDimension1D;
@@ -1173,8 +1429,11 @@ typedef struct VkPhysicalDeviceLimits_host
     VkDeviceSize optimalBufferCopyRowPitchAlignment;
     VkDeviceSize nonCoherentAtomSize;
 } VkPhysicalDeviceLimits_host;
+#else
+typedef VkPhysicalDeviceLimits VkPhysicalDeviceLimits_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkPhysicalDeviceProperties_host
 {
     uint32_t apiVersion;
@@ -1187,25 +1446,34 @@ typedef struct VkPhysicalDeviceProperties_host
     VkPhysicalDeviceLimits_host limits;
     VkPhysicalDeviceSparseProperties sparseProperties;
 } VkPhysicalDeviceProperties_host;
+#else
+typedef VkPhysicalDeviceProperties VkPhysicalDeviceProperties_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkPhysicalDeviceProperties2_host
 {
     VkStructureType sType;
     void *pNext;
     VkPhysicalDeviceProperties_host properties;
 } VkPhysicalDeviceProperties2_host;
-
 typedef VkPhysicalDeviceProperties2 VkPhysicalDeviceProperties2KHR;
+#else
+typedef VkPhysicalDeviceProperties2 VkPhysicalDeviceProperties2_host;
+#endif
 
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkPhysicalDeviceSurfaceInfo2KHR_host
 {
     VkStructureType sType;
     const void *pNext;
     VkSurfaceKHR surface;
 } VkPhysicalDeviceSurfaceInfo2KHR_host;
+#else
+typedef VkPhysicalDeviceSurfaceInfo2KHR VkPhysicalDeviceSurfaceInfo2KHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkPipelineExecutableInfoKHR_host
 {
     VkStructureType sType;
@@ -1213,16 +1481,22 @@ typedef struct VkPipelineExecutableInfoKHR_host
     VkPipeline pipeline;
     uint32_t executableIndex;
 } VkPipelineExecutableInfoKHR_host;
+#else
+typedef VkPipelineExecutableInfoKHR VkPipelineExecutableInfoKHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkPipelineInfoKHR_host
 {
     VkStructureType sType;
     const void *pNext;
     VkPipeline pipeline;
 } VkPipelineInfoKHR_host;
+#else
+typedef VkPipelineInfoKHR VkPipelineInfoKHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkSparseMemoryBind_host
 {
     VkDeviceSize resourceOffset;
@@ -1231,24 +1505,33 @@ typedef struct VkSparseMemoryBind_host
     VkDeviceSize memoryOffset;
     VkSparseMemoryBindFlags flags;
 } VkSparseMemoryBind_host;
+#else
+typedef VkSparseMemoryBind VkSparseMemoryBind_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkSparseBufferMemoryBindInfo_host
 {
     VkBuffer buffer;
     uint32_t bindCount;
     const VkSparseMemoryBind_host *pBinds;
 } VkSparseBufferMemoryBindInfo_host;
+#else
+typedef VkSparseBufferMemoryBindInfo VkSparseBufferMemoryBindInfo_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkSparseImageOpaqueMemoryBindInfo_host
 {
     VkImage image;
     uint32_t bindCount;
     const VkSparseMemoryBind_host *pBinds;
 } VkSparseImageOpaqueMemoryBindInfo_host;
+#else
+typedef VkSparseImageOpaqueMemoryBindInfo VkSparseImageOpaqueMemoryBindInfo_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkSparseImageMemoryBind_host
 {
     VkImageSubresource subresource;
@@ -1258,16 +1541,22 @@ typedef struct VkSparseImageMemoryBind_host
     VkDeviceSize memoryOffset;
     VkSparseMemoryBindFlags flags;
 } VkSparseImageMemoryBind_host;
+#else
+typedef VkSparseImageMemoryBind VkSparseImageMemoryBind_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkSparseImageMemoryBindInfo_host
 {
     VkImage image;
     uint32_t bindCount;
     const VkSparseImageMemoryBind_host *pBinds;
 } VkSparseImageMemoryBindInfo_host;
+#else
+typedef VkSparseImageMemoryBindInfo VkSparseImageMemoryBindInfo_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkBindSparseInfo_host
 {
     VkStructureType sType;
@@ -1283,8 +1572,11 @@ typedef struct VkBindSparseInfo_host
     uint32_t signalSemaphoreCount;
     const VkSemaphore *pSignalSemaphores;
 } VkBindSparseInfo_host;
+#else
+typedef VkBindSparseInfo VkBindSparseInfo_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkSubmitInfo_host
 {
     VkStructureType sType;
@@ -1297,8 +1589,11 @@ typedef struct VkSubmitInfo_host
     uint32_t signalSemaphoreCount;
     const VkSemaphore *pSignalSemaphores;
 } VkSubmitInfo_host;
+#else
+typedef VkSubmitInfo VkSubmitInfo_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkSemaphoreSubmitInfoKHR_host
 {
     VkStructureType sType;
@@ -1308,8 +1603,11 @@ typedef struct VkSemaphoreSubmitInfoKHR_host
     VkPipelineStageFlags2KHR stageMask;
     uint32_t deviceIndex;
 } VkSemaphoreSubmitInfoKHR_host;
+#else
+typedef VkSemaphoreSubmitInfoKHR VkSemaphoreSubmitInfoKHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkCommandBufferSubmitInfoKHR_host
 {
     VkStructureType sType;
@@ -1317,8 +1615,11 @@ typedef struct VkCommandBufferSubmitInfoKHR_host
     VkCommandBuffer commandBuffer;
     uint32_t deviceMask;
 } VkCommandBufferSubmitInfoKHR_host;
+#else
+typedef VkCommandBufferSubmitInfoKHR VkCommandBufferSubmitInfoKHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkSubmitInfo2KHR_host
 {
     VkStructureType sType;
@@ -1331,8 +1632,11 @@ typedef struct VkSubmitInfo2KHR_host
     uint32_t signalSemaphoreInfoCount;
     const VkSemaphoreSubmitInfoKHR_host *pSignalSemaphoreInfos;
 } VkSubmitInfo2KHR_host;
+#else
+typedef VkSubmitInfo2KHR VkSubmitInfo2KHR_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkDebugUtilsObjectNameInfoEXT_host
 {
     VkStructureType sType;
@@ -1341,8 +1645,11 @@ typedef struct VkDebugUtilsObjectNameInfoEXT_host
     uint64_t objectHandle;
     const char *pObjectName;
 } VkDebugUtilsObjectNameInfoEXT_host;
+#else
+typedef VkDebugUtilsObjectNameInfoEXT VkDebugUtilsObjectNameInfoEXT_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkDebugUtilsObjectTagInfoEXT_host
 {
     VkStructureType sType;
@@ -1353,8 +1660,11 @@ typedef struct VkDebugUtilsObjectTagInfoEXT_host
     size_t tagSize;
     const void *pTag;
 } VkDebugUtilsObjectTagInfoEXT_host;
+#else
+typedef VkDebugUtilsObjectTagInfoEXT VkDebugUtilsObjectTagInfoEXT_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkSemaphoreSignalInfo_host
 {
     VkStructureType sType;
@@ -1362,9 +1672,12 @@ typedef struct VkSemaphoreSignalInfo_host
     VkSemaphore semaphore;
     uint64_t value;
 } VkSemaphoreSignalInfo_host;
-
 typedef VkSemaphoreSignalInfo VkSemaphoreSignalInfoKHR;
+#else
+typedef VkSemaphoreSignalInfo VkSemaphoreSignalInfo_host;
+#endif
 
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkDebugUtilsMessengerCallbackDataEXT_host
 {
     VkStructureType sType;
@@ -1380,8 +1693,11 @@ typedef struct VkDebugUtilsMessengerCallbackDataEXT_host
     uint32_t objectCount;
     const VkDebugUtilsObjectNameInfoEXT_host *pObjects;
 } VkDebugUtilsMessengerCallbackDataEXT_host;
+#else
+typedef VkDebugUtilsMessengerCallbackDataEXT VkDebugUtilsMessengerCallbackDataEXT_host;
+#endif
 
-
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkCopyDescriptorSet_host
 {
     VkStructureType sType;
@@ -1394,7 +1710,9 @@ typedef struct VkCopyDescriptorSet_host
     uint32_t dstArrayElement;
     uint32_t descriptorCount;
 } VkCopyDescriptorSet_host;
-
+#else
+typedef VkCopyDescriptorSet VkCopyDescriptorSet_host;
+#endif
 
 
 VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCreateInfo *out_struct) DECLSPEC_HIDDEN;

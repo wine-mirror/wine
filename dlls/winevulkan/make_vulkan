@@ -1927,14 +1927,12 @@ class VkStruct(Sequence):
                 text += "    {0};\n".format(m.definition())
 
         if postfix is not None:
-            text += "}} {0}{1};\n\n".format(self.name, postfix)
+            text += "}} {0}{1};\n".format(self.name, postfix)
         else:
             text += "}} {0};\n".format(self.name)
 
         for aliasee in self.aliased_by:
             text += "typedef {0} {1};\n".format(self.name, aliasee.name)
-
-        text += "\n"
 
         return text
 
@@ -2781,7 +2779,11 @@ class VkGenerator(object):
         f.write("\n")
 
         for struct in self.host_structs:
+            f.write("#if defined(USE_STRUCT_CONVERSION)\n")
             f.write(struct.definition(align=False, conv=True, postfix="_host"))
+            f.write("#else\n")
+            f.write("typedef {0} {0}_host;\n".format(struct.name))
+            f.write("#endif\n\n")
         f.write("\n")
 
         for func in self.struct_chain_conversions:
@@ -3037,6 +3039,7 @@ class VkGenerator(object):
         for struct in structs:
             LOGGER.debug("Generating struct: {0}".format(struct.name))
             f.write(struct.definition(align=True))
+            f.write("\n")
 
         for func in self.registry.funcs.values():
             if not func.is_required():
