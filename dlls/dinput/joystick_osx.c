@@ -1323,13 +1323,13 @@ static unsigned short get_joystick_index(REFGUID guid)
     return 0xffff;
 }
 
-static HRESULT joydev_create_device(IDirectInputImpl *dinput, REFGUID rguid, REFIID riid, LPVOID *pdev, int unicode)
+static HRESULT joydev_create_device( IDirectInputImpl *dinput, REFGUID rguid, IDirectInputDevice8W **out )
 {
     unsigned short index;
     int joystick_devices_count;
 
-    TRACE("%p %s %s %p %i\n", dinput, debugstr_guid(rguid), debugstr_guid(riid), pdev, unicode);
-    *pdev = NULL;
+    TRACE( "%p %s %p\n", dinput, debugstr_guid( rguid ), out );
+    *out = NULL;
 
     if ((joystick_devices_count = find_joystick_devices()) == 0)
         return DIERR_DEVICENOTREG;
@@ -1340,36 +1340,11 @@ static HRESULT joydev_create_device(IDirectInputImpl *dinput, REFGUID rguid, REF
         JoystickImpl *This;
         HRESULT hr;
 
-        if (riid == NULL)
-            ;/* nothing */
-        else if (IsEqualGUID(&IID_IDirectInputDeviceA,  riid) ||
-                 IsEqualGUID(&IID_IDirectInputDevice2A, riid) ||
-                 IsEqualGUID(&IID_IDirectInputDevice7A, riid) ||
-                 IsEqualGUID(&IID_IDirectInputDevice8A, riid))
-        {
-            unicode = 0;
-        }
-        else if (IsEqualGUID(&IID_IDirectInputDeviceW,  riid) ||
-                 IsEqualGUID(&IID_IDirectInputDevice2W, riid) ||
-                 IsEqualGUID(&IID_IDirectInputDevice7W, riid) ||
-                 IsEqualGUID(&IID_IDirectInputDevice8W, riid))
-        {
-            unicode = 1;
-        }
-        else
-        {
-            WARN("no interface\n");
-            return DIERR_NOINTERFACE;
-        }
-
         if (FAILED(hr = alloc_device( rguid, dinput, &This, index ))) return hr;
 
         TRACE( "Created a Joystick device (%p)\n", This );
 
-        if (unicode)
-            *pdev = &This->generic.base.IDirectInputDevice8W_iface;
-        else
-            *pdev = &This->generic.base.IDirectInputDevice8A_iface;
+        *out = &This->generic.base.IDirectInputDevice8W_iface;
         return hr;
     }
 
