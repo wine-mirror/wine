@@ -5562,8 +5562,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
 BOOL vshader_get_input(const struct wined3d_shader *shader,
         BYTE usage_req, BYTE usage_idx_req, unsigned int *regnum) DECLSPEC_HIDDEN;
 void find_vs_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
-        WORD swizzle_map, struct vs_compile_args *args,
-        const struct wined3d_context *context) DECLSPEC_HIDDEN;
+        struct vs_compile_args *args, const struct wined3d_context *context) DECLSPEC_HIDDEN;
 
 void find_ds_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
         struct ds_compile_args *args, const struct wined3d_context *context) DECLSPEC_HIDDEN;

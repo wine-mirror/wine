@@ -4477,7 +4477,7 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
     int i;
     WORD int_skip;
 
-    find_vs_compile_args(state, shader, context_gl->c.stream_info.swizzle_map, &args->super, &context_gl->c);
+    find_vs_compile_args(state, shader, &args->super, &context_gl->c);
 
     args->clip.boolclip_compare = 0;
     if (use_ps(state))

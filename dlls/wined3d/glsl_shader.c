@@ -10245,7 +10245,7 @@ static void set_glsl_shader_program(const struct wined3d_context_gl *context_gl,
 
         vshader = state->shader[WINED3D_SHADER_TYPE_VERTEX];
 
-        find_vs_compile_args(state, vshader, context_gl->c.stream_info.swizzle_map, &vs_compile_args, &context_gl->c);
+        find_vs_compile_args(state, vshader, &vs_compile_args, &context_gl->c);
         vs_id = find_glsl_vertex_shader(context_gl, priv, vshader, &vs_compile_args);
         vs_list = &vshader->linked_programs;
     }

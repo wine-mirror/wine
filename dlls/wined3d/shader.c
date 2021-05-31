@@ -3524,12 +3524,13 @@ static void init_interpolation_compile_args(DWORD *interpolation_args,
 }
 
 void find_vs_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
-        WORD swizzle_map, struct vs_compile_args *args, const struct wined3d_context *context)
+        struct vs_compile_args *args, const struct wined3d_context *context)
 {
     const struct wined3d_shader *geometry_shader = state->shader[WINED3D_SHADER_TYPE_GEOMETRY];
     const struct wined3d_shader *pixel_shader = state->shader[WINED3D_SHADER_TYPE_PIXEL];
     const struct wined3d_shader *hull_shader = state->shader[WINED3D_SHADER_TYPE_HULL];
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
+    WORD swizzle_map = context->stream_info.swizzle_map;
 
     args->fog_src = state->render_states[WINED3D_RS_FOGTABLEMODE]
             == WINED3D_FOG_NONE ? VS_FOG_COORD : VS_FOG_Z;
