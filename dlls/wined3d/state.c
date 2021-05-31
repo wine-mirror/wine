@@ -278,11 +278,7 @@ static void state_lighting(struct wined3d_context *context, const struct wined3d
 
     /* Lighting is not enabled if transformed vertices are drawn, but lighting
      * does not affect the stream sources, so it is not grouped for
-     * performance reasons. This state reads the decoded vertex declaration,
-     * so if it is dirty don't do anything. The vertex declaration applying
-     * function calls this function for updating. */
-    if (isStateDirty(context, STATE_VDECL))
-        return;
+     * performance reasons. */
 
     if (state->render_states[WINED3D_RS_LIGHTING]
             && !context->stream_info.position_transformed)
@@ -1510,12 +1506,6 @@ static void state_colormat(struct wined3d_context *context, const struct wined3d
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     GLenum Parm = 0;
 
-    /* Depends on the decoded vertex declaration to read the existence of
-     * diffuse data. The vertex declaration will call this function if the
-     * fixed function pipeline is used. */
-    if (isStateDirty(&context_gl->c, STATE_VDECL))
-        return;
-
     context_gl->untracked_material_count = 0;
     if ((context_gl->c.stream_info.use_map & (1u << WINED3D_FFP_DIFFUSE))
             && state->render_states[WINED3D_RS_COLORVERTEX])
@@ -1655,9 +1645,6 @@ static void state_linepattern_w(struct wined3d_context *context, const struct wi
 static void state_normalize(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
-
-    if (isStateDirty(context, STATE_VDECL))
-        return;
 
     /* Without vertex normals, we set the current normal to 0/0/0 to remove the diffuse factor
      * from the opengl lighting equation, as d3d does. Normalization of 0/0/0 can lead to a division
@@ -3444,10 +3431,9 @@ static void transform_texture(struct wined3d_context *context, const struct wine
     unsigned int mapped_stage = context_gl->tex_unit_map[tex];
     struct wined3d_matrix mat;
 
-    /* Ignore this when a vertex shader is used, or if the streams aren't sorted out yet */
-    if (use_vs(state) || isStateDirty(context, STATE_VDECL))
+    if (use_vs(state))
     {
-        TRACE("Using a vertex shader, or stream sources not sorted out yet, skipping\n");
+        TRACE("Using a vertex shader, skipping.\n");
         return;
     }
 
@@ -4013,8 +3999,6 @@ static void transform_projection(struct wined3d_context *context, const struct w
 
 static void streamsrc(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    if (isStateDirty(context, STATE_VDECL))
-        return;
     wined3d_context_gl_update_stream_sources(wined3d_context_gl(context), state);
 }
 
