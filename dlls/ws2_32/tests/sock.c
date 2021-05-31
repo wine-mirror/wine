@@ -4092,6 +4092,101 @@ static void test_keepalive_vals(void)
     closesocket(sock);
 }
 
+static void test_unsupported_ioctls(void)
+{
+    OVERLAPPED overlapped = {0}, *overlapped_ptr;
+    unsigned int i;
+    ULONG_PTR key;
+    HANDLE port;
+    DWORD size;
+    SOCKET s;
+    int ret;
+
+    static const DWORD codes[] = {0xdeadbeef, FIOASYNC, 0x667e, SIO_FLUSH};
+
+    for (i = 0; i < ARRAY_SIZE(codes); ++i)
+    {
+        winetest_push_context("ioctl %#x", codes[i]);
+        s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        port = CreateIoCompletionPort((HANDLE)s, NULL, 123, 0);
+
+        WSASetLastError(0xdeadbeef);
+        ret = WSAIoctl(s, codes[i], NULL, 0, NULL, 0, NULL, &overlapped, NULL);
+        todo_wine_if (codes[i] == SIO_FLUSH)
+            ok(ret == -1, "expected failure\n");
+        todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+        WSASetLastError(0xdeadbeef);
+        size = 0xdeadbeef;
+        ret = WSAIoctl(s, codes[i], NULL, 0, NULL, 0, &size, NULL, NULL);
+        todo_wine_if (codes[i] == SIO_FLUSH)
+            ok(ret == -1, "expected failure\n");
+        todo_wine_if (codes[i] == FIOASYNC || codes[i] == SIO_FLUSH)
+            ok(WSAGetLastError() == WSAEOPNOTSUPP, "got error %u\n", WSAGetLastError());
+        todo_wine_if (codes[i] != SIO_FLUSH)
+            ok(!size, "got size %u\n", size);
+
+        WSASetLastError(0xdeadbeef);
+        size = 0xdeadbeef;
+        overlapped.Internal = 0xdeadbeef;
+        overlapped.InternalHigh = 0xdeadbeef;
+        ret = WSAIoctl(s, codes[i], NULL, 0, NULL, 0, &size, &overlapped, NULL);
+        todo_wine_if (codes[i] == SIO_FLUSH)
+            ok(ret == -1, "expected failure\n");
+        todo_wine ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
+        todo_wine_if (codes[i] == SIO_FLUSH)
+            ok(size == 0xdeadbeef, "got size %u\n", size);
+
+        ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
+        todo_wine_if (codes[i] == SIO_FLUSH)
+            ok(!ret, "expected failure\n");
+        todo_wine_if (codes[i] != 0xdeadbeef)
+            ok(GetLastError() == ERROR_NOT_SUPPORTED, "got error %u\n", GetLastError());
+        todo_wine_if (codes[i] == FIOASYNC || codes[i] == 0x667e)
+            ok(!size, "got size %u\n", size);
+        ok(key == 123, "got key %Iu\n", key);
+        todo_wine_if (codes[i] == FIOASYNC || codes[i] == 0x667e)
+            ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
+        todo_wine_if (codes[i] != 0xdeadbeef)
+            ok((NTSTATUS)overlapped.Internal == STATUS_NOT_SUPPORTED,
+                    "got status %#x\n", (NTSTATUS)overlapped.Internal);
+        todo_wine_if (codes[i] == FIOASYNC || codes[i] == 0x667e)
+            ok(!overlapped.InternalHigh, "got size %Iu\n", overlapped.InternalHigh);
+
+        CloseHandle(port);
+        closesocket(s);
+
+        s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+        ret = WSAIoctl(s, codes[i], NULL, 0, NULL, 0, NULL, &overlapped, socket_apc);
+        todo_wine_if (codes[i] == SIO_FLUSH)
+            ok(ret == -1, "expected failure\n");
+        todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+        apc_count = 0;
+        size = 0xdeadbeef;
+        ret = WSAIoctl(s, codes[i], NULL, 0, NULL, 0, &size, &overlapped, socket_apc);
+        todo_wine_if (codes[i] == SIO_FLUSH)
+            ok(ret == -1, "expected failure\n");
+        todo_wine ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
+        todo_wine_if (codes[i] == SIO_FLUSH)
+            ok(size == 0xdeadbeef, "got size %u\n", size);
+
+        ret = SleepEx(0, TRUE);
+        todo_wine ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
+        if (ret == WAIT_IO_COMPLETION)
+        {
+            ok(apc_count == 1, "APC was called %u times\n", apc_count);
+            ok(apc_error == WSAEOPNOTSUPP, "got APC error %u\n", apc_error);
+            ok(!apc_size, "got APC size %u\n", apc_size);
+            ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
+        }
+
+        closesocket(s);
+        winetest_pop_context();
+    }
+}
+
 static BOOL drain_pause = FALSE;
 static DWORD WINAPI drain_socket_thread(LPVOID arg)
 {
@@ -10314,6 +10409,7 @@ START_TEST( sock )
     test_keepalive_vals();
     test_sioRoutingInterfaceQuery();
     test_sioAddressListChange();
+    test_unsupported_ioctls();
 
     test_WSASendMsg();
     test_WSASendTo();
