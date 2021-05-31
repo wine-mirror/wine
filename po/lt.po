@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-05-19 23:30+0300\n"
+"PO-Revision-Date: 2021-06-01 00:06+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -15187,7 +15187,7 @@ msgstr "reg: Netinkami komandos eilutės parametrai\n"
 
 #: programs/reg/reg.rc:202
 msgid "reg: The source and destination keys cannot be the same\n"
-msgstr ""
+msgstr "reg: Šaltinio ir paskirties raktai negali būti tie patys\n"
 
 #: programs/reg/reg.rc:131
 msgid "Are you sure you want to delete the registry value '%1'?"
