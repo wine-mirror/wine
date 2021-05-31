@@ -3443,3 +3443,55 @@ DXGI_FORMAT WINAPI MFMapDX9FormatToDXGIFormat(DWORD format)
             return DXGI_FORMAT_UNKNOWN;
     }
 }
+
+/***********************************************************************
+ *      MFInitVideoFormat_RGB (mfplat.@)
+ */
+HRESULT WINAPI MFInitVideoFormat_RGB(MFVIDEOFORMAT *format, DWORD width, DWORD height, DWORD d3dformat)
+{
+    unsigned int transfer_function;
+
+    TRACE("%p, %u, %u, %#x.\n", format, width, height, d3dformat);
+
+    if (!format)
+        return E_INVALIDARG;
+
+    if (!d3dformat) d3dformat = D3DFMT_X8R8G8B8;
+
+    switch (d3dformat)
+    {
+        case D3DFMT_X8R8G8B8:
+        case D3DFMT_R8G8B8:
+        case D3DFMT_A8R8G8B8:
+        case D3DFMT_R5G6B5:
+        case D3DFMT_X1R5G5B5:
+        case D3DFMT_A2B10G10R10:
+        case D3DFMT_P8:
+            transfer_function = MFVideoTransFunc_sRGB;
+            break;
+        default:
+            transfer_function = MFVideoTransFunc_10;
+    }
+
+    memset(format, 0, sizeof(*format));
+    format->dwSize = sizeof(*format);
+    format->videoInfo.dwWidth = width;
+    format->videoInfo.dwHeight = height;
+    format->videoInfo.PixelAspectRatio.Numerator = 1;
+    format->videoInfo.PixelAspectRatio.Denominator = 1;
+    format->videoInfo.InterlaceMode = MFVideoInterlace_Progressive;
+    format->videoInfo.TransferFunction = transfer_function;
+    format->videoInfo.ColorPrimaries = MFVideoPrimaries_BT709;
+    format->videoInfo.SourceLighting = MFVideoLighting_office;
+    format->videoInfo.FramesPerSecond.Numerator = 60;
+    format->videoInfo.FramesPerSecond.Denominator = 1;
+    format->videoInfo.NominalRange = MFNominalRange_Normal;
+    format->videoInfo.GeometricAperture.Area.cx = width;
+    format->videoInfo.GeometricAperture.Area.cy = height;
+    format->videoInfo.MinimumDisplayAperture = format->videoInfo.GeometricAperture;
+    memcpy(&format->guidFormat, &MFVideoFormat_Base, sizeof(format->guidFormat));
+    format->guidFormat.Data1 = d3dformat;
+    format->surfaceInfo.Format = d3dformat;
+
+    return S_OK;
+}

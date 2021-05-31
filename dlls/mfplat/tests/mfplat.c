@@ -264,6 +264,7 @@ static HRESULT (WINAPI *pMFCreateVideoMediaTypeFromSubtype)(const GUID *subtype,
 static HRESULT (WINAPI *pMFLockSharedWorkQueue)(const WCHAR *name, LONG base_priority, DWORD *taskid, DWORD *queue);
 static HRESULT (WINAPI *pMFLockDXGIDeviceManager)(UINT *token, IMFDXGIDeviceManager **manager);
 static HRESULT (WINAPI *pMFUnlockDXGIDeviceManager)(void);
+static HRESULT (WINAPI *pMFInitVideoFormat_RGB)(MFVIDEOFORMAT *format, DWORD width, DWORD height, DWORD d3dformat);
 
 static HWND create_window(void)
 {
@@ -937,6 +938,7 @@ static void init_functions(void)
     X(MFCreateVideoSampleAllocatorEx);
     X(MFGetPlaneSize);
     X(MFGetStrideForBitmapInfoHeader);
+    X(MFInitVideoFormat_RGB);
     X(MFLockDXGIDeviceManager);
     X(MFLockSharedWorkQueue);
     X(MFMapDX9FormatToDXGIFormat);
@@ -7206,6 +7208,109 @@ static void test_shared_dxgi_device_manager(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 }
 
+static void check_video_format(const MFVIDEOFORMAT *format, unsigned int width, unsigned int height,
+        DWORD d3dformat)
+{
+    unsigned int transfer_function;
+    GUID guid;
+
+    if (!d3dformat) d3dformat = D3DFMT_X8R8G8B8;
+
+    switch (d3dformat)
+    {
+        case D3DFMT_X8R8G8B8:
+        case D3DFMT_R8G8B8:
+        case D3DFMT_A8R8G8B8:
+        case D3DFMT_R5G6B5:
+        case D3DFMT_X1R5G5B5:
+        case D3DFMT_A2B10G10R10:
+        case D3DFMT_P8:
+            transfer_function = MFVideoTransFunc_sRGB;
+            break;
+        default:
+            transfer_function = MFVideoTransFunc_10;
+    }
+
+    memcpy(&guid, &MFVideoFormat_Base, sizeof(guid));
+    guid.Data1 = d3dformat;
+
+    ok(format->dwSize == sizeof(*format), "Unexpected format size.\n");
+    ok(format->videoInfo.dwWidth == width, "Unexpected width %u.\n", format->videoInfo.dwWidth);
+    ok(format->videoInfo.dwHeight == height, "Unexpected height %u.\n", format->videoInfo.dwHeight);
+    ok(format->videoInfo.PixelAspectRatio.Numerator == 1 &&
+            format->videoInfo.PixelAspectRatio.Denominator == 1, "Unexpected PAR.\n");
+    ok(format->videoInfo.SourceChromaSubsampling == MFVideoChromaSubsampling_Unknown, "Unexpected chroma subsampling.\n");
+    ok(format->videoInfo.InterlaceMode == MFVideoInterlace_Progressive, "Unexpected interlace mode %u.\n",
+            format->videoInfo.InterlaceMode);
+    ok(format->videoInfo.TransferFunction == transfer_function, "Unexpected transfer function %u.\n",
+            format->videoInfo.TransferFunction);
+    ok(format->videoInfo.ColorPrimaries == MFVideoPrimaries_BT709, "Unexpected color primaries %u.\n",
+            format->videoInfo.ColorPrimaries);
+    ok(format->videoInfo.TransferMatrix == MFVideoTransferMatrix_Unknown, "Unexpected transfer matrix.\n");
+    ok(format->videoInfo.SourceLighting == MFVideoLighting_office, "Unexpected source lighting %u.\n",
+            format->videoInfo.SourceLighting);
+    ok(format->videoInfo.FramesPerSecond.Numerator == 60 &&
+            format->videoInfo.FramesPerSecond.Denominator == 1, "Unexpected frame rate %u/%u.\n",
+            format->videoInfo.FramesPerSecond.Numerator, format->videoInfo.FramesPerSecond.Denominator);
+    ok(format->videoInfo.NominalRange == MFNominalRange_Normal, "Unexpected nominal range %u.\n",
+            format->videoInfo.NominalRange);
+    ok(format->videoInfo.GeometricAperture.Area.cx == width && format->videoInfo.GeometricAperture.Area.cy == height,
+            "Unexpected geometric aperture.\n");
+    ok(!memcmp(&format->videoInfo.GeometricAperture, &format->videoInfo.MinimumDisplayAperture, sizeof(MFVideoArea)),
+            "Unexpected minimum display aperture.\n");
+    ok(format->videoInfo.PanScanAperture.Area.cx == 0 && format->videoInfo.PanScanAperture.Area.cy == 0,
+            "Unexpected geometric aperture.\n");
+    ok(format->videoInfo.VideoFlags == 0, "Unexpected video flags.\n");
+    ok(IsEqualGUID(&format->guidFormat, &guid), "Unexpected format guid %s.\n", wine_dbgstr_guid(&format->guidFormat));
+    ok(format->compressedInfo.AvgBitrate == 0, "Unexpected bitrate.\n");
+    ok(format->compressedInfo.AvgBitErrorRate == 0, "Unexpected error bitrate.\n");
+    ok(format->compressedInfo.MaxKeyFrameSpacing == 0, "Unexpected MaxKeyFrameSpacing.\n");
+    ok(format->surfaceInfo.Format == d3dformat, "Unexpected format %u.\n", format->surfaceInfo.Format);
+    ok(format->surfaceInfo.PaletteEntries == 0, "Unexpected palette size %u.\n", format->surfaceInfo.PaletteEntries);
+}
+
+static void test_MFInitVideoFormat_RGB(void)
+{
+    static const DWORD formats[] =
+    {
+        0, /* same D3DFMT_X8R8G8B8 */
+        D3DFMT_X8R8G8B8,
+        D3DFMT_R8G8B8,
+        D3DFMT_A8R8G8B8,
+        D3DFMT_R5G6B5,
+        D3DFMT_X1R5G5B5,
+        D3DFMT_A2B10G10R10,
+        D3DFMT_P8,
+        D3DFMT_L8,
+        D3DFMT_YUY2,
+        D3DFMT_DXT1,
+        D3DFMT_D16,
+        D3DFMT_L16,
+        D3DFMT_A16B16G16R16F,
+    };
+    MFVIDEOFORMAT format;
+    unsigned int i;
+    HRESULT hr;
+
+    if (!pMFInitVideoFormat_RGB)
+    {
+        win_skip("MFInitVideoFormat_RGB is not available.\n");
+        return;
+    }
+
+    hr = pMFInitVideoFormat_RGB(NULL, 64, 32, 0);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(formats); ++i)
+    {
+        memset(&format, 0, sizeof(format));
+        hr = pMFInitVideoFormat_RGB(&format, 64, 32, formats[i]);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        if (SUCCEEDED(hr))
+            check_video_format(&format, 64, 32, formats[i]);
+    }
+}
+
 START_TEST(mfplat)
 {
     char **argv;
@@ -7272,6 +7377,7 @@ START_TEST(mfplat)
     test_MFMapDX9FormatToDXGIFormat();
     test_MFllMulDiv();
     test_shared_dxgi_device_manager();
+    test_MFInitVideoFormat_RGB();
 
     CoUninitialize();
 }

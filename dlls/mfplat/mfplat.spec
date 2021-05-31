@@ -127,7 +127,7 @@
 @ stub MFInitMediaTypeFromVideoInfoHeader
 @ stdcall MFInitMediaTypeFromWaveFormatEx(ptr ptr long)
 @ stub MFInitVideoFormat
-@ stub MFInitVideoFormat_RGB
+@ stdcall MFInitVideoFormat_RGB(ptr long long long)
 @ stdcall MFInvokeCallback(ptr)
 @ stub MFJoinIoPort
 @ stdcall MFJoinWorkQueue(long long ptr) rtworkq.RtwqJoinWorkQueue
