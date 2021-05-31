@@ -4212,8 +4212,9 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
     if (d3d_info->emulated_flatshading)
         args->flatshading = state->render_states[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT;
 
-    args->render_offscreen = shader->reg_maps.vpos && gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS]
-            ? context->render_offscreen : 0;
+    args->render_offscreen = (shader->reg_maps.vpos && gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS])
+            || (shader->reg_maps.usesdsy && wined3d_settings.offscreen_rendering_mode != ORM_FBO)
+            ? context->render_offscreen : 1;
 
     for (i = 0; i < ARRAY_SIZE(state->fb.render_targets); ++i)
     {

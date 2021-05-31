@@ -4036,6 +4036,9 @@ static void shader_glsl_pow(const struct wined3d_shader_instruction *ins)
 /* Map the opcode 1-to-1 to the GL code (arg->dst = instruction(src0, src1, ...) */
 static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
 {
+    const struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
+    bool y_correction = ins->ctx->reg_maps->shader_version.type == WINED3D_SHADER_TYPE_PIXEL
+            ? !priv->cur_ps_args->render_offscreen : false;
     struct wined3d_string_buffer *buffer = ins->ctx->buffer;
     struct glsl_src_param src_param;
     const char *instruction;
@@ -4052,9 +4055,9 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
         case WINED3DSIH_DSX: instruction = "dFdx"; break;
         case WINED3DSIH_DSX_COARSE: instruction = "dFdxCoarse"; break;
         case WINED3DSIH_DSX_FINE: instruction = "dFdxFine"; break;
-        case WINED3DSIH_DSY: instruction = "ycorrection.y * dFdy"; break;
-        case WINED3DSIH_DSY_COARSE: instruction = "ycorrection.y * dFdyCoarse"; break;
-        case WINED3DSIH_DSY_FINE: instruction = "ycorrection.y * dFdyFine"; break;
+        case WINED3DSIH_DSY: instruction = y_correction ? "ycorrection.y * dFdy" : "dFdy"; break;
+        case WINED3DSIH_DSY_COARSE: instruction = y_correction ? "ycorrection.y * dFdyCoarse" : "dFdyCoarse"; break;
+        case WINED3DSIH_DSY_FINE: instruction = y_correction ? "ycorrection.y * dFdyFine" : "dFdyFine"; break;
         case WINED3DSIH_FIRSTBIT_HI: instruction = "findMSB"; break;
         case WINED3DSIH_FIRSTBIT_LO: instruction = "findLSB"; break;
         case WINED3DSIH_FIRSTBIT_SHI: instruction = "findMSB"; break;
@@ -7773,25 +7776,23 @@ static GLuint shader_glsl_generate_fragment_shader(const struct wined3d_context_
         shader_glsl_append_imm_vec(buffer, &wined3d_srgb_const[1].x, 4, gl_info);
         shader_addline(buffer, ";\n");
     }
-    if (reg_maps->vpos || reg_maps->usesdsy)
+    if ((reg_maps->usesdsy && wined3d_settings.offscreen_rendering_mode != ORM_FBO)
+            || (reg_maps->vpos && !gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS]))
     {
-        if (reg_maps->usesdsy || !gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS])
+        ++extra_constants_needed;
+        shader_addline(buffer, "uniform vec4 ycorrection;\n");
+    }
+    if (reg_maps->vpos)
+    {
+        if (gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS])
         {
-            ++extra_constants_needed;
-            shader_addline(buffer, "uniform vec4 ycorrection;\n");
+            if (context_gl->c.d3d_info->wined3d_creation_flags & WINED3D_PIXEL_CENTER_INTEGER)
+                shader_addline(buffer, "layout(%spixel_center_integer) in vec4 gl_FragCoord;\n",
+                        args->render_offscreen ? "" : "origin_upper_left, ");
+            else if (!args->render_offscreen)
+                shader_addline(buffer, "layout(origin_upper_left) in vec4 gl_FragCoord;\n");
         }
-        if (reg_maps->vpos)
-        {
-            if (gl_info->supported[ARB_FRAGMENT_COORD_CONVENTIONS])
-            {
-                if (context_gl->c.d3d_info->wined3d_creation_flags & WINED3D_PIXEL_CENTER_INTEGER)
-                    shader_addline(buffer, "layout(%spixel_center_integer) in vec4 gl_FragCoord;\n",
-                            args->render_offscreen ? "" : "origin_upper_left, ");
-                else if (!args->render_offscreen)
-                    shader_addline(buffer, "layout(origin_upper_left) in vec4 gl_FragCoord;\n");
-            }
-            shader_addline(buffer, "vec4 vpos;\n");
-        }
+        shader_addline(buffer, "vec4 vpos;\n");
     }
 
     if (args->alpha_test_func + 1 != WINED3D_CMP_ALWAYS)
