@@ -2660,13 +2660,10 @@ class VkGenerator(object):
             if not vk_func.needs_thunk():
                 continue
 
-            # Exports symbols for Core functions.
-            if not vk_func.is_core_func() and not vk_func.needs_private_thunk():
-                f.write("static ")
-
             if vk_func.needs_private_thunk():
                 f.write(vk_func.thunk(prefix="thunk_"))
             else:
+                f.write("static ")
                 f.write(vk_func.thunk(prefix=prefix, call_conv="WINAPI"))
 
         # Create array of device extensions.
