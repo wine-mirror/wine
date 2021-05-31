@@ -122,11 +122,7 @@ static uint64_t wine_vk_get_wrapper(struct VkInstance_T *instance, uint64_t nati
 
 static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
     VkDebugUtilsMessageTypeFlagsEXT message_types,
-#if defined(USE_STRUCT_CONVERSION)
     const VkDebugUtilsMessengerCallbackDataEXT_host *callback_data,
-#else
-    const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
-#endif
     void *user_data)
 {
     struct VkDebugUtilsMessengerCallbackDataEXT wine_callback_data;
@@ -640,11 +636,8 @@ VkResult WINAPI wine_vkAllocateCommandBuffers(VkDevice device,
 
     for (i = 0; i < allocate_info->commandBufferCount; i++)
     {
-#if defined(USE_STRUCT_CONVERSION)
         VkCommandBufferAllocateInfo_host allocate_info_host;
-#else
-        VkCommandBufferAllocateInfo allocate_info_host;
-#endif
+
         /* TODO: future extensions (none yet) may require pNext conversion. */
         allocate_info_host.pNext = allocate_info->pNext;
         allocate_info_host.sType = allocate_info->sType;
