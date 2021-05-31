@@ -334,7 +334,7 @@ static HRESULT video_presenter_configure_output_type(struct video_presenter *pre
         if (SUCCEEDED(hr))
             hr = IMFMediaType_SetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, stride);
         if (SUCCEEDED(hr))
-            hr = IMFMediaType_SetUINT32(media_type, &MF_MT_SAMPLE_SIZE, stride);
+            hr = IMFMediaType_SetUINT32(media_type, &MF_MT_SAMPLE_SIZE, size);
     }
 
     return hr;
