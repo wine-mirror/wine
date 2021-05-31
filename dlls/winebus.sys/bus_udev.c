@@ -114,20 +114,24 @@ static inline struct platform_private *impl_from_DEVICE_OBJECT(DEVICE_OBJECT *de
 
 #ifdef HAS_PROPER_INPUT_HEADER
 
+#include "psh_hid_macros.h"
+
 static const BYTE REPORT_ABS_AXIS_TAIL[] = {
-    0x17, 0x00, 0x00, 0x00, 0x00,  /* LOGICAL_MINIMUM (0) */
-    0x27, 0xff, 0x00, 0x00, 0x00,  /* LOGICAL_MAXIMUM (0xff) */
-    0x37, 0x00, 0x00, 0x00, 0x00,  /* PHYSICAL_MINIMUM (0) */
-    0x47, 0xff, 0x00, 0x00, 0x00,  /* PHYSICAL_MAXIMUM (256) */
-    0x75, 0x20,                    /* REPORT_SIZE (32) */
-    0x95, 0x00,                    /* REPORT_COUNT (2) */
-    0x81, 0x02,                    /* INPUT (Data,Var,Abs) */
+    LOGICAL_MINIMUM(4, /* placeholder */ 0x00000000),
+    LOGICAL_MAXIMUM(4, /* placeholder */ 0x000000ff),
+    PHYSICAL_MINIMUM(4, /* placeholder */ 0x00000000),
+    PHYSICAL_MAXIMUM(4, /* placeholder */ 0x000000ff),
+    REPORT_SIZE(1, 32),
+    REPORT_COUNT(1, /* placeholder */ 0),
+    INPUT(1, Data|Var|Abs),
 };
 #define IDX_ABS_LOG_MINIMUM 1
 #define IDX_ABS_LOG_MAXIMUM 6
 #define IDX_ABS_PHY_MINIMUM 11
 #define IDX_ABS_PHY_MAXIMUM 16
 #define IDX_ABS_AXIS_COUNT 23
+
+#include "pop_hid_macros.h"
 
 static const BYTE ABS_TO_HID_MAP[][2] = {
     {HID_USAGE_PAGE_GENERIC, HID_USAGE_GENERIC_X},              /*ABS_X*/

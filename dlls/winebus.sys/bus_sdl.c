@@ -138,58 +138,60 @@ static inline struct platform_private *impl_from_DEVICE_OBJECT(DEVICE_OBJECT *de
     return (struct platform_private *)get_platform_private(device);
 }
 
+#include "psh_hid_macros.h"
+
 static const BYTE REPORT_AXIS_TAIL[] = {
-    0x17, 0x00, 0x00, 0x00, 0x00,   /* LOGICAL_MINIMUM (0) */
-    0x27, 0xff, 0xff, 0x00, 0x00,   /* LOGICAL_MAXIMUM (65535) */
-    0x37, 0x00, 0x00, 0x00, 0x00,   /* PHYSICAL_MINIMUM (0) */
-    0x47, 0xff, 0xff, 0x00, 0x00,   /* PHYSICAL_MAXIMUM (65535) */
-    0x75, 0x10,         /* REPORT_SIZE (16) */
-    0x95, 0x00,         /* REPORT_COUNT (?) */
-    0x81, 0x02,         /* INPUT (Data,Var,Abs) */
+    LOGICAL_MINIMUM(4, 0x00000000),
+    LOGICAL_MAXIMUM(4, 0x0000ffff),
+    PHYSICAL_MINIMUM(4, 0x00000000),
+    PHYSICAL_MAXIMUM(4, 0x0000ffff),
+    REPORT_SIZE(1, 16),
+    REPORT_COUNT(1, /* placeholder */ 0),
+    INPUT(1, Data|Var|Abs),
 };
 #define IDX_ABS_AXIS_COUNT 23
 
 #define CONTROLLER_NUM_BUTTONS 11
 
 static const BYTE CONTROLLER_BUTTONS[] = {
-    0x05, 0x09, /* USAGE_PAGE (Button) */
-    0x19, 0x01, /* USAGE_MINIMUM (Button 1) */
-    0x29, CONTROLLER_NUM_BUTTONS, /* USAGE_MAXIMUM (Button 11) */
-    0x15, 0x00, /* LOGICAL_MINIMUM (0) */
-    0x25, 0x01, /* LOGICAL_MAXIMUM (1) */
-    0x35, 0x00, /* LOGICAL_MINIMUM (0) */
-    0x45, 0x01, /* LOGICAL_MAXIMUM (1) */
-    0x95, CONTROLLER_NUM_BUTTONS, /* REPORT_COUNT (11) */
-    0x75, 0x01, /* REPORT_SIZE (1) */
-    0x81, 0x02, /* INPUT (Data,Var,Abs) */
+    USAGE_PAGE(1, HID_USAGE_PAGE_BUTTON),
+    USAGE_MINIMUM(1, 1),
+    USAGE_MAXIMUM(1, CONTROLLER_NUM_BUTTONS),
+    LOGICAL_MINIMUM(1, 0),
+    LOGICAL_MAXIMUM(1, 1),
+    PHYSICAL_MINIMUM(1, 0),
+    PHYSICAL_MAXIMUM(1, 1),
+    REPORT_COUNT(1, CONTROLLER_NUM_BUTTONS),
+    REPORT_SIZE(1, 1),
+    INPUT(1, Data|Var|Abs),
 };
 
 static const BYTE CONTROLLER_AXIS [] = {
-    0x05, 0x01,         /* USAGE_PAGE (Generic Desktop) */
-    0x09, 0x30,         /* USAGE (X) */
-    0x09, 0x31,         /* USAGE (Y) */
-    0x09, 0x33,         /* USAGE (RX) */
-    0x09, 0x34,         /* USAGE (RY) */
-    0x17, 0x00, 0x00, 0x00, 0x00,   /* LOGICAL_MINIMUM (0) */
-    0x27, 0xff, 0xff, 0x00, 0x00,   /* LOGICAL_MAXIMUM (65535) */
-    0x37, 0x00, 0x00, 0x00, 0x00,   /* PHYSICAL_MINIMUM (0) */
-    0x47, 0xff, 0xff, 0x00, 0x00,   /* PHYSICAL_MAXIMUM (65535) */
-    0x75, 0x10,         /* REPORT_SIZE (16) */
-    0x95, 0x04,         /* REPORT_COUNT (4) */
-    0x81, 0x02,         /* INPUT (Data,Var,Abs) */
+    USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+    USAGE(1, HID_USAGE_GENERIC_X),
+    USAGE(1, HID_USAGE_GENERIC_Y),
+    USAGE(1, HID_USAGE_GENERIC_RX),
+    USAGE(1, HID_USAGE_GENERIC_RY),
+    LOGICAL_MINIMUM(4, 0x00000000),
+    LOGICAL_MAXIMUM(4, 0x0000ffff),
+    PHYSICAL_MINIMUM(4, 0x00000000),
+    PHYSICAL_MAXIMUM(4, 0x0000ffff),
+    REPORT_SIZE(1, 16),
+    REPORT_COUNT(1, 4),
+    INPUT(1, Data|Var|Abs),
 };
 
 static const BYTE CONTROLLER_TRIGGERS [] = {
-    0x05, 0x01,         /* USAGE_PAGE (Generic Desktop) */
-    0x09, 0x32,         /* USAGE (Z) */
-    0x09, 0x35,         /* USAGE (RZ) */
-    0x16, 0x00, 0x00,   /* LOGICAL_MINIMUM (0) */
-    0x26, 0xff, 0x7f,   /* LOGICAL_MAXIMUM (32767) */
-    0x36, 0x00, 0x00,   /* PHYSICAL_MINIMUM (0) */
-    0x46, 0xff, 0x7f,   /* PHYSICAL_MAXIMUM (32767) */
-    0x75, 0x10,         /* REPORT_SIZE (16) */
-    0x95, 0x02,         /* REPORT_COUNT (2) */
-    0x81, 0x02,         /* INPUT (Data,Var,Abs) */
+    USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+    USAGE(1, HID_USAGE_GENERIC_Z),
+    USAGE(1, HID_USAGE_GENERIC_RZ),
+    LOGICAL_MINIMUM(2, 0x0000),
+    LOGICAL_MAXIMUM(2, 0x7fff),
+    PHYSICAL_MINIMUM(2, 0x0000),
+    PHYSICAL_MAXIMUM(2, 0x7fff),
+    REPORT_SIZE(1, 16),
+    REPORT_COUNT(1, 2),
+    INPUT(1, Data|Var|Abs),
 };
 
 #define CONTROLLER_NUM_AXES 6
@@ -197,25 +199,27 @@ static const BYTE CONTROLLER_TRIGGERS [] = {
 #define CONTROLLER_NUM_HATSWITCHES 1
 
 static const BYTE HAPTIC_RUMBLE[] = {
-    0x06, 0x00, 0xff,   /* USAGE PAGE (vendor-defined) */
-    0x09, 0x01,         /* USAGE (1) */
+    USAGE_PAGE(2, HID_USAGE_PAGE_VENDOR_DEFINED_BEGIN),
+    USAGE(1, 0x01),
     /* padding */
-    0x95, 0x02,         /* REPORT_COUNT (2) */
-    0x75, 0x08,         /* REPORT_SIZE (8) */
-    0x91, 0x02,         /* OUTPUT (Data,Var,Abs) */
+    REPORT_COUNT(1, 0x02),
+    REPORT_SIZE(1, 0x08),
+    OUTPUT(1, Data|Var|Abs),
     /* actuators */
-    0x15, 0x00,         /* LOGICAL MINIMUM (0) */
-    0x25, 0xff,         /* LOGICAL MAXIMUM (255) */
-    0x35, 0x00,         /* PHYSICAL MINIMUM (0) */
-    0x45, 0xff,         /* PHYSICAL MAXIMUM (255) */
-    0x75, 0x08,         /* REPORT_SIZE (8) */
-    0x95, 0x02,         /* REPORT_COUNT (2) */
-    0x91, 0x02,         /* OUTPUT (Data,Var,Abs) */
+    LOGICAL_MINIMUM(1, 0x00),
+    LOGICAL_MAXIMUM(1, 0xff),
+    PHYSICAL_MINIMUM(1, 0x00),
+    PHYSICAL_MAXIMUM(1, 0xff),
+    REPORT_SIZE(1, 0x08),
+    REPORT_COUNT(1, 0x02),
+    OUTPUT(1, Data|Var|Abs),
     /* padding */
-    0x95, 0x02,         /* REPORT_COUNT (3) */
-    0x75, 0x08,         /* REPORT_SIZE (8) */
-    0x91, 0x02,         /* OUTPUT (Data,Var,Abs) */
+    REPORT_COUNT(1, 0x02),
+    REPORT_SIZE(1, 0x08),
+    OUTPUT(1, Data|Var|Abs),
 };
+
+#include "pop_hid_macros.h"
 
 static BYTE *add_axis_block(BYTE *report_ptr, BYTE count, BYTE page, const BYTE *usages, BOOL absolute)
 {

@@ -20,75 +20,79 @@
 
 /* Blocks of data for building HID device descriptions */
 
+#include "psh_hid_macros.h"
+
 static const BYTE REPORT_HEADER[] = {
-    0x05, 0x01, /* USAGE_PAGE (Generic Desktop) */
-    0x09, 0x00, /* USAGE (??) */
-    0xa1, 0x01, /* COLLECTION (Application) */
-    0x09, 0x01, /*   USAGE () */
-    0xa1, 0x00, /*   COLLECTION (Physical) */
+    USAGE_PAGE(1, /* placeholder */ HID_USAGE_PAGE_GENERIC),
+    USAGE(1, 0),
+    COLLECTION(1, Application),
+        USAGE(1, /* placeholder */ HID_USAGE_GENERIC_POINTER),
+        COLLECTION(1, Physical),
 };
 #define IDX_HEADER_PAGE 1
 #define IDX_HEADER_USAGE 3
 
 static const BYTE REPORT_BUTTONS[] = {
-    0x05, 0x09, /* USAGE_PAGE (Button) */
-    0x19, 0x01, /* USAGE_MINIMUM (Button 1) */
-    0x29, 0x03, /* USAGE_MAXIMUM (Button 3) */
-    0x15, 0x00, /* LOGICAL_MINIMUM (0) */
-    0x25, 0x01, /* LOGICAL_MAXIMUM (1) */
-    0x35, 0x00, /* PHYSICAL_MINIMUM (0) */
-    0x45, 0x01, /* PHYSICAL_MAXIMUM (1) */
-    0x95, 0x03, /* REPORT_COUNT (3) */
-    0x75, 0x01, /* REPORT_SIZE (1) */
-    0x81, 0x02, /* INPUT (Data,Var,Abs) */
+    USAGE_PAGE(1, HID_USAGE_PAGE_BUTTON),
+    USAGE_MINIMUM(1, /* placeholder */ 1),
+    USAGE_MAXIMUM(1, /* placeholder */ 3),
+    LOGICAL_MINIMUM(1, 0),
+    LOGICAL_MAXIMUM(1, 1),
+    PHYSICAL_MINIMUM(1, 0),
+    PHYSICAL_MAXIMUM(1, 1),
+    REPORT_COUNT(1, /* placeholder */ 3),
+    REPORT_SIZE(1, 1),
+    INPUT(1, Data|Var|Abs),
 };
 #define IDX_BUTTON_MIN_USAGE 3
 #define IDX_BUTTON_MAX_USAGE 5
 #define IDX_BUTTON_COUNT 15
 
 static const BYTE REPORT_PADDING[] = {
-    0x95, 0x03, /* REPORT_COUNT (3) */
-    0x75, 0x01, /* REPORT_SIZE (1) */
-    0x81, 0x03, /* INPUT (Cnst,Var,Abs) */
+    REPORT_COUNT(1, /* placeholder */ 3),
+    REPORT_SIZE(1, 1),
+    INPUT(1, Cnst|Var|Abs),
 };
 #define IDX_PADDING_BIT_COUNT 1
 
 static const BYTE REPORT_AXIS_HEADER[] = {
-    0x05, 0x01,  /* USAGE_PAGE (Generic Desktop) */
+    USAGE_PAGE(1, /* placeholder */ HID_USAGE_PAGE_GENERIC),
 };
 #define IDX_AXIS_PAGE 1
 
 static const BYTE REPORT_AXIS_USAGE[] = {
-    0x09, 0x30,  /* USAGE (X) */
+    USAGE(1, /* placeholder */ HID_USAGE_GENERIC_X),
 };
 #define IDX_AXIS_USAGE 1
 
 static const BYTE REPORT_REL_AXIS_TAIL[] = {
-    0x15, 0x81,    /* LOGICAL_MINIMUM (0) */
-    0x25, 0x7f,    /* LOGICAL_MAXIMUM (0xffff) */
-    0x75, 0x08,    /* REPORT_SIZE (16) */
-    0x95, 0x02,    /* REPORT_COUNT (2) */
-    0x81, 0x06,    /* INPUT (Data,Var,Rel) */
+    LOGICAL_MINIMUM(1, 0x81),
+    LOGICAL_MAXIMUM(1, 0x7f),
+    REPORT_SIZE(1, 8),
+    REPORT_COUNT(1, /* placeholder */ 2),
+    INPUT(1, Data|Var|Rel),
 };
 #define IDX_REL_AXIS_COUNT 7
 
 static const BYTE REPORT_HATSWITCH[] = {
-    0x05, 0x01,  /* USAGE_PAGE (Generic Desktop) */
-    0x09, 0x39,  /* USAGE (Hatswitch) */
-    0x15, 0x01,  /* LOGICAL_MINIMUM (1) */
-    0x25, 0x08,  /* LOGICAL_MAXIMUM (0x08) */
-    0x35, 0x00,  /* PHYSICAL_MINIMUM (0) */
-    0x45, 0x08,  /* PHYSICAL_MAXIMUM (8) */
-    0x75, 0x04,  /* REPORT_SIZE (4) */
-    0x95, 0x01,  /* REPORT_COUNT (1) */
-    0x81, 0x02,  /* INPUT (Data,Var,Abs) */
+    USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+    USAGE(1, HID_USAGE_GENERIC_HATSWITCH),
+    LOGICAL_MINIMUM(1, 1),
+    LOGICAL_MAXIMUM(1, 8),
+    PHYSICAL_MINIMUM(1, 0),
+    PHYSICAL_MAXIMUM(1, 8),
+    REPORT_SIZE(1, 4),
+    REPORT_COUNT(1, /* placeholder */ 1),
+    INPUT(1, Data|Var|Abs),
 };
 #define IDX_HATSWITCH_COUNT 15
 
 static const BYTE REPORT_TAIL[] = {
-    0xc0, /*   END_COLLECTION */
-    0xc0  /* END_COLLECTION */
+        END_COLLECTION,
+    END_COLLECTION,
 };
+
+#include "pop_hid_macros.h"
 
 static inline BYTE *add_button_block(BYTE* report_ptr, BYTE usage_min, BYTE usage_max)
 {
