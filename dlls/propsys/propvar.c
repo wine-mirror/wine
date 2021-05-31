@@ -798,7 +798,10 @@ static BOOL isemptyornull(const PROPVARIANT *propvar)
     if (propvar->vt == VT_CLSID)
         return !propvar->puuid;
 
-    /* FIXME: vectors, byrefs, errors? */
+    if (propvar->vt & VT_VECTOR)
+        return !propvar->caub.cElems;
+
+    /* FIXME: byrefs, errors? */
     return FALSE;
 }
 
@@ -807,6 +810,7 @@ INT WINAPI PropVariantCompareEx(REFPROPVARIANT propvar1, REFPROPVARIANT propvar2
 {
     const PROPVARIANT *propvar2_converted;
     PROPVARIANT propvar2_static;
+    unsigned int count;
     HRESULT hr;
     INT res=-1;
 
@@ -893,6 +897,13 @@ INT WINAPI PropVariantCompareEx(REFPROPVARIANT propvar1, REFPROPVARIANT propvar2
     case VT_CLSID:
         res = memcmp(propvar1->puuid, propvar2->puuid, sizeof(*propvar1->puuid));
         if (res) res = res > 0 ? 1 : -1;
+        break;
+    case VT_VECTOR | VT_UI1:
+        count = min(propvar1->caub.cElems, propvar2->caub.cElems);
+        res = count ? memcmp(propvar1->caub.pElems, propvar2->caub.pElems, sizeof(*propvar1->caub.pElems) * count) : 0;
+        if (res) res = res > 0 ? 1 : -1;
+        if (!res && propvar1->caub.cElems != propvar2->caub.cElems)
+            res = propvar1->caub.cElems > propvar2->caub.cElems ? 1 : -1;
         break;
     default:
         FIXME("vartype %#x not handled\n", propvar1->vt);

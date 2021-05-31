@@ -666,15 +666,18 @@ static void test_PropVariantToStringAlloc(void)
     CoTaskMemFree(str);
 }
 
-static void test_PropVariantCompare(void)
+static void test_PropVariantCompareEx(void)
 {
     PROPVARIANT empty, null, emptyarray, i2_0, i2_2, i4_large, i4_largeneg, i4_2, str_2, str_02, str_b;
     PROPVARIANT clsid_null, clsid, clsid2, r4_0, r4_2, r8_0, r8_2;
+    PROPVARIANT var1, var2;
     INT res;
     static const WCHAR str_2W[] = {'2', 0};
     static const WCHAR str_02W[] = {'0', '2', 0};
     static const WCHAR str_bW[] = {'b', 0};
     SAFEARRAY emptysafearray;
+    unsigned char bytevector1[] = {1,2,3};
+    unsigned char bytevector2[] = {4,5,6};
 
     PropVariantInit(&empty);
     PropVariantInit(&null);
@@ -846,6 +849,74 @@ todo_wine
 
     res = PropVariantCompareEx(&r8_2, &r8_0, 0, 0);
     ok(res == 1, "res=%i\n", res);
+
+    /* VT_VECTOR | VT_UI1 */
+    var1.vt = VT_VECTOR | VT_UI1;
+    var1.caub.cElems = 1;
+    var1.caub.pElems = bytevector1;
+    var2.vt = VT_VECTOR | VT_UI1;
+    var2.caub.cElems = 1;
+    var2.caub.pElems = bytevector2;
+
+    res = PropVariantCompareEx(&var1, &var2, 0, 0);
+    ok(res == -1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&var2, &var1, 0, 0);
+    ok(res == 1, "res=%i\n", res);
+
+    /* Vector length mismatch */
+    var1.caub.cElems = 2;
+    res = PropVariantCompareEx(&var1, &var2, 0, 0);
+    ok(res == -1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&var2, &var1, 0, 0);
+    ok(res == 1, "res=%i\n", res);
+
+    var1.caub.pElems = bytevector2;
+    var2.caub.pElems = bytevector1;
+    res = PropVariantCompareEx(&var1, &var2, 0, 0);
+    ok(res == 1, "res=%i\n", res);
+
+    var1.caub.pElems = bytevector1;
+    var2.caub.pElems = bytevector2;
+
+    var1.caub.cElems = 1;
+    var2.caub.cElems = 2;
+    res = PropVariantCompareEx(&var1, &var2, 0, 0);
+    ok(res == -1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&var2, &var1, 0, 0);
+    ok(res == 1, "res=%i\n", res);
+
+    /* Length mismatch over same data */
+    var1.caub.pElems = bytevector1;
+    var2.caub.pElems = bytevector1;
+
+    res = PropVariantCompareEx(&var1, &var2, 0, 0);
+    ok(res == -1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&var2, &var1, 0, 0);
+    ok(res == 1, "res=%i\n", res);
+
+    var1.caub.cElems = 1;
+    var2.caub.cElems = 1;
+    res = PropVariantCompareEx(&var1, &var2, 0, 0);
+    ok(res == 0, "res=%i\n", res);
+
+    var1.caub.cElems = 0;
+    res = PropVariantCompareEx(&var1, &var2, 0, PVCF_TREATEMPTYASGREATERTHAN);
+    ok(res == 1, "res=%i\n", res);
+    res = PropVariantCompareEx(&var2, &var1, 0, PVCF_TREATEMPTYASGREATERTHAN);
+    ok(res == -1, "res=%i\n", res);
+
+    res = PropVariantCompareEx(&var1, &var2, 0, 0);
+    ok(res == -1, "res=%i\n", res);
+    res = PropVariantCompareEx(&var2, &var1, 0, 0);
+    ok(res == 1, "res=%i\n", res);
+
+    var2.caub.cElems = 0;
+    res = PropVariantCompareEx(&var1, &var2, 0, 0);
+    ok(res == 0, "res=%i\n", res);
 
     SysFreeString(str_2.bstrVal);
     SysFreeString(str_02.bstrVal);
@@ -1957,7 +2028,7 @@ START_TEST(propsys)
     test_InitPropVariantFromBuffer();
     test_PropVariantToGUID();
     test_PropVariantToStringAlloc();
-    test_PropVariantCompare();
+    test_PropVariantCompareEx();
     test_intconversions();
     test_PropVariantChangeType_LPWSTR();
     test_PropVariantToBoolean();
