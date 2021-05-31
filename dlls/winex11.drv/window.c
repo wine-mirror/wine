@@ -749,9 +749,9 @@ static void set_mwm_hints( struct x11drv_win_data *data, DWORD style, DWORD ex_s
         if (is_window_resizable( data, style )) mwm_hints.functions |= MWM_FUNC_RESIZE;
         if (!(style & WS_DISABLED))
         {
+            mwm_hints.functions |= MWM_FUNC_CLOSE;
             if (style & WS_MINIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MINIMIZE;
             if (style & WS_MAXIMIZEBOX) mwm_hints.functions |= MWM_FUNC_MAXIMIZE;
-            if (style & WS_SYSMENU)     mwm_hints.functions |= MWM_FUNC_CLOSE;
 
             /* The window can be programmatically minimized even without
                a minimize box button. Allow the WM to restore it. */
