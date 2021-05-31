@@ -565,7 +565,7 @@ static void test_poll(void)
     ret = bind(client, (const struct sockaddr *)&bind_addr, sizeof(bind_addr));
     ok(!ret, "got error %u\n", WSAGetLastError());
     len = sizeof(addr);
-    ret = getsockname(listener, (struct sockaddr *)&addr, &len);
+    ret = getsockname(client, (struct sockaddr *)&addr, &len);
     ok(!ret, "got error %u\n", WSAGetLastError());
 
     check_poll(client, event, AFD_POLL_WRITE);
@@ -1046,7 +1046,7 @@ static void test_recv(void)
     ret = bind(client, (const struct sockaddr *)&bind_addr, sizeof(bind_addr));
     ok(!ret, "got error %u\n", WSAGetLastError());
     len = sizeof(addr);
-    ret = getsockname(listener, (struct sockaddr *)&addr, &len);
+    ret = getsockname(client, (struct sockaddr *)&addr, &len);
     ok(!ret, "got error %u\n", WSAGetLastError());
 
     memset(buffer, 0xcc, sizeof(buffer));
