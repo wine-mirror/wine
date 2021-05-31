@@ -111,9 +111,10 @@ static void test_open_device(void)
     closesocket(s);
 }
 
-#define check_poll(a, b, c) check_poll_(__LINE__, a, b, c, FALSE)
-#define check_poll_todo(a, b, c) check_poll_(__LINE__, a, b, c, TRUE)
-static void check_poll_(int line, SOCKET s, HANDLE event, int expect, BOOL todo)
+#define check_poll(a, b, c) check_poll_(__LINE__, a, b, ~0, c, FALSE)
+#define check_poll_mask(a, b, c, d) check_poll_(__LINE__, a, b, c, d, FALSE)
+#define check_poll_todo(a, b, c) check_poll_(__LINE__, a, b, ~0, c, TRUE)
+static void check_poll_(int line, SOCKET s, HANDLE event, int mask, int expect, BOOL todo)
 {
     struct afd_poll_params in_params = {0}, out_params = {0};
     IO_STATUS_BLOCK io;
@@ -122,12 +123,17 @@ static void check_poll_(int line, SOCKET s, HANDLE event, int expect, BOOL todo)
     in_params.timeout = -1000 * 10000;
     in_params.count = 1;
     in_params.sockets[0].socket = s;
-    in_params.sockets[0].flags = ~0;
+    in_params.sockets[0].flags = mask;
     in_params.sockets[0].status = 0xdeadbeef;
 
     ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io,
             IOCTL_AFD_POLL, &in_params, sizeof(in_params), &out_params, sizeof(out_params));
-    ok_(__FILE__, line)(!ret, "got %#x\n", ret);
+    ok_(__FILE__, line)(!ret || ret == STATUS_PENDING, "got %#x\n", ret);
+    if (ret == STATUS_PENDING)
+    {
+        ret = WaitForSingleObject(event, 1000);
+        ok_(__FILE__, line)(!ret, "wait timed out\n");
+    }
     ok_(__FILE__, line)(!io.Status, "got %#x\n", io.Status);
     ok_(__FILE__, line)(io.Information == sizeof(out_params), "got %#Ix\n", io.Information);
     ok_(__FILE__, line)(out_params.timeout == in_params.timeout, "got timeout %I64d\n", out_params.timeout);
@@ -311,6 +317,7 @@ static void test_poll(void)
     ret = send(server, "data", 5, 0);
     ok(ret == 5, "got %d\n", ret);
 
+    check_poll_mask(client, event, AFD_POLL_READ, AFD_POLL_READ);
     check_poll(client, event, AFD_POLL_WRITE | AFD_POLL_CONNECT | AFD_POLL_READ);
     check_poll(server, event, AFD_POLL_WRITE | AFD_POLL_CONNECT);
 
@@ -325,6 +332,7 @@ static void test_poll(void)
     ok(ret == 1, "got %d\n", ret);
 
     check_poll(client, event, AFD_POLL_WRITE | AFD_POLL_CONNECT | AFD_POLL_READ);
+    check_poll_mask(server, event, AFD_POLL_OOB, AFD_POLL_OOB);
     check_poll(server, event, AFD_POLL_CONNECT | AFD_POLL_OOB);
 
     ret = recv(server, large_buffer, 1, MSG_OOB);
@@ -341,6 +349,7 @@ static void test_poll(void)
     ok(ret == 1, "got %d\n", ret);
 
     check_poll(client, event, AFD_POLL_WRITE | AFD_POLL_CONNECT | AFD_POLL_READ);
+    check_poll_mask(server, event, AFD_POLL_READ, AFD_POLL_READ);
     check_poll(server, event, AFD_POLL_CONNECT | AFD_POLL_READ);
 
     closesocket(client);
@@ -364,6 +373,7 @@ static void test_poll(void)
     ok(!ret, "got error %u\n", WSAGetLastError());
 
     check_poll(client, event, AFD_POLL_WRITE | AFD_POLL_CONNECT);
+    check_poll_mask(server, event, AFD_POLL_HUP, AFD_POLL_HUP);
     check_poll(server, event, AFD_POLL_WRITE | AFD_POLL_CONNECT | AFD_POLL_HUP);
 
     closesocket(client);
@@ -381,12 +391,14 @@ static void test_poll(void)
     ok(ret == 5, "got %d\n", ret);
 
     check_poll(client, event, AFD_POLL_WRITE | AFD_POLL_CONNECT);
+    check_poll_mask(server, event, AFD_POLL_READ, AFD_POLL_READ);
     check_poll(server, event, AFD_POLL_WRITE | AFD_POLL_CONNECT | AFD_POLL_READ);
 
     ret = shutdown(client, SD_SEND);
     ok(!ret, "got error %u\n", WSAGetLastError());
 
     check_poll(client, event, AFD_POLL_WRITE | AFD_POLL_CONNECT);
+    check_poll_mask(server, event, AFD_POLL_READ, AFD_POLL_READ);
     check_poll_todo(server, event, AFD_POLL_WRITE | AFD_POLL_CONNECT | AFD_POLL_READ | AFD_POLL_HUP);
 
     /* Test closing a socket while polling on it. Note that AFD_POLL_CLOSE
@@ -862,6 +874,9 @@ static void test_recv(void)
     ret = send(server, "data", 5, 0);
     ok(ret == 5, "got %d\n", ret);
 
+    /* wait for the data to be available */
+    check_poll_mask(client, event, AFD_POLL_READ, AFD_POLL_READ);
+
     memset(&io, 0xcc, sizeof(io));
     memset(buffer, 0xcc, sizeof(buffer));
     ret = NtDeviceIoControlFile((HANDLE)client, event, NULL, NULL, &io,
@@ -885,6 +900,9 @@ static void test_recv(void)
 
     ret = send(server, "data", 5, 0);
     ok(ret == 5, "got %d\n", ret);
+
+    /* wait for the data to be available */
+    check_poll_mask(client, event, AFD_POLL_READ, AFD_POLL_READ);
 
     memset(&io, 0xcc, sizeof(io));
     memset(buffer, 0xcc, sizeof(buffer));
@@ -926,6 +944,9 @@ static void test_recv(void)
     ret = send(server, "data", 5, 0);
     ok(ret == 5, "got %d\n", ret);
 
+    /* wait for the data to be available */
+    check_poll_mask(client, event, AFD_POLL_READ, AFD_POLL_READ);
+
     memset(&io, 0xcc, sizeof(io));
     memset(buffer, 0xcc, sizeof(buffer));
     ret = NtDeviceIoControlFile((HANDLE)client, event, NULL, NULL, &io,
@@ -965,6 +986,9 @@ static void test_recv(void)
 
     ret = send(server, "data", 4, 0);
     ok(ret == 4, "got %d\n", ret);
+
+    /* wait for the data to be available */
+    check_poll_mask(client, event, AFD_POLL_READ, AFD_POLL_READ);
 
     memset(buffer, 0xcc, sizeof(buffer));
     ret = NtDeviceIoControlFile((HANDLE)client, event, NULL, NULL, &io,
@@ -1081,6 +1105,9 @@ static void test_recv(void)
 
     ret = sendto(server, "moredata", 9, 0, (struct sockaddr *)&addr, sizeof(addr));
     ok(ret == 9, "got %d\n", ret);
+
+    /* wait for the data to be available */
+    check_poll_mask(client, event, AFD_POLL_READ, AFD_POLL_READ);
 
     memset(&io, 0, sizeof(io));
     memset(buffer, 0xcc, sizeof(buffer));
