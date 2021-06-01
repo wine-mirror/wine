@@ -327,15 +327,6 @@ static inline struct amd64_thread_data *amd64_thread_data(void)
     return (struct amd64_thread_data *)ntdll_get_thread_data()->cpu_data;
 }
 
-void *get_syscall_frame(void)
-{
-    return amd64_thread_data()->syscall_frame;
-}
-
-void set_syscall_frame(void *frame)
-{
-    amd64_thread_data()->syscall_frame = frame;
-}
 
 static struct syscall_xsave *get_syscall_xsave( struct syscall_frame *frame )
 {
@@ -1598,7 +1589,7 @@ __ASM_GLOBAL_FUNC( set_full_cpu_context,
  */
 void signal_restore_full_cpu_context(void)
 {
-    struct syscall_xsave *xsave = get_syscall_xsave( get_syscall_frame() );
+    struct syscall_xsave *xsave = get_syscall_xsave( amd64_thread_data()->syscall_frame );
 
     if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_XSAVE)
     {
