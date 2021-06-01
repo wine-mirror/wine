@@ -1865,11 +1865,6 @@ NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
 }
 
 
-extern void CDECL raise_func_trampoline( void *dispatcher ) DECLSPEC_HIDDEN;
-
-__ASM_GLOBAL_FUNC( raise_func_trampoline,
-                   "jmpq *%r8\n\t")
-
 /***********************************************************************
  *           setup_raise_exception
  */
@@ -1934,8 +1929,7 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
         }
     }
 
-    RIP_sig(sigcontext) = (ULONG_PTR)raise_func_trampoline;
-    R8_sig(sigcontext)  = (ULONG_PTR)pKiUserExceptionDispatcher;
+    RIP_sig(sigcontext) = (ULONG_PTR)pKiUserExceptionDispatcher;
     RSP_sig(sigcontext) = (ULONG_PTR)stack;
     /* clear single-step, direction, and align check flag */
     EFL_sig(sigcontext) &= ~(0x100|0x400|0x40000);
