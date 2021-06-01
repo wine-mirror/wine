@@ -9231,58 +9231,150 @@ static void test_shutdown_completion_port(void)
 
 static void test_address_list_query(void)
 {
-    SOCKET_ADDRESS_LIST *address_list;
-    DWORD bytes_returned, size;
+    char buffer[1024];
+    SOCKET_ADDRESS_LIST *address_list = (SOCKET_ADDRESS_LIST *)buffer;
+    OVERLAPPED overlapped = {0}, *overlapped_ptr;
+    DWORD size, expect_size;
     unsigned int i;
+    ULONG_PTR key;
+    HANDLE port;
     SOCKET s;
     int ret;
 
     s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(s != INVALID_SOCKET, "Failed to create socket, error %d.\n", WSAGetLastError());
+    port = CreateIoCompletionPort((HANDLE)s, NULL, 123, 0);
 
-    bytes_returned = 0;
-    ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, NULL, 0, &bytes_returned, NULL, NULL);
+    size = 0;
+    ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, NULL, 0, &size, NULL, NULL);
     ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
     ok(WSAGetLastError() == WSAEFAULT, "Got unexpected error %d.\n", WSAGetLastError());
-    ok(bytes_returned >= FIELD_OFFSET(SOCKET_ADDRESS_LIST, Address[0]),
-            "Got unexpected bytes_returned %u.\n", bytes_returned);
+    ok(size >= FIELD_OFFSET(SOCKET_ADDRESS_LIST, Address[0]), "Got unexpected size %u.\n", size);
+    expect_size = size;
 
-    size = bytes_returned;
-    bytes_returned = 0;
-    address_list = HeapAlloc(GetProcessHeap(), 0, size * 2);
-    ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, address_list, size * 2, &bytes_returned, NULL, NULL);
-    ok(!ret, "Got unexpected ret %d, error %d.\n", ret, WSAGetLastError());
-    ok(bytes_returned == size, "Got unexpected bytes_returned %u, expected %u.\n", bytes_returned, size);
+    size = 0;
+    ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, buffer, sizeof(buffer), &size, NULL, NULL);
+    ok(!ret, "Got unexpected ret %d.\n", ret);
+    todo_wine ok(!WSAGetLastError(), "Got unexpected error %d.\n", WSAGetLastError());
+    ok(size == expect_size, "Expected size %u, got %u.\n", expect_size, size);
 
-    bytes_returned = FIELD_OFFSET(SOCKET_ADDRESS_LIST, Address[address_list->iAddressCount]);
+    expect_size = FIELD_OFFSET(SOCKET_ADDRESS_LIST, Address[address_list->iAddressCount]);
     for (i = 0; i < address_list->iAddressCount; ++i)
     {
-        bytes_returned += address_list->Address[i].iSockaddrLength;
+        expect_size += address_list->Address[i].iSockaddrLength;
     }
-    ok(size == bytes_returned, "Got unexpected size %u, expected %u.\n", size, bytes_returned);
+    ok(size == expect_size, "Expected size %u, got %u.\n", expect_size, size);
 
-    ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, address_list, size, NULL, NULL, NULL);
+    ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, buffer, sizeof(buffer), NULL, NULL, NULL);
     ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
     ok(WSAGetLastError() == WSAEFAULT, "Got unexpected error %d.\n", WSAGetLastError());
 
-    bytes_returned = 0xdeadbeef;
-    ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, NULL, size, &bytes_returned, NULL, NULL);
+    size = 0xdeadbeef;
+    ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, NULL, sizeof(buffer), &size, NULL, NULL);
     ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
     ok(WSAGetLastError() == WSAEFAULT, "Got unexpected error %d.\n", WSAGetLastError());
-    ok(bytes_returned == size, "Got unexpected bytes_returned %u, expected %u.\n", bytes_returned, size);
+    ok(size == expect_size, "Expected size %u, got %u.\n", expect_size, size);
 
-    ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, address_list, 1, &bytes_returned, NULL, NULL);
+    size = 0xdeadbeef;
+    ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, buffer, 0, &size, NULL, NULL);
+    ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
+    ok(WSAGetLastError() == WSAEFAULT, "Got unexpected error %d.\n", WSAGetLastError());
+    ok(size == expect_size, "Expected size %u, got %u.\n", expect_size, size);
+
+    size = 0xdeadbeef;
+    ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, buffer, 1, &size, NULL, NULL);
     ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
     ok(WSAGetLastError() == WSAEINVAL, "Got unexpected error %d.\n", WSAGetLastError());
-    ok(bytes_returned == 0, "Got unexpected bytes_returned %u.\n", bytes_returned);
+    ok(!size, "Got size %u.\n", size);
 
-    ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, address_list,
-            FIELD_OFFSET(SOCKET_ADDRESS_LIST, Address[0]), &bytes_returned, NULL, NULL);
+    size = 0xdeadbeef;
+    memset(buffer, 0xcc, sizeof(buffer));
+    ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, buffer,
+            FIELD_OFFSET(SOCKET_ADDRESS_LIST, Address[0]), &size, NULL, NULL);
     ok(ret == SOCKET_ERROR, "Got unexpected ret %d.\n", ret);
     ok(WSAGetLastError() == WSAEFAULT, "Got unexpected error %d.\n", WSAGetLastError());
-    ok(bytes_returned == size, "Got unexpected bytes_returned %u, expected %u.\n", bytes_returned, size);
+    ok(size == expect_size, "Expected size %u, got %u.\n", expect_size, size);
+    ok(address_list->iAddressCount == 0xcccccccc, "Got %u addresses.\n", address_list->iAddressCount);
 
-    HeapFree(GetProcessHeap(), 0, address_list);
+    WSASetLastError(0xdeadbeef);
+    overlapped.Internal = 0xdeadbeef;
+    overlapped.InternalHigh = 0xdeadbeef;
+    size = 0xdeadbeef;
+    ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, buffer, 0, &size, &overlapped, NULL);
+    ok(ret == -1, "Got unexpected ret %d.\n", ret);
+    ok(WSAGetLastError() == WSAEFAULT, "Got unexpected error %d.\n", WSAGetLastError());
+    ok(size == expect_size, "Expected size %u, got %u.\n", expect_size, size);
+    todo_wine ok(overlapped.Internal == 0xdeadbeef, "Got status %#x.\n", (NTSTATUS)overlapped.Internal);
+    todo_wine ok(overlapped.InternalHigh == 0xdeadbeef, "Got size %Iu.\n", overlapped.InternalHigh);
+
+    overlapped.Internal = 0xdeadbeef;
+    overlapped.InternalHigh = 0xdeadbeef;
+    size = 0xdeadbeef;
+    ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, buffer, 1, &size, &overlapped, NULL);
+    ok(ret == -1, "Got unexpected ret %d.\n", ret);
+    ok(WSAGetLastError() == WSAEINVAL, "Got unexpected error %d.\n", WSAGetLastError());
+    ok(!size, "Expected size %u, got %u.\n", expect_size, size);
+    ok(overlapped.Internal == 0xdeadbeef, "Got status %#x.\n", (NTSTATUS)overlapped.Internal);
+    ok(overlapped.InternalHigh == 0xdeadbeef, "Got size %Iu.\n", overlapped.InternalHigh);
+
+    overlapped.Internal = 0xdeadbeef;
+    overlapped.InternalHigh = 0xdeadbeef;
+    size = 0xdeadbeef;
+    ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, buffer,
+            FIELD_OFFSET(SOCKET_ADDRESS_LIST, Address[0]), &size, &overlapped, NULL);
+    ok(ret == -1, "Got unexpected ret %d.\n", ret);
+    ok(WSAGetLastError() == WSAEFAULT, "Got unexpected error %d.\n", WSAGetLastError());
+    ok(size == expect_size, "Expected size %u, got %u.\n", expect_size, size);
+    todo_wine ok(overlapped.Internal == 0xdeadbeef, "Got status %#x.\n", (NTSTATUS)overlapped.Internal);
+    todo_wine ok(overlapped.InternalHigh == 0xdeadbeef, "Got size %Iu.\n", overlapped.InternalHigh);
+    ok(address_list->iAddressCount == 0xcccccccc, "Got %u addresses.\n", address_list->iAddressCount);
+
+    overlapped.Internal = 0xdeadbeef;
+    overlapped.InternalHigh = 0xdeadbeef;
+    size = 0xdeadbeef;
+    ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, buffer, sizeof(buffer), &size, &overlapped, NULL);
+    ok(!ret, "Got unexpected ret %d.\n", ret);
+    todo_wine ok(!WSAGetLastError(), "Got unexpected error %d.\n", WSAGetLastError());
+    ok(size == expect_size, "Expected size %u, got %u.\n", expect_size, size);
+
+    ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
+    todo_wine ok(ret, "Got error %u.\n", GetLastError());
+    todo_wine ok(!size, "Got size %u.\n", size);
+    ok(overlapped_ptr == &overlapped, "Got overlapped %p.\n", overlapped_ptr);
+    ok(!overlapped.Internal, "Got status %#x.\n", (NTSTATUS)overlapped.Internal);
+    todo_wine ok(!overlapped.InternalHigh, "Got size %Iu.\n", overlapped.InternalHigh);
+
+    ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
+    ok(!ret, "Expected failure.\n");
+    todo_wine ok(GetLastError() == WAIT_TIMEOUT, "Got error %u.\n", GetLastError());
+
+    closesocket(s);
+    CloseHandle(port);
+
+    /* Test with an APC. */
+
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+    ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, buffer, sizeof(buffer), NULL, &overlapped, socket_apc);
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+    apc_count = 0;
+    size = 0xdeadbeef;
+    ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, buffer, sizeof(buffer), &size, &overlapped, socket_apc);
+    ok(!ret, "expected success\n");
+    ok(size == expect_size, "got size %u\n", size);
+
+    ret = SleepEx(0, TRUE);
+    todo_wine ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
+    if (ret == WAIT_IO_COMPLETION)
+    {
+        ok(apc_count == 1, "APC was called %u times\n", apc_count);
+        ok(!apc_error, "got APC error %u\n", apc_error);
+        ok(!apc_size, "got APC size %u\n", apc_size);
+        ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
+    }
+
     closesocket(s);
 }
 
