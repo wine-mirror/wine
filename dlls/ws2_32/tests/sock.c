@@ -3705,8 +3705,8 @@ static void test_fionread_siocatmark(void)
 
     WSASetLastError(0xdeadbeef);
     ret = WSAIoctl(client, FIONREAD, NULL, 0, &value, sizeof(value), NULL, NULL, NULL);
-    todo_wine ok(ret == -1, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
 
     WSASetLastError(0xdeadbeef);
     size = 0xdeadbeef;
@@ -3717,8 +3717,8 @@ static void test_fionread_siocatmark(void)
 
     WSASetLastError(0xdeadbeef);
     ret = WSAIoctl(client, SIOCATMARK, NULL, 0, &value, sizeof(value), NULL, NULL, NULL);
-    todo_wine ok(ret == -1, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
 
     WSASetLastError(0xdeadbeef);
     size = 0xdeadbeef;
@@ -3732,12 +3732,12 @@ static void test_fionread_siocatmark(void)
     port = CreateIoCompletionPort((HANDLE)client, NULL, 123, 0);
 
     ret = WSAIoctl(client, FIONREAD, NULL, 0, &value, sizeof(value), NULL, &overlapped, NULL);
-    todo_wine ok(ret == -1, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
 
     ret = WSAIoctl(client, SIOCATMARK, NULL, 0, &value, sizeof(value), NULL, &overlapped, NULL);
-    todo_wine ok(ret == -1, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
 
     WSASetLastError(0xdeadbeef);
     size = 0xdeadbeef;
@@ -3857,12 +3857,12 @@ static void test_fionread_siocatmark(void)
     server = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
     ret = WSAIoctl(server, FIONREAD, NULL, 0, &value, sizeof(value), NULL, &overlapped, socket_apc);
-    todo_wine ok(ret == -1, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
 
     ret = WSAIoctl(server, SIOCATMARK, NULL, 0, &value, sizeof(value), NULL, &overlapped, socket_apc);
-    todo_wine ok(ret == -1, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
 
     apc_count = 0;
     size = 0xdeadbeef;
@@ -3920,8 +3920,8 @@ static void test_fionbio(void)
 
     WSASetLastError(0xdeadbeef);
     ret = WSAIoctl(s, FIONBIO, &one, sizeof(one), NULL, 0, NULL, NULL, NULL);
-    todo_wine ok(ret == -1, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
 
     ret = WSAIoctl(s, FIONBIO, &one, sizeof(one) - 1, NULL, 0, &size, &overlapped, NULL);
     ok(ret == -1, "expected failure\n");
@@ -3952,7 +3952,7 @@ static void test_fionbio(void)
     ok(!overlapped.InternalHigh, "got size %Iu\n", overlapped.InternalHigh);
 
     ret = WSAIoctl(s, FIONBIO, &one, sizeof(one), NULL, 0, NULL, &overlapped, NULL);
-    todo_wine ok(ret == -1, "expected failure\n");
+    ok(ret == -1, "expected failure\n");
     ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
 
     ret = WSAEventSelect(s, event, FD_READ);
@@ -3974,8 +3974,8 @@ static void test_fionbio(void)
     s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
     ret = WSAIoctl(s, FIONBIO, &one, sizeof(one), NULL, 0, NULL, &overlapped, socket_apc);
-    todo_wine ok(ret == -1, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
 
     apc_count = 0;
     size = 0xdeadbeef;
@@ -4033,12 +4033,12 @@ static void test_keepalive_vals(void)
     ok(!size, "got size %u\n", size);
 
     ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(kalive), NULL, 0, NULL, NULL, NULL);
-    todo_wine ok(ret == SOCKET_ERROR, "WSAIoctl succeeded unexpectedly\n");
-    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+    ok(ret == SOCKET_ERROR, "WSAIoctl succeeded unexpectedly\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
 
     ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(kalive), NULL, 0, NULL, &overlapped, NULL);
-    todo_wine ok(ret == SOCKET_ERROR, "WSAIoctl succeeded unexpectedly\n");
-    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+    ok(ret == SOCKET_ERROR, "WSAIoctl succeeded unexpectedly\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
 
     WSASetLastError(0xdeadbeef);
     size = 0xdeadbeef;
@@ -4093,8 +4093,8 @@ static void test_keepalive_vals(void)
     sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
     ret = WSAIoctl(sock, SIO_KEEPALIVE_VALS, &kalive, sizeof(kalive), NULL, 0, NULL, &overlapped, socket_apc);
-    todo_wine ok(ret == -1, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
 
     apc_count = 0;
     size = 0xdeadbeef;
@@ -4135,9 +4135,8 @@ static void test_unsupported_ioctls(void)
 
         WSASetLastError(0xdeadbeef);
         ret = WSAIoctl(s, codes[i], NULL, 0, NULL, 0, NULL, &overlapped, NULL);
-        todo_wine_if (codes[i] == SIO_FLUSH)
-            ok(ret == -1, "expected failure\n");
-        todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+        ok(ret == -1, "expected failure\n");
+        ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
 
         WSASetLastError(0xdeadbeef);
         size = 0xdeadbeef;
@@ -4182,9 +4181,8 @@ static void test_unsupported_ioctls(void)
         s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
         ret = WSAIoctl(s, codes[i], NULL, 0, NULL, 0, NULL, &overlapped, socket_apc);
-        todo_wine_if (codes[i] == SIO_FLUSH)
-            ok(ret == -1, "expected failure\n");
-        todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+        ok(ret == -1, "expected failure\n");
+        ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
 
         apc_count = 0;
         size = 0xdeadbeef;
@@ -4228,8 +4226,8 @@ static void test_get_extension_func(void)
     WSASetLastError(0xdeadbeef);
     ret = WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &acceptex_guid, sizeof(GUID),
             &func, sizeof(func), NULL, &overlapped, NULL);
-    todo_wine ok(ret == -1, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
 
     WSASetLastError(0xdeadbeef);
     size = 0xdeadbeef;
@@ -4269,7 +4267,7 @@ static void test_get_extension_func(void)
     todo_wine ok(overlapped.InternalHigh == 0xdeadbeef, "got size %Iu\n", overlapped.InternalHigh);
 
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
-    todo_wine ok(!ret, "expected failure\n");
+    ok(!ret, "expected failure\n");
     todo_wine ok(GetLastError() == WAIT_TIMEOUT, "got error %u\n", WSAGetLastError());
 
     CloseHandle(port);
@@ -4279,8 +4277,8 @@ static void test_get_extension_func(void)
 
     ret = WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &acceptex_guid, sizeof(GUID),
             &func, sizeof(func), NULL, &overlapped, socket_apc);
-    todo_wine ok(ret == -1, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
 
     apc_count = 0;
     size = 0xdeadbeef;

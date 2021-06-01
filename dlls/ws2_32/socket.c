@@ -3329,7 +3329,7 @@ static DWORD get_interface_list(SOCKET s, void *out_buff, DWORD out_size, DWORD 
     DWORD status = 0;
     int fd;
 
-    if (!out_buff || !ret_size)
+    if (!out_buff)
         return WSAEFAULT;
 
     if ((fd = get_sock_fd(s, 0, NULL)) == -1)
@@ -3451,6 +3451,12 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
     TRACE("%04lx, %s, %p, %d, %p, %d, %p, %p, %p\n",
           s, debugstr_wsaioctl(code), in_buff, in_size, out_buff, out_size, ret_size, overlapped, completion);
 
+    if (!ret_size)
+    {
+        SetLastError( WSAEFAULT );
+        return -1;
+    }
+
     switch (code)
     {
     case WS_FIONBIO:
@@ -3543,12 +3549,6 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         DWORD size;
 
         TRACE("-> SIO_ADDRESS_LIST_QUERY request\n");
-
-        if (!ret_size)
-        {
-            SetLastError(WSAEFAULT);
-            return SOCKET_ERROR;
-        }
 
         if (out_size && out_size < FIELD_OFFSET(SOCKET_ADDRESS_LIST, Address[0]))
         {
@@ -3718,7 +3718,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
        TRACE("-> WS_SIO_ROUTING_INTERFACE_QUERY request\n");
 
        if (!in_buff || in_size < sizeof(struct WS_sockaddr) ||
-           !out_buff || out_size < sizeof(struct WS_sockaddr_in) || !ret_size)
+           !out_buff || out_size < sizeof(struct WS_sockaddr_in))
        {
            SetLastError(WSAEFAULT);
            return SOCKET_ERROR;
@@ -3816,7 +3816,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
 
     if (!status)
     {
-        if (ret_size) *ret_size = total;
+        *ret_size = total;
         return 0;
     }
     SetLastError( status );
