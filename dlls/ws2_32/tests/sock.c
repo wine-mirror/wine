@@ -200,6 +200,23 @@ static void tcp_socketpair(SOCKET *src, SOCKET *dst)
     tcp_socketpair_flags(src, dst, WSA_FLAG_OVERLAPPED);
 }
 
+#define check_poll(a, b) check_poll_(__LINE__, a, POLLRDNORM | POLLRDBAND | POLLWRNORM, b, FALSE)
+#define check_poll_todo(a, b) check_poll_(__LINE__, a, POLLRDNORM | POLLRDBAND | POLLWRNORM, b, TRUE)
+#define check_poll_mask(a, b, c) check_poll_(__LINE__, a, b, c, FALSE)
+#define check_poll_mask_todo(a, b, c) check_poll_(__LINE__, a, b, c, TRUE)
+static void check_poll_(int line, SOCKET s, short mask, short expect, BOOL todo)
+{
+    WSAPOLLFD pollfd;
+    int ret;
+
+    pollfd.fd = s;
+    pollfd.events = mask;
+    pollfd.revents = 0xdead;
+    ret = pWSAPoll(&pollfd, 1, 1000);
+    ok_(__FILE__, line)(ret == (pollfd.revents ? 1 : 0), "WSAPoll() returned %d\n", ret);
+    todo_wine_if (todo) ok_(__FILE__, line)(pollfd.revents == expect, "got wrong events %#x\n", pollfd.revents);
+}
+
 static void set_so_opentype ( BOOL overlapped )
 {
     int optval = !overlapped, newval, len = sizeof (int);
@@ -3763,10 +3780,16 @@ static void test_fionread_siocatmark(void)
     ret = send(server, "data", 5, 0);
     ok(ret == 5, "got %d\n", ret);
 
+    /* wait for the data to be available */
+    check_poll_mask(client, POLLRDNORM, POLLRDNORM);
+
     check_fionread_siocatmark(client, 5, TRUE);
 
     ret = send(server, "a", 1, MSG_OOB);
     ok(ret == 1, "got %d\n", ret);
+
+    /* wait for the data to be available */
+    check_poll_mask(client, POLLRDBAND, POLLRDBAND);
 
     check_fionread_siocatmark_todo_oob(client, 5, FALSE);
 
@@ -5869,23 +5892,6 @@ static void test_write_watch(void)
     closesocket( dest );
     closesocket( src );
     VirtualFree( base, 0, MEM_FREE );
-}
-
-#define check_poll(a, b) check_poll_(__LINE__, a, POLLRDNORM | POLLRDBAND | POLLWRNORM, b, FALSE)
-#define check_poll_todo(a, b) check_poll_(__LINE__, a, POLLRDNORM | POLLRDBAND | POLLWRNORM, b, TRUE)
-#define check_poll_mask(a, b, c) check_poll_(__LINE__, a, b, c, FALSE)
-#define check_poll_mask_todo(a, b, c) check_poll_(__LINE__, a, b, c, TRUE)
-static void check_poll_(int line, SOCKET s, short mask, short expect, BOOL todo)
-{
-    WSAPOLLFD pollfd;
-    int ret;
-
-    pollfd.fd = s;
-    pollfd.events = mask;
-    pollfd.revents = 0xdead;
-    ret = pWSAPoll(&pollfd, 1, 1000);
-    ok_(__FILE__, line)(ret == (pollfd.revents ? 1 : 0), "WSAPoll() returned %d\n", ret);
-    todo_wine_if (todo) ok_(__FILE__, line)(pollfd.revents == expect, "got wrong events %#x\n", pollfd.revents);
 }
 
 static void test_WSAPoll(void)
