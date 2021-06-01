@@ -457,78 +457,6 @@ static void socket_list_remove(SOCKET socket)
     LeaveCriticalSection(&cs_socket_list);
 }
 
-/****************************************************************
- * Async IO declarations
- ****************************************************************/
-
-typedef NTSTATUS async_callback_t( void *user, IO_STATUS_BLOCK *io, NTSTATUS status );
-
-struct ws2_async_io
-{
-    async_callback_t *callback; /* must be the first field */
-    struct ws2_async_io *next;
-};
-
-struct ws2_async_shutdown
-{
-    struct ws2_async_io io;
-    HANDLE              hSocket;
-    IO_STATUS_BLOCK     iosb;
-    int                 type;
-};
-
-struct ws2_async
-{
-    struct ws2_async_io                 io;
-    HANDLE                              hSocket;
-    LPWSAOVERLAPPED                     user_overlapped;
-    LPWSAOVERLAPPED_COMPLETION_ROUTINE  completion_func;
-    IO_STATUS_BLOCK                     local_iosb;
-    struct WS_sockaddr                  *addr;
-    union
-    {
-        int val;     /* for send operations */
-        int *ptr;    /* for recv operations */
-    }                                   addrlen;
-    DWORD                               flags;
-    DWORD                              *lpFlags;
-    WSABUF                             *control;
-    unsigned int                        n_iovecs;
-    unsigned int                        first_iovec;
-    struct iovec                        iovec[1];
-};
-
-static struct ws2_async_io *async_io_freelist;
-
-static void release_async_io( struct ws2_async_io *io )
-{
-    for (;;)
-    {
-        struct ws2_async_io *next = async_io_freelist;
-        io->next = next;
-        if (InterlockedCompareExchangePointer( (void **)&async_io_freelist, io, next ) == next) return;
-    }
-}
-
-static struct ws2_async_io *alloc_async_io( DWORD size, async_callback_t callback )
-{
-    /* first free remaining previous fileinfos */
-
-    struct ws2_async_io *io = InterlockedExchangePointer( (void **)&async_io_freelist, NULL );
-
-    while (io)
-    {
-        struct ws2_async_io *next = io->next;
-        HeapFree( GetProcessHeap(), 0, io );
-        io = next;
-    }
-
-    io = HeapAlloc( GetProcessHeap(), 0, size );
-    if (io) io->callback = callback;
-    return io;
-}
-
-
 typedef struct          /* WSAAsyncSelect() control struct */
 {
   HANDLE      service, event, sock;
@@ -1727,20 +1655,6 @@ static BOOL ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, i
     return TRUE;
 }
 
-/**************************************************************************
- * Functions for handling overlapped I/O
- **************************************************************************/
-
-/* user APC called upon async completion */
-static void WINAPI ws2_async_apc( void *arg, IO_STATUS_BLOCK *iosb, ULONG reserved )
-{
-    struct ws2_async *wsa = arg;
-
-    if (wsa->completion_func) wsa->completion_func( NtStatusToWSAError(iosb->u.Status),
-                                                    iosb->Information, wsa->user_overlapped,
-                                                    wsa->flags );
-    release_async_io( &wsa->io );
-}
 
 
 /***********************************************************************
@@ -3283,29 +3197,28 @@ static DWORD server_ioctl_sock( SOCKET s, DWORD code, LPVOID in_buff, DWORD in_s
                                 LPWSAOVERLAPPED overlapped,
                                 LPWSAOVERLAPPED_COMPLETION_ROUTINE completion )
 {
-    HANDLE event = overlapped ? overlapped->hEvent : 0;
+    IO_STATUS_BLOCK iosb, *piosb = &iosb;
     HANDLE handle = SOCKET2HANDLE( s );
-    struct ws2_async *wsa = NULL;
-    IO_STATUS_BLOCK *io = (PIO_STATUS_BLOCK)overlapped, iosb;
+    PIO_APC_ROUTINE apc = NULL;
+    HANDLE event = NULL;
     void *cvalue = NULL;
     NTSTATUS status;
 
+    if (overlapped)
+    {
+        piosb = (IO_STATUS_BLOCK *)overlapped;
+        if (!((ULONG_PTR)overlapped->hEvent & 1)) cvalue = overlapped;
+        event = overlapped->hEvent;
+    }
+
     if (completion)
     {
-        if (!(wsa = (struct ws2_async *)alloc_async_io( sizeof(*wsa), NULL )))
-            return WSA_NOT_ENOUGH_MEMORY;
-        wsa->hSocket           = handle;
-        wsa->user_overlapped   = overlapped;
-        wsa->completion_func   = completion;
-        if (!io) io = &wsa->local_iosb;
-        cvalue = wsa;
+        event = NULL;
+        cvalue = completion;
+        apc = socket_apc;
     }
-    else if (!io)
-        io = &iosb;
-    else if (!((ULONG_PTR)overlapped->hEvent & 1))
-        cvalue = overlapped;
 
-    status = NtDeviceIoControlFile( handle, event, wsa ? ws2_async_apc : NULL, cvalue, io, code,
+    status = NtDeviceIoControlFile( handle, event, apc, cvalue, piosb, code,
                                     in_buff, in_size, out_buff, out_size );
     if (status == STATUS_NOT_SUPPORTED)
     {
@@ -3313,9 +3226,7 @@ static DWORD server_ioctl_sock( SOCKET s, DWORD code, LPVOID in_buff, DWORD in_s
               code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
     }
     else if (status == STATUS_SUCCESS)
-        *ret_size = io->Information; /* "Information" is the size written to the output buffer */
-
-    if (status != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, wsa );
+        *ret_size = piosb->Information;
 
     return NtStatusToWSAError( status );
 }
