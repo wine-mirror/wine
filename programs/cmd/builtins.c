@@ -4218,7 +4218,7 @@ void WCMD_setshow_env (WCHAR *s) {
     if ((!status) & (gle == ERROR_ENVVAR_NOT_FOUND)) {
       errorlevel = 1;
     } else if (!status) WCMD_print_error();
-    else errorlevel = 0;
+    else if (!interactive) errorlevel = 0;
   }
 }
 
