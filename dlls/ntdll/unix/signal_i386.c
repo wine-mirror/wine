@@ -1779,7 +1779,6 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, void *stack_ptr,
                                   EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     struct syscall_frame *frame = x86_thread_data()->syscall_frame;
-    __WINE_FRAME *wine_frame = (__WINE_FRAME *)NtCurrentTeb()->Tib.ExceptionList;
     DWORD i;
 
     if (!frame) return FALSE;
@@ -1796,7 +1795,7 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, void *stack_ptr,
           context->Ebp, context->Esp, context->SegCs, context->SegDs,
           context->SegEs, context->SegFs, context->SegGs, context->EFlags );
 
-    if ((char *)wine_frame < (char *)frame)
+    if (ntdll_get_thread_data()->jmp_buf)
     {
         /* stack frame for calling __wine_longjmp */
         struct
@@ -1809,10 +1808,11 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, void *stack_ptr,
         TRACE( "returning to handler\n" );
         stack = virtual_setup_exception( stack_ptr, sizeof(*stack), rec );
         stack->retval  = 1;
-        stack->jmp     = &wine_frame->jmp;
+        stack->jmp     = ntdll_get_thread_data()->jmp_buf;
         stack->retaddr = (void *)0xdeadbabe;
         ESP_sig(sigcontext) = (DWORD)stack;
         EIP_sig(sigcontext) = (DWORD)__wine_longjmp;
+        ntdll_get_thread_data()->jmp_buf = NULL;
     }
     else
     {

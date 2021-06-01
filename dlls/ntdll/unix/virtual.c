@@ -104,7 +104,34 @@ struct file_view
     unsigned int  protect;       /* protection for all pages at allocation time and SEC_* flags */
 };
 
-#define __EXCEPT_SYSCALL __EXCEPT_HANDLER(0)
+#undef __TRY
+#undef __EXCEPT
+#undef __ENDTRY
+
+#define __TRY \
+    do { __wine_jmp_buf __jmp; \
+         int __first = 1; \
+         assert( !ntdll_get_thread_data()->jmp_buf ); \
+         for (;;) if (!__first) \
+         { \
+             do {
+
+#define __EXCEPT \
+             } while(0); \
+             ntdll_get_thread_data()->jmp_buf = NULL; \
+             break; \
+         } else { \
+             if (__wine_setjmpex( &__jmp, NULL )) { \
+                 do {
+
+#define __ENDTRY \
+                 } while (0); \
+                 break; \
+             } \
+             ntdll_get_thread_data()->jmp_buf = &__jmp; \
+             __first = 0; \
+         } \
+    } while (0);
 
 /* per-page protection flags */
 #define VPROT_READ       0x01
@@ -3428,7 +3455,7 @@ BOOL virtual_check_buffer_for_read( const void *ptr, SIZE_T size )
         dummy = p[0];
         dummy = p[count - 1];
     }
-    __EXCEPT_SYSCALL
+    __EXCEPT
     {
         return FALSE;
     }
@@ -3461,7 +3488,7 @@ BOOL virtual_check_buffer_for_write( void *ptr, SIZE_T size )
         p[0] |= 0;
         p[count - 1] |= 0;
     }
-    __EXCEPT_SYSCALL
+    __EXCEPT
     {
         return FALSE;
     }
