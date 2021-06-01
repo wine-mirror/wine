@@ -2783,9 +2783,9 @@ static const CSIDL_DATA CSIDL_Data[] =
     },
     { /* 0x56 */
         &FOLDERID_Public,
-        CSIDL_Type_CurrVer, /* FIXME */
+        CSIDL_Type_AllUsers,
         NULL,
-        UsersPublicW,
+        NULL,
 
         KF_CATEGORY_FIXED, /* category */
         PublicW, /* name */
