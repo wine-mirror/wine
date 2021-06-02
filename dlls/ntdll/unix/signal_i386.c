@@ -520,7 +520,10 @@ C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, gs ) 
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, exit_frame ) == 0x1f4 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, syscall_frame ) == 0x1f8 );
 
-static void *syscall_dispatcher;
+/* flags to control the behavior of the syscall dispatcher */
+#define SYSCALL_HAVE_XSAVE    1
+#define SYSCALL_HAVE_XSAVEC   2
+#define SYSCALL_HAVE_FXSAVE   4
 
 static inline struct x86_thread_data *x86_thread_data(void)
 {
@@ -2331,7 +2334,7 @@ NTSTATUS signal_alloc_thread( TEB *teb )
     }
     else thread_data->fs = gdt_fs_sel;
 
-    teb->WOW32Reserved = syscall_dispatcher;
+    teb->WOW32Reserved = __wine_syscall_dispatcher;
     return STATUS_SUCCESS;
 }
 
@@ -2374,6 +2377,10 @@ void signal_init_process(void)
 {
     struct sigaction sig_act;
 
+    if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_FXSR) __wine_syscall_flags |= SYSCALL_HAVE_FXSAVE;
+    if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_XSAVE) __wine_syscall_flags |= SYSCALL_HAVE_XSAVE;
+    if (xstate_compaction_enabled) __wine_syscall_flags |= SYSCALL_HAVE_XSAVEC;
+
     sig_act.sa_mask = server_block_set;
     sig_act.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
 #ifdef __ANDROID__
@@ -2409,20 +2416,7 @@ void signal_init_process(void)
  */
 void *signal_init_syscalls(void)
 {
-    extern void __wine_syscall_dispatcher_fxsave(void) DECLSPEC_HIDDEN;
-    extern void __wine_syscall_dispatcher_xsave(void) DECLSPEC_HIDDEN;
-    extern void __wine_syscall_dispatcher_xsavec(void) DECLSPEC_HIDDEN;
-
-    if (xstate_compaction_enabled)
-        syscall_dispatcher = __wine_syscall_dispatcher_xsavec;
-    else if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_XSAVE)
-        syscall_dispatcher = __wine_syscall_dispatcher_xsave;
-    else if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_FXSR)
-        syscall_dispatcher = __wine_syscall_dispatcher_fxsave;
-    else
-        syscall_dispatcher = __wine_syscall_dispatcher;
-
-    return NtCurrentTeb()->WOW32Reserved = syscall_dispatcher;
+    return NtCurrentTeb()->WOW32Reserved = __wine_syscall_dispatcher;
 }
 
 
