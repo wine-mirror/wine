@@ -19618,7 +19618,6 @@ fi
 for ac_func in \
 	exp2 \
 	exp2f \
-	fma \
 	fmaf \
 	lgamma \
 	lgammaf \
