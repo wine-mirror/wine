@@ -1780,21 +1780,6 @@ struct get_socket_info_reply
 };
 
 
-
-struct enable_socket_event_request
-{
-    struct request_header __header;
-    obj_handle_t handle;
-    unsigned int mask;
-    unsigned int sstate;
-    unsigned int cstate;
-    char __pad_28[4];
-};
-struct enable_socket_event_reply
-{
-    struct reply_header __header;
-};
-
 struct set_socket_deferred_request
 {
     struct request_header __header;
@@ -5521,7 +5506,6 @@ enum request
     REQ_set_socket_event,
     REQ_get_socket_event,
     REQ_get_socket_info,
-    REQ_enable_socket_event,
     REQ_set_socket_deferred,
     REQ_recv_socket,
     REQ_poll_socket,
@@ -5805,7 +5789,6 @@ union generic_request
     struct set_socket_event_request set_socket_event_request;
     struct get_socket_event_request get_socket_event_request;
     struct get_socket_info_request get_socket_info_request;
-    struct enable_socket_event_request enable_socket_event_request;
     struct set_socket_deferred_request set_socket_deferred_request;
     struct recv_socket_request recv_socket_request;
     struct poll_socket_request poll_socket_request;
@@ -6087,7 +6070,6 @@ union generic_reply
     struct set_socket_event_reply set_socket_event_reply;
     struct get_socket_event_reply get_socket_event_reply;
     struct get_socket_info_reply get_socket_info_reply;
-    struct enable_socket_event_reply enable_socket_event_reply;
     struct set_socket_deferred_reply set_socket_deferred_reply;
     struct recv_socket_reply recv_socket_reply;
     struct poll_socket_reply poll_socket_reply;
@@ -6312,7 +6294,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 710
+#define SERVER_PROTOCOL_VERSION 711
 
 /* ### protocol_version end ### */
 

@@ -2109,14 +2109,6 @@ static void dump_get_socket_info_reply( const struct get_socket_info_reply *req 
     fprintf( stderr, ", protocol=%d", req->protocol );
 }
 
-static void dump_enable_socket_event_request( const struct enable_socket_event_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-    fprintf( stderr, ", mask=%08x", req->mask );
-    fprintf( stderr, ", sstate=%08x", req->sstate );
-    fprintf( stderr, ", cstate=%08x", req->cstate );
-}
-
 static void dump_set_socket_deferred_request( const struct set_socket_deferred_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
@@ -4610,7 +4602,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_socket_event_request,
     (dump_func)dump_get_socket_event_request,
     (dump_func)dump_get_socket_info_request,
-    (dump_func)dump_enable_socket_event_request,
     (dump_func)dump_set_socket_deferred_request,
     (dump_func)dump_recv_socket_request,
     (dump_func)dump_poll_socket_request,
@@ -4891,7 +4882,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_socket_event_reply,
     (dump_func)dump_get_socket_info_reply,
     NULL,
-    NULL,
     (dump_func)dump_recv_socket_reply,
     (dump_func)dump_poll_socket_reply,
     (dump_func)dump_send_socket_reply,
@@ -5170,7 +5160,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_socket_event",
     "get_socket_event",
     "get_socket_info",
-    "enable_socket_event",
     "set_socket_deferred",
     "recv_socket",
     "poll_socket",

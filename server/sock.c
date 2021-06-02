@@ -2378,30 +2378,6 @@ DECL_HANDLER(get_socket_event)
     release_object( &sock->obj );
 }
 
-/* re-enable pending socket events */
-DECL_HANDLER(enable_socket_event)
-{
-    struct sock *sock;
-
-    if (!(sock = (struct sock*)get_handle_obj( current->process, req->handle,
-                                               FILE_WRITE_ATTRIBUTES, &sock_ops)))
-        return;
-
-    if (get_unix_fd( sock->fd ) == -1) return;
-
-    /* for event-based notification, windows erases stale events */
-    sock->pending_events &= ~req->mask;
-
-    sock->reported_events &= ~req->mask;
-    sock->state |= req->sstate;
-    sock->state &= ~req->cstate;
-    if (sock->type != WS_SOCK_STREAM) sock->state &= ~STREAM_FLAG_MASK;
-
-    sock_reselect( sock );
-
-    release_object( &sock->obj );
-}
-
 DECL_HANDLER(set_socket_deferred)
 {
     struct sock *sock, *acceptsock;
