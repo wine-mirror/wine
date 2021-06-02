@@ -3536,7 +3536,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         }
 
         FIXME("SIO_GET_EXTENSION_FUNCTION_POINTER %s: stub\n", debugstr_guid(in_buff));
-        SetLastError( WSAEOPNOTSUPP );
+        SetLastError( WSAEINVAL );
         return -1;
     }
     case WS_SIO_KEEPALIVE_VALS:

@@ -4258,7 +4258,7 @@ static void test_get_extension_func(void)
     ret = WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &bogus_guid, sizeof(GUID),
             &func, sizeof(func), &size, &overlapped, NULL);
     ok(ret == -1, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
     ok(size == 0xdeadbeef, "got size %u\n", size);
     ok(overlapped.Internal == 0xdeadbeef, "got status %#x\n", (NTSTATUS)overlapped.Internal);
     ok(overlapped.InternalHigh == 0xdeadbeef, "got size %Iu\n", overlapped.InternalHigh);
