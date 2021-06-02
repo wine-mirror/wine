@@ -1377,7 +1377,7 @@ static void test_window_close(IPin *pin, IMemInputPin *input, IMediaControl *con
     ret = check_ec_userabort(eventsrc, 0);
     todo_wine ok(ret == 1, "Expected EC_USERABORT.\n");
 
-    todo_wine ok(IsWindow(hwnd), "Window should exist.\n");
+    ok(IsWindow(hwnd), "Window should exist.\n");
     ok(!IsWindowVisible(hwnd), "Window should be visible.\n");
 
     thread = send_frame(input);
@@ -1417,7 +1417,7 @@ static void test_window_close(IPin *pin, IMemInputPin *input, IMediaControl *con
     ret = check_ec_userabort(eventsrc, 0);
     todo_wine ok(ret == 1, "Expected EC_USERABORT.\n");
 
-    todo_wine ok(IsWindow(hwnd), "Window should exist.\n");
+    ok(IsWindow(hwnd), "Window should exist.\n");
     ok(!IsWindowVisible(hwnd), "Window should be visible.\n");
 
     hr = IMediaControl_Stop(control);
