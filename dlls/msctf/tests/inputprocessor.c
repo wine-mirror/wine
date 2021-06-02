@@ -2130,8 +2130,8 @@ TfEditCookie ec)
     ITfContext_Release(context2);
 
     hr = ITfRange_QueryInterface(range, &IID_ITfRangeACP, (void **)&unk);
-todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(unk);
 
     ITfRange_Release(range);
 

@@ -37,8 +37,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msctf);
 
 typedef struct tagRange {
-    ITfRange ITfRange_iface;
-    /* const ITfRangeACPVtb *RangeACPVtbl; */
+    ITfRangeACP ITfRangeACP_iface;
     LONG refCount;
 
     ITfContext *context;
@@ -48,9 +47,14 @@ typedef struct tagRange {
 
 } Range;
 
-static inline Range *impl_from_ITfRange(ITfRange *iface)
+static inline Range *impl_from_ITfRangeACP(ITfRangeACP *iface)
 {
-    return CONTAINING_RECORD(iface, Range, ITfRange_iface);
+    return CONTAINING_RECORD(iface, Range, ITfRangeACP_iface);
+}
+
+static Range *unsafe_impl_from_ITfRange(ITfRange *iface)
+{
+    return CONTAINING_RECORD(iface, Range, ITfRangeACP_iface);
 }
 
 static void Range_Destructor(Range *This)
@@ -60,19 +64,22 @@ static void Range_Destructor(Range *This)
     HeapFree(GetProcessHeap(),0,This);
 }
 
-static HRESULT WINAPI Range_QueryInterface(ITfRange *iface, REFIID iid, LPVOID *ppvOut)
+static HRESULT WINAPI Range_QueryInterface(ITfRangeACP *iface, REFIID iid, LPVOID *ppvOut)
 {
-    Range *This = impl_from_ITfRange(iface);
+    Range *range = impl_from_ITfRangeACP(iface);
+
     *ppvOut = NULL;
 
-    if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITfRange))
+    if (IsEqualIID(iid, &IID_IUnknown) ||
+            IsEqualIID(iid, &IID_ITfRange) ||
+            IsEqualIID(iid, &IID_ITfRangeACP))
     {
-        *ppvOut = &This->ITfRange_iface;
+        *ppvOut = &range->ITfRangeACP_iface;
     }
 
     if (*ppvOut)
     {
-        ITfRange_AddRef(iface);
+        ITfRangeACP_AddRef(iface);
         return S_OK;
     }
 
@@ -80,136 +87,121 @@ static HRESULT WINAPI Range_QueryInterface(ITfRange *iface, REFIID iid, LPVOID *
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI Range_AddRef(ITfRange *iface)
+static ULONG WINAPI Range_AddRef(ITfRangeACP *iface)
 {
-    Range *This = impl_from_ITfRange(iface);
-    return InterlockedIncrement(&This->refCount);
+    Range *range = impl_from_ITfRangeACP(iface);
+    return InterlockedIncrement(&range->refCount);
 }
 
-static ULONG WINAPI Range_Release(ITfRange *iface)
+static ULONG WINAPI Range_Release(ITfRangeACP *iface)
 {
-    Range *This = impl_from_ITfRange(iface);
+    Range *range = impl_from_ITfRangeACP(iface);
     ULONG ret;
 
-    ret = InterlockedDecrement(&This->refCount);
+    ret = InterlockedDecrement(&range->refCount);
     if (ret == 0)
-        Range_Destructor(This);
+        Range_Destructor(range);
     return ret;
 }
 
-/*****************************************************
- * ITfRange functions
- *****************************************************/
-
-static HRESULT WINAPI Range_GetText(ITfRange *iface, TfEditCookie ec,
+static HRESULT WINAPI Range_GetText(ITfRangeACP *iface, TfEditCookie ec,
         DWORD dwFlags, WCHAR *pchText, ULONG cchMax, ULONG *pcch)
 {
-    Range *This = impl_from_ITfRange(iface);
-    FIXME("STUB:(%p)\n",This);
+    FIXME("STUB:(%p)\n", iface);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Range_SetText(ITfRange *iface, TfEditCookie ec,
+static HRESULT WINAPI Range_SetText(ITfRangeACP *iface, TfEditCookie ec,
          DWORD dwFlags, const WCHAR *pchText, LONG cch)
 {
-    Range *This = impl_from_ITfRange(iface);
-    FIXME("STUB:(%p)\n",This);
+    FIXME("STUB:(%p)\n", iface);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Range_GetFormattedText(ITfRange *iface, TfEditCookie ec,
+static HRESULT WINAPI Range_GetFormattedText(ITfRangeACP *iface, TfEditCookie ec,
         IDataObject **ppDataObject)
 {
-    Range *This = impl_from_ITfRange(iface);
-    FIXME("STUB:(%p)\n",This);
+    FIXME("STUB:(%p)\n", iface);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Range_GetEmbedded(ITfRange *iface, TfEditCookie ec,
+static HRESULT WINAPI Range_GetEmbedded(ITfRangeACP *iface, TfEditCookie ec,
         REFGUID rguidService, REFIID riid, IUnknown **ppunk)
 {
-    Range *This = impl_from_ITfRange(iface);
-    FIXME("STUB:(%p)\n",This);
+    FIXME("STUB:(%p)\n", iface);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Range_InsertEmbedded(ITfRange *iface, TfEditCookie ec,
+static HRESULT WINAPI Range_InsertEmbedded(ITfRangeACP *iface, TfEditCookie ec,
         DWORD dwFlags, IDataObject *pDataObject)
 {
-    Range *This = impl_from_ITfRange(iface);
-    FIXME("STUB:(%p)\n",This);
+    FIXME("STUB:(%p)\n", iface);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Range_ShiftStart(ITfRange *iface, TfEditCookie ec,
+static HRESULT WINAPI Range_ShiftStart(ITfRangeACP *iface, TfEditCookie ec,
         LONG cchReq, LONG *pcch, const TF_HALTCOND *pHalt)
 {
-    Range *This = impl_from_ITfRange(iface);
-    FIXME("STUB:(%p)\n",This);
+    FIXME("STUB:(%p)\n", iface);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Range_ShiftEnd(ITfRange *iface, TfEditCookie ec,
+static HRESULT WINAPI Range_ShiftEnd(ITfRangeACP *iface, TfEditCookie ec,
         LONG cchReq, LONG *pcch, const TF_HALTCOND *pHalt)
 {
-    Range *This = impl_from_ITfRange(iface);
-    FIXME("STUB:(%p)\n",This);
+    FIXME("STUB:(%p)\n", iface);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Range_ShiftStartToRange(ITfRange *iface, TfEditCookie ec,
+static HRESULT WINAPI Range_ShiftStartToRange(ITfRangeACP *iface, TfEditCookie ec,
         ITfRange *pRange, TfAnchor aPos)
 {
-    Range *This = impl_from_ITfRange(iface);
-    FIXME("STUB:(%p)\n",This);
+    FIXME("STUB:(%p)\n", iface);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Range_ShiftEndToRange(ITfRange *iface, TfEditCookie ec,
+static HRESULT WINAPI Range_ShiftEndToRange(ITfRangeACP *iface, TfEditCookie ec,
         ITfRange *pRange, TfAnchor aPos)
 {
-    Range *This = impl_from_ITfRange(iface);
-    FIXME("STUB:(%p)\n",This);
+    FIXME("STUB:(%p)\n", iface);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Range_ShiftStartRegion(ITfRange *iface, TfEditCookie ec,
+static HRESULT WINAPI Range_ShiftStartRegion(ITfRangeACP *iface, TfEditCookie ec,
         TfShiftDir dir, BOOL *pfNoRegion)
 {
-    Range *This = impl_from_ITfRange(iface);
-    FIXME("STUB:(%p)\n",This);
+    FIXME("STUB:(%p)\n", iface);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Range_ShiftEndRegion(ITfRange *iface, TfEditCookie ec,
+static HRESULT WINAPI Range_ShiftEndRegion(ITfRangeACP *iface, TfEditCookie ec,
         TfShiftDir dir, BOOL *pfNoRegion)
 {
-    Range *This = impl_from_ITfRange(iface);
-    FIXME("STUB:(%p)\n",This);
+    FIXME("STUB:(%p)\n", iface);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Range_IsEmpty(ITfRange *iface, TfEditCookie ec,
+static HRESULT WINAPI Range_IsEmpty(ITfRangeACP *iface, TfEditCookie ec,
         BOOL *pfEmpty)
 {
-    Range *This = impl_from_ITfRange(iface);
-    FIXME("STUB:(%p)\n",This);
+    FIXME("STUB:(%p)\n", iface);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Range_Collapse(ITfRange *iface, TfEditCookie ec,
+static HRESULT WINAPI Range_Collapse(ITfRangeACP *iface, TfEditCookie ec,
         TfAnchor aPos)
 {
-    Range *This = impl_from_ITfRange(iface);
-    TRACE("(%p) %i %i\n",This,ec,aPos);
+    Range *range = impl_from_ITfRangeACP(iface);
+
+    TRACE("%p, %i, %i.\n", iface, ec, aPos);
 
     switch (aPos)
     {
         case TF_ANCHOR_START:
-            This->anchorEnd = This->anchorStart;
+            range->anchorEnd = range->anchorStart;
             break;
         case TF_ANCHOR_END:
-            This->anchorStart = This->anchorEnd;
+            range->anchorStart = range->anchorEnd;
             break;
         default:
             return E_INVALIDARG;
@@ -218,90 +210,95 @@ static HRESULT WINAPI Range_Collapse(ITfRange *iface, TfEditCookie ec,
     return S_OK;
 }
 
-static HRESULT WINAPI Range_IsEqualStart(ITfRange *iface, TfEditCookie ec,
+static HRESULT WINAPI Range_IsEqualStart(ITfRangeACP *iface, TfEditCookie ec,
         ITfRange *pWith, TfAnchor aPos, BOOL *pfEqual)
 {
-    Range *This = impl_from_ITfRange(iface);
-    FIXME("STUB:(%p)\n",This);
+    FIXME("STUB:(%p)\n", iface);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Range_IsEqualEnd(ITfRange *iface, TfEditCookie ec,
+static HRESULT WINAPI Range_IsEqualEnd(ITfRangeACP *iface, TfEditCookie ec,
         ITfRange *pWith, TfAnchor aPos, BOOL *pfEqual)
 {
-    Range *This = impl_from_ITfRange(iface);
-    FIXME("STUB:(%p)\n",This);
+    FIXME("STUB:(%p)\n", iface);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Range_CompareStart(ITfRange *iface, TfEditCookie ec,
+static HRESULT WINAPI Range_CompareStart(ITfRangeACP *iface, TfEditCookie ec,
         ITfRange *pWith, TfAnchor aPos, LONG *plResult)
 {
-    Range *This = impl_from_ITfRange(iface);
-    FIXME("STUB:(%p)\n",This);
+    FIXME("STUB:(%p)\n", iface);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Range_CompareEnd(ITfRange *iface, TfEditCookie ec,
+static HRESULT WINAPI Range_CompareEnd(ITfRangeACP *iface, TfEditCookie ec,
         ITfRange *pWith, TfAnchor aPos, LONG *plResult)
 {
-    Range *This = impl_from_ITfRange(iface);
-    FIXME("STUB:(%p)\n",This);
+    FIXME("STUB:(%p)\n", iface);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Range_AdjustForInsert(ITfRange *iface, TfEditCookie ec,
+static HRESULT WINAPI Range_AdjustForInsert(ITfRangeACP *iface, TfEditCookie ec,
         ULONG cchInsert, BOOL *pfInsertOk)
 {
-    Range *This = impl_from_ITfRange(iface);
-    FIXME("STUB:(%p)\n",This);
+    FIXME("STUB:(%p)\n", iface);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Range_GetGravity(ITfRange *iface,
+static HRESULT WINAPI Range_GetGravity(ITfRangeACP *iface,
         TfGravity *pgStart, TfGravity *pgEnd)
 {
-    Range *This = impl_from_ITfRange(iface);
-    FIXME("STUB:(%p)\n",This);
+    FIXME("STUB:(%p)\n", iface);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Range_SetGravity(ITfRange *iface, TfEditCookie ec,
+static HRESULT WINAPI Range_SetGravity(ITfRangeACP *iface, TfEditCookie ec,
          TfGravity gStart, TfGravity gEnd)
 {
-    Range *This = impl_from_ITfRange(iface);
-    FIXME("STUB:(%p)\n",This);
+    FIXME("STUB:(%p)\n", iface);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Range_Clone(ITfRange *iface, ITfRange **ppClone)
+static HRESULT WINAPI Range_Clone(ITfRangeACP *iface, ITfRange **ppClone)
 {
-    Range *This = impl_from_ITfRange(iface);
-    FIXME("STUB:(%p)\n",This);
+    FIXME("STUB:(%p)\n", iface);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Range_GetContext(ITfRange *iface, ITfContext **context)
+static HRESULT WINAPI Range_GetContext(ITfRangeACP *iface, ITfContext **context)
 {
-    Range *This = impl_from_ITfRange(iface);
+    Range *range = impl_from_ITfRangeACP(iface);
 
-    TRACE("(%p, %p)\n", This, context);
+    TRACE("%p, %p.\n", iface, context);
 
     if (!context)
         return E_INVALIDARG;
 
-    *context = This->context;
+    *context = range->context;
     ITfContext_AddRef(*context);
 
     return S_OK;
 }
 
-static const ITfRangeVtbl Range_RangeVtbl =
+static HRESULT WINAPI Range_GetExtent(ITfRangeACP *iface, LONG *anchor, LONG *count)
+{
+    FIXME("%p, %p, %p.\n", iface, anchor, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Range_SetExtent(ITfRangeACP *iface, LONG anchor, LONG count)
+{
+    FIXME("%p, %d, %d.\n", iface, anchor, count);
+
+    return E_NOTIMPL;
+}
+
+static const ITfRangeACPVtbl rangevtbl =
 {
     Range_QueryInterface,
     Range_AddRef,
     Range_Release,
-
     Range_GetText,
     Range_SetText,
     Range_GetFormattedText,
@@ -323,7 +320,9 @@ static const ITfRangeVtbl Range_RangeVtbl =
     Range_GetGravity,
     Range_SetGravity,
     Range_Clone,
-    Range_GetContext
+    Range_GetContext,
+    Range_GetExtent,
+    Range_SetExtent,
 };
 
 HRESULT Range_Constructor(ITfContext *context, DWORD anchorStart, DWORD anchorEnd, ITfRange **ppOut)
@@ -336,14 +335,15 @@ HRESULT Range_Constructor(ITfContext *context, DWORD anchorStart, DWORD anchorEn
 
     TRACE("(%p) %p\n", This, context);
 
-    This->ITfRange_iface.lpVtbl = &Range_RangeVtbl;
+    This->ITfRangeACP_iface.lpVtbl = &rangevtbl;
     This->refCount = 1;
     This->context = context;
     ITfContext_AddRef(This->context);
     This->anchorStart = anchorStart;
     This->anchorEnd = anchorEnd;
 
-    *ppOut = &This->ITfRange_iface;
+    *ppOut = (ITfRange *)&This->ITfRangeACP_iface;
+
     TRACE("returning %p\n", *ppOut);
 
     return S_OK;
@@ -358,7 +358,7 @@ HRESULT TF_SELECTION_to_TS_SELECTION_ACP(const TF_SELECTION *tf, TS_SELECTION_AC
     if (!tf || !tsAcp || !tf->range)
         return E_INVALIDARG;
 
-    This = impl_from_ITfRange(tf->range);
+    This = unsafe_impl_from_ITfRange(tf->range);
 
     tsAcp->acpStart = This->anchorStart;
     tsAcp->acpEnd = This->anchorEnd;
