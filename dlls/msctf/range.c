@@ -42,7 +42,7 @@ typedef struct tagRange {
     LONG refCount;
 
     ITextStoreACP   *pITextStoreACP;
-    ITfContext      *pITfContext;
+    ITfContext *context;
 
     DWORD lockType;
     TfGravity gravityStart, gravityEnd;
@@ -58,6 +58,7 @@ static inline Range *impl_from_ITfRange(ITfRange *iface)
 static void Range_Destructor(Range *This)
 {
     TRACE("destroying %p\n", This);
+    ITfContext_Release(This->context);
     HeapFree(GetProcessHeap(),0,This);
 }
 
@@ -282,13 +283,18 @@ static HRESULT WINAPI Range_Clone(ITfRange *iface, ITfRange **ppClone)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI Range_GetContext(ITfRange *iface, ITfContext **ppContext)
+static HRESULT WINAPI Range_GetContext(ITfRange *iface, ITfContext **context)
 {
     Range *This = impl_from_ITfRange(iface);
-    TRACE("(%p)\n",This);
-    if (!ppContext)
+
+    TRACE("(%p, %p)\n", This, context);
+
+    if (!context)
         return E_INVALIDARG;
-    *ppContext = This->pITfContext;
+
+    *context = This->context;
+    ITfContext_AddRef(*context);
+
     return S_OK;
 }
 
@@ -334,7 +340,8 @@ HRESULT Range_Constructor(ITfContext *context, ITextStoreACP *textstore, DWORD l
 
     This->ITfRange_iface.lpVtbl = &Range_RangeVtbl;
     This->refCount = 1;
-    This->pITfContext = context;
+    This->context = context;
+    ITfContext_AddRef(This->context);
     This->pITextStoreACP = textstore;
     This->lockType = lockType;
     This->anchorStart = anchorStart;

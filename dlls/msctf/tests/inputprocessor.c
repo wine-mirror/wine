@@ -228,6 +228,8 @@ static HRESULT WINAPI TextStoreACP_AdviseSink(ITextStoreACP *iface,
     REFIID riid, IUnknown *punk, DWORD dwMask)
 {
     ITextStoreACPServices *services;
+    ITfRangeACP *range;
+    ITfContext *context;
     HRESULT hr;
 
     if (winetest_debug > 1) trace("ITextStoreACP::AdviseSink(iid %s, mask %#x)\n",
@@ -243,6 +245,18 @@ static HRESULT WINAPI TextStoreACP_AdviseSink(ITextStoreACP *iface,
 
     hr = ITextStoreACPSink_QueryInterface(ACPSink, &IID_ITextStoreACPServices, (void**)&services);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    range = NULL;
+    hr = ITextStoreACPServices_CreateRange(services, 0, 1, &range);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    if (range)
+    {
+        hr = ITfRangeACP_GetContext(range, &context);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ITfContext_Release(context);
+        ITfRangeACP_Release(range);
+    }
+
     ITextStoreACPServices_Release(services);
 
     return S_OK;
@@ -2084,10 +2098,11 @@ static void test_InsertAtSelection(TfEditCookie ec, ITfContext *cxt)
 static HRESULT WINAPI EditSession_DoEditSession(ITfEditSession *iface,
 TfEditCookie ec)
 {
-    ITfContext *cxt;
+    ITfContext *cxt, *context2;
     ITfDocumentMgr *dm;
     ITfRange *range;
     TF_SELECTION selection;
+    IUnknown *unk;
     ULONG fetched;
     HRESULT hr;
 
@@ -2108,6 +2123,15 @@ TfEditCookie ec)
     hr = ITfContext_GetStart(cxt,ec,&range);
     ok(SUCCEEDED(hr),"Unexpected return code %x\n",hr);
     ok(range != NULL,"Range set to NULL\n");
+
+    hr = ITfRange_GetContext(range, &context2);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(context2 == cxt, "Unexpected context pointer.\n");
+    ITfContext_Release(context2);
+
+    hr = ITfRange_QueryInterface(range, &IID_ITfRangeACP, (void **)&unk);
+todo_wine
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     ITfRange_Release(range);
 
