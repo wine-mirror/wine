@@ -1021,6 +1021,18 @@ static HRESULT join_thread_(int line, HANDLE thread)
 }
 #define join_thread(a) join_thread_(__LINE__, a)
 
+static void commit_allocator(IMemInputPin *input)
+{
+    IMemAllocator *allocator;
+    HRESULT hr;
+
+    hr = IMemInputPin_GetAllocator(input, &allocator);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMemAllocator_Commit(allocator);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IMemAllocator_Release(allocator);
+}
+
 static void test_filter_state(IMemInputPin *input, IMediaControl *control)
 {
     IMemAllocator *allocator;
@@ -1130,9 +1142,7 @@ static void test_filter_state(IMemInputPin *input, IMediaControl *control)
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
-    hr = IMemAllocator_Commit(allocator);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-
+    commit_allocator(input);
     hr = IMediaControl_Pause(control);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
@@ -1163,17 +1173,11 @@ static void test_filter_state(IMemInputPin *input, IMediaControl *control)
 
 static void test_flushing(IPin *pin, IMemInputPin *input, IMediaControl *control)
 {
-    IMemAllocator *allocator;
     OAFilterState state;
     HANDLE thread;
     HRESULT hr;
 
-    hr = IMemInputPin_GetAllocator(input, &allocator);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    hr = IMemAllocator_Commit(allocator);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    IMemAllocator_Release(allocator);
-
+    commit_allocator(input);
     hr = IMediaControl_Pause(control);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
@@ -1239,7 +1243,6 @@ static void test_current_image(IBaseFilter *filter, IMemInputPin *input,
     const BITMAPINFOHEADER *bih = (BITMAPINFOHEADER *)buffer;
     const DWORD *data = (DWORD *)((char *)buffer + sizeof(BITMAPINFOHEADER));
     BITMAPINFOHEADER expect_bih = *req_bih;
-    IMemAllocator *allocator;
     OAFilterState state;
     IBasicVideo *video;
     unsigned int i;
@@ -1272,12 +1275,7 @@ static void test_current_image(IBaseFilter *filter, IMemInputPin *input,
     ok(!memcmp(bih, &expect_bih, sizeof(BITMAPINFOHEADER)), "Bitmap headers didn't match.\n");
     /* The contents seem to reflect the last frame rendered. */
 
-    hr = IMemInputPin_GetAllocator(input, &allocator);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    hr = IMemAllocator_Commit(allocator);
-    ok(hr == S_OK, "Got hr %#x.\n", hr);
-    IMemAllocator_Release(allocator);
-
+    commit_allocator(input);
     hr = IMediaControl_Pause(control);
     ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
