@@ -3515,29 +3515,29 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
             EXTENSION_FUNCTION(WSAID_WSASENDMSG, WSASendMsg)
         };
 #undef EXTENSION_FUNCTION
-        BOOL found = FALSE;
         unsigned int i;
 
         for (i = 0; i < ARRAY_SIZE(guid_funcs); i++)
         {
             if (IsEqualGUID(&guid_funcs[i].guid, in_buff))
             {
-                found = TRUE;
-                break;
+                NTSTATUS status = STATUS_SUCCESS;
+                DWORD ret = 0;
+
+                TRACE( "returning %s\n", guid_funcs[i].name );
+                *(void **)out_buff = guid_funcs[i].func_ptr;
+
+                ret = server_ioctl_sock( s, IOCTL_AFD_WINE_COMPLETE_ASYNC, &status, sizeof(status),
+                                         NULL, 0, ret_size, overlapped, completion );
+                *ret_size = sizeof(void *);
+                SetLastError( ret );
+                return ret ? -1 : 0;
             }
         }
 
-        if (found)
-        {
-            TRACE("-> got %s\n", guid_funcs[i].name);
-            *(void **)out_buff = guid_funcs[i].func_ptr;
-            total = sizeof(void *);
-            break;
-        }
-
         FIXME("SIO_GET_EXTENSION_FUNCTION_POINTER %s: stub\n", debugstr_guid(in_buff));
-        status = WSAEOPNOTSUPP;
-        break;
+        SetLastError( WSAEOPNOTSUPP );
+        return -1;
     }
     case WS_SIO_KEEPALIVE_VALS:
     {
