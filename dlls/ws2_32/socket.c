@@ -798,35 +798,6 @@ static inline void release_sock_fd( SOCKET s, int fd )
     close( fd );
 }
 
-static void _enable_event( HANDLE s, unsigned int event,
-                           unsigned int sstate, unsigned int cstate )
-{
-    SERVER_START_REQ( enable_socket_event )
-    {
-        req->handle = wine_server_obj_handle( s );
-        req->mask   = event;
-        req->sstate = sstate;
-        req->cstate = cstate;
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-}
-
-static unsigned int _get_sock_mask(SOCKET s)
-{
-    unsigned int ret;
-    SERVER_START_REQ( get_socket_event )
-    {
-        req->handle  = wine_server_obj_handle( SOCKET2HANDLE(s) );
-        req->service = FALSE;
-        req->c_event = 0;
-        wine_server_call( req );
-        ret = reply->mask;
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
 static void _get_sock_errors(SOCKET s, int *events)
 {
     SERVER_START_REQ( get_socket_event )
@@ -3371,23 +3342,20 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
     switch (code)
     {
     case WS_FIONBIO:
-        if (in_size != sizeof(WS_u_long) || IS_INTRESOURCE(in_buff))
+    {
+        DWORD ret;
+
+        if (IS_INTRESOURCE( in_buff ))
         {
-            SetLastError(WSAEFAULT);
-            return SOCKET_ERROR;
+            SetLastError( WSAEFAULT );
+            return -1;
         }
-        TRACE("-> FIONBIO (%x)\n", *(WS_u_long*)in_buff);
-        if (_get_sock_mask(s))
-        {
-            /* AsyncSelect()'ed sockets are always nonblocking */
-            if (!*(WS_u_long *)in_buff) status = WSAEINVAL;
-            break;
-        }
-        if (*(WS_u_long *)in_buff)
-            _enable_event(SOCKET2HANDLE(s), 0, FD_WINE_NONBLOCKING, 0);
-        else
-            _enable_event(SOCKET2HANDLE(s), 0, 0, FD_WINE_NONBLOCKING);
-        break;
+
+        ret = server_ioctl_sock( s, IOCTL_AFD_WINE_FIONBIO, in_buff, in_size,
+                                 out_buff, out_size, ret_size, overlapped, completion );
+        SetLastError( ret );
+        return ret ? -1 : 0;
+    }
 
     case WS_FIONREAD:
     {
@@ -3684,32 +3652,21 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
     case 0x667e: /* Netscape tries hard to use bogus ioctl 0x667e */
         SetLastError(WSAEOPNOTSUPP);
         return SOCKET_ERROR;
+
     case WS_SIO_ADDRESS_LIST_CHANGE:
-        code = IOCTL_AFD_WINE_ADDRESS_LIST_CHANGE;
-        status = WSAEOPNOTSUPP;
-        break;
-    default:
-        status = WSAEOPNOTSUPP;
-        break;
+    {
+        DWORD ret;
+
+        ret = server_ioctl_sock( s, IOCTL_AFD_WINE_ADDRESS_LIST_CHANGE, in_buff, in_size,
+                                 out_buff, out_size, ret_size, overlapped, completion );
+        SetLastError( ret );
+        return ret ? -1 : 0;
     }
 
-    if (status == WSAEOPNOTSUPP)
-    {
-        status = server_ioctl_sock(s, code, in_buff, in_size, out_buff, out_size, &total,
-                                   overlapped, completion);
-        if (status != WSAEOPNOTSUPP)
-        {
-            if (status == 0 || status == WSA_IO_PENDING || status == WSAEWOULDBLOCK)
-                TRACE("-> %s request\n", debugstr_wsaioctl(code));
-            else
-                ERR("-> %s request failed with status 0x%x\n", debugstr_wsaioctl(code), status);
-
-            /* overlapped and completion operations will be handled by the server */
-            completion = NULL;
-            overlapped = NULL;
-        }
-        else
-            FIXME("unsupported WS_IOCTL cmd (%s)\n", debugstr_wsaioctl(code));
+    default:
+        FIXME( "unimplemented ioctl %s\n", debugstr_wsaioctl( code ) );
+        status = WSAEOPNOTSUPP;
+        break;
     }
 
     if (completion)

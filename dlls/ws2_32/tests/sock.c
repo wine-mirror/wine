@@ -3931,11 +3931,11 @@ static void test_fionbio(void)
     WSASetLastError(0xdeadbeef);
     ret = WSAIoctl(s, FIONBIO, &one, sizeof(one), NULL, 0, &size, NULL, NULL);
     ok(!ret, "expected success\n");
-    todo_wine ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+    ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
     ok(!size, "got size %u\n", size);
 
     ret = WSAIoctl(s, FIONBIO, &one, sizeof(one) + 1, NULL, 0, &size, NULL, NULL);
-    todo_wine ok(!ret, "got error %u\n", WSAGetLastError());
+    ok(!ret, "got error %u\n", WSAGetLastError());
 
     overlapped.Internal = 0xdeadbeef;
     overlapped.InternalHigh = 0xdeadbeef;
@@ -3984,14 +3984,11 @@ static void test_fionbio(void)
     ok(!size, "got size %u\n", size);
 
     ret = SleepEx(0, TRUE);
-    todo_wine ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
-    if (ret == WAIT_IO_COMPLETION)
-    {
-        ok(apc_count == 1, "APC was called %u times\n", apc_count);
-        ok(!apc_error, "got APC error %u\n", apc_error);
-        ok(!apc_size, "got APC size %u\n", apc_size);
-        ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
-    }
+    ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
+    ok(apc_count == 1, "APC was called %u times\n", apc_count);
+    ok(!apc_error, "got APC error %u\n", apc_error);
+    ok(!apc_size, "got APC size %u\n", apc_size);
+    ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
 
     closesocket(s);
 }
