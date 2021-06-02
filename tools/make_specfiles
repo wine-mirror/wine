@@ -508,6 +508,10 @@ my @dll_groups =
   "mscoree",
   "mscorwks",
  ],
+ [
+  "sppc",
+  "slc",
+ ],
 );
 
 my $update_flags = 0;

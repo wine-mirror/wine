@@ -38,7 +38,7 @@
 @ stub SLGetLicense
 @ stub SLGetLicenseFileId
 @ stub SLGetLicenseInformation
-@ stub SLGetLicensingStatusInformation
+@ stdcall SLGetLicensingStatusInformation(ptr ptr ptr wstr ptr ptr)
 @ stub SLGetPKeyId
 @ stub SLGetPKeyInformation
 @ stub SLGetPolicyInformation
@@ -51,7 +51,7 @@
 @ stub SLInstallProofOfPurchaseEx
 @ stub SLIsGenuineLocalEx
 @ stub SLLoadApplicationPolicies
-@ stub SLOpen
+@ stdcall SLOpen(ptr)
 @ stub SLPersistApplicationPolicies
 @ stub SLPersistRTSPayloadOverride
 @ stub SLReArm

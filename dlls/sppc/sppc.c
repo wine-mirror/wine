@@ -31,33 +31,22 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(slc);
 
-HRESULT WINAPI SLGetWindowsInformation(LPCWSTR name, SLDATATYPE *type, UINT *val, LPBYTE *size)
+HRESULT WINAPI SLGetLicensingStatusInformation(HSLC handle, const SLID *app, const SLID *product,
+                                               LPCWSTR name, UINT *count, SL_LICENSING_STATUS **status)
 {
-    FIXME("(%s %p %p %p) stub\n", debugstr_w(name), type, val, size );
+    FIXME("(%p %p %p %s %p %p) stub\n", handle, app, product, debugstr_w(name), count, status );
 
-    return SL_E_RIGHT_NOT_GRANTED;
+    return SL_E_RIGHT_NOT_CONSUMED;
 }
 
-HRESULT WINAPI SLGetWindowsInformationDWORD(LPCWSTR lpszValueName, LPDWORD pdwValue)
+HRESULT WINAPI SLOpen(HSLC *handle)
 {
-    UNICODE_STRING nameW;
-    NTSTATUS status;
-    ULONG type, len;
+    FIXME("(%p) stub\n", handle );
 
-    TRACE("(%s)\n", debugstr_w(lpszValueName) );
-
-    if (!lpszValueName || !pdwValue)
+    if (!handle)
         return E_INVALIDARG;
-    if (!lpszValueName[0])
-        return SL_E_RIGHT_NOT_GRANTED;
 
-    RtlInitUnicodeString( &nameW, lpszValueName );
-    status = NtQueryLicenseValue( &nameW, &type, pdwValue, sizeof(DWORD), &len );
+    *handle = (HSLC)0xdeadbeef;
 
-    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
-        return SL_E_VALUE_NOT_FOUND;
-    if ((!status || status == STATUS_BUFFER_TOO_SMALL) && (type != REG_DWORD))
-        return SL_E_DATATYPE_MISMATCHED;
-
-    return status ? E_FAIL : S_OK;
+    return S_OK;
 }
