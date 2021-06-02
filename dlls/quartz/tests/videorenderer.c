@@ -1100,7 +1100,7 @@ static void test_sample_time(IBaseFilter *filter, IPin *pin, IMemInputPin *input
     IMediaSeeking_Release(seeking);
 }
 
-static unsigned int check_ec_complete(IMediaEvent *eventsrc, DWORD timeout)
+static unsigned int check_event_code(IMediaEvent *eventsrc, DWORD timeout, LONG expected_code, LONG_PTR expected1, LONG_PTR expected2)
 {
     LONG_PTR param1, param2;
     unsigned int ret = 0;
@@ -1109,10 +1109,10 @@ static unsigned int check_ec_complete(IMediaEvent *eventsrc, DWORD timeout)
 
     while ((hr = IMediaEvent_GetEvent(eventsrc, &code, &param1, &param2, timeout)) == S_OK)
     {
-        if (code == EC_COMPLETE)
+        if (code == expected_code)
         {
-            ok(param1 == S_OK, "Got param1 %#lx.\n", param1);
-            ok(!param2, "Got param2 %#lx.\n", param2);
+            ok(param1 == expected1, "Got param1 %#lx.\n", param1);
+            ok(param2 == expected2, "Got param2 %#lx.\n", param2);
             ret++;
         }
         IMediaEvent_FreeEventParams(eventsrc, code, param1, param2);
@@ -1121,6 +1121,11 @@ static unsigned int check_ec_complete(IMediaEvent *eventsrc, DWORD timeout)
     ok(hr == E_ABORT, "Got hr %#x.\n", hr);
 
     return ret;
+}
+
+static inline unsigned int check_ec_complete(IMediaEvent *eventsrc, DWORD timeout)
+{
+    return check_event_code(eventsrc, timeout, EC_COMPLETE, S_OK, 0);
 }
 
 static void test_eos(IPin *pin, IMemInputPin *input, IMediaControl *control)
@@ -1307,6 +1312,90 @@ static void test_current_image(IBaseFilter *filter, IMemInputPin *input,
     IBasicVideo_Release(video);
 }
 
+static inline unsigned int check_ec_userabort(IMediaEvent *eventsrc, DWORD timeout)
+{
+    return check_event_code(eventsrc, timeout, EC_USERABORT, 0, 0);
+}
+
+static void test_window_close(IPin *pin, IMemInputPin *input, IMediaControl *control)
+{
+    IMediaEvent *eventsrc;
+    OAFilterState state;
+    IOverlay *overlay;
+    HANDLE thread;
+    HRESULT hr;
+    HWND hwnd;
+    BOOL ret;
+
+    IMediaControl_QueryInterface(control, &IID_IMediaEvent, (void **)&eventsrc);
+    IPin_QueryInterface(pin, &IID_IOverlay, (void **)&overlay);
+
+    hr = IOverlay_GetWindowHandle(overlay, &hwnd);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    IOverlay_Release(overlay);
+
+    hr = IMediaControl_Pause(control);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ret = check_ec_userabort(eventsrc, 0);
+    ok(!ret, "Got unexpected EC_USERABORT.\n");
+
+    SendMessageW(hwnd, WM_CLOSE, 0, 0);
+
+    hr = IMediaControl_GetState(control, 1000, &state);
+    ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
+    ret = check_ec_userabort(eventsrc, 0);
+    todo_wine ok(ret == 1, "Expected EC_USERABORT.\n");
+
+    todo_wine ok(IsWindow(hwnd), "Window should exist.\n");
+    ok(!IsWindowVisible(hwnd), "Window should be visible.\n");
+
+    thread = send_frame(input);
+    ret = WaitForSingleObject(thread, 1000);
+    todo_wine ok(ret == WAIT_OBJECT_0, "Wait failed\n");
+    if (ret == WAIT_OBJECT_0)
+    {
+        GetExitCodeThread(thread, (DWORD *)&hr);
+        ok(hr == E_UNEXPECTED, "Got hr %#x.\n", hr);
+    }
+    CloseHandle(thread);
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_userabort(eventsrc, 0);
+    ok(!ret, "Got unexpected EC_USERABORT.\n");
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_userabort(eventsrc, 0);
+    ok(!ret, "Got unexpected EC_USERABORT.\n");
+
+    /* We receive an EC_USERABORT notification immediately. */
+
+    hr = IMediaControl_Run(control);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    hr = join_thread(send_frame(input));
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = IMediaControl_GetState(control, 1000, &state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_userabort(eventsrc, 0);
+    ok(!ret, "Got unexpected EC_USERABORT.\n");
+
+    SendMessageW(hwnd, WM_CLOSE, 0, 0);
+
+    ret = check_ec_userabort(eventsrc, 0);
+    todo_wine ok(ret == 1, "Expected EC_USERABORT.\n");
+
+    todo_wine ok(IsWindow(hwnd), "Window should exist.\n");
+    ok(!IsWindowVisible(hwnd), "Window should be visible.\n");
+
+    hr = IMediaControl_Stop(control);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ret = check_ec_userabort(eventsrc, 0);
+    ok(!ret, "Got unexpected EC_USERABORT.\n");
+
+    IMediaEvent_Release(eventsrc);
+}
+
 static void test_connect_pin(void)
 {
     VIDEOINFOHEADER vih =
@@ -1428,6 +1517,7 @@ static void test_connect_pin(void)
     test_sample_time(filter, pin, input, control);
     test_eos(pin, input, control);
     test_current_image(filter, input, control, &vih.bmiHeader);
+    test_window_close(pin, input, control);
 
     hr = IFilterGraph2_Disconnect(graph, pin);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
