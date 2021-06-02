@@ -1316,6 +1316,45 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             break;
         }
 
+        case IOCTL_AFD_WINE_SIOCATMARK:
+        {
+            int value, ret;
+            socklen_t len = sizeof(value);
+
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+                return status;
+
+            if (out_size < sizeof(int))
+            {
+                status = STATUS_BUFFER_TOO_SMALL;
+                break;
+            }
+
+            if (getsockopt( fd, SOL_SOCKET, SO_OOBINLINE, &value, &len ) < 0)
+            {
+                status = sock_errno_to_status( errno );
+                break;
+            }
+
+            if (value)
+            {
+                *(int *)out_buffer = TRUE;
+            }
+            else
+            {
+                if ((ret = ioctl( fd, SIOCATMARK, &value )) < 0)
+                {
+                    status = sock_errno_to_status( errno );
+                    break;
+                }
+                /* windows is reversed with respect to unix */
+                *(int *)out_buffer = !value;
+            }
+            status = STATUS_SUCCESS;
+            complete_async( handle, event, apc, apc_user, io, status, 0 );
+            break;
+        }
+
         default:
         {
             if ((code >> 16) == FILE_DEVICE_NETWORK)
