@@ -249,13 +249,11 @@ static HRESULT WINAPI TextStoreACP_AdviseSink(ITextStoreACP *iface,
     range = NULL;
     hr = ITextStoreACPServices_CreateRange(services, 0, 1, &range);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-    if (range)
-    {
-        hr = ITfRangeACP_GetContext(range, &context);
-        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
-        ITfContext_Release(context);
-        ITfRangeACP_Release(range);
-    }
+
+    hr = ITfRangeACP_GetContext(range, &context);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ITfContext_Release(context);
+    ITfRangeACP_Release(range);
 
     ITextStoreACPServices_Release(services);
 

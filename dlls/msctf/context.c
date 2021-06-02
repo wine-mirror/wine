@@ -1022,9 +1022,9 @@ static HRESULT WINAPI TextStoreACPServices_CreateRange(ITextStoreACPServices *if
 {
     Context *This = impl_from_ITextStoreACPServices(iface);
 
-    FIXME("stub: %p %d %d %p\n", This, start, end, range);
+    TRACE("%p, %d, %d, %p.\n", This, start, end, range);
 
-    return S_OK;
+    return Range_Constructor(&This->ITfContext_iface, start, end, (ITfRange **)range);
 }
 
 static const ITextStoreACPServicesVtbl TextStoreACPServicesVtbl =
