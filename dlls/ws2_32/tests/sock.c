@@ -3667,7 +3667,7 @@ static void check_fionread_siocatmark_(int line, SOCKET s, unsigned int normal, 
     WSASetLastError(0xdeadbeef);
     ret = WSAIoctl(s, FIONREAD, NULL, 0, &value, sizeof(value), &size, NULL, NULL);
     ok_(__FILE__, line)(!ret, "expected success\n");
-    todo_wine ok_(__FILE__, line)(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+    ok_(__FILE__, line)(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
     todo_wine_if (todo_normal) ok_(__FILE__, line)(value == normal, "FIONBIO returned %u\n", value);
 
     value = 0xdeadbeef;
@@ -3746,9 +3746,9 @@ static void test_fionread_siocatmark(void)
     overlapped.InternalHigh = 0xdeadbeef;
     ret = WSAIoctl(client, FIONREAD, NULL, 0, &value, sizeof(value), &size, &overlapped, NULL);
     ok(!ret, "expected success\n");
-    todo_wine ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+    ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
     ok(!value, "got %u\n", value);
-    todo_wine ok(size == sizeof(value), "got size %u\n", size);
+    ok(size == sizeof(value), "got size %u\n", size);
     ok(!overlapped.Internal, "got status %#x\n", (NTSTATUS)overlapped.Internal);
     ok(!overlapped.InternalHigh, "got size %Iu\n", overlapped.InternalHigh);
 
@@ -3868,17 +3868,14 @@ static void test_fionread_siocatmark(void)
     size = 0xdeadbeef;
     ret = WSAIoctl(server, FIONREAD, NULL, 0, &value, sizeof(value), &size, &overlapped, socket_apc);
     ok(!ret, "expected success\n");
-    todo_wine ok(size == sizeof(value), "got size %u\n", size);
+    ok(size == sizeof(value), "got size %u\n", size);
 
     ret = SleepEx(0, TRUE);
-    todo_wine ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
-    if (ret == WAIT_IO_COMPLETION)
-    {
-        ok(apc_count == 1, "APC was called %u times\n", apc_count);
-        ok(!apc_error, "got APC error %u\n", apc_error);
-        ok(!apc_size, "got APC size %u\n", apc_size);
-        ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
-    }
+    ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
+    ok(apc_count == 1, "APC was called %u times\n", apc_count);
+    ok(!apc_error, "got APC error %u\n", apc_error);
+    ok(!apc_size, "got APC size %u\n", apc_size);
+    ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
 
     apc_count = 0;
     size = 0xdeadbeef;

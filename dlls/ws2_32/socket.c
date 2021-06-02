@@ -3359,28 +3359,13 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
 
     case WS_FIONREAD:
     {
-#if defined(linux)
-        int listening = 0;
-        socklen_t len = sizeof(listening);
-#endif
-        if (out_size != sizeof(WS_u_long) || IS_INTRESOURCE(out_buff))
-        {
-            SetLastError(WSAEFAULT);
-            return SOCKET_ERROR;
-        }
-        if ((fd = get_sock_fd( s, 0, NULL )) == -1) return SOCKET_ERROR;
+        DWORD ret;
 
-#if defined(linux)
-        /* On Linux, FIONREAD on listening socket always fails (see tcp(7)).
-           However, it succeeds on native. */
-        if (!getsockopt( fd, SOL_SOCKET, SO_ACCEPTCONN, &listening, &len ) && listening)
-            (*(WS_u_long *) out_buff) = 0;
-        else
-#endif
-        if (ioctl(fd, FIONREAD, out_buff ) == -1)
-            status = wsaErrno();
-        release_sock_fd( s, fd );
-        break;
+        ret = server_ioctl_sock( s, IOCTL_AFD_WINE_FIONREAD, in_buff, in_size,
+                                 out_buff, out_size, ret_size, overlapped, completion );
+        SetLastError( ret );
+        if (!ret) *ret_size = sizeof(WS_u_long);
+        return ret ? -1 : 0;
     }
 
     case WS_SIOCATMARK:
