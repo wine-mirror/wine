@@ -5417,26 +5417,35 @@ todo_wine
 
 static void test_GetFileAttributesExW(void)
 {
-    static const WCHAR path1[] = {'\\','\\','?','\\',0};
-    static const WCHAR path2[] = {'\\','?','?','\\',0};
-    static const WCHAR path3[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\',0};
+    static const struct
+    {
+        const WCHAR *path;
+        DWORD expected_error;
+    }
+    tests[] =
+    {
+        {L"\\\\?\\", ERROR_INVALID_NAME},
+        {L"\\??\\", ERROR_INVALID_NAME},
+        {L"\\DosDevices\\", ERROR_FILE_NOT_FOUND},
+        {L"\\\\?\\C:\\windows\\system32\\..\\system32\\kernel32.dll", ERROR_INVALID_NAME},
+    };
     WIN32_FILE_ATTRIBUTE_DATA info;
+    DWORD error, test_idx;
     BOOL ret;
 
-    SetLastError(0xdeadbeef);
-    ret = GetFileAttributesExW(path1, GetFileExInfoStandard, &info);
-    ok(!ret, "GetFileAttributesExW succeeded\n");
-    ok(GetLastError() == ERROR_INVALID_NAME, "Expected error ERROR_INVALID_NAME, got %u\n", GetLastError());
+    for (test_idx = 0; test_idx < ARRAY_SIZE(tests); ++test_idx)
+    {
+        winetest_push_context("Test %u", test_idx);
 
-    SetLastError(0xdeadbeef);
-    ret = GetFileAttributesExW(path2, GetFileExInfoStandard, &info);
-    ok(!ret, "GetFileAttributesExW succeeded\n");
-    ok(GetLastError() == ERROR_INVALID_NAME, "Expected error ERROR_INVALID_NAME, got %u\n", GetLastError());
+        SetLastError(0xdeadbeef);
+        ret = GetFileAttributesExW(tests[test_idx].path, GetFileExInfoStandard, &info);
+        error = GetLastError();
+        ok(!ret, "GetFileAttributesExW succeeded\n");
+        ok(error == tests[test_idx].expected_error, "Expected error %u, got %u\n",
+           tests[test_idx].expected_error, error);
 
-    SetLastError(0xdeadbeef);
-    ret = GetFileAttributesExW(path3, GetFileExInfoStandard, &info);
-    ok(!ret, "GetFileAttributesExW succeeded\n");
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Expected error ERROR_FILE_NOT_FOUND, got %u\n", GetLastError());
+        winetest_pop_context();
+    }
 }
 
 static void test_post_completion(void)
