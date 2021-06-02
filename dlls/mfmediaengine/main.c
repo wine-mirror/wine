@@ -1161,6 +1161,8 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
                 IMFTopologyNode_Release(video_src);
         }
 
+        IMFTopology_SetUINT32(topology, &MF_TOPOLOGY_ENUMERATE_SOURCE_TYPES, TRUE);
+
         if (SUCCEEDED(hr))
             hr = IMFMediaSession_SetTopology(engine->session, MFSESSION_SETTOPOLOGY_IMMEDIATE, topology);
     }
