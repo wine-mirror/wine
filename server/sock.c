@@ -1892,6 +1892,27 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         set_error( STATUS_PENDING );
         return 1;
 
+    case IOCTL_AFD_WINE_FIONBIO:
+        if (get_req_data_size() < sizeof(int))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return 0;
+        }
+        if (*(int *)get_req_data())
+        {
+            sock->state |= FD_WINE_NONBLOCKING;
+        }
+        else
+        {
+            if (sock->mask)
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                return 0;
+            }
+            sock->state &= ~FD_WINE_NONBLOCKING;
+        }
+        return 1;
+
     default:
         set_error( STATUS_NOT_SUPPORTED );
         return 0;
