@@ -3370,29 +3370,13 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
 
     case WS_SIOCATMARK:
     {
-        unsigned int oob = 0, atmark = 0;
-        socklen_t oobsize = sizeof(int);
-        if (out_size != sizeof(WS_u_long) || IS_INTRESOURCE(out_buff))
-        {
-            SetLastError(WSAEFAULT);
-            return SOCKET_ERROR;
-        }
-        if ((fd = get_sock_fd( s, 0, NULL )) == -1) return SOCKET_ERROR;
-        /* SO_OOBINLINE sockets must always return TRUE to SIOCATMARK */
-        if ((getsockopt(fd, SOL_SOCKET, SO_OOBINLINE, &oob, &oobsize ) == -1)
-           || (!oob && ioctl(fd, SIOCATMARK, &atmark ) == -1))
-            status = wsaErrno();
-        else
-        {
-            /* The SIOCATMARK value read from ioctl() is reversed
-             * because BSD returns TRUE if it's in the OOB mark
-             * while Windows returns TRUE if there are NO OOB bytes.
-             */
-            (*(WS_u_long *) out_buff) = oob || !atmark;
-        }
+        DWORD ret;
 
-        release_sock_fd( s, fd );
-        break;
+        ret = server_ioctl_sock( s, IOCTL_AFD_WINE_SIOCATMARK, in_buff, in_size,
+                                 out_buff, out_size, ret_size, overlapped, completion );
+        SetLastError( ret );
+        if (!ret) *ret_size = sizeof(WS_u_long);
+        return ret ? -1 : 0;
     }
 
     case WS_FIOASYNC:
