@@ -77,8 +77,19 @@ static LRESULT CALLBACK WndProcW(HWND hwnd, UINT message, WPARAM wparam, LPARAM 
         DestroyWindow(hwnd);
         return 0;
     case WM_CLOSE:
+    {
+        IFilterGraph *graph = window->pFilter->graph;
+        IMediaEventSink *event_sink;
         IVideoWindow_put_Visible(&window->IVideoWindow_iface, OAFALSE);
+        if (graph && SUCCEEDED(IFilterGraph_QueryInterface(graph,
+                                                           &IID_IMediaEventSink,
+                                                           (void **)&event_sink)))
+        {
+            IMediaEventSink_Notify(event_sink, EC_USERABORT, 0, 0);
+            IMediaEventSink_Release(event_sink);
+        }
         return 0;
+    }
     }
 
     return DefWindowProcW(hwnd, message, wparam, lparam);

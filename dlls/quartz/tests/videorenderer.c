@@ -1344,7 +1344,7 @@ static void test_window_close(IPin *pin, IMemInputPin *input, IMediaControl *con
     hr = IMediaControl_GetState(control, 1000, &state);
     ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#x.\n", hr);
     ret = check_ec_userabort(eventsrc, 0);
-    todo_wine ok(ret == 1, "Expected EC_USERABORT.\n");
+    ok(ret == 1, "Expected EC_USERABORT.\n");
 
     ok(IsWindow(hwnd), "Window should exist.\n");
     ok(!IsWindowVisible(hwnd), "Window should be visible.\n");
@@ -1383,7 +1383,7 @@ static void test_window_close(IPin *pin, IMemInputPin *input, IMediaControl *con
     SendMessageW(hwnd, WM_CLOSE, 0, 0);
 
     ret = check_ec_userabort(eventsrc, 0);
-    todo_wine ok(ret == 1, "Expected EC_USERABORT.\n");
+    ok(ret == 1, "Expected EC_USERABORT.\n");
 
     ok(IsWindow(hwnd), "Window should exist.\n");
     ok(!IsWindowVisible(hwnd), "Window should be visible.\n");
