@@ -3472,14 +3472,12 @@ int * CDECL __fpecode(void)
  */
 double CDECL ldexp(double num, int exp)
 {
-  double z = unix_funcs->ldexp(num,exp);
+  double z = __scalbn(num, exp);
 
   if (isfinite(num) && !isfinite(z))
     return math_error(_OVERFLOW, "ldexp", num, exp, z);
   if (num && isfinite(num) && !z)
     return math_error(_UNDERFLOW, "ldexp", num, exp, z);
-  if (z == 0 && signbit(z))
-    z = 0.0; /* Convert -0 -> +0 */
   return z;
 }
 

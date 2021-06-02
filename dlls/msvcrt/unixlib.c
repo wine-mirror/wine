@@ -139,14 +139,6 @@ static float CDECL unix_hypotf(float x, float y)
 }
 
 /*********************************************************************
- *      ldexp
- */
-static double CDECL unix_ldexp(double num, int exp)
-{
-    return ldexp( num, exp );
-}
-
-/*********************************************************************
  *      lgamma
  */
 static double CDECL unix_lgamma(double x)
@@ -306,7 +298,6 @@ static const struct unix_funcs funcs =
     unix_frexpf,
     unix_hypot,
     unix_hypotf,
-    unix_ldexp,
     unix_lgamma,
     unix_lgammaf,
     unix_log,
