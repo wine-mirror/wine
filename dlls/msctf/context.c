@@ -267,7 +267,6 @@ static HRESULT WINAPI Context_GetSelection (ITfContext *iface,
         TF_SELECTION *pSelection, ULONG *pcFetched)
 {
     Context *This = impl_from_ITfContext(iface);
-    EditCookie *cookie;
     ULONG count, i;
     ULONG totalFetched = 0;
     HRESULT hr = S_OK;
@@ -289,8 +288,6 @@ static HRESULT WINAPI Context_GetSelection (ITfContext *iface,
         return E_NOTIMPL;
     }
 
-    cookie = get_Cookie_data(ec);
-
     if (ulIndex == TF_DEFAULT_SELECTION)
         count = 1;
     else
@@ -310,7 +307,7 @@ static HRESULT WINAPI Context_GetSelection (ITfContext *iface,
         {
             pSelection[totalFetched].style.ase = acps.style.ase;
             pSelection[totalFetched].style.fInterimChar = acps.style.fInterimChar;
-            Range_Constructor(iface, This->pITextStoreACP, cookie->lockType, acps.acpStart, acps.acpEnd, &pSelection[totalFetched].range);
+            Range_Constructor(iface, acps.acpStart, acps.acpEnd, &pSelection[totalFetched].range);
             totalFetched ++;
         }
         else
@@ -364,7 +361,7 @@ static HRESULT WINAPI Context_GetStart (ITfContext *iface,
         TfEditCookie ec, ITfRange **ppStart)
 {
     Context *This = impl_from_ITfContext(iface);
-    EditCookie *cookie;
+
     TRACE("(%p) %i %p\n",This,ec,ppStart);
 
     if (!ppStart)
@@ -378,15 +375,13 @@ static HRESULT WINAPI Context_GetStart (ITfContext *iface,
     if (get_Cookie_magic(ec)!=COOKIE_MAGIC_EDITCOOKIE)
         return TF_E_NOLOCK;
 
-    cookie = get_Cookie_data(ec);
-    return Range_Constructor(iface, This->pITextStoreACP, cookie->lockType, 0, 0, ppStart);
+    return Range_Constructor(iface, 0, 0, ppStart);
 }
 
 static HRESULT WINAPI Context_GetEnd (ITfContext *iface,
         TfEditCookie ec, ITfRange **ppEnd)
 {
     Context *This = impl_from_ITfContext(iface);
-    EditCookie *cookie;
     LONG end;
     TRACE("(%p) %i %p\n",This,ec,ppEnd);
 
@@ -407,10 +402,9 @@ static HRESULT WINAPI Context_GetEnd (ITfContext *iface,
         return E_NOTIMPL;
     }
 
-    cookie = get_Cookie_data(ec);
     ITextStoreACP_GetEndACP(This->pITextStoreACP,&end);
 
-    return Range_Constructor(iface, This->pITextStoreACP, cookie->lockType, end, end, ppEnd);
+    return Range_Constructor(iface, end, end, ppEnd);
 }
 
 static HRESULT WINAPI Context_GetActiveView (ITfContext *iface,
@@ -720,7 +714,7 @@ static HRESULT WINAPI InsertAtSelection_InsertTextAtSelection(
 
     hr = ITextStoreACP_InsertTextAtSelection(This->pITextStoreACP, dwFlags, pchText, cch, &acpStart, &acpEnd, &change);
     if (SUCCEEDED(hr))
-        Range_Constructor(&This->ITfContext_iface, This->pITextStoreACP, cookie->lockType, change.acpStart, change.acpNewEnd, ppRange);
+        Range_Constructor(&This->ITfContext_iface, change.acpStart, change.acpNewEnd, ppRange);
 
     return hr;
 }

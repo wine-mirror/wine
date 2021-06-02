@@ -41,10 +41,8 @@ typedef struct tagRange {
     /* const ITfRangeACPVtb *RangeACPVtbl; */
     LONG refCount;
 
-    ITextStoreACP   *pITextStoreACP;
     ITfContext *context;
 
-    DWORD lockType;
     TfGravity gravityStart, gravityEnd;
     DWORD anchorStart, anchorEnd;
 
@@ -328,7 +326,7 @@ static const ITfRangeVtbl Range_RangeVtbl =
     Range_GetContext
 };
 
-HRESULT Range_Constructor(ITfContext *context, ITextStoreACP *textstore, DWORD lockType, DWORD anchorStart, DWORD anchorEnd, ITfRange **ppOut)
+HRESULT Range_Constructor(ITfContext *context, DWORD anchorStart, DWORD anchorEnd, ITfRange **ppOut)
 {
     Range *This;
 
@@ -336,14 +334,12 @@ HRESULT Range_Constructor(ITfContext *context, ITextStoreACP *textstore, DWORD l
     if (This == NULL)
         return E_OUTOFMEMORY;
 
-    TRACE("(%p) %p %p\n",This, context, textstore);
+    TRACE("(%p) %p\n", This, context);
 
     This->ITfRange_iface.lpVtbl = &Range_RangeVtbl;
     This->refCount = 1;
     This->context = context;
     ITfContext_AddRef(This->context);
-    This->pITextStoreACP = textstore;
-    This->lockType = lockType;
     This->anchorStart = anchorStart;
     This->anchorEnd = anchorEnd;
 
