@@ -5099,7 +5099,7 @@ static NTSTATUS register_async_file_read( HANDLE handle, HANDLE event,
     return status;
 }
 
-static void add_completion( HANDLE handle, ULONG_PTR value, NTSTATUS status, ULONG info, BOOL async )
+void add_completion( HANDLE handle, ULONG_PTR value, NTSTATUS status, ULONG info, BOOL async )
 {
     SERVER_START_REQ( add_fd_completion )
     {

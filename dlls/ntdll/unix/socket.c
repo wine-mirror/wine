@@ -1116,6 +1116,17 @@ static NTSTATUS sock_transmit( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
     return status;
 }
 
+static void complete_async( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
+                            IO_STATUS_BLOCK *io, NTSTATUS status, ULONG_PTR information )
+{
+    io->Status = status;
+    io->Information = information;
+    if (event) NtSetEvent( event, NULL );
+    if (apc) NtQueueApcThread( GetCurrentThread(), (PNTAPCFUNC)apc, (ULONG_PTR)apc_user, (ULONG_PTR)io, 0 );
+    if (apc_user) add_completion( handle, (ULONG_PTR)apc_user, status, information, FALSE );
+}
+
+
 NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user, IO_STATUS_BLOCK *io,
                      ULONG code, void *in_buffer, ULONG in_size, void *out_buffer, ULONG out_size )
 {
@@ -1246,6 +1257,16 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             }
 
             status = sock_transmit( handle, event, apc, apc_user, io, fd, params );
+            break;
+        }
+
+        case IOCTL_AFD_WINE_COMPLETE_ASYNC:
+        {
+            if (in_size != sizeof(NTSTATUS))
+                return STATUS_BUFFER_TOO_SMALL;
+
+            status = *(NTSTATUS *)in_buffer;
+            complete_async( handle, event, apc, apc_user, io, status, 0 );
             break;
         }
 
