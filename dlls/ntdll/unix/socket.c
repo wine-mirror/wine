@@ -25,6 +25,9 @@
 #include "config.h"
 #include <errno.h>
 #include <unistd.h>
+#ifdef HAVE_SYS_IOCTL_H
+# include <sys/ioctl.h>
+#endif
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
@@ -1273,6 +1276,45 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
         case IOCTL_AFD_POLL:
             status = sock_poll( handle, event, apc, apc_user, io, in_buffer, in_size, out_buffer, out_size );
             break;
+
+        case IOCTL_AFD_WINE_FIONREAD:
+        {
+            int value, ret;
+
+            if (out_size < sizeof(int))
+            {
+                status = STATUS_BUFFER_TOO_SMALL;
+                break;
+            }
+
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+                return status;
+
+#ifdef linux
+            {
+                socklen_t len = sizeof(value);
+
+                /* FIONREAD on a listening socket always fails (see tcp(7)). */
+                if (!getsockopt( fd, SOL_SOCKET, SO_ACCEPTCONN, &value, &len ) && value)
+                {
+                    *(int *)out_buffer = 0;
+                    status = STATUS_SUCCESS;
+                    complete_async( handle, event, apc, apc_user, io, status, 0 );
+                    break;
+                }
+            }
+#endif
+
+            if ((ret = ioctl( fd, FIONREAD, &value )) < 0)
+            {
+                status = sock_errno_to_status( errno );
+                break;
+            }
+            *(int *)out_buffer = value;
+            status = STATUS_SUCCESS;
+            complete_async( handle, event, apc, apc_user, io, status, 0 );
+            break;
+        }
 
         default:
         {
