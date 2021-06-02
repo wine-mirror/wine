@@ -251,6 +251,10 @@ C_ASSERT((offsetof(struct stack_layout, xstate) == sizeof(struct stack_layout)))
 C_ASSERT( sizeof(XSTATE) == 0x140 );
 C_ASSERT( sizeof(struct stack_layout) == 0x590 ); /* Should match the size in call_user_exception_dispatcher(). */
 
+/* flags to control the behavior of the syscall dispatcher */
+#define SYSCALL_HAVE_XSAVE    1
+#define SYSCALL_HAVE_XSAVEC   2
+
 /* stack layout when calling an user apc function.
  * FIXME: match Windows ABI. */
 struct apc_stack_layout
@@ -2653,6 +2657,9 @@ void signal_init_process(void)
 {
     struct sigaction sig_act;
 
+    if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_XSAVE) __wine_syscall_flags |= SYSCALL_HAVE_XSAVE;
+    if (xstate_compaction_enabled) __wine_syscall_flags |= SYSCALL_HAVE_XSAVEC;
+
     sig_act.sa_mask = server_block_set;
     sig_act.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
 
@@ -2685,24 +2692,14 @@ void signal_init_process(void)
  */
 void *signal_init_syscalls(void)
 {
-    void *ptr, *syscall_dispatcher;
-
-    extern void __wine_syscall_dispatcher_xsave(void) DECLSPEC_HIDDEN;
-    extern void __wine_syscall_dispatcher_xsavec(void) DECLSPEC_HIDDEN;
-
-    if (xstate_compaction_enabled)
-        syscall_dispatcher = __wine_syscall_dispatcher_xsavec;
-    else if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_XSAVE)
-        syscall_dispatcher = __wine_syscall_dispatcher_xsave;
-    else
-        syscall_dispatcher = __wine_syscall_dispatcher;
+    void *ptr;
 
     /* sneak in a syscall dispatcher pointer at a fixed address (7ffe1000) */
     ptr = (char *)user_shared_data + page_size;
     anon_mmap_fixed( ptr, page_size, PROT_READ | PROT_WRITE, 0 );
-    *(void **)ptr = syscall_dispatcher;
+    *(void **)ptr = __wine_syscall_dispatcher;
 
-    return syscall_dispatcher;
+    return __wine_syscall_dispatcher;
 }
 
 

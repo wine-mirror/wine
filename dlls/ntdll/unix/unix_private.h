@@ -248,6 +248,7 @@ extern void DECLSPEC_NORETURN signal_start_thread( PRTL_THREAD_START_ROUTINE ent
                                                    BOOL suspend, void *thunk, TEB *teb ) DECLSPEC_HIDDEN;
 extern void DECLSPEC_NORETURN signal_exit_thread( int status, void (*func)(int) ) DECLSPEC_HIDDEN;
 extern void __wine_syscall_dispatcher(void) DECLSPEC_HIDDEN;
+extern unsigned int __wine_syscall_flags DECLSPEC_HIDDEN;
 extern void signal_restore_full_cpu_context(void) DECLSPEC_HIDDEN;
 extern NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size ) DECLSPEC_HIDDEN;
 extern NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size ) DECLSPEC_HIDDEN;

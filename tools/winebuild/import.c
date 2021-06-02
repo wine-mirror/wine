@@ -1621,45 +1621,43 @@ static void output_syscall_dispatcher( const char *variant )
         output( "\tmovw %%ss,-0x8(%%rbp)\n" );
         output( "\tmovw %%gs,-0x6(%%rbp)\n" );
         output( "\tmovq %%rsp,%%r12\n" );
-        output( "\tmovq %%rax,%%r11\n" );
-        if (!*variant)
-        {
-            output( "\tfxsave64 (%%r12)\n" );
-        }
-        else
-        {
-            output( "\tmovl $7,%%eax\n" );
-            output( "\tmovq %%rdx,%%rsi\n" );
-            output( "\txorq %%rdx,%%rdx\n" );
-            output( "\tmovq %%rdx,0x200(%%r12)\n" );
-            output( "\tmovq %%rdx,0x208(%%r12)\n" );
-            output( "\tmovq %%rdx,0x210(%%r12)\n" );
-            if (!strcmp( variant, "_xsavec" ))
-            {
-                output( "\tmovq %%rdx,0x218(%%r12)\n" );
-                output( "\tmovq %%rdx,0x220(%%r12)\n" );
-                output( "\tmovq %%rdx,0x228(%%r12)\n" );
-                output( "\tmovq %%rdx,0x230(%%r12)\n" );
-                output( "\tmovq %%rdx,0x238(%%r12)\n" );
-                output( "\txsavec64 (%%r12)\n" );
-            }
-            else
-                output( "\txsave64 (%%r12)\n" );
-            output( "\tmovq %%rsi,%%rdx\n" );
-        }
-        output( "\tmovq %%gs:0x30,%%rcx\n" );
+        output( "\tmovq %%rax,%%r13\n" );
+        output( "\tmovl %s(%%rip),%%r14d\n", asm_name("__wine_syscall_flags") );
+        output( "\ttestl $3,%%r14d\n" );  /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
+        output( "\tjz 2f\n" );
+        output( "\tmovl $7,%%eax\n" );
+        output( "\tmovq %%rdx,%%rsi\n" );
+        output( "\txorq %%rdx,%%rdx\n" );
+        output( "\tmovq %%rdx,0x200(%%r12)\n" );
+        output( "\tmovq %%rdx,0x208(%%r12)\n" );
+        output( "\tmovq %%rdx,0x210(%%r12)\n" );
+        output( "\ttestl $2,%%r14d\n" );  /* SYSCALL_HAVE_XSAVEC */
+        output( "\tjz 1f\n" );
+        output( "\tmovq %%rdx,0x218(%%r12)\n" );
+        output( "\tmovq %%rdx,0x220(%%r12)\n" );
+        output( "\tmovq %%rdx,0x228(%%r12)\n" );
+        output( "\tmovq %%rdx,0x230(%%r12)\n" );
+        output( "\tmovq %%rdx,0x238(%%r12)\n" );
+        output( "\txsavec64 (%%r12)\n" );
+        output( "\tmovq %%rsi,%%rdx\n" );
+        output( "\tjmp 3f\n" );
+        output( "1:\txsave64 (%%r12)\n" );
+        output( "\tmovq %%rsi,%%rdx\n" );
+        output( "\tjmp 3f\n" );
+        output( "2:\tfxsave64 (%%r12)\n" );
+        output( "3:\tmovq %%gs:0x30,%%rcx\n" );
         output( "\tleaq -0x98(%%rbp),%%rbx\n" );
         output( "\tmovq %%rbx,0x328(%%rcx)\n" );  /* amd64_thread_data()->syscall_frame */
-        output( "\tmovq %%r11,%%rbx\n" );
+        output( "\tmovq %%r13,%%rbx\n" );
         output( "\tshrl $8,%%ebx\n" );
         output( "\tandl $0x30,%%ebx\n" );         /* syscall table number */
         output( "\tleaq %s(%%rip),%%rcx\n", asm_name("KeServiceDescriptorTable") );
         output( "\tleaq (%%rcx,%%rbx,2),%%rbx\n" );
-        output( "\tandq $0xfff,%%r11\n" );        /* syscall number */
-        output( "\tcmpq 16(%%rbx),%%r11\n" );     /* table->ServiceLimit */
-        output( "\tjae 3f\n" );
+        output( "\tandq $0xfff,%%r13\n" );        /* syscall number */
+        output( "\tcmpq 16(%%rbx),%%r13\n" );     /* table->ServiceLimit */
+        output( "\tjae 5f\n" );
         output( "\tmovq 24(%%rbx),%%rcx\n" );     /* table->ArgumentTable */
-        output( "\tmovzbl (%%rcx,%%r11),%%ecx\n" );
+        output( "\tmovzbl (%%rcx,%%r13),%%ecx\n" );
         output( "\tsubq $0x20,%%rcx\n" );
         output( "\tjbe 1f\n" );
         output( "\tsubq %%rcx,%%rsp\n" );
@@ -1672,22 +1670,19 @@ static void output_syscall_dispatcher( const char *variant )
         output( "1:\tmovq %%r10,%%rcx\n" );
         output( "\tsubq $0x20,%%rsp\n" );
         output( "\tmovq (%%rbx),%%r10\n" );      /* table->ServiceTable */
-        output( "\tcallq *(%%r10,%%r11,8)\n" );
+        output( "\tcallq *(%%r10,%%r13,8)\n" );
         output( "2:\tmovq %%gs:0x30,%%rcx\n" );
         output( "\tmovq $0,0x328(%%rcx)\n" );
-        if (!*variant)
-        {
-            output( "\tfxrstor64 (%%r12)\n" );
-        }
-        else
-        {
-            output( "\tmovq %%rax,%%r11\n" );
-            output( "\tmovl $7,%%eax\n" );
-            output( "\txorq %%rdx,%%rdx\n" );
-            output( "\txrstor64 (%%r12)\n" );
-            output( "\tmovq %%r11,%%rax\n" );
-        }
-        output( "\tmovq -0x30(%%rbp),%%r15\n" );
+        output( "\ttestl $3,%%r14d\n" );  /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
+        output( "\tjz 3f\n" );
+        output( "\tmovq %%rax,%%r11\n" );
+        output( "\tmovl $7,%%eax\n" );
+        output( "\txorq %%rdx,%%rdx\n" );
+        output( "\txrstor64 (%%r12)\n" );
+        output( "\tmovq %%r11,%%rax\n" );
+        output( "\tjmp 4f\n" );
+        output( "3:\tfxrstor64 (%%r12)\n" );
+        output( "4:\tmovq -0x30(%%rbp),%%r15\n" );
         output( "\tmovq -0x38(%%rbp),%%r14\n" );
         output( "\tmovq -0x40(%%rbp),%%r13\n" );
         output( "\tmovq -0x48(%%rbp),%%r12\n" );
@@ -1704,7 +1699,7 @@ static void output_syscall_dispatcher( const char *variant )
         output( "\tmovq (%%rbp),%%rbp\n" );
         output_cfi( ".cfi_same_value %%rbp" );
         output( "\tiretq\n" );
-        output( "3:\tmovl $0x%x,%%eax\n", invalid_param );
+        output( "5:\tmovl $0x%x,%%eax\n", invalid_param );
         output( "\tjmp 2b\n" );
         break;
     case CPU_ARM:
@@ -1861,10 +1856,6 @@ void output_syscalls( DLLSPEC *spec )
             output_syscall_dispatcher( "_xsave" );
             output_syscall_dispatcher( "_xsavec" );
             break;
-        case CPU_x86_64:
-            output_syscall_dispatcher( "_xsave" );
-            output_syscall_dispatcher( "_xsavec" );
-            break;
         default:
             break;
         }
@@ -1881,6 +1872,9 @@ void output_syscalls( DLLSPEC *spec )
         output( ".Lsyscall_args:\n" );
         for (i = 0; i < count; i++)
             output( "\t.byte %u\n", get_args_size( syscalls[i] ));
+        output( "\t.align %d\n", get_alignment(4) );
+        output( "%s\n", asm_globl("__wine_syscall_flags") );
+        output( "\t.long 0\n" );
         return;
     }
 
