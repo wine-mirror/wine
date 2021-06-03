@@ -3263,11 +3263,40 @@ double CDECL _hypot(double x, double y)
 
 /*********************************************************************
  *      _hypotf (MSVCRT.@)
+ *
+ * Copied from musl: src/math/hypotf.c
  */
 float CDECL _hypotf(float x, float y)
 {
-  /* FIXME: errno handling */
-  return unix_funcs->hypotf( x, y );
+    UINT32 ux = *(UINT32*)&x, uy = *(UINT32*)&y, ut;
+    float z;
+
+    ux &= -1U >> 1;
+    uy &= -1U >> 1;
+    if (ux < uy) {
+        ut = ux;
+        ux = uy;
+        uy = ut;
+    }
+
+    x = *(float*)&ux;
+    y = *(float*)&uy;
+    if (uy == 0xff << 23)
+        return y;
+    if (ux >= 0xff << 23 || uy == 0 || ux - uy >= 25 << 23)
+        return x + y;
+
+    z = 1;
+    if (ux >= (0x7f + 60) << 23) {
+        z = 0x1p90f;
+        x *= 0x1p-90f;
+        y *= 0x1p-90f;
+    } else if (uy < (0x7f - 60) << 23) {
+        z = 0x1p-90f;
+        x *= 0x1p90f;
+        y *= 0x1p90f;
+    }
+    return z * sqrtf((double)x * x + (double)y * y);
 }
 
 /*********************************************************************

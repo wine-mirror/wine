@@ -95,14 +95,6 @@ static float CDECL unix_fmaf( float x, float y, float z )
 }
 
 /*********************************************************************
- *      hypotf
- */
-static float CDECL unix_hypotf(float x, float y)
-{
-    return hypotf( x, y );
-}
-
-/*********************************************************************
  *      lgamma
  */
 static double CDECL unix_lgamma(double x)
@@ -257,7 +249,6 @@ static const struct unix_funcs funcs =
     unix_exp2,
     unix_exp2f,
     unix_fmaf,
-    unix_hypotf,
     unix_lgamma,
     unix_lgammaf,
     unix_log,

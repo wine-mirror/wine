@@ -28,7 +28,6 @@ struct unix_funcs
     double          (CDECL *exp2)(double x);
     float           (CDECL *exp2f)(float x);
     float           (CDECL *fmaf)(float x, float y, float z);
-    float           (CDECL *hypotf)(float x, float y);
     double          (CDECL *lgamma)(double x);
     float           (CDECL *lgammaf)(float x);
     double          (CDECL *log)(double x);
