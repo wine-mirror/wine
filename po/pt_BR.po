@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-05-29 15:57-0300\n"
+"PO-Revision-Date: 2021-06-03 11:15-0300\n"
 "Last-Translator: Roberto Augusto Pungartnik <rpungartnik@gmail.com>\n"
 "Language-Team: Portuguese (Brazil)\n"
 "Language: pt_BR\n"
@@ -3973,7 +3973,7 @@ msgstr ""
 
 #: dlls/jscript/jscript.rc:74
 msgid "Cannot define property '|': object is not extensible"
-msgstr "Não posso definir porpriedade '|': objeto não é extensível"
+msgstr "Não posso definir propriedade '|': objeto não é extensível"
 
 #: dlls/jscript/jscript.rc:75
 msgid "Cannot redefine non-configurable property '|'"
@@ -9051,7 +9051,7 @@ msgstr "Configuração de rede"
 
 #: dlls/oledb32/version.rc:96
 msgid "&Impersonation level:"
-msgstr "N&ivel de representação:"
+msgstr "N&ível de representação:"
 
 #: dlls/oledb32/version.rc:98
 msgid "P&rotection level:"
@@ -14871,7 +14871,8 @@ msgstr ""
 "     (Padrão).\n"
 "\n"
 "  /t <tipo>\n"
-"     Tipo do dado para ser adicionao ao registro. Se [/t] for especificado,\n"
+"     Tipo do dado para ser adicionado ao registro. Se [/t] for "
+"especificado,\n"
 "     <tipo> deve ser uma das opções a seguir:\n"
 "\n"
 "         REG_SZ    | REG_MULTI_SZ | REG_EXPAND_SZ\n"
@@ -14928,7 +14929,7 @@ msgstr ""
 "\n"
 "  Copia o conteúdo de uma chave de registro especificada para outra "
 "localização.\n"
-"  Por padrão, esta operação copia apenas os valores do registrp. Use [/s] "
+"  Por padrão, esta operação copia apenas os valores do registro. Use [/s] "
 "para\n"
 "  copiar de forma recursiva todas as subchaves e valores.\n"
 "\n"
@@ -14953,8 +14954,8 @@ msgstr ""
 "     Copia todas as subchaves e valores de <Chave1> para <Chave2>.\n"
 "\n"
 "  /f\n"
-"     Sobreescreve todos os dados em <Chave2> sem pedir por confirmação.\n"
-"     Esta operação nao afeta subchaves e valores que existem somente em  "
+"     Sobrescreve todos os dados em <Chave2> sem pedir por confirmação.\n"
+"     Esta operação não afeta subchaves e valores que existem somente em  "
 "<Chave2>.\n"
 "\n"
 
@@ -15247,7 +15248,7 @@ msgstr "reg: Parâmetros da linha de comandos inválidos\n"
 
 #: programs/reg/reg.rc:202
 msgid "reg: The source and destination keys cannot be the same\n"
-msgstr ""
+msgstr "reg: Chaves de origem e destino não podem ser as mesmas\n"
 
 #: programs/reg/reg.rc:131
 msgid "Are you sure you want to delete the registry value '%1'?"
@@ -15275,7 +15276,7 @@ msgstr "reg: Sequência de escape não reconhecida [\\%1!c!]\n"
 
 #: programs/reg/reg.rc:173
 msgid "reg: Unable to import the registry key '%1'\n"
-msgstr "reg: Não foi possível importar a chave de registro '%1'.\n"
+msgstr "reg: Não foi possível importar a chave de registro '%1'\n"
 
 #: programs/reg/reg.rc:148
 msgid "reg: The file '%1' was not found.\n"
@@ -18586,7 +18587,7 @@ msgstr ""
 "[/A]  Copiar apenas arquivos com atributo de arquivo.\n"
 "[/M]  Copiar apenas arquivos com atributo de arquivo, removendo\n"
 "\to atributo de arquivo.\n"
-"[/K]  Copia os atributos do arquivo; sem isto, os atributos nao são "
+"[/K]  Copia os atributos do arquivo; sem isto, os atributos não são "
 "preservados.\n"
 "[/D | /D:m-d-y] Copiar novos arquivos ou os alterados após a data "
 "fornecida.\n"
