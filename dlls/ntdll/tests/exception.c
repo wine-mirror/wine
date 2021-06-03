@@ -8042,32 +8042,28 @@ static void test_copy_context(void)
         {0x0, 0x1}, {0x1000, 0},
     };
 
-    static const struct
-    {
-        ULONG flags;
-    }
-    tests[] =
+    static const ULONG tests[] =
     {
         /* AMD64 */
-        {0x100000 | 0x01}, /* CONTEXT_CONTROL */
-        {0x100000 | 0x02}, /* CONTEXT_INTEGER */
-        {0x100000 | 0x04}, /* CONTEXT_SEGMENTS */
-        {0x100000 | 0x08}, /* CONTEXT_FLOATING_POINT */
-        {0x100000 | 0x10}, /* CONTEXT_DEBUG_REGISTERS */
-        {0x100000 | 0x0b}, /* CONTEXT_FULL */
-        {0x100000 | 0x40}, /* CONTEXT_XSTATE */
-        {0x100000 | 0x1f}, /* CONTEXT_ALL */
+        CONTEXT_AMD64_CONTROL,
+        CONTEXT_AMD64_INTEGER,
+        CONTEXT_AMD64_SEGMENTS,
+        CONTEXT_AMD64_FLOATING_POINT,
+        CONTEXT_AMD64_DEBUG_REGISTERS,
+        CONTEXT_AMD64_FULL,
+        CONTEXT_AMD64_XSTATE,
+        CONTEXT_AMD64_ALL,
         /* X86 */
-        { 0x10000 | 0x01}, /* CONTEXT_CONTROL */
-        { 0x10000 | 0x02}, /* CONTEXT_INTEGER */
-        { 0x10000 | 0x04}, /* CONTEXT_SEGMENTS */
-        { 0x10000 | 0x08}, /* CONTEXT_FLOATING_POINT */
-        { 0x10000 | 0x10}, /* CONTEXT_DEBUG_REGISTERS */
-        { 0x10000 | 0x20}, /* CONTEXT_EXTENDED_REGISTERS */
-        { 0x10000 | 0x40}, /* CONTEXT_XSTATE */
-        { 0x10000 | 0x3f}, /* CONTEXT_ALL */
+        CONTEXT_I386_CONTROL,
+        CONTEXT_I386_INTEGER,
+        CONTEXT_I386_SEGMENTS,
+        CONTEXT_I386_FLOATING_POINT,
+        CONTEXT_I386_DEBUG_REGISTERS,
+        CONTEXT_I386_EXTENDED_REGISTERS,
+        CONTEXT_I386_XSTATE,
+        CONTEXT_I386_ALL
     };
-    static const ULONG arch_flags[] = {0x100000, 0x10000};
+    static const ULONG arch_flags[] = {CONTEXT_AMD64, CONTEXT_i386};
 
     DECLSPEC_ALIGN(64) BYTE src_context_buffer[4096];
     DECLSPEC_ALIGN(64) BYTE dst_context_buffer[4096];
@@ -8097,8 +8093,9 @@ static void test_copy_context(void)
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
-        flags = tests[i].flags;
-        flags_offset = (flags & 0x100000) ? 0x30 : 0;
+        flags = tests[i];
+        flags_offset = (flags & CONTEXT_AMD64) ? offsetof(AMD64_CONTEXT,ContextFlags)
+                                               : offsetof(I386_CONTEXT,ContextFlags);
 
         memset(dst_context_buffer, 0xdd, sizeof(dst_context_buffer));
         memset(src_context_buffer, 0xcc, sizeof(src_context_buffer));
@@ -8131,7 +8128,7 @@ static void test_copy_context(void)
         ok(!status, "Got unexpected status %#x, flags %#x.\n", status, flags);
 
         context_length = (BYTE *)dst_ex - (BYTE *)dst + dst_ex->All.Length;
-        check_changes_in_range((BYTE *)dst, flags & 0x100000 ? &ranges_amd64[0] : &ranges_x86[0],
+        check_changes_in_range((BYTE *)dst, flags & CONTEXT_AMD64 ? &ranges_amd64[0] : &ranges_x86[0],
                 flags, context_length);
 
         ok(*(DWORD *)((BYTE *)dst + flags_offset) == flags, "Got unexpected ContextFlags %#x, flags %#x.\n",
@@ -8150,10 +8147,10 @@ static void test_copy_context(void)
                 bret, GetLastError(), flags);
         ok(*(DWORD *)((BYTE *)dst + flags_offset) == 0, "Got unexpected ContextFlags %#x, flags %#x.\n",
                 *(DWORD *)((BYTE *)dst + flags_offset), flags);
-        check_changes_in_range((BYTE *)dst, flags & 0x100000 ? &ranges_amd64[0] : &ranges_x86[0],
+        check_changes_in_range((BYTE *)dst, flags & CONTEXT_AMD64 ? &ranges_amd64[0] : &ranges_x86[0],
                 0, context_length);
 
-        *(DWORD *)((BYTE *)dst + flags_offset) = flags & 0x110000;
+        *(DWORD *)((BYTE *)dst + flags_offset) = flags & (CONTEXT_AMD64 | CONTEXT_i386);
         *(DWORD *)((BYTE *)src + flags_offset) = flags;
         SetLastError(0xdeadbeef);
         bret = pCopyContext(dst, flags, src);
@@ -8171,7 +8168,7 @@ static void test_copy_context(void)
         {
             ok(*(DWORD *)((BYTE *)dst + flags_offset) == flags, "Got unexpected ContextFlags %#x, flags %#x.\n",
                     *(DWORD *)((BYTE *)dst + flags_offset), flags);
-            check_changes_in_range((BYTE *)dst, flags & 0x100000 ? &ranges_amd64[0] : &ranges_x86[0],
+            check_changes_in_range((BYTE *)dst, flags & CONTEXT_AMD64 ? &ranges_amd64[0] : &ranges_x86[0],
                     flags, context_length);
         }
         else
@@ -8179,7 +8176,7 @@ static void test_copy_context(void)
             ok(*(DWORD *)((BYTE *)dst + flags_offset) == (flags & 0x110000),
                     "Got unexpected ContextFlags %#x, flags %#x.\n",
                     *(DWORD *)((BYTE *)dst + flags_offset), flags);
-            check_changes_in_range((BYTE *)dst, flags & 0x100000 ? &ranges_amd64[0] : &ranges_x86[0],
+            check_changes_in_range((BYTE *)dst, flags & CONTEXT_AMD64 ? &ranges_amd64[0] : &ranges_x86[0],
                     0, context_length);
         }
     }
@@ -8187,8 +8184,9 @@ static void test_copy_context(void)
     for (i = 0; i < ARRAY_SIZE(arch_flags); ++i)
     {
         flags = arch_flags[i] | 0x42;
-        flags_offset = (flags & 0x100000) ? 0x30 : 0;
-        context_length = (flags & 0x100000) ? 0x4d0 : 0x2cc;
+        flags_offset = (flags & CONTEXT_AMD64) ? offsetof(AMD64_CONTEXT,ContextFlags)
+                                               : offsetof(I386_CONTEXT,ContextFlags);
+        context_length = (flags & CONTEXT_AMD64) ? sizeof(AMD64_CONTEXT) : sizeof(I386_CONTEXT);
 
         memset(dst_context_buffer, 0xdd, sizeof(dst_context_buffer));
         memset(src_context_buffer, 0xcc, sizeof(src_context_buffer));

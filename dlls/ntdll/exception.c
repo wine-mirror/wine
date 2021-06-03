@@ -736,8 +736,28 @@ static const struct context_parameters
 }
 arch_context_parameters[] =
 {
-    {0x00100000, 0xd810005f, 0x4d0, 0x4d0, 0x20, 7, 0xf, 0x30, copy_ranges_amd64},
-    {0x00010000, 0xd801007f, 0x2cc,  0xcc, 0x18, 3, 0x3,    0,   copy_ranges_x86},
+    {
+        CONTEXT_AMD64,
+        0xd8000000 | CONTEXT_AMD64_ALL | CONTEXT_AMD64_XSTATE,
+        sizeof(AMD64_CONTEXT),
+        sizeof(AMD64_CONTEXT),
+        0x20,
+        7,
+        TYPE_ALIGNMENT(AMD64_CONTEXT) - 1,
+        offsetof(AMD64_CONTEXT,ContextFlags),
+        copy_ranges_amd64
+    },
+    {
+        CONTEXT_i386,
+        0xd8000000 | CONTEXT_I386_ALL | CONTEXT_I386_XSTATE,
+        sizeof(I386_CONTEXT),
+        offsetof(I386_CONTEXT,ExtendedRegisters),
+        0x18,
+        3,
+        TYPE_ALIGNMENT(I386_CONTEXT) - 1,
+        offsetof(I386_CONTEXT,ContextFlags),
+        copy_ranges_x86
+    },
 };
 
 static const struct context_parameters *context_get_parameters( ULONG context_flags )
