@@ -3458,7 +3458,7 @@ HRESULT WINAPI MFInitAttributesFromBlob(IMFAttributes *dest, const UINT8 *buffer
     return hr;
 }
 
-typedef struct bytestream
+struct bytestream
 {
     struct attributes attributes;
     IMFByteStream IMFByteStream_iface;
@@ -3471,11 +3471,11 @@ typedef struct bytestream
     DWORD capabilities;
     struct list pending;
     CRITICAL_SECTION cs;
-} mfbytestream;
+};
 
-static inline mfbytestream *impl_from_IMFByteStream(IMFByteStream *iface)
+static inline struct bytestream *impl_from_IMFByteStream(IMFByteStream *iface)
 {
-    return CONTAINING_RECORD(iface, mfbytestream, IMFByteStream_iface);
+    return CONTAINING_RECORD(iface, struct bytestream, IMFByteStream_iface);
 }
 
 static struct bytestream *impl_bytestream_from_IMFGetService(IMFGetService *iface)
@@ -3773,11 +3773,9 @@ static HRESULT WINAPI bytestream_GetCapabilities(IMFByteStream *iface, DWORD *ca
     return S_OK;
 }
 
-static HRESULT WINAPI mfbytestream_SetLength(IMFByteStream *iface, QWORD length)
+static HRESULT WINAPI bytestream_SetLength(IMFByteStream *iface, QWORD length)
 {
-    mfbytestream *This = impl_from_IMFByteStream(iface);
-
-    FIXME("%p, %s\n", This, wine_dbgstr_longlong(length));
+    FIXME("%p, %s\n", iface, wine_dbgstr_longlong(length));
 
     return E_NOTIMPL;
 }
@@ -3880,11 +3878,9 @@ static HRESULT WINAPI bytestream_EndRead(IMFByteStream *iface, IMFAsyncResult *r
     return bytestream_complete_io_request(stream, ASYNC_STREAM_OP_READ, result, byte_read);
 }
 
-static HRESULT WINAPI mfbytestream_Write(IMFByteStream *iface, const BYTE *data, ULONG count, ULONG *written)
+static HRESULT WINAPI bytestream_Write(IMFByteStream *iface, const BYTE *data, ULONG count, ULONG *written)
 {
-    mfbytestream *This = impl_from_IMFByteStream(iface);
-
-    FIXME("%p, %p, %u, %p\n", This, data, count, written);
+    FIXME("%p, %p, %u, %p\n", iface, data, count, written);
 
     return E_NOTIMPL;
 }
@@ -3908,30 +3904,24 @@ static HRESULT WINAPI bytestream_EndWrite(IMFByteStream *iface, IMFAsyncResult *
     return bytestream_complete_io_request(stream, ASYNC_STREAM_OP_WRITE, result, written);
 }
 
-static HRESULT WINAPI mfbytestream_Seek(IMFByteStream *iface, MFBYTESTREAM_SEEK_ORIGIN seek, LONGLONG offset,
+static HRESULT WINAPI bytestream_Seek(IMFByteStream *iface, MFBYTESTREAM_SEEK_ORIGIN seek, LONGLONG offset,
                         DWORD flags, QWORD *current)
 {
-    mfbytestream *This = impl_from_IMFByteStream(iface);
-
-    FIXME("%p, %u, %s, 0x%08x, %p\n", This, seek, wine_dbgstr_longlong(offset), flags, current);
+    FIXME("%p, %u, %s, 0x%08x, %p\n", iface, seek, wine_dbgstr_longlong(offset), flags, current);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI mfbytestream_Flush(IMFByteStream *iface)
+static HRESULT WINAPI bytestream_Flush(IMFByteStream *iface)
 {
-    mfbytestream *This = impl_from_IMFByteStream(iface);
-
-    FIXME("%p\n", This);
+    FIXME("%p\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI mfbytestream_Close(IMFByteStream *iface)
+static HRESULT WINAPI bytestream_Close(IMFByteStream *iface)
 {
-    mfbytestream *This = impl_from_IMFByteStream(iface);
-
-    FIXME("%p\n", This);
+    FIXME("%p\n", iface);
 
     return E_NOTIMPL;
 }
@@ -3956,19 +3946,19 @@ static const IMFByteStreamVtbl bytestream_file_vtbl =
     bytestream_Release,
     bytestream_GetCapabilities,
     bytestream_file_GetLength,
-    mfbytestream_SetLength,
+    bytestream_SetLength,
     bytestream_file_GetCurrentPosition,
     bytestream_SetCurrentPosition,
     bytestream_file_IsEndOfStream,
     bytestream_file_Read,
     bytestream_BeginRead,
     bytestream_EndRead,
-    mfbytestream_Write,
+    bytestream_Write,
     bytestream_BeginWrite,
     bytestream_EndWrite,
-    mfbytestream_Seek,
-    mfbytestream_Flush,
-    mfbytestream_Close
+    bytestream_Seek,
+    bytestream_Flush,
+    bytestream_Close
 };
 
 static HRESULT WINAPI bytestream_stream_GetLength(IMFByteStream *iface, QWORD *length)
@@ -4146,35 +4136,34 @@ static const IMFByteStreamVtbl bytestream_stream_vtbl =
     bytestream_stream_Close,
 };
 
-static inline mfbytestream *impl_from_IMFByteStream_IMFAttributes(IMFAttributes *iface)
+static inline struct bytestream *impl_from_IMFByteStream_IMFAttributes(IMFAttributes *iface)
 {
-    return CONTAINING_RECORD(iface, mfbytestream, attributes.IMFAttributes_iface);
+    return CONTAINING_RECORD(iface, struct bytestream, attributes.IMFAttributes_iface);
 }
 
-static HRESULT WINAPI mfbytestream_attributes_QueryInterface(
-    IMFAttributes *iface, REFIID riid, void **out)
+static HRESULT WINAPI bytestream_attributes_QueryInterface(IMFAttributes *iface, REFIID riid, void **out)
 {
-    mfbytestream *This = impl_from_IMFByteStream_IMFAttributes(iface);
-    return IMFByteStream_QueryInterface(&This->IMFByteStream_iface, riid, out);
+    struct bytestream *stream = impl_from_IMFByteStream_IMFAttributes(iface);
+    return IMFByteStream_QueryInterface(&stream->IMFByteStream_iface, riid, out);
 }
 
-static ULONG WINAPI mfbytestream_attributes_AddRef(IMFAttributes *iface)
+static ULONG WINAPI bytestream_attributes_AddRef(IMFAttributes *iface)
 {
-    mfbytestream *This = impl_from_IMFByteStream_IMFAttributes(iface);
-    return IMFByteStream_AddRef(&This->IMFByteStream_iface);
+    struct bytestream *stream = impl_from_IMFByteStream_IMFAttributes(iface);
+    return IMFByteStream_AddRef(&stream->IMFByteStream_iface);
 }
 
-static ULONG WINAPI mfbytestream_attributes_Release(IMFAttributes *iface)
+static ULONG WINAPI bytestream_attributes_Release(IMFAttributes *iface)
 {
-    mfbytestream *This = impl_from_IMFByteStream_IMFAttributes(iface);
-    return IMFByteStream_Release(&This->IMFByteStream_iface);
+    struct bytestream *stream = impl_from_IMFByteStream_IMFAttributes(iface);
+    return IMFByteStream_Release(&stream->IMFByteStream_iface);
 }
 
-static const IMFAttributesVtbl mfbytestream_attributes_vtbl =
+static const IMFAttributesVtbl bytestream_attributes_vtbl =
 {
-    mfbytestream_attributes_QueryInterface,
-    mfbytestream_attributes_AddRef,
-    mfbytestream_attributes_Release,
+    bytestream_attributes_QueryInterface,
+    bytestream_attributes_AddRef,
+    bytestream_attributes_Release,
     mfattributes_GetItem,
     mfattributes_GetItemType,
     mfattributes_CompareItem,
@@ -4311,7 +4300,7 @@ HRESULT WINAPI MFCreateMFByteStreamOnStream(IStream *stream, IMFByteStream **byt
     }
 
     object->IMFByteStream_iface.lpVtbl = &bytestream_stream_vtbl;
-    object->attributes.IMFAttributes_iface.lpVtbl = &mfbytestream_attributes_vtbl;
+    object->attributes.IMFAttributes_iface.lpVtbl = &bytestream_attributes_vtbl;
     object->read_callback.lpVtbl = &bytestream_stream_read_callback_vtbl;
     object->write_callback.lpVtbl = &bytestream_stream_write_callback_vtbl;
     InitializeCriticalSection(&object->cs);
@@ -4478,7 +4467,7 @@ HRESULT WINAPI MFCreateFile(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPENMODE open
         return hr;
     }
     object->IMFByteStream_iface.lpVtbl = &bytestream_file_vtbl;
-    object->attributes.IMFAttributes_iface.lpVtbl = &mfbytestream_attributes_vtbl;
+    object->attributes.IMFAttributes_iface.lpVtbl = &bytestream_attributes_vtbl;
     object->IMFGetService_iface.lpVtbl = &bytestream_file_getservice_vtbl;
     object->read_callback.lpVtbl = &bytestream_file_read_callback_vtbl;
     object->write_callback.lpVtbl = &bytestream_file_write_callback_vtbl;
