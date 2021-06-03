@@ -714,10 +714,11 @@ static void test_synthesized(void)
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
+        winetest_push_context("%d", i);
         r = OpenClipboard(NULL);
-        ok(r, "%u: gle %d\n", i, GetLastError());
+        ok(r, "gle %d\n", GetLastError());
         r = EmptyClipboard();
-        ok(r, "%u: gle %d\n", i, GetLastError());
+        ok(r, "gle %d\n", GetLastError());
 
         switch (tests[i].format)
         {
@@ -744,45 +745,50 @@ static void test_synthesized(void)
         }
 
         count = CountClipboardFormats();
-        ok( count == 1, "%u: count %u\n", i, count );
+        ok( count == 1, "count %u\n", count );
 
         r = CloseClipboard();
-        ok(r, "%u: gle %d\n", i, GetLastError());
+        ok(r, "gle %d\n", GetLastError());
 
         count = CountClipboardFormats();
         for (j = 0; tests[i].expected[j]; j++)
         {
             r = IsClipboardFormatAvailable( tests[i].expected[j] );
-            ok( r, "%u: %04x not available\n", i, tests[i].expected[j] );
+            ok( r, "%04x not available\n", tests[i].expected[j] );
         }
-        ok( count == j, "%u: count %u instead of %u\n", i, count, j );
+        ok( count == j, "count %u instead of %u\n", count, j );
 
         r = OpenClipboard( hwnd );
-        ok(r, "%u: gle %d\n", i, GetLastError());
+        ok(r, "gle %d\n", GetLastError());
         cf = 0;
         for (j = 0; tests[i].expected[j]; j++)
         {
+            winetest_push_context("%d", j);
             cf = EnumClipboardFormats( cf );
-            ok(cf == tests[i].expected[j], "%u.%u: got %04x instead of %04x\n",
-               i, j, cf, tests[i].expected[j] );
-            if (cf != tests[i].expected[j]) break;
+            ok(cf == tests[i].expected[j], "got %04x instead of %04x\n",
+               cf, tests[i].expected[j] );
+            if (cf != tests[i].expected[j])
+            {
+                winetest_pop_context();
+                break;
+            }
             old_seq = GetClipboardSequenceNumber();
             data = GetClipboardData( cf );
             ok(data != NULL ||
                broken( tests[i].format == CF_DIBV5 && cf == CF_DIB ), /* >= Vista */
-               "%u: couldn't get data, cf %04x err %d\n", i, cf, GetLastError());
+               "couldn't get data, cf %04x err %d\n", cf, GetLastError());
             seq = GetClipboardSequenceNumber();
-            ok(seq == old_seq, "sequence changed (test %d %d)\n", i, cf);
+            ok(seq == old_seq, "sequence changed (test %d)\n", cf);
             switch (cf)
             {
             case CF_LOCALE:
             {
                 UINT *ptr = GlobalLock( data );
                 DWORD layout = LOWORD( GetKeyboardLayout(0) );
-                ok( GlobalSize( data ) == sizeof(*ptr), "%u: size %lu\n", i, GlobalSize( data ));
+                ok( GlobalSize( data ) == sizeof(*ptr), "size %lu\n", GlobalSize( data ));
                 ok( *ptr == layout ||
                     broken( *ptr == MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT )),
-                    "%u: CF_LOCALE %04x/%04x\n", i, *ptr, layout );
+                    "CF_LOCALE %04x/%04x\n", *ptr, layout );
                 GlobalUnlock( data );
                 break;
             }
@@ -794,82 +800,90 @@ static void test_synthesized(void)
                 ok( GlobalSize( data ) == 10 * sizeof(WCHAR), "wrong len %ld\n", GlobalSize( data ));
                 break;
             }
+            winetest_pop_context();
         }
         if (!tests[i].expected[j])
         {
             cf = EnumClipboardFormats( cf );
-            ok(cf == 0, "%u: cf %04x\n", i, cf);
+            ok(cf == 0, "cf %04x\n", cf);
         }
 
         /* now with delayed rendering */
 
         r = EmptyClipboard();
-        ok(r, "%u: gle %d\n", i, GetLastError());
+        ok(r, "gle %d\n", GetLastError());
 
         rendered = SendMessageA( hwnd, WM_USER, 0, 0 );
-        ok( !rendered, "%u: formats %08x have been rendered\n", i, rendered );
+        ok( !rendered, "formats %08x have been rendered\n", rendered );
 
         SetClipboardData( tests[i].format, 0 );
         rendered = SendMessageA( hwnd, WM_USER, 0, 0 );
-        ok( !rendered, "%u: formats %08x have been rendered\n", i, rendered );
+        ok( !rendered, "formats %08x have been rendered\n", rendered );
 
         count = CountClipboardFormats();
-        ok( count == 1, "%u: count %u\n", i, count );
+        ok( count == 1, "count %u\n", count );
 
         r = CloseClipboard();
-        ok(r, "%u: gle %d\n", i, GetLastError());
+        ok(r, "gle %d\n", GetLastError());
         rendered = SendMessageA( hwnd, WM_USER, 0, 0 );
-        ok( !rendered, "%u: formats %08x have been rendered\n", i, rendered );
+        ok( !rendered, "formats %08x have been rendered\n", rendered );
 
         count = CountClipboardFormats();
         for (j = 0; tests[i].expected[j]; j++)
         {
             r = IsClipboardFormatAvailable( tests[i].expected[j] );
-            ok( r, "%u: %04x not available\n", i, tests[i].expected[j] );
+            ok( r, "%04x not available\n", tests[i].expected[j] );
         }
-        ok( count == j, "%u: count %u instead of %u\n", i, count, j );
+        ok( count == j, "count %u instead of %u\n", count, j );
         rendered = SendMessageA( hwnd, WM_USER, 0, 0 );
-        ok( !rendered, "%u: formats %08x have been rendered\n", i, rendered );
+        ok( !rendered, "formats %08x have been rendered\n", rendered );
 
         r = OpenClipboard(NULL);
-        ok(r, "%u: gle %d\n", i, GetLastError());
+        ok(r, "gle %d\n", GetLastError());
         cf = 0;
         for (j = 0; tests[i].expected[j]; j++)
         {
+            winetest_push_context("%d", j);
             cf = EnumClipboardFormats( cf );
-            ok(cf == tests[i].expected[j], "%u.%u: got %04x instead of %04x\n",
-               i, j, cf, tests[i].expected[j] );
-            if (cf != tests[i].expected[j]) break;
+            ok(cf == tests[i].expected[j], "got %04x instead of %04x\n",
+               cf, tests[i].expected[j] );
+            if (cf != tests[i].expected[j])
+            {
+                winetest_pop_context();
+                break;
+            }
             rendered = SendMessageA( hwnd, WM_USER, 0, 0 );
-            ok( !rendered, "%u.%u: formats %08x have been rendered\n", i, j, rendered );
+            ok( !rendered, "formats %08x have been rendered\n", rendered );
             data = GetClipboardData( cf );
             rendered = SendMessageA( hwnd, WM_USER, 0, 0 );
             if (cf == CF_LOCALE)
             {
-                ok(data != NULL, "%u: CF_LOCALE no data\n", i);
-                ok( !rendered, "%u.%u: formats %08x have been rendered\n", i, j, rendered );
+                ok(data != NULL, "CF_LOCALE no data\n");
+                ok( !rendered, "formats %08x have been rendered\n", rendered );
             }
             else
             {
-                ok(!data, "%u: format %04x got data %p\n", i, cf, data);
+                ok(!data, "format %04x got data %p\n", cf, data);
                 ok( rendered == (1 << tests[i].format),
-                    "%u.%u: formats %08x have been rendered\n", i, j, rendered );
+                    "formats %08x have been rendered\n", rendered );
                 /* try to render a second time */
                 data = GetClipboardData( cf );
                 rendered = SendMessageA( hwnd, WM_USER, 0, 0 );
                 ok( rendered == (1 << tests[i].format),
-                    "%u.%u: formats %08x have been rendered\n", i, j, rendered );
+                    "formats %08x have been rendered\n", rendered );
             }
+            winetest_pop_context();
         }
         if (!tests[i].expected[j])
         {
             cf = EnumClipboardFormats( cf );
-            ok(cf == 0, "%u: cf %04x\n", i, cf);
+            ok(cf == 0, "cf %04x\n", cf);
         }
         r = CloseClipboard();
-        ok(r, "%u: gle %d\n", i, GetLastError());
+        ok(r, "gle %d\n", GetLastError());
         rendered = SendMessageA( hwnd, WM_USER, 0, 0 );
-        ok( !rendered, "%u: formats %08x have been rendered\n", i, rendered );
+        ok( !rendered, "formats %08x have been rendered\n", rendered );
+        winetest_pop_context();
     }
 
     r = OpenClipboard(NULL);
