@@ -59,7 +59,6 @@ typedef struct MMDevEnumImpl
     LONG ref;
 } MMDevEnumImpl;
 
-static MMDevEnumImpl *MMDevEnumerator;
 static MMDevice **MMDevice_head;
 static MMDevice *MMDevice_def_rec, *MMDevice_def_play;
 static DWORD MMDevice_count;
@@ -69,6 +68,7 @@ static const IMMDeviceVtbl MMDeviceVtbl;
 static const IPropertyStoreVtbl MMDevPropVtbl;
 static const IMMEndpointVtbl MMEndpointVtbl;
 
+static MMDevEnumImpl enumerator;
 static IMMDevice info_device;
 
 typedef struct MMDevColImpl
@@ -860,23 +860,15 @@ static const IMMDeviceCollectionVtbl MMDevColVtbl =
 
 HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
 {
-    MMDevEnumImpl *This = MMDevEnumerator;
-
-    if (!This)
+    if (enumerator.ref == 0)
     {
-        This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
-        *ppv = NULL;
-        if (!This)
-            return E_OUTOFMEMORY;
-        This->ref = 1;
-        This->IMMDeviceEnumerator_iface.lpVtbl = &MMDevEnumVtbl;
-        MMDevEnumerator = This;
-
+        enumerator.ref = 1;
         load_devices_from_reg();
         load_driver_devices(eRender);
         load_driver_devices(eCapture);
     }
-    return IMMDeviceEnumerator_QueryInterface(&This->IMMDeviceEnumerator_iface, riid, ppv);
+
+    return IMMDeviceEnumerator_QueryInterface(&enumerator.IMMDeviceEnumerator_iface, riid, ppv);
 }
 
 void MMDevEnum_Free(void)
@@ -886,8 +878,6 @@ void MMDevEnum_Free(void)
     RegCloseKey(key_render);
     RegCloseKey(key_capture);
     key_render = key_capture = NULL;
-    HeapFree(GetProcessHeap(), 0, MMDevEnumerator);
-    MMDevEnumerator = NULL;
 }
 
 static HRESULT WINAPI MMDevEnum_QueryInterface(IMMDeviceEnumerator *iface, REFIID riid, void **ppv)
@@ -920,8 +910,6 @@ static ULONG WINAPI MMDevEnum_Release(IMMDeviceEnumerator *iface)
 {
     MMDevEnumImpl *This = impl_from_IMMDeviceEnumerator(iface);
     LONG ref = InterlockedDecrement(&This->ref);
-    if (!ref)
-        MMDevEnum_Free();
     TRACE("Refcount now %i\n", ref);
     return ref;
 }
@@ -1285,6 +1273,12 @@ static const IMMDeviceEnumeratorVtbl MMDevEnumVtbl =
     MMDevEnum_GetDevice,
     MMDevEnum_RegisterEndpointNotificationCallback,
     MMDevEnum_UnregisterEndpointNotificationCallback
+};
+
+static MMDevEnumImpl enumerator =
+{
+    {&MMDevEnumVtbl},
+    0,
 };
 
 static HRESULT MMDevPropStore_Create(MMDevice *parent, DWORD access, IPropertyStore **ppv)
