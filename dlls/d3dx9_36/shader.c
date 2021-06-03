@@ -1112,7 +1112,6 @@ static UINT set(struct ID3DXConstantTableImpl *table, IDirect3DDevice9 *device, 
             if (inclass == D3DXPC_MATRIX_ROWS && desc->RegisterSet == D3DXRS_BOOL)
             {
                 D3DXMATRIX mat, *m, min;
-                D3DXMatrixTranspose(&mat, &min);
 
                 if (is_pointer)
                     min = *(D3DXMATRIX *)(indata[index / 16]);
