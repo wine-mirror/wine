@@ -53,6 +53,7 @@ static NTSTATUS  (WINAPI *pRtlGetExtendedContextLength2)(ULONG context_flags, UL
 static NTSTATUS  (WINAPI *pRtlInitializeExtendedContext)(void *context, ULONG context_flags, CONTEXT_EX **context_ex);
 static NTSTATUS  (WINAPI *pRtlInitializeExtendedContext2)(void *context, ULONG context_flags, CONTEXT_EX **context_ex,
         ULONG64 compaction_mask);
+static NTSTATUS  (WINAPI *pRtlCopyContext)(CONTEXT *dst, DWORD context_flags, CONTEXT *src);
 static NTSTATUS  (WINAPI *pRtlCopyExtendedContext)(CONTEXT_EX *dst, ULONG context_flags, CONTEXT_EX *src);
 static void *    (WINAPI *pRtlLocateExtendedFeature)(CONTEXT_EX *context_ex, ULONG feature_id, ULONG *length);
 static void *    (WINAPI *pRtlLocateLegacyContext)(CONTEXT_EX *context_ex, ULONG *length);
@@ -75,7 +76,6 @@ static BOOL      (WINAPI *pInitializeContext2)(void *buffer, DWORD context_flags
 static void *    (WINAPI *pLocateXStateFeature)(CONTEXT *context, DWORD feature_id, DWORD *length);
 static BOOL      (WINAPI *pSetXStateFeaturesMask)(CONTEXT *context, DWORD64 feature_mask);
 static BOOL      (WINAPI *pGetXStateFeaturesMask)(CONTEXT *context, DWORD64 *feature_mask);
-static BOOL      (WINAPI *pCopyContext)(CONTEXT *dst, DWORD context_flags, CONTEXT *src);
 
 #define RTL_UNLOAD_EVENT_TRACE_NUMBER 64
 
@@ -8140,11 +8140,10 @@ static void test_copy_context(void)
         *(DWORD *)((BYTE *)src + flags_offset) = 0;
         *(DWORD *)((BYTE *)dst + flags_offset) = 0;
         SetLastError(0xdeadbeef);
-        bret = pCopyContext(dst, flags | 0x40, src);
-        ok((!bret && GetLastError() == (enabled_features ? ERROR_INVALID_PARAMETER : ERROR_NOT_SUPPORTED))
-                || broken(!bret && GetLastError() == ERROR_INVALID_PARAMETER),
-                "Got unexpected bret %#x, GetLastError() %#x, flags %#x.\n",
-                bret, GetLastError(), flags);
+        status = pRtlCopyContext(dst, flags | 0x40, src);
+        ok(status == (enabled_features ? STATUS_INVALID_PARAMETER : STATUS_NOT_SUPPORTED)
+           || broken(status == STATUS_INVALID_PARAMETER),
+           "Got unexpected status %#x, flags %#x.\n", status, flags);
         ok(*(DWORD *)((BYTE *)dst + flags_offset) == 0, "Got unexpected ContextFlags %#x, flags %#x.\n",
                 *(DWORD *)((BYTE *)dst + flags_offset), flags);
         check_changes_in_range((BYTE *)dst, flags & CONTEXT_AMD64 ? &ranges_amd64[0] : &ranges_x86[0],
@@ -8152,19 +8151,15 @@ static void test_copy_context(void)
 
         *(DWORD *)((BYTE *)dst + flags_offset) = flags & (CONTEXT_AMD64 | CONTEXT_i386);
         *(DWORD *)((BYTE *)src + flags_offset) = flags;
-        SetLastError(0xdeadbeef);
-        bret = pCopyContext(dst, flags, src);
+        status = pRtlCopyContext(dst, flags, src);
         if (flags & 0x40)
-            ok((!bret && GetLastError() == ERROR_MORE_DATA)
-                    || broken(!(flags & CONTEXT_NATIVE) && !bret && GetLastError() == ERROR_INVALID_PARAMETER),
-                    "Got unexpected bret %#x, GetLastError() %#x, flags %#x.\n",
-                    bret, GetLastError(), flags);
+            ok((status == STATUS_BUFFER_OVERFLOW)
+               || broken(!(flags & CONTEXT_NATIVE) && status == STATUS_INVALID_PARAMETER),
+               "Got unexpected status %#x, flags %#x.\n", status, flags);
         else
-            ok((bret && GetLastError() == 0xdeadbeef)
-                    || broken(!(flags & CONTEXT_NATIVE) && !bret && GetLastError() == ERROR_INVALID_PARAMETER),
-                    "Got unexpected bret %#x, GetLastError() %#x, flags %#x.\n",
-                    bret, GetLastError(), flags);
-        if (bret)
+            ok(!status || broken(!(flags & CONTEXT_NATIVE) && status == STATUS_INVALID_PARAMETER),
+               "Got unexpected status %#x, flags %#x.\n", status, flags);
+        if (!status)
         {
             ok(*(DWORD *)((BYTE *)dst + flags_offset) == flags, "Got unexpected ContextFlags %#x, flags %#x.\n",
                     *(DWORD *)((BYTE *)dst + flags_offset), flags);
@@ -8315,12 +8310,9 @@ static void test_copy_context(void)
         memset(&dst_xs->YmmContext, 0xdd, sizeof(dst_xs->YmmContext));
         dst_xs->CompactionMask = 0xdddddddddddddddd;
         dst_xs->Mask = 0xdddddddddddddddd;
-        SetLastError(0xdeadbeef);
-        bret = pCopyContext(dst, flags, src);
-        ok((bret && GetLastError() == 0xdeadbeef)
-                || broken(!(flags & CONTEXT_NATIVE) && !bret && GetLastError() == ERROR_INVALID_PARAMETER),
-                "Got unexpected bret %#x, GetLastError() %#x, flags %#x.\n",
-                bret, GetLastError(), flags);
+        status = pRtlCopyContext(dst, flags, src);
+        ok(!status || broken(!(flags & CONTEXT_NATIVE) && status == STATUS_INVALID_PARAMETER),
+           "Got unexpected status %#x, flags %#x.\n", status, flags);
         ok(dst_xs->Mask == 0xdddddddddddddddd || broken(dst_xs->Mask == 4), "Got unexpected Mask %s, flags %#x.\n",
                 wine_dbgstr_longlong(dst_xs->Mask), flags);
         ok(dst_xs->CompactionMask == 0xdddddddddddddddd || broken(dst_xs->CompactionMask == expected_compaction),
@@ -8385,6 +8377,7 @@ START_TEST(exception)
     X(RtlLocateLegacyContext);
     X(RtlSetExtendedFeaturesMask);
     X(RtlGetExtendedFeaturesMask);
+    X(RtlCopyContext);
     X(RtlCopyExtendedContext);
 #undef X
 
@@ -8397,7 +8390,6 @@ START_TEST(exception)
     X(LocateXStateFeature);
     X(SetXStateFeaturesMask);
     X(GetXStateFeaturesMask);
-    X(CopyContext);
 #undef X
 
     if (pRtlAddVectoredExceptionHandler && pRtlRemoveVectoredExceptionHandler)

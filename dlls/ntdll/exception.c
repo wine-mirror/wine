@@ -961,6 +961,50 @@ ULONG64 WINAPI RtlGetExtendedFeaturesMask( CONTEXT_EX *context_ex )
 }
 
 
+/***********************************************************************
+ *              RtlCopyContext  (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlCopyContext( CONTEXT *dst, DWORD context_flags, CONTEXT *src )
+{
+    DWORD context_size, arch_flag, flags_offset, dst_flags, src_flags;
+    static const DWORD arch_mask = CONTEXT_i386 | CONTEXT_AMD64;
+    BYTE *d, *s;
+
+    TRACE("dst %p, context_flags %#x, src %p.\n", dst, context_flags, src);
+
+    if (context_flags & 0x40 && !RtlGetEnabledExtendedFeatures( ~(ULONG64)0 )) return STATUS_NOT_SUPPORTED;
+
+    arch_flag = context_flags & arch_mask;
+    switch (arch_flag)
+    {
+    case CONTEXT_i386:
+        context_size = sizeof( I386_CONTEXT );
+        flags_offset = offsetof( I386_CONTEXT, ContextFlags );
+        break;
+    case CONTEXT_AMD64:
+        context_size = sizeof( AMD64_CONTEXT );
+        flags_offset = offsetof( AMD64_CONTEXT, ContextFlags );
+        break;
+    default:
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    d = (BYTE *)dst;
+    s = (BYTE *)src;
+    dst_flags = *(DWORD *)(d + flags_offset);
+    src_flags = *(DWORD *)(s + flags_offset);
+
+    if ((dst_flags & arch_mask) != arch_flag || (src_flags & arch_mask) != arch_flag)
+        return STATUS_INVALID_PARAMETER;
+
+    context_flags &= src_flags;
+    if (context_flags & ~dst_flags & 0x40) return STATUS_BUFFER_OVERFLOW;
+
+    return RtlCopyExtendedContext( (CONTEXT_EX *)(d + context_size), context_flags,
+                                   (CONTEXT_EX *)(s + context_size) );
+}
+
+
 /**********************************************************************
  *              RtlCopyExtendedContext      (NTDLL.@)
  */

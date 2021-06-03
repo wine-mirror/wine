@@ -527,6 +527,7 @@
 @ stub RtlConvertUiListToApiList
 @ stdcall -arch=win32 -ret64 RtlConvertUlongToLargeInteger(long)
 # @ stub RtlConvertVariantToProperty
+@ stdcall RtlCopyContext(ptr long ptr)
 @ stdcall RtlCopyExtendedContext(ptr long ptr)
 @ stdcall RtlCopyLuid(ptr ptr)
 @ stdcall RtlCopyLuidAndAttributesArray(long ptr ptr)
