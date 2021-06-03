@@ -428,7 +428,7 @@ static void BuildCallTo16Core( int reg_func )
         /*
          * Modify CONTEXT86 structure to contain new values
          *
-         * NOTE:  We restore only EAX, EBX, EDX, EDX, EBP, and ESP.
+         * NOTE:  We restore only EAX, EBX, ECX, EDX, EBP, and ESP.
          *        The segment registers as well as ESI and EDI should
          *        not be modified by a well-behaved 16-bit routine in
          *        any case.  [If necessary, we could restore them as well,
