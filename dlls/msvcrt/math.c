@@ -3494,10 +3494,28 @@ double CDECL fabs( double x )
 
 /*********************************************************************
  *		frexp (MSVCRT.@)
+ *
+ * Copied from musl: src/math/frexp.c
  */
-double CDECL frexp( double x, int *exp )
+double CDECL frexp( double x, int *e )
 {
-  return unix_funcs->frexp( x, exp );
+    UINT64 ux = *(UINT64*)&x;
+    int ee = ux >> 52 & 0x7ff;
+
+    if (!ee) {
+        if (x) {
+            x = frexp(x * 0x1p64, e);
+            *e -= 64;
+        } else *e = 0;
+        return x;
+    } else if (ee == 0x7ff) {
+        return x;
+    }
+
+    *e = ee - 0x3fe;
+    ux &= 0x800fffffffffffffull;
+    ux |= 0x3fe0000000000000ull;
+    return *(double*)&ux;
 }
 
 /*********************************************************************
