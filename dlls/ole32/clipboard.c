@@ -22,7 +22,7 @@
  *    This file contains the implementation for the OLE Clipboard and its
  *    internal interfaces. The OLE clipboard interacts with an IDataObject
  *    interface via the OleSetClipboard, OleGetClipboard and
- *    OleIsCurrentClipboard API's. An internal IDataObject delegates
+ *    OleIsCurrentClipboard APIs. An internal IDataObject delegates
  *    to a client supplied IDataObject or the WIN32 clipboard API depending
  *    on whether OleSetClipboard has been invoked.
  *    Here are some operating scenarios:
