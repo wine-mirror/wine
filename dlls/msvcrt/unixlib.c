@@ -95,14 +95,6 @@ static float CDECL unix_fmaf( float x, float y, float z )
 }
 
 /*********************************************************************
- *      frexpf
- */
-static float CDECL unix_frexpf( float x, int *exp )
-{
-    return frexpf( x, exp );
-}
-
-/*********************************************************************
  *      hypot
  */
 static double CDECL unix_hypot(double x, double y)
@@ -273,7 +265,6 @@ static const struct unix_funcs funcs =
     unix_exp2,
     unix_exp2f,
     unix_fmaf,
-    unix_frexpf,
     unix_hypot,
     unix_hypotf,
     unix_lgamma,

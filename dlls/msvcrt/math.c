@@ -1611,10 +1611,28 @@ float CDECL floorf( float x )
 
 /*********************************************************************
  *      frexpf (MSVCRT.@)
+ *
+ * Copied from musl: src/math/frexpf.c
  */
-float CDECL frexpf( float x, int *exp )
+float CDECL frexpf( float x, int *e )
 {
-  return unix_funcs->frexpf( x, exp );
+    UINT32 ux = *(UINT32*)&x;
+    int ee = ux >> 23 & 0xff;
+
+    if (!ee) {
+        if (x) {
+            x = frexpf(x * 0x1p64, e);
+            *e -= 64;
+        } else *e = 0;
+        return x;
+    } else if (ee == 0xff) {
+        return x;
+    }
+
+    *e = ee - 0x7e;
+    ux &= 0x807ffffful;
+    ux |= 0x3f000000ul;
+    return *(float*)&ux;
 }
 
 /*********************************************************************
