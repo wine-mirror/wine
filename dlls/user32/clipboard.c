@@ -81,8 +81,11 @@ struct metafile_pict
 static const char *debugstr_format( UINT id )
 {
     WCHAR buffer[256];
+    DWORD le = GetLastError();
+    BOOL r = GetClipboardFormatNameW( id, buffer, 256 );
+    SetLastError(le);
 
-    if (GetClipboardFormatNameW( id, buffer, 256 ))
+    if (r)
         return wine_dbg_sprintf( "%04x %s", id, debugstr_w(buffer) );
 
     switch (id)
