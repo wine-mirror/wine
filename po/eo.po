@@ -13066,12 +13066,12 @@ msgstr ""
 msgid "Are you sure?"
 msgstr ""
 
-#: programs/cmd/cmd.rc:366 programs/reg/reg.rc:127 programs/xcopy/xcopy.rc:43
+#: programs/cmd/cmd.rc:366 programs/reg/reg.rc:126 programs/xcopy/xcopy.rc:43
 msgctxt "Yes key"
 msgid "Y"
 msgstr ""
 
-#: programs/cmd/cmd.rc:367 programs/reg/reg.rc:128 programs/xcopy/xcopy.rc:44
+#: programs/cmd/cmd.rc:367 programs/reg/reg.rc:127 programs/xcopy/xcopy.rc:44
 msgctxt "No key"
 msgid "N"
 msgstr ""
@@ -13140,7 +13140,7 @@ msgstr ""
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr ""
 
-#: programs/cmd/cmd.rc:386 programs/xcopy/xcopy.rc:45
+#: programs/cmd/cmd.rc:386 programs/reg/reg.rc:128 programs/xcopy/xcopy.rc:45
 msgctxt "All key"
 msgid "A"
 msgstr ""
@@ -13207,11 +13207,11 @@ msgstr ""
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr ""
 
-#: programs/cmd/cmd.rc:402 programs/reg/reg.rc:126
+#: programs/cmd/cmd.rc:402 programs/reg/reg.rc:129
 msgid " (Yes|No)"
 msgstr ""
 
-#: programs/cmd/cmd.rc:403
+#: programs/cmd/cmd.rc:403 programs/reg/reg.rc:130
 msgid " (Yes|No|All)"
 msgstr ""
 
@@ -14578,17 +14578,17 @@ msgstr ""
 msgid "Icons (*.ico)"
 msgstr ""
 
-#: programs/reg/reg.rc:137
+#: programs/reg/reg.rc:139
 #, fuzzy
 #| msgid "Invalid share name.\n"
 msgid "reg: Invalid syntax. "
 msgstr "Nevalida nomo de kunuzata aparato.\n"
 
-#: programs/reg/reg.rc:140
+#: programs/reg/reg.rc:142
 msgid "Type \"REG %1 /?\" for help.\n"
 msgstr ""
 
-#: programs/reg/reg.rc:179
+#: programs/reg/reg.rc:181
 #, fuzzy
 #| msgid "Are you sure you want to delete '%1'?"
 msgid "reg: Unable to access or create the specified registry key\n"
@@ -14598,13 +14598,13 @@ msgstr "Ĉu vi estas certa pri forigo de '%1'?"
 msgid "reg: The operation completed successfully\n"
 msgstr ""
 
-#: programs/reg/reg.rc:129
+#: programs/reg/reg.rc:131
 #, fuzzy
 #| msgid "Operation canceled by user.\n"
 msgid "reg: The registry operation was cancelled\n"
 msgstr "Operacio nuligita de uzanto.\n"
 
-#: programs/reg/reg.rc:172
+#: programs/reg/reg.rc:174
 #, fuzzy
 #| msgid "Are you sure you want to delete '%1'?"
 msgid "reg: Unable to find the specified registry key\n"
@@ -14616,11 +14616,11 @@ msgstr "Ĉu vi estas certa pri forigo de '%1'?"
 msgid "reg: Unable to find the specified registry value\n"
 msgstr "Ĉu vi estas certa pri forigo de '%1'?"
 
-#: programs/reg/reg.rc:130 programs/regedit/regedit.rc:239
+#: programs/reg/reg.rc:132 programs/regedit/regedit.rc:239
 msgid "(Default)"
 msgstr "(Defaŭlta)"
 
-#: programs/reg/reg.rc:139
+#: programs/reg/reg.rc:141
 msgid "Type \"REG /?\" for help.\n"
 msgstr ""
 
@@ -14687,7 +14687,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: programs/reg/reg.rc:200
+#: programs/reg/reg.rc:202
 msgid ""
 "REG COPY <key1> <key2> [/s] [/f]\n"
 "\n"
@@ -14761,7 +14761,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: programs/reg/reg.rc:168
+#: programs/reg/reg.rc:170
 msgid ""
 "REG EXPORT <key> <file> [/y]\n"
 "\n"
@@ -14792,7 +14792,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: programs/reg/reg.rc:146
+#: programs/reg/reg.rc:148
 msgid ""
 "REG IMPORT <file>\n"
 "\n"
@@ -14838,7 +14838,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: programs/reg/reg.rc:178
+#: programs/reg/reg.rc:180
 msgid ""
 "  /reg:32\n"
 "     Access the registry using the 32-bit view.\n"
@@ -14858,13 +14858,13 @@ msgstr "Nevalida nomo de kunuzata aparato.\n"
 msgid "reg: Unable to access remote machine\n"
 msgstr ""
 
-#: programs/reg/reg.rc:170
+#: programs/reg/reg.rc:172
 #, fuzzy
 #| msgid "Invalid share name.\n"
 msgid "reg: Invalid system key\n"
 msgstr "Nevalida nomo de kunuzata aparato.\n"
 
-#: programs/reg/reg.rc:138
+#: programs/reg/reg.rc:140
 #, fuzzy
 #| msgid "Invalid version option.\n"
 msgid "reg: Invalid option [%1]. "
@@ -14878,7 +14878,7 @@ msgstr ""
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
 msgstr ""
 
-#: programs/reg/reg.rc:134
+#: programs/reg/reg.rc:136
 msgid "reg: The option [/d] must be followed by a valid string\n"
 msgstr ""
 
@@ -14902,61 +14902,69 @@ msgstr "Dosiero estas jam ekzistanta. Ĉu vi volas anstataŭi ĝin?"
 msgid "reg: Invalid command line parameters\n"
 msgstr "Nevalida komandlinio.\n"
 
-#: programs/reg/reg.rc:202
+#: programs/reg/reg.rc:204
 msgid "reg: The source and destination keys cannot be the same\n"
 msgstr ""
 
-#: programs/reg/reg.rc:131
+#: programs/reg/reg.rc:205
+#, fuzzy
+#| msgid "The specified file already exists. Do you want to replace it?"
+msgid ""
+"The value '%1\\%2' already exists in the destination key. Do you want to "
+"overwrite it?"
+msgstr "Dosiero estas jam ekzistanta. Ĉu vi volas anstataŭi ĝin?"
+
+#: programs/reg/reg.rc:133
 #, fuzzy
 #| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "Ĉu vi certas pri forigo de ĉi tiuj valoroj?"
 
-#: programs/reg/reg.rc:132
+#: programs/reg/reg.rc:134
 #, fuzzy
 #| msgid "Are you sure you want to delete value '%s'?"
 msgid "Are you sure you want to delete all registry values in '%1'?"
 msgstr "Ĉu vi certas pri forigo de '%s'?"
 
-#: programs/reg/reg.rc:133
+#: programs/reg/reg.rc:135
 #, fuzzy
 #| msgid "Are you sure you want to delete '%1'?"
 msgid "Are you sure you want to delete the registry key '%1'?"
 msgstr "Ĉu vi estas certa pri forigo de '%1'?"
 
-#: programs/reg/reg.rc:135
+#: programs/reg/reg.rc:137
 #, fuzzy
 #| msgid "Are you sure you want to delete these values?"
 msgid "reg: Unable to delete all registry values in '%1'\n"
 msgstr "Ĉu vi certas pri forigo de ĉi tiuj valoroj?"
 
-#: programs/reg/reg.rc:171
+#: programs/reg/reg.rc:173
 #, fuzzy
 #| msgid "The specified file already exists. Do you want to replace it?"
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "Dosiero estas jam ekzistanta. Ĉu vi volas anstataŭi ĝin?"
 
-#: programs/reg/reg.rc:149
+#: programs/reg/reg.rc:151
 msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr ""
 
-#: programs/reg/reg.rc:173
+#: programs/reg/reg.rc:175
 #, fuzzy
 #| msgid "Are you sure you want to delete '%1'?"
 msgid "reg: Unable to import the registry key '%1'\n"
 msgstr "Ĉu vi estas certa pri forigo de '%1'?"
 
-#: programs/reg/reg.rc:148
+#: programs/reg/reg.rc:150
 #, fuzzy
 #| msgid "Search string '%s' not found"
 msgid "reg: The file '%1' was not found.\n"
 msgstr "Mi ne trovis la ĉenon %s"
 
-#: programs/reg/reg.rc:141 programs/regedit/regedit.rc:240
+#: programs/reg/reg.rc:143 programs/regedit/regedit.rc:240
 msgid "(value not set)"
 msgstr "(valoro ne elektita)"
 
-#: programs/reg/reg.rc:136
+#: programs/reg/reg.rc:138
 msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr ""
 

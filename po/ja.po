@@ -13255,12 +13255,12 @@ msgstr ""
 msgid "Are you sure?"
 msgstr "よろしいですか?"
 
-#: programs/cmd/cmd.rc:366 programs/reg/reg.rc:127 programs/xcopy/xcopy.rc:43
+#: programs/cmd/cmd.rc:366 programs/reg/reg.rc:126 programs/xcopy/xcopy.rc:43
 msgctxt "Yes key"
 msgid "Y"
 msgstr "Y"
 
-#: programs/cmd/cmd.rc:367 programs/reg/reg.rc:128 programs/xcopy/xcopy.rc:44
+#: programs/cmd/cmd.rc:367 programs/reg/reg.rc:127 programs/xcopy/xcopy.rc:44
 msgctxt "No key"
 msgid "N"
 msgstr "N"
@@ -13329,7 +13329,7 @@ msgstr "'%1' を開けません\n"
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "バッチ スクリプトの外からバッチ ラベルを呼び出すことはできません\n"
 
-#: programs/cmd/cmd.rc:386 programs/xcopy/xcopy.rc:45
+#: programs/cmd/cmd.rc:386 programs/reg/reg.rc:128 programs/xcopy/xcopy.rc:45
 msgctxt "All key"
 msgid "A"
 msgstr "A"
@@ -13398,11 +13398,11 @@ msgstr "ドライブ %1!c! のボリューム ラベルは %2 です\n"
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "ドライブ %1!c! のボリューム ラベルがありません。\n"
 
-#: programs/cmd/cmd.rc:402 programs/reg/reg.rc:126
+#: programs/cmd/cmd.rc:402 programs/reg/reg.rc:129
 msgid " (Yes|No)"
 msgstr " (Yes|No)"
 
-#: programs/cmd/cmd.rc:403
+#: programs/cmd/cmd.rc:403 programs/reg/reg.rc:130
 msgid " (Yes|No|All)"
 msgstr " (Yes|No|All)"
 
@@ -14767,15 +14767,15 @@ msgstr "アイコン ファイル"
 msgid "Icons (*.ico)"
 msgstr "アイコン (*.ico)"
 
-#: programs/reg/reg.rc:137
+#: programs/reg/reg.rc:139
 msgid "reg: Invalid syntax. "
 msgstr "reg: 無効な構文です。"
 
-#: programs/reg/reg.rc:140
+#: programs/reg/reg.rc:142
 msgid "Type \"REG %1 /?\" for help.\n"
 msgstr "ヘルプは \"REG %1 /?\" と入力してください。\n"
 
-#: programs/reg/reg.rc:179
+#: programs/reg/reg.rc:181
 msgid "reg: Unable to access or create the specified registry key\n"
 msgstr "reg: 指定されたレジストリ キーをアクセスまたは作成できません\n"
 
@@ -14783,11 +14783,11 @@ msgstr "reg: 指定されたレジストリ キーをアクセスまたは作成
 msgid "reg: The operation completed successfully\n"
 msgstr "reg: 操作は正常に完了しました\n"
 
-#: programs/reg/reg.rc:129
+#: programs/reg/reg.rc:131
 msgid "reg: The registry operation was cancelled\n"
 msgstr "reg: レジストリ操作は取り消されました\n"
 
-#: programs/reg/reg.rc:172
+#: programs/reg/reg.rc:174
 msgid "reg: Unable to find the specified registry key\n"
 msgstr "reg: 指定されたレジストリ キーを見つけられません\n"
 
@@ -14795,11 +14795,11 @@ msgstr "reg: 指定されたレジストリ キーを見つけられません\n"
 msgid "reg: Unable to find the specified registry value\n"
 msgstr "reg: 指定されたレジストリ値を見つけられません\n"
 
-#: programs/reg/reg.rc:130 programs/regedit/regedit.rc:239
+#: programs/reg/reg.rc:132 programs/regedit/regedit.rc:239
 msgid "(Default)"
 msgstr "(既定)"
 
-#: programs/reg/reg.rc:139
+#: programs/reg/reg.rc:141
 msgid "Type \"REG /?\" for help.\n"
 msgstr "ヘルプは \"REG /?\" と入力してください。\n"
 
@@ -14933,7 +14933,7 @@ msgstr ""
 "     レジストリを確認することなく変更します。\n"
 "\n"
 
-#: programs/reg/reg.rc:200
+#: programs/reg/reg.rc:202
 #, fuzzy
 #| msgid ""
 #| "REG EXPORT <key> <file> [/y]\n"
@@ -15094,7 +15094,7 @@ msgstr ""
 "     削除します。\n"
 "\n"
 
-#: programs/reg/reg.rc:168
+#: programs/reg/reg.rc:170
 msgid ""
 "REG EXPORT <key> <file> [/y]\n"
 "\n"
@@ -15148,7 +15148,7 @@ msgstr ""
 "    <ファイル> を確認することなく上書きします。\n"
 "\n"
 
-#: programs/reg/reg.rc:146
+#: programs/reg/reg.rc:148
 msgid ""
 "REG IMPORT <file>\n"
 "\n"
@@ -15233,7 +15233,7 @@ msgstr ""
 "     <キー> とそのサブキー配下にあるレジストリ エントリの一覧を表示します。\n"
 "\n"
 
-#: programs/reg/reg.rc:178
+#: programs/reg/reg.rc:180
 msgid ""
 "  /reg:32\n"
 "     Access the registry using the 32-bit view.\n"
@@ -15257,11 +15257,11 @@ msgstr "reg: レジストリ キーが正しくありません\n"
 msgid "reg: Unable to access remote machine\n"
 msgstr "reg: リモート マシンにアクセスできません\n"
 
-#: programs/reg/reg.rc:170
+#: programs/reg/reg.rc:172
 msgid "reg: Invalid system key\n"
 msgstr "reg: システム キーが正しくありません\n"
 
-#: programs/reg/reg.rc:138
+#: programs/reg/reg.rc:140
 msgid "reg: Invalid option [%1]. "
 msgstr "reg: 無効なオプション [%1]。"
 
@@ -15275,7 +15275,7 @@ msgstr "reg: [/d] オプションのあとに正しい 16 進数値を指定し�
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
 msgstr "reg: [/d] オプションのあとに正しい 16 進数値を指定してください\n"
 
-#: programs/reg/reg.rc:134
+#: programs/reg/reg.rc:136
 msgid "reg: The option [/d] must be followed by a valid string\n"
 msgstr "reg: /d オプションのあとに正しい文字列を指定してください\n"
 
@@ -15295,49 +15295,57 @@ msgstr "レジストリ値 '%1' はすでに存在します。上書きします
 msgid "reg: Invalid command line parameters\n"
 msgstr "reg: コマンド ライン パラメーターが正しくありません\n"
 
-#: programs/reg/reg.rc:202
+#: programs/reg/reg.rc:204
 msgid "reg: The source and destination keys cannot be the same\n"
 msgstr ""
 
-#: programs/reg/reg.rc:131
+#: programs/reg/reg.rc:205
+#, fuzzy
+#| msgid "The file '%1' already exists. Do you want to overwrite it?"
+msgid ""
+"The value '%1\\%2' already exists in the destination key. Do you want to "
+"overwrite it?"
+msgstr "ファイル '%1' はすでに存在します。上書きしますか?"
+
+#: programs/reg/reg.rc:133
 msgid "Are you sure you want to delete the registry value '%1'?"
 msgstr "本当にレジストリ値 '%1' を削除しますか?"
 
-#: programs/reg/reg.rc:132
+#: programs/reg/reg.rc:134
 msgid "Are you sure you want to delete all registry values in '%1'?"
 msgstr "本当に '%1' にあるすべてのレジストリ値を削除しますか?"
 
-#: programs/reg/reg.rc:133
+#: programs/reg/reg.rc:135
 msgid "Are you sure you want to delete the registry key '%1'?"
 msgstr "本当にレジストリ キー '%1' を削除しますか?"
 
-#: programs/reg/reg.rc:135
+#: programs/reg/reg.rc:137
 #, fuzzy
 #| msgid "regedit: Unable to delete the registry key '%1'.\n"
 msgid "reg: Unable to delete all registry values in '%1'\n"
 msgstr "regedit: レジストリ キー '%1' を削除できません。\n"
 
-#: programs/reg/reg.rc:171
+#: programs/reg/reg.rc:173
 msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgstr "ファイル '%1' はすでに存在します。上書きしますか?"
 
-#: programs/reg/reg.rc:149
+#: programs/reg/reg.rc:151
 msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
 msgstr "reg: 認識できないエスケープ シーケンスです [\\%1!c!]\n"
 
-#: programs/reg/reg.rc:173
+#: programs/reg/reg.rc:175
 msgid "reg: Unable to import the registry key '%1'\n"
 msgstr "reg: レジストリ キー '%1' をインポートできません\n"
 
-#: programs/reg/reg.rc:148
+#: programs/reg/reg.rc:150
 msgid "reg: The file '%1' was not found.\n"
 msgstr "reg: ファイル '%1' が見つかりません。\n"
 
-#: programs/reg/reg.rc:141 programs/regedit/regedit.rc:240
+#: programs/reg/reg.rc:143 programs/regedit/regedit.rc:240
 msgid "(value not set)"
 msgstr "(値の設定なし)"
 
-#: programs/reg/reg.rc:136
+#: programs/reg/reg.rc:138
 msgid "Search complete. Number of matches found: %1!d!\n"
 msgstr "検索が完了しました。該当箇所の数: %1!d!\n"
 
