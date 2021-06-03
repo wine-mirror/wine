@@ -1255,7 +1255,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 
             if (in_size < sizeof(*params))
             {
-                return STATUS_BUFFER_TOO_SMALL;
+                status = STATUS_BUFFER_TOO_SMALL;
                 break;
             }
 
