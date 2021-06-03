@@ -73,4 +73,7 @@ extern HRESULT AudioClient_Create(MMDevice *parent, IAudioClient **ppv) DECLSPEC
 extern HRESULT AudioEndpointVolume_Create(MMDevice *parent, IAudioEndpointVolumeEx **ppv) DECLSPEC_HIDDEN;
 extern HRESULT SpatialAudioClient_Create(IMMDevice *device, ISpatialAudioClient **out) DECLSPEC_HIDDEN;
 
+extern HRESULT load_devices_from_reg(void) DECLSPEC_HIDDEN;
+extern HRESULT load_driver_devices(EDataFlow flow) DECLSPEC_HIDDEN;
+
 extern const WCHAR drv_keyW[] DECLSPEC_HIDDEN;

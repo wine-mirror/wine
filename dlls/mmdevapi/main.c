@@ -148,6 +148,12 @@ static BOOL WINAPI init_driver(INIT_ONCE *once, void *param, void **context)
             *next = ',';
     }
 
+    if (drvs.module != 0){
+        load_devices_from_reg();
+        load_driver_devices(eRender);
+        load_driver_devices(eCapture);
+    }
+
     return drvs.module != 0;
 }
 

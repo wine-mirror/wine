@@ -373,7 +373,7 @@ static MMDevice *MMDevice_Create(WCHAR *name, GUID *id, EDataFlow flow, DWORD st
     return cur;
 }
 
-static HRESULT load_devices_from_reg(void)
+HRESULT load_devices_from_reg(void)
 {
     DWORD i = 0;
     HKEY root, cur;
@@ -466,7 +466,7 @@ static HRESULT set_format(MMDevice *dev)
     return S_OK;
 }
 
-static HRESULT load_driver_devices(EDataFlow flow)
+HRESULT load_driver_devices(EDataFlow flow)
 {
     WCHAR **ids;
     GUID *guids;
@@ -860,14 +860,6 @@ static const IMMDeviceCollectionVtbl MMDevColVtbl =
 
 HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
 {
-    if (enumerator.ref == 0)
-    {
-        enumerator.ref = 1;
-        load_devices_from_reg();
-        load_driver_devices(eRender);
-        load_driver_devices(eCapture);
-    }
-
     return IMMDeviceEnumerator_QueryInterface(&enumerator.IMMDeviceEnumerator_iface, riid, ppv);
 }
 
@@ -1278,7 +1270,7 @@ static const IMMDeviceEnumeratorVtbl MMDevEnumVtbl =
 static MMDevEnumImpl enumerator =
 {
     {&MMDevEnumVtbl},
-    0,
+    1,
 };
 
 static HRESULT MMDevPropStore_Create(MMDevice *parent, DWORD access, IPropertyStore **ppv)
