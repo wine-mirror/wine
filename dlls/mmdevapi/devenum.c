@@ -59,9 +59,7 @@ typedef struct MMDevEnumImpl
     LONG ref;
 } MMDevEnumImpl;
 
-static MMDevice **MMDevice_head;
 static MMDevice *MMDevice_def_rec, *MMDevice_def_play;
-static DWORD MMDevice_count;
 static const IMMDeviceEnumeratorVtbl MMDevEnumVtbl;
 static const IMMDeviceCollectionVtbl MMDevColVtbl;
 static const IMMDeviceVtbl MMDeviceVtbl;
@@ -69,6 +67,7 @@ static const IPropertyStoreVtbl MMDevPropVtbl;
 static const IMMEndpointVtbl MMEndpointVtbl;
 
 static MMDevEnumImpl enumerator;
+static struct list device_list = LIST_INIT(device_list);
 static IMMDevice info_device;
 
 typedef struct MMDevColImpl
@@ -263,9 +262,8 @@ static HRESULT set_driver_prop_value(GUID *id, const EDataFlow flow, const PROPE
 static MMDevice *MMDevice_Create(WCHAR *name, GUID *id, EDataFlow flow, DWORD state, BOOL setdefault)
 {
     HKEY key, root;
-    MMDevice *cur = NULL;
+    MMDevice *device, *cur = NULL;
     WCHAR guidstr[39];
-    DWORD i;
 
     static const PROPERTYKEY deviceinterface_key = {
         {0x233164c8, 0x1b2c, 0x4c7d, {0xbc, 0x68, 0xb6, 0x71, 0x68, 0x7a, 0x25, 0x67}}, 1
@@ -275,9 +273,8 @@ static MMDevice *MMDevice_Create(WCHAR *name, GUID *id, EDataFlow flow, DWORD st
         {0xb3f8fa53, 0x0004, 0x438e, {0x90, 0x03, 0x51, 0xa4, 0x6e, 0x13, 0x9b, 0xfc}}, 2
     };
 
-    for (i = 0; i < MMDevice_count; ++i)
+    LIST_FOR_EACH_ENTRY(device, &device_list, MMDevice, entry)
     {
-        MMDevice *device = MMDevice_head[i];
         if (device->flow == flow && IsEqualGUID(&device->devguid, id)){
             cur = device;
             break;
@@ -296,11 +293,7 @@ static MMDevice *MMDevice_Create(WCHAR *name, GUID *id, EDataFlow flow, DWORD st
         InitializeCriticalSection(&cur->crst);
         cur->crst.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": MMDevice.crst");
 
-        if (!MMDevice_head)
-            MMDevice_head = HeapAlloc(GetProcessHeap(), 0, sizeof(*MMDevice_head));
-        else
-            MMDevice_head = HeapReAlloc(GetProcessHeap(), 0, MMDevice_head, sizeof(*MMDevice_head)*(1+MMDevice_count));
-        MMDevice_head[MMDevice_count++] = cur;
+        list_add_tail(&device_list, &cur->entry);
     }else if(cur->ref > 0)
         WARN("Modifying an MMDevice with postitive reference count!\n");
 
@@ -495,17 +488,8 @@ HRESULT load_driver_devices(EDataFlow flow)
 
 static void MMDevice_Destroy(MMDevice *This)
 {
-    DWORD i;
     TRACE("Freeing %s\n", debugstr_w(This->drv_id));
-    /* Since this function is called at destruction time, reordering of the list is unimportant */
-    for (i = 0; i < MMDevice_count; ++i)
-    {
-        if (MMDevice_head[i] == This)
-        {
-            MMDevice_head[i] = MMDevice_head[--MMDevice_count];
-            break;
-        }
-    }
+    list_remove(&This->entry);
     This->crst.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->crst);
     HeapFree(GetProcessHeap(), 0, This->drv_id);
@@ -806,16 +790,15 @@ static ULONG WINAPI MMDevCol_Release(IMMDeviceCollection *iface)
 static HRESULT WINAPI MMDevCol_GetCount(IMMDeviceCollection *iface, UINT *numdevs)
 {
     MMDevColImpl *This = impl_from_IMMDeviceCollection(iface);
-    DWORD i;
+    MMDevice *cur;
 
     TRACE("(%p)->(%p)\n", This, numdevs);
     if (!numdevs)
         return E_POINTER;
 
     *numdevs = 0;
-    for (i = 0; i < MMDevice_count; ++i)
+    LIST_FOR_EACH_ENTRY(cur, &device_list, MMDevice, entry)
     {
-        MMDevice *cur = MMDevice_head[i];
         if ((cur->flow == This->flow || This->flow == eAll)
             && (cur->state & This->state))
             ++(*numdevs);
@@ -826,15 +809,15 @@ static HRESULT WINAPI MMDevCol_GetCount(IMMDeviceCollection *iface, UINT *numdev
 static HRESULT WINAPI MMDevCol_Item(IMMDeviceCollection *iface, UINT n, IMMDevice **dev)
 {
     MMDevColImpl *This = impl_from_IMMDeviceCollection(iface);
-    DWORD i = 0, j = 0;
+    MMDevice *cur;
+    DWORD i = 0;
 
     TRACE("(%p)->(%u, %p)\n", This, n, dev);
     if (!dev)
         return E_POINTER;
 
-    for (j = 0; j < MMDevice_count; ++j)
+    LIST_FOR_EACH_ENTRY(cur, &device_list, MMDevice, entry)
     {
-        MMDevice *cur = MMDevice_head[j];
         if ((cur->flow == This->flow || This->flow == eAll)
             && (cur->state & This->state)
             && i++ == n)
@@ -865,8 +848,9 @@ HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
 
 void MMDevEnum_Free(void)
 {
-    while (MMDevice_count)
-        MMDevice_Destroy(MMDevice_head[0]);
+    MMDevice *device, *next;
+    LIST_FOR_EACH_ENTRY_SAFE(device, next, &device_list, MMDevice, entry)
+        MMDevice_Destroy(device);
     RegCloseKey(key_render);
     RegCloseKey(key_capture);
     key_render = key_capture = NULL;
@@ -1006,7 +990,7 @@ static HRESULT WINAPI MMDevEnum_GetDefaultAudioEndpoint(IMMDeviceEnumerator *ifa
 static HRESULT WINAPI MMDevEnum_GetDevice(IMMDeviceEnumerator *iface, const WCHAR *name, IMMDevice **device)
 {
     MMDevEnumImpl *This = impl_from_IMMDeviceEnumerator(iface);
-    DWORD i=0;
+    MMDevice *impl;
     IMMDevice *dev = NULL;
 
     TRACE("(%p)->(%s,%p)\n", This, debugstr_w(name), device);
@@ -1019,11 +1003,11 @@ static HRESULT WINAPI MMDevEnum_GetDevice(IMMDeviceEnumerator *iface, const WCHA
         return S_OK;
     }
 
-    for (i = 0; i < MMDevice_count; ++i)
+    LIST_FOR_EACH_ENTRY(impl, &device_list, MMDevice, entry)
     {
         HRESULT hr;
         WCHAR *str;
-        dev = &MMDevice_head[i]->IMMDevice_iface;
+        dev = &impl->IMMDevice_iface;
         hr = IMMDevice_GetId(dev, &str);
         if (FAILED(hr))
         {
