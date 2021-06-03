@@ -5125,6 +5125,8 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                             loop_next = TRUE;
                             break;
                         }
+
+                        dwBufferSize = 2048;
                     }
                     heap_free( host );
 
@@ -5153,6 +5155,8 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                             loop_next = TRUE;
                             break;
                         }
+
+                        dwBufferSize = 2048;
                     }
 
                     if(!loop_next) {
