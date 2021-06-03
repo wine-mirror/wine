@@ -32,6 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 enum sink_state
 {
     SINK_STATE_STOPPED = 0,
+    SINK_STATE_PAUSED,
     SINK_STATE_RUNNING,
 };
 
@@ -1101,46 +1102,59 @@ static ULONG WINAPI sample_grabber_clock_sink_Release(IMFClockStateSink *iface)
     return IMFMediaSink_Release(&grabber->IMFMediaSink_iface);
 }
 
-static void sample_grabber_set_state(struct sample_grabber *grabber, enum sink_state state)
+static HRESULT sample_grabber_set_state(struct sample_grabber *grabber, enum sink_state state,
+                                        MFTIME systime, LONGLONG offset)
 {
     static const DWORD events[] =
     {
         MEStreamSinkStopped, /* SINK_STATE_STOPPED */
+        MEStreamSinkPaused,  /* SINK_STATE_PAUSED */
         MEStreamSinkStarted, /* SINK_STATE_RUNNING */
     };
-    BOOL set_state = FALSE;
+    BOOL do_callback = FALSE;
+    HRESULT hr = S_OK;
     unsigned int i;
 
     EnterCriticalSection(&grabber->cs);
 
     if (!grabber->is_shut_down)
     {
-        switch (grabber->state)
+        if (state == SINK_STATE_PAUSED && grabber->state == SINK_STATE_STOPPED)
+            hr = MF_E_INVALID_STATE_TRANSITION;
+        else
         {
-            case SINK_STATE_STOPPED:
-                set_state = state == SINK_STATE_RUNNING;
-                break;
-            case SINK_STATE_RUNNING:
-                set_state = state == SINK_STATE_STOPPED;
-                break;
-            default:
-                ;
-        }
-
-        if (set_state)
-        {
-            grabber->state = state;
-            if (state == SINK_STATE_RUNNING)
+            if (state == SINK_STATE_RUNNING && grabber->state == SINK_STATE_STOPPED)
             {
                 /* Every transition to running state sends a bunch requests to build up initial queue. */
                 for (i = 0; i < 4; ++i)
                     sample_grabber_stream_request_sample(grabber);
             }
-            IMFStreamSink_QueueEvent(&grabber->IMFStreamSink_iface, events[state], &GUID_NULL, S_OK, NULL);
+            do_callback = state != grabber->state || state != SINK_STATE_PAUSED;
+            if (do_callback)
+                IMFStreamSink_QueueEvent(&grabber->IMFStreamSink_iface, events[state], &GUID_NULL, S_OK, NULL);
+            grabber->state = state;
         }
     }
 
     LeaveCriticalSection(&grabber->cs);
+
+    if (do_callback)
+    {
+        switch (state)
+        {
+        case SINK_STATE_STOPPED:
+            hr = IMFSampleGrabberSinkCallback_OnClockStop(sample_grabber_get_callback(grabber), systime);
+            break;
+        case SINK_STATE_PAUSED:
+            hr = IMFSampleGrabberSinkCallback_OnClockPause(sample_grabber_get_callback(grabber), systime);
+            break;
+        case SINK_STATE_RUNNING:
+            hr = IMFSampleGrabberSinkCallback_OnClockStart(sample_grabber_get_callback(grabber), systime, offset);
+            break;
+        }
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI sample_grabber_clock_sink_OnClockStart(IMFClockStateSink *iface, MFTIME systime, LONGLONG offset)
@@ -1149,9 +1163,7 @@ static HRESULT WINAPI sample_grabber_clock_sink_OnClockStart(IMFClockStateSink *
 
     TRACE("%p, %s, %s.\n", iface, debugstr_time(systime), debugstr_time(offset));
 
-    sample_grabber_set_state(grabber, SINK_STATE_RUNNING);
-
-    return IMFSampleGrabberSinkCallback_OnClockStart(sample_grabber_get_callback(grabber), systime, offset);
+    return sample_grabber_set_state(grabber, SINK_STATE_RUNNING, systime, offset);
 }
 
 static HRESULT WINAPI sample_grabber_clock_sink_OnClockStop(IMFClockStateSink *iface, MFTIME systime)
@@ -1160,9 +1172,7 @@ static HRESULT WINAPI sample_grabber_clock_sink_OnClockStop(IMFClockStateSink *i
 
     TRACE("%p, %s.\n", iface, debugstr_time(systime));
 
-    sample_grabber_set_state(grabber, SINK_STATE_STOPPED);
-
-    return IMFSampleGrabberSinkCallback_OnClockStop(sample_grabber_get_callback(grabber), systime);
+    return sample_grabber_set_state(grabber, SINK_STATE_STOPPED, systime, 0);
 }
 
 static HRESULT WINAPI sample_grabber_clock_sink_OnClockPause(IMFClockStateSink *iface, MFTIME systime)
@@ -1171,7 +1181,7 @@ static HRESULT WINAPI sample_grabber_clock_sink_OnClockPause(IMFClockStateSink *
 
     TRACE("%p, %s.\n", iface, debugstr_time(systime));
 
-    return IMFSampleGrabberSinkCallback_OnClockPause(sample_grabber_get_callback(grabber), systime);
+    return sample_grabber_set_state(grabber, SINK_STATE_PAUSED, systime, 0);
 }
 
 static HRESULT WINAPI sample_grabber_clock_sink_OnClockRestart(IMFClockStateSink *iface, MFTIME systime)
@@ -1180,9 +1190,7 @@ static HRESULT WINAPI sample_grabber_clock_sink_OnClockRestart(IMFClockStateSink
 
     TRACE("%p, %s.\n", iface, debugstr_time(systime));
 
-    sample_grabber_set_state(grabber, SINK_STATE_RUNNING);
-
-    return IMFSampleGrabberSinkCallback_OnClockRestart(sample_grabber_get_callback(grabber), systime);
+    return sample_grabber_set_state(grabber, SINK_STATE_RUNNING, systime, PRESENTATION_CURRENT_POSITION);
 }
 
 static HRESULT WINAPI sample_grabber_clock_sink_OnClockSetRate(IMFClockStateSink *iface, MFTIME systime, float rate)
