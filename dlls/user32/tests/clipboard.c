@@ -62,6 +62,27 @@ static BOOL open_clipboard(HWND hwnd)
     }
 }
 
+static BOOL has_no_open_wnd(void)
+{
+    DWORD start = GetTickCount();
+    while (1)
+    {
+        HWND clipwnd = GetOpenClipboardWindow();
+        if (!clipwnd) return TRUE;
+        if (GetTickCount() - start > 100)
+        {
+            char classname[256];
+            DWORD le = GetLastError();
+            /* See open_clipboard() */
+            GetClassNameA(clipwnd, classname, ARRAY_SIZE(classname));
+            trace("%p (%s) opened the clipboard\n", clipwnd, classname);
+            SetLastError(le);
+            return FALSE;
+        }
+        Sleep(15);
+    }
+}
+
 static DWORD WINAPI open_clipboard_thread(LPVOID arg)
 {
     HWND hWnd = arg;
@@ -347,7 +368,7 @@ static void test_ClipboardOwner(void)
     SetLastError(0xdeadbeef);
     ok(!GetClipboardOwner() && GetLastError() == 0xdeadbeef, "clipboard should not be owned\n");
     ok(!GetClipboardViewer() && GetLastError() == 0xdeadbeef, "viewer still exists\n");
-    ok(!GetOpenClipboardWindow() && GetLastError() == 0xdeadbeef, "clipboard should not be open\n");
+    ok( has_no_open_wnd() && GetLastError() == 0xdeadbeef, "clipboard should not be open\n");
     ok( !IsClipboardFormatAvailable( CF_WAVE ), "CF_WAVE available\n" );
 
     SetLastError( 0xdeadbeef );
@@ -365,7 +386,7 @@ static void test_ClipboardOwner(void)
     ok( ret, "CloseClipboard error %d\n", GetLastError());
 
     run_thread( open_and_empty_clipboard_thread, 0, __LINE__ );
-    ok( !GetOpenClipboardWindow(), "wrong open window %p\n", GetOpenClipboardWindow() );
+    ok( has_no_open_wnd(), "wrong open window\n" );
     ok( !GetClipboardOwner(), "wrong owner window %p\n", GetClipboardOwner() );
 
     ret = open_clipboard( 0 );
@@ -386,12 +407,12 @@ static void test_ClipboardOwner(void)
     ok( !IsClipboardFormatAvailable( CF_WAVE ), "SetClipboardData succeeded\n" );
 
     run_thread( open_and_empty_clipboard_thread, GetDesktopWindow(), __LINE__ );
-    ok( !GetOpenClipboardWindow(), "wrong open window %p\n", GetOpenClipboardWindow() );
+    ok( has_no_open_wnd(), "wrong open window\n" );
     ok( GetClipboardOwner() == GetDesktopWindow(), "wrong owner window %p / %p\n",
         GetClipboardOwner(), GetDesktopWindow() );
 
     run_thread( open_and_empty_clipboard_win_thread, 0, __LINE__ );
-    ok( !GetOpenClipboardWindow(), "wrong open window %p\n", GetOpenClipboardWindow() );
+    ok( has_no_open_wnd(), "wrong open window\n" );
     ok( !GetClipboardOwner(), "wrong owner window %p\n", GetClipboardOwner() );
 }
 
