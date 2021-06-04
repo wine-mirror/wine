@@ -1882,7 +1882,17 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
     }
 
     case IOCTL_AFD_WINE_ADDRESS_LIST_CHANGE:
-        if ((sock->state & FD_WINE_NONBLOCKING) && async_is_blocking( async ))
+    {
+        int force_async;
+
+        if (get_req_data_size() < sizeof(int))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return 0;
+        }
+        force_async = *(int *)get_req_data();
+
+        if ((sock->state & FD_WINE_NONBLOCKING) && !force_async)
         {
             set_error( STATUS_DEVICE_NOT_READY );
             return 0;
@@ -1891,6 +1901,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         queue_async( &sock->ifchange_q, async );
         set_error( STATUS_PENDING );
         return 1;
+    }
 
     case IOCTL_AFD_WINE_FIONBIO:
         if (get_req_data_size() < sizeof(int))

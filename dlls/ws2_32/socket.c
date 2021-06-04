@@ -3639,9 +3639,10 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
 
     case WS_SIO_ADDRESS_LIST_CHANGE:
     {
+        int force_async = !!overlapped;
         DWORD ret;
 
-        ret = server_ioctl_sock( s, IOCTL_AFD_WINE_ADDRESS_LIST_CHANGE, in_buff, in_size,
+        ret = server_ioctl_sock( s, IOCTL_AFD_WINE_ADDRESS_LIST_CHANGE, &force_async, sizeof(force_async),
                                  out_buff, out_size, ret_size, overlapped, completion );
         SetLastError( ret );
         return ret ? -1 : 0;
