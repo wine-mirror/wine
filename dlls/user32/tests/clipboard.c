@@ -33,10 +33,39 @@ static BOOL (WINAPI *pGetUpdatedClipboardFormats)( UINT *formats, UINT count, UI
 static int thread_from_line;
 static char *argv0;
 
+static BOOL open_clipboard(HWND hwnd)
+{
+    DWORD start = GetTickCount();
+    while (1)
+    {
+        BOOL ret = OpenClipboard(hwnd);
+        if (ret || GetLastError() != ERROR_ACCESS_DENIED)
+            return ret;
+        if (GetTickCount() - start > 100)
+        {
+            char classname[256];
+            DWORD le = GetLastError();
+            HWND clipwnd = GetOpenClipboardWindow();
+            /* Provide a hint as to the source of interference:
+             * - The class name would typically be CLIPBRDWNDCLASS if the
+             *   clipboard was opened by a Windows application using the
+             *   ole32 API.
+             * - And it would be __wine_clipboard_manager if it was opened in
+             *   response to a native application.
+             */
+            GetClassNameA(clipwnd, classname, ARRAY_SIZE(classname));
+            trace("%p (%s) opened the clipboard\n", clipwnd, classname);
+            SetLastError(le);
+            return ret;
+        }
+        Sleep(15);
+    }
+}
+
 static DWORD WINAPI open_clipboard_thread(LPVOID arg)
 {
     HWND hWnd = arg;
-    ok(OpenClipboard(hWnd), "%u: OpenClipboard failed\n", thread_from_line);
+    ok(open_clipboard(hWnd), "%u: OpenClipboard failed\n", thread_from_line);
     return 0;
 }
 
@@ -52,7 +81,7 @@ static DWORD WINAPI empty_clipboard_thread(LPVOID arg)
 static DWORD WINAPI open_and_empty_clipboard_thread(LPVOID arg)
 {
     HWND hWnd = arg;
-    ok(OpenClipboard(hWnd), "%u: OpenClipboard failed\n", thread_from_line);
+    ok(open_clipboard(hWnd), "%u: OpenClipboard failed\n", thread_from_line);
     ok(EmptyClipboard(), "%u: EmptyClipboard failed\n", thread_from_line );
     return 0;
 }
@@ -60,7 +89,7 @@ static DWORD WINAPI open_and_empty_clipboard_thread(LPVOID arg)
 static DWORD WINAPI open_and_empty_clipboard_win_thread(LPVOID arg)
 {
     HWND hwnd = CreateWindowA( "static", NULL, WS_POPUP, 0, 0, 10, 10, 0, 0, 0, NULL );
-    ok(OpenClipboard(hwnd), "%u: OpenClipboard failed\n", thread_from_line);
+    ok(open_clipboard(hwnd), "%u: OpenClipboard failed\n", thread_from_line);
     ok(EmptyClipboard(), "%u: EmptyClipboard failed\n", thread_from_line );
     return 0;
 }
@@ -126,7 +155,7 @@ static void grab_clipboard_process( int arg )
     BOOL ret;
 
     SetLastError( 0xdeadbeef );
-    ret = OpenClipboard( 0 );
+    ret = open_clipboard( 0 );
     ok( ret, "OpenClipboard failed\n" );
     ret = EmptyClipboard();
     ok( ret, "EmptyClipboard failed\n" );
@@ -243,14 +272,14 @@ static void test_ClipboardOwner(void)
     ok(GetLastError() == ERROR_CLIPBOARD_NOT_OPEN || broken(GetLastError() == 0xdeadbeef), /* wow64 */
        "wrong error %u\n", GetLastError());
 
-    ok(OpenClipboard(0), "OpenClipboard failed\n");
+    ok(open_clipboard(0), "OpenClipboard failed\n");
     ok(!GetClipboardOwner(), "clipboard should still be not owned\n");
     ok(!OpenClipboard(hWnd1), "OpenClipboard should fail since clipboard already opened\n");
-    ok(OpenClipboard(0), "OpenClipboard again failed\n");
+    ok(open_clipboard(0), "OpenClipboard again failed\n");
     ret = CloseClipboard();
     ok( ret, "CloseClipboard error %d\n", GetLastError());
 
-    ok(OpenClipboard(hWnd1), "OpenClipboard failed\n");
+    ok(open_clipboard(hWnd1), "OpenClipboard failed\n");
     run_thread( open_clipboard_thread, hWnd1, __LINE__ );
     run_thread( empty_clipboard_thread, 0, __LINE__ );
     run_thread( set_clipboard_data_thread, hWnd1, __LINE__ );
@@ -258,7 +287,7 @@ static void test_ClipboardOwner(void)
     ok( !GetClipboardData( CF_WAVE ), "CF_WAVE data available\n" );
     run_process( "set_clipboard_data 0" );
     ok(!CloseClipboard(), "CloseClipboard should fail if clipboard wasn't open\n");
-    ok(OpenClipboard(hWnd1), "OpenClipboard failed\n");
+    ok(open_clipboard(hWnd1), "OpenClipboard failed\n");
 
     SetLastError(0xdeadbeef);
     ret = OpenClipboard(hWnd2);
@@ -286,7 +315,7 @@ static void test_ClipboardOwner(void)
     ok(GetClipboardOwner() == hWnd1, "clipboard should still be owned\n");
 
     /* any window will do, even from a different process */
-    ret = OpenClipboard( GetDesktopWindow() );
+    ret = open_clipboard( GetDesktopWindow() );
     ok( ret, "OpenClipboard error %d\n", GetLastError());
     ret = EmptyClipboard();
     ok( ret, "EmptyClipboard error %d\n", GetLastError());
@@ -299,7 +328,7 @@ static void test_ClipboardOwner(void)
     ret = CloseClipboard();
     ok( ret, "CloseClipboard error %d\n", GetLastError());
 
-    ret = OpenClipboard( hWnd1 );
+    ret = open_clipboard( hWnd1 );
     ok( ret, "OpenClipboard error %d\n", GetLastError());
     ret = EmptyClipboard();
     ok( ret, "EmptyClipboard error %d\n", GetLastError());
@@ -326,7 +355,7 @@ static void test_ClipboardOwner(void)
     ok( !ret, "CloseClipboard succeeded\n" );
     ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "wrong error %u\n", GetLastError() );
 
-    ret = OpenClipboard( 0 );
+    ret = open_clipboard( 0 );
     ok( ret, "OpenClipboard error %d\n", GetLastError());
     run_thread( set_clipboard_data_thread, 0, __LINE__ );
     ok( IsClipboardFormatAvailable( CF_WAVE ), "CF_WAVE not available\n" );
@@ -339,7 +368,7 @@ static void test_ClipboardOwner(void)
     ok( !GetOpenClipboardWindow(), "wrong open window %p\n", GetOpenClipboardWindow() );
     ok( !GetClipboardOwner(), "wrong owner window %p\n", GetClipboardOwner() );
 
-    ret = OpenClipboard( 0 );
+    ret = open_clipboard( 0 );
     ok( ret, "OpenClipboard error %d\n", GetLastError());
     run_thread( set_clipboard_data_thread, 0, __LINE__ );
     ok( IsClipboardFormatAvailable( CF_WAVE ), "CF_WAVE not available\n" );
@@ -429,7 +458,7 @@ static void test_RegisterClipboardFormatA(void)
             trace("%04x: %s\n", format_id, len ? buf : "");
     }
 
-    ret = OpenClipboard(0);
+    ret = open_clipboard(0);
     ok( ret, "OpenClipboard error %d\n", GetLastError());
 
     /* try some invalid/unregistered formats */
@@ -611,7 +640,7 @@ static void test_synthesized(void)
     htext = create_textA();
     emf = create_emf();
 
-    r = OpenClipboard(NULL);
+    r = open_clipboard(NULL);
     ok(r, "gle %d\n", GetLastError());
     r = EmptyClipboard();
     ok(r, "gle %d\n", GetLastError());
@@ -637,7 +666,7 @@ static void test_synthesized(void)
     r = IsClipboardFormatAvailable( CF_METAFILEPICT );
     ok( r, "CF_METAFILEPICT not available err %d\n", GetLastError());
 
-    r = OpenClipboard(NULL);
+    r = open_clipboard(NULL);
     ok(r, "gle %d\n", GetLastError());
     cf = EnumClipboardFormats(0);
     ok(cf == CF_TEXT, "cf %08x\n", cf);
@@ -679,7 +708,7 @@ static void test_synthesized(void)
     r = CloseClipboard();
     ok(r, "gle %d\n", GetLastError());
 
-    r = OpenClipboard( NULL );
+    r = open_clipboard( NULL );
     ok(r, "gle %d\n", GetLastError());
     SetLastError( 0xdeadbeef );
     cf = EnumClipboardFormats(0);
@@ -715,7 +744,7 @@ static void test_synthesized(void)
     for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         winetest_push_context("%d", i);
-        r = OpenClipboard(NULL);
+        r = open_clipboard(NULL);
         ok(r, "gle %d\n", GetLastError());
         r = EmptyClipboard();
         ok(r, "gle %d\n", GetLastError());
@@ -758,7 +787,7 @@ static void test_synthesized(void)
         }
         ok( count == j, "count %u instead of %u\n", count, j );
 
-        r = OpenClipboard( hwnd );
+        r = open_clipboard( hwnd );
         ok(r, "gle %d\n", GetLastError());
         cf = 0;
         for (j = 0; tests[i].expected[j]; j++)
@@ -838,7 +867,7 @@ static void test_synthesized(void)
         rendered = SendMessageA( hwnd, WM_USER, 0, 0 );
         ok( !rendered, "formats %08x have been rendered\n", rendered );
 
-        r = OpenClipboard(NULL);
+        r = open_clipboard(NULL);
         ok(r, "gle %d\n", GetLastError());
         cf = 0;
         for (j = 0; tests[i].expected[j]; j++)
@@ -886,7 +915,7 @@ static void test_synthesized(void)
         winetest_pop_context();
     }
 
-    r = OpenClipboard(NULL);
+    r = open_clipboard(NULL);
     ok(r, "gle %d\n", GetLastError());
     r = EmptyClipboard();
     ok(r, "gle %d\n", GetLastError());
@@ -1005,7 +1034,7 @@ static void get_clipboard_data_process(void)
     HANDLE data;
     BOOL r;
 
-    r = OpenClipboard(0);
+    r = open_clipboard(0);
     ok(r, "OpenClipboard failed: %d\n", GetLastError());
     data = GetClipboardData( CF_UNICODETEXT );
     ok( data != NULL, "GetClipboardData failed: %d\n", GetLastError());
@@ -1101,7 +1130,7 @@ static DWORD WINAPI clipboard_thread(void *param)
     ok( !r, "OpenClipboard succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "wrong error %u\n", GetLastError() );
 
-    r = OpenClipboard(win);
+    r = open_clipboard(win);
     ok(r, "OpenClipboard failed: %d\n", GetLastError());
 
     check_messages(win, 0, 0, 0, 0, 0);
@@ -1142,7 +1171,7 @@ static DWORD WINAPI clipboard_thread(void *param)
 
     check_messages(win, 2, 1, 1, 0, 0);
 
-    r = OpenClipboard(win);
+    r = open_clipboard(win);
     ok(r, "OpenClipboard failed: %d\n", GetLastError());
 
     check_messages(win, 0, 0, 0, 0, 0);
@@ -1172,7 +1201,7 @@ static DWORD WINAPI clipboard_thread(void *param)
     /* no synthesized format, so CloseClipboard doesn't change the sequence */
     check_messages(win, 0, 1, 1, 0, 0);
 
-    r = OpenClipboard(win);
+    r = open_clipboard(win);
     ok(r, "OpenClipboard failed: %d\n", GetLastError());
     r = CloseClipboard();
     ok(r, "CloseClipboard failed: %d\n", GetLastError());
@@ -1180,7 +1209,7 @@ static DWORD WINAPI clipboard_thread(void *param)
     check_messages(win, 0, 0, 0, 0, 0);
 
     formats = CountClipboardFormats();
-    r = OpenClipboard(0);
+    r = open_clipboard(0);
     ok(r, "OpenClipboard failed: %d\n", GetLastError());
     r = EmptyClipboard();
     ok(r, "EmptyClipboard failed: %d\n", GetLastError());
@@ -1191,7 +1220,7 @@ static DWORD WINAPI clipboard_thread(void *param)
     count = SendMessageA( win, WM_USER+5, 0, 0 );
     ok( count == formats, "wrong format count %u on WM_DESTROYCLIPBOARD\n", count );
 
-    r = OpenClipboard(win);
+    r = open_clipboard(win);
     ok(r, "OpenClipboard failed: %d\n", GetLastError());
     SetClipboardData( CF_WAVE, GlobalAlloc( GMEM_FIXED, 1 ));
     check_messages(win, 1, 0, 0, 0, 0);
@@ -1214,7 +1243,7 @@ static DWORD WINAPI clipboard_thread(void *param)
     }
     check_messages(win, 1, 1, 1, 0, 0);
 
-    r = OpenClipboard(0);
+    r = open_clipboard(0);
     ok(r, "OpenClipboard failed: %d\n", GetLastError());
     SetClipboardData( CF_WAVE, GlobalAlloc( GMEM_FIXED, 1 ));
     check_messages(win, 1, 0, 0, 0, 0);
@@ -1237,7 +1266,7 @@ static DWORD WINAPI clipboard_thread(void *param)
     }
     check_messages(win, 2, 1, 1, 0, 0);
 
-    r = OpenClipboard(0);
+    r = open_clipboard(0);
     ok(r, "OpenClipboard failed: %d\n", GetLastError());
     SetClipboardData( CF_WAVE, GlobalAlloc( GMEM_FIXED, 1 ));
     check_messages(win, 1, 0, 0, 0, 0);
@@ -1251,7 +1280,7 @@ static DWORD WINAPI clipboard_thread(void *param)
 
     if (cross_thread)
     {
-        r = OpenClipboard( win );
+        r = open_clipboard( win );
         ok(r, "OpenClipboard failed: %d\n", GetLastError());
         r = EmptyClipboard();
         ok(r, "EmptyClipboard failed: %d\n", GetLastError());
@@ -1395,7 +1424,7 @@ static void test_handles( HWND hwnd )
     /* discarded handles can't be GlobalLock'ed */
     ok( is_freed( empty_moveable ), "expected free mem %p\n", empty_moveable );
 
-    r = OpenClipboard( hwnd );
+    r = open_clipboard( hwnd );
     ok( r, "gle %d\n", GetLastError() );
     r = EmptyClipboard();
     ok( r, "gle %d\n", GetLastError() );
@@ -1513,7 +1542,7 @@ static void test_handles( HWND hwnd )
     ok( is_moveable( hmoveable ), "expected moveable mem %p\n", hmoveable );
     ok( is_fixed( empty_fixed ), "expected fixed mem %p\n", empty_fixed );
 
-    r = OpenClipboard( hwnd );
+    r = open_clipboard( hwnd );
     ok( r, "gle %d\n", GetLastError() );
 
     /* and now they are freed, unless we are the owner */
@@ -1638,7 +1667,7 @@ static DWORD WINAPI test_handles_thread2( void *arg )
     HANDLE h;
     char *ptr;
 
-    r = OpenClipboard( 0 );
+    r = open_clipboard( 0 );
     ok( r, "gle %d\n", GetLastError() );
     h = GetClipboardData( CF_TEXT );
     ok( is_moveable( h ), "expected moveable mem %p\n", h );
@@ -1693,7 +1722,7 @@ static void test_handles_process( const char *str )
     BYTE buffer[1024];
 
     format_id = RegisterClipboardFormatA( "my_cool_clipboard_format" );
-    r = OpenClipboard( 0 );
+    r = open_clipboard( 0 );
     ok( r, "gle %d\n", GetLastError() );
     h = GetClipboardData( CF_TEXT );
     ok( is_fixed( h ), "expected fixed mem %p\n", h );
@@ -1782,7 +1811,7 @@ static void test_handles_process_dib( const char *str )
     BOOL r;
     HANDLE h;
 
-    r = OpenClipboard( 0 );
+    r = open_clipboard( 0 );
     ok( r, "gle %d\n", GetLastError() );
     h = GetClipboardData( CF_BITMAP );
     ok( !GetObjectType( h ), "expected invalid object %p\n", h );
@@ -1811,7 +1840,7 @@ static void test_data_handles(void)
     bitmap2 = CreateBitmap( 10, 10, 1, 1, NULL );
     palette = CreatePalette( &logpalette );
 
-    r = OpenClipboard( hwnd );
+    r = open_clipboard( hwnd );
     ok( r, "gle %d\n", GetLastError() );
     r = EmptyClipboard();
     ok( r, "gle %d\n", GetLastError() );
@@ -1847,7 +1876,7 @@ static void test_data_handles(void)
     run_thread( test_handles_thread2, 0, __LINE__ );
     run_process( "handles test" );
 
-    r = OpenClipboard( hwnd );
+    r = open_clipboard( hwnd );
     ok( r, "gle %d\n", GetLastError() );
     h = GetClipboardData( CF_TEXT );
     ok( is_moveable( h ), "expected moveable mem %p\n", h );
@@ -1891,7 +1920,7 @@ static void test_data_handles(void)
     bmi.bmiHeader.biBitCount = 32;
     bitmap = CreateDIBSection( 0, &bmi, DIB_RGB_COLORS, &bits, 0, 0 );
 
-    r = OpenClipboard( hwnd );
+    r = open_clipboard( hwnd );
     ok( r, "gle %d\n", GetLastError() );
     r = EmptyClipboard();
     ok( r, "gle %d\n", GetLastError() );
@@ -1903,7 +1932,7 @@ static void test_data_handles(void)
 
     run_process( "handles_dib dummy" );
 
-    r = OpenClipboard( hwnd );
+    r = open_clipboard( hwnd );
     ok( r, "gle %d\n", GetLastError() );
     ok( GetObjectType( bitmap ) == OBJ_BITMAP, "expected bitmap %p\n", bitmap );
     r = EmptyClipboard();
@@ -1945,7 +1974,7 @@ static void test_GetUpdatedClipboardFormats(void)
     ok( r, "gle %d\n", GetLastError() );
     ok( !count, "wrong count %u\n", count );
 
-    r = OpenClipboard( 0 );
+    r = open_clipboard( 0 );
     ok( r, "gle %d\n", GetLastError() );
     r = EmptyClipboard();
     ok( r, "gle %d\n", GetLastError() );
@@ -2062,7 +2091,7 @@ static void test_string_data(void)
         if (!test_data[i].strA[0] && test_data[i].len < sizeof(WCHAR)) continue;
 #endif
         winetest_push_context("%d", i);
-        r = OpenClipboard( 0 );
+        r = open_clipboard( 0 );
         ok( r, "gle %d\n", GetLastError() );
         r = EmptyClipboard();
         ok( r, "gle %d\n", GetLastError() );
@@ -2102,7 +2131,7 @@ static void test_string_data_process( int i )
     WCHAR bufferW[12];
 
     winetest_push_context("%d", i);
-    r = OpenClipboard( 0 );
+    r = open_clipboard( 0 );
     ok( r, "gle %d\n", GetLastError() );
     if (test_data[i].strA[0])
     {
