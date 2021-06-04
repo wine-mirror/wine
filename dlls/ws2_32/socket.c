@@ -1975,62 +1975,65 @@ static int WINAPI WS2_WSARecvMsg( SOCKET s, LPWSAMSG msg, LPDWORD lpNumberOfByte
  */
 static BOOL interface_bind( SOCKET s, int fd, struct sockaddr *addr )
 {
+#if defined(HAVE_GETIFADDRS) && (defined(IP_BOUND_IF) || defined(LINUX_BOUND_IF))
     struct sockaddr_in *in_sock = (struct sockaddr_in *) addr;
     in_addr_t bind_addr = in_sock->sin_addr.s_addr;
-    PIP_ADAPTER_INFO adapters = NULL, adapter;
+    struct ifaddrs *ifaddrs, *ifaddr;
+    unsigned int index;
     BOOL ret = FALSE;
-    DWORD adap_size;
     int enable = 1;
 
     if (bind_addr == htonl(INADDR_ANY) || bind_addr == htonl(INADDR_LOOPBACK))
         return FALSE; /* Not binding to a network adapter, special interface binding unnecessary. */
     if (_get_fd_type(fd) != SOCK_DGRAM)
         return FALSE; /* Special interface binding is only necessary for UDP datagrams. */
-    if (GetAdaptersInfo(NULL, &adap_size) != ERROR_BUFFER_OVERFLOW)
-        goto cleanup;
-    adapters = HeapAlloc(GetProcessHeap(), 0, adap_size);
-    if (adapters == NULL || GetAdaptersInfo(adapters, &adap_size) != NO_ERROR)
-        goto cleanup;
-    /* Search the IPv4 adapter list for the appropriate binding interface */
-    for (adapter = adapters; adapter != NULL; adapter = adapter->Next)
-    {
-        in_addr_t adapter_addr = (in_addr_t) inet_addr(adapter->IpAddressList.IpAddress.String);
 
-        if (bind_addr == adapter_addr)
+    if (getifaddrs( &ifaddrs ) < 0) return FALSE;
+
+    for (ifaddr = ifaddrs; ifaddr != NULL; ifaddr = ifaddr->ifa_next)
+    {
+        if (ifaddr->ifa_addr && ifaddr->ifa_addr->sa_family == AF_INET
+                && ((struct sockaddr_in *)ifaddr->ifa_addr)->sin_addr.s_addr == bind_addr)
         {
+            index = if_nametoindex( ifaddr->ifa_name );
+            if (!index)
+            {
+                ERR( "Unable to look up interface index for %s: %s\n", ifaddr->ifa_name, strerror( errno ) );
+                continue;
+            }
+
 #if defined(IP_BOUND_IF)
             /* IP_BOUND_IF sets both the incoming and outgoing restriction at once */
-            if (setsockopt(fd, IPPROTO_IP, IP_BOUND_IF, &adapter->Index, sizeof(adapter->Index)) != 0)
+            if (setsockopt(fd, IPPROTO_IP, IP_BOUND_IF, &index, sizeof(index)) != 0)
                 goto cleanup;
             ret = TRUE;
 #elif defined(LINUX_BOUND_IF)
-            in_addr_t ifindex = (in_addr_t) htonl(adapter->Index);
-            struct interface_filter specific_interface_filter;
-            struct sock_fprog filter_prog;
+            {
+                in_addr_t ifindex = (in_addr_t) htonl(index);
+                struct interface_filter specific_interface_filter;
+                struct sock_fprog filter_prog;
 
-            if (setsockopt(fd, IPPROTO_IP, IP_UNICAST_IF, &ifindex, sizeof(ifindex)) != 0)
-                goto cleanup; /* Failed to suggest egress interface */
-            specific_interface_filter = generic_interface_filter;
-            specific_interface_filter.iface_rule.k = adapter->Index;
-            specific_interface_filter.ip_rule.k = htonl(adapter_addr);
-            filter_prog.len = sizeof(generic_interface_filter)/sizeof(struct sock_filter);
-            filter_prog.filter = (struct sock_filter *) &specific_interface_filter;
-            if (setsockopt(fd, SOL_SOCKET, SO_ATTACH_FILTER, &filter_prog, sizeof(filter_prog)) != 0)
-                goto cleanup; /* Failed to specify incoming packet filter */
-            ret = TRUE;
-#else
-            FIXME("Broadcast packets on interface-bound sockets are not currently supported on this platform, "
-                  "receiving broadcast packets will not work on socket %04lx.\n", s);
+                if (setsockopt(fd, IPPROTO_IP, IP_UNICAST_IF, &ifindex, sizeof(ifindex)) != 0)
+                    goto cleanup; /* Failed to suggest egress interface */
+                specific_interface_filter = generic_interface_filter;
+                specific_interface_filter.iface_rule.k = index;
+                specific_interface_filter.ip_rule.k = htonl(bind_addr);
+                filter_prog.len = sizeof(generic_interface_filter)/sizeof(struct sock_filter);
+                filter_prog.filter = (struct sock_filter *) &specific_interface_filter;
+                if (setsockopt(fd, SOL_SOCKET, SO_ATTACH_FILTER, &filter_prog, sizeof(filter_prog)) != 0)
+                    goto cleanup; /* Failed to specify incoming packet filter */
+                ret = TRUE;
+            }
 #endif
             if (ret)
             {
                 EnterCriticalSection(&cs_if_addr_cache);
-                if (if_addr_cache_size <= adapter->Index)
+                if (if_addr_cache_size <= index)
                 {
                     unsigned int new_size;
                     in_addr_t *new;
 
-                    new_size = max(if_addr_cache_size * 2, adapter->Index + 1);
+                    new_size = max(if_addr_cache_size * 2, index + 1);
                     if (!(new = heap_realloc(if_addr_cache, sizeof(*if_addr_cache) * new_size)))
                     {
                         ERR("No memory.\n");
@@ -2043,10 +2046,10 @@ static BOOL interface_bind( SOCKET s, int fd, struct sockaddr *addr )
                     if_addr_cache = new;
                     if_addr_cache_size = new_size;
                 }
-                if (if_addr_cache[adapter->Index] && if_addr_cache[adapter->Index] != adapter_addr)
-                    WARN("Adapter addr for iface index %u has changed.\n", adapter->Index);
+                if (if_addr_cache[index] && if_addr_cache[index] != bind_addr)
+                    WARN("Adapter addr for iface index %u has changed.\n", index);
 
-                if_addr_cache[adapter->Index] = adapter_addr;
+                if_addr_cache[index] = bind_addr;
                 LeaveCriticalSection(&cs_if_addr_cache);
             }
             break;
@@ -2054,15 +2057,19 @@ static BOOL interface_bind( SOCKET s, int fd, struct sockaddr *addr )
     }
     /* Will soon be switching to INADDR_ANY: permit address reuse */
     if (ret && setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) == 0)
-        TRACE("Socket %04lx bound to interface index %d\n", s, adapter->Index);
+        TRACE("Socket %04lx bound to interface index %d\n", s, index);
     else
         ret = FALSE;
 
 cleanup:
     if(!ret)
         ERR("Failed to bind to interface, receiving broadcast packets will not work on socket %04lx.\n", s);
-    HeapFree(GetProcessHeap(), 0, adapters);
+    freeifaddrs( ifaddrs );
     return ret;
+#else
+    FIXME( "Broadcast packets on interface-bound sockets are not currently supported on this platform.\n" );
+    return FALSE;
+#endif
 }
 
 /***********************************************************************
