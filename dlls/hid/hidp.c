@@ -21,7 +21,6 @@
 
 #include <stdarg.h>
 
-#define NONAMELESSUNION
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -275,14 +274,14 @@ static NTSTATUS find_usage(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, USHORT 
             value->UsagePage != UsagePage)
             continue;
 
-        if (value->IsRange && value->u.Range.UsageMin <= Usage && Usage <= value->u.Range.UsageMax)
+        if (value->IsRange && value->Range.UsageMin <= Usage && Usage <= value->Range.UsageMax)
         {
             *element = elems[report->elementIdx + i];
-            element->valueStartBit += value->BitSize * (Usage - value->u.Range.UsageMin);
+            element->valueStartBit += value->BitSize * (Usage - value->Range.UsageMin);
             element->bitCount = elems[report->elementIdx + i].ElementType == ValueElement ? value->BitSize: 1;
             return HIDP_STATUS_SUCCESS;
         }
-        else if (value->u.NotRange.Usage == Usage)
+        else if (value->NotRange.Usage == Usage)
         {
             *element = elems[report->elementIdx + i];
             element->bitCount = elems[report->elementIdx + i].ElementType == ValueElement ? value->BitSize : 1;
@@ -453,7 +452,7 @@ NTSTATUS WINAPI HidP_GetUsages(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, USH
                 {
                     if (uCount == *UsageLength)
                         return HIDP_STATUS_BUFFER_TOO_SMALL;
-                    UsageList[uCount] = element->caps.button.u.Range.UsageMin + k;
+                    UsageList[uCount] = element->caps.button.Range.UsageMin + k;
                     uCount++;
                 }
             }
@@ -612,8 +611,8 @@ ULONG WINAPI HidP_MaxUsageListLength(HIDP_REPORT_TYPE ReportType, USAGE UsagePag
                (UsagePage == 0 || elems[report[i].elementIdx + j].caps.button.UsagePage == UsagePage))
             {
                 if (elems[report[i].elementIdx + j].caps.button.IsRange)
-                    count += (elems[report[i].elementIdx + j].caps.button.u.Range.UsageMax -
-                             elems[report[i].elementIdx + j].caps.button.u.Range.UsageMin) + 1;
+                    count += (elems[report[i].elementIdx + j].caps.button.Range.UsageMax -
+                             elems[report[i].elementIdx + j].caps.button.Range.UsageMin) + 1;
                 else
                     count++;
             }
@@ -740,10 +739,10 @@ NTSTATUS WINAPI HidP_GetSpecificButtonCaps(HIDP_REPORT_TYPE ReportType,
                 (LinkCollection == 0 || LinkCollection == elems[report[j].elementIdx + i].caps.button.LinkCollection) &&
                 (Usage == 0 || (
                   (!elems[report[j].elementIdx + i].caps.button.IsRange &&
-                    Usage == elems[report[j].elementIdx + i].caps.button.u.NotRange.Usage)) ||
+                    Usage == elems[report[j].elementIdx + i].caps.button.NotRange.Usage)) ||
                   (elems[report[j].elementIdx + i].caps.button.IsRange &&
-                    Usage >= elems[report[j].elementIdx + i].caps.button.u.Range.UsageMin &&
-                    Usage <= elems[report[j].elementIdx + i].caps.button.u.Range.UsageMax)))
+                    Usage >= elems[report[j].elementIdx + i].caps.button.Range.UsageMin &&
+                    Usage <= elems[report[j].elementIdx + i].caps.button.Range.UsageMax)))
             {
                 ButtonCaps[u++] = elems[report[j].elementIdx + i].caps.button;
             }
@@ -808,7 +807,7 @@ NTSTATUS WINAPI HidP_GetSpecificValueCaps(HIDP_REPORT_TYPE ReportType,
             if (elems[report[j].elementIdx + i].ElementType == ValueElement &&
                 (UsagePage == 0 || UsagePage == elems[report[j].elementIdx + i].caps.value.UsagePage) &&
                 (LinkCollection == 0 || LinkCollection == elems[report[j].elementIdx + i].caps.value.LinkCollection) &&
-                (Usage == 0 || Usage == elems[report[j].elementIdx + i].caps.value.u.NotRange.Usage))
+                (Usage == 0 || Usage == elems[report[j].elementIdx + i].caps.value.NotRange.Usage))
             {
                 ValueCaps[u++] = elems[report[j].elementIdx + i].caps.value;
             }
@@ -877,7 +876,7 @@ NTSTATUS WINAPI HidP_GetUsagesEx(HIDP_REPORT_TYPE ReportType, USHORT LinkCollect
                 {
                     if (uCount < *UsageLength)
                     {
-                        ButtonList[uCount].Usage = element->caps.button.u.Range.UsageMin + k;
+                        ButtonList[uCount].Usage = element->caps.button.Range.UsageMin + k;
                         ButtonList[uCount].UsagePage = element->caps.button.UsagePage;
                     }
                     uCount++;
@@ -960,8 +959,8 @@ NTSTATUS WINAPI HidP_GetData(HIDP_REPORT_TYPE ReportType, HIDP_DATA *DataList, U
                 {
                     if (uCount < *DataLength)
                     {
-                        DataList[uCount].DataIndex = element->caps.button.u.Range.DataIndexMin + k;
-                        DataList[uCount].u.On = v;
+                        DataList[uCount].DataIndex = element->caps.button.Range.DataIndexMin + k;
+                        DataList[uCount].On = v;
                     }
                     uCount++;
                 }
@@ -976,8 +975,8 @@ NTSTATUS WINAPI HidP_GetData(HIDP_REPORT_TYPE ReportType, HIDP_DATA *DataList, U
                                      element->valueStartBit, element->bitCount, &v);
                 if (rc != HIDP_STATUS_SUCCESS)
                     return rc;
-                DataList[uCount].DataIndex = element->caps.value.u.NotRange.DataIndex;
-                DataList[uCount].u.RawValue = v;
+                DataList[uCount].DataIndex = element->caps.value.NotRange.DataIndex;
+                DataList[uCount].RawValue = v;
             }
             uCount++;
         }
