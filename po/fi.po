@@ -6961,24 +6961,16 @@ msgid "Resource is not currently available.\n"
 msgstr "Resurssi ei ole nyt saatavilla.\n"
 
 #: dlls/localspl/localspl.rc:37
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter"
-msgstr "Kirjain"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:38
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Small"
-msgstr "Kirjain"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:39
-#, fuzzy
-#| msgid "&Table"
 msgid "Tabloid"
-msgstr "&Taulukko"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:40
 msgid "Ledger"
@@ -6989,51 +6981,36 @@ msgid "Legal"
 msgstr ""
 
 #: dlls/localspl/localspl.rc:42
-#, fuzzy
-#| msgid "State"
 msgid "Statement"
-msgstr "Tila"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:43
-#, fuzzy
-#| msgid "&Execute..."
 msgid "Executive"
-msgstr "Suo&rita..."
+msgstr ""
 
 #: dlls/localspl/localspl.rc:44
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A3"
-msgstr "A"
+msgstr "A3"
 
 #: dlls/localspl/localspl.rc:45
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A4"
-msgstr "A"
+msgstr "A4"
 
 #: dlls/localspl/localspl.rc:46
-#, fuzzy
-#| msgid "Small"
 msgid "A4 Small"
-msgstr "Pieni"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:47
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A5"
-msgstr "A"
+msgstr "A5"
 
 #: dlls/localspl/localspl.rc:48
 msgid "B4 (JIS)"
-msgstr ""
+msgstr "B4 (JIS)"
 
 #: dlls/localspl/localspl.rc:49
 msgid "B5 (JIS)"
-msgstr ""
+msgstr "B5 (JIS)"
 
 #: dlls/localspl/localspl.rc:50
 msgid "Folio"
@@ -7052,10 +7029,8 @@ msgid "11x17"
 msgstr ""
 
 #: dlls/localspl/localspl.rc:54
-#, fuzzy
-#| msgid "Notepad"
 msgid "Note"
-msgstr "Muistio"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:55
 msgid "Envelope #9"
@@ -7095,51 +7070,47 @@ msgstr ""
 
 #: dlls/localspl/localspl.rc:64
 msgid "Envelope C5"
-msgstr ""
+msgstr "C5-kirjekuori"
 
 #: dlls/localspl/localspl.rc:65
 msgid "Envelope C3"
-msgstr ""
+msgstr "C3-kirjekuori"
 
 #: dlls/localspl/localspl.rc:66
 msgid "Envelope C4"
-msgstr ""
+msgstr "C4-kirjekuori"
 
 #: dlls/localspl/localspl.rc:67
 msgid "Envelope C6"
-msgstr ""
+msgstr "C6-kirjekuori"
 
 #: dlls/localspl/localspl.rc:68
 msgid "Envelope C65"
-msgstr ""
+msgstr "C65-kirjekuori"
 
 #: dlls/localspl/localspl.rc:69
 msgid "Envelope B4"
-msgstr ""
+msgstr "B4-kirjekuori"
 
 #: dlls/localspl/localspl.rc:70
 msgid "Envelope B5"
-msgstr ""
+msgstr "B5-kirjekuori"
 
 #: dlls/localspl/localspl.rc:71
 msgid "Envelope B6"
-msgstr ""
+msgstr "B6-kirjekuori"
 
 #: dlls/localspl/localspl.rc:72
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "Envelope"
-msgstr "PKCS 7, kääritty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:73
 msgid "Envelope Monarch"
-msgstr ""
+msgstr "Monarch-kirjekuori"
 
 #: dlls/localspl/localspl.rc:74
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "6 3/4 Envelope"
-msgstr "PKCS 7, kääritty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:75
 msgid "US Std Fanfold"
@@ -7155,13 +7126,11 @@ msgstr ""
 
 #: dlls/localspl/localspl.rc:78
 msgid "B4 (ISO)"
-msgstr ""
+msgstr "B4 (ISO)"
 
 #: dlls/localspl/localspl.rc:79
-#, fuzzy
-#| msgid "Japanese"
 msgid "Japanese Postcard"
-msgstr "Japanilainen"
+msgstr "Japanilainen postikortti"
 
 #: dlls/localspl/localspl.rc:80
 msgid "9x11"
@@ -7180,11 +7149,8 @@ msgid "Envelope Invite"
 msgstr ""
 
 #: dlls/localspl/localspl.rc:84
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Extra"
-msgstr "Kirjain"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:85
 msgid "Legal Extra"
@@ -7195,24 +7161,16 @@ msgid "Tabloid Extra"
 msgstr ""
 
 #: dlls/localspl/localspl.rc:87
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A4 Extra"
-msgstr "&Ekstrat"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:88
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "Letter Transverse"
-msgstr "läpikäyty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:89
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "A4 Transverse"
-msgstr "läpikäyty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:90
 msgid "Letter Extra Transverse"
@@ -7227,56 +7185,40 @@ msgid "Super B"
 msgstr ""
 
 #: dlls/localspl/localspl.rc:93
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Plus"
-msgstr "Kirjain"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:94
 msgid "A4 Plus"
 msgstr ""
 
 #: dlls/localspl/localspl.rc:95
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "A5 Transverse"
-msgstr "läpikäyty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:96
 msgid "B5 (JIS) Transverse"
 msgstr ""
 
 #: dlls/localspl/localspl.rc:97
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A3 Extra"
-msgstr "&Ekstrat"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:98
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A5 Extra"
-msgstr "&Ekstrat"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:99
 msgid "B5 (ISO) Extra"
 msgstr ""
 
 #: dlls/localspl/localspl.rc:100
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A2"
-msgstr "A"
+msgstr "A2"
 
 #: dlls/localspl/localspl.rc:101
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "A3 Transverse"
-msgstr "läpikäyty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:102
 msgid "A3 Extra Transverse"
@@ -7287,11 +7229,8 @@ msgid "Japanese Double Postcard"
 msgstr ""
 
 #: dlls/localspl/localspl.rc:104
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A6"
-msgstr "A"
+msgstr "A6"
 
 #: dlls/localspl/localspl.rc:105
 msgid "Japanese Envelope Kaku #2"
@@ -7363,7 +7302,7 @@ msgstr ""
 
 #: dlls/localspl/localspl.rc:122
 msgid "B6 (JIS)"
-msgstr ""
+msgstr "B6 (JIS)"
 
 #: dlls/localspl/localspl.rc:123
 msgid "B6 (JIS) Rotated"
@@ -7394,64 +7333,44 @@ msgid "PRC 32K(Big)"
 msgstr ""
 
 #: dlls/localspl/localspl.rc:130
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #1"
-msgstr "PKCS 7, kääritty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:131
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #2"
-msgstr "PKCS 7, kääritty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:132
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #3"
-msgstr "PKCS 7, kääritty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:133
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #4"
-msgstr "PKCS 7, kääritty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:134
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #5"
-msgstr "PKCS 7, kääritty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:135
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #6"
-msgstr "PKCS 7, kääritty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:136
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #7"
-msgstr "PKCS 7, kääritty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:137
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #8"
-msgstr "PKCS 7, kääritty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:138
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #9"
-msgstr "PKCS 7, kääritty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:139
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #10"
-msgstr "PKCS 7, kääritty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:140
 msgid "PRC 16K Rotated"
@@ -7466,64 +7385,44 @@ msgid "PRC 32K(Big) Rotated"
 msgstr ""
 
 #: dlls/localspl/localspl.rc:143
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #1 Rotated"
-msgstr "PKCS 7, kääritty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:144
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #2 Rotated"
-msgstr "PKCS 7, kääritty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:145
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #3 Rotated"
-msgstr "PKCS 7, kääritty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:146
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #4 Rotated"
-msgstr "PKCS 7, kääritty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:147
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #5 Rotated"
-msgstr "PKCS 7, kääritty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:148
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #6 Rotated"
-msgstr "PKCS 7, kääritty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:149
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #7 Rotated"
-msgstr "PKCS 7, kääritty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:150
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #8 Rotated"
-msgstr "PKCS 7, kääritty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:151
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #9 Rotated"
-msgstr "PKCS 7, kääritty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:152
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #10 Rotated"
-msgstr "PKCS 7, kääritty"
+msgstr ""
 
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
@@ -14789,17 +14688,6 @@ msgid "Type \"REG /?\" for help.\n"
 msgstr "Komento \"REG /?\" näyttää ohjeen.\n"
 
 #: programs/reg/reg.rc:35
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  REG [operation] [parameters]\n"
-#| "\n"
-#| "Supported operations:\n"
-#| "  ADD | DELETE | EXPORT | IMPORT | QUERY\n"
-#| "\n"
-#| "For help on a specific operation, type:\n"
-#| "  REG [operation] /?\n"
-#| "\n"
 msgid ""
 "Usage:\n"
 "  REG [operation] [parameters]\n"
@@ -14815,7 +14703,7 @@ msgstr ""
 "  REG [toiminto] [parametrit]\n"
 "\n"
 "Tuetut toiminnot:\n"
-"  ADD, DELETE, EXPORT, IMPORT, QUERY\n"
+"  ADD, COPY, DELETE, EXPORT, IMPORT, QUERY\n"
 "\n"
 "Ohjeen kustakin toiminnosta saa komennolla\n"
 "  REG [toiminto] /?\n"
@@ -14917,35 +14805,6 @@ msgstr ""
 "\n"
 
 #: programs/reg/reg.rc:202
-#, fuzzy
-#| msgid ""
-#| "REG EXPORT <key> <file> [/y]\n"
-#| "\n"
-#| "  Exports a specified registry key (including all subkeys and values)\n"
-#| "  to a file.\n"
-#| "\n"
-#| "  <key>\n"
-#| "     The registry key to export.\n"
-#| "\n"
-#| "     Format: ROOT\\Subkey\n"
-#| "\n"
-#| "     ROOT: A predefined registry key. This must be one of the following:\n"
-#| "\n"
-#| "         HKEY_LOCAL_MACHINE  | HKLM\n"
-#| "         HKEY_CURRENT_USER   | HKCU\n"
-#| "         HKEY_CLASSES_ROOT   | HKCR\n"
-#| "         HKEY_USERS          | HKU\n"
-#| "         HKEY_CURRENT_CONFIG | HKCC\n"
-#| "\n"
-#| "     Subkey: The full path to a registry key under a given ROOT key.\n"
-#| "\n"
-#| "  <file>\n"
-#| "     The name and path of the registry file that will be created.\n"
-#| "     This file must have a .reg extension.\n"
-#| "\n"
-#| "  /y\n"
-#| "     Overwrite <file> without prompting for confirmation.\n"
-#| "\n"
 msgid ""
 "REG COPY <key1> <key2> [/s] [/f]\n"
 "\n"
@@ -14979,12 +14838,15 @@ msgid ""
 "<key2>.\n"
 "\n"
 msgstr ""
-"REG EXPORT <avain> <tiedosto> [/y]\n"
+"REG COPY <avain1> <avain2> [/s] [/f]\n"
 "\n"
-"  Vie rekisteriavaimen (mukaan lukien aliavaimet ja arvot) tiedostoon.\n"
+"  Kopioi rekisteriavaimen sisällön toiseen sijaintiin.\n"
+"  Yleensä tämä kopioi vain arvot. Parametrilla [/s] voi kopioida\n"
+"  rekursiivisesti myös aliavainten sisällön.\n"
 "\n"
-"  <avain>\n"
-"     Vietävä rekisteriavain.\n"
+"  <avain1>, <avain2>\n"
+"     Rekisteriavaimet, kopioinnin lähde (<avain1>) ja kohde (<avain2>).\n"
+"     Näistä <avain2> luodaan, jos sitä ei vielä ole rekisterissä.\n"
 "\n"
 "     Muoto: JUURI\\Aliavain\n"
 "\n"
@@ -14998,12 +14860,12 @@ msgstr ""
 "\n"
 "     Aliavain: Rekisteriavaimen koko polku JUURI-avaimen alla.\n"
 "\n"
-"  <tiedosto>\n"
-"     Luotavan rekisteritiedoston nimi ja polku. Tiedostonimen tulee olla\n"
-"     .reg-päätteinen.\n"
+"  /s\n"
+"     Kopioi kaikki aliavaimet ja arvot <avain1>:stä to <avain2>:een.\n"
 "\n"
-"  /y\n"
-"     Ylikirjoita tiedosto kysymättä vahvistusta.\n"
+"  /f\n"
+"     Ylikirjoita tiedot <avain2>:ssa kysymättä vahvistusta.\n"
+"     Asetus ei muuta aliavaimia ja arvoja, jotka ovat vain <avain2>:ssa.\n"
 "\n"
 
 #: programs/reg/reg.rc:92
@@ -15253,18 +15115,16 @@ msgid "reg: Invalid option [%1]. "
 msgstr "reg: Valitsin [%1] ei kelpaa. "
 
 #: programs/reg/reg.rc:122
-#, fuzzy
-#| msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
 msgid "reg: The option [/d] must be followed by a valid numeric value\n"
-msgstr "reg: Valitsinta [/d] täytyy seurata kelpo heksadesimaaliarvo\n"
+msgstr "reg: Valitsimen [/d] jälkeen täytyy tulla lukuarvo\n"
 
 #: programs/reg/reg.rc:123
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
-msgstr "reg: Valitsinta [/d] täytyy seurata kelpo heksadesimaaliarvo\n"
+msgstr "reg: Valitsimen [/d] jälkeen täytyy tulla heksadesimaaliarvo\n"
 
 #: programs/reg/reg.rc:136
 msgid "reg: The option [/d] must be followed by a valid string\n"
-msgstr "reg: Valitsinta [/d] täytyy seurata kelpo merkkijono\n"
+msgstr "reg: Valitsimen [/d] jälkeen täytyy tulla merkkijono\n"
 
 #: programs/reg/reg.rc:124
 msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
@@ -15284,15 +15144,13 @@ msgstr "reg: Komentoriviparametrit eivät kelpaa\n"
 
 #: programs/reg/reg.rc:204
 msgid "reg: The source and destination keys cannot be the same\n"
-msgstr ""
+msgstr "reg: Lähde ja kohde eivät voi olla sama avain\n"
 
 #: programs/reg/reg.rc:205
-#, fuzzy
-#| msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgid ""
 "The value '%1\\%2' already exists in the destination key. Do you want to "
 "overwrite it?"
-msgstr "Tiedosto '%1' on jo olemassa. Haluatko korvata sen?"
+msgstr "Kohdeavaimessa on jo arvo '%1\\%2'. Haluatko korvata sen?"
 
 #: programs/reg/reg.rc:133
 msgid "Are you sure you want to delete the registry value '%1'?"
@@ -15307,10 +15165,8 @@ msgid "Are you sure you want to delete the registry key '%1'?"
 msgstr "Haluatko varmasti tuhota rekisteriavaimen '%1'?"
 
 #: programs/reg/reg.rc:137
-#, fuzzy
-#| msgid "regedit: Unable to delete the registry key '%1'.\n"
 msgid "reg: Unable to delete all registry values in '%1'\n"
-msgstr "regedit: Rekisteriavainta '%1' ei voida poistaa.\n"
+msgstr "reg: Kaikkia rekisteriarvoja kohteessa '%1' ei voida poistaa.\n"
 
 #: programs/reg/reg.rc:173
 msgid "The file '%1' already exists. Do you want to overwrite it?"
