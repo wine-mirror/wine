@@ -21,6 +21,14 @@
 #ifndef __WINE_PARSE_H
 #define __WINE_PARSE_H
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "windef.h"
+#include "winbase.h"
+#include "winternl.h"
+#include "hidusage.h"
+#include "ddk/hidpi.h"
+
 #define HID_MAGIC 0x8491759
 
 typedef enum __WINE_ELEMENT_TYPE {
@@ -34,11 +42,38 @@ typedef struct __WINE_ELEMENT
     WINE_ELEMENT_TYPE ElementType;
     UINT  valueStartBit;
     UINT  bitCount;
-    union {
-        HIDP_VALUE_CAPS value;
-        HIDP_BUTTON_CAPS button;
-    } caps;
+    HIDP_VALUE_CAPS caps;
 } WINE_HID_ELEMENT;
+
+/* make sure HIDP_BUTTON_CAPS is a subset of HIDP_VALUE_CAPS */
+C_ASSERT( sizeof(HIDP_BUTTON_CAPS) == sizeof(HIDP_VALUE_CAPS) );
+
+C_ASSERT( offsetof(HIDP_BUTTON_CAPS, UsagePage) == offsetof(HIDP_VALUE_CAPS, UsagePage) );
+C_ASSERT( offsetof(HIDP_BUTTON_CAPS, ReportID) == offsetof(HIDP_VALUE_CAPS, ReportID) );
+C_ASSERT( offsetof(HIDP_BUTTON_CAPS, IsAlias) == offsetof(HIDP_VALUE_CAPS, IsAlias) );
+C_ASSERT( offsetof(HIDP_BUTTON_CAPS, BitField) == offsetof(HIDP_VALUE_CAPS, BitField) );
+C_ASSERT( offsetof(HIDP_BUTTON_CAPS, LinkCollection) == offsetof(HIDP_VALUE_CAPS, LinkCollection) );
+C_ASSERT( offsetof(HIDP_BUTTON_CAPS, LinkUsage) == offsetof(HIDP_VALUE_CAPS, LinkUsage) );
+C_ASSERT( offsetof(HIDP_BUTTON_CAPS, LinkUsagePage) == offsetof(HIDP_VALUE_CAPS, LinkUsagePage) );
+
+C_ASSERT( offsetof(HIDP_BUTTON_CAPS, IsRange) == offsetof(HIDP_VALUE_CAPS, IsRange) );
+C_ASSERT( offsetof(HIDP_BUTTON_CAPS, IsStringRange) == offsetof(HIDP_VALUE_CAPS, IsStringRange) );
+C_ASSERT( offsetof(HIDP_BUTTON_CAPS, IsDesignatorRange) == offsetof(HIDP_VALUE_CAPS, IsDesignatorRange) );
+C_ASSERT( offsetof(HIDP_BUTTON_CAPS, IsAbsolute) == offsetof(HIDP_VALUE_CAPS, IsAbsolute) );
+
+C_ASSERT( offsetof(HIDP_BUTTON_CAPS, Range.UsageMin) == offsetof(HIDP_VALUE_CAPS, Range.UsageMin) );
+C_ASSERT( offsetof(HIDP_BUTTON_CAPS, Range.UsageMax) == offsetof(HIDP_VALUE_CAPS, Range.UsageMax) );
+C_ASSERT( offsetof(HIDP_BUTTON_CAPS, Range.StringMin) == offsetof(HIDP_VALUE_CAPS, Range.StringMin) );
+C_ASSERT( offsetof(HIDP_BUTTON_CAPS, Range.StringMax) == offsetof(HIDP_VALUE_CAPS, Range.StringMax) );
+C_ASSERT( offsetof(HIDP_BUTTON_CAPS, Range.DesignatorMin) == offsetof(HIDP_VALUE_CAPS, Range.DesignatorMin) );
+C_ASSERT( offsetof(HIDP_BUTTON_CAPS, Range.DesignatorMax) == offsetof(HIDP_VALUE_CAPS, Range.DesignatorMax) );
+C_ASSERT( offsetof(HIDP_BUTTON_CAPS, Range.DataIndexMin) == offsetof(HIDP_VALUE_CAPS, Range.DataIndexMin) );
+C_ASSERT( offsetof(HIDP_BUTTON_CAPS, Range.DataIndexMax) == offsetof(HIDP_VALUE_CAPS, Range.DataIndexMax) );
+
+C_ASSERT( offsetof(HIDP_BUTTON_CAPS, NotRange.Usage) == offsetof(HIDP_VALUE_CAPS, NotRange.Usage) );
+C_ASSERT( offsetof(HIDP_BUTTON_CAPS, NotRange.StringIndex) == offsetof(HIDP_VALUE_CAPS, NotRange.StringIndex) );
+C_ASSERT( offsetof(HIDP_BUTTON_CAPS, NotRange.DesignatorIndex) == offsetof(HIDP_VALUE_CAPS, NotRange.DesignatorIndex) );
+C_ASSERT( offsetof(HIDP_BUTTON_CAPS, NotRange.DataIndex) == offsetof(HIDP_VALUE_CAPS, NotRange.DataIndex) );
 
 typedef struct __WINE_HID_REPORT
 {

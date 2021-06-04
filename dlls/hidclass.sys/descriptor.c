@@ -258,18 +258,18 @@ static void debug_collection(struct collection *collection)
 
 static void debug_print_button_cap(const CHAR * type, WINE_HID_ELEMENT *wine_element)
 {
-    if (!wine_element->caps.button.IsRange)
+    if (!wine_element->caps.IsRange)
         TRACE("%s Button: 0x%x/0x%04x: ReportId %i, startBit %i/1\n" , type,
-            wine_element->caps.button.UsagePage,
-            wine_element->caps.button.NotRange.Usage,
-            wine_element->caps.value.ReportID,
+            wine_element->caps.UsagePage,
+            wine_element->caps.NotRange.Usage,
+            wine_element->caps.ReportID,
             wine_element->valueStartBit);
     else
         TRACE("%s Button: 0x%x/[0x%04x-0x%04x]: ReportId %i, startBit %i/%i\n" ,type,
-               wine_element->caps.button.UsagePage,
-               wine_element->caps.button.Range.UsageMin,
-               wine_element->caps.button.Range.UsageMax,
-               wine_element->caps.value.ReportID,
+               wine_element->caps.UsagePage,
+               wine_element->caps.Range.UsageMin,
+               wine_element->caps.Range.UsageMax,
+               wine_element->caps.ReportID,
                wine_element->valueStartBit,
                wine_element->bitCount);
 }
@@ -280,19 +280,19 @@ static void debug_print_value_cap(const CHAR * type, WINE_HID_ELEMENT *wine_elem
           "Bit Size %i, ReportCount %i, UnitsExp %i, Units %i, "
           "LogicalMin %i, Logical Max %i, PhysicalMin %i, "
           "PhysicalMax %i -- StartBit %i/%i\n", type,
-            wine_element->caps.value.UsagePage,
-            wine_element->caps.value.NotRange.Usage,
-            wine_element->caps.value.ReportID,
-            wine_element->caps.value.IsAbsolute,
-            wine_element->caps.value.HasNull,
-            wine_element->caps.value.BitSize,
-            wine_element->caps.value.ReportCount,
-            wine_element->caps.value.UnitsExp,
-            wine_element->caps.value.Units,
-            wine_element->caps.value.LogicalMin,
-            wine_element->caps.value.LogicalMax,
-            wine_element->caps.value.PhysicalMin,
-            wine_element->caps.value.PhysicalMax,
+            wine_element->caps.UsagePage,
+            wine_element->caps.NotRange.Usage,
+            wine_element->caps.ReportID,
+            wine_element->caps.IsAbsolute,
+            wine_element->caps.HasNull,
+            wine_element->caps.BitSize,
+            wine_element->caps.ReportCount,
+            wine_element->caps.UnitsExp,
+            wine_element->caps.Units,
+            wine_element->caps.LogicalMin,
+            wine_element->caps.LogicalMax,
+            wine_element->caps.PhysicalMin,
+            wine_element->caps.PhysicalMax,
             wine_element->valueStartBit,
             wine_element->bitCount);
 }
@@ -704,89 +704,89 @@ static void build_elements(WINE_HID_REPORT *wine_report, WINE_HID_ELEMENT *elems
     if (feature->caps.BitSize == 1)
     {
         wine_element->ElementType = ButtonElement;
-        wine_element->caps.button.UsagePage = feature->caps.UsagePage;
-        wine_element->caps.button.ReportID = feature->caps.ReportID;
-        wine_element->caps.button.BitField = feature->BitField;
-        wine_element->caps.button.LinkCollection = feature->collection->index;
-        wine_element->caps.button.LinkUsage = feature->collection->caps.NotRange.Usage;
-        wine_element->caps.button.LinkUsagePage = feature->collection->caps.UsagePage;
-        wine_element->caps.button.IsRange = feature->caps.IsRange;
-        wine_element->caps.button.IsStringRange = feature->caps.IsStringRange;
-        wine_element->caps.button.IsDesignatorRange = feature->caps.IsDesignatorRange;
-        wine_element->caps.button.IsAbsolute = feature->IsAbsolute;
-        if (wine_element->caps.button.IsRange)
+        wine_element->caps.UsagePage = feature->caps.UsagePage;
+        wine_element->caps.ReportID = feature->caps.ReportID;
+        wine_element->caps.BitField = feature->BitField;
+        wine_element->caps.LinkCollection = feature->collection->index;
+        wine_element->caps.LinkUsage = feature->collection->caps.NotRange.Usage;
+        wine_element->caps.LinkUsagePage = feature->collection->caps.UsagePage;
+        wine_element->caps.IsRange = feature->caps.IsRange;
+        wine_element->caps.IsStringRange = feature->caps.IsStringRange;
+        wine_element->caps.IsDesignatorRange = feature->caps.IsDesignatorRange;
+        wine_element->caps.IsAbsolute = feature->IsAbsolute;
+        if (wine_element->caps.IsRange)
         {
-            wine_element->caps.button.Range.UsageMin = feature->caps.Range.UsageMin;
-            wine_element->caps.button.Range.UsageMax = feature->caps.Range.UsageMax;
-            wine_element->caps.button.Range.StringMin = feature->caps.Range.StringMin;
-            wine_element->caps.button.Range.StringMax = feature->caps.Range.StringMax;
-            wine_element->caps.button.Range.DesignatorMin = feature->caps.Range.DesignatorMin;
-            wine_element->caps.button.Range.DesignatorMax = feature->caps.Range.DesignatorMax;
-            wine_element->caps.button.Range.DataIndexMin = *data_index;
-            wine_element->caps.button.Range.DataIndexMax = *data_index + wine_element->bitCount - 1;
+            wine_element->caps.Range.UsageMin = feature->caps.Range.UsageMin;
+            wine_element->caps.Range.UsageMax = feature->caps.Range.UsageMax;
+            wine_element->caps.Range.StringMin = feature->caps.Range.StringMin;
+            wine_element->caps.Range.StringMax = feature->caps.Range.StringMax;
+            wine_element->caps.Range.DesignatorMin = feature->caps.Range.DesignatorMin;
+            wine_element->caps.Range.DesignatorMax = feature->caps.Range.DesignatorMax;
+            wine_element->caps.Range.DataIndexMin = *data_index;
+            wine_element->caps.Range.DataIndexMax = *data_index + wine_element->bitCount - 1;
             *data_index = *data_index + wine_element->bitCount;
         }
         else
         {
-            wine_element->caps.button.NotRange.Usage = feature->caps.NotRange.Usage;
-            wine_element->caps.button.NotRange.Reserved1 = feature->caps.NotRange.Usage;
-            wine_element->caps.button.NotRange.StringIndex = feature->caps.NotRange.StringIndex;
-            wine_element->caps.button.NotRange.Reserved2 = feature->caps.NotRange.StringIndex;
-            wine_element->caps.button.NotRange.DesignatorIndex = feature->caps.NotRange.DesignatorIndex;
-            wine_element->caps.button.NotRange.Reserved3 = feature->caps.NotRange.DesignatorIndex;
-            wine_element->caps.button.NotRange.DataIndex = *data_index;
-            wine_element->caps.button.NotRange.Reserved4 = *data_index;
+            wine_element->caps.NotRange.Usage = feature->caps.NotRange.Usage;
+            wine_element->caps.NotRange.Reserved1 = feature->caps.NotRange.Usage;
+            wine_element->caps.NotRange.StringIndex = feature->caps.NotRange.StringIndex;
+            wine_element->caps.NotRange.Reserved2 = feature->caps.NotRange.StringIndex;
+            wine_element->caps.NotRange.DesignatorIndex = feature->caps.NotRange.DesignatorIndex;
+            wine_element->caps.NotRange.Reserved3 = feature->caps.NotRange.DesignatorIndex;
+            wine_element->caps.NotRange.DataIndex = *data_index;
+            wine_element->caps.NotRange.Reserved4 = *data_index;
             *data_index = *data_index + 1;
         }
     }
     else
     {
         wine_element->ElementType = ValueElement;
-        wine_element->caps.value.UsagePage = feature->caps.UsagePage;
-        wine_element->caps.value.ReportID = feature->caps.ReportID;
-        wine_element->caps.value.BitField = feature->BitField;
-        wine_element->caps.value.LinkCollection = feature->collection->index;
-        wine_element->caps.value.LinkUsage = feature->collection->caps.NotRange.Usage;
-        wine_element->caps.value.LinkUsagePage = feature->collection->caps.UsagePage;
-        wine_element->caps.value.IsRange = feature->caps.IsRange;
-        wine_element->caps.value.IsStringRange = feature->caps.IsStringRange;
-        wine_element->caps.value.IsDesignatorRange = feature->caps.IsDesignatorRange;
-        wine_element->caps.value.IsAbsolute = feature->IsAbsolute;
-        wine_element->caps.value.HasNull = feature->HasNull;
-        wine_element->caps.value.BitSize = feature->caps.BitSize;
-        wine_element->caps.value.ReportCount = feature->caps.ReportCount;
-        wine_element->caps.value.UnitsExp = feature->caps.UnitsExp;
-        wine_element->caps.value.Units = feature->caps.Units;
-        wine_element->caps.value.LogicalMin = feature->caps.LogicalMin;
-        wine_element->caps.value.LogicalMax = feature->caps.LogicalMax;
-        wine_element->caps.value.PhysicalMin = feature->caps.PhysicalMin;
-        wine_element->caps.value.PhysicalMax = feature->caps.PhysicalMax;
-        if (wine_element->caps.value.IsRange)
+        wine_element->caps.UsagePage = feature->caps.UsagePage;
+        wine_element->caps.ReportID = feature->caps.ReportID;
+        wine_element->caps.BitField = feature->BitField;
+        wine_element->caps.LinkCollection = feature->collection->index;
+        wine_element->caps.LinkUsage = feature->collection->caps.NotRange.Usage;
+        wine_element->caps.LinkUsagePage = feature->collection->caps.UsagePage;
+        wine_element->caps.IsRange = feature->caps.IsRange;
+        wine_element->caps.IsStringRange = feature->caps.IsStringRange;
+        wine_element->caps.IsDesignatorRange = feature->caps.IsDesignatorRange;
+        wine_element->caps.IsAbsolute = feature->IsAbsolute;
+        wine_element->caps.HasNull = feature->HasNull;
+        wine_element->caps.BitSize = feature->caps.BitSize;
+        wine_element->caps.ReportCount = feature->caps.ReportCount;
+        wine_element->caps.UnitsExp = feature->caps.UnitsExp;
+        wine_element->caps.Units = feature->caps.Units;
+        wine_element->caps.LogicalMin = feature->caps.LogicalMin;
+        wine_element->caps.LogicalMax = feature->caps.LogicalMax;
+        wine_element->caps.PhysicalMin = feature->caps.PhysicalMin;
+        wine_element->caps.PhysicalMax = feature->caps.PhysicalMax;
+        if (wine_element->caps.IsRange)
         {
-            wine_element->caps.value.Range.UsageMin = feature->caps.Range.UsageMin;
-            wine_element->caps.value.Range.UsageMax = feature->caps.Range.UsageMax;
-            wine_element->caps.value.Range.StringMin = feature->caps.Range.StringMin;
-            wine_element->caps.value.Range.StringMax = feature->caps.Range.StringMax;
-            wine_element->caps.value.Range.DesignatorMin = feature->caps.Range.DesignatorMin;
-            wine_element->caps.value.Range.DesignatorMax = feature->caps.Range.DesignatorMax;
-            wine_element->caps.value.Range.DataIndexMin = *data_index;
-            wine_element->caps.value.Range.DataIndexMax = *data_index +
-                (wine_element->caps.value.Range.UsageMax -
-                 wine_element->caps.value.Range.UsageMin);
+            wine_element->caps.Range.UsageMin = feature->caps.Range.UsageMin;
+            wine_element->caps.Range.UsageMax = feature->caps.Range.UsageMax;
+            wine_element->caps.Range.StringMin = feature->caps.Range.StringMin;
+            wine_element->caps.Range.StringMax = feature->caps.Range.StringMax;
+            wine_element->caps.Range.DesignatorMin = feature->caps.Range.DesignatorMin;
+            wine_element->caps.Range.DesignatorMax = feature->caps.Range.DesignatorMax;
+            wine_element->caps.Range.DataIndexMin = *data_index;
+            wine_element->caps.Range.DataIndexMax = *data_index +
+                (wine_element->caps.Range.UsageMax -
+                 wine_element->caps.Range.UsageMin);
             *data_index = *data_index +
-                (wine_element->caps.value.Range.UsageMax -
-                 wine_element->caps.value.Range.UsageMin) + 1;
+                (wine_element->caps.Range.UsageMax -
+                 wine_element->caps.Range.UsageMin) + 1;
         }
         else
         {
-            wine_element->caps.value.NotRange.Usage = feature->caps.NotRange.Usage;
-            wine_element->caps.value.NotRange.Reserved1 = feature->caps.NotRange.Usage;
-            wine_element->caps.value.NotRange.StringIndex = feature->caps.NotRange.StringIndex;
-            wine_element->caps.value.NotRange.Reserved2 = feature->caps.NotRange.StringIndex;
-            wine_element->caps.value.NotRange.DesignatorIndex = feature->caps.NotRange.DesignatorIndex;
-            wine_element->caps.value.NotRange.Reserved3 = feature->caps.NotRange.DesignatorIndex;
-            wine_element->caps.value.NotRange.DataIndex = *data_index;
-            wine_element->caps.value.NotRange.Reserved4 = *data_index;
+            wine_element->caps.NotRange.Usage = feature->caps.NotRange.Usage;
+            wine_element->caps.NotRange.Reserved1 = feature->caps.NotRange.Usage;
+            wine_element->caps.NotRange.StringIndex = feature->caps.NotRange.StringIndex;
+            wine_element->caps.NotRange.Reserved2 = feature->caps.NotRange.StringIndex;
+            wine_element->caps.NotRange.DesignatorIndex = feature->caps.NotRange.DesignatorIndex;
+            wine_element->caps.NotRange.Reserved3 = feature->caps.NotRange.DesignatorIndex;
+            wine_element->caps.NotRange.DataIndex = *data_index;
+            wine_element->caps.NotRange.Reserved4 = *data_index;
             *data_index = *data_index + 1;
         }
     }
