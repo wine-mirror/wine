@@ -117,6 +117,7 @@ static void  (CDECL   *pomp_destroy_lock)(omp_lock_t *lock);
 static void  (CDECL   *pomp_destroy_nest_lock)(omp_nest_lock_t *lock);
 static int   (CDECL   *pomp_get_max_threads)(void);
 static int   (CDECL   *pomp_get_nested)(void);
+static int   (CDECL   *pomp_get_num_procs)(void);
 static int   (CDECL   *pomp_get_num_threads)(void);
 static int   (CDECL   *pomp_get_thread_num)(void);
 static int   (CDECL   *pomp_in_parallel)(void);
@@ -352,6 +353,7 @@ static BOOL init_vcomp(void)
     VCOMP_GET_PROC(omp_destroy_nest_lock);
     VCOMP_GET_PROC(omp_get_max_threads);
     VCOMP_GET_PROC(omp_get_nested);
+    VCOMP_GET_PROC(omp_get_num_procs);
     VCOMP_GET_PROC(omp_get_num_threads);
     VCOMP_GET_PROC(omp_get_thread_num);
     VCOMP_GET_PROC(omp_in_parallel);
@@ -2209,11 +2211,24 @@ static void test_reduction_float_double(void)
     }
 }
 
+static void test_omp_get_num_procs(void)
+{
+    SYSTEM_INFO sysinfo;
+    int num_procs;
+
+    num_procs = pomp_get_num_procs();
+    ok(num_procs > 0, "expected non-zero num_procs\n");
+    GetSystemInfo(&sysinfo);
+    ok(sysinfo.dwNumberOfProcessors > 0, "expected non-zero dwNumberOfProcessors\n");
+    ok(num_procs == sysinfo.dwNumberOfProcessors, "got dwNumberOfProcessors %d num_procs %d\n", sysinfo.dwNumberOfProcessors, num_procs);
+}
+
 START_TEST(vcomp)
 {
     if (!init_vcomp())
         return;
 
+    test_omp_get_num_procs();
     test_omp_get_num_threads(FALSE);
     test_omp_get_num_threads(TRUE);
     test_vcomp_fork();
