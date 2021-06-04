@@ -43,6 +43,7 @@ static DWORD   vcomp_context_tls = TLS_OUT_OF_INDEXES;
 static HMODULE vcomp_module;
 static int     vcomp_max_threads;
 static int     vcomp_num_threads;
+static int     vcomp_num_procs;
 static BOOL    vcomp_nested_fork = FALSE;
 
 static RTL_CRITICAL_SECTION vcomp_section;
@@ -1001,8 +1002,8 @@ int CDECL omp_get_nested(void)
 
 int CDECL omp_get_num_procs(void)
 {
-    TRACE("stub\n");
-    return 1;
+    TRACE("\n");
+    return vcomp_num_procs;
 }
 
 int CDECL omp_get_num_threads(void)
@@ -1843,6 +1844,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
             vcomp_module      = instance;
             vcomp_max_threads = sysinfo.dwNumberOfProcessors;
             vcomp_num_threads = sysinfo.dwNumberOfProcessors;
+            vcomp_num_procs   = sysinfo.dwNumberOfProcessors;
             break;
         }
 
