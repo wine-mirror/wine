@@ -33,7 +33,7 @@ static const BYTE REPORT_HEADER[] = {
 #define IDX_HEADER_USAGE 3
 
 static const BYTE REPORT_BUTTONS[] = {
-    USAGE_PAGE(1, HID_USAGE_PAGE_BUTTON),
+    USAGE_PAGE(1, /* placeholder */ HID_USAGE_PAGE_BUTTON),
     USAGE_MINIMUM(1, /* placeholder */ 1),
     USAGE_MAXIMUM(1, /* placeholder */ 3),
     LOGICAL_MINIMUM(1, 0),
@@ -44,6 +44,7 @@ static const BYTE REPORT_BUTTONS[] = {
     REPORT_SIZE(1, 1),
     INPUT(1, Data|Var|Abs),
 };
+#define IDX_BUTTON_USAGE_PAGE 1
 #define IDX_BUTTON_MIN_USAGE 3
 #define IDX_BUTTON_MAX_USAGE 5
 #define IDX_BUTTON_COUNT 15
