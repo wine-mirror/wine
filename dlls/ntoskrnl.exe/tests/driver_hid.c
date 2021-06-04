@@ -85,21 +85,25 @@ static NTSTATUS WINAPI driver_power(DEVICE_OBJECT *device, IRP *irp)
     return PoCallDriver(ext->NextDeviceObject, irp);
 }
 
+#include "psh_hid_macros.h"
+
 static const unsigned char report_descriptor[] =
 {
-    0x05, HID_USAGE_PAGE_GENERIC,
-    0x09, HID_USAGE_GENERIC_JOYSTICK,
-    0xa1, 0x01, /* application collection */
-    0x05, HID_USAGE_PAGE_GENERIC,
-    0x09, HID_USAGE_GENERIC_X,
-    0x09, HID_USAGE_GENERIC_Y,
-    0x15, 0x80, /* logical minimum -128 */
-    0x25, 0x7f, /* logical maximum 127 */
-    0x75, 0x08, /* report size */
-    0x95, 0x02, /* report count */
-    0x81, 0x02, /* input, variable */
-    0xc0, /* end collection */
+    USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+    USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+    COLLECTION(1, Application),
+        USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+        USAGE(1, HID_USAGE_GENERIC_X),
+        USAGE(1, HID_USAGE_GENERIC_Y),
+        LOGICAL_MINIMUM(1, -128),
+        LOGICAL_MAXIMUM(1, 127),
+        REPORT_SIZE(1, 8),
+        REPORT_COUNT(1, 2),
+        INPUT(1, Data|Var|Abs),
+    END_COLLECTION,
 };
+
+#include "pop_hid_macros.h"
 
 static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
 {
