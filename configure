@@ -14708,7 +14708,7 @@ fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
-if test "x$with_gstreamer" = xyes -o "x$ac_cv_header_QuickTime_ImageCompression_h" != xyes
+if test "x$with_gstreamer" = xyes -o "x$with_quicktime" = xno -o "x$ac_cv_header_QuickTime_ImageCompression_h" != xyes
 then
     if test "x$ac_glib2_broken" != xyes -a "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" != xyes; then :
   case "x$with_gstreamer" in
