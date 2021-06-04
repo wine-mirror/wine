@@ -113,8 +113,6 @@ static	DWORD	MPEG3_GetFormatIndex(LPWAVEFORMATEX wfx)
 
 typedef struct tagAcmMpeg3Data
 {
-    void (*convert)(PACMDRVSTREAMINSTANCE adsi,
-		    const unsigned char*, LPDWORD, unsigned char*, LPDWORD);
     mpg123_handle *mh;
 } AcmMpeg3Data;
 
@@ -241,7 +239,6 @@ static	LRESULT	MPEG3_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
 	    adsi->pwfxSrc->nChannels != adsi->pwfxDst->nChannels ||
             adsi->pwfxDst->wBitsPerSample != 16)
 	    goto theEnd;
-        aad->convert = mp3_horse;
         aad->mh = mpg123_new(NULL,&err);
         mpg123_open_feed(aad->mh);
 
@@ -574,7 +571,7 @@ static LRESULT MPEG3_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEAD
         MPEG3_Reset(adsi, aad);
     }
 
-    aad->convert(adsi, adsh->pbSrc, &nsrc, adsh->pbDst, &ndst);
+    mp3_horse(adsi, adsh->pbSrc, &nsrc, adsh->pbDst, &ndst);
     adsh->cbSrcLengthUsed = nsrc;
     adsh->cbDstLengthUsed = ndst;
 
