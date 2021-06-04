@@ -121,14 +121,6 @@ static float CDECL unix_lgammaf(float x)
 }
 
 /*********************************************************************
- *      log10
- */
-static double CDECL unix_log10( double x )
-{
-    return log10( x );
-}
-
-/*********************************************************************
  *      log10f
  */
 static float CDECL unix_log10f( float x )
@@ -211,7 +203,6 @@ static const struct unix_funcs funcs =
     unix_fmaf,
     unix_lgamma,
     unix_lgammaf,
-    unix_log10,
     unix_log10f,
     unix_log2,
     unix_log2f,
