@@ -655,12 +655,15 @@ static void test_source_resolver(void)
     IMFStreamDescriptor *sd;
     IUnknown *cancel_cookie;
     IMFByteStream *stream;
+    IMFGetService *get_service;
+    IMFRateSupport *rate_support;
     WCHAR pathW[MAX_PATH];
     int i, sample_count;
     WCHAR *filename;
     PROPVARIANT var;
     HRESULT hr;
     GUID guid;
+    float rate;
 
     if (!pMFCreateSourceResolver)
     {
@@ -766,6 +769,62 @@ static void test_source_resolver(void)
 
     check_interface(mediasource, &IID_IMFGetService, TRUE);
     check_service_interface(mediasource, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport, TRUE);
+
+    hr = IMFMediaSource_QueryInterface(mediasource, &IID_IMFGetService, (void**)&get_service);
+    ok(hr == S_OK, "Failed to get service interface, hr %#x.\n", hr);
+
+    hr = IMFGetService_GetService(get_service, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateSupport, (void**)&rate_support);
+    ok(hr == S_OK, "Failed to get rate support interface, hr %#x.\n", hr);
+
+    hr = IMFRateSupport_GetFastestRate(rate_support, MFRATE_FORWARD, FALSE, &rate);
+    ok(hr == S_OK, "Failed to query fastest rate, hr %#x.\n", hr);
+    ok(rate == 1e6f, "Unexpected fastest rate %f.\n", rate);
+    hr = IMFRateSupport_GetFastestRate(rate_support, MFRATE_FORWARD, TRUE, &rate);
+    ok(hr == S_OK, "Failed to query fastest rate, hr %#x.\n", hr);
+    ok(rate == 1e6f, "Unexpected fastest rate %f.\n", rate);
+    hr = IMFRateSupport_GetFastestRate(rate_support, MFRATE_REVERSE, FALSE, &rate);
+    ok(hr == S_OK, "Failed to query fastest rate, hr %#x.\n", hr);
+    ok(rate == -1e6f, "Unexpected fastest rate %f.\n", rate);
+    hr = IMFRateSupport_GetFastestRate(rate_support, MFRATE_REVERSE, TRUE, &rate);
+    ok(hr == S_OK, "Failed to query fastest rate, hr %#x.\n", hr);
+    ok(rate == -1e6f, "Unexpected fastest rate %f.\n", rate);
+
+    hr = IMFRateSupport_GetSlowestRate(rate_support, MFRATE_FORWARD, FALSE, &rate);
+    ok(hr == S_OK, "Failed to query slowest rate, hr %#x.\n", hr);
+    ok(rate == 0.0f, "Unexpected slowest rate %f.\n", rate);
+    hr = IMFRateSupport_GetSlowestRate(rate_support, MFRATE_FORWARD, TRUE, &rate);
+    ok(hr == S_OK, "Failed to query slowest rate, hr %#x.\n", hr);
+    ok(rate == 0.0f, "Unexpected slowest rate %f.\n", rate);
+    hr = IMFRateSupport_GetSlowestRate(rate_support, MFRATE_REVERSE, FALSE, &rate);
+    ok(hr == S_OK, "Failed to query slowest rate, hr %#x.\n", hr);
+    ok(rate == 0.0f, "Unexpected slowest rate %f.\n", rate);
+    hr = IMFRateSupport_GetSlowestRate(rate_support, MFRATE_REVERSE, TRUE, &rate);
+    ok(hr == S_OK, "Failed to query slowest rate, hr %#x.\n", hr);
+    ok(rate == 0.0f, "Unexpected slowest rate %f.\n", rate);
+
+    hr = IMFRateSupport_IsRateSupported(rate_support, FALSE, 0.0f, NULL);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    hr = IMFRateSupport_IsRateSupported(rate_support, FALSE, 0.0f, &rate);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(rate == 0.0f, "Unexpected rate %f.\n", rate);
+
+    hr = IMFRateSupport_IsRateSupported(rate_support, FALSE, 1.0f, &rate);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(rate == 1.0f, "Unexpected rate %f.\n", rate);
+    hr = IMFRateSupport_IsRateSupported(rate_support, FALSE, -1.0f, &rate);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(rate == -1.0f, "Unexpected rate %f.\n", rate);
+    hr = IMFRateSupport_IsRateSupported(rate_support, FALSE, 1e6f + 1.0f, &rate);
+    ok(hr == MF_E_UNSUPPORTED_RATE, "Unexpected hr %#x.\n", hr);
+    ok(rate == 1e6f + 1.0f || broken(rate == 1e6f) /* Win7 */, "Unexpected %f.\n", rate);
+    hr = IMFRateSupport_IsRateSupported(rate_support, FALSE, -1e6f, &rate);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(rate == -1e6f, "Unexpected rate %f.\n", rate);
+
+    hr = IMFRateSupport_IsRateSupported(rate_support, FALSE, -1e6f - 1.0f, &rate);
+    ok(hr == MF_E_UNSUPPORTED_RATE, "Unexpected hr %#x.\n", hr);
+    ok(rate == -1e6f - 1.0f || broken(rate == -1e6f) /* Win7 */, "Unexpected rate %f.\n", rate);
+
     check_service_interface(mediasource, &MF_RATE_CONTROL_SERVICE, &IID_IMFRateControl, TRUE);
     hr = IMFMediaSource_CreatePresentationDescriptor(mediasource, &descriptor);
     ok(hr == S_OK, "Failed to get presentation descriptor, hr %#x.\n", hr);
@@ -879,6 +938,8 @@ todo_wine
     hr = IMFMediaSource_CreatePresentationDescriptor(mediasource, NULL);
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
+    IMFRateSupport_Release(rate_support);
+    IMFGetService_Release(get_service);
     IMFMediaSource_Release(mediasource);
     IMFByteStream_Release(stream);
 
