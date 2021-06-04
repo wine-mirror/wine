@@ -111,11 +111,6 @@ static	DWORD	MPEG3_GetFormatIndex(LPWAVEFORMATEX wfx)
     return 0xFFFFFFFF;
 }
 
-typedef struct tagAcmMpeg3Data
-{
-    mpg123_handle *mh;
-} AcmMpeg3Data;
-
 /***********************************************************************
  *           MPEG3_drvOpen
  */
@@ -135,11 +130,9 @@ static LRESULT MPEG3_drvClose(DWORD_PTR dwDevID)
 }
 
 
-static void mp3_horse(PACMDRVSTREAMINSTANCE adsi,
-                      const unsigned char* src, LPDWORD nsrc,
-                      unsigned char* dst, LPDWORD ndst)
+static void mp3_horse(mpg123_handle *handle, const unsigned char *src,
+        DWORD *nsrc, unsigned char *dst, DWORD *ndst)
 {
-    AcmMpeg3Data*       amd = (AcmMpeg3Data*)adsi->dwDriver;
     int                 ret;
     size_t              size;
     DWORD               dpos = 0;
@@ -147,7 +140,7 @@ static void mp3_horse(PACMDRVSTREAMINSTANCE adsi,
 
     if (*nsrc > 0)
     {
-        ret = mpg123_feed(amd->mh, src, *nsrc);
+        ret = mpg123_feed(handle, src, *nsrc);
         if (ret != MPG123_OK)
         {
             ERR("Error feeding data\n");
@@ -158,7 +151,7 @@ static void mp3_horse(PACMDRVSTREAMINSTANCE adsi,
 
     do {
         size = 0;
-        ret = mpg123_read(amd->mh, dst + dpos, *ndst - dpos, &size);
+        ret = mpg123_read(handle, dst + dpos, *ndst - dpos, &size);
         if (ret == MPG123_ERR)
         {
             FIXME("Error occurred during decoding!\n");
@@ -170,7 +163,7 @@ static void mp3_horse(PACMDRVSTREAMINSTANCE adsi,
         {
             long rate;
             int channels, enc;
-            mpg123_getformat(amd->mh, &rate, &channels, &enc);
+            mpg123_getformat(handle, &rate, &channels, &enc);
             TRACE("New format: %li Hz, %i channels, encoding value %i\n", rate, channels, enc);
         }
         dpos += size;
@@ -185,7 +178,7 @@ static void mp3_horse(PACMDRVSTREAMINSTANCE adsi,
  */
 static LRESULT MPEG3_StreamOpen(ACMDRVSTREAMINSTANCE *instance)
 {
-    AcmMpeg3Data*	aad;
+    mpg123_handle *handle;
     int err;
 
     assert(!(instance->fdwOpen & ACM_STREAMOPENF_ASYNC));
@@ -215,12 +208,9 @@ static LRESULT MPEG3_StreamOpen(ACMDRVSTREAMINSTANCE *instance)
             || instance->pwfxDst->wBitsPerSample != 16)
         return MMSYSERR_NOTSUPPORTED;
 
-    if (!(aad = HeapAlloc(GetProcessHeap(), 0, sizeof(AcmMpeg3Data))))
-        return MMSYSERR_NOMEM;
-    instance->dwDriver = (DWORD_PTR)aad;
-
-    aad->mh = mpg123_new(NULL, &err);
-    mpg123_open_feed(aad->mh);
+    handle = mpg123_new(NULL, &err);
+    instance->dwDriver = (DWORD_PTR)handle;
+    mpg123_open_feed(handle);
 
 #if MPG123_API_VERSION >= 31 /* needed for MPG123_IGNORE_FRAMEINFO enum value */
     /* mpg123 may find a XING header in the mp3 and use that information
@@ -228,7 +218,7 @@ static LRESULT MPEG3_StreamOpen(ACMDRVSTREAMINSTANCE *instance)
      * We cannot allow that since the caller application is feeding us.
      * This fixes problems for mp3 files encoded with LAME (bug 42361)
      */
-    mpg123_param(aad->mh, MPG123_ADD_FLAGS, MPG123_IGNORE_INFOFRAME, 0);
+    mpg123_param(handle, MPG123_ADD_FLAGS, MPG123_IGNORE_INFOFRAME, 0);
 #endif
 
     return MMSYSERR_NOERROR;
@@ -238,11 +228,12 @@ static LRESULT MPEG3_StreamOpen(ACMDRVSTREAMINSTANCE *instance)
  *           MPEG3_StreamClose
  *
  */
-static	LRESULT	MPEG3_StreamClose(PACMDRVSTREAMINSTANCE adsi)
+static LRESULT MPEG3_StreamClose(ACMDRVSTREAMINSTANCE *instance)
 {
-    mpg123_close(((AcmMpeg3Data*)adsi->dwDriver)->mh);
-    mpg123_delete(((AcmMpeg3Data*)adsi->dwDriver)->mh);
-    HeapFree(GetProcessHeap(), 0, (void*)adsi->dwDriver);
+    mpg123_handle *handle = (mpg123_handle *)instance->dwDriver;
+
+    mpg123_close(handle);
+    mpg123_delete(handle);
     return MMSYSERR_NOERROR;
 }
 
@@ -513,9 +504,9 @@ static	LRESULT MPEG3_StreamSize(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMSIZE ad
  *           MPEG3_StreamConvert
  *
  */
-static LRESULT MPEG3_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEADER adsh)
+static LRESULT MPEG3_StreamConvert(ACMDRVSTREAMINSTANCE *instance, ACMDRVSTREAMHEADER *adsh)
 {
-    AcmMpeg3Data*	aad = (AcmMpeg3Data*)adsi->dwDriver;
+    mpg123_handle *handle = (mpg123_handle *)instance->dwDriver;
     DWORD		nsrc = adsh->cbSrcLength;
     DWORD		ndst = adsh->cbDstLength;
 
@@ -533,12 +524,12 @@ static LRESULT MPEG3_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEAD
      */
     if ((adsh->fdwConvert & ACM_STREAMCONVERTF_START))
     {
-        mpg123_feedseek(aad->mh, 0, SEEK_SET, NULL);
-        mpg123_close(aad->mh);
-        mpg123_open_feed(aad->mh);
+        mpg123_feedseek(handle, 0, SEEK_SET, NULL);
+        mpg123_close(handle);
+        mpg123_open_feed(handle);
     }
 
-    mp3_horse(adsi, adsh->pbSrc, &nsrc, adsh->pbDst, &ndst);
+    mp3_horse(handle, adsh->pbSrc, &nsrc, adsh->pbDst, &ndst);
     adsh->cbSrcLengthUsed = nsrc;
     adsh->cbDstLengthUsed = ndst;
 
