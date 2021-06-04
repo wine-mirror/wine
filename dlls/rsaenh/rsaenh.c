@@ -2695,7 +2695,7 @@ BOOL WINAPI RSAENH_CPDecrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
              pbData[*pdwDataLen-1] <= *pdwDataLen) {
                 BOOL padOkay = TRUE;
 
-                /* check that every bad byte has the same value */
+                /* check that every pad byte has the same value */
                 for (i = 1; padOkay && i < pbData[*pdwDataLen-1]; i++)
                     if (pbData[*pdwDataLen - i - 1] != pbData[*pdwDataLen - 1])
                         padOkay = FALSE;
