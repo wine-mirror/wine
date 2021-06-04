@@ -133,18 +133,6 @@ static double CDECL unix_log2(double x)
 }
 
 /*********************************************************************
- *      log2f
- */
-static float CDECL unix_log2f(float x)
-{
-#ifdef HAVE_LOG2F
-    return log2f(x);
-#else
-    return unix_log2(x);
-#endif
-}
-
-/*********************************************************************
  *      pow
  */
 static double CDECL unix_pow( double x, double y )
@@ -196,7 +184,6 @@ static const struct unix_funcs funcs =
     unix_lgamma,
     unix_lgammaf,
     unix_log2,
-    unix_log2f,
     unix_pow,
     unix_powf,
     unix_tgamma,

@@ -31,7 +31,6 @@ struct unix_funcs
     double          (CDECL *lgamma)(double x);
     float           (CDECL *lgammaf)(float x);
     double          (CDECL *log2)(double x);
-    float           (CDECL *log2f)(float x);
     double          (CDECL *pow)(double x, double y);
     float           (CDECL *powf)(float x, float y);
     double          (CDECL *tgamma)(double x);
