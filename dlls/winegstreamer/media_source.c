@@ -832,7 +832,7 @@ static HRESULT media_stream_init_desc(struct media_stream *stream)
             type_count = 1;
     }
 
-    assert(type_count < ARRAY_SIZE(stream_types));
+    assert(type_count <= ARRAY_SIZE(stream_types));
 
     if (!type_count)
     {
