@@ -180,93 +180,58 @@ static void mp3_horse(PACMDRVSTREAMINSTANCE adsi,
 }
 
 /***********************************************************************
- *           MPEG3_Reset
- *
- */
-static void MPEG3_Reset(PACMDRVSTREAMINSTANCE adsi, AcmMpeg3Data* aad)
-{
-    mpg123_feedseek(aad->mh, 0, SEEK_SET, NULL);
-    mpg123_close(aad->mh);
-    mpg123_open_feed(aad->mh);
-}
-
-/***********************************************************************
  *           MPEG3_StreamOpen
  *
  */
-static	LRESULT	MPEG3_StreamOpen(PACMDRVSTREAMINSTANCE adsi)
+static LRESULT MPEG3_StreamOpen(ACMDRVSTREAMINSTANCE *instance)
 {
-    LRESULT error = MMSYSERR_NOTSUPPORTED;
     AcmMpeg3Data*	aad;
     int err;
 
-    assert(!(adsi->fdwOpen & ACM_STREAMOPENF_ASYNC));
+    assert(!(instance->fdwOpen & ACM_STREAMOPENF_ASYNC));
 
-    if (MPEG3_GetFormatIndex(adsi->pwfxSrc) == 0xFFFFFFFF ||
-	MPEG3_GetFormatIndex(adsi->pwfxDst) == 0xFFFFFFFF)
-	return ACMERR_NOTPOSSIBLE;
+    if (MPEG3_GetFormatIndex(instance->pwfxSrc) == 0xFFFFFFFF
+            || MPEG3_GetFormatIndex(instance->pwfxDst) == 0xFFFFFFFF)
+        return ACMERR_NOTPOSSIBLE;
 
-    aad = HeapAlloc(GetProcessHeap(), 0, sizeof(AcmMpeg3Data));
-    if (aad == 0) return MMSYSERR_NOMEM;
+    if (instance->pwfxDst->wFormatTag != WAVE_FORMAT_PCM)
+        return MMSYSERR_NOTSUPPORTED;
 
-    adsi->dwDriver = (DWORD_PTR)aad;
+    if (instance->pwfxSrc->wFormatTag != WAVE_FORMAT_MPEGLAYER3
+            && instance->pwfxSrc->wFormatTag != WAVE_FORMAT_MPEG)
+        return MMSYSERR_NOTSUPPORTED;
 
-    if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
-	adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
+    if (instance->pwfxSrc->wFormatTag == WAVE_FORMAT_MPEGLAYER3)
     {
-	goto theEnd;
+        MPEGLAYER3WAVEFORMAT *mp3_format = (MPEGLAYER3WAVEFORMAT *)instance->pwfxSrc;
+
+        if (instance->pwfxSrc->cbSize < MPEGLAYER3_WFX_EXTRA_BYTES
+                || mp3_format->wID != MPEGLAYER3_ID_MPEG)
+            return ACMERR_NOTPOSSIBLE;
     }
-    else if ((adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_MPEGLAYER3 ||
-              adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_MPEG) &&
-             adsi->pwfxDst->wFormatTag == WAVE_FORMAT_PCM)
-    {
-        if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_MPEGLAYER3)
-        {
-            MPEGLAYER3WAVEFORMAT *formatmp3 = (MPEGLAYER3WAVEFORMAT *)adsi->pwfxSrc;
 
-            if (adsi->pwfxSrc->cbSize < MPEGLAYER3_WFX_EXTRA_BYTES ||
-                formatmp3->wID != MPEGLAYER3_ID_MPEG)
-            {
-                error = ACMERR_NOTPOSSIBLE;
-                goto theEnd;
-            }
-        }
+    if (instance->pwfxSrc->nSamplesPerSec != instance->pwfxDst->nSamplesPerSec
+            || instance->pwfxSrc->nChannels != instance->pwfxDst->nChannels
+            || instance->pwfxDst->wBitsPerSample != 16)
+        return MMSYSERR_NOTSUPPORTED;
 
-	/* resampling or mono <=> stereo not available
-         * MPEG3 algo only define 16 bit per sample output
-         */
-	if (adsi->pwfxSrc->nSamplesPerSec != adsi->pwfxDst->nSamplesPerSec ||
-	    adsi->pwfxSrc->nChannels != adsi->pwfxDst->nChannels ||
-            adsi->pwfxDst->wBitsPerSample != 16)
-	    goto theEnd;
-        aad->mh = mpg123_new(NULL,&err);
-        mpg123_open_feed(aad->mh);
+    if (!(aad = HeapAlloc(GetProcessHeap(), 0, sizeof(AcmMpeg3Data))))
+        return MMSYSERR_NOMEM;
+    instance->dwDriver = (DWORD_PTR)aad;
+
+    aad->mh = mpg123_new(NULL, &err);
+    mpg123_open_feed(aad->mh);
 
 #if MPG123_API_VERSION >= 31 /* needed for MPG123_IGNORE_FRAMEINFO enum value */
-        /* mpg123 may find a XING header in the mp3 and use that information
-         * to ask for seeks in order to read specific frames in the file.
-         * We cannot allow that since the caller application is feeding us.
-         * This fixes problems for mp3 files encoded with LAME (bug 42361)
-         */
-        mpg123_param(aad->mh, MPG123_ADD_FLAGS, MPG123_IGNORE_INFOFRAME, 0);
+    /* mpg123 may find a XING header in the mp3 and use that information
+     * to ask for seeks in order to read specific frames in the file.
+     * We cannot allow that since the caller application is feeding us.
+     * This fixes problems for mp3 files encoded with LAME (bug 42361)
+     */
+    mpg123_param(aad->mh, MPG123_ADD_FLAGS, MPG123_IGNORE_INFOFRAME, 0);
 #endif
-    }
-    else if (adsi->pwfxSrc->wFormatTag == WAVE_FORMAT_PCM &&
-             (adsi->pwfxDst->wFormatTag == WAVE_FORMAT_MPEGLAYER3 ||
-              adsi->pwfxDst->wFormatTag == WAVE_FORMAT_MPEG))
-    {
-        WARN("Encoding to MPEG is not supported\n");
-        goto theEnd;
-    }
-    else goto theEnd;
-    MPEG3_Reset(adsi, aad);
 
     return MMSYSERR_NOERROR;
-
- theEnd:
-    HeapFree(GetProcessHeap(), 0, aad);
-    adsi->dwDriver = 0L;
-    return error;
 }
 
 /***********************************************************************
@@ -568,7 +533,9 @@ static LRESULT MPEG3_StreamConvert(PACMDRVSTREAMINSTANCE adsi, PACMDRVSTREAMHEAD
      */
     if ((adsh->fdwConvert & ACM_STREAMCONVERTF_START))
     {
-        MPEG3_Reset(adsi, aad);
+        mpg123_feedseek(aad->mh, 0, SEEK_SET, NULL);
+        mpg123_close(aad->mh);
+        mpg123_open_feed(aad->mh);
     }
 
     mp3_horse(adsi, adsh->pbSrc, &nsrc, adsh->pbDst, &ndst);
