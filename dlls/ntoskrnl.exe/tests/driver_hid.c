@@ -100,6 +100,27 @@ static const unsigned char report_descriptor[] =
         REPORT_SIZE(1, 8),
         REPORT_COUNT(1, 2),
         INPUT(1, Data|Var|Abs),
+
+        USAGE_PAGE(1, HID_USAGE_PAGE_BUTTON),
+        USAGE_MINIMUM(1, 1),
+        USAGE_MAXIMUM(1, 8),
+        LOGICAL_MINIMUM(1, 0),
+        LOGICAL_MAXIMUM(1, 1),
+        PHYSICAL_MINIMUM(1, 0),
+        PHYSICAL_MAXIMUM(1, 1),
+        REPORT_COUNT(1, 8),
+        REPORT_SIZE(1, 1),
+        INPUT(1, Data|Var|Abs),
+
+        USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+        USAGE(1, HID_USAGE_GENERIC_HATSWITCH),
+        LOGICAL_MINIMUM(1, 1),
+        LOGICAL_MAXIMUM(1, 8),
+        PHYSICAL_MINIMUM(1, 0),
+        PHYSICAL_MAXIMUM(1, 8),
+        REPORT_SIZE(1, 4),
+        REPORT_COUNT(1, 2),
+        INPUT(1, Data|Var|Abs),
     END_COLLECTION,
 };
 
@@ -181,7 +202,7 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
 
         case IOCTL_HID_READ_REPORT:
         {
-            ULONG expected_size = 2;
+            ULONG expected_size = 4;
             ok(!in_size, "got input size %u\n", in_size);
             if (!test_failed) todo_wine ok(out_size == expected_size, "got output size %u\n", out_size);
             if (out_size != expected_size) test_failed = TRUE;
