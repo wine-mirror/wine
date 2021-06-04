@@ -9297,7 +9297,7 @@ static void test_address_list_query(void)
     size = 0;
     ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, buffer, sizeof(buffer), &size, NULL, NULL);
     ok(!ret, "Got unexpected ret %d.\n", ret);
-    todo_wine ok(!WSAGetLastError(), "Got unexpected error %d.\n", WSAGetLastError());
+    ok(!WSAGetLastError(), "Got unexpected error %d.\n", WSAGetLastError());
     ok(size == expect_size, "Expected size %u, got %u.\n", expect_size, size);
 
     expect_size = FIELD_OFFSET(SOCKET_ADDRESS_LIST, Address[address_list->iAddressCount]);
@@ -9346,8 +9346,8 @@ static void test_address_list_query(void)
     ok(ret == -1, "Got unexpected ret %d.\n", ret);
     ok(WSAGetLastError() == WSAEFAULT, "Got unexpected error %d.\n", WSAGetLastError());
     ok(size == expect_size, "Expected size %u, got %u.\n", expect_size, size);
-    todo_wine ok(overlapped.Internal == 0xdeadbeef, "Got status %#x.\n", (NTSTATUS)overlapped.Internal);
-    todo_wine ok(overlapped.InternalHigh == 0xdeadbeef, "Got size %Iu.\n", overlapped.InternalHigh);
+    ok(overlapped.Internal == 0xdeadbeef, "Got status %#x.\n", (NTSTATUS)overlapped.Internal);
+    ok(overlapped.InternalHigh == 0xdeadbeef, "Got size %Iu.\n", overlapped.InternalHigh);
 
     overlapped.Internal = 0xdeadbeef;
     overlapped.InternalHigh = 0xdeadbeef;
@@ -9367,8 +9367,8 @@ static void test_address_list_query(void)
     ok(ret == -1, "Got unexpected ret %d.\n", ret);
     ok(WSAGetLastError() == WSAEFAULT, "Got unexpected error %d.\n", WSAGetLastError());
     ok(size == expect_size, "Expected size %u, got %u.\n", expect_size, size);
-    todo_wine ok(overlapped.Internal == 0xdeadbeef, "Got status %#x.\n", (NTSTATUS)overlapped.Internal);
-    todo_wine ok(overlapped.InternalHigh == 0xdeadbeef, "Got size %Iu.\n", overlapped.InternalHigh);
+    ok(overlapped.Internal == 0xdeadbeef, "Got status %#x.\n", (NTSTATUS)overlapped.Internal);
+    ok(overlapped.InternalHigh == 0xdeadbeef, "Got size %Iu.\n", overlapped.InternalHigh);
     ok(address_list->iAddressCount == 0xcccccccc, "Got %u addresses.\n", address_list->iAddressCount);
 
     overlapped.Internal = 0xdeadbeef;
@@ -9376,19 +9376,19 @@ static void test_address_list_query(void)
     size = 0xdeadbeef;
     ret = WSAIoctl(s, SIO_ADDRESS_LIST_QUERY, NULL, 0, buffer, sizeof(buffer), &size, &overlapped, NULL);
     ok(!ret, "Got unexpected ret %d.\n", ret);
-    todo_wine ok(!WSAGetLastError(), "Got unexpected error %d.\n", WSAGetLastError());
+    ok(!WSAGetLastError(), "Got unexpected error %d.\n", WSAGetLastError());
     ok(size == expect_size, "Expected size %u, got %u.\n", expect_size, size);
 
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
-    todo_wine ok(ret, "Got error %u.\n", GetLastError());
-    todo_wine ok(!size, "Got size %u.\n", size);
+    ok(ret, "Got error %u.\n", GetLastError());
+    ok(!size, "Got size %u.\n", size);
     ok(overlapped_ptr == &overlapped, "Got overlapped %p.\n", overlapped_ptr);
     ok(!overlapped.Internal, "Got status %#x.\n", (NTSTATUS)overlapped.Internal);
-    todo_wine ok(!overlapped.InternalHigh, "Got size %Iu.\n", overlapped.InternalHigh);
+    ok(!overlapped.InternalHigh, "Got size %Iu.\n", overlapped.InternalHigh);
 
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
     ok(!ret, "Expected failure.\n");
-    todo_wine ok(GetLastError() == WAIT_TIMEOUT, "Got error %u.\n", GetLastError());
+    ok(GetLastError() == WAIT_TIMEOUT, "Got error %u.\n", GetLastError());
 
     closesocket(s);
     CloseHandle(port);
@@ -9408,14 +9408,11 @@ static void test_address_list_query(void)
     ok(size == expect_size, "got size %u\n", size);
 
     ret = SleepEx(0, TRUE);
-    todo_wine ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
-    if (ret == WAIT_IO_COMPLETION)
-    {
-        ok(apc_count == 1, "APC was called %u times\n", apc_count);
-        ok(!apc_error, "got APC error %u\n", apc_error);
-        ok(!apc_size, "got APC size %u\n", apc_size);
-        ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
-    }
+    ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
+    ok(apc_count == 1, "APC was called %u times\n", apc_count);
+    ok(!apc_error, "got APC error %u\n", apc_error);
+    ok(!apc_size, "got APC size %u\n", apc_size);
+    ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
 
     closesocket(s);
 }

@@ -3399,8 +3399,8 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
            break;
        }
 
-   case WS_SIO_ADDRESS_LIST_QUERY:
-   {
+    case WS_SIO_ADDRESS_LIST_QUERY:
+    {
         DWORD size;
 
         TRACE("-> SIO_ADDRESS_LIST_QUERY request\n");
@@ -3415,17 +3415,19 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         if (GetAdaptersInfo(NULL, &size) == ERROR_BUFFER_OVERFLOW)
         {
             IP_ADAPTER_INFO *p, *table = HeapAlloc(GetProcessHeap(), 0, size);
+            NTSTATUS status = STATUS_SUCCESS;
             SOCKET_ADDRESS_LIST *sa_list;
             SOCKADDR_IN *sockaddr;
             SOCKET_ADDRESS *sa;
             unsigned int i;
+            DWORD ret = 0;
             DWORD num;
 
             if (!table || GetAdaptersInfo(table, &size))
             {
                 HeapFree(GetProcessHeap(), 0, table);
-                status = WSAEINVAL;
-                break;
+                SetLastError( WSAEINVAL );
+                return -1;
             }
 
             for (p = table, num = 0; p; p = p->Next)
@@ -3436,8 +3438,8 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
             {
                 *ret_size = total;
                 HeapFree(GetProcessHeap(), 0, table);
-                status = WSAEFAULT;
-                break;
+                SetLastError( WSAEFAULT );
+                return -1;
             }
 
             sa_list = out_buff;
@@ -3459,14 +3461,20 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
             }
 
             HeapFree(GetProcessHeap(), 0, table);
+
+            ret = server_ioctl_sock( s, IOCTL_AFD_WINE_COMPLETE_ASYNC, &status, sizeof(status),
+                                     NULL, 0, ret_size, overlapped, completion );
+            *ret_size = total;
+            SetLastError( ret );
+            return ret ? -1 : 0;
         }
         else
         {
             WARN("unable to get IP address list\n");
-            status = WSAEINVAL;
+            SetLastError( WSAEINVAL );
+            return -1;
         }
-        break;
-   }
+    }
 
     case WS_SIO_FLUSH:
         FIXME("SIO_FLUSH: stub.\n");
