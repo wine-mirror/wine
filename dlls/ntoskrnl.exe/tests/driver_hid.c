@@ -103,6 +103,7 @@ static const unsigned char report_descriptor[] =
 
 static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
 {
+    static BOOL test_failed;
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
     const ULONG in_size = stack->Parameters.DeviceIoControl.InputBufferLength;
     const ULONG out_size = stack->Parameters.DeviceIoControl.OutputBufferLength;
@@ -175,11 +176,15 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
         }
 
         case IOCTL_HID_READ_REPORT:
+        {
+            ULONG expected_size = 2;
             ok(!in_size, "got input size %u\n", in_size);
-            todo_wine ok(out_size == 2, "got output size %u\n", out_size);
+            if (!test_failed) todo_wine ok(out_size == expected_size, "got output size %u\n", out_size);
+            if (out_size != expected_size) test_failed = TRUE;
 
             ret = STATUS_NOT_IMPLEMENTED;
             break;
+        }
 
         case IOCTL_HID_GET_STRING:
             ok(!in_size, "got input size %u\n", in_size);
