@@ -1799,6 +1799,7 @@ MONTHCAL_HitTest(const MONTHCAL_INFO *infoPtr, MCHITTESTINFO *lpht)
   if(!lpht || lpht->cbSize < MCHITTESTINFO_V1_SIZE) return -1;
 
   htinfo.st = st_null;
+  htinfo.uHit = 0;
 
   /* we should preserve passed fields if hit area doesn't need them */
   if (lpht->cbSize == sizeof(MCHITTESTINFO))
