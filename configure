@@ -14708,7 +14708,9 @@ fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
-if test "x$ac_glib2_broken" != xyes -a "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" != xyes -a "x$ac_cv_header_QuickTime_ImageCompression_h" != xyes ; then :
+if test "x$with_gstreamer" = xyes -o "x$ac_cv_header_QuickTime_ImageCompression_h" != xyes
+then
+    if test "x$ac_glib2_broken" != xyes -a "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" != xyes; then :
   case "x$with_gstreamer" in
   x)   as_fn_append wine_notices "|gstreamer-1.0 base plugins ${notice_platform}development files not found, GStreamer won't be supported." ;;
   xno) ;;
@@ -14716,6 +14718,7 @@ if test "x$ac_glib2_broken" != xyes -a "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" !
 This is an error since --with-gstreamer was requested." "$LINENO" 5 ;;
 esac
 
+fi
 fi
 test "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" = xyes || enable_winegstreamer=${enable_winegstreamer:-no}
 
