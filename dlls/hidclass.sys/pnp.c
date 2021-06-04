@@ -21,6 +21,7 @@
 #define NONAMELESSUNION
 #include <unistd.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include "initguid.h"
 #include "hid.h"
 #include "devguid.h"
@@ -239,19 +240,19 @@ static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
         return;
     }
 
-    reportDescriptor = HeapAlloc(GetProcessHeap(), 0, descriptor.DescriptorList[i].wReportLength);
+    reportDescriptor = malloc(descriptor.DescriptorList[i].wReportLength);
     status = call_minidriver(IOCTL_HID_GET_REPORT_DESCRIPTOR, fdo, NULL, 0,
         reportDescriptor, descriptor.DescriptorList[i].wReportLength);
     if (status != STATUS_SUCCESS)
     {
         ERR("Cannot get Report Descriptor(%x)\n",status);
-        HeapFree(GetProcessHeap(), 0, reportDescriptor);
+        free(reportDescriptor);
         IoDeleteDevice(child_pdo);
         return;
     }
 
     pdo_ext->u.pdo.preparsed_data = ParseDescriptor(reportDescriptor, descriptor.DescriptorList[i].wReportLength);
-    HeapFree(GetProcessHeap(), 0, reportDescriptor);
+    free(reportDescriptor);
     if (!pdo_ext->u.pdo.preparsed_data)
     {
         ERR("Cannot parse Report Descriptor\n");
@@ -475,7 +476,7 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
             }
             CloseHandle(ext->u.pdo.halt_event);
 
-            HeapFree(GetProcessHeap(), 0, ext->u.pdo.preparsed_data);
+            free(ext->u.pdo.preparsed_data);
             if (ext->u.pdo.ring_buffer)
                 RingBuffer_Destroy(ext->u.pdo.ring_buffer);
 
@@ -561,7 +562,7 @@ static void WINAPI driver_unload(DRIVER_OBJECT *driver)
         if (md->DriverUnload)
             md->DriverUnload(md->minidriver.DriverObject);
         list_remove(&md->entry);
-        HeapFree(GetProcessHeap(), 0, md);
+        free(md);
     }
 }
 
@@ -569,7 +570,7 @@ NTSTATUS WINAPI HidRegisterMinidriver(HID_MINIDRIVER_REGISTRATION *registration)
 {
     minidriver *driver;
 
-    if (!(driver = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*driver))))
+    if (!(driver = calloc(1, sizeof(*driver))))
         return STATUS_NO_MEMORY;
 
     driver->DriverUnload = registration->DriverObject->DriverUnload;

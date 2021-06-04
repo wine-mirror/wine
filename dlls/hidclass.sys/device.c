@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "hid.h"
@@ -115,7 +116,7 @@ static void hid_device_send_input(DEVICE_OBJECT *device, HID_XFER_PACKET *packet
     data_size = offsetof(RAWINPUT, data.hid.bRawData) + packet->reportBufferLen;
     if (!(id = ext->u.pdo.preparsed_data->reports[0].reportID)) data_size += 1;
 
-    if (!(rawinput = HeapAlloc(GetProcessHeap(), 0, data_size)))
+    if (!(rawinput = malloc(data_size)))
     {
         ERR("Failed to allocate rawinput data!\n");
         return;
@@ -138,7 +139,7 @@ static void hid_device_send_input(DEVICE_OBJECT *device, HID_XFER_PACKET *packet
     input.u.hi.wParamL = 0;
     __wine_send_input(0, &input, rawinput);
 
-    HeapFree(GetProcessHeap(), 0, rawinput);
+    free(rawinput);
 }
 
 static void HID_Device_processQueue(DEVICE_OBJECT *device)
@@ -148,7 +149,7 @@ static void HID_Device_processQueue(DEVICE_OBJECT *device)
     UINT buffer_size = RingBuffer_GetBufferSize(ext->u.pdo.ring_buffer);
     HID_XFER_PACKET *packet;
 
-    packet = HeapAlloc(GetProcessHeap(), 0, buffer_size);
+    packet = malloc(buffer_size);
 
     while((irp = pop_irp_from_queue(ext)))
     {
@@ -174,7 +175,7 @@ static void HID_Device_processQueue(DEVICE_OBJECT *device)
         }
         IoCompleteRequest( irp, IO_NO_INCREMENT );
     }
-    HeapFree(GetProcessHeap(), 0, packet);
+    free(packet);
 }
 
 static DWORD CALLBACK hid_device_thread(void *args)
@@ -189,7 +190,7 @@ static DWORD CALLBACK hid_device_thread(void *args)
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
     USHORT report_size = ext->u.pdo.preparsed_data->caps.InputReportByteLength;
 
-    packet = HeapAlloc(GetProcessHeap(), 0, sizeof(*packet) + report_size);
+    packet = malloc(sizeof(*packet) + report_size);
     packet->reportBuffer = (BYTE *)packet + sizeof(*packet);
 
     if (ext->u.pdo.information.Polled)
@@ -347,7 +348,7 @@ static NTSTATUS HID_get_feature(BASE_DEVICE_EXTENSION *ext, IRP *irp)
     TRACE_(hid_report)("Device %p Buffer length %i Buffer %p\n", ext, irpsp->Parameters.DeviceIoControl.OutputBufferLength, out_buffer);
 
     len = sizeof(*packet) + irpsp->Parameters.DeviceIoControl.OutputBufferLength;
-    packet = HeapAlloc(GetProcessHeap(), 0, len);
+    packet = malloc(len);
     packet->reportBufferLen = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
     packet->reportBuffer = ((BYTE*)packet) + sizeof(*packet);
     packet->reportId = out_buffer[0];
@@ -367,7 +368,7 @@ static NTSTATUS HID_get_feature(BASE_DEVICE_EXTENSION *ext, IRP *irp)
 
     TRACE_(hid_report)("Result 0x%x get %li bytes\n", rc, irp->IoStatus.Information);
 
-    HeapFree(GetProcessHeap(), 0, packet);
+    free(packet);
 
     return rc;
 }
@@ -496,7 +497,7 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
             BYTE *buffer = MmGetSystemAddressForMdlSafe(irp->MdlAddress, NormalPagePriority);
             ULONG out_length;
 
-            packet = HeapAlloc(GetProcessHeap(), 0, packet_size);
+            packet = malloc(packet_size);
 
             if (ext->u.pdo.preparsed_data->reports[0].reportID)
                 packet->reportId = buffer[0];
@@ -514,7 +515,7 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
             else
                 irp->IoStatus.Information = 0;
             irp->IoStatus.u.Status = rc;
-            HeapFree(GetProcessHeap(), 0, packet);
+            free(packet);
             break;
         }
         case IOCTL_SET_NUM_DEVICE_INPUT_BUFFERS:
@@ -578,7 +579,7 @@ NTSTATUS WINAPI pdo_read(DEVICE_OBJECT *device, IRP *irp)
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
     int ptr = -1;
 
-    packet = HeapAlloc(GetProcessHeap(), 0, buffer_size);
+    packet = malloc(buffer_size);
     ptr = PtrToUlong( irp->Tail.Overlay.OriginalFileObject->FsContext );
 
     irp->IoStatus.Information = 0;
@@ -639,7 +640,7 @@ NTSTATUS WINAPI pdo_read(DEVICE_OBJECT *device, IRP *irp)
             IoCompleteRequest(irp, IO_NO_INCREMENT);
         }
     }
-    HeapFree(GetProcessHeap(), 0, packet);
+    free(packet);
 
     return rc;
 }

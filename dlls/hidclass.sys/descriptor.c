@@ -507,7 +507,7 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
                     case TAG_MAIN_FEATURE:
                         for (j = 0; j < caps->ReportCount; j++)
                         {
-                            feature = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*feature));
+                            feature = calloc(1, sizeof(*feature));
                             list_add_tail(&collection->features, &feature->entry);
                             if (bTag == TAG_MAIN_INPUT)
                                 feature->type = HidP_Input;
@@ -532,7 +532,7 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
                         break;
                     case TAG_MAIN_COLLECTION:
                     {
-                        struct collection *subcollection = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct collection));
+                        struct collection *subcollection = calloc(1, sizeof(struct collection));
                         list_add_tail(&collection->collections, &subcollection->entry);
                         subcollection->parent = collection;
                         /* Only set our collection once...
@@ -598,7 +598,7 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
                         break;
                     case TAG_GLOBAL_PUSH:
                     {
-                        struct caps_stack *saved = HeapAlloc(GetProcessHeap(), 0, sizeof(*saved));
+                        struct caps_stack *saved = malloc(sizeof(*saved));
                         saved->caps = *caps;
                         TRACE("Push\n");
                         list_add_tail(stack, &saved->entry);
@@ -615,7 +615,7 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
                             saved = LIST_ENTRY(tail, struct caps_stack, entry);
                             *caps = saved->caps;
                             list_remove(tail);
-                            HeapFree(GetProcessHeap(), 0, saved);
+                            free(saved);
                         }
                         else
                             ERR("Pop but no stack!\n");
@@ -928,7 +928,7 @@ static WINE_HIDP_PREPARSED_DATA* build_PreparseData(struct collection *base_coll
     nodes_offset = size;
     size += node_count * sizeof(WINE_HID_LINK_COLLECTION_NODE);
 
-    data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+    data = calloc(1, size);
     data->magic = HID_MAGIC;
     data->dwSize = size;
     data->caps.Usage = base_collection->caps.u.NotRange.Usage;
@@ -953,9 +953,9 @@ static void free_collection(struct collection *collection)
     LIST_FOR_EACH_ENTRY_SAFE(fentry, fnext, &collection->features, struct feature, entry)
     {
         list_remove(&fentry->entry);
-        HeapFree(GetProcessHeap(), 0, fentry);
+        free(fentry);
     }
-    HeapFree(GetProcessHeap(), 0, collection);
+    free(collection);
 }
 
 WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
@@ -983,7 +983,7 @@ WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
 
     list_init(&caps_stack);
 
-    base = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*base));
+    base = calloc(1, sizeof(*base));
     base->index = 1;
     list_init(&base->features);
     list_init(&base->collections);
@@ -1001,7 +1001,7 @@ WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
         LIST_FOR_EACH_ENTRY_SAFE(entry, cursor, &caps_stack, struct caps_stack, entry)
         {
             list_remove(&entry->entry);
-            HeapFree(GetProcessHeap(), 0, entry);
+            free(entry);
         }
     }
 

@@ -18,6 +18,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 #define NONAMELESSUNION
 #include "hid.h"
 
@@ -50,26 +51,26 @@ struct ReportRingBuffer* RingBuffer_Create(UINT buffer_size)
 
     TRACE("Create Ring Buffer with buffer size %i\n",buffer_size);
 
-    ring = HeapAlloc(GetProcessHeap(), 0, sizeof(*ring));
+    ring = malloc(sizeof(*ring));
     if (!ring)
         return NULL;
     ring->start = ring->end = 0;
     ring->size = BASE_BUFFER_SIZE;
     ring->buffer_size = buffer_size;
     ring->pointer_alloc = 2;
-    ring->pointers = HeapAlloc(GetProcessHeap(), 0, sizeof(UINT) * ring->pointer_alloc);
+    ring->pointers = malloc(sizeof(UINT) * ring->pointer_alloc);
     if (!ring->pointers)
     {
-        HeapFree(GetProcessHeap(), 0, ring);
+        free(ring);
         return NULL;
     }
     for (i = 0; i < ring->pointer_alloc; i++)
         ring->pointers[i] = POINTER_UNUSED;
-    ring->buffer = HeapAlloc(GetProcessHeap(), 0, buffer_size * ring->size);
+    ring->buffer = malloc(buffer_size * ring->size);
     if (!ring->buffer)
     {
-        HeapFree(GetProcessHeap(), 0, ring->pointers);
-        HeapFree(GetProcessHeap(), 0, ring);
+        free(ring->pointers);
+        free(ring);
         return NULL;
     }
     InitializeCriticalSection(&ring->lock);
@@ -79,11 +80,11 @@ struct ReportRingBuffer* RingBuffer_Create(UINT buffer_size)
 
 void RingBuffer_Destroy(struct ReportRingBuffer *ring)
 {
-    HeapFree(GetProcessHeap(), 0, ring->buffer);
-    HeapFree(GetProcessHeap(), 0, ring->pointers);
+    free(ring->buffer);
+    free(ring->pointers);
     ring->lock.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&ring->lock);
-    HeapFree(GetProcessHeap(), 0, ring);
+    free(ring);
 }
 
 UINT RingBuffer_GetBufferSize(struct ReportRingBuffer *ring)
@@ -113,13 +114,13 @@ NTSTATUS RingBuffer_SetSize(struct ReportRingBuffer *ring, UINT size)
         if (ring->pointers[i] != POINTER_UNUSED)
             ring->pointers[i] = 0;
     }
-    new_buffer = HeapAlloc(GetProcessHeap(), 0, ring->buffer_size * size);
+    new_buffer = malloc(ring->buffer_size * size);
     if (!new_buffer)
     {
         LeaveCriticalSection(&ring->lock);
         return STATUS_NO_MEMORY;
     }
-    HeapFree(GetProcessHeap(), 0, ring->buffer);
+    free(ring->buffer);
     ring->buffer = new_buffer;
     ring->size = size;
     LeaveCriticalSection(&ring->lock);
