@@ -476,12 +476,13 @@ static NTSTATUS mouse_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, 
 {
     TRACE("buffer %p, length %u.\n", buffer, length);
 
-    *ret_length = sizeof(REPORT_HEADER) + sizeof(REPORT_TAIL);
-    if (length < sizeof(REPORT_HEADER) + sizeof(REPORT_TAIL))
+    *ret_length = sizeof(REPORT_HEADER) + sizeof(REPORT_BUTTONS) + sizeof(REPORT_TAIL);
+    if (length < sizeof(REPORT_HEADER) + sizeof(REPORT_BUTTONS) + sizeof(REPORT_TAIL))
         return STATUS_BUFFER_TOO_SMALL;
 
     memcpy(buffer, REPORT_HEADER, sizeof(REPORT_HEADER));
-    memcpy(buffer + sizeof(REPORT_HEADER), REPORT_TAIL, sizeof(REPORT_TAIL));
+    add_button_block(buffer + sizeof(REPORT_HEADER), 1, 3);
+    memcpy(buffer + sizeof(REPORT_HEADER) + sizeof(REPORT_BUTTONS), REPORT_TAIL, sizeof(REPORT_TAIL));
     buffer[IDX_HEADER_PAGE] = HID_USAGE_PAGE_GENERIC;
     buffer[IDX_HEADER_USAGE] = HID_USAGE_GENERIC_MOUSE;
 
