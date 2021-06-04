@@ -30,7 +30,6 @@ struct unix_funcs
     float           (CDECL *fmaf)(float x, float y, float z);
     double          (CDECL *lgamma)(double x);
     float           (CDECL *lgammaf)(float x);
-    float           (CDECL *log10f)(float x);
     double          (CDECL *log2)(double x);
     float           (CDECL *log2f)(float x);
     double          (CDECL *pow)(double x, double y);
