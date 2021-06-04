@@ -1,7 +1,7 @@
 MODULE    = l3codeca.acm
 IMPORTS   = winmm user32
 EXTRAINCL = $(MPG123_CFLAGS)
-EXTRALIBS = $(MPG123_LIBS) $(COREAUDIO_LIBS)
+EXTRALIBS = $(MPG123_LIBS)
 
 C_SRCS = \
 	mpegl3.c

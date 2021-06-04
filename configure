@@ -16358,7 +16358,7 @@ fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
-if test "x$ac_cv_lib_mpg123_mpg123_feed" != xyes -a x"$ac_cv_header_CoreAudio_CoreAudio_h" != xyes; then :
+if test "x$ac_cv_lib_mpg123_mpg123_feed" != xyes; then :
   case "x$with_mpg123" in
   x)   as_fn_append wine_notices "|libmpg123 ${notice_platform}development files not found (or too old), mp3 codec won't be supported." ;;
   xno) ;;
