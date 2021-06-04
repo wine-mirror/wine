@@ -19,7 +19,6 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
-#define NONAMELESSUNION
 #include "hid.h"
 
 #include "wine/debug.h"
