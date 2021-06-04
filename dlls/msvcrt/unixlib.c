@@ -95,19 +95,6 @@ static float CDECL unix_fmaf( float x, float y, float z )
 }
 
 /*********************************************************************
- *      lgamma
- */
-static double CDECL unix_lgamma(double x)
-{
-#ifdef HAVE_LGAMMA
-    return lgamma(x);
-#else
-    FIXME( "not implemented\n" );
-    return 0;
-#endif
-}
-
-/*********************************************************************
  *      lgammaf
  */
 static float CDECL unix_lgammaf(float x)
@@ -169,7 +156,6 @@ static const struct unix_funcs funcs =
     unix_exp2,
     unix_exp2f,
     unix_fmaf,
-    unix_lgamma,
     unix_lgammaf,
     unix_pow,
     unix_powf,
