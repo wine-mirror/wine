@@ -2661,7 +2661,6 @@ AC_CHECK_FUNCS(\
 	fmaf \
 	lgamma \
 	lgammaf \
-	log1p \
 	log1pf \
 	log2 \
 	log2f \

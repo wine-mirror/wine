@@ -6898,12 +6898,76 @@ float CDECL expm1f(float x)
 
 /*********************************************************************
  *      log1p (MSVCR120.@)
+ *
+ * Copied from musl: src/math/log1p.c
  */
 double CDECL log1p(double x)
 {
-    if (x < -1) *_errno() = EDOM;
-    else if (x == -1) *_errno() = ERANGE;
-    return unix_funcs->log1p( x );
+    static const double ln2_hi = 6.93147180369123816490e-01,
+        ln2_lo = 1.90821492927058770002e-10,
+        Lg1 = 6.666666666666735130e-01,
+        Lg2 = 3.999999999940941908e-01,
+        Lg3 = 2.857142874366239149e-01,
+        Lg4 = 2.222219843214978396e-01,
+        Lg5 = 1.818357216161805012e-01,
+        Lg6 = 1.531383769920937332e-01,
+        Lg7 = 1.479819860511658591e-01;
+
+    union {double f; UINT64 i;} u = {x};
+    double hfsq, f, c, s, z, R, w, t1, t2, dk;
+    UINT32 hx, hu;
+    int k;
+
+    hx = u.i >> 32;
+    k = 1;
+    if (hx < 0x3fda827a || hx >> 31) { /* 1+x < sqrt(2)+ */
+        if (hx >= 0xbff00000) { /* x <= -1.0 */
+            if (x == -1) {
+                *_errno() = ERANGE;
+                return x / 0.0; /* og1p(-1) = -inf */
+            }
+            *_errno() = EDOM;
+            return (x-x) / 0.0; /* log1p(x<-1) = NaN */
+        }
+        if (hx << 1 < 0x3ca00000 << 1) { /* |x| < 2**-53 */
+            fp_barrier(x + 0x1p120f);
+            /* underflow if subnormal */
+            if ((hx & 0x7ff00000) == 0)
+                fp_barrierf(x);
+            return x;
+        }
+        if (hx <= 0xbfd2bec4) { /* sqrt(2)/2- <= 1+x < sqrt(2)+ */
+            k = 0;
+            c = 0;
+            f = x;
+        }
+    } else if (hx >= 0x7ff00000)
+        return x;
+    if (k) {
+        u.f = 1 + x;
+        hu = u.i >> 32;
+        hu += 0x3ff00000 - 0x3fe6a09e;
+        k = (int)(hu >> 20) - 0x3ff;
+        /* correction term ~ log(1+x)-log(u), avoid underflow in c/u */
+        if (k < 54) {
+            c = k >= 2 ? 1 - (u.f - x) : x - (u.f - 1);
+            c /= u.f;
+        } else
+            c = 0;
+        /* reduce u into [sqrt(2)/2, sqrt(2)] */
+        hu = (hu & 0x000fffff) + 0x3fe6a09e;
+        u.i = (UINT64)hu << 32 | (u.i & 0xffffffff);
+        f = u.f - 1;
+    }
+    hfsq = 0.5 * f * f;
+    s = f / (2.0 + f);
+    z = s * s;
+    w = z * z;
+    t1 = w * (Lg2 + w * (Lg4 + w * Lg6));
+    t2 = z * (Lg1 + w * (Lg3 + w * (Lg5 + w * Lg7)));
+    R = t2 + t1;
+    dk = k;
+    return s * (hfsq + R) + (dk * ln2_lo + c) - hfsq + f + dk * ln2_hi;
 }
 
 /*********************************************************************
