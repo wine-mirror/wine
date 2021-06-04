@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-05-20 14:10+0200\n"
+"PO-Revision-Date: 2021-06-04 19:40+0200\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -4515,7 +4515,7 @@ msgstr "Pad is ongeldig.\n"
 
 #: dlls/kernel32/winerror.mc:678
 msgid "Signal pending.\n"
-msgstr "Signaal wachtende.\n"
+msgstr "Signaal in behandeling.\n"
 
 #: dlls/kernel32/winerror.mc:683
 msgid "Max system-wide thread count reached.\n"
@@ -4527,7 +4527,7 @@ msgstr "Vergrendelen mislukt.\n"
 
 #: dlls/kernel32/winerror.mc:693
 msgid "Resource in use.\n"
-msgstr "Resource in gebruik.\n"
+msgstr "Bron in gebruik.\n"
 
 #: dlls/kernel32/winerror.mc:698
 msgid "Cancel violation.\n"
@@ -6088,11 +6088,11 @@ msgstr "Geen systeembronnen.\n"
 
 #: dlls/kernel32/winerror.mc:2653
 msgid "No non-paged system resources.\n"
-msgstr "Geen nonpaged systeembronnen.\n"
+msgstr "Geen niet-wisselbare systeembronnen.\n"
 
 #: dlls/kernel32/winerror.mc:2658
 msgid "No paged system resources.\n"
-msgstr "Geen paged systeembronnen.\n"
+msgstr "Geen wisselbare systeembronnen.\n"
 
 #: dlls/kernel32/winerror.mc:2663
 msgid "No working set quota.\n"
@@ -6112,7 +6112,7 @@ msgstr "Menu-item niet gevonden.\n"
 
 #: dlls/kernel32/winerror.mc:2683
 msgid "Invalid keyboard handle.\n"
-msgstr "Ongeldige toestenbordhandle.\n"
+msgstr "Ongeldige toestenbordbeschrijving.\n"
 
 #: dlls/kernel32/winerror.mc:2688
 msgid "Hook type not allowed.\n"
@@ -6124,15 +6124,15 @@ msgstr "Interactief windowstation vereist.\n"
 
 #: dlls/kernel32/winerror.mc:2698
 msgid "Timeout.\n"
-msgstr "Timeout.\n"
+msgstr "Time-out.\n"
 
 #: dlls/kernel32/winerror.mc:2703
 msgid "Invalid monitor handle.\n"
-msgstr "Ongeldige monitorhandle.\n"
+msgstr "Ongeldige monitorbeschrijving.\n"
 
 #: dlls/kernel32/winerror.mc:2708
 msgid "Event log file corrupt.\n"
-msgstr "Gebeurtenislogbestand corrupt.\n"
+msgstr "Gebeurtenislogbestand beschadigd.\n"
 
 #: dlls/kernel32/winerror.mc:2713
 msgid "Event log can't start.\n"
@@ -6384,7 +6384,7 @@ msgstr "Onbekende interface.\n"
 
 #: dlls/kernel32/winerror.mc:3023
 msgid "No bindings.\n"
-msgstr "Geen bindings.\n"
+msgstr "Geen bindingen.\n"
 
 #: dlls/kernel32/winerror.mc:3028
 msgid "No protocol sequences.\n"
@@ -6392,11 +6392,11 @@ msgstr "Geen protocol volgordes.\n"
 
 #: dlls/kernel32/winerror.mc:3033
 msgid "Can't create endpoint.\n"
-msgstr "Kan eindpunt niet creëren.\n"
+msgstr "Kan eindpunt niet aanmaken.\n"
 
 #: dlls/kernel32/winerror.mc:3038
 msgid "Out of resources.\n"
-msgstr "Resources zijn op.\n"
+msgstr "Onvoldoende bronnen.\n"
 
 #: dlls/kernel32/winerror.mc:3043
 msgid "RPC server unavailable.\n"
@@ -6412,15 +6412,15 @@ msgstr "Ongeldige netwerkopties.\n"
 
 #: dlls/kernel32/winerror.mc:3058
 msgid "No RPC call active.\n"
-msgstr "Geen RPC-call actief.\n"
+msgstr "Geen RPC-oproep actief.\n"
 
 #: dlls/kernel32/winerror.mc:3063
 msgid "RPC call failed.\n"
-msgstr "RPC-call mislukt.\n"
+msgstr "RPC-oproep mislukt.\n"
 
 #: dlls/kernel32/winerror.mc:3068
 msgid "RPC call failed and didn't execute.\n"
-msgstr "RPC-call mislukt en niet uitgevoerd.\n"
+msgstr "RPC-oproep mislukt en niet uitgevoerd.\n"
 
 #: dlls/kernel32/winerror.mc:3073
 msgid "RPC protocol error.\n"
@@ -6740,23 +6740,23 @@ msgstr "Server heeft open handles.\n"
 
 #: dlls/kernel32/winerror.mc:3473
 msgid "Resource data not found.\n"
-msgstr "Resourcedata niet gevonden.\n"
+msgstr "Brongegevens niet gevonden.\n"
 
 #: dlls/kernel32/winerror.mc:3478
 msgid "Resource type not found.\n"
-msgstr "Resourcetype niet gevonden.\n"
+msgstr "Brontype niet gevonden.\n"
 
 #: dlls/kernel32/winerror.mc:3483
 msgid "Resource name not found.\n"
-msgstr "Resourcenaam niet gevonden.\n"
+msgstr "Bronnaam niet gevonden.\n"
 
 #: dlls/kernel32/winerror.mc:3488
 msgid "Resource language not found.\n"
-msgstr "Resourcetaal niet gevonden.\n"
+msgstr "Brontaal niet gevonden.\n"
 
 #: dlls/kernel32/winerror.mc:3493
 msgid "Not enough quota.\n"
-msgstr "Niet genoeg quota.\n"
+msgstr "Onvoldoende quota.\n"
 
 #: dlls/kernel32/winerror.mc:3498
 msgid "No interfaces.\n"
@@ -9573,55 +9573,55 @@ msgstr "Terugspoelen"
 
 #: dlls/shdoclc/shdoclc.rc:199
 msgid "Trace Tags"
-msgstr "Traceer Labels"
+msgstr "Markeringen"
 
 #: dlls/shdoclc/shdoclc.rc:200
 msgid "Resource Failures"
-msgstr "Resource Fouten"
+msgstr "Bronfouten"
 
 #: dlls/shdoclc/shdoclc.rc:201
 msgid "Dump Tracking Info"
-msgstr "Log Tracerings Informatie"
+msgstr "Traceerinformatie Dumpen"
 
 #: dlls/shdoclc/shdoclc.rc:202
 msgid "Debug Break"
-msgstr "Debug Onderbreking"
+msgstr "Foutopsporing Onderbreking"
 
 #: dlls/shdoclc/shdoclc.rc:203
 msgid "Debug View"
-msgstr "Debug Beeld"
+msgstr "Foutopsporingsbeeld"
 
 #: dlls/shdoclc/shdoclc.rc:204
 msgid "Dump Tree"
-msgstr "Log Gehele Boom"
+msgstr "Boom Dumpen"
 
 #: dlls/shdoclc/shdoclc.rc:205
 msgid "Dump Lines"
-msgstr "Log Regels"
+msgstr "Regels Dumpen"
 
 #: dlls/shdoclc/shdoclc.rc:206
 msgid "Dump DisplayTree"
-msgstr "Log Beeld Boom"
+msgstr "BeeldBoom Dumpen"
 
 #: dlls/shdoclc/shdoclc.rc:207
 msgid "Dump FormatCaches"
-msgstr "Log Formaat Caches"
+msgstr "FormaatCaches Dumpen"
 
 #: dlls/shdoclc/shdoclc.rc:208
 msgid "Dump LayoutRects"
-msgstr "Log Layout Rects"
+msgstr "LayoutRects Dumpen"
 
 #: dlls/shdoclc/shdoclc.rc:209
 msgid "Memory Monitor"
-msgstr "Geheugen Monitor"
+msgstr "Geheugenmonitor"
 
 #: dlls/shdoclc/shdoclc.rc:210
 msgid "Performance Meters"
-msgstr "Performance Meters"
+msgstr "Prestatiemeters"
 
 #: dlls/shdoclc/shdoclc.rc:211
 msgid "Save HTML"
-msgstr "Sla HTML op"
+msgstr "HTML Opslaan"
 
 #: dlls/shdoclc/shdoclc.rc:213
 msgid "&Browse View"
@@ -13810,7 +13810,7 @@ msgstr ""
 
 #: programs/net/net.rc:46
 msgid "%1      %2      %3      Open resources: %4!u!\n"
-msgstr "%1      %2      %3      Open resources: %4!u!\n"
+msgstr "%1      %2      %3      Open bronnen: %4!u!\n"
 
 #: programs/net/net.rc:48
 msgid "Paused"
@@ -15263,15 +15263,14 @@ msgstr "reg: Foutieve opdrachtregel-parameters\n"
 
 #: programs/reg/reg.rc:204
 msgid "reg: The source and destination keys cannot be the same\n"
-msgstr ""
+msgstr "reg: De bron- en de doelsleutel kunnen niet hetzelfde zijn\n"
 
 #: programs/reg/reg.rc:205
-#, fuzzy
-#| msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgid ""
 "The value '%1\\%2' already exists in the destination key. Do you want to "
 "overwrite it?"
-msgstr "Het bestand '%1' bestaat al. Wilt u het overschrijven?"
+msgstr ""
+"De waarde '%1\\%2' komt al voor in de doelsleutel. Wilt u het overschrijven?"
 
 #: programs/reg/reg.rc:133
 msgid "Are you sure you want to delete the registry value '%1'?"
