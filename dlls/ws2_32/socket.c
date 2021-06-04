@@ -3188,6 +3188,10 @@ static DWORD server_ioctl_sock( SOCKET s, DWORD code, LPVOID in_buff, DWORD in_s
         if (!((ULONG_PTR)overlapped->hEvent & 1)) cvalue = overlapped;
         event = overlapped->hEvent;
     }
+    else
+    {
+        if (!(event = get_sync_event())) return GetLastError();
+    }
 
     if (completion)
     {
@@ -3198,6 +3202,12 @@ static DWORD server_ioctl_sock( SOCKET s, DWORD code, LPVOID in_buff, DWORD in_s
 
     status = NtDeviceIoControlFile( handle, event, apc, cvalue, piosb, code,
                                     in_buff, in_size, out_buff, out_size );
+    if (status == STATUS_PENDING && !overlapped)
+    {
+        if (WaitForSingleObject( event, INFINITE ) == WAIT_FAILED)
+            return -1;
+        status = piosb->u.Status;
+    }
     if (status == STATUS_NOT_SUPPORTED)
     {
         FIXME("Unsupported ioctl %x (device=%x access=%x func=%x method=%x)\n",
