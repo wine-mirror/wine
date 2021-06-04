@@ -137,18 +137,6 @@ static float CDECL unix_log10f( float x )
 }
 
 /*********************************************************************
- *      log1pf
- */
-static float CDECL unix_log1pf(float x)
-{
-#ifdef HAVE_LOG1PF
-    return log1pf(x);
-#else
-    return log(1 + x);
-#endif
-}
-
-/*********************************************************************
  *      log2
  */
 static double CDECL unix_log2(double x)
@@ -225,7 +213,6 @@ static const struct unix_funcs funcs =
     unix_lgammaf,
     unix_log10,
     unix_log10f,
-    unix_log1pf,
     unix_log2,
     unix_log2f,
     unix_pow,
