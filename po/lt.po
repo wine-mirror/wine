@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-06-01 00:06+0300\n"
+"PO-Revision-Date: 2021-06-04 08:43+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -15190,12 +15190,11 @@ msgid "reg: The source and destination keys cannot be the same\n"
 msgstr "reg: Šaltinio ir paskirties raktai negali būti tie patys\n"
 
 #: programs/reg/reg.rc:205
-#, fuzzy
-#| msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgid ""
 "The value '%1\\%2' already exists in the destination key. Do you want to "
 "overwrite it?"
-msgstr "Failas „%1“ jau egzistuoja. Ar norite jį perrašyti?"
+msgstr ""
+"Reikšmė „%1\\%2“ jau egzistuoja paskirties rakte. Ar norite ją perrašyti?"
 
 #: programs/reg/reg.rc:133
 msgid "Are you sure you want to delete the registry value '%1'?"
