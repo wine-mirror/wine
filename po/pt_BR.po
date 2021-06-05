@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-06-03 11:15-0300\n"
+"PO-Revision-Date: 2021-06-05 11:28-0300\n"
 "Last-Translator: Roberto Augusto Pungartnik <rpungartnik@gmail.com>\n"
 "Language-Team: Portuguese (Brazil)\n"
 "Language: pt_BR\n"
@@ -15251,12 +15251,10 @@ msgid "reg: The source and destination keys cannot be the same\n"
 msgstr "reg: Chaves de origem e destino não podem ser as mesmas\n"
 
 #: programs/reg/reg.rc:205
-#, fuzzy
-#| msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgid ""
 "The value '%1\\%2' already exists in the destination key. Do you want to "
 "overwrite it?"
-msgstr "O arquivo '%1' já existe. Deseja sobrescrevê-lo?"
+msgstr "O valor '%1\\%2' já existe na chave de destino. Deseja sobrescrevê-lo?"
 
 #: programs/reg/reg.rc:133
 msgid "Are you sure you want to delete the registry value '%1'?"
