@@ -593,11 +593,7 @@ static void DSOUND_MixToPrimary(const DirectSoundDevice *device, float *mix_buff
 		if (dsb->buflen && dsb->state) {
 			TRACE("Checking %p, frames=%d\n", dsb, frames);
 			AcquireSRWLockShared(&dsb->lock);
-			/* if buffer is stopping it is stopped now */
-			if (dsb->state == STATE_STOPPING) {
-				dsb->state = STATE_STOPPED;
-				DSOUND_CheckEvent(dsb, 0, 0);
-			} else if (dsb->state != STATE_STOPPED) {
+			if (dsb->state != STATE_STOPPED) {
 
 				/* if the buffer was starting, it must be playing now */
 				if (dsb->state == STATE_STARTING)
