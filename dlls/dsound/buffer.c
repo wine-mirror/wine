@@ -296,8 +296,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Play(IDirectSoundBuffer8 *iface, DW
 	if (This->state == STATE_STOPPED) {
 		This->leadin = TRUE;
 		This->state = STATE_STARTING;
-	} else if (This->state == STATE_STOPPING)
-		This->state = STATE_PLAYING;
+	}
 
 	for (i = 0; i < This->num_filters; i++) {
 		IMediaObject_Discontinuity(This->filters[i].obj, 0);
@@ -317,9 +316,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Stop(IDirectSoundBuffer8 *iface)
 
 	AcquireSRWLockExclusive(&This->lock);
 
-	if (This->state == STATE_PLAYING)
-		This->state = STATE_STOPPING;
-	else if (This->state == STATE_STARTING)
+	if (This->state == STATE_PLAYING || This->state == STATE_STARTING)
 	{
 		This->state = STATE_STOPPED;
 		DSOUND_CheckEvent(This, 0, 0);
