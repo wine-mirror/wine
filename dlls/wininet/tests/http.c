@@ -6734,7 +6734,7 @@ static void test_secure_connection(void)
     test_cert_struct(req, &test_winehq_org_cert);
 
     /* Querying the same option through InternetQueryOptionW still results in
-     * ASCII strings being returned.
+     * ANSI strings being returned.
      */
     size = 0;
     ret = InternetQueryOptionW(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,
@@ -6742,7 +6742,7 @@ static void test_secure_connection(void)
     ok(ret || GetLastError() == ERROR_INSUFFICIENT_BUFFER, "InternetQueryOption failed: %d\n", GetLastError());
     ok(size == sizeof(INTERNET_CERTIFICATE_INFOW), "size = %d\n", size);
     certificate_structW = HeapAlloc(GetProcessHeap(), 0, size);
-    ret = InternetQueryOptionA(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,
+    ret = InternetQueryOptionW(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT,
                               certificate_structW, &size);
     certificate_structA = (INTERNET_CERTIFICATE_INFOA *)certificate_structW;
     ok(ret, "InternetQueryOption failed: %d\n", GetLastError());
