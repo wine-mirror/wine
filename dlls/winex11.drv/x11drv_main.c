@@ -108,6 +108,15 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION x11drv_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+static CRITICAL_SECTION x11drv_error_section;
+static CRITICAL_SECTION_DEBUG x11drv_error_section_debug =
+{
+    0, 0, &x11drv_error_section,
+    { &x11drv_error_section_debug.ProcessLocksList, &x11drv_error_section_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": x11drv_error_section") }
+};
+static CRITICAL_SECTION x11drv_error_section = { &x11drv_error_section_debug, -1, 0, 0, 0, 0 };
+
 struct d3dkmt_vidpn_source
 {
     D3DKMT_VIDPNSOURCEOWNER_TYPE type;      /* VidPN source owner type */
@@ -256,6 +265,7 @@ static inline BOOL ignore_error( Display *display, XErrorEvent *event )
  */
 void X11DRV_expect_error( Display *display, x11drv_error_callback callback, void *arg )
 {
+    EnterCriticalSection( &x11drv_error_section );
     err_callback         = callback;
     err_callback_display = display;
     err_callback_arg     = arg;
@@ -272,8 +282,10 @@ void X11DRV_expect_error( Display *display, x11drv_error_callback callback, void
  */
 int X11DRV_check_error(void)
 {
+    int res = err_callback_result;
     err_callback = NULL;
-    return err_callback_result;
+    LeaveCriticalSection( &x11drv_error_section );
+    return res;
 }
 
 
