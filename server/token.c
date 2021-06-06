@@ -1113,7 +1113,7 @@ static unsigned int token_access_check( struct token *token,
      * determined here. */
     if (token_sid_present( token, owner, FALSE ))
     {
-        current_access |= (READ_CONTROL | WRITE_DAC);
+        current_access |= (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE);
         if (desired_access == current_access)
         {
             *granted_access = current_access;

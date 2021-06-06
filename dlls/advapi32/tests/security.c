@@ -1076,10 +1076,25 @@ todo_wine {
     SetLastError(0xdeadbeef);
     rc = AccessCheck(sd, token, DELETE, &mapping, &priv_set, &priv_set_len, &granted, &status);
     ok(rc, "AccessCheck error %d\n", GetLastError());
-todo_wine {
     ok(status == 1, "expected 1, got %d\n", status);
     ok(granted == DELETE, "expected DELETE, got %#x\n", granted);
-}
+
+    granted = 0xdeadbeef;
+    status = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    rc = AccessCheck(sd, token, WRITE_OWNER, &mapping, &priv_set, &priv_set_len, &granted, &status);
+    ok(rc, "AccessCheck error %d\n", GetLastError());
+    ok(status == 1, "expected 1, got %d\n", status);
+    ok(granted == WRITE_OWNER, "expected WRITE_OWNER, got %#x\n", granted);
+
+    granted = 0xdeadbeef;
+    status = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    rc = AccessCheck(sd, token, SYNCHRONIZE, &mapping, &priv_set, &priv_set_len, &granted, &status);
+    ok(rc, "AccessCheck error %d\n", GetLastError());
+    ok(status == 1, "expected 1, got %d\n", status);
+    ok(granted == SYNCHRONIZE, "expected SYNCHRONIZE, got %#x\n", granted);
+
     granted = 0xdeadbeef;
     status = 0xdeadbeef;
     SetLastError(0xdeadbeef);
