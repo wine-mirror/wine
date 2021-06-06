@@ -4102,7 +4102,7 @@ START_TEST(url)
             trace("asynchronous https test...\n");
             test_BindToStorage(HTTPS_TEST, 0, TYMED_ISTREAM);
         }else {
-            win_skip("Skipping https testt\n");
+            win_skip("Skipping https tests\n");
         }
 
         bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA;
