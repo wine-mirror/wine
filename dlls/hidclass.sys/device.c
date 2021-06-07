@@ -345,6 +345,12 @@ static NTSTATUS HID_get_feature(BASE_DEVICE_EXTENSION *ext, IRP *irp)
     out_buffer = MmGetSystemAddressForMdlSafe(irp->MdlAddress, NormalPagePriority);
     TRACE_(hid_report)("Device %p Buffer length %i Buffer %p\n", ext, irpsp->Parameters.DeviceIoControl.OutputBufferLength, out_buffer);
 
+    if (!irpsp->Parameters.DeviceIoControl.OutputBufferLength || !out_buffer)
+    {
+        irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
+        return rc;
+    }
+
     len = sizeof(*packet) + irpsp->Parameters.DeviceIoControl.OutputBufferLength;
     packet = malloc(len);
     packet->reportBufferLen = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
@@ -494,6 +500,12 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
             UINT packet_size = sizeof(*packet) + irpsp->Parameters.DeviceIoControl.OutputBufferLength;
             BYTE *buffer = MmGetSystemAddressForMdlSafe(irp->MdlAddress, NormalPagePriority);
             ULONG out_length;
+
+            if (!irpsp->Parameters.DeviceIoControl.OutputBufferLength || !buffer)
+            {
+                irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
+                break;
+            }
 
             packet = malloc(packet_size);
 
