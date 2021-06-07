@@ -390,6 +390,11 @@ static HRESULT WINAPI device_manager_processor_service_GetVideoProcessorDeviceGu
 {
     FIXME("%p, %p, %p, %p semi-stub.\n", iface, video_desc, count, guids);
 
+    *count = 0;
+
+    if (!dxva_is_supported_stream_format(video_desc))
+        return E_FAIL;
+
     if (!(*guids = CoTaskMemAlloc(sizeof(**guids))))
         return E_OUTOFMEMORY;
 

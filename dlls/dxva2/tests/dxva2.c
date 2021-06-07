@@ -380,7 +380,6 @@ static void test_device_manager(void)
         ok(hr == E_FAIL, "Unexpected hr %#x, format %d.\n", hr, rt_unsupported_formats[i]);
 
         hr = IDirectXVideoProcessorService_GetVideoProcessorDeviceGuids(proc_service, &video_desc, &count, &guids);
-    todo_wine
         ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
     }
 
