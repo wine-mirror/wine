@@ -122,8 +122,6 @@ struct caps {
             USHORT Reserved3;
         } NotRange;
     } DUMMYUNIONNAME;
-
-    int Delim;
 };
 
 struct feature {
@@ -200,7 +198,7 @@ static void debugstr_caps(const char* type, struct caps *caps)
         return;
     TRACE("(%s Caps: UsagePage 0x%x; LogicalMin %i; LogicalMax %i; PhysicalMin %i; "
             "PhysicalMax %i; UnitsExp %i; Units %i; BitSize %i; ReportID %i; ReportCount %i; "
-            "Usage %s; StringIndex %s; DesignatorIndex %s; Delim %i;)\n",
+            "Usage %s; StringIndex %s; DesignatorIndex %s;)\n",
     type,
     caps->UsagePage,
     caps->LogicalMin,
@@ -214,8 +212,7 @@ static void debugstr_caps(const char* type, struct caps *caps)
     caps->ReportCount,
     debugstr_usages(caps),
     debugstr_stringindex(caps),
-    debugstr_designatorindex(caps),
-    caps->Delim);
+    debugstr_designatorindex(caps));
 }
 
 static void debug_feature(struct feature *feature)
@@ -681,8 +678,8 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
                         caps->IsStringRange = TRUE;
                         break;
                     case TAG_LOCAL_DELIMITER:
-                        caps->Delim = getValue(bSize, itemVal, FALSE);
-                        break;
+                        FIXME("delimiter %d not implemented!\n", itemVal);
+                        return -1;
                     default:
                         ERR("Unknown (bTag: 0x%x, bType: 0x%x)\n", bTag, bType);
                         return -1;
