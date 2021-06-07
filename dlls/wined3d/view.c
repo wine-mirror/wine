@@ -1197,7 +1197,7 @@ static void shader_resource_view_gl_bind_and_dirtify(struct wined3d_shader_resou
 void wined3d_shader_resource_view_gl_generate_mipmap(struct wined3d_shader_resource_view_gl *view_gl,
         struct wined3d_context_gl *context_gl)
 {
-    unsigned int i, j, layer_count, level_count, base_level, base_layer;
+    unsigned int i, j, layer_count, level_count, base_level, base_layer, sub_resource_idx;
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     struct wined3d_texture_gl *texture_gl;
     struct gl_texture *gl_tex;
@@ -1216,8 +1216,8 @@ void wined3d_shader_resource_view_gl_generate_mipmap(struct wined3d_shader_resou
     location = srgb ? WINED3D_LOCATION_TEXTURE_SRGB : WINED3D_LOCATION_TEXTURE_RGB;
     for (i = 0; i < layer_count; ++i)
     {
-        if (!wined3d_texture_load_location(&texture_gl->t,
-                (base_layer + i) * level_count + base_level, &context_gl->c, location))
+        sub_resource_idx = (base_layer + i) * texture_gl->t.level_count + base_level;
+        if (!wined3d_texture_load_location(&texture_gl->t, sub_resource_idx, &context_gl->c, location))
             ERR("Failed to load source layer %u.\n", base_layer + i);
     }
 
@@ -1249,10 +1249,9 @@ void wined3d_shader_resource_view_gl_generate_mipmap(struct wined3d_shader_resou
     {
         for (j = 1; j < level_count; ++j)
         {
-            wined3d_texture_validate_location(&texture_gl->t,
-                    (base_layer + i) * level_count + base_level + j, location);
-            wined3d_texture_invalidate_location(&texture_gl->t,
-                    (base_layer + i) * level_count + base_level + j, ~location);
+            sub_resource_idx = (base_layer + i) * texture_gl->t.level_count + base_level + j;
+            wined3d_texture_validate_location(&texture_gl->t, sub_resource_idx, location);
+            wined3d_texture_invalidate_location(&texture_gl->t, sub_resource_idx, ~location);
         }
     }
 
