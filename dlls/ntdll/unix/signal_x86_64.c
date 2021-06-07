@@ -1618,7 +1618,19 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     BOOL self = (handle == GetCurrentThread());
     struct syscall_frame *frame;
     struct syscall_xsave *xsave;
-    XSTATE *xs;
+
+    if ((flags & CONTEXT_XSTATE) && (cpu_info.ProcessorFeatureBits & CPU_FEATURE_AVX))
+    {
+        CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
+        XSTATE *xs = (XSTATE *)((char *)context_ex + context_ex->XState.Offset);
+
+        if (context_ex->XState.Length < offsetof(XSTATE, YmmContext) ||
+            context_ex->XState.Length > sizeof(XSTATE))
+            return STATUS_INVALID_PARAMETER;
+        if ((xs->Mask & XSTATE_MASK_GSSE) && (context_ex->XState.Length < sizeof(XSTATE)))
+            return STATUS_BUFFER_OVERFLOW;
+    }
+    else flags &= ~CONTEXT_XSTATE;
 
     /* debug registers require a server call */
     if (self && (flags & CONTEXT_DEBUG_REGISTERS))
@@ -1684,24 +1696,17 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         xsave->xsave = context->u.FltSave;
         xsave->xstate.Mask |= XSTATE_MASK_LEGACY;
     }
-    if ((cpu_info.ProcessorFeatureBits & CPU_FEATURE_AVX) && (xs = xstate_from_context( context )))
+    if (flags & CONTEXT_XSTATE)
     {
         CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
-
-        if (context_ex->XState.Length < offsetof(XSTATE, YmmContext)
-            || context_ex->XState.Length > sizeof(XSTATE))
-            return STATUS_INVALID_PARAMETER;
+        XSTATE *xs = (XSTATE *)((char *)context_ex + context_ex->XState.Offset);
 
         if (xs->Mask & XSTATE_MASK_GSSE)
         {
-            if (context_ex->XState.Length < sizeof(XSTATE))
-                return STATUS_BUFFER_OVERFLOW;
-
             xsave->xstate.Mask |= XSTATE_MASK_GSSE;
             memcpy( &xsave->xstate.YmmContext, &xs->YmmContext, sizeof(xs->YmmContext) );
         }
-        else
-            xsave->xstate.Mask &= ~XSTATE_MASK_GSSE;
+        else xsave->xstate.Mask &= ~XSTATE_MASK_GSSE;
     }
     return STATUS_SUCCESS;
 }
