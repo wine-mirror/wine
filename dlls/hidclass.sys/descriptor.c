@@ -464,7 +464,7 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
 {
     int usages_top = 0;
     USAGE usages[256];
-    unsigned int i;
+    int i;
 
     for (i = index; i < length;)
     {
@@ -479,6 +479,7 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
         {
             /* Long data items: Should be unused */
             ERR("Long Data Item, should be unused\n");
+            return -1;
         }
         else
         {
@@ -506,7 +507,7 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
                     case TAG_MAIN_FEATURE:
                         for (j = 0; j < caps->ReportCount; j++)
                         {
-                            feature = calloc(1, sizeof(*feature));
+                            if (!(feature = calloc(1, sizeof(*feature)))) return -1;
                             list_add_tail(&collection->features, &feature->entry);
                             if (bTag == TAG_MAIN_INPUT)
                                 feature->type = HidP_Input;
@@ -531,7 +532,8 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
                         break;
                     case TAG_MAIN_COLLECTION:
                     {
-                        struct collection *subcollection = calloc(1, sizeof(struct collection));
+                        struct collection *subcollection;
+                        if (!(subcollection = calloc(1, sizeof(struct collection)))) return -1;
                         list_add_tail(&collection->collections, &subcollection->entry);
                         subcollection->parent = collection;
                         /* Only set our collection once...
@@ -552,13 +554,14 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
 
                         parse_collection(bSize, itemVal, subcollection);
 
-                        i = parse_descriptor(descriptor, i+1, length, feature_index, collection_index, subcollection, caps, stack);
+                        if ((i = parse_descriptor(descriptor, i+1, length, feature_index, collection_index, subcollection, caps, stack)) < 0) return i;
                         continue;
                     }
                     case TAG_MAIN_END_COLLECTION:
                         return i;
                     default:
                         ERR("Unknown (bTag: 0x%x, bType: 0x%x)\n", bTag, bType);
+                        return -1;
                 }
             }
             else if (bType == TAG_TYPE_GLOBAL)
@@ -597,7 +600,8 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
                         break;
                     case TAG_GLOBAL_PUSH:
                     {
-                        struct caps_stack *saved = malloc(sizeof(*saved));
+                        struct caps_stack *saved;
+                        if (!(saved = malloc(sizeof(*saved)))) return -1;
                         saved->caps = *caps;
                         TRACE("Push\n");
                         list_add_tail(stack, &saved->entry);
@@ -617,11 +621,15 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
                             free(saved);
                         }
                         else
+                        {
                             ERR("Pop but no stack!\n");
+                            return -1;
+                        }
                         break;
                     }
                     default:
                         ERR("Unknown (bTag: 0x%x, bType: 0x%x)\n", bTag, bType);
+                        return -1;
                 }
             }
             else if (bType == TAG_TYPE_LOCAL)
@@ -630,7 +638,10 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
                 {
                     case TAG_LOCAL_USAGE:
                         if (usages_top == sizeof(usages))
+                        {
                             ERR("More than 256 individual usages defined\n");
+                            return -1;
+                        }
                         else
                         {
                             usages[usages_top++] = getValue(bSize, itemVal, FALSE);
@@ -674,10 +685,14 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
                         break;
                     default:
                         ERR("Unknown (bTag: 0x%x, bType: 0x%x)\n", bTag, bType);
+                        return -1;
                 }
             }
             else
+            {
                 ERR("Unknown (bTag: 0x%x, bType: 0x%x)\n", bTag, bType);
+                return -1;
+            }
 
             i += bSize;
         }
@@ -927,7 +942,7 @@ static WINE_HIDP_PREPARSED_DATA* build_PreparseData(struct collection *base_coll
     nodes_offset = size;
     size += node_count * sizeof(WINE_HID_LINK_COLLECTION_NODE);
 
-    data = calloc(1, size);
+    if (!(data = calloc(1, size))) return NULL;
     data->magic = HID_MAGIC;
     data->dwSize = size;
     data->caps.Usage = base_collection->caps.NotRange.Usage;
@@ -982,14 +997,18 @@ WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
 
     list_init(&caps_stack);
 
-    base = calloc(1, sizeof(*base));
+    if (!(base = calloc(1, sizeof(*base)))) return NULL;
     base->index = 1;
     list_init(&base->features);
     list_init(&base->collections);
     memset(&caps, 0, sizeof(caps));
 
     cidx = 0;
-    parse_descriptor(descriptor, 0, length, &feature_count, &cidx, base, &caps, &caps_stack);
+    if (parse_descriptor(descriptor, 0, length, &feature_count, &cidx, base, &caps, &caps_stack) < 0)
+    {
+        free_collection(base);
+        return NULL;
+    }
 
     debug_collection(base);
 
@@ -1004,8 +1023,8 @@ WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
         }
     }
 
-    data = build_PreparseData(base, cidx);
-    debug_print_preparsed(data);
+    if ((data = build_PreparseData(base, cidx)))
+        debug_print_preparsed(data);
     free_collection(base);
 
     return data;
