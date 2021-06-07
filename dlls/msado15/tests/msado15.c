@@ -43,24 +43,6 @@ static BOOL is_eof( _Recordset *recordset )
     return eof == VARIANT_TRUE;
 }
 
-static LONG get_refs_field( Field *field )
-{
-    Field_AddRef( field );
-    return Field_Release( field );
-}
-
-static LONG get_refs_fields( Fields *fields )
-{
-    Fields_AddRef( fields );
-    return Fields_Release( fields );
-}
-
-static LONG get_refs_recordset( _Recordset *recordset )
-{
-    _Recordset_AddRef( recordset );
-    return _Recordset_Release( recordset );
-}
-
 static void test_Recordset(void)
 {
     _Recordset *recordset;
@@ -70,7 +52,7 @@ static void test_Recordset(void)
     Field *field;
     Properties *props;
     Property *prop;
-    LONG refs, count, state;
+    LONG count, state;
     VARIANT missing, val, index;
     CursorLocationEnum location;
     CursorTypeEnum cursor;
@@ -89,39 +71,15 @@ static void test_Recordset(void)
     errorinfo = NULL;
     hr = _Recordset_QueryInterface( recordset, &IID_ISupportErrorInfo, (void **)&errorinfo );
     ok( hr == S_OK, "got %08x\n", hr );
-    refs = get_refs_recordset( recordset );
-    ok( refs == 2, "got %d\n", refs );
     if (errorinfo) ISupportErrorInfo_Release( errorinfo );
-    refs = get_refs_recordset( recordset );
-    ok( refs == 1, "got %d\n", refs );
 
-    /* handing out fields object increases recordset refcount */
-    refs = get_refs_recordset( recordset );
-    ok( refs == 1, "got %d\n", refs );
     hr = _Recordset_get_Fields( recordset, &fields );
     ok( hr == S_OK, "got %08x\n", hr );
-    refs = get_refs_recordset( recordset );
-    ok( refs == 2, "got %d\n", refs );
-    refs = get_refs_fields( fields );
-    ok( refs == 1, "got %d\n", refs );
 
-    /* releasing fields object decreases recordset refcount, but fields refcount doesn't drop to zero */
-    Fields_Release( fields );
-    refs = get_refs_recordset( recordset );
-    ok( refs == 1, "got %d\n", refs );
-    refs = get_refs_fields( fields );
-    ok( refs == 1, "got %d\n", refs );
-
-    /* calling get_Fields again returns the same object with the same refcount and increases recordset refcount  */
+    /* calling get_Fields again returns the same object */
     hr = _Recordset_get_Fields( recordset, &fields2 );
     ok( hr == S_OK, "got %08x\n", hr );
-    refs = get_refs_recordset( recordset );
-    ok( refs == 2, "got %d\n", refs );
-    refs = get_refs_fields( fields2 );
-    ok( refs == 1, "got %d\n", refs );
     ok( fields2 == fields, "expected same object\n" );
-    refs = Fields_Release( fields2 );
-    ok( refs == 1, "got %d\n", refs );
 
     count = -1;
     hr = Fields_get_Count( fields2, &count );
@@ -131,12 +89,7 @@ static void test_Recordset(void)
     hr = _Recordset_Close( recordset );
     ok( hr == MAKE_ADO_HRESULT( adErrObjectClosed ), "got %08x\n", hr );
 
-    refs = _Recordset_Release( recordset );
-    ok( !refs, "got %d\n", refs );
-
-    /* fields object still has a reference */
-    refs = Fields_Release( fields2 );
-    ok( refs == 1, "got %d\n", refs );
+    Fields_Release( fields2 );
 
     hr = CoCreateInstance( &CLSID_Recordset, NULL, CLSCTX_INPROC_SERVER, &IID__Recordset, (void **)&recordset );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -678,7 +631,7 @@ static void test_Fields(void)
     Field *field, *field2;
     VARIANT val, index;
     BSTR name;
-    LONG refs, count, size;
+    LONG count, size;
     DataTypeEnum type;
     FieldAttributeEnum attrs;
     HRESULT hr;
@@ -693,11 +646,7 @@ static void test_Fields(void)
     errorinfo = NULL;
     hr = Fields_QueryInterface( fields, &IID_ISupportErrorInfo, (void **)&errorinfo );
     ok( hr == S_OK, "got %08x\n", hr );
-    refs = get_refs_fields( fields );
-    ok( refs == 2, "got %d\n", refs );
     if (errorinfo) ISupportErrorInfo_Release( errorinfo );
-    refs = get_refs_fields( fields );
-    ok( refs == 1, "got %d\n", refs );
 
     count = -1;
     hr = Fields_get_Count( fields, &count );
@@ -727,29 +676,12 @@ static void test_Fields(void)
     name = SysAllocString( L"field" );
     V_VT( &index ) = VT_BSTR;
     V_BSTR( &index ) = name;
-    refs = get_refs_recordset( recordset );
-    ok( refs == 2, "got %d\n", refs );
-    refs = get_refs_fields( fields );
-    ok( refs == 1, "got %d\n", refs );
     hr = Fields_get_Item( fields, index, &field );
-    ok( hr == S_OK, "got %08x\n", hr );
-    refs = get_refs_field( field );
-    ok( refs == 1, "got %d\n", refs );
-    refs = get_refs_recordset( recordset );
-    ok( refs == 2, "got %d\n", refs );
-    refs = get_refs_fields( fields );
-    ok( refs == 1, "got %d\n", refs );
 
     /* calling get_Item again returns the same object and adds reference */
     hr = Fields_get_Item( fields, index, &field2 );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( field2 == field, "expected same object\n" );
-    refs = get_refs_field( field2 );
-    ok( refs == 2, "got %d\n", refs );
-    refs = get_refs_recordset( recordset );
-    ok( refs == 2, "got %d\n", refs );
-    refs = get_refs_fields( fields );
-    ok( refs == 1, "got %d\n", refs );
     Field_Release( field2 );
     SysFreeString( name );
 
@@ -757,11 +689,7 @@ static void test_Fields(void)
     errorinfo = NULL;
     hr = Field_QueryInterface( field, &IID_ISupportErrorInfo, (void **)&errorinfo );
     ok( hr == S_OK, "got %08x\n", hr );
-    refs = get_refs_field( field );
-    ok( refs == 2, "got %d\n", refs );
     if (errorinfo) ISupportErrorInfo_Release( errorinfo );
-    refs = get_refs_field( field );
-    ok( refs == 1, "got %d\n", refs );
 
     /* verify values set with _Append */
     hr = Field_get_Name( field, &name );
