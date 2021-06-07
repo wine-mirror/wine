@@ -215,7 +215,7 @@ static void process_data(HIDP_CAPS Caps, PHIDP_PREPARSED_DATA ppd, CHAR *data, D
             status = HidP_GetUsages(HidP_Input, i, 0, button_pages, &usage_length, ppd, data, data_length);
             ok (status == HIDP_STATUS_SUCCESS || usage_length == 0,
                 "HidP_GetUsages failed (%x) but usage length still %i\n", status, usage_length);
-            if (usage_length)
+            if (status == HIDP_STATUS_SUCCESS && usage_length)
             {
                 CHAR report[50];
                 int count;
