@@ -594,6 +594,7 @@ static HRESULT Field_create( const WCHAR *name, LONG index, struct recordset *re
     field->Field_iface.lpVtbl = &field_vtbl;
     field->ISupportErrorInfo_iface.lpVtbl = &field_supporterrorinfo_vtbl;
     field->Properties_iface.lpVtbl = &field_properties_vtbl;
+    field->refs = 1;
     if (!(field->name = strdupW( name )))
     {
         heap_free( field );
@@ -998,6 +999,7 @@ static ULONG WINAPI recordset_AddRef( _Recordset *iface )
 static void close_recordset( struct recordset *recordset )
 {
     ULONG row, col, col_count;
+    ULONG i;
 
     if ( recordset->row_set ) IRowset_Release( recordset->row_set );
     recordset->row_set = NULL;
@@ -1005,6 +1007,13 @@ static void close_recordset( struct recordset *recordset )
     if (!recordset->fields) return;
     col_count = get_column_count( recordset );
 
+    for (i = 0; i < col_count; i++)
+    {
+        struct field *field = impl_from_Field( recordset->fields->field[i] );
+        field->recordset = NULL;
+        Field_Release(&field->Field_iface);
+    }
+    recordset->fields->count = 0;
     Fields_Release( &recordset->fields->Fields_iface );
     recordset->fields = NULL;
 

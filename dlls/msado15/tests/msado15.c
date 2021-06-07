@@ -273,7 +273,7 @@ static void test_Recordset(void)
 
     count = -1;
     hr = Fields_get_Count( fields, &count );
-    todo_wine ok( !count, "got %d\n", count );
+    ok( !count, "got %d\n", count );
 
     hr = Field_get_Name(field, &name);
     todo_wine ok( hr == MAKE_ADO_HRESULT( adErrObjectNotSet ), "got %08x\n", hr );
