@@ -617,8 +617,6 @@ static void build_elements(WINE_HID_REPORT *wine_report, WINE_HID_ELEMENT *elems
         *data_index = *data_index + 1;
     }
 
-    if (feature->caps.BitSize == 1) wine_element->ElementType = ButtonElement;
-    else wine_element->ElementType = ValueElement;
     wine_report->elementCount++;
 }
 

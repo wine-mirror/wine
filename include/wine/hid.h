@@ -31,15 +31,8 @@
 
 #define HID_MAGIC 0x8491759
 
-typedef enum __WINE_ELEMENT_TYPE {
-    UnknownElement = 0,
-    ButtonElement,
-    ValueElement,
-} WINE_ELEMENT_TYPE;
-
 typedef struct __WINE_ELEMENT
 {
-    WINE_ELEMENT_TYPE ElementType;
     UINT  valueStartBit;
     UINT  bitCount;
     HIDP_VALUE_CAPS caps;
