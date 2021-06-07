@@ -63,9 +63,7 @@ struct hid_platform_private {
     WCHAR *device_path;
     BOOL enabled;
 
-    DWORD report_length;
-    BYTE current_report;
-    CHAR *reports[2];
+    char *input_report_buf[2];
 
     struct axis_info lx, ly, ltrigger, rx, ry, rtrigger;
 };
@@ -185,10 +183,8 @@ static BOOL init_controller(xinput_controller *controller, PHIDP_PREPARSED_DATA 
 
     private->ppd = ppd;
     private->device = device;
-    private->report_length = caps->InputReportByteLength + 1;
-    private->current_report = 0;
-    if (!(private->reports[0] = calloc(1, private->report_length))) goto failed;
-    if (!(private->reports[1] = calloc(1, private->report_length))) goto failed;
+    if (!(private->input_report_buf[0] = calloc(1, private->caps.InputReportByteLength))) goto failed;
+    if (!(private->input_report_buf[1] = calloc(1, private->caps.InputReportByteLength))) goto failed;
     size = (lstrlenW(device_path) + 1) * sizeof(WCHAR);
     if (!(private->device_path = malloc(size))) goto failed;
     memcpy(private->device_path, device_path, size);
@@ -202,8 +198,8 @@ static BOOL init_controller(xinput_controller *controller, PHIDP_PREPARSED_DATA 
 
 failed:
     free(private->device_path);
-    free(private->reports[0]);
-    free(private->reports[1]);
+    free(private->input_report_buf[0]);
+    free(private->input_report_buf[1]);
     free(private);
     return FALSE;
 }
@@ -313,8 +309,8 @@ static void remove_gamepad(xinput_controller *device)
         device->platform_private = NULL;
 
         CloseHandle(private->device);
-        free(private->reports[0]);
-        free(private->reports[1]);
+        free(private->input_report_buf[0]);
+        free(private->input_report_buf[1]);
         free(private->device_path);
         HidD_FreePreparsedData(private->ppd);
         free(private);
@@ -344,8 +340,8 @@ void HID_update_state(xinput_controller *device, XINPUT_STATE *state)
 {
     struct hid_platform_private *private = device->platform_private;
     int i;
-    CHAR *report = private->reports[(private->current_report)%2];
-    CHAR *target_report = private->reports[(private->current_report+1)%2];
+    char **report_buf = private->input_report_buf, *tmp;
+    ULONG report_len = private->caps.InputReportByteLength;
     NTSTATUS status;
 
     USAGE buttons[11];
@@ -355,7 +351,7 @@ void HID_update_state(xinput_controller *device, XINPUT_STATE *state)
     if (!private->enabled)
         return;
 
-    if (!HidD_GetInputReport(private->device, target_report, private->report_length))
+    if (!HidD_GetInputReport(private->device, report_buf[0], report_len))
     {
         if (GetLastError() == ERROR_ACCESS_DENIED || GetLastError() == ERROR_INVALID_HANDLE)
         {
@@ -366,13 +362,12 @@ void HID_update_state(xinput_controller *device, XINPUT_STATE *state)
         else ERR("Failed to get input report, HidD_GetInputReport failed with error %u\n", GetLastError());
         return;
     }
-    if (memcmp(report, target_report, private->report_length) != 0)
-    {
-        private->current_report = (private->current_report+1)%2;
 
+    if (memcmp(report_buf[0], report_buf[1], report_len) != 0)
+    {
         device->state.dwPacketNumber++;
         button_length = ARRAY_SIZE(buttons);
-        status = HidP_GetUsages(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, buttons, &button_length, private->ppd, target_report, private->report_length);
+        status = HidP_GetUsages(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, buttons, &button_length, private->ppd, report_buf[0], report_len);
         if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsages HID_USAGE_PAGE_BUTTON returned %#x\n", status);
 
         device->state.Gamepad.wButtons = 0;
@@ -394,7 +389,7 @@ void HID_update_state(xinput_controller *device, XINPUT_STATE *state)
             }
         }
 
-        status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH, &hat_value, private->ppd, target_report, private->report_length);
+        status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH, &hat_value, private->ppd, report_buf[0], report_len);
         if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_HATSWITCH returned %#x\n", status);
         else
         {
@@ -431,31 +426,34 @@ void HID_update_state(xinput_controller *device, XINPUT_STATE *state)
             }
         }
 
-        status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, &value, private->ppd, target_report, private->report_length);
+        status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, &value, private->ppd, report_buf[0], report_len);
         if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetScaledUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_X returned %#x\n", status);
         else device->state.Gamepad.sThumbLX = scale_short(value, &private->lx);
 
-        status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Y, &value, private->ppd, target_report, private->report_length);
+        status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Y, &value, private->ppd, report_buf[0], report_len);
         if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetScaledUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_Y returned %#x\n", status);
         else device->state.Gamepad.sThumbLY = -scale_short(value, &private->ly) - 1;
 
-        status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RX, &value, private->ppd, target_report, private->report_length);
+        status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RX, &value, private->ppd, report_buf[0], report_len);
         if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetScaledUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RX returned %#x\n", status);
         else device->state.Gamepad.sThumbRX = scale_short(value, &private->rx);
 
-        status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY, &value, private->ppd, target_report, private->report_length);
+        status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY, &value, private->ppd, report_buf[0], report_len);
         if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetScaledUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RY returned %#x\n", status);
         else device->state.Gamepad.sThumbRY = -scale_short(value, &private->ry) - 1;
 
-        status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RZ, &value, private->ppd, target_report, private->report_length);
+        status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RZ, &value, private->ppd, report_buf[0], report_len);
         if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetScaledUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_RZ returned %#x\n", status);
         else device->state.Gamepad.bRightTrigger = scale_byte(value, &private->rtrigger);
 
-        status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z, &value, private->ppd, target_report, private->report_length);
+        status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z, &value, private->ppd, report_buf[0], report_len);
         if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetScaledUsageValue HID_USAGE_PAGE_GENERIC / HID_USAGE_GENERIC_Z returned %#x\n", status);
         else device->state.Gamepad.bLeftTrigger = scale_byte(value, &private->ltrigger);
     }
 
+    tmp = report_buf[0];
+    report_buf[0] = report_buf[1];
+    report_buf[1] = tmp;
     memcpy(state, &device->state, sizeof(*state));
 }
 
