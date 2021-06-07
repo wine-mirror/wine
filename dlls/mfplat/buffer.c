@@ -32,6 +32,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
 #define ALIGN_SIZE(size, alignment) (((size) + (alignment)) & ~((alignment)))
 
+typedef void (*p_copy_image_func)(BYTE *dest, LONG dest_stride, const BYTE *src, LONG src_stride, DWORD width, DWORD lines);
+
 struct buffer
 {
     IMFMediaBuffer IMFMediaBuffer_iface;
@@ -53,8 +55,8 @@ struct buffer
         unsigned int width;
         unsigned int height;
         int pitch;
-
         unsigned int locks;
+        p_copy_image_func copy_image;
     } _2d;
     struct
     {
@@ -72,6 +74,35 @@ struct buffer
 
     CRITICAL_SECTION cs;
 };
+
+static void copy_image(const struct buffer *buffer, BYTE *dest, LONG dest_stride, const BYTE *src,
+        LONG src_stride, DWORD width, DWORD lines)
+{
+    MFCopyImage(dest, dest_stride, src, src_stride, width, lines);
+
+    if (buffer->_2d.copy_image)
+    {
+        dest += dest_stride * lines;
+        src += src_stride * lines;
+        buffer->_2d.copy_image(dest, dest_stride, src, src_stride, width, lines);
+    }
+}
+
+static void copy_image_nv12(BYTE *dest, LONG dest_stride, const BYTE *src, LONG src_stride, DWORD width, DWORD lines)
+{
+    MFCopyImage(dest, dest_stride, src, src_stride, width, lines / 2);
+}
+
+static void copy_image_imc1(BYTE *dest, LONG dest_stride, const BYTE *src, LONG src_stride, DWORD width, DWORD lines)
+{
+    MFCopyImage(dest, dest_stride, src, src_stride, width / 2, lines);
+}
+
+static void copy_image_imc2(BYTE *dest, LONG dest_stride, const BYTE *src, LONG src_stride, DWORD width, DWORD lines)
+{
+    MFCopyImage(dest, dest_stride, src, src_stride, width / 2, lines / 2);
+    MFCopyImage(dest + dest_stride / 2, dest_stride, src + src_stride / 2, src_stride, width / 2, lines / 2);
+}
 
 static inline struct buffer *impl_from_IMFMediaBuffer(IMFMediaBuffer *iface)
 {
@@ -307,7 +338,7 @@ static HRESULT WINAPI memory_1d_2d_buffer_Unlock(IMFMediaBuffer *iface)
 
     if (buffer->_2d.linear_buffer && !--buffer->_2d.locks)
     {
-        MFCopyImage(buffer->data, buffer->_2d.pitch, buffer->_2d.linear_buffer, buffer->_2d.width,
+        copy_image(buffer, buffer->data, buffer->_2d.pitch, buffer->_2d.linear_buffer, buffer->_2d.width,
                 buffer->_2d.width, buffer->_2d.height);
 
         free(buffer->_2d.linear_buffer);
@@ -357,7 +388,7 @@ static HRESULT WINAPI d3d9_surface_buffer_Lock(IMFMediaBuffer *iface, BYTE **dat
             hr = IDirect3DSurface9_LockRect(buffer->d3d9_surface.surface, &rect, NULL, 0);
             if (SUCCEEDED(hr))
             {
-                MFCopyImage(buffer->_2d.linear_buffer, buffer->_2d.width, rect.pBits, rect.Pitch,
+                copy_image(buffer, buffer->_2d.linear_buffer, buffer->_2d.width, rect.pBits, rect.Pitch,
                         buffer->_2d.width, buffer->_2d.height);
                 IDirect3DSurface9_UnlockRect(buffer->d3d9_surface.surface);
             }
@@ -396,7 +427,7 @@ static HRESULT WINAPI d3d9_surface_buffer_Unlock(IMFMediaBuffer *iface)
 
         if (SUCCEEDED(hr = IDirect3DSurface9_LockRect(buffer->d3d9_surface.surface, &rect, NULL, 0)))
         {
-            MFCopyImage(rect.pBits, rect.Pitch, buffer->_2d.linear_buffer, buffer->_2d.width,
+            copy_image(buffer, rect.pBits, rect.Pitch, buffer->_2d.linear_buffer, buffer->_2d.width,
                     buffer->_2d.width, buffer->_2d.height);
             IDirect3DSurface9_UnlockRect(buffer->d3d9_surface.surface);
         }
@@ -936,7 +967,7 @@ static HRESULT WINAPI dxgi_surface_buffer_Lock(IMFMediaBuffer *iface, BYTE **dat
             hr = dxgi_surface_buffer_map(buffer);
             if (SUCCEEDED(hr))
             {
-                MFCopyImage(buffer->_2d.linear_buffer, buffer->_2d.width, buffer->dxgi_surface.map_desc.pData,
+                copy_image(buffer, buffer->_2d.linear_buffer, buffer->_2d.width, buffer->dxgi_surface.map_desc.pData,
                         buffer->dxgi_surface.map_desc.RowPitch, buffer->_2d.width, buffer->_2d.height);
             }
         }
@@ -970,7 +1001,7 @@ static HRESULT WINAPI dxgi_surface_buffer_Unlock(IMFMediaBuffer *iface)
         hr = HRESULT_FROM_WIN32(ERROR_WAS_UNLOCKED);
     else if (!--buffer->_2d.locks)
     {
-        MFCopyImage(buffer->dxgi_surface.map_desc.pData, buffer->dxgi_surface.map_desc.RowPitch,
+        copy_image(buffer, buffer->dxgi_surface.map_desc.pData, buffer->dxgi_surface.map_desc.RowPitch,
                 buffer->_2d.linear_buffer, buffer->_2d.width, buffer->_2d.width, buffer->_2d.height);
         dxgi_surface_buffer_unmap(buffer);
 
@@ -1262,6 +1293,17 @@ static HRESULT create_1d_buffer(DWORD max_length, DWORD alignment, IMFMediaBuffe
     return S_OK;
 }
 
+static p_copy_image_func get_2d_buffer_copy_func(DWORD fourcc)
+{
+    if (fourcc == MAKEFOURCC('N','V','1','2'))
+        return copy_image_nv12;
+    if (fourcc == MAKEFOURCC('I','M','C','1') || fourcc == MAKEFOURCC('I','M','C','3'))
+        return copy_image_imc1;
+    if (fourcc == MAKEFOURCC('I','M','C','2') || fourcc == MAKEFOURCC('I','M','C','4'))
+        return copy_image_imc2;
+    return NULL;
+}
+
 static HRESULT create_2d_buffer(DWORD width, DWORD height, DWORD fourcc, BOOL bottom_up, IMFMediaBuffer **buffer)
 {
     unsigned int stride, max_length, plane_size;
@@ -1336,6 +1378,7 @@ static HRESULT create_2d_buffer(DWORD width, DWORD height, DWORD fourcc, BOOL bo
     object->_2d.height = height;
     object->_2d.pitch = bottom_up ? -pitch : pitch;
     object->_2d.scanline0 = bottom_up ? object->data + pitch * (object->_2d.height - 1) : object->data;
+    object->_2d.copy_image = get_2d_buffer_copy_func(fourcc);
 
     *buffer = &object->IMFMediaBuffer_iface;
 
@@ -1374,6 +1417,7 @@ static HRESULT create_d3d9_surface_buffer(IUnknown *surface, BOOL bottom_up, IMF
     object->_2d.width = stride;
     object->_2d.height = desc.Height;
     object->max_length = object->_2d.plane_size;
+    object->_2d.copy_image = get_2d_buffer_copy_func(desc.Format);
 
     *buffer = &object->IMFMediaBuffer_iface;
 
@@ -1428,6 +1472,7 @@ static HRESULT create_dxgi_surface_buffer(IUnknown *surface, unsigned int sub_re
     object->_2d.width = stride;
     object->_2d.height = desc.Height;
     object->max_length = object->_2d.plane_size;
+    object->_2d.copy_image = get_2d_buffer_copy_func(desc.Format);
 
     if (FAILED(hr = init_attributes_object(&object->dxgi_surface.attributes, 0)))
     {

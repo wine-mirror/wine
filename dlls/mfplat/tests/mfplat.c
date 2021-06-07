@@ -5496,10 +5496,10 @@ static void test_MFCreate2DMediaBuffer(void)
     };
     unsigned int max_length, length, length2;
     BYTE *buffer_start, *data, *data2;
+    int i, j, k, pitch, pitch2, stride;
     IMF2DBuffer2 *_2dbuffer2;
     IMF2DBuffer *_2dbuffer;
     IMFMediaBuffer *buffer;
-    int i, pitch, pitch2;
     HRESULT hr;
     BOOL ret;
 
@@ -5694,6 +5694,8 @@ static void test_MFCreate2DMediaBuffer(void)
         ok(length2 == ptr->contiguous_length, "%d: unexpected linear buffer length %u for %u x %u, format %s.\n",
                 i, length2, ptr->width, ptr->height, wine_dbgstr_an((char *)&ptr->fourcc, 4));
 
+        memset(data, 0xff, length2);
+
         hr = IMFMediaBuffer_Unlock(buffer);
         ok(hr == S_OK, "Failed to unlock buffer, hr %#x.\n", hr);
 
@@ -5711,6 +5713,44 @@ static void test_MFCreate2DMediaBuffer(void)
         ok(hr == S_OK, "Failed to get scanline, hr %#x.\n", hr);
         ok(data2 == data, "Unexpected data pointer.\n");
         ok(pitch == pitch2, "Unexpected pitch.\n");
+
+        /* primary plane */
+        for(j = 0; j < ptr->height; j++)
+            for (k = 0; k < ptr->width; k++)
+                ok(data[j * pitch + k] == 0xff, "Unexpected byte %02x at test %d row %d column %d.\n", data[j * pitch + k], i, j, k);
+
+        hr = pMFGetStrideForBitmapInfoHeader(ptr->fourcc, ptr->width, &stride);
+        ok(hr == S_OK, "Failed to get stride, hr %#x.\n", hr);
+
+        /* secondary planes */
+        switch (ptr->fourcc)
+        {
+            case MAKEFOURCC('I','M','C','1'):
+            case MAKEFOURCC('I','M','C','3'):
+                for (j = ptr->height; j < length2 / stride; j++)
+                    for (k = 0; k < ptr->width / 2; k++)
+                        ok(data[j * pitch + k] == 0xff, "Unexpected byte %02x at test %d row %d column %d.\n", data[j * pitch + k], i, j, k);
+                break;
+
+            case MAKEFOURCC('I','M','C','2'):
+            case MAKEFOURCC('I','M','C','4'):
+                for (j = ptr->height; j < length2 / stride; j++)
+                    for (k = 0; k < ptr->width / 2; k++)
+                        ok(data[j * pitch + k] == 0xff, "Unexpected byte %02x at test %d row %d column %d.\n", data[j * pitch + k], i, j, k);
+                for (j = ptr->height; j < length2 / stride; j++)
+                    for (k = pitch / 2; k < pitch / 2 + ptr->width / 2; k++)
+                        ok(data[j * pitch + k] == 0xff, "Unexpected byte %02x at test %d row %d column %d.\n", data[j * pitch + k], i, j, k);
+                break;
+
+            case MAKEFOURCC('N','V','1','2'):
+                for (j = ptr->height; j < length2 / stride; j++)
+                    for (k = 0; k < ptr->width; k++)
+                        ok(data[j * pitch + k] == 0xff, "Unexpected byte %02x at test %d row %d column %d.\n", data[j * pitch + k], i, j, k);
+                break;
+
+            default:
+                ;
+        }
 
         hr = IMF2DBuffer_Unlock2D(_2dbuffer);
         ok(hr == S_OK, "Failed to unlock buffer, hr %#x.\n", hr);
