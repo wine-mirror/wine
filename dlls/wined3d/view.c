@@ -1266,7 +1266,7 @@ void wined3d_shader_resource_view_gl_generate_mipmap(struct wined3d_shader_resou
 void wined3d_shader_resource_view_vk_generate_mipmap(struct wined3d_shader_resource_view_vk *srv_vk,
         struct wined3d_context_vk *context_vk)
 {
-    unsigned int i, j, layer_count, level_count, base_level, base_layer;
+    unsigned int i, j, layer_count, level_count, base_level, base_layer, sub_resource_idx;
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     VkImageSubresourceRange vk_src_range, vk_dst_range;
     struct wined3d_texture_vk *texture_vk;
@@ -1283,8 +1283,9 @@ void wined3d_shader_resource_view_vk_generate_mipmap(struct wined3d_shader_resou
     texture_vk = wined3d_texture_vk(texture_from_resource(srv_vk->v.resource));
     for (i = 0; i < layer_count; ++i)
     {
-        if (!wined3d_texture_load_location(&texture_vk->t,
-                (base_layer + i) * level_count + base_level, &context_vk->c, WINED3D_LOCATION_TEXTURE_RGB))
+        sub_resource_idx = (base_layer + i) * texture_vk->t.level_count + base_level;
+        if (!wined3d_texture_load_location(&texture_vk->t, sub_resource_idx,
+                &context_vk->c, WINED3D_LOCATION_TEXTURE_RGB))
             ERR("Failed to load source layer %u.\n", base_layer + i);
     }
 
@@ -1393,10 +1394,9 @@ void wined3d_shader_resource_view_vk_generate_mipmap(struct wined3d_shader_resou
     {
         for (j = 1; j < level_count; ++j)
         {
-            wined3d_texture_validate_location(&texture_vk->t,
-                    (base_layer + i) * level_count + base_level + j, WINED3D_LOCATION_TEXTURE_RGB);
-            wined3d_texture_invalidate_location(&texture_vk->t,
-                    (base_layer + i) * level_count + base_level + j, ~WINED3D_LOCATION_TEXTURE_RGB);
+            sub_resource_idx = (base_layer + i) * texture_vk->t.level_count + base_level + j;
+            wined3d_texture_validate_location(&texture_vk->t, sub_resource_idx, WINED3D_LOCATION_TEXTURE_RGB);
+            wined3d_texture_invalidate_location(&texture_vk->t, sub_resource_idx, ~WINED3D_LOCATION_TEXTURE_RGB);
         }
     }
 
