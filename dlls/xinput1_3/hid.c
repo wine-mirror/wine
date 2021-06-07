@@ -64,6 +64,7 @@ struct hid_platform_private {
     BOOL enabled;
 
     char *input_report_buf[2];
+    char *output_report_buf;
 
     struct axis_info lx, ly, ltrigger, rx, ry, rtrigger;
 };
@@ -185,6 +186,7 @@ static BOOL init_controller(xinput_controller *controller, PHIDP_PREPARSED_DATA 
     private->device = device;
     if (!(private->input_report_buf[0] = calloc(1, private->caps.InputReportByteLength))) goto failed;
     if (!(private->input_report_buf[1] = calloc(1, private->caps.InputReportByteLength))) goto failed;
+    if (!(private->output_report_buf = calloc(1, private->caps.OutputReportByteLength))) goto failed;
     size = (lstrlenW(device_path) + 1) * sizeof(WCHAR);
     if (!(private->device_path = malloc(size))) goto failed;
     memcpy(private->device_path, device_path, size);
@@ -200,6 +202,7 @@ failed:
     free(private->device_path);
     free(private->input_report_buf[0]);
     free(private->input_report_buf[1]);
+    free(private->output_report_buf);
     free(private);
     return FALSE;
 }
@@ -311,6 +314,7 @@ static void remove_gamepad(xinput_controller *device)
         CloseHandle(private->device);
         free(private->input_report_buf[0]);
         free(private->input_report_buf[1]);
+        free(private->output_report_buf);
         free(private->device_path);
         HidD_FreePreparsedData(private->ppd);
         free(private);
@@ -460,14 +464,8 @@ void HID_update_state(xinput_controller *device, XINPUT_STATE *state)
 DWORD HID_set_state(xinput_controller* device, XINPUT_VIBRATION* state)
 {
     struct hid_platform_private *private = device->platform_private;
-
-    struct {
-        BYTE report;
-        BYTE pad1[2];
-        BYTE left;
-        BYTE right;
-        BYTE pad2[3];
-    } report;
+    char *output_report_buf = private->output_report_buf;
+    ULONG output_report_len = private->caps.OutputReportByteLength;
 
     if (device->caps.Flags & XINPUT_CAPS_FFB_SUPPORTED)
     {
@@ -476,14 +474,13 @@ DWORD HID_set_state(xinput_controller* device, XINPUT_VIBRATION* state)
 
         if (private->enabled)
         {
-            report.report = 0;
-            report.pad1[0] = 0x8;
-            report.pad1[1] = 0x0;
-            report.left = (BYTE)(state->wLeftMotorSpeed / 256);
-            report.right = (BYTE)(state->wRightMotorSpeed / 256);
-            memset(&report.pad2, 0, sizeof(report.pad2));
+            memset(output_report_buf, 0, output_report_len);
+            output_report_buf[0] = /* report id */ 0;
+            output_report_buf[1] = 0x8;
+            output_report_buf[3] = (BYTE)(state->wLeftMotorSpeed / 256);
+            output_report_buf[4] = (BYTE)(state->wRightMotorSpeed / 256);
 
-            if (!HidD_SetOutputReport(private->device, &report, sizeof(report)))
+            if (!HidD_SetOutputReport(private->device, output_report_buf, output_report_len))
             {
                 WARN("unable to set output report, HidD_SetOutputReport failed with error %u\n", GetLastError());
                 return GetLastError();
