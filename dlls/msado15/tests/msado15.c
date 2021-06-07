@@ -271,6 +271,13 @@ static void test_Recordset(void)
     hr = _Recordset_Close( recordset );
     ok( hr == S_OK, "got %08x\n", hr );
 
+    count = -1;
+    hr = Fields_get_Count( fields, &count );
+    todo_wine ok( !count, "got %d\n", count );
+
+    hr = Field_get_Name(field, &name);
+    todo_wine ok( hr == MAKE_ADO_HRESULT( adErrObjectNotSet ), "got %08x\n", hr );
+
     state = -1;
     hr = _Recordset_get_State( recordset, &state );
     ok( hr == S_OK, "got %08x\n", hr );
@@ -638,6 +645,9 @@ static void test_Fields(void)
 
     hr = CoCreateInstance( &CLSID_Recordset, NULL, CLSCTX_INPROC_SERVER, &IID__Recordset, (void **)&recordset );
     ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = _Recordset_QueryInterface( recordset, &IID_Fields, (void **)&fields );
+    ok( hr == E_NOINTERFACE, "got %08x\n", hr );
 
     hr = _Recordset_get_Fields( recordset, &fields );
     ok( hr == S_OK, "got %08x\n", hr );
