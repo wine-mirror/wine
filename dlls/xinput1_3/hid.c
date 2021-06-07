@@ -57,6 +57,8 @@ struct axis_info
 
 struct hid_platform_private {
     PHIDP_PREPARSED_DATA ppd;
+    HIDP_CAPS caps;
+
     HANDLE device;
     WCHAR *device_path;
     BOOL enabled;
@@ -85,7 +87,7 @@ static void MarkUsage(struct hid_platform_private *private, WORD usage, LONG min
     }
 }
 
-static BOOL VerifyGamepad(PHIDP_PREPARSED_DATA ppd, XINPUT_CAPABILITIES *xinput_caps, struct hid_platform_private *private, HIDP_CAPS *caps)
+static BOOL VerifyGamepad(PHIDP_PREPARSED_DATA ppd, XINPUT_CAPABILITIES *xinput_caps, struct hid_platform_private *private)
 {
     HIDP_BUTTON_CAPS *button_caps;
     HIDP_VALUE_CAPS *value_caps;
@@ -93,17 +95,14 @@ static BOOL VerifyGamepad(PHIDP_PREPARSED_DATA ppd, XINPUT_CAPABILITIES *xinput_
 
     int i;
     int button_count = 0;
-    USHORT button_caps_count = 0;
-    USHORT value_caps_count = 0;
 
     /* Count buttons */
     memset(xinput_caps, 0, sizeof(XINPUT_CAPABILITIES));
 
-    button_caps_count = caps->NumberInputButtonCaps;
-    if (!(button_caps = malloc(sizeof(*button_caps) * button_caps_count))) return FALSE;
-    status = HidP_GetButtonCaps(HidP_Input, button_caps, &button_caps_count, ppd);
+    if (!(button_caps = malloc(sizeof(*button_caps) * private->caps.NumberInputButtonCaps))) return FALSE;
+    status = HidP_GetButtonCaps(HidP_Input, button_caps, &private->caps.NumberInputButtonCaps, ppd);
     if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetButtonCaps returned %#x\n", status);
-    else for (i = 0; i < button_caps_count; i++)
+    else for (i = 0; i < private->caps.NumberInputButtonCaps; i++)
     {
         if (button_caps[i].UsagePage != HID_USAGE_PAGE_BUTTON)
             continue;
@@ -117,11 +116,10 @@ static BOOL VerifyGamepad(PHIDP_PREPARSED_DATA ppd, XINPUT_CAPABILITIES *xinput_
         WARN("Too few buttons, continuing anyway\n");
     xinput_caps->Gamepad.wButtons = 0xffff;
 
-    value_caps_count = caps->NumberInputValueCaps;
-    if (!(value_caps = malloc(sizeof(*value_caps) * value_caps_count))) return FALSE;
-    status = HidP_GetValueCaps(HidP_Input, value_caps, &value_caps_count, ppd);
+    if (!(value_caps = malloc(sizeof(*value_caps) * private->caps.NumberInputValueCaps))) return FALSE;
+    status = HidP_GetValueCaps(HidP_Input, value_caps, &private->caps.NumberInputValueCaps, ppd);
     if (status != HIDP_STATUS_SUCCESS) WARN("HidP_GetValueCaps returned %#x\n", status);
-    else for (i = 0; i < value_caps_count; i++)
+    else for (i = 0; i < private->caps.NumberInputValueCaps; i++)
     {
         if (value_caps[i].UsagePage != HID_USAGE_PAGE_GENERIC)
             continue;
@@ -164,8 +162,7 @@ static BOOL VerifyGamepad(PHIDP_PREPARSED_DATA ppd, XINPUT_CAPABILITIES *xinput_
     xinput_caps->Type = XINPUT_DEVTYPE_GAMEPAD;
     xinput_caps->SubType = XINPUT_DEVSUBTYPE_GAMEPAD;
 
-    value_caps_count = caps->NumberOutputValueCaps;
-    if (value_caps_count > 0)
+    if (private->caps.NumberOutputValueCaps > 0)
     {
         xinput_caps->Flags |= XINPUT_CAPS_FFB_SUPPORTED;
         xinput_caps->Vibration.wLeftMotorSpeed = 255;
@@ -181,7 +178,8 @@ static BOOL init_controller(xinput_controller *controller, PHIDP_PREPARSED_DATA 
     struct hid_platform_private *private;
 
     if (!(private = calloc(1, sizeof(struct hid_platform_private)))) return FALSE;
-    if (!VerifyGamepad(ppd, &controller->caps, private, caps)) goto failed;
+    private->caps = *caps;
+    if (!VerifyGamepad(ppd, &controller->caps, private)) goto failed;
 
     TRACE("Found gamepad %s\n", debugstr_w(device_path));
 
