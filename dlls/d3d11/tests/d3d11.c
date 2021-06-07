@@ -102,6 +102,22 @@ struct device_desc
     UINT flags;
 };
 
+struct resource_desc
+{
+    D3D11_RESOURCE_DIMENSION dimension;
+    unsigned int width;
+    unsigned int height;
+    unsigned int depth_or_array_size;
+    unsigned int level_count;
+    DXGI_FORMAT format;
+    DXGI_SAMPLE_DESC sample_desc;
+    D3D11_USAGE usage;
+    unsigned int bind_flags;
+    unsigned int cpu_access_flags;
+    unsigned int misc_flags;
+    unsigned int structure_byte_stride;
+};
+
 struct swapchain_desc
 {
     BOOL windowed;
@@ -771,6 +787,66 @@ static ID3D11Buffer *create_buffer_(unsigned int line, ID3D11Device *device,
     return buffer;
 }
 
+static HRESULT create_resource(ID3D11Device *device, const struct resource_desc *desc,
+        const D3D11_SUBRESOURCE_DATA *data, ID3D11Resource **resource)
+{
+    D3D11_TEXTURE1D_DESC texture1d_desc;
+    D3D11_TEXTURE2D_DESC texture2d_desc;
+    D3D11_TEXTURE3D_DESC texture3d_desc;
+    D3D11_BUFFER_DESC buffer_desc;
+
+    switch (desc->dimension)
+    {
+        case D3D11_RESOURCE_DIMENSION_BUFFER:
+            buffer_desc.ByteWidth = desc->width;
+            buffer_desc.Usage = desc->usage;
+            buffer_desc.BindFlags = desc->bind_flags;
+            buffer_desc.CPUAccessFlags = desc->cpu_access_flags;
+            buffer_desc.MiscFlags = desc->misc_flags;
+            buffer_desc.StructureByteStride = desc->structure_byte_stride;
+            return ID3D11Device_CreateBuffer(device, &buffer_desc, data, (ID3D11Buffer **)resource);
+
+        case D3D11_RESOURCE_DIMENSION_TEXTURE1D:
+            texture1d_desc.Width = desc->width;
+            texture1d_desc.MipLevels = desc->level_count;
+            texture1d_desc.ArraySize = desc->depth_or_array_size;
+            texture1d_desc.Format = desc->format;
+            texture1d_desc.Usage = desc->usage;
+            texture1d_desc.BindFlags = desc->bind_flags;
+            texture1d_desc.CPUAccessFlags = desc->cpu_access_flags;
+            texture1d_desc.MiscFlags = desc->misc_flags;
+            return ID3D11Device_CreateTexture1D(device, &texture1d_desc, data, (ID3D11Texture1D **)resource);
+
+        case D3D11_RESOURCE_DIMENSION_TEXTURE2D:
+            texture2d_desc.Width = desc->width;
+            texture2d_desc.Height = desc->height;
+            texture2d_desc.MipLevels = desc->level_count;
+            texture2d_desc.ArraySize = desc->depth_or_array_size;
+            texture2d_desc.Format = desc->format;
+            texture2d_desc.SampleDesc = desc->sample_desc;
+            texture2d_desc.Usage = desc->usage;
+            texture2d_desc.BindFlags = desc->bind_flags;
+            texture2d_desc.CPUAccessFlags = desc->cpu_access_flags;
+            texture2d_desc.MiscFlags = desc->misc_flags;
+            return ID3D11Device_CreateTexture2D(device, &texture2d_desc, data, (ID3D11Texture2D **)resource);
+
+        case D3D11_RESOURCE_DIMENSION_TEXTURE3D:
+            texture3d_desc.Width = desc->width;
+            texture3d_desc.Height = desc->height;
+            texture3d_desc.Depth = desc->depth_or_array_size;
+            texture3d_desc.MipLevels = desc->level_count;
+            texture3d_desc.Format = desc->format;
+            texture3d_desc.Usage = desc->usage;
+            texture3d_desc.BindFlags = desc->bind_flags;
+            texture3d_desc.CPUAccessFlags = desc->cpu_access_flags;
+            texture3d_desc.MiscFlags = desc->misc_flags;
+            return ID3D11Device_CreateTexture3D(device, &texture3d_desc, data, (ID3D11Texture3D **)resource);
+
+        default:
+            return E_INVALIDARG;
+    }
+}
+
 struct resource_readback
 {
     ID3D11Resource *resource;
@@ -934,6 +1010,36 @@ static void get_texture3d_readback(ID3D11Texture3D *texture, unsigned int sub_re
             sub_resource_idx, device, rb);
 
     ID3D11Device_Release(device);
+}
+
+static void get_resource_readback(ID3D11Resource *resource,
+        unsigned int sub_resource_idx, struct resource_readback *rb)
+{
+    D3D11_RESOURCE_DIMENSION d;
+
+    ID3D11Resource_GetType(resource, &d);
+    switch (d)
+    {
+        case D3D11_RESOURCE_DIMENSION_BUFFER:
+            get_buffer_readback((ID3D11Buffer *)resource, rb);
+            return;
+
+        case D3D11_RESOURCE_DIMENSION_TEXTURE1D:
+            get_texture1d_readback((ID3D11Texture1D *)resource, sub_resource_idx, rb);
+            return;
+
+        case D3D11_RESOURCE_DIMENSION_TEXTURE2D:
+            get_texture_readback((ID3D11Texture2D *)resource, sub_resource_idx, rb);
+            return;
+
+        case D3D11_RESOURCE_DIMENSION_TEXTURE3D:
+            get_texture3d_readback((ID3D11Texture3D *)resource, sub_resource_idx, rb);
+            return;
+
+        default:
+            memset(rb, 0, sizeof(*rb));
+            return;
+    }
 }
 
 static void *get_readback_data(struct resource_readback *rb,
@@ -16312,6 +16418,228 @@ static void test_clear_buffer_unordered_access_view(void)
     ID3D11DeviceContext_Release(context);
     refcount = ID3D11Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
+static void test_clear_image_unordered_access_view(void)
+{
+    unsigned int expected_colour, actual_colour;
+    D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc;
+    unsigned int i, j, d, p, x, y, z, layer;
+    struct d3d11_test_context test_context;
+    unsigned int image_size, image_depth;
+    struct resource_desc resource_desc;
+    ID3D11UnorderedAccessView *uav[2];
+    ID3D11DeviceContext *context;
+    struct resource_readback rb;
+    BOOL is_small_float_format;
+    ID3D11Resource *resource;
+    BOOL is_inside, success;
+    ID3D11Device *device;
+    UINT clear_value[4];
+    HRESULT hr;
+
+#define IMAGE_SIZE 16
+    static const struct
+    {
+        DXGI_FORMAT format;
+        unsigned int image_mips;
+        unsigned int image_layers;
+        unsigned int mip_level;
+        unsigned int first_layer;
+        unsigned int layer_count;
+        unsigned int values[4];
+        unsigned int expected;
+        BOOL is_float;
+        unsigned int clamped;
+        BOOL is_todo;
+    }
+    tests[] =
+    {
+        /* Test clearing a specific mip level. */
+        {DXGI_FORMAT_R32_FLOAT,       2, 1, 0, 0, 1, {1,          0, 0, 0}, 0x00000001, FALSE, 0, TRUE},
+        {DXGI_FORMAT_R32_FLOAT,       2, 1, 1, 0, 1, {1,          0, 0, 0}, 0x00000001, FALSE, 0, TRUE},
+        {DXGI_FORMAT_R32_FLOAT,       2, 1, 0, 0, 1, {0x3f000000, 0, 0, 0}, 0x3f000000, TRUE,  0, TRUE},
+        {DXGI_FORMAT_R32_FLOAT,       2, 1, 1, 0, 1, {0x3f000000, 0, 0, 0}, 0x3f000000, TRUE,  0, TRUE},
+        /* Test clearing specific array layers. */
+        {DXGI_FORMAT_R32_FLOAT,       1, IMAGE_SIZE, 0, 0, IMAGE_SIZE, {1, 0, 0, 0}, 0x00000001, FALSE, 0, TRUE},
+        {DXGI_FORMAT_R32_FLOAT,       1, IMAGE_SIZE, 0, 3, 2,          {1, 0, 0, 0}, 0x00000001, FALSE, 0, TRUE},
+        {DXGI_FORMAT_R32_FLOAT,       1, IMAGE_SIZE, 0, 0, IMAGE_SIZE,
+                {0x3f000000, 0, 0, 0}, 0x3f000000, TRUE, 0, TRUE},
+        {DXGI_FORMAT_R32_FLOAT,       1, IMAGE_SIZE, 0, 3, 2,
+                {0x3f000000, 0, 0, 0}, 0x3f000000, TRUE, 0, TRUE},
+        /* Test uint clears with formats. */
+        {DXGI_FORMAT_R16G16_UINT,     1, 1, 0, 0, 1, {1,       2, 3, 4}, 0x00020001, FALSE, 0, TRUE},
+        {DXGI_FORMAT_R16G16_UINT,     1, 1, 0, 0, 1, {0x12345, 0, 0, 0}, 0x00002345, FALSE, 0x0000ffff, TRUE},
+        {DXGI_FORMAT_R16G16_UNORM,    1, 1, 0, 0, 1, {1,       2, 3, 4}, 0x00020001, FALSE, 0, TRUE},
+        {DXGI_FORMAT_R16G16_FLOAT,    1, 1, 0, 0, 1, {1,       2, 3, 4}, 0x00020001, FALSE, 0, TRUE},
+        {DXGI_FORMAT_R8G8B8A8_UINT,   1, 1, 0, 0, 1, {1,       2, 3, 4}, 0x04030201, FALSE, 0, TRUE},
+        {DXGI_FORMAT_R8G8B8A8_UINT,   1, 1, 0, 0, 1, {0x123,   0, 0, 0}, 0x00000023, FALSE, 0x000000ff, TRUE},
+        {DXGI_FORMAT_R8G8B8A8_UNORM,  1, 1, 0, 0, 1, {1,       2, 3, 4}, 0x04030201, FALSE, 0, TRUE},
+        {DXGI_FORMAT_R11G11B10_FLOAT, 1, 1, 0, 0, 1, {1,       2, 3, 4}, 0x00c01001, FALSE, 0, TRUE},
+        /* Test float clears with formats. */
+        {DXGI_FORMAT_R16G16_UNORM,    1, 1, 0, 0, 1,
+                {0x3f000000 /* 0.5f */, 0x3f800000 /* 1.0f */, 0, 0}, 0xffff8000, TRUE, 0, TRUE},
+        {DXGI_FORMAT_R16G16_FLOAT,    1, 1, 0, 0, 1,
+                {0x3f000000 /* 0.5f */, 0x3f800000 /* 1.0f */, 0, 0}, 0x3c003800, TRUE, 0, TRUE},
+        {DXGI_FORMAT_R8G8B8A8_UNORM,  1, 1, 0, 0, 1,
+                {0x3f000000 /* 0.5f */, 0x3f800000 /* 1.0f */, 0, 0}, 0x0000ff80, TRUE, 0, TRUE},
+        {DXGI_FORMAT_R8G8B8A8_UNORM,  1, 1, 0, 0, 1,
+                {0, 0, 0x3f000000 /* 0.5f */, 0x3f800000 /* 1.0f */}, 0xff800000, TRUE, 0, TRUE},
+        {DXGI_FORMAT_R11G11B10_FLOAT, 1, 1, 0, 0, 1,
+                {0x3f000000 /* 1.0f */, 0 /* 0.0f */, 0xbf800000 /* -1.0f */, 0x3f000000 /* 1.0f */},
+                0x00000380, TRUE, 0, TRUE},
+    };
+
+    static const struct
+    {
+        D3D11_RESOURCE_DIMENSION resource_dim;
+        D3D11_UAV_DIMENSION view_dim;
+        BOOL is_layered;
+    }
+    uav_dimensions[] =
+    {
+        {D3D11_RESOURCE_DIMENSION_TEXTURE2D, D3D11_UAV_DIMENSION_TEXTURE2D,      FALSE},
+        {D3D11_RESOURCE_DIMENSION_TEXTURE2D, D3D11_UAV_DIMENSION_TEXTURE2DARRAY, TRUE },
+        /* Expected behaviour with partial layer coverage is unclear. */
+        {D3D11_RESOURCE_DIMENSION_TEXTURE3D, D3D11_UAV_DIMENSION_TEXTURE3D,      FALSE},
+    };
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    memset(&resource_desc, 0, sizeof(resource_desc));
+    resource_desc.width = IMAGE_SIZE;
+    resource_desc.height = IMAGE_SIZE;
+    resource_desc.sample_desc.Count = 1;
+    resource_desc.usage = D3D11_USAGE_DEFAULT;
+    resource_desc.bind_flags = D3D11_BIND_UNORDERED_ACCESS;
+
+    for (d = 0; d < ARRAY_SIZE(uav_dimensions); ++d)
+    {
+        for (i = 0; i < ARRAY_SIZE(tests); ++i)
+        {
+            winetest_push_context("Dim %u, Test %u", d, i);
+
+            if (tests[i].image_layers > 1 && !uav_dimensions[d].is_layered)
+            {
+                winetest_pop_context();
+                continue;
+            }
+
+            resource_desc.dimension = uav_dimensions[d].resource_dim;
+            resource_desc.depth_or_array_size = tests[i].image_layers;
+            resource_desc.level_count = tests[i].image_mips;
+            resource_desc.format = tests[i].format;
+            if (FAILED(hr = create_resource(device, &resource_desc, NULL, &resource)))
+            {
+                skip("Failed to create resource, hr %#x.\n", hr);
+                winetest_pop_context();
+                continue;
+            }
+
+            uav_desc.Format = tests[i].format;
+            uav_desc.ViewDimension = uav_dimensions[d].view_dim;
+
+            for (j = 0; j < 2; ++j)
+            {
+                unsigned int first_layer = j ? 0 : tests[i].first_layer;
+                unsigned int layer_count = j ? tests[i].image_layers : tests[i].layer_count;
+
+                switch (uav_desc.ViewDimension)
+                {
+                    case D3D11_UAV_DIMENSION_TEXTURE2D:
+                        uav_desc.Texture2D.MipSlice = tests[i].mip_level;
+                        break;
+
+                    case D3D11_UAV_DIMENSION_TEXTURE2DARRAY:
+                        uav_desc.Texture2DArray.MipSlice = tests[i].mip_level;
+                        uav_desc.Texture2DArray.FirstArraySlice = first_layer;
+                        uav_desc.Texture2DArray.ArraySize = layer_count;
+                        break;
+
+                    case D3D11_UAV_DIMENSION_TEXTURE3D:
+                        uav_desc.Texture3D.MipSlice = tests[i].mip_level;
+                        uav_desc.Texture3D.FirstWSlice = first_layer;
+                        uav_desc.Texture3D.WSize = layer_count;
+                        break;
+
+                    default:
+                        ok(0, "Unhandled uav dimension %#x.\n", uav_dimensions[d].view_dim);
+                        break;
+                }
+
+                hr = ID3D11Device_CreateUnorderedAccessView(device, resource, &uav_desc, &uav[j]);
+                ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+            }
+
+            for (j = 0; j < 4; ++j)
+            {
+                clear_value[j] = tests[i].expected ? 0u : ~0u;
+            }
+
+            ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav[1], clear_value);
+            if (tests[i].is_float)
+                ID3D11DeviceContext_ClearUnorderedAccessViewFloat(context, uav[0], (const float *)tests[i].values);
+            else
+                ID3D11DeviceContext_ClearUnorderedAccessViewUint(context, uav[0], tests[i].values);
+
+            image_depth = uav_dimensions[d].resource_dim == D3D11_RESOURCE_DIMENSION_TEXTURE3D
+                    ? max(tests[i].image_layers >> tests[i].mip_level, 1u) : 1;
+            image_size = max(IMAGE_SIZE >> tests[i].mip_level, 1u);
+
+            is_small_float_format = tests[i].format == DXGI_FORMAT_R16G16_UNORM
+                    || tests[i].format == DXGI_FORMAT_R16G16_FLOAT
+                    || tests[i].format == DXGI_FORMAT_R11G11B10_FLOAT
+                    || tests[i].format == DXGI_FORMAT_R8G8B8A8_UNORM;
+            for (layer = 0; layer < tests[i].image_layers / image_depth; ++layer)
+            {
+                get_resource_readback(resource, tests[i].mip_level + (layer * tests[i].image_mips), &rb);
+
+                success = TRUE;
+                expected_colour = actual_colour = x = y = z = 0;
+                for (p = 0; p < image_depth * image_size * image_size; ++p)
+                {
+                    x = p % image_size;
+                    y = (p / image_size) % image_size;
+                    z = p / (image_size * image_size);
+
+                    if (uav_dimensions[d].resource_dim == D3D11_RESOURCE_DIMENSION_TEXTURE3D)
+                        is_inside = z >= tests[i].first_layer
+                                && z < tests[i].first_layer + tests[i].layer_count;
+                    else
+                        is_inside = layer >= tests[i].first_layer
+                                && layer < tests[i].first_layer + tests[i].layer_count;
+
+                    expected_colour = is_inside ? tests[i].expected : clear_value[0];
+                    actual_colour = get_readback_u32(&rb, x, y, z);
+                    if (!(success = compare_color(actual_colour, expected_colour, tests[i].is_float ? 1 : 0)
+                            /* Some drivers/GPUs clamp clear values that can't
+                             * be represented by the format. (Windows 7
+                             * testbot, AMD PALM) */
+                            || broken(is_inside && tests[i].clamped && actual_colour == tests[i].clamped)
+                            /* Some drivers/GPUs mishandle integer clears of
+                             * small float/normalised formats. (AMD PALM) */
+                            || broken(is_inside && !tests[i].is_float && is_small_float_format && !actual_colour)))
+                        break;
+                }
+                todo_wine_if(tests[i].is_todo && expected_colour)
+                    ok(success, "At layer %u, (%u,%u,%u), expected 0x%08x, got 0x%08x.\n",
+                            layer, x, y, z, expected_colour, actual_colour);
+
+                release_resource_readback(&rb);
+            }
+
+            ID3D11UnorderedAccessView_Release(uav[1]);
+            ID3D11UnorderedAccessView_Release(uav[0]);
+            ID3D11Resource_Release(resource);
+            winetest_pop_context();
+        }
+    }
+
+    release_test_context(&test_context);
+#undef IMAGE_SIZE
 }
 
 static void test_initial_depth_stencil_state(void)
@@ -33043,6 +33371,7 @@ START_TEST(d3d11)
     queue_test(test_clear_render_target_view_3d);
     queue_test(test_clear_depth_stencil_view);
     queue_test(test_clear_buffer_unordered_access_view);
+    queue_test(test_clear_image_unordered_access_view);
     queue_test(test_initial_depth_stencil_state);
     queue_test(test_draw_depth_only);
     queue_test(test_draw_uav_only);
