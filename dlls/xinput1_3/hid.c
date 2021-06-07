@@ -21,6 +21,7 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "wine/debug.h"
 #include "windef.h"
@@ -98,7 +99,7 @@ static BOOL VerifyGamepad(PHIDP_PREPARSED_DATA ppd, XINPUT_CAPABILITIES *xinput_
     memset(xinput_caps, 0, sizeof(XINPUT_CAPABILITIES));
 
     button_caps_count = caps->NumberInputButtonCaps;
-    button_caps = HeapAlloc(GetProcessHeap(), 0, sizeof(*button_caps) * button_caps_count);
+    if (!(button_caps = malloc(sizeof(*button_caps) * button_caps_count))) return FALSE;
     HidP_GetButtonCaps(HidP_Input, button_caps, &button_caps_count, ppd);
     for (i = 0; i < button_caps_count; i++)
     {
@@ -109,13 +110,13 @@ static BOOL VerifyGamepad(PHIDP_PREPARSED_DATA ppd, XINPUT_CAPABILITIES *xinput_
         else
             button_count = max(button_count, button_caps[i].NotRange.Usage);
     }
-    HeapFree(GetProcessHeap(), 0, button_caps);
+    free(button_caps);
     if (button_count < 11)
         WARN("Too few buttons, continuing anyway\n");
     xinput_caps->Gamepad.wButtons = 0xffff;
 
     value_caps_count = caps->NumberInputValueCaps;
-    value_caps = HeapAlloc(GetProcessHeap(), 0, sizeof(*value_caps) * value_caps_count);
+    if (!(value_caps = malloc(sizeof(*value_caps) * value_caps_count))) return FALSE;
     HidP_GetValueCaps(HidP_Input, value_caps, &value_caps_count, ppd);
     for (i = 0; i < value_caps_count; i++)
     {
@@ -130,7 +131,7 @@ static BOOL VerifyGamepad(PHIDP_PREPARSED_DATA ppd, XINPUT_CAPABILITIES *xinput_
         else
             MarkUsage(private, value_caps[i].NotRange.Usage, value_caps[i].LogicalMin, value_caps[i].LogicalMax, value_caps[i].BitSize);
     }
-    HeapFree(GetProcessHeap(), 0, value_caps);
+    free(value_caps);
 
     if (private->ltrigger.bits)
         xinput_caps->Gamepad.bLeftTrigger = (1u << (sizeof(xinput_caps->Gamepad.bLeftTrigger) + 1)) - 1;
@@ -174,13 +175,10 @@ static BOOL VerifyGamepad(PHIDP_PREPARSED_DATA ppd, XINPUT_CAPABILITIES *xinput_
 static BOOL init_controller(xinput_controller *controller, PHIDP_PREPARSED_DATA ppd, HIDP_CAPS *caps, HANDLE device, WCHAR *device_path)
 {
     size_t size;
-    struct hid_platform_private *private = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct hid_platform_private));
+    struct hid_platform_private *private;
 
-    if (!VerifyGamepad(ppd, &controller->caps, private, caps))
-    {
-        HeapFree(GetProcessHeap(), 0, private);
-        return FALSE;
-    }
+    if (!(private = calloc(1, sizeof(struct hid_platform_private)))) return FALSE;
+    if (!VerifyGamepad(ppd, &controller->caps, private, caps)) goto failed;
 
     TRACE("Found gamepad %s\n", debugstr_w(device_path));
 
@@ -188,10 +186,10 @@ static BOOL init_controller(xinput_controller *controller, PHIDP_PREPARSED_DATA 
     private->device = device;
     private->report_length = caps->InputReportByteLength + 1;
     private->current_report = 0;
-    private->reports[0] = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, private->report_length);
-    private->reports[1] = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, private->report_length);
+    if (!(private->reports[0] = calloc(1, private->report_length))) goto failed;
+    if (!(private->reports[1] = calloc(1, private->report_length))) goto failed;
     size = (lstrlenW(device_path) + 1) * sizeof(WCHAR);
-    private->device_path = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!(private->device_path = malloc(size))) goto failed;
     memcpy(private->device_path, device_path, size);
     private->enabled = TRUE;
 
@@ -199,8 +197,14 @@ static BOOL init_controller(xinput_controller *controller, PHIDP_PREPARSED_DATA 
     memset(&controller->vibration, 0, sizeof(controller->vibration));
 
     controller->platform_private = private;
-
     return TRUE;
+
+failed:
+    free(private->device_path);
+    free(private->reports[0]);
+    free(private->reports[1]);
+    free(private);
+    return FALSE;
 }
 
 void HID_find_gamepads(xinput_controller *devices)
@@ -233,7 +237,7 @@ void HID_find_gamepads(xinput_controller *devices)
 
     device_info_set = SetupDiGetClassDevsW(&hid_guid, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
 
-    data = HeapAlloc(GetProcessHeap(), 0 , sizeof(*data) + detail_size);
+    if (!(data = malloc(sizeof(*data) + detail_size))) goto done;
     data->cbSize = sizeof(*data);
 
     ZeroMemory(&interface_data, sizeof(interface_data));
@@ -291,7 +295,9 @@ void HID_find_gamepads(xinput_controller *devices)
             HidD_FreePreparsedData(ppd);
         }
     }
-    HeapFree(GetProcessHeap(), 0, data);
+
+done:
+    free(data);
     SetupDiDestroyDeviceInfoList(device_info_set);
     LeaveCriticalSection(&xinput_crit);
 }
@@ -307,11 +313,11 @@ static void remove_gamepad(xinput_controller *device)
         device->platform_private = NULL;
 
         CloseHandle(private->device);
-        HeapFree(GetProcessHeap(), 0, private->reports[0]);
-        HeapFree(GetProcessHeap(), 0, private->reports[1]);
-        HeapFree(GetProcessHeap(), 0, private->device_path);
+        free(private->reports[0]);
+        free(private->reports[1]);
+        free(private->device_path);
         HidD_FreePreparsedData(private->ppd);
-        HeapFree(GetProcessHeap(), 0, private);
+        free(private);
     }
 
     LeaveCriticalSection(&device->crit);
