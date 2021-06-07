@@ -111,6 +111,7 @@ static void test_device_manager(void)
         D3DFMT_A8R8G8B8,
         D3DFMT_X8R8G8B8,
         D3DFMT_YUY2,
+        MAKEFOURCC('A','Y','U','V'),
     };
     static const D3DFORMAT rt_unsupported_formats[] =
     {
@@ -354,6 +355,12 @@ static void test_device_manager(void)
         init_video_desc(&video_desc, rt_formats[i]);
 
         count = 0;
+        hr = IDirectXVideoProcessorService_GetVideoProcessorDeviceGuids(proc_service, &video_desc, &count, &guids);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        ok(count > 0, "Unexpected device count.\n");
+        CoTaskMemFree(guids);
+
+        count = 0;
         hr = IDirectXVideoProcessorService_GetVideoProcessorRenderTargets(proc_service, &DXVA2_VideoProcSoftwareDevice,
                 &video_desc, &count, &formats);
         ok(hr == S_OK, "Unexpected hr %#x, format %d.\n", hr, rt_formats[i]);
@@ -371,6 +378,10 @@ static void test_device_manager(void)
         hr = IDirectXVideoProcessorService_GetVideoProcessorRenderTargets(proc_service, &DXVA2_VideoProcSoftwareDevice,
                 &video_desc, &count, &formats);
         ok(hr == E_FAIL, "Unexpected hr %#x, format %d.\n", hr, rt_unsupported_formats[i]);
+
+        hr = IDirectXVideoProcessorService_GetVideoProcessorDeviceGuids(proc_service, &video_desc, &count, &guids);
+    todo_wine
+        ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
     }
 
     IDirectXVideoProcessorService_Release(proc_service);
