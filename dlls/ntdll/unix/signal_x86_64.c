@@ -281,31 +281,31 @@ C_ASSERT( sizeof(struct syscall_xsave) == 0x340 );
 
 struct syscall_frame
 {
-    ULONG64               rax;     /* 0000 */
-    ULONG64               rbx;     /* 0008 */
-    ULONG64               rcx;     /* 0010 */
-    ULONG64               rdx;     /* 0018 */
-    ULONG64               rsi;     /* 0020 */
-    ULONG64               rdi;     /* 0028 */
-    ULONG64               r8;      /* 0030 */
-    ULONG64               r9;      /* 0038 */
-    ULONG64               r10;     /* 0040 */
-    ULONG64               r11;     /* 0048 */
-    ULONG64               r12;     /* 0050 */
-    ULONG64               r13;     /* 0058 */
-    ULONG64               r14;     /* 0060 */
-    ULONG64               r15;     /* 0068 */
-    ULONG64               rip;     /* 0070 */
-    WORD                  cs;      /* 0078 */
-    WORD                  ds;      /* 007a */
-    WORD                  es;      /* 007c */
-    WORD                  fs;      /* 007e */
-    ULONG64               eflags;  /* 0080 */
-    ULONG64               rsp;     /* 0088 */
-    WORD                  ss;      /* 0090 */
-    WORD                  gs;      /* 0092 */
-    WORD                  pad[2];  /* 0094 */
-    ULONG64               rbp;     /* 0098 */
+    ULONG64               rax;           /* 0000 */
+    ULONG64               rbx;           /* 0008 */
+    ULONG64               rcx;           /* 0010 */
+    ULONG64               rdx;           /* 0018 */
+    ULONG64               rsi;           /* 0020 */
+    ULONG64               rdi;           /* 0028 */
+    ULONG64               r8;            /* 0030 */
+    ULONG64               r9;            /* 0038 */
+    ULONG64               r10;           /* 0040 */
+    ULONG64               r11;           /* 0048 */
+    ULONG64               r12;           /* 0050 */
+    ULONG64               r13;           /* 0058 */
+    ULONG64               r14;           /* 0060 */
+    ULONG64               r15;           /* 0068 */
+    ULONG64               rip;           /* 0070 */
+    WORD                  cs;            /* 0078 */
+    WORD                  ds;            /* 007a */
+    WORD                  es;            /* 007c */
+    WORD                  fs;            /* 007e */
+    ULONG64               eflags;        /* 0080 */
+    ULONG64               rsp;           /* 0088 */
+    WORD                  ss;            /* 0090 */
+    WORD                  gs;            /* 0092 */
+    DWORD                 restore_flags; /* 0094 */
+    ULONG64               rbp;           /* 0098 */
 };
 
 C_ASSERT( sizeof( struct syscall_frame ) == 0xa0);
@@ -1559,51 +1559,13 @@ static void restore_context( const struct xcontext *xcontext, ucontext_t *sigcon
 
 
 /***********************************************************************
- *           set_full_cpu_context
- *
- * Set the new CPU context.
- */
-extern void set_full_cpu_context(void) DECLSPEC_HIDDEN;
-__ASM_GLOBAL_FUNC( set_full_cpu_context,
-                   "movq %gs:0x30,%rdx\n\t"
-                   "movq 0x328(%rdx),%rsp\n\t"      /* amd64_thread_data()->syscall_frame */
-                   "movq $0,0x328(%rdx)\n\t"
-                   "movq 0x00(%rsp),%rax\n\t"
-                   "movq 0x08(%rsp),%rbx\n\t"
-                   "movq 0x10(%rsp),%rcx\n\t"
-                   "movq 0x18(%rsp),%rdx\n\t"
-                   "movq 0x20(%rsp),%rsi\n\t"
-                   "movq 0x28(%rsp),%rdi\n\t"
-                   "movq 0x30(%rsp),%r8\n\t"
-                   "movq 0x38(%rsp),%r9\n\t"
-                   "movq 0x40(%rsp),%r10\n\t"
-                   "movq 0x48(%rsp),%r11\n\t"
-                   "movq 0x50(%rsp),%r12\n\t"
-                   "movq 0x58(%rsp),%r13\n\t"
-                   "movq 0x60(%rsp),%r14\n\t"
-                   "movq 0x68(%rsp),%r15\n\t"
-                   "movq 0x98(%rsp),%rbp\n\t"
-                   "leaq 0x70(%rsp),%rsp\n\t"
-                   "iretq" )
-
-/***********************************************************************
  *           signal_restore_full_cpu_context
  *
  * Restore full context from syscall frame
  */
 void signal_restore_full_cpu_context(void)
 {
-    struct syscall_xsave *xsave = get_syscall_xsave( amd64_thread_data()->syscall_frame );
-
-    if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_XSAVE)
-    {
-        __asm__ volatile( "xrstor64 %0" : : "m"(xsave->xsave), "a" (7), "d" (0) );
-    }
-    else
-    {
-        __asm__ volatile( "fxrstor64 %0" : : "m"(xsave->xsave) );
-    }
-    set_full_cpu_context();
+    amd64_thread_data()->syscall_frame->restore_flags |= CONTEXT_INTEGER;
 }
 
 
@@ -1708,6 +1670,8 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         }
         else xsave->xstate.Mask &= ~XSTATE_MASK_GSSE;
     }
+
+    frame->restore_flags |= flags & ~CONTEXT_INTEGER;
     return STATUS_SUCCESS;
 }
 

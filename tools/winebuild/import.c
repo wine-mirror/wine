@@ -1614,6 +1614,7 @@ static void output_syscall_dispatcher(void)
         output( "\tmovw %%fs,-0x1a(%%rbp)\n" );
         output( "\tmovw %%ss,-0x8(%%rbp)\n" );
         output( "\tmovw %%gs,-0x6(%%rbp)\n" );
+        output( "\tmovl $0,-0x4(%%rbp)\n" );
         output( "\tmovq %%rsp,%%r12\n" );
         output( "\tmovq %%rax,%%r13\n" );
         output( "\tmovl %s(%%rip),%%r14d\n", asm_name("__wine_syscall_flags") );
@@ -1667,6 +1668,9 @@ static void output_syscall_dispatcher(void)
         output( "\tcallq *(%%r10,%%r13,8)\n" );
         output( "2:\tmovq %%gs:0x30,%%rcx\n" );
         output( "\tmovq $0,0x328(%%rcx)\n" );
+        output( "\tmovl -4(%%rbp),%%ecx\n" );    /* frame->restore_flags */
+        output( "\ttestl $0x48,%%ecx\n" );       /* CONTEXT_FLOATING_POINT | CONTEXT_XSTATE */
+        output( "\tjz 4f\n" );
         output( "\ttestl $3,%%r14d\n" );  /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
         output( "\tjz 3f\n" );
         output( "\tmovq %%rax,%%r11\n" );
@@ -1687,7 +1691,24 @@ static void output_syscall_dispatcher(void)
         output_cfi( ".cfi_same_value %%rsi" );
         output( "\tmovq -0x90(%%rbp),%%rbx\n" );
         output_cfi( ".cfi_same_value %%rbx" );
-        output( "\tleaq -0x28(%%rbp),%%rsp\n" );
+        output( "\ttestl $0x3,%%ecx\n" );        /* CONTEXT_CONTROL | CONTEXT_INTEGER */
+        output( "\tjnz 1f\n" );
+        output( "\tmovq -0x28(%%rbp),%%rcx\n" ); /* frame->rip */
+        output( "\tleaq -0x10(%%rbp),%%rsp\n" ); /* frame->rsp */
+        output( "\tmovq (%%rbp),%%rbp\n" );
+        output_cfi( ".cfi_same_value %%rbp" );
+        output( "\tpopq %%rsp\n" );
+        output( "\tjmpq *%%rcx\n" );
+        output( "1:\ttestl $0x2,%%ecx\n" );      /* CONTEXT_INTEGER */
+        output( "\tjz 1f\n" );
+        output( "\tmovq -0x98(%%rbp),%%rax\n" );
+        output( "\tmovq -0x88(%%rbp),%%rcx\n" );
+        output( "\tmovq -0x80(%%rbp),%%rdx\n" );
+        output( "\tmovq -0x68(%%rbp),%%r8\n" );
+        output( "\tmovq -0x60(%%rbp),%%r9\n" );
+        output( "\tmovq -0x58(%%rbp),%%r10\n" );
+        output( "\tmovq -0x50(%%rbp),%%r11\n" );
+        output( "1:\tleaq -0x28(%%rbp),%%rsp\n" );
         output_cfi( ".cfi_def_cfa_register %%rsp" );
         output_cfi( ".cfi_adjust_cfa_offset 40" );
         output( "\tmovq (%%rbp),%%rbp\n" );
