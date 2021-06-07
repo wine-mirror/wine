@@ -16451,22 +16451,19 @@ static void test_clear_image_unordered_access_view(void)
         unsigned int expected;
         BOOL is_float;
         unsigned int clamped;
-        BOOL is_todo;
     }
     tests[] =
     {
         /* Test clearing a specific mip level. */
         {DXGI_FORMAT_R32_FLOAT,       2, 1, 0, 0, 1, {1,          0, 0, 0}, 0x00000001},
         {DXGI_FORMAT_R32_FLOAT,       2, 1, 1, 0, 1, {1,          0, 0, 0}, 0x00000001},
-        {DXGI_FORMAT_R32_FLOAT,       2, 1, 0, 0, 1, {0x3f000000, 0, 0, 0}, 0x3f000000, TRUE,  0, TRUE},
-        {DXGI_FORMAT_R32_FLOAT,       2, 1, 1, 0, 1, {0x3f000000, 0, 0, 0}, 0x3f000000, TRUE,  0, TRUE},
+        {DXGI_FORMAT_R32_FLOAT,       2, 1, 0, 0, 1, {0x3f000000, 0, 0, 0}, 0x3f000000, TRUE},
+        {DXGI_FORMAT_R32_FLOAT,       2, 1, 1, 0, 1, {0x3f000000, 0, 0, 0}, 0x3f000000, TRUE},
         /* Test clearing specific array layers. */
         {DXGI_FORMAT_R32_FLOAT,       1, IMAGE_SIZE, 0, 0, IMAGE_SIZE, {1, 0, 0, 0}, 0x00000001},
         {DXGI_FORMAT_R32_FLOAT,       1, IMAGE_SIZE, 0, 3, 2,          {1, 0, 0, 0}, 0x00000001},
-        {DXGI_FORMAT_R32_FLOAT,       1, IMAGE_SIZE, 0, 0, IMAGE_SIZE,
-                {0x3f000000, 0, 0, 0}, 0x3f000000, TRUE, 0, TRUE},
-        {DXGI_FORMAT_R32_FLOAT,       1, IMAGE_SIZE, 0, 3, 2,
-                {0x3f000000, 0, 0, 0}, 0x3f000000, TRUE, 0, TRUE},
+        {DXGI_FORMAT_R32_FLOAT,       1, IMAGE_SIZE, 0, 0, IMAGE_SIZE, {0x3f000000, 0, 0, 0}, 0x3f000000, TRUE},
+        {DXGI_FORMAT_R32_FLOAT,       1, IMAGE_SIZE, 0, 3, 2,          {0x3f000000, 0, 0, 0}, 0x3f000000, TRUE},
         /* Test uint clears with formats. */
         {DXGI_FORMAT_R16G16_UINT,     1, 1, 0, 0, 1, {1,       2, 3, 4}, 0x00020001},
         {DXGI_FORMAT_R16G16_UINT,     1, 1, 0, 0, 1, {0x12345, 0, 0, 0}, 0x00002345, FALSE, 0x0000ffff},
@@ -16478,16 +16475,16 @@ static void test_clear_image_unordered_access_view(void)
         {DXGI_FORMAT_R11G11B10_FLOAT, 1, 1, 0, 0, 1, {1,       2, 3, 4}, 0x00c01001},
         /* Test float clears with formats. */
         {DXGI_FORMAT_R16G16_UNORM,    1, 1, 0, 0, 1,
-                {0x3f000000 /* 0.5f */, 0x3f800000 /* 1.0f */, 0, 0}, 0xffff8000, TRUE, 0, TRUE},
+                {0x3f000000 /* 0.5f */, 0x3f800000 /* 1.0f */, 0, 0}, 0xffff8000, TRUE},
         {DXGI_FORMAT_R16G16_FLOAT,    1, 1, 0, 0, 1,
-                {0x3f000000 /* 0.5f */, 0x3f800000 /* 1.0f */, 0, 0}, 0x3c003800, TRUE, 0, TRUE},
+                {0x3f000000 /* 0.5f */, 0x3f800000 /* 1.0f */, 0, 0}, 0x3c003800, TRUE},
         {DXGI_FORMAT_R8G8B8A8_UNORM,  1, 1, 0, 0, 1,
-                {0x3f000000 /* 0.5f */, 0x3f800000 /* 1.0f */, 0, 0}, 0x0000ff80, TRUE, 0, TRUE},
+                {0x3f000000 /* 0.5f */, 0x3f800000 /* 1.0f */, 0, 0}, 0x0000ff80, TRUE},
         {DXGI_FORMAT_R8G8B8A8_UNORM,  1, 1, 0, 0, 1,
-                {0, 0, 0x3f000000 /* 0.5f */, 0x3f800000 /* 1.0f */}, 0xff800000, TRUE, 0, TRUE},
+                {0, 0, 0x3f000000 /* 0.5f */, 0x3f800000 /* 1.0f */}, 0xff800000, TRUE},
         {DXGI_FORMAT_R11G11B10_FLOAT, 1, 1, 0, 0, 1,
                 {0x3f000000 /* 1.0f */, 0 /* 0.0f */, 0xbf800000 /* -1.0f */, 0x3f000000 /* 1.0f */},
-                0x00000380, TRUE, 0, TRUE},
+                0x00000380, TRUE},
     };
 
     static const struct
@@ -16624,9 +16621,8 @@ static void test_clear_image_unordered_access_view(void)
                             || broken(is_inside && !tests[i].is_float && is_small_float_format && !actual_colour)))
                         break;
                 }
-                todo_wine_if(tests[i].is_todo && expected_colour)
-                    ok(success, "At layer %u, (%u,%u,%u), expected 0x%08x, got 0x%08x.\n",
-                            layer, x, y, z, expected_colour, actual_colour);
+                ok(success, "At layer %u, (%u,%u,%u), expected 0x%08x, got 0x%08x.\n",
+                        layer, x, y, z, expected_colour, actual_colour);
 
                 release_resource_readback(&rb);
             }

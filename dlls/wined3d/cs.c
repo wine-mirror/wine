@@ -504,6 +504,7 @@ struct wined3d_cs_clear_unordered_access_view
     enum wined3d_cs_op opcode;
     struct wined3d_unordered_access_view *view;
     struct wined3d_uvec4 clear_value;
+    bool fp;
 };
 
 struct wined3d_cs_copy_uav_counter
@@ -2721,14 +2722,14 @@ static void wined3d_cs_exec_clear_unordered_access_view(struct wined3d_cs *cs, c
     struct wined3d_context *context;
 
     context = context_acquire(cs->c.device, NULL, 0);
-    cs->c.device->adapter->adapter_ops->adapter_clear_uav(context, view, &op->clear_value);
+    cs->c.device->adapter->adapter_ops->adapter_clear_uav(context, view, &op->clear_value, op->fp);
     context_release(context);
 
     wined3d_resource_release(view->resource);
 }
 
-void wined3d_device_context_emit_clear_uav_uint(struct wined3d_device_context *context,
-        struct wined3d_unordered_access_view *view, const struct wined3d_uvec4 *clear_value)
+void wined3d_device_context_emit_clear_uav(struct wined3d_device_context *context,
+        struct wined3d_unordered_access_view *view, const struct wined3d_uvec4 *clear_value, bool fp)
 {
     struct wined3d_cs_clear_unordered_access_view *op;
 
@@ -2736,6 +2737,7 @@ void wined3d_device_context_emit_clear_uav_uint(struct wined3d_device_context *c
     op->opcode = WINED3D_CS_OP_CLEAR_UNORDERED_ACCESS_VIEW;
     op->view = view;
     op->clear_value = *clear_value;
+    op->fp = fp;
 
     wined3d_device_context_acquire_resource(context, view->resource);
 

@@ -1447,8 +1447,17 @@ static void STDMETHODCALLTYPE d3d11_device_context_ClearUnorderedAccessViewUint(
 static void STDMETHODCALLTYPE d3d11_device_context_ClearUnorderedAccessViewFloat(ID3D11DeviceContext1 *iface,
         ID3D11UnorderedAccessView *unordered_access_view, const float values[4])
 {
-    FIXME("iface %p, unordered_access_view %p, values %s stub!\n",
+    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
+    struct d3d11_unordered_access_view *view;
+
+    TRACE("iface %p, unordered_access_view %p, values %s.\n",
             iface, unordered_access_view, debug_float4(values));
+
+    view = unsafe_impl_from_ID3D11UnorderedAccessView(unordered_access_view);
+    wined3d_mutex_lock();
+    wined3d_device_context_clear_uav_float(context->wined3d_context,
+            view->wined3d_view, (const struct wined3d_vec4 *)values);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_ClearDepthStencilView(ID3D11DeviceContext1 *iface,

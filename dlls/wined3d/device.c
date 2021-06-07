@@ -4799,12 +4799,26 @@ HRESULT CDECL wined3d_device_context_clear_rendertarget_view(struct wined3d_devi
     return WINED3D_OK;
 }
 
+void CDECL wined3d_device_context_clear_uav_float(struct wined3d_device_context *context,
+        struct wined3d_unordered_access_view *view, const struct wined3d_vec4 *clear_value)
+{
+    TRACE("context %p, view %p, clear_value %s.\n", context, view, debug_vec4(clear_value));
+
+    if (!(view->format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & (WINED3DFMT_FLAG_FLOAT | WINED3DFMT_FLAG_NORMALISED)))
+    {
+        WARN("Not supported for view format %s.\n", debug_d3dformat(view->format->id));
+        return;
+    }
+
+    wined3d_device_context_emit_clear_uav(context, view, (const struct wined3d_uvec4 *)clear_value, true);
+}
+
 void CDECL wined3d_device_context_clear_uav_uint(struct wined3d_device_context *context,
         struct wined3d_unordered_access_view *view, const struct wined3d_uvec4 *clear_value)
 {
     TRACE("context %p, view %p, clear_value %s.\n", context, view, debug_uvec4(clear_value));
 
-    wined3d_device_context_emit_clear_uav_uint(context, view, clear_value);
+    wined3d_device_context_emit_clear_uav(context, view, clear_value, false);
 }
 
 static unsigned int sanitise_map_flags(const struct wined3d_resource *resource, unsigned int flags)

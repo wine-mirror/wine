@@ -1446,8 +1446,8 @@ void wined3d_unordered_access_view_invalidate_location(struct wined3d_unordered_
     wined3d_view_invalidate_location(view->resource, &view->desc, location);
 }
 
-void wined3d_unordered_access_view_gl_clear_uint(struct wined3d_unordered_access_view_gl *view_gl,
-        const struct wined3d_uvec4 *clear_value, struct wined3d_context_gl *context_gl)
+void wined3d_unordered_access_view_gl_clear(struct wined3d_unordered_access_view_gl *view_gl,
+        const struct wined3d_uvec4 *clear_value, struct wined3d_context_gl *context_gl, bool fp)
 {
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     const struct wined3d_format_gl *format_gl;
@@ -1478,7 +1478,7 @@ void wined3d_unordered_access_view_gl_clear_uint(struct wined3d_unordered_access
         base_layer = view_gl->v.desc.u.texture.layer_idx;
         base_level = view_gl->v.desc.u.texture.level_idx;
 
-        if (format_gl->f.byte_count <= 4)
+        if (format_gl->f.byte_count <= 4 && !fp)
         {
             gl_format = format_gl->format;
             gl_type = format_gl->type;
@@ -1549,6 +1549,12 @@ void wined3d_unordered_access_view_gl_clear_uint(struct wined3d_unordered_access
             && format_gl->f.id != WINED3DFMT_R32G32B32A32_SINT)
     {
         FIXME("Not implemented for format %s.\n", debug_d3dformat(format_gl->f.id));
+        return;
+    }
+
+    if (fp)
+    {
+        FIXME("Floating-point buffer clears not implemented.\n");
         return;
     }
 
@@ -1700,8 +1706,8 @@ HRESULT wined3d_unordered_access_view_gl_init(struct wined3d_unordered_access_vi
     return hr;
 }
 
-void wined3d_unordered_access_view_vk_clear_uint(struct wined3d_unordered_access_view_vk *view_vk,
-        const struct wined3d_uvec4 *clear_value, struct wined3d_context_vk *context_vk)
+void wined3d_unordered_access_view_vk_clear(struct wined3d_unordered_access_view_vk *view_vk,
+        const struct wined3d_uvec4 *clear_value, struct wined3d_context_vk *context_vk, bool fp)
 {
     const struct wined3d_vk_info *vk_info;
     const struct wined3d_format *format;
@@ -1712,7 +1718,7 @@ void wined3d_unordered_access_view_vk_clear_uint(struct wined3d_unordered_access
     VkAccessFlags access_mask;
     unsigned int offset, size;
 
-    TRACE("view_vk %p, clear_value %s, context_vk %p.\n", view_vk, debug_uvec4(clear_value), context_vk);
+    TRACE("view_vk %p, clear_value %s, context_vk %p, fp %#x.\n", view_vk, debug_uvec4(clear_value), context_vk, fp);
 
     resource = view_vk->v.resource;
     if (resource->type != WINED3D_RTYPE_BUFFER)
