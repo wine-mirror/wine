@@ -767,9 +767,25 @@ static void check_resource_info(ID3D10Resource *resource, unsigned int i, unsign
             ok_(__FILE__, line)(desc_2d.Format == test_image[i].expected.Format,
                     "Test %u: Got unexpected Format %u, expected %u.\n",
                     i, desc_2d.Format, test_image[i].expected.Format);
+            ok_(__FILE__, line)(desc_2d.SampleDesc.Count == 1,
+                    "Test %u: Got unexpected SampleDesc.Count %u, expected %u\n",
+                    i, desc_2d.SampleDesc.Count, 1);
+            ok_(__FILE__, line)(desc_2d.SampleDesc.Quality == 0,
+                    "Test %u: Got unexpected SampleDesc.Quality %u, expected %u\n",
+                    i, desc_2d.SampleDesc.Quality, 0);
+            ok_(__FILE__, line)(desc_2d.Usage == D3D10_USAGE_DEFAULT,
+                    "Test %u: Got unexpected Usage %u, expected %u\n",
+                    i, desc_2d.Usage, D3D10_USAGE_DEFAULT);
+            ok_(__FILE__, line)(desc_2d.BindFlags == D3D10_BIND_SHADER_RESOURCE,
+                    "Test %u: Got unexpected BindFlags %#x, expected %#x\n",
+                    i, desc_2d.BindFlags, D3D10_BIND_SHADER_RESOURCE);
+            ok_(__FILE__, line)(desc_2d.CPUAccessFlags == 0,
+                    "Test %u: Got unexpected CPUAccessFlags %#x, expected %#x\n",
+                    i, desc_2d.CPUAccessFlags, 0);
             ok_(__FILE__, line)(desc_2d.MiscFlags == test_image[i].expected.MiscFlags,
-                    "Test %u: Got unexpected MiscFlags %u, expected %u.\n",
+                    "Test %u: Got unexpected MiscFlags %#x, expected %#x.\n",
                     i, desc_2d.MiscFlags, test_image[i].expected.MiscFlags);
+
             ID3D10Texture2D_Release(texture_2d);
             break;
 
@@ -792,8 +808,17 @@ static void check_resource_info(ID3D10Resource *resource, unsigned int i, unsign
             ok_(__FILE__, line)(desc_3d.Format == test_image[i].expected.Format,
                     "Test %u: Got unexpected Format %u, expected %u.\n",
                     i, desc_3d.Format, test_image[i].expected.Format);
+            ok_(__FILE__, line)(desc_3d.Usage == D3D10_USAGE_DEFAULT,
+                    "Test %u: Got unexpected Usage %u, expected %u\n",
+                    i, desc_3d.Usage, D3D10_USAGE_DEFAULT);
+            ok_(__FILE__, line)(desc_3d.BindFlags == D3D10_BIND_SHADER_RESOURCE,
+                    "Test %u: Got unexpected BindFlags %#x, expected %#x\n",
+                    i, desc_3d.BindFlags, D3D10_BIND_SHADER_RESOURCE);
+            ok_(__FILE__, line)(desc_3d.CPUAccessFlags == 0,
+                    "Test %u: Got unexpected CPUAccessFlags %#x, expected %#x\n",
+                    i, desc_3d.CPUAccessFlags, 0);
             ok_(__FILE__, line)(desc_3d.MiscFlags == test_image[i].expected.MiscFlags,
-                    "Test %u: Got unexpected MiscFlags %u, expected %u.\n",
+                    "Test %u: Got unexpected MiscFlags %#x, expected %#x.\n",
                     i, desc_3d.MiscFlags, test_image[i].expected.MiscFlags);
             ID3D10Texture3D_Release(texture_3d);
             break;
