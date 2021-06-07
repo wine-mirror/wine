@@ -1254,7 +1254,7 @@ float CDECL logf( float x )
     if (ix - 0x00800000 >= 0x7f800000 - 0x00800000) {
         /* x < 0x1p-126 or inf or nan. */
         if (ix * 2 == 0)
-            return math_error(_SING, "logf", x, 0, -1.0 / x);
+            return math_error(_SING, "logf", x, 0, (ix & 0x80000000 ? 1.0 : -1.0) / x);
         if (ix == 0x7f800000) /* log(inf) == inf. */
             return x;
         if (ix * 2 > 0xff000000)
@@ -1273,7 +1273,7 @@ float CDECL logf( float x )
     tmp = ix - 0x3f330000;
     i = (tmp >> (23 - 4)) % (1 << 4);
     k = (INT32)tmp >> 23; /* arithmetic shift */
-    iz = ix - (tmp & 0xff << 23);
+    iz = ix - (tmp & (0x1ffu << 23));
     invc = T[i].invc;
     logc = T[i].logc;
     z = *(float*)&iz;
@@ -2966,7 +2966,7 @@ double CDECL log( double x )
     if (top - 0x0010 >= 0x7ff0 - 0x0010) {
         /* x < 0x1p-1022 or inf or nan. */
         if (ix * 2 == 0)
-            return math_error(_SING, "log", x, 0, -1.0 / x);
+            return math_error(_SING, "log", x, 0, (top & 0x8000 ? 1.0 : -1.0) / x);
         if (ix == 0x7ff0000000000000ULL) /* log(inf) == inf. */
             return x;
         if ((top & 0x7ff0) == 0x7ff0 && (ix & 0xfffffffffffffULL))
