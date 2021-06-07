@@ -5803,6 +5803,18 @@ BOOL wined3d_get_primary_adapter_luid(LUID *luid)
     return TRUE;
 }
 
+uint32_t wined3d_format_pack(const struct wined3d_format *format, const struct wined3d_uvec4 *value)
+{
+    uint32_t p = 0;
+
+    p |= (value->x & wined3d_mask_from_size(format->red_size)) << format->red_offset;
+    p |= (value->y & wined3d_mask_from_size(format->green_size)) << format->green_offset;
+    p |= (value->z & wined3d_mask_from_size(format->blue_size)) << format->blue_offset;
+    p |= (value->w & wined3d_mask_from_size(format->alpha_size)) << format->alpha_offset;
+
+    return p;
+}
+
 /* Note: It's the caller's responsibility to ensure values can be expressed
  * in the requested format. UNORM formats for example can only express values
  * in the range 0.0f -> 1.0f. */

@@ -16456,26 +16456,26 @@ static void test_clear_image_unordered_access_view(void)
     tests[] =
     {
         /* Test clearing a specific mip level. */
-        {DXGI_FORMAT_R32_FLOAT,       2, 1, 0, 0, 1, {1,          0, 0, 0}, 0x00000001, FALSE, 0, TRUE},
-        {DXGI_FORMAT_R32_FLOAT,       2, 1, 1, 0, 1, {1,          0, 0, 0}, 0x00000001, FALSE, 0, TRUE},
+        {DXGI_FORMAT_R32_FLOAT,       2, 1, 0, 0, 1, {1,          0, 0, 0}, 0x00000001},
+        {DXGI_FORMAT_R32_FLOAT,       2, 1, 1, 0, 1, {1,          0, 0, 0}, 0x00000001},
         {DXGI_FORMAT_R32_FLOAT,       2, 1, 0, 0, 1, {0x3f000000, 0, 0, 0}, 0x3f000000, TRUE,  0, TRUE},
         {DXGI_FORMAT_R32_FLOAT,       2, 1, 1, 0, 1, {0x3f000000, 0, 0, 0}, 0x3f000000, TRUE,  0, TRUE},
         /* Test clearing specific array layers. */
-        {DXGI_FORMAT_R32_FLOAT,       1, IMAGE_SIZE, 0, 0, IMAGE_SIZE, {1, 0, 0, 0}, 0x00000001, FALSE, 0, TRUE},
-        {DXGI_FORMAT_R32_FLOAT,       1, IMAGE_SIZE, 0, 3, 2,          {1, 0, 0, 0}, 0x00000001, FALSE, 0, TRUE},
+        {DXGI_FORMAT_R32_FLOAT,       1, IMAGE_SIZE, 0, 0, IMAGE_SIZE, {1, 0, 0, 0}, 0x00000001},
+        {DXGI_FORMAT_R32_FLOAT,       1, IMAGE_SIZE, 0, 3, 2,          {1, 0, 0, 0}, 0x00000001},
         {DXGI_FORMAT_R32_FLOAT,       1, IMAGE_SIZE, 0, 0, IMAGE_SIZE,
                 {0x3f000000, 0, 0, 0}, 0x3f000000, TRUE, 0, TRUE},
         {DXGI_FORMAT_R32_FLOAT,       1, IMAGE_SIZE, 0, 3, 2,
                 {0x3f000000, 0, 0, 0}, 0x3f000000, TRUE, 0, TRUE},
         /* Test uint clears with formats. */
-        {DXGI_FORMAT_R16G16_UINT,     1, 1, 0, 0, 1, {1,       2, 3, 4}, 0x00020001, FALSE, 0, TRUE},
-        {DXGI_FORMAT_R16G16_UINT,     1, 1, 0, 0, 1, {0x12345, 0, 0, 0}, 0x00002345, FALSE, 0x0000ffff, TRUE},
-        {DXGI_FORMAT_R16G16_UNORM,    1, 1, 0, 0, 1, {1,       2, 3, 4}, 0x00020001, FALSE, 0, TRUE},
-        {DXGI_FORMAT_R16G16_FLOAT,    1, 1, 0, 0, 1, {1,       2, 3, 4}, 0x00020001, FALSE, 0, TRUE},
-        {DXGI_FORMAT_R8G8B8A8_UINT,   1, 1, 0, 0, 1, {1,       2, 3, 4}, 0x04030201, FALSE, 0, TRUE},
-        {DXGI_FORMAT_R8G8B8A8_UINT,   1, 1, 0, 0, 1, {0x123,   0, 0, 0}, 0x00000023, FALSE, 0x000000ff, TRUE},
-        {DXGI_FORMAT_R8G8B8A8_UNORM,  1, 1, 0, 0, 1, {1,       2, 3, 4}, 0x04030201, FALSE, 0, TRUE},
-        {DXGI_FORMAT_R11G11B10_FLOAT, 1, 1, 0, 0, 1, {1,       2, 3, 4}, 0x00c01001, FALSE, 0, TRUE},
+        {DXGI_FORMAT_R16G16_UINT,     1, 1, 0, 0, 1, {1,       2, 3, 4}, 0x00020001},
+        {DXGI_FORMAT_R16G16_UINT,     1, 1, 0, 0, 1, {0x12345, 0, 0, 0}, 0x00002345, FALSE, 0x0000ffff},
+        {DXGI_FORMAT_R16G16_UNORM,    1, 1, 0, 0, 1, {1,       2, 3, 4}, 0x00020001},
+        {DXGI_FORMAT_R16G16_FLOAT,    1, 1, 0, 0, 1, {1,       2, 3, 4}, 0x00020001},
+        {DXGI_FORMAT_R8G8B8A8_UINT,   1, 1, 0, 0, 1, {1,       2, 3, 4}, 0x04030201},
+        {DXGI_FORMAT_R8G8B8A8_UINT,   1, 1, 0, 0, 1, {0x123,   0, 0, 0}, 0x00000023, FALSE, 0x000000ff},
+        {DXGI_FORMAT_R8G8B8A8_UNORM,  1, 1, 0, 0, 1, {1,       2, 3, 4}, 0x04030201},
+        {DXGI_FORMAT_R11G11B10_FLOAT, 1, 1, 0, 0, 1, {1,       2, 3, 4}, 0x00c01001},
         /* Test float clears with formats. */
         {DXGI_FORMAT_R16G16_UNORM,    1, 1, 0, 0, 1,
                 {0x3f000000 /* 0.5f */, 0x3f800000 /* 1.0f */, 0, 0}, 0xffff8000, TRUE, 0, TRUE},
