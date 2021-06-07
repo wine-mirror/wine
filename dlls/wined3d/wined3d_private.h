@@ -5959,6 +5959,11 @@ static inline BOOL is_rasterization_disabled(const struct wined3d_shader *geomet
             && geometry_shader->u.gs.so_desc->rasterizer_stream_idx == WINED3D_NO_RASTERIZER_STREAM;
 }
 
+static inline uint32_t wined3d_mask_from_size(unsigned int size)
+{
+    return size < 32 ? (1u << size) - 1 : ~0u;
+}
+
 static inline DWORD wined3d_extract_bits(const DWORD *bitstream,
         unsigned int offset, unsigned int count)
 {

@@ -36,11 +36,11 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 static const DWORD surface_simple_locations = WINED3D_LOCATION_SYSMEM | WINED3D_LOCATION_BUFFER;
 
 /* Works correctly only for <= 4 bpp formats. */
-static void get_color_masks(const struct wined3d_format *format, DWORD *masks)
+static void get_color_masks(const struct wined3d_format *format, uint32_t *masks)
 {
-    masks[0] = ((1u << format->red_size) - 1) << format->red_offset;
-    masks[1] = ((1u << format->green_size) - 1) << format->green_offset;
-    masks[2] = ((1u << format->blue_size) - 1) << format->blue_offset;
+    masks[0] = wined3d_mask_from_size(format->red_size) << format->red_offset;
+    masks[1] = wined3d_mask_from_size(format->green_size) << format->green_offset;
+    masks[2] = wined3d_mask_from_size(format->blue_size) << format->blue_offset;
 }
 
 /* See also float_16_to_32() in wined3d_private.h */
