@@ -3899,6 +3899,7 @@ static void test_fionbio(void)
     u_long one = 1, zero = 0;
     HANDLE port, event;
     ULONG_PTR key;
+    void *output;
     DWORD size;
     SOCKET s;
     int ret;
@@ -3930,6 +3931,11 @@ static void test_fionbio(void)
 
     ret = WSAIoctl(s, FIONBIO, &one, sizeof(one) + 1, NULL, 0, &size, NULL, NULL);
     ok(!ret, "got error %u\n", WSAGetLastError());
+
+    output = VirtualAlloc(NULL, 4, MEM_RESERVE | MEM_COMMIT, PAGE_NOACCESS);
+    ret = WSAIoctl(s, FIONBIO, &one, sizeof(one) + 1, output, 4, &size, NULL, NULL);
+    todo_wine ok(!ret, "got error %u\n", WSAGetLastError());
+    VirtualFree(output, 0, MEM_FREE);
 
     overlapped.Internal = 0xdeadbeef;
     overlapped.InternalHigh = 0xdeadbeef;
