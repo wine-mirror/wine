@@ -199,7 +199,7 @@ UINT RingBuffer_AddPointer(struct ReportRingBuffer *ring)
     {
         int count = idx = ring->pointer_alloc;
         ring->pointer_alloc *= 2;
-        ring->pointers = HeapReAlloc(GetProcessHeap(), 0, ring->pointers, sizeof(UINT) * ring->pointer_alloc);
+        ring->pointers = realloc(ring->pointers, sizeof(UINT) * ring->pointer_alloc);
         for( ;count < ring->pointer_alloc; count++)
             ring->pointers[count] = POINTER_UNUSED;
     }
