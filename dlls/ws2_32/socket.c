@@ -40,11 +40,6 @@
 # define sipx_node       sipx_addr.x_host.c_host
 #endif  /* __FreeBSD__ */
 
-#if !defined(TCP_KEEPIDLE) && defined(TCP_KEEPALIVE)
-/* TCP_KEEPALIVE is the Mac OS name for TCP_KEEPIDLE */
-#define TCP_KEEPIDLE TCP_KEEPALIVE
-#endif
-
 #define FILE_USE_FILE_POINTER_POSITION ((LONGLONG)-2)
 
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
@@ -3228,7 +3223,6 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
                     DWORD out_size, LPDWORD ret_size, LPWSAOVERLAPPED overlapped,
                     LPWSAOVERLAPPED_COMPLETION_ROUTINE completion )
 {
-    int fd;
     DWORD status = 0, total = 0;
 
     TRACE("%04lx, %s, %p, %d, %p, %d, %p, %p, %p\n",
@@ -3422,52 +3416,18 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         SetLastError( WSAEINVAL );
         return -1;
     }
+
     case WS_SIO_KEEPALIVE_VALS:
     {
-        struct tcp_keepalive *k;
-        int keepalive, keepidle, keepintvl;
+        DWORD ret;
 
-        if (!in_buff || in_size < sizeof(struct tcp_keepalive))
-        {
-            SetLastError(WSAEFAULT);
-            return SOCKET_ERROR;
-        }
+        ret = server_ioctl_sock( s, IOCTL_AFD_WINE_KEEPALIVE_VALS, in_buff, in_size,
+                                 out_buff, out_size, ret_size, overlapped, completion );
+        if (!overlapped || completion) *ret_size = 0;
+        SetLastError( ret );
+        return ret ? -1 : 0;
+    }
 
-        k = in_buff;
-        keepalive = k->onoff ? 1 : 0;
-        keepidle = max( 1, (k->keepalivetime + 500) / 1000 );
-        keepintvl = max( 1, (k->keepaliveinterval + 500) / 1000 );
-
-        TRACE("onoff: %d, keepalivetime: %d, keepaliveinterval: %d\n", keepalive, keepidle, keepintvl);
-
-        fd = get_sock_fd(s, 0, NULL);
-        if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keepalive, sizeof(int)) == -1)
-            status = WSAEINVAL;
-#if defined(TCP_KEEPIDLE) || defined(TCP_KEEPINTVL)
-        /* these values need to be set only if SO_KEEPALIVE is enabled */
-        else if(keepalive)
-        {
-#ifndef TCP_KEEPIDLE
-            FIXME("ignoring keepalive timeout\n");
-#else
-            if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, (void *)&keepidle, sizeof(int)) == -1)
-                status = WSAEINVAL;
-            else
-#endif
-#ifdef TCP_KEEPINTVL
-            if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, (void *)&keepintvl, sizeof(int)) == -1)
-                status = WSAEINVAL;
-#else
-                FIXME("ignoring keepalive interval\n");
-#endif
-        }
-#else
-        else
-            FIXME("ignoring keepalive interval and timeout\n");
-#endif
-        release_sock_fd(s, fd);
-        break;
-   }
    case WS_SIO_ROUTING_INTERFACE_QUERY:
    {
        struct WS_sockaddr *daddr = (struct WS_sockaddr *)in_buff;
