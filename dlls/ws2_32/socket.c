@@ -3219,122 +3219,6 @@ static DWORD server_ioctl_sock( SOCKET s, DWORD code, LPVOID in_buff, DWORD in_s
     return NtStatusToWSAError( status );
 }
 
-static DWORD get_interface_list(SOCKET s, void *out_buff, DWORD out_size, DWORD *ret_size, DWORD *total_bytes)
-{
-    DWORD size, interface_count = 0, ret;
-    INTERFACE_INFO *info = out_buff;
-    PMIB_IPADDRTABLE table = NULL;
-    struct if_nameindex *if_ni;
-    DWORD status = 0;
-    int fd;
-
-    if (!out_buff)
-        return WSAEFAULT;
-
-    if ((fd = get_sock_fd(s, 0, NULL)) == -1)
-        return SOCKET_ERROR;
-
-    if ((ret = GetIpAddrTable(NULL, &size, TRUE)) != ERROR_INSUFFICIENT_BUFFER)
-    {
-        if (ret != ERROR_NO_DATA)
-        {
-            ERR("Unable to get ip address table.\n");
-            status = WSAEINVAL;
-        }
-        goto done;
-    }
-    if (!(table = heap_alloc(size)))
-    {
-        ERR("No memory.\n");
-        status = WSAEINVAL;
-        goto done;
-    }
-    if (GetIpAddrTable(table, &size, TRUE) != NO_ERROR)
-    {
-        ERR("Unable to get interface table.\n");
-        status = WSAEINVAL;
-        goto done;
-    }
-    if (table->dwNumEntries * sizeof(INTERFACE_INFO) > out_size)
-    {
-        WARN("Buffer too small, dwNumEntries %u, out_size = %u.\n", table->dwNumEntries, out_size);
-        *ret_size = 0;
-        status = WSAEFAULT;
-        goto done;
-    }
-
-    if (!(if_ni = if_nameindex()))
-    {
-        ERR("Unable to get interface name index.\n");
-        status = WSAEINVAL;
-        goto done;
-    }
-
-    for (; interface_count < table->dwNumEntries; ++interface_count, ++info)
-    {
-        unsigned int addr, mask;
-        struct ifreq if_info;
-        unsigned int i;
-
-        memset(info, 0, sizeof(*info));
-
-        for (i = 0; if_ni[i].if_index || if_ni[i].if_name; ++i)
-            if (if_ni[i].if_index == table->table[interface_count].dwIndex)
-                break;
-
-        if (!if_ni[i].if_name)
-        {
-            ERR("Error obtaining interface name for ifindex %u.\n", table->table[interface_count].dwIndex);
-            status = WSAEINVAL;
-            break;
-        }
-
-        lstrcpynA(if_info.ifr_name, if_ni[i].if_name, IFNAMSIZ);
-        if (ioctl(fd, SIOCGIFFLAGS, &if_info) < 0)
-        {
-            ERR("Error obtaining status flags for socket.\n");
-            status = WSAEINVAL;
-            break;
-        }
-
-        if (if_info.ifr_flags & IFF_BROADCAST)
-            info->iiFlags |= WS_IFF_BROADCAST;
-#ifdef IFF_POINTOPOINT
-        if (if_info.ifr_flags & IFF_POINTOPOINT)
-            info->iiFlags |= WS_IFF_POINTTOPOINT;
-#endif
-        if (if_info.ifr_flags & IFF_LOOPBACK)
-            info->iiFlags |= WS_IFF_LOOPBACK;
-        if (if_info.ifr_flags & IFF_UP)
-            info->iiFlags |= WS_IFF_UP;
-        if (if_info.ifr_flags & IFF_MULTICAST)
-            info->iiFlags |= WS_IFF_MULTICAST;
-
-        addr = table->table[interface_count].dwAddr;
-        mask = table->table[interface_count].dwMask;
-
-        info->iiAddress.AddressIn.sin_family = WS_AF_INET;
-        info->iiAddress.AddressIn.sin_port = 0;
-        info->iiAddress.AddressIn.sin_addr.WS_s_addr = addr;
-
-        info->iiNetmask.AddressIn.sin_family = WS_AF_INET;
-        info->iiNetmask.AddressIn.sin_port = 0;
-        info->iiNetmask.AddressIn.sin_addr.WS_s_addr = mask;
-
-        if (if_info.ifr_flags & IFF_BROADCAST)
-        {
-            info->iiBroadcastAddress.AddressIn.sin_family = WS_AF_INET;
-            info->iiBroadcastAddress.AddressIn.sin_port = 0;
-            info->iiBroadcastAddress.AddressIn.sin_addr.WS_s_addr = addr | ~mask;
-        }
-    }
-    if_freenameindex(if_ni);
-done:
-    heap_free(table);
-    *total_bytes = sizeof(INTERFACE_INFO) * interface_count;
-    release_sock_fd(s, fd);
-    return status;
-}
 
 /**********************************************************************
  *              WSAIoctl                (WS2_32.50)
@@ -3403,13 +3287,16 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         SetLastError(WSAEINVAL);
         return SOCKET_ERROR;
 
-   case WS_SIO_GET_INTERFACE_LIST:
-       {
-           TRACE("-> SIO_GET_INTERFACE_LIST request\n");
+    case WS_SIO_GET_INTERFACE_LIST:
+    {
+        DWORD ret;
 
-           status = get_interface_list(s, out_buff, out_size, ret_size, &total);
-           break;
-       }
+        ret = server_ioctl_sock( s, IOCTL_AFD_WINE_GET_INTERFACE_LIST, in_buff, in_size,
+                                 out_buff, out_size, ret_size, overlapped, completion );
+        SetLastError( ret );
+        if (ret && ret != ERROR_IO_PENDING) *ret_size = 0;
+        return ret ? -1 : 0;
+    }
 
     case WS_SIO_ADDRESS_LIST_QUERY:
     {
