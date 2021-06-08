@@ -94,14 +94,17 @@ HINTERNET alloc_handle( struct object_header *hdr )
     if (!max_handles)
     {
         num = HANDLE_CHUNK_SIZE;
-        if (!(p = heap_alloc_zero( sizeof(ULONG_PTR) * num ))) goto end;
+        if (!(p = calloc( 1, sizeof(ULONG_PTR) * num ))) goto end;
         handles = p;
         max_handles = num;
     }
     if (max_handles == next_handle)
     {
+        size_t new_size, old_size = max_handles * sizeof(ULONG_PTR);
         num = max_handles * 2;
-        if (!(p = heap_realloc_zero( handles, sizeof(ULONG_PTR) * num ))) goto end;
+        new_size = num * sizeof(ULONG_PTR);
+        if (!(p = realloc( handles, new_size ))) goto end;
+        memset( (char *)p + old_size, 0, new_size - old_size );
         handles = p;
         max_handles = num;
     }

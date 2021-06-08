@@ -19,12 +19,11 @@
 #ifndef _WINE_WINHTTP_PRIVATE_H_
 #define _WINE_WINHTTP_PRIVATE_H_
 
-#include "wine/heap.h"
-#include "wine/list.h"
-
 #include "ole2.h"
 #include "sspi.h"
 #include "wincrypt.h"
+
+#include "wine/list.h"
 
 #define WINHTTP_HANDLE_TYPE_SOCKET 4
 
@@ -347,17 +346,12 @@ DWORD process_header( struct request *, const WCHAR *, const WCHAR *, DWORD, BOO
 extern HRESULT WinHttpRequest_create( void ** ) DECLSPEC_HIDDEN;
 void release_typelib( void ) DECLSPEC_HIDDEN;
 
-static inline void* __WINE_ALLOC_SIZE(2) heap_realloc_zero( LPVOID mem, SIZE_T size )
-{
-    return HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, mem, size );
-}
-
 static inline WCHAR *strdupW( const WCHAR *src )
 {
     WCHAR *dst;
 
     if (!src) return NULL;
-    dst = heap_alloc( (lstrlenW( src ) + 1) * sizeof(WCHAR) );
+    dst = malloc( (lstrlenW( src ) + 1) * sizeof(WCHAR) );
     if (dst) lstrcpyW( dst, src );
     return dst;
 }
@@ -368,7 +362,7 @@ static inline WCHAR *strdupAW( const char *src )
     if (src)
     {
         int len = MultiByteToWideChar( CP_ACP, 0, src, -1, NULL, 0 );
-        if ((dst = heap_alloc( len * sizeof(WCHAR) )))
+        if ((dst = malloc( len * sizeof(WCHAR) )))
             MultiByteToWideChar( CP_ACP, 0, src, -1, dst, len );
     }
     return dst;
@@ -380,7 +374,7 @@ static inline char *strdupWA( const WCHAR *src )
     if (src)
     {
         int len = WideCharToMultiByte( CP_ACP, 0, src, -1, NULL, 0, NULL, NULL );
-        if ((dst = heap_alloc( len )))
+        if ((dst = malloc( len )))
             WideCharToMultiByte( CP_ACP, 0, src, -1, dst, len, NULL, NULL );
     }
     return dst;
@@ -392,7 +386,7 @@ static inline char *strdupWA_sized( const WCHAR *src, DWORD size )
     if (src)
     {
         int len = WideCharToMultiByte( CP_ACP, 0, src, size, NULL, 0, NULL, NULL ) + 1;
-        if ((dst = heap_alloc( len )))
+        if ((dst = malloc( len )))
         {
             WideCharToMultiByte( CP_ACP, 0, src, size, dst, len, NULL, NULL );
             dst[len - 1] = 0;

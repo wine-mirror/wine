@@ -187,14 +187,14 @@ DWORD netconn_create( struct hostdata *host, const struct sockaddr_storage *sock
 
     winsock_init();
 
-    if (!(conn = heap_alloc_zero( sizeof(*conn) ))) return ERROR_OUTOFMEMORY;
+    if (!(conn = calloc( 1, sizeof(*conn) ))) return ERROR_OUTOFMEMORY;
     conn->host = host;
     conn->sockaddr = *sockaddr;
     if ((conn->socket = socket( sockaddr->ss_family, SOCK_STREAM, 0 )) == -1)
     {
         ret = WSAGetLastError();
         WARN("unable to create socket (%u)\n", ret);
-        heap_free( conn );
+        free( conn );
         return ret;
     }
 
@@ -208,7 +208,7 @@ DWORD netconn_create( struct hostdata *host, const struct sockaddr_storage *sock
         break;
     default:
         ERR( "unhandled family %u\n", conn->sockaddr.ss_family );
-        heap_free( conn );
+        free( conn );
         return ERROR_INVALID_PARAMETER;
     }
 
@@ -237,7 +237,7 @@ DWORD netconn_create( struct hostdata *host, const struct sockaddr_storage *sock
     {
         WARN("unable to connect to host (%u)\n", ret);
         closesocket( conn->socket );
-        heap_free( conn );
+        free( conn );
         return ret;
     }
 
@@ -249,14 +249,14 @@ void netconn_close( struct netconn *conn )
 {
     if (conn->secure)
     {
-        heap_free( conn->peek_msg_mem );
-        heap_free(conn->ssl_buf);
-        heap_free(conn->extra_buf);
+        free( conn->peek_msg_mem );
+        free(conn->ssl_buf);
+        free(conn->extra_buf);
         DeleteSecurityContext(&conn->ssl_ctx);
     }
     closesocket( conn->socket );
     release_host( conn->host );
-    heap_free(conn);
+    free(conn);
 }
 
 DWORD netconn_secure_connect( struct netconn *conn, WCHAR *hostname, DWORD security_flags, CredHandle *cred_handle,
@@ -276,7 +276,7 @@ DWORD netconn_secure_connect( struct netconn *conn, WCHAR *hostname, DWORD secur
     const DWORD isc_req_flags = ISC_REQ_ALLOCATE_MEMORY|ISC_REQ_USE_SESSION_KEY|ISC_REQ_CONFIDENTIALITY
         |ISC_REQ_SEQUENCE_DETECT|ISC_REQ_REPLAY_DETECT|ISC_REQ_MANUAL_CRED_VALIDATION;
 
-    if (!(read_buf = heap_alloc( read_buf_size ))) return ERROR_OUTOFMEMORY;
+    if (!(read_buf = malloc( read_buf_size ))) return ERROR_OUTOFMEMORY;
 
     status = InitializeSecurityContextW(cred_handle, NULL, hostname, isc_req_flags, 0, 0, NULL, 0,
             &ctx, &out_desc, &attrs, NULL);
@@ -318,7 +318,7 @@ DWORD netconn_secure_connect( struct netconn *conn, WCHAR *hostname, DWORD secur
         if(in_bufs[0].cbBuffer + 1024 > read_buf_size) {
             BYTE *new_read_buf;
 
-            new_read_buf = heap_realloc(read_buf, read_buf_size + 1024);
+            new_read_buf = realloc(read_buf, read_buf_size + 1024);
             if(!new_read_buf) {
                 status = E_OUTOFMEMORY;
                 break;
@@ -365,7 +365,7 @@ DWORD netconn_secure_connect( struct netconn *conn, WCHAR *hostname, DWORD secur
                 break;
             }
 
-            conn->ssl_buf = heap_alloc(conn->ssl_sizes.cbHeader + conn->ssl_sizes.cbMaximumMessage + conn->ssl_sizes.cbTrailer);
+            conn->ssl_buf = malloc(conn->ssl_sizes.cbHeader + conn->ssl_sizes.cbMaximumMessage + conn->ssl_sizes.cbTrailer);
             if(!conn->ssl_buf) {
                 res = ERROR_OUTOFMEMORY;
                 break;
@@ -373,11 +373,11 @@ DWORD netconn_secure_connect( struct netconn *conn, WCHAR *hostname, DWORD secur
         }
     }
 
-    heap_free(read_buf);
+    free(read_buf);
 
     if(status != SEC_E_OK || res != ERROR_SUCCESS) {
         WARN("Failed to initialize security context: %08x\n", status);
-        heap_free(conn->ssl_buf);
+        free(conn->ssl_buf);
         conn->ssl_buf = NULL;
         DeleteSecurityContext(&ctx);
         return ERROR_WINHTTP_SECURE_CHANNEL_ERROR;
@@ -459,7 +459,7 @@ static DWORD read_ssl_chunk( struct netconn *conn, void *buf, SIZE_T buf_size, S
         memcpy(conn->ssl_buf, conn->extra_buf, conn->extra_len);
         buf_len = conn->extra_len;
         conn->extra_len = 0;
-        heap_free(conn->extra_buf);
+        free(conn->extra_buf);
         conn->extra_buf = NULL;
     }else {
         if ((buf_len = sock_recv( conn->socket, conn->ssl_buf + conn->extra_len, ssl_buf_size - conn->extra_len, 0)) < 0)
@@ -516,7 +516,7 @@ static DWORD read_ssl_chunk( struct netconn *conn, void *buf, SIZE_T buf_size, S
             memcpy(buf, bufs[i].pvBuffer, size);
             if(size < bufs[i].cbBuffer) {
                 assert(!conn->peek_len);
-                conn->peek_msg_mem = conn->peek_msg = heap_alloc(bufs[i].cbBuffer - size);
+                conn->peek_msg_mem = conn->peek_msg = malloc(bufs[i].cbBuffer - size);
                 if(!conn->peek_msg)
                     return ERROR_OUTOFMEMORY;
                 conn->peek_len = bufs[i].cbBuffer-size;
@@ -529,7 +529,7 @@ static DWORD read_ssl_chunk( struct netconn *conn, void *buf, SIZE_T buf_size, S
 
     for(i = 0; i < ARRAY_SIZE(bufs); i++) {
         if(bufs[i].BufferType == SECBUFFER_EXTRA) {
-            conn->extra_buf = heap_alloc(bufs[i].cbBuffer);
+            conn->extra_buf = malloc(bufs[i].cbBuffer);
             if(!conn->extra_buf)
                 return ERROR_OUTOFMEMORY;
 
@@ -561,7 +561,7 @@ DWORD netconn_recv( struct netconn *conn, void *buf, size_t len, int flags, int 
 
             if (conn->peek_len == 0)
             {
-                heap_free( conn->peek_msg_mem );
+                free( conn->peek_msg_mem );
                 conn->peek_msg_mem = NULL;
                 conn->peek_msg = NULL;
             }

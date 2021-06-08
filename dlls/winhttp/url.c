@@ -65,7 +65,7 @@ static WCHAR *decode_url( LPCWSTR url, DWORD *len )
     const WCHAR *p = url;
     WCHAR hex[3], *q, *ret;
 
-    if (!(ret = heap_alloc( *len * sizeof(WCHAR) ))) return NULL;
+    if (!(ret = malloc( *len * sizeof(WCHAR) ))) return NULL;
     q = ret;
     while (*len > 0)
     {
@@ -144,7 +144,7 @@ static DWORD escape_url( const WCHAR *url, DWORD *len, WCHAR **ret )
         len_path = 0;
     }
 
-    if (!(*ret = heap_alloc( (len_base + len_path + 1) * sizeof(WCHAR) ))) return ERROR_OUTOFMEMORY;
+    if (!(*ret = malloc( (len_base + len_path + 1) * sizeof(WCHAR) ))) return ERROR_OUTOFMEMORY;
     memcpy( *ret, url, len_base * sizeof(WCHAR) );
 
     if (p) escape_string( p, *len - (p - url), *ret + len_base, &len_path );
@@ -331,8 +331,8 @@ exit:
         if (overflow) err = ERROR_INSUFFICIENT_BUFFER;
         uc->nScheme = scheme_number;
     }
-    heap_free( url_decoded );
-    heap_free( url_escaped );
+    free( url_decoded );
+    free( url_escaped );
     SetLastError( err );
     return !err;
 }
