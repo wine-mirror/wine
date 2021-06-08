@@ -52,7 +52,7 @@
 @ stub SLIsGenuineLocalEx
 @ stub SLLoadApplicationPolicies
 @ stdcall SLOpen(ptr)
-@ stub SLPersistApplicationPolicies
+@ stdcall SLPersistApplicationPolicies(ptr ptr long)
 @ stub SLPersistRTSPayloadOverride
 @ stub SLReArm
 @ stub SLRegisterEvent
