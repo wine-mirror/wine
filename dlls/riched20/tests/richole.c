@@ -3403,6 +3403,26 @@ static void test_InsertObject(void)
   ok(result == lstrlenW(expected_string), "Got wrong length: %d.\n", result);
   todo_wine ok(!lstrcmpW(buffer, expected_string), "Got wrong content: %s.\n", debugstr_w(buffer));
 
+  gettextex.flags = GT_NOHIDDENTEXT;
+  memset(buffer, 0, sizeof(buffer));
+  result = SendMessageW(hwnd, EM_GETTEXTEX, (WPARAM)&gettextex, (LPARAM)buffer);
+  ok(result == lstrlenW(expected_string), "Got wrong length: %d.\n", result);
+  todo_wine ok(!lstrcmpW(buffer, expected_string), "Got wrong content: %s.\n", debugstr_w(buffer));
+
+  gettextex.flags = GT_SELECTION;
+  memset(buffer, 0, sizeof(buffer));
+  SendMessageW(hwnd, EM_SETSEL, 0, -1);
+  result = SendMessageW(hwnd, EM_GETTEXTEX, (WPARAM)&gettextex, (LPARAM)buffer);
+  ok(result == lstrlenW(expected_string), "Got wrong length: %d.\n", result);
+  todo_wine ok(!lstrcmpW(buffer, expected_string), "Got wrong content: %s.\n", debugstr_w(buffer));
+
+  expected_string = L"abc d efg";
+  gettextex.flags = GT_USECRLF;
+  memset(buffer, 0, sizeof(buffer));
+  result = SendMessageW(hwnd, EM_GETTEXTEX, (WPARAM)&gettextex, (LPARAM)buffer);
+  ok(result == lstrlenW(expected_string), "Got wrong length: %d.\n", result);
+  ok(!lstrcmpW(buffer, expected_string), "Got wrong content: %s.\n", debugstr_w(buffer));
+
   expected_stringA = "abc d efg";
   memset(bufferA, 0, sizeof(bufferA));
   SendMessageA(hwnd, EM_SETSEL, 0, -1);
