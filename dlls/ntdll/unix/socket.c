@@ -41,6 +41,9 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
+#ifdef HAVE_NETINET_TCP_H
+# include <netinet/tcp.h>
+#endif
 
 #ifdef HAVE_NETIPX_IPX_H
 # include <netipx/ipx.h>
@@ -72,12 +75,18 @@
 #define USE_WS_PREFIX
 #include "winsock2.h"
 #include "mswsock.h"
+#include "mstcpip.h"
 #include "ws2tcpip.h"
 #include "wsipx.h"
 #include "af_irda.h"
 #include "wine/afd.h"
 
 #include "unix_private.h"
+
+#if !defined(TCP_KEEPIDLE) && defined(TCP_KEEPALIVE)
+/* TCP_KEEPALIVE is the Mac OS name for TCP_KEEPIDLE */
+#define TCP_KEEPIDLE TCP_KEEPALIVE
+#endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 
@@ -1445,6 +1454,56 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             FIXME( "Interface list queries are currently not supported on this platform.\n" );
             status = STATUS_NOT_SUPPORTED;
 #endif
+            break;
+        }
+
+        case IOCTL_AFD_WINE_KEEPALIVE_VALS:
+        {
+            struct tcp_keepalive *k = in_buffer;
+            int keepalive;
+
+            if (!in_buffer || in_size < sizeof(struct tcp_keepalive))
+                return STATUS_BUFFER_TOO_SMALL;
+            keepalive = !!k->onoff;
+
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+                return status;
+
+            if (setsockopt( fd, SOL_SOCKET, SO_KEEPALIVE, &keepalive, sizeof(int) ) < 0)
+            {
+                status = STATUS_INVALID_PARAMETER;
+                break;
+            }
+
+            if (keepalive)
+            {
+#ifdef TCP_KEEPIDLE
+                int idle = max( 1, (k->keepalivetime + 500) / 1000 );
+
+                if (setsockopt( fd, IPPROTO_TCP, TCP_KEEPIDLE, &idle, sizeof(int) ) < 0)
+                {
+                    status = STATUS_INVALID_PARAMETER;
+                    break;
+                }
+#else
+                FIXME("ignoring keepalive timeout\n");
+#endif
+            }
+
+            if (keepalive)
+            {
+#ifdef TCP_KEEPINTVL
+                int interval = max( 1, (k->keepaliveinterval + 500) / 1000 );
+
+                if (setsockopt( fd, IPPROTO_TCP, TCP_KEEPINTVL, &interval, sizeof(int) ) < 0)
+                    status = STATUS_INVALID_PARAMETER;
+#else
+                FIXME("ignoring keepalive interval\n");
+#endif
+            }
+
+            status = STATUS_SUCCESS;
+            complete_async( handle, event, apc, apc_user, io, status, 0 );
             break;
         }
 
