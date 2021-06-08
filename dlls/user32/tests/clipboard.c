@@ -151,24 +151,26 @@ static void set_clipboard_data_process( int arg )
 {
     HANDLE ret;
 
+    winetest_push_context("process %u", arg);
     SetLastError( 0xdeadbeef );
     if (arg)
     {
-        ok( IsClipboardFormatAvailable( CF_WAVE ), "process %u: CF_WAVE not available\n", arg );
+        ok( IsClipboardFormatAvailable( CF_WAVE ), "CF_WAVE not available\n" );
         ret = SetClipboardData( CF_WAVE, GlobalAlloc( GMEM_DDESHARE | GMEM_ZEROINIT, 100 ));
-        ok( ret != 0, "process %u: SetClipboardData failed err %u\n", arg, GetLastError() );
+        ok( ret != 0, "SetClipboardData failed err %u\n", GetLastError() );
     }
     else
     {
         SetClipboardData( CF_WAVE, 0 );
-        ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "process %u: wrong error %u\n",
-            arg, GetLastError());
-        ok( !IsClipboardFormatAvailable( CF_WAVE ), "process %u: SetClipboardData succeeded\n", arg );
+        ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "wrong error %u\n",
+            GetLastError());
+        ok( !IsClipboardFormatAvailable( CF_WAVE ), "SetClipboardData succeeded\n" );
         ret = SetClipboardData( CF_WAVE, GlobalAlloc( GMEM_DDESHARE | GMEM_ZEROINIT, 100 ));
-        ok( !ret, "process %u: SetClipboardData succeeded\n", arg );
-        ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "process %u: wrong error %u\n",
-            arg, GetLastError());
+        ok( !ret, "SetClipboardData succeeded\n" );
+        ok( GetLastError() == ERROR_CLIPBOARD_NOT_OPEN, "wrong error %u\n",
+            GetLastError());
     }
+    winetest_pop_context();
 }
 
 static void grab_clipboard_process( int arg )
