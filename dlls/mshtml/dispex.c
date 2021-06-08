@@ -331,7 +331,7 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
 
                 hres = ITypeInfo_GetRefTypeInfo(dti, tdesc->u.lptdesc->u.hreftype, &ref_type_info);
                 if(FAILED(hres)) {
-                    ERR("Coulg not get referenced type info: %08x\n", hres);
+                    ERR("Could not get referenced type info: %08x\n", hres);
                     return;
                 }
 
