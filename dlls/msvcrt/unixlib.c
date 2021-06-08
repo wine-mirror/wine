@@ -111,19 +111,6 @@ static float CDECL unix_powf( float x, float y )
 }
 
 /*********************************************************************
- *      tgamma
- */
-static double CDECL unix_tgamma(double x)
-{
-#ifdef HAVE_TGAMMA
-    return tgamma(x);
-#else
-    FIXME( "not implemented\n" );
-    return 0;
-#endif
-}
-
-/*********************************************************************
  *      tgammaf
  */
 static float CDECL unix_tgammaf(float x)
@@ -145,7 +132,6 @@ static const struct unix_funcs funcs =
     unix_fmaf,
     unix_pow,
     unix_powf,
-    unix_tgamma,
     unix_tgammaf,
 };
 

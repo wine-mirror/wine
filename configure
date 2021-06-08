@@ -19623,7 +19623,6 @@ for ac_func in \
 	exp2 \
 	exp2f \
 	fmaf \
-	tgamma \
 	tgammaf
 
 do :

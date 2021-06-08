@@ -929,9 +929,6 @@
 /* Define to 1 if you have the <termios.h> header file. */
 #undef HAVE_TERMIOS_H
 
-/* Define to 1 if you have the `tgamma' function. */
-#undef HAVE_TGAMMA
-
 /* Define to 1 if you have the `tgammaf' function. */
 #undef HAVE_TGAMMAF
 
