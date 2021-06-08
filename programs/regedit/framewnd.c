@@ -178,7 +178,7 @@ static void UpdateMenuItems(HMENU hMenu) {
     selection = (HTREEITEM)SendMessageW(hwndTV, TVM_GETNEXTITEM, TVGN_CARET, 0);
     keyName = GetItemPath(hwndTV, selection, &hRootKey);
     index = SendMessageW(g_pChildWnd->hListWnd, LVM_GETNEXTITEM, -1,
-                         MAKELPARAM(LVNI_FOCUSED | LVNI_SELECTED, 0));
+                         MAKELPARAM(LVNI_SELECTED, 0));
 
     update_expand_or_collapse_item(hwndTV, selection, hMenu);
     update_modify_items(hMenu, index);
