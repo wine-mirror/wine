@@ -789,6 +789,7 @@ WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
     WINE_HIDP_PREPARSED_DATA *data = NULL;
     struct collection *base;
     HIDP_VALUE_CAPS caps;
+    int i;
 
     struct list caps_stack;
 
@@ -797,14 +798,13 @@ WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
 
     if (TRACE_ON(hid))
     {
-        TRACE("Descriptor[%i]: ", length);
-        for (cidx = 0; cidx < length; cidx++)
+        TRACE("descriptor %p, length %u:\n", descriptor, length);
+        for (i = 0; i < length;)
         {
-            TRACE("%x ",descriptor[cidx]);
-            if ((cidx+1) % 80 == 0)
-                TRACE("\n");
+            TRACE("%08x ", i);
+            do { TRACE(" %02x", descriptor[i]); } while (++i % 16 && i < length);
+            TRACE("\n");
         }
-        TRACE("\n");
     }
 
     list_init(&caps_stack);
