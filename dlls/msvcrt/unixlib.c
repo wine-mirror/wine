@@ -83,18 +83,6 @@ static float CDECL unix_exp2f( float x )
 }
 
 /*********************************************************************
- *      fmaf
- */
-static float CDECL unix_fmaf( float x, float y, float z )
-{
-#ifdef HAVE_FMAF
-    return fmaf(x, y, z);
-#else
-    return x * y + z;
-#endif
-}
-
-/*********************************************************************
  *      pow
  */
 static double CDECL unix_pow( double x, double y )
@@ -116,7 +104,6 @@ static const struct unix_funcs funcs =
     unix_expf,
     unix_exp2,
     unix_exp2f,
-    unix_fmaf,
     unix_pow,
     unix_powf,
 };

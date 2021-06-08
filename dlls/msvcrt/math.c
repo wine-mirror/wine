@@ -4127,14 +4127,43 @@ double CDECL fma( double x, double y, double z )
 
 /*********************************************************************
  *      fmaf (MSVCRT.@)
+ *
+ * Copied from musl: src/math/fmaf.c
  */
 float CDECL fmaf( float x, float y, float z )
 {
-  float w = unix_funcs->fmaf(x, y, z);
-  if ((isinf(x) && y == 0) || (x == 0 && isinf(y))) *_errno() = EDOM;
-  else if (isinf(x) && isinf(z) && x != z) *_errno() = EDOM;
-  else if (isinf(y) && isinf(z) && y != z) *_errno() = EDOM;
-  return w;
+    union { double f; UINT64 i; } u;
+    double xy, adjust;
+    int e;
+
+    xy = (double)x * y;
+    u.f = xy + z;
+    e = u.i>>52 & 0x7ff;
+    /* Common case: The double precision result is fine. */
+    if ((u.i & 0x1fffffff) != 0x10000000 || /* not a halfway case */
+            e == 0x7ff || /* NaN */
+            (u.f - xy == z && u.f - z == xy) || /* exact */
+            (_controlfp(0, 0) & _MCW_RC) != _RC_NEAR) /* not round-to-nearest */
+    {
+        if (!isnan(x) && !isnan(y) && !isnan(z) && isnan(u.f)) *_errno() = EDOM;
+
+        /* underflow may not be raised correctly, example:
+           fmaf(0x1p-120f, 0x1p-120f, 0x1p-149f) */
+        if (e < 0x3ff-126 && e >= 0x3ff-149 && _statusfp() & _SW_INEXACT)
+            fp_barrierf((float)u.f * (float)u.f);
+        return u.f;
+    }
+
+    /*
+     * If result is inexact, and exactly halfway between two float values,
+     * we need to adjust the low-order bit in the direction of the error.
+     */
+    _controlfp(_RC_CHOP, _MCW_RC);
+    adjust = fp_barrier(xy + z);
+    _controlfp(_RC_NEAR, _MCW_RC);
+    if (u.f == adjust)
+        u.i++;
+    return u.f;
 }
 
 /*********************************************************************

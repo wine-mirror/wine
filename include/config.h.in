@@ -120,9 +120,6 @@
 /* Define to 1 if you have the <float.h> header file. */
 #undef HAVE_FLOAT_H
 
-/* Define to 1 if you have the `fmaf' function. */
-#undef HAVE_FMAF
-
 /* Define to 1 if you have the `fnmatch' function. */
 #undef HAVE_FNMATCH
 
