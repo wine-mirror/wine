@@ -5450,14 +5450,16 @@ static void test_MFCreate2DMediaBuffer(void)
         unsigned int contiguous_length;
         int pitch;
         unsigned int plane_multiplier;
+        unsigned int max_length;
     } _2d_buffer_tests[] =
     {
-        { 2, 2, MAKEFOURCC('N','V','1','2'), 6, 64 },
-        { 4, 2, MAKEFOURCC('N','V','1','2'), 12, 64 },
-        { 2, 4, MAKEFOURCC('N','V','1','2'), 12, 64 },
-        { 1, 3, MAKEFOURCC('N','V','1','2'), 4, 64 },
+        { 2,  2, MAKEFOURCC('N','V','1','2'), 6, 64, 0, 192 },
+        { 4,  2, MAKEFOURCC('N','V','1','2'), 12, 64 },
+        { 2,  4, MAKEFOURCC('N','V','1','2'), 12, 64 },
+        { 1,  3, MAKEFOURCC('N','V','1','2'), 4, 64 },
+        { 4, 16, MAKEFOURCC('N','V','1','2'), 96, 64, 0, 1536 },
 
-        { 2, 2, MAKEFOURCC('I','M','C','2'), 6, 128 },
+        { 2, 2, MAKEFOURCC('I','M','C','2'), 6, 128, 0, 384 },
         { 4, 2, MAKEFOURCC('I','M','C','2'), 12, 128 },
         { 2, 4, MAKEFOURCC('I','M','C','2'), 12, 128 },
         { 2, 2, MAKEFOURCC('I','M','C','4'), 6, 128 },
@@ -5466,29 +5468,29 @@ static void test_MFCreate2DMediaBuffer(void)
 
         { 4,  2, MAKEFOURCC('I','M','C','1'),  32, 128, 2 },
         { 4,  4, MAKEFOURCC('I','M','C','1'),  64, 128, 2 },
-        { 4, 16, MAKEFOURCC('I','M','C','1'), 256, 128, 2 },
+        { 4, 16, MAKEFOURCC('I','M','C','1'), 256, 128, 2, 4096 },
         { 4, 20, MAKEFOURCC('I','M','C','1'), 320, 128, 2 },
 
         { 4,  2, MAKEFOURCC('I','M','C','3'),  32, 128, 2 },
         { 4,  4, MAKEFOURCC('I','M','C','3'),  64, 128, 2 },
-        { 4, 16, MAKEFOURCC('I','M','C','3'), 256, 128, 2 },
+        { 4, 16, MAKEFOURCC('I','M','C','3'), 256, 128, 2, 4096 },
         { 4, 20, MAKEFOURCC('I','M','C','3'), 320, 128, 2 },
 
         { 4,  2, MAKEFOURCC('Y','V','1','2'),  12, 128 },
         { 4,  4, MAKEFOURCC('Y','V','1','2'),  24, 128 },
-        { 4, 16, MAKEFOURCC('Y','V','1','2'),  96, 128 },
+        { 4, 16, MAKEFOURCC('Y','V','1','2'),  96, 128, 0, 3072 },
 
         { 4,  2, MAKEFOURCC('A','Y','U','V'),  32, 64 },
         { 4,  4, MAKEFOURCC('A','Y','U','V'),  64, 64 },
-        { 4, 16, MAKEFOURCC('A','Y','U','V'), 256, 64 },
+        { 4, 16, MAKEFOURCC('A','Y','U','V'), 256, 64, 0, 1024 },
 
         { 4,  2, MAKEFOURCC('Y','U','Y','2'),  16, 64 },
         { 4,  4, MAKEFOURCC('Y','U','Y','2'),  32, 64 },
-        { 4, 16, MAKEFOURCC('Y','U','Y','2'), 128, 64 },
+        { 4, 16, MAKEFOURCC('Y','U','Y','2'), 128, 64, 0, 1024 },
 
         { 4,  2, MAKEFOURCC('U','Y','V','Y'),  16, 64 },
         { 4,  4, MAKEFOURCC('U','Y','V','Y'),  32, 64 },
-        { 4, 16, MAKEFOURCC('U','Y','V','Y'), 128, 64 },
+        { 4, 16, MAKEFOURCC('U','Y','V','Y'), 128, 64, 0, 1024 },
 
         { 2, 4, D3DFMT_A8R8G8B8, 32, 64 },
         { 1, 4, D3DFMT_A8R8G8B8, 16, 64 },
@@ -5680,6 +5682,12 @@ static void test_MFCreate2DMediaBuffer(void)
 
         hr = pMFCreate2DMediaBuffer(ptr->width, ptr->height, ptr->fourcc, FALSE, &buffer);
         ok(hr == S_OK, "Failed to create a buffer, hr %#x.\n", hr);
+
+        hr = IMFMediaBuffer_GetMaxLength(buffer, &length);
+        ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+        if (ptr->max_length)
+            ok(length == ptr->max_length, "%u: unexpected maximum length %u for %u x %u, format %s.\n",
+                    i, length, ptr->width, ptr->height, wine_dbgstr_an((char *)&ptr->fourcc, 4));
 
         hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer, (void **)&_2dbuffer);
         ok(hr == S_OK, "Failed to get interface, hr %#x.\n", hr);
