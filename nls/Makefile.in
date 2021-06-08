@@ -46,6 +46,7 @@ SOURCES = \
 	c_437.nls \
 	c_500.nls \
 	c_708.nls \
+	c_720.nls \
 	c_737.nls \
 	c_775.nls \
 	c_850.nls \

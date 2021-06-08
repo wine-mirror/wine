@@ -106,6 +106,7 @@ static const struct { UINT cp; const WCHAR *name; } codepage_names[] =
     { 437,   L"OEM United States" },
     { 500,   L"IBM EBCDIC International" },
     { 708,   L"Arabic ASMO" },
+    { 720,   L"Arabic (Transparent ASMO)" },
     { 737,   L"OEM Greek 437G" },
     { 775,   L"OEM Baltic" },
     { 850,   L"OEM Multilingual Latin 1" },
