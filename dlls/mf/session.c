@@ -18,6 +18,7 @@
 
 #include <stdarg.h>
 #include <math.h>
+#include <float.h>
 
 #define COBJMACROS
 
@@ -3536,8 +3537,9 @@ static HRESULT session_get_presentation_rate(struct media_session *session, MFRA
     struct media_source *source;
     struct media_sink *sink;
     HRESULT hr = E_POINTER;
+    float rate;
 
-    *result = 0.0f;
+    rate = fastest ? FLT_MAX : 0.0f;
 
     EnterCriticalSection(&session->cs);
 
@@ -3545,7 +3547,7 @@ static HRESULT session_get_presentation_rate(struct media_session *session, MFRA
     {
         LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
         {
-            if (FAILED(hr = session_presentation_object_get_rate((IUnknown *)source->source, direction, thin, fastest, result)))
+            if (FAILED(hr = session_presentation_object_get_rate((IUnknown *)source->source, direction, thin, fastest, &rate)))
                 break;
         }
 
@@ -3553,13 +3555,16 @@ static HRESULT session_get_presentation_rate(struct media_session *session, MFRA
         {
             LIST_FOR_EACH_ENTRY(sink, &session->presentation.sinks, struct media_sink, entry)
             {
-                if (FAILED(hr = session_presentation_object_get_rate((IUnknown *)sink->sink, direction, thin, fastest, result)))
+                if (FAILED(hr = session_presentation_object_get_rate((IUnknown *)sink->sink, direction, thin, fastest, &rate)))
                     break;
             }
         }
     }
 
     LeaveCriticalSection(&session->cs);
+
+    if (SUCCEEDED(hr))
+        *result = direction == MFRATE_FORWARD ? rate : -rate;
 
     return hr;
 }
