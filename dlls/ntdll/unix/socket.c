@@ -24,7 +24,14 @@
 
 #include "config.h"
 #include <errno.h>
+#include <sys/types.h>
 #include <unistd.h>
+#ifdef HAVE_IFADDRS_H
+# include <ifaddrs.h>
+#endif
+#ifdef HAVE_NET_IF_H
+# include <net/if.h>
+#endif
 #ifdef HAVE_SYS_IOCTL_H
 # include <sys/ioctl.h>
 #endif
@@ -1352,6 +1359,92 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             }
             status = STATUS_SUCCESS;
             complete_async( handle, event, apc, apc_user, io, status, 0 );
+            break;
+        }
+
+        case IOCTL_AFD_WINE_GET_INTERFACE_LIST:
+        {
+#ifdef HAVE_GETIFADDRS
+            INTERFACE_INFO *info = out_buffer;
+            struct ifaddrs *ifaddrs, *ifaddr;
+            unsigned int count = 0;
+            ULONG ret_size;
+
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+                return status;
+
+            if (getifaddrs( &ifaddrs ) < 0)
+            {
+                status = sock_errno_to_status( errno );
+                break;
+            }
+
+            for (ifaddr = ifaddrs; ifaddr != NULL; ifaddr = ifaddr->ifa_next)
+            {
+                if (ifaddr->ifa_addr && ifaddr->ifa_addr->sa_family == AF_INET) ++count;
+            }
+
+            ret_size = count * sizeof(*info);
+            if (out_size < ret_size)
+            {
+                status = STATUS_PENDING;
+                complete_async( handle, event, apc, apc_user, io, STATUS_BUFFER_TOO_SMALL, 0 );
+                freeifaddrs( ifaddrs );
+                break;
+            }
+
+            memset( out_buffer, 0, ret_size );
+
+            count = 0;
+            for (ifaddr = ifaddrs; ifaddr != NULL; ifaddr = ifaddr->ifa_next)
+            {
+                in_addr_t addr, mask;
+
+                if (!ifaddr->ifa_addr || ifaddr->ifa_addr->sa_family != AF_INET)
+                    continue;
+
+                addr = ((const struct sockaddr_in *)ifaddr->ifa_addr)->sin_addr.s_addr;
+                mask = ((const struct sockaddr_in *)ifaddr->ifa_netmask)->sin_addr.s_addr;
+
+                info[count].iiFlags = 0;
+                if (ifaddr->ifa_flags & IFF_BROADCAST)
+                    info[count].iiFlags |= WS_IFF_BROADCAST;
+                if (ifaddr->ifa_flags & IFF_LOOPBACK)
+                    info[count].iiFlags |= WS_IFF_LOOPBACK;
+                if (ifaddr->ifa_flags & IFF_MULTICAST)
+                    info[count].iiFlags |= WS_IFF_MULTICAST;
+#ifdef IFF_POINTTOPOINT
+                if (ifaddr->ifa_flags & IFF_POINTTOPOINT)
+                    info[count].iiFlags |= WS_IFF_POINTTOPOINT;
+#endif
+                if (ifaddr->ifa_flags & IFF_UP)
+                    info[count].iiFlags |= WS_IFF_UP;
+
+                info[count].iiAddress.AddressIn.sin_family = WS_AF_INET;
+                info[count].iiAddress.AddressIn.sin_port = 0;
+                info[count].iiAddress.AddressIn.sin_addr.WS_s_addr = addr;
+
+                info[count].iiNetmask.AddressIn.sin_family = WS_AF_INET;
+                info[count].iiNetmask.AddressIn.sin_port = 0;
+                info[count].iiNetmask.AddressIn.sin_addr.WS_s_addr = mask;
+
+                if (ifaddr->ifa_flags & IFF_BROADCAST)
+                {
+                    info[count].iiBroadcastAddress.AddressIn.sin_family = WS_AF_INET;
+                    info[count].iiBroadcastAddress.AddressIn.sin_port = 0;
+                    info[count].iiBroadcastAddress.AddressIn.sin_addr.WS_s_addr = addr | ~mask;
+                }
+
+                ++count;
+            }
+
+            freeifaddrs( ifaddrs );
+            status = STATUS_PENDING;
+            complete_async( handle, event, apc, apc_user, io, STATUS_SUCCESS, ret_size );
+#else
+            FIXME( "Interface list queries are currently not supported on this platform.\n" );
+            status = STATUS_NOT_SUPPORTED;
+#endif
             break;
         }
 
