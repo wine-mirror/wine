@@ -1787,7 +1787,7 @@ static char *download_script( const WCHAR *url, DWORD *out_size )
     if (!(req = WinHttpOpenRequest( con, NULL, uc.lpszUrlPath, NULL, NULL, acceptW, flags ))) goto done;
     if (!WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 )) goto done;
 
-    if (!(WinHttpReceiveResponse( req, 0 ))) goto done;
+    if (!WinHttpReceiveResponse( req, 0 )) goto done;
     if (!WinHttpQueryHeaders( req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status,
         &size, NULL ) || status != HTTP_STATUS_OK) goto done;
 
