@@ -992,7 +992,7 @@ static BOOL request_set_option( struct object_header *hdr, DWORD option, void *b
             CertFreeCertificateContext( request->client_cert );
             request->client_cert = NULL;
         }
-        else if (buflen >= sizeof(cert))
+        else if (buflen >= sizeof(*cert))
         {
             if (!(cert = CertDuplicateCertificateContext( buffer ))) return FALSE;
             CertFreeCertificateContext( request->client_cert );
