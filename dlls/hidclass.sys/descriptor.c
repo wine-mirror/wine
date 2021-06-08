@@ -248,7 +248,7 @@ static void debug_print_preparsed(WINE_HIDP_PREPARSED_DATA *data)
             debug_print_report("OUTPUT", data, &data->reports[i]);
         }
         end += data->reportCount[HidP_Feature];
-        for (i = 0; i < end; i++)
+        for (; i < end; i++)
         {
             debug_print_report("FEATURE", data, &data->reports[i]);
         }
