@@ -3368,8 +3368,10 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
             return -1;
         }
 
+        /* Explicitly ignore the output buffer; WeChat tries to pass an address
+         * without write access. */
         ret = server_ioctl_sock( s, IOCTL_AFD_WINE_FIONBIO, in_buff, in_size,
-                                 out_buff, out_size, ret_size, overlapped, completion );
+                                 NULL, 0, ret_size, overlapped, completion );
         SetLastError( ret );
         return ret ? -1 : 0;
     }

@@ -3934,7 +3934,7 @@ static void test_fionbio(void)
 
     output = VirtualAlloc(NULL, 4, MEM_RESERVE | MEM_COMMIT, PAGE_NOACCESS);
     ret = WSAIoctl(s, FIONBIO, &one, sizeof(one) + 1, output, 4, &size, NULL, NULL);
-    todo_wine ok(!ret, "got error %u\n", WSAGetLastError());
+    ok(!ret, "got error %u\n", WSAGetLastError());
     VirtualFree(output, 0, MEM_FREE);
 
     overlapped.Internal = 0xdeadbeef;
