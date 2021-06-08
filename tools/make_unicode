@@ -46,6 +46,7 @@ my @allfiles =
     "CodpageFiles/437.txt",
     "CodpageFiles/500.txt",
     "CodpageFiles/708.txt",
+    "CodpageFiles/720.txt",
     "CodpageFiles/737.txt",
     "CodpageFiles/775.txt",
     "CodpageFiles/850.txt",
