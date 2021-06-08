@@ -455,15 +455,23 @@ static struct re_object* create_re_object(const REOBJECT *reo)
   return reobj;
 }
 
-void ME_InsertOLEFromCursor(ME_TextEditor *editor, const REOBJECT* reo, int nCursor)
+void editor_insert_oleobj(ME_TextEditor *editor, const REOBJECT *reo)
 {
   ME_Run *run, *prev;
   const WCHAR space = ' ';
   struct re_object *reobj_prev = NULL;
-  ME_Cursor *cursor = editor->pCursors + nCursor;
-  ME_Style *style = style_get_insert_style( editor, cursor );
+  ME_Cursor *cursor, cursor_from_ofs;
+  ME_Style *style;
 
-  /* FIXME no no no */
+  if (reo->cp == REO_CP_SELECTION)
+    cursor = editor->pCursors;
+  else
+  {
+    cursor_from_char_ofs( editor, reo->cp, &cursor_from_ofs );
+    cursor = &cursor_from_ofs;
+  }
+  style = style_get_insert_style( editor, cursor );
+
   if (ME_IsSelection(editor))
     ME_DeleteSelection(editor);
 

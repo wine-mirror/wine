@@ -1172,7 +1172,7 @@ static HRESULT insert_static_object(ME_TextEditor *editor, HENHMETAFILE hemf, HB
     reobject.dwFlags = 0; /* FIXME */
     reobject.dwUser = 0;
 
-    ME_InsertOLEFromCursor(editor, &reobject, 0);
+    editor_insert_oleobj(editor, &reobject);
     hr = S_OK;
   }
 
