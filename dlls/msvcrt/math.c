@@ -9171,10 +9171,12 @@ double CDECL tgamma(double x)
 
 /*********************************************************************
  *      tgammaf (MSVCR120.@)
+ *
+ * Copied from musl: src/math/tgammaf.c
  */
 float CDECL tgammaf(float x)
 {
-    return unix_funcs->tgammaf( x );
+    return tgamma(x);
 }
 
 /*********************************************************************

@@ -30,7 +30,6 @@ struct unix_funcs
     float           (CDECL *fmaf)(float x, float y, float z);
     double          (CDECL *pow)(double x, double y);
     float           (CDECL *powf)(float x, float y);
-    float           (CDECL *tgammaf)(float x);
 };
 
 #endif /* __UNIXLIB_H */

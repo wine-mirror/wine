@@ -110,19 +110,6 @@ static float CDECL unix_powf( float x, float y )
     return powf( x, y );
 }
 
-/*********************************************************************
- *      tgammaf
- */
-static float CDECL unix_tgammaf(float x)
-{
-#ifdef HAVE_TGAMMAF
-    return tgammaf(x);
-#else
-    FIXME( "not implemented\n" );
-    return 0;
-#endif
-}
-
 static const struct unix_funcs funcs =
 {
     unix_exp,
@@ -132,7 +119,6 @@ static const struct unix_funcs funcs =
     unix_fmaf,
     unix_pow,
     unix_powf,
-    unix_tgammaf,
 };
 
 NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )
