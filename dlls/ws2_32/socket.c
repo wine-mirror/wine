@@ -3369,10 +3369,6 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         }
     }
 
-    case WS_SIO_FLUSH:
-        FIXME("SIO_FLUSH: stub.\n");
-        break;
-
     case WS_SIO_GET_EXTENSION_FUNCTION_POINTER:
     {
 #define EXTENSION_FUNCTION(x, y) { x, y, #y },
