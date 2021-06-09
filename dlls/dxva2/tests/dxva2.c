@@ -378,9 +378,6 @@ static void test_device_manager(void)
         hr = IDirectXVideoProcessorService_GetVideoProcessorRenderTargets(proc_service, &DXVA2_VideoProcSoftwareDevice,
                 &video_desc, &count, &formats);
         ok(hr == E_FAIL, "Unexpected hr %#x, format %d.\n", hr, rt_unsupported_formats[i]);
-
-        hr = IDirectXVideoProcessorService_GetVideoProcessorDeviceGuids(proc_service, &video_desc, &count, &guids);
-        ok(hr == E_FAIL, "Unexpected hr %#x.\n", hr);
     }
 
     IDirectXVideoProcessorService_Release(proc_service);
