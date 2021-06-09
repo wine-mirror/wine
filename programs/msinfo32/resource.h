@@ -17,5 +17,6 @@
  */
 
 #include <windef.h>
+#include <winuser.h>
 
 #define STRING_SYSTEM_INFO 100

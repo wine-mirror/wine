@@ -16,6 +16,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdarg.h>
+
+#include <windef.h>
+#include <winbase.h>
+#include <winuser.h>
+#include <commctrl.h>
 #include <shlwapi.h>
 #include <shellapi.h>
 
@@ -28,6 +34,8 @@ int __cdecl wmain(int argc, WCHAR *argv[])
 {
     int i;
     WCHAR system_info[64];
+
+    InitCommonControls();
 
     WINE_FIXME("stub:");
     for (i = 0; i < argc; i++)

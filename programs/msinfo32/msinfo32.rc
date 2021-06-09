@@ -26,3 +26,6 @@ STRINGTABLE
 {
     STRING_SYSTEM_INFO, "System Information"
 }
+
+/* @makedep: msinfo32.manifest */
+1 RT_MANIFEST msinfo32.manifest
