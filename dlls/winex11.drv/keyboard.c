@@ -1505,7 +1505,7 @@ X11DRV_KEYBOARD_DetectLayout( Display *display )
           char str[5];
           for (i = 0; i < 4; i++) str[i] = ckey[keyc][i] ? ckey[keyc][i] : ' ';
           str[4] = 0;
-          TRACE_(key)("mismatch for keycode %u, got %s\n", keyc, str);
+          TRACE_(key)("mismatch for keycode %u, got %s\n", keyc, debugstr_a(str));
           mismatch++;
           score -= syms;
 	}
