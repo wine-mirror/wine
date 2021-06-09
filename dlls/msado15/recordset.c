@@ -740,26 +740,22 @@ static HRESULT map_index( struct fields *fields, VARIANT *index, ULONG *ret )
 {
     ULONG i;
 
-    if (V_VT( index ) == VT_I4 || V_VT( index ) == VT_I2)
+    if (V_VT( index ) != VT_BSTR)
     {
-        if (V_VT( index ) == VT_I4)
-            i = V_I4 ( index );
-        else
-            i = V_I2 ( index );
+        VARIANT idx;
 
-        if (i < fields->count)
+        VariantInit(&idx);
+        if (VariantChangeType(&idx, index, 0, VT_UI4) == S_OK)
         {
-            *ret = i;
-            return S_OK;
+            i = V_UI4 ( &idx );
+            if (i < fields->count)
+            {
+                *ret = i;
+                return S_OK;
+            }
         }
 
         return MAKE_ADO_HRESULT(adErrItemNotFound);
-    }
-
-    if (V_VT( index ) != VT_BSTR)
-    {
-        FIXME( "variant type %u not supported\n", V_VT( index ) );
-        return E_INVALIDARG;
     }
 
     for (i = 0; i < fields->count; i++)

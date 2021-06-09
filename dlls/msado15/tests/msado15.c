@@ -150,6 +150,23 @@ static void test_Recordset(void)
     ok( hr == S_OK, "got %08x\n", hr );
     Field_Release(field);
 
+    V_VT( &index ) = VT_I1;
+    V_I1( &index ) = 0;
+    hr = Fields_get_Item( fields, index, &field );
+    ok( hr == S_OK, "got %08x\n", hr );
+    Field_Release(field);
+
+    V_VT( &index ) = VT_R8;
+    V_R8( &index ) = 0.1;
+    hr = Fields_get_Item( fields, index, &field );
+    ok( hr == S_OK, "got %08x\n", hr );
+    Field_Release(field);
+
+    V_VT( &index ) = VT_UNKNOWN;
+    V_UNKNOWN( &index ) = NULL;
+    hr = Fields_get_Item( fields, index, &field );
+    ok( hr == MAKE_ADO_HRESULT(adErrItemNotFound), "got %08x\n", hr );
+
     V_VT( &index ) = VT_BSTR;
     V_BSTR( &index ) = name;
     hr = Fields_get_Item( fields, index, &field );
