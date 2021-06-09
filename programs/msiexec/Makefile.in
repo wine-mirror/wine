@@ -1,5 +1,5 @@
 MODULE    = msiexec.exe
-IMPORTS   = msi ole32 advapi32 user32
+IMPORTS   = msi ole32 advapi32 user32 comctl32
 
 EXTRADLLFLAGS = -mwindows -mno-cygwin
 
