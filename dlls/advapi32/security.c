@@ -101,7 +101,7 @@ static const AccountSid ACCOUNT_SIDS[] = {
     { WinBuiltinPreWindows2000CompatibleAccessSid, L"Pre-Windows 2000 Compatible Access", L"BUILTIN", SidTypeAlias },
     { WinBuiltinRemoteDesktopUsersSid, L"Remote Desktop Users", L"BUILTIN", SidTypeAlias },
     { WinBuiltinNetworkConfigurationOperatorsSid, L"Network Configuration Operators", L"BUILTIN", SidTypeAlias },
-    { WinNTLMAuthenticationSid, L"NTML Authentication", L"NT AUTHORITY", SidTypeWellKnownGroup },
+    { WinNTLMAuthenticationSid, L"NTLM Authentication", L"NT AUTHORITY", SidTypeWellKnownGroup },
     { WinDigestAuthenticationSid, L"Digest Authentication", L"NT AUTHORITY", SidTypeWellKnownGroup },
     { WinSChannelAuthenticationSid, L"SChannel Authentication", L"NT AUTHORITY", SidTypeWellKnownGroup },
     { WinThisOrganizationSid, L"This Organization", L"NT AUTHORITY", SidTypeWellKnownGroup },
