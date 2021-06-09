@@ -3491,16 +3491,9 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         return ret ? -1 : 0;
     }
 
-   case WS_SIO_SET_COMPATIBILITY_MODE:
-       TRACE("WS_SIO_SET_COMPATIBILITY_MODE ignored\n");
-       status = WSAEOPNOTSUPP;
-       break;
    case WS_SIO_UDP_CONNRESET:
        FIXME("WS_SIO_UDP_CONNRESET stub\n");
        break;
-    case 0x667e: /* Netscape tries hard to use bogus ioctl 0x667e */
-        SetLastError(WSAEOPNOTSUPP);
-        return SOCKET_ERROR;
 
     case WS_SIO_ADDRESS_LIST_CHANGE:
     {
@@ -3515,8 +3508,25 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
 
     default:
         FIXME( "unimplemented ioctl %s\n", debugstr_wsaioctl( code ) );
-        status = WSAEOPNOTSUPP;
-        break;
+        /* fall through */
+    case LOWORD(WS_FIONBIO): /* Netscape tries to use this */
+    case WS_SIO_SET_COMPATIBILITY_MODE:
+    {
+        NTSTATUS status = STATUS_NOT_SUPPORTED;
+
+        server_ioctl_sock( s, IOCTL_AFD_WINE_COMPLETE_ASYNC, &status, sizeof(status),
+                           NULL, 0, ret_size, overlapped, completion );
+        if (overlapped)
+        {
+            SetLastError( ERROR_IO_PENDING );
+        }
+        else
+        {
+            *ret_size = 0;
+            SetLastError( WSAEOPNOTSUPP );
+        }
+        return -1;
+    }
     }
 
     if (completion)
