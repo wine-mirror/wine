@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <windows.h>
+#include <commctrl.h>
 #include <shellapi.h>
 
 
@@ -37,6 +38,8 @@ static void launch(LPCWSTR what)
 
 int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrev, LPWSTR lpszCmdLine, INT nCmdShow)
 {
+    InitCommonControls();
+
     /* no parameters - pop up whole "Control Panel" by default */
     if (!*lpszCmdLine) {
         launch(lpszCmdLine);
