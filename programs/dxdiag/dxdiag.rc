@@ -29,3 +29,6 @@ STRINGTABLE
     STRING_DXDIAG_TOOL, "DirectX Diagnostic Tool"
     STRING_USAGE, "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 }
+
+/* @makedep: dxdiag.manifest */
+1 RT_MANIFEST dxdiag.manifest

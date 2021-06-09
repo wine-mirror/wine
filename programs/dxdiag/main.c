@@ -21,6 +21,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <dxdiag.h>
+#include <commctrl.h>
 
 #include "wine/debug.h"
 #include "dxdiag_private.h"
@@ -179,6 +180,8 @@ int WINAPI wWinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int cm
 {
     struct command_line_info info;
     struct dxdiag_information *dxdiag_info;
+
+    InitCommonControls();
 
     hInstance = hInst;
 
