@@ -109,6 +109,7 @@ void     (WINAPI *pKiUserApcDispatcher)(CONTEXT*,ULONG_PTR,ULONG_PTR,ULONG_PTR,P
 NTSTATUS (WINAPI *pKiUserExceptionDispatcher)(EXCEPTION_RECORD*,CONTEXT*) = NULL;
 void     (WINAPI *pLdrInitializeThunk)(CONTEXT*,void**,ULONG_PTR,ULONG_PTR) = NULL;
 void     (WINAPI *pRtlUserThreadStart)( PRTL_THREAD_START_ROUTINE entry, void *arg ) = NULL;
+void     (WINAPI *p__wine_ctrl_routine)(void*);
 
 static NTSTATUS (CDECL *p__wine_set_unix_funcs)( int version, const struct unix_funcs *funcs );
 
@@ -836,6 +837,7 @@ static void load_ntdll_functions( HMODULE module )
     GET_FUNC( KiUserApcDispatcher );
     GET_FUNC( LdrInitializeThunk );
     GET_FUNC( RtlUserThreadStart );
+    GET_FUNC( __wine_ctrl_routine );
     GET_FUNC( __wine_set_unix_funcs );
 #undef GET_FUNC
 #define SET_PTR(name,val) \

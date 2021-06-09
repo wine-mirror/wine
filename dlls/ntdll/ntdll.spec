@@ -1616,6 +1616,7 @@
 @ cdecl -syscall __wine_unix_call(int64 long ptr)
 @ cdecl __wine_set_unix_funcs(long ptr)
 @ cdecl __wine_init_unix_lib(long long ptr ptr)
+@ stdcall __wine_ctrl_routine(ptr)
 @ extern __wine_syscall_dispatcher
 @ extern -arch=i386 __wine_ldt_copy
 

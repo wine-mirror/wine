@@ -2713,14 +2713,6 @@ static int main_loop( struct console *console, HANDLE signal )
     return 0;
 }
 
-static LONG WINAPI handle_ctrl_c( EXCEPTION_POINTERS *eptr )
-{
-    if (eptr->ExceptionRecord->ExceptionCode != CONTROL_C_EXIT) return EXCEPTION_CONTINUE_SEARCH;
-    /* In Unix mode, ignore ctrl c exceptions. Signals are sent it to clients as well and we will
-     * terminate the usual way if they don't handle it. */
-    return EXCEPTION_CONTINUE_EXECUTION;
-}
-
 int __cdecl wmain(int argc, WCHAR *argv[])
 {
     int headless = 0, i, width = 0, height = 0;
@@ -2809,8 +2801,6 @@ int __cdecl wmain(int argc, WCHAR *argv[])
         set_console_title( &console, si.lpTitle, wcslen( si.lpTitle ) * sizeof(WCHAR) );
         ShowWindow( console.win, (si.dwFlags & STARTF_USESHOWWINDOW) ? si.wShowWindow : SW_SHOW );
     }
-
-    if (console.is_unix) RtlAddVectoredExceptionHandler( FALSE, handle_ctrl_c );
 
     return main_loop( &console, signal );
 }

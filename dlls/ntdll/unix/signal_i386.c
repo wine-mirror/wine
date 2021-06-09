@@ -1956,9 +1956,14 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void int_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    EXCEPTION_RECORD rec = { CONTROL_C_EXIT };
+    HANDLE handle;
 
-    setup_exception( sigcontext, &rec );
+    init_handler( sigcontext );
+
+    if (!p__wine_ctrl_routine) return;
+    if (!NtCreateThreadEx( &handle, THREAD_ALL_ACCESS, NULL, NtCurrentProcess(),
+                           p__wine_ctrl_routine, 0 /* CTRL_C_EVENT */, 0, 0, 0, 0, NULL ))
+        NtClose( handle );
 }
 
 /**********************************************************************
