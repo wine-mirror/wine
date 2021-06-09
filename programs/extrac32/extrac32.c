@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include <windows.h>
+#include <commctrl.h>
 #include <shellapi.h>
 #include <setupapi.h>
 #include <shlwapi.h>
@@ -225,6 +226,8 @@ int PASCAL wWinMain(HINSTANCE hInstance, HINSTANCE prev, LPWSTR cmdline, int sho
     WCHAR check, cmd = 0;
     WCHAR path[MAX_PATH];
     LPCWSTR cabfile = NULL;
+
+    InitCommonControls();
 
     path[0] = 0;
 
