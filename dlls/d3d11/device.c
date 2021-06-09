@@ -521,13 +521,14 @@ static ULONG STDMETHODCALLTYPE d3d11_device_context_Release(ID3D11DeviceContext1
 
     if (!refcount)
     {
+        ID3D11Device2 *device = &context->device->ID3D11Device2_iface;
         if (context->type != D3D11_DEVICE_CONTEXT_IMMEDIATE)
         {
             wined3d_deferred_context_destroy(context->wined3d_context);
             d3d11_device_context_cleanup(context);
             heap_free(context);
         }
-        ID3D11Device2_Release(&context->device->ID3D11Device2_iface);
+        ID3D11Device2_Release(device);
     }
 
     return refcount;
