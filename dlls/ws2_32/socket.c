@@ -3276,11 +3276,6 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         return ret ? -1 : 0;
     }
 
-    case WS_FIOASYNC:
-        WARN("Warning: WS1.1 shouldn't be using async I/O\n");
-        SetLastError(WSAEINVAL);
-        return SOCKET_ERROR;
-
     case WS_SIO_GET_INTERFACE_LIST:
     {
         DWORD ret;

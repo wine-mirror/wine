@@ -4136,35 +4136,27 @@ static void test_unsupported_ioctls(void)
         size = 0xdeadbeef;
         ret = WSAIoctl(s, codes[i], NULL, 0, NULL, 0, &size, NULL, NULL);
         ok(ret == -1, "expected failure\n");
-        todo_wine_if (codes[i] == FIOASYNC)
-            ok(WSAGetLastError() == WSAEOPNOTSUPP, "got error %u\n", WSAGetLastError());
-        todo_wine_if (codes[i] == FIOASYNC)
-            ok(!size, "got size %u\n", size);
+        ok(WSAGetLastError() == WSAEOPNOTSUPP, "got error %u\n", WSAGetLastError());
+        ok(!size, "got size %u\n", size);
 
         WSASetLastError(0xdeadbeef);
         size = 0xdeadbeef;
         overlapped.Internal = 0xdeadbeef;
         overlapped.InternalHigh = 0xdeadbeef;
         ret = WSAIoctl(s, codes[i], NULL, 0, NULL, 0, &size, &overlapped, NULL);
-            ok(ret == -1, "expected failure\n");
-        todo_wine_if (codes[i] == FIOASYNC)
-            ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
+        ok(ret == -1, "expected failure\n");
+        ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
         ok(size == 0xdeadbeef, "got size %u\n", size);
 
         ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
         ok(!ret, "expected failure\n");
-        todo_wine_if (codes[i] == FIOASYNC)
-            ok(GetLastError() == ERROR_NOT_SUPPORTED, "got error %u\n", GetLastError());
-        todo_wine_if (codes[i] == FIOASYNC)
-            ok(!size, "got size %u\n", size);
+        ok(GetLastError() == ERROR_NOT_SUPPORTED, "got error %u\n", GetLastError());
+        ok(!size, "got size %u\n", size);
         ok(key == 123, "got key %Iu\n", key);
-        todo_wine_if (codes[i] == FIOASYNC)
-            ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
-        todo_wine_if (codes[i] == FIOASYNC)
-            ok((NTSTATUS)overlapped.Internal == STATUS_NOT_SUPPORTED,
-                    "got status %#x\n", (NTSTATUS)overlapped.Internal);
-        todo_wine_if (codes[i] == FIOASYNC)
-            ok(!overlapped.InternalHigh, "got size %Iu\n", overlapped.InternalHigh);
+        ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
+        ok((NTSTATUS)overlapped.Internal == STATUS_NOT_SUPPORTED,
+                "got status %#x\n", (NTSTATUS)overlapped.Internal);
+        ok(!overlapped.InternalHigh, "got size %Iu\n", overlapped.InternalHigh);
 
         CloseHandle(port);
         closesocket(s);
@@ -4179,20 +4171,15 @@ static void test_unsupported_ioctls(void)
         size = 0xdeadbeef;
         ret = WSAIoctl(s, codes[i], NULL, 0, NULL, 0, &size, &overlapped, socket_apc);
         ok(ret == -1, "expected failure\n");
-        todo_wine_if (codes[i] == FIOASYNC)
-            ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
+        ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
         ok(size == 0xdeadbeef, "got size %u\n", size);
 
         ret = SleepEx(0, TRUE);
-        todo_wine_if (codes[i] == FIOASYNC)
-            ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
-        if (ret == WAIT_IO_COMPLETION)
-        {
-            ok(apc_count == 1, "APC was called %u times\n", apc_count);
-            ok(apc_error == WSAEOPNOTSUPP, "got APC error %u\n", apc_error);
-            ok(!apc_size, "got APC size %u\n", apc_size);
-            ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
-        }
+        ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
+        ok(apc_count == 1, "APC was called %u times\n", apc_count);
+        ok(apc_error == WSAEOPNOTSUPP, "got APC error %u\n", apc_error);
+        ok(!apc_size, "got APC size %u\n", apc_size);
+        ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
 
         closesocket(s);
         winetest_pop_context();
