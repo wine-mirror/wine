@@ -9943,7 +9943,7 @@ msgid "File type:"
 msgstr "ファイルの種類:"
 
 #: dlls/shell32/shell32.rc:359 dlls/shell32/shell32.rc:392
-#: dlls/urlmon/urlmon.rc:37 programs/explorer/explorer.rc:32
+#: dlls/urlmon/urlmon.rc:37 programs/explorer/explorer.rc:33
 msgid "Location:"
 msgstr "場所:"
 
@@ -13607,15 +13607,15 @@ msgstr "DirectX 診断ツール"
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 msgstr "使い方: dxdiag [/whql:off | /whql:on] [/t ファイル名 | /x ファイル名]"
 
-#: programs/explorer/explorer.rc:31
+#: programs/explorer/explorer.rc:32
 msgid "Wine Explorer"
 msgstr "Wine エクスプローラー"
 
-#: programs/explorer/explorer.rc:33
+#: programs/explorer/explorer.rc:34
 msgid "Start"
 msgstr "スタート"
 
-#: programs/explorer/explorer.rc:34 programs/winefile/winefile.rc:36
+#: programs/explorer/explorer.rc:35 programs/winefile/winefile.rc:36
 msgid "&Run..."
 msgstr "実行(&R)..."
 

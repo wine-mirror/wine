@@ -19,6 +19,7 @@
  */
 
 #include "windef.h"
+#include "winuser.h"
 #include "resource.h"
 
 #pragma makedep po
@@ -43,3 +44,6 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 #define WINE_PRODUCTVERSION_STR "6.1.7601.17567"
 
 #include "wine/wine_common_ver.rc"
+
+/* @makedep: explorer.manifest */
+1 RT_MANIFEST explorer.manifest

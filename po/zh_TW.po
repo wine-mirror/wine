@@ -10275,7 +10275,7 @@ msgid "File type:"
 msgstr "檔案類型"
 
 #: dlls/shell32/shell32.rc:359 dlls/shell32/shell32.rc:392
-#: dlls/urlmon/urlmon.rc:37 programs/explorer/explorer.rc:32
+#: dlls/urlmon/urlmon.rc:37 programs/explorer/explorer.rc:33
 msgid "Location:"
 msgstr "位址："
 
@@ -14262,17 +14262,17 @@ msgstr "DirectX 診斷工具"
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 msgstr "用法：dxdiag [/whql:off | /whql:on] [/t 檔名 | /x 檔名]"
 
-#: programs/explorer/explorer.rc:31
+#: programs/explorer/explorer.rc:32
 msgid "Wine Explorer"
 msgstr "Wine 檔案總管"
 
-#: programs/explorer/explorer.rc:33
+#: programs/explorer/explorer.rc:34
 #, fuzzy
 #| msgid "StartUp"
 msgid "Start"
 msgstr "啟動"
 
-#: programs/explorer/explorer.rc:34 programs/winefile/winefile.rc:36
+#: programs/explorer/explorer.rc:35 programs/winefile/winefile.rc:36
 msgid "&Run..."
 msgstr "執行(&R)..."
 

@@ -10421,7 +10421,7 @@ msgid "File type:"
 msgstr "Tipo di file"
 
 #: dlls/shell32/shell32.rc:359 dlls/shell32/shell32.rc:392
-#: dlls/urlmon/urlmon.rc:37 programs/explorer/explorer.rc:32
+#: dlls/urlmon/urlmon.rc:37 programs/explorer/explorer.rc:33
 msgid "Location:"
 msgstr "Locazione:"
 
@@ -14340,17 +14340,17 @@ msgstr "Strumento di Diagnostica DirectX"
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 msgstr "Uso: dxdiag [/whql:off | /whql:on] [/t nome_file | /x nome_file]"
 
-#: programs/explorer/explorer.rc:31
+#: programs/explorer/explorer.rc:32
 msgid "Wine Explorer"
 msgstr "Explorer di Wine"
 
-#: programs/explorer/explorer.rc:33
+#: programs/explorer/explorer.rc:34
 #, fuzzy
 #| msgid "StartUp"
 msgid "Start"
 msgstr "Esecuzione automatica"
 
-#: programs/explorer/explorer.rc:34 programs/winefile/winefile.rc:36
+#: programs/explorer/explorer.rc:35 programs/winefile/winefile.rc:36
 msgid "&Run..."
 msgstr "&Esegui..."
 

@@ -10034,7 +10034,7 @@ msgid "File type:"
 msgstr "Тип файлу:"
 
 #: dlls/shell32/shell32.rc:359 dlls/shell32/shell32.rc:392
-#: dlls/urlmon/urlmon.rc:37 programs/explorer/explorer.rc:32
+#: dlls/urlmon/urlmon.rc:37 programs/explorer/explorer.rc:33
 msgid "Location:"
 msgstr "Розміщення:"
 
@@ -13689,15 +13689,15 @@ msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 msgstr ""
 "Використання: dxdiag [/whql:off | /whql:on] [/t ім'я_файлу | /x ім'я_файлу]"
 
-#: programs/explorer/explorer.rc:31
+#: programs/explorer/explorer.rc:32
 msgid "Wine Explorer"
 msgstr "Оглядач Wine"
 
-#: programs/explorer/explorer.rc:33
+#: programs/explorer/explorer.rc:34
 msgid "Start"
 msgstr "Пуск"
 
-#: programs/explorer/explorer.rc:34 programs/winefile/winefile.rc:36
+#: programs/explorer/explorer.rc:35 programs/winefile/winefile.rc:36
 msgid "&Run..."
 msgstr "&Запустити..."
 

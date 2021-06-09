@@ -10311,7 +10311,7 @@ msgid "File type:"
 msgstr "نوع الملف"
 
 #: dlls/shell32/shell32.rc:359 dlls/shell32/shell32.rc:392
-#: dlls/urlmon/urlmon.rc:37 programs/explorer/explorer.rc:32
+#: dlls/urlmon/urlmon.rc:37 programs/explorer/explorer.rc:33
 msgid "Location:"
 msgstr "المكان:"
 
@@ -14352,17 +14352,17 @@ msgstr "أداة تشخيص ديركت اكس"
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 msgstr "الاستخدام: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 
-#: programs/explorer/explorer.rc:31
+#: programs/explorer/explorer.rc:32
 msgid "Wine Explorer"
 msgstr "مستعرض واين"
 
-#: programs/explorer/explorer.rc:33
+#: programs/explorer/explorer.rc:34
 #, fuzzy
 #| msgid "StartUp"
 msgid "Start"
 msgstr "بدء التشغيل"
 
-#: programs/explorer/explorer.rc:34 programs/winefile/winefile.rc:36
+#: programs/explorer/explorer.rc:35 programs/winefile/winefile.rc:36
 msgid "&Run..."
 msgstr "ش&غل..."
 

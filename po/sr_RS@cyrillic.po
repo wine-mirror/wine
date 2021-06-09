@@ -10372,7 +10372,7 @@ msgid "File type:"
 msgstr "Датотека"
 
 #: dlls/shell32/shell32.rc:359 dlls/shell32/shell32.rc:392
-#: dlls/urlmon/urlmon.rc:37 programs/explorer/explorer.rc:32
+#: dlls/urlmon/urlmon.rc:37 programs/explorer/explorer.rc:33
 #, fuzzy
 msgid "Location:"
 msgstr "Локација"
@@ -13817,18 +13817,18 @@ msgstr ""
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
 msgstr ""
 
-#: programs/explorer/explorer.rc:31
+#: programs/explorer/explorer.rc:32
 #, fuzzy
 msgid "Wine Explorer"
 msgstr "Wine Internet Explorer"
 
-#: programs/explorer/explorer.rc:33
+#: programs/explorer/explorer.rc:34
 #, fuzzy
 #| msgid "Start Menu"
 msgid "Start"
 msgstr "„Старт“ мени"
 
-#: programs/explorer/explorer.rc:34 programs/winefile/winefile.rc:36
+#: programs/explorer/explorer.rc:35 programs/winefile/winefile.rc:36
 msgid "&Run..."
 msgstr ""
 
