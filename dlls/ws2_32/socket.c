@@ -3435,7 +3435,8 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         struct WS_sockaddr_in *saddr_in = out_buff;
         MIB_IPFORWARDROW row;
         PMIB_IPADDRTABLE ipAddrTable = NULL;
-        DWORD size, i, found_index;
+        DWORD size, i, found_index, ret = 0;
+        NTSTATUS status = STATUS_SUCCESS;
 
         TRACE( "-> WS_SIO_ROUTING_INTERFACE_QUERY request\n" );
 
@@ -3448,21 +3449,21 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         if (daddr->sa_family != WS_AF_INET)
         {
             FIXME("unsupported address family %d\n", daddr->sa_family);
-            status = WSAEAFNOSUPPORT;
-            break;
+            SetLastError( WSAEAFNOSUPPORT );
+            return -1;
         }
         if (GetBestRoute( daddr_in->sin_addr.S_un.S_addr, 0, &row ) != NOERROR ||
             GetIpAddrTable( NULL, &size, FALSE ) != ERROR_INSUFFICIENT_BUFFER)
         {
-            status = WSAEFAULT;
-            break;
+            SetLastError( WSAEFAULT );
+            return -1;
         }
         ipAddrTable = HeapAlloc( GetProcessHeap(), 0, size );
         if (GetIpAddrTable( ipAddrTable, &size, FALSE ))
         {
             HeapFree( GetProcessHeap(), 0, ipAddrTable );
-            status = WSAEFAULT;
-            break;
+            SetLastError( WSAEFAULT );
+            return -1;
         }
         for (i = 0, found_index = ipAddrTable->dwNumEntries;
              i < ipAddrTable->dwNumEntries; i++)
@@ -3475,15 +3476,19 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
             ERR("no matching IP address for interface %d\n",
                 row.dwForwardIfIndex);
             HeapFree( GetProcessHeap(), 0, ipAddrTable );
-            status = WSAEFAULT;
-            break;
+            SetLastError( WSAEFAULT );
+            return -1;
         }
         saddr_in->sin_family = WS_AF_INET;
         saddr_in->sin_addr.S_un.S_addr = ipAddrTable->table[found_index].dwAddr;
         saddr_in->sin_port = 0;
-        total = sizeof(struct WS_sockaddr_in);
         HeapFree( GetProcessHeap(), 0, ipAddrTable );
-        break;
+
+        ret = server_ioctl_sock( s, IOCTL_AFD_WINE_COMPLETE_ASYNC, &status, sizeof(status),
+                                 NULL, 0, ret_size, overlapped, completion );
+        if (!ret) *ret_size = sizeof(struct WS_sockaddr_in);
+        SetLastError( ret );
+        return ret ? -1 : 0;
     }
 
    case WS_SIO_SET_COMPATIBILITY_MODE:

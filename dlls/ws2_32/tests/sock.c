@@ -7770,7 +7770,7 @@ static void test_sioRoutingInterfaceQuery(void)
     size = 0xdeadbeef;
     ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, &in, sizeof(in), &out, sizeof(out), &size, NULL, NULL);
     ok(!ret, "expected failure\n");
-    todo_wine ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+    ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
     ok(size == sizeof(out), "got size %u\n", size);
     /* We expect the source address to be INADDR_LOOPBACK as well, but
      * there's no guarantee that a route to the loopback address exists,
@@ -7801,15 +7801,15 @@ static void test_sioRoutingInterfaceQuery(void)
     overlapped.InternalHigh = 0xdeadbeef;
     ret = WSAIoctl(sock, SIO_ROUTING_INTERFACE_QUERY, &in, sizeof(in), &out, sizeof(out), &size, &overlapped, NULL);
     ok(!ret, "expected failure\n");
-    todo_wine ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+    ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
     ok(size == sizeof(out), "got size %u\n", size);
 
     ret = GetQueuedCompletionStatus(port, &size, &key, &overlapped_ptr, 0);
     ok(ret, "got error %u\n", GetLastError());
-    todo_wine ok(!size, "got size %u\n", size);
+    ok(!size, "got size %u\n", size);
     ok(overlapped_ptr == &overlapped, "got overlapped %p\n", overlapped_ptr);
     ok(!overlapped.Internal, "got status %#x\n", (NTSTATUS)overlapped.Internal);
-    todo_wine ok(!overlapped.InternalHigh, "got size %Iu\n", overlapped.InternalHigh);
+    ok(!overlapped.InternalHigh, "got size %Iu\n", overlapped.InternalHigh);
 
     CloseHandle(port);
     closesocket(sock);
@@ -7829,14 +7829,11 @@ static void test_sioRoutingInterfaceQuery(void)
     ok(size == sizeof(out), "got size %u\n", size);
 
     ret = SleepEx(0, TRUE);
-    todo_wine ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
-    if (ret == WAIT_IO_COMPLETION)
-    {
-        ok(apc_count == 1, "APC was called %u times\n", apc_count);
-        ok(!apc_error, "got APC error %u\n", apc_error);
-        ok(!apc_size, "got APC size %u\n", apc_size);
-        ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
-    }
+    ok(ret == WAIT_IO_COMPLETION, "got %d\n", ret);
+    ok(apc_count == 1, "APC was called %u times\n", apc_count);
+    ok(!apc_error, "got APC error %u\n", apc_error);
+    ok(!apc_size, "got APC size %u\n", apc_size);
+    ok(apc_overlapped == &overlapped, "got APC overlapped %p\n", apc_overlapped);
 
     closesocket(sock);
 }
