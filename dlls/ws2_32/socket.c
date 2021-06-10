@@ -473,8 +473,6 @@ static int ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, in
 int WSAIOCTL_GetInterfaceCount(void);
 int WSAIOCTL_GetInterfaceName(int intNumber, char *intName);
 
-static void WS_AddCompletion( SOCKET sock, ULONG_PTR CompletionValue, NTSTATUS CompletionStatus, ULONG Information, BOOL force );
-
 #define MAP_OPTION(opt) { WS_##opt, opt }
 
 static const int ws_sock_map[][2] =
@@ -644,45 +642,6 @@ static UINT wsaErrno(void)
     WARN("errno %d, (%s).\n", loc_errno, strerror(loc_errno));
 
     return sock_get_error( loc_errno );
-}
-
-static NTSTATUS sock_error_to_ntstatus( DWORD err )
-{
-    switch (err)
-    {
-    case 0:                    return STATUS_SUCCESS;
-    case WSAEBADF:             return STATUS_INVALID_HANDLE;
-    case WSAEACCES:            return STATUS_ACCESS_DENIED;
-    case WSAEFAULT:            return STATUS_ACCESS_VIOLATION;
-    case WSAEINVAL:            return STATUS_INVALID_PARAMETER;
-    case WSAEMFILE:            return STATUS_TOO_MANY_OPENED_FILES;
-    case WSAEINPROGRESS:
-    case WSAEWOULDBLOCK:       return STATUS_DEVICE_NOT_READY;
-    case WSAEALREADY:          return STATUS_NETWORK_BUSY;
-    case WSAENOTSOCK:          return STATUS_OBJECT_TYPE_MISMATCH;
-    case WSAEDESTADDRREQ:      return STATUS_INVALID_PARAMETER;
-    case WSAEMSGSIZE:          return STATUS_BUFFER_OVERFLOW;
-    case WSAEPROTONOSUPPORT:
-    case WSAESOCKTNOSUPPORT:
-    case WSAEPFNOSUPPORT:
-    case WSAEAFNOSUPPORT:
-    case WSAEPROTOTYPE:        return STATUS_NOT_SUPPORTED;
-    case WSAENOPROTOOPT:       return STATUS_INVALID_PARAMETER;
-    case WSAEOPNOTSUPP:        return STATUS_NOT_SUPPORTED;
-    case WSAEADDRINUSE:        return STATUS_SHARING_VIOLATION;
-    case WSAEADDRNOTAVAIL:     return STATUS_INVALID_PARAMETER;
-    case WSAECONNREFUSED:      return STATUS_CONNECTION_REFUSED;
-    case WSAESHUTDOWN:         return STATUS_PIPE_DISCONNECTED;
-    case WSAENOTCONN:          return STATUS_INVALID_CONNECTION;
-    case WSAETIMEDOUT:         return STATUS_IO_TIMEOUT;
-    case WSAENETUNREACH:       return STATUS_NETWORK_UNREACHABLE;
-    case WSAENETDOWN:          return STATUS_NETWORK_BUSY;
-    case WSAECONNRESET:        return STATUS_CONNECTION_RESET;
-    case WSAECONNABORTED:      return STATUS_CONNECTION_ABORTED;
-    default:
-        FIXME("unmapped error %u\n", err);
-        return STATUS_UNSUCCESSFUL;
-    }
 }
 
 static DWORD NtStatusToWSAError( NTSTATUS status )
@@ -3224,8 +3183,6 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
                     DWORD out_size, LPDWORD ret_size, LPWSAOVERLAPPED overlapped,
                     LPWSAOVERLAPPED_COMPLETION_ROUTINE completion )
 {
-    DWORD status = 0, total = 0;
-
     TRACE("%04lx, %s, %p, %d, %p, %d, %p, %p, %p\n",
           s, debugstr_wsaioctl(code), in_buff, in_size, out_buff, out_size, ret_size, overlapped, completion);
 
@@ -3290,7 +3247,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
 
     case WS_SIO_ADDRESS_LIST_QUERY:
     {
-        DWORD size;
+        DWORD size, total;
 
         TRACE("-> SIO_ADDRESS_LIST_QUERY request\n");
 
@@ -3483,10 +3440,6 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         return ret ? -1 : 0;
     }
 
-   case WS_SIO_UDP_CONNRESET:
-       FIXME("WS_SIO_UDP_CONNRESET stub\n");
-       break;
-
     case WS_SIO_ADDRESS_LIST_CHANGE:
     {
         int force_async = !!overlapped;
@@ -3494,6 +3447,18 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
 
         ret = server_ioctl_sock( s, IOCTL_AFD_WINE_ADDRESS_LIST_CHANGE, &force_async, sizeof(force_async),
                                  out_buff, out_size, ret_size, overlapped, completion );
+        SetLastError( ret );
+        return ret ? -1 : 0;
+    }
+
+    case WS_SIO_UDP_CONNRESET:
+    {
+        NTSTATUS status = STATUS_SUCCESS;
+        DWORD ret;
+
+        FIXME( "WS_SIO_UDP_CONNRESET stub\n" );
+        ret = server_ioctl_sock( s, IOCTL_AFD_WINE_COMPLETE_ASYNC, &status, sizeof(status),
+                                 NULL, 0, ret_size, overlapped, completion );
         SetLastError( ret );
         return ret ? -1 : 0;
     }
@@ -3520,27 +3485,6 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         return -1;
     }
     }
-
-    if (completion)
-    {
-        FIXME( "completion routine %p not supported\n", completion );
-    }
-    else if (overlapped)
-    {
-        ULONG_PTR cvalue = (overlapped && ((ULONG_PTR)overlapped->hEvent & 1) == 0) ? (ULONG_PTR)overlapped : 0;
-        overlapped->Internal = sock_error_to_ntstatus( status );
-        overlapped->InternalHigh = total;
-        if (cvalue) WS_AddCompletion( HANDLE2SOCKET(s), cvalue, overlapped->Internal, total, FALSE );
-        if (overlapped->hEvent) NtSetEvent( overlapped->hEvent, NULL );
-    }
-
-    if (!status)
-    {
-        *ret_size = total;
-        return 0;
-    }
-    SetLastError( status );
-    return SOCKET_ERROR;
 }
 
 
@@ -3920,22 +3864,6 @@ int WINAPI WSAPoll(WSAPOLLFD *wfds, ULONG count, int timeout)
 
     HeapFree(GetProcessHeap(), 0, ufds);
     return ret;
-}
-
-/* helper to send completion messages for client-only i/o operation case */
-static void WS_AddCompletion( SOCKET sock, ULONG_PTR CompletionValue, NTSTATUS CompletionStatus,
-                              ULONG Information, BOOL async )
-{
-    SERVER_START_REQ( add_fd_completion )
-    {
-        req->handle      = wine_server_obj_handle( SOCKET2HANDLE(sock) );
-        req->cvalue      = CompletionValue;
-        req->status      = CompletionStatus;
-        req->information = Information;
-        req->async       = async;
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
 }
 
 
