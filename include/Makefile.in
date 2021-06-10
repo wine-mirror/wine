@@ -68,6 +68,7 @@ SOURCES = \
 	cmdprp.idl \
 	cmdstrm.idl \
 	cmdtxt.idl \
+	cmdwpr.idl \
 	cmnquery.idl \
 	codecapi.h \
 	colinf.idl \

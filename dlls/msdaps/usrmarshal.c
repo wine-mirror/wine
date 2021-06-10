@@ -1697,3 +1697,47 @@ HRESULT __RPC_STUB ICommandPrepare_Unprepare_Stub(ICommandPrepare* This, IErrorI
     FIXME("(%p)->(%p): stub\n", This, error);
     return E_NOTIMPL;
 }
+
+HRESULT CALLBACK ICommandWithParameters_GetParameterInfo_Proxy(ICommandWithParameters* This,
+    DB_UPARAMS *uparams, DBPARAMINFO **info, OLECHAR **buffer)
+{
+    FIXME("(%p)->(%p %p %p): stub\n", This, uparams, info, buffer);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB ICommandWithParameters_GetParameterInfo_Stub(ICommandWithParameters* This,
+    DB_UPARAMS *uparams, DBPARAMINFO **param_info, DBBYTEOFFSET **offsets, DBLENGTH *buff_len,
+    OLECHAR **buffer, IErrorInfo **error)
+{
+    FIXME("(%p)->(%p %p %p %p %p %p %p): stub\n", This, uparams, param_info, buffer, offsets, buff_len,
+          buffer, error);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK ICommandWithParameters_SetParameterInfo_Proxy(ICommandWithParameters* This,
+    DB_UPARAMS params, const DB_UPARAMS ordinals[], const DBPARAMBINDINFO bindinfo[])
+{
+    FIXME("(%p)->(%ld %p %p): stub\n", This, params, ordinals, bindinfo);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB ICommandWithParameters_SetParameterInfo_Stub(ICommandWithParameters* This,
+    DB_UPARAMS params, const DB_UPARAMS *ordinals, const DBPARAMBINDINFO *bindinfo, IErrorInfo **error)
+{
+    FIXME("(%p)->(%ld %p %p %p): stub\n", This, params, ordinals, bindinfo, error);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK ICommandWithParameters_MapParameterNames_Proxy(ICommandWithParameters* This,
+    DB_UPARAMS count, LPCWSTR names[], DB_LPARAMS ordinals[])
+{
+    FIXME("(%p)->(%ld %p %p): stub\n", This, count, names, ordinals);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB ICommandWithParameters_MapParameterNames_Stub(ICommandWithParameters* This,
+    DB_UPARAMS count, LPCOLESTR *names, DB_LPARAMS *ordinals, IErrorInfo **error)
+{
+    FIXME("(%p)->(%ld %p %p %p): stub\n", This, count, names, ordinals, error);
+    return E_NOTIMPL;
+}
