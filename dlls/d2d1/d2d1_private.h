@@ -150,6 +150,7 @@ struct d2d_device_context
     ID3D10StateBlock *stateblock;
     struct d2d_shape_resources shape_resources[D2D_SHAPE_TYPE_COUNT];
     ID3D10PixelShader *ps;
+    ID3D10Buffer *ps_cb;
     ID3D10Buffer *ib;
     unsigned int vb_stride;
     ID3D10Buffer *vb;
@@ -314,8 +315,7 @@ HRESULT d2d_bitmap_brush_create(ID2D1Factory *factory, ID2D1Bitmap *bitmap,
         struct d2d_brush **brush) DECLSPEC_HIDDEN;
 void d2d_brush_bind_resources(struct d2d_brush *brush, struct d2d_device_context *context,
         unsigned int brush_idx) DECLSPEC_HIDDEN;
-HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_brush *opacity_brush, BOOL outline, BOOL is_arc,
-        struct d2d_device_context *render_target, ID3D10Buffer **ps_cb) DECLSPEC_HIDDEN;
+BOOL d2d_brush_fill_cb(const struct d2d_brush *brush, struct d2d_brush_cb *cb) DECLSPEC_HIDDEN;
 struct d2d_brush *unsafe_impl_from_ID2D1Brush(ID2D1Brush *iface) DECLSPEC_HIDDEN;
 
 struct d2d_stroke_style

@@ -1122,7 +1122,7 @@ static D3D10_TEXTURE_ADDRESS_MODE texture_address_mode_from_extend_mode(D2D1_EXT
     }
 }
 
-static BOOL d2d_brush_fill_cb(const struct d2d_brush *brush, struct d2d_brush_cb *cb)
+BOOL d2d_brush_fill_cb(const struct d2d_brush *brush, struct d2d_brush_cb *cb)
 {
     float theta, sin_theta, cos_theta;
     float dpi_scale, d, s1, s2, t, u;
@@ -1236,37 +1236,6 @@ static BOOL d2d_brush_fill_cb(const struct d2d_brush *brush, struct d2d_brush_cb
             FIXME("Unhandled brush type %#x.\n", brush->type);
             return FALSE;
     }
-}
-
-HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_brush *opacity_brush,
-        BOOL outline, BOOL is_arc, struct d2d_device_context *render_target, ID3D10Buffer **ps_cb)
-{
-    D3D10_SUBRESOURCE_DATA buffer_data;
-    struct d2d_ps_cb cb_data = {0};
-    D3D10_BUFFER_DESC buffer_desc;
-    HRESULT hr;
-
-    cb_data.outline = outline;
-    cb_data.is_arc = is_arc;
-    if (!d2d_brush_fill_cb(brush, &cb_data.colour_brush))
-        return E_NOTIMPL;
-    if (!d2d_brush_fill_cb(opacity_brush, &cb_data.opacity_brush))
-        return E_NOTIMPL;
-
-    buffer_desc.ByteWidth = sizeof(cb_data);
-    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
-    buffer_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
-    buffer_desc.CPUAccessFlags = 0;
-    buffer_desc.MiscFlags = 0;
-
-    buffer_data.pSysMem = &cb_data;
-    buffer_data.SysMemPitch = 0;
-    buffer_data.SysMemSlicePitch = 0;
-
-    if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->d3d_device, &buffer_desc, &buffer_data, ps_cb)))
-        ERR("Failed to create constant buffer, hr %#x.\n", hr);
-
-    return hr;
 }
 
 static void d2d_brush_bind_bitmap(struct d2d_brush *brush, struct d2d_device_context *context,
