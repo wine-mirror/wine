@@ -19,6 +19,7 @@
  */
 
 #include "main.h"
+#include "commctrl.h"
 #include "commdlg.h"
 #include "shellapi.h"
 
@@ -553,6 +554,8 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int 
 {
     MSG msg;
     HANDLE hAccelTable;
+
+    InitCommonControls();
 
     if(!InitApplication(hInst))
         return FALSE;

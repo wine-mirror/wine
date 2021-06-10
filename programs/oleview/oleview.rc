@@ -222,5 +222,8 @@ IDA_OLEVIEW ACCELERATORS
     VK_F5, IDM_REFRESH, VIRTKEY
 }
 
+/* @makedep: oleview.manifest */
+1 RT_MANIFEST oleview.manifest
+
 /* @makedep: toolbar.bmp */
 IDB_TOOLBAR BITMAP toolbar.bmp
