@@ -299,7 +299,8 @@ static void compare_tm(const TEXTMETRICA *tm, const TEXTMETRICA *otm)
     ok(tm->tmCharSet == otm->tmCharSet, "tmCharSet %d != %d\n", tm->tmCharSet, otm->tmCharSet);
 }
 
-static void test_font_metrics(HDC hdc, HFONT hfont, LONG lfHeight,
+static void test_font_metrics(const char *context,
+                              HDC hdc, HFONT hfont, LONG lfHeight,
                               LONG lfWidth, const char *test_str,
 			      INT test_str_len, const TEXTMETRICA *tm_orig,
 			      const SIZE *size_orig, INT width_of_A_orig,
@@ -315,6 +316,7 @@ static void test_font_metrics(HDC hdc, HFONT hfont, LONG lfHeight,
     if (!hfont)
         return;
 
+    if (context) winetest_push_context("%s", context);
     ok(GetCurrentObject(hdc, OBJ_FONT) == hfont, "hfont should be selected\n");
 
     GetObjectA(hfont, sizeof(lf), &lf);
@@ -389,6 +391,7 @@ if (0) /* these metrics are scaled too, but with rounding errors */
     GetCharWidthA(hdc, 'A', 'A', &width_of_A);
 
     ok(near_match(width_of_A, width_of_A_orig * scale_x), "width A %d != %d\n", width_of_A, width_of_A_orig * scale_x);
+    if (context) winetest_pop_context();
 }
 
 /* Test how GDI scales bitmap font metrics */
@@ -430,7 +433,7 @@ static void test_bitmap_font(void)
     bitmap_lf.lfWidth = 4;
     hfont = create_font("bitmap", &bitmap_lf);
     old_hfont = SelectObject(hdc, hfont);
-    test_font_metrics(hdc, hfont, 0, 4, test_str, sizeof(test_str), &tm_orig, &size_orig, width_orig, 1, 1);
+    test_font_metrics("bitmap", hdc, hfont, 0, 4, test_str, sizeof(test_str), &tm_orig, &size_orig, width_orig, 1, 1);
     SelectObject(hdc, old_hfont);
     DeleteObject(hfont);
 
@@ -453,7 +456,9 @@ static void test_bitmap_font(void)
         else if(scale == 2 && nearest_height - i == (height_orig / 4)) continue;
         else if(scale == 2 && nearest_height - i > (height_orig / 4 - 1)) scale--;
         old_hfont = SelectObject(hdc, hfont);
-        test_font_metrics(hdc, hfont, bitmap_lf.lfHeight, 0, test_str, sizeof(test_str), &tm_orig, &size_orig, width_orig, 1, scale);
+        winetest_push_context("height %i", i);
+        test_font_metrics(NULL, hdc, hfont, bitmap_lf.lfHeight, 0, test_str, sizeof(test_str), &tm_orig, &size_orig, width_orig, 1, scale);
+        winetest_pop_context();
         SelectObject(hdc, old_hfont);
         DeleteObject(hfont);
     }
@@ -463,7 +468,7 @@ static void test_bitmap_font(void)
     bitmap_lf.lfWidth *= 3;
     hfont = create_font("3x2", &bitmap_lf);
     old_hfont = SelectObject(hdc, hfont);
-    test_font_metrics(hdc, hfont, bitmap_lf.lfHeight, 0, test_str, sizeof(test_str), &tm_orig, &size_orig, width_orig, 3, 2);
+    test_font_metrics("bitmap 3x2", hdc, hfont, bitmap_lf.lfHeight, 0, test_str, sizeof(test_str), &tm_orig, &size_orig, width_orig, 3, 2);
     SelectObject(hdc, old_hfont);
     DeleteObject(hfont);
 
@@ -472,7 +477,7 @@ static void test_bitmap_font(void)
     bitmap_lf.lfWidth = 0;
     hfont = create_font("3x3", &bitmap_lf);
     old_hfont = SelectObject(hdc, hfont);
-    test_font_metrics(hdc, hfont, bitmap_lf.lfHeight, 0, test_str, sizeof(test_str), &tm_orig, &size_orig, width_orig, 3, 3);
+    test_font_metrics("bitmap 3x3", hdc, hfont, bitmap_lf.lfHeight, 0, test_str, sizeof(test_str), &tm_orig, &size_orig, width_orig, 3, 3);
     SelectObject(hdc, old_hfont);
     DeleteObject(hfont);
 
@@ -513,7 +518,7 @@ static void test_outline_font(void)
     ok(GetTextExtentPoint32A(hdc, test_str, sizeof(test_str), &size_orig), "GetTextExtentPoint32A failed\n");
     ok(GetCharWidthA(hdc, 'A', 'A', &width_orig), "GetCharWidthA failed\n");
 
-    test_font_metrics(hdc, hfont, lf.lfHeight, otm.otmTextMetrics.tmAveCharWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
+    test_font_metrics("outline", hdc, hfont, lf.lfHeight, otm.otmTextMetrics.tmAveCharWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
     SelectObject(hdc, old_hfont);
     DeleteObject(hfont);
 
@@ -537,7 +542,7 @@ static void test_outline_font(void)
     lf.lfWidth = lfWidth * 3;
     hfont = create_font("3x2", &lf);
     old_hfont = SelectObject(hdc, hfont);
-    test_font_metrics(hdc, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 3, 2);
+    test_font_metrics("outline 3x2", hdc, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 3, 2);
     SelectObject(hdc, old_hfont);
     DeleteObject(hfont);
 
@@ -546,7 +551,7 @@ static void test_outline_font(void)
     lf.lfWidth = lfWidth * 3;
     hfont = create_font("3x3", &lf);
     old_hfont = SelectObject(hdc, hfont);
-    test_font_metrics(hdc, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 3, 3);
+    test_font_metrics("outline 3x3", hdc, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 3, 3);
     SelectObject(hdc, old_hfont);
     DeleteObject(hfont);
 
@@ -555,7 +560,7 @@ static void test_outline_font(void)
     lf.lfWidth = lfWidth * 1;
     hfont = create_font("1x1", &lf);
     old_hfont = SelectObject(hdc, hfont);
-    test_font_metrics(hdc, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
+    test_font_metrics("outline 1x1", hdc, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
     SelectObject(hdc, old_hfont);
     DeleteObject(hfont);
 
@@ -564,7 +569,7 @@ static void test_outline_font(void)
     lf.lfWidth = 0;
     hfont = create_font("1x1", &lf);
     old_hfont = SelectObject(hdc, hfont);
-    test_font_metrics(hdc, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
+    test_font_metrics("outline 1x0", hdc, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
 
     /* with an identity matrix */
     memset(&gm, 0, sizeof(gm));
@@ -587,12 +592,12 @@ static void test_outline_font(void)
      */
     hdc_2 = CreateCompatibleDC(0);
     old_hfont_2 = SelectObject(hdc_2, hfont);
-    test_font_metrics(hdc_2, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
+    test_font_metrics("dc2.base", hdc_2, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
 
     SetMapMode(hdc, MM_ANISOTROPIC);
 
     /* font metrics on another DC should be unchanged */
-    test_font_metrics(hdc_2, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
+    test_font_metrics("dc2.aniso", hdc_2, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
 
     /* test restrictions of compatibility mode GM_COMPATIBLE */
     /*  part 1: rescaling only X should not change font scaling on screen.
@@ -600,24 +605,24 @@ static void test_outline_font(void)
                 appears as X scaling of 2 that no one requested. */
     SetWindowExtEx(hdc, 100, 100, NULL);
     SetViewportExtEx(hdc, 50, 100, NULL);
-    test_font_metrics(hdc, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 2, 1);
+    test_font_metrics("xscaling", hdc, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 2, 1);
     /* font metrics on another DC should be unchanged */
-    test_font_metrics(hdc_2, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
+    test_font_metrics("dc2.xscaling", hdc_2, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
 
     /*  part 2: rescaling only Y should change font scaling.
                 As also X is scaled by a factor of 2, but this is not
                 requested by the DC transformation, we get a scaling factor
                 of 2 in the X coordinate. */
     SetViewportExtEx(hdc, 100, 200, NULL);
-    test_font_metrics(hdc, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 2, 1);
+    test_font_metrics("yscaling", hdc, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 2, 1);
     /* font metrics on another DC should be unchanged */
-    test_font_metrics(hdc_2, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
+    test_font_metrics("dc2.yscaling", hdc_2, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
 
     /* restore scaling */
     SetMapMode(hdc, MM_TEXT);
 
     /* font metrics on another DC should be unchanged */
-    test_font_metrics(hdc_2, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
+    test_font_metrics("dc2.text", hdc_2, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
 
     SelectObject(hdc_2, old_hfont_2);
     DeleteDC(hdc_2);
@@ -642,7 +647,7 @@ static void test_outline_font(void)
     ret = SetWorldTransform(hdc, &xform);
     ok(ret, "SetWorldTransform error %u\n", GetLastError());
 
-    test_font_metrics(hdc, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
+    test_font_metrics("xform", hdc, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
 
     /* with an identity matrix */
     memset(&gm, 0, sizeof(gm));
@@ -669,7 +674,7 @@ static void test_outline_font(void)
     ret = SetMapMode(hdc, MM_LOMETRIC);
     ok(ret == MM_TEXT, "expected MM_TEXT, got %d, error %u\n", ret, GetLastError());
 
-    test_font_metrics(hdc, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
+    test_font_metrics("lometric", hdc, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
 
     /* with an identity matrix */
     memset(&gm, 0, sizeof(gm));
@@ -694,7 +699,7 @@ static void test_outline_font(void)
     ret = SetMapMode(hdc, MM_TEXT);
     ok(ret == MM_LOMETRIC, "expected MM_LOMETRIC, got %d, error %u\n", ret, GetLastError());
 
-    test_font_metrics(hdc, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
+    test_font_metrics("text", hdc, hfont, lf.lfHeight, lf.lfWidth, test_str, sizeof(test_str), &otm.otmTextMetrics, &size_orig, width_orig, 1, 1);
 
     /* with an identity matrix */
     memset(&gm, 0, sizeof(gm));
