@@ -51,14 +51,6 @@ static double CDECL unix_exp( double x )
 }
 
 /*********************************************************************
- *      expf
- */
-static float CDECL unix_expf( float x )
-{
-    return expf( x );
-}
-
-/*********************************************************************
  *      exp2
  */
 static double CDECL unix_exp2( double x )
@@ -89,7 +81,6 @@ static float CDECL unix_powf( float x, float y )
 static const struct unix_funcs funcs =
 {
     unix_exp,
-    unix_expf,
     unix_exp2,
     unix_pow,
     unix_powf,

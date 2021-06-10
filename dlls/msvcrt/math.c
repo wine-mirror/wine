@@ -668,6 +668,38 @@ static float __cosdf(double x)
     r = C2 + z * C3;
     return ((1.0 + z * C0) + w * C1) + (w * z) * r;
 }
+
+/* Based on musl implementation: src/math/round.c */
+static double __round(double x)
+{
+    ULONGLONG llx = *(ULONGLONG*)&x, tmp;
+    int e = (llx >> 52 & 0x7ff) - 0x3ff;
+
+    if (e >= 52)
+        return x;
+    if (e < -1)
+        return 0 * x;
+    else if (e == -1)
+        return signbit(x) ? -1 : 1;
+
+    tmp = 0x000fffffffffffffULL >> e;
+    if (!(llx & tmp))
+        return x;
+    llx += 0x0008000000000000ULL >> e;
+    llx &= ~tmp;
+    return *(double*)&llx;
+}
+
+static const UINT64 exp2f_T[] = {
+    0x3ff0000000000000ULL, 0x3fefd9b0d3158574ULL, 0x3fefb5586cf9890fULL, 0x3fef9301d0125b51ULL,
+    0x3fef72b83c7d517bULL, 0x3fef54873168b9aaULL, 0x3fef387a6e756238ULL, 0x3fef1e9df51fdee1ULL,
+    0x3fef06fe0a31b715ULL, 0x3feef1a7373aa9cbULL, 0x3feedea64c123422ULL, 0x3feece086061892dULL,
+    0x3feebfdad5362a27ULL, 0x3feeb42b569d4f82ULL, 0x3feeab07dd485429ULL, 0x3feea47eb03a5585ULL,
+    0x3feea09e667f3bcdULL, 0x3fee9f75e8ec5f74ULL, 0x3feea11473eb0187ULL, 0x3feea589994cce13ULL,
+    0x3feeace5422aa0dbULL, 0x3feeb737b0cdc5e5ULL, 0x3feec49182a3f090ULL, 0x3feed503b23e255dULL,
+    0x3feee89f995ad3adULL, 0x3feeff76f2fb5e47ULL, 0x3fef199bdd85529cULL, 0x3fef3720dcef9069ULL,
+    0x3fef5818dcfba487ULL, 0x3fef7c97337b9b5fULL, 0x3fefa4afa2a490daULL, 0x3fefd0765b6e4540ULL
+};
 #endif
 
 #ifndef __i386__
@@ -1134,11 +1166,50 @@ float CDECL coshf( float x )
  */
 float CDECL expf( float x )
 {
-  float ret = unix_funcs->expf( x );
-  if (isnan(x)) return math_error(_DOMAIN, "expf", x, 0, ret);
-  if (isfinite(x) && !ret) return math_error(_UNDERFLOW, "expf", x, 0, ret);
-  if (isfinite(x) && !isfinite(ret)) return math_error(_OVERFLOW, "expf", x, 0, ret);
-  return ret;
+    static const double C[] = {
+        0x1.c6af84b912394p-5 / (1 << 5) / (1 << 5) / (1 << 5),
+        0x1.ebfce50fac4f3p-3 / (1 << 5) / (1 << 5),
+        0x1.62e42ff0c52d6p-1 / (1 << 5)
+    };
+    static const double invln2n = 0x1.71547652b82fep+0 * (1 << 5);
+
+    double kd, z, r, r2, y, s;
+    UINT32 abstop;
+    UINT64 ki, t;
+
+    abstop = (*(UINT32*)&x >> 20) & 0x7ff;
+    if (abstop >= 0x42b) {
+        /* |x| >= 88 or x is nan.  */
+        if (*(UINT32*)&x == 0xff800000)
+            return 0.0f;
+        if (abstop >= 0x7f8)
+            return x + x;
+        if (x > 0x1.62e42ep6f) /* x > log(0x1p128) ~= 88.72 */
+            return math_error(_OVERFLOW, "expf", x, 0, x * FLT_MAX);
+        if (x < -0x1.9fe368p6f) /* x < log(0x1p-150) ~= -103.97 */
+            return math_error(_UNDERFLOW, "expf", x, 0, fp_barrierf(FLT_MIN) * FLT_MIN);
+    }
+
+    /* x*N/Ln2 = k + r with r in [-1/2, 1/2] and int k.  */
+    z = invln2n * x;
+
+    /* Round and convert z to int, the result is in [-150*N, 128*N] and
+       ideally ties-to-even rule is used, otherwise the magnitude of r
+       can be bigger which gives larger approximation error.  */
+    kd = __round(z);
+    ki = kd;
+    r = z - kd;
+
+    /* exp(x) = 2^(k/N) * 2^(r/N) ~= s * (C0*r^3 + C1*r^2 + C2*r + 1) */
+    t = exp2f_T[ki % (1 << 5)];
+    t += ki << (52 - 5);
+    s = *(double*)&t;
+    z = C[0] * r + C[1];
+    r2 = r * r;
+    y = C[2] * r + 1;
+    y = z * r2 + y;
+    y = y * s;
+    return y;
 }
 
 /*********************************************************************
@@ -7030,16 +7101,6 @@ double CDECL exp2(double x)
  */
 float CDECL exp2f(float x)
 {
-    static const UINT64 T[] = {
-        0x3ff0000000000000ULL, 0x3fefd9b0d3158574ULL, 0x3fefb5586cf9890fULL, 0x3fef9301d0125b51ULL,
-        0x3fef72b83c7d517bULL, 0x3fef54873168b9aaULL, 0x3fef387a6e756238ULL, 0x3fef1e9df51fdee1ULL,
-        0x3fef06fe0a31b715ULL, 0x3feef1a7373aa9cbULL, 0x3feedea64c123422ULL, 0x3feece086061892dULL,
-        0x3feebfdad5362a27ULL, 0x3feeb42b569d4f82ULL, 0x3feeab07dd485429ULL, 0x3feea47eb03a5585ULL,
-        0x3feea09e667f3bcdULL, 0x3fee9f75e8ec5f74ULL, 0x3feea11473eb0187ULL, 0x3feea589994cce13ULL,
-        0x3feeace5422aa0dbULL, 0x3feeb737b0cdc5e5ULL, 0x3feec49182a3f090ULL, 0x3feed503b23e255dULL,
-        0x3feee89f995ad3adULL, 0x3feeff76f2fb5e47ULL, 0x3fef199bdd85529cULL, 0x3fef3720dcef9069ULL,
-        0x3fef5818dcfba487ULL, 0x3fef7c97337b9b5fULL, 0x3fefa4afa2a490daULL, 0x3fefd0765b6e4540ULL
-    };
     static const double C[] = {
         0x1.c6af84b912394p-5, 0x1.ebfce50fac4f3p-3, 0x1.62e42ff0c52d6p-1
     };
@@ -7074,7 +7135,7 @@ float CDECL exp2f(float x)
     r = xd - kd;
 
     /* exp2(x) = 2^(k/N) * 2^r ~= s * (C0*r^3 + C1*r^2 + C2*r + 1) */
-    t = T[ki % (1 << 5)];
+    t = exp2f_T[ki % (1 << 5)];
     t += ki << (52 - 5);
     s = *(double*)&t;
     z = C[0] * r + C[1];
@@ -7682,27 +7743,10 @@ __int64 CDECL llrintf(float x)
 
 /*********************************************************************
  *      round (MSVCR120.@)
- *
- * Based on musl implementation: src/math/round.c
  */
 double CDECL round(double x)
 {
-    ULONGLONG llx = *(ULONGLONG*)&x, tmp;
-    int e = (llx >> 52 & 0x7ff) - 0x3ff;
-
-    if (e >= 52)
-        return x;
-    if (e < -1)
-        return 0 * x;
-    else if (e == -1)
-        return signbit(x) ? -1 : 1;
-
-    tmp = 0x000fffffffffffffULL >> e;
-    if (!(llx & tmp))
-        return x;
-    llx += 0x0008000000000000ULL >> e;
-    llx &= ~tmp;
-    return *(double*)&llx;
+    return __round(x);
 }
 
 /*********************************************************************
