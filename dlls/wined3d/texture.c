@@ -5013,7 +5013,7 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
     wined3d_context_vk_wait_command_buffer(context_vk, src_texture_vk->image.command_buffer_id);
 
     staging_bo_addr.buffer_object = (uintptr_t)&staging_bo;
-    staging_bo_addr.addr = (uint8_t *)NULL;
+    staging_bo_addr.addr = NULL;
     if (!(map_ptr = wined3d_context_map_bo_address(context, &staging_bo_addr,
             sub_resource->size, WINED3D_MAP_READ)))
     {
