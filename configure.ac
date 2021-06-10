@@ -2659,8 +2659,7 @@ then
 fi
 
 AC_CHECK_FUNCS(\
-	exp2 \
-	exp2f
+	exp2
 )
 LIBS="$ac_save_LIBS"
 

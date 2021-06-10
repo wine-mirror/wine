@@ -26,7 +26,6 @@ struct unix_funcs
     double          (CDECL *exp)(double x);
     float           (CDECL *expf)(float x);
     double          (CDECL *exp2)(double x);
-    float           (CDECL *exp2f)(float x);
     double          (CDECL *pow)(double x, double y);
     float           (CDECL *powf)(float x, float y);
 };
