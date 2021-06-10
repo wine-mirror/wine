@@ -126,6 +126,12 @@ struct d2d_device_context_ops
     HRESULT (*device_context_present)(IUnknown *outer_unknown);
 };
 
+enum d2d_device_context_sampler_limits
+{
+    D2D_SAMPLER_INTERPOLATION_MODE_COUNT = 2,
+    D2D_SAMPLER_EXTEND_MODE_COUNT = 3,
+};
+
 struct d2d_device_context
 {
     ID2D1DeviceContext ID2D1DeviceContext_iface;
@@ -149,6 +155,10 @@ struct d2d_device_context
     ID3D10Buffer *vb;
     ID3D10RasterizerState *rs;
     ID3D10BlendState *bs;
+    ID3D10SamplerState *sampler_states
+            [D2D_SAMPLER_INTERPOLATION_MODE_COUNT]
+            [D2D_SAMPLER_EXTEND_MODE_COUNT]
+            [D2D_SAMPLER_EXTEND_MODE_COUNT];
 
     struct d2d_error_state error;
     D2D1_DRAWING_STATE_DESCRIPTION1 drawing_state;
@@ -287,7 +297,6 @@ struct d2d_brush
             D2D1_EXTEND_MODE extend_mode_x;
             D2D1_EXTEND_MODE extend_mode_y;
             D2D1_INTERPOLATION_MODE interpolation_mode;
-            ID3D10SamplerState *sampler_state;
         } bitmap;
     } u;
 };
@@ -303,7 +312,8 @@ HRESULT d2d_radial_gradient_brush_create(ID2D1Factory *factory,
 HRESULT d2d_bitmap_brush_create(ID2D1Factory *factory, ID2D1Bitmap *bitmap,
         const D2D1_BITMAP_BRUSH_PROPERTIES1 *bitmap_brush_desc, const D2D1_BRUSH_PROPERTIES *brush_desc,
         struct d2d_brush **brush) DECLSPEC_HIDDEN;
-void d2d_brush_bind_resources(struct d2d_brush *brush, ID3D10Device *device, unsigned int brush_idx) DECLSPEC_HIDDEN;
+void d2d_brush_bind_resources(struct d2d_brush *brush, struct d2d_device_context *context,
+        unsigned int brush_idx) DECLSPEC_HIDDEN;
 HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_brush *opacity_brush, BOOL outline, BOOL is_arc,
         struct d2d_device_context *render_target, ID3D10Buffer **ps_cb) DECLSPEC_HIDDEN;
 struct d2d_brush *unsafe_impl_from_ID2D1Brush(ID2D1Brush *iface) DECLSPEC_HIDDEN;

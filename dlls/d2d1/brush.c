@@ -859,8 +859,6 @@ static ULONG STDMETHODCALLTYPE d2d_bitmap_brush_Release(ID2D1BitmapBrush1 *iface
 
     if (!refcount)
     {
-        if (brush->u.bitmap.sampler_state)
-            ID3D10SamplerState_Release(brush->u.bitmap.sampler_state);
         if (brush->u.bitmap.bitmap)
             ID2D1Bitmap1_Release(&brush->u.bitmap.bitmap->ID2D1Bitmap1_iface);
         d2d_brush_destroy(brush);
@@ -924,11 +922,6 @@ static void STDMETHODCALLTYPE d2d_bitmap_brush_SetExtendModeX(ID2D1BitmapBrush1 
     TRACE("iface %p, mode %#x.\n", iface, mode);
 
     brush->u.bitmap.extend_mode_x = mode;
-    if (brush->u.bitmap.sampler_state)
-    {
-        ID3D10SamplerState_Release(brush->u.bitmap.sampler_state);
-        brush->u.bitmap.sampler_state = NULL;
-    }
 }
 
 static void STDMETHODCALLTYPE d2d_bitmap_brush_SetExtendModeY(ID2D1BitmapBrush1 *iface, D2D1_EXTEND_MODE mode)
@@ -938,11 +931,6 @@ static void STDMETHODCALLTYPE d2d_bitmap_brush_SetExtendModeY(ID2D1BitmapBrush1 
     TRACE("iface %p, mode %#x.\n", iface, mode);
 
     brush->u.bitmap.extend_mode_y = mode;
-    if (brush->u.bitmap.sampler_state)
-    {
-        ID3D10SamplerState_Release(brush->u.bitmap.sampler_state);
-        brush->u.bitmap.sampler_state = NULL;
-    }
 }
 
 static void STDMETHODCALLTYPE d2d_bitmap_brush_SetInterpolationMode(ID2D1BitmapBrush1 *iface,
@@ -963,11 +951,6 @@ static void STDMETHODCALLTYPE d2d_bitmap_brush_SetInterpolationMode(ID2D1BitmapB
     }
 
     brush->u.bitmap.interpolation_mode = d2d1_1_interp_mode_from_d2d1(mode);
-    if (brush->u.bitmap.sampler_state)
-    {
-        ID3D10SamplerState_Release(brush->u.bitmap.sampler_state);
-        brush->u.bitmap.sampler_state = NULL;
-    }
 }
 
 static void STDMETHODCALLTYPE d2d_bitmap_brush_SetBitmap(ID2D1BitmapBrush1 *iface, ID2D1Bitmap *bitmap)
@@ -1051,11 +1034,6 @@ static void STDMETHODCALLTYPE d2d_bitmap_brush_SetInterpolationMode1(ID2D1Bitmap
     }
 
     brush->u.bitmap.interpolation_mode = mode;
-    if (brush->u.bitmap.sampler_state)
-    {
-        ID3D10SamplerState_Release(brush->u.bitmap.sampler_state);
-        brush->u.bitmap.sampler_state = NULL;
-    }
 }
 
 static D2D1_INTERPOLATION_MODE STDMETHODCALLTYPE d2d_bitmap_brush_GetInterpolationMode1(ID2D1BitmapBrush1 *iface)
@@ -1292,12 +1270,20 @@ HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_brush *opacity_b
     return hr;
 }
 
-static void d2d_brush_bind_bitmap(struct d2d_brush *brush, ID3D10Device *device, unsigned int brush_idx)
+static void d2d_brush_bind_bitmap(struct d2d_brush *brush, struct d2d_device_context *context,
+        unsigned int brush_idx)
 {
+    ID3D10SamplerState **sampler_state;
     HRESULT hr;
 
-    ID3D10Device_PSSetShaderResources(device, brush_idx, 1, &brush->u.bitmap.bitmap->srv);
-    if (!brush->u.bitmap.sampler_state)
+    ID3D10Device_PSSetShaderResources(context->d3d_device, brush_idx, 1, &brush->u.bitmap.bitmap->srv);
+
+    sampler_state = &context->sampler_states
+            [brush->u.bitmap.interpolation_mode % D2D_SAMPLER_INTERPOLATION_MODE_COUNT]
+            [brush->u.bitmap.extend_mode_x % D2D_SAMPLER_EXTEND_MODE_COUNT]
+            [brush->u.bitmap.extend_mode_y % D2D_SAMPLER_EXTEND_MODE_COUNT];
+
+    if (!*sampler_state)
     {
         D3D10_SAMPLER_DESC sampler_desc;
 
@@ -1318,14 +1304,13 @@ static void d2d_brush_bind_bitmap(struct d2d_brush *brush, ID3D10Device *device,
         sampler_desc.MinLOD = 0.0f;
         sampler_desc.MaxLOD = 0.0f;
 
-        if (FAILED(hr = ID3D10Device_CreateSamplerState(device,
-                        &sampler_desc, &brush->u.bitmap.sampler_state)))
+        if (FAILED(hr = ID3D10Device_CreateSamplerState(context->d3d_device, &sampler_desc, sampler_state)))
             ERR("Failed to create sampler state, hr %#x.\n", hr);
     }
-    ID3D10Device_PSSetSamplers(device, brush_idx, 1, &brush->u.bitmap.sampler_state);
+    ID3D10Device_PSSetSamplers(context->d3d_device, brush_idx, 1, sampler_state);
 }
 
-void d2d_brush_bind_resources(struct d2d_brush *brush, ID3D10Device *device, unsigned int brush_idx)
+void d2d_brush_bind_resources(struct d2d_brush *brush, struct d2d_device_context *context, unsigned int brush_idx)
 {
     switch (brush->type)
     {
@@ -1333,15 +1318,15 @@ void d2d_brush_bind_resources(struct d2d_brush *brush, ID3D10Device *device, uns
             break;
 
         case D2D_BRUSH_TYPE_LINEAR:
-            d2d_gradient_bind(brush->u.linear.gradient, device, brush_idx);
+            d2d_gradient_bind(brush->u.linear.gradient, context->d3d_device, brush_idx);
             break;
 
         case D2D_BRUSH_TYPE_RADIAL:
-            d2d_gradient_bind(brush->u.radial.gradient, device, brush_idx);
+            d2d_gradient_bind(brush->u.radial.gradient, context->d3d_device, brush_idx);
             break;
 
         case D2D_BRUSH_TYPE_BITMAP:
-            d2d_brush_bind_bitmap(brush, device, brush_idx);
+            d2d_brush_bind_bitmap(brush, context, brush_idx);
             break;
 
         default:

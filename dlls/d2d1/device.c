@@ -176,10 +176,10 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
     if (brush)
     {
         ID3D10Device_OMSetBlendState(device, render_target->bs, NULL, D3D10_DEFAULT_SAMPLE_MASK);
-        d2d_brush_bind_resources(brush, device, 0);
+        d2d_brush_bind_resources(brush, render_target, 0);
     }
     if (opacity_brush)
-        d2d_brush_bind_resources(opacity_brush, device, 1);
+        d2d_brush_bind_resources(opacity_brush, render_target, 1);
 
     if (ib)
         ID3D10Device_DrawIndexed(device, index_count, 0, 0);
@@ -254,7 +254,7 @@ static ULONG STDMETHODCALLTYPE d2d_device_context_inner_Release(IUnknown *iface)
 
     if (!refcount)
     {
-        unsigned int i;
+        unsigned int i, j, k;
 
         d2d_clip_stack_cleanup(&context->clip_stack);
         IDWriteRenderingParams_Release(context->default_text_rendering_params);
@@ -270,6 +270,17 @@ static ULONG STDMETHODCALLTYPE d2d_device_context_inner_Release(IUnknown *iface)
         {
             ID3D10VertexShader_Release(context->shape_resources[i].vs);
             ID3D10InputLayout_Release(context->shape_resources[i].il);
+        }
+        for (i = 0; i < D2D_SAMPLER_INTERPOLATION_MODE_COUNT; ++i)
+        {
+            for (j = 0; j < D2D_SAMPLER_EXTEND_MODE_COUNT; ++j)
+            {
+                for (k = 0; k < D2D_SAMPLER_EXTEND_MODE_COUNT; ++k)
+                {
+                    if (context->sampler_states[i][j][k])
+                        ID3D10SamplerState_Release(context->sampler_states[i][j][k]);
+                }
+            }
         }
         context->stateblock->lpVtbl->Release(context->stateblock);
         if (context->target)
