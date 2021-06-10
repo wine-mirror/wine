@@ -3463,6 +3463,28 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         return ret ? -1 : 0;
     }
 
+    case WS_SIO_BASE_HANDLE:
+    {
+        NTSTATUS status;
+        DWORD ret;
+
+        if (overlapped)
+        {
+            status = STATUS_NOT_SUPPORTED;
+        }
+        else
+        {
+            status = STATUS_SUCCESS;
+            *(SOCKET *)out_buff = s;
+        }
+        ret = server_ioctl_sock( s, IOCTL_AFD_WINE_COMPLETE_ASYNC, &status, sizeof(status),
+                                 NULL, 0, ret_size, overlapped, completion );
+        if (overlapped) ret = ERROR_IO_PENDING;
+        if (!ret) *ret_size = sizeof(SOCKET);
+        SetLastError( ret );
+        return ret ? -1 : 0;
+    }
+
     default:
         FIXME( "unimplemented ioctl %s\n", debugstr_wsaioctl( code ) );
         /* fall through */
