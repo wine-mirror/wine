@@ -1524,6 +1524,20 @@ static inline void check_hidp_caps_(int line, HIDP_CAPS *caps, const HIDP_CAPS *
     check_member_(__FILE__, line, *caps, *exp, "%d", NumberFeatureDataIndices);
 }
 
+#define check_hidp_link_collection_node(a, b) check_hidp_link_collection_node_(__LINE__, a, b)
+static inline void check_hidp_link_collection_node_(int line, HIDP_LINK_COLLECTION_NODE *node,
+                                                    const HIDP_LINK_COLLECTION_NODE *exp)
+{
+    check_member_(__FILE__, line, *node, *exp, "%04x", LinkUsage);
+    check_member_(__FILE__, line, *node, *exp, "%04x", LinkUsagePage);
+    check_member_(__FILE__, line, *node, *exp, "%d", Parent);
+    check_member_(__FILE__, line, *node, *exp, "%d", NumberOfChildren);
+    check_member_(__FILE__, line, *node, *exp, "%d", NextSibling);
+    check_member_(__FILE__, line, *node, *exp, "%d", FirstChild);
+    check_member_(__FILE__, line, *node, *exp, "%d", CollectionType);
+    check_member_(__FILE__, line, *node, *exp, "%d", IsAlias);
+}
+
 #define check_hidp_button_caps(a, b) check_hidp_button_caps_(__LINE__, a, b)
 static inline void check_hidp_button_caps_(int line, HIDP_BUTTON_CAPS *caps, const HIDP_BUTTON_CAPS *exp)
 {
@@ -1693,10 +1707,20 @@ static void test_hidp(HANDLE file)
             .NotRange.DataIndex = 10,
         },
     };
+    static const HIDP_LINK_COLLECTION_NODE expect_collections[] =
+    {
+        {
+            .LinkUsage = HID_USAGE_GENERIC_JOYSTICK,
+            .LinkUsagePage = HID_USAGE_PAGE_GENERIC,
+            .CollectionType = 1,
+        },
+    };
 
+    HIDP_LINK_COLLECTION_NODE collections[16];
     PHIDP_PREPARSED_DATA preparsed_data;
     HIDP_BUTTON_CAPS button_caps[16];
     HIDP_VALUE_CAPS value_caps[16];
+    DWORD collection_count;
     char buffer[200];
     NTSTATUS status;
     HIDP_CAPS caps;
@@ -1713,6 +1737,27 @@ static void test_hidp(HANDLE file)
     status = HidP_GetCaps(preparsed_data, &caps);
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetCaps returned %#x\n", status);
     check_hidp_caps(&caps, &expect_hidp_caps);
+
+    collection_count = 0;
+    status = HidP_GetLinkCollectionNodes(collections, &collection_count, preparsed_data);
+    ok(status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetLinkCollectionNodes returned %#x\n", status);
+    todo_wine
+    ok(collection_count == caps.NumberLinkCollectionNodes, "got %d collection nodes, expected %d\n",
+       collection_count, caps.NumberLinkCollectionNodes);
+    collection_count = ARRAY_SIZE(collections);
+    status = HidP_GetLinkCollectionNodes(collections, &collection_count, (PHIDP_PREPARSED_DATA)buffer);
+    ok(status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_GetLinkCollectionNodes returned %#x\n", status);
+    status = HidP_GetLinkCollectionNodes(collections, &collection_count, preparsed_data);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_GetLinkCollectionNodes returned %#x\n", status);
+    ok(collection_count == caps.NumberLinkCollectionNodes, "got %d collection nodes, expected %d\n",
+       collection_count, caps.NumberLinkCollectionNodes);
+
+    for (i = 0; i < ARRAY_SIZE(expect_collections); ++i)
+    {
+        winetest_push_context("collections[%d]", i);
+        check_hidp_link_collection_node(collections + i, expect_collections + i);
+        winetest_pop_context();
+    }
 
     count = ARRAY_SIZE(button_caps);
     status = HidP_GetButtonCaps(HidP_Output, button_caps, &count, preparsed_data);
