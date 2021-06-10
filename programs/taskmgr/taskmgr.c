@@ -999,6 +999,8 @@ int APIENTRY WinMain(HINSTANCE hInstance,
     HANDLE hToken; 
     TOKEN_PRIVILEGES tkp; 
 
+    InitCommonControls();
+
     /* Initialize global variables */
     hInst = hInstance;
 
