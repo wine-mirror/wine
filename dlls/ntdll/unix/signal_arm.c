@@ -390,7 +390,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         }
         if (needed_flags & CONTEXT_CONTROL)
         {
-            context->Sp   = (DWORD)&frame->r4;
+            context->Sp   = (DWORD)(frame + 1);
             context->Lr   = frame->thunk_addr;
             context->Pc   = frame->thunk_addr;
             context->Cpsr = frame->cpsr;
@@ -439,8 +439,6 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 
     rec->ExceptionAddress = (void *)PC_sig(sigcontext);
     save_context( &context, sigcontext );
-    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT)
-        context.Pc += CPSR_sig(sigcontext) & 0x20 ? 2 : 4;
 
     status = send_debug_event( rec, &context, TRUE );
     if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
@@ -599,6 +597,12 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     switch (get_trap_code(signal, context))
     {
     case TRAP_ARM_PRIVINFLT:   /* Invalid opcode exception */
+        if (*(WORD *)PC_sig(context) == 0xdefe)  /* breakpoint */
+        {
+            rec.ExceptionCode = EXCEPTION_BREAKPOINT;
+            rec.NumberParameters = 1;
+            break;
+        }
         rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
     case TRAP_ARM_PAGEFLT:  /* Page fault */

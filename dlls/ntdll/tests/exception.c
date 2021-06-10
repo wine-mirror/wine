@@ -4250,23 +4250,28 @@ static void test_thread_context(void)
     {
         DWORD R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, Sp, Lr, Pc, Cpsr;
     } expect;
-    NTSTATUS (*func_ptr)( void *arg1, void *arg2, struct expected *res, void *func ) = code_mem;
+    NTSTATUS (*func_ptr)( void *arg1, void *arg2, struct expected *res, void *func );
 
-    static const DWORD call_func[] =
+    static const WORD call_func[] =
     {
-        0xe92d4002,  /* push    {r1, lr} */
-        0xe8821fff,  /* stm     r2, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, sl, fp, ip} */
-        0xe582d034,  /* str     sp, [r2, #52] */
-        0xe582e038,  /* str     lr, [r2, #56] */
-        0xe10f1000,  /* mrs     r1, CPSR */
-        0xe5821040,  /* str     r1, [r2, #64] */
-        0xe59d1000,  /* ldr     r1, [sp] */
-        0xe582f03c,  /* str     pc, [r2, #60] */
-        0xe12fff33,  /* blx     r3 */
-        0xe8bd8002,  /* pop     {r1, pc} */
+        0xb502,            /* push    {r1, lr} */
+        0xe882, 0x1fff,    /* stmia.w r2, {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, sl, fp, ip} */
+        0xf8c2, 0xd034,    /* str.w   sp, [r2, #52] */
+        0xf8c2, 0xe038,    /* str.w   lr, [r2, #56] */
+        0xf3ef, 0x8100,    /* mrs     r1, CPSR */
+        0xf041, 0x0120,    /* orr.w   r1, r1, #32 */
+        0x6411,            /* str     r1, [r2, #64] */
+        0x9900,            /* ldr     r1, [sp, #0] */
+        0x4679,            /* mov     r1, pc */
+        0xf101, 0x0109,    /* add.w   r1, r1, #9 */
+        0x63d1,            /* str     r1, [r2, #60] */
+        0x9900,            /* ldr     r1, [sp, #0] */
+        0x4798,            /* blx     r3 */
+        0xbd02,            /* pop     {r1, pc} */
     };
 
-    memcpy( func_ptr, call_func, sizeof(call_func) );
+    memcpy( code_mem, call_func, sizeof(call_func) );
+    func_ptr = (void *)((char *)code_mem + 1);  /* thumb */
 
 #define COMPARE(reg) \
     ok( context.reg == expect.reg, "wrong " #reg " %08x/%08x\n", context.reg, expect.reg )
@@ -4283,9 +4288,9 @@ static void test_thread_context(void)
            context.R0, context.R1, context.R2, context.R3, context.R4, context.R5, context.R6, context.R7,
            context.R8, context.R9, context.R10, context.R11, context.R12, context.Sp, context.Lr, context.Pc, context.Cpsr );
 
-    ok( context.ContextFlags == CONTEXT_FULL,
+    ok( context.ContextFlags == (CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_FLOATING_POINT),
         "wrong flags %08x\n", context.ContextFlags );
-    COMPARE( R0 );
+    ok( !context.R0, "wrong R0 %08x\n", context.R0 );
     COMPARE( R1 );
     COMPARE( R2 );
     COMPARE( R3 );
@@ -4301,7 +4306,7 @@ static void test_thread_context(void)
     COMPARE( Sp );
     COMPARE( Pc );
     COMPARE( Cpsr );
-    ok( context.Lr == expect.Pc, "wrong Lr %08x/%08x\n", context.Lr, expect.Pc );
+    ok( !context.Lr, "wrong Lr %08x\n", context.Lr );
 
     memset( &context, 0xcc, sizeof(context) );
     memset( &expect, 0xcc, sizeof(expect) );
@@ -4326,13 +4331,13 @@ static void test_thread_context(void)
     COMPARE( R9 );
     COMPARE( R10 );
     COMPARE( R11 );
-    ok( (context.Cpsr & 0xff0f0000) == (expect.Cpsr & 0xff0f0000),
+    ok( (context.Cpsr & 0xff0f0030) == (expect.Cpsr & 0xff0f0030),
         "wrong Cpsr %08x/%08x\n", context.Cpsr, expect.Cpsr );
-    ok( context.Sp == expect.Sp - 8,
-        "wrong Sp %08x/%08x\n", context.Sp, expect.Sp - 8 );
+    ok( context.Sp == expect.Sp - 16,
+        "wrong Sp %08x/%08x\n", context.Sp, expect.Sp - 16 );
     /* Pc is somewhere close to the NtGetContextThread implementation */
-    ok( (char *)context.Pc >= (char *)pNtGetContextThread - 0x40000 &&
-        (char *)context.Pc <= (char *)pNtGetContextThread + 0x40000,
+    ok( (char *)context.Pc >= (char *)pNtGetContextThread &&
+        (char *)context.Pc <= (char *)pNtGetContextThread + 0x10,
         "wrong Pc %08x/%08x\n", context.Pc, (DWORD)pNtGetContextThread );
 #undef COMPARE
 }
@@ -4427,7 +4432,6 @@ static void test_debugger(DWORD cont_status)
             }
             else
             {
-#if 0  /* RtlRaiseException test disabled for now */
                 if (stage == 1)
                 {
                     ok((char *)ctx.Pc == (char *)code_mem_address + 0xb, "Pc at %x instead of %p\n",
@@ -4461,16 +4465,14 @@ static void test_debugger(DWORD cont_status)
                             ok((char *)ctx.Pc == (char *)code_mem_address + 0xa,
                                "Pc at 0x%x instead of %p\n", ctx.Pc, (char *)code_mem_address + 0xa);
                             /* need to fixup Pc for debuggee */
-                            /*ctx.Pc += 2; */
+                            ctx.Pc += 2;
                         }
                         else ok((char *)ctx.Pc == (char *)code_mem_address + 0xb,
                                 "Pc at 0x%x instead of %p\n", ctx.Pc, (char *)code_mem_address + 0xb);
                         /* here we handle exception */
                     }
                 }
-                else
-#endif
-                if (stage == 7 || stage == 8)
+                else if (stage == 7 || stage == 8)
                 {
                     ok(de.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT,
                        "expected EXCEPTION_BREAKPOINT, got %08x\n", de.u.Exception.ExceptionRecord.ExceptionCode);
@@ -4482,8 +4484,8 @@ static void test_debugger(DWORD cont_status)
                 {
                     ok(de.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT,
                        "expected EXCEPTION_BREAKPOINT, got %08x\n", de.u.Exception.ExceptionRecord.ExceptionCode);
-                    ok((char *)ctx.Pc == (char *)code_mem_address + 4,
-                       "expected Pc = %p, got 0x%x\n", (char *)code_mem_address + 4, ctx.Pc);
+                    ok((char *)ctx.Pc == (char *)code_mem_address + 3,
+                       "expected Pc = %p, got 0x%x\n", (char *)code_mem_address + 3, ctx.Pc);
                     if (stage == 10) continuestatus = DBG_EXCEPTION_NOT_HANDLED;
                 }
                 else if (stage == 11 || stage == 12 || stage == 13)
@@ -6307,12 +6309,13 @@ static LONG CALLBACK breakpoint_handler(EXCEPTION_POINTERS *ExceptionInfo)
        "got ExceptionInformation[0] = %lx\n", rec->ExceptionInformation[0]);
     ExceptionInfo->ContextRecord->Rip = (DWORD_PTR)code_mem + 2;
 #elif defined(__arm__)
-    ok(ExceptionInfo->ContextRecord->Pc == (DWORD)code_mem + 4,
-       "expected pc = %lx, got %lx\n", (DWORD)code_mem + 4, ExceptionInfo->ContextRecord->Pc);
+    ok(ExceptionInfo->ContextRecord->Pc == (DWORD)code_mem + 1,
+       "expected pc = %x, got %x\n", (DWORD)code_mem + 1, ExceptionInfo->ContextRecord->Pc);
     ok(rec->NumberParameters == 1,
        "ExceptionParameters is %d instead of 1\n", rec->NumberParameters);
     ok(rec->ExceptionInformation[0] == 0,
        "got ExceptionInformation[0] = %lx\n", rec->ExceptionInformation[0]);
+    ExceptionInfo->ContextRecord->Pc += 2;
 #elif defined(__aarch64__)
     ok(ExceptionInfo->ContextRecord->Pc == (DWORD_PTR)code_mem + 4,
        "expected pc = %lx, got %lx\n", (DWORD_PTR)code_mem + 4, ExceptionInfo->ContextRecord->Pc);
@@ -6329,7 +6332,7 @@ static LONG CALLBACK breakpoint_handler(EXCEPTION_POINTERS *ExceptionInfo)
 #if defined(__i386__) || defined(__x86_64__)
 static const BYTE breakpoint_code[] = { 0xcd, 0x03, 0xc3 };   /* int $0x3; ret */
 #elif defined(__arm__)
-static const DWORD breakpoint_code[] = { 0xe1200070, 0xe12fff1e };  /* bkpt #0; bx lr */
+static const DWORD breakpoint_code[] = { 0xdefe, 0x4770 };  /* udf #0xfe; bx lr */
 #elif defined(__aarch64__)
 static const DWORD breakpoint_code[] = { 0xd4200000, 0xd65f03c0 };  /* brk #0; ret */
 #endif
@@ -6340,7 +6343,9 @@ static void test_breakpoint(DWORD numexc)
     void *vectored_handler;
 
     memcpy(code_mem, breakpoint_code, sizeof(breakpoint_code));
-
+#ifdef __arm__
+    func = (void *)((char *)code_mem + 1);  /* thumb */
+#endif
     vectored_handler = pRtlAddVectoredExceptionHandler(TRUE, &breakpoint_handler);
     ok(vectored_handler != 0, "RtlAddVectoredExceptionHandler failed\n");
 
@@ -6421,8 +6426,6 @@ static LONG CALLBACK invalid_handle_vectored_handler(EXCEPTION_POINTERS *Excepti
 static void test_closehandle(DWORD numexc, HANDLE handle)
 {
     PVOID vectored_handler;
-    NTSTATUS status;
-    DWORD res;
 
     if (!pRtlAddVectoredExceptionHandler || !pRtlRemoveVectoredExceptionHandler || !pRtlRaiseException)
     {
@@ -6434,17 +6437,12 @@ static void test_closehandle(DWORD numexc, HANDLE handle)
     ok(vectored_handler != 0, "RtlAddVectoredExceptionHandler failed\n");
 
     invalid_handle_exceptions = 0;
-    res = CloseHandle(handle);
-
-    ok(!res || (is_wow64 && res), "CloseHandle(%p) unexpectedly succeeded\n", handle);
-    ok(GetLastError() == ERROR_INVALID_HANDLE, "wrong error code %d instead of %d\n",
-       GetLastError(), ERROR_INVALID_HANDLE);
+    CloseHandle(handle);
     ok(invalid_handle_exceptions == numexc, "CloseHandle generated %d exceptions, expected %d\n",
        invalid_handle_exceptions, numexc);
 
     invalid_handle_exceptions = 0;
-    status = pNtClose(handle);
-    ok(status == STATUS_INVALID_HANDLE || (is_wow64 && status == 0), "NtClose(%p) returned status %08x\n", handle, status);
+    pNtClose(handle);
     ok(invalid_handle_exceptions == numexc, "NtClose generated %d exceptions, expected %d\n",
        invalid_handle_exceptions, numexc);
 
