@@ -17,6 +17,7 @@
  */
 
 #include <windows.h>
+#include <commctrl.h>
 #include <commdlg.h>
 #include <stdio.h>
 
@@ -402,6 +403,8 @@ static void HandleCommandLine(LPWSTR cmdline)
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
     MSG msg;
+
+    InitCommonControls();
 
     /* Other instances of app running? */
     if (!hPrevInstance)

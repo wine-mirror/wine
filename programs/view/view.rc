@@ -48,3 +48,6 @@ BEGIN
     IDS_DESCRIPTION         "Regular Metafile Viewer"
     IDS_OPEN_META_STRING    "Metafiles (*.wmf, *.emf)"
 END
+
+/* @makedep: view.manifest */
+1 RT_MANIFEST view.manifest

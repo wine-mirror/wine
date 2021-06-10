@@ -17,6 +17,7 @@
  */
 
 #include <windef.h>
+#include <winuser.h>
 
 #define IDS_DESCRIPTION                 2
 #define IDS_OPEN_META_STRING            3
