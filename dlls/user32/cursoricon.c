@@ -3000,6 +3000,7 @@ HANDLE WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
                 {
                     if (!(info.hbmColor = create_color_bitmap( desiredx, desiredy )))
                     {
+                        release_icon_frame( icon, frame );
                         release_user_handle_ptr( icon );
                         return 0;
                     }
@@ -3009,6 +3010,7 @@ HANDLE WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
                     if (!(info.hbmMask = CreateBitmap( desiredx, desiredy, 1, 1, NULL )))
                     {
                         DeleteObject( info.hbmColor );
+                        release_icon_frame( icon, frame );
                         release_user_handle_ptr( icon );
                         return 0;
                     }
@@ -3034,6 +3036,7 @@ HANDLE WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
                 DeleteObject( info.hbmMask );
             }
 
+            release_icon_frame( icon, frame );
             release_user_handle_ptr( icon );
 
             if (res && (flags & LR_COPYDELETEORG)) DeleteObject( hnd );
