@@ -10219,24 +10219,50 @@ static void test_bind(void)
 /* Test calling methods on a socket which is currently connecting. */
 static void test_connecting_socket(void)
 {
+    const struct sockaddr_in bind_addr = {.sin_family = AF_INET, .sin_addr.s_addr = htonl(INADDR_ANY)};
     const struct sockaddr_in invalid_addr =
     {
         .sin_family = AF_INET,
         .sin_addr.s_addr = inet_addr("192.0.2.0"),
         .sin_port = 255
     };
+    OVERLAPPED overlapped = {0}, overlapped2 = {0};
+    GUID connectex_guid = WSAID_CONNECTEX;
+    LPFN_CONNECTEX pConnectEx;
     struct sockaddr_in addr;
     char buffer[4];
     SOCKET client;
     int ret, len;
+    DWORD size;
 
     client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(client != -1, "failed to create socket, error %u\n", WSAGetLastError());
     set_blocking(client, FALSE);
 
+    ret = bind(client, (const struct sockaddr *)&bind_addr, sizeof(bind_addr));
+    ok(!ret, "expected success\n");
+    ok(!WSAGetLastError(), "got %u\n", WSAGetLastError());
+
     ret = connect(client, (struct sockaddr *)&invalid_addr, sizeof(invalid_addr));
     ok(ret == -1, "got %d\n", ret);
     ok(WSAGetLastError() == WSAEWOULDBLOCK, "got %u\n", WSAGetLastError());
+
+    /* Mortal Kombat 11 connects to the same address twice and expects the
+     * second to return WSAEALREADY. */
+    ret = connect(client, (struct sockaddr *)&invalid_addr, sizeof(invalid_addr));
+    ok(ret == -1, "got %d\n", ret);
+    todo_wine ok(WSAGetLastError() == WSAEALREADY, "got %u\n", WSAGetLastError());
+
+    ret = WSAIoctl(client, SIO_GET_EXTENSION_FUNCTION_POINTER, &connectex_guid, sizeof(connectex_guid),
+            &pConnectEx, sizeof(pConnectEx), &size, NULL, NULL);
+    ok(!ret, "failed to get ConnectEx, error %u\n", WSAGetLastError());
+    overlapped.Internal = 0xdeadbeef;
+    overlapped.InternalHigh = 0xdeadbeef;
+    ret = pConnectEx(client, (struct sockaddr *)&invalid_addr, sizeof(invalid_addr), NULL, 0, &size, &overlapped);
+    ok(!ret, "got %d\n", ret);
+    todo_wine ok(WSAGetLastError() == WSAEINVAL, "got %u\n", WSAGetLastError());
+    ok((NTSTATUS)overlapped.Internal == STATUS_PENDING, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    todo_wine ok(overlapped.InternalHigh == 0xdeadbeef, "got size %Iu\n", overlapped.InternalHigh);
 
     len = sizeof(addr);
     ret = getsockname(client, (struct sockaddr *)&addr, &len);
@@ -10253,6 +10279,53 @@ static void test_connecting_socket(void)
         ok(addr.sin_addr.s_addr == inet_addr("192.0.2.0"), "got address %#08x\n", addr.sin_addr.s_addr);
         ok(addr.sin_port == 255, "expected nonzero port\n");
     }
+
+    ret = recv(client, buffer, sizeof(buffer), 0);
+    ok(ret == -1, "got %d\n", ret);
+    todo_wine ok(WSAGetLastError() == WSAENOTCONN, "got %u\n", WSAGetLastError());
+
+    ret = send(client, "data", 5, 0);
+    ok(ret == -1, "got %d\n", ret);
+    todo_wine ok(WSAGetLastError() == WSAENOTCONN, "got %u\n", WSAGetLastError());
+
+    closesocket(client);
+
+    /* Test with ConnectEx(). */
+
+    client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(client != -1, "failed to create socket, error %u\n", WSAGetLastError());
+    set_blocking(client, FALSE);
+
+    ret = bind(client, (const struct sockaddr *)&bind_addr, sizeof(bind_addr));
+    ok(!ret, "expected success\n");
+    ok(!WSAGetLastError(), "got %u\n", WSAGetLastError());
+
+    ret = pConnectEx(client, (struct sockaddr *)&invalid_addr, sizeof(invalid_addr), NULL, 0, &size, &overlapped2);
+    ok(!ret, "got %d\n", ret);
+    ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
+
+    ret = connect(client, (struct sockaddr *)&invalid_addr, sizeof(invalid_addr));
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == WSAEINVAL, "got %u\n", WSAGetLastError());
+
+    overlapped.Internal = 0xdeadbeef;
+    overlapped.InternalHigh = 0xdeadbeef;
+    ret = pConnectEx(client, (struct sockaddr *)&invalid_addr, sizeof(invalid_addr), NULL, 0, &size, &overlapped);
+    ok(!ret, "got %d\n", ret);
+    todo_wine ok(WSAGetLastError() == WSAEINVAL, "got %u\n", WSAGetLastError());
+    ok((NTSTATUS)overlapped.Internal == STATUS_PENDING, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    todo_wine ok(overlapped.InternalHigh == 0xdeadbeef, "got size %Iu\n", overlapped.InternalHigh);
+
+    len = sizeof(addr);
+    ret = getsockname(client, (struct sockaddr *)&addr, &len);
+    ok(!ret, "got error %u\n", WSAGetLastError());
+    ok(addr.sin_family == AF_INET, "got family %u\n", addr.sin_family);
+    ok(addr.sin_port, "expected nonzero port\n");
+
+    len = sizeof(addr);
+    ret = getpeername(client, (struct sockaddr *)&addr, &len);
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == WSAENOTCONN, "got %u\n", WSAGetLastError());
 
     ret = recv(client, buffer, sizeof(buffer), 0);
     ok(ret == -1, "got %d\n", ret);
