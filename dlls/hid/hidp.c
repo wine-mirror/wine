@@ -1001,6 +1001,9 @@ NTSTATUS WINAPI HidP_GetLinkCollectionNodes(HIDP_LINK_COLLECTION_NODE *LinkColle
 
     TRACE("(%p, %p, %p)\n", LinkCollectionNode, LinkCollectionNodeLength, PreparsedData);
 
+    if (data->magic != HID_MAGIC)
+        return HIDP_STATUS_INVALID_PREPARSED_DATA;
+
     if (*LinkCollectionNodeLength < data->caps.NumberLinkCollectionNodes)
         return HIDP_STATUS_BUFFER_TOO_SMALL;
 
