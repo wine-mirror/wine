@@ -33,7 +33,8 @@ static BOOL (WINAPI *pGetUpdatedClipboardFormats)( UINT *formats, UINT count, UI
 static int thread_from_line;
 static char *argv0;
 
-static BOOL open_clipboard(HWND hwnd)
+#define open_clipboard(hwnd) open_clipboard_(__LINE__, hwnd)
+static BOOL open_clipboard_(int line, HWND hwnd)
 {
     DWORD start = GetTickCount();
     while (1)
@@ -54,7 +55,7 @@ static BOOL open_clipboard(HWND hwnd)
              *   response to a native application.
              */
             GetClassNameA(clipwnd, classname, ARRAY_SIZE(classname));
-            trace("%p (%s) opened the clipboard\n", clipwnd, classname);
+            trace_(__FILE__, line)("%p (%s) opened the clipboard\n", clipwnd, classname);
             SetLastError(le);
             return ret;
         }
@@ -62,7 +63,8 @@ static BOOL open_clipboard(HWND hwnd)
     }
 }
 
-static BOOL has_no_open_wnd(void)
+#define has_no_open_wnd() has_no_open_wnd_(__LINE__)
+static BOOL has_no_open_wnd_(int line)
 {
     DWORD start = GetTickCount();
     DWORD le = GetLastError();
@@ -76,7 +78,7 @@ static BOOL has_no_open_wnd(void)
             le = GetLastError();
             /* See open_clipboard() */
             GetClassNameA(clipwnd, classname, ARRAY_SIZE(classname));
-            trace("%p (%s) opened the clipboard\n", clipwnd, classname);
+            trace_(__FILE__, line)("%p (%s) opened the clipboard\n", clipwnd, classname);
             SetLastError(le);
             return FALSE;
         }
