@@ -5436,7 +5436,7 @@ static void test_thread_context(void)
     {
         ULONG64 X0, X1, X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12, X13, X14, X15, X16,
             X17, X18, X19, X20, X21, X22, X23, X24, X25, X26, X27, X28, Fp, Lr, Sp, Pc;
-        ULONG Cpsr;
+        ULONG Cpsr, Fpcr, Fpsr;
     } expect;
     NTSTATUS (*func_ptr)( void *arg1, void *arg2, struct expected *res, void *func ) = code_mem;
 
@@ -5462,10 +5462,14 @@ static void test_thread_context(void)
         0x910003e1,  /* mov     x1, sp */
         0xf9007c41,  /* str     x1, [x2, #248] */
         0x90000001,  /* adrp    x1, 1f */
-        0x9101a021,  /* add     x1, x1, #:lo12:1f */
+        0x9101e021,  /* add     x1, x1, #:lo12:1f */
         0xf9008041,  /* str     x1, [x2, #256] */
         0xd53b4201,  /* mrs     x1, nzcv */
         0xb9010841,  /* str     w1, [x2, #264] */
+        0xd53b4401,  /* mrs     x1, fpcr */
+        0xb9010c41,  /* str     w1, [x2, #268] */
+        0xd53b4421,  /* mrs     x1, fpsr */
+        0xb9011041,  /* str     w1, [x2, #272] */
         0xf9400441,  /* ldr     x1, [x2, #8] */
         0xd63f0060,  /* blr     x3 */
         0xa8c17bfd,  /* 1: ldp     x29, x30, [sp], #16 */
@@ -5503,7 +5507,7 @@ static void test_thread_context(void)
 
     ok( context.ContextFlags == CONTEXT_FULL,
         "wrong flags %08x\n", context.ContextFlags );
-    COMPARE( X0 );
+    ok( !context.X0, "wrong X0 %p\n", (void *)context.X0 );
     COMPARE( X1 );
     COMPARE( X2 );
     COMPARE( X3 );
@@ -5536,7 +5540,9 @@ static void test_thread_context(void)
     COMPARE( Sp );
     COMPARE( Pc );
     COMPARE( Cpsr );
-    ok( context.Lr == expect.Pc, "wrong Lr %p/%p\n", (void *)context.Lr, (void *)expect.Pc );
+    COMPARE( Fpcr );
+    COMPARE( Fpsr );
+    ok( !context.Lr, "wrong Lr %p\n", (void *)context.Lr );
 
     memset( &context, 0xcc, sizeof(context) );
     memset( &expect, 0xcc, sizeof(expect) );
@@ -5565,7 +5571,6 @@ static void test_thread_context(void)
            (void *)context.X28, (void *)context.Fp, (void *)context.Lr, (void *)context.Sp,
            (void *)context.Pc, context.Cpsr );
     /* other registers are not preserved */
-    todo_wine COMPARE( X18 );
     COMPARE( X19 );
     COMPARE( X20 );
     COMPARE( X21 );
@@ -5577,12 +5582,12 @@ static void test_thread_context(void)
     COMPARE( X27 );
     COMPARE( X28 );
     COMPARE( Fp );
+    COMPARE( Fpcr );
+    COMPARE( Fpsr );
     ok( context.Lr == expect.Pc, "wrong Lr %p/%p\n", (void *)context.Lr, (void *)expect.Pc );
-    ok( context.Sp == expect.Sp - 16,
-        "wrong Sp %p/%p\n", (void *)context.Sp, (void *)(expect.Sp - 16) );
-    /* Pc is somewhere close to the NtGetContextThread implementation */
-    ok( (char *)context.Pc >= (char *)pNtGetContextThread - 0x40000 &&
-        (char *)context.Pc <= (char *)pNtGetContextThread + 0x40000,
+    ok( context.Sp == expect.Sp, "wrong Sp %p/%p\n", (void *)context.Sp, (void *)expect.Sp );
+    ok( (char *)context.Pc >= (char *)pNtGetContextThread &&
+        (char *)context.Pc <= (char *)pNtGetContextThread + 32,
         "wrong Pc %p/%p\n", (void *)context.Pc, pNtGetContextThread );
 #undef COMPARE
 }
@@ -5677,7 +5682,6 @@ static void test_debugger(DWORD cont_status)
             }
             else
             {
-#if 0  /* RtlRaiseException test disabled for now */
                 if (stage == 1)
                 {
                     ok((char *)ctx.Pc == (char *)code_mem_address + 0xb, "Pc at %p instead of %p\n",
@@ -5718,9 +5722,7 @@ static void test_debugger(DWORD cont_status)
                         /* here we handle exception */
                     }
                 }
-                else
-#endif
-                if (stage == 7 || stage == 8)
+                else if (stage == 7 || stage == 8)
                 {
                     ok(de.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT,
                        "expected EXCEPTION_BREAKPOINT, got %08x\n", de.u.Exception.ExceptionRecord.ExceptionCode);
@@ -5756,7 +5758,7 @@ static void test_debugger(DWORD cont_status)
         else if (de.dwDebugEventCode == OUTPUT_DEBUG_STRING_EVENT)
         {
             int stage;
-            char buffer[64];
+            char buffer[128];
 
             status = pNtReadVirtualMemory(pi.hProcess, &test_stage, &stage,
                                           sizeof(stage), &size_read);
@@ -5774,7 +5776,8 @@ static void test_debugger(DWORD cont_status)
             if (stage == 3 || stage == 4)
                 ok(!strcmp(buffer, "Hello World"), "got unexpected debug string '%s'\n", buffer);
             else /* ignore unrelated debug strings like 'SHIMVIEW: ShimInfo(Complete)' */
-                ok(strstr(buffer, "SHIMVIEW") != NULL, "unexpected stage %x, got debug string event '%s'\n", stage, buffer);
+                ok(strstr(buffer, "SHIMVIEW") || !strncmp(buffer, "RTL:", 4),
+                   "unexpected stage %x, got debug string event '%s'\n", stage, buffer);
 
             if (stage == 4) continuestatus = DBG_EXCEPTION_NOT_HANDLED;
         }
@@ -6317,12 +6320,13 @@ static LONG CALLBACK breakpoint_handler(EXCEPTION_POINTERS *ExceptionInfo)
        "got ExceptionInformation[0] = %lx\n", rec->ExceptionInformation[0]);
     ExceptionInfo->ContextRecord->Pc += 2;
 #elif defined(__aarch64__)
-    ok(ExceptionInfo->ContextRecord->Pc == (DWORD_PTR)code_mem + 4,
-       "expected pc = %lx, got %lx\n", (DWORD_PTR)code_mem + 4, ExceptionInfo->ContextRecord->Pc);
+    ok(ExceptionInfo->ContextRecord->Pc == (DWORD_PTR)code_mem,
+       "expected pc = %lx, got %lx\n", (DWORD_PTR)code_mem, ExceptionInfo->ContextRecord->Pc);
     ok(rec->NumberParameters == 1,
        "ExceptionParameters is %d instead of 1\n", rec->NumberParameters);
     ok(rec->ExceptionInformation[0] == 0,
        "got ExceptionInformation[0] = %lx\n", rec->ExceptionInformation[0]);
+    ExceptionInfo->ContextRecord->Pc += 4;
 #endif
 
     breakpoint_exceptions++;
@@ -6334,7 +6338,7 @@ static const BYTE breakpoint_code[] = { 0xcd, 0x03, 0xc3 };   /* int $0x3; ret *
 #elif defined(__arm__)
 static const DWORD breakpoint_code[] = { 0xdefe, 0x4770 };  /* udf #0xfe; bx lr */
 #elif defined(__aarch64__)
-static const DWORD breakpoint_code[] = { 0xd4200000, 0xd65f03c0 };  /* brk #0; ret */
+static const DWORD breakpoint_code[] = { 0xd43e0000, 0xd65f03c0 };  /* brk #0xf000; ret */
 #endif
 
 static void test_breakpoint(DWORD numexc)

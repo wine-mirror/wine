@@ -459,7 +459,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         {
             context->u.s.Fp  = frame->x29;
             context->u.s.Lr  = frame->ret_addr;
-            context->Sp      = (ULONG64)&frame->thunk_x29;
+            context->Sp      = (ULONG64)(frame + 1);
             context->Pc      = frame->thunk_addr;
             context->Cpsr    = 0;
             context->ContextFlags |= CONTEXT_CONTROL;
@@ -575,7 +575,6 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
     rec->ExceptionAddress = (void *)PC_sig(sigcontext);
     save_context( &context, sigcontext );
     save_fpu( &context, sigcontext );
-    if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context.Pc += 4;
 
     status = send_debug_event( rec, &context, TRUE );
     if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
