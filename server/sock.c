@@ -1780,7 +1780,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 
         if (sock->connect_req)
         {
-            set_error( params->synchronous ? STATUS_INVALID_PARAMETER : STATUS_CONNECTION_ACTIVE );
+            set_error( STATUS_INVALID_PARAMETER );
             return 0;
         }
 

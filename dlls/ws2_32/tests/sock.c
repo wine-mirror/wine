@@ -10312,7 +10312,7 @@ static void test_connecting_socket(void)
     overlapped.InternalHigh = 0xdeadbeef;
     ret = pConnectEx(client, (struct sockaddr *)&invalid_addr, sizeof(invalid_addr), NULL, 0, &size, &overlapped);
     ok(!ret, "got %d\n", ret);
-    todo_wine ok(WSAGetLastError() == WSAEINVAL, "got %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAEINVAL, "got %u\n", WSAGetLastError());
     ok((NTSTATUS)overlapped.Internal == STATUS_PENDING, "got status %#x\n", (NTSTATUS)overlapped.Internal);
     todo_wine ok(overlapped.InternalHigh == 0xdeadbeef, "got size %Iu\n", overlapped.InternalHigh);
 
