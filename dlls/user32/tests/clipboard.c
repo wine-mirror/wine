@@ -65,6 +65,7 @@ static BOOL open_clipboard(HWND hwnd)
 static BOOL has_no_open_wnd(void)
 {
     DWORD start = GetTickCount();
+    DWORD le = GetLastError();
     while (1)
     {
         HWND clipwnd = GetOpenClipboardWindow();
@@ -72,7 +73,7 @@ static BOOL has_no_open_wnd(void)
         if (GetTickCount() - start > 100)
         {
             char classname[256];
-            DWORD le = GetLastError();
+            le = GetLastError();
             /* See open_clipboard() */
             GetClassNameA(clipwnd, classname, ARRAY_SIZE(classname));
             trace("%p (%s) opened the clipboard\n", clipwnd, classname);
@@ -80,6 +81,7 @@ static BOOL has_no_open_wnd(void)
             return FALSE;
         }
         Sleep(15);
+        SetLastError(le);
     }
 }
 
