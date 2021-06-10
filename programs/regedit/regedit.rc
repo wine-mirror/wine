@@ -434,6 +434,9 @@ STRINGTABLE
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
+/* @makedep: regedit.manifest */
+1 RT_MANIFEST regedit.manifest
+
 /* @makedep: folderopen.ico */
 IDI_OPEN_FILE ICON folderopen.ico
 

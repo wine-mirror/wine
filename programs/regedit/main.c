@@ -142,6 +142,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
     HACCEL hAccel;
     BOOL is_wow64;
 
+    InitCommonControls();
+
     if (ProcessCmdLine(GetCommandLineW())) {
         return 0;
     }
