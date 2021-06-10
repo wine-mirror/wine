@@ -45,3 +45,6 @@ BEGIN
     LTEXT "The Wine configuration in %s is being updated, please wait...",
           IDC_WAITTEXT, 40, 5, 150, 40, SS_NOPREFIX
 END
+
+/* @makedep: wineboot.manifest */
+1 RT_MANIFEST wineboot.manifest
