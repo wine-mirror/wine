@@ -40,6 +40,8 @@
 #include "initguid.h"
 #include "devguid.h"
 #include "ddk/hidclass.h"
+#include "ddk/hidsdi.h"
+#include "ddk/hidpi.h"
 #include "wine/test.h"
 #include "wine/heap.h"
 #include "wine/mssign.h"
@@ -1496,6 +1498,220 @@ static void test_pnp_driver(struct testsign_context *ctx)
     SetCurrentDirectoryA(cwd);
 }
 
+#define check_member_(file, line, val, exp, fmt, member)               \
+        ok_(file, line)((val).member == (exp).member,                  \
+                        "got " #member " " fmt ", expected " fmt "\n", \
+                        (val).member, (exp).member)
+#define check_member(val, exp, fmt, member) check_member_(__FILE__, __LINE__, val, exp, fmt, member)
+
+#define check_hidp_caps(a, b) check_hidp_caps_(__LINE__, a, b)
+static inline void check_hidp_caps_(int line, HIDP_CAPS *caps, const HIDP_CAPS *exp)
+{
+    check_member_(__FILE__, line, *caps, *exp, "%04x", Usage);
+    check_member_(__FILE__, line, *caps, *exp, "%04x", UsagePage);
+    check_member_(__FILE__, line, *caps, *exp, "%d", InputReportByteLength);
+    check_member_(__FILE__, line, *caps, *exp, "%d", OutputReportByteLength);
+    check_member_(__FILE__, line, *caps, *exp, "%d", FeatureReportByteLength);
+    check_member_(__FILE__, line, *caps, *exp, "%d", NumberLinkCollectionNodes);
+    check_member_(__FILE__, line, *caps, *exp, "%d", NumberInputButtonCaps);
+    check_member_(__FILE__, line, *caps, *exp, "%d", NumberInputValueCaps);
+    check_member_(__FILE__, line, *caps, *exp, "%d", NumberInputDataIndices);
+    check_member_(__FILE__, line, *caps, *exp, "%d", NumberOutputButtonCaps);
+    check_member_(__FILE__, line, *caps, *exp, "%d", NumberOutputValueCaps);
+    check_member_(__FILE__, line, *caps, *exp, "%d", NumberOutputDataIndices);
+    check_member_(__FILE__, line, *caps, *exp, "%d", NumberFeatureButtonCaps);
+    check_member_(__FILE__, line, *caps, *exp, "%d", NumberFeatureValueCaps);
+    check_member_(__FILE__, line, *caps, *exp, "%d", NumberFeatureDataIndices);
+}
+
+#define check_hidp_button_caps(a, b) check_hidp_button_caps_(__LINE__, a, b)
+static inline void check_hidp_button_caps_(int line, HIDP_BUTTON_CAPS *caps, const HIDP_BUTTON_CAPS *exp)
+{
+    check_member_(__FILE__, line, *caps, *exp, "%04x", UsagePage);
+    check_member_(__FILE__, line, *caps, *exp, "%d", ReportID);
+    check_member_(__FILE__, line, *caps, *exp, "%d", IsAlias);
+    check_member_(__FILE__, line, *caps, *exp, "%d", BitField);
+    check_member_(__FILE__, line, *caps, *exp, "%d", LinkCollection);
+    check_member_(__FILE__, line, *caps, *exp, "%04x", LinkUsage);
+    check_member_(__FILE__, line, *caps, *exp, "%04x", LinkUsagePage);
+    check_member_(__FILE__, line, *caps, *exp, "%d", IsRange);
+    check_member_(__FILE__, line, *caps, *exp, "%d", IsStringRange);
+    check_member_(__FILE__, line, *caps, *exp, "%d", IsDesignatorRange);
+    check_member_(__FILE__, line, *caps, *exp, "%d", IsAbsolute);
+
+    if (!caps->IsRange && !exp->IsRange)
+    {
+        check_member_(__FILE__, line, *caps, *exp, "%04x", NotRange.Usage);
+        check_member_(__FILE__, line, *caps, *exp, "%d", NotRange.DataIndex);
+    }
+    else if (caps->IsRange && exp->IsRange)
+    {
+        check_member_(__FILE__, line, *caps, *exp, "%04x", Range.UsageMin);
+        check_member_(__FILE__, line, *caps, *exp, "%04x", Range.UsageMax);
+        check_member_(__FILE__, line, *caps, *exp, "%d", Range.DataIndexMin);
+        check_member_(__FILE__, line, *caps, *exp, "%d", Range.DataIndexMax);
+    }
+
+    if (!caps->IsRange && !exp->IsRange)
+        check_member_(__FILE__, line, *caps, *exp, "%d", NotRange.StringIndex);
+    else if (caps->IsStringRange && exp->IsStringRange)
+    {
+        check_member_(__FILE__, line, *caps, *exp, "%d", Range.StringMin);
+        check_member_(__FILE__, line, *caps, *exp, "%d", Range.StringMax);
+    }
+
+    if (!caps->IsDesignatorRange && !exp->IsDesignatorRange)
+        check_member_(__FILE__, line, *caps, *exp, "%d", NotRange.DesignatorIndex);
+    else if (caps->IsDesignatorRange && exp->IsDesignatorRange)
+    {
+        check_member_(__FILE__, line, *caps, *exp, "%d", Range.DesignatorMin);
+        check_member_(__FILE__, line, *caps, *exp, "%d", Range.DesignatorMax);
+    }
+}
+
+static void test_hidp(HANDLE file)
+{
+    static const HIDP_CAPS expect_hidp_caps =
+    {
+        .Usage = HID_USAGE_GENERIC_JOYSTICK,
+        .UsagePage = HID_USAGE_PAGE_GENERIC,
+        .InputReportByteLength = 5,
+        .NumberLinkCollectionNodes = 1,
+        .NumberInputButtonCaps = 1,
+        .NumberInputValueCaps = 3,
+        .NumberInputDataIndices = 11,
+    };
+    static const HIDP_BUTTON_CAPS expect_button_caps[] =
+    {
+        {
+            .UsagePage = HID_USAGE_PAGE_BUTTON,
+            .BitField = 2,
+            .LinkUsage = HID_USAGE_GENERIC_JOYSTICK,
+            .LinkUsagePage = HID_USAGE_PAGE_GENERIC,
+            .IsRange = TRUE,
+            .IsAbsolute = TRUE,
+            .Range.UsageMin = 1,
+            .Range.UsageMax = 8,
+            .Range.DataIndexMin = 2,
+            .Range.DataIndexMax = 9,
+        },
+    };
+
+    PHIDP_PREPARSED_DATA preparsed_data;
+    HIDP_BUTTON_CAPS button_caps[16];
+    char buffer[200];
+    NTSTATUS status;
+    HIDP_CAPS caps;
+    unsigned int i;
+    USHORT count;
+    BOOL ret;
+
+    ret = HidD_GetPreparsedData(file, &preparsed_data);
+    ok(ret, "HidD_GetPreparsedData failed with error %u\n", GetLastError());
+
+    memset(buffer, 0, sizeof(buffer));
+    status = HidP_GetCaps((PHIDP_PREPARSED_DATA)buffer, &caps);
+    ok(status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_GetCaps returned %#x\n", status);
+    status = HidP_GetCaps(preparsed_data, &caps);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_GetCaps returned %#x\n", status);
+    check_hidp_caps(&caps, &expect_hidp_caps);
+
+    count = ARRAY_SIZE(button_caps);
+    status = HidP_GetButtonCaps(HidP_Output, button_caps, &count, preparsed_data);
+    todo_wine
+    ok(status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetButtonCaps returned %#x\n", status);
+    status = HidP_GetButtonCaps(HidP_Feature + 1, button_caps, &count, preparsed_data);
+    ok(status == HIDP_STATUS_INVALID_REPORT_TYPE, "HidP_GetButtonCaps returned %#x\n", status);
+    count = 0;
+    status = HidP_GetButtonCaps(HidP_Input, button_caps, &count, preparsed_data);
+    todo_wine
+    ok(status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetButtonCaps returned %#x\n", status);
+    todo_wine
+    ok(count == caps.NumberInputButtonCaps, "HidP_GetButtonCaps returned count %d, expected %d\n",
+       count, caps.NumberInputButtonCaps);
+    count = ARRAY_SIZE(button_caps);
+    status = HidP_GetButtonCaps(HidP_Input, button_caps, &count, (PHIDP_PREPARSED_DATA)buffer);
+    ok(status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_GetButtonCaps returned %#x\n", status);
+    status = HidP_GetButtonCaps(HidP_Input, button_caps, &count, preparsed_data);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_GetButtonCaps returned %#x\n", status);
+    ok(count == caps.NumberInputButtonCaps, "HidP_GetButtonCaps returned count %d, expected %d\n",
+       count, caps.NumberInputButtonCaps);
+
+    for (i = 0; i < ARRAY_SIZE(expect_button_caps); ++i)
+    {
+        winetest_push_context("button_caps[%d]", i);
+        check_member(button_caps[i], expect_button_caps[i], "%04x", UsagePage);
+        check_member(button_caps[i], expect_button_caps[i], "%d", ReportID);
+        check_member(button_caps[i], expect_button_caps[i], "%d", IsAlias);
+        todo_wine
+        check_member(button_caps[i], expect_button_caps[i], "%d", BitField);
+        check_member(button_caps[i], expect_button_caps[i], "%d", LinkCollection);
+        check_member(button_caps[i], expect_button_caps[i], "%04x", LinkUsage);
+        check_member(button_caps[i], expect_button_caps[i], "%04x", LinkUsagePage);
+        check_member(button_caps[i], expect_button_caps[i], "%d", IsRange);
+        check_member(button_caps[i], expect_button_caps[i], "%d", IsStringRange);
+        check_member(button_caps[i], expect_button_caps[i], "%d", IsDesignatorRange);
+        check_member(button_caps[i], expect_button_caps[i], "%d", IsAbsolute);
+        check_member(button_caps[i], expect_button_caps[i], "%04x", Range.UsageMin);
+        check_member(button_caps[i], expect_button_caps[i], "%04x", Range.UsageMax);
+        check_member(button_caps[i], expect_button_caps[i], "%d", Range.StringMin);
+        check_member(button_caps[i], expect_button_caps[i], "%d", Range.StringMax);
+        check_member(button_caps[i], expect_button_caps[i], "%d", Range.DesignatorMin);
+        check_member(button_caps[i], expect_button_caps[i], "%d", Range.DesignatorMax);
+        check_member(button_caps[i], expect_button_caps[i], "%d", Range.DataIndexMin);
+        check_member(button_caps[i], expect_button_caps[i], "%d", Range.DataIndexMax);
+        winetest_pop_context();
+    }
+
+    count = ARRAY_SIZE(button_caps) - 1;
+    status = HidP_GetSpecificButtonCaps(HidP_Output, 0, 0, 0, button_caps, &count, preparsed_data);
+    todo_wine
+    ok(status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificButtonCaps returned %#x\n", status);
+    status = HidP_GetSpecificButtonCaps(HidP_Feature + 1, 0, 0, 0, button_caps, &count, preparsed_data);
+    ok(status == HIDP_STATUS_INVALID_REPORT_TYPE, "HidP_GetSpecificButtonCaps returned %#x\n", status);
+    count = 0;
+    status = HidP_GetSpecificButtonCaps(HidP_Input, 0, 0, 0, button_caps, &count, preparsed_data);
+    todo_wine
+    ok(status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetSpecificButtonCaps returned %#x\n", status);
+    todo_wine
+    ok(count == caps.NumberInputButtonCaps, "HidP_GetSpecificButtonCaps returned count %d, expected %d\n",
+       count, caps.NumberInputButtonCaps);
+    count = ARRAY_SIZE(button_caps) - 1;
+    status = HidP_GetSpecificButtonCaps(HidP_Input, 0, 0, 0, button_caps, &count, (PHIDP_PREPARSED_DATA)buffer);
+    ok(status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_GetSpecificButtonCaps returned %#x\n", status);
+
+    status = HidP_GetSpecificButtonCaps(HidP_Input, 0, 0, 0, button_caps + 1, &count, preparsed_data);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_GetSpecificButtonCaps returned %#x\n", status);
+    ok(count == caps.NumberInputButtonCaps, "HidP_GetSpecificButtonCaps returned count %d, expected %d\n",
+       count, caps.NumberInputButtonCaps);
+    check_hidp_button_caps(&button_caps[1], &button_caps[0]);
+
+    status = HidP_GetSpecificButtonCaps(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, 5, button_caps + 1,
+                                        &count, preparsed_data);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_GetSpecificButtonCaps returned %#x\n", status);
+    ok(count == 1, "HidP_GetSpecificButtonCaps returned count %d, expected %d\n", count, 1);
+    check_hidp_button_caps(&button_caps[1], &button_caps[0]);
+
+    count = 0xbeef;
+    status = HidP_GetSpecificButtonCaps(HidP_Input, 0xfffe, 0, 0, button_caps, &count, preparsed_data);
+    todo_wine
+    ok(status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificButtonCaps returned %#x\n", status);
+    ok(count == 0, "HidP_GetSpecificButtonCaps returned count %d, expected %d\n", count, 0);
+    count = 0xbeef;
+    status = HidP_GetSpecificButtonCaps(HidP_Input, 0, 0xfffe, 0, button_caps, &count, preparsed_data);
+    todo_wine
+    ok(status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificButtonCaps returned %#x\n", status);
+    ok(count == 0, "HidP_GetSpecificButtonCaps returned count %d, expected %d\n", count, 0);
+    count = 0xbeef;
+    status = HidP_GetSpecificButtonCaps(HidP_Input, 0, 0, 0xfffe, button_caps, &count, preparsed_data);
+    todo_wine
+    ok(status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificButtonCaps returned %#x\n", status);
+    ok(count == 0, "HidP_GetSpecificButtonCaps returned count %d, expected %d\n", count, 0);
+
+    HidD_FreePreparsedData(preparsed_data);
+    CloseHandle(file);
+}
+
 static void test_hid_device(void)
 {
     char buffer[200];
@@ -1540,6 +1756,8 @@ static void test_hid_device(void)
     file = CreateFileA(iface_detail->DevicePath, FILE_READ_ACCESS,
             FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
     ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+
+    test_hidp(file);
 
     CloseHandle(file);
 
