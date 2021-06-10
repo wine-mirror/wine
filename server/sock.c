@@ -1784,6 +1784,14 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             return 0;
         }
 
+        if (sock->state & FD_CONNECT)
+        {
+            /* FIXME: STATUS_ADDRESS_ALREADY_ASSOCIATED probably isn't right,
+             * but there's no status code that maps to WSAEALREADY... */
+            set_error( params->synchronous ? STATUS_ADDRESS_ALREADY_ASSOCIATED : STATUS_INVALID_PARAMETER );
+            return 0;
+        }
+
         ret = connect( unix_fd, addr, params->addr_len );
         if (ret < 0 && errno != EINPROGRESS)
         {

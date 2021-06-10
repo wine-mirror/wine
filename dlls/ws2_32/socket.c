@@ -2222,7 +2222,8 @@ int WINAPI WS_connect( SOCKET s, const struct WS_sockaddr *addr, int len )
     }
     if (status)
     {
-        SetLastError( NtStatusToWSAError( status ) );
+        /* NtStatusToWSAError() has no mapping for WSAEALREADY */
+        SetLastError( status == STATUS_ADDRESS_ALREADY_ASSOCIATED ? WSAEALREADY : NtStatusToWSAError( status ) );
         return -1;
     }
     return 0;

@@ -10251,7 +10251,7 @@ static void test_connecting_socket(void)
      * second to return WSAEALREADY. */
     ret = connect(client, (struct sockaddr *)&invalid_addr, sizeof(invalid_addr));
     ok(ret == -1, "got %d\n", ret);
-    todo_wine ok(WSAGetLastError() == WSAEALREADY, "got %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAEALREADY, "got %u\n", WSAGetLastError());
 
     ret = WSAIoctl(client, SIO_GET_EXTENSION_FUNCTION_POINTER, &connectex_guid, sizeof(connectex_guid),
             &pConnectEx, sizeof(pConnectEx), &size, NULL, NULL);
@@ -10260,7 +10260,7 @@ static void test_connecting_socket(void)
     overlapped.InternalHigh = 0xdeadbeef;
     ret = pConnectEx(client, (struct sockaddr *)&invalid_addr, sizeof(invalid_addr), NULL, 0, &size, &overlapped);
     ok(!ret, "got %d\n", ret);
-    todo_wine ok(WSAGetLastError() == WSAEINVAL, "got %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAEINVAL, "got %u\n", WSAGetLastError());
     ok((NTSTATUS)overlapped.Internal == STATUS_PENDING, "got status %#x\n", (NTSTATUS)overlapped.Internal);
     todo_wine ok(overlapped.InternalHigh == 0xdeadbeef, "got size %Iu\n", overlapped.InternalHigh);
 
