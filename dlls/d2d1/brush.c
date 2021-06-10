@@ -1122,8 +1122,7 @@ static D3D10_TEXTURE_ADDRESS_MODE texture_address_mode_from_extend_mode(D2D1_EXT
     }
 }
 
-static BOOL d2d_brush_fill_cb(const struct d2d_brush *brush,
-        const struct d2d_device_context *render_target, struct d2d_brush_cb *cb)
+static BOOL d2d_brush_fill_cb(const struct d2d_brush *brush, struct d2d_brush_cb *cb)
 {
     float theta, sin_theta, cos_theta;
     float dpi_scale, d, s1, s2, t, u;
@@ -1249,9 +1248,9 @@ HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_brush *opacity_b
 
     cb_data.outline = outline;
     cb_data.is_arc = is_arc;
-    if (!d2d_brush_fill_cb(brush, render_target, &cb_data.colour_brush))
+    if (!d2d_brush_fill_cb(brush, &cb_data.colour_brush))
         return E_NOTIMPL;
-    if (!d2d_brush_fill_cb(opacity_brush, render_target, &cb_data.opacity_brush))
+    if (!d2d_brush_fill_cb(opacity_brush, &cb_data.opacity_brush))
         return E_NOTIMPL;
 
     buffer_desc.ByteWidth = sizeof(cb_data);
