@@ -1720,8 +1720,8 @@ static void test_hidp(HANDLE file)
     PHIDP_PREPARSED_DATA preparsed_data;
     HIDP_BUTTON_CAPS button_caps[16];
     HIDP_VALUE_CAPS value_caps[16];
+    char buffer[200], report[200];
     DWORD collection_count;
-    char buffer[200];
     NTSTATUS status;
     HIDP_CAPS caps;
     unsigned int i;
@@ -1951,6 +1951,23 @@ static void test_hidp(HANDLE file)
     todo_wine
     ok(status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificValueCaps returned %#x\n", status);
     ok(count == 0, "HidP_GetSpecificValueCaps returned count %d, expected %d\n", count, 0);
+
+    status = HidP_InitializeReportForID(HidP_Input, 0, (PHIDP_PREPARSED_DATA)buffer, report, sizeof(report));
+    ok(status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_InitializeReportForID returned %#x\n", status);
+    status = HidP_InitializeReportForID(HidP_Feature + 1, 0, preparsed_data, report, sizeof(report));
+    ok(status == HIDP_STATUS_INVALID_REPORT_TYPE, "HidP_InitializeReportForID returned %#x\n", status);
+    status = HidP_InitializeReportForID(HidP_Input, 0, preparsed_data, report, sizeof(report));
+    ok(status == HIDP_STATUS_INVALID_REPORT_LENGTH, "HidP_InitializeReportForID returned %#x\n", status);
+    status = HidP_InitializeReportForID(HidP_Input, 0, preparsed_data, report, caps.InputReportByteLength + 1);
+    ok(status == HIDP_STATUS_INVALID_REPORT_LENGTH, "HidP_InitializeReportForID returned %#x\n", status);
+
+    memset(report, 0xcd, sizeof(report));
+    status = HidP_InitializeReportForID(HidP_Input, 0, preparsed_data, report, caps.InputReportByteLength);
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#x\n", status);
+
+    memset(buffer, 0xcd, sizeof(buffer));
+    memset(buffer, 0, caps.InputReportByteLength);
+    ok(!memcmp(buffer, report, sizeof(buffer)), "unexpected report data\n");
 
     HidD_FreePreparsedData(preparsed_data);
     CloseHandle(file);
