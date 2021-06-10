@@ -1424,17 +1424,182 @@ float CDECL log10f( float x )
     return dk * log10_2lo + (lo + hi) * ivln10lo + lo * ivln10hi + hi * ivln10hi + dk * log10_2hi;
 }
 
+/* Subnormal input is normalized so ix has negative biased exponent.
+   Output is multiplied by POWF_SCALE (where 1 << 5). */
+static double powf_log2(UINT32 ix)
+{
+    static const struct {
+        double invc, logc;
+    } T[] = {
+        { 0x1.661ec79f8f3bep+0, -0x1.efec65b963019p-2 * (1 << 5) },
+        { 0x1.571ed4aaf883dp+0, -0x1.b0b6832d4fca4p-2 * (1 << 5) },
+        { 0x1.49539f0f010bp+0, -0x1.7418b0a1fb77bp-2 * (1 << 5) },
+        { 0x1.3c995b0b80385p+0, -0x1.39de91a6dcf7bp-2 * (1 << 5) },
+        { 0x1.30d190c8864a5p+0, -0x1.01d9bf3f2b631p-2 * (1 << 5) },
+        { 0x1.25e227b0b8eap+0, -0x1.97c1d1b3b7afp-3 * (1 << 5) },
+        { 0x1.1bb4a4a1a343fp+0, -0x1.2f9e393af3c9fp-3 * (1 << 5) },
+        { 0x1.12358f08ae5bap+0, -0x1.960cbbf788d5cp-4 * (1 << 5) },
+        { 0x1.0953f419900a7p+0, -0x1.a6f9db6475fcep-5 * (1 << 5) },
+        { 0x1p+0, 0x0p+0 * (1 << 4) },
+        { 0x1.e608cfd9a47acp-1, 0x1.338ca9f24f53dp-4 * (1 << 5) },
+        { 0x1.ca4b31f026aap-1, 0x1.476a9543891bap-3 * (1 << 5) },
+        { 0x1.b2036576afce6p-1, 0x1.e840b4ac4e4d2p-3 * (1 << 5) },
+        { 0x1.9c2d163a1aa2dp-1, 0x1.40645f0c6651cp-2 * (1 << 5) },
+        { 0x1.886e6037841edp-1, 0x1.88e9c2c1b9ff8p-2 * (1 << 5) },
+        { 0x1.767dcf5534862p-1, 0x1.ce0a44eb17bccp-2 * (1 << 5) }
+    };
+    static const double A[] = {
+        0x1.27616c9496e0bp-2 * (1 << 5), -0x1.71969a075c67ap-2 * (1 << 5),
+        0x1.ec70a6ca7baddp-2 * (1 << 5), -0x1.7154748bef6c8p-1 * (1 << 5),
+        0x1.71547652ab82bp0 * (1 << 5)
+    };
+
+    double z, r, r2, r4, p, q, y, y0, invc, logc;
+    UINT32 iz, top, tmp;
+    int k, i;
+
+    /* x = 2^k z; where z is in range [OFF,2*OFF] and exact.
+       The range is split into N subintervals.
+       The ith subinterval contains z and c is near its center. */
+    tmp = ix - 0x3f330000;
+    i = (tmp >> (23 - 4)) % (1 << 4);
+    top = tmp & 0xff800000;
+    iz = ix - top;
+    k = (INT32)top >> (23 - 5); /* arithmetic shift */
+    invc = T[i].invc;
+    logc = T[i].logc;
+    z = *(float*)&iz;
+
+    /* log2(x) = log1p(z/c-1)/ln2 + log2(c) + k */
+    r = z * invc - 1;
+    y0 = logc + (double)k;
+
+    /* Pipelined polynomial evaluation to approximate log1p(r)/ln2. */
+    r2 = r * r;
+    y = A[0] * r + A[1];
+    p = A[2] * r + A[3];
+    r4 = r2 * r2;
+    q = A[4] * r + y0;
+    q = p * r2 + q;
+    y = y * r4 + q;
+    return y;
+}
+
+/* The output of log2 and thus the input of exp2 is either scaled by N
+   (in case of fast toint intrinsics) or not. The unscaled xd must be
+   in [-1021,1023], sign_bias sets the sign of the result. */
+static float powf_exp2(double xd, UINT32 sign_bias)
+{
+    static const double C[] = {
+        0x1.c6af84b912394p-5 / (1 << 5) / (1 << 5) / (1 << 5),
+        0x1.ebfce50fac4f3p-3 / (1 << 5) / (1 << 5),
+        0x1.62e42ff0c52d6p-1 / (1 << 5)
+    };
+
+    UINT64 ki, ski, t;
+    double kd, z, r, r2, y, s;
+
+    /* N*x = k + r with r in [-1/2, 1/2] */
+    kd = __round(xd); /* k */
+    ki = kd;
+    r = xd - kd;
+
+    /* exp2(x) = 2^(k/N) * 2^r ~= s * (C0*r^3 + C1*r^2 + C2*r + 1) */
+    t = exp2f_T[ki % (1 << 5)];
+    ski = ki + sign_bias;
+    t += ski << (52 - 5);
+    s = *(double*)&t;
+    z = C[0] * r + C[1];
+    r2 = r * r;
+    y = C[2] * r + 1;
+    y = z * r2 + y;
+    y = y * s;
+    return y;
+}
+
+/* Returns 0 if not int, 1 if odd int, 2 if even int. The argument is
+   the bit representation of a non-zero finite floating-point value. */
+static int powf_checkint(UINT32 iy)
+{
+    int e = iy >> 23 & 0xff;
+    if (e < 0x7f)
+        return 0;
+    if (e > 0x7f + 23)
+        return 2;
+    if (iy & ((1 << (0x7f + 23 - e)) - 1))
+        return 0;
+    if (iy & (1 << (0x7f + 23 - e)))
+        return 1;
+    return 2;
+}
+
 /*********************************************************************
  *      powf (MSVCRT.@)
+ *
+ * Copied from musl: src/math/powf.c src/math/powf_data.c
  */
 float CDECL powf( float x, float y )
 {
-  float z = unix_funcs->powf(x,y);
-  if (x < 0 && y != floorf(y)) return math_error(_DOMAIN, "powf", x, y, z);
-  if (!x && isfinite(y) && y < 0) return math_error(_SING, "powf", x, y, z);
-  if (isfinite(x) && isfinite(y) && !isfinite(z)) return math_error(_OVERFLOW, "powf", x, y, z);
-  if (x && isfinite(x) && isfinite(y) && !z) return math_error(_UNDERFLOW, "powf", x, y, z);
-  return z;
+    UINT32 sign_bias = 0;
+    UINT32 ix, iy;
+    double logx, ylogx;
+
+    ix = *(UINT32*)&x;
+    iy = *(UINT32*)&y;
+    if (ix - 0x00800000 >= 0x7f800000 - 0x00800000 ||
+            2 * iy - 1 >= 2u * 0x7f800000 - 1) {
+        /* Either (x < 0x1p-126 or inf or nan) or (y is 0 or inf or nan). */
+        if (2 * iy - 1 >= 2u * 0x7f800000 - 1) {
+            if (2 * iy == 0)
+                return 1.0f;
+            if (ix == 0x3f800000)
+                return 1.0f;
+            if (2 * ix > 2u * 0x7f800000 || 2 * iy > 2u * 0x7f800000)
+                return x + y;
+            if (2 * ix == 2 * 0x3f800000)
+                return 1.0f;
+            if ((2 * ix < 2 * 0x3f800000) == !(iy & 0x80000000))
+                return 0.0f; /* |x|<1 && y==inf or |x|>1 && y==-inf. */
+            return y * y;
+        }
+        if (2 * ix - 1 >= 2u * 0x7f800000 - 1) {
+            float x2 = x * x;
+            if (ix & 0x80000000 && powf_checkint(iy) == 1)
+                x2 = -x2;
+            if (iy & 0x80000000 && x2 == 0.0)
+                return math_error(_SING, "powf", x, 0, 1 / x2);
+            /* Without the barrier some versions of clang hoist the 1/x2 and
+               thus division by zero exception can be signaled spuriously. */
+            return iy & 0x80000000 ? fp_barrierf(1 / x2) : x2;
+        }
+        /* x and y are non-zero finite. */
+        if (ix & 0x80000000) {
+            /* Finite x < 0. */
+            int yint = powf_checkint(iy);
+            if (yint == 0)
+                return math_error(_DOMAIN, "powf", x, 0, 0 / (x - x));
+            if (yint == 1)
+                sign_bias = 1 << (5 + 11);
+            ix &= 0x7fffffff;
+        }
+        if (ix < 0x00800000) {
+            /* Normalize subnormal x so exponent becomes negative. */
+            x *= 0x1p23f;
+            ix = *(UINT32*)&x;
+            ix &= 0x7fffffff;
+            ix -= 23 << 23;
+        }
+    }
+    logx = powf_log2(ix);
+    ylogx = y * logx; /* cannot overflow, y is single prec. */
+    if ((*(UINT64*)&ylogx >> 47 & 0xffff) >= 0x40af800000000000llu >> 47) {
+        /* |y*log(x)| >= 126. */
+        if (ylogx > 0x1.fffffffd1d571p+6 * (1 << 5))
+            return math_error(_OVERFLOW, "powf", x, 0, (sign_bias ? -1.0 : 1.0) * 0x1p1023);
+        if (ylogx <= -150.0 * (1 << 5))
+            return math_error(_UNDERFLOW, "powf", x, 0, (sign_bias ? -1.0 : 1.0) / 0x1p1023);
+    }
+    return powf_exp2(ylogx, sign_bias);
 }
 
 /*********************************************************************

@@ -70,20 +70,11 @@ static double CDECL unix_pow( double x, double y )
     return pow( x, y );
 }
 
-/*********************************************************************
- *      powf
- */
-static float CDECL unix_powf( float x, float y )
-{
-    return powf( x, y );
-}
-
 static const struct unix_funcs funcs =
 {
     unix_exp,
     unix_exp2,
     unix_pow,
-    unix_powf,
 };
 
 NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *ptr_in, void *ptr_out )

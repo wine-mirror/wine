@@ -26,7 +26,6 @@ struct unix_funcs
     double          (CDECL *exp)(double x);
     double          (CDECL *exp2)(double x);
     double          (CDECL *pow)(double x, double y);
-    float           (CDECL *powf)(float x, float y);
 };
 
 #endif /* __UNIXLIB_H */
