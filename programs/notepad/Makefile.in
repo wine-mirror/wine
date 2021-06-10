@@ -1,5 +1,5 @@
 MODULE    = notepad.exe
-IMPORTS   = comdlg32 shell32 shlwapi user32 gdi32 advapi32
+IMPORTS   = comdlg32 shell32 shlwapi user32 gdi32 advapi32 comctl32
 
 EXTRADLLFLAGS = -mwindows -mno-cygwin
 

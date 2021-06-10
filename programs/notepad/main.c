@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 #include <windows.h>
+#include <commctrl.h>
 #include <commdlg.h>
 #include <shellapi.h>
 #include <shlwapi.h>
@@ -749,6 +750,8 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     INT x, y;
     static const WCHAR className[] = {'N','o','t','e','p','a','d',0};
     static const WCHAR winName[]   = {'N','o','t','e','p','a','d',0};
+
+    InitCommonControls();
 
     aFINDMSGSTRING = RegisterWindowMessageW(FINDMSGSTRINGW);
 
