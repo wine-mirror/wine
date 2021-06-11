@@ -610,8 +610,6 @@ static void complete_async_connect( struct sock *sock )
 
     if (debug_level) fprintf( stderr, "completing connect request for socket %p\n", sock );
 
-    sock->pending_events &= ~(FD_CONNECT | FD_READ | FD_WRITE);
-    sock->reported_events &= ~(FD_CONNECT | FD_READ | FD_WRITE);
     sock->state = SOCK_CONNECTED;
 
     if (!req->send_len)
@@ -1845,9 +1843,6 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 
         /* a connected or connecting socket can no longer be accepted into */
         allow_fd_caching( sock->fd );
-
-        sock->pending_events &= ~(FD_CONNECT | FD_READ | FD_WRITE);
-        sock->reported_events &= ~(FD_CONNECT | FD_READ | FD_WRITE);
 
         if (!ret)
         {
