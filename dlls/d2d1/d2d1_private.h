@@ -121,6 +121,22 @@ struct d2d_ps_cb
     struct d2d_brush_cb opacity_brush;
 };
 
+struct d2d_vec4
+{
+    float x, y, z, w;
+};
+
+struct d2d_vs_cb
+{
+    struct
+    {
+        float _11, _21, _31, pad0;
+        float _12, _22, _32, stroke_width;
+    } transform_geometry;
+    struct d2d_vec4 transform_rtx;
+    struct d2d_vec4 transform_rty;
+};
+
 struct d2d_device_context_ops
 {
     HRESULT (*device_context_present)(IUnknown *outer_unknown);
@@ -149,6 +165,7 @@ struct d2d_device_context
     struct d2d_bitmap *target;
     ID3D10StateBlock *stateblock;
     struct d2d_shape_resources shape_resources[D2D_SHAPE_TYPE_COUNT];
+    ID3D10Buffer *vs_cb;
     ID3D10PixelShader *ps;
     ID3D10Buffer *ps_cb;
     ID3D10Buffer *ib;
@@ -413,11 +430,6 @@ struct d2d_curve_vertex
 struct d2d_face
 {
     UINT16 v[3];
-};
-
-struct d2d_vec4
-{
-    float x, y, z, w;
 };
 
 struct d2d_outline_vertex
