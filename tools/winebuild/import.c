@@ -1665,15 +1665,27 @@ static void output_syscall_dispatcher(void)
         output( "\tjmp 2b\n" );
         break;
     case CPU_ARM:
-        output( "\tpush {r4-r11}\n" );
-        output( "\tadd r6, sp, #40\n" );  /* stack parameters */
-        output( "\tsub sp, sp, #8\n" );
-        output( "\tmrc p15, 0, r7, c13, c0, 2\n" ); /* NtCurrentTeb() */
-        output( "\tadd r7, #0x1d8\n" );  /* arm_thread_data()->syscall_frame */
+        output( "\tmrc p15, 0, r1, c13, c0, 2\n" ); /* NtCurrentTeb() */
+        output( "\tldr r1, [r1, #0x1d8]\n" );  /* arm_thread_data()->syscall_frame */
+        output( "\tadd r0, r1, #0x10\n" );
+        output( "\tstm r0, {r4-r12,lr}\n" );
+        output( "\tstr sp, [r1, #0x38]\n" );
+        output( "\tstr r3, [r1, #0x3c]\n" );
         output( "\tmrs r0, CPSR\n" );
         output( "\tbfi r0, lr, #5, #1\n" );  /* set thumb bit */
-        output( "\tstr r0, [sp, #4]\n" );
-        output( "\tstr sp, [r7]\n" );  /* syscall frame */
+        output( "\tstr r0, [r1, #0x40]\n" );
+        output( "\tmov r0, #0\n" );
+        output( "\tstr r0, [r1, #0x44]\n" ); /* frame->restore_flags */
+        if (strcmp( float_abi_option, "soft" ))
+        {
+            output( "\tvmrs r0, fpscr\n" );
+            output( "\tstr r0, [r1, #0x48]\n" );
+            output( "\tadd r0, r1, #0x50\n" );
+            output( "\tvstm r0, {d0-d15}\n" );
+        }
+        output( "\tmov r6, sp\n" );
+        output( "\tmov sp, r1\n" );
+        output( "\tmov r8, r1\n" );
         output( "\tldr r5, 6f\n");
         if (UsePIC) output( "1:\tadd r5, pc\n");
         output( "\tubfx r4, ip, #12, #2\n" );  /* syscall table number */
@@ -1698,11 +1710,24 @@ static void output_syscall_dispatcher(void)
         output( "\tldr r5, [r4]\n");     /* table->ServiceTable */
         output( "\tldr ip, [r5, ip, lsl #2]\n");
         output( "\tblx ip\n");
-        output( "4:\tmov ip, #0\n" );
-        output( "\tstr ip, [r7]\n" );
-        output( "\tsub ip, r6, #40\n" );
-        output( "\tmov sp, ip\n" );
-        output( "\tpop {r4-r12,pc}\n" );
+        output( "\tldr ip, [r8, #0x44]\n" ); /* frame->restore_flags */
+        if (strcmp( float_abi_option, "soft" ))
+        {
+            output( "\ttst ip, #4\n" );  /* CONTEXT_FLOATING_POINT */
+            output( "\tbeq 3f\n" );
+            output( "\tldr r4, [r8, #0x48]\n" );
+            output( "\tvmsr fpscr, r4\n" );
+            output( "\tadd r4, r8, #0x50\n" );
+            output( "\tvldm r4, {d0-d15}\n" );
+            output( "3:\n" );
+        }
+        output( "\ttst ip, #2\n" );  /* CONTEXT_INTEGER */
+        output( "\tit ne\n" );
+        output( "\tldmne r8, {r0-r3}\n" );
+        output( "4:\tldr lr, [r8, #0x3c]\n" );
+        output( "\tldr sp, [r8, #0x38]\n" );
+        output( "\tadd r8, r8, #0x10\n" );
+        output( "\tldm r8, {r4-r12,pc}\n" );
         output( "5:\tmovw r0, #0x%x\n", invalid_param & 0xffff );
         output( "\tmovt r0, #0x%x\n", invalid_param >> 16 );
         output( "\tb 4b\n" );
@@ -1940,7 +1965,7 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tmov r3, lr\n" );
             output( "\tbl %s\n", asm_name("__wine_syscall") );
             output( "\tadd sp, #16\n" );
-            output( "\tbx ip\n" );
+            output( "\tbx lr\n" );
             break;
         case CPU_ARM64:
             output( "\tmov x8, #%u\n", i );
@@ -1969,7 +1994,6 @@ void output_syscalls( DLLSPEC *spec )
         output( "\t.align %d\n", get_alignment(16) );
         output( "\t%s\n", func_declaration("__wine_syscall") );
         output( "%s:\n", asm_name("__wine_syscall") );
-        output( "\tpush {r3,lr}\n" );
         if (UsePIC)
         {
             output( "\tldr r0, 2f\n");
