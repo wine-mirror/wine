@@ -1672,6 +1672,15 @@ static void test_clip_box(void)
     DeleteObject(bitmap);
 }
 
+static void test_SetPixel(void)
+{
+    COLORREF c;
+
+    c = SetPixel((HDC)0xdeadbeef, 0, 0, 0);
+    ok(c == ~0, "SetPixel returned: %x\n", c);
+}
+
+
 START_TEST(dc)
 {
     test_dc_values();
@@ -1688,4 +1697,5 @@ START_TEST(dc)
     test_printer_dc();
     test_pscript_printer_dc();
     test_clip_box();
+    test_SetPixel();
 }

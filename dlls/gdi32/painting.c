@@ -453,7 +453,7 @@ COLORREF WINAPI SetPixel( HDC hdc, INT x, INT y, COLORREF color )
     COLORREF ret;
     DC * dc = get_dc_ptr( hdc );
 
-    if (!dc) return 0;
+    if (!dc) return ~0;
     update_dc( dc );
     physdev = GET_DC_PHYSDEV( dc, pSetPixel );
     ret = physdev->funcs->pSetPixel( physdev, x, y, color );
