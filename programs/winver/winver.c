@@ -19,12 +19,15 @@
  */
 
 #include "windows.h"
+#include "commctrl.h"
 #include "shellapi.h"
 
 int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 {
     char name[128] = "Wine ";
     const char * (CDECL *wine_get_version)(void);
+
+    InitCommonControls();
 
     wine_get_version = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "wine_get_version" );
     if (wine_get_version) strcat( name, wine_get_version() );

@@ -15,6 +15,8 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#include <windef.h>
+#include <winuser.h>
 
 #define WINE_FILEDESCRIPTION_STR "Windows Version"
 #define WINE_FILENAME_STR "winver.exe"
@@ -25,3 +27,6 @@
 #define WINE_PRODUCTVERSION_STR "5.1.2600.0"
 
 #include "wine/wine_common_ver.rc"
+
+/* @makedep: winver.manifest */
+1 RT_MANIFEST winver.manifest

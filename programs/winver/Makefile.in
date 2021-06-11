@@ -1,5 +1,5 @@
 MODULE    = winver.exe
-IMPORTS   = shell32
+IMPORTS   = shell32 comctl32
 
 EXTRADLLFLAGS = -mwindows -mno-cygwin
 
