@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
@@ -593,17 +594,21 @@ static BOOL get_computer_sid( PSID sid )
     return TRUE;
 }
 
-static DWORD get_sid_size( const WCHAR *string )
+static DWORD get_sid_size( const WCHAR *string, const WCHAR **end )
 {
     if (string[0] == 'S' && string[1] == '-') /* S-R-I(-S)+ */
     {
         int token_count = 0;
-        while (*string)
+        string++;
+        while (*string == '-' || iswdigit(*string))
         {
             if (*string == '-')
                 token_count++;
             string++;
         }
+
+        if (end)
+            *end = string;
 
         if (token_count >= 3)
             return GetSidLengthRequired( token_count - 2 );
@@ -611,6 +616,9 @@ static DWORD get_sid_size( const WCHAR *string )
     else /* String constant format  - Only available in winxp and above */
     {
         unsigned int i;
+
+        if (end)
+            *end = string + 2;
 
         for (i = 0; i < ARRAY_SIZE(well_known_sids); i++)
         {
@@ -632,12 +640,12 @@ static DWORD get_sid_size( const WCHAR *string )
     return GetSidLengthRequired( 0 );
 }
 
-static BOOL parse_sid( const WCHAR *string, SID *pisid, DWORD *size )
+static BOOL parse_sid( const WCHAR *string, const WCHAR **end, SID *pisid, DWORD *size )
 {
     while (*string == ' ')
         string++;
 
-    *size = get_sid_size( string );
+    *size = get_sid_size( string, end );
     if (!pisid) /* Simply compute the size */
         return TRUE;
 
@@ -647,7 +655,7 @@ static BOOL parse_sid( const WCHAR *string, SID *pisid, DWORD *size )
         DWORD csubauth = ((*size - GetSidLengthRequired(0)) / sizeof(DWORD));
 
         string += 2; /* Advance to Revision */
-        pisid->Revision = wcstoul( string, NULL, 10 );
+        pisid->Revision = wcstoul( string, (WCHAR**)&string, 10 );
 
         if (pisid->Revision != SDDL_REVISION)
         {
@@ -665,8 +673,6 @@ static BOOL parse_sid( const WCHAR *string, SID *pisid, DWORD *size )
         pisid->SubAuthorityCount = csubauth;
 
         /* Advance to identifier authority */
-        while (*string && *string != '-')
-            string++;
         if (*string == '-')
             string++;
 
@@ -675,24 +681,20 @@ static BOOL parse_sid( const WCHAR *string, SID *pisid, DWORD *size )
          */
         pisid->IdentifierAuthority.Value[0] = 0;
         pisid->IdentifierAuthority.Value[1] = 0;
-        identAuth = wcstoul( string, NULL, 10 );
+        identAuth = wcstoul( string, (WCHAR**)&string, 10 );
         pisid->IdentifierAuthority.Value[5] = identAuth & 0xff;
         pisid->IdentifierAuthority.Value[4] = (identAuth & 0xff00) >> 8;
         pisid->IdentifierAuthority.Value[3] = (identAuth & 0xff0000) >> 16;
         pisid->IdentifierAuthority.Value[2] = (identAuth & 0xff000000) >> 24;
 
         /* Advance to first sub authority */
-        while (*string && *string != '-')
-            string++;
         if (*string == '-')
             string++;
 
-        while (*string)
+        while (iswdigit(*string) || *string == '-')
         {
-            pisid->SubAuthority[i++] = wcstoul( string, NULL, 10 );
+            pisid->SubAuthority[i++] = wcstoul( string, (WCHAR**)&string, 10 );
 
-            while (*string && *string != '-')
-                string++;
             if (*string == '-')
                 string++;
         }
@@ -702,6 +704,9 @@ static BOOL parse_sid( const WCHAR *string, SID *pisid, DWORD *size )
             SetLastError( ERROR_INVALID_SID );
             return FALSE;
         }
+
+        if (end)
+            assert(*end == string);
 
         return TRUE;
     }
@@ -746,6 +751,7 @@ static BOOL parse_sid( const WCHAR *string, SID *pisid, DWORD *size )
 BOOL WINAPI DECLSPEC_HOTPATCH ConvertStringSidToSidW( const WCHAR *string, PSID *sid )
 {
     DWORD size;
+    const WCHAR *string_end;
 
     TRACE("%s, %p\n", debugstr_w(string), sid);
 
@@ -761,12 +767,18 @@ BOOL WINAPI DECLSPEC_HOTPATCH ConvertStringSidToSidW( const WCHAR *string, PSID 
         return FALSE;
     }
 
-    if (!parse_sid( string, NULL, &size ))
+    if (!parse_sid( string, &string_end, NULL, &size ))
         return FALSE;
+
+    if (*string_end)
+    {
+        SetLastError(ERROR_INVALID_SID);
+        return FALSE;
+    }
 
     *sid = LocalAlloc( 0, size );
 
-    if (!parse_sid( string, *sid, &size ))
+    if (!parse_sid( string, NULL, *sid, &size ))
     {
         LocalFree( *sid );
         return FALSE;
@@ -996,11 +1008,11 @@ static BOOL parse_acl( const WCHAR *string, DWORD *flags, ACL *acl, DWORD *ret_s
         string++;
 
         /* Parse ACE account sid */
-        if (parse_sid( string, ace ? (SID *)&ace->SidStart : NULL, &sidlen ))
-        {
-            while (*string && *string != ')')
-                string++;
-        }
+        if (!parse_sid( string, &string, ace ? (SID *)&ace->SidStart : NULL, &sidlen ))
+            goto err;
+
+        while (*string == ' ')
+            string++;
 
         if (*string != ')')
             goto err;
@@ -1095,7 +1107,7 @@ static BOOL parse_sd( const WCHAR *string, SECURITY_DESCRIPTOR_RELATIVE *sd, DWO
             {
                 DWORD bytes;
 
-                if (!parse_sid( tok, (SID *)next, &bytes ))
+                if (!parse_sid( tok, NULL, (SID *)next, &bytes ))
                     goto out;
 
                 if (sd)
@@ -1113,7 +1125,7 @@ static BOOL parse_sd( const WCHAR *string, SECURITY_DESCRIPTOR_RELATIVE *sd, DWO
             {
                 DWORD bytes;
 
-                if (!parse_sid( tok, (SID *)next, &bytes ))
+                if (!parse_sid( tok, NULL, (SID *)next, &bytes ))
                     goto out;
 
                 if (sd)

@@ -338,6 +338,20 @@ static void test_ConvertStringSidToSid(void)
      "expected GetLastError() is ERROR_INVALID_SID, got %d\n",
      GetLastError() );
 
+    r = ConvertStringSidToSidA( "WDandmorecharacters", &psid );
+    ok( !r,
+     "expected failure with too many characters\n" );
+    ok( GetLastError() == ERROR_INVALID_SID,
+     "expected GetLastError() is ERROR_INVALID_SID, got %d\n",
+     GetLastError() );
+
+    r = ConvertStringSidToSidA( "WD)", &psid );
+    ok( !r,
+     "expected failure with too many characters\n" );
+    ok( GetLastError() == ERROR_INVALID_SID,
+     "expected GetLastError() is ERROR_INVALID_SID, got %d\n",
+     GetLastError() );
+
     ok(ConvertStringSidToSidA("S-1-5-21-93476-23408-4576", &psid), "ConvertStringSidToSidA failed\n");
     pisid = psid;
     ok(pisid->SubAuthorityCount == 4, "Invalid sub authority count - expected 4, got %d\n", pisid->SubAuthorityCount);
@@ -4237,7 +4251,8 @@ static void test_ConvertStringSecurityDescriptor(void)
         { "",                                SDDL_REVISION_1, TRUE },
         /* test ACE string SID */
         { "D:(D;;GA;;;S-1-0-0)",             SDDL_REVISION_1, TRUE },
-        { "D:(D;;GA;;;Nonexistent account)", SDDL_REVISION_1, FALSE, ERROR_INVALID_ACL, ERROR_INVALID_SID } /* W2K */
+        { "D:(D;;GA;;;WDANDSUCH)",           SDDL_REVISION_1, FALSE, ERROR_INVALID_ACL },
+        { "D:(D;;GA;;;Nonexistent account)", SDDL_REVISION_1, FALSE, ERROR_INVALID_ACL, ERROR_INVALID_SID }, /* W2K */
     };
 
     for (i = 0; i < ARRAY_SIZE(cssd); i++)
