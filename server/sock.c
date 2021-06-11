@@ -151,7 +151,6 @@ struct sock
      * any event once until it is reset.) */
     unsigned int        reported_events;
     unsigned int        flags;       /* socket flags */
-    int                 wr_shutdown_pending; /* is a write shutdown pending? */
     unsigned short      proto;       /* socket protocol */
     unsigned short      type;        /* socket type */
     unsigned short      family;      /* socket family */
@@ -173,6 +172,8 @@ struct sock
     struct list         accept_list; /* list of pending accept requests */
     struct accept_req  *accept_recv_req; /* pending accept-into request which will recv on this socket */
     struct connect_req *connect_req; /* pending connection request */
+    unsigned int        wr_shutdown_pending : 1; /* is a write shutdown pending? */
+    unsigned int        nonblocking : 1; /* is the socket nonblocking? */
 };
 
 static void sock_dump( struct object *obj, int verbose );
@@ -1166,7 +1167,6 @@ static struct sock *create_socket(void)
     sock->mask    = 0;
     sock->pending_events = 0;
     sock->reported_events = 0;
-    sock->wr_shutdown_pending = 0;
     sock->flags   = 0;
     sock->proto   = 0;
     sock->type    = 0;
@@ -1180,6 +1180,8 @@ static struct sock *create_socket(void)
     sock->ifchange_obj = NULL;
     sock->accept_recv_req = NULL;
     sock->connect_req = NULL;
+    sock->wr_shutdown_pending = 0;
+    sock->nonblocking = 0;
     init_async_queue( &sock->read_q );
     init_async_queue( &sock->write_q );
     init_async_queue( &sock->ifchange_q );
@@ -1403,8 +1405,7 @@ static struct sock *accept_socket( struct sock *sock )
 
         /* newly created socket gets the same properties of the listening socket */
         acceptsock->state  = FD_WINE_CONNECTED|FD_READ|FD_WRITE;
-        if (sock->state & FD_WINE_NONBLOCKING)
-            acceptsock->state |= FD_WINE_NONBLOCKING;
+        acceptsock->nonblocking = sock->nonblocking;
         acceptsock->mask    = sock->mask;
         acceptsock->proto   = sock->proto;
         acceptsock->type    = sock->type;
@@ -1657,7 +1658,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         {
             struct accept_req *req;
 
-            if (sock->state & FD_WINE_NONBLOCKING) return 0;
+            if (sock->nonblocking) return 0;
             if (get_error() != STATUS_DEVICE_NOT_READY) return 0;
 
             if (!(req = alloc_accept_req( sock, NULL, async, NULL ))) return 0;
@@ -1818,7 +1819,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 
         sock->state |= FD_CONNECT;
 
-        if (params->synchronous && (sock->state & FD_WINE_NONBLOCKING))
+        if (params->synchronous && sock->nonblocking)
         {
             sock_reselect( sock );
             set_error( STATUS_DEVICE_NOT_READY );
@@ -1882,7 +1883,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             sock->event = NULL;
             sock->window = 0;
             sock->mask = 0;
-            sock->state |= FD_WINE_NONBLOCKING;
+            sock->nonblocking = 1;
         }
 
         sock_reselect( sock );
@@ -1900,7 +1901,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         }
         force_async = *(int *)get_req_data();
 
-        if ((sock->state & FD_WINE_NONBLOCKING) && !force_async)
+        if (sock->nonblocking && !force_async)
         {
             set_error( STATUS_DEVICE_NOT_READY );
             return 0;
@@ -1919,7 +1920,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         }
         if (*(int *)get_req_data())
         {
-            sock->state |= FD_WINE_NONBLOCKING;
+            sock->nonblocking = 1;
         }
         else
         {
@@ -1928,7 +1929,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
                 set_error( STATUS_INVALID_PARAMETER );
                 return 0;
             }
-            sock->state &= ~FD_WINE_NONBLOCKING;
+            sock->nonblocking = 0;
         }
         return 1;
 
@@ -2354,7 +2355,7 @@ DECL_HANDLER(set_socket_event)
 
     sock_reselect( sock );
 
-    sock->state |= FD_WINE_NONBLOCKING;
+    sock->nonblocking = 1;
 
     /* if a network event is pending, signal the event object
        it is possible that FD_CONNECT or FD_ACCEPT network events has happened
@@ -2442,7 +2443,7 @@ DECL_HANDLER(recv_socket)
     fd = sock->fd;
 
     /* recv() returned EWOULDBLOCK, i.e. no data available yet */
-    if (status == STATUS_DEVICE_NOT_READY && !(sock->state & FD_WINE_NONBLOCKING))
+    if (status == STATUS_DEVICE_NOT_READY && !sock->nonblocking)
     {
 #ifdef SO_RCVTIMEO
         struct timeval tv;
@@ -2543,11 +2544,11 @@ DECL_HANDLER(send_socket)
      * not trying to force the operation to be asynchronous), return success.
      * Windows actually refuses to send any data in this case, and returns
      * EWOULDBLOCK, but we have no way of doing that. */
-    if (status == STATUS_DEVICE_NOT_READY && req->total && (sock->state & FD_WINE_NONBLOCKING))
+    if (status == STATUS_DEVICE_NOT_READY && req->total && sock->nonblocking)
         status = STATUS_SUCCESS;
 
     /* send() returned EWOULDBLOCK or a short write, i.e. cannot send all data yet */
-    if (status == STATUS_DEVICE_NOT_READY && !(sock->state & FD_WINE_NONBLOCKING))
+    if (status == STATUS_DEVICE_NOT_READY && !sock->nonblocking)
     {
 #ifdef SO_SNDTIMEO
         struct timeval tv;
