@@ -43,14 +43,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /*********************************************************************
- *      exp
- */
-static double CDECL unix_exp( double x )
-{
-    return exp( x );
-}
-
-/*********************************************************************
  *      pow
  */
 static double CDECL unix_pow( double x, double y )
@@ -60,7 +52,6 @@ static double CDECL unix_pow( double x, double y )
 
 static const struct unix_funcs funcs =
 {
-    unix_exp,
     unix_pow,
 };
 

@@ -549,6 +549,27 @@ recompute:
     return n & 7;
 }
 
+/* Based on musl implementation: src/math/round.c */
+static double __round(double x)
+{
+    ULONGLONG llx = *(ULONGLONG*)&x, tmp;
+    int e = (llx >> 52 & 0x7ff) - 0x3ff;
+
+    if (e >= 52)
+        return x;
+    if (e < -1)
+        return 0 * x;
+    else if (e == -1)
+        return signbit(x) ? -1 : 1;
+
+    tmp = 0x000fffffffffffffULL >> e;
+    if (!(llx & tmp))
+        return x;
+    llx += 0x0008000000000000ULL >> e;
+    llx &= ~tmp;
+    return *(double*)&llx;
+}
+
 #if !defined(__i386__) || _MSVCR_VER >= 120
 /* Copied from musl: src/math/expm1f.c */
 static float __expm1f(float x)
@@ -667,27 +688,6 @@ static float __cosdf(double x)
     w = z * z;
     r = C2 + z * C3;
     return ((1.0 + z * C0) + w * C1) + (w * z) * r;
-}
-
-/* Based on musl implementation: src/math/round.c */
-static double __round(double x)
-{
-    ULONGLONG llx = *(ULONGLONG*)&x, tmp;
-    int e = (llx >> 52 & 0x7ff) - 0x3ff;
-
-    if (e >= 52)
-        return x;
-    if (e < -1)
-        return 0 * x;
-    else if (e == -1)
-        return signbit(x) ? -1 : 1;
-
-    tmp = 0x000fffffffffffffULL >> e;
-    if (!(llx & tmp))
-        return x;
-    llx += 0x0008000000000000ULL >> e;
-    llx &= ~tmp;
-    return *(double*)&llx;
 }
 
 static const UINT64 exp2f_T[] = {
@@ -2794,7 +2794,6 @@ double CDECL cosh( double x )
     return t;
 }
 
-#if _MSVCR_VER >= 120
 /* Copied from musl: src/math/exp_data.c */
 static const UINT64 exp_T[] = {
     0x0ULL, 0x3ff0000000000000ULL,
@@ -2926,18 +2925,119 @@ static const UINT64 exp_T[] = {
     0x3c77893b4d91cd9dULL, 0x3fefe7c1819e90d8ULL,
     0x3c5305c14160cc89ULL, 0x3feff3c22b8f71f1ULL
 };
-#endif
 
 /*********************************************************************
  *		exp (MSVCRT.@)
+ *
+ * Copied from musl: src/math/exp.c
  */
 double CDECL exp( double x )
 {
-  double ret = unix_funcs->exp( x );
-  if (isnan(x)) return math_error(_DOMAIN, "exp", x, 0, ret);
-  if (isfinite(x) && !ret) return math_error(_UNDERFLOW, "exp", x, 0, ret);
-  if (isfinite(x) && !isfinite(ret)) return math_error(_OVERFLOW, "exp", x, 0, ret);
-  return ret;
+    static const double C[] = {
+        0x1.ffffffffffdbdp-2,
+        0x1.555555555543cp-3,
+        0x1.55555cf172b91p-5,
+        0x1.1111167a4d017p-7
+    };
+    static const double invln2N = 0x1.71547652b82fep0 * (1 << 7),
+        negln2hiN = -0x1.62e42fefa0000p-8,
+        negln2loN = -0x1.cf79abc9e3b3ap-47;
+
+    UINT32 abstop;
+    UINT64 ki, idx, top, sbits;
+    double kd, z, r, r2, scale, tail, tmp;
+
+    abstop = (*(UINT64*)&x >> 52) & 0x7ff;
+    if (abstop -  0x3c9 >= 0x408 - 0x3c9) {
+        if (abstop - 0x3c9 >= 0x80000000)
+            /* Avoid spurious underflow for tiny x. */
+            /* Note: 0 is common input. */
+            return 1.0 + x;
+        if (abstop >= 0x409) {
+            if (*(UINT64*)&x == 0xfff0000000000000ULL)
+                return 0.0;
+#if _MSVCR_VER == 0
+            if (*(UINT64*)&x > 0x7ff0000000000000ULL)
+                return math_error(_DOMAIN, "exp", x, 0, 1.0 + x);
+#endif
+            if (abstop >= 0x7ff)
+                return 1.0 + x;
+            if (*(UINT64*)&x >> 63)
+                return math_error(_UNDERFLOW, "exp", x, 0, fp_barrier(DBL_MIN) * DBL_MIN);
+            else
+                return math_error(_OVERFLOW, "exp", x, 0, fp_barrier(DBL_MAX) * DBL_MAX);
+        }
+        /* Large x is special cased below. */
+        abstop = 0;
+    }
+
+    /* exp(x) = 2^(k/N) * exp(r), with exp(r) in [2^(-1/2N),2^(1/2N)]. */
+    /* x = ln2/N*k + r, with int k and r in [-ln2/2N, ln2/2N]. */
+    z = invln2N * x;
+    kd = __round(z);
+    ki = (INT64)kd;
+
+    r = x + kd * negln2hiN + kd * negln2loN;
+    /* 2^(k/N) ~= scale * (1 + tail). */
+    idx = 2 * (ki % (1 << 7));
+    top = ki << (52 - 7);
+    tail = *(double*)&exp_T[idx];
+    /* This is only a valid scale when -1023*N < k < 1024*N. */
+    sbits = exp_T[idx + 1] + top;
+    /* exp(x) = 2^(k/N) * exp(r) ~= scale + scale * (tail + exp(r) - 1). */
+    /* Evaluation is optimized assuming superscalar pipelined execution. */
+    r2 = r * r;
+    /* Without fma the worst case error is 0.25/N ulp larger. */
+    /* Worst case error is less than 0.5+1.11/N+(abs poly error * 2^53) ulp. */
+    tmp = tail + r + r2 * (C[0] + r * C[1]) + r2 * r2 * (C[2] + r * C[3]);
+    if (abstop == 0) {
+        /* Handle cases that may overflow or underflow when computing the result that
+           is scale*(1+TMP) without intermediate rounding. The bit representation of
+           scale is in SBITS, however it has a computed exponent that may have
+           overflown into the sign bit so that needs to be adjusted before using it as
+           a double. (int32_t)KI is the k used in the argument reduction and exponent
+           adjustment of scale, positive k here means the result may overflow and
+           negative k means the result may underflow. */
+        double scale, y;
+
+        if ((ki & 0x80000000) == 0) {
+            /* k > 0, the exponent of scale might have overflowed by <= 460. */
+            sbits -= 1009ull << 52;
+            scale = *(double*)&sbits;
+            y = 0x1p1009 * (scale + scale * tmp);
+            if (isinf(y))
+                return math_error(_OVERFLOW, "exp", x, 0, y);
+            return y;
+        }
+        /* k < 0, need special care in the subnormal range. */
+        sbits += 1022ull << 52;
+        scale = *(double*)&sbits;
+        y = scale + scale * tmp;
+        if (y < 1.0) {
+            /* Round y to the right precision before scaling it into the subnormal
+               range to avoid double rounding that can cause 0.5+E/2 ulp error where
+               E is the worst-case ulp error outside the subnormal range. So this
+               is only useful if the goal is better than 1 ulp worst-case error. */
+            double hi, lo;
+            lo = scale - y + scale * tmp;
+            hi = 1.0 + y;
+            lo = 1.0 - hi + y + lo;
+            y = hi + lo - 1.0;
+            /* Avoid -0.0 with downward rounding. */
+            if (y == 0.0)
+                y = 0.0;
+            /* The underflow exception needs to be signaled explicitly. */
+            fp_barrier(fp_barrier(0x1p-1022) * 0x1p-1022);
+            y = 0x1p-1022 * y;
+            return math_error(_UNDERFLOW, "exp", x, 0, y);
+        }
+        y = 0x1p-1022 * y;
+        return y;
+    }
+    scale = *(double*)&sbits;
+    /* Note: tmp == 0 or |tmp| > 2^-200 and scale > 2^-739, so there
+       is no spurious underflow here even without fma. */
+    return scale + scale * tmp;
 }
 
 /*********************************************************************
