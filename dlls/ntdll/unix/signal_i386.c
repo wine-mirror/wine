@@ -921,13 +921,15 @@ static inline void restore_context( const struct xcontext *xcontext, ucontext_t 
 
 
 /***********************************************************************
- *           signal_restore_full_cpu_context
- *
- * Restore full context from syscall frame
+ *           signal_set_full_context
  */
-void signal_restore_full_cpu_context(void)
+NTSTATUS signal_set_full_context( CONTEXT *context )
 {
-    x86_thread_data()->syscall_frame->restore_flags |= CONTEXT_INTEGER;
+    NTSTATUS status = NtSetContextThread( GetCurrentThread(), context );
+
+    if (!status && (context->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
+        x86_thread_data()->syscall_frame->restore_flags |= CONTEXT_INTEGER;
+    return status;
 }
 
 
@@ -1566,10 +1568,8 @@ struct apc_stack_layout
 /***********************************************************************
  *           call_user_apc_dispatcher
  */
-NTSTATUS WINAPI call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1,
-                                          ULONG_PTR arg2, ULONG_PTR arg3, PNTAPCFUNC func,
-                                          void (WINAPI *dispatcher)(CONTEXT*,ULONG_PTR,ULONG_PTR,ULONG_PTR,PNTAPCFUNC),
-                                          NTSTATUS status )
+NTSTATUS call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3,
+                                   PNTAPCFUNC func, NTSTATUS status )
 {
     struct syscall_frame *frame = x86_thread_data()->syscall_frame;
     ULONG esp = context ? context->Esp : frame->esp;
@@ -1590,7 +1590,7 @@ NTSTATUS WINAPI call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1,
     stack->func = func;
     frame->ebp = stack->context.Ebp;
     frame->esp = (ULONG)stack - 4;
-    frame->eip = (ULONG)dispatcher;
+    frame->eip = (ULONG)pKiUserApcDispatcher;
     return status;
 }
 
@@ -1598,17 +1598,16 @@ NTSTATUS WINAPI call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1,
 /***********************************************************************
  *           call_raise_user_exception_dispatcher
  */
-void WINAPI call_raise_user_exception_dispatcher( NTSTATUS (WINAPI *dispatcher)(void) )
+void call_raise_user_exception_dispatcher(void)
 {
-    x86_thread_data()->syscall_frame->eip = (DWORD)dispatcher;
+    x86_thread_data()->syscall_frame->eip = (DWORD)pKiRaiseUserExceptionDispatcher;
 }
 
 
 /***********************************************************************
  *           call_user_exception_dispatcher
  */
-NTSTATUS WINAPI call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context,
-                                                NTSTATUS (WINAPI *dispatcher)(EXCEPTION_RECORD*,CONTEXT*) )
+NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     struct syscall_frame *frame = x86_thread_data()->syscall_frame;
     void **stack = (void **)frame->esp;
@@ -1617,7 +1616,7 @@ NTSTATUS WINAPI call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *
     *(--stack) = context;
     *(--stack) = rec;
     frame->esp = (ULONG)stack;
-    frame->eip = (ULONG)dispatcher;
+    frame->eip = (ULONG)pKiUserExceptionDispatcher;
     return STATUS_SUCCESS;
 }
 

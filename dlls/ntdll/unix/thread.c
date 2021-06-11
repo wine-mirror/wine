@@ -1152,7 +1152,7 @@ NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL 
     if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
         return NtContinue( context, FALSE );
 
-    if (first_chance) return call_user_exception_dispatcher( rec, context, pKiUserExceptionDispatcher );
+    if (first_chance) return call_user_exception_dispatcher( rec, context );
 
     if (rec->ExceptionFlags & EH_STACK_INVALID)
         ERR_(seh)("Exception frame is not in stack limits => unable to dispatch exception.\n");

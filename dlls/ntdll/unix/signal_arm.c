@@ -319,13 +319,15 @@ static void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
 
 
 /***********************************************************************
- *           signal_restore_full_cpu_context
- *
- * Restore full context from syscall frame
+ *           signal_set_full_context
  */
-void signal_restore_full_cpu_context(void)
+NTSTATUS signal_set_full_context( CONTEXT *context )
 {
-    arm_thread_data()->syscall_frame->restore_flags |= CONTEXT_INTEGER;
+    NTSTATUS status = NtSetContextThread( GetCurrentThread(), context );
+
+    if (!status && (context->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
+        arm_thread_data()->syscall_frame->restore_flags |= CONTEXT_INTEGER;
+    return status;
 }
 
 
@@ -496,10 +498,8 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 /***********************************************************************
  *           call_user_apc_dispatcher
  */
-NTSTATUS WINAPI call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3,
-                                          PNTAPCFUNC func,
-                                          void (WINAPI *dispatcher)(CONTEXT*,ULONG_PTR,ULONG_PTR,ULONG_PTR,PNTAPCFUNC),
-                                          NTSTATUS status )
+NTSTATUS call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3,
+                                   PNTAPCFUNC func, NTSTATUS status )
 {
     struct syscall_frame *frame = arm_thread_data()->syscall_frame;
     ULONG sp = context ? context->Sp : frame->sp;
@@ -524,7 +524,7 @@ NTSTATUS WINAPI call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1, ULON
         stack->context.R0 = status;
     }
     frame->sp = (DWORD)stack;
-    frame->pc = (DWORD)dispatcher;
+    frame->pc = (DWORD)pKiUserApcDispatcher;
     frame->r0 = (DWORD)&stack->context;
     frame->r1 = arg1;
     frame->r2 = arg2;
@@ -538,17 +538,16 @@ NTSTATUS WINAPI call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1, ULON
 /***********************************************************************
  *           call_raise_user_exception_dispatcher
  */
-void WINAPI call_raise_user_exception_dispatcher( NTSTATUS (WINAPI *dispatcher)(void) )
+void call_raise_user_exception_dispatcher(void)
 {
-    arm_thread_data()->syscall_frame->pc = (DWORD)dispatcher;
+    arm_thread_data()->syscall_frame->pc = (DWORD)pKiRaiseUserExceptionDispatcher;
 }
 
 
 /***********************************************************************
  *           call_user_exception_dispatcher
  */
-NTSTATUS WINAPI call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context,
-                                                NTSTATUS (WINAPI *dispatcher)(EXCEPTION_RECORD*,CONTEXT*) )
+NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     struct syscall_frame *frame = arm_thread_data()->syscall_frame;
     NTSTATUS status = NtSetContextThread( GetCurrentThread(), context );
@@ -556,7 +555,7 @@ NTSTATUS WINAPI call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *
     if (status) return status;
     frame->r0 = (DWORD)rec;
     frame->r1 = (DWORD)context;
-    frame->pc = (DWORD)dispatcher;
+    frame->pc = (DWORD)pKiUserExceptionDispatcher;
     frame->restore_flags |= CONTEXT_INTEGER | CONTEXT_CONTROL;
     return status;
 }

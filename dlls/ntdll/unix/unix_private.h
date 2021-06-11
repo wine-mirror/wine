@@ -249,7 +249,7 @@ extern void DECLSPEC_NORETURN signal_start_thread( PRTL_THREAD_START_ROUTINE ent
 extern void DECLSPEC_NORETURN signal_exit_thread( int status, void (*func)(int) ) DECLSPEC_HIDDEN;
 extern void __wine_syscall_dispatcher(void) DECLSPEC_HIDDEN;
 extern unsigned int __wine_syscall_flags DECLSPEC_HIDDEN;
-extern void signal_restore_full_cpu_context(void) DECLSPEC_HIDDEN;
+extern NTSTATUS signal_set_full_context( CONTEXT *context ) DECLSPEC_HIDDEN;
 extern NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size ) DECLSPEC_HIDDEN;
 extern NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size ) DECLSPEC_HIDDEN;
 extern void fill_vm_counters( VM_COUNTERS_EX *pvmi, int unix_pid ) DECLSPEC_HIDDEN;
@@ -284,14 +284,10 @@ extern void add_completion( HANDLE handle, ULONG_PTR value, NTSTATUS status, ULO
 
 extern void dbg_init(void) DECLSPEC_HIDDEN;
 
-extern NTSTATUS WINAPI call_user_apc_dispatcher( CONTEXT *context_ptr, ULONG_PTR arg1,
-                                                 ULONG_PTR arg2, ULONG_PTR arg3,
-                                                 PNTAPCFUNC func,
-                                                 void (WINAPI *dispatcher)(CONTEXT*,ULONG_PTR,ULONG_PTR,ULONG_PTR,PNTAPCFUNC),
-                                                 NTSTATUS status ) DECLSPEC_HIDDEN;
-extern NTSTATUS WINAPI call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context,
-                                                       NTSTATUS (WINAPI *dispatcher)(EXCEPTION_RECORD*,CONTEXT*) ) DECLSPEC_HIDDEN;
-extern void WINAPI call_raise_user_exception_dispatcher( NTSTATUS (WINAPI *dispatcher)(void) ) DECLSPEC_HIDDEN;
+extern NTSTATUS call_user_apc_dispatcher( CONTEXT *context_ptr, ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3,
+                                          PNTAPCFUNC func, NTSTATUS status ) DECLSPEC_HIDDEN;
+extern NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context ) DECLSPEC_HIDDEN;
+extern void call_raise_user_exception_dispatcher(void) DECLSPEC_HIDDEN;
 
 #define IMAGE_DLLCHARACTERISTICS_PREFER_NATIVE 0x0010 /* Wine extension */
 

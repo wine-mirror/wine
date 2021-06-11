@@ -357,7 +357,7 @@ static int wait_select_reply( void *cookie )
 static NTSTATUS invoke_user_apc( CONTEXT *context, const user_apc_t *apc, NTSTATUS status )
 {
     return call_user_apc_dispatcher( context, apc->args[0], apc->args[1], apc->args[2],
-                                     wine_server_get_ptr( apc->func ), pKiUserApcDispatcher, status );
+                                     wine_server_get_ptr( apc->func ), status );
 }
 
 
@@ -698,10 +698,7 @@ NTSTATUS WINAPI NtContinue( CONTEXT *context, BOOLEAN alertable )
         status = server_select( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE, 0, NULL, NULL, &apc );
         if (status == STATUS_USER_APC) return invoke_user_apc( context, &apc, status );
     }
-    status = NtSetContextThread( GetCurrentThread(), context );
-    if (!status && (context->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
-        signal_restore_full_cpu_context();
-    return status;
+    return signal_set_full_context( context );
 }
 
 
@@ -1745,7 +1742,7 @@ NTSTATUS WINAPI NtClose( HANDLE handle )
     if (!NtQueryInformationProcess( NtCurrentProcess(), ProcessDebugPort, &port, sizeof(port), NULL) && port)
     {
         NtCurrentTeb()->ExceptionCode = ret;
-        call_raise_user_exception_dispatcher( pKiRaiseUserExceptionDispatcher );
+        call_raise_user_exception_dispatcher();
     }
     return ret;
 }

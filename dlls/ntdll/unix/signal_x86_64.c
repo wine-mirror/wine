@@ -1551,13 +1551,15 @@ static void restore_context( const struct xcontext *xcontext, ucontext_t *sigcon
 
 
 /***********************************************************************
- *           signal_restore_full_cpu_context
- *
- * Restore full context from syscall frame
+ *           signal_set_full_context
  */
-void signal_restore_full_cpu_context(void)
+NTSTATUS signal_set_full_context( CONTEXT *context )
 {
-    amd64_thread_data()->syscall_frame->restore_flags |= CONTEXT_INTEGER;
+    NTSTATUS status = NtSetContextThread( GetCurrentThread(), context );
+
+    if (!status && (context->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
+        amd64_thread_data()->syscall_frame->restore_flags |= CONTEXT_INTEGER;
+    return status;
 }
 
 
@@ -1915,10 +1917,8 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 /***********************************************************************
  *           call_user_apc_dispatcher
  */
-NTSTATUS WINAPI call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3,
-                                          PNTAPCFUNC func,
-                                          void (WINAPI *dispatcher)(CONTEXT*,ULONG_PTR,ULONG_PTR,ULONG_PTR,PNTAPCFUNC),
-                                          NTSTATUS status )
+NTSTATUS call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3,
+                                   PNTAPCFUNC func, NTSTATUS status )
 {
     struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
     ULONG64 rsp = context ? context->Rsp : frame->rsp;
@@ -1939,7 +1939,7 @@ NTSTATUS WINAPI call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1, ULON
     }
     frame->rbp = stack->context.Rbp;
     frame->rsp = (ULONG64)stack - 8;
-    frame->rip = (ULONG64)dispatcher;
+    frame->rip = (ULONG64)pKiUserApcDispatcher;
     frame->rcx = (ULONG64)&stack->context;
     frame->rdx = arg1;
     frame->r8  = arg2;
@@ -1953,17 +1953,16 @@ NTSTATUS WINAPI call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1, ULON
 /***********************************************************************
  *           call_raise_user_exception_dispatcher
  */
-void WINAPI call_raise_user_exception_dispatcher( NTSTATUS (WINAPI *dispatcher)(void) )
+void call_raise_user_exception_dispatcher(void)
 {
-    amd64_thread_data()->syscall_frame->rip = (UINT64)dispatcher;
+    amd64_thread_data()->syscall_frame->rip = (UINT64)pKiRaiseUserExceptionDispatcher;
 }
 
 
 /***********************************************************************
  *           call_user_exception_dispatcher
  */
-NTSTATUS WINAPI call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context,
-                                                NTSTATUS (WINAPI *dispatcher)(EXCEPTION_RECORD*,CONTEXT*) )
+NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
     struct stack_layout *stack;
@@ -1989,7 +1988,7 @@ NTSTATUS WINAPI call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *
     if (stack->rec.ExceptionCode == EXCEPTION_BREAKPOINT) stack->context.Rip--;
     frame->rbp = context->Rbp;
     frame->rsp = (ULONG64)stack;
-    frame->rip = (ULONG64)dispatcher;
+    frame->rip = (ULONG64)pKiUserExceptionDispatcher;
     frame->restore_flags |= CONTEXT_CONTROL;
     return status;
 }
