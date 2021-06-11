@@ -1214,7 +1214,7 @@
 # @ stub ZwEnumerateSystemEnvironmentValuesEx
 @ stdcall -private -syscall ZwEnumerateValueKey(long long long ptr long ptr) NtEnumerateValueKey
 @ stub ZwExtendSection
-# @ stub ZwFilterToken
+@ stdcall -private -syscall ZwFilterToken(long long ptr ptr ptr ptr) NtFilterToken
 @ stdcall -private -syscall ZwFindAtom(ptr long ptr) NtFindAtom
 @ stdcall -private -syscall ZwFlushBuffersFile(long ptr) NtFlushBuffersFile
 @ stdcall -private -syscall ZwFlushInstructionCache(long ptr long) NtFlushInstructionCache
