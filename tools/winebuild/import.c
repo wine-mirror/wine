@@ -1551,83 +1551,71 @@ static void output_syscall_dispatcher(void)
         output( "\tjmp 5b\n" );
         break;
     case CPU_x86_64:
-        output( "\tpushq %%rbp\n" );
-        output_cfi( ".cfi_adjust_cfa_offset 8" );
-        output_cfi( ".cfi_rel_offset %%rbp,0" );
-        output( "\tmovq %%rsp,%%rbp\n" );
-        output_cfi( ".cfi_def_cfa_register %%rbp" );
-        output( "\tleaq -0x10(%%rbp),%%rsp\n" );
+        output( "\tmovq %%gs:0x30,%%rcx\n" );
+        output( "\tmovq 0x328(%%rcx),%%rcx\n" );  /* amd64_thread_data()->syscall_frame */
+        output( "\tmovq %%rax,0x00(%%rcx)\n" );
+        output( "\tmovq %%rbx,0x08(%%rcx)\n" );
+        output( "\tmovq %%rdx,0x18(%%rcx)\n" );
+        output( "\tmovq %%rsi,0x20(%%rcx)\n" );
+        output( "\tmovq %%rdi,0x28(%%rcx)\n" );
+        output( "\tmovq %%r12,0x50(%%rcx)\n" );
+        output( "\tmovq %%r13,0x58(%%rcx)\n" );
+        output( "\tmovq %%r14,0x60(%%rcx)\n" );
+        output( "\tmovq %%r15,0x68(%%rcx)\n" );
+        output( "\tpopq 0x70(%%rcx)\n" );         /* frame->rip */
+        output( "\tmovw %%cs,0x78(%%rcx)\n" );
+        output( "\tmovw %%ds,0x7a(%%rcx)\n" );
+        output( "\tmovw %%es,0x7c(%%rcx)\n" );
+        output( "\tmovw %%fs,0x7e(%%rcx)\n" );
+        output( "\tmovq %%rsp,0x88(%%rcx)\n" );
+        output( "\tmovw %%ss,0x90(%%rcx)\n" );
+        output( "\tmovw %%gs,0x92(%%rcx)\n" );
+        output( "\tmovl $0,0x94(%%rcx)\n" );     /* frame->restore_flags */
+        output( "\tmovq %%rbp,0x98(%%rcx)\n" );
         output( "\tpushfq\n" );
-        output( "\tsubq $0x3c0,%%rsp\n" );
-        output( "\tandq $~63,%%rsp\n" );
-        output( "\tmovq %%rbx,-0x90(%%rbp)\n" );
-        output_cfi( ".cfi_rel_offset %%rbx,-144" );
-        output( "\tmovq %%rsi,-0x78(%%rbp)\n" );
-        output_cfi( ".cfi_rel_offset %%rsi,-120" );
-        output( "\tmovq %%rdi,-0x70(%%rbp)\n" );
-        output_cfi( ".cfi_rel_offset %%rdi,-112" );
-        output( "\tmovq %%r12,-0x48(%%rbp)\n" );
-        output_cfi( ".cfi_rel_offset %%r12,-72" );
-        output( "\tmovq %%r13,-0x40(%%rbp)\n" );
-        output( "\tmovq %%r14,-0x38(%%rbp)\n" );
-        output( "\tmovq %%r15,-0x30(%%rbp)\n" );
+        output( "\tpopq 0x80(%%rcx)\n" );
         /* Legends of Runeterra hooks the first system call return instruction, and
          * depends on us returning to it. Adjust the return address accordingly. */
-        output( "\tsubq $0xb,0x8(%%rbp)\n" );
-        output( "\tmovq 0x8(%%rbp),%%rbx\n" );
-        output( "\tmovq %%rbx,-0x28(%%rbp)\n" );
-        output( "\tleaq 0x10(%%rbp),%%rbx\n" );
-        output( "\tmovq %%rbx,-0x10(%%rbp)\n" );
-        output( "\tmovw %%cs,-0x20(%%rbp)\n" );
-        output( "\tmovw %%ds,-0x1e(%%rbp)\n" );
-        output( "\tmovw %%es,-0x1c(%%rbp)\n" );
-        output( "\tmovw %%fs,-0x1a(%%rbp)\n" );
-        output( "\tmovw %%ss,-0x8(%%rbp)\n" );
-        output( "\tmovw %%gs,-0x6(%%rbp)\n" );
-        output( "\tmovl $0,-0x4(%%rbp)\n" );
-        output( "\tmovq %%rsp,%%r12\n" );
-        output( "\tmovq %%rax,%%r13\n" );
+        output( "\tsubq $0xb,0x70(%%rcx)\n" );
         output( "\tmovl %s(%%rip),%%r14d\n", asm_name("__wine_syscall_flags") );
         output( "\ttestl $3,%%r14d\n" );  /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
         output( "\tjz 2f\n" );
         output( "\tmovl $7,%%eax\n" );
-        output( "\tmovq %%rdx,%%rsi\n" );
-        output( "\txorq %%rdx,%%rdx\n" );
-        output( "\tmovq %%rdx,0x200(%%r12)\n" );
-        output( "\tmovq %%rdx,0x208(%%r12)\n" );
-        output( "\tmovq %%rdx,0x210(%%r12)\n" );
+        output( "\txorl %%edx,%%edx\n" );
+        output( "\tmovq %%rdx,0x2c0(%%rcx)\n" );
+        output( "\tmovq %%rdx,0x2c8(%%rcx)\n" );
+        output( "\tmovq %%rdx,0x2d0(%%rcx)\n" );
         output( "\ttestl $2,%%r14d\n" );  /* SYSCALL_HAVE_XSAVEC */
         output( "\tjz 1f\n" );
-        output( "\tmovq %%rdx,0x218(%%r12)\n" );
-        output( "\tmovq %%rdx,0x220(%%r12)\n" );
-        output( "\tmovq %%rdx,0x228(%%r12)\n" );
-        output( "\tmovq %%rdx,0x230(%%r12)\n" );
-        output( "\tmovq %%rdx,0x238(%%r12)\n" );
-        output( "\txsavec64 (%%r12)\n" );
-        output( "\tmovq %%rsi,%%rdx\n" );
+        output( "\tmovq %%rdx,0x2d8(%%rcx)\n" );
+        output( "\tmovq %%rdx,0x2e0(%%rcx)\n" );
+        output( "\tmovq %%rdx,0x2e8(%%rcx)\n" );
+        output( "\tmovq %%rdx,0x2f0(%%rcx)\n" );
+        output( "\tmovq %%rdx,0x2f8(%%rcx)\n" );
+        output( "\txsavec64 0xc0(%%rcx)\n" );
         output( "\tjmp 3f\n" );
-        output( "1:\txsave64 (%%r12)\n" );
-        output( "\tmovq %%rsi,%%rdx\n" );
+        output( "1:\txsave64 0xc0(%%rcx)\n" );
         output( "\tjmp 3f\n" );
-        output( "2:\tfxsave64 (%%r12)\n" );
-        output( "3:\tmovq %%gs:0x30,%%rcx\n" );
-        output( "\tleaq -0x98(%%rbp),%%rbx\n" );
-        output( "\tmovq %%rbx,0x328(%%rcx)\n" );  /* amd64_thread_data()->syscall_frame */
-        output( "\tmovq %%r13,%%rbx\n" );
+        output( "2:\tfxsave64 0xc0(%%rcx)\n" );
+        output( "3:\tleaq 0x98(%%rcx),%%rbp\n" );
+        output( "\tleaq 0x28(%%rsp),%%rsi\n" );   /* first argument */
+        output( "\tmovq %%rcx,%%rsp\n" );
+        output( "\tmovq 0x00(%%rcx),%%rax\n" );
+        output( "\tmovq 0x18(%%rcx),%%rdx\n" );
+        output( "\tmovl %%eax,%%ebx\n" );
         output( "\tshrl $8,%%ebx\n" );
         output( "\tandl $0x30,%%ebx\n" );         /* syscall table number */
         output( "\tleaq %s(%%rip),%%rcx\n", asm_name("KeServiceDescriptorTable") );
         output( "\tleaq (%%rcx,%%rbx,2),%%rbx\n" );
-        output( "\tandq $0xfff,%%r13\n" );        /* syscall number */
-        output( "\tcmpq 16(%%rbx),%%r13\n" );     /* table->ServiceLimit */
+        output( "\tandl $0xfff,%%eax\n" );        /* syscall number */
+        output( "\tcmpq 16(%%rbx),%%rax\n" );     /* table->ServiceLimit */
         output( "\tjae 5f\n" );
         output( "\tmovq 24(%%rbx),%%rcx\n" );     /* table->ArgumentTable */
-        output( "\tmovzbl (%%rcx,%%r13),%%ecx\n" );
+        output( "\tmovzbl (%%rcx,%%rax),%%ecx\n" );
         output( "\tsubq $0x20,%%rcx\n" );
         output( "\tjbe 1f\n" );
         output( "\tsubq %%rcx,%%rsp\n" );
         output( "\tshrq $3,%%rcx\n" );
-        output( "\tleaq 0x38(%%rbp),%%rsi\n" );
         output( "\tandq $~15,%%rsp\n\t" );
         output( "\tmovq %%rsp,%%rdi\n" );
         output( "\tcld\n" );
@@ -1635,55 +1623,44 @@ static void output_syscall_dispatcher(void)
         output( "1:\tmovq %%r10,%%rcx\n" );
         output( "\tsubq $0x20,%%rsp\n" );
         output( "\tmovq (%%rbx),%%r10\n" );      /* table->ServiceTable */
-        output( "\tcallq *(%%r10,%%r13,8)\n" );
-        output( "2:\tmovq %%gs:0x30,%%rcx\n" );
-        output( "\tmovq $0,0x328(%%rcx)\n" );
-        output( "\tmovl -4(%%rbp),%%ecx\n" );    /* frame->restore_flags */
-        output( "\ttestl $0x48,%%ecx\n" );       /* CONTEXT_FLOATING_POINT | CONTEXT_XSTATE */
+        output( "\tcallq *(%%r10,%%rax,8)\n" );
+        output( "2:\tleaq -0x98(%%rbp),%%rcx\n" );
+        output( "\tmovl 0x94(%%rcx),%%edx\n" );   /* frame->restore_flags */
+        output( "\ttestl $0x48,%%edx\n" );  /* CONTEXT_FLOATING_POINT | CONTEXT_XSTATE */
         output( "\tjz 4f\n" );
         output( "\ttestl $3,%%r14d\n" );  /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
         output( "\tjz 3f\n" );
         output( "\tmovq %%rax,%%r11\n" );
         output( "\tmovl $7,%%eax\n" );
-        output( "\txorq %%rdx,%%rdx\n" );
-        output( "\txrstor64 (%%r12)\n" );
+        output( "\txorl %%edx,%%edx\n" );
+        output( "\txrstor64 0xc0(%%rcx)\n" );
         output( "\tmovq %%r11,%%rax\n" );
+        output( "\tmovl 0x94(%%rcx),%%edx\n" );
         output( "\tjmp 4f\n" );
-        output( "3:\tfxrstor64 (%%r12)\n" );
-        output( "4:\tmovq -0x30(%%rbp),%%r15\n" );
-        output( "\tmovq -0x38(%%rbp),%%r14\n" );
-        output( "\tmovq -0x40(%%rbp),%%r13\n" );
-        output( "\tmovq -0x48(%%rbp),%%r12\n" );
-        output_cfi( ".cfi_same_value %%r12" );
-        output( "\tmovq -0x70(%%rbp),%%rdi\n" );
-        output_cfi( ".cfi_same_value %%rdi" );
-        output( "\tmovq -0x78(%%rbp),%%rsi\n" );
-        output_cfi( ".cfi_same_value %%rsi" );
-        output( "\tmovq -0x90(%%rbp),%%rbx\n" );
-        output_cfi( ".cfi_same_value %%rbx" );
-        output( "\ttestl $0x3,%%ecx\n" );        /* CONTEXT_CONTROL | CONTEXT_INTEGER */
+        output( "3:\tfxrstor64 0xc0(%%rcx)\n" );
+        output( "4:\tmovq 0x98(%%rcx),%%rbp\n" );
+        output( "\tmovq 0x68(%%rcx),%%r15\n" );
+        output( "\tmovq 0x60(%%rcx),%%r14\n" );
+        output( "\tmovq 0x58(%%rcx),%%r13\n" );
+        output( "\tmovq 0x50(%%rcx),%%r12\n" );
+        output( "\tmovq 0x28(%%rcx),%%rdi\n" );
+        output( "\tmovq 0x20(%%rcx),%%rsi\n" );
+        output( "\tmovq 0x08(%%rcx),%%rbx\n" );
+        output( "\ttestl $0x3,%%edx\n" );  /* CONTEXT_CONTROL | CONTEXT_INTEGER */
         output( "\tjnz 1f\n" );
-        output( "\tmovq -0x28(%%rbp),%%rcx\n" ); /* frame->rip */
-        output( "\tleaq -0x10(%%rbp),%%rsp\n" ); /* frame->rsp */
-        output( "\tmovq (%%rbp),%%rbp\n" );
-        output_cfi( ".cfi_same_value %%rbp" );
-        output( "\tpopq %%rsp\n" );
-        output( "\tjmpq *%%rcx\n" );
-        output( "1:\ttestl $0x2,%%ecx\n" );      /* CONTEXT_INTEGER */
+        output( "\tmovq 0x88(%%rcx),%%rsp\n" );
+        output( "\tjmpq *0x70(%%rcx)\n" );  /* frame->rip */
+        output( "1:\tleaq 0x70(%%rcx),%%rsp\n" );
+        output( "\ttestl $0x2,%%edx\n" );  /* CONTEXT_INTEGER */
         output( "\tjz 1f\n" );
-        output( "\tmovq -0x98(%%rbp),%%rax\n" );
-        output( "\tmovq -0x88(%%rbp),%%rcx\n" );
-        output( "\tmovq -0x80(%%rbp),%%rdx\n" );
-        output( "\tmovq -0x68(%%rbp),%%r8\n" );
-        output( "\tmovq -0x60(%%rbp),%%r9\n" );
-        output( "\tmovq -0x58(%%rbp),%%r10\n" );
-        output( "\tmovq -0x50(%%rbp),%%r11\n" );
-        output( "1:\tleaq -0x28(%%rbp),%%rsp\n" );
-        output_cfi( ".cfi_def_cfa_register %%rsp" );
-        output_cfi( ".cfi_adjust_cfa_offset 40" );
-        output( "\tmovq (%%rbp),%%rbp\n" );
-        output_cfi( ".cfi_same_value %%rbp" );
-        output( "\tiretq\n" );
+        output( "\tmovq 0x00(%%rcx),%%rax\n" );
+        output( "\tmovq 0x18(%%rcx),%%rdx\n" );
+        output( "\tmovq 0x30(%%rcx),%%r8\n" );
+        output( "\tmovq 0x38(%%rcx),%%r9\n" );
+        output( "\tmovq 0x40(%%rcx),%%r10\n" );
+        output( "\tmovq 0x48(%%rcx),%%r11\n" );
+        output( "\tmovq 0x10(%%rcx),%%rcx\n" );
+        output( "1:\tiretq\n" );
         output( "5:\tmovl $0x%x,%%eax\n", invalid_param );
         output( "\tjmp 2b\n" );
         break;
