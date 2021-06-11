@@ -1786,8 +1786,6 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             return 0;
         }
 
-        sock->pending_events &= ~FD_ACCEPT;
-        sock->reported_events &= ~FD_ACCEPT;
         sock->state = SOCK_LISTENING;
 
         /* a listening socket can no longer be accepted into */
