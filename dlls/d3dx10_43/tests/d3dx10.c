@@ -685,38 +685,38 @@ static void delete_resource_module(const WCHAR *filename, HMODULE module)
     DeleteFileW(path);
 }
 
-static void check_image_info(D3DX10_IMAGE_INFO *image_info, unsigned int i, unsigned int line)
+static void check_image_info(D3DX10_IMAGE_INFO *image_info, const struct test_image *image, unsigned int line)
 {
-    ok_(__FILE__, line)(image_info->Width == test_image[i].expected.Width,
-            "Test %u: Got unexpected Width %u, expected %u.\n",
-            i, image_info->Width, test_image[i].expected.Width);
-    ok_(__FILE__, line)(image_info->Height == test_image[i].expected.Height,
-            "Test %u: Got unexpected Height %u, expected %u.\n",
-            i, image_info->Height, test_image[i].expected.Height);
-    ok_(__FILE__, line)(image_info->Depth == test_image[i].expected.Depth,
-            "Test %u: Got unexpected Depth %u, expected %u.\n",
-            i, image_info->Depth, test_image[i].expected.Depth);
-    ok_(__FILE__, line)(image_info->ArraySize == test_image[i].expected.ArraySize,
-            "Test %u: Got unexpected ArraySize %u, expected %u.\n",
-            i, image_info->ArraySize, test_image[i].expected.ArraySize);
-    ok_(__FILE__, line)(image_info->MipLevels == test_image[i].expected.MipLevels,
-            "Test %u: Got unexpected MipLevels %u, expected %u.\n",
-            i, image_info->MipLevels, test_image[i].expected.MipLevels);
-    ok_(__FILE__, line)(image_info->MiscFlags == test_image[i].expected.MiscFlags,
-            "Test %u: Got unexpected MiscFlags %#x, expected %#x.\n",
-            i, image_info->MiscFlags, test_image[i].expected.MiscFlags);
-    ok_(__FILE__, line)(image_info->Format == test_image[i].expected.Format,
-            "Test %u: Got unexpected Format %#x, expected %#x.\n",
-            i, image_info->Format, test_image[i].expected.Format);
-    ok_(__FILE__, line)(image_info->ResourceDimension == test_image[i].expected.ResourceDimension,
-            "Test %u: Got unexpected ResourceDimension %u, expected %u.\n",
-            i, image_info->ResourceDimension, test_image[i].expected.ResourceDimension);
-    ok_(__FILE__, line)(image_info->ImageFileFormat == test_image[i].expected.ImageFileFormat,
-            "Test %u: Got unexpected ImageFileFormat %u, expected %u.\n",
-            i, image_info->ImageFileFormat, test_image[i].expected.ImageFileFormat);
+    ok_(__FILE__, line)(image_info->Width == image->expected.Width,
+            "Got unexpected Width %u, expected %u.\n",
+            image_info->Width, image->expected.Width);
+    ok_(__FILE__, line)(image_info->Height == image->expected.Height,
+            "Got unexpected Height %u, expected %u.\n",
+            image_info->Height, image->expected.Height);
+    ok_(__FILE__, line)(image_info->Depth == image->expected.Depth,
+            "Got unexpected Depth %u, expected %u.\n",
+            image_info->Depth, image->expected.Depth);
+    ok_(__FILE__, line)(image_info->ArraySize == image->expected.ArraySize,
+            "Got unexpected ArraySize %u, expected %u.\n",
+            image_info->ArraySize, image->expected.ArraySize);
+    ok_(__FILE__, line)(image_info->MipLevels == image->expected.MipLevels,
+            "Got unexpected MipLevels %u, expected %u.\n",
+            image_info->MipLevels, image->expected.MipLevels);
+    ok_(__FILE__, line)(image_info->MiscFlags == image->expected.MiscFlags,
+            "Got unexpected MiscFlags %#x, expected %#x.\n",
+            image_info->MiscFlags, image->expected.MiscFlags);
+    ok_(__FILE__, line)(image_info->Format == image->expected.Format,
+            "Got unexpected Format %#x, expected %#x.\n",
+            image_info->Format, image->expected.Format);
+    ok_(__FILE__, line)(image_info->ResourceDimension == image->expected.ResourceDimension,
+            "Got unexpected ResourceDimension %u, expected %u.\n",
+            image_info->ResourceDimension, image->expected.ResourceDimension);
+    ok_(__FILE__, line)(image_info->ImageFileFormat == image->expected.ImageFileFormat,
+            "Got unexpected ImageFileFormat %u, expected %u.\n",
+            image_info->ImageFileFormat, image->expected.ImageFileFormat);
 }
 
-static void check_resource_info(ID3D10Resource *resource, unsigned int i, unsigned int line)
+static void check_resource_info(ID3D10Resource *resource, const struct test_image *image, unsigned int line)
 {
     unsigned int expected_mip_levels, expected_width, expected_height, max_dimension;
     D3D10_RESOURCE_DIMENSION resource_dimension;
@@ -726,9 +726,9 @@ static void check_resource_info(ID3D10Resource *resource, unsigned int i, unsign
     ID3D10Texture3D *texture_3d;
     HRESULT hr;
 
-    expected_width = test_image[i].expected.Width;
-    expected_height = test_image[i].expected.Height;
-    if (is_block_compressed(test_image[i].expected.Format))
+    expected_width = image->expected.Width;
+    expected_height = image->expected.Height;
+    if (is_block_compressed(image->expected.Format))
     {
         expected_width = (expected_width + 3) & ~3;
         expected_height = (expected_height + 3) & ~3;
@@ -742,84 +742,84 @@ static void check_resource_info(ID3D10Resource *resource, unsigned int i, unsign
     }
 
     ID3D10Resource_GetType(resource, &resource_dimension);
-    ok(resource_dimension == test_image[i].expected.ResourceDimension,
-            "Test %u: Got unexpected ResourceDimension %u, expected %u.\n",
-            i, resource_dimension, test_image[i].expected.ResourceDimension);
+    ok(resource_dimension == image->expected.ResourceDimension,
+            "Got unexpected ResourceDimension %u, expected %u.\n",
+             resource_dimension, image->expected.ResourceDimension);
 
     switch (resource_dimension)
     {
         case D3D10_RESOURCE_DIMENSION_TEXTURE2D:
             hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture2D, (void **)&texture_2d);
-            ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Got unexpected hr %#x.\n",  hr);
             ID3D10Texture2D_GetDesc(texture_2d, &desc_2d);
             ok_(__FILE__, line)(desc_2d.Width == expected_width,
-                    "Test %u: Got unexpected Width %u, expected %u.\n",
-                    i, desc_2d.Width, expected_width);
+                    "Got unexpected Width %u, expected %u.\n",
+                     desc_2d.Width, expected_width);
             ok_(__FILE__, line)(desc_2d.Height == expected_height,
-                    "Test %u: Got unexpected Height %u, expected %u.\n",
-                    i, desc_2d.Height, expected_height);
+                    "Got unexpected Height %u, expected %u.\n",
+                     desc_2d.Height, expected_height);
             ok_(__FILE__, line)(desc_2d.MipLevels == expected_mip_levels,
-                    "Test %u: Got unexpected MipLevels %u, expected %u.\n",
-                    i, desc_2d.MipLevels, expected_mip_levels);
-            ok_(__FILE__, line)(desc_2d.ArraySize == test_image[i].expected.ArraySize,
-                    "Test %u: Got unexpected ArraySize %u, expected %u.\n",
-                    i, desc_2d.ArraySize, test_image[i].expected.ArraySize);
-            ok_(__FILE__, line)(desc_2d.Format == test_image[i].expected.Format,
-                    "Test %u: Got unexpected Format %u, expected %u.\n",
-                    i, desc_2d.Format, test_image[i].expected.Format);
+                    "Got unexpected MipLevels %u, expected %u.\n",
+                     desc_2d.MipLevels, expected_mip_levels);
+            ok_(__FILE__, line)(desc_2d.ArraySize == image->expected.ArraySize,
+                    "Got unexpected ArraySize %u, expected %u.\n",
+                     desc_2d.ArraySize, image->expected.ArraySize);
+            ok_(__FILE__, line)(desc_2d.Format == image->expected.Format,
+                    "Got unexpected Format %u, expected %u.\n",
+                     desc_2d.Format, image->expected.Format);
             ok_(__FILE__, line)(desc_2d.SampleDesc.Count == 1,
-                    "Test %u: Got unexpected SampleDesc.Count %u, expected %u\n",
-                    i, desc_2d.SampleDesc.Count, 1);
+                    "Got unexpected SampleDesc.Count %u, expected %u\n",
+                     desc_2d.SampleDesc.Count, 1);
             ok_(__FILE__, line)(desc_2d.SampleDesc.Quality == 0,
-                    "Test %u: Got unexpected SampleDesc.Quality %u, expected %u\n",
-                    i, desc_2d.SampleDesc.Quality, 0);
+                    "Got unexpected SampleDesc.Quality %u, expected %u\n",
+                     desc_2d.SampleDesc.Quality, 0);
             ok_(__FILE__, line)(desc_2d.Usage == D3D10_USAGE_DEFAULT,
-                    "Test %u: Got unexpected Usage %u, expected %u\n",
-                    i, desc_2d.Usage, D3D10_USAGE_DEFAULT);
+                    "Got unexpected Usage %u, expected %u\n",
+                     desc_2d.Usage, D3D10_USAGE_DEFAULT);
             ok_(__FILE__, line)(desc_2d.BindFlags == D3D10_BIND_SHADER_RESOURCE,
-                    "Test %u: Got unexpected BindFlags %#x, expected %#x\n",
-                    i, desc_2d.BindFlags, D3D10_BIND_SHADER_RESOURCE);
+                    "Got unexpected BindFlags %#x, expected %#x\n",
+                     desc_2d.BindFlags, D3D10_BIND_SHADER_RESOURCE);
             ok_(__FILE__, line)(desc_2d.CPUAccessFlags == 0,
-                    "Test %u: Got unexpected CPUAccessFlags %#x, expected %#x\n",
-                    i, desc_2d.CPUAccessFlags, 0);
-            ok_(__FILE__, line)(desc_2d.MiscFlags == test_image[i].expected.MiscFlags,
-                    "Test %u: Got unexpected MiscFlags %#x, expected %#x.\n",
-                    i, desc_2d.MiscFlags, test_image[i].expected.MiscFlags);
+                    "Got unexpected CPUAccessFlags %#x, expected %#x\n",
+                     desc_2d.CPUAccessFlags, 0);
+            ok_(__FILE__, line)(desc_2d.MiscFlags == image->expected.MiscFlags,
+                    "Got unexpected MiscFlags %#x, expected %#x.\n",
+                     desc_2d.MiscFlags, image->expected.MiscFlags);
 
             ID3D10Texture2D_Release(texture_2d);
             break;
 
         case D3D10_RESOURCE_DIMENSION_TEXTURE3D:
             hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture3D, (void **)&texture_3d);
-            ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Got unexpected hr %#x.\n",  hr);
             ID3D10Texture3D_GetDesc(texture_3d, &desc_3d);
             ok_(__FILE__, line)(desc_3d.Width == expected_width,
-                    "Test %u: Got unexpected Width %u, expected %u.\n",
-                    i, desc_3d.Width, expected_width);
+                    "Got unexpected Width %u, expected %u.\n",
+                     desc_3d.Width, expected_width);
             ok_(__FILE__, line)(desc_3d.Height == expected_height,
-                    "Test %u: Got unexpected Height %u, expected %u.\n",
-                    i, desc_3d.Height, expected_height);
-            ok_(__FILE__, line)(desc_3d.Depth == test_image[i].expected.Depth,
-                    "Test %u: Got unexpected Depth %u, expected %u.\n",
-                    i, desc_3d.Depth, test_image[i].expected.Depth);
+                    "Got unexpected Height %u, expected %u.\n",
+                     desc_3d.Height, expected_height);
+            ok_(__FILE__, line)(desc_3d.Depth == image->expected.Depth,
+                    "Got unexpected Depth %u, expected %u.\n",
+                     desc_3d.Depth, image->expected.Depth);
             ok_(__FILE__, line)(desc_3d.MipLevels == expected_mip_levels,
-                    "Test %u: Got unexpected MipLevels %u, expected %u.\n",
-                    i, desc_3d.MipLevels, expected_mip_levels);
-            ok_(__FILE__, line)(desc_3d.Format == test_image[i].expected.Format,
-                    "Test %u: Got unexpected Format %u, expected %u.\n",
-                    i, desc_3d.Format, test_image[i].expected.Format);
+                    "Got unexpected MipLevels %u, expected %u.\n",
+                     desc_3d.MipLevels, expected_mip_levels);
+            ok_(__FILE__, line)(desc_3d.Format == image->expected.Format,
+                    "Got unexpected Format %u, expected %u.\n",
+                     desc_3d.Format, image->expected.Format);
             ok_(__FILE__, line)(desc_3d.Usage == D3D10_USAGE_DEFAULT,
-                    "Test %u: Got unexpected Usage %u, expected %u\n",
-                    i, desc_3d.Usage, D3D10_USAGE_DEFAULT);
+                    "Got unexpected Usage %u, expected %u\n",
+                     desc_3d.Usage, D3D10_USAGE_DEFAULT);
             ok_(__FILE__, line)(desc_3d.BindFlags == D3D10_BIND_SHADER_RESOURCE,
-                    "Test %u: Got unexpected BindFlags %#x, expected %#x\n",
-                    i, desc_3d.BindFlags, D3D10_BIND_SHADER_RESOURCE);
+                    "Got unexpected BindFlags %#x, expected %#x\n",
+                     desc_3d.BindFlags, D3D10_BIND_SHADER_RESOURCE);
             ok_(__FILE__, line)(desc_3d.CPUAccessFlags == 0,
-                    "Test %u: Got unexpected CPUAccessFlags %#x, expected %#x\n",
-                    i, desc_3d.CPUAccessFlags, 0);
-            ok_(__FILE__, line)(desc_3d.MiscFlags == test_image[i].expected.MiscFlags,
-                    "Test %u: Got unexpected MiscFlags %#x, expected %#x.\n",
-                    i, desc_3d.MiscFlags, test_image[i].expected.MiscFlags);
+                    "Got unexpected CPUAccessFlags %#x, expected %#x\n",
+                     desc_3d.CPUAccessFlags, 0);
+            ok_(__FILE__, line)(desc_3d.MiscFlags == image->expected.MiscFlags,
+                    "Got unexpected MiscFlags %#x, expected %#x.\n",
+                     desc_3d.MiscFlags, image->expected.MiscFlags);
             ID3D10Texture3D_Release(texture_3d);
             break;
 
@@ -1555,11 +1555,14 @@ static void test_get_image_info(void)
 
     for (i = 0; i < ARRAY_SIZE(test_image); ++i)
     {
+        winetest_push_context("Test %u", i);
+
         hr = D3DX10GetImageInfoFromMemory(test_image[i].data, test_image[i].size, NULL, &image_info, NULL);
-        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
-        if (hr != S_OK)
-            continue;
-        check_image_info(&image_info, i, __LINE__);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        if (hr == S_OK)
+            check_image_info(&image_info, test_image + i, __LINE__);
+
+        winetest_pop_context();
     }
 
     hr = D3DX10GetImageInfoFromFileW(NULL, NULL, &image_info, NULL);
@@ -1573,19 +1576,21 @@ static void test_get_image_info(void)
 
     for (i = 0; i < ARRAY_SIZE(test_image); ++i)
     {
+        winetest_push_context("Test %u", i);
         create_file(test_filename, test_image[i].data, test_image[i].size, path);
 
         hr = D3DX10GetImageInfoFromFileW(path, NULL, &image_info, NULL);
-        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
         if (hr == S_OK)
-            check_image_info(&image_info, i, __LINE__);
+            check_image_info(&image_info, test_image + i, __LINE__);
 
         hr = D3DX10GetImageInfoFromFileA(get_str_a(path), NULL, &image_info, NULL);
-        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
         if (hr == S_OK)
-            check_image_info(&image_info, i, __LINE__);
+            check_image_info(&image_info, test_image + i, __LINE__);
 
         delete_file(test_filename);
+        winetest_pop_context();
     }
 
 
@@ -1602,19 +1607,21 @@ static void test_get_image_info(void)
 
     for (i = 0; i < ARRAY_SIZE(test_image); ++i)
     {
+        winetest_push_context("Test %u", i);
         resource_module = create_resource_module(test_resource_name, test_image[i].data, test_image[i].size);
 
         hr = D3DX10GetImageInfoFromResourceW(resource_module, test_resource_name, NULL, &image_info, NULL);
-        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
         if (hr == S_OK)
-            check_image_info(&image_info, i, __LINE__);
+            check_image_info(&image_info, test_image + i, __LINE__);
 
         hr = D3DX10GetImageInfoFromResourceA(resource_module, get_str_a(test_resource_name), NULL, &image_info, NULL);
-        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
         if (hr == S_OK)
-            check_image_info(&image_info, i, __LINE__);
+            check_image_info(&image_info, test_image + i, __LINE__);
 
         delete_resource_module(test_resource_name, resource_module);
+        winetest_pop_context();
     }
 
     CoUninitialize();
@@ -1652,11 +1659,15 @@ static void test_create_texture(void)
 
     for (i = 0; i < ARRAY_SIZE(test_image); ++i)
     {
+        winetest_push_context("Test %u", i);
+
         hr = D3DX10CreateTextureFromMemory(device, test_image[i].data, test_image[i].size, NULL, NULL, &resource, NULL);
         todo_wine
-        ok(hr == S_OK, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
         if (hr == S_OK)
-            check_resource_info(resource, i, __LINE__);
+            check_resource_info(resource, test_image + i, __LINE__);
+
+        winetest_pop_context();
     }
 
     CoUninitialize();
