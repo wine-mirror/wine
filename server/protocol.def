@@ -1441,7 +1441,6 @@ enum server_fd_type
 @REPLY
     unsigned int mask;          /* event mask */
     unsigned int pmask;         /* pending events */
-    unsigned int state;         /* status bits */
     VARARG(errors,ints);        /* event errors */
 @END
 

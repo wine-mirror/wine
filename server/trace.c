@@ -2093,7 +2093,6 @@ static void dump_get_socket_event_reply( const struct get_socket_event_reply *re
 {
     fprintf( stderr, " mask=%08x", req->mask );
     fprintf( stderr, ", pmask=%08x", req->pmask );
-    fprintf( stderr, ", state=%08x", req->state );
     dump_varargs_ints( ", errors=", cur_size );
 }
 
@@ -5391,6 +5390,7 @@ static const struct
     { "ABANDONED_WAIT_0",            STATUS_ABANDONED_WAIT_0 },
     { "ACCESS_DENIED",               STATUS_ACCESS_DENIED },
     { "ACCESS_VIOLATION",            STATUS_ACCESS_VIOLATION },
+    { "ADDRESS_ALREADY_ASSOCIATED",  STATUS_ADDRESS_ALREADY_ASSOCIATED },
     { "ALERTED",                     STATUS_ALERTED },
     { "BAD_DEVICE_TYPE",             STATUS_BAD_DEVICE_TYPE },
     { "BAD_IMPERSONATION_LEVEL",     STATUS_BAD_IMPERSONATION_LEVEL },

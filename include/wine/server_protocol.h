@@ -1758,9 +1758,7 @@ struct get_socket_event_reply
     struct reply_header __header;
     unsigned int mask;
     unsigned int pmask;
-    unsigned int state;
     /* VARARG(errors,ints); */
-    char __pad_20[4];
 };
 
 
@@ -6294,7 +6292,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 711
+#define SERVER_PROTOCOL_VERSION 712
 
 /* ### protocol_version end ### */
 

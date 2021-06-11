@@ -2376,7 +2376,6 @@ DECL_HANDLER(get_socket_event)
     if (get_unix_fd( sock->fd ) == -1) return;
     reply->mask  = sock->mask;
     reply->pmask = sock->pending_events;
-    reply->state = sock->state;
     set_reply_data( sock->errors, min( get_reply_max_size(), sizeof(sock->errors) ));
 
     if (req->service)
