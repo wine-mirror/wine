@@ -301,6 +301,9 @@ END
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
+/* @makedep: wordpad.manifest */
+1 RT_MANIFEST wordpad.manifest
+
 /* @makedep: toolbar.bmp */
 IDB_TOOLBAR BITMAP "toolbar.bmp"
 
