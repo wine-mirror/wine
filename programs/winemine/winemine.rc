@@ -105,6 +105,9 @@ IDA_WINEMINE ACCELERATORS
 
 LANGUAGE LANG_NEUTRAL,SUBLANG_NEUTRAL
 
+/* @makedep: winemine.manifest */
+1 RT_MANIFEST winemine.manifest
+
 /* @makedep: winemine.ico */
 IDI_WINEMINE ICON winemine.ico
 

@@ -23,6 +23,7 @@
 #include <string.h>
 #include <time.h>
 #include <windows.h>
+#include <commctrl.h>
 #include <stdlib.h>
 #include <shellapi.h>
 #include "main.h"
@@ -1011,6 +1012,8 @@ int WINAPI wWinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPWSTR cmdline, int c
     HWND hWnd;
     HACCEL haccel;
     WCHAR appname[20];
+
+    InitCommonControls();
 
     LoadStringW( hInst, IDS_APPNAME, appname, ARRAY_SIZE(appname));
 
