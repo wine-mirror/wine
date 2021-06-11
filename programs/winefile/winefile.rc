@@ -195,6 +195,9 @@ IDA_WINEFILE ACCELERATORS
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
+/* @makedep: winefile.manifest */
+1 RT_MANIFEST winefile.manifest
+
 /* @makedep: winefile.ico */
 IDI_WINEFILE ICON winefile.ico
 
