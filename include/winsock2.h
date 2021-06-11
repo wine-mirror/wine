@@ -291,11 +291,6 @@ extern "C" {
 #define FD_ROUTING_INTERFACE_CHANGE 0x00000100
 #define FD_ADDRESS_LIST_CHANGE      0x00000200
 
-#ifdef __WINESRC__
-#define FD_WINE_LISTENING           0x10000000
-#define FD_WINE_CONNECTED           0x40000000
-#endif
-
 /* Constants for LPCONDITIONPROC */
 #define CF_ACCEPT                  0x0000
 #define CF_REJECT                  0x0001
