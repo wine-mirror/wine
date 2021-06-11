@@ -672,7 +672,7 @@ static OSStatus pull_adapter(SSLConnectionRef transport, void *buff, SIZE_T *buf
             ret = noErr;
         }
     }
-    else if (status == EAGAIN)
+    else if (status == -1)
     {
         TRACE("Would block before being able to pull anything\n");
         ret = errSSLWouldBlock;
@@ -723,7 +723,7 @@ static OSStatus push_adapter(SSLConnectionRef transport, const void *buff, SIZE_
         TRACE("Pushed %lu bytes\n", *buff_len);
         ret = noErr;
     }
-    else if (status == EAGAIN)
+    else if (status == -1)
     {
         TRACE("Would block before being able to push anything\n");
         ret = errSSLWouldBlock;

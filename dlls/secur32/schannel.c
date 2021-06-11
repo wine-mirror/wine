@@ -759,9 +759,8 @@ static char * CDECL schan_get_buffer(const struct schan_transport *t, struct sch
  *      *buff_len > 0 indicates that some data was read.  May be less than
  *          what was requested, in which case the caller should call again if/
  *          when they want more.
- *  EAGAIN when no data could be read without blocking
+ *  -1 when no data could be read without blocking
  *  another errno-style error value on failure
- *
  */
 static int CDECL schan_pull(struct schan_transport *t, void *buff, size_t *buff_len)
 {
@@ -774,7 +773,7 @@ static int CDECL schan_pull(struct schan_transport *t, void *buff, size_t *buff_
 
     b = schan_get_buffer(t, &t->in, &local_len);
     if (!b)
-        return EAGAIN;
+        return -1;
 
     memcpy(buff, b, local_len);
     t->in.offset += local_len;
@@ -797,10 +796,9 @@ static int CDECL schan_pull(struct schan_transport *t, void *buff, size_t *buff_
  *  0 on success
  *      *buff_len will be > 0 indicating how much data was written.  May be less
  *          than what was requested, in which case the caller should call again
-            if/when they want to write more.
- *  EAGAIN when no data could be written without blocking
+ *          if/when they want to write more.
+ * -1 when no data could be written without blocking
  *  another errno-style error value on failure
- *
  */
 static int CDECL schan_push(struct schan_transport *t, const void *buff, size_t *buff_len)
 {
@@ -813,7 +811,7 @@ static int CDECL schan_push(struct schan_transport *t, const void *buff, size_t 
 
     b = schan_get_buffer(t, &t->out, &local_len);
     if (!b)
-        return EAGAIN;
+        return -1;
 
     memcpy(b, buff, local_len);
     t->out.offset += local_len;
