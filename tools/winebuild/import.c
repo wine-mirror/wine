@@ -1712,27 +1712,55 @@ static void output_syscall_dispatcher(void)
             output( "6:\t.long %s\n", asm_name("KeServiceDescriptorTable") );
         break;
     case CPU_ARM64:
-        output( "\tstp x29, x30, [sp,#-160]!\n" );
-        output_cfi( "\t.cfi_def_cfa_offset 160\n" );
-        output_cfi( "\t.cfi_offset 29, -160\n" );
-        output_cfi( "\t.cfi_offset 30, -152\n" );
-        output( "\tmov x29, sp\n" );
-        output_cfi( "\t.cfi_def_cfa_register 29\n" );
-        output( "\tstp x27, x28, [sp, #144]\n" );
-        output_cfi( "\t.cfi_offset 27, -16\n" );
-        output_cfi( "\t.cfi_offset 28, -8\n" );
-        output( "\tstp x25, x26, [sp, #128]\n" );
-        output_cfi( "\t.cfi_offset 25, -32\n" );
-        output_cfi( "\t.cfi_offset 26, -24\n" );
-        output( "\tstp x23, x24, [sp, #112]\n" );
-        output_cfi( "\t.cfi_offset 23, -48\n" );
-        output_cfi( "\t.cfi_offset 24, -40\n" );
-        output( "\tstp x21, x22, [sp, #96]\n" );
-        output_cfi( "\t.cfi_offset 21, -64\n" );
-        output_cfi( "\t.cfi_offset 22, -56\n" );
-        output( "\tstp x19, x20, [sp, #80]\n" );
-        output_cfi( "\t.cfi_offset 19, -80\n" );
-        output_cfi( "\t.cfi_offset 20, -72\n" );
+        /* FIXME: use x18 directly instead */
+        output( "\tstp x0, x1, [sp, #-96]!\n" );
+        output( "\tstp x2, x3, [sp, #16]\n" );
+        output( "\tstp x4, x5, [sp, #32]\n" );
+        output( "\tstp x6, x7, [sp, #48]\n" );
+        output( "\tstp x8, x9, [sp, #64]\n" );
+        output( "\tstr lr, [sp, #80]\n" );
+        output( "\tbl %s\n", asm_name("NtCurrentTeb") );
+        output( "\tmov x18, x0\n" );
+        output( "\tldp x2, x3, [sp, #16]\n" );
+        output( "\tldp x4, x5, [sp, #32]\n" );
+        output( "\tldp x6, x7, [sp, #48]\n" );
+        output( "\tldp x8, x9, [sp, #64]\n" );
+        output( "\tldr lr, [sp, #80]\n" );
+        output( "\tldp x0, x1, [sp], #96\n" );
+
+        output( "\tldr x10, [x18, #0x2f8]\n" );  /* arm64_thread_data()->syscall_frame */
+        output( "\tstp x18, x19, [x10, #0x90]\n" );
+        output( "\tstp x20, x21, [x10, #0xa0]\n" );
+        output( "\tstp x22, x23, [x10, #0xb0]\n" );
+        output( "\tstp x24, x25, [x10, #0xc0]\n" );
+        output( "\tstp x26, x27, [x10, #0xd0]\n" );
+        output( "\tstp x28, x29, [x10, #0xe0]\n" );
+        output( "\tmov x19, sp\n" );
+        output( "\tstp x9, x19, [x10, #0xf0]\n" );
+        output( "\tmrs x9, NZCV\n" );
+        output( "\tstp lr, x9, [x10, #0x100]\n" );
+        output( "\tstr xzr, [x10, #0x110]\n" );  /* frame->restore_flags */
+        output( "\tmrs x9, FPCR\n" );
+        output( "\tstr w9, [x10, #0x118]\n" );
+        output( "\tmrs x9, FPSR\n" );
+        output( "\tstr w9, [x10, #0x11c]\n" );
+        output( "\tstp q0,  q1,  [x10, #0x120]\n" );
+        output( "\tstp q2,  q3,  [x10, #0x140]\n" );
+        output( "\tstp q4,  q5,  [x10, #0x160]\n" );
+        output( "\tstp q6,  q7,  [x10, #0x180]\n" );
+        output( "\tstp q8,  q9,  [x10, #0x1a0]\n" );
+        output( "\tstp q10, q11, [x10, #0x1c0]\n" );
+        output( "\tstp q12, q13, [x10, #0x1e0]\n" );
+        output( "\tstp q14, q15, [x10, #0x200]\n" );
+        output( "\tstp q16, q17, [x10, #0x220]\n" );
+        output( "\tstp q18, q19, [x10, #0x240]\n" );
+        output( "\tstp q20, q21, [x10, #0x260]\n" );
+        output( "\tstp q22, q23, [x10, #0x280]\n" );
+        output( "\tstp q24, q25, [x10, #0x2a0]\n" );
+        output( "\tstp q26, q27, [x10, #0x2c0]\n" );
+        output( "\tstp q28, q29, [x10, #0x2e0]\n" );
+        output( "\tstp q30, q31, [x10, #0x300]\n" );
+        output( "\tmov sp, x10\n" );
         output( "\tand x20, x8, #0xfff\n" );   /* syscall number */
         output( "\tubfx x21, x8, #12, #2\n" ); /* syscall table number */
         output( "\tadrp x16, %s\n", arm64_page(asm_name("KeServiceDescriptorTable")) );
@@ -1741,41 +1769,64 @@ static void output_syscall_dispatcher(void)
         output( "\tldr x16, [x21, #16]\n" );   /* table->ServiceLimit */
         output( "\tcmp x20, x16\n" );
         output( "\tbcs 4f\n" );
-        output( "\tstp x6, x7, [sp, #64]\n" );
-        output( "\tstp x4, x5, [sp, #48]\n" );
-        output( "\tstp x2, x3, [sp, #32]\n" );
-        output( "\tstp x0, x1, [sp, #16]\n" );
-        output( "\tbl %s\n", asm_name("NtCurrentTeb") );
-        output( "\tadd x19, x0, #0x2f8\n" );  /* arm64_thread_data()->syscall_frame */
-        output( "\tstr x29, [x19]\n" );
-        output( "\tldp x0, x1, [sp, #16]\n" );
-        output( "\tldp x2, x3, [sp, #32]\n" );
-        output( "\tldp x4, x5, [sp, #48]\n" );
-        output( "\tldp x6, x7, [sp, #64]\n" );
+        output( "\tmov x22, sp\n" );
         output( "\tldr x16, [x21, #24]\n" );   /* table->ArgumentTable */
         output( "\tldrb w9, [x16, x20]\n" );
         output( "\tsubs x9, x9, #64\n" );
         output( "\tbls 2f\n" );
-        output( "\tadd x11, x29, #176\n" );
         output( "\tsub sp, sp, x9\n" );
         output( "\ttbz x9, #3, 1f\n" );
         output( "\tsub sp, sp, #8\n" );
         output( "1:\tsub x9, x9, #8\n" );
-        output( "\tldr x10, [x11, x9]\n" );
+        output( "\tldr x10, [x19, x9]\n" );
         output( "\tstr x10, [sp, x9]\n" );
         output( "\tcbnz x9, 1b\n" );
         output( "2:\tldr x16, [x21]\n" );      /* table->ServiceTable */
         output( "\tldr x16, [x16, x20, lsl 3]\n" );
         output( "\tblr x16\n" );
-        output( "\tmov sp, x29\n" );
-        output( "\tstr xzr, [x19]\n" );
-        output( "3:\tldp x19, x20, [sp, #80]\n" );
-        output( "\tldp x21, x22, [sp, #96]\n" );
-        output( "\tldp x23, x24, [sp, #112]\n" );
-        output( "\tldp x25, x26, [sp, #128]\n" );
-        output( "\tldp x27, x28, [sp, #144]\n" );
-        output( "\tldp x29, x30, [sp], #160\n" );
-        output( "\tret\n" );
+        output( "\tmov sp, x22\n" );
+        output( "3:\tldp x18, x19, [sp, #0x90]\n" );
+        output( "\tldp x20, x21, [sp, #0xa0]\n" );
+        output( "\tldp x22, x23, [sp, #0xb0]\n" );
+        output( "\tldp x24, x25, [sp, #0xc0]\n" );
+        output( "\tldp x26, x27, [sp, #0xd0]\n" );
+        output( "\tldp x28, x29, [sp, #0xe0]\n" );
+        output( "\tldr x16, [sp, #0x110]\n" );  /* frame->restore_flags */
+        output( "\ttbz x16, #2, 1f\n" );  /* CONTEXT_FLOATING_POINT */
+        output( "\tldp q0,  q1,  [sp, #0x120]\n" );
+        output( "\tldp q2,  q3,  [sp, #0x140]\n" );
+        output( "\tldp q4,  q5,  [sp, #0x160]\n" );
+        output( "\tldp q6,  q7,  [sp, #0x180]\n" );
+        output( "\tldp q8,  q9,  [sp, #0x1a0]\n" );
+        output( "\tldp q10, q11, [sp, #0x1c0]\n" );
+        output( "\tldp q12, q13, [sp, #0x1e0]\n" );
+        output( "\tldp q14, q15, [sp, #0x200]\n" );
+        output( "\tldp q16, q17, [sp, #0x220]\n" );
+        output( "\tldp q18, q19, [sp, #0x240]\n" );
+        output( "\tldp q20, q21, [sp, #0x260]\n" );
+        output( "\tldp q22, q23, [sp, #0x280]\n" );
+        output( "\tldp q24, q25, [sp, #0x2a0]\n" );
+        output( "\tldp q26, q27, [sp, #0x2c0]\n" );
+        output( "\tldp q28, q29, [sp, #0x2e0]\n" );
+        output( "\tldp q30, q31, [sp, #0x300]\n" );
+        output( "\tldr w9, [x10, #0x118]\n" );
+        output( "\tmsr FPCR, x9\n" );
+        output( "\tldr w9, [x10, #0x11c]\n" );
+        output( "\tmsr FPSR, x9\n" );
+        output( "1:\ttbz x16, #1, 1f\n" );  /* CONTEXT_INTEGER */
+        output( "\tldp x0, x1, [sp, #0x00]\n" );
+        output( "\tldp x2, x3, [sp, #0x10]\n" );
+        output( "\tldp x4, x5, [sp, #0x20]\n" );
+        output( "\tldp x6, x7, [sp, #0x30]\n" );
+        output( "\tldp x8, x9, [sp, #0x40]\n" );
+        output( "\tldp x10, x11, [sp, #0x50]\n" );
+        output( "\tldp x12, x13, [sp, #0x60]\n" );
+        output( "\tldp x14, x15, [sp, #0x70]\n" );
+        output( "1:\tldp x16, x17, [sp, #0x100]\n" );
+        output( "\tmsr NZCV, x17\n" );
+        output( "\tldp x30, x17, [sp, #0xf0]\n" );
+        output( "\tmov sp, x17\n" );
+        output( "\tret x16\n" );
         output( "4:\tmov x0, #0x%x\n", invalid_param & 0xffff0000 );
         output( "\tmovk x0, #0x%x\n", invalid_param & 0x0000ffff );
         output( "\tb 3b\n" );
@@ -1892,15 +1943,9 @@ void output_syscalls( DLLSPEC *spec )
             output( "\tbx ip\n" );
             break;
         case CPU_ARM64:
-            output( "\tstp x29, x30, [sp,#-16]!\n" );
-            output_cfi( "\t.cfi_def_cfa_offset 16\n" );
-            output_cfi( "\t.cfi_offset 29, -16\n" );
-            output_cfi( "\t.cfi_offset 30, -8\n" );
             output( "\tmov x8, #%u\n", i );
-            output( "\tadrp x16, %s\n", arm64_page( asm_name("__wine_syscall_dispatcher") ) );
-            output( "\tldr x16, [x16, #%s]\n", arm64_pageoff( asm_name("__wine_syscall_dispatcher") ) );
-            output( "\tblr x16\n");
-            output( "\tldp x29, x30, [sp], #16\n" );
+            output( "\tmov x9, x30\n" );
+            output( "\tbl %s\n", asm_name("__wine_syscall" ));
             output( "\tret\n" );
             break;
         default:
@@ -1940,6 +1985,14 @@ void output_syscalls( DLLSPEC *spec )
         if (UsePIC) output( "2:\t.long %s-1b-%u\n", asm_name("__wine_syscall_dispatcher"), thumb_mode ? 4 : 8 );
         output_function_size( "__wine_syscall" );
         break;
+    case CPU_ARM64:
+        output( "\t.align %d\n", get_alignment(16) );
+        output( "\t%s\n", func_declaration("__wine_syscall") );
+        output( "%s:\n", asm_name("__wine_syscall") );
+        output( "\tadrp x16, %s\n", arm64_page( asm_name("__wine_syscall_dispatcher") ) );
+        output( "\tldr x16, [x16, #%s]\n", arm64_pageoff( asm_name("__wine_syscall_dispatcher") ) );
+        output( "\tbr x16\n");
+        output_function_size( "__wine_syscall" );
     default:
         break;
     }
