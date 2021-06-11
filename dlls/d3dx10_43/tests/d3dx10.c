@@ -31,6 +31,10 @@ static const BYTE test_bmp_1bpp[] =
     0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0xf1, 0xf2, 0xf3, 0x80, 0xf4, 0xf5, 0xf6, 0x81, 0x00, 0x00,
     0x00, 0x00
 };
+static const BYTE test_bmp_1bpp_data[] =
+{
+    0xf3, 0xf2, 0xf1, 0xff
+};
 
 /* 1x1 4bpp bmp image */
 static const BYTE test_bmp_4bpp[] =
@@ -40,6 +44,10 @@ static const BYTE test_bmp_4bpp[] =
     0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x12, 0x0b, 0x00, 0x00, 0x12, 0x0b, 0x00, 0x00, 0x02, 0x00,
     0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0xf1, 0xf2, 0xf3, 0x80, 0xf4, 0xf5, 0xf6, 0x81, 0x00, 0x00,
     0x00, 0x00
+};
+static const BYTE test_bmp_4bpp_data[] =
+{
+    0xf3, 0xf2, 0xf1, 0xff
 };
 
 /* 1x1 8bpp bmp image */
@@ -51,6 +59,10 @@ static const BYTE test_bmp_8bpp[] =
     0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0xf1, 0xf2, 0xf3, 0x80, 0xf4, 0xf5, 0xf6, 0x81, 0x00, 0x00,
     0x00, 0x00
 };
+static const BYTE test_bmp_8bpp_data[] =
+{
+    0xf3, 0xf2, 0xf1, 0xff
+};
 
 /* 1x1 16bpp bmp image */
 static const BYTE test_bmp_16bpp[] =
@@ -60,6 +72,10 @@ static const BYTE test_bmp_16bpp[] =
     0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x12, 0x0b, 0x00, 0x00, 0x12, 0x0b, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0e, 0x42, 0x00, 0x00, 0x00, 0x00
 };
+static const BYTE test_bmp_16bpp_data[] =
+{
+    0x84, 0x84, 0x73, 0xff
+};
 
 /* 1x1 24bpp bmp image */
 static const BYTE test_bmp_24bpp[] =
@@ -68,6 +84,10 @@ static const BYTE test_bmp_24bpp[] =
     0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x12, 0x0b, 0x00, 0x00, 0x12, 0x0b, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x73, 0x84, 0x84, 0x00, 0x00, 0x00
+};
+static const BYTE test_bmp_24bpp_data[] =
+{
+    0x84, 0x84, 0x73, 0xff
 };
 
 /* 2x2 32bpp XRGB bmp image */
@@ -79,6 +99,11 @@ static const BYTE test_bmp_32bpp_xrgb[] =
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xa0, 0xb0, 0xc0, 0x00, 0xa1, 0xb1, 0xc1, 0x00, 0xa2, 0xb2,
     0xc2, 0x00, 0xa3, 0xb3, 0xc3, 0x00
 };
+static const BYTE test_bmp_32bpp_xrgb_data[] =
+{
+    0xc2, 0xb2, 0xa2, 0xff, 0xc3, 0xb3, 0xa3, 0xff, 0xc0, 0xb0, 0xa0, 0xff, 0xc1, 0xb1, 0xa1, 0xff
+
+};
 
 /* 2x2 32bpp ARGB bmp image */
 static const BYTE test_bmp_32bpp_argb[] =
@@ -89,6 +114,11 @@ static const BYTE test_bmp_32bpp_argb[] =
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xa0, 0xb0, 0xc0, 0x00, 0xa1, 0xb1, 0xc1, 0x00, 0xa2, 0xb2,
     0xc2, 0x00, 0xa3, 0xb3, 0xc3, 0x01
 };
+static const BYTE test_bmp_32bpp_argb_data[] =
+{
+    0xc2, 0xb2, 0xa2, 0xff, 0xc3, 0xb3, 0xa3, 0xff, 0xc0, 0xb0, 0xa0, 0xff, 0xc1, 0xb1, 0xa1, 0xff
+
+};
 
 /* 1x1 8bpp gray png image */
 static const BYTE test_png_8bpp_gray[] =
@@ -98,6 +128,10 @@ static const BYTE test_png_8bpp_gray[] =
     0x55, 0x00, 0x00, 0x00, 0x0a, 0x49, 0x44, 0x41, 0x54, 0x08, 0xd7, 0x63, 0xf8, 0x0f, 0x00, 0x01,
     0x01, 0x01, 0x00, 0x1b, 0xb6, 0xee, 0x56, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae,
     0x42, 0x60, 0x82
+};
+static const BYTE test_png_8bpp_gray_data[] =
+{
+    0xff, 0xff, 0xff, 0xff
 };
 
 /* 1x1 jpg image */
@@ -122,6 +156,10 @@ static const BYTE test_jpg[] =
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xda, 0x00, 0x0c, 0x03, 0x01,
     0x00, 0x02, 0x11, 0x03, 0x11, 0x00, 0x3f, 0x00, 0xb2, 0xc0, 0x07, 0xff, 0xd9
 };
+static const BYTE test_jpg_data[] =
+{
+    0xff, 0xff, 0xff, 0xff
+};
 
 /* 1x1 gif image */
 static const BYTE test_gif[] =
@@ -129,6 +167,10 @@ static const BYTE test_gif[] =
     0x47, 0x49, 0x46, 0x38, 0x37, 0x61, 0x01, 0x00, 0x01, 0x00, 0x80, 0x00, 0x00, 0xff, 0xff, 0xff,
     0xff, 0xff, 0xff, 0x2c, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x02, 0x02, 0x44,
     0x01, 0x00, 0x3b
+};
+static const BYTE test_gif_data[] =
+{
+    0xff, 0xff, 0xff, 0xff
 };
 
 /* 1x1 tiff image */
@@ -152,6 +194,10 @@ static const BYTE test_tiff[] =
     0x69, 0x66, 0x00, 0x00, 0x00, 0x00, 0x00, 0x48, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x48,
     0x00, 0x00, 0x00, 0x01
 };
+static const BYTE test_tiff_data[] =
+{
+    0x00, 0x00, 0x00, 0xff
+};
 
 /* 1x1 alpha dds image */
 static const BYTE test_dds_alpha[] =
@@ -164,6 +210,10 @@ static const BYTE test_dds_alpha[] =
     0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0xff
+};
+static const BYTE test_dds_alpha_data[] =
+{
     0xff
 };
 
@@ -180,6 +230,10 @@ static const BYTE test_dds_luminance[] =
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x82
 };
+static const BYTE test_dds_luminance_data[] =
+{
+    0x82, 0x82, 0x82, 0xff
+};
 
 /* 1x1 16bpp dds image */
 static const BYTE test_dds_16bpp[] =
@@ -193,6 +247,10 @@ static const BYTE test_dds_16bpp[] =
     0xe0, 0x03, 0x00, 0x00, 0x1f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x0e, 0x42
+};
+static const BYTE test_dds_16bpp_data[] =
+{
+    0x84, 0x84, 0x73, 0xff
 };
 
 /* 1x1 24bpp dds image */
@@ -208,6 +266,10 @@ static const BYTE test_dds_24bpp[] =
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x70, 0x81, 0x83
 };
+static const BYTE test_dds_24bpp_data[] =
+{
+    0x83, 0x81, 0x70, 0xff
+};
 
 /* 1x1 32bpp dds image */
 static const BYTE test_dds_32bpp[] =
@@ -222,6 +284,10 @@ static const BYTE test_dds_32bpp[] =
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x70, 0x81, 0x83, 0xff
 };
+static const BYTE test_dds_32bpp_data[] =
+{
+    0x83, 0x81, 0x70, 0xff
+};
 
 /* 1x1 64bpp dds image */
 static const BYTE test_dds_64bpp[] =
@@ -234,6 +300,10 @@ static const BYTE test_dds_64bpp[] =
     0x04, 0x00, 0x00, 0x00, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x83, 0x83, 0x81, 0x81, 0x70, 0x70, 0xff, 0xff
+};
+static const BYTE test_dds_64bpp_data[] =
+{
     0x83, 0x83, 0x81, 0x81, 0x70, 0x70, 0xff, 0xff
 };
 
@@ -251,6 +321,10 @@ static const BYTE test_dds_96bpp[] =
     0x06, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x84, 0x83, 0x03, 0x3f, 0x82, 0x81, 0x01, 0x3f, 0xe2, 0xe0, 0xe0, 0x3e
 };
+static const BYTE test_dds_96bpp_data[] =
+{
+    0x84, 0x83, 0x03, 0x3f, 0x82, 0x81, 0x01, 0x3f, 0xe2, 0xe0, 0xe0, 0x3e
+};
 
 /* 1x1 128bpp dds image */
 static const BYTE test_dds_128bpp[] =
@@ -265,6 +339,11 @@ static const BYTE test_dds_128bpp[] =
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x84, 0x83, 0x03, 0x3f, 0x82, 0x81, 0x01, 0x3f, 0xe2, 0xe0, 0xe0, 0x3e, 0x00, 0x00, 0x80, 0x3f
 };
+static const BYTE test_dds_128bpp_data[] =
+{
+    0x84, 0x83, 0x03, 0x3f, 0x82, 0x81, 0x01, 0x3f, 0xe2, 0xe0, 0xe0, 0x3e, 0x00, 0x00, 0x80, 0x3f
+
+};
 
 /* 4x4 DXT1 dds image */
 static const BYTE test_dds_dxt1[] =
@@ -277,6 +356,10 @@ static const BYTE test_dds_dxt1[] =
     0x04, 0x00, 0x00, 0x00, 0x44, 0x58, 0x54, 0x31, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x2a, 0x31, 0xf5, 0xbc, 0xe3, 0x6e, 0x2a, 0x3a
+};
+static const BYTE test_dds_dxt1_data[] =
+{
     0x2a, 0x31, 0xf5, 0xbc, 0xe3, 0x6e, 0x2a, 0x3a
 };
 
@@ -295,6 +378,11 @@ static const BYTE test_dds_dxt2[] =
     0xff, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x57, 0x53, 0x00, 0x00, 0x52, 0x52, 0x55, 0x55,
     0x0f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xce, 0x59, 0x00, 0x00, 0x54, 0x55, 0x55, 0x55
 };
+static const BYTE test_dds_dxt2_data[] =
+{
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfd, 0xde, 0xc4, 0x10, 0x2f, 0xbf, 0xff, 0x7b
+
+};
 
 /* 1x3 DXT3 dds image */
 static const BYTE test_dds_dxt3[] =
@@ -309,6 +397,11 @@ static const BYTE test_dds_dxt3[] =
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x0c, 0x92, 0x38, 0x84, 0x00, 0xff, 0x55, 0xff,
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x53, 0x8b, 0x53, 0x8b, 0x00, 0x00, 0x00, 0x00
+};
+static const BYTE test_dds_dxt3_data[] =
+{
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x4e, 0x92, 0xd6, 0x83, 0x00, 0xaa, 0x55, 0x55
+
 };
 
 /* 4x4 DXT4 dds image */
@@ -326,6 +419,11 @@ static const BYTE test_dds_dxt4[] =
     0xff, 0x00, 0x40, 0x02, 0x24, 0x49, 0x92, 0x24, 0x57, 0x53, 0x00, 0x00, 0x52, 0x52, 0x55, 0x55,
     0xff, 0x00, 0x48, 0x92, 0x24, 0x49, 0x92, 0x24, 0xce, 0x59, 0x00, 0x00, 0x54, 0x55, 0x55, 0x55
 };
+static const BYTE test_dds_dxt4_data[] =
+{
+    0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfd, 0xde, 0xc4, 0x10, 0x2f, 0xbf, 0xff, 0x7b
+
+};
 
 /* 4x2 DXT5 dds image */
 static const BYTE test_dds_dxt5[] =
@@ -339,6 +437,11 @@ static const BYTE test_dds_dxt5[] =
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x10, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xef, 0x87, 0x0f, 0x78, 0x05, 0x05, 0x50, 0x50
+};
+static const BYTE test_dds_dxt5_data[] =
+{
+    0xff, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xef, 0x87, 0x0f, 0x78, 0x05, 0x05, 0x05, 0x05
+
 };
 
 /* 4x4 BC4 dds image */
@@ -354,6 +457,10 @@ static const BYTE test_dds_bc4[] =
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0xd9, 0x15, 0xbc, 0x41, 0x5b, 0xa3, 0x3d, 0x3a, 0x8f, 0x3d, 0x45, 0x81, 0x20, 0x45, 0x81, 0x20,
     0x6f, 0x6f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+static const BYTE test_dds_bc4_data[] =
+{
+    0xd9, 0x15, 0xbc, 0x41, 0x5b, 0xa3, 0x3d, 0x3a
 };
 
 /* 6x3 BC5 dds image */
@@ -371,6 +478,12 @@ static const BYTE test_dds_bc5[] =
     0xd5, 0x0f, 0xc3, 0x50, 0x96, 0xcf, 0x53, 0x96, 0xdf, 0x16, 0xc3, 0x50, 0x96, 0xcf, 0x53, 0x96,
     0x83, 0x55, 0x08, 0x83, 0x30, 0x08, 0x83, 0x30, 0x79, 0x46, 0x31, 0x1c, 0xc3, 0x31, 0x1c, 0xc3,
     0x6d, 0x6d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x5c, 0x5c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+static const BYTE test_dds_bc5_data[] =
+{
+    0x95, 0x35, 0xe2, 0xa3, 0xf5, 0xd2, 0x28, 0x68, 0x65, 0x32, 0x7c, 0x4e, 0xdb, 0xe4, 0x56, 0x0a,
+    0xb9, 0x33, 0xaf, 0xf0, 0x52, 0xbe, 0xed, 0x27, 0xb4, 0x2e, 0xa6, 0x60, 0x4e, 0xb6, 0x5d, 0x3f
+
 };
 
 /* 4x4 DXT1 cube map */
@@ -393,6 +506,10 @@ static const BYTE test_dds_cube[] =
     0xf5, 0xa7, 0x08, 0x69, 0x74, 0xc0, 0xbf, 0xd7, 0x32, 0x96, 0x0b, 0x7b, 0xcc, 0x55, 0xcc, 0x55,
     0x0e, 0x84, 0x0e, 0x84, 0x00, 0x00, 0x00, 0x00, 0xf5, 0xa7, 0x08, 0x69, 0x74, 0xc0, 0xbf, 0xd7,
     0x32, 0x96, 0x0b, 0x7b, 0xcc, 0x55, 0xcc, 0x55, 0x0e, 0x84, 0x0e, 0x84, 0x00, 0x00, 0x00, 0x00
+};
+static const BYTE test_dds_cube_data[] =
+{
+    0xf5, 0xa7, 0x08, 0x69, 0x74, 0xc0, 0xbf, 0xd7
 };
 
 /* 1x1 wmp image */
@@ -417,125 +534,130 @@ static const BYTE test_wmp[] =
     0x82, 0x76, 0x71, 0x13, 0xde, 0x50, 0xd4, 0x2d, 0xc2, 0xda, 0x1e, 0x3b, 0xa6, 0xa1, 0x62, 0x7b,
     0xca, 0x1a, 0x85, 0x4b, 0x6e, 0x74, 0xec, 0x60
 };
+static const BYTE test_wmp_data[] =
+{
+    0xff, 0xff, 0xff, 0xff
+};
 
 static const struct test_image
 {
     const BYTE *data;
     unsigned int size;
-    D3DX10_IMAGE_INFO expected;
+    const BYTE *expected_data;
+    D3DX10_IMAGE_INFO expected_info;
 }
 test_image[] =
 {
     {
-        test_bmp_1bpp,       sizeof(test_bmp_1bpp),
+        test_bmp_1bpp,       sizeof(test_bmp_1bpp),          test_bmp_1bpp_data,
         {1, 1, 1, 1, 1, 0,   DXGI_FORMAT_R8G8B8A8_UNORM,     D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_BMP}
     },
     {
-        test_bmp_4bpp,       sizeof(test_bmp_4bpp),
+        test_bmp_4bpp,       sizeof(test_bmp_4bpp),          test_bmp_4bpp_data,
         {1, 1, 1, 1, 1, 0,   DXGI_FORMAT_R8G8B8A8_UNORM,     D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_BMP}
     },
     {
-        test_bmp_8bpp,       sizeof(test_bmp_8bpp),
+        test_bmp_8bpp,       sizeof(test_bmp_8bpp),          test_bmp_8bpp_data,
         {1, 1, 1, 1, 1, 0,   DXGI_FORMAT_R8G8B8A8_UNORM,     D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_BMP}
     },
     {
-        test_bmp_16bpp,      sizeof(test_bmp_16bpp),
+        test_bmp_16bpp,      sizeof(test_bmp_16bpp),         test_bmp_16bpp_data,
         {1, 1, 1, 1, 1, 0,   DXGI_FORMAT_R8G8B8A8_UNORM,     D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_BMP}
     },
     {
-        test_bmp_24bpp,      sizeof(test_bmp_24bpp),
+        test_bmp_24bpp,      sizeof(test_bmp_24bpp),         test_bmp_24bpp_data,
         {1, 1, 1, 1, 1, 0,   DXGI_FORMAT_R8G8B8A8_UNORM,     D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_BMP}
     },
     {
-        test_bmp_32bpp_xrgb, sizeof(test_bmp_32bpp_xrgb),
+        test_bmp_32bpp_xrgb, sizeof(test_bmp_32bpp_xrgb),    test_bmp_32bpp_xrgb_data,
         {2, 2, 1, 1, 1, 0,   DXGI_FORMAT_R8G8B8A8_UNORM,     D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_BMP}
     },
     {
-        test_bmp_32bpp_argb, sizeof(test_bmp_32bpp_argb),
+        test_bmp_32bpp_argb, sizeof(test_bmp_32bpp_argb),    test_bmp_32bpp_argb_data,
         {2, 2, 1, 1, 1, 0,   DXGI_FORMAT_R8G8B8A8_UNORM,     D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_BMP}
     },
     {
-        test_png_8bpp_gray,  sizeof(test_png_8bpp_gray),
+        test_png_8bpp_gray,  sizeof(test_png_8bpp_gray),     test_png_8bpp_gray_data,
         {1, 1, 1, 1, 1, 0,   DXGI_FORMAT_R8G8B8A8_UNORM,     D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_PNG}
     },
     {
-        test_jpg,            sizeof(test_jpg),
+        test_jpg,            sizeof(test_jpg),               test_jpg_data,
         {1, 1, 1, 1, 1, 0,   DXGI_FORMAT_R8G8B8A8_UNORM,     D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_JPG}
     },
     {
-        test_gif,            sizeof(test_gif),
+        test_gif,            sizeof(test_gif),               test_gif_data,
         {1, 1, 1, 1, 1, 0,   DXGI_FORMAT_R8G8B8A8_UNORM,     D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_GIF}
     },
     {
-        test_tiff,           sizeof(test_tiff),
+        test_tiff,           sizeof(test_tiff),              test_tiff_data,
         {1, 1, 1, 1, 1, 0,   DXGI_FORMAT_R8G8B8A8_UNORM,     D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_TIFF}
     },
     {
-        test_dds_alpha,      sizeof(test_dds_alpha),
+        test_dds_alpha,      sizeof(test_dds_alpha),         test_dds_alpha_data,
         {1, 1, 1, 1, 1, 0,   DXGI_FORMAT_A8_UNORM,           D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_DDS}
     },
     {
-        test_dds_luminance,  sizeof(test_dds_luminance),
+        test_dds_luminance,  sizeof(test_dds_luminance),     test_dds_luminance_data,
         {1, 1, 1, 1, 1, 0,   DXGI_FORMAT_R8G8B8A8_UNORM,     D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_DDS}
     },
     {
-        test_dds_16bpp,      sizeof(test_dds_16bpp),
+        test_dds_16bpp,      sizeof(test_dds_16bpp),         test_dds_16bpp_data,
         {1, 1, 1, 1, 1, 0,   DXGI_FORMAT_R8G8B8A8_UNORM,     D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_DDS}
     },
     {
-        test_dds_24bpp,      sizeof(test_dds_24bpp),
+        test_dds_24bpp,      sizeof(test_dds_24bpp),         test_dds_24bpp_data,
         {1, 1, 1, 1, 1, 0,   DXGI_FORMAT_R8G8B8A8_UNORM,     D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_DDS}
     },
     {
-        test_dds_32bpp,      sizeof(test_dds_32bpp),
+        test_dds_32bpp,      sizeof(test_dds_32bpp),         test_dds_32bpp_data,
         {1, 1, 1, 1, 1, 0,   DXGI_FORMAT_R8G8B8A8_UNORM,     D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_DDS}
     },
     {
-        test_dds_64bpp,      sizeof(test_dds_64bpp),
+        test_dds_64bpp,      sizeof(test_dds_64bpp),         test_dds_64bpp_data,
         {1, 1, 1, 1, 1, 0,   DXGI_FORMAT_R16G16B16A16_UNORM, D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_DDS}
     },
     {
-        test_dds_96bpp,      sizeof(test_dds_96bpp),
+        test_dds_96bpp,      sizeof(test_dds_96bpp),         test_dds_96bpp_data,
         {1, 1, 1, 1, 1, 0,   DXGI_FORMAT_R32G32B32_FLOAT,    D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_DDS}
     },
     {
-        test_dds_128bpp,     sizeof(test_dds_128bpp),
+        test_dds_128bpp,     sizeof(test_dds_128bpp),        test_dds_128bpp_data,
         {1, 1, 1, 1, 1, 0,   DXGI_FORMAT_R32G32B32A32_FLOAT, D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_DDS}
     },
     {
-        test_dds_dxt1,       sizeof(test_dds_dxt1),
+        test_dds_dxt1,       sizeof(test_dds_dxt1),          test_dds_dxt1_data,
         {4, 4, 1, 1, 1, 0,   DXGI_FORMAT_BC1_UNORM,          D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_DDS}
     },
     {
-        test_dds_dxt2,       sizeof(test_dds_dxt2),
+        test_dds_dxt2,       sizeof(test_dds_dxt2),          test_dds_dxt2_data,
         {4, 4, 1, 1, 3, 0,   DXGI_FORMAT_BC2_UNORM,          D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_DDS}
     },
     {
-        test_dds_dxt3,       sizeof(test_dds_dxt3),
+        test_dds_dxt3,       sizeof(test_dds_dxt3),          test_dds_dxt3_data,
         {1, 3, 1, 1, 2, 0,   DXGI_FORMAT_BC2_UNORM,          D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_DDS}
     },
     {
-        test_dds_dxt4,       sizeof(test_dds_dxt4),
+        test_dds_dxt4,       sizeof(test_dds_dxt4),          test_dds_dxt4_data,
         {4, 4, 1, 1, 3, 0,   DXGI_FORMAT_BC3_UNORM,          D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_DDS}
     },
     {
-        test_dds_dxt5,       sizeof(test_dds_dxt5),
+        test_dds_dxt5,       sizeof(test_dds_dxt5),          test_dds_dxt5_data,
         {4, 2, 1, 1, 1, 0,   DXGI_FORMAT_BC3_UNORM,          D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_DDS}
     },
     {
-        test_dds_bc4,        sizeof(test_dds_bc4),
+        test_dds_bc4,        sizeof(test_dds_bc4),           test_dds_bc4_data,
         {4, 4, 1, 1, 3, 0,   DXGI_FORMAT_BC4_UNORM,          D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_DDS}
     },
     {
-        test_dds_bc5,        sizeof(test_dds_bc5),
+        test_dds_bc5,        sizeof(test_dds_bc5),           test_dds_bc5_data,
         {6, 3, 1, 1, 3, 0,   DXGI_FORMAT_BC5_UNORM,          D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_DDS}
     },
     {
-        test_dds_cube,       sizeof(test_dds_cube),
+        test_dds_cube,       sizeof(test_dds_cube),          test_dds_cube_data,
         {4, 4, 1, 6, 3, 0x4, DXGI_FORMAT_BC1_UNORM,          D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_DDS}
     },
     {
-        test_wmp,            sizeof(test_wmp),
+        test_wmp,            sizeof(test_wmp),               test_wmp_data,
         {1, 1, 1, 1, 1, 0,   DXGI_FORMAT_R8G8B8A8_UNORM,     D3D10_RESOURCE_DIMENSION_TEXTURE2D, D3DX10_IFF_WMP}
     },
 };
@@ -562,6 +684,140 @@ static BOOL is_block_compressed(DXGI_FORMAT format)
             return TRUE;
 
     return FALSE;
+}
+
+static unsigned int get_bpp_from_format(DXGI_FORMAT format)
+{
+    switch (format)
+    {
+        case DXGI_FORMAT_R32G32B32A32_TYPELESS:
+        case DXGI_FORMAT_R32G32B32A32_FLOAT:
+        case DXGI_FORMAT_R32G32B32A32_UINT:
+        case DXGI_FORMAT_R32G32B32A32_SINT:
+            return 128;
+        case DXGI_FORMAT_R32G32B32_TYPELESS:
+        case DXGI_FORMAT_R32G32B32_FLOAT:
+        case DXGI_FORMAT_R32G32B32_UINT:
+        case DXGI_FORMAT_R32G32B32_SINT:
+            return 96;
+        case DXGI_FORMAT_R16G16B16A16_TYPELESS:
+        case DXGI_FORMAT_R16G16B16A16_FLOAT:
+        case DXGI_FORMAT_R16G16B16A16_UNORM:
+        case DXGI_FORMAT_R16G16B16A16_UINT:
+        case DXGI_FORMAT_R16G16B16A16_SNORM:
+        case DXGI_FORMAT_R16G16B16A16_SINT:
+        case DXGI_FORMAT_R32G32_TYPELESS:
+        case DXGI_FORMAT_R32G32_FLOAT:
+        case DXGI_FORMAT_R32G32_UINT:
+        case DXGI_FORMAT_R32G32_SINT:
+        case DXGI_FORMAT_R32G8X24_TYPELESS:
+        case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
+        case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
+        case DXGI_FORMAT_X32_TYPELESS_G8X24_UINT:
+        case DXGI_FORMAT_Y416:
+        case DXGI_FORMAT_Y210:
+        case DXGI_FORMAT_Y216:
+            return 64;
+        case DXGI_FORMAT_R10G10B10A2_TYPELESS:
+        case DXGI_FORMAT_R10G10B10A2_UNORM:
+        case DXGI_FORMAT_R10G10B10A2_UINT:
+        case DXGI_FORMAT_R11G11B10_FLOAT:
+        case DXGI_FORMAT_R8G8B8A8_TYPELESS:
+        case DXGI_FORMAT_R8G8B8A8_UNORM:
+        case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+        case DXGI_FORMAT_R8G8B8A8_UINT:
+        case DXGI_FORMAT_R8G8B8A8_SNORM:
+        case DXGI_FORMAT_R8G8B8A8_SINT:
+        case DXGI_FORMAT_R16G16_TYPELESS:
+        case DXGI_FORMAT_R16G16_FLOAT:
+        case DXGI_FORMAT_R16G16_UNORM:
+        case DXGI_FORMAT_R16G16_UINT:
+        case DXGI_FORMAT_R16G16_SNORM:
+        case DXGI_FORMAT_R16G16_SINT:
+        case DXGI_FORMAT_R32_TYPELESS:
+        case DXGI_FORMAT_D32_FLOAT:
+        case DXGI_FORMAT_R32_FLOAT:
+        case DXGI_FORMAT_R32_UINT:
+        case DXGI_FORMAT_R32_SINT:
+        case DXGI_FORMAT_R24G8_TYPELESS:
+        case DXGI_FORMAT_D24_UNORM_S8_UINT:
+        case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
+        case DXGI_FORMAT_X24_TYPELESS_G8_UINT:
+        case DXGI_FORMAT_R9G9B9E5_SHAREDEXP:
+        case DXGI_FORMAT_R8G8_B8G8_UNORM:
+        case DXGI_FORMAT_G8R8_G8B8_UNORM:
+        case DXGI_FORMAT_B8G8R8A8_UNORM:
+        case DXGI_FORMAT_B8G8R8X8_UNORM:
+        case DXGI_FORMAT_R10G10B10_XR_BIAS_A2_UNORM:
+        case DXGI_FORMAT_B8G8R8A8_TYPELESS:
+        case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+        case DXGI_FORMAT_B8G8R8X8_TYPELESS:
+        case DXGI_FORMAT_B8G8R8X8_UNORM_SRGB:
+        case DXGI_FORMAT_AYUV:
+        case DXGI_FORMAT_Y410:
+        case DXGI_FORMAT_YUY2:
+            return 32;
+        case DXGI_FORMAT_P010:
+        case DXGI_FORMAT_P016:
+            return 24;
+        case DXGI_FORMAT_R8G8_TYPELESS:
+        case DXGI_FORMAT_R8G8_UNORM:
+        case DXGI_FORMAT_R8G8_UINT:
+        case DXGI_FORMAT_R8G8_SNORM:
+        case DXGI_FORMAT_R8G8_SINT:
+        case DXGI_FORMAT_R16_TYPELESS:
+        case DXGI_FORMAT_R16_FLOAT:
+        case DXGI_FORMAT_D16_UNORM:
+        case DXGI_FORMAT_R16_UNORM:
+        case DXGI_FORMAT_R16_UINT:
+        case DXGI_FORMAT_R16_SNORM:
+        case DXGI_FORMAT_R16_SINT:
+        case DXGI_FORMAT_B5G6R5_UNORM:
+        case DXGI_FORMAT_B5G5R5A1_UNORM:
+        case DXGI_FORMAT_A8P8:
+        case DXGI_FORMAT_B4G4R4A4_UNORM:
+            return 16;
+        case DXGI_FORMAT_NV12:
+        case DXGI_FORMAT_420_OPAQUE:
+        case DXGI_FORMAT_NV11:
+            return 12;
+        case DXGI_FORMAT_R8_TYPELESS:
+        case DXGI_FORMAT_R8_UNORM:
+        case DXGI_FORMAT_R8_UINT:
+        case DXGI_FORMAT_R8_SNORM:
+        case DXGI_FORMAT_R8_SINT:
+        case DXGI_FORMAT_A8_UNORM:
+        case DXGI_FORMAT_AI44:
+        case DXGI_FORMAT_IA44:
+        case DXGI_FORMAT_P8:
+        case DXGI_FORMAT_BC2_TYPELESS:
+        case DXGI_FORMAT_BC2_UNORM:
+        case DXGI_FORMAT_BC2_UNORM_SRGB:
+        case DXGI_FORMAT_BC3_TYPELESS:
+        case DXGI_FORMAT_BC3_UNORM:
+        case DXGI_FORMAT_BC3_UNORM_SRGB:
+        case DXGI_FORMAT_BC5_TYPELESS:
+        case DXGI_FORMAT_BC5_UNORM:
+        case DXGI_FORMAT_BC5_SNORM:
+        case DXGI_FORMAT_BC6H_TYPELESS:
+        case DXGI_FORMAT_BC6H_UF16:
+        case DXGI_FORMAT_BC6H_SF16:
+        case DXGI_FORMAT_BC7_TYPELESS:
+        case DXGI_FORMAT_BC7_UNORM:
+        case DXGI_FORMAT_BC7_UNORM_SRGB:
+            return 8;
+        case DXGI_FORMAT_BC1_TYPELESS:
+        case DXGI_FORMAT_BC1_UNORM:
+        case DXGI_FORMAT_BC1_UNORM_SRGB:
+        case DXGI_FORMAT_BC4_TYPELESS:
+        case DXGI_FORMAT_BC4_UNORM:
+        case DXGI_FORMAT_BC4_SNORM:
+            return 4;
+        case DXGI_FORMAT_R1_UNORM:
+            return 1;
+        default:
+            return 0;
+    }
 }
 
 static BOOL compare_float(float f, float g, unsigned int ulps)
@@ -687,33 +943,59 @@ static void delete_resource_module(const WCHAR *filename, HMODULE module)
 
 static void check_image_info(D3DX10_IMAGE_INFO *image_info, const struct test_image *image, unsigned int line)
 {
-    ok_(__FILE__, line)(image_info->Width == image->expected.Width,
+    ok_(__FILE__, line)(image_info->Width == image->expected_info.Width,
             "Got unexpected Width %u, expected %u.\n",
-            image_info->Width, image->expected.Width);
-    ok_(__FILE__, line)(image_info->Height == image->expected.Height,
+            image_info->Width, image->expected_info.Width);
+    ok_(__FILE__, line)(image_info->Height == image->expected_info.Height,
             "Got unexpected Height %u, expected %u.\n",
-            image_info->Height, image->expected.Height);
-    ok_(__FILE__, line)(image_info->Depth == image->expected.Depth,
+            image_info->Height, image->expected_info.Height);
+    ok_(__FILE__, line)(image_info->Depth == image->expected_info.Depth,
             "Got unexpected Depth %u, expected %u.\n",
-            image_info->Depth, image->expected.Depth);
-    ok_(__FILE__, line)(image_info->ArraySize == image->expected.ArraySize,
+            image_info->Depth, image->expected_info.Depth);
+    ok_(__FILE__, line)(image_info->ArraySize == image->expected_info.ArraySize,
             "Got unexpected ArraySize %u, expected %u.\n",
-            image_info->ArraySize, image->expected.ArraySize);
-    ok_(__FILE__, line)(image_info->MipLevels == image->expected.MipLevels,
+            image_info->ArraySize, image->expected_info.ArraySize);
+    ok_(__FILE__, line)(image_info->MipLevels == image->expected_info.MipLevels,
             "Got unexpected MipLevels %u, expected %u.\n",
-            image_info->MipLevels, image->expected.MipLevels);
-    ok_(__FILE__, line)(image_info->MiscFlags == image->expected.MiscFlags,
+            image_info->MipLevels, image->expected_info.MipLevels);
+    ok_(__FILE__, line)(image_info->MiscFlags == image->expected_info.MiscFlags,
             "Got unexpected MiscFlags %#x, expected %#x.\n",
-            image_info->MiscFlags, image->expected.MiscFlags);
-    ok_(__FILE__, line)(image_info->Format == image->expected.Format,
+            image_info->MiscFlags, image->expected_info.MiscFlags);
+    ok_(__FILE__, line)(image_info->Format == image->expected_info.Format,
             "Got unexpected Format %#x, expected %#x.\n",
-            image_info->Format, image->expected.Format);
-    ok_(__FILE__, line)(image_info->ResourceDimension == image->expected.ResourceDimension,
+            image_info->Format, image->expected_info.Format);
+    ok_(__FILE__, line)(image_info->ResourceDimension == image->expected_info.ResourceDimension,
             "Got unexpected ResourceDimension %u, expected %u.\n",
-            image_info->ResourceDimension, image->expected.ResourceDimension);
-    ok_(__FILE__, line)(image_info->ImageFileFormat == image->expected.ImageFileFormat,
+            image_info->ResourceDimension, image->expected_info.ResourceDimension);
+    ok_(__FILE__, line)(image_info->ImageFileFormat == image->expected_info.ImageFileFormat,
             "Got unexpected ImageFileFormat %u, expected %u.\n",
-            image_info->ImageFileFormat, image->expected.ImageFileFormat);
+            image_info->ImageFileFormat, image->expected_info.ImageFileFormat);
+}
+
+static ID3D10Texture2D *get_texture_readback(ID3D10Texture2D *texture)
+{
+    D3D10_TEXTURE2D_DESC desc;
+    ID3D10Texture2D *readback;
+    ID3D10Device *device;
+    HRESULT hr;
+
+    ID3D10Texture2D_GetDevice(texture, &device);
+
+    ID3D10Texture2D_GetDesc(texture, &desc);
+    desc.Usage = D3D10_USAGE_STAGING;
+    desc.BindFlags = 0;
+    desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
+
+    hr = ID3D10Device_CreateTexture2D(device, &desc, NULL, &readback);
+    if (hr != S_OK)
+    {
+        ID3D10Device_Release(device);
+        return NULL;
+    }
+    ID3D10Device_CopyResource(device, (ID3D10Resource *)readback, (ID3D10Resource *)texture);
+
+    ID3D10Device_Release(device);
+    return readback;
 }
 
 static void check_resource_info(ID3D10Resource *resource, const struct test_image *image, unsigned int line)
@@ -726,9 +1008,9 @@ static void check_resource_info(ID3D10Resource *resource, const struct test_imag
     ID3D10Texture3D *texture_3d;
     HRESULT hr;
 
-    expected_width = image->expected.Width;
-    expected_height = image->expected.Height;
-    if (is_block_compressed(image->expected.Format))
+    expected_width = image->expected_info.Width;
+    expected_height = image->expected_info.Height;
+    if (is_block_compressed(image->expected_info.Format))
     {
         expected_width = (expected_width + 3) & ~3;
         expected_height = (expected_height + 3) & ~3;
@@ -742,9 +1024,9 @@ static void check_resource_info(ID3D10Resource *resource, const struct test_imag
     }
 
     ID3D10Resource_GetType(resource, &resource_dimension);
-    ok(resource_dimension == image->expected.ResourceDimension,
+    ok(resource_dimension == image->expected_info.ResourceDimension,
             "Got unexpected ResourceDimension %u, expected %u.\n",
-             resource_dimension, image->expected.ResourceDimension);
+             resource_dimension, image->expected_info.ResourceDimension);
 
     switch (resource_dimension)
     {
@@ -761,12 +1043,12 @@ static void check_resource_info(ID3D10Resource *resource, const struct test_imag
             ok_(__FILE__, line)(desc_2d.MipLevels == expected_mip_levels,
                     "Got unexpected MipLevels %u, expected %u.\n",
                      desc_2d.MipLevels, expected_mip_levels);
-            ok_(__FILE__, line)(desc_2d.ArraySize == image->expected.ArraySize,
+            ok_(__FILE__, line)(desc_2d.ArraySize == image->expected_info.ArraySize,
                     "Got unexpected ArraySize %u, expected %u.\n",
-                     desc_2d.ArraySize, image->expected.ArraySize);
-            ok_(__FILE__, line)(desc_2d.Format == image->expected.Format,
+                     desc_2d.ArraySize, image->expected_info.ArraySize);
+            ok_(__FILE__, line)(desc_2d.Format == image->expected_info.Format,
                     "Got unexpected Format %u, expected %u.\n",
-                     desc_2d.Format, image->expected.Format);
+                     desc_2d.Format, image->expected_info.Format);
             ok_(__FILE__, line)(desc_2d.SampleDesc.Count == 1,
                     "Got unexpected SampleDesc.Count %u, expected %u\n",
                      desc_2d.SampleDesc.Count, 1);
@@ -782,9 +1064,9 @@ static void check_resource_info(ID3D10Resource *resource, const struct test_imag
             ok_(__FILE__, line)(desc_2d.CPUAccessFlags == 0,
                     "Got unexpected CPUAccessFlags %#x, expected %#x\n",
                      desc_2d.CPUAccessFlags, 0);
-            ok_(__FILE__, line)(desc_2d.MiscFlags == image->expected.MiscFlags,
+            ok_(__FILE__, line)(desc_2d.MiscFlags == image->expected_info.MiscFlags,
                     "Got unexpected MiscFlags %#x, expected %#x.\n",
-                     desc_2d.MiscFlags, image->expected.MiscFlags);
+                     desc_2d.MiscFlags, image->expected_info.MiscFlags);
 
             ID3D10Texture2D_Release(texture_2d);
             break;
@@ -799,15 +1081,15 @@ static void check_resource_info(ID3D10Resource *resource, const struct test_imag
             ok_(__FILE__, line)(desc_3d.Height == expected_height,
                     "Got unexpected Height %u, expected %u.\n",
                      desc_3d.Height, expected_height);
-            ok_(__FILE__, line)(desc_3d.Depth == image->expected.Depth,
+            ok_(__FILE__, line)(desc_3d.Depth == image->expected_info.Depth,
                     "Got unexpected Depth %u, expected %u.\n",
-                     desc_3d.Depth, image->expected.Depth);
+                     desc_3d.Depth, image->expected_info.Depth);
             ok_(__FILE__, line)(desc_3d.MipLevels == expected_mip_levels,
                     "Got unexpected MipLevels %u, expected %u.\n",
                      desc_3d.MipLevels, expected_mip_levels);
-            ok_(__FILE__, line)(desc_3d.Format == image->expected.Format,
+            ok_(__FILE__, line)(desc_3d.Format == image->expected_info.Format,
                     "Got unexpected Format %u, expected %u.\n",
-                     desc_3d.Format, image->expected.Format);
+                     desc_3d.Format, image->expected_info.Format);
             ok_(__FILE__, line)(desc_3d.Usage == D3D10_USAGE_DEFAULT,
                     "Got unexpected Usage %u, expected %u\n",
                      desc_3d.Usage, D3D10_USAGE_DEFAULT);
@@ -817,15 +1099,59 @@ static void check_resource_info(ID3D10Resource *resource, const struct test_imag
             ok_(__FILE__, line)(desc_3d.CPUAccessFlags == 0,
                     "Got unexpected CPUAccessFlags %#x, expected %#x\n",
                      desc_3d.CPUAccessFlags, 0);
-            ok_(__FILE__, line)(desc_3d.MiscFlags == image->expected.MiscFlags,
+            ok_(__FILE__, line)(desc_3d.MiscFlags == image->expected_info.MiscFlags,
                     "Got unexpected MiscFlags %#x, expected %#x.\n",
-                     desc_3d.MiscFlags, image->expected.MiscFlags);
+                     desc_3d.MiscFlags, image->expected_info.MiscFlags);
             ID3D10Texture3D_Release(texture_3d);
             break;
 
         default:
             break;
     }
+}
+
+static void check_resource_data(ID3D10Resource *resource, const struct test_image *image, unsigned int line)
+{
+    unsigned int width, height, stride, i;
+    D3D10_MAPPED_TEXTURE2D map;
+    D3D10_TEXTURE2D_DESC desc;
+    ID3D10Texture2D *readback;
+    BOOL line_match;
+    HRESULT hr;
+
+    readback = get_texture_readback((ID3D10Texture2D *)resource);
+    ok_(__FILE__, line)(readback != NULL, "Failed to get texture readback.\n");
+    if (!readback)
+        return;
+
+    ID3D10Texture2D_GetDesc(readback, &desc);
+    width = desc.Width;
+    height = desc.Height;
+    stride = (width * get_bpp_from_format(desc.Format) + 7) / 8;
+    if (is_block_compressed(desc.Format))
+    {
+        stride *= 4;
+        height = (height + 3) / 4;
+    }
+
+    hr = ID3D10Texture2D_Map(readback, 0, D3D10_MAP_READ, 0, &map);
+    ok_(__FILE__, line)(hr == S_OK, "Map failed, hr %#x.\n", hr);
+    if (hr != S_OK)
+    {
+        ID3D10Texture2D_Unmap(readback, 0);
+        return;
+    }
+
+    for (i = 0; i < height; ++i)
+    {
+        line_match = !memcmp(image->expected_data + stride * i,
+                (BYTE *)map.pData + map.RowPitch * i, stride);
+        ok_(__FILE__, line)(line_match, "Data mismatch for line %u.\n", i);
+        if (!line_match)
+            break;
+    }
+
+    ID3D10Texture2D_Unmap(readback, 0);
 }
 
 static void test_D3DX10UnsetAllDeviceObjects(void)
@@ -1665,7 +1991,11 @@ static void test_create_texture(void)
         todo_wine
         ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
         if (hr == S_OK)
+        {
             check_resource_info(resource, test_image + i, __LINE__);
+            check_resource_data(resource, test_image + i, __LINE__);
+            ID3D10Resource_Release(resource);
+        }
 
         winetest_pop_context();
     }
