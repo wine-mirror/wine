@@ -51,18 +51,6 @@ static double CDECL unix_exp( double x )
 }
 
 /*********************************************************************
- *      exp2
- */
-static double CDECL unix_exp2( double x )
-{
-#ifdef HAVE_EXP2
-    return exp2(x);
-#else
-    return pow(2, x);
-#endif
-}
-
-/*********************************************************************
  *      pow
  */
 static double CDECL unix_pow( double x, double y )
@@ -73,7 +61,6 @@ static double CDECL unix_pow( double x, double y )
 static const struct unix_funcs funcs =
 {
     unix_exp,
-    unix_exp2,
     unix_pow,
 };
 

@@ -2658,9 +2658,6 @@ then
     AC_DEFINE(HAVE_ISNAN, 1, [Define to 1 if you have the `isnan' function.])
 fi
 
-AC_CHECK_FUNCS(\
-	exp2
-)
 LIBS="$ac_save_LIBS"
 
 dnl Check for __builtin_popcount
