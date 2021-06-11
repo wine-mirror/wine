@@ -1433,170 +1433,118 @@ static void output_syscall_dispatcher(void)
     switch (target_cpu)
     {
     case CPU_x86:
-        output( "\tpushl %%ebp\n" );
-        output_cfi( ".cfi_adjust_cfa_offset 4\n" );
-        output_cfi( ".cfi_rel_offset %%ebp,0\n" );
-        output( "\tmovl %%esp,%%ebp\n" );
-        output_cfi( ".cfi_def_cfa_register %%ebp\n" );
-        output( "\tleal -0x2c(%%esp),%%esp\n" );
-        output( "\tmovl %%ebx,-0x14(%%ebp)\n" );
-        output_cfi( ".cfi_rel_offset %%ebx,-0x14\n" );
-        output( "\tmovl %%edi,-0x08(%%ebp)\n" );
-        output_cfi( ".cfi_rel_offset %%edi,-0x08\n" );
-        output( "\tmovl %%esi,-0x04(%%ebp)\n" );
-        output_cfi( ".cfi_rel_offset %%esi,-0x04\n" );
+        output( "\tmovl %%fs:0x1f8,%%ecx\n" );   /* x86_thread_data()->syscall_frame */
+        output( "\tmovl $0,0x00(%%ecx)\n" );     /* frame->restore_flags */
+        output( "\tpopl 0x08(%%ecx)\n" );        /* frame->eip */
+        output( "\tmovl %%esp,0x0c(%%ecx)\n" );  /* frame->esp */
         output( "\tpushfl\n" );
-        output( "\tpushl $0\n" );
-        output( "\tmovw %%gs,-0x1a(%%ebp)\n" );
-        output( "\tmovw %%fs,-0x1c(%%ebp)\n" );
-        output( "\tmovw %%es,-0x1e(%%ebp)\n" );
-        output( "\tmovw %%ds,-0x20(%%ebp)\n" );
-        output( "\tmovw %%ss,-0x22(%%ebp)\n" );
-        output( "\tmovw %%cs,-0x24(%%ebp)\n" );
-        output( "\tleal 8(%%ebp),%%ecx\n" );
-        output( "\tmovl %%ecx,-0x28(%%ebp)\n" ); /* frame->esp */
-        output( "\tmovl 4(%%ebp),%%ecx\n" );
-        output( "\tmovl %%ecx,-0x2c(%%ebp)\n" ); /* frame->eip */
-        output( "\tsubl $0x2c0,%%esp\n") ;
-        output( "\tandl $~63,%%esp\n" );
-        output( "\tmovl %%eax,%%ecx\n" );
-        output( "\tshrl $8,%%ecx\n" );
-        output( "\tandl $0x30,%%ecx\n" );       /* syscall table number */
+        output( "\tpopl 0x04(%%ecx)\n" );        /* frame->eflags */
+        output( "\tmovw %%cs,0x10(%%ecx)\n" );
+        output( "\tmovw %%ss,0x12(%%ecx)\n" );
+        output( "\tmovw %%ds,0x14(%%ecx)\n" );
+        output( "\tmovw %%es,0x16(%%ecx)\n" );
+        output( "\tmovw %%fs,0x18(%%ecx)\n" );
+        output( "\tmovw %%gs,0x1a(%%ecx)\n" );
+        output( "\tmovl %%eax,0x1c(%%ecx)\n" );
+        output( "\tmovl %%ebx,0x20(%%ecx)\n" );
+        output( "\tmovl %%edi,0x2c(%%ecx)\n" );
+        output( "\tmovl %%esi,0x30(%%ecx)\n" );
+        output( "\tmovl %%ebp,0x34(%%ecx)\n" );
+        output( "\tleal 0x34(%%ecx),%%ebp\n" );
+        output( "\tleal 4(%%esp),%%esi\n" );    /* first argument */
         output( "\tmovl %%eax,%%edx\n" );
-        output( "\tandl $0xfff,%%edx\n" );      /* syscall number */
+        output( "\tshrl $8,%%edx\n" );
+        output( "\tandl $0x30,%%edx\n" );       /* syscall table number */
         if (UsePIC)
         {
             output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
-            output( "1:\tleal %s-1b(%%eax,%%ecx),%%ebx\n", asm_name("KeServiceDescriptorTable") );
-            output( "\tmovl %s-1b(%%eax),%%esi\n", asm_name("__wine_syscall_flags") );
+            output( "1:\tleal %s-1b(%%eax,%%edx),%%ebx\n", asm_name("KeServiceDescriptorTable") );
+            output( "\tmovl %s-1b(%%eax),%%edi\n", asm_name("__wine_syscall_flags") );
             needs_get_pc_thunk = 1;
         }
         else
         {
-            output( "\tleal %s(%%ecx),%%ebx\n", asm_name("KeServiceDescriptorTable") );
-            output( "\tmovl %s,%%esi\n", asm_name("__wine_syscall_flags") );
+            output( "\tleal %s(%%edx),%%ebx\n", asm_name("KeServiceDescriptorTable") );
+            output( "\tmovl %s,%%edi\n", asm_name("__wine_syscall_flags") );
         }
-        output( "\ttestl $3,%%esi\n" );  /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
+        output( "\ttestl $3,%%edi\n" );  /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
         output( "\tjz 2f\n" );
-        output( "\tmovl %%edx,%%ecx\n ");
         output( "\tmovl $7,%%eax\n" );
         output( "\txorl %%edx,%%edx\n" );
-        for (i = 0; i < 6; i++) output( "\tmovl %%edx,0x%x(%%esp)\n", 0x200 + i * 4 );
-        output( "\ttestl $2,%%esi\n" );  /* SYSCALL_HAVE_XSAVEC */
+        for (i = 0; i < 6; i++) output( "\tmovl %%edx,0x%x(%%ecx)\n", 0x240 + i * 4 );
+        output( "\ttestl $2,%%edi\n" );  /* SYSCALL_HAVE_XSAVEC */
         output( "\tjz 1f\n" );
-        for (i = 6; i < 16; i++) output( "\tmovl %%edx,0x%x(%%esp)\n", 0x200 + i * 4 );
-        output( "\txsavec (%%esp)\n" );
-        output( "\tmovl %%ecx,%%edx\n ");
+        for (i = 6; i < 16; i++) output( "\tmovl %%edx,0x%x(%%ecx)\n", 0x240 + i * 4 );
+        output( "\txsavec 0x40(%%ecx)\n" );
         output( "\tjmp 4f\n" );
-        output( "1:\txsave (%%esp)\n" );
-        output( "\tmovl %%ecx,%%edx\n ");
+        output( "1:\txsave 0x40(%%ecx)\n" );
         output( "\tjmp 4f\n" );
-        output( "2:\ttestl $4,%%esi\n" );  /* SYSCALL_HAVE_FXSAVE */
+        output( "2:\ttestl $4,%%edi\n" );  /* SYSCALL_HAVE_FXSAVE */
         output( "\tjz 3f\n" );
-        output( "\tfxsave (%%esp)\n" );
+        output( "\tfxsave 0x40(%%ecx)\n" );
         output( "\tjmp 4f\n" );
-        output( "3:\tfnsave (%%esp)\n" );
+        output( "3:\tfnsave 0x40(%%ecx)\n" );
         output( "\tfwait\n" );
-        output( "4:\tleal -0x34(%%ebp),%%ecx\n" );
-        output( "\tmovl %%ecx,%%fs:0x1f8\n" );  /* x86_thread_data()->syscall_frame */
-        output( "\tcmpl 8(%%ebx),%%edx\n" );   /* table->ServiceLimit */
+        output( "4:\tmovl %%ecx,%%esp\n" );
+        output( "\tmovl 0x1c(%%esp),%%edx\n" ); /* frame->eax */
+        output( "\tandl $0xfff,%%edx\n" );      /* syscall number */
+        output( "\tcmpl 8(%%ebx),%%edx\n" );    /* table->ServiceLimit */
         output( "\tjae 6f\n" );
         output( "\tmovl 12(%%ebx),%%eax\n" );  /* table->ArgumentTable */
         output( "\tmovzbl (%%eax,%%edx,1),%%ecx\n" );
         output( "\tmovl (%%ebx),%%eax\n" );    /* table->ServiceTable */
-        output( "\tmovl %%esi,%%ebx\n" );
+        output( "\tmovl %%edi,%%ebx\n" );
         output( "\tsubl %%ecx,%%esp\n" );
         output( "\tshrl $2,%%ecx\n" );
-        output( "\tleal 12(%%ebp),%%esi\n" );
         output( "\tandl $~15,%%esp\n" );
         output( "\tmovl %%esp,%%edi\n" );
         output( "\tcld\n" );
         output( "\trep; movsl\n" );
-        output( "\tmovl %%ebx,%%esi\n" );
+        output( "\tmovl %%ebx,%%edi\n" );
         output( "\tcall *(%%eax,%%edx,4)\n" );
-        output( "5:\tmovl $0,%%fs:0x1f8\n" );
-        output( "\tmovl -0x34(%%ebp),%%ecx\n" );  /* syscall_frame->restore_flags */
-        output( "\ttestl $0x68,%%ecx\n" );  /* CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS | CONTEXT_XSAVE */
+        output( "5:\tleal -0x34(%%ebp),%%esp\n" );
+        output( "\tmovl (%%esp),%%ecx\n" );  /* frame->restore_flags */
+        output( "\ttestl $0x68,%%ecx\n" );   /* CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS | CONTEXT_XSAVE */
         output( "\tjz 3f\n" );
-        output( "\tleal -0x2f4(%%ebp),%%ebx\n") ;
-        output( "\tandl $~63,%%ebx\n" );
-        output( "\ttestl $3,%%esi\n" );  /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
+        output( "\ttestl $3,%%edi\n" );  /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
         output( "\tjz 1f\n" );
-        output( "\tmovl %%eax,%%edi\n" );
+        output( "\tmovl %%eax,%%esi\n" );
         output( "\tmovl $7,%%eax\n" );
         output( "\txorl %%edx,%%edx\n" );
-        output( "\txrstor (%%ebx)\n" );
-        output( "\tmovl %%edi,%%eax\n" );
+        output( "\txrstor 0x40(%%esp)\n" );
+        output( "\tmovl %%esi,%%eax\n" );
         output( "\tjmp 3f\n" );
-        output( "1:\ttestl $4,%%esi\n" );  /* SYSCALL_HAVE_FXSAVE */
+        output( "1:\ttestl $4,%%edi\n" );  /* SYSCALL_HAVE_FXSAVE */
         output( "\tjz 2f\n" );
-        output( "\tfxrstor (%%ebx)\n" );
+        output( "\tfxrstor 0x40(%%esp)\n" );
         output( "\tjmp 3f\n" );
-        output( "2:\tfrstor (%%ebx)\n" );
+        output( "2:\tfrstor 0x40(%%esp)\n" );
         output( "\tfwait\n" );
-        output( "3:\tmovl -0x08(%%ebp),%%edi\n" );
-        output_cfi( ".cfi_same_value %%edi" );
-        output( "\tmovl -0x04(%%ebp),%%esi\n" );
-        output_cfi( ".cfi_same_value %%esi" );
-        output( "\tmovl -0x14(%%ebp),%%ebx\n" );
-        output_cfi( ".cfi_same_value %%ebx" );
+        output( "3:\tmovl 0x2c(%%esp),%%edi\n" );
+        output( "\tmovl 0x30(%%esp),%%esi\n" );
+        output( "\tmovl 0x34(%%esp),%%ebp\n" );
         output( "\ttestl $0x7,%%ecx\n" );  /* CONTEXT_CONTROL | CONTEXT_SEGMENTS | CONTEXT_INTEGER */
         output( "\tjnz 1f\n" );
-        output( "\tmovl -0x2c(%%ebp),%%ecx\n" );  /* frame->eip */
-        output( "\tleal -0x28(%%ebp),%%esp\n" );  /* frame->esp */
-        output( "\tmovl (%%ebp),%%ebp\n" );
-        output_cfi( ".cfi_same_value %%ebp" );
-        output( "\tpopl %%esp\n" );
+        output( "\tmovl 0x20(%%esp),%%ebx\n" );
+        output( "\tmovl 0x08(%%esp),%%ecx\n" );  /* frame->eip */
+        output( "\tmovl 0x0c(%%esp),%%esp\n" );  /* frame->esp */
         output( "\tjmpl *%%ecx\n" );
         output( "1:\ttestl $0x2,%%ecx\n" );  /* CONTEXT_INTEGER */
-        output( "\tjnz 1f\n" );
-        output( "\tmovl %%eax,-0x18(%%ebp)\n" );
-        output( "\tmovl $0,-0x10(%%ebp)\n" );
-        output( "\tmovl $0,-0x0c(%%ebp)\n" );
-        output( "1:\tmovw -0x1a(%%ebp),%%gs\n" );
-        output( "\tmovw -0x1c(%%ebp),%%fs\n" );
-        output( "\tmovw -0x1e(%%ebp),%%es\n" );
-        output( "\tleal -0x34(%%ebp),%%ecx\n" );
-        output_cfi( ".cfi_def_cfa_register %%ecx" );
-        output_cfi( ".cfi_adjust_cfa_offset 0x34\n" );
-        output( "\tmovl (%%ebp),%%ebp\n" );
-        output_cfi( ".cfi_same_value %%ebp" );
-        output( "\tmovw %%ss,%%ax\n" );
-        output( "\tcmpw 0x12(%%ecx),%%ax\n" );
-        output( "\tjne 3f\n" );
-        /* As soon as we have switched stacks the context structure could
-         * be invalid (when signal handlers are executed for example). Copy
-         * values on the target stack before changing ESP. */
-        output( "\tmovl 0x0c(%%ecx),%%eax\n" );
-        output( "\tleal -4*4(%%eax),%%eax\n" );
-        output( "\tmovl 0x04(%%ecx),%%edx\n" );
-        output( "\tmovl %%edx,3*4(%%eax)\n" );
-        output( "\tmovl 0x10(%%ecx),%%edx\n" );
-        output( "\tmovl %%edx,2*4(%%eax)\n" );
-        output( "\tmovl 0x08(%%ecx),%%edx\n" );
-        output( "\tmovl %%edx,1*4(%%eax)\n" );
-        output( "\tmovl 0x1c(%%ecx),%%edx\n" );
-        output( "\tmovl %%edx,0*4(%%eax)\n" );
-        output( "\tpushl 0x14(%%ecx)\n" );
-        output( "\tmovl 0x28(%%ecx),%%edx\n" );
-        output( "\tmovl 0x24(%%ecx),%%ecx\n" );
-        output( "\tpopl %%ds\n" );
-        output( "\tmovl %%eax,%%esp\n" );
-        output( "\tpopl %%eax\n" );
-        output( "\tiret\n" );
-        /* Restore the context when the stack segment changes. We can't use
-         * the same code as above because we do not know if the stack segment
-         * is 16 or 32 bit, and 'movl' will throw an exception when we try to
-         * access memory above the limit. */
-        output( "3:\tmovl 0x28(%%ecx),%%edx\n" );
-        output( "\tmovl 0x1c(%%ecx),%%eax\n" );
-        output( "\tmovw 0x12(%%ecx),%%ss\n" );
-        output( "\tmovl 0x0c(%%ecx),%%esp\n" );
-        output( "\tpushl 0x04(%%ecx)\n" );
-        output( "\tpushl 0x10(%%ecx)\n" );
-        output( "\tpushl 0x08(%%ecx)\n" );
-        output( "\tpushl 0x14(%%ecx)\n" );
-        output( "\tmovl 0x24(%%ecx),%%ecx\n" );
+        output( "\tjz 1f\n" );
+        output( "\tmovl 0x1c(%%esp),%%eax\n" );
+        output( "\tmovl 0x24(%%esp),%%ecx\n" );
+        output( "\tmovl 0x28(%%esp),%%edx\n" );
+        output( "1:\tmovl 0x0c(%%esp),%%ebx\n" ); /* frame->esp */
+        output( "\tmovw 0x12(%%esp),%%ss\n" );
+        output( "\txchgl %%ebx,%%esp\n" );
+        output( "\tpushl 0x04(%%ebx)\n" );       /* frame->eflags */
+        output( "\tpushl 0x10(%%ebx)\n" );       /* frame->cs */
+        output( "\tpushl 0x08(%%ebx)\n" );       /* frame->eip */
+        output( "\tpushl 0x14(%%ebx)\n" );       /* frame->ds */
+        output( "\tmovw 0x16(%%ebx),%%es\n" );
+        output( "\tmovw 0x18(%%ebx),%%fs\n" );
+        output( "\tmovw 0x1a(%%ebx),%%gs\n" );
+        output( "\tmovl 0x20(%%ebx),%%ebx\n" );
         output( "\tpopl %%ds\n" );
         output( "\tiret\n" );
         output( "6:\tmovl $0x%x,%%eax\n", invalid_param );
