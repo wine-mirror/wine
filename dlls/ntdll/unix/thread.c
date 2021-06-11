@@ -784,9 +784,9 @@ void set_thread_id( TEB *teb, DWORD pid, DWORD tid )
 /***********************************************************************
  *           init_thread_stack
  */
-NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR zero_bits, SIZE_T reserve_size,
-                            SIZE_T commit_size, SIZE_T *pthread_size )
+NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR zero_bits, SIZE_T reserve_size, SIZE_T commit_size )
 {
+    struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     INITIAL_TEB stack;
     NTSTATUS status;
 
@@ -800,33 +800,27 @@ NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR zero_bits, SIZE_T reserve_size,
         TEB32 *teb32 = (TEB32 *)((char *)teb + teb->WowTebOffset);
 
         /* 32-bit stack */
-        if ((status = virtual_alloc_thread_stack( &stack, zero_bits, reserve_size, commit_size, NULL )))
+        if ((status = virtual_alloc_thread_stack( &stack, zero_bits, reserve_size, commit_size, 0 )))
             return status;
         teb32->Tib.StackBase = PtrToUlong( stack.StackBase );
         teb32->Tib.StackLimit = PtrToUlong( stack.StackLimit );
         teb32->DeallocationStack = PtrToUlong( stack.DeallocationStack );
 
         /* 64-bit stack */
-        if ((status = virtual_alloc_thread_stack( &stack, 0, 0x40000, 0x40000, pthread_size )))
+        if ((status = virtual_alloc_thread_stack( &stack, 0, 0x40000, 0x40000, kernel_stack_size )))
             return status;
         cpu = (WOW64_CPURESERVED *)(((ULONG_PTR)stack.StackBase - cpusize) & ~15);
         cpu->Machine = main_image_info.Machine;
         teb->Tib.StackBase = teb->TlsSlots[WOW64_TLS_CPURESERVED] = cpu;
         teb->Tib.StackLimit = stack.StackLimit;
         teb->DeallocationStack = stack.DeallocationStack;
-
-        if (pthread_size)
-        {
-            struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
-            thread_data->start_stack = stack.StackBase;
-            *pthread_size += (char *)stack.StackBase - (char *)cpu;
-        }
+        thread_data->kernel_stack = stack.StackBase;
         return STATUS_SUCCESS;
 #else
         TEB64 *teb64 = (TEB64 *)((char *)teb + teb->WowTebOffset);
 
         /* 64-bit stack */
-        if ((status = virtual_alloc_thread_stack( &stack, 0, 0x40000, 0x40000, NULL ))) return status;
+        if ((status = virtual_alloc_thread_stack( &stack, 0, 0x40000, 0x40000, 0 ))) return status;
 
         cpu = (WOW64_CPURESERVED *)(((ULONG_PTR)stack.StackBase - cpusize) & ~15);
         cpu->Machine = main_image_info.Machine;
@@ -837,16 +831,13 @@ NTSTATUS init_thread_stack( TEB *teb, ULONG_PTR zero_bits, SIZE_T reserve_size,
     }
 
     /* native stack */
-    if ((status = virtual_alloc_thread_stack( &stack, zero_bits, reserve_size, commit_size, pthread_size )))
+    if ((status = virtual_alloc_thread_stack( &stack, zero_bits, reserve_size,
+                                              commit_size, kernel_stack_size )))
         return status;
     teb->Tib.StackBase = stack.StackBase;
     teb->Tib.StackLimit = stack.StackLimit;
     teb->DeallocationStack = stack.DeallocationStack;
-    if (pthread_size)
-    {
-        struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
-        thread_data->start_stack = stack.StackBase;
-    }
+    thread_data->kernel_stack = stack.StackBase;
     return STATUS_SUCCESS;
 }
 
@@ -904,7 +895,6 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
     struct ntdll_thread_data *thread_data;
     DWORD tid = 0;
     int request_pipe[2];
-    SIZE_T extra_stack = PTHREAD_STACK_MIN;
     TEB *teb;
     NTSTATUS status;
 
@@ -980,7 +970,7 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
 
     if ((status = virtual_alloc_teb( &teb ))) goto done;
 
-    if ((status = init_thread_stack( teb, zero_bits, stack_reserve, stack_commit, &extra_stack )))
+    if ((status = init_thread_stack( teb, zero_bits, stack_reserve, stack_commit )))
     {
         virtual_free_teb( teb );
         goto done;
@@ -990,13 +980,12 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
 
     thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
     thread_data->request_fd  = request_pipe[1];
-    thread_data->start_stack = (char *)teb->Tib.StackBase;
     thread_data->start = start;
     thread_data->param = param;
 
     pthread_attr_init( &pthread_attr );
     pthread_attr_setstack( &pthread_attr, teb->DeallocationStack,
-                           (char *)teb->Tib.StackBase + extra_stack - (char *)teb->DeallocationStack );
+                           (char *)thread_data->kernel_stack + kernel_stack_size - (char *)teb->DeallocationStack );
     pthread_attr_setguardsize( &pthread_attr, 0 );
     pthread_attr_setscope( &pthread_attr, PTHREAD_SCOPE_SYSTEM ); /* force creating a kernel thread */
     InterlockedIncrement( &nb_threads );
