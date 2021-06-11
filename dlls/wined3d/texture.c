@@ -5139,7 +5139,7 @@ BOOL wined3d_texture_vk_prepare_texture(struct wined3d_texture_vk *texture_vk,
         vk_usage |= VK_IMAGE_USAGE_STORAGE_BIT;
 
     texture_vk->layout = VK_IMAGE_LAYOUT_GENERAL;
-    if (wined3d_popcount(resource->bind_flags == 1))
+    if (wined3d_popcount(resource->bind_flags) == 1)
     {
         switch (resource->bind_flags)
         {
