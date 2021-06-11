@@ -172,6 +172,8 @@ struct sock
     struct list         accept_list; /* list of pending accept requests */
     struct accept_req  *accept_recv_req; /* pending accept-into request which will recv on this socket */
     struct connect_req *connect_req; /* pending connection request */
+    unsigned int        rd_shutdown : 1; /* is the read end shut down? */
+    unsigned int        wr_shutdown : 1; /* is the write end shut down? */
     unsigned int        wr_shutdown_pending : 1; /* is a write shutdown pending? */
     unsigned int        nonblocking : 1; /* is the socket nonblocking? */
 };
@@ -781,9 +783,9 @@ static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
         int status = sock_get_ntstatus( error );
         struct accept_req *req, *next;
 
-        if (!(sock->state & FD_READ))
+        if (sock->rd_shutdown)
             async_wake_up( &sock->read_q, status );
-        if (!(sock->state & FD_WRITE))
+        if (sock->wr_shutdown)
             async_wake_up( &sock->write_q, status );
 
         LIST_FOR_EACH_ENTRY_SAFE( req, next, &sock->accept_list, struct accept_req, entry )
@@ -869,7 +871,7 @@ static void sock_poll_event( struct fd *fd, int event )
         else if (event & POLLOUT)
         {
             /* we got connected */
-            sock->state |= FD_WINE_CONNECTED|FD_READ|FD_WRITE;
+            sock->state |= FD_WINE_CONNECTED;
             sock->state &= ~FD_CONNECT;
             sock->connect_time = current_time;
         }
@@ -911,12 +913,12 @@ static void sock_poll_event( struct fd *fd, int event )
             }
         }
 
-        if ( (hangup_seen || event & (POLLHUP|POLLERR)) && (sock->state & (FD_READ|FD_WRITE)) )
+        if ((hangup_seen || event & (POLLHUP | POLLERR)) && (!sock->rd_shutdown || !sock->wr_shutdown))
         {
             error = error ? error : sock_error( fd );
             if ( (event & POLLERR) || ( sock_shutdown_type == SOCK_SHUTDOWN_EOF && (event & POLLHUP) ))
-                sock->state &= ~FD_WRITE;
-            sock->state &= ~FD_READ;
+                sock->wr_shutdown = 1;
+            sock->rd_shutdown = 1;
 
             if (debug_level)
                 fprintf(stderr, "socket %p aborted by error %d, event: %x\n", sock, error, event);
@@ -969,7 +971,6 @@ static int sock_get_poll_events( struct fd *fd )
 {
     struct sock *sock = get_fd_user( fd );
     unsigned int mask = sock->mask & ~sock->reported_events;
-    unsigned int smask = sock->state & mask;
     struct poll_req *req;
     int ev = 0;
 
@@ -996,7 +997,12 @@ static int sock_get_poll_events( struct fd *fd )
     {
         if (async_waiting( &sock->read_q )) ev |= POLLIN | POLLPRI;
     }
-    else if (smask & FD_READ || (sock->state & FD_WINE_LISTENING && mask & FD_ACCEPT))
+    else if (sock->state & FD_WINE_LISTENING)
+    {
+        if (mask & FD_ACCEPT)
+            ev |= POLLIN;
+    }
+    else if (!sock->rd_shutdown && (mask & FD_READ))
         ev |= POLLIN | POLLPRI;
     /* We use POLLIN with 0 bytes recv() as FD_CLOSE indication for stream sockets. */
     else if (sock->type == WS_SOCK_STREAM && (mask & FD_CLOSE) && !(sock->reported_events & FD_READ))
@@ -1006,7 +1012,7 @@ static int sock_get_poll_events( struct fd *fd )
     {
         if (async_waiting( &sock->write_q )) ev |= POLLOUT;
     }
-    else if (smask & FD_WRITE)
+    else if (!sock->wr_shutdown && (mask & FD_WRITE))
         ev |= POLLOUT;
 
     LIST_FOR_EACH_ENTRY( req, &poll_list, struct poll_req, entry )
@@ -1039,18 +1045,30 @@ static void sock_queue_async( struct fd *fd, struct async *async, int type, int 
     switch (type)
     {
     case ASYNC_TYPE_READ:
+        if (sock->rd_shutdown)
+        {
+            set_error( STATUS_PIPE_DISCONNECTED );
+            return;
+        }
         queue = &sock->read_q;
         break;
+
     case ASYNC_TYPE_WRITE:
+        if (sock->wr_shutdown)
+        {
+            set_error( STATUS_PIPE_DISCONNECTED );
+            return;
+        }
         queue = &sock->write_q;
         break;
+
     default:
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
 
-    if ( ( !( sock->state & (FD_READ|FD_CONNECT|FD_WINE_LISTENING) ) && type == ASYNC_TYPE_READ  ) ||
-         ( !( sock->state & (FD_WRITE|FD_CONNECT) ) && type == ASYNC_TYPE_WRITE ) )
+    if ( ( !( sock->state & (FD_CONNECT|FD_WINE_LISTENING) ) && type == ASYNC_TYPE_READ  ) ||
+         ( !( sock->state & (FD_CONNECT) ) && type == ASYNC_TYPE_WRITE ) )
     {
         set_error( STATUS_PIPE_DISCONNECTED );
         return;
@@ -1180,6 +1198,8 @@ static struct sock *create_socket(void)
     sock->ifchange_obj = NULL;
     sock->accept_recv_req = NULL;
     sock->connect_req = NULL;
+    sock->rd_shutdown = 0;
+    sock->wr_shutdown = 0;
     sock->wr_shutdown_pending = 0;
     sock->nonblocking = 0;
     init_async_queue( &sock->read_q );
@@ -1339,7 +1359,6 @@ static int init_socket( struct sock *sock, int family, int type, int protocol, u
     }
 #endif
 
-    sock->state  = (type != SOCK_STREAM) ? (FD_READ|FD_WRITE) : 0;
     sock->flags  = flags;
     sock->proto  = protocol;
     sock->type   = type;
@@ -1404,7 +1423,7 @@ static struct sock *accept_socket( struct sock *sock )
         }
 
         /* newly created socket gets the same properties of the listening socket */
-        acceptsock->state  = FD_WINE_CONNECTED|FD_READ|FD_WRITE;
+        acceptsock->state   = FD_WINE_CONNECTED;
         acceptsock->nonblocking = sock->nonblocking;
         acceptsock->mask    = sock->mask;
         acceptsock->proto   = sock->proto;
@@ -1458,7 +1477,7 @@ static int accept_into_socket( struct sock *sock, struct sock *acceptsock )
             return FALSE;
     }
 
-    acceptsock->state  |= FD_WINE_CONNECTED|FD_READ|FD_WRITE;
+    acceptsock->state |= FD_WINE_CONNECTED;
     acceptsock->pending_events = 0;
     acceptsock->reported_events = 0;
     acceptsock->proto   = sock->proto;
@@ -1808,7 +1827,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 
         if (!ret)
         {
-            sock->state |= FD_WINE_CONNECTED | FD_READ | FD_WRITE;
+            sock->state |= FD_WINE_CONNECTED;
             sock->state &= ~FD_CONNECT;
 
             if (!send_len) return 1;
@@ -1866,11 +1885,11 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 
         if (how != SD_SEND)
         {
-            sock->state &= ~FD_READ;
+            sock->rd_shutdown = 1;
         }
         if (how != SD_RECEIVE)
         {
-            sock->state &= ~FD_WRITE;
+            sock->wr_shutdown = 1;
             if (list_empty( &sock->write_q.queue ))
                 shutdown( unix_fd, SHUT_WR );
             else
@@ -2462,8 +2481,7 @@ DECL_HANDLER(recv_socket)
         status = STATUS_PENDING;
     }
 
-    /* are we shut down? */
-    if (status == STATUS_PENDING && !(sock->state & FD_READ)) status = STATUS_PIPE_DISCONNECTED;
+    if (status == STATUS_PENDING && sock->rd_shutdown) status = STATUS_PIPE_DISCONNECTED;
 
     sock->pending_events &= ~(req->oob ? FD_OOB : FD_READ);
     sock->reported_events &= ~(req->oob ? FD_OOB : FD_READ);
@@ -2567,8 +2585,7 @@ DECL_HANDLER(send_socket)
         status = STATUS_PENDING;
     }
 
-    /* are we shut down? */
-    if (status == STATUS_PENDING && !(sock->state & FD_WRITE)) status = STATUS_PIPE_DISCONNECTED;
+    if (status == STATUS_PENDING && sock->wr_shutdown) status = STATUS_PIPE_DISCONNECTED;
 
     if ((async = create_request_async( fd, get_fd_comp_flags( fd ), &req->async )))
     {
