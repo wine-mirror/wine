@@ -596,7 +596,7 @@ static BOOL get_computer_sid( PSID sid )
 
 static DWORD get_sid_size( const WCHAR *string, const WCHAR **end )
 {
-    if (string[0] == 'S' && string[1] == '-') /* S-R-I(-S)+ */
+    if ((string[0] == 'S' || string[0] == 's') && string[1] == '-') /* S-R-I(-S)+ */
     {
         int token_count = 0;
         string++;
@@ -622,13 +622,13 @@ static DWORD get_sid_size( const WCHAR *string, const WCHAR **end )
 
         for (i = 0; i < ARRAY_SIZE(well_known_sids); i++)
         {
-            if (!wcsncmp( well_known_sids[i].str, string, 2 ))
+            if (!wcsnicmp( well_known_sids[i].str, string, 2 ))
                 return GetSidLengthRequired( well_known_sids[i].sid.SubAuthorityCount );
         }
 
         for (i = 0; i < ARRAY_SIZE(well_known_rids); i++)
         {
-            if (!wcsncmp( well_known_rids[i].str, string, 2 ))
+            if (!wcsnicmp( well_known_rids[i].str, string, 2 ))
             {
                 struct max_sid local;
                 get_computer_sid(&local);
@@ -649,7 +649,7 @@ static BOOL parse_sid( const WCHAR *string, const WCHAR **end, SID *pisid, DWORD
     if (!pisid) /* Simply compute the size */
         return TRUE;
 
-    if (string[0] == 'S' && string[1] == '-') /* S-R-I-S-S */
+    if ((string[0] == 'S' || string[0] == 's') && string[1] == '-') /* S-R-I-S-S */
     {
         DWORD i = 0, identAuth;
         DWORD csubauth = ((*size - GetSidLengthRequired(0)) / sizeof(DWORD));
@@ -717,7 +717,7 @@ static BOOL parse_sid( const WCHAR *string, const WCHAR **end, SID *pisid, DWORD
 
         for (i = 0; i < ARRAY_SIZE(well_known_sids); i++)
         {
-            if (!wcsncmp(well_known_sids[i].str, string, 2))
+            if (!wcsnicmp(well_known_sids[i].str, string, 2))
             {
                 DWORD j;
                 pisid->SubAuthorityCount = well_known_sids[i].sid.SubAuthorityCount;
@@ -730,7 +730,7 @@ static BOOL parse_sid( const WCHAR *string, const WCHAR **end, SID *pisid, DWORD
 
         for (i = 0; i < ARRAY_SIZE(well_known_rids); i++)
         {
-            if (!wcsncmp(well_known_rids[i].str, string, 2))
+            if (!wcsnicmp(well_known_rids[i].str, string, 2))
             {
                 get_computer_sid(pisid);
                 pisid->SubAuthority[pisid->SubAuthorityCount] = well_known_rids[i].rid;

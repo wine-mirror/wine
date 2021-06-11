@@ -265,6 +265,7 @@ static void test_ConvertStringSidToSid(void)
     str_to_sid_tests[] =
     {
         { "WD", "S-1-1-0" },
+        { "wD", "S-1-1-0" },
         { "CO", "S-1-3-0" },
         { "CG", "S-1-3-1" },
         { "OW", "S-1-3-4", 1 }, /* Vista+ */
@@ -304,6 +305,7 @@ static void test_ConvertStringSidToSid(void)
         { "PA", "", 1 },
         { "RS", "", 1 },
         { "SA", "", 1 },
+        { "s-1-12-1", "S-1-12-1" },
     };
 
     const char noSubAuthStr[] = "S-1-5";
