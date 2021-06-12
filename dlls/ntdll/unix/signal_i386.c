@@ -461,24 +461,6 @@ enum i386_trap_code
 #endif
 };
 
-struct syscall_xsave
-{
-    union
-    {
-        XSAVE_FORMAT       xsave;
-        FLOATING_SAVE_AREA fsave;
-    } u;
-    struct
-    {
-        ULONG64 mask;
-        ULONG64 compaction_mask;
-        ULONG64 reserved[6];
-        M128A   ymm_high[8];
-    } xstate;
-};
-
-C_ASSERT( sizeof(struct syscall_xsave) == 0x2c0 );
-
 struct syscall_frame
 {
     DWORD              restore_flags;  /* 000 */
@@ -504,16 +486,13 @@ struct syscall_frame
         XSAVE_FORMAT       xsave;
         FLOATING_SAVE_AREA fsave;
     } u;
-    struct                            /* 240 */
-    {
-        ULONG64 mask;
-        ULONG64 compaction_mask;
-        ULONG64 reserved[6];
-        M128A   ymm_high[8];
-    } xstate;
+    /* Leave space for the whole set of YMM registers. They're not used in
+     * 32-bit mode, but some processors fault if they're not in writable memory.
+     */
+    XSTATE             xstate;         /* 240 */
 };
 
-C_ASSERT( sizeof(struct syscall_frame) == 0x300 );
+C_ASSERT( sizeof(struct syscall_frame) == 0x380 );
 
 struct x86_thread_data
 {
@@ -1011,7 +990,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         memcpy( &frame->u.xsave, context->ExtendedRegisters, sizeof(frame->u.xsave) );
         /* reset the current interrupt status */
         frame->u.xsave.StatusWord &= frame->u.xsave.ControlWord | 0xff80;
-        frame->xstate.mask |= XSTATE_MASK_LEGACY;
+        frame->xstate.Mask |= XSTATE_MASK_LEGACY;
     }
     else if (flags & CONTEXT_FLOATING_POINT)
     {
@@ -1023,7 +1002,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         {
             frame->u.fsave = context->FloatSave;
         }
-        frame->xstate.mask |= XSTATE_MASK_LEGACY_FLOATING_POINT;
+        frame->xstate.Mask |= XSTATE_MASK_LEGACY_FLOATING_POINT;
     }
     if (flags & CONTEXT_XSTATE)
     {
@@ -1032,10 +1011,10 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 
         if (xs->Mask & XSTATE_MASK_GSSE)
         {
-            frame->xstate.mask |= XSTATE_MASK_GSSE;
-            memcpy( &frame->xstate.ymm_high, &xs->YmmContext, sizeof(frame->xstate.ymm_high) );
+            frame->xstate.Mask |= XSTATE_MASK_GSSE;
+            frame->xstate.YmmContext = xs->YmmContext;
         }
-        else frame->xstate.mask &= ~XSTATE_MASK_GSSE;
+        else frame->xstate.Mask &= ~XSTATE_MASK_GSSE;
     }
 
     frame->restore_flags |= flags & ~CONTEXT_INTEGER;
@@ -1104,7 +1083,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
                 context->FloatSave = frame->u.fsave;
             }
             else if (!xstate_compaction_enabled ||
-                     (frame->xstate.mask & XSTATE_MASK_LEGACY_FLOATING_POINT))
+                     (frame->xstate.Mask & XSTATE_MASK_LEGACY_FLOATING_POINT))
             {
                 fpux_to_fpu( &context->FloatSave, &frame->u.xsave );
             }
@@ -1120,7 +1099,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
             XSAVE_FORMAT *xs = (XSAVE_FORMAT *)context->ExtendedRegisters;
 
             if (!xstate_compaction_enabled ||
-                (frame->xstate.mask & XSTATE_MASK_LEGACY_FLOATING_POINT))
+                (frame->xstate.Mask & XSTATE_MASK_LEGACY_FLOATING_POINT))
             {
                 memcpy( xs, &frame->u.xsave, FIELD_OFFSET( XSAVE_FORMAT, MxCsr ));
                 memcpy( xs->FloatRegisters, frame->u.xsave.FloatRegisters,
@@ -1133,7 +1112,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
                 xs->ControlWord = 0x37f;
             }
 
-            if (!xstate_compaction_enabled || (frame->xstate.mask & XSTATE_MASK_LEGACY_SSE))
+            if (!xstate_compaction_enabled || (frame->xstate.Mask & XSTATE_MASK_LEGACY_SSE))
             {
                 memcpy( xs->XmmRegisters, frame->u.xsave.XmmRegisters, sizeof( xs->XmmRegisters ));
                 xs->MxCsr      = frame->u.xsave.MxCsr;
@@ -1168,7 +1147,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
                 return STATUS_INVALID_PARAMETER;
 
             mask = (xstate_compaction_enabled ? xstate->CompactionMask : xstate->Mask) & XSTATE_MASK_GSSE;
-            xstate->Mask = frame->xstate.mask & mask;
+            xstate->Mask = frame->xstate.Mask & mask;
             xstate->CompactionMask = xstate_compaction_enabled ? (0x8000000000000000 | mask) : 0;
             memset( xstate->Reserved, 0, sizeof(xstate->Reserved) );
             if (xstate->Mask)
@@ -1176,7 +1155,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
                 if (context_ex->XState.Length < sizeof(XSTATE))
                     return STATUS_BUFFER_OVERFLOW;
 
-                memcpy( &xstate->YmmContext, frame->xstate.ymm_high, sizeof(frame->xstate.ymm_high) );
+                xstate->YmmContext = frame->xstate.YmmContext;
             }
         }
     }
@@ -2401,7 +2380,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    /* set syscall frame */
                    "cmpl $0,%fs:0x1f8\n\t"      /* x86_thread_data()->syscall_frame */
                    "jnz 1f\n\t"
-                   "leal -0x300(%esp),%eax\n\t" /* sizeof(struct syscall_frame) */
+                   "leal -0x380(%esp),%eax\n\t" /* sizeof(struct syscall_frame) */
                    "andl $~63,%eax\n\t"
                    "movl %eax,%fs:0x1f8\n"      /* x86_thread_data()->syscall_frame */
                    /* switch to thread stack */
