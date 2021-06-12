@@ -376,6 +376,9 @@ static void add_process_view( struct thread *thread, struct memory_view *view )
             /* main exe */
             set_process_machine( process, view );
             list_add_head( &process->views, &view->entry );
+
+            free( process->image );
+            process->image = NULL;
             if (get_view_nt_name( view, &name ) && (process->image = memdup( name.str, name.len )))
                 process->imagelen = name.len;
             return;
