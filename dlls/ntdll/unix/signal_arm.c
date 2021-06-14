@@ -973,8 +973,10 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "bx r5" )
 
 
-extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), TEB *teb );
-__ASM_GLOBAL_FUNC( call_thread_exit_func,
+/***********************************************************************
+ *           signal_exit_thread
+ */
+__ASM_GLOBAL_FUNC( signal_exit_thread,
                    "ldr r3, [r2, #0x1d4]\n\t"  /* arm_thread_data()->exit_frame */
                    "mov ip, #0\n\t"
                    "str ip, [r2, #0x1d4]\n\t"
@@ -982,13 +984,5 @@ __ASM_GLOBAL_FUNC( call_thread_exit_func,
                    "it ne\n\t"
                    "movne sp, r3\n\t"
                    "blx r1" )
-
-/***********************************************************************
- *           signal_exit_thread
- */
-void signal_exit_thread( int status, void (*func)(int) )
-{
-    call_thread_exit_func( status, func, NtCurrentTeb() );
-}
 
 #endif  /* __arm__ */

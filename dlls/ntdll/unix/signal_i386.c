@@ -2436,14 +2436,15 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
  */
 __ASM_GLOBAL_FUNC( signal_exit_thread,
                    "movl 8(%esp),%ecx\n\t"
+                   "movl 12(%esp),%esi\n\t"
+                   "xorl %edx,%edx\n\t"
                    /* fetch exit frame */
-                   "movl %fs:0x1f4,%edx\n\t"    /* x86_thread_data()->exit_frame */
+                   "xchgl %edx,0x1f4(%esi)\n\t"    /* x86_thread_data()->exit_frame */
                    "testl %edx,%edx\n\t"
                    "jnz 1f\n\t"
                    "jmp *%ecx\n\t"
                    /* switch to exit frame stack */
                    "1:\tmovl 4(%esp),%eax\n\t"
-                   "movl $0,%fs:0x1f4\n\t"
                    "movl %edx,%ebp\n\t"
                    __ASM_CFI(".cfi_def_cfa %ebp,4\n\t")
                    __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")

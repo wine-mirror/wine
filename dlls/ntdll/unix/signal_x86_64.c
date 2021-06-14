@@ -2691,14 +2691,13 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
  */
 __ASM_GLOBAL_FUNC( signal_exit_thread,
                    /* fetch exit frame */
-                   "movq %gs:0x30,%rax\n\t"
-                   "movq 0x320(%rax),%rdx\n\t"      /* amd64_thread_data()->exit_frame */
-                   "testq %rdx,%rdx\n\t"
+                   "xorl %ecx,%ecx\n\t"
+                   "xchgq %rcx,0x320(%rdx)\n\t"      /* amd64_thread_data()->exit_frame */
+                   "testq %rcx,%rcx\n\t"
                    "jnz 1f\n\t"
                    "jmp *%rsi\n"
                    /* switch to exit frame stack */
-                   "1:\tmovq $0,0x320(%rax)\n\t"
-                   "movq %rdx,%rsp\n\t"
+                   "1:\tmovq %rcx,%rsp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 56\n\t")
                    __ASM_CFI(".cfi_rel_offset %rbp,48\n\t")
                    __ASM_CFI(".cfi_rel_offset %rbx,40\n\t")

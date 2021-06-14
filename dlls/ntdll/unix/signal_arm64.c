@@ -1146,9 +1146,10 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "mov lr, #0\n\t"
                    "br x19" )
 
-
-extern void DECLSPEC_NORETURN call_thread_exit_func( int status, void (*func)(int), TEB *teb );
-__ASM_GLOBAL_FUNC( call_thread_exit_func,
+/***********************************************************************
+ *           signal_exit_thread
+ */
+__ASM_GLOBAL_FUNC( signal_exit_thread,
                    "stp x29, x30, [sp,#-16]!\n\t"
                    "ldr x3, [x2, #0x2f0]\n\t"  /* arm64_thread_data()->exit_frame */
                    "str xzr, [x2, #0x2f0]\n\t"
@@ -1156,15 +1157,6 @@ __ASM_GLOBAL_FUNC( call_thread_exit_func,
                    "mov sp, x3\n"
                    "1:\tldp x29, x30, [sp], #16\n\t"
                    "br x1" )
-
-/***********************************************************************
- *           signal_exit_thread
- */
-void signal_exit_thread( int status, void (*func)(int) )
-{
-    call_thread_exit_func( status, func, NtCurrentTeb() );
-}
-
 
 /**********************************************************************
  *           NtCurrentTeb   (NTDLL.@)
