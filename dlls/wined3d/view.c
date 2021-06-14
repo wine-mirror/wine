@@ -773,8 +773,19 @@ static VkImageView wined3d_view_vk_create_vk_image_view(struct wined3d_context_v
     }
     create_info.subresourceRange.baseMipLevel = desc->u.texture.level_idx;
     create_info.subresourceRange.levelCount = desc->u.texture.level_count;
-    create_info.subresourceRange.baseArrayLayer = desc->u.texture.layer_idx;
-    create_info.subresourceRange.layerCount = desc->u.texture.layer_count;
+    if (create_info.viewType == VK_IMAGE_VIEW_TYPE_3D)
+    {
+        if (desc->u.texture.layer_idx || (desc->u.texture.layer_count != texture_vk->t.resource.depth
+                && desc->u.texture.layer_count != ~0u))
+            WARN("Partial 3D texture views are not supported.\n");
+        create_info.subresourceRange.baseArrayLayer = 0;
+        create_info.subresourceRange.layerCount = 1;
+    }
+    else
+    {
+        create_info.subresourceRange.baseArrayLayer = desc->u.texture.layer_idx;
+        create_info.subresourceRange.layerCount = desc->u.texture.layer_count;
+    }
     if ((vr = VK_CALL(vkCreateImageView(device_vk->vk_device, &create_info, NULL, &vk_image_view))) < 0)
     {
         ERR("Failed to create Vulkan image view, vr %s.\n", wined3d_debug_vkresult(vr));
