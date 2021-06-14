@@ -2011,6 +2011,59 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         }
         return 1;
 
+    case IOCTL_AFD_EVENT_SELECT:
+    {
+        struct event *event = NULL;
+        obj_handle_t event_handle;
+        int mask;
+
+        if (is_machine_64bit( current->process->machine ))
+        {
+            const struct afd_event_select_params_64 *params = get_req_data();
+
+            if (get_req_data_size() < sizeof(params))
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                return 1;
+            }
+
+            event_handle = params->event;
+            mask = params->mask;
+        }
+        else
+        {
+            const struct afd_event_select_params_32 *params = get_req_data();
+
+            if (get_req_data_size() < sizeof(params))
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                return 1;
+            }
+
+            event_handle = params->event;
+            mask = params->mask;
+        }
+
+        if ((event_handle || mask) &&
+            !(event = get_event_obj( current->process, event_handle, EVENT_MODIFY_STATE )))
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return 1;
+        }
+
+        if (sock->event) release_object( sock->event );
+        sock->event = event;
+        sock->mask = mask;
+        sock->window = 0;
+        sock->message = 0;
+        sock->wparam = 0;
+        sock->nonblocking = 1;
+
+        sock_reselect( sock );
+
+        return 1;
+    }
+
     default:
         set_error( STATUS_NOT_SUPPORTED );
         return 0;

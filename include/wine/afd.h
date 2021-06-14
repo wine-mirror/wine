@@ -35,6 +35,7 @@
 #define IOCTL_AFD_LISTEN                    CTL_CODE(FILE_DEVICE_BEEP, 0x802, METHOD_NEITHER,  FILE_ANY_ACCESS)
 #define IOCTL_AFD_RECV                      CTL_CODE(FILE_DEVICE_BEEP, 0x805, METHOD_NEITHER,  FILE_ANY_ACCESS)
 #define IOCTL_AFD_POLL                      CTL_CODE(FILE_DEVICE_BEEP, 0x809, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define IOCTL_AFD_EVENT_SELECT              CTL_CODE(FILE_DEVICE_BEEP, 0x821, METHOD_NEITHER,  FILE_ANY_ACCESS)
 
 enum afd_poll_bit
 {
@@ -105,6 +106,24 @@ struct afd_poll_params
     } sockets[1];
 };
 #include <poppack.h>
+
+struct afd_event_select_params
+{
+    HANDLE event;
+    int mask;
+};
+
+struct afd_event_select_params_64
+{
+    ULONGLONG event;
+    int mask;
+};
+
+struct afd_event_select_params_32
+{
+    ULONG event;
+    int mask;
+};
 
 #define IOCTL_AFD_WINE_CREATE               CTL_CODE(FILE_DEVICE_NETWORK, 200, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_AFD_WINE_ACCEPT               CTL_CODE(FILE_DEVICE_NETWORK, 201, METHOD_BUFFERED, FILE_ANY_ACCESS)

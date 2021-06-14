@@ -1170,6 +1170,17 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             break;
         }
 
+        case IOCTL_AFD_EVENT_SELECT:
+        {
+            const struct afd_event_select_params *params = in_buffer;
+
+            TRACE( "event %p, mask %#x\n", params->event, params->mask );
+            if (out_size) FIXME( "unexpected output size %u\n", out_size );
+
+            status = STATUS_BAD_DEVICE_TYPE;
+            break;
+        }
+
         case IOCTL_AFD_RECV:
         {
             const struct afd_recv_params *params = in_buffer;
