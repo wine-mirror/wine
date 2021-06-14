@@ -167,7 +167,7 @@ struct sock
     user_handle_t       window;      /* window to send the message to */
     unsigned int        message;     /* message to send */
     obj_handle_t        wparam;      /* message wparam (socket handle) */
-    unsigned int        errors[AFD_POLL_BIT_COUNT]; /* event errors */
+    int                 errors[AFD_POLL_BIT_COUNT]; /* event errors */
     timeout_t           connect_time;/* time the socket was connected */
     struct sock        *deferred;    /* socket that waits for a deferred accept */
     struct async_queue  read_q;      /* queue for asynchronous reads */
@@ -486,7 +486,7 @@ static void sock_wake_up( struct sock *sock )
             enum afd_poll_bit event = event_bitorder[i];
             if (events & (1 << event))
             {
-                lparam_t lparam = afd_poll_flag_to_win32(1 << event) | (sock->errors[event] << 16);
+                lparam_t lparam = afd_poll_flag_to_win32(1 << event) | (sock_get_error( sock->errors[event] ) << 16);
                 post_message( sock->window, sock->message, sock->wparam, lparam );
             }
         }
@@ -851,7 +851,7 @@ static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
     return event;
 }
 
-static void post_socket_event( struct sock *sock, enum afd_poll_bit event_bit, unsigned int error )
+static void post_socket_event( struct sock *sock, enum afd_poll_bit event_bit, int error )
 {
     unsigned int event = (1 << event_bit);
 
@@ -874,12 +874,12 @@ static void sock_dispatch_events( struct sock *sock, enum connection_state prevs
         if (event & POLLOUT)
             post_socket_event( sock, AFD_POLL_BIT_CONNECT, 0 );
         if (event & (POLLERR | POLLHUP))
-            post_socket_event( sock, AFD_POLL_BIT_CONNECT_ERR, sock_get_error( error ) );
+            post_socket_event( sock, AFD_POLL_BIT_CONNECT_ERR, error );
         break;
 
     case SOCK_LISTENING:
         if (event & (POLLIN | POLLERR | POLLHUP))
-            post_socket_event( sock, AFD_POLL_BIT_ACCEPT, sock_get_error( error ) );
+            post_socket_event( sock, AFD_POLL_BIT_ACCEPT, error );
         break;
 
     case SOCK_CONNECTED:
@@ -894,7 +894,7 @@ static void sock_dispatch_events( struct sock *sock, enum connection_state prevs
             post_socket_event( sock, AFD_POLL_BIT_OOB, 0 );
 
         if (event & (POLLERR | POLLHUP))
-            post_socket_event( sock, AFD_POLL_BIT_HUP, sock_get_error( error ) );
+            post_socket_event( sock, AFD_POLL_BIT_HUP, error );
         break;
     }
 
@@ -2457,13 +2457,13 @@ DECL_HANDLER(get_socket_event)
     reply->mask  = afd_poll_flag_to_win32( sock->mask );
     reply->pmask = afd_poll_flag_to_win32( sock->pending_events );
 
-    errors[FD_READ_BIT]     = sock->errors[AFD_POLL_BIT_READ];
-    errors[FD_WRITE_BIT]    = sock->errors[AFD_POLL_BIT_WRITE];
-    errors[FD_OOB_BIT]      = sock->errors[AFD_POLL_BIT_OOB];
-    errors[FD_ACCEPT_BIT]   = sock->errors[AFD_POLL_BIT_ACCEPT];
-    errors[FD_CONNECT_BIT]  = sock->errors[AFD_POLL_BIT_CONNECT_ERR];
-    if (!(errors[FD_CLOSE_BIT] = sock->errors[AFD_POLL_BIT_HUP]))
-        errors[FD_CLOSE_BIT] = sock->errors[AFD_POLL_BIT_RESET];
+    errors[FD_READ_BIT]     = sock_get_error( sock->errors[AFD_POLL_BIT_READ] );
+    errors[FD_WRITE_BIT]    = sock_get_error( sock->errors[AFD_POLL_BIT_WRITE] );
+    errors[FD_OOB_BIT]      = sock_get_error( sock->errors[AFD_POLL_BIT_OOB] );
+    errors[FD_ACCEPT_BIT]   = sock_get_error( sock->errors[AFD_POLL_BIT_ACCEPT] );
+    errors[FD_CONNECT_BIT]  = sock_get_error( sock->errors[AFD_POLL_BIT_CONNECT_ERR] );
+    if (!(errors[FD_CLOSE_BIT] = sock_get_error( sock->errors[AFD_POLL_BIT_HUP] )))
+        errors[FD_CLOSE_BIT] = sock_get_error( sock->errors[AFD_POLL_BIT_RESET] );
     set_reply_data( errors, min( get_reply_max_size(), sizeof(errors) ));
 
     if (req->service)
