@@ -335,52 +335,6 @@ static inline TEB64 *NtCurrentTeb64(void) { return NULL; }
 static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiBatchCount; }
 #endif
 
-struct xcontext
-{
-    CONTEXT c;
-    CONTEXT_EX c_ex;
-    ULONG64 host_compaction_mask;
-};
-
-#if defined(__i386__) || defined(__x86_64__)
-extern BOOL xstate_compaction_enabled DECLSPEC_HIDDEN;
-
-static inline XSTATE *xstate_from_context( const CONTEXT *context )
-{
-    CONTEXT_EX *xctx = (CONTEXT_EX *)(context + 1);
-
-    if ((context->ContextFlags & CONTEXT_XSTATE) != CONTEXT_XSTATE)
-        return NULL;
-
-    return (XSTATE *)((char *)(context + 1) + xctx->XState.Offset);
-}
-
-static inline void context_init_xstate( CONTEXT *context, void *xstate_buffer )
-{
-    CONTEXT_EX *xctx;
-
-    xctx = (CONTEXT_EX *)(context + 1);
-    xctx->Legacy.Length = sizeof(CONTEXT);
-    xctx->Legacy.Offset = -(LONG)sizeof(CONTEXT);
-
-    xctx->XState.Length = sizeof(XSTATE);
-    xctx->XState.Offset = (BYTE *)xstate_buffer - (BYTE *)xctx;
-
-    xctx->All.Length = sizeof(CONTEXT) + xctx->XState.Offset + xctx->XState.Length;
-    xctx->All.Offset = -(LONG)sizeof(CONTEXT);
-    context->ContextFlags |= 0x40;
-}
-
-#else
-static inline XSTATE *xstate_from_context( const CONTEXT *context )
-{
-    return NULL;
-}
-static inline void context_init_xstate( CONTEXT *context, void *xstate_buffer )
-{
-}
-#endif
-
 enum loadorder
 {
     LO_INVALID,
