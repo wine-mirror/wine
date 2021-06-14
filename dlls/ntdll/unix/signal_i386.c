@@ -2342,7 +2342,7 @@ void signal_init_process(void)
 /***********************************************************************
  *           init_thread_context
  */
-static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry, void *arg )
+static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
 {
     context->SegCs  = get_cs();
     context->SegDs  = get_ds();
@@ -2353,7 +2353,7 @@ static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry,
     context->EFlags = 0x202;
     context->Eax    = (DWORD)entry;
     context->Ebx    = (DWORD)arg;
-    context->Esp    = (DWORD)NtCurrentTeb()->Tib.StackBase - 16;
+    context->Esp    = (DWORD)teb->Tib.StackBase - 16;
     context->Eip    = (DWORD)pRtlUserThreadStart;
     context->FloatSave.ControlWord = 0x27f;
     ((XSAVE_FORMAT *)context->ExtendedRegisters)->ControlWord = 0x27f;
@@ -2369,7 +2369,7 @@ static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry,
 /***********************************************************************
  *           get_initial_context
  */
-PCONTEXT DECLSPEC_HIDDEN get_initial_context( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend )
+PCONTEXT DECLSPEC_HIDDEN get_initial_context( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
 {
     CONTEXT *ctx;
 
@@ -2377,15 +2377,15 @@ PCONTEXT DECLSPEC_HIDDEN get_initial_context( LPTHREAD_START_ROUTINE entry, void
     {
         CONTEXT context = { CONTEXT_ALL };
 
-        init_thread_context( &context, entry, arg );
+        init_thread_context( &context, entry, arg, teb );
         wait_suspend( &context );
         ctx = (CONTEXT *)((ULONG_PTR)context.Esp & ~15) - 1;
         *ctx = context;
     }
     else
     {
-        ctx = (CONTEXT *)((char *)NtCurrentTeb()->Tib.StackBase - 16) - 1;
-        init_thread_context( ctx, entry, arg );
+        ctx = (CONTEXT *)((char *)teb->Tib.StackBase - 16) - 1;
+        init_thread_context( ctx, entry, arg, teb );
     }
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
     ctx->ContextFlags = CONTEXT_FULL | CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS;
@@ -2409,17 +2409,19 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "pushl %edi\n\t"
                    __ASM_CFI(".cfi_rel_offset %edi,-12\n\t")
                    /* store exit frame */
-                   "movl %ebp,%fs:0x1f4\n\t"    /* x86_thread_data()->exit_frame */
+                   "movl 24(%ebp),%ecx\n\t"     /* teb */
+                   "movl %ebp,0x1f4(%ecx)\n\t"  /* x86_thread_data()->exit_frame */
                    /* set syscall frame */
-                   "cmpl $0,%fs:0x1f8\n\t"      /* x86_thread_data()->syscall_frame */
+                   "cmpl $0,0x1f8(%ecx)\n\t"    /* x86_thread_data()->syscall_frame */
                    "jnz 1f\n\t"
                    "leal -0x380(%esp),%eax\n\t" /* sizeof(struct syscall_frame) */
                    "andl $~63,%eax\n\t"
-                   "movl %eax,%fs:0x1f8\n"      /* x86_thread_data()->syscall_frame */
+                   "movl %eax,0x1f8(%ecx)\n"    /* x86_thread_data()->syscall_frame */
                    /* switch to thread stack */
-                   "1:\tmovl %fs:4,%eax\n\t"    /* NtCurrentTeb()->StackBase */
-                   "leal -0x1004(%eax),%esp\n\t"
+                   "1:\tmovl 4(%ecx),%eax\n\t"  /* teb->StackBase */
+                   "leal -0x1000(%eax),%esp\n\t"
                    /* attach dlls */
+                   "pushl %ecx\n\t"             /* teb */
                    "pushl 16(%ebp)\n\t"         /* suspend */
                    "pushl 12(%ebp)\n\t"         /* arg */
                    "pushl 8(%ebp)\n\t"          /* entry */

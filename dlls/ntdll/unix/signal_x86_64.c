@@ -2603,13 +2603,13 @@ void signal_init_process(void)
 /***********************************************************************
  *           init_thread_context
  */
-static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry, void *arg )
+static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
 {
     __asm__( "movw %%cs,%0" : "=m" (context->SegCs) );
     __asm__( "movw %%ss,%0" : "=m" (context->SegSs) );
     context->Rcx    = (ULONG_PTR)entry;
     context->Rdx    = (ULONG_PTR)arg;
-    context->Rsp    = (ULONG_PTR)NtCurrentTeb()->Tib.StackBase - 0x28;
+    context->Rsp    = (ULONG_PTR)teb->Tib.StackBase - 0x28;
     context->Rip    = (ULONG_PTR)pRtlUserThreadStart;
     context->EFlags = 0x200;
     context->u.FltSave.ControlWord = 0x27f;
@@ -2620,7 +2620,7 @@ static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry,
 /***********************************************************************
  *           get_initial_context
  */
-PCONTEXT DECLSPEC_HIDDEN get_initial_context( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend )
+PCONTEXT DECLSPEC_HIDDEN get_initial_context( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
 {
     CONTEXT *ctx;
 
@@ -2629,15 +2629,15 @@ PCONTEXT DECLSPEC_HIDDEN get_initial_context( LPTHREAD_START_ROUTINE entry, void
         CONTEXT context = { 0 };
 
         context.ContextFlags = CONTEXT_ALL;
-        init_thread_context( &context, entry, arg );
+        init_thread_context( &context, entry, arg, teb );
         wait_suspend( &context );
         ctx = (CONTEXT *)((ULONG_PTR)context.Rsp & ~15) - 1;
         *ctx = context;
     }
     else
     {
-        ctx = (CONTEXT *)((char *)NtCurrentTeb()->Tib.StackBase - 0x30) - 1;
-        init_thread_context( ctx, entry, arg );
+        ctx = (CONTEXT *)((char *)teb->Tib.StackBase - 0x30) - 1;
+        init_thread_context( ctx, entry, arg, teb );
     }
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
     ctx->ContextFlags = CONTEXT_FULL;
@@ -2666,17 +2666,17 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "movq %r15,8(%rsp)\n\t"
                    __ASM_CFI(".cfi_rel_offset %r15,8\n\t")
                    /* store exit frame */
-                   "movq %gs:0x30,%rax\n\t"
-                   "movq %rsp,0x320(%rax)\n\t"      /* amd64_thread_data()->exit_frame */
+                   "movq %rsp,0x320(%r8)\n\t"       /* amd64_thread_data()->exit_frame */
                    /* set syscall frame */
-                   "cmpq $0,0x328(%rax)\n\t"        /* amd64_thread_data()->syscall_frame */
+                   "cmpq $0,0x328(%r8)\n\t"         /* amd64_thread_data()->syscall_frame */
                    "jnz 1f\n\t"
                    "leaq -0x400(%rsp),%r10\n\t"     /* sizeof(struct syscall_frame) */
                    "andq $~63,%r10\n\t"
-                   "movq %r10,0x328(%rax)\n"        /* amd64_thread_data()->syscall_frame */
+                   "movq %r10,0x328(%r8)\n"         /* amd64_thread_data()->syscall_frame */
                    /* switch to thread stack */
-                   "1:\tmovq 8(%rax),%rax\n\t"      /* NtCurrentTeb()->Tib.StackBase */
+                   "1:\tmovq 8(%r8),%rax\n\t"       /* teb->Tib.StackBase */
                    "movq %rcx,%rbx\n\t"             /* thunk */
+                   "movq %r8,%rcx\n\t"              /* teb */
                    "leaq -0x1000(%rax),%rsp\n\t"
                    /* attach dlls */
                    "call " __ASM_NAME("get_initial_context") "\n\t"
