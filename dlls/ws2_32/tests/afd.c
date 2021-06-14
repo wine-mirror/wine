@@ -1136,6 +1136,99 @@ static void test_recv(void)
     CloseHandle(event);
 }
 
+static void test_event_select(void)
+{
+    struct afd_event_select_params params;
+    WSANETWORKEVENTS events;
+    SOCKET client, server;
+    IO_STATUS_BLOCK io;
+    HANDLE event;
+    int ret;
+
+    event = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    tcp_socketpair(&client, &server);
+
+    memset(&io, 0xcc, sizeof(io));
+    ret = NtDeviceIoControlFile((HANDLE)client, NULL, NULL, NULL, &io,
+            IOCTL_AFD_EVENT_SELECT, NULL, 0, NULL, 0);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret);
+    ok(io.Status == STATUS_INVALID_PARAMETER, "got status %#x\n", io.Status);
+    ok(!io.Information, "got information %#Ix\n", io.Information);
+
+    params.event = 0;
+    params.mask = ~0;
+    memset(&io, 0xcc, sizeof(io));
+    ret = NtDeviceIoControlFile((HANDLE)client, NULL, NULL, NULL, &io,
+            IOCTL_AFD_EVENT_SELECT, &params, sizeof(params), NULL, 0);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret);
+    ok(io.Status == STATUS_INVALID_PARAMETER, "got status %#x\n", io.Status);
+    ok(!io.Information, "got information %#Ix\n", io.Information);
+
+    params.event = event;
+    params.mask = ~0;
+    memset(&io, 0xcc, sizeof(io));
+    ret = NtDeviceIoControlFile((HANDLE)client, NULL, NULL, NULL, &io,
+            IOCTL_AFD_EVENT_SELECT, &params, sizeof(params), NULL, 0);
+    ok(!ret, "got %#x\n", ret);
+    ok(!io.Status, "got status %#x\n", io.Status);
+    ok(!io.Information, "got information %#Ix\n", io.Information);
+
+    ret = WSAEnumNetworkEvents(client, event, &events);
+    ok(!ret, "got error %u\n", WSAGetLastError());
+    ok(events.lNetworkEvents == (FD_CONNECT | FD_WRITE), "got events %#x\n", events.lNetworkEvents);
+
+    closesocket(client);
+    closesocket(server);
+
+    tcp_socketpair(&client, &server);
+
+    params.event = event;
+    params.mask = AFD_POLL_CONNECT;
+    memset(&io, 0xcc, sizeof(io));
+    ret = NtDeviceIoControlFile((HANDLE)client, NULL, NULL, NULL, &io,
+            IOCTL_AFD_EVENT_SELECT, &params, sizeof(params), NULL, 0);
+    ok(!ret, "got %#x\n", ret);
+    ok(!io.Status, "got status %#x\n", io.Status);
+    ok(!io.Information, "got information %#Ix\n", io.Information);
+
+    ret = WSAEnumNetworkEvents(client, event, &events);
+    ok(!ret, "got error %u\n", WSAGetLastError());
+    ok(events.lNetworkEvents == FD_CONNECT, "got events %#x\n", events.lNetworkEvents);
+
+    closesocket(client);
+    closesocket(server);
+
+    tcp_socketpair(&client, &server);
+
+    params.event = event;
+    params.mask = ~0;
+    memset(&io, 0xcc, sizeof(io));
+    ret = NtDeviceIoControlFile((HANDLE)client, NULL, NULL, NULL, &io,
+            IOCTL_AFD_EVENT_SELECT, &params, sizeof(params), NULL, 0);
+    ok(!ret, "got %#x\n", ret);
+    ok(!io.Status, "got status %#x\n", io.Status);
+    ok(!io.Information, "got information %#Ix\n", io.Information);
+
+    params.event = 0;
+    params.mask = 0;
+    memset(&io, 0xcc, sizeof(io));
+    ret = NtDeviceIoControlFile((HANDLE)client, NULL, NULL, NULL, &io,
+            IOCTL_AFD_EVENT_SELECT, &params, sizeof(params), NULL, 0);
+    ok(!ret, "got %#x\n", ret);
+    ok(!io.Status, "got status %#x\n", io.Status);
+    ok(!io.Information, "got information %#Ix\n", io.Information);
+
+    ret = WSAEnumNetworkEvents(client, event, &events);
+    ok(!ret, "got error %u\n", WSAGetLastError());
+    ok(!events.lNetworkEvents, "got events %#x\n", events.lNetworkEvents);
+
+    closesocket(client);
+    closesocket(server);
+
+    CloseHandle(event);
+}
+
 START_TEST(afd)
 {
     WSADATA data;
@@ -1146,6 +1239,7 @@ START_TEST(afd)
     test_poll();
     test_poll_completion_port();
     test_recv();
+    test_event_select();
 
     WSACleanup();
 }
