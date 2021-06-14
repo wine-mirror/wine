@@ -37,7 +37,7 @@
 @ stub HidP_SetData
 @ stub HidP_SetScaledUsageValue
 @ stdcall HidP_SetUsageValue(long long long long long ptr ptr long)
-@ stub HidP_SetUsageValueArray
+@ stdcall HidP_SetUsageValueArray(long long long long ptr long ptr ptr long)
 @ stdcall HidP_SetUsages(long long long ptr ptr ptr ptr long)
 @ stdcall HidP_TranslateUsagesToI8042ScanCodes(ptr long long ptr ptr ptr)
 @ stub HidP_UnsetUsages

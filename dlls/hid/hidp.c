@@ -642,6 +642,16 @@ NTSTATUS WINAPI HidP_SetUsageValue(HIDP_REPORT_TYPE ReportType, USAGE UsagePage,
     return rc;
 }
 
+NTSTATUS WINAPI HidP_SetUsageValueArray( HIDP_REPORT_TYPE report_type, USAGE usage_page, USHORT collection,
+                                         USAGE usage, char *value_buf, USHORT value_len,
+                                         PHIDP_PREPARSED_DATA preparsed_data, char *report_buf, ULONG report_len )
+{
+    FIXME( "report_type %d, usage_page %x, collection %d, usage %x, value_buf %p, value_len %u, "
+           "preparsed_data %p, report_buf %p, report_len %u stub!\n",
+           report_type, usage_page, collection, usage, value_buf, value_len, preparsed_data, report_buf, report_len );
+
+    return HIDP_STATUS_NOT_IMPLEMENTED;
+}
 
 NTSTATUS WINAPI HidP_SetUsages(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, USHORT LinkCollection,
                                PUSAGE UsageList, PULONG UsageLength, PHIDP_PREPARSED_DATA PreparsedData,
