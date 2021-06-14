@@ -1047,7 +1047,6 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 
     if (self)
     {
-        XSTATE *xstate;
         if (needed_flags & CONTEXT_INTEGER)
         {
             context->Eax = frame->eax;
@@ -1127,19 +1126,10 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 
             context->ContextFlags |= CONTEXT_EXTENDED_REGISTERS;
         }
-        /* update the cached version of the debug registers */
-        if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386))
-        {
-            x86_thread_data()->dr0 = context->Dr0;
-            x86_thread_data()->dr1 = context->Dr1;
-            x86_thread_data()->dr2 = context->Dr2;
-            x86_thread_data()->dr3 = context->Dr3;
-            x86_thread_data()->dr6 = context->Dr6;
-            x86_thread_data()->dr7 = context->Dr7;
-        }
-        if ((cpu_info.ProcessorFeatureBits & CPU_FEATURE_AVX) && (xstate = xstate_from_context( context )))
+        if ((needed_flags & CONTEXT_XSTATE) && (cpu_info.ProcessorFeatureBits & CPU_FEATURE_AVX))
         {
             CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
+            XSTATE *xstate = (XSTATE *)((char *)context_ex + context_ex->XState.Offset);
             unsigned int mask;
 
             if (context_ex->XState.Length < offsetof(XSTATE, YmmContext)
@@ -1152,11 +1142,19 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
             memset( xstate->Reserved, 0, sizeof(xstate->Reserved) );
             if (xstate->Mask)
             {
-                if (context_ex->XState.Length < sizeof(XSTATE))
-                    return STATUS_BUFFER_OVERFLOW;
-
+                if (context_ex->XState.Length < sizeof(XSTATE)) return STATUS_BUFFER_OVERFLOW;
                 xstate->YmmContext = frame->xstate.YmmContext;
             }
+        }
+        /* update the cached version of the debug registers */
+        if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386))
+        {
+            x86_thread_data()->dr0 = context->Dr0;
+            x86_thread_data()->dr1 = context->Dr1;
+            x86_thread_data()->dr2 = context->Dr2;
+            x86_thread_data()->dr3 = context->Dr3;
+            x86_thread_data()->dr6 = context->Dr6;
+            x86_thread_data()->dr7 = context->Dr7;
         }
     }
 
