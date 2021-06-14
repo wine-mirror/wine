@@ -39,7 +39,6 @@ C_SRCS = \
 	thread.c \
 	time.c \
 	undname.c \
-	unixlib.c \
 	wcs.c
 
 RC_SRCS = rsrc.rc
