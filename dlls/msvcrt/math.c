@@ -1567,7 +1567,7 @@ float CDECL powf( float x, float y )
             if (ix & 0x80000000 && powf_checkint(iy) == 1)
                 x2 = -x2;
             if (iy & 0x80000000 && x2 == 0.0)
-                return math_error(_SING, "powf", x, 0, 1 / x2);
+                return math_error(_SING, "powf", x, y, 1 / x2);
             /* Without the barrier some versions of clang hoist the 1/x2 and
                thus division by zero exception can be signaled spuriously. */
             return iy & 0x80000000 ? fp_barrierf(1 / x2) : x2;
@@ -1577,7 +1577,7 @@ float CDECL powf( float x, float y )
             /* Finite x < 0. */
             int yint = powf_checkint(iy);
             if (yint == 0)
-                return math_error(_DOMAIN, "powf", x, 0, 0 / (x - x));
+                return math_error(_DOMAIN, "powf", x, y, 0 / (x - x));
             if (yint == 1)
                 sign_bias = 1 << (5 + 11);
             ix &= 0x7fffffff;
@@ -1595,9 +1595,9 @@ float CDECL powf( float x, float y )
     if ((*(UINT64*)&ylogx >> 47 & 0xffff) >= 0x40af800000000000llu >> 47) {
         /* |y*log(x)| >= 126. */
         if (ylogx > 0x1.fffffffd1d571p+6 * (1 << 5))
-            return math_error(_OVERFLOW, "powf", x, 0, (sign_bias ? -1.0 : 1.0) * 0x1p1023);
+            return math_error(_OVERFLOW, "powf", x, y, (sign_bias ? -1.0 : 1.0) * 0x1p1023);
         if (ylogx <= -150.0 * (1 << 5))
-            return math_error(_UNDERFLOW, "powf", x, 0, (sign_bias ? -1.0 : 1.0) / 0x1p1023);
+            return math_error(_UNDERFLOW, "powf", x, y, (sign_bias ? -1.0 : 1.0) / 0x1p1023);
     }
     return powf_exp2(ylogx, sign_bias);
 }
