@@ -36,6 +36,25 @@
 #define IOCTL_AFD_RECV                      CTL_CODE(FILE_DEVICE_BEEP, 0x805, METHOD_NEITHER,  FILE_ANY_ACCESS)
 #define IOCTL_AFD_POLL                      CTL_CODE(FILE_DEVICE_BEEP, 0x809, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
+enum afd_poll_bit
+{
+    AFD_POLL_BIT_READ           = 0,
+    AFD_POLL_BIT_OOB            = 1,
+    AFD_POLL_BIT_WRITE          = 2,
+    AFD_POLL_BIT_HUP            = 3,
+    AFD_POLL_BIT_RESET          = 4,
+    AFD_POLL_BIT_CLOSE          = 5,
+    AFD_POLL_BIT_CONNECT        = 6,
+    AFD_POLL_BIT_ACCEPT         = 7,
+    AFD_POLL_BIT_CONNECT_ERR    = 8,
+    /* IOCTL_AFD_GET_EVENTS has space for 13 events. */
+    AFD_POLL_BIT_UNK1           = 9,
+    AFD_POLL_BIT_UNK2           = 10,
+    AFD_POLL_BIT_UNK3           = 11,
+    AFD_POLL_BIT_UNK4           = 12,
+    AFD_POLL_BIT_COUNT          = 13,
+};
+
 #define AFD_POLL_READ           0x0001
 #define AFD_POLL_OOB            0x0002
 #define AFD_POLL_WRITE          0x0004

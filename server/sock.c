@@ -146,14 +146,14 @@ struct sock
     struct fd          *fd;          /* socket file descriptor */
     enum connection_state state;     /* connection state */
     unsigned int        mask;        /* event mask */
-    /* pending FD_* events which have not yet been reported to the application */
+    /* pending AFD_POLL_* events which have not yet been reported to the application */
     unsigned int        pending_events;
-    /* FD_* events which have already been reported and should not be selected
-     * for again until reset by a relevant call.
+    /* AFD_POLL_* events which have already been reported and should not be
+     * selected for again until reset by a relevant call.
      *
-     * For example, if FD_READ is set here and not in pending_events, it has
-     * already been reported and consumed, and we should not report it again,
-     * even if POLLIN is signaled, until it is reset by e.g recv().
+     * For example, if AFD_POLL_READ is set here and not in pending_events, it
+     * has already been reported and consumed, and we should not report it
+     * again, even if POLLIN is signaled, until it is reset by e.g recv().
      *
      * If an event has been signaled and not consumed yet, it will be set in
      * both pending_events and reported_events (as we should only ever report
@@ -167,7 +167,7 @@ struct sock
     user_handle_t       window;      /* window to send the message to */
     unsigned int        message;     /* message to send */
     obj_handle_t        wparam;      /* message wparam (socket handle) */
-    unsigned int        errors[FD_MAX_EVENTS]; /* event errors */
+    unsigned int        errors[AFD_POLL_BIT_COUNT]; /* event errors */
     timeout_t           connect_time;/* time the socket was connected */
     struct sock        *deferred;    /* socket that waits for a deferred accept */
     struct async_queue  read_q;      /* queue for asynchronous reads */
@@ -338,26 +338,20 @@ static int sockaddr_from_unix( const union unix_sockaddr *uaddr, struct WS_socka
     }
 }
 
-/* Permutation of 0..FD_MAX_EVENTS - 1 representing the order in which
- * we post messages if there are multiple events.  Used to send
- * messages.  The problem is if there is both a FD_CONNECT event and,
- * say, an FD_READ event available on the same socket, we want to
- * notify the app of the connect event first.  Otherwise it may
- * discard the read event because it thinks it hasn't connected yet.
- */
-static const int event_bitorder[FD_MAX_EVENTS] =
+/* some events are generated at the same time but must be sent in a particular
+ * order (e.g. CONNECT must be sent before READ) */
+static const enum afd_poll_bit event_bitorder[] =
 {
-    FD_CONNECT_BIT,
-    FD_ACCEPT_BIT,
-    FD_OOB_BIT,
-    FD_WRITE_BIT,
-    FD_READ_BIT,
-    FD_CLOSE_BIT,
-    6, 7, 8, 9  /* leftovers */
+    AFD_POLL_BIT_CONNECT,
+    AFD_POLL_BIT_CONNECT_ERR,
+    AFD_POLL_BIT_ACCEPT,
+    AFD_POLL_BIT_OOB,
+    AFD_POLL_BIT_WRITE,
+    AFD_POLL_BIT_READ,
+    AFD_POLL_BIT_RESET,
+    AFD_POLL_BIT_HUP,
+    AFD_POLL_BIT_CLOSE,
 };
-
-/* Flags that make sense only for SOCK_STREAM sockets */
-#define STREAM_FLAG_MASK ((unsigned int) (FD_CONNECT | FD_ACCEPT | FD_WINE_LISTENING | FD_WINE_CONNECTED))
 
 typedef enum {
     SOCK_SHUTDOWN_ERROR = -1,
@@ -425,6 +419,53 @@ static int sock_reselect( struct sock *sock )
     return ev;
 }
 
+static unsigned int afd_poll_flag_to_win32( unsigned int flags )
+{
+    static const unsigned int map[] =
+    {
+        FD_READ,    /* READ */
+        FD_OOB,     /* OOB */
+        FD_WRITE,   /* WRITE */
+        FD_CLOSE,   /* HUP */
+        FD_CLOSE,   /* RESET */
+        0,          /* CLOSE */
+        FD_CONNECT, /* CONNECT */
+        FD_ACCEPT,  /* ACCEPT */
+        FD_CONNECT, /* CONNECT_ERR */
+    };
+
+    unsigned int i, ret = 0;
+
+    for (i = 0; i < ARRAY_SIZE(map); ++i)
+    {
+        if (flags & (1 << i)) ret |= map[i];
+    }
+
+    return ret;
+}
+
+static unsigned int afd_poll_flag_from_win32( unsigned int flags )
+{
+    static const unsigned int map[] =
+    {
+        AFD_POLL_READ,
+        AFD_POLL_WRITE,
+        AFD_POLL_OOB,
+        AFD_POLL_ACCEPT,
+        AFD_POLL_CONNECT | AFD_POLL_CONNECT_ERR,
+        AFD_POLL_RESET | AFD_POLL_HUP,
+    };
+
+    unsigned int i, ret = 0;
+
+    for (i = 0; i < ARRAY_SIZE(map); ++i)
+    {
+        if (flags & (1 << i)) ret |= map[i];
+    }
+
+    return ret;
+}
+
 /* wake anybody waiting on the socket event or send the associated message */
 static void sock_wake_up( struct sock *sock )
 {
@@ -440,12 +481,12 @@ static void sock_wake_up( struct sock *sock )
     if (sock->window)
     {
         if (debug_level) fprintf(stderr, "signalling events %x win %08x\n", events, sock->window );
-        for (i = 0; i < FD_MAX_EVENTS; i++)
+        for (i = 0; i < ARRAY_SIZE(event_bitorder); i++)
         {
-            int event = event_bitorder[i];
+            enum afd_poll_bit event = event_bitorder[i];
             if (events & (1 << event))
             {
-                lparam_t lparam = (1 << event) | (sock->errors[event] << 16);
+                lparam_t lparam = afd_poll_flag_to_win32(1 << event) | (sock->errors[event] << 16);
                 post_message( sock->window, sock->message, sock->wparam, lparam );
             }
         }
@@ -810,7 +851,7 @@ static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
     return event;
 }
 
-static void post_socket_event( struct sock *sock, unsigned int event_bit, unsigned int error )
+static void post_socket_event( struct sock *sock, enum afd_poll_bit event_bit, unsigned int error )
 {
     unsigned int event = (1 << event_bit);
 
@@ -830,28 +871,30 @@ static void sock_dispatch_events( struct sock *sock, enum connection_state prevs
         break;
 
     case SOCK_CONNECTING:
-        if (event & (POLLOUT | POLLERR | POLLHUP))
-            post_socket_event( sock, FD_CONNECT_BIT, sock_get_error( error ) );
+        if (event & POLLOUT)
+            post_socket_event( sock, AFD_POLL_BIT_CONNECT, 0 );
+        if (event & (POLLERR | POLLHUP))
+            post_socket_event( sock, AFD_POLL_BIT_CONNECT_ERR, sock_get_error( error ) );
         break;
 
     case SOCK_LISTENING:
         if (event & (POLLIN | POLLERR | POLLHUP))
-            post_socket_event( sock, FD_ACCEPT_BIT, sock_get_error( error ) );
+            post_socket_event( sock, AFD_POLL_BIT_ACCEPT, sock_get_error( error ) );
         break;
 
     case SOCK_CONNECTED:
     case SOCK_CONNECTIONLESS:
         if (event & POLLIN)
-            post_socket_event( sock, FD_READ_BIT, 0 );
+            post_socket_event( sock, AFD_POLL_BIT_READ, 0 );
 
         if (event & POLLOUT)
-            post_socket_event( sock, FD_WRITE_BIT, 0 );
+            post_socket_event( sock, AFD_POLL_BIT_WRITE, 0 );
 
         if (event & POLLPRI)
-            post_socket_event( sock, FD_OOB_BIT, 0 );
+            post_socket_event( sock, AFD_POLL_BIT_OOB, 0 );
 
         if (event & (POLLERR | POLLHUP))
-            post_socket_event( sock, FD_CLOSE_BIT, sock_get_error( error ) );
+            post_socket_event( sock, AFD_POLL_BIT_HUP, sock_get_error( error ) );
         break;
     }
 
@@ -1006,7 +1049,7 @@ static int sock_get_poll_events( struct fd *fd )
         return POLLOUT;
 
     case SOCK_LISTENING:
-        if (!list_empty( &sock->accept_list ) || (mask & FD_ACCEPT))
+        if (!list_empty( &sock->accept_list ) || (mask & AFD_POLL_ACCEPT))
             ev |= POLLIN;
         break;
 
@@ -1020,17 +1063,17 @@ static int sock_get_poll_events( struct fd *fd )
         {
             if (async_waiting( &sock->read_q )) ev |= POLLIN | POLLPRI;
         }
-        else if (!sock->rd_shutdown && (mask & FD_READ))
+        else if (!sock->rd_shutdown && (mask & AFD_POLL_READ))
             ev |= POLLIN | POLLPRI;
-        /* We use POLLIN with 0 bytes recv() as FD_CLOSE indication for stream sockets. */
-        else if (sock->state == SOCK_CONNECTED && (mask & FD_CLOSE) && !(sock->reported_events & FD_READ))
+        /* We use POLLIN with 0 bytes recv() as hangup indication for stream sockets. */
+        else if (sock->state == SOCK_CONNECTED && (mask & AFD_POLL_HUP) && !(sock->reported_events & AFD_POLL_READ))
             ev |= POLLIN;
 
         if (async_queued( &sock->write_q ))
         {
             if (async_waiting( &sock->write_q )) ev |= POLLOUT;
         }
-        else if (!sock->wr_shutdown && (mask & FD_WRITE))
+        else if (!sock->wr_shutdown && (mask & AFD_POLL_WRITE))
         {
             ev |= POLLOUT;
         }
@@ -1465,8 +1508,8 @@ static struct sock *accept_socket( struct sock *sock )
         }
     }
     clear_error();
-    sock->pending_events &= ~FD_ACCEPT;
-    sock->reported_events &= ~FD_ACCEPT;
+    sock->pending_events &= ~AFD_POLL_ACCEPT;
+    sock->reported_events &= ~AFD_POLL_ACCEPT;
     sock_reselect( sock );
     return acceptsock;
 }
@@ -1514,8 +1557,8 @@ static int accept_into_socket( struct sock *sock, struct sock *acceptsock )
     acceptsock->fd = newfd;
 
     clear_error();
-    sock->pending_events &= ~FD_ACCEPT;
-    sock->reported_events &= ~FD_ACCEPT;
+    sock->pending_events &= ~AFD_POLL_ACCEPT;
+    sock->reported_events &= ~AFD_POLL_ACCEPT;
     sock_reselect( sock );
 
     return TRUE;
@@ -1791,7 +1834,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         /* a listening socket can no longer be accepted into */
         allow_fd_caching( sock->fd );
 
-        /* we may already be selecting for FD_ACCEPT */
+        /* we may already be selecting for AFD_POLL_ACCEPT */
         sock_reselect( sock );
         return 0;
     }
@@ -2374,11 +2417,11 @@ DECL_HANDLER(set_socket_event)
                                                 FILE_WRITE_ATTRIBUTES, &sock_ops))) return;
     if (get_unix_fd( sock->fd ) == -1) return;
     old_event = sock->event;
-    sock->mask    = req->mask;
+    sock->mask    = afd_poll_flag_from_win32( req->mask );
     if (req->window)
     {
-        sock->pending_events &= ~req->mask;
-        sock->reported_events &= ~req->mask;
+        sock->pending_events &= ~sock->mask;
+        sock->reported_events &= ~sock->mask;
     }
     sock->event   = NULL;
     sock->window  = req->window;
@@ -2393,7 +2436,7 @@ DECL_HANDLER(set_socket_event)
     sock->nonblocking = 1;
 
     /* if a network event is pending, signal the event object
-       it is possible that FD_CONNECT or FD_ACCEPT network events has happened
+       it is possible that CONNECT or ACCEPT network events has happened
        before a WSAEventSelect() was done on it.
        (when dealing with Asynchronous socket)  */
     sock_wake_up( sock );
@@ -2405,14 +2448,23 @@ DECL_HANDLER(set_socket_event)
 /* get socket event parameters */
 DECL_HANDLER(get_socket_event)
 {
+    unsigned int errors[FD_MAX_EVENTS] = {0};
     struct sock *sock;
 
     if (!(sock = (struct sock *)get_handle_obj( current->process, req->handle,
                                                 FILE_READ_ATTRIBUTES, &sock_ops ))) return;
     if (get_unix_fd( sock->fd ) == -1) return;
-    reply->mask  = sock->mask;
-    reply->pmask = sock->pending_events;
-    set_reply_data( sock->errors, min( get_reply_max_size(), sizeof(sock->errors) ));
+    reply->mask  = afd_poll_flag_to_win32( sock->mask );
+    reply->pmask = afd_poll_flag_to_win32( sock->pending_events );
+
+    errors[FD_READ_BIT]     = sock->errors[AFD_POLL_BIT_READ];
+    errors[FD_WRITE_BIT]    = sock->errors[AFD_POLL_BIT_WRITE];
+    errors[FD_OOB_BIT]      = sock->errors[AFD_POLL_BIT_OOB];
+    errors[FD_ACCEPT_BIT]   = sock->errors[AFD_POLL_BIT_ACCEPT];
+    errors[FD_CONNECT_BIT]  = sock->errors[AFD_POLL_BIT_CONNECT_ERR];
+    if (!(errors[FD_CLOSE_BIT] = sock->errors[AFD_POLL_BIT_HUP]))
+        errors[FD_CLOSE_BIT] = sock->errors[AFD_POLL_BIT_RESET];
+    set_reply_data( errors, min( get_reply_max_size(), sizeof(errors) ));
 
     if (req->service)
     {
@@ -2499,8 +2551,8 @@ DECL_HANDLER(recv_socket)
 
     if (status == STATUS_PENDING && sock->rd_shutdown) status = STATUS_PIPE_DISCONNECTED;
 
-    sock->pending_events &= ~(req->oob ? FD_OOB : FD_READ);
-    sock->reported_events &= ~(req->oob ? FD_OOB : FD_READ);
+    sock->pending_events &= ~(req->oob ? AFD_POLL_OOB : AFD_POLL_READ);
+    sock->reported_events &= ~(req->oob ? AFD_POLL_OOB : AFD_POLL_READ);
 
     if ((async = create_request_async( fd, get_fd_comp_flags( fd ), &req->async )))
     {
@@ -2570,8 +2622,8 @@ DECL_HANDLER(send_socket)
     if (status != STATUS_SUCCESS)
     {
         /* send() calls only clear and reselect events if unsuccessful. */
-        sock->pending_events &= ~FD_WRITE;
-        sock->reported_events &= ~FD_WRITE;
+        sock->pending_events &= ~AFD_POLL_WRITE;
+        sock->reported_events &= ~AFD_POLL_WRITE;
     }
 
     /* If we had a short write and the socket is nonblocking (and the client is
