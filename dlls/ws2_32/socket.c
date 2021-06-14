@@ -4379,29 +4379,50 @@ int WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEvent, LPWSANETWORKEVENTS lp
     return SOCKET_ERROR;
 }
 
-/***********************************************************************
- *		WSAEventSelect (WS2_32.39)
- */
-int WINAPI WSAEventSelect(SOCKET s, WSAEVENT hEvent, LONG lEvent)
+
+static unsigned int afd_poll_flag_from_win32( unsigned int flags )
 {
-    int ret;
-
-    TRACE("%04lx, hEvent %p, event %08x\n", s, hEvent, lEvent);
-
-    SERVER_START_REQ( set_socket_event )
+    static const unsigned int map[] =
     {
-        req->handle = wine_server_obj_handle( SOCKET2HANDLE(s) );
-        req->mask   = lEvent;
-        req->event  = wine_server_obj_handle( hEvent );
-        req->window = 0;
-        req->msg    = 0;
-        ret = wine_server_call( req );
+        AFD_POLL_READ,
+        AFD_POLL_WRITE,
+        AFD_POLL_OOB,
+        AFD_POLL_ACCEPT,
+        AFD_POLL_CONNECT | AFD_POLL_CONNECT_ERR,
+        AFD_POLL_RESET | AFD_POLL_HUP,
+    };
+
+    unsigned int i, ret = 0;
+
+    for (i = 0; i < ARRAY_SIZE(map); ++i)
+    {
+        if (flags & (1 << i)) ret |= map[i];
     }
-    SERVER_END_REQ;
-    if (!ret) return 0;
-    SetLastError(WSAEINVAL);
-    return SOCKET_ERROR;
+
+    return ret;
 }
+
+
+/***********************************************************************
+ *      WSAEventSelect   (ws2_32.@)
+ */
+int WINAPI WSAEventSelect( SOCKET s, WSAEVENT event, LONG mask )
+{
+    struct afd_event_select_params params;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    TRACE( "socket %#lx, event %p, mask %#x\n", s, event, mask );
+
+    params.event = event;
+    params.mask = afd_poll_flag_from_win32( mask );
+
+    status = NtDeviceIoControlFile( (HANDLE)s, NULL, NULL, NULL, &io, IOCTL_AFD_EVENT_SELECT,
+                                    &params, sizeof(params), NULL, 0 );
+    SetLastError( NtStatusToWSAError( status ) );
+    return status ? -1 : 0;
+}
+
 
 /**********************************************************************
  *      WSAGetOverlappedResult (WS2_32.40)
