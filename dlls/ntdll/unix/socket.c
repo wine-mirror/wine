@@ -1181,6 +1181,12 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             break;
         }
 
+        case IOCTL_AFD_GET_EVENTS:
+            if (in_size) FIXME( "unexpected input size %u\n", in_size );
+
+            status = STATUS_BAD_DEVICE_TYPE;
+            break;
+
         case IOCTL_AFD_RECV:
         {
             const struct afd_recv_params *params = in_buffer;

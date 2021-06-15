@@ -2011,6 +2011,28 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         }
         return 1;
 
+    case IOCTL_AFD_GET_EVENTS:
+    {
+        struct afd_get_events_params params = {0};
+        unsigned int i;
+
+        if (get_reply_max_size() < sizeof(params))
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return 0;
+        }
+
+        params.flags = sock->pending_events & sock->mask;
+        for (i = 0; i < ARRAY_SIZE( params.status ); ++i)
+            params.status[i] = sock_get_ntstatus( sock->errors[i] );
+
+        sock->pending_events = 0;
+        sock_reselect( sock );
+
+        set_reply_data( &params, sizeof(params) );
+        return 0;
+    }
+
     case IOCTL_AFD_EVENT_SELECT:
     {
         struct event *event = NULL;

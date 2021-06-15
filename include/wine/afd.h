@@ -36,6 +36,7 @@
 #define IOCTL_AFD_RECV                      CTL_CODE(FILE_DEVICE_BEEP, 0x805, METHOD_NEITHER,  FILE_ANY_ACCESS)
 #define IOCTL_AFD_POLL                      CTL_CODE(FILE_DEVICE_BEEP, 0x809, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_AFD_EVENT_SELECT              CTL_CODE(FILE_DEVICE_BEEP, 0x821, METHOD_NEITHER,  FILE_ANY_ACCESS)
+#define IOCTL_AFD_GET_EVENTS                CTL_CODE(FILE_DEVICE_BEEP, 0x822, METHOD_NEITHER,  FILE_ANY_ACCESS)
 
 enum afd_poll_bit
 {
@@ -123,6 +124,12 @@ struct afd_event_select_params_32
 {
     ULONG event;
     int mask;
+};
+
+struct afd_get_events_params
+{
+    int flags;
+    NTSTATUS status[13];
 };
 
 #define IOCTL_AFD_WINE_CREATE               CTL_CODE(FILE_DEVICE_NETWORK, 200, METHOD_BUFFERED, FILE_ANY_ACCESS)
