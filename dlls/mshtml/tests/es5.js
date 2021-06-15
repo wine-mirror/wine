@@ -1207,3 +1207,20 @@ sync_test("head_setter", function() {
     document.head = "";
     ok(typeof(document.head) === "object", "typeof(document.head) = " + typeof(document.head));
 });
+
+
+sync_test("declaration_let", function() {
+    ok(a === undefined, "a is not undefined");
+    var a = 3;
+
+    {
+        let a = 2;
+
+        ok(a == 2, "a != 2");
+
+        a = 4;
+        ok(a == 4, "a != 4");
+    }
+
+    todo_wine.ok(a == 3, "a != 3");
+});

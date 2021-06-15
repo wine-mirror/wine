@@ -87,7 +87,7 @@ static variable_list_t *variable_list_add(parser_ctx_t*,variable_list_t*,variabl
 
 static void *new_statement(parser_ctx_t*,statement_type_t,size_t,unsigned);
 static statement_t *new_block_statement(parser_ctx_t*,unsigned,statement_list_t*);
-static statement_t *new_var_statement(parser_ctx_t*,unsigned,variable_list_t*);
+static statement_t *new_var_statement(parser_ctx_t*,BOOL,BOOL,unsigned,variable_list_t*);
 static statement_t *new_expression_statement(parser_ctx_t*,unsigned,expression_t*);
 static statement_t *new_if_statement(parser_ctx_t*,unsigned,expression_t*,statement_t*,statement_t*);
 static statement_t *new_while_statement(parser_ctx_t*,unsigned,BOOL,expression_t*,statement_t*);
@@ -168,8 +168,9 @@ static source_elements_t *source_elements_add_statement(source_elements_t*,state
 }
 
 /* keywords */
-%token <identifier> kBREAK kCASE kCATCH kCONTINUE kDEFAULT kDELETE kDO kELSE kFUNCTION kIF kFINALLY kFOR kGET kIN kSET
-%token <identifier> kINSTANCEOF kNEW kNULL kRETURN kSWITCH kTHIS kTHROW kTRUE kFALSE kTRY kTYPEOF kVAR kVOID kWHILE kWITH
+%token <identifier> kBREAK kCASE kCATCH kCONST kCONTINUE kDEFAULT kDELETE kDO kELSE kFUNCTION kIF kFINALLY kFOR
+%token <identifier> kGET kIN kLET kSET kINSTANCEOF kNEW kNULL kRETURN kSWITCH kTHIS kTHROW kTRUE kFALSE
+%token <identifier> kTRY kTYPEOF kVAR kVOID kWHILE kWITH
 %token tANDAND tOROR tINC tDEC tHTMLCOMMENT kDIVEQ kDCOL
 
 /* tokens */
@@ -182,6 +183,7 @@ static source_elements_t *source_elements_add_statement(source_elements_t*,state
 %type <source_elements> FunctionBody
 %type <statement> Statement
 %type <statement> Block
+%type <statement> LexicalDeclaration
 %type <statement> VariableStatement
 %type <statement> EmptyStatement
 %type <statement> ExpressionStatement
@@ -291,6 +293,7 @@ FormalParameterList_opt
 /* ECMA-262 3rd Edition    12 */
 Statement
         : Block                 { $$ = $1; }
+        | LexicalDeclaration    { $$ = $1; }
         | VariableStatement     { $$ = $1; }
         | EmptyStatement        { $$ = $1; }
         | FunctionExpression    { $$ = new_expression_statement(ctx, @$, $1); }
@@ -322,10 +325,25 @@ Block
         : '{' StatementList '}' { $$ = new_block_statement(ctx, @2, $2); }
         | '{' '}'               { $$ = new_block_statement(ctx, @$, NULL); }
 
+/* ECMA-262 10th Edition   13.3.1, TODO:  BindingList*/
+LexicalDeclaration
+        : kLET VariableDeclarationList semicolon_opt
+                                { $$ = new_var_statement(ctx, TRUE, FALSE, @$, $2); }
+        | kCONST VariableDeclarationList semicolon_opt
+                                {
+                                    if(ctx->script->version < SCRIPTLANGUAGEVERSION_ES5) {
+                                        WARN("const var declaration %s in legacy mode.\n",
+                                                debugstr_w($1));
+                                        set_error(ctx, @$, JS_E_SYNTAX);
+                                        YYABORT;
+                                    }
+                                    $$ = new_var_statement(ctx, TRUE, TRUE, @$, $2);
+                                }
+
 /* ECMA-262 3rd Edition    12.2 */
 VariableStatement
         : kVAR VariableDeclarationList semicolon_opt
-                                { $$ = new_var_statement(ctx, @$, $2); }
+                                { $$ = new_var_statement(ctx, FALSE, FALSE, @$, $2); }
 
 /* ECMA-262 3rd Edition    12.2 */
 VariableDeclarationList
@@ -834,6 +852,7 @@ ReservedAsIdentifier
         : kBREAK                { $$ = $1; }
         | kCASE                 { $$ = $1; }
         | kCATCH                { $$ = $1; }
+        | kCONST                { $$ = $1; }
         | kCONTINUE             { $$ = $1; }
         | kDEFAULT              { $$ = $1; }
         | kDELETE               { $$ = $1; }
@@ -847,6 +866,7 @@ ReservedAsIdentifier
         | kIF                   { $$ = $1; }
         | kIN                   { $$ = $1; }
         | kINSTANCEOF           { $$ = $1; }
+        | kLET                  { $$ = $1; }
         | kNEW                  { $$ = $1; }
         | kNULL                 { $$ = $1; }
         | kRETURN               { $$ = $1; }
@@ -1144,8 +1164,10 @@ static variable_list_t *variable_list_add(parser_ctx_t *ctx, variable_list_t *li
     return list;
 }
 
-static statement_t *new_var_statement(parser_ctx_t *ctx, unsigned loc, variable_list_t *variable_list)
+static statement_t *new_var_statement(parser_ctx_t *ctx, BOOL block_scope, BOOL constant, unsigned loc,
+        variable_list_t *variable_list)
 {
+    variable_declaration_t *var;
     var_statement_t *ret;
 
     ret = new_statement(ctx, STAT_VAR, sizeof(*ret), loc);
@@ -1153,6 +1175,11 @@ static statement_t *new_var_statement(parser_ctx_t *ctx, unsigned loc, variable_
         return NULL;
 
     ret->variable_list = variable_list->head;
+    for (var = ret->variable_list; var; var = var->next)
+    {
+        var->block_scope = block_scope;
+        var->constant = constant;
+    }
 
     return &ret->stat;
 }

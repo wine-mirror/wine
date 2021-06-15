@@ -1138,6 +1138,11 @@ static HRESULT compile_variable_list(compiler_ctx_t *ctx, variable_declaration_t
         if(!iter->expr)
             continue;
 
+        if (iter->block_scope)
+            FIXME("Block scope variables are not supported.\n");
+        if (iter->constant)
+            FIXME("Constant variables are not supported.\n");
+
         hres = emit_identifier_ref(ctx, iter->identifier, 0);
         if(FAILED(hres))
             return hres;

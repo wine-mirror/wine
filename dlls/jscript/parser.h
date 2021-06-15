@@ -95,6 +95,7 @@ literal_t *new_boolean_literal(parser_ctx_t*,BOOL) DECLSPEC_HIDDEN;
 
 typedef struct _variable_declaration_t {
     const WCHAR *identifier;
+    BOOL block_scope, constant;
     expression_t *expr;
 
     struct _variable_declaration_t *next;
