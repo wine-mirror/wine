@@ -957,6 +957,7 @@ static void session_clear_end_of_presentation(struct media_session *session)
     {
         node->flags &= ~TOPO_NODE_END_OF_STREAM;
     }
+    session->presentation.topo_status = MF_TOPOSTATUS_READY;
 }
 
 static void session_set_stopped(struct media_session *session, HRESULT status)
