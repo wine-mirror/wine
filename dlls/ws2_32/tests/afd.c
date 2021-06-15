@@ -1229,6 +1229,110 @@ static void test_event_select(void)
     CloseHandle(event);
 }
 
+static void test_get_events(void)
+{
+    const struct sockaddr_in invalid_addr =
+    {
+        .sin_family = AF_INET,
+        .sin_addr.s_addr = htonl(INADDR_LOOPBACK),
+        .sin_port = 255,
+    };
+    struct afd_get_events_params params;
+    WSANETWORKEVENTS events;
+    SOCKET client, server;
+    IO_STATUS_BLOCK io;
+    unsigned int i;
+    HANDLE event;
+    int ret;
+
+    event = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    tcp_socketpair(&client, &server);
+
+    ret = WSAEventSelect(client, event, FD_ACCEPT | FD_CLOSE | FD_CONNECT | FD_OOB | FD_READ | FD_WRITE);
+    ok(!ret, "got error %u\n", GetLastError());
+
+    memset(&params, 0xcc, sizeof(params));
+    memset(&io, 0xcc, sizeof(io));
+    ret = NtDeviceIoControlFile((HANDLE)client, NULL, NULL, NULL, &io,
+            IOCTL_AFD_GET_EVENTS, NULL, 0, NULL, 0);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret);
+
+    memset(&params, 0xcc, sizeof(params));
+    memset(&io, 0xcc, sizeof(io));
+    ret = NtDeviceIoControlFile((HANDLE)client, NULL, NULL, NULL, &io,
+            IOCTL_AFD_GET_EVENTS, NULL, 0, &params, sizeof(params));
+    ok(!ret, "got %#x\n", ret);
+    ok(params.flags == (AFD_POLL_WRITE | AFD_POLL_CONNECT), "got flags %#x\n", params.flags);
+    for (i = 0; i < ARRAY_SIZE(params.status); ++i)
+        ok(!params.status[i], "got status[%u] %#x\n", i, params.status[i]);
+
+    ret = WSAEnumNetworkEvents(client, event, &events);
+    ok(!ret, "got error %u\n", GetLastError());
+    ok(!events.lNetworkEvents, "got events %#x\n", events.lNetworkEvents);
+
+    closesocket(client);
+    closesocket(server);
+
+    tcp_socketpair(&client, &server);
+
+    ret = WSAEventSelect(client, event, FD_ACCEPT | FD_CLOSE | FD_CONNECT | FD_OOB | FD_READ | FD_WRITE);
+    ok(!ret, "got error %u\n", GetLastError());
+
+    ret = WSAEnumNetworkEvents(client, event, &events);
+    ok(!ret, "got error %u\n", GetLastError());
+    ok(events.lNetworkEvents == (FD_WRITE | FD_CONNECT), "got events %#x\n", events.lNetworkEvents);
+
+    memset(&params, 0xcc, sizeof(params));
+    memset(&io, 0xcc, sizeof(io));
+    ret = NtDeviceIoControlFile((HANDLE)client, NULL, NULL, NULL, &io,
+            IOCTL_AFD_GET_EVENTS, NULL, 0, &params, sizeof(params));
+    ok(!ret, "got %#x\n", ret);
+    ok(!params.flags, "got flags %#x\n", params.flags);
+    for (i = 0; i < ARRAY_SIZE(params.status); ++i)
+        ok(!params.status[i], "got status[%u] %#x\n", i, params.status[i]);
+
+    closesocket(client);
+    closesocket(server);
+
+    /* Test a failed connection. The following call can take over 2 seconds to
+     * complete, so make the test interactive-only. */
+
+    if (winetest_interactive)
+    {
+        client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+        ResetEvent(event);
+        ret = WSAEventSelect(client, event, FD_CONNECT);
+        ok(!ret, "got error %u\n", GetLastError());
+
+        ret = connect(client, (struct sockaddr *)&invalid_addr, sizeof(invalid_addr));
+        ok(ret == -1, "expected failure\n");
+        ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
+
+        ret = WaitForSingleObject(event, 2000);
+        ok(!ret, "got %#x\n", ret);
+
+        memset(&params, 0xcc, sizeof(params));
+        memset(&io, 0xcc, sizeof(io));
+        ret = NtDeviceIoControlFile((HANDLE)client, NULL, NULL, NULL, &io,
+                IOCTL_AFD_GET_EVENTS, NULL, 0, &params, sizeof(params));
+        ok(!ret, "got %#x\n", ret);
+        ok(params.flags == AFD_POLL_CONNECT_ERR, "got flags %#x\n", params.flags);
+        for (i = 0; i < ARRAY_SIZE(params.status); ++i)
+        {
+            if (i == AFD_POLL_BIT_CONNECT_ERR)
+                ok(params.status[i] == STATUS_CONNECTION_REFUSED, "got status[%u] %#x\n", i, params.status[i]);
+            else
+                ok(!params.status[i], "got status[%u] %#x\n", i, params.status[i]);
+        }
+
+        closesocket(client);
+    }
+
+    CloseHandle(event);
+}
+
 START_TEST(afd)
 {
     WSADATA data;
@@ -1240,6 +1344,7 @@ START_TEST(afd)
     test_poll_completion_port();
     test_recv();
     test_event_select();
+    test_get_events();
 
     WSACleanup();
 }
