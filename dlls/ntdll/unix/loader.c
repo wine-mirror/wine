@@ -1772,7 +1772,7 @@ static void load_ntdll(void)
 /***********************************************************************
  *           get_image_address
  */
-ULONG_PTR get_image_address(void)
+static ULONG_PTR get_image_address(void)
 {
 #ifdef HAVE_GETAUXVAL
     ULONG_PTR size, num, phdr_addr = getauxval( AT_PHDR );
@@ -1877,6 +1877,7 @@ static void start_main_thread(void)
     if (p___wine_main_argc) *p___wine_main_argc = main_argc;
     if (p___wine_main_argv) *p___wine_main_argv = main_argv;
     if (p___wine_main_wargv) *p___wine_main_wargv = main_wargv;
+    *(ULONG_PTR *)&peb->CloudFileFlags = get_image_address();
     set_load_order_app_name( main_wargv[0] );
     init_thread_stack( teb, is_win64 ? 0x7fffffff : 0, 0, 0 );
     NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );

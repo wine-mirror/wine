@@ -485,7 +485,7 @@ void init_cpu_info(void)
     num = 1;
     FIXME("Detecting the number of processors is not supported.\n");
 #endif
-    NtCurrentTeb()->Peb->NumberOfProcessors = num;
+    peb->NumberOfProcessors = num;
     get_cpuinfo( &cpu_info );
     TRACE( "<- CPU arch %d, level %d, rev %d, features 0x%x\n",
            cpu_info.ProcessorArchitecture, cpu_info.ProcessorLevel, cpu_info.ProcessorRevision,
@@ -1033,7 +1033,7 @@ static NTSTATUS create_logical_proc_info( SYSTEM_LOGICAL_PROCESSOR_INFORMATION *
     if (relation != RelationAll)
         FIXME("Relationship filtering not implemented: 0x%x\n", relation);
 
-    lcpu_no = NtCurrentTeb()->Peb->NumberOfProcessors;
+    lcpu_no = peb->NumberOfProcessors;
 
     size = sizeof(pkgs_no);
     if (sysctlbyname("hw.packages", &pkgs_no, &size, NULL, 0))
@@ -1180,7 +1180,7 @@ static NTSTATUS create_cpuset_info(SYSTEM_CPU_SET_INFORMATION *info)
     ULONG64 cpu_mask;
     NTSTATUS status;
 
-    count = NtCurrentTeb()->Peb->NumberOfProcessors;
+    count = peb->NumberOfProcessors;
 
     cpu_info_size = 3 * sizeof(*proc_info);
     if (!(proc_info_buffer = malloc(cpu_info_size)))
@@ -2411,7 +2411,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         {
             static int i = 1;
             unsigned int n;
-            cpus = min(NtCurrentTeb()->Peb->NumberOfProcessors, out_cpus);
+            cpus = min(peb->NumberOfProcessors, out_cpus);
             FIXME("stub info_class SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION\n");
             /* many programs expect these values to change so fake change */
             for (n = 0; n < cpus; n++)
@@ -2537,7 +2537,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
 
     case SystemInterruptInformation: /* 23 */
     {
-        len = NtCurrentTeb()->Peb->NumberOfProcessors * sizeof(SYSTEM_INTERRUPT_INFORMATION);
+        len = peb->NumberOfProcessors * sizeof(SYSTEM_INTERRUPT_INFORMATION);
         if (size >= len)
         {
             if (!info) ret = STATUS_ACCESS_VIOLATION;
@@ -2716,7 +2716,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
 
         /* Each logical processor may use up to 7 entries in returned table:
          * core, numa node, package, L1i, L1d, L2, L3 */
-        len = 7 * NtCurrentTeb()->Peb->NumberOfProcessors;
+        len = 7 * peb->NumberOfProcessors;
         buf = malloc( len * sizeof(*buf) );
         if (!buf)
         {
@@ -2904,7 +2904,7 @@ NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
 
     case SystemCpuSetInformation:
     {
-        unsigned int cpu_count = NtCurrentTeb()->Peb->NumberOfProcessors;
+        unsigned int cpu_count = peb->NumberOfProcessors;
         PROCESS_BASIC_INFORMATION pbi;
         HANDLE process;
 
@@ -3261,7 +3261,7 @@ NTSTATUS WINAPI NtPowerInformation( POWER_INFORMATION_LEVEL level, void *input, 
         int i, out_cpus;
 
         if ((output == NULL) || (out_size == 0)) return STATUS_INVALID_PARAMETER;
-        out_cpus = NtCurrentTeb()->Peb->NumberOfProcessors;
+        out_cpus = peb->NumberOfProcessors;
         if ((out_size / sizeof(PROCESSOR_POWER_INFORMATION)) < out_cpus) return STATUS_BUFFER_TOO_SMALL;
 #if defined(linux)
         {

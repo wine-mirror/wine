@@ -62,6 +62,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(environ);
 
+PEB *peb = NULL;
 USHORT *uctable = NULL, *lctable = NULL;
 SIZE_T startup_info_size = 0;
 BOOL is_prefix_bootstrap = FALSE;
@@ -1996,8 +1997,6 @@ static void *build_wow64_parameters( const RTL_USER_PROCESS_PARAMETERS *params )
  */
 static void init_peb( RTL_USER_PROCESS_PARAMETERS *params, void *module )
 {
-    PEB *peb = NtCurrentTeb()->Peb;
-
     peb->ImageBaseAddress           = module;
     peb->ProcessParameters          = params;
     peb->OSMajorVersion             = 6;

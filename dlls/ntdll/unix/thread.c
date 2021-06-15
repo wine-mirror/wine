@@ -1096,7 +1096,7 @@ NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_c
     select_op_t select_op;
     sigset_t old_set;
 
-    if (!NtCurrentTeb()->Peb->BeingDebugged) return 0;  /* no debugger present */
+    if (!peb->BeingDebugged) return 0;  /* no debugger present */
 
     pthread_sigmask( SIG_BLOCK, &server_block_set, &old_set );
 
@@ -1906,21 +1906,21 @@ ULONG WINAPI NtGetCurrentProcessorNumber(void)
     if (res != -1) return processor;
 #endif
 
-    if (NtCurrentTeb()->Peb->NumberOfProcessors > 1)
+    if (peb->NumberOfProcessors > 1)
     {
         ULONG_PTR thread_mask, processor_mask;
 
         if (!NtQueryInformationThread( GetCurrentThread(), ThreadAffinityMask,
                                        &thread_mask, sizeof(thread_mask), NULL ))
         {
-            for (processor = 0; processor < NtCurrentTeb()->Peb->NumberOfProcessors; processor++)
+            for (processor = 0; processor < peb->NumberOfProcessors; processor++)
             {
                 processor_mask = (1 << processor);
                 if (thread_mask & processor_mask)
                 {
                     if (thread_mask != processor_mask)
                         FIXME( "need multicore support (%d processors)\n",
-                               NtCurrentTeb()->Peb->NumberOfProcessors );
+                               peb->NumberOfProcessors );
                     return processor;
                 }
             }

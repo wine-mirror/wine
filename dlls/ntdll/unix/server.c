@@ -1558,7 +1558,6 @@ size_t server_init_process(void)
  */
 void server_init_process_done(void)
 {
-    PEB *peb = NtCurrentTeb()->Peb;
     void *entry, *teb;
     NTSTATUS status;
     int suspend, needs_close, unixdir;
@@ -1738,7 +1737,7 @@ NTSTATUS WINAPI NtClose( HANDLE handle )
     if (fd != -1) close( fd );
 
     if (ret != STATUS_INVALID_HANDLE || !handle) return ret;
-    if (!NtCurrentTeb()->Peb->BeingDebugged) return ret;
+    if (!peb->BeingDebugged) return ret;
     if (!NtQueryInformationProcess( NtCurrentProcess(), ProcessDebugPort, &port, sizeof(port), NULL) && port)
     {
         NtCurrentTeb()->ExceptionCode = ret;

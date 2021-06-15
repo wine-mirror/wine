@@ -299,7 +299,7 @@ void dbg_init(void)
 
     if (nb_debug_options == -1) init_options();
 
-    options = (struct __wine_debug_channel *)((char *)NtCurrentTeb()->Peb + (is_win64 ? 2 : 1) * page_size);
+    options = (struct __wine_debug_channel *)((char *)peb + (is_win64 ? 2 : 1) * page_size);
     memcpy( options, debug_options, nb_debug_options * sizeof(*options) );
     free( debug_options );
     debug_options = options;

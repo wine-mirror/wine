@@ -2688,7 +2688,7 @@ void virtual_init(void)
  */
 ULONG_PTR get_system_affinity_mask(void)
 {
-    ULONG num_cpus = NtCurrentTeb()->Peb->NumberOfProcessors;
+    ULONG num_cpus = peb->NumberOfProcessors;
     if (num_cpus >= sizeof(ULONG_PTR) * 8) return ~(ULONG_PTR)0;
     return ((ULONG_PTR)1 << num_cpus) - 1;
 }
@@ -2723,7 +2723,7 @@ void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info )
     info->LowestUserAddress       = (void *)0x10000;
     info->HighestUserAddress      = (char *)user_space_limit - 1;
     info->ActiveProcessorsAffinityMask = get_system_affinity_mask();
-    info->NumberOfProcessors      = NtCurrentTeb()->Peb->NumberOfProcessors;
+    info->NumberOfProcessors      = peb->NumberOfProcessors;
 }
 
 
@@ -2840,7 +2840,7 @@ NTSTATUS virtual_create_builtin_view( void *module, const UNICODE_STRING *nt_nam
 
 
 /* set some initial values in a new TEB */
-static TEB *init_teb( void *ptr, PEB *peb, BOOL is_wow )
+static TEB *init_teb( void *ptr, BOOL is_wow )
 {
     struct ntdll_thread_data *thread_data;
     TEB *teb;
@@ -2902,8 +2902,6 @@ static TEB *init_teb( void *ptr, PEB *peb, BOOL is_wow )
  */
 TEB *virtual_alloc_first_teb(void)
 {
-    TEB *teb;
-    PEB *peb;
     void *ptr;
     NTSTATUS status;
     SIZE_T data_size = page_size;
@@ -2926,9 +2924,7 @@ TEB *virtual_alloc_first_teb(void)
     data_size = 2 * block_size;
     NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&ptr, 0, &data_size, MEM_COMMIT, PAGE_READWRITE );
     peb = (PEB *)((char *)teb_block + 31 * block_size + (is_win64 ? 0 : page_size));
-    teb = init_teb( ptr, peb, FALSE );
-    *(ULONG_PTR *)&peb->CloudFileFlags = get_image_address();
-    return teb;
+    return init_teb( ptr, FALSE );
 }
 
 
@@ -2969,7 +2965,7 @@ NTSTATUS virtual_alloc_teb( TEB **ret_teb )
         NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&ptr, 0, &block_size,
                                  MEM_COMMIT, PAGE_READWRITE );
     }
-    *ret_teb = teb = init_teb( ptr, NtCurrentTeb()->Peb, !!NtCurrentTeb()->WowTebOffset );
+    *ret_teb = teb = init_teb( ptr, !!NtCurrentTeb()->WowTebOffset );
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
 
     if ((status = signal_alloc_thread( teb )))
@@ -3050,8 +3046,7 @@ NTSTATUS virtual_clear_tls_index( ULONG index )
     else
     {
         index -= TLS_MINIMUM_AVAILABLE;
-        if (index >= 8 * sizeof(NtCurrentTeb()->Peb->TlsExpansionBitmapBits))
-            return STATUS_INVALID_PARAMETER;
+        if (index >= 8 * sizeof(peb->TlsExpansionBitmapBits)) return STATUS_INVALID_PARAMETER;
 
         server_enter_uninterrupted_section( &virtual_mutex, &sigset );
         LIST_FOR_EACH_ENTRY( thread_data, &teb_list, struct ntdll_thread_data, entry )
@@ -3655,7 +3650,7 @@ void CDECL virtual_release_address_space(void)
 void virtual_set_large_address_space(void)
 {
     /* no large address space on win9x */
-    if (NtCurrentTeb()->Peb->OSPlatformId != VER_PLATFORM_WIN32_NT) return;
+    if (peb->OSPlatformId != VER_PLATFORM_WIN32_NT) return;
 
     user_space_limit = working_set_limit = address_space_limit;
 }
