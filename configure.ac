@@ -742,10 +742,10 @@ case $host_os in
     AC_SUBST(APPKIT_LIBS,"-framework AppKit")
     AC_SUBST(SYSTEMCONFIGURATION_LIBS,"-framework SystemConfiguration")
 
-    WINELOADER_LDFLAGS="-Wl,-pie,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist"
+    WINELOADER_LDFLAGS="-Wl,-pie,-segalign,0x1000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist"
 
     wine_can_build_preloader=yes
-    WINEPRELOADER_LDFLAGS="-nostartfiles -nodefaultlibs -e _start -ldylib1.o -Wl,-image_base,0x7d400000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist,-segaddr,WINE_4GB_RESERVE,0x100000000"
+    WINEPRELOADER_LDFLAGS="-nostartfiles -nodefaultlibs -e _start -ldylib1.o -Wl,-image_base,0x7d400000,-segalign,0x1000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist,-segaddr,WINE_4GB_RESERVE,0x100000000"
     WINE_TRY_CFLAGS([-Wl,-no_new_main -e _main],
                     [WINEPRELOADER_LDFLAGS="-Wl,-no_new_main $WINEPRELOADER_LDFLAGS"
                      WINE_TRY_CFLAGS([-Wl,-no_new_main -e _main -nostartfiles -nodefaultlibs],,
