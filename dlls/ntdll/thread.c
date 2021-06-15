@@ -34,11 +34,32 @@
 
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 WINE_DECLARE_DEBUG_CHANNEL(thread);
+WINE_DECLARE_DEBUG_CHANNEL(pid);
+WINE_DECLARE_DEBUG_CHANNEL(timestamp);
 
 struct _KUSER_SHARED_DATA *user_shared_data = (void *)0x7ffe0000;
 
+struct debug_info
+{
+    unsigned int str_pos;       /* current position in strings buffer */
+    unsigned int out_pos;       /* current position in output buffer */
+    char         strings[1020]; /* buffer for temporary strings */
+    char         output[1020];  /* current output line */
+};
+
+C_ASSERT( sizeof(struct debug_info) == 0x800 );
+
 static int nb_debug_options;
 static struct __wine_debug_channel *debug_options;
+
+static inline struct debug_info *get_info(void)
+{
+#ifdef _WIN64
+    return (struct debug_info *)((TEB32 *)((char *)NtCurrentTeb() + 0x2000) + 1);
+#else
+    return (struct debug_info *)(NtCurrentTeb() + 1);
+#endif
+}
 
 static void init_options(void)
 {
@@ -81,7 +102,14 @@ unsigned char __cdecl __wine_dbg_get_channel_flags( struct __wine_debug_channel 
  */
 const char * __cdecl __wine_dbg_strdup( const char *str )
 {
-    return unix_funcs->dbg_strdup( str );
+    struct debug_info *info = get_info();
+    unsigned int pos = info->str_pos;
+    size_t n = strlen( str ) + 1;
+
+    assert( n <= sizeof(info->strings) );
+    if (pos + n > sizeof(info->strings)) pos = 0;
+    info->str_pos = pos + n;
+    return memcpy( info->strings + pos, str, n );
 }
 
 /***********************************************************************
@@ -90,7 +118,27 @@ const char * __cdecl __wine_dbg_strdup( const char *str )
 int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
                                const char *function )
 {
-    return unix_funcs->dbg_header( cls, channel, function );
+    static const char * const classes[] = { "fixme", "err", "warn", "trace" };
+    struct debug_info *info = get_info();
+    char *pos = info->output;
+
+    if (!(__wine_dbg_get_channel_flags( channel ) & (1 << cls))) return -1;
+
+    /* only print header if we are at the beginning of the line */
+    if (info->out_pos) return 0;
+
+    if (TRACE_ON(timestamp))
+    {
+        ULONG ticks = NtGetTickCount();
+        pos += sprintf( pos, "%3u.%03u:", ticks / 1000, ticks % 1000 );
+    }
+    if (TRACE_ON(pid)) pos += sprintf( pos, "%04x:", GetCurrentProcessId() );
+    pos += sprintf( pos, "%04x:", GetCurrentThreadId() );
+    if (function && cls < ARRAY_SIZE( classes ))
+        pos += snprintf( pos, sizeof(info->output) - (pos - info->output), "%s:%s:%s ",
+                         classes[cls], channel->name, function );
+    info->out_pos = pos - info->output;
+    return info->out_pos;
 }
 
 /***********************************************************************

@@ -277,7 +277,7 @@ int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_
 {
     static const char * const classes[] = { "fixme", "err", "warn", "trace" };
     struct debug_info *info = get_info();
-    char buffer[200], *pos = buffer;
+    char *pos = info->output;
 
     if (!(__wine_dbg_get_channel_flags( channel ) & (1 << cls))) return -1;
 
@@ -295,10 +295,10 @@ int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_
         pos += sprintf( pos, "%04x:", GetCurrentThreadId() );
     }
     if (function && cls < ARRAY_SIZE( classes ))
-        snprintf( pos, sizeof(buffer) - (pos - buffer), "%s:%s:%s ",
-                  classes[cls], channel->name, function );
-
-    return append_output( info, buffer, strlen( buffer ));
+        pos += snprintf( pos, sizeof(info->output) - (pos - info->output), "%s:%s:%s ",
+                         classes[cls], channel->name, function );
+    info->out_pos = pos - info->output;
+    return info->out_pos;
 }
 
 /***********************************************************************

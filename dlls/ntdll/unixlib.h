@@ -26,7 +26,7 @@
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 121
+#define NTDLL_UNIXLIB_VERSION 122
 
 struct unix_funcs
 {
@@ -80,10 +80,7 @@ struct unix_funcs
                                                CONTEXT *context );
 
     /* debugging functions */
-    const char *  (CDECL *dbg_strdup)( const char *str );
     int           (CDECL *dbg_output)( const char *str );
-    int           (CDECL *dbg_header)( enum __wine_debug_class cls, struct __wine_debug_channel *channel,
-                                       const char *function );
 };
 
 #endif /* __NTDLL_UNIXLIB_H */
