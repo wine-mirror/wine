@@ -3826,6 +3826,33 @@ int WINAPI WS_select(int nfds, WS_fd_set *ws_readfds,
     return ret;
 }
 
+
+static unsigned int afd_poll_flag_to_win32( unsigned int flags )
+{
+    static const unsigned int map[] =
+    {
+        FD_READ,    /* READ */
+        FD_OOB,     /* OOB */
+        FD_WRITE,   /* WRITE */
+        FD_CLOSE,   /* HUP */
+        FD_CLOSE,   /* RESET */
+        0,          /* CLOSE */
+        FD_CONNECT, /* CONNECT */
+        FD_ACCEPT,  /* ACCEPT */
+        FD_CONNECT, /* CONNECT_ERR */
+    };
+
+    unsigned int i, ret = 0;
+
+    for (i = 0; i < ARRAY_SIZE(map); ++i)
+    {
+        if (flags & (1 << i)) ret |= map[i];
+    }
+
+    return ret;
+}
+
+
 /***********************************************************************
  *     WSAPoll
  */
@@ -4347,36 +4374,47 @@ SOCKET WINAPI WS_socket(int af, int type, int protocol)
 
 
 /***********************************************************************
- *		WSAEnumNetworkEvents (WS2_32.36)
+ *      WSAEnumNetworkEvents   (ws2_32.@)
  */
-int WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEvent, LPWSANETWORKEVENTS lpEvent)
+int WINAPI WSAEnumNetworkEvents( SOCKET s, WSAEVENT event, WSANETWORKEVENTS *ret_events )
 {
-    int ret;
-    int i;
-    int errors[FD_MAX_EVENTS];
+    struct afd_get_events_params params;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
 
-    TRACE("%04lx, hEvent %p, lpEvent %p\n", s, hEvent, lpEvent );
+    TRACE( "socket %#lx, event %p, events %p\n", s, event, ret_events );
 
-    SERVER_START_REQ( get_socket_event )
+    ResetEvent( event );
+
+    status = NtDeviceIoControlFile( (HANDLE)s, NULL, NULL, NULL, &io, IOCTL_AFD_GET_EVENTS,
+                                    NULL, 0, &params, sizeof(params) );
+    if (!status)
     {
-        req->handle  = wine_server_obj_handle( SOCKET2HANDLE(s) );
-        req->service = TRUE;
-        req->c_event = wine_server_obj_handle( hEvent );
-        wine_server_set_reply( req, errors, sizeof(errors) );
-        if (!(ret = wine_server_call(req))) lpEvent->lNetworkEvents = reply->pmask & reply->mask;
-    }
-    SERVER_END_REQ;
-    if (!ret)
-    {
-        for (i = 0; i < FD_MAX_EVENTS; i++)
+        ret_events->lNetworkEvents = afd_poll_flag_to_win32( params.flags );
+
+        if (ret_events->lNetworkEvents & FD_READ)
+            ret_events->iErrorCode[FD_READ_BIT] = NtStatusToWSAError( params.status[AFD_POLL_BIT_READ] );
+
+        if (ret_events->lNetworkEvents & FD_WRITE)
+            ret_events->iErrorCode[FD_WRITE_BIT] = NtStatusToWSAError( params.status[AFD_POLL_BIT_WRITE] );
+
+        if (ret_events->lNetworkEvents & FD_OOB)
+            ret_events->iErrorCode[FD_OOB_BIT] = NtStatusToWSAError( params.status[AFD_POLL_BIT_OOB] );
+
+        if (ret_events->lNetworkEvents & FD_ACCEPT)
+            ret_events->iErrorCode[FD_ACCEPT_BIT] = NtStatusToWSAError( params.status[AFD_POLL_BIT_ACCEPT] );
+
+        if (ret_events->lNetworkEvents & FD_CONNECT)
+            ret_events->iErrorCode[FD_CONNECT_BIT] = NtStatusToWSAError( params.status[AFD_POLL_BIT_CONNECT_ERR] );
+
+        if (ret_events->lNetworkEvents & FD_CLOSE)
         {
-            if (lpEvent->lNetworkEvents & (1 << i))
-                lpEvent->iErrorCode[i] = errors[i];
+            if (!(ret_events->iErrorCode[FD_CLOSE_BIT] = NtStatusToWSAError( params.status[AFD_POLL_BIT_HUP] )))
+                ret_events->iErrorCode[FD_CLOSE_BIT] = NtStatusToWSAError( params.status[AFD_POLL_BIT_RESET] );
         }
-        return 0;
     }
-    SetLastError(WSAEINVAL);
-    return SOCKET_ERROR;
+    SetLastError( NtStatusToWSAError( status ) );
+    return status ? -1 : 0;
 }
 
 
