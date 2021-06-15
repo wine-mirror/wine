@@ -4508,28 +4508,27 @@ BOOL WINAPI WSAGetOverlappedResult( SOCKET s, LPWSAOVERLAPPED lpOverlapped,
 
 
 /***********************************************************************
- *      WSAAsyncSelect			(WS2_32.101)
+ *      WSAAsyncSelect   (ws2_32.@)
  */
-INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, LONG lEvent)
+int WINAPI WSAAsyncSelect( SOCKET s, HWND window, UINT message, LONG mask )
 {
-    int ret;
+    struct afd_message_select_params params;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
 
-    TRACE("%04lx, hWnd %p, uMsg %08x, event %08x\n", s, hWnd, uMsg, lEvent);
+    TRACE( "socket %#lx, window %p, message %#x, mask %#x\n", s, window, message, mask );
 
-    SERVER_START_REQ( set_socket_event )
-    {
-        req->handle = wine_server_obj_handle( SOCKET2HANDLE(s) );
-        req->mask   = lEvent;
-        req->event  = 0;
-        req->window = wine_server_user_handle( hWnd );
-        req->msg    = uMsg;
-        ret = wine_server_call( req );
-    }
-    SERVER_END_REQ;
-    if (!ret) return 0;
-    SetLastError(WSAEINVAL);
-    return SOCKET_ERROR;
+    params.handle = wine_server_obj_handle( (HANDLE)s );
+    params.window = wine_server_user_handle( window );
+    params.message = message;
+    params.mask = afd_poll_flag_from_win32( mask );
+
+    status = NtDeviceIoControlFile( (HANDLE)s, NULL, NULL, NULL, &io, IOCTL_AFD_WINE_MESSAGE_SELECT,
+                                    &params, sizeof(params), NULL, 0 );
+    SetLastError( NtStatusToWSAError( status ) );
+    return status ? -1 : 0;
 }
+
 
 /***********************************************************************
  *      WSACreateEvent          (WS2_32.31)
