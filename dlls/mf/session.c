@@ -946,11 +946,16 @@ static void session_pause(struct media_session *session)
 static void session_clear_end_of_presentation(struct media_session *session)
 {
     struct media_source *source;
+    struct topo_node *node;
 
     session->presentation.flags &= ~SESSION_FLAG_END_OF_PRESENTATION;
     LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
     {
         source->flags &= ~SOURCE_FLAG_END_OF_PRESENTATION;
+    }
+    LIST_FOR_EACH_ENTRY(node, &session->presentation.nodes, struct topo_node, entry)
+    {
+        node->flags &= ~TOPO_NODE_END_OF_STREAM;
     }
 }
 
