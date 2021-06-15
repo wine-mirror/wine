@@ -1063,11 +1063,20 @@ static int sock_get_poll_events( struct fd *fd )
         {
             if (async_waiting( &sock->read_q )) ev |= POLLIN | POLLPRI;
         }
-        else if (!sock->rd_shutdown && (mask & AFD_POLL_READ))
-            ev |= POLLIN | POLLPRI;
-        /* We use POLLIN with 0 bytes recv() as hangup indication for stream sockets. */
-        else if (sock->state == SOCK_CONNECTED && (mask & AFD_POLL_HUP) && !(sock->reported_events & AFD_POLL_READ))
-            ev |= POLLIN;
+        else
+        {
+            if (!sock->rd_shutdown)
+            {
+                if (mask & AFD_POLL_READ)
+                    ev |= POLLIN;
+                if (mask & AFD_POLL_OOB)
+                    ev |= POLLPRI;
+            }
+
+            /* We use POLLIN with 0 bytes recv() as hangup indication for stream sockets. */
+            if (sock->state == SOCK_CONNECTED && (mask & AFD_POLL_HUP) && !(sock->reported_events & AFD_POLL_READ))
+                ev |= POLLIN;
+        }
 
         if (async_queued( &sock->write_q ))
         {
