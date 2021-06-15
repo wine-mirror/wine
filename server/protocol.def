@@ -1423,16 +1423,6 @@ enum server_fd_type
 @END
 
 
-/* Set socket event parameters */
-@REQ(set_socket_event)
-    obj_handle_t  handle;        /* handle to the socket */
-    unsigned int  mask;          /* event mask */
-    obj_handle_t  event;         /* event object */
-    user_handle_t window;        /* window to send the message to */
-    unsigned int  msg;           /* message to send */
-@END
-
-
 /* Get socket event parameters */
 @REQ(get_socket_event)
     obj_handle_t handle;        /* handle to the socket */

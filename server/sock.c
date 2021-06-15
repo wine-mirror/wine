@@ -444,28 +444,6 @@ static unsigned int afd_poll_flag_to_win32( unsigned int flags )
     return ret;
 }
 
-static unsigned int afd_poll_flag_from_win32( unsigned int flags )
-{
-    static const unsigned int map[] =
-    {
-        AFD_POLL_READ,
-        AFD_POLL_WRITE,
-        AFD_POLL_OOB,
-        AFD_POLL_ACCEPT,
-        AFD_POLL_CONNECT | AFD_POLL_CONNECT_ERR,
-        AFD_POLL_RESET | AFD_POLL_HUP,
-    };
-
-    unsigned int i, ret = 0;
-
-    for (i = 0; i < ARRAY_SIZE(map); ++i)
-    {
-        if (flags & (1 << i)) ret |= map[i];
-    }
-
-    return ret;
-}
-
 /* wake anybody waiting on the socket event or send the associated message */
 static void sock_wake_up( struct sock *sock )
 {
@@ -2518,44 +2496,6 @@ struct object *create_socket_device( struct object *root, const struct unicode_s
                                      unsigned int attr, const struct security_descriptor *sd )
 {
     return create_named_object( root, &socket_device_ops, name, attr, sd );
-}
-
-/* set socket event parameters */
-DECL_HANDLER(set_socket_event)
-{
-    struct sock *sock;
-    struct event *old_event;
-
-    if (!(sock = (struct sock *)get_handle_obj( current->process, req->handle,
-                                                FILE_WRITE_ATTRIBUTES, &sock_ops))) return;
-    if (get_unix_fd( sock->fd ) == -1) return;
-    old_event = sock->event;
-    sock->mask    = afd_poll_flag_from_win32( req->mask );
-    if (req->window)
-    {
-        sock->pending_events &= ~sock->mask;
-        sock->reported_events &= ~sock->mask;
-    }
-    sock->event   = NULL;
-    sock->window  = req->window;
-    sock->message = req->msg;
-    sock->wparam  = req->handle;  /* wparam is the socket handle */
-    if (req->event) sock->event = get_event_obj( current->process, req->event, EVENT_MODIFY_STATE );
-
-    if (debug_level && sock->event) fprintf(stderr, "event ptr: %p\n", sock->event);
-
-    sock_reselect( sock );
-
-    sock->nonblocking = 1;
-
-    /* if a network event is pending, signal the event object
-       it is possible that CONNECT or ACCEPT network events has happened
-       before a WSAEventSelect() was done on it.
-       (when dealing with Asynchronous socket)  */
-    sock_wake_up( sock );
-
-    if (old_event) release_object( old_event ); /* we're through with it */
-    release_object( &sock->obj );
 }
 
 /* get socket event parameters */

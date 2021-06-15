@@ -172,7 +172,6 @@ DECL_HANDLER(get_file_info);
 DECL_HANDLER(get_volume_info);
 DECL_HANDLER(lock_file);
 DECL_HANDLER(unlock_file);
-DECL_HANDLER(set_socket_event);
 DECL_HANDLER(get_socket_event);
 DECL_HANDLER(get_socket_info);
 DECL_HANDLER(set_socket_deferred);
@@ -454,7 +453,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_volume_info,
     (req_handler)req_lock_file,
     (req_handler)req_unlock_file,
-    (req_handler)req_set_socket_event,
     (req_handler)req_get_socket_event,
     (req_handler)req_get_socket_info,
     (req_handler)req_set_socket_deferred,
@@ -1040,12 +1038,6 @@ C_ASSERT( FIELD_OFFSET(struct unlock_file_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct unlock_file_request, offset) == 16 );
 C_ASSERT( FIELD_OFFSET(struct unlock_file_request, count) == 24 );
 C_ASSERT( sizeof(struct unlock_file_request) == 32 );
-C_ASSERT( FIELD_OFFSET(struct set_socket_event_request, handle) == 12 );
-C_ASSERT( FIELD_OFFSET(struct set_socket_event_request, mask) == 16 );
-C_ASSERT( FIELD_OFFSET(struct set_socket_event_request, event) == 20 );
-C_ASSERT( FIELD_OFFSET(struct set_socket_event_request, window) == 24 );
-C_ASSERT( FIELD_OFFSET(struct set_socket_event_request, msg) == 28 );
-C_ASSERT( sizeof(struct set_socket_event_request) == 32 );
 C_ASSERT( FIELD_OFFSET(struct get_socket_event_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct get_socket_event_request, service) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_socket_event_request, c_event) == 20 );
