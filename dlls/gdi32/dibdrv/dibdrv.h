@@ -211,6 +211,8 @@ typedef struct primitive_funcs
     void             (* shrink_row)(const dib_info *dst_dib, const POINT *dst_start,
                                     const dib_info *src_dib, const POINT *src_start,
                                     const struct stretch_params *params, int mode, BOOL keep_dst);
+    void               (* halftone)(const dib_info *dst_dib, const struct bitblt_coords *dst,
+                                    const dib_info *src_dib, const struct bitblt_coords *src);
 } primitive_funcs;
 
 extern const primitive_funcs funcs_8888 DECLSPEC_HIDDEN;

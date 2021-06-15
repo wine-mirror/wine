@@ -1216,6 +1216,12 @@ DWORD stretch_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bit
     init_dib_info_from_bitmapinfo( &src_dib, src_info, src_bits );
     init_dib_info_from_bitmapinfo( &dst_dib, dst_info, dst_bits );
 
+    if (mode == HALFTONE)
+    {
+        dst_dib.funcs->halftone( &dst_dib, dst, &src_dib, src );
+        goto done;
+    }
+
     /* v */
     ret = calc_1d_stretch_params( dst->y, dst->height, dst->visrect.top, dst->visrect.bottom,
                                   src->y, src->height, src->visrect.top, src->visrect.bottom,
@@ -1300,6 +1306,7 @@ DWORD stretch_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bit
         }
     }
 
+done:
     /* update coordinates, the destination rectangle is always stored at 0,0 */
     *src = *dst;
     src->x -= src->visrect.left;
