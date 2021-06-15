@@ -435,7 +435,7 @@ static void test_filter_state(IMediaControl *control, IMemAllocator *allocator)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMediaControl_Pause(control);
-    todo_wine ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     hr = IMemAllocator_Decommit(allocator);
     ok(hr == S_OK, "Got hr %#x.\n", hr);

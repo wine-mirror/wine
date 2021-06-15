@@ -197,11 +197,9 @@ static HRESULT vfw_capture_init_stream(struct strmbase_filter *iface)
     req_props.cbBuffer = get_image_size(filter);
     req_props.cbAlign = 1;
     req_props.cbPrefix = 0;
-    if (FAILED(hr = IMemAllocator_SetProperties(filter->source.pAllocator, &req_props, &ret_props)))
-    {
+    if (FAILED(hr = IMemAllocator_SetProperties(filter->source.pAllocator, &req_props, &ret_props))
+            && hr != VFW_E_ALREADY_COMMITTED)
         ERR("Failed to set allocator properties (buffer size %u), hr %#x.\n", req_props.cbBuffer, hr);
-        return hr;
-    }
 
     if (FAILED(hr = IMemAllocator_Commit(filter->source.pAllocator)))
         ERR("Failed to commit allocator, hr %#x.\n", hr);
