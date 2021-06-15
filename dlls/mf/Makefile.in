@@ -6,6 +6,7 @@ DELAYIMPORTS = evr user32
 EXTRADLLFLAGS = -mno-cygwin -Wb,--prefer-native
 
 C_SRCS = \
+	clock.c \
 	copier.c \
 	evr.c \
 	main.c \
