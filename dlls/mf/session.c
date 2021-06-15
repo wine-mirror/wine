@@ -943,6 +943,17 @@ static void session_pause(struct media_session *session)
         session_set_paused(session, hr);
 }
 
+static void session_clear_end_of_presentation(struct media_session *session)
+{
+    struct media_source *source;
+
+    session->presentation.flags &= ~SESSION_FLAG_END_OF_PRESENTATION;
+    LIST_FOR_EACH_ENTRY(source, &session->presentation.sources, struct media_source, entry)
+    {
+        source->flags &= ~SOURCE_FLAG_END_OF_PRESENTATION;
+    }
+}
+
 static void session_set_stopped(struct media_session *session, HRESULT status)
 {
     MediaEventType event_type;
@@ -957,6 +968,7 @@ static void session_set_stopped(struct media_session *session, HRESULT status)
         IMFMediaEventQueue_QueueEvent(session->event_queue, event);
         IMFMediaEvent_Release(event);
     }
+    session_clear_end_of_presentation(session);
     session_command_complete(session);
 }
 
