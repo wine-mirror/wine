@@ -47,19 +47,10 @@ static inline BOOL is_machine_64bit( WORD machine )
     return (machine == IMAGE_FILE_MACHINE_AMD64 || machine == IMAGE_FILE_MACHINE_ARM64);
 }
 
-struct debug_info
-{
-    unsigned int str_pos;       /* current position in strings buffer */
-    unsigned int out_pos;       /* current position in output buffer */
-    char         strings[1024]; /* buffer for temporary strings */
-    char         output[1024];  /* current output line */
-};
-
 /* thread private data, stored in NtCurrentTeb()->GdiTebBatch */
 struct ntdll_thread_data
 {
     void              *cpu_data[16];  /* reserved for CPU-specific data */
-    struct debug_info *debug_info;    /* info for debugstr functions */
     void              *kernel_stack;  /* stack for thread startup and kernel syscalls */
     int                request_fd;    /* fd for sending server requests */
     int                reply_fd;      /* fd for receiving server replies */
@@ -88,9 +79,9 @@ struct async_fileio
 };
 
 static const SIZE_T page_size = 0x1000;
-static const SIZE_T teb_size = 0x3000;  /* TEB64 + TEB32 */
+static const SIZE_T teb_size = 0x3800;  /* TEB64 + TEB32 + debug info */
 static const SIZE_T signal_stack_mask = 0xffff;
-static const SIZE_T signal_stack_size = 0x10000 - 0x3000;
+static const SIZE_T signal_stack_size = 0x10000 - 0x3800;
 static const SIZE_T kernel_stack_size = 0x20000;
 static const LONG teb_offset = 0x2000;
 

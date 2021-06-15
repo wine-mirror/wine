@@ -43,6 +43,16 @@
 WINE_DECLARE_DEBUG_CHANNEL(pid);
 WINE_DECLARE_DEBUG_CHANNEL(timestamp);
 
+struct debug_info
+{
+    unsigned int str_pos;       /* current position in strings buffer */
+    unsigned int out_pos;       /* current position in output buffer */
+    char         strings[1020]; /* buffer for temporary strings */
+    char         output[1020];  /* current output line */
+};
+
+C_ASSERT( sizeof(struct debug_info) == 0x800 );
+
 static BOOL init_done;
 static struct debug_info initial_info;  /* debug info for initial thread */
 static unsigned char default_flags = (1 << __WINE_DBCL_ERR) | (1 << __WINE_DBCL_FIXME);
@@ -56,7 +66,11 @@ static const char * const debug_classes[] = { "fixme", "err", "warn", "trace" };
 static inline struct debug_info *get_info(void)
 {
     if (!init_done) return &initial_info;
-    return ntdll_get_thread_data()->debug_info;
+#ifdef _WIN64
+    return (struct debug_info *)((TEB32 *)((char *)NtCurrentTeb() + teb_offset) + 1);
+#else
+    return (struct debug_info *)(NtCurrentTeb() + 1);
+#endif
 }
 
 /* add a string to the output buffer */
@@ -304,6 +318,5 @@ void dbg_init(void)
     free( debug_options );
     debug_options = options;
     options[nb_debug_options] = default_option;
-    ntdll_get_thread_data()->debug_info = (struct debug_info *)(options + nb_debug_options + 1);
     init_done = TRUE;
 }

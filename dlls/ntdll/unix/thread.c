@@ -731,11 +731,8 @@ static void pthread_exit_wrapper( int status )
 static void start_thread( TEB *teb )
 {
     struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
-    struct debug_info debug_info;
     BOOL suspend;
 
-    debug_info.str_pos = debug_info.out_pos = 0;
-    thread_data->debug_info = &debug_info;
     thread_data->pthread_id = pthread_self();
     signal_init_thread( teb );
     server_init_thread( thread_data->start, &suspend );
