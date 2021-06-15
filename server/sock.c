@@ -2095,6 +2095,35 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         return 1;
     }
 
+    case IOCTL_AFD_WINE_MESSAGE_SELECT:
+    {
+        const struct afd_message_select_params *params = get_req_data();
+
+        if (get_req_data_size() < sizeof(params))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return 0;
+        }
+
+        if (sock->event) release_object( sock->event );
+
+        if (params->window)
+        {
+            sock->pending_events = 0;
+            sock->reported_events = 0;
+        }
+        sock->event = NULL;
+        sock->mask = params->mask;
+        sock->window = params->window;
+        sock->message = params->message;
+        sock->wparam = params->handle;
+        sock->nonblocking = 1;
+
+        sock_reselect( sock );
+
+        return 1;
+    }
+
     default:
         set_error( STATUS_NOT_SUPPORTED );
         return 0;

@@ -147,6 +147,7 @@ struct afd_get_events_params
 #define IOCTL_AFD_WINE_SIOCATMARK           CTL_CODE(FILE_DEVICE_NETWORK, 212, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_AFD_WINE_GET_INTERFACE_LIST   CTL_CODE(FILE_DEVICE_NETWORK, 213, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_AFD_WINE_KEEPALIVE_VALS       CTL_CODE(FILE_DEVICE_NETWORK, 214, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define IOCTL_AFD_WINE_MESSAGE_SELECT       CTL_CODE(FILE_DEVICE_NETWORK, 215, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 struct afd_create_params
 {
@@ -197,6 +198,14 @@ struct afd_transmit_params
     LARGE_INTEGER offset;
     TRANSMIT_FILE_BUFFERS buffers;
     DWORD flags;
+};
+
+struct afd_message_select_params
+{
+    obj_handle_t handle;
+    user_handle_t window;
+    unsigned int message;
+    int mask;
 };
 
 #endif
