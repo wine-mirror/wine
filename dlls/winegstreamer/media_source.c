@@ -170,6 +170,11 @@ static ULONG WINAPI source_async_command_Release(IUnknown *iface)
     {
         if (command->op == SOURCE_ASYNC_START)
             PropVariantClear(&command->u.start.position);
+        else if (command->op == SOURCE_ASYNC_REQUEST_SAMPLE)
+        {
+            if (command->u.request_sample.token)
+                IUnknown_Release(command->u.request_sample.token);
+        }
         free(command);
     }
 
@@ -467,8 +472,6 @@ static void wait_on_sample(struct media_stream *stream, IUnknown *token)
 
             case WG_PARSER_EVENT_EOS:
                 stream->eos = TRUE;
-                if (token)
-                    IUnknown_Release(token);
                 IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEEndOfStream, &GUID_NULL, S_OK, &empty_var);
                 dispatch_end_of_presentation(stream->parent_source);
                 return;
