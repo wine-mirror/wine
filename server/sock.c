@@ -30,6 +30,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#ifdef HAVE_IFADDRS_H
+# include <ifaddrs.h>
+#endif
+#ifdef HAVE_NET_IF_H
+# include <net/if.h>
+#endif
 #ifdef HAVE_NETINET_IN_H
 # include <netinet/in.h>
 #endif
@@ -50,6 +56,9 @@
 #include <time.h>
 #include <unistd.h>
 #include <limits.h>
+#ifdef HAVE_LINUX_FILTER_H
+# include <linux/filter.h>
+#endif
 #ifdef HAVE_LINUX_RTNETLINK_H
 # include <linux/rtnetlink.h>
 #endif
@@ -95,6 +104,10 @@
 #include "thread.h"
 #include "request.h"
 #include "user.h"
+
+#if defined(linux) && !defined(IP_UNICAST_IF)
+#define IP_UNICAST_IF 50
+#endif
 
 static struct list poll_list = LIST_INIT( poll_list );
 
@@ -335,6 +348,108 @@ static int sockaddr_from_unix( const union unix_sockaddr *uaddr, struct WS_socka
     default:
         return -1;
 
+    }
+}
+
+static socklen_t sockaddr_to_unix( const struct WS_sockaddr *wsaddr, int wsaddrlen, union unix_sockaddr *uaddr )
+{
+    memset( uaddr, 0, sizeof(*uaddr) );
+
+    switch (wsaddr->sa_family)
+    {
+    case WS_AF_INET:
+    {
+        struct WS_sockaddr_in win = {0};
+
+        if (wsaddrlen < sizeof(win)) return 0;
+        memcpy( &win, wsaddr, sizeof(win) );
+        uaddr->in.sin_family = AF_INET;
+        uaddr->in.sin_port = win.sin_port;
+        memcpy( &uaddr->in.sin_addr, &win.sin_addr, sizeof(win.sin_addr) );
+        return sizeof(uaddr->in);
+    }
+
+    case WS_AF_INET6:
+    {
+        struct WS_sockaddr_in6 win = {0};
+
+        if (wsaddrlen < sizeof(struct WS_sockaddr_in6_old)) return 0;
+        if (wsaddrlen < sizeof(struct WS_sockaddr_in6))
+            memcpy( &win, wsaddr, sizeof(struct WS_sockaddr_in6_old) );
+        else
+            memcpy( &win, wsaddr, sizeof(struct WS_sockaddr_in6) );
+
+        uaddr->in6.sin6_family = AF_INET6;
+        uaddr->in6.sin6_port = win.sin6_port;
+        uaddr->in6.sin6_flowinfo = win.sin6_flowinfo;
+        memcpy( &uaddr->in6.sin6_addr, &win.sin6_addr, sizeof(win.sin6_addr) );
+#ifdef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
+        if (wsaddrlen >= sizeof(struct WS_sockaddr_in6))
+            uaddr->in6.sin6_scope_id = win.sin6_scope_id;
+#endif
+        return sizeof(uaddr->in6);
+    }
+
+#ifdef HAS_IPX
+    case WS_AF_IPX:
+    {
+        struct WS_sockaddr_ipx win = {0};
+
+        if (wsaddrlen < sizeof(win)) return 0;
+        memcpy( &win, wsaddr, sizeof(win) );
+        uaddr->ipx.sipx_family = AF_IPX;
+        memcpy( &uaddr->ipx.sipx_network, win.sa_netnum, sizeof(win.sa_netnum) );
+        memcpy( &uaddr->ipx.sipx_node, win.sa_nodenum, sizeof(win.sa_nodenum) );
+        uaddr->ipx.sipx_port = win.sa_socket;
+        return sizeof(uaddr->ipx);
+    }
+#endif
+
+#ifdef HAS_IRDA
+    case WS_AF_IRDA:
+    {
+        SOCKADDR_IRDA win = {0};
+        unsigned int lsap_sel;
+
+        if (wsaddrlen < sizeof(win)) return 0;
+        memcpy( &win, wsaddr, sizeof(win) );
+        uaddr->irda.sir_family = AF_IRDA;
+        if (sscanf( win.irdaServiceName, "LSAP-SEL%u", &lsap_sel ) == 1)
+            uaddr->sir_lsap_sel = lsap_sel;
+        else
+        {
+            uaddr->sir_lsap_sel = LSAP_ANY;
+            memcpy( uaddr->irda.sir_name, win.irdaServiceName, sizeof(win.irdaServiceName) );
+        }
+        memcpy( &uaddr->irda.sir_addr, win.irdaDeviceID, sizeof(win.irdaDeviceID) );
+        return sizeof(uaddr->irda);
+    }
+#endif
+
+    case WS_AF_UNSPEC:
+        switch (wsaddrlen)
+        {
+        default: /* likely an ipv4 address */
+        case sizeof(struct WS_sockaddr_in):
+            return sizeof(uaddr->in);
+
+#ifdef HAS_IPX
+        case sizeof(struct WS_sockaddr_ipx):
+            return sizeof(uaddr->ipx);
+#endif
+
+#ifdef HAS_IRDA
+        case sizeof(SOCKADDR_IRDA):
+            return sizeof(uaddr->irda);
+#endif
+
+        case sizeof(struct WS_sockaddr_in6):
+        case sizeof(struct WS_sockaddr_in6_old):
+            return sizeof(uaddr->in6);
+        }
+
+    default:
+        return 0;
     }
 }
 
@@ -1551,6 +1666,137 @@ static int accept_into_socket( struct sock *sock, struct sock *acceptsock )
     return TRUE;
 }
 
+#ifdef IP_BOUND_IF
+
+static int bind_to_index( int fd, in_addr_t bind_addr, unsigned int index )
+{
+    return setsockopt( fd, IPPROTO_IP, IP_BOUND_IF, &index, sizeof(index) );
+}
+
+#elif defined(IP_UNICAST_IF) && defined(SO_ATTACH_FILTER)
+
+struct interface_filter
+{
+    struct sock_filter iface_memaddr;
+    struct sock_filter iface_rule;
+    struct sock_filter ip_memaddr;
+    struct sock_filter ip_rule;
+    struct sock_filter return_keep;
+    struct sock_filter return_dump;
+};
+# define FILTER_JUMP_DUMP(here)  (u_char)(offsetof(struct interface_filter, return_dump) \
+                                 -offsetof(struct interface_filter, here)-sizeof(struct sock_filter)) \
+                                 /sizeof(struct sock_filter)
+# define FILTER_JUMP_KEEP(here)  (u_char)(offsetof(struct interface_filter, return_keep) \
+                                 -offsetof(struct interface_filter, here)-sizeof(struct sock_filter)) \
+                                 /sizeof(struct sock_filter)
+# define FILTER_JUMP_NEXT()      (u_char)(0)
+# define SKF_NET_DESTIP          16 /* offset in the network header to the destination IP */
+static struct interface_filter generic_interface_filter =
+{
+    /* This filter rule allows incoming packets on the specified interface, which works for all
+     * remotely generated packets and for locally generated broadcast packets. */
+    BPF_STMT(BPF_LD+BPF_W+BPF_ABS, SKF_AD_OFF+SKF_AD_IFINDEX),
+    BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 0xdeadbeef, FILTER_JUMP_KEEP(iface_rule), FILTER_JUMP_NEXT()),
+    /* This rule allows locally generated packets targeted at the specific IP address of the chosen
+     * adapter (local packets not destined for the broadcast address do not have IFINDEX set) */
+    BPF_STMT(BPF_LD+BPF_W+BPF_ABS, SKF_NET_OFF+SKF_NET_DESTIP),
+    BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 0xdeadbeef, FILTER_JUMP_KEEP(ip_rule), FILTER_JUMP_DUMP(ip_rule)),
+    BPF_STMT(BPF_RET+BPF_K, (u_int)-1), /* keep packet */
+    BPF_STMT(BPF_RET+BPF_K, 0)          /* dump packet */
+};
+
+static int bind_to_index( int fd, in_addr_t bind_addr, unsigned int index )
+{
+    in_addr_t ifindex = htonl( index );
+    struct interface_filter specific_interface_filter;
+    struct sock_fprog filter_prog;
+    int ret;
+
+    if ((ret = setsockopt( fd, IPPROTO_IP, IP_UNICAST_IF, &ifindex, sizeof(ifindex) )) < 0)
+        return ret;
+
+    specific_interface_filter = generic_interface_filter;
+    specific_interface_filter.iface_rule.k = index;
+    specific_interface_filter.ip_rule.k = htonl( bind_addr );
+    filter_prog.len = sizeof(generic_interface_filter) / sizeof(struct sock_filter);
+    filter_prog.filter = (struct sock_filter *)&specific_interface_filter;
+    return setsockopt( fd, SOL_SOCKET, SO_ATTACH_FILTER, &filter_prog, sizeof(filter_prog) );
+}
+
+#else
+
+static int bind_to_index( int fd, in_addr_t bind_addr, unsigned int index )
+{
+    errno = EOPNOTSUPP;
+    return -1;
+}
+
+#endif /* LINUX_BOUND_IF */
+
+/* Take bind() calls on any name corresponding to a local network adapter and
+ * restrict the given socket to operating only on the specified interface. This
+ * restriction consists of two components:
+ *  1) An outgoing packet restriction suggesting the egress interface for all
+ *     packets.
+ *  2) An incoming packet restriction dropping packets not meant for the
+ *     interface.
+ * If the function succeeds in placing these restrictions, then the name for the
+ * bind() may safely be changed to INADDR_ANY, permitting the transmission and
+ * receipt of broadcast packets on the socket. This behavior is only relevant to
+ * UDP sockets and is needed for applications that expect to be able to receive
+ * broadcast packets on a socket that is bound to a specific network interface.
+ */
+static int bind_to_interface( struct sock *sock, const struct sockaddr_in *addr )
+{
+    in_addr_t bind_addr = addr->sin_addr.s_addr;
+    struct ifaddrs *ifaddrs, *ifaddr;
+    int fd = get_unix_fd( sock->fd );
+    static const int enable = 1;
+    unsigned int index;
+
+    if (bind_addr == htonl( INADDR_ANY ) || bind_addr == htonl( INADDR_LOOPBACK ))
+        return 0;
+    if (sock->type != WS_SOCK_DGRAM)
+        return 0;
+
+    if (getifaddrs( &ifaddrs ) < 0) return 0;
+
+    for (ifaddr = ifaddrs; ifaddr != NULL; ifaddr = ifaddr->ifa_next)
+    {
+        if (ifaddr->ifa_addr && ifaddr->ifa_addr->sa_family == AF_INET
+                && ((struct sockaddr_in *)ifaddr->ifa_addr)->sin_addr.s_addr == bind_addr)
+        {
+            index = if_nametoindex( ifaddr->ifa_name );
+            if (!index)
+            {
+                if (debug_level)
+                    fprintf( stderr, "Unable to look up interface index for %s: %s\n",
+                             ifaddr->ifa_name, strerror( errno ) );
+                continue;
+            }
+
+            freeifaddrs( ifaddrs );
+
+            if (bind_to_index( fd, bind_addr, index ) < 0)
+            {
+                if (debug_level)
+                    fprintf( stderr, "failed to bind to interface: %s\n", strerror( errno ) );
+                return 0;
+            }
+
+            if (setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable) ) < 0)
+            {
+                if (debug_level)
+                    fprintf( stderr, "failed to reuse address: %s\n", strerror( errno ) );
+                return 0;
+            }
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /* return an errno value mapped to a WSA error */
 static unsigned int sock_get_error( int err )
 {
@@ -1646,7 +1892,7 @@ static int sock_get_ntstatus( int err )
         case ENOPROTOOPT:       return STATUS_INVALID_PARAMETER;
         case EOPNOTSUPP:        return STATUS_NOT_SUPPORTED;
         case EADDRINUSE:        return STATUS_SHARING_VIOLATION;
-        case EADDRNOTAVAIL:     return STATUS_INVALID_PARAMETER;
+        case EADDRNOTAVAIL:     return STATUS_INVALID_ADDRESS_COMPONENT;
         case ECONNREFUSED:      return STATUS_CONNECTION_REFUSED;
         case ESHUTDOWN:         return STATUS_PIPE_DISCONNECTED;
         case ENOTCONN:          return STATUS_INVALID_CONNECTION;
@@ -2099,6 +2345,60 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 
         sock_reselect( sock );
 
+        return 1;
+    }
+
+    case IOCTL_AFD_BIND:
+    {
+        const struct afd_bind_params *params = get_req_data();
+        union unix_sockaddr unix_addr;
+        data_size_t in_size;
+        socklen_t unix_len;
+
+        /* the ioctl is METHOD_NEITHER, so ntdll gives us the output buffer as
+         * input */
+        if (get_req_data_size() < get_reply_max_size())
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return 0;
+        }
+        in_size = get_req_data_size() - get_reply_max_size();
+        if (in_size < offsetof(struct afd_bind_params, addr.sa_data)
+                || get_reply_max_size() < sizeof(struct WS_sockaddr))
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return 0;
+        }
+
+        unix_len = sockaddr_to_unix( &params->addr, in_size - sizeof(int), &unix_addr );
+        if (!unix_len)
+        {
+            set_error( STATUS_INVALID_ADDRESS );
+            return 0;
+        }
+
+        if (unix_addr.addr.sa_family == WS_AF_INET)
+        {
+            static const char magic_loopback_addr[] = {127, 12, 34, 56};
+
+            if (!memcmp( &unix_addr.in.sin_addr, magic_loopback_addr, 4 )
+                    || bind_to_interface( sock, &unix_addr.in ))
+                unix_addr.in.sin_addr.s_addr = htonl( INADDR_ANY );
+        }
+
+        if (bind( unix_fd, &unix_addr.addr, unix_len ) < 0)
+        {
+            if (errno == EADDRINUSE)
+            {
+                int reuse;
+                socklen_t len = sizeof(reuse);
+
+                if (!getsockopt( unix_fd, SOL_SOCKET, SO_REUSEADDR, (char *)&reuse, &len ) && reuse)
+                    errno = EACCES;
+            }
+
+            set_error( sock_get_ntstatus( errno ) );
+        }
         return 1;
     }
 

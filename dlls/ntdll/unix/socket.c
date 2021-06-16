@@ -1157,6 +1157,16 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 
     switch (code)
     {
+        case IOCTL_AFD_BIND:
+        {
+            const struct afd_bind_params *params = in_buffer;
+
+            if (params->unknown) FIXME( "bind: got unknown %#x\n", params->unknown );
+
+            status = STATUS_BAD_DEVICE_TYPE;
+            break;
+        }
+
         case IOCTL_AFD_LISTEN:
         {
             const struct afd_listen_params *params = in_buffer;

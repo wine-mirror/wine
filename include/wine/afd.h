@@ -32,6 +32,7 @@
 # define WS(x)    x
 #endif
 
+#define IOCTL_AFD_BIND                      CTL_CODE(FILE_DEVICE_BEEP, 0x800, METHOD_NEITHER,  FILE_ANY_ACCESS)
 #define IOCTL_AFD_LISTEN                    CTL_CODE(FILE_DEVICE_BEEP, 0x802, METHOD_NEITHER,  FILE_ANY_ACCESS)
 #define IOCTL_AFD_RECV                      CTL_CODE(FILE_DEVICE_BEEP, 0x805, METHOD_NEITHER,  FILE_ANY_ACCESS)
 #define IOCTL_AFD_POLL                      CTL_CODE(FILE_DEVICE_BEEP, 0x809, METHOD_BUFFERED, FILE_ANY_ACCESS)
@@ -69,6 +70,12 @@ enum afd_poll_bit
 /* I have never seen these reported, but StarCraft Remastered polls for them. */
 #define AFD_POLL_UNK1           0x0200
 #define AFD_POLL_UNK2           0x0400
+
+struct afd_bind_params
+{
+    int unknown;
+    struct WS(sockaddr) addr; /* variable size */
+};
 
 struct afd_listen_params
 {
