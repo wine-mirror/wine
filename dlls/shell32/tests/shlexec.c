@@ -2816,6 +2816,7 @@ static void test_directory(void)
     char path[MAX_PATH + 10], curdir[MAX_PATH];
     char params[1024], dirpath[1024];
     INT_PTR rc;
+    BOOL ret;
 
     sprintf(path, "%s\\test2.exe", tmpdir);
     CopyFileA(argv0, path, FALSE);
@@ -2876,7 +2877,18 @@ static void test_directory(void)
     okChildString("argvA0", path);
     okChildString("argvA3", "Exec");
     okChildPath("longPath", path);
+
+    SetCurrentDirectoryA(tmpdir);
+    ret = CreateDirectoryA( "tmp", NULL );
+    ok(ret || GetLastError() == ERROR_ALREADY_EXISTS, "Failed to create 'tmp' err %u\n", GetLastError());
+    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
+                        NULL, path, params, "tmp", NULL);
+    okShell(rc > 32, "returned %lu\n", rc);
+
     DeleteFileA(path);
+
+    RemoveDirectoryA("tmp");
+    SetCurrentDirectoryA(curdir);
 }
 
 START_TEST(shlexec)

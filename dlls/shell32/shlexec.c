@@ -318,7 +318,6 @@ static UINT_PTR SHELL_ExecuteW(const WCHAR *lpCmd, WCHAR *env, BOOL shWait,
     UINT gcdret = 0;
     WCHAR curdir[MAX_PATH];
     DWORD dwCreationFlags;
-    const WCHAR *lpDirectory = NULL;
 
     TRACE("Execute %s from directory %s\n", debugstr_w(lpCmd), debugstr_w(psei->lpDirectory));
 
@@ -326,17 +325,13 @@ static UINT_PTR SHELL_ExecuteW(const WCHAR *lpCmd, WCHAR *env, BOOL shWait,
      * a bad working directory */
     if (psei->lpDirectory && psei->lpDirectory[0])
     {
-        DWORD attr = GetFileAttributesW(psei->lpDirectory);
-        if (attr != INVALID_FILE_ATTRIBUTES && attr & FILE_ATTRIBUTE_DIRECTORY)
-            lpDirectory = psei->lpDirectory;
+        /* ShellExecute specifies the command from psei->lpDirectory
+         * if present. Not from the current dir as CreateProcess does */
+        if( ( gcdret = GetCurrentDirectoryW( MAX_PATH, curdir )))
+            if( !SetCurrentDirectoryW( psei->lpDirectory ))
+                ERR("cannot set directory %s\n", debugstr_w(psei->lpDirectory ));
     }
 
-    /* ShellExecute specifies the command from psei->lpDirectory
-     * if present. Not from the current dir as CreateProcess does */
-    if( lpDirectory )
-        if( ( gcdret = GetCurrentDirectoryW( MAX_PATH, curdir)))
-            if( !SetCurrentDirectoryW( lpDirectory))
-                ERR("cannot set directory %s\n", debugstr_w(lpDirectory));
     ZeroMemory(&startup,sizeof(STARTUPINFOW));
     startup.cb = sizeof(STARTUPINFOW);
     startup.dwFlags = STARTF_USESHOWWINDOW;
@@ -345,7 +340,7 @@ static UINT_PTR SHELL_ExecuteW(const WCHAR *lpCmd, WCHAR *env, BOOL shWait,
     if (!(psei->fMask & SEE_MASK_NO_CONSOLE))
         dwCreationFlags |= CREATE_NEW_CONSOLE;
     if (CreateProcessW(NULL, (LPWSTR)lpCmd, NULL, NULL, FALSE, dwCreationFlags, env,
-                       lpDirectory, &startup, &info))
+                       NULL, &startup, &info))
     {
         /* Give 30 seconds to the app to come up, if desired. Probably only needed
            when starting app immediately before making a DDE connection. */
