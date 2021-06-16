@@ -206,6 +206,28 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
                 INPUT(1, Data|Var|Abs),
             END_COLLECTION,
 
+            USAGE_PAGE(1, HID_USAGE_PAGE_LED),
+            USAGE(1, HID_USAGE_LED_GREEN),
+            COLLECTION(1, Report),
+                REPORT_ID_OR_USAGE_PAGE(1, report_id, 0),
+                USAGE_PAGE(1, HID_USAGE_PAGE_LED),
+                USAGE(1, 1),
+                USAGE(1, 2),
+                USAGE(1, 3),
+                USAGE(1, 4),
+                USAGE(1, 5),
+                USAGE(1, 6),
+                USAGE(1, 7),
+                USAGE(1, 8),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 1),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 1),
+                REPORT_COUNT(1, 8),
+                REPORT_SIZE(1, 1),
+                INPUT(1, Data|Var|Abs),
+            END_COLLECTION,
+
             USAGE_PAGE(2, HID_USAGE_PAGE_HAPTICS),
             USAGE(1, HID_USAGE_HAPTICS_SIMPLE_CONTROLLER),
             COLLECTION(1, Logical),
@@ -347,7 +369,7 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
 
         case IOCTL_HID_READ_REPORT:
         {
-            ULONG expected_size = 22;
+            ULONG expected_size = 23;
             ok(!in_size, "got input size %u\n", in_size);
             if (!test_failed)
             {
