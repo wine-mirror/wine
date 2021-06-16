@@ -1500,40 +1500,6 @@ static void test_pnp_driver(struct testsign_context *ctx)
                         (val).member, (exp).member)
 #define check_member(val, exp, fmt, member) check_member_(__FILE__, __LINE__, val, exp, fmt, member)
 
-#define check_hidp_caps(a, b) check_hidp_caps_(__LINE__, a, b)
-static inline void check_hidp_caps_(int line, HIDP_CAPS *caps, const HIDP_CAPS *exp)
-{
-    check_member_(__FILE__, line, *caps, *exp, "%04x", Usage);
-    check_member_(__FILE__, line, *caps, *exp, "%04x", UsagePage);
-    check_member_(__FILE__, line, *caps, *exp, "%d", InputReportByteLength);
-    check_member_(__FILE__, line, *caps, *exp, "%d", OutputReportByteLength);
-    check_member_(__FILE__, line, *caps, *exp, "%d", FeatureReportByteLength);
-    check_member_(__FILE__, line, *caps, *exp, "%d", NumberLinkCollectionNodes);
-    check_member_(__FILE__, line, *caps, *exp, "%d", NumberInputButtonCaps);
-    check_member_(__FILE__, line, *caps, *exp, "%d", NumberInputValueCaps);
-    check_member_(__FILE__, line, *caps, *exp, "%d", NumberInputDataIndices);
-    check_member_(__FILE__, line, *caps, *exp, "%d", NumberOutputButtonCaps);
-    check_member_(__FILE__, line, *caps, *exp, "%d", NumberOutputValueCaps);
-    check_member_(__FILE__, line, *caps, *exp, "%d", NumberOutputDataIndices);
-    check_member_(__FILE__, line, *caps, *exp, "%d", NumberFeatureButtonCaps);
-    check_member_(__FILE__, line, *caps, *exp, "%d", NumberFeatureValueCaps);
-    check_member_(__FILE__, line, *caps, *exp, "%d", NumberFeatureDataIndices);
-}
-
-#define check_hidp_link_collection_node(a, b) check_hidp_link_collection_node_(__LINE__, a, b)
-static inline void check_hidp_link_collection_node_(int line, HIDP_LINK_COLLECTION_NODE *node,
-                                                    const HIDP_LINK_COLLECTION_NODE *exp)
-{
-    check_member_(__FILE__, line, *node, *exp, "%04x", LinkUsage);
-    check_member_(__FILE__, line, *node, *exp, "%04x", LinkUsagePage);
-    check_member_(__FILE__, line, *node, *exp, "%d", Parent);
-    check_member_(__FILE__, line, *node, *exp, "%d", NumberOfChildren);
-    check_member_(__FILE__, line, *node, *exp, "%d", NextSibling);
-    check_member_(__FILE__, line, *node, *exp, "%d", FirstChild);
-    check_member_(__FILE__, line, *node, *exp, "%d", CollectionType);
-    check_member_(__FILE__, line, *node, *exp, "%d", IsAlias);
-}
-
 #define check_hidp_button_caps(a, b) check_hidp_button_caps_(__LINE__, a, b)
 static inline void check_hidp_button_caps_(int line, HIDP_BUTTON_CAPS *caps, const HIDP_BUTTON_CAPS *exp)
 {
@@ -1636,15 +1602,36 @@ static inline void check_hidp_value_caps_(int line, HIDP_VALUE_CAPS *caps, const
 
 static void test_hidp(HANDLE file, int report_id)
 {
-    const HIDP_CAPS expect_hidp_caps =
+    const HIDP_CAPS expect_hidp_caps[] =
     {
-        .Usage = HID_USAGE_GENERIC_JOYSTICK,
-        .UsagePage = HID_USAGE_PAGE_GENERIC,
-        .InputReportByteLength = 5,
-        .NumberLinkCollectionNodes = 2,
-        .NumberInputButtonCaps = 1,
-        .NumberInputValueCaps = 3,
-        .NumberInputDataIndices = 11,
+        /* without report id */
+        {
+            .Usage = HID_USAGE_GENERIC_JOYSTICK,
+            .UsagePage = HID_USAGE_PAGE_GENERIC,
+            .InputReportByteLength = 11,
+            .FeatureReportByteLength = 14,
+            .NumberLinkCollectionNodes = 7,
+            .NumberInputButtonCaps = 5,
+            .NumberInputValueCaps = 4,
+            .NumberInputDataIndices = 32,
+            .NumberFeatureButtonCaps = 1,
+            .NumberFeatureValueCaps = 5,
+            .NumberFeatureDataIndices = 7,
+        },
+        /* with report id */
+        {
+            .Usage = HID_USAGE_GENERIC_JOYSTICK,
+            .UsagePage = HID_USAGE_PAGE_GENERIC,
+            .InputReportByteLength = 10,
+            .FeatureReportByteLength = 13,
+            .NumberLinkCollectionNodes = 7,
+            .NumberInputButtonCaps = 5,
+            .NumberInputValueCaps = 4,
+            .NumberInputDataIndices = 32,
+            .NumberFeatureButtonCaps = 1,
+            .NumberFeatureValueCaps = 5,
+            .NumberFeatureDataIndices = 7,
+        },
     };
     const HIDP_BUTTON_CAPS expect_button_caps[] =
     {
@@ -1662,6 +1649,48 @@ static void test_hidp(HANDLE file, int report_id)
             .Range.DataIndexMin = 2,
             .Range.DataIndexMax = 9,
         },
+        {
+            .UsagePage = HID_USAGE_PAGE_BUTTON,
+            .ReportID = report_id,
+            .BitField = 3,
+            .LinkCollection = 1,
+            .LinkUsage = HID_USAGE_GENERIC_JOYSTICK,
+            .LinkUsagePage = HID_USAGE_PAGE_GENERIC,
+            .IsRange = TRUE,
+            .IsAbsolute = TRUE,
+            .Range.UsageMin = 0x18,
+            .Range.UsageMax = 0x1f,
+            .Range.DataIndexMin = 10,
+            .Range.DataIndexMax = 17,
+        },
+        {
+            .UsagePage = HID_USAGE_PAGE_KEYBOARD,
+            .ReportID = report_id,
+            .BitField = 0x1fc,
+            .LinkCollection = 1,
+            .LinkUsage = HID_USAGE_GENERIC_JOYSTICK,
+            .LinkUsagePage = HID_USAGE_PAGE_GENERIC,
+            .IsRange = TRUE,
+            .IsAbsolute = FALSE,
+            .Range.UsageMin = 0x8,
+            .Range.UsageMax = 0xf,
+            .Range.DataIndexMin = 18,
+            .Range.DataIndexMax = 25,
+        },
+        {
+            .UsagePage = HID_USAGE_PAGE_BUTTON,
+            .ReportID = report_id,
+            .BitField = 2,
+            .LinkCollection = 1,
+            .LinkUsage = HID_USAGE_GENERIC_JOYSTICK,
+            .LinkUsagePage = HID_USAGE_PAGE_GENERIC,
+            .IsRange = FALSE,
+            .IsAbsolute = TRUE,
+            .NotRange.Usage = 0x20,
+            .NotRange.Reserved1 = 0x20,
+            .NotRange.DataIndex = 26,
+            .NotRange.Reserved4 = 26,
+        },
     };
     const HIDP_VALUE_CAPS expect_value_caps[] =
     {
@@ -1678,6 +1707,7 @@ static void test_hidp(HANDLE file, int report_id)
             .LogicalMin = -128,
             .LogicalMax = 127,
             .NotRange.Usage = HID_USAGE_GENERIC_Y,
+            .NotRange.Reserved1 = HID_USAGE_GENERIC_Y,
         },
         {
             .UsagePage = HID_USAGE_PAGE_GENERIC,
@@ -1692,7 +1722,25 @@ static void test_hidp(HANDLE file, int report_id)
             .LogicalMin = -128,
             .LogicalMax = 127,
             .NotRange.Usage = HID_USAGE_GENERIC_X,
+            .NotRange.Reserved1 = HID_USAGE_GENERIC_X,
             .NotRange.DataIndex = 1,
+            .NotRange.Reserved4 = 1,
+        },
+        {
+            .UsagePage = HID_USAGE_PAGE_BUTTON,
+            .ReportID = report_id,
+            .BitField = 2,
+            .LinkUsage = HID_USAGE_GENERIC_JOYSTICK,
+            .LinkUsagePage = HID_USAGE_PAGE_GENERIC,
+            .LinkCollection = 1,
+            .IsAbsolute = TRUE,
+            .ReportCount = 1,
+            .LogicalMax = 1,
+            .IsRange = TRUE,
+            .Range.UsageMin = 0x21,
+            .Range.UsageMax = 0x22,
+            .Range.DataIndexMin = 27,
+            .Range.DataIndexMax = 28,
         },
         {
             .UsagePage = HID_USAGE_PAGE_GENERIC,
@@ -1706,9 +1754,10 @@ static void test_hidp(HANDLE file, int report_id)
             .ReportCount = 2,
             .LogicalMin = 1,
             .LogicalMax = 8,
-            .PhysicalMax = 8,
             .NotRange.Usage = HID_USAGE_GENERIC_HATSWITCH,
-            .NotRange.DataIndex = 10,
+            .NotRange.Reserved1 = HID_USAGE_GENERIC_HATSWITCH,
+            .NotRange.DataIndex = 29,
+            .NotRange.Reserved4 = 29,
         },
     };
     static const HIDP_LINK_COLLECTION_NODE expect_collections[] =
@@ -1717,8 +1766,8 @@ static void test_hidp(HANDLE file, int report_id)
             .LinkUsage = HID_USAGE_GENERIC_JOYSTICK,
             .LinkUsagePage = HID_USAGE_PAGE_GENERIC,
             .CollectionType = 1,
-            .NumberOfChildren = 1,
-            .FirstChild = 1,
+            .NumberOfChildren = 4,
+            .FirstChild = 6,
         },
         {
             .LinkUsage = HID_USAGE_GENERIC_JOYSTICK,
@@ -1747,7 +1796,25 @@ static void test_hidp(HANDLE file, int report_id)
     ok(status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_GetCaps returned %#x\n", status);
     status = HidP_GetCaps(preparsed_data, &caps);
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetCaps returned %#x\n", status);
-    check_hidp_caps(&caps, &expect_hidp_caps);
+    check_member(caps, expect_hidp_caps[report_id], "%04x", Usage);
+    check_member(caps, expect_hidp_caps[report_id], "%04x", UsagePage);
+    check_member(caps, expect_hidp_caps[report_id], "%d", InputReportByteLength);
+    check_member(caps, expect_hidp_caps[report_id], "%d", OutputReportByteLength);
+    check_member(caps, expect_hidp_caps[report_id], "%d", FeatureReportByteLength);
+    check_member(caps, expect_hidp_caps[report_id], "%d", NumberLinkCollectionNodes);
+    todo_wine
+    check_member(caps, expect_hidp_caps[report_id], "%d", NumberInputButtonCaps);
+    todo_wine
+    check_member(caps, expect_hidp_caps[report_id], "%d", NumberInputValueCaps);
+    todo_wine
+    check_member(caps, expect_hidp_caps[report_id], "%d", NumberInputDataIndices);
+    check_member(caps, expect_hidp_caps[report_id], "%d", NumberOutputButtonCaps);
+    check_member(caps, expect_hidp_caps[report_id], "%d", NumberOutputValueCaps);
+    check_member(caps, expect_hidp_caps[report_id], "%d", NumberOutputDataIndices);
+    check_member(caps, expect_hidp_caps[report_id], "%d", NumberFeatureButtonCaps);
+    check_member(caps, expect_hidp_caps[report_id], "%d", NumberFeatureValueCaps);
+    todo_wine
+    check_member(caps, expect_hidp_caps[report_id], "%d", NumberFeatureDataIndices);
 
     collection_count = 0;
     status = HidP_GetLinkCollectionNodes(collections, &collection_count, preparsed_data);
@@ -1766,7 +1833,16 @@ static void test_hidp(HANDLE file, int report_id)
     for (i = 0; i < ARRAY_SIZE(expect_collections); ++i)
     {
         winetest_push_context("collections[%d]", i);
-        check_hidp_link_collection_node(collections + i, expect_collections + i);
+        check_member(collections[i], expect_collections[i], "%04x", LinkUsage);
+        check_member(collections[i], expect_collections[i], "%04x", LinkUsagePage);
+        check_member(collections[i], expect_collections[i], "%d", Parent);
+        check_member(collections[i], expect_collections[i], "%d", NumberOfChildren);
+        todo_wine_if(i == 1)
+        check_member(collections[i], expect_collections[i], "%d", NextSibling);
+        todo_wine_if(i == 0)
+        check_member(collections[i], expect_collections[i], "%d", FirstChild);
+        check_member(collections[i], expect_collections[i], "%d", CollectionType);
+        check_member(collections[i], expect_collections[i], "%d", IsAlias);
         winetest_pop_context();
     }
 
@@ -1786,6 +1862,7 @@ static void test_hidp(HANDLE file, int report_id)
     count = ARRAY_SIZE(button_caps);
     status = HidP_GetButtonCaps(HidP_Input, button_caps, &count, (PHIDP_PREPARSED_DATA)buffer);
     ok(status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_GetButtonCaps returned %#x\n", status);
+    memset(button_caps, 0, sizeof(button_caps));
     status = HidP_GetButtonCaps(HidP_Input, button_caps, &count, preparsed_data);
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetButtonCaps returned %#x\n", status);
     ok(count == caps.NumberInputButtonCaps, "HidP_GetButtonCaps returned count %d, expected %d\n",
@@ -1794,25 +1871,36 @@ static void test_hidp(HANDLE file, int report_id)
     for (i = 0; i < ARRAY_SIZE(expect_button_caps); ++i)
     {
         winetest_push_context("button_caps[%d]", i);
+        todo_wine_if(i >= 2)
         check_member(button_caps[i], expect_button_caps[i], "%04x", UsagePage);
+        todo_wine_if(i >= 2 && report_id)
         check_member(button_caps[i], expect_button_caps[i], "%d", ReportID);
         check_member(button_caps[i], expect_button_caps[i], "%d", IsAlias);
         todo_wine
         check_member(button_caps[i], expect_button_caps[i], "%d", BitField);
+        todo_wine_if(i >= 2)
         check_member(button_caps[i], expect_button_caps[i], "%d", LinkCollection);
+        todo_wine_if(i >= 3)
         check_member(button_caps[i], expect_button_caps[i], "%04x", LinkUsage);
+        todo_wine_if(i >= 3)
         check_member(button_caps[i], expect_button_caps[i], "%04x", LinkUsagePage);
+        todo_wine_if(i == 1)
         check_member(button_caps[i], expect_button_caps[i], "%d", IsRange);
         check_member(button_caps[i], expect_button_caps[i], "%d", IsStringRange);
         check_member(button_caps[i], expect_button_caps[i], "%d", IsDesignatorRange);
+        todo_wine_if(i >= 2)
         check_member(button_caps[i], expect_button_caps[i], "%d", IsAbsolute);
+        todo_wine_if(i >= 1)
         check_member(button_caps[i], expect_button_caps[i], "%04x", Range.UsageMin);
+        todo_wine_if(i >= 1)
         check_member(button_caps[i], expect_button_caps[i], "%04x", Range.UsageMax);
         check_member(button_caps[i], expect_button_caps[i], "%d", Range.StringMin);
         check_member(button_caps[i], expect_button_caps[i], "%d", Range.StringMax);
         check_member(button_caps[i], expect_button_caps[i], "%d", Range.DesignatorMin);
         check_member(button_caps[i], expect_button_caps[i], "%d", Range.DesignatorMax);
+        todo_wine_if(i >= 1)
         check_member(button_caps[i], expect_button_caps[i], "%d", Range.DataIndexMin);
+        todo_wine_if(i >= 1)
         check_member(button_caps[i], expect_button_caps[i], "%d", Range.DataIndexMax);
         winetest_pop_context();
     }
@@ -1886,6 +1974,7 @@ static void test_hidp(HANDLE file, int report_id)
     for (i = 0; i < ARRAY_SIZE(expect_value_caps); ++i)
     {
         winetest_push_context("value_caps[%d]", i);
+        todo_wine_if(i == 3)
         check_member(value_caps[i], expect_value_caps[i], "%04x", UsagePage);
         check_member(value_caps[i], expect_value_caps[i], "%d", ReportID);
         check_member(value_caps[i], expect_value_caps[i], "%d", IsAlias);
@@ -1894,28 +1983,42 @@ static void test_hidp(HANDLE file, int report_id)
         check_member(value_caps[i], expect_value_caps[i], "%d", LinkCollection);
         check_member(value_caps[i], expect_value_caps[i], "%04x", LinkUsage);
         check_member(value_caps[i], expect_value_caps[i], "%04x", LinkUsagePage);
+        todo_wine_if(i == 3)
         check_member(value_caps[i], expect_value_caps[i], "%d", IsRange);
         check_member(value_caps[i], expect_value_caps[i], "%d", IsStringRange);
         check_member(value_caps[i], expect_value_caps[i], "%d", IsDesignatorRange);
+        todo_wine_if(i == 2)
         check_member(value_caps[i], expect_value_caps[i], "%d", IsAbsolute);
+        todo_wine_if(i == 2)
         check_member(value_caps[i], expect_value_caps[i], "%d", HasNull);
+        todo_wine_if(i >= 2)
         check_member(value_caps[i], expect_value_caps[i], "%d", BitSize);
+        todo_wine_if(i == 2)
         check_member(value_caps[i], expect_value_caps[i], "%d", ReportCount);
         check_member(value_caps[i], expect_value_caps[i], "%d", UnitsExp);
         check_member(value_caps[i], expect_value_caps[i], "%d", Units);
+        todo_wine_if(i >= 3)
         check_member(value_caps[i], expect_value_caps[i], "%d", LogicalMin);
+        todo_wine_if(i >= 2)
         check_member(value_caps[i], expect_value_caps[i], "%d", LogicalMax);
         check_member(value_caps[i], expect_value_caps[i], "%d", PhysicalMin);
         check_member(value_caps[i], expect_value_caps[i], "%d", PhysicalMax);
-        todo_wine_if(i != 2)
-        check_member(value_caps[i], expect_value_caps[i], "%04x", NotRange.Usage);
-        check_member(value_caps[i], expect_value_caps[i], "%d", NotRange.StringIndex);
-        check_member(value_caps[i], expect_value_caps[i], "%d", NotRange.DesignatorIndex);
-        check_member(value_caps[i], expect_value_caps[i], "%d", NotRange.DataIndex);
+        todo_wine
+        check_member(value_caps[i], expect_value_caps[i], "%04x", Range.UsageMin);
+        todo_wine
+        check_member(value_caps[i], expect_value_caps[i], "%04x", Range.UsageMax);
+        check_member(value_caps[i], expect_value_caps[i], "%d", Range.StringMin);
+        check_member(value_caps[i], expect_value_caps[i], "%d", Range.StringMax);
+        check_member(value_caps[i], expect_value_caps[i], "%d", Range.DesignatorMin);
+        check_member(value_caps[i], expect_value_caps[i], "%d", Range.DesignatorMax);
+        todo_wine_if(i >= 2)
+        check_member(value_caps[i], expect_value_caps[i], "%d", Range.DataIndexMin);
+        todo_wine_if(i >= 2)
+        check_member(value_caps[i], expect_value_caps[i], "%d", Range.DataIndexMax);
         winetest_pop_context();
     }
 
-    count = ARRAY_SIZE(value_caps) - 3;
+    count = ARRAY_SIZE(value_caps) - 4;
     status = HidP_GetSpecificValueCaps(HidP_Output, 0, 0, 0, value_caps, &count, preparsed_data);
     todo_wine
     ok(status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificValueCaps returned %#x\n", status);
@@ -1928,24 +2031,61 @@ static void test_hidp(HANDLE file, int report_id)
     todo_wine
     ok(count == caps.NumberInputValueCaps, "HidP_GetSpecificValueCaps returned count %d, expected %d\n",
        count, caps.NumberInputValueCaps);
-    count = ARRAY_SIZE(value_caps) - 3;
-    status = HidP_GetSpecificValueCaps(HidP_Input, 0, 0, 0, value_caps + 3, &count, (PHIDP_PREPARSED_DATA)buffer);
+    count = ARRAY_SIZE(value_caps) - 4;
+    status = HidP_GetSpecificValueCaps(HidP_Input, 0, 0, 0, value_caps + 4, &count, (PHIDP_PREPARSED_DATA)buffer);
     ok(status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_GetSpecificValueCaps returned %#x\n", status);
 
-    status = HidP_GetSpecificValueCaps(HidP_Input, 0, 0, 0, value_caps + 3, &count, preparsed_data);
+    status = HidP_GetSpecificValueCaps(HidP_Input, 0, 0, 0, value_caps + 4, &count, preparsed_data);
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetSpecificValueCaps returned %#x\n", status);
     ok(count == caps.NumberInputValueCaps, "HidP_GetSpecificValueCaps returned count %d, expected %d\n",
        count, caps.NumberInputValueCaps);
-    check_hidp_value_caps(&value_caps[3], &value_caps[0]);
-    check_hidp_value_caps(&value_caps[4], &value_caps[1]);
-    check_hidp_value_caps(&value_caps[5], &value_caps[2]);
+    check_hidp_value_caps(&value_caps[4], &value_caps[0]);
+    check_hidp_value_caps(&value_caps[5], &value_caps[1]);
+    check_hidp_value_caps(&value_caps[6], &value_caps[2]);
+    check_hidp_value_caps(&value_caps[7], &value_caps[3]);
 
     count = 1;
     status = HidP_GetSpecificValueCaps(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH,
-                                       value_caps + 3, &count, preparsed_data);
+                                       value_caps + 4, &count, preparsed_data);
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetSpecificValueCaps returned %#x\n", status);
     ok(count == 1, "HidP_GetSpecificValueCaps returned count %d, expected %d\n", count, 1);
-    check_hidp_value_caps(&value_caps[3], &value_caps[2]);
+
+    todo_wine
+    check_member(value_caps[4], value_caps[3], "%04x", UsagePage);
+    check_member(value_caps[4], value_caps[3], "%d", ReportID);
+    check_member(value_caps[4], value_caps[3], "%d", IsAlias);
+    check_member(value_caps[4], value_caps[3], "%d", BitField);
+    check_member(value_caps[4], value_caps[3], "%d", LinkCollection);
+    check_member(value_caps[4], value_caps[3], "%04x", LinkUsage);
+    check_member(value_caps[4], value_caps[3], "%04x", LinkUsagePage);
+    todo_wine
+    check_member(value_caps[4], value_caps[3], "%d", IsRange);
+    check_member(value_caps[4], value_caps[3], "%d", IsStringRange);
+    check_member(value_caps[4], value_caps[3], "%d", IsDesignatorRange);
+    check_member(value_caps[4], value_caps[3], "%d", IsAbsolute);
+    check_member(value_caps[4], value_caps[3], "%d", HasNull);
+    todo_wine
+    check_member(value_caps[4], value_caps[3], "%d", BitSize);
+    check_member(value_caps[4], value_caps[3], "%d", ReportCount);
+    check_member(value_caps[4], value_caps[3], "%d", UnitsExp);
+    check_member(value_caps[4], value_caps[3], "%d", Units);
+    todo_wine
+    check_member(value_caps[4], value_caps[3], "%d", LogicalMin);
+    todo_wine
+    check_member(value_caps[4], value_caps[3], "%d", LogicalMax);
+    check_member(value_caps[4], value_caps[3], "%d", PhysicalMin);
+    check_member(value_caps[4], value_caps[3], "%d", PhysicalMax);
+    todo_wine
+    check_member(value_caps[4], value_caps[3], "%04x", Range.UsageMin);
+    check_member(value_caps[4], value_caps[3], "%04x", Range.UsageMax);
+    check_member(value_caps[4], value_caps[3], "%d", Range.StringMin);
+    check_member(value_caps[4], value_caps[3], "%d", Range.StringMax);
+    check_member(value_caps[4], value_caps[3], "%d", Range.DesignatorMin);
+    check_member(value_caps[4], value_caps[3], "%d", Range.DesignatorMax);
+    todo_wine
+    check_member(value_caps[4], value_caps[3], "%d", Range.DataIndexMin);
+    todo_wine
+    check_member(value_caps[4], value_caps[3], "%d", Range.DataIndexMax);
 
     count = 0xdead;
     status = HidP_GetSpecificValueCaps(HidP_Input, 0xfffe, 0, 0, value_caps, &count, preparsed_data);
@@ -1982,6 +2122,22 @@ static void test_hidp(HANDLE file, int report_id)
 
     memset(buffer, 0xcd, sizeof(buffer));
     memset(buffer, 0, caps.InputReportByteLength);
+    buffer[0] = report_id;
+    todo_wine_if(report_id)
+    ok(!memcmp(buffer, report, sizeof(buffer)), "unexpected report data\n");
+
+    memset(report, 0xcd, sizeof(report));
+    status = HidP_InitializeReportForID(HidP_Feature, 3, preparsed_data, report, caps.FeatureReportByteLength);
+    todo_wine_if(!report_id)
+    ok(status == HIDP_STATUS_REPORT_DOES_NOT_EXIST, "HidP_InitializeReportForID returned %#x\n", status);
+
+    memset(report, 0xcd, sizeof(report));
+    status = HidP_InitializeReportForID(HidP_Feature, report_id, preparsed_data, report, caps.FeatureReportByteLength);
+    todo_wine_if(report_id)
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#x\n", status);
+
+    memset(buffer, 0xcd, sizeof(buffer));
+    memset(buffer, 0, caps.FeatureReportByteLength);
     buffer[0] = report_id;
     todo_wine_if(report_id)
     ok(!memcmp(buffer, report, sizeof(buffer)), "unexpected report data\n");
