@@ -1775,6 +1775,18 @@ static void test_hidp(HANDLE file, int report_id)
             .CollectionType = 2,
         },
     };
+    static const HIDP_DATA expect_data[] =
+    {
+        { .DataIndex = 0, },
+        { .DataIndex = 1, },
+        { .DataIndex = 5, .RawValue = 1, },
+        { .DataIndex = 7, .RawValue = 1, },
+        { .DataIndex = 30, },
+        { .DataIndex = 31, },
+        { .DataIndex = 32, .RawValue = 0xfeedcafe, },
+        { .DataIndex = 37, .RawValue = 1, },
+        { .DataIndex = 39, .RawValue = 1, },
+    };
 
     HIDP_LINK_COLLECTION_NODE collections[16];
     PHIDP_PREPARSED_DATA preparsed_data;
@@ -1784,6 +1796,7 @@ static void test_hidp(HANDLE file, int report_id)
     char buffer[200], report[200];
     DWORD collection_count;
     DWORD waveform_list;
+    HIDP_DATA data[32];
     USAGE usages[16];
     NTSTATUS status;
     HIDP_CAPS caps;
@@ -2396,6 +2409,36 @@ static void test_hidp(HANDLE file, int report_id)
     todo_wine
     ok(usage_and_pages[3].Usage == 4, "got usage_and_pages[3] Usage %x, expected %x\n",
        usage_and_pages[3].Usage, 4);
+
+    value = HidP_MaxDataListLength(HidP_Feature + 1, preparsed_data);
+    ok(value == 0, "HidP_MaxDataListLength(HidP_Feature + 1) returned %d, expected %d\n", value, 0);
+    value = HidP_MaxDataListLength(HidP_Input, preparsed_data);
+    todo_wine
+    ok(value == 50, "HidP_MaxDataListLength(HidP_Input) returned %d, expected %d\n", value, 50);
+    value = HidP_MaxDataListLength(HidP_Output, preparsed_data);
+    ok(value == 0, "HidP_MaxDataListLength(HidP_Output) returned %d, expected %d\n", value, 0);
+    value = HidP_MaxDataListLength(HidP_Feature, preparsed_data);
+    ok(value == 13, "HidP_MaxDataListLength(HidP_Feature) returned %d, expected %d\n", value, 13);
+
+    value = 1;
+    status = HidP_GetData(HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength);
+    todo_wine_if(report_id)
+    ok(status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetData returned %#x\n", status);
+    todo_wine
+    ok(value == 9, "got data count %d, expected %d\n", value, 9);
+    memset(data, 0, sizeof(data));
+    status = HidP_GetData(HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength);
+    todo_wine_if(report_id)
+    ok(status == HIDP_STATUS_SUCCESS, "HidP_GetData returned %#x\n", status);
+    if (status == HIDP_STATUS_SUCCESS) for (i = 0; i < ARRAY_SIZE(expect_data); ++i)
+    {
+        winetest_push_context("data[%d]", i);
+        todo_wine_if(i >= 4)
+        check_member(data[i], expect_data[i], "%d", DataIndex);
+        todo_wine_if(i == 6 || i == 7 || i == 8)
+        check_member(data[i], expect_data[i], "%d", RawValue);
+        winetest_pop_context();
+    }
 
     memset(report, 0xcd, sizeof(report));
     status = HidP_InitializeReportForID(HidP_Feature, 3, preparsed_data, report, caps.FeatureReportByteLength);
