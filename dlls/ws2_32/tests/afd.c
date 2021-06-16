@@ -1407,7 +1407,7 @@ static void test_bind(void)
 
     ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
             &params, sizeof(params), &addr, sizeof(addr));
-    todo_wine ok(ret == STATUS_ADDRESS_ALREADY_ASSOCIATED, "got %#x\n", ret);
+    ok(ret == STATUS_ADDRESS_ALREADY_ASSOCIATED, "got %#x\n", ret);
 
     s2 = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 

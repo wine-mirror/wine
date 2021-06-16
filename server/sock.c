@@ -2405,6 +2405,12 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             return 0;
         }
 
+        if (sock->bound)
+        {
+            set_error( STATUS_ADDRESS_ALREADY_ASSOCIATED );
+            return 0;
+        }
+
         unix_len = sockaddr_to_unix( &params->addr, in_size - sizeof(int), &unix_addr );
         if (!unix_len)
         {
