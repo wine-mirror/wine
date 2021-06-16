@@ -1549,13 +1549,13 @@ static void test_getsockname(void)
     memset(&addr, 0xcc, sizeof(addr));
     ret = NtDeviceIoControlFile((HANDLE)client, event, NULL, NULL, &io,
             IOCTL_AFD_GETSOCKNAME, NULL, 0, &addr, sizeof(addr));
-    todo_wine ok(!ret, "got %#x\n", ret);
-    todo_wine ok(!io.Status, "got %#x\n", io.Status);
-    todo_wine ok(io.Information == sizeof(addr), "got %#Ix\n", io.Information);
+    ok(!ret, "got %#x\n", ret);
+    ok(!io.Status, "got %#x\n", io.Status);
+    ok(io.Information == sizeof(addr), "got %#Ix\n", io.Information);
     len = sizeof(addr2);
     ret = getsockname(client, (struct sockaddr *)&addr2, &len);
     ok(!ret, "got error %u\n", WSAGetLastError());
-    todo_wine ok(!memcmp(&addr, &addr2, sizeof(struct sockaddr)), "addresses didn't match\n");
+    ok(!memcmp(&addr, &addr2, sizeof(struct sockaddr)), "addresses didn't match\n");
 
     closesocket(client);
 

@@ -89,9 +89,6 @@
 # undef if_indextoname
 # undef if_nametoindex
 #endif
-#ifdef HAVE_LINUX_FILTER_H
-# include <linux/filter.h>
-#endif
 #ifdef HAVE_IFADDRS_H
 # include <ifaddrs.h>
 #endif
@@ -151,7 +148,6 @@
 #include "winnt.h"
 #define USE_WC_PREFIX   /* For CMSG_DATA */
 #include "iphlpapi.h"
-#include "netioapi.h"
 #include "ip2string.h"
 #include "wine/afd.h"
 #include "wine/server.h"

@@ -10292,7 +10292,7 @@ static void test_bind(void)
     WSASetLastError(0xdeadbeef);
     ret = bind(s, (const struct sockaddr *)&invalid_addr, sizeof(invalid_addr));
     ok(ret == -1, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAEADDRNOTAVAIL, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAEADDRNOTAVAIL, "got error %u\n", WSAGetLastError());
 
     WSASetLastError(0xdeadbeef);
     ret = bind(s, (const struct sockaddr *)&bind_addr, sizeof(bind_addr));
