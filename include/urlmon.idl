@@ -405,6 +405,37 @@ interface IAuthenticate : IUnknown
 }
 
 /*****************************************************************************
+ * IAuthenticateEx interface
+ */
+[
+    object,
+    uuid(2ad1edaf-d83d-48b5-9adf-03dbe19f53bd),
+    pointer_default(unique)
+]
+
+interface IAuthenticateEx : IAuthenticate
+{
+    typedef [unique] IAuthenticateEx *LPAUTHENTICATIONEX;
+
+    typedef enum {
+        AUTHENTICATEF_PROXY = 0x00000001,
+        AUTHENTICATEF_BASIC = 0x00000002,
+        AUTHENTICATEF_HTTP  = 0x00000004
+    } AUTHENTICATEF;
+
+    typedef struct _tagAUTHENTICATEINFO {
+        DWORD dwFlags;
+        DWORD dwReserved;
+    } AUTHENTICATEINFO;
+
+    HRESULT AuthenticateEx(
+            [out] HWND *phwnd,
+            [out] LPWSTR *pszUsername,
+            [out] LPWSTR *pszPassword,
+            [in]  AUTHENTICATEINFO *pauthinfo);
+}
+
+/*****************************************************************************
  * IHttpNegotiate interface
  */
 [
