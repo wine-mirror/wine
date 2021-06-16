@@ -75,3 +75,6 @@ BEGIN
     DEFPUSHBUTTON   "Close", IDOK, 326, 320, 70, 16, WS_TABSTOP
     PUSHBUTTON      "&Save As...", ID_SAVEAS, 252, 320, 70, 16, WS_TABSTOP
 END
+
+/* @makedep: winedbg.manifest */
+1 RT_MANIFEST winedbg.manifest
