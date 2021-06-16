@@ -1436,9 +1436,10 @@ static void output_syscall_dispatcher(void)
         output( "\tmovl %%fs:0x1f8,%%ecx\n" );   /* x86_thread_data()->syscall_frame */
         output( "\tmovl $0,0x00(%%ecx)\n" );     /* frame->restore_flags */
         output( "\tpopl 0x08(%%ecx)\n" );        /* frame->eip */
-        output( "\tmovl %%esp,0x0c(%%ecx)\n" );  /* frame->esp */
         output( "\tpushfl\n" );
         output( "\tpopl 0x04(%%ecx)\n" );        /* frame->eflags */
+        output( "%s\n", asm_globl("__wine_syscall_dispatcher_prolog_end") );
+        output( "\tmovl %%esp,0x0c(%%ecx)\n" );  /* frame->esp */
         output( "\tmovw %%cs,0x10(%%ecx)\n" );
         output( "\tmovw %%ss,0x12(%%ecx)\n" );
         output( "\tmovw %%ds,0x14(%%ecx)\n" );
@@ -1553,6 +1554,11 @@ static void output_syscall_dispatcher(void)
     case CPU_x86_64:
         output( "\tmovq %%gs:0x30,%%rcx\n" );
         output( "\tmovq 0x328(%%rcx),%%rcx\n" );  /* amd64_thread_data()->syscall_frame */
+        output( "\tpopq 0x70(%%rcx)\n" );         /* frame->rip */
+        output( "\tpushfq\n" );
+        output( "\tpopq 0x80(%%rcx)\n" );
+        output( "\tmovl $0,0x94(%%rcx)\n" );     /* frame->restore_flags */
+        output( "%s\n", asm_globl("__wine_syscall_dispatcher_prolog_end") );
         output( "\tmovq %%rax,0x00(%%rcx)\n" );
         output( "\tmovq %%rbx,0x08(%%rcx)\n" );
         output( "\tmovq %%rdx,0x18(%%rcx)\n" );
@@ -1562,7 +1568,6 @@ static void output_syscall_dispatcher(void)
         output( "\tmovq %%r13,0x58(%%rcx)\n" );
         output( "\tmovq %%r14,0x60(%%rcx)\n" );
         output( "\tmovq %%r15,0x68(%%rcx)\n" );
-        output( "\tpopq 0x70(%%rcx)\n" );         /* frame->rip */
         output( "\tmovw %%cs,0x78(%%rcx)\n" );
         output( "\tmovw %%ds,0x7a(%%rcx)\n" );
         output( "\tmovw %%es,0x7c(%%rcx)\n" );
@@ -1570,10 +1575,7 @@ static void output_syscall_dispatcher(void)
         output( "\tmovq %%rsp,0x88(%%rcx)\n" );
         output( "\tmovw %%ss,0x90(%%rcx)\n" );
         output( "\tmovw %%gs,0x92(%%rcx)\n" );
-        output( "\tmovl $0,0x94(%%rcx)\n" );     /* frame->restore_flags */
         output( "\tmovq %%rbp,0x98(%%rcx)\n" );
-        output( "\tpushfq\n" );
-        output( "\tpopq 0x80(%%rcx)\n" );
         /* Legends of Runeterra hooks the first system call return instruction, and
          * depends on us returning to it. Adjust the return address accordingly. */
         output( "\tsubq $0xb,0x70(%%rcx)\n" );

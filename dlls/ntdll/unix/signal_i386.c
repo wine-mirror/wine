@@ -1753,6 +1753,34 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, void *stack_ptr,
 }
 
 
+/***********************************************************************
+ *           handle_syscall_trap
+ *
+ * Handle a trap exception during a system call.
+ */
+static BOOL handle_syscall_trap( ucontext_t *sigcontext )
+{
+    extern void __wine_syscall_dispatcher_prolog_end(void);
+    struct syscall_frame *frame = x86_thread_data()->syscall_frame;
+
+    /* disallow single-stepping through a syscall */
+
+    if ((void *)EIP_sig( sigcontext ) != __wine_syscall_dispatcher) return FALSE;
+
+    TRACE( "ignoring trap in syscall eip=%08x eflags=%08x\n", EIP_sig(sigcontext), EFL_sig(sigcontext) );
+
+    frame->eip = *(ULONG *)ESP_sig( sigcontext );
+    frame->eflags = EFL_sig(sigcontext);
+    frame->restore_flags = CONTEXT_CONTROL;
+
+    EIP_sig( sigcontext ) = (ULONG)__wine_syscall_dispatcher_prolog_end;
+    ECX_sig( sigcontext ) = (ULONG)frame;
+    ESP_sig( sigcontext ) += sizeof(ULONG);
+    EFL_sig( sigcontext ) &= ~0x100;  /* clear single-step flag */
+    return TRUE;
+}
+
+
 /**********************************************************************
  *		segv_handler
  *
@@ -1854,6 +1882,8 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     struct xcontext xcontext;
     ucontext_t *ucontext = sigcontext;
     void *stack = setup_exception_record( sigcontext, &rec, &xcontext );
+
+    if (handle_syscall_trap( ucontext )) return;
 
     switch (TRAP_sig(ucontext))
     {
