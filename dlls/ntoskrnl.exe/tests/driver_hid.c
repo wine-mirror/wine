@@ -40,6 +40,7 @@
 static UNICODE_STRING control_symlink;
 
 static unsigned int got_start_device;
+static DWORD report_id;
 
 static NTSTATUS WINAPI driver_pnp(DEVICE_OBJECT *device, IRP *irp)
 {
@@ -85,49 +86,54 @@ static NTSTATUS WINAPI driver_power(DEVICE_OBJECT *device, IRP *irp)
     return PoCallDriver(ext->NextDeviceObject, irp);
 }
 
-#include "psh_hid_macros.h"
-
-static const unsigned char report_descriptor[] =
-{
-    USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
-    USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
-    COLLECTION(1, Application),
-        USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
-        USAGE(1, HID_USAGE_GENERIC_X),
-        USAGE(1, HID_USAGE_GENERIC_Y),
-        LOGICAL_MINIMUM(1, -128),
-        LOGICAL_MAXIMUM(1, 127),
-        REPORT_SIZE(1, 8),
-        REPORT_COUNT(1, 2),
-        INPUT(1, Data|Var|Abs),
-
-        USAGE_PAGE(1, HID_USAGE_PAGE_BUTTON),
-        USAGE_MINIMUM(1, 1),
-        USAGE_MAXIMUM(1, 8),
-        LOGICAL_MINIMUM(1, 0),
-        LOGICAL_MAXIMUM(1, 1),
-        PHYSICAL_MINIMUM(1, 0),
-        PHYSICAL_MAXIMUM(1, 1),
-        REPORT_COUNT(1, 8),
-        REPORT_SIZE(1, 1),
-        INPUT(1, Data|Var|Abs),
-
-        USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
-        USAGE(1, HID_USAGE_GENERIC_HATSWITCH),
-        LOGICAL_MINIMUM(1, 1),
-        LOGICAL_MAXIMUM(1, 8),
-        PHYSICAL_MINIMUM(1, 0),
-        PHYSICAL_MAXIMUM(1, 8),
-        REPORT_SIZE(1, 4),
-        REPORT_COUNT(1, 2),
-        INPUT(1, Data|Var|Abs),
-    END_COLLECTION,
-};
-
-#include "pop_hid_macros.h"
-
 static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
 {
+#include "psh_hid_macros.h"
+/* Replace REPORT_ID with USAGE_PAGE when id is 0 */
+#define REPORT_ID_OR_USAGE_PAGE(size, id) SHORT_ITEM_1((id ? 8 : 0), 1, id)
+    const unsigned char report_descriptor[] =
+    {
+        USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+        USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+        COLLECTION(1, Application),
+            USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+            COLLECTION(1, Logical),
+                REPORT_ID_OR_USAGE_PAGE(1, report_id),
+                USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+                USAGE(1, HID_USAGE_GENERIC_X),
+                USAGE(1, HID_USAGE_GENERIC_Y),
+                LOGICAL_MINIMUM(1, -128),
+                LOGICAL_MAXIMUM(1, 127),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 2),
+                INPUT(1, Data|Var|Abs),
+
+                USAGE_PAGE(1, HID_USAGE_PAGE_BUTTON),
+                USAGE_MINIMUM(1, 1),
+                USAGE_MAXIMUM(1, 8),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 1),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 1),
+                REPORT_COUNT(1, 8),
+                REPORT_SIZE(1, 1),
+                INPUT(1, Data|Var|Abs),
+
+                USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+                USAGE(1, HID_USAGE_GENERIC_HATSWITCH),
+                LOGICAL_MINIMUM(1, 1),
+                LOGICAL_MAXIMUM(1, 8),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 8),
+                REPORT_SIZE(1, 4),
+                REPORT_COUNT(1, 2),
+                INPUT(1, Data|Var|Abs),
+            END_COLLECTION,
+        END_COLLECTION,
+    };
+#undef REPORT_ID_OR_USAGE_PAGE
+#include "pop_hid_macros.h"
+
     static BOOL test_failed;
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
     const ULONG in_size = stack->Parameters.DeviceIoControl.InputBufferLength;
@@ -202,9 +208,13 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
 
         case IOCTL_HID_READ_REPORT:
         {
-            ULONG expected_size = 4;
+            ULONG expected_size = report_id ? 5 : 4;
             ok(!in_size, "got input size %u\n", in_size);
-            if (!test_failed) todo_wine ok(out_size == expected_size, "got output size %u\n", out_size);
+            if (!test_failed)
+            {
+                todo_wine_if(!report_id)
+                ok(out_size == expected_size, "got output size %u\n", out_size);
+            }
             if (out_size != expected_size) test_failed = TRUE;
 
             ret = STATUS_NOT_IMPLEMENTED;
@@ -278,16 +288,32 @@ static void WINAPI driver_unload(DRIVER_OBJECT *driver)
 
 NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *registry)
 {
+    static const int info_size = offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data );
+    char buffer[offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data ) + sizeof(DWORD)];
     HID_MINIDRIVER_REGISTRATION params =
     {
         .Revision = HID_REVISION,
         .DriverObject = driver,
         .RegistryPath = registry,
     };
+    UNICODE_STRING name_str;
+    OBJECT_ATTRIBUTES attr;
     NTSTATUS ret;
+    HANDLE hkey;
+    DWORD size;
 
     if ((ret = winetest_init()))
         return ret;
+
+    InitializeObjectAttributes(&attr, registry, 0, NULL, NULL);
+    ret = ZwOpenKey(&hkey, KEY_ALL_ACCESS, &attr);
+    ok(!ret, "ZwOpenKey returned %#x\n", ret);
+
+    RtlInitUnicodeString(&name_str, L"ReportID");
+    size = info_size + sizeof(report_id);
+    ret = ZwQueryValueKey(hkey, &name_str, KeyValuePartialInformation, buffer, size, &size);
+    ok(!ret, "ZwQueryValueKey returned %#x\n", ret);
+    memcpy(&report_id, buffer + info_size, size - info_size);
 
     driver->DriverExtension->AddDevice = driver_add_device;
     driver->DriverUnload = driver_unload;

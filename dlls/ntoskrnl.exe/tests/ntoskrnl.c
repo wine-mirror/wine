@@ -1634,25 +1634,27 @@ static inline void check_hidp_value_caps_(int line, HIDP_VALUE_CAPS *caps, const
     }
 }
 
-static void test_hidp(HANDLE file)
+static void test_hidp(HANDLE file, int report_id)
 {
-    static const HIDP_CAPS expect_hidp_caps =
+    const HIDP_CAPS expect_hidp_caps =
     {
         .Usage = HID_USAGE_GENERIC_JOYSTICK,
         .UsagePage = HID_USAGE_PAGE_GENERIC,
         .InputReportByteLength = 5,
-        .NumberLinkCollectionNodes = 1,
+        .NumberLinkCollectionNodes = 2,
         .NumberInputButtonCaps = 1,
         .NumberInputValueCaps = 3,
         .NumberInputDataIndices = 11,
     };
-    static const HIDP_BUTTON_CAPS expect_button_caps[] =
+    const HIDP_BUTTON_CAPS expect_button_caps[] =
     {
         {
             .UsagePage = HID_USAGE_PAGE_BUTTON,
+            .ReportID = report_id,
             .BitField = 2,
             .LinkUsage = HID_USAGE_GENERIC_JOYSTICK,
             .LinkUsagePage = HID_USAGE_PAGE_GENERIC,
+            .LinkCollection = 1,
             .IsRange = TRUE,
             .IsAbsolute = TRUE,
             .Range.UsageMin = 1,
@@ -1661,13 +1663,15 @@ static void test_hidp(HANDLE file)
             .Range.DataIndexMax = 9,
         },
     };
-    static const HIDP_VALUE_CAPS expect_value_caps[] =
+    const HIDP_VALUE_CAPS expect_value_caps[] =
     {
         {
             .UsagePage = HID_USAGE_PAGE_GENERIC,
+            .ReportID = report_id,
             .BitField = 2,
             .LinkUsage = HID_USAGE_GENERIC_JOYSTICK,
             .LinkUsagePage = HID_USAGE_PAGE_GENERIC,
+            .LinkCollection = 1,
             .IsAbsolute = TRUE,
             .BitSize = 8,
             .ReportCount = 1,
@@ -1677,9 +1681,11 @@ static void test_hidp(HANDLE file)
         },
         {
             .UsagePage = HID_USAGE_PAGE_GENERIC,
+            .ReportID = report_id,
             .BitField = 2,
             .LinkUsage = HID_USAGE_GENERIC_JOYSTICK,
             .LinkUsagePage = HID_USAGE_PAGE_GENERIC,
+            .LinkCollection = 1,
             .IsAbsolute = TRUE,
             .BitSize = 8,
             .ReportCount = 1,
@@ -1690,9 +1696,11 @@ static void test_hidp(HANDLE file)
         },
         {
             .UsagePage = HID_USAGE_PAGE_GENERIC,
+            .ReportID = report_id,
             .BitField = 2,
             .LinkUsage = HID_USAGE_GENERIC_JOYSTICK,
             .LinkUsagePage = HID_USAGE_PAGE_GENERIC,
+            .LinkCollection = 1,
             .IsAbsolute = TRUE,
             .BitSize = 4,
             .ReportCount = 2,
@@ -1709,6 +1717,13 @@ static void test_hidp(HANDLE file)
             .LinkUsage = HID_USAGE_GENERIC_JOYSTICK,
             .LinkUsagePage = HID_USAGE_PAGE_GENERIC,
             .CollectionType = 1,
+            .NumberOfChildren = 1,
+            .FirstChild = 1,
+        },
+        {
+            .LinkUsage = HID_USAGE_GENERIC_JOYSTICK,
+            .LinkUsagePage = HID_USAGE_PAGE_GENERIC,
+            .CollectionType = 2,
         },
     };
 
@@ -1956,20 +1971,26 @@ static void test_hidp(HANDLE file)
     ok(status == HIDP_STATUS_INVALID_REPORT_LENGTH, "HidP_InitializeReportForID returned %#x\n", status);
     status = HidP_InitializeReportForID(HidP_Input, 0, preparsed_data, report, caps.InputReportByteLength + 1);
     ok(status == HIDP_STATUS_INVALID_REPORT_LENGTH, "HidP_InitializeReportForID returned %#x\n", status);
+    status = HidP_InitializeReportForID(HidP_Input, 1 - report_id, preparsed_data, report, caps.InputReportByteLength);
+    todo_wine_if(!report_id)
+    ok(status == HIDP_STATUS_REPORT_DOES_NOT_EXIST, "HidP_InitializeReportForID returned %#x\n", status);
 
     memset(report, 0xcd, sizeof(report));
-    status = HidP_InitializeReportForID(HidP_Input, 0, preparsed_data, report, caps.InputReportByteLength);
+    status = HidP_InitializeReportForID(HidP_Input, report_id, preparsed_data, report, caps.InputReportByteLength);
+    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#x\n", status);
 
     memset(buffer, 0xcd, sizeof(buffer));
     memset(buffer, 0, caps.InputReportByteLength);
+    buffer[0] = report_id;
+    todo_wine_if(report_id)
     ok(!memcmp(buffer, report, sizeof(buffer)), "unexpected report data\n");
 
     HidD_FreePreparsedData(preparsed_data);
     CloseHandle(file);
 }
 
-static void test_hid_device(void)
+static void test_hid_device(DWORD report_id)
 {
     char buffer[200];
     SP_DEVICE_INTERFACE_DETAIL_DATA_A *iface_detail = (void *)buffer;
@@ -1983,6 +2004,8 @@ static void test_hid_device(void)
     unsigned int i;
     HDEVINFO set;
     HANDLE file;
+
+    winetest_push_context("report %d", report_id);
 
     set = SetupDiGetClassDevsA(&GUID_DEVINTERFACE_HID, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
     ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
@@ -2014,7 +2037,7 @@ static void test_hid_device(void)
             FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
     ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
 
-    test_hidp(file);
+    test_hidp(file, report_id);
 
     CloseHandle(file);
 
@@ -2022,9 +2045,11 @@ static void test_hid_device(void)
     InitializeObjectAttributes(&attr, &string, OBJ_CASE_INSENSITIVE, NULL, NULL);
     status = NtOpenFile(&file, SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT);
     todo_wine ok(status == STATUS_UNSUCCESSFUL, "got %#x\n", status);
+
+    winetest_pop_context();
 }
 
-static void test_hid_driver(struct testsign_context *ctx)
+static void test_hid_driver(struct testsign_context *ctx, DWORD report_id)
 {
     static const char hardware_id[] = "test_hardware_id\0";
     char path[MAX_PATH], dest[MAX_PATH], *filepart;
@@ -2034,12 +2059,20 @@ static void test_hid_driver(struct testsign_context *ctx)
     SC_HANDLE manager, service;
     BOOL ret, need_reboot;
     HANDLE catalog, file;
+    LSTATUS status;
     HDEVINFO set;
+    HKEY hkey;
     FILE *f;
 
     GetCurrentDirectoryA(ARRAY_SIZE(cwd), cwd);
     GetTempPathA(ARRAY_SIZE(tempdir), tempdir);
     SetCurrentDirectoryA(tempdir);
+
+    status = RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Services\\winetest", 0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL);
+    ok(!status, "RegCreateKeyExW returned %#x\n", status);
+
+    status = RegSetValueExW(hkey, L"ReportID", 0, REG_DWORD, (void *)&report_id, sizeof(report_id));
+    ok(!status, "RegSetValueExW returned %#x\n", status);
 
     load_resource(L"driver_hid.dll", driver_filename);
     ret = MoveFileExW(driver_filename, L"winetest.sys", MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING);
@@ -2088,7 +2121,7 @@ static void test_hid_driver(struct testsign_context *ctx)
 
     /* Tests. */
 
-    test_hid_device();
+    test_hid_device(report_id);
 
     /* Clean up. */
 
@@ -2219,7 +2252,8 @@ START_TEST(ntoskrnl)
     test_pnp_driver(&ctx);
 
     subtest("driver_hid");
-    test_hid_driver(&ctx);
+    test_hid_driver(&ctx, 0);
+    test_hid_driver(&ctx, 1);
 
 out:
     testsign_cleanup(&ctx);
