@@ -3592,6 +3592,7 @@ static void test_getsockname(void)
     ok(sock != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
 
     sa_get = sa_set;
+    WSASetLastError(0xdeadbeef);
     ret = getsockname(sock, (struct sockaddr *)&sa_get, &sa_get_len);
     ok(ret == SOCKET_ERROR, "expected failure\n");
     ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
@@ -3600,11 +3601,20 @@ static void test_getsockname(void)
     ret = bind(sock, (struct sockaddr *) &sa_set, sa_set_len);
     ok(!ret, "failed to bind, error %u\n", WSAGetLastError());
 
+    WSASetLastError(0xdeadbeef);
     ret = getsockname(sock, (struct sockaddr *) &sa_get, &sa_get_len);
-    ok(!ret, "failed to get address, error %u\n", WSAGetLastError());
+    ok(!ret, "got %d\n", ret);
+    ok(!WSAGetLastError() || WSAGetLastError() == 0xdeadbeef /* < 7 */, "got error %u\n", WSAGetLastError());
 
     ret = memcmp(sa_get.sin_zero, null_padding, 8);
     ok(ret == 0, "getsockname did not zero the sockaddr_in structure\n");
+
+    sa_get_len = sizeof(sa_get) - 1;
+    WSASetLastError(0xdeadbeef);
+    ret = getsockname(sock, (struct sockaddr *)&sa_get, &sa_get_len);
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+    ok(sa_get_len == sizeof(sa_get) - 1, "got size %d\n", sa_get_len);
 
     closesocket(sock);
 
@@ -5546,11 +5556,11 @@ todo_wine
 static void test_WSASendTo(void)
 {
     SOCKET s;
-    struct sockaddr_in addr;
+    struct sockaddr_in addr, ret_addr;
     char buf[12] = "hello world";
     WSABUF data_buf;
     DWORD bytesSent;
-    int ret;
+    int ret, len;
 
     addr.sin_family = AF_INET;
     addr.sin_port = htons(139);
@@ -5566,6 +5576,11 @@ static void test_WSASendTo(void)
     ok(ret == SOCKET_ERROR && WSAGetLastError() == WSAENOTSOCK,
        "WSASendTo() failed: %d/%d\n", ret, WSAGetLastError());
 
+    len = sizeof(ret_addr);
+    ret = getsockname(s, (struct sockaddr *)&ret_addr, &len);
+    ok(ret == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
+
     WSASetLastError(12345);
     ret = WSASendTo(s, &data_buf, 1, NULL, 0, (struct sockaddr*)&addr, sizeof(addr), NULL, NULL);
     ok(ret == SOCKET_ERROR && WSAGetLastError() == WSAEFAULT,
@@ -5575,6 +5590,12 @@ static void test_WSASendTo(void)
     ret = WSASendTo(s, &data_buf, 1, &bytesSent, 0, (struct sockaddr *)&addr, sizeof(addr), NULL, NULL);
     ok(!ret, "expected success\n");
     ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+
+    len = sizeof(ret_addr);
+    ret = getsockname(s, (struct sockaddr *)&ret_addr, &len);
+    ok(!ret, "got error %u\n", WSAGetLastError());
+    ok(ret_addr.sin_family == AF_INET, "got family %u\n", ret_addr.sin_family);
+    ok(ret_addr.sin_port, "expected nonzero port\n");
 }
 
 static DWORD WINAPI recv_thread(LPVOID arg)
