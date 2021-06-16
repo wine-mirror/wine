@@ -41,3 +41,6 @@ STRINGTABLE {
 \t\t    Use '--list' to determine the application GUID.\n\
 \  [no option]       Launch the graphical version of this program.\n\n"
 }
+
+/* @makedep: uninstaller.manifest */
+1 RT_MANIFEST uninstaller.manifest

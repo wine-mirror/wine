@@ -23,6 +23,7 @@
 
 #include <string.h>
 #include <windows.h>
+#include <commctrl.h>
 #include <shlwapi.h>
 #include "resource.h"
 #include "regstr.h"
@@ -175,6 +176,8 @@ int __cdecl wmain(int argc, WCHAR *argv[])
         else WINE_ERR( "failed to restart 64-bit %s, err %d\n", wine_dbgstr_w(filename), GetLastError() );
         Wow64RevertWow64FsRedirection( redir );
     }
+
+    InitCommonControls();
 
     while( i<argc )
     {
