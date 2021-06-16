@@ -250,6 +250,14 @@ const char * __cdecl __wine_dbg_strdup( const char *str )
 }
 
 /***********************************************************************
+ *		__wine_dbg_write  (NTDLL.@)
+ */
+int WINAPI __wine_dbg_write( const char *str, unsigned int len )
+{
+    return write( 2, str, len );
+}
+
+/***********************************************************************
  *		__wine_dbg_output  (NTDLL.@)
  */
 int __cdecl __wine_dbg_output( const char *str )
@@ -261,7 +269,7 @@ int __cdecl __wine_dbg_output( const char *str )
     if (end)
     {
         ret += append_output( info, str, end + 1 - str );
-        write( 2, info->output, info->out_pos );
+        __wine_dbg_write( info->output, info->out_pos );
         info->out_pos = 0;
         str = end + 1;
     }

@@ -26,7 +26,7 @@
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 122
+#define NTDLL_UNIXLIB_VERSION 123
 
 struct unix_funcs
 {
@@ -78,9 +78,6 @@ struct unix_funcs
     NTSTATUS      (CDECL *init_unix_lib)( void *module, DWORD reason, const void *ptr_in, void *ptr_out );
     NTSTATUS      (CDECL *unwind_builtin_dll)( ULONG type, struct _DISPATCHER_CONTEXT *dispatch,
                                                CONTEXT *context );
-
-    /* debugging functions */
-    int           (CDECL *dbg_output)( const char *str );
 };
 
 #endif /* __NTDLL_UNIXLIB_H */
