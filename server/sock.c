@@ -109,6 +109,15 @@
 #define IP_UNICAST_IF 50
 #endif
 
+union win_sockaddr
+{
+    struct WS_sockaddr addr;
+    struct WS_sockaddr_in in;
+    struct WS_sockaddr_in6 in6;
+    struct WS_sockaddr_ipx ipx;
+    SOCKADDR_IRDA irda;
+};
+
 static struct list poll_list = LIST_INIT( poll_list );
 
 struct poll_req
@@ -194,10 +203,13 @@ struct sock
     struct list         accept_list; /* list of pending accept requests */
     struct accept_req  *accept_recv_req; /* pending accept-into request which will recv on this socket */
     struct connect_req *connect_req; /* pending connection request */
+    union win_sockaddr  addr;        /* socket name */
+    int                 addr_len;    /* socket name length */
     unsigned int        rd_shutdown : 1; /* is the read end shut down? */
     unsigned int        wr_shutdown : 1; /* is the write end shut down? */
     unsigned int        wr_shutdown_pending : 1; /* is a write shutdown pending? */
     unsigned int        nonblocking : 1; /* is the socket nonblocking? */
+    unsigned int        bound : 1;   /* is the socket bound? */
 };
 
 static void sock_dump( struct object *obj, int verbose );
@@ -1365,10 +1377,13 @@ static struct sock *create_socket(void)
     sock->ifchange_obj = NULL;
     sock->accept_recv_req = NULL;
     sock->connect_req = NULL;
+    memset( &sock->addr, 0, sizeof(sock->addr) );
+    sock->addr_len = 0;
     sock->rd_shutdown = 0;
     sock->wr_shutdown = 0;
     sock->wr_shutdown_pending = 0;
     sock->nonblocking = 0;
+    sock->bound = 0;
     init_async_queue( &sock->read_q );
     init_async_queue( &sock->write_q );
     init_async_queue( &sock->ifchange_q );
@@ -1583,6 +1598,9 @@ static struct sock *accept_socket( struct sock *sock )
     }
     else
     {
+        union unix_sockaddr unix_addr;
+        socklen_t unix_len;
+
         if ((acceptfd = accept_new_fd( sock )) == -1) return NULL;
         if (!(acceptsock = create_socket()))
         {
@@ -1592,6 +1610,7 @@ static struct sock *accept_socket( struct sock *sock )
 
         /* newly created socket gets the same properties of the listening socket */
         acceptsock->state   = SOCK_CONNECTED;
+        acceptsock->bound   = 1;
         acceptsock->nonblocking = sock->nonblocking;
         acceptsock->mask    = sock->mask;
         acceptsock->proto   = sock->proto;
@@ -1608,6 +1627,9 @@ static struct sock *accept_socket( struct sock *sock )
             release_object( acceptsock );
             return NULL;
         }
+        unix_len = sizeof(unix_addr);
+        if (!getsockname( acceptfd, &unix_addr.addr, &unix_len ))
+            acceptsock->addr_len = sockaddr_from_unix( &unix_addr, &acceptsock->addr.addr, sizeof(acceptsock->addr) );
     }
     clear_error();
     sock->pending_events &= ~AFD_POLL_ACCEPT;
@@ -1618,6 +1640,8 @@ static struct sock *accept_socket( struct sock *sock )
 
 static int accept_into_socket( struct sock *sock, struct sock *acceptsock )
 {
+    union unix_sockaddr unix_addr;
+    socklen_t unix_len;
     int acceptfd;
     struct fd *newfd;
 
@@ -1657,6 +1681,10 @@ static int accept_into_socket( struct sock *sock, struct sock *acceptsock )
     fd_copy_completion( acceptsock->fd, newfd );
     release_object( acceptsock->fd );
     acceptsock->fd = newfd;
+
+    unix_len = sizeof(unix_addr);
+    if (!getsockname( get_unix_fd( newfd ), &unix_addr.addr, &unix_len ))
+        acceptsock->addr_len = sockaddr_from_unix( &unix_addr, &acceptsock->addr.addr, sizeof(acceptsock->addr) );
 
     clear_error();
     sock->pending_events &= ~AFD_POLL_ACCEPT;
@@ -2075,8 +2103,10 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
     case IOCTL_AFD_WINE_CONNECT:
     {
         const struct afd_connect_params *params = get_req_data();
+        union unix_sockaddr unix_addr;
         const struct sockaddr *addr;
         struct connect_req *req;
+        socklen_t unix_len;
         int send_len, ret;
 
         if (get_req_data_size() < sizeof(*params) ||
@@ -2117,6 +2147,11 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 
         /* a connected or connecting socket can no longer be accepted into */
         allow_fd_caching( sock->fd );
+
+        unix_len = sizeof(unix_addr);
+        if (!sock->bound && !getsockname( unix_fd, &unix_addr.addr, &unix_len ))
+            sock->addr_len = sockaddr_from_unix( &unix_addr, &sock->addr.addr, sizeof(sock->addr) );
+        sock->bound = 1;
 
         if (!ret)
         {
@@ -2351,7 +2386,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
     case IOCTL_AFD_BIND:
     {
         const struct afd_bind_params *params = get_req_data();
-        union unix_sockaddr unix_addr;
+        union unix_sockaddr unix_addr, bind_addr;
         data_size_t in_size;
         socklen_t unix_len;
 
@@ -2376,6 +2411,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             set_error( STATUS_INVALID_ADDRESS );
             return 0;
         }
+        bind_addr = unix_addr;
 
         if (unix_addr.addr.sa_family == WS_AF_INET)
         {
@@ -2383,10 +2419,10 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 
             if (!memcmp( &unix_addr.in.sin_addr, magic_loopback_addr, 4 )
                     || bind_to_interface( sock, &unix_addr.in ))
-                unix_addr.in.sin_addr.s_addr = htonl( INADDR_ANY );
+                bind_addr.in.sin_addr.s_addr = htonl( INADDR_ANY );
         }
 
-        if (bind( unix_fd, &unix_addr.addr, unix_len ) < 0)
+        if (bind( unix_fd, &bind_addr.addr, unix_len ) < 0)
         {
             if (errno == EADDRINUSE)
             {
@@ -2398,9 +2434,39 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             }
 
             set_error( sock_get_ntstatus( errno ) );
+            return 1;
         }
+
+        sock->bound = 1;
+
+        unix_len = sizeof(bind_addr);
+        if (!getsockname( unix_fd, &bind_addr.addr, &unix_len ))
+        {
+            /* store the interface or magic loopback address instead of the
+             * actual unix address */
+            if (bind_addr.addr.sa_family == AF_INET)
+                bind_addr.in.sin_addr = unix_addr.in.sin_addr;
+            sock->addr_len = sockaddr_from_unix( &bind_addr, &sock->addr.addr, sizeof(sock->addr) );
+        }
+
         return 1;
     }
+
+    case IOCTL_AFD_GETSOCKNAME:
+        if (!sock->bound)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return 0;
+        }
+
+        if (get_reply_max_size() < sock->addr_len)
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return 0;
+        }
+
+        set_reply_data( &sock->addr, sock->addr_len );
+        return 1;
 
     default:
         set_error( STATUS_NOT_SUPPORTED );
@@ -2971,6 +3037,17 @@ DECL_HANDLER(send_socket)
 
     if (!sock) return;
     fd = sock->fd;
+
+    if (sock->type == WS_SOCK_DGRAM)
+    {
+        /* sendto() and sendmsg() implicitly binds a socket */
+        union unix_sockaddr unix_addr;
+        socklen_t unix_len = sizeof(unix_addr);
+
+        if (!sock->bound && !getsockname( get_unix_fd( fd ), &unix_addr.addr, &unix_len ))
+            sock->addr_len = sockaddr_from_unix( &unix_addr, &sock->addr.addr, sizeof(sock->addr) );
+        sock->bound = 1;
+    }
 
     if (status != STATUS_SUCCESS)
     {
