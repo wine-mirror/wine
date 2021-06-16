@@ -88,6 +88,9 @@ BEGIN
     DEFPUSHBUTTON "Close", IDCANCEL, 55, 40, 40, 14
 END
 
+/* @makedep: winetest.manifest */
+1 RT_MANIFEST winetest.manifest
+
 /* @makedep: winetest.ico */
 IDI_WINE ICON "winetest.ico"
 

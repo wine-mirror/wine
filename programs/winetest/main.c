@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <windows.h>
+#include <commctrl.h>
 #include <winternl.h>
 #include <mshtml.h>
 
@@ -1264,6 +1265,8 @@ int __cdecl main( int argc, char *argv[] )
     int poweroff = 0;
     int interactive = 1;
     int i;
+
+    InitCommonControls();
 
     if (!LoadStringA( 0, IDS_BUILD_ID, build_id, sizeof(build_id) )) build_id[0] = 0;
 
