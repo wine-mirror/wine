@@ -49,3 +49,6 @@ STRINGTABLE
 {
 IDS_CLOCK, "Clock"
 }
+
+/* @makedep: clock.manifest */
+1 RT_MANIFEST clock.manifest
