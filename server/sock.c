@@ -2449,6 +2449,8 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             sock->addr_len = sockaddr_from_unix( &bind_addr, &sock->addr.addr, sizeof(sock->addr) );
         }
 
+        if (get_reply_max_size() >= sock->addr_len)
+            set_reply_data( &sock->addr, sock->addr_len );
         return 1;
     }
 
