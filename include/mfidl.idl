@@ -1270,6 +1270,165 @@ interface IMFRealTimeClientEx : IUnknown
     );
 }
 
+[
+    object,
+    uuid(35fe1bb8-a3a9-40fe-bbec-eb569c9ccca3),
+]
+interface IMFWorkQueueServices : IUnknown
+{
+    [local]
+    HRESULT BeginRegisterTopologyWorkQueuesWithMMCSS(
+        [in] IMFAsyncCallback *callback,
+        [in] IUnknown *state
+    );
+
+    [call_as(BeginRegisterTopologyWorkQueuesWithMMCSS)]
+    HRESULT RemoteBeginRegisterTopologyWorkQueuesWithMMCSS(
+        [in] IMFRemoteAsyncCallback *callback
+    );
+
+    [local]
+    HRESULT EndRegisterTopologyWorkQueuesWithMMCSS(
+        [in] IMFAsyncResult *result
+    );
+
+    [call_as(EndRegisterTopologyWorkQueuesWithMMCSS)]
+    HRESULT RemoteEndRegisterTopologyWorkQueuesWithMMCSS(
+        [in] IUnknown *result
+    );
+
+    [local]
+    HRESULT BeginUnregisterTopologyWorkQueuesWithMMCSS(
+        [in] IMFAsyncCallback *callback,
+        [in] IUnknown *state
+    );
+
+    [call_as(BeginUnregisterTopologyWorkQueuesWithMMCSS)]
+    HRESULT RemoteBeginUnregisterTopologyWorkQueuesWithMMCSS(
+        [in] IMFRemoteAsyncCallback *callback
+    );
+
+    [local]
+    HRESULT EndUnregisterTopologyWorkQueuesWithMMCSS(
+        [in] IMFAsyncResult *result
+    );
+
+    [call_as(EndUnregisterTopologyWorkQueuesWithMMCSS)]
+    HRESULT RemoteEndUnregisterTopologyWorkQueuesWithMMCSS(
+        [in] IUnknown *result
+    );
+
+    HRESULT GetTopologyWorkQueueMMCSSClass(
+        [in] DWORD queue,
+        [out, size_is(*classname_len)] LPWSTR classname,
+        [in, out] DWORD *classname_len
+    );
+
+    HRESULT GetTopologyWorkQueueMMCSSTaskId(
+         [in] DWORD queue,
+         [out] DWORD *taksid
+    );
+
+    [local]
+    HRESULT BeginRegisterPlatformWorkQueueWithMMCSS(
+        [in] DWORD platform_queue,
+        [in] LPCWSTR classname,
+        [in] DWORD taskid,
+        [in] IMFAsyncCallback *callback,
+        [in] IUnknown *state
+    );
+
+    [call_as(BeginRegisterPlatformWorkQueueWithMMCSS)]
+    HRESULT RemoteBeginRegisterPlatformWorkQueueWithMMCSS(
+        [in] DWORD platform_queue,
+        [in] LPCWSTR classname,
+        [in] DWORD taskid,
+        [in] IMFRemoteAsyncCallback *callback
+    );
+
+    [local]
+    HRESULT EndRegisterPlatformWorkQueueWithMMCSS(
+        [in] IMFAsyncResult *result,
+        [out] DWORD *taskid
+    );
+
+    [call_as(EndRegisterPlatformWorkQueueWithMMCSS)]
+    HRESULT RemoteEndRegisterPlatformWorkQueueWithMMCSS(
+        [in] IUnknown *result,
+        [out] DWORD *taskid
+    );
+
+    [local]
+    HRESULT BeginUnregisterPlatformWorkQueueWithMMCSS(
+        [in] DWORD platform_queue,
+        [in] IMFAsyncCallback *callback,
+        [in] IUnknown *state
+    );
+
+    [call_as(BeginUnregisterPlatformWorkQueueWithMMCSS)]
+    HRESULT RemoteBeginUnregisterPlatformWorkQueueWithMMCSS(
+        [in] DWORD platform_queue,
+        [in] IMFRemoteAsyncCallback *callback
+    );
+
+    [local]
+    HRESULT EndUnregisterPlatformWorkQueueWithMMCSS(
+        [in] IMFAsyncResult *result
+    );
+
+    [call_as(EndUnregisterPlatformWorkQueueWithMMCSS)]
+    HRESULT RemoteEndUnregisterPlatformWorkQueueWithMMCSS(
+        [in] IUnknown *result
+    );
+
+    HRESULT GetPlaftormWorkQueueMMCSSClass(
+        [in] DWORD platform_queue,
+        [out, size_is(*classname_len)] LPWSTR classname,
+        [in, out] DWORD *classname_len
+    );
+
+    HRESULT GetPlatformWorkQueueMMCSSTaskId(
+        [in] DWORD platform_queue,
+        [out] DWORD *taskid
+    );
+}
+
+[
+    object,
+    uuid(96bf961b-40fe-42f1-ba9d-320238b49700),
+]
+interface IMFWorkQueueServicesEx : IMFWorkQueueServices
+{
+    HRESULT GetTopologyWorkQueueMMCSSPriority(
+        [in] DWORD queueid,
+        [out] LONG *priority
+    );
+
+    [local]
+    HRESULT BeginRegisterPlatformWorkQueueWithMMCSSEx(
+        [in] DWORD platform_queue,
+        [in] LPCWSTR classname,
+        [in] DWORD taskid,
+        [in] LONG priority,
+        [in] IMFAsyncCallback *callback,
+        [in] IUnknown *state
+    );
+
+    [call_as(BeginRegisterPlatformWorkQueueWithMMCSSEx)]
+    HRESULT RemoteBeginRegisterPlatformWorkQueueWithMMCSSEx(
+        [in] DWORD platform_queue,
+        [in] LPCWSTR classname,
+        [in] DWORD taskid,
+        [in] LONG priority,
+        [in] IMFRemoteAsyncCallback *callback
+    );
+
+    HRESULT GetPlatformWorkQueueMMCSSPriority(
+        [in] DWORD platform_queue,
+        [out] LONG *priority
+    );
+}
+
 enum
 {
     MF_ACTIVATE_CUSTOM_MIXER_ALLOWFAIL = 0x00000001,
@@ -1386,6 +1545,7 @@ cpp_quote("EXTERN_GUID(MR_CAPTURE_POLICY_VOLUME_SERVICE, 0x24030acd, 0x107a, 0x4
 cpp_quote("EXTERN_GUID(MR_STREAM_VOLUME_SERVICE, 0xf8b5fa2f, 0x32ef, 0x46f5, 0xb1, 0x72, 0x13, 0x21, 0x21, 0x2f, 0xb2, 0xc4);")
 cpp_quote("EXTERN_GUID(MR_AUDIO_POLICY_SERVICE, 0x911fd737, 0x6775, 0x4ab0, 0xa6, 0x14, 0x29, 0x78, 0x62, 0xfd, 0xac, 0x88);")
 cpp_quote("EXTERN_GUID(MF_PROPERTY_HANDLER_SERVICE, 0xa3face02, 0x32b8, 0x41dd, 0x90, 0xe7, 0x5f, 0xef, 0x7c, 0x89, 0x91, 0xb5);")
+cpp_quote("EXTERN_GUID(MF_WORKQUEUE_SERVICES, 0x8e37d489, 0x41e0, 0x413a, 0x90, 0x68, 0x28, 0x7c, 0x88, 0x6d, 0x8d, 0xda);")
 
 cpp_quote("EXTERN_GUID(MF_SAMPLEGRABBERSINK_SAMPLE_TIME_OFFSET, 0x62e3d776, 0x8100, 0x4e03, 0xa6, 0xe8, 0xbd, 0x38, 0x57, 0xac, 0x9c, 0x47);")
 cpp_quote("EXTERN_GUID(MF_SAMPLEGRABBERSINK_IGNORE_CLOCK, 0x0efda2c0, 0x2b69, 0x4e2e, 0xab, 0x8d, 0x46, 0xdc, 0xbf, 0xf7, 0xd2, 0x5d);")
