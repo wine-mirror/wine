@@ -256,29 +256,6 @@ static void debug_print_preparsed(WINE_HIDP_PREPARSED_DATA *data)
     }
 }
 
-static int getValue(int bsize, int source, BOOL allow_negative)
-{
-    int mask = 0xff;
-    int negative = 0x80;
-    int outofrange = 0x100;
-    int value;
-    unsigned int i;
-
-    if (bsize == 4)
-        return source;
-
-    for (i = 1; i < bsize; i++)
-    {
-        mask = (mask<<8) + 0xff;
-        negative = (negative<<8);
-        outofrange = (outofrange<<8);
-    }
-    value = (source&mask);
-    if (allow_negative && value&negative)
-        value = -1 * (outofrange - value);
-    return value;
-}
-
 static void parse_io_feature(unsigned int bSize, int itemVal, int bTag,
                              unsigned int *feature_index,
                              struct feature *feature)
@@ -342,17 +319,35 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
     int usages_top = 0;
     USAGE usages[256];
     int i;
+    UINT32 value;
+    INT32 signed_value;
 
     for (i = index; i < length;)
     {
         BYTE b0 = descriptor[i++];
-        int bSize = b0 & 0x03;
+        int size = b0 & 0x03;
         int bType = (b0 >> 2) & 0x03;
         int bTag = (b0 >> 4) & 0x0F;
 
-        bSize = (bSize == 3) ? 4 : bSize;
-        if (bType == TAG_TYPE_RESERVED && bTag == 0x0F && bSize == 2 &&
-            i + 2 < length)
+        if (size == 3) size = 4;
+        if (length - i < size)
+        {
+            ERR("Need %d bytes to read item value\n", size);
+            return -1;
+        }
+
+        if (size == 0) signed_value = value = 0;
+        else if (size == 1) signed_value = (INT8)(value = *(UINT8 *)(descriptor + i));
+        else if (size == 2) signed_value = (INT16)(value = *(UINT16 *)(descriptor + i));
+        else if (size == 4) signed_value = (INT32)(value = *(UINT32 *)(descriptor + i));
+        else
+        {
+            ERR("Unexpected item value size %d.\n", size);
+            return -1;
+        }
+        i += size;
+
+        if (bType == TAG_TYPE_RESERVED && bTag == 0x0F && size == 2)
         {
             /* Long data items: Should be unused */
             ERR("Long Data Item, should be unused\n");
@@ -360,19 +355,9 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
         }
         else
         {
-            int bSizeActual = 0;
-            int itemVal = 0;
             unsigned int j;
 
-            for (j = 0; j < bSize; j++)
-            {
-                if (i + j < length)
-                {
-                    itemVal += descriptor[i + j] << (8 * j);
-                    bSizeActual++;
-                }
-            }
-            TRACE(" 0x%x[%i], type %i , tag %i, size %i, val %i\n",b0,i-1,bType, bTag, bSize, itemVal );
+            TRACE(" 0x%x[%i], type %i , tag %i, size %i, val %i\n",b0,i-size-1,bType, bTag, size, value );
 
             if (bType == TAG_TYPE_MAIN)
             {
@@ -392,7 +377,7 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
                                 feature->type = HidP_Output;
                             else
                                 feature->type = HidP_Feature;
-                            parse_io_feature(bSize, itemVal, bTag, feature_index, feature);
+                            parse_io_feature(size, value, bTag, feature_index, feature);
                             if (j < usages_top)
                                 caps->NotRange.Usage = usages[j];
                             feature->caps = *caps;
@@ -429,9 +414,9 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
                         list_init(&subcollection->collections);
                         new_caps(caps);
 
-                        parse_collection(bSize, itemVal, subcollection);
+                        parse_collection(size, value, subcollection);
 
-                        if ((i = parse_descriptor(descriptor, i+1, length, feature_index, collection_index, subcollection, caps, stack)) < 0) return i;
+                        if ((i = parse_descriptor(descriptor, i, length, feature_index, collection_index, subcollection, caps, stack)) < 0) return i;
                         continue;
                     }
                     case TAG_MAIN_END_COLLECTION:
@@ -446,34 +431,34 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
                 switch(bTag)
                 {
                     case TAG_GLOBAL_USAGE_PAGE:
-                        caps->UsagePage = getValue(bSize, itemVal, FALSE);
+                        caps->UsagePage = value;
                         break;
                     case TAG_GLOBAL_LOGICAL_MINIMUM:
-                        caps->LogicalMin = getValue(bSize, itemVal, TRUE);
+                        caps->LogicalMin = signed_value;
                         break;
                     case TAG_GLOBAL_LOGICAL_MAXIMUM:
-                        caps->LogicalMax = getValue(bSize, itemVal, TRUE);
+                        caps->LogicalMax = signed_value;
                         break;
                     case TAG_GLOBAL_PHYSICAL_MINIMUM:
-                        caps->PhysicalMin = getValue(bSize, itemVal, TRUE);
+                        caps->PhysicalMin = signed_value;
                         break;
                     case TAG_GLOBAL_PHYSICAL_MAXIMUM:
-                        caps->PhysicalMax = getValue(bSize, itemVal, TRUE);
+                        caps->PhysicalMax = signed_value;
                         break;
                     case TAG_GLOBAL_UNIT_EXPONENT:
-                        caps->UnitsExp = getValue(bSize, itemVal, TRUE);
+                        caps->UnitsExp = signed_value;
                         break;
                     case TAG_GLOBAL_UNIT:
-                        caps->Units = getValue(bSize, itemVal, TRUE);
+                        caps->Units = signed_value;
                         break;
                     case TAG_GLOBAL_REPORT_SIZE:
-                        caps->BitSize = getValue(bSize, itemVal, FALSE);
+                        caps->BitSize = value;
                         break;
                     case TAG_GLOBAL_REPORT_ID:
-                        caps->ReportID = getValue(bSize, itemVal, FALSE);
+                        caps->ReportID = value;
                         break;
                     case TAG_GLOBAL_REPORT_COUNT:
-                        caps->ReportCount = getValue(bSize, itemVal, FALSE);
+                        caps->ReportCount = value;
                         break;
                     case TAG_GLOBAL_PUSH:
                     {
@@ -521,44 +506,44 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
                         }
                         else
                         {
-                            usages[usages_top++] = getValue(bSize, itemVal, FALSE);
+                            usages[usages_top++] = value;
                             caps->IsRange = FALSE;
                         }
                         break;
                     case TAG_LOCAL_USAGE_MINIMUM:
-                        caps->Range.UsageMin = getValue(bSize, itemVal, FALSE);
+                        caps->Range.UsageMin = value;
                         caps->IsRange = TRUE;
                         break;
                     case TAG_LOCAL_USAGE_MAXIMUM:
-                        caps->Range.UsageMax = getValue(bSize, itemVal, FALSE);
+                        caps->Range.UsageMax = value;
                         caps->IsRange = TRUE;
                         break;
                     case TAG_LOCAL_DESIGNATOR_INDEX:
-                        caps->NotRange.DesignatorIndex = getValue(bSize, itemVal, FALSE);
+                        caps->NotRange.DesignatorIndex = value;
                         caps->IsDesignatorRange = FALSE;
                         break;
                     case TAG_LOCAL_DESIGNATOR_MINIMUM:
-                        caps->Range.DesignatorMin = getValue(bSize, itemVal, FALSE);
+                        caps->Range.DesignatorMin = value;
                         caps->IsDesignatorRange = TRUE;
                         break;
                     case TAG_LOCAL_DESIGNATOR_MAXIMUM:
-                        caps->Range.DesignatorMax = getValue(bSize, itemVal, FALSE);
+                        caps->Range.DesignatorMax = value;
                         caps->IsDesignatorRange = TRUE;
                         break;
                     case TAG_LOCAL_STRING_INDEX:
-                        caps->NotRange.StringIndex = getValue(bSize, itemVal, FALSE);
+                        caps->NotRange.StringIndex = value;
                         caps->IsStringRange = FALSE;
                         break;
                     case TAG_LOCAL_STRING_MINIMUM:
-                        caps->Range.StringMin = getValue(bSize, itemVal, FALSE);
+                        caps->Range.StringMin = value;
                         caps->IsStringRange = TRUE;
                         break;
                     case TAG_LOCAL_STRING_MAXIMUM:
-                        caps->Range.StringMax = getValue(bSize, itemVal, FALSE);
+                        caps->Range.StringMax = value;
                         caps->IsStringRange = TRUE;
                         break;
                     case TAG_LOCAL_DELIMITER:
-                        FIXME("delimiter %d not implemented!\n", itemVal);
+                        FIXME("delimiter %d not implemented!\n", value);
                         return -1;
                     default:
                         ERR("Unknown (bTag: 0x%x, bType: 0x%x)\n", bTag, bType);
@@ -570,8 +555,6 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
                 ERR("Unknown (bTag: 0x%x, bType: 0x%x)\n", bTag, bType);
                 return -1;
             }
-
-            i += bSize;
         }
     }
     return i;
