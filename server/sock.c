@@ -2084,6 +2084,12 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             return 0;
         }
 
+        if (!sock->bound)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return 0;
+        }
+
         if (listen( unix_fd, params->backlog ) < 0)
         {
             set_error( sock_get_ntstatus( errno ) );

@@ -3282,19 +3282,8 @@ int WINAPI WS_listen( SOCKET s, int backlog )
     struct afd_listen_params params = {.backlog = backlog};
     IO_STATUS_BLOCK io;
     NTSTATUS status;
-    int fd, bound;
 
     TRACE( "socket %#lx, backlog %d\n", s, backlog );
-
-    if ((fd = get_sock_fd( s, FILE_READ_DATA, NULL )) == -1)
-        return -1;
-    bound = is_fd_bound( fd, NULL, NULL );
-    release_sock_fd( s, fd );
-    if (bound <= 0)
-    {
-        SetLastError( bound ? wsaErrno() : WSAEINVAL );
-        return -1;
-    }
 
     status = NtDeviceIoControlFile( SOCKET2HANDLE(s), NULL, NULL, NULL, &io,
             IOCTL_AFD_LISTEN, &params, sizeof(params), NULL, 0 );
