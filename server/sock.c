@@ -109,6 +109,8 @@
 #define IP_UNICAST_IF 50
 #endif
 
+static const char magic_loopback_addr[] = {127, 12, 34, 56};
+
 union win_sockaddr
 {
     struct WS_sockaddr addr;
@@ -2109,8 +2111,8 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
     case IOCTL_AFD_WINE_CONNECT:
     {
         const struct afd_connect_params *params = get_req_data();
+        const struct WS_sockaddr *addr;
         union unix_sockaddr unix_addr;
-        const struct sockaddr *addr;
         struct connect_req *req;
         socklen_t unix_len;
         int send_len, ret;
@@ -2122,7 +2124,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             return 0;
         }
         send_len = get_req_data_size() - sizeof(*params) - params->addr_len;
-        addr = (const struct sockaddr *)(params + 1);
+        addr = (const struct WS_sockaddr *)(params + 1);
 
         if (sock->accept_recv_req)
         {
@@ -2144,7 +2146,16 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             return 0;
         }
 
-        ret = connect( unix_fd, addr, params->addr_len );
+        unix_len = sockaddr_to_unix( addr, params->addr_len, &unix_addr );
+        if (!unix_len)
+        {
+            set_error( STATUS_INVALID_ADDRESS );
+            return 0;
+        }
+        if (unix_addr.addr.sa_family == AF_INET && !memcmp( &unix_addr.in.sin_addr, magic_loopback_addr, 4 ))
+            unix_addr.in.sin_addr.s_addr = htonl( INADDR_LOOPBACK );
+
+        ret = connect( unix_fd, &unix_addr.addr, unix_len );
         if (ret < 0 && errno != EINPROGRESS)
         {
             set_error( sock_get_ntstatus( errno ) );
@@ -2427,8 +2438,6 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
 
         if (unix_addr.addr.sa_family == WS_AF_INET)
         {
-            static const char magic_loopback_addr[] = {127, 12, 34, 56};
-
             if (!memcmp( &unix_addr.in.sin_addr, magic_loopback_addr, 4 )
                     || bind_to_interface( sock, &unix_addr.in ))
                 bind_addr.in.sin_addr.s_addr = htonl( INADDR_ANY );

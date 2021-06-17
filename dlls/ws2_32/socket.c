@@ -1959,8 +1959,6 @@ int WINAPI WS_closesocket(SOCKET s)
  */
 int WINAPI WS_connect( SOCKET s, const struct WS_sockaddr *addr, int len )
 {
-    union generic_unix_sockaddr uaddr;
-    unsigned int uaddrlen = ws_sockaddr_ws2u( addr, len, &uaddr );
     struct afd_connect_params *params;
     IO_STATUS_BLOCK io;
     HANDLE sync_event;
@@ -1968,35 +1966,19 @@ int WINAPI WS_connect( SOCKET s, const struct WS_sockaddr *addr, int len )
 
     TRACE( "socket %#lx, addr %s, len %d\n", s, debugstr_sockaddr(addr), len );
 
-    if (!uaddrlen)
-    {
-        SetLastError( WSAEFAULT );
-        return -1;
-    }
-
-    if (addr->sa_family == WS_AF_INET)
-    {
-        struct sockaddr_in *in4 = (struct sockaddr_in *)&uaddr;
-        if (!memcmp(&in4->sin_addr, magic_loopback_addr, sizeof(magic_loopback_addr)))
-        {
-            TRACE("Replacing magic address 127.12.34.56 with INADDR_LOOPBACK.\n");
-            in4->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-        }
-    }
-
     if (!(sync_event = get_sync_event())) return -1;
 
-    if (!(params = HeapAlloc( GetProcessHeap(), 0, sizeof(*params) + uaddrlen )))
+    if (!(params = HeapAlloc( GetProcessHeap(), 0, sizeof(*params) + len )))
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return -1;
     }
-    params->addr_len = uaddrlen;
+    params->addr_len = len;
     params->synchronous = TRUE;
-    memcpy(params + 1, &uaddr, uaddrlen);
+    memcpy( params + 1, addr, len );
 
     status = NtDeviceIoControlFile( (HANDLE)s, sync_event, NULL, NULL, &io, IOCTL_AFD_WINE_CONNECT,
-                                    params, sizeof(*params) + uaddrlen, NULL, 0);
+                                    params, sizeof(*params) + len, NULL, 0 );
     HeapFree( GetProcessHeap(), 0, params );
     if (status == STATUS_PENDING)
     {
@@ -2029,8 +2011,6 @@ int WINAPI WSAConnect( SOCKET s, const struct WS_sockaddr* name, int namelen,
 static BOOL WINAPI WS2_ConnectEx( SOCKET s, const struct WS_sockaddr *name, int namelen,
                                   void *send_buffer, DWORD send_len, DWORD *ret_len, OVERLAPPED *overlapped )
 {
-    union generic_unix_sockaddr uaddr;
-    unsigned int uaddrlen = ws_sockaddr_ws2u(name, namelen, &uaddr);
     struct afd_connect_params *params;
     void *cvalue = NULL;
     NTSTATUS status;
@@ -2060,35 +2040,19 @@ static BOOL WINAPI WS2_ConnectEx( SOCKET s, const struct WS_sockaddr *name, int 
     overlapped->Internal = STATUS_PENDING;
     overlapped->InternalHigh = 0;
 
-    if (!uaddrlen)
-    {
-        SetLastError( WSAEFAULT );
-        return SOCKET_ERROR;
-    }
-
-    if (name->sa_family == WS_AF_INET)
-    {
-        struct sockaddr_in *in4 = (struct sockaddr_in *)&uaddr;
-        if (!memcmp( &in4->sin_addr, magic_loopback_addr, sizeof(magic_loopback_addr) ))
-        {
-            TRACE("Replacing magic address 127.12.34.56 with INADDR_LOOPBACK.\n");
-            in4->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-        }
-    }
-
-    if (!(params = HeapAlloc( GetProcessHeap(), 0, sizeof(*params) + uaddrlen + send_len )))
+    if (!(params = HeapAlloc( GetProcessHeap(), 0, sizeof(*params) + namelen + send_len )))
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return SOCKET_ERROR;
     }
-    params->addr_len = uaddrlen;
+    params->addr_len = namelen;
     params->synchronous = FALSE;
-    memcpy( params + 1, &uaddr, uaddrlen );
-    memcpy( (char *)(params + 1) + uaddrlen, send_buffer, send_len );
+    memcpy( params + 1, name, namelen );
+    memcpy( (char *)(params + 1) + namelen, send_buffer, send_len );
 
     status = NtDeviceIoControlFile( SOCKET2HANDLE(s), overlapped->hEvent, NULL, cvalue,
                                     (IO_STATUS_BLOCK *)overlapped, IOCTL_AFD_WINE_CONNECT,
-                                    params, sizeof(*params) + uaddrlen + send_len, NULL, 0 );
+                                    params, sizeof(*params) + namelen + send_len, NULL, 0 );
     HeapFree( GetProcessHeap(), 0, params );
     if (ret_len) *ret_len = overlapped->InternalHigh;
     SetLastError( NtStatusToWSAError( status ) );

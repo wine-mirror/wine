@@ -173,7 +173,7 @@ struct afd_connect_params
 {
     int addr_len;
     int synchronous;
-    /* VARARG(addr, struct sockaddr, addr_len); */
+    /* VARARG(addr, struct WS(sockaddr), addr_len); */
     /* VARARG(data, bytes); */
 };
 
