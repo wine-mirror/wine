@@ -47,7 +47,7 @@
 #include "secur32_priv.h"
 #include "wine/debug.h"
 
-#ifdef HAVE_SECURITY_SECURITY_H
+#if defined(HAVE_SECURITY_SECURITY_H) && !defined(SONAME_LIBGNUTLS)
 
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 
@@ -1290,4 +1290,4 @@ NTSTATUS CDECL __wine_init_unix_lib( HMODULE module, DWORD reason, const void *p
     return STATUS_SUCCESS;
 }
 
-#endif /* HAVE_SECURITY_SECURITY_H */
+#endif /* HAVE_SECURITY_SECURITY_H && !SONAME_LIBGNUTLS */
