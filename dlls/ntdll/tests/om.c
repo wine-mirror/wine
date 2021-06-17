@@ -2304,7 +2304,7 @@ static void test_wait_on_address(void)
     status = pRtlWaitOnAddress(&address, &compare, 8, &timeout);
     ticks = GetTickCount() - ticks;
     ok(status == STATUS_TIMEOUT, "got 0x%08x\n", status);
-    ok(ticks >= 90 && ticks <= 1000, "got %u\n", ticks);
+    ok(ticks >= 80 && ticks <= 1000, "got %u\n", ticks);
     ok(address == 0, "got %s\n", wine_dbgstr_longlong(address));
     ok(compare == 0, "got %s\n", wine_dbgstr_longlong(compare));
 
@@ -2319,7 +2319,7 @@ static void test_wait_on_address(void)
         status = pRtlWaitOnAddress(&address, &compare, size, &timeout);
         ticks = GetTickCount() - ticks;
         ok(status == STATUS_TIMEOUT, "got 0x%08x\n", status);
-        ok(ticks >= 90 && ticks <= 1000, "got %u\n", ticks);
+        ok(ticks >= 80 && ticks <= 1000, "got %u\n", ticks);
 
         status = pRtlWaitOnAddress(&address, &compare, size << 1, &timeout);
         ok(!status, "got 0x%08x\n", status);
