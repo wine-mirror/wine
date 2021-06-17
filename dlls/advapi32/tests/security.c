@@ -306,6 +306,7 @@ static void test_ConvertStringSidToSid(void)
         { "RS", "", 1 },
         { "SA", "", 1 },
         { "s-1-12-1", "S-1-12-1" },
+        { "S-0x1-0XC-0x1a", "S-1-12-26" },
     };
 
     const char noSubAuthStr[] = "S-1-5";
