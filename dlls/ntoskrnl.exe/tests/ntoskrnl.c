@@ -2093,6 +2093,7 @@ static void test_hidp(HANDLE file, int report_id)
     check_member(value_caps[4], value_caps[3], "%d", PhysicalMax);
     todo_wine
     check_member(value_caps[4], value_caps[3], "%04x", Range.UsageMin);
+    todo_wine
     check_member(value_caps[4], value_caps[3], "%04x", Range.UsageMax);
     check_member(value_caps[4], value_caps[3], "%d", Range.StringMin);
     check_member(value_caps[4], value_caps[3], "%d", Range.StringMax);

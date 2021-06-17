@@ -128,11 +128,6 @@ struct collection {
     struct list collections;
 };
 
-struct caps_stack {
-    struct list entry;
-    struct hid_value_caps caps;
-};
-
 static inline const char *debugstr_hidp_value_caps( HIDP_VALUE_CAPS *caps )
 {
     if (!caps) return "(null)";
@@ -298,15 +293,67 @@ struct hid_parser_state
     DWORD usages_size;
 
     struct hid_value_caps items;
+
+    struct hid_value_caps *stack;
+    DWORD                  stack_size;
+    DWORD                  global_idx;
 };
+
+static BOOL array_reserve( struct hid_value_caps **array, DWORD *array_size, DWORD index )
+{
+    if (index < *array_size) return TRUE;
+    if ((*array_size = *array_size ? (*array_size * 3 / 2) : 32) <= index) return FALSE;
+    if (!(*array = realloc( *array, *array_size * sizeof(**array) ))) return FALSE;
+    return TRUE;
+}
+
+static void copy_global_items( struct hid_value_caps *dst, const struct hid_value_caps *src )
+{
+    dst->usage_page = src->usage_page;
+    dst->logical_min = src->logical_min;
+    dst->logical_max = src->logical_max;
+    dst->physical_min = src->physical_min;
+    dst->physical_max = src->physical_max;
+    dst->units_exp = src->units_exp;
+    dst->units = src->units;
+    dst->bit_size = src->bit_size;
+    dst->report_id = src->report_id;
+    dst->report_count = src->report_count;
+}
 
 static void reset_local_items( struct hid_parser_state *state )
 {
-    state->items.is_range = FALSE;
-    state->items.is_string_range = FALSE;
-    state->items.is_designator_range = FALSE;
-    state->items.usage_min = FALSE;
+    struct hid_value_caps tmp;
+    copy_global_items( &tmp, &state->items );
+    memset( &state->items, 0, sizeof(state->items) );
+    copy_global_items( &state->items, &tmp );
     state->usages_size = 0;
+}
+
+static BOOL parse_global_push( struct hid_parser_state *state )
+{
+    if (!array_reserve( &state->stack, &state->stack_size, state->global_idx ))
+    {
+        ERR( "HID parser stack overflow!\n" );
+        return FALSE;
+    }
+
+    copy_global_items( state->stack + state->global_idx, &state->items );
+    state->global_idx++;
+    return TRUE;
+}
+
+static BOOL parse_global_pop( struct hid_parser_state *state )
+{
+    if (!state->global_idx)
+    {
+        ERR( "HID parser global stack underflow!\n" );
+        return FALSE;
+    }
+
+    state->global_idx--;
+    copy_global_items( &state->items, state->stack + state->global_idx );
+    return TRUE;
 }
 
 static BOOL parse_local_usage( struct hid_parser_state *state, USAGE usage )
@@ -315,6 +362,13 @@ static BOOL parse_local_usage( struct hid_parser_state *state, USAGE usage )
     state->items.is_range = FALSE;
     if (state->usages_size++ == 255) ERR( "HID parser usages stack overflow!\n" );
     return state->usages_size <= 255;
+}
+
+static void free_parser_state( struct hid_parser_state *state )
+{
+    if (state->global_idx) ERR( "%u unpopped device caps on the stack\n", state->global_idx );
+    free( state->stack );
+    free( state );
 }
 
 static void parse_io_feature(unsigned int bSize, int itemVal, int bTag,
@@ -366,7 +420,7 @@ static void parse_collection(unsigned int bSize, int itemVal,
 
 static int parse_descriptor( BYTE *descriptor, unsigned int index, unsigned int length,
                              unsigned int *feature_index, unsigned int *collection_index,
-                             struct collection *collection, struct hid_parser_state *state, struct list *stack )
+                             struct collection *collection, struct hid_parser_state *state )
 {
     int i, j;
     UINT32 value;
@@ -445,7 +499,7 @@ static int parse_descriptor( BYTE *descriptor, unsigned int index, unsigned int 
             reset_local_items( state );
 
             if ((i = parse_descriptor( descriptor, i, length, feature_index, collection_index,
-                                       subcollection, state, stack )) < 0)
+                                       subcollection, state )) < 0)
                 return i;
             continue;
         }
@@ -484,34 +538,11 @@ static int parse_descriptor( BYTE *descriptor, unsigned int index, unsigned int 
             state->items.report_count = value;
             break;
         case SHORT_ITEM(TAG_GLOBAL_PUSH, TAG_TYPE_GLOBAL):
-        {
-            struct caps_stack *saved;
-            if (!(saved = malloc(sizeof(*saved)))) return -1;
-            saved->caps = state->items;
-            TRACE("Push\n");
-            list_add_tail(stack, &saved->entry);
+            if (!parse_global_push( state )) return -1;
             break;
-        }
         case SHORT_ITEM(TAG_GLOBAL_POP, TAG_TYPE_GLOBAL):
-        {
-            struct list *tail;
-            struct caps_stack *saved;
-            TRACE("Pop\n");
-            tail = list_tail(stack);
-            if (tail)
-            {
-                saved = LIST_ENTRY(tail, struct caps_stack, entry);
-                state->items = saved->caps;
-                list_remove(tail);
-                free(saved);
-            }
-            else
-            {
-                ERR("Pop but no stack!\n");
-                return -1;
-            }
+            if (!parse_global_pop( state )) return -1;
             break;
-        }
 
         case SHORT_ITEM(TAG_LOCAL_USAGE, TAG_TYPE_LOCAL):
             if (!parse_local_usage( state, value )) return -1;
@@ -775,8 +806,6 @@ WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
     struct collection *base;
     int i;
 
-    struct list caps_stack;
-
     unsigned int feature_count = 0;
     unsigned int cidx;
 
@@ -791,8 +820,6 @@ WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
         }
     }
 
-    list_init(&caps_stack);
-
     if (!(state = calloc( 1, sizeof(*state) ))) return NULL;
     if (!(base = calloc( 1, sizeof(*base) )))
     {
@@ -804,30 +831,19 @@ WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
     list_init(&base->collections);
 
     cidx = 0;
-    if (parse_descriptor( descriptor, 0, length, &feature_count, &cidx, base, state, &caps_stack ) < 0)
+    if (parse_descriptor( descriptor, 0, length, &feature_count, &cidx, base, state ) < 0)
     {
         free_collection(base);
-        free( state );
+        free_parser_state( state );
         return NULL;
     }
 
     debug_collection(base);
 
-    if (!list_empty(&caps_stack))
-    {
-        struct caps_stack *entry, *cursor;
-        ERR("%i unpopped device caps on the stack\n", list_count(&caps_stack));
-        LIST_FOR_EACH_ENTRY_SAFE(entry, cursor, &caps_stack, struct caps_stack, entry)
-        {
-            list_remove(&entry->entry);
-            free(entry);
-        }
-    }
-
     if ((data = build_PreparseData(base, cidx)))
         debug_print_preparsed(data);
     free_collection(base);
 
-    free( state );
+    free_parser_state( state );
     return data;
 }
