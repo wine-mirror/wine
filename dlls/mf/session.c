@@ -28,7 +28,6 @@
 #include "evr.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 #include "mf_private.h"
@@ -431,7 +430,7 @@ static ULONG WINAPI session_op_Release(IUnknown *iface)
             default:
                 ;
         }
-        heap_free(op);
+        free(op);
     }
 
     return refcount;
@@ -448,7 +447,7 @@ static HRESULT create_session_op(enum session_command command, struct session_op
 {
     struct session_op *op;
 
-    if (!(op = heap_alloc_zero(sizeof(*op))))
+    if (!(op = calloc(1, sizeof(*op))))
         return E_OUTOFMEMORY;
 
     op->IUnknown_iface.lpVtbl = &session_op_vtbl;
@@ -511,7 +510,7 @@ static void session_clear_topologies(struct media_session *session)
     {
         list_remove(&ptr->entry);
         IMFTopology_Release(ptr->topology);
-        heap_free(ptr);
+        free(ptr);
     }
 }
 
@@ -640,7 +639,7 @@ static void transform_release_sample(struct sample *sample)
     list_remove(&sample->entry);
     if (sample->sample)
         IMFSample_Release(sample->sample);
-    heap_free(sample);
+    free(sample);
 }
 
 static void transform_stream_drop_samples(struct transform_stream *stream)
@@ -666,10 +665,10 @@ static void release_topo_node(struct topo_node *node)
                 transform_stream_drop_samples(&node->u.transform.inputs[i]);
             for (i = 0; i < node->u.transform.output_count; ++i)
                 transform_stream_drop_samples(&node->u.transform.outputs[i]);
-            heap_free(node->u.transform.inputs);
-            heap_free(node->u.transform.outputs);
-            heap_free(node->u.transform.input_map);
-            heap_free(node->u.transform.output_map);
+            free(node->u.transform.inputs);
+            free(node->u.transform.outputs);
+            free(node->u.transform.input_map);
+            free(node->u.transform.output_map);
             break;
         case MF_TOPOLOGY_OUTPUT_NODE:
             if (node->u.sink.allocator)
@@ -688,7 +687,7 @@ static void release_topo_node(struct topo_node *node)
         IUnknown_Release(node->object.object);
     if (node->node)
         IMFTopologyNode_Release(node->node);
-    heap_free(node);
+    free(node);
 }
 
 static void session_shutdown_current_topology(struct media_session *session)
@@ -771,7 +770,7 @@ static void session_clear_presentation(struct media_session *session)
             IMFMediaSource_Release(source->source);
         if (source->pd)
             IMFPresentationDescriptor_Release(source->pd);
-        heap_free(source);
+        free(source);
     }
 
     LIST_FOR_EACH_ENTRY_SAFE(node, node2, &session->presentation.nodes, struct topo_node, entry)
@@ -790,7 +789,7 @@ static void session_clear_presentation(struct media_session *session)
             IMFMediaSinkPreroll_Release(sink->preroll);
         if (sink->event_generator)
             IMFMediaEventGenerator_Release(sink->event_generator);
-        heap_free(sink);
+        free(sink);
     }
 }
 
@@ -1078,7 +1077,7 @@ static void session_release_media_source(struct media_source *source)
     IMFMediaSource_Release(source->source);
     if (source->pd)
         IMFPresentationDescriptor_Release(source->pd);
-    heap_free(source);
+    free(source);
 }
 
 static HRESULT session_add_media_source(struct media_session *session, IMFTopologyNode *node, IMFMediaSource *source)
@@ -1089,7 +1088,7 @@ static HRESULT session_add_media_source(struct media_session *session, IMFTopolo
     if (session_get_media_source(session, source))
         return S_FALSE;
 
-    if (!(media_source = heap_alloc_zero(sizeof(*media_source))))
+    if (!(media_source = calloc(1, sizeof(*media_source))))
         return E_OUTOFMEMORY;
 
     media_source->source = source;
@@ -1150,7 +1149,7 @@ static HRESULT session_add_media_sink(struct media_session *session, IMFTopology
             return S_FALSE;
     }
 
-    if (!(media_sink = heap_alloc_zero(sizeof(*media_sink))))
+    if (!(media_sink = calloc(1, sizeof(*media_sink))))
         return E_OUTOFMEMORY;
 
     media_sink->sink = sink;
@@ -1188,14 +1187,14 @@ static HRESULT session_set_transform_stream_info(struct topo_node *node)
     hr = IMFTransform_GetStreamCount(node->object.transform, &input_count, &output_count);
     if (SUCCEEDED(hr) && (input_count > 1 || output_count > 1))
     {
-        input_map = heap_calloc(input_count, sizeof(*input_map));
-        output_map = heap_calloc(output_count, sizeof(*output_map));
+        input_map = calloc(input_count, sizeof(*input_map));
+        output_map = calloc(output_count, sizeof(*output_map));
         if (FAILED(IMFTransform_GetStreamIDs(node->object.transform, input_count, input_map,
                 output_count, output_map)))
         {
             /* Assume sequential identifiers. */
-            heap_free(input_map);
-            heap_free(output_map);
+            free(input_map);
+            free(output_map);
             input_map = output_map = NULL;
         }
     }
@@ -1205,13 +1204,13 @@ static HRESULT session_set_transform_stream_info(struct topo_node *node)
         node->u.transform.input_map = input_map;
         node->u.transform.output_map = output_map;
 
-        streams = heap_calloc(input_count, sizeof(*streams));
+        streams = calloc(input_count, sizeof(*streams));
         for (i = 0; i < input_count; ++i)
             list_init(&streams[i].samples);
         node->u.transform.inputs = streams;
         node->u.transform.input_count = input_count;
 
-        streams = heap_calloc(output_count, sizeof(*streams));
+        streams = calloc(output_count, sizeof(*streams));
         for (i = 0; i < output_count; ++i)
         {
             list_init(&streams[i].samples);
@@ -1306,7 +1305,7 @@ static HRESULT session_append_node(struct media_session *session, IMFTopologyNod
     IMFStreamDescriptor *sd;
     HRESULT hr = S_OK;
 
-    if (!(topo_node = heap_alloc_zero(sizeof(*topo_node))))
+    if (!(topo_node = calloc(1, sizeof(*topo_node))))
         return E_OUTOFMEMORY;
 
     IMFTopologyNode_GetNodeType(node, &topo_node->type);
@@ -1573,7 +1572,7 @@ static void session_set_topology(struct media_session *session, DWORD flags, IMF
     {
         struct queued_topology *queued_topology;
 
-        if ((queued_topology = heap_alloc_zero(sizeof(*queued_topology))))
+        if ((queued_topology = calloc(1, sizeof(*queued_topology))))
         {
             queued_topology->topology = topology;
             IMFTopology_AddRef(queued_topology->topology);
@@ -1655,7 +1654,7 @@ static ULONG WINAPI mfsession_Release(IMFMediaSession *iface)
         if (session->quality_manager)
             IMFQualityManager_Release(session->quality_manager);
         DeleteCriticalSection(&session->cs);
-        heap_free(session);
+        free(session);
     }
 
     return refcount;
@@ -2596,7 +2595,7 @@ static void session_set_sink_stream_state(struct media_session *session, IMFStre
 
 static struct sample *transform_create_sample(IMFSample *sample)
 {
-    struct sample *sample_entry = heap_alloc_zero(sizeof(*sample_entry));
+    struct sample *sample_entry = calloc(1, sizeof(*sample_entry));
 
     if (sample_entry)
     {
@@ -2660,7 +2659,7 @@ static HRESULT transform_node_pull_samples(const struct media_session *session, 
     unsigned int i;
     HRESULT hr = E_UNEXPECTED;
 
-    if (!(buffers = heap_calloc(node->u.transform.output_count, sizeof(*buffers))))
+    if (!(buffers = calloc(node->u.transform.output_count, sizeof(*buffers))))
         return E_OUTOFMEMORY;
 
     for (i = 0; i < node->u.transform.output_count; ++i)
@@ -2703,7 +2702,7 @@ static HRESULT transform_node_pull_samples(const struct media_session *session, 
             IMFSample_Release(buffers[i].pSample);
     }
 
-    heap_free(buffers);
+    free(buffers);
 
     return hr;
 }
@@ -3611,8 +3610,7 @@ HRESULT WINAPI MFCreateMediaSession(IMFAttributes *config, IMFMediaSession **ses
 
     TRACE("%p, %p.\n", config, session);
 
-    object = heap_alloc_zero(sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMFMediaSession_iface.lpVtbl = &mfmediasessionvtbl;
@@ -3749,7 +3747,7 @@ static ULONG WINAPI standard_quality_manager_Release(IMFQualityManager *iface)
         if (manager->topology)
             IMFTopology_Release(manager->topology);
         DeleteCriticalSection(&manager->cs);
-        heap_free(manager);
+        free(manager);
     }
 
     return refcount;
@@ -3941,8 +3939,7 @@ HRESULT WINAPI MFCreateStandardQualityManager(IMFQualityManager **manager)
 
     TRACE("%p.\n", manager);
 
-    object = heap_alloc_zero(sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMFQualityManager_iface.lpVtbl = &standard_quality_manager_vtbl;

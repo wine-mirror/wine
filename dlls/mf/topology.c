@@ -256,7 +256,7 @@ static void topology_clear(struct topology *topology)
         topology_node_disconnect(topology->nodes.nodes[i]);
         IMFTopologyNode_Release(&topology->nodes.nodes[i]->IMFTopologyNode_iface);
     }
-    heap_free(topology->nodes.nodes);
+    free(topology->nodes.nodes);
     topology->nodes.nodes = NULL;
     topology->nodes.count = 0;
     topology->nodes.size = 0;
@@ -274,7 +274,7 @@ static ULONG WINAPI topology_Release(IMFTopology *iface)
         if (topology->attributes)
             IMFAttributes_Release(topology->attributes);
         topology_clear(topology);
-        heap_free(topology);
+        free(topology);
     }
 
     return refcount;
@@ -885,8 +885,7 @@ HRESULT WINAPI MFCreateTopology(IMFTopology **topology)
     if (!topology)
         return E_POINTER;
 
-    object = heap_alloc_zero(sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMFTopology_iface.lpVtbl = &topologyvtbl;
@@ -961,11 +960,11 @@ static ULONG WINAPI topology_node_Release(IMFTopologyNode *iface)
             if (node->outputs.streams[i].preferred_type)
                 IMFMediaType_Release(node->outputs.streams[i].preferred_type);
         }
-        heap_free(node->inputs.streams);
-        heap_free(node->outputs.streams);
+        free(node->inputs.streams);
+        free(node->outputs.streams);
         IMFAttributes_Release(node->attributes);
         DeleteCriticalSection(&node->cs);
-        heap_free(node);
+        free(node);
     }
 
     return refcount;
@@ -1767,8 +1766,7 @@ static HRESULT create_topology_node(MF_TOPOLOGY_TYPE node_type, struct topology_
 {
     HRESULT hr;
 
-    *node = heap_alloc_zero(sizeof(**node));
-    if (!*node)
+    if (!(*node = calloc(1, sizeof(**node))))
         return E_OUTOFMEMORY;
 
     (*node)->IMFTopologyNode_iface.lpVtbl = &topologynodevtbl;
@@ -1777,7 +1775,7 @@ static HRESULT create_topology_node(MF_TOPOLOGY_TYPE node_type, struct topology_
     hr = MFCreateAttributes(&(*node)->attributes, 0);
     if (FAILED(hr))
     {
-        heap_free(*node);
+        free(*node);
         return hr;
     }
     (*node)->id = ((TOPOID)GetCurrentProcessId() << 32) | InterlockedIncrement(&next_node_id);
@@ -1931,9 +1929,7 @@ static ULONG WINAPI topology_loader_Release(IMFTopoLoader *iface)
     TRACE("%p, refcount %u.\n", iface, refcount);
 
     if (!refcount)
-    {
-        heap_free(loader);
-    }
+        free(loader);
 
     return refcount;
 }
@@ -2692,8 +2688,7 @@ HRESULT WINAPI MFCreateTopoLoader(IMFTopoLoader **loader)
     if (!loader)
         return E_POINTER;
 
-    object = heap_alloc(sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMFTopoLoader_iface.lpVtbl = &topologyloadervtbl;
@@ -2751,9 +2746,7 @@ static ULONG WINAPI seq_source_Release(IMFSequencerSource *iface)
     TRACE("%p, refcount %u.\n", iface, refcount);
 
     if (!refcount)
-    {
-        heap_free(seq_source);
-    }
+        free(seq_source);
 
     return refcount;
 }
@@ -2855,8 +2848,7 @@ HRESULT WINAPI MFCreateSequencerSource(IUnknown *reserved, IMFSequencerSource **
     if (!seq_source)
         return E_POINTER;
 
-    object = heap_alloc(sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMFSequencerSource_iface.lpVtbl = &seqsourcevtbl;

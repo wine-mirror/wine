@@ -24,7 +24,6 @@
 #include "mf_private.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
@@ -105,7 +104,7 @@ static void sample_grabber_free_private(void *user_context)
     struct sample_grabber_activate_context *context = user_context;
     IMFMediaType_Release(context->media_type);
     IMFSampleGrabberSinkCallback_Release(context->callback);
-    heap_free(context);
+    free(context);
 }
 
 static struct sample_grabber *impl_from_IMFMediaSink(IMFMediaSink *iface)
@@ -194,7 +193,7 @@ static void stream_release_pending_item(struct scheduled_item *item)
             PropVariantClear(&item->u.marker.context);
             break;
     }
-    heap_free(item);
+    free(item);
 }
 
 static ULONG WINAPI sample_grabber_stream_Release(IMFStreamSink *iface)
@@ -386,7 +385,7 @@ static HRESULT stream_queue_sample(struct sample_grabber *grabber, IMFSample *sa
     if (FAILED(hr = IMFSample_GetSampleTime(sample, &sampletime)))
         return hr;
 
-    if (!(item = heap_alloc_zero(sizeof(*item))))
+    if (!(item = calloc(1, sizeof(*item))))
         return E_OUTOFMEMORY;
 
     item->type = ITEM_TYPE_SAMPLE;
@@ -467,7 +466,7 @@ static HRESULT stream_place_marker(struct sample_grabber *grabber, MFSTREAMSINK_
         return S_OK;
     }
 
-    if (!(item = heap_alloc_zero(sizeof(*item))))
+    if (!(item = calloc(1, sizeof(*item))))
         return E_OUTOFMEMORY;
 
     item->type = ITEM_TYPE_MARKER;
@@ -866,7 +865,7 @@ static ULONG WINAPI sample_grabber_sink_Release(IMFMediaSink *iface)
             IMFAttributes_Release(grabber->sample_attributes);
         sample_grabber_release_pending_items(grabber);
         DeleteCriticalSection(&grabber->cs);
-        heap_free(grabber);
+        free(grabber);
     }
 
     return refcount;
@@ -1401,8 +1400,7 @@ static HRESULT sample_grabber_create_object(IMFAttributes *attributes, void *use
     if (FAILED(IMFMediaType_GetMajorType(context->media_type, &guid)))
         return MF_E_INVALIDMEDIATYPE;
 
-    object = heap_alloc_zero(sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMFMediaSink_iface.lpVtbl = &sample_grabber_sink_vtbl;
@@ -1478,8 +1476,7 @@ HRESULT WINAPI MFCreateSampleGrabberSinkActivate(IMFMediaType *media_type, IMFSa
     if (!media_type || !callback || !activate)
         return E_POINTER;
 
-    context = heap_alloc_zero(sizeof(*context));
-    if (!context)
+    if (!(context = calloc(1, sizeof(*context))))
         return E_OUTOFMEMORY;
 
     context->media_type = media_type;

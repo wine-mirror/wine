@@ -286,7 +286,7 @@ static ULONG WINAPI video_stream_sink_Release(IMFStreamSink *iface)
         if (stream->allocator)
             IMFVideoSampleAllocator_Release(stream->allocator);
         DeleteCriticalSection(&stream->cs);
-        heap_free(stream);
+        free(stream);
     }
 
     return refcount;
@@ -1053,7 +1053,7 @@ static HRESULT video_renderer_stream_create(struct video_renderer *renderer, uns
     unsigned int value;
     HRESULT hr;
 
-    if (!(stream = heap_alloc_zero(sizeof(*stream))))
+    if (!(stream = calloc(1, sizeof(*stream))))
         return E_OUTOFMEMORY;
 
     stream->IMFStreamSink_iface.lpVtbl = &video_stream_sink_vtbl;
@@ -1179,7 +1179,7 @@ static ULONG WINAPI video_renderer_sink_Release(IMFMediaSink *iface)
         if (renderer->attributes)
             IMFAttributes_Release(renderer->attributes);
         DeleteCriticalSection(&renderer->cs);
-        heap_free(renderer);
+        free(renderer);
     }
 
     return refcount;
@@ -1456,7 +1456,7 @@ static HRESULT WINAPI video_renderer_sink_Shutdown(IMFMediaSink *iface)
         IMFMediaSink_Release(iface);
         renderer->streams[i] = NULL;
     }
-    heap_free(renderer->streams);
+    free(renderer->streams);
     renderer->stream_count = 0;
     renderer->stream_size = 0;
     IMFMediaEventQueue_Shutdown(renderer->event_queue);
@@ -1637,8 +1637,8 @@ static HRESULT video_renderer_configure_mixer(struct video_renderer *renderer)
         /* Create stream sinks for inputs that mixer already has by default. */
         if (SUCCEEDED(IMFTransform_GetStreamCount(renderer->mixer, &input_count, &output_count)))
         {
-            ids = heap_calloc(input_count, sizeof(*ids));
-            oids = heap_calloc(output_count, sizeof(*oids));
+            ids = calloc(input_count, sizeof(*ids));
+            oids = calloc(output_count, sizeof(*oids));
 
             if (ids && oids)
             {
@@ -1652,8 +1652,8 @@ static HRESULT video_renderer_configure_mixer(struct video_renderer *renderer)
 
             }
 
-            heap_free(ids);
-            heap_free(oids);
+            free(ids);
+            free(oids);
         }
     }
 
@@ -2766,7 +2766,7 @@ static HRESULT evr_create_object(IMFAttributes *attributes, void *user_context, 
 
     TRACE("%p, %p, %p.\n", attributes, user_context, obj);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMFMediaSink_iface.lpVtbl = &video_renderer_sink_vtbl;

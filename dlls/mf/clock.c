@@ -19,7 +19,6 @@
 #define COBJMACROS
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 #include "mf_private.h"
@@ -174,7 +173,7 @@ static ULONG WINAPI sink_notification_Release(IUnknown *iface)
     if (!refcount)
     {
         IMFClockStateSink_Release(notification->sink);
-        heap_free(notification);
+        free(notification);
     }
 
     return refcount;
@@ -194,8 +193,7 @@ static void clock_notify_async_sink(struct presentation_clock *clock, MFTIME sys
     IMFAsyncResult *result;
     HRESULT hr;
 
-    object = heap_alloc(sizeof(*object));
-    if (!object)
+    if (!(object = malloc(sizeof(*object))))
         return;
 
     object->IUnknown_iface.lpVtbl = &sinknotificationvtbl;
@@ -279,7 +277,7 @@ static ULONG WINAPI present_clock_Release(IMFPresentationClock *iface)
         {
             list_remove(&sink->entry);
             IMFClockStateSink_Release(sink->state_sink);
-            heap_free(sink);
+            free(sink);
         }
         LIST_FOR_EACH_ENTRY_SAFE(timer, timer2, &clock->timers, struct clock_timer, entry)
         {
@@ -287,7 +285,7 @@ static ULONG WINAPI present_clock_Release(IMFPresentationClock *iface)
             IUnknown_Release(&timer->IUnknown_iface);
         }
         DeleteCriticalSection(&clock->cs);
-        heap_free(clock);
+        free(clock);
     }
 
     return refcount;
@@ -456,8 +454,7 @@ static HRESULT WINAPI present_clock_AddClockStateSink(IMFPresentationClock *ifac
     if (!state_sink)
         return E_INVALIDARG;
 
-    sink = heap_alloc(sizeof(*sink));
-    if (!sink)
+    if (!(sink = malloc(sizeof(*sink))))
         return E_OUTOFMEMORY;
 
     sink->state_sink = state_sink;
@@ -496,7 +493,7 @@ static HRESULT WINAPI present_clock_AddClockStateSink(IMFPresentationClock *ifac
     if (FAILED(hr))
     {
         IMFClockStateSink_Release(sink->state_sink);
-        heap_free(sink);
+        free(sink);
     }
 
     return hr;
@@ -520,7 +517,7 @@ static HRESULT WINAPI present_clock_RemoveClockStateSink(IMFPresentationClock *i
         {
             IMFClockStateSink_Release(sink->state_sink);
             list_remove(&sink->entry);
-            heap_free(sink);
+            free(sink);
             break;
         }
     }
@@ -868,7 +865,7 @@ static ULONG WINAPI clock_timer_Release(IUnknown *iface)
     {
         IMFAsyncResult_Release(timer->result);
         IMFAsyncCallback_Release(timer->callback);
-        heap_free(timer);
+        free(timer);
     }
 
     return refcount;
@@ -890,12 +887,12 @@ static HRESULT WINAPI present_clock_timer_SetTimer(IMFTimer *iface, DWORD flags,
 
     TRACE("%p, %#x, %s, %p, %p, %p.\n", iface, flags, debugstr_time(time), callback, state, cancel_key);
 
-    if (!(clock_timer = heap_alloc_zero(sizeof(*clock_timer))))
+    if (!(clock_timer = calloc(1, sizeof(*clock_timer))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = MFCreateAsyncResult(NULL, NULL, state, &clock_timer->result)))
     {
-        heap_free(clock_timer);
+        free(clock_timer);
         return hr;
     }
 
@@ -1140,8 +1137,7 @@ HRESULT WINAPI MFCreatePresentationClock(IMFPresentationClock **clock)
 
     TRACE("%p.\n", clock);
 
-    object = heap_alloc_zero(sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMFPresentationClock_iface.lpVtbl = &presentationclockvtbl;

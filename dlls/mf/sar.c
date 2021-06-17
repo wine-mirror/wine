@@ -26,7 +26,6 @@
 #include "audioclient.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
@@ -121,7 +120,7 @@ static void release_pending_object(struct queued_object *object)
             PropVariantClear(&object->u.marker.context);
             break;
     }
-    heap_free(object);
+    free(object);
 }
 
 static struct audio_renderer *impl_from_IMFMediaSink(IMFMediaSink *iface)
@@ -279,7 +278,7 @@ static ULONG WINAPI audio_renderer_sink_Release(IMFMediaSink *iface)
         audio_renderer_release_audio_client(renderer);
         CloseHandle(renderer->buffer_ready_event);
         DeleteCriticalSection(&renderer->cs);
-        heap_free(renderer);
+        free(renderer);
     }
 
     return refcount;
@@ -1332,7 +1331,7 @@ static HRESULT stream_queue_sample(struct audio_renderer *renderer, IMFSample *s
 {
     struct queued_object *object;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->type = OBJECT_TYPE_SAMPLE;
@@ -1372,7 +1371,7 @@ static HRESULT stream_place_marker(struct audio_renderer *renderer, MFSTREAMSINK
     struct queued_object *marker;
     HRESULT hr = S_OK;
 
-    if (!(marker = heap_alloc_zero(sizeof(*marker))))
+    if (!(marker = calloc(1, sizeof(*marker))))
         return E_OUTOFMEMORY;
 
     marker->type = OBJECT_TYPE_MARKER;
@@ -1843,7 +1842,7 @@ static HRESULT sar_create_object(IMFAttributes *attributes, void *user_context, 
 
     TRACE("%p, %p, %p.\n", attributes, user_context, obj);
 
-    if (!(renderer = heap_alloc_zero(sizeof(*renderer))))
+    if (!(renderer = calloc(1, sizeof(*renderer))))
         return E_OUTOFMEMORY;
 
     renderer->IMFMediaSink_iface.lpVtbl = &audio_renderer_sink_vtbl;

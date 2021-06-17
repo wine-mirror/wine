@@ -23,7 +23,6 @@
 #include "mf_private.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 
@@ -92,7 +91,7 @@ static ULONG WINAPI sample_copier_transform_Release(IMFTransform *iface)
         if (transform->buffer_type)
             IMFMediaType_Release(transform->buffer_type);
         DeleteCriticalSection(&transform->cs);
-        heap_free(transform);
+        free(transform);
     }
 
     return refcount;
@@ -576,8 +575,7 @@ HRESULT WINAPI MFCreateSampleCopierMFT(IMFTransform **transform)
 
     TRACE("%p.\n", transform);
 
-    object = heap_alloc_zero(sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMFTransform_iface.lpVtbl = &sample_copier_transform_vtbl;
