@@ -1115,6 +1115,9 @@ static void testGetAdaptersInfo(void)
         ; /* no adapter's, that's okay */
     else if (apiReturn == ERROR_BUFFER_OVERFLOW) {
         PIP_ADAPTER_INFO ptr, buf = HeapAlloc(GetProcessHeap(), 0, len);
+        NET_LUID luid;
+        GUID guid;
+        char AdapterName[ARRAY_SIZE(ptr->AdapterName)];
 
         apiReturn = GetAdaptersInfo(buf, &len);
         ok(apiReturn == NO_ERROR,
@@ -1122,6 +1125,13 @@ static void testGetAdaptersInfo(void)
            apiReturn);
         ptr = buf;
         while (ptr) {
+            ConvertInterfaceIndexToLuid(ptr->Index, &luid);
+            ConvertInterfaceLuidToGuid(&luid, &guid);
+            sprintf(AdapterName, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+                    guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1],
+                    guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5],
+                    guid.Data4[6], guid.Data4[7]);
+            ok(!strcmp(ptr->AdapterName, AdapterName), "expected '%s' got '%s'\n", ptr->AdapterName, AdapterName);
             ok(ptr->IpAddressList.IpAddress.String[0], "A valid IP address must be present\n");
             ok(ptr->IpAddressList.IpMask.String[0], "A valid mask must be present\n");
             ok(ptr->GatewayList.IpAddress.String[0], "A valid IP address must be present\n");
