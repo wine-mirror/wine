@@ -318,16 +318,16 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
 {
     int usages_top = 0;
     USAGE usages[256];
-    int i;
+    int i, j;
     UINT32 value;
     INT32 signed_value;
+    struct feature *feature;
 
     for (i = index; i < length;)
     {
-        BYTE b0 = descriptor[i++];
-        int size = b0 & 0x03;
-        int bType = (b0 >> 2) & 0x03;
-        int bTag = (b0 >> 4) & 0x0F;
+        BYTE item = descriptor[i++];
+        BYTE tag = item >> 4;
+        int size = item & 0x03;
 
         if (size == 3) size = 4;
         if (length - i < size)
@@ -347,215 +347,180 @@ static int parse_descriptor(BYTE *descriptor, unsigned int index, unsigned int l
         }
         i += size;
 
-        if (bType == TAG_TYPE_RESERVED && bTag == 0x0F && size == 2)
+#define SHORT_ITEM(tag,type) (((tag)<<4)|((type)<<2))
+        switch (item & SHORT_ITEM(0xf,0x3))
         {
-            /* Long data items: Should be unused */
-            ERR("Long Data Item, should be unused\n");
-            return -1;
+        case SHORT_ITEM(TAG_MAIN_INPUT, TAG_TYPE_MAIN):
+        case SHORT_ITEM(TAG_MAIN_OUTPUT, TAG_TYPE_MAIN):
+        case SHORT_ITEM(TAG_MAIN_FEATURE, TAG_TYPE_MAIN):
+            for (j = 0; j < caps->ReportCount; j++)
+            {
+                if (!(feature = calloc(1, sizeof(*feature)))) return -1;
+                list_add_tail(&collection->features, &feature->entry);
+                if (tag == TAG_MAIN_INPUT)
+                    feature->type = HidP_Input;
+                else if (tag == TAG_MAIN_OUTPUT)
+                    feature->type = HidP_Output;
+                else
+                    feature->type = HidP_Feature;
+                parse_io_feature(size, value, tag, feature_index, feature);
+                if (j < usages_top)
+                    caps->NotRange.Usage = usages[j];
+                feature->caps = *caps;
+                feature->caps.ReportCount = 1;
+                feature->collection = collection;
+                if (j+1 >= usages_top)
+                {
+                    feature->caps.ReportCount += caps->ReportCount - (j + 1);
+                    break;
+                }
+            }
+            usages_top = 0;
+            new_caps(caps);
+            break;
+        case SHORT_ITEM(TAG_MAIN_COLLECTION, TAG_TYPE_MAIN):
+        {
+            struct collection *subcollection;
+            if (!(subcollection = calloc(1, sizeof(struct collection)))) return -1;
+            list_add_tail(&collection->collections, &subcollection->entry);
+            subcollection->parent = collection;
+            /* Only set our collection once...
+               We do not properly handle composite devices yet. */
+            if (usages_top)
+            {
+                caps->NotRange.Usage = usages[usages_top-1];
+                usages_top = 0;
+            }
+            if (*collection_index == 0)
+                collection->caps = *caps;
+            subcollection->caps = *caps;
+            subcollection->index = *collection_index;
+            *collection_index = *collection_index + 1;
+            list_init(&subcollection->features);
+            list_init(&subcollection->collections);
+            new_caps(caps);
+
+            parse_collection(size, value, subcollection);
+
+            if ((i = parse_descriptor(descriptor, i, length, feature_index, collection_index, subcollection, caps, stack)) < 0) return i;
+            continue;
         }
-        else
+        case SHORT_ITEM(TAG_MAIN_END_COLLECTION, TAG_TYPE_MAIN):
+            return i;
+
+        case SHORT_ITEM(TAG_GLOBAL_USAGE_PAGE, TAG_TYPE_GLOBAL):
+            caps->UsagePage = value;
+            break;
+        case SHORT_ITEM(TAG_GLOBAL_LOGICAL_MINIMUM, TAG_TYPE_GLOBAL):
+            caps->LogicalMin = signed_value;
+            break;
+        case SHORT_ITEM(TAG_GLOBAL_LOGICAL_MAXIMUM, TAG_TYPE_GLOBAL):
+            caps->LogicalMax = signed_value;
+            break;
+        case SHORT_ITEM(TAG_GLOBAL_PHYSICAL_MINIMUM, TAG_TYPE_GLOBAL):
+            caps->PhysicalMin = signed_value;
+            break;
+        case SHORT_ITEM(TAG_GLOBAL_PHYSICAL_MAXIMUM, TAG_TYPE_GLOBAL):
+            caps->PhysicalMax = signed_value;
+            break;
+        case SHORT_ITEM(TAG_GLOBAL_UNIT_EXPONENT, TAG_TYPE_GLOBAL):
+            caps->UnitsExp = signed_value;
+            break;
+        case SHORT_ITEM(TAG_GLOBAL_UNIT, TAG_TYPE_GLOBAL):
+            caps->Units = signed_value;
+            break;
+        case SHORT_ITEM(TAG_GLOBAL_REPORT_SIZE, TAG_TYPE_GLOBAL):
+            caps->BitSize = value;
+            break;
+        case SHORT_ITEM(TAG_GLOBAL_REPORT_ID, TAG_TYPE_GLOBAL):
+            caps->ReportID = value;
+            break;
+        case SHORT_ITEM(TAG_GLOBAL_REPORT_COUNT, TAG_TYPE_GLOBAL):
+            caps->ReportCount = value;
+            break;
+        case SHORT_ITEM(TAG_GLOBAL_PUSH, TAG_TYPE_GLOBAL):
         {
-            unsigned int j;
-
-            TRACE(" 0x%x[%i], type %i , tag %i, size %i, val %i\n",b0,i-size-1,bType, bTag, size, value );
-
-            if (bType == TAG_TYPE_MAIN)
+            struct caps_stack *saved;
+            if (!(saved = malloc(sizeof(*saved)))) return -1;
+            saved->caps = *caps;
+            TRACE("Push\n");
+            list_add_tail(stack, &saved->entry);
+            break;
+        }
+        case SHORT_ITEM(TAG_GLOBAL_POP, TAG_TYPE_GLOBAL):
+        {
+            struct list *tail;
+            struct caps_stack *saved;
+            TRACE("Pop\n");
+            tail = list_tail(stack);
+            if (tail)
             {
-                struct feature *feature;
-                switch(bTag)
-                {
-                    case TAG_MAIN_INPUT:
-                    case TAG_MAIN_OUTPUT:
-                    case TAG_MAIN_FEATURE:
-                        for (j = 0; j < caps->ReportCount; j++)
-                        {
-                            if (!(feature = calloc(1, sizeof(*feature)))) return -1;
-                            list_add_tail(&collection->features, &feature->entry);
-                            if (bTag == TAG_MAIN_INPUT)
-                                feature->type = HidP_Input;
-                            else if (bTag == TAG_MAIN_OUTPUT)
-                                feature->type = HidP_Output;
-                            else
-                                feature->type = HidP_Feature;
-                            parse_io_feature(size, value, bTag, feature_index, feature);
-                            if (j < usages_top)
-                                caps->NotRange.Usage = usages[j];
-                            feature->caps = *caps;
-                            feature->caps.ReportCount = 1;
-                            feature->collection = collection;
-                            if (j+1 >= usages_top)
-                            {
-                                feature->caps.ReportCount += caps->ReportCount - (j + 1);
-                                break;
-                            }
-                        }
-                        usages_top = 0;
-                        new_caps(caps);
-                        break;
-                    case TAG_MAIN_COLLECTION:
-                    {
-                        struct collection *subcollection;
-                        if (!(subcollection = calloc(1, sizeof(struct collection)))) return -1;
-                        list_add_tail(&collection->collections, &subcollection->entry);
-                        subcollection->parent = collection;
-                        /* Only set our collection once...
-                           We do not properly handle composite devices yet. */
-                        if (usages_top)
-                        {
-                            caps->NotRange.Usage = usages[usages_top-1];
-                            usages_top = 0;
-                        }
-                        if (*collection_index == 0)
-                            collection->caps = *caps;
-                        subcollection->caps = *caps;
-                        subcollection->index = *collection_index;
-                        *collection_index = *collection_index + 1;
-                        list_init(&subcollection->features);
-                        list_init(&subcollection->collections);
-                        new_caps(caps);
-
-                        parse_collection(size, value, subcollection);
-
-                        if ((i = parse_descriptor(descriptor, i, length, feature_index, collection_index, subcollection, caps, stack)) < 0) return i;
-                        continue;
-                    }
-                    case TAG_MAIN_END_COLLECTION:
-                        return i;
-                    default:
-                        ERR("Unknown (bTag: 0x%x, bType: 0x%x)\n", bTag, bType);
-                        return -1;
-                }
-            }
-            else if (bType == TAG_TYPE_GLOBAL)
-            {
-                switch(bTag)
-                {
-                    case TAG_GLOBAL_USAGE_PAGE:
-                        caps->UsagePage = value;
-                        break;
-                    case TAG_GLOBAL_LOGICAL_MINIMUM:
-                        caps->LogicalMin = signed_value;
-                        break;
-                    case TAG_GLOBAL_LOGICAL_MAXIMUM:
-                        caps->LogicalMax = signed_value;
-                        break;
-                    case TAG_GLOBAL_PHYSICAL_MINIMUM:
-                        caps->PhysicalMin = signed_value;
-                        break;
-                    case TAG_GLOBAL_PHYSICAL_MAXIMUM:
-                        caps->PhysicalMax = signed_value;
-                        break;
-                    case TAG_GLOBAL_UNIT_EXPONENT:
-                        caps->UnitsExp = signed_value;
-                        break;
-                    case TAG_GLOBAL_UNIT:
-                        caps->Units = signed_value;
-                        break;
-                    case TAG_GLOBAL_REPORT_SIZE:
-                        caps->BitSize = value;
-                        break;
-                    case TAG_GLOBAL_REPORT_ID:
-                        caps->ReportID = value;
-                        break;
-                    case TAG_GLOBAL_REPORT_COUNT:
-                        caps->ReportCount = value;
-                        break;
-                    case TAG_GLOBAL_PUSH:
-                    {
-                        struct caps_stack *saved;
-                        if (!(saved = malloc(sizeof(*saved)))) return -1;
-                        saved->caps = *caps;
-                        TRACE("Push\n");
-                        list_add_tail(stack, &saved->entry);
-                        break;
-                    }
-                    case TAG_GLOBAL_POP:
-                    {
-                        struct list *tail;
-                        struct caps_stack *saved;
-                        TRACE("Pop\n");
-                        tail = list_tail(stack);
-                        if (tail)
-                        {
-                            saved = LIST_ENTRY(tail, struct caps_stack, entry);
-                            *caps = saved->caps;
-                            list_remove(tail);
-                            free(saved);
-                        }
-                        else
-                        {
-                            ERR("Pop but no stack!\n");
-                            return -1;
-                        }
-                        break;
-                    }
-                    default:
-                        ERR("Unknown (bTag: 0x%x, bType: 0x%x)\n", bTag, bType);
-                        return -1;
-                }
-            }
-            else if (bType == TAG_TYPE_LOCAL)
-            {
-                switch(bTag)
-                {
-                    case TAG_LOCAL_USAGE:
-                        if (usages_top == sizeof(usages))
-                        {
-                            ERR("More than 256 individual usages defined\n");
-                            return -1;
-                        }
-                        else
-                        {
-                            usages[usages_top++] = value;
-                            caps->IsRange = FALSE;
-                        }
-                        break;
-                    case TAG_LOCAL_USAGE_MINIMUM:
-                        caps->Range.UsageMin = value;
-                        caps->IsRange = TRUE;
-                        break;
-                    case TAG_LOCAL_USAGE_MAXIMUM:
-                        caps->Range.UsageMax = value;
-                        caps->IsRange = TRUE;
-                        break;
-                    case TAG_LOCAL_DESIGNATOR_INDEX:
-                        caps->NotRange.DesignatorIndex = value;
-                        caps->IsDesignatorRange = FALSE;
-                        break;
-                    case TAG_LOCAL_DESIGNATOR_MINIMUM:
-                        caps->Range.DesignatorMin = value;
-                        caps->IsDesignatorRange = TRUE;
-                        break;
-                    case TAG_LOCAL_DESIGNATOR_MAXIMUM:
-                        caps->Range.DesignatorMax = value;
-                        caps->IsDesignatorRange = TRUE;
-                        break;
-                    case TAG_LOCAL_STRING_INDEX:
-                        caps->NotRange.StringIndex = value;
-                        caps->IsStringRange = FALSE;
-                        break;
-                    case TAG_LOCAL_STRING_MINIMUM:
-                        caps->Range.StringMin = value;
-                        caps->IsStringRange = TRUE;
-                        break;
-                    case TAG_LOCAL_STRING_MAXIMUM:
-                        caps->Range.StringMax = value;
-                        caps->IsStringRange = TRUE;
-                        break;
-                    case TAG_LOCAL_DELIMITER:
-                        FIXME("delimiter %d not implemented!\n", value);
-                        return -1;
-                    default:
-                        ERR("Unknown (bTag: 0x%x, bType: 0x%x)\n", bTag, bType);
-                        return -1;
-                }
+                saved = LIST_ENTRY(tail, struct caps_stack, entry);
+                *caps = saved->caps;
+                list_remove(tail);
+                free(saved);
             }
             else
             {
-                ERR("Unknown (bTag: 0x%x, bType: 0x%x)\n", bTag, bType);
+                ERR("Pop but no stack!\n");
                 return -1;
             }
+            break;
         }
+
+        case SHORT_ITEM(TAG_LOCAL_USAGE, TAG_TYPE_LOCAL):
+            if (usages_top == sizeof(usages))
+            {
+                ERR("More than 256 individual usages defined\n");
+                return -1;
+            }
+            else
+            {
+                usages[usages_top++] = value;
+                caps->IsRange = FALSE;
+            }
+            break;
+        case SHORT_ITEM(TAG_LOCAL_USAGE_MINIMUM, TAG_TYPE_LOCAL):
+            caps->Range.UsageMin = value;
+            caps->IsRange = TRUE;
+            break;
+        case SHORT_ITEM(TAG_LOCAL_USAGE_MAXIMUM, TAG_TYPE_LOCAL):
+            caps->Range.UsageMax = value;
+            caps->IsRange = TRUE;
+            break;
+        case SHORT_ITEM(TAG_LOCAL_DESIGNATOR_INDEX, TAG_TYPE_LOCAL):
+            caps->NotRange.DesignatorIndex = value;
+            caps->IsDesignatorRange = FALSE;
+            break;
+        case SHORT_ITEM(TAG_LOCAL_DESIGNATOR_MINIMUM, TAG_TYPE_LOCAL):
+            caps->Range.DesignatorMin = value;
+            caps->IsDesignatorRange = TRUE;
+            break;
+        case SHORT_ITEM(TAG_LOCAL_DESIGNATOR_MAXIMUM, TAG_TYPE_LOCAL):
+            caps->Range.DesignatorMax = value;
+            caps->IsDesignatorRange = TRUE;
+            break;
+        case SHORT_ITEM(TAG_LOCAL_STRING_INDEX, TAG_TYPE_LOCAL):
+            caps->NotRange.StringIndex = value;
+            caps->IsStringRange = FALSE;
+            break;
+        case SHORT_ITEM(TAG_LOCAL_STRING_MINIMUM, TAG_TYPE_LOCAL):
+            caps->Range.StringMin = value;
+            caps->IsStringRange = TRUE;
+            break;
+        case SHORT_ITEM(TAG_LOCAL_STRING_MAXIMUM, TAG_TYPE_LOCAL):
+            caps->Range.StringMax = value;
+            caps->IsStringRange = TRUE;
+            break;
+        case SHORT_ITEM(TAG_LOCAL_DELIMITER, TAG_TYPE_LOCAL):
+            FIXME("delimiter %d not implemented!\n", value);
+            return -1;
+
+        default:
+            FIXME("item type %x not implemented!\n", item);
+            return -1;
+        }
+#undef SHORT_ITEM
     }
     return i;
 }
