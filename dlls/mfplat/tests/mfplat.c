@@ -664,6 +664,7 @@ static void test_source_resolver(void)
     HRESULT hr;
     GUID guid;
     float rate;
+    UINT32 rotation;
 
     if (!pMFCreateSourceResolver)
     {
@@ -849,6 +850,12 @@ static void test_source_resolver(void)
     ok(hr == S_OK, "Failed to get media sub type, hr %#x.\n", hr);
 todo_wine
     ok(IsEqualGUID(&guid, &MFVideoFormat_M4S2), "Unexpected sub type %s.\n", debugstr_guid(&guid));
+
+    hr = IMFMediaType_GetUINT32(media_type, &MF_MT_VIDEO_ROTATION, &rotation);
+    ok(hr == S_OK || broken(hr == MF_E_ATTRIBUTENOTFOUND) /* Win7 */, "Failed to get rotation, hr %#x.\n", hr);
+    if (hr == S_OK)
+        ok(rotation == MFVideoRotationFormat_0, "Got wrong rotation %u.\n", rotation);
+
     IMFMediaType_Release(media_type);
 
     hr = IMFPresentationDescriptor_SelectStream(descriptor, 0);

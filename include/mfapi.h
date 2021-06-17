@@ -449,6 +449,14 @@ typedef enum _MFWaveFormatExConvertFlags
     MFWaveFormatExConvertFlag_ForceExtensible = 1,
 } MFWaveFormatExConvertFlags;
 
+typedef enum _MFVideoRotationFormat
+{
+    MFVideoRotationFormat_0 = 0,
+    MFVideoRotationFormat_90 = 90,
+    MFVideoRotationFormat_180 = 180,
+    MFVideoRotationFormat_270 = 270
+} MFVideoRotationFormat;
+
 enum _MFT_ENUM_FLAG
 {
     MFT_ENUM_FLAG_SYNCMFT                         = 0x00000001,
