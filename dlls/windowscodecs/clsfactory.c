@@ -47,6 +47,7 @@ static const classinfo wic_classes[] = {
     {&CLSID_WICImagingFactory2, ImagingFactory_CreateInstance},
     {&CLSID_WICBmpDecoder, BmpDecoder_CreateInstance},
     {&CLSID_WICPngDecoder, PngDecoder_CreateInstance},
+    {&CLSID_WICPngDecoder2, PngDecoder_CreateInstance},
     {&CLSID_WICPngEncoder, PngEncoder_CreateInstance},
     {&CLSID_WICBmpEncoder, BmpEncoder_CreateInstance},
     {&CLSID_WICGifDecoder, GifDecoder_CreateInstance},
