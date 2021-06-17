@@ -147,7 +147,10 @@ static void copy_hidp_value_caps( HIDP_VALUE_CAPS *out, const struct hid_value_c
     out->LinkCollection = in->link_collection;
     out->LinkUsagePage = in->link_usage_page;
     out->LinkUsage = in->link_usage;
+    out->BitField = in->bit_field;
     out->IsAlias = FALSE;
+    out->IsAbsolute = HID_VALUE_CAPS_IS_ABSOLUTE( in );
+    out->HasNull = HID_VALUE_CAPS_HAS_NULL( in );
     out->BitSize = in->bit_size;
     out->ReportCount = in->report_count;
     out->UnitsExp = in->units_exp;
@@ -501,6 +504,8 @@ static int parse_descriptor( BYTE *descriptor, unsigned int index, unsigned int 
         }
         i += size;
 
+        state->items.bit_field = value;
+
 #define SHORT_ITEM(tag,type) (((tag)<<4)|((type)<<2))
         switch (item & SHORT_ITEM(0xf,0x3))
         {
@@ -660,9 +665,6 @@ static void build_elements(WINE_HID_REPORT *wine_report, WINE_HID_ELEMENT *elems
     wine_report->bitSize += wine_element->bitCount;
 
     wine_element->caps = feature->caps;
-    wine_element->caps.BitField = feature->BitField;
-    wine_element->caps.IsAbsolute = feature->IsAbsolute;
-    wine_element->caps.HasNull = feature->HasNull;
 
     if (wine_element->caps.IsRange)
     {

@@ -84,6 +84,7 @@ struct hid_value_caps
     USHORT  link_collection;
     USAGE   link_usage_page;
     USAGE   link_usage;
+    USHORT  bit_field;
     USHORT  bit_size;
     USHORT  report_count;
     LONG    logical_min;
@@ -93,6 +94,9 @@ struct hid_value_caps
     ULONG   units;
     ULONG   units_exp;
 };
+
+#define HID_VALUE_CAPS_IS_ABSOLUTE(x) (((x)->bit_field & 0x04) == 0)
+#define HID_VALUE_CAPS_HAS_NULL(x) (((x)->bit_field & 0x40) != 0)
 
 typedef struct __WINE_HID_REPORT
 {

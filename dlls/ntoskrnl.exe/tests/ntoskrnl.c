@@ -1892,7 +1892,7 @@ static void test_hidp(HANDLE file, int report_id)
         check_member(button_caps[i], expect_button_caps[i], "%04x", UsagePage);
         check_member(button_caps[i], expect_button_caps[i], "%d", ReportID);
         check_member(button_caps[i], expect_button_caps[i], "%d", IsAlias);
-        todo_wine
+        todo_wine_if(i == 1 || i == 2)
         check_member(button_caps[i], expect_button_caps[i], "%d", BitField);
         todo_wine_if(i >= 2)
         check_member(button_caps[i], expect_button_caps[i], "%d", LinkCollection);
@@ -1994,7 +1994,7 @@ static void test_hidp(HANDLE file, int report_id)
         check_member(value_caps[i], expect_value_caps[i], "%04x", UsagePage);
         check_member(value_caps[i], expect_value_caps[i], "%d", ReportID);
         check_member(value_caps[i], expect_value_caps[i], "%d", IsAlias);
-        todo_wine
+        todo_wine_if(i == 2)
         check_member(value_caps[i], expect_value_caps[i], "%d", BitField);
         check_member(value_caps[i], expect_value_caps[i], "%d", LinkCollection);
         check_member(value_caps[i], expect_value_caps[i], "%04x", LinkUsage);
