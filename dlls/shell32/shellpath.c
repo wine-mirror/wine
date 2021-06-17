@@ -4688,6 +4688,13 @@ static HRESULT _SHRegisterFolders(HKEY hRootKey, HANDLE hToken,
                 }
             }
         }
+        else
+        {
+            /* create the default dir, which may be different from the path
+             * stored in the registry. */
+            SHGetFolderPathW(NULL, folders[i] | CSIDL_FLAG_CREATE,
+             hToken, SHGFP_TYPE_DEFAULT, path);
+        }
     }
     if (hUserKey)
         RegCloseKey(hUserKey);
