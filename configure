@@ -7453,9 +7453,6 @@ done
 for ac_header in \
 	AL/al.h \
 	ApplicationServices/ApplicationServices.h \
-	AudioToolbox/AudioConverter.h \
-	AudioUnit/AudioUnit.h \
-	AudioUnit/AudioComponent.h \
 	CL/cl.h \
 	Carbon/Carbon.h \
 	CommonCrypto/CommonCryptor.h \
@@ -8974,31 +8971,11 @@ done
 
         LIBS="$ac_save_LIBS"
     fi
-    if test "$ac_cv_header_CoreAudio_CoreAudio_h" = "yes" -a "$ac_cv_header_AudioUnit_AudioUnit_h" = "yes"
+    if test "$ac_cv_header_CoreAudio_CoreAudio_h" = "yes"
     then
-        if test "$ac_cv_header_AudioUnit_AudioComponent_h" = "yes"
-        then
-            COREAUDIO_LIBS="-framework CoreFoundation -framework CoreAudio -framework AudioUnit -framework AudioToolbox -framework CoreMIDI"
+        COREAUDIO_LIBS="-framework CoreFoundation -framework CoreAudio -framework AudioUnit -framework AudioToolbox -framework CoreMIDI"
 
-        else
-                        COREAUDIO_LIBS="-framework CoreAudio -framework AudioUnit -framework CoreServices -framework AudioToolbox -framework CoreMIDI"
-
-        fi
         enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-yes}
-                ac_save_LIBS="$LIBS"
-        LIBS="$LIBS $COREAUDIO_LIBS"
-        for ac_func in AUGraphAddNode
-do :
-  ac_fn_c_check_func "$LINENO" "AUGraphAddNode" "ac_cv_func_AUGraphAddNode"
-if test "x$ac_cv_func_AUGraphAddNode" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_AUGRAPHADDNODE 1
-_ACEOF
-
-fi
-done
-
-        LIBS="$ac_save_LIBS"
     fi
     if test "$ac_cv_header_OpenAL_al_h" = "yes"
     then

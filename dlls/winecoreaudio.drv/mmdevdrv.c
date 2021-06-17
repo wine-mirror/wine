@@ -72,28 +72,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(coreaudio);
 
-#ifndef HAVE_AUDIOUNIT_AUDIOCOMPONENT_H
-/* Define new AudioComponent Manager functions for OSX 10.5 */
-typedef Component AudioComponent;
-typedef ComponentDescription AudioComponentDescription;
-typedef ComponentInstance AudioComponentInstance;
-
-static inline AudioComponent AudioComponentFindNext(AudioComponent ac, AudioComponentDescription *desc)
-{
-    return FindNextComponent(ac, desc);
-}
-
-static inline OSStatus AudioComponentInstanceNew(AudioComponent ac, AudioComponentInstance *aci)
-{
-    return OpenAComponent(ac, aci);
-}
-
-static inline OSStatus AudioComponentInstanceDispose(AudioComponentInstance aci)
-{
-    return CloseComponent(aci);
-}
-#endif
-
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
 static const REFERENCE_TIME DefaultPeriod = 100000;

@@ -431,9 +431,6 @@ AC_SYS_LARGEFILE()
 AC_CHECK_HEADERS(\
 	AL/al.h \
 	ApplicationServices/ApplicationServices.h \
-	AudioToolbox/AudioConverter.h \
-	AudioUnit/AudioUnit.h \
-	AudioUnit/AudioComponent.h \
 	CL/cl.h \
 	Carbon/Carbon.h \
 	CommonCrypto/CommonCryptor.h \
@@ -800,21 +797,10 @@ case $host_os in
         AC_CHECK_FUNCS(SSLCopyPeerCertificates)
         LIBS="$ac_save_LIBS"
     fi
-    if test "$ac_cv_header_CoreAudio_CoreAudio_h" = "yes" -a "$ac_cv_header_AudioUnit_AudioUnit_h" = "yes"
+    if test "$ac_cv_header_CoreAudio_CoreAudio_h" = "yes"
     then
-        if test "$ac_cv_header_AudioUnit_AudioComponent_h" = "yes"
-        then
-            AC_SUBST(COREAUDIO_LIBS,"-framework CoreFoundation -framework CoreAudio -framework AudioUnit -framework AudioToolbox -framework CoreMIDI")
-        else
-            dnl CoreServices needed by AudioUnit
-            AC_SUBST(COREAUDIO_LIBS,"-framework CoreAudio -framework AudioUnit -framework CoreServices -framework AudioToolbox -framework CoreMIDI")
-        fi
+        AC_SUBST(COREAUDIO_LIBS,"-framework CoreFoundation -framework CoreAudio -framework AudioUnit -framework AudioToolbox -framework CoreMIDI")
         enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-yes}
-        dnl Check for the AUGraphAddNode function
-        ac_save_LIBS="$LIBS"
-        LIBS="$LIBS $COREAUDIO_LIBS"
-        AC_CHECK_FUNCS(AUGraphAddNode)
-        LIBS="$ac_save_LIBS"
     fi
     if test "$ac_cv_header_OpenAL_al_h" = "yes"
     then

@@ -31,18 +31,6 @@
 /* Define to 1 if you have the <asm/user.h> header file. */
 #undef HAVE_ASM_USER_H
 
-/* Define to 1 if you have the <AudioToolbox/AudioConverter.h> header file. */
-#undef HAVE_AUDIOTOOLBOX_AUDIOCONVERTER_H
-
-/* Define to 1 if you have the <AudioUnit/AudioComponent.h> header file. */
-#undef HAVE_AUDIOUNIT_AUDIOCOMPONENT_H
-
-/* Define to 1 if you have the <AudioUnit/AudioUnit.h> header file. */
-#undef HAVE_AUDIOUNIT_AUDIOUNIT_H
-
-/* Define to 1 if you have the `AUGraphAddNode' function. */
-#undef HAVE_AUGRAPHADDNODE
-
 /* Define to 1 if you have the <capi20.h> header file. */
 #undef HAVE_CAPI20_H
 
