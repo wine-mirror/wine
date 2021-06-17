@@ -144,6 +144,9 @@ static void copy_hidp_value_caps( HIDP_VALUE_CAPS *out, const struct hid_value_c
 {
     out->UsagePage = in->usage_page;
     out->ReportID = in->report_id;
+    out->LinkCollection = in->link_collection;
+    out->LinkUsagePage = in->link_usage_page;
+    out->LinkUsage = in->link_usage;
     out->IsAlias = FALSE;
     out->BitSize = in->bit_size;
     out->ReportCount = in->report_count;
@@ -289,6 +292,8 @@ static void debug_print_preparsed(WINE_HIDP_PREPARSED_DATA *data)
 
 struct hid_parser_state
 {
+    HIDP_CAPS caps;
+
     USAGE usages[256];
     DWORD usages_size;
 
@@ -297,6 +302,7 @@ struct hid_parser_state
     struct hid_value_caps *stack;
     DWORD                  stack_size;
     DWORD                  global_idx;
+    DWORD                  collection_idx;
 };
 
 static BOOL array_reserve( struct hid_value_caps **array, DWORD *array_size, DWORD index )
@@ -321,12 +327,21 @@ static void copy_global_items( struct hid_value_caps *dst, const struct hid_valu
     dst->report_count = src->report_count;
 }
 
+static void copy_collection_items( struct hid_value_caps *dst, const struct hid_value_caps *src )
+{
+    dst->link_collection = src->link_collection;
+    dst->link_usage_page = src->link_usage_page;
+    dst->link_usage = src->link_usage;
+}
+
 static void reset_local_items( struct hid_parser_state *state )
 {
     struct hid_value_caps tmp;
     copy_global_items( &tmp, &state->items );
+    copy_collection_items( &tmp, &state->items );
     memset( &state->items, 0, sizeof(state->items) );
     copy_global_items( &state->items, &tmp );
+    copy_collection_items( &state->items, &tmp );
     state->usages_size = 0;
 }
 
@@ -364,9 +379,44 @@ static BOOL parse_local_usage( struct hid_parser_state *state, USAGE usage )
     return state->usages_size <= 255;
 }
 
+static BOOL parse_new_collection( struct hid_parser_state *state )
+{
+    if (!array_reserve( &state->stack, &state->stack_size, state->collection_idx ))
+    {
+        ERR( "HID parser stack overflow!\n" );
+        return FALSE;
+    }
+
+    copy_collection_items( state->stack + state->collection_idx, &state->items );
+    state->collection_idx++;
+
+    state->items.link_collection = state->caps.NumberLinkCollectionNodes;
+    state->items.link_usage_page = state->items.usage_page;
+    state->items.link_usage = state->items.usage_min;
+    state->caps.NumberLinkCollectionNodes++;
+
+    reset_local_items( state );
+    return TRUE;
+}
+
+static BOOL parse_end_collection( struct hid_parser_state *state )
+{
+    if (!state->collection_idx)
+    {
+        ERR( "HID parser collection stack underflow!\n" );
+        return FALSE;
+    }
+
+    state->collection_idx--;
+    copy_collection_items( &state->items, state->stack + state->collection_idx );
+    reset_local_items( state );
+    return TRUE;
+}
+
 static void free_parser_state( struct hid_parser_state *state )
 {
     if (state->global_idx) ERR( "%u unpopped device caps on the stack\n", state->global_idx );
+    if (state->collection_idx) ERR( "%u unpopped device collection on the stack\n", state->collection_idx );
     free( state->stack );
     free( state );
 }
@@ -496,7 +546,7 @@ static int parse_descriptor( BYTE *descriptor, unsigned int index, unsigned int 
             list_init(&subcollection->features);
             list_init(&subcollection->collections);
             parse_collection(size, value, subcollection);
-            reset_local_items( state );
+            if (!parse_new_collection( state )) return -1;
 
             if ((i = parse_descriptor( descriptor, i, length, feature_index, collection_index,
                                        subcollection, state )) < 0)
@@ -504,7 +554,7 @@ static int parse_descriptor( BYTE *descriptor, unsigned int index, unsigned int 
             continue;
         }
         case SHORT_ITEM(TAG_MAIN_END_COLLECTION, TAG_TYPE_MAIN):
-            reset_local_items( state );
+            if (!parse_end_collection( state )) return -1;
             return i;
 
         case SHORT_ITEM(TAG_GLOBAL_USAGE_PAGE, TAG_TYPE_GLOBAL):
@@ -611,9 +661,6 @@ static void build_elements(WINE_HID_REPORT *wine_report, WINE_HID_ELEMENT *elems
 
     wine_element->caps = feature->caps;
     wine_element->caps.BitField = feature->BitField;
-    wine_element->caps.LinkCollection = feature->collection->index;
-    wine_element->caps.LinkUsage = feature->collection->caps.NotRange.Usage;
-    wine_element->caps.LinkUsagePage = feature->collection->caps.UsagePage;
     wine_element->caps.IsAbsolute = feature->IsAbsolute;
     wine_element->caps.HasNull = feature->HasNull;
 

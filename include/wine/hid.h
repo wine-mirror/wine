@@ -81,6 +81,9 @@ struct hid_value_caps
     BOOLEAN is_string_range;
     BOOLEAN is_designator_range;
     UCHAR   report_id;
+    USHORT  link_collection;
+    USAGE   link_usage_page;
+    USAGE   link_usage;
     USHORT  bit_size;
     USHORT  report_count;
     LONG    logical_min;
