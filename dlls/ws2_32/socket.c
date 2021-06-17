@@ -2077,42 +2077,35 @@ static BOOL WINAPI WS2_DisconnectEx( SOCKET s, OVERLAPPED *overlapped, DWORD fla
     return !status;
 }
 
+
 /***********************************************************************
- *		getpeername		(WS2_32.5)
+ *      getpeername   (ws2_32.5)
  */
-int WINAPI WS_getpeername(SOCKET s, struct WS_sockaddr *name, int *namelen)
+int WINAPI WS_getpeername( SOCKET s, struct WS_sockaddr *addr, int *len )
 {
-    int fd;
-    int res;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
 
-    TRACE("socket %04lx, ptr %p, len %08x\n", s, name, namelen ? *namelen : 0);
+    TRACE( "socket %#lx, addr %p, len %d\n", s, addr, len ? *len : 0 );
 
-    fd = get_sock_fd( s, 0, NULL );
-    res = SOCKET_ERROR;
-
-    if (fd != -1)
+    if (!socket_list_find( s ))
     {
-        union generic_unix_sockaddr uaddr;
-        socklen_t uaddrlen = sizeof(uaddr);
-
-        if (getpeername(fd, &uaddr.addr, &uaddrlen) == 0)
-        {
-            if (!name || !namelen)
-                SetLastError(WSAEFAULT);
-            else if (ws_sockaddr_u2ws(&uaddr.addr, name, namelen) != 0)
-                /* The buffer was too small */
-                SetLastError(WSAEFAULT);
-            else
-            {
-                res = 0;
-                TRACE("=> %s\n", debugstr_sockaddr(name));
-            }
-        }
-        else
-            SetLastError(wsaErrno());
-        release_sock_fd( s, fd );
+        WSASetLastError( WSAENOTSOCK );
+        return -1;
     }
-    return res;
+
+    if (!len)
+    {
+        SetLastError( WSAEFAULT );
+        return -1;
+    }
+
+    status = NtDeviceIoControlFile( (HANDLE)s, NULL, NULL, NULL, &io,
+                                    IOCTL_AFD_WINE_GETPEERNAME, NULL, 0, addr, *len );
+    if (!status)
+        *len = io.Information;
+    SetLastError( NtStatusToWSAError( status ) );
+    return status ? -1 : 0;
 }
 
 

@@ -1540,6 +1540,32 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             break;
         }
 
+        case IOCTL_AFD_WINE_GETPEERNAME:
+        {
+            union unix_sockaddr unix_addr;
+            socklen_t unix_len = sizeof(unix_addr);
+            int len;
+
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+                return status;
+
+            if (getpeername( fd, &unix_addr.addr, &unix_len ) < 0)
+            {
+                status = sock_errno_to_status( errno );
+                break;
+            }
+
+            len = sockaddr_from_unix( &unix_addr, out_buffer, out_size );
+            if (out_size < len)
+            {
+                status = STATUS_BUFFER_TOO_SMALL;
+                break;
+            }
+            io->Information = len;
+            status = STATUS_SUCCESS;
+            break;
+        }
+
         default:
         {
             if ((code >> 16) == FILE_DEVICE_NETWORK)
