@@ -2985,9 +2985,10 @@ NTSTATUS virtual_alloc_teb( TEB **ret_teb )
 void virtual_free_teb( TEB *teb )
 {
     struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&teb->GdiTebBatch;
-    void *ptr = teb;
+    void *ptr;
     SIZE_T size;
     sigset_t sigset;
+    WOW_TEB *wow_teb = get_wow_teb( teb );
 
     signal_free_thread( teb );
     if (teb->DeallocationStack)
@@ -3000,24 +3001,15 @@ void virtual_free_teb( TEB *teb )
         size = 0;
         NtFreeVirtualMemory( GetCurrentProcess(), &thread_data->kernel_stack, &size, MEM_RELEASE );
     }
-    if (teb->WowTebOffset)
+    if (wow_teb && (ptr = ULongToPtr( wow_teb->DeallocationStack )))
     {
-#ifdef _WIN64
-        TEB32 *teb32 = (TEB32 *)((char *)teb + teb->WowTebOffset);
-        void *addr = ULongToPtr( teb32->DeallocationStack );
-#else
-        TEB64 *teb64 = (TEB64 *)((char *)teb + teb->WowTebOffset);
-        void *addr = ULongToPtr( teb64->DeallocationStack );
-#endif
-        if (addr)
-        {
-            size = 0;
-            NtFreeVirtualMemory( GetCurrentProcess(), &addr, &size, MEM_RELEASE );
-        }
+        size = 0;
+        NtFreeVirtualMemory( GetCurrentProcess(), &ptr, &size, MEM_RELEASE );
     }
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
     list_remove( &thread_data->entry );
+    ptr = teb;
     if (!is_win64) ptr = (char *)ptr - teb_offset;
     *(void **)ptr = next_free_teb;
     next_free_teb = ptr;

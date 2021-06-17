@@ -321,10 +321,17 @@ static inline void mutex_unlock( pthread_mutex_t *mutex )
 }
 
 #ifdef _WIN64
+typedef TEB32 WOW_TEB;
 static inline TEB64 *NtCurrentTeb64(void) { return NULL; }
 #else
+typedef TEB64 WOW_TEB;
 static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiBatchCount; }
 #endif
+
+static inline WOW_TEB *get_wow_teb( TEB *teb )
+{
+    return teb->WowTebOffset ? (WOW_TEB *)((char *)teb + teb->WowTebOffset) : NULL;
+}
 
 enum loadorder
 {
