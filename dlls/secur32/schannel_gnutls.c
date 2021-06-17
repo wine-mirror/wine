@@ -42,7 +42,7 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
-#if defined(SONAME_LIBGNUTLS) && !defined(HAVE_SECURITY_SECURITY_H)
+#if defined(SONAME_LIBGNUTLS)
 
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
@@ -1098,4 +1098,4 @@ void schan_imp_deinit(void)
     libgnutls_handle = NULL;
 }
 
-#endif /* SONAME_LIBGNUTLS && !HAVE_SECURITY_SECURITY_H */
+#endif /* SONAME_LIBGNUTLS */
