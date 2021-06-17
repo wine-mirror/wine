@@ -2126,6 +2126,12 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         send_len = get_req_data_size() - sizeof(*params) - params->addr_len;
         addr = (const struct WS_sockaddr *)(params + 1);
 
+        if (!params->synchronous && !sock->bound)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return 0;
+        }
+
         if (sock->accept_recv_req)
         {
             set_error( STATUS_INVALID_PARAMETER );

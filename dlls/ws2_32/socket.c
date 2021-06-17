@@ -2014,21 +2014,9 @@ static BOOL WINAPI WS2_ConnectEx( SOCKET s, const struct WS_sockaddr *name, int 
     struct afd_connect_params *params;
     void *cvalue = NULL;
     NTSTATUS status;
-    int fd, ret;
 
     TRACE( "socket %#lx, ptr %p %s, length %d, send_buffer %p, send_len %u, overlapped %p\n",
            s, name, debugstr_sockaddr(name), namelen, send_buffer, send_len, overlapped );
-
-    if ((fd = get_sock_fd( s, FILE_READ_DATA, NULL )) == -1)
-        return FALSE;
-
-    if ((ret = is_fd_bound( fd, NULL, NULL )) <= 0)
-    {
-        SetLastError( ret ? wsaErrno() : WSAEINVAL );
-        release_sock_fd( s, fd );
-        return FALSE;
-    }
-    release_sock_fd( s, fd );
 
     if (!overlapped)
     {
