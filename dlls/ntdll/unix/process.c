@@ -894,10 +894,11 @@ void fill_vm_counters( VM_COUNTERS_EX *pvmi, int unix_pid )
 {
 #if defined(MACH_TASK_BASIC_INFO)
     struct mach_task_basic_info info;
+    mach_msg_type_number_t infoCount;
 
     if (unix_pid != -1) return; /* FIXME: Retrieve information for other processes. */
 
-    mach_msg_type_number_t infoCount = MACH_TASK_BASIC_INFO_COUNT;
+    infoCount = MACH_TASK_BASIC_INFO_COUNT;
     if(task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&info, &infoCount) == KERN_SUCCESS)
     {
         pvmi->VirtualSize = info.resident_size + info.virtual_size;
