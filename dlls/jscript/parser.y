@@ -1131,6 +1131,7 @@ static statement_t *new_block_statement(parser_ctx_t *ctx, unsigned loc, stateme
     if(!ret)
         return NULL;
 
+    ret->scope_index = 0;
     ret->stat_list = list ? list->head : NULL;
 
     return &ret->stat;
