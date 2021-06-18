@@ -1605,21 +1605,15 @@ void wined3d_unordered_access_view_set_counter(struct wined3d_unordered_access_v
 void wined3d_unordered_access_view_copy_counter(struct wined3d_unordered_access_view *view,
         struct wined3d_buffer *buffer, unsigned int offset, struct wined3d_context *context)
 {
-    struct wined3d_bo_address dst, src;
-    DWORD dst_location;
+    struct wined3d_const_bo_address src;
 
     if (!view->counter_bo)
         return;
 
-    dst_location = wined3d_buffer_get_memory(buffer, context, &dst);
-    dst.addr += offset;
-
     src.buffer_object = view->counter_bo;
     src.addr = NULL;
 
-    wined3d_context_copy_bo_address(context, &dst, &src, sizeof(uint32_t));
-
-    wined3d_buffer_invalidate_location(buffer, ~dst_location);
+    wined3d_buffer_copy_bo_address(buffer, context, offset, &src, sizeof(uint32_t));
 }
 
 void wined3d_unordered_access_view_gl_update(struct wined3d_unordered_access_view_gl *uav_gl,

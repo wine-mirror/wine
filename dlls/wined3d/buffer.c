@@ -1009,28 +1009,36 @@ static HRESULT buffer_resource_sub_resource_unmap(struct wined3d_resource *resou
     return WINED3D_OK;
 }
 
+void wined3d_buffer_copy_bo_address(struct wined3d_buffer *dst_buffer, struct wined3d_context *context,
+        unsigned int dst_offset, const struct wined3d_const_bo_address *src_addr, unsigned int size)
+{
+    struct wined3d_bo_address dst_addr;
+    DWORD dst_location;
+
+    dst_location = wined3d_buffer_get_memory(dst_buffer, context, &dst_addr);
+    dst_addr.addr += dst_offset;
+
+    wined3d_context_copy_bo_address(context, &dst_addr, (const struct wined3d_bo_address *)src_addr, size);
+    wined3d_buffer_invalidate_range(dst_buffer, ~dst_location, dst_offset, size);
+}
+
 void wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_offset,
         struct wined3d_buffer *src_buffer, unsigned int src_offset, unsigned int size)
 {
-    struct wined3d_bo_address dst, src;
     struct wined3d_context *context;
-    DWORD dst_location;
+    struct wined3d_bo_address src;
 
     TRACE("dst_buffer %p, dst_offset %u, src_buffer %p, src_offset %u, size %u.\n",
             dst_buffer, dst_offset, src_buffer, src_offset, size);
 
     context = context_acquire(dst_buffer->resource.device, NULL, 0);
 
-    dst_location = wined3d_buffer_get_memory(dst_buffer, context, &dst);
-    dst.addr += dst_offset;
-
     wined3d_buffer_get_memory(src_buffer, context, &src);
     src.addr += src_offset;
 
-    wined3d_context_copy_bo_address(context, &dst, &src, size);
-    context_release(context);
+    wined3d_buffer_copy_bo_address(dst_buffer, context, dst_offset, wined3d_const_bo_address(&src), size);
 
-    wined3d_buffer_invalidate_range(dst_buffer, ~dst_location, dst_offset, size);
+    context_release(context);
 }
 
 void wined3d_buffer_upload_data(struct wined3d_buffer *buffer, struct wined3d_context *context,
