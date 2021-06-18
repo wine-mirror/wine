@@ -205,30 +205,45 @@ static BOOL stack_topn_exprval(script_ctx_t *ctx, unsigned n, exprval_t *r)
     switch(jsval_type(v)) {
     case JSV_NUMBER: {
         call_frame_t *frame = ctx->call_ctx;
+        scope_chain_t *scope;
         unsigned off = get_number(v);
 
         if(!frame->base_scope->frame && off >= frame->arguments_off) {
             DISPID id;
             BSTR name;
-            HRESULT hres;
+            HRESULT hres = E_FAIL;
 
             /* Got stack reference in deoptimized code. Need to convert it back to variable object reference. */
 
             assert(off < frame->variables_off + frame->function->var_cnt);
-            name = off >= frame->variables_off
-                ? frame->function->variables[off - frame->variables_off].name
-                : frame->function->params[off - frame->arguments_off];
-            hres = jsdisp_get_id(ctx->call_ctx->base_scope->jsobj, name, 0, &id);
-            if(FAILED(hres)) {
-                r->type = EXPRVAL_INVALID;
-                r->u.hres = hres;
-                return FALSE;
+            if (off >= frame->variables_off)
+            {
+                name = frame->function->variables[off - frame->variables_off].name;
+                scope = frame->scope;
+            }
+            else
+            {
+                name = frame->function->params[off - frame->arguments_off];
+                scope = frame->base_scope;
             }
 
-            *stack_top_ref(ctx, n+1) = jsval_obj(jsdisp_addref(frame->base_scope->jsobj));
+            while (1)
+            {
+                if (scope->jsobj && SUCCEEDED(hres = jsdisp_get_id(scope->jsobj, name, 0, &id)))
+                    break;
+                if (scope == frame->base_scope)
+                {
+                    r->type = EXPRVAL_INVALID;
+                    r->u.hres = hres;
+                    return FALSE;
+                }
+                scope = scope->next;
+            }
+
+            *stack_top_ref(ctx, n+1) = jsval_obj(jsdisp_addref(scope->jsobj));
             *stack_top_ref(ctx, n) = jsval_number(id);
             r->type = EXPRVAL_IDREF;
-            r->u.idref.disp = frame->base_scope->obj;
+            r->u.idref.disp = scope->obj;
             r->u.idref.id = id;
             return TRUE;
         }
@@ -401,11 +416,13 @@ static HRESULT scope_push(scope_chain_t *scope, jsdisp_t *jsobj, IDispatch *obj,
 
     new_scope->ref = 1;
 
-    IDispatch_AddRef(obj);
+    if (obj)
+        IDispatch_AddRef(obj);
     new_scope->jsobj = jsobj;
     new_scope->obj = obj;
     new_scope->frame = NULL;
     new_scope->next = scope ? scope_addref(scope) : NULL;
+    new_scope->scope_index = 0;
 
     *ret = new_scope;
     return S_OK;
@@ -428,7 +445,8 @@ void scope_release(scope_chain_t *scope)
     if(scope->next)
         scope_release(scope->next);
 
-    IDispatch_Release(scope->obj);
+    if (scope->obj)
+        IDispatch_Release(scope->obj);
     heap_free(scope);
 }
 
@@ -553,13 +571,59 @@ HRESULT jsval_strict_equal(jsval_t lval, jsval_t rval, BOOL *ret)
     return S_OK;
 }
 
+static HRESULT detach_scope(script_ctx_t *ctx, call_frame_t *frame, scope_chain_t *scope)
+{
+    unsigned int i, index;
+    HRESULT hres;
+
+    if (!scope->frame)
+        return S_OK;
+
+    assert(scope->frame == frame);
+    scope->frame = NULL;
+
+    if (!scope->jsobj)
+    {
+        assert(!scope->obj);
+
+        if (FAILED(hres = create_object(ctx, NULL, &scope->jsobj)))
+            return hres;
+        scope->obj = to_disp(scope->jsobj);
+    }
+
+    index = scope->scope_index;
+    for(i = 0; i < frame->function->local_scopes[index].locals_cnt; i++)
+    {
+        WCHAR *name = frame->function->local_scopes[index].locals[i].name;
+        int ref = frame->function->local_scopes[index].locals[i].ref;
+
+        if (FAILED(hres = jsdisp_propput_name(scope->jsobj, name, ctx->stack[local_off(frame, ref)])))
+            return hres;
+    }
+    return S_OK;
+}
+
+static HRESULT detach_scope_chain(script_ctx_t *ctx, call_frame_t *frame, scope_chain_t *scope)
+{
+    HRESULT hres;
+
+    while (1)
+    {
+        if ((hres = detach_scope(ctx, frame, scope)))
+            return hres;
+        if (scope == frame->base_scope)
+            break;
+        scope = scope->next;
+    }
+    return S_OK;
+}
+
 /*
  * Transfers local variables from stack to variable object.
  * It's slow, so we want to avoid it as much as possible.
  */
 static HRESULT detach_variable_object(script_ctx_t *ctx, call_frame_t *frame, BOOL from_release)
 {
-    unsigned i;
     HRESULT hres;
 
     if(!frame->base_scope || !frame->base_scope->frame)
@@ -576,15 +640,8 @@ static HRESULT detach_variable_object(script_ctx_t *ctx, call_frame_t *frame, BO
             return hres;
     }
 
-    frame->base_scope->frame = NULL;
-
-    for(i = 0; i < frame->function->local_scopes[0].locals_cnt; i++) {
-        hres = jsdisp_propput_name(frame->variable_obj, frame->function->local_scopes[0].locals[i].name,
-                                   ctx->stack[local_off(frame, frame->function->local_scopes[0].locals[i].ref)]);
-        if(FAILED(hres))
-            return hres;
-    }
-    return S_OK;
+    TRACE("detaching scope chain %p, frame %p.\n", ctx->call_ctx->scope, frame);
+    return detach_scope_chain(ctx, frame, ctx->call_ctx->scope);
 }
 
 static BOOL lookup_global_members(script_ctx_t *ctx, BSTR identifier, exprval_t *ret)
@@ -627,10 +684,10 @@ static int __cdecl local_ref_cmp(const void *key, const void *ref)
     return wcscmp((const WCHAR*)key, ((const local_ref_t*)ref)->name);
 }
 
-local_ref_t *lookup_local(const function_code_t *function, const WCHAR *identifier)
+local_ref_t *lookup_local(const function_code_t *function, const WCHAR *identifier, unsigned int scope)
 {
-    return bsearch(identifier, function->local_scopes[0].locals, function->local_scopes[0].locals_cnt,
-            sizeof(*function->local_scopes[0].locals), local_ref_cmp);
+    return bsearch(identifier, function->local_scopes[scope].locals, function->local_scopes[scope].locals_cnt,
+            sizeof(*function->local_scopes[scope].locals), local_ref_cmp);
 }
 
 /* ECMA-262 3rd Edition    10.1.4 */
@@ -647,7 +704,7 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
         for(scope = ctx->call_ctx->scope; scope; scope = scope->next) {
             if(scope->frame) {
                 function_code_t *func = scope->frame->function;
-                local_ref_t *ref = lookup_local(func, identifier);
+                local_ref_t *ref = lookup_local(func, identifier, scope->scope_index);
 
                 if(ref) {
                     ret->type = EXPRVAL_STACK_REF;
@@ -670,6 +727,10 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
                     return S_OK;
                 }
             }
+
+            if (!scope->jsobj && !scope->obj)
+                continue;
+
             if(scope->jsobj)
                 hres = jsdisp_get_id(scope->jsobj, identifier, fdexNameImplicit, &id);
             else
@@ -820,8 +881,54 @@ static HRESULT interp_forin(script_ctx_t *ctx)
     return S_OK;
 }
 
+static HRESULT scope_init_locals(script_ctx_t *ctx)
+{
+    call_frame_t *frame = ctx->call_ctx;
+    unsigned int i, off, index;
+    scope_chain_t *scope;
+    BOOL detached_vars;
+    HRESULT hres;
+
+    scope = frame->scope;
+    index = scope->scope_index;
+    detached_vars = !(frame->base_scope && frame->base_scope->frame);
+
+    if (!detached_vars)
+    {
+        assert(frame->base_scope->frame == frame);
+        frame->scope->frame = ctx->call_ctx;
+    }
+    else if (!scope->jsobj)
+    {
+        assert(!scope->obj);
+        if (FAILED(hres = create_object(ctx, NULL, &scope->jsobj)))
+            return hres;
+        scope->obj = to_disp(scope->jsobj);
+    }
+
+    for(i = 0; i < frame->function->local_scopes[index].locals_cnt; i++)
+    {
+        WCHAR *name = frame->function->local_scopes[index].locals[i].name;
+        int ref = frame->function->local_scopes[index].locals[i].ref;
+        jsval_t val = jsval_undefined();
+
+        if (detached_vars)
+        {
+            if (FAILED(hres = jsdisp_propput_name(scope->jsobj, name, val)))
+                return hres;
+        }
+        else
+        {
+            off = local_off(frame, ref);
+            jsval_release(ctx->stack[off]);
+            ctx->stack[off] = val;
+        }
+    }
+    return S_OK;
+}
+
 /* ECMA-262 3rd Edition    12.10 */
-static HRESULT interp_push_scope(script_ctx_t *ctx)
+static HRESULT interp_push_with_scope(script_ctx_t *ctx)
 {
     IDispatch *disp;
     jsval_t v;
@@ -838,6 +945,25 @@ static HRESULT interp_push_scope(script_ctx_t *ctx)
     hres = scope_push(ctx->call_ctx->scope, to_jsdisp(disp), disp, &ctx->call_ctx->scope);
     IDispatch_Release(disp);
     return hres;
+}
+
+/* ECMA-262 10th Edition   13.3.1 */
+static HRESULT interp_push_block_scope(script_ctx_t *ctx)
+{
+    unsigned int scope_index = get_op_uint(ctx, 0);
+    call_frame_t *frame = ctx->call_ctx;
+    HRESULT hres;
+
+    TRACE("scope_index %u.\n", scope_index);
+
+    hres = scope_push(ctx->call_ctx->scope, NULL, NULL, &frame->scope);
+
+    if (FAILED(hres) || !scope_index)
+        return hres;
+
+    frame->scope->scope_index = scope_index;
+
+    return scope_init_locals(ctx);
 }
 
 /* ECMA-262 3rd Edition    12.10 */

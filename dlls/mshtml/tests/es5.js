@@ -1210,17 +1210,63 @@ sync_test("head_setter", function() {
 
 
 sync_test("declaration_let", function() {
+    ok(typeof(func) === "undefined", "typeof(func)  = " + typeof(func));
+    with(new Object()) {
+        var x = false && function func() {};
+    }
+    ok(typeof(func) === "undefined", "typeof(func)  = " + typeof(func));
+
+    function expect_exception(func, todo) {
+        try {
+            func();
+        }catch(e) {
+            return;
+        }
+        if (typeof todo === 'undefined' || !todo)
+            ok(false, "expected exception");
+        else
+            todo_wine.ok(false, "expected exception");
+    }
+
+    function call_func(f, expected_a)
+    {
+        f(2, expected_a);
+    }
+
     ok(a === undefined, "a is not undefined");
     var a = 3;
 
     {
         let a = 2;
+        let b
+
+        ok(typeof b === 'undefined', "b is defined");
+        ok(b === undefined, "b !== undefined");
 
         ok(a == 2, "a != 2");
 
         a = 4;
         ok(a == 4, "a != 4");
+
+        eval('ok(a == 4, "eval: a != 4"); b = a; a = 5;')
+        ok(b == 4, "b != 4");
+        ok(a == 5, "a != 5");
+
+        function func1()
+        {
+            ok(typeof b === 'undefined', "func1: b is defined");
+            ok(b === undefined, "func1: should produce exception");
+            let b = 1;
+        }
+        expect_exception(func1, true);
+
+        function func2()
+        {
+            let b = 1;
+            ok(b == 1, "func2: b != 1");
+        }
+        func2();
     }
 
-    todo_wine.ok(a == 3, "a != 3");
+    ok(a == 3, "a != 3");
 });

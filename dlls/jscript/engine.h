@@ -75,7 +75,8 @@
     X(preinc,     1, ARG_INT,    0)        \
     X(push_acc,   1, 0,0)                  \
     X(push_except,1, ARG_ADDR,   ARG_UINT) \
-    X(push_scope, 1, 0,0)                  \
+    X(push_block_scope, 1, ARG_UINT, 0)    \
+    X(push_with_scope,  1, 0,0)            \
     X(regexp,     1, ARG_STR,    ARG_UINT) \
     X(rshift,     1, 0,0)                  \
     X(rshift2,    1, 0,0)                  \
@@ -180,7 +181,7 @@ typedef struct _function_code_t {
 } function_code_t;
 
 IDispatch *lookup_global_host(script_ctx_t*) DECLSPEC_HIDDEN;
-local_ref_t *lookup_local(const function_code_t*,const WCHAR*) DECLSPEC_HIDDEN;
+local_ref_t *lookup_local(const function_code_t*,const WCHAR*,unsigned int) DECLSPEC_HIDDEN;
 
 struct _bytecode_t {
     LONG ref;
@@ -222,6 +223,7 @@ typedef struct _scope_chain_t {
     LONG ref;
     jsdisp_t *jsobj;
     IDispatch *obj;
+    unsigned int scope_index;
     struct _call_frame_t *frame;
     struct _scope_chain_t *next;
 } scope_chain_t;

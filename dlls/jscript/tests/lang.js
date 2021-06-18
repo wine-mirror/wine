@@ -1586,6 +1586,22 @@ tmp.testWith = true;
 with(tmp)
     ok(testWith === true, "testWith !== true");
 
+function withScopeTest()
+{
+    var a = 3;
+    with({a : 2})
+    {
+        ok(a == 2, "withScopeTest: a != 2");
+        function func()
+        {
+            ok(a == 3, "withScopeTest: func: a != 3");
+        }
+        func();
+        eval('ok(a == 2, "withScopeTest: eval: a != 2");');
+    }
+}
+withScopeTest();
+
 if(false) {
     var varTest1 = true;
 }
