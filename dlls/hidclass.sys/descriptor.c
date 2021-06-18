@@ -306,6 +306,9 @@ struct hid_parser_state
     DWORD                  stack_size;
     DWORD                  global_idx;
     DWORD                  collection_idx;
+
+    struct hid_value_caps *collections;
+    DWORD                  collections_size;
 };
 
 static BOOL array_reserve( struct hid_value_caps **array, DWORD *array_size, DWORD index )
@@ -390,12 +393,24 @@ static BOOL parse_new_collection( struct hid_parser_state *state )
         return FALSE;
     }
 
+    if (!array_reserve( &state->collections, &state->collections_size, state->caps.NumberLinkCollectionNodes ))
+    {
+        ERR( "HID parser collections overflow!\n" );
+        return FALSE;
+    }
+
     copy_collection_items( state->stack + state->collection_idx, &state->items );
     state->collection_idx++;
 
+    state->collections[state->caps.NumberLinkCollectionNodes] = state->items;
     state->items.link_collection = state->caps.NumberLinkCollectionNodes;
     state->items.link_usage_page = state->items.usage_page;
     state->items.link_usage = state->items.usage_min;
+    if (!state->caps.NumberLinkCollectionNodes)
+    {
+        state->caps.UsagePage = state->items.usage_page;
+        state->caps.Usage = state->items.usage_min;
+    }
     state->caps.NumberLinkCollectionNodes++;
 
     reset_local_items( state );
@@ -421,6 +436,7 @@ static void free_parser_state( struct hid_parser_state *state )
     if (state->global_idx) ERR( "%u unpopped device caps on the stack\n", state->global_idx );
     if (state->collection_idx) ERR( "%u unpopped device collection on the stack\n", state->collection_idx );
     free( state->stack );
+    free( state->collections );
     free( state );
 }
 
@@ -727,10 +743,8 @@ static void preparse_collection(const struct collection *root, const struct coll
         WINE_HIDP_PREPARSED_DATA *data, struct preparse_ctx *ctx)
 {
     WINE_HID_ELEMENT *elem = HID_ELEMS(data);
-    WINE_HID_LINK_COLLECTION_NODE *nodes = HID_NODES(data);
     struct feature *f;
     struct collection *c;
-    struct list *entry;
 
     LIST_FOR_EACH_ENTRY(f, &base->features, struct feature, entry)
     {
@@ -775,33 +789,18 @@ static void preparse_collection(const struct collection *root, const struct coll
         }
     }
 
-    if (root != base)
-    {
-        nodes[base->index].LinkUsagePage = base->caps.UsagePage;
-        nodes[base->index].LinkUsage = base->caps.NotRange.Usage;
-        nodes[base->index].Parent = base->parent == root ? 0 : base->parent->index;
-        nodes[base->index].CollectionType = base->type;
-        nodes[base->index].IsAlias = 0;
-
-        if ((entry = list_head(&base->collections)))
-            nodes[base->index].FirstChild = LIST_ENTRY(entry, struct collection, entry)->index;
-    }
-
     LIST_FOR_EACH_ENTRY(c, &base->collections, struct collection, entry)
-    {
         preparse_collection(root, c, data, ctx);
-
-        if ((entry = list_next(&base->collections, &c->entry)))
-            nodes[c->index].NextSibling = LIST_ENTRY(entry, struct collection, entry)->index;
-        if (root != base) nodes[base->index].NumberOfChildren++;
-    }
 }
 
-static WINE_HIDP_PREPARSED_DATA* build_PreparseData(struct collection *base_collection, unsigned int node_count)
+static WINE_HIDP_PREPARSED_DATA *build_preparsed_data( struct collection *base_collection,
+                                                       struct hid_parser_state *state )
 {
+    WINE_HID_LINK_COLLECTION_NODE *nodes;
     WINE_HIDP_PREPARSED_DATA *data;
     unsigned int report_count;
     unsigned int size;
+    DWORD i;
 
     struct preparse_ctx ctx;
     unsigned int element_off;
@@ -816,18 +815,34 @@ static WINE_HIDP_PREPARSED_DATA* build_PreparseData(struct collection *base_coll
     size = element_off + (ctx.elem_count * sizeof(WINE_HID_ELEMENT));
 
     nodes_offset = size;
-    size += node_count * sizeof(WINE_HID_LINK_COLLECTION_NODE);
+    size += state->caps.NumberLinkCollectionNodes * sizeof(WINE_HID_LINK_COLLECTION_NODE);
 
     if (!(data = calloc(1, size))) return NULL;
     data->magic = HID_MAGIC;
     data->dwSize = size;
-    data->caps.Usage = base_collection->caps.NotRange.Usage;
-    data->caps.UsagePage = base_collection->caps.UsagePage;
-    data->caps.NumberLinkCollectionNodes = node_count;
+    data->caps = state->caps;
     data->elementOffset = element_off;
     data->nodesOffset = nodes_offset;
 
     preparse_collection(base_collection, base_collection, data, &ctx);
+
+    nodes = HID_NODES( data );
+    for (i = 0; i < data->caps.NumberLinkCollectionNodes; ++i)
+    {
+        nodes[i].LinkUsagePage = state->collections[i].usage_page;
+        nodes[i].LinkUsage = state->collections[i].usage_min;
+        nodes[i].Parent = state->collections[i].link_collection;
+        nodes[i].CollectionType = state->collections[i].bit_field;
+        nodes[i].IsAlias = 0;
+
+        if (i > 0)
+        {
+            nodes[i].NextSibling = nodes[nodes[i].Parent].FirstChild;
+            nodes[nodes[i].Parent].FirstChild = i;
+            nodes[nodes[i].Parent].NumberOfChildren++;
+        }
+    }
+
     return data;
 }
 
@@ -889,7 +904,7 @@ WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
 
     debug_collection(base);
 
-    if ((data = build_PreparseData(base, cidx)))
+    if ((data = build_preparsed_data( base, state )))
         debug_print_preparsed(data);
     free_collection(base);
 

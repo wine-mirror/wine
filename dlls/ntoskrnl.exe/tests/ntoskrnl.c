@@ -1500,6 +1500,20 @@ static void test_pnp_driver(struct testsign_context *ctx)
                         (val).member, (exp).member)
 #define check_member(val, exp, fmt, member) check_member_(__FILE__, __LINE__, val, exp, fmt, member)
 
+#define check_hidp_link_collection_node(a, b) check_hidp_link_collection_node_(__LINE__, a, b)
+static inline void check_hidp_link_collection_node_(int line, HIDP_LINK_COLLECTION_NODE *node,
+                                                    const HIDP_LINK_COLLECTION_NODE *exp)
+{
+    check_member_(__FILE__, line, *node, *exp, "%04x", LinkUsage);
+    check_member_(__FILE__, line, *node, *exp, "%04x", LinkUsagePage);
+    check_member_(__FILE__, line, *node, *exp, "%d", Parent);
+    check_member_(__FILE__, line, *node, *exp, "%d", NumberOfChildren);
+    check_member_(__FILE__, line, *node, *exp, "%d", NextSibling);
+    check_member_(__FILE__, line, *node, *exp, "%d", FirstChild);
+    check_member_(__FILE__, line, *node, *exp, "%d", CollectionType);
+    check_member_(__FILE__, line, *node, *exp, "%d", IsAlias);
+}
+
 #define check_hidp_button_caps(a, b) check_hidp_button_caps_(__LINE__, a, b)
 static inline void check_hidp_button_caps_(int line, HIDP_BUTTON_CAPS *caps, const HIDP_BUTTON_CAPS *exp)
 {
@@ -1850,16 +1864,7 @@ static void test_hidp(HANDLE file, int report_id)
     for (i = 0; i < ARRAY_SIZE(expect_collections); ++i)
     {
         winetest_push_context("collections[%d]", i);
-        check_member(collections[i], expect_collections[i], "%04x", LinkUsage);
-        check_member(collections[i], expect_collections[i], "%04x", LinkUsagePage);
-        check_member(collections[i], expect_collections[i], "%d", Parent);
-        check_member(collections[i], expect_collections[i], "%d", NumberOfChildren);
-        todo_wine_if(i == 1)
-        check_member(collections[i], expect_collections[i], "%d", NextSibling);
-        todo_wine_if(i == 0)
-        check_member(collections[i], expect_collections[i], "%d", FirstChild);
-        check_member(collections[i], expect_collections[i], "%d", CollectionType);
-        check_member(collections[i], expect_collections[i], "%d", IsAlias);
+        check_hidp_link_collection_node(&collections[i], &expect_collections[i]);
         winetest_pop_context();
     }
 
