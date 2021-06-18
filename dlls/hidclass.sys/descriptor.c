@@ -406,6 +406,31 @@ static BOOL parse_end_collection( struct hid_parser_state *state )
     return TRUE;
 }
 
+static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TYPE type, struct collection *collection )
+{
+    struct feature *feature;
+    int j;
+
+    for (j = 0; j < state->items.report_count; j++)
+    {
+        if (!(feature = calloc( 1, sizeof(*feature) ))) return -1;
+        list_add_tail( &collection->features, &feature->entry );
+        feature->type = type;
+        feature->isData = ((state->items.bit_field & INPUT_DATA_CONST) == 0);
+        if (j < state->usages_size) state->items.usage_min = state->usages[j];
+        copy_hidp_value_caps( &feature->caps, &state->items );
+        feature->caps.ReportCount = 1;
+        if (j + 1 >= state->usages_size)
+        {
+            feature->caps.ReportCount += state->items.report_count - (j + 1);
+            break;
+        }
+    }
+
+    reset_local_items( state );
+    return TRUE;
+}
+
 static void free_parser_state( struct hid_parser_state *state )
 {
     if (state->global_idx) ERR( "%u unpopped device caps on the stack\n", state->global_idx );
@@ -413,19 +438,6 @@ static void free_parser_state( struct hid_parser_state *state )
     free( state->stack );
     free( state->collections );
     free( state );
-}
-
-static void parse_io_feature(unsigned int bSize, int itemVal, int bTag,
-                             struct feature *feature)
-{
-    if (bSize == 0)
-    {
-        return;
-    }
-    else
-    {
-        feature->isData = ((itemVal & INPUT_DATA_CONST) == 0);
-    }
 }
 
 static void parse_collection(unsigned int bSize, int itemVal,
@@ -447,15 +459,13 @@ static void parse_collection(unsigned int bSize, int itemVal,
 static int parse_descriptor( BYTE *descriptor, unsigned int index, unsigned int length,
                              struct collection *collection, struct hid_parser_state *state )
 {
-    int i, j;
+    int i;
     UINT32 value;
     INT32 signed_value;
-    struct feature *feature;
 
     for (i = index; i < length;)
     {
         BYTE item = descriptor[i++];
-        BYTE tag = item >> 4;
         int size = item & 0x03;
 
         if (size == 3) size = 4;
@@ -482,29 +492,13 @@ static int parse_descriptor( BYTE *descriptor, unsigned int index, unsigned int 
         switch (item & SHORT_ITEM(0xf,0x3))
         {
         case SHORT_ITEM(TAG_MAIN_INPUT, TAG_TYPE_MAIN):
+            if (!parse_new_value_caps( state, HidP_Input, collection )) return -1;
+            break;
         case SHORT_ITEM(TAG_MAIN_OUTPUT, TAG_TYPE_MAIN):
+            if (!parse_new_value_caps( state, HidP_Output, collection )) return -1;
+            break;
         case SHORT_ITEM(TAG_MAIN_FEATURE, TAG_TYPE_MAIN):
-            for (j = 0; j < state->items.report_count; j++)
-            {
-                if (!(feature = calloc(1, sizeof(*feature)))) return -1;
-                list_add_tail(&collection->features, &feature->entry);
-                if (tag == TAG_MAIN_INPUT)
-                    feature->type = HidP_Input;
-                else if (tag == TAG_MAIN_OUTPUT)
-                    feature->type = HidP_Output;
-                else
-                    feature->type = HidP_Feature;
-                parse_io_feature( size, value, tag, feature );
-                if (j < state->usages_size) state->items.usage_min = state->usages[j];
-                copy_hidp_value_caps( &feature->caps, &state->items );
-                feature->caps.ReportCount = 1;
-                if (j + 1 >= state->usages_size)
-                {
-                    feature->caps.ReportCount += state->items.report_count - (j + 1);
-                    break;
-                }
-            }
-            reset_local_items( state );
+            if (!parse_new_value_caps( state, HidP_Feature, collection )) return -1;
             break;
         case SHORT_ITEM(TAG_MAIN_COLLECTION, TAG_TYPE_MAIN):
         {
