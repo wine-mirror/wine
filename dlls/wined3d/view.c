@@ -1611,7 +1611,7 @@ void wined3d_unordered_access_view_copy_counter(struct wined3d_unordered_access_
     if (!view->counter_bo)
         return;
 
-    dst_location = wined3d_buffer_get_memory(buffer, &dst, buffer->locations);
+    dst_location = wined3d_buffer_get_memory(buffer, &dst);
     dst.addr += offset;
 
     src.buffer_object = view->counter_bo;
