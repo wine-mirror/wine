@@ -304,7 +304,7 @@ void context_update_stream_info(struct wined3d_context *context, const struct wi
         else
         {
             wined3d_buffer_load(buffer, context, state);
-            wined3d_buffer_get_memory(buffer, &data);
+            wined3d_buffer_get_memory(buffer, context, &data);
             element->data.buffer_object = data.buffer_object;
             element->data.addr += (ULONG_PTR)data.addr;
         }

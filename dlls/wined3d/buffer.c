@@ -603,13 +603,26 @@ BYTE *wined3d_buffer_load_sysmem(struct wined3d_buffer *buffer, struct wined3d_c
     return buffer->resource.heap_memory;
 }
 
-DWORD wined3d_buffer_get_memory(struct wined3d_buffer *buffer, struct wined3d_bo_address *data)
+DWORD wined3d_buffer_get_memory(struct wined3d_buffer *buffer, struct wined3d_context *context,
+        struct wined3d_bo_address *data)
 {
     unsigned int locations = buffer->locations;
 
-    TRACE("buffer %p, data %p, locations %s.\n",
-            buffer, data, wined3d_debug_location(locations));
+    TRACE("buffer %p, context %p, data %p, locations %s.\n",
+            buffer, context, data, wined3d_debug_location(locations));
 
+    if (locations & WINED3D_LOCATION_DISCARDED)
+    {
+        locations = ((buffer->flags & WINED3D_BUFFER_USE_BO) ? WINED3D_LOCATION_BUFFER : WINED3D_LOCATION_SYSMEM);
+        if (!wined3d_buffer_prepare_location(buffer, context, locations))
+        {
+            data->buffer_object = 0;
+            data->addr = NULL;
+            return 0;
+        }
+        wined3d_buffer_validate_location(buffer, locations);
+        wined3d_buffer_invalidate_location(buffer, WINED3D_LOCATION_DISCARDED);
+    }
     if (locations & WINED3D_LOCATION_BUFFER)
     {
         data->buffer_object = buffer->buffer_object;
@@ -1006,13 +1019,14 @@ void wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_off
     TRACE("dst_buffer %p, dst_offset %u, src_buffer %p, src_offset %u, size %u.\n",
             dst_buffer, dst_offset, src_buffer, src_offset, size);
 
-    dst_location = wined3d_buffer_get_memory(dst_buffer, &dst);
+    context = context_acquire(dst_buffer->resource.device, NULL, 0);
+
+    dst_location = wined3d_buffer_get_memory(dst_buffer, context, &dst);
     dst.addr += dst_offset;
 
-    wined3d_buffer_get_memory(src_buffer, &src);
+    wined3d_buffer_get_memory(src_buffer, context, &src);
     src.addr += src_offset;
 
-    context = context_acquire(dst_buffer->resource.device, NULL, 0);
     wined3d_context_copy_bo_address(context, &dst, &src, size);
     context_release(context);
 
