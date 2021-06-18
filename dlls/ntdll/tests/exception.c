@@ -1309,10 +1309,8 @@ static DWORD simd_fault_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_R
             ok( rec->ExceptionCode ==  STATUS_FLOAT_MULTIPLE_TRAPS,
                 "exception code: %#x, should be %#x\n",
                 rec->ExceptionCode,  STATUS_FLOAT_MULTIPLE_TRAPS);
-            ok( rec->NumberParameters == 1 || broken(is_wow64 && rec->NumberParameters == 2),
-                "# of params: %i, should be 1\n",
-                rec->NumberParameters);
-            if( rec->NumberParameters == 1 )
+            ok( rec->NumberParameters == is_wow64 ? 2 : 1, "# of params: %i\n", rec->NumberParameters);
+            if (rec->NumberParameters >= 1)
                 ok( rec->ExceptionInformation[0] == 0, "param #1: %lx, should be 0\n", rec->ExceptionInformation[0]);
         }
         context->Eip += 3; /* skip divps */
@@ -1999,53 +1997,6 @@ static void test_kiuserexceptiondispatcher(void)
     ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
 }
 
-static BOOL test_apc_called;
-
-static void CALLBACK test_apc(ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3)
-{
-    test_apc_called = TRUE;
-}
-
-static void test_user_apc(void)
-{
-    NTSTATUS status;
-    CONTEXT context;
-    int pass;
-
-    if (!pNtQueueApcThread)
-    {
-        win_skip("NtQueueApcThread is not available.\n");
-        return;
-    }
-
-    pass = 0;
-    InterlockedIncrement(&pass);
-    RtlCaptureContext(&context);
-    InterlockedIncrement(&pass);
-
-    if (pass == 2)
-    {
-        /* Try to make sure context data is far enough below context.Esp. */
-        CONTEXT c[4];
-
-        c[0] = context;
-
-        test_apc_called = FALSE;
-        status = pNtQueueApcThread(GetCurrentThread(), test_apc, 0, 0, 0);
-        ok(!status, "Got unexpected status %#x.\n", status);
-        SleepEx(0, TRUE);
-        ok(test_apc_called, "Test user APC was not called.\n");
-        test_apc_called = FALSE;
-        status = pNtQueueApcThread(GetCurrentThread(), test_apc, 0, 0, 0);
-        ok(!status, "Got unexpected status %#x.\n", status);
-        status = NtContinue(&c[0], TRUE );
-
-        /* Broken before Win7, in that case NtContinue returns here instead of restoring context after calling APC. */
-        ok(0, "Should not get here, status %#x.\n", status);
-    }
-    ok(pass == 3, "Got unexpected pass %d.\n", pass);
-    ok(test_apc_called, "Test user APC was not called.\n");
-}
 #elif defined(__x86_64__)
 
 #define UNW_FLAG_NHANDLER  0
@@ -3078,6 +3029,381 @@ skip_params:
 
     context->Rip += except->length;
     return ExceptionContinueExecution;
+}
+
+static const BYTE segfault_code[5] =
+{
+    0x31, 0xc0, /* xor    %eax,%eax */
+    0x8f, 0x00, /* popq   (%rax) - cause exception */
+    0xc3        /* ret */
+};
+
+struct dbgreg_test
+{
+    ULONG_PTR dr0, dr1, dr2, dr3, dr6, dr7;
+};
+/* test handling of debug registers */
+static DWORD WINAPI dreg_handler( EXCEPTION_RECORD *rec, ULONG64 frame,
+                                  CONTEXT *context, DISPATCHER_CONTEXT *dispatcher )
+{
+    const struct dbgreg_test *test = *(const struct dbgreg_test **)dispatcher->HandlerData;
+
+    context->Rip += 2;	/* Skips the popq (%rax) */
+    context->Dr0 = test->dr0;
+    context->Dr1 = test->dr1;
+    context->Dr2 = test->dr2;
+    context->Dr3 = test->dr3;
+    context->Dr6 = test->dr6;
+    context->Dr7 = test->dr7;
+    return ExceptionContinueExecution;
+}
+
+#define CHECK_DEBUG_REG(n, m) \
+    ok((ctx.Dr##n & m) == test->dr##n, "(%d) failed to set debug register " #n " to %p, got %p\n", \
+       test_num, (void *)test->dr##n, (void *)ctx.Dr##n)
+
+static int check_debug_registers(int test_num, const struct dbgreg_test *test)
+{
+    CONTEXT ctx;
+    NTSTATUS status;
+
+    ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+    status = pNtGetContextThread(GetCurrentThread(), &ctx);
+    ok(status == STATUS_SUCCESS, "NtGetContextThread failed with %x\n", status);
+
+    if (!ctx.Dr0 && !ctx.Dr1 && !ctx.Dr2 && !ctx.Dr3 && !ctx.Dr6 && !ctx.Dr7)
+    {
+        win_skip( "debug registers broken\n" );
+        return 0;
+    }
+    CHECK_DEBUG_REG(0, ~0);
+    CHECK_DEBUG_REG(1, ~0);
+    CHECK_DEBUG_REG(2, ~0);
+    CHECK_DEBUG_REG(3, ~0);
+    CHECK_DEBUG_REG(6, 0x0f);
+    CHECK_DEBUG_REG(7, ~0xdc00);
+    return 1;
+}
+
+static const BYTE single_stepcode[] =
+{
+    0x9c,               /* pushf */
+    0x58,               /* pop   %rax */
+    0x0d,0,1,0,0,       /* or    $0x100,%eax */
+    0x50,               /* push   %rax */
+    0x9d,               /* popf    */
+    0x35,0,1,0,0,       /* xor    $0x100,%eax */
+    0x50,               /* push   %rax */
+    0x9d,               /* popf    */
+    0x90,
+    0xc3
+};
+
+/* test the single step exception behaviour */
+static DWORD WINAPI single_step_handler( EXCEPTION_RECORD *rec, ULONG64 frame,
+                                         CONTEXT *context, DISPATCHER_CONTEXT *dispatcher )
+{
+    got_exception++;
+    ok (!(context->EFlags & 0x100), "eflags has single stepping bit set\n");
+
+    if( got_exception < 3)
+        context->EFlags |= 0x100;  /* single step until popf instruction */
+    else {
+        /* show that the last single step exception on the popf instruction
+         * (which removed the TF bit), still is a EXCEPTION_SINGLE_STEP exception */
+        ok( rec->ExceptionCode == EXCEPTION_SINGLE_STEP,
+            "exception is not EXCEPTION_SINGLE_STEP: %x\n", rec->ExceptionCode);
+    }
+    return ExceptionContinueExecution;
+}
+
+/* Test the alignment check (AC) flag handling. */
+static const BYTE align_check_code[] =
+{
+    0x55,               /* push   %rbp */
+    0x48,0x89,0xe5,     /* mov    %rsp,%rbp */
+    0x9c,               /* pushf   */
+    0x9c,               /* pushf   */
+    0x58,               /* pop    %rax */
+    0x0d,0,0,4,0,       /* or     $0x40000,%eax */
+    0x50,               /* push   %rax */
+    0x9d,               /* popf    */
+    0x48,0x89,0xe0,     /* mov %rsp, %rax */
+    0x8b,0x40,0x1,      /* mov 0x1(%rax), %eax - cause exception */
+    0x9d,               /* popf    */
+    0x5d,               /* pop    %rbp */
+    0xc3,               /* ret     */
+};
+
+static DWORD WINAPI align_check_handler( EXCEPTION_RECORD *rec, ULONG64 frame,
+                                         CONTEXT *context, DISPATCHER_CONTEXT *dispatcher )
+{
+#ifdef __GNUC__
+    __asm__ volatile( "pushfq; andl $~0x40000,(%rsp); popfq" );
+#endif
+    ok (!(context->EFlags & 0x40000), "eflags has AC bit set\n");
+    got_exception++;
+    return ExceptionContinueExecution;
+}
+
+/* Test the direction flag handling. */
+static const BYTE direction_flag_code[] =
+{
+    0xfd,               /* std */
+    0xfa,               /* cli - cause exception */
+    0xc3,               /* ret     */
+};
+
+static DWORD WINAPI direction_flag_handler( EXCEPTION_RECORD *rec, ULONG64 frame,
+                                            CONTEXT *context, DISPATCHER_CONTEXT *dispatcher )
+{
+#ifdef __GNUC__
+    ULONG_PTR flags;
+    __asm__("pushfq; popq %0; cld" : "=r" (flags) );
+    /* older windows versions don't clear DF properly so don't test */
+    if (flags & 0x400) trace( "eflags has DF bit set\n" );
+#endif
+    ok( context->EFlags & 0x400, "context eflags has DF bit cleared\n" );
+    got_exception++;
+    context->Rip++;  /* skip cli */
+    context->EFlags &= ~0x400;  /* make sure it is cleared on return */
+    return ExceptionContinueExecution;
+}
+
+/* test single stepping over hardware breakpoint */
+static const BYTE dummy_code[] = { 0x90, 0x90, 0x90, 0xc3 };  /* nop, nop, nop, ret */
+
+static DWORD WINAPI bpx_handler( EXCEPTION_RECORD *rec, ULONG64 frame,
+                                 CONTEXT *context, DISPATCHER_CONTEXT *dispatcher )
+{
+    got_exception++;
+    ok( rec->ExceptionCode == EXCEPTION_SINGLE_STEP,
+        "wrong exception code: %x\n", rec->ExceptionCode);
+
+    if(got_exception == 1) {
+        /* hw bp exception on first nop */
+        ok( (void *)context->Rip == code_mem, "rip is wrong: %p instead of %p\n",
+            (void *)context->Rip, code_mem );
+        ok( (context->Dr6 & 0xf) == 1, "B0 flag is not set in Dr6\n");
+        ok( !(context->Dr6 & 0x4000), "BS flag is set in Dr6\n");
+        context->Dr0 = context->Dr0 + 1;  /* set hw bp again on next instruction */
+        context->EFlags |= 0x100;       /* enable single stepping */
+    } else if (got_exception == 2) {
+        /* single step exception on second nop */
+        ok( (char *)context->Rip == (char *)code_mem + 1, "rip is wrong: %p instead of %p\n",
+            (void *)context->Rip, (char *)code_mem + 1);
+        ok( (context->Dr6 & 0x4000), "BS flag is not set in Dr6\n");
+        context->EFlags |= 0x100;
+    } else if( got_exception == 3) {
+        /* hw bp exception on second nop */
+        ok( (void *)context->Rip == (char *)code_mem + 1, "rip is wrong: %p instead of %p\n",
+            (void *)context->Rip, (char *)code_mem + 1);
+        ok( (context->Dr6 & 0xf) == 1, "B0 flag is not set in Dr6\n");
+        ok( !(context->Dr6 & 0x4000), "BS flag is set in Dr6\n");
+        context->Dr0 = 0;       /* clear breakpoint */
+        context->EFlags |= 0x100;
+    } else {
+        /* single step exception on third nop */
+        ok( (void *)context->Rip == (char *)code_mem + 2, "rip is wrong: %p instead of %p\n",
+            (void *)context->Rip, (char *)code_mem + 2);
+        ok( (context->Dr6 & 0xf) == 0, "B0...3 flags in Dr6 shouldn't be set\n");
+        ok( (context->Dr6 & 0x4000), "BS flag is not set in Dr6\n");
+    }
+
+    context->Dr6 = 0;  /* clear status register */
+    return ExceptionContinueExecution;
+}
+
+/* test int3 handling */
+static const BYTE int3_code[] = { 0xcc, 0xc3 };  /* int 3, ret */
+
+static DWORD WINAPI int3_handler( EXCEPTION_RECORD *rec, ULONG64 frame,
+                                  CONTEXT *context, DISPATCHER_CONTEXT *dispatcher )
+{
+    ok( rec->ExceptionAddress == code_mem, "exception address not at: %p, but at %p\n",
+                                           code_mem,  rec->ExceptionAddress);
+    ok( (void *)context->Rip == code_mem, "rip not at: %p, but at %p\n", code_mem, (void *)context->Rip);
+    if ((void *)context->Rip == code_mem) context->Rip++; /* skip breakpoint */
+
+    return ExceptionContinueExecution;
+}
+
+/* trap unhandled exceptions */
+static LONG CALLBACK exc_filter( EXCEPTION_POINTERS *ptrs )
+{
+    printf( "%04x unhandled exception %08x at %p rip %p eflags %x\n",
+            GetCurrentProcessId(),
+            ptrs->ExceptionRecord->ExceptionCode, ptrs->ExceptionRecord->ExceptionAddress,
+            (void *)ptrs->ContextRecord->Rip, ptrs->ContextRecord->EFlags );
+    fflush( stdout );
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
+static void test_exceptions(void)
+{
+    CONTEXT ctx;
+    NTSTATUS res;
+    struct dbgreg_test dreg_test;
+
+    /* test handling of debug registers */
+    memset(&dreg_test, 0, sizeof(dreg_test));
+
+    dreg_test.dr0 = 0x42424240;
+    dreg_test.dr2 = 0x126bb070;
+    dreg_test.dr3 = 0x0badbad0;
+    dreg_test.dr7 = 0xffff0115;
+    run_exception_test(dreg_handler, &dreg_test, &segfault_code, sizeof(segfault_code), 0);
+    if (check_debug_registers(1, &dreg_test))
+    {
+        dreg_test.dr0 = 0x42424242;
+        dreg_test.dr2 = 0x100f0fe7;
+        dreg_test.dr3 = 0x0abebabe;
+        dreg_test.dr7 = 0x115;
+        run_exception_test(dreg_handler, &dreg_test, &segfault_code, sizeof(segfault_code), 0);
+        check_debug_registers(2, &dreg_test);
+
+        /* test single stepping over hardware breakpoint */
+        memset(&ctx, 0, sizeof(ctx));
+        ctx.Dr0 = (ULONG_PTR)code_mem;  /* set hw bp on first nop */
+        ctx.Dr7 = 1;
+        ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+        res = pNtSetContextThread( GetCurrentThread(), &ctx );
+        ok( res == STATUS_SUCCESS, "NtSetContextThread failed with %x\n", res);
+
+        got_exception = 0;
+        run_exception_test(bpx_handler, NULL, dummy_code, sizeof(dummy_code), 0);
+        ok( got_exception == 4,"expected 4 exceptions, got %d\n", got_exception);
+    }
+
+    /* test single stepping behavior */
+    SetUnhandledExceptionFilter( exc_filter );
+    got_exception = 0;
+    run_exception_test(single_step_handler, NULL, &single_stepcode, sizeof(single_stepcode), 0);
+    ok(got_exception == 3, "expected 3 single step exceptions, got %d\n", got_exception);
+
+    /* test alignment exceptions */
+    if (0)  /* broken on Windows */
+    {
+    got_exception = 0;
+    run_exception_test(align_check_handler, NULL, align_check_code, sizeof(align_check_code), 0);
+    ok(got_exception == 0, "got %d alignment faults, expected 0\n", got_exception);
+    }
+
+    /* test direction flag */
+    got_exception = 0;
+    run_exception_test(direction_flag_handler, NULL, direction_flag_code, sizeof(direction_flag_code), 0);
+    ok(got_exception == 1, "got %d exceptions, expected 1\n", got_exception);
+
+    /* test int3 handling */
+    run_exception_test(int3_handler, NULL, int3_code, sizeof(int3_code), 0);
+}
+
+static DWORD WINAPI simd_fault_handler( EXCEPTION_RECORD *rec, ULONG64 frame,
+                                        CONTEXT *context, DISPATCHER_CONTEXT *dispatcher )
+{
+    int *stage = *(int **)dispatcher->HandlerData;
+
+    got_exception++;
+
+    if (*stage == 1)
+    {
+        /* fault while executing sse instruction */
+        context->Rip += 3; /* skip addps */
+        return ExceptionContinueExecution;
+    }
+    else if (*stage == 2 || *stage == 3 )
+    {
+        /* stage 2 - divide by zero fault */
+        /* stage 3 - invalid operation fault */
+        if( rec->ExceptionCode == EXCEPTION_ILLEGAL_INSTRUCTION)
+            skip("system doesn't support SIMD exceptions\n");
+        else
+        {
+            ULONG expect = *stage == 2 ? EXCEPTION_FLT_DIVIDE_BY_ZERO : EXCEPTION_FLT_INVALID_OPERATION;
+            ok( rec->ExceptionCode == expect, "exception code: %#x, should be %#x\n",
+                rec->ExceptionCode, expect );
+            todo_wine
+            ok( rec->NumberParameters == 2, "# of params: %i, should be 2\n", rec->NumberParameters);
+            if (rec->NumberParameters == 2)
+            {
+                /* no idea what these mean */
+                ok( rec->ExceptionInformation[0] == 0, "param #0: %lx\n", rec->ExceptionInformation[0]);
+                ok( rec->ExceptionInformation[1] != 0, "param #1: %lx\n", rec->ExceptionInformation[1]);
+            }
+        }
+        context->Rip += 3; /* skip divps */
+    }
+    else
+        ok(FALSE, "unexpected stage %x\n", *stage);
+
+    return ExceptionContinueExecution;
+}
+
+static const BYTE simd_exception_test[] =
+{
+    0x48, 0x83, 0xec, 0x8,               /* sub $0x8, %rsp       */
+    0x0f, 0xae, 0x1c, 0x24,              /* stmxcsr (%rsp)       */
+    0x8b, 0x04, 0x24,                    /* mov    (%rsp),%eax   * store mxcsr */
+    0x66, 0x81, 0x24, 0x24, 0xff, 0xfd,  /* andw $0xfdff,(%rsp)  * enable divide by */
+    0x0f, 0xae, 0x14, 0x24,              /* ldmxcsr (%rsp)       * zero exceptions  */
+    0xb9, 0x01, 0x00, 0x00, 0x00,        /* movl   $0x1,%ecx     */
+    0x66, 0x48, 0x0f, 0x6e, 0xc9,        /* movq   %rcx,%xmm1    * fill dividend  */
+    0x0f, 0x57, 0xc0,                    /* xorps  %xmm0,%xmm0   * clear divisor  */
+    0x0f, 0x5e, 0xc8,                    /* divps  %xmm0,%xmm1   * generate fault */
+    0x89, 0x04, 0x24,                    /* mov    %eax,(%rsp)   * restore to old mxcsr */
+    0x0f, 0xae, 0x14, 0x24,              /* ldmxcsr (%rsp)       */
+    0x48, 0x83, 0xc4, 0x08,              /* add    $0x8,%rsp     */
+    0xc3,                                /* ret */
+};
+
+static const BYTE simd_exception_test2[] =
+{
+    0x48, 0x83, 0xec, 0x8,               /* sub $0x8, %rsp       */
+    0x0f, 0xae, 0x1c, 0x24,              /* stmxcsr (%rsp)       */
+    0x8b, 0x04, 0x24,                    /* mov    (%rsp),%eax   * store mxcsr */
+    0x66, 0x81, 0x24, 0x24, 0x7f, 0xff,  /* andw $0xff7f,(%rsp)  * enable invalid       */
+    0x0f, 0xae, 0x14, 0x24,              /* ldmxcsr (%rsp)       * operation exceptions */
+    0x0f, 0x57, 0xc9,                    /* xorps  %xmm1,%xmm1   * clear dividend */
+    0x0f, 0x57, 0xc0,                    /* xorps  %xmm0,%xmm0   * clear divisor  */
+    0x0f, 0x5e, 0xc8,                    /* divps  %xmm0,%xmm1   * generate fault */
+    0x89, 0x04, 0x24,                    /* mov    %eax,(%rsp)   * restore to old mxcsr */
+    0x0f, 0xae, 0x14, 0x24,              /* ldmxcsr (%rsp)       */
+    0x48, 0x83, 0xc4, 0x08,              /* add    $0x8,%rsp     */
+    0xc3,                                /* ret */
+};
+
+static const BYTE sse_check[] =
+{
+    0x0f, 0x58, 0xc8,                    /* addps  %xmm0,%xmm1 */
+    0xc3,                                /* ret */
+};
+
+static void test_simd_exceptions(void)
+{
+    int stage;
+
+    /* test if CPU & OS can do sse */
+    stage = 1;
+    got_exception = 0;
+    run_exception_test(simd_fault_handler, &stage, sse_check, sizeof(sse_check), 0);
+    if(got_exception) {
+        skip("system doesn't support SSE\n");
+        return;
+    }
+
+    /* generate a SIMD exception */
+    stage = 2;
+    got_exception = 0;
+    run_exception_test(simd_fault_handler, &stage, simd_exception_test,
+                       sizeof(simd_exception_test), 0);
+    ok(got_exception == 1, "got exception: %i, should be 1\n", got_exception);
+
+    /* generate a SIMD exception, test FPE_FLTINV */
+    stage = 3;
+    got_exception = 0;
+    run_exception_test(simd_fault_handler, &stage, simd_exception_test2,
+                       sizeof(simd_exception_test2), 0);
+    ok(got_exception == 1, "got exception: %i, should be 1\n", got_exception);
 }
 
 static void test_prot_fault(void)
@@ -5870,7 +6196,7 @@ static void test_debug_registers(void)
         ctx.Dr7 = tests[i].dr7;
 
         status = pNtSetContextThread(GetCurrentThread(), &ctx);
-        ok(status == STATUS_SUCCESS, "NtGetContextThread failed with %08x\n", status);
+        ok(status == STATUS_SUCCESS, "NtSetContextThread failed with %08x\n", status);
 
         memset(&ctx, 0, sizeof(ctx));
         ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
@@ -6488,6 +6814,55 @@ static void test_vectored_continue_handler(void)
 
     ret = pRtlRemoveVectoredContinueHandler((void *)0x11223344);
     ok(!ret, "RtlRemoveVectoredContinueHandler succeeded\n");
+}
+
+static BOOL test_apc_called;
+
+static void CALLBACK test_apc(ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3)
+{
+    test_apc_called = TRUE;
+}
+
+static void test_user_apc(void)
+{
+    NTSTATUS status;
+    CONTEXT context;
+    int pass;
+
+    if (!pNtQueueApcThread)
+    {
+        win_skip("NtQueueApcThread is not available.\n");
+        return;
+    }
+
+    pass = 0;
+    InterlockedIncrement(&pass);
+    RtlCaptureContext(&context);
+    InterlockedIncrement(&pass);
+
+    if (pass == 2)
+    {
+        /* Try to make sure context data is far enough below context.Esp. */
+        CONTEXT c[4];
+
+        c[0] = context;
+
+        test_apc_called = FALSE;
+        status = pNtQueueApcThread(GetCurrentThread(), test_apc, 0, 0, 0);
+        ok(!status, "Got unexpected status %#x.\n", status);
+        SleepEx(0, TRUE);
+        ok(test_apc_called, "Test user APC was not called.\n");
+        test_apc_called = FALSE;
+        status = pNtQueueApcThread(GetCurrentThread(), test_apc, 0, 0, 0);
+        ok(!status, "Got unexpected status %#x.\n", status);
+        status = NtContinue(&c[0], TRUE );
+
+        /* Broken before Win7, in that case NtContinue returns here instead of restoring context after calling APC. */
+        ok(broken(TRUE), "Should not get here, status %#x.\n", status);
+        return;
+    }
+    ok(pass == 3, "Got unexpected pass %d.\n", pass);
+    ok(test_apc_called, "Test user APC was not called.\n");
 }
 
 static DWORD WINAPI suspend_thread_test( void *arg )
@@ -8479,7 +8854,6 @@ START_TEST(exception)
     test_kiuserexceptiondispatcher();
     test_extended_context();
     test_copy_context();
-    test_user_apc();
 
 #elif defined(__x86_64__)
 
@@ -8498,14 +8872,14 @@ START_TEST(exception)
     X(RtlWow64GetThreadContext);
     X(RtlWow64SetThreadContext);
 #undef X
+    p_setjmp = (void *)GetProcAddress( hmsvcrt, "_setjmp" );
 
-    p_setjmp                           = (void *)GetProcAddress( hmsvcrt,
-                                                                 "_setjmp" );
-
+    test_exceptions();
     test_rtlraiseexception();
     test_debug_registers();
     test_debug_registers_wow64();
     test_debug_service(1);
+    test_simd_exceptions();
     test_virtual_unwind();
     test___C_specific_handler();
     test_restore_context();
@@ -8542,6 +8916,7 @@ START_TEST(exception)
     test_closehandle(0, (HANDLE)0xdeadbeef);
     NtCurrentTeb()->Peb->BeingDebugged = 0;
 
+    test_user_apc();
     test_vectored_continue_handler();
     test_suspend_thread();
     test_suspend_process();
