@@ -2497,6 +2497,24 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         set_reply_data( &sock->addr, sock->addr_len );
         return 1;
 
+    case IOCTL_AFD_WINE_DEFER:
+    {
+        const obj_handle_t *handle = get_req_data();
+        struct sock *acceptsock;
+
+        if (get_req_data_size() < sizeof(*handle))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return 0;
+        }
+
+        acceptsock = (struct sock *)get_handle_obj( current->process, *handle, 0, &sock_ops );
+        if (!acceptsock) return 0;
+
+        sock->deferred = acceptsock;
+        return 1;
+    }
+
     default:
         set_error( STATUS_NOT_SUPPORTED );
         return 0;
