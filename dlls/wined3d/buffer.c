@@ -1041,7 +1041,6 @@ static void wined3d_buffer_init_data(struct wined3d_buffer *buffer,
         struct wined3d_device *device, const struct wined3d_sub_resource_data *data)
 {
     struct wined3d_resource *resource = &buffer->resource;
-    struct wined3d_bo_address bo;
     struct wined3d_box box;
 
     if (buffer->flags & WINED3D_BUFFER_USE_BO)
@@ -1052,8 +1051,7 @@ static void wined3d_buffer_init_data(struct wined3d_buffer *buffer,
     }
     else
     {
-        wined3d_buffer_get_memory(buffer, &bo, WINED3D_LOCATION_SYSMEM);
-        memcpy(bo.addr, data->data, resource->size);
+        memcpy(buffer->resource.heap_memory, data->data, resource->size);
         wined3d_buffer_validate_location(buffer, WINED3D_LOCATION_SYSMEM);
         wined3d_buffer_invalidate_location(buffer, ~WINED3D_LOCATION_SYSMEM);
     }
