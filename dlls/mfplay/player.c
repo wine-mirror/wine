@@ -1977,6 +1977,9 @@ HRESULT WINAPI MFPCreateMediaPlayer(const WCHAR *url, BOOL start_playback, MFP_C
             WARN("Failed to set media item, hr %#x.\n", hr);
             goto failed;
         }
+
+        if (start_playback)
+            IMFPMediaPlayer_Play(&object->IMFPMediaPlayer_iface);
     }
 
     *player = &object->IMFPMediaPlayer_iface;
