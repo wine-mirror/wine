@@ -2280,6 +2280,11 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         if (!rec.ExceptionCode) return;
         break;
     case TRAP_x86_ALIGNFLT:  /* Alignment check exception */
+        if (EFL_sig(ucontext) & 0x00040000)
+        {
+            EFL_sig(ucontext) &= ~0x00040000;  /* reset AC flag */
+            return;
+        }
         rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
         break;
     default:
