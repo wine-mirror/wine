@@ -1319,3 +1319,25 @@ sync_test("declaration_let", function() {
 
     ok(a == 3, "a != 3");
 });
+
+sync_test("let scope instances", function() {
+    var a = [], i;
+    for(i = 0; i < 3; i++) {
+        a[i] = function() { return v; };
+        let v = i;
+    }
+    for(i = 0; i < 3; i++)
+        ok(a[i]() == i, "a[" + i + "]() = " + a[i]());
+
+    ok(typeof f == 'undefined', "f is defined");
+
+    for(i = 0; i < 3; i++) {
+        function f() { return v; }
+        a[i] = f;
+        let v = i;
+    }
+    for(i = 0; i < 3; i++)
+        ok(a[i]() == i, "a[" + i + "]() = " + a[i]());
+
+    ok(f() == 2, "f() = " + f());
+});
