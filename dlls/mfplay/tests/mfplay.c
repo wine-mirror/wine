@@ -87,6 +87,26 @@ static void test_create_player(void)
     HWND window;
     HRESULT hr;
 
+    hr = MFPCreateMediaPlayer(NULL, FALSE, 0, NULL, NULL, NULL);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+
+    hr = MFPCreateMediaPlayer(NULL, TRUE, 0, NULL, NULL, NULL);
+    ok(FAILED(hr), "Unexpected hr %#x.\n", hr);
+
+    player = (void *)0xdeadbeef;
+    hr = MFPCreateMediaPlayer(NULL, TRUE, 0, NULL, NULL, &player);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(!player, "Unexpected pointer %p.\n", player);
+
+    hr = MFPCreateMediaPlayer(L"doesnotexist.mp4", FALSE, 0, &callback, NULL, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#x.\n", hr);
+
+    hr = MFPCreateMediaPlayer(L"doesnotexist.mp4", FALSE, 0, &callback, NULL, &player);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "Unexpected hr %#x.\n", hr);
+
+    hr = MFPCreateMediaPlayer(NULL, TRUE, 0, &callback, NULL, &player);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+
     hr = MFPCreateMediaPlayer(NULL, FALSE, 0, NULL, NULL, &player);
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 

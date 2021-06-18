@@ -1911,13 +1911,25 @@ static const IMFAsyncCallbackVtbl media_player_session_events_callback_vtbl =
     media_player_session_events_callback_Invoke,
 };
 
+/***********************************************************************
+ *      MFPCreateMediaPlayer (mfplay.@)
+ */
 HRESULT WINAPI MFPCreateMediaPlayer(const WCHAR *url, BOOL start_playback, MFP_CREATION_OPTIONS options,
         IMFPMediaPlayerCallback *callback, HWND window, IMFPMediaPlayer **player)
 {
     struct media_player *object;
+    IMFPMediaItem *item;
     HRESULT hr;
 
     TRACE("%s, %d, %#x, %p, %p, %p.\n", debugstr_w(url), start_playback, options, callback, window, player);
+
+    if (!player)
+        return E_POINTER;
+
+    *player = NULL;
+
+    if (!url && start_playback)
+        return E_INVALIDARG;
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -1948,6 +1960,23 @@ HRESULT WINAPI MFPCreateMediaPlayer(const WCHAR *url, BOOL start_playback, MFP_C
     {
         object->event_window = CreateWindowW(eventclassW, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE,
                 0, mfplay_instance, NULL);
+    }
+
+    if (url)
+    {
+        if (FAILED(hr = media_player_create_item_from_url(object, url, TRUE, 0, &item)))
+        {
+            WARN("Failed to create media item, hr %#x.\n", hr);
+            goto failed;
+        }
+
+        hr = IMFPMediaPlayer_SetMediaItem(&object->IMFPMediaPlayer_iface, item);
+        IMFPMediaItem_Release(item);
+        if (FAILED(hr))
+        {
+            WARN("Failed to set media item, hr %#x.\n", hr);
+            goto failed;
+        }
     }
 
     *player = &object->IMFPMediaPlayer_iface;
