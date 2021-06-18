@@ -109,8 +109,6 @@ static const char* const collection_string[] = {
 
 struct collection {
     struct list entry;
-    HIDP_VALUE_CAPS caps;
-    unsigned int index;
     unsigned int type;
     struct collection *parent;
     struct list features;
@@ -186,15 +184,14 @@ static void debug_collection(struct collection *collection)
     struct collection *centry;
     if (TRACE_ON(hid))
     {
-        TRACE("START Collection %i <<< %s, parent: %p,  %i features,  %i collections\n",
-                collection->index, collection_string[collection->type], collection->parent,
-                list_count(&collection->features), list_count(&collection->collections));
-        TRACE("Collection %s\n", debugstr_hidp_value_caps(&collection->caps));
+        TRACE( "START Collection <<< %s, parent: %p,  %i features,  %i collections\n",
+               collection_string[collection->type], collection->parent,
+               list_count( &collection->features ), list_count( &collection->collections ) );
         LIST_FOR_EACH_ENTRY(fentry, &collection->features, struct feature, entry)
             debug_feature(fentry);
         LIST_FOR_EACH_ENTRY(centry, &collection->collections, struct collection, entry)
             debug_collection(centry);
-        TRACE(">>> END Collection %i\n", collection->index);
+        TRACE( ">>> END Collection\n" );
     }
 }
 
@@ -447,7 +444,7 @@ static void parse_collection(unsigned int bSize, int itemVal,
     }
 }
 
-static int parse_descriptor( BYTE *descriptor, unsigned int index, unsigned int length, unsigned int *collection_index,
+static int parse_descriptor( BYTE *descriptor, unsigned int index, unsigned int length,
                              struct collection *collection, struct hid_parser_state *state )
 {
     int i, j;
@@ -518,17 +515,12 @@ static int parse_descriptor( BYTE *descriptor, unsigned int index, unsigned int 
             /* Only set our collection once...
                We do not properly handle composite devices yet. */
             if (state->usages_size) state->items.usage_min = state->usages[state->usages_size - 1];
-            if (*collection_index == 0) copy_hidp_value_caps( &collection->caps, &state->items );
-            copy_hidp_value_caps( &subcollection->caps, &state->items );
-            subcollection->index = *collection_index;
-            *collection_index = *collection_index + 1;
             list_init(&subcollection->features);
             list_init(&subcollection->collections);
             parse_collection(size, value, subcollection);
             if (!parse_new_collection( state )) return -1;
 
-            if ((i = parse_descriptor( descriptor, i, length, collection_index, subcollection, state )) < 0)
-                return i;
+            if ((i = parse_descriptor( descriptor, i, length, subcollection, state )) < 0) return i;
             continue;
         }
         case SHORT_ITEM(TAG_MAIN_END_COLLECTION, TAG_TYPE_MAIN):
@@ -827,8 +819,6 @@ WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
     struct collection *base;
     int i;
 
-    unsigned int cidx;
-
     if (TRACE_ON(hid))
     {
         TRACE("descriptor %p, length %u:\n", descriptor, length);
@@ -846,12 +836,10 @@ WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
         free( state );
         return NULL;
     }
-    base->index = 1;
     list_init(&base->features);
     list_init(&base->collections);
 
-    cidx = 0;
-    if (parse_descriptor( descriptor, 0, length, &cidx, base, state ) < 0)
+    if (parse_descriptor( descriptor, 0, length, base, state ) < 0)
     {
         free_collection(base);
         free_parser_state( state );
