@@ -1445,12 +1445,6 @@ enum server_fd_type
 @END
 
 
-@REQ(set_socket_deferred)
-    obj_handle_t handle;        /* handle to the socket */
-    obj_handle_t deferred;      /* handle to the socket for which accept() is deferred */
-@END
-
-
 /* Perform a recv on a socket */
 @REQ(recv_socket)
     int          oob;           /* are we receiving OOB data? */

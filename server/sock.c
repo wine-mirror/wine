@@ -2950,24 +2950,6 @@ DECL_HANDLER(get_socket_event)
     release_object( &sock->obj );
 }
 
-DECL_HANDLER(set_socket_deferred)
-{
-    struct sock *sock, *acceptsock;
-
-    sock=(struct sock *)get_handle_obj( current->process, req->handle, FILE_WRITE_ATTRIBUTES, &sock_ops );
-    if ( !sock )
-        return;
-
-    acceptsock = (struct sock *)get_handle_obj( current->process, req->deferred, 0, &sock_ops );
-    if ( !acceptsock )
-    {
-        release_object( sock );
-        return;
-    }
-    sock->deferred = acceptsock;
-    release_object( sock );
-}
-
 DECL_HANDLER(get_socket_info)
 {
     struct sock *sock;
