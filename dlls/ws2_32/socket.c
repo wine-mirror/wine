@@ -4564,18 +4564,16 @@ SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, int *addrlen,
         return cs;
 
     case CF_DEFER:
-        SERVER_START_REQ( set_socket_deferred )
-        {
-            req->handle = wine_server_obj_handle( SOCKET2HANDLE(s) );
-            req->deferred = wine_server_obj_handle( SOCKET2HANDLE(cs) );
-            if ( !wine_server_call_err ( req ) )
-            {
-                SetLastError( WSATRY_AGAIN );
-                WS_closesocket( cs );
-            }
-        }
-        SERVER_END_REQ;
-        return SOCKET_ERROR;
+    {
+        obj_handle_t server_handle = cs;
+        IO_STATUS_BLOCK io;
+        NTSTATUS status;
+
+        status = NtDeviceIoControlFile( (HANDLE)s, NULL, NULL, NULL, &io, IOCTL_AFD_WINE_DEFER,
+                                        &server_handle, sizeof(server_handle), NULL, 0 );
+        SetLastError( status ? RtlNtStatusToDosError( status ) : WSATRY_AGAIN );
+        return -1;
+    }
 
     case CF_REJECT:
         WS_closesocket( cs );
