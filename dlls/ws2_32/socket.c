@@ -416,14 +416,6 @@ static void socket_list_remove(SOCKET socket)
     LeaveCriticalSection(&cs_socket_list);
 }
 
-typedef struct          /* WSAAsyncSelect() control struct */
-{
-  HANDLE      service, event, sock;
-  HWND        hWnd;
-  UINT        uMsg;
-  LONG        lEvent;
-} ws_select_info;
-
 #define WS_MAX_SOCKETS_PER_PROCESS      128     /* reasonable guess */
 #define WS_MAX_UDP_DATAGRAM             1024
 static INT WINAPI WSA_DefaultBlockingHook( FARPROC x );
@@ -433,9 +425,6 @@ static FARPROC blocking_hook = (FARPROC)WSA_DefaultBlockingHook;
 
 /* function prototypes */
 static int ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, int *size);
-
-int WSAIOCTL_GetInterfaceCount(void);
-int WSAIOCTL_GetInterfaceName(int intNumber, char *intName);
 
 #define MAP_OPTION(opt) { WS_##opt, opt }
 
