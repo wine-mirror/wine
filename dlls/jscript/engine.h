@@ -147,6 +147,11 @@ typedef struct {
 
 #define INVALID_LOCAL_REF 0x7fffffff
 
+typedef struct {
+    unsigned locals_cnt;
+    local_ref_t *locals;
+} local_ref_scopes_t;
+
 typedef struct _function_code_t {
     BSTR name;
     int local_ref;
@@ -168,8 +173,8 @@ typedef struct _function_code_t {
     unsigned param_cnt;
     BSTR *params;
 
-    unsigned locals_cnt;
-    local_ref_t *locals;
+    local_ref_scopes_t *local_scopes;
+    unsigned local_scope_count;
 
     bytecode_t *bytecode;
 } function_code_t;

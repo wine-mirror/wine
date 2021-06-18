@@ -578,13 +578,12 @@ static HRESULT detach_variable_object(script_ctx_t *ctx, call_frame_t *frame, BO
 
     frame->base_scope->frame = NULL;
 
-    for(i = 0; i < frame->function->locals_cnt; i++) {
-        hres = jsdisp_propput_name(frame->variable_obj, frame->function->locals[i].name,
-                                   ctx->stack[local_off(frame, frame->function->locals[i].ref)]);
+    for(i = 0; i < frame->function->local_scopes[0].locals_cnt; i++) {
+        hres = jsdisp_propput_name(frame->variable_obj, frame->function->local_scopes[0].locals[i].name,
+                                   ctx->stack[local_off(frame, frame->function->local_scopes[0].locals[i].ref)]);
         if(FAILED(hres))
             return hres;
     }
-
     return S_OK;
 }
 
@@ -630,7 +629,8 @@ static int __cdecl local_ref_cmp(const void *key, const void *ref)
 
 local_ref_t *lookup_local(const function_code_t *function, const WCHAR *identifier)
 {
-    return bsearch(identifier, function->locals, function->locals_cnt, sizeof(*function->locals), local_ref_cmp);
+    return bsearch(identifier, function->local_scopes[0].locals, function->local_scopes[0].locals_cnt,
+            sizeof(*function->local_scopes[0].locals), local_ref_cmp);
 }
 
 /* ECMA-262 3rd Edition    10.1.4 */

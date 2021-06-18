@@ -2379,10 +2379,14 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
     if(FAILED(hres))
         return hres;
 
-    func->locals = compiler_alloc(ctx->code, ctx->locals_cnt * sizeof(*func->locals));
-    if(!func->locals)
+    func->local_scope_count = 1;
+    func->local_scopes = compiler_alloc(ctx->code, func->local_scope_count * sizeof(*func->local_scopes));
+    if(!func->local_scopes)
         return E_OUTOFMEMORY;
-    func->locals_cnt = ctx->locals_cnt;
+    func->local_scopes[0].locals = compiler_alloc(ctx->code, ctx->locals_cnt * sizeof(*func->local_scopes[0].locals));
+    if(!func->local_scopes[0].locals)
+        return E_OUTOFMEMORY;
+    func->local_scopes[0].locals_cnt = ctx->locals_cnt;
 
     func->variables = compiler_alloc(ctx->code, func->var_cnt * sizeof(*func->variables));
     if(!func->variables)
@@ -2390,8 +2394,8 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
 
     i = 0;
     WINE_RB_FOR_EACH_ENTRY(local, &ctx->locals, function_local_t, entry) {
-        func->locals[i].name = local->name;
-        func->locals[i].ref = local->ref;
+        func->local_scopes[0].locals[i].name = local->name;
+        func->local_scopes[0].locals[i].ref = local->ref;
         if(local->ref >= 0) {
             func->variables[local->ref].name = local->name;
             func->variables[local->ref].func_id = -1;
