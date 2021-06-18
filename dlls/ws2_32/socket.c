@@ -4516,77 +4516,79 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 
 
 /***********************************************************************
- *              WSAAccept                        (WS2_32.26)
+ *      WSAAccept   (ws2_32.@)
  */
-SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
-               LPCONDITIONPROC lpfnCondition, DWORD_PTR dwCallbackData)
+SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, int *addrlen,
+                         LPCONDITIONPROC callback, DWORD_PTR context )
 {
+    int ret = 0, size;
+    WSABUF caller_id, caller_data, callee_id, callee_data;
+    struct WS_sockaddr src_addr, dst_addr;
+    GROUP group;
+    SOCKET cs;
 
-       int ret = 0, size;
-       WSABUF CallerId, CallerData, CalleeId, CalleeData;
-       /*        QOS SQOS, GQOS; */
-       GROUP g;
-       SOCKET cs;
-       SOCKADDR src_addr, dst_addr;
+    TRACE( "socket %#lx, addr %p, addrlen %p, callback %p, context %#lx\n",
+           s, addr, addrlen, callback, context );
 
-       TRACE("socket %04lx, sockaddr %p, addrlen %p, fnCondition %p, dwCallbackData %ld\n",
-               s, addr, addrlen, lpfnCondition, dwCallbackData);
+    cs = WS_accept(s, addr, addrlen);
+    if (cs == SOCKET_ERROR) return SOCKET_ERROR;
+    if (!callback) return cs;
 
-       cs = WS_accept(s, addr, addrlen);
-       if (cs == SOCKET_ERROR) return SOCKET_ERROR;
-       if (!lpfnCondition) return cs;
+    if (addr && addrlen)
+    {
+        caller_id.buf = (char *)addr;
+        caller_id.len = *addrlen;
+    }
+    else
+    {
+        size = sizeof(src_addr);
+        WS_getpeername( cs, &src_addr, &size );
+        caller_id.buf = (char *)&src_addr;
+        caller_id.len = size;
+    }
+    caller_data.buf = NULL;
+    caller_data.len = 0;
 
-       if (addr && addrlen)
-       {
-           CallerId.buf = (char *)addr;
-           CallerId.len = *addrlen;
-       }
-       else
-       {
-           size = sizeof(src_addr);
-           WS_getpeername(cs, &src_addr, &size);
-           CallerId.buf = (char *)&src_addr;
-           CallerId.len = size;
-       }
-       CallerData.buf = NULL;
-       CallerData.len = 0;
+    size = sizeof(dst_addr);
+    WS_getsockname( cs, &dst_addr, &size );
 
-       size = sizeof(dst_addr);
-       WS_getsockname(cs, &dst_addr, &size);
+    callee_id.buf = (char *)&dst_addr;
+    callee_id.len = sizeof(dst_addr);
 
-       CalleeId.buf = (char *)&dst_addr;
-       CalleeId.len = sizeof(dst_addr);
+    ret = (*callback)( &caller_id, &caller_data, NULL, NULL,
+                       &callee_id, &callee_data, &group, context );
 
-       ret = (*lpfnCondition)(&CallerId, &CallerData, NULL, NULL,
-                       &CalleeId, &CalleeData, &g, dwCallbackData);
+    switch (ret)
+    {
+    case CF_ACCEPT:
+        return cs;
 
-       switch (ret)
-       {
-               case CF_ACCEPT:
-                       return cs;
-               case CF_DEFER:
-                       SERVER_START_REQ( set_socket_deferred )
-                       {
-                           req->handle = wine_server_obj_handle( SOCKET2HANDLE(s) );
-                           req->deferred = wine_server_obj_handle( SOCKET2HANDLE(cs) );
-                           if ( !wine_server_call_err ( req ) )
-                           {
-                               SetLastError( WSATRY_AGAIN );
-                               WS_closesocket( cs );
-                           }
-                       }
-                       SERVER_END_REQ;
-                       return SOCKET_ERROR;
-               case CF_REJECT:
-                       WS_closesocket(cs);
-                       SetLastError(WSAECONNREFUSED);
-                       return SOCKET_ERROR;
-               default:
-                       FIXME("Unknown return type from Condition function\n");
-                       SetLastError(WSAENOTSOCK);
-                       return SOCKET_ERROR;
-       }
+    case CF_DEFER:
+        SERVER_START_REQ( set_socket_deferred )
+        {
+            req->handle = wine_server_obj_handle( SOCKET2HANDLE(s) );
+            req->deferred = wine_server_obj_handle( SOCKET2HANDLE(cs) );
+            if ( !wine_server_call_err ( req ) )
+            {
+                SetLastError( WSATRY_AGAIN );
+                WS_closesocket( cs );
+            }
+        }
+        SERVER_END_REQ;
+        return SOCKET_ERROR;
+
+    case CF_REJECT:
+        WS_closesocket( cs );
+        SetLastError( WSAECONNREFUSED );
+        return SOCKET_ERROR;
+
+    default:
+        FIXME( "Unknown return type from Condition function\n" );
+        SetLastError( WSAENOTSOCK );
+        return SOCKET_ERROR;
+    }
 }
+
 
 /***********************************************************************
  *              WSADuplicateSocketA                      (WS2_32.32)
