@@ -305,6 +305,7 @@ typedef struct _function_expression_t {
     DWORD src_len;
     unsigned func_id;
     BOOL is_statement;
+    unsigned int scope_index;
 
     struct _function_expression_t *next; /* for compiler */
 } function_expression_t;

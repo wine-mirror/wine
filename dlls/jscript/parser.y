@@ -1415,6 +1415,7 @@ static expression_t *new_function_expression(parser_ctx_t *ctx, const WCHAR *ide
     ret->src_str = src_str;
     ret->src_len = src_len;
     ret->is_statement = FALSE;
+    ret->scope_index = 0;
     ret->next = NULL;
 
     return &ret->expr;

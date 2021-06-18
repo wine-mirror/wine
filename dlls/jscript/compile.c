@@ -41,6 +41,7 @@ typedef struct _statement_ctx_t {
 
     unsigned int scope_index;
     BOOL block_scope;
+    BOOL scope_has_functions;
     struct _statement_ctx_t *next;
 } statement_ctx_t;
 
@@ -80,6 +81,7 @@ typedef struct _compiler_ctx_t {
 
     function_expression_t *func_head;
     function_expression_t *func_tail;
+    function_expression_t *current_function_expr;
 
     heap_pool_t heap;
 } compiler_ctx_t;
@@ -979,6 +981,18 @@ static HRESULT compile_object_literal(compiler_ctx_t *ctx, property_value_expres
 
 static HRESULT compile_function_expression(compiler_ctx_t *ctx, function_expression_t *expr, BOOL emit_ret)
 {
+    statement_ctx_t *stat_ctx;
+
+    assert(ctx->current_function_expr);
+
+    for(stat_ctx = ctx->stat_ctx; stat_ctx; stat_ctx = stat_ctx->next)
+    {
+        if(stat_ctx->block_scope)
+            break;
+    }
+    ctx->current_function_expr->scope_index = stat_ctx ? stat_ctx->scope_index : 0;
+    ctx->current_function_expr = ctx->current_function_expr->next;
+
     return emit_ret ? push_instr_uint(ctx, OP_func, expr->func_id) : S_OK;
 }
 
@@ -1957,15 +1971,27 @@ static BOOL alloc_variable(compiler_ctx_t *ctx, const WCHAR *name, unsigned int 
 
 static HRESULT visit_function_expression(compiler_ctx_t *ctx, function_expression_t *expr)
 {
+    statement_ctx_t *stat_ctx;
+
     expr->func_id = ctx->func->func_cnt++;
     ctx->func_tail = ctx->func_tail ? (ctx->func_tail->next = expr) : (ctx->func_head = expr);
 
     if(!expr->identifier || expr->event_target)
         return S_OK;
+
+    for (stat_ctx = ctx->stat_ctx; stat_ctx; stat_ctx = stat_ctx->next)
+    {
+        if (stat_ctx->block_scope)
+        {
+            stat_ctx->scope_has_functions = TRUE;
+            break;
+        }
+    }
+
     if(!expr->is_statement && ctx->parser->script->version >= SCRIPTLANGUAGEVERSION_ES5)
         return S_OK;
 
-    return alloc_variable(ctx, expr->identifier, 0) ? S_OK : E_OUTOFMEMORY;
+    return alloc_variable(ctx, expr->identifier, stat_ctx ? stat_ctx->scope_index : 0) ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT visit_expression(compiler_ctx_t *ctx, expression_t *expr)
@@ -2150,7 +2176,7 @@ static HRESULT visit_block_statement(compiler_ctx_t *ctx, block_statement_t *blo
         iter = iter->next;
     }
 
-    if (needs_scope && !ctx->local_scopes[stat_ctx.scope_index].locals_cnt)
+    if (needs_scope && !(ctx->local_scopes[stat_ctx.scope_index].locals_cnt || stat_ctx.scope_has_functions))
         remove_local_scope(ctx, block->scope_index);
 
     return S_OK;
@@ -2434,6 +2460,7 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
 
     func->bytecode = ctx->code;
     func->local_ref = INVALID_LOCAL_REF;
+    func->scope_index = 0;
     ctx->func_head = ctx->func_tail = NULL;
     ctx->from_eval = from_eval;
     ctx->func = func;
@@ -2518,6 +2545,7 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
         return E_OUTOFMEMORY;
     memset(func->funcs, 0, func->func_cnt * sizeof(*func->funcs));
 
+    ctx->current_function_expr = ctx->func_head;
     off = ctx->code_off;
     hres = compile_block_statement(ctx, NULL, source->statement);
     if(FAILED(hres))
@@ -2539,10 +2567,13 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
         if(FAILED(hres))
             return hres;
 
-        TRACE("[%d] func %s\n", i, debugstr_w(func->funcs[i].name));
+        func->funcs[i].scope_index = iter->scope_index;
+
+        TRACE("[%d] func %s, scope_index %u\n", i, debugstr_w(func->funcs[i].name), iter->scope_index);
         if((ctx->parser->script->version < SCRIPTLANGUAGEVERSION_ES5 || iter->is_statement) &&
            func->funcs[i].name && !func->funcs[i].event_target) {
-            local_ref_t *local_ref = lookup_local(func, func->funcs[i].name, 0);
+            local_ref_t *local_ref = lookup_local(func, func->funcs[i].name, func->funcs[i].scope_index);
+
             func->funcs[i].local_ref = local_ref->ref;
             TRACE("found ref %s %d for %s\n", debugstr_w(local_ref->name), local_ref->ref, debugstr_w(func->funcs[i].name));
             if(local_ref->ref >= 0)

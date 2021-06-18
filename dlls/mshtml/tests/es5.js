@@ -1266,6 +1266,55 @@ sync_test("declaration_let", function() {
             ok(b == 1, "func2: b != 1");
         }
         func2();
+
+        var w = 8;
+        with({w: 9})
+        {
+            {
+                let c = 5
+
+                function func3(b, expected)
+                {
+                    var b = 2
+
+                    ok(typeof d === 'undefined', "d is defined");
+
+                    ok(c == expected, "func3: c != expected");
+                    ok(w == 9, "w != 9")
+                    ok(b == 2, "func3: b != 2");
+                    b = 3;
+                    ok(b == 3, "func3: b != 3");
+                    ok(a == expected, "func3: a != expected");
+                    a = 6;
+                    c = 6;
+                }
+
+                let f3 = func3
+                let f4 = function()
+                    {
+                        ok(a == 6, "f4: a != 6");
+                    }
+
+                ok(a == 5, "tmp 2 a != 5");
+                ok(c == 5, "c != 5");
+                func3(1, 5)
+                ok(c == 6, "c != 6");
+                call_func(func3, 6);
+                f3(1, 6)
+                ok(a == 6, "a != 6");
+                ok(b == 4, "b != 4");
+                ok(c == 6, "c != 6");
+
+                call_func(f4);
+                f4();
+            }
+        }
+        {
+            let c = 4;
+            let d = 1;
+
+            func3(1, 6);
+        }
     }
 
     ok(a == 3, "a != 3");

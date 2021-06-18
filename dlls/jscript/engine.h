@@ -177,6 +177,8 @@ typedef struct _function_code_t {
     local_ref_scopes_t *local_scopes;
     unsigned local_scope_count;
 
+    unsigned int scope_index; /* index of scope in the parent function where the function is defined */
+
     bytecode_t *bytecode;
 } function_code_t;
 
