@@ -95,17 +95,6 @@ struct feature {
 
     HIDP_REPORT_TYPE type;
     BOOLEAN isData;
-    BOOLEAN isArray;
-    BOOLEAN IsAbsolute;
-    BOOLEAN Wrap;
-    BOOLEAN Linear;
-    BOOLEAN prefState;
-    BOOLEAN HasNull;
-    BOOLEAN Volatile;
-    BOOLEAN BitField;
-
-    unsigned int index;
-    struct collection *collection;
 };
 
 static const char* const collection_string[] = {
@@ -186,18 +175,7 @@ static void debug_feature(struct feature *feature)
 {
     if (!feature)
         return;
-    TRACE("[Feature type %s [%i]; %s; %s; %s; %s; %s; %s; %s; %s; %s]\n",
-    feature_string[feature->type],
-    feature->index,
-    (feature->isData)?"Data":"Const",
-    (feature->isArray)?"Array":"Var",
-    (feature->IsAbsolute)?"Abs":"Rel",
-    (feature->Wrap)?"Wrap":"NoWrap",
-    (feature->Linear)?"Linear":"NonLinear",
-    (feature->prefState)?"PrefStat":"NoPrefState",
-    (feature->HasNull)?"HasNull":"NoNull",
-    (feature->Volatile)?"Volatile":"NonVolatile",
-    (feature->BitField)?"BitField":"Buffered");
+    TRACE( "[Feature type %s %s]\n", feature_string[feature->type], (feature->isData) ? "Data" : "Const" );
 
     TRACE("Feature %s\n", debugstr_hidp_value_caps(&feature->caps));
 }
@@ -441,7 +419,6 @@ static void free_parser_state( struct hid_parser_state *state )
 }
 
 static void parse_io_feature(unsigned int bSize, int itemVal, int bTag,
-                             unsigned int *feature_index,
                              struct feature *feature)
 {
     if (bSize == 0)
@@ -451,23 +428,6 @@ static void parse_io_feature(unsigned int bSize, int itemVal, int bTag,
     else
     {
         feature->isData = ((itemVal & INPUT_DATA_CONST) == 0);
-        feature->isArray =  ((itemVal & INPUT_ARRAY_VAR) == 0);
-        feature->IsAbsolute = ((itemVal & INPUT_ABS_REL) == 0);
-        feature->Wrap = ((itemVal & INPUT_WRAP) != 0);
-        feature->Linear = ((itemVal & INPUT_LINEAR) == 0);
-        feature->prefState = ((itemVal & INPUT_PREFSTATE) == 0);
-        feature->HasNull = ((itemVal & INPUT_NULL) != 0);
-
-        if (bTag != TAG_MAIN_INPUT)
-        {
-            feature->Volatile = ((itemVal & INPUT_VOLATILE) != 0);
-        }
-        if (bSize > 1)
-        {
-            feature->BitField = ((itemVal & INPUT_BITFIELD) == 0);
-        }
-        feature->index = *feature_index;
-        *feature_index = *feature_index + 1;
     }
 }
 
@@ -487,8 +447,7 @@ static void parse_collection(unsigned int bSize, int itemVal,
     }
 }
 
-static int parse_descriptor( BYTE *descriptor, unsigned int index, unsigned int length,
-                             unsigned int *feature_index, unsigned int *collection_index,
+static int parse_descriptor( BYTE *descriptor, unsigned int index, unsigned int length, unsigned int *collection_index,
                              struct collection *collection, struct hid_parser_state *state )
 {
     int i, j;
@@ -538,11 +497,10 @@ static int parse_descriptor( BYTE *descriptor, unsigned int index, unsigned int 
                     feature->type = HidP_Output;
                 else
                     feature->type = HidP_Feature;
-                parse_io_feature(size, value, tag, feature_index, feature);
+                parse_io_feature( size, value, tag, feature );
                 if (j < state->usages_size) state->items.usage_min = state->usages[j];
                 copy_hidp_value_caps( &feature->caps, &state->items );
                 feature->caps.ReportCount = 1;
-                feature->collection = collection;
                 if (j + 1 >= state->usages_size)
                 {
                     feature->caps.ReportCount += state->items.report_count - (j + 1);
@@ -569,8 +527,7 @@ static int parse_descriptor( BYTE *descriptor, unsigned int index, unsigned int 
             parse_collection(size, value, subcollection);
             if (!parse_new_collection( state )) return -1;
 
-            if ((i = parse_descriptor( descriptor, i, length, feature_index, collection_index,
-                                       subcollection, state )) < 0)
+            if ((i = parse_descriptor( descriptor, i, length, collection_index, subcollection, state )) < 0)
                 return i;
             continue;
         }
@@ -870,7 +827,6 @@ WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
     struct collection *base;
     int i;
 
-    unsigned int feature_count = 0;
     unsigned int cidx;
 
     if (TRACE_ON(hid))
@@ -895,7 +851,7 @@ WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
     list_init(&base->collections);
 
     cidx = 0;
-    if (parse_descriptor( descriptor, 0, length, &feature_count, &cidx, base, state ) < 0)
+    if (parse_descriptor( descriptor, 0, length, &cidx, base, state ) < 0)
     {
         free_collection(base);
         free_parser_state( state );
