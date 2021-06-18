@@ -1341,3 +1341,86 @@ sync_test("let scope instances", function() {
 
     ok(f() == 2, "f() = " + f());
 });
+
+sync_test("functions scope", function() {
+    function f(){ return 1; }
+    function f(){ return 2; }
+
+    var f0 = f, f1, f2, f3, i, o, a = [];
+    ok(f0() === 2, "f0() = " + f0());
+
+    {
+        f1 = f;
+        function f() { return 3; }
+        ok(f1 === f, "f1 != f");
+        ok(f0 != f1, "f0 == f1");
+    }
+    ok(f === f1, "f != f1");
+
+    for(i = 0; i < 3; i++) {
+        a[i] = f;
+        function f() {}
+        ok(f === a[i], "f != a[i]");
+    }
+    ok(a[0] != a[1], "a[0] == a[1]");
+    ok(a[1] != a[2], "a[1] == a[2]");
+    ok(f === a[2], "f != a[2]");
+
+    {
+        f2 = f;
+        ok(f() === 4, "f() = " + f());
+        function f() { return 4; }
+
+        {
+            f3 = f;
+            ok(f() === 5, "f() = " + f());
+            function f() { return 5;}
+        }
+        ok(f() === 4, "f() = " + f());
+        ok(f === f2, "f != f2");
+    }
+    ok(f === f3, "f != f3");
+
+    with(o = {f: 1}) {
+        ok(f === 1, "f != 1");
+        {
+            ok(f() === 6, "f() = " + f());
+            function f() { return 6; }
+        }
+        ok(f === 1, "f != 1");
+        delete o.f;
+        ok(f() === 6, "f() = " + f());
+    }
+
+    if(false) {
+        function f() { throw "unexpected call"; }
+    }
+    ok(f() === 6, "f() = " + f());
+
+    /* 'with' has no effect for function defined in a single statement context. */
+    let w = 8;
+    with({w:10, value:11})
+        function with_function()
+        {
+            var except
+
+            ok(w == 8, "w != 8");
+            except = false;
+            try
+            {
+                ok(value === undefined, "value is defined");
+            }
+            catch(e)
+            {
+                except = true;
+            }
+            ok(except, "with_function: expected exception");
+
+            let ret = w;
+            w = 9;
+            return ret;
+        }
+    val = with_function();
+    ok(val == 8, "val != 8");
+    ok(w == 9, "w != 9");
+});
