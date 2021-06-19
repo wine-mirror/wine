@@ -553,13 +553,11 @@ static void test_RtlDosPathNameToNtPathName_U(void)
         winetest_push_context("%s", debugstr_w(error_paths[i]));
 
         ret = pRtlDosPathNameToNtPathName_U(error_paths[i], &nameW, &file_part, NULL);
-        todo_wine_if(i == 3 || i == 4)
         ok(!ret, "Got %d.\n", ret);
 
         if (pRtlDosPathNameToNtPathName_U_WithStatus)
         {
             status = pRtlDosPathNameToNtPathName_U_WithStatus(error_paths[i], &nameW, &file_part, NULL);
-            todo_wine_if(i == 3 || i == 4)
             ok(status == STATUS_OBJECT_NAME_INVALID || broken(status == STATUS_OBJECT_PATH_NOT_FOUND /* 2003 */),
                "Got status %#x.\n", status);
         }
