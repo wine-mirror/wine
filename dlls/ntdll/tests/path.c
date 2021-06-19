@@ -316,6 +316,11 @@ static void test_RtlGetFullPathName_U(void)
             { "...",                         "C:\\windows\\",    NULL},
             { "./foo",                       "C:\\windows\\foo", "foo"},
             { "foo/..",                      "C:\\windows",      "windows"},
+            { "\\windows\\nul",              "\\\\.\\nul",       NULL},
+            { "C:\\nonexistent\\nul",        "\\\\.\\nul",       NULL},
+            { "C:\\con\\con",                "\\\\.\\con",       NULL},
+            { "C:NUL.",                      "\\\\.\\NUL",       NULL},
+            { "C:NUL",                       "\\\\.\\NUL",       NULL},
             { "AUX",                         "\\\\.\\AUX",       NULL},
             { "COM1",                        "\\\\.\\COM1",      NULL},
             { "?<>*\"|:",                    "C:\\windows\\?<>*\"|:", "?<>*\"|:"},
@@ -458,6 +463,9 @@ static void test_RtlDosPathNameToNtPathName_U(void)
         {L"...",            L"\\??\\C:\\windows\\",         -1},
         {L"./foo",          L"\\??\\C:\\windows\\foo",      15},
         {L"foo/..",         L"\\??\\C:\\windows",            7},
+        {L"\\windows\\nul", L"\\??\\nul",                   -1},
+        {L"C:NUL.",         L"\\??\\NUL",                   -1},
+        {L"C:NUL",          L"\\??\\NUL",                   -1},
         {L"AUX" ,           L"\\??\\AUX",                   -1},
         {L"COM1" ,          L"\\??\\COM1",                  -1},
         {L"?<>*\"|:",       L"\\??\\C:\\windows\\?<>*\"|:", 15},
@@ -533,32 +541,30 @@ static void test_RtlDosPathNameToNtPathName_U(void)
         {L"cOnOuT$",        L"\\??\\cOnOuT$",               -1, L"\\??\\C:\\windows\\cOnOuT$" /* winxp */ },
         {L"CONERR$",        L"\\??\\C:\\windows\\CONERR$",  15},
     };
+    static const WCHAR *error_paths[] = {
+        NULL, L"", L" ", L"C:\\nonexistent\\nul", L"C:\\con\\con"
+    };
 
     GetCurrentDirectoryA(sizeof(curdir), curdir);
     SetCurrentDirectoryA("C:\\windows\\");
 
-    ret = pRtlDosPathNameToNtPathName_U(NULL, &nameW, &file_part, NULL);
-    ok(!ret, "Got %d.\n", ret);
-
-    ret = pRtlDosPathNameToNtPathName_U(L"", &nameW, &file_part, NULL);
-    ok(!ret, "Got %d.\n", ret);
-
-    ret = pRtlDosPathNameToNtPathName_U(L" ", &nameW, &file_part, NULL);
-    ok(!ret, "Got %d.\n", ret);
-
-    if (pRtlDosPathNameToNtPathName_U_WithStatus)
+    for (i = 0; i < ARRAY_SIZE(error_paths); ++i)
     {
-        status = pRtlDosPathNameToNtPathName_U_WithStatus(NULL, &nameW, &file_part, NULL);
-        ok(status == STATUS_OBJECT_NAME_INVALID || status == STATUS_OBJECT_PATH_NOT_FOUND /* 2003 */,
-                "Got status %#x.\n", status);
+        winetest_push_context("%s", debugstr_w(error_paths[i]));
 
-        status = pRtlDosPathNameToNtPathName_U_WithStatus(L"", &nameW, &file_part, NULL);
-        ok(status == STATUS_OBJECT_NAME_INVALID || status == STATUS_OBJECT_PATH_NOT_FOUND /* 2003 */,
-                "Got status %#x.\n", status);
+        ret = pRtlDosPathNameToNtPathName_U(error_paths[i], &nameW, &file_part, NULL);
+        todo_wine_if(i == 3 || i == 4)
+        ok(!ret, "Got %d.\n", ret);
 
-        status = pRtlDosPathNameToNtPathName_U_WithStatus(L" ", &nameW, &file_part, NULL);
-        ok(status == STATUS_OBJECT_NAME_INVALID || status == STATUS_OBJECT_PATH_NOT_FOUND /* 2003 */,
-                "Got status %#x.\n", status);
+        if (pRtlDosPathNameToNtPathName_U_WithStatus)
+        {
+            status = pRtlDosPathNameToNtPathName_U_WithStatus(error_paths[i], &nameW, &file_part, NULL);
+            todo_wine_if(i == 3 || i == 4)
+            ok(status == STATUS_OBJECT_NAME_INVALID || broken(status == STATUS_OBJECT_PATH_NOT_FOUND /* 2003 */),
+               "Got status %#x.\n", status);
+        }
+
+        winetest_pop_context();
     }
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
