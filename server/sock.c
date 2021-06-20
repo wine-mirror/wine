@@ -2515,6 +2515,23 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         return 1;
     }
 
+    case IOCTL_AFD_WINE_GET_INFO:
+    {
+        struct afd_get_info_params params;
+
+        if (get_reply_max_size() < sizeof(params))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return 0;
+        }
+
+        params.family = sock->family;
+        params.type = sock->type;
+        params.protocol = sock->proto;
+        set_reply_data( &params, sizeof(params) );
+        return 0;
+    }
+
     default:
         set_error( STATUS_NOT_SUPPORTED );
         return 0;

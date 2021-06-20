@@ -158,6 +158,7 @@ struct afd_get_events_params
 #define IOCTL_AFD_WINE_MESSAGE_SELECT       CTL_CODE(FILE_DEVICE_NETWORK, 215, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_AFD_WINE_GETPEERNAME          CTL_CODE(FILE_DEVICE_NETWORK, 216, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_AFD_WINE_DEFER                CTL_CODE(FILE_DEVICE_NETWORK, 217, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define IOCTL_AFD_WINE_GET_INFO             CTL_CODE(FILE_DEVICE_NETWORK, 218, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 struct afd_create_params
 {
@@ -216,6 +217,11 @@ struct afd_message_select_params
     user_handle_t window;
     unsigned int message;
     int mask;
+};
+
+struct afd_get_info_params
+{
+    int family, type, protocol;
 };
 
 #endif
