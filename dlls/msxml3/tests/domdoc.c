@@ -2205,6 +2205,8 @@ static void test_domnode( void )
 
     if (element)
     {
+        IXMLDOMNamedNodeMap *attributes;
+
         owner = NULL;
         r = IXMLDOMElement_get_ownerDocument( element, &owner );
         ok( r == S_OK, "get_ownerDocument return code\n");
@@ -2283,6 +2285,29 @@ static void test_domnode( void )
         ok( map != NULL, "should be attributes\n");
 
         EXPECT_CHILDREN(element);
+
+        r = IXMLDOMElement_get_childNodes( element, &list );
+        ok( r == S_OK, "Expected S_OK, ret %08x\n", r );
+        r = IXMLDOMNodeList_nextNode( list, &node ); /* <bs> */
+        ok( r == S_OK, "Expected S_OK, ret %08x\n", r );
+        IXMLDOMNode_Release( node );
+        r = IXMLDOMNodeList_nextNode( list, &node ); /* <pr> */
+        ok( r == S_OK, "Expected S_OK, ret %08x\n", r );
+        IXMLDOMNode_Release( node );
+        r = IXMLDOMNodeList_nextNode( list, &node ); /* <empty> */
+        ok( r == S_OK, "Expected S_OK, ret %08x\n", r );
+        r = IXMLDOMNode_get_attributes( node, &attributes );
+        ok( r == S_OK, "Expected S_OK, ret %08x\n", r );
+        next = (IXMLDOMNode*)0xdeadbeef;
+        r = IXMLDOMNamedNodeMap_nextNode( attributes, &next );
+        ok( r == S_FALSE, "Expected S_FALSE, ret %08x\n", r );
+        ok( next == NULL, "Expected NULL, ret %p\n", next );
+        IXMLDOMNamedNodeMap_Release( attributes );
+        IXMLDOMNode_Release( node );
+        node = NULL;
+        next = NULL;
+        IXMLDOMNodeList_Release( list );
+        list = NULL;
     }
     else
         ok( FALSE, "no element\n");

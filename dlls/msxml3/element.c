@@ -1890,6 +1890,8 @@ static HRESULT domelem_next_node(const xmlNodePtr node, LONG *iter, IXMLDOMNode 
     *nextNode = NULL;
 
     curr = node->properties;
+    if (curr == NULL)
+        return S_FALSE;
 
     for (i = 0; i < *iter; i++) {
         if (curr->next == NULL)
