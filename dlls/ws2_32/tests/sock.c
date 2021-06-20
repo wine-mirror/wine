@@ -3816,6 +3816,9 @@ static void test_fionread_siocatmark(void)
     ret = recv(client, buffer, 1, MSG_OOB);
     ok(ret == 1, "got %d\n", ret);
 
+    /* wait for the data to be available */
+    check_poll_mask_todo(client, POLLRDBAND, POLLRDBAND);
+
     check_fionread_siocatmark_todo(client, 2, FALSE);
 
     ret = recv(client, buffer, 5, 0);
@@ -3831,6 +3834,9 @@ static void test_fionread_siocatmark(void)
     ret = send(server, "a", 1, MSG_OOB);
     ok(ret == 1, "got %d\n", ret);
 
+    /* wait for the data to be available */
+    check_poll_mask(client, POLLRDBAND, POLLRDBAND);
+
     ret = 1;
     ret = setsockopt(client, SOL_SOCKET, SO_OOBINLINE, (char *)&ret, sizeof(ret));
     ok(!ret, "got error %u\n", WSAGetLastError());
@@ -3844,6 +3850,9 @@ static void test_fionread_siocatmark(void)
 
     ret = send(server, "a", 1, MSG_OOB);
     ok(ret == 1, "got %d\n", ret);
+
+    /* wait for the data to be available */
+    check_poll_mask(client, POLLRDNORM, POLLRDNORM);
 
     check_fionread_siocatmark(client, 1, TRUE);
 
