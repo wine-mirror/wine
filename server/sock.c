@@ -2967,22 +2967,6 @@ DECL_HANDLER(get_socket_event)
     release_object( &sock->obj );
 }
 
-DECL_HANDLER(get_socket_info)
-{
-    struct sock *sock;
-
-    sock = (struct sock *)get_handle_obj( current->process, req->handle, FILE_READ_ATTRIBUTES, &sock_ops );
-    if (!sock) return;
-
-    if (get_unix_fd( sock->fd ) == -1) return;
-
-    reply->family   = sock->family;
-    reply->type     = sock->type;
-    reply->protocol = sock->proto;
-
-    release_object( &sock->obj );
-}
-
 DECL_HANDLER(recv_socket)
 {
     struct sock *sock = (struct sock *)get_handle_obj( current->process, req->async.handle, 0, &sock_ops );

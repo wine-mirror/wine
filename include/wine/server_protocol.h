@@ -1747,22 +1747,6 @@ struct get_socket_event_reply
 
 
 
-struct get_socket_info_request
-{
-    struct request_header __header;
-    obj_handle_t handle;
-};
-struct get_socket_info_reply
-{
-    struct reply_header __header;
-    int family;
-    int type;
-    int protocol;
-    char __pad_20[4];
-};
-
-
-
 struct recv_socket_request
 {
     struct request_header __header;
@@ -5473,7 +5457,6 @@ enum request
     REQ_lock_file,
     REQ_unlock_file,
     REQ_get_socket_event,
-    REQ_get_socket_info,
     REQ_recv_socket,
     REQ_poll_socket,
     REQ_send_socket,
@@ -5754,7 +5737,6 @@ union generic_request
     struct lock_file_request lock_file_request;
     struct unlock_file_request unlock_file_request;
     struct get_socket_event_request get_socket_event_request;
-    struct get_socket_info_request get_socket_info_request;
     struct recv_socket_request recv_socket_request;
     struct poll_socket_request poll_socket_request;
     struct send_socket_request send_socket_request;
@@ -6033,7 +6015,6 @@ union generic_reply
     struct lock_file_reply lock_file_reply;
     struct unlock_file_reply unlock_file_reply;
     struct get_socket_event_reply get_socket_event_reply;
-    struct get_socket_info_reply get_socket_info_reply;
     struct recv_socket_reply recv_socket_reply;
     struct poll_socket_reply poll_socket_reply;
     struct send_socket_reply send_socket_reply;
@@ -6257,7 +6238,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 714
+#define SERVER_PROTOCOL_VERSION 715
 
 /* ### protocol_version end ### */
 
