@@ -6064,7 +6064,7 @@ static void test_WSAPoll(void)
     WSASetLastError(0xdeadbeef);
     ret = pWSAPoll(fds, 2, 0);
     ok(!ret, "got %d\n", ret);
-    todo_wine ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+    ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
     ok(fds[0].revents == POLLNVAL, "got events %#x\n", fds[0].revents);
     ok(!fds[1].revents, "got events %#x\n", fds[1].revents);
 
@@ -6077,7 +6077,7 @@ static void test_WSAPoll(void)
     WSASetLastError(0xdeadbeef);
     ret = pWSAPoll(fds, 2, 0);
     ok(!ret, "got %d\n", ret);
-    todo_wine ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+    ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
     ok(!fds[0].revents, "got events %#x\n", fds[0].revents);
     ok(fds[1].revents == POLLNVAL, "got events %#x\n", fds[1].revents);
 
@@ -6102,7 +6102,7 @@ static void test_WSAPoll(void)
     fds[1].revents = 0xdead;
     WSASetLastError(0xdeadbeef);
     ret = pWSAPoll(fds, 2, 0);
-    todo_wine ok(ret == -1, "got %d\n", ret);
+    ok(ret == -1, "got %d\n", ret);
     ok(WSAGetLastError() == WSAENOTSOCK, "got error %u\n", WSAGetLastError());
     ok(fds[0].revents == POLLNVAL, "got events %#x\n", fds[0].revents);
     ok(fds[1].revents == POLLNVAL, "got events %#x\n", fds[1].revents);
@@ -6222,8 +6222,8 @@ static void test_WSAPoll(void)
     ok(ret == 1, "got %d\n", ret);
 
     check_poll(client, POLLWRNORM);
-    check_poll_mask_todo(server, POLLRDNORM | POLLRDBAND, POLLRDNORM);
-    check_poll_todo(server, POLLWRNORM | POLLRDNORM);
+    check_poll_mask(server, POLLRDNORM | POLLRDBAND, POLLRDNORM);
+    check_poll(server, POLLWRNORM | POLLRDNORM);
 
     buffer[0] = 0xcc;
     ret = recv(server, buffer, 1, 0);
@@ -6261,8 +6261,8 @@ static void test_WSAPoll(void)
 
     closesocket(client);
 
-    check_poll_mask_todo(server, 0, POLLHUP);
-    check_poll_todo(server, POLLWRNORM | POLLHUP);
+    check_poll_mask(server, 0, POLLHUP);
+    check_poll(server, POLLWRNORM | POLLHUP);
 
     closesocket(server);
 
