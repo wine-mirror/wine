@@ -190,8 +190,6 @@ struct per_thread_data
     struct WS_hostent *he_buffer;
     struct WS_servent *se_buffer;
     struct WS_protoent *pe_buffer;
-    struct pollfd *fd_cache;
-    unsigned int fd_count;
     int he_len;
     int se_len;
     int pe_len;
