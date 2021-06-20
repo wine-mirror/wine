@@ -1433,41 +1433,29 @@ static INT WS_DuplicateSocket(BOOL unicode, SOCKET s, DWORD dwProcessId, LPWSAPR
 
 static BOOL ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, int *size)
 {
+    struct afd_get_info_params params;
+    IO_STATUS_BLOCK io;
     NTSTATUS status;
-    int address_family;
-    int socket_type;
-    int protocol;
     unsigned int i;
 
     *size = unicode ? sizeof(WSAPROTOCOL_INFOW) : sizeof(WSAPROTOCOL_INFOA);
     memset(buffer, 0, *size);
 
-    SERVER_START_REQ( get_socket_info )
-    {
-        req->handle  = wine_server_obj_handle( SOCKET2HANDLE(s) );
-        status = wine_server_call( req );
-        if (!status)
-        {
-            address_family = reply->family;
-            socket_type = reply->type;
-            protocol = reply->protocol;
-        }
-    }
-    SERVER_END_REQ;
-
+    status = NtDeviceIoControlFile( (HANDLE)s, NULL, NULL, NULL, &io,
+                                    IOCTL_AFD_WINE_GET_INFO, NULL, 0, &params, sizeof(params) );
     if (status)
     {
-        unsigned int err = NtStatusToWSAError( status );
-        SetLastError( err == WSAEBADF ? WSAENOTSOCK : err );
+        SetLastError( NtStatusToWSAError( status ) );
         return FALSE;
     }
 
     for (i = 0; i < ARRAY_SIZE(supported_protocols); ++i)
     {
         const WSAPROTOCOL_INFOW *info = &supported_protocols[i];
-        if (address_family == info->iAddressFamily &&
-            socket_type == info->iSocketType &&
-            protocol >= info->iProtocol && protocol <= info->iProtocol + info->iProtocolMaxOffset)
+        if (params.family == info->iAddressFamily &&
+            params.type == info->iSocketType &&
+            params.protocol >= info->iProtocol &&
+            params.protocol <= info->iProtocol + info->iProtocolMaxOffset)
         {
             if (unicode)
                 *buffer = *info;
@@ -1478,12 +1466,12 @@ static BOOL ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, i
                 WideCharToMultiByte( CP_ACP, 0, info->szProtocol, -1,
                                      bufferA->szProtocol, sizeof(bufferA->szProtocol), NULL, NULL );
             }
-            buffer->iProtocol = protocol;
+            buffer->iProtocol = params.protocol;
             return TRUE;
         }
     }
-    FIXME("Could not fill protocol information for family %d, type %d, protocol %d.\n",
-            address_family, socket_type, protocol);
+    FIXME( "Could not fill protocol information for family %d, type %d, protocol %d.\n",
+            params.family, params.type, params.protocol );
     return TRUE;
 }
 
