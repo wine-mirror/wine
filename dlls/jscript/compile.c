@@ -568,6 +568,24 @@ static HRESULT emit_member_expression(compiler_ctx_t *ctx, expression_t *expr)
     return S_OK;
 }
 
+static void push_compiler_statement_ctx(compiler_ctx_t *ctx, statement_ctx_t *stat_ctx)
+{
+    if (stat_ctx)
+    {
+        stat_ctx->next = ctx->stat_ctx;
+        ctx->stat_ctx = stat_ctx;
+    }
+}
+
+static void pop_compiler_statement_ctx(compiler_ctx_t *ctx, statement_ctx_t *stat_ctx)
+{
+    if (stat_ctx)
+    {
+        assert(ctx->stat_ctx == stat_ctx);
+        ctx->stat_ctx = stat_ctx->next;
+    }
+}
+
 static HRESULT compile_memberid_expression(compiler_ctx_t *ctx, expression_t *expr, unsigned flags)
 {
     HRESULT hres;
@@ -1866,10 +1884,7 @@ static HRESULT compile_statement(compiler_ctx_t *ctx, statement_ctx_t *stat_ctx,
 {
     HRESULT hres;
 
-    if(stat_ctx) {
-        stat_ctx->next = ctx->stat_ctx;
-        ctx->stat_ctx = stat_ctx;
-    }
+    push_compiler_statement_ctx(ctx, stat_ctx);
 
     set_compiler_loc(ctx, stat->loc);
 
@@ -1926,10 +1941,7 @@ static HRESULT compile_statement(compiler_ctx_t *ctx, statement_ctx_t *stat_ctx,
     DEFAULT_UNREACHABLE;
     }
 
-    if(stat_ctx) {
-        assert(ctx->stat_ctx == stat_ctx);
-        ctx->stat_ctx = stat_ctx->next;
-    }
+    pop_compiler_statement_ctx(ctx, stat_ctx);
 
     return hres;
 }
@@ -2186,11 +2198,7 @@ static HRESULT visit_statement(compiler_ctx_t *ctx, statement_ctx_t *stat_ctx, s
 {
     HRESULT hres = S_OK;
 
-    if(stat_ctx)
-    {
-        stat_ctx->next = ctx->stat_ctx;
-        ctx->stat_ctx = stat_ctx;
-    }
+    push_compiler_statement_ctx(ctx, stat_ctx);
 
     switch(stat->type) {
     case STAT_BLOCK:
@@ -2352,11 +2360,7 @@ static HRESULT visit_statement(compiler_ctx_t *ctx, statement_ctx_t *stat_ctx, s
     DEFAULT_UNREACHABLE;
     }
 
-    if(stat_ctx)
-    {
-        assert(ctx->stat_ctx == stat_ctx);
-        ctx->stat_ctx = stat_ctx->next;
-    }
+    pop_compiler_statement_ctx(ctx, stat_ctx);
 
     return hres;
 }
