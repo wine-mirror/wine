@@ -634,6 +634,10 @@ HTHEME WINAPI OpenThemeDataEx(HWND hwnd, LPCWSTR pszClassList, DWORD flags)
 
         if (pszUseClassList)
             hTheme = MSSTYLES_OpenThemeClass(pszAppName, pszUseClassList);
+
+        /* Fall back to default class if the specified subclass is not found */
+        if (!hTheme)
+            hTheme = MSSTYLES_OpenThemeClass(NULL, pszUseClassList);
     }
     if(IsWindow(hwnd))
         SetPropW(hwnd, (LPCWSTR)MAKEINTATOM(atWindowTheme), hTheme);

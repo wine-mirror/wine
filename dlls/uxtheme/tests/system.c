@@ -127,7 +127,7 @@ todo_wine
         ok(hRes == S_OK, "Expected S_OK, got 0x%08x.\n", hRes);
 
         hTheme = OpenThemeData(hWnd, L"Button");
-        todo_wine ok(!!hTheme, "OpenThemeData failed.\n");
+        ok(!!hTheme, "OpenThemeData failed.\n");
         CloseThemeData(hTheme);
     }
     else
