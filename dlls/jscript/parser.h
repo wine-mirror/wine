@@ -171,6 +171,7 @@ typedef struct {
     expression_t *end_expr;
     unsigned end_loc;
     statement_t *statement;
+    unsigned int scope_index;
 } for_statement_t;
 
 typedef struct {

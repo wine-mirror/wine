@@ -1330,6 +1330,18 @@ sync_test("declaration_let", function() {
         except = true;
     }
     ok(except, "with({w:9}) let a = 3: expected exception.");
+
+    let for_count = 0;
+    for (let for_i1 = 0, for_i2 = 1; for_i1 < 3; ++for_i1, ++for_i2, ++for_count)
+    {
+        let for_i2 = 10;
+
+        ok(for_i2 == 10, "for_i2 != 10");
+    }
+
+    ok(typeof for_i1 == 'undefined', "for_i1 is defined");
+    ok(typeof for_i2 == 'undefined', "for_i2 is defined");
+    ok(for_count == 3, "for_count != 3");
 });
 
 sync_test("let scope instances", function() {

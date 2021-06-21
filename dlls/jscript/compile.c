@@ -1377,47 +1377,63 @@ static HRESULT compile_while_statement(compiler_ctx_t *ctx, while_statement_t *s
     return S_OK;
 }
 
-/* ECMA-262 3rd Edition    12.6.3 */
+/* ECMA-262 10th Edition   13.7.4 */
 static HRESULT compile_for_statement(compiler_ctx_t *ctx, for_statement_t *stat)
 {
     statement_ctx_t stat_ctx = {0, FALSE, FALSE};
+    statement_ctx_t scope_stat_ctx = {0, TRUE};
     unsigned expr_off;
     HRESULT hres;
+
+    if (stat->scope_index)
+    {
+        if(FAILED(hres = push_instr_uint(ctx, OP_push_block_scope, stat->scope_index)))
+            return hres;
+
+        scope_stat_ctx.scope_index = stat->scope_index;
+        scope_stat_ctx.block_scope = TRUE;
+        push_compiler_statement_ctx(ctx, &scope_stat_ctx);
+    }
 
     if(stat->variable_list) {
         hres = compile_variable_list(ctx, stat->variable_list);
         if(FAILED(hres))
-            return hres;
+            goto done;
     }else if(stat->begin_expr) {
         hres = compile_expression(ctx, stat->begin_expr, FALSE);
         if(FAILED(hres))
-            return hres;
+            goto done;
     }
 
     stat_ctx.break_label = alloc_label(ctx);
     if(!stat_ctx.break_label)
-        return E_OUTOFMEMORY;
+    {
+        hres = E_OUTOFMEMORY;
+        goto done;
+    }
 
     stat_ctx.continue_label = alloc_label(ctx);
     if(!stat_ctx.continue_label)
-        return E_OUTOFMEMORY;
-
+    {
+        hres = E_OUTOFMEMORY;
+        goto done;
+    }
     expr_off = ctx->code_off;
 
     if(stat->expr) {
         set_compiler_loc(ctx, stat->expr_loc);
         hres = compile_expression(ctx, stat->expr, TRUE);
         if(FAILED(hres))
-            return hres;
+            goto done;
 
         hres = push_instr_uint(ctx, OP_jmp_z, stat_ctx.break_label);
         if(FAILED(hres))
-            return hres;
+            goto done;
     }
 
     hres = compile_statement(ctx, &stat_ctx, stat->statement);
     if(FAILED(hres))
-        return hres;
+        goto done;
 
     label_set_addr(ctx, stat_ctx.continue_label);
 
@@ -1425,15 +1441,23 @@ static HRESULT compile_for_statement(compiler_ctx_t *ctx, for_statement_t *stat)
         set_compiler_loc(ctx, stat->end_loc);
         hres = compile_expression(ctx, stat->end_expr, FALSE);
         if(FAILED(hres))
-            return hres;
+            goto done;
     }
 
     hres = push_instr_uint(ctx, OP_jmp, expr_off);
     if(FAILED(hres))
-        return hres;
+        goto done;
 
     label_set_addr(ctx, stat_ctx.break_label);
-    return S_OK;
+    hres = S_OK;
+done:
+    if (stat->scope_index)
+    {
+        pop_compiler_statement_ctx(ctx, &scope_stat_ctx);
+        if(SUCCEEDED(hres) && !push_instr(ctx, OP_pop_scope))
+            return E_OUTOFMEMORY;
+    }
+    return hres;
 }
 
 /* ECMA-262 3rd Edition    12.6.4 */
@@ -2225,27 +2249,61 @@ static HRESULT visit_statement(compiler_ctx_t *ctx, statement_ctx_t *stat_ctx, s
         break;
     }
     case STAT_FOR: {
+        statement_ctx_t stat_ctx_data = {0, TRUE}, *stat_ctx = NULL;
         for_statement_t *for_stat = (for_statement_t*)stat;
 
         if(for_stat->variable_list)
+        {
+            variable_declaration_t *var;
+
+            for(var = for_stat->variable_list; var; var = var->next)
+            {
+                if (var->block_scope)
+                {
+                    stat_ctx = &stat_ctx_data;
+                    break;
+                }
+            }
+
+            if (stat_ctx)
+            {
+                if (!alloc_local_scope(ctx, &for_stat->scope_index))
+                {
+                    hres = E_OUTOFMEMORY;
+                    break;
+                }
+                stat_ctx->scope_index = for_stat->scope_index;
+                stat_ctx->block_scope = TRUE;
+                push_compiler_statement_ctx(ctx, stat_ctx);
+            }
             hres = visit_variable_list(ctx, for_stat->variable_list);
+        }
         else if(for_stat->begin_expr)
             hres = visit_expression(ctx, for_stat->begin_expr);
         if(FAILED(hres))
+        {
+            pop_compiler_statement_ctx(ctx, stat_ctx);
             break;
+        }
 
         if(for_stat->expr) {
             hres = visit_expression(ctx, for_stat->expr);
             if(FAILED(hres))
+            {
+                pop_compiler_statement_ctx(ctx, stat_ctx);
                 break;
+            }
         }
 
         hres = visit_statement(ctx, NULL, for_stat->statement);
         if(FAILED(hres))
+        {
+            pop_compiler_statement_ctx(ctx, stat_ctx);
             break;
-
+        }
         if(for_stat->end_expr)
             hres = visit_expression(ctx, for_stat->end_expr);
+        pop_compiler_statement_ctx(ctx, stat_ctx);
         break;
     }
     case STAT_FORIN:  {

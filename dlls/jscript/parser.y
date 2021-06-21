@@ -86,7 +86,7 @@ static statement_t *new_var_statement(parser_ctx_t*,BOOL,BOOL,unsigned,variable_
 static statement_t *new_expression_statement(parser_ctx_t*,unsigned,expression_t*);
 static statement_t *new_if_statement(parser_ctx_t*,unsigned,expression_t*,statement_t*,statement_t*);
 static statement_t *new_while_statement(parser_ctx_t*,unsigned,BOOL,expression_t*,statement_t*);
-static statement_t *new_for_statement(parser_ctx_t*,unsigned,variable_list_t*,expression_t*,expression_t*,unsigned,
+static statement_t *new_for_statement(parser_ctx_t*,unsigned,variable_declaration_t*,expression_t*,expression_t*,unsigned,
                                       expression_t*,unsigned,statement_t*);
 static statement_t *new_forin_statement(parser_ctx_t*,unsigned,variable_declaration_t*,expression_t*,expression_t*,statement_t*);
 static statement_t *new_continue_statement(parser_ctx_t*,unsigned,const WCHAR*);
@@ -177,6 +177,7 @@ static expression_t *new_prop_and_value_expression(parser_ctx_t*,property_list_t
 %type <statement> Declaration
 %type <statement> Block
 %type <statement> LexicalDeclaration
+%type <statement> LexicalDeclarationNoIn
 %type <statement> VariableStatement
 %type <statement> EmptyStatement
 %type <statement> ExpressionStatement
@@ -344,6 +345,21 @@ LexicalDeclaration
                                     $$ = new_var_statement(ctx, TRUE, TRUE, @$, $2);
                                 }
 
+/* ECMA-262 10th Edition   13.3.1, TODO:  BindingList*/
+LexicalDeclarationNoIn
+        : kLET VariableDeclarationListNoIn semicolon_opt
+                                { $$ = new_var_statement(ctx, TRUE, FALSE, @$, $2); }
+        | kCONST VariableDeclarationListNoIn semicolon_opt
+                                {
+                                    if(ctx->script->version < SCRIPTLANGUAGEVERSION_ES5) {
+                                        WARN("const var declaration %s in legacy mode.\n",
+                                                debugstr_w($1));
+                                        set_error(ctx, @$, JS_E_SYNTAX);
+                                        YYABORT;
+                                    }
+                                    $$ = new_var_statement(ctx, TRUE, TRUE, @$, $2);
+                                }
+
 /* ECMA-262 3rd Edition    12.2 */
 VariableStatement
         : kVAR VariableDeclarationList semicolon_opt
@@ -408,7 +424,7 @@ IfStatement
         | kIF left_bracket Expression_err right_bracket Statement %prec LOWER_THAN_ELSE
                                 { $$ = new_if_statement(ctx, @$, $3, $5, NULL); }
 
-/* ECMA-262 3rd Edition    12.6 */
+/* ECMA-262 10th Edition   13.7 */
 IterationStatement
         : kDO Statement kWHILE left_bracket Expression_err right_bracket semicolon_opt
                                 { $$ = new_while_statement(ctx, @3, TRUE, $5, $2); }
@@ -425,11 +441,18 @@ IterationStatement
           semicolon Expression_opt
                                 { if(!explicit_error(ctx, $7, ';')) YYABORT; }
           semicolon Expression_opt right_bracket Statement
-                                { $$ = new_for_statement(ctx, @3, $4, NULL, $7, @7, $10, @10, $12); }
+                                { $$ = new_for_statement(ctx, @3, $4 ? $4->head : NULL, NULL, $7, @7, $10, @10, $12); }
         | kFOR left_bracket LeftHandSideExpression kIN Expression_err right_bracket Statement
                                 { $$ = new_forin_statement(ctx, @$, NULL, $3, $5, $7); }
         | kFOR left_bracket kVAR VariableDeclarationNoIn kIN Expression_err right_bracket Statement
                                 { $$ = new_forin_statement(ctx, @$,  $4, NULL, $6, $8); }
+        | kFOR left_bracket LexicalDeclarationNoIn
+                                { if(!explicit_error(ctx, $3, ';')) YYABORT; }
+          Expression_opt
+                                { if(!explicit_error(ctx, $5, ';')) YYABORT; }
+          semicolon Expression_opt right_bracket Statement
+                                { $$ = new_for_statement(ctx, @3, ((var_statement_t *)$3)->variable_list,
+                                  NULL, $5, @5, $8, @8, $10); }
 
 /* ECMA-262 3rd Edition    12.7 */
 ContinueStatement
@@ -1235,7 +1258,7 @@ static statement_t *new_while_statement(parser_ctx_t *ctx, unsigned loc, BOOL do
     return &ret->stat;
 }
 
-static statement_t *new_for_statement(parser_ctx_t *ctx, unsigned loc, variable_list_t *variable_list, expression_t *begin_expr,
+static statement_t *new_for_statement(parser_ctx_t *ctx, unsigned loc, variable_declaration_t *variable_list, expression_t *begin_expr,
         expression_t *expr, unsigned expr_loc, expression_t *end_expr, unsigned end_loc, statement_t *statement)
 {
     for_statement_t *ret;
@@ -1244,13 +1267,14 @@ static statement_t *new_for_statement(parser_ctx_t *ctx, unsigned loc, variable_
     if(!ret)
         return NULL;
 
-    ret->variable_list = variable_list ? variable_list->head : NULL;
+    ret->variable_list = variable_list;
     ret->begin_expr = begin_expr;
     ret->expr = expr;
     ret->expr_loc = expr_loc;
     ret->end_expr = end_expr;
     ret->end_loc = end_loc;
     ret->statement = statement;
+    ret->scope_index = 0;
 
     return &ret->stat;
 }
