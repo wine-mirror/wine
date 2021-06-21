@@ -104,7 +104,6 @@ static void test_SetWindowTheme(void)
     HWND    hWnd;
 
     hRes = SetWindowTheme(NULL, NULL, NULL);
-todo_wine
     ok( hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08x\n", hRes);
 
     /* Only do the bare minimum to get a valid hwnd */
