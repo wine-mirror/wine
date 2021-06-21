@@ -2707,12 +2707,12 @@ static ULONG STDMETHODCALLTYPE d2d_gdi_interop_render_target_Release(ID2D1GdiInt
 
 static HRESULT d2d_device_context_get_surface(struct d2d_device_context *render_target, IDXGISurface1 **surface)
 {
-    ID3D10Resource *resource;
+    ID3D11Resource *resource;
     HRESULT hr;
 
-    ID3D10RenderTargetView_GetResource(render_target->target->rtv, &resource);
-    hr = ID3D10Resource_QueryInterface(resource, &IID_IDXGISurface1, (void **)surface);
-    ID3D10Resource_Release(resource);
+    ID3D11RenderTargetView_GetResource(render_target->target->d3d11_rtv, &resource);
+    hr = ID3D11Resource_QueryInterface(resource, &IID_IDXGISurface1, (void **)surface);
+    ID3D11Resource_Release(resource);
     if (FAILED(hr))
     {
         *surface = NULL;
