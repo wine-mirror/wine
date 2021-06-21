@@ -1149,6 +1149,8 @@ static variable_declaration_t *new_variable_declaration(parser_ctx_t *ctx, const
     ret->expr = expr;
     ret->next = NULL;
     ret->global_next = NULL;
+    ret->block_scope = FALSE;
+    ret->constant = FALSE;
 
     return ret;
 }
