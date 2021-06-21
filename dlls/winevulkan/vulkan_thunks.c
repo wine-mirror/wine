@@ -1551,31 +1551,35 @@ static inline void convert_VkSwapchainCreateInfoKHR_win_to_host(const VkSwapchai
 
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkDebugMarkerObjectNameInfoEXT_win_to_host(const VkDebugMarkerObjectNameInfoEXT *in, VkDebugMarkerObjectNameInfoEXT_host *out)
+#else
+static inline void convert_VkDebugMarkerObjectNameInfoEXT_win_to_host(const VkDebugMarkerObjectNameInfoEXT *in, VkDebugMarkerObjectNameInfoEXT *out)
+#endif /* USE_STRUCT_CONVERSION */
 {
     if (!in) return;
 
     out->sType = in->sType;
     out->pNext = in->pNext;
     out->objectType = in->objectType;
-    out->object = in->object;
+    out->object = wine_vk_unwrap_handle(in->objectType, in->object);
     out->pObjectName = in->pObjectName;
 }
-#endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkDebugMarkerObjectTagInfoEXT_win_to_host(const VkDebugMarkerObjectTagInfoEXT *in, VkDebugMarkerObjectTagInfoEXT_host *out)
+#else
+static inline void convert_VkDebugMarkerObjectTagInfoEXT_win_to_host(const VkDebugMarkerObjectTagInfoEXT *in, VkDebugMarkerObjectTagInfoEXT *out)
+#endif /* USE_STRUCT_CONVERSION */
 {
     if (!in) return;
 
     out->sType = in->sType;
     out->pNext = in->pNext;
     out->objectType = in->objectType;
-    out->object = in->object;
+    out->object = wine_vk_unwrap_handle(in->objectType, in->object);
     out->tagName = in->tagName;
     out->tagSize = in->tagSize;
     out->pTag = in->pTag;
 }
-#endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
 static inline VkMappedMemoryRange_host *convert_VkMappedMemoryRange_array_win_to_host(const VkMappedMemoryRange *in, uint32_t count)
@@ -2475,31 +2479,35 @@ static inline void free_VkSubmitInfo2KHR_array(VkSubmitInfo2KHR *in, uint32_t co
 
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkDebugUtilsObjectNameInfoEXT_win_to_host(const VkDebugUtilsObjectNameInfoEXT *in, VkDebugUtilsObjectNameInfoEXT_host *out)
+#else
+static inline void convert_VkDebugUtilsObjectNameInfoEXT_win_to_host(const VkDebugUtilsObjectNameInfoEXT *in, VkDebugUtilsObjectNameInfoEXT *out)
+#endif /* USE_STRUCT_CONVERSION */
 {
     if (!in) return;
 
     out->sType = in->sType;
     out->pNext = in->pNext;
     out->objectType = in->objectType;
-    out->objectHandle = in->objectHandle;
+    out->objectHandle = wine_vk_unwrap_handle(in->objectType, in->objectHandle);
     out->pObjectName = in->pObjectName;
 }
-#endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkDebugUtilsObjectTagInfoEXT_win_to_host(const VkDebugUtilsObjectTagInfoEXT *in, VkDebugUtilsObjectTagInfoEXT_host *out)
+#else
+static inline void convert_VkDebugUtilsObjectTagInfoEXT_win_to_host(const VkDebugUtilsObjectTagInfoEXT *in, VkDebugUtilsObjectTagInfoEXT *out)
+#endif /* USE_STRUCT_CONVERSION */
 {
     if (!in) return;
 
     out->sType = in->sType;
     out->pNext = in->pNext;
     out->objectType = in->objectType;
-    out->objectHandle = in->objectHandle;
+    out->objectHandle = wine_vk_unwrap_handle(in->objectType, in->objectHandle);
     out->tagName = in->tagName;
     out->tagSize = in->tagSize;
     out->pTag = in->pTag;
 }
-#endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkSemaphoreSignalInfo_win_to_host(const VkSemaphoreSignalInfo *in, VkSemaphoreSignalInfo_host *out)
@@ -2517,6 +2525,11 @@ static inline void convert_VkSemaphoreSignalInfo_win_to_host(const VkSemaphoreSi
 static inline VkDebugUtilsObjectNameInfoEXT_host *convert_VkDebugUtilsObjectNameInfoEXT_array_win_to_host(const VkDebugUtilsObjectNameInfoEXT *in, uint32_t count)
 {
     VkDebugUtilsObjectNameInfoEXT_host *out;
+#else
+static inline VkDebugUtilsObjectNameInfoEXT *convert_VkDebugUtilsObjectNameInfoEXT_array_win_to_host(const VkDebugUtilsObjectNameInfoEXT *in, uint32_t count)
+{
+    VkDebugUtilsObjectNameInfoEXT *out;
+#endif /* USE_STRUCT_CONVERSION */
     unsigned int i;
 
     if (!in) return NULL;
@@ -2527,25 +2540,29 @@ static inline VkDebugUtilsObjectNameInfoEXT_host *convert_VkDebugUtilsObjectName
         out[i].sType = in[i].sType;
         out[i].pNext = in[i].pNext;
         out[i].objectType = in[i].objectType;
-        out[i].objectHandle = in[i].objectHandle;
+        out[i].objectHandle = wine_vk_unwrap_handle(in[i].objectType, in[i].objectHandle);
         out[i].pObjectName = in[i].pObjectName;
     }
 
     return out;
 }
-#endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
 static inline void free_VkDebugUtilsObjectNameInfoEXT_array(VkDebugUtilsObjectNameInfoEXT_host *in, uint32_t count)
+#else
+static inline void free_VkDebugUtilsObjectNameInfoEXT_array(VkDebugUtilsObjectNameInfoEXT *in, uint32_t count)
+#endif /* USE_STRUCT_CONVERSION */
 {
     if (!in) return;
 
     free(in);
 }
-#endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkDebugUtilsMessengerCallbackDataEXT_win_to_host(const VkDebugUtilsMessengerCallbackDataEXT *in, VkDebugUtilsMessengerCallbackDataEXT_host *out)
+#else
+static inline void convert_VkDebugUtilsMessengerCallbackDataEXT_win_to_host(const VkDebugUtilsMessengerCallbackDataEXT *in, VkDebugUtilsMessengerCallbackDataEXT *out)
+#endif /* USE_STRUCT_CONVERSION */
 {
     if (!in) return;
 
@@ -2562,14 +2579,19 @@ static inline void convert_VkDebugUtilsMessengerCallbackDataEXT_win_to_host(cons
     out->objectCount = in->objectCount;
     out->pObjects = convert_VkDebugUtilsObjectNameInfoEXT_array_win_to_host(in->pObjects, in->objectCount);
 }
-#endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
 static inline void free_VkDebugUtilsMessengerCallbackDataEXT(VkDebugUtilsMessengerCallbackDataEXT_host *in)
-{
-    free_VkDebugUtilsObjectNameInfoEXT_array((VkDebugUtilsObjectNameInfoEXT_host *)in->pObjects, in->objectCount);
-}
+#else
+static inline void free_VkDebugUtilsMessengerCallbackDataEXT(VkDebugUtilsMessengerCallbackDataEXT *in)
 #endif /* USE_STRUCT_CONVERSION */
+{
+#if defined(USE_STRUCT_CONVERSION)
+    free_VkDebugUtilsObjectNameInfoEXT_array((VkDebugUtilsObjectNameInfoEXT_host *)in->pObjects, in->objectCount);
+#else
+    free_VkDebugUtilsObjectNameInfoEXT_array((VkDebugUtilsObjectNameInfoEXT *)in->pObjects, in->objectCount);
+#endif /* USE_STRUCT_CONVERSION */
+}
 
 #if defined(USE_STRUCT_CONVERSION)
 static inline VkCopyDescriptorSet_host *convert_VkCopyDescriptorSet_array_win_to_host(const VkCopyDescriptorSet *in, uint32_t count)
@@ -6278,31 +6300,49 @@ static VkResult WINAPI wine_vkCreateValidationCacheEXT(VkDevice device, const Vk
     return device->funcs.p_vkCreateValidationCacheEXT(device->device, pCreateInfo, NULL, pValidationCache);
 }
 
-VkResult thunk_vkDebugMarkerSetObjectNameEXT(VkDevice device, const VkDebugMarkerObjectNameInfoEXT *pNameInfo)
+static VkResult WINAPI wine_vkDebugMarkerSetObjectNameEXT(VkDevice device, const VkDebugMarkerObjectNameInfoEXT *pNameInfo)
 {
 #if defined(USE_STRUCT_CONVERSION)
     VkResult result;
     VkDebugMarkerObjectNameInfoEXT_host pNameInfo_host;
+    TRACE("%p, %p\n", device, pNameInfo);
+
     convert_VkDebugMarkerObjectNameInfoEXT_win_to_host(pNameInfo, &pNameInfo_host);
     result = device->funcs.p_vkDebugMarkerSetObjectNameEXT(device->device, &pNameInfo_host);
 
     return result;
 #else
-    return device->funcs.p_vkDebugMarkerSetObjectNameEXT(device->device, pNameInfo);
+    VkResult result;
+    VkDebugMarkerObjectNameInfoEXT pNameInfo_host;
+    TRACE("%p, %p\n", device, pNameInfo);
+
+    convert_VkDebugMarkerObjectNameInfoEXT_win_to_host(pNameInfo, &pNameInfo_host);
+    result = device->funcs.p_vkDebugMarkerSetObjectNameEXT(device->device, &pNameInfo_host);
+
+    return result;
 #endif
 }
 
-VkResult thunk_vkDebugMarkerSetObjectTagEXT(VkDevice device, const VkDebugMarkerObjectTagInfoEXT *pTagInfo)
+static VkResult WINAPI wine_vkDebugMarkerSetObjectTagEXT(VkDevice device, const VkDebugMarkerObjectTagInfoEXT *pTagInfo)
 {
 #if defined(USE_STRUCT_CONVERSION)
     VkResult result;
     VkDebugMarkerObjectTagInfoEXT_host pTagInfo_host;
+    TRACE("%p, %p\n", device, pTagInfo);
+
     convert_VkDebugMarkerObjectTagInfoEXT_win_to_host(pTagInfo, &pTagInfo_host);
     result = device->funcs.p_vkDebugMarkerSetObjectTagEXT(device->device, &pTagInfo_host);
 
     return result;
 #else
-    return device->funcs.p_vkDebugMarkerSetObjectTagEXT(device->device, pTagInfo);
+    VkResult result;
+    VkDebugMarkerObjectTagInfoEXT pTagInfo_host;
+    TRACE("%p, %p\n", device, pTagInfo);
+
+    convert_VkDebugMarkerObjectTagInfoEXT_win_to_host(pTagInfo, &pTagInfo_host);
+    result = device->funcs.p_vkDebugMarkerSetObjectTagEXT(device->device, &pTagInfo_host);
+
+    return result;
 #endif
 }
 
@@ -7668,31 +7708,49 @@ static void WINAPI wine_vkResetQueryPoolEXT(VkDevice device, VkQueryPool queryPo
     device->funcs.p_vkResetQueryPoolEXT(device->device, queryPool, firstQuery, queryCount);
 }
 
-VkResult thunk_vkSetDebugUtilsObjectNameEXT(VkDevice device, const VkDebugUtilsObjectNameInfoEXT *pNameInfo)
+static VkResult WINAPI wine_vkSetDebugUtilsObjectNameEXT(VkDevice device, const VkDebugUtilsObjectNameInfoEXT *pNameInfo)
 {
 #if defined(USE_STRUCT_CONVERSION)
     VkResult result;
     VkDebugUtilsObjectNameInfoEXT_host pNameInfo_host;
+    TRACE("%p, %p\n", device, pNameInfo);
+
     convert_VkDebugUtilsObjectNameInfoEXT_win_to_host(pNameInfo, &pNameInfo_host);
     result = device->funcs.p_vkSetDebugUtilsObjectNameEXT(device->device, &pNameInfo_host);
 
     return result;
 #else
-    return device->funcs.p_vkSetDebugUtilsObjectNameEXT(device->device, pNameInfo);
+    VkResult result;
+    VkDebugUtilsObjectNameInfoEXT pNameInfo_host;
+    TRACE("%p, %p\n", device, pNameInfo);
+
+    convert_VkDebugUtilsObjectNameInfoEXT_win_to_host(pNameInfo, &pNameInfo_host);
+    result = device->funcs.p_vkSetDebugUtilsObjectNameEXT(device->device, &pNameInfo_host);
+
+    return result;
 #endif
 }
 
-VkResult thunk_vkSetDebugUtilsObjectTagEXT(VkDevice device, const VkDebugUtilsObjectTagInfoEXT *pTagInfo)
+static VkResult WINAPI wine_vkSetDebugUtilsObjectTagEXT(VkDevice device, const VkDebugUtilsObjectTagInfoEXT *pTagInfo)
 {
 #if defined(USE_STRUCT_CONVERSION)
     VkResult result;
     VkDebugUtilsObjectTagInfoEXT_host pTagInfo_host;
+    TRACE("%p, %p\n", device, pTagInfo);
+
     convert_VkDebugUtilsObjectTagInfoEXT_win_to_host(pTagInfo, &pTagInfo_host);
     result = device->funcs.p_vkSetDebugUtilsObjectTagEXT(device->device, &pTagInfo_host);
 
     return result;
 #else
-    return device->funcs.p_vkSetDebugUtilsObjectTagEXT(device->device, pTagInfo);
+    VkResult result;
+    VkDebugUtilsObjectTagInfoEXT pTagInfo_host;
+    TRACE("%p, %p\n", device, pTagInfo);
+
+    convert_VkDebugUtilsObjectTagInfoEXT_win_to_host(pTagInfo, &pTagInfo_host);
+    result = device->funcs.p_vkSetDebugUtilsObjectTagEXT(device->device, &pTagInfo_host);
+
+    return result;
 #endif
 }
 
@@ -7742,16 +7800,24 @@ static VkResult WINAPI wine_vkSignalSemaphoreKHR(VkDevice device, const VkSemaph
 #endif
 }
 
-void thunk_vkSubmitDebugUtilsMessageEXT(VkInstance instance, VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData)
+static void WINAPI wine_vkSubmitDebugUtilsMessageEXT(VkInstance instance, VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData)
 {
 #if defined(USE_STRUCT_CONVERSION)
     VkDebugUtilsMessengerCallbackDataEXT_host pCallbackData_host;
+    TRACE("%p, %#x, %#x, %p\n", instance, messageSeverity, messageTypes, pCallbackData);
+
     convert_VkDebugUtilsMessengerCallbackDataEXT_win_to_host(pCallbackData, &pCallbackData_host);
     instance->funcs.p_vkSubmitDebugUtilsMessageEXT(instance->instance, messageSeverity, messageTypes, &pCallbackData_host);
 
     free_VkDebugUtilsMessengerCallbackDataEXT(&pCallbackData_host);
 #else
-    instance->funcs.p_vkSubmitDebugUtilsMessageEXT(instance->instance, messageSeverity, messageTypes, pCallbackData);
+    VkDebugUtilsMessengerCallbackDataEXT pCallbackData_host;
+    TRACE("%p, %#x, %#x, %p\n", instance, messageSeverity, messageTypes, pCallbackData);
+
+    convert_VkDebugUtilsMessengerCallbackDataEXT_win_to_host(pCallbackData, &pCallbackData_host);
+    instance->funcs.p_vkSubmitDebugUtilsMessageEXT(instance->instance, messageSeverity, messageTypes, &pCallbackData_host);
+
+    free_VkDebugUtilsMessengerCallbackDataEXT(&pCallbackData_host);
 #endif
 }
 

@@ -242,17 +242,10 @@ FUNCTION_OVERRIDES = {
     # VK_EXT_debug_utils
     "vkCreateDebugUtilsMessengerEXT" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
     "vkDestroyDebugUtilsMessengerEXT" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
-    "vkSubmitDebugUtilsMessageEXT" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.PRIVATE},
-    "vkSetDebugUtilsObjectTagEXT" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.PRIVATE},
-    "vkSetDebugUtilsObjectNameEXT" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.PRIVATE},
 
     # VK_EXT_debug_report
     "vkCreateDebugReportCallbackEXT" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
     "vkDestroyDebugReportCallbackEXT" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
-
-    # VK_EXT_debug_marker
-    "vkDebugMarkerSetObjectNameEXT" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.PRIVATE},
-    "vkDebugMarkerSetObjectTagEXT" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.PRIVATE},
 }
 
 STRUCT_CHAIN_CONVERSIONS = {
@@ -1085,7 +1078,7 @@ class VkHandle(object):
 
 class VkMember(object):
     def __init__(self, const=False, struct_fwd_decl=False,_type=None, pointer=None, name=None, array_len=None,
-            dyn_array_len=None, optional=False, values=None):
+            dyn_array_len=None, optional=False, values=None, object_type=None):
         self.const = const
         self.struct_fwd_decl = struct_fwd_decl
         self.name = name
@@ -1096,6 +1089,7 @@ class VkMember(object):
         self.dyn_array_len = dyn_array_len
         self.optional = optional
         self.values = values
+        self.object_type = object_type
 
     def __eq__(self, other):
         """ Compare member based on name against a string.
@@ -1165,8 +1159,10 @@ class VkMember(object):
                 # Remove brackets around length
                 array_len = name_elem.tail.strip("[]")
 
+        object_type = member.get("objecttype", None)
+
         return VkMember(const=const, struct_fwd_decl=struct_fwd_decl, _type=member_type, pointer=pointer, name=name_elem.text,
-                array_len=array_len, dyn_array_len=dyn_array_len, optional=optional, values=values)
+                array_len=array_len, dyn_array_len=dyn_array_len, optional=optional, values=values, object_type=object_type)
 
     def copy(self, input, output, direction, conv):
         """ Helper method for use by conversion logic to generate a C-code statement to copy this member.
@@ -1194,6 +1190,11 @@ class VkMember(object):
                 else:
                     handle = self.type_info["data"]
                     return "{0}{1} = {2};\n".format(output, self.name, handle.driver_handle("{0}{1}".format(input, self.name)))
+            elif self.is_generic_handle():
+                if direction == Direction.OUTPUT:
+                    LOGGER.err("OUTPUT parameter {0}.{1} cannot be unwrapped".format(self.type, self.name))
+                else:
+                    return "{0}{1} = wine_vk_unwrap_handle({2}{3}, {2}{1});\n".format(output, self.name, input, self.object_type)
             else:
                 if direction == Direction.OUTPUT:
                     return "convert_{0}_host_to_win(&{2}{1}, &{3}{1});\n".format(self.type, self.name, input, output)
@@ -1288,7 +1289,7 @@ class VkMember(object):
 
             struct.needs_struct_extensions_conversion()
             direction = Direction.OUTPUT if struct.returnedonly else Direction.INPUT
-        elif self.is_handle():
+        elif self.is_handle() or self.is_generic_handle():
             direction = Direction.INPUT
 
         operand = self.type_info["data"]
@@ -1336,6 +1337,13 @@ class VkMember(object):
     def is_union(self):
         return self.type_info["category"] == "union"
 
+    def is_generic_handle(self):
+        """ Returns True if the member is a unit64_t containing
+        a handle with a separate object type
+        """
+
+        return self.object_type != None and self.type == "uint64_t"
+
     def needs_alignment(self):
         """ Check if this member needs alignment for 64-bit data.
         Various structures need alignment on 64-bit variables due
@@ -1377,6 +1385,9 @@ class VkMember(object):
         if self.is_handle():
             handle = self.type_info["data"]
             return handle.is_wrapped()
+
+        if self.is_generic_handle():
+            return True
 
         return False
 
