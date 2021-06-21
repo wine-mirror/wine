@@ -1833,7 +1833,6 @@ static void test_hidp(HANDLE file, int report_id)
     check_member(caps, expect_hidp_caps[report_id], "%d", OutputReportByteLength);
     check_member(caps, expect_hidp_caps[report_id], "%d", FeatureReportByteLength);
     check_member(caps, expect_hidp_caps[report_id], "%d", NumberLinkCollectionNodes);
-    todo_wine
     check_member(caps, expect_hidp_caps[report_id], "%d", NumberInputButtonCaps);
     todo_wine
     check_member(caps, expect_hidp_caps[report_id], "%d", NumberInputValueCaps);
@@ -1870,15 +1869,12 @@ static void test_hidp(HANDLE file, int report_id)
 
     count = ARRAY_SIZE(button_caps);
     status = HidP_GetButtonCaps(HidP_Output, button_caps, &count, preparsed_data);
-    todo_wine
     ok(status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetButtonCaps returned %#x\n", status);
     status = HidP_GetButtonCaps(HidP_Feature + 1, button_caps, &count, preparsed_data);
     ok(status == HIDP_STATUS_INVALID_REPORT_TYPE, "HidP_GetButtonCaps returned %#x\n", status);
     count = 0;
     status = HidP_GetButtonCaps(HidP_Input, button_caps, &count, preparsed_data);
-    todo_wine
     ok(status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetButtonCaps returned %#x\n", status);
-    todo_wine
     ok(count == caps.NumberInputButtonCaps, "HidP_GetButtonCaps returned count %d, expected %d\n",
        count, caps.NumberInputButtonCaps);
     count = ARRAY_SIZE(button_caps);
@@ -1893,50 +1889,18 @@ static void test_hidp(HANDLE file, int report_id)
     for (i = 0; i < ARRAY_SIZE(expect_button_caps); ++i)
     {
         winetest_push_context("button_caps[%d]", i);
-        todo_wine_if(i >= 2)
-        check_member(button_caps[i], expect_button_caps[i], "%04x", UsagePage);
-        check_member(button_caps[i], expect_button_caps[i], "%d", ReportID);
-        check_member(button_caps[i], expect_button_caps[i], "%d", IsAlias);
-        todo_wine_if(i == 1 || i == 2)
-        check_member(button_caps[i], expect_button_caps[i], "%d", BitField);
-        todo_wine_if(i >= 2)
-        check_member(button_caps[i], expect_button_caps[i], "%d", LinkCollection);
-        todo_wine_if(i >= (report_id ? 2 : 3))
-        check_member(button_caps[i], expect_button_caps[i], "%04x", LinkUsage);
-        todo_wine_if(i >= (report_id ? 2 : 3))
-        check_member(button_caps[i], expect_button_caps[i], "%04x", LinkUsagePage);
-        todo_wine_if(i >= 1 && i <= (report_id ? 2 : 1))
-        check_member(button_caps[i], expect_button_caps[i], "%d", IsRange);
-        check_member(button_caps[i], expect_button_caps[i], "%d", IsStringRange);
-        check_member(button_caps[i], expect_button_caps[i], "%d", IsDesignatorRange);
-        todo_wine_if(i == 2)
-        check_member(button_caps[i], expect_button_caps[i], "%d", IsAbsolute);
-        todo_wine_if(i >= 1)
-        check_member(button_caps[i], expect_button_caps[i], "%04x", Range.UsageMin);
-        todo_wine_if(i >= 1)
-        check_member(button_caps[i], expect_button_caps[i], "%04x", Range.UsageMax);
-        check_member(button_caps[i], expect_button_caps[i], "%d", Range.StringMin);
-        check_member(button_caps[i], expect_button_caps[i], "%d", Range.StringMax);
-        check_member(button_caps[i], expect_button_caps[i], "%d", Range.DesignatorMin);
-        check_member(button_caps[i], expect_button_caps[i], "%d", Range.DesignatorMax);
-        todo_wine_if(i >= 1)
-        check_member(button_caps[i], expect_button_caps[i], "%d", Range.DataIndexMin);
-        todo_wine_if(i >= 1)
-        check_member(button_caps[i], expect_button_caps[i], "%d", Range.DataIndexMax);
+        check_hidp_button_caps(&button_caps[i], &expect_button_caps[i]);
         winetest_pop_context();
     }
 
     count = ARRAY_SIZE(button_caps) - 1;
     status = HidP_GetSpecificButtonCaps(HidP_Output, 0, 0, 0, button_caps, &count, preparsed_data);
-    todo_wine
     ok(status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificButtonCaps returned %#x\n", status);
     status = HidP_GetSpecificButtonCaps(HidP_Feature + 1, 0, 0, 0, button_caps, &count, preparsed_data);
     ok(status == HIDP_STATUS_INVALID_REPORT_TYPE, "HidP_GetSpecificButtonCaps returned %#x\n", status);
     count = 0;
     status = HidP_GetSpecificButtonCaps(HidP_Input, 0, 0, 0, button_caps, &count, preparsed_data);
-    todo_wine
     ok(status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetSpecificButtonCaps returned %#x\n", status);
-    todo_wine
     ok(count == caps.NumberInputButtonCaps, "HidP_GetSpecificButtonCaps returned count %d, expected %d\n",
        count, caps.NumberInputButtonCaps);
     count = ARRAY_SIZE(button_caps) - 1;
@@ -1957,17 +1921,14 @@ static void test_hidp(HANDLE file, int report_id)
 
     count = 0xbeef;
     status = HidP_GetSpecificButtonCaps(HidP_Input, 0xfffe, 0, 0, button_caps, &count, preparsed_data);
-    todo_wine
     ok(status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificButtonCaps returned %#x\n", status);
     ok(count == 0, "HidP_GetSpecificButtonCaps returned count %d, expected %d\n", count, 0);
     count = 0xbeef;
     status = HidP_GetSpecificButtonCaps(HidP_Input, 0, 0xfffe, 0, button_caps, &count, preparsed_data);
-    todo_wine
     ok(status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificButtonCaps returned %#x\n", status);
     ok(count == 0, "HidP_GetSpecificButtonCaps returned count %d, expected %d\n", count, 0);
     count = 0xbeef;
     status = HidP_GetSpecificButtonCaps(HidP_Input, 0, 0, 0xfffe, button_caps, &count, preparsed_data);
-    todo_wine
     ok(status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetSpecificButtonCaps returned %#x\n", status);
     ok(count == 0, "HidP_GetSpecificButtonCaps returned count %d, expected %d\n", count, 0);
 
