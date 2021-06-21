@@ -36,6 +36,36 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(hidp);
 
+static NTSTATUS get_value_caps_range( WINE_HIDP_PREPARSED_DATA *preparsed, HIDP_REPORT_TYPE report_type, ULONG report_len,
+                                      const struct hid_value_caps **caps, const struct hid_value_caps **caps_end )
+{
+    if (preparsed->magic != HID_MAGIC) return HIDP_STATUS_INVALID_PREPARSED_DATA;
+
+    switch (report_type)
+    {
+    case HidP_Input:
+        if (report_len && report_len != preparsed->caps.InputReportByteLength)
+            return HIDP_STATUS_INVALID_REPORT_LENGTH;
+        *caps = HID_INPUT_VALUE_CAPS( preparsed );
+        break;
+    case HidP_Output:
+        if (report_len && report_len != preparsed->caps.OutputReportByteLength)
+            return HIDP_STATUS_INVALID_REPORT_LENGTH;
+        *caps = HID_OUTPUT_VALUE_CAPS( preparsed );
+        break;
+    case HidP_Feature:
+        if (report_len && report_len != preparsed->caps.FeatureReportByteLength)
+            return HIDP_STATUS_INVALID_REPORT_LENGTH;
+        *caps = HID_FEATURE_VALUE_CAPS( preparsed );
+        break;
+    default:
+        return HIDP_STATUS_INVALID_REPORT_TYPE;
+    }
+
+    *caps_end = *caps + preparsed->value_caps_count[report_type];
+    return HIDP_STATUS_SUCCESS;
+}
+
 static NTSTATUS get_report_data(BYTE *report, INT reportLength, INT startBit, INT valueSize, PULONG value)
 {
 
@@ -422,48 +452,26 @@ NTSTATUS WINAPI HidP_GetValueCaps( HIDP_REPORT_TYPE report_type, HIDP_VALUE_CAPS
     return HidP_GetSpecificValueCaps( report_type, 0, 0, 0, caps, caps_count, preparsed_data );
 }
 
-NTSTATUS WINAPI HidP_InitializeReportForID(HIDP_REPORT_TYPE ReportType, UCHAR ReportID,
-                                           PHIDP_PREPARSED_DATA PreparsedData, PCHAR Report,
-                                           ULONG ReportLength)
+NTSTATUS WINAPI HidP_InitializeReportForID( HIDP_REPORT_TYPE report_type, UCHAR report_id,
+                                            PHIDP_PREPARSED_DATA preparsed_data, char *report_buf, ULONG report_len )
 {
-    int size;
-    PWINE_HIDP_PREPARSED_DATA data = (PWINE_HIDP_PREPARSED_DATA)PreparsedData;
-    WINE_HID_REPORT *report = NULL;
-    int r_count;
+    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    const struct hid_value_caps *caps, *end;
+    NTSTATUS status;
 
-    TRACE("(%i, %i, %p, %p, %i)\n",ReportType, ReportID, PreparsedData, Report, ReportLength);
+    TRACE( "report_type %d, report_id %x, preparsed_data %p, report_buf %p, report_len %u.\n", report_type,
+           report_id, preparsed_data, report_buf, report_len );
 
-    if (data->magic != HID_MAGIC)
-        return HIDP_STATUS_INVALID_PREPARSED_DATA;
+    if (!report_len) return HIDP_STATUS_INVALID_REPORT_LENGTH;
 
-    switch(ReportType)
-    {
-        case HidP_Input:
-            size = data->caps.InputReportByteLength;
-            break;
-        case HidP_Output:
-            size = data->caps.OutputReportByteLength;
-            break;
-        case HidP_Feature:
-            size = data->caps.FeatureReportByteLength;
-            break;
-        default:
-            return HIDP_STATUS_INVALID_REPORT_TYPE;
-    }
-    r_count = data->reportCount[ReportType];
-    report = &data->reports[data->reportIdx[ReportType][(BYTE)Report[0]]];
+    status = get_value_caps_range( preparsed, report_type, report_len, &caps, &end );
+    if (status != HIDP_STATUS_SUCCESS) return status;
 
-    if (!r_count || !size)
-        return HIDP_STATUS_REPORT_DOES_NOT_EXIST;
+    while (caps != end && (caps->report_id != report_id || (!caps->usage_min && !caps->usage_max))) caps++;
+    if (caps == end) return HIDP_STATUS_REPORT_DOES_NOT_EXIST;
 
-    if (size != ReportLength)
-        return HIDP_STATUS_INVALID_REPORT_LENGTH;
-
-    if (report->reportID && report->reportID != Report[0])
-        return HIDP_STATUS_REPORT_DOES_NOT_EXIST;
-
-    ZeroMemory(Report, size);
-    Report[0] = ReportID;
+    memset( report_buf, 0, report_len );
+    report_buf[0] = report_id;
     return HIDP_STATUS_SUCCESS;
 }
 

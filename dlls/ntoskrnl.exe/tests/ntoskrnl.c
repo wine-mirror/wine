@@ -2134,18 +2134,15 @@ static void test_hidp(HANDLE file, int report_id)
     status = HidP_InitializeReportForID(HidP_Input, 0, preparsed_data, report, caps.InputReportByteLength + 1);
     ok(status == HIDP_STATUS_INVALID_REPORT_LENGTH, "HidP_InitializeReportForID returned %#x\n", status);
     status = HidP_InitializeReportForID(HidP_Input, 1 - report_id, preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(!report_id)
     ok(status == HIDP_STATUS_REPORT_DOES_NOT_EXIST, "HidP_InitializeReportForID returned %#x\n", status);
 
     memset(report, 0xcd, sizeof(report));
     status = HidP_InitializeReportForID(HidP_Input, report_id, preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#x\n", status);
 
     memset(buffer, 0xcd, sizeof(buffer));
     memset(buffer, 0, caps.InputReportByteLength);
     buffer[0] = report_id;
-    todo_wine_if(report_id)
     ok(!memcmp(buffer, report, sizeof(buffer)), "unexpected report data\n");
 
     status = HidP_SetUsageValueArray(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, buffer,
@@ -2163,12 +2160,10 @@ static void test_hidp(HANDLE file, int report_id)
 
     status = HidP_GetUsageValueArray(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, buffer,
                                      sizeof(buffer), preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_NOT_VALUE_ARRAY, "HidP_GetUsageValueArray returned %#x\n", status);
     memset(buffer, 0xcd, sizeof(buffer));
     status = HidP_GetUsageValueArray(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH, buffer,
                                      0, preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetUsageValueArray returned %#x\n", status);
     status = HidP_GetUsageValueArray(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH, buffer,
                                      8, preparsed_data, report, caps.InputReportByteLength);
@@ -2178,53 +2173,41 @@ static void test_hidp(HANDLE file, int report_id)
     value = -128;
     status = HidP_SetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X,
                                 value, preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#x\n", status);
     value = 0xdeadbeef;
     status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X,
                                 &value, preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status);
-    todo_wine_if(report_id)
     ok(value == 0x80, "got value %x, expected %#x\n", value, 0x80);
     value = 0xdeadbeef;
     status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X,
                                       (LONG *)&value, preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#x\n", status);
-    todo_wine_if(report_id)
     ok(value == -128, "got value %x, expected %#x\n", value, -128);
 
     value = 127;
     status = HidP_SetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X,
                                 value, preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#x\n", status);
     value = 0xdeadbeef;
     status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X,
                                       (LONG *)&value, preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#x\n", status);
-    todo_wine_if(report_id)
     ok(value == 127, "got value %x, expected %#x\n", value, 127);
 
     value = 0;
     status = HidP_SetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X,
                                 value, preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#x\n", status);
     value = 0xdeadbeef;
     status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X,
                                       (LONG *)&value, preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#x\n", status);
-    todo_wine_if(report_id)
     ok(value == 0, "got value %x, expected %#x\n", value, 0);
 
     value = 0x7fffffff;
     status = HidP_SetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                 value, preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#x\n", status);
     value = 0xdeadbeef;
     status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
@@ -2236,7 +2219,6 @@ static void test_hidp(HANDLE file, int report_id)
     value = 0xdeadbeef;
     status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                 &value, preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status);
     todo_wine
     ok(value == 0x7fffffff, "got value %x, expected %#x\n", value, 0x7fffffff);
@@ -2244,12 +2226,10 @@ static void test_hidp(HANDLE file, int report_id)
     value = 0x3fffffff;
     status = HidP_SetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                 value, preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#x\n", status);
     value = 0xdeadbeef;
     status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                       (LONG *)&value, preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#x\n", status);
     todo_wine
     ok(value == 0x7fffffff, "got value %x, expected %#x\n", value, 0x7fffffff);
@@ -2257,40 +2237,32 @@ static void test_hidp(HANDLE file, int report_id)
     value = 0;
     status = HidP_SetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                 value, preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#x\n", status);
     value = 0xdeadbeef;
     status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                       (LONG *)&value, preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#x\n", status);
-    todo_wine_if(report_id)
     ok(value == 0x80000000, "got value %x, expected %#x\n", value, 0x80000000);
 
     value = 0;
     status = HidP_SetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RX,
                                 value, preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#x\n", status);
     value = 0xdeadbeef;
     status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RX,
                                       (LONG *)&value, preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#x\n", status);
-    todo_wine_if(report_id)
     ok(value == 0, "got value %x, expected %#x\n", value, 0);
 
     value = 0xfeedcafe;
     status = HidP_SetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY,
                                 value, preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#x\n", status);
     value = 0xdeadbeef;
     status = HidP_GetScaledUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_RY,
                                       (LONG *)&value, preparsed_data, report, caps.InputReportByteLength);
     todo_wine
     ok(status == HIDP_STATUS_BAD_LOG_PHY_VALUES, "HidP_GetScaledUsageValue returned %#x\n", status);
-    todo_wine_if(report_id)
     ok(value == 0, "got value %x, expected %#x\n", value, 0);
 
     value = HidP_MaxUsageListLength(HidP_Feature + 1, 0, preparsed_data);
@@ -2314,46 +2286,39 @@ static void test_hidp(HANDLE file, int report_id)
     value = 1;
     status = HidP_SetUsages(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, usages, &value,
                             preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_SetUsages returned %#x\n", status);
     usages[1] = 2;
     usages[2] = 0xff;
     value = 3;
     status = HidP_SetUsages(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, usages, &value,
                             preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_SetUsages returned %#x\n", status);
     usages[0] = 4;
     usages[1] = 6;
     value = 2;
     status = HidP_SetUsages(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, usages, &value,
                             preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_SetUsages returned %#x\n", status);
     usages[0] = 4;
     usages[1] = 6;
     value = 2;
     status = HidP_SetUsages(HidP_Input, HID_USAGE_PAGE_LED, 0, usages, &value, preparsed_data,
                             report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_SetUsages returned %#x\n", status);
 
     status = HidP_SetUsageValue(HidP_Input, HID_USAGE_PAGE_LED, 0, 6, 1,
                                 preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_SetUsageValue returned %#x\n", status);
 
     value = 0xdeadbeef;
     status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_LED, 0, 6, &value,
                                 preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_SetUsageValue returned %#x\n", status);
     ok(value == 0xdeadbeef, "got value %x, expected %#x\n", value, 0xdeadbeef);
 
     value = 1;
     status = HidP_GetUsages(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, usages, &value,
                             preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetUsages returned %#x\n", status);
     todo_wine
     ok(value == 2, "got usage count %d, expected %d\n", value, 2);
@@ -2361,22 +2326,16 @@ static void test_hidp(HANDLE file, int report_id)
     memset(usages, 0xcd, sizeof(usages));
     status = HidP_GetUsages(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, usages, &value,
                             preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsages returned %#x\n", status);
-    todo_wine_if(report_id)
     ok(value == 2, "got usage count %d, expected %d\n", value, 2);
-    todo_wine_if(report_id)
     ok(usages[0] == 4, "got usages[0] %x, expected %x\n", usages[0], 4);
-    todo_wine_if(report_id)
     ok(usages[1] == 6, "got usages[1] %x, expected %x\n", usages[1], 6);
 
     value = ARRAY_SIZE(usages);
     memset(usages, 0xcd, sizeof(usages));
     status = HidP_GetUsages(HidP_Input, HID_USAGE_PAGE_LED, 0, usages, &value, preparsed_data,
                             report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsages returned %#x\n", status);
-    todo_wine_if(report_id)
     ok(value == 2, "got usage count %d, expected %d\n", value, 2);
     todo_wine
     ok(usages[0] == 6, "got usages[0] %x, expected %x\n", usages[0], 6);
@@ -2387,26 +2346,18 @@ static void test_hidp(HANDLE file, int report_id)
     memset(usage_and_pages, 0xcd, sizeof(usage_and_pages));
     status = HidP_GetUsagesEx(HidP_Input, 0, usage_and_pages, &value, preparsed_data, report,
                               caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsagesEx returned %#x\n", status);
-    todo_wine_if(report_id)
     ok(value == 4, "got usage count %d, expected %d\n", value, 4);
-    todo_wine_if(report_id)
     ok(usage_and_pages[0].UsagePage == HID_USAGE_PAGE_BUTTON, "got usage_and_pages[0] UsagePage %x, expected %x\n",
        usage_and_pages[0].UsagePage, HID_USAGE_PAGE_BUTTON);
-    todo_wine_if(report_id)
     ok(usage_and_pages[1].UsagePage == HID_USAGE_PAGE_BUTTON, "got usage_and_pages[1] UsagePage %x, expected %x\n",
        usage_and_pages[1].UsagePage, HID_USAGE_PAGE_BUTTON);
-    todo_wine_if(report_id)
     ok(usage_and_pages[2].UsagePage == HID_USAGE_PAGE_LED, "got usage_and_pages[2] UsagePage %x, expected %x\n",
        usage_and_pages[2].UsagePage, HID_USAGE_PAGE_LED);
-    todo_wine_if(report_id)
     ok(usage_and_pages[3].UsagePage == HID_USAGE_PAGE_LED, "got usage_and_pages[3] UsagePage %x, expected %x\n",
        usage_and_pages[3].UsagePage, HID_USAGE_PAGE_LED);
-    todo_wine_if(report_id)
     ok(usage_and_pages[0].Usage == 4, "got usage_and_pages[0] Usage %x, expected %x\n",
        usage_and_pages[0].Usage, 4);
-    todo_wine_if(report_id)
     ok(usage_and_pages[1].Usage == 6, "got usage_and_pages[1] Usage %x, expected %x\n",
        usage_and_pages[1].Usage, 6);
     todo_wine
@@ -2428,15 +2379,13 @@ static void test_hidp(HANDLE file, int report_id)
 
     value = 1;
     status = HidP_GetData(HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetData returned %#x\n", status);
     todo_wine
     ok(value == 9, "got data count %d, expected %d\n", value, 9);
     memset(data, 0, sizeof(data));
     status = HidP_GetData(HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetData returned %#x\n", status);
-    if (status == HIDP_STATUS_SUCCESS) for (i = 0; i < ARRAY_SIZE(expect_data); ++i)
+    for (i = 0; i < ARRAY_SIZE(expect_data); ++i)
     {
         winetest_push_context("data[%d]", i);
         todo_wine_if(i >= 4)
@@ -2448,18 +2397,15 @@ static void test_hidp(HANDLE file, int report_id)
 
     memset(report, 0xcd, sizeof(report));
     status = HidP_InitializeReportForID(HidP_Feature, 3, preparsed_data, report, caps.FeatureReportByteLength);
-    todo_wine_if(!report_id)
     ok(status == HIDP_STATUS_REPORT_DOES_NOT_EXIST, "HidP_InitializeReportForID returned %#x\n", status);
 
     memset(report, 0xcd, sizeof(report));
     status = HidP_InitializeReportForID(HidP_Feature, report_id, preparsed_data, report, caps.FeatureReportByteLength);
-    todo_wine_if(report_id)
     ok(status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#x\n", status);
 
     memset(buffer, 0xcd, sizeof(buffer));
     memset(buffer, 0, caps.FeatureReportByteLength);
     buffer[0] = report_id;
-    todo_wine_if(report_id)
     ok(!memcmp(buffer, report, sizeof(buffer)), "unexpected report data\n");
 
     for (i = 0; i < caps.NumberLinkCollectionNodes; ++i)
