@@ -1655,18 +1655,6 @@ void WINAPI wine_vkDestroyDebugReportCallbackEXT(
     free(object);
 }
 
-void WINAPI wine_vkDebugReportMessageEXT(VkInstance instance, VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT object_type,
-    uint64_t object, size_t location, int32_t code, const char *layer_prefix, const char *message)
-{
-    TRACE("%p, %#x, %#x, 0x%s, 0x%s, %d, %p, %p\n", instance, flags, object_type, wine_dbgstr_longlong(object),
-        wine_dbgstr_longlong(location), code, layer_prefix, message);
-
-    object = wine_vk_unwrap_handle(object_type, object);
-
-    instance->funcs.p_vkDebugReportMessageEXT(
-        instance->instance, flags, object_type, object, location, code, layer_prefix, message);
-}
-
 VkResult WINAPI wine_vkDebugMarkerSetObjectTagEXT(VkDevice device, const VkDebugMarkerObjectTagInfoEXT *tag_info)
 {
     VkDebugMarkerObjectTagInfoEXT wine_tag_info;

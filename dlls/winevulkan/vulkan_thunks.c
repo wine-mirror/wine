@@ -6306,6 +6306,12 @@ VkResult thunk_vkDebugMarkerSetObjectTagEXT(VkDevice device, const VkDebugMarker
 #endif
 }
 
+static void WINAPI wine_vkDebugReportMessageEXT(VkInstance instance, VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objectType, uint64_t object, size_t location, int32_t messageCode, const char *pLayerPrefix, const char *pMessage)
+{
+    TRACE("%p, %#x, %#x, 0x%s, 0x%s, %d, %p, %p\n", instance, flags, objectType, wine_dbgstr_longlong(object), wine_dbgstr_longlong(location), messageCode, pLayerPrefix, pMessage);
+    instance->funcs.p_vkDebugReportMessageEXT(instance->instance, flags, objectType, wine_vk_unwrap_handle(objectType, object), location, messageCode, pLayerPrefix, pMessage);
+}
+
 static VkResult WINAPI wine_vkDeferredOperationJoinKHR(VkDevice device, VkDeferredOperationKHR operation)
 {
     TRACE("%p, 0x%s\n", device, wine_dbgstr_longlong(operation));
