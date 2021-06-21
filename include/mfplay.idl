@@ -197,6 +197,8 @@ cpp_quote("#define MFP_GET_ERROR_EVENT(hdr)                   __MFP_CAST_EVENT(h
 cpp_quote("#define MFP_GET_PLAYBACK_ENDED_EVENT(hdr)          __MFP_CAST_EVENT(hdr, PLAYBACK_ENDED)")
 cpp_quote("#define MFP_GET_ACQUIRE_USER_CREDENTIAL_EVENT(hdr) __MFP_CAST_EVENT(hdr, ACQUIRE_USER_CREDENTIAL)")
 
+cpp_quote("EXTERN_GUID(MFP_POSITIONTYPE_100NS, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0);")
+
 [
     object,
     uuid(766c8ffb-5fdb-4fea-a28d-b912996f51bd),
