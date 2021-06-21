@@ -2182,21 +2182,10 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, EXCEPTION_RECORD *rec,
     }
     else
     {
-        XMM_SAVE_AREA32 *fpu = FPU_sig(sigcontext);
-
         TRACE( "returning to user mode ip=%016lx ret=%08x\n", frame->rip, rec->ExceptionCode );
-        RAX_sig(sigcontext) = rec->ExceptionCode;
-        RBX_sig(sigcontext) = frame->rbx;
-        RSI_sig(sigcontext) = frame->rsi;
-        RDI_sig(sigcontext) = frame->rdi;
-        RBP_sig(sigcontext) = frame->rbp;
-        R12_sig(sigcontext) = frame->r12;
-        R13_sig(sigcontext) = frame->r13;
-        R14_sig(sigcontext) = frame->r14;
-        R15_sig(sigcontext) = frame->r15;
-        RSP_sig(sigcontext) = frame->rsp;
-        RIP_sig(sigcontext) = frame->rip;
-        if (fpu) *fpu = frame->xsave;
+        RCX_sig(sigcontext) = (ULONG_PTR)frame;
+        RDX_sig(sigcontext) = rec->ExceptionCode;
+        RIP_sig(sigcontext) = (ULONG_PTR)__wine_syscall_dispatcher_return;
     }
     return TRUE;
 }

@@ -756,12 +756,9 @@ static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
     else
     {
         TRACE( "returning to user mode ip=%p ret=%08x\n", (void *)frame->pc, rec->ExceptionCode );
-        for (i = 18; i < 29; i++) REGn_sig( i, context ) = frame->x[i];
-        REGn_sig(0, context)  = rec->ExceptionCode;
-        FP_sig(context)       = frame->fp;
-        LR_sig(context)       = frame->lr;
-        SP_sig(context)       = frame->sp;
-        PC_sig(context)       = frame->pc;
+        REGn_sig(0, context) = (ULONG_PTR)frame;
+        REGn_sig(1, context) = rec->ExceptionCode;
+        PC_sig(context)      = (ULONG_PTR)__wine_syscall_dispatcher_return;
     }
     return TRUE;
 }

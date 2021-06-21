@@ -1460,27 +1460,22 @@ static void output_syscall_dispatcher(void)
         {
             output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
             output( "1:\tleal %s-1b(%%eax,%%edx),%%ebx\n", asm_name("KeServiceDescriptorTable") );
-            output( "\tmovl %s-1b(%%eax),%%edi\n", asm_name("__wine_syscall_flags") );
             needs_get_pc_thunk = 1;
         }
-        else
-        {
-            output( "\tleal %s(%%edx),%%ebx\n", asm_name("KeServiceDescriptorTable") );
-            output( "\tmovl %s,%%edi\n", asm_name("__wine_syscall_flags") );
-        }
-        output( "\ttestl $3,%%edi\n" );  /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
+        else output( "\tleal %s(%%edx),%%ebx\n", asm_name("KeServiceDescriptorTable") );
+        output( "\ttestl $3,0x38(%%ecx)\n" );  /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
         output( "\tjz 2f\n" );
         output( "\tmovl $7,%%eax\n" );
         output( "\txorl %%edx,%%edx\n" );
         for (i = 0; i < 6; i++) output( "\tmovl %%edx,0x%x(%%ecx)\n", 0x240 + i * 4 );
-        output( "\ttestl $2,%%edi\n" );  /* SYSCALL_HAVE_XSAVEC */
+        output( "\ttestl $2,0x38(%%ecx)\n" );  /* SYSCALL_HAVE_XSAVEC */
         output( "\tjz 1f\n" );
         for (i = 6; i < 16; i++) output( "\tmovl %%edx,0x%x(%%ecx)\n", 0x240 + i * 4 );
         output( "\txsavec 0x40(%%ecx)\n" );
         output( "\tjmp 4f\n" );
         output( "1:\txsave 0x40(%%ecx)\n" );
         output( "\tjmp 4f\n" );
-        output( "2:\ttestl $4,%%edi\n" );  /* SYSCALL_HAVE_FXSAVE */
+        output( "2:\ttestl $4,0x38(%%ecx)\n" );  /* SYSCALL_HAVE_FXSAVE */
         output( "\tjz 3f\n" );
         output( "\tfxsave 0x40(%%ecx)\n" );
         output( "\tjmp 4f\n" );
@@ -1494,20 +1489,18 @@ static void output_syscall_dispatcher(void)
         output( "\tmovl 12(%%ebx),%%eax\n" );  /* table->ArgumentTable */
         output( "\tmovzbl (%%eax,%%edx,1),%%ecx\n" );
         output( "\tmovl (%%ebx),%%eax\n" );    /* table->ServiceTable */
-        output( "\tmovl %%edi,%%ebx\n" );
         output( "\tsubl %%ecx,%%esp\n" );
         output( "\tshrl $2,%%ecx\n" );
         output( "\tandl $~15,%%esp\n" );
         output( "\tmovl %%esp,%%edi\n" );
         output( "\tcld\n" );
         output( "\trep; movsl\n" );
-        output( "\tmovl %%ebx,%%edi\n" );
         output( "\tcall *(%%eax,%%edx,4)\n" );
-        output( "5:\tleal -0x34(%%ebp),%%esp\n" );
-        output( "\tmovl (%%esp),%%ecx\n" );  /* frame->restore_flags */
+        output( "\tleal -0x34(%%ebp),%%esp\n" );
+        output( "5:\tmovl (%%esp),%%ecx\n" );  /* frame->restore_flags */
         output( "\ttestl $0x68,%%ecx\n" );   /* CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS | CONTEXT_XSAVE */
         output( "\tjz 3f\n" );
-        output( "\ttestl $3,%%edi\n" );  /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
+        output( "\ttestl $3,0x38(%%esp)\n" );  /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
         output( "\tjz 1f\n" );
         output( "\tmovl %%eax,%%esi\n" );
         output( "\tmovl $7,%%eax\n" );
@@ -1515,7 +1508,7 @@ static void output_syscall_dispatcher(void)
         output( "\txrstor 0x40(%%esp)\n" );
         output( "\tmovl %%esi,%%eax\n" );
         output( "\tjmp 3f\n" );
-        output( "1:\ttestl $4,%%edi\n" );  /* SYSCALL_HAVE_FXSAVE */
+        output( "1:\ttestl $4,0x38(%%esp)\n" );  /* SYSCALL_HAVE_FXSAVE */
         output( "\tjz 2f\n" );
         output( "\tfxrstor 0x40(%%esp)\n" );
         output( "\tjmp 3f\n" );
@@ -1549,6 +1542,10 @@ static void output_syscall_dispatcher(void)
         output( "\tpopl %%ds\n" );
         output( "\tiret\n" );
         output( "6:\tmovl $0x%x,%%eax\n", invalid_param );
+        output( "\tjmp 5b\n" );
+        output( "%s\n", asm_globl("__wine_syscall_dispatcher_return") );
+        output( "\tmovl 8(%%esp),%%eax\n" );
+        output( "\tmovl 4(%%esp),%%esp\n" );
         output( "\tjmp 5b\n" );
         break;
     case CPU_x86_64:
@@ -1626,8 +1623,8 @@ static void output_syscall_dispatcher(void)
         output( "\tsubq $0x20,%%rsp\n" );
         output( "\tmovq (%%rbx),%%r10\n" );      /* table->ServiceTable */
         output( "\tcallq *(%%r10,%%rax,8)\n" );
-        output( "2:\tleaq -0x98(%%rbp),%%rcx\n" );
-        output( "\tmovl 0x94(%%rcx),%%edx\n" );   /* frame->restore_flags */
+        output( "\tleaq -0x98(%%rbp),%%rcx\n" );
+        output( "2:\tmovl 0x94(%%rcx),%%edx\n" );   /* frame->restore_flags */
         output( "\ttestl $0x48,%%edx\n" );  /* CONTEXT_FLOATING_POINT | CONTEXT_XSTATE */
         output( "\tjz 4f\n" );
         output( "\ttestl $3,%%r14d\n" );  /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
@@ -1663,7 +1660,11 @@ static void output_syscall_dispatcher(void)
         output( "\tmovq 0x48(%%rcx),%%r11\n" );
         output( "\tmovq 0x10(%%rcx),%%rcx\n" );
         output( "1:\tiretq\n" );
-        output( "5:\tmovl $0x%x,%%eax\n", invalid_param );
+        output( "5:\tmovl $0x%x,%%edx\n", invalid_param );
+        output( "\tmovq %%rsp,%%rcx\n" );
+        output( "%s\n", asm_globl("__wine_syscall_dispatcher_return") );
+        output( "\tmovl %s(%%rip),%%r14d\n", asm_name("__wine_syscall_flags") );
+        output( "\tmovq %%rdx,%%rax\n" );
         output( "\tjmp 2b\n" );
         break;
     case CPU_ARM:
@@ -1712,7 +1713,7 @@ static void output_syscall_dispatcher(void)
         output( "\tldr r5, [r4]\n");     /* table->ServiceTable */
         output( "\tldr ip, [r5, ip, lsl #2]\n");
         output( "\tblx ip\n");
-        output( "\tldr ip, [r8, #0x44]\n" ); /* frame->restore_flags */
+        output( "4:\tldr ip, [r8, #0x44]\n" ); /* frame->restore_flags */
         if (strcmp( float_abi_option, "soft" ))
         {
             output( "\ttst ip, #4\n" );  /* CONTEXT_FLOATING_POINT */
@@ -1726,12 +1727,16 @@ static void output_syscall_dispatcher(void)
         output( "\ttst ip, #2\n" );  /* CONTEXT_INTEGER */
         output( "\tit ne\n" );
         output( "\tldmne r8, {r0-r3}\n" );
-        output( "4:\tldr lr, [r8, #0x3c]\n" );
+        output( "\tldr lr, [r8, #0x3c]\n" );
         output( "\tldr sp, [r8, #0x38]\n" );
         output( "\tadd r8, r8, #0x10\n" );
         output( "\tldm r8, {r4-r12,pc}\n" );
         output( "5:\tmovw r0, #0x%x\n", invalid_param & 0xffff );
         output( "\tmovt r0, #0x%x\n", invalid_param >> 16 );
+        output( "\tb 4b\n" );
+        output( "%s\n", asm_globl("__wine_syscall_dispatcher_return") );
+        output( "\tmov r8, r0\n" );
+        output( "\tmov r0, r1\n" );
         output( "\tb 4b\n" );
         if (UsePIC)
             output( "6:\t.long %s-1b-%u\n", asm_name("KeServiceDescriptorTable"), thumb_mode ? 4 : 8 );
@@ -1836,9 +1841,9 @@ static void output_syscall_dispatcher(void)
         output( "\tldp q26, q27, [sp, #0x2c0]\n" );
         output( "\tldp q28, q29, [sp, #0x2e0]\n" );
         output( "\tldp q30, q31, [sp, #0x300]\n" );
-        output( "\tldr w9, [x10, #0x118]\n" );
+        output( "\tldr w9, [sp, #0x118]\n" );
         output( "\tmsr FPCR, x9\n" );
-        output( "\tldr w9, [x10, #0x11c]\n" );
+        output( "\tldr w9, [sp, #0x11c]\n" );
         output( "\tmsr FPSR, x9\n" );
         output( "1:\ttbz x16, #1, 1f\n" );  /* CONTEXT_INTEGER */
         output( "\tldp x0, x1, [sp, #0x00]\n" );
@@ -1856,6 +1861,10 @@ static void output_syscall_dispatcher(void)
         output( "\tret x16\n" );
         output( "4:\tmov x0, #0x%x\n", invalid_param & 0xffff0000 );
         output( "\tmovk x0, #0x%x\n", invalid_param & 0x0000ffff );
+        output( "\tb 3b\n" );
+        output( "%s\n", asm_globl("__wine_syscall_dispatcher_return") );
+        output( "\tmov sp, x0\n" );
+        output( "\tmov x0, x1\n" );
         output( "\tb 3b\n" );
         break;
     default:

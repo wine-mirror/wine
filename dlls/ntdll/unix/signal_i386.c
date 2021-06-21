@@ -480,7 +480,8 @@ struct syscall_frame
     DWORD              edi;            /* 02c */
     DWORD              esi;            /* 030 */
     DWORD              ebp;            /* 034 */
-    DWORD              align[2];       /* 038 */
+    DWORD              syscall_flags;  /* 038 */
+    DWORD              align;          /* 03c */
     union                              /* 040 */
     {
         XSAVE_FORMAT       xsave;
@@ -1709,7 +1710,7 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, void *stack_ptr,
                                   EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     struct syscall_frame *frame = x86_thread_data()->syscall_frame;
-    DWORD i;
+    DWORD i, *stack;
 
     if (!is_inside_syscall( sigcontext )) return FALSE;
 
@@ -1727,10 +1728,9 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, void *stack_ptr,
 
     if (ntdll_get_thread_data()->jmp_buf)
     {
-        DWORD *stack = stack_ptr;
-
         TRACE( "returning to handler\n" );
         /* push stack frame for calling __wine_longjmp */
+        stack = stack_ptr;
         *(--stack) = 1;
         *(--stack) = (DWORD)ntdll_get_thread_data()->jmp_buf;
         *(--stack) = 0xdeadbabe;  /* return address */
@@ -1741,13 +1741,12 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, void *stack_ptr,
     else
     {
         TRACE( "returning to user mode ip=%08x ret=%08x\n", frame->eip, rec->ExceptionCode );
-        EAX_sig(sigcontext) = rec->ExceptionCode;
-        EBX_sig(sigcontext) = frame->ebx;
-        ESI_sig(sigcontext) = frame->esi;
-        EDI_sig(sigcontext) = frame->edi;
-        EBP_sig(sigcontext) = frame->ebp;
-        ESP_sig(sigcontext) = frame->esp;
-        EIP_sig(sigcontext) = frame->eip;
+        stack = (DWORD *)frame;
+        *(--stack) = rec->ExceptionCode;
+        *(--stack) = (DWORD)frame;
+        *(--stack) = 0xdeadbabe;  /* return address */
+        ESP_sig(sigcontext) = (DWORD)stack;
+        EIP_sig(sigcontext) = (DWORD)__wine_syscall_dispatcher_return;
     }
     return TRUE;
 }
@@ -2401,6 +2400,8 @@ static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry,
  */
 PCONTEXT DECLSPEC_HIDDEN get_initial_context( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
 {
+    struct x86_thread_data *thread_data = (struct x86_thread_data *)&teb->GdiTebBatch;
+    struct syscall_frame *frame = thread_data->syscall_frame;
     CONTEXT *ctx;
 
     if (suspend)
@@ -2417,6 +2418,7 @@ PCONTEXT DECLSPEC_HIDDEN get_initial_context( LPTHREAD_START_ROUTINE entry, void
         ctx = (CONTEXT *)((char *)teb->Tib.StackBase - 16) - 1;
         init_thread_context( ctx, entry, arg, teb );
     }
+    frame->syscall_flags = __wine_syscall_flags;
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
     ctx->ContextFlags = CONTEXT_FULL | CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS;
     return ctx;
