@@ -237,7 +237,6 @@ FUNCTION_OVERRIDES = {
 
     # VK_EXT_private_data
     "vkGetPrivateDataEXT" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
-    "vkSetPrivateDataEXT" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
 
     # VK_EXT_calibrated_timestamps
     "vkGetPhysicalDeviceCalibrateableTimeDomainsEXT" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE},

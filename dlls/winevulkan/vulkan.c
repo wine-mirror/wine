@@ -1400,16 +1400,6 @@ void WINAPI wine_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR(VkPhysicalDev
     properties->externalSemaphoreFeatures = 0;
 }
 
-VkResult WINAPI wine_vkSetPrivateDataEXT(VkDevice device, VkObjectType object_type, uint64_t object_handle,
-        VkPrivateDataSlotEXT private_data_slot, uint64_t data)
-{
-    TRACE("%p, %#x, 0x%s, 0x%s, 0x%s\n", device, object_type, wine_dbgstr_longlong(object_handle),
-            wine_dbgstr_longlong(private_data_slot), wine_dbgstr_longlong(data));
-
-    object_handle = wine_vk_unwrap_handle(object_type, object_handle);
-    return device->funcs.p_vkSetPrivateDataEXT(device->device, object_type, object_handle, private_data_slot, data);
-}
-
 void WINAPI wine_vkGetPrivateDataEXT(VkDevice device, VkObjectType object_type, uint64_t object_handle,
         VkPrivateDataSlotEXT private_data_slot, uint64_t *data)
 {

@@ -7690,6 +7690,12 @@ static VkResult WINAPI wine_vkSetEvent(VkDevice device, VkEvent event)
     return device->funcs.p_vkSetEvent(device->device, event);
 }
 
+static VkResult WINAPI wine_vkSetPrivateDataEXT(VkDevice device, VkObjectType objectType, uint64_t objectHandle, VkPrivateDataSlotEXT privateDataSlot, uint64_t data)
+{
+    TRACE("%p, %#x, 0x%s, 0x%s, 0x%s\n", device, objectType, wine_dbgstr_longlong(objectHandle), wine_dbgstr_longlong(privateDataSlot), wine_dbgstr_longlong(data));
+    return device->funcs.p_vkSetPrivateDataEXT(device->device, objectType, wine_vk_unwrap_handle(objectType, objectHandle), privateDataSlot, data);
+}
+
 static VkResult WINAPI wine_vkSignalSemaphore(VkDevice device, const VkSemaphoreSignalInfo *pSignalInfo)
 {
 #if defined(USE_STRUCT_CONVERSION)
