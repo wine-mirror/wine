@@ -1414,12 +1414,13 @@ class VkMember(object):
 class VkParam(object):
     """ Helper class which describes a parameter to a function call. """
 
-    def __init__(self, type_info, const=None, pointer=None, name=None, array_len=None, dyn_array_len=None):
+    def __init__(self, type_info, const=None, pointer=None, name=None, array_len=None, dyn_array_len=None, object_type=None):
         self.const = const
         self.name = name
         self.array_len = array_len
         self.dyn_array_len = dyn_array_len
         self.pointer = pointer
+        self.object_type = object_type
         self.type_info = type_info
         self.type = type_info["name"] # For convenience
         self.handle = type_info["data"] if type_info["category"] == "handle" else None
@@ -1457,12 +1458,15 @@ class VkParam(object):
         type_elem = param.find("type")
         pointer = type_elem.tail.strip() if type_elem.tail.strip() != "" else None
 
+        # Some uint64_t are actually handles with a separate type param
+        object_type = param.get("objecttype", None)
+
         # Since we have parsed all types before hand, this should not happen.
         type_info = types.get(type_elem.text, None)
         if type_info is None:
             LOGGER.err("type info not found for: {0}".format(type_elem.text))
 
-        return VkParam(type_info, const=const, pointer=pointer, name=name, array_len=array_len, dyn_array_len=dyn_array_len)
+        return VkParam(type_info, const=const, pointer=pointer, name=name, array_len=array_len, dyn_array_len=dyn_array_len, object_type=object_type)
 
     def _set_conversions(self):
         """ Internal helper function to configure any needed conversion functions. """
@@ -1790,6 +1794,9 @@ class VkParam(object):
             else:
                 return "&{0}_host".format(self.name)
         else:
+            if self.object_type != None and self.type == "uint64_t":
+                return "wine_vk_unwrap_handle({0}, {1})".format(self.object_type, self.name)
+
             # We need to pass the native handle to the native Vulkan calls and
             # the wine driver's handle to calls which are wrapped by the driver.
             driver_handle = self.handle.driver_handle(self.name) if self.is_handle() else None
