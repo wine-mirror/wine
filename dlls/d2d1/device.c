@@ -287,6 +287,7 @@ static ULONG STDMETHODCALLTYPE d2d_device_context_inner_Release(IUnknown *iface)
         context->stateblock->lpVtbl->Release(context->stateblock);
         if (context->target)
             ID2D1Bitmap1_Release(&context->target->ID2D1Bitmap1_iface);
+        ID3D11Device1_Release(context->d3d11_device);
         ID3D10Device_Release(context->d3d_device);
         ID2D1Factory_Release(context->factory);
         ID2D1Device_Release(context->device);
@@ -3850,6 +3851,13 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
         return hr;
     }
 
+    if (FAILED(hr = IDXGIDevice_QueryInterface(device_impl->dxgi_device,
+            &IID_ID3D11Device1, (void **)&render_target->d3d11_device)))
+    {
+        WARN("Failed to query ID3D11Device1 interface, hr %#x.\n", hr);
+        goto err;
+    }
+
     if (FAILED(hr = D3D10StateBlockMaskEnableAll(&state_mask)))
     {
         WARN("Failed to create stateblock mask, hr %#x.\n", hr);
@@ -4013,6 +4021,8 @@ err:
     }
     if (render_target->stateblock)
         render_target->stateblock->lpVtbl->Release(render_target->stateblock);
+    if (render_target->d3d11_device)
+        ID3D11Device1_Release(render_target->d3d11_device);
     if (render_target->d3d_device)
         ID3D10Device_Release(render_target->d3d_device);
     ID2D1Device_Release(render_target->device);

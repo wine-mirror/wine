@@ -27,7 +27,7 @@
 #include <math.h>
 #define COBJMACROS
 #include "d2d1_2.h"
-#include "d3d11.h"
+#include "d3d11_1.h"
 #ifdef D2D1_INIT_GUID
 #include "initguid.h"
 #endif
@@ -162,6 +162,7 @@ struct d2d_device_context
     ID2D1Factory *factory;
     ID2D1Device *device;
     ID3D10Device *d3d_device;
+    ID3D11Device1 *d3d11_device;
     struct d2d_bitmap *target;
     ID3D10StateBlock *stateblock;
     struct d2d_shape_resources shape_resources[D2D_SHAPE_TYPE_COUNT];
