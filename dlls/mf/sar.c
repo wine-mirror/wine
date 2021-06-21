@@ -1751,7 +1751,7 @@ static HRESULT WINAPI audio_renderer_render_callback_GetParameters(IMFAsyncCallb
 
 static void audio_renderer_render(struct audio_renderer *renderer, IMFAsyncResult *result)
 {
-    unsigned int src_frames, dst_frames, max_frames, src_len;
+    unsigned int src_frames, dst_frames, max_frames, pad_frames, src_len;
     struct queued_object *obj, *obj2;
     BOOL keep_sample = FALSE;
     IMFMediaBuffer *buffer;
@@ -1775,20 +1775,24 @@ static void audio_renderer_render(struct audio_renderer *renderer, IMFAsyncResul
                     {
                         if (SUCCEEDED(IAudioClient_GetBufferSize(renderer->audio_client, &max_frames)))
                         {
-                            src_frames -= obj->u.sample.frame_offset;
-                            dst_frames = min(src_frames, max_frames);
-
-                            if (SUCCEEDED(hr = IAudioRenderClient_GetBuffer(renderer->audio_render_client, dst_frames, &dst)))
+                            if (SUCCEEDED(IAudioClient_GetCurrentPadding(renderer->audio_client, &pad_frames)))
                             {
-                                memcpy(dst, src + obj->u.sample.frame_offset * renderer->frame_size,
-                                        dst_frames * renderer->frame_size);
+                                max_frames -= pad_frames;
+                                src_frames -= obj->u.sample.frame_offset;
+                                dst_frames = min(src_frames, max_frames);
 
-                                IAudioRenderClient_ReleaseBuffer(renderer->audio_render_client, dst_frames, 0);
+                                if (SUCCEEDED(hr = IAudioRenderClient_GetBuffer(renderer->audio_render_client, dst_frames, &dst)))
+                                {
+                                    memcpy(dst, src + obj->u.sample.frame_offset * renderer->frame_size,
+                                            dst_frames * renderer->frame_size);
 
-                                obj->u.sample.frame_offset += dst_frames;
+                                    IAudioRenderClient_ReleaseBuffer(renderer->audio_render_client, dst_frames, 0);
+
+                                    obj->u.sample.frame_offset += dst_frames;
+                                }
+
+                                keep_sample = FAILED(hr) || src_frames > max_frames;
                             }
-
-                            keep_sample = FAILED(hr) || src_frames > max_frames;
                         }
                     }
                     IMFMediaBuffer_Unlock(buffer);
