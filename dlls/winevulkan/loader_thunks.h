@@ -89,6 +89,8 @@ struct unix_funcs
     void (WINAPI *p_vkCmdDrawMeshTasksIndirectCountNV)(VkCommandBuffer, VkBuffer, VkDeviceSize, VkBuffer, VkDeviceSize, uint32_t, uint32_t);
     void (WINAPI *p_vkCmdDrawMeshTasksIndirectNV)(VkCommandBuffer, VkBuffer, VkDeviceSize, uint32_t, uint32_t);
     void (WINAPI *p_vkCmdDrawMeshTasksNV)(VkCommandBuffer, uint32_t, uint32_t);
+    void (WINAPI *p_vkCmdDrawMultiEXT)(VkCommandBuffer, uint32_t, const VkMultiDrawInfoEXT *, uint32_t, uint32_t, uint32_t);
+    void (WINAPI *p_vkCmdDrawMultiIndexedEXT)(VkCommandBuffer, uint32_t, const VkMultiDrawIndexedInfoEXT *, uint32_t, uint32_t, uint32_t, const int32_t *);
     void (WINAPI *p_vkCmdEndConditionalRenderingEXT)(VkCommandBuffer);
     void (WINAPI *p_vkCmdEndDebugUtilsLabelEXT)(VkCommandBuffer);
     void (WINAPI *p_vkCmdEndQuery)(VkCommandBuffer, VkQueryPool, uint32_t);

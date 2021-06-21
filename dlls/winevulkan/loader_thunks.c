@@ -388,6 +388,16 @@ void WINAPI vkCmdDrawMeshTasksNV(VkCommandBuffer commandBuffer, uint32_t taskCou
     unix_funcs->p_vkCmdDrawMeshTasksNV(commandBuffer, taskCount, firstTask);
 }
 
+void WINAPI vkCmdDrawMultiEXT(VkCommandBuffer commandBuffer, uint32_t drawCount, const VkMultiDrawInfoEXT *pVertexInfo, uint32_t instanceCount, uint32_t firstInstance, uint32_t stride)
+{
+    unix_funcs->p_vkCmdDrawMultiEXT(commandBuffer, drawCount, pVertexInfo, instanceCount, firstInstance, stride);
+}
+
+void WINAPI vkCmdDrawMultiIndexedEXT(VkCommandBuffer commandBuffer, uint32_t drawCount, const VkMultiDrawIndexedInfoEXT *pIndexInfo, uint32_t instanceCount, uint32_t firstInstance, uint32_t stride, const int32_t *pVertexOffset)
+{
+    unix_funcs->p_vkCmdDrawMultiIndexedEXT(commandBuffer, drawCount, pIndexInfo, instanceCount, firstInstance, stride, pVertexOffset);
+}
+
 void WINAPI vkCmdEndConditionalRenderingEXT(VkCommandBuffer commandBuffer)
 {
     unix_funcs->p_vkCmdEndConditionalRenderingEXT(commandBuffer);
@@ -2060,6 +2070,8 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdDrawMeshTasksIndirectCountNV", &vkCmdDrawMeshTasksIndirectCountNV},
     {"vkCmdDrawMeshTasksIndirectNV", &vkCmdDrawMeshTasksIndirectNV},
     {"vkCmdDrawMeshTasksNV", &vkCmdDrawMeshTasksNV},
+    {"vkCmdDrawMultiEXT", &vkCmdDrawMultiEXT},
+    {"vkCmdDrawMultiIndexedEXT", &vkCmdDrawMultiIndexedEXT},
     {"vkCmdEndConditionalRenderingEXT", &vkCmdEndConditionalRenderingEXT},
     {"vkCmdEndDebugUtilsLabelEXT", &vkCmdEndDebugUtilsLabelEXT},
     {"vkCmdEndQuery", &vkCmdEndQuery},

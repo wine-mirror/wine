@@ -64,7 +64,7 @@ from enum import Enum
 LOGGER = logging.Logger("vulkan")
 LOGGER.addHandler(logging.StreamHandler())
 
-VK_XML_VERSION = "1.2.178"
+VK_XML_VERSION = "1.2.182"
 WINE_VK_VERSION = (1, 2)
 
 # Filenames to create.
@@ -108,12 +108,16 @@ UNSUPPORTED_EXTENSIONS = [
     # Extensions for other platforms
     "VK_EXT_external_memory_dma_buf",
     "VK_EXT_image_drm_format_modifier",
+    "VK_EXT_physical_device_drm",
     "VK_KHR_external_fence_fd",
     "VK_KHR_external_memory_fd",
     "VK_KHR_external_semaphore_fd",
 
     # Extensions which require callback handling
     "VK_EXT_device_memory_report",
+
+    # Extensions which are broken
+    "VK_HUAWEI_subpass_shading", # https://github.com/KhronosGroup/Vulkan-Docs/issues/1564
 
     # Deprecated extensions
     "VK_NV_external_memory_capabilities",

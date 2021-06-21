@@ -2842,6 +2842,22 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTI_DRAW_FEATURES_EXT:
+        {
+            const VkPhysicalDeviceMultiDrawFeaturesEXT *in = (const VkPhysicalDeviceMultiDrawFeaturesEXT *)in_header;
+            VkPhysicalDeviceMultiDrawFeaturesEXT *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->multiDraw = in->multiDraw;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_FEATURES_EXT:
         {
             const VkPhysicalDeviceInlineUniformBlockFeaturesEXT *in = (const VkPhysicalDeviceInlineUniformBlockFeaturesEXT *)in_header;
@@ -3962,6 +3978,22 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_UNIFORM_CONTROL_FLOW_FEATURES_KHR:
+        {
+            const VkPhysicalDeviceShaderSubgroupUniformControlFlowFeaturesKHR *in = (const VkPhysicalDeviceShaderSubgroupUniformControlFlowFeaturesKHR *)in_header;
+            VkPhysicalDeviceShaderSubgroupUniformControlFlowFeaturesKHR *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->shaderSubgroupUniformControlFlow = in->shaderSubgroupUniformControlFlow;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT:
         {
             const VkPhysicalDeviceRobustness2FeaturesEXT *in = (const VkPhysicalDeviceRobustness2FeaturesEXT *)in_header;
@@ -4208,6 +4240,23 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             out->pNext = NULL;
             out->provokingVertexLast = in->provokingVertexLast;
             out->transformFeedbackPreservesProvokingVertex = in->transformFeedbackPreservesProvokingVertex;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_MOTION_BLUR_FEATURES_NV:
+        {
+            const VkPhysicalDeviceRayTracingMotionBlurFeaturesNV *in = (const VkPhysicalDeviceRayTracingMotionBlurFeaturesNV *)in_header;
+            VkPhysicalDeviceRayTracingMotionBlurFeaturesNV *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->rayTracingMotionBlur = in->rayTracingMotionBlur;
+            out->rayTracingMotionBlurPipelineTraceRaysIndirect = in->rayTracingMotionBlurPipelineTraceRaysIndirect;
 
             out_header->pNext = (VkBaseOutStructure *)out;
             out_header = out_header->pNext;
@@ -5122,6 +5171,18 @@ static void WINAPI wine_vkCmdDrawMeshTasksNV(VkCommandBuffer commandBuffer, uint
 {
     TRACE("%p, %u, %u\n", commandBuffer, taskCount, firstTask);
     commandBuffer->device->funcs.p_vkCmdDrawMeshTasksNV(commandBuffer->command_buffer, taskCount, firstTask);
+}
+
+static void WINAPI wine_vkCmdDrawMultiEXT(VkCommandBuffer commandBuffer, uint32_t drawCount, const VkMultiDrawInfoEXT *pVertexInfo, uint32_t instanceCount, uint32_t firstInstance, uint32_t stride)
+{
+    TRACE("%p, %u, %p, %u, %u, %u\n", commandBuffer, drawCount, pVertexInfo, instanceCount, firstInstance, stride);
+    commandBuffer->device->funcs.p_vkCmdDrawMultiEXT(commandBuffer->command_buffer, drawCount, pVertexInfo, instanceCount, firstInstance, stride);
+}
+
+static void WINAPI wine_vkCmdDrawMultiIndexedEXT(VkCommandBuffer commandBuffer, uint32_t drawCount, const VkMultiDrawIndexedInfoEXT *pIndexInfo, uint32_t instanceCount, uint32_t firstInstance, uint32_t stride, const int32_t *pVertexOffset)
+{
+    TRACE("%p, %u, %p, %u, %u, %u, %p\n", commandBuffer, drawCount, pIndexInfo, instanceCount, firstInstance, stride, pVertexOffset);
+    commandBuffer->device->funcs.p_vkCmdDrawMultiIndexedEXT(commandBuffer->command_buffer, drawCount, pIndexInfo, instanceCount, firstInstance, stride, pVertexOffset);
 }
 
 static void WINAPI wine_vkCmdEndConditionalRenderingEXT(VkCommandBuffer commandBuffer)
@@ -7799,6 +7860,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_fragment_density_map2",
     "VK_EXT_fragment_shader_interlock",
     "VK_EXT_global_priority",
+    "VK_EXT_global_priority_query",
     "VK_EXT_host_query_reset",
     "VK_EXT_image_robustness",
     "VK_EXT_index_type_uint8",
@@ -7806,6 +7868,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_line_rasterization",
     "VK_EXT_memory_budget",
     "VK_EXT_memory_priority",
+    "VK_EXT_multi_draw",
     "VK_EXT_pci_bus_info",
     "VK_EXT_pipeline_creation_cache_control",
     "VK_EXT_post_depth_coverage",
@@ -7884,6 +7947,7 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_shader_float_controls",
     "VK_KHR_shader_non_semantic_info",
     "VK_KHR_shader_subgroup_extended_types",
+    "VK_KHR_shader_subgroup_uniform_control_flow",
     "VK_KHR_shader_terminate_invocation",
     "VK_KHR_spirv_1_4",
     "VK_KHR_storage_buffer_storage_class",
@@ -7918,6 +7982,7 @@ static const char * const vk_device_extensions[] =
     "VK_NV_inherited_viewport_scissor",
     "VK_NV_mesh_shader",
     "VK_NV_ray_tracing",
+    "VK_NV_ray_tracing_motion_blur",
     "VK_NV_representative_fragment_test",
     "VK_NV_sample_mask_override_coverage",
     "VK_NV_scissor_exclusive",
@@ -8091,6 +8156,8 @@ const struct unix_funcs loader_funcs =
     &wine_vkCmdDrawMeshTasksIndirectCountNV,
     &wine_vkCmdDrawMeshTasksIndirectNV,
     &wine_vkCmdDrawMeshTasksNV,
+    &wine_vkCmdDrawMultiEXT,
+    &wine_vkCmdDrawMultiIndexedEXT,
     &wine_vkCmdEndConditionalRenderingEXT,
     &wine_vkCmdEndDebugUtilsLabelEXT,
     &wine_vkCmdEndQuery,
