@@ -156,62 +156,11 @@ static NTSTATUS get_report_data_array(BYTE *report, UINT reportLength, UINT star
     return HIDP_STATUS_SUCCESS;
 }
 
-
-NTSTATUS WINAPI HidP_GetButtonCaps(HIDP_REPORT_TYPE ReportType, PHIDP_BUTTON_CAPS ButtonCaps,
-                                   PUSHORT ButtonCapsLength, PHIDP_PREPARSED_DATA PreparsedData)
+NTSTATUS WINAPI HidP_GetButtonCaps( HIDP_REPORT_TYPE report_type, HIDP_BUTTON_CAPS *caps, USHORT *caps_count,
+                                    PHIDP_PREPARSED_DATA preparsed_data )
 {
-    PWINE_HIDP_PREPARSED_DATA data = (PWINE_HIDP_PREPARSED_DATA)PreparsedData;
-    WINE_HID_ELEMENT *elems = HID_ELEMS(data);
-    WINE_HID_REPORT *report = NULL;
-    USHORT b_count = 0, r_count = 0;
-    int i,j,u;
-
-    TRACE("(%i, %p, %p, %p)\n",ReportType, ButtonCaps, ButtonCapsLength, PreparsedData);
-
-    if (data->magic != HID_MAGIC)
-        return HIDP_STATUS_INVALID_PREPARSED_DATA;
-
-    switch(ReportType)
-    {
-        case HidP_Input:
-            b_count = data->caps.NumberInputButtonCaps;
-            report = HID_INPUT_REPORTS(data);
-            break;
-        case HidP_Output:
-            b_count = data->caps.NumberOutputButtonCaps;
-            report = HID_OUTPUT_REPORTS(data);
-            break;
-        case HidP_Feature:
-            b_count = data->caps.NumberFeatureButtonCaps;
-            report = HID_FEATURE_REPORTS(data);
-            break;
-        default:
-            return HIDP_STATUS_INVALID_REPORT_TYPE;
-    }
-    r_count = data->reportCount[ReportType];
-
-    if (!r_count || !b_count)
-    {
-        *ButtonCapsLength = 0;
-        return HIDP_STATUS_SUCCESS;
-    }
-
-    b_count = min(b_count, *ButtonCapsLength);
-
-    u = 0;
-    for (j = 0; j < r_count && u < b_count; j++)
-    {
-        for (i = 0; i < report[j].elementCount && u < b_count; i++)
-        {
-            if (elems[report[j].elementIdx + i].caps.BitSize == 1)
-                ButtonCaps[u++] = *(HIDP_BUTTON_CAPS *)&elems[report[j].elementIdx + i].caps;
-        }
-    }
-
-    *ButtonCapsLength = b_count;
-    return HIDP_STATUS_SUCCESS;
+    return HidP_GetSpecificButtonCaps( report_type, 0, 0, 0, caps, caps_count, preparsed_data );
 }
-
 
 NTSTATUS WINAPI HidP_GetCaps(PHIDP_PREPARSED_DATA PreparsedData,
     PHIDP_CAPS Capabilities)
@@ -467,60 +416,10 @@ NTSTATUS WINAPI HidP_GetUsages(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, USH
     return HIDP_STATUS_SUCCESS;
 }
 
-
-NTSTATUS WINAPI HidP_GetValueCaps(HIDP_REPORT_TYPE ReportType, PHIDP_VALUE_CAPS ValueCaps,
-                                  PUSHORT ValueCapsLength, PHIDP_PREPARSED_DATA PreparsedData)
+NTSTATUS WINAPI HidP_GetValueCaps( HIDP_REPORT_TYPE report_type, HIDP_VALUE_CAPS *caps, USHORT *caps_count,
+                                   PHIDP_PREPARSED_DATA preparsed_data )
 {
-    PWINE_HIDP_PREPARSED_DATA data = (PWINE_HIDP_PREPARSED_DATA)PreparsedData;
-    WINE_HID_ELEMENT *elems = HID_ELEMS(data);
-    WINE_HID_REPORT *report = NULL;
-    USHORT v_count = 0, r_count = 0;
-    int i,j,u;
-
-    TRACE("(%i, %p, %p, %p)\n", ReportType, ValueCaps, ValueCapsLength, PreparsedData);
-
-    if (data->magic != HID_MAGIC)
-        return HIDP_STATUS_INVALID_PREPARSED_DATA;
-
-    switch(ReportType)
-    {
-        case HidP_Input:
-            v_count = data->caps.NumberInputValueCaps;
-            report = HID_INPUT_REPORTS(data);
-            break;
-        case HidP_Output:
-            v_count = data->caps.NumberOutputValueCaps;
-            report = HID_OUTPUT_REPORTS(data);
-            break;
-        case HidP_Feature:
-            v_count = data->caps.NumberFeatureValueCaps;
-            report = HID_FEATURE_REPORTS(data);
-            break;
-        default:
-            return HIDP_STATUS_INVALID_REPORT_TYPE;
-    }
-    r_count = data->reportCount[ReportType];
-
-    if (!r_count || !v_count)
-    {
-        *ValueCapsLength = 0;
-        return HIDP_STATUS_SUCCESS;
-    }
-
-    v_count = min(v_count, *ValueCapsLength);
-
-    u = 0;
-    for (j = 0; j < r_count && u < v_count; j++)
-    {
-        for (i = 0; i < report[j].elementCount && u < v_count; i++)
-        {
-            if (elems[report[j].elementIdx + i].caps.BitSize != 1)
-                ValueCaps[u++] = elems[report[j].elementIdx + i].caps;
-        }
-    }
-
-    *ValueCapsLength = v_count;
-    return HIDP_STATUS_SUCCESS;
+    return HidP_GetSpecificValueCaps( report_type, 0, 0, 0, caps, caps_count, preparsed_data );
 }
 
 NTSTATUS WINAPI HidP_InitializeReportForID(HIDP_REPORT_TYPE ReportType, UCHAR ReportID,
