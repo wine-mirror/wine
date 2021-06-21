@@ -287,8 +287,13 @@ struct hid_parser_state
     struct hid_value_caps *collections;
     DWORD                  collections_size;
 
+    struct hid_value_caps *values[3];
+    ULONG                  values_size[3];
+
     ULONG   bit_size[3][256];
     USHORT *byte_size[3]; /* pointers to caps */
+    USHORT *value_idx[3]; /* pointers to caps */
+    USHORT *data_idx[3]; /* pointers to caps */
 };
 
 static BOOL array_reserve( struct hid_value_caps **array, DWORD *array_size, DWORD index )
@@ -447,7 +452,12 @@ static BOOL parse_end_collection( struct hid_parser_state *state )
 
 static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TYPE type, struct collection *collection )
 {
+    struct hid_value_caps *value;
+    USAGE usage_page = state->items.usage_page;
+    DWORD usages_size = max(1, state->usages_size);
     USHORT *byte_size = state->byte_size[type];
+    USHORT *value_idx = state->value_idx[type];
+    USHORT *data_idx = state->data_idx[type];
     ULONG *bit_size = &state->bit_size[type][state->items.report_id];
     struct feature *feature;
     int j;
@@ -472,6 +482,34 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
     *bit_size += state->items.bit_size * state->items.report_count;
     *byte_size = max( *byte_size, (*bit_size + 7) / 8 );
 
+    if (!state->items.report_count)
+    {
+        reset_local_items( state );
+        return TRUE;
+    }
+
+    if (!array_reserve( &state->values[type], &state->values_size[type], *value_idx + usages_size ))
+    {
+        ERR( "HID parser values overflow!\n" );
+        return FALSE;
+    }
+    value = state->values[type] + *value_idx;
+
+    state->items.report_count -= usages_size - 1;
+    while (usages_size--)
+    {
+        state->items.usage_page = state->usages_page[usages_size];
+        state->items.usage_min = state->usages_min[usages_size];
+        state->items.usage_max = state->usages_max[usages_size];
+        state->items.data_index_min = *data_idx;
+        state->items.data_index_max = *data_idx + state->items.usage_max - state->items.usage_min;
+        if (state->items.usage_max || state->items.usage_min) *data_idx = state->items.data_index_max + 1;
+        *value++ = state->items;
+        *value_idx += 1;
+        state->items.report_count = 1;
+    }
+
+    state->items.usage_page = usage_page;
     reset_local_items( state );
     return TRUE;
 }
@@ -482,6 +520,14 @@ static void init_parser_state( struct hid_parser_state *state )
     state->byte_size[HidP_Input] = &state->caps.InputReportByteLength;
     state->byte_size[HidP_Output] = &state->caps.OutputReportByteLength;
     state->byte_size[HidP_Feature] = &state->caps.FeatureReportByteLength;
+
+    state->value_idx[HidP_Input] = &state->caps.NumberInputValueCaps;
+    state->value_idx[HidP_Output] = &state->caps.NumberOutputValueCaps;
+    state->value_idx[HidP_Feature] = &state->caps.NumberFeatureValueCaps;
+
+    state->data_idx[HidP_Input] = &state->caps.NumberInputDataIndices;
+    state->data_idx[HidP_Output] = &state->caps.NumberOutputDataIndices;
+    state->data_idx[HidP_Feature] = &state->caps.NumberFeatureDataIndices;
 }
 
 static void free_parser_state( struct hid_parser_state *state )
@@ -490,6 +536,9 @@ static void free_parser_state( struct hid_parser_state *state )
     if (state->collection_idx) ERR( "%u unpopped device collection on the stack\n", state->collection_idx );
     free( state->stack );
     free( state->collections );
+    free( state->values[HidP_Input] );
+    free( state->values[HidP_Output] );
+    free( state->values[HidP_Feature] );
     free( state );
 }
 
@@ -785,9 +834,10 @@ static WINE_HIDP_PREPARSED_DATA *build_preparsed_data( struct collection *base_c
 {
     WINE_HID_LINK_COLLECTION_NODE *nodes;
     WINE_HIDP_PREPARSED_DATA *data;
+    struct hid_value_caps *caps;
     unsigned int report_count;
     unsigned int size;
-    DWORD i;
+    DWORD i, button, filler, caps_len, caps_off;
 
     struct preparse_ctx ctx;
     unsigned int element_off;
@@ -804,13 +854,26 @@ static WINE_HIDP_PREPARSED_DATA *build_preparsed_data( struct collection *base_c
     nodes_offset = size;
     size += state->caps.NumberLinkCollectionNodes * sizeof(WINE_HID_LINK_COLLECTION_NODE);
 
+    caps_len = state->caps.NumberInputValueCaps + state->caps.NumberOutputValueCaps + state->caps.NumberFeatureValueCaps;
+    caps_off = size;
+    size += caps_len * sizeof(*caps);
+
     if (!(data = calloc(1, size))) return NULL;
     data->magic = HID_MAGIC;
     data->dwSize = size;
     data->caps = state->caps;
+    data->new_caps = state->caps;
     data->elementOffset = element_off;
     data->nodesOffset = nodes_offset;
 
+    data->value_caps_offset = caps_off;
+    data->value_caps_count[HidP_Input] = state->caps.NumberInputValueCaps;
+    data->value_caps_count[HidP_Output] = state->caps.NumberOutputValueCaps;
+    data->value_caps_count[HidP_Feature] = state->caps.NumberFeatureValueCaps;
+
+    data->caps.NumberInputValueCaps = data->caps.NumberInputButtonCaps = data->caps.NumberInputDataIndices = 0;
+    data->caps.NumberOutputValueCaps = data->caps.NumberOutputButtonCaps = data->caps.NumberOutputDataIndices = 0;
+    data->caps.NumberFeatureValueCaps = data->caps.NumberFeatureButtonCaps = data->caps.NumberFeatureDataIndices = 0;
     preparse_collection(base_collection, base_collection, data, &ctx);
 
     nodes = HID_NODES( data );
@@ -829,6 +892,40 @@ static WINE_HIDP_PREPARSED_DATA *build_preparsed_data( struct collection *base_c
             nodes[nodes[i].Parent].NumberOfChildren++;
         }
     }
+
+    /* fixup value vs button vs filler counts */
+
+    caps = HID_INPUT_VALUE_CAPS( data );
+    memcpy( caps, state->values[0], data->new_caps.NumberInputValueCaps * sizeof(*caps) );
+    for (i = 0, button = 0, filler = 0; i < data->new_caps.NumberInputValueCaps; ++i)
+    {
+        if (!caps[i].usage_min && !caps[i].usage_max) filler++;
+        else if (HID_VALUE_CAPS_IS_BUTTON( caps + i )) button++;
+    }
+    data->new_caps.NumberInputButtonCaps = button;
+    data->new_caps.NumberInputValueCaps -= filler + button;
+
+    caps = HID_OUTPUT_VALUE_CAPS( data );
+    memcpy( caps, state->values[1], data->new_caps.NumberOutputValueCaps * sizeof(*caps) );
+    for (i = 0, button = 0, filler = 0; i < data->new_caps.NumberOutputValueCaps; ++i)
+    {
+        if (!caps[i].usage_min && !caps[i].usage_max) filler++;
+        else if (HID_VALUE_CAPS_IS_BUTTON( caps + i )) button++;
+    }
+    caps += data->new_caps.NumberOutputValueCaps;
+    data->new_caps.NumberOutputButtonCaps = button;
+    data->new_caps.NumberOutputValueCaps -= filler + button;
+
+    caps = HID_FEATURE_VALUE_CAPS( data );
+    memcpy( caps, state->values[2], data->new_caps.NumberFeatureValueCaps * sizeof(*caps) );
+    for (i = 0, button = 0, filler = 0; i < data->new_caps.NumberFeatureValueCaps; ++i)
+    {
+        if (!caps[i].usage_min && !caps[i].usage_max) filler++;
+        else if (HID_VALUE_CAPS_IS_BUTTON( caps + i )) button++;
+    }
+    caps += data->new_caps.NumberFeatureValueCaps;
+    data->new_caps.NumberFeatureButtonCaps = button;
+    data->new_caps.NumberFeatureValueCaps -= filler + button;
 
     return data;
 }
