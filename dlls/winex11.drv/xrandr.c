@@ -1390,6 +1390,7 @@ static void xrandr14_free_modes( DEVMODEW *modes )
 
 static BOOL xrandr14_get_current_mode( ULONG_PTR id, DEVMODEW *mode )
 {
+    struct current_mode *mode_ptr = NULL;
     XRRScreenResources *screen_resources;
     XRROutputInfo *output_info = NULL;
     RROutput output = (RROutput)id;
@@ -1406,13 +1407,15 @@ static BOOL xrandr14_get_current_mode( ULONG_PTR id, DEVMODEW *mode )
             continue;
 
         if (!current_modes[mode_idx].loaded)
+        {
+            mode_ptr = &current_modes[mode_idx];
             break;
+        }
 
         memcpy( mode, &current_modes[mode_idx].mode, sizeof(*mode) );
         LeaveCriticalSection( &current_modes_section );
         return TRUE;
     }
-    LeaveCriticalSection( &current_modes_section );
 
     screen_resources = xrandr_get_screen_resources();
     if (!screen_resources)
@@ -1473,21 +1476,15 @@ static BOOL xrandr14_get_current_mode( ULONG_PTR id, DEVMODEW *mode )
     mode->u1.s2.dmPosition.y = crtc_info->y - primary.top;
     ret = TRUE;
 
-    EnterCriticalSection( &current_modes_section );
-    for (mode_idx = 0; mode_idx < current_mode_count; ++mode_idx)
+done:
+    if (ret && mode_ptr)
     {
-        if (current_modes[mode_idx].id != id)
-            continue;
-
-        memcpy( &current_modes[mode_idx].mode, mode, sizeof(*mode) );
-        current_modes[mode_idx].mode.dmSize = sizeof(*mode);
-        current_modes[mode_idx].mode.dmDriverExtra = 0;
-        current_modes[mode_idx].loaded = TRUE;
-        break;
+        memcpy( &mode_ptr->mode, mode, sizeof(*mode) );
+        mode_ptr->mode.dmSize = sizeof(*mode);
+        mode_ptr->mode.dmDriverExtra = 0;
+        mode_ptr->loaded = TRUE;
     }
     LeaveCriticalSection( &current_modes_section );
-
-done:
     if (crtc_info)
         pXRRFreeCrtcInfo( crtc_info );
     if (output_info)
