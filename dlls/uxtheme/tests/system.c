@@ -102,6 +102,7 @@ static void test_GetWindowTheme(void)
 
 static void test_SetWindowTheme(void)
 {
+    HTHEME  hTheme;
     HRESULT hRes;
     HWND    hWnd;
 
@@ -110,11 +111,29 @@ todo_wine
     ok( hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08x\n", hRes);
 
     /* Only do the bare minimum to get a valid hwnd */
-    hWnd = CreateWindowExA(0, "static", "", WS_POPUP, 0,0,100,100,0, 0, 0, NULL);
+    hWnd = CreateWindowExA(0, "button", "test", WS_POPUP, 0, 0, 100, 100, 0, 0, 0, NULL);
     ok(hWnd != NULL, "Failed to create a test window.\n");
 
     hRes = SetWindowTheme(hWnd, NULL, NULL);
     ok( hRes == S_OK, "Expected S_OK, got 0x%08x\n", hRes);
+
+    if (IsThemeActive())
+    {
+        hTheme = OpenThemeData(hWnd, L"Button");
+        ok(!!hTheme, "OpenThemeData failed.\n");
+        CloseThemeData(hTheme);
+
+        hRes = SetWindowTheme(hWnd, L"deadbeef", NULL);
+        ok(hRes == S_OK, "Expected S_OK, got 0x%08x.\n", hRes);
+
+        hTheme = OpenThemeData(hWnd, L"Button");
+        todo_wine ok(!!hTheme, "OpenThemeData failed.\n");
+        CloseThemeData(hTheme);
+    }
+    else
+    {
+        skip("No active theme, skipping rest of SetWindowTheme tests.\n");
+    }
 
     DestroyWindow(hWnd);
 }
