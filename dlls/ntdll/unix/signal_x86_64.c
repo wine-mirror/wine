@@ -2626,47 +2626,40 @@ void signal_init_process(void)
 
 
 /***********************************************************************
- *           init_thread_context
+ *           call_init_thunk
  */
-static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
+void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
 {
-    __asm__( "movw %%cs,%0" : "=m" (context->SegCs) );
-    __asm__( "movw %%ss,%0" : "=m" (context->SegSs) );
-    context->Rcx    = (ULONG_PTR)entry;
-    context->Rdx    = (ULONG_PTR)arg;
-    context->Rsp    = (ULONG_PTR)teb->Tib.StackBase - 0x28;
-    context->Rip    = (ULONG_PTR)pRtlUserThreadStart;
-    context->EFlags = 0x200;
-    context->u.FltSave.ControlWord = 0x27f;
-    context->u.FltSave.MxCsr = context->MxCsr = 0x1f80;
-}
+    struct amd64_thread_data *thread_data = (struct amd64_thread_data *)&teb->GdiTebBatch;
+    struct syscall_frame *frame = thread_data->syscall_frame;
+    CONTEXT *ctx, context = { 0 };
 
+    context.ContextFlags = CONTEXT_ALL;
+    context.Rcx    = (ULONG_PTR)entry;
+    context.Rdx    = (ULONG_PTR)arg;
+    context.Rsp    = (ULONG_PTR)teb->Tib.StackBase - 0x28;
+    context.Rip    = (ULONG_PTR)pRtlUserThreadStart;
+    context.EFlags = 0x200;
+    context.u.FltSave.ControlWord = 0x27f;
+    context.u.FltSave.MxCsr = context.MxCsr = 0x1f80;
+    __asm__( "movw %%cs,%0" : "=m" (context.SegCs) );
+    __asm__( "movw %%ss,%0" : "=m" (context.SegSs) );
 
-/***********************************************************************
- *           get_initial_context
- */
-PCONTEXT DECLSPEC_HIDDEN get_initial_context( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
-{
-    CONTEXT *ctx;
+    if (suspend) wait_suspend( &context );
 
-    if (suspend)
-    {
-        CONTEXT context = { 0 };
-
-        context.ContextFlags = CONTEXT_ALL;
-        init_thread_context( &context, entry, arg, teb );
-        wait_suspend( &context );
-        ctx = (CONTEXT *)((ULONG_PTR)context.Rsp & ~15) - 1;
-        *ctx = context;
-    }
-    else
-    {
-        ctx = (CONTEXT *)((char *)teb->Tib.StackBase - 0x30) - 1;
-        init_thread_context( ctx, entry, arg, teb );
-    }
-    pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
+    ctx = (CONTEXT *)((ULONG_PTR)context.Rsp & ~15) - 1;
+    *ctx = context;
     ctx->ContextFlags = CONTEXT_FULL;
-    return ctx;
+    memset( frame, 0, sizeof(*frame) );
+    NtSetContextThread( GetCurrentThread(), ctx );
+
+    frame->rsp = (ULONG64)ctx - 8;
+    frame->rip = (ULONG64)pLdrInitializeThunk;
+    frame->rcx = (ULONG64)ctx;
+    frame->restore_flags |= CONTEXT_INTEGER;
+
+    pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
+    __wine_syscall_dispatcher_return( frame, 0 );
 }
 
 
@@ -2691,24 +2684,16 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "movq %r15,8(%rsp)\n\t"
                    __ASM_CFI(".cfi_rel_offset %r15,8\n\t")
                    /* store exit frame */
-                   "movq %rsp,0x320(%r8)\n\t"       /* amd64_thread_data()->exit_frame */
+                   "movq %rsp,0x320(%rcx)\n\t"     /* amd64_thread_data()->exit_frame */
                    /* set syscall frame */
-                   "cmpq $0,0x328(%r8)\n\t"         /* amd64_thread_data()->syscall_frame */
+                   "movq 0x328(%rcx),%rax\n\t"     /* amd64_thread_data()->syscall_frame */
+                   "orq %rax,%rax\n\t"
                    "jnz 1f\n\t"
-                   "leaq -0x400(%rsp),%r10\n\t"     /* sizeof(struct syscall_frame) */
-                   "andq $~63,%r10\n\t"
-                   "movq %r10,0x328(%r8)\n"         /* amd64_thread_data()->syscall_frame */
-                   /* switch to thread stack */
-                   "1:\tmovq 8(%r8),%rax\n\t"       /* teb->Tib.StackBase */
-                   "movq %rcx,%rbx\n\t"             /* thunk */
-                   "movq %r8,%rcx\n\t"              /* teb */
-                   "leaq -0x1000(%rax),%rsp\n\t"
-                   /* attach dlls */
-                   "call " __ASM_NAME("get_initial_context") "\n\t"
-                   "movq %rax,%rcx\n\t"             /* context */
-                   "xorq %rax,%rax\n\t"
-                   "pushq %rax\n\t"
-                   "jmp *%rbx" )
+                   "leaq -0x400(%rsp),%rax\n\t"    /* sizeof(struct syscall_frame) */
+                   "andq $~63,%rax\n\t"
+                   "movq %rax,0x328(%rcx)\n"       /* amd64_thread_data()->syscall_frame */
+                   "1:\tmovq %rax,%rsp\n\t"
+                   "call " __ASM_NAME("call_init_thunk"))
 
 
 /***********************************************************************

@@ -894,48 +894,39 @@ void signal_init_process(void)
 
 
 /***********************************************************************
- *           init_thread_context
+ *           call_init_thunk
  */
-static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
+void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
 {
-    context->R0 = (DWORD)entry;
-    context->R1 = (DWORD)arg;
-    context->Sp = (DWORD)teb->Tib.StackBase;
-    context->Pc = (DWORD)pRtlUserThreadStart;
-    if (context->Pc & 1) context->Cpsr |= 0x20; /* thumb mode */
+    struct arm_thread_data *thread_data = (struct arm_thread_data *)&teb->GdiTebBatch;
+    struct syscall_frame *frame = thread_data->syscall_frame;
+    CONTEXT *ctx, context = { CONTEXT_ALL };
+
+    context.R0 = (DWORD)entry;
+    context.R1 = (DWORD)arg;
+    context.Sp = (DWORD)teb->Tib.StackBase;
+    context.Pc = (DWORD)pRtlUserThreadStart;
+    if (context.Pc & 1) context.Cpsr |= 0x20; /* thumb mode */
     if (NtCurrentTeb64())
     {
         WOW64_CPURESERVED *cpu = ULongToPtr( NtCurrentTeb64()->TlsSlots[WOW64_TLS_CPURESERVED] );
-        memcpy( cpu + 1, context, sizeof(*context) );
+        memcpy( cpu + 1, &context, sizeof(context) );
     }
-}
 
+    if (suspend) wait_suspend( &context );
 
-/***********************************************************************
- *           get_initial_context
- */
-PCONTEXT DECLSPEC_HIDDEN get_initial_context( LPTHREAD_START_ROUTINE entry, void *arg,
-                                              BOOL suspend, TEB *teb )
-{
-    CONTEXT *ctx;
-
-    if (suspend)
-    {
-        CONTEXT context = { CONTEXT_ALL };
-
-        init_thread_context( &context, entry, arg, teb );
-        wait_suspend( &context );
-        ctx = (CONTEXT *)((ULONG_PTR)context.Sp & ~15) - 1;
-        *ctx = context;
-    }
-    else
-    {
-        ctx = (CONTEXT *)teb->Tib.StackBase - 1;
-        init_thread_context( ctx, entry, arg, teb );
-    }
-    pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
+    ctx = (CONTEXT *)((ULONG_PTR)context.Sp & ~15) - 1;
+    *ctx = context;
     ctx->ContextFlags = CONTEXT_FULL;
-    return ctx;
+    NtSetContextThread( GetCurrentThread(), ctx );
+
+    frame->sp = (DWORD)ctx;
+    frame->pc = (DWORD)pLdrInitializeThunk;
+    frame->r0 = (DWORD)ctx;
+    frame->restore_flags |= CONTEXT_INTEGER;
+
+    pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
+    __wine_syscall_dispatcher_return( frame, 0 );
 }
 
 
@@ -944,23 +935,15 @@ PCONTEXT DECLSPEC_HIDDEN get_initial_context( LPTHREAD_START_ROUTINE entry, void
  */
 __ASM_GLOBAL_FUNC( signal_start_thread,
                    "push {r4-r12,lr}\n\t"
-                   "mov r5, r3\n\t"           /* thunk */
                    /* store exit frame */
-                   "ldr r3, [sp, #40]\n\t"    /* teb */
                    "str sp, [r3, #0x1d4]\n\t" /* arm_thread_data()->exit_frame */
                    /* set syscall frame */
                    "ldr r6, [r3, #0x1d8]\n\t" /* arm_thread_data()->syscall_frame */
                    "cbnz r6, 1f\n\t"
                    "sub r6, sp, #0x150\n\t"   /* sizeof(struct syscall_frame) */
                    "str r6, [r3, #0x1d8]\n\t" /* arm_thread_data()->syscall_frame */
-                   /* switch to thread stack */
-                   "1:\tldr r4, [r3, #4]\n\t" /* teb->Tib.StackBase */
-                   "sub r4, #0x1000\n\t"
-                   "mov sp, r4\n\t"
-                   /* attach dlls */
-                   "bl " __ASM_NAME("get_initial_context") "\n\t"
-                   "mov lr, #0\n\t"
-                   "bx r5" )
+                   "1:\tmov sp, r6\n\t"
+                   "bl " __ASM_NAME("call_init_thunk") )
 
 
 /***********************************************************************

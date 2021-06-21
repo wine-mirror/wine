@@ -1600,7 +1600,7 @@ void server_init_process_done(void)
     SERVER_END_REQ;
 
     assert( !status );
-    signal_start_thread( entry, peb, suspend, pLdrInitializeThunk, NtCurrentTeb() );
+    signal_start_thread( entry, peb, suspend, NtCurrentTeb() );
 }
 
 

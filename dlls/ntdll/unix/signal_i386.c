@@ -2369,59 +2369,56 @@ void signal_init_process(void)
 
 
 /***********************************************************************
- *           init_thread_context
+ *           call_init_thunk
  */
-static void init_thread_context( CONTEXT *context, LPTHREAD_START_ROUTINE entry, void *arg, TEB *teb )
-{
-    context->SegCs  = get_cs();
-    context->SegDs  = get_ds();
-    context->SegEs  = get_ds();
-    context->SegFs  = get_fs();
-    context->SegGs  = get_gs();
-    context->SegSs  = get_ds();
-    context->EFlags = 0x202;
-    context->Eax    = (DWORD)entry;
-    context->Ebx    = (DWORD)arg;
-    context->Esp    = (DWORD)teb->Tib.StackBase - 16;
-    context->Eip    = (DWORD)pRtlUserThreadStart;
-    context->FloatSave.ControlWord = 0x27f;
-    ((XSAVE_FORMAT *)context->ExtendedRegisters)->ControlWord = 0x27f;
-    ((XSAVE_FORMAT *)context->ExtendedRegisters)->MxCsr = 0x1f80;
-    if (NtCurrentTeb64())
-    {
-        WOW64_CPURESERVED *cpu = ULongToPtr( NtCurrentTeb64()->TlsSlots[WOW64_TLS_CPURESERVED] );
-        memcpy( cpu + 1, context, sizeof(*context) );
-    }
-}
-
-
-/***********************************************************************
- *           get_initial_context
- */
-PCONTEXT DECLSPEC_HIDDEN get_initial_context( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
+void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
 {
     struct x86_thread_data *thread_data = (struct x86_thread_data *)&teb->GdiTebBatch;
     struct syscall_frame *frame = thread_data->syscall_frame;
-    CONTEXT *ctx;
+    CONTEXT *ctx, context = { CONTEXT_ALL };
+    DWORD *stack;
 
-    if (suspend)
+    context.SegCs  = get_cs();
+    context.SegDs  = get_ds();
+    context.SegEs  = get_ds();
+    context.SegFs  = get_fs();
+    context.SegGs  = get_gs();
+    context.SegSs  = get_ds();
+    context.EFlags = 0x202;
+    context.Eax    = (DWORD)entry;
+    context.Ebx    = (DWORD)arg;
+    context.Esp    = (DWORD)teb->Tib.StackBase - 16;
+    context.Eip    = (DWORD)pRtlUserThreadStart;
+    context.FloatSave.ControlWord = 0x27f;
+    ((XSAVE_FORMAT *)context.ExtendedRegisters)->ControlWord = 0x27f;
+    ((XSAVE_FORMAT *)context.ExtendedRegisters)->MxCsr = 0x1f80;
+    if (NtCurrentTeb64())
     {
-        CONTEXT context = { CONTEXT_ALL };
+        WOW64_CPURESERVED *cpu = ULongToPtr( NtCurrentTeb64()->TlsSlots[WOW64_TLS_CPURESERVED] );
+        memcpy( cpu + 1, &context, sizeof(context) );
+    }
 
-        init_thread_context( &context, entry, arg, teb );
-        wait_suspend( &context );
-        ctx = (CONTEXT *)((ULONG_PTR)context.Esp & ~15) - 1;
-        *ctx = context;
-    }
-    else
-    {
-        ctx = (CONTEXT *)((char *)teb->Tib.StackBase - 16) - 1;
-        init_thread_context( ctx, entry, arg, teb );
-    }
-    frame->syscall_flags = __wine_syscall_flags;
-    pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
+    if (suspend) wait_suspend( &context );
+
+    ctx = (CONTEXT *)((ULONG_PTR)context.Esp & ~3) - 1;
+    *ctx = context;
     ctx->ContextFlags = CONTEXT_FULL | CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS;
-    return ctx;
+    memset( frame, 0, sizeof(*frame) );
+    NtSetContextThread( GetCurrentThread(), ctx );
+
+    stack = (DWORD *)ctx;
+    *(--stack) = 0;
+    *(--stack) = 0;
+    *(--stack) = 0;
+    *(--stack) = (DWORD)ctx;
+    *(--stack) = 0xdeadbabe;
+    frame->esp = (DWORD)stack;
+    frame->eip = (DWORD)pLdrInitializeThunk;
+    frame->syscall_flags = __wine_syscall_flags;
+    frame->restore_flags |= CONTEXT_INTEGER;
+
+    pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
+    __wine_syscall_dispatcher_return( frame, 0 );
 }
 
 
@@ -2441,28 +2438,21 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "pushl %edi\n\t"
                    __ASM_CFI(".cfi_rel_offset %edi,-12\n\t")
                    /* store exit frame */
-                   "movl 24(%ebp),%ecx\n\t"     /* teb */
+                   "movl 20(%ebp),%ecx\n\t"     /* teb */
                    "movl %ebp,0x1f4(%ecx)\n\t"  /* x86_thread_data()->exit_frame */
                    /* set syscall frame */
-                   "cmpl $0,0x1f8(%ecx)\n\t"    /* x86_thread_data()->syscall_frame */
+                   "movl 0x1f8(%ecx),%eax\n\t"  /* x86_thread_data()->syscall_frame */
+                   "orl %eax,%eax\n\t"
                    "jnz 1f\n\t"
                    "leal -0x380(%esp),%eax\n\t" /* sizeof(struct syscall_frame) */
                    "andl $~63,%eax\n\t"
                    "movl %eax,0x1f8(%ecx)\n"    /* x86_thread_data()->syscall_frame */
-                   /* switch to thread stack */
-                   "1:\tmovl 4(%ecx),%eax\n\t"  /* teb->StackBase */
-                   "leal -0x1000(%eax),%esp\n\t"
-                   /* attach dlls */
+                   "1:\tmovl %eax,%esp\n\t"
                    "pushl %ecx\n\t"             /* teb */
                    "pushl 16(%ebp)\n\t"         /* suspend */
                    "pushl 12(%ebp)\n\t"         /* arg */
                    "pushl 8(%ebp)\n\t"          /* entry */
-                   "call " __ASM_NAME("get_initial_context") "\n\t"
-                   "movl %eax,(%esp)\n\t"       /* context */
-                   "movl 20(%ebp),%edx\n\t"     /* thunk */
-                   "xorl %ebp,%ebp\n\t"
-                   "pushl $0\n\t"
-                   "jmp *%edx" )
+                   "call " __ASM_NAME("call_init_thunk") )
 
 
 /***********************************************************************
