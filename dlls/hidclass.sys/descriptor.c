@@ -272,7 +272,9 @@ struct hid_parser_state
 {
     HIDP_CAPS caps;
 
-    USAGE usages[256];
+    USAGE usages_page[256];
+    USAGE usages_min[256];
+    USAGE usages_max[256];
     DWORD usages_size;
 
     struct hid_value_caps items;
@@ -323,6 +325,9 @@ static void reset_local_items( struct hid_parser_state *state )
     memset( &state->items, 0, sizeof(state->items) );
     copy_global_items( &state->items, &tmp );
     copy_collection_items( &state->items, &tmp );
+    memset( &state->usages_page, 0, sizeof(state->usages_page) );
+    memset( &state->usages_min, 0, sizeof(state->usages_min) );
+    memset( &state->usages_max, 0, sizeof(state->usages_max) );
     state->usages_size = 0;
 }
 
@@ -352,12 +357,40 @@ static BOOL parse_global_pop( struct hid_parser_state *state )
     return TRUE;
 }
 
-static BOOL parse_local_usage( struct hid_parser_state *state, USAGE usage )
+static BOOL parse_local_usage( struct hid_parser_state *state, USAGE usage_page, USAGE usage )
 {
-    state->usages[state->usages_size] = usage;
+    if (!usage_page) usage_page = state->items.usage_page;
+    if (state->items.is_range) state->usages_size = 0;
+    state->usages_page[state->usages_size] = usage_page;
+    state->usages_min[state->usages_size] = usage;
+    state->usages_max[state->usages_size] = usage;
+    state->items.usage_min = usage;
+    state->items.usage_max = usage;
     state->items.is_range = FALSE;
     if (state->usages_size++ == 255) ERR( "HID parser usages stack overflow!\n" );
     return state->usages_size <= 255;
+}
+
+static void parse_local_usage_min( struct hid_parser_state *state, USAGE usage_page, USAGE usage )
+{
+    if (!usage_page) usage_page = state->items.usage_page;
+    if (!state->items.is_range) state->usages_max[0] = 0;
+    state->usages_page[0] = usage_page;
+    state->usages_min[0] = usage;
+    state->items.usage_min = usage;
+    state->items.is_range = TRUE;
+    state->usages_size = 1;
+}
+
+static void parse_local_usage_max( struct hid_parser_state *state, USAGE usage_page, USAGE usage )
+{
+    if (!usage_page) usage_page = state->items.usage_page;
+    if (!state->items.is_range) state->usages_min[0] = 0;
+    state->usages_page[0] = usage_page;
+    state->usages_max[0] = usage;
+    state->items.usage_max = usage;
+    state->items.is_range = TRUE;
+    state->usages_size = 1;
 }
 
 static BOOL parse_new_collection( struct hid_parser_state *state )
@@ -376,6 +409,9 @@ static BOOL parse_new_collection( struct hid_parser_state *state )
 
     copy_collection_items( state->stack + state->collection_idx, &state->items );
     state->collection_idx++;
+
+    state->items.usage_min = state->usages_min[0];
+    state->items.usage_max = state->usages_max[0];
 
     state->collections[state->caps.NumberLinkCollectionNodes] = state->items;
     state->items.link_collection = state->caps.NumberLinkCollectionNodes;
@@ -417,8 +453,8 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
         list_add_tail( &collection->features, &feature->entry );
         feature->type = type;
         feature->isData = ((state->items.bit_field & INPUT_DATA_CONST) == 0);
-        if (j < state->usages_size) state->items.usage_min = state->usages[j];
         copy_hidp_value_caps( &feature->caps, &state->items );
+        if (j < state->usages_size) feature->caps.NotRange.Usage = state->usages_min[j];
         feature->caps.ReportCount = 1;
         if (j + 1 >= state->usages_size)
         {
@@ -508,7 +544,6 @@ static int parse_descriptor( BYTE *descriptor, unsigned int index, unsigned int 
             subcollection->parent = collection;
             /* Only set our collection once...
                We do not properly handle composite devices yet. */
-            if (state->usages_size) state->items.usage_min = state->usages[state->usages_size - 1];
             list_init(&subcollection->features);
             list_init(&subcollection->collections);
             parse_collection(size, value, subcollection);
@@ -559,15 +594,13 @@ static int parse_descriptor( BYTE *descriptor, unsigned int index, unsigned int 
             break;
 
         case SHORT_ITEM(TAG_LOCAL_USAGE, TAG_TYPE_LOCAL):
-            if (!parse_local_usage( state, value )) return -1;
+            if (!parse_local_usage( state, value >> 16, value & 0xffff )) return -1;
             break;
         case SHORT_ITEM(TAG_LOCAL_USAGE_MINIMUM, TAG_TYPE_LOCAL):
-            state->items.usage_min = value;
-            state->items.is_range = TRUE;
+            parse_local_usage_min( state, value >> 16, value & 0xffff );
             break;
         case SHORT_ITEM(TAG_LOCAL_USAGE_MAXIMUM, TAG_TYPE_LOCAL):
-            state->items.usage_max = value;
-            state->items.is_range = TRUE;
+            parse_local_usage_max( state, value >> 16, value & 0xffff );
             break;
         case SHORT_ITEM(TAG_LOCAL_DESIGNATOR_INDEX, TAG_TYPE_LOCAL):
             state->items.designator_min = state->items.designator_max = value;
