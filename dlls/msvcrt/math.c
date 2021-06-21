@@ -660,14 +660,17 @@ static float __expm1f(float x)
 /* Copied from musl: src/math/__sindf.c */
 static float __sindf(double x)
 {
-    static const double S1 = -0x15555554cbac77.0p-55,
-        S2 = 0x111110896efbb2.0p-59,
-        S3 = -0x1a00f9e2cae774.0p-65,
-        S4 = 0x16cd878c3b46a7.0p-71;
+    static const double S1 = -0x1.5555555555555p-3,
+        S2 = 0x1.1111111111111p-7,
+        S3 = -0x1.a01a01a01a01ap-13,
+        S4 = 0x1.71de3a556c734p-19;
 
     double r, s, w, z;
 
     z = x * x;
+    if (x > -7.8175831586122513e-03 && x < 7.8175831586122513e-03)
+        return x * (1 + S1 * z);
+
     w = z * z;
     r = S3 + z * S4;
     s = z * x;
