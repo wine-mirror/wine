@@ -106,54 +106,27 @@ __ASM_GLOBAL_FUNC( __wine_longjmp,
 #elif defined(__arm__)
 
 __ASM_GLOBAL_FUNC( __wine_setjmpex,
-                   "str r1, [r0]\n\t"              /* jmp_buf->Frame */
-                   "str r4, [r0, #0x4]\n\t"        /* jmp_buf->R4 */
-                   "str r5, [r0, #0x8]\n\t"        /* jmp_buf->R5 */
-                   "str r6, [r0, #0xc]\n\t"        /* jmp_buf->R6 */
-                   "str r7, [r0, #0x10]\n\t"       /* jmp_buf->R7 */
-                   "str r8, [r0, #0x14]\n\t"       /* jmp_buf->R8 */
-                   "str r9, [r0, #0x18]\n\t"       /* jmp_buf->R9 */
-                   "str r10, [r0, #0x1c]\n\t"      /* jmp_buf->R10 */
-                   "str r11, [r0, #0x20]\n\t"      /* jmp_buf->R11 */
+                   "stm r0, {r1,r4-r11}\n"         /* jmp_buf->Frame,R4..R11 */
                    "str sp, [r0, #0x24]\n\t"       /* jmp_buf->Sp */
                    "str lr, [r0, #0x28]\n\t"       /* jmp_buf->Pc */
 #ifndef __SOFTFP__
                    "vmrs r2, fpscr\n\t"
                    "str r2, [r0, #0x2c]\n\t"       /* jmp_buf->Fpscr */
-                   "vstr d8,  [r0, #0x30]\n\t"     /* jmp_buf->D[0] */
-                   "vstr d9,  [r0, #0x38]\n\t"     /* jmp_buf->D[1] */
-                   "vstr d10, [r0, #0x40]\n\t"     /* jmp_buf->D[2] */
-                   "vstr d11, [r0, #0x48]\n\t"     /* jmp_buf->D[3] */
-                   "vstr d12, [r0, #0x50]\n\t"     /* jmp_buf->D[4] */
-                   "vstr d13, [r0, #0x58]\n\t"     /* jmp_buf->D[5] */
-                   "vstr d14, [r0, #0x60]\n\t"     /* jmp_buf->D[6] */
-                   "vstr d15, [r0, #0x68]\n\t"     /* jmp_buf->D[7] */
+                   "add r0, r0, #0x30\n\t"
+                   "vstm r0, {d8-d15}\n\t"         /* jmp_buf->D[0..7] */
 #endif
                    "mov r0, #0\n\t"
                    "bx lr" )
 
 __ASM_GLOBAL_FUNC( __wine_longjmp,
-                   "ldr r4, [r0, #0x4]\n\t"        /* jmp_buf->R4 */
-                   "ldr r5, [r0, #0x8]\n\t"        /* jmp_buf->R5 */
-                   "ldr r6, [r0, #0xc]\n\t"        /* jmp_buf->R6 */
-                   "ldr r7, [r0, #0x10]\n\t"       /* jmp_buf->R7 */
-                   "ldr r8, [r0, #0x14]\n\t"       /* jmp_buf->R8 */
-                   "ldr r9, [r0, #0x18]\n\t"       /* jmp_buf->R9 */
-                   "ldr r10, [r0, #0x1c]\n\t"      /* jmp_buf->R10 */
-                   "ldr r11, [r0, #0x20]\n\t"      /* jmp_buf->R11 */
+                   "ldm r0, {r3-r11}\n\t"          /* jmp_buf->Frame,R4..R11 */
                    "ldr sp, [r0, #0x24]\n\t"       /* jmp_buf->Sp */
                    "ldr r2, [r0, #0x28]\n\t"       /* jmp_buf->Pc */
 #ifndef __SOFTFP__
                    "ldr r3, [r0, #0x2c]\n\t"       /* jmp_buf->Fpscr */
                    "vmsr fpscr, r3\n\t"
-                   "vldr d8,  [r0, #0x30]\n\t"     /* jmp_buf->D[0] */
-                   "vldr d9,  [r0, #0x38]\n\t"     /* jmp_buf->D[1] */
-                   "vldr d10, [r0, #0x40]\n\t"     /* jmp_buf->D[2] */
-                   "vldr d11, [r0, #0x48]\n\t"     /* jmp_buf->D[3] */
-                   "vldr d12, [r0, #0x50]\n\t"     /* jmp_buf->D[4] */
-                   "vldr d13, [r0, #0x58]\n\t"     /* jmp_buf->D[5] */
-                   "vldr d14, [r0, #0x60]\n\t"     /* jmp_buf->D[6] */
-                   "vldr d15, [r0, #0x68]\n\t"     /* jmp_buf->D[7] */
+                   "add r0, r0, #0x30\n\t"
+                   "vldm r0, {d8-d15}\n\t"         /* jmp_buf->D[0..7] */
 #endif
                    "mov r0, r1\n\t"                /* retval */
                    "bx r2" )
