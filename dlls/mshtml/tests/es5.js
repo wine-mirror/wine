@@ -1318,6 +1318,18 @@ sync_test("declaration_let", function() {
     }
 
     ok(a == 3, "a != 3");
+
+    var except = false
+
+    try
+    {
+        eval('if (true) let a = 3');
+    }
+    catch (e)
+    {
+        except = true;
+    }
+    ok(except, "with({w:9}) let a = 3: expected exception.");
 });
 
 sync_test("let scope instances", function() {

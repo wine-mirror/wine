@@ -16,9 +16,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-typedef struct _source_elements_t source_elements_t;
 typedef struct _expression_t expression_t;
 typedef struct _statement_t statement_t;
+
+typedef struct _statement_list_t {
+    statement_t *head;
+    statement_t *tail;
+} statement_list_t;
+
 struct _bytecode_t;
 
 typedef struct {
@@ -36,7 +41,7 @@ typedef struct _parser_ctx_t {
 
     script_ctx_t *script;
     struct _compiler_ctx_t *compiler;
-    source_elements_t *source;
+    statement_list_t *source;
     BOOL nl;
     BOOL implicit_nl_semicolon;
     BOOL is_html;
@@ -290,17 +295,12 @@ typedef struct _parameter_t {
     struct _parameter_t *next;
 } parameter_t;
 
-struct _source_elements_t {
-    statement_t *statement;
-    statement_t *statement_tail;
-};
-
 typedef struct _function_expression_t {
     expression_t expr;
     const WCHAR *identifier;
     const WCHAR *event_target;
     parameter_t *parameter_list;
-    source_elements_t *source_elements;
+    statement_list_t *statement_list;
     const WCHAR *src_str;
     DWORD src_len;
     unsigned func_id;

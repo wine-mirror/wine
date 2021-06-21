@@ -2448,7 +2448,7 @@ static HRESULT init_code(compiler_ctx_t *compiler, const WCHAR *source, UINT64 s
     return S_OK;
 }
 
-static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, function_expression_t *func_expr,
+static HRESULT compile_function(compiler_ctx_t *ctx, statement_list_t *source, function_expression_t *func_expr,
         BOOL from_eval, function_code_t *func)
 {
     function_expression_t *iter;
@@ -2506,7 +2506,7 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
             return E_OUTOFMEMORY;
     }
 
-    hres = visit_block_statement(ctx, NULL, source->statement);
+    hres = visit_block_statement(ctx, NULL, source ? source->head : NULL);
     if(FAILED(hres))
         return hres;
 
@@ -2547,7 +2547,7 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
 
     ctx->current_function_expr = ctx->func_head;
     off = ctx->code_off;
-    hres = compile_block_statement(ctx, NULL, source->statement);
+    hres = compile_block_statement(ctx, NULL, source ? source->head : NULL);
     if(FAILED(hres))
         return hres;
 
@@ -2563,7 +2563,7 @@ static HRESULT compile_function(compiler_ctx_t *ctx, source_elements_t *source, 
     func->instr_off = off;
 
     for(iter = ctx->func_head, i=0; iter; iter = iter->next, i++) {
-        hres = compile_function(ctx, iter->source_elements, iter, FALSE, func->funcs+i);
+        hres = compile_function(ctx, iter->statement_list, iter, FALSE, func->funcs+i);
         if(FAILED(hres))
             return hres;
 
