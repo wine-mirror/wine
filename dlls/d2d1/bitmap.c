@@ -72,6 +72,8 @@ static ULONG STDMETHODCALLTYPE d2d_bitmap_Release(ID2D1Bitmap1 *iface)
             ID3D10RenderTargetView_Release(bitmap->rtv);
         if (bitmap->surface)
             IDXGISurface_Release(bitmap->surface);
+        if (bitmap->d3d11_resource)
+            ID3D11Resource_Release(bitmap->d3d11_resource);
         ID3D10Resource_Release(bitmap->resource);
         ID2D1Factory_Release(bitmap->factory);
         heap_free(bitmap);
@@ -272,13 +274,18 @@ static BOOL format_supported(const D2D1_PIXEL_FORMAT *format)
 static void d2d_bitmap_init(struct d2d_bitmap *bitmap, struct d2d_device_context *context,
         ID3D10Resource *resource, D2D1_SIZE_U size, const D2D1_BITMAP_PROPERTIES1 *desc)
 {
+    ID3D11Resource *d3d11_resource;
     ID3D10Device *d3d_device;
     HRESULT hr;
+
+    if (FAILED(hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D11Resource, (void **)&d3d11_resource)))
+        WARN("Failed to query ID3D11Resource interface, hr %#x.\n", hr);
 
     bitmap->ID2D1Bitmap1_iface.lpVtbl = &d2d_bitmap_vtbl;
     bitmap->refcount = 1;
     ID2D1Factory_AddRef(bitmap->factory = context->factory);
     ID3D10Resource_AddRef(bitmap->resource = resource);
+    bitmap->d3d11_resource = d3d11_resource;
     bitmap->pixel_size = size;
     bitmap->format = desc->pixelFormat;
     bitmap->dpi_x = desc->dpiX;
