@@ -81,10 +81,7 @@ static void test_GetWindowTheme(void)
     SetLastError(0xdeadbeef);
     hTheme = GetWindowTheme(NULL);
     ok( hTheme == NULL, "Expected a NULL return, got %p\n", hTheme);
-    todo_wine
-        ok( GetLastError() == E_HANDLE,
-            "Expected E_HANDLE, got 0x%08x\n",
-            GetLastError());
+    ok( GetLastError() == E_HANDLE, "Expected E_HANDLE, got 0x%08x\n", GetLastError() );
 
     /* Only do the bare minimum to get a valid hwnd */
     hWnd = CreateWindowExA(0, "static", "", WS_POPUP, 0,0,100,100,0, 0, 0, NULL);

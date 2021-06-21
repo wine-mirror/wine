@@ -669,6 +669,13 @@ HTHEME WINAPI OpenThemeData(HWND hwnd, LPCWSTR classlist)
 HTHEME WINAPI GetWindowTheme(HWND hwnd)
 {
     TRACE("(%p)\n", hwnd);
+
+    if (!hwnd)
+    {
+        SetLastError(E_HANDLE);
+        return NULL;
+    }
+
     return GetPropW(hwnd, (LPCWSTR)MAKEINTATOM(atWindowTheme));
 }
 
