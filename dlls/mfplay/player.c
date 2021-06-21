@@ -63,6 +63,8 @@ struct media_item
     DWORD_PTR user_data;
     WCHAR *url;
     IUnknown *object;
+    LONGLONG start_position;
+    LONGLONG stop_position;
 };
 
 struct media_player
@@ -418,21 +420,92 @@ static HRESULT WINAPI media_item_SetUserData(IMFPMediaItem *iface, DWORD_PTR use
     return S_OK;
 }
 
+static HRESULT media_item_set_position(const GUID *format, const PROPVARIANT *position, LARGE_INTEGER *ret)
+{
+    ret->QuadPart = 0;
+
+    if (format && !IsEqualGUID(format, &MFP_POSITIONTYPE_100NS))
+        return E_INVALIDARG;
+
+    if ((format != NULL) ^ (position != NULL))
+        return E_POINTER;
+
+    if (position && position->vt != VT_EMPTY && position->vt != VT_I8)
+        return E_INVALIDARG;
+
+    if ((!format && !position) || position->vt == VT_EMPTY)
+        return S_OK;
+
+    if (position->hVal.QuadPart == 0)
+        return MF_E_OUT_OF_RANGE;
+
+    ret->QuadPart = position->hVal.QuadPart;
+
+    return S_OK;
+}
+
+static void media_item_get_position(LONGLONG value, GUID *format, PROPVARIANT *position)
+{
+    if (!format)
+        return;
+
+    memcpy(format, &MFP_POSITIONTYPE_100NS, sizeof(*format));
+
+    if (value)
+    {
+        position->vt = VT_I8;
+        position->hVal.QuadPart = value;
+    }
+}
+
 static HRESULT WINAPI media_item_GetStartStopPosition(IMFPMediaItem *iface, GUID *start_format,
         PROPVARIANT *start_position, GUID *stop_format, PROPVARIANT *stop_position)
 {
-    FIXME("%p, %p, %p, %p, %p.\n", iface, start_format, start_position, stop_format, stop_position);
+    struct media_item *item = impl_from_IMFPMediaItem(iface);
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p, %p, %p.\n", iface, start_format, start_position, stop_format, stop_position);
+
+    if (start_position)
+        start_position->vt = VT_EMPTY;
+    if (stop_position)
+        stop_position->vt = VT_EMPTY;
+
+    if (((start_format != NULL) ^ (start_position != NULL)) ||
+            ((stop_format != NULL) ^ (stop_position != NULL)))
+    {
+        return E_POINTER;
+    }
+
+    media_item_get_position(item->start_position, start_format, start_position);
+    media_item_get_position(item->stop_position, stop_format, stop_position);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI media_item_SetStartStopPosition(IMFPMediaItem *iface, const GUID *start_format,
         const PROPVARIANT *start_position, const GUID *stop_format, const PROPVARIANT *stop_position)
 {
-    FIXME("%p, %s, %p, %s, %p.\n", iface, debugstr_guid(start_format), start_position,
+    struct media_item *item = impl_from_IMFPMediaItem(iface);
+    LARGE_INTEGER start, stop;
+    HRESULT hr;
+
+    TRACE("%p, %s, %p, %s, %p.\n", iface, debugstr_guid(start_format), start_position,
             debugstr_guid(stop_format), stop_position);
 
-    return E_NOTIMPL;
+    hr = media_item_set_position(start_format, start_position, &start);
+    if (SUCCEEDED(hr))
+        hr = media_item_set_position(stop_format, stop_position, &stop);
+
+    if (FAILED(hr))
+        return hr;
+
+    if (start.QuadPart > stop.QuadPart)
+        return MF_E_OUT_OF_RANGE;
+
+    item->start_position = start.QuadPart;
+    item->stop_position = stop.QuadPart;
+
+    return hr;
 }
 
 static HRESULT media_item_get_stream_type(IMFStreamDescriptor *sd, GUID *major)
