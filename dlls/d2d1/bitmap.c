@@ -332,10 +332,11 @@ static void d2d_bitmap_init(struct d2d_bitmap *bitmap, struct d2d_device_context
 HRESULT d2d_bitmap_create(struct d2d_device_context *context, D2D1_SIZE_U size, const void *src_data,
         UINT32 pitch, const D2D1_BITMAP_PROPERTIES1 *desc, struct d2d_bitmap **bitmap)
 {
-    D3D10_SUBRESOURCE_DATA resource_data;
+    D3D11_SUBRESOURCE_DATA resource_data;
     D2D1_BITMAP_PROPERTIES1 bitmap_desc;
-    D3D10_TEXTURE2D_DESC texture_desc;
-    ID3D10Texture2D *texture;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11Texture2D *texture;
+    ID3D10Resource *resource;
     HRESULT hr;
 
     if (!format_supported(&desc->pixelFormat))
@@ -366,33 +367,41 @@ HRESULT d2d_bitmap_create(struct d2d_device_context *context, D2D1_SIZE_U size, 
     texture_desc.Format = desc->pixelFormat.format;
     texture_desc.SampleDesc.Count = 1;
     texture_desc.SampleDesc.Quality = 0;
-    texture_desc.Usage = D3D10_USAGE_DEFAULT;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
     texture_desc.BindFlags = 0;
     if (desc->bitmapOptions & D2D1_BITMAP_OPTIONS_TARGET)
-        texture_desc.BindFlags |= D3D10_BIND_RENDER_TARGET;
+        texture_desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
     if (!(desc->bitmapOptions & D2D1_BITMAP_OPTIONS_CANNOT_DRAW))
-        texture_desc.BindFlags |= D3D10_BIND_SHADER_RESOURCE;
+        texture_desc.BindFlags |= D3D11_BIND_SHADER_RESOURCE;
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
     if (desc->bitmapOptions & D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE)
-        texture_desc.MiscFlags |= D3D10_RESOURCE_MISC_GDI_COMPATIBLE;
+        texture_desc.MiscFlags |= D3D11_RESOURCE_MISC_GDI_COMPATIBLE;
 
     resource_data.pSysMem = src_data;
     resource_data.SysMemPitch = pitch;
 
-    if (FAILED(hr = ID3D10Device_CreateTexture2D(context->d3d_device, &texture_desc,
+    if (FAILED(hr = ID3D11Device1_CreateTexture2D(context->d3d11_device, &texture_desc,
             src_data ? &resource_data : NULL, &texture)))
     {
         ERR("Failed to create texture, hr %#x.\n", hr);
         return hr;
     }
 
+    if (FAILED(hr = ID3D11Texture2D_QueryInterface(texture, &IID_ID3D10Resource, (void **)&resource)))
+    {
+        ERR("Failed to query ID3D10Resource interface, hr %#x.\n", hr);
+        ID3D11Texture2D_Release(texture);
+        return hr;
+    }
+
     if ((*bitmap = heap_alloc_zero(sizeof(**bitmap))))
     {
-        d2d_bitmap_init(*bitmap, context, (ID3D10Resource *)texture, size, desc);
+        d2d_bitmap_init(*bitmap, context, resource, size, desc);
         TRACE("Created bitmap %p.\n", *bitmap);
     }
-    ID3D10Texture2D_Release(texture);
+    ID3D11Texture2D_Release(texture);
+    ID3D10Resource_Release(resource);
 
     return *bitmap ? S_OK : E_OUTOFMEMORY;
 }
