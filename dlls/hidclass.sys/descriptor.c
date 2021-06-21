@@ -286,6 +286,9 @@ struct hid_parser_state
 
     struct hid_value_caps *collections;
     DWORD                  collections_size;
+
+    ULONG   bit_size[3][256];
+    USHORT *byte_size[3]; /* pointers to caps */
 };
 
 static BOOL array_reserve( struct hid_value_caps **array, DWORD *array_size, DWORD index )
@@ -444,6 +447,8 @@ static BOOL parse_end_collection( struct hid_parser_state *state )
 
 static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TYPE type, struct collection *collection )
 {
+    USHORT *byte_size = state->byte_size[type];
+    ULONG *bit_size = &state->bit_size[type][state->items.report_id];
     struct feature *feature;
     int j;
 
@@ -463,8 +468,20 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
         }
     }
 
+    if (!*bit_size) *bit_size = 8;
+    *bit_size += state->items.bit_size * state->items.report_count;
+    *byte_size = max( *byte_size, (*bit_size + 7) / 8 );
+
     reset_local_items( state );
     return TRUE;
+}
+
+static void init_parser_state( struct hid_parser_state *state )
+{
+    memset( state, 0, sizeof(*state) );
+    state->byte_size[HidP_Input] = &state->caps.InputReportByteLength;
+    state->byte_size[HidP_Output] = &state->caps.OutputReportByteLength;
+    state->byte_size[HidP_Feature] = &state->caps.FeatureReportByteLength;
 }
 
 static void free_parser_state( struct hid_parser_state *state )
@@ -747,20 +764,14 @@ static void preparse_collection(const struct collection *root, const struct coll
             case HidP_Input:
                 build_elements(report, elem, f, &data->caps.NumberInputDataIndices);
                 count_elements(f, &data->caps.NumberInputButtonCaps, &data->caps.NumberInputValueCaps);
-                data->caps.InputReportByteLength =
-                    max(data->caps.InputReportByteLength, (report->bitSize + 7) / 8);
                 break;
             case HidP_Output:
                 build_elements(report, elem, f, &data->caps.NumberOutputDataIndices);
                 count_elements(f, &data->caps.NumberOutputButtonCaps, &data->caps.NumberOutputValueCaps);
-                data->caps.OutputReportByteLength =
-                    max(data->caps.OutputReportByteLength, (report->bitSize + 7) / 8);
                 break;
             case HidP_Feature:
                 build_elements(report, elem, f, &data->caps.NumberFeatureDataIndices);
                 count_elements(f, &data->caps.NumberFeatureButtonCaps, &data->caps.NumberFeatureValueCaps);
-                data->caps.FeatureReportByteLength =
-                    max(data->caps.FeatureReportByteLength, (report->bitSize + 7) / 8);
                 break;
         }
     }
@@ -865,6 +876,7 @@ WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
     }
     list_init(&base->features);
     list_init(&base->collections);
+    init_parser_state( state );
 
     if (parse_descriptor( descriptor, 0, length, base, state ) < 0)
     {
