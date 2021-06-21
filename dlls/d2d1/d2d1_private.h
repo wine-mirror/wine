@@ -378,7 +378,9 @@ struct d2d_bitmap
 
     ID2D1Factory *factory;
     ID3D10ShaderResourceView *srv;
+    ID3D11ShaderResourceView *d3d11_srv;
     ID3D10RenderTargetView *rtv;
+    ID3D11RenderTargetView *d3d11_rtv;
     IDXGISurface *surface;
     ID3D10Resource *resource;
     ID3D11Resource *d3d11_resource;

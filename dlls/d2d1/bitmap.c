@@ -68,8 +68,12 @@ static ULONG STDMETHODCALLTYPE d2d_bitmap_Release(ID2D1Bitmap1 *iface)
     {
         if (bitmap->srv)
             ID3D10ShaderResourceView_Release(bitmap->srv);
+        if (bitmap->d3d11_srv)
+            ID3D11ShaderResourceView_Release(bitmap->d3d11_srv);
         if (bitmap->rtv)
             ID3D10RenderTargetView_Release(bitmap->rtv);
+        if (bitmap->d3d11_rtv)
+            ID3D11RenderTargetView_Release(bitmap->d3d11_rtv);
         if (bitmap->surface)
             IDXGISurface_Release(bitmap->surface);
         if (bitmap->d3d11_resource)
@@ -275,20 +279,20 @@ static BOOL format_supported(const D2D1_PIXEL_FORMAT *format)
 }
 
 static void d2d_bitmap_init(struct d2d_bitmap *bitmap, struct d2d_device_context *context,
-        ID3D10Resource *resource, D2D1_SIZE_U size, const D2D1_BITMAP_PROPERTIES1 *desc)
+        ID3D10Resource *d3d10_resource, D2D1_SIZE_U size, const D2D1_BITMAP_PROPERTIES1 *desc)
 {
-    ID3D11Resource *d3d11_resource;
-    ID3D10Device *d3d_device;
+    ID3D11Resource *resource;
+    ID3D11Device *d3d_device;
     HRESULT hr;
 
-    if (FAILED(hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D11Resource, (void **)&d3d11_resource)))
+    if (FAILED(hr = ID3D10Resource_QueryInterface(d3d10_resource, &IID_ID3D11Resource, (void **)&resource)))
         WARN("Failed to query ID3D11Resource interface, hr %#x.\n", hr);
 
     bitmap->ID2D1Bitmap1_iface.lpVtbl = &d2d_bitmap_vtbl;
     bitmap->refcount = 1;
     ID2D1Factory_AddRef(bitmap->factory = context->factory);
-    ID3D10Resource_AddRef(bitmap->resource = resource);
-    bitmap->d3d11_resource = d3d11_resource;
+    ID3D10Resource_AddRef(bitmap->resource = d3d10_resource);
+    bitmap->d3d11_resource = resource;
     bitmap->pixel_size = size;
     bitmap->format = desc->pixelFormat;
     bitmap->dpi_x = desc->dpiX;
@@ -296,21 +300,27 @@ static void d2d_bitmap_init(struct d2d_bitmap *bitmap, struct d2d_device_context
     bitmap->options = desc->bitmapOptions;
 
     if (d2d_device_context_is_dxgi_target(context))
-        ID3D10Resource_QueryInterface(resource, &IID_IDXGISurface, (void **)&bitmap->surface);
+        ID3D11Resource_QueryInterface(resource, &IID_IDXGISurface, (void **)&bitmap->surface);
 
-    ID3D10Resource_GetDevice(resource, &d3d_device);
+    ID3D11Resource_GetDevice(resource, &d3d_device);
     if (bitmap->options & D2D1_BITMAP_OPTIONS_TARGET)
     {
-        if (FAILED(hr = ID3D10Device_CreateRenderTargetView(d3d_device, resource, NULL, &bitmap->rtv)))
+        if (FAILED(hr = ID3D11Device_CreateRenderTargetView(d3d_device, resource, NULL, &bitmap->d3d11_rtv)))
             WARN("Failed to create RTV, hr %#x.\n", hr);
+        if (FAILED(hr = ID3D11RenderTargetView_QueryInterface(bitmap->d3d11_rtv, &IID_ID3D10RenderTargetView,
+                (void **)&bitmap->rtv)))
+            WARN("Failed to query D3D10 RTV interface, hr %#x.\n", hr);
     }
 
     if (!(bitmap->options & D2D1_BITMAP_OPTIONS_CANNOT_DRAW))
     {
-        if (FAILED(hr = ID3D10Device_CreateShaderResourceView(d3d_device, resource, NULL, &bitmap->srv)))
+        if (FAILED(hr = ID3D11Device_CreateShaderResourceView(d3d_device, resource, NULL, &bitmap->d3d11_srv)))
             WARN("Failed to create SRV, hr %#x.\n", hr);
+        if (FAILED(hr = ID3D11ShaderResourceView_QueryInterface(bitmap->d3d11_srv, &IID_ID3D10ShaderResourceView,
+                (void **)&bitmap->srv)))
+            WARN("Failed to query D3D10 SRV interface, hr %#x.\n", hr);
     }
-    ID3D10Device_Release(d3d_device);
+    ID3D11Device_Release(d3d_device);
 
     if (bitmap->dpi_x == 0.0f && bitmap->dpi_y == 0.0f)
     {
