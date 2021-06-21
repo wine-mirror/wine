@@ -1128,6 +1128,10 @@ static HRESULT media_item_create_source_node(struct media_item *item, IMFStreamD
         IMFTopologyNode_SetUnknown(*node, &MF_TOPONODE_SOURCE, (IUnknown *)item->source);
         IMFTopologyNode_SetUnknown(*node, &MF_TOPONODE_PRESENTATION_DESCRIPTOR, (IUnknown *)item->pd);
         IMFTopologyNode_SetUnknown(*node, &MF_TOPONODE_STREAM_DESCRIPTOR, (IUnknown *)sd);
+        if (item->start_position)
+            IMFTopologyNode_SetUINT64(*node, &MF_TOPONODE_MEDIASTART, item->start_position);
+        if (item->stop_position)
+            IMFTopologyNode_SetUINT64(*node, &MF_TOPONODE_MEDIASTOP, item->stop_position);
     }
 
     return hr;
