@@ -152,8 +152,9 @@ static HRESULT STDMETHODCALLTYPE d2d_bitmap_CopyFromMemory(ID2D1Bitmap1 *iface,
         const D2D1_RECT_U *dst_rect, const void *src_data, UINT32 pitch)
 {
     struct d2d_bitmap *bitmap = impl_from_ID2D1Bitmap1(iface);
-    ID3D10Device *device;
-    D3D10_BOX box;
+    ID3D11DeviceContext *context;
+    ID3D11Device *device;
+    D3D11_BOX box;
 
     TRACE("iface %p, dst_rect %p, src_data %p, pitch %u.\n", iface, dst_rect, src_data, pitch);
 
@@ -167,9 +168,11 @@ static HRESULT STDMETHODCALLTYPE d2d_bitmap_CopyFromMemory(ID2D1Bitmap1 *iface,
         box.back = 1;
     }
 
-    ID3D10Resource_GetDevice(bitmap->resource, &device);
-    ID3D10Device_UpdateSubresource(device, bitmap->resource, 0, dst_rect ? &box : NULL, src_data, pitch, 0);
-    ID3D10Device_Release(device);
+    ID3D11Resource_GetDevice(bitmap->d3d11_resource, &device);
+    ID3D11Device_GetImmediateContext(device, &context);
+    ID3D11DeviceContext_UpdateSubresource(context, bitmap->d3d11_resource, 0, dst_rect ? &box : NULL, src_data, pitch, 0);
+    ID3D11DeviceContext_Release(context);
+    ID3D11Device_Release(device);
 
     return S_OK;
 }
