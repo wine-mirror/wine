@@ -1222,8 +1222,27 @@ static void test_debugger(DWORD cont_status)
                 {
                     test_debugger_xstate(pi.hThread, &ctx, stage);
                 }
+                else if (stage == 16)
+                {
+                    USHORT ss;
+                    __asm__( "movw %%ss,%0" : "=r" (ss) );
+                    ok( ctx.SegSs == ss, "wrong ss %04x / %04x\n", ctx.SegSs, ss );
+                    ok( ctx.SegFs != ctx.SegSs, "wrong fs %04x / %04x\n", ctx.SegFs, ctx.SegSs );
+                    if (is_wow64)
+                    {
+                        ok( ctx.SegDs == ctx.SegSs, "wrong ds %04x / %04x\n", ctx.SegDs, ctx.SegSs );
+                        ok( ctx.SegEs == ctx.SegSs, "wrong es %04x / %04x\n", ctx.SegEs, ctx.SegSs );
+                        ok( ctx.SegGs == ctx.SegSs, "wrong gs %04x / %04x\n", ctx.SegGs, ctx.SegSs );
+                    }
+                    else
+                    {
+                        ok( !ctx.SegDs, "wrong ds %04x / %04x\n", ctx.SegDs, ctx.SegSs );
+                        ok( !ctx.SegEs, "wrong es %04x / %04x\n", ctx.SegEs, ctx.SegSs );
+                        ok( !ctx.SegGs, "wrong gs %04x / %04x\n", ctx.SegGs, ctx.SegSs );
+                    }
+                }
                 else
-                    ok(FALSE, "unexpected stage %x\n", stage);
+                    ok(FALSE, "unexpected stage %u\n", stage);
 
                 status = pNtSetContextThread(pi.hThread, &ctx);
                 ok(!status, "NtSetContextThread failed with 0x%x\n", status);
@@ -2956,6 +2975,7 @@ static DWORD WINAPI handler( EXCEPTION_RECORD *rec, ULONG64 frame,
 {
     const struct exception *except = *(const struct exception **)(dispatcher->HandlerData);
     unsigned int i, parameter_count, entry = except - exceptions;
+    USHORT ds, es, fs, gs, ss;
 
     got_exception++;
     trace( "exception %u: %x flags:%x addr:%p\n",
@@ -2972,13 +2992,22 @@ static DWORD WINAPI handler( EXCEPTION_RECORD *rec, ULONG64 frame,
         "%u: Unexpected exception address %p/%p\n", entry,
         rec->ExceptionAddress, (char*)context->Rip );
 
+    __asm__ volatile( "movw %%ds,%0" : "=g" (ds) );
+    __asm__ volatile( "movw %%es,%0" : "=g" (es) );
+    __asm__ volatile( "movw %%fs,%0" : "=g" (fs) );
+    __asm__ volatile( "movw %%gs,%0" : "=g" (gs) );
+    __asm__ volatile( "movw %%ss,%0" : "=g" (ss) );
+    ok( context->SegDs == ds || !ds, "%u: ds %#x does not match %#x\n", entry, context->SegDs, ds );
+    ok( context->SegEs == es || !es, "%u: es %#x does not match %#x\n", entry, context->SegEs, es );
+    ok( context->SegFs == fs || !fs, "%u: fs %#x does not match %#x\n", entry, context->SegFs, fs );
+    ok( context->SegGs == gs || !gs, "%u: gs %#x does not match %#x\n", entry, context->SegGs, gs );
+    ok( context->SegSs == ss, "%u: ss %#x does not match %#x\n", entry, context->SegSs, ss );
     ok( context->SegDs == context->SegSs,
         "%u: ds %#x does not match ss %#x\n", entry, context->SegDs, context->SegSs );
     todo_wine ok( context->SegEs == context->SegSs,
         "%u: es %#x does not match ss %#x\n", entry, context->SegEs, context->SegSs );
     todo_wine ok( context->SegGs == context->SegSs,
         "%u: gs %#x does not match ss %#x\n", entry, context->SegGs, context->SegSs );
-
     todo_wine ok( context->SegFs && context->SegFs != context->SegSs,
         "%u: got fs %#x\n", entry, context->SegFs );
 
@@ -3243,6 +3272,7 @@ static void test_exceptions(void)
 {
     CONTEXT ctx;
     NTSTATUS res;
+    USHORT ds, es, fs, gs, ss;
     struct dbgreg_test dreg_test;
 
     /* test handling of debug registers */
@@ -3296,6 +3326,49 @@ static void test_exceptions(void)
 
     /* test int3 handling */
     run_exception_test(int3_handler, NULL, int3_code, sizeof(int3_code), 0);
+
+    /* test segment registers */
+    ctx.ContextFlags = CONTEXT_CONTROL | CONTEXT_SEGMENTS;
+    res = pNtGetContextThread( GetCurrentThread(), &ctx );
+    ok( res == STATUS_SUCCESS, "NtGetContextThread failed with %x\n", res );
+    __asm__ volatile( "movw %%ds,%0" : "=g" (ds) );
+    __asm__ volatile( "movw %%es,%0" : "=g" (es) );
+    __asm__ volatile( "movw %%fs,%0" : "=g" (fs) );
+    __asm__ volatile( "movw %%gs,%0" : "=g" (gs) );
+    __asm__ volatile( "movw %%ss,%0" : "=g" (ss) );
+    ok( ctx.SegDs == ds, "wrong ds %04x / %04x\n", ctx.SegDs, ds );
+    ok( ctx.SegEs == es, "wrong es %04x / %04x\n", ctx.SegEs, es );
+    ok( ctx.SegFs == fs, "wrong fs %04x / %04x\n", ctx.SegFs, fs );
+    ok( ctx.SegGs == gs, "wrong gs %04x / %04x\n", ctx.SegGs, gs );
+    ok( ctx.SegSs == ss, "wrong ss %04x / %04x\n", ctx.SegSs, ss );
+    todo_wine ok( ctx.SegDs == ctx.SegSs, "wrong ds %04x / %04x\n", ctx.SegDs, ctx.SegSs );
+    todo_wine ok( ctx.SegEs == ctx.SegSs, "wrong es %04x / %04x\n", ctx.SegEs, ctx.SegSs );
+    ok( ctx.SegFs != ctx.SegSs, "wrong fs %04x / %04x\n", ctx.SegFs, ctx.SegSs );
+    todo_wine ok( ctx.SegGs == ctx.SegSs, "wrong gs %04x / %04x\n", ctx.SegGs, ctx.SegSs );
+    if (ctx.SegDs == ctx.SegSs)  /* FIXME: remove once Wine is fixed */
+    {
+    ctx.SegDs = 0;
+    ctx.SegEs = ctx.SegFs;
+    ctx.SegFs = ctx.SegSs;
+    res = pNtSetContextThread( GetCurrentThread(), &ctx );
+    ok( res == STATUS_SUCCESS, "NtGetContextThread failed with %x\n", res );
+    __asm__ volatile( "movw %%ds,%0" : "=g" (ds) );
+    __asm__ volatile( "movw %%es,%0" : "=g" (es) );
+    __asm__ volatile( "movw %%fs,%0" : "=g" (fs) );
+    __asm__ volatile( "movw %%gs,%0" : "=g" (gs) );
+    __asm__ volatile( "movw %%ss,%0" : "=g" (ss) );
+    res = pNtGetContextThread( GetCurrentThread(), &ctx );
+    ok( res == STATUS_SUCCESS, "NtGetContextThread failed with %x\n", res );
+    ok( ctx.SegDs == ds, "wrong ds %08x / %08x\n", ctx.SegDs, ds );
+    ok( ctx.SegEs == es, "wrong es %04x / %04x\n", ctx.SegEs, es );
+    ok( ctx.SegFs == fs, "wrong fs %04x / %04x\n", ctx.SegFs, fs );
+    ok( ctx.SegGs == gs, "wrong gs %04x / %04x\n", ctx.SegGs, gs );
+    ok( ctx.SegSs == ss, "wrong ss %04x / %04x\n", ctx.SegSs, ss );
+    ok( ctx.SegDs == ctx.SegSs, "wrong ds %04x / %04x\n", ctx.SegDs, ctx.SegSs );
+    ok( ctx.SegEs == ctx.SegSs, "wrong es %04x / %04x\n", ctx.SegEs, ctx.SegSs );
+    ok( ctx.SegFs != ctx.SegSs, "wrong fs %04x / %04x\n", ctx.SegFs, ctx.SegSs );
+    todo_wine ok( ctx.SegGs == ctx.SegSs, "wrong gs %04x / %04x\n", ctx.SegGs, ctx.SegSs );
+    }
 }
 
 static DWORD WINAPI simd_fault_handler( EXCEPTION_RECORD *rec, ULONG64 frame,
@@ -3716,7 +3789,7 @@ static void test_debugger(DWORD cont_status)
                                           sizeof(stage), &size_read);
             ok(!status,"NtReadVirtualMemory failed with 0x%x\n", status);
 
-            ctx.ContextFlags = CONTEXT_FULL;
+            ctx.ContextFlags = CONTEXT_FULL | CONTEXT_SEGMENTS;
             status = pNtGetContextThread(pi.hThread, &ctx);
             ok(!status, "NtGetContextThread failed with 0x%x\n", status);
 
@@ -3812,8 +3885,31 @@ static void test_debugger(DWORD cont_status)
                 {
                     test_debugger_xstate(pi.hThread, &ctx, stage);
                 }
+                else if (stage == 16)
+                {
+                    USHORT ss;
+                    __asm__( "movw %%ss,%0" : "=r" (ss) );
+                    ok( ctx.SegSs == ss, "wrong ss %04x / %04x\n", ctx.SegSs, ss );
+                    todo_wine ok( ctx.SegDs == ctx.SegSs, "wrong ds %04x / %04x\n", ctx.SegDs, ctx.SegSs );
+                    todo_wine ok( ctx.SegEs == ctx.SegSs, "wrong es %04x / %04x\n", ctx.SegEs, ctx.SegSs );
+                    ok( ctx.SegFs != ctx.SegSs, "wrong fs %04x / %04x\n", ctx.SegFs, ctx.SegSs );
+                    todo_wine ok( ctx.SegGs == ctx.SegSs, "wrong gs %04x / %04x\n", ctx.SegGs, ctx.SegSs );
+                    ctx.SegSs = 0;
+                    ctx.SegDs = 0;
+                    ctx.SegEs = ctx.SegFs;
+                    ctx.SegGs = 0;
+                    status = pNtSetContextThread( pi.hThread, &ctx );
+                    ok( status == STATUS_SUCCESS, "NtSetContextThread failed with %x\n", status );
+                    status = pNtGetContextThread( pi.hThread, &ctx );
+                    ok( status == STATUS_SUCCESS, "NtGetContextThread failed with %x\n", status );
+                    todo_wine ok( ctx.SegSs == ss, "wrong ss %04x / %04x\n", ctx.SegSs, ss );
+                    ok( ctx.SegDs == ctx.SegSs, "wrong ds %04x / %04x\n", ctx.SegDs, ctx.SegSs );
+                    ok( ctx.SegEs == ctx.SegSs, "wrong es %04x / %04x\n", ctx.SegEs, ctx.SegSs );
+                    todo_wine ok( ctx.SegFs != ctx.SegSs, "wrong fs %04x / %04x\n", ctx.SegFs, ctx.SegSs );
+                    ok( ctx.SegGs == ctx.SegSs, "wrong gs %04x / %04x\n", ctx.SegGs, ctx.SegSs );
+                }
                 else
-                    ok(FALSE, "unexpected stage %x\n", stage);
+                    ok(FALSE, "unexpected stage %u\n", stage);
 
                 status = pNtSetContextThread(pi.hThread, &ctx);
                 ok(!status, "NtSetContextThread failed with 0x%x\n", status);
@@ -6736,6 +6832,41 @@ static void test_debuggee_xstate(void)
                 || broken(test_stage == 15 && data[i] == i + 1) /* Win7 */,
                 "Got unexpected data %#x, test_stage %u, i %u.\n", data[i], test_stage, i);
 }
+
+static BYTE except_code_segments[] =
+{
+    0x8c, 0xc0, /* mov %es,%eax */
+    0x50,       /* push %rax */
+    0x8c, 0xd8, /* mov %ds,%eax */
+    0x50,       /* push %rax */
+    0x8c, 0xe0, /* mov %fs,%eax */
+    0x50,       /* push %rax */
+    0x8c, 0xe8, /* mov %gs,%eax */
+    0x50,       /* push %rax */
+    0x31, 0xc0, /* xor %eax,%eax */
+    0x8e, 0xc0, /* mov %eax,%es */
+    0x8e, 0xd8, /* mov %eax,%ds */
+    0x8e, 0xe0, /* mov %eax,%fs */
+    0x8e, 0xe8, /* mov %eax,%gs */
+    0xcc,       /* int3 */
+    0x58,       /* pop %rax */
+    0x8e, 0xe8, /* mov %eax,%gs */
+    0x58,       /* pop %rax */
+    0x8e, 0xe0, /* mov %eax,%fs */
+    0x58,       /* pop %rax */
+    0x8e, 0xd8, /* mov %eax,%ds */
+    0x58,       /* pop %rax */
+    0x8e, 0xc0, /* mov %eax,%es */
+    0xc3,       /* retq */
+};
+
+static void test_debuggee_segments(void)
+{
+    void (CDECL *func)(void) = code_mem;
+
+    memcpy( code_mem, except_code_segments, sizeof(except_code_segments));
+    func();
+}
 #endif
 
 static DWORD invalid_handle_exceptions;
@@ -8834,6 +8965,8 @@ START_TEST(exception)
         test_debuggee_xstate();
         test_stage = 15;
         test_debuggee_xstate();
+        test_stage = 16;
+        test_debuggee_segments();
 #endif
 
         /* rest of tests only run in parent */
