@@ -3617,7 +3617,6 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         /* The options listed here don't need any special handling. Thanks to
          * the conversion happening above, options from there will fall through
          * to this, too.*/
-        case WS_SO_ACCEPTCONN:
         case WS_SO_BROADCAST:
         case WS_SO_ERROR:
         case WS_SO_KEEPALIVE:
@@ -3714,6 +3713,9 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
 
         default:
             TRACE("Unknown SOL_SOCKET optname: 0x%08x\n", optname);
+            /* fall through */
+
+        case WS_SO_ACCEPTCONN:
             SetLastError(WSAENOPROTOOPT);
             return SOCKET_ERROR;
         }
