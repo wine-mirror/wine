@@ -3625,7 +3625,6 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
          * however, using it the BSD way fixes bug 8513 and seems to be what
          * most programmers assume, anyway */
         case WS_SO_REUSEADDR:
-        case WS_SO_TYPE:
             convert_sockopt(&level, &optname);
             break;
 
@@ -3716,6 +3715,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             /* fall through */
 
         case WS_SO_ACCEPTCONN:
+        case WS_SO_TYPE:
             SetLastError(WSAENOPROTOOPT);
             return SOCKET_ERROR;
         }
