@@ -26,11 +26,13 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "winreg.h"
-#include "commctrl.h" 
+#include "commctrl.h"
+#include "uxtheme.h"
 
 #include "resources.h"
 
 #include "wine/test.h"
+#include "v6util.h"
 
 #include "msg.h"
 
@@ -43,6 +45,10 @@ static BOOL (WINAPI *pImageList_Destroy)(HIMAGELIST);
 static INT (WINAPI *pImageList_GetImageCount)(HIMAGELIST);
 static BOOL (WINAPI *pImageList_GetIconSize)(HIMAGELIST, int *, int *);
 static HIMAGELIST (WINAPI *pImageList_LoadImageA)(HINSTANCE, LPCSTR, int, int, COLORREF, UINT, UINT);
+
+static BOOL (WINAPI *pIsThemeActive)(VOID);
+
+static BOOL is_theme_active;
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
@@ -2203,7 +2209,7 @@ static LRESULT CALLBACK cbt_hook_proc(int code, WPARAM wParam, LPARAM lParam)
     return CallNextHookEx(g_tbhook, code, wParam, lParam);
 }
 
-static void test_create(void)
+static void test_create(BOOL v6)
 {
     HWND hwnd, tooltip;
     DWORD style;
@@ -2217,16 +2223,32 @@ static void test_create(void)
     hwnd = CreateWindowExA(0, TOOLBARCLASSNAMEA, NULL, WS_CHILD | WS_VISIBLE, 0, 0, 0, 0,
         hMainWnd, (HMENU)5, GetModuleHandleA(NULL), NULL);
 
-    CHECK_CALLED(g_hook_create);
-    CHECK_CALLED(g_hook_WM_NCCREATE);
-    CHECK_CALLED(g_hook_WM_CREATE);
+    if (v6)
+    {
+        expect(called_g_hook_create, FALSE);
+        expect(called_g_hook_WM_NCCREATE, FALSE);
+        expect(called_g_hook_WM_CREATE, FALSE);
+    }
+    else
+    {
+        CHECK_CALLED(g_hook_create);
+        CHECK_CALLED(g_hook_WM_NCCREATE);
+        CHECK_CALLED(g_hook_WM_CREATE);
+    }
 
     style = GetWindowLongA(hwnd, GWL_STYLE);
-    ok((style & TBSTYLE_TOOLTIPS) == TBSTYLE_TOOLTIPS, "got 0x%08x\n", style);
+    if (v6)
+    {
+        ok(!(style & TBSTYLE_TOOLTIPS), "got 0x%08x\n", style);
+    }
+    else
+    {
+        ok((style & TBSTYLE_TOOLTIPS) == TBSTYLE_TOOLTIPS, "got 0x%08x\n", style);
 
-    tooltip = (HWND)SendMessageA(hwnd, TB_GETTOOLTIPS, 0, 0);
-    ok(tooltip != NULL, "got %p\n", tooltip);
-    ok(GetParent(tooltip) == hMainWnd, "got %p, %p\n", hMainWnd, hwnd);
+        tooltip = (HWND)SendMessageA(hwnd, TB_GETTOOLTIPS, 0, 0);
+        ok(tooltip != NULL, "got %p\n", tooltip);
+        ok(GetParent(tooltip) == hMainWnd, "got %p, %p\n", hMainWnd, hwnd);
+    }
 
     DestroyWindow(hwnd);
     UnhookWindowsHook(WH_CBT, cbt_hook_proc);
@@ -2241,6 +2263,24 @@ static void test_create(void)
 
     style = SendMessageA(hwnd, TB_GETSTYLE, 0, 0);
     ok((style & TBSTYLE_TRANSPARENT) == TBSTYLE_TRANSPARENT, "got 0x%08x\n", style);
+
+    DestroyWindow(hwnd);
+
+    if (!is_theme_active)
+    {
+        skip("Theming is not active, skipping following tests.\n");
+        return;
+    }
+
+    hwnd = CreateWindowA(TOOLBARCLASSNAMEA, NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS
+                         | TBSTYLE_TOOLTIPS | TBSTYLE_GROUP, 0, 0, 0, 0, hMainWnd, (HMENU)5,
+                         GetModuleHandleA(NULL), NULL);
+
+    style = GetWindowLongA(hwnd, GWL_STYLE);
+    ok(!(style & TBSTYLE_TRANSPARENT), "got 0x%08x\n", style);
+
+    style = SendMessageA(hwnd, TB_GETSTYLE, 0, 0);
+    ok(!(style & TBSTYLE_TRANSPARENT), "got 0x%08x\n", style);
 
     DestroyWindow(hwnd);
 }
@@ -2536,7 +2576,10 @@ static void test_imagelist(void)
 
 static void init_functions(void)
 {
-    HMODULE hComCtl32 = LoadLibraryA("comctl32.dll");
+    HMODULE hComCtl32, hUxtheme;
+
+    hComCtl32 = LoadLibraryA("comctl32.dll");
+    hUxtheme = LoadLibraryA("uxtheme.dll");
 
 #define X(f) p##f = (void*)GetProcAddress(hComCtl32, #f);
     X(CreateToolbarEx);
@@ -2545,16 +2588,25 @@ static void init_functions(void)
     X(ImageList_LoadImageA);
     X(ImageList_Destroy);
 #undef X
+
+#define X(f) p##f = (void*)GetProcAddress(hUxtheme, #f)
+    X(IsThemeActive);
+#undef X
 }
 
 START_TEST(toolbar)
 {
+    ULONG_PTR ctx_cookie;
     WNDCLASSA wc;
+    HANDLE ctx;
     MSG msg;
     RECT rc;
 
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
     init_functions();
+
+    if (pIsThemeActive)
+        is_theme_active = pIsThemeActive();
 
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.cbClsExtra = 0;
@@ -2586,12 +2638,17 @@ START_TEST(toolbar)
     test_getstring();
     test_tooltip();
     test_get_set_style();
-    test_create();
+    test_create(FALSE);
     test_TB_GET_SET_EXTENDEDSTYLE();
     test_noresize();
     test_save();
     test_drawtext_flags();
     test_imagelist();
+
+    if (!load_v6_module(&ctx_cookie, &ctx))
+        return;
+
+    test_create(TRUE);
 
     PostQuitMessage(0);
     while(GetMessageA(&msg,0,0,0)) {
@@ -2599,4 +2656,6 @@ START_TEST(toolbar)
         DispatchMessageA(&msg);
     }
     DestroyWindow(hMainWnd);
+
+    unload_v6_module(ctx_cookie, ctx);
 }
