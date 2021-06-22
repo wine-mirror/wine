@@ -2118,75 +2118,51 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             return ret;
         case WS_SO_BSP_STATE:
         {
-            int req_size, addr_size;
+            CSADDR_INFO *csinfo = (CSADDR_INFO *)optval;
             WSAPROTOCOL_INFOW infow;
-            CSADDR_INFO *csinfo;
+            int addr_size;
 
-            ret = ws_protocol_info(s, TRUE, &infow, &addr_size);
-            if (ret)
+            if (!ws_protocol_info( s, TRUE, &infow, &addr_size ))
+                return -1;
+
+            if (infow.iAddressFamily == WS_AF_INET)
+                addr_size = sizeof(struct sockaddr_in);
+            else if (infow.iAddressFamily == WS_AF_INET6)
+                addr_size = sizeof(struct sockaddr_in6);
+            else
             {
-                if (infow.iAddressFamily == WS_AF_INET)
-                    addr_size = sizeof(struct sockaddr_in);
-                else if (infow.iAddressFamily == WS_AF_INET6)
-                    addr_size = sizeof(struct sockaddr_in6);
-                else
-                {
-                    FIXME("Family %d is unsupported for SO_BSP_STATE\n", infow.iAddressFamily);
-                    SetLastError(WSAEAFNOSUPPORT);
-                    return SOCKET_ERROR;
-                }
-
-                req_size = sizeof(CSADDR_INFO) + addr_size * 2;
-                if (*optlen < req_size)
-                {
-                    ret = 0;
-                    SetLastError(WSAEFAULT);
-                }
-                else
-                {
-                    union generic_unix_sockaddr uaddr;
-                    socklen_t uaddrlen;
-
-                    if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
-                        return SOCKET_ERROR;
-
-                    csinfo = (CSADDR_INFO*) optval;
-
-                    /* Check if the sock is bound */
-                    if (is_fd_bound(fd, &uaddr, &uaddrlen) == 1)
-                    {
-                        csinfo->LocalAddr.lpSockaddr =
-                            (LPSOCKADDR) (optval + sizeof(CSADDR_INFO));
-                        ws_sockaddr_u2ws(&uaddr.addr, csinfo->LocalAddr.lpSockaddr, &addr_size);
-                        csinfo->LocalAddr.iSockaddrLength = addr_size;
-                    }
-                    else
-                    {
-                        csinfo->LocalAddr.lpSockaddr = NULL;
-                        csinfo->LocalAddr.iSockaddrLength = 0;
-                    }
-
-                    /* Check if the sock is connected */
-                    if (!getpeername(fd, &uaddr.addr, &uaddrlen) &&
-                        is_sockaddr_bound(&uaddr.addr, uaddrlen))
-                    {
-                        csinfo->RemoteAddr.lpSockaddr =
-                            (LPSOCKADDR) (optval + sizeof(CSADDR_INFO) + addr_size);
-                        ws_sockaddr_u2ws(&uaddr.addr, csinfo->RemoteAddr.lpSockaddr, &addr_size);
-                        csinfo->RemoteAddr.iSockaddrLength = addr_size;
-                    }
-                    else
-                    {
-                        csinfo->RemoteAddr.lpSockaddr = NULL;
-                        csinfo->RemoteAddr.iSockaddrLength = 0;
-                    }
-
-                    csinfo->iSocketType = infow.iSocketType;
-                    csinfo->iProtocol = infow.iProtocol;
-                    release_sock_fd( s, fd );
-                }
+                FIXME( "family %d is unsupported for SO_BSP_STATE\n", infow.iAddressFamily );
+                SetLastError( WSAEAFNOSUPPORT );
+                return -1;
             }
-            return ret ? 0 : SOCKET_ERROR;
+
+            if (*optlen < sizeof(CSADDR_INFO) + addr_size * 2)
+            {
+                ret = 0;
+                SetLastError( WSAEFAULT );
+                return -1;
+            }
+
+            csinfo->LocalAddr.lpSockaddr = (struct WS_sockaddr *)(csinfo + 1);
+            csinfo->RemoteAddr.lpSockaddr = (struct WS_sockaddr *)((char *)(csinfo + 1) + addr_size);
+
+            csinfo->LocalAddr.iSockaddrLength = addr_size;
+            if (WS_getsockname( s, csinfo->LocalAddr.lpSockaddr, &csinfo->LocalAddr.iSockaddrLength ) < 0)
+            {
+                csinfo->LocalAddr.lpSockaddr = NULL;
+                csinfo->LocalAddr.iSockaddrLength = 0;
+            }
+
+            csinfo->RemoteAddr.iSockaddrLength = addr_size;
+            if (WS_getpeername( s, csinfo->RemoteAddr.lpSockaddr, &csinfo->RemoteAddr.iSockaddrLength ) < 0)
+            {
+                csinfo->RemoteAddr.lpSockaddr = NULL;
+                csinfo->RemoteAddr.iSockaddrLength = 0;
+            }
+
+            csinfo->iSocketType = infow.iSocketType;
+            csinfo->iProtocol = infow.iProtocol;
+            return 0;
         }
         case WS_SO_DONTLINGER:
         {
