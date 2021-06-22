@@ -41,3 +41,5 @@ C_SRCS = \
 	undname.c \
 	unixlib.c \
 	wcs.c
+
+RC_SRCS = version.rc
