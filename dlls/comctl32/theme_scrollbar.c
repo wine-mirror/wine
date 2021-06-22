@@ -332,6 +332,8 @@ static void paint_scrollbar(HWND hwnd, HTHEME theme)
         else
             state = SZB_RIGHTALIGN;
 
+        if (IsThemeBackgroundPartiallyTransparent(theme, SBP_SIZEBOX, state))
+            DrawThemeParentBackground(hwnd, dc, NULL);
         DrawThemeBackground(theme, dc, SBP_SIZEBOX, state, &r, NULL);
     } else {
         SCROLLINFO si;
@@ -364,6 +366,8 @@ static void paint_scrollbar(HWND hwnd, HTHEME theme)
                     thumbstate = SCRBS_HOT;
             }
         }
+
+        DrawThemeParentBackground(hwnd, dc, NULL);
 
         if (vertical) {
             SIZE upsize, downsize;
