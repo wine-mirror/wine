@@ -867,9 +867,11 @@ static void test_PdhMakeCounterPathA(void)
     ret = PdhMakeCounterPathA(NULL, NULL, &buflen, 0);
     ok(ret == PDH_INVALID_ARGUMENT, "PdhMakeCounterPathA failed 0x%08x\n", ret);
 
+    if (0) { /* Crashes on Windows 10 >= 2004 */
     buflen = 0;
     ret = PdhMakeCounterPathA(NULL, buffer, &buflen, 0);
     ok(ret == PDH_INVALID_ARGUMENT, "PdhMakeCounterPathA failed 0x%08x\n", ret);
+    }
 
     buflen = sizeof(buffer);
     memset(&e, 0, sizeof(e));
