@@ -2294,23 +2294,51 @@ static void test_WSASocket(void)
     sock = WSASocketA(0, 0, 0, &pi[0], 0, 0);
     ok(sock != INVALID_SOCKET, "Failed to create socket: %d\n",
             WSAGetLastError());
+
     size = sizeof(socktype);
     socktype = 0xdead;
     err = getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size);
     ok(!err,"getsockopt failed with %d\n", WSAGetLastError());
     ok(socktype == SOCK_DGRAM, "Wrong socket type, expected %d received %d\n",
        SOCK_DGRAM, socktype);
+
+    socktype = SOCK_STREAM;
+    WSASetLastError(0xdeadbeef);
+    err = setsockopt(sock, SOL_SOCKET, SO_TYPE, (char *)&socktype, sizeof(socktype));
+    ok(err == -1, "expected failure\n");
+    todo_wine ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
+
+    socktype = SOCK_DGRAM;
+    WSASetLastError(0xdeadbeef);
+    err = setsockopt(sock, SOL_SOCKET, SO_TYPE, (char *)&socktype, sizeof(socktype));
+    ok(err == -1, "expected failure\n");
+    todo_wine ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
+
     closesocket(sock);
 
     sock = WSASocketA(AF_INET, SOCK_STREAM, IPPROTO_TCP, &pi[0], 0, 0);
     ok(sock != INVALID_SOCKET, "Failed to create socket: %d\n",
             WSAGetLastError());
+
     size = sizeof(socktype);
     socktype = 0xdead;
     err = getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size);
     ok(!err,"getsockopt failed with %d\n", WSAGetLastError());
     ok(socktype == SOCK_STREAM, "Wrong socket type, expected %d received %d\n",
        SOCK_STREAM, socktype);
+
+    socktype = SOCK_STREAM;
+    WSASetLastError(0xdeadbeef);
+    err = setsockopt(sock, SOL_SOCKET, SO_TYPE, (char *)&socktype, sizeof(socktype));
+    ok(err == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAENOPROTOOPT, "got error %u\n", WSAGetLastError());
+
+    socktype = SOCK_DGRAM;
+    WSASetLastError(0xdeadbeef);
+    err = setsockopt(sock, SOL_SOCKET, SO_TYPE, (char *)&socktype, sizeof(socktype));
+    ok(err == -1, "expected failure\n");
+    ok(WSAGetLastError() == WSAENOPROTOOPT, "got error %u\n", WSAGetLastError());
+
     closesocket(sock);
 
     HeapFree(GetProcessHeap(), 0, pi);
