@@ -240,7 +240,8 @@ static void test_PdhAddEnglishCounterA( void )
     ok(ret == PDH_INVALID_ARGUMENT, "PdhAddEnglishCounterA failed 0x%08x\n", ret);
 
     ret = pPdhAddEnglishCounterA( NULL, "\\System\\System Up Time", 0, &counter );
-    ok(ret == PDH_INVALID_ARGUMENT, "PdhAddEnglishCounterA failed 0x%08x\n", ret);
+    ok(ret == PDH_INVALID_HANDLE || broken(ret == PDH_INVALID_ARGUMENT) /* win10 <= 1909 */,
+       "PdhAddEnglishCounterA failed 0x%08x\n", ret);
 
     ret = pPdhAddEnglishCounterA( query, NULL, 0, &counter );
     ok(ret == PDH_INVALID_ARGUMENT, "PdhAddEnglishCounterA failed 0x%08x\n", ret);
@@ -281,7 +282,8 @@ static void test_PdhAddEnglishCounterW( void )
     ok(ret == PDH_INVALID_ARGUMENT, "PdhAddEnglishCounterW failed 0x%08x\n", ret);
 
     ret = pPdhAddEnglishCounterW( NULL, system_uptime, 0, &counter );
-    ok(ret == PDH_INVALID_ARGUMENT, "PdhAddEnglishCounterW failed 0x%08x\n", ret);
+    ok(ret == PDH_INVALID_HANDLE || broken(ret == PDH_INVALID_ARGUMENT) /* win10 <= 1909 */,
+       "PdhAddEnglishCounterW failed 0x%08x\n", ret);
 
     ret = pPdhAddEnglishCounterW( query, NULL, 0, &counter );
     ok(ret == PDH_INVALID_ARGUMENT, "PdhAddEnglishCounterW failed 0x%08x\n", ret);

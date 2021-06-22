@@ -284,7 +284,8 @@ PDH_STATUS WINAPI PdhAddEnglishCounterA( PDH_HQUERY query, LPCSTR path,
 {
     TRACE("%p %s %lx %p\n", query, debugstr_a(path), userdata, counter);
 
-    if (!query) return PDH_INVALID_ARGUMENT;
+    if (!counter) return PDH_INVALID_ARGUMENT;
+    if (!query) return PDH_INVALID_HANDLE;
     return PdhAddCounterA( query, path, userdata, counter );
 }
 
@@ -296,7 +297,8 @@ PDH_STATUS WINAPI PdhAddEnglishCounterW( PDH_HQUERY query, LPCWSTR path,
 {
     TRACE("%p %s %lx %p\n", query, debugstr_w(path), userdata, counter);
 
-    if (!query) return PDH_INVALID_ARGUMENT;
+    if (!counter) return PDH_INVALID_ARGUMENT;
+    if (!query) return PDH_INVALID_HANDLE;
     return PdhAddCounterW( query, path, userdata, counter );
 }
 
