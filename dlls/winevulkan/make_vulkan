@@ -1078,7 +1078,7 @@ class VkHandle(object):
 
 class VkMember(object):
     def __init__(self, const=False, struct_fwd_decl=False,_type=None, pointer=None, name=None, array_len=None,
-            dyn_array_len=None, optional=False, values=None, object_type=None):
+            dyn_array_len=None, optional=False, values=None, object_type=None, bit_width=None):
         self.const = const
         self.struct_fwd_decl = struct_fwd_decl
         self.name = name
@@ -1090,6 +1090,7 @@ class VkMember(object):
         self.optional = optional
         self.values = values
         self.object_type = object_type
+        self.bit_width = bit_width
 
     def __eq__(self, other):
         """ Compare member based on name against a string.
@@ -1116,6 +1117,7 @@ class VkMember(object):
         member_type = None
         pointer = None
         array_len = None
+        bit_width = None
 
         values = member.get("values")
 
@@ -1161,8 +1163,14 @@ class VkMember(object):
 
         object_type = member.get("objecttype", None)
 
+        # Some members are bit field values:
+        # <member><type>uint32_t</type> <name>mask</name>:8</member>
+        if name_elem.tail and name_elem.tail[0] == ':':
+            LOGGER.debug("Found bit field")
+            bit_width = int(name_elem.tail[1:])
+
         return VkMember(const=const, struct_fwd_decl=struct_fwd_decl, _type=member_type, pointer=pointer, name=name_elem.text,
-                array_len=array_len, dyn_array_len=dyn_array_len, optional=optional, values=values, object_type=object_type)
+                array_len=array_len, dyn_array_len=dyn_array_len, optional=optional, values=values, object_type=object_type, bit_width=bit_width)
 
     def copy(self, input, output, direction, conv):
         """ Helper method for use by conversion logic to generate a C-code statement to copy this member.
@@ -1267,6 +1275,9 @@ class VkMember(object):
         if self.is_static_array():
             text += "[{0}]".format(self.array_len)
 
+        if self.is_bit_field():
+            text += ":{}".format(self.bit_width)
+
         return text
 
     def get_conversions(self):
@@ -1343,6 +1354,9 @@ class VkMember(object):
         """
 
         return self.object_type != None and self.type == "uint64_t"
+
+    def is_bit_field(self):
+        return self.bit_width is not None
 
     def needs_alignment(self):
         """ Check if this member needs alignment for 64-bit data.

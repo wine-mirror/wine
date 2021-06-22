@@ -5752,10 +5752,10 @@ typedef struct VkAccelerationStructureGeometryMotionTrianglesDataNV
 typedef struct VkAccelerationStructureInstanceKHR
 {
     VkTransformMatrixKHR transform;
-    uint32_t instanceCustomIndex;
-    uint32_t mask;
-    uint32_t instanceShaderBindingTableRecordOffset;
-    VkGeometryInstanceFlagsKHR flags;
+    uint32_t instanceCustomIndex:24;
+    uint32_t mask:8;
+    uint32_t instanceShaderBindingTableRecordOffset:24;
+    VkGeometryInstanceFlagsKHR flags:8;
     uint64_t WINE_VK_ALIGN(8) accelerationStructureReference;
 } VkAccelerationStructureInstanceKHR;
 typedef VkAccelerationStructureInstanceKHR VkAccelerationStructureInstanceNV;
@@ -5772,10 +5772,10 @@ typedef struct VkAccelerationStructureSRTMotionInstanceNV
 {
     VkSRTDataNV transformT0;
     VkSRTDataNV transformT1;
-    uint32_t instanceCustomIndex;
-    uint32_t mask;
-    uint32_t instanceShaderBindingTableRecordOffset;
-    VkGeometryInstanceFlagsKHR flags;
+    uint32_t instanceCustomIndex:24;
+    uint32_t mask:8;
+    uint32_t instanceShaderBindingTableRecordOffset:24;
+    VkGeometryInstanceFlagsKHR flags:8;
     uint64_t WINE_VK_ALIGN(8) accelerationStructureReference;
 } VkAccelerationStructureSRTMotionInstanceNV;
 
@@ -7033,10 +7033,10 @@ typedef struct VkAccelerationStructureMatrixMotionInstanceNV
 {
     VkTransformMatrixKHR transformT0;
     VkTransformMatrixKHR transformT1;
-    uint32_t instanceCustomIndex;
-    uint32_t mask;
-    uint32_t instanceShaderBindingTableRecordOffset;
-    VkGeometryInstanceFlagsKHR flags;
+    uint32_t instanceCustomIndex:24;
+    uint32_t mask:8;
+    uint32_t instanceShaderBindingTableRecordOffset:24;
+    VkGeometryInstanceFlagsKHR flags:8;
     uint64_t WINE_VK_ALIGN(8) accelerationStructureReference;
 } VkAccelerationStructureMatrixMotionInstanceNV;
 
