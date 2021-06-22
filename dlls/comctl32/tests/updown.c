@@ -973,6 +973,42 @@ static void test_updown_pos_notifications(void)
     DestroyWindow(updown);
 }
 
+static void test_UDS_SETBUDDY(void)
+{
+    static const int start_width = 100, start_height = 100;
+    int width, height, updown_width;
+    HWND updown;
+    RECT rect;
+    BOOL ret;
+
+    updown = create_updown_control(UDS_ALIGNRIGHT | UDS_SETBUDDYINT | UDS_ARROWKEYS, g_edit);
+    ret = SetWindowPos(g_edit, 0, 100, 100, start_width, start_height, SWP_NOACTIVATE | SWP_NOZORDER);
+    ok(ret, "SetWindowPos failed, error %u.\n", GetLastError());
+    ret = GetWindowRect(g_edit, &rect);
+    ok(ret, "GetWindowRect failed, error %u.\n", GetLastError());
+    width = rect.right - rect.left;
+    height = rect.bottom - rect.top;
+    ok(width == start_width, "Expected width %d, got %d.\n", start_width, width);
+    ok(height == start_height, "Expected height %d, got %d.\n", start_height, height);
+
+    SendMessageA(updown, UDM_SETBUDDY, (WPARAM)g_edit, 0);
+    ret = GetWindowRect(g_edit, &rect);
+    ok(ret, "GetWindowRect failed, error %u.\n", GetLastError());
+    updown_width = start_width - (rect.right - rect.left);
+    ok(updown_width > 0, "Expected updown width > 0, got %d.\n", updown_width);
+
+    SendMessageA(updown, UDM_SETBUDDY, (WPARAM)g_edit, 0);
+    ret = GetWindowRect(g_edit, &rect);
+    ok(ret, "GetWindowRect failed, error %u.\n", GetLastError());
+    width = rect.right - rect.left;
+    height = rect.bottom - rect.top;
+    ok(width == start_width - 2 * updown_width, "Expected width %d, got %d.\n",
+       start_width - 2 * updown_width, width);
+    ok(height == start_height, "Expected height %d, got %d.\n", start_height, height);
+
+    DestroyWindow(updown);
+}
+
 static void init_functions(void)
 {
     HMODULE hComCtl32 = LoadLibraryA("comctl32.dll");
@@ -1002,6 +1038,7 @@ START_TEST(updown)
     test_updown_buddy();
     test_updown_base();
     test_updown_unicode();
+    test_UDS_SETBUDDY();
     test_UDS_SETBUDDYINT();
     test_CreateUpDownControl();
     test_updown_pos_notifications();
