@@ -2901,6 +2901,7 @@ TREEVIEW_Refresh(TREEVIEW_INFO *infoPtr, HDC hdc, const RECT *rc)
     HWND hwnd = infoPtr->hwnd;
     RECT rect = *rc;
     TREEVIEW_ITEM *item;
+    HTHEME theme;
 
     if (infoPtr->clientHeight == 0 || infoPtr->clientWidth == 0)
     {
@@ -2915,6 +2916,12 @@ TREEVIEW_Refresh(TREEVIEW_INFO *infoPtr, HDC hdc, const RECT *rc)
     {
 	ReleaseDC(hwnd, hdc);
 	return;
+    }
+
+    if (infoPtr->dwStyle & TVS_HASBUTTONS && (theme = GetWindowTheme(infoPtr->hwnd)))
+    {
+        if (IsThemeBackgroundPartiallyTransparent(theme, TVP_GLYPH, 0))
+            DrawThemeParentBackground(infoPtr->hwnd, hdc, NULL);
     }
 
     for (item = infoPtr->root->firstChild;
