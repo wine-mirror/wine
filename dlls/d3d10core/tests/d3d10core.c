@@ -18935,6 +18935,158 @@ static void test_unbound_streams(void)
     release_test_context(&test_context);
 }
 
+static void test_texture_compressed_3d(void)
+{
+    struct d3d10core_test_context test_context;
+    D3D10_SUBRESOURCE_DATA resource_data;
+    D3D10_TEXTURE3D_DESC texture_desc;
+    ID3D10SamplerState *sampler_state;
+    unsigned int idx, r0, r1, x, y, z;
+    D3D10_SAMPLER_DESC sampler_desc;
+    ID3D10ShaderResourceView *srv;
+    struct resource_readback rb;
+    ID3D10Texture3D *texture;
+    DWORD colour, expected;
+    ID3D10PixelShader *ps;
+    ID3D10Device *device;
+    DWORD *texture_data;
+    BOOL equal = TRUE;
+    HRESULT hr;
+
+    static const DWORD ps_code[] =
+    {
+#if 0
+        Texture3D t;
+        SamplerState s;
+
+        float4 main(float4 position : SV_POSITION) : SV_Target
+        {
+            return t.Sample(s, position.xyz / float3(640, 480, 1));
+        }
+#endif
+        0x43425844, 0x27b15ae8, 0xbebf46f7, 0x6cd88d8d, 0x5118de51, 0x00000001, 0x00000134, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000070f, 0x505f5653, 0x5449534f, 0x004e4f49,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000098, 0x00000040,
+        0x00000026, 0x0300005a, 0x00106000, 0x00000000, 0x04002858, 0x00107000, 0x00000000, 0x00005555,
+        0x04002064, 0x00101072, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068,
+        0x00000001, 0x0a000038, 0x00100072, 0x00000000, 0x00101246, 0x00000000, 0x00004002, 0x3acccccd,
+        0x3b088889, 0x3f800000, 0x00000000, 0x09000045, 0x001020f2, 0x00000000, 0x00100246, 0x00000000,
+        0x00107e46, 0x00000000, 0x00106000, 0x00000000, 0x0100003e,
+    };
+
+    static const unsigned int block_indices[] =
+    {
+        0, 1, 3, 2,
+        6, 7, 5, 4,
+        0, 1, 3, 2,
+        6, 7, 5, 4,
+    };
+
+    if (!init_test_context(&test_context))
+        return;
+    device = test_context.device;
+
+    hr = ID3D10Device_CreatePixelShader(device, ps_code, sizeof(ps_code), &ps);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    /* Simply test all combinations of r0 and r1. */
+    texture_data = heap_alloc(256 * 256 * sizeof(UINT64));
+    for (r1 = 0; r1 < 256; ++r1)
+    {
+        for (r0 = 0; r0 < 256; ++r0)
+        {
+            /* bits = block_indices[] */
+            texture_data[(r1 * 256 + r0) * 2 + 0] = 0xe4c80000 | (r1 << 8) | r0;
+            texture_data[(r1 * 256 + r0) * 2 + 1] = 0x97e4c897;
+        }
+    }
+    resource_data.pSysMem = texture_data;
+    resource_data.SysMemPitch = 64 * sizeof(UINT64);
+    resource_data.SysMemSlicePitch = 64 * resource_data.SysMemPitch;
+
+    texture_desc.Width = 256;
+    texture_desc.Height = 256;
+    texture_desc.Depth = 16;
+    texture_desc.MipLevels = 1;
+    texture_desc.Format = DXGI_FORMAT_BC4_UNORM;
+    texture_desc.Usage = D3D10_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+    hr = ID3D10Device_CreateTexture3D(device, &texture_desc, &resource_data, &texture);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    heap_free(texture_data);
+
+    hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)texture, NULL, &srv);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    sampler_desc.Filter = D3D10_FILTER_MIN_MAG_MIP_POINT;
+    sampler_desc.AddressU = D3D10_TEXTURE_ADDRESS_CLAMP;
+    sampler_desc.AddressV = D3D10_TEXTURE_ADDRESS_CLAMP;
+    sampler_desc.AddressW = D3D10_TEXTURE_ADDRESS_CLAMP;
+    sampler_desc.MipLODBias = 0.0f;
+    sampler_desc.MaxAnisotropy = 0;
+    sampler_desc.ComparisonFunc = D3D10_COMPARISON_NEVER;
+    sampler_desc.BorderColor[0] = 0.0f;
+    sampler_desc.BorderColor[1] = 0.0f;
+    sampler_desc.BorderColor[2] = 0.0f;
+    sampler_desc.BorderColor[3] = 0.0f;
+    sampler_desc.MinLOD = 0.0f;
+    sampler_desc.MaxLOD = 0.0f;
+    hr = ID3D10Device_CreateSamplerState(device, &sampler_desc, &sampler_state);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    ID3D10Device_PSSetShader(device, ps);
+    ID3D10Device_PSSetShaderResources(device, 0, 1, &srv);
+    ID3D10Device_PSSetSamplers(device, 0, 1, &sampler_state);
+
+    for (z = 0; z < 16; ++z)
+    {
+        draw_quad_z(&test_context, (z * 2.0f + 1.0f) / 32.0f);
+        get_texture_readback(test_context.backbuffer, 0, &rb);
+        for (y = 0; y < 256; ++y)
+        {
+            for (x = 0; x < 256; ++x)
+            {
+                idx = z * 64 * 64 + (y / 4) * 64 + (x / 4);
+                r0 = idx % 256;
+                r1 = idx / 256;
+
+                switch (block_indices[(y % 4) * 4 + (x % 4)])
+                {
+                    case 0: expected = r0; break;
+                    case 1: expected = r1; break;
+                    case 2: expected = r0 > r1 ? (12 * r0 +  2 * r1 + 7) / 14 : (8 * r0 + 2 * r1 + 5) / 10; break;
+                    case 3: expected = r0 > r1 ? (10 * r0 +  4 * r1 + 7) / 14 : (6 * r0 + 4 * r1 + 5) / 10; break;
+                    case 4: expected = r0 > r1 ? ( 8 * r0 +  6 * r1 + 7) / 14 : (4 * r0 + 6 * r1 + 5) / 10; break;
+                    case 5: expected = r0 > r1 ? ( 6 * r0 +  8 * r1 + 7) / 14 : (2 * r0 + 8 * r1 + 5) / 10; break;
+                    case 6: expected = r0 > r1 ? ( 4 * r0 + 10 * r1 + 7) / 14 : 0x00; break;
+                    case 7: expected = r0 > r1 ? ( 2 * r0 + 12 * r1 + 7) / 14 : 0xff; break;
+                    default: expected = ~0u; break;
+                }
+                expected |= 0xff000000;
+                colour = get_readback_color(&rb, (x * 640 + 128) / 256, (y * 480 + 128) / 256);
+                if (!(equal = compare_color(colour, expected, 2)))
+                    break;
+            }
+            if (!equal)
+                break;
+        }
+        release_resource_readback(&rb);
+        if (!equal)
+            break;
+    }
+    ok(equal, "Got unexpected colour 0x%08x at (%u, %u, %u), expected 0x%08x.\n", colour, x, y, z, expected);
+
+    ID3D10PixelShader_Release(ps);
+    ID3D10SamplerState_Release(sampler_state);
+    ID3D10ShaderResourceView_Release(srv);
+    ID3D10Texture3D_Release(texture);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d10core)
 {
     unsigned int argc, i;
@@ -19060,6 +19212,7 @@ START_TEST(d3d10core)
     queue_test(test_independent_blend);
     queue_test(test_dual_source_blend);
     queue_test(test_unbound_streams);
+    queue_test(test_texture_compressed_3d);
 
     run_queued_tests();
 
