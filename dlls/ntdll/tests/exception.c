@@ -4168,22 +4168,31 @@ static void test_thread_context(void)
 
 static void test_wow64_context(void)
 {
+    const char appname[] = "C:\\windows\\syswow64\\cmd.exe";
+    char cmdline[256];
     THREAD_BASIC_INFORMATION info;
     PROCESS_INFORMATION pi;
     STARTUPINFOA si = {0};
-    WOW64_CONTEXT ctx, *ctx_ptr;
+    WOW64_CONTEXT ctx, *ctx_ptr = NULL;
+    CONTEXT context;
     NTSTATUS ret;
     TEB teb;
-    SIZE_T res, cpu_size;
+    TEB32 teb32;
+    SIZE_T res, cpu_size = 0;
     WOW64_CPURESERVED *cpu = NULL;
     WOW64_CPU_AREA_INFO cpu_info;
+    BOOL r, got32, got64;
+    unsigned int i, cs32, cs64;
+    ULONG_PTR ecx, rcx;
 
     memset(&ctx, 0x55, sizeof(ctx));
     ctx.ContextFlags = WOW64_CONTEXT_ALL;
     ret = pRtlWow64GetThreadContext( GetCurrentThread(), &ctx );
     ok(ret == STATUS_INVALID_PARAMETER || broken(ret == STATUS_PARTIAL_COPY), "got %#x\n", ret);
 
-    CreateProcessA("C:\\windows\\syswow64\\notepad.exe", NULL, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
+    sprintf( cmdline, "\"%s\" /c for /l %%n in () do @echo >nul", appname );
+    r = CreateProcessA( appname, cmdline, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
+    ok( r, "failed to start %s err %u\n", appname, GetLastError() );
 
     ret = pRtlWow64GetThreadContext( pi.hThread, &ctx );
     ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
@@ -4206,9 +4215,9 @@ static void test_wow64_context(void)
     if (!ReadProcessMemory( pi.hProcess, info.TebBaseAddress, &teb, sizeof(teb), &res )) res = 0;
     ok( res == sizeof(teb), "wrong len %lx\n", res );
 
+    memset( &teb32, 0, sizeof(teb32) );
     if (teb.WowTebOffset > 1)
     {
-        TEB32 teb32;
         if (!ReadProcessMemory( pi.hProcess, (char *)info.TebBaseAddress + teb.WowTebOffset,
                                 &teb32, sizeof(teb32), &res )) res = 0;
         ok( res == sizeof(teb32), "wrong len %lx\n", res );
@@ -4243,16 +4252,247 @@ static void test_wow64_context(void)
         ok(ctx_ptr->Esi == ctx.Esi, "got esi %08x / %08x\n", ctx_ptr->Esi, ctx.Esi);
         ok(ctx_ptr->Edi == ctx.Edi, "got edi %08x / %08x\n", ctx_ptr->Edi, ctx.Edi);
         ok(ctx_ptr->SegCs == ctx.SegCs, "got cs %04x / %04x\n", ctx_ptr->SegCs, ctx.SegCs);
-        ok(ctx_ptr->SegDs == ctx.SegDs, "got cs %04x / %04x\n", ctx_ptr->SegDs, ctx.SegDs);
-        ok(ctx_ptr->SegSs == ctx.SegSs, "got cs %04x / %04x\n", ctx_ptr->SegSs, ctx.SegSs);
+        ok(ctx_ptr->SegDs == ctx.SegDs, "got ds %04x / %04x\n", ctx_ptr->SegDs, ctx.SegDs);
+        ok(ctx_ptr->SegEs == ctx.SegEs, "got es %04x / %04x\n", ctx_ptr->SegEs, ctx.SegEs);
+        ok(ctx_ptr->SegFs == ctx.SegFs, "got fs %04x / %04x\n", ctx_ptr->SegFs, ctx.SegFs);
+        ok(ctx_ptr->SegGs == ctx.SegGs, "got gs %04x / %04x\n", ctx_ptr->SegGs, ctx.SegGs);
+        ok(ctx_ptr->SegSs == ctx.SegSs, "got ss %04x / %04x\n", ctx_ptr->SegSs, ctx.SegSs);
         ok(ctx_ptr->EFlags == ctx.EFlags, "got eflags %08x / %08x\n", ctx_ptr->EFlags, ctx.EFlags);
         ok((WORD)ctx_ptr->FloatSave.ControlWord == ctx.FloatSave.ControlWord,
            "got control word %08x / %08x\n", ctx_ptr->FloatSave.ControlWord, ctx.FloatSave.ControlWord);
         ok(*(WORD *)ctx_ptr->ExtendedRegisters == *(WORD *)ctx.ExtendedRegisters,
            "got SSE control word %04x\n", *(WORD *)ctx_ptr->ExtendedRegisters,
            *(WORD *)ctx.ExtendedRegisters);
+
+        ecx = ctx.Ecx;
+        ctx.Ecx = 0x12345678;
+        ret = pRtlWow64SetThreadContext( pi.hThread, &ctx );
+        ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+        if (!ReadProcessMemory( pi.hProcess, teb.TlsSlots[WOW64_TLS_CPURESERVED], cpu, cpu_size, &res )) res = 0;
+        ok( res == cpu_size, "wrong len %lx\n", res );
+        todo_wine
+        ok( ctx_ptr->Ecx == 0x12345678, "got ecx %08x\n", ctx_ptr->Ecx );
+        ctx.Ecx = ecx;
+        pRtlWow64SetThreadContext( pi.hThread, &ctx );
     }
+    else win_skip( "RtlWow64GetCpuAreaInfo not supported\n" );
+
+    memset( &context, 0x55, sizeof(context) );
+    context.ContextFlags = CONTEXT_ALL;
+    ret = pNtGetContextThread( pi.hThread, &context );
+    ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+    ok( context.ContextFlags == CONTEXT_ALL, "got context flags %#x\n", context.ContextFlags );
+    todo_wine
+    ok( !context.Rax, "rax is not zero %lx\n", context.Rax );
+    todo_wine
+    ok( !context.Rbx, "rbx is not zero %lx\n", context.Rbx );
+    ok( !context.Rsi, "rsi is not zero %lx\n", context.Rsi );
+    ok( !context.Rdi, "rdi is not zero %lx\n", context.Rdi );
+    ok( !context.Rbp, "rbp is not zero %lx\n", context.Rbp );
+    ok( !context.R8, "r8 is not zero %lx\n", context.R8 );
+    ok( !context.R9, "r9 is not zero %lx\n", context.R9 );
+    ok( !context.R10, "r10 is not zero %lx\n", context.R10 );
+    ok( !context.R11, "r11 is not zero %lx\n", context.R11 );
+    ok( !context.R12, "r12 is not zero %lx\n", context.R12 );
+    ok( !context.R13, "r13 is not zero %lx\n", context.R13 );
+    ok( !context.R14, "r14 is not zero %lx\n", context.R14 );
+    ok( !context.R15, "r15 is not zero %lx\n", context.R15 );
+    todo_wine
+    ok( ((ULONG_PTR)context.Rsp & ~0xfff) == ((ULONG_PTR)teb.Tib.StackBase & ~0xfff),
+        "rsp is not at top of stack %p / %p\n", (void *)context.Rsp, teb.Tib.StackBase );
+    todo_wine
+    ok( context.EFlags == 0x200, "wrong flags %08x\n", context.EFlags );
+    todo_wine
+    ok( context.MxCsr == 0x1f80, "wrong mxcsr %08x\n", context.MxCsr );
+    todo_wine
+    ok( context.FltSave.ControlWord == 0x27f, "wrong control %08x\n", context.FltSave.ControlWord );
+    todo_wine
+    ok( context.SegCs != ctx.SegCs, "wrong cs %04x\n", context.SegCs );
+    ok( context.SegDs == ctx.SegDs, "wrong ds %04x / %04x\n", context.SegDs, ctx.SegDs  );
+    ok( context.SegEs == ctx.SegEs, "wrong es %04x / %04x\n", context.SegEs, ctx.SegEs  );
+    ok( context.SegFs == ctx.SegFs, "wrong fs %04x / %04x\n", context.SegFs, ctx.SegFs  );
+    ok( context.SegGs == ctx.SegGs, "wrong gs %04x / %04x\n", context.SegGs, ctx.SegGs  );
+    ok( context.SegSs == ctx.SegSs, "wrong ss %04x / %04x\n", context.SegSs, ctx.SegSs  );
+
+    cs32 = ctx.SegCs;
+    cs64 = context.SegCs;
+    if (cs32 == cs64)
+    {
+        todo_wine win_skip( "no wow64 support\n" );
+        goto done;
+    }
+
+    for (i = 0, got32 = got64 = FALSE; i < 10000 && !(got32 && got64); i++)
+    {
+        ResumeThread( pi.hThread );
+        Sleep( 1 );
+        SuspendThread( pi.hThread );
+        memset( &context, 0x55, sizeof(context) );
+        context.ContextFlags = CONTEXT_ALL;
+        ret = pNtGetContextThread( pi.hThread, &context );
+        ok( ret == STATUS_SUCCESS, "got %#x\n", ret );
+        if (ret) break;
+        if (context.SegCs == cs32 && got32) continue;
+        if (context.SegCs == cs64 && got64) continue;
+        if (context.SegCs != cs32 && context.SegCs != cs64)
+        {
+            ok( 0, "unexpected cs %04x\n", context.SegCs );
+            break;
+        }
+
+        memset( &ctx, 0x55, sizeof(ctx) );
+        ctx.ContextFlags = WOW64_CONTEXT_ALL;
+        ret = pRtlWow64GetThreadContext( pi.hThread, &ctx );
+        ok(ret == STATUS_SUCCESS, "got %#x\n", ret);
+        ok( ctx.ContextFlags == WOW64_CONTEXT_ALL, "got context flags %#x\n", ctx.ContextFlags );
+        if (context.SegCs == cs32)
+        {
+            trace( "in 32-bit mode %04x\n", context.SegCs );
+            ok( ctx.Eip == context.Rip, "cs32: eip %08x / %p\n", ctx.Eip, (void *)context.Rip );
+            ok( ctx.Ebp == context.Rbp, "cs32: ebp %08x / %p\n", ctx.Ebp, (void *)context.Rbp );
+            ok( ctx.Esp == context.Rsp, "cs32: esp %08x / %p\n", ctx.Esp, (void *)context.Rsp );
+            ok( ctx.Eax == context.Rax, "cs32: eax %08x / %p\n", ctx.Eax, (void *)context.Rax );
+            ok( ctx.Ebx == context.Rbx, "cs32: ebx %08x / %p\n", ctx.Ebx, (void *)context.Rbx );
+            ok( ctx.Ecx == context.Rcx, "cs32: ecx %08x / %p\n", ctx.Ecx, (void *)context.Rcx );
+            ok( ctx.Edx == context.Rdx, "cs32: edx %08x / %p\n", ctx.Edx, (void *)context.Rdx );
+            ok( ctx.Esi == context.Rsi, "cs32: esi %08x / %p\n", ctx.Esi, (void *)context.Rsi );
+            ok( ctx.Edi == context.Rdi, "cs32: edi %08x / %p\n", ctx.Edi, (void *)context.Rdi );
+            ok( ctx.SegCs == cs32, "cs32: wrong cs %04x / %04x\n", ctx.SegCs, cs32 );
+            ok( ctx.SegDs == context.SegDs, "cs32: wrong ds %04x / %04x\n", ctx.SegDs, context.SegDs );
+            ok( ctx.SegEs == context.SegEs, "cs32: wrong es %04x / %04x\n", ctx.SegEs, context.SegEs );
+            ok( ctx.SegFs == context.SegFs, "cs32: wrong fs %04x / %04x\n", ctx.SegFs, context.SegFs );
+            ok( ctx.SegGs == context.SegGs, "cs32: wrong gs %04x / %04x\n", ctx.SegGs, context.SegGs );
+            ok( ctx.SegSs == context.SegSs, "cs32: wrong ss %04x / %04x\n", ctx.SegSs, context.SegSs );
+            if (teb32.DeallocationStack)
+                ok( ctx.Esp >= teb32.DeallocationStack && ctx.Esp <= teb32.Tib.StackBase,
+                    "cs32: esp not inside 32-bit stack %08x / %08x-%08x\n", ctx.Esp,
+                    teb32.DeallocationStack, teb32.Tib.StackBase );
+            /* r12 points to the TEB */
+            ok( (void *)context.R12 == info.TebBaseAddress,
+                "cs32: r12 not pointing to the TEB %p / %p\n", (void *)context.R12, info.TebBaseAddress );
+            /* r13 points inside the cpu area */
+            ok( (void *)context.R13 >= teb.TlsSlots[WOW64_TLS_CPURESERVED] &&
+                context.R13 <= ((ULONG_PTR)teb.TlsSlots[WOW64_TLS_CPURESERVED] | 0xfff),
+                "cs32: r13 not pointing into cpu area %p / %p\n", (void *)context.R13,
+                teb.TlsSlots[WOW64_TLS_CPURESERVED] );
+            /* r14 stores the 64-bit stack pointer */
+            ok( (void *)context.R14 >= teb.DeallocationStack && (void *)context.R14 <= teb.Tib.StackBase,
+                "cs32: r14 not inside 32-bit stack %p / %p-%p\n", (void *)context.R14,
+                (void *)teb.DeallocationStack, (void *)teb.Tib.StackBase );
+
+            if (pRtlWow64GetCpuAreaInfo)
+            {
+                /* in 32-bit mode, the 32-bit context is the current cpu context, not the stored one */
+                if (!ReadProcessMemory( pi.hProcess, teb.TlsSlots[WOW64_TLS_CPURESERVED],
+                                        cpu, cpu_size, &res )) res = 0;
+                ok( res == cpu_size, "wrong len %lx\n", res );
+                ok(ctx_ptr->ContextFlags == WOW64_CONTEXT_ALL,
+                   "cs32: got context flags %#x\n", ctx_ptr->ContextFlags);
+                ok(ctx_ptr->Eip != ctx.Eip, "cs32: got eip %08x / %08x\n", ctx_ptr->Eip, ctx.Eip);
+
+                /* changing either context changes the actual cpu context */
+                rcx = context.Rcx;
+                ecx = ctx_ptr->Ecx;
+                context.Rcx = 0xfedcba987654321ull;
+                pNtSetContextThread( pi.hThread, &context );
+                memset( &ctx, 0x55, sizeof(ctx) );
+                ctx.ContextFlags = WOW64_CONTEXT_ALL;
+                pRtlWow64GetThreadContext( pi.hThread, &ctx );
+                ok( ctx.Ecx == 0x87654321, "cs64: ecx set to %08x\n", ctx.Ecx );
+                ReadProcessMemory( pi.hProcess, teb.TlsSlots[WOW64_TLS_CPURESERVED], cpu, cpu_size, &res );
+                ok( ctx_ptr->Ecx == ecx, "cs64: ecx set to %08x\n", ctx_ptr->Ecx );
+                ctx.Ecx = 0x33334444;
+                pRtlWow64SetThreadContext( pi.hThread, &ctx );
+                memset( &ctx, 0x55, sizeof(ctx) );
+                ctx.ContextFlags = WOW64_CONTEXT_ALL;
+                pRtlWow64GetThreadContext( pi.hThread, &ctx );
+                ok( ctx.Ecx == 0x33334444, "cs64: ecx set to %08x\n", ctx.Ecx );
+                ReadProcessMemory( pi.hProcess, teb.TlsSlots[WOW64_TLS_CPURESERVED], cpu, cpu_size, &res );
+                ok( ctx_ptr->Ecx == ecx, "cs64: ecx set to %08x\n", ctx_ptr->Ecx );
+                memset( &context, 0x55, sizeof(context) );
+                context.ContextFlags = CONTEXT_ALL;
+                pNtGetContextThread( pi.hThread, &context );
+                ok( context.Rcx == 0x33334444, "cs64: rcx set to %p\n", (void *)context.Rcx );
+                /* restore everything */
+                context.Rcx = rcx;
+                pNtSetContextThread( pi.hThread, &context );
+            }
+            got32 = TRUE;
+        }
+        else
+        {
+            trace( "in 64-bit mode %04x\n", context.SegCs );
+            ok( ctx.Eip != context.Rip, "cs64: eip %08x / %p\n", ctx.Eip, (void *)context.Rip);
+            ok( ctx.SegCs == cs32, "cs64: wrong cs %04x / %04x\n", ctx.SegCs, cs32 );
+            ok( ctx.SegDs == context.SegDs, "cs64: wrong ds %04x / %04x\n", ctx.SegDs, context.SegDs );
+            ok( ctx.SegEs == context.SegEs, "cs64: wrong es %04x / %04x\n", ctx.SegEs, context.SegEs );
+            ok( ctx.SegFs == context.SegFs, "cs64: wrong fs %04x / %04x\n", ctx.SegFs, context.SegFs );
+            ok( ctx.SegGs == context.SegGs, "cs64: wrong gs %04x / %04x\n", ctx.SegGs, context.SegGs );
+            ok( ctx.SegSs == context.SegSs, "cs64: wrong ss %04x / %04x\n", ctx.SegSs, context.SegSs );
+            if (teb32.DeallocationStack)
+                ok( ctx.Esp >= teb32.DeallocationStack && ctx.Esp <= teb32.Tib.StackBase,
+                    "cs64: esp not inside 32-bit stack %08x / %08x-%08x\n", ctx.Esp,
+                    teb32.DeallocationStack, teb32.Tib.StackBase );
+            ok( (void *)context.Rsp >= teb.DeallocationStack && (void *)context.Rsp <= teb.Tib.StackBase,
+                "cs64: rsp not inside 64-bit stack %p / %p-%p\n", (void *)context.Rsp,
+                teb.DeallocationStack, teb.Tib.StackBase );
+
+            if (pRtlWow64GetCpuAreaInfo)
+            {
+                /* in 64-bit mode, the 32-bit context is stored in the cpu area */
+                if (!ReadProcessMemory( pi.hProcess, teb.TlsSlots[WOW64_TLS_CPURESERVED],
+                                        cpu, cpu_size, &res )) res = 0;
+                ok( res == cpu_size, "wrong len %lx\n", res );
+                ok(ctx_ptr->ContextFlags == WOW64_CONTEXT_ALL,
+                   "cs64: got context flags %#x\n", ctx_ptr->ContextFlags);
+                ok(ctx_ptr->Eip == ctx.Eip, "cs64: got eip %08x / %08x\n", ctx_ptr->Eip, ctx.Eip);
+                ok(ctx_ptr->Eax == ctx.Eax, "cs64: got eax %08x / %08x\n", ctx_ptr->Eax, ctx.Eax);
+                ok(ctx_ptr->Ebx == ctx.Ebx, "cs64: got ebx %08x / %08x\n", ctx_ptr->Ebx, ctx.Ebx);
+                ok(ctx_ptr->Ecx == ctx.Ecx, "cs64: got ecx %08x / %08x\n", ctx_ptr->Ecx, ctx.Ecx);
+                ok(ctx_ptr->Edx == ctx.Edx, "cs64: got edx %08x / %08x\n", ctx_ptr->Edx, ctx.Edx);
+                ok(ctx_ptr->Ebp == ctx.Ebp, "cs64: got ebp %08x / %08x\n", ctx_ptr->Ebp, ctx.Ebp);
+                ok(ctx_ptr->Esi == ctx.Esi, "cs64: got esi %08x / %08x\n", ctx_ptr->Esi, ctx.Esi);
+                ok(ctx_ptr->Edi == ctx.Edi, "cs64: got edi %08x / %08x\n", ctx_ptr->Edi, ctx.Edi);
+                ok(ctx_ptr->EFlags == ctx.EFlags, "cs64: got eflags %08x / %08x\n", ctx_ptr->EFlags, ctx.EFlags);
+
+                /* changing one context doesn't change the other one */
+                rcx = context.Rcx;
+                ecx = ctx.Ecx;
+                context.Rcx = 0xfedcba987654321ull;
+                pNtSetContextThread( pi.hThread, &context );
+                memset( &ctx, 0x55, sizeof(ctx) );
+                ctx.ContextFlags = WOW64_CONTEXT_ALL;
+                pRtlWow64GetThreadContext( pi.hThread, &ctx );
+                ok( ctx.Ecx == ecx, "cs64: ecx set to %08x\n", ctx.Ecx );
+                ReadProcessMemory( pi.hProcess, teb.TlsSlots[WOW64_TLS_CPURESERVED], cpu, cpu_size, &res );
+                ok( ctx_ptr->Ecx == ecx, "cs64: ecx set to %08x\n", ctx_ptr->Ecx );
+                ctx.Ecx = 0x22223333;
+                pRtlWow64SetThreadContext( pi.hThread, &ctx );
+                memset( &ctx, 0x55, sizeof(ctx) );
+                ctx.ContextFlags = WOW64_CONTEXT_ALL;
+                pRtlWow64GetThreadContext( pi.hThread, &ctx );
+                ok( ctx.Ecx == 0x22223333, "cs64: ecx set to %08x\n", ctx.Ecx );
+                ReadProcessMemory( pi.hProcess, teb.TlsSlots[WOW64_TLS_CPURESERVED], cpu, cpu_size, &res );
+                ok( ctx_ptr->Ecx == 0x22223333, "cs64: ecx set to %08x\n", ctx_ptr->Ecx );
+                memset( &context, 0x55, sizeof(context) );
+                context.ContextFlags = CONTEXT_ALL;
+                pNtGetContextThread( pi.hThread, &context );
+                ok( context.Rcx == 0xfedcba987654321ull, "cs64: rcx set to %p\n", (void *)context.Rcx );
+                /* restore everything */
+                context.Rcx = rcx;
+                pNtSetContextThread( pi.hThread, &context );
+                ctx.Ecx = ecx;
+                pRtlWow64SetThreadContext( pi.hThread, &ctx );
+            }
+            got64 = TRUE;
+        }
+    }
+    if (!got32) skip( "failed to test 32-bit context\n" );
+    if (!got64) skip( "failed to test 64-bit context\n" );
+
+done:
     pNtTerminateProcess(pi.hProcess, 0);
+    free( cpu );
 }
 
 static BYTE saved_KiUserExceptionDispatcher_bytes[12];
@@ -9004,6 +9244,7 @@ START_TEST(exception)
     X(RtlUnwindEx);
     X(RtlWow64GetThreadContext);
     X(RtlWow64SetThreadContext);
+    X(RtlWow64GetCpuAreaInfo);
 #undef X
     p_setjmp = (void *)GetProcAddress( hmsvcrt, "_setjmp" );
 
