@@ -2641,7 +2641,6 @@ static void test_visual(void)
     ok(ret, "TB_ADDBUTTONSA failed.\n");
 
     theme = pGetWindowTheme(toolbar);
-    todo_wine
     ok(!theme, "Expected theme not opened by window.\n");
 
     toolbar_dc = GetDC(toolbar);
@@ -2672,7 +2671,6 @@ static void test_visual(void)
     BitBlt(mem_dc2, 0, 0, width, height, toolbar_dc, 0, 0, SRCCOPY);
 
     ret = equal_dc(mem_dc1, mem_dc2, width, height);
-    todo_wine
     ok(ret, "Expected same content.\n");
 
     pCloseThemeData(theme);
