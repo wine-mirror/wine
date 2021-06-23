@@ -804,6 +804,17 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetPriorityClass( HANDLE process )
 }
 
 
+/***********************************************************************
+ *           GetProcessGroupAffinity   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH GetProcessGroupAffinity( HANDLE process, USHORT *count, USHORT *array )
+{
+    FIXME( "(%p,%p,%p): stub\n", process, count, array );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
+
 /******************************************************************
  *           GetProcessHandleCount   (kernelbase.@)
  */

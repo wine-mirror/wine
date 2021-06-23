@@ -782,7 +782,7 @@
 @ stdcall GetProcessAffinityMask(long ptr ptr)
 @ stdcall GetProcessDEPPolicy(long ptr ptr)
 @ stdcall GetProcessFlags(long)
-# @ stub GetProcessGroupAffinity
+@ stdcall -import GetProcessGroupAffinity(long ptr ptr)
 @ stdcall -import GetProcessHandleCount(long ptr)
 @ stdcall -import GetProcessHeap()
 @ stdcall -import GetProcessHeaps(long ptr) RtlGetProcessHeaps

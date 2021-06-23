@@ -623,7 +623,7 @@
 @ stdcall GetProcAddress(long str)
 # @ stub GetProcAddressForCaller
 # @ stub GetProcessDefaultCpuSets
-# @ stub GetProcessGroupAffinity
+@ stdcall GetProcessGroupAffinity(long ptr ptr)
 @ stdcall GetProcessHandleCount(long ptr)
 @ stdcall -norelay GetProcessHeap() kernelbase_GetProcessHeap
 @ stdcall -import GetProcessHeaps(long ptr) RtlGetProcessHeaps
