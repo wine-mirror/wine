@@ -502,7 +502,7 @@ static HRESULT session_submit_simple_command(struct media_session *session, enum
     return hr;
 }
 
-static void session_clear_topologies(struct media_session *session)
+static void session_clear_queued_topologies(struct media_session *session)
 {
     struct queued_topology *ptr, *next;
 
@@ -1055,8 +1055,22 @@ static void session_close(struct media_session *session)
             break;
     }
 
+    session_clear_queued_topologies(session);
     if (FAILED(hr))
         session_set_closed(session, hr);
+}
+
+static void session_clear_topologies(struct media_session *session)
+{
+    HRESULT hr = S_OK;
+
+    if (session->state == SESSION_STATE_CLOSED)
+        hr = MF_E_INVALIDREQUEST;
+    else
+        session_clear_queued_topologies(session);
+    IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionTopologiesCleared,
+            &GUID_NULL, hr, NULL);
+    session_command_complete(session);
 }
 
 static struct media_source *session_get_media_source(struct media_session *session, IMFMediaSource *source)
@@ -1561,7 +1575,7 @@ static void session_set_topology(struct media_session *session, DWORD flags, IMF
     }
     else if (topology && flags & MFSESSION_SETTOPOLOGY_IMMEDIATE)
     {
-        session_clear_topologies(session);
+        session_clear_queued_topologies(session);
         session_clear_presentation(session);
     }
 
@@ -1636,7 +1650,7 @@ static ULONG WINAPI mfsession_Release(IMFMediaSession *iface)
 
     if (!refcount)
     {
-        session_clear_topologies(session);
+        session_clear_queued_topologies(session);
         session_clear_presentation(session);
         session_clear_command_list(session);
         if (session->presentation.current_topology)
@@ -2079,9 +2093,6 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
     {
         case SESSION_CMD_CLEAR_TOPOLOGIES:
             session_clear_topologies(session);
-            IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionTopologiesCleared, &GUID_NULL,
-                    S_OK, NULL);
-            session_command_complete(session);
             break;
         case SESSION_CMD_SET_TOPOLOGY:
             session_set_topology(session, op->u.set_topology.flags, op->u.set_topology.topology);
