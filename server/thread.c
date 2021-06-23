@@ -1797,14 +1797,15 @@ DECL_HANDLER(get_thread_context)
         return;
     }
 
-    if ((thread_context = (struct context *)get_handle_obj( current->process, req->handle, 0, &context_ops )))
+    if (req->context)
     {
-        close_handle( current->process, req->handle ); /* avoid extra server call */
-        system_flags = get_context_system_regs( thread_context->regs.machine );
+        if (!(thread_context = (struct context *)get_handle_obj( current->process, req->context, 0, &context_ops )))
+            return;
+        close_handle( current->process, req->context ); /* avoid extra server call */
     }
-    else if ((thread = get_thread_from_handle( req->handle, THREAD_GET_CONTEXT )))
+    else
     {
-        clear_error();
+        if (!(thread = get_thread_from_handle( req->handle, THREAD_GET_CONTEXT ))) return;
         system_flags = get_context_system_regs( thread->process->machine );
         if (thread->state == RUNNING)
         {
@@ -1831,8 +1832,8 @@ DECL_HANDLER(get_thread_context)
         }
         else set_error( STATUS_UNSUCCESSFUL );
         release_object( thread );
+        if (!thread_context) return;
     }
-    if (get_error() || !thread_context) return;
 
     set_error( thread_context->status );
     if (!thread_context->status && (context = set_reply_data_size( sizeof(context_t) )))

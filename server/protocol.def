@@ -1882,7 +1882,8 @@ struct process_info
 
 /* Retrieve the current context of a thread */
 @REQ(get_thread_context)
-    obj_handle_t handle;       /* thread or context handle */
+    obj_handle_t handle;       /* thread handle */
+    obj_handle_t context;      /* context handle */
     unsigned int flags;        /* context flags */
 @REPLY
     int          self;         /* was it a handle to the current thread? */

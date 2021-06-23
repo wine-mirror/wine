@@ -2460,8 +2460,8 @@ struct get_thread_context_request
 {
     struct request_header __header;
     obj_handle_t handle;
+    obj_handle_t context;
     unsigned int flags;
-    char __pad_20[4];
 };
 struct get_thread_context_reply
 {

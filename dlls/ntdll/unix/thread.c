@@ -1316,6 +1316,7 @@ NTSTATUS set_thread_context( HANDLE handle, const void *context, BOOL *self, USH
 NTSTATUS get_thread_context( HANDLE handle, void *context, BOOL *self, USHORT machine )
 {
     NTSTATUS ret;
+    HANDLE context_handle;
     context_t server_context;
     unsigned int flags = get_server_context_flags( context, machine );
 
@@ -1326,17 +1327,17 @@ NTSTATUS get_thread_context( HANDLE handle, void *context, BOOL *self, USHORT ma
         wine_server_set_reply( req, &server_context, sizeof(server_context) );
         ret = wine_server_call( req );
         *self = reply->self;
-        handle = wine_server_ptr_handle( reply->handle );
+        context_handle = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
 
     if (ret == STATUS_PENDING)
     {
-        NtWaitForSingleObject( handle, FALSE, NULL );
+        NtWaitForSingleObject( context_handle, FALSE, NULL );
 
         SERVER_START_REQ( get_thread_context )
         {
-            req->handle  = wine_server_obj_handle( handle );
+            req->context = wine_server_obj_handle( context_handle );
             req->flags   = flags;
             wine_server_set_reply( req, &server_context, sizeof(server_context) );
             ret = wine_server_call( req );
