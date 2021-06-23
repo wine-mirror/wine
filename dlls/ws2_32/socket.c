@@ -2098,9 +2098,11 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         case WS_SO_ACCEPTCONN:
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_SO_ACCEPTCONN, optval, optlen );
 
+        case WS_SO_BROADCAST:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_SO_BROADCAST, optval, optlen );
+
         /* Handle common cases. The special cases are below, sorted
          * alphabetically */
-        case WS_SO_BROADCAST:
         case WS_SO_DEBUG:
         case WS_SO_KEEPALIVE:
         case WS_SO_OOBINLINE:

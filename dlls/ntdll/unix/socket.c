@@ -1146,6 +1146,25 @@ static void complete_async( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, vo
 }
 
 
+static NTSTATUS do_getsockopt( HANDLE handle, IO_STATUS_BLOCK *io, void *out_buffer,
+                               ULONG out_size, int level, int option )
+{
+    int fd, needs_close = FALSE;
+    socklen_t len = out_size;
+    NTSTATUS status;
+    int ret;
+
+    if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+        return status;
+
+    ret = getsockopt( fd, level, option, out_buffer, &len );
+    if (needs_close) close( fd );
+    if (ret) return sock_errno_to_status( errno );
+    io->Information = len;
+    return STATUS_SUCCESS;
+}
+
+
 NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user, IO_STATUS_BLOCK *io,
                      ULONG code, void *in_buffer, ULONG in_size, void *out_buffer, ULONG out_size )
 {
@@ -1565,6 +1584,9 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             status = STATUS_SUCCESS;
             break;
         }
+
+        case IOCTL_AFD_WINE_GET_SO_BROADCAST:
+            return do_getsockopt( handle, io, out_buffer, out_size, SOL_SOCKET, SO_BROADCAST );
 
         default:
         {
