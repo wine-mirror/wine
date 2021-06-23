@@ -4144,7 +4144,7 @@ static void StorageImpl_SetNextBlockInChain(
  *
  */
 static ULONG StorageImpl_GetNextFreeBigBlock(
-  StorageImpl* This)
+  StorageImpl* This, ULONG neededAddNumBlocks)
 {
   ULONG depotBlockIndexPos;
   BYTE depotBuffer[MAX_BIG_BLOCK_SIZE];
@@ -4269,7 +4269,7 @@ static ULONG StorageImpl_GetNextFreeBigBlock(
   /*
    * make sure that the block physically exists before using it
    */
-  neededSize.QuadPart = StorageImpl_GetBigBlockOffset(This, freeBlock)+This->bigBlockSize;
+  neededSize.QuadPart = StorageImpl_GetBigBlockOffset(This, freeBlock)+This->bigBlockSize * neededAddNumBlocks;
 
   ILockBytes_Stat(This->lockBytes, &statstg, STATFLAG_NONAME);
 
@@ -7403,7 +7403,7 @@ static BOOL BlockChainStream_Enlarge(BlockChainStream* This,
    */
   if (blockIndex == BLOCK_END_OF_CHAIN)
   {
-    blockIndex = StorageImpl_GetNextFreeBigBlock(This->parentStorage);
+    blockIndex = StorageImpl_GetNextFreeBigBlock(This->parentStorage, 1);
     StorageImpl_SetNextBlockInChain(This->parentStorage,
                                       blockIndex,
                                       BLOCK_END_OF_CHAIN);
@@ -7472,7 +7472,7 @@ static BOOL BlockChainStream_Enlarge(BlockChainStream* This,
   {
     while (oldNumBlocks < newNumBlocks)
     {
-      blockIndex = StorageImpl_GetNextFreeBigBlock(This->parentStorage);
+      blockIndex = StorageImpl_GetNextFreeBigBlock(This->parentStorage, newNumBlocks - oldNumBlocks);
 
       StorageImpl_SetNextBlockInChain(
 	This->parentStorage,
