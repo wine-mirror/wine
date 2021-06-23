@@ -2103,7 +2103,6 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
 
         /* Handle common cases. The special cases are below, sorted
          * alphabetically */
-        case WS_SO_DEBUG:
         case WS_SO_KEEPALIVE:
         case WS_SO_OOBINLINE:
         case WS_SO_RCVBUF:
@@ -2168,6 +2167,13 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             csinfo->iProtocol = infow.iProtocol;
             return 0;
         }
+
+        case WS_SO_DEBUG:
+            WARN( "returning 0 for SO_DEBUG\n" );
+            *(DWORD *)optval = 0;
+            SetLastError( 0 );
+            return 0;
+
         case WS_SO_DONTLINGER:
         {
             struct linger lingval;

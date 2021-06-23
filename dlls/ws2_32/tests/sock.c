@@ -10991,7 +10991,7 @@ static void test_so_debug(void)
     debug = 0xdeadbeef;
     ret = getsockopt(s, SOL_SOCKET, SO_DEBUG, (char *)&debug, &len);
     ok(!ret, "got %d\n", ret);
-    todo_wine ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+    ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
     ok(len == sizeof(debug), "got len %u\n", len);
     ok(!debug, "got debug %u\n", debug);
 
@@ -11006,7 +11006,7 @@ static void test_so_debug(void)
     debug = 0xdeadbeef;
     ret = getsockopt(s, SOL_SOCKET, SO_DEBUG, (char *)&debug, &len);
     ok(!ret, "got %d\n", ret);
-    todo_wine ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+    ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
     ok(len == sizeof(debug), "got len %u\n", len);
     todo_wine ok(debug == 1, "got debug %u\n", debug);
 
