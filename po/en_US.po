@@ -1085,7 +1085,8 @@ msgstr "Lime"
 msgid "Yellow"
 msgstr "Yellow"
 
-#: dlls/comdlg32/comdlg32.rc:134 programs/wordpad/wordpad.rc:137
+#: dlls/comdlg32/comdlg32.rc:134 dlls/light.msstyles/light.rc:29
+#: dlls/light.msstyles/light.rc:36 programs/wordpad/wordpad.rc:137
 msgid "Blue"
 msgstr "Blue"
 
@@ -6967,11 +6968,11 @@ msgstr "Invalid call.\n"
 msgid "Resource is not currently available.\n"
 msgstr "Resource is not currently available.\n"
 
-#: dlls/light.msstyles/light.rc:29 dlls/light.msstyles/light.rc:35
+#: dlls/light.msstyles/light.rc:30 dlls/light.msstyles/light.rc:37
 msgid "Classic Blue"
 msgstr "Classic Blue"
 
-#: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
+#: dlls/light.msstyles/light.rc:43 dlls/light.msstyles/light.rc:49
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
 msgid "Normal"
 msgstr "Normal"

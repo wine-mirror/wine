@@ -1094,7 +1094,8 @@ msgstr "Llima"
 msgid "Yellow"
 msgstr "Groga"
 
-#: dlls/comdlg32/comdlg32.rc:134 programs/wordpad/wordpad.rc:137
+#: dlls/comdlg32/comdlg32.rc:134 dlls/light.msstyles/light.rc:29
+#: dlls/light.msstyles/light.rc:36 programs/wordpad/wordpad.rc:137
 msgid "Blue"
 msgstr "Blau"
 
@@ -6994,13 +6995,13 @@ msgstr "La trucada no és vàlida.\n"
 msgid "Resource is not currently available.\n"
 msgstr "El recurs actualment no està disponible.\n"
 
-#: dlls/light.msstyles/light.rc:29 dlls/light.msstyles/light.rc:35
+#: dlls/light.msstyles/light.rc:30 dlls/light.msstyles/light.rc:37
 #, fuzzy
 #| msgid "Class Name:"
 msgid "Classic Blue"
 msgstr "Nom de classe:"
 
-#: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
+#: dlls/light.msstyles/light.rc:43 dlls/light.msstyles/light.rc:49
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
 msgid "Normal"
 msgstr "Normal"

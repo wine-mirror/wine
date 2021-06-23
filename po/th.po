@@ -1081,7 +1081,8 @@ msgstr "สีเขียวออ่น"
 msgid "Yellow"
 msgstr "สีเหลือง"
 
-#: dlls/comdlg32/comdlg32.rc:134 programs/wordpad/wordpad.rc:137
+#: dlls/comdlg32/comdlg32.rc:134 dlls/light.msstyles/light.rc:29
+#: dlls/light.msstyles/light.rc:36 programs/wordpad/wordpad.rc:137
 msgid "Blue"
 msgstr "สีฟ้า"
 
@@ -7030,11 +7031,11 @@ msgstr ""
 msgid "Resource is not currently available.\n"
 msgstr "ใช้ไม่ได้ตอนนี้; .\n"
 
-#: dlls/light.msstyles/light.rc:29 dlls/light.msstyles/light.rc:35
+#: dlls/light.msstyles/light.rc:30 dlls/light.msstyles/light.rc:37
 msgid "Classic Blue"
 msgstr ""
 
-#: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
+#: dlls/light.msstyles/light.rc:43 dlls/light.msstyles/light.rc:49
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
 msgid "Normal"
 msgstr ""
