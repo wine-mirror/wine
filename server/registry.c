@@ -147,6 +147,7 @@ static struct save_branch_info save_branch_info[MAX_SAVE_BRANCH_INFO];
 
 unsigned int supported_machines_count = 0;
 unsigned short supported_machines[8];
+unsigned short native_machine = 0;
 
 /* information about a file being loaded */
 struct file_load_info
@@ -1790,6 +1791,7 @@ static void init_supported_machines(void)
 #error Unsupported machine
 #endif
     supported_machines_count = count;
+    native_machine = supported_machines[0];
 }
 
 /* registry initialisation */
@@ -2071,7 +2073,7 @@ void flush_registry(void)
 /* determine if the thread is wow64 (32-bit client running on 64-bit prefix) */
 static int is_wow64_thread( struct thread *thread )
 {
-    return (is_machine_64bit( supported_machines[0] ) && !is_machine_64bit( thread->process->machine ));
+    return (is_machine_64bit( native_machine ) && !is_machine_64bit( thread->process->machine ));
 }
 
 
