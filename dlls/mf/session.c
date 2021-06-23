@@ -3361,7 +3361,7 @@ static HRESULT WINAPI session_sink_finalizer_callback_Invoke(IMFAsyncCallback *i
         if (state == (IUnknown *)sink->sink)
         {
             if (FAILED(hr = IMFMediaSink_QueryInterface(sink->sink, &IID_IMFFinalizableMediaSink, (void **)&fin_sink)))
-                WARN("Unexpected, missing IMFFinalizableSink, hr %#x.\n", hr);
+                WARN("Unexpected, missing IMFFinalizableMediaSink, hr %#x.\n", hr);
         }
         else
         {
