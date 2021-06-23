@@ -806,6 +806,26 @@ static struct topo_node *session_get_node_by_id(const struct media_session *sess
     return NULL;
 }
 
+static void session_command_complete(struct media_session *session)
+{
+    struct session_op *op;
+    struct list *e;
+
+    /* Pop current command, submit next. */
+    if ((e = list_head(&session->commands)))
+    {
+        op = LIST_ENTRY(e, struct session_op, entry);
+        list_remove(&op->entry);
+        IUnknown_Release(&op->IUnknown_iface);
+    }
+
+    if ((e = list_head(&session->commands)))
+    {
+        op = LIST_ENTRY(e, struct session_op, entry);
+        MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &session->commands_callback, &op->IUnknown_iface);
+    }
+}
+
 static void session_start(struct media_session *session, const GUID *time_format, const PROPVARIANT *start_position)
 {
     struct media_source *source;
@@ -840,6 +860,7 @@ static void session_start(struct media_session *session, const GUID *time_format
             break;
         case SESSION_STATE_STARTED:
             FIXME("Seeking is not implemented.\n");
+            session_command_complete(session);
             break;
         case SESSION_STATE_CLOSED:
             IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionStarted, &GUID_NULL,
@@ -847,26 +868,6 @@ static void session_start(struct media_session *session, const GUID *time_format
             break;
         default:
             ;
-    }
-}
-
-static void session_command_complete(struct media_session *session)
-{
-    struct session_op *op;
-    struct list *e;
-
-    /* Pop current command, submit next. */
-    if ((e = list_head(&session->commands)))
-    {
-        op = LIST_ENTRY(e, struct session_op, entry);
-        list_remove(&op->entry);
-        IUnknown_Release(&op->IUnknown_iface);
-    }
-
-    if ((e = list_head(&session->commands)))
-    {
-        op = LIST_ENTRY(e, struct session_op, entry);
-        MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &session->commands_callback, &op->IUnknown_iface);
     }
 }
 
