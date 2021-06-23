@@ -2532,6 +2532,20 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         return 0;
     }
 
+    case IOCTL_AFD_WINE_GET_SO_ACCEPTCONN:
+    {
+        int listening = (sock->state == SOCK_LISTENING);
+
+        if (get_reply_max_size() < sizeof(listening))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return 0;
+        }
+
+        set_reply_data( &listening, sizeof(listening) );
+        return 1;
+    }
+
     default:
         set_error( STATUS_NOT_SUPPORTED );
         return 0;
