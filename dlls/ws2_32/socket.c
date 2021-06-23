@@ -2063,6 +2063,19 @@ int WINAPI WS_getsockname( SOCKET s, struct WS_sockaddr *addr, int *len )
     return status ? -1 : 0;
 }
 
+
+static int server_getsockopt( SOCKET s, ULONG code, char *optval, int *optlen )
+{
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtDeviceIoControlFile( (HANDLE)s, NULL, NULL, NULL, &io, code, NULL, 0, optval, *optlen );
+    if (!status) *optlen = io.Information;
+    SetLastError( NtStatusToWSAError( status ) );
+    return status ? -1 : 0;
+}
+
+
 /***********************************************************************
  *		getsockopt		(WS2_32.7)
  */
@@ -2082,6 +2095,9 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
     {
         switch(optname)
         {
+        case WS_SO_ACCEPTCONN:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_SO_ACCEPTCONN, optval, optlen );
+
         /* Handle common cases. The special cases are below, sorted
          * alphabetically */
         case WS_SO_BROADCAST:
@@ -2101,21 +2117,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             }
             release_sock_fd( s, fd );
             return ret;
-        case WS_SO_ACCEPTCONN:
-            if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
-                return SOCKET_ERROR;
-            if (getsockopt(fd, SOL_SOCKET, SO_ACCEPTCONN, optval, (socklen_t *)optlen) != 0 )
-            {
-                SetLastError(wsaErrno());
-                ret = SOCKET_ERROR;
-            }
-            else
-            {
-                /* BSD returns != 0 while Windows return exact == 1 */
-                if (*(int *)optval) *(int *)optval = 1;
-            }
-            release_sock_fd( s, fd );
-            return ret;
+
         case WS_SO_BSP_STATE:
         {
             CSADDR_INFO *csinfo = (CSADDR_INFO *)optval;
