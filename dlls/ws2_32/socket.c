@@ -3538,6 +3538,18 @@ int WINAPI WS_sendto(SOCKET s, const char *buf, int len, int flags,
         return n;
 }
 
+
+static int server_setsockopt( SOCKET s, ULONG code, const char *optval, int optlen )
+{
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtDeviceIoControlFile( (HANDLE)s, NULL, NULL, NULL, &io, code, (void *)optval, optlen, NULL, 0 );
+    SetLastError( NtStatusToWSAError( status ) );
+    return status ? -1 : 0;
+}
+
+
 /***********************************************************************
  *		setsockopt		(WS2_32.21)
  */
@@ -3566,6 +3578,9 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
     case WS_SOL_SOCKET:
         switch(optname)
         {
+        case WS_SO_BROADCAST:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_SO_BROADCAST, optval, optlen );
+
         /* Some options need some conversion before they can be sent to
          * setsockopt. The conversions are done here, then they will fall through
          * to the general case. Special options that are not passed to
@@ -3621,7 +3636,6 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         /* The options listed here don't need any special handling. Thanks to
          * the conversion happening above, options from there will fall through
          * to this, too.*/
-        case WS_SO_BROADCAST:
         case WS_SO_ERROR:
         case WS_SO_KEEPALIVE:
         case WS_SO_OOBINLINE:
