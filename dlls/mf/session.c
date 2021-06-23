@@ -903,9 +903,12 @@ static void session_set_started(struct media_session *session)
     session_command_complete(session);
 }
 
-static void session_set_paused(struct media_session *session, HRESULT status)
+static void session_set_paused(struct media_session *session, unsigned int state, HRESULT status)
 {
-    session->state = SESSION_STATE_PAUSED;
+    /* Failed event status could indicate a failure during normal transition to paused state,
+       or an attempt to pause from invalid initial state. To finalize failed transition in the former case,
+       state is still forced to PAUSED, otherwise previous state is retained. */
+    if (state != ~0u) session->state = state;
     if (SUCCEEDED(status))
         session_set_caps(session, session->caps & ~MFSESSIONCAP_PAUSE);
     IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionPaused, &GUID_NULL, status, NULL);
@@ -923,6 +926,7 @@ static void session_set_closed(struct media_session *session, HRESULT status)
 
 static void session_pause(struct media_session *session)
 {
+    unsigned int state = ~0u;
     HRESULT hr;
 
     switch (session->state)
@@ -932,14 +936,19 @@ static void session_pause(struct media_session *session)
             /* Transition in two steps - pause the clock, wait for sinks, then pause sources. */
             if (SUCCEEDED(hr = IMFPresentationClock_Pause(session->clock)))
                 session->state = SESSION_STATE_PAUSING_SINKS;
+            state = SESSION_STATE_PAUSED;
 
+            break;
+
+        case SESSION_STATE_STOPPED:
+            hr = MF_E_SESSION_PAUSEWHILESTOPPED;
             break;
         default:
             hr = MF_E_INVALIDREQUEST;
     }
 
     if (FAILED(hr))
-        session_set_paused(session, hr);
+        session_set_paused(session, state, hr);
 }
 
 static void session_clear_end_of_presentation(struct media_session *session)
@@ -2502,7 +2511,7 @@ static void session_set_source_object_state(struct media_session *session, IUnkn
             if (!session_is_source_nodes_state(session, OBJ_STATE_PAUSED))
                 break;
 
-            session_set_paused(session, S_OK);
+            session_set_paused(session, SESSION_STATE_PAUSED, S_OK);
             break;
         case SESSION_STATE_STOPPING_SOURCES:
             if (!session_is_source_nodes_state(session, OBJ_STATE_STOPPED))
@@ -2578,7 +2587,7 @@ static void session_set_sink_stream_state(struct media_session *session, IMFStre
             }
 
             if (FAILED(hr))
-                session_set_paused(session, hr);
+                session_set_paused(session, SESSION_STATE_PAUSED, hr);
 
             break;
         case SESSION_STATE_STOPPING_SINKS:
