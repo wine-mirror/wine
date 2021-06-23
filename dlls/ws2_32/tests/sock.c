@@ -10978,6 +10978,41 @@ static void test_timeout(void)
     CloseHandle(overlapped.hEvent);
 }
 
+static void test_so_debug(void)
+{
+    int ret, len;
+    DWORD debug;
+    SOCKET s;
+
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+    len = sizeof(debug);
+    WSASetLastError(0xdeadbeef);
+    debug = 0xdeadbeef;
+    ret = getsockopt(s, SOL_SOCKET, SO_DEBUG, (char *)&debug, &len);
+    ok(!ret, "got %d\n", ret);
+    todo_wine ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+    ok(len == sizeof(debug), "got len %u\n", len);
+    ok(!debug, "got debug %u\n", debug);
+
+    WSASetLastError(0xdeadbeef);
+    debug = 2;
+    ret = setsockopt(s, SOL_SOCKET, SO_DEBUG, (char *)&debug, sizeof(debug));
+    ok(!ret, "got %d\n", ret);
+    todo_wine ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+
+    len = sizeof(debug);
+    WSASetLastError(0xdeadbeef);
+    debug = 0xdeadbeef;
+    ret = getsockopt(s, SOL_SOCKET, SO_DEBUG, (char *)&debug, &len);
+    ok(!ret, "got %d\n", ret);
+    todo_wine ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+    ok(len == sizeof(debug), "got len %u\n", len);
+    todo_wine ok(debug == 1, "got debug %u\n", debug);
+
+    closesocket(s);
+}
+
 START_TEST( sock )
 {
     int i;
@@ -10993,6 +11028,7 @@ START_TEST( sock )
     test_so_reuseaddr();
     test_ip_pktinfo();
     test_extendedSocketOptions();
+    test_so_debug();
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
         do_test(&tests[i]);
