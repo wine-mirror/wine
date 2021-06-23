@@ -6933,6 +6933,17 @@ msgstr "අවලංගු මට්ටමක්.\n"
 msgid "Resource is not currently available.\n"
 msgstr "අගය ලද හැකි නැහැ.\n"
 
+#: dlls/light.msstyles/light.rc:29 dlls/light.msstyles/light.rc:35
+#, fuzzy
+#| msgid "Class Name:"
+msgid "Classic Blue"
+msgstr "පන්තිය නම:"
+
+#: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
+#: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
+msgid "Normal"
+msgstr "සාමාන"
+
 #: dlls/localspl/localspl.rc:37
 #, fuzzy
 #| msgctxt "Drive letter"
@@ -17601,10 +17612,6 @@ msgstr "ෆොන්ට"
 #: programs/winhlp32/winhlp32.rc:52 programs/winhlp32/winhlp32.rc:72
 msgid "Small"
 msgstr "පොඩි"
-
-#: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
-msgid "Normal"
-msgstr "සාමාන"
 
 #: programs/winhlp32/winhlp32.rc:54 programs/winhlp32/winhlp32.rc:74
 msgid "Large"

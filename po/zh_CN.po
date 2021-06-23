@@ -6920,6 +6920,17 @@ msgstr "无效调用。\n"
 msgid "Resource is not currently available.\n"
 msgstr "资源当前不可用。\n"
 
+#: dlls/light.msstyles/light.rc:29 dlls/light.msstyles/light.rc:35
+#, fuzzy
+#| msgid "Class Name:"
+msgid "Classic Blue"
+msgstr "类名："
+
+#: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
+#: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
+msgid "Normal"
+msgstr "普通"
+
 #: dlls/localspl/localspl.rc:37
 #, fuzzy
 #| msgctxt "Drive letter"
@@ -17642,10 +17653,6 @@ msgstr "字体"
 #: programs/winhlp32/winhlp32.rc:52 programs/winhlp32/winhlp32.rc:72
 msgid "Small"
 msgstr "小号"
-
-#: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
-msgid "Normal"
-msgstr "普通"
 
 #: programs/winhlp32/winhlp32.rc:54 programs/winhlp32/winhlp32.rc:74
 msgid "Large"

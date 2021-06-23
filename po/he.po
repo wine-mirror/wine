@@ -7271,6 +7271,17 @@ msgstr "אפשרות שגויה.\n"
 msgid "Resource is not currently available.\n"
 msgstr "הגודל הזמין.\n"
 
+#: dlls/light.msstyles/light.rc:29 dlls/light.msstyles/light.rc:35
+#, fuzzy
+#| msgid "Class Name:"
+msgid "Classic Blue"
+msgstr "שם המחלקה:"
+
+#: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
+#: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
+msgid "Normal"
+msgstr "רגילים"
+
 #: dlls/localspl/localspl.rc:37
 #, fuzzy
 msgid "Letter"
@@ -18174,10 +18185,6 @@ msgstr "גופנים"
 #: programs/winhlp32/winhlp32.rc:52 programs/winhlp32/winhlp32.rc:72
 msgid "Small"
 msgstr "קטנים"
-
-#: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
-msgid "Normal"
-msgstr "רגילים"
 
 #: programs/winhlp32/winhlp32.rc:54 programs/winhlp32/winhlp32.rc:74
 msgid "Large"

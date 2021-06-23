@@ -6982,6 +6982,17 @@ msgstr "Ongeldige oproep.\n"
 msgid "Resource is not currently available.\n"
 msgstr "Bron is tijdelijk niet beschikbaar.\n"
 
+#: dlls/light.msstyles/light.rc:29 dlls/light.msstyles/light.rc:35
+#, fuzzy
+#| msgid "Class Name:"
+msgid "Classic Blue"
+msgstr "Klassenaam:"
+
+#: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
+#: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
+msgid "Normal"
+msgstr "Standaard"
+
 #: dlls/localspl/localspl.rc:37
 msgid "Letter"
 msgstr "Letter (VS)"
@@ -18008,10 +18019,6 @@ msgstr "Lettertype"
 #: programs/winhlp32/winhlp32.rc:52 programs/winhlp32/winhlp32.rc:72
 msgid "Small"
 msgstr "Klein"
-
-#: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
-msgid "Normal"
-msgstr "Standaard"
 
 #: programs/winhlp32/winhlp32.rc:54 programs/winhlp32/winhlp32.rc:74
 msgid "Large"

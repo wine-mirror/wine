@@ -1,0 +1,3 @@
+MODULE = light.msstyles
+
+RC_SRCS = light.rc

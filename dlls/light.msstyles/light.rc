@@ -1,0 +1,140 @@
+/*
+ * Copyright 2021 Zhiyi Zhang for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#include "resources.h"
+
+#pragma makedep po
+
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
+
+/* Theme color display names */
+STRINGTABLE
+{
+    IDS_COLOR_DISPLAY_NAME_CLASSIC_BLUE "Classic Blue"
+}
+
+/* Theme color tooltips */
+STRINGTABLE
+{
+    IDS_COLOR_TOOLTIP_CLASSIC_BLUE "Classic Blue"
+}
+
+/* Theme size display names */
+STRINGTABLE
+{
+    IDS_SIZE_DISPLAY_NAME_NORMAL "Normal"
+}
+
+/* Theme size tooltips */
+STRINGTABLE
+{
+    IDS_SIZE_TOOLTIP_NORMAL "Normal"
+}
+
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+
+/* Theme version */
+1 PACKTHEM_VERSION {0x3}
+
+/* Theme color names */
+1 COLORNAMES
+{
+"Classic Blue\0"
+"\0"
+}
+
+/* Theme size names */
+1 SIZENAMES
+{
+"NormalSize\0"
+"\0"
+}
+
+/* Theme ini files */
+1 FILERESNAMES
+{
+"CLASSIC_BLUE_INI\0"
+"\0"
+}
+
+/* Theme definition */
+THEMES_INI TEXTFILE
+{
+"[documentation]\r\n"
+"DisplayName = Light\r\n"
+"ToolTip = Light Visual Style\r\n"
+}
+
+/* Light theme definition */
+/* Classic blue theme, no bitmaps */
+CLASSIC_BLUE_INI TEXTFILE
+{
+"[Globals]\r\n"
+"EdgeLightColor = 255 255 255\r\n"
+"EdgeHighLightColor = 255 255 255\r\n"
+"EdgeShadowColor = 189 189 189\r\n"
+"EdgeDkShadowColor = 158 158 158\r\n"
+"EdgeFillColor = 255 255 255\r\n"
+
+"\r\n[SysMetrics]\r\n"
+"; System colors\r\n"
+"Scrollbar = 255 255 255\r\n"
+"Background = 37 111 149\r\n"
+"ActiveCaption = 50 150 250\r\n"
+"InactiveCaption = 245 245 245\r\n"
+"Menu = 255 255 255\r\n"
+"Window = 255 255 255\r\n"
+"WindowFrame = 158 158 158\r\n"
+"MenuText = 0 0 0\r\n"
+"WindowText = 0 0 0\r\n"
+"CaptionText = 0 0 0\r\n"
+"ActiveBorder = 255 255 255\r\n"
+"InactiveBorder = 255 255 255\r\n"
+"AppWorkSpace = 128 128 128\r\n"
+"Highlight = 48 150 250\r\n"
+"HighlightText = 255 255 255\r\n"
+"BtnFace = 245 245 245\r\n"
+"BtnShadow = 166 166 166\r\n"
+"GrayText = 166 166 166\r\n"
+"BtnText = 0 0 0\r\n"
+"InactiveCaptionText = 100 100 100\r\n"
+"BtnHighlight = 255 255 255\r\n"
+"DkShadow3d = 106 106 106\r\n"
+"Light3d = 227 227 227\r\n"
+"InfoText = 0 0 0\r\n"
+"InfoBk = 255 255 255\r\n"
+"ButtonAlternateFace = 255 255 255\r\n"
+"HotTracking = 224 224 224\r\n"
+"GradientActiveCaption = 50 150 250\r\n"
+"GradientInactiveCaption = 245 245 245\r\n"
+"MenuHilight = 48 150 250\r\n"
+"MenuBar = 255 255 255\r\n"
+
+"\r\n; Flat menus\r\n"
+"FlatMenus = true\r\n"
+}
+
+/* File version */
+#define WINE_FILEDESCRIPTION_STR "Light Theme"
+#define WINE_FILENAME_STR "light.msstyles"
+#define WINE_FILEVERSION 1,0,0,1
+#define WINE_FILEVERSION_STR "1.0.0.1"
+#define WINE_PRODUCTVERSION 1,0,0,1
+#define WINE_PRODUCTVERSION_STR "1.0.0.1"
+
+#include "wine/wine_common_ver.rc"

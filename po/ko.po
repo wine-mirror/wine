@@ -6956,6 +6956,17 @@ msgstr "잘못된 호출.\n"
 msgid "Resource is not currently available.\n"
 msgstr "현재 리소스를 사용할 수 없습니다.\n"
 
+#: dlls/light.msstyles/light.rc:29 dlls/light.msstyles/light.rc:35
+#, fuzzy
+#| msgid "Class Name:"
+msgid "Classic Blue"
+msgstr "클래스 이름:"
+
+#: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
+#: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
+msgid "Normal"
+msgstr "보통"
+
 #: dlls/localspl/localspl.rc:37
 #, fuzzy
 #| msgctxt "Drive letter"
@@ -17838,10 +17849,6 @@ msgstr "글꼴"
 #: programs/winhlp32/winhlp32.rc:52 programs/winhlp32/winhlp32.rc:72
 msgid "Small"
 msgstr "작게"
-
-#: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
-msgid "Normal"
-msgstr "보통"
 
 #: programs/winhlp32/winhlp32.rc:54 programs/winhlp32/winhlp32.rc:74
 msgid "Large"

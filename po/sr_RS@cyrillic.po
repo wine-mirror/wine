@@ -7290,6 +7290,15 @@ msgstr "Неисправни акредитиви.\n"
 msgid "Resource is not currently available.\n"
 msgstr "Недоступно"
 
+#: dlls/light.msstyles/light.rc:29 dlls/light.msstyles/light.rc:35
+msgid "Classic Blue"
+msgstr ""
+
+#: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
+#: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
+msgid "Normal"
+msgstr ""
+
 #: dlls/localspl/localspl.rc:37
 msgid "Letter"
 msgstr ""
@@ -18157,10 +18166,6 @@ msgstr "Фонтови"
 
 #: programs/winhlp32/winhlp32.rc:52 programs/winhlp32/winhlp32.rc:72
 msgid "Small"
-msgstr ""
-
-#: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
-msgid "Normal"
 msgstr ""
 
 #: programs/winhlp32/winhlp32.rc:54 programs/winhlp32/winhlp32.rc:74

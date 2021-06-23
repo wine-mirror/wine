@@ -6990,6 +6990,17 @@ msgstr "Невірний запит.\n"
 msgid "Resource is not currently available.\n"
 msgstr "Наразі ресурс недоступний.\n"
 
+#: dlls/light.msstyles/light.rc:29 dlls/light.msstyles/light.rc:35
+#, fuzzy
+#| msgid "Class Name:"
+msgid "Classic Blue"
+msgstr "Ім'я класу:"
+
+#: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
+#: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
+msgid "Normal"
+msgstr "Нормальний"
+
 #: dlls/localspl/localspl.rc:37
 #, fuzzy
 #| msgctxt "Drive letter"
@@ -17919,10 +17930,6 @@ msgstr "Шрифти"
 #: programs/winhlp32/winhlp32.rc:52 programs/winhlp32/winhlp32.rc:72
 msgid "Small"
 msgstr "Малий"
-
-#: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
-msgid "Normal"
-msgstr "Нормальний"
 
 #: programs/winhlp32/winhlp32.rc:54 programs/winhlp32/winhlp32.rc:74
 msgid "Large"

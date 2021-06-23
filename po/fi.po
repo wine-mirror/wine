@@ -6960,6 +6960,17 @@ msgstr "Kutsu ei kelpaa.\n"
 msgid "Resource is not currently available.\n"
 msgstr "Resurssi ei ole nyt saatavilla.\n"
 
+#: dlls/light.msstyles/light.rc:29 dlls/light.msstyles/light.rc:35
+#, fuzzy
+#| msgid "Class Name:"
+msgid "Classic Blue"
+msgstr "Luokan nimi:"
+
+#: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
+#: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
+msgid "Normal"
+msgstr "Normaali"
+
 #: dlls/localspl/localspl.rc:37
 msgid "Letter"
 msgstr ""
@@ -17864,10 +17875,6 @@ msgstr "Fontit"
 #: programs/winhlp32/winhlp32.rc:52 programs/winhlp32/winhlp32.rc:72
 msgid "Small"
 msgstr "Pieni"
-
-#: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
-msgid "Normal"
-msgstr "Normaali"
 
 #: programs/winhlp32/winhlp32.rc:54 programs/winhlp32/winhlp32.rc:74
 msgid "Large"

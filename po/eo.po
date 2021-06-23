@@ -6935,6 +6935,15 @@ msgstr "Nevalida tabelo.\n"
 msgid "Resource is not currently available.\n"
 msgstr "Noma servo ne disponeblas.\n"
 
+#: dlls/light.msstyles/light.rc:29 dlls/light.msstyles/light.rc:35
+msgid "Classic Blue"
+msgstr ""
+
+#: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
+#: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
+msgid "Normal"
+msgstr "Ordinara"
+
 #: dlls/localspl/localspl.rc:37
 #, fuzzy
 #| msgctxt "Drive letter"
@@ -17587,10 +17596,6 @@ msgstr "Tiparoj"
 #: programs/winhlp32/winhlp32.rc:52 programs/winhlp32/winhlp32.rc:72
 msgid "Small"
 msgstr "Malgranda"
-
-#: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
-msgid "Normal"
-msgstr "Ordinara"
 
 #: programs/winhlp32/winhlp32.rc:54 programs/winhlp32/winhlp32.rc:74
 msgid "Large"
