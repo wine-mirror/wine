@@ -333,6 +333,13 @@ BLUE_INI TEXTFILE
 "[Edit.Edittext(ReadOnly)]\r\n"
 "FillColor = 245 245 245\r\n"
 "TextColor = 0 0 0\r\n"
+
+"\r\n; ListBox\r\n"
+"[ListBox]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 1\r\n"
+"FillColor = 255 255 255\r\n"
+"BorderColor = 174 174 174\r\n"
 }
 
 /* Button */
