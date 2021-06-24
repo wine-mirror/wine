@@ -294,6 +294,30 @@ BLUE_INI TEXTFILE
 "ImageFile2 = blue_commandlink_glyph_45px.bmp\r\n"
 "MinDpi1 = 96\r\n"
 "MinDpi2 = 144\r\n"
+
+"\r\n; ComboBox\r\n"
+"[ComboBox]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 1\r\n"
+"FillColor = 255 255 255\r\n"
+"BorderColor = 174 174 174\r\n"
+
+"[ComboBox(Disabled)]\r\n"
+"BorderColor = 228 228 228\r\n"
+"FillColor = 231 231 231\r\n"
+
+"[ComboBox.DropDownButton]\r\n"
+"BgType = ImageFile\r\n"
+"ImageLayout = Vertical\r\n"
+"SizingType = Stretch\r\n"
+"ImageFile = blue_combobutton.bmp\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageCount = 4\r\n"
+"GlyphType = ImageGlyph\r\n"
+"GlyphImageFile = blue_combobutton_glyph.bmp\r\n"
+"GlyphTransparent = True\r\n"
+"Transparent = True\r\n"
 }
 
 /* Button */
@@ -329,6 +353,13 @@ BLUE_COMMANDLINK_GLYPH_30PX_BMP BITMAP "blue_commandlink_glyph_30px.bmp"
 
 /* @makedep: blue_commandlink_glyph_45px.bmp */
 BLUE_COMMANDLINK_GLYPH_45PX_BMP BITMAP "blue_commandlink_glyph_45px.bmp"
+
+/* ComboBox */
+/* @makedep: blue_combobutton.bmp */
+BLUE_COMBOBUTTON_BMP BITMAP "blue_combobutton.bmp"
+
+/* @makedep: blue_combobutton_glyph.bmp */
+BLUE_COMBOBUTTON_GLYPH_BMP BITMAP "blue_combobutton_glyph.bmp"
 
 /* File version */
 #define WINE_FILEDESCRIPTION_STR "Light Theme"
