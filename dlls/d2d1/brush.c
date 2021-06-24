@@ -128,17 +128,19 @@ static const struct ID2D1GradientStopCollectionVtbl d2d_gradient_vtbl =
 };
 
 HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D10Device *device, const D2D1_GRADIENT_STOP *stops,
-        UINT32 stop_count, D2D1_GAMMA gamma, D2D1_EXTEND_MODE extend_mode, struct d2d_gradient **gradient)
+        UINT32 stop_count, D2D1_GAMMA gamma, D2D1_EXTEND_MODE extend_mode, struct d2d_gradient **out)
 {
     D3D10_SHADER_RESOURCE_VIEW_DESC srv_desc;
     D3D10_SUBRESOURCE_DATA buffer_data;
     ID3D10ShaderResourceView *view;
+    struct d2d_gradient *gradient;
     D3D10_BUFFER_DESC buffer_desc;
     struct d2d_vec4 *data;
     ID3D10Buffer *buffer;
     unsigned int i;
     HRESULT hr;
 
+    *out = NULL;
     if (!(data = heap_calloc(stop_count, 2 * sizeof(*data))))
     {
         ERR("Failed to allocate data.\n");
@@ -185,7 +187,7 @@ HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D10Device *device, const D
         return hr;
     }
 
-    if (!(*gradient = heap_alloc_zero(sizeof(**gradient))))
+    if (!(gradient = heap_alloc_zero(sizeof(*gradient))))
     {
         ID3D10ShaderResourceView_Release(view);
         return E_OUTOFMEMORY;
@@ -196,21 +198,22 @@ HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D10Device *device, const D
     if (extend_mode != D2D1_EXTEND_MODE_CLAMP)
         FIXME("Ignoring extend mode %#x.\n", extend_mode);
 
-    (*gradient)->ID2D1GradientStopCollection_iface.lpVtbl = &d2d_gradient_vtbl;
-    (*gradient)->refcount = 1;
-    ID2D1Factory_AddRef((*gradient)->factory = factory);
-    (*gradient)->view = view;
+    gradient->ID2D1GradientStopCollection_iface.lpVtbl = &d2d_gradient_vtbl;
+    gradient->refcount = 1;
+    ID2D1Factory_AddRef(gradient->factory = factory);
+    gradient->view = view;
 
-    (*gradient)->stop_count = stop_count;
-    if (!((*gradient)->stops = heap_calloc(stop_count, sizeof(*stops))))
+    gradient->stop_count = stop_count;
+    if (!(gradient->stops = heap_calloc(stop_count, sizeof(*stops))))
     {
         ID3D10ShaderResourceView_Release(view);
-        heap_free(*gradient);
+        heap_free(gradient);
         return E_OUTOFMEMORY;
     }
-    memcpy((*gradient)->stops, stops, stop_count * sizeof(*stops));
+    memcpy(gradient->stops, stops, stop_count * sizeof(*stops));
 
-    TRACE("Created gradient %p.\n", *gradient);
+    TRACE("Created gradient %p.\n", gradient);
+    *out = gradient;
     return S_OK;
 }
 
