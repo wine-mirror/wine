@@ -73,6 +73,7 @@ struct caps_filter
     USAGE   usage_page;
     USHORT  collection;
     USAGE   usage;
+    UCHAR   report_id;
 };
 
 static BOOL match_value_caps( const struct hid_value_caps *caps, const struct caps_filter *filter )
@@ -89,20 +90,22 @@ static BOOL match_value_caps( const struct hid_value_caps *caps, const struct ca
 typedef NTSTATUS (*enum_value_caps_callback)( const struct hid_value_caps *caps, void *user );
 
 static NTSTATUS enum_value_caps( WINE_HIDP_PREPARSED_DATA *preparsed, HIDP_REPORT_TYPE report_type,
-                                 const struct caps_filter *filter, enum_value_caps_callback callback,
-                                 void *user, USHORT *count )
+                                 ULONG report_len, const struct caps_filter *filter,
+                                 enum_value_caps_callback callback, void *user, USHORT *count )
 {
     const struct hid_value_caps *caps, *caps_end;
     NTSTATUS status;
     LONG remaining = *count;
 
-    for (status = get_value_caps_range( preparsed, report_type, 0, &caps, &caps_end );
+    for (status = get_value_caps_range( preparsed, report_type, report_len, &caps, &caps_end );
          status == HIDP_STATUS_SUCCESS && caps != caps_end; caps++)
     {
         if (!match_value_caps( caps, filter )) continue;
-        if (remaining-- > 0) status = callback( caps, user );
+        if (filter->report_id && caps->report_id != filter->report_id) continue;
+        else if (remaining-- > 0) status = callback( caps, user );
     }
 
+    if (status == HIDP_STATUS_NULL) status = HIDP_STATUS_SUCCESS;
     if (status != HIDP_STATUS_SUCCESS) return status;
 
     *count -= remaining;
@@ -539,7 +542,7 @@ ULONG WINAPI HidP_MaxUsageListLength( HIDP_REPORT_TYPE report_type, USAGE usage_
 
     TRACE( "report_type %d, usage_page %x, preparsed_data %p.\n", report_type, usage_page, preparsed_data );
 
-    enum_value_caps( preparsed, report_type, &filter, get_usage_list_length, &count, &limit );
+    enum_value_caps( preparsed, report_type, 0, &filter, get_usage_list_length, &count, &limit );
     return count;
 }
 
@@ -575,32 +578,42 @@ NTSTATUS WINAPI HidP_SetUsageValueArray( HIDP_REPORT_TYPE report_type, USAGE usa
     return HIDP_STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS WINAPI HidP_SetUsages(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, USHORT LinkCollection,
-                               PUSAGE UsageList, PULONG UsageLength, PHIDP_PREPARSED_DATA PreparsedData,
-                               PCHAR Report, ULONG ReportLength)
+struct set_usage_params
 {
-    WINE_HID_ELEMENT element;
-    NTSTATUS rc;
-    ULONG i;
+    USAGE usage;
+    char *report_buf;
+};
 
-    TRACE("(%i, %x, %i, %p, %p, %p, %p, %i)\n", ReportType, UsagePage, LinkCollection, UsageList,
-            UsageLength, PreparsedData, Report, ReportLength);
+static NTSTATUS set_usage( const struct hid_value_caps *caps, void *user )
+{
+    struct set_usage_params *params = user;
+    ULONG bit = caps->start_bit + params->usage - caps->usage_min;
+    params->report_buf[bit / 8] |= (1 << (bit % 8));
+    return HIDP_STATUS_NULL;
+}
 
-    for (i = 0; i < *UsageLength; i++)
+NTSTATUS WINAPI HidP_SetUsages( HIDP_REPORT_TYPE report_type, USAGE usage_page, USHORT collection, USAGE *usages,
+                                ULONG *usage_count, PHIDP_PREPARSED_DATA preparsed_data, char *report_buf, ULONG report_len )
+{
+    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    struct set_usage_params params = {.report_buf = report_buf};
+    struct caps_filter filter = {.buttons = TRUE, .usage_page = usage_page, .collection = collection};
+    NTSTATUS status;
+    USHORT limit = 1;
+    ULONG i, count = *usage_count;
+
+    TRACE( "report_type %d, usage_page %x, collection %d, usages %p, usage_count %p, preparsed_data %p, "
+           "report_buf %p, report_len %u.\n",
+           report_type, usage_page, collection, usages, usage_count, preparsed_data, report_buf, report_len );
+
+    if (!report_len) return HIDP_STATUS_INVALID_REPORT_LENGTH;
+
+    filter.report_id = report_buf[0];
+    for (i = 0; i < count; ++i)
     {
-        rc = find_usage(ReportType, UsagePage, LinkCollection,
-                UsageList[i], PreparsedData, Report, 1, &element);
-        if (rc == HIDP_STATUS_SUCCESS)
-        {
-            rc = set_report_data((BYTE*)Report, ReportLength,
-                    element.valueStartBit, element.bitCount, -1);
-        }
-
-        if (rc != HIDP_STATUS_SUCCESS)
-        {
-            *UsageLength = i;
-            return rc;
-        }
+        params.usage = filter.usage = usages[i];
+        status = enum_value_caps( preparsed, report_type, report_len, &filter, set_usage, &params, &limit );
+        if (status != HIDP_STATUS_SUCCESS) return status;
     }
 
     return HIDP_STATUS_SUCCESS;
@@ -669,7 +682,7 @@ NTSTATUS WINAPI HidP_GetSpecificButtonCaps( HIDP_REPORT_TYPE report_type, USAGE 
     TRACE( "report_type %d, usage_page %x, collection %d, usage %x, caps %p, caps_count %p, preparsed_data %p.\n",
            report_type, usage_page, collection, usage, caps, caps_count, preparsed_data );
 
-    return enum_value_caps( preparsed, report_type, &filter, get_button_caps, &caps, caps_count );
+    return enum_value_caps( preparsed, report_type, 0, &filter, get_button_caps, &caps, caps_count );
 }
 
 static NTSTATUS get_value_caps( const struct hid_value_caps *caps, void *user )
@@ -732,7 +745,7 @@ NTSTATUS WINAPI HidP_GetSpecificValueCaps( HIDP_REPORT_TYPE report_type, USAGE u
     TRACE( "report_type %d, usage_page %x, collection %d, usage %x, caps %p, caps_count %p, preparsed_data %p.\n",
            report_type, usage_page, collection, usage, caps, caps_count, preparsed_data );
 
-    return enum_value_caps( preparsed, report_type, &filter, get_value_caps, &caps, caps_count );
+    return enum_value_caps( preparsed, report_type, 0, &filter, get_value_caps, &caps, caps_count );
 }
 
 NTSTATUS WINAPI HidP_GetUsagesEx(HIDP_REPORT_TYPE ReportType, USHORT LinkCollection, USAGE_AND_PAGE *ButtonList,

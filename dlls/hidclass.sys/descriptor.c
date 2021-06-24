@@ -481,6 +481,7 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
     if (!*bit_size) *bit_size = 8;
     *bit_size += state->items.bit_size * state->items.report_count;
     *byte_size = max( *byte_size, (*bit_size + 7) / 8 );
+    state->items.start_bit = *bit_size;
 
     if (!state->items.report_count)
     {
@@ -498,6 +499,7 @@ static BOOL parse_new_value_caps( struct hid_parser_state *state, HIDP_REPORT_TY
     state->items.report_count -= usages_size - 1;
     while (usages_size--)
     {
+        state->items.start_bit -= state->items.report_count * state->items.bit_size;
         state->items.usage_page = state->usages_page[usages_size];
         state->items.usage_min = state->usages_min[usages_size];
         state->items.usage_max = state->usages_max[usages_size];

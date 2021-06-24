@@ -59,6 +59,7 @@ struct hid_value_caps
     USHORT  bit_field;
     USHORT  bit_size;
     USHORT  report_count;
+    ULONG   start_bit;
     LONG    logical_min;
     LONG    logical_max;
     LONG    physical_min;
