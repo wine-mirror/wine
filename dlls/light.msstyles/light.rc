@@ -318,6 +318,21 @@ BLUE_INI TEXTFILE
 "GlyphImageFile = blue_combobutton_glyph.bmp\r\n"
 "GlyphTransparent = True\r\n"
 "Transparent = True\r\n"
+
+"\r\n; Edit\r\n"
+"[Edit]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 1\r\n"
+"FillColor = 255 255 255\r\n"
+"BorderColor = 174 174 174\r\n"
+
+"[Edit.Edittext(Disabled)]\r\n"
+"FillColor = 245 245 245\r\n"
+"TextColor = 166 166 166\r\n"
+
+"[Edit.Edittext(ReadOnly)]\r\n"
+"FillColor = 245 245 245\r\n"
+"TextColor = 0 0 0\r\n"
 }
 
 /* Button */
