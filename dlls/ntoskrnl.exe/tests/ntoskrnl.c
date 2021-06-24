@@ -2227,10 +2227,8 @@ static void test_hidp(HANDLE file, int report_id)
        usage_and_pages[0].Usage, 4);
     ok(usage_and_pages[1].Usage == 6, "got usage_and_pages[1] Usage %x, expected %x\n",
        usage_and_pages[1].Usage, 6);
-    todo_wine
     ok(usage_and_pages[2].Usage == 6, "got usage_and_pages[2] Usage %x, expected %x\n",
        usage_and_pages[2].Usage, 6);
-    todo_wine
     ok(usage_and_pages[3].Usage == 4, "got usage_and_pages[3] Usage %x, expected %x\n",
        usage_and_pages[3].Usage, 4);
 
