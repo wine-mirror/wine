@@ -2073,20 +2073,6 @@ static void dump_unlock_file_request( const struct unlock_file_request *req )
     dump_uint64( ", count=", &req->count );
 }
 
-static void dump_get_socket_event_request( const struct get_socket_event_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-    fprintf( stderr, ", service=%d", req->service );
-    fprintf( stderr, ", c_event=%04x", req->c_event );
-}
-
-static void dump_get_socket_event_reply( const struct get_socket_event_reply *req )
-{
-    fprintf( stderr, " mask=%08x", req->mask );
-    fprintf( stderr, ", pmask=%08x", req->pmask );
-    dump_varargs_ints( ", errors=", cur_size );
-}
-
 static void dump_recv_socket_request( const struct recv_socket_request *req )
 {
     fprintf( stderr, " oob=%d", req->oob );
@@ -4571,7 +4557,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_volume_info_request,
     (dump_func)dump_lock_file_request,
     (dump_func)dump_unlock_file_request,
-    (dump_func)dump_get_socket_event_request,
     (dump_func)dump_recv_socket_request,
     (dump_func)dump_poll_socket_request,
     (dump_func)dump_send_socket_request,
@@ -4847,7 +4832,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_volume_info_reply,
     (dump_func)dump_lock_file_reply,
     NULL,
-    (dump_func)dump_get_socket_event_reply,
     (dump_func)dump_recv_socket_reply,
     (dump_func)dump_poll_socket_reply,
     (dump_func)dump_send_socket_reply,
@@ -5123,7 +5107,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_volume_info",
     "lock_file",
     "unlock_file",
-    "get_socket_event",
     "recv_socket",
     "poll_socket",
     "send_socket",

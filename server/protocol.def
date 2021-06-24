@@ -1423,18 +1423,6 @@ enum server_fd_type
 @END
 
 
-/* Get socket event parameters */
-@REQ(get_socket_event)
-    obj_handle_t handle;        /* handle to the socket */
-    int          service;       /* clear pending? */
-    obj_handle_t c_event;       /* event to clear */
-@REPLY
-    unsigned int mask;          /* event mask */
-    unsigned int pmask;         /* pending events */
-    VARARG(errors,ints);        /* event errors */
-@END
-
-
 /* Perform a recv on a socket */
 @REQ(recv_socket)
     int          oob;           /* are we receiving OOB data? */

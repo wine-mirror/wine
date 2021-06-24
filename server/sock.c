@@ -2976,45 +2976,6 @@ struct object *create_socket_device( struct object *root, const struct unicode_s
     return create_named_object( root, &socket_device_ops, name, attr, sd );
 }
 
-/* get socket event parameters */
-DECL_HANDLER(get_socket_event)
-{
-    unsigned int errors[FD_MAX_EVENTS] = {0};
-    struct sock *sock;
-
-    if (!(sock = (struct sock *)get_handle_obj( current->process, req->handle,
-                                                FILE_READ_ATTRIBUTES, &sock_ops ))) return;
-    if (get_unix_fd( sock->fd ) == -1) return;
-    reply->mask  = afd_poll_flag_to_win32( sock->mask );
-    reply->pmask = afd_poll_flag_to_win32( sock->pending_events );
-
-    errors[FD_READ_BIT]     = sock_get_error( sock->errors[AFD_POLL_BIT_READ] );
-    errors[FD_WRITE_BIT]    = sock_get_error( sock->errors[AFD_POLL_BIT_WRITE] );
-    errors[FD_OOB_BIT]      = sock_get_error( sock->errors[AFD_POLL_BIT_OOB] );
-    errors[FD_ACCEPT_BIT]   = sock_get_error( sock->errors[AFD_POLL_BIT_ACCEPT] );
-    errors[FD_CONNECT_BIT]  = sock_get_error( sock->errors[AFD_POLL_BIT_CONNECT_ERR] );
-    if (!(errors[FD_CLOSE_BIT] = sock_get_error( sock->errors[AFD_POLL_BIT_HUP] )))
-        errors[FD_CLOSE_BIT] = sock_get_error( sock->errors[AFD_POLL_BIT_RESET] );
-    set_reply_data( errors, min( get_reply_max_size(), sizeof(errors) ));
-
-    if (req->service)
-    {
-        if (req->c_event)
-        {
-            struct event *cevent = get_event_obj( current->process, req->c_event,
-                                                  EVENT_MODIFY_STATE );
-            if (cevent)
-            {
-                reset_event( cevent );
-                release_object( cevent );
-            }
-        }
-        sock->pending_events = 0;
-        sock_reselect( sock );
-    }
-    release_object( &sock->obj );
-}
-
 DECL_HANDLER(recv_socket)
 {
     struct sock *sock = (struct sock *)get_handle_obj( current->process, req->async.handle, 0, &sock_ops );
