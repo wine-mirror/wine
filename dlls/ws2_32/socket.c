@@ -3555,6 +3555,9 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             SetLastError( WSAENOPROTOOPT );
             return -1;
 
+        case WS_SO_KEEPALIVE:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_SO_KEEPALIVE, optval, optlen );
+
         /* Some options need some conversion before they can be sent to
          * setsockopt. The conversions are done here, then they will fall through
          * to the general case. Special options that are not passed to
@@ -3610,7 +3613,6 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         /* The options listed here don't need any special handling. Thanks to
          * the conversion happening above, options from there will fall through
          * to this, too.*/
-        case WS_SO_KEEPALIVE:
         case WS_SO_OOBINLINE:
         /* BSD socket SO_REUSEADDR is not 100% compatible to winsock semantics.
          * however, using it the BSD way fixes bug 8513 and seems to be what
