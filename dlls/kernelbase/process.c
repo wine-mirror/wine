@@ -202,7 +202,7 @@ static RTL_USER_PROCESS_PARAMETERS *create_process_params( const WCHAR *filename
         params->hStdOutput = startup->hStdOutput;
         params->hStdError  = startup->hStdError;
     }
-    else if (flags & DETACHED_PROCESS)
+    else if (flags & (DETACHED_PROCESS | CREATE_NEW_CONSOLE))
     {
         params->hStdInput  = INVALID_HANDLE_VALUE;
         params->hStdOutput = INVALID_HANDLE_VALUE;
