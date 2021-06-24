@@ -2546,6 +2546,40 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         return 1;
     }
 
+    case IOCTL_AFD_WINE_GET_SO_ERROR:
+    {
+        int error;
+        socklen_t len = sizeof(error);
+        unsigned int i;
+
+        if (get_reply_max_size() < sizeof(error))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return 0;
+        }
+
+        if (getsockopt( unix_fd, SOL_SOCKET, SO_ERROR, (char *)&error, &len ) < 0)
+        {
+            set_error( sock_get_ntstatus( errno ) );
+            return 0;
+        }
+
+        if (!error)
+        {
+            for (i = 0; i < ARRAY_SIZE( sock->errors ); ++i)
+            {
+                if (sock->errors[i])
+                {
+                    error = sock->errors[i];
+                    break;
+                }
+            }
+        }
+
+        set_reply_data( &error, sizeof(error) );
+        return 1;
+    }
+
     default:
         set_error( STATUS_NOT_SUPPORTED );
         return 0;
