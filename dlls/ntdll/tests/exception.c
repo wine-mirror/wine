@@ -4002,7 +4002,6 @@ static void test_thread_context(void)
         XMM_SAVE_AREA32 FltSave;
         WORD SegCs, SegDs, SegEs, SegFs, SegGs, SegSs;
     } expect;
-    XMM_SAVE_AREA32 broken_fltsave;
     NTSTATUS (*func_ptr)( void *arg1, void *arg2, struct expected *res, void *func ) = code_mem;
 
     static const BYTE call_func[] =
@@ -4164,12 +4163,12 @@ static void test_thread_context(void)
     COMPARE( SegGs );
     COMPARE( SegSs );
 
-    broken_fltsave = context.FltSave;
-    memset( &broken_fltsave.ErrorOpcode, 0xcc, 0x12 );
+    /* AMD CPUs don't save the opcode or data pointer if no exception is
+     * pending; see the AMD64 Architecture Programmer's Manual Volume 5 s.v.
+     * FXSAVE */
+    memcpy( &expect.FltSave, &context.FltSave, 0x12 );
 
-    ok( !memcmp( &context.FltSave, &expect.FltSave, offsetof( XMM_SAVE_AREA32, XmmRegisters )) ||
-        broken( !memcmp( &broken_fltsave, &expect.FltSave, offsetof( XMM_SAVE_AREA32, XmmRegisters )) ) /* w2008, w8 */,
-        "wrong FltSave\n" );
+    ok( !memcmp( &context.FltSave, &expect.FltSave, offsetof( XMM_SAVE_AREA32, ErrorOffset )), "wrong FltSave\n" );
     for (i = 6; i < 16; i++)
         ok( !memcmp( &context.Xmm0 + i, &expect.FltSave.XmmRegisters[i], sizeof(context.Xmm0) ),
             "wrong xmm%u\n", i );
