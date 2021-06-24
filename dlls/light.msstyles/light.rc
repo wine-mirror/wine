@@ -179,7 +179,156 @@ BLUE_INI TEXTFILE
 
 "\r\n; Flat menus\r\n"
 "FlatMenus = true\r\n"
+
+"\r\n; Button\r\n"
+"[Button.Pushbutton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingMargins = 8, 8, 8, 8\r\n"
+"SizingType = Stretch\r\n"
+"ContentMargins = 3, 3, 3, 3\r\n"
+"ImageFile = blue_button.bmp\r\n"
+"ImageCount = 6\r\n"
+"ImageLayout = Vertical\r\n"
+"TextColor = 0 0 0\r\n"
+"MinSize = 10, 5\r\n"
+
+"[Button.Pushbutton(Pressed)]\r\n"
+"TextColor = 255 255 255\r\n"
+
+"[Button.Pushbutton(Disabled)]\r\n"
+"TextColor = 166 166 166\r\n"
+
+"[Button.Checkbox]\r\n"
+"BgType = ImageFile\r\n"
+"ImageLayout = Vertical\r\n"
+"SizingType = TrueSize\r\n"
+"SizingMargins = 0, 0, 0, 0\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageCount = 12\r\n"
+"MirrorImage = False\r\n"
+"ImageSelectType = Dpi\r\n"
+"UniformSizing = True\r\n"
+"Transparent = True\r\n"
+"ImageFile1 = blue_checkbox_13px.bmp\r\n"
+"ImageFile2 = blue_checkbox_16px.bmp\r\n"
+"ImageFile3 = blue_checkbox_25px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 118\r\n"
+"MinDpi3 = 185\r\n"
+
+"[Button.Checkbox(Checkeddisabled)]\r\n"
+"TextColor = 189 189 189\r\n"
+
+"[Button.Checkbox(Uncheckeddisabled)]\r\n"
+"TextColor = 189 189 189\r\n"
+
+"[Button.Checkbox(Mixeddisabled)]\r\n"
+"TextColor = 189 189 189\r\n"
+
+"[Button.Radiobutton]\r\n"
+"BgType = ImageFile\r\n"
+"ImageLayout = Vertical\r\n"
+"Transparent = True\r\n"
+"SizingType = TrueSize\r\n"
+"SizingMargins = 0, 0, 0, 0\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageCount = 8\r\n"
+"ImageSelectType = Dpi\r\n"
+"UniformSizing = True\r\n"
+"ImageFile1 = blue_radiobutton_13px.bmp\r\n"
+"ImageFile2 = blue_radiobutton_16px.bmp\r\n"
+"ImageFile3 = blue_radiobutton_25px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 118\r\n"
+"MinDpi3 = 185\r\n"
+
+"[Button.Radiobutton(Checkeddisabled)]\r\n"
+"TextColor = 189 189 189\r\n"
+
+"[Button.Radiobutton(Uncheckeddisabled)]\r\n"
+"TextColor = 189 189 189\r\n"
+
+"[Button.Groupbox]\r\n"
+"TextColor = 0 0 0\r\n"
+"BgType = ImageFile\r\n"
+"SizingMargins = 5, 5, 5, 5\r\n"
+"SizingType = Tile\r\n"
+"ImageFile = blue_groupbox.bmp\r\n"
+"BorderOnly = True\r\n"
+"Transparent = True\r\n"
+
+"[Button.Commandlink]\r\n"
+"BgType = ImageFile\r\n"
+"BorderSize = 0\r\n"
+"ContentMargins = 7, 7, 10, 10\r\n"
+"Font = Tahoma, 10\r\n"
+"BodyFont = Tahoma, 8\r\n"
+"ImageFile = blue_commandlink.bmp\r\n"
+"ImageCount = 6\r\n"
+"ImageLayout = Vertical\r\n"
+"SizingType = Stretch\r\n"
+"SizingMargins = 5, 5, 24, 24\r\n"
+"Transparent = True\r\n"
+"TextColor = 0 0 0\r\n"
+"MinSize = 10, 5\r\n"
+
+"[Button.Commandlink(Hot)]\r\n"
+"TextColor = 48 150 250\r\n"
+
+"[Button.Commandlink(Pressed)]\r\n"
+"TextColor = 41 121 255\r\n"
+
+"[Button.Commandlink(Disabled)]\r\n"
+"TextColor = 174 174 174\r\n"
+
+"[Button.CommandlinkGlyph]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageCount = 5\r\n"
+"Transparent = True\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"Transparent = True\r\n"
+"UniformSizing = True\r\n"
+"ImageFile1 = blue_commandlink_glyph_30px.bmp\r\n"
+"ImageFile2 = blue_commandlink_glyph_45px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 144\r\n"
 }
+
+/* Button */
+/* @makedep: blue_button.bmp */
+BLUE_BUTTON_BMP BITMAP "blue_button.bmp"
+
+/* @makedep: blue_checkbox_13px.bmp */
+BLUE_CHECKBOX_13PX_BMP BITMAP "blue_checkbox_13px.bmp"
+
+/* @makedep: blue_checkbox_16px.bmp */
+BLUE_CHECKBOX_16PX_BMP BITMAP "blue_checkbox_16px.bmp"
+
+/* @makedep: blue_checkbox_25px.bmp */
+BLUE_CHECKBOX_25PX_BMP BITMAP "blue_checkbox_25px.bmp"
+
+/* @makedep: blue_radiobutton_13px.bmp */
+BLUE_RADIOBUTTON_13PX_BMP BITMAP "blue_radiobutton_13px.bmp"
+
+/* @makedep: blue_radiobutton_16px.bmp */
+BLUE_RADIOBUTTON_16PX_BMP BITMAP "blue_radiobutton_16px.bmp"
+
+/* @makedep: blue_radiobutton_25px.bmp */
+BLUE_RADIOBUTTON_25PX_BMP BITMAP "blue_radiobutton_25px.bmp"
+
+/* @makedep: blue_groupbox.bmp */
+BLUE_GROUPBOX_BMP BITMAP "blue_groupbox.bmp"
+
+/* @makedep: blue_commandlink.bmp */
+BLUE_COMMANDLINK_BMP BITMAP "blue_commandlink.bmp"
+
+/* @makedep: blue_commandlink_glyph_30px.bmp */
+BLUE_COMMANDLINK_GLYPH_30PX_BMP BITMAP "blue_commandlink_glyph_30px.bmp"
+
+/* @makedep: blue_commandlink_glyph_45px.bmp */
+BLUE_COMMANDLINK_GLYPH_45PX_BMP BITMAP "blue_commandlink_glyph_45px.bmp"
 
 /* File version */
 #define WINE_FILEDESCRIPTION_STR "Light Theme"

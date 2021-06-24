@@ -1,3 +1,16 @@
 MODULE = light.msstyles
 
 RC_SRCS = light.rc
+
+SVG_SRCS = \
+	blue_button.svg \
+	blue_checkbox_13px.svg \
+	blue_checkbox_16px.svg \
+	blue_checkbox_25px.svg \
+	blue_commandlink.svg \
+	blue_commandlink_glyph_30px.svg \
+	blue_commandlink_glyph_45px.svg \
+	blue_groupbox.svg \
+	blue_radiobutton_13px.svg \
+	blue_radiobutton_16px.svg \
+	blue_radiobutton_25px.svg
