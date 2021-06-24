@@ -840,6 +840,28 @@ struct wined3d_resource * CDECL wined3d_buffer_get_resource(struct wined3d_buffe
     return &buffer->resource;
 }
 
+static HRESULT buffer_resource_sub_resource_get_desc(struct wined3d_resource *resource,
+        unsigned int sub_resource_idx, struct wined3d_sub_resource_desc *desc)
+{
+    if (sub_resource_idx)
+    {
+        WARN("Invalid sub_resource_idx %u.\n", sub_resource_idx);
+        return E_INVALIDARG;
+    }
+
+    desc->format = WINED3DFMT_UNKNOWN;
+    desc->multisample_type = WINED3D_MULTISAMPLE_NONE;
+    desc->multisample_quality = 0;
+    desc->usage = resource->usage;
+    desc->bind_flags = resource->bind_flags;
+    desc->access = resource->access;
+    desc->width = resource->size;
+    desc->height = 1;
+    desc->depth = 1;
+    desc->size = resource->size;
+    return S_OK;
+}
+
 static HRESULT buffer_resource_sub_resource_map(struct wined3d_resource *resource, unsigned int sub_resource_idx,
         struct wined3d_map_desc *map_desc, const struct wined3d_box *box, uint32_t flags)
 {
@@ -1105,6 +1127,7 @@ static const struct wined3d_resource_ops buffer_resource_ops =
     buffer_resource_decref,
     buffer_resource_preload,
     buffer_resource_unload,
+    buffer_resource_sub_resource_get_desc,
     buffer_resource_sub_resource_map,
     buffer_resource_sub_resource_unmap,
 };

@@ -4649,7 +4649,7 @@ void CDECL wined3d_device_context_update_sub_resource(struct wined3d_device_cont
         struct wined3d_resource *resource, unsigned int sub_resource_idx, const struct wined3d_box *box,
         const void *data, unsigned int row_pitch, unsigned int depth_pitch, unsigned int flags)
 {
-    unsigned int width, height, depth;
+    struct wined3d_sub_resource_desc desc;
     struct wined3d_box b;
 
     TRACE("context %p, resource %p, sub_resource_idx %u, box %s, data %p, row_pitch %u, depth_pitch %u, flags %#x.\n",
@@ -4664,43 +4664,17 @@ void CDECL wined3d_device_context_update_sub_resource(struct wined3d_device_cont
         return;
     }
 
-    if (resource->type == WINED3D_RTYPE_BUFFER)
-    {
-        if (sub_resource_idx > 0)
-        {
-            WARN("Invalid sub_resource_idx %u.\n", sub_resource_idx);
-            return;
-        }
-
-        width = resource->size;
-        height = 1;
-        depth = 1;
-    }
-    else
-    {
-        struct wined3d_texture *texture = texture_from_resource(resource);
-        unsigned int level;
-
-        if (sub_resource_idx >= texture->level_count * texture->layer_count)
-        {
-            WARN("Invalid sub_resource_idx %u.\n", sub_resource_idx);
-            return;
-        }
-
-        level = sub_resource_idx % texture->level_count;
-        width = wined3d_texture_get_level_width(texture, level);
-        height = wined3d_texture_get_level_height(texture, level);
-        depth = wined3d_texture_get_level_depth(texture, level);
-    }
+    if (FAILED(wined3d_resource_get_sub_resource_desc(resource, sub_resource_idx, &desc)))
+        return;
 
     if (!box)
     {
-        wined3d_box_set(&b, 0, 0, width, height, 0, depth);
+        wined3d_box_set(&b, 0, 0, desc.width, desc.height, 0, desc.depth);
         box = &b;
     }
-    else if (box->left >= box->right || box->right > width
-            || box->top >= box->bottom || box->bottom > height
-            || box->front >= box->back || box->back > depth)
+    else if (box->left >= box->right || box->right > desc.width
+            || box->top >= box->bottom || box->bottom > desc.height
+            || box->front >= box->back || box->back > desc.depth)
     {
         WARN("Invalid box %s specified.\n", debug_box(box));
         return;
