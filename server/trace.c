@@ -666,8 +666,8 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
             dump_uints( ",extended=", (const unsigned int *)ctx.ext.i386_regs,
                         sizeof(ctx.ext.i386_regs) / sizeof(int) );
         if (ctx.flags & SERVER_CTX_YMM_REGISTERS)
-            dump_uints( ",ymm_high=", (const unsigned int *)ctx.ymm.ymm_high_regs.ymm_high,
-                        sizeof(ctx.ymm.ymm_high_regs) / sizeof(int) );
+            dump_uints( ",ymm_high=", (const unsigned int *)ctx.ymm.regs.ymm_high,
+                        sizeof(ctx.ymm.regs) / sizeof(int) );
         break;
     case IMAGE_FILE_MACHINE_AMD64:
         fprintf( stderr, "%s{machine=x86_64", prefix );
@@ -719,8 +719,8 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
                          (unsigned int)ctx.fp.x86_64_regs.fpregs[i].low );
         }
         if (ctx.flags & SERVER_CTX_YMM_REGISTERS)
-            dump_uints( ",ymm_high=", (const unsigned int *)ctx.ymm.ymm_high_regs.ymm_high,
-                        sizeof(ctx.ymm.ymm_high_regs) / sizeof(int) );
+            dump_uints( ",ymm_high=", (const unsigned int *)ctx.ymm.regs.ymm_high,
+                        sizeof(ctx.ymm.regs) / sizeof(int) );
         break;
     case IMAGE_FILE_MACHINE_ARMNT:
         fprintf( stderr, "%s{machine=arm", prefix );

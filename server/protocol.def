@@ -172,7 +172,7 @@ typedef struct
     } ext;                       /* selected by SERVER_CTX_EXTENDED_REGISTERS */
     union
     {
-        struct { struct { unsigned __int64 low, high; } ymm_high[16]; } ymm_high_regs;
+        struct { struct { unsigned __int64 low, high; } ymm_high[16]; } regs;
     } ymm;                       /* selected by SERVER_CTX_YMM_REGISTERS */
 } context_t;
 

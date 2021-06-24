@@ -156,7 +156,7 @@ typedef struct
     } ext;
     union
     {
-        struct { struct { unsigned __int64 low, high; } ymm_high[16]; } ymm_high_regs;
+        struct { struct { unsigned __int64 low, high; } ymm_high[16]; } regs;
     } ymm;
 } context_t;
 

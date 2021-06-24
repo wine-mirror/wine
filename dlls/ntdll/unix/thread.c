@@ -215,8 +215,7 @@ static NTSTATUS context_to_server( context_t *to, const void *src, USHORT machin
             const XSTATE *xs = (const XSTATE *)((const char *)xctx + xctx->XState.Offset);
 
             to->flags |= SERVER_CTX_YMM_REGISTERS;
-            if (xs->Mask & 4)
-                memcpy( &to->ymm.ymm_high_regs.ymm_high, &xs->YmmContext, sizeof(xs->YmmContext) );
+            if (xs->Mask & 4) memcpy( &to->ymm.regs.ymm_high, &xs->YmmContext, sizeof(xs->YmmContext) );
         }
         return STATUS_SUCCESS;
     }
@@ -283,8 +282,7 @@ static NTSTATUS context_to_server( context_t *to, const void *src, USHORT machin
             const XSTATE *xs = (const XSTATE *)((const char *)xctx + xctx->XState.Offset);
 
             to->flags |= SERVER_CTX_YMM_REGISTERS;
-            if (xs->Mask & 4)
-                memcpy( &to->ymm.ymm_high_regs.ymm_high, &xs->YmmContext, sizeof(xs->YmmContext) );
+            if (xs->Mask & 4) memcpy( &to->ymm.regs.ymm_high, &xs->YmmContext, sizeof(xs->YmmContext) );
         }
         return STATUS_SUCCESS;
     }
@@ -526,11 +524,10 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
 
             xs->Mask &= ~4;
             if (user_shared_data->XState.CompactionEnabled) xs->CompactionMask = 0x8000000000000004;
-            for (i = 0; i < ARRAY_SIZE( from->ymm.ymm_high_regs.ymm_high); i++)
+            for (i = 0; i < ARRAY_SIZE( from->ymm.regs.ymm_high); i++)
             {
-                if (!from->ymm.ymm_high_regs.ymm_high[i].low && !from->ymm.ymm_high_regs.ymm_high[i].high)
-                    continue;
-                memcpy( &xs->YmmContext, &from->ymm.ymm_high_regs, sizeof(xs->YmmContext) );
+                if (!from->ymm.regs.ymm_high[i].low && !from->ymm.regs.ymm_high[i].high) continue;
+                memcpy( &xs->YmmContext, &from->ymm.regs, sizeof(xs->YmmContext) );
                 xs->Mask |= 4;
                 break;
             }
@@ -604,11 +601,10 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
 
             xs->Mask &= ~4;
             if (user_shared_data->XState.CompactionEnabled) xs->CompactionMask = 0x8000000000000004;
-            for (i = 0; i < ARRAY_SIZE( from->ymm.ymm_high_regs.ymm_high); i++)
+            for (i = 0; i < ARRAY_SIZE( from->ymm.regs.ymm_high); i++)
             {
-                if (!from->ymm.ymm_high_regs.ymm_high[i].low && !from->ymm.ymm_high_regs.ymm_high[i].high)
-                    continue;
-                memcpy( &xs->YmmContext, &from->ymm.ymm_high_regs, sizeof(xs->YmmContext) );
+                if (!from->ymm.regs.ymm_high[i].low && !from->ymm.regs.ymm_high[i].high) continue;
+                memcpy( &xs->YmmContext, &from->ymm.regs, sizeof(xs->YmmContext) );
                 xs->Mask |= 4;
                 break;
             }
