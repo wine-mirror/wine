@@ -4836,6 +4836,7 @@ HRESULT CDECL wined3d_device_context_map(struct wined3d_device_context *context,
 {
     struct wined3d_sub_resource_desc desc;
     struct wined3d_box b;
+    HRESULT hr;
 
     TRACE("context %p, resource %p, sub_resource_idx %u, map_desc %p, box %s, flags %#x.\n",
             context, resource, sub_resource_idx, map_desc, debug_box(box), flags);
@@ -4869,7 +4870,10 @@ HRESULT CDECL wined3d_device_context_map(struct wined3d_device_context *context,
         box = &b;
     }
 
-    return context->ops->map(context, resource, sub_resource_idx, map_desc, box, flags);
+    if (SUCCEEDED(hr = context->ops->map(context, resource, sub_resource_idx, &map_desc->data, box, flags)))
+        wined3d_resource_get_sub_resource_map_pitch(resource, sub_resource_idx,
+                &map_desc->row_pitch, &map_desc->slice_pitch);
+    return hr;
 }
 
 HRESULT CDECL wined3d_device_context_unmap(struct wined3d_device_context *context,

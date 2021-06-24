@@ -3514,13 +3514,31 @@ static HRESULT texture_resource_sub_resource_get_desc(struct wined3d_resource *r
     return wined3d_texture_get_sub_resource_desc(texture, sub_resource_idx, desc);
 }
 
+static void texture_resource_sub_resource_get_map_pitch(struct wined3d_resource *resource,
+        unsigned int sub_resource_idx, unsigned int *row_pitch, unsigned int *slice_pitch)
+{
+    const struct wined3d_texture *texture = texture_from_resource(resource);
+    unsigned int level = sub_resource_idx % texture->level_count;
+
+    if (resource->format_flags & WINED3DFMT_FLAG_BROKEN_PITCH)
+    {
+        *row_pitch = wined3d_texture_get_level_width(texture, level) * resource->format->byte_count;
+        *slice_pitch = wined3d_texture_get_level_height(texture, level) * (*row_pitch);
+    }
+    else
+    {
+        wined3d_texture_get_pitch(texture, level, row_pitch, slice_pitch);
+    }
+}
+
 static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resource, unsigned int sub_resource_idx,
-        struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags)
+        void **map_ptr, const struct wined3d_box *box, DWORD flags)
 {
     const struct wined3d_format *format = resource->format;
     struct wined3d_texture_sub_resource *sub_resource;
     struct wined3d_device *device = resource->device;
     unsigned int fmt_flags = resource->format_flags;
+    unsigned int row_pitch, slice_pitch;
     struct wined3d_context *context;
     struct wined3d_texture *texture;
     struct wined3d_bo_address data;
@@ -3528,8 +3546,8 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
     BYTE *base_memory;
     BOOL ret;
 
-    TRACE("resource %p, sub_resource_idx %u, map_desc %p, box %s, flags %#x.\n",
-            resource, sub_resource_idx, map_desc, debug_box(box), flags);
+    TRACE("resource %p, sub_resource_idx %u, map_ptr %p, box %s, flags %#x.\n",
+            resource, sub_resource_idx, map_ptr, debug_box(box), flags);
 
     texture = texture_from_resource(resource);
     sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx);
@@ -3594,30 +3612,22 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
 
     context_release(context);
 
-    if (fmt_flags & WINED3DFMT_FLAG_BROKEN_PITCH)
-    {
-        map_desc->row_pitch = wined3d_texture_get_level_width(texture, texture_level) * format->byte_count;
-        map_desc->slice_pitch = wined3d_texture_get_level_height(texture, texture_level) * map_desc->row_pitch;
-    }
-    else
-    {
-        wined3d_texture_get_pitch(texture, texture_level, &map_desc->row_pitch, &map_desc->slice_pitch);
-    }
+    texture_resource_sub_resource_get_map_pitch(resource, sub_resource_idx, &row_pitch, &slice_pitch);
 
     if ((fmt_flags & (WINED3DFMT_FLAG_BLOCKS | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_BLOCKS)
     {
         /* Compressed textures are block based, so calculate the offset of
          * the block that contains the top-left pixel of the mapped box. */
-        map_desc->data = base_memory
-                + (box->front * map_desc->slice_pitch)
-                + ((box->top / format->block_height) * map_desc->row_pitch)
+        *map_ptr = base_memory
+                + (box->front * slice_pitch)
+                + ((box->top / format->block_height) * row_pitch)
                 + ((box->left / format->block_width) * format->block_byte_count);
     }
     else
     {
-        map_desc->data = base_memory
-                + (box->front * map_desc->slice_pitch)
-                + (box->top * map_desc->row_pitch)
+        *map_ptr = base_memory
+                + (box->front * slice_pitch)
+                + (box->top * row_pitch)
                 + (box->left * format->byte_count);
     }
 
@@ -3632,8 +3642,7 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
     ++resource->map_count;
     ++sub_resource->map_count;
 
-    TRACE("Returning memory %p, row pitch %u, slice pitch %u.\n",
-            map_desc->data, map_desc->row_pitch, map_desc->slice_pitch);
+    TRACE("Returning memory %p.\n", *map_ptr);
 
     return WINED3D_OK;
 }
@@ -3690,6 +3699,7 @@ static const struct wined3d_resource_ops texture_resource_ops =
     texture_resource_preload,
     texture_resource_unload,
     texture_resource_sub_resource_get_desc,
+    texture_resource_sub_resource_get_map_pitch,
     texture_resource_sub_resource_map,
     texture_resource_sub_resource_unmap,
 };

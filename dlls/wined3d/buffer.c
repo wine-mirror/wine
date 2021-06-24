@@ -862,8 +862,14 @@ static HRESULT buffer_resource_sub_resource_get_desc(struct wined3d_resource *re
     return S_OK;
 }
 
+static void buffer_resource_sub_resource_get_map_pitch(struct wined3d_resource *resource,
+        unsigned int sub_resource_idx, unsigned int *row_pitch, unsigned int *slice_pitch)
+{
+    *row_pitch = *slice_pitch = resource->size;
+}
+
 static HRESULT buffer_resource_sub_resource_map(struct wined3d_resource *resource, unsigned int sub_resource_idx,
-        struct wined3d_map_desc *map_desc, const struct wined3d_box *box, uint32_t flags)
+        void **map_ptr, const struct wined3d_box *box, uint32_t flags)
 {
     struct wined3d_buffer *buffer = buffer_from_resource(resource);
     struct wined3d_device *device = resource->device;
@@ -872,13 +878,11 @@ static HRESULT buffer_resource_sub_resource_map(struct wined3d_resource *resourc
     uint8_t *base;
     LONG count;
 
-    TRACE("resource %p, sub_resource_idx %u, map_desc %p, box %s, flags %#x.\n",
-            resource, sub_resource_idx, map_desc, debug_box(box), flags);
+    TRACE("resource %p, sub_resource_idx %u, map_ptr %p, box %s, flags %#x.\n",
+            resource, sub_resource_idx, map_ptr, debug_box(box), flags);
 
     offset = box->left;
     size = box->right - box->left;
-
-    map_desc->row_pitch = map_desc->slice_pitch = resource->size;
 
     count = ++resource->map_count;
 
@@ -965,9 +969,9 @@ static HRESULT buffer_resource_sub_resource_map(struct wined3d_resource *resourc
     }
 
     base = buffer->map_ptr ? buffer->map_ptr : resource->heap_memory;
-    map_desc->data = base + offset;
+    *map_ptr = base + offset;
 
-    TRACE("Returning memory at %p (base %p, offset %u).\n", map_desc->data, base, offset);
+    TRACE("Returning memory at %p (base %p, offset %u).\n", *map_ptr, base, offset);
 
     return WINED3D_OK;
 }
@@ -1115,6 +1119,7 @@ static const struct wined3d_resource_ops buffer_resource_ops =
     buffer_resource_preload,
     buffer_resource_unload,
     buffer_resource_sub_resource_get_desc,
+    buffer_resource_sub_resource_get_map_pitch,
     buffer_resource_sub_resource_map,
     buffer_resource_sub_resource_unmap,
 };
