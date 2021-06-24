@@ -7562,7 +7562,7 @@ static const unsigned test_extended_context_spoil_data1[8] = {0x10, 0x20, 0x30, 
 static const unsigned test_extended_context_spoil_data2[8] = {0x15, 0x25, 0x35, 0x45, 0x55, 0x65, 0x75, 0x85};
 
 static BOOL test_extended_context_modified_state;
-static BOOL compaction_enabled;
+static BOOL xsaveopt_enabled, compaction_enabled;
 
 static DWORD test_extended_context_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
         CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher)
@@ -7603,9 +7603,11 @@ static DWORD test_extended_context_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGI
     context_ymm_data = (unsigned int *)&xs->YmmContext;
     ok(!((ULONG_PTR)xs % 64), "Got unexpected xs %p.\n", xs);
 
-    ok((compaction_enabled && (xs->CompactionMask & (expected_compaction_mask | 3)) == expected_compaction_mask)
-            || (!compaction_enabled && !xs->CompactionMask), "Got unexpected CompactionMask %s, compaction %#x.\n",
-            wine_dbgstr_longlong(xs->CompactionMask), compaction_enabled);
+    if (compaction_enabled)
+        ok((xs->CompactionMask & (expected_compaction_mask | 3)) == expected_compaction_mask,
+                "Got compaction mask %#I64x.\n", xs->CompactionMask);
+    else
+        ok(!xs->CompactionMask, "Got compaction mask %#I64x.\n", xs->CompactionMask);
 
     if (test_extended_context_modified_state)
     {
@@ -7615,9 +7617,13 @@ static DWORD test_extended_context_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGI
     }
     else
     {
-        ok(!xs->Mask, "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
-        /* The save area has garbage in this case, the state should be restored to INIT_STATE
-         * without using these data. */
+        ok(xs->Mask == (xsaveopt_enabled ? 0 : 4), "Got unexpected Mask %#I64x.\n", xs->Mask);
+        /* The save area has garbage if xsaveopt is available, so we can't test
+         * its contents. */
+
+        /* Clear the mask; the state should be restored to INIT_STATE without
+         * using this data. */
+        xs->Mask = 0;
         memcpy(context_ymm_data, test_extended_context_spoil_data1 + 4, sizeof(M128A));
     }
 
@@ -7897,6 +7903,7 @@ static void test_extended_context(void)
         int regs[4];
 
         __cpuidex(regs, 0xd, 1);
+        xsaveopt_enabled = regs[0] & 1;
         compaction_enabled = regs[0] & 2;
     }
 
@@ -8547,7 +8554,7 @@ static void test_extended_context(void)
             "Got unexpected bret %#x, GetLastError() %u.\n", bret, GetLastError());
     ok(context->ContextFlags == expected_flags, "Got unexpected ContextFlags %#x.\n",
             context->ContextFlags);
-    ok(xs->Mask == (compaction_enabled ? 0 : 4), "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+    ok(xs->Mask == (compaction_enabled ? 0 : 4), "Got unexpected Mask %#I64x.\n", xs->Mask);
     ok(xs->CompactionMask == 4, "Got unexpected CompactionMask %s.\n",
             wine_dbgstr_longlong(xs->CompactionMask));
     for (i = 0; i < 4; ++i)
@@ -8618,7 +8625,7 @@ static void test_extended_context(void)
     expected_compaction = compaction_enabled ? ((ULONG64)1 << 63) | 4 : 0;
 
     xs = (XSTATE *)((BYTE *)context_ex + context_ex->XState.Offset);
-    ok(!xs->Mask, "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+    ok(xs->Mask == (xsaveopt_enabled ? 0 : 4), "Got unexpected Mask %#I64x.\n", xs->Mask);
     ok(xs->CompactionMask == expected_compaction, "Got unexpected CompactionMask %s.\n",
             wine_dbgstr_longlong(xs->CompactionMask));
 
@@ -8626,12 +8633,13 @@ static void test_extended_context(void)
         ok(!data[i], "Got unexpected data %#x, i %u.\n", data[i], i);
 
     for (i = 0; i < 4; ++i)
-        ok(((ULONG *)&xs->YmmContext)[i] == 0xcccccccc
+        ok(((ULONG *)&xs->YmmContext)[i] == ((xs->Mask & 4) ? 0 : 0xcccccccc)
                 || broken(((ULONG *)&xs->YmmContext)[i] == test_extended_context_data[i + 4]),
                 "Got unexpected data %#x, i %u.\n", ((ULONG *)&xs->YmmContext)[i], i);
 
     /* Test fault exception context. */
     memset(data, 0xff, sizeof(data));
+    xs->Mask = 0;
     test_extended_context_modified_state = FALSE;
     run_exception_test(test_extended_context_handler, NULL, except_code_reset_ymm_state,
             ARRAY_SIZE(except_code_reset_ymm_state), PAGE_EXECUTE_READ);
@@ -8664,12 +8672,13 @@ static void test_extended_context(void)
 
     bret = GetThreadContext(thread, context);
     ok(bret, "Got unexpected bret %#x, GetLastError() %u.\n", bret, GetLastError());
-    ok(!xs->Mask, "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+    todo_wine_if (!xsaveopt_enabled)
+        ok(xs->Mask == (xsaveopt_enabled ? 0 : 4), "Got unexpected Mask %#I64x.\n", xs->Mask);
     ok(xs->CompactionMask == expected_compaction, "Got unexpected CompactionMask %s.\n",
             wine_dbgstr_longlong(xs->CompactionMask));
     for (i = 0; i < 16 * 4; ++i)
-        ok(((ULONG *)&xs->YmmContext)[i] == 0xcccccccc, "Got unexpected value %#x, i %u.\n",
-                ((ULONG *)&xs->YmmContext)[i], i);
+        ok(((ULONG *)&xs->YmmContext)[i] == ((xs->Mask & 4) ? 0 : 0xcccccccc),
+                "Got unexpected value %#x, i %u.\n", ((ULONG *)&xs->YmmContext)[i], i);
 
     pSetXStateFeaturesMask(context, 4);
     memset(&xs->YmmContext, 0, sizeof(xs->YmmContext));
@@ -8725,11 +8734,24 @@ static void test_extended_context(void)
     memset(&xs->YmmContext, 0xcc, sizeof(xs->YmmContext));
     bret = GetThreadContext(thread, context);
     ok(bret, "Got unexpected bret %#x, GetLastError() %u.\n", bret, GetLastError());
-    ok(!xs->Mask || (sizeof(void *) == 4 && xs->Mask == 4),
-            "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
-    for (i = 0; i < 16 * 4; ++i)
-        ok(((ULONG *)&xs->YmmContext)[i] == (xs->Mask ? (i < 8 * 4 ? 0 : 0x48484848) : 0xcccccccc),
-                "Got unexpected value %#x, i %u.\n", ((ULONG *)&xs->YmmContext)[i], i);
+    todo_wine_if (!xsaveopt_enabled && sizeof(void *) != 4)
+        ok(xs->Mask == (xsaveopt_enabled ? 0 : 4) || (sizeof(void *) == 4 && xs->Mask == 4),
+                "Got unexpected Mask %#I64x.\n", xs->Mask);
+    if (xs->Mask == 4)
+    {
+        for (i = 0; i < 8 * sizeof(void *); ++i)
+            ok(((ULONG *)&xs->YmmContext)[i] == 0,
+                    "Got unexpected value %#x, i %u.\n", ((ULONG *)&xs->YmmContext)[i], i);
+        for (; i < 16 * 4; ++i)
+            ok(((ULONG *)&xs->YmmContext)[i] == 0x48484848,
+                    "Got unexpected value %#x, i %u.\n", ((ULONG *)&xs->YmmContext)[i], i);
+    }
+    else
+    {
+        for (i = 0; i < 16 * 4; ++i)
+            ok(((ULONG *)&xs->YmmContext)[i] == 0xcccccccc,
+                    "Got unexpected value %#x, i %u.\n", ((ULONG *)&xs->YmmContext)[i], i);
+    }
 
     bret = ResumeThread(thread);
     ok(bret, "Got unexpected bret %#x, GetLastError() %u.\n", bret, GetLastError());
