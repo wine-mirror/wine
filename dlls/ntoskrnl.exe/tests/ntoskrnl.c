@@ -2190,7 +2190,6 @@ static void test_hidp(HANDLE file, int report_id)
     status = HidP_GetUsages(HidP_Input, HID_USAGE_PAGE_BUTTON, 0, usages, &value,
                             preparsed_data, report, caps.InputReportByteLength);
     ok(status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetUsages returned %#x\n", status);
-    todo_wine
     ok(value == 2, "got usage count %d, expected %d\n", value, 2);
     value = ARRAY_SIZE(usages);
     memset(usages, 0xcd, sizeof(usages));
@@ -2207,9 +2206,7 @@ static void test_hidp(HANDLE file, int report_id)
                             report, caps.InputReportByteLength);
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsages returned %#x\n", status);
     ok(value == 2, "got usage count %d, expected %d\n", value, 2);
-    todo_wine
     ok(usages[0] == 6, "got usages[0] %x, expected %x\n", usages[0], 6);
-    todo_wine
     ok(usages[1] == 4, "got usages[1] %x, expected %x\n", usages[1], 4);
 
     value = ARRAY_SIZE(usage_and_pages);
