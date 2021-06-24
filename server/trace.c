@@ -103,6 +103,22 @@ static void dump_uint64( const char *prefix, const unsigned __int64 *val )
         fprintf( stderr, "%s%08x", prefix, (unsigned int)*val );
 }
 
+static void dump_uint128( const char *prefix, const unsigned __int64 val[2] )
+{
+    unsigned __int64 low = val[0], high = val[1];
+
+    if ((unsigned int)high != high)
+        fprintf( stderr, "%s%x%08x%08x%08x", prefix, (unsigned int)(high >> 32), (unsigned int)high,
+                 (unsigned int)(low >> 32), (unsigned int)low );
+    else if (high)
+        fprintf( stderr, "%s%x%08x%08x", prefix, (unsigned int)high,
+                 (unsigned int)(low >> 32), (unsigned int)low );
+    else if ((unsigned int)low != low)
+        fprintf( stderr, "%s%x%08x", prefix, (unsigned int)(low >> 32), (unsigned int)low );
+    else
+        fprintf( stderr, "%s%x", prefix, (unsigned int)low );
+}
+
 static void dump_rectangle( const char *prefix, const rectangle_t *rect )
 {
     fprintf( stderr, "%s{%d,%d;%d,%d}", prefix,
@@ -666,8 +682,11 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
             dump_uints( ",extended=", (const unsigned int *)ctx.ext.i386_regs,
                         sizeof(ctx.ext.i386_regs) / sizeof(int) );
         if (ctx.flags & SERVER_CTX_YMM_REGISTERS)
-            dump_uints( ",ymm_high=", (const unsigned int *)ctx.ymm.regs.ymm_high,
-                        sizeof(ctx.ymm.regs) / sizeof(int) );
+            for (i = 0; i < 16; i++)
+            {
+                fprintf( stderr, ",ymm%u=", i );
+                dump_uint128( "", (const unsigned __int64 *)&ctx.ymm.regs.ymm_high[i] );
+            }
         break;
     case IMAGE_FILE_MACHINE_AMD64:
         fprintf( stderr, "%s{machine=x86_64", prefix );
@@ -710,17 +729,17 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
             dump_uint64( ",dr7=", &ctx.debug.x86_64_regs.dr7 );
         }
         if (ctx.flags & SERVER_CTX_FLOATING_POINT)
-        {
             for (i = 0; i < 32; i++)
-                fprintf( stderr, ",fp%u=%08x%08x%08x%08x", i,
-                         (unsigned int)(ctx.fp.x86_64_regs.fpregs[i].high >> 32),
-                         (unsigned int)ctx.fp.x86_64_regs.fpregs[i].high,
-                         (unsigned int)(ctx.fp.x86_64_regs.fpregs[i].low >> 32),
-                         (unsigned int)ctx.fp.x86_64_regs.fpregs[i].low );
-        }
+            {
+                fprintf( stderr, ",fp%u=", i );
+                dump_uint128( "", (const unsigned __int64 *)&ctx.fp.x86_64_regs.fpregs[i] );
+            }
         if (ctx.flags & SERVER_CTX_YMM_REGISTERS)
-            dump_uints( ",ymm_high=", (const unsigned int *)ctx.ymm.regs.ymm_high,
-                        sizeof(ctx.ymm.regs) / sizeof(int) );
+            for (i = 0; i < 16; i++)
+            {
+                fprintf( stderr, ",ymm%u=", i );
+                dump_uint128( "", (const unsigned __int64 *)&ctx.ymm.regs.ymm_high[i] );
+            }
         break;
     case IMAGE_FILE_MACHINE_ARMNT:
         fprintf( stderr, "%s{machine=arm", prefix );
