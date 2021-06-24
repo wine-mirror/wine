@@ -414,7 +414,7 @@ HRESULT d2d_bitmap_create_shared(struct d2d_device_context *context, REFIID iid,
     if (IsEqualGUID(iid, &IID_ID2D1Bitmap))
     {
         struct d2d_bitmap *src_impl = unsafe_impl_from_ID2D1Bitmap(data);
-        ID3D10Device *device;
+        ID3D11Device *device;
         HRESULT hr = S_OK;
 
         if (src_impl->factory != context->factory)
@@ -423,9 +423,9 @@ HRESULT d2d_bitmap_create_shared(struct d2d_device_context *context, REFIID iid,
             goto failed;
         }
 
-        ID3D10Resource_GetDevice(src_impl->resource, &device);
-        ID3D10Device_Release(device);
-        if (device != context->d3d_device)
+        ID3D11Resource_GetDevice(src_impl->d3d11_resource, &device);
+        ID3D11Device_Release(device);
+        if (device != (ID3D11Device *)context->d3d11_device)
         {
             hr = D2DERR_UNSUPPORTED_OPERATION;
             goto failed;
@@ -466,28 +466,37 @@ HRESULT d2d_bitmap_create_shared(struct d2d_device_context *context, REFIID iid,
     {
         DXGI_SURFACE_DESC surface_desc;
         IDXGISurface *surface = data;
-        ID3D10Resource *resource;
+        ID3D11Resource *resource;
+        ID3D10Resource *d3d10_resource;
         D2D1_SIZE_U pixel_size;
-        ID3D10Device *device;
+        ID3D11Device *device;
         HRESULT hr;
 
-        if (FAILED(IDXGISurface_QueryInterface(surface, &IID_ID3D10Resource, (void **)&resource)))
+        if (FAILED(IDXGISurface_QueryInterface(surface, &IID_ID3D11Resource, (void **)&resource)))
         {
             WARN("Failed to get d3d resource from dxgi surface.\n");
             return E_FAIL;
         }
 
-        ID3D10Resource_GetDevice(resource, &device);
-        ID3D10Device_Release(device);
-        if (device != context->d3d_device)
+        if (FAILED(hr = ID3D11Resource_QueryInterface(resource, &IID_ID3D10Resource, (void **)&d3d10_resource)))
         {
-            ID3D10Resource_Release(resource);
+            ERR("Failed to query ID3D10Resource interface, hr %#x.\n", hr);
+            ID3D11Resource_Release(resource);
+            return hr;
+        }
+
+        ID3D11Resource_GetDevice(resource, &device);
+        ID3D11Resource_Release(resource);
+        ID3D11Device_Release(device);
+        if (device != (ID3D11Device *)context->d3d11_device)
+        {
+            ID3D10Resource_Release(d3d10_resource);
             return D2DERR_UNSUPPORTED_OPERATION;
         }
 
         if (!(*bitmap = heap_alloc_zero(sizeof(**bitmap))))
         {
-            ID3D10Resource_Release(resource);
+            ID3D10Resource_Release(d3d10_resource);
             return E_OUTOFMEMORY;
         }
 
@@ -495,7 +504,7 @@ HRESULT d2d_bitmap_create_shared(struct d2d_device_context *context, REFIID iid,
         if (FAILED(hr = IDXGISurface_GetDesc(surface, &surface_desc)))
         {
             WARN("Failed to get surface desc, hr %#x.\n", hr);
-            ID3D10Resource_Release(resource);
+            ID3D10Resource_Release(d3d10_resource);
             return hr;
         }
 
@@ -522,8 +531,8 @@ HRESULT d2d_bitmap_create_shared(struct d2d_device_context *context, REFIID iid,
         pixel_size.width = surface_desc.Width;
         pixel_size.height = surface_desc.Height;
 
-        d2d_bitmap_init(*bitmap, context, resource, pixel_size, &d);
-        ID3D10Resource_Release(resource);
+        d2d_bitmap_init(*bitmap, context, d3d10_resource, pixel_size, &d);
+        ID3D10Resource_Release(d3d10_resource);
         TRACE("Created bitmap %p.\n", *bitmap);
 
         return S_OK;
