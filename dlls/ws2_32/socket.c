@@ -694,19 +694,6 @@ static inline void release_sock_fd( SOCKET s, int fd )
     close( fd );
 }
 
-static void _get_sock_errors(SOCKET s, int *events)
-{
-    SERVER_START_REQ( get_socket_event )
-    {
-        req->handle  = wine_server_obj_handle( SOCKET2HANDLE(s) );
-        req->service = FALSE;
-        req->c_event = 0;
-        wine_server_set_reply( req, events, sizeof(int) * FD_MAX_EVENTS );
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-}
-
 static int _get_fd_type(int fd)
 {
     int sock_type = -1;
@@ -2236,33 +2223,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             return 0;
 
         case WS_SO_ERROR:
-        {
-            if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
-                return SOCKET_ERROR;
-            if (getsockopt(fd, SOL_SOCKET, SO_ERROR, optval, (socklen_t *)optlen) != 0 )
-            {
-                SetLastError(wsaErrno());
-                ret = SOCKET_ERROR;
-            }
-            release_sock_fd( s, fd );
-
-            /* The wineserver may have swallowed the error before us */
-            if (!ret && *(int*) optval == 0)
-            {
-                int i, events[FD_MAX_EVENTS];
-                _get_sock_errors(s, events);
-                for (i = 0; i < FD_MAX_EVENTS; i++)
-                {
-                    if(events[i])
-                    {
-                        TRACE("returning SO_ERROR %d from wine server\n", events[i]);
-                        *(int*) optval = events[i];
-                        break;
-                    }
-                }
-            }
-            return ret;
-        }
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_SO_ERROR, optval, optlen );
 
         case WS_SO_LINGER:
         {

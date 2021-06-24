@@ -1295,7 +1295,6 @@ todo_wine
     SetLastError(0xdeadbeef);
     i = 4321;
     err = getsockopt(s, SOL_SOCKET, SO_ERROR, (char *) &i, &size);
-todo_wine
     ok( !err && !WSAGetLastError(),
         "got %d with %d (expected 0 with 0)\n",
         err, WSAGetLastError());
@@ -1306,7 +1305,6 @@ todo_wine
     SetLastError(0xdeadbeef);
     size = 1;
     err = getsockopt(s, SOL_SOCKET, SO_ERROR, (char *) &i, &size);
-todo_wine
     ok( (err == SOCKET_ERROR) && (WSAGetLastError() == WSAEFAULT),
         "got %d with %d (expected SOCKET_ERROR with WSAEFAULT)\n",
         err, WSAGetLastError());
