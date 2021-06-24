@@ -3532,11 +3532,10 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
             resource, sub_resource_idx, map_desc, debug_box(box), flags);
 
     texture = texture_from_resource(resource);
-    if (!(sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx)))
-        return E_INVALIDARG;
+    sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx);
 
     texture_level = sub_resource_idx % texture->level_count;
-    if (box && FAILED(wined3d_texture_check_box_dimensions(texture, texture_level, box)))
+    if (FAILED(wined3d_texture_check_box_dimensions(texture, texture_level, box)))
     {
         WARN("Map box is invalid.\n");
         if (((fmt_flags & WINED3DFMT_FLAG_BLOCKS) && !(resource->access & WINED3D_RESOURCE_ACCESS_CPU))
@@ -3605,38 +3604,28 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
         wined3d_texture_get_pitch(texture, texture_level, &map_desc->row_pitch, &map_desc->slice_pitch);
     }
 
-    if (!box)
+    if ((fmt_flags & (WINED3DFMT_FLAG_BLOCKS | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_BLOCKS)
     {
-        map_desc->data = base_memory;
+        /* Compressed textures are block based, so calculate the offset of
+         * the block that contains the top-left pixel of the mapped box. */
+        map_desc->data = base_memory
+                + (box->front * map_desc->slice_pitch)
+                + ((box->top / format->block_height) * map_desc->row_pitch)
+                + ((box->left / format->block_width) * format->block_byte_count);
     }
     else
     {
-        if ((fmt_flags & (WINED3DFMT_FLAG_BLOCKS | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_BLOCKS)
-        {
-            /* Compressed textures are block based, so calculate the offset of
-             * the block that contains the top-left pixel of the mapped box. */
-            map_desc->data = base_memory
-                    + (box->front * map_desc->slice_pitch)
-                    + ((box->top / format->block_height) * map_desc->row_pitch)
-                    + ((box->left / format->block_width) * format->block_byte_count);
-        }
-        else
-        {
-            map_desc->data = base_memory
-                    + (box->front * map_desc->slice_pitch)
-                    + (box->top * map_desc->row_pitch)
-                    + (box->left * format->byte_count);
-        }
+        map_desc->data = base_memory
+                + (box->front * map_desc->slice_pitch)
+                + (box->top * map_desc->row_pitch)
+                + (box->left * format->byte_count);
     }
 
     if (texture->swapchain && texture->swapchain->front_buffer == texture)
     {
         RECT *r = &texture->swapchain->front_buffer_update;
 
-        if (!box)
-            SetRect(r, 0, 0, resource->width, resource->height);
-        else
-            SetRect(r, box->left, box->top, box->right, box->bottom);
+        SetRect(r, box->left, box->top, box->right, box->bottom);
         TRACE("Mapped front buffer %s.\n", wine_dbgstr_rect(r));
     }
 

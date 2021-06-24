@@ -4834,6 +4834,9 @@ HRESULT CDECL wined3d_device_context_map(struct wined3d_device_context *context,
         struct wined3d_resource *resource, unsigned int sub_resource_idx,
         struct wined3d_map_desc *map_desc, const struct wined3d_box *box, unsigned int flags)
 {
+    struct wined3d_sub_resource_desc desc;
+    struct wined3d_box b;
+
     TRACE("context %p, resource %p, sub_resource_idx %u, map_desc %p, box %s, flags %#x.\n",
             context, resource, sub_resource_idx, map_desc, debug_box(box), flags);
 
@@ -4856,6 +4859,15 @@ HRESULT CDECL wined3d_device_context_map(struct wined3d_device_context *context,
     }
 
     flags = sanitise_map_flags(resource, flags);
+
+    if (FAILED(wined3d_resource_get_sub_resource_desc(resource, sub_resource_idx, &desc)))
+        return E_INVALIDARG;
+
+    if (!box)
+    {
+        wined3d_box_set(&b, 0, 0, desc.width, desc.height, 0, desc.depth);
+        box = &b;
+    }
 
     return context->ops->map(context, resource, sub_resource_idx, map_desc, box, flags);
 }

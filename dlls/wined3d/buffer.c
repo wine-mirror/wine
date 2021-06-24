@@ -875,21 +875,8 @@ static HRESULT buffer_resource_sub_resource_map(struct wined3d_resource *resourc
     TRACE("resource %p, sub_resource_idx %u, map_desc %p, box %s, flags %#x.\n",
             resource, sub_resource_idx, map_desc, debug_box(box), flags);
 
-    if (sub_resource_idx)
-    {
-        WARN("Invalid sub_resource_idx %u.\n", sub_resource_idx);
-        return E_INVALIDARG;
-    }
-
-    if (box)
-    {
-        offset = box->left;
-        size = box->right - box->left;
-    }
-    else
-    {
-        offset = size = 0;
-    }
+    offset = box->left;
+    size = box->right - box->left;
 
     map_desc->row_pitch = map_desc->slice_pitch = resource->size;
 
