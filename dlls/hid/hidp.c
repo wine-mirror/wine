@@ -524,56 +524,22 @@ NTSTATUS WINAPI HidP_InitializeReportForID( HIDP_REPORT_TYPE report_type, UCHAR 
     return HIDP_STATUS_SUCCESS;
 }
 
-ULONG WINAPI HidP_MaxUsageListLength(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, PHIDP_PREPARSED_DATA PreparsedData)
+static NTSTATUS get_usage_list_length( const struct hid_value_caps *caps, void *data )
 {
-    PWINE_HIDP_PREPARSED_DATA data = (PWINE_HIDP_PREPARSED_DATA)PreparsedData;
-    WINE_HID_ELEMENT *elems = HID_ELEMS(data);
-    WINE_HID_REPORT *report = NULL;
-    int r_count;
-    int i;
-    int count = 0;
+    *(ULONG *)data += caps->report_count;
+    return HIDP_STATUS_SUCCESS;
+}
 
-    TRACE("(%i, %x, %p)\n", ReportType, UsagePage, PreparsedData);
+ULONG WINAPI HidP_MaxUsageListLength( HIDP_REPORT_TYPE report_type, USAGE usage_page, PHIDP_PREPARSED_DATA preparsed_data )
+{
+    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    struct caps_filter filter = {.buttons = TRUE, .usage_page = usage_page};
+    USHORT limit = -1;
+    ULONG count = 0;
 
-    if (data->magic != HID_MAGIC)
-        return 0;
+    TRACE( "report_type %d, usage_page %x, preparsed_data %p.\n", report_type, usage_page, preparsed_data );
 
-    switch(ReportType)
-    {
-        case HidP_Input:
-            report = HID_INPUT_REPORTS(data);
-            break;
-        case HidP_Output:
-            report = HID_OUTPUT_REPORTS(data);
-            break;
-        case HidP_Feature:
-            report = HID_FEATURE_REPORTS(data);
-            break;
-        default:
-            return HIDP_STATUS_INVALID_REPORT_TYPE;
-    }
-    r_count = data->reportCount[ReportType];
-
-
-    if (!r_count)
-        return 0;
-
-    for (i = 0; i < r_count; i++)
-    {
-        int j;
-        for (j = 0; j < report[i].elementCount; j++)
-        {
-            if (elems[report[i].elementIdx + j].caps.BitSize == 1 &&
-               (UsagePage == 0 || elems[report[i].elementIdx + j].caps.UsagePage == UsagePage))
-            {
-                if (elems[report[i].elementIdx + j].caps.IsRange)
-                    count += (elems[report[i].elementIdx + j].caps.Range.UsageMax -
-                             elems[report[i].elementIdx + j].caps.Range.UsageMin) + 1;
-                else
-                    count++;
-            }
-        }
-    }
+    enum_value_caps( preparsed, report_type, &filter, get_usage_list_length, &count, &limit );
     return count;
 }
 

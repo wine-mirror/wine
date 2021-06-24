@@ -2140,18 +2140,14 @@ static void test_hidp(HANDLE file, int report_id)
     ok(value == 0, "got value %x, expected %#x\n", value, 0);
 
     value = HidP_MaxUsageListLength(HidP_Feature + 1, 0, preparsed_data);
-    todo_wine
     ok(value == 0, "HidP_MaxUsageListLength(HidP_Feature + 1, 0) returned %d, expected %d\n", value, 0);
     value = HidP_MaxUsageListLength(HidP_Input, 0, preparsed_data);
-    todo_wine
     ok(value == 42, "HidP_MaxUsageListLength(HidP_Input, 0) returned %d, expected %d\n", value, 42);
     value = HidP_MaxUsageListLength(HidP_Input, HID_USAGE_PAGE_BUTTON, preparsed_data);
-    todo_wine
     ok(value == 32, "HidP_MaxUsageListLength(HidP_Input, HID_USAGE_PAGE_BUTTON) returned %d, expected %d\n", value, 32);
     value = HidP_MaxUsageListLength(HidP_Input, HID_USAGE_PAGE_LED, preparsed_data);
     ok(value == 8, "HidP_MaxUsageListLength(HidP_Input, HID_USAGE_PAGE_LED) returned %d, expected %d\n", value, 8);
     value = HidP_MaxUsageListLength(HidP_Feature, HID_USAGE_PAGE_BUTTON, preparsed_data);
-    todo_wine
     ok(value == 8, "HidP_MaxUsageListLength(HidP_Feature, HID_USAGE_PAGE_BUTTON) returned %d, expected %d\n", value, 8);
     value = HidP_MaxUsageListLength(HidP_Feature, HID_USAGE_PAGE_LED, preparsed_data);
     ok(value == 0, "HidP_MaxUsageListLength(HidP_Feature, HID_USAGE_PAGE_LED) returned %d, expected %d\n", value, 0);
