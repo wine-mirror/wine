@@ -457,7 +457,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateGradientStopCollection
     TRACE("iface %p, stops %p, stop_count %u, gamma %#x, extend_mode %#x, gradient %p.\n",
             iface, stops, stop_count, gamma, extend_mode, gradient);
 
-    if (SUCCEEDED(hr = d2d_gradient_create(render_target->factory, render_target->d3d_device,
+    if (SUCCEEDED(hr = d2d_gradient_create(render_target->factory, render_target->d3d11_device,
             stops, stop_count, gamma, extend_mode, &object)))
         *gradient = &object->ID2D1GradientStopCollection_iface;
 

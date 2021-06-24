@@ -65,6 +65,7 @@ static ULONG STDMETHODCALLTYPE d2d_gradient_Release(ID2D1GradientStopCollection 
     if (!refcount)
     {
         heap_free(gradient->stops);
+        ID3D11ShaderResourceView_Release(gradient->d3d11_view);
         ID3D10ShaderResourceView_Release(gradient->view);
         ID2D1Factory_Release(gradient->factory);
         heap_free(gradient);
@@ -127,16 +128,17 @@ static const struct ID2D1GradientStopCollectionVtbl d2d_gradient_vtbl =
     d2d_gradient_GetExtendMode,
 };
 
-HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D10Device *device, const D2D1_GRADIENT_STOP *stops,
+HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D11Device1 *device, const D2D1_GRADIENT_STOP *stops,
         UINT32 stop_count, D2D1_GAMMA gamma, D2D1_EXTEND_MODE extend_mode, struct d2d_gradient **out)
 {
-    D3D10_SHADER_RESOURCE_VIEW_DESC srv_desc;
-    D3D10_SUBRESOURCE_DATA buffer_data;
+    D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
+    ID3D11ShaderResourceView *d3d11_view;
+    D3D11_SUBRESOURCE_DATA buffer_data;
     ID3D10ShaderResourceView *view;
     struct d2d_gradient *gradient;
-    D3D10_BUFFER_DESC buffer_desc;
+    D3D11_BUFFER_DESC buffer_desc;
     struct d2d_vec4 *data;
-    ID3D10Buffer *buffer;
+    ID3D11Buffer *buffer;
     unsigned int i;
     HRESULT hr;
 
@@ -157,8 +159,8 @@ HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D10Device *device, const D
     }
 
     buffer_desc.ByteWidth = 2 * stop_count * sizeof(*data);
-    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
-    buffer_desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
+    buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
     buffer_desc.CPUAccessFlags = 0;
     buffer_desc.MiscFlags = 0;
 
@@ -166,7 +168,7 @@ HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D10Device *device, const D
     buffer_data.SysMemPitch = 0;
     buffer_data.SysMemSlicePitch = 0;
 
-    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &buffer_data, &buffer);
+    hr = ID3D11Device1_CreateBuffer(device, &buffer_desc, &buffer_data, &buffer);
     heap_free(data);
     if (FAILED(hr))
     {
@@ -175,21 +177,29 @@ HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D10Device *device, const D
     }
 
     srv_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-    srv_desc.ViewDimension = D3D10_SRV_DIMENSION_BUFFER;
+    srv_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
     srv_desc.Buffer.ElementOffset = 0;
     srv_desc.Buffer.ElementWidth = 2 * stop_count;
 
-    hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)buffer, &srv_desc, &view);
-    ID3D10Buffer_Release(buffer);
+    hr = ID3D11Device1_CreateShaderResourceView(device, (ID3D11Resource *)buffer, &srv_desc, &d3d11_view);
+    ID3D11Buffer_Release(buffer);
     if (FAILED(hr))
     {
         ERR("Failed to create view, hr %#x.\n", hr);
         return hr;
     }
 
+    if (FAILED(hr = ID3D11ShaderResourceView_QueryInterface(d3d11_view, &IID_ID3D10ShaderResourceView, (void **)&view)))
+    {
+        ERR("Failed to query D3D10 view, hr %#x.\n", hr);
+        ID3D11ShaderResourceView_Release(d3d11_view);
+        return hr;
+    }
+
     if (!(gradient = heap_alloc_zero(sizeof(*gradient))))
     {
         ID3D10ShaderResourceView_Release(view);
+        ID3D11ShaderResourceView_Release(d3d11_view);
         return E_OUTOFMEMORY;
     }
 
@@ -202,11 +212,13 @@ HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D10Device *device, const D
     gradient->refcount = 1;
     ID2D1Factory_AddRef(gradient->factory = factory);
     gradient->view = view;
+    gradient->d3d11_view = d3d11_view;
 
     gradient->stop_count = stop_count;
     if (!(gradient->stops = heap_calloc(stop_count, sizeof(*stops))))
     {
         ID3D10ShaderResourceView_Release(view);
+        ID3D11ShaderResourceView_Release(d3d11_view);
         heap_free(gradient);
         return E_OUTOFMEMORY;
     }
