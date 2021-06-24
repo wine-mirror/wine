@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-06-04 08:43+0300\n"
+"PO-Revision-Date: 2021-06-24 21:06+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -6974,10 +6974,8 @@ msgid "Resource is not currently available.\n"
 msgstr "Išteklius šiuo metu neprieinamas.\n"
 
 #: dlls/light.msstyles/light.rc:30 dlls/light.msstyles/light.rc:37
-#, fuzzy
-#| msgid "Class Name:"
 msgid "Classic Blue"
-msgstr "Klasės vardas:"
+msgstr "Klasikinė mėlyna"
 
 #: dlls/light.msstyles/light.rc:43 dlls/light.msstyles/light.rc:49
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
