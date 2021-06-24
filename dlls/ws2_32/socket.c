@@ -2090,7 +2090,6 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
 
         /* Handle common cases. The special cases are below, sorted
          * alphabetically */
-        case WS_SO_KEEPALIVE:
         case WS_SO_OOBINLINE:
         case WS_SO_RCVBUF:
         case WS_SO_REUSEADDR:
@@ -2224,6 +2223,9 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
 
         case WS_SO_ERROR:
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_SO_ERROR, optval, optlen );
+
+        case WS_SO_KEEPALIVE:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_SO_KEEPALIVE, optval, optlen );
 
         case WS_SO_LINGER:
         {
