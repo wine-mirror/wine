@@ -437,6 +437,9 @@ static BOOL handle_debug_event(struct gdb_context* gdbctx)
         fprintf(stderr, "%04x:%04x: create thread I @%p\n", de->dwProcessId,
             de->dwThreadId, de->u.CreateProcessInfo.lpStartAddress);
 
+        dbg_load_module(gdbctx->process->handle, de->u.CreateProcessInfo.hFile, u.buffer,
+                        (DWORD_PTR)de->u.CreateProcessInfo.lpBaseOfImage, 0);
+
         dbg_add_thread(gdbctx->process, de->dwThreadId,
                        de->u.CreateProcessInfo.hThread,
                        de->u.CreateProcessInfo.lpThreadLocalBase);
