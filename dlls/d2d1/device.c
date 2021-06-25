@@ -125,6 +125,7 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
     ID3D10Device *device = render_target->d3d_device;
     ID3D10Buffer *d3d10_ib = NULL, *d3d10_vb = NULL, *d3d10_vs_cb = NULL, *d3d10_ps_cb = NULL;
     ID3D11Buffer *vs_cb = render_target->vs_cb, *ps_cb = render_target->ps_cb;
+    ID3D10VertexShader *d3d10_vs = NULL;
     ID3D10InputLayout *d3d10_il = NULL;
     D3D10_RECT scissor_rect;
     unsigned int offset;
@@ -168,6 +169,12 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
         goto error;
     }
 
+    if (shape_resources->vs && FAILED(hr = ID3D11VertexShader_QueryInterface(shape_resources->vs, &IID_ID3D10VertexShader, (void **)&d3d10_vs)))
+    {
+        ERR("Failed to query D3D10 vertex shader, hr %#x.\n", hr);
+        goto error;
+    }
+
     if (FAILED(hr = render_target->stateblock->lpVtbl->Capture(render_target->stateblock)))
     {
         WARN("Failed to capture stateblock, hr %#x.\n", hr);
@@ -182,7 +189,7 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
     offset = 0;
     ID3D10Device_IASetVertexBuffers(device, 0, 1, &d3d10_vb, &vb_stride, &offset);
     ID3D10Device_VSSetConstantBuffers(device, 0, 1, &d3d10_vs_cb);
-    ID3D10Device_VSSetShader(device, shape_resources->vs);
+    ID3D10Device_VSSetShader(device, d3d10_vs);
     ID3D10Device_PSSetConstantBuffers(device, 0, 1, &d3d10_ps_cb);
     ID3D10Device_PSSetShader(device, render_target->ps);
     ID3D10Device_RSSetViewports(device, 1, &vp);
@@ -223,6 +230,7 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
         WARN("Failed to apply stateblock, hr %#x.\n", hr);
 
 error:
+    if (d3d10_vs) ID3D10VertexShader_Release(d3d10_vs);
     if (d3d10_il) ID3D10InputLayout_Release(d3d10_il);
     if (d3d10_ib) ID3D10Buffer_Release(d3d10_ib);
     if (d3d10_vb) ID3D10Buffer_Release(d3d10_vb);
@@ -310,7 +318,7 @@ static ULONG STDMETHODCALLTYPE d2d_device_context_inner_Release(IUnknown *iface)
         ID3D11Buffer_Release(context->vs_cb);
         for (i = 0; i < D2D_SHAPE_TYPE_COUNT; ++i)
         {
-            ID3D10VertexShader_Release(context->shape_resources[i].vs);
+            ID3D11VertexShader_Release(context->shape_resources[i].vs);
             ID3D11InputLayout_Release(context->shape_resources[i].il);
         }
         for (i = 0; i < D2D_SAMPLER_INTERPOLATION_MODE_COUNT; ++i)
@@ -3946,8 +3954,8 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
             goto err;
         }
 
-        if (FAILED(hr = ID3D10Device_CreateVertexShader(render_target->d3d_device, si->vs_code,
-                si->vs_code_size, &render_target->shape_resources[si->shape_type].vs)))
+        if (FAILED(hr = ID3D11Device1_CreateVertexShader(render_target->d3d11_device, si->vs_code,
+                si->vs_code_size, NULL, &render_target->shape_resources[si->shape_type].vs)))
         {
             WARN("Failed to create vertex shader for shape type %#x, hr %#x.\n", si->shape_type, hr);
             goto err;
@@ -4080,7 +4088,7 @@ err:
     for (i = 0; i < D2D_SHAPE_TYPE_COUNT; ++i)
     {
         if (render_target->shape_resources[i].vs)
-            ID3D10VertexShader_Release(render_target->shape_resources[i].vs);
+            ID3D11VertexShader_Release(render_target->shape_resources[i].vs);
         if (render_target->shape_resources[i].il)
             ID3D11InputLayout_Release(render_target->shape_resources[i].il);
     }
