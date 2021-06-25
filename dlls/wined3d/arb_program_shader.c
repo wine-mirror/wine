@@ -7922,7 +7922,7 @@ static DWORD arbfp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bl
     {
         const struct wined3d_format *fmt = src_texture->resource.format;
         alpha_test_key.color_space_low_value = 0;
-        alpha_test_key.color_space_high_value = ~(((1u << fmt->alpha_size) - 1) << fmt->alpha_offset);
+        alpha_test_key.color_space_high_value = ~(wined3d_mask_from_size(fmt->alpha_size) << fmt->alpha_offset);
         color_key = &alpha_test_key;
     }
 
