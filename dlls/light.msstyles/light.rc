@@ -532,6 +532,35 @@ BLUE_INI TEXTFILE
 "GlyphImageFile = blue_spin_glyph_left.bmp\r\n"
 "GlyphTransparent = True\r\n"
 
+"\r\n; Status\r\n"
+"[Status]\r\n"
+"SizingMargins = 1, 1, 2, 1\r\n"
+"ImageFile = blue_status_background.bmp\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 1\r\n"
+"SizingType = Stretch\r\n"
+
+"[Status.Pane]\r\n"
+"SizingMargins = 0, 2, 2, 2\r\n"
+"ImageFile = blue_status_pane.bmp\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 1\r\n"
+"SizingType = Tile\r\n"
+"Transparent = True\r\n"
+
+"[Status.GripperPane]\r\n"
+"BgType = None\r\n"
+
+"[Status.Gripper]\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"; Same as scrollbar resize box gripper \r\n"
+"ImageFile = blue_scrollbar_resizebox_grip.bmp\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 2\r\n"
+"SizingType = TrueSize\r\n"
+"Transparent = True\r\n"
+"VAlign = Bottom\r\n"
+
 "\r\n; Toolbar\r\n"
 "[Toolbar]\r\n"
 "BgType = BorderFill\r\n"
@@ -706,6 +735,13 @@ BLUE_SPIN_GLYPH_RIGHT_BMP BITMAP "blue_spin_glyph_right.bmp"
 
 /* @makedep: blue_spin_glyph_up.bmp */
 BLUE_SPIN_GLYPH_UP_BMP BITMAP "blue_spin_glyph_up.bmp"
+
+/* Status */
+/* @makedep: blue_status_background.bmp */
+BLUE_STATUS_BACKGROUND_BMP BITMAP "blue_status_background.bmp"
+
+/* @makedep: blue_status_pane.bmp */
+BLUE_STATUS_PANE_BMP BITMAP "blue_status_pane.bmp"
 
 /* ToolBar */
 /* @makedep: blue_toolbar_buttons.bmp */
