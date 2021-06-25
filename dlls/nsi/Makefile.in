@@ -1,0 +1,4 @@
+MODULE    = nsi.dll
+IMPORTLIB = nsi
+
+EXTRADLLFLAGS = -mno-cygwin
