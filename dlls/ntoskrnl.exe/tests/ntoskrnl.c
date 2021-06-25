@@ -2378,7 +2378,6 @@ static void test_hidp(HANDLE file, int report_id)
                                      64, preparsed_data, report, caps.FeatureReportByteLength);
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValueArray returned %#x\n", status);
     memset(buffer + 16, 0xff, 8);
-    todo_wine
     ok(!memcmp(buffer, buffer + 16, 16), "unexpected report value\n");
 
     HidD_FreePreparsedData(preparsed_data);
