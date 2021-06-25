@@ -92,6 +92,9 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #include "comsvcs.h"
 #include "directmanipulation.h"
 
+#define __WINE_INIT_NPI_MODULEID
+#include "netiodef.h"
+
 /* FIXME: cguids declares GUIDs but does not define their values */
 
 /* GUIDs not declared in an exported header file */

@@ -57,4 +57,33 @@ static inline BOOLEAN NmrIsEqualNpiModuleId( const NPI_MODULEID *mod1, const NPI
     return FALSE;
 }
 
+#ifdef __WINE_INIT_NPI_MODULEID
+#ifdef __cplusplus
+#define DEFINE_NPI_GUID_MODULEID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
+    EXTERN_C const NPI_MODULEID name DECLSPEC_HIDDEN;                   \
+    EXTERN_C const NPI_MODULEID name =                                  \
+    { sizeof(NPI_MODULEID), MIT_GUID, { { l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } } } }
+#else
+#define DEFINE_NPI_GUID_MODULEID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
+    const NPI_MODULEID name DECLSPEC_HIDDEN;                            \
+    const NPI_MODULEID name =                                           \
+    { sizeof(NPI_MODULEID), MIT_GUID, { { l, w1, w2, { b1, b2,  b3,  b4,  b5,  b6,  b7,  b8 } } } }
+#endif
+#else /* __WINE_INIT_MODULEID */
+#define DEFINE_NPI_GUID_MODULEID(name, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8) \
+    EXTERN_C const NPI_MODULEID name DECLSPEC_HIDDEN
+#endif /* __WINE_INIT_MODULEID */
+
+#define DEFINE_NPI_MS_MODULEID(name, n) DEFINE_NPI_GUID_MODULEID(name, 0xeb004a00 + (n), 0x9b1a, 0x11d4, \
+                                                                 0x91, 0x23, 0x00, 0x50, 0x04, 0x77, 0x59, 0xbc)
+
+DEFINE_NPI_MS_MODULEID( NPI_MS_IPV4_MODULEID,        0x00 );
+DEFINE_NPI_MS_MODULEID( NPI_MS_IPV6_MODULEID,        0x01 );
+DEFINE_NPI_MS_MODULEID( NPI_MS_UDP_MODULEID,         0x02 );
+DEFINE_NPI_MS_MODULEID( NPI_MS_TCP_MODULEID,         0x03 );
+DEFINE_NPI_MS_MODULEID( NPI_MS_NDIS_MODULEID,        0x11 );
+
+#undef DEFINE_NPI_MS_MODULEID
+#undef DEFINE_NPI_GUID_MODULEID
+
 #endif /* __WINE_NETIODEF_H */
