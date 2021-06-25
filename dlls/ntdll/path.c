@@ -231,7 +231,7 @@ NTSTATUS WINAPI RtlDosPathNameToNtPathName_U_WithStatus(const WCHAR *dos_path, U
             goto out;
         }
 
-        if (*file_part) *file_part = NULL;
+        if (file_part) *file_part = NULL;
 
         sz = LOWORD(dosdev);
 
