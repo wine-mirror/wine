@@ -1613,6 +1613,28 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
         case IOCTL_AFD_WINE_SET_SO_KEEPALIVE:
             return do_setsockopt( handle, io, SOL_SOCKET, SO_KEEPALIVE, in_buffer, in_size );
 
+        case IOCTL_AFD_WINE_GET_SO_LINGER:
+        {
+            struct WS_linger *ws_linger = out_buffer;
+            struct linger unix_linger;
+            socklen_t len = sizeof(unix_linger);
+            int ret;
+
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+                return status;
+
+            ret = getsockopt( fd, SOL_SOCKET, SO_LINGER, &unix_linger, &len );
+            if (needs_close) close( fd );
+            if (!ret)
+            {
+                ws_linger->l_onoff = unix_linger.l_onoff;
+                ws_linger->l_linger = unix_linger.l_linger;
+                io->Information = sizeof(*ws_linger);
+            }
+
+            return ret ? sock_errno_to_status( errno ) : STATUS_SUCCESS;
+        }
+
         default:
         {
             if ((code >> 16) == FILE_DEVICE_NETWORK)

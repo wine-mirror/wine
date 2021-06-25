@@ -2229,9 +2229,6 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
 
         case WS_SO_LINGER:
         {
-            struct linger lingval;
-            socklen_t len = sizeof(struct linger);
-
             /* struct linger and LINGER have different sizes */
             if (!optlen || *optlen < sizeof(LINGER) || !optval)
             {
@@ -2243,23 +2240,13 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
 
             if (_get_fd_type(fd) == SOCK_DGRAM)
             {
-                SetLastError(WSAENOPROTOOPT);
-                ret = SOCKET_ERROR;
+                release_sock_fd( s, fd );
+                SetLastError( WSAENOPROTOOPT );
+                return -1;
             }
-            else if (getsockopt(fd, SOL_SOCKET, SO_LINGER, &lingval, &len) != 0)
-            {
-                SetLastError(wsaErrno());
-                ret = SOCKET_ERROR;
-            }
-            else
-            {
-                ((LINGER *)optval)->l_onoff = lingval.l_onoff;
-                ((LINGER *)optval)->l_linger = lingval.l_linger;
-                *optlen = sizeof(struct linger);
-            }
-
             release_sock_fd( s, fd );
-            return ret;
+
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_SO_LINGER, optval, optlen );
         }
 
         case WS_SO_MAX_MSG_SIZE:
