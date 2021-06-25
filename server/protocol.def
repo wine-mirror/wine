@@ -3535,6 +3535,13 @@ struct handle_info
 @END
 
 
+/* set fd eof information */
+@REQ(set_fd_eof_info)
+    obj_handle_t handle;        /* handle to a file or directory */
+    file_pos_t   eof;           /* offset of eof of file */
+@END
+
+
 /* Retrieve layered info for a window */
 @REQ(get_window_layered_info)
     user_handle_t  handle;        /* handle to the window */

@@ -2630,6 +2630,32 @@ failed:
     free( name );
 }
 
+static void set_fd_eof( struct fd *fd, file_pos_t eof )
+{
+    struct stat st;
+
+    if (!fd->inode)
+    {
+        set_error( STATUS_OBJECT_TYPE_MISMATCH );
+        return;
+    }
+
+    if (fd->unix_fd == -1)
+    {
+        set_error( fd->no_fd_status );
+        return;
+    }
+
+    /* first try normal truncate */
+    if (ftruncate( fd->unix_fd, eof ) != -1) return;
+
+    /* now check for the need to extend the file */
+    if (fstat( fd->unix_fd, &st ) != -1 && eof > st.st_size)
+        grow_file( fd->unix_fd, eof );
+    else
+        file_set_error();
+}
+
 struct completion *fd_get_completion( struct fd *fd, apc_param_t *p_key )
 {
     *p_key = fd->comp_key;
@@ -2921,4 +2947,15 @@ DECL_HANDLER(set_fd_name_info)
         release_object( fd );
     }
     if (root_fd) release_object( root_fd );
+}
+
+/* set fd eof information */
+DECL_HANDLER(set_fd_eof_info)
+{
+    struct fd *fd = get_handle_fd_obj( current->process, req->handle, 0 );
+    if (fd)
+    {
+        set_fd_eof( fd, req->eof );
+        release_object( fd );
+    }
 }

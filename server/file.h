@@ -168,6 +168,7 @@ extern int is_file_executable( const char *name );
 
 struct memory_view;
 
+extern int grow_file( int unix_fd, file_pos_t new_size );
 extern struct memory_view *find_mapped_view( struct process *process, client_ptr_t base );
 extern struct memory_view *get_exe_view( struct process *process );
 extern struct file *get_view_file( const struct memory_view *view, unsigned int access, unsigned int sharing );

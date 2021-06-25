@@ -241,7 +241,7 @@ static void shared_map_destroy( struct object *obj )
 }
 
 /* extend a file beyond the current end of file */
-static int grow_file( int unix_fd, file_pos_t new_size )
+int grow_file( int unix_fd, file_pos_t new_size )
 {
     static const char zero;
     off_t size = new_size;
