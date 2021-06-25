@@ -1653,46 +1653,6 @@ void * CDECL wined3d_texture_get_parent(const struct wined3d_texture *texture)
     return texture->resource.parent;
 }
 
-HRESULT wined3d_texture_check_box_dimensions(const struct wined3d_texture *texture,
-        unsigned int level, const struct wined3d_box *box)
-{
-    const struct wined3d_format *format = texture->resource.format;
-    unsigned int width_mask, height_mask, width, height, depth;
-
-    width = wined3d_texture_get_level_width(texture, level);
-    height = wined3d_texture_get_level_height(texture, level);
-    depth = wined3d_texture_get_level_depth(texture, level);
-
-    if (box->left >= box->right || box->right > width
-            || box->top >= box->bottom || box->bottom > height
-            || box->front >= box->back || box->back > depth)
-    {
-        WARN("Box %s is invalid.\n", debug_box(box));
-        return WINEDDERR_INVALIDRECT;
-    }
-
-    if (texture->resource.format_flags & WINED3DFMT_FLAG_BLOCKS)
-    {
-        /* This assumes power of two block sizes, but NPOT block sizes would
-         * be silly anyway.
-         *
-         * This also assumes that the format's block depth is 1. */
-        width_mask = format->block_width - 1;
-        height_mask = format->block_height - 1;
-
-        if ((box->left & width_mask) || (box->top & height_mask)
-                || (box->right & width_mask && box->right != width)
-                || (box->bottom & height_mask && box->bottom != height))
-        {
-            WARN("Box %s is misaligned for %ux%u blocks.\n",
-                    debug_box(box), format->block_width, format->block_height);
-            return WINED3DERR_INVALIDCALL;
-        }
-    }
-
-    return WINED3D_OK;
-}
-
 void CDECL wined3d_texture_get_pitch(const struct wined3d_texture *texture,
         unsigned int level, unsigned int *row_pitch, unsigned int *slice_pitch)
 {
@@ -2250,7 +2210,7 @@ HRESULT CDECL wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (dirty_region && FAILED(wined3d_texture_check_box_dimensions(texture, 0, dirty_region)))
+    if (dirty_region && FAILED(wined3d_resource_check_box_dimensions(&texture->resource, 0, dirty_region)))
     {
         WARN("Invalid dirty_region %s specified.\n", debug_box(dirty_region));
         return WINED3DERR_INVALIDCALL;
@@ -3553,7 +3513,7 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
     sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx);
 
     texture_level = sub_resource_idx % texture->level_count;
-    if (FAILED(wined3d_texture_check_box_dimensions(texture, texture_level, box)))
+    if (FAILED(wined3d_resource_check_box_dimensions(resource, sub_resource_idx, box)))
     {
         WARN("Map box is invalid.\n");
         if (((fmt_flags & WINED3DFMT_FLAG_BLOCKS) && !(resource->access & WINED3D_RESOURCE_ACCESS_CPU))
@@ -4024,12 +3984,10 @@ HRESULT CDECL wined3d_device_context_blt(struct wined3d_device_context *context,
             && filter != WINED3D_TEXF_LINEAR)
         return WINED3DERR_INVALIDCALL;
 
-    if (FAILED(hr = wined3d_texture_check_box_dimensions(dst_texture,
-            dst_sub_resource_idx % dst_texture->level_count, &dst_box)))
+    if (FAILED(hr = wined3d_resource_check_box_dimensions(&dst_texture->resource, dst_sub_resource_idx, &dst_box)))
         return hr;
 
-    if (FAILED(hr = wined3d_texture_check_box_dimensions(src_texture,
-            src_sub_resource_idx % src_texture->level_count, &src_box)))
+    if (FAILED(hr = wined3d_resource_check_box_dimensions(&src_texture->resource, src_sub_resource_idx, &src_box)))
         return hr;
 
     if (dst_texture->sub_resources[dst_sub_resource_idx].map_count

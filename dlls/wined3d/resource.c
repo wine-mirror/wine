@@ -501,6 +501,44 @@ unsigned int wined3d_resource_get_sample_count(const struct wined3d_resource *re
     return resource->multisample_type;
 }
 
+HRESULT wined3d_resource_check_box_dimensions(struct wined3d_resource *resource,
+        unsigned int sub_resource_idx, const struct wined3d_box *box)
+{
+    const struct wined3d_format *format = resource->format;
+    struct wined3d_sub_resource_desc desc;
+    unsigned int width_mask, height_mask;
+
+    wined3d_resource_get_sub_resource_desc(resource, sub_resource_idx, &desc);
+
+    if (box->left >= box->right || box->right > desc.width
+            || box->top >= box->bottom || box->bottom > desc.height
+            || box->front >= box->back || box->back > desc.depth)
+    {
+        WARN("Box %s is invalid.\n", debug_box(box));
+        return WINEDDERR_INVALIDRECT;
+    }
+
+    if (resource->format_flags & WINED3DFMT_FLAG_BLOCKS)
+    {
+        /* This assumes power of two block sizes, but NPOT block sizes would
+         * be silly anyway.
+         *
+         * This also assumes that the format's block depth is 1. */
+        width_mask = format->block_width - 1;
+        height_mask = format->block_height - 1;
+
+        if ((box->left & width_mask) || (box->top & height_mask)
+                || (box->right & width_mask && box->right != desc.width)
+                || (box->bottom & height_mask && box->bottom != desc.height))
+        {
+            WARN("Box %s is misaligned for %ux%u blocks.\n", debug_box(box), format->block_width, format->block_height);
+            return WINED3DERR_INVALIDCALL;
+        }
+    }
+
+    return WINED3D_OK;
+}
+
 VkAccessFlags vk_access_mask_from_bind_flags(uint32_t bind_flags)
 {
     VkAccessFlags flags = 0;
