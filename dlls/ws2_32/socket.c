@@ -2090,7 +2090,6 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
 
         /* Handle common cases. The special cases are below, sorted
          * alphabetically */
-        case WS_SO_OOBINLINE:
         case WS_SO_RCVBUF:
         case WS_SO_REUSEADDR:
         case WS_SO_SNDBUF:
@@ -2251,6 +2250,9 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             *(int *)optval = 65507;
             *optlen = sizeof(int);
             return 0;
+
+        case WS_SO_OOBINLINE:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_SO_OOBINLINE, optval, optlen );
 
         /* SO_OPENTYPE does not require a valid socket handle. */
         case WS_SO_OPENTYPE:
