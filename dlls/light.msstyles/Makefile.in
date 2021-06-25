@@ -15,4 +15,12 @@ SVG_SRCS = \
 	blue_groupbox.svg \
 	blue_radiobutton_13px.svg \
 	blue_radiobutton_16px.svg \
-	blue_radiobutton_25px.svg
+	blue_radiobutton_25px.svg \
+	blue_scrollbar_arrow_glyphs_7px.svg \
+	blue_scrollbar_arrow_glyphs_9px.svg \
+	blue_scrollbar_arrows.svg \
+	blue_scrollbar_resizebox_grip.svg \
+	blue_scrollbar_shaft_horizontal.svg \
+	blue_scrollbar_shaft_vertical.svg \
+	blue_scrollbar_thumb_horizontal.svg \
+	blue_scrollbar_thumb_vertical.svg

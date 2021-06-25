@@ -340,6 +340,82 @@ BLUE_INI TEXTFILE
 "BorderSize = 1\r\n"
 "FillColor = 255 255 255\r\n"
 "BorderColor = 174 174 174\r\n"
+
+"\r\n; Scroll Bar\r\n"
+"[ScrollBar.ArrowBtn]\r\n"
+"BgType = ImageFile\r\n"
+"SizingMargins = 5, 5, 5, 5\r\n"
+"ContentMargins = 0, 0, 3, 3\r\n"
+"SizingType = Tile\r\n"
+"ImageFile = blue_scrollbar_arrows.bmp\r\n"
+"ImageCount = 16\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"GlyphTransparent = True\r\n"
+"ImageSelectType = Size\r\n"
+"UniformSizing = True\r\n"
+"ImageFile1 = blue_scrollbar_arrow_glyphs_7px.bmp\r\n"
+"ImageFile2 = blue_scrollbar_arrow_glyphs_9px.bmp\r\n"
+"MinSize1 = 7, 7\r\n"
+"MinSize2 = 9, 9\r\n"
+
+"[ScrollBar.ThumbBtnHorz]\r\n"
+"BgType = ImageFile\r\n"
+"SizingMargins = 5, 5, 5, 5\r\n"
+"ContentMargins = 4, 4, 0, 0\r\n"
+"ImageFile = blue_scrollbar_thumb_horizontal.bmp\r\n"
+"ImageCount = 4\r\n"
+"ImageLayout = Vertical\r\n"
+
+"[ScrollBar.ThumbBtnVert]\r\n"
+"BgType = ImageFile\r\n"
+"SizingMargins = 5, 5, 5, 5\r\n"
+"ContentMargins = 0, 0, 4, 4\r\n"
+"ImageFile = blue_scrollbar_thumb_vertical.bmp\r\n"
+"ImageCount = 4\r\n"
+"ImageLayout = Vertical\r\n"
+
+"[ScrollBar.GripperHorz]\r\n"
+"BgType = None\r\n"
+
+"[ScrollBar.GripperVert]\r\n"
+"BgType = None\r\n"
+
+"[ScrollBar.LowerTrackHorz]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_scrollbar_shaft_horizontal.bmp\r\n"
+"SizingMargins = 0, 0, 1, 1\r\n"
+"ImageCount = 4\r\n"
+"ImageLayout = Vertical\r\n"
+
+"[ScrollBar.LowerTrackVert]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_scrollbar_shaft_vertical.bmp\r\n"
+"SizingMargins = 1, 1, 0, 0\r\n"
+"ImageCount = 4\r\n"
+"ImageLayout = Vertical\r\n"
+
+"[ScrollBar.UpperTrackHorz]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_scrollbar_shaft_horizontal.bmp\r\n"
+"SizingMargins = 0, 0, 1, 1\r\n"
+"ImageCount = 4\r\n"
+"ImageLayout = Vertical\r\n"
+
+"[ScrollBar.UpperTrackVert]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_scrollbar_shaft_vertical.bmp\r\n"
+"SizingMargins = 1, 1, 0, 0\r\n"
+"ImageCount = 4\r\n"
+"ImageLayout = Vertical\r\n"
+
+"[ScrollBar.SizeBox]\r\n"
+"ImageFile = blue_scrollbar_resizebox_grip.bmp\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 2\r\n"
+"SizingType = TrueSize\r\n"
+"Transparent = True\r\n"
+"VAlign = Bottom\r\n"
 }
 
 /* Button */
@@ -382,6 +458,31 @@ BLUE_COMBOBUTTON_BMP BITMAP "blue_combobutton.bmp"
 
 /* @makedep: blue_combobutton_glyph.bmp */
 BLUE_COMBOBUTTON_GLYPH_BMP BITMAP "blue_combobutton_glyph.bmp"
+
+/* Scroll Bar */
+/* @makedep: blue_scrollbar_arrows.bmp */
+BLUE_SCROLLBAR_ARROWS_BMP BITMAP "blue_scrollbar_arrows.bmp"
+
+/* @makedep: blue_scrollbar_arrow_glyphs_7px.bmp */
+BLUE_SCROLLBAR_ARROW_GLYPHS_7PX_BMP BITMAP "blue_scrollbar_arrow_glyphs_7px.bmp"
+
+/* @makedep: blue_scrollbar_arrow_glyphs_9px.bmp */
+BLUE_SCROLLBAR_ARROW_GLYPHS_9PX_BMP BITMAP "blue_scrollbar_arrow_glyphs_9px.bmp"
+
+/* @makedep: blue_scrollbar_resizebox_grip.bmp */
+BLUE_SCROLLBAR_RESIZEBOX_GRIP_BMP BITMAP "blue_scrollbar_resizebox_grip.bmp"
+
+/* @makedep: blue_scrollbar_shaft_horizontal.bmp */
+BLUE_SCROLLBAR_SHAFT_HORIZONTAL_BMP BITMAP "blue_scrollbar_shaft_horizontal.bmp"
+
+/* @makedep: blue_scrollbar_shaft_vertical.bmp */
+BLUE_SCROLLBAR_SHAFT_VERTICAL_BMP BITMAP "blue_scrollbar_shaft_vertical.bmp"
+
+/* @makedep: blue_scrollbar_thumb_horizontal.bmp */
+BLUE_SCROLLBAR_THUMB_HORIZONTAL_BMP BITMAP "blue_scrollbar_thumb_horizontal.bmp"
+
+/* @makedep: blue_scrollbar_thumb_vertical.bmp */
+BLUE_SCROLLBAR_THUMB_VERTICAL_BMP BITMAP "blue_scrollbar_thumb_vertical.bmp"
 
 /* File version */
 #define WINE_FILEDESCRIPTION_STR "Light Theme"
