@@ -73,7 +73,7 @@ struct d2d_error_state
 
 struct d2d_shape_resources
 {
-    ID3D10InputLayout *il;
+    ID3D11InputLayout *il;
     ID3D10VertexShader *vs;
 };
 

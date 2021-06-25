@@ -125,6 +125,7 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
     ID3D10Device *device = render_target->d3d_device;
     ID3D10Buffer *d3d10_ib = NULL, *d3d10_vb = NULL, *d3d10_vs_cb = NULL, *d3d10_ps_cb = NULL;
     ID3D11Buffer *vs_cb = render_target->vs_cb, *ps_cb = render_target->ps_cb;
+    ID3D10InputLayout *d3d10_il = NULL;
     D3D10_RECT scissor_rect;
     unsigned int offset;
     D3D10_VIEWPORT vp;
@@ -161,6 +162,12 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
         goto error;
     }
 
+    if (shape_resources->il && FAILED(hr = ID3D11InputLayout_QueryInterface(shape_resources->il, &IID_ID3D10InputLayout, (void **)&d3d10_il)))
+    {
+        ERR("Failed to query D3D10 input layout, hr %#x.\n", hr);
+        goto error;
+    }
+
     if (FAILED(hr = render_target->stateblock->lpVtbl->Capture(render_target->stateblock)))
     {
         WARN("Failed to capture stateblock, hr %#x.\n", hr);
@@ -169,7 +176,7 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
 
     ID3D10Device_ClearState(device);
 
-    ID3D10Device_IASetInputLayout(device, shape_resources->il);
+    ID3D10Device_IASetInputLayout(device, d3d10_il);
     ID3D10Device_IASetPrimitiveTopology(device, D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     ID3D10Device_IASetIndexBuffer(device, d3d10_ib, DXGI_FORMAT_R16_UINT, 0);
     offset = 0;
@@ -216,6 +223,7 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
         WARN("Failed to apply stateblock, hr %#x.\n", hr);
 
 error:
+    if (d3d10_il) ID3D10InputLayout_Release(d3d10_il);
     if (d3d10_ib) ID3D10Buffer_Release(d3d10_ib);
     if (d3d10_vb) ID3D10Buffer_Release(d3d10_vb);
     if (d3d10_vs_cb) ID3D10Buffer_Release(d3d10_vs_cb);
@@ -303,7 +311,7 @@ static ULONG STDMETHODCALLTYPE d2d_device_context_inner_Release(IUnknown *iface)
         for (i = 0; i < D2D_SHAPE_TYPE_COUNT; ++i)
         {
             ID3D10VertexShader_Release(context->shape_resources[i].vs);
-            ID3D10InputLayout_Release(context->shape_resources[i].il);
+            ID3D11InputLayout_Release(context->shape_resources[i].il);
         }
         for (i = 0; i < D2D_SAMPLER_INTERPOLATION_MODE_COUNT; ++i)
         {
@@ -2840,29 +2848,29 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
     unsigned int i;
     HRESULT hr;
 
-    static const D3D10_INPUT_ELEMENT_DESC il_desc_outline[] =
+    static const D3D11_INPUT_ELEMENT_DESC il_desc_outline[] =
     {
-        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0},
-        {"PREV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D10_INPUT_PER_VERTEX_DATA, 0},
-        {"NEXT", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 16, D3D10_INPUT_PER_VERTEX_DATA, 0},
+        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"PREV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"NEXT", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
-    static const D3D10_INPUT_ELEMENT_DESC il_desc_curve_outline[] =
+    static const D3D11_INPUT_ELEMENT_DESC il_desc_curve_outline[] =
     {
-        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0},
-        {"P", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D10_INPUT_PER_VERTEX_DATA, 0},
-        {"P", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 16, D3D10_INPUT_PER_VERTEX_DATA, 0},
-        {"P", 2, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D10_INPUT_PER_VERTEX_DATA, 0},
-        {"PREV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 32, D3D10_INPUT_PER_VERTEX_DATA, 0},
-        {"NEXT", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40, D3D10_INPUT_PER_VERTEX_DATA, 0},
+        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"P", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"P", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"P", 2, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"PREV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"NEXT", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
-    static const D3D10_INPUT_ELEMENT_DESC il_desc_triangle[] =
+    static const D3D11_INPUT_ELEMENT_DESC il_desc_triangle[] =
     {
-        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0},
+        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
-    static const D3D10_INPUT_ELEMENT_DESC il_desc_curve[] =
+    static const D3D11_INPUT_ELEMENT_DESC il_desc_curve[] =
     {
-        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0},
-        {"TEXCOORD", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 8, D3D10_INPUT_PER_VERTEX_DATA, 0},
+        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"TEXCOORD", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
     static const DWORD vs_code_outline[] =
     {
@@ -3856,7 +3864,7 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
     static const struct shape_info
     {
         enum d2d_shape_type shape_type;
-        const D3D10_INPUT_ELEMENT_DESC *il_desc;
+        const D3D11_INPUT_ELEMENT_DESC *il_desc;
         unsigned int il_element_count;
         const void *vs_code;
         size_t vs_code_size;
@@ -3931,7 +3939,7 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
     {
         const struct shape_info *si = &shape_info[i];
 
-        if (FAILED(hr = ID3D10Device_CreateInputLayout(render_target->d3d_device, si->il_desc, si->il_element_count,
+        if (FAILED(hr = ID3D11Device1_CreateInputLayout(render_target->d3d11_device, si->il_desc, si->il_element_count,
                 si->vs_code, si->vs_code_size, &render_target->shape_resources[si->shape_type].il)))
         {
             WARN("Failed to create input layout for shape type %#x, hr %#x.\n", si->shape_type, hr);
@@ -4074,7 +4082,7 @@ err:
         if (render_target->shape_resources[i].vs)
             ID3D10VertexShader_Release(render_target->shape_resources[i].vs);
         if (render_target->shape_resources[i].il)
-            ID3D10InputLayout_Release(render_target->shape_resources[i].il);
+            ID3D11InputLayout_Release(render_target->shape_resources[i].il);
     }
     if (render_target->stateblock)
         render_target->stateblock->lpVtbl->Release(render_target->stateblock);
