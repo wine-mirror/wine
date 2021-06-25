@@ -2,3 +2,6 @@ MODULE    = nsi.dll
 IMPORTLIB = nsi
 
 EXTRADLLFLAGS = -mno-cygwin
+
+C_SRCS = \
+	nsi.c

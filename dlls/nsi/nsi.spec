@@ -1,5 +1,5 @@
 @ stub NsiAllocateAndGetPersistentDataWithMaskTable
-@ stub NsiAllocateAndGetTable
+@ stdcall NsiAllocateAndGetTable(long ptr long ptr long ptr long ptr long ptr long ptr long)
 @ stub NsiCancelChangeNotification
 @ stub NsiDeregisterChangeNotification
 @ stub NsiDeregisterChangeNotificationEx
@@ -7,7 +7,7 @@
 @ stub NsiEnumerateObjectsAllParametersEx
 @ stub NsiEnumerateObjectsAllPersistentParametersWithMask
 @ stub NsiFreePersistentDataWithMaskTable
-@ stub NsiFreeTable
+@ stdcall NsiFreeTable(ptr ptr ptr ptr)
 @ stub NsiGetAllParameters
 @ stub NsiGetAllParametersEx
 @ stub NsiGetAllPersistentParametersWithMask
