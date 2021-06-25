@@ -341,6 +341,13 @@ BLUE_INI TEXTFILE
 "FillColor = 255 255 255\r\n"
 "BorderColor = 174 174 174\r\n"
 
+"\r\n; ListView\r\n"
+"[ListView]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 1\r\n"
+"FillColor = 255 255 255\r\n"
+"BorderColor = 174 174 174\r\n"
+
 "\r\n; Rebar\r\n"
 "[Rebar]\r\n"
 "BgType = ImageFile\r\n"
