@@ -3513,13 +3513,6 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
     sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx);
 
     texture_level = sub_resource_idx % texture->level_count;
-    if (FAILED(wined3d_resource_check_box_dimensions(resource, sub_resource_idx, box)))
-    {
-        WARN("Map box is invalid.\n");
-        if (((fmt_flags & WINED3DFMT_FLAG_BLOCKS) && !(resource->access & WINED3D_RESOURCE_ACCESS_CPU))
-                || resource->type != WINED3D_RTYPE_TEXTURE_2D)
-            return WINED3DERR_INVALIDCALL;
-    }
 
     if (texture->flags & WINED3D_TEXTURE_DC_IN_USE)
     {

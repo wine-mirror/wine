@@ -4866,6 +4866,16 @@ HRESULT CDECL wined3d_device_context_map(struct wined3d_device_context *context,
         wined3d_box_set(&b, 0, 0, desc.width, desc.height, 0, desc.depth);
         box = &b;
     }
+    else if (FAILED(wined3d_resource_check_box_dimensions(resource, sub_resource_idx, box)))
+    {
+        WARN("Map box is invalid.\n");
+
+        if (resource->type != WINED3D_RTYPE_BUFFER && resource->type != WINED3D_RTYPE_TEXTURE_2D)
+            return WINED3DERR_INVALIDCALL;
+
+        if ((resource->format_flags & WINED3DFMT_FLAG_BLOCKS) && !(resource->access & WINED3D_RESOURCE_ACCESS_CPU))
+            return WINED3DERR_INVALIDCALL;
+    }
 
     if (SUCCEEDED(hr = context->ops->map(context, resource, sub_resource_idx, &map_desc->data, box, flags)))
         wined3d_resource_get_sub_resource_map_pitch(resource, sub_resource_idx,
