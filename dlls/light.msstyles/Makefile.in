@@ -23,4 +23,13 @@ SVG_SRCS = \
 	blue_scrollbar_shaft_horizontal.svg \
 	blue_scrollbar_shaft_vertical.svg \
 	blue_scrollbar_thumb_horizontal.svg \
-	blue_scrollbar_thumb_vertical.svg
+	blue_scrollbar_thumb_vertical.svg \
+	blue_spin_background.svg \
+	blue_spin_background_down.svg \
+	blue_spin_background_left.svg \
+	blue_spin_background_right.svg \
+	blue_spin_background_up.svg \
+	blue_spin_glyph_down.svg \
+	blue_spin_glyph_left.svg \
+	blue_spin_glyph_right.svg \
+	blue_spin_glyph_up.svg

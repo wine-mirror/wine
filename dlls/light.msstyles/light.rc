@@ -416,6 +416,62 @@ BLUE_INI TEXTFILE
 "SizingType = TrueSize\r\n"
 "Transparent = True\r\n"
 "VAlign = Bottom\r\n"
+
+"\r\n; Spin\r\n"
+"[Spin]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Tile\r\n"
+"ImageFile = blue_spin_background.bmp\r\n"
+"SizingMargins = 2, 2, 2, 2\r\n"
+"ImageCount = 1\r\n"
+
+"[Spin.Up]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageFile = blue_spin_background_up.bmp\r\n"
+"SizingMargins = 4, 3, 4, 2\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageCount = 4\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"GlyphImageFile = blue_spin_glyph_up.bmp\r\n"
+"GlyphTransparent = True\r\n"
+
+"[Spin.Down]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Tile\r\n"
+"ImageFile = blue_spin_background_down.bmp\r\n"
+"SizingMargins = 4, 3, 3, 3\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageCount = 4\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"GlyphImageFile = blue_spin_glyph_down.bmp\r\n"
+"GlyphTransparent = True\r\n"
+
+"[Spin.Uphorz]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageFile = blue_spin_background_right.bmp\r\n"
+"SizingMargins = 3, 3, 4, 2\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageCount = 4\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"GlyphImageFile = blue_spin_glyph_right.bmp\r\n"
+"GlyphTransparent = True\r\n"
+
+"[Spin.Downhorz]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageFile = blue_spin_background_left.bmp\r\n"
+"SizingMargins = 4, 2, 4, 2\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageCount = 4\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"GlyphImageFile = blue_spin_glyph_left.bmp\r\n"
+"GlyphTransparent = True\r\n"
 }
 
 /* Button */
@@ -483,6 +539,34 @@ BLUE_SCROLLBAR_THUMB_HORIZONTAL_BMP BITMAP "blue_scrollbar_thumb_horizontal.bmp"
 
 /* @makedep: blue_scrollbar_thumb_vertical.bmp */
 BLUE_SCROLLBAR_THUMB_VERTICAL_BMP BITMAP "blue_scrollbar_thumb_vertical.bmp"
+
+/* Spin */
+/* @makedep: blue_spin_background.bmp */
+BLUE_SPIN_BACKGROUND_BMP BITMAP "blue_spin_background.bmp"
+
+/* @makedep: blue_spin_background_down.bmp */
+BLUE_SPIN_BACKGROUND_DOWN_BMP BITMAP "blue_spin_background_down.bmp"
+
+/* @makedep: blue_spin_background_right.bmp */
+BLUE_SPIN_BACKGROUND_RIGHT_BMP BITMAP "blue_spin_background_right.bmp"
+
+/* @makedep: blue_spin_background_left.bmp */
+BLUE_SPIN_BACKGROUND_LEFT_BMP BITMAP "blue_spin_background_left.bmp"
+
+/* @makedep: blue_spin_background_up.bmp */
+BLUE_SPIN_BACKGROUND_UP_BMP BITMAP "blue_spin_background_up.bmp"
+
+/* @makedep: blue_spin_glyph_down.bmp */
+BLUE_SPIN_GLYPH_DOWN_BMP BITMAP "blue_spin_glyph_down.bmp"
+
+/* @makedep: blue_spin_glyph_left.bmp */
+BLUE_SPIN_GLYPH_LEFT_BMP BITMAP "blue_spin_glyph_left.bmp"
+
+/* @makedep: blue_spin_glyph_right.bmp */
+BLUE_SPIN_GLYPH_RIGHT_BMP BITMAP "blue_spin_glyph_right.bmp"
+
+/* @makedep: blue_spin_glyph_up.bmp */
+BLUE_SPIN_GLYPH_UP_BMP BITMAP "blue_spin_glyph_up.bmp"
 
 /* File version */
 #define WINE_FILEDESCRIPTION_STR "Light Theme"
