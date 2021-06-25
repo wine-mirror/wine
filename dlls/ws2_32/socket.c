@@ -3545,6 +3545,9 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         case WS_SO_KEEPALIVE:
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_SO_KEEPALIVE, optval, optlen );
 
+        case WS_SO_LINGER:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_SO_LINGER, optval, optlen );
+
         /* Some options need some conversion before they can be sent to
          * setsockopt. The conversions are done here, then they will fall through
          * to the general case. Special options that are not passed to
@@ -3558,20 +3561,6 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             }
             linger.l_onoff  = *(const int*)optval == 0;
             linger.l_linger = 0;
-            level = SOL_SOCKET;
-            optname = SO_LINGER;
-            optval = (char*)&linger;
-            optlen = sizeof(struct linger);
-            break;
-
-        case WS_SO_LINGER:
-            if (!optval)
-            {
-                SetLastError(WSAEFAULT);
-                return SOCKET_ERROR;
-            }
-            linger.l_onoff  = ((LINGER*)optval)->l_onoff;
-            linger.l_linger  = ((LINGER*)optval)->l_linger;
             level = SOL_SOCKET;
             optname = SO_LINGER;
             optval = (char*)&linger;

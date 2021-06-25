@@ -1635,6 +1635,17 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             return ret ? sock_errno_to_status( errno ) : STATUS_SUCCESS;
         }
 
+        case IOCTL_AFD_WINE_SET_SO_LINGER:
+        {
+            const struct WS_linger *ws_linger = in_buffer;
+            struct linger unix_linger;
+
+            unix_linger.l_onoff = ws_linger->l_onoff;
+            unix_linger.l_linger = ws_linger->l_linger;
+
+            return do_setsockopt( handle, io, SOL_SOCKET, SO_LINGER, &unix_linger, sizeof(unix_linger) );
+        }
+
         default:
         {
             if ((code >> 16) == FILE_DEVICE_NETWORK)
