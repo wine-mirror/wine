@@ -32,4 +32,10 @@ SVG_SRCS = \
 	blue_spin_glyph_down.svg \
 	blue_spin_glyph_left.svg \
 	blue_spin_glyph_right.svg \
-	blue_spin_glyph_up.svg
+	blue_spin_glyph_up.svg \
+	blue_toolbar_buttons.svg \
+	blue_toolbar_buttons_split.svg \
+	blue_toolbar_buttons_split_dropdown.svg \
+	blue_toolbar_buttons_split_dropdown_glyph.svg \
+	blue_toolbar_separator_horizontal.svg \
+	blue_toolbar_separator_vertical.svg

@@ -472,6 +472,73 @@ BLUE_INI TEXTFILE
 "GlyphType = ImageGlyph\r\n"
 "GlyphImageFile = blue_spin_glyph_left.bmp\r\n"
 "GlyphTransparent = True\r\n"
+
+"\r\n; Toolbar\r\n"
+"[Toolbar]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 244 244 244\r\n"
+"TextColor = 0 0 0\r\n"
+
+"[Toolbar(Pressed)]\r\n"
+"TextColor = 0 0 0\r\n"
+
+"[Toolbar.Button]\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_toolbar_buttons.bmp\r\n"
+"BgType = ImageFile\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 6\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+
+"[Toolbar.Separator]\r\n"
+"SizingMargins = 5, 2, 2, 1\r\n"
+"ImageFile = blue_toolbar_separator_horizontal.bmp\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 1\r\n"
+"SizingType = Tile\r\n"
+"Transparent = True\r\n"
+
+"[Toolbar.SeparatorVert]\r\n"
+"SizingMargins = 2, 1, 5, 1\r\n"
+"ImageFile = blue_toolbar_separator_vertical.bmp\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 1\r\n"
+"SizingType = Tile\r\n"
+"Transparent = True\r\n"
+
+"[Toolbar.DropdownButton]\r\n"
+"SizingMargins = 4, 4, 4, 4\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_toolbar_buttons.bmp\r\n"
+"BgType = ImageFile\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 6\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+
+"[Toolbar.SplitButton]\r\n"
+"SizingMargins = 3, 2, 3, 3\r\n"
+"ImageFile = blue_toolbar_buttons_split.bmp\r\n"
+"BgType = ImageFile\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 6\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+
+"[Toolbar.SplitButtonDropdown]\r\n"
+"SizingMargins = 1, 3, 3, 3\r\n"
+"ImageFile = blue_toolbar_buttons_split_dropdown.bmp\r\n"
+"BgType = ImageFile\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 6\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"GlyphType = ImageGlyph\r\n"
+"GlyphImageFile = blue_toolbar_buttons_split_dropdown_glyph.bmp\r\n"
+"GlyphTransparent = True\r\n"
 }
 
 /* Button */
@@ -567,6 +634,25 @@ BLUE_SPIN_GLYPH_RIGHT_BMP BITMAP "blue_spin_glyph_right.bmp"
 
 /* @makedep: blue_spin_glyph_up.bmp */
 BLUE_SPIN_GLYPH_UP_BMP BITMAP "blue_spin_glyph_up.bmp"
+
+/* ToolBar */
+/* @makedep: blue_toolbar_buttons.bmp */
+BLUE_TOOLBAR_BUTTONS_BMP BITMAP "blue_toolbar_buttons.bmp"
+
+/* @makedep: blue_toolbar_buttons_split.bmp */
+BLUE_TOOLBAR_BUTTONS_SPLIT_BMP BITMAP "blue_toolbar_buttons_split.bmp"
+
+/* @makedep: blue_toolbar_separator_horizontal.bmp */
+BLUE_TOOLBAR_SEPARATOR_HORIZONTAL_BMP BITMAP "blue_toolbar_separator_horizontal.bmp"
+
+/* @makedep: blue_toolbar_separator_vertical.bmp */
+BLUE_TOOLBAR_SEPARATOR_VERTICAL_BMP BITMAP "blue_toolbar_separator_vertical.bmp"
+
+/* @makedep: blue_toolbar_buttons_split_dropdown.bmp */
+BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_BMP BITMAP "blue_toolbar_buttons_split_dropdown.bmp"
+
+/* @makedep: blue_toolbar_buttons_split_dropdown_glyph.bmp */
+BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_GLYPH_BMP BITMAP "blue_toolbar_buttons_split_dropdown_glyph.bmp"
 
 /* File version */
 #define WINE_FILEDESCRIPTION_STR "Light Theme"
