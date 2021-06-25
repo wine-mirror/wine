@@ -761,10 +761,12 @@ void set_thread_id( TEB *teb, DWORD pid, DWORD tid )
 
     teb->ClientId.UniqueProcess = ULongToHandle( pid );
     teb->ClientId.UniqueThread  = ULongToHandle( tid );
+    teb->RealClientId = teb->ClientId;
     if (wow_teb)
     {
         wow_teb->ClientId.UniqueProcess = pid;
         wow_teb->ClientId.UniqueThread  = tid;
+        wow_teb->RealClientId = wow_teb->ClientId;
     }
 }
 

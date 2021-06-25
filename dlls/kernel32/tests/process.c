@@ -80,6 +80,7 @@ static BOOL   (WINAPI *pSetInformationJobObject)(HANDLE job, JOBOBJECTINFOCLASS 
 static HANDLE (WINAPI *pCreateIoCompletionPort)(HANDLE file, HANDLE existing_port, ULONG_PTR key, DWORD threads);
 static BOOL   (WINAPI *pGetNumaProcessorNode)(UCHAR, PUCHAR);
 static NTSTATUS (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
+static NTSTATUS (WINAPI *pNtQueryInformationThread)(HANDLE, THREADINFOCLASS, PVOID, ULONG, PULONG);
 static NTSTATUS (WINAPI *pNtQuerySystemInformationEx)(SYSTEM_INFORMATION_CLASS, void*, ULONG, void*, ULONG, ULONG*);
 static DWORD  (WINAPI *pWTSGetActiveConsoleSessionId)(void);
 static HANDLE (WINAPI *pCreateToolhelp32Snapshot)(DWORD, DWORD);
@@ -248,6 +249,7 @@ static BOOL init(void)
     hntdll    = GetModuleHandleA("ntdll.dll");
 
     pNtQueryInformationProcess = (void *)GetProcAddress(hntdll, "NtQueryInformationProcess");
+    pNtQueryInformationThread = (void *)GetProcAddress(hntdll, "NtQueryInformationThread");
     pNtQuerySystemInformationEx = (void *)GetProcAddress(hntdll, "NtQuerySystemInformationEx");
 
     pGetNativeSystemInfo = (void *) GetProcAddress(hkernel32, "GetNativeSystemInfo");
@@ -3516,6 +3518,37 @@ static void test_SuspendProcessState(void)
     ok( child_peb.OSMajorVersion, "OSMajorVersion not set %u\n", child_peb.OSMajorVersion );
     ok( child_peb.OSPlatformId == VER_PLATFORM_WIN32_NT, "OSPlatformId not set %u\n", child_peb.OSPlatformId );
     ok( child_peb.SessionId == 1, "SessionId not set %u\n", child_peb.SessionId );
+
+    if (pNtQueryInformationThread)
+    {
+        TEB child_teb;
+        THREAD_BASIC_INFORMATION info;
+        NTSTATUS status = pNtQueryInformationThread( pi.hThread, ThreadBasicInformation,
+                                                     &info, sizeof(info), NULL );
+        ok( !status, "NtQueryInformationProcess failed %x\n", status );
+        ret = ReadProcessMemory( pi.hProcess, info.TebBaseAddress, &child_teb, sizeof(child_teb), NULL );
+        ok( ret, "Failed to read TEB (%u)\n", GetLastError() );
+
+        ok( child_teb.Peb == peb_ptr, "wrong Peb %p / %p\n", child_teb.Peb, peb_ptr );
+        ok( PtrToUlong(child_teb.ClientId.UniqueProcess) == pi.dwProcessId, "wrong pid %x / %x\n",
+            PtrToUlong(child_teb.ClientId.UniqueProcess), pi.dwProcessId );
+        ok( PtrToUlong(child_teb.ClientId.UniqueThread) == pi.dwThreadId, "wrong tid %x / %x\n",
+            PtrToUlong(child_teb.ClientId.UniqueThread), pi.dwThreadId );
+        ok( PtrToUlong(child_teb.RealClientId.UniqueProcess) == pi.dwProcessId, "wrong real pid %x / %x\n",
+            PtrToUlong(child_teb.RealClientId.UniqueProcess), pi.dwProcessId );
+        ok( PtrToUlong(child_teb.RealClientId.UniqueThread) == pi.dwThreadId, "wrong real tid %x / %x\n",
+            PtrToUlong(child_teb.RealClientId.UniqueThread), pi.dwThreadId );
+        ok( child_teb.StaticUnicodeString.MaximumLength == sizeof(child_teb.StaticUnicodeBuffer),
+            "StaticUnicodeString.MaximumLength wrong %x\n", child_teb.StaticUnicodeString.MaximumLength );
+        ok( (char *)child_teb.StaticUnicodeString.Buffer == (char *)info.TebBaseAddress + offsetof(TEB, StaticUnicodeBuffer),
+            "StaticUnicodeString.Buffer wrong %p\n", child_teb.StaticUnicodeString.Buffer );
+
+        ok( !child_teb.CurrentLocale, "CurrentLocale set %x\n", child_teb.CurrentLocale );
+        ok( !child_teb.TlsLinks.Flink, "TlsLinks.Flink set %p\n", child_teb.TlsLinks.Flink );
+        ok( !child_teb.TlsLinks.Blink, "TlsLinks.Blink set %p\n", child_teb.TlsLinks.Blink );
+        ok( !child_teb.TlsExpansionSlots, "TlsExpansionSlots set %p\n", child_teb.TlsExpansionSlots );
+        ok( !child_teb.FlsSlots, "FlsSlots set %p\n", child_teb.FlsSlots );
+    }
 
     ret = SetThreadContext(pi.hThread, &ctx);
     ok(ret, "Failed to set remote thread context (%d)\n", GetLastError());
