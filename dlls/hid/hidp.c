@@ -192,48 +192,6 @@ static NTSTATUS get_report_data(BYTE *report, INT reportLength, INT startBit, IN
     return HIDP_STATUS_SUCCESS;
 }
 
-static NTSTATUS set_report_data(BYTE *report, INT reportLength, INT startBit, INT valueSize, ULONG value)
-{
-    if ((startBit + valueSize) / 8  > reportLength)
-        return HIDP_STATUS_INVALID_REPORT_LENGTH;
-
-    if (valueSize == 1)
-    {
-        ULONG byte_index = startBit / 8;
-        ULONG bit_index = startBit - (byte_index * 8);
-        if (value)
-            report[byte_index] |= (1 << bit_index);
-        else
-            report[byte_index] &= ~(1 << bit_index);
-    }
-    else
-    {
-        ULONG byte_index = (startBit + valueSize - 1) / 8;
-        ULONG data = value;
-        ULONG remainingBits = valueSize;
-        while (remainingBits)
-        {
-            BYTE subvalue = data & 0xff;
-
-            data >>= 8;
-
-            if (remainingBits >= 8)
-            {
-                report[byte_index] = subvalue;
-                byte_index --;
-                remainingBits -= 8;
-            }
-            else if (remainingBits > 0)
-            {
-                BYTE mask = (0xff << (8-remainingBits)) & subvalue;
-                report[byte_index] |= mask;
-                remainingBits = 0;
-            }
-        }
-    }
-    return HIDP_STATUS_SUCCESS;
-}
-
 NTSTATUS WINAPI HidP_GetButtonCaps( HIDP_REPORT_TYPE report_type, HIDP_BUTTON_CAPS *caps, USHORT *caps_count,
                                     PHIDP_PREPARSED_DATA preparsed_data )
 {
@@ -533,25 +491,21 @@ static NTSTATUS set_usage_value( const struct hid_value_caps *caps, void *user )
     return HIDP_STATUS_NULL;
 }
 
-NTSTATUS WINAPI HidP_SetUsageValue(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, USHORT LinkCollection,
-                                   USAGE Usage, ULONG UsageValue, PHIDP_PREPARSED_DATA PreparsedData,
-                                   CHAR *Report, ULONG ReportLength)
+NTSTATUS WINAPI HidP_SetUsageValue( HIDP_REPORT_TYPE report_type, USAGE usage_page, USHORT collection, USAGE usage,
+                                    ULONG value, PHIDP_PREPARSED_DATA preparsed_data, char *report_buf, ULONG report_len )
 {
-    WINE_HID_ELEMENT element;
-    NTSTATUS rc;
+    struct usage_value_params params = {.value_buf = &value, .value_len = sizeof(value), .report_buf = report_buf};
+    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    struct caps_filter filter = {.values = TRUE, .usage_page = usage_page, .collection = collection, .usage = usage};
+    USHORT count = 1;
 
-    TRACE("(%i, %x, %i, %i, %i, %p, %p, %i)\n", ReportType, UsagePage, LinkCollection, Usage, UsageValue,
-          PreparsedData, Report, ReportLength);
+    TRACE( "report_type %d, usage_page %x, collection %d, usage %x, value %u, preparsed_data %p, report_buf %p, report_len %u.\n",
+           report_type, usage_page, collection, usage, value, preparsed_data, report_buf, report_len );
 
-    rc = find_usage(ReportType, UsagePage, LinkCollection, Usage, PreparsedData, Report, 0, &element);
+    if (!report_len) return HIDP_STATUS_INVALID_REPORT_LENGTH;
 
-    if (rc == HIDP_STATUS_SUCCESS)
-    {
-        return set_report_data((BYTE*)Report, ReportLength,
-                               element.valueStartBit, element.bitCount, UsageValue);
-    }
-
-    return rc;
+    filter.report_id = report_buf[0];
+    return enum_value_caps( preparsed, report_type, report_len, &filter, set_usage_value, &params, &count );
 }
 
 NTSTATUS WINAPI HidP_SetUsageValueArray( HIDP_REPORT_TYPE report_type, USAGE usage_page, USHORT collection,

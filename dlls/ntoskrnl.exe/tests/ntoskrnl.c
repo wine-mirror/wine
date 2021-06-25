@@ -2093,7 +2093,6 @@ static void test_hidp(HANDLE file, int report_id)
     status = HidP_GetUsageValue(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_Z,
                                 &value, preparsed_data, report, caps.InputReportByteLength);
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status);
-    todo_wine
     ok(value == 0x7fffffff, "got value %x, expected %#x\n", value, 0x7fffffff);
 
     value = 0x3fffffff;
@@ -2292,13 +2291,12 @@ static void test_hidp(HANDLE file, int report_id)
     status = HidP_SetUsageValue(HidP_Feature, HID_USAGE_PAGE_ORDINAL, waveform_list, 3,
                                 HID_USAGE_HAPTICS_WAVEFORM_RUMBLE, preparsed_data, report,
                                 caps.FeatureReportByteLength + 1);
-    todo_wine
     ok(status == HIDP_STATUS_INVALID_REPORT_LENGTH, "HidP_SetUsageValue returned %#x\n", status);
     report[0] = 1 - report_id;
     status = HidP_SetUsageValue(HidP_Feature, HID_USAGE_PAGE_ORDINAL, waveform_list, 3,
                                 HID_USAGE_HAPTICS_WAVEFORM_RUMBLE, preparsed_data, report,
                                 caps.FeatureReportByteLength);
-    todo_wine
+    todo_wine_if(!report_id)
     ok(status == (report_id ? HIDP_STATUS_SUCCESS : HIDP_STATUS_INCOMPATIBLE_REPORT_ID),
        "HidP_SetUsageValue returned %#x\n", status);
     report[0] = 2;
@@ -2310,7 +2308,6 @@ static void test_hidp(HANDLE file, int report_id)
     report[0] = report_id;
     status = HidP_SetUsageValue(HidP_Feature, HID_USAGE_PAGE_ORDINAL, 0xdead, 3, HID_USAGE_HAPTICS_WAVEFORM_RUMBLE,
                                 preparsed_data, report, caps.FeatureReportByteLength);
-    todo_wine
     ok(status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_SetUsageValue returned %#x\n", status);
 
     status = HidP_SetUsageValue(HidP_Feature, HID_USAGE_PAGE_ORDINAL, waveform_list, 3,
@@ -2323,7 +2320,6 @@ static void test_hidp(HANDLE file, int report_id)
     buffer[0] = report_id;
     value = HID_USAGE_HAPTICS_WAVEFORM_RUMBLE;
     memcpy(buffer + 1, &value, 2);
-    todo_wine
     ok(!memcmp(buffer, report, sizeof(buffer)), "unexpected report data\n");
 
     status = HidP_GetUsageValue(HidP_Feature, HID_USAGE_PAGE_ORDINAL, waveform_list, 3, &value,
