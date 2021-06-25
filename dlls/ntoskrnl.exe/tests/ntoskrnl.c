@@ -2330,12 +2330,11 @@ static void test_hidp(HANDLE file, int report_id)
     ok(status == HIDP_STATUS_INVALID_REPORT_TYPE, "HidP_GetUsageValue returned %#x\n", status);
     status = HidP_GetUsageValue(HidP_Feature, HID_USAGE_PAGE_ORDINAL, waveform_list, 3, &value,
                                 preparsed_data, report, caps.FeatureReportByteLength + 1);
-    todo_wine
     ok(status == HIDP_STATUS_INVALID_REPORT_LENGTH, "HidP_GetUsageValue returned %#x\n", status);
     report[0] = 1 - report_id;
     status = HidP_GetUsageValue(HidP_Feature, HID_USAGE_PAGE_ORDINAL, waveform_list, 3, &value,
                                 preparsed_data, report, caps.FeatureReportByteLength);
-    todo_wine
+    todo_wine_if(!report_id)
     ok(status == (report_id ? HIDP_STATUS_SUCCESS : HIDP_STATUS_INCOMPATIBLE_REPORT_ID),
        "HidP_GetUsageValue returned %#x\n", status);
     report[0] = 2;
@@ -2346,14 +2345,12 @@ static void test_hidp(HANDLE file, int report_id)
     report[0] = report_id;
     status = HidP_GetUsageValue(HidP_Feature, HID_USAGE_PAGE_ORDINAL, 0xdead, 3, &value,
                                 preparsed_data, report, caps.FeatureReportByteLength);
-    todo_wine
     ok(status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_GetUsageValue returned %#x\n", status);
 
     value = 0xdeadbeef;
     status = HidP_GetUsageValue(HidP_Feature, HID_USAGE_PAGE_ORDINAL, waveform_list, 3, &value,
                                 preparsed_data, report, caps.FeatureReportByteLength);
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#x\n", status);
-    todo_wine
     ok(value == HID_USAGE_HAPTICS_WAVEFORM_RUMBLE, "got value %x, expected %#x\n", value,
        HID_USAGE_HAPTICS_WAVEFORM_RUMBLE);
 

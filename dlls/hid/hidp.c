@@ -347,25 +347,21 @@ static NTSTATUS get_usage_value( const struct hid_value_caps *caps, void *user )
     return HIDP_STATUS_NULL;
 }
 
-NTSTATUS WINAPI HidP_GetUsageValue(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, USHORT LinkCollection,
-                                   USAGE Usage, PULONG UsageValue, PHIDP_PREPARSED_DATA PreparsedData,
-                                   PCHAR Report, ULONG ReportLength)
+NTSTATUS WINAPI HidP_GetUsageValue( HIDP_REPORT_TYPE report_type, USAGE usage_page, USHORT collection, USAGE usage,
+                                    ULONG *value, PHIDP_PREPARSED_DATA preparsed_data, char *report_buf, ULONG report_len )
 {
-    WINE_HID_ELEMENT element;
-    NTSTATUS rc;
+    struct usage_value_params params = {.value_buf = value, .value_len = sizeof(*value), .report_buf = report_buf};
+    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    struct caps_filter filter = {.values = TRUE, .usage_page = usage_page, .collection = collection, .usage = usage};
+    USHORT count = 1;
 
-    TRACE("(%i, %x, %i, %i, %p, %p, %p, %i)\n", ReportType, UsagePage, LinkCollection, Usage, UsageValue,
-          PreparsedData, Report, ReportLength);
+    TRACE( "report_type %d, usage_page %x, collection %d, usage %x, value %p, preparsed_data %p, report_buf %p, report_len %u.\n",
+           report_type, usage_page, collection, usage, value, preparsed_data, report_buf, report_len );
 
-    rc = find_usage(ReportType, UsagePage, LinkCollection, Usage, PreparsedData, Report, 0, &element);
+    if (!report_len) return HIDP_STATUS_INVALID_REPORT_LENGTH;
 
-    if (rc == HIDP_STATUS_SUCCESS)
-    {
-        return get_report_data((BYTE*)Report, ReportLength,
-                               element.valueStartBit, element.bitCount, UsageValue);
-    }
-
-    return rc;
+    filter.report_id = report_buf[0];
+    return enum_value_caps( preparsed, report_type, report_len, &filter, get_usage_value, &params, &count );
 }
 
 NTSTATUS WINAPI HidP_GetUsageValueArray( HIDP_REPORT_TYPE report_type, USAGE usage_page, USHORT collection,
