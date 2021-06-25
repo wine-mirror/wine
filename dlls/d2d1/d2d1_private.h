@@ -167,7 +167,7 @@ struct d2d_device_context
     ID3D10StateBlock *stateblock;
     struct d2d_shape_resources shape_resources[D2D_SHAPE_TYPE_COUNT];
     ID3D11Buffer *vs_cb;
-    ID3D10PixelShader *ps;
+    ID3D11PixelShader *ps;
     ID3D11Buffer *ps_cb;
     ID3D11Buffer *ib;
     unsigned int vb_stride;
