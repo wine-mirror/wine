@@ -2645,15 +2645,25 @@ static void set_fd_eof( struct fd *fd, file_pos_t eof )
         set_error( fd->no_fd_status );
         return;
     }
-
-    /* first try normal truncate */
-    if (ftruncate( fd->unix_fd, eof ) != -1) return;
-
-    /* now check for the need to extend the file */
-    if (fstat( fd->unix_fd, &st ) != -1 && eof > st.st_size)
-        grow_file( fd->unix_fd, eof );
-    else
+    if (fstat( fd->unix_fd, &st) == -1)
+    {
         file_set_error();
+        return;
+    }
+    if (eof < st.st_size)
+    {
+        struct fd *fd_ptr;
+        LIST_FOR_EACH_ENTRY( fd_ptr, &fd->inode->open, struct fd, inode_entry )
+        {
+            if (fd_ptr->access & FILE_MAPPING_ACCESS)
+            {
+                set_error( STATUS_USER_MAPPED_FILE );
+                return;
+            }
+        }
+        if (ftruncate( fd->unix_fd, eof ) == -1) file_set_error();
+    }
+    else grow_file( fd->unix_fd, eof );
 }
 
 struct completion *fd_get_completion( struct fd *fd, apc_param_t *p_key )

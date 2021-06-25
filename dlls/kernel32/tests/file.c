@@ -6052,11 +6052,11 @@ static void test_eof(void)
         SetLastError(0xdeadbeef);
         SetFilePointer(file, 6, NULL, SEEK_SET);
         ret = SetEndOfFile(file);
-        todo_wine ok(!ret, "expected failure\n");
-        todo_wine ok(GetLastError() == ERROR_USER_MAPPED_FILE, "got error %u\n", GetLastError());
+        ok(!ret, "expected failure\n");
+        ok(GetLastError() == ERROR_USER_MAPPED_FILE, "got error %u\n", GetLastError());
         ret = GetFileSizeEx(file, &file_size);
         ok(ret, "failed to get size, error %u\n", GetLastError());
-        todo_wine ok(file_size.QuadPart == 8, "got size %I64d\n", file_size.QuadPart);
+        ok(file_size.QuadPart == 8, "got size %I64d\n", file_size.QuadPart);
 
         SetFilePointer(file, 8192, NULL, SEEK_SET);
         ret = SetEndOfFile(file);
@@ -6067,11 +6067,11 @@ static void test_eof(void)
 
         SetFilePointer(file, 8191, NULL, SEEK_SET);
         ret = SetEndOfFile(file);
-        todo_wine ok(!ret, "expected failure\n");
-        todo_wine ok(GetLastError() == ERROR_USER_MAPPED_FILE, "got error %u\n", GetLastError());
+        ok(!ret, "expected failure\n");
+        ok(GetLastError() == ERROR_USER_MAPPED_FILE, "got error %u\n", GetLastError());
         ret = GetFileSizeEx(file, &file_size);
         ok(ret, "failed to get size, error %u\n", GetLastError());
-        todo_wine ok(file_size.QuadPart == 8192, "got size %I64d\n", file_size.QuadPart);
+        ok(file_size.QuadPart == 8192, "got size %I64d\n", file_size.QuadPart);
 
         view = MapViewOfFile(mapping, map_tests[i].view_access, 0, 0, 4);
         ok(!!view, "failed to map view, error %u\n", GetLastError());
@@ -6087,11 +6087,11 @@ static void test_eof(void)
 
         SetFilePointer(file, 16383, NULL, SEEK_SET);
         ret = SetEndOfFile(file);
-        todo_wine ok(!ret, "expected failure\n");
-        todo_wine ok(GetLastError() == ERROR_USER_MAPPED_FILE, "got error %u\n", GetLastError());
+        ok(!ret, "expected failure\n");
+        ok(GetLastError() == ERROR_USER_MAPPED_FILE, "got error %u\n", GetLastError());
         ret = GetFileSizeEx(file, &file_size);
         ok(ret, "failed to get size, error %u\n", GetLastError());
-        todo_wine ok(file_size.QuadPart == 16384, "got size %I64d\n", file_size.QuadPart);
+        ok(file_size.QuadPart == 16384, "got size %I64d\n", file_size.QuadPart);
 
         ret = UnmapViewOfFile(view);
         ok(ret, "failed to unmap view, error %u\n", GetLastError());
