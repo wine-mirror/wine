@@ -3329,14 +3329,14 @@ todo_wine
 
     fdi.DoDeleteFile = TRUE;
     res = pNtSetInformationFile( handle, &io, &fdi, sizeof(fdi), FileDispositionInformation );
-    todo_wine ok( res == STATUS_CANNOT_DELETE, "got %#x\n", res );
+    ok( res == STATUS_CANNOT_DELETE, "got %#x\n", res );
     res = GetFileAttributesA( buffer );
     ok( res != INVALID_FILE_ATTRIBUTES, "expected file to exist\n" );
 
     CloseHandle( mapping );
     CloseHandle( handle );
     res = DeleteFileA( buffer );
-    todo_wine ok( res, "got error %u\n", GetLastError() );
+    ok( res, "got error %u\n", GetLastError() );
 
     GetTempFileNameA( tmp_path, "dis", 0, buffer );
     handle = CreateFileA( buffer, GENERIC_READ | GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, 0, 0 );
@@ -3373,14 +3373,14 @@ todo_wine
 
     fdi.DoDeleteFile = TRUE;
     res = pNtSetInformationFile( handle, &io, &fdi, sizeof(fdi), FileDispositionInformation );
-    todo_wine ok( res == STATUS_CANNOT_DELETE, "got %#x\n", res );
+    ok( res == STATUS_CANNOT_DELETE, "got %#x\n", res );
     res = GetFileAttributesA( buffer );
     ok( res != INVALID_FILE_ATTRIBUTES, "expected file to exist\n" );
 
     UnmapViewOfFile( view );
     CloseHandle( handle );
     res = DeleteFileA( buffer );
-    todo_wine ok( res, "got error %u\n", GetLastError() );
+    ok( res, "got error %u\n", GetLastError() );
 
     GetTempFileNameA( tmp_path, "dis", 0, buffer );
     handle = CreateFileA( buffer, GENERIC_READ | GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, 0, 0 );

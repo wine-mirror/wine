@@ -2452,6 +2452,17 @@ static void set_fd_disposition( struct fd *fd, int unlink )
 
     if (unlink)
     {
+        struct fd *fd_ptr;
+
+        LIST_FOR_EACH_ENTRY( fd_ptr, &fd->inode->open, struct fd, inode_entry )
+        {
+            if (fd_ptr->access & FILE_MAPPING_ACCESS)
+            {
+                set_error( STATUS_CANNOT_DELETE );
+                return;
+            }
+        }
+
         if (fstat( fd->unix_fd, &st ) == -1)
         {
             file_set_error();
