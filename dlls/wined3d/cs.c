@@ -2214,15 +2214,21 @@ static void wined3d_cs_mt_push_constants(struct wined3d_device_context *context,
 
 static void wined3d_cs_exec_reset_state(struct wined3d_cs *cs, const void *data)
 {
+    const struct wined3d_device *device = cs->c.device;
     const struct wined3d_cs_reset_state *op = data;
+    const struct wined3d_state_entry *state_table;
     unsigned int state;
 
     state_cleanup(&cs->state);
-    wined3d_state_reset(&cs->state, &cs->c.device->adapter->d3d_info);
+    wined3d_state_reset(&cs->state, &device->adapter->d3d_info);
     if (op->invalidate)
     {
+        state_table = device->state_table;
         for (state = 0; state <= STATE_HIGHEST; ++state)
-            device_invalidate_state(cs->c.device, state);
+        {
+            if (state_table[state].representative)
+                device_invalidate_state(device, state);
+        }
     }
 }
 
