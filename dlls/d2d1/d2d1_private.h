@@ -166,12 +166,12 @@ struct d2d_device_context
     struct d2d_bitmap *target;
     ID3D10StateBlock *stateblock;
     struct d2d_shape_resources shape_resources[D2D_SHAPE_TYPE_COUNT];
-    ID3D10Buffer *vs_cb;
+    ID3D11Buffer *vs_cb;
     ID3D10PixelShader *ps;
-    ID3D10Buffer *ps_cb;
-    ID3D10Buffer *ib;
+    ID3D11Buffer *ps_cb;
+    ID3D11Buffer *ib;
     unsigned int vb_stride;
-    ID3D10Buffer *vb;
+    ID3D11Buffer *vb;
     ID3D10RasterizerState *rs;
     ID3D10BlendState *bs;
     ID3D10SamplerState *sampler_states
