@@ -2021,15 +2021,14 @@ static void test_hidp(HANDLE file, int report_id)
 
     status = HidP_SetUsageValueArray(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, buffer,
                                      sizeof(buffer), preparsed_data, report, caps.InputReportByteLength);
-    todo_wine
     ok(status == HIDP_STATUS_NOT_VALUE_ARRAY, "HidP_SetUsageValueArray returned %#x\n", status);
     memset(buffer, 0xcd, sizeof(buffer));
     status = HidP_SetUsageValueArray(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH, buffer,
                                      0, preparsed_data, report, caps.InputReportByteLength);
-    todo_wine
     ok(status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_SetUsageValueArray returned %#x\n", status);
     status = HidP_SetUsageValueArray(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH, buffer,
                                      8, preparsed_data, report, caps.InputReportByteLength);
+    todo_wine
     ok(status == HIDP_STATUS_NOT_IMPLEMENTED, "HidP_SetUsageValueArray returned %#x\n", status);
 
     status = HidP_GetUsageValueArray(HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, buffer,
@@ -2365,13 +2364,10 @@ static void test_hidp(HANDLE file, int report_id)
     memset(buffer, 0xff, sizeof(buffer));
     status = HidP_SetUsageValueArray(HidP_Feature, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_WAVEFORM_CUTOFF_TIME, buffer,
                                      0, preparsed_data, report, caps.FeatureReportByteLength);
-    todo_wine
     ok(status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_SetUsageValueArray returned %#x\n", status);
     status = HidP_SetUsageValueArray(HidP_Feature, HID_USAGE_PAGE_HAPTICS, 0, HID_USAGE_HAPTICS_WAVEFORM_CUTOFF_TIME, buffer,
                                      64, preparsed_data, report, caps.FeatureReportByteLength);
-    todo_wine
     ok(status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValueArray returned %#x\n", status);
-    todo_wine
     ok(!memcmp(report + 9, buffer, 8), "unexpected report data\n");
 
     memset(buffer, 0, sizeof(buffer));

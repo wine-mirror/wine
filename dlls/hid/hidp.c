@@ -70,6 +70,7 @@ struct caps_filter
 {
     BOOLEAN buttons;
     BOOLEAN values;
+    BOOLEAN array;
     USAGE   usage_page;
     USHORT  collection;
     USAGE   usage;
@@ -102,6 +103,7 @@ static NTSTATUS enum_value_caps( WINE_HIDP_PREPARSED_DATA *preparsed, HIDP_REPOR
     {
         if (!match_value_caps( caps, filter )) continue;
         if (filter->report_id && caps->report_id != filter->report_id) continue;
+        else if (filter->array && (caps->is_range || caps->report_count <= 1)) return HIDP_STATUS_NOT_VALUE_ARRAY;
         else if (remaining-- > 0) status = callback( caps, user );
     }
 
@@ -112,6 +114,44 @@ static NTSTATUS enum_value_caps( WINE_HIDP_PREPARSED_DATA *preparsed, HIDP_REPOR
     if (*count == 0) return HIDP_STATUS_USAGE_NOT_FOUND;
     if (remaining < 0) return HIDP_STATUS_BUFFER_TOO_SMALL;
     return HIDP_STATUS_SUCCESS;
+}
+
+/* copy count bits from src, starting at (-shift) bit if < 0, to dst starting at (shift) bit if > 0 */
+static void copy_bits( unsigned char *dst, const unsigned char *src, int count, int shift )
+{
+    unsigned char bits, mask;
+    size_t src_shift = shift < 0 ? (-shift & 7) : 0;
+    size_t dst_shift = shift > 0 ? (shift & 7) : 0;
+    if (shift < 0) src += -shift / 8;
+    if (shift > 0) dst += shift / 8;
+
+    if (src_shift == 0 && dst_shift == 0)
+    {
+        memcpy( dst, src, count / 8 );
+        dst += count / 8;
+        src += count / 8;
+        count &= 7;
+    }
+
+    if (!count) return;
+
+    bits = *dst << (8 - dst_shift);
+    count += dst_shift;
+
+    while (count > 8)
+    {
+        *dst = bits >> (8 - dst_shift);
+        bits = *(unsigned short *)src++ >> src_shift;
+        *dst++ |= bits << dst_shift;
+        count -= 8;
+    }
+
+    bits >>= (8 - dst_shift);
+    if (count <= 8 - src_shift) bits |= (*src >> src_shift) << dst_shift;
+    else bits |= (*(unsigned short *)src >> src_shift) << dst_shift;
+
+    mask = (1 << count) - 1;
+    *dst = (bits & mask) | (*dst & ~mask);
 }
 
 static NTSTATUS get_report_data(BYTE *report, INT reportLength, INT startBit, INT valueSize, PULONG value)
@@ -323,6 +363,13 @@ static NTSTATUS find_usage(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, USHORT 
     return HIDP_STATUS_USAGE_NOT_FOUND;
 }
 
+struct usage_value_params
+{
+    void *value_buf;
+    USHORT value_len;
+    void *report_buf;
+};
+
 static LONG sign_extend(ULONG value, const WINE_HID_ELEMENT *element)
 {
     UINT bit_count = element->bitCount;
@@ -514,6 +561,15 @@ ULONG WINAPI HidP_MaxUsageListLength( HIDP_REPORT_TYPE report_type, USAGE usage_
     return count;
 }
 
+static NTSTATUS set_usage_value( const struct hid_value_caps *caps, void *user )
+{
+    struct usage_value_params *params = user;
+    ULONG bit_count = caps->bit_size * caps->report_count;
+    if ((bit_count + 7) / 8 > params->value_len) return HIDP_STATUS_BUFFER_TOO_SMALL;
+    copy_bits( params->report_buf, params->value_buf, bit_count, caps->start_bit );
+    return HIDP_STATUS_NULL;
+}
+
 NTSTATUS WINAPI HidP_SetUsageValue(HIDP_REPORT_TYPE ReportType, USAGE UsagePage, USHORT LinkCollection,
                                    USAGE Usage, ULONG UsageValue, PHIDP_PREPARSED_DATA PreparsedData,
                                    CHAR *Report, ULONG ReportLength)
@@ -539,11 +595,19 @@ NTSTATUS WINAPI HidP_SetUsageValueArray( HIDP_REPORT_TYPE report_type, USAGE usa
                                          USAGE usage, char *value_buf, USHORT value_len,
                                          PHIDP_PREPARSED_DATA preparsed_data, char *report_buf, ULONG report_len )
 {
-    FIXME( "report_type %d, usage_page %x, collection %d, usage %x, value_buf %p, value_len %u, "
-           "preparsed_data %p, report_buf %p, report_len %u stub!\n",
+    struct usage_value_params params = {.value_buf = value_buf, .value_len = value_len, .report_buf = report_buf};
+    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    struct caps_filter filter = {.values = TRUE, .array = TRUE, .usage_page = usage_page, .collection = collection, .usage = usage};
+    USHORT count = 1;
+
+    TRACE( "report_type %d, usage_page %x, collection %d, usage %x, value_buf %p, value_len %u, "
+           "preparsed_data %p, report_buf %p, report_len %u.\n",
            report_type, usage_page, collection, usage, value_buf, value_len, preparsed_data, report_buf, report_len );
 
-    return HIDP_STATUS_NOT_IMPLEMENTED;
+    if (!report_len) return HIDP_STATUS_INVALID_REPORT_LENGTH;
+
+    filter.report_id = report_buf[0];
+    return enum_value_caps( preparsed, report_type, report_len, &filter, set_usage_value, &params, &count );
 }
 
 struct set_usage_params
