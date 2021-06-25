@@ -13215,7 +13215,7 @@ static DWORD glsl_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bli
         const struct wined3d_format *f = src_texture->resource.format;
 
         alpha_test_key.color_space_low_value = 0;
-        alpha_test_key.color_space_high_value = ~(((1u << f->alpha_size) - 1) << f->alpha_offset);
+        alpha_test_key.color_space_high_value = ~(wined3d_mask_from_size(f->alpha_size) << f->alpha_offset);
         colour_key = &alpha_test_key;
     }
     else if (op != WINED3D_BLIT_OP_COLOR_BLIT_CKEY)
