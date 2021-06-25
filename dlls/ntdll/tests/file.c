@@ -2960,12 +2960,13 @@ static void test_file_disposition_information(void)
 {
     char tmp_path[MAX_PATH], buffer[MAX_PATH + 16];
     DWORD dirpos;
-    HANDLE handle, handle2, handle3;
+    HANDLE handle, handle2, handle3, mapping;
     NTSTATUS res;
     IO_STATUS_BLOCK io;
     FILE_DISPOSITION_INFORMATION fdi;
     BOOL fileDeleted;
-    DWORD fdi2;
+    DWORD fdi2, size;
+    void *view;
 
     GetTempPathA( MAX_PATH, tmp_path );
 
@@ -3312,6 +3313,94 @@ todo_wine
     ok( !fileDeleted, "Directory shouldn't have been deleted\n" );
     fileDeleted = RemoveDirectoryA( buffer );
     ok( fileDeleted, "Directory should have been deleted\n" );
+
+    /* a file with an open mapping handle cannot be deleted */
+
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
+    handle = CreateFileA( buffer, GENERIC_READ | GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( handle != INVALID_HANDLE_VALUE, "failed to create file, error %u\n", GetLastError() );
+    WriteFile(handle, "data", 4, &size, NULL);
+    mapping = CreateFileMappingA( handle, NULL, PAGE_READONLY, 0, 4, NULL );
+    ok( !!mapping, "failed to create mapping, error %u\n", GetLastError() );
+
+    fdi.DoDeleteFile = FALSE;
+    res = pNtSetInformationFile( handle, &io, &fdi, sizeof(fdi), FileDispositionInformation );
+    ok( !res, "got %#x\n", res );
+
+    fdi.DoDeleteFile = TRUE;
+    res = pNtSetInformationFile( handle, &io, &fdi, sizeof(fdi), FileDispositionInformation );
+    todo_wine ok( res == STATUS_CANNOT_DELETE, "got %#x\n", res );
+    res = GetFileAttributesA( buffer );
+    ok( res != INVALID_FILE_ATTRIBUTES, "expected file to exist\n" );
+
+    CloseHandle( mapping );
+    CloseHandle( handle );
+    res = DeleteFileA( buffer );
+    todo_wine ok( res, "got error %u\n", GetLastError() );
+
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
+    handle = CreateFileA( buffer, GENERIC_READ | GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( handle != INVALID_HANDLE_VALUE, "failed to create file, error %u\n", GetLastError() );
+    WriteFile(handle, "data", 4, &size, NULL);
+    mapping = CreateFileMappingA( handle, NULL, PAGE_READONLY, 0, 4, NULL );
+    ok( !!mapping, "failed to create mapping, error %u\n", GetLastError() );
+    CloseHandle( mapping );
+
+    fdi.DoDeleteFile = TRUE;
+    res = pNtSetInformationFile( handle, &io, &fdi, sizeof(fdi), FileDispositionInformation );
+    ok( !res, "got %#x\n", res );
+
+    CloseHandle( handle );
+    res = DeleteFileA( buffer );
+    ok( !res, "expected failure\n" );
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "got error %u\n", GetLastError() );
+
+    /* a file with an open view cannot be deleted */
+
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
+    handle = CreateFileA( buffer, GENERIC_READ | GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( handle != INVALID_HANDLE_VALUE, "failed to create file, error %u\n", GetLastError() );
+    WriteFile(handle, "data", 4, &size, NULL);
+    mapping = CreateFileMappingA( handle, NULL, PAGE_READONLY, 0, 4, NULL );
+    ok( !!mapping, "failed to create mapping, error %u\n", GetLastError() );
+    view = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 4 );
+    ok( !!view, "failed to map view, error %u\n", GetLastError() );
+    CloseHandle( mapping );
+
+    fdi.DoDeleteFile = FALSE;
+    res = pNtSetInformationFile( handle, &io, &fdi, sizeof(fdi), FileDispositionInformation );
+    ok( !res, "got %#x\n", res );
+
+    fdi.DoDeleteFile = TRUE;
+    res = pNtSetInformationFile( handle, &io, &fdi, sizeof(fdi), FileDispositionInformation );
+    todo_wine ok( res == STATUS_CANNOT_DELETE, "got %#x\n", res );
+    res = GetFileAttributesA( buffer );
+    ok( res != INVALID_FILE_ATTRIBUTES, "expected file to exist\n" );
+
+    UnmapViewOfFile( view );
+    CloseHandle( handle );
+    res = DeleteFileA( buffer );
+    todo_wine ok( res, "got error %u\n", GetLastError() );
+
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
+    handle = CreateFileA( buffer, GENERIC_READ | GENERIC_WRITE | DELETE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( handle != INVALID_HANDLE_VALUE, "failed to create file, error %u\n", GetLastError() );
+    WriteFile(handle, "data", 4, &size, NULL);
+    mapping = CreateFileMappingA( handle, NULL, PAGE_READONLY, 0, 4, NULL );
+    ok( !!mapping, "failed to create mapping, error %u\n", GetLastError() );
+    view = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 4 );
+    ok( !!view, "failed to map view, error %u\n", GetLastError() );
+    CloseHandle( mapping );
+    UnmapViewOfFile( view );
+
+    fdi.DoDeleteFile = TRUE;
+    res = pNtSetInformationFile( handle, &io, &fdi, sizeof(fdi), FileDispositionInformation );
+    ok( !res, "got %#x\n", res );
+
+    CloseHandle( handle );
+    res = DeleteFileA( buffer );
+    ok( !res, "expected failure\n" );
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "got error %u\n", GetLastError() );
 }
 
 static void test_file_name_information(void)
