@@ -2162,29 +2162,21 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
 
         case WS_SO_DONTLINGER:
         {
-            struct linger lingval;
-            socklen_t len = sizeof(struct linger);
+            struct WS_linger linger;
+            int len = sizeof(linger);
+            int ret;
 
             if (!optlen || *optlen < sizeof(BOOL)|| !optval)
             {
                 SetLastError(WSAEFAULT);
                 return SOCKET_ERROR;
             }
-            if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
-                return SOCKET_ERROR;
 
-            if (getsockopt(fd, SOL_SOCKET, SO_LINGER, &lingval, &len) != 0 )
+            if (!(ret = WS_getsockopt( s, WS_SOL_SOCKET, WS_SO_LINGER, (char *)&linger, &len )))
             {
-                SetLastError(wsaErrno());
-                ret = SOCKET_ERROR;
-            }
-            else
-            {
-                *(BOOL *)optval = !lingval.l_onoff;
+                *(BOOL *)optval = !linger.l_onoff;
                 *optlen = sizeof(BOOL);
             }
-
-            release_sock_fd( s, fd );
             return ret;
         }
 
