@@ -3506,7 +3506,6 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
 {
     int fd;
     int woptval;
-    struct linger linger;
     struct timeval tval;
     struct ip_mreq_source mreq_source;
 
@@ -3529,6 +3528,21 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         case WS_SO_BROADCAST:
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_SO_BROADCAST, optval, optlen );
 
+        case WS_SO_DONTLINGER:
+        {
+            struct WS_linger linger;
+
+            if (!optval)
+            {
+                SetLastError( WSAEFAULT );
+                return -1;
+            }
+
+            linger.l_onoff  = !*(const BOOL *)optval;
+            linger.l_linger = 0;
+            return WS_setsockopt( s, WS_SOL_SOCKET, WS_SO_LINGER, (char *)&linger, sizeof(linger) );
+        }
+
         case WS_SO_ERROR:
             FIXME( "SO_ERROR, stub!\n" );
             SetLastError( WSAENOPROTOOPT );
@@ -3544,20 +3558,6 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
          * setsockopt. The conversions are done here, then they will fall through
          * to the general case. Special options that are not passed to
          * setsockopt follow below that.*/
-
-        case WS_SO_DONTLINGER:
-            if (!optval)
-            {
-                SetLastError(WSAEFAULT);
-                return SOCKET_ERROR;
-            }
-            linger.l_onoff  = *(const int*)optval == 0;
-            linger.l_linger = 0;
-            level = SOL_SOCKET;
-            optname = SO_LINGER;
-            optval = (char*)&linger;
-            optlen = sizeof(struct linger);
-            break;
 
         case WS_SO_SNDBUF:
             if (!*(const int *)optval)
