@@ -341,6 +341,65 @@ BLUE_INI TEXTFILE
 "FillColor = 255 255 255\r\n"
 "BorderColor = 174 174 174\r\n"
 
+"\r\n; Rebar\r\n"
+"[Rebar]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageFile = blue_rebar_background.bmp\r\n"
+"SizingMargins = 1, 1, 9, 2\r\n"
+"Font = Tahoma, 8\r\n"
+"TextColor = 0 0 0\r\n"
+
+"[Rebar.Band]\r\n"
+"BgType = None\r\n"
+"ContentMargins = 2, 0, 0, 0\r\n"
+
+"[Rebar.Gripper]\r\n"
+"Bgtype = imagefile\r\n"
+"SizingMargins = 2, 1, 4, 2\r\n"
+"ContentMargins = 2, 1, 0, 0\r\n"
+"ImageFile = blue_rebar_gripper_horizontal.bmp\r\n"
+"SizingType = Tile\r\n"
+"Transparent = True\r\n"
+
+"[Rebar.GripperVert]\r\n"
+"Bgtype = ImageFile\r\n"
+"SizingMargins = 3, 3, 2, 1\r\n"
+"ContentMargins = 1, 2, 0, 0\r\n"
+"ImageFile = blue_rebar_gripper_vertical.bmp\r\n"
+"SizingType = Tile\r\n"
+"Transparent = True\r\n"
+
+"[Rebar.Chevron]\r\n"
+"SizingMargins = 4, 4, 4, 4\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"; Same as toolbar buttons \r\n"
+"ImageFile = blue_toolbar_buttons.bmp\r\n"
+"Bgtype = ImageFile\r\n"
+"Imagelayout = Vertical\r\n"
+"ImageCount = 6\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"GlyphType = ImageGlyph\r\n"
+"GlyphImageFile = blue_rebar_chevron.bmp\r\n"
+"GlyphTransparent = True\r\n"
+"VAlign = Top\r\n"
+
+"[Rebar.ChevronVert]\r\n"
+"SizingMargins = 4, 4, 4, 4\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"; Same as toolbar buttons \r\n"
+"ImageFile = blue_toolbar_buttons.bmp\r\n"
+"Bgtype = ImageFile\r\n"
+"Imagelayout = Vertical\r\n"
+"ImageCount = 6\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"GlyphType = ImageGlyph\r\n"
+"GlyphImageFile = blue_rebar_chevron.bmp\r\n"
+"GlyphTransparent = True\r\n"
+"VAlign = Top\r\n"
+
 "\r\n; Scroll Bar\r\n"
 "[ScrollBar.ArrowBtn]\r\n"
 "BgType = ImageFile\r\n"
@@ -581,6 +640,19 @@ BLUE_COMBOBUTTON_BMP BITMAP "blue_combobutton.bmp"
 
 /* @makedep: blue_combobutton_glyph.bmp */
 BLUE_COMBOBUTTON_GLYPH_BMP BITMAP "blue_combobutton_glyph.bmp"
+
+/* Rebar */
+/* @makedep: blue_rebar_background.bmp */
+BLUE_REBAR_BACKGROUND_BMP BITMAP "blue_rebar_background.bmp"
+
+/* @makedep: blue_rebar_gripper_horizontal.bmp */
+BLUE_REBAR_GRIPPER_HORIZONTAL_BMP BITMAP "blue_rebar_gripper_horizontal.bmp"
+
+/* @makedep: blue_rebar_gripper_vertical.bmp */
+BLUE_REBAR_GRIPPER_VERTICAL_BMP BITMAP "blue_rebar_gripper_vertical.bmp"
+
+/* @makedep: blue_rebar_chevron.bmp */
+BLUE_REBAR_CHEVRON_BMP BITMAP "blue_rebar_chevron.bmp"
 
 /* Scroll Bar */
 /* @makedep: blue_scrollbar_arrows.bmp */
