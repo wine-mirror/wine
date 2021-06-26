@@ -1041,6 +1041,14 @@ static BOOL request_set_option( struct object_header *hdr, DWORD option, void *b
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
 
+    case WINHTTP_OPTION_MAX_RESPONSE_HEADER_SIZE:
+        FIXME("WINHTTP_OPTION_MAX_RESPONSE_HEADER_SIZE\n");
+        return TRUE;
+
+    case WINHTTP_OPTION_MAX_RESPONSE_DRAIN_SIZE:
+        FIXME("WINHTTP_OPTION_MAX_RESPONSE_DRAIN_SIZE\n");
+        return TRUE;
+
     default:
         FIXME("unimplemented option %u\n", option);
         SetLastError( ERROR_WINHTTP_INVALID_OPTION );
