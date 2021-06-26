@@ -3559,6 +3559,9 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         case WS_SO_OOBINLINE:
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_SO_OOBINLINE, optval, optlen );
 
+        case WS_SO_RCVBUF:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_SO_RCVBUF, optval, optlen );
+
         /* Some options need some conversion before they can be sent to
          * setsockopt. The conversions are done here, then they will fall through
          * to the general case. Special options that are not passed to
@@ -3574,14 +3577,6 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             }
             convert_sockopt(&level, &optname);
             break;
-
-        case WS_SO_RCVBUF:
-            if (*(const int*)optval < 2048)
-            {
-                WARN("SO_RCVBF for %d bytes is too small: ignored\n", *(const int*)optval );
-                return 0;
-            }
-            /* Fall through */
 
         /* The options listed here don't need any special handling. Thanks to
          * the conversion happening above, options from there will fall through
