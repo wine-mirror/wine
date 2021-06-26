@@ -815,6 +815,21 @@ static void dump_varargs_context( const char *prefix, data_size_t size )
     remove_data( size );
 }
 
+static void dump_varargs_contexts( const char *prefix, data_size_t size )
+{
+    if (!size)
+    {
+        fprintf( stderr, "%s{}", prefix );
+        return;
+    }
+    fprintf( stderr, "%s{", prefix );
+    while (cur_size)
+    {
+        dump_varargs_context( "", cur_size );
+        fputc( cur_size ? ',' : '}', stderr );
+    }
+}
+
 static void dump_varargs_debug_event( const char *prefix, data_size_t size )
 {
     debug_event_t event;
@@ -1781,14 +1796,14 @@ static void dump_select_request( const struct select_request *req )
     fprintf( stderr, ", prev_apc=%04x", req->prev_apc );
     dump_varargs_apc_result( ", result=", cur_size );
     dump_varargs_select_op( ", data=", min(cur_size,req->size) );
-    dump_varargs_context( ", context=", cur_size );
+    dump_varargs_contexts( ", contexts=", cur_size );
 }
 
 static void dump_select_reply( const struct select_reply *req )
 {
     dump_apc_call( " call=", &req->call );
     fprintf( stderr, ", apc_handle=%04x", req->apc_handle );
-    dump_varargs_context( ", context=", cur_size );
+    dump_varargs_contexts( ", contexts=", cur_size );
 }
 
 static void dump_create_event_request( const struct create_event_request *req )
@@ -2555,19 +2570,20 @@ static void dump_get_thread_context_request( const struct get_thread_context_req
     fprintf( stderr, " handle=%04x", req->handle );
     fprintf( stderr, ", context=%04x", req->context );
     fprintf( stderr, ", flags=%08x", req->flags );
+    fprintf( stderr, ", machine=%04x", req->machine );
 }
 
 static void dump_get_thread_context_reply( const struct get_thread_context_reply *req )
 {
     fprintf( stderr, " self=%d", req->self );
     fprintf( stderr, ", handle=%04x", req->handle );
-    dump_varargs_context( ", context=", cur_size );
+    dump_varargs_contexts( ", contexts=", cur_size );
 }
 
 static void dump_set_thread_context_request( const struct set_thread_context_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
-    dump_varargs_context( ", context=", cur_size );
+    dump_varargs_contexts( ", contexts=", cur_size );
 }
 
 static void dump_set_thread_context_reply( const struct set_thread_context_reply *req )

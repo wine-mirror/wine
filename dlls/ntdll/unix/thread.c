@@ -1010,6 +1010,46 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
 
 
 /***********************************************************************
+ *           contexts_to_server
+ */
+static void contexts_to_server( context_t server_contexts[2], CONTEXT *context )
+{
+    unsigned int count = 0;
+    void *native_context = get_native_context( context );
+    void *wow_context = get_wow_context( context );
+
+    if (native_context)
+    {
+        context_to_server( &server_contexts[count++], native_machine, native_context, native_machine );
+        if (wow_context) context_to_server( &server_contexts[count++], main_image_info.Machine,
+                                            wow_context, main_image_info.Machine );
+    }
+    else
+        context_to_server( &server_contexts[count++], native_machine,
+                           wow_context, main_image_info.Machine );
+
+    if (count < 2) memset( &server_contexts[1], 0, sizeof(server_contexts[1]) );
+}
+
+
+/***********************************************************************
+ *           contexts_from_server
+ */
+static void contexts_from_server( CONTEXT *context, context_t server_contexts[2] )
+{
+    void *native_context = get_native_context( context );
+    void *wow_context = get_wow_context( context );
+
+    if (native_context)
+    {
+        context_from_server( native_context, &server_contexts[0], native_machine );
+        if (wow_context) context_from_server( wow_context, &server_contexts[1], main_image_info.Machine );
+    }
+    else context_from_server( wow_context, &server_contexts[0], main_image_info.Machine );
+}
+
+
+/***********************************************************************
  *           pthread_exit_wrapper
  */
 static void pthread_exit_wrapper( int status )
@@ -1362,12 +1402,12 @@ void exit_process( int status )
 void wait_suspend( CONTEXT *context )
 {
     int saved_errno = errno;
-    context_t server_context;
+    context_t server_contexts[2];
 
-    context_to_server( &server_context, current_machine, context, current_machine );
+    contexts_to_server( server_contexts, context );
     /* wait with 0 timeout, will only return once the thread is no longer suspended */
-    server_select( NULL, 0, SELECT_INTERRUPTIBLE, 0, &server_context, NULL, NULL );
-    context_from_server( context, &server_context, current_machine );
+    server_select( NULL, 0, SELECT_INTERRUPTIBLE, 0, server_contexts, NULL, NULL );
+    contexts_from_server( context, server_contexts );
     errno = saved_errno;
 }
 
@@ -1408,15 +1448,14 @@ NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_c
 
     if (handle)
     {
-        context_t server_context;
+        context_t server_contexts[2];
 
         select_op.wait.op = SELECT_WAIT;
         select_op.wait.handles[0] = handle;
 
-        context_to_server( &server_context, current_machine, context, current_machine );
-
+        contexts_to_server( server_contexts, context );
         server_select( &select_op, offsetof( select_op_t, wait.handles[1] ), SELECT_INTERRUPTIBLE,
-                       TIMEOUT_INFINITE, &server_context, NULL, NULL );
+                       TIMEOUT_INFINITE, server_contexts, NULL, NULL );
 
         SERVER_START_REQ( get_exception_status )
         {
@@ -1424,7 +1463,7 @@ NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL first_c
             ret = wine_server_call( req );
         }
         SERVER_END_REQ;
-        if (ret >= 0) context_from_server( context, &server_context, current_machine );
+        if (ret >= 0) contexts_from_server( context, server_contexts );
     }
 
     pthread_sigmask( SIG_SETMASK, &old_set, NULL );
@@ -1594,14 +1633,18 @@ NTSTATUS WINAPI NtQueueApcThread( HANDLE handle, PNTAPCFUNC func, ULONG_PTR arg1
  */
 NTSTATUS set_thread_context( HANDLE handle, const void *context, BOOL *self, USHORT machine )
 {
-    context_t server_context;
+    context_t server_contexts[2];
+    unsigned int count = 0;
     NTSTATUS ret;
 
-    context_to_server( &server_context, machine, context, machine );
+    context_to_server( &server_contexts[count++], native_machine, context, machine );
+    if (machine != native_machine)
+        context_to_server( &server_contexts[count++], machine, context, machine );
+
     SERVER_START_REQ( set_thread_context )
     {
         req->handle  = wine_server_obj_handle( handle );
-        wine_server_add_data( req, &server_context, sizeof(server_context) );
+        wine_server_add_data( req, server_contexts, count * sizeof(server_contexts[0]) );
         ret = wine_server_call( req );
         *self = reply->self;
     }
@@ -1618,17 +1661,20 @@ NTSTATUS get_thread_context( HANDLE handle, void *context, BOOL *self, USHORT ma
 {
     NTSTATUS ret;
     HANDLE context_handle;
-    context_t server_context;
+    context_t server_contexts[2];
+    unsigned int count;
     unsigned int flags = get_server_context_flags( context, machine );
 
     SERVER_START_REQ( get_thread_context )
     {
         req->handle  = wine_server_obj_handle( handle );
         req->flags   = flags;
-        wine_server_set_reply( req, &server_context, sizeof(server_context) );
+        req->machine = machine;
+        wine_server_set_reply( req, server_contexts, sizeof(server_contexts) );
         ret = wine_server_call( req );
         *self = reply->self;
         context_handle = wine_server_ptr_handle( reply->handle );
+        count = wine_server_reply_size( reply ) / sizeof(server_contexts[0]);
     }
     SERVER_END_REQ;
 
@@ -1640,12 +1686,18 @@ NTSTATUS get_thread_context( HANDLE handle, void *context, BOOL *self, USHORT ma
         {
             req->context = wine_server_obj_handle( context_handle );
             req->flags   = flags;
-            wine_server_set_reply( req, &server_context, sizeof(server_context) );
+            req->machine = machine;
+            wine_server_set_reply( req, server_contexts, sizeof(server_contexts) );
             ret = wine_server_call( req );
+            count = wine_server_reply_size( reply ) / sizeof(server_contexts[0]);
         }
         SERVER_END_REQ;
     }
-    if (!ret) ret = context_from_server( context, &server_context, machine );
+    if (!ret)
+    {
+        ret = context_from_server( context, &server_contexts[0], machine );
+        if (!ret && count > 1) ret = context_from_server( context, &server_contexts[1], machine );
+    }
     return ret;
 }
 

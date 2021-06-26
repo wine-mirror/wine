@@ -1307,14 +1307,14 @@ struct select_request
     obj_handle_t prev_apc;
     /* VARARG(result,apc_result); */
     /* VARARG(data,select_op,size); */
-    /* VARARG(context,context); */
+    /* VARARG(contexts,contexts); */
 };
 struct select_reply
 {
     struct reply_header __header;
     apc_call_t   call;
     obj_handle_t apc_handle;
-    /* VARARG(context,context); */
+    /* VARARG(contexts,contexts); */
     char __pad_60[4];
 };
 #define SELECT_ALERTABLE     1
@@ -2462,13 +2462,15 @@ struct get_thread_context_request
     obj_handle_t handle;
     obj_handle_t context;
     unsigned int flags;
+    unsigned short machine;
+    char __pad_26[6];
 };
 struct get_thread_context_reply
 {
     struct reply_header __header;
     int          self;
     obj_handle_t handle;
-    /* VARARG(context,context); */
+    /* VARARG(contexts,contexts); */
 };
 
 
@@ -2477,7 +2479,7 @@ struct set_thread_context_request
 {
     struct request_header __header;
     obj_handle_t handle;
-    /* VARARG(context,context); */
+    /* VARARG(contexts,contexts); */
 };
 struct set_thread_context_reply
 {
@@ -6218,7 +6220,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 716
+#define SERVER_PROTOCOL_VERSION 717
 
 /* ### protocol_version end ### */
 

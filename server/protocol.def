@@ -1156,11 +1156,11 @@ typedef struct
     obj_handle_t prev_apc;     /* handle to previous APC */
     VARARG(result,apc_result); /* result of previous APC */
     VARARG(data,select_op,size); /* operation-specific data */
-    VARARG(context,context);   /* suspend context */
+    VARARG(contexts,contexts);   /* suspend context(s) */
 @REPLY
     apc_call_t   call;         /* APC call arguments */
     obj_handle_t apc_handle;   /* handle to next APC */
-    VARARG(context,context);   /* suspend context */
+    VARARG(contexts,contexts); /* suspend context(s) */
 @END
 #define SELECT_ALERTABLE     1
 #define SELECT_INTERRUPTIBLE 2
@@ -1885,17 +1885,18 @@ struct process_info
     obj_handle_t handle;       /* thread handle */
     obj_handle_t context;      /* context handle */
     unsigned int flags;        /* context flags */
+    unsigned short machine;    /* context architecture */
 @REPLY
     int          self;         /* was it a handle to the current thread? */
     obj_handle_t handle;       /* pending context handle */
-    VARARG(context,context);   /* thread context */
+    VARARG(contexts,contexts); /* thread context(s) */
 @END
 
 
 /* Set the current context of a thread */
 @REQ(set_thread_context)
     obj_handle_t handle;       /* thread handle */
-    VARARG(context,context);   /* thread context */
+    VARARG(contexts,contexts); /* thread context(s) */
 @REPLY
     int          self;         /* was it a handle to the current thread? */
 @END

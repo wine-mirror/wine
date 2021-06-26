@@ -421,6 +421,24 @@ NTSTATUS signal_set_full_context( CONTEXT *context )
 
 
 /***********************************************************************
+ *              get_native_context
+ */
+void *get_native_context( CONTEXT *context )
+{
+    return context;
+}
+
+
+/***********************************************************************
+ *              get_wow_context
+ */
+void *get_wow_context( CONTEXT *context )
+{
+    return NULL;
+}
+
+
+/***********************************************************************
  *              NtSetContextThread  (NTDLL.@)
  *              ZwSetContextThread  (NTDLL.@)
  */

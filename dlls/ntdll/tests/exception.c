@@ -4318,9 +4318,7 @@ static void test_wow64_context(void)
         "rsp is not at top of stack %p / %p\n", (void *)context.Rsp, teb.Tib.StackBase );
     todo_wine
     ok( context.EFlags == 0x200, "wrong flags %08x\n", context.EFlags );
-    todo_wine
     ok( context.MxCsr == 0x1f80, "wrong mxcsr %08x\n", context.MxCsr );
-    todo_wine
     ok( context.FltSave.ControlWord == 0x27f, "wrong control %08x\n", context.FltSave.ControlWord );
     todo_wine
     ok( context.SegCs != ctx.SegCs, "wrong cs %04x\n", context.SegCs );

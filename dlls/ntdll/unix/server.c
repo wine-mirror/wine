@@ -622,10 +622,11 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
                 wine_server_add_data( req, select_op, size );
                 if (suspend_context)
                 {
-                    wine_server_add_data( req, context, sizeof(*context) );
+                    data_size_t ctx_size = (context[1].machine ? 2 : 1) * sizeof(*context);
+                    wine_server_add_data( req, context, ctx_size );
                     suspend_context = FALSE; /* server owns the context now */
                 }
-                if (context) wine_server_set_reply( req, context, sizeof(*context) );
+                if (context) wine_server_set_reply( req, context, 2 * sizeof(*context) );
                 ret = server_call_unlocked( req );
                 apc_handle  = reply->apc_handle;
                 call        = reply->call;

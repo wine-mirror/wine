@@ -230,6 +230,8 @@ extern NTSTATUS get_builtin_unix_info( void *module, const char **name, void **h
 extern NTSTATUS set_builtin_unix_info( void *module, const char *name, void *handle, void *entry ) DECLSPEC_HIDDEN;
 
 extern NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_len ) DECLSPEC_HIDDEN;
+extern void *get_native_context( CONTEXT *context ) DECLSPEC_HIDDEN;
+extern void *get_wow_context( CONTEXT *context ) DECLSPEC_HIDDEN;
 extern BOOL get_thread_times( int unix_pid, int unix_tid, LARGE_INTEGER *kernel_time,
                               LARGE_INTEGER *user_time ) DECLSPEC_HIDDEN;
 extern void signal_init_threading(void) DECLSPEC_HIDDEN;
