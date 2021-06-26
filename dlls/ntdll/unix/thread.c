@@ -174,7 +174,7 @@ static unsigned int get_server_context_flags( const void *context, USHORT machin
         if (flags & CONTEXT_I386_SEGMENTS) ret |= SERVER_CTX_SEGMENTS;
         if (flags & CONTEXT_I386_FLOATING_POINT) ret |= SERVER_CTX_FLOATING_POINT;
         if (flags & CONTEXT_I386_DEBUG_REGISTERS) ret |= SERVER_CTX_DEBUG_REGISTERS;
-        if (flags & CONTEXT_I386_EXTENDED_REGISTERS) ret |= SERVER_CTX_EXTENDED_REGISTERS;
+        if (flags & CONTEXT_I386_EXTENDED_REGISTERS) ret |= SERVER_CTX_EXTENDED_REGISTERS | SERVER_CTX_FLOATING_POINT;
         if (flags & CONTEXT_I386_XSTATE) ret |= SERVER_CTX_YMM_REGISTERS;
         break;
     case IMAGE_FILE_MACHINE_AMD64:
@@ -594,7 +594,7 @@ static NTSTATUS context_to_server( context_t *to, USHORT to_machine, const void 
  */
 static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT machine )
 {
-    DWORD i;
+    DWORD i, to_flags;
 
     switch (MAKELONG( from->machine, machine ))
     {
@@ -602,8 +602,8 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
     {
         I386_CONTEXT *to = dst;
 
-        to->ContextFlags = CONTEXT_i386 | (to->ContextFlags & CONTEXT_I386_XSTATE);
-        if (from->flags & SERVER_CTX_CONTROL)
+        to_flags = to->ContextFlags & ~CONTEXT_i386;
+        if ((from->flags & SERVER_CTX_CONTROL) && (to_flags & CONTEXT_I386_CONTROL))
         {
             to->ContextFlags |= CONTEXT_I386_CONTROL;
             to->Ebp    = from->ctl.i386_regs.ebp;
@@ -613,7 +613,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             to->SegSs  = from->ctl.i386_regs.ss;
             to->EFlags = from->ctl.i386_regs.eflags;
         }
-        if (from->flags & SERVER_CTX_INTEGER)
+        if ((from->flags & SERVER_CTX_INTEGER) && (to_flags & CONTEXT_I386_INTEGER))
         {
             to->ContextFlags |= CONTEXT_I386_INTEGER;
             to->Eax = from->integer.i386_regs.eax;
@@ -623,7 +623,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             to->Esi = from->integer.i386_regs.esi;
             to->Edi = from->integer.i386_regs.edi;
         }
-        if (from->flags & SERVER_CTX_SEGMENTS)
+        if ((from->flags & SERVER_CTX_SEGMENTS) && (to_flags & CONTEXT_I386_SEGMENTS))
         {
             to->ContextFlags |= CONTEXT_I386_SEGMENTS;
             to->SegDs = from->seg.i386_regs.ds;
@@ -631,7 +631,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             to->SegFs = from->seg.i386_regs.fs;
             to->SegGs = from->seg.i386_regs.gs;
         }
-        if (from->flags & SERVER_CTX_FLOATING_POINT)
+        if ((from->flags & SERVER_CTX_FLOATING_POINT) && (to_flags & CONTEXT_I386_FLOATING_POINT))
         {
             to->ContextFlags |= CONTEXT_I386_FLOATING_POINT;
             to->FloatSave.ControlWord   = from->fp.i386_regs.ctrl;
@@ -644,7 +644,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             to->FloatSave.Cr0NpxState   = from->fp.i386_regs.cr0npx;
             memcpy( to->FloatSave.RegisterArea, from->fp.i386_regs.regs, sizeof(to->FloatSave.RegisterArea) );
         }
-        if (from->flags & SERVER_CTX_DEBUG_REGISTERS)
+        if ((from->flags & SERVER_CTX_DEBUG_REGISTERS) && (to_flags & CONTEXT_I386_DEBUG_REGISTERS))
         {
             to->ContextFlags |= CONTEXT_I386_DEBUG_REGISTERS;
             to->Dr0 = from->debug.i386_regs.dr0;
@@ -654,13 +654,12 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             to->Dr6 = from->debug.i386_regs.dr6;
             to->Dr7 = from->debug.i386_regs.dr7;
         }
-        if (from->flags & SERVER_CTX_EXTENDED_REGISTERS)
+        if ((from->flags & SERVER_CTX_EXTENDED_REGISTERS) && (to_flags & CONTEXT_I386_EXTENDED_REGISTERS))
         {
             to->ContextFlags |= CONTEXT_I386_EXTENDED_REGISTERS;
             memcpy( to->ExtendedRegisters, from->ext.i386_regs, sizeof(to->ExtendedRegisters) );
         }
-        if (from->flags & SERVER_CTX_YMM_REGISTERS &&
-            (to->ContextFlags & CONTEXT_I386_XSTATE) == CONTEXT_I386_XSTATE)
+        if ((from->flags & SERVER_CTX_YMM_REGISTERS) && (to_flags & CONTEXT_I386_XSTATE))
         {
             CONTEXT_EX *xctx = (CONTEXT_EX *)(to + 1);
             XSTATE *xs = (XSTATE *)((char *)xctx + xctx->XState.Offset);
@@ -682,8 +681,8 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
     {
         I386_CONTEXT *to = dst;
 
-        to->ContextFlags = CONTEXT_i386 | (to->ContextFlags & CONTEXT_I386_XSTATE);
-        if (from->flags & SERVER_CTX_CONTROL)
+        to_flags = to->ContextFlags & ~CONTEXT_i386;
+        if ((from->flags & SERVER_CTX_CONTROL) && (to_flags & CONTEXT_I386_CONTROL))
         {
             to->ContextFlags |= CONTEXT_I386_CONTROL;
             to->Ebp    = from->ctl.x86_64_regs.rbp;
@@ -693,7 +692,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             to->SegSs  = from->ctl.x86_64_regs.ss;
             to->EFlags = from->ctl.x86_64_regs.flags;
         }
-        if (from->flags & SERVER_CTX_INTEGER)
+        if ((from->flags & SERVER_CTX_INTEGER) && (to_flags & CONTEXT_I386_INTEGER))
         {
             to->ContextFlags |= CONTEXT_I386_INTEGER;
             to->Eax = from->integer.x86_64_regs.rax;
@@ -703,7 +702,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             to->Esi = from->integer.x86_64_regs.rsi;
             to->Edi = from->integer.x86_64_regs.rdi;
         }
-        if (from->flags & SERVER_CTX_SEGMENTS)
+        if ((from->flags & SERVER_CTX_SEGMENTS) && (to_flags & CONTEXT_I386_SEGMENTS))
         {
             to->ContextFlags |= CONTEXT_I386_SEGMENTS;
             to->SegDs = from->seg.x86_64_regs.ds;
@@ -713,11 +712,18 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
         }
         if (from->flags & SERVER_CTX_FLOATING_POINT)
         {
-            to->ContextFlags |= CONTEXT_I386_EXTENDED_REGISTERS | CONTEXT_I386_FLOATING_POINT;
-            memcpy( to->ExtendedRegisters, from->fp.x86_64_regs.fpregs, sizeof(to->ExtendedRegisters) );
-            fpux_to_fpu( &to->FloatSave, (XMM_SAVE_AREA32 *)from->fp.x86_64_regs.fpregs );
+            if (to_flags & CONTEXT_I386_EXTENDED_REGISTERS)
+            {
+                to->ContextFlags |= CONTEXT_I386_EXTENDED_REGISTERS;
+                memcpy( to->ExtendedRegisters, from->fp.x86_64_regs.fpregs, sizeof(to->ExtendedRegisters) );
+            }
+            if (to_flags & CONTEXT_I386_FLOATING_POINT)
+            {
+                to->ContextFlags |= CONTEXT_I386_FLOATING_POINT;
+                fpux_to_fpu( &to->FloatSave, (XMM_SAVE_AREA32 *)from->fp.x86_64_regs.fpregs );
+            }
         }
-        if (from->flags & SERVER_CTX_DEBUG_REGISTERS)
+        if ((from->flags & SERVER_CTX_DEBUG_REGISTERS) && (to_flags & CONTEXT_I386_DEBUG_REGISTERS))
         {
             to->ContextFlags |= CONTEXT_I386_DEBUG_REGISTERS;
             to->Dr0 = from->debug.x86_64_regs.dr0;
@@ -727,8 +733,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             to->Dr6 = from->debug.x86_64_regs.dr6;
             to->Dr7 = from->debug.x86_64_regs.dr7;
         }
-        if (from->flags & SERVER_CTX_YMM_REGISTERS &&
-            (to->ContextFlags & CONTEXT_I386_XSTATE) == CONTEXT_I386_XSTATE)
+        if ((from->flags & SERVER_CTX_YMM_REGISTERS) && (to_flags & CONTEXT_I386_XSTATE))
         {
             CONTEXT_EX *xctx = (CONTEXT_EX *)(to + 1);
             XSTATE *xs = (XSTATE *)((char *)xctx + xctx->XState.Offset);
@@ -750,8 +755,8 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
     {
         AMD64_CONTEXT *to = dst;
 
-        to->ContextFlags = CONTEXT_AMD64 | (to->ContextFlags & CONTEXT_AMD64_XSTATE);
-        if (from->flags & SERVER_CTX_CONTROL)
+        to_flags = to->ContextFlags & ~CONTEXT_i386;
+        if ((from->flags & SERVER_CTX_CONTROL) && (to_flags & CONTEXT_AMD64_CONTROL))
         {
             to->ContextFlags |= CONTEXT_AMD64_CONTROL;
             to->Rbp    = from->ctl.x86_64_regs.rbp;
@@ -761,8 +766,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             to->SegSs  = from->ctl.x86_64_regs.ss;
             to->EFlags = from->ctl.x86_64_regs.flags;
         }
-
-        if (from->flags & SERVER_CTX_INTEGER)
+        if ((from->flags & SERVER_CTX_INTEGER) && (to_flags & CONTEXT_AMD64_INTEGER))
         {
             to->ContextFlags |= CONTEXT_AMD64_INTEGER;
             to->Rax = from->integer.x86_64_regs.rax;
@@ -780,7 +784,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             to->R14 = from->integer.x86_64_regs.r14;
             to->R15 = from->integer.x86_64_regs.r15;
         }
-        if (from->flags & SERVER_CTX_SEGMENTS)
+        if ((from->flags & SERVER_CTX_SEGMENTS) && (to_flags & CONTEXT_AMD64_SEGMENTS))
         {
             to->ContextFlags |= CONTEXT_AMD64_SEGMENTS;
             to->SegDs = from->seg.x86_64_regs.ds;
@@ -788,13 +792,13 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             to->SegFs = from->seg.x86_64_regs.fs;
             to->SegGs = from->seg.x86_64_regs.gs;
         }
-        if (from->flags & SERVER_CTX_FLOATING_POINT)
+        if ((from->flags & SERVER_CTX_FLOATING_POINT) && (to_flags & CONTEXT_AMD64_FLOATING_POINT))
         {
             to->ContextFlags |= CONTEXT_AMD64_FLOATING_POINT;
             memcpy( &to->u.FltSave, from->fp.x86_64_regs.fpregs, sizeof(from->fp.x86_64_regs.fpregs) );
             to->MxCsr = to->u.FltSave.MxCsr;
         }
-        if (from->flags & SERVER_CTX_DEBUG_REGISTERS)
+        if ((from->flags & SERVER_CTX_DEBUG_REGISTERS) && (to_flags & CONTEXT_AMD64_DEBUG_REGISTERS))
         {
             to->ContextFlags |= CONTEXT_AMD64_DEBUG_REGISTERS;
             to->Dr0 = from->debug.x86_64_regs.dr0;
@@ -804,8 +808,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             to->Dr6 = from->debug.x86_64_regs.dr6;
             to->Dr7 = from->debug.x86_64_regs.dr7;
         }
-        if (from->flags & SERVER_CTX_YMM_REGISTERS &&
-            (to->ContextFlags & CONTEXT_AMD64_XSTATE) == CONTEXT_AMD64_XSTATE)
+        if ((from->flags & SERVER_CTX_YMM_REGISTERS) && (to_flags & CONTEXT_AMD64_XSTATE))
         {
             CONTEXT_EX *xctx = (CONTEXT_EX *)(to + 1);
             XSTATE *xs = (XSTATE *)((char *)xctx + xctx->XState.Offset);
@@ -827,8 +830,8 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
     {
         AMD64_CONTEXT *to = dst;
 
-        to->ContextFlags = CONTEXT_AMD64;
-        if (from->flags & SERVER_CTX_CONTROL)
+        to_flags = to->ContextFlags & ~CONTEXT_i386;
+        if ((from->flags & SERVER_CTX_CONTROL) && (to_flags & CONTEXT_AMD64_CONTROL))
         {
             to->ContextFlags |= CONTEXT_AMD64_CONTROL;
             to->Rbp    = from->ctl.i386_regs.ebp;
@@ -838,8 +841,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             to->SegSs  = from->ctl.i386_regs.ss;
             to->EFlags = from->ctl.i386_regs.eflags;
         }
-
-        if (from->flags & SERVER_CTX_INTEGER)
+        if ((from->flags & SERVER_CTX_INTEGER) && (to_flags & CONTEXT_AMD64_INTEGER))
         {
             to->ContextFlags |= CONTEXT_AMD64_INTEGER;
             to->Rax = from->integer.i386_regs.eax;
@@ -857,7 +859,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             to->R14 = 0;
             to->R15 = 0;
         }
-        if (from->flags & SERVER_CTX_SEGMENTS)
+        if ((from->flags & SERVER_CTX_SEGMENTS) && (to_flags & CONTEXT_AMD64_SEGMENTS))
         {
             to->ContextFlags |= CONTEXT_AMD64_SEGMENTS;
             to->SegDs = from->seg.i386_regs.ds;
@@ -865,12 +867,12 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             to->SegFs = from->seg.i386_regs.fs;
             to->SegGs = from->seg.i386_regs.gs;
         }
-        if (from->flags & SERVER_CTX_EXTENDED_REGISTERS)
+        if ((from->flags & SERVER_CTX_EXTENDED_REGISTERS) && (to_flags & CONTEXT_AMD64_FLOATING_POINT))
         {
             to->ContextFlags |= CONTEXT_AMD64_FLOATING_POINT;
             memcpy( &to->u.FltSave, from->ext.i386_regs, sizeof(to->u.FltSave) );
         }
-        else if (from->flags & SERVER_CTX_FLOATING_POINT)
+        else if ((from->flags & SERVER_CTX_FLOATING_POINT) && (to_flags & CONTEXT_AMD64_FLOATING_POINT))
         {
             I386_FLOATING_SAVE_AREA fpu;
 
@@ -886,7 +888,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             memcpy( fpu.RegisterArea, from->fp.i386_regs.regs, sizeof(fpu.RegisterArea) );
             fpu_to_fpux( &to->u.FltSave, &fpu );
         }
-        if (from->flags & SERVER_CTX_DEBUG_REGISTERS)
+        if ((from->flags & SERVER_CTX_DEBUG_REGISTERS) && (to_flags & CONTEXT_AMD64_DEBUG_REGISTERS))
         {
             to->ContextFlags |= CONTEXT_AMD64_DEBUG_REGISTERS;
             to->Dr0 = from->debug.i386_regs.dr0;
@@ -896,8 +898,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             to->Dr6 = from->debug.i386_regs.dr6;
             to->Dr7 = from->debug.i386_regs.dr7;
         }
-        if (from->flags & SERVER_CTX_YMM_REGISTERS &&
-            (to->ContextFlags & CONTEXT_AMD64_XSTATE) == CONTEXT_AMD64_XSTATE)
+        if ((from->flags & SERVER_CTX_YMM_REGISTERS) && (to_flags & CONTEXT_AMD64_XSTATE))
         {
             CONTEXT_EX *xctx = (CONTEXT_EX *)(to + 1);
             XSTATE *xs = (XSTATE *)((char *)xctx + xctx->XState.Offset);
@@ -919,8 +920,8 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
     {
         ARM_CONTEXT *to = dst;
 
-        to->ContextFlags = CONTEXT_ARM;
-        if (from->flags & SERVER_CTX_CONTROL)
+        to_flags = to->ContextFlags & ~CONTEXT_ARM;
+        if ((from->flags & SERVER_CTX_CONTROL) && (to_flags & CONTEXT_ARM_CONTROL))
         {
             to->ContextFlags |= CONTEXT_ARM_CONTROL;
             to->Sp   = from->ctl.arm_regs.sp;
@@ -928,7 +929,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             to->Pc   = from->ctl.arm_regs.pc;
             to->Cpsr = from->ctl.arm_regs.cpsr;
         }
-        if (from->flags & SERVER_CTX_INTEGER)
+        if ((from->flags & SERVER_CTX_INTEGER) && (to_flags & CONTEXT_ARM_INTEGER))
         {
             to->ContextFlags |= CONTEXT_ARM_INTEGER;
             to->R0  = from->integer.arm_regs.r[0];
@@ -945,13 +946,13 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             to->R11 = from->integer.arm_regs.r[11];
             to->R12 = from->integer.arm_regs.r[12];
         }
-        if (from->flags & SERVER_CTX_FLOATING_POINT)
+        if ((from->flags & SERVER_CTX_FLOATING_POINT) && (to_flags & CONTEXT_ARM_FLOATING_POINT))
         {
             to->ContextFlags |= CONTEXT_ARM_FLOATING_POINT;
             for (i = 0; i < 32; i++) to->u.D[i] = from->fp.arm_regs.d[i];
             to->Fpscr = from->fp.arm_regs.fpscr;
         }
-        if (from->flags & SERVER_CTX_DEBUG_REGISTERS)
+        if ((from->flags & SERVER_CTX_DEBUG_REGISTERS) && (to_flags & CONTEXT_ARM_DEBUG_REGISTERS))
         {
             to->ContextFlags |= CONTEXT_ARM_DEBUG_REGISTERS;
             for (i = 0; i < ARM_MAX_BREAKPOINTS; i++) to->Bvr[i] = from->debug.arm_regs.bvr[i];
@@ -966,8 +967,9 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
     {
         ARM64_NT_CONTEXT *to = dst;
 
+        to_flags = to->ContextFlags & ~CONTEXT_ARM64;
         to->ContextFlags = CONTEXT_ARM64;
-        if (from->flags & SERVER_CTX_CONTROL)
+        if ((from->flags & SERVER_CTX_CONTROL) && (to_flags & CONTEXT_ARM64_CONTROL))
         {
             to->ContextFlags |= CONTEXT_ARM64_CONTROL;
             to->u.s.Fp = from->integer.arm64_regs.x[29];
@@ -976,12 +978,12 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             to->Pc     = from->ctl.arm64_regs.pc;
             to->Cpsr   = from->ctl.arm64_regs.pstate;
         }
-        if (from->flags & SERVER_CTX_INTEGER)
+        if ((from->flags & SERVER_CTX_INTEGER) && (to_flags & CONTEXT_ARM64_INTEGER))
         {
             to->ContextFlags |= CONTEXT_ARM64_INTEGER;
             for (i = 0; i <= 28; i++) to->u.X[i] = from->integer.arm64_regs.x[i];
         }
-        if (from->flags & SERVER_CTX_FLOATING_POINT)
+        if ((from->flags & SERVER_CTX_FLOATING_POINT) && (to_flags & CONTEXT_ARM64_FLOATING_POINT))
         {
             to->ContextFlags |= CONTEXT_ARM64_FLOATING_POINT;
             for (i = 0; i < 32; i++)
@@ -992,7 +994,7 @@ static NTSTATUS context_from_server( void *dst, const context_t *from, USHORT ma
             to->Fpcr = from->fp.arm64_regs.fpcr;
             to->Fpsr = from->fp.arm64_regs.fpsr;
         }
-        if (from->flags & SERVER_CTX_DEBUG_REGISTERS)
+        if ((from->flags & SERVER_CTX_DEBUG_REGISTERS) && (to_flags & CONTEXT_ARM64_DEBUG_REGISTERS))
         {
             to->ContextFlags |= CONTEXT_ARM64_DEBUG_REGISTERS;
             for (i = 0; i < ARM64_MAX_BREAKPOINTS; i++) to->Bcr[i] = from->debug.arm64_regs.bcr[i];
