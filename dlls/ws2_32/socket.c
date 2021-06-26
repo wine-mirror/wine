@@ -2090,7 +2090,6 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
 
         /* Handle common cases. The special cases are below, sorted
          * alphabetically */
-        case WS_SO_RCVBUF:
         case WS_SO_REUSEADDR:
         case WS_SO_SNDBUF:
             if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
@@ -2285,6 +2284,10 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             }
             return ret ? 0 : SOCKET_ERROR;
         }
+
+        case WS_SO_RCVBUF:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_SO_RCVBUF, optval, optlen );
+
         case WS_SO_RCVTIMEO:
         case WS_SO_SNDTIMEO:
         {
