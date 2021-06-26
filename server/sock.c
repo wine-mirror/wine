@@ -2580,6 +2580,22 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         return 1;
     }
 
+    case IOCTL_AFD_WINE_SET_SO_RCVBUF:
+    {
+        DWORD rcvbuf;
+
+        if (get_req_data_size() < sizeof(rcvbuf))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return 0;
+        }
+        rcvbuf = *(DWORD *)get_req_data();
+
+        if (setsockopt( unix_fd, SOL_SOCKET, SO_RCVBUF, (char *)&rcvbuf, sizeof(rcvbuf) ) < 0)
+            set_error( sock_get_ntstatus( errno ) );
+        return 0;
+    }
+
     default:
         set_error( STATUS_NOT_SUPPORTED );
         return 0;
