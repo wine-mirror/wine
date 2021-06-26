@@ -207,6 +207,7 @@ struct sock
     struct connect_req *connect_req; /* pending connection request */
     union win_sockaddr  addr;        /* socket name */
     int                 addr_len;    /* socket name length */
+    unsigned int        rcvbuf;      /* advisory recv buffer size */
     unsigned int        rd_shutdown : 1; /* is the read end shut down? */
     unsigned int        wr_shutdown : 1; /* is the write end shut down? */
     unsigned int        wr_shutdown_pending : 1; /* is a write shutdown pending? */
@@ -1386,6 +1387,7 @@ static struct sock *create_socket(void)
     sock->wr_shutdown_pending = 0;
     sock->nonblocking = 0;
     sock->bound = 0;
+    sock->rcvbuf = 0;
     init_async_queue( &sock->read_q );
     init_async_queue( &sock->write_q );
     init_async_queue( &sock->ifchange_q );
@@ -1477,7 +1479,8 @@ static void set_dont_fragment( int fd, int level, int value )
 static int init_socket( struct sock *sock, int family, int type, int protocol, unsigned int flags )
 {
     unsigned int options = 0;
-    int sockfd, unix_type, unix_family, unix_protocol;
+    int sockfd, unix_type, unix_family, unix_protocol, value;
+    socklen_t len;
 
     unix_family = get_unix_family( family );
     unix_type = get_unix_type( type );
@@ -1542,6 +1545,10 @@ static int init_socket( struct sock *sock, int family, int type, int protocol, u
         setsockopt( sockfd, IPPROTO_IPV6, IPV6_V6ONLY, &enable, sizeof(enable) );
     }
 #endif
+
+    len = sizeof(value);
+    if (!getsockopt( sockfd, SOL_SOCKET, SO_RCVBUF, &value, &len ))
+        sock->rcvbuf = value;
 
     sock->state  = (type == WS_SOCK_STREAM ? SOCK_UNCONNECTED : SOCK_CONNECTIONLESS);
     sock->flags  = flags;
@@ -2580,6 +2587,20 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         return 1;
     }
 
+    case IOCTL_AFD_WINE_GET_SO_RCVBUF:
+    {
+        int rcvbuf = sock->rcvbuf;
+
+        if (get_reply_max_size() < sizeof(rcvbuf))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return 0;
+        }
+
+        set_reply_data( &rcvbuf, sizeof(rcvbuf) );
+        return 1;
+    }
+
     case IOCTL_AFD_WINE_SET_SO_RCVBUF:
     {
         DWORD rcvbuf;
@@ -2591,7 +2612,9 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         }
         rcvbuf = *(DWORD *)get_req_data();
 
-        if (setsockopt( unix_fd, SOL_SOCKET, SO_RCVBUF, (char *)&rcvbuf, sizeof(rcvbuf) ) < 0)
+        if (!setsockopt( unix_fd, SOL_SOCKET, SO_RCVBUF, (char *)&rcvbuf, sizeof(rcvbuf) ))
+            sock->rcvbuf = rcvbuf;
+        else
             set_error( sock_get_ntstatus( errno ) );
         return 0;
     }
