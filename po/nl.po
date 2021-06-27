@@ -6984,10 +6984,8 @@ msgid "Resource is not currently available.\n"
 msgstr "Bron is tijdelijk niet beschikbaar.\n"
 
 #: dlls/light.msstyles/light.rc:30 dlls/light.msstyles/light.rc:37
-#, fuzzy
-#| msgid "Class Name:"
 msgid "Classic Blue"
-msgstr "Klassenaam:"
+msgstr "Klassiek Blauw"
 
 #: dlls/light.msstyles/light.rc:43 dlls/light.msstyles/light.rc:49
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
