@@ -775,6 +775,110 @@ BLUE_INI TEXTFILE
 "GlyphImageFile = blue_toolbar_buttons_split_dropdown_glyph.bmp\r\n"
 "GlyphTransparent = True\r\n"
 
+"\r\n; TrackBar\r\n"
+"[TrackBar]\r\n"
+"BgType = BorderFill\r\n"
+"FillType = Solid\r\n"
+"FillColor = 245 245 245\r\n"
+"BorderSize = 1\r\n"
+"BorderColor = 174 174 174\r\n"
+
+"[TrackBar.Thumb]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_trackbar_thumb_horizontal.bmp\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+"SizingMargins = 2, 3, 2, 3\r\n"
+"SizingType = Tile\r\n"
+
+"[TrackBar.ThumbVert]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_trackbar_thumb_vertical.bmp\r\n"
+"SizingMargins = 2, 3, 2, 3\r\n"
+"SizingType = Stretch\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+
+"[TrackBar.ThumbTop]\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+"Transparent = True\r\n"
+"SizingType = TrueSize\r\n"
+"ImageSelectType = Dpi\r\n"
+"UniformSizing = true\r\n"
+"ImageFile1 = blue_trackbar_thumb_up_11px.bmp\r\n"
+"ImageFile2 = blue_trackbar_thumb_up_15px.bmp\r\n"
+"ImageFile3 = blue_trackbar_thumb_up_21px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 118\r\n"
+"MinDpi3 = 185\r\n"
+
+"[TrackBar.ThumbBottom]\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 5\r\n"
+"Transparent = True\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"UniformSizing = True\r\n"
+"ImageFile1 = blue_trackbar_thumb_down_11px.bmp\r\n"
+"ImageFile2 = blue_trackbar_thumb_down_15px.bmp\r\n"
+"ImageFile3 = blue_trackbar_thumb_down_21px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 118\r\n"
+"MinDpi3 = 185\r\n"
+
+"[TrackBar.ThumbLeft]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageCount = 5\r\n"
+"Transparent = True\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"UniformSizing = True\r\n"
+"ImageFile1 = blue_trackbar_thumb_left_19px.bmp\r\n"
+"ImageFile2 = blue_trackbar_thumb_left_25px.bmp\r\n"
+"ImageFile3 = blue_trackbar_thumb_left_44px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 118\r\n"
+"MinDpi3 = 185\r\n"
+
+"[TrackBar.ThumbRight]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageCount = 5\r\n"
+"Transparent = True\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"UniformSizing = True\r\n"
+"ImageFile1 = blue_trackbar_thumb_right_19px.bmp\r\n"
+"ImageFile2 = blue_trackbar_thumb_right_25px.bmp\r\n"
+"ImageFile3 = blue_trackbar_thumb_right_44px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 118\r\n"
+"MinDpi3 = 185\r\n"
+
+"[TrackBar.Track]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_trackbar_slider_track.bmp\r\n"
+"ImageCount = 1\r\n"
+"SizingType = Stretch\r\n"
+"SizingMargins = 2, 2, 2, 2\r\n"
+
+"[TrackBar.TrackVert]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_trackbar_slider_track.bmp\r\n"
+"ImageCount = 1\r\n"
+"SizingType = Stretch\r\n"
+"SizingMargins = 2, 2, 2, 2\r\n"
+
+"[TrackBar.Tics]\r\n"
+"Color = 174 174 174\r\n"
+
+"[TrackBar.TicsVert]\r\n"
+"Color = 174 174 174\r\n"
+
 "\r\n; TreeView\r\n"
 "[TreeView]\r\n"
 "BgType = BorderFill\r\n"
@@ -965,6 +1069,52 @@ BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_BMP BITMAP "blue_toolbar_buttons_split_dropd
 
 /* @makedep: blue_toolbar_buttons_split_dropdown_glyph.bmp */
 BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_GLYPH_BMP BITMAP "blue_toolbar_buttons_split_dropdown_glyph.bmp"
+
+/* TrackBar */
+/* @makedep: blue_trackbar_thumb_horizontal.bmp */
+BLUE_TRACKBAR_THUMB_HORIZONTAL_BMP BITMAP "blue_trackbar_thumb_horizontal.bmp"
+
+/* @makedep: blue_trackbar_thumb_vertical.bmp */
+BLUE_TRACKBAR_THUMB_VERTICAL_BMP BITMAP "blue_trackbar_thumb_vertical.bmp"
+
+/* @makedep: blue_trackbar_slider_track.bmp */
+BLUE_TRACKBAR_SLIDER_TRACK_BMP BITMAP "blue_trackbar_slider_track.bmp"
+
+/* @makedep: blue_trackbar_thumb_down_11px.bmp */
+BLUE_TRACKBAR_THUMB_DOWN_11PX_BMP BITMAP "blue_trackbar_thumb_down_11px.bmp"
+
+/* @makedep: blue_trackbar_thumb_down_15px.bmp */
+BLUE_TRACKBAR_THUMB_DOWN_15PX_BMP BITMAP "blue_trackbar_thumb_down_15px.bmp"
+
+/* @makedep: blue_trackbar_thumb_down_21px.bmp */
+BLUE_TRACKBAR_THUMB_DOWN_21PX_BMP BITMAP "blue_trackbar_thumb_down_21px.bmp"
+
+/* @makedep: blue_trackbar_thumb_left_19px.bmp */
+BLUE_TRACKBAR_THUMB_LEFT_19PX_BMP BITMAP "blue_trackbar_thumb_left_19px.bmp"
+
+/* @makedep: blue_trackbar_thumb_left_25px.bmp */
+BLUE_TRACKBAR_THUMB_LEFT_25PX_BMP BITMAP "blue_trackbar_thumb_left_25px.bmp"
+
+/* @makedep: blue_trackbar_thumb_left_44px.bmp */
+BLUE_TRACKBAR_THUMB_LEFT_44PX_BMP BITMAP "blue_trackbar_thumb_left_44px.bmp"
+
+/* @makedep: blue_trackbar_thumb_right_19px.bmp */
+BLUE_TRACKBAR_THUMB_RIGHT_19PX_BMP BITMAP "blue_trackbar_thumb_right_19px.bmp"
+
+/* @makedep: blue_trackbar_thumb_right_25px.bmp */
+BLUE_TRACKBAR_THUMB_RIGHT_25PX_BMP BITMAP "blue_trackbar_thumb_right_25px.bmp"
+
+/* @makedep: blue_trackbar_thumb_right_44px.bmp */
+BLUE_TRACKBAR_THUMB_RIGHT_44PX_BMP BITMAP "blue_trackbar_thumb_right_44px.bmp"
+
+/* @makedep: blue_trackbar_thumb_up_11px.bmp */
+BLUE_TRACKBAR_THUMB_UP_11PX_BMP BITMAP "blue_trackbar_thumb_up_11px.bmp"
+
+/* @makedep: blue_trackbar_thumb_up_15px.bmp */
+BLUE_TRACKBAR_THUMB_UP_15PX_BMP BITMAP "blue_trackbar_thumb_up_15px.bmp"
+
+/* @makedep: blue_trackbar_thumb_up_21px.bmp */
+BLUE_TRACKBAR_THUMB_UP_21PX_BMP BITMAP "blue_trackbar_thumb_up_21px.bmp"
 
 /* TreeView */
 /* @makedep: blue_treeview_expand_collapse_9px.bmp */
