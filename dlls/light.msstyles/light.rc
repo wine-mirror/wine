@@ -634,6 +634,27 @@ BLUE_INI TEXTFILE
 "GlyphType = ImageGlyph\r\n"
 "GlyphImageFile = blue_toolbar_buttons_split_dropdown_glyph.bmp\r\n"
 "GlyphTransparent = True\r\n"
+
+"\r\n; TreeView\r\n"
+"[TreeView]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 1\r\n"
+"FillColor = 255 255 255\r\n"
+"BorderColor = 174 174 174\r\n"
+
+"[TreeView.Glyph]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageCount = 2\r\n"
+"ImageLayout = vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"UniformSizing = True\r\n"
+"ImageFile1 = blue_treeview_expand_collapse_9px.bmp\r\n"
+"ImageFile2 = blue_treeview_expand_collapse_10px.bmp\r\n"
+"ImageFile3 = blue_treeview_expand_collapse_15px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 133\r\n"
+"MinDpi3 = 150\r\n"
 }
 
 /* Button */
@@ -768,6 +789,16 @@ BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_BMP BITMAP "blue_toolbar_buttons_split_dropd
 
 /* @makedep: blue_toolbar_buttons_split_dropdown_glyph.bmp */
 BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_GLYPH_BMP BITMAP "blue_toolbar_buttons_split_dropdown_glyph.bmp"
+
+/* TreeView */
+/* @makedep: blue_treeview_expand_collapse_9px.bmp */
+BLUE_TREEVIEW_EXPAND_COLLAPSE_9PX_BMP BITMAP "blue_treeview_expand_collapse_9px.bmp"
+
+/* @makedep: blue_treeview_expand_collapse_10px.bmp */
+BLUE_TREEVIEW_EXPAND_COLLAPSE_10PX_BMP BITMAP "blue_treeview_expand_collapse_10px.bmp"
+
+/* @makedep: blue_treeview_expand_collapse_15px.bmp */
+BLUE_TREEVIEW_EXPAND_COLLAPSE_15PX_BMP BITMAP "blue_treeview_expand_collapse_15px.bmp"
 
 /* File version */
 #define WINE_FILEDESCRIPTION_STR "Light Theme"

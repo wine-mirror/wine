@@ -44,4 +44,7 @@ SVG_SRCS = \
 	blue_toolbar_buttons_split_dropdown.svg \
 	blue_toolbar_buttons_split_dropdown_glyph.svg \
 	blue_toolbar_separator_horizontal.svg \
-	blue_toolbar_separator_vertical.svg
+	blue_toolbar_separator_vertical.svg \
+	blue_treeview_expand_collapse_10px.svg \
+	blue_treeview_expand_collapse_15px.svg \
+	blue_treeview_expand_collapse_9px.svg
