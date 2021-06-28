@@ -620,6 +620,94 @@ BLUE_INI TEXTFILE
 "Transparent = True\r\n"
 "VAlign = Bottom\r\n"
 
+"\r\n; Tab\r\n"
+"[Tab]\r\n"
+"BgType = BorderFill\r\n"
+"FillType = Solid\r\n"
+"FillColor = 255 255 255\r\n"
+"BorderSize = 0\r\n"
+
+"[Tab.Pane]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_tab_pane_edge.bmp\r\n"
+"SizingMargins = 2, 4, 2, 4\r\n"
+"SizingType = Stretch\r\n"
+"ImageCount = 1\r\n"
+
+"[Tab.TabItem]\r\n"
+"SizingMargins = 2, 2, 6, 6\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_tab_item.bmp\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+
+"[Tab.TabItemLeftEdge]\r\n"
+"SizingMargins = 2, 2, 6, 6\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_tab_item_left.bmp\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+"Transparent = True\r\n"
+
+"[Tab.TabItemRightEdge]\r\n"
+"SizingMargins = 2, 2, 6, 6\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_tab_item_right.bmp\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+"Transparent = True\r\n"
+
+"[Tab.TabItemBothEdge]\r\n"
+"SizingMargins = 2, 2, 6, 6\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_tab_item.bmp\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+
+"[Tab.TopTabItem]\r\n"
+"SizingMargins = 2, 2, 6, 6\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_tab_item.bmp\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+"Transparent = True\r\n"
+
+"[Tab.TopTabItemLeftEdge]\r\n"
+"SizingMargins = 2, 2, 6, 6\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_tab_item_left.bmp\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+"Transparent = True\r\n"
+
+"[Tab.TopTabItemRightEdge]\r\n"
+"SizingMargins = 2, 2, 6, 6\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_tab_item_right.bmp\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+"Transparent = True\r\n"
+
+"[Tab.TopTabItemBothEdge]\r\n"
+"SizingMargins = 2, 2, 6, 6\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_tab_item.bmp\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+"Transparent = True\r\n"
+
+"[Tab.Body]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_tab_background.bmp\r\n"
+
 "\r\n; Toolbar\r\n"
 "[Toolbar]\r\n"
 "BgType = BorderFill\r\n"
@@ -842,6 +930,22 @@ BLUE_STATUS_BACKGROUND_BMP BITMAP "blue_status_background.bmp"
 
 /* @makedep: blue_status_pane.bmp */
 BLUE_STATUS_PANE_BMP BITMAP "blue_status_pane.bmp"
+
+/* Tab */
+/* @makedep: blue_tab_background.bmp */
+BLUE_TAB_BACKGROUND_BMP BITMAP "blue_tab_background.bmp"
+
+/* @makedep: blue_tab_item.bmp */
+BLUE_TAB_ITEM_BMP BITMAP "blue_tab_item.bmp"
+
+/* @makedep: blue_tab_item_left.bmp */
+BLUE_TAB_ITEM_LEFT_BMP BITMAP "blue_tab_item_left.bmp"
+
+/* @makedep: blue_tab_item_right.bmp */
+BLUE_TAB_ITEM_RIGHT_BMP BITMAP "blue_tab_item_right.bmp"
+
+/* @makedep: blue_tab_pane_edge.bmp */
+BLUE_TAB_PANE_EDGE_BMP BITMAP "blue_tab_pane_edge.bmp"
 
 /* ToolBar */
 /* @makedep: blue_toolbar_buttons.bmp */

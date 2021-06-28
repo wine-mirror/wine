@@ -45,6 +45,11 @@ SVG_SRCS = \
 	blue_spin_glyph_up.svg \
 	blue_status_background.svg \
 	blue_status_pane.svg \
+	blue_tab_background.svg \
+	blue_tab_item.svg \
+	blue_tab_item_left.svg \
+	blue_tab_item_right.svg \
+	blue_tab_pane_edge.svg \
 	blue_toolbar_buttons.svg \
 	blue_toolbar_buttons_split.svg \
 	blue_toolbar_buttons_split_dropdown.svg \
