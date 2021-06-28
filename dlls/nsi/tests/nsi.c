@@ -33,6 +33,54 @@ static int bounded( ULONG64 val, ULONG64 lo, ULONG64 hi )
     return lo <= val && val <= hi;
 }
 
+static void test_nsi_api( void )
+{
+    DWORD rw_sizes[] = { FIELD_OFFSET(struct nsi_ndis_ifinfo_rw, name2), FIELD_OFFSET(struct nsi_ndis_ifinfo_rw, unk),
+                         sizeof(struct nsi_ndis_ifinfo_rw) };
+    struct nsi_ndis_ifinfo_rw *rw_tbl, *rw, get_rw;
+    struct nsi_ndis_ifinfo_dynamic *dyn_tbl, *dyn, get_dyn;
+    struct nsi_ndis_ifinfo_static *stat_tbl, *stat, get_stat;
+    DWORD err, count, i, rw_size;
+    NET_LUID *luid_tbl;
+
+    /* Use the NDIS ifinfo table to test various api */
+    for (i = 0; i < ARRAY_SIZE(rw_sizes); i++)
+    {
+        err = NsiAllocateAndGetTable( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, (void **)&luid_tbl, sizeof(*luid_tbl),
+                                      (void **)&rw_tbl, rw_sizes[i], (void **)&dyn_tbl, sizeof(*dyn_tbl),
+                                      (void **)&stat_tbl, sizeof(*stat_tbl), &count, 0 );
+        if (!err) break;
+    }
+todo_wine
+    ok( !err, "got %d\n", err );
+    if (err) return;
+    rw_size = rw_sizes[i];
+
+    for (i = 0; i < count; i++)
+    {
+        winetest_push_context( "%d", i );
+        rw = (struct nsi_ndis_ifinfo_rw *)((BYTE *)rw_tbl + i * rw_size);
+        dyn = dyn_tbl + i;
+        stat = stat_tbl + i;
+
+        err = NsiGetAllParameters( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, luid_tbl + i, sizeof(*luid_tbl),
+                                   &get_rw, rw_size, &get_dyn, sizeof(get_dyn), &get_stat, sizeof(get_stat) );
+        ok( !err, "got %d\n", err );
+        /* test a selection of members */
+        ok( IsEqualGUID( &get_rw.network_guid, &rw->network_guid ), "mismatch\n" );
+        ok( get_rw.alias.Length == rw->alias.Length, "mismatch\n" );
+        ok( !memcmp( get_rw.alias.String, rw->alias.String, rw->alias.Length ), "mismatch\n" );
+        ok( get_rw.phys_addr.Length == rw->phys_addr.Length, "mismatch\n" );
+        ok( !memcmp( get_rw.phys_addr.Address, rw->phys_addr.Address, IF_MAX_PHYS_ADDRESS_LENGTH ), "mismatch\n" );
+        ok( get_dyn.oper_status == dyn->oper_status, "mismatch\n" );
+        ok( get_stat.if_index == stat->if_index, "mismatch\n" );
+        ok( IsEqualGUID( &get_stat.if_guid, &stat->if_guid ), "mismatch\n" );
+        winetest_pop_context();
+    }
+
+    NsiFreeTable( luid_tbl, rw_tbl, dyn_tbl, stat_tbl );
+}
+
 static void test_ndis_ifinfo( void )
 {
     DWORD rw_sizes[] = { FIELD_OFFSET(struct nsi_ndis_ifinfo_rw, name2), FIELD_OFFSET(struct nsi_ndis_ifinfo_rw, unk),
@@ -145,5 +193,7 @@ todo_wine
 
 START_TEST( nsi )
 {
+    test_nsi_api();
+
     test_ndis_ifinfo();
 }
