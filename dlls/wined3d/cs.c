@@ -489,7 +489,8 @@ struct wined3d_cs_update_sub_resource
     struct wined3d_resource *resource;
     unsigned int sub_resource_idx;
     struct wined3d_box box;
-    struct wined3d_sub_resource_data data;
+    struct wined3d_const_bo_address addr;
+    unsigned int row_pitch, slice_pitch;
 };
 
 struct wined3d_cs_add_dirty_texture_region
@@ -2606,21 +2607,17 @@ static void wined3d_cs_exec_update_sub_resource(struct wined3d_cs *cs, const voi
     struct wined3d_resource *resource = op->resource;
     const struct wined3d_box *box = &op->box;
     unsigned int width, height, depth, level;
-    struct wined3d_const_bo_address addr;
     struct wined3d_context *context;
     struct wined3d_texture *texture;
     struct wined3d_box src_box;
 
     context = context_acquire(cs->c.device, NULL, 0);
 
-    addr.buffer_object = 0;
-    addr.addr = op->data.data;
-
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
         struct wined3d_buffer *buffer = buffer_from_resource(resource);
 
-        wined3d_buffer_copy_bo_address(buffer, context, box->left, &addr, box->right - box->left);
+        wined3d_buffer_copy_bo_address(buffer, context, box->left, &op->addr, box->right - box->left);
         goto done;
     }
 
@@ -2639,8 +2636,8 @@ static void wined3d_cs_exec_update_sub_resource(struct wined3d_cs *cs, const voi
         wined3d_texture_load_location(texture, op->sub_resource_idx, context, WINED3D_LOCATION_TEXTURE_RGB);
 
     wined3d_box_set(&src_box, 0, 0, box->right - box->left, box->bottom - box->top, 0, box->back - box->front);
-    texture->texture_ops->texture_upload_data(context, &addr, texture->resource.format, &src_box,
-            op->data.row_pitch, op->data.slice_pitch, texture, op->sub_resource_idx,
+    texture->texture_ops->texture_upload_data(context, &op->addr, texture->resource.format, &src_box,
+            op->row_pitch, op->slice_pitch, texture, op->sub_resource_idx,
             WINED3D_LOCATION_TEXTURE_RGB, box->left, box->top, box->front);
 
     wined3d_texture_validate_location(texture, op->sub_resource_idx, WINED3D_LOCATION_TEXTURE_RGB);
@@ -2665,9 +2662,10 @@ static void wined3d_cs_update_sub_resource(struct wined3d_device_context *contex
     op->resource = resource;
     op->sub_resource_idx = sub_resource_idx;
     op->box = *box;
-    op->data.row_pitch = row_pitch;
-    op->data.slice_pitch = slice_pitch;
-    op->data.data = data;
+    op->addr.buffer_object = 0;
+    op->addr.addr = data;
+    op->row_pitch = row_pitch;
+    op->slice_pitch = slice_pitch;
 
     wined3d_device_context_acquire_resource(context, resource);
 
