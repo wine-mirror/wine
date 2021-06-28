@@ -924,8 +924,6 @@ typedef struct
     client_ptr_t teb;          /* TEB of new thread (in thread address space) */
     client_ptr_t entry;        /* entry point (in thread address space) */
 @REPLY
-    process_id_t pid;          /* process id of the new thread's process */
-    thread_id_t  tid;          /* thread id of the new thread */
     int          suspend;      /* is thread suspended? */
 @END
 

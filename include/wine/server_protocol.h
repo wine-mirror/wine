@@ -952,10 +952,8 @@ struct init_thread_request
 struct init_thread_reply
 {
     struct reply_header __header;
-    process_id_t pid;
-    thread_id_t  tid;
     int          suspend;
-    char __pad_20[4];
+    char __pad_12[4];
 };
 
 
@@ -6236,7 +6234,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 718
+#define SERVER_PROTOCOL_VERSION 719
 
 /* ### protocol_version end ### */
 

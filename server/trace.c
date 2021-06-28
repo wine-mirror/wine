@@ -1545,9 +1545,7 @@ static void dump_init_thread_request( const struct init_thread_request *req )
 
 static void dump_init_thread_reply( const struct init_thread_reply *req )
 {
-    fprintf( stderr, " pid=%04x", req->pid );
-    fprintf( stderr, ", tid=%04x", req->tid );
-    fprintf( stderr, ", suspend=%d", req->suspend );
+    fprintf( stderr, " suspend=%d", req->suspend );
 }
 
 static void dump_terminate_process_request( const struct terminate_process_request *req )

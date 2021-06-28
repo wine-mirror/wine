@@ -1457,8 +1457,6 @@ DECL_HANDLER(init_thread)
     generate_debug_event( current, DbgCreateThreadStateChange, &req->entry );
     set_thread_affinity( current, current->affinity );
 
-    reply->pid     = get_process_id( current->process );
-    reply->tid     = get_thread_id( current );
     reply->suspend = (current->suspend || current->process->suspend || current->context != NULL);
 }
 
