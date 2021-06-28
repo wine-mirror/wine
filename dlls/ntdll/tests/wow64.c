@@ -28,6 +28,7 @@ static NTSTATUS (WINAPI *pRtlWow64IsWowGuestMachineSupported)(USHORT,BOOLEAN*);
 #ifdef _WIN64
 static NTSTATUS (WINAPI *pRtlWow64GetCpuAreaInfo)(WOW64_CPURESERVED*,ULONG,WOW64_CPU_AREA_INFO*);
 #else
+static NTSTATUS (WINAPI *pNtWow64AllocateVirtualMemory64)(HANDLE,ULONG64*,ULONG64,ULONG64*,ULONG,ULONG);
 static NTSTATUS (WINAPI *pNtWow64ReadVirtualMemory64)(HANDLE,ULONG64,void*,ULONG64,ULONG64*);
 static NTSTATUS (WINAPI *pNtWow64WriteVirtualMemory64)(HANDLE,ULONG64,const void *,ULONG64,ULONG64*);
 #endif
@@ -48,6 +49,7 @@ static void init(void)
 #ifdef _WIN64
     GET_PROC( RtlWow64GetCpuAreaInfo );
 #else
+    GET_PROC( NtWow64AllocateVirtualMemory64 );
     GET_PROC( NtWow64ReadVirtualMemory64 );
     GET_PROC( NtWow64WriteVirtualMemory64 );
 #endif
@@ -489,6 +491,73 @@ static void test_nt_wow64(void)
             "NtWow64WriteVirtualMemory64 failed %x\n", status );
     }
     else win_skip( "NtWow64ReadVirtualMemory64 not supported\n" );
+
+    if (pNtWow64AllocateVirtualMemory64)
+    {
+        ULONG64 ptr = 0;
+        ULONG64 size = 0x2345;
+
+        status = pNtWow64AllocateVirtualMemory64( process, &ptr, 0, &size,
+                                                  MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE );
+        ok( !status, "NtWow64AllocateVirtualMemory64 failed %x\n", status );
+        ok( ptr, "ptr not set\n" );
+        ok( size == 0x3000, "size not set %s\n", wine_dbgstr_longlong(size) );
+        ptr += 0x1000;
+        status = pNtWow64AllocateVirtualMemory64( process, &ptr, 0, &size,
+                                                  MEM_RESERVE | MEM_COMMIT, PAGE_READONLY );
+        ok( status == STATUS_CONFLICTING_ADDRESSES, "NtWow64AllocateVirtualMemory64 failed %x\n", status );
+        ptr = 0;
+        size = 0;
+        status = pNtWow64AllocateVirtualMemory64( process, &ptr, 0, &size,
+                                                  MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE );
+        ok( status == STATUS_INVALID_PARAMETER || status == STATUS_INVALID_PARAMETER_4,
+            "NtWow64AllocateVirtualMemory64 failed %x\n", status );
+        size = 0x1000;
+        status = pNtWow64AllocateVirtualMemory64( process, &ptr, 22, &size,
+                                                  MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE );
+        ok( status == STATUS_INVALID_PARAMETER || status == STATUS_INVALID_PARAMETER_3,
+            "NtWow64AllocateVirtualMemory64 failed %x\n", status );
+        status = pNtWow64AllocateVirtualMemory64( process, &ptr, 33, &size,
+                                                  MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE );
+        ok( status == STATUS_INVALID_PARAMETER || status == STATUS_INVALID_PARAMETER_3,
+            "NtWow64AllocateVirtualMemory64 failed %x\n", status );
+        status = pNtWow64AllocateVirtualMemory64( process, &ptr, 0x3fffffff, &size,
+                                                  MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE );
+        todo_wine_if( !is_wow64 )
+        ok( !status, "NtWow64AllocateVirtualMemory64 failed %x\n", status );
+        ok( ptr < 0x40000000, "got wrong ptr %s\n", wine_dbgstr_longlong(ptr) );
+        if (!status && pNtWow64WriteVirtualMemory64)
+        {
+            status = pNtWow64WriteVirtualMemory64( process, ptr, str, sizeof(str), &res );
+            ok( !status, "NtWow64WriteVirtualMemory64 failed %x\n", status );
+            ok( res == sizeof(str), "wrong size %s\n", wine_dbgstr_longlong(res) );
+            ok( !strcmp( (char *)(ULONG_PTR)ptr, str ), "wrong data %s\n",
+                debugstr_a((char *)(ULONG_PTR)ptr) );
+            ptr = 0;
+            status = pNtWow64AllocateVirtualMemory64( process, &ptr, 0, &size,
+                                                      MEM_RESERVE | MEM_COMMIT, PAGE_READONLY );
+            ok( !status, "NtWow64AllocateVirtualMemory64 failed %x\n", status );
+            status = pNtWow64WriteVirtualMemory64( process, ptr, str, sizeof(str), &res );
+            todo_wine
+            ok( status == STATUS_PARTIAL_COPY || broken( status == STATUS_ACCESS_VIOLATION ),
+                "NtWow64WriteVirtualMemory64 failed %x\n", status );
+            todo_wine
+            ok( !res, "wrong size %s\n", wine_dbgstr_longlong(res) );
+        }
+        ptr = 0x9876543210ull;
+        status = pNtWow64AllocateVirtualMemory64( process, &ptr, 0, &size,
+                                                  MEM_RESERVE | MEM_COMMIT, PAGE_READONLY );
+        todo_wine
+        ok( !status || broken( status == STATUS_CONFLICTING_ADDRESSES ),
+            "NtWow64AllocateVirtualMemory64 failed %x\n", status );
+        if (!status) ok( ptr == 0x9876540000ull, "wrong ptr %s\n", wine_dbgstr_longlong(ptr) );
+        ptr = 0;
+        status = pNtWow64AllocateVirtualMemory64( GetCurrentProcess(), &ptr, 0, &size,
+                                                  MEM_RESERVE | MEM_COMMIT, PAGE_READONLY );
+        ok( !status || broken( status == STATUS_INVALID_HANDLE ),
+            "NtWow64AllocateVirtualMemory64 failed %x\n", status );
+    }
+    else win_skip( "NtWow64AllocateVirtualMemory64 not supported\n" );
 
     NtClose( process );
 }
