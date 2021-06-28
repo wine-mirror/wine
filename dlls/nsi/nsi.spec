@@ -3,7 +3,7 @@
 @ stub NsiCancelChangeNotification
 @ stub NsiDeregisterChangeNotification
 @ stub NsiDeregisterChangeNotificationEx
-@ stub NsiEnumerateObjectsAllParameters
+@ stdcall NsiEnumerateObjectsAllParameters(long long ptr long ptr long ptr long ptr long ptr long ptr)
 @ stub NsiEnumerateObjectsAllParametersEx
 @ stub NsiEnumerateObjectsAllPersistentParametersWithMask
 @ stub NsiFreePersistentDataWithMaskTable

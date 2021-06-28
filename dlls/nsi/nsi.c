@@ -38,6 +38,16 @@ DWORD WINAPI NsiAllocateAndGetTable( DWORD unk, const NPI_MODULEID *module, DWOR
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
+DWORD WINAPI NsiEnumerateObjectsAllParameters( DWORD unk, DWORD unk2, const NPI_MODULEID *module, DWORD table,
+                                               void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
+                                               void *dynamic_data, DWORD dynamic_size, void *static_data, DWORD static_size,
+                                               DWORD *count )
+{
+    FIXME( "%d %d %p %d %p %d %p %d %p %d %p %d %p: stub\n", unk, unk2, module, table, key_data, key_size,
+           rw_data, rw_size, dynamic_data, dynamic_size, static_data, static_size, count );
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 void WINAPI NsiFreeTable( void *key_data, void *rw_data, void *dynamic_data, void *static_data )
 {
     FIXME( "%p %p %p %p: stub\n", key_data, rw_data, dynamic_data, static_data );

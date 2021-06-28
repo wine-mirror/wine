@@ -101,6 +101,10 @@ struct nsi_ndis_ifinfo_static
 DWORD WINAPI NsiAllocateAndGetTable( DWORD unk, const NPI_MODULEID *module, DWORD table, void **key_data, DWORD key_size,
                                      void **rw_data, DWORD rw_size, void **dynamic_data, DWORD dynamic_size,
                                      void **static_data, DWORD static_size, DWORD *count, DWORD unk2 );
+DWORD WINAPI NsiEnumerateObjectsAllParameters( DWORD unk, DWORD unk2, const NPI_MODULEID *module, DWORD table,
+                                               void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
+                                               void *dynamic_data, DWORD dynamic_size, void *static_data, DWORD static_size,
+                                               DWORD *count );
 void WINAPI NsiFreeTable( void *key_data, void *rw_data, void *dynamic_data, void *static_data );
 DWORD WINAPI NsiGetAllParameters( DWORD unk, const NPI_MODULEID *module, DWORD table, const void *key, DWORD key_size,
                                   void *rw_data, DWORD rw_size, void *dynamic_data, DWORD dynamic_size,

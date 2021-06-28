@@ -37,11 +37,11 @@ static void test_nsi_api( void )
 {
     DWORD rw_sizes[] = { FIELD_OFFSET(struct nsi_ndis_ifinfo_rw, name2), FIELD_OFFSET(struct nsi_ndis_ifinfo_rw, unk),
                          sizeof(struct nsi_ndis_ifinfo_rw) };
-    struct nsi_ndis_ifinfo_rw *rw_tbl, *rw, get_rw;
-    struct nsi_ndis_ifinfo_dynamic *dyn_tbl, *dyn, get_dyn;
-    struct nsi_ndis_ifinfo_static *stat_tbl, *stat, get_stat;
-    DWORD err, count, i, rw_size;
-    NET_LUID *luid_tbl;
+    struct nsi_ndis_ifinfo_rw *rw_tbl, *rw, get_rw, *enum_rw_tbl, *enum_rw;
+    struct nsi_ndis_ifinfo_dynamic *dyn_tbl, *dyn, get_dyn, *enum_dyn_tbl, *enum_dyn;
+    struct nsi_ndis_ifinfo_static *stat_tbl, *stat, get_stat, *enum_stat_tbl, *enum_stat;
+    DWORD err, count, i, rw_size, enum_count;
+    NET_LUID *luid_tbl, *enum_luid_tbl;
 
     /* Use the NDIS ifinfo table to test various api */
     for (i = 0; i < ARRAY_SIZE(rw_sizes); i++)
@@ -101,6 +101,68 @@ todo_wine
         winetest_pop_context();
     }
 
+    enum_count = 0;
+    err = NsiEnumerateObjectsAllParameters( 1, 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE,
+                                            NULL, 0, NULL, 0,
+                                            NULL, 0, NULL, 0, &enum_count );
+    ok( !err, "got %d\n", err );
+    ok( enum_count == count, "mismatch\n" );
+
+    enum_luid_tbl = malloc( count * sizeof(*enum_luid_tbl) );
+    enum_rw_tbl = malloc( count * rw_size );
+    enum_dyn_tbl = malloc( count * sizeof(*enum_dyn_tbl) );
+    enum_stat_tbl = malloc( count * sizeof(*enum_stat_tbl) );
+
+    err = NsiEnumerateObjectsAllParameters( 1, 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE,
+                                            enum_luid_tbl, sizeof(*enum_luid_tbl), enum_rw_tbl, rw_size,
+                                            enum_dyn_tbl, sizeof(*enum_dyn_tbl), enum_stat_tbl, sizeof(*enum_stat_tbl),
+                                            &enum_count );
+    ok( !err, "got %d\n", err );
+    ok( enum_count == count, "mismatch\n" );
+
+    for (i = 0; i < count; i++)
+    {
+        winetest_push_context( "%d", i );
+        rw = (struct nsi_ndis_ifinfo_rw *)((BYTE *)rw_tbl + i * rw_size);
+        enum_rw = (struct nsi_ndis_ifinfo_rw *)((BYTE *)enum_rw_tbl + i * rw_size);
+        dyn = dyn_tbl + i;
+        enum_dyn = enum_dyn_tbl + i;
+        stat = stat_tbl + i;
+        enum_stat = enum_stat_tbl + i;
+
+        /* test a selection of members */
+        ok( enum_luid_tbl[i].Value == luid_tbl[i].Value, "mismatch\n" );
+        ok( IsEqualGUID( &enum_rw->network_guid, &rw->network_guid ), "mismatch\n" );
+        ok( enum_rw->alias.Length == rw->alias.Length, "mismatch\n" );
+        ok( !memcmp( enum_rw->alias.String, rw->alias.String, rw->alias.Length ), "mismatch\n" );
+        ok( enum_rw->phys_addr.Length == rw->phys_addr.Length, "mismatch\n" );
+        ok( !memcmp( enum_rw->phys_addr.Address, rw->phys_addr.Address, IF_MAX_PHYS_ADDRESS_LENGTH ), "mismatch\n" );
+        ok( enum_dyn->oper_status == dyn->oper_status, "mismatch\n" );
+        ok( enum_stat->if_index == stat->if_index, "mismatch\n" );
+        ok( IsEqualGUID( &enum_stat->if_guid, &stat->if_guid ), "mismatch\n" );
+        winetest_pop_context();
+    }
+
+    if (count > 0)
+    {
+        enum_count--;
+        memset( enum_luid_tbl, 0xcc, count * sizeof(*enum_luid_tbl) );
+
+        err = NsiEnumerateObjectsAllParameters( 1, 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE,
+                                                enum_luid_tbl, sizeof(*enum_luid_tbl), enum_rw_tbl, rw_size,
+                                                enum_dyn_tbl, sizeof(*enum_dyn_tbl), enum_stat_tbl, sizeof(*enum_stat_tbl),
+                                                &enum_count );
+        ok( err == ERROR_MORE_DATA, "got %d\n", err );
+        ok( enum_count == count - 1, "mismatch\n" );
+
+        for (i = 0; i < enum_count; i++) /* for simplicity just check the luids */
+            ok( enum_luid_tbl[i].Value == luid_tbl[i].Value, "%d: mismatch\n", i );
+    }
+
+    free( enum_luid_tbl );
+    free( enum_rw_tbl );
+    free( enum_dyn_tbl );
+    free( enum_stat_tbl );
     NsiFreeTable( luid_tbl, rw_tbl, dyn_tbl, stat_tbl );
 }
 
