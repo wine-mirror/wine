@@ -721,33 +721,37 @@ NTSTATUS WINAPI HidP_GetData( HIDP_REPORT_TYPE report_type, HIDP_DATA *data, ULO
     return HIDP_STATUS_SUCCESS;
 }
 
-NTSTATUS WINAPI HidP_GetLinkCollectionNodes(HIDP_LINK_COLLECTION_NODE *LinkCollectionNode,
-    ULONG *LinkCollectionNodeLength, PHIDP_PREPARSED_DATA PreparsedData)
+NTSTATUS WINAPI HidP_GetLinkCollectionNodes( HIDP_LINK_COLLECTION_NODE *nodes, ULONG *nodes_len, PHIDP_PREPARSED_DATA preparsed_data )
 {
-    WINE_HIDP_PREPARSED_DATA *data = (WINE_HIDP_PREPARSED_DATA*)PreparsedData;
-    WINE_HID_LINK_COLLECTION_NODE *nodes = HID_NODES(data);
-    ULONG i;
+    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    struct hid_value_caps *caps = HID_COLLECTION_VALUE_CAPS( preparsed );
+    ULONG i, count, capacity = *nodes_len;
 
-    TRACE("(%p, %p, %p)\n", LinkCollectionNode, LinkCollectionNodeLength, PreparsedData);
+    TRACE( "nodes %p, nodes_len %p, preparsed_data %p.\n", nodes, nodes_len, preparsed_data );
 
-    if (data->magic != HID_MAGIC)
-        return HIDP_STATUS_INVALID_PREPARSED_DATA;
+    if (preparsed->magic != HID_MAGIC) return HIDP_STATUS_INVALID_PREPARSED_DATA;
 
-    if (*LinkCollectionNodeLength < data->caps.NumberLinkCollectionNodes)
-        return HIDP_STATUS_BUFFER_TOO_SMALL;
+    if (capacity < preparsed->caps.NumberLinkCollectionNodes) return HIDP_STATUS_BUFFER_TOO_SMALL;
+    count = *nodes_len = preparsed->caps.NumberLinkCollectionNodes;
 
-    for (i = 0; i < data->caps.NumberLinkCollectionNodes; ++i)
+    for (i = 0; i < count; ++i)
     {
-        LinkCollectionNode[i].LinkUsage = nodes[i].LinkUsage;
-        LinkCollectionNode[i].LinkUsagePage = nodes[i].LinkUsagePage;
-        LinkCollectionNode[i].Parent = nodes[i].Parent;
-        LinkCollectionNode[i].NumberOfChildren = nodes[i].NumberOfChildren;
-        LinkCollectionNode[i].NextSibling = nodes[i].NextSibling;
-        LinkCollectionNode[i].FirstChild = nodes[i].FirstChild;
-        LinkCollectionNode[i].CollectionType = nodes[i].CollectionType;
-        LinkCollectionNode[i].IsAlias = nodes[i].IsAlias;
+        nodes[i].LinkUsagePage = caps[i].usage_page;
+        nodes[i].LinkUsage = caps[i].usage_min;
+        nodes[i].Parent = caps[i].link_collection;
+        nodes[i].CollectionType = caps[i].bit_field;
+        nodes[i].IsAlias = 0;
+        nodes[i].FirstChild = 0;
+        nodes[i].NextSibling = 0;
+        nodes[i].NumberOfChildren = 0;
+
+        if (i > 0)
+        {
+            nodes[i].NextSibling = nodes[nodes[i].Parent].FirstChild;
+            nodes[nodes[i].Parent].FirstChild = i;
+            nodes[nodes[i].Parent].NumberOfChildren++;
+        }
     }
-    *LinkCollectionNodeLength = data->caps.NumberLinkCollectionNodes;
 
     return HIDP_STATUS_SUCCESS;
 }

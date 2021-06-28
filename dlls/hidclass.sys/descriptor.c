@@ -834,7 +834,6 @@ static void preparse_collection(const struct collection *root, const struct coll
 static WINE_HIDP_PREPARSED_DATA *build_preparsed_data( struct collection *base_collection,
                                                        struct hid_parser_state *state )
 {
-    WINE_HID_LINK_COLLECTION_NODE *nodes;
     WINE_HIDP_PREPARSED_DATA *data;
     struct hid_value_caps *caps;
     unsigned int report_count;
@@ -843,7 +842,6 @@ static WINE_HIDP_PREPARSED_DATA *build_preparsed_data( struct collection *base_c
 
     struct preparse_ctx ctx;
     unsigned int element_off;
-    unsigned int nodes_offset;
 
     memset(&ctx, 0, sizeof(ctx));
     create_preparse_ctx(base_collection, &ctx);
@@ -853,10 +851,8 @@ static WINE_HIDP_PREPARSED_DATA *build_preparsed_data( struct collection *base_c
     element_off = FIELD_OFFSET(WINE_HIDP_PREPARSED_DATA, reports[report_count]);
     size = element_off + (ctx.elem_count * sizeof(WINE_HID_ELEMENT));
 
-    nodes_offset = size;
-    size += state->caps.NumberLinkCollectionNodes * sizeof(WINE_HID_LINK_COLLECTION_NODE);
-
-    caps_len = state->caps.NumberInputValueCaps + state->caps.NumberOutputValueCaps + state->caps.NumberFeatureValueCaps;
+    caps_len = state->caps.NumberInputValueCaps + state->caps.NumberOutputValueCaps +
+               state->caps.NumberFeatureValueCaps + state->caps.NumberLinkCollectionNodes;
     caps_off = size;
     size += caps_len * sizeof(*caps);
 
@@ -866,7 +862,6 @@ static WINE_HIDP_PREPARSED_DATA *build_preparsed_data( struct collection *base_c
     data->caps = state->caps;
     data->new_caps = state->caps;
     data->elementOffset = element_off;
-    data->nodesOffset = nodes_offset;
 
     data->value_caps_offset = caps_off;
     data->value_caps_count[HidP_Input] = state->caps.NumberInputValueCaps;
@@ -877,23 +872,6 @@ static WINE_HIDP_PREPARSED_DATA *build_preparsed_data( struct collection *base_c
     data->caps.NumberOutputValueCaps = data->caps.NumberOutputButtonCaps = data->caps.NumberOutputDataIndices = 0;
     data->caps.NumberFeatureValueCaps = data->caps.NumberFeatureButtonCaps = data->caps.NumberFeatureDataIndices = 0;
     preparse_collection(base_collection, base_collection, data, &ctx);
-
-    nodes = HID_NODES( data );
-    for (i = 0; i < data->caps.NumberLinkCollectionNodes; ++i)
-    {
-        nodes[i].LinkUsagePage = state->collections[i].usage_page;
-        nodes[i].LinkUsage = state->collections[i].usage_min;
-        nodes[i].Parent = state->collections[i].link_collection;
-        nodes[i].CollectionType = state->collections[i].bit_field;
-        nodes[i].IsAlias = 0;
-
-        if (i > 0)
-        {
-            nodes[i].NextSibling = nodes[nodes[i].Parent].FirstChild;
-            nodes[nodes[i].Parent].FirstChild = i;
-            nodes[nodes[i].Parent].NumberOfChildren++;
-        }
-    }
 
     /* fixup value vs button vs filler counts */
 
@@ -928,6 +906,9 @@ static WINE_HIDP_PREPARSED_DATA *build_preparsed_data( struct collection *base_c
     caps += data->new_caps.NumberFeatureValueCaps;
     data->new_caps.NumberFeatureButtonCaps = button;
     data->new_caps.NumberFeatureValueCaps -= filler + button;
+
+    caps = HID_COLLECTION_VALUE_CAPS( data );
+    memcpy( caps, state->collections, data->new_caps.NumberLinkCollectionNodes * sizeof(*caps) );
 
     return data;
 }
