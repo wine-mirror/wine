@@ -9,7 +9,7 @@
 @ stub NsiFreePersistentDataWithMaskTable
 @ stdcall NsiFreeTable(ptr ptr ptr ptr)
 @ stdcall NsiGetAllParameters(long ptr long ptr long ptr long ptr long ptr long)
-@ stub NsiGetAllParametersEx
+@ stdcall NsiGetAllParametersEx(ptr)
 @ stub NsiGetAllPersistentParametersWithMask
 @ stub NsiObjectSecurity
 @ stdcall NsiGetParameter(long ptr long ptr long long ptr long long)

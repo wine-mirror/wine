@@ -40,6 +40,7 @@ static void test_nsi_api( void )
     struct nsi_ndis_ifinfo_rw *rw_tbl, *rw, get_rw, *enum_rw_tbl, *enum_rw;
     struct nsi_ndis_ifinfo_dynamic *dyn_tbl, *dyn, get_dyn, *enum_dyn_tbl, *enum_dyn;
     struct nsi_ndis_ifinfo_static *stat_tbl, *stat, get_stat, *enum_stat_tbl, *enum_stat;
+    struct nsi_get_all_parameters_ex get_all_params;
     struct nsi_enumerate_all_ex enum_params;
     DWORD err, count, i, rw_size, enum_count;
     NET_LUID *luid_tbl, *enum_luid_tbl;
@@ -66,6 +67,35 @@ todo_wine
 
         err = NsiGetAllParameters( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, luid_tbl + i, sizeof(*luid_tbl),
                                    &get_rw, rw_size, &get_dyn, sizeof(get_dyn), &get_stat, sizeof(get_stat) );
+        ok( !err, "got %d\n", err );
+        /* test a selection of members */
+        ok( IsEqualGUID( &get_rw.network_guid, &rw->network_guid ), "mismatch\n" );
+        ok( get_rw.alias.Length == rw->alias.Length, "mismatch\n" );
+        ok( !memcmp( get_rw.alias.String, rw->alias.String, rw->alias.Length ), "mismatch\n" );
+        ok( get_rw.phys_addr.Length == rw->phys_addr.Length, "mismatch\n" );
+        ok( !memcmp( get_rw.phys_addr.Address, rw->phys_addr.Address, IF_MAX_PHYS_ADDRESS_LENGTH ), "mismatch\n" );
+        ok( get_dyn.oper_status == dyn->oper_status, "mismatch\n" );
+        ok( get_stat.if_index == stat->if_index, "mismatch\n" );
+        ok( IsEqualGUID( &get_stat.if_guid, &stat->if_guid ), "mismatch\n" );
+
+        memset( &get_rw, 0xcc, sizeof(get_rw) );
+        memset( &get_dyn, 0xcc, sizeof(get_dyn) );
+        memset( &get_stat, 0xcc, sizeof(get_stat) );
+
+        memset( &get_all_params, 0, sizeof(get_all_params) );
+        get_all_params.first_arg = 1;
+        get_all_params.module = &NPI_MS_NDIS_MODULEID;
+        get_all_params.table = NSI_NDIS_IFINFO_TABLE;
+        get_all_params.key = luid_tbl + i;
+        get_all_params.key_size = sizeof(*luid_tbl);
+        get_all_params.rw_data = &get_rw;
+        get_all_params.rw_size = rw_size;
+        get_all_params.dynamic_data = &get_dyn;
+        get_all_params.dynamic_size = sizeof(get_dyn);
+        get_all_params.static_data = &get_stat;
+        get_all_params.static_size = sizeof(get_stat);
+
+        err = NsiGetAllParametersEx( &get_all_params );
         ok( !err, "got %d\n", err );
         /* test a selection of members */
         ok( IsEqualGUID( &get_rw.network_guid, &rw->network_guid ), "mismatch\n" );

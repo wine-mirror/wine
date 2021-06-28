@@ -84,8 +84,31 @@ DWORD WINAPI NsiGetAllParameters( DWORD unk, const NPI_MODULEID *module, DWORD t
                                   void *rw_data, DWORD rw_size, void *dynamic_data, DWORD dynamic_size,
                                   void *static_data, DWORD static_size )
 {
+    struct nsi_get_all_parameters_ex params;
+
     FIXME( "%d %p %d %p %d %p %d %p %d %p %d: stub\n", unk, module, table, key, key_size,
            rw_data, rw_size, dynamic_data, dynamic_size, static_data, static_size );
+
+    params.unknown[0] = 0;
+    params.unknown[1] = 0;
+    params.module = module;
+    params.table = table;
+    params.first_arg = unk;
+    params.unknown2 = 0;
+    params.key = key;
+    params.key_size = key_size;
+    params.rw_data = rw_data;
+    params.rw_size = rw_size;
+    params.dynamic_data = dynamic_data;
+    params.dynamic_size = dynamic_size;
+    params.static_data = static_data;
+    params.static_size = static_size;
+
+    return NsiGetAllParametersEx( &params );
+}
+
+DWORD WINAPI NsiGetAllParametersEx( struct nsi_get_all_parameters_ex *params )
+{
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
 
