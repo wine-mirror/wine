@@ -129,6 +129,7 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
     ID3D10VertexShader *d3d10_vs = NULL;
     ID3D10PixelShader *d3d10_ps = NULL;
     ID3D10InputLayout *d3d10_il = NULL;
+    ID3D10BlendState *d3d10_bs = NULL;
     D3D10_RECT scissor_rect;
     unsigned int offset;
     D3D10_VIEWPORT vp;
@@ -189,6 +190,12 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
         goto error;
     }
 
+    if (render_target->bs && FAILED(hr = ID3D11BlendState_QueryInterface(render_target->bs, &IID_ID3D10BlendState, (void **)&d3d10_bs)))
+    {
+        ERR("Failed to query D3D10 blend state, hr %#x.\n", hr);
+        goto error;
+    }
+
     if (FAILED(hr = render_target->stateblock->lpVtbl->Capture(render_target->stateblock)))
     {
         WARN("Failed to capture stateblock, hr %#x.\n", hr);
@@ -229,7 +236,7 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
     ID3D10Device_OMSetRenderTargets(device, 1, &render_target->target->rtv, NULL);
     if (brush)
     {
-        ID3D10Device_OMSetBlendState(device, render_target->bs, NULL, D3D10_DEFAULT_SAMPLE_MASK);
+        ID3D10Device_OMSetBlendState(device, d3d10_bs, NULL, D3D10_DEFAULT_SAMPLE_MASK);
         d2d_brush_bind_resources(brush, render_target, 0);
     }
     if (opacity_brush)
@@ -244,6 +251,7 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
         WARN("Failed to apply stateblock, hr %#x.\n", hr);
 
 error:
+    if (d3d10_bs) ID3D10BlendState_Release(d3d10_bs);
     if (d3d10_rs) ID3D10RasterizerState_Release(d3d10_rs);
     if (d3d10_ps) ID3D10PixelShader_Release(d3d10_ps);
     if (d3d10_vs) ID3D10VertexShader_Release(d3d10_vs);
@@ -325,7 +333,7 @@ static ULONG STDMETHODCALLTYPE d2d_device_context_inner_Release(IUnknown *iface)
         if (context->text_rendering_params)
             IDWriteRenderingParams_Release(context->text_rendering_params);
         if (context->bs)
-            ID3D10BlendState_Release(context->bs);
+            ID3D11BlendState_Release(context->bs);
         ID3D11RasterizerState_Release(context->rs);
         ID3D11Buffer_Release(context->vb);
         ID3D11Buffer_Release(context->ib);
@@ -2076,7 +2084,7 @@ static void d2d_device_context_reset_target(struct d2d_device_context *context)
     memset(&context->desc.pixelFormat, 0, sizeof(context->desc.pixelFormat));
     memset(&context->pixel_size, 0, sizeof(context->pixel_size));
 
-    ID3D10BlendState_Release(context->bs);
+    ID3D11BlendState_Release(context->bs);
     context->bs = NULL;
 }
 
@@ -2084,7 +2092,7 @@ static void STDMETHODCALLTYPE d2d_device_context_SetTarget(ID2D1DeviceContext *i
 {
     struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
     struct d2d_bitmap *bitmap_impl;
-    D3D10_BLEND_DESC blend_desc;
+    D3D11_BLEND_DESC blend_desc;
     ID2D1Bitmap *bitmap;
     HRESULT hr;
 
@@ -2118,23 +2126,24 @@ static void STDMETHODCALLTYPE d2d_device_context_SetTarget(ID2D1DeviceContext *i
     context->target = bitmap_impl;
 
     memset(&blend_desc, 0, sizeof(blend_desc));
-    blend_desc.BlendEnable[0] = TRUE;
-    blend_desc.SrcBlend = D3D10_BLEND_ONE;
-    blend_desc.DestBlend = D3D10_BLEND_INV_SRC_ALPHA;
-    blend_desc.BlendOp = D3D10_BLEND_OP_ADD;
+    blend_desc.IndependentBlendEnable = FALSE;
+    blend_desc.RenderTarget[0].BlendEnable = TRUE;
+    blend_desc.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+    blend_desc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+    blend_desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
     if (context->desc.pixelFormat.alphaMode == D2D1_ALPHA_MODE_IGNORE)
     {
-        blend_desc.SrcBlendAlpha = D3D10_BLEND_ZERO;
-        blend_desc.DestBlendAlpha = D3D10_BLEND_ONE;
+        blend_desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ZERO;
+        blend_desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
     }
     else
     {
-        blend_desc.SrcBlendAlpha = D3D10_BLEND_ONE;
-        blend_desc.DestBlendAlpha = D3D10_BLEND_INV_SRC_ALPHA;
+        blend_desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+        blend_desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_INV_SRC_ALPHA;
     }
-    blend_desc.BlendOpAlpha = D3D10_BLEND_OP_ADD;
-    blend_desc.RenderTargetWriteMask[0] = D3D10_COLOR_WRITE_ENABLE_ALL;
-    if (FAILED(hr = ID3D10Device_CreateBlendState(context->d3d_device, &blend_desc, &context->bs)))
+    blend_desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+    blend_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+    if (FAILED(hr = ID3D11Device1_CreateBlendState(context->d3d11_device, &blend_desc, &context->bs)))
         WARN("Failed to create blend state, hr %#x.\n", hr);
 }
 
