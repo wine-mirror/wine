@@ -12,7 +12,7 @@
 @ stub NsiGetAllParametersEx
 @ stub NsiGetAllPersistentParametersWithMask
 @ stub NsiObjectSecurity
-@ stub NsiGetParameter
+@ stdcall NsiGetParameter(long ptr long ptr long long ptr long long)
 @ stub NsiGetParameterEx
 @ stub NsiRegisterChangeNotification
 @ stub NsiRegisterChangeNotificationEx

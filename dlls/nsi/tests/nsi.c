@@ -75,6 +75,29 @@ todo_wine
         ok( get_dyn.oper_status == dyn->oper_status, "mismatch\n" );
         ok( get_stat.if_index == stat->if_index, "mismatch\n" );
         ok( IsEqualGUID( &get_stat.if_guid, &stat->if_guid ), "mismatch\n" );
+
+        memset( &get_rw, 0xcc, sizeof(get_rw) );
+        memset( &get_dyn, 0xcc, sizeof(get_dyn) );
+        memset( &get_stat, 0xcc, sizeof(get_stat) );
+
+        err = NsiGetParameter( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, luid_tbl + i, sizeof(*luid_tbl),
+                               NSI_PARAM_TYPE_RW, &get_rw.alias, sizeof(get_rw.alias),
+                               FIELD_OFFSET(struct nsi_ndis_ifinfo_rw, alias) );
+        ok( !err, "got %d\n", err );
+        ok( get_rw.alias.Length == rw->alias.Length, "mismatch\n" );
+        ok( !memcmp( get_rw.alias.String, rw->alias.String, rw->alias.Length ), "mismatch\n" );
+
+        err = NsiGetParameter( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, luid_tbl + i, sizeof(*luid_tbl),
+                               NSI_PARAM_TYPE_STATIC, &get_stat.if_index, sizeof(get_stat.if_index),
+                               FIELD_OFFSET(struct nsi_ndis_ifinfo_static, if_index) );
+        ok( !err, "got %d\n", err );
+        ok( get_stat.if_index == stat->if_index, "mismatch\n" );
+
+        err = NsiGetParameter( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, luid_tbl + i, sizeof(*luid_tbl),
+                               NSI_PARAM_TYPE_STATIC, &get_stat.if_guid, sizeof(get_stat.if_guid),
+                               FIELD_OFFSET(struct nsi_ndis_ifinfo_static, if_guid) );
+        ok( !err, "got %d\n", err );
+        ok( IsEqualGUID( &get_stat.if_guid, &stat->if_guid ), "mismatch\n" );
         winetest_pop_context();
     }
 

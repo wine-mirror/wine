@@ -51,3 +51,11 @@ DWORD WINAPI NsiGetAllParameters( DWORD unk, const NPI_MODULEID *module, DWORD t
            rw_data, rw_size, dynamic_data, dynamic_size, static_data, static_size );
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+DWORD WINAPI NsiGetParameter( DWORD unk, const NPI_MODULEID *module, DWORD table, const void *key, DWORD key_size,
+                              DWORD param_type, void *data, DWORD data_size, DWORD data_offset )
+{
+    FIXME( "%d %p %d %p %d %d %p %d %d: stub\n", unk, module, table, key, key_size,
+           param_type, data, data_size, data_offset );
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
