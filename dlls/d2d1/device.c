@@ -125,6 +125,7 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
     ID3D10Device *device = render_target->d3d_device;
     ID3D10Buffer *d3d10_ib = NULL, *d3d10_vb = NULL, *d3d10_vs_cb = NULL, *d3d10_ps_cb = NULL;
     ID3D11Buffer *vs_cb = render_target->vs_cb, *ps_cb = render_target->ps_cb;
+    ID3D10RasterizerState *d3d10_rs = NULL;
     ID3D10VertexShader *d3d10_vs = NULL;
     ID3D10PixelShader *d3d10_ps = NULL;
     ID3D10InputLayout *d3d10_il = NULL;
@@ -182,6 +183,12 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
         goto error;
     }
 
+    if (render_target->rs && FAILED(hr = ID3D11RasterizerState_QueryInterface(render_target->rs, &IID_ID3D10RasterizerState, (void **)&d3d10_rs)))
+    {
+        ERR("Failed to query D3D10 rasterizer state, hr %#x.\n", hr);
+        goto error;
+    }
+
     if (FAILED(hr = render_target->stateblock->lpVtbl->Capture(render_target->stateblock)))
     {
         WARN("Failed to capture stateblock, hr %#x.\n", hr);
@@ -218,7 +225,7 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
         scissor_rect.bottom = render_target->pixel_size.height;
     }
     ID3D10Device_RSSetScissorRects(device, 1, &scissor_rect);
-    ID3D10Device_RSSetState(device, render_target->rs);
+    ID3D10Device_RSSetState(device, d3d10_rs);
     ID3D10Device_OMSetRenderTargets(device, 1, &render_target->target->rtv, NULL);
     if (brush)
     {
@@ -237,6 +244,7 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
         WARN("Failed to apply stateblock, hr %#x.\n", hr);
 
 error:
+    if (d3d10_rs) ID3D10RasterizerState_Release(d3d10_rs);
     if (d3d10_ps) ID3D10PixelShader_Release(d3d10_ps);
     if (d3d10_vs) ID3D10VertexShader_Release(d3d10_vs);
     if (d3d10_il) ID3D10InputLayout_Release(d3d10_il);
@@ -318,7 +326,7 @@ static ULONG STDMETHODCALLTYPE d2d_device_context_inner_Release(IUnknown *iface)
             IDWriteRenderingParams_Release(context->text_rendering_params);
         if (context->bs)
             ID3D10BlendState_Release(context->bs);
-        ID3D10RasterizerState_Release(context->rs);
+        ID3D11RasterizerState_Release(context->rs);
         ID3D11Buffer_Release(context->vb);
         ID3D11Buffer_Release(context->ib);
         ID3D11Buffer_Release(context->ps_cb);
@@ -2859,7 +2867,7 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
     D3D10_STATE_BLOCK_MASK state_mask;
     struct d2d_device *device_impl;
     IDWriteFactory *dwrite_factory;
-    D3D10_RASTERIZER_DESC rs_desc;
+    D3D11_RASTERIZER_DESC rs_desc;
     D3D11_BUFFER_DESC buffer_desc;
     unsigned int i;
     HRESULT hr;
@@ -4033,8 +4041,8 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
         goto err;
     }
 
-    rs_desc.FillMode = D3D10_FILL_SOLID;
-    rs_desc.CullMode = D3D10_CULL_NONE;
+    rs_desc.FillMode = D3D11_FILL_SOLID;
+    rs_desc.CullMode = D3D11_CULL_NONE;
     rs_desc.FrontCounterClockwise = FALSE;
     rs_desc.DepthBias = 0;
     rs_desc.DepthBiasClamp = 0.0f;
@@ -4043,7 +4051,7 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
     rs_desc.ScissorEnable = TRUE;
     rs_desc.MultisampleEnable = FALSE;
     rs_desc.AntialiasedLineEnable = FALSE;
-    if (FAILED(hr = ID3D10Device_CreateRasterizerState(render_target->d3d_device, &rs_desc, &render_target->rs)))
+    if (FAILED(hr = ID3D11Device1_CreateRasterizerState(render_target->d3d11_device, &rs_desc, &render_target->rs)))
     {
         WARN("Failed to create clear rasterizer state, hr %#x.\n", hr);
         goto err;
@@ -4082,7 +4090,7 @@ err:
     if (render_target->default_text_rendering_params)
         IDWriteRenderingParams_Release(render_target->default_text_rendering_params);
     if (render_target->rs)
-        ID3D10RasterizerState_Release(render_target->rs);
+        ID3D11RasterizerState_Release(render_target->rs);
     if (render_target->vb)
         ID3D11Buffer_Release(render_target->vb);
     if (render_target->ib)

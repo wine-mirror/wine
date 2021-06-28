@@ -172,7 +172,7 @@ struct d2d_device_context
     ID3D11Buffer *ib;
     unsigned int vb_stride;
     ID3D11Buffer *vb;
-    ID3D10RasterizerState *rs;
+    ID3D11RasterizerState *rs;
     ID3D10BlendState *bs;
     ID3D10SamplerState *sampler_states
             [D2D_SAMPLER_INTERPOLATION_MODE_COUNT]
