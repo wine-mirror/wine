@@ -4,7 +4,7 @@
 @ stub NsiDeregisterChangeNotification
 @ stub NsiDeregisterChangeNotificationEx
 @ stdcall NsiEnumerateObjectsAllParameters(long long ptr long ptr long ptr long ptr long ptr long ptr)
-@ stub NsiEnumerateObjectsAllParametersEx
+@ stdcall NsiEnumerateObjectsAllParametersEx(ptr)
 @ stub NsiEnumerateObjectsAllPersistentParametersWithMask
 @ stub NsiFreePersistentDataWithMaskTable
 @ stdcall NsiFreeTable(ptr ptr ptr ptr)

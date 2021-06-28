@@ -40,6 +40,7 @@ static void test_nsi_api( void )
     struct nsi_ndis_ifinfo_rw *rw_tbl, *rw, get_rw, *enum_rw_tbl, *enum_rw;
     struct nsi_ndis_ifinfo_dynamic *dyn_tbl, *dyn, get_dyn, *enum_dyn_tbl, *enum_dyn;
     struct nsi_ndis_ifinfo_static *stat_tbl, *stat, get_stat, *enum_stat_tbl, *enum_stat;
+    struct nsi_enumerate_all_ex enum_params;
     DWORD err, count, i, rw_size, enum_count;
     NET_LUID *luid_tbl, *enum_luid_tbl;
 
@@ -158,6 +159,25 @@ todo_wine
         for (i = 0; i < enum_count; i++) /* for simplicity just check the luids */
             ok( enum_luid_tbl[i].Value == luid_tbl[i].Value, "%d: mismatch\n", i );
     }
+
+    memset( &enum_params, 0, sizeof(enum_params) );
+    enum_params.first_arg = 1;
+    enum_params.second_arg = 1;
+    enum_params.module = &NPI_MS_NDIS_MODULEID;
+    enum_params.table = NSI_NDIS_IFINFO_TABLE;
+    enum_params.key_data = enum_luid_tbl;
+    enum_params.key_size = sizeof(*enum_luid_tbl);
+    enum_params.rw_data = enum_rw_tbl;
+    enum_params.rw_size = rw_size;
+    enum_params.dynamic_data = enum_dyn_tbl;
+    enum_params.dynamic_size = sizeof(*enum_dyn_tbl);
+    enum_params.static_data = enum_stat_tbl;
+    enum_params.static_size = sizeof(*enum_stat_tbl);
+    enum_params.count = count;
+
+    err = NsiEnumerateObjectsAllParametersEx( &enum_params );
+    ok( !err, "got %d\n", err );
+    ok( enum_params.count == count, "mismatch\n" );
 
     free( enum_luid_tbl );
     free( enum_rw_tbl );
