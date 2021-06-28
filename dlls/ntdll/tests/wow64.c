@@ -27,6 +27,9 @@ static NTSTATUS (WINAPI *pRtlWow64GetProcessMachines)(HANDLE,WORD*,WORD*);
 static NTSTATUS (WINAPI *pRtlWow64IsWowGuestMachineSupported)(USHORT,BOOLEAN*);
 #ifdef _WIN64
 static NTSTATUS (WINAPI *pRtlWow64GetCpuAreaInfo)(WOW64_CPURESERVED*,ULONG,WOW64_CPU_AREA_INFO*);
+#else
+static NTSTATUS (WINAPI *pNtWow64ReadVirtualMemory64)(HANDLE,ULONG64,void*,ULONG64,ULONG64*);
+static NTSTATUS (WINAPI *pNtWow64WriteVirtualMemory64)(HANDLE,ULONG64,const void *,ULONG64,ULONG64*);
 #endif
 
 static BOOL is_wow64;
@@ -44,6 +47,9 @@ static void init(void)
     GET_PROC( RtlWow64IsWowGuestMachineSupported );
 #ifdef _WIN64
     GET_PROC( RtlWow64GetCpuAreaInfo );
+#else
+    GET_PROC( NtWow64ReadVirtualMemory64 );
+    GET_PROC( NtWow64WriteVirtualMemory64 );
 #endif
 #undef GET_PROC
 }
@@ -453,6 +459,40 @@ static void test_cpu_area(void)
     else win_skip( "RtlWow64GetCpuAreaInfo not supported\n" );
 }
 
+#else  /* _WIN64 */
+
+static void test_nt_wow64(void)
+{
+    const char str[] = "hello wow64";
+    char buffer[100];
+    NTSTATUS status;
+    ULONG64 res;
+    HANDLE process = OpenProcess( PROCESS_ALL_ACCESS, FALSE, GetCurrentProcessId() );
+
+    ok( process != 0, "failed to open current process %u\n", GetLastError() );
+    if (pNtWow64ReadVirtualMemory64)
+    {
+        status = pNtWow64ReadVirtualMemory64( process, (ULONG_PTR)str, buffer, sizeof(str), &res );
+        ok( !status, "NtWow64ReadVirtualMemory64 failed %x\n", status );
+        ok( res == sizeof(str), "wrong size %s\n", wine_dbgstr_longlong(res) );
+        ok( !strcmp( buffer, str ), "wrong data %s\n", debugstr_a(buffer) );
+        status = pNtWow64WriteVirtualMemory64( process, (ULONG_PTR)buffer, " bye ", 5, &res );
+        ok( !status, "NtWow64WriteVirtualMemory64 failed %x\n", status );
+        ok( res == 5, "wrong size %s\n", wine_dbgstr_longlong(res) );
+        ok( !strcmp( buffer, " bye  wow64" ), "wrong data %s\n", debugstr_a(buffer) );
+        /* current process pseudo-handle is broken on some Windows versions */
+        status = pNtWow64ReadVirtualMemory64( GetCurrentProcess(), (ULONG_PTR)str, buffer, sizeof(str), &res );
+        ok( !status || broken( status == STATUS_INVALID_HANDLE ),
+            "NtWow64ReadVirtualMemory64 failed %x\n", status );
+        status = pNtWow64WriteVirtualMemory64( GetCurrentProcess(), (ULONG_PTR)buffer, " bye ", 5, &res );
+        ok( !status || broken( status == STATUS_INVALID_HANDLE ),
+            "NtWow64WriteVirtualMemory64 failed %x\n", status );
+    }
+    else win_skip( "NtWow64ReadVirtualMemory64 not supported\n" );
+
+    NtClose( process );
+}
+
 #endif  /* _WIN64 */
 
 
@@ -463,5 +503,7 @@ START_TEST(wow64)
     test_peb_teb();
 #ifdef _WIN64
     test_cpu_area();
+#else
+    test_nt_wow64();
 #endif
 }
