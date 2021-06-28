@@ -1121,19 +1121,19 @@ struct d2d_brush *unsafe_impl_from_ID2D1Brush(ID2D1Brush *iface)
     return CONTAINING_RECORD(iface, struct d2d_brush, ID2D1Brush_iface);
 }
 
-static D3D10_TEXTURE_ADDRESS_MODE texture_address_mode_from_extend_mode(D2D1_EXTEND_MODE mode)
+static D3D11_TEXTURE_ADDRESS_MODE texture_address_mode_from_extend_mode(D2D1_EXTEND_MODE mode)
 {
     switch (mode)
     {
         case D2D1_EXTEND_MODE_CLAMP:
-            return D3D10_TEXTURE_ADDRESS_CLAMP;
+            return D3D11_TEXTURE_ADDRESS_CLAMP;
         case D2D1_EXTEND_MODE_WRAP:
-            return D3D10_TEXTURE_ADDRESS_WRAP;
+            return D3D11_TEXTURE_ADDRESS_WRAP;
         case D2D1_EXTEND_MODE_MIRROR:
-            return D3D10_TEXTURE_ADDRESS_MIRROR;
+            return D3D11_TEXTURE_ADDRESS_MIRROR;
         default:
             FIXME("Unhandled extend mode %#x.\n", mode);
-            return D3D10_TEXTURE_ADDRESS_CLAMP;
+            return D3D11_TEXTURE_ADDRESS_CLAMP;
     }
 }
 
@@ -1256,7 +1256,8 @@ BOOL d2d_brush_fill_cb(const struct d2d_brush *brush, struct d2d_brush_cb *cb)
 static void d2d_brush_bind_bitmap(struct d2d_brush *brush, struct d2d_device_context *context,
         unsigned int brush_idx)
 {
-    ID3D10SamplerState **sampler_state;
+    ID3D10SamplerState *d3d10_sampler_state;
+    ID3D11SamplerState **sampler_state;
     HRESULT hr;
 
     ID3D10Device_PSSetShaderResources(context->d3d_device, brush_idx, 1, &brush->u.bitmap.bitmap->srv);
@@ -1268,18 +1269,18 @@ static void d2d_brush_bind_bitmap(struct d2d_brush *brush, struct d2d_device_con
 
     if (!*sampler_state)
     {
-        D3D10_SAMPLER_DESC sampler_desc;
+        D3D11_SAMPLER_DESC sampler_desc;
 
         if (brush->u.bitmap.interpolation_mode == D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR)
-            sampler_desc.Filter = D3D10_FILTER_MIN_MAG_MIP_POINT;
+            sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
         else
-            sampler_desc.Filter = D3D10_FILTER_MIN_MAG_MIP_LINEAR;
+            sampler_desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
         sampler_desc.AddressU = texture_address_mode_from_extend_mode(brush->u.bitmap.extend_mode_x);
         sampler_desc.AddressV = texture_address_mode_from_extend_mode(brush->u.bitmap.extend_mode_y);
-        sampler_desc.AddressW = D3D10_TEXTURE_ADDRESS_CLAMP;
+        sampler_desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
         sampler_desc.MipLODBias = 0.0f;
         sampler_desc.MaxAnisotropy = 0;
-        sampler_desc.ComparisonFunc = D3D10_COMPARISON_NEVER;
+        sampler_desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
         sampler_desc.BorderColor[0] = 0.0f;
         sampler_desc.BorderColor[1] = 0.0f;
         sampler_desc.BorderColor[2] = 0.0f;
@@ -1287,10 +1288,15 @@ static void d2d_brush_bind_bitmap(struct d2d_brush *brush, struct d2d_device_con
         sampler_desc.MinLOD = 0.0f;
         sampler_desc.MaxLOD = 0.0f;
 
-        if (FAILED(hr = ID3D10Device_CreateSamplerState(context->d3d_device, &sampler_desc, sampler_state)))
+        if (FAILED(hr = ID3D11Device1_CreateSamplerState(context->d3d11_device, &sampler_desc, sampler_state)))
             ERR("Failed to create sampler state, hr %#x.\n", hr);
     }
-    ID3D10Device_PSSetSamplers(context->d3d_device, brush_idx, 1, sampler_state);
+
+    if (FAILED(hr = ID3D11SamplerState_QueryInterface(*sampler_state, &IID_ID3D10SamplerState, (void **)&d3d10_sampler_state)))
+        ERR("Failed to query D3D10 sampler state, hr %#x.\n", hr);
+
+    ID3D10Device_PSSetSamplers(context->d3d_device, brush_idx, 1, &d3d10_sampler_state);
+    ID3D10SamplerState_Release(d3d10_sampler_state);
 }
 
 void d2d_brush_bind_resources(struct d2d_brush *brush, struct d2d_device_context *context, unsigned int brush_idx)

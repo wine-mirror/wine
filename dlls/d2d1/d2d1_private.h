@@ -174,7 +174,7 @@ struct d2d_device_context
     ID3D11Buffer *vb;
     ID3D11RasterizerState *rs;
     ID3D11BlendState *bs;
-    ID3D10SamplerState *sampler_states
+    ID3D11SamplerState *sampler_states
             [D2D_SAMPLER_INTERPOLATION_MODE_COUNT]
             [D2D_SAMPLER_EXTEND_MODE_COUNT]
             [D2D_SAMPLER_EXTEND_MODE_COUNT];

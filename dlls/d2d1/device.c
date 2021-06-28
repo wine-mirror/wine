@@ -352,7 +352,7 @@ static ULONG STDMETHODCALLTYPE d2d_device_context_inner_Release(IUnknown *iface)
                 for (k = 0; k < D2D_SAMPLER_EXTEND_MODE_COUNT; ++k)
                 {
                     if (context->sampler_states[i][j][k])
-                        ID3D10SamplerState_Release(context->sampler_states[i][j][k]);
+                        ID3D11SamplerState_Release(context->sampler_states[i][j][k]);
                 }
             }
         }
