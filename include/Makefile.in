@@ -581,6 +581,7 @@ SOURCES = \
 	powrprof.h \
 	prntvpt.h \
 	profinfo.h \
+	proofofpossessioncookieinfo.idl \
 	propidl.idl \
 	propkey.h \
 	propkeydef.h \
