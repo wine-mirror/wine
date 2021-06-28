@@ -190,16 +190,7 @@ static DWORD WINAPI stream_thread(void *arg)
 static HRESULT vfw_capture_init_stream(struct strmbase_filter *iface)
 {
     struct vfw_capture *filter = impl_from_strmbase_filter(iface);
-    ALLOCATOR_PROPERTIES req_props, ret_props;
     HRESULT hr;
-
-    req_props.cBuffers = 3;
-    req_props.cbBuffer = get_image_size(filter);
-    req_props.cbAlign = 1;
-    req_props.cbPrefix = 0;
-    if (FAILED(hr = IMemAllocator_SetProperties(filter->source.pAllocator, &req_props, &ret_props))
-            && hr != VFW_E_ALREADY_COMMITTED)
-        ERR("Failed to set allocator properties (buffer size %u), hr %#x.\n", req_props.cbBuffer, hr);
 
     if (FAILED(hr = IMemAllocator_Commit(filter->source.pAllocator)))
         ERR("Failed to commit allocator, hr %#x.\n", hr);
@@ -688,20 +679,19 @@ static HRESULT source_query_interface(struct strmbase_pin *iface, REFIID iid, vo
 }
 
 static HRESULT WINAPI VfwPin_DecideBufferSize(struct strmbase_source *iface,
-        IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
+        IMemAllocator *allocator, ALLOCATOR_PROPERTIES *req_props)
 {
-    ALLOCATOR_PROPERTIES actual;
+    struct vfw_capture *filter = impl_from_strmbase_pin(&iface->pin);
+    ALLOCATOR_PROPERTIES ret_props;
 
-    /* What we put here doesn't matter, the
-       driver function should override it then commit */
-    if (!ppropInputRequest->cBuffers)
-        ppropInputRequest->cBuffers = 3;
-    if (!ppropInputRequest->cbBuffer)
-        ppropInputRequest->cbBuffer = 230400;
-    if (!ppropInputRequest->cbAlign)
-        ppropInputRequest->cbAlign = 1;
+    if (!req_props->cBuffers)
+        req_props->cBuffers = 3;
+    if (!req_props->cbBuffer)
+        req_props->cbBuffer = get_image_size(filter);
+    if (!req_props->cbAlign)
+        req_props->cbAlign = 1;
 
-    return IMemAllocator_SetProperties(pAlloc, ppropInputRequest, &actual);
+    return IMemAllocator_SetProperties(allocator, req_props, &ret_props);
 }
 
 static const struct strmbase_source_ops source_ops =
