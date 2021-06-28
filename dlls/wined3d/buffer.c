@@ -1054,25 +1054,6 @@ void wined3d_buffer_copy(struct wined3d_buffer *dst_buffer, unsigned int dst_off
     context_release(context);
 }
 
-void wined3d_buffer_upload_data(struct wined3d_buffer *buffer, struct wined3d_context *context,
-        const struct wined3d_box *box, const void *data)
-{
-    struct wined3d_range range;
-
-    if (box)
-    {
-        range.offset = box->left;
-        range.size = box->right - box->left;
-    }
-    else
-    {
-        range.offset = 0;
-        range.size = buffer->resource.size;
-    }
-
-    buffer->buffer_ops->buffer_upload_ranges(buffer, context, data, range.offset, 1, &range);
-}
-
 static void wined3d_buffer_init_data(struct wined3d_buffer *buffer,
         struct wined3d_device *device, const struct wined3d_sub_resource_data *data)
 {

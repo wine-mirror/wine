@@ -2613,18 +2613,14 @@ static void wined3d_cs_exec_update_sub_resource(struct wined3d_cs *cs, const voi
 
     context = context_acquire(cs->c.device, NULL, 0);
 
+    addr.buffer_object = 0;
+    addr.addr = op->data.data;
+
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
         struct wined3d_buffer *buffer = buffer_from_resource(resource);
 
-        if (!wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_BUFFER))
-        {
-            ERR("Failed to load buffer location.\n");
-            goto done;
-        }
-
-        wined3d_buffer_upload_data(buffer, context, box, op->data.data);
-        wined3d_buffer_invalidate_location(buffer, ~WINED3D_LOCATION_BUFFER);
+        wined3d_buffer_copy_bo_address(buffer, context, box->left, &addr, box->right - box->left);
         goto done;
     }
 
@@ -2634,9 +2630,6 @@ static void wined3d_cs_exec_update_sub_resource(struct wined3d_cs *cs, const voi
     width = wined3d_texture_get_level_width(texture, level);
     height = wined3d_texture_get_level_height(texture, level);
     depth = wined3d_texture_get_level_depth(texture, level);
-
-    addr.buffer_object = 0;
-    addr.addr = op->data.data;
 
     /* Only load the sub-resource for partial updates. */
     if (!box->left && !box->top && !box->front
