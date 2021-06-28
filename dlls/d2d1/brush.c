@@ -65,8 +65,7 @@ static ULONG STDMETHODCALLTYPE d2d_gradient_Release(ID2D1GradientStopCollection 
     if (!refcount)
     {
         heap_free(gradient->stops);
-        ID3D11ShaderResourceView_Release(gradient->d3d11_view);
-        ID3D10ShaderResourceView_Release(gradient->view);
+        ID3D11ShaderResourceView_Release(gradient->view);
         ID2D1Factory_Release(gradient->factory);
         heap_free(gradient);
     }
@@ -132,9 +131,8 @@ HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D11Device1 *device, const 
         UINT32 stop_count, D2D1_GAMMA gamma, D2D1_EXTEND_MODE extend_mode, struct d2d_gradient **out)
 {
     D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
-    ID3D11ShaderResourceView *d3d11_view;
     D3D11_SUBRESOURCE_DATA buffer_data;
-    ID3D10ShaderResourceView *view;
+    ID3D11ShaderResourceView *view;
     struct d2d_gradient *gradient;
     D3D11_BUFFER_DESC buffer_desc;
     struct d2d_vec4 *data;
@@ -181,7 +179,7 @@ HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D11Device1 *device, const 
     srv_desc.Buffer.ElementOffset = 0;
     srv_desc.Buffer.ElementWidth = 2 * stop_count;
 
-    hr = ID3D11Device1_CreateShaderResourceView(device, (ID3D11Resource *)buffer, &srv_desc, &d3d11_view);
+    hr = ID3D11Device1_CreateShaderResourceView(device, (ID3D11Resource *)buffer, &srv_desc, &view);
     ID3D11Buffer_Release(buffer);
     if (FAILED(hr))
     {
@@ -189,17 +187,9 @@ HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D11Device1 *device, const 
         return hr;
     }
 
-    if (FAILED(hr = ID3D11ShaderResourceView_QueryInterface(d3d11_view, &IID_ID3D10ShaderResourceView, (void **)&view)))
-    {
-        ERR("Failed to query D3D10 view, hr %#x.\n", hr);
-        ID3D11ShaderResourceView_Release(d3d11_view);
-        return hr;
-    }
-
     if (!(gradient = heap_alloc_zero(sizeof(*gradient))))
     {
-        ID3D10ShaderResourceView_Release(view);
-        ID3D11ShaderResourceView_Release(d3d11_view);
+        ID3D11ShaderResourceView_Release(view);
         return E_OUTOFMEMORY;
     }
 
@@ -212,13 +202,11 @@ HRESULT d2d_gradient_create(ID2D1Factory *factory, ID3D11Device1 *device, const 
     gradient->refcount = 1;
     ID2D1Factory_AddRef(gradient->factory = factory);
     gradient->view = view;
-    gradient->d3d11_view = d3d11_view;
 
     gradient->stop_count = stop_count;
     if (!(gradient->stops = heap_calloc(stop_count, sizeof(*stops))))
     {
-        ID3D10ShaderResourceView_Release(view);
-        ID3D11ShaderResourceView_Release(d3d11_view);
+        ID3D11ShaderResourceView_Release(view);
         heap_free(gradient);
         return E_OUTOFMEMORY;
     }
@@ -241,7 +229,7 @@ static void d2d_gradient_bind(struct d2d_gradient *gradient, ID3D11Device1 *devi
 {
     ID3D11DeviceContext *context;
     ID3D11Device1_GetImmediateContext(device, &context);
-    ID3D11DeviceContext_PSSetShaderResources(context, 2 + brush_idx, 1, &gradient->d3d11_view);
+    ID3D11DeviceContext_PSSetShaderResources(context, 2 + brush_idx, 1, &gradient->view);
     ID3D11DeviceContext_Release(context);
 }
 
@@ -1263,8 +1251,8 @@ static void d2d_brush_bind_bitmap(struct d2d_brush *brush, struct d2d_device_con
     ID3D11DeviceContext *d3d_context;
     HRESULT hr;
 
-    ID3D11Device1_GetImmediateContext(context->d3d11_device, &d3d_context);
-    ID3D11DeviceContext_PSSetShaderResources(d3d_context, brush_idx, 1, &brush->u.bitmap.bitmap->d3d11_srv);
+    ID3D11Device1_GetImmediateContext(context->d3d_device, &d3d_context);
+    ID3D11DeviceContext_PSSetShaderResources(d3d_context, brush_idx, 1, &brush->u.bitmap.bitmap->srv);
 
     sampler_state = &context->sampler_states
             [brush->u.bitmap.interpolation_mode % D2D_SAMPLER_INTERPOLATION_MODE_COUNT]
@@ -1292,7 +1280,7 @@ static void d2d_brush_bind_bitmap(struct d2d_brush *brush, struct d2d_device_con
         sampler_desc.MinLOD = 0.0f;
         sampler_desc.MaxLOD = 0.0f;
 
-        if (FAILED(hr = ID3D11Device1_CreateSamplerState(context->d3d11_device, &sampler_desc, sampler_state)))
+        if (FAILED(hr = ID3D11Device1_CreateSamplerState(context->d3d_device, &sampler_desc, sampler_state)))
             ERR("Failed to create sampler state, hr %#x.\n", hr);
     }
 
@@ -1308,11 +1296,11 @@ void d2d_brush_bind_resources(struct d2d_brush *brush, struct d2d_device_context
             break;
 
         case D2D_BRUSH_TYPE_LINEAR:
-            d2d_gradient_bind(brush->u.linear.gradient, context->d3d11_device, brush_idx);
+            d2d_gradient_bind(brush->u.linear.gradient, context->d3d_device, brush_idx);
             break;
 
         case D2D_BRUSH_TYPE_RADIAL:
-            d2d_gradient_bind(brush->u.radial.gradient, context->d3d11_device, brush_idx);
+            d2d_gradient_bind(brush->u.radial.gradient, context->d3d_device, brush_idx);
             break;
 
         case D2D_BRUSH_TYPE_BITMAP:

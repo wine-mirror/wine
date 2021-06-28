@@ -123,7 +123,7 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
 {
     struct d2d_shape_resources *shape_resources = &render_target->shape_resources[shape_type];
     ID3DDeviceContextState *prev_state;
-    ID3D11Device1 *device = render_target->d3d11_device;
+    ID3D11Device1 *device = render_target->d3d_device;
     ID3D11DeviceContext1 *context;
     ID3D11Buffer *vs_cb = render_target->vs_cb, *ps_cb = render_target->ps_cb;
     D3D11_RECT scissor_rect;
@@ -170,7 +170,7 @@ static void d2d_device_context_draw(struct d2d_device_context *render_target, en
     }
     ID3D11DeviceContext1_RSSetScissorRects(context, 1, &scissor_rect);
     ID3D11DeviceContext1_RSSetState(context, render_target->rs);
-    ID3D11DeviceContext1_OMSetRenderTargets(context, 1, &render_target->target->d3d11_rtv, NULL);
+    ID3D11DeviceContext1_OMSetRenderTargets(context, 1, &render_target->target->rtv, NULL);
     if (brush)
     {
         ID3D11DeviceContext1_OMSetBlendState(context, render_target->bs, NULL, D3D11_DEFAULT_SAMPLE_MASK);
@@ -287,8 +287,7 @@ static ULONG STDMETHODCALLTYPE d2d_device_context_inner_Release(IUnknown *iface)
             ID3DDeviceContextState_Release(context->d3d_state);
         if (context->target)
             ID2D1Bitmap1_Release(&context->target->ID2D1Bitmap1_iface);
-        ID3D11Device1_Release(context->d3d11_device);
-        ID3D10Device_Release(context->d3d_device);
+        ID3D11Device1_Release(context->d3d_device);
         ID2D1Factory_Release(context->factory);
         ID2D1Device_Release(context->device);
         heap_free(context);
@@ -457,7 +456,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateGradientStopCollection
     TRACE("iface %p, stops %p, stop_count %u, gamma %#x, extend_mode %#x, gradient %p.\n",
             iface, stops, stop_count, gamma, extend_mode, gradient);
 
-    if (SUCCEEDED(hr = d2d_gradient_create(render_target->factory, render_target->d3d11_device,
+    if (SUCCEEDED(hr = d2d_gradient_create(render_target->factory, render_target->d3d_device,
             stops, stop_count, gamma, extend_mode, &object)))
         *gradient = &object->ID2D1GradientStopCollection_iface;
 
@@ -717,7 +716,7 @@ static HRESULT d2d_device_context_update_ps_cb(struct d2d_device_context *contex
     struct d2d_ps_cb *cb_data;
     HRESULT hr;
 
-    ID3D11Device1_GetImmediateContext(context->d3d11_device, &d3d_context);
+    ID3D11Device1_GetImmediateContext(context->d3d_device, &d3d_context);
 
     if (FAILED(hr = ID3D11DeviceContext_Map(d3d_context, (ID3D11Resource *)context->ps_cb,
             0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc)))
@@ -753,7 +752,7 @@ static HRESULT d2d_device_context_update_vs_cb(struct d2d_device_context *contex
     float tmp_x, tmp_y;
     HRESULT hr;
 
-    ID3D11Device1_GetImmediateContext(context->d3d11_device, &d3d_context);
+    ID3D11Device1_GetImmediateContext(context->d3d_device, &d3d_context);
 
     if (FAILED(hr = ID3D11DeviceContext_Map(d3d_context, (ID3D11Resource *)context->vs_cb,
             0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc)))
@@ -826,7 +825,7 @@ static void d2d_device_context_draw_geometry(struct d2d_device_context *render_t
         buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
         buffer_data.pSysMem = geometry->outline.faces;
 
-        if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d11_device, &buffer_desc, &buffer_data, &ib)))
+        if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d_device, &buffer_desc, &buffer_data, &ib)))
         {
             WARN("Failed to create index buffer, hr %#x.\n", hr);
             return;
@@ -836,7 +835,7 @@ static void d2d_device_context_draw_geometry(struct d2d_device_context *render_t
         buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
         buffer_data.pSysMem = geometry->outline.vertices;
 
-        if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d11_device, &buffer_desc, &buffer_data, &vb)))
+        if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d_device, &buffer_desc, &buffer_data, &vb)))
         {
             ERR("Failed to create vertex buffer, hr %#x.\n", hr);
             ID3D11Buffer_Release(ib);
@@ -856,7 +855,7 @@ static void d2d_device_context_draw_geometry(struct d2d_device_context *render_t
         buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
         buffer_data.pSysMem = geometry->outline.bezier_faces;
 
-        if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d11_device, &buffer_desc, &buffer_data, &ib)))
+        if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d_device, &buffer_desc, &buffer_data, &ib)))
         {
             WARN("Failed to create beziers index buffer, hr %#x.\n", hr);
             return;
@@ -866,7 +865,7 @@ static void d2d_device_context_draw_geometry(struct d2d_device_context *render_t
         buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
         buffer_data.pSysMem = geometry->outline.beziers;
 
-        if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d11_device, &buffer_desc, &buffer_data, &vb)))
+        if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d_device, &buffer_desc, &buffer_data, &vb)))
         {
             ERR("Failed to create beziers vertex buffer, hr %#x.\n", hr);
             ID3D11Buffer_Release(ib);
@@ -887,7 +886,7 @@ static void d2d_device_context_draw_geometry(struct d2d_device_context *render_t
         buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
         buffer_data.pSysMem = geometry->outline.arc_faces;
 
-        if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d11_device, &buffer_desc, &buffer_data, &ib)))
+        if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d_device, &buffer_desc, &buffer_data, &ib)))
         {
             WARN("Failed to create arcs index buffer, hr %#x.\n", hr);
             return;
@@ -897,7 +896,7 @@ static void d2d_device_context_draw_geometry(struct d2d_device_context *render_t
         buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
         buffer_data.pSysMem = geometry->outline.arcs;
 
-        if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d11_device, &buffer_desc, &buffer_data, &vb)))
+        if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d_device, &buffer_desc, &buffer_data, &vb)))
         {
             ERR("Failed to create arcs vertex buffer, hr %#x.\n", hr);
             ID3D11Buffer_Release(ib);
@@ -963,7 +962,7 @@ static void d2d_device_context_fill_geometry(struct d2d_device_context *render_t
         buffer_desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
         buffer_data.pSysMem = geometry->fill.faces;
 
-        if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d11_device, &buffer_desc, &buffer_data, &ib)))
+        if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d_device, &buffer_desc, &buffer_data, &ib)))
         {
             WARN("Failed to create index buffer, hr %#x.\n", hr);
             return;
@@ -973,7 +972,7 @@ static void d2d_device_context_fill_geometry(struct d2d_device_context *render_t
         buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
         buffer_data.pSysMem = geometry->fill.vertices;
 
-        if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d11_device, &buffer_desc, &buffer_data, &vb)))
+        if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d_device, &buffer_desc, &buffer_data, &vb)))
         {
             ERR("Failed to create vertex buffer, hr %#x.\n", hr);
             ID3D11Buffer_Release(ib);
@@ -993,7 +992,7 @@ static void d2d_device_context_fill_geometry(struct d2d_device_context *render_t
         buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
         buffer_data.pSysMem = geometry->fill.bezier_vertices;
 
-        if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d11_device, &buffer_desc, &buffer_data, &vb)))
+        if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d_device, &buffer_desc, &buffer_data, &vb)))
         {
             ERR("Failed to create beziers vertex buffer, hr %#x.\n", hr);
             return;
@@ -1011,7 +1010,7 @@ static void d2d_device_context_fill_geometry(struct d2d_device_context *render_t
         buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
         buffer_data.pSysMem = geometry->fill.arc_vertices;
 
-        if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d11_device, &buffer_desc, &buffer_data, &vb)))
+        if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d_device, &buffer_desc, &buffer_data, &vb)))
         {
             ERR("Failed to create arc vertex buffer, hr %#x.\n", hr);
             return;
@@ -1627,7 +1626,7 @@ static void STDMETHODCALLTYPE d2d_device_context_Clear(ID2D1DeviceContext *iface
 
     TRACE("iface %p, colour %p.\n", iface, colour);
 
-    ID3D11Device1_GetImmediateContext(render_target->d3d11_device, &d3d_context);
+    ID3D11Device1_GetImmediateContext(render_target->d3d_device, &d3d_context);
 
     if (FAILED(hr = ID3D11DeviceContext_Map(d3d_context, (ID3D11Resource *)render_target->vs_cb,
             0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc)))
@@ -1782,7 +1781,7 @@ static UINT32 STDMETHODCALLTYPE d2d_device_context_GetMaximumBitmapSize(ID2D1Dev
 {
     TRACE("iface %p.\n", iface);
 
-    return D3D10_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+    return D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
 }
 
 static BOOL STDMETHODCALLTYPE d2d_device_context_IsSupported(ID2D1DeviceContext *iface,
@@ -2071,7 +2070,7 @@ static void STDMETHODCALLTYPE d2d_device_context_SetTarget(ID2D1DeviceContext *i
     }
     blend_desc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
     blend_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-    if (FAILED(hr = ID3D11Device1_CreateBlendState(context->d3d11_device, &blend_desc, &context->bs)))
+    if (FAILED(hr = ID3D11Device1_CreateBlendState(context->d3d_device, &blend_desc, &context->bs)))
         WARN("Failed to create blend state, hr %#x.\n", hr);
 }
 
@@ -2736,7 +2735,7 @@ static HRESULT d2d_device_context_get_surface(struct d2d_device_context *render_
     ID3D11Resource *resource;
     HRESULT hr;
 
-    ID3D11RenderTargetView_GetResource(render_target->target->d3d11_rtv, &resource);
+    ID3D11RenderTargetView_GetResource(render_target->target->rtv, &resource);
     hr = ID3D11Resource_QueryInterface(resource, &IID_IDXGISurface1, (void **)surface);
     ID3D11Resource_Release(resource);
     if (FAILED(hr))
@@ -3870,21 +3869,13 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
 
     device_impl = unsafe_impl_from_ID2D1Device(device);
     if (FAILED(hr = IDXGIDevice_QueryInterface(device_impl->dxgi_device,
-            &IID_ID3D10Device, (void **)&render_target->d3d_device)))
-    {
-        WARN("Failed to get device interface, hr %#x.\n", hr);
-        ID2D1Factory_Release(render_target->factory);
-        return hr;
-    }
-
-    if (FAILED(hr = IDXGIDevice_QueryInterface(device_impl->dxgi_device,
-            &IID_ID3D11Device1, (void **)&render_target->d3d11_device)))
+            &IID_ID3D11Device1, (void **)&render_target->d3d_device)))
     {
         WARN("Failed to query ID3D11Device1 interface, hr %#x.\n", hr);
         goto err;
     }
 
-    if (FAILED(hr = ID3D11Device1_CreateDeviceContextState(render_target->d3d11_device,
+    if (FAILED(hr = ID3D11Device1_CreateDeviceContextState(render_target->d3d_device,
             0, &feature_levels, 1, D3D11_SDK_VERSION, &IID_ID3D11Device1, NULL,
             &render_target->d3d_state)))
     {
@@ -3896,14 +3887,14 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
     {
         const struct shape_info *si = &shape_info[i];
 
-        if (FAILED(hr = ID3D11Device1_CreateInputLayout(render_target->d3d11_device, si->il_desc, si->il_element_count,
+        if (FAILED(hr = ID3D11Device1_CreateInputLayout(render_target->d3d_device, si->il_desc, si->il_element_count,
                 si->vs_code, si->vs_code_size, &render_target->shape_resources[si->shape_type].il)))
         {
             WARN("Failed to create input layout for shape type %#x, hr %#x.\n", si->shape_type, hr);
             goto err;
         }
 
-        if (FAILED(hr = ID3D11Device1_CreateVertexShader(render_target->d3d11_device, si->vs_code,
+        if (FAILED(hr = ID3D11Device1_CreateVertexShader(render_target->d3d_device, si->vs_code,
                 si->vs_code_size, NULL, &render_target->shape_resources[si->shape_type].vs)))
         {
             WARN("Failed to create vertex shader for shape type %#x, hr %#x.\n", si->shape_type, hr);
@@ -3918,14 +3909,14 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
     buffer_desc.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
     buffer_desc.MiscFlags = 0;
 
-    if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d11_device, &buffer_desc, NULL,
+    if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d_device, &buffer_desc, NULL,
             &render_target->vs_cb)))
     {
         WARN("Failed to create constant buffer, hr %#x.\n", hr);
         goto err;
     }
 
-    if (FAILED(hr = ID3D11Device1_CreatePixelShader(render_target->d3d11_device,
+    if (FAILED(hr = ID3D11Device1_CreatePixelShader(render_target->d3d_device,
             ps_code, sizeof(ps_code), NULL, &render_target->ps)))
     {
         WARN("Failed to create pixel shader, hr %#x.\n", hr);
@@ -3938,7 +3929,7 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
     buffer_desc.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
     buffer_desc.MiscFlags = 0;
 
-    if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d11_device, &buffer_desc, NULL,
+    if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d_device, &buffer_desc, NULL,
             &render_target->ps_cb)))
     {
         WARN("Failed to create constant buffer, hr %#x.\n", hr);
@@ -3955,7 +3946,7 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
     buffer_data.SysMemPitch = 0;
     buffer_data.SysMemSlicePitch = 0;
 
-    if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d11_device,
+    if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d_device,
             &buffer_desc, &buffer_data, &render_target->ib)))
     {
         WARN("Failed to create clear index buffer, hr %#x.\n", hr);
@@ -3967,7 +3958,7 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
     buffer_data.pSysMem = quad;
 
     render_target->vb_stride = sizeof(*quad);
-    if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d11_device,
+    if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d_device,
             &buffer_desc, &buffer_data, &render_target->vb)))
     {
         WARN("Failed to create clear vertex buffer, hr %#x.\n", hr);
@@ -3984,7 +3975,7 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
     rs_desc.ScissorEnable = TRUE;
     rs_desc.MultisampleEnable = FALSE;
     rs_desc.AntialiasedLineEnable = FALSE;
-    if (FAILED(hr = ID3D11Device1_CreateRasterizerState(render_target->d3d11_device, &rs_desc, &render_target->rs)))
+    if (FAILED(hr = ID3D11Device1_CreateRasterizerState(render_target->d3d_device, &rs_desc, &render_target->rs)))
     {
         WARN("Failed to create clear rasterizer state, hr %#x.\n", hr);
         goto err;
@@ -4043,10 +4034,8 @@ err:
     }
     if (render_target->d3d_state)
         ID3DDeviceContextState_Release(render_target->d3d_state);
-    if (render_target->d3d11_device)
-        ID3D11Device1_Release(render_target->d3d11_device);
     if (render_target->d3d_device)
-        ID3D10Device_Release(render_target->d3d_device);
+        ID3D11Device1_Release(render_target->d3d_device);
     ID2D1Device_Release(render_target->device);
     ID2D1Factory_Release(render_target->factory);
     return hr;

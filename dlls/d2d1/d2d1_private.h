@@ -161,8 +161,7 @@ struct d2d_device_context
 
     ID2D1Factory *factory;
     ID2D1Device *device;
-    ID3D10Device *d3d_device;
-    ID3D11Device1 *d3d11_device;
+    ID3D11Device1 *d3d_device;
     ID3DDeviceContextState *d3d_state;
     struct d2d_bitmap *target;
     struct d2d_shape_resources shape_resources[D2D_SHAPE_TYPE_COUNT];
@@ -272,8 +271,7 @@ struct d2d_gradient
     LONG refcount;
 
     ID2D1Factory *factory;
-    ID3D10ShaderResourceView *view;
-    ID3D11ShaderResourceView *d3d11_view;
+    ID3D11ShaderResourceView *view;
     D2D1_GRADIENT_STOP *stops;
     UINT32 stop_count;
 };
@@ -378,13 +376,10 @@ struct d2d_bitmap
     LONG refcount;
 
     ID2D1Factory *factory;
-    ID3D10ShaderResourceView *srv;
-    ID3D11ShaderResourceView *d3d11_srv;
-    ID3D10RenderTargetView *rtv;
-    ID3D11RenderTargetView *d3d11_rtv;
+    ID3D11ShaderResourceView *srv;
+    ID3D11RenderTargetView *rtv;
     IDXGISurface *surface;
-    ID3D10Resource *resource;
-    ID3D11Resource *d3d11_resource;
+    ID3D11Resource *resource;
     D2D1_SIZE_U pixel_size;
     D2D1_PIXEL_FORMAT format;
     float dpi_x;

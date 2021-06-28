@@ -936,11 +936,8 @@ static ID2D1RenderTarget *create_render_target_desc(IDXGISurface *surface,
     hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
     ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
     hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory, surface, desc, &render_target);
-    todo_wine_if(d3d11) ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
     ID2D1Factory_Release(factory);
-
-    if (FAILED(hr))
-        return NULL;
 
     return render_target;
 }

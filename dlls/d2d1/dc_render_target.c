@@ -715,7 +715,7 @@ static HRESULT STDMETHODCALLTYPE d2d_dc_render_target_BindDC(ID2D1DCRenderTarget
     }
 
     bitmap_impl = unsafe_impl_from_ID2D1Bitmap(bitmap);
-    ID3D10Resource_QueryInterface(bitmap_impl->resource, &IID_IDXGISurface1, (void **)&dxgi_surface);
+    ID3D11Resource_QueryInterface(bitmap_impl->resource, &IID_IDXGISurface1, (void **)&dxgi_surface);
 
     ID2D1DeviceContext_SetTarget(context, (ID2D1Image *)bitmap);
     ID2D1Bitmap_Release(bitmap);
