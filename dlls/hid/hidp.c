@@ -96,13 +96,14 @@ static NTSTATUS enum_value_caps( WINE_HIDP_PREPARSED_DATA *preparsed, HIDP_REPOR
 {
     const struct hid_value_caps *caps, *caps_end;
     NTSTATUS status;
+    BOOL incompatible = FALSE;
     LONG remaining = *count;
 
     for (status = get_value_caps_range( preparsed, report_type, report_len, &caps, &caps_end );
          status == HIDP_STATUS_SUCCESS && caps != caps_end; caps++)
     {
         if (!match_value_caps( caps, filter )) continue;
-        if (filter->report_id && caps->report_id != filter->report_id) continue;
+        if (filter->report_id && caps->report_id != filter->report_id) incompatible = TRUE;
         else if (filter->array && (caps->is_range || caps->report_count <= 1)) return HIDP_STATUS_NOT_VALUE_ARRAY;
         else if (remaining-- > 0) status = callback( caps, user );
     }
@@ -111,7 +112,7 @@ static NTSTATUS enum_value_caps( WINE_HIDP_PREPARSED_DATA *preparsed, HIDP_REPOR
     if (status != HIDP_STATUS_SUCCESS) return status;
 
     *count -= remaining;
-    if (*count == 0) return HIDP_STATUS_USAGE_NOT_FOUND;
+    if (*count == 0) return incompatible ? HIDP_STATUS_INCOMPATIBLE_REPORT_ID : HIDP_STATUS_USAGE_NOT_FOUND;
     if (remaining < 0) return HIDP_STATUS_BUFFER_TOO_SMALL;
     return HIDP_STATUS_SUCCESS;
 }
