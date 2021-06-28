@@ -1348,12 +1348,15 @@ HRESULT wined3d_query_gl_create(struct wined3d_device *device, enum wined3d_quer
     }
 }
 
-void wined3d_query_pool_vk_free_query(struct wined3d_query_pool_vk *pool_vk, size_t idx)
+static void wined3d_query_pool_vk_mark_complete(struct wined3d_query_pool_vk *pool_vk, size_t idx,
+        struct wined3d_context_vk *context_vk)
 {
-    wined3d_bitmap_clear(pool_vk->allocated, idx);
-
-    if (list_empty(&pool_vk->entry))
-        list_add_tail(pool_vk->free_list, &pool_vk->entry);
+    /* Don't reset completed queries right away, as vkCmdResetQueryPool() needs to happen
+     * outside of a render pass. Queue the query to be reset in wined3d_query_pool_vk_reset()
+     * instead, which is called when the render pass ends. */
+    wined3d_bitmap_set(pool_vk->completed, idx);
+    if (list_empty(&pool_vk->completed_entry))
+        list_add_tail(&context_vk->completed_query_pools, &pool_vk->completed_entry);
 }
 
 bool wined3d_query_pool_vk_allocate_query(struct wined3d_query_pool_vk *pool_vk, size_t *idx)
@@ -1372,6 +1375,29 @@ void wined3d_query_pool_vk_cleanup(struct wined3d_query_pool_vk *pool_vk, struct
 
     VK_CALL(vkDestroyQueryPool(device_vk->vk_device, pool_vk->vk_query_pool, NULL));
     list_remove(&pool_vk->entry);
+    list_remove(&pool_vk->completed_entry);
+}
+
+void wined3d_query_pool_vk_reset(struct wined3d_query_pool_vk *pool_vk, struct wined3d_context_vk *context_vk,
+        VkCommandBuffer vk_command_buffer)
+{
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    unsigned int start = 0, idx;
+    struct wined3d_range range;
+
+    for (;;)
+    {
+        if (!wined3d_bitmap_get_range(pool_vk->completed, WINED3D_QUERY_POOL_SIZE, start, &range))
+            break;
+
+        VK_CALL(vkCmdResetQueryPool(vk_command_buffer, pool_vk->vk_query_pool, range.offset, range.size));
+        start = range.offset + range.size;
+        for (idx = range.offset; idx < start; ++idx)
+            wined3d_bitmap_clear(pool_vk->allocated, idx);
+    }
+    memset(pool_vk->completed, 0, sizeof(pool_vk->completed));
+    if (list_empty(&pool_vk->entry))
+        list_add_tail(pool_vk->free_list, &pool_vk->entry);
 }
 
 bool wined3d_query_pool_vk_init(struct wined3d_query_pool_vk *pool_vk,
@@ -1383,6 +1409,7 @@ bool wined3d_query_pool_vk_init(struct wined3d_query_pool_vk *pool_vk,
     VkResult vr;
 
     list_init(&pool_vk->entry);
+    list_init(&pool_vk->completed_entry);
     pool_vk->free_list = free_pools;
 
     pool_info.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
@@ -1468,6 +1495,8 @@ bool wined3d_query_vk_accumulate_data(struct wined3d_query_vk *query_vk,
     if (vr == VK_NOT_READY)
         return false;
 
+    wined3d_query_pool_vk_mark_complete(pool_idx->pool_vk, pool_idx->idx, context_vk);
+
     result = (void *)query_vk->q.data;
     switch (query_vk->q.type)
     {
@@ -1519,8 +1548,7 @@ static void wined3d_query_vk_begin(struct wined3d_query_vk *query_vk,
     struct wined3d_query_pool_vk *pool_vk;
     size_t idx;
 
-    if (!query_vk->pool_idx.pool_vk
-            && !wined3d_context_vk_allocate_query(context_vk, query_vk->q.type, &query_vk->pool_idx))
+    if (!wined3d_context_vk_allocate_query(context_vk, query_vk->q.type, &query_vk->pool_idx))
     {
         ERR("Failed to allocate new query.\n");
         return;
@@ -1528,7 +1556,6 @@ static void wined3d_query_vk_begin(struct wined3d_query_vk *query_vk,
     pool_vk = query_vk->pool_idx.pool_vk;
     idx = query_vk->pool_idx.idx;
 
-    VK_CALL(vkCmdResetQueryPool(vk_command_buffer, pool_vk->vk_query_pool, idx, 1));
     if (query_vk->q.type >= WINED3D_QUERY_TYPE_SO_STATISTICS_STREAM1
             && query_vk->q.type <= WINED3D_QUERY_TYPE_SO_STATISTICS_STREAM3)
         VK_CALL(vkCmdBeginQueryIndexedEXT(vk_command_buffer, pool_vk->vk_query_pool, idx,
@@ -1599,6 +1626,7 @@ static BOOL wined3d_query_vk_poll(struct wined3d_query *query, uint32_t flags)
     if (query_vk->pool_idx.pool_vk && !wined3d_query_vk_accumulate_data(query_vk, context_vk, &query_vk->pool_idx))
         goto unavailable;
 
+    query_vk->pool_idx.pool_vk = NULL;
     context_release(&context_vk->c);
 
     return TRUE;
@@ -1622,7 +1650,6 @@ static BOOL wined3d_query_vk_issue(struct wined3d_query *query, uint32_t flags)
     {
         context_vk = wined3d_context_vk(context_acquire(&device_vk->d, NULL, 0));
 
-        wined3d_context_vk_end_current_render_pass(context_vk);
         list_remove(&query_vk->entry);
         if (query_vk->pending_count)
             wined3d_context_vk_remove_pending_queries(context_vk, query_vk);
@@ -1633,6 +1660,9 @@ static BOOL wined3d_query_vk_issue(struct wined3d_query *query, uint32_t flags)
             wined3d_query_vk_end(query_vk, context_vk, vk_command_buffer);
             list_remove(&query_vk->entry);
         }
+        if (query_vk->pool_idx.pool_vk)
+            wined3d_query_pool_vk_mark_complete(query_vk->pool_idx.pool_vk,
+                    query_vk->pool_idx.idx, context_vk);
         wined3d_query_vk_begin(query_vk, context_vk, vk_command_buffer);
         list_add_head(&context_vk->active_queries, &query_vk->entry);
         query_vk->started = true;
@@ -1669,8 +1699,6 @@ static void wined3d_query_vk_destroy(struct wined3d_query *query)
         wined3d_context_vk_remove_pending_queries(context_vk, query_vk);
         context_release(&context_vk->c);
     }
-    if (query_vk->pool_idx.pool_vk)
-        wined3d_query_pool_vk_free_query(query_vk->pool_idx.pool_vk, query_vk->pool_idx.idx);
     heap_free(query_vk);
 }
 
