@@ -13,6 +13,8 @@ SVG_SRCS = \
 	blue_commandlink_glyph_30px.svg \
 	blue_commandlink_glyph_45px.svg \
 	blue_groupbox.svg \
+	blue_header.svg \
+	blue_header_item.svg \
 	blue_radiobutton_13px.svg \
 	blue_radiobutton_16px.svg \
 	blue_radiobutton_25px.svg \

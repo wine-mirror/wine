@@ -334,6 +334,23 @@ BLUE_INI TEXTFILE
 "FillColor = 245 245 245\r\n"
 "TextColor = 0 0 0\r\n"
 
+"\r\n; Header\r\n"
+"[Header]\r\n"
+"BgType = ImageFile\r\n"
+"SizingMargins = 2, 2, 2, 4\r\n"
+"ImageFile = blue_header.bmp\r\n"
+"SizingType = Tile\r\n"
+
+"[Header.HeaderItem]\r\n"
+"BgType = ImageFile\r\n"
+"SizingMargins = 2, 2, 2, 4\r\n"
+"ContentMargins = 3, 0, 0, 0\r\n"
+"ImageFile = blue_header_item.bmp\r\n"
+"ImageCount = 5\r\n"
+"ImageLayout = Vertical\r\n"
+"SizingType = Tile\r\n"
+"Transparent = True\r\n"
+
 "\r\n; ListBox\r\n"
 "[ListBox]\r\n"
 "BgType = BorderFill\r\n"
@@ -697,6 +714,13 @@ BLUE_COMBOBUTTON_BMP BITMAP "blue_combobutton.bmp"
 
 /* @makedep: blue_combobutton_glyph.bmp */
 BLUE_COMBOBUTTON_GLYPH_BMP BITMAP "blue_combobutton_glyph.bmp"
+
+/* Header */
+/* @makedep: blue_header.bmp */
+BLUE_HEADER_BMP BITMAP "blue_header.bmp"
+
+/* @makedep: blue_header_item.bmp */
+BLUE_HEADER_ITEM_BMP BITMAP "blue_header_item.bmp"
 
 /* Rebar */
 /* @makedep: blue_rebar_background.bmp */
