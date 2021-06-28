@@ -679,24 +679,24 @@ NTSTATUS WINAPI HidP_GetUsagesEx( HIDP_REPORT_TYPE report_type, USHORT collectio
     return status;
 }
 
-ULONG WINAPI HidP_MaxDataListLength(HIDP_REPORT_TYPE ReportType, PHIDP_PREPARSED_DATA PreparsedData)
+static NTSTATUS count_data( const struct hid_value_caps *caps, void *user )
 {
-    WINE_HIDP_PREPARSED_DATA *data = (WINE_HIDP_PREPARSED_DATA *)PreparsedData;
-    TRACE("(%i, %p)\n", ReportType, PreparsedData);
-    if (data->magic != HID_MAGIC)
-        return 0;
+    if (caps->is_range || HID_VALUE_CAPS_IS_BUTTON( caps )) *(ULONG *)user += caps->report_count;
+    else *(ULONG *)user += 1;
+    return HIDP_STATUS_SUCCESS;
+}
 
-    switch(ReportType)
-    {
-        case HidP_Input:
-            return data->caps.NumberInputDataIndices;
-        case HidP_Output:
-            return data->caps.NumberOutputDataIndices;
-        case HidP_Feature:
-            return data->caps.NumberFeatureDataIndices;
-        default:
-            return 0;
-    }
+ULONG WINAPI HidP_MaxDataListLength( HIDP_REPORT_TYPE report_type, PHIDP_PREPARSED_DATA preparsed_data )
+{
+    WINE_HIDP_PREPARSED_DATA *preparsed = (WINE_HIDP_PREPARSED_DATA *)preparsed_data;
+    struct caps_filter filter = {};
+    USHORT limit = -1;
+    ULONG count = 0;
+
+    TRACE( "report_type %d, preparsed_data %p.\n", report_type, preparsed_data );
+
+    enum_value_caps( preparsed, report_type, 0, &filter, count_data, &count, &limit );
+    return count;
 }
 
 NTSTATUS WINAPI HidP_GetData(HIDP_REPORT_TYPE ReportType, HIDP_DATA *DataList, ULONG *DataLength,

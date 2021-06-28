@@ -2229,7 +2229,6 @@ static void test_hidp(HANDLE file, int report_id)
     value = HidP_MaxDataListLength(HidP_Feature + 1, preparsed_data);
     ok(value == 0, "HidP_MaxDataListLength(HidP_Feature + 1) returned %d, expected %d\n", value, 0);
     value = HidP_MaxDataListLength(HidP_Input, preparsed_data);
-    todo_wine
     ok(value == 50, "HidP_MaxDataListLength(HidP_Input) returned %d, expected %d\n", value, 50);
     value = HidP_MaxDataListLength(HidP_Output, preparsed_data);
     ok(value == 0, "HidP_MaxDataListLength(HidP_Output) returned %d, expected %d\n", value, 0);
