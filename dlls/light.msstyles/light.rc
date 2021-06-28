@@ -365,6 +365,41 @@ BLUE_INI TEXTFILE
 "FillColor = 255 255 255\r\n"
 "BorderColor = 174 174 174\r\n"
 
+"\r\n; Progress\r\n"
+"[Progress]\r\n"
+"ProgressChunkSize = 1\r\n"
+"ProgressSpaceSize = 0\r\n"
+"BgType = BorderFill\r\n"
+"FillType = Solid\r\n"
+"FillColor = 255 255 255\r\n"
+"BorderSize = 1\r\n"
+"BorderColor = 174 174 174\r\n"
+
+"[Progress.Bar]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_progress_track_horizontal.bmp\r\n"
+"MinSize = 10, 10\r\n"
+"SizingMargins = 1, 1, 1, 1\r\n"
+"SizingType = Stretch\r\n"
+
+"[Progress.BarVert]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_progress_track_vertical.bmp\r\n"
+"SizingMargins = 1, 1, 1, 1\r\n"
+"SizingType = Stretch\r\n"
+
+"[Progress.Chunk]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_progress_chunk_horizontal.bmp\r\n"
+"SizingMargins = 1, 1, 1, 1\r\n"
+"SizingType = Stretch\r\n"
+
+"[Progress.ChunkVert]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_progress_chunk_vertical.bmp\r\n"
+"SizingMargins = 1, 1, 1, 1\r\n"
+"SizingType = Stretch\r\n"
+
 "\r\n; Rebar\r\n"
 "[Rebar]\r\n"
 "BgType = ImageFile\r\n"
@@ -721,6 +756,19 @@ BLUE_HEADER_BMP BITMAP "blue_header.bmp"
 
 /* @makedep: blue_header_item.bmp */
 BLUE_HEADER_ITEM_BMP BITMAP "blue_header_item.bmp"
+
+/* Progress */
+/* @makedep: blue_progress_chunk_horizontal.bmp */
+BLUE_PROGRESS_CHUNK_HORIZONTAL_BMP BITMAP "blue_progress_chunk_horizontal.bmp"
+
+/* @makedep: blue_progress_chunk_vertical.bmp */
+BLUE_PROGRESS_CHUNK_VERTICAL_BMP BITMAP "blue_progress_chunk_vertical.bmp"
+
+/* @makedep: blue_progress_track_horizontal.bmp */
+BLUE_PROGRESS_TRACK_HORIZONTAL_BMP BITMAP "blue_progress_track_horizontal.bmp"
+
+/* @makedep: blue_progress_track_vertical.bmp */
+BLUE_PROGRESS_TRACK_VERTICAL_BMP BITMAP "blue_progress_track_vertical.bmp"
 
 /* Rebar */
 /* @makedep: blue_rebar_background.bmp */
