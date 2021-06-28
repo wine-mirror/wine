@@ -1500,6 +1500,26 @@ static void test_pnp_driver(struct testsign_context *ctx)
                         (val).member, (exp).member)
 #define check_member(val, exp, fmt, member) check_member_(__FILE__, __LINE__, val, exp, fmt, member)
 
+#define check_hidp_caps(a, b) check_hidp_caps_(__LINE__, a, b)
+static inline void check_hidp_caps_(int line, HIDP_CAPS *caps, const HIDP_CAPS *exp)
+{
+    check_member_(__FILE__, line, *caps, *exp, "%04x", Usage);
+    check_member_(__FILE__, line, *caps, *exp, "%04x", UsagePage);
+    check_member_(__FILE__, line, *caps, *exp, "%d", InputReportByteLength);
+    check_member_(__FILE__, line, *caps, *exp, "%d", OutputReportByteLength);
+    check_member_(__FILE__, line, *caps, *exp, "%d", FeatureReportByteLength);
+    check_member_(__FILE__, line, *caps, *exp, "%d", NumberLinkCollectionNodes);
+    check_member_(__FILE__, line, *caps, *exp, "%d", NumberInputButtonCaps);
+    check_member_(__FILE__, line, *caps, *exp, "%d", NumberInputValueCaps);
+    check_member_(__FILE__, line, *caps, *exp, "%d", NumberInputDataIndices);
+    check_member_(__FILE__, line, *caps, *exp, "%d", NumberOutputButtonCaps);
+    check_member_(__FILE__, line, *caps, *exp, "%d", NumberOutputValueCaps);
+    check_member_(__FILE__, line, *caps, *exp, "%d", NumberOutputDataIndices);
+    check_member_(__FILE__, line, *caps, *exp, "%d", NumberFeatureButtonCaps);
+    check_member_(__FILE__, line, *caps, *exp, "%d", NumberFeatureValueCaps);
+    check_member_(__FILE__, line, *caps, *exp, "%d", NumberFeatureDataIndices);
+}
+
 #define check_hidp_link_collection_node(a, b) check_hidp_link_collection_node_(__LINE__, a, b)
 static inline void check_hidp_link_collection_node_(int line, HIDP_LINK_COLLECTION_NODE *node,
                                                     const HIDP_LINK_COLLECTION_NODE *exp)
@@ -1827,23 +1847,7 @@ static void test_hidp(HANDLE file, int report_id)
     ok(status == HIDP_STATUS_INVALID_PREPARSED_DATA, "HidP_GetCaps returned %#x\n", status);
     status = HidP_GetCaps(preparsed_data, &caps);
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetCaps returned %#x\n", status);
-    check_member(caps, expect_hidp_caps[report_id], "%04x", Usage);
-    check_member(caps, expect_hidp_caps[report_id], "%04x", UsagePage);
-    check_member(caps, expect_hidp_caps[report_id], "%d", InputReportByteLength);
-    check_member(caps, expect_hidp_caps[report_id], "%d", OutputReportByteLength);
-    check_member(caps, expect_hidp_caps[report_id], "%d", FeatureReportByteLength);
-    check_member(caps, expect_hidp_caps[report_id], "%d", NumberLinkCollectionNodes);
-    check_member(caps, expect_hidp_caps[report_id], "%d", NumberInputButtonCaps);
-    check_member(caps, expect_hidp_caps[report_id], "%d", NumberInputValueCaps);
-    todo_wine
-    check_member(caps, expect_hidp_caps[report_id], "%d", NumberInputDataIndices);
-    check_member(caps, expect_hidp_caps[report_id], "%d", NumberOutputButtonCaps);
-    check_member(caps, expect_hidp_caps[report_id], "%d", NumberOutputValueCaps);
-    check_member(caps, expect_hidp_caps[report_id], "%d", NumberOutputDataIndices);
-    check_member(caps, expect_hidp_caps[report_id], "%d", NumberFeatureButtonCaps);
-    check_member(caps, expect_hidp_caps[report_id], "%d", NumberFeatureValueCaps);
-    todo_wine
-    check_member(caps, expect_hidp_caps[report_id], "%d", NumberFeatureDataIndices);
+    check_hidp_caps(&caps, &expect_hidp_caps[report_id]);
 
     collection_count = 0;
     status = HidP_GetLinkCollectionNodes(collections, &collection_count, preparsed_data);
@@ -2238,7 +2242,6 @@ static void test_hidp(HANDLE file, int report_id)
     value = 1;
     status = HidP_GetData(HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength);
     ok(status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetData returned %#x\n", status);
-    todo_wine
     ok(value == 9, "got data count %d, expected %d\n", value, 9);
     memset(data, 0, sizeof(data));
     status = HidP_GetData(HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength);
@@ -2246,9 +2249,7 @@ static void test_hidp(HANDLE file, int report_id)
     for (i = 0; i < ARRAY_SIZE(expect_data); ++i)
     {
         winetest_push_context("data[%d]", i);
-        todo_wine_if(i >= 4)
         check_member(data[i], expect_data[i], "%d", DataIndex);
-        todo_wine_if(i == 6 || i == 7 || i == 8)
         check_member(data[i], expect_data[i], "%d", RawValue);
         winetest_pop_context();
     }
