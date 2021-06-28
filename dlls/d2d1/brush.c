@@ -237,9 +237,12 @@ static struct d2d_gradient *unsafe_impl_from_ID2D1GradientStopCollection(ID2D1Gr
     return CONTAINING_RECORD(iface, struct d2d_gradient, ID2D1GradientStopCollection_iface);
 }
 
-static void d2d_gradient_bind(struct d2d_gradient *gradient, ID3D10Device *device, unsigned int brush_idx)
+static void d2d_gradient_bind(struct d2d_gradient *gradient, ID3D11Device1 *device, unsigned int brush_idx)
 {
-    ID3D10Device_PSSetShaderResources(device, 2 + brush_idx, 1, &gradient->view);
+    ID3D11DeviceContext *context;
+    ID3D11Device1_GetImmediateContext(device, &context);
+    ID3D11DeviceContext_PSSetShaderResources(context, 2 + brush_idx, 1, &gradient->d3d11_view);
+    ID3D11DeviceContext_Release(context);
 }
 
 static void d2d_brush_destroy(struct d2d_brush *brush)
@@ -1256,11 +1259,12 @@ BOOL d2d_brush_fill_cb(const struct d2d_brush *brush, struct d2d_brush_cb *cb)
 static void d2d_brush_bind_bitmap(struct d2d_brush *brush, struct d2d_device_context *context,
         unsigned int brush_idx)
 {
-    ID3D10SamplerState *d3d10_sampler_state;
     ID3D11SamplerState **sampler_state;
+    ID3D11DeviceContext *d3d_context;
     HRESULT hr;
 
-    ID3D10Device_PSSetShaderResources(context->d3d_device, brush_idx, 1, &brush->u.bitmap.bitmap->srv);
+    ID3D11Device1_GetImmediateContext(context->d3d11_device, &d3d_context);
+    ID3D11DeviceContext_PSSetShaderResources(d3d_context, brush_idx, 1, &brush->u.bitmap.bitmap->d3d11_srv);
 
     sampler_state = &context->sampler_states
             [brush->u.bitmap.interpolation_mode % D2D_SAMPLER_INTERPOLATION_MODE_COUNT]
@@ -1292,11 +1296,8 @@ static void d2d_brush_bind_bitmap(struct d2d_brush *brush, struct d2d_device_con
             ERR("Failed to create sampler state, hr %#x.\n", hr);
     }
 
-    if (FAILED(hr = ID3D11SamplerState_QueryInterface(*sampler_state, &IID_ID3D10SamplerState, (void **)&d3d10_sampler_state)))
-        ERR("Failed to query D3D10 sampler state, hr %#x.\n", hr);
-
-    ID3D10Device_PSSetSamplers(context->d3d_device, brush_idx, 1, &d3d10_sampler_state);
-    ID3D10SamplerState_Release(d3d10_sampler_state);
+    ID3D11DeviceContext_PSSetSamplers(d3d_context, brush_idx, 1, sampler_state);
+    ID3D11DeviceContext_Release(d3d_context);
 }
 
 void d2d_brush_bind_resources(struct d2d_brush *brush, struct d2d_device_context *context, unsigned int brush_idx)
@@ -1307,11 +1308,11 @@ void d2d_brush_bind_resources(struct d2d_brush *brush, struct d2d_device_context
             break;
 
         case D2D_BRUSH_TYPE_LINEAR:
-            d2d_gradient_bind(brush->u.linear.gradient, context->d3d_device, brush_idx);
+            d2d_gradient_bind(brush->u.linear.gradient, context->d3d11_device, brush_idx);
             break;
 
         case D2D_BRUSH_TYPE_RADIAL:
-            d2d_gradient_bind(brush->u.radial.gradient, context->d3d_device, brush_idx);
+            d2d_gradient_bind(brush->u.radial.gradient, context->d3d11_device, brush_idx);
             break;
 
         case D2D_BRUSH_TYPE_BITMAP:

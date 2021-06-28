@@ -163,8 +163,8 @@ struct d2d_device_context
     ID2D1Device *device;
     ID3D10Device *d3d_device;
     ID3D11Device1 *d3d11_device;
+    ID3DDeviceContextState *d3d_state;
     struct d2d_bitmap *target;
-    ID3D10StateBlock *stateblock;
     struct d2d_shape_resources shape_resources[D2D_SHAPE_TYPE_COUNT];
     ID3D11Buffer *vs_cb;
     ID3D11PixelShader *ps;
