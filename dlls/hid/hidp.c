@@ -731,8 +731,8 @@ NTSTATUS WINAPI HidP_GetLinkCollectionNodes( HIDP_LINK_COLLECTION_NODE *nodes, U
 
     if (preparsed->magic != HID_MAGIC) return HIDP_STATUS_INVALID_PREPARSED_DATA;
 
-    if (capacity < preparsed->caps.NumberLinkCollectionNodes) return HIDP_STATUS_BUFFER_TOO_SMALL;
     count = *nodes_len = preparsed->caps.NumberLinkCollectionNodes;
+    if (capacity < count) return HIDP_STATUS_BUFFER_TOO_SMALL;
 
     for (i = 0; i < count; ++i)
     {

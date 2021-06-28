@@ -1852,7 +1852,6 @@ static void test_hidp(HANDLE file, int report_id)
     collection_count = 0;
     status = HidP_GetLinkCollectionNodes(collections, &collection_count, preparsed_data);
     ok(status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetLinkCollectionNodes returned %#x\n", status);
-    todo_wine
     ok(collection_count == caps.NumberLinkCollectionNodes, "got %d collection nodes, expected %d\n",
        collection_count, caps.NumberLinkCollectionNodes);
     collection_count = ARRAY_SIZE(collections);
