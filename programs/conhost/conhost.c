@@ -2565,8 +2565,8 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
         return STATUS_SUCCESS;
 
     default:
-        FIXME( "unsupported ioctl %x\n", code );
-        return STATUS_NOT_SUPPORTED;
+        WARN( "unsupported ioctl %x\n", code );
+        return STATUS_INVALID_HANDLE;
     }
 }
 
