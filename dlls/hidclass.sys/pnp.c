@@ -466,7 +466,7 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
             if (ext->u.pdo.is_mouse)
                 IoSetDeviceInterfaceState(&ext->u.pdo.mouse_link_name, FALSE);
             if (ext->u.pdo.is_keyboard)
-                IoSetDeviceInterfaceState(&ext->u.pdo.keyboard_link_name, TRUE);
+                IoSetDeviceInterfaceState(&ext->u.pdo.keyboard_link_name, FALSE);
 
             if (ext->u.pdo.thread)
             {
