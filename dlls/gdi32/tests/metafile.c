@@ -3123,7 +3123,6 @@ static void test_enhmetafile_file(void)
     ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
 
     size = GetFileSize(file, NULL);
-    todo_wine
     ok(!size, "size = %u\n", size);
 
     pts[0].x = pts[0].y = 10;
@@ -3142,7 +3141,6 @@ static void test_enhmetafile_file(void)
     ok( ret, "PolyBezierTo failed\n" );
 
     size = GetFileSize(file, NULL);
-    todo_wine
     ok(!size, "size = %u\n", size);
 
     metafile = CloseEnhMetaFile(dc);
