@@ -756,6 +756,8 @@ static void test_sync(void)
     ok(ret == 0, "got %#x\n", ret);
 
     ret = wait_single(&timer, 0);
+    /* aliasing makes it sometimes succeeds, try again in that case */
+    if (ret == 0) ret = wait_single(&timer, 0);
     ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
 
     ret = wait_single(&timer, -40 * 10000);
