@@ -1655,6 +1655,26 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
         case IOCTL_AFD_WINE_GET_SO_REUSEADDR:
             return do_getsockopt( handle, io, SOL_SOCKET, SO_REUSEADDR, out_buffer, out_size );
 
+        /* BSD socket SO_REUSEADDR is not 100% compatible to winsock semantics;
+         * however, using it the BSD way fixes bug 8513 and seems to be what
+         * most programmers assume, anyway */
+        case IOCTL_AFD_WINE_SET_SO_REUSEADDR:
+        {
+            int fd, needs_close = FALSE;
+            NTSTATUS status;
+            int ret;
+
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+                return status;
+
+            ret = setsockopt( fd, SOL_SOCKET, SO_REUSEADDR, in_buffer, in_size );
+#ifdef __APPLE__
+            if (!ret) ret = setsockopt( fd, SOL_SOCKET, SO_REUSEPORT, in_buffer, in_size );
+#endif
+            if (needs_close) close( fd );
+            return ret ? sock_errno_to_status( errno ) : STATUS_SUCCESS;
+        }
+
         default:
         {
             if ((code >> 16) == FILE_DEVICE_NETWORK)
