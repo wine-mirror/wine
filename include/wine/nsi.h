@@ -19,6 +19,8 @@
 #ifndef __WINE_NSI_H
 #define __WINE_NSI_H
 
+#include "winioctl.h"
+
 /* Undocumented NSI NDIS tables */
 #define NSI_NDIS_IFINFO_TABLE              0
 #define NSI_NDIS_INDEX_LUID_TABLE          2
@@ -90,6 +92,24 @@ struct nsi_ndis_ifinfo_static
     } flags;
     DWORD media_type;
     DWORD phys_medium_type;
+};
+
+/* Wine specific ioctl interface */
+
+#define IOCTL_NSIPROXY_WINE_ENUMERATE_ALL         CTL_CODE(FILE_DEVICE_NETWORK, 0x400, METHOD_BUFFERED, 0)
+
+/* input for IOCTL_NSIPROXY_WINE_ENUMERATE_ALL */
+struct nsiproxy_enumerate_all
+{
+    NPI_MODULEID module;
+    DWORD first_arg;
+    DWORD second_arg;
+    DWORD table;
+    DWORD key_size;
+    DWORD rw_size;
+    DWORD dynamic_size;
+    DWORD static_size;
+    DWORD count;
 };
 
 /* Undocumented Nsi api */

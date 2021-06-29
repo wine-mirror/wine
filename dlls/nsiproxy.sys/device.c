@@ -28,9 +28,59 @@
 #include "winternl.h"
 #include "winioctl.h"
 #include "ddk/wdm.h"
+#include "ifdef.h"
+#include "netiodef.h"
+#include "wine/nsi.h"
 #include "wine/debug.h"
+#include "nsiproxy_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(nsi);
+
+static void nsiproxy_enumerate_all( IRP *irp )
+{
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+    struct nsiproxy_enumerate_all *in = (struct nsiproxy_enumerate_all *)irp->AssociatedIrp.SystemBuffer;
+    DWORD in_len = irpsp->Parameters.DeviceIoControl.InputBufferLength;
+    void *out = irp->AssociatedIrp.SystemBuffer;
+    DWORD out_len = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
+    struct nsi_enumerate_all_ex enum_all;
+
+    if (in_len != sizeof(*in))
+    {
+        irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+        return;
+    }
+
+    if (out_len < sizeof(DWORD) + (in->key_size + in->rw_size + in->dynamic_size + in->static_size) * in->count)
+    {
+        irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+        return;
+    }
+
+    enum_all.unknown[0] = 0;
+    enum_all.unknown[1] = 0;
+    enum_all.first_arg = in->first_arg;
+    enum_all.second_arg = in->second_arg;
+    enum_all.module = &in->module;
+    enum_all.table = in->table;
+    enum_all.key_data = (BYTE *)out + sizeof(DWORD);
+    enum_all.key_size = in->key_size;
+    enum_all.rw_data = (BYTE *)enum_all.key_data + in->key_size * in->count;
+    enum_all.rw_size = in->rw_size;
+    enum_all.dynamic_data = (BYTE *)enum_all.rw_data + in->rw_size * in->count;
+    enum_all.dynamic_size = in->dynamic_size;
+    enum_all.static_data = (BYTE *)enum_all.dynamic_data + in->dynamic_size * in->count;
+    enum_all.static_size = in->static_size;
+    enum_all.count = in->count;
+
+    irp->IoStatus.u.Status = nsi_enumerate_all_ex( &enum_all );
+    if (irp->IoStatus.u.Status == STATUS_SUCCESS || irp->IoStatus.u.Status == STATUS_MORE_ENTRIES)
+    {
+        irp->IoStatus.Information = out_len;
+        *(DWORD *)out = enum_all.count;
+    }
+    else irp->IoStatus.Information = 0;
+}
 
 static NTSTATUS WINAPI nsi_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
@@ -43,6 +93,10 @@ static NTSTATUS WINAPI nsi_ioctl( DEVICE_OBJECT *device, IRP *irp )
 
     switch (irpsp->Parameters.DeviceIoControl.IoControlCode)
     {
+    case IOCTL_NSIPROXY_WINE_ENUMERATE_ALL:
+        nsiproxy_enumerate_all( irp );
+        break;
+
     default:
         FIXME( "ioctl %x not supported\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
         irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
