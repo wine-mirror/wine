@@ -1526,6 +1526,7 @@ enable_normaliz
 enable_npmshtml
 enable_npptools
 enable_nsi
+enable_nsiproxy_sys
 enable_ntdll
 enable_ntdsapi
 enable_ntoskrnl_exe
@@ -20822,6 +20823,7 @@ wine_fn_config_makefile dlls/npmshtml enable_npmshtml
 wine_fn_config_makefile dlls/npptools enable_npptools
 wine_fn_config_makefile dlls/nsi enable_nsi
 wine_fn_config_makefile dlls/nsi/tests enable_tests
+wine_fn_config_makefile dlls/nsiproxy.sys enable_nsiproxy_sys
 wine_fn_config_makefile dlls/ntdll enable_ntdll
 wine_fn_config_makefile dlls/ntdll/tests enable_tests
 wine_fn_config_makefile dlls/ntdsapi enable_ntdsapi

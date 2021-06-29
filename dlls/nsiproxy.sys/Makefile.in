@@ -1,0 +1,6 @@
+MODULE    = nsiproxy.sys
+IMPORTS   = ntoskrnl
+EXTRADLLFLAGS = -Wl,--subsystem,native
+
+C_SRCS = \
+	device.c
