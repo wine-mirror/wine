@@ -552,6 +552,10 @@ static void mouse_device_create(void)
     IoInvalidateDeviceRelations(bus_pdo, BusRelations);
 }
 
+static void keyboard_free_device(DEVICE_OBJECT *device)
+{
+}
+
 static NTSTATUS keyboard_get_reportdescriptor(DEVICE_OBJECT *device, BYTE *buffer, DWORD length, DWORD *ret_length)
 {
     TRACE("buffer %p, length %u.\n", buffer, length);
@@ -606,6 +610,7 @@ static NTSTATUS keyboard_set_feature_report(DEVICE_OBJECT *device, UCHAR id, BYT
 
 static const platform_vtbl keyboard_vtbl =
 {
+    .free_device = keyboard_free_device,
     .get_reportdescriptor = keyboard_get_reportdescriptor,
     .get_string = keyboard_get_string,
     .begin_report_processing = keyboard_begin_report_processing,
