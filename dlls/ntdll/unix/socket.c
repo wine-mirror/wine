@@ -1652,6 +1652,9 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
         case IOCTL_AFD_WINE_SET_SO_OOBINLINE:
             return do_setsockopt( handle, io, SOL_SOCKET, SO_OOBINLINE, in_buffer, in_size );
 
+        case IOCTL_AFD_WINE_GET_SO_REUSEADDR:
+            return do_getsockopt( handle, io, SOL_SOCKET, SO_REUSEADDR, out_buffer, out_size );
+
         default:
         {
             if ((code >> 16) == FILE_DEVICE_NETWORK)
