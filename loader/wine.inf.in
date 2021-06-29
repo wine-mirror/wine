@@ -3775,6 +3775,7 @@ ErrorControl=1
 LoadOrderGroup="System Bus Extender"
 
 [NDISService]
+AddReg=NDISServiceKeys
 Description="NDIS service"
 DisplayName="NDIS"
 ServiceBinary="%12%\ndis.sys"
@@ -3783,7 +3784,11 @@ StartType=2
 ErrorControl=1
 LoadOrderGroup="System Bus Extender"
 
+[NDISServiceKeys]
+HKR,,"Tag",0x10001,2
+
 [NsiProxyService]
+AddReg=NsiProxyServiceKeys
 Description="NSI proxy service"
 DisplayName="NSI Proxy"
 ServiceBinary="%12%\nsiproxy.sys"
@@ -3791,6 +3796,9 @@ ServiceType=1
 StartType=2
 ErrorControl=1
 LoadOrderGroup="System Bus Extender"
+
+[NsiProxyServiceKeys]
+HKR,,"Tag",0x10001,1
 
 [RpcSsService]
 Description="RPC service"
