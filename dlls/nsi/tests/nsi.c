@@ -41,6 +41,7 @@ static void test_nsi_api( void )
     struct nsi_ndis_ifinfo_dynamic *dyn_tbl, *dyn, get_dyn, *enum_dyn_tbl, *enum_dyn;
     struct nsi_ndis_ifinfo_static *stat_tbl, *stat, get_stat, *enum_stat_tbl, *enum_stat;
     struct nsi_get_all_parameters_ex get_all_params;
+    struct nsi_get_parameter_ex get_param;
     struct nsi_enumerate_all_ex enum_params;
     DWORD err, count, i, rw_size, enum_count;
     NET_LUID *luid_tbl, *enum_luid_tbl;
@@ -127,6 +128,42 @@ todo_wine
         err = NsiGetParameter( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, luid_tbl + i, sizeof(*luid_tbl),
                                NSI_PARAM_TYPE_STATIC, &get_stat.if_guid, sizeof(get_stat.if_guid),
                                FIELD_OFFSET(struct nsi_ndis_ifinfo_static, if_guid) );
+        ok( !err, "got %d\n", err );
+        ok( IsEqualGUID( &get_stat.if_guid, &stat->if_guid ), "mismatch\n" );
+
+        memset( &get_rw, 0xcc, sizeof(get_rw) );
+        memset( &get_dyn, 0xcc, sizeof(get_dyn) );
+        memset( &get_stat, 0xcc, sizeof(get_stat) );
+
+        memset( &get_param, 0, sizeof(get_param) );
+        get_param.first_arg = 1;
+        get_param.module = &NPI_MS_NDIS_MODULEID;
+        get_param.table = NSI_NDIS_IFINFO_TABLE;
+        get_param.key = luid_tbl + i;
+        get_param.key_size = sizeof(*luid_tbl);
+
+        get_param.param_type = NSI_PARAM_TYPE_RW;
+        get_param.data = &get_rw.alias;
+        get_param.data_size = sizeof(get_rw.alias);
+        get_param.data_offset = FIELD_OFFSET(struct nsi_ndis_ifinfo_rw, alias);
+        err = NsiGetParameterEx( &get_param );
+        ok( !err, "got %d\n", err );
+        ok( get_rw.alias.Length == rw->alias.Length, "mismatch\n" );
+        ok( !memcmp( get_rw.alias.String, rw->alias.String, rw->alias.Length ), "mismatch\n" );
+
+        get_param.param_type = NSI_PARAM_TYPE_STATIC;
+        get_param.data = &get_stat.if_index;
+        get_param.data_size = sizeof(get_stat.if_index);
+        get_param.data_offset = FIELD_OFFSET(struct nsi_ndis_ifinfo_static, if_index);
+        err = NsiGetParameterEx( &get_param );
+        ok( !err, "got %d\n", err );
+        ok( get_stat.if_index == stat->if_index, "mismatch\n" );
+
+        get_param.param_type = NSI_PARAM_TYPE_STATIC;
+        get_param.data = &get_stat.if_guid;
+        get_param.data_size = sizeof(get_stat.if_guid);
+        get_param.data_offset = FIELD_OFFSET(struct nsi_ndis_ifinfo_static, if_guid);
+        err = NsiGetParameterEx( &get_param );
         ok( !err, "got %d\n", err );
         ok( IsEqualGUID( &get_stat.if_guid, &stat->if_guid ), "mismatch\n" );
         winetest_pop_context();

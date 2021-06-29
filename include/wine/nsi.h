@@ -133,6 +133,21 @@ struct nsi_get_all_parameters_ex
     DWORD static_size;
 };
 
+struct nsi_get_parameter_ex
+{
+    void *unknown[2];
+    const NPI_MODULEID *module;
+    DWORD_PTR table;
+    DWORD first_arg;
+    DWORD unknown2;
+    const void *key;
+    DWORD key_size;
+    DWORD_PTR param_type;
+    void *data;
+    DWORD data_size;
+    DWORD data_offset;
+};
+
 DWORD WINAPI NsiAllocateAndGetTable( DWORD unk, const NPI_MODULEID *module, DWORD table, void **key_data, DWORD key_size,
                                      void **rw_data, DWORD rw_size, void **dynamic_data, DWORD dynamic_size,
                                      void **static_data, DWORD static_size, DWORD *count, DWORD unk2 );
@@ -148,5 +163,6 @@ DWORD WINAPI NsiGetAllParameters( DWORD unk, const NPI_MODULEID *module, DWORD t
 DWORD WINAPI NsiGetAllParametersEx( struct nsi_get_all_parameters_ex *params );
 DWORD WINAPI NsiGetParameter( DWORD unk, const NPI_MODULEID *module, DWORD table, const void *key, DWORD key_size,
                               DWORD param_type, void *data, DWORD data_size, DWORD data_offset );
+DWORD WINAPI NsiGetParameterEx( struct nsi_get_parameter_ex *params );
 
 #endif /* __WINE_NSI_H */
