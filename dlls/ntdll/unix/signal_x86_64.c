@@ -1725,129 +1725,120 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
  */
 NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 {
-    NTSTATUS ret;
-    DWORD needed_flags;
     struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
+    DWORD needed_flags = context->ContextFlags & ~CONTEXT_AMD64;
     BOOL self = (handle == GetCurrentThread());
 
-    if (!context) return STATUS_INVALID_PARAMETER;
-
-    needed_flags = context->ContextFlags & ~CONTEXT_AMD64;
-
     /* debug registers require a server call */
-    if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_AMD64)) self = FALSE;
+    if (needed_flags & CONTEXT_DEBUG_REGISTERS) self = FALSE;
 
     if (!self)
     {
-        if ((ret = get_thread_context( handle, context, &self, IMAGE_FILE_MACHINE_AMD64 ))) return ret;
-        needed_flags &= ~context->ContextFlags;
+        NTSTATUS ret = get_thread_context( handle, context, &self, IMAGE_FILE_MACHINE_AMD64 );
+        if (ret || !self) return ret;
     }
 
-    if (self)
+    if (needed_flags & CONTEXT_INTEGER)
     {
-        if (needed_flags & CONTEXT_INTEGER)
+        context->Rax = frame->rax;
+        context->Rbx = frame->rbx;
+        context->Rcx = frame->rcx;
+        context->Rdx = frame->rdx;
+        context->Rsi = frame->rsi;
+        context->Rdi = frame->rdi;
+        context->R8  = frame->r8;
+        context->R9  = frame->r9;
+        context->R10 = frame->r10;
+        context->R11 = frame->r11;
+        context->R12 = frame->r12;
+        context->R13 = frame->r13;
+        context->R14 = frame->r14;
+        context->R15 = frame->r15;
+        context->ContextFlags |= CONTEXT_INTEGER;
+    }
+    if (needed_flags & CONTEXT_CONTROL)
+    {
+        context->Rsp    = frame->rsp;
+        context->Rbp    = frame->rbp;
+        context->Rip    = frame->rip;
+        context->EFlags = frame->eflags;
+        context->SegCs  = frame->cs;
+        context->SegSs  = frame->ss;
+        context->ContextFlags |= CONTEXT_CONTROL;
+    }
+    if (needed_flags & CONTEXT_SEGMENTS)
+    {
+        context->SegDs  = frame->ds;
+        context->SegEs  = frame->es;
+        context->SegFs  = frame->fs;
+        context->SegGs  = frame->gs;
+        context->ContextFlags |= CONTEXT_SEGMENTS;
+    }
+    if (needed_flags & CONTEXT_FLOATING_POINT)
+    {
+        if (!xstate_compaction_enabled ||
+            (frame->xstate.Mask & XSTATE_MASK_LEGACY_FLOATING_POINT))
         {
-            context->Rax = frame->rax;
-            context->Rbx = frame->rbx;
-            context->Rcx = frame->rcx;
-            context->Rdx = frame->rdx;
-            context->Rsi = frame->rsi;
-            context->Rdi = frame->rdi;
-            context->R8  = frame->r8;
-            context->R9  = frame->r9;
-            context->R10 = frame->r10;
-            context->R11 = frame->r11;
-            context->R12 = frame->r12;
-            context->R13 = frame->r13;
-            context->R14 = frame->r14;
-            context->R15 = frame->r15;
-            context->ContextFlags |= CONTEXT_INTEGER;
+            memcpy( &context->u.FltSave, &frame->xsave, FIELD_OFFSET( XSAVE_FORMAT, MxCsr ));
+            memcpy( context->u.FltSave.FloatRegisters, frame->xsave.FloatRegisters,
+                    sizeof( context->u.FltSave.FloatRegisters ));
         }
-        if (needed_flags & CONTEXT_CONTROL)
+        else
         {
-            context->Rsp    = frame->rsp;
-            context->Rbp    = frame->rbp;
-            context->Rip    = frame->rip;
-            context->EFlags = frame->eflags;
-            context->SegCs  = frame->cs;
-            context->SegSs  = frame->ss;
-            context->ContextFlags |= CONTEXT_CONTROL;
+            memset( &context->u.FltSave, 0, FIELD_OFFSET( XSAVE_FORMAT, MxCsr ));
+            memset( context->u.FltSave.FloatRegisters, 0,
+                    sizeof( context->u.FltSave.FloatRegisters ));
+            context->u.FltSave.ControlWord = 0x37f;
         }
-        if (needed_flags & CONTEXT_SEGMENTS)
-        {
-            context->SegDs  = frame->ds;
-            context->SegEs  = frame->es;
-            context->SegFs  = frame->fs;
-            context->SegGs  = frame->gs;
-            context->ContextFlags |= CONTEXT_SEGMENTS;
-        }
-        if (needed_flags & CONTEXT_FLOATING_POINT)
-        {
-            if (!xstate_compaction_enabled ||
-                (frame->xstate.Mask & XSTATE_MASK_LEGACY_FLOATING_POINT))
-            {
-                memcpy( &context->u.FltSave, &frame->xsave, FIELD_OFFSET( XSAVE_FORMAT, MxCsr ));
-                memcpy( context->u.FltSave.FloatRegisters, frame->xsave.FloatRegisters,
-                        sizeof( context->u.FltSave.FloatRegisters ));
-            }
-            else
-            {
-                memset( &context->u.FltSave, 0, FIELD_OFFSET( XSAVE_FORMAT, MxCsr ));
-                memset( context->u.FltSave.FloatRegisters, 0,
-                        sizeof( context->u.FltSave.FloatRegisters ));
-                context->u.FltSave.ControlWord = 0x37f;
-            }
 
-            if (!xstate_compaction_enabled || (frame->xstate.Mask & XSTATE_MASK_LEGACY_SSE))
-            {
-                memcpy( context->u.FltSave.XmmRegisters, frame->xsave.XmmRegisters,
-                        sizeof( context->u.FltSave.XmmRegisters ));
-                context->u.FltSave.MxCsr      = frame->xsave.MxCsr;
-                context->u.FltSave.MxCsr_Mask = frame->xsave.MxCsr_Mask;
-            }
-            else
-            {
-                memset( context->u.FltSave.XmmRegisters, 0,
-                        sizeof( context->u.FltSave.XmmRegisters ));
-                context->u.FltSave.MxCsr      = 0x1f80;
-                context->u.FltSave.MxCsr_Mask = 0x2ffff;
-            }
-
-            context->MxCsr = context->u.FltSave.MxCsr;
-            context->ContextFlags |= CONTEXT_FLOATING_POINT;
-        }
-        if ((needed_flags & CONTEXT_XSTATE) && (cpu_info.ProcessorFeatureBits & CPU_FEATURE_AVX))
+        if (!xstate_compaction_enabled || (frame->xstate.Mask & XSTATE_MASK_LEGACY_SSE))
         {
-            CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
-            XSTATE *xstate = (XSTATE *)((char *)context_ex + context_ex->XState.Offset);
-            unsigned int mask;
-
-            if (context_ex->XState.Length < offsetof(XSTATE, YmmContext)
-                || context_ex->XState.Length > sizeof(XSTATE))
-                return STATUS_INVALID_PARAMETER;
-
-            mask = (xstate_compaction_enabled ? xstate->CompactionMask : xstate->Mask) & XSTATE_MASK_GSSE;
-            xstate->Mask = frame->xstate.Mask & mask;
-            xstate->CompactionMask = xstate_compaction_enabled ? (0x8000000000000000 | mask) : 0;
-            memset( xstate->Reserved, 0, sizeof(xstate->Reserved) );
-            if (xstate->Mask)
-            {
-                if (context_ex->XState.Length < sizeof(XSTATE)) return STATUS_BUFFER_OVERFLOW;
-                memcpy( &xstate->YmmContext, &frame->xstate.YmmContext, sizeof(xstate->YmmContext) );
-            }
+            memcpy( context->u.FltSave.XmmRegisters, frame->xsave.XmmRegisters,
+                    sizeof( context->u.FltSave.XmmRegisters ));
+            context->u.FltSave.MxCsr      = frame->xsave.MxCsr;
+            context->u.FltSave.MxCsr_Mask = frame->xsave.MxCsr_Mask;
         }
-        /* update the cached version of the debug registers */
-        if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_AMD64))
+        else
         {
-            amd64_thread_data()->dr0 = context->Dr0;
-            amd64_thread_data()->dr1 = context->Dr1;
-            amd64_thread_data()->dr2 = context->Dr2;
-            amd64_thread_data()->dr3 = context->Dr3;
-            amd64_thread_data()->dr6 = context->Dr6;
-            amd64_thread_data()->dr7 = context->Dr7;
+            memset( context->u.FltSave.XmmRegisters, 0,
+                    sizeof( context->u.FltSave.XmmRegisters ));
+            context->u.FltSave.MxCsr      = 0x1f80;
+            context->u.FltSave.MxCsr_Mask = 0x2ffff;
+        }
+
+        context->MxCsr = context->u.FltSave.MxCsr;
+        context->ContextFlags |= CONTEXT_FLOATING_POINT;
+    }
+    if ((needed_flags & CONTEXT_XSTATE) && (cpu_info.ProcessorFeatureBits & CPU_FEATURE_AVX))
+    {
+        CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
+        XSTATE *xstate = (XSTATE *)((char *)context_ex + context_ex->XState.Offset);
+        unsigned int mask;
+
+        if (context_ex->XState.Length < offsetof(XSTATE, YmmContext)
+            || context_ex->XState.Length > sizeof(XSTATE))
+            return STATUS_INVALID_PARAMETER;
+
+        mask = (xstate_compaction_enabled ? xstate->CompactionMask : xstate->Mask) & XSTATE_MASK_GSSE;
+        xstate->Mask = frame->xstate.Mask & mask;
+        xstate->CompactionMask = xstate_compaction_enabled ? (0x8000000000000000 | mask) : 0;
+        memset( xstate->Reserved, 0, sizeof(xstate->Reserved) );
+        if (xstate->Mask)
+        {
+            if (context_ex->XState.Length < sizeof(XSTATE)) return STATUS_BUFFER_OVERFLOW;
+            memcpy( &xstate->YmmContext, &frame->xstate.YmmContext, sizeof(xstate->YmmContext) );
         }
     }
-
+    /* update the cached version of the debug registers */
+    if (needed_flags & CONTEXT_DEBUG_REGISTERS)
+    {
+        amd64_thread_data()->dr0 = context->Dr0;
+        amd64_thread_data()->dr1 = context->Dr1;
+        amd64_thread_data()->dr2 = context->Dr2;
+        amd64_thread_data()->dr3 = context->Dr3;
+        amd64_thread_data()->dr6 = context->Dr6;
+        amd64_thread_data()->dr7 = context->Dr7;
+    }
     return STATUS_SUCCESS;
 }
 

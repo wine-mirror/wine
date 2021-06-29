@@ -1024,7 +1024,6 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
     if (!self)
     {
         if ((ret = get_thread_context( handle, context, &self, IMAGE_FILE_MACHINE_I386 ))) return ret;
-        needed_flags &= ~context->ContextFlags;
     }
 
     if (self)
@@ -1129,7 +1128,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
             }
         }
         /* update the cached version of the debug registers */
-        if (context->ContextFlags & (CONTEXT_DEBUG_REGISTERS & ~CONTEXT_i386))
+        if (needed_flags & CONTEXT_DEBUG_REGISTERS)
         {
             x86_thread_data()->dr0 = context->Dr0;
             x86_thread_data()->dr1 = context->Dr1;

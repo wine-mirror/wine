@@ -493,42 +493,38 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
  */
 NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 {
-    NTSTATUS ret;
     struct syscall_frame *frame = arm64_thread_data()->syscall_frame;
     DWORD needed_flags = context->ContextFlags & ~CONTEXT_ARM64;
     BOOL self = (handle == GetCurrentThread());
 
     if (!self)
     {
-        if ((ret = get_thread_context( handle, context, &self, IMAGE_FILE_MACHINE_ARM64 ))) return ret;
-        needed_flags &= ~context->ContextFlags;
+        NTSTATUS ret = get_thread_context( handle, context, &self, IMAGE_FILE_MACHINE_ARM64 );
+        if (ret || !self) return ret;
     }
 
-    if (self)
+    if (needed_flags & CONTEXT_INTEGER)
     {
-        if (needed_flags & CONTEXT_INTEGER)
-        {
-            memcpy( context->u.X, frame->x, sizeof(context->u.X[0]) * 29 );
-            context->ContextFlags |= CONTEXT_INTEGER;
-        }
-        if (needed_flags & CONTEXT_CONTROL)
-        {
-            context->u.s.Fp  = frame->fp;
-            context->u.s.Lr  = frame->lr;
-            context->Sp      = frame->sp;
-            context->Pc      = frame->pc;
-            context->Cpsr    = frame->cpsr;
-            context->ContextFlags |= CONTEXT_CONTROL;
-        }
-        if (needed_flags & CONTEXT_FLOATING_POINT)
-        {
-            context->Fpcr = frame->fpcr;
-            context->Fpsr = frame->fpsr;
-            memcpy( context->V, frame->v, sizeof(context->V) );
-            context->ContextFlags |= CONTEXT_FLOATING_POINT;
-        }
-        if (needed_flags & CONTEXT_DEBUG_REGISTERS) FIXME( "debug registers not supported\n" );
+        memcpy( context->u.X, frame->x, sizeof(context->u.X[0]) * 29 );
+        context->ContextFlags |= CONTEXT_INTEGER;
     }
+    if (needed_flags & CONTEXT_CONTROL)
+    {
+        context->u.s.Fp  = frame->fp;
+        context->u.s.Lr  = frame->lr;
+        context->Sp      = frame->sp;
+        context->Pc      = frame->pc;
+        context->Cpsr    = frame->cpsr;
+        context->ContextFlags |= CONTEXT_CONTROL;
+    }
+    if (needed_flags & CONTEXT_FLOATING_POINT)
+    {
+        context->Fpcr = frame->fpcr;
+        context->Fpsr = frame->fpsr;
+        memcpy( context->V, frame->v, sizeof(context->V) );
+        context->ContextFlags |= CONTEXT_FLOATING_POINT;
+    }
+    if (needed_flags & CONTEXT_DEBUG_REGISTERS) FIXME( "debug registers not supported\n" );
     return STATUS_SUCCESS;
 }
 
