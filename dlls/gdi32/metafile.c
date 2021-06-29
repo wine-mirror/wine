@@ -60,15 +60,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(metafile);
 
-#include "pshpack1.h"
-typedef struct
-{
-    DWORD dw1, dw2, dw3;
-    WORD w4;
-    CHAR filename[0x100];
-} METAHEADERDISK;
-#include "poppack.h"
-
 
 /******************************************************************
  *         MF_AddHandle
@@ -231,56 +222,6 @@ HMETAFILE WINAPI GetMetaFileW( LPCWSTR lpFilename )
 }
 
 
-/******************************************************************
- *         MF_LoadDiskBasedMetaFile
- *
- * Creates a new memory-based metafile from a disk-based one.
- */
-static METAHEADER *MF_LoadDiskBasedMetaFile(METAHEADER *mh)
-{
-    METAHEADERDISK *mhd;
-    HANDLE hfile;
-    METAHEADER *mh2;
-
-    if(mh->mtType != METAFILE_DISK) {
-        ERR("Not a disk based metafile\n");
-	return NULL;
-    }
-    mhd = (METAHEADERDISK *)((char *)mh + sizeof(METAHEADER));
-
-    if((hfile = CreateFileA(mhd->filename, GENERIC_READ, FILE_SHARE_READ, NULL,
-			    OPEN_EXISTING, 0, 0)) == INVALID_HANDLE_VALUE) {
-        WARN("Can't open file of disk based metafile\n");
-        return NULL;
-    }
-    mh2 = MF_ReadMetaFile(hfile);
-    CloseHandle(hfile);
-    return mh2;
-}
-
-/******************************************************************
- *         MF_CreateMetaHeaderDisk
- *
- * Take a memory based METAHEADER and change it to a disk based METAHEADER
- * associated with filename.  Note: Trashes contents of old one.
- */
-METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mh, LPCVOID filename, BOOL uni )
-{
-    METAHEADERDISK *mhd;
-
-    mh = HeapReAlloc( GetProcessHeap(), 0, mh,
-		      sizeof(METAHEADER) + sizeof(METAHEADERDISK));
-    mh->mtType = METAFILE_DISK;
-    mhd = (METAHEADERDISK *)((char *)mh + sizeof(METAHEADER));
-
-    if( uni )
-        WideCharToMultiByte(CP_ACP, 0, filename, -1, 
-                   mhd->filename, sizeof mhd->filename, NULL, NULL);
-    else
-        lstrcpynA( mhd->filename, filename, sizeof mhd->filename );
-    return mh;
-}
-
 /* return a copy of the metafile bits, to be freed with HeapFree */
 static METAHEADER *get_metafile_bits( HMETAFILE hmf )
 {
@@ -288,13 +229,8 @@ static METAHEADER *get_metafile_bits( HMETAFILE hmf )
 
     if (!mh) return NULL;
 
-    if (mh->mtType != METAFILE_DISK)
-    {
-        ret = HeapAlloc( GetProcessHeap(), 0, mh->mtSize * 2 );
-        if (ret) memcpy( ret, mh, mh->mtSize * 2 );
-    }
-    else ret = MF_LoadDiskBasedMetaFile( mh );
-
+    ret = HeapAlloc( GetProcessHeap(), 0, mh->mtSize * 2 );
+    if (ret) memcpy( ret, mh, mh->mtSize * 2 );
     GDI_ReleaseObj( hmf );
     return ret;
 }
@@ -1092,16 +1028,7 @@ UINT WINAPI GetMetaFileBitsEx( HMETAFILE hmf, UINT nSize, LPVOID buf )
 
     TRACE("(%p,%d,%p)\n", hmf, nSize, buf);
     if (!mh) return 0;  /* FIXME: error code */
-    if(mh->mtType == METAFILE_DISK)
-    {
-        mh = MF_LoadDiskBasedMetaFile( mh );
-        if (!mh)
-        {
-            GDI_ReleaseObj( hmf );
-            return 0;
-        }
-        mf_copy = TRUE;
-    }
+
     mfSize = mh->mtSize * 2;
     if (buf)
     {

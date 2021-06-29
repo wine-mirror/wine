@@ -330,22 +330,17 @@ HDC WINAPI CreateMetaFileW( LPCWSTR filename )
 
     if (!(dc = MFDRV_AllocMetaFile())) return 0;
     physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
+    physDev->mh->mtType = METAFILE_MEMORY;
 
     if (filename)  /* disk based metafile */
     {
-        physDev->mh->mtType = METAFILE_DISK;
         if ((hFile = CreateFileW(filename, GENERIC_WRITE, 0, NULL,
 				CREATE_ALWAYS, 0, 0)) == INVALID_HANDLE_VALUE) {
             free_dc_ptr( dc );
             return 0;
         }
 	physDev->hFile = hFile;
-
-	/* Grow METAHEADER to include filename */
-	physDev->mh = MF_CreateMetaHeaderDisk(physDev->mh, filename, TRUE);
     }
-    else  /* memory based metafile */
-	physDev->mh->mtType = METAFILE_MEMORY;
 
     TRACE("returning %p\n", physDev->dev.hdc);
     ret = physDev->dev.hdc;
@@ -413,9 +408,8 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
 	return 0;
     }
 
-    if (physDev->mh->mtType == METAFILE_DISK)  /* disk based metafile */
+    if (physDev->hFile)  /* disk based metafile */
     {
-	physDev->mh->mtType = METAFILE_MEMORY; /* This is what windows does */
         if (!WriteFile(physDev->hFile, physDev->mh, physDev->mh->mtSize * 2,
                        &bytes_written, NULL)) {
             free_dc_ptr( dc );

@@ -464,7 +464,6 @@ extern void lp_to_dp( DC *dc, POINT *points, INT count ) DECLSPEC_HIDDEN;
 
 /* metafile.c */
 extern HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh) DECLSPEC_HIDDEN;
-extern METAHEADER *MF_CreateMetaHeaderDisk(METAHEADER *mr, LPCVOID filename, BOOL unicode ) DECLSPEC_HIDDEN;
 
 /* Format of comment record added by GetWinMetaFileBits */
 #include <pshpack2.h>
