@@ -2067,7 +2067,11 @@ static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId
                                         debugstr_w(ikf_path), debugstr_w(ikf_parent_path));
                                 ok_(__FILE__, known_folder->line)(*(ikf_path + lstrlenW(ikf_parent_path)) == '\\',
                                         "Missing slash\n");
-                                ok_(__FILE__, known_folder->line)(wcsicmp(kfd.pszRelativePath, ikf_path + lstrlenW(ikf_parent_path) + 1) == 0,
+                                ok_(__FILE__, known_folder->line)(
+                                        wcsicmp(kfd.pszRelativePath, ikf_path + lstrlenW(ikf_parent_path) + 1) == 0 ||
+                                        /* With multiple drives, there are multiple CD-burning folders */
+                                        (IsEqualGUID(folderId, &FOLDERID_CDBurning) &&
+                                         wcsnicmp(kfd.pszRelativePath, ikf_path + lstrlenW(ikf_parent_path) + 1, wcslen(kfd.pszRelativePath)) == 0),
                                         "Full path %s does not end with relative path %s\n",
                                         debugstr_w(ikf_path), debugstr_w(kfd.pszRelativePath));
 
