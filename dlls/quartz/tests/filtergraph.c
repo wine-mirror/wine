@@ -4186,6 +4186,49 @@ static void test_ec_complete(void)
     ok(filter3.ref == 1, "Got outstanding refcount %d.\n", filter3.ref);
 }
 
+static void test_renderfile_failure(void)
+{
+    static const char bogus_data[20] = {0xde, 0xad, 0xbe, 0xef};
+
+    struct testfilter testfilter;
+    IEnumFilters *filterenum;
+    const WCHAR *filename;
+    IFilterGraph2 *graph;
+    IBaseFilter *filter;
+    HRESULT hr;
+    ULONG ref;
+    BOOL ret;
+
+    /* Windows removes the source filter from the graph if a RenderFile
+     * call fails. It leaves the rest of the graph intact. */
+
+    graph = create_graph();
+    testfilter_init(&testfilter, NULL, 0);
+    hr = IFilterGraph2_AddFilter(graph, &testfilter.IBaseFilter_iface, L"dummy");
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    filename = create_file(L"test.nonsense", bogus_data, sizeof(bogus_data));
+    hr = IFilterGraph2_RenderFile(graph, filename, NULL);
+    todo_wine ok(hr == VFW_E_UNSUPPORTED_STREAM, "Got hr %#x.\n", hr);
+
+    hr = IFilterGraph2_EnumFilters(graph, &filterenum);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IEnumFilters_Next(filterenum, 1, &filter, NULL);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    todo_wine ok(filter == &testfilter.IBaseFilter_iface, "Got unexpected filter %p.\n", filter);
+
+    hr = IEnumFilters_Next(filterenum, 1, &filter, NULL);
+    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+
+    IEnumFilters_Release(filterenum);
+
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ret = DeleteFileW(filename);
+    todo_wine ok(ret, "Failed to delete %s, error %u.\n", debugstr_w(filename), GetLastError());
+}
+
 /* Remove and re-add the filter, to flush the graph's internal
  * IMediaSeeking cache. Don't expose IMediaSeeking when adding, to show
  * that it's only queried when needed. */
@@ -5645,6 +5688,7 @@ START_TEST(filtergraph)
     test_sync_source();
     test_filter_state();
     test_ec_complete();
+    test_renderfile_failure();
     test_graph_seeking();
     test_default_sync_source();
     test_add_source_filter();
