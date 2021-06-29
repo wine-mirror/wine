@@ -25,9 +25,15 @@
 #include "iptypes.h"
 #include "netiodef.h"
 #include "wine/nsi.h"
+#include "wine/heap.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(nsi);
+
+static inline HANDLE get_nsi_device( void )
+{
+    return CreateFileW( L"\\\\.\\Nsi", 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
+}
 
 DWORD WINAPI NsiAllocateAndGetTable( DWORD unk, const NPI_MODULEID *module, DWORD table, void **key_data, DWORD key_size,
                                      void **rw_data, DWORD rw_size, void **dynamic_data, DWORD dynamic_size,
@@ -46,7 +52,7 @@ DWORD WINAPI NsiEnumerateObjectsAllParameters( DWORD unk, DWORD unk2, const NPI_
     struct nsi_enumerate_all_ex params;
     DWORD err;
 
-    FIXME( "%d %d %p %d %p %d %p %d %p %d %p %d %p: stub\n", unk, unk2, module, table, key_data, key_size,
+    TRACE( "%d %d %p %d %p %d %p %d %p %d %p %d %p\n", unk, unk2, module, table, key_data, key_size,
            rw_data, rw_size, dynamic_data, dynamic_size, static_data, static_size, count );
 
     params.unknown[0] = 0;
@@ -72,7 +78,52 @@ DWORD WINAPI NsiEnumerateObjectsAllParameters( DWORD unk, DWORD unk2, const NPI_
 
 DWORD WINAPI NsiEnumerateObjectsAllParametersEx( struct nsi_enumerate_all_ex *params )
 {
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    DWORD out_size, received, err = ERROR_SUCCESS;
+    HANDLE device = get_nsi_device();
+    struct nsiproxy_enumerate_all in;
+    BYTE *out, *ptr;
+
+    if (device == INVALID_HANDLE_VALUE) return GetLastError();
+
+    out_size = sizeof(DWORD) +
+        (params->key_size + params->rw_size + params->dynamic_size + params->static_size) * params->count;
+
+    out = heap_alloc( out_size );
+    if (!out)
+    {
+        CloseHandle( device );
+        return ERROR_OUTOFMEMORY;
+    }
+
+    in.module = *params->module;
+    in.first_arg = params->first_arg;
+    in.second_arg = params->second_arg;
+    in.table = params->table;
+    in.key_size = params->key_size;
+    in.rw_size = params->rw_size;
+    in.dynamic_size = params->dynamic_size;
+    in.static_size = params->static_size;
+    in.count = params->count;
+
+    if (!DeviceIoControl( device, IOCTL_NSIPROXY_WINE_ENUMERATE_ALL, &in, sizeof(in), out, out_size, &received, NULL ))
+        err = GetLastError();
+    if (err == ERROR_SUCCESS || err == ERROR_MORE_DATA)
+    {
+        params->count = *(DWORD *)out;
+        ptr = out + sizeof(DWORD);
+        if (params->key_size) memcpy( params->key_data, ptr, params->key_size * params->count );
+        ptr += params->key_size * in.count;
+        if (params->rw_size) memcpy( params->rw_data, ptr, params->rw_size * params->count );
+        ptr += params->rw_size * in.count;
+        if (params->dynamic_size) memcpy( params->dynamic_data, ptr, params->dynamic_size * params->count );
+        ptr += params->dynamic_size * in.count;
+        if (params->static_size) memcpy( params->static_data, ptr, params->static_size * params->count );
+    }
+
+    heap_free( out );
+    CloseHandle( device );
+
+    return err;
 }
 
 void WINAPI NsiFreeTable( void *key_data, void *rw_data, void *dynamic_data, void *static_data )
