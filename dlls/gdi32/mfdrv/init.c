@@ -325,7 +325,6 @@ HDC WINAPI CreateMetaFileW( LPCWSTR filename )
     DC *dc;
     METAFILEDRV_PDEVICE *physDev;
     HANDLE hFile;
-    DWORD bytes_written;
 
     TRACE("%s\n", debugstr_w(filename) );
 
@@ -340,12 +339,6 @@ HDC WINAPI CreateMetaFileW( LPCWSTR filename )
             free_dc_ptr( dc );
             return 0;
         }
-        if (!WriteFile( hFile, physDev->mh, sizeof(*physDev->mh),
-                        &bytes_written, NULL )) {
-            free_dc_ptr( dc );
-            CloseHandle (hFile );
-            return 0;
-	}
 	physDev->hFile = hFile;
 
 	/* Grow METAHEADER to include filename */
@@ -422,19 +415,13 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
 
     if (physDev->mh->mtType == METAFILE_DISK)  /* disk based metafile */
     {
-        if (SetFilePointer(physDev->hFile, 0, NULL, FILE_BEGIN) != 0) {
-            free_dc_ptr( dc );
-            return 0;
-        }
-
 	physDev->mh->mtType = METAFILE_MEMORY; /* This is what windows does */
-        if (!WriteFile(physDev->hFile, physDev->mh, sizeof(*physDev->mh),
+        if (!WriteFile(physDev->hFile, physDev->mh, physDev->mh->mtSize * 2,
                        &bytes_written, NULL)) {
             free_dc_ptr( dc );
             return 0;
         }
         CloseHandle(physDev->hFile);
-	physDev->mh->mtType = METAFILE_DISK;
     }
 
     return dc;
@@ -481,32 +468,19 @@ BOOL MFDRV_WriteRecord( PHYSDEV dev, METARECORD *mr, DWORD rlen)
     METAHEADER *mh;
     METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
 
-    switch(physDev->mh->mtType)
+    len = physDev->mh->mtSize * 2 + rlen;
+    /* reallocate memory if needed */
+    size = HeapSize( GetProcessHeap(), 0, physDev->mh );
+    if (len > size)
     {
-    case METAFILE_MEMORY:
-	len = physDev->mh->mtSize * 2 + rlen;
-	/* reallocate memory if needed */
-        size = HeapSize( GetProcessHeap(), 0, physDev->mh );
-        if (len > size)
-        {
-            /*expand size*/
-            size += size / 2 + rlen;
-            mh = HeapReAlloc( GetProcessHeap(), 0, physDev->mh, size);
-            if (!mh) return FALSE;
-            physDev->mh = mh;
-            TRACE("Reallocated metafile: new size is %d\n",size);
-        }
-	memcpy((WORD *)physDev->mh + physDev->mh->mtSize, mr, rlen);
-        break;
-    case METAFILE_DISK:
-        TRACE("Writing record to disk\n");
-        if (!WriteFile(physDev->hFile, mr, rlen, NULL, NULL))
-	    return FALSE;
-        break;
-    default:
-        ERR("Unknown metafile type %d\n", physDev->mh->mtType );
-        return FALSE;
+        /*expand size*/
+        size += size / 2 + rlen;
+        mh = HeapReAlloc( GetProcessHeap(), 0, physDev->mh, size);
+        if (!mh) return FALSE;
+        physDev->mh = mh;
+        TRACE("Reallocated metafile: new size is %d\n",size);
     }
+    memcpy((WORD *)physDev->mh + physDev->mh->mtSize, mr, rlen);
 
     physDev->mh->mtSize += rlen / 2;
     physDev->mh->mtMaxRecord = max(physDev->mh->mtMaxRecord, rlen / 2);

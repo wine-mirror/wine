@@ -3043,7 +3043,6 @@ static void test_metafile_file(void)
     ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
 
     size = GetFileSize(file, NULL);
-    todo_wine
     ok(!size, "size = %u\n", size);
 
     ret = MoveToEx(dc, 1, 1, NULL);
@@ -3056,7 +3055,6 @@ static void test_metafile_file(void)
     ok( ret, "Ellipse error %d.\n", GetLastError());
 
     size = GetFileSize(file, NULL);
-    todo_wine
     ok(!size, "size = %u\n", size);
 
     metafile = CloseMetaFile(dc);
