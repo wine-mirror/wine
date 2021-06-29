@@ -19068,7 +19068,7 @@ static void test_texture_compressed_3d(void)
                 }
                 expected |= 0xff000000;
                 colour = get_readback_color(&rb, (x * 640 + 128) / 256, (y * 480 + 128) / 256);
-                if (!(equal = compare_color(colour, expected, 2)))
+                if (!(equal = compare_color(colour, expected, 8)))
                     break;
             }
             if (!equal)
