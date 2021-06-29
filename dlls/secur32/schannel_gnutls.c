@@ -292,10 +292,6 @@ static DWORD CDECL schan_get_enabled_protocols(void)
 
 static int pull_timeout(gnutls_transport_ptr_t transport, unsigned int timeout)
 {
-    struct schan_transport *t = (struct schan_transport *)transport;
-    SIZE_T count = 0;
-
-    if (callbacks->get_buffer(t, &t->in, &count)) return 1;
     return 0;
 }
 
@@ -309,7 +305,7 @@ static BOOL CDECL schan_create_session(schan_session *session, schan_credentials
 
     if (cred->enabled_protocols & (SP_PROT_DTLS1_0_CLIENT | SP_PROT_DTLS1_2_CLIENT))
     {
-        flags |= GNUTLS_DATAGRAM | GNUTLS_NONBLOCK;
+        flags |= GNUTLS_DATAGRAM;
     }
 
     err = pgnutls_init(s, flags);

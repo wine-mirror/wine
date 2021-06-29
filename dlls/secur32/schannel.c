@@ -879,11 +879,6 @@ static inline SIZE_T read_record_size(const BYTE *buf, SIZE_T header_size)
     return (buf[header_size - 2] << 8) | buf[header_size - 1];
 }
 
-static inline BOOL is_dtls_context(const struct schan_context *ctx)
-{
-    return (ctx->header_size == HEADER_SIZE_DTLS);
-}
-
 /***********************************************************************
  *              InitializeSecurityContextW
  */
@@ -1011,7 +1006,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
                 return SEC_E_INCOMPLETE_MESSAGE;
             }
         }
-        else if (!is_dtls_context(ctx)) return SEC_E_INCOMPLETE_MESSAGE;
+        else return SEC_E_INCOMPLETE_MESSAGE;
 
         TRACE("Using expected_size %lu.\n", expected_size);
     }
