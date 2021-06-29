@@ -208,6 +208,7 @@ struct sock
     union win_sockaddr  addr;        /* socket name */
     int                 addr_len;    /* socket name length */
     unsigned int        rcvbuf;      /* advisory recv buffer size */
+    unsigned int        rcvtimeo;    /* receive timeout in ms */
     unsigned int        rd_shutdown : 1; /* is the read end shut down? */
     unsigned int        wr_shutdown : 1; /* is the write end shut down? */
     unsigned int        wr_shutdown_pending : 1; /* is a write shutdown pending? */
@@ -1388,6 +1389,7 @@ static struct sock *create_socket(void)
     sock->nonblocking = 0;
     sock->bound = 0;
     sock->rcvbuf = 0;
+    sock->rcvtimeo = 0;
     init_async_queue( &sock->read_q );
     init_async_queue( &sock->write_q );
     init_async_queue( &sock->ifchange_q );
@@ -2619,6 +2621,35 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         return 0;
     }
 
+    case IOCTL_AFD_WINE_GET_SO_RCVTIMEO:
+    {
+        DWORD rcvtimeo = sock->rcvtimeo;
+
+        if (get_reply_max_size() < sizeof(rcvtimeo))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return 0;
+        }
+
+        set_reply_data( &rcvtimeo, sizeof(rcvtimeo) );
+        return 1;
+    }
+
+    case IOCTL_AFD_WINE_SET_SO_RCVTIMEO:
+    {
+        DWORD rcvtimeo;
+
+        if (get_req_data_size() < sizeof(rcvtimeo))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return 0;
+        }
+        rcvtimeo = *(DWORD *)get_req_data();
+
+        sock->rcvtimeo = rcvtimeo;
+        return 0;
+    }
+
     default:
         set_error( STATUS_NOT_SUPPORTED );
         return 0;
@@ -3029,19 +3060,14 @@ DECL_HANDLER(recv_socket)
     /* recv() returned EWOULDBLOCK, i.e. no data available yet */
     if (status == STATUS_DEVICE_NOT_READY && !sock->nonblocking)
     {
-#ifdef SO_RCVTIMEO
-        struct timeval tv;
-        socklen_t len = sizeof(tv);
-
         /* Set a timeout on the async if necessary.
          *
          * We want to do this *only* if the client gave us STATUS_DEVICE_NOT_READY.
          * If the client gave us STATUS_PENDING, it expects the async to always
          * block (it was triggered by WSARecv*() with a valid OVERLAPPED
          * structure) and for the timeout not to be respected. */
-        if (is_fd_overlapped( fd ) && !getsockopt( get_unix_fd( fd ), SOL_SOCKET, SO_RCVTIMEO, (char *)&tv, &len ))
-            timeout = tv.tv_sec * -10000000 + tv.tv_usec * -10;
-#endif
+        if (is_fd_overlapped( fd ))
+            timeout = (timeout_t)sock->rcvtimeo * -10000;
 
         status = STATUS_PENDING;
     }

@@ -2289,6 +2289,8 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_SO_RCVBUF, optval, optlen );
 
         case WS_SO_RCVTIMEO:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_SO_RCVTIMEO, optval, optlen );
+
         case WS_SO_SNDTIMEO:
         {
             INT64 timeout;
@@ -3565,6 +3567,9 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         case WS_SO_RCVBUF:
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_SO_RCVBUF, optval, optlen );
 
+        case WS_SO_RCVTIMEO:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_SO_RCVTIMEO, optval, optlen );
+
         /* Some options need some conversion before they can be sent to
          * setsockopt. The conversions are done here, then they will fall through
          * to the general case. Special options that are not passed to
@@ -3631,13 +3636,8 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             TRACE("setting global SO_OPENTYPE = 0x%x\n", *((const int*)optval) );
             return 0;
 
-#ifdef SO_RCVTIMEO
-        case WS_SO_RCVTIMEO:
-#endif
 #ifdef SO_SNDTIMEO
         case WS_SO_SNDTIMEO:
-#endif
-#if defined(SO_RCVTIMEO) || defined(SO_SNDTIMEO)
             if (optval && optlen == sizeof(UINT32)) {
                 /* WinSock passes milliseconds instead of struct timeval */
                 tval.tv_usec = (*(const UINT32*)optval % 1000) * 1000;

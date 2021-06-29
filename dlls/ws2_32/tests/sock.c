@@ -10919,7 +10919,7 @@ static void test_timeout(void)
     WSASetLastError(0xdeadbeef);
     ret = getsockopt(client, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, &len);
     ok(!ret, "expected success\n");
-    todo_wine ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+    ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
     ok(len == sizeof(timeout), "got size %u\n", len);
     ok(!timeout, "got timeout %u\n", timeout);
 
@@ -10927,15 +10927,15 @@ static void test_timeout(void)
     WSASetLastError(0xdeadbeef);
     ret = setsockopt(client, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, sizeof(timeout));
     ok(!ret, "expected success\n");
-    todo_wine ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+    ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
 
     timeout = 0xdeadbeef;
     len = sizeof(timeout);
     WSASetLastError(0xdeadbeef);
     ret = getsockopt(client, SOL_SOCKET, SO_RCVTIMEO, (char *)&timeout, &len);
     ok(!ret, "expected success\n");
-    todo_wine ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
-    todo_wine ok(timeout == 100, "got timeout %u\n", timeout);
+    ok(!WSAGetLastError(), "got error %u\n", WSAGetLastError());
+    ok(timeout == 100, "got timeout %u\n", timeout);
 
     WSASetLastError(0xdeadbeef);
     ret = recv(client, &buffer, 1, 0);
