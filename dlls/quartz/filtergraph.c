@@ -1431,11 +1431,19 @@ static HRESULT WINAPI FilterGraph2_RenderFile(IFilterGraph2 *iface, LPCWSTR lpcw
         IEnumPins_Release(penumpins);
 
         if (!any)
+        {
+            if (FAILED(hr = IFilterGraph2_RemoveFilter(iface, preader)))
+                ERR("Failed to remove source filter, hr %#x.\n", hr);
             hr = VFW_E_CANNOT_RENDER;
+        }
         else if (partial)
+        {
             hr = VFW_S_PARTIAL_RENDER;
+        }
         else
+        {
             hr = S_OK;
+        }
     }
     IBaseFilter_Release(preader);
 

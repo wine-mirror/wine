@@ -4216,17 +4216,17 @@ static void test_renderfile_failure(void)
 
     hr = IEnumFilters_Next(filterenum, 1, &filter, NULL);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    todo_wine ok(filter == &testfilter.IBaseFilter_iface, "Got unexpected filter %p.\n", filter);
+    ok(filter == &testfilter.IBaseFilter_iface, "Got unexpected filter %p.\n", filter);
 
     hr = IEnumFilters_Next(filterenum, 1, &filter, NULL);
-    todo_wine ok(hr == S_FALSE, "Got hr %#x.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#x.\n", hr);
 
     IEnumFilters_Release(filterenum);
 
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
     ret = DeleteFileW(filename);
-    todo_wine ok(ret, "Failed to delete %s, error %u.\n", debugstr_w(filename), GetLastError());
+    ok(ret, "Failed to delete %s, error %u.\n", debugstr_w(filename), GetLastError());
 }
 
 /* Remove and re-add the filter, to flush the graph's internal
