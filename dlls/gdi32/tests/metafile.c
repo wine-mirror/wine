@@ -3015,6 +3015,175 @@ static void test_mf_Blank(void)
     ok( ret, "DeleteMetaFile(%p) error %d\n", hMetafile, GetLastError());
 }
 
+static void test_metafile_file(void)
+{
+    char temp_path[MAX_PATH];
+    char mf_name[MAX_PATH];
+    char buf[4096];
+    HMETAFILE metafile;
+    POINT oldpoint;
+    DWORD size;
+    HANDLE file;
+    HDC dc;
+    BOOL ret;
+
+    GetTempPathA(MAX_PATH, temp_path);
+    GetTempFileNameA(temp_path, "wmf", 0, mf_name);
+
+    dc = CreateMetaFileA(mf_name);
+    ok(dc != 0, "CreateMetaFileA(NULL) error %d\n", GetLastError());
+
+    file = CreateFileA(mf_name, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                       OPEN_EXISTING, 0, NULL);
+    ok(file == INVALID_HANDLE_VALUE && GetLastError() == ERROR_SHARING_VIOLATION,
+       "CreateFile returned: %p %u\n", file, GetLastError());
+
+    file = CreateFileA(mf_name, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                       OPEN_EXISTING, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
+
+    size = GetFileSize(file, NULL);
+    todo_wine
+    ok(!size, "size = %u\n", size);
+
+    ret = MoveToEx(dc, 1, 1, NULL);
+    ok( ret, "MoveToEx error %d.\n", GetLastError());
+    ret = LineTo(dc, 2, 2);
+    ok( ret, "LineTo error %d.\n", GetLastError());
+    ret = MoveToEx(dc, 1, 1, &oldpoint);
+    ok( ret, "MoveToEx error %d.\n", GetLastError());
+    ret = Ellipse(dc, 0, 0, 2, 2);
+    ok( ret, "Ellipse error %d.\n", GetLastError());
+
+    size = GetFileSize(file, NULL);
+    todo_wine
+    ok(!size, "size = %u\n", size);
+
+    metafile = CloseMetaFile(dc);
+    size = GetFileSize(file, NULL);
+    ok(size == sizeof(MF_GRAPHICS_BITS), "size = %u\n", size);
+
+    CloseHandle(file);
+    file = CreateFileA(mf_name, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                       OPEN_EXISTING, 0, NULL);
+    todo_wine
+    ok(file == INVALID_HANDLE_VALUE && GetLastError() == ERROR_SHARING_VIOLATION,
+       "CreateFile returned: %p %u\n", file, GetLastError());
+    if (file != INVALID_HANDLE_VALUE) CloseHandle(file);
+    file = CreateFileA(mf_name, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                       OPEN_EXISTING, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
+    ret = ReadFile(file, buf, sizeof(buf), &size, NULL);
+    ok(ret, "ReadFile failed: %u\n", GetLastError());
+    ok(size == sizeof(MF_GRAPHICS_BITS), "size = %u\n", size);
+    ok(!memcmp(buf, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS)), "unexpected file content\n");
+    CloseHandle(file);
+
+    if (compare_mf_bits(metafile, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS), "mf_Graphics") != 0)
+    {
+        dump_mf_bits(metafile, "mf_Graphics");
+        EnumMetaFile(0, metafile, mf_enum_proc, 0);
+    }
+
+    DeleteMetaFile(metafile);
+
+    SetLastError(0xdeadbeef);
+    metafile = CloseMetaFile(dc);
+    todo_wine
+    ok(!metafile && GetLastError() == ERROR_INVALID_HANDLE, "CloseMetaFile returned %p (%u)\n",
+       metafile, GetLastError());
+
+    ret = DeleteFileA(mf_name);
+    ok(ret, "Could not delete file: %u\n", GetLastError());
+}
+
+static void test_enhmetafile_file(void)
+{
+    char temp_path[MAX_PATH];
+    char mf_name[MAX_PATH];
+    char buf[4096];
+    HENHMETAFILE metafile;
+    POINT pts[4];
+    DWORD size;
+    HANDLE file;
+    HDC dc;
+    BOOL ret;
+
+    GetTempPathA(MAX_PATH, temp_path);
+    GetTempFileNameA(temp_path, "wmf", 0, mf_name);
+
+    dc = CreateEnhMetaFileA(NULL, mf_name, NULL, NULL);
+    ok(dc != 0, "CreateMetaFileA(NULL) error %d\n", GetLastError());
+
+    file = CreateFileA(mf_name, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                       OPEN_EXISTING, 0, NULL);
+    ok(file == INVALID_HANDLE_VALUE && GetLastError() == ERROR_SHARING_VIOLATION,
+       "CreateFile returned: %p %u\n", file, GetLastError());
+
+    file = CreateFileA(mf_name, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                       OPEN_EXISTING, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
+
+    size = GetFileSize(file, NULL);
+    todo_wine
+    ok(!size, "size = %u\n", size);
+
+    pts[0].x = pts[0].y = 10;
+    pts[1].x = pts[1].y = 20;
+    pts[2].x = pts[2].y = 15;
+    pts[3].x = pts[3].y = 25;
+    ret = PolyBezierTo(dc, pts, 3);  /* EMR_POLYBEZIERTO16 */
+    ok( ret, "PolyBezierTo failed\n" );
+    ret = PolyBezier(dc, pts, 4);    /* EMR_POLYBEZIER16   */
+    ok( ret, "PolyBezier failed\n" );
+
+    pts[0].x = pts[0].y = 32769;
+    ret = PolyBezier(dc, pts, 4);    /* EMR_POLYBEZIER   */
+    ok( ret, "PolyBezier failed\n" );
+    ret = PolyBezierTo(dc, pts, 3);  /* EMR_POLYBEZIERTO */
+    ok( ret, "PolyBezierTo failed\n" );
+
+    size = GetFileSize(file, NULL);
+    todo_wine
+    ok(!size, "size = %u\n", size);
+
+    metafile = CloseEnhMetaFile(dc);
+    size = GetFileSize(file, NULL);
+    ok(size == sizeof(EMF_BEZIER_BITS), "size = %u\n", size);
+
+    CloseHandle(file);
+    file = CreateFileA(mf_name, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                       OPEN_EXISTING, 0, NULL);
+    todo_wine
+    ok(file == INVALID_HANDLE_VALUE && GetLastError() == ERROR_SHARING_VIOLATION,
+       "CreateFile returned: %p %u\n", file, GetLastError());
+    if (file != INVALID_HANDLE_VALUE) CloseHandle(file);
+    file = CreateFileA(mf_name, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                       OPEN_EXISTING, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
+    ret = ReadFile(file, buf, sizeof(buf), &size, NULL);
+    ok(ret, "ReadFile failed: %u\n", GetLastError());
+    ok(size == sizeof(EMF_BEZIER_BITS), "size = %u\n", size);
+    CloseHandle(file);
+
+    if (compare_emf_bits(metafile, EMF_BEZIER_BITS, sizeof(EMF_BEZIER_BITS), "emf_Bezier", FALSE) != 0)
+    {
+        dump_emf_bits(metafile, "emf_Bezier");
+        dump_emf_records(metafile, "emf_Bezier");
+    }
+
+    DeleteEnhMetaFile(metafile);
+
+    SetLastError(0xdeadbeef);
+    metafile = CloseEnhMetaFile(dc);
+    todo_wine
+    ok(!metafile && GetLastError() == ERROR_INVALID_HANDLE, "CloseMetaFile returned %p (%u)\n",
+       metafile, GetLastError());
+
+    ret = DeleteFileA(mf_name);
+    ok(ret, "Could not delete file: %u\n", GetLastError());
+}
+
 static void test_CopyMetaFile(void)
 {
     HDC hdcMetafile;
@@ -6107,6 +6276,7 @@ START_TEST(metafile)
     test_emf_GradientFill();
     test_emf_WorldTransform();
     test_emf_text_extents();
+    test_enhmetafile_file();
 
     /* For win-format metafiles (mfdrv) */
     test_mf_SaveDC();
@@ -6120,6 +6290,7 @@ START_TEST(metafile)
     test_mf_clipping();
     test_mf_GetPath();
     test_mf_SetLayout();
+    test_metafile_file();
 
     /* For metafile conversions */
     test_mf_conversions();
