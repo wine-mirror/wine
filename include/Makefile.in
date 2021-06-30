@@ -540,6 +540,7 @@ SOURCES = \
 	ntddvdeo.h \
 	ntdef.h \
 	ntdsapi.h \
+	ntgdi.h \
 	ntlsa.h \
 	ntquery.h \
 	ntsecapi.h \
