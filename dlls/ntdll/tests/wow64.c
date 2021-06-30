@@ -463,6 +463,94 @@ static void test_cpu_area(void)
 
 #else  /* _WIN64 */
 
+static ULONG64 main_module, ntdll_module, wow64_module, wow64cpu_module, wow64win_module;
+
+static void enum_modules64( void (*func)(ULONG64,const WCHAR *) )
+{
+    typedef struct
+    {
+        LIST_ENTRY64     InLoadOrderLinks;
+        LIST_ENTRY64     InMemoryOrderLinks;
+        LIST_ENTRY64     InInitializationOrderLinks;
+        ULONG64          DllBase;
+        ULONG64          EntryPoint;
+        ULONG            SizeOfImage;
+        UNICODE_STRING64 FullDllName;
+        UNICODE_STRING64 BaseDllName;
+        /* etc. */
+    } LDR_DATA_TABLE_ENTRY64;
+
+    TEB64 *teb64 = (TEB64 *)NtCurrentTeb()->GdiBatchCount;
+    PEB64 peb64;
+    ULONG64 ptr;
+    PEB_LDR_DATA64 ldr;
+    LDR_DATA_TABLE_ENTRY64 entry;
+    NTSTATUS status;
+    HANDLE process;
+
+    process = OpenProcess( PROCESS_ALL_ACCESS, FALSE, GetCurrentProcessId() );
+    ok( process != 0, "failed to open current process %u\n", GetLastError() );
+    status = pNtWow64ReadVirtualMemory64( process, teb64->Peb, &peb64, sizeof(peb64), NULL );
+    ok( !status, "NtWow64ReadVirtualMemory64 failed %x\n", status );
+    todo_wine
+    ok( peb64.LdrData, "LdrData not initialized\n" );
+    if (!peb64.LdrData) goto done;
+    status = pNtWow64ReadVirtualMemory64( process, peb64.LdrData, &ldr, sizeof(ldr), NULL );
+    ok( !status, "NtWow64ReadVirtualMemory64 failed %x\n", status );
+    ptr = ldr.InLoadOrderModuleList.Flink;
+    for (;;)
+    {
+        WCHAR buffer[256];
+        status = pNtWow64ReadVirtualMemory64( process, ptr, &entry, sizeof(entry), NULL );
+        ok( !status, "NtWow64ReadVirtualMemory64 failed %x\n", status );
+        status = pNtWow64ReadVirtualMemory64( process, entry.BaseDllName.Buffer, buffer, sizeof(buffer), NULL );
+        ok( !status, "NtWow64ReadVirtualMemory64 failed %x\n", status );
+        if (status) break;
+        func( entry.DllBase, buffer );
+        ptr = entry.InLoadOrderLinks.Flink;
+        if (ptr == peb64.LdrData + offsetof( PEB_LDR_DATA64, InLoadOrderModuleList )) break;
+    }
+done:
+    NtClose( process );
+}
+
+static void check_module( ULONG64 base, const WCHAR *name )
+{
+    if (base == (ULONG_PTR)GetModuleHandleW(0))
+    {
+        WCHAR *p, module[MAX_PATH];
+
+        GetModuleFileNameW( 0, module, MAX_PATH );
+        if ((p = wcsrchr( module, '\\' ))) p++;
+        else p = module;
+        ok( !wcsicmp( name, p ), "wrong name %s / %s\n", debugstr_w(name), debugstr_w(module));
+        main_module = base;
+        return;
+    }
+#define CHECK_MODULE(mod) if (!wcsicmp( name, L"" #mod ".dll" )) { mod ## _module = base; return; }
+    CHECK_MODULE(ntdll);
+    CHECK_MODULE(wow64);
+    CHECK_MODULE(wow64cpu);
+    CHECK_MODULE(wow64win);
+#undef CHECK_MODULE
+    ok( 0, "unknown module %s %s found\n", wine_dbgstr_longlong(base), wine_dbgstr_w(name));
+}
+
+static void test_modules(void)
+{
+    if (!is_wow64) return;
+    if (!pNtWow64ReadVirtualMemory64) return;
+    enum_modules64( check_module );
+    todo_wine
+    {
+    ok( main_module, "main module not found\n" );
+    ok( ntdll_module, "64-bit ntdll not found\n" );
+    ok( wow64_module, "wow64.dll not found\n" );
+    ok( wow64cpu_module, "wow64cpu.dll not found\n" );
+    ok( wow64win_module, "wow64win.dll not found\n" );
+    }
+}
+
 static void test_nt_wow64(void)
 {
     const char str[] = "hello wow64";
@@ -574,5 +662,6 @@ START_TEST(wow64)
     test_cpu_area();
 #else
     test_nt_wow64();
+    test_modules();
 #endif
 }
