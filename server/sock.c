@@ -2650,6 +2650,30 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         return 0;
     }
 
+    case IOCTL_AFD_WINE_SET_SO_SNDBUF:
+    {
+        DWORD sndbuf;
+
+        if (get_req_data_size() < sizeof(sndbuf))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return 0;
+        }
+        sndbuf = *(DWORD *)get_req_data();
+
+#ifdef __APPLE__
+        if (!sndbuf)
+        {
+            /* setsockopt fails if a zero value is passed */
+            return 0;
+        }
+#endif
+
+        if (setsockopt( unix_fd, SOL_SOCKET, SO_SNDBUF, (char *)&sndbuf, sizeof(sndbuf) ) < 0)
+            set_error( sock_get_ntstatus( errno ) );
+        return 0;
+    }
+
     default:
         set_error( STATUS_NOT_SUPPORTED );
         return 0;
