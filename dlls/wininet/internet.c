@@ -1085,6 +1085,11 @@ BOOL WINAPI InternetGetLastResponseInfoA(LPDWORD lpdwError,
 
     TRACE("(%p, %p, %p)\n", lpdwError, lpszBuffer, lpdwBufferLength);
 
+    if (!lpdwError || !lpdwBufferLength)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
     if (lpwite)
     {
         *lpdwError = lpwite->dwError;
@@ -1122,6 +1127,11 @@ BOOL WINAPI InternetGetLastResponseInfoW(LPDWORD lpdwError,
 
     TRACE("(%p, %p, %p)\n", lpdwError, lpszBuffer, lpdwBufferLength);
 
+    if (!lpdwError || !lpdwBufferLength)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
     if (lpwite)
     {
         *lpdwError = lpwite->dwError;

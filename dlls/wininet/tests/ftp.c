@@ -738,12 +738,19 @@ static void test_command(HINTERNET hFtp)
 
     for (i = 0; i < ARRAY_SIZE(command_test); i++)
     {
+        DWORD size;
+
         SetLastError(0xdeadbeef);
         ret = pFtpCommandA(hFtp, FALSE, FTP_TRANSFER_TYPE_ASCII, command_test[i].cmd, 0, NULL);
         error = GetLastError();
 
         ok(ret == command_test[i].ret, "%d: expected FtpCommandA to %s\n", i, command_test[i].ret ? "succeed" : "fail");
         ok(error == command_test[i].error, "%d: expected error %u, got %u\n", i, command_test[i].error, error);
+
+        ret = InternetGetLastResponseInfoA(&error, NULL, NULL);
+        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "%d: ret %d, lasterr %d\n", i, ret, GetLastError());
+        ret = InternetGetLastResponseInfoA(NULL, NULL, &size);
+        ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "%d: ret %d, lasterr %d\n", i, ret, GetLastError());
     }
 }
 
