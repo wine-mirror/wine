@@ -1572,7 +1572,7 @@ HBITMAP WINAPI DECLSPEC_HOTPATCH CreateDIBSection(HDC hdc, const BITMAPINFO *bmi
 
     if (!bmp->dib.dsBm.bmBits) goto error;
 
-    if (!(ret = alloc_gdi_handle( bmp, OBJ_BITMAP, &dib_funcs ))) goto error;
+    if (!(ret = alloc_gdi_handle( &bmp->obj, OBJ_BITMAP, &dib_funcs ))) goto error;
 
     if (bits) *bits = bmp->dib.dsBm.bmBits;
     return ret;
@@ -1684,7 +1684,7 @@ NTSTATUS WINAPI D3DKMTCreateDCFromMemory( D3DKMT_CREATEDCFROMMEMORY *desc )
         }
     }
 
-    if (!(bitmap = alloc_gdi_handle( bmp, OBJ_BITMAP, &dib_funcs ))) goto error;
+    if (!(bitmap = alloc_gdi_handle( &bmp->obj, OBJ_BITMAP, &dib_funcs ))) goto error;
 
     desc->hDc = dc;
     desc->hBitmap = bitmap;

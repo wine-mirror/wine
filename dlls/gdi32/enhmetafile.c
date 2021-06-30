@@ -47,8 +47,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);
 
 typedef struct
 {
-    ENHMETAHEADER  *emh;
-    BOOL           on_disk;   /* true if metafile is on disk */
+    struct gdi_obj_header obj;
+    ENHMETAHEADER        *emh;
+    BOOL                  on_disk;   /* true if metafile is on disk */
 } ENHMETAFILEOBJ;
 
 static const struct emr_name {
@@ -276,7 +277,7 @@ HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, DWORD filesize, BOOL on
     metaObj->emh = emh;
     metaObj->on_disk = on_disk;
 
-    if (!(hmf = alloc_gdi_handle( metaObj, OBJ_ENHMETAFILE, NULL )))
+    if (!(hmf = alloc_gdi_handle( &metaObj->obj, OBJ_ENHMETAFILE, NULL )))
         HeapFree( GetProcessHeap(), 0, metaObj );
     return hmf;
 }

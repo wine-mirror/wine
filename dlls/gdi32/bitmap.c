@@ -222,7 +222,7 @@ HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
         return 0;
     }
 
-    if (!(hbitmap = alloc_gdi_handle( bmpobj, OBJ_BITMAP, &bitmap_funcs )))
+    if (!(hbitmap = alloc_gdi_handle( &bmpobj->obj, OBJ_BITMAP, &bitmap_funcs )))
     {
         HeapFree( GetProcessHeap(), 0, bmpobj->dib.dsBm.bmBits );
         HeapFree( GetProcessHeap(), 0, bmpobj );

@@ -60,6 +60,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(metafile);
 
+struct metafile
+{
+    struct gdi_obj_header obj;
+    METAHEADER *data;
+};
 
 /******************************************************************
  *         MF_AddHandle
@@ -91,7 +96,13 @@ static int MF_AddHandle(HANDLETABLE *ht, UINT htlen, HGDIOBJ hobj)
  */
 HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh)
 {
-    return alloc_gdi_handle( mh, OBJ_METAFILE, NULL );
+    struct metafile *metafile;
+
+    if (!(metafile = HeapAlloc(GetProcessHeap(), 0, sizeof(*metafile))))
+        return NULL;
+    metafile->data = mh;
+
+    return alloc_gdi_handle( &metafile->obj, OBJ_METAFILE, NULL );
 }
 
 /******************************************************************
@@ -123,10 +134,11 @@ static POINT *convert_points( UINT count, const POINTS *pts )
 
 BOOL WINAPI DeleteMetaFile( HMETAFILE hmf )
 {
-    METAHEADER *mh = free_gdi_handle( hmf );
+    struct metafile *metafile = free_gdi_handle( hmf );
 
-    if (!mh) return FALSE;
-    HeapFree( GetProcessHeap(), 0, mh );
+    if (!metafile) return FALSE;
+    HeapFree( GetProcessHeap(), 0, metafile->data );
+    HeapFree( GetProcessHeap(), 0, metafile );
     return TRUE;
 }
 
@@ -225,12 +237,13 @@ HMETAFILE WINAPI GetMetaFileW( LPCWSTR lpFilename )
 /* return a copy of the metafile bits, to be freed with HeapFree */
 static METAHEADER *get_metafile_bits( HMETAFILE hmf )
 {
-    METAHEADER *ret, *mh = GDI_GetObjPtr( hmf, OBJ_METAFILE );
+    struct metafile *metafile = GDI_GetObjPtr( hmf, OBJ_METAFILE );
+    METAHEADER *ret;
 
-    if (!mh) return NULL;
+    if (!metafile) return NULL;
 
-    ret = HeapAlloc( GetProcessHeap(), 0, mh->mtSize * 2 );
-    if (ret) memcpy( ret, mh, mh->mtSize * 2 );
+    ret = HeapAlloc( GetProcessHeap(), 0, metafile->data->mtSize * 2 );
+    if (ret) memcpy( ret, metafile->data, metafile->data->mtSize * 2 );
     GDI_ReleaseObj( hmf );
     return ret;
 }
@@ -1022,20 +1035,19 @@ HMETAFILE WINAPI SetMetaFileBitsEx( UINT size, const BYTE *lpData )
  */
 UINT WINAPI GetMetaFileBitsEx( HMETAFILE hmf, UINT nSize, LPVOID buf )
 {
-    METAHEADER *mh = GDI_GetObjPtr( hmf, OBJ_METAFILE );
+    struct metafile *metafile = GDI_GetObjPtr( hmf, OBJ_METAFILE );
     UINT mfSize;
-    BOOL mf_copy = FALSE;
 
     TRACE("(%p,%d,%p)\n", hmf, nSize, buf);
-    if (!mh) return 0;  /* FIXME: error code */
 
-    mfSize = mh->mtSize * 2;
+    if (!metafile) return 0;  /* FIXME: error code */
+
+    mfSize = metafile->data->mtSize * 2;
     if (buf)
     {
         if(mfSize > nSize) mfSize = nSize;
-        memmove(buf, mh, mfSize);
+        memmove(buf, metafile->data, mfSize);
     }
-    if (mf_copy) HeapFree( GetProcessHeap(), 0, mh );
     GDI_ReleaseObj( hmf );
     TRACE("returning size %d\n", mfSize);
     return mfSize;

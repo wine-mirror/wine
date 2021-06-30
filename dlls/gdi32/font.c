@@ -196,7 +196,8 @@ static const struct gdi_obj_funcs fontobj_funcs =
 
 typedef struct
 {
-    LOGFONTW    logfont;
+    struct gdi_obj_header obj;
+    LOGFONTW              logfont;
 } FONTOBJ;
 
 struct font_enum
@@ -4321,7 +4322,7 @@ HFONT WINAPI CreateFontIndirectExW( const ENUMLOGFONTEXDVW *penumex )
 
     fontPtr->logfont = *plf;
 
-    if (!(hFont = alloc_gdi_handle( fontPtr, OBJ_FONT, &fontobj_funcs )))
+    if (!(hFont = alloc_gdi_handle( &fontPtr->obj, OBJ_FONT, &fontobj_funcs )))
     {
         HeapFree( GetProcessHeap(), 0, fontPtr );
         return 0;

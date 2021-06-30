@@ -57,8 +57,14 @@ struct gdi_obj_funcs
     BOOL    (*pDeleteObject)( HGDIOBJ handle );
 };
 
+struct gdi_obj_header
+{
+    const struct gdi_obj_funcs *funcs;       /* type-specific functions */
+};
+
 typedef struct tagDC
 {
+    struct gdi_obj_header obj;     /* object header */
     HDC          hSelf;            /* Handle to this DC */
     struct gdi_physdev nulldrv;    /* physdev for the null driver */
     PHYSDEV      physDev;          /* current top of the physdev stack */
@@ -169,9 +175,10 @@ static inline PHYSDEV find_dc_driver( DC *dc, const struct gdi_dc_funcs *funcs )
 
 typedef struct tagBITMAPOBJ
 {
-    DIBSECTION          dib;
-    SIZE                size;   /* For SetBitmapDimension() */
-    RGBQUAD            *color_table;  /* DIB color table if <= 8bpp (always 1 << bpp in size) */
+    struct gdi_obj_header obj;
+    DIBSECTION            dib;
+    SIZE                  size;   /* For SetBitmapDimension() */
+    RGBQUAD              *color_table;  /* DIB color table if <= 8bpp (always 1 << bpp in size) */
 } BITMAPOBJ;
 
 static inline BOOL is_bitmapobj_dib( const BITMAPOBJ *bmp )
@@ -443,7 +450,8 @@ extern BOOL opentype_get_properties( const void *data, size_t size, const struct
                                      DWORD *version, FONTSIGNATURE *fs, DWORD *ntm_flags ) DECLSPEC_HIDDEN;
 
 /* gdiobj.c */
-extern HGDIOBJ alloc_gdi_handle( void *obj, WORD type, const struct gdi_obj_funcs *funcs ) DECLSPEC_HIDDEN;
+extern HGDIOBJ alloc_gdi_handle( struct gdi_obj_header *obj, WORD type,
+                                 const struct gdi_obj_funcs *funcs ) DECLSPEC_HIDDEN;
 extern void *free_gdi_handle( HGDIOBJ handle ) DECLSPEC_HIDDEN;
 extern HGDIOBJ get_full_gdi_handle( HGDIOBJ handle ) DECLSPEC_HIDDEN;
 extern void *GDI_GetObjPtr( HGDIOBJ, WORD ) DECLSPEC_HIDDEN;
@@ -515,6 +523,7 @@ extern HRGN create_polypolygon_region( const POINT *pts, const INT *count, INT n
 #define RGN_DEFAULT_RECTS 4
 typedef struct
 {
+    struct gdi_obj_header obj;
     INT size;
     INT numRects;
     RECT *rects;

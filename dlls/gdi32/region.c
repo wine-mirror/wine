@@ -622,7 +622,7 @@ HRGN WINAPI CreateRectRgn(INT left, INT top, INT right, INT bottom)
 
     if (!(obj = alloc_region( RGN_DEFAULT_RECTS ))) return 0;
 
-    if (!(hrgn = alloc_gdi_handle( obj, OBJ_REGION, &region_funcs )))
+    if (!(hrgn = alloc_gdi_handle( &obj->obj, OBJ_REGION, &region_funcs )))
     {
         free_region( obj );
         return 0;
@@ -799,7 +799,7 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
     }
     rects[ellipse_height / 2].top = top + ellipse_height / 2;  /* extend to top of rectangle */
 
-    hrgn = alloc_gdi_handle( obj, OBJ_REGION, &region_funcs );
+    hrgn = alloc_gdi_handle( &obj->obj, OBJ_REGION, &region_funcs );
 
     TRACE("(%d,%d-%d,%d %dx%d): ret=%p\n",
 	  left, top, right, bottom, ellipse_width, ellipse_height, hrgn );
@@ -1006,7 +1006,7 @@ HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA*
             if (!REGION_UnionRectWithRegion( pCurRect, obj )) goto done;
         }
     }
-    hrgn = alloc_gdi_handle( obj, OBJ_REGION, &region_funcs );
+    hrgn = alloc_gdi_handle( &obj->obj, OBJ_REGION, &region_funcs );
 
 done:
     if (!hrgn) free_region( obj );
@@ -2746,7 +2746,7 @@ HRGN create_polypolygon_region( const POINT *Pts, const INT *Count, INT nbpolygo
     {
         if (nb_points) scan_convert( obj, &ET, mode, clip_rect );
 
-        if (!(hrgn = alloc_gdi_handle( obj, OBJ_REGION, &region_funcs )))
+        if (!(hrgn = alloc_gdi_handle( &obj->obj, OBJ_REGION, &region_funcs )))
             free_region( obj );
     }
 
