@@ -372,10 +372,6 @@ void bus_unlink_hid_device(DEVICE_OBJECT *device)
     EnterCriticalSection(&device_list_cs);
     list_remove(&pnp_device->entry);
     LeaveCriticalSection(&device_list_cs);
-
-    EnterCriticalSection(&ext->cs);
-    ext->removed = TRUE;
-    LeaveCriticalSection(&ext->cs);
 }
 
 void bus_remove_hid_device(DEVICE_OBJECT *device)
@@ -698,13 +694,18 @@ static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
             status = STATUS_SUCCESS;
             break;
 
+        case IRP_MN_SURPRISE_REMOVAL:
+            EnterCriticalSection(&ext->cs);
+            remove_pending_irps(device);
+            ext->removed = TRUE;
+            LeaveCriticalSection(&ext->cs);
+            break;
+
         case IRP_MN_REMOVE_DEVICE:
         {
             struct pnp_device *pnp_device = ext->pnp_device;
 
-            EnterCriticalSection(&ext->cs);
             remove_pending_irps(device);
-            LeaveCriticalSection(&ext->cs);
 
             ext->vtbl->free_device(device);
 
