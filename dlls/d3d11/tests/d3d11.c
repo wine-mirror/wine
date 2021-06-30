@@ -33046,7 +33046,7 @@ static void test_deferred_context_map(void)
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE, 0, &map_desc);
-    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &map_desc);
     todo_wine ok(hr == D3D11_ERROR_DEFERRED_CONTEXT_MAP_WITHOUT_INITIAL_DISCARD, "Got unexpected hr %#x.\n", hr);

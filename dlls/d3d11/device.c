@@ -744,6 +744,10 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_context_Map(ID3D11DeviceContext1 *
     if (map_flags)
         FIXME("Ignoring map_flags %#x.\n", map_flags);
 
+    if (context->type != D3D11_DEVICE_CONTEXT_IMMEDIATE
+            && map_type != D3D11_MAP_WRITE_DISCARD && map_type != D3D11_MAP_WRITE_NO_OVERWRITE)
+        return E_INVALIDARG;
+
     wined3d_resource = wined3d_resource_from_d3d11_resource(resource);
 
     wined3d_mutex_lock();
