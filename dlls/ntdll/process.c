@@ -143,6 +143,24 @@ NTSTATUS WINAPI RtlWow64GetCpuAreaInfo( WOW64_CPURESERVED *cpu, ULONG reserved, 
 }
 
 
+/**********************************************************************
+ *           RtlWow64GetCurrentCpuArea  (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlWow64GetCurrentCpuArea( USHORT *machine, void **context, void **context_ex )
+{
+    WOW64_CPU_AREA_INFO info;
+    NTSTATUS status;
+
+    if (!(status = RtlWow64GetCpuAreaInfo( NtCurrentTeb()->TlsSlots[WOW64_TLS_CPURESERVED], 0, &info )))
+    {
+        if (machine) *machine = info.Machine;
+        if (context) *context = info.Context;
+        if (context_ex) *context_ex = *(void **)info.ContextEx;
+    }
+    return status;
+}
+
+
 /******************************************************************************
  *              RtlWow64GetThreadContext  (NTDLL.@)
  */

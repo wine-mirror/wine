@@ -1075,6 +1075,7 @@
 @ stdcall RtlWow64EnableFsRedirection(long)
 @ stdcall RtlWow64EnableFsRedirectionEx(long ptr)
 @ stdcall -arch=win64 RtlWow64GetCpuAreaInfo(ptr long ptr)
+@ stdcall -arch=win64 RtlWow64GetCurrentCpuArea(ptr ptr ptr)
 @ stdcall RtlWow64GetCurrentMachine()
 @ stdcall RtlWow64GetProcessMachines(long ptr ptr)
 @ stdcall -arch=win64 RtlWow64GetThreadContext(long ptr)
