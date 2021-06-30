@@ -3,7 +3,7 @@
 @ stub GetDeviceID
 @ stub GetDeviceIDString
 @ stub GetDeviceIDWithTimeout
-@ stub Tbsi_Context_Create
+@ stdcall Tbsi_Context_Create(ptr ptr)
 @ stub Tbsi_Create_Windows_Key
 @ stub Tbsi_FilterLog
 @ stub Tbsi_GetDeviceInfo
