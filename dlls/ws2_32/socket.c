@@ -2088,20 +2088,6 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         case WS_SO_BROADCAST:
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_SO_BROADCAST, optval, optlen );
 
-        /* Handle common cases. The special cases are below, sorted
-         * alphabetically */
-        case WS_SO_SNDBUF:
-            if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
-                return SOCKET_ERROR;
-            convert_sockopt(&level, &optname);
-            if (getsockopt(fd, level, optname, optval, (socklen_t *)optlen) != 0 )
-            {
-                SetLastError(wsaErrno());
-                ret = SOCKET_ERROR;
-            }
-            release_sock_fd( s, fd );
-            return ret;
-
         case WS_SO_BSP_STATE:
         {
             CSADDR_INFO *csinfo = (CSADDR_INFO *)optval;
@@ -2292,6 +2278,9 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
 
         case WS_SO_REUSEADDR:
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_SO_REUSEADDR, optval, optlen );
+
+        case WS_SO_SNDBUF:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_SO_SNDBUF, optval, optlen );
 
         case WS_SO_SNDTIMEO:
         {
