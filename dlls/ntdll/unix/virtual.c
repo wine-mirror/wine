@@ -3663,10 +3663,18 @@ static int CDECL get_free_mem_state_callback( void *start, SIZE_T size, void *ar
     else /* outside of the reserved area, pretend it's allocated */
     {
         info->RegionSize        = (char *)start - (char *)info->BaseAddress;
+#ifdef __i386__
         info->State             = MEM_RESERVE;
         info->Protect           = PAGE_NOACCESS;
         info->AllocationProtect = PAGE_NOACCESS;
         info->Type              = MEM_PRIVATE;
+#else
+        info->State             = MEM_FREE;
+        info->Protect           = PAGE_NOACCESS;
+        info->AllocationBase    = 0;
+        info->AllocationProtect = 0;
+        info->Type              = 0;
+#endif
     }
     return 1;
 }
