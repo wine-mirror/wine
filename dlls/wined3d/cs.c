@@ -26,6 +26,13 @@ WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 #define WINED3D_INITIAL_CS_SIZE 4096
 
+struct wined3d_deferred_upload
+{
+    struct wined3d_resource *resource;
+    unsigned int sub_resource_idx;
+    uint8_t *sysmem;
+};
+
 struct wined3d_command_list
 {
     LONG refcount;
@@ -38,6 +45,9 @@ struct wined3d_command_list
     SIZE_T resource_count;
     struct wined3d_resource **resources;
 
+    SIZE_T upload_count;
+    struct wined3d_deferred_upload *uploads;
+
     /* List of command lists queued for execution on this command list. We might
      * be the only thing holding a pointer to another command list, so we need
      * to hold a reference here (and in wined3d_deferred_context) as well. */
@@ -48,8 +58,12 @@ struct wined3d_command_list
 static void wined3d_command_list_destroy_object(void *object)
 {
     struct wined3d_command_list *list = object;
+    SIZE_T i;
 
     TRACE("list %p.\n", list);
+
+    for (i = 0; i < list->upload_count; ++i)
+        heap_free(list->uploads[i].sysmem);
 
     heap_free(list->resources);
     heap_free(list->data);
@@ -3343,6 +3357,9 @@ struct wined3d_deferred_context
     SIZE_T resource_count, resources_capacity;
     struct wined3d_resource **resources;
 
+    SIZE_T upload_count, uploads_capacity;
+    struct wined3d_deferred_upload *uploads;
+
     /* List of command lists queued for execution on this context. A command
      * list can be the only thing holding a pointer to another command list, so
      * we need to hold a reference here and in wined3d_command_list as well. */
@@ -3401,9 +3418,45 @@ static void *wined3d_deferred_context_prepare_upload_bo(struct wined3d_device_co
         struct wined3d_resource *resource, unsigned int sub_resource_idx, const struct wined3d_box *box,
         unsigned int row_pitch, unsigned int slice_pitch, uint32_t flags, struct wined3d_const_bo_address *address)
 {
-    FIXME("context %p, resource %p, sub_resource_idx %u, box %p, flags %#x, address %p, stub!\n",
-            context, resource, sub_resource_idx, box, flags, address);
-    return NULL;
+    struct wined3d_deferred_context *deferred = wined3d_deferred_context_from_context(context);
+    const struct wined3d_format *format = resource->format;
+    struct wined3d_deferred_upload *upload;
+    uint8_t *sysmem, *map_ptr;
+    size_t size;
+
+    size = (box->back - box->front - 1) * slice_pitch
+            + ((box->bottom - box->top - 1) / format->block_height) * row_pitch
+            + ((box->right - box->left + format->block_width - 1) / format->block_width) * format->block_byte_count;
+
+    if (!(flags & WINED3D_MAP_WRITE))
+    {
+        WARN("Flags %#x are not valid on a deferred context.\n", flags);
+        return NULL;
+    }
+
+    if (flags & ~(WINED3D_MAP_WRITE | WINED3D_MAP_DISCARD))
+    {
+        FIXME("Unhandled flags %#x.\n", flags);
+        return NULL;
+    }
+
+    if (!wined3d_array_reserve((void **)&deferred->uploads, &deferred->uploads_capacity,
+            deferred->upload_count + 1, sizeof(*deferred->uploads)))
+        return NULL;
+
+    if (!(sysmem = heap_alloc(size + RESOURCE_ALIGNMENT - 1)))
+        return NULL;
+
+    upload = &deferred->uploads[deferred->upload_count++];
+    upload->resource = resource;
+    wined3d_resource_incref(resource);
+    upload->sub_resource_idx = sub_resource_idx;
+    upload->sysmem = sysmem;
+
+    address->buffer_object = 0;
+    map_ptr = (uint8_t *)align((size_t)sysmem, RESOURCE_ALIGNMENT);
+    address->addr = map_ptr;
+    return map_ptr;
 }
 
 static HRESULT wined3d_deferred_context_map(struct wined3d_device_context *context, struct wined3d_resource *resource,
@@ -3527,6 +3580,12 @@ void CDECL wined3d_deferred_context_destroy(struct wined3d_device_context *conte
 
     for (i = 0; i < deferred->resource_count; ++i)
         wined3d_resource_decref(deferred->resources[i]);
+
+    for (i = 0; i < deferred->upload_count; ++i)
+    {
+        wined3d_resource_decref(deferred->uploads[i].resource);
+        heap_free(deferred->uploads[i].sysmem);
+    }
     heap_free(deferred->resources);
 
     wined3d_state_destroy(deferred->c.state);
