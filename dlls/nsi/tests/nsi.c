@@ -54,9 +54,7 @@ static void test_nsi_api( void )
                                       (void **)&stat_tbl, sizeof(*stat_tbl), &count, 0 );
         if (!err) break;
     }
-todo_wine
     ok( !err, "got %d\n", err );
-    if (err) return;
     rw_size = rw_sizes[i];
 
     for (i = 0; i < count; i++)
@@ -68,7 +66,9 @@ todo_wine
 
         err = NsiGetAllParameters( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, luid_tbl + i, sizeof(*luid_tbl),
                                    &get_rw, rw_size, &get_dyn, sizeof(get_dyn), &get_stat, sizeof(get_stat) );
+todo_wine
         ok( !err, "got %d\n", err );
+        if (err) break;
         /* test a selection of members */
         ok( IsEqualGUID( &get_rw.network_guid, &rw->network_guid ), "mismatch\n" );
         ok( get_rw.alias.Length == rw->alias.Length, "mismatch\n" );
@@ -273,7 +273,6 @@ static void test_ndis_ifinfo( void )
                                       (void **)&stat_tbl, sizeof(*stat_tbl), &count, 0 );
         if (!err) break;
     }
-todo_wine
     ok( !err, "got %d\n", err );
     if (err) return;
     rw_size = rw_sizes[i];

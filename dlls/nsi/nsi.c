@@ -39,9 +39,52 @@ DWORD WINAPI NsiAllocateAndGetTable( DWORD unk, const NPI_MODULEID *module, DWOR
                                      void **rw_data, DWORD rw_size, void **dynamic_data, DWORD dynamic_size,
                                      void **static_data, DWORD static_size, DWORD *count, DWORD unk2 )
 {
-    FIXME( "%d %p %d %p %d %p %d %p %d %p %d %p %d: stub\n", unk, module, table, key_data, key_size,
+    DWORD err, num = 0;
+    void *data[4] = { NULL };
+    DWORD sizes[4] = { key_size, rw_size, dynamic_size, static_size };
+    int i, attempt;
+
+    TRACE( "%d %p %d %p %d %p %d %p %d %p %d %p %d\n", unk, module, table, key_data, key_size,
            rw_data, rw_size, dynamic_data, dynamic_size, static_data, static_size, count, unk2 );
-    return ERROR_CALL_NOT_IMPLEMENTED;
+
+    for (attempt = 0; attempt < 5; attempt++)
+    {
+        err = NsiEnumerateObjectsAllParameters( unk, 0, module, table, NULL, 0, NULL, 0, NULL, 0, NULL, 0, &num );
+        if (err) return err;
+
+        for (i = 0; i < ARRAY_SIZE(data); i++)
+        {
+            if (sizes[i])
+            {
+                data[i] = heap_alloc( sizes[i] * num );
+                if (!data[i])
+                {
+                    err = ERROR_OUTOFMEMORY;
+                    goto err;
+                }
+            }
+        }
+
+        err = NsiEnumerateObjectsAllParameters( unk, 0, module, table, data[0], sizes[0], data[1], sizes[1],
+                                                data[2], sizes[2], data[3], sizes[3], &num );
+        if (err != ERROR_MORE_DATA) break;
+
+        NsiFreeTable( data[0], data[1], data[2], data[3] );
+        memset( data, 0, sizeof(data) );
+    }
+
+    if (!err)
+    {
+        if (sizes[0]) *key_data = data[0];
+        if (sizes[1]) *rw_data = data[1];
+        if (sizes[2]) *dynamic_data = data[2];
+        if (sizes[3]) *static_data = data[3];
+        *count = num;
+    }
+
+err:
+    if (err) NsiFreeTable( data[0], data[1], data[2], data[3] );
+    return err;
 }
 
 DWORD WINAPI NsiEnumerateObjectsAllParameters( DWORD unk, DWORD unk2, const NPI_MODULEID *module, DWORD table,
@@ -128,7 +171,11 @@ DWORD WINAPI NsiEnumerateObjectsAllParametersEx( struct nsi_enumerate_all_ex *pa
 
 void WINAPI NsiFreeTable( void *key_data, void *rw_data, void *dynamic_data, void *static_data )
 {
-    FIXME( "%p %p %p %p: stub\n", key_data, rw_data, dynamic_data, static_data );
+    TRACE( "%p %p %p %p\n", key_data, rw_data, dynamic_data, static_data );
+    heap_free( key_data );
+    heap_free( rw_data );
+    heap_free( dynamic_data );
+    heap_free( static_data );
 }
 
 DWORD WINAPI NsiGetAllParameters( DWORD unk, const NPI_MODULEID *module, DWORD table, const void *key, DWORD key_size,
