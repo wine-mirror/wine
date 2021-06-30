@@ -24,10 +24,13 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "wingdi.h"
+#include "ntgdi.h"
 #include "winuser.h"
+#include "winternl.h"
 
 #include "wine/test.h"
+
+static BOOL is_wow64;
 
 static void test_gdi_objects(void)
 {
@@ -362,11 +365,68 @@ static void test_handles_on_win64(void)
     }
 }
 
+static GDI_SHARED_MEMORY *get_gdi_shared(void)
+{
+#ifndef _WIN64
+    if (NtCurrentTeb()->GdiBatchCount)
+    {
+        TEB64 *teb64 = (TEB64 *)(UINT_PTR)NtCurrentTeb()->GdiBatchCount;
+        PEB64 *peb64 = (PEB64 *)(UINT_PTR)teb64->Peb;
+        return (GDI_SHARED_MEMORY *)(UINT_PTR)peb64->GdiSharedHandleTable;
+    }
+#endif
+    return (GDI_SHARED_MEMORY *)NtCurrentTeb()->Peb->GdiSharedHandleTable;
+}
+
+static void test_shared_handle_table(void)
+{
+    GDI_SHARED_MEMORY *gdi_shared;
+    GDI_HANDLE_ENTRY *entry;
+    unsigned int handle;
+    HRGN hrgn;
+
+    if (sizeof(void *) == 4 && !is_wow64)
+    {
+        skip("Skipping shared memory tests on 32-bit Windows\n");
+        return;
+    }
+    gdi_shared = get_gdi_shared();
+
+    hrgn = CreateRectRgn(10, 10, 20, 20);
+    ok(hrgn != 0, "CreateRectRgn failed\n");
+
+    handle = (UINT_PTR)hrgn;
+    entry = &gdi_shared->Handles[handle & 0xffff];
+    ok(entry->Unique == handle >> 16, "Unique = %x, expected %x\n",
+       entry->Unique, handle >> 16);
+    todo_wine
+    ok(entry->Type == 4, "Type = %x\n", entry->Type);
+    ok(entry->Object, "Object = NULL\n");
+    todo_wine
+    ok(entry->Owner.ProcessId == GetCurrentProcessId(), "ProcessId = %x, expected %x\n",
+       entry->Owner.ProcessId, GetCurrentProcessId());
+    ok(entry->Owner.Count == 0, "Count = %u\n", entry->Owner.Count);
+
+    DeleteObject(hrgn);
+    ok(entry->Unique == handle >> 16, "Unique = %x, expected %x\n",
+       entry->Unique, handle >> 16);
+    todo_wine
+    ok(entry->Type == 4, "Type = %x\n", entry->Type);
+    ok(entry->Object, "Object = NULL\n");
+    todo_wine
+    ok(entry->Owner.ProcessId == GetCurrentProcessId(), "ProcessId = %x, expected %x\n",
+       entry->Owner.ProcessId, GetCurrentProcessId());
+    ok(entry->Owner.Count == 0, "Count = %u\n", entry->Owner.Count);
+}
+
 START_TEST(gdiobj)
 {
+    if (!IsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
+
     test_gdi_objects();
     test_thread_objects();
     test_GetCurrentObject();
     test_region();
     test_handles_on_win64();
+    test_shared_handle_table();
 }

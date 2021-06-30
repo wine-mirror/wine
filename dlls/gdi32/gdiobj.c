@@ -598,6 +598,21 @@ static HFONT create_scaled_font( const LOGFONTW *deffont )
     return CreateFontIndirectW( &lf );
 }
 
+static void set_gdi_shared(void)
+{
+#ifndef _WIN64
+    if (NtCurrentTeb()->GdiBatchCount)
+    {
+        TEB64 *teb64 = (TEB64 *)(UINT_PTR)NtCurrentTeb()->GdiBatchCount;
+        PEB64 *peb64 = (PEB64 *)(UINT_PTR)teb64->Peb;
+        peb64->GdiSharedHandleTable = (UINT_PTR)&gdi_shared;
+        return;
+    }
+#endif
+    /* NOTE: Windows uses 32-bit for 32-bit kernel */
+    NtCurrentTeb()->Peb->GdiSharedHandleTable = &gdi_shared;
+}
+
 /***********************************************************************
  *           DllMain
  *
@@ -612,6 +627,7 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 
     gdi32_module = inst;
     DisableThreadLibraryCalls( inst );
+    set_gdi_shared();
     font_init();
 
     /* create stock objects */
