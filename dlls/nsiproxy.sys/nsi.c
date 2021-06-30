@@ -30,9 +30,47 @@
 #include "ifdef.h"
 #include "netiodef.h"
 #include "wine/nsi.h"
+#include "wine/debug.h"
 #include "nsiproxy_private.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(nsi);
+
+static const struct module *modules[] =
+{
+    &ndis_module,
+};
+
+static const struct module_table *get_module_table( const NPI_MODULEID *id, DWORD table )
+{
+    const struct module_table *entry;
+    int i;
+
+    for (i = 0; i < ARRAY_SIZE(modules); i++)
+        if (NmrIsEqualNpiModuleId( modules[i]->module, id ))
+            for (entry = modules[i]->tables; entry->table != ~0u; entry++)
+                if (entry->table == table) return entry;
+
+    return NULL;
+}
 
 NTSTATUS nsi_enumerate_all_ex( struct nsi_enumerate_all_ex *params )
 {
-    return STATUS_NOT_IMPLEMENTED;
+    const struct module_table *entry = get_module_table( params->module, params->table );
+    DWORD sizes[4] = { params->key_size, params->rw_size, params->dynamic_size, params->static_size };
+    void *data[4] = { params->key_data, params->rw_data, params->dynamic_data, params->static_data };
+    int i;
+
+    if (!entry || !entry->enumerate_all)
+    {
+        WARN( "table not found\n" );
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(sizes); i++)
+    {
+        if (!sizes[i]) data[i] = NULL;
+        else if (sizes[i] != entry->sizes[i]) return STATUS_INVALID_PARAMETER;
+    }
+
+    return entry->enumerate_all( data[0], sizes[0], data[1], sizes[1], data[2], sizes[2], data[3], sizes[3], &params->count );
 }

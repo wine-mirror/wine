@@ -19,3 +19,20 @@
  */
 
 NTSTATUS nsi_enumerate_all_ex( struct nsi_enumerate_all_ex *params ) DECLSPEC_HIDDEN;
+
+struct module_table
+{
+    DWORD table;
+    DWORD sizes[4];
+    NTSTATUS (*enumerate_all)( void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
+                               void *dynamic_data, DWORD dynamic_size,
+                               void *static_data, DWORD static_size, DWORD_PTR *count );
+};
+
+struct module
+{
+    const NPI_MODULEID *module;
+    const struct module_table *tables;
+};
+
+extern const struct module ndis_module DECLSPEC_HIDDEN;
