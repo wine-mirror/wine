@@ -39,21 +39,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 #define FIRST_GDI_HANDLE 32
 #define MAX_GDI_HANDLES  16384
 
-struct hdc_list
-{
-    HDC hdc;
-    struct hdc_list *next;
-};
-
 struct gdi_handle_entry
 {
     void                       *obj;         /* pointer to the object-specific data */
-    struct hdc_list            *hdcs;        /* list of HDCs interested in this object */
     WORD                        generation;  /* generation count for reusing handle values */
     WORD                        type;        /* object type (one of the OBJ_* constants) */
-    WORD                        selcount;    /* number of times the object is selected in a DC */
-    WORD                        system : 1;  /* system object flag */
-    WORD                        deleted : 1; /* whether DeleteObject has been called on this object */
 };
 
 static struct gdi_handle_entry gdi_handles[MAX_GDI_HANDLES];
@@ -436,7 +426,7 @@ void CDECL __wine_make_gdi_object_system( HGDIOBJ handle, BOOL set)
     struct gdi_handle_entry *entry;
 
     EnterCriticalSection( &gdi_section );
-    if ((entry = handle_entry( handle ))) entry->system = !!set;
+    if ((entry = handle_entry( handle ))) entry_obj( entry )->system = !!set;
     LeaveCriticalSection( &gdi_section );
 }
 
@@ -492,7 +482,7 @@ UINT GDI_get_ref_count( HGDIOBJ handle )
     UINT ret = 0;
 
     EnterCriticalSection( &gdi_section );
-    if ((entry = handle_entry( handle ))) ret = entry->selcount;
+    if ((entry = handle_entry( handle ))) ret = entry_obj( entry )->selcount;
     LeaveCriticalSection( &gdi_section );
     return ret;
 }
@@ -508,7 +498,7 @@ HGDIOBJ GDI_inc_ref_count( HGDIOBJ handle )
     struct gdi_handle_entry *entry;
 
     EnterCriticalSection( &gdi_section );
-    if ((entry = handle_entry( handle ))) entry->selcount++;
+    if ((entry = handle_entry( handle ))) entry_obj( entry )->selcount++;
     else handle = 0;
     LeaveCriticalSection( &gdi_section );
     return handle;
@@ -527,11 +517,11 @@ BOOL GDI_dec_ref_count( HGDIOBJ handle )
     EnterCriticalSection( &gdi_section );
     if ((entry = handle_entry( handle )))
     {
-        assert( entry->selcount );
-        if (!--entry->selcount && entry->deleted)
+        assert( entry_obj( entry )->selcount );
+        if (!--entry_obj( entry )->selcount && entry_obj( entry )->deleted)
         {
             /* handle delayed DeleteObject*/
-            entry->deleted = 0;
+            entry_obj( entry )->deleted = 0;
             LeaveCriticalSection( &gdi_section );
             TRACE( "executing delayed DeleteObject for %p\n", handle );
             DeleteObject( handle );
@@ -725,7 +715,7 @@ static void dump_gdi_objects( void )
         else
             TRACE( "handle %p obj %p type %s selcount %u deleted %u\n",
                    entry_to_handle( entry ), entry->obj, gdi_obj_type( entry->type ),
-                   entry->selcount, entry->deleted );
+                   entry_obj( entry )->selcount, entry_obj( entry )->deleted );
     }
     LeaveCriticalSection( &gdi_section );
 }
@@ -757,12 +747,12 @@ HGDIOBJ alloc_gdi_handle( struct gdi_obj_header *obj, WORD type, const struct gd
         return 0;
     }
     obj->funcs    = funcs;
+    obj->hdcs     = NULL;
+    obj->selcount = 0;
+    obj->system   = 0;
+    obj->deleted  = 0;
     entry->obj      = obj;
-    entry->hdcs     = NULL;
     entry->type     = type;
-    entry->selcount = 0;
-    entry->system   = 0;
-    entry->deleted  = 0;
     if (++entry->generation == 0xffff) entry->generation = 1;
     ret = entry_to_handle( entry );
     LeaveCriticalSection( &gdi_section );
@@ -900,6 +890,7 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
     struct gdi_handle_entry *entry;
     struct hdc_list *hdcs_head;
     const struct gdi_obj_funcs *funcs = NULL;
+    struct gdi_obj_header *header;
 
     EnterCriticalSection( &gdi_section );
     if (!(entry = handle_entry( obj )))
@@ -908,7 +899,8 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
         return FALSE;
     }
 
-    if (entry->system)
+    header = entry_obj( entry );
+    if (header->system)
     {
 	TRACE("Preserving system object %p\n", obj);
         LeaveCriticalSection( &gdi_section );
@@ -917,15 +909,15 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
 
     obj = entry_to_handle( entry );  /* make it a full handle */
 
-    hdcs_head = entry->hdcs;
-    entry->hdcs = NULL;
+    hdcs_head = header->hdcs;
+    header->hdcs = NULL;
 
-    if (entry->selcount)
+    if (header->selcount)
     {
-        TRACE("delayed for %p because object in use, count %u\n", obj, entry->selcount );
-        entry->deleted = 1;  /* mark for delete */
+        TRACE("delayed for %p because object in use, count %u\n", obj, header->selcount );
+        header->deleted = 1;  /* mark for delete */
     }
-    else funcs = entry_obj( entry )->funcs;
+    else funcs = header->funcs;
 
     LeaveCriticalSection( &gdi_section );
 
@@ -964,17 +956,18 @@ void GDI_hdc_using_object(HGDIOBJ obj, HDC hdc)
     TRACE("obj %p hdc %p\n", obj, hdc);
 
     EnterCriticalSection( &gdi_section );
-    if ((entry = handle_entry( obj )) && !entry->system)
+    if ((entry = handle_entry( obj )) && !entry_obj( entry )->system)
     {
-        for (phdc = entry->hdcs; phdc; phdc = phdc->next)
+        struct gdi_obj_header *header = entry_obj( entry );
+        for (phdc = header->hdcs; phdc; phdc = phdc->next)
             if (phdc->hdc == hdc) break;
 
         if (!phdc)
         {
             phdc = HeapAlloc(GetProcessHeap(), 0, sizeof(*phdc));
             phdc->hdc = hdc;
-            phdc->next = entry->hdcs;
-            entry->hdcs = phdc;
+            phdc->next = header->hdcs;
+            header->hdcs = phdc;
         }
     }
     LeaveCriticalSection( &gdi_section );
@@ -992,9 +985,9 @@ void GDI_hdc_not_using_object(HGDIOBJ obj, HDC hdc)
     TRACE("obj %p hdc %p\n", obj, hdc);
 
     EnterCriticalSection( &gdi_section );
-    if ((entry = handle_entry( obj )) && !entry->system)
+    if ((entry = handle_entry( obj )) && !entry_obj( entry )->system)
     {
-        for (pphdc = &entry->hdcs; *pphdc; pphdc = &(*pphdc)->next)
+        for (pphdc = &entry_obj( entry )->hdcs; *pphdc; pphdc = &(*pphdc)->next)
             if ((*pphdc)->hdc == hdc)
             {
                 struct hdc_list *phdc = *pphdc;

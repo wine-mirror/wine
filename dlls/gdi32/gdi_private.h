@@ -57,9 +57,19 @@ struct gdi_obj_funcs
     BOOL    (*pDeleteObject)( HGDIOBJ handle );
 };
 
+struct hdc_list
+{
+    HDC hdc;
+    struct hdc_list *next;
+};
+
 struct gdi_obj_header
 {
     const struct gdi_obj_funcs *funcs;       /* type-specific functions */
+    struct hdc_list            *hdcs;        /* list of HDCs interested in this object */
+    WORD                        selcount;    /* number of times the object is selected in a DC */
+    WORD                        system : 1;  /* system object flag */
+    WORD                        deleted : 1; /* whether DeleteObject has been called on this object */
 };
 
 typedef struct tagDC
