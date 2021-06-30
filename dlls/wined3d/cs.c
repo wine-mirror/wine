@@ -3505,9 +3505,24 @@ static void *wined3d_deferred_context_prepare_upload_bo(struct wined3d_device_co
         return NULL;
     }
 
-    if (flags & ~(WINED3D_MAP_WRITE | WINED3D_MAP_DISCARD))
+    if (flags & ~(WINED3D_MAP_WRITE | WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
     {
         FIXME("Unhandled flags %#x.\n", flags);
+        return NULL;
+    }
+
+    if (flags & WINED3D_MAP_NOOVERWRITE)
+    {
+        const struct wined3d_deferred_upload *upload;
+
+        if ((upload = deferred_context_get_upload(deferred, resource, sub_resource_idx)))
+        {
+            map_ptr = (uint8_t *)align((size_t)upload->sysmem, RESOURCE_ALIGNMENT);
+            address->buffer_object = 0;
+            address->addr = map_ptr;
+            return map_ptr;
+        }
+
         return NULL;
     }
 
