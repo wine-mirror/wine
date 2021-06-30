@@ -686,6 +686,7 @@ SOURCES = \
 	t2embapi.h \
 	tapi.h \
 	taskschd.idl \
+	tbs.h \
 	tchar.h \
 	tcpestats.h \
 	tcpmib.h \
