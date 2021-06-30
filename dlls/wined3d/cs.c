@@ -2649,6 +2649,40 @@ done:
     wined3d_resource_release(resource);
 }
 
+void wined3d_device_context_emit_update_sub_resource(struct wined3d_device_context *context,
+        struct wined3d_resource *resource, unsigned int sub_resource_idx, const struct wined3d_box *box,
+        const void *data, unsigned int row_pitch, unsigned int slice_pitch)
+{
+    struct wined3d_const_bo_address src_addr;
+    void *map_ptr;
+
+    if ((map_ptr = context->ops->prepare_upload_bo(context, resource, sub_resource_idx, box,
+            row_pitch, slice_pitch, WINED3D_MAP_WRITE, &src_addr)))
+    {
+        struct wined3d_cs_update_sub_resource *op;
+
+        wined3d_format_copy_data(resource->format, data, row_pitch, slice_pitch, map_ptr, row_pitch, slice_pitch,
+                box->right - box->left, box->bottom - box->top, box->back - box->front);
+
+        op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+        op->opcode = WINED3D_CS_OP_UPDATE_SUB_RESOURCE;
+        op->resource = resource;
+        op->sub_resource_idx = sub_resource_idx;
+        op->box = *box;
+        op->addr = src_addr;
+        op->row_pitch = row_pitch;
+        op->slice_pitch = slice_pitch;
+
+        wined3d_device_context_acquire_resource(context, resource);
+
+        wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
+    }
+    else
+    {
+        context->ops->update_sub_resource(context, resource, sub_resource_idx, box, data, row_pitch, slice_pitch);
+    }
+}
+
 static void wined3d_cs_update_sub_resource(struct wined3d_device_context *context,
         struct wined3d_resource *resource, unsigned int sub_resource_idx, const struct wined3d_box *box,
         const void *data, unsigned int row_pitch, unsigned int slice_pitch)
@@ -2946,12 +2980,21 @@ static void wined3d_cs_st_finish(struct wined3d_device_context *context, enum wi
 {
 }
 
+static void *wined3d_cs_prepare_upload_bo(struct wined3d_device_context *context, struct wined3d_resource *resource,
+        unsigned int sub_resource_idx, const struct wined3d_box *box, unsigned int row_pitch,
+        unsigned int slice_pitch, uint32_t flags, struct wined3d_const_bo_address *address)
+{
+    /* FIXME: We would like to return mapped or newly allocated memory here. */
+    return NULL;
+}
+
 static const struct wined3d_device_context_ops wined3d_cs_st_ops =
 {
     wined3d_cs_st_require_space,
     wined3d_cs_st_submit,
     wined3d_cs_st_finish,
     wined3d_cs_st_push_constants,
+    wined3d_cs_prepare_upload_bo,
     wined3d_cs_map,
     wined3d_cs_unmap,
     wined3d_cs_update_sub_resource,
@@ -3080,6 +3123,7 @@ static const struct wined3d_device_context_ops wined3d_cs_mt_ops =
     wined3d_cs_mt_submit,
     wined3d_cs_mt_finish,
     wined3d_cs_mt_push_constants,
+    wined3d_cs_prepare_upload_bo,
     wined3d_cs_map,
     wined3d_cs_unmap,
     wined3d_cs_update_sub_resource,
@@ -3353,6 +3397,15 @@ static void wined3d_deferred_context_push_constants(struct wined3d_device_contex
     FIXME("context %p, p %#x, start_idx %u, count %u, constants %p, stub!\n", context, p, start_idx, count, constants);
 }
 
+static void *wined3d_deferred_context_prepare_upload_bo(struct wined3d_device_context *context,
+        struct wined3d_resource *resource, unsigned int sub_resource_idx, const struct wined3d_box *box,
+        unsigned int row_pitch, unsigned int slice_pitch, uint32_t flags, struct wined3d_const_bo_address *address)
+{
+    FIXME("context %p, resource %p, sub_resource_idx %u, box %p, flags %#x, address %p, stub!\n",
+            context, resource, sub_resource_idx, box, flags, address);
+    return NULL;
+}
+
 static HRESULT wined3d_deferred_context_map(struct wined3d_device_context *context, struct wined3d_resource *resource,
         unsigned int sub_resource_idx, void **map_ptr, const struct wined3d_box *box, unsigned int flags)
 {
@@ -3430,6 +3483,7 @@ static const struct wined3d_device_context_ops wined3d_deferred_context_ops =
     wined3d_deferred_context_submit,
     wined3d_deferred_context_finish,
     wined3d_deferred_context_push_constants,
+    wined3d_deferred_context_prepare_upload_bo,
     wined3d_deferred_context_map,
     wined3d_deferred_context_unmap,
     wined3d_deferred_context_update_sub_resource,
