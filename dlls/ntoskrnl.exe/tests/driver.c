@@ -141,6 +141,133 @@ static void test_irp_struct(IRP *irp, DEVICE_OBJECT *device)
     IoFreeIrp(irp);
 }
 
+static int cancel_queue_cnt;
+
+static void WINAPI cancel_queued_irp(DEVICE_OBJECT *device, IRP *irp)
+{
+    IoReleaseCancelSpinLock(irp->CancelIrql);
+    ok(irp->Cancel == TRUE, "Cancel = %x\n", irp->Cancel);
+    ok(!irp->CancelRoutine, "CancelRoutine = %p\n", irp->CancelRoutine);
+    irp->IoStatus.Status = STATUS_CANCELLED;
+    irp->IoStatus.Information = 0;
+    cancel_queue_cnt++;
+}
+
+static void test_queue(void)
+{
+    KDEVICE_QUEUE_ENTRY *entry;
+    KDEVICE_QUEUE queue;
+    BOOLEAN ret;
+    KIRQL irql;
+    IRP *irp;
+
+    irp = IoAllocateIrp(1, FALSE);
+
+    memset(&queue, 0xcd, sizeof(queue));
+    KeInitializeDeviceQueue(&queue);
+    ok(!queue.Busy, "unexpected Busy state\n");
+    ok(queue.Size == sizeof(queue), "unexpected Size %x\n", queue.Size);
+    ok(queue.Type == IO_TYPE_DEVICE_QUEUE, "unexpected Type %x\n", queue.Type);
+    ok(IsListEmpty(&queue.DeviceListHead), "expected empty queue list\n");
+
+    ret = KeInsertDeviceQueue(&queue, &irp->Tail.Overlay.DeviceQueueEntry);
+    ok(!ret, "expected KeInsertDeviceQueue to not insert IRP\n");
+    ok(queue.Busy, "expected Busy state\n");
+    ok(IsListEmpty(&queue.DeviceListHead), "expected empty queue list\n");
+    ok(!irp->Tail.Overlay.DeviceQueueEntry.Inserted, "expected not inserted\n");
+
+    entry = KeRemoveDeviceQueue(&queue);
+    ok(!entry, "expected KeRemoveDeviceQueue to return NULL\n");
+    ok(!queue.Busy, "unexpected Busy state\n");
+    ok(IsListEmpty(&queue.DeviceListHead), "expected empty queue list\n");
+    ok(!irp->Tail.Overlay.DeviceQueueEntry.Inserted, "expected not inserted\n");
+
+    ret = KeInsertDeviceQueue(&queue, &irp->Tail.Overlay.DeviceQueueEntry);
+    ok(!ret, "expected KeInsertDeviceQueue to not insert IRP\n");
+    ok(queue.Busy, "expected Busy state\n");
+    ok(IsListEmpty(&queue.DeviceListHead), "expected empty queue list\n");
+    ok(!irp->Tail.Overlay.DeviceQueueEntry.Inserted, "expected not inserted\n");
+
+    ret = KeInsertDeviceQueue(&queue, &irp->Tail.Overlay.DeviceQueueEntry);
+    ok(ret, "expected KeInsertDeviceQueue to insert IRP\n");
+    ok(queue.Busy, "expected Busy state\n");
+    ok(!IsListEmpty(&queue.DeviceListHead), "unexpected empty queue list\n");
+    ok(irp->Tail.Overlay.DeviceQueueEntry.Inserted, "expected inserted\n");
+    ok(queue.DeviceListHead.Flink == &irp->Tail.Overlay.DeviceQueueEntry.DeviceListEntry,
+       "unexpected queue list head\n");
+
+    entry = KeRemoveDeviceQueue(&queue);
+    ok(entry != NULL, "expected KeRemoveDeviceQueue to return non-NULL\n");
+    ok(CONTAINING_RECORD(entry, IRP, Tail.Overlay.DeviceQueueEntry) == irp,
+       "unexpected IRP returned\n");
+    ok(queue.Busy, "expected Busy state\n");
+    ok(IsListEmpty(&queue.DeviceListHead), "expected empty queue list\n");
+    ok(!irp->Tail.Overlay.DeviceQueueEntry.Inserted, "expected not inserted\n");
+
+    entry = KeRemoveDeviceQueue(&queue);
+    ok(entry == NULL, "expected KeRemoveDeviceQueue to return NULL\n");
+    ok(!queue.Busy, "unexpected Busy state\n");
+    ok(IsListEmpty(&queue.DeviceListHead), "expected empty queue list\n");
+    ok(!irp->Tail.Overlay.DeviceQueueEntry.Inserted, "expected not inserted\n");
+
+    IoCancelIrp(irp);
+    ok(irp->Cancel, "unexpected non-cancelled state\n");
+
+    ret = KeInsertDeviceQueue(&queue, &irp->Tail.Overlay.DeviceQueueEntry);
+    ok(!ret, "expected KeInsertDeviceQueue to not insert IRP\n");
+    ok(queue.Busy, "expected Busy state\n");
+    ok(IsListEmpty(&queue.DeviceListHead), "expected empty queue list\n");
+    ok(!irp->Tail.Overlay.DeviceQueueEntry.Inserted, "expected inserted\n");
+    ret = KeInsertDeviceQueue(&queue, &irp->Tail.Overlay.DeviceQueueEntry);
+    ok(ret, "expected KeInsertDeviceQueue to insert IRP\n");
+    ok(queue.Busy, "expected Busy state\n");
+    ok(!IsListEmpty(&queue.DeviceListHead), "unexpected empty queue list\n");
+    ok(irp->Tail.Overlay.DeviceQueueEntry.Inserted, "expected inserted\n");
+    ok(queue.DeviceListHead.Flink == &irp->Tail.Overlay.DeviceQueueEntry.DeviceListEntry,
+       "unexpected queue list head\n");
+
+    entry = KeRemoveDeviceQueue(&queue);
+    ok(entry != NULL, "expected KeRemoveDeviceQueue to return non-NULL\n");
+    ok(CONTAINING_RECORD(entry, IRP, Tail.Overlay.DeviceQueueEntry) == irp,
+       "unexpected IRP returned\n");
+    ok(queue.Busy, "expected Busy state\n");
+    ok(IsListEmpty(&queue.DeviceListHead), "expected empty queue list\n");
+    ok(!irp->Tail.Overlay.DeviceQueueEntry.Inserted, "expected inserted\n");
+    ok(irp->Cancel, "unexpected non-cancelled state\n");
+
+    IoFreeIrp(irp);
+
+    irp = IoAllocateIrp(1, FALSE);
+
+    IoAcquireCancelSpinLock(&irql);
+    IoSetCancelRoutine(irp, cancel_queued_irp);
+    IoReleaseCancelSpinLock(irql);
+
+    ret = KeInsertDeviceQueue(&queue, &irp->Tail.Overlay.DeviceQueueEntry);
+    ok(ret, "expected KeInsertDeviceQueue to insert IRP\n");
+    ok(queue.Busy, "expected Busy state\n");
+    ok(!IsListEmpty(&queue.DeviceListHead), "expected empty queue list\n");
+    ok(irp->Tail.Overlay.DeviceQueueEntry.Inserted, "expected inserted\n");
+    ok(queue.DeviceListHead.Flink == &irp->Tail.Overlay.DeviceQueueEntry.DeviceListEntry,
+       "unexpected queue list head\n");
+
+    IoCancelIrp(irp);
+    ok(irp->Cancel, "unexpected non-cancelled state\n");
+    ok(cancel_queue_cnt, "expected cancel routine to be called\n");
+
+    entry = KeRemoveDeviceQueue(&queue);
+    ok(entry != NULL, "expected KeRemoveDeviceQueue to return non-NULL\n");
+    ok(CONTAINING_RECORD(entry, IRP, Tail.Overlay.DeviceQueueEntry) == irp,
+       "unexpected IRP returned\n");
+    ok(irp->Cancel, "unexpected non-cancelled state\n");
+    ok(cancel_queue_cnt, "expected cancel routine to be called\n");
+    ok(queue.Busy, "expected Busy state\n");
+    ok(IsListEmpty(&queue.DeviceListHead), "expected empty queue list\n");
+    ok(!irp->Tail.Overlay.DeviceQueueEntry.Inserted, "expected inserted\n");
+
+    IoFreeIrp(irp);
+}
+
 static void test_mdl_map(void)
 {
     char buffer[20] = "test buffer";
@@ -2128,6 +2255,7 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     test_init_funcs();
     test_load_driver();
     test_sync();
+    test_queue();
     test_version();
     test_stack_callout();
     test_lookaside_list();

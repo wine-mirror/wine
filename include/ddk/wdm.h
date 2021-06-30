@@ -397,6 +397,7 @@ typedef struct _WAIT_CONTEXT_BLOCK {
 #define IO_TYPE_ERROR_LOG               0x0b
 #define IO_TYPE_ERROR_MESSAGE           0x0c
 #define IO_TYPE_DEVICE_OBJECT_EXTENSION 0x0d
+#define IO_TYPE_DEVICE_QUEUE            0x14
 
 typedef struct _DEVICE_OBJECT {
   CSHORT  Type;
@@ -1750,6 +1751,7 @@ void      WINAPI KeEnterCriticalRegion(void);
 void      WINAPI KeGenericCallDpc(PKDEFERRED_ROUTINE,PVOID);
 ULONG     WINAPI KeGetCurrentProcessorNumber(void);
 PKTHREAD  WINAPI KeGetCurrentThread(void);
+void      WINAPI KeInitializeDeviceQueue(KDEVICE_QUEUE*);
 void      WINAPI KeInitializeDpc(KDPC*,PKDEFERRED_ROUTINE,void*);
 void      WINAPI KeInitializeEvent(PRKEVENT,EVENT_TYPE,BOOLEAN);
 void      WINAPI KeInitializeMutex(PRKMUTEX,ULONG);
@@ -1760,6 +1762,7 @@ static FORCEINLINE void WINAPI KeInitializeSpinLock( KSPIN_LOCK *lock )
 }
 void      WINAPI KeInitializeTimerEx(PKTIMER,TIMER_TYPE);
 void      WINAPI KeInitializeTimer(KTIMER*);
+BOOLEAN   WINAPI KeInsertDeviceQueue(KDEVICE_QUEUE*,KDEVICE_QUEUE_ENTRY*);
 void      WINAPI KeLeaveCriticalRegion(void);
 ULONG     WINAPI KeQueryActiveProcessorCountEx(USHORT);
 KAFFINITY WINAPI KeQueryActiveProcessors(void);
@@ -1772,6 +1775,7 @@ LONG      WINAPI KeReleaseMutex(PRKMUTEX,BOOLEAN);
 LONG      WINAPI KeReleaseSemaphore(PRKSEMAPHORE,KPRIORITY,LONG,BOOLEAN);
 void      WINAPI KeReleaseSpinLock(KSPIN_LOCK*,KIRQL);
 void      WINAPI KeReleaseSpinLockFromDpcLevel(KSPIN_LOCK*);
+KDEVICE_QUEUE_ENTRY * WINAPI KeRemoveDeviceQueue(KDEVICE_QUEUE*);
 LONG      WINAPI KeResetEvent(PRKEVENT);
 void      WINAPI KeRevertToUserAffinityThread(void);
 void      WINAPI KeRevertToUserAffinityThreadEx(KAFFINITY affinity);

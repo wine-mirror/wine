@@ -1362,3 +1362,50 @@ BOOLEAN WINAPI KeSetTimer(KTIMER *timer, LARGE_INTEGER duetime, KDPC *dpc)
 
     return KeSetTimerEx(timer, duetime, 0, dpc);
 }
+
+void WINAPI KeInitializeDeviceQueue( KDEVICE_QUEUE *queue )
+{
+    TRACE( "queue %p.\n", queue );
+
+    KeInitializeSpinLock( &queue->Lock );
+    InitializeListHead( &queue->DeviceListHead );
+    queue->Busy = FALSE;
+    queue->Type = IO_TYPE_DEVICE_QUEUE;
+    queue->Size = sizeof(*queue);
+}
+
+BOOLEAN WINAPI KeInsertDeviceQueue( KDEVICE_QUEUE *queue, KDEVICE_QUEUE_ENTRY *entry )
+{
+    BOOL insert;
+    KIRQL irql;
+
+    TRACE( "queue %p, entry %p.\n", queue, entry );
+
+    KeAcquireSpinLock( &queue->Lock, &irql );
+    insert = entry->Inserted = queue->Busy;
+    if (insert) InsertTailList( &queue->DeviceListHead, &entry->DeviceListEntry );
+    queue->Busy = TRUE;
+    KeReleaseSpinLock( &queue->Lock, irql );
+
+    return insert;
+}
+
+KDEVICE_QUEUE_ENTRY *WINAPI KeRemoveDeviceQueue( KDEVICE_QUEUE *queue )
+{
+    KDEVICE_QUEUE_ENTRY *entry = NULL;
+    KIRQL irql;
+
+    TRACE( "queue %p.\n", queue );
+
+    KeAcquireSpinLock( &queue->Lock, &irql );
+    if (IsListEmpty( &queue->DeviceListHead )) queue->Busy = FALSE;
+    else
+    {
+        entry = CONTAINING_RECORD( RemoveHeadList( &queue->DeviceListHead ),
+                                   KDEVICE_QUEUE_ENTRY, DeviceListEntry );
+        entry->Inserted = FALSE;
+    }
+    KeReleaseSpinLock( &queue->Lock, irql );
+
+    return entry;
+}

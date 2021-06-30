@@ -567,7 +567,7 @@
 @ stub KeI386SetGdtSelector
 @ stub KeIcacheFlushCount
 @ stdcall KeInitializeApc(ptr ptr long ptr ptr ptr long ptr)
-@ stub KeInitializeDeviceQueue
+@ stdcall KeInitializeDeviceQueue(ptr)
 @ stdcall KeInitializeDpc(ptr ptr ptr)
 @ stdcall KeInitializeEvent(ptr long long)
 @ stub KeInitializeInterrupt
@@ -579,7 +579,7 @@
 @ stdcall KeInitializeTimer(ptr)
 @ stdcall KeInitializeTimerEx(ptr long)
 @ stub KeInsertByKeyDeviceQueue
-@ stub KeInsertDeviceQueue
+@ stdcall KeInsertDeviceQueue(ptr ptr)
 @ stub KeInsertHeadQueue
 @ stdcall KeInsertQueue(ptr ptr)
 @ stub KeInsertQueueApc
@@ -617,7 +617,7 @@
 @ stdcall KeReleaseSpinLockFromDpcLevel(ptr)
 @ stub KeRemoveByKeyDeviceQueue
 @ stub KeRemoveByKeyDeviceQueueIfBusy
-@ stub KeRemoveDeviceQueue
+@ stdcall KeRemoveDeviceQueue(ptr)
 @ stub KeRemoveEntryDeviceQueue
 @ stub KeRemoveQueue
 @ stub KeRemoveQueueDpc
