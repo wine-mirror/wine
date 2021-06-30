@@ -8345,6 +8345,7 @@ if test "x$ac_cv_cflags__Wl___disable_stdcall_fixup" = xyes; then :
 fi ;;
     esac
         enable_iphlpapi=${enable_iphlpapi:-no}
+    enable_nsiproxy_sys=${enable_nsiproxy_sys:-no}
     enable_ws2_32=${enable_ws2_32:-no}
     enable_loader=${enable_loader:-no}
     enable_server=${enable_server:-no}
