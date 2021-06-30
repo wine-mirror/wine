@@ -1781,7 +1781,7 @@ DWORD WINAPI GetIfEntry(PMIB_IFROW pIfRow)
  */
 DWORD WINAPI GetIfEntry2( MIB_IF_ROW2 *row2 )
 {
-    DWORD ret, len = ARRAY_SIZE(row2->Description);
+    DWORD ret;
     char buf[MAX_ADAPTER_NAME], *name;
     MIB_IFROW row;
 
@@ -1803,14 +1803,19 @@ DWORD WINAPI GetIfEntry2( MIB_IF_ROW2 *row2 )
     ConvertInterfaceLuidToGuid( &row2->InterfaceLuid, &row2->InterfaceGuid );
     row2->Type                            = row.dwType;
     row2->Mtu                             = row.dwMtu;
-    MultiByteToWideChar( CP_UNIXCP, 0, (const char *)row.bDescr, -1, row2->Description, len );
+    MultiByteToWideChar( CP_UNIXCP, 0, (const char *)row.bDescr, -1, row2->Description, ARRAY_SIZE(row2->Description) );
+    MultiByteToWideChar( CP_UNIXCP, 0, (const char *)row.bDescr, -1, row2->Alias, ARRAY_SIZE(row2->Alias) );
     row2->PhysicalAddressLength           = row.dwPhysAddrLen;
     memcpy( &row2->PhysicalAddress, &row.bPhysAddr, row.dwPhysAddrLen );
     memcpy( &row2->PermanentPhysicalAddress, &row.bPhysAddr, row.dwPhysAddrLen );
-    row2->OperStatus                      = IfOperStatusUp;
+    row2->OperStatus                      = row.dwOperStatus == MIB_IF_OPER_STATUS_OPERATIONAL ? IfOperStatusUp : IfOperStatusDown;
     row2->AdminStatus                     = NET_IF_ADMIN_STATUS_UP;
     row2->MediaConnectState               = MediaConnectStateConnected;
     row2->ConnectionType                  = NET_IF_CONNECTION_DEDICATED;
+    row2->TransmitLinkSpeed = row2->ReceiveLinkSpeed = row.dwSpeed;
+    row2->AccessType = (row2->Type == MIB_IF_TYPE_LOOPBACK) ? NET_IF_ACCESS_LOOPBACK : NET_IF_ACCESS_BROADCAST;
+    row2->InterfaceAndOperStatusFlags.ConnectorPresent = row2->Type != MIB_IF_TYPE_LOOPBACK;
+    row2->InterfaceAndOperStatusFlags.HardwareInterface = row2->Type != MIB_IF_TYPE_LOOPBACK;
 
     /* stats */
     row2->InOctets        = row.dwInOctets;
