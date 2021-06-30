@@ -2455,6 +2455,8 @@ HRESULT wined3d_device_context_emit_map(struct wined3d_device_context *context, 
 {
     struct wined3d_const_bo_address addr;
     unsigned int row_pitch, slice_pitch;
+    struct wined3d_cs_map *op;
+    HRESULT hr;
 
     wined3d_resource_get_sub_resource_map_pitch(resource, sub_resource_idx, &row_pitch, &slice_pitch);
 
@@ -2466,23 +2468,14 @@ HRESULT wined3d_device_context_emit_map(struct wined3d_device_context *context, 
         return WINED3D_OK;
     }
 
-    return context->ops->map(context, resource, sub_resource_idx, map_ptr, box, flags);
-}
-
-static HRESULT wined3d_cs_map(struct wined3d_device_context *context, struct wined3d_resource *resource,
-        unsigned int sub_resource_idx, void **map_ptr, const struct wined3d_box *box, unsigned int flags)
-{
-    struct wined3d_cs *cs = wined3d_cs_from_context(context);
-    struct wined3d_cs_map *op;
-    HRESULT hr;
-
     /* Mapping resources from the worker thread isn't an issue by itself, but
      * increasing the map count would be visible to applications. */
-    wined3d_not_from_cs(cs);
+    wined3d_not_from_cs(context->device);
 
     wined3d_resource_wait_idle(resource);
 
-    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_MAP);
+    if (!(op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_MAP)))
+        return E_OUTOFMEMORY;
     op->opcode = WINED3D_CS_OP_MAP;
     op->resource = resource;
     op->sub_resource_idx = sub_resource_idx;
@@ -2492,7 +2485,7 @@ static HRESULT wined3d_cs_map(struct wined3d_device_context *context, struct win
     op->hr = &hr;
 
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_MAP);
-    wined3d_cs_finish(cs, WINED3D_CS_QUEUE_MAP);
+    wined3d_device_context_finish(context, WINED3D_CS_QUEUE_MAP);
 
     return hr;
 }
@@ -2509,7 +2502,9 @@ HRESULT wined3d_device_context_emit_unmap(struct wined3d_device_context *context
         struct wined3d_resource *resource, unsigned int sub_resource_idx)
 {
     struct wined3d_const_bo_address addr;
+    struct wined3d_cs_unmap *op;
     struct wined3d_box box;
+    HRESULT hr;
 
     if (context->ops->get_upload_bo(context, resource, sub_resource_idx, &box, &addr))
     {
@@ -2520,17 +2515,7 @@ HRESULT wined3d_device_context_emit_unmap(struct wined3d_device_context *context
         return WINED3D_OK;
     }
 
-    return context->ops->unmap(context, resource, sub_resource_idx);
-}
-
-static HRESULT wined3d_cs_unmap(struct wined3d_device_context *context, struct wined3d_resource *resource,
-        unsigned int sub_resource_idx)
-{
-    struct wined3d_cs *cs = wined3d_cs_from_context(context);
-    struct wined3d_cs_unmap *op;
-    HRESULT hr;
-
-    wined3d_not_from_cs(cs);
+    wined3d_not_from_cs(context->device);
 
     op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_MAP);
     op->opcode = WINED3D_CS_OP_UNMAP;
@@ -2539,7 +2524,7 @@ static HRESULT wined3d_cs_unmap(struct wined3d_device_context *context, struct w
     op->hr = &hr;
 
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_MAP);
-    wined3d_cs_finish(cs, WINED3D_CS_QUEUE_MAP);
+    wined3d_device_context_finish(context, WINED3D_CS_QUEUE_MAP);
 
     return hr;
 }
@@ -2728,6 +2713,7 @@ void wined3d_device_context_emit_update_sub_resource(struct wined3d_device_conte
         struct wined3d_resource *resource, unsigned int sub_resource_idx, const struct wined3d_box *box,
         const void *data, unsigned int row_pitch, unsigned int slice_pitch)
 {
+    struct wined3d_cs_update_sub_resource *op;
     struct wined3d_const_bo_address src_addr;
     void *map_ptr;
 
@@ -2737,18 +2723,8 @@ void wined3d_device_context_emit_update_sub_resource(struct wined3d_device_conte
         wined3d_format_copy_data(resource->format, data, row_pitch, slice_pitch, map_ptr, row_pitch, slice_pitch,
                 box->right - box->left, box->bottom - box->top, box->back - box->front);
         wined3d_device_context_upload_bo(context, resource, sub_resource_idx, box, &src_addr, row_pitch, slice_pitch);
+        return;
     }
-    else
-    {
-        context->ops->update_sub_resource(context, resource, sub_resource_idx, box, data, row_pitch, slice_pitch);
-    }
-}
-
-static void wined3d_cs_update_sub_resource(struct wined3d_device_context *context,
-        struct wined3d_resource *resource, unsigned int sub_resource_idx, const struct wined3d_box *box,
-        const void *data, unsigned int row_pitch, unsigned int slice_pitch)
-{
-    struct wined3d_cs_update_sub_resource *op;
 
     wined3d_resource_wait_idle(resource);
 
@@ -3063,9 +3039,6 @@ static const struct wined3d_device_context_ops wined3d_cs_st_ops =
     wined3d_cs_st_push_constants,
     wined3d_cs_prepare_upload_bo,
     wined3d_cs_get_upload_bo,
-    wined3d_cs_map,
-    wined3d_cs_unmap,
-    wined3d_cs_update_sub_resource,
     wined3d_cs_issue_query,
     wined3d_cs_flush,
     wined3d_cs_acquire_resource,
@@ -3193,9 +3166,6 @@ static const struct wined3d_device_context_ops wined3d_cs_mt_ops =
     wined3d_cs_mt_push_constants,
     wined3d_cs_prepare_upload_bo,
     wined3d_cs_get_upload_bo,
-    wined3d_cs_map,
-    wined3d_cs_unmap,
-    wined3d_cs_update_sub_resource,
     wined3d_cs_issue_query,
     wined3d_cs_flush,
     wined3d_cs_acquire_resource,
@@ -3434,7 +3404,8 @@ static void *wined3d_deferred_context_require_space(struct wined3d_device_contex
     struct wined3d_cs_packet *packet;
     size_t header_size, packet_size;
 
-    assert(queue_id == WINED3D_CS_QUEUE_DEFAULT);
+    if (queue_id != WINED3D_CS_QUEUE_DEFAULT)
+        return NULL;
 
     header_size = offsetof(struct wined3d_cs_packet, data[0]);
     packet_size = offsetof(struct wined3d_cs_packet, data[size]);
@@ -3564,29 +3535,6 @@ static bool wined3d_deferred_context_get_upload_bo(struct wined3d_device_context
     return false;
 }
 
-static HRESULT wined3d_deferred_context_map(struct wined3d_device_context *context, struct wined3d_resource *resource,
-        unsigned int sub_resource_idx, void **map_ptr, const struct wined3d_box *box, unsigned int flags)
-{
-    FIXME("context %p, resource %p, sub_resource_idx %u, map_ptr %p, box %p, flags %#x, stub!\n",
-            context, resource, sub_resource_idx, map_ptr, box, flags);
-    return E_NOTIMPL;
-}
-
-static HRESULT wined3d_deferred_context_unmap(struct wined3d_device_context *context,
-        struct wined3d_resource *resource, unsigned int sub_resource_idx)
-{
-    FIXME("context %p, resource %p, sub_resource_idx %u, stub!\n", context, resource, sub_resource_idx);
-    return E_NOTIMPL;
-}
-
-static void wined3d_deferred_context_update_sub_resource(struct wined3d_device_context *context,
-        struct wined3d_resource *resource, unsigned int sub_resource_idx, const struct wined3d_box *box,
-        const void *data, unsigned int row_pitch, unsigned int slice_pitch)
-{
-    FIXME("context %p, resource %p, sub_resource_idx %u, box %s, data %p, row_pitch %u, slice_pitch %u, stub!\n",
-            context, resource, sub_resource_idx, debug_box(box), data, row_pitch, slice_pitch);
-}
-
 static void wined3d_deferred_context_issue_query(struct wined3d_device_context *context,
         struct wined3d_query *query, unsigned int flags)
 {
@@ -3643,9 +3591,6 @@ static const struct wined3d_device_context_ops wined3d_deferred_context_ops =
     wined3d_deferred_context_push_constants,
     wined3d_deferred_context_prepare_upload_bo,
     wined3d_deferred_context_get_upload_bo,
-    wined3d_deferred_context_map,
-    wined3d_deferred_context_unmap,
-    wined3d_deferred_context_update_sub_resource,
     wined3d_deferred_context_issue_query,
     wined3d_deferred_context_flush,
     wined3d_deferred_context_acquire_resource,

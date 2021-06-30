@@ -5536,7 +5536,7 @@ void device_resource_add(struct wined3d_device *device, struct wined3d_resource 
 {
     TRACE("device %p, resource %p.\n", device, resource);
 
-    wined3d_not_from_cs(device->cs);
+    wined3d_not_from_cs(device);
 
     list_add_head(&device->resources, &resource->resource_list_entry);
 }
@@ -5545,7 +5545,7 @@ static void device_resource_remove(struct wined3d_device *device, struct wined3d
 {
     TRACE("device %p, resource %p.\n", device, resource);
 
-    wined3d_not_from_cs(device->cs);
+    wined3d_not_from_cs(device);
 
     list_remove(&resource->resource_list_entry);
 }

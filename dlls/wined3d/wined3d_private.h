@@ -4714,13 +4714,6 @@ struct wined3d_device_context_ops
             unsigned int slice_pitch, uint32_t flags, struct wined3d_const_bo_address *address);
     bool (*get_upload_bo)(struct wined3d_device_context *context, struct wined3d_resource *resource,
             unsigned int sub_resource_idx, struct wined3d_box *box, struct wined3d_const_bo_address *address);
-    HRESULT (*map)(struct wined3d_device_context *context, struct wined3d_resource *resource,
-            unsigned int sub_resource_idx, void **map_ptr, const struct wined3d_box *box, unsigned int flags);
-    HRESULT (*unmap)(struct wined3d_device_context *context, struct wined3d_resource *resource,
-        unsigned int sub_resource_idx);
-    void (*update_sub_resource)(struct wined3d_device_context *context, struct wined3d_resource *resource,
-            unsigned int sub_resource_idx, const struct wined3d_box *box,
-            const void *data, unsigned int row_pitch, unsigned int slice_pitch);
     void (*issue_query)(struct wined3d_device_context *context, struct wined3d_query *query, unsigned int flags);
     void (*flush)(struct wined3d_device_context *context);
     void (*acquire_resource)(struct wined3d_device_context *context, struct wined3d_resource *resource);
@@ -6047,9 +6040,9 @@ static inline void wined3d_from_cs(const struct wined3d_cs *cs)
         assert(cs->thread_id == GetCurrentThreadId());
 }
 
-static inline void wined3d_not_from_cs(struct wined3d_cs *cs)
+static inline void wined3d_not_from_cs(const struct wined3d_device *device)
 {
-    assert(cs->thread_id != GetCurrentThreadId());
+    assert(device->cs->thread_id != GetCurrentThreadId());
 }
 
 static inline enum wined3d_material_color_source validate_material_colour_source(WORD use_map,
