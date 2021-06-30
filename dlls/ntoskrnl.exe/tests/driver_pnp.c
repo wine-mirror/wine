@@ -41,6 +41,56 @@ static UNICODE_STRING control_symlink, bus_symlink;
 static DRIVER_OBJECT *driver_obj;
 static DEVICE_OBJECT *bus_fdo, *bus_pdo;
 
+static DWORD remove_device_count;
+static DWORD surprise_removal_count;
+static DWORD query_remove_device_count;
+static DWORD cancel_remove_device_count;
+
+struct irp_queue
+{
+    KSPIN_LOCK lock;
+    LIST_ENTRY list;
+};
+
+static IRP *irp_queue_pop(struct irp_queue *queue)
+{
+    KIRQL irql;
+    IRP *irp;
+
+    KeAcquireSpinLock(&queue->lock, &irql);
+    if (IsListEmpty(&queue->list)) irp = NULL;
+    else irp = CONTAINING_RECORD(RemoveHeadList(&queue->list), IRP, Tail.Overlay.ListEntry);
+    KeReleaseSpinLock(&queue->lock, irql);
+
+    return irp;
+}
+
+static void irp_queue_push(struct irp_queue *queue, IRP *irp)
+{
+    KIRQL irql;
+
+    KeAcquireSpinLock(&queue->lock, &irql);
+    InsertTailList(&queue->list, &irp->Tail.Overlay.ListEntry);
+    KeReleaseSpinLock(&queue->lock, irql);
+}
+
+static void irp_queue_clear(struct irp_queue *queue)
+{
+    IRP *irp;
+
+    while ((irp = irp_queue_pop(queue)))
+    {
+        irp->IoStatus.Status = STATUS_DELETE_PENDING;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+    }
+}
+
+static void irp_queue_init(struct irp_queue *queue)
+{
+    KeInitializeSpinLock(&queue->lock);
+    InitializeListHead(&queue->list);
+}
+
 struct device
 {
     struct list entry;
@@ -49,6 +99,7 @@ struct device
     BOOL removed;
     UNICODE_STRING child_symlink;
     DEVICE_POWER_STATE power_state;
+    struct irp_queue irp_queue;
 };
 
 static struct list device_list = LIST_INIT(device_list);
@@ -207,6 +258,8 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
             POWER_STATE state = {.DeviceState = PowerDeviceD0};
             NTSTATUS status;
 
+            irp_queue_init(&device->irp_queue);
+
             ok(!stack->Parameters.StartDevice.AllocatedResources, "expected no resources\n");
             ok(!stack->Parameters.StartDevice.AllocatedResourcesTranslated, "expected no translated resources\n");
 
@@ -223,6 +276,14 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
         }
 
         case IRP_MN_REMOVE_DEVICE:
+            /* should've been checked and reset by IOCTL_WINETEST_CHECK_REMOVED */
+            ok(remove_device_count == 0, "expected no IRP_MN_REMOVE_DEVICE\n");
+            todo_wine ok(surprise_removal_count == 0, "expected no IRP_MN_SURPRISE_REMOVAL\n");
+            ok(query_remove_device_count == 0, "expected no IRP_MN_QUERY_REMOVE_DEVICE\n");
+            ok(cancel_remove_device_count == 0, "expected no IRP_MN_CANCEL_REMOVE_DEVICE\n");
+
+            remove_device_count++;
+            irp_queue_clear(&device->irp_queue);
             if (device->removed)
             {
                 IoSetDeviceInterfaceState(&device->child_symlink, FALSE);
@@ -289,8 +350,20 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
             break;
         }
 
-        case IRP_MN_QUERY_REMOVE_DEVICE:
         case IRP_MN_SURPRISE_REMOVAL:
+            surprise_removal_count++;
+            irp_queue_clear(&device->irp_queue);
+            ret = STATUS_SUCCESS;
+            break;
+
+        case IRP_MN_QUERY_REMOVE_DEVICE:
+            query_remove_device_count++;
+            irp_queue_clear(&device->irp_queue);
+            ret = STATUS_SUCCESS;
+            break;
+
+        case IRP_MN_CANCEL_REMOVE_DEVICE:
+            cancel_remove_device_count++;
             ret = STATUS_SUCCESS;
             break;
     }
@@ -579,8 +652,10 @@ static NTSTATUS fdo_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
     }
 }
 
-static NTSTATUS pdo_ioctl(struct device *device, IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
+static NTSTATUS pdo_ioctl(DEVICE_OBJECT *device_obj, IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
 {
+    struct device *device = device_obj->DeviceExtension;
+
     switch (code)
     {
         case IOCTL_WINETEST_CHILD_GET_ID:
@@ -588,6 +663,22 @@ static NTSTATUS pdo_ioctl(struct device *device, IRP *irp, IO_STACK_LOCATION *st
                 return STATUS_BUFFER_TOO_SMALL;
             *(int *)irp->AssociatedIrp.SystemBuffer = device->id;
             irp->IoStatus.Information = sizeof(device->id);
+            return STATUS_SUCCESS;
+
+        case IOCTL_WINETEST_MARK_PENDING:
+            IoMarkIrpPending(irp);
+            irp_queue_push(&device->irp_queue, irp);
+            return STATUS_PENDING;
+
+        case IOCTL_WINETEST_CHECK_REMOVED:
+            ok(remove_device_count == 0, "expected IRP_MN_REMOVE_DEVICE\n");
+            ok(surprise_removal_count == 1, "expected IRP_MN_SURPRISE_REMOVAL\n");
+            ok(query_remove_device_count == 0, "expected no IRP_MN_QUERY_REMOVE_DEVICE\n");
+            ok(cancel_remove_device_count == 0, "expected no IRP_MN_CANCEL_REMOVE_DEVICE\n");
+            remove_device_count = 0;
+            surprise_removal_count = 0;
+            query_remove_device_count = 0;
+            cancel_remove_device_count = 0;
             return STATUS_SUCCESS;
 
         default:
@@ -605,10 +696,10 @@ static NTSTATUS WINAPI driver_ioctl(DEVICE_OBJECT *device, IRP *irp)
     if (device == bus_fdo)
         status = fdo_ioctl(irp, stack, code);
     else
-        status = pdo_ioctl(device->DeviceExtension, irp, stack, code);
+        status = pdo_ioctl(device, irp, stack, code);
 
     irp->IoStatus.Status = status;
-    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    if (status != STATUS_PENDING) IoCompleteRequest(irp, IO_NO_INCREMENT);
     return status;
 }
 

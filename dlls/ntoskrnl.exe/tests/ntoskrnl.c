@@ -1150,10 +1150,11 @@ static void test_pnp_devices(void)
     };
     HDEVNOTIFY notify_handle;
     DWORD size, type, dword;
+    HANDLE bus, child, tmp;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING string;
+    OVERLAPPED ovl = {0};
     IO_STATUS_BLOCK io;
-    HANDLE bus, child;
     HDEVINFO set;
     HWND window;
     BOOL ret;
@@ -1349,6 +1350,14 @@ static void test_pnp_devices(void)
 
     CloseHandle(child);
 
+    ret = NtOpenFile(&child, SYNCHRONIZE, &attr, &io, 0, 0);
+    ok(!ret, "failed to open child: %#x\n", ret);
+
+    ret = DeviceIoControl(child, IOCTL_WINETEST_MARK_PENDING, NULL, 0, NULL, 0, &size, &ovl);
+    ok(!ret, "DeviceIoControl succeded\n");
+    ok(GetLastError() == ERROR_IO_PENDING, "got error %u\n", GetLastError());
+    ok(size == 0, "got size %u\n", size);
+
     id = 1;
     ret = DeviceIoControl(bus, IOCTL_WINETEST_BUS_REMOVE_CHILD, &id, sizeof(id), NULL, 0, &size, NULL);
     ok(ret, "got error %u\n", GetLastError());
@@ -1357,7 +1366,24 @@ static void test_pnp_devices(void)
     ok(got_child_arrival == 1, "got %u child arrival messages\n", got_child_arrival);
     ok(got_child_removal == 1, "got %u child removal messages\n", got_child_removal);
 
-    ret = NtOpenFile(&child, SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT);
+    ret = DeviceIoControl(child, IOCTL_WINETEST_CHECK_REMOVED, NULL, 0, NULL, 0, &size, NULL);
+    todo_wine ok(ret, "got error %u\n", GetLastError());
+
+    ret = NtOpenFile(&tmp, SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT);
+    todo_wine ok(ret == STATUS_NO_SUCH_DEVICE, "got %#x\n", ret);
+
+    ret = GetOverlappedResult(child, &ovl, &size, TRUE);
+    ok(!ret, "unexpected success.\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "got error %u\n", GetLastError());
+    ok(size == 0, "got size %u\n", size);
+
+    CloseHandle(child);
+
+    pump_messages();
+    ok(got_child_arrival == 1, "got %u child arrival messages\n", got_child_arrival);
+    ok(got_child_removal == 1, "got %u child removal messages\n", got_child_removal);
+
+    ret = NtOpenFile(&tmp, SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT);
     ok(ret == STATUS_OBJECT_NAME_NOT_FOUND, "got %#x\n", ret);
 
     CloseHandle(bus);
