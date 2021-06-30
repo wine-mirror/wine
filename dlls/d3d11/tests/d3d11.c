@@ -33052,15 +33052,7 @@ static void test_deferred_context_map(void)
     todo_wine ok(hr == D3D11_ERROR_DEFERRED_CONTEXT_MAP_WITHOUT_INITIAL_DISCARD, "Got unexpected hr %#x.\n", hr);
 
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    if (hr != S_OK)
-    {
-        ID3D11Buffer_Release(buffer2);
-        ID3D11Buffer_Release(buffer);
-        ID3D11DeviceContext_Release(deferred);
-        release_test_context(&test_context);
-        return;
-    }
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     map_data = map_desc.pData;
     /* The previous contents of map_data are undefined and may in practice be
      * uninitialized garbage. */
@@ -33109,13 +33101,14 @@ static void test_deferred_context_map(void)
     ID3D11DeviceContext_Unmap(immediate, (ID3D11Resource *)buffer, 0);
 
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &map_desc);
-    ok(hr == D3D11_ERROR_DEFERRED_CONTEXT_MAP_WITHOUT_INITIAL_DISCARD, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == D3D11_ERROR_DEFERRED_CONTEXT_MAP_WITHOUT_INITIAL_DISCARD, "Got unexpected hr %#x.\n", hr);
 
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     map_data = map_desc.pData;
     for (i = 0; i < ARRAY_SIZE(data); ++i)
         map_data[i] = 2 * i;
+    memcpy(data, map_data, sizeof(data));
     ID3D11DeviceContext_Unmap(deferred, (ID3D11Resource *)buffer, 0);
 
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_READ, 0, &map_desc);
@@ -33128,32 +33121,38 @@ static void test_deferred_context_map(void)
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &map_desc);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
-    map_data = map_desc.pData;
-    for (i = 0; i < ARRAY_SIZE(data); ++i)
+    if (hr == S_OK)
     {
-        ok(map_data[i] == 2 * i, "Got unexpected value %.8e at %u.\n", map_data[i], i);
-        if (i % 2)
-            map_data[i] = 3 * i;
-    }
-    memcpy(data, map_data, sizeof(data));
+        map_data = map_desc.pData;
+        for (i = 0; i < ARRAY_SIZE(data); ++i)
+        {
+            ok(map_data[i] == 2 * i, "Got unexpected value %.8e at %u.\n", map_data[i], i);
+            if (i % 2)
+                map_data[i] = 3 * i;
+        }
+        memcpy(data, map_data, sizeof(data));
 
-    ID3D11DeviceContext_Unmap(deferred, (ID3D11Resource *)buffer, 0);
+        ID3D11DeviceContext_Unmap(deferred, (ID3D11Resource *)buffer, 0);
+    }
 
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE_NO_OVERWRITE, 0, &map_desc);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
-    map_data = map_desc.pData;
-    for (i = 0; i < ARRAY_SIZE(data); ++i)
+    if (hr == S_OK)
     {
-        ok(map_data[i] == data[i], "Got unexpected value %.8e at %u.\n", map_data[i], i);
-        if (i % 3)
-            map_data[i] = 4 * i;
-    }
-    memcpy(data, map_data, sizeof(data));
+        map_data = map_desc.pData;
+        for (i = 0; i < ARRAY_SIZE(data); ++i)
+        {
+            ok(map_data[i] == data[i], "Got unexpected value %.8e at %u.\n", map_data[i], i);
+            if (i % 3)
+                map_data[i] = 4 * i;
+        }
+        memcpy(data, map_data, sizeof(data));
 
-    ID3D11DeviceContext_Unmap(deferred, (ID3D11Resource *)buffer, 0);
+        ID3D11DeviceContext_Unmap(deferred, (ID3D11Resource *)buffer, 0);
+    }
 
     hr = ID3D11DeviceContext_FinishCommandList(deferred, FALSE, &list);
     ok(hr == S_OK, "Failed to create command list, hr %#x.\n", hr);

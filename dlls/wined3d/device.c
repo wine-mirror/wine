@@ -4880,7 +4880,8 @@ HRESULT CDECL wined3d_device_context_map(struct wined3d_device_context *context,
             return WINED3DERR_INVALIDCALL;
     }
 
-    if (SUCCEEDED(hr = context->ops->map(context, resource, sub_resource_idx, &map_desc->data, box, flags)))
+    if (SUCCEEDED(hr = wined3d_device_context_emit_map(context, resource,
+            sub_resource_idx, &map_desc->data, box, flags)))
         wined3d_resource_get_sub_resource_map_pitch(resource, sub_resource_idx,
                 &map_desc->row_pitch, &map_desc->slice_pitch);
     return hr;
@@ -4891,7 +4892,7 @@ HRESULT CDECL wined3d_device_context_unmap(struct wined3d_device_context *contex
 {
     TRACE("context %p, resource %p, sub_resource_idx %u.\n", context, resource, sub_resource_idx);
 
-    return context->ops->unmap(context, resource, sub_resource_idx);
+    return wined3d_device_context_emit_unmap(context, resource, sub_resource_idx);
 }
 
 void CDECL wined3d_device_context_issue_query(struct wined3d_device_context *context,

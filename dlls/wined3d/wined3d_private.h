@@ -4712,6 +4712,8 @@ struct wined3d_device_context_ops
     void *(*prepare_upload_bo)(struct wined3d_device_context *context, struct wined3d_resource *resource,
             unsigned int sub_resource_idx, const struct wined3d_box *box, unsigned int row_pitch,
             unsigned int slice_pitch, uint32_t flags, struct wined3d_const_bo_address *address);
+    bool (*get_upload_bo)(struct wined3d_device_context *context, struct wined3d_resource *resource,
+            unsigned int sub_resource_idx, struct wined3d_box *box, struct wined3d_const_bo_address *address);
     HRESULT (*map)(struct wined3d_device_context *context, struct wined3d_resource *resource,
             unsigned int sub_resource_idx, void **map_ptr, const struct wined3d_box *box, unsigned int flags);
     HRESULT (*unmap)(struct wined3d_device_context *context, struct wined3d_resource *resource,
@@ -4805,6 +4807,9 @@ void wined3d_device_context_emit_draw(struct wined3d_device_context *context,
         bool indexed) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_generate_mipmaps(struct wined3d_device_context *context,
         struct wined3d_shader_resource_view *view) DECLSPEC_HIDDEN;
+HRESULT wined3d_device_context_emit_map(struct wined3d_device_context *context,
+        struct wined3d_resource *resource, unsigned int sub_resource_idx, void **map_ptr,
+        const struct wined3d_box *box, unsigned int flags) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_reset_state(struct wined3d_device_context *context, bool invalidate) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_blend_state(struct wined3d_device_context *context,
         struct wined3d_blend_state *state, const struct wined3d_color *blend_factor,
@@ -4866,6 +4871,8 @@ void wined3d_device_context_emit_set_viewports(struct wined3d_device_context *co
 void wined3d_device_context_emit_update_sub_resource(struct wined3d_device_context *context,
         struct wined3d_resource *resource, unsigned int sub_resource_idx, const struct wined3d_box *box,
         const void *data, unsigned int row_pitch, unsigned int slice_pitch) DECLSPEC_HIDDEN;
+HRESULT wined3d_device_context_emit_unmap(struct wined3d_device_context *context,
+        struct wined3d_resource *resource, unsigned int sub_resource_idx) DECLSPEC_HIDDEN;
 
 static inline void wined3d_resource_wait_idle(struct wined3d_resource *resource)
 {
