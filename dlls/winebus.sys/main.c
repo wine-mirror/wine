@@ -235,6 +235,20 @@ static WCHAR *get_compatible_ids(DEVICE_OBJECT *device)
     return dst;
 }
 
+static void remove_pending_irps(DEVICE_OBJECT *device)
+{
+    struct device_extension *ext = device->DeviceExtension;
+    LIST_ENTRY *entry;
+
+    while ((entry = RemoveHeadList(&ext->irp_queue)) != &ext->irp_queue)
+    {
+        IRP *queued_irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.s.ListEntry);
+        queued_irp->IoStatus.u.Status = STATUS_DELETE_PENDING;
+        queued_irp->IoStatus.Information = 0;
+        IoCompleteRequest(queued_irp, IO_NO_INCREMENT);
+    }
+}
+
 DEVICE_OBJECT *bus_create_hid_device(const WCHAR *busidW, WORD vid, WORD pid,
                                      WORD input, DWORD version, DWORD uid, const WCHAR *serialW, BOOL is_gamepad,
                                      const platform_vtbl *vtbl, DWORD platform_data_size)
@@ -687,16 +701,9 @@ static NTSTATUS pdo_pnp_dispatch(DEVICE_OBJECT *device, IRP *irp)
         case IRP_MN_REMOVE_DEVICE:
         {
             struct pnp_device *pnp_device = ext->pnp_device;
-            LIST_ENTRY *entry;
 
             EnterCriticalSection(&ext->cs);
-            while ((entry = RemoveHeadList(&ext->irp_queue)) != &ext->irp_queue)
-            {
-                IRP *queued_irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.s.ListEntry);
-                queued_irp->IoStatus.u.Status = STATUS_DELETE_PENDING;
-                queued_irp->IoStatus.Information = 0;
-                IoCompleteRequest(queued_irp, IO_NO_INCREMENT);
-            }
+            remove_pending_irps(device);
             LeaveCriticalSection(&ext->cs);
 
             ext->vtbl->free_device(device);
