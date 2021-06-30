@@ -210,6 +210,7 @@ struct sock
     unsigned int        rcvbuf;      /* advisory recv buffer size */
     unsigned int        sndbuf;      /* advisory send buffer size */
     unsigned int        rcvtimeo;    /* receive timeout in ms */
+    unsigned int        sndtimeo;    /* send timeout in ms */
     unsigned int        rd_shutdown : 1; /* is the read end shut down? */
     unsigned int        wr_shutdown : 1; /* is the write end shut down? */
     unsigned int        wr_shutdown_pending : 1; /* is a write shutdown pending? */
@@ -1392,6 +1393,7 @@ static struct sock *create_socket(void)
     sock->rcvbuf = 0;
     sock->sndbuf = 0;
     sock->rcvtimeo = 0;
+    sock->sndtimeo = 0;
     init_async_queue( &sock->read_q );
     init_async_queue( &sock->write_q );
     init_async_queue( &sock->ifchange_q );
@@ -2697,6 +2699,35 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         return 0;
     }
 
+    case IOCTL_AFD_WINE_GET_SO_SNDTIMEO:
+    {
+        DWORD sndtimeo = sock->sndtimeo;
+
+        if (get_reply_max_size() < sizeof(sndtimeo))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return 0;
+        }
+
+        set_reply_data( &sndtimeo, sizeof(sndtimeo) );
+        return 1;
+    }
+
+    case IOCTL_AFD_WINE_SET_SO_SNDTIMEO:
+    {
+        DWORD sndtimeo;
+
+        if (get_req_data_size() < sizeof(sndtimeo))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return 0;
+        }
+        sndtimeo = *(DWORD *)get_req_data();
+
+        sock->sndtimeo = sndtimeo;
+        return 0;
+    }
+
     default:
         set_error( STATUS_NOT_SUPPORTED );
         return 0;
@@ -3217,19 +3248,14 @@ DECL_HANDLER(send_socket)
     /* send() returned EWOULDBLOCK or a short write, i.e. cannot send all data yet */
     if (status == STATUS_DEVICE_NOT_READY && !sock->nonblocking)
     {
-#ifdef SO_SNDTIMEO
-        struct timeval tv;
-        socklen_t len = sizeof(tv);
-
         /* Set a timeout on the async if necessary.
          *
          * We want to do this *only* if the client gave us STATUS_DEVICE_NOT_READY.
          * If the client gave us STATUS_PENDING, it expects the async to always
          * block (it was triggered by WSASend*() with a valid OVERLAPPED
          * structure) and for the timeout not to be respected. */
-        if (is_fd_overlapped( fd ) && !getsockopt( get_unix_fd( fd ), SOL_SOCKET, SO_SNDTIMEO, (char *)&tv, &len ))
-            timeout = tv.tv_sec * -10000000 + tv.tv_usec * -10;
-#endif
+        if (is_fd_overlapped( fd ))
+            timeout = (timeout_t)sock->sndtimeo * -10000;
 
         status = STATUS_PENDING;
     }

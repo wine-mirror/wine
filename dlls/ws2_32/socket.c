@@ -913,34 +913,6 @@ static int convert_sockopt(INT *level, INT *optname)
   return 0;
 }
 
-/* Utility: get the SO_RCVTIMEO or SO_SNDTIMEO socket option
- * from an fd and return the value converted to milli seconds
- * or 0 if there is an infinite time out */
-static inline INT64 get_rcvsnd_timeo( int fd, BOOL is_recv)
-{
-  struct timeval tv;
-  socklen_t len = sizeof(tv);
-  int optname, res;
-
-  if (is_recv)
-#ifdef SO_RCVTIMEO
-      optname = SO_RCVTIMEO;
-#else
-      return 0;
-#endif
-  else
-#ifdef SO_SNDTIMEO
-      optname = SO_SNDTIMEO;
-#else
-      return 0;
-#endif
-
-  res = getsockopt(fd, SOL_SOCKET, optname, &tv, &len);
-  if (res < 0)
-      return 0;
-  return (UINT64)tv.tv_sec * 1000 + tv.tv_usec / 1000;
-}
-
 int
 convert_socktype_w2u(int windowssocktype) {
     unsigned int i;
@@ -2283,23 +2255,8 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_SO_SNDBUF, optval, optlen );
 
         case WS_SO_SNDTIMEO:
-        {
-            INT64 timeout;
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_SO_SNDTIMEO, optval, optlen );
 
-            if (!optlen || *optlen < sizeof(int)|| !optval)
-            {
-                SetLastError(WSAEFAULT);
-                return SOCKET_ERROR;
-            }
-            if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
-                return SOCKET_ERROR;
-
-            timeout = get_rcvsnd_timeo(fd, optname == WS_SO_RCVTIMEO);
-            *(int *)optval = timeout <= UINT_MAX ? timeout : UINT_MAX;
-
-            release_sock_fd( s, fd );
-            return ret;
-        }
         case WS_SO_TYPE:
         {
             int sock_type;
@@ -3504,7 +3461,6 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
 {
     int fd;
     int woptval;
-    struct timeval tval;
     struct ip_mreq_source mreq_source;
 
     TRACE("(socket %04lx, %s, optval %s, optlen %d)\n", s,
@@ -3567,6 +3523,9 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         case WS_SO_SNDBUF:
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_SO_SNDBUF, optval, optlen );
 
+        case WS_SO_SNDTIMEO:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_SO_SNDTIMEO, optval, optlen );
+
         /* SO_DEBUG is a privileged operation, ignore it. */
         case WS_SO_DEBUG:
             TRACE("Ignoring SO_DEBUG\n");
@@ -3606,27 +3565,6 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             get_per_thread_data()->opentype = *(const int *)optval;
             TRACE("setting global SO_OPENTYPE = 0x%x\n", *((const int*)optval) );
             return 0;
-
-#ifdef SO_SNDTIMEO
-        case WS_SO_SNDTIMEO:
-            if (optval && optlen == sizeof(UINT32)) {
-                /* WinSock passes milliseconds instead of struct timeval */
-                tval.tv_usec = (*(const UINT32*)optval % 1000) * 1000;
-                tval.tv_sec = *(const UINT32*)optval / 1000;
-                /* min of 500 milliseconds */
-                if (tval.tv_sec == 0 && tval.tv_usec && tval.tv_usec < 500000)
-                    tval.tv_usec = 500000;
-                optlen = sizeof(struct timeval);
-                optval = (char*)&tval;
-            } else if (optlen == sizeof(struct timeval)) {
-                WARN("SO_SND/RCVTIMEO for %d bytes: assuming unixism\n", optlen);
-            } else {
-                WARN("SO_SND/RCVTIMEO for %d bytes is weird: ignored\n", optlen);
-                return 0;
-            }
-            convert_sockopt(&level, &optname);
-            break;
-#endif
 
         case WS_SO_RANDOMIZE_PORT:
             FIXME("Ignoring WS_SO_RANDOMIZE_PORT\n");
