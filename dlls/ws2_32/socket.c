@@ -3575,21 +3575,8 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         case WS_SO_REUSEADDR:
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_SO_REUSEADDR, optval, optlen );
 
-        /* Some options need some conversion before they can be sent to
-         * setsockopt. The conversions are done here, then they will fall through
-         * to the general case. Special options that are not passed to
-         * setsockopt follow below that.*/
-
         case WS_SO_SNDBUF:
-            if (!*(const int *)optval)
-            {
-                FIXME("SO_SNDBUF ignoring request to disable send buffering\n");
-#ifdef __APPLE__
-                return 0;
-#endif
-            }
-            convert_sockopt(&level, &optname);
-            break;
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_SO_SNDBUF, optval, optlen );
 
         /* SO_DEBUG is a privileged operation, ignore it. */
         case WS_SO_DEBUG:
