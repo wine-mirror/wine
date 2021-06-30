@@ -208,6 +208,7 @@ struct sock
     union win_sockaddr  addr;        /* socket name */
     int                 addr_len;    /* socket name length */
     unsigned int        rcvbuf;      /* advisory recv buffer size */
+    unsigned int        sndbuf;      /* advisory send buffer size */
     unsigned int        rcvtimeo;    /* receive timeout in ms */
     unsigned int        rd_shutdown : 1; /* is the read end shut down? */
     unsigned int        wr_shutdown : 1; /* is the write end shut down? */
@@ -1389,6 +1390,7 @@ static struct sock *create_socket(void)
     sock->nonblocking = 0;
     sock->bound = 0;
     sock->rcvbuf = 0;
+    sock->sndbuf = 0;
     sock->rcvtimeo = 0;
     init_async_queue( &sock->read_q );
     init_async_queue( &sock->write_q );
@@ -1551,6 +1553,10 @@ static int init_socket( struct sock *sock, int family, int type, int protocol, u
     len = sizeof(value);
     if (!getsockopt( sockfd, SOL_SOCKET, SO_RCVBUF, &value, &len ))
         sock->rcvbuf = value;
+
+    len = sizeof(value);
+    if (!getsockopt( sockfd, SOL_SOCKET, SO_SNDBUF, &value, &len ))
+        sock->sndbuf = value;
 
     sock->state  = (type == WS_SOCK_STREAM ? SOCK_UNCONNECTED : SOCK_CONNECTIONLESS);
     sock->flags  = flags;
@@ -2650,6 +2656,20 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         return 0;
     }
 
+    case IOCTL_AFD_WINE_GET_SO_SNDBUF:
+    {
+        int sndbuf = sock->sndbuf;
+
+        if (get_reply_max_size() < sizeof(sndbuf))
+        {
+            set_error( STATUS_BUFFER_TOO_SMALL );
+            return 0;
+        }
+
+        set_reply_data( &sndbuf, sizeof(sndbuf) );
+        return 1;
+    }
+
     case IOCTL_AFD_WINE_SET_SO_SNDBUF:
     {
         DWORD sndbuf;
@@ -2665,11 +2685,14 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (!sndbuf)
         {
             /* setsockopt fails if a zero value is passed */
+            sock->sndbuf = sndbuf;
             return 0;
         }
 #endif
 
-        if (setsockopt( unix_fd, SOL_SOCKET, SO_SNDBUF, (char *)&sndbuf, sizeof(sndbuf) ) < 0)
+        if (!setsockopt( unix_fd, SOL_SOCKET, SO_SNDBUF, (char *)&sndbuf, sizeof(sndbuf) ))
+            sock->sndbuf = sndbuf;
+        else
             set_error( sock_get_ntstatus( errno ) );
         return 0;
     }
