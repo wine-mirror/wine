@@ -575,7 +575,7 @@
 @ stdcall KeInitializeMutex(ptr long)
 @ stub KeInitializeQueue
 @ stdcall KeInitializeSemaphore(ptr long long)
-@ stdcall KeInitializeSpinLock(ptr)
+@ stdcall KeInitializeSpinLock(ptr) NTOSKRNL_KeInitializeSpinLock
 @ stdcall KeInitializeTimer(ptr)
 @ stdcall KeInitializeTimerEx(ptr long)
 @ stub KeInsertByKeyDeviceQueue
