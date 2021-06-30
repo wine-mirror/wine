@@ -8202,9 +8202,9 @@ static void test_elevation(void)
         ok(elevation.TokenIsElevated == FALSE, "got elevation %#x\n", elevation.TokenIsElevated);
         ret = GetTokenInformation(linked.LinkedToken, TokenType, &type, sizeof(type), &size);
         ok(ret, "got error %u\n", GetLastError());
-        todo_wine ok(type == TokenImpersonation, "got type %#x\n", type);
+        ok(type == TokenImpersonation, "got type %#x\n", type);
         ret = GetTokenInformation(linked.LinkedToken, TokenImpersonationLevel, &type, sizeof(type), &size);
-        todo_wine ok(ret, "got error %u\n", GetLastError());
+        ok(ret, "got error %u\n", GetLastError());
         ok(type == SecurityIdentification, "got impersonation level %#x\n", type);
 
         /* Asking for the linked token again gives us a different token. */

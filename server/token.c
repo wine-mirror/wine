@@ -830,7 +830,7 @@ struct token *get_token_obj( struct process *process, obj_handle_t handle, unsig
     return (struct token *)get_handle_obj( process, handle, access, &token_ops );
 }
 
-struct token *token_create_admin( int elevation )
+struct token *token_create_admin( unsigned primary, int impersonation_level, int elevation )
 {
     struct token *token = NULL;
     static const SID_IDENTIFIER_AUTHORITY nt_authority = { SECURITY_NT_AUTHORITY };
@@ -890,9 +890,9 @@ struct token *token_create_admin( int elevation )
             { logon_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY|SE_GROUP_LOGON_ID },
         };
         static const TOKEN_SOURCE admin_source = {"SeMgr", {0, 0}};
-        token = create_token( TRUE, user_sid, admin_groups, ARRAY_SIZE( admin_groups ),
+        token = create_token( primary, user_sid, admin_groups, ARRAY_SIZE( admin_groups ),
                               admin_privs, ARRAY_SIZE( admin_privs ), default_dacl,
-                              admin_source, NULL, -1, elevation );
+                              admin_source, NULL, impersonation_level, elevation );
         /* we really need a primary group */
         assert( token->primary_group );
     }
@@ -1669,7 +1669,7 @@ DECL_HANDLER(create_linked_token)
             release_object( token );
             return;
         }
-        if ((linked = token_create_admin( elevation )))
+        if ((linked = token_create_admin( FALSE, SecurityIdentification, elevation )))
         {
             reply->linked = alloc_handle( current->process, linked, TOKEN_ALL_ACCESS, 0 );
             release_object( linked );
