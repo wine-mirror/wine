@@ -27,7 +27,7 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
-#include "wingdi.h"
+#include "ntgdi.h"
 #include "wine/gdi_driver.h"
 
 /* Metafile defines */
