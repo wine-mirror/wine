@@ -498,7 +498,7 @@ static DWORD getInterfacePhysicalByName(const char *name, PDWORD len, PBYTE addr
           break;
 #endif
         default:
-          addrLen = min(MAX_INTERFACE_PHYSADDR, sizeof(ifr.ifr_hwaddr.sa_data));
+          addrLen = 0;
           *type = MIB_IF_TYPE_OTHER;
       }
       if (addrLen > *len) {
