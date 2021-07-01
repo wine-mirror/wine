@@ -3624,6 +3624,9 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
     case WS_IPPROTO_IP:
         switch(optname)
         {
+        case WS_IP_ADD_MEMBERSHIP:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_ADD_MEMBERSHIP, optval, optlen );
+
         case WS_IP_ADD_SOURCE_MEMBERSHIP:
         case WS_IP_DROP_SOURCE_MEMBERSHIP:
         case WS_IP_BLOCK_SOURCE:
@@ -3640,7 +3643,6 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             convert_sockopt(&level, &optname);
             break;
         }
-        case WS_IP_ADD_MEMBERSHIP:
         case WS_IP_DROP_MEMBERSHIP:
 #ifdef IP_HDRINCL
         case WS_IP_HDRINCL:

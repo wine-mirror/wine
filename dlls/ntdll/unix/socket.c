@@ -1675,6 +1675,9 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             return ret ? sock_errno_to_status( errno ) : STATUS_SUCCESS;
         }
 
+        case IOCTL_AFD_WINE_SET_IP_ADD_MEMBERSHIP:
+            return do_setsockopt( handle, io, IPPROTO_IP, IP_ADD_MEMBERSHIP, in_buffer, in_size );
+
         default:
         {
             if ((code >> 16) == FILE_DEVICE_NETWORK)
