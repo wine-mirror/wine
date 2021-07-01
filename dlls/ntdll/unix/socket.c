@@ -1684,6 +1684,39 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
         case IOCTL_AFD_WINE_SET_IP_BLOCK_SOURCE:
             return do_setsockopt( handle, io, IPPROTO_IP, IP_BLOCK_SOURCE, in_buffer, in_size );
 
+        case IOCTL_AFD_WINE_GET_IP_DONTFRAGMENT:
+        {
+            socklen_t len = out_size;
+            int ret;
+
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+                return status;
+
+#ifdef IP_DONTFRAG
+            ret = getsockopt( fd, IPPROTO_IP, IP_DONTFRAG, out_buffer, &len );
+#elif defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DONT)
+            {
+                int value;
+
+                len = sizeof(value);
+                ret = getsockopt( fd, IPPROTO_IP, IP_MTU_DISCOVER, &value, &len );
+                if (!ret) *(DWORD *)out_buffer = (value != IP_PMTUDISC_DONT);
+            }
+#else
+            {
+                static int once;
+
+                if (!once++)
+                    FIXME( "IP_DONTFRAGMENT is not supported on this platform\n" );
+                ret = 0; /* fake success */
+            }
+#endif
+            if (needs_close) close( fd );
+            if (ret) return sock_errno_to_status( errno );
+            io->Information = len;
+            return STATUS_SUCCESS;
+        }
+
         default:
         {
             if ((code >> 16) == FILE_DEVICE_NETWORK)

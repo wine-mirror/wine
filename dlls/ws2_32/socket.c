@@ -2433,6 +2433,9 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
     case WS_IPPROTO_IP:
         switch(optname)
         {
+        case WS_IP_DONTFRAGMENT:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_DONTFRAGMENT, optval, optlen );
+
 #ifdef IP_HDRINCL
         case WS_IP_HDRINCL:
 #endif
@@ -2458,8 +2461,6 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             }
             release_sock_fd( s, fd );
             return ret;
-        case WS_IP_DONTFRAGMENT:
-            return get_dont_fragment(s, IPPROTO_IP, (BOOL *)optval) ? 0 : SOCKET_ERROR;
 
         default:
             FIXME( "unrecognized IP option %u\n", optname );
