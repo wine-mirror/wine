@@ -4103,7 +4103,16 @@ static void dump_get_object_info_reply( const struct get_object_info_reply *req 
     fprintf( stderr, " access=%08x", req->access );
     fprintf( stderr, ", ref_count=%08x", req->ref_count );
     fprintf( stderr, ", handle_count=%08x", req->handle_count );
-    fprintf( stderr, ", total=%u", req->total );
+}
+
+static void dump_get_object_name_request( const struct get_object_name_request *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+}
+
+static void dump_get_object_name_reply( const struct get_object_name_reply *req )
+{
+    fprintf( stderr, " total=%u", req->total );
     dump_varargs_unicode_str( ", name=", cur_size );
 }
 
@@ -4771,6 +4780,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_open_symlink_request,
     (dump_func)dump_query_symlink_request,
     (dump_func)dump_get_object_info_request,
+    (dump_func)dump_get_object_name_request,
     (dump_func)dump_get_object_type_request,
     (dump_func)dump_get_object_types_request,
     (dump_func)dump_allocate_locally_unique_id_request,
@@ -5047,6 +5057,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_open_symlink_reply,
     (dump_func)dump_query_symlink_reply,
     (dump_func)dump_get_object_info_reply,
+    (dump_func)dump_get_object_name_reply,
     (dump_func)dump_get_object_type_reply,
     (dump_func)dump_get_object_types_reply,
     (dump_func)dump_allocate_locally_unique_id_reply,
@@ -5323,6 +5334,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "open_symlink",
     "query_symlink",
     "get_object_info",
+    "get_object_name",
     "get_object_type",
     "get_object_types",
     "allocate_locally_unique_id",

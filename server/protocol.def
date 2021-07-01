@@ -3299,6 +3299,13 @@ struct handle_info
     unsigned int   access;        /* granted access mask */
     unsigned int   ref_count;     /* object ref count */
     unsigned int   handle_count;  /* object handle count */
+@END
+
+
+/* Query the full name of an object */
+@REQ(get_object_name)
+    obj_handle_t   handle;        /* handle to the object */
+@REPLY
     data_size_t    total;         /* total needed size for name */
     VARARG(name,unicode_str);     /* object name */
 @END

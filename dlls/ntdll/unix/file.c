@@ -6772,7 +6772,7 @@ NTSTATUS WINAPI NtQueryObject( HANDLE handle, OBJECT_INFORMATION_CLASS info_clas
 
         /* not a file, treat as a generic object */
 
-        SERVER_START_REQ( get_object_info )
+        SERVER_START_REQ( get_object_name )
         {
             req->handle = wine_server_obj_handle( handle );
             if (len > sizeof(*p)) wine_server_set_reply( req, p + 1, len - sizeof(*p) );

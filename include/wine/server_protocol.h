@@ -4687,8 +4687,22 @@ struct get_object_info_reply
     unsigned int   access;
     unsigned int   ref_count;
     unsigned int   handle_count;
+    char __pad_20[4];
+};
+
+
+
+struct get_object_name_request
+{
+    struct request_header __header;
+    obj_handle_t   handle;
+};
+struct get_object_name_reply
+{
+    struct reply_header __header;
     data_size_t    total;
     /* VARARG(name,unicode_str); */
+    char __pad_12[4];
 };
 
 
@@ -5626,6 +5640,7 @@ enum request
     REQ_open_symlink,
     REQ_query_symlink,
     REQ_get_object_info,
+    REQ_get_object_name,
     REQ_get_object_type,
     REQ_get_object_types,
     REQ_allocate_locally_unique_id,
@@ -5906,6 +5921,7 @@ union generic_request
     struct open_symlink_request open_symlink_request;
     struct query_symlink_request query_symlink_request;
     struct get_object_info_request get_object_info_request;
+    struct get_object_name_request get_object_name_request;
     struct get_object_type_request get_object_type_request;
     struct get_object_types_request get_object_types_request;
     struct allocate_locally_unique_id_request allocate_locally_unique_id_request;
@@ -6184,6 +6200,7 @@ union generic_reply
     struct open_symlink_reply open_symlink_reply;
     struct query_symlink_reply query_symlink_reply;
     struct get_object_info_reply get_object_info_reply;
+    struct get_object_name_reply get_object_name_reply;
     struct get_object_type_reply get_object_type_reply;
     struct get_object_types_reply get_object_types_reply;
     struct allocate_locally_unique_id_reply allocate_locally_unique_id_reply;
@@ -6234,7 +6251,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 719
+#define SERVER_PROTOCOL_VERSION 720
 
 /* ### protocol_version end ### */
 
