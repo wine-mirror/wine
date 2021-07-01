@@ -2259,27 +2259,22 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
 
         case WS_SO_TYPE:
         {
-            int sock_type;
+            WSAPROTOCOL_INFOW info;
+            int size;
+
             if (!optlen || *optlen < sizeof(int) || !optval)
             {
                 SetLastError(WSAEFAULT);
                 return SOCKET_ERROR;
             }
-            if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
-                return SOCKET_ERROR;
 
-            sock_type = _get_fd_type(fd);
-            if (sock_type == -1)
-            {
-                SetLastError(wsaErrno());
-                ret = SOCKET_ERROR;
-            }
-            else
-                (*(int *)optval) = convert_socktype_u2w(sock_type);
+            if (!ws_protocol_info( s, TRUE, &info, &size ))
+                return -1;
 
-            release_sock_fd( s, fd );
-            return ret;
+            *(int *)optval = info.iSocketType;
+            return 0;
         }
+
         default:
             TRACE("Unknown SOL_SOCKET optname: 0x%08x\n", optname);
             SetLastError(WSAENOPROTOOPT);
