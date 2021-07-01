@@ -1024,11 +1024,20 @@ HANDLE WINAPI DECLSPEC_HOTPATCH OpenProcess( DWORD access, BOOL inherit, DWORD i
 /***********************************************************************
  *           ProcessIdToSessionId   (kernelbase.@)
  */
-BOOL WINAPI DECLSPEC_HOTPATCH ProcessIdToSessionId( DWORD procid, DWORD *sessionid )
+BOOL WINAPI DECLSPEC_HOTPATCH ProcessIdToSessionId( DWORD pid, DWORD *id )
 {
-    if (procid != GetCurrentProcessId()) FIXME( "Unsupported for other process %x\n", procid );
-    *sessionid = NtCurrentTeb()->Peb->SessionId;
-    return TRUE;
+    HANDLE process;
+    NTSTATUS status;
+
+    if (pid == GetCurrentProcessId())
+    {
+        *id = NtCurrentTeb()->Peb->SessionId;
+        return TRUE;
+    }
+    if (!(process = OpenProcess( PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid ))) return FALSE;
+    status = NtQueryInformationProcess( process, ProcessSessionInformation, id, sizeof(*id), NULL );
+    CloseHandle( process );
+    return set_ntstatus( status );
 }
 
 
