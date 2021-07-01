@@ -82,6 +82,47 @@ static void nsiproxy_enumerate_all( IRP *irp )
     else irp->IoStatus.Information = 0;
 }
 
+static void nsiproxy_get_all_parameters( IRP *irp )
+{
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+    struct nsiproxy_get_all_parameters *in = (struct nsiproxy_get_all_parameters *)irp->AssociatedIrp.SystemBuffer;
+    DWORD in_len = irpsp->Parameters.DeviceIoControl.InputBufferLength;
+    BYTE *out = irp->AssociatedIrp.SystemBuffer;
+    DWORD out_len = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
+    struct nsi_get_all_parameters_ex get_all;
+
+    if (in_len < FIELD_OFFSET(struct nsiproxy_get_all_parameters, key[0]) ||
+        in_len < FIELD_OFFSET(struct nsiproxy_get_all_parameters, key[in->key_size]))
+    {
+        irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+        return;
+    }
+
+    if (out_len < in->rw_size + in->dynamic_size + in->static_size)
+    {
+        irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+        return;
+    }
+
+    get_all.unknown[0] = 0;
+    get_all.unknown[1] = 0;
+    get_all.first_arg = in->first_arg;
+    get_all.unknown2 = 0;
+    get_all.module = &in->module;
+    get_all.table = in->table;
+    get_all.key = in->key;
+    get_all.key_size = in->key_size;
+    get_all.rw_data = out;
+    get_all.rw_size = in->rw_size;
+    get_all.dynamic_data = out + in->rw_size;
+    get_all.dynamic_size = in->dynamic_size;
+    get_all.static_data = out + in->rw_size + in->dynamic_size;
+    get_all.static_size = in->static_size;
+
+    irp->IoStatus.u.Status = nsi_get_all_parameters_ex( &get_all );
+    irp->IoStatus.Information = (irp->IoStatus.u.Status == STATUS_SUCCESS) ? out_len : 0;
+}
+
 static NTSTATUS WINAPI nsi_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
@@ -95,6 +136,10 @@ static NTSTATUS WINAPI nsi_ioctl( DEVICE_OBJECT *device, IRP *irp )
     {
     case IOCTL_NSIPROXY_WINE_ENUMERATE_ALL:
         nsiproxy_enumerate_all( irp );
+        break;
+
+    case IOCTL_NSIPROXY_WINE_GET_ALL_PARAMETERS:
+        nsiproxy_get_all_parameters( irp );
         break;
 
     default:

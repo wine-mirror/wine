@@ -97,6 +97,7 @@ struct nsi_ndis_ifinfo_static
 /* Wine specific ioctl interface */
 
 #define IOCTL_NSIPROXY_WINE_ENUMERATE_ALL         CTL_CODE(FILE_DEVICE_NETWORK, 0x400, METHOD_BUFFERED, 0)
+#define IOCTL_NSIPROXY_WINE_GET_ALL_PARAMETERS    CTL_CODE(FILE_DEVICE_NETWORK, 0x401, METHOD_BUFFERED, 0)
 
 /* input for IOCTL_NSIPROXY_WINE_ENUMERATE_ALL */
 struct nsiproxy_enumerate_all
@@ -110,6 +111,19 @@ struct nsiproxy_enumerate_all
     DWORD dynamic_size;
     DWORD static_size;
     DWORD count;
+};
+
+/* input for IOCTL_NSIPROXY_WINE_GET_ALL_PARAMETERS */
+struct nsiproxy_get_all_parameters
+{
+    NPI_MODULEID module;
+    DWORD first_arg;
+    DWORD table;
+    DWORD key_size;
+    DWORD rw_size;
+    DWORD dynamic_size;
+    DWORD static_size;
+    BYTE key[1]; /* key_size */
 };
 
 /* Undocumented Nsi api */

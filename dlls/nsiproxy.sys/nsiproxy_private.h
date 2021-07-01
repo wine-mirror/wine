@@ -19,6 +19,7 @@
  */
 
 NTSTATUS nsi_enumerate_all_ex( struct nsi_enumerate_all_ex *params ) DECLSPEC_HIDDEN;
+NTSTATUS nsi_get_all_parameters_ex( struct nsi_get_all_parameters_ex *params ) DECLSPEC_HIDDEN;
 
 struct module_table
 {
@@ -27,6 +28,9 @@ struct module_table
     NTSTATUS (*enumerate_all)( void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
                                void *dynamic_data, DWORD dynamic_size,
                                void *static_data, DWORD static_size, DWORD_PTR *count );
+    NTSTATUS (*get_all_parameters)( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
+                                    void *dynamic_data, DWORD dynamic_size,
+                                    void *static_data, DWORD static_size );
 };
 
 struct module

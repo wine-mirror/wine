@@ -74,3 +74,28 @@ NTSTATUS nsi_enumerate_all_ex( struct nsi_enumerate_all_ex *params )
 
     return entry->enumerate_all( data[0], sizes[0], data[1], sizes[1], data[2], sizes[2], data[3], sizes[3], &params->count );
 }
+
+NTSTATUS nsi_get_all_parameters_ex( struct nsi_get_all_parameters_ex *params )
+{
+    const struct module_table *entry = get_module_table( params->module, params->table );
+    void *rw = params->rw_data;
+    void *dyn = params->dynamic_data;
+    void *stat = params->static_data;
+
+    if (!entry || !entry->get_all_parameters)
+    {
+        WARN( "table not found\n" );
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    if (params->key_size != entry->sizes[0]) return STATUS_INVALID_PARAMETER;
+    if (!params->rw_size) rw = NULL;
+    else if (params->rw_size != entry->sizes[1]) return STATUS_INVALID_PARAMETER;
+    if (!params->dynamic_size) dyn = NULL;
+    else if (params->dynamic_size != entry->sizes[2]) return STATUS_INVALID_PARAMETER;
+    if (!params->static_size) stat = NULL;
+    else if (params->static_size != entry->sizes[3]) return STATUS_INVALID_PARAMETER;
+
+    return entry->get_all_parameters( params->key, params->key_size, rw, params->rw_size,
+                                      dyn, params->dynamic_size, stat, params->static_size );
+}
