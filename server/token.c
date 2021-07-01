@@ -1601,6 +1601,7 @@ DECL_HANDLER(get_token_info)
     {
         reply->token_id = token->token_id;
         reply->modified_id = token->modified_id;
+        reply->session_id = token->session_id;
         reply->primary = token->primary;
         reply->impersonation_level = token->impersonation_level;
         reply->elevation = token->elevation;

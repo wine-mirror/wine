@@ -3432,6 +3432,7 @@ struct handle_info
 @REPLY
     luid_t         token_id;      /* locally-unique identifier of the token */
     luid_t         modified_id;   /* locally-unique identifier of the modified version of the token */
+    unsigned int   session_id;    /* token session id */
     int            primary;       /* is the token primary or impersonation? */
     int            impersonation_level; /* level of impersonation */
     int            elevation;     /* elevation type */
