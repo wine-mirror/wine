@@ -24,9 +24,11 @@
 static NTSTATUS (WINAPI *pNtQuerySystemInformationEx)(SYSTEM_INFORMATION_CLASS,void*,ULONG,void*,ULONG,ULONG*);
 static USHORT   (WINAPI *pRtlWow64GetCurrentMachine)(void);
 static NTSTATUS (WINAPI *pRtlWow64GetProcessMachines)(HANDLE,WORD*,WORD*);
+static NTSTATUS (WINAPI *pRtlWow64GetThreadContext)(HANDLE,WOW64_CONTEXT*);
 static NTSTATUS (WINAPI *pRtlWow64IsWowGuestMachineSupported)(USHORT,BOOLEAN*);
 #ifdef _WIN64
 static NTSTATUS (WINAPI *pRtlWow64GetCpuAreaInfo)(WOW64_CPURESERVED*,ULONG,WOW64_CPU_AREA_INFO*);
+static NTSTATUS (WINAPI *pRtlWow64GetThreadSelectorEntry)(HANDLE,THREAD_DESCRIPTOR_INFORMATION*,ULONG,ULONG*);
 #else
 static NTSTATUS (WINAPI *pNtWow64AllocateVirtualMemory64)(HANDLE,ULONG64*,ULONG64,ULONG64*,ULONG,ULONG);
 static NTSTATUS (WINAPI *pNtWow64ReadVirtualMemory64)(HANDLE,ULONG64,void*,ULONG64,ULONG64*);
@@ -46,9 +48,11 @@ static void init(void)
     GET_PROC( NtQuerySystemInformationEx );
     GET_PROC( RtlWow64GetCurrentMachine );
     GET_PROC( RtlWow64GetProcessMachines );
+    GET_PROC( RtlWow64GetThreadContext );
     GET_PROC( RtlWow64IsWowGuestMachineSupported );
 #ifdef _WIN64
     GET_PROC( RtlWow64GetCpuAreaInfo );
+    GET_PROC( RtlWow64GetThreadSelectorEntry );
 #else
     GET_PROC( NtWow64AllocateVirtualMemory64 );
     GET_PROC( NtWow64ReadVirtualMemory64 );
@@ -408,6 +412,138 @@ static void test_peb_teb(void)
     ok( !NtCurrentTeb()->GdiBatchCount, "GdiBatchCount set to %x\n", NtCurrentTeb()->GdiBatchCount );
     ok( !NtCurrentTeb()->WowTebOffset || broken( NtCurrentTeb()->WowTebOffset == 1 ), /* vista */
         "WowTebOffset set to %x\n", NtCurrentTeb()->WowTebOffset );
+}
+
+static void test_selectors(void)
+{
+    THREAD_DESCRIPTOR_INFORMATION info;
+    NTSTATUS status;
+    ULONG base, limit, sel, retlen;
+    I386_CONTEXT context = { CONTEXT_I386_CONTROL | CONTEXT_I386_SEGMENTS };
+
+#ifdef _WIN64
+    if (!pRtlWow64GetThreadSelectorEntry)
+    {
+        win_skip( "RtlWow64GetThreadSelectorEntry not supported\n" );
+        return;
+    }
+    if (!pRtlWow64GetThreadContext || pRtlWow64GetThreadContext( GetCurrentThread(), &context ))
+    {
+        /* hardcoded values */
+        context.SegCs = 0x23;
+        context.SegSs = 0x2b;
+        context.SegFs = 0x53;
+    }
+#define GET_ENTRY(info,size,ret) \
+    pRtlWow64GetThreadSelectorEntry( GetCurrentThread(), info, size, ret )
+
+#else
+    GetThreadContext( GetCurrentThread(), &context );
+#define GET_ENTRY(info,size,ret) \
+    NtQueryInformationThread( GetCurrentThread(), ThreadDescriptorTableEntry, info, size, ret )
+#endif
+
+    trace( "cs %04x ss %04x fs %04x\n", context.SegCs, context.SegSs, context.SegFs );
+    retlen = 0xdeadbeef;
+    info.Selector = 0;
+    status = GET_ENTRY( &info, sizeof(info) - 1, &retlen );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "wrong status %x\n", status );
+    ok( retlen == 0xdeadbeef, "len set %u\n", retlen );
+
+    retlen = 0xdeadbeef;
+    status = GET_ENTRY( &info, sizeof(info) + 1, &retlen );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "wrong status %x\n", status );
+    ok( retlen == 0xdeadbeef, "len set %u\n", retlen );
+
+    retlen = 0xdeadbeef;
+    status = GET_ENTRY( NULL, 0, &retlen );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "wrong status %x\n", status );
+    ok( retlen == 0xdeadbeef, "len set %u\n", retlen );
+
+    status = GET_ENTRY( &info, sizeof(info), NULL );
+    ok( !status, "wrong status %x\n", status );
+
+    for (info.Selector = 0; info.Selector < 0x100; info.Selector++)
+    {
+        retlen = 0xdeadbeef;
+        status = GET_ENTRY( &info, sizeof(info), &retlen );
+        base = (info.Entry.BaseLow |
+                (info.Entry.HighWord.Bytes.BaseMid << 16) |
+                (info.Entry.HighWord.Bytes.BaseHi << 24));
+        limit = (info.Entry.LimitLow | info.Entry.HighWord.Bits.LimitHi << 16);
+        sel = info.Selector | 3;
+
+        if (sel == 0x03)  /* null selector */
+        {
+            ok( !status, "wrong status %x\n", status );
+            ok( retlen == sizeof(info.Entry), "len set %u\n", retlen );
+            ok( !base, "wrong base %x\n", base );
+            ok( !limit, "wrong limit %x\n", limit );
+            ok( !info.Entry.HighWord.Bytes.Flags1, "wrong flags1 %x\n", info.Entry.HighWord.Bytes.Flags1 );
+            ok( !info.Entry.HighWord.Bytes.Flags2, "wrong flags2 %x\n", info.Entry.HighWord.Bytes.Flags2 );
+        }
+        else if (sel == context.SegCs)  /* 32-bit code selector */
+        {
+            ok( !status, "wrong status %x\n", status );
+            ok( retlen == sizeof(info.Entry), "len set %u\n", retlen );
+            ok( !base, "wrong base %x\n", base );
+            ok( limit == 0xfffff, "wrong limit %x\n", limit );
+            ok( info.Entry.HighWord.Bits.Type == 0x1b, "wrong type %x\n", info.Entry.HighWord.Bits.Type );
+            ok( info.Entry.HighWord.Bits.Dpl == 3, "wrong dpl %x\n", info.Entry.HighWord.Bits.Dpl );
+            ok( info.Entry.HighWord.Bits.Pres, "wrong pres\n" );
+            ok( !info.Entry.HighWord.Bits.Sys, "wrong sys\n" );
+            ok( info.Entry.HighWord.Bits.Default_Big, "wrong big\n" );
+            ok( info.Entry.HighWord.Bits.Granularity, "wrong granularity\n" );
+        }
+        else if (sel == context.SegSs)  /* 32-bit data selector */
+        {
+            ok( !status, "wrong status %x\n", status );
+            ok( retlen == sizeof(info.Entry), "len set %u\n", retlen );
+            ok( !base, "wrong base %x\n", base );
+            ok( limit == 0xfffff, "wrong limit %x\n", limit );
+            ok( info.Entry.HighWord.Bits.Type == 0x13, "wrong type %x\n", info.Entry.HighWord.Bits.Type );
+            ok( info.Entry.HighWord.Bits.Dpl == 3, "wrong dpl %x\n", info.Entry.HighWord.Bits.Dpl );
+            ok( info.Entry.HighWord.Bits.Pres, "wrong pres\n" );
+            ok( !info.Entry.HighWord.Bits.Sys, "wrong sys\n" );
+            ok( info.Entry.HighWord.Bits.Default_Big, "wrong big\n" );
+            ok( info.Entry.HighWord.Bits.Granularity, "wrong granularity\n" );
+        }
+        else if (sel == context.SegFs)  /* TEB selector */
+        {
+            ok( !status, "wrong status %x\n", status );
+            ok( retlen == sizeof(info.Entry), "len set %u\n", retlen );
+#ifdef _WIN64
+            if (NtCurrentTeb()->WowTebOffset == 0x2000)
+                ok( base == (ULONG_PTR)NtCurrentTeb() + 0x2000, "wrong base %x / %p\n",
+                    base, NtCurrentTeb() );
+#else
+            ok( base == (ULONG_PTR)NtCurrentTeb(), "wrong base %x / %p\n", base, NtCurrentTeb() );
+#endif
+            ok( limit == 0xfff || broken(limit == 0x4000),  /* <= win8 */
+                "wrong limit %x\n", limit );
+            ok( info.Entry.HighWord.Bits.Type == 0x13, "wrong type %x\n", info.Entry.HighWord.Bits.Type );
+            ok( info.Entry.HighWord.Bits.Dpl == 3, "wrong dpl %x\n", info.Entry.HighWord.Bits.Dpl );
+            ok( info.Entry.HighWord.Bits.Pres, "wrong pres\n" );
+            ok( !info.Entry.HighWord.Bits.Sys, "wrong sys\n" );
+            ok( info.Entry.HighWord.Bits.Default_Big, "wrong big\n" );
+            ok( !info.Entry.HighWord.Bits.Granularity, "wrong granularity\n" );
+        }
+        else if (!status)
+        {
+            ok( retlen == sizeof(info.Entry), "len set %u\n", retlen );
+            trace( "succeeded for %x base %x limit %x type %x\n",
+                   sel, base, limit, info.Entry.HighWord.Bits.Type );
+        }
+        else
+        {
+            ok( status == STATUS_UNSUCCESSFUL ||
+                ((sel & 4) && (status == STATUS_NO_LDT)) ||
+                broken( status == STATUS_ACCESS_VIOLATION),  /* <= win8 */
+                "%x: wrong status %x\n", info.Selector, status );
+            ok( retlen == 0xdeadbeef, "len set %u\n", retlen );
+        }
+    }
+#undef GET_ENTRY
 }
 
 #ifdef _WIN64
@@ -783,6 +919,7 @@ START_TEST(wow64)
     init();
     test_query_architectures();
     test_peb_teb();
+    test_selectors();
 #ifndef _WIN64
     test_nt_wow64();
     test_modules();

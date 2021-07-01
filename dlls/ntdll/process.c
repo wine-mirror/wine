@@ -178,6 +178,73 @@ NTSTATUS WINAPI RtlWow64SetThreadContext( HANDLE handle, const WOW64_CONTEXT *co
     return NtSetInformationThread( handle, ThreadWow64Context, context, sizeof(*context) );
 }
 
+/******************************************************************************
+ *              RtlWow64GetThreadSelectorEntry  (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlWow64GetThreadSelectorEntry( HANDLE handle, THREAD_DESCRIPTOR_INFORMATION *info,
+                                                ULONG size, ULONG *retlen )
+{
+    DWORD sel;
+    WOW64_CONTEXT context = { WOW64_CONTEXT_CONTROL | WOW64_CONTEXT_SEGMENTS };
+    LDT_ENTRY entry = { 0 };
+
+    if (size != sizeof(*info)) return STATUS_INFO_LENGTH_MISMATCH;
+    if (RtlWow64GetThreadContext( handle, &context ))
+    {
+        /* hardcoded values */
+        context.SegCs = 0x23;
+#ifdef __x86_64__
+        __asm__( "movw %%fs,%0" : "=m" (context.SegFs) );
+        __asm__( "movw %%ss,%0" : "=m" (context.SegSs) );
+#else
+        context.SegSs = 0x2b;
+        context.SegFs = 0x53;
+#endif
+    }
+
+    sel = info->Selector | 3;
+    if (sel == 0x03) goto done; /* null selector */
+
+    /* set common data */
+    entry.HighWord.Bits.Dpl = 3;
+    entry.HighWord.Bits.Pres = 1;
+    entry.HighWord.Bits.Default_Big = 1;
+    if (sel == context.SegCs)  /* code selector */
+    {
+        entry.LimitLow = 0xffff;
+        entry.HighWord.Bits.LimitHi = 0xf;
+        entry.HighWord.Bits.Type = 0x1b;  /* code */
+        entry.HighWord.Bits.Granularity = 1;
+    }
+    else if (sel == context.SegSs)  /* data selector */
+    {
+        entry.LimitLow = 0xffff;
+        entry.HighWord.Bits.LimitHi = 0xf;
+        entry.HighWord.Bits.Type = 0x13;  /* data */
+        entry.HighWord.Bits.Granularity = 1;
+    }
+    else if (sel == context.SegFs)  /* TEB selector */
+    {
+        THREAD_BASIC_INFORMATION tbi;
+
+        entry.LimitLow = 0xfff;
+        entry.HighWord.Bits.Type = 0x13;  /* data */
+        if (!NtQueryInformationThread( handle, ThreadBasicInformation, &tbi, sizeof(tbi), NULL ))
+        {
+            ULONG addr = (ULONG_PTR)tbi.TebBaseAddress + 0x2000;  /* 32-bit teb offset */
+            entry.BaseLow = addr;
+            entry.HighWord.Bytes.BaseMid = addr >> 16;
+            entry.HighWord.Bytes.BaseHi  = addr >> 24;
+        }
+    }
+    else return STATUS_UNSUCCESSFUL;
+
+done:
+    info->Entry = entry;
+    if (retlen) *retlen = sizeof(entry);
+    return STATUS_SUCCESS;
+}
+
 #endif
 
 /**********************************************************************
