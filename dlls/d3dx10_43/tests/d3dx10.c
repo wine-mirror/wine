@@ -1147,6 +1147,8 @@ static void check_resource_data(ID3D10Resource *resource, const struct test_imag
     {
         line_match = !memcmp(image->expected_data + stride * i,
                 (BYTE *)map.pData + map.RowPitch * i, stride);
+        todo_wine_if(is_block_compressed(image->expected_info.Format)
+                && (image->expected_info.Width % 4 != 0 || image->expected_info.Height % 4 != 0))
         ok_(__FILE__, line)(line_match, "Data mismatch for line %u.\n", i);
         if (!line_match)
             break;
@@ -1997,7 +1999,7 @@ static void test_create_texture(void)
         winetest_push_context("Test %u", i);
 
         hr = D3DX10CreateTextureFromMemory(device, test_image[i].data, test_image[i].size, NULL, NULL, &resource, NULL);
-        todo_wine_if(is_block_compressed(test_image[i].expected_info.Format))
+        todo_wine_if(test_image[i].expected_info.MiscFlags & D3D10_RESOURCE_MISC_TEXTURECUBE)
         ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
         if (hr == S_OK)
         {

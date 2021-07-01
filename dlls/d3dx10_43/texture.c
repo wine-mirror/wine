@@ -71,6 +71,17 @@ wic_pixel_formats[] =
     { &GUID_WICPixelFormat128bppRGBAFloat,    DXGI_FORMAT_R32G32B32A32_FLOAT }
 };
 
+static const DXGI_FORMAT block_compressed_formats[] =
+{
+    DXGI_FORMAT_BC1_TYPELESS,  DXGI_FORMAT_BC1_UNORM, DXGI_FORMAT_BC1_UNORM_SRGB,
+    DXGI_FORMAT_BC2_TYPELESS,  DXGI_FORMAT_BC2_UNORM, DXGI_FORMAT_BC2_UNORM_SRGB,
+    DXGI_FORMAT_BC3_TYPELESS,  DXGI_FORMAT_BC3_UNORM, DXGI_FORMAT_BC3_UNORM_SRGB,
+    DXGI_FORMAT_BC4_TYPELESS,  DXGI_FORMAT_BC4_UNORM, DXGI_FORMAT_BC4_SNORM,
+    DXGI_FORMAT_BC5_TYPELESS,  DXGI_FORMAT_BC5_UNORM, DXGI_FORMAT_BC5_SNORM,
+    DXGI_FORMAT_BC6H_TYPELESS, DXGI_FORMAT_BC6H_UF16, DXGI_FORMAT_BC6H_SF16,
+    DXGI_FORMAT_BC7_TYPELESS,  DXGI_FORMAT_BC7_UNORM, DXGI_FORMAT_BC7_UNORM_SRGB
+};
+
 static const DXGI_FORMAT to_be_converted_format[] =
 {
     DXGI_FORMAT_UNKNOWN,
@@ -122,6 +133,17 @@ static D3D10_RESOURCE_DIMENSION wic_dimension_to_d3dx10_dimension(WICDdsDimensio
         default:
             return D3D10_RESOURCE_DIMENSION_UNKNOWN;
     }
+}
+
+static BOOL is_block_compressed(DXGI_FORMAT format)
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(block_compressed_formats); ++i)
+        if (format == block_compressed_formats[i])
+            return TRUE;
+
+    return FALSE;
 }
 
 static unsigned int get_bpp_from_format(DXGI_FORMAT format)
@@ -556,6 +578,7 @@ HRESULT WINAPI D3DX10CreateTextureFromMemory(ID3D10Device *device, const void *s
 {
     unsigned int frame_count, width, height, stride, frame_size;
     IWICFormatConverter *converter = NULL;
+    IWICDdsFrameDecode *dds_frame = NULL;
     D3D10_TEXTURE2D_DESC texture_2d_desc;
     D3D10_SUBRESOURCE_DATA resource_data;
     IWICBitmapFrameDecode *frame = NULL;
@@ -582,6 +605,11 @@ HRESULT WINAPI D3DX10CreateTextureFromMemory(ID3D10Device *device, const void *s
 
     if (FAILED(D3DX10GetImageInfoFromMemory(src_data, src_data_size, NULL, &img_info, NULL)))
         return E_FAIL;
+    if (img_info.MiscFlags & D3D10_RESOURCE_MISC_TEXTURECUBE)
+    {
+        FIXME("Cube map is not supported.\n");
+        return E_FAIL;
+    }
 
     if (FAILED(hr = WICCreateImagingFactory_Proxy(WINCODEC_SDK_VERSION, &factory)))
         goto end;
@@ -600,6 +628,11 @@ HRESULT WINAPI D3DX10CreateTextureFromMemory(ID3D10Device *device, const void *s
 
     width = img_info.Width;
     height = img_info.Height;
+    if (is_block_compressed(img_info.Format))
+    {
+        width = (width + 3) & ~3;
+        height = (height + 3) & ~3;
+    }
     stride = (width * get_bpp_from_format(img_info.Format) + 7) / 8;
     frame_size = stride * height;
 
@@ -609,35 +642,45 @@ HRESULT WINAPI D3DX10CreateTextureFromMemory(ID3D10Device *device, const void *s
         goto end;
     }
 
-    if (!(dst_format = dxgi_format_to_wic_guid(img_info.Format)))
+    if (is_block_compressed(img_info.Format))
     {
-        hr = E_FAIL;
-        FIXME("Unsupported DXGI format %#x.\n", img_info.Format);
-        goto end;
-    }
-
-    if (IsEqualGUID(&src_format, dst_format))
-    {
-        if (FAILED(hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, stride, frame_size, buffer)))
+        if (FAILED(hr = IWICBitmapFrameDecode_QueryInterface(frame, &IID_IWICDdsFrameDecode, (void **)&dds_frame)))
+            goto end;
+        if (FAILED(hr = IWICDdsFrameDecode_CopyBlocks(dds_frame, NULL, stride * 4, frame_size, buffer)))
             goto end;
     }
     else
     {
-        if (FAILED(hr = IWICImagingFactory_CreateFormatConverter(factory, &converter)))
-            goto end;
-        if (FAILED(hr = IWICFormatConverter_CanConvert(converter, &src_format, dst_format, &can_convert)))
-            goto end;
-        if (!can_convert)
+        if (!(dst_format = dxgi_format_to_wic_guid(img_info.Format)))
         {
-            WARN("Format converting %s to %s is not supported by WIC.\n",
-                    debugstr_guid(&src_format), debugstr_guid(dst_format));
+            hr = E_FAIL;
+            FIXME("Unsupported DXGI format %#x.\n", img_info.Format);
             goto end;
         }
-        if (FAILED(hr = IWICFormatConverter_Initialize(converter, (IWICBitmapSource *)frame, dst_format,
-                WICBitmapDitherTypeErrorDiffusion, 0, 0, WICBitmapPaletteTypeCustom)))
-            goto end;
-        if (FAILED(hr = IWICFormatConverter_CopyPixels(converter, NULL, stride, frame_size, buffer)))
-            goto end;
+
+        if (IsEqualGUID(&src_format, dst_format))
+        {
+            if (FAILED(hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, stride, frame_size, buffer)))
+                goto end;
+        }
+        else
+        {
+            if (FAILED(hr = IWICImagingFactory_CreateFormatConverter(factory, &converter)))
+                goto end;
+            if (FAILED(hr = IWICFormatConverter_CanConvert(converter, &src_format, dst_format, &can_convert)))
+                goto end;
+            if (!can_convert)
+            {
+                WARN("Format converting %s to %s is not supported by WIC.\n",
+                        debugstr_guid(&src_format), debugstr_guid(dst_format));
+                goto end;
+            }
+            if (FAILED(hr = IWICFormatConverter_Initialize(converter, (IWICBitmapSource *)frame, dst_format,
+                    WICBitmapDitherTypeErrorDiffusion, 0, 0, WICBitmapPaletteTypeCustom)))
+                goto end;
+            if (FAILED(hr = IWICFormatConverter_CopyPixels(converter, NULL, stride, frame_size, buffer)))
+                goto end;
+        }
     }
 
     memset(&texture_2d_desc, 0, sizeof(texture_2d_desc));
@@ -664,6 +707,8 @@ HRESULT WINAPI D3DX10CreateTextureFromMemory(ID3D10Device *device, const void *s
 end:
     if (converter)
         IWICFormatConverter_Release(converter);
+    if (dds_frame)
+        IWICDdsFrameDecode_Release(dds_frame);
     if (buffer)
         heap_free(buffer);
     if (frame)
