@@ -11011,6 +11011,47 @@ static void test_so_debug(void)
     closesocket(s);
 }
 
+static void test_set_only_options(void)
+{
+    unsigned int i;
+    int ret, len;
+    int value;
+    SOCKET s;
+
+    static const struct
+    {
+        int level;
+        int option;
+    }
+    tests[] =
+    {
+        {IPPROTO_IP, IP_ADD_MEMBERSHIP},
+        {IPPROTO_IP, IP_DROP_MEMBERSHIP},
+        {IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP},
+        {IPPROTO_IPV6, IPV6_DROP_MEMBERSHIP},
+    };
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        if (tests[i].level == IPPROTO_IPV6)
+        {
+            s = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+            if (s == INVALID_SOCKET) continue;
+        }
+        else
+        {
+            s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        }
+
+        len = sizeof(value);
+        ret = getsockopt(s, tests[i].level, tests[i].option, (char *)&value, &len);
+        ok(ret == -1, "expected failure\n");
+        ok(WSAGetLastError() == WSAENOPROTOOPT, "got error %u\n", WSAGetLastError());
+
+        closesocket(s);
+    }
+}
+
 START_TEST( sock )
 {
     int i;
@@ -11027,6 +11068,7 @@ START_TEST( sock )
     test_ip_pktinfo();
     test_extendedSocketOptions();
     test_so_debug();
+    test_set_only_options();
 
     for (i = 0; i < ARRAY_SIZE(tests); i++)
         do_test(&tests[i]);
