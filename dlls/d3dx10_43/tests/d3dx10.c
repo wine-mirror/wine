@@ -1971,17 +1971,29 @@ static void test_create_texture(void)
 
     /* D3DX10CreateTextureFromMemory tests */
 
-    todo_wine
-    {
+    resource = (ID3D10Resource *)0xdeadbeef;
     hr = D3DX10CreateTextureFromMemory(device, NULL, 0, NULL, NULL, &resource, NULL);
+    todo_wine
     ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(resource == (ID3D10Resource *)0xdeadbeef, "Got unexpected resource %p.\n", resource);
+
+    resource = (ID3D10Resource *)0xdeadbeef;
     hr = D3DX10CreateTextureFromMemory(device, NULL, sizeof(test_bmp_1bpp), NULL, NULL, &resource, NULL);
+    todo_wine
     ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(resource == (ID3D10Resource *)0xdeadbeef, "Got unexpected resource %p.\n", resource);
+
+    resource = (ID3D10Resource *)0xdeadbeef;
     hr = D3DX10CreateTextureFromMemory(device, test_bmp_1bpp, 0, NULL, NULL, &resource, NULL);
+    todo_wine
     ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(resource == (ID3D10Resource *)0xdeadbeef, "Got unexpected resource %p.\n", resource);
+
+    resource = (ID3D10Resource *)0xdeadbeef;
     hr = D3DX10CreateTextureFromMemory(device, test_bmp_1bpp, sizeof(test_bmp_1bpp) - 1, NULL, NULL, &resource, NULL);
+    todo_wine
     ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
-    }
+    ok(resource == (ID3D10Resource *)0xdeadbeef, "Got unexpected resource %p.\n", resource);
 
     for (i = 0; i < ARRAY_SIZE(test_image); ++i)
     {
