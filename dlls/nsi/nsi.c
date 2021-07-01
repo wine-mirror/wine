@@ -257,7 +257,7 @@ DWORD WINAPI NsiGetParameter( DWORD unk, const NPI_MODULEID *module, DWORD table
 {
     struct nsi_get_parameter_ex params;
 
-    FIXME( "%d %p %d %p %d %d %p %d %d: stub\n", unk, module, table, key, key_size,
+    TRACE( "%d %p %d %p %d %d %p %d %d\n", unk, module, table, key, key_size,
            param_type, data, data_size, data_offset );
 
     params.unknown[0] = 0;
@@ -277,5 +277,32 @@ DWORD WINAPI NsiGetParameter( DWORD unk, const NPI_MODULEID *module, DWORD table
 
 DWORD WINAPI NsiGetParameterEx( struct nsi_get_parameter_ex *params )
 {
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    HANDLE device = get_nsi_device();
+    struct nsiproxy_get_parameter *in;
+    ULONG in_size = FIELD_OFFSET( struct nsiproxy_get_parameter, key[params->key_size] ), received;
+    DWORD err = ERROR_SUCCESS;
+
+    if (device == INVALID_HANDLE_VALUE) return GetLastError();
+
+    in = heap_alloc( in_size );
+    if (!in)
+    {
+        err = ERROR_OUTOFMEMORY;
+        goto err;
+    }
+    in->module = *params->module;
+    in->first_arg = params->first_arg;
+    in->table = params->table;
+    in->key_size = params->key_size;
+    in->param_type = params->param_type;
+    in->data_offset = params->data_offset;
+    memcpy( in->key, params->key, params->key_size );
+
+    if (!DeviceIoControl( device, IOCTL_NSIPROXY_WINE_GET_PARAMETER, in, in_size, params->data, params->data_size, &received, NULL ))
+        err = GetLastError();
+
+err:
+    heap_free( in );
+    CloseHandle( device );
+    return err;
 }
