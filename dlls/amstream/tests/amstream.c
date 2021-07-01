@@ -462,7 +462,7 @@ static void test_openfile(const WCHAR *test_avi_path)
 
     check_interface(filter, &IID_IMediaSeeking, FALSE);
 
-    hr = IAMMultiMediaStream_OpenFile(mmstream, test_avi_path, 0);
+    hr = IAMMultiMediaStream_OpenFile(mmstream, test_avi_path, AMMSF_RENDERTOEXISTING);
     ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#x.\n", hr);
 
     check_interface(filter, &IID_IMediaSeeking, FALSE);
@@ -489,7 +489,7 @@ static void test_openfile(const WCHAR *test_avi_path)
 
     check_interface(filter, &IID_IMediaSeeking, FALSE);
 
-    hr = IAMMultiMediaStream_OpenFile(mmstream, test_avi_path, 0);
+    hr = IAMMultiMediaStream_OpenFile(mmstream, test_avi_path, AMMSF_RENDERTOEXISTING);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     check_interface(filter, &IID_IMediaSeeking, TRUE);
@@ -585,7 +585,7 @@ static void test_mmstream_get_duration(const WCHAR *test_avi_path)
     ok(hr == S_OK || hr == VFW_E_NO_AUDIO_HARDWARE, "Got hr %#x.\n", hr);
     audio_hr = hr;
 
-    hr = IAMMultiMediaStream_OpenFile(mmstream, test_avi_path, 0);
+    hr = IAMMultiMediaStream_OpenFile(mmstream, test_avi_path, AMMSF_RENDERTOEXISTING);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     duration = 0xdeadbeefdeadbeefULL;
@@ -618,7 +618,7 @@ static void test_mmstream_get_duration(const WCHAR *test_avi_path)
 
     mmstream = create_ammultimediastream();
 
-    hr = IAMMultiMediaStream_OpenFile(mmstream, test_avi_path, 0);
+    hr = IAMMultiMediaStream_OpenFile(mmstream, test_avi_path, AMMSF_RENDERTOEXISTING);
     ok(hr == VFW_E_CANNOT_CONNECT, "Got hr %#x.\n", hr);
 
     duration = 0xdeadbeefdeadbeefULL;
@@ -1778,7 +1778,7 @@ static void test_media_streams(void)
     }
 
     /* Test open file with no filename */
-    hr = IAMMultiMediaStream_OpenFile(pams, NULL, 0);
+    hr = IAMMultiMediaStream_OpenFile(pams, NULL, AMMSF_RENDERTOEXISTING);
     ok(hr == E_POINTER, "IAMMultiMediaStream_OpenFile returned %x instead of %x\n", hr, E_POINTER);
 
     if (video_stream)
