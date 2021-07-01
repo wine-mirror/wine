@@ -3634,6 +3634,9 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         case WS_IP_BLOCK_SOURCE:
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_BLOCK_SOURCE, optval, optlen );
 
+        case WS_IP_DONTFRAGMENT:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_DONTFRAGMENT, optval, optlen );
+
         case WS_IP_DROP_SOURCE_MEMBERSHIP:
         case WS_IP_UNBLOCK_SOURCE:
         {
@@ -3666,8 +3669,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
 #endif
             convert_sockopt(&level, &optname);
             break;
-        case WS_IP_DONTFRAGMENT:
-            return set_dont_fragment(s, IPPROTO_IP, *(BOOL *)optval) ? 0 : SOCKET_ERROR;
+
         default:
             FIXME("Unknown IPPROTO_IP optname 0x%08x\n", optname);
             return SOCKET_ERROR;

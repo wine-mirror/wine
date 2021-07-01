@@ -1717,6 +1717,25 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             return STATUS_SUCCESS;
         }
 
+        case IOCTL_AFD_WINE_SET_IP_DONTFRAGMENT:
+#ifdef IP_DONTFRAG
+            return do_setsockopt( handle, io, IPPROTO_IP, IP_DONTFRAG, in_buffer, in_size );
+#elif defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DO) && defined(IP_PMTUDISC_DONT)
+        {
+            int value = *(DWORD *)in_buffer ? IP_PMTUDISC_DO : IP_PMTUDISC_DONT;
+
+            return do_setsockopt( handle, io, IPPROTO_IP, IP_MTU_DISCOVER, &value, sizeof(value) );
+        }
+#else
+        {
+            static int once;
+
+            if (!once++)
+                FIXME( "IP_DONTFRAGMENT is not supported on this platform\n" );
+            return STATUS_SUCCESS; /* fake success */
+        }
+#endif
+
         default:
         {
             if ((code >> 16) == FILE_DEVICE_NETWORK)
