@@ -1456,6 +1456,7 @@ DECL_HANDLER(get_process_info)
         reply->peb              = process->peb;
         reply->start_time       = process->start_time;
         reply->end_time         = process->end_time;
+        reply->session_id       = process->session_id;
         reply->machine          = process->machine;
         if (get_reply_max_size())
         {

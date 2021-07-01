@@ -957,6 +957,7 @@ typedef struct
     client_ptr_t peb;              /* PEB address in process address space */
     timeout_t    start_time;       /* process start time */
     timeout_t    end_time;         /* process end time */
+    unsigned int session_id;       /* process session id */
     int          exit_code;        /* process exit code */
     int          priority;         /* priority class */
     unsigned short machine;        /* process architecture */

@@ -987,7 +987,6 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
     UNIMPLEMENTED_INFO_CLASS(ProcessWx86Information);
     UNIMPLEMENTED_INFO_CLASS(ProcessPriorityBoost);
     UNIMPLEMENTED_INFO_CLASS(ProcessDeviceMap);
-    UNIMPLEMENTED_INFO_CLASS(ProcessSessionInformation);
     UNIMPLEMENTED_INFO_CLASS(ProcessForegroundInformation);
     UNIMPLEMENTED_INFO_CLASS(ProcessLUIDDeviceMapsEnabled);
     UNIMPLEMENTED_INFO_CLASS(ProcessBreakOnTermination);
@@ -1266,6 +1265,21 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
                 req->handle = wine_server_obj_handle( handle );
                 if (!(ret = wine_server_call( req )))
                     *(ULONG_PTR *)info = reply->affinity & system_mask;
+            }
+            SERVER_END_REQ;
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+
+    case ProcessSessionInformation:
+        len = sizeof(DWORD);
+        if (size == len)
+        {
+            SERVER_START_REQ(get_process_info)
+            {
+                req->handle = wine_server_obj_handle( handle );
+                if (!(ret = wine_server_call( req )))
+                    *(DWORD *)info = reply->session_id;
             }
             SERVER_END_REQ;
         }

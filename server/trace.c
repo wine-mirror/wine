@@ -1584,6 +1584,7 @@ static void dump_get_process_info_reply( const struct get_process_info_reply *re
     dump_uint64( ", peb=", &req->peb );
     dump_timeout( ", start_time=", &req->start_time );
     dump_timeout( ", end_time=", &req->end_time );
+    fprintf( stderr, ", session_id=%08x", req->session_id );
     fprintf( stderr, ", exit_code=%d", req->exit_code );
     fprintf( stderr, ", priority=%d", req->priority );
     fprintf( stderr, ", machine=%04x", req->machine );

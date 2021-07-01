@@ -1004,11 +1004,12 @@ struct get_process_info_reply
     client_ptr_t peb;
     timeout_t    start_time;
     timeout_t    end_time;
+    unsigned int session_id;
     int          exit_code;
     int          priority;
     unsigned short machine;
     /* VARARG(image,pe_image_info); */
-    char __pad_58[6];
+    char __pad_62[2];
 };
 
 
@@ -6251,7 +6252,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 721
+#define SERVER_PROTOCOL_VERSION 722
 
 /* ### protocol_version end ### */
 
