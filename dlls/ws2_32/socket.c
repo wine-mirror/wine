@@ -3630,8 +3630,10 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         case WS_IP_ADD_SOURCE_MEMBERSHIP:
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_ADD_SOURCE_MEMBERSHIP, optval, optlen );
 
-        case WS_IP_DROP_SOURCE_MEMBERSHIP:
         case WS_IP_BLOCK_SOURCE:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_BLOCK_SOURCE, optval, optlen );
+
+        case WS_IP_DROP_SOURCE_MEMBERSHIP:
         case WS_IP_UNBLOCK_SOURCE:
         {
             WS_IP_MREQ_SOURCE* val = (void*)optval;
