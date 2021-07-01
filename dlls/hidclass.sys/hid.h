@@ -67,6 +67,9 @@ typedef struct _BASE_DEVICE_EXTENSION
             KSPIN_LOCK irp_queue_lock;
             LIST_ENTRY irp_queue;
 
+            KSPIN_LOCK lock;
+            BOOL removed;
+
             BOOL is_mouse;
             UNICODE_STRING mouse_link_name;
             BOOL is_keyboard;

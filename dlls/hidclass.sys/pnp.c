@@ -359,11 +359,23 @@ static NTSTATUS fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
     }
 }
 
+static void remove_pending_irps(BASE_DEVICE_EXTENSION *ext)
+{
+    IRP *irp;
+
+    while ((irp = pop_irp_from_queue(ext)))
+    {
+        irp->IoStatus.Status = STATUS_DELETE_PENDING;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+    }
+}
+
 static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
     NTSTATUS status = irp->IoStatus.Status;
+    KIRQL irql;
 
     TRACE("irp %p, minor function %#x.\n", irp, irpsp->MinorFunction);
 
@@ -453,12 +465,13 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
                 IoSetDeviceInterfaceState(&ext->u.pdo.mouse_link_name, TRUE);
             if (ext->u.pdo.is_keyboard)
                 IoSetDeviceInterfaceState(&ext->u.pdo.keyboard_link_name, TRUE);
+
+            ext->u.pdo.removed = FALSE;
             status = STATUS_SUCCESS;
             break;
 
         case IRP_MN_REMOVE_DEVICE:
-        {
-            IRP *queued_irp;
+            remove_pending_irps(ext);
 
             send_wm_input_device_change(ext, GIDC_REMOVAL);
 
@@ -479,21 +492,21 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
             if (ext->u.pdo.ring_buffer)
                 RingBuffer_Destroy(ext->u.pdo.ring_buffer);
 
-            while ((queued_irp = pop_irp_from_queue(ext)))
-            {
-                queued_irp->IoStatus.Status = STATUS_DEVICE_REMOVED;
-                IoCompleteRequest(queued_irp, IO_NO_INCREMENT);
-            }
-
             RtlFreeUnicodeString(&ext->u.pdo.link_name);
 
             irp->IoStatus.Status = STATUS_SUCCESS;
             IoCompleteRequest(irp, IO_NO_INCREMENT);
             IoDeleteDevice(device);
             return STATUS_SUCCESS;
-        }
 
         case IRP_MN_SURPRISE_REMOVAL:
+            KeAcquireSpinLock(&ext->u.pdo.lock, &irql);
+            ext->u.pdo.removed = TRUE;
+            KeReleaseSpinLock(&ext->u.pdo.lock, irql);
+
+            remove_pending_irps(ext);
+
+            SetEvent(ext->u.pdo.halt_event);
             status = STATUS_SUCCESS;
             break;
 
