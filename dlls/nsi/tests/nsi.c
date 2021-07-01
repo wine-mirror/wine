@@ -66,9 +66,7 @@ static void test_nsi_api( void )
 
         err = NsiGetAllParameters( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, luid_tbl + i, sizeof(*luid_tbl),
                                    &get_rw, rw_size, &get_dyn, sizeof(get_dyn), &get_stat, sizeof(get_stat) );
-todo_wine
         ok( !err, "got %d\n", err );
-        if (err) break;
         /* test a selection of members */
         ok( IsEqualGUID( &get_rw.network_guid, &rw->network_guid ), "mismatch\n" );
         ok( get_rw.alias.Length == rw->alias.Length, "mismatch\n" );
@@ -115,7 +113,9 @@ todo_wine
         err = NsiGetParameter( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, luid_tbl + i, sizeof(*luid_tbl),
                                NSI_PARAM_TYPE_RW, &get_rw.alias, sizeof(get_rw.alias),
                                FIELD_OFFSET(struct nsi_ndis_ifinfo_rw, alias) );
+todo_wine
         ok( !err, "got %d\n", err );
+        if (err) continue;
         ok( get_rw.alias.Length == rw->alias.Length, "mismatch\n" );
         ok( !memcmp( get_rw.alias.String, rw->alias.String, rw->alias.Length ), "mismatch\n" );
 
@@ -257,11 +257,11 @@ static void test_ndis_ifinfo( void )
 {
     DWORD rw_sizes[] = { FIELD_OFFSET(struct nsi_ndis_ifinfo_rw, name2), FIELD_OFFSET(struct nsi_ndis_ifinfo_rw, unk),
                          sizeof(struct nsi_ndis_ifinfo_rw) };
-    struct nsi_ndis_ifinfo_rw *rw_tbl;
-    struct nsi_ndis_ifinfo_dynamic *dyn_tbl, *dyn_tbl_2;
-    struct nsi_ndis_ifinfo_static *stat_tbl;
+    struct nsi_ndis_ifinfo_rw *rw_tbl, rw_get;
+    struct nsi_ndis_ifinfo_dynamic *dyn_tbl, *dyn_tbl_2, dyn_get;
+    struct nsi_ndis_ifinfo_static *stat_tbl, stat_get;
     DWORD err, count, i, rw_size;
-    NET_LUID *luid_tbl, *luid_tbl_2;
+    NET_LUID *luid_tbl, *luid_tbl_2, luid_get;
     MIB_IF_TABLE2 *table;
 
     /* Contents of GetIfTable2() keyed by luids */
@@ -356,6 +356,17 @@ static void test_ndis_ifinfo( void )
         /* OutQLen */
         winetest_pop_context();
     }
+    err = NsiGetAllParameters( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, luid_tbl, sizeof(*luid_tbl),
+                               &rw_get, rw_size, &dyn_get, sizeof(dyn_get),
+                               &stat_get, sizeof(stat_get) );
+    ok( !err, "got %d\n", err );
+    ok( IsEqualGUID( &stat_tbl[0].if_guid, &stat_get.if_guid ), "mismatch\n" );
+
+    luid_get.Value = ~0u;
+    err = NsiGetAllParameters( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, &luid_get, sizeof(luid_get),
+                               &rw_get, rw_size, &dyn_get, sizeof(dyn_get),
+                               &stat_get, sizeof(stat_get) );
+    ok( err == ERROR_FILE_NOT_FOUND, "got %d\n", err );
 
     FreeMibTable( table );
     NsiFreeTable( luid_tbl_2, NULL, dyn_tbl_2, NULL );

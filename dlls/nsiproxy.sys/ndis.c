@@ -118,6 +118,16 @@ static struct if_entry *find_entry_from_index( DWORD index )
     return NULL;
 }
 
+static struct if_entry *find_entry_from_luid( const NET_LUID *luid )
+{
+    struct if_entry *entry;
+
+    LIST_FOR_EACH_ENTRY( entry, &if_list, struct if_entry, entry )
+        if (entry->if_luid.Value == luid->Value) return entry;
+
+    return NULL;
+}
+
 #if defined (SIOCGIFHWADDR) && defined (HAVE_STRUCT_IFREQ_IFR_HWADDR)
 static NTSTATUS if_get_physical( const char *name, DWORD *type, IF_PHYSICAL_ADDRESS *phys_addr )
 {
@@ -479,6 +489,32 @@ static NTSTATUS ifinfo_enumerate_all( void *key_data, DWORD key_size, void *rw_d
     return status;
 }
 
+static NTSTATUS ifinfo_get_all_parameters( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
+                                           void *dynamic_data, DWORD dynamic_size,
+                                           void *static_data, DWORD static_size )
+{
+    struct if_entry *entry;
+    NTSTATUS status = STATUS_OBJECT_NAME_NOT_FOUND;
+
+    TRACE( "%p %d %p %d %p %d %p %d\n", key, key_size, rw_data, rw_size,
+           dynamic_data, dynamic_size, static_data, static_size );
+
+    EnterCriticalSection( &if_list_cs );
+
+    update_if_table();
+
+    entry = find_entry_from_luid( (const NET_LUID *)key );
+    if (entry)
+    {
+        ifinfo_fill_entry( entry, NULL, rw_data, dynamic_data, static_data );
+        status = STATUS_SUCCESS;
+    }
+
+    LeaveCriticalSection( &if_list_cs );
+
+    return status;
+}
+
 static const struct module_table tables[] =
 {
     {
@@ -488,6 +524,7 @@ static const struct module_table tables[] =
             sizeof(struct nsi_ndis_ifinfo_dynamic), sizeof(struct nsi_ndis_ifinfo_static)
         },
         ifinfo_enumerate_all,
+        ifinfo_get_all_parameters,
     },
     { ~0u }
 };
