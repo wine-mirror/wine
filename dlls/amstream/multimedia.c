@@ -471,9 +471,12 @@ static HRESULT WINAPI multimedia_stream_OpenFile(IAMMultiMediaStream *iface,
 
         if (SUCCEEDED(ret = IGraphBuilder_QueryInterface(This->graph, &IID_IFilterGraph2, (void **)&graph)))
         {
-            ret = IFilterGraph2_RenderEx(graph, This->ipin, AM_RENDEREX_RENDERTOEXISTINGRENDERERS, NULL);
+            DWORD renderflags = (flags & AMMSF_RENDERALLSTREAMS) ? 0 : AM_RENDEREX_RENDERTOEXISTINGRENDERERS;
+
+            ret = IFilterGraph2_RenderEx(graph, This->ipin, renderflags, NULL);
             if (ret == VFW_E_CANNOT_RENDER) ret = VFW_E_CANNOT_CONNECT;
             else if (ret == VFW_S_PARTIAL_RENDER) ret = S_OK;
+
             IFilterGraph2_Release(graph);
         }
         else

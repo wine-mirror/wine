@@ -452,6 +452,50 @@ static void test_openfile(const WCHAR *test_avi_path)
     ok(!ref, "Got outstanding refcount %d.\n", ref);
 
     mmstream = create_ammultimediastream();
+
+    hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!graph, "Expected NULL graph.\n");
+
+    hr = IAMMultiMediaStream_GetFilter(mmstream, &filter);
+    ok(!!filter, "Expected non-NULL filter.\n");
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    check_interface(filter, &IID_IMediaSeeking, FALSE);
+
+    hr = IAMMultiMediaStream_OpenFile(mmstream, test_avi_path, AMMSF_RENDERALLSTREAMS);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    check_interface(filter, &IID_IMediaSeeking, FALSE);
+
+    hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &graph);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(!!graph, "Expected non-NULL graph.\n");
+
+    hr = IGraphBuilder_QueryInterface(graph, &IID_IMediaFilter, (void **)&media_filter);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    clock = NULL;
+    IMediaFilter_GetSyncSource(media_filter, &clock);
+    ok(!!clock, "Expected non-NULL clock.\n");
+
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    IMediaFilter_Release(media_filter);
+    ref = IGraphBuilder_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IMediaStreamFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IReferenceClock_Release(clock);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    mmstream = create_ammultimediastream();
     hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &graph);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(!graph, "Expected NULL graph.\n");
