@@ -1774,7 +1774,8 @@ void CDECL wined3d_device_context_set_state(struct wined3d_device_context *conte
 
     for (i = 0; i < WINEHIGHEST_RENDER_STATE + 1; ++i)
     {
-        wined3d_device_context_emit_set_render_state(context, i, state->render_states[i]);
+        if (context->device->state_table[STATE_RENDER(i)].representative)
+            wined3d_device_context_emit_set_render_state(context, i, state->render_states[i]);
     }
 
     wined3d_device_context_emit_set_blend_state(context, state->blend_state, &state->blend_factor, state->sample_mask);
