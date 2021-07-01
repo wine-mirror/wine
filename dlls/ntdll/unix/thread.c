@@ -1098,6 +1098,35 @@ static SIZE_T get_machine_context_size( USHORT machine )
 
 
 /***********************************************************************
+ *           get_cpu_area
+ *
+ * cf. RtlWow64GetCurrentCpuArea
+ */
+void *get_cpu_area( USHORT machine )
+{
+    WOW64_CPURESERVED *cpu;
+    ULONG align;
+
+    if (!NtCurrentTeb()->WowTebOffset) return NULL;
+#ifdef _WIN64
+    cpu = NtCurrentTeb()->TlsSlots[WOW64_TLS_CPURESERVED];
+#else
+    cpu = ULongToPtr( NtCurrentTeb64()->TlsSlots[WOW64_TLS_CPURESERVED] );
+#endif
+    if (cpu->Machine != machine) return NULL;
+    switch (cpu->Machine)
+    {
+    case IMAGE_FILE_MACHINE_I386: align = TYPE_ALIGNMENT(I386_CONTEXT); break;
+    case IMAGE_FILE_MACHINE_AMD64: align = TYPE_ALIGNMENT(ARM_CONTEXT); break;
+    case IMAGE_FILE_MACHINE_ARMNT: align = TYPE_ALIGNMENT(AMD64_CONTEXT); break;
+    case IMAGE_FILE_MACHINE_ARM64: align = TYPE_ALIGNMENT(ARM64_NT_CONTEXT); break;
+    default: return NULL;
+    }
+    return (void *)(((ULONG_PTR)(cpu + 1) + align - 1) & ~(align - 1));
+}
+
+
+/***********************************************************************
  *           set_thread_id
  */
 void set_thread_id( TEB *teb, DWORD pid, DWORD tid )

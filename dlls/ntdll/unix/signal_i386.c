@@ -2337,11 +2337,7 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     context.FloatSave.ControlWord = 0x27f;
     ((XSAVE_FORMAT *)context.ExtendedRegisters)->ControlWord = 0x27f;
     ((XSAVE_FORMAT *)context.ExtendedRegisters)->MxCsr = 0x1f80;
-    if (NtCurrentTeb64())
-    {
-        WOW64_CPURESERVED *cpu = ULongToPtr( NtCurrentTeb64()->TlsSlots[WOW64_TLS_CPURESERVED] );
-        memcpy( cpu + 1, &context, sizeof(context) );
-    }
+    if ((ctx = get_cpu_area( IMAGE_FILE_MACHINE_I386 ))) *ctx = context;
 
     if (suspend) wait_suspend( &context );
 

@@ -921,11 +921,7 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     context.Sp = (DWORD)teb->Tib.StackBase;
     context.Pc = (DWORD)pRtlUserThreadStart;
     if (context.Pc & 1) context.Cpsr |= 0x20; /* thumb mode */
-    if (NtCurrentTeb64())
-    {
-        WOW64_CPURESERVED *cpu = ULongToPtr( NtCurrentTeb64()->TlsSlots[WOW64_TLS_CPURESERVED] );
-        memcpy( cpu + 1, &context, sizeof(context) );
-    }
+    if ((ctx = get_cpu_area( IMAGE_FILE_MACHINE_ARMNT ))) *ctx = context;
 
     if (suspend) wait_suspend( &context );
 
