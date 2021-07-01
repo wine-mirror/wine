@@ -726,8 +726,20 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device_obj, IRP *irp
     ULONG code = stack->Parameters.DeviceIoControl.IoControlCode;
     struct usb_device *device = device_obj->DeviceExtension;
     NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    BOOL removed;
 
     TRACE("device_obj %p, irp %p, code %#x.\n", device_obj, irp, code);
+
+    EnterCriticalSection(&wineusb_cs);
+    removed = device->removed;
+    LeaveCriticalSection(&wineusb_cs);
+
+    if (removed)
+    {
+        irp->IoStatus.Status = STATUS_DELETE_PENDING;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+        return STATUS_DELETE_PENDING;
+    }
 
     switch (code)
     {
