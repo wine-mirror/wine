@@ -182,6 +182,7 @@ struct afd_get_events_params
 #define IOCTL_AFD_WINE_GET_SO_SNDTIMEO                  WINE_AFD_IOC(237)
 #define IOCTL_AFD_WINE_SET_SO_SNDTIMEO                  WINE_AFD_IOC(238)
 #define IOCTL_AFD_WINE_SET_IP_ADD_MEMBERSHIP            WINE_AFD_IOC(239)
+#define IOCTL_AFD_WINE_SET_IP_ADD_SOURCE_MEMBERSHIP     WINE_AFD_IOC(240)
 
 struct afd_create_params
 {
