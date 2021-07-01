@@ -1750,7 +1750,8 @@ void CDECL wined3d_device_context_set_state(struct wined3d_device_context *conte
 
     for (i = 0; i < WINED3D_HIGHEST_TRANSFORM_STATE + 1; ++i)
     {
-        wined3d_device_context_emit_set_transform(context, i, state->transforms + i);
+        if (context->device->state_table[STATE_TRANSFORM(i)].representative)
+            wined3d_device_context_emit_set_transform(context, i, state->transforms + i);
     }
 
     for (i = 0; i < WINED3D_MAX_CLIP_DISTANCES; ++i)
