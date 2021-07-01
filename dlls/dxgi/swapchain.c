@@ -328,6 +328,8 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetDevice(IDXGISwapChain1 *ifac
 static HRESULT d3d11_swapchain_present(struct d3d11_swapchain *swapchain,
         unsigned int sync_interval, unsigned int flags)
 {
+    HRESULT hr;
+
     if (sync_interval > 4)
     {
         WARN("Invalid sync interval %u.\n", sync_interval);
@@ -345,7 +347,9 @@ static HRESULT d3d11_swapchain_present(struct d3d11_swapchain *swapchain,
         return S_OK;
     }
 
-    return wined3d_swapchain_present(swapchain->wined3d_swapchain, NULL, NULL, NULL, sync_interval, 0);
+    if (SUCCEEDED(hr = wined3d_swapchain_present(swapchain->wined3d_swapchain, NULL, NULL, NULL, sync_interval, 0)))
+        InterlockedIncrement(&swapchain->present_count);
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d11_swapchain_Present(IDXGISwapChain1 *iface, UINT sync_interval, UINT flags)
@@ -599,9 +603,13 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetFrameStatistics(IDXGISwapCha
 static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetLastPresentCount(IDXGISwapChain1 *iface,
         UINT *last_present_count)
 {
-    FIXME("iface %p, last_present_count %p stub!\n", iface, last_present_count);
+    struct d3d11_swapchain *swapchain = d3d11_swapchain_from_IDXGISwapChain1(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, last_present_count %p.\n", iface, last_present_count);
+
+    *last_present_count =  swapchain->present_count;
+
+    return S_OK;
 }
 
 /* IDXGISwapChain1 methods */

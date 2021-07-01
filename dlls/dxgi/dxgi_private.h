@@ -182,6 +182,7 @@ struct d3d11_swapchain
     IWineDXGIFactory *factory;
 
     IDXGIOutput *target;
+    LONG present_count;
 };
 
 HRESULT d3d11_swapchain_init(struct d3d11_swapchain *swapchain, struct dxgi_device *device,
