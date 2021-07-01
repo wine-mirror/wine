@@ -667,7 +667,7 @@ static BOOL str2int(const char* str, DWORD_PTR* val)
 {
     char*   ptr;
 
-    *val = strtol(str, &ptr, 10);
+    *val = strtol(str, &ptr, 0);
     return str < ptr && !*ptr;
 }
 
