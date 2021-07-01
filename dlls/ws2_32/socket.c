@@ -2433,8 +2433,6 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
     case WS_IPPROTO_IP:
         switch(optname)
         {
-        case WS_IP_ADD_MEMBERSHIP:
-        case WS_IP_DROP_MEMBERSHIP:
 #ifdef IP_HDRINCL
         case WS_IP_HDRINCL:
 #endif
@@ -2462,19 +2460,20 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             return ret;
         case WS_IP_DONTFRAGMENT:
             return get_dont_fragment(s, IPPROTO_IP, (BOOL *)optval) ? 0 : SOCKET_ERROR;
+
+        default:
+            FIXME( "unrecognized IP option %u\n", optname );
+            /* fall through */
+
+        case WS_IP_ADD_MEMBERSHIP:
+        case WS_IP_DROP_MEMBERSHIP:
+            SetLastError( WSAENOPROTOOPT );
+            return -1;
         }
-        FIXME("Unknown IPPROTO_IP optname 0x%08x\n", optname);
-        return SOCKET_ERROR;
 
     case WS_IPPROTO_IPV6:
         switch(optname)
         {
-#ifdef IPV6_ADD_MEMBERSHIP
-        case WS_IPV6_ADD_MEMBERSHIP:
-#endif
-#ifdef IPV6_DROP_MEMBERSHIP
-        case WS_IPV6_DROP_MEMBERSHIP:
-#endif
         case WS_IPV6_MULTICAST_IF:
         case WS_IPV6_MULTICAST_HOPS:
         case WS_IPV6_MULTICAST_LOOP:
@@ -2495,9 +2494,16 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             return ret;
         case WS_IPV6_DONTFRAG:
             return get_dont_fragment(s, IPPROTO_IPV6, (BOOL *)optval) ? 0 : SOCKET_ERROR;
+
+        default:
+            FIXME( "unrecognized IPv6 option %u\n", optname );
+            /* fall through */
+
+        case WS_IPV6_ADD_MEMBERSHIP:
+        case WS_IPV6_DROP_MEMBERSHIP:
+            SetLastError( WSAENOPROTOOPT );
+            return -1;
         }
-        FIXME("Unknown IPPROTO_IPV6 optname 0x%08x\n", optname);
-        return SOCKET_ERROR;
 
     default:
         WARN("Unknown level: 0x%08x\n", level);
