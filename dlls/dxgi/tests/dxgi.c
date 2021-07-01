@@ -7368,28 +7368,29 @@ static void test_swapchain_present_count(IUnknown *device, BOOL is_d3d12)
 
     present_count = ~0u;
     hr = IDXGISwapChain_GetLastPresentCount(swapchain, &present_count);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(!present_count, "Got unexpected present count %u.\n", present_count);
+    todo_wine_if(is_d3d12) ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine_if(is_d3d12) ok(!present_count, "Got unexpected present count %u.\n", present_count);
 
     hr = IDXGISwapChain_Present(swapchain, 0, 0);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     expected = present_count + 1;
     hr = IDXGISwapChain_GetLastPresentCount(swapchain, &present_count);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(present_count == expected, "Got unexpected present count %u, expected %u.\n", present_count, expected);
+    todo_wine_if(is_d3d12) ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine_if(is_d3d12)
+        ok(present_count == expected, "Got unexpected present count %u, expected %u.\n", present_count, expected);
 
     hr = IDXGISwapChain_Present(swapchain, 10, 0);
     ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
     expected = present_count;
     hr = IDXGISwapChain_GetLastPresentCount(swapchain, &present_count);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine_if(is_d3d12) ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     ok(present_count == expected, "Got unexpected present count %u, expected %u.\n", present_count, expected);
 
     hr = IDXGISwapChain_Present(swapchain, 0, DXGI_PRESENT_TEST);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     expected = present_count;
     hr = IDXGISwapChain_GetLastPresentCount(swapchain, &present_count);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine_if(is_d3d12) ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     ok(present_count == expected, "Got unexpected present count %u, expected %u.\n", present_count, expected);
 
     ShowWindow(window, SW_MINIMIZE);
@@ -7397,7 +7398,7 @@ static void test_swapchain_present_count(IUnknown *device, BOOL is_d3d12)
     ok(hr == (is_d3d12 ? S_OK : DXGI_STATUS_OCCLUDED), "Got unexpected hr %#x.\n", hr);
     expected = present_count + !!is_d3d12;
     hr = IDXGISwapChain_GetLastPresentCount(swapchain, &present_count);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine_if(is_d3d12) ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     todo_wine_if(is_d3d12)
         ok(present_count == expected, "Got unexpected present count %u, expected %u.\n", present_count, expected);
 
@@ -7406,8 +7407,9 @@ static void test_swapchain_present_count(IUnknown *device, BOOL is_d3d12)
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     expected = present_count + 1;
     hr = IDXGISwapChain_GetLastPresentCount(swapchain, &present_count);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(present_count == expected, "Got unexpected present count %u, expected %u.\n", present_count, expected);
+    todo_wine_if(is_d3d12) ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine_if(is_d3d12)
+        ok(present_count == expected, "Got unexpected present count %u, expected %u.\n", present_count, expected);
 
     IDXGISwapChain_Release(swapchain);
     DestroyWindow(window);
