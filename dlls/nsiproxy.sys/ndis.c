@@ -515,6 +515,75 @@ static NTSTATUS ifinfo_get_all_parameters( const void *key, DWORD key_size, void
     return status;
 }
 
+static NTSTATUS ifinfo_get_rw_parameter( struct if_entry *entry, void *data, DWORD data_size, DWORD data_offset )
+{
+    switch (data_offset)
+    {
+    case FIELD_OFFSET( struct nsi_ndis_ifinfo_rw, alias ):
+    {
+        IF_COUNTED_STRING *str = (IF_COUNTED_STRING *)data;
+        if (data_size != sizeof(*str)) return STATUS_INVALID_PARAMETER;
+        if_counted_string_init( str, entry->if_name );
+        return STATUS_SUCCESS;
+    }
+    default:
+        FIXME( "Offset %#x not handled\n", data_offset );
+    }
+
+    return STATUS_INVALID_PARAMETER;
+}
+
+static NTSTATUS ifinfo_get_static_parameter( struct if_entry *entry, void *data, DWORD data_size, DWORD data_offset )
+{
+    switch (data_offset)
+    {
+    case FIELD_OFFSET( struct nsi_ndis_ifinfo_static, if_index ):
+        if (data_size != sizeof(DWORD)) return STATUS_INVALID_PARAMETER;
+        *(DWORD *)data = entry->if_index;
+        return STATUS_SUCCESS;
+
+    case FIELD_OFFSET( struct nsi_ndis_ifinfo_static, if_guid ):
+        if (data_size != sizeof(GUID)) return STATUS_INVALID_PARAMETER;
+        *(GUID *)data = entry->if_guid;
+        return STATUS_SUCCESS;
+
+    default:
+        FIXME( "Offset %#x not handled\n", data_offset );
+    }
+    return STATUS_INVALID_PARAMETER;
+}
+
+static NTSTATUS ifinfo_get_parameter( const void *key, DWORD key_size, DWORD param_type,
+                                      void *data, DWORD data_size, DWORD data_offset )
+{
+    struct if_entry *entry;
+    NTSTATUS status = STATUS_OBJECT_NAME_NOT_FOUND;
+
+    TRACE( "%p %d %d %p %d %d\n", key, key_size, param_type, data, data_size, data_offset );
+
+    EnterCriticalSection( &if_list_cs );
+
+    update_if_table();
+
+    entry = find_entry_from_luid( (const NET_LUID *)key );
+    if (entry)
+    {
+        switch (param_type)
+        {
+        case NSI_PARAM_TYPE_RW:
+            status = ifinfo_get_rw_parameter( entry, data, data_size, data_offset );
+            break;
+        case NSI_PARAM_TYPE_STATIC:
+            status = ifinfo_get_static_parameter( entry, data, data_size, data_offset );
+            break;
+        }
+    }
+
+    LeaveCriticalSection( &if_list_cs );
+
+    return status;
+}
+
 static const struct module_table tables[] =
 {
     {
@@ -525,6 +594,7 @@ static const struct module_table tables[] =
         },
         ifinfo_enumerate_all,
         ifinfo_get_all_parameters,
+        ifinfo_get_parameter
     },
     { ~0u }
 };
