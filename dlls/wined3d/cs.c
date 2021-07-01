@@ -3310,6 +3310,9 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device,
     cs->c.device = device;
     cs->serialize_commands = TRACE_ON(d3d_sync) || wined3d_settings.cs_multithreaded & WINED3D_CSMT_SERIALIZE;
 
+    if (cs->serialize_commands)
+        ERR_(d3d_sync)("Forcing serialization of all command streams.\n");
+
     state_init(&cs->state, d3d_info, WINED3D_STATE_NO_REF | WINED3D_STATE_INIT_DEFAULT, cs->c.state->feature_level);
 
     cs->data_size = WINED3D_INITIAL_CS_SIZE;
