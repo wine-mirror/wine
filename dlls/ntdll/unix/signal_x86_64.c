@@ -362,6 +362,9 @@ static inline void context_init_xstate( CONTEXT *context, void *xstate_buffer )
     context->ContextFlags |= CONTEXT_XSTATE;
 }
 
+static USHORT cs32_sel;  /* selector for %cs in 32-bit mode */
+static USHORT cs64_sel;  /* selector for %cs in 64-bit mode */
+static USHORT ds64_sel;  /* selector for %ds/%es/%ss in 64-bit mode */
 
 /***********************************************************************
  * Definitions for Dwarf unwind tables
@@ -2479,6 +2482,8 @@ NTSTATUS WINAPI NtSetLdtEntries( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_E
  */
 void signal_init_threading(void)
 {
+    __asm__( "movw %%cs,%0" : "=m" (cs64_sel) );
+    __asm__( "movw %%ss,%0" : "=m" (ds64_sel) );
 }
 
 
@@ -2607,6 +2612,13 @@ void signal_init_process(void)
     if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_XSAVE) __wine_syscall_flags |= SYSCALL_HAVE_XSAVE;
     if (xstate_compaction_enabled) __wine_syscall_flags |= SYSCALL_HAVE_XSAVEC;
 
+#ifdef __linux__
+    if (NtCurrentTeb()->WowTebOffset)
+    {
+        cs32_sel = 0x23;
+    }
+#endif
+
     sig_act.sa_mask = server_block_set;
     sig_act.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
 
@@ -2642,17 +2654,39 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     struct amd64_thread_data *thread_data = (struct amd64_thread_data *)&teb->GdiTebBatch;
     struct syscall_frame *frame = thread_data->syscall_frame;
     CONTEXT *ctx, context = { 0 };
+    I386_CONTEXT *wow_context;
 
     context.ContextFlags = CONTEXT_ALL;
     context.Rcx    = (ULONG_PTR)entry;
     context.Rdx    = (ULONG_PTR)arg;
     context.Rsp    = (ULONG_PTR)teb->Tib.StackBase - 0x28;
     context.Rip    = (ULONG_PTR)pRtlUserThreadStart;
+    context.SegCs  = cs64_sel;
+    context.SegDs  = ds64_sel;
+    context.SegEs  = ds64_sel;
+    context.SegGs  = ds64_sel;
+    context.SegSs  = ds64_sel;
     context.EFlags = 0x200;
     context.u.FltSave.ControlWord = 0x27f;
     context.u.FltSave.MxCsr = context.MxCsr = 0x1f80;
-    __asm__( "movw %%cs,%0" : "=m" (context.SegCs) );
-    __asm__( "movw %%ss,%0" : "=m" (context.SegSs) );
+
+    if ((wow_context = get_cpu_area( IMAGE_FILE_MACHINE_I386 )))
+    {
+        wow_context->ContextFlags = CONTEXT_I386_ALL;
+        wow_context->Eax = (ULONG_PTR)entry;
+        wow_context->Ebx = (ULONG_PTR)arg;
+        wow_context->Esp = get_wow_teb( teb )->Tib.StackBase - 16;
+        wow_context->Eip = (ULONG_PTR)pRtlUserThreadStart;
+        wow_context->SegCs = cs32_sel;
+        wow_context->SegDs = context.SegDs;
+        wow_context->SegEs = context.SegEs;
+        wow_context->SegFs = context.SegFs;
+        wow_context->SegGs = context.SegGs;
+        wow_context->SegSs = context.SegSs;
+        wow_context->EFlags = 0x202;
+        wow_context->FloatSave.ControlWord = context.u.FltSave.ControlWord;
+        *(XSAVE_FORMAT *)wow_context->ExtendedRegisters = context.u.FltSave;
+    }
 
     if (suspend) wait_suspend( &context );
 
