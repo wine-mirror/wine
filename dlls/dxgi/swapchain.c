@@ -2179,10 +2179,9 @@ static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
         return hresult_from_vk_result(vr);
     }
 
+    ++swapchain->frame_number;
     if ((frame_latency_event = swapchain->frame_latency_event))
     {
-        ++swapchain->frame_number;
-
         if (FAILED(hr = ID3D12CommandQueue_Signal(swapchain->command_queue,
                 swapchain->frame_latency_fence, swapchain->frame_number)))
         {
@@ -2505,9 +2504,13 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetFrameStatistics(IDXGISwapCha
 static HRESULT STDMETHODCALLTYPE d3d12_swapchain_GetLastPresentCount(IDXGISwapChain4 *iface,
         UINT *last_present_count)
 {
-    FIXME("iface %p, last_present_count %p stub!\n", iface, last_present_count);
+    struct d3d12_swapchain *swapchain = d3d12_swapchain_from_IDXGISwapChain4(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, last_present_count %p.\n", iface, last_present_count);
+
+    *last_present_count = swapchain->frame_number;
+
+    return S_OK;
 }
 
 /* IDXGISwapChain1 methods */
