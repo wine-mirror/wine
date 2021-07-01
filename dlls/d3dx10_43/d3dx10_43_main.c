@@ -187,17 +187,6 @@ HRESULT WINAPI D3DX10CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D10_DRIVE
             D3D10_1_SDK_VERSION, desc, swapchain, (ID3D10Device1 **)device);
 }
 
-HRESULT WINAPI D3DX10CreateTextureFromMemory(ID3D10Device *device, const void *src_data,
-        SIZE_T src_data_size, D3DX10_IMAGE_LOAD_INFO *loadinfo, ID3DX10ThreadPump *pump,
-        ID3D10Resource **texture, HRESULT *hresult)
-{
-    FIXME("device %p, src_data %p, src_data_size %lu, loadinfo %p, pump %p, texture %p, "
-            "hresult %p, stub!\n",
-            device, src_data, src_data_size, loadinfo, pump, texture, hresult);
-
-    return E_NOTIMPL;
-}
-
 HRESULT WINAPI D3DX10FilterTexture(ID3D10Resource *texture, UINT src_level, UINT filter)
 {
     FIXME("texture %p, src_level %u, filter %#x stub!\n", texture, src_level, filter);
