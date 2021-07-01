@@ -686,6 +686,7 @@ struct process *create_process( int fd, struct process *parent, unsigned int fla
         process->affinity = parent->affinity;
     }
     if (!process->handles || !process->token) goto error;
+    process->session_id = default_session_id;
 
     /* Assign a high security label to the token. The default would be medium
      * but Wine provides admin access to all applications right now so high

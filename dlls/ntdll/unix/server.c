@@ -1513,6 +1513,7 @@ size_t server_init_process(void)
         ret = wine_server_call( req );
         pid               = reply->pid;
         tid               = reply->tid;
+        peb->SessionId    = reply->session_id;
         info_size         = reply->info_size;
         server_start_time = reply->server_start;
         supported_machines_count = wine_server_reply_size( reply ) / sizeof(*supported_machines);

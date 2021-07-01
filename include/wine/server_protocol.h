@@ -933,9 +933,9 @@ struct init_first_thread_reply
     process_id_t pid;
     thread_id_t  tid;
     timeout_t    server_start;
+    unsigned int session_id;
     data_size_t  info_size;
     /* VARARG(machines,ushorts); */
-    char __pad_28[4];
 };
 
 
@@ -6251,7 +6251,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 720
+#define SERVER_PROTOCOL_VERSION 721
 
 /* ### protocol_version end ### */
 

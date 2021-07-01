@@ -51,6 +51,7 @@ struct process
     struct fd           *msg_fd;          /* fd for sendmsg/recvmsg */
     process_id_t         id;              /* id of the process */
     process_id_t         group_id;        /* group id of the process */
+    unsigned int         session_id;      /* session id */
     struct timeout_user *sigkill_timeout; /* timeout for final SIGKILL */
     unsigned short       machine;         /* client machine type */
     int                  unix_pid;        /* Unix pid for final SIGKILL */
@@ -141,5 +142,7 @@ static inline int is_process_init_done( struct process *process )
 {
     return process->startup_state == STARTUP_DONE;
 }
+
+static const unsigned int default_session_id = 1;
 
 #endif  /* __WINE_SERVER_PROCESS_H */

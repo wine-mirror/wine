@@ -1431,6 +1431,7 @@ DECL_HANDLER(init_first_thread)
 
     reply->pid          = get_process_id( process );
     reply->tid          = get_thread_id( current );
+    reply->session_id   = process->session_id;
     reply->info_size    = get_process_startup_info_size( process );
     reply->server_start = server_start_time;
     set_reply_data( supported_machines,

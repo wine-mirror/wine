@@ -911,6 +911,7 @@ typedef struct
     process_id_t pid;          /* process id of the new thread's process */
     thread_id_t  tid;          /* thread id of the new thread */
     timeout_t    server_start; /* server start time */
+    unsigned int session_id;   /* process session id */
     data_size_t  info_size;    /* total size of startup info */
     VARARG(machines,ushorts);  /* array of supported machines */
 @END
