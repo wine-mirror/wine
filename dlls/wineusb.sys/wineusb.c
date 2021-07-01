@@ -145,7 +145,6 @@ static void remove_usb_device(libusb_device *libusb_device)
         if (device->libusb_device == libusb_device)
         {
             list_remove(&device->entry);
-            device->removed = TRUE;
             break;
         }
     }
@@ -402,26 +401,24 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
         }
 
         case IRP_MN_START_DEVICE:
+            ret = STATUS_SUCCESS;
+            break;
+
         case IRP_MN_SURPRISE_REMOVAL:
+            EnterCriticalSection(&wineusb_cs);
+            remove_pending_irps(device);
+            device->removed = TRUE;
+            LeaveCriticalSection(&wineusb_cs);
             ret = STATUS_SUCCESS;
             break;
 
         case IRP_MN_REMOVE_DEVICE:
-            EnterCriticalSection(&wineusb_cs);
             remove_pending_irps(device);
-            LeaveCriticalSection(&wineusb_cs);
 
-            if (device->removed)
-            {
-                libusb_unref_device(device->libusb_device);
-                libusb_close(device->handle);
+            libusb_unref_device(device->libusb_device);
+            libusb_close(device->handle);
 
-                irp->IoStatus.Status = STATUS_SUCCESS;
-                IoCompleteRequest(irp, IO_NO_INCREMENT);
-                IoDeleteDevice(device->device_obj);
-                return STATUS_SUCCESS;
-            }
-
+            IoDeleteDevice(device->device_obj);
             ret = STATUS_SUCCESS;
             break;
 
