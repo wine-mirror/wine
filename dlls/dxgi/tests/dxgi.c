@@ -908,6 +908,38 @@ static IDXGIAdapter *get_adapter_(unsigned int line, IUnknown *device, BOOL is_d
     return adapter;
 }
 
+#define create_swapchain(a, b, c) create_swapchain_(__LINE__, a, b, c)
+static IDXGISwapChain *create_swapchain_(unsigned int line, IUnknown *device, BOOL is_d3d12, HWND window)
+{
+    DXGI_SWAP_CHAIN_DESC desc;
+    IDXGISwapChain *swapchain;
+    IDXGIFactory *factory;
+    HRESULT hr;
+
+    desc.BufferDesc.Width = 640;
+    desc.BufferDesc.Height = 480;
+    desc.BufferDesc.RefreshRate.Numerator = 60;
+    desc.BufferDesc.RefreshRate.Denominator = 1;
+    desc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    desc.SampleDesc.Count = 1;
+    desc.SampleDesc.Quality = 0;
+    desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    desc.BufferCount = is_d3d12 ? 2 : 1;
+    desc.OutputWindow = window;
+    desc.Windowed = TRUE;
+    desc.SwapEffect = is_d3d12 ? DXGI_SWAP_EFFECT_FLIP_DISCARD : DXGI_SWAP_EFFECT_DISCARD;
+    desc.Flags = 0;
+
+    get_factory(device, is_d3d12, &factory);
+    hr = IDXGIFactory_CreateSwapChain(factory, device, &desc, &swapchain);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to create swapchain, hr %#x.\n", hr);
+    IDXGIFactory_Release(factory);
+
+    return swapchain;
+}
+
 static void test_adapter_desc(void)
 {
     DXGI_ADAPTER_DESC1 desc1;
@@ -7324,6 +7356,63 @@ done:
     heap_free(original_modes);
 }
 
+static void test_swapchain_present_count(IUnknown *device, BOOL is_d3d12)
+{
+    UINT present_count, expected;
+    IDXGISwapChain *swapchain;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    swapchain = create_swapchain(device, is_d3d12, window);
+
+    present_count = ~0u;
+    hr = IDXGISwapChain_GetLastPresentCount(swapchain, &present_count);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(!present_count, "Got unexpected present count %u.\n", present_count);
+
+    hr = IDXGISwapChain_Present(swapchain, 0, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    expected = present_count + 1;
+    hr = IDXGISwapChain_GetLastPresentCount(swapchain, &present_count);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(present_count == expected, "Got unexpected present count %u, expected %u.\n", present_count, expected);
+
+    hr = IDXGISwapChain_Present(swapchain, 10, 0);
+    ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    expected = present_count;
+    hr = IDXGISwapChain_GetLastPresentCount(swapchain, &present_count);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(present_count == expected, "Got unexpected present count %u, expected %u.\n", present_count, expected);
+
+    hr = IDXGISwapChain_Present(swapchain, 0, DXGI_PRESENT_TEST);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    expected = present_count;
+    hr = IDXGISwapChain_GetLastPresentCount(swapchain, &present_count);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(present_count == expected, "Got unexpected present count %u, expected %u.\n", present_count, expected);
+
+    ShowWindow(window, SW_MINIMIZE);
+    hr = IDXGISwapChain_Present(swapchain, 0, 0);
+    ok(hr == (is_d3d12 ? S_OK : DXGI_STATUS_OCCLUDED), "Got unexpected hr %#x.\n", hr);
+    expected = present_count + !!is_d3d12;
+    hr = IDXGISwapChain_GetLastPresentCount(swapchain, &present_count);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine_if(is_d3d12)
+        ok(present_count == expected, "Got unexpected present count %u, expected %u.\n", present_count, expected);
+
+    ShowWindow(window, SW_NORMAL);
+    hr = IDXGISwapChain_Present(swapchain, 0, 0);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    expected = present_count + 1;
+    hr = IDXGISwapChain_GetLastPresentCount(swapchain, &present_count);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(present_count == expected, "Got unexpected present count %u, expected %u.\n", present_count, expected);
+
+    IDXGISwapChain_Release(swapchain);
+    DestroyWindow(window);
+}
+
 static void run_on_d3d10(void (*test_func)(IUnknown *device, BOOL is_d3d12))
 {
     IDXGIDevice *device;
@@ -7441,6 +7530,7 @@ START_TEST(dxgi)
     run_on_d3d10(test_window_association);
     run_on_d3d10(test_default_fullscreen_target_output);
     run_on_d3d10(test_mode_change);
+    run_on_d3d10(test_swapchain_present_count);
 
     if (!(d3d12_module = LoadLibraryA("d3d12.dll")))
     {
@@ -7471,6 +7561,7 @@ START_TEST(dxgi)
     run_on_d3d12(test_window_association);
     run_on_d3d12(test_default_fullscreen_target_output);
     run_on_d3d12(test_mode_change);
+    run_on_d3d12(test_swapchain_present_count);
 
     FreeLibrary(d3d12_module);
 }
