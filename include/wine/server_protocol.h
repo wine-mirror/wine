@@ -2010,9 +2010,9 @@ struct process_info
     int             priority;
     process_id_t    pid;
     process_id_t    parent_pid;
+    unsigned int    session_id;
     int             handle_count;
     int             unix_pid;
-    int             __pad;
 
 
 };
@@ -6252,7 +6252,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 722
+#define SERVER_PROTOCOL_VERSION 723
 
 /* ### protocol_version end ### */
 

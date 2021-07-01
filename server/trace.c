@@ -1220,9 +1220,9 @@ static void dump_varargs_process_info( const char *prefix, data_size_t size )
         if (size - pos < sizeof(*process)) break;
         if (pos) fputc( ',', stderr );
         dump_timeout( "{start_time=", &process->start_time );
-        fprintf( stderr, ",thread_count=%u,priority=%d,pid=%04x,parent_pid=%04x,handle_count=%u,unix_pid=%d,",
+        fprintf( stderr, ",thread_count=%u,priority=%d,pid=%04x,parent_pid=%04x,session_id=%08x,handle_count=%u,unix_pid=%d,",
                  process->thread_count, process->priority, process->pid,
-                 process->parent_pid, process->handle_count, process->unix_pid );
+                 process->parent_pid, process->session_id, process->handle_count, process->unix_pid );
         pos += sizeof(*process);
 
         pos = dump_inline_unicode_string( "name=L\"", pos, process->name_len, size );

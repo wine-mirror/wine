@@ -1874,6 +1874,7 @@ DECL_HANDLER(list_processes)
         process_info->priority = process->priority;
         process_info->pid = process->id;
         process_info->parent_pid = process->parent_id;
+        process_info->session_id = process->session_id;
         process_info->handle_count = get_handle_table_count(process);
         process_info->unix_pid = process->unix_pid;
         pos += sizeof(*process_info);

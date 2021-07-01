@@ -2294,6 +2294,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
                 nt_process->dwBasePriority = server_process->priority;
                 nt_process->UniqueProcessId = UlongToHandle(server_process->pid);
                 nt_process->ParentProcessId = UlongToHandle(server_process->parent_pid);
+                nt_process->SessionId = server_process->session_id;
                 nt_process->HandleCount = server_process->handle_count;
                 get_thread_times( server_process->unix_pid, -1, &nt_process->KernelTime, &nt_process->UserTime );
                 fill_vm_counters( &nt_process->vmCounters, server_process->unix_pid );
