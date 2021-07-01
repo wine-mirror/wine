@@ -694,14 +694,6 @@ static inline void release_sock_fd( SOCKET s, int fd )
     close( fd );
 }
 
-static int _get_fd_type(int fd)
-{
-    int sock_type = -1;
-    socklen_t optlen = sizeof(sock_type);
-    getsockopt(fd, SOL_SOCKET, SO_TYPE, (char*) &sock_type, &optlen);
-    return sock_type;
-}
-
 static BOOL set_dont_fragment(SOCKET s, int level, BOOL value)
 {
     int fd, optname;
@@ -2176,22 +2168,24 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
 
         case WS_SO_LINGER:
         {
+            WSAPROTOCOL_INFOW info;
+            int size;
+
             /* struct linger and LINGER have different sizes */
             if (!optlen || *optlen < sizeof(LINGER) || !optval)
             {
                 SetLastError(WSAEFAULT);
                 return SOCKET_ERROR;
             }
-            if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
-                return SOCKET_ERROR;
 
-            if (_get_fd_type(fd) == SOCK_DGRAM)
+            if (!ws_protocol_info( s, TRUE, &info, &size ))
+                return -1;
+
+            if (info.iSocketType == SOCK_DGRAM)
             {
-                release_sock_fd( s, fd );
                 SetLastError( WSAENOPROTOOPT );
                 return -1;
             }
-            release_sock_fd( s, fd );
 
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_SO_LINGER, optval, optlen );
         }
