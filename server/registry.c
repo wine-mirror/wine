@@ -413,6 +413,12 @@ static WCHAR *key_get_full_name( struct object *obj, data_size_t *ret_len )
     data_size_t len = sizeof(root_name) - sizeof(WCHAR);
     char *ret;
 
+    if (key->flags & KEY_DELETED)
+    {
+        set_error( STATUS_KEY_DELETED );
+        return NULL;
+    }
+
     for (key = (struct key *)obj; key != root_key; key = key->parent) len += key->namelen + sizeof(WCHAR);
     if (!(ret = malloc( len ))) return NULL;
 
