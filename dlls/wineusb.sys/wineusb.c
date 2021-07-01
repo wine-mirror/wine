@@ -363,6 +363,20 @@ static NTSTATUS query_id(const struct usb_device *device, IRP *irp, BUS_QUERY_ID
     return STATUS_SUCCESS;
 }
 
+static void remove_pending_irps(struct usb_device *device)
+{
+    LIST_ENTRY *entry;
+    IRP *irp;
+
+    while ((entry = RemoveHeadList(&device->irp_list)) != &device->irp_list)
+    {
+        irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.ListEntry);
+        irp->IoStatus.Status = STATUS_DELETE_PENDING;
+        irp->IoStatus.Information = 0;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+    }
+}
+
 static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
@@ -393,17 +407,8 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
             break;
 
         case IRP_MN_REMOVE_DEVICE:
-        {
-            LIST_ENTRY *entry;
-
             EnterCriticalSection(&wineusb_cs);
-            while ((entry = RemoveHeadList(&device->irp_list)) != &device->irp_list)
-            {
-                irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.ListEntry);
-                irp->IoStatus.Status = STATUS_DELETE_PENDING;
-                irp->IoStatus.Information = 0;
-                IoCompleteRequest(irp, IO_NO_INCREMENT);
-            }
+            remove_pending_irps(device);
             LeaveCriticalSection(&wineusb_cs);
 
             if (device->removed)
@@ -419,7 +424,6 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
 
             ret = STATUS_SUCCESS;
             break;
-        }
 
         default:
             FIXME("Unhandled minor function %#x.\n", stack->MinorFunction);
