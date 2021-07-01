@@ -54,7 +54,7 @@ extern const PSID security_high_label_sid;
 /* token functions */
 
 extern struct token *get_token_obj( struct process *process, obj_handle_t handle, unsigned int access );
-extern struct token *token_create_admin( unsigned primary, int impersonation_level, int elevation );
+extern struct token *token_create_admin( unsigned primary, int impersonation_level, int elevation, unsigned int session_id );
 extern int token_assign_label( struct token *token, PSID label );
 extern struct token *token_duplicate( struct token *src_token, unsigned primary,
                                       int impersonation_level, const struct security_descriptor *sd,
@@ -66,6 +66,7 @@ extern int token_check_privileges( struct token *token, int all_required,
 extern const ACL *token_get_default_dacl( struct token *token );
 extern const SID *token_get_user( struct token *token );
 extern const SID *token_get_primary_group( struct token *token );
+extern unsigned int token_get_session_id( struct token *token );
 extern int token_sid_present( struct token *token, const SID *sid, int deny);
 
 static inline const ACE_HEADER *ace_next( const ACE_HEADER *ace )

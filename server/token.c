@@ -122,7 +122,8 @@ struct token
     SID           *user;            /* SID of user this token represents */
     SID           *owner;           /* SID of owner (points to user or one of groups) */
     SID           *primary_group;   /* SID of user's primary group (points to one of groups) */
-    unsigned       primary;         /* is this a primary or impersonation token? */
+    unsigned int   primary;         /* is this a primary or impersonation token? */
+    unsigned int   session_id;      /* token session id */
     ACL           *default_dacl;    /* the default DACL to assign to objects created by this user */
     TOKEN_SOURCE   source;          /* source of the token */
     int            impersonation_level; /* impersonation level this token is capable of if non-primary token */
@@ -537,7 +538,7 @@ static void token_destroy( struct object *obj )
  *  modified_id may be NULL, indicating that a new modified_id luid should be
  *   allocated.
  */
-static struct token *create_token( unsigned primary, const SID *user,
+static struct token *create_token( unsigned int primary, unsigned int session_id, const SID *user,
                                    const SID_AND_ATTRIBUTES *groups, unsigned int group_count,
                                    const LUID_AND_ATTRIBUTES *privs, unsigned int priv_count,
                                    const ACL *default_dacl, TOKEN_SOURCE source,
@@ -557,6 +558,7 @@ static struct token *create_token( unsigned primary, const SID *user,
         list_init( &token->privileges );
         list_init( &token->groups );
         token->primary = primary;
+        token->session_id = session_id;
         /* primary tokens don't have impersonation levels */
         if (primary)
             token->impersonation_level = -1;
@@ -677,7 +679,7 @@ struct token *token_duplicate( struct token *src_token, unsigned primary,
         return NULL;
     }
 
-    token = create_token( primary, src_token->user, NULL, 0,
+    token = create_token( primary, src_token->session_id, src_token->user, NULL, 0,
                           NULL, 0, src_token->default_dacl,
                           src_token->source, modified_id,
                           impersonation_level, src_token->elevation );
@@ -830,7 +832,7 @@ struct token *get_token_obj( struct process *process, obj_handle_t handle, unsig
     return (struct token *)get_handle_obj( process, handle, access, &token_ops );
 }
 
-struct token *token_create_admin( unsigned primary, int impersonation_level, int elevation )
+struct token *token_create_admin( unsigned primary, int impersonation_level, int elevation, unsigned int session_id )
 {
     struct token *token = NULL;
     static const SID_IDENTIFIER_AUTHORITY nt_authority = { SECURITY_NT_AUTHORITY };
@@ -890,7 +892,7 @@ struct token *token_create_admin( unsigned primary, int impersonation_level, int
             { logon_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY|SE_GROUP_LOGON_ID },
         };
         static const TOKEN_SOURCE admin_source = {"SeMgr", {0, 0}};
-        token = create_token( primary, user_sid, admin_groups, ARRAY_SIZE( admin_groups ),
+        token = create_token( primary, session_id, user_sid, admin_groups, ARRAY_SIZE( admin_groups ),
                               admin_privs, ARRAY_SIZE( admin_privs ), default_dacl,
                               admin_source, NULL, impersonation_level, elevation );
         /* we really need a primary group */
@@ -1195,6 +1197,11 @@ const SID *token_get_user( struct token *token )
 const SID *token_get_primary_group( struct token *token )
 {
     return token->primary_group;
+}
+
+unsigned int token_get_session_id( struct token *token )
+{
+    return token->session_id;
 }
 
 int check_object_access(struct token *token, struct object *obj, unsigned int *access)
@@ -1669,7 +1676,7 @@ DECL_HANDLER(create_linked_token)
             release_object( token );
             return;
         }
-        if ((linked = token_create_admin( FALSE, SecurityIdentification, elevation )))
+        if ((linked = token_create_admin( FALSE, SecurityIdentification, elevation, token->session_id )))
         {
             reply->linked = alloc_handle( current->process, linked, TOKEN_ALL_ACCESS, 0 );
             release_object( linked );

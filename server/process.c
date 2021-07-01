@@ -664,7 +664,7 @@ struct process *create_process( int fd, struct process *parent, unsigned int fla
     if (!parent)
     {
         process->handles = alloc_handle_table( process, 0 );
-        process->token = token_create_admin( TRUE, -1, TokenElevationTypeFull );
+        process->token = token_create_admin( TRUE, -1, TokenElevationTypeFull, default_session_id );
         process->affinity = ~0;
     }
     else
@@ -686,7 +686,7 @@ struct process *create_process( int fd, struct process *parent, unsigned int fla
         process->affinity = parent->affinity;
     }
     if (!process->handles || !process->token) goto error;
-    process->session_id = default_session_id;
+    process->session_id = token_get_session_id( process->token );
 
     /* Assign a high security label to the token. The default would be medium
      * but Wine provides admin access to all applications right now so high
