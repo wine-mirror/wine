@@ -98,6 +98,7 @@ struct nsi_ndis_ifinfo_static
 
 #define IOCTL_NSIPROXY_WINE_ENUMERATE_ALL         CTL_CODE(FILE_DEVICE_NETWORK, 0x400, METHOD_BUFFERED, 0)
 #define IOCTL_NSIPROXY_WINE_GET_ALL_PARAMETERS    CTL_CODE(FILE_DEVICE_NETWORK, 0x401, METHOD_BUFFERED, 0)
+#define IOCTL_NSIPROXY_WINE_GET_PARAMETER         CTL_CODE(FILE_DEVICE_NETWORK, 0x402, METHOD_BUFFERED, 0)
 
 /* input for IOCTL_NSIPROXY_WINE_ENUMERATE_ALL */
 struct nsiproxy_enumerate_all
@@ -123,6 +124,18 @@ struct nsiproxy_get_all_parameters
     DWORD rw_size;
     DWORD dynamic_size;
     DWORD static_size;
+    BYTE key[1]; /* key_size */
+};
+
+/* input for IOCTL_NSIPROXY_WINE_GET_PARAMETER */
+struct nsiproxy_get_parameter
+{
+    NPI_MODULEID module;
+    DWORD first_arg;
+    DWORD table;
+    DWORD key_size;
+    DWORD param_type;
+    DWORD data_offset;
     BYTE key[1]; /* key_size */
 };
 

@@ -99,3 +99,21 @@ NTSTATUS nsi_get_all_parameters_ex( struct nsi_get_all_parameters_ex *params )
     return entry->get_all_parameters( params->key, params->key_size, rw, params->rw_size,
                                       dyn, params->dynamic_size, stat, params->static_size );
 }
+
+NTSTATUS nsi_get_parameter_ex( struct nsi_get_parameter_ex *params )
+{
+    const struct module_table *entry = get_module_table( params->module, params->table );
+
+    if (!entry || !entry->get_parameter)
+    {
+        WARN( "table not found\n" );
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    if (params->param_type > 2) return STATUS_INVALID_PARAMETER;
+    if (params->key_size != entry->sizes[0]) return STATUS_INVALID_PARAMETER;
+    if (params->data_offset + params->data_size > entry->sizes[params->param_type + 1])
+        return STATUS_INVALID_PARAMETER;
+    return entry->get_parameter( params->key, params->key_size, params->param_type,
+                                 params->data, params->data_size, params->data_offset );
+}

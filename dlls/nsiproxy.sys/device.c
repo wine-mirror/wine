@@ -123,6 +123,39 @@ static void nsiproxy_get_all_parameters( IRP *irp )
     irp->IoStatus.Information = (irp->IoStatus.u.Status == STATUS_SUCCESS) ? out_len : 0;
 }
 
+static void nsiproxy_get_parameter( IRP *irp )
+{
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+    struct nsiproxy_get_parameter *in = (struct nsiproxy_get_parameter *)irp->AssociatedIrp.SystemBuffer;
+    DWORD in_len = irpsp->Parameters.DeviceIoControl.InputBufferLength;
+    void *out = irp->AssociatedIrp.SystemBuffer;
+    DWORD out_len = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
+    struct nsi_get_parameter_ex get_param;
+
+    if (in_len < FIELD_OFFSET(struct nsiproxy_get_parameter, key[0]) ||
+        in_len < FIELD_OFFSET(struct nsiproxy_get_parameter, key[in->key_size]))
+    {
+        irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+        return;
+    }
+
+    get_param.unknown[0] = 0;
+    get_param.unknown[1] = 0;
+    get_param.first_arg = in->first_arg;
+    get_param.unknown2 = 0;
+    get_param.module = &in->module;
+    get_param.table = in->table;
+    get_param.key = in->key;
+    get_param.key_size = in->key_size;
+    get_param.param_type = in->param_type;
+    get_param.data = out;
+    get_param.data_size = out_len;
+    get_param.data_offset = in->data_offset;
+
+    irp->IoStatus.u.Status = nsi_get_parameter_ex( &get_param );
+    irp->IoStatus.Information = irp->IoStatus.u.Status == STATUS_SUCCESS ? out_len : 0;
+}
+
 static NTSTATUS WINAPI nsi_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
@@ -140,6 +173,10 @@ static NTSTATUS WINAPI nsi_ioctl( DEVICE_OBJECT *device, IRP *irp )
 
     case IOCTL_NSIPROXY_WINE_GET_ALL_PARAMETERS:
         nsiproxy_get_all_parameters( irp );
+        break;
+
+    case IOCTL_NSIPROXY_WINE_GET_PARAMETER:
+        nsiproxy_get_parameter( irp );
         break;
 
     default:
