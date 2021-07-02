@@ -1035,12 +1035,6 @@ static void apply_sysparams(void)
     ncm.lfStatusFont  = metrics[IDC_SYSPARAMS_TOOLTIP_TEXT - IDC_SYSPARAMS_BUTTON].lf;
     ncm.lfMessageFont = metrics[IDC_SYSPARAMS_MSGBOX_TEXT - IDC_SYSPARAMS_BUTTON].lf;
 
-    ncm.lfMenuFont.lfHeight    = MulDiv( ncm.lfMenuFont.lfHeight, -72, dpi );
-    ncm.lfCaptionFont.lfHeight = MulDiv( ncm.lfCaptionFont.lfHeight, -72, dpi );
-    ncm.lfStatusFont.lfHeight  = MulDiv( ncm.lfStatusFont.lfHeight, -72, dpi );
-    ncm.lfMessageFont.lfHeight = MulDiv( ncm.lfMessageFont.lfHeight, -72, dpi );
-    ncm.lfSmCaptionFont.lfHeight = MulDiv( ncm.lfSmCaptionFont.lfHeight, -72, dpi );
-
     SystemParametersInfoW(SPI_SETNONCLIENTMETRICS, sizeof(ncm), &ncm,
                           SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
 
