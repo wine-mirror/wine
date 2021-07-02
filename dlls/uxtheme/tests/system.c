@@ -24,6 +24,7 @@
 #include "vfwmsgs.h"
 #include "uxtheme.h"
 
+#include "msg.h"
 #include "wine/test.h"
 
 static HTHEME  (WINAPI * pOpenThemeDataEx)(HWND, LPCWSTR, DWORD);
@@ -34,6 +35,16 @@ static HRESULT (WINAPI *pGetBufferedPaintBits)(HPAINTBUFFER, RGBQUAD **, int *);
 static HDC (WINAPI *pGetBufferedPaintDC)(HPAINTBUFFER);
 static HDC (WINAPI *pGetBufferedPaintTargetDC)(HPAINTBUFFER);
 static HRESULT (WINAPI *pGetBufferedPaintTargetRect)(HPAINTBUFFER, RECT *);
+
+/* For message tests */
+enum seq_index
+{
+    PARENT_SEQ_INDEX,
+    CHILD_SEQ_INDEX,
+    NUM_MSG_SEQUENCES
+};
+
+static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
 static void init_funcs(void)
 {
@@ -51,6 +62,72 @@ static void init_funcs(void)
 
     UXTHEME_GET_PROC(OpenThemeDataEx);
 #undef UXTHEME_GET_PROC
+}
+
+/* Try to make sure pending X events have been processed before continuing */
+static void flush_events(void)
+{
+    MSG msg;
+    int diff = 200;
+    int min_timeout = 100;
+    DWORD time = GetTickCount() + diff;
+
+    while (diff > 0)
+    {
+        if (MsgWaitForMultipleObjects(0, NULL, FALSE, min_timeout, QS_ALLINPUT) == WAIT_TIMEOUT)
+            break;
+        while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+            DispatchMessageA(&msg);
+        diff = time - GetTickCount();
+    }
+}
+
+static LRESULT WINAPI TestSetWindowThemeParentProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    static LONG defwndproc_counter;
+    struct message msg = {0};
+    LRESULT ret;
+
+    /* Only care about WM_THEMECHANGED */
+    if (message != WM_THEMECHANGED)
+        return DefWindowProcA(hwnd, message, wParam, lParam);
+
+    msg.message = message;
+    msg.flags = sent | wparam | lparam;
+    if (defwndproc_counter)
+        msg.flags |= defwinproc;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+    add_message(sequences, PARENT_SEQ_INDEX, &msg);
+
+    InterlockedIncrement(&defwndproc_counter);
+    ret = DefWindowProcA(hwnd, message, wParam, lParam);
+    InterlockedDecrement(&defwndproc_counter);
+    return ret;
+}
+
+static LRESULT WINAPI TestSetWindowThemeChildProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    static LONG defwndproc_counter;
+    struct message msg = {0};
+    LRESULT ret;
+
+    /* Only care about WM_THEMECHANGED */
+    if (message != WM_THEMECHANGED)
+        return DefWindowProcA(hwnd, message, wParam, lParam);
+
+    msg.message = message;
+    msg.flags = sent | wparam | lparam;
+    if (defwndproc_counter)
+        msg.flags |= defwinproc;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+    add_message(sequences, CHILD_SEQ_INDEX, &msg);
+
+    InterlockedIncrement(&defwndproc_counter);
+    ret = DefWindowProcA(hwnd, message, wParam, lParam);
+    InterlockedDecrement(&defwndproc_counter);
+    return ret;
 }
 
 static void test_IsThemed(void)
@@ -100,15 +177,71 @@ static void test_GetWindowTheme(void)
     DestroyWindow(hWnd);
 }
 
+static const struct message SetWindowThemeSeq[] =
+{
+    {WM_THEMECHANGED, sent},
+    {0}
+};
+
+static const struct message EmptySeq[] =
+{
+    {0}
+};
+
 static void test_SetWindowTheme(void)
 {
-    HTHEME  hTheme;
+    WNDCLASSA cls = {0};
+    HWND hWnd, child;
+    HTHEME hTheme;
     HRESULT hRes;
-    HWND    hWnd;
+    MSG msg;
 
     hRes = SetWindowTheme(NULL, NULL, NULL);
 todo_wine
     ok( hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08x\n", hRes);
+
+    /* Test that WM_THEMECHANGED is sent and not posted to windows */
+    cls.hInstance = GetModuleHandleA(0);
+    cls.hCursor = LoadCursorA(0, (LPCSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpfnWndProc = TestSetWindowThemeParentProcA;
+    cls.lpszClassName = "TestSetWindowThemeParentClass";
+    RegisterClassA(&cls);
+
+    cls.lpfnWndProc = TestSetWindowThemeChildProcA;
+    cls.lpszClassName = "TestSetWindowThemeChildClass";
+    RegisterClassA(&cls);
+
+    hWnd = CreateWindowA("TestSetWindowThemeParentClass", "parent",
+                         WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 200, 200, 0, 0, 0, NULL);
+    ok(!!hWnd, "Failed to create a parent window.\n");
+    child = CreateWindowA("TestSetWindowThemeChildClass", "child", WS_CHILD | WS_VISIBLE, 0, 0, 50,
+                          50, hWnd, 0, 0, NULL);
+    ok(!!child, "Failed to create a child window.\n");
+    flush_events();
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    hRes = SetWindowTheme(hWnd, NULL, NULL);
+    ok(hRes == S_OK, "Expected %#x, got %#x.\n", S_OK, hRes);
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+    {
+        struct message recv_msg = {0};
+
+        if (msg.message == WM_THEMECHANGED)
+        {
+            recv_msg.message = msg.message;
+            recv_msg.flags = posted | wparam | lparam;
+            recv_msg.wParam = msg.wParam;
+            recv_msg.lParam = msg.lParam;
+            add_message(sequences, msg.hwnd == hWnd ? PARENT_SEQ_INDEX : CHILD_SEQ_INDEX, &recv_msg);
+        }
+        DispatchMessageA(&msg);
+    }
+    ok_sequence(sequences, PARENT_SEQ_INDEX, SetWindowThemeSeq, "SetWindowTheme parent", TRUE);
+    ok_sequence(sequences, CHILD_SEQ_INDEX, EmptySeq, "SetWindowTheme child", TRUE);
+    DestroyWindow(hWnd);
+    UnregisterClassA("TestSetWindowThemeParentClass", GetModuleHandleA(0));
+    UnregisterClassA("TestSetWindowThemeChildClass", GetModuleHandleA(0));
 
     /* Only do the bare minimum to get a valid hwnd */
     hWnd = CreateWindowExA(0, "button", "test", WS_POPUP, 0, 0, 100, 100, 0, 0, 0, NULL);
@@ -750,6 +883,7 @@ todo_wine
 START_TEST(system)
 {
     init_funcs();
+    init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
     /* No real functional theme API tests will be done (yet). The current tests
      * only show input/return behaviour
