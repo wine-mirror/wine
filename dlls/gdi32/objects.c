@@ -65,6 +65,17 @@ static WORD get_object_type( HGDIOBJ obj )
 }
 
 /***********************************************************************
+ *           GetObjectType    (GDI32.@)
+ */
+DWORD WINAPI GetObjectType( HGDIOBJ handle )
+{
+    DWORD result = get_object_type( handle );
+    TRACE("%p -> %u\n", handle, result );
+    if (!result) SetLastError( ERROR_INVALID_HANDLE );
+    return result;
+}
+
+/***********************************************************************
  *           SelectObject    (GDI32.@)
  *
  * Select a Gdi object into a device context.

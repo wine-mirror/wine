@@ -1091,23 +1091,6 @@ INT WINAPI GetObjectW( HGDIOBJ handle, INT count, LPVOID buffer )
 }
 
 /***********************************************************************
- *           GetObjectType    (GDI32.@)
- */
-DWORD WINAPI GetObjectType( HGDIOBJ handle )
-{
-    GDI_HANDLE_ENTRY *entry;
-    DWORD result = 0;
-
-    EnterCriticalSection( &gdi_section );
-    if ((entry = handle_entry( handle ))) result = entry->Type;
-    LeaveCriticalSection( &gdi_section );
-
-    TRACE("%p -> %u\n", handle, result );
-    if (!result) SetLastError( ERROR_INVALID_HANDLE );
-    return result;
-}
-
-/***********************************************************************
  *           GetCurrentObject    	(GDI32.@)
  *
  * Get the currently selected object of a given type in a device context.
