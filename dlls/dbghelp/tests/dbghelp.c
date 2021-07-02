@@ -106,7 +106,7 @@ static void test_stack_walk(void)
 
         addr = (void *)(DWORD_PTR)frame.AddrPC.Offset;
 
-        if (addr > (char *)stack_walk_thread && addr < (char *)stack_walk_thread + 0x100)
+        if (!found_our_frame && addr > (char *)stack_walk_thread && addr < (char *)stack_walk_thread + 0x100)
         {
             found_our_frame = TRUE;
 
