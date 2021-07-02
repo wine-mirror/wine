@@ -417,19 +417,15 @@ BOOL WINAPI FixBrushOrgEx( HDC hdc, INT x, INT y, LPPOINT oldorg )
 
 
 /***********************************************************************
- *           BRUSH_SelectObject
+ *           NtGdiSelectBrush (win32u.@)
  */
-static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc )
+HGDIOBJ WINAPI NtGdiSelectBrush( HDC hdc, HGDIOBJ handle )
 {
     BRUSHOBJ *brush;
     HGDIOBJ ret = 0;
-    DC *dc = get_dc_ptr( hdc );
+    DC *dc;
 
-    if (!dc)
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
-        return 0;
-    }
+    if (!(dc = get_dc_ptr( hdc ))) return 0;
 
     if ((brush = GDI_GetObjPtr( handle, OBJ_BRUSH )))
     {
@@ -453,6 +449,17 @@ static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc )
         }
     }
     release_dc_ptr( dc );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           BRUSH_SelectObject
+ */
+static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc )
+{
+    HGDIOBJ ret = NtGdiSelectBrush( hdc, handle );
+    if (!ret) SetLastError( ERROR_INVALID_HANDLE );
     return ret;
 }
 
