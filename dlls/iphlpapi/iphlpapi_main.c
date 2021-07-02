@@ -3244,21 +3244,20 @@ DWORD WINAPI ConvertInterfaceLuidToIndex(const NET_LUID *luid, NET_IFINDEX *inde
  */
 DWORD WINAPI ConvertInterfaceLuidToNameA(const NET_LUID *luid, char *name, SIZE_T len)
 {
-    DWORD ret;
-    MIB_IFROW row;
+    DWORD err;
+    WCHAR nameW[IF_MAX_STRING_SIZE + 1];
 
-    TRACE("(%p %p %u)\n", luid, name, (DWORD)len);
+    TRACE( "(%p %p %u)\n", luid, name, (DWORD)len );
 
     if (!luid) return ERROR_INVALID_PARAMETER;
+    if (!name || !len) return ERROR_NOT_ENOUGH_MEMORY;
 
-    row.dwIndex = luid->Info.NetLuidIndex;
-    if ((ret = GetIfEntry( &row ))) return ret;
+    err = ConvertInterfaceLuidToNameW( luid, nameW, ARRAY_SIZE(nameW) );
+    if (err) return err;
 
-    if (!name || len < WideCharToMultiByte( CP_UNIXCP, 0, row.wszName, -1, NULL, 0, NULL, NULL ))
-        return ERROR_NOT_ENOUGH_MEMORY;
-
-    WideCharToMultiByte( CP_UNIXCP, 0, row.wszName, -1, name, len, NULL, NULL );
-    return NO_ERROR;
+    if (!WideCharToMultiByte( CP_UNIXCP, 0, nameW, -1, name, len, NULL, NULL ))
+        err = GetLastError();
+    return err;
 }
 
 /******************************************************************
@@ -3286,22 +3285,15 @@ DWORD WINAPI ConvertInterfaceLuidToNameW(const NET_LUID *luid, WCHAR *name, SIZE
  */
 DWORD WINAPI ConvertInterfaceNameToLuidA(const char *name, NET_LUID *luid)
 {
-    DWORD ret;
-    IF_INDEX index;
-    MIB_IFROW row;
+    WCHAR nameW[IF_MAX_STRING_SIZE];
 
-    TRACE("(%s %p)\n", debugstr_a(name), luid);
+    TRACE( "(%s %p)\n", debugstr_a(name), luid );
 
-    if ((ret = getInterfaceIndexByName( name, &index ))) return ERROR_INVALID_NAME;
-    if (!luid) return ERROR_INVALID_PARAMETER;
+    if (!name) return ERROR_INVALID_NAME;
+    if (!MultiByteToWideChar( CP_UNIXCP, 0, name, -1, nameW, ARRAY_SIZE(nameW) ))
+        return GetLastError();
 
-    row.dwIndex = index;
-    if ((ret = GetIfEntry( &row ))) return ret;
-
-    luid->Info.Reserved     = 0;
-    luid->Info.NetLuidIndex = index;
-    luid->Info.IfType       = row.dwType;
-    return NO_ERROR;
+    return ConvertInterfaceNameToLuidW( nameW, luid );
 }
 
 /******************************************************************
