@@ -431,8 +431,13 @@ static void test_selectors(void)
     {
         /* hardcoded values */
         context.SegCs = 0x23;
+#ifdef __x86_64__
+        __asm__( "movw %%fs,%0" : "=m" (context.SegFs) );
+        __asm__( "movw %%ss,%0" : "=m" (context.SegSs) );
+#else
         context.SegSs = 0x2b;
         context.SegFs = 0x53;
+#endif
     }
 #define GET_ENTRY(info,size,ret) \
     pRtlWow64GetThreadSelectorEntry( GetCurrentThread(), info, size, ret )
