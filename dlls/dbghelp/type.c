@@ -921,12 +921,12 @@ BOOL WINAPI SymGetTypeInfo(HANDLE hProcess, DWORD64 ModBase,
 BOOL WINAPI SymGetTypeFromName(HANDLE hProcess, ULONG64 BaseOfDll,
                                PCSTR Name, PSYMBOL_INFO Symbol)
 {
-    struct process*     pcs = process_find_by_handle(hProcess);
     struct module_pair  pair;
     struct symt*        type;
 
-    if (!pcs) return FALSE;
-    pair.requested = module_find_by_addr(pcs, BaseOfDll, DMT_UNKNOWN);
+    pair.pcs = process_find_by_handle(hProcess);
+    if (!pair.pcs) return FALSE;
+    pair.requested = module_find_by_addr(pair.pcs, BaseOfDll, DMT_UNKNOWN);
     if (!module_get_debug(&pair)) return FALSE;
     type = symt_find_type_by_name(pair.effective, SymTagNull, Name);
     if (!type) return FALSE;
