@@ -3374,11 +3374,19 @@ IF_INDEX WINAPI IPHLP_if_nametoindex(const char *name)
 /******************************************************************
  *    if_indextoname (IPHLPAPI.@)
  */
-PCHAR WINAPI IPHLP_if_indextoname(NET_IFINDEX index, PCHAR name)
+char *WINAPI IPHLP_if_indextoname( NET_IFINDEX index, char *name )
 {
-    TRACE("(%u, %p)\n", index, name);
+    NET_LUID luid;
+    DWORD err;
 
-    return getInterfaceNameByIndex(index, name);
+    TRACE( "(%u, %p)\n", index, name );
+
+    err = ConvertInterfaceIndexToLuid( index, &luid );
+    if (err) return NULL;
+
+    err = ConvertInterfaceLuidToNameA( &luid, name, IF_MAX_STRING_SIZE );
+    if (err) return NULL;
+    return name;
 }
 
 /******************************************************************
