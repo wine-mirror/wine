@@ -702,6 +702,13 @@ static void get_thread_info(struct gdb_context* gdbctx, unsigned tid,
  * =============================================== *
  */
 
+static int addr_width(struct gdb_context* gdbctx)
+{
+    int sz = (gdbctx && gdbctx->process && gdbctx->process->be_cpu) ?
+        gdbctx->process->be_cpu->pointer_size : (int)sizeof(void*);
+    return sz * 2;
+}
+
 enum packet_return {packet_error = 0x00, packet_ok = 0x01, packet_done = 0x02,
                     packet_last_f = 0x80};
 
@@ -1343,7 +1350,7 @@ static void packet_query_monitor_wnd_helper(struct gdb_context* gdbctx, HWND hWn
                 "%*s%04lx%*s%-17.17s %08x %0*lx %.14s\n",
                 indent, "", (ULONG_PTR)hWnd, 13 - indent, "",
                 clsName, GetWindowLongW(hWnd, GWL_STYLE),
-                ADDRWIDTH, (ULONG_PTR)GetWindowLongPtrW(hWnd, GWLP_WNDPROC),
+                addr_width(gdbctx), (ULONG_PTR)GetWindowLongPtrW(hWnd, GWLP_WNDPROC),
                 wndName);
        packet_reply_hex_to_str(gdbctx, buffer);
        packet_reply_close(gdbctx);
@@ -1468,8 +1475,8 @@ static void packet_query_monitor_mem(struct gdb_context* gdbctx, int len, const 
         }
         packet_reply_open(gdbctx);
         snprintf(buffer, sizeof(buffer), "%0*lx %0*lx %s %s %s\n",
-                 (unsigned)sizeof(void*), (DWORD_PTR)addr,
-                 (unsigned)sizeof(void*), mbi.RegionSize, state, type, prot);
+                 addr_width(gdbctx), (DWORD_PTR)addr,
+                 addr_width(gdbctx), mbi.RegionSize, state, type, prot);
         packet_reply_add(gdbctx, "O");
         packet_reply_hex_to_str(gdbctx, buffer);
         packet_reply_close(gdbctx);
