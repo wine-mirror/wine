@@ -1052,8 +1052,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
         aa->PhysicalAddressLength = buflen;
         aa->IfType = typeFromMibType(type);
         aa->ConnectionType = connectionTypeFromMibType(type);
-        aa->Luid.Info.NetLuidIndex = index;
-        aa->Luid.Info.IfType = aa->IfType;
+        ConvertInterfaceIndexToLuid( index, &aa->Luid );
 
         if (output_gateways && num_v4_gateways)
         {
@@ -1796,10 +1795,8 @@ DWORD WINAPI GetIfEntry2( MIB_IF_ROW2 *row2 )
     if ((ret = getInterfaceStatsByName( name, &row ))) return ret;
 
     memset( row2, 0, sizeof(*row2) );
-    row2->InterfaceLuid.Info.Reserved     = 0;
-    row2->InterfaceLuid.Info.NetLuidIndex = row.dwIndex;
-    row2->InterfaceLuid.Info.IfType       = row.dwType;
     row2->InterfaceIndex                  = row.dwIndex;
+    ConvertInterfaceIndexToLuid( row2->InterfaceIndex, &row2->InterfaceLuid );
     ConvertInterfaceLuidToGuid( &row2->InterfaceLuid, &row2->InterfaceGuid );
     row2->Type                            = row.dwType;
     row2->Mtu                             = row.dwMtu;
