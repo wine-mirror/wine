@@ -7743,6 +7743,32 @@ done:
     ReleaseDC(0, hdc);
 }
 
+static void test_select_object(void)
+{
+    HFONT hfont, old_font;
+    LOGFONTA lf;
+
+    memset(&lf, 0, sizeof lf);
+
+    lf.lfCharSet = ANSI_CHARSET;
+    lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+    lf.lfWeight = FW_DONTCARE;
+    lf.lfHeight = 16;
+    lf.lfWidth = 16;
+    lf.lfQuality = DEFAULT_QUALITY;
+
+    lstrcpyA(lf.lfFaceName, "Arial");
+    hfont = create_font("Arial", &lf);
+
+    SetLastError(0xdeadbeef);
+    old_font = SelectObject(NULL, hfont);
+    ok(!old_font, "SelectObject returned %p\n", old_font);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError() = %u\n",
+       GetLastError());
+
+    DeleteObject(hfont);
+}
+
 START_TEST(font)
 {
     static const char *test_names[] =
@@ -7829,6 +7855,7 @@ START_TEST(font)
     test_ttf_names();
     test_lang_names();
     test_char_width();
+    test_select_object();
 
     /* These tests should be last test until RemoveFontResource
      * is properly implemented.

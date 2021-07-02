@@ -2673,6 +2673,12 @@ static void test_select_object(void)
     hbm_old = SelectObject(hdc, hbm_old);
     ok(hbm_old == hbm, "SelectObject failed\n");
 
+    SetLastError(0xdeadbeef);
+    hbm_old = SelectObject(NULL, hbm);
+    ok(!hbm_old, "SelectObject returned %p\n", hbm_old);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError() = %u\n",
+       GetLastError());
+
     DeleteObject(hbm);
 
     /* test an 1-bpp bitmap */
