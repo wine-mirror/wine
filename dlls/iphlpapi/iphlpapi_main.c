@@ -3357,13 +3357,18 @@ DWORD WINAPI ConvertLengthToIpv4Mask(ULONG mask_len, ULONG *mask)
  */
 IF_INDEX WINAPI IPHLP_if_nametoindex(const char *name)
 {
-    IF_INDEX idx;
+    IF_INDEX index;
+    NET_LUID luid;
+    DWORD err;
 
-    TRACE("(%s)\n", name);
-    if (getInterfaceIndexByName(name, &idx) == NO_ERROR)
-        return idx;
+    TRACE( "(%s)\n", name );
 
-    return 0;
+    err = ConvertInterfaceNameToLuidA( name, &luid );
+    if (err) return 0;
+
+    err = ConvertInterfaceLuidToIndex( &luid, &index );
+    if (err) index = 0;
+    return index;
 }
 
 /******************************************************************
