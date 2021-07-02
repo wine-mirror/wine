@@ -4534,9 +4534,9 @@ static void update_font_code_page( DC *dc, HANDLE font )
 }
 
 /***********************************************************************
- *           FONT_SelectObject
+ *           NtGdiSelectFont (win32u.@)
  */
-static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
+HGDIOBJ WINAPI NtGdiSelectFont( HDC hdc, HGDIOBJ handle )
 {
     HGDIOBJ ret = 0;
     DC *dc = get_dc_ptr( hdc );
@@ -4566,6 +4566,15 @@ static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
 
     release_dc_ptr( dc );
     return ret;
+}
+
+
+/***********************************************************************
+ *           FONT_SelectObject
+ */
+static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
+{
+    return NtGdiSelectFont( hdc, handle );
 }
 
 
