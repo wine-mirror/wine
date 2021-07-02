@@ -357,6 +357,10 @@ my @dll_groups =
  ],
  [
   "shcore",
+  "api-ms-win-core-featurestaging-l1-1-0",
+ ],
+ [
+  "shcore",
   "shell32",
   "api-ms-win-shcore-obsolete-l1-1-0",
   "api-ms-win-shcore-thread-l1-1-0",
