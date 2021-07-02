@@ -215,20 +215,16 @@ invalid:
 }
 
 /***********************************************************************
- *           PEN_SelectObject
+ *           NtGdiSelectPen (win32u.@)
  */
-static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, HDC hdc )
+HGDIOBJ WINAPI NtGdiSelectPen( HDC hdc, HGDIOBJ handle )
 {
     PENOBJ *pen;
     HGDIOBJ ret = 0;
-    DC *dc = get_dc_ptr( hdc );
     WORD type;
+    DC *dc;
 
-    if (!dc)
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
-        return 0;
-    }
+    if (!(dc = get_dc_ptr( hdc ))) return 0;
 
     if ((pen = get_any_obj_ptr( handle, &type )))
     {
@@ -265,6 +261,16 @@ static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, HDC hdc )
         }
     }
     release_dc_ptr( dc );
+    return ret;
+}
+
+/***********************************************************************
+ *           PEN_SelectObject
+ */
+static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, HDC hdc )
+{
+    HGDIOBJ ret = NtGdiSelectPen( hdc, handle );
+    if (!ret) SetLastError( ERROR_INVALID_HANDLE );
     return ret;
 }
 
