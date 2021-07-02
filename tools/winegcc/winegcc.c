@@ -1939,6 +1939,13 @@ int main(int argc, char **argv)
 		    opts.output_name = option_arg;
                     raw_compiler_arg = 0;
 		    break;
+                case 'p':
+                    if (strcmp("-pthread", opts.args->base[i]) == 0)
+                    {
+                        raw_compiler_arg = 1;
+                        raw_linker_arg = 1;
+                    }
+                    break;
                 case 's':
                     if (strcmp("-static", opts.args->base[i]) == 0)
 			linking = -1;
