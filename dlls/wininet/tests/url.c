@@ -659,7 +659,6 @@ static void InternetCrackUrl_test(void)
   copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 1024, 1024);
   ret = InternetCrackUrlA("http://x.org", 13 /* includes the nul */, 0, &urlComponents);
   ok(ret, "InternetCrackUrlA failed with error %d\n", GetLastError());
-  todo_wine
   ok(urlComponents.dwHostNameLength == 5,
      "Expected dwHostNameLength of 5, got %d\n", urlComponents.dwHostNameLength);
 
@@ -670,7 +669,6 @@ static void InternetCrackUrl_test(void)
   copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 1024, 1024);
   ret = InternetCrackUrlA("http://x.org\0/x", 15, 0, &urlComponents);
   ok(ret, "InternetCrackUrlA failed with error %d\n", GetLastError());
-  todo_wine
   ok(urlComponents.dwUrlPathLength == 0,
     "Expected dwUrlPathLength of 0, got %d\n", urlComponents.dwUrlPathLength);
 }
