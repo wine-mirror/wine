@@ -230,6 +230,7 @@ file_type get_file_type(const char* filename)
 
     if (cnt == sizeof(res_sig) && !memcmp(buf, res_sig, sizeof(res_sig))) return file_res;
     if (strendswith(filename, ".o")) return file_obj;
+    if (strendswith(filename, ".obj")) return file_obj;
     if (strendswith(filename, ".a")) return file_arh;
     if (strendswith(filename, ".res")) return file_res;
     if (strendswith(filename, ".so")) return file_so;
