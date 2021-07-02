@@ -1722,59 +1722,7 @@ NTSTATUS WINAPI D3DKMTDestroyDCFromMemory( const D3DKMT_DESTROYDCFROMMEMORY *des
  */
 static HGDIOBJ DIB_SelectObject( HGDIOBJ handle, HDC hdc )
 {
-    HGDIOBJ ret;
-    BITMAPOBJ *bitmap;
-    DC *dc;
-    PHYSDEV physdev;
-
-    if (!(dc = get_dc_ptr( hdc ))) return 0;
-
-    if (GetObjectType( hdc ) != OBJ_MEMDC)
-    {
-        ret = 0;
-        goto done;
-    }
-    ret = dc->hBitmap;
-    if (handle == dc->hBitmap) goto done;  /* nothing to do */
-
-    if (!(bitmap = GDI_GetObjPtr( handle, OBJ_BITMAP )))
-    {
-        ret = 0;
-        goto done;
-    }
-
-    if (GDI_get_ref_count( handle ))
-    {
-        WARN( "Bitmap already selected in another DC\n" );
-        GDI_ReleaseObj( handle );
-        ret = 0;
-        goto done;
-    }
-
-    physdev = GET_DC_PHYSDEV( dc, pSelectBitmap );
-    if (!physdev->funcs->pSelectBitmap( physdev, handle ))
-    {
-        GDI_ReleaseObj( handle );
-        ret = 0;
-    }
-    else
-    {
-        dc->hBitmap = handle;
-        GDI_inc_ref_count( handle );
-        dc->dirty = 0;
-        dc->vis_rect.left   = 0;
-        dc->vis_rect.top    = 0;
-        dc->vis_rect.right  = bitmap->dib.dsBm.bmWidth;
-        dc->vis_rect.bottom = bitmap->dib.dsBm.bmHeight;
-        dc->device_rect = dc->vis_rect;
-        GDI_ReleaseObj( handle );
-        DC_InitDC( dc );
-        GDI_dec_ref_count( ret );
-    }
-
- done:
-    release_dc_ptr( dc );
-    return ret;
+    return NtGdiSelectBitmap( hdc, handle );
 }
 
 

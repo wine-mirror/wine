@@ -423,9 +423,9 @@ LONG WINAPI SetBitmapBits(
 
 
 /***********************************************************************
- *           BITMAP_SelectObject
+ *           NtGdiSelectBitmap (win32u.@)
  */
-static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
+HGDIOBJ WINAPI NtGdiSelectBitmap( HDC hdc, HGDIOBJ handle )
 {
     HGDIOBJ ret;
     BITMAPOBJ *bitmap;
@@ -456,7 +456,8 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
         goto done;
     }
 
-    if (bitmap->dib.dsBm.bmBitsPixel != 1 &&
+    if (!is_bitmapobj_dib( bitmap ) &&
+        bitmap->dib.dsBm.bmBitsPixel != 1 &&
         bitmap->dib.dsBm.bmBitsPixel != GetDeviceCaps( hdc, BITSPIXEL ))
     {
         WARN( "Wrong format bitmap %u bpp\n", bitmap->dib.dsBm.bmBitsPixel );
@@ -489,6 +490,14 @@ static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
  done:
     release_dc_ptr( dc );
     return ret;
+}
+
+/***********************************************************************
+ *           BITMAP_SelectObject
+ */
+static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
+{
+    return NtGdiSelectBitmap( hdc, handle );
 }
 
 
