@@ -584,6 +584,31 @@ static NTSTATUS ifinfo_get_parameter( const void *key, DWORD key_size, DWORD par
     return status;
 }
 
+static NTSTATUS index_luid_get_parameter( const void *key, DWORD key_size, DWORD param_type,
+                                          void *data, DWORD data_size, DWORD data_offset )
+{
+    struct if_entry *entry;
+    NTSTATUS status = STATUS_OBJECT_NAME_NOT_FOUND;
+
+    TRACE( "%p %d %d %p %d %d\n", key, key_size, param_type, data, data_size, data_offset );
+
+    if (param_type != NSI_PARAM_TYPE_STATIC || data_size != sizeof(NET_LUID) || data_offset != 0)
+        return STATUS_INVALID_PARAMETER;
+
+    EnterCriticalSection( &if_list_cs );
+
+    update_if_table();
+
+    entry = find_entry_from_index( *(DWORD *)key );
+    if (entry)
+    {
+        *(NET_LUID *)data = entry->if_luid;
+        status = STATUS_SUCCESS;
+    }
+    LeaveCriticalSection( &if_list_cs );
+    return status;
+}
+
 static const struct module_table tables[] =
 {
     {
@@ -595,6 +620,16 @@ static const struct module_table tables[] =
         ifinfo_enumerate_all,
         ifinfo_get_all_parameters,
         ifinfo_get_parameter
+    },
+    {
+        NSI_NDIS_INDEX_LUID_TABLE,
+        {
+            sizeof(DWORD), 0,
+            0, sizeof(NET_LUID)
+        },
+        NULL,
+        NULL,
+        index_luid_get_parameter
     },
     { ~0u }
 };

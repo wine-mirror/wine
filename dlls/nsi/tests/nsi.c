@@ -382,9 +382,39 @@ static void test_ndis_ifinfo( void )
     NsiFreeTable( luid_tbl, rw_tbl, dyn_tbl, stat_tbl );
 }
 
+static void test_ndis_index_luid( void )
+{
+    DWORD err, count, i;
+    NET_LUID *luids, luid;
+    DWORD index;
+
+    /* index -> luid map.  NsiAllocateAndGetTable and NsiGetAllParameters fail */
+
+    /* first get the luids */
+    err = NsiAllocateAndGetTable( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, (void **)&luids, sizeof(*luids),
+                                  NULL, 0, NULL, 0, NULL, 0, &count, 0 );
+    ok( !err, "got %d\n", err );
+
+    for (i = 0; i < count; i++)
+    {
+        ConvertInterfaceLuidToIndex( luids + i, &index );
+        err = NsiGetParameter( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_INDEX_LUID_TABLE, &index, sizeof(index),
+                               NSI_PARAM_TYPE_STATIC, &luid, sizeof(luid), 0 );
+        ok( !err, "got %d\n", err );
+        ok( luid.Value == luids[i].Value, "%d: luid mismatch\n", i );
+    }
+    NsiFreeTable( luids, NULL, NULL, NULL );
+
+    index = ~0u;
+    err = NsiGetParameter( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_INDEX_LUID_TABLE, &index, sizeof(index),
+                           NSI_PARAM_TYPE_STATIC, &luid, sizeof(luid), 0 );
+    ok( err == ERROR_FILE_NOT_FOUND, "got %d\n", err );
+}
+
 START_TEST( nsi )
 {
     test_nsi_api();
 
     test_ndis_ifinfo();
+    test_ndis_index_luid();
 }
