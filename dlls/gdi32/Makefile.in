@@ -41,6 +41,7 @@ C_SRCS = \
 	mfdrv/init.c \
 	mfdrv/objects.c \
 	mfdrv/text.c \
+	objects.c \
 	opengl.c \
 	opentype.c \
 	painting.c \

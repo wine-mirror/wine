@@ -39,13 +39,11 @@ typedef struct
 
 #define NB_HATCH_STYLES  6
 
-static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc );
 static INT BRUSH_GetObject( HGDIOBJ handle, INT count, LPVOID buffer );
 static BOOL BRUSH_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs brush_funcs =
 {
-    BRUSH_SelectObject,  /* pSelectObject */
     BRUSH_GetObject,     /* pGetObjectA */
     BRUSH_GetObject,     /* pGetObjectW */
     NULL,                /* pUnrealizeObject */
@@ -449,17 +447,6 @@ HGDIOBJ WINAPI NtGdiSelectBrush( HDC hdc, HGDIOBJ handle )
         }
     }
     release_dc_ptr( dc );
-    return ret;
-}
-
-
-/***********************************************************************
- *           BRUSH_SelectObject
- */
-static HGDIOBJ BRUSH_SelectObject( HGDIOBJ handle, HDC hdc )
-{
-    HGDIOBJ ret = NtGdiSelectBrush( hdc, handle );
-    if (!ret) SetLastError( ERROR_INVALID_HANDLE );
     return ret;
 }
 

@@ -1156,42 +1156,6 @@ HGDIOBJ WINAPI GetCurrentObject(HDC hdc,UINT type)
 
 
 /***********************************************************************
- *           SelectObject    (GDI32.@)
- *
- * Select a Gdi object into a device context.
- *
- * PARAMS
- *  hdc  [I] Device context to associate the object with
- *  hObj [I] Gdi object to associate with hdc
- *
- * RETURNS
- *  Success: A non-NULL handle representing the previously selected object of
- *           the same type as hObj.
- *  Failure: A NULL object. If hdc is invalid, GetLastError() returns ERROR_INVALID_HANDLE.
- *           if hObj is not a valid object handle, no last error is set. In either
- *           case, hdc is unaffected by the call.
- */
-HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ hObj )
-{
-    GDI_HANDLE_ENTRY *entry;
-    const struct gdi_obj_funcs *funcs = NULL;
-
-    TRACE( "(%p,%p)\n", hdc, hObj );
-
-    EnterCriticalSection( &gdi_section );
-    if ((entry = handle_entry( hObj )))
-    {
-        funcs = entry_obj( entry )->funcs;
-        hObj = entry_to_handle( entry );  /* make it a full handle */
-    }
-    LeaveCriticalSection( &gdi_section );
-
-    if (funcs && funcs->pSelectObject) return funcs->pSelectObject( hObj, hdc );
-    return 0;
-}
-
-
-/***********************************************************************
  *           UnrealizeObject    (GDI32.@)
  */
 BOOL WINAPI UnrealizeObject( HGDIOBJ obj )

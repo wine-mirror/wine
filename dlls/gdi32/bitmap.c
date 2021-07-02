@@ -32,13 +32,11 @@
 WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
 
 
-static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc );
 static INT BITMAP_GetObject( HGDIOBJ handle, INT count, LPVOID buffer );
 static BOOL BITMAP_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs bitmap_funcs =
 {
-    BITMAP_SelectObject,  /* pSelectObject */
     BITMAP_GetObject,     /* pGetObjectA */
     BITMAP_GetObject,     /* pGetObjectW */
     NULL,                 /* pUnrealizeObject */
@@ -490,14 +488,6 @@ HGDIOBJ WINAPI NtGdiSelectBitmap( HDC hdc, HGDIOBJ handle )
  done:
     release_dc_ptr( dc );
     return ret;
-}
-
-/***********************************************************************
- *           BITMAP_SelectObject
- */
-static HGDIOBJ BITMAP_SelectObject( HGDIOBJ handle, HDC hdc )
-{
-    return NtGdiSelectBitmap( hdc, handle );
 }
 
 

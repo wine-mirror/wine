@@ -107,12 +107,10 @@ SOFTWARE.
 WINE_DEFAULT_DEBUG_CHANNEL(region);
 
 
-static HGDIOBJ REGION_SelectObject( HGDIOBJ handle, HDC hdc );
 static BOOL REGION_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs region_funcs =
 {
-    REGION_SelectObject,  /* pSelectObject */
     NULL,                 /* pGetObjectA */
     NULL,                 /* pGetObjectW */
     NULL,                 /* pUnrealizeObject */
@@ -486,14 +484,6 @@ static BOOL REGION_DeleteObject( HGDIOBJ handle )
     if (!rgn) return FALSE;
     free_region( rgn );
     return TRUE;
-}
-
-/***********************************************************************
- *           REGION_SelectObject
- */
-static HGDIOBJ REGION_SelectObject( HGDIOBJ handle, HDC hdc )
-{
-    return ULongToHandle(SelectClipRgn( hdc, handle ));
 }
 
 

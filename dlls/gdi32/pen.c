@@ -40,13 +40,11 @@ typedef struct
 } PENOBJ;
 
 
-static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, HDC hdc );
 static INT PEN_GetObject( HGDIOBJ handle, INT count, LPVOID buffer );
 static BOOL PEN_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs pen_funcs =
 {
-    PEN_SelectObject,  /* pSelectObject */
     PEN_GetObject,     /* pGetObjectA */
     PEN_GetObject,     /* pGetObjectW */
     NULL,              /* pUnrealizeObject */
@@ -261,16 +259,6 @@ HGDIOBJ WINAPI NtGdiSelectPen( HDC hdc, HGDIOBJ handle )
         }
     }
     release_dc_ptr( dc );
-    return ret;
-}
-
-/***********************************************************************
- *           PEN_SelectObject
- */
-static HGDIOBJ PEN_SelectObject( HGDIOBJ handle, HDC hdc )
-{
-    HGDIOBJ ret = NtGdiSelectPen( hdc, handle );
-    if (!ret) SetLastError( ERROR_INVALID_HANDLE );
     return ret;
 }
 

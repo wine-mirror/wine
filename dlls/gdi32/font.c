@@ -180,14 +180,12 @@ static inline WCHAR *strdupW( const WCHAR *p )
     return ret;
 }
 
-static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc );
 static INT FONT_GetObjectA( HGDIOBJ handle, INT count, LPVOID buffer );
 static INT FONT_GetObjectW( HGDIOBJ handle, INT count, LPVOID buffer );
 static BOOL FONT_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs fontobj_funcs =
 {
-    FONT_SelectObject,  /* pSelectObject */
     FONT_GetObjectA,    /* pGetObjectA */
     FONT_GetObjectW,    /* pGetObjectW */
     NULL,               /* pUnrealizeObject */
@@ -4566,15 +4564,6 @@ HGDIOBJ WINAPI NtGdiSelectFont( HDC hdc, HGDIOBJ handle )
 
     release_dc_ptr( dc );
     return ret;
-}
-
-
-/***********************************************************************
- *           FONT_SelectObject
- */
-static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
-{
-    return NtGdiSelectFont( hdc, handle );
 }
 
 

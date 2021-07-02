@@ -78,13 +78,11 @@
 WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
 
 
-static HGDIOBJ DIB_SelectObject( HGDIOBJ handle, HDC hdc );
 static INT DIB_GetObject( HGDIOBJ handle, INT count, LPVOID buffer );
 static BOOL DIB_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs dib_funcs =
 {
-    DIB_SelectObject,  /* pSelectObject */
     DIB_GetObject,     /* pGetObjectA */
     DIB_GetObject,     /* pGetObjectW */
     NULL,              /* pUnrealizeObject */
@@ -1714,15 +1712,6 @@ NTSTATUS WINAPI D3DKMTDestroyDCFromMemory( const D3DKMT_DESTROYDCFROMMEMORY *des
     DeleteDC( desc->hDc );
 
     return STATUS_SUCCESS;
-}
-
-
-/***********************************************************************
- *           DIB_SelectObject
- */
-static HGDIOBJ DIB_SelectObject( HGDIOBJ handle, HDC hdc )
-{
-    return NtGdiSelectBitmap( hdc, handle );
 }
 
 
