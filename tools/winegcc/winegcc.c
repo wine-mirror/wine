@@ -2030,7 +2030,10 @@ int main(int argc, char **argv)
                                 opts.debug_file = strdup( Wl->base[++j] );
                                 continue;
                             }
-                            if (!strcmp(Wl->base[j], "--whole-archive") || !strcmp(Wl->base[j], "--no-whole-archive"))
+                            if (!strcmp(Wl->base[j], "--whole-archive") ||
+                                !strcmp(Wl->base[j], "--no-whole-archive") ||
+                                !strcmp(Wl->base[j], "--start-group") ||
+                                !strcmp(Wl->base[j], "--end-group"))
                             {
                                 strarray_add( opts.files, strmake( "-Wl,%s", Wl->base[j] ));
                                 continue;
