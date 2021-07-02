@@ -74,10 +74,10 @@ BOOL CDECL nulldrv_FillRgn( PHYSDEV dev, HRGN rgn, HBRUSH brush )
     BOOL ret = FALSE;
     HBRUSH prev;
 
-    if ((prev = SelectObject( dev->hdc, brush )))
+    if ((prev = NtGdiSelectBrush( dev->hdc, brush )))
     {
         ret = PaintRgn( dev->hdc, rgn );
-        SelectObject( dev->hdc, prev );
+        NtGdiSelectBrush( dev->hdc, prev );
     }
     return ret;
 }
@@ -97,10 +97,10 @@ BOOL CDECL nulldrv_FrameRgn( PHYSDEV dev, HRGN rgn, HBRUSH brush, INT width, INT
 
 BOOL CDECL nulldrv_InvertRgn( PHYSDEV dev, HRGN rgn )
 {
-    HBRUSH prev_brush = SelectObject( dev->hdc, GetStockObject(BLACK_BRUSH) );
+    HBRUSH prev_brush = NtGdiSelectBrush( dev->hdc, GetStockObject(BLACK_BRUSH) );
     INT prev_rop = SetROP2( dev->hdc, R2_NOT );
     BOOL ret = PaintRgn( dev->hdc, rgn );
-    SelectObject( dev->hdc, prev_brush );
+    NtGdiSelectBrush( dev->hdc, prev_brush );
     SetROP2( dev->hdc, prev_rop );
     return ret;
 }

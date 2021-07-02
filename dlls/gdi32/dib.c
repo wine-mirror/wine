@@ -940,8 +940,8 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries, const RGBQUA
         {
             SetTextColor( hdc, dc->textColor );
             SetBkColor( hdc, dc->backgroundColor );
-            SelectObject( hdc, dc->hPen );
-            SelectObject( hdc, dc->hBrush );
+            NtGdiSelectPen( hdc, dc->hPen );
+            NtGdiSelectBrush( hdc, dc->hBrush );
         }
     }
     release_dc_ptr( dc );
@@ -1686,7 +1686,7 @@ NTSTATUS WINAPI D3DKMTCreateDCFromMemory( D3DKMT_CREATEDCFROMMEMORY *desc )
 
     desc->hDc = dc;
     desc->hBitmap = bitmap;
-    SelectObject( dc, bitmap );
+    NtGdiSelectBitmap( dc, bitmap );
     return STATUS_SUCCESS;
 
 error:

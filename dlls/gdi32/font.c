@@ -5722,10 +5722,10 @@ BOOL CDECL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT
 
         if (brush)
         {
-            orig = SelectObject( dev->hdc, brush );
+            orig = NtGdiSelectBrush( dev->hdc, brush );
             dp_to_lp( dc, (POINT *)&rc, 2 );
             PatBlt( dev->hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, PATCOPY );
-            SelectObject( dev->hdc, orig );
+            NtGdiSelectBrush( dev->hdc, orig );
             DeleteObject( brush );
         }
     }
@@ -5811,7 +5811,7 @@ BOOL CDECL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT
     }
 
     pen = CreatePen( PS_SOLID, 1, dc->textColor );
-    orig = SelectObject( dev->hdc, pen );
+    orig = NtGdiSelectPen( dev->hdc, pen );
 
     for (i = 0; i < count; i++)
     {
@@ -5840,7 +5840,7 @@ BOOL CDECL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT
         }
     }
 
-    SelectObject( dev->hdc, orig );
+    NtGdiSelectPen( dev->hdc, orig );
     DeleteObject( pen );
     return TRUE;
 }
@@ -6264,10 +6264,10 @@ done:
         UINT size = GetOutlineTextMetricsW(hdc, 0, NULL);
         OUTLINETEXTMETRICW* otm = NULL;
         POINT pts[5];
-        HPEN hpen = SelectObject(hdc, GetStockObject(NULL_PEN));
+        HPEN hpen = NtGdiSelectPen(hdc, GetStockObject(NULL_PEN));
         HBRUSH hbrush = CreateSolidBrush(dc->textColor);
 
-        hbrush = SelectObject(hdc, hbrush);
+        hbrush = NtGdiSelectBrush(hdc, hbrush);
 
         if(!size)
         {
@@ -6322,8 +6322,8 @@ done:
             Polygon(hdc, pts, 5);
         }
 
-        SelectObject(hdc, hpen);
-        hbrush = SelectObject(hdc, hbrush);
+        NtGdiSelectPen(hdc, hpen);
+        hbrush = NtGdiSelectBrush(hdc, hbrush);
         DeleteObject(hbrush);
     }
 

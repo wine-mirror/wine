@@ -269,9 +269,9 @@ void DC_InitDC( DC* dc )
     physdev->funcs->pRealizeDefaultPalette( physdev );
     SetTextColor( dc->hSelf, dc->textColor );
     SetBkColor( dc->hSelf, dc->backgroundColor );
-    SelectObject( dc->hSelf, dc->hPen );
-    SelectObject( dc->hSelf, dc->hBrush );
-    SelectObject( dc->hSelf, dc->hFont );
+    NtGdiSelectPen( dc->hSelf, dc->hPen );
+    NtGdiSelectBrush( dc->hSelf, dc->hBrush );
+    NtGdiSelectFont( dc->hSelf, dc->hFont );
     update_dc_clipping( dc );
     SetVirtualResolution( dc->hSelf, 0, 0, 0, 0 );
     physdev = GET_DC_PHYSDEV( dc, pSetBoundsRect );
@@ -365,8 +365,8 @@ void DC_UpdateXforms( DC *dc )
     if (linear_xform_cmp( &oldworld2vport, &dc->xformWorld2Vport ) &&
         GetObjectType( dc->hSelf ) != OBJ_METADC)
     {
-        SelectObject(dc->hSelf, dc->hFont);
-        SelectObject(dc->hSelf, dc->hPen);
+        NtGdiSelectFont(dc->hSelf, dc->hFont);
+        NtGdiSelectPen(dc->hSelf, dc->hPen);
     }
 }
 
@@ -515,10 +515,10 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     DC_UpdateXforms( dc );
     update_dc_clipping( dc );
 
-    SelectObject( dev->hdc, dcs->hBitmap );
-    SelectObject( dev->hdc, dcs->hBrush );
-    SelectObject( dev->hdc, dcs->hFont );
-    SelectObject( dev->hdc, dcs->hPen );
+    NtGdiSelectBitmap( dev->hdc, dcs->hBitmap );
+    NtGdiSelectBrush( dev->hdc, dcs->hBrush );
+    NtGdiSelectFont( dev->hdc, dcs->hFont );
+    NtGdiSelectPen( dev->hdc, dcs->hPen );
     SetBkColor( dev->hdc, dcs->backgroundColor);
     SetTextColor( dev->hdc, dcs->textColor);
     GDISelectPalette( dev->hdc, dcs->hPalette, FALSE );
@@ -551,9 +551,9 @@ static BOOL reset_dc_state( HDC hdc )
     set_initial_dc_state( dc );
     SetBkColor( hdc, RGB( 255, 255, 255 ));
     SetTextColor( hdc, RGB( 0, 0, 0 ));
-    SelectObject( hdc, GetStockObject( WHITE_BRUSH ));
-    SelectObject( hdc, GetStockObject( SYSTEM_FONT ));
-    SelectObject( hdc, GetStockObject( BLACK_PEN ));
+    NtGdiSelectBrush( hdc, GetStockObject( WHITE_BRUSH ));
+    NtGdiSelectFont( hdc, GetStockObject( SYSTEM_FONT ));
+    NtGdiSelectPen( hdc, GetStockObject( BLACK_PEN ));
     SetVirtualResolution( hdc, 0, 0, 0, 0 );
     GDISelectPalette( hdc, GetStockObject( DEFAULT_PALETTE ), FALSE );
     SetBoundsRect( hdc, NULL, DCB_DISABLE );
@@ -1067,7 +1067,7 @@ INT WINAPI SetGraphicsMode( HDC hdc, INT mode )
         dc->GraphicsMode = mode;
     }
     /* font metrics depend on the graphics mode */
-    if (ret != mode) SelectObject(dc->hSelf, dc->hFont);
+    if (ret != mode) NtGdiSelectFont(dc->hSelf, dc->hFont);
     release_dc_ptr( dc );
     return ret;
 }

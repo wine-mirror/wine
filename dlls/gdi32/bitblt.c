@@ -785,42 +785,42 @@ BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
 	return BitBlt(hdcDest, nXDest, nYDest, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, FRGND_ROP3(dwRop));
 
     hbrMask = CreatePatternBrush(hbmMask);
-    hbrDst = SelectObject(hdcDest, GetStockObject(NULL_BRUSH));
+    hbrDst = NtGdiSelectBrush(hdcDest, GetStockObject(NULL_BRUSH));
 
     /* make bitmap */
     hDC1 = CreateCompatibleDC(hdcDest);
     hBitmap1 = CreateCompatibleBitmap(hdcDest, nWidth, nHeight);
-    hOldBitmap1 = SelectObject(hDC1, hBitmap1);
+    hOldBitmap1 = NtGdiSelectBitmap(hDC1, hBitmap1);
 
     /* draw using bkgnd rop */
     BitBlt(hDC1, 0, 0, nWidth, nHeight, hdcDest, nXDest, nYDest, SRCCOPY);
-    hbrTmp = SelectObject(hDC1, hbrDst);
+    hbrTmp = NtGdiSelectBrush(hDC1, hbrDst);
     BitBlt(hDC1, 0, 0, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, BKGND_ROP3(dwRop));
-    SelectObject(hDC1, hbrTmp);
+    NtGdiSelectBrush(hDC1, hbrTmp);
 
     /* make bitmap */
     hDC2 = CreateCompatibleDC(hdcDest);
     hBitmap2 = CreateCompatibleBitmap(hdcDest, nWidth, nHeight);
-    hOldBitmap2 = SelectObject(hDC2, hBitmap2);
+    hOldBitmap2 = NtGdiSelectBitmap(hDC2, hBitmap2);
 
     /* draw using foregnd rop */
     BitBlt(hDC2, 0, 0, nWidth, nHeight, hdcDest, nXDest, nYDest, SRCCOPY);
-    hbrTmp = SelectObject(hDC2, hbrDst);
+    hbrTmp = NtGdiSelectBrush(hDC2, hbrDst);
     BitBlt(hDC2, 0, 0, nWidth, nHeight, hdcSrc, nXSrc, nYSrc, FRGND_ROP3(dwRop));
 
     /* combine both using the mask as a pattern brush */
-    SelectObject(hDC2, hbrMask);
+    NtGdiSelectBrush(hDC2, hbrMask);
     SetBrushOrgEx(hDC2, -xMask, -yMask, NULL);
     BitBlt(hDC2, 0, 0, nWidth, nHeight, hDC1, 0, 0, 0xac0744 ); /* (D & P) | (S & ~P) */ 
-    SelectObject(hDC2, hbrTmp);
+    NtGdiSelectBrush(hDC2, hbrTmp);
 
     /* blit to dst */
     BitBlt(hdcDest, nXDest, nYDest, nWidth, nHeight, hDC2, 0, 0, SRCCOPY);
 
     /* restore all objects */
-    SelectObject(hdcDest, hbrDst);
-    SelectObject(hDC1, hOldBitmap1);
-    SelectObject(hDC2, hOldBitmap2);
+    NtGdiSelectBrush(hdcDest, hbrDst);
+    NtGdiSelectBitmap(hDC1, hOldBitmap1);
+    NtGdiSelectBitmap(hDC2, hOldBitmap2);
 
     /* delete all temp objects */
     DeleteObject(hBitmap1);
@@ -880,7 +880,7 @@ BOOL WINAPI GdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest,
         bmpWork = CreateDIBSection( 0, &info, DIB_RGB_COLORS, NULL, NULL, 0 );
     }
     else bmpWork = CreateCompatibleBitmap(hdcDest, widthDest, heightDest);
-    oldWork = SelectObject(hdcWork, bmpWork);
+    oldWork = NtGdiSelectBitmap(hdcWork, bmpWork);
     if(!StretchBlt(hdcWork, 0, 0, widthDest, heightDest, hdcSrc, xSrc, ySrc, widthSrc, heightSrc, SRCCOPY)) {
         TRACE("Failed to stretch\n");
         goto error;
@@ -890,7 +890,7 @@ BOOL WINAPI GdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest,
     /* Create mask */
     hdcMask = CreateCompatibleDC(hdcDest);
     bmpMask = CreateCompatibleBitmap(hdcMask, widthDest, heightDest);
-    oldMask = SelectObject(hdcMask, bmpMask);
+    oldMask = NtGdiSelectBitmap(hdcMask, bmpMask);
     if(!BitBlt(hdcMask, 0, 0, widthDest, heightDest, hdcWork, 0, 0, SRCCOPY)) {
         TRACE("Failed to create mask\n");
         goto error;
@@ -922,12 +922,12 @@ error:
     SetBkColor(hdcDest, oldBackground);
     SetTextColor(hdcDest, oldForeground);
     if(hdcWork) {
-        SelectObject(hdcWork, oldWork);
+        NtGdiSelectBitmap(hdcWork, oldWork);
         DeleteDC(hdcWork);
     }
     if(bmpWork) DeleteObject(bmpWork);
     if(hdcMask) {
-        SelectObject(hdcMask, oldMask);
+        NtGdiSelectBitmap(hdcMask, oldMask);
         DeleteDC(hdcMask);
     }
     if(bmpMask) DeleteObject(bmpMask);
