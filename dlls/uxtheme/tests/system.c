@@ -237,8 +237,8 @@ todo_wine
         }
         DispatchMessageA(&msg);
     }
-    ok_sequence(sequences, PARENT_SEQ_INDEX, SetWindowThemeSeq, "SetWindowTheme parent", TRUE);
-    ok_sequence(sequences, CHILD_SEQ_INDEX, EmptySeq, "SetWindowTheme child", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, SetWindowThemeSeq, "SetWindowTheme parent", FALSE);
+    ok_sequence(sequences, CHILD_SEQ_INDEX, EmptySeq, "SetWindowTheme child", FALSE);
     DestroyWindow(hWnd);
     UnregisterClassA("TestSetWindowThemeParentClass", GetModuleHandleA(0));
     UnregisterClassA("TestSetWindowThemeChildClass", GetModuleHandleA(0));
