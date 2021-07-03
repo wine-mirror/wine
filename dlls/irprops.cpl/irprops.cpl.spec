@@ -23,7 +23,7 @@
 @ stub BluetoothFindNextProfileDescriptor
 @ stub BluetoothFindNextProtocolDescriptorStack
 @ stub BluetoothFindNextProtocolEntry
-@ stub BluetoothFindNextRadio
+@ stdcall BluetoothFindNextRadio(ptr ptr) bthprops.cpl.BluetoothFindNextRadio
 @ stub BluetoothFindNextService
 @ stub BluetoothFindProfileDescriptorClose
 @ stub BluetoothFindProtocolDescriptorStackClose
