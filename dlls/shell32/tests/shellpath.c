@@ -3010,7 +3010,7 @@ static void test_PathResolve(void)
         ok(!lstrcmpiW(path, tests[i].expected_path),
                 "test %d: expected %s, got %s\n", i, wine_dbgstr_w(tests[i].expected_path), wine_dbgstr_w(path));
         if (!tests[i].expected)
-            ok(GetLastError() == ERROR_FILE_NOT_FOUND, "expected ERROR_ALREADY_EXISTS, got %d\n", GetLastError());
+            ok(GetLastError() == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
     }
 
     CloseHandle(file);
