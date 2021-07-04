@@ -3014,7 +3014,9 @@ static void test_PathResolve(void)
         ok(!lstrcmpiW(path, tests[i].expected_path),
                 "expected %s, got %s\n", wine_dbgstr_w(tests[i].expected_path), wine_dbgstr_w(path));
         if (!tests[i].expected)
-            ok(GetLastError() == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
+            ok(GetLastError() == ERROR_FILE_NOT_FOUND ||
+               broken(GetLastError() == ERROR_PATH_NOT_FOUND /* some win 8.1 & 10 */),
+               "expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
         winetest_pop_context();
     }
 
