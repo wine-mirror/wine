@@ -1685,8 +1685,9 @@ static void test_hidp(HANDLE file, int report_id)
             .Usage = HID_USAGE_GENERIC_JOYSTICK,
             .UsagePage = HID_USAGE_PAGE_GENERIC,
             .InputReportByteLength = 24,
+            .OutputReportByteLength = 3,
             .FeatureReportByteLength = 18,
-            .NumberLinkCollectionNodes = 8,
+            .NumberLinkCollectionNodes = 10,
             .NumberInputButtonCaps = 13,
             .NumberInputValueCaps = 7,
             .NumberInputDataIndices = 43,
@@ -1699,8 +1700,9 @@ static void test_hidp(HANDLE file, int report_id)
             .Usage = HID_USAGE_GENERIC_JOYSTICK,
             .UsagePage = HID_USAGE_PAGE_GENERIC,
             .InputReportByteLength = 23,
+            .OutputReportByteLength = 2,
             .FeatureReportByteLength = 17,
-            .NumberLinkCollectionNodes = 8,
+            .NumberLinkCollectionNodes = 10,
             .NumberInputButtonCaps = 13,
             .NumberInputValueCaps = 7,
             .NumberInputDataIndices = 43,
@@ -1842,8 +1844,8 @@ static void test_hidp(HANDLE file, int report_id)
             .LinkUsage = HID_USAGE_GENERIC_JOYSTICK,
             .LinkUsagePage = HID_USAGE_PAGE_GENERIC,
             .CollectionType = 1,
-            .NumberOfChildren = 5,
-            .FirstChild = 7,
+            .NumberOfChildren = 7,
+            .FirstChild = 9,
         },
         {
             .LinkUsage = HID_USAGE_GENERIC_JOYSTICK,
@@ -2577,6 +2579,57 @@ static void test_hidp(HANDLE file, int report_id)
     SetLastError(0xdeadbeef);
     ret = sync_ioctl(file, IOCTL_HID_SET_FEATURE, report, caps.FeatureReportByteLength * 2, NULL, &value);
     ok(ret, "IOCTL_HID_SET_FEATURE failed, last error %u\n", GetLastError());
+    todo_wine ok(value == 3, "got length %u, expected 3\n", value);
+
+
+    memset(report, 0xcd, sizeof(report));
+    status = HidP_InitializeReportForID(HidP_Output, report_id, preparsed_data, report, caps.OutputReportByteLength);
+    ok(status == HIDP_STATUS_REPORT_DOES_NOT_EXIST, "HidP_InitializeReportForID returned %#x\n", status);
+    memset(report, 0, caps.OutputReportByteLength);
+    report[0] = report_id;
+
+    SetLastError(0xdeadbeef);
+    ret = HidD_SetOutputReport(file, report, 0);
+    todo_wine ok(!ret, "HidD_SetOutputReport succeeded\n");
+    todo_wine ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "HidD_SetOutputReport returned error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = HidD_SetOutputReport(file, report, caps.OutputReportByteLength - 1);
+    todo_wine
+    ok(!ret, "HidD_SetOutputReport succeeded\n");
+    todo_wine
+    ok(GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == ERROR_CRC),
+       "HidD_SetOutputReport returned error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    memset(buffer, 0x5a, sizeof(buffer));
+    ret = HidD_SetOutputReport(file, buffer, caps.OutputReportByteLength);
+    if (report_id || broken(!ret))
+    {
+        todo_wine
+        ok(!ret, "HidD_SetOutputReport succeeded, last error %u\n", GetLastError());
+        todo_wine
+        ok(GetLastError() == ERROR_INVALID_PARAMETER || broken(GetLastError() == ERROR_CRC),
+           "HidD_SetOutputReport returned error %u\n", GetLastError());
+    }
+    else
+    {
+        ok(ret, "HidD_SetOutputReport failed, last error %u\n", GetLastError());
+    }
+
+    SetLastError(0xdeadbeef);
+    ret = HidD_SetOutputReport(file, report, caps.OutputReportByteLength);
+    ok(ret, "HidD_SetOutputReport failed, last error %u\n", GetLastError());
+
+    value = caps.OutputReportByteLength * 2;
+    SetLastError(0xdeadbeef);
+    ret = sync_ioctl(file, IOCTL_HID_SET_OUTPUT_REPORT, NULL, 0, report, &value);
+    todo_wine ok(!ret, "IOCTL_HID_SET_OUTPUT_REPORT succeeded\n");
+    todo_wine ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "IOCTL_HID_SET_OUTPUT_REPORT returned error %u\n", GetLastError());
+    value = 0;
+    SetLastError(0xdeadbeef);
+    ret = sync_ioctl(file, IOCTL_HID_SET_OUTPUT_REPORT, report, caps.OutputReportByteLength * 2, NULL, &value);
+    ok(ret, "IOCTL_HID_SET_OUTPUT_REPORT failed, last error %u\n", GetLastError());
     todo_wine ok(value == 3, "got length %u, expected 3\n", value);
 
 

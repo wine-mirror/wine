@@ -290,6 +290,26 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
                 REPORT_SIZE(1, 1),
                 FEATURE(1, Data|Var|Abs),
             END_COLLECTION,
+
+            USAGE_PAGE(1, HID_USAGE_PAGE_LED),
+            USAGE(1, HID_USAGE_LED_GREEN),
+            COLLECTION(1, Report),
+                REPORT_ID_OR_USAGE_PAGE(1, report_id, 0),
+                USAGE_PAGE(1, HID_USAGE_PAGE_LED),
+                REPORT_COUNT(1, 8),
+                REPORT_SIZE(1, 1),
+                OUTPUT(1, Cnst|Var|Abs),
+            END_COLLECTION,
+
+            USAGE_PAGE(1, HID_USAGE_PAGE_LED),
+            USAGE(1, HID_USAGE_LED_RED),
+            COLLECTION(1, Report),
+                REPORT_ID_OR_USAGE_PAGE(1, report_id, 1),
+                USAGE_PAGE(1, HID_USAGE_PAGE_LED),
+                REPORT_COUNT(1, 8),
+                REPORT_SIZE(1, 1),
+                OUTPUT(1, Cnst|Var|Abs),
+            END_COLLECTION,
         END_COLLECTION,
     };
 #undef REPORT_ID_OR_USAGE_PAGE
@@ -398,6 +418,25 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
 
             memset(packet->reportBuffer, 0xa5, 3);
             if (report_id) ((char *)packet->reportBuffer)[0] = report_id;
+            irp->IoStatus.Information = 3;
+            ret = STATUS_SUCCESS;
+            break;
+        }
+
+        case IOCTL_HID_SET_OUTPUT_REPORT:
+        {
+            HID_XFER_PACKET *packet = irp->UserBuffer;
+            ULONG expected_size = 2;
+            todo_wine ok(in_size == sizeof(*packet), "got input size %u\n", in_size);
+            todo_wine ok(!out_size, "got output size %u\n", out_size);
+
+            todo_wine_if(packet->reportId != report_id)
+            ok(packet->reportId == report_id, "got packet report id %u\n", packet->reportId);
+            todo_wine_if(packet->reportBufferLen == 0 || packet->reportBufferLen == 1)
+            ok(packet->reportBufferLen >= expected_size, "got packet buffer len %u, expected %d or more\n",
+               packet->reportBufferLen, expected_size);
+            ok(!!packet->reportBuffer, "got packet buffer %p\n", packet->reportBuffer);
+
             irp->IoStatus.Information = 3;
             ret = STATUS_SUCCESS;
             break;
