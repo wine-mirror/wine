@@ -475,24 +475,6 @@ static INT BITMAP_GetObject( HGDIOBJ handle, INT count, LPVOID buffer )
 
 
 /******************************************************************************
- * CreateDiscardableBitmap [GDI32.@]
- *
- * Creates a discardable bitmap.
- *
- * RETURNS
- *    Success: Handle to bitmap
- *    Failure: NULL
- */
-HBITMAP WINAPI CreateDiscardableBitmap(
-    HDC hdc,    /* [in] Handle to device context */
-    INT width,  /* [in] Bitmap width */
-    INT height) /* [in] Bitmap height */
-{
-    return CreateCompatibleBitmap( hdc, width, height );
-}
-
-
-/******************************************************************************
  *      NtGdiGetBitmapDimension (win32u.@)
  *
  * Retrieves dimensions of a bitmap.

@@ -215,3 +215,13 @@ HBITMAP WINAPI CreateBitmap( INT width, INT height, UINT planes,
 
     return NtGdiCreateBitmap( width, height, planes, bpp, bits );
 }
+
+/******************************************************************************
+ *           CreateDiscardableBitmap (GDI32.@)
+ *
+ * Creates a discardable bitmap.
+ */
+HBITMAP WINAPI CreateDiscardableBitmap( HDC hdc, INT width, INT height )
+{
+    return CreateCompatibleBitmap( hdc, width, height );
+}
