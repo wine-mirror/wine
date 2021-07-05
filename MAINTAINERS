@@ -181,8 +181,13 @@ F:	programs/netstat/
 Network
 P:	Bruno Jesus <00cpxxx@gmail.com>
 P:	Erich E. Hoover <erich.e.hoover@wine-staging.com>
-F:	dlls/iphlpapi/
 F:	dlls/ws2_32/
+
+Network Store Interface
+M:	Huw Davies <huw@codeweavers.com>
+F:	dlls/iphlpapi/
+F:	dlls/nsi/
+F:	dlls/nsiproxy.sys/
 
 OLE Embedding
 M:	Huw Davies <huw@codeweavers.com>
