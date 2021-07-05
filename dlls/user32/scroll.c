@@ -74,17 +74,6 @@ typedef struct
   /* Scroll timer id */
 #define SCROLL_TIMER   0
 
-  /* Scroll-bar hit testing */
-enum SCROLL_HITTEST
-{
-    SCROLL_NOWHERE,      /* Outside the scroll bar */
-    SCROLL_TOP_ARROW,    /* Top or left arrow */
-    SCROLL_TOP_RECT,     /* Rectangle between the top arrow and the thumb */
-    SCROLL_THUMB,        /* Thumb rectangle */
-    SCROLL_BOTTOM_RECT,  /* Rectangle between the thumb and the bottom arrow */
-    SCROLL_BOTTOM_ARROW  /* Bottom or right arrow */
-};
-
  /* What to do after SCROLL_SetScrollInfo() */
 #define SA_SSI_HIDE		0x0001
 #define SA_SSI_SHOW		0x0002
@@ -583,8 +572,8 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, INT nBar,
  *
  * Redraw the whole scrollbar.
  */
-void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
-			   BOOL arrows, BOOL interior )
+void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar, enum SCROLL_HITTEST hit_test, BOOL arrows,
+                           BOOL interior )
 {
     INT arrowSize, thumbSize, thumbPos;
     RECT rect;
@@ -611,8 +600,8 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
     {
 	if( vertical == SCROLL_trackVertical && GetCapture() == hwnd )
 	    SCROLL_DrawArrows( hdc, infoPtr, &rect, arrowSize, vertical,
-			       (SCROLL_trackHitTest == SCROLL_TOP_ARROW),
-			       (SCROLL_trackHitTest == SCROLL_BOTTOM_ARROW) );
+                               hit_test == SCROLL_trackHitTest && hit_test == SCROLL_TOP_ARROW,
+                               hit_test == SCROLL_trackHitTest && hit_test == SCROLL_BOTTOM_ARROW );
 	else
 	    SCROLL_DrawArrows( hdc, infoPtr, &rect, arrowSize, vertical,
 							       FALSE, FALSE );
@@ -649,9 +638,9 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
 void SCROLL_DrawNCScrollBar( HWND hwnd, HDC hdc, BOOL draw_horizontal, BOOL draw_vertical )
 {
     if (draw_horizontal)
-        SCROLL_DrawScrollBar( hwnd, hdc, SB_HORZ, TRUE, TRUE );
+        SCROLL_DrawScrollBar( hwnd, hdc, SB_HORZ, SCROLL_trackHitTest, TRUE, TRUE );
     if (draw_vertical)
-        SCROLL_DrawScrollBar( hwnd, hdc, SB_VERT, TRUE, TRUE );
+        SCROLL_DrawScrollBar( hwnd, hdc, SB_VERT, SCROLL_trackHitTest, TRUE, TRUE );
 }
 
 /***********************************************************************
@@ -684,7 +673,7 @@ static void SCROLL_RefreshScrollBar( HWND hwnd, INT nBar,
                            DCX_CACHE | ((nBar == SB_CTL) ? 0 : DCX_WINDOW) );
     if (!hdc) return;
 
-    SCROLL_DrawScrollBar( hwnd, hdc, nBar, arrows, interior );
+    SCROLL_DrawScrollBar( hwnd, hdc, nBar, SCROLL_trackHitTest, arrows, interior );
     ReleaseDC( hwnd, hdc );
 }
 
@@ -831,8 +820,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
         break;
 
     case SCROLL_TOP_ARROW:
-        SCROLL_DrawArrows( hdc, infoPtr, &rect, arrowSize, vertical,
-                           (hittest == SCROLL_trackHitTest), FALSE );
+        SCROLL_DrawScrollBar( hwnd, hdc, nBar, hittest, TRUE, FALSE );
         if (hittest == SCROLL_trackHitTest)
         {
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
@@ -929,8 +917,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
         break;
 
     case SCROLL_BOTTOM_ARROW:
-        SCROLL_DrawArrows( hdc, infoPtr, &rect, arrowSize, vertical,
-                           FALSE, (hittest == SCROLL_trackHitTest) );
+        SCROLL_DrawScrollBar( hwnd, hdc, nBar, hittest, TRUE, FALSE );
         if (hittest == SCROLL_trackHitTest)
         {
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
@@ -1430,7 +1417,7 @@ LRESULT ScrollBarWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                 FillRect( hdc, &rc, GetSysColorBrush(COLOR_SCROLLBAR) );
             }
             else
-                SCROLL_DrawScrollBar( hwnd, hdc, SB_CTL, TRUE, TRUE );
+                SCROLL_DrawScrollBar( hwnd, hdc, SB_CTL, SCROLL_trackHitTest, TRUE, TRUE );
             if (!wParam) EndPaint(hwnd, &ps);
         }
         break;
