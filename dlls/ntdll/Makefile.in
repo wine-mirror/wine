@@ -12,7 +12,6 @@ C_SRCS = \
 	critsection.c \
 	crypt.c \
 	debugbuffer.c \
-	directory.c \
 	env.c \
 	error.c \
 	exception.c \
