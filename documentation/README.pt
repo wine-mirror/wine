@@ -3,8 +3,8 @@
 Wine é um programa que permite correr programas Microsoft Windows
 (incluindo DOS, Windows 3.x e Win32 executáveis) em Unix.
 Consiste num carregador (loader), que carrega e executa um binário
-Microsoft Windows, e uma livraria (chamada Winelib) que implementa
-Windows API calls usando o Unix ou X11 equivalentes. A livraria também
+Microsoft Windows, e uma biblioteca (chamada Winelib) que implementa
+Windows API calls usando o Unix ou X11 equivalentes. A biblioteca também
 pode ser usada para "porting" Win32 código para executáveis do nativo Unix .
 
 Wine é software grátis,autorizado segundo a GNU LGPL; ver o ficheiro
@@ -13,14 +13,14 @@ LICENÇA para os detalhes.
 2.ARRANQUE RÁPIDO
 
 Sempre que se compila da source, é recomendado que se use o Wine
-Installer para construir e instalar o Wine. Desde a primeira directoria
+Installer para construir e instalar o Wine. Desde a primeira diretoria
 do Wine source (que contém este ficheiro),corre:
 
 ./tools/wineinstall
 
 Corre os programas conforme as "wine [options] program". Para mais
-informações e resoçução de problemas. Lê o resto deste ficheiro, a Wine
-man page, e especialmente a abundância de informação  encontrada em
+informações e resolução de problemas. Lê o resto deste ficheiro, a Wine
+main page, e especialmente a abundância de informação  encontrada em
 https://www.winehq.org.
 
 3.REQUERIMENTOS
@@ -103,7 +103,7 @@ make
 
 Isto irá contruir o programa "wine" e numerosos suportes livraris/binarios.
 O programa "wine" irá carregar e correr executaveis do Windows.
-A livraria "libwine" ("winelib") pode ser usada para compilar e ligar
+A biblioteca "libwine" ("winelib") pode ser usada para compilar e ligar
 Windows source code sob o Unix.
 
 Para ver as opções de compilação da configuração, faz ./configure -help.
@@ -133,9 +133,9 @@ installar.
 Ver https://www.winehq.org/support/ para informação sobre a
 configuraçao.
 
-No caso da livraria carregar erros (e.g. "Error while loading shared
+No caso da biblioteca carregar erros (e.g. "Error while loading shared
 libraries: libntdll.so"), tem a certeza de adicionar o caminho da
-livraria para /etc/ld.so.conf e correr ldconfig como root.
+biblioteca para /etc/ld.so.conf e correr ldconfig como root.
 
 Para verificar a correcção do ambiente, tu precisas para que o Wine
 corra com sucesso, tu podes correr "./tools/winecheck | less".
