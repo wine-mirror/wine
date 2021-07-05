@@ -811,6 +811,7 @@ run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const ch
         report (R_STEP, "Running: %s:%s", test->name, subtest);
         xprintf ("%s:%s start %s\n", test->name, subtest, file);
         status = run_ex (cmd, out_file, tempdir, 120000, FALSE, &pid);
+        if (status == -2) status = -GetLastError();
         heap_free (cmd);
         xprintf ("%s:%s:%04x done (%d) in %ds\n", test->name, subtest, pid, status, (GetTickCount()-start)/1000);
         if (status) failures++;
