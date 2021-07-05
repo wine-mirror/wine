@@ -2980,6 +2980,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_SwapDeviceContextState(ID3D11
     struct d3d_device_context_state *state_impl, *prev_impl;
     struct d3d_device *device = context->device;
     struct wined3d_state *wined3d_state;
+    static unsigned int once;
 
     TRACE("iface %p, state %p, prev %p.\n", iface, state, prev);
 
@@ -3010,7 +3011,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_SwapDeviceContextState(ID3D11
     device->state = state_impl;
     d3d_device_context_state_private_release(prev_impl);
 
-    if (d3d_device_is_d3d10_active(device))
+    if (d3d_device_is_d3d10_active(device) && !once++)
         FIXME("D3D10 interface emulation not fully implemented yet!\n");
     wined3d_mutex_unlock();
 }
