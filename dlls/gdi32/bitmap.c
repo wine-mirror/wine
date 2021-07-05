@@ -91,12 +91,12 @@ HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
 
 
 /******************************************************************************
- * CreateBitmap [GDI32.@]
+ *      NtGdiCreateBitmap (win32u.@)
  *
  * Creates a bitmap with the specified info.
  */
-HBITMAP WINAPI CreateBitmap( INT width, INT height, UINT planes,
-                             UINT bpp, const void *bits )
+HBITMAP WINAPI NtGdiCreateBitmap( INT width, INT height, UINT planes,
+                                  UINT bpp, const void *bits )
 {
     BITMAPOBJ *bmpobj;
     HBITMAP hbitmap;
@@ -110,7 +110,7 @@ HBITMAP WINAPI CreateBitmap( INT width, INT height, UINT planes,
     }
 
     if (!width || !height)
-        return GetStockObject( DEFAULT_BITMAP );
+        return 0;
 
     if (height < 0)
         height = -height;

@@ -201,3 +201,17 @@ HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
     return CreateBitmap( bmp->bmWidth, bmp->bmHeight, bmp->bmPlanes,
                          bmp->bmBitsPixel, bmp->bmBits );
 }
+
+/******************************************************************************
+ *           CreateBitmap (GDI32.@)
+ *
+ * Creates a bitmap with the specified info.
+ */
+HBITMAP WINAPI CreateBitmap( INT width, INT height, UINT planes,
+                             UINT bpp, const void *bits )
+{
+    if (!width || !height)
+        return GetStockObject( STOCK_LAST + 1 ); /* default 1x1 bitmap */
+
+    return NtGdiCreateBitmap( width, height, planes, bpp, bits );
+}
