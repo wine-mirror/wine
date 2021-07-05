@@ -1154,7 +1154,7 @@ static bool wined3d_render_pass_vk_init(struct wined3d_render_pass_vk *pass,
 
     rt_count = 0;
     attachment_count = 0;
-    mask = key->rt_mask & ((1u << WINED3D_MAX_RENDER_TARGETS) - 1);
+    mask = key->rt_mask & wined3d_mask_from_size(WINED3D_MAX_RENDER_TARGETS);
     while (mask)
     {
         i = wined3d_bit_scan(&mask);
@@ -1181,7 +1181,7 @@ static bool wined3d_render_pass_vk_init(struct wined3d_render_pass_vk *pass,
         rt_count = i + 1;
     }
 
-    mask = ~key->rt_mask & ((1u << rt_count) - 1);
+    mask = ~key->rt_mask & wined3d_mask_from_size(rt_count);
     while (mask)
     {
         i = wined3d_bit_scan(&mask);
