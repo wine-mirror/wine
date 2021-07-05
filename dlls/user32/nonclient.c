@@ -1027,11 +1027,7 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip )
 	DrawEdge (hdc, &rect, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
 
     /* Draw the scroll-bars */
-
-    if (dwStyle & WS_VSCROLL)
-        SCROLL_DrawScrollBar( hwnd, hdc, SB_VERT, TRUE, TRUE );
-    if (dwStyle & WS_HSCROLL)
-        SCROLL_DrawScrollBar( hwnd, hdc, SB_HORZ, TRUE, TRUE );
+    SCROLL_DrawNCScrollBar( hwnd, hdc, dwStyle & WS_HSCROLL, dwStyle & WS_VSCROLL );
 
     /* Draw the "size-box" */
     if ((dwStyle & WS_VSCROLL) && (dwStyle & WS_HSCROLL))

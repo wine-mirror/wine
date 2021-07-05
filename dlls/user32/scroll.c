@@ -646,6 +646,14 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
     }
 }
 
+void SCROLL_DrawNCScrollBar( HWND hwnd, HDC hdc, BOOL draw_horizontal, BOOL draw_vertical )
+{
+    if (draw_horizontal)
+        SCROLL_DrawScrollBar( hwnd, hdc, SB_HORZ, TRUE, TRUE );
+    if (draw_vertical)
+        SCROLL_DrawScrollBar( hwnd, hdc, SB_VERT, TRUE, TRUE );
+}
+
 /***********************************************************************
  *           SCROLL_DrawSizeGrip
  *
