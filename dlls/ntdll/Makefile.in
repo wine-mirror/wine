@@ -62,7 +62,6 @@ C_SRCS = \
 	unix/thread.c \
 	unix/virtual.c \
 	version.c \
-	virtual.c \
 	wcstring.c
 
 RC_SRCS = version.rc
