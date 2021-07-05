@@ -3231,7 +3231,7 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
     if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_STENCIL_REF) && dsv)
     {
         VK_CALL(vkCmdSetStencilReference(vk_command_buffer, VK_STENCIL_FACE_FRONT_AND_BACK,
-            state->stencil_ref & ((1 << dsv->format->stencil_size) - 1)));
+            state->stencil_ref & wined3d_mask_from_size(dsv->format->stencil_size)));
     }
 
     if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_STREAMSRC))
