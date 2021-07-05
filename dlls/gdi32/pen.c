@@ -56,28 +56,12 @@ static const struct gdi_obj_funcs pen_funcs =
  */
 HPEN WINAPI CreatePen( INT style, INT width, COLORREF color )
 {
-    LOGPEN logpen;
-
-    TRACE("%d %d %06x\n", style, width, color );
-
-    logpen.lopnStyle = style;
-    logpen.lopnWidth.x = width;
-    logpen.lopnWidth.y = 0;
-    logpen.lopnColor = color;
-
-    return CreatePenIndirect( &logpen );
-}
-
-
-/***********************************************************************
- *           CreatePenIndirect    (GDI32.@)
- */
-HPEN WINAPI CreatePenIndirect( const LOGPEN * pen )
-{
-    PENOBJ * penPtr;
+    PENOBJ *penPtr;
     HPEN hpen;
 
-    if (pen->lopnStyle == PS_NULL)
+    TRACE( "%d %d %06x\n", style, width, color );
+
+    if (style == PS_NULL)
     {
         hpen = GetStockObject(NULL_PEN);
         if (hpen) return hpen;
@@ -85,12 +69,12 @@ HPEN WINAPI CreatePenIndirect( const LOGPEN * pen )
 
     if (!(penPtr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*penPtr) ))) return 0;
 
-    penPtr->logpen.elpPenStyle = pen->lopnStyle;
-    penPtr->logpen.elpWidth = abs(pen->lopnWidth.x);
-    penPtr->logpen.elpColor = pen->lopnColor;
+    penPtr->logpen.elpPenStyle   = style;
+    penPtr->logpen.elpWidth      = abs(width);
+    penPtr->logpen.elpColor      = color;
     penPtr->logpen.elpBrushStyle = BS_SOLID;
 
-    switch (pen->lopnStyle)
+    switch (style)
     {
     case PS_SOLID:
     case PS_DASH:

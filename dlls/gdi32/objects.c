@@ -169,3 +169,11 @@ INT WINAPI GetObjectA( HGDIOBJ handle, INT count, void *buffer )
 
     return GetObjectW( handle, count, buffer );
 }
+
+/***********************************************************************
+ *           CreatePenIndirect    (GDI32.@)
+ */
+HPEN WINAPI CreatePenIndirect( const LOGPEN *pen )
+{
+    return CreatePen( pen->lopnStyle, pen->lopnWidth.x, pen->lopnColor );
+}
