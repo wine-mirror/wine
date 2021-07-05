@@ -21,7 +21,9 @@
 
 #include "ntdll_test.h"
 
+static NTSTATUS (WINAPI *pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
 static NTSTATUS (WINAPI *pNtQuerySystemInformationEx)(SYSTEM_INFORMATION_CLASS,void*,ULONG,void*,ULONG,ULONG*);
+static NTSTATUS (WINAPI *pRtlGetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
 static USHORT   (WINAPI *pRtlWow64GetCurrentMachine)(void);
 static NTSTATUS (WINAPI *pRtlWow64GetProcessMachines)(HANDLE,WORD*,WORD*);
 static NTSTATUS (WINAPI *pRtlWow64GetThreadContext)(HANDLE,WOW64_CONTEXT*);
@@ -31,6 +33,7 @@ static NTSTATUS (WINAPI *pRtlWow64GetCpuAreaInfo)(WOW64_CPURESERVED*,ULONG,WOW64
 static NTSTATUS (WINAPI *pRtlWow64GetThreadSelectorEntry)(HANDLE,THREAD_DESCRIPTOR_INFORMATION*,ULONG,ULONG*);
 #else
 static NTSTATUS (WINAPI *pNtWow64AllocateVirtualMemory64)(HANDLE,ULONG64*,ULONG64,ULONG64*,ULONG,ULONG);
+static NTSTATUS (WINAPI *pNtWow64GetNativeSystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
 static NTSTATUS (WINAPI *pNtWow64ReadVirtualMemory64)(HANDLE,ULONG64,void*,ULONG64,ULONG64*);
 static NTSTATUS (WINAPI *pNtWow64WriteVirtualMemory64)(HANDLE,ULONG64,const void *,ULONG64,ULONG64*);
 #endif
@@ -45,7 +48,9 @@ static void init(void)
     if (!IsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
 
 #define GET_PROC(func) p##func = (void *)GetProcAddress( ntdll, #func )
+    GET_PROC( NtQuerySystemInformation );
     GET_PROC( NtQuerySystemInformationEx );
+    GET_PROC( RtlGetNativeSystemInformation );
     GET_PROC( RtlWow64GetCurrentMachine );
     GET_PROC( RtlWow64GetProcessMachines );
     GET_PROC( RtlWow64GetThreadContext );
@@ -55,6 +60,7 @@ static void init(void)
     GET_PROC( RtlWow64GetThreadSelectorEntry );
 #else
     GET_PROC( NtWow64AllocateVirtualMemory64 );
+    GET_PROC( NtWow64GetNativeSystemInformation );
     GET_PROC( NtWow64ReadVirtualMemory64 );
     GET_PROC( NtWow64WriteVirtualMemory64 );
 #endif
@@ -883,6 +889,69 @@ static void test_nt_wow64(void)
             "NtWow64AllocateVirtualMemory64 failed %x\n", status );
     }
     else win_skip( "NtWow64AllocateVirtualMemory64 not supported\n" );
+
+    if (pNtWow64GetNativeSystemInformation)
+    {
+        ULONG i, len;
+        SYSTEM_BASIC_INFORMATION sbi, sbi2, sbi3;
+
+        memset( &sbi, 0xcc, sizeof(sbi) );
+        status = pNtQuerySystemInformation( SystemBasicInformation, &sbi, sizeof(sbi), &len );
+        ok( status == STATUS_SUCCESS, "failed %x\n", status );
+        ok( len == sizeof(sbi), "wrong length %d\n", len );
+
+        memset( &sbi2, 0xcc, sizeof(sbi2) );
+        status = pRtlGetNativeSystemInformation( SystemBasicInformation, &sbi2, sizeof(sbi2), &len );
+        ok( status == STATUS_SUCCESS, "failed %x\n", status );
+        ok( len == sizeof(sbi2), "wrong length %d\n", len );
+
+        ok( sbi.HighestUserAddress == (void *)0x7ffeffff, "wrong limit %p\n", sbi.HighestUserAddress);
+        todo_wine_if( is_wow64 )
+        ok( sbi2.HighestUserAddress == (is_wow64 ? (void *)0xfffeffff : (void *)0x7ffeffff),
+            "wrong limit %p\n", sbi.HighestUserAddress);
+
+        memset( &sbi3, 0xcc, sizeof(sbi3) );
+        status = pNtWow64GetNativeSystemInformation( SystemBasicInformation, &sbi3, sizeof(sbi3), &len );
+        ok( status == STATUS_SUCCESS, "failed %x\n", status );
+        ok( len == sizeof(sbi3), "wrong length %d\n", len );
+        ok( !memcmp( &sbi2, &sbi3, offsetof(SYSTEM_BASIC_INFORMATION,NumberOfProcessors)+1 ),
+            "info is different\n" );
+
+        memset( &sbi3, 0xcc, sizeof(sbi3) );
+        status = pNtWow64GetNativeSystemInformation( SystemEmulationBasicInformation, &sbi3, sizeof(sbi3), &len );
+        ok( status == STATUS_SUCCESS, "failed %x\n", status );
+        ok( len == sizeof(sbi3), "wrong length %d\n", len );
+        ok( !memcmp( &sbi, &sbi3, offsetof(SYSTEM_BASIC_INFORMATION,NumberOfProcessors)+1 ),
+            "info is different\n" );
+
+        for (i = 0; i < 256; i++)
+        {
+            NTSTATUS expect = pNtQuerySystemInformation( i, NULL, 0, &len );
+            status = pNtWow64GetNativeSystemInformation( i, NULL, 0, &len );
+            switch (i)
+            {
+            case SystemNativeBasicInformation:
+                ok( status == STATUS_INVALID_INFO_CLASS || status == STATUS_INFO_LENGTH_MISMATCH ||
+                    broken(status == STATUS_NOT_IMPLEMENTED) /* vista */, "%u: %x / %x\n", i, status, expect );
+                break;
+            case SystemBasicInformation:
+            case SystemCpuInformation:
+            case SystemEmulationBasicInformation:
+            case SystemEmulationProcessorInformation:
+                ok( status == expect, "%u: %x / %x\n", i, status, expect );
+                break;
+            default:
+                if (is_wow64)  /* only a few info classes are supported on Wow64 */
+                    ok( status == STATUS_INVALID_INFO_CLASS ||
+                        broken(status == STATUS_NOT_IMPLEMENTED), /* vista */
+                        "%u: %x\n", i, status );
+                else
+                    ok( status == expect, "%u: %x / %x\n", i, status, expect );
+                break;
+            }
+        }
+    }
+    else win_skip( "NtWow64GetNativeSystemInformation not supported\n" );
 
     NtClose( process );
 }

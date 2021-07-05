@@ -4988,4 +4988,27 @@ NTSTATUS WINAPI NtWow64WriteVirtualMemory64( HANDLE process, ULONG64 addr, const
     return status;
 }
 
+
+/***********************************************************************
+ *             NtWow64GetNativeSystemInformation   (NTDLL.@)
+ *             ZwWow64GetNativeSystemInformation   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtWow64GetNativeSystemInformation( SYSTEM_INFORMATION_CLASS class, void *info,
+                                                   ULONG len, ULONG *retlen )
+{
+    switch (class)
+    {
+    case SystemBasicInformation:
+    case SystemCpuInformation:
+    case SystemEmulationBasicInformation:
+    case SystemEmulationProcessorInformation:
+        return NtQuerySystemInformation( class, info, len, retlen );
+    case SystemNativeBasicInformation:
+        return NtQuerySystemInformation( SystemBasicInformation, info, len, retlen );
+    default:
+        if (is_wow64) return STATUS_INVALID_INFO_CLASS;
+        return NtQuerySystemInformation( class, info, len, retlen );
+    }
+}
+
 #endif  /* _WIN64 */
