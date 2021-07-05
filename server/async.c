@@ -396,7 +396,6 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
         if (async->timeout) remove_timeout_user( async->timeout );
         async->timeout = NULL;
         async->status = status;
-        if (status == STATUS_MORE_PROCESSING_REQUIRED) return;  /* don't report the completion */
 
         if (async->data.apc)
         {
