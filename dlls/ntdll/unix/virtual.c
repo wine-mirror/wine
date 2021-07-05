@@ -2682,7 +2682,7 @@ ULONG_PTR get_system_affinity_mask(void)
 /***********************************************************************
  *           virtual_get_system_info
  */
-void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info )
+void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info, BOOL wow64 )
 {
 #if defined(HAVE_STRUCT_SYSINFO_TOTALRAM) && defined(HAVE_STRUCT_SYSINFO_MEM_UNIT)
     struct sysinfo sinfo;
@@ -2707,9 +2707,19 @@ void virtual_get_system_info( SYSTEM_BASIC_INFORMATION *info )
     info->MmNumberOfPhysicalPages = info->MmHighestPhysicalPage - info->MmLowestPhysicalPage;
     info->AllocationGranularity   = granularity_mask + 1;
     info->LowestUserAddress       = (void *)0x10000;
-    info->HighestUserAddress      = (char *)user_space_limit - 1;
     info->ActiveProcessorsAffinityMask = get_system_affinity_mask();
     info->NumberOfProcessors      = peb->NumberOfProcessors;
+#ifdef _WIN64
+    if (wow64)
+    {
+        if (main_image_info.ImageCharacteristics & IMAGE_FILE_LARGE_ADDRESS_AWARE)
+            info->HighestUserAddress = (char *)0xc0000000 - 1;
+        else
+            info->HighestUserAddress = (char *)0x7fff0000 - 1;
+        return;
+    }
+#endif
+    info->HighestUserAddress = (char *)user_space_limit - 1;
 }
 
 

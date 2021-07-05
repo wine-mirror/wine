@@ -2161,11 +2161,14 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
 
     switch (class)
     {
+    case SystemNativeBasicInformation:  /* 114 */
+        if (!is_win64) return STATUS_INVALID_INFO_CLASS;
+        /* fall through */
     case SystemBasicInformation:  /* 0 */
     {
         SYSTEM_BASIC_INFORMATION sbi;
 
-        virtual_get_system_info( &sbi );
+        virtual_get_system_info( &sbi, FALSE );
         len = sizeof(sbi);
         if (size == len)
         {
@@ -2658,6 +2661,37 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         else ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
     }
+
+    case SystemEmulationBasicInformation:  /* 62 */
+    {
+        SYSTEM_BASIC_INFORMATION sbi;
+
+        virtual_get_system_info( &sbi, !!NtCurrentTeb()->WowTebOffset );
+        len = sizeof(sbi);
+        if (size == len)
+        {
+            if (!info) ret = STATUS_ACCESS_VIOLATION;
+            else memcpy( info, &sbi, len);
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+    }
+
+    case SystemEmulationProcessorInformation:  /* 63 */
+        if (size >= (len = sizeof(cpu_info)))
+        {
+            SYSTEM_CPU_INFORMATION cpu = cpu_info;
+            if (is_win64)
+            {
+                if (cpu_info.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
+                    cpu.ProcessorArchitecture = PROCESSOR_ARCHITECTURE_INTEL;
+                else if (cpu_info.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64)
+                    cpu.ProcessorArchitecture = PROCESSOR_ARCHITECTURE_ARM;
+            }
+            memcpy(info, &cpu, len);
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
 
     case SystemExtendedHandleInformation:  /* 64 */
     {

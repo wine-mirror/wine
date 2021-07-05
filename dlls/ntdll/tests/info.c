@@ -110,8 +110,8 @@ static void InitFunctionPtrs(void)
 static void test_query_basic(void)
 {
     NTSTATUS status;
-    ULONG ReturnLength;
-    SYSTEM_BASIC_INFORMATION sbi, sbi2;
+    ULONG i, ReturnLength;
+    SYSTEM_BASIC_INFORMATION sbi, sbi2, sbi3;
 
     /* This test also covers some basic parameter testing that should be the same for 
      * every information class
@@ -140,6 +140,7 @@ static void test_query_basic(void)
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
 
     /* Finally some correct calls */
+    memset(&sbi, 0xcc, sizeof(sbi));
     status = pNtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(sbi), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     ok( sizeof(sbi) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
@@ -148,7 +149,7 @@ static void test_query_basic(void)
     if (winetest_debug > 1) trace("Number of Processors : %d\n", sbi.NumberOfProcessors);
     ok( sbi.NumberOfProcessors > 0, "Expected more than 0 processors, got %d\n", sbi.NumberOfProcessors);
 
-    memset(&sbi2, 0, sizeof(sbi2));
+    memset(&sbi2, 0xcc, sizeof(sbi2));
     status = pRtlGetNativeSystemInformation(SystemBasicInformation, &sbi2, sizeof(sbi2), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x.\n", status);
     ok( sizeof(sbi2) == ReturnLength, "Unexpected length %u.\n", ReturnLength);
@@ -169,24 +170,142 @@ static void test_query_basic(void)
             "Expected AllocationGranularity %#lx, got %#lx.\n",
             sbi.AllocationGranularity, sbi2.AllocationGranularity);
     ok( sbi.LowestUserAddress == sbi2.LowestUserAddress, "Expected LowestUserAddress %p, got %p.\n",
-            (void *)sbi.LowestUserAddress, (void *)sbi2.LowestUserAddress);
-    /* Not testing HighestUserAddress. The field is different from NtQuerySystemInformation result
-     * on 32 bit Windows (some of Win8 versions are the exception). Whenever it is different,
-     * NtQuerySystemInformation returns user space limit (0x0x7ffeffff) and RtlGetNativeSystemInformation
-     * returns address space limit (0xfffeffff). */
+            sbi.LowestUserAddress, sbi2.LowestUserAddress);
     ok( sbi.ActiveProcessorsAffinityMask == sbi2.ActiveProcessorsAffinityMask,
             "Expected ActiveProcessorsAffinityMask %#lx, got %#lx.\n",
             sbi.ActiveProcessorsAffinityMask, sbi2.ActiveProcessorsAffinityMask);
     ok( sbi.NumberOfProcessors == sbi2.NumberOfProcessors, "Expected NumberOfProcessors %u, got %u.\n",
             sbi.NumberOfProcessors, sbi2.NumberOfProcessors);
+#ifdef _WIN64
+    ok( sbi.HighestUserAddress == sbi2.HighestUserAddress, "Expected HighestUserAddress %p, got %p.\n",
+            (void *)sbi.HighestUserAddress, (void *)sbi2.HighestUserAddress);
+#else
+    ok( sbi.HighestUserAddress == (void *)0x7ffeffff, "wrong limit %p\n", sbi.HighestUserAddress);
+    todo_wine_if( is_wow64 )
+    ok( sbi2.HighestUserAddress == (is_wow64 ? (void *)0xfffeffff : (void *)0x7ffeffff),
+        "wrong limit %p\n", sbi.HighestUserAddress);
+#endif
+
+    memset(&sbi3, 0xcc, sizeof(sbi3));
+    status = pNtQuerySystemInformation(SystemNativeBasicInformation, &sbi3, sizeof(sbi3), &ReturnLength);
+#ifdef _WIN64
+    ok( status == STATUS_SUCCESS || broken(status == STATUS_INVALID_INFO_CLASS), "got %08x\n", status);
+    if (!status)
+    {
+        ok( sizeof(sbi3) == ReturnLength, "Unexpected length %u.\n", ReturnLength);
+        ok( !memcmp( &sbi2, &sbi3, offsetof(SYSTEM_BASIC_INFORMATION,NumberOfProcessors)+1 ),
+            "info is different\n" );
+    }
+#else
+    ok( status == STATUS_INVALID_INFO_CLASS || broken(STATUS_NOT_IMPLEMENTED), /* vista */
+        "got %08x\n", status);
+    status = pRtlGetNativeSystemInformation( SystemNativeBasicInformation, &sbi3, sizeof(sbi3), &ReturnLength );
+    todo_wine
+    ok( !status || status == STATUS_INFO_LENGTH_MISMATCH ||
+        broken(status == STATUS_INVALID_INFO_CLASS) || broken(status == STATUS_NOT_IMPLEMENTED),
+        "failed %x\n", status );
+    if (!status || status == STATUS_INFO_LENGTH_MISMATCH)
+        ok( !status == !is_wow64, "got wrong status %x wow64 %u\n", status, is_wow64 );
+    if (!status)
+    {
+        ok( sizeof(sbi3) == ReturnLength, "Unexpected length %u.\n", ReturnLength);
+        ok( !memcmp( &sbi2, &sbi3, offsetof(SYSTEM_BASIC_INFORMATION,NumberOfProcessors)+1 ),
+            "info is different\n" );
+    }
+    else if (status == STATUS_INFO_LENGTH_MISMATCH)
+    {
+        /* SystemNativeBasicInformation uses the 64-bit structure on Wow64 */
+        struct
+        {
+            DWORD     unknown;
+            ULONG     KeMaximumIncrement;
+            ULONG     PageSize;
+            ULONG     MmNumberOfPhysicalPages;
+            ULONG     MmLowestPhysicalPage;
+            ULONG     MmHighestPhysicalPage;
+            ULONG64   AllocationGranularity;
+            ULONG64   LowestUserAddress;
+            ULONG64   HighestUserAddress;
+            ULONG64   ActiveProcessorsAffinityMask;
+            BYTE      NumberOfProcessors;
+        } sbi64;
+
+        ok( ReturnLength == sizeof(sbi64), "len %x\n", ReturnLength );
+        memset( &sbi64, 0xcc, sizeof(sbi64) );
+        ReturnLength = 0;
+        status = pRtlGetNativeSystemInformation( SystemNativeBasicInformation, &sbi64, sizeof(sbi64), &ReturnLength );
+        ok( !status, "failed %x\n", status );
+        ok( ReturnLength == sizeof(sbi64), "len %x\n", ReturnLength );
+
+        ok( sbi.unknown == sbi64.unknown, "unknown %#x / %#x\n", sbi.unknown, sbi64.unknown);
+        ok( sbi.KeMaximumIncrement == sbi64.KeMaximumIncrement, "KeMaximumIncrement %u / %u\n",
+            sbi.KeMaximumIncrement, sbi64.KeMaximumIncrement);
+        ok( sbi.PageSize == sbi64.PageSize, "PageSize %u / %u\n", sbi.PageSize, sbi64.PageSize);
+        ok( sbi.MmNumberOfPhysicalPages == sbi64.MmNumberOfPhysicalPages,
+            "MmNumberOfPhysicalPages %u / %u\n",
+            sbi.MmNumberOfPhysicalPages, sbi64.MmNumberOfPhysicalPages);
+        ok( sbi.MmLowestPhysicalPage == sbi64.MmLowestPhysicalPage, "MmLowestPhysicalPage %u / %u\n",
+            sbi.MmLowestPhysicalPage, sbi64.MmLowestPhysicalPage);
+        ok( sbi.MmHighestPhysicalPage == sbi64.MmHighestPhysicalPage, "MmHighestPhysicalPage %u / %u\n",
+            sbi.MmHighestPhysicalPage, sbi64.MmHighestPhysicalPage);
+        ok( sbi.AllocationGranularity == (ULONG_PTR)sbi64.AllocationGranularity,
+            "AllocationGranularity %#lx / %#lx\n", sbi.AllocationGranularity,
+            (ULONG_PTR)sbi64.AllocationGranularity);
+        ok( (ULONG_PTR)sbi.LowestUserAddress == sbi64.LowestUserAddress, "LowestUserAddress %p / %s\n",
+            sbi.LowestUserAddress, wine_dbgstr_longlong(sbi64.LowestUserAddress));
+        ok( sbi.ActiveProcessorsAffinityMask == sbi64.ActiveProcessorsAffinityMask,
+            "ActiveProcessorsAffinityMask %#lx / %s\n",
+            sbi.ActiveProcessorsAffinityMask, wine_dbgstr_longlong(sbi64.ActiveProcessorsAffinityMask));
+        ok( sbi.NumberOfProcessors == sbi64.NumberOfProcessors, "NumberOfProcessors %u / %u\n",
+            sbi.NumberOfProcessors, sbi64.NumberOfProcessors);
+        ok( sbi64.HighestUserAddress == 0x7ffffffeffff, "wrong limit %s\n",
+            wine_dbgstr_longlong(sbi64.HighestUserAddress));
+    }
+#endif
+
+    memset(&sbi3, 0xcc, sizeof(sbi3));
+    status = pNtQuerySystemInformation(SystemEmulationBasicInformation, &sbi3, sizeof(sbi3), &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x.\n", status);
+    ok( sizeof(sbi3) == ReturnLength, "Unexpected length %u.\n", ReturnLength);
+    ok( !memcmp( &sbi, &sbi3, offsetof(SYSTEM_BASIC_INFORMATION,NumberOfProcessors)+1 ),
+        "info is different\n" );
+
+    for (i = 0; i < 256; i++)
+    {
+        NTSTATUS expect = pNtQuerySystemInformation( i, NULL, 0, &ReturnLength );
+        status = pRtlGetNativeSystemInformation( i, NULL, 0, &ReturnLength );
+        switch (i)
+        {
+        case SystemNativeBasicInformation:
+            ok( status == STATUS_INVALID_INFO_CLASS || status == STATUS_INFO_LENGTH_MISMATCH ||
+                broken(status == STATUS_NOT_IMPLEMENTED) /* vista */, "%u: %x / %x\n", i, status, expect );
+            break;
+        case SystemBasicInformation:
+        case SystemCpuInformation:
+        case SystemEmulationBasicInformation:
+        case SystemEmulationProcessorInformation:
+            ok( status == expect, "%u: %x / %x\n", i, status, expect );
+            break;
+        default:
+            if (is_wow64)  /* only a few info classes are supported on Wow64 */
+                todo_wine_if (is_wow64 && status != STATUS_INVALID_INFO_CLASS)
+                ok( status == STATUS_INVALID_INFO_CLASS ||
+                    broken(status == STATUS_NOT_IMPLEMENTED), /* vista */
+                    "%u: %x\n", i, status );
+            else
+                ok( status == expect, "%u: %x / %x\n", i, status, expect );
+            break;
+        }
+    }
 }
 
 static void test_query_cpu(void)
 {
     DWORD status;
     ULONG ReturnLength;
-    SYSTEM_CPU_INFORMATION sci;
+    SYSTEM_CPU_INFORMATION sci, sci2;
 
+    memset(&sci, 0xcc, sizeof(sci));
     status = pNtQuerySystemInformation(SystemCpuInformation, &sci, sizeof(sci), &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     ok( sizeof(sci) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
@@ -195,6 +314,55 @@ static void test_query_cpu(void)
     if (winetest_debug > 1) trace("Processor FeatureSet : %08x\n", sci.ProcessorFeatureBits);
     ok( sci.ProcessorFeatureBits != 0, "Expected some features for this processor, got %08x\n",
         sci.ProcessorFeatureBits);
+
+    memset(&sci2, 0xcc, sizeof(sci2));
+    status = pRtlGetNativeSystemInformation(SystemCpuInformation, &sci2, sizeof(sci2), &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x.\n", status);
+    ok( sizeof(sci2) == ReturnLength, "Unexpected length %u.\n", ReturnLength);
+
+    if (is_wow64)
+    {
+        ok( sci.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL, "ProcessorArchitecture wrong %x\n",
+            sci.ProcessorArchitecture );
+        todo_wine
+        ok( sci2.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64, "ProcessorArchitecture wrong %x\n",
+            sci2.ProcessorArchitecture );
+    }
+    else
+        ok( sci.ProcessorArchitecture == sci2.ProcessorArchitecture,
+            "ProcessorArchitecture differs %x / %x\n",
+            sci.ProcessorArchitecture, sci2.ProcessorArchitecture );
+
+    ok( sci.ProcessorLevel == sci2.ProcessorLevel, "ProcessorLevel differs %x / %x\n",
+        sci.ProcessorLevel, sci2.ProcessorLevel );
+    ok( sci.ProcessorRevision == sci2.ProcessorRevision, "ProcessorRevision differs %x / %x\n",
+        sci.ProcessorRevision, sci2.ProcessorRevision );
+    ok( sci.MaximumProcessors == sci2.MaximumProcessors, "MaximumProcessors differs %x / %x\n",
+        sci.MaximumProcessors, sci2.MaximumProcessors );
+    ok( sci.ProcessorFeatureBits == sci2.ProcessorFeatureBits, "ProcessorFeatureBits differs %x / %x\n",
+        sci.ProcessorFeatureBits, sci2.ProcessorFeatureBits );
+
+    memset(&sci2, 0xcc, sizeof(sci2));
+    status = pNtQuerySystemInformation(SystemEmulationProcessorInformation, &sci2, sizeof(sci2), &ReturnLength);
+    ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x.\n", status);
+    ok( sizeof(sci2) == ReturnLength, "Unexpected length %u.\n", ReturnLength);
+
+#ifdef _WIN64
+    ok( sci2.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL, "ProcessorArchitecture wrong %x\n",
+        sci2.ProcessorArchitecture );
+#else
+    ok( sci.ProcessorArchitecture == sci2.ProcessorArchitecture,
+        "ProcessorArchitecture differs %x / %x\n",
+        sci.ProcessorArchitecture, sci2.ProcessorArchitecture );
+#endif
+    ok( sci.ProcessorLevel == sci2.ProcessorLevel, "ProcessorLevel differs %x / %x\n",
+        sci.ProcessorLevel, sci2.ProcessorLevel );
+    ok( sci.ProcessorRevision == sci2.ProcessorRevision, "ProcessorRevision differs %x / %x\n",
+        sci.ProcessorRevision, sci2.ProcessorRevision );
+    ok( sci.MaximumProcessors == sci2.MaximumProcessors, "MaximumProcessors differs %x / %x\n",
+        sci.MaximumProcessors, sci2.MaximumProcessors );
+    ok( sci.ProcessorFeatureBits == sci2.ProcessorFeatureBits, "ProcessorFeatureBits differs %x / %x\n",
+        sci.ProcessorFeatureBits, sci2.ProcessorFeatureBits );
 }
 
 static void test_query_performance(void)
