@@ -176,7 +176,7 @@ HBITMAP WINAPI NtGdiCreateBitmap( INT width, INT height, UINT planes,
     }
 
     if (bits)
-        SetBitmapBits( hbitmap, height * bmpobj->dib.dsBm.bmWidthBytes, bits );
+        NtGdiSetBitmapBits( hbitmap, height * bmpobj->dib.dsBm.bmWidthBytes, bits );
 
     TRACE("%dx%d, bpp %d planes %d: returning %p\n", width, height, bpp, planes, hbitmap);
     return hbitmap;
@@ -184,7 +184,7 @@ HBITMAP WINAPI NtGdiCreateBitmap( INT width, INT height, UINT planes,
 
 
 /***********************************************************************
- * GetBitmapBits [GDI32.@]
+ *      NtGdiGetBitmapBits (win32u.@)
  *
  * Copies bitmap bits of bitmap to buffer.
  *
@@ -192,7 +192,7 @@ HBITMAP WINAPI NtGdiCreateBitmap( INT width, INT height, UINT planes,
  *    Success: Number of bytes copied
  *    Failure: 0
  */
-LONG WINAPI GetBitmapBits(
+LONG WINAPI NtGdiGetBitmapBits(
     HBITMAP hbitmap, /* [in]  Handle to bitmap */
     LONG count,        /* [in]  Number of bytes to copy */
     LPVOID bits)       /* [out] Pointer to buffer to receive bits */
@@ -253,7 +253,7 @@ done:
 
 
 /******************************************************************************
- * SetBitmapBits [GDI32.@]
+ *      NtGdiSetBitmapBits (win32u.@)
  *
  * Sets bits of color data for a bitmap.
  *
@@ -261,7 +261,7 @@ done:
  *    Success: Number of bytes used in setting the bitmap bits
  *    Failure: 0
  */
-LONG WINAPI SetBitmapBits(
+LONG WINAPI NtGdiSetBitmapBits(
     HBITMAP hbitmap, /* [in] Handle to bitmap */
     LONG count,        /* [in] Number of bytes in bitmap array */
     LPCVOID bits)      /* [in] Address of array with bitmap bits */
@@ -493,7 +493,7 @@ HBITMAP WINAPI CreateDiscardableBitmap(
 
 
 /******************************************************************************
- * GetBitmapDimensionEx [GDI32.@]
+ *      NtGdiGetBitmapDimension (win32u.@)
  *
  * Retrieves dimensions of a bitmap.
  *
@@ -501,7 +501,7 @@ HBITMAP WINAPI CreateDiscardableBitmap(
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL WINAPI GetBitmapDimensionEx(
+BOOL WINAPI NtGdiGetBitmapDimension(
     HBITMAP hbitmap, /* [in]  Handle to bitmap */
     LPSIZE size)     /* [out] Address of struct receiving dimensions */
 {
@@ -514,7 +514,7 @@ BOOL WINAPI GetBitmapDimensionEx(
 
 
 /******************************************************************************
- * SetBitmapDimensionEx [GDI32.@]
+ *      NtGdiSetBitmapDimension (win32u.@)
  *
  * Assigns dimensions to a bitmap.
  * MSDN says that this function will fail if hbitmap is a handle created by
@@ -524,7 +524,7 @@ BOOL WINAPI GetBitmapDimensionEx(
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL WINAPI SetBitmapDimensionEx(
+BOOL WINAPI NtGdiSetBitmapDimension(
     HBITMAP hbitmap, /* [in]  Handle to bitmap */
     INT x,           /* [in]  Bitmap width */
     INT y,           /* [in]  Bitmap height */

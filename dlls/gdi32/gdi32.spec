@@ -240,8 +240,8 @@
 @ stdcall GetArcDirection(long)
 @ stdcall GetAspectRatioFilterEx(long ptr)
 # @ stub GetBitmapAttributes
-@ stdcall GetBitmapBits(long long ptr)
-@ stdcall GetBitmapDimensionEx(long ptr)
+@ stdcall GetBitmapBits(long long ptr) NtGdiGetBitmapBits
+@ stdcall GetBitmapDimensionEx(long ptr) NtGdiGetBitmapDimension
 @ stdcall GetBkColor(long)
 @ stdcall GetBkMode(long)
 @ stdcall GetBoundsRect(long ptr long)
@@ -474,8 +474,8 @@
 @ stdcall SetAbortProc(long ptr)
 @ stdcall SetArcDirection(long long)
 # @ stub SetBitmapAttributes
-@ stdcall SetBitmapBits(long long ptr)
-@ stdcall SetBitmapDimensionEx(long long long ptr)
+@ stdcall SetBitmapBits(long long ptr) NtGdiSetBitmapBits
+@ stdcall SetBitmapDimensionEx(long long long ptr) NtGdiSetBitmapDimension
 @ stdcall SetBkColor(long long)
 @ stdcall SetBkMode(long long)
 @ stdcall SetBoundsRect(long ptr long)
