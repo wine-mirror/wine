@@ -186,3 +186,18 @@ HPEN WINAPI CreatePen( INT style, INT width, COLORREF color )
     if (style < 0 || style > PS_INSIDEFRAME) style = PS_SOLID;
     return NtGdiCreatePen( style, width, color, NULL );
 }
+
+/***********************************************************************
+ *           CreateBitmapIndirect (GDI32.@)
+ */
+HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
+{
+    if (!bmp || bmp->bmType)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+
+    return CreateBitmap( bmp->bmWidth, bmp->bmHeight, bmp->bmPlanes,
+                         bmp->bmBitsPixel, bmp->bmBits );
+}
