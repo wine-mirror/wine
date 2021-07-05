@@ -22,7 +22,6 @@ C_SRCS = \
 	loader.c \
 	locale.c \
 	misc.c \
-	nt.c \
 	path.c \
 	printf.c \
 	process.c \

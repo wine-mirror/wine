@@ -759,3 +759,21 @@ NTSTATUS WINAPI RtlVerifyVersionInfo( const RTL_OSVERSIONINFOEXW *info,
 
     return STATUS_SUCCESS;
 }
+
+
+/******************************************************************************
+ *        VerSetConditionMask   (NTDLL.@)
+ */
+ULONGLONG WINAPI VerSetConditionMask( ULONGLONG condition_mask, DWORD type_mask, BYTE condition )
+{
+    condition &= 0x07;
+    if (type_mask & VER_PRODUCT_TYPE) condition_mask |= condition << 7*3;
+    else if (type_mask & VER_SUITENAME) condition_mask |= condition << 6*3;
+    else if (type_mask & VER_SERVICEPACKMAJOR) condition_mask |= condition << 5*3;
+    else if (type_mask & VER_SERVICEPACKMINOR) condition_mask |= condition << 4*3;
+    else if (type_mask & VER_PLATFORMID) condition_mask |= condition << 3*3;
+    else if (type_mask & VER_BUILDNUMBER) condition_mask |= condition << 2*3;
+    else if (type_mask & VER_MAJORVERSION) condition_mask |= condition << 1*3;
+    else if (type_mask & VER_MINORVERSION) condition_mask |= condition << 0*3;
+    return condition_mask;
+}
