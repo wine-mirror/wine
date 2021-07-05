@@ -594,12 +594,6 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, INT nBar,
     RECT r;
     HPEN hSavePen;
     HBRUSH hSaveBrush,hBrush;
-    BOOL Save_SCROLL_MovingThumb = SCROLL_MovingThumb;
-
-    if (Save_SCROLL_MovingThumb &&
-        (SCROLL_TrackingWin == hwnd) &&
-        (SCROLL_TrackingBar == nBar))
-        SCROLL_DrawMovingThumb( hdc, rect, vertical, arrowSize, thumbSize );
 
       /* Select the correct brush and pen */
 
@@ -672,11 +666,6 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, INT nBar,
     Rectangle( hdc, r.left+1, r.top+1, r.right-1, r.bottom-1 );
     DrawEdge( hdc, &r, EDGE_RAISED, BF_RECT );
 
-    if (Save_SCROLL_MovingThumb &&
-        (SCROLL_TrackingWin == hwnd) &&
-        (SCROLL_TrackingBar == nBar))
-        SCROLL_DrawMovingThumb( hdc, rect, vertical, arrowSize, thumbSize );
-
     /* cleanup */
     SelectObject( hdc, hSavePen );
     SelectObject( hdc, hSaveBrush );
@@ -695,7 +684,6 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
     RECT rect;
     BOOL vertical;
     SCROLLBAR_INFO *infoPtr = SCROLL_GetInternalInfo( hwnd, nBar, TRUE );
-    BOOL Save_SCROLL_MovingThumb = SCROLL_MovingThumb;
     DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
 
     if (!(hwnd = WIN_GetFullHandle( hwnd ))) return;
@@ -711,11 +699,6 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
     /* do not draw if the scrollbar rectangle is empty */
     if(IsRectEmpty(&rect)) return;
 
-    if (Save_SCROLL_MovingThumb &&
-        (SCROLL_TrackingWin == hwnd) &&
-        (SCROLL_TrackingBar == nBar))
-        SCROLL_DrawMovingThumb( hdc, &rect, vertical, arrowSize, thumbSize );
-
       /* Draw the arrows */
 
     if (arrows && arrowSize)
@@ -728,14 +711,19 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
 	    SCROLL_DrawArrows( hdc, infoPtr, &rect, arrowSize, vertical,
 							       FALSE, FALSE );
     }
-    if( interior )
-	SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbSize,
-                         thumbPos, infoPtr->flags, vertical, FALSE, FALSE );
 
-    if (Save_SCROLL_MovingThumb &&
-        (SCROLL_TrackingWin == hwnd) &&
-        (SCROLL_TrackingBar == nBar))
-        SCROLL_DrawMovingThumb( hdc, &rect, vertical, arrowSize, thumbSize );
+    if (interior)
+    {
+        if (SCROLL_MovingThumb && SCROLL_TrackingWin == hwnd && SCROLL_TrackingBar == nBar)
+        {
+            SCROLL_DrawMovingThumb( hdc, &rect, vertical, arrowSize, thumbSize );
+        }
+        else
+        {
+            SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbSize, thumbPos,
+                                 infoPtr->flags, vertical, FALSE, FALSE );
+        }
+    }
 
     /* if scroll bar has focus, reposition the caret */
     if(hwnd==GetFocus() && (nBar==SB_CTL))
@@ -975,9 +963,6 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
         }
         else if (msg == WM_LBUTTONUP)
         {
-	    if (SCROLL_MovingThumb)
-		SCROLL_DrawMovingThumb(hdc, &rect, vertical, arrowSize, thumbSize);
-
             SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbSize,
                                  thumbPos, infoPtr->flags, vertical,
                                  FALSE, FALSE );
@@ -994,9 +979,6 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
 	    }
             if ( (pos != lastMousePos) || (!SCROLL_MovingThumb) )
             {
-		if (SCROLL_MovingThumb)
-		    SCROLL_DrawMovingThumb( hdc, &rect, vertical,
-                                        arrowSize, thumbSize );
                 lastMousePos = pos;
                 SCROLL_TrackingPos = trackThumbPos + pos - lastClickPos;
                 SCROLL_TrackingVal = SCROLL_GetThumbVal( infoPtr, &rect,
@@ -1005,9 +987,8 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
                 SendMessageW( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                                 MAKEWPARAM( SB_THUMBTRACK, SCROLL_TrackingVal),
                                 (LPARAM)hwndCtl );
-		if (!SCROLL_MovingThumb)
-		    SCROLL_DrawMovingThumb( hdc, &rect, vertical,
-                                        arrowSize, thumbSize );
+                SCROLL_DrawMovingThumb( hdc, &rect, vertical, arrowSize, thumbSize );
+                SCROLL_MovingThumb = TRUE;
             }
         }
         break;
@@ -1077,6 +1058,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
 
         /* Terminate tracking */
         SCROLL_TrackingWin = 0;
+        SCROLL_MovingThumb = FALSE;
     }
 
     ReleaseDC( hwnd, hdc );
