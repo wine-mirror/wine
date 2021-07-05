@@ -55,7 +55,6 @@ static BOOL PALETTE_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs palette_funcs =
 {
-    PALETTE_GetObject,        /* pGetObjectA */
     PALETTE_GetObject,        /* pGetObjectW */
     PALETTE_UnrealizeObject,  /* pUnrealizeObject */
     PALETTE_DeleteObject      /* pDeleteObject */

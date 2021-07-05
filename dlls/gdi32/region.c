@@ -111,7 +111,6 @@ static BOOL REGION_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs region_funcs =
 {
-    NULL,                 /* pGetObjectA */
     NULL,                 /* pGetObjectW */
     NULL,                 /* pUnrealizeObject */
     REGION_DeleteObject   /* pDeleteObject */

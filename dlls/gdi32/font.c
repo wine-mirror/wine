@@ -180,13 +180,11 @@ static inline WCHAR *strdupW( const WCHAR *p )
     return ret;
 }
 
-static INT FONT_GetObjectA( HGDIOBJ handle, INT count, LPVOID buffer );
 static INT FONT_GetObjectW( HGDIOBJ handle, INT count, LPVOID buffer );
 static BOOL FONT_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs fontobj_funcs =
 {
-    FONT_GetObjectA,    /* pGetObjectA */
     FONT_GetObjectW,    /* pGetObjectW */
     NULL,               /* pUnrealizeObject */
     FONT_DeleteObject   /* pDeleteObject */
@@ -4566,26 +4564,6 @@ HGDIOBJ WINAPI NtGdiSelectFont( HDC hdc, HGDIOBJ handle )
     return ret;
 }
 
-
-/***********************************************************************
- *           FONT_GetObjectA
- */
-static INT FONT_GetObjectA( HGDIOBJ handle, INT count, LPVOID buffer )
-{
-    FONTOBJ *font = GDI_GetObjPtr( handle, OBJ_FONT );
-    LOGFONTA lfA;
-
-    if (!font) return 0;
-    if (buffer)
-    {
-        FONT_LogFontWToA( &font->logfont, &lfA );
-        if (count > sizeof(lfA)) count = sizeof(lfA);
-        memcpy( buffer, &lfA, count );
-    }
-    else count = sizeof(lfA);
-    GDI_ReleaseObj( handle );
-    return count;
-}
 
 /***********************************************************************
  *           FONT_GetObjectW

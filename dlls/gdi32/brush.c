@@ -44,7 +44,6 @@ static BOOL BRUSH_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs brush_funcs =
 {
-    BRUSH_GetObject,     /* pGetObjectA */
     BRUSH_GetObject,     /* pGetObjectW */
     NULL,                /* pUnrealizeObject */
     BRUSH_DeleteObject   /* pDeleteObject */

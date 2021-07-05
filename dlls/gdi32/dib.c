@@ -83,7 +83,6 @@ static BOOL DIB_DeleteObject( HGDIOBJ handle );
 
 static const struct gdi_obj_funcs dib_funcs =
 {
-    DIB_GetObject,     /* pGetObjectA */
     DIB_GetObject,     /* pGetObjectW */
     NULL,              /* pUnrealizeObject */
     DIB_DeleteObject   /* pDeleteObject */

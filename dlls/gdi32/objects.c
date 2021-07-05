@@ -23,6 +23,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "ntgdi.h"
 #include "winternl.h"
 
@@ -139,4 +140,32 @@ INT WINAPI GetObjectW( HGDIOBJ handle, INT count, void *buffer )
         }
     }
     return result;
+}
+
+/***********************************************************************
+ *           GetObjectA    (GDI32.@)
+ */
+INT WINAPI GetObjectA( HGDIOBJ handle, INT count, void *buffer )
+{
+    TRACE("%p %d %p\n", handle, count, buffer );
+
+    if (get_object_type( handle ) == OBJ_FONT)
+    {
+        LOGFONTA *lfA = buffer;
+        LOGFONTW lf;
+
+        if (!buffer) return sizeof(*lfA);
+        if (!GetObjectW( handle, sizeof(lf), &lf )) return 0;
+        if (count > sizeof(*lfA)) count = sizeof(*lfA);
+        memcpy( lfA, &lf, min( count, FIELD_OFFSET(LOGFONTA, lfFaceName) ));
+        if (count > FIELD_OFFSET(LOGFONTA, lfFaceName))
+        {
+            WideCharToMultiByte( CP_ACP, 0, lf.lfFaceName, -1, lfA->lfFaceName,
+                                 count - FIELD_OFFSET(LOGFONTA, lfFaceName), NULL, NULL );
+            if (count == sizeof(*lfA)) lfA->lfFaceName[LF_FACESIZE - 1] = 0;
+        }
+        return count;
+    }
+
+    return GetObjectW( handle, count, buffer );
 }

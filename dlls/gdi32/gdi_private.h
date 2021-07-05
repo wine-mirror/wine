@@ -50,7 +50,6 @@ typedef struct {
 
 struct gdi_obj_funcs
 {
-    INT     (*pGetObjectA)( HGDIOBJ handle, INT count, LPVOID buffer );
     INT     (*pGetObjectW)( HGDIOBJ handle, INT count, LPVOID buffer );
     BOOL    (*pUnrealizeObject)( HGDIOBJ handle );
     BOOL    (*pDeleteObject)( HGDIOBJ handle );
