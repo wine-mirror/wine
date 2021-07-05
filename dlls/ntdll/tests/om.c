@@ -2266,10 +2266,10 @@ static void test_semaphore(void)
 
 static void test_wait_on_address(void)
 {
-    DWORD ticks;
     SIZE_T size;
     NTSTATUS status;
-    LARGE_INTEGER timeout;
+    LARGE_INTEGER start, end, timeout;
+    DWORD elapsed;
     LONG64 address, compare;
 
     if (!pRtlWaitOnAddress)
@@ -2298,13 +2298,13 @@ static void test_wait_on_address(void)
     /* values match */
     address = 0;
     compare = 0;
-    pNtQuerySystemTime(&timeout);
-    timeout.QuadPart += 100*10000;
-    ticks = GetTickCount();
+    pNtQuerySystemTime(&start);
+    timeout.QuadPart = start.QuadPart + 100 * 10000;
     status = pRtlWaitOnAddress(&address, &compare, 8, &timeout);
-    ticks = GetTickCount() - ticks;
+    pNtQuerySystemTime(&end);
     ok(status == STATUS_TIMEOUT, "got 0x%08x\n", status);
-    ok(ticks >= 80 && ticks <= 1000, "got %u\n", ticks);
+    elapsed = (end.QuadPart - start.QuadPart) / 10000;
+    ok(90 <= elapsed && elapsed <= 900, "timed out in %u ms\n", elapsed);
     ok(address == 0, "got %s\n", wine_dbgstr_longlong(address));
     ok(compare == 0, "got %s\n", wine_dbgstr_longlong(compare));
 
@@ -2314,12 +2314,13 @@ static void test_wait_on_address(void)
         compare = ~0;
         compare <<= size * 8;
 
+        pNtQuerySystemTime(&start);
         timeout.QuadPart = -100 * 10000;
-        ticks = GetTickCount();
         status = pRtlWaitOnAddress(&address, &compare, size, &timeout);
-        ticks = GetTickCount() - ticks;
+        pNtQuerySystemTime(&end);
         ok(status == STATUS_TIMEOUT, "got 0x%08x\n", status);
-        ok(ticks >= 80 && ticks <= 1000, "got %u\n", ticks);
+        elapsed = (end.QuadPart - start.QuadPart) / 10000;
+        ok(90 <= elapsed && elapsed <= 900, "timed out in %u ms\n", elapsed);
 
         status = pRtlWaitOnAddress(&address, &compare, size << 1, &timeout);
         ok(!status, "got 0x%08x\n", status);
