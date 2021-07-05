@@ -386,6 +386,7 @@ static void cat_okfile(void)
     SetEndOfFile(okfile);
 
     winetest_add_failures(InterlockedExchange(&test_data->failures, 0));
+    winetest_add_failures(InterlockedExchange(&test_data->todo_failures, 0));
 }
 
 static ULONG64 modified_value;

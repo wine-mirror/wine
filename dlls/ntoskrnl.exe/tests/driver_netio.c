@@ -141,7 +141,7 @@ static void test_wsk_get_address_info(void)
     {
         struct sockaddr_in *addr = (struct sockaddr_in *)addr_info->ai_addr;
 
-        ok(addr_info->ai_addrlen == sizeof(*addr), "Got unexpected ai_addrlen %u.\n", addr_info->ai_addrlen);
+        ok(addr_info->ai_addrlen == sizeof(*addr), "Got unexpected ai_addrlen %I64u.\n", (UINT64)addr_info->ai_addrlen);
         ok(addr->sin_family == AF_INET, "Got unexpected sin_family %u.\n", addr->sin_family);
         ok(ntohs(addr->sin_port) == 12345, "Got unexpected sin_port %u.\n", ntohs(addr->sin_port));
         ok(ntohl(addr->sin_addr.s_addr) == 0x7f000001, "Got unexpected sin_addr %#x.\n",

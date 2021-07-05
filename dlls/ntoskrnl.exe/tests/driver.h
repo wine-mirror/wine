@@ -54,7 +54,8 @@ struct test_data
     int running_under_wine;
     int winetest_report_success;
     int winetest_debug;
-    int successes, failures, skipped, todo_successes, todo_failures;
+    int failures;
+    int todo_failures;
 };
 
 struct main_test_input
@@ -63,13 +64,6 @@ struct main_test_input
     SIZE_T teststr_offset;
     ULONG64 *modified_value;
 };
-
-static inline char *drv_strrchr( const char *str, char ch )
-{
-    char *ret = NULL;
-    do { if (*str == ch) ret = (char *)(ULONG_PTR)str; } while (*str++);
-    return ret;
-}
 
 static const GUID control_class = {0xdeadbeef, 0x29ef, 0x4538, {0xa5, 0xfd, 0xb6, 0x95, 0x73, 0xa3, 0x62, 0xc0}};
 
