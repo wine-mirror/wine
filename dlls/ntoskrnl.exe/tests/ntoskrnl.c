@@ -1842,6 +1842,8 @@ static void test_hidp(HANDLE file, int report_id)
         { .DataIndex = 1, },
         { .DataIndex = 5, .RawValue = 1, },
         { .DataIndex = 7, .RawValue = 1, },
+        { .DataIndex = 19, .RawValue = 1, },
+        { .DataIndex = 21, .RawValue = 1, },
         { .DataIndex = 30, },
         { .DataIndex = 31, },
         { .DataIndex = 32, .RawValue = 0xfeedcafe, },
@@ -2200,6 +2202,20 @@ static void test_hidp(HANDLE file, int report_id)
                             report, caps.InputReportByteLength);
     ok(status == HIDP_STATUS_SUCCESS, "HidP_SetUsages returned %#x\n", status);
 
+    usages[0] = 0x9;
+    usages[1] = 0xb;
+    usages[2] = 0xa;
+    value = 3;
+    ok(report[6] == 0, "got report[6] %x expected 0\n", report[6]);
+    ok(report[7] == 0, "got report[7] %x expected 0\n", report[7]);
+    memcpy(buffer, report, caps.InputReportByteLength);
+    status = HidP_SetUsages(HidP_Input, HID_USAGE_PAGE_KEYBOARD, 0, usages, &value, preparsed_data,
+                            report, caps.InputReportByteLength);
+    todo_wine ok(status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_SetUsages returned %#x\n", status);
+    buffer[6] = 2;
+    buffer[7] = 4;
+    todo_wine ok(!memcmp(buffer, report, caps.InputReportByteLength), "unexpected report data\n");
+
     status = HidP_SetUsageValue(HidP_Input, HID_USAGE_PAGE_LED, 0, 6, 1,
                                 preparsed_data, report, caps.InputReportByteLength);
     ok(status == HIDP_STATUS_USAGE_NOT_FOUND, "HidP_SetUsageValue returned %#x\n", status);
@@ -2238,23 +2254,35 @@ static void test_hidp(HANDLE file, int report_id)
     status = HidP_GetUsagesEx(HidP_Input, 0, usage_and_pages, &value, preparsed_data, report,
                               caps.InputReportByteLength);
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetUsagesEx returned %#x\n", status);
-    ok(value == 4, "got usage count %d, expected %d\n", value, 4);
+    todo_wine ok(value == 6, "got usage count %d, expected %d\n", value, 4);
     ok(usage_and_pages[0].UsagePage == HID_USAGE_PAGE_BUTTON, "got usage_and_pages[0] UsagePage %x, expected %x\n",
        usage_and_pages[0].UsagePage, HID_USAGE_PAGE_BUTTON);
     ok(usage_and_pages[1].UsagePage == HID_USAGE_PAGE_BUTTON, "got usage_and_pages[1] UsagePage %x, expected %x\n",
        usage_and_pages[1].UsagePage, HID_USAGE_PAGE_BUTTON);
-    ok(usage_and_pages[2].UsagePage == HID_USAGE_PAGE_LED, "got usage_and_pages[2] UsagePage %x, expected %x\n",
-       usage_and_pages[2].UsagePage, HID_USAGE_PAGE_LED);
-    ok(usage_and_pages[3].UsagePage == HID_USAGE_PAGE_LED, "got usage_and_pages[3] UsagePage %x, expected %x\n",
-       usage_and_pages[3].UsagePage, HID_USAGE_PAGE_LED);
+    ok(usage_and_pages[2].UsagePage == HID_USAGE_PAGE_KEYBOARD, "got usage_and_pages[2] UsagePage %x, expected %x\n",
+       usage_and_pages[2].UsagePage, HID_USAGE_PAGE_KEYBOARD);
+    ok(usage_and_pages[3].UsagePage == HID_USAGE_PAGE_KEYBOARD, "got usage_and_pages[3] UsagePage %x, expected %x\n",
+       usage_and_pages[3].UsagePage, HID_USAGE_PAGE_KEYBOARD);
+    todo_wine
+    ok(usage_and_pages[4].UsagePage == HID_USAGE_PAGE_LED, "got usage_and_pages[4] UsagePage %x, expected %x\n",
+       usage_and_pages[4].UsagePage, HID_USAGE_PAGE_LED);
+    ok(usage_and_pages[5].UsagePage == HID_USAGE_PAGE_LED, "got usage_and_pages[5] UsagePage %x, expected %x\n",
+       usage_and_pages[5].UsagePage, HID_USAGE_PAGE_LED);
     ok(usage_and_pages[0].Usage == 4, "got usage_and_pages[0] Usage %x, expected %x\n",
        usage_and_pages[0].Usage, 4);
     ok(usage_and_pages[1].Usage == 6, "got usage_and_pages[1] Usage %x, expected %x\n",
        usage_and_pages[1].Usage, 6);
-    ok(usage_and_pages[2].Usage == 6, "got usage_and_pages[2] Usage %x, expected %x\n",
-       usage_and_pages[2].Usage, 6);
-    ok(usage_and_pages[3].Usage == 4, "got usage_and_pages[3] Usage %x, expected %x\n",
-       usage_and_pages[3].Usage, 4);
+    ok(usage_and_pages[2].Usage == 9, "got usage_and_pages[2] Usage %x, expected %x\n",
+       usage_and_pages[2].Usage, 9);
+    todo_wine
+    ok(usage_and_pages[3].Usage == 11, "got usage_and_pages[3] Usage %x, expected %x\n",
+       usage_and_pages[3].Usage, 11);
+    todo_wine
+    ok(usage_and_pages[4].Usage == 6, "got usage_and_pages[4] Usage %x, expected %x\n",
+       usage_and_pages[4].Usage, 6);
+    todo_wine
+    ok(usage_and_pages[5].Usage == 4, "got usage_and_pages[5] Usage %x, expected %x\n",
+       usage_and_pages[5].Usage, 4);
 
     value = HidP_MaxDataListLength(HidP_Feature + 1, preparsed_data);
     ok(value == 0, "HidP_MaxDataListLength(HidP_Feature + 1) returned %d, expected %d\n", value, 0);
@@ -2268,15 +2296,15 @@ static void test_hidp(HANDLE file, int report_id)
     value = 1;
     status = HidP_GetData(HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength);
     ok(status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetData returned %#x\n", status);
-    ok(value == 9, "got data count %d, expected %d\n", value, 9);
+    todo_wine ok(value == 11, "got data count %d, expected %d\n", value, 11);
     memset(data, 0, sizeof(data));
     status = HidP_GetData(HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength);
     ok(status == HIDP_STATUS_SUCCESS, "HidP_GetData returned %#x\n", status);
     for (i = 0; i < ARRAY_SIZE(expect_data); ++i)
     {
         winetest_push_context("data[%d]", i);
-        check_member(data[i], expect_data[i], "%d", DataIndex);
-        check_member(data[i], expect_data[i], "%d", RawValue);
+        todo_wine_if(i >= 4) check_member(data[i], expect_data[i], "%d", DataIndex);
+        todo_wine_if(i >= 4) check_member(data[i], expect_data[i], "%d", RawValue);
         winetest_pop_context();
     }
 
