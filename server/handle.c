@@ -174,21 +174,16 @@ static void handle_table_destroy( struct object *obj )
 
     assert( obj->ops == &handle_table_ops );
 
-    /* first notify all objects that handles are being closed */
-    if (table->process)
-    {
-        for (i = 0, entry = table->entries; i <= table->last; i++, entry++)
-        {
-            struct object *obj = entry->ptr;
-            if (obj) obj->ops->close_handle( obj, table->process, index_to_handle(i) );
-        }
-    }
-
     for (i = 0, entry = table->entries; i <= table->last; i++, entry++)
     {
         struct object *obj = entry->ptr;
         entry->ptr = NULL;
-        if (obj) release_object_from_handle( obj );
+        if (obj)
+        {
+            if (table->process)
+                obj->ops->close_handle( obj, table->process, index_to_handle(i) );
+            release_object_from_handle( obj );
+        }
     }
     free( table->entries );
 }
