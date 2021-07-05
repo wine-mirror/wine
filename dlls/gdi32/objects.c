@@ -111,3 +111,32 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ obj )
     if (!ret) SetLastError( ERROR_INVALID_HANDLE );
     return ret;
 }
+
+/***********************************************************************
+ *           GetObjectW    (GDI32.@)
+ */
+INT WINAPI GetObjectW( HGDIOBJ handle, INT count, void *buffer )
+{
+    int result;
+
+    TRACE( "%p %d %p\n", handle, count, buffer );
+
+    result = NtGdiExtGetObjectW( handle, count, buffer );
+    if (!result && count)
+    {
+        switch(get_object_type( handle ))
+        {
+        case 0:
+        case OBJ_BITMAP:
+        case OBJ_BRUSH:
+        case OBJ_FONT:
+        case OBJ_PAL:
+        case OBJ_PEN:
+        case OBJ_EXTPEN:
+            break;
+        default:
+            SetLastError( ERROR_INVALID_HANDLE );
+        }
+    }
+    return result;
+}

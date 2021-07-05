@@ -1060,9 +1060,9 @@ INT WINAPI GetObjectA( HGDIOBJ handle, INT count, LPVOID buffer )
 }
 
 /***********************************************************************
- *           GetObjectW    (GDI32.@)
+ *           NtGdiExtGetObjectW    (win32u.@)
  */
-INT WINAPI GetObjectW( HGDIOBJ handle, INT count, LPVOID buffer )
+INT WINAPI NtGdiExtGetObjectW( HGDIOBJ handle, INT count, void *buffer )
 {
     GDI_HANDLE_ENTRY *entry;
     const struct gdi_obj_funcs *funcs = NULL;
@@ -1078,11 +1078,9 @@ INT WINAPI GetObjectW( HGDIOBJ handle, INT count, LPVOID buffer )
     }
     LeaveCriticalSection( &gdi_section );
 
-    if (funcs)
+    if (funcs && funcs->pGetObjectW)
     {
-        if (!funcs->pGetObjectW)
-            SetLastError( ERROR_INVALID_HANDLE );
-        else if (buffer && ((ULONG_PTR)buffer >> 16) == 0) /* catch apps getting argument order wrong */
+        if (buffer && ((ULONG_PTR)buffer >> 16) == 0) /* catch apps getting argument order wrong */
             SetLastError( ERROR_NOACCESS );
         else
             result = funcs->pGetObjectW( handle, count, buffer );
