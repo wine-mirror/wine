@@ -161,18 +161,14 @@ void async_terminate( struct async *async, unsigned int status )
 
     if (!async->direct_result)
     {
-        if (async->data.user)
-        {
-            apc_call_t data;
+        apc_call_t data;
 
-            memset( &data, 0, sizeof(data) );
-            data.type            = APC_ASYNC_IO;
-            data.async_io.user   = async->data.user;
-            data.async_io.sb     = async->data.iosb;
-            data.async_io.status = status;
-            thread_queue_apc( async->thread->process, async->thread, &async->obj, &data );
-        }
-        else async_set_result( &async->obj, STATUS_SUCCESS, 0 );
+        memset( &data, 0, sizeof(data) );
+        data.type            = APC_ASYNC_IO;
+        data.async_io.user   = async->data.user;
+        data.async_io.sb     = async->data.iosb;
+        data.async_io.status = status;
+        thread_queue_apc( async->thread->process, async->thread, &async->obj, &data );
     }
 
     async_reselect( async );
