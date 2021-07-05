@@ -108,11 +108,9 @@ static BOOL SCROLL_ShowScrollBar( HWND hwnd, INT nBar,
 				    BOOL fShowH, BOOL fShowV );
 static INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
                                  const SCROLLINFO *info, BOOL bRedraw );
-static void SCROLL_DrawInterior_9x( HWND hwnd, HDC hdc, INT nBar,
-				    RECT *rect, INT arrowSize,
-				    INT thumbSize, INT thumbPos,
-				    UINT flags, BOOL vertical,
-				    BOOL top_selected, BOOL bottom_selected );
+static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, INT nBar, RECT *rect, INT arrowSize,
+                                 INT thumbSize, INT thumbPos, UINT flags, BOOL vertical,
+                                 BOOL top_selected, BOOL bottom_selected );
 
 
 /*********************************************************************
@@ -484,9 +482,8 @@ static void SCROLL_DrawMovingThumb( HDC hdc, RECT *rect, BOOL vertical,
   else if( pos > max_size )
     pos = max_size;
 
-  SCROLL_DrawInterior_9x( SCROLL_TrackingWin, hdc, SCROLL_TrackingBar,
-			  rect, arrowSize, thumbSize, pos,
-			  0, vertical, FALSE, FALSE );
+  SCROLL_DrawInterior( SCROLL_TrackingWin, hdc, SCROLL_TrackingBar, rect, arrowSize, thumbSize, pos,
+                       0, vertical, FALSE, FALSE );
 
   SCROLL_MovingThumb = !SCROLL_MovingThumb;
 }
@@ -496,95 +493,6 @@ static void SCROLL_DrawMovingThumb( HDC hdc, RECT *rect, BOOL vertical,
  *
  * Draw the scroll bar interior (everything except the arrows).
  */
-static void SCROLL_DrawInterior_9x( HWND hwnd, HDC hdc, INT nBar,
-				    RECT *rect, INT arrowSize,
-				    INT thumbSize, INT thumbPos,
-				    UINT flags, BOOL vertical,
-				    BOOL top_selected, BOOL bottom_selected )
-{
-    RECT r;
-    HPEN hSavePen;
-    HBRUSH hSaveBrush,hBrush;
-
-    /* Only scrollbar controls send WM_CTLCOLORSCROLLBAR.
-     * The window-owned scrollbars need to call DEFWND_ControlColor
-     * to correctly setup default scrollbar colors
-     */
-    if (nBar == SB_CTL)
-    {
-      hBrush = (HBRUSH)SendMessageW( GetParent(hwnd), WM_CTLCOLORSCROLLBAR,
-				     (WPARAM)hdc,(LPARAM)hwnd);
-    }
-    else
-    {
-      hBrush = DEFWND_ControlColor( hdc, CTLCOLOR_SCROLLBAR );
-    }
-
-    hSavePen = SelectObject( hdc, SYSCOLOR_GetPen(COLOR_WINDOWFRAME) );
-    hSaveBrush = SelectObject( hdc, hBrush );
-
-    /* Calculate the scroll rectangle */
-    r = *rect;
-    if (vertical)
-    {
-        r.top    += arrowSize - SCROLL_ARROW_THUMB_OVERLAP;
-        r.bottom -= (arrowSize - SCROLL_ARROW_THUMB_OVERLAP);
-    }
-    else
-    {
-        r.left  += arrowSize - SCROLL_ARROW_THUMB_OVERLAP;
-        r.right -= (arrowSize - SCROLL_ARROW_THUMB_OVERLAP);
-    }
-
-    /* Draw the scroll rectangles and thumb */
-    if (!thumbPos)  /* No thumb to draw */
-    {
-        PatBlt( hdc, r.left, r.top,
-                     r.right - r.left, r.bottom - r.top,
-                     PATCOPY );
-
-        /* cleanup and return */
-        SelectObject( hdc, hSavePen );
-        SelectObject( hdc, hSaveBrush );
-        return;
-    }
-
-    if (vertical)
-    {
-        PatBlt( hdc, r.left, r.top,
-                  r.right - r.left,
-                  thumbPos - (arrowSize - SCROLL_ARROW_THUMB_OVERLAP),
-                  top_selected ? 0x0f0000 : PATCOPY );
-        r.top += thumbPos - (arrowSize - SCROLL_ARROW_THUMB_OVERLAP);
-        PatBlt( hdc, r.left, r.top + thumbSize,
-                  r.right - r.left,
-                  r.bottom - r.top - thumbSize,
-                  bottom_selected ? 0x0f0000 : PATCOPY );
-        r.bottom = r.top + thumbSize;
-    }
-    else  /* horizontal */
-    {
-        PatBlt( hdc, r.left, r.top,
-                  thumbPos - (arrowSize - SCROLL_ARROW_THUMB_OVERLAP),
-                  r.bottom - r.top,
-                  top_selected ? 0x0f0000 : PATCOPY );
-        r.left += thumbPos - (arrowSize - SCROLL_ARROW_THUMB_OVERLAP);
-        PatBlt( hdc, r.left + thumbSize, r.top,
-                  r.right - r.left - thumbSize,
-                  r.bottom - r.top,
-                  bottom_selected ? 0x0f0000 : PATCOPY );
-        r.right = r.left + thumbSize;
-    }
-
-    /* Draw the thumb */
-    DrawEdge( hdc, &r, EDGE_RAISED, BF_RECT | BF_MIDDLE  );
-
-    /* cleanup */
-    SelectObject( hdc, hSavePen );
-    SelectObject( hdc, hSaveBrush );
-}
-
-
 static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, INT nBar,
                                  RECT *rect, INT arrowSize,
                                  INT thumbSize, INT thumbPos,
