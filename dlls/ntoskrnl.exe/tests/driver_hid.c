@@ -424,6 +424,25 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
             break;
         }
 
+        case IOCTL_HID_SET_FEATURE:
+        {
+            HID_XFER_PACKET *packet = irp->UserBuffer;
+            ULONG expected_size = 17;
+            todo_wine ok(in_size == sizeof(*packet), "got input size %u\n", in_size);
+            todo_wine ok(!out_size, "got output size %u\n", out_size);
+
+            todo_wine_if(packet->reportId != report_id)
+            ok(packet->reportId == report_id, "got packet report id %u\n", packet->reportId);
+            todo_wine_if(packet->reportBufferLen == 0 || packet->reportBufferLen == 16)
+            ok(packet->reportBufferLen >= expected_size, "got packet buffer len %u, expected %d or more\n",
+               packet->reportBufferLen, expected_size);
+            ok(!!packet->reportBuffer, "got packet buffer %p\n", packet->reportBuffer);
+
+            irp->IoStatus.Information = 3;
+            ret = STATUS_SUCCESS;
+            break;
+        }
+
         case IOCTL_HID_GET_STRING:
             ok(!in_size, "got input size %u\n", in_size);
             ok(out_size == 128, "got output size %u\n", out_size);
