@@ -313,8 +313,7 @@ static WCHAR test_load_image_name[MAX_PATH];
 static void WINAPI test_load_image_notify_routine(UNICODE_STRING *image_name, HANDLE process_id,
         IMAGE_INFO *image_info)
 {
-    if (test_load_image_notify_count == -1
-            || (image_name->Buffer && wcsstr(image_name->Buffer, L".tmp")))
+    if (image_name->Buffer && wcsstr(image_name->Buffer, L".tmp"))
     {
         ++test_load_image_notify_count;
         test_image_info = *image_info;
@@ -380,7 +379,7 @@ static void test_load_driver(void)
             || !wcscmp(test_load_image_name, full_name->Name.Buffer),
             "Expected image path name %ls, got %ls.\n", full_name->Name.Buffer, test_load_image_name);
 
-    test_load_image_notify_count = -1;
+    test_load_image_notify_count = 0;
 
     ret = ZwLoadDriver(&name);
     ok(ret == STATUS_IMAGE_ALREADY_LOADED, "got %#x\n", ret);
@@ -395,7 +394,7 @@ static void test_load_driver(void)
     ret = PsRemoveLoadImageNotifyRoutine(test_load_image_notify_routine);
     ok(ret == STATUS_PROCEDURE_NOT_FOUND, "Got unexpected status %#x.\n", ret);
 
-    ok(test_load_image_notify_count == -1, "Got unexpected test_load_image_notify_count %u.\n",
+    ok(test_load_image_notify_count == 0, "Got unexpected test_load_image_notify_count %u.\n",
             test_load_image_notify_count);
     RtlFreeUnicodeString(&image_path);
 }
