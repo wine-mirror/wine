@@ -509,6 +509,16 @@ void UXTHEME_InitSystem(HINSTANCE hInst)
     UXTHEME_LoadTheme();
 }
 
+void UXTHEME_UninitSystem(void)
+{
+    MSSTYLES_SetActiveTheme(NULL, FALSE);
+
+    GlobalDeleteAtom(atWindowTheme);
+    GlobalDeleteAtom(atSubAppName);
+    GlobalDeleteAtom(atSubIdList);
+    GlobalDeleteAtom(atDialogThemeEnabled);
+}
+
 /***********************************************************************
  *      IsAppThemed                                         (UXTHEME.@)
  */

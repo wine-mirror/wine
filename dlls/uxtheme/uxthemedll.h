@@ -95,6 +95,7 @@ HRESULT WINAPI ParseThemeIniFile(LPCWSTR pszIniFileName, LPWSTR pszUnknown,
                                  ParseThemeIniFileProc callback, LPVOID lpData) DECLSPEC_HIDDEN;
 
 extern void UXTHEME_InitSystem(HINSTANCE hInst) DECLSPEC_HIDDEN;
+extern void UXTHEME_UninitSystem(void) DECLSPEC_HIDDEN;
 
 /* No alpha blending */
 #define ALPHABLEND_NONE             0
