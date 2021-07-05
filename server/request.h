@@ -896,6 +896,7 @@ C_ASSERT( FIELD_OFFSET(struct select_request, prev_apc) == 36 );
 C_ASSERT( sizeof(struct select_request) == 40 );
 C_ASSERT( FIELD_OFFSET(struct select_reply, call) == 8 );
 C_ASSERT( FIELD_OFFSET(struct select_reply, apc_handle) == 56 );
+C_ASSERT( FIELD_OFFSET(struct select_reply, signaled) == 60 );
 C_ASSERT( sizeof(struct select_reply) == 64 );
 C_ASSERT( FIELD_OFFSET(struct create_event_request, access) == 12 );
 C_ASSERT( FIELD_OFFSET(struct create_event_request, manual_reset) == 16 );

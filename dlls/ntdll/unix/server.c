@@ -603,6 +603,7 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
     apc_call_t call;
     apc_result_t result;
     sigset_t old_set;
+    int signaled;
 
     memset( &result, 0, sizeof(result) );
 
@@ -628,6 +629,7 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
                 }
                 if (context) wine_server_set_reply( req, context, 2 * sizeof(*context) );
                 ret = server_call_unlocked( req );
+                signaled    = reply->signaled;
                 apc_handle  = reply->apc_handle;
                 call        = reply->call;
             }
@@ -646,7 +648,7 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
             mutex_unlock( mutex );
             mutex = NULL;
         }
-        if (ret != STATUS_PENDING) break;
+        if (signaled) break;
 
         ret = wait_select_reply( &cookie );
     }
