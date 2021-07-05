@@ -35,15 +35,6 @@
 #include "ntdll_misc.h"
 #include "ddk/wdm.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
-
-/*
- *	Token
- */
-
-/*
- *	Misc
- */
 
 /***********************************************************************
  * RtlIsProcessorFeaturePresent [NTDLL.@]
@@ -51,25 +42,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 BOOLEAN WINAPI RtlIsProcessorFeaturePresent( UINT feature )
 {
     return feature < PROCESSOR_FEATURE_MAX && user_shared_data->ProcessorFeatures[feature];
-}
-
-/******************************************************************************
- * RtlGetNativeSystemInformation [NTDLL.@]
- */
-NTSTATUS WINAPI /* DECLSPEC_HOTPATCH */ RtlGetNativeSystemInformation(
-	IN SYSTEM_INFORMATION_CLASS SystemInformationClass,
-	OUT PVOID SystemInformation,
-	IN ULONG Length,
-	OUT PULONG ResultLength)
-{
-    FIXME( "semi-stub, SystemInformationClass %#x, SystemInformation %p, Length %#x, ResultLength %p.\n",
-            SystemInformationClass, SystemInformation, Length, ResultLength );
-
-    /* RtlGetNativeSystemInformation function is the same as NtQuerySystemInformation on some Win7
-     * versions but there are differences for earlier and newer versions, at least:
-     *     - HighestUserAddress field for SystemBasicInformation;
-     *     - Some information classes are not supported by RtlGetNativeSystemInformation. */
-    return NtQuerySystemInformation( SystemInformationClass, SystemInformation, Length, ResultLength );
 }
 
 /******************************************************************************

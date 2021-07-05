@@ -721,7 +721,8 @@
 # Yes, Microsoft really misspelled this one!
 # @ stub RtlGetLengthWithoutTrailingPathSeperators
 @ stdcall RtlGetLongestNtPathLength()
-@ stdcall RtlGetNativeSystemInformation(long ptr long ptr)
+@ stdcall -syscall -arch=win32 RtlGetNativeSystemInformation(long ptr long ptr) NtWow64GetNativeSystemInformation
+@ stdcall -syscall -arch=win64 RtlGetNativeSystemInformation(long ptr long ptr) NtQuerySystemInformation
 # @ stub RtlGetNextRange
 @ stdcall RtlGetNtGlobalFlags()
 @ stdcall RtlGetNtProductType(ptr)

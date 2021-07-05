@@ -200,11 +200,11 @@ static void test_query_basic(void)
     ok( status == STATUS_INVALID_INFO_CLASS || broken(STATUS_NOT_IMPLEMENTED), /* vista */
         "got %08x\n", status);
     status = pRtlGetNativeSystemInformation( SystemNativeBasicInformation, &sbi3, sizeof(sbi3), &ReturnLength );
-    todo_wine
     ok( !status || status == STATUS_INFO_LENGTH_MISMATCH ||
         broken(status == STATUS_INVALID_INFO_CLASS) || broken(status == STATUS_NOT_IMPLEMENTED),
         "failed %x\n", status );
     if (!status || status == STATUS_INFO_LENGTH_MISMATCH)
+        todo_wine_if( is_wow64 )
         ok( !status == !is_wow64, "got wrong status %x wow64 %u\n", status, is_wow64 );
     if (!status)
     {
