@@ -68,7 +68,7 @@ HFONT    WINAPI NtGdiHfontCreate( const ENUMLOGFONTEXDVW *enumex, ULONG unk2, UL
                                   ULONG unk4, void *data );
 HBRUSH   WINAPI NtGdiCreateDIBBrush( const void* data, UINT coloruse );
 HBRUSH   WINAPI NtGdiCreatePatternBrushInternal( HBITMAP hbitmap, BOOL pen );
-HPEN     WINAPI NtGdiCreatePen( INT style, INT width, COLORREF color );
+HPEN     WINAPI NtGdiCreatePen( INT style, INT width, COLORREF color, HBRUSH brush );
 HRGN     WINAPI NtGdiCreateRectRgn( INT left, INT top, INT right, INT bottom );
 HRGN     WINAPI NtGdiCreateRoundRectRgn( INT left, INT top, INT right, INT bottom,
                                          INT ellipse_width, INT ellipse_height );

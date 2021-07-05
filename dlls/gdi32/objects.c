@@ -177,3 +177,12 @@ HPEN WINAPI CreatePenIndirect( const LOGPEN *pen )
 {
     return CreatePen( pen->lopnStyle, pen->lopnWidth.x, pen->lopnColor );
 }
+
+/***********************************************************************
+ *           CreatePen    (GDI32.@)
+ */
+HPEN WINAPI CreatePen( INT style, INT width, COLORREF color )
+{
+    if (style < 0 || style > PS_INSIDEFRAME) style = PS_SOLID;
+    return NtGdiCreatePen( style, width, color, NULL );
+}
