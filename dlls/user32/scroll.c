@@ -484,8 +484,6 @@ static void SCROLL_DrawMovingThumb( HDC hdc, RECT *rect, BOOL vertical,
 
   SCROLL_DrawInterior( SCROLL_TrackingWin, hdc, SCROLL_TrackingBar, rect, arrowSize, thumbSize, pos,
                        0, vertical, FALSE, FALSE );
-
-  SCROLL_MovingThumb = !SCROLL_MovingThumb;
 }
 
 /***********************************************************************
@@ -625,6 +623,7 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
         if (SCROLL_MovingThumb && SCROLL_TrackingWin == hwnd && SCROLL_TrackingBar == nBar)
         {
             SCROLL_DrawMovingThumb( hdc, &rect, vertical, arrowSize, thumbSize );
+            SCROLL_MovingThumb = FALSE;
         }
         else
         {
@@ -867,7 +866,10 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
                                                         vertical,
                                                         SCROLL_TrackingPos );
 	    if (!SCROLL_MovingThumb)
+            {
 		SCROLL_DrawMovingThumb(hdc, &rect, vertical, arrowSize, thumbSize);
+                SCROLL_MovingThumb = TRUE;
+            }
         }
         else if (msg == WM_LBUTTONUP)
         {
