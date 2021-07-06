@@ -1722,6 +1722,7 @@ enable_wmvcore
 enable_wnaspi32
 enable_wow64
 enable_wow64cpu
+enable_wow64win
 enable_wpc
 enable_wpcap
 enable_ws2_32
@@ -5750,6 +5751,7 @@ $as_echo "$wine_cv_builtin_ms_va_list" >&6; }
       notice_platform="64-bit "
       TARGETFLAGS="$TARGETFLAGS -m64"
       enable_wow64=${enable_wow64:-yes}
+      enable_wow64win=${enable_wow64win:-yes}
       enable_wow64cpu=${enable_wow64cpu:-yes}
     fi
     ;;
@@ -5865,6 +5867,7 @@ fi
 $as_echo "$wine_cv_builtin_ms_va_list" >&6; }
     test $wine_cv_builtin_ms_va_list != no || as_fn_error $? "You need clang >= 5.0 to build Wine for arm64." "$LINENO" 5
     enable_wow64=${enable_wow64:-yes}
+    enable_wow64win=${enable_wow64win:-yes}
     ;;
   i[3456789]86*)
     enable_win16=${enable_win16:-yes}
@@ -5875,6 +5878,7 @@ esac
 enable_win16=${enable_win16:-no}
 enable_win64=${enable_win64:-no}
 enable_wow64=${enable_wow64:-no}
+enable_wow64win=${enable_wow64win:-no}
 enable_wow64cpu=${enable_wow64cpu:-no}
 
 enable_winetest=${enable_winetest:-$enable_tests}
@@ -21152,6 +21156,7 @@ wine_fn_config_makefile dlls/wnaspi32 enable_wnaspi32
 wine_fn_config_makefile dlls/wow32 enable_win16
 wine_fn_config_makefile dlls/wow64 enable_wow64
 wine_fn_config_makefile dlls/wow64cpu enable_wow64cpu
+wine_fn_config_makefile dlls/wow64win enable_wow64win
 wine_fn_config_makefile dlls/wpc enable_wpc
 wine_fn_config_makefile dlls/wpc/tests enable_tests
 wine_fn_config_makefile dlls/wpcap enable_wpcap
