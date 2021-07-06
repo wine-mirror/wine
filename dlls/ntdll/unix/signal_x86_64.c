@@ -1521,6 +1521,28 @@ static inline void set_sigcontext( const CONTEXT *context, ucontext_t *sigcontex
 
 
 /***********************************************************************
+ *           init_handler
+ */
+static inline void init_handler( const ucontext_t *sigcontext )
+{
+#ifdef __linux__
+    if (fs32_sel) arch_prctl( ARCH_SET_FS, amd64_thread_data()->pthread_teb );
+#endif
+}
+
+
+/***********************************************************************
+ *           leave_handler
+ */
+static inline void leave_handler( const ucontext_t *sigcontext )
+{
+#ifdef __linux__
+    if (fs32_sel) __asm__ volatile( "movw %0,%%fs" :: "r" (fs32_sel) );
+#endif
+}
+
+
+/***********************************************************************
  *           save_context
  *
  * Set the register values from a sigcontext.
@@ -1528,6 +1550,8 @@ static inline void set_sigcontext( const CONTEXT *context, ucontext_t *sigcontex
 static void save_context( struct xcontext *xcontext, const ucontext_t *sigcontext )
 {
     CONTEXT *context = &xcontext->c;
+
+    init_handler( sigcontext );
 
     context->ContextFlags = CONTEXT_CONTROL | CONTEXT_INTEGER | CONTEXT_SEGMENTS | CONTEXT_DEBUG_REGISTERS;
     context->Rax    = RAX_sig(sigcontext);
@@ -1611,6 +1635,7 @@ static void restore_context( const struct xcontext *xcontext, ucontext_t *sigcon
     if (FPU_sig(sigcontext)) *FPU_sig(sigcontext) = context->u.FltSave;
     if ((cpu_info.ProcessorFeatureBits & CPU_FEATURE_AVX) && (xs = XState_sig(FPU_sig(sigcontext))))
         xs->CompactionMask = xcontext->host_compaction_mask;
+    leave_handler( sigcontext );
 }
 
 
@@ -2139,6 +2164,7 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
     RSP_sig(sigcontext) = (ULONG_PTR)stack;
     /* clear single-step, direction, and align check flag */
     EFL_sig(sigcontext) &= ~(0x100|0x400|0x40000);
+    leave_handler( sigcontext );
 }
 
 
@@ -2343,6 +2369,7 @@ static inline BOOL handle_interrupt( ucontext_t *sigcontext, EXCEPTION_RECORD *r
             case 4: /* BREAKPOINT_UNLOAD_SYMBOLS */
             case 5: /* BREAKPOINT_COMMAND_STRING (>= Win2003) */
                 RIP_sig(sigcontext) += 3;
+                leave_handler( sigcontext );
                 return TRUE;
         }
         context->Rip += 3;
@@ -2479,12 +2506,17 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         rec.ExceptionInformation[1] = (ULONG_PTR)siginfo->si_addr;
         rec.ExceptionCode = virtual_handle_fault( siginfo->si_addr, rec.ExceptionInformation[0],
                                                   (void *)RSP_sig(ucontext) );
-        if (!rec.ExceptionCode) return;
+        if (!rec.ExceptionCode)
+        {
+            leave_handler( sigcontext );
+            return;
+        }
         break;
     case TRAP_x86_ALIGNFLT:  /* Alignment check exception */
         if (EFL_sig(ucontext) & 0x00040000)
         {
             EFL_sig(ucontext) &= ~0x00040000;  /* reset AC flag */
+            leave_handler( sigcontext );
             return;
         }
         rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
@@ -2627,6 +2659,7 @@ static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void quit_handler( int signal, siginfo_t *siginfo, void *ucontext )
 {
+    init_handler( ucontext );
     abort_thread(0);
 }
 
