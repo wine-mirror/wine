@@ -855,7 +855,6 @@ static void InternetCrackUrlW_test(void)
     comp.dwHostNameLength = ARRAY_SIZE(host);
     r = InternetCrackUrlW(url3, 13 /* includes the nul */, 0, &comp);
     ok(r, "InternetCrackUrlW failed with error %d\n", GetLastError());
-    todo_wine
     ok(comp.dwHostNameLength == 5,
         "Expected dwHostNameLength of 5, got %d\n", comp.dwHostNameLength);
 
@@ -877,7 +876,6 @@ static void InternetCrackUrlW_test(void)
     comp.dwUrlPathLength = ARRAY_SIZE(urlpart);
     r = InternetCrackUrlW(url5, 15, 0, &comp);
     ok(r, "InternetCrackUrlW failed with error %d\n", GetLastError());
-    todo_wine
     ok(comp.dwUrlPathLength == 0,
         "Expected dwUrlPathLength of 0, got %d\n", comp.dwUrlPathLength);
 }

@@ -1646,7 +1646,13 @@ BOOL WINAPI InternetCrackUrlW(const WCHAR *lpszUrl, DWORD dwUrlLength, DWORD dwF
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    if (!dwUrlLength) dwUrlLength = lstrlenW(lpszUrl);
+
+    if (!dwUrlLength)
+        dwUrlLength = lstrlenW(lpszUrl);
+    else {
+        /* Windows stops at a null, regardless of what dwUrlLength says. */
+        dwUrlLength = wcsnlen(lpszUrl, dwUrlLength);
+    }
 
     if (dwFlags & ICU_DECODE)
     {
