@@ -2511,6 +2511,29 @@ static void test_DetectOutboundCodePageInIStream(IMultiLanguage3 *ml)
     todo_wine ok(detected[2] == 1200, "got %u\n", detected[2]);
 }
 
+/* Returns true if the user interface is in English. Note that this does not
+ * presume of the formatting of dates, numbers, etc.
+ */
+static BOOL is_lang_english(void)
+{
+    static HMODULE hkernel32 = NULL;
+    static LANGID (WINAPI *pGetThreadUILanguage)(void) = NULL;
+    static LANGID (WINAPI *pGetUserDefaultUILanguage)(void) = NULL;
+
+    if (!hkernel32)
+    {
+        hkernel32 = GetModuleHandleA("kernel32.dll");
+        pGetThreadUILanguage = (void*)GetProcAddress(hkernel32, "GetThreadUILanguage");
+        pGetUserDefaultUILanguage = (void*)GetProcAddress(hkernel32, "GetUserDefaultUILanguage");
+    }
+    if (pGetThreadUILanguage)
+        return PRIMARYLANGID(pGetThreadUILanguage()) == LANG_ENGLISH;
+    if (pGetUserDefaultUILanguage)
+        return PRIMARYLANGID(pGetUserDefaultUILanguage()) == LANG_ENGLISH;
+
+    return PRIMARYLANGID(GetUserDefaultLangID()) == LANG_ENGLISH;
+}
+
 static void test_GetCodePageInfo(IMultiLanguage2 *iML2)
 {
     static const DWORD VALID_MASK = (DWORD)(~(MIMECONTF_VALID_NLS | MIMECONTF_VALID));
@@ -2560,10 +2583,9 @@ static void test_GetCodePageInfo(IMultiLanguage2 *iML2)
                    "%d: got wrong wszBodyCharset expected %s return %s.\n",
                i, wine_dbgstr_w(cpinfo_cmp.wszBodyCharset), wine_dbgstr_w(cpinfo.wszBodyCharset));
 
-            if ((PRIMARYLANGID(LANGIDFROMLCID(GetSystemDefaultLCID())) != LANG_ENGLISH) ||
-                (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) != LANG_ENGLISH))
+            if (!is_lang_english())
             {
-                /* FIXME: Windows returns description and font name in system's language */
+                /* FIXME: Cannot test non-English descriptions and font names */
                 skip("Non-English locale\n");
             }
             else
