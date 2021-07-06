@@ -6041,9 +6041,9 @@ static inline void wined3d_from_cs(const struct wined3d_cs *cs)
         assert(cs->thread_id == GetCurrentThreadId());
 }
 
-static inline void wined3d_not_from_cs(const struct wined3d_device *device)
+static inline void wined3d_not_from_cs(const struct wined3d_cs *cs)
 {
-    assert(device->cs->thread_id != GetCurrentThreadId());
+    assert(cs->thread_id != GetCurrentThreadId());
 }
 
 static inline enum wined3d_material_color_source validate_material_colour_source(WORD use_map,

@@ -2457,7 +2457,7 @@ HRESULT wined3d_device_context_emit_map(struct wined3d_device_context *context, 
 
     /* Mapping resources from the worker thread isn't an issue by itself, but
      * increasing the map count would be visible to applications. */
-    wined3d_not_from_cs(context->device);
+    wined3d_not_from_cs(context->device->cs);
 
     wined3d_resource_wait_idle(resource);
 
@@ -2502,7 +2502,7 @@ HRESULT wined3d_device_context_emit_unmap(struct wined3d_device_context *context
         return WINED3D_OK;
     }
 
-    wined3d_not_from_cs(context->device);
+    wined3d_not_from_cs(context->device->cs);
 
     op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_MAP);
     op->opcode = WINED3D_CS_OP_UNMAP;
