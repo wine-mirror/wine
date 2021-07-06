@@ -2353,25 +2353,12 @@ static void wined3d_cs_issue_query(struct wined3d_device_context *context,
         query->state = QUERY_SIGNALLED;
 }
 
-static void wined3d_cs_execute_command_list(struct wined3d_device_context *context,
-        struct wined3d_command_list *list, bool restore_state)
+static void wined3d_cs_acquire_command_list(struct wined3d_device_context *context, struct wined3d_command_list *list)
 {
-    struct wined3d_cs_execute_command_list *op;
     SIZE_T i;
-
-    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
-    op->opcode = WINED3D_CS_OP_EXECUTE_COMMAND_LIST;
-    op->list = list;
 
     for (i = 0; i < list->resource_count; ++i)
         wined3d_resource_acquire(list->resources[i]);
-
-    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
-
-    if (restore_state)
-        wined3d_device_context_set_state(context, context->state);
-    else
-        wined3d_device_context_reset_state(context);
 }
 
 static void wined3d_cs_exec_preload_resource(struct wined3d_cs *cs, const void *data)
@@ -2962,6 +2949,25 @@ static void wined3d_cs_exec_execute_command_list(struct wined3d_cs *cs, const vo
     }
 }
 
+void wined3d_device_context_emit_execute_command_list(struct wined3d_device_context *context,
+        struct wined3d_command_list *list, bool restore_state)
+{
+    struct wined3d_cs_execute_command_list *op;
+
+    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op->opcode = WINED3D_CS_OP_EXECUTE_COMMAND_LIST;
+    op->list = list;
+
+    context->ops->acquire_command_list(context, list);
+
+    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
+
+    if (restore_state)
+        wined3d_device_context_set_state(context, context->state);
+    else
+        wined3d_device_context_reset_state(context);
+}
+
 static void *wined3d_cs_st_require_space(struct wined3d_device_context *context,
         size_t size, enum wined3d_cs_queue_id queue_id)
 {
@@ -3042,7 +3048,7 @@ static const struct wined3d_device_context_ops wined3d_cs_st_ops =
     wined3d_cs_issue_query,
     wined3d_cs_flush,
     wined3d_cs_acquire_resource,
-    wined3d_cs_execute_command_list,
+    wined3d_cs_acquire_command_list,
 };
 
 static BOOL wined3d_cs_queue_is_empty(const struct wined3d_cs *cs, const struct wined3d_cs_queue *queue)
@@ -3169,7 +3175,7 @@ static const struct wined3d_device_context_ops wined3d_cs_mt_ops =
     wined3d_cs_issue_query,
     wined3d_cs_flush,
     wined3d_cs_acquire_resource,
-    wined3d_cs_execute_command_list,
+    wined3d_cs_acquire_command_list,
 };
 
 static void poll_queries(struct wined3d_cs *cs)
@@ -3562,20 +3568,10 @@ static void wined3d_deferred_context_acquire_resource(struct wined3d_device_cont
     wined3d_resource_incref(resource);
 }
 
-static void wined3d_deferred_context_execute_command_list(struct wined3d_device_context *context,
-        struct wined3d_command_list *list, bool restore_state)
+static void wined3d_deferred_context_acquire_command_list(struct wined3d_device_context *context,
+        struct wined3d_command_list *list)
 {
     struct wined3d_deferred_context *deferred = wined3d_deferred_context_from_context(context);
-    struct wined3d_cs_execute_command_list *op;
-
-    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
-    op->opcode = WINED3D_CS_OP_EXECUTE_COMMAND_LIST;
-    op->list = list;
-
-    if (restore_state)
-        wined3d_device_context_set_state(context, context->state);
-    else
-        wined3d_device_context_reset_state(context);
 
     /* Grab a reference to the command list. Note that this implicitly prevents
      * any dependent command lists or resources from being freed as well. */
@@ -3597,7 +3593,7 @@ static const struct wined3d_device_context_ops wined3d_deferred_context_ops =
     wined3d_deferred_context_issue_query,
     wined3d_deferred_context_flush,
     wined3d_deferred_context_acquire_resource,
-    wined3d_deferred_context_execute_command_list,
+    wined3d_deferred_context_acquire_command_list,
 };
 
 HRESULT CDECL wined3d_deferred_context_create(struct wined3d_device *device, struct wined3d_device_context **context)

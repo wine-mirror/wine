@@ -4717,8 +4717,7 @@ struct wined3d_device_context_ops
     void (*issue_query)(struct wined3d_device_context *context, struct wined3d_query *query, unsigned int flags);
     void (*flush)(struct wined3d_device_context *context);
     void (*acquire_resource)(struct wined3d_device_context *context, struct wined3d_resource *resource);
-    void (*execute_command_list)(struct wined3d_device_context *context,
-            struct wined3d_command_list *list, bool restore_state);
+    void (*acquire_command_list)(struct wined3d_device_context *context, struct wined3d_command_list *list);
 };
 
 struct wined3d_device_context
@@ -4798,6 +4797,8 @@ void wined3d_device_context_emit_draw(struct wined3d_device_context *context,
         enum wined3d_primitive_type primitive_type, unsigned int patch_vertex_count, int base_vertex_idx,
         unsigned int start_idx, unsigned int index_count, unsigned int start_instance, unsigned int instance_count,
         bool indexed) DECLSPEC_HIDDEN;
+void wined3d_device_context_emit_execute_command_list(struct wined3d_device_context *context,
+        struct wined3d_command_list *list, bool restore_state) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_generate_mipmaps(struct wined3d_device_context *context,
         struct wined3d_shader_resource_view *view) DECLSPEC_HIDDEN;
 HRESULT wined3d_device_context_emit_map(struct wined3d_device_context *context,

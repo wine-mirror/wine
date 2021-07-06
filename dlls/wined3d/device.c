@@ -4908,7 +4908,7 @@ void CDECL wined3d_device_context_execute_command_list(struct wined3d_device_con
 {
     TRACE("context %p, list %p, restore_state %d.\n", context, list, restore_state);
 
-    context->ops->execute_command_list(context, list, restore_state);
+    wined3d_device_context_emit_execute_command_list(context, list, restore_state);
 }
 
 struct wined3d_rendertarget_view * CDECL wined3d_device_context_get_rendertarget_view(
