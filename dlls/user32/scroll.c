@@ -562,15 +562,10 @@ static void SCROLL_DoDrawScrollBar( HWND hwnd, HDC hdc, INT nBar, enum SCROLL_HI
                                     BOOL interior, RECT *rect, INT arrowSize, INT thumbPos,
                                     INT thumbSize, BOOL vertical )
 {
-    SCROLLBAR_INFO *infoPtr = SCROLL_GetInternalInfo( hwnd, nBar, TRUE );
-    DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
+    SCROLLBAR_INFO *infoPtr;
 
-    if (!(hwnd = WIN_GetFullHandle( hwnd ))) return;
-
-    if (!infoPtr ||
-        ((nBar == SB_VERT) && !(style & WS_VSCROLL)) ||
-        ((nBar == SB_HORZ) && !(style & WS_HSCROLL))) return;
-    if (!WIN_IsWindowDrawable( hwnd, FALSE )) return;
+    if (!(infoPtr = SCROLL_GetInternalInfo( hwnd, nBar, TRUE )))
+        return;
 
       /* Draw the arrows */
 
@@ -625,7 +620,18 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT bar, enum SCROLL_HITTEST hit_
 {
     INT arrow_size, thumb_size, thumb_pos;
     BOOL vertical;
+    DWORD style;
     RECT rect;
+
+    if (!(hwnd = WIN_GetFullHandle( hwnd )))
+        return;
+
+    style = GetWindowLongW( hwnd, GWL_STYLE );
+    if ((bar == SB_VERT && !(style & WS_VSCROLL)) || (bar == SB_HORZ && !(style & WS_HSCROLL)))
+        return;
+
+    if (!WIN_IsWindowDrawable( hwnd, FALSE ))
+        return;
 
     SCROLL_GetScrollBarDrawInfo( hwnd, bar, tracking_info, &rect, &arrow_size, &thumb_size,
                                  &thumb_pos, &vertical );
