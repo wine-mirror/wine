@@ -42,10 +42,64 @@ static UNICODE_STRING control_symlink;
 static unsigned int got_start_device;
 static DWORD report_id;
 
+struct irp_queue
+{
+    KSPIN_LOCK lock;
+    LIST_ENTRY list;
+};
+
+static IRP *irp_queue_pop(struct irp_queue *queue)
+{
+    KIRQL irql;
+    IRP *irp;
+
+    KeAcquireSpinLock(&queue->lock, &irql);
+    if (IsListEmpty(&queue->list)) irp = NULL;
+    else irp = CONTAINING_RECORD(RemoveHeadList(&queue->list), IRP, Tail.Overlay.ListEntry);
+    KeReleaseSpinLock(&queue->lock, irql);
+
+    return irp;
+}
+
+static void irp_queue_push(struct irp_queue *queue, IRP *irp)
+{
+    KIRQL irql;
+
+    KeAcquireSpinLock(&queue->lock, &irql);
+    InsertTailList(&queue->list, &irp->Tail.Overlay.ListEntry);
+    KeReleaseSpinLock(&queue->lock, irql);
+}
+
+static void irp_queue_clear(struct irp_queue *queue)
+{
+    IRP *irp;
+
+    while ((irp = irp_queue_pop(queue)))
+    {
+        irp->IoStatus.Status = STATUS_DELETE_PENDING;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+    }
+}
+
+static void irp_queue_init(struct irp_queue *queue)
+{
+    KeInitializeSpinLock(&queue->lock);
+    InitializeListHead(&queue->list);
+}
+
+struct hid_device
+{
+    BOOL removed;
+    KSPIN_LOCK lock;
+    struct irp_queue irp_queue;
+};
+
 static NTSTATUS WINAPI driver_pnp(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
     HID_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    struct hid_device *impl = ext->MiniDeviceExtension;
+    KIRQL irql;
 
     if (winetest_debug > 1) trace("pnp %#x\n", stack->MinorFunction);
 
@@ -53,17 +107,35 @@ static NTSTATUS WINAPI driver_pnp(DEVICE_OBJECT *device, IRP *irp)
     {
         case IRP_MN_START_DEVICE:
             ++got_start_device;
+            impl->removed = FALSE;
+            KeInitializeSpinLock(&impl->lock);
+            irp_queue_init(&impl->irp_queue);
             IoSetDeviceInterfaceState(&control_symlink, TRUE);
             irp->IoStatus.Status = STATUS_SUCCESS;
             break;
 
         case IRP_MN_SURPRISE_REMOVAL:
         case IRP_MN_QUERY_REMOVE_DEVICE:
+            KeAcquireSpinLock(&impl->lock, &irql);
+            impl->removed = TRUE;
+            KeReleaseSpinLock(&impl->lock, irql);
+            irp_queue_clear(&impl->irp_queue);
+            irp->IoStatus.Status = STATUS_SUCCESS;
+            break;
+
+        case IRP_MN_CANCEL_REMOVE_DEVICE:
+            KeAcquireSpinLock(&impl->lock, &irql);
+            impl->removed = FALSE;
+            KeReleaseSpinLock(&impl->lock, irql);
+            irp->IoStatus.Status = STATUS_SUCCESS;
+            break;
+
         case IRP_MN_STOP_DEVICE:
             irp->IoStatus.Status = STATUS_SUCCESS;
             break;
 
         case IRP_MN_REMOVE_DEVICE:
+            irp_queue_clear(&impl->irp_queue);
             IoSetDeviceInterfaceState(&control_symlink, FALSE);
             irp->IoStatus.Status = STATUS_SUCCESS;
             break;
@@ -317,16 +389,31 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
 
     static BOOL test_failed;
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
+    HID_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    struct hid_device *impl = ext->MiniDeviceExtension;
     const ULONG in_size = stack->Parameters.DeviceIoControl.InputBufferLength;
     const ULONG out_size = stack->Parameters.DeviceIoControl.OutputBufferLength;
     const ULONG code = stack->Parameters.DeviceIoControl.IoControlCode;
     NTSTATUS ret;
+    BOOL removed;
+    KIRQL irql;
 
     if (winetest_debug > 1) trace("ioctl %#x\n", code);
 
     ok(got_start_device, "expected IRP_MN_START_DEVICE before any ioctls\n");
 
     irp->IoStatus.Information = 0;
+
+    KeAcquireSpinLock(&impl->lock, &irql);
+    removed = impl->removed;
+    KeReleaseSpinLock(&impl->lock, irql);
+
+    if (removed)
+    {
+        irp->IoStatus.Status = STATUS_DELETE_PENDING;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+        return STATUS_DELETE_PENDING;
+    }
 
     switch (code)
     {
@@ -398,7 +485,9 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
             }
             if (out_size != expected_size) test_failed = TRUE;
 
-            ret = STATUS_NOT_IMPLEMENTED;
+            IoMarkIrpPending(irp);
+            irp_queue_push(&impl->irp_queue, irp);
+            ret = STATUS_PENDING;
             break;
         }
 
@@ -494,8 +583,11 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
             ret = STATUS_NOT_IMPLEMENTED;
     }
 
-    irp->IoStatus.Status = ret;
-    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    if (ret != STATUS_PENDING)
+    {
+        irp->IoStatus.Status = ret;
+        IoCompleteRequest(irp, IO_NO_INCREMENT);
+    }
     return ret;
 }
 
@@ -555,6 +647,7 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *registry)
     {
         .Revision = HID_REVISION,
         .DriverObject = driver,
+        .DeviceExtensionSize = sizeof(struct hid_device),
         .RegistryPath = registry,
     };
     UNICODE_STRING name_str;
