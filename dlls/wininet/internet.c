@@ -1136,10 +1136,7 @@ BOOL WINAPI InternetGetLastResponseInfoW(LPDWORD lpdwError,
     {
         *lpdwError = lpwite->dwError;
         if (lpwite->dwError)
-        {
-            memcpy(lpszBuffer, lpwite->response, *lpdwBufferLength);
-            *lpdwBufferLength = lstrlenW(lpszBuffer);
-        }
+            *lpdwBufferLength = MultiByteToWideChar(CP_ACP, 0, lpwite->response, -1, lpszBuffer, *lpdwBufferLength);
         else
             *lpdwBufferLength = 0;
     }
