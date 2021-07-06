@@ -1676,7 +1676,7 @@ static BOOL sync_ioctl(HANDLE file, DWORD code, void *in_buf, DWORD in_len, void
     return ret;
 }
 
-static void test_hidp(HANDLE file, int report_id)
+static void test_hidp(HANDLE file, int report_id, BOOL polled)
 {
     const HIDP_CAPS expect_hidp_caps[] =
     {
@@ -2674,6 +2674,27 @@ static void test_hidp(HANDLE file, int report_id)
     }
 
 
+    memset(report, 0xcd, sizeof(report));
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(file, report, 0, &value, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_USER_BUFFER, "ReadFile failed, last error %u\n", GetLastError());
+    ok(value == 0, "ReadFile returned %x\n", value);
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(file, report, caps.InputReportByteLength - 1, &value, NULL);
+    ok(!ret && GetLastError() == ERROR_INVALID_USER_BUFFER, "ReadFile failed, last error %u\n", GetLastError());
+    ok(value == 0, "ReadFile returned %x\n", value);
+
+    if (polled)
+    {
+        memset(report, 0xcd, sizeof(report));
+        SetLastError(0xdeadbeef);
+        ret = ReadFile(file, report, caps.InputReportByteLength, &value, NULL);
+        todo_wine ok(ret, "ReadFile failed, last error %u\n", GetLastError());
+        todo_wine ok(value == (report_id ? 3 : 4), "ReadFile returned %x\n", value);
+        todo_wine ok(report[0] == report_id, "unexpected report data\n");
+    }
+
+
     HidD_FreePreparsedData(preparsed_data);
     CloseHandle(file);
 }
@@ -2725,7 +2746,7 @@ static void test_hid_device(DWORD report_id, DWORD polled)
             FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
     ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
 
-    test_hidp(file, report_id);
+    test_hidp(file, report_id, polled);
 
     CloseHandle(file);
 
