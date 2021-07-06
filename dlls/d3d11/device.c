@@ -586,6 +586,32 @@ static void d3d11_device_context_set_constant_buffers(ID3D11DeviceContext1 *ifac
     wined3d_mutex_unlock();
 }
 
+static void d3d11_device_context_set_shader_resource_views(ID3D11DeviceContext1 *iface, enum wined3d_shader_type type,
+        unsigned int start_slot, unsigned int count, ID3D11ShaderResourceView *const *views)
+{
+    struct wined3d_shader_resource_view *wined3d_views[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
+    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
+    unsigned int i;
+
+    if (count > ARRAY_SIZE(wined3d_views))
+    {
+        WARN("View count %u exceeds limit; ignoring call.\n", count);
+        return;
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        struct d3d_shader_resource_view *view = unsafe_impl_from_ID3D11ShaderResourceView(views[i]);
+
+        wined3d_views[i] = view ? view->wined3d_view : NULL;
+    }
+
+    wined3d_mutex_lock();
+    wined3d_device_context_set_shader_resource_views(context->wined3d_context,
+            type, start_slot, count, wined3d_views);
+    wined3d_mutex_unlock();
+}
+
 static void STDMETHODCALLTYPE d3d11_device_context_GetDevice(ID3D11DeviceContext1 *iface, ID3D11Device **device)
 {
     struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
@@ -639,21 +665,10 @@ static void STDMETHODCALLTYPE d3d11_device_context_VSSetConstantBuffers(ID3D11De
 static void STDMETHODCALLTYPE d3d11_device_context_PSSetShaderResources(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT view_count, ID3D11ShaderResourceView *const *views)
 {
-    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, view_count %u, views %p.\n",
             iface, start_slot, view_count, views);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < view_count; ++i)
-    {
-        struct d3d_shader_resource_view *view = unsafe_impl_from_ID3D11ShaderResourceView(views[i]);
-
-        wined3d_device_context_set_shader_resource_view(context->wined3d_context, WINED3D_SHADER_TYPE_PIXEL,
-                start_slot + i, view ? view->wined3d_view : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d11_device_context_set_shader_resource_views(iface, WINED3D_SHADER_TYPE_PIXEL, start_slot, view_count, views);
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_PSSetShader(ID3D11DeviceContext1 *iface,
@@ -925,20 +940,9 @@ static void STDMETHODCALLTYPE d3d11_device_context_IASetPrimitiveTopology(ID3D11
 static void STDMETHODCALLTYPE d3d11_device_context_VSSetShaderResources(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT view_count, ID3D11ShaderResourceView *const *views)
 {
-    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, view_count %u, views %p.\n", iface, start_slot, view_count, views);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < view_count; ++i)
-    {
-        struct d3d_shader_resource_view *view = unsafe_impl_from_ID3D11ShaderResourceView(views[i]);
-
-        wined3d_device_context_set_shader_resource_view(context->wined3d_context, WINED3D_SHADER_TYPE_VERTEX,
-                start_slot + i, view ? view->wined3d_view : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d11_device_context_set_shader_resource_views(iface, WINED3D_SHADER_TYPE_VERTEX, start_slot, view_count, views);
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_VSSetSamplers(ID3D11DeviceContext1 *iface,
@@ -1037,20 +1041,9 @@ static void STDMETHODCALLTYPE d3d11_device_context_SetPredication(ID3D11DeviceCo
 static void STDMETHODCALLTYPE d3d11_device_context_GSSetShaderResources(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT view_count, ID3D11ShaderResourceView *const *views)
 {
-    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, view_count %u, views %p.\n", iface, start_slot, view_count, views);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < view_count; ++i)
-    {
-        struct d3d_shader_resource_view *view = unsafe_impl_from_ID3D11ShaderResourceView(views[i]);
-
-        wined3d_device_context_set_shader_resource_view(context->wined3d_context, WINED3D_SHADER_TYPE_GEOMETRY,
-                start_slot + i, view ? view->wined3d_view : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d11_device_context_set_shader_resource_views(iface, WINED3D_SHADER_TYPE_GEOMETRY, start_slot, view_count, views);
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_GSSetSamplers(ID3D11DeviceContext1 *iface,
@@ -1564,21 +1557,10 @@ static void STDMETHODCALLTYPE d3d11_device_context_ExecuteCommandList(ID3D11Devi
 static void STDMETHODCALLTYPE d3d11_device_context_HSSetShaderResources(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT view_count, ID3D11ShaderResourceView *const *views)
 {
-    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, view_count %u, views %p.\n",
             iface, start_slot, view_count, views);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < view_count; ++i)
-    {
-        struct d3d_shader_resource_view *view = unsafe_impl_from_ID3D11ShaderResourceView(views[i]);
-
-        wined3d_device_context_set_shader_resource_view(context->wined3d_context, WINED3D_SHADER_TYPE_HULL,
-                start_slot + i, view ? view->wined3d_view : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d11_device_context_set_shader_resource_views(iface, WINED3D_SHADER_TYPE_HULL, start_slot, view_count, views);
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_HSSetShader(ID3D11DeviceContext1 *iface,
@@ -1632,21 +1614,10 @@ static void STDMETHODCALLTYPE d3d11_device_context_HSSetConstantBuffers(ID3D11De
 static void STDMETHODCALLTYPE d3d11_device_context_DSSetShaderResources(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT view_count, ID3D11ShaderResourceView *const *views)
 {
-    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, view_count %u, views %p.\n",
             iface, start_slot, view_count, views);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < view_count; ++i)
-    {
-        struct d3d_shader_resource_view *view = unsafe_impl_from_ID3D11ShaderResourceView(views[i]);
-
-        wined3d_device_context_set_shader_resource_view(context->wined3d_context, WINED3D_SHADER_TYPE_DOMAIN,
-                start_slot + i, view ? view->wined3d_view : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d11_device_context_set_shader_resource_views(iface, WINED3D_SHADER_TYPE_DOMAIN, start_slot, view_count, views);
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_DSSetShader(ID3D11DeviceContext1 *iface,
@@ -1700,21 +1671,10 @@ static void STDMETHODCALLTYPE d3d11_device_context_DSSetConstantBuffers(ID3D11De
 static void STDMETHODCALLTYPE d3d11_device_context_CSSetShaderResources(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT view_count, ID3D11ShaderResourceView *const *views)
 {
-    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, view_count %u, views %p.\n",
             iface, start_slot, view_count, views);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < view_count; ++i)
-    {
-        struct d3d_shader_resource_view *view = unsafe_impl_from_ID3D11ShaderResourceView(views[i]);
-
-        wined3d_device_context_set_shader_resource_view(context->wined3d_context, WINED3D_SHADER_TYPE_COMPUTE,
-                start_slot + i, view ? view->wined3d_view : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d11_device_context_set_shader_resource_views(iface, WINED3D_SHADER_TYPE_COMPUTE, start_slot, view_count, views);
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_CSSetUnorderedAccessViews(ID3D11DeviceContext1 *iface,
@@ -4606,6 +4566,32 @@ static void d3d10_device_set_constant_buffers(ID3D10Device1 *iface, enum wined3d
     wined3d_mutex_unlock();
 }
 
+static void d3d10_device_set_shader_resource_views(ID3D10Device1 *iface, enum wined3d_shader_type type,
+        unsigned int start_slot, unsigned int count, ID3D10ShaderResourceView *const *views)
+{
+    struct wined3d_shader_resource_view *wined3d_views[D3D10_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
+    struct d3d_device *device = impl_from_ID3D10Device(iface);
+    unsigned int i;
+
+    if (count > ARRAY_SIZE(wined3d_views))
+    {
+        WARN("View count %u exceeds limit; ignoring call.\n", count);
+        return;
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        struct d3d_shader_resource_view *view = unsafe_impl_from_ID3D10ShaderResourceView(views[i]);
+
+        wined3d_views[i] = view ? view->wined3d_view : NULL;
+    }
+
+    wined3d_mutex_lock();
+    wined3d_device_context_set_shader_resource_views(device->immediate_context.wined3d_context,
+            type, start_slot, count, wined3d_views);
+    wined3d_mutex_unlock();
+}
+
 static void STDMETHODCALLTYPE d3d10_device_VSSetConstantBuffers(ID3D10Device1 *iface,
         UINT start_slot, UINT buffer_count, ID3D10Buffer *const *buffers)
 {
@@ -4619,21 +4605,10 @@ static void STDMETHODCALLTYPE d3d10_device_VSSetConstantBuffers(ID3D10Device1 *i
 static void STDMETHODCALLTYPE d3d10_device_PSSetShaderResources(ID3D10Device1 *iface,
         UINT start_slot, UINT view_count, ID3D10ShaderResourceView *const *views)
 {
-    struct d3d_device *device = impl_from_ID3D10Device(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, view_count %u, views %p.\n",
             iface, start_slot, view_count, views);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < view_count; ++i)
-    {
-        struct d3d_shader_resource_view *view = unsafe_impl_from_ID3D10ShaderResourceView(views[i]);
-
-        wined3d_device_context_set_shader_resource_view(device->immediate_context.wined3d_context,
-                WINED3D_SHADER_TYPE_PIXEL, start_slot + i, view ? view->wined3d_view : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d10_device_set_shader_resource_views(iface, WINED3D_SHADER_TYPE_PIXEL, start_slot, view_count, views);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_PSSetShader(ID3D10Device1 *iface,
@@ -4843,21 +4818,10 @@ static void STDMETHODCALLTYPE d3d10_device_IASetPrimitiveTopology(ID3D10Device1 
 static void STDMETHODCALLTYPE d3d10_device_VSSetShaderResources(ID3D10Device1 *iface,
         UINT start_slot, UINT view_count, ID3D10ShaderResourceView *const *views)
 {
-    struct d3d_device *device = impl_from_ID3D10Device(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, view_count %u, views %p.\n",
             iface, start_slot, view_count, views);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < view_count; ++i)
-    {
-        struct d3d_shader_resource_view *view = unsafe_impl_from_ID3D10ShaderResourceView(views[i]);
-
-        wined3d_device_context_set_shader_resource_view(device->immediate_context.wined3d_context,
-                WINED3D_SHADER_TYPE_VERTEX, start_slot + i, view ? view->wined3d_view : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d10_device_set_shader_resource_views(iface, WINED3D_SHADER_TYPE_VERTEX, start_slot, view_count, views);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_VSSetSamplers(ID3D10Device1 *iface,
@@ -4897,21 +4861,10 @@ static void STDMETHODCALLTYPE d3d10_device_SetPredication(ID3D10Device1 *iface, 
 static void STDMETHODCALLTYPE d3d10_device_GSSetShaderResources(ID3D10Device1 *iface,
         UINT start_slot, UINT view_count, ID3D10ShaderResourceView *const *views)
 {
-    struct d3d_device *device = impl_from_ID3D10Device(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, view_count %u, views %p.\n",
             iface, start_slot, view_count, views);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < view_count; ++i)
-    {
-        struct d3d_shader_resource_view *view = unsafe_impl_from_ID3D10ShaderResourceView(views[i]);
-
-        wined3d_device_context_set_shader_resource_view(device->immediate_context.wined3d_context,
-                WINED3D_SHADER_TYPE_GEOMETRY, start_slot + i, view ? view->wined3d_view : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d10_device_set_shader_resource_views(iface, WINED3D_SHADER_TYPE_GEOMETRY, start_slot, view_count, views);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_GSSetSamplers(ID3D10Device1 *iface,

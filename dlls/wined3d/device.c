@@ -1701,10 +1701,8 @@ void CDECL wined3d_device_context_set_state(struct wined3d_device_context *conte
         {
             wined3d_device_context_emit_set_sampler(context, i, j, state->sampler[i][j]);
         }
-        for (j = 0; j < MAX_SHADER_RESOURCE_VIEWS; ++j)
-        {
-            wined3d_device_context_emit_set_shader_resource_view(context, i, j, state->shader_resource_view[i][j]);
-        }
+        wined3d_device_context_emit_set_shader_resource_views(context, i, 0,
+                MAX_SHADER_RESOURCE_VIEWS, state->shader_resource_view[i]);
     }
 
     for (i = 0; i < WINED3D_PIPELINE_COUNT; ++i)
@@ -1982,45 +1980,58 @@ void CDECL wined3d_device_context_set_scissor_rects(struct wined3d_device_contex
     wined3d_device_context_emit_set_scissor_rects(context, rect_count, rects);
 }
 
-void CDECL wined3d_device_context_set_shader_resource_view(struct wined3d_device_context *context,
-        enum wined3d_shader_type type, unsigned int idx, struct wined3d_shader_resource_view *view)
+void CDECL wined3d_device_context_set_shader_resource_views(struct wined3d_device_context *context,
+        enum wined3d_shader_type type, unsigned int start_idx, unsigned int count,
+        struct wined3d_shader_resource_view *const *const views)
 {
+    struct wined3d_shader_resource_view *real_views[MAX_SHADER_RESOURCE_VIEWS];
     struct wined3d_state *state = context->state;
-    const struct wined3d_rendertarget_view *dsv;
-    struct wined3d_shader_resource_view *prev;
+    const struct wined3d_rendertarget_view *dsv = state->fb.depth_stencil;
+    unsigned int i;
 
-    TRACE("context %p, type %#x, idx %u, view %p.\n", context, type, idx, view);
+    TRACE("context %p, type %#x, start_idx %u, count %u, views %p.\n", context, type, start_idx, count, views);
 
-    if (idx >= MAX_SHADER_RESOURCE_VIEWS)
+    if (start_idx >= MAX_SHADER_RESOURCE_VIEWS || count > MAX_SHADER_RESOURCE_VIEWS - start_idx)
     {
-        WARN("Invalid view index %u.\n", idx);
+        WARN("Invalid view index %u, count %u.\n", start_idx, count);
         return;
     }
 
-    prev = state->shader_resource_view[type][idx];
-    if (view == prev)
+    if (!memcmp(views, &state->shader_resource_view[type][start_idx], count * sizeof(*views)))
         return;
 
-    if (view && (wined3d_is_srv_rtv_bound(state, view)
-            || ((dsv = state->fb.depth_stencil)
-            && dsv->resource == view->resource && wined3d_dsv_srv_conflict(dsv, view->format))))
+    memcpy(real_views, views, count * sizeof(*views));
+
+    for (i = 0; i < count; ++i)
     {
-        WARN("Application is trying to bind resource which is attached as render target.\n");
-        view = NULL;
+        struct wined3d_shader_resource_view *view = real_views[i];
+
+        if (view && (wined3d_is_srv_rtv_bound(state, view)
+                || (dsv && dsv->resource == view->resource && wined3d_dsv_srv_conflict(dsv, view->format))))
+        {
+            WARN("Application is trying to bind resource which is attached as render target.\n");
+            real_views[i] = NULL;
+        }
     }
 
-    if (view)
+    wined3d_device_context_emit_set_shader_resource_views(context, type, start_idx, count, real_views);
+    for (i = 0; i < count; ++i)
     {
-        wined3d_shader_resource_view_incref(view);
-        wined3d_srv_bind_count_inc(view);
-    }
+        struct wined3d_shader_resource_view *prev = state->shader_resource_view[type][start_idx + i];
+        struct wined3d_shader_resource_view *view = real_views[i];
 
-    state->shader_resource_view[type][idx] = view;
-    wined3d_device_context_emit_set_shader_resource_view(context, type, idx, view);
-    if (prev)
-    {
-        wined3d_srv_bind_count_dec(prev);
-        wined3d_shader_resource_view_decref(prev);
+        if (view)
+        {
+            wined3d_shader_resource_view_incref(view);
+            wined3d_srv_bind_count_inc(view);
+        }
+
+        state->shader_resource_view[type][start_idx + i] = view;
+        if (prev)
+        {
+            wined3d_srv_bind_count_dec(prev);
+            wined3d_shader_resource_view_decref(prev);
+        }
     }
 }
 
@@ -2100,8 +2111,10 @@ static void wined3d_device_context_unbind_srv_for_rtv(struct wined3d_device_cont
                         && ((!dsv && wined3d_is_srv_rtv_bound(state, srv))
                         || (dsv && wined3d_dsv_srv_conflict(view, srv->format))))
                 {
+                    static struct wined3d_shader_resource_view *const null_srv;
+
                     WARN("Application sets bound resource as render target.\n");
-                    wined3d_device_context_set_shader_resource_view(context, i, j, NULL);
+                    wined3d_device_context_set_shader_resource_views(context, i, j, 1, &null_srv);
                 }
             }
         }

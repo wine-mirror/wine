@@ -134,7 +134,7 @@
 @ cdecl wined3d_device_context_set_sampler(ptr long long ptr)
 @ cdecl wined3d_device_context_set_scissor_rects(ptr long ptr)
 @ cdecl wined3d_device_context_set_shader(ptr long ptr)
-@ cdecl wined3d_device_context_set_shader_resource_view(ptr long long ptr)
+@ cdecl wined3d_device_context_set_shader_resource_views(ptr long long long ptr)
 @ cdecl wined3d_device_context_set_state(ptr ptr)
 @ cdecl wined3d_device_context_set_stream_output(ptr long ptr long)
 @ cdecl wined3d_device_context_set_stream_source(ptr long ptr long long)

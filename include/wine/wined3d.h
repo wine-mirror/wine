@@ -2519,8 +2519,9 @@ void __cdecl wined3d_device_context_set_scissor_rects(struct wined3d_device_cont
         const RECT *rects);
 void __cdecl wined3d_device_context_set_shader(struct wined3d_device_context *context,
         enum wined3d_shader_type type, struct wined3d_shader *shader);
-void __cdecl wined3d_device_context_set_shader_resource_view(struct wined3d_device_context *context,
-        enum wined3d_shader_type type, unsigned int idx, struct wined3d_shader_resource_view *view);
+void __cdecl wined3d_device_context_set_shader_resource_views(struct wined3d_device_context *context,
+        enum wined3d_shader_type type, unsigned int start_idx, unsigned int count,
+        struct wined3d_shader_resource_view *const *views);
 void __cdecl wined3d_device_context_set_state(struct wined3d_device_context *context, struct wined3d_state *state);
 void __cdecl wined3d_device_context_set_stream_output(struct wined3d_device_context *context, unsigned int idx,
         struct wined3d_buffer *buffer, unsigned int offset);

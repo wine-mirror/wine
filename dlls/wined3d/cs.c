@@ -122,7 +122,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_INDEX_BUFFER,
     WINED3D_CS_OP_SET_CONSTANT_BUFFERS,
     WINED3D_CS_OP_SET_TEXTURE,
-    WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEW,
+    WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEWS,
     WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEW,
     WINED3D_CS_OP_SET_SAMPLER,
     WINED3D_CS_OP_SET_SHADER,
@@ -310,12 +310,13 @@ struct wined3d_cs_set_color_key
     struct wined3d_color_key color_key;
 };
 
-struct wined3d_cs_set_shader_resource_view
+struct wined3d_cs_set_shader_resource_views
 {
     enum wined3d_cs_op opcode;
     enum wined3d_shader_type type;
-    UINT view_idx;
-    struct wined3d_shader_resource_view *view;
+    unsigned int start_idx;
+    unsigned int count;
+    struct wined3d_shader_resource_view *views[1];
 };
 
 struct wined3d_cs_set_unordered_access_view
@@ -601,7 +602,7 @@ static const char *debug_cs_op(enum wined3d_cs_op op)
         WINED3D_TO_STR(WINED3D_CS_OP_SET_INDEX_BUFFER);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_CONSTANT_BUFFERS);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_TEXTURE);
-        WINED3D_TO_STR(WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEW);
+        WINED3D_TO_STR(WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEWS);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEW);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_SAMPLER);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_SHADER);
@@ -1659,18 +1660,23 @@ void wined3d_device_context_emit_set_texture(struct wined3d_device_context *cont
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
-static void wined3d_cs_exec_set_shader_resource_view(struct wined3d_cs *cs, const void *data)
+static void wined3d_cs_exec_set_shader_resource_views(struct wined3d_cs *cs, const void *data)
 {
-    const struct wined3d_cs_set_shader_resource_view *op = data;
-    struct wined3d_shader_resource_view *prev;
+    const struct wined3d_cs_set_shader_resource_views *op = data;
+    unsigned int i;
 
-    prev = cs->state.shader_resource_view[op->type][op->view_idx];
-    cs->state.shader_resource_view[op->type][op->view_idx] = op->view;
+    for (i = 0; i < op->count; ++i)
+    {
+        struct wined3d_shader_resource_view *prev = cs->state.shader_resource_view[op->type][op->start_idx + i];
+        struct wined3d_shader_resource_view *view = op->views[i];
 
-    if (op->view)
-        InterlockedIncrement(&op->view->resource->bind_count);
-    if (prev)
-        InterlockedDecrement(&prev->resource->bind_count);
+        cs->state.shader_resource_view[op->type][op->start_idx + i] = view;
+
+        if (view)
+            InterlockedIncrement(&view->resource->bind_count);
+        if (prev)
+            InterlockedDecrement(&prev->resource->bind_count);
+    }
 
     if (op->type != WINED3D_SHADER_TYPE_COMPUTE)
         device_invalidate_state(cs->c.device, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
@@ -1678,16 +1684,19 @@ static void wined3d_cs_exec_set_shader_resource_view(struct wined3d_cs *cs, cons
         device_invalidate_state(cs->c.device, STATE_COMPUTE_SHADER_RESOURCE_BINDING);
 }
 
-void wined3d_device_context_emit_set_shader_resource_view(struct wined3d_device_context *context,
-        enum wined3d_shader_type type, unsigned int view_idx, struct wined3d_shader_resource_view *view)
+void wined3d_device_context_emit_set_shader_resource_views(struct wined3d_device_context *context,
+        enum wined3d_shader_type type, unsigned int start_idx, unsigned int count,
+        struct wined3d_shader_resource_view *const *views)
 {
-    struct wined3d_cs_set_shader_resource_view *op;
+    struct wined3d_cs_set_shader_resource_views *op;
 
-    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
-    op->opcode = WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEW;
+    op = wined3d_device_context_require_space(context,
+            offsetof(struct wined3d_cs_set_shader_resource_views, views[count]), WINED3D_CS_QUEUE_DEFAULT);
+    op->opcode = WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEWS;
     op->type = type;
-    op->view_idx = view_idx;
-    op->view = view;
+    op->start_idx = start_idx;
+    op->count = count;
+    memcpy(op->views, views, count * sizeof(*views));
 
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
@@ -2901,7 +2910,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_INDEX_BUFFER            */ wined3d_cs_exec_set_index_buffer,
     /* WINED3D_CS_OP_SET_CONSTANT_BUFFERS        */ wined3d_cs_exec_set_constant_buffers,
     /* WINED3D_CS_OP_SET_TEXTURE                 */ wined3d_cs_exec_set_texture,
-    /* WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEW    */ wined3d_cs_exec_set_shader_resource_view,
+    /* WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEWS   */ wined3d_cs_exec_set_shader_resource_views,
     /* WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEW   */ wined3d_cs_exec_set_unordered_access_view,
     /* WINED3D_CS_OP_SET_SAMPLER                 */ wined3d_cs_exec_set_sampler,
     /* WINED3D_CS_OP_SET_SHADER                  */ wined3d_cs_exec_set_shader,
