@@ -2633,6 +2633,47 @@ static void test_hidp(HANDLE file, int report_id)
     todo_wine ok(value == 3, "got length %u, expected 3\n", value);
 
 
+    SetLastError(0xdeadbeef);
+    ret = WriteFile(file, report, 0, &value, NULL);
+    ok(!ret, "WriteFile succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_USER_BUFFER, "WriteFile returned error %u\n", GetLastError());
+    ok(value == 0, "WriteFile returned %x\n", value);
+    SetLastError(0xdeadbeef);
+    ret = WriteFile(file, report, caps.OutputReportByteLength - 1, &value, NULL);
+    ok(!ret, "WriteFile succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_INVALID_USER_BUFFER,
+       "WriteFile returned error %u\n", GetLastError());
+    ok(value == 0, "WriteFile returned %x\n", value);
+
+    memset(report, 0xcd, sizeof(report));
+    report[0] = 0xa5;
+    SetLastError(0xdeadbeef);
+    ret = WriteFile(file, report, caps.OutputReportByteLength * 2, &value, NULL);
+    if (report_id || broken(!ret) /* w7u */)
+    {
+        todo_wine
+        ok(!ret, "WriteFile succeeded\n");
+        todo_wine
+        ok(GetLastError() == ERROR_INVALID_PARAMETER, "WriteFile returned error %u\n", GetLastError());
+        todo_wine
+        ok(value == 0, "WriteFile wrote %u\n", value);
+        SetLastError(0xdeadbeef);
+        report[0] = report_id;
+        ret = WriteFile(file, report, caps.OutputReportByteLength, &value, NULL);
+    }
+
+    if (report_id)
+    {
+        ok(ret, "WriteFile failed, last error %u\n", GetLastError());
+        ok(value == 2, "WriteFile wrote %u\n", value);
+    }
+    else
+    {
+        ok(ret, "WriteFile failed, last error %u\n", GetLastError());
+        todo_wine ok(value == 3, "WriteFile wrote %u\n", value);
+    }
+
+
     HidD_FreePreparsedData(preparsed_data);
     CloseHandle(file);
 }
@@ -2680,7 +2721,7 @@ static void test_hid_device(DWORD report_id, DWORD polled)
 
     todo_wine ok(found, "didn't find device\n");
 
-    file = CreateFileA(iface_detail->DevicePath, FILE_READ_ACCESS,
+    file = CreateFileA(iface_detail->DevicePath, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
             FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
     ok(file != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
 
