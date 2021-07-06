@@ -3213,20 +3213,17 @@ DWORD WINAPI ConvertInterfaceIndexToLuid(NET_IFINDEX index, NET_LUID *luid)
  */
 DWORD WINAPI ConvertInterfaceLuidToGuid(const NET_LUID *luid, GUID *guid)
 {
-    DWORD ret;
-    MIB_IFROW row;
+    DWORD err;
 
-    TRACE("(%p %p)\n", luid, guid);
+    TRACE( "(%p %p)\n", luid, guid );
 
     if (!luid || !guid) return ERROR_INVALID_PARAMETER;
 
-    row.dwIndex = luid->Info.NetLuidIndex;
-    if ((ret = GetIfEntry( &row ))) return ret;
-
-    memset( guid, 0, sizeof(*guid) );
-    guid->Data1 = luid->Info.NetLuidIndex;
-    memcpy( guid->Data4+2, "NetDev", 6 );
-    return NO_ERROR;
+    err = NsiGetParameter( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, luid, sizeof(*luid),
+                           NSI_PARAM_TYPE_STATIC, guid, sizeof(*guid),
+                           FIELD_OFFSET(struct nsi_ndis_ifinfo_static, if_guid) );
+    if (err) memset( guid, 0, sizeof(*guid) );
+    return err;
 }
 
 /******************************************************************
