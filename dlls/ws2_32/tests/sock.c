@@ -3271,13 +3271,13 @@ static void test_select(void)
         id = 0xdeadbeef;
         ret = getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char *)&id, &len);
         ok(!ret, "getsockopt failed with %d\n", WSAGetLastError());
-        todo_wine ok(id == WSAECONNREFUSED, "got error %u\n", id);
+        ok(id == WSAECONNREFUSED, "got error %u\n", id);
 
         len = sizeof(id);
         id = 0xdeadbeef;
         ret = getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char *)&id, &len);
         ok(!ret, "getsockopt failed with %d\n", WSAGetLastError());
-        todo_wine ok(id == WSAECONNREFUSED, "got error %u\n", id);
+        ok(id == WSAECONNREFUSED, "got error %u\n", id);
 
         FD_ZERO_ALL();
         FD_SET(fdWrite, &readfds);
@@ -3307,7 +3307,7 @@ static void test_select(void)
         id = 0xdeadbeef;
         ret = getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char *)&id, &len);
         ok(!ret, "getsockopt failed with %d\n", WSAGetLastError());
-        todo_wine ok(id == WSAECONNREFUSED, "got error %u\n", id);
+        ok(id == WSAECONNREFUSED, "got error %u\n", id);
 
         FD_ZERO_ALL();
         FD_SET(fdWrite, &readfds);
@@ -6515,13 +6515,13 @@ static void test_WSAPoll(void)
         err = 0xdeadbeef;
         ret = getsockopt(client, SOL_SOCKET, SO_ERROR, (char *)&err, &len);
         ok(!ret, "getsockopt failed with %d\n", WSAGetLastError());
-        todo_wine ok(err == WSAECONNREFUSED, "got error %u\n", err);
+        ok(err == WSAECONNREFUSED, "got error %u\n", err);
 
         len = sizeof(err);
         err = 0xdeadbeef;
         ret = getsockopt(client, SOL_SOCKET, SO_ERROR, (char *)&err, &len);
         ok(!ret, "getsockopt failed with %d\n", WSAGetLastError());
-        todo_wine ok(err == WSAECONNREFUSED, "got error %u\n", err);
+        ok(err == WSAECONNREFUSED, "got error %u\n", err);
 
         check_poll_todo(client, POLLWRNORM | POLLHUP | POLLERR);
 

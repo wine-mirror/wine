@@ -2587,7 +2587,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             {
                 if (sock->errors[i])
                 {
-                    error = sock->errors[i];
+                    error = sock_get_error( sock->errors[i] );
                     break;
                 }
             }
