@@ -56,7 +56,9 @@
 #include "netioapi.h"
 #include "tcpestats.h"
 #include "ip2string.h"
+#include "netiodef.h"
 
+#include "wine/nsi.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
@@ -3183,20 +3185,16 @@ DWORD WINAPI ConvertInterfaceGuidToLuid(const GUID *guid, NET_LUID *luid)
  */
 DWORD WINAPI ConvertInterfaceIndexToLuid(NET_IFINDEX index, NET_LUID *luid)
 {
-    MIB_IFROW row;
+    DWORD err;
 
-    TRACE("(%u %p)\n", index, luid);
+    TRACE( "(%u %p)\n", index, luid );
 
     if (!luid) return ERROR_INVALID_PARAMETER;
-    memset( luid, 0, sizeof(*luid) );
 
-    row.dwIndex = index;
-    if (GetIfEntry( &row )) return ERROR_FILE_NOT_FOUND;
-
-    luid->Info.Reserved     = 0;
-    luid->Info.NetLuidIndex = index;
-    luid->Info.IfType       = row.dwType;
-    return NO_ERROR;
+    err = NsiGetParameter( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_INDEX_LUID_TABLE, &index, sizeof(index),
+                           NSI_PARAM_TYPE_STATIC, luid, sizeof(*luid), 0 );
+    if (err) luid->Value = 0;
+    return err;
 }
 
 /******************************************************************
