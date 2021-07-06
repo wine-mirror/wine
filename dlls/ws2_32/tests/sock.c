@@ -3252,16 +3252,19 @@ static void test_select(void)
         FD_SET(fdWrite, &exceptfds);
         select_timeout.tv_sec = 10;
         ret = select(0, &readfds, &writefds, &exceptfds, &select_timeout);
-        ok(ret == 1, "expected 1, got %d\n", ret);
+        todo_wine ok(ret == 1, "expected 1, got %d\n", ret);
         len = sizeof(id);
         id = 0xdeadbeef;
         ret = getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char*)&id, &len);
         ok(!ret, "getsockopt failed with %d\n", WSAGetLastError());
-        ok(id == WSAECONNREFUSED, "expected 10061, got %d\n", id);
-        ok(FD_ISSET(fdWrite, &exceptfds), "fdWrite socket is not in the set\n");
+        todo_wine ok(id == WSAECONNREFUSED, "got error %u\n", id);
+        todo_wine ok(FD_ISSET(fdWrite, &exceptfds), "fdWrite socket is not in the set\n");
         ok(select_timeout.tv_usec == 250000, "select timeout should not have changed\n");
         closesocket(fdWrite);
     }
+
+    select_timeout.tv_sec = 1;
+    select_timeout.tv_usec = 250000;
 
     /* Try select() on a closed socket after connection */
     tcp_socketpair(&fdRead, &fdWrite);
@@ -6372,22 +6375,33 @@ static void test_WSAPoll(void)
      * so make the test interactive-only. */
     if (winetest_interactive)
     {
-        const struct sockaddr_in invalid_addr = {.sin_family = AF_INET, .sin_addr.s_addr = inet_addr("192.0.2.0")};
+        const struct sockaddr_in invalid_addr =
+        {
+            .sin_family = AF_INET,
+            .sin_addr.s_addr = htonl(INADDR_LOOPBACK),
+            .sin_port = 255,
+        };
+        SOCKET client;
 
-        client = setup_connector_socket(&invalid_addr, sizeof(invalid_addr), TRUE);
+        client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        set_blocking(client, FALSE);
+
+        ret = connect(client, (const struct sockaddr *)&invalid_addr, sizeof(invalid_addr));
+        ok(ret == -1, "got %d\n", ret);
+        ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
 
         fds[0].fd = client;
         fds[0].events = POLLRDNORM | POLLRDBAND | POLLWRNORM;
         fds[0].revents = 0xdead;
         ret = pWSAPoll(fds, 1, 10000);
-        ok(ret == 1, "got %d\n", ret);
-        ok(fds[0].revents == POLLERR, "got events %#x\n", fds[0].revents);
+        todo_wine ok(ret == 1, "got %d\n", ret);
+        todo_wine ok(fds[0].revents == (POLLWRNORM | POLLHUP | POLLERR), "got events %#x\n", fds[0].revents);
 
         len = sizeof(err);
         err = 0xdeadbeef;
         ret = getsockopt(client, SOL_SOCKET, SO_ERROR, (char *)&err, &len);
         ok(!ret, "getsockopt failed with %d\n", WSAGetLastError());
-        ok(err == WSAECONNREFUSED, "expected 10061, got %d\n", err);
+        todo_wine ok(err == WSAECONNREFUSED, "got error %u\n", err);
         closesocket(client);
     }
 

@@ -448,7 +448,8 @@ static void test_poll(void)
 
         addr.sin_port = 255;
         ret = connect(client, (struct sockaddr *)&addr, sizeof(addr));
-        ok(!ret || WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
+        ok(ret == -1, "got %d\n", ret);
+        ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
 
         ret = WaitForSingleObject(event, 10000);
         ok(!ret, "got %#x\n", ret);
@@ -474,6 +475,7 @@ static void test_poll(void)
     server = accept(listener, NULL, NULL);
     ok(server != -1, "got error %u\n", WSAGetLastError());
 
+    in_params->timeout = -1000 * 10000;
     in_params->count = 2;
     in_params->sockets[0].socket = client;
     in_params->sockets[0].flags = AFD_POLL_READ;
@@ -1310,7 +1312,7 @@ static void test_get_events(void)
         ok(ret == -1, "expected failure\n");
         ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
 
-        ret = WaitForSingleObject(event, 2000);
+        ret = WaitForSingleObject(event, 10000);
         ok(!ret, "got %#x\n", ret);
 
         memset(&params, 0xcc, sizeof(params));
