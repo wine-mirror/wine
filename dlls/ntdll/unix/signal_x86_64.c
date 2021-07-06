@@ -41,6 +41,9 @@
 #ifdef HAVE_MACHINE_SYSARCH_H
 # include <machine/sysarch.h>
 #endif
+#ifdef HAVE_SYS_AUXV_H
+# include <sys/auxv.h>
+#endif
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
@@ -276,8 +279,10 @@ C_ASSERT( sizeof(XSTATE) == 0x140 );
 C_ASSERT( sizeof(struct stack_layout) == 0x590 ); /* Should match the size in call_user_exception_dispatcher(). */
 
 /* flags to control the behavior of the syscall dispatcher */
-#define SYSCALL_HAVE_XSAVE    1
-#define SYSCALL_HAVE_XSAVEC   2
+#define SYSCALL_HAVE_XSAVE       1
+#define SYSCALL_HAVE_XSAVEC      2
+#define SYSCALL_HAVE_PTHREAD_TEB 4
+#define SYSCALL_HAVE_WRFSGSBASE  8
 
 /* stack layout when calling an user apc function.
  * FIXME: match Windows ABI. */
@@ -2859,6 +2864,8 @@ void signal_init_process(void)
         if ((sel = alloc_fs_sel( -1, teb32 )) != -1)
         {
             fs32_sel = (sel << 3) | 3;
+            __wine_syscall_flags |= SYSCALL_HAVE_PTHREAD_TEB;
+            if (getauxval( AT_HWCAP2 ) & 2) __wine_syscall_flags |= SYSCALL_HAVE_WRFSGSBASE;
         }
         else ERR( "failed to allocate %%fs selector\n" );
     }

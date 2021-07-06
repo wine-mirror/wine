@@ -1597,6 +1597,21 @@ static void output_syscall_dispatcher(void)
         output( "\tjmp 3f\n" );
         output( "2:\tfxsave64 0xc0(%%rcx)\n" );
         output( "3:\tleaq 0x98(%%rcx),%%rbp\n" );
+        if (target_platform == PLATFORM_LINUX)
+        {
+            output( "\ttestl $12,%%r14d\n" );  /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
+            output( "\tjz 2f\n" );
+            output( "\tmovq %%gs:0x330,%%rsi\n" );  /* amd64_thread_data()->pthread_teb */
+            output( "\ttestl $8,%%r14d\n" );  /* SYSCALL_HAVE_WRFSGSBASE */
+            output( "\tjz 1f\n" );
+            output( "\twrfsbase %%rsi\n" );
+            output( "\tjmp 2f\n" );
+            output( "1:\tmov $0x1002,%%edi\n" );      /* ARCH_SET_FS */
+            output( "\tmov $158,%%eax\n" );           /* SYS_arch_prctl */
+            output( "\tsyscall\n" );
+            output( "\tleaq -0x98(%%rbp),%%rcx\n" );
+            output( "2:\n" );
+        }
         output( "\tleaq 0x28(%%rsp),%%rsi\n" );   /* first argument */
         output( "\tmovq %%rcx,%%rsp\n" );
         output( "\tmovq 0x00(%%rcx),%%rax\n" );
@@ -1625,6 +1640,13 @@ static void output_syscall_dispatcher(void)
         output( "\tcallq *(%%r10,%%rax,8)\n" );
         output( "\tleaq -0x98(%%rbp),%%rcx\n" );
         output( "2:\tmovl 0x94(%%rcx),%%edx\n" );   /* frame->restore_flags */
+        if (target_platform == PLATFORM_LINUX)
+        {
+            output( "\ttestl $12,%%r14d\n" ); /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
+            output( "\tjz 1f\n" );
+            output( "\tmovw 0x7e(%%rcx),%%fs\n" );
+            output( "1:\n" );
+        }
         output( "\ttestl $0x48,%%edx\n" );  /* CONTEXT_FLOATING_POINT | CONTEXT_XSTATE */
         output( "\tjz 4f\n" );
         output( "\ttestl $3,%%r14d\n" );  /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
