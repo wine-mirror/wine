@@ -614,6 +614,13 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar, enum SCROLL_HITTEST hit
             SCROLL_DrawMovingThumb( hdc, &rect, vertical, arrowSize, thumbSize );
             SCROLL_MovingThumb = FALSE;
         }
+        else if (vertical == SCROLL_trackVertical && GetCapture() == hwnd)
+        {
+            SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbSize, thumbPos,
+                                 infoPtr->flags, vertical,
+                                 hit_test == SCROLL_trackHitTest && hit_test == SCROLL_TOP_RECT,
+                                 hit_test == SCROLL_trackHitTest && hit_test == SCROLL_BOTTOM_RECT );
+        }
         else
         {
             SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbSize, thumbPos,
@@ -836,9 +843,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
         break;
 
     case SCROLL_TOP_RECT:
-        SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbSize,
-                             thumbPos, infoPtr->flags, vertical,
-                             (hittest == SCROLL_trackHitTest), FALSE );
+        SCROLL_DrawScrollBar( hwnd, hdc, nBar, hittest, FALSE, TRUE );
         if (hittest == SCROLL_trackHitTest)
         {
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
@@ -869,9 +874,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
         }
         else if (msg == WM_LBUTTONUP)
         {
-            SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbSize,
-                                 thumbPos, infoPtr->flags, vertical,
-                                 FALSE, FALSE );
+            SCROLL_DrawScrollBar( hwnd, hdc, nBar, SCROLL_NOWHERE, FALSE, TRUE );
         }
         else  /* WM_MOUSEMOVE */
         {
@@ -900,9 +903,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
         break;
 
     case SCROLL_BOTTOM_RECT:
-        SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbSize,
-                             thumbPos, infoPtr->flags, vertical,
-                             FALSE, (hittest == SCROLL_trackHitTest) );
+        SCROLL_DrawScrollBar( hwnd, hdc, nBar, hittest, FALSE, TRUE );
         if (hittest == SCROLL_trackHitTest)
         {
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
