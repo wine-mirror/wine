@@ -2513,8 +2513,8 @@ void __cdecl wined3d_device_context_set_rasterizer_state(struct wined3d_device_c
         struct wined3d_rasterizer_state *rasterizer_state);
 HRESULT __cdecl wined3d_device_context_set_rendertarget_view(struct wined3d_device_context *context,
         unsigned int view_idx, struct wined3d_rendertarget_view *view, BOOL set_viewport);
-void __cdecl wined3d_device_context_set_sampler(struct wined3d_device_context *context,
-        enum wined3d_shader_type type, unsigned int idx, struct wined3d_sampler *sampler);
+void __cdecl wined3d_device_context_set_samplers(struct wined3d_device_context *context, enum wined3d_shader_type type,
+        unsigned int start_idx, unsigned int count, struct wined3d_sampler *const *samplers);
 void __cdecl wined3d_device_context_set_scissor_rects(struct wined3d_device_context *context, unsigned int rect_count,
         const RECT *rects);
 void __cdecl wined3d_device_context_set_shader(struct wined3d_device_context *context,

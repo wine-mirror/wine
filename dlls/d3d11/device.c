@@ -612,6 +612,31 @@ static void d3d11_device_context_set_shader_resource_views(ID3D11DeviceContext1 
     wined3d_mutex_unlock();
 }
 
+static void d3d11_device_context_set_samplers(ID3D11DeviceContext1 *iface, enum wined3d_shader_type type,
+        unsigned int start_slot, unsigned int count, ID3D11SamplerState *const *samplers)
+{
+    struct wined3d_sampler *wined3d_samplers[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
+    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
+    unsigned int i;
+
+    if (count > ARRAY_SIZE(wined3d_samplers))
+    {
+        WARN("Sampler count %u exceeds limit; ignoring call.\n", count);
+        return;
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        struct d3d_sampler_state *sampler = unsafe_impl_from_ID3D11SamplerState(samplers[i]);
+
+        wined3d_samplers[i] = sampler ? sampler->wined3d_sampler : NULL;
+    }
+
+    wined3d_mutex_lock();
+    wined3d_device_context_set_samplers(context->wined3d_context, type, start_slot, count, wined3d_samplers);
+    wined3d_mutex_unlock();
+}
+
 static void STDMETHODCALLTYPE d3d11_device_context_GetDevice(ID3D11DeviceContext1 *iface, ID3D11Device **device)
 {
     struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
@@ -692,21 +717,10 @@ static void STDMETHODCALLTYPE d3d11_device_context_PSSetShader(ID3D11DeviceConte
 static void STDMETHODCALLTYPE d3d11_device_context_PSSetSamplers(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT sampler_count, ID3D11SamplerState *const *samplers)
 {
-    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, sampler_count %u, samplers %p.\n",
             iface, start_slot, sampler_count, samplers);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < sampler_count; ++i)
-    {
-        struct d3d_sampler_state *sampler = unsafe_impl_from_ID3D11SamplerState(samplers[i]);
-
-        wined3d_device_context_set_sampler(context->wined3d_context, WINED3D_SHADER_TYPE_PIXEL, start_slot + i,
-                sampler ? sampler->wined3d_sampler : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d11_device_context_set_samplers(iface, WINED3D_SHADER_TYPE_PIXEL, start_slot, sampler_count, samplers);
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_VSSetShader(ID3D11DeviceContext1 *iface,
@@ -948,21 +962,10 @@ static void STDMETHODCALLTYPE d3d11_device_context_VSSetShaderResources(ID3D11De
 static void STDMETHODCALLTYPE d3d11_device_context_VSSetSamplers(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT sampler_count, ID3D11SamplerState *const *samplers)
 {
-    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, sampler_count %u, samplers %p.\n",
             iface, start_slot, sampler_count, samplers);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < sampler_count; ++i)
-    {
-        struct d3d_sampler_state *sampler = unsafe_impl_from_ID3D11SamplerState(samplers[i]);
-
-        wined3d_device_context_set_sampler(context->wined3d_context, WINED3D_SHADER_TYPE_VERTEX, start_slot + i,
-                sampler ? sampler->wined3d_sampler : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d11_device_context_set_samplers(iface, WINED3D_SHADER_TYPE_VERTEX, start_slot, sampler_count, samplers);
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_Begin(ID3D11DeviceContext1 *iface,
@@ -1049,21 +1052,10 @@ static void STDMETHODCALLTYPE d3d11_device_context_GSSetShaderResources(ID3D11De
 static void STDMETHODCALLTYPE d3d11_device_context_GSSetSamplers(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT sampler_count, ID3D11SamplerState *const *samplers)
 {
-    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, sampler_count %u, samplers %p.\n",
             iface, start_slot, sampler_count, samplers);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < sampler_count; ++i)
-    {
-        struct d3d_sampler_state *sampler = unsafe_impl_from_ID3D11SamplerState(samplers[i]);
-
-        wined3d_device_context_set_sampler(context->wined3d_context, WINED3D_SHADER_TYPE_GEOMETRY, start_slot + i,
-                sampler ? sampler->wined3d_sampler : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d11_device_context_set_samplers(iface, WINED3D_SHADER_TYPE_GEOMETRY, start_slot, sampler_count, samplers);
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_OMSetRenderTargets(ID3D11DeviceContext1 *iface,
@@ -1584,21 +1576,10 @@ static void STDMETHODCALLTYPE d3d11_device_context_HSSetShader(ID3D11DeviceConte
 static void STDMETHODCALLTYPE d3d11_device_context_HSSetSamplers(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT sampler_count, ID3D11SamplerState *const *samplers)
 {
-    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, sampler_count %u, samplers %p.\n",
             iface, start_slot, sampler_count, samplers);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < sampler_count; ++i)
-    {
-        struct d3d_sampler_state *sampler = unsafe_impl_from_ID3D11SamplerState(samplers[i]);
-
-        wined3d_device_context_set_sampler(context->wined3d_context, WINED3D_SHADER_TYPE_HULL, start_slot + i,
-                sampler ? sampler->wined3d_sampler : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d11_device_context_set_samplers(iface, WINED3D_SHADER_TYPE_HULL, start_slot, sampler_count, samplers);
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_HSSetConstantBuffers(ID3D11DeviceContext1 *iface,
@@ -1641,21 +1622,10 @@ static void STDMETHODCALLTYPE d3d11_device_context_DSSetShader(ID3D11DeviceConte
 static void STDMETHODCALLTYPE d3d11_device_context_DSSetSamplers(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT sampler_count, ID3D11SamplerState *const *samplers)
 {
-    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, sampler_count %u, samplers %p.\n",
             iface, start_slot, sampler_count, samplers);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < sampler_count; ++i)
-    {
-        struct d3d_sampler_state *sampler = unsafe_impl_from_ID3D11SamplerState(samplers[i]);
-
-        wined3d_device_context_set_sampler(context->wined3d_context, WINED3D_SHADER_TYPE_DOMAIN, start_slot + i,
-                sampler ? sampler->wined3d_sampler : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d11_device_context_set_samplers(iface, WINED3D_SHADER_TYPE_DOMAIN, start_slot, sampler_count, samplers);
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_DSSetConstantBuffers(ID3D11DeviceContext1 *iface,
@@ -1718,21 +1688,10 @@ static void STDMETHODCALLTYPE d3d11_device_context_CSSetShader(ID3D11DeviceConte
 static void STDMETHODCALLTYPE d3d11_device_context_CSSetSamplers(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT sampler_count, ID3D11SamplerState *const *samplers)
 {
-    struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, sampler_count %u, samplers %p.\n",
             iface, start_slot, sampler_count, samplers);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < sampler_count; ++i)
-    {
-        struct d3d_sampler_state *sampler = unsafe_impl_from_ID3D11SamplerState(samplers[i]);
-
-        wined3d_device_context_set_sampler(context->wined3d_context, WINED3D_SHADER_TYPE_COMPUTE, start_slot + i,
-                sampler ? sampler->wined3d_sampler : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d11_device_context_set_samplers(iface, WINED3D_SHADER_TYPE_COMPUTE, start_slot, sampler_count, samplers);
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_CSSetConstantBuffers(ID3D11DeviceContext1 *iface,
@@ -4592,6 +4551,32 @@ static void d3d10_device_set_shader_resource_views(ID3D10Device1 *iface, enum wi
     wined3d_mutex_unlock();
 }
 
+static void d3d10_device_set_samplers(ID3D10Device1 *iface, enum wined3d_shader_type type,
+        unsigned int start_slot, unsigned int count, ID3D10SamplerState *const *samplers)
+{
+    struct wined3d_sampler *wined3d_samplers[D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT];
+    struct d3d_device *device = impl_from_ID3D10Device(iface);
+    unsigned int i;
+
+    if (count > ARRAY_SIZE(wined3d_samplers))
+    {
+        WARN("Sampler count %u exceeds limit; ignoring call.\n", count);
+        return;
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        struct d3d_sampler_state *sampler = unsafe_impl_from_ID3D10SamplerState(samplers[i]);
+
+        wined3d_samplers[i] = sampler ? sampler->wined3d_sampler : NULL;
+    }
+
+    wined3d_mutex_lock();
+    wined3d_device_context_set_samplers(device->immediate_context.wined3d_context,
+            type, start_slot, count, wined3d_samplers);
+    wined3d_mutex_unlock();
+}
+
 static void STDMETHODCALLTYPE d3d10_device_VSSetConstantBuffers(ID3D10Device1 *iface,
         UINT start_slot, UINT buffer_count, ID3D10Buffer *const *buffers)
 {
@@ -4628,21 +4613,10 @@ static void STDMETHODCALLTYPE d3d10_device_PSSetShader(ID3D10Device1 *iface,
 static void STDMETHODCALLTYPE d3d10_device_PSSetSamplers(ID3D10Device1 *iface,
         UINT start_slot, UINT sampler_count, ID3D10SamplerState *const *samplers)
 {
-    struct d3d_device *device = impl_from_ID3D10Device(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, sampler_count %u, samplers %p.\n",
             iface, start_slot, sampler_count, samplers);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < sampler_count; ++i)
-    {
-        struct d3d_sampler_state *sampler = unsafe_impl_from_ID3D10SamplerState(samplers[i]);
-
-        wined3d_device_context_set_sampler(device->immediate_context.wined3d_context,
-                WINED3D_SHADER_TYPE_PIXEL, start_slot + i, sampler ? sampler->wined3d_sampler : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d10_device_set_samplers(iface, WINED3D_SHADER_TYPE_PIXEL, start_slot, sampler_count, samplers);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_VSSetShader(ID3D10Device1 *iface,
@@ -4827,21 +4801,10 @@ static void STDMETHODCALLTYPE d3d10_device_VSSetShaderResources(ID3D10Device1 *i
 static void STDMETHODCALLTYPE d3d10_device_VSSetSamplers(ID3D10Device1 *iface,
         UINT start_slot, UINT sampler_count, ID3D10SamplerState *const *samplers)
 {
-    struct d3d_device *device = impl_from_ID3D10Device(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, sampler_count %u, samplers %p.\n",
             iface, start_slot, sampler_count, samplers);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < sampler_count; ++i)
-    {
-        struct d3d_sampler_state *sampler = unsafe_impl_from_ID3D10SamplerState(samplers[i]);
-
-        wined3d_device_context_set_sampler(device->immediate_context.wined3d_context,
-                WINED3D_SHADER_TYPE_VERTEX, start_slot + i, sampler ? sampler->wined3d_sampler : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d10_device_set_samplers(iface, WINED3D_SHADER_TYPE_VERTEX, start_slot, sampler_count, samplers);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_SetPredication(ID3D10Device1 *iface, ID3D10Predicate *predicate, BOOL value)
@@ -4870,21 +4833,10 @@ static void STDMETHODCALLTYPE d3d10_device_GSSetShaderResources(ID3D10Device1 *i
 static void STDMETHODCALLTYPE d3d10_device_GSSetSamplers(ID3D10Device1 *iface,
         UINT start_slot, UINT sampler_count, ID3D10SamplerState *const *samplers)
 {
-    struct d3d_device *device = impl_from_ID3D10Device(iface);
-    unsigned int i;
-
     TRACE("iface %p, start_slot %u, sampler_count %u, samplers %p.\n",
             iface, start_slot, sampler_count, samplers);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < sampler_count; ++i)
-    {
-        struct d3d_sampler_state *sampler = unsafe_impl_from_ID3D10SamplerState(samplers[i]);
-
-        wined3d_device_context_set_sampler(device->immediate_context.wined3d_context, WINED3D_SHADER_TYPE_GEOMETRY,
-                start_slot + i, sampler ? sampler->wined3d_sampler : NULL);
-    }
-    wined3d_mutex_unlock();
+    d3d10_device_set_samplers(iface, WINED3D_SHADER_TYPE_GEOMETRY, start_slot, sampler_count, samplers);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_OMSetRenderTargets(ID3D10Device1 *iface,

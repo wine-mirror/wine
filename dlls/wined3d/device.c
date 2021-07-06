@@ -1697,10 +1697,7 @@ void CDECL wined3d_device_context_set_state(struct wined3d_device_context *conte
     {
         wined3d_device_context_emit_set_shader(context, i, state->shader[i]);
         wined3d_device_context_emit_set_constant_buffers(context, i, 0, MAX_CONSTANT_BUFFERS, state->cb[i]);
-        for (j = 0; j < MAX_SAMPLER_OBJECTS; ++j)
-        {
-            wined3d_device_context_emit_set_sampler(context, i, j, state->sampler[i][j]);
-        }
+        wined3d_device_context_emit_set_samplers(context, i, 0, MAX_SAMPLER_OBJECTS, state->sampler[i]);
         wined3d_device_context_emit_set_shader_resource_views(context, i, 0,
                 MAX_SHADER_RESOURCE_VIEWS, state->shader_resource_view[i]);
     }
@@ -2035,30 +2032,35 @@ void CDECL wined3d_device_context_set_shader_resource_views(struct wined3d_devic
     }
 }
 
-void CDECL wined3d_device_context_set_sampler(struct wined3d_device_context *context,
-        enum wined3d_shader_type type, unsigned int idx, struct wined3d_sampler *sampler)
+void CDECL wined3d_device_context_set_samplers(struct wined3d_device_context *context, enum wined3d_shader_type type,
+        unsigned int start_idx, unsigned int count, struct wined3d_sampler *const *samplers)
 {
     struct wined3d_state *state = context->state;
-    struct wined3d_sampler *prev;
+    unsigned int i;
 
-    TRACE("context %p, type %#x, idx %u, sampler %p.\n", context, type, idx, sampler);
+    TRACE("context %p, type %#x, start_idx %u, count %u, samplers %p.\n", context, type, start_idx, count, samplers);
 
-    if (idx >= MAX_SAMPLER_OBJECTS)
+    if (start_idx >= MAX_SAMPLER_OBJECTS || count > MAX_SAMPLER_OBJECTS - start_idx)
     {
-        WARN("Invalid sampler index %u.\n", idx);
+        WARN("Invalid sampler index %u, count %u.\n", start_idx, count);
         return;
     }
 
-    prev = state->sampler[type][idx];
-    if (sampler == prev)
+    if (!memcmp(samplers, &state->sampler[type][start_idx], count * sizeof(*samplers)))
         return;
 
-    if (sampler)
-        wined3d_sampler_incref(sampler);
-    state->sampler[type][idx] = sampler;
-    wined3d_device_context_emit_set_sampler(context, type, idx, sampler);
-    if (prev)
-        wined3d_sampler_decref(prev);
+    wined3d_device_context_emit_set_samplers(context, type, start_idx, count, samplers);
+    for (i = 0; i < count; ++i)
+    {
+        struct wined3d_sampler *prev = state->sampler[type][start_idx + i];
+        struct wined3d_sampler *sampler = samplers[i];
+
+        if (sampler)
+            wined3d_sampler_incref(sampler);
+        state->sampler[type][start_idx + i] = sampler;
+        if (prev)
+            wined3d_sampler_decref(prev);
+    }
 }
 
 void CDECL wined3d_device_context_set_unordered_access_view(struct wined3d_device_context *context,

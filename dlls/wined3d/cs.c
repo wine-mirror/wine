@@ -124,7 +124,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_TEXTURE,
     WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEWS,
     WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEW,
-    WINED3D_CS_OP_SET_SAMPLER,
+    WINED3D_CS_OP_SET_SAMPLERS,
     WINED3D_CS_OP_SET_SHADER,
     WINED3D_CS_OP_SET_BLEND_STATE,
     WINED3D_CS_OP_SET_DEPTH_STENCIL_STATE,
@@ -328,12 +328,13 @@ struct wined3d_cs_set_unordered_access_view
     unsigned int initial_count;
 };
 
-struct wined3d_cs_set_sampler
+struct wined3d_cs_set_samplers
 {
     enum wined3d_cs_op opcode;
     enum wined3d_shader_type type;
-    UINT sampler_idx;
-    struct wined3d_sampler *sampler;
+    unsigned int start_idx;
+    unsigned int count;
+    struct wined3d_sampler *samplers[1];
 };
 
 struct wined3d_cs_set_shader
@@ -604,7 +605,7 @@ static const char *debug_cs_op(enum wined3d_cs_op op)
         WINED3D_TO_STR(WINED3D_CS_OP_SET_TEXTURE);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEWS);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEW);
-        WINED3D_TO_STR(WINED3D_CS_OP_SET_SAMPLER);
+        WINED3D_TO_STR(WINED3D_CS_OP_SET_SAMPLERS);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_SHADER);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_BLEND_STATE);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_DEPTH_STENCIL_STATE);
@@ -1736,27 +1737,32 @@ void wined3d_device_context_emit_set_unordered_access_view(struct wined3d_device
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
-static void wined3d_cs_exec_set_sampler(struct wined3d_cs *cs, const void *data)
+static void wined3d_cs_exec_set_samplers(struct wined3d_cs *cs, const void *data)
 {
-    const struct wined3d_cs_set_sampler *op = data;
+    const struct wined3d_cs_set_samplers *op = data;
+    unsigned int i;
 
-    cs->state.sampler[op->type][op->sampler_idx] = op->sampler;
+    for (i = 0; i < op->count; ++i)
+        cs->state.sampler[op->type][op->start_idx + i] = op->samplers[i];
+
     if (op->type != WINED3D_SHADER_TYPE_COMPUTE)
         device_invalidate_state(cs->c.device, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
     else
         device_invalidate_state(cs->c.device, STATE_COMPUTE_SHADER_RESOURCE_BINDING);
 }
 
-void wined3d_device_context_emit_set_sampler(struct wined3d_device_context *context, enum wined3d_shader_type type,
-        unsigned int sampler_idx, struct wined3d_sampler *sampler)
+void wined3d_device_context_emit_set_samplers(struct wined3d_device_context *context, enum wined3d_shader_type type,
+        unsigned int start_idx, unsigned int count, struct wined3d_sampler *const *samplers)
 {
-    struct wined3d_cs_set_sampler *op;
+    struct wined3d_cs_set_samplers *op;
 
-    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
-    op->opcode = WINED3D_CS_OP_SET_SAMPLER;
+    op = wined3d_device_context_require_space(context, offsetof(struct wined3d_cs_set_samplers, samplers[count]),
+            WINED3D_CS_QUEUE_DEFAULT);
+    op->opcode = WINED3D_CS_OP_SET_SAMPLERS;
     op->type = type;
-    op->sampler_idx = sampler_idx;
-    op->sampler = sampler;
+    op->start_idx = start_idx;
+    op->count = count;
+    memcpy(op->samplers, samplers, count * sizeof(*samplers));
 
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
@@ -2912,7 +2918,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_TEXTURE                 */ wined3d_cs_exec_set_texture,
     /* WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEWS   */ wined3d_cs_exec_set_shader_resource_views,
     /* WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEW   */ wined3d_cs_exec_set_unordered_access_view,
-    /* WINED3D_CS_OP_SET_SAMPLER                 */ wined3d_cs_exec_set_sampler,
+    /* WINED3D_CS_OP_SET_SAMPLERS                */ wined3d_cs_exec_set_samplers,
     /* WINED3D_CS_OP_SET_SHADER                  */ wined3d_cs_exec_set_shader,
     /* WINED3D_CS_OP_SET_BLEND_STATE             */ wined3d_cs_exec_set_blend_state,
     /* WINED3D_CS_OP_SET_DEPTH_STENCIL_STATE     */ wined3d_cs_exec_set_depth_stencil_state,
