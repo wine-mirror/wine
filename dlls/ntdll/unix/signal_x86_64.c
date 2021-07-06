@@ -311,11 +311,13 @@ struct amd64_thread_data
     DWORD_PTR             dr7;           /* 0318 */
     void                 *exit_frame;    /* 0320 exit frame pointer */
     struct syscall_frame *syscall_frame; /* 0328 syscall frame pointer */
+    void                 *pthread_teb;   /* 0330 thread data for pthread */
 };
 
 C_ASSERT( sizeof(struct amd64_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, exit_frame ) == 0x320 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, syscall_frame ) == 0x328 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, pthread_teb ) == 0x330 );
 
 static inline struct amd64_thread_data *amd64_thread_data(void)
 {
@@ -2740,6 +2742,7 @@ void signal_init_thread( TEB *teb )
 
 #if defined __linux__
     arch_prctl( ARCH_SET_GS, teb );
+    arch_prctl( ARCH_GET_FS, &amd64_thread_data()->pthread_teb );
 #elif defined (__FreeBSD__) || defined (__FreeBSD_kernel__)
     amd64_set_gsbase( teb );
 #elif defined(__NetBSD__)
@@ -2751,11 +2754,12 @@ void signal_init_thread( TEB *teb )
     __asm__ volatile (".byte 0x65\n\tmovq %0,%c1"
                       :
                       : "r" (teb->ThreadLocalStoragePointer), "n" (FIELD_OFFSET(TEB, ThreadLocalStoragePointer)));
+    amd64_thread_data()->pthread_teb = mac_thread_gsbase();
 
     /* alloc_tls_slot() needs to poke a value to an address relative to each
        thread's gsbase.  Have each thread record its gsbase pointer into its
        TEB so alloc_tls_slot() can find it. */
-    teb->Reserved5[0] = mac_thread_gsbase();
+    teb->Reserved5[0] = amd64_thread_data()->pthread_teb;
 #else
 # error Please define setting %gs for your architecture
 #endif
