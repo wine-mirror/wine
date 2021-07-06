@@ -80,14 +80,8 @@ typedef struct
 #define SA_SSI_REFRESH		0x0004
 #define SA_SSI_REPAINT_ARROWS	0x0008
 
- /* Thumb-tracking info */
-static HWND SCROLL_TrackingWin = 0;
-static INT  SCROLL_TrackingBar = 0;
-static INT  SCROLL_TrackingPos = 0;
-static INT  SCROLL_TrackingVal = 0;
- /* Hit test code of the last button-down event */
-static enum SCROLL_HITTEST SCROLL_trackHitTest;
-static BOOL SCROLL_trackVertical;
+/* Scroll Bar tracking information */
+static struct SCROLL_TRACKING_INFO g_tracking_info;
 
  /* Is the moving thumb being displayed? */
 static BOOL SCROLL_MovingThumb = FALSE;
@@ -456,7 +450,7 @@ static void SCROLL_DrawArrows( HDC hdc, SCROLLBAR_INFO *infoPtr,
 static void SCROLL_DrawMovingThumb( HDC hdc, RECT *rect, BOOL vertical,
 				    INT arrowSize, INT thumbSize )
 {
-  INT pos = SCROLL_TrackingPos;
+  INT pos = g_tracking_info.thumb_pos;
   INT max_size;
 
   if( vertical )
@@ -471,7 +465,7 @@ static void SCROLL_DrawMovingThumb( HDC hdc, RECT *rect, BOOL vertical,
   else if( pos > max_size )
     pos = max_size;
 
-  SCROLL_DrawInterior( SCROLL_TrackingWin, hdc, SCROLL_TrackingBar, rect, arrowSize, thumbSize, pos,
+  SCROLL_DrawInterior( g_tracking_info.win, hdc, g_tracking_info.bar, rect, arrowSize, thumbSize, pos,
                        0, vertical, FALSE, FALSE );
 }
 
@@ -572,7 +566,8 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, INT nBar,
  *
  * Redraw the whole scrollbar.
  */
-void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar, enum SCROLL_HITTEST hit_test, BOOL arrows,
+void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar, enum SCROLL_HITTEST hit_test,
+                           const struct SCROLL_TRACKING_INFO *tracking_info, BOOL arrows,
                            BOOL interior )
 {
     INT arrowSize, thumbSize, thumbPos;
@@ -598,10 +593,10 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar, enum SCROLL_HITTEST hit
 
     if (arrows && arrowSize)
     {
-	if( vertical == SCROLL_trackVertical && GetCapture() == hwnd )
+        if (vertical == tracking_info->vertical && GetCapture() == hwnd)
 	    SCROLL_DrawArrows( hdc, infoPtr, &rect, arrowSize, vertical,
-                               hit_test == SCROLL_trackHitTest && hit_test == SCROLL_TOP_ARROW,
-                               hit_test == SCROLL_trackHitTest && hit_test == SCROLL_BOTTOM_ARROW );
+                               hit_test == tracking_info->hit_test && hit_test == SCROLL_TOP_ARROW,
+                               hit_test == tracking_info->hit_test && hit_test == SCROLL_BOTTOM_ARROW );
 	else
 	    SCROLL_DrawArrows( hdc, infoPtr, &rect, arrowSize, vertical,
 							       FALSE, FALSE );
@@ -609,17 +604,17 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar, enum SCROLL_HITTEST hit
 
     if (interior)
     {
-        if (SCROLL_MovingThumb && SCROLL_TrackingWin == hwnd && SCROLL_TrackingBar == nBar)
+        if (SCROLL_MovingThumb && tracking_info->win == hwnd && tracking_info->bar == nBar)
         {
             SCROLL_DrawMovingThumb( hdc, &rect, vertical, arrowSize, thumbSize );
             SCROLL_MovingThumb = FALSE;
         }
-        else if (vertical == SCROLL_trackVertical && GetCapture() == hwnd)
+        else if (vertical == tracking_info->vertical && GetCapture() == hwnd)
         {
             SCROLL_DrawInterior( hwnd, hdc, nBar, &rect, arrowSize, thumbSize, thumbPos,
                                  infoPtr->flags, vertical,
-                                 hit_test == SCROLL_trackHitTest && hit_test == SCROLL_TOP_RECT,
-                                 hit_test == SCROLL_trackHitTest && hit_test == SCROLL_BOTTOM_RECT );
+                                 hit_test == tracking_info->hit_test && hit_test == SCROLL_TOP_RECT,
+                                 hit_test == tracking_info->hit_test && hit_test == SCROLL_BOTTOM_RECT );
         }
         else
         {
@@ -645,9 +640,9 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar, enum SCROLL_HITTEST hit
 void SCROLL_DrawNCScrollBar( HWND hwnd, HDC hdc, BOOL draw_horizontal, BOOL draw_vertical )
 {
     if (draw_horizontal)
-        SCROLL_DrawScrollBar( hwnd, hdc, SB_HORZ, SCROLL_trackHitTest, TRUE, TRUE );
+        SCROLL_DrawScrollBar( hwnd, hdc, SB_HORZ, g_tracking_info.hit_test, &g_tracking_info, TRUE, TRUE );
     if (draw_vertical)
-        SCROLL_DrawScrollBar( hwnd, hdc, SB_VERT, SCROLL_trackHitTest, TRUE, TRUE );
+        SCROLL_DrawScrollBar( hwnd, hdc, SB_VERT, g_tracking_info.hit_test, &g_tracking_info, TRUE, TRUE );
 }
 
 /***********************************************************************
@@ -680,7 +675,7 @@ static void SCROLL_RefreshScrollBar( HWND hwnd, INT nBar,
                            DCX_CACHE | ((nBar == SB_CTL) ? 0 : DCX_WINDOW) );
     if (!hdc) return;
 
-    SCROLL_DrawScrollBar( hwnd, hdc, nBar, SCROLL_trackHitTest, arrows, interior );
+    SCROLL_DrawScrollBar( hwnd, hdc, nBar, g_tracking_info.hit_test, &g_tracking_info, arrows, interior );
     ReleaseDC( hwnd, hdc );
 }
 
@@ -748,7 +743,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
 
     SCROLLBAR_INFO *infoPtr = SCROLL_GetInternalInfo( hwnd, nBar, FALSE );
     if (!infoPtr) return;
-    if ((SCROLL_trackHitTest == SCROLL_NOWHERE) && (msg != WM_LBUTTONDOWN))
+    if ((g_tracking_info.hit_test == SCROLL_NOWHERE) && (msg != WM_LBUTTONDOWN))
 		  return;
 
     if (nBar == SB_CTL && (GetWindowLongW( hwnd, GWL_STYLE ) & (SBS_SIZEGRIP | SBS_SIZEBOX)))
@@ -759,7 +754,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
                 HideCaret(hwnd);  /* hide caret while holding down LBUTTON */
                 SetCapture( hwnd );
                 prevPt = pt;
-                SCROLL_trackHitTest  = hittest = SCROLL_THUMB;
+                g_tracking_info.hit_test = hittest = SCROLL_THUMB;
                 break;
             case WM_MOUSEMOVE:
                 GetClientRect(GetParent(GetParent(hwnd)),&rect);
@@ -767,7 +762,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
                 break;
             case WM_LBUTTONUP:
                 ReleaseCapture();
-                SCROLL_trackHitTest  = hittest = SCROLL_NOWHERE;
+                g_tracking_info.hit_test = hittest = SCROLL_NOWHERE;
                 if (hwnd==GetFocus()) ShowCaret(hwnd);
                 break;
             case WM_SYSTIMER:
@@ -787,8 +782,8 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
     {
       case WM_LBUTTONDOWN:  /* Initialise mouse tracking */
           HideCaret(hwnd);  /* hide caret while holding down LBUTTON */
-          SCROLL_trackVertical = vertical;
-          SCROLL_trackHitTest  = hittest = SCROLL_HitTest( hwnd, nBar, pt, FALSE );
+          g_tracking_info.vertical = vertical;
+          g_tracking_info.hit_test = hittest = SCROLL_HitTest( hwnd, nBar, pt, FALSE );
           lastClickPos  = vertical ? (pt.y - rect.top) : (pt.x - rect.left);
           lastMousePos  = lastClickPos;
           trackThumbPos = thumbPos;
@@ -821,14 +816,14 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
     TRACE("Event: hwnd=%p bar=%d msg=%s pt=%d,%d hit=%d\n",
           hwnd, nBar, SPY_GetMsgName(msg,hwnd), pt.x, pt.y, hittest );
 
-    switch(SCROLL_trackHitTest)
+    switch (g_tracking_info.hit_test)
     {
     case SCROLL_NOWHERE:  /* No tracking in progress */
         break;
 
     case SCROLL_TOP_ARROW:
-        SCROLL_DrawScrollBar( hwnd, hdc, nBar, hittest, TRUE, FALSE );
-        if (hittest == SCROLL_trackHitTest)
+        SCROLL_DrawScrollBar( hwnd, hdc, nBar, hittest, &g_tracking_info, TRUE, FALSE );
+        if (hittest == g_tracking_info.hit_test)
         {
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
             {
@@ -843,8 +838,8 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
         break;
 
     case SCROLL_TOP_RECT:
-        SCROLL_DrawScrollBar( hwnd, hdc, nBar, hittest, FALSE, TRUE );
-        if (hittest == SCROLL_trackHitTest)
+        SCROLL_DrawScrollBar( hwnd, hdc, nBar, hittest, &g_tracking_info, FALSE, TRUE );
+        if (hittest == g_tracking_info.hit_test)
         {
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
             {
@@ -860,21 +855,20 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
     case SCROLL_THUMB:
         if (msg == WM_LBUTTONDOWN)
         {
-            SCROLL_TrackingWin = hwnd;
-            SCROLL_TrackingBar = nBar;
-            SCROLL_TrackingPos = trackThumbPos + lastMousePos - lastClickPos;
-            SCROLL_TrackingVal = SCROLL_GetThumbVal( infoPtr, &rect,
-                                                        vertical,
-                                                        SCROLL_TrackingPos );
-	    if (!SCROLL_MovingThumb)
+            g_tracking_info.win = hwnd;
+            g_tracking_info.bar = nBar;
+            g_tracking_info.thumb_pos = trackThumbPos + lastMousePos - lastClickPos;
+            g_tracking_info.thumb_val = SCROLL_GetThumbVal( infoPtr, &rect, vertical,
+                                                            g_tracking_info.thumb_pos );
+            if (!SCROLL_MovingThumb)
             {
                 SCROLL_MovingThumb = TRUE;
-                SCROLL_DrawScrollBar( hwnd, hdc, nBar, hittest, FALSE, TRUE );
+                SCROLL_DrawScrollBar( hwnd, hdc, nBar, hittest, &g_tracking_info, FALSE, TRUE );
             }
         }
         else if (msg == WM_LBUTTONUP)
         {
-            SCROLL_DrawScrollBar( hwnd, hdc, nBar, SCROLL_NOWHERE, FALSE, TRUE );
+            SCROLL_DrawScrollBar( hwnd, hdc, nBar, SCROLL_NOWHERE, &g_tracking_info, FALSE, TRUE );
         }
         else  /* WM_MOUSEMOVE */
         {
@@ -889,22 +883,21 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
             if ( (pos != lastMousePos) || (!SCROLL_MovingThumb) )
             {
                 lastMousePos = pos;
-                SCROLL_TrackingPos = trackThumbPos + pos - lastClickPos;
-                SCROLL_TrackingVal = SCROLL_GetThumbVal( infoPtr, &rect,
-                                                         vertical,
-                                                         SCROLL_TrackingPos );
+                g_tracking_info.thumb_pos = trackThumbPos + pos - lastClickPos;
+                g_tracking_info.thumb_val = SCROLL_GetThumbVal( infoPtr, &rect, vertical,
+                                                                g_tracking_info.thumb_pos );
                 SendMessageW( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
-                                MAKEWPARAM( SB_THUMBTRACK, SCROLL_TrackingVal),
-                                (LPARAM)hwndCtl );
+                              MAKEWPARAM( SB_THUMBTRACK, g_tracking_info.thumb_val ),
+                              (LPARAM)hwndCtl );
                 SCROLL_MovingThumb = TRUE;
-                SCROLL_DrawScrollBar( hwnd, hdc, nBar, hittest, FALSE, TRUE );
+                SCROLL_DrawScrollBar( hwnd, hdc, nBar, hittest, &g_tracking_info, FALSE, TRUE );
             }
         }
         break;
 
     case SCROLL_BOTTOM_RECT:
-        SCROLL_DrawScrollBar( hwnd, hdc, nBar, hittest, FALSE, TRUE );
-        if (hittest == SCROLL_trackHitTest)
+        SCROLL_DrawScrollBar( hwnd, hdc, nBar, hittest, &g_tracking_info, FALSE, TRUE );
+        if (hittest == g_tracking_info.hit_test)
         {
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
             {
@@ -918,8 +911,8 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
         break;
 
     case SCROLL_BOTTOM_ARROW:
-        SCROLL_DrawScrollBar( hwnd, hdc, nBar, hittest, TRUE, FALSE );
-        if (hittest == SCROLL_trackHitTest)
+        SCROLL_DrawScrollBar( hwnd, hdc, nBar, hittest, &g_tracking_info, TRUE, FALSE );
+        if (hittest == g_tracking_info.hit_test)
         {
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
             {
@@ -948,8 +941,8 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
 
     if (msg == WM_LBUTTONUP)
     {
-	hittest = SCROLL_trackHitTest;
-	SCROLL_trackHitTest = SCROLL_NOWHERE;  /* Terminate tracking */
+        hittest = g_tracking_info.hit_test;
+        g_tracking_info.hit_test = SCROLL_NOWHERE; /* Terminate tracking */
 
         if (hittest == SCROLL_THUMB)
         {
@@ -963,7 +956,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
                           SB_ENDSCROLL, (LPARAM)hwndCtl );
 
         /* Terminate tracking */
-        SCROLL_TrackingWin = 0;
+        g_tracking_info.win = 0;
         SCROLL_MovingThumb = FALSE;
     }
 
@@ -1115,7 +1108,7 @@ static BOOL SCROLL_GetScrollInfo(HWND hwnd, INT nBar, LPSCROLLINFO info)
     if (info->fMask & SIF_PAGE) info->nPage = infoPtr->page;
     if (info->fMask & SIF_POS) info->nPos = infoPtr->curVal;
     if ((info->fMask & SIF_TRACKPOS) && (info->cbSize == sizeof(*info)))
-        info->nTrackPos = (SCROLL_TrackingWin == WIN_GetFullHandle(hwnd)) ? SCROLL_TrackingVal : infoPtr->curVal;
+        info->nTrackPos = (g_tracking_info.win == WIN_GetFullHandle(hwnd)) ? g_tracking_info.thumb_val : infoPtr->curVal;
     if (info->fMask & SIF_RANGE)
     {
         info->nMin = infoPtr->minVal;
@@ -1190,12 +1183,12 @@ static BOOL SCROLL_GetScrollBarInfo(HWND hwnd, LONG idObject, LPSCROLLBARINFO in
     }
     if (nBar == SB_CTL && !IsWindowEnabled(hwnd))
         info->rgstate[0] |= STATE_SYSTEM_UNAVAILABLE;
-    
-    pressed = ((nBar == SB_VERT) == SCROLL_trackVertical && GetCapture() == hwnd);
-    
+
+    pressed = ((nBar == SB_VERT) == g_tracking_info.vertical && GetCapture() == hwnd);
+
     /* Top/left arrow button state. MSDN says top/right, but I don't believe it */
     info->rgstate[1] = 0;
-    if (pressed && SCROLL_trackHitTest == SCROLL_TOP_ARROW)
+    if (pressed && g_tracking_info.hit_test == SCROLL_TOP_ARROW)
         info->rgstate[1] |= STATE_SYSTEM_PRESSED;
     if (infoPtr->flags & ESB_DISABLE_LTUP)
         info->rgstate[1] |= STATE_SYSTEM_UNAVAILABLE;
@@ -1204,24 +1197,24 @@ static BOOL SCROLL_GetScrollBarInfo(HWND hwnd, LONG idObject, LPSCROLLBARINFO in
     info->rgstate[2] = 0;
     if (infoPtr->curVal == infoPtr->minVal)
         info->rgstate[2] |= STATE_SYSTEM_INVISIBLE;
-    if (pressed && SCROLL_trackHitTest == SCROLL_TOP_RECT)
+    if (pressed && g_tracking_info.hit_test == SCROLL_TOP_RECT)
         info->rgstate[2] |= STATE_SYSTEM_PRESSED;
 
     /* Thumb state */
     info->rgstate[3] = 0;
-    if (pressed && SCROLL_trackHitTest == SCROLL_THUMB)
+    if (pressed && g_tracking_info.hit_test == SCROLL_THUMB)
         info->rgstate[3] |= STATE_SYSTEM_PRESSED;
 
     /* Page down/right region state. MSDN says down/left, but I don't believe it */
     info->rgstate[4] = 0;
     if (infoPtr->curVal >= infoPtr->maxVal - 1)
         info->rgstate[4] |= STATE_SYSTEM_INVISIBLE;
-    if (pressed && SCROLL_trackHitTest == SCROLL_BOTTOM_RECT)
+    if (pressed && g_tracking_info.hit_test == SCROLL_BOTTOM_RECT)
         info->rgstate[4] |= STATE_SYSTEM_PRESSED;
     
     /* Bottom/right arrow button state. MSDN says bottom/left, but I don't believe it */
     info->rgstate[5] = 0;
-    if (pressed && SCROLL_trackHitTest == SCROLL_BOTTOM_ARROW)
+    if (pressed && g_tracking_info.hit_test == SCROLL_BOTTOM_ARROW)
         info->rgstate[5] |= STATE_SYSTEM_PRESSED;
     if (infoPtr->flags & ESB_DISABLE_RTDN)
         info->rgstate[5] |= STATE_SYSTEM_UNAVAILABLE;
@@ -1418,7 +1411,7 @@ LRESULT ScrollBarWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
                 FillRect( hdc, &rc, GetSysColorBrush(COLOR_SCROLLBAR) );
             }
             else
-                SCROLL_DrawScrollBar( hwnd, hdc, SB_CTL, SCROLL_trackHitTest, TRUE, TRUE );
+                SCROLL_DrawScrollBar( hwnd, hdc, SB_CTL, g_tracking_info.hit_test, &g_tracking_info, TRUE, TRUE );
             if (!wParam) EndPaint(hwnd, &ps);
         }
         break;

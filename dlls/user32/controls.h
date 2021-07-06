@@ -191,9 +191,21 @@ enum SCROLL_HITTEST
     SCROLL_BOTTOM_ARROW  /* Bottom or right arrow */
 };
 
+/* Scroll bar tracking information */
+struct SCROLL_TRACKING_INFO
+{
+    HWND win;                       /* Tracking window */
+    INT bar;                        /* SB_HORZ / SB_VERT / SB_CTL */
+    INT thumb_pos;                  /* Thumb position */
+    INT thumb_val;                  /* Current thumb value from thumb position */
+    BOOL vertical;                  /* Is scroll bar vertical */
+    enum SCROLL_HITTEST hit_test;   /* Hit Test code of the last button-down event */
+};
+
 extern void SCROLL_DrawNCScrollBar( HWND hwnd, HDC hdc, BOOL draw_horizontal, BOOL draw_vertical ) DECLSPEC_HIDDEN;
 extern void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar, enum SCROLL_HITTEST hit_test,
-                                  BOOL arrows, BOOL interior ) DECLSPEC_HIDDEN;
+                                  const struct SCROLL_TRACKING_INFO *tracking_info, BOOL arrows,
+                                  BOOL interior ) DECLSPEC_HIDDEN;
 extern void SCROLL_TrackScrollBar( HWND hwnd, INT scrollbar, POINT pt ) DECLSPEC_HIDDEN;
 
 /* combo box */
