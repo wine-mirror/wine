@@ -296,6 +296,16 @@ static void SCROLL_GetScrollBarDrawInfo( HWND hwnd, INT bar,
 {
     INT pos, max_size;
 
+    if (bar == SB_CTL && GetWindowLongW( hwnd, GWL_STYLE ) & (SBS_SIZEGRIP | SBS_SIZEBOX))
+    {
+        GetClientRect( hwnd, rect );
+        *arrow_size = 0;
+        *thumb_pos = 0;
+        *thumb_size = 0;
+        *vertical = FALSE;
+        return;
+    }
+
     *vertical = SCROLL_GetScrollBarRect( hwnd, bar, rect, arrow_size, thumb_size, thumb_pos );
 
     if (SCROLL_MovingThumb && tracking_info->win == hwnd && tracking_info->bar == bar)
@@ -564,6 +574,28 @@ static void SCROLL_DoDrawScrollBar( HWND hwnd, HDC hdc, INT nBar, enum SCROLL_HI
 {
     SCROLLBAR_INFO *infoPtr;
 
+    if (nBar == SB_CTL)
+    {
+        DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
+
+        if (style & SBS_SIZEGRIP)
+        {
+            RECT rc = *rect;
+
+            FillRect( hdc, &rc, GetSysColorBrush( COLOR_SCROLLBAR ) );
+            rc.left = max( rc.left, rc.right - GetSystemMetrics( SM_CXVSCROLL ) - 1 );
+            rc.top = max( rc.top, rc.bottom - GetSystemMetrics( SM_CYHSCROLL ) - 1 );
+            DrawFrameControl( hdc, &rc, DFC_SCROLL, DFCS_SCROLLSIZEGRIP );
+            return;
+        }
+
+        if (style & SBS_SIZEBOX)
+        {
+            FillRect( hdc, rect, GetSysColorBrush( COLOR_SCROLLBAR ) );
+            return;
+        }
+    }
+
     if (!(infoPtr = SCROLL_GetInternalInfo( hwnd, nBar, TRUE )))
         return;
 
@@ -657,23 +689,6 @@ void SCROLL_DrawNCScrollBar( HWND hwnd, HDC hdc, BOOL draw_horizontal, BOOL draw
     if (draw_vertical)
         SCROLL_DrawScrollBar( hwnd, hdc, SB_VERT, g_tracking_info.hit_test, &g_tracking_info, TRUE, TRUE );
 }
-
-/***********************************************************************
- *           SCROLL_DrawSizeGrip
- *
- *  Draw the size grip.
- */
-static void SCROLL_DrawSizeGrip( HWND hwnd,  HDC hdc)
-{
-    RECT rc;
-
-    GetClientRect( hwnd, &rc );
-    FillRect( hdc, &rc, GetSysColorBrush(COLOR_SCROLLBAR) );
-    rc.left = max( rc.left, rc.right - GetSystemMetrics(SM_CXVSCROLL) - 1 );
-    rc.top  = max( rc.top, rc.bottom - GetSystemMetrics(SM_CYHSCROLL) - 1 );
-    DrawFrameControl( hdc, &rc, DFC_SCROLL, DFCS_SCROLLSIZEGRIP );
-}
-
 
 /***********************************************************************
  *           SCROLL_RefreshScrollBar
@@ -1413,18 +1428,7 @@ LRESULT ScrollBarWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
         {
             PAINTSTRUCT ps;
             HDC hdc = wParam ? (HDC)wParam : BeginPaint(hwnd, &ps);
-            if (GetWindowLongW( hwnd, GWL_STYLE ) & SBS_SIZEGRIP)
-            {
-                SCROLL_DrawSizeGrip( hwnd, hdc);
-            }
-            else if (GetWindowLongW( hwnd, GWL_STYLE ) & SBS_SIZEBOX)
-            {
-                RECT rc;
-                GetClientRect( hwnd, &rc );
-                FillRect( hdc, &rc, GetSysColorBrush(COLOR_SCROLLBAR) );
-            }
-            else
-                SCROLL_DrawScrollBar( hwnd, hdc, SB_CTL, g_tracking_info.hit_test, &g_tracking_info, TRUE, TRUE );
+            SCROLL_DrawScrollBar( hwnd, hdc, SB_CTL, g_tracking_info.hit_test, &g_tracking_info, TRUE, TRUE );
             if (!wParam) EndPaint(hwnd, &ps);
         }
         break;
