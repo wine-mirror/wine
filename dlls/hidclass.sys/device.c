@@ -703,6 +703,20 @@ NTSTATUS WINAPI pdo_write(DEVICE_OBJECT *device, IRP *irp)
         return STATUS_DELETE_PENDING;
     }
 
+    if (!irpsp->Parameters.Write.Length)
+    {
+        irp->IoStatus.Status = STATUS_INVALID_USER_BUFFER;
+        IoCompleteRequest( irp, IO_NO_INCREMENT );
+        return irp->IoStatus.Status;
+    }
+
+    if (irpsp->Parameters.Write.Length < data->caps.OutputReportByteLength)
+    {
+        irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
+        IoCompleteRequest( irp, IO_NO_INCREMENT );
+        return irp->IoStatus.Status;
+    }
+
     irp->IoStatus.Information = 0;
 
     TRACE_(hid_report)("Device %p Buffer length %i Buffer %p\n", device, irpsp->Parameters.Write.Length, irp->AssociatedIrp.SystemBuffer);
