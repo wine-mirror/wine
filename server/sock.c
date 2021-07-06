@@ -2734,6 +2734,29 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
     }
 }
 
+static int poll_single_socket( struct sock *sock, int mask )
+{
+    struct pollfd pollfd;
+
+    pollfd.fd = get_unix_fd( sock->fd );
+    pollfd.events = poll_flags_from_afd( sock, mask );
+    if (pollfd.events < 0 || poll( &pollfd, 1, 0 ) < 0)
+        return 0;
+
+    if ((mask & AFD_POLL_HUP) && (pollfd.revents & POLLIN) && sock->type == WS_SOCK_STREAM)
+    {
+        char dummy;
+
+        if (!recv( get_unix_fd( sock->fd ), &dummy, 1, MSG_PEEK ))
+        {
+            pollfd.revents &= ~POLLIN;
+            pollfd.revents |= POLLHUP;
+        }
+    }
+
+    return get_poll_flags( sock, pollfd.revents ) & mask;
+}
+
 static int poll_socket( struct sock *poll_sock, struct async *async, timeout_t timeout,
                         unsigned int count, const struct poll_socket_input *input )
 {
@@ -2788,26 +2811,9 @@ static int poll_socket( struct sock *poll_sock, struct async *async, timeout_t t
     for (i = 0; i < count; ++i)
     {
         struct sock *sock = req->sockets[i].sock;
-        struct pollfd pollfd;
-        int flags;
+        int mask = req->sockets[i].flags;
+        int flags = poll_single_socket( sock, mask );
 
-        pollfd.fd = get_unix_fd( sock->fd );
-        pollfd.events = poll_flags_from_afd( sock, req->sockets[i].flags );
-        if (pollfd.events < 0 || poll( &pollfd, 1, 0 ) < 0) continue;
-
-        if ((req->sockets[i].flags & AFD_POLL_HUP) && (pollfd.revents & POLLIN) &&
-            sock->type == WS_SOCK_STREAM)
-        {
-            char dummy;
-
-            if (!recv( get_unix_fd( sock->fd ), &dummy, 1, MSG_PEEK ))
-            {
-                pollfd.revents &= ~POLLIN;
-                pollfd.revents |= POLLHUP;
-            }
-        }
-
-        flags = get_poll_flags( sock, pollfd.revents ) & req->sockets[i].flags;
         if (flags)
         {
             req->iosb->status = STATUS_SUCCESS;
