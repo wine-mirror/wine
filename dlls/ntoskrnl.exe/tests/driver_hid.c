@@ -41,6 +41,7 @@ static UNICODE_STRING control_symlink;
 
 static unsigned int got_start_device;
 static DWORD report_id;
+static DWORD polled;
 
 struct irp_queue
 {
@@ -485,9 +486,19 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
             }
             if (out_size != expected_size) test_failed = TRUE;
 
-            IoMarkIrpPending(irp);
-            irp_queue_push(&impl->irp_queue, irp);
-            ret = STATUS_PENDING;
+            if (polled)
+            {
+                memset(irp->UserBuffer, 0xa5, expected_size);
+                if (report_id) ((char *)irp->UserBuffer)[0] = report_id;
+                irp->IoStatus.Information = 3;
+                ret = STATUS_SUCCESS;
+            }
+            else
+            {
+                IoMarkIrpPending(irp);
+                irp_queue_push(&impl->irp_queue, irp);
+                ret = STATUS_PENDING;
+            }
             break;
         }
 
@@ -498,8 +509,9 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device, IRP *irp)
             ok(!in_size, "got input size %u\n", in_size);
             ok(out_size == sizeof(*packet), "got output size %u\n", out_size);
 
-            todo_wine_if(packet->reportId == 0x5a)
-            ok(packet->reportId == report_id, "got packet report id %u\n", packet->reportId);
+            todo_wine_if(packet->reportId == 0x5a || (polled && report_id && packet->reportId == 0))
+            ok(packet->reportId == report_id, "report %d, polled %d got packet report id %u\n",
+               report_id, polled, packet->reportId);
             todo_wine_if(packet->reportBufferLen == 21 || packet->reportBufferLen == 22)
             ok(packet->reportBufferLen >= expected_size, "got packet buffer len %u, expected %d or more\n",
                packet->reportBufferLen, expected_size);
@@ -668,6 +680,13 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *registry)
     ret = ZwQueryValueKey(hkey, &name_str, KeyValuePartialInformation, buffer, size, &size);
     ok(!ret, "ZwQueryValueKey returned %#x\n", ret);
     memcpy(&report_id, buffer + info_size, size - info_size);
+
+    RtlInitUnicodeString(&name_str, L"PolledMode");
+    size = info_size + sizeof(polled);
+    ret = ZwQueryValueKey(hkey, &name_str, KeyValuePartialInformation, buffer, size, &size);
+    ok(!ret, "ZwQueryValueKey returned %#x\n", ret);
+    memcpy(&polled, buffer + info_size, size - info_size);
+    params.DevicesArePolled = polled;
 
     driver->DriverExtension->AddDevice = driver_add_device;
     driver->DriverUnload = driver_unload;

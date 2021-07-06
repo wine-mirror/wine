@@ -2637,7 +2637,7 @@ static void test_hidp(HANDLE file, int report_id)
     CloseHandle(file);
 }
 
-static void test_hid_device(DWORD report_id)
+static void test_hid_device(DWORD report_id, DWORD polled)
 {
     char buffer[200];
     SP_DEVICE_INTERFACE_DETAIL_DATA_A *iface_detail = (void *)buffer;
@@ -2652,7 +2652,7 @@ static void test_hid_device(DWORD report_id)
     HDEVINFO set;
     HANDLE file;
 
-    winetest_push_context("report %d", report_id);
+    winetest_push_context("report %d, polled %d", report_id, polled);
 
     set = SetupDiGetClassDevsA(&GUID_DEVINTERFACE_HID, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
     ok(set != INVALID_HANDLE_VALUE, "failed to get device list, error %#x\n", GetLastError());
@@ -2696,7 +2696,7 @@ static void test_hid_device(DWORD report_id)
     winetest_pop_context();
 }
 
-static void test_hid_driver(struct testsign_context *ctx, DWORD report_id)
+static void test_hid_driver(struct testsign_context *ctx, DWORD report_id, DWORD polled)
 {
     static const char hardware_id[] = "test_hardware_id\0";
     char path[MAX_PATH], dest[MAX_PATH], *filepart;
@@ -2719,6 +2719,9 @@ static void test_hid_driver(struct testsign_context *ctx, DWORD report_id)
     ok(!status, "RegCreateKeyExW returned %#x\n", status);
 
     status = RegSetValueExW(hkey, L"ReportID", 0, REG_DWORD, (void *)&report_id, sizeof(report_id));
+    ok(!status, "RegSetValueExW returned %#x\n", status);
+
+    status = RegSetValueExW(hkey, L"PolledMode", 0, REG_DWORD, (void *)&polled, sizeof(polled));
     ok(!status, "RegSetValueExW returned %#x\n", status);
 
     load_resource(L"driver_hid.dll", driver_filename);
@@ -2768,7 +2771,7 @@ static void test_hid_driver(struct testsign_context *ctx, DWORD report_id)
 
     /* Tests. */
 
-    test_hid_device(report_id);
+    test_hid_device(report_id, polled);
 
     /* Clean up. */
 
@@ -2899,8 +2902,10 @@ START_TEST(ntoskrnl)
     test_pnp_driver(&ctx);
 
     subtest("driver_hid");
-    test_hid_driver(&ctx, 0);
-    test_hid_driver(&ctx, 1);
+    test_hid_driver(&ctx, 0, FALSE);
+    test_hid_driver(&ctx, 1, FALSE);
+    test_hid_driver(&ctx, 0, TRUE);
+    test_hid_driver(&ctx, 1, TRUE);
 
 out:
     testsign_cleanup(&ctx);
