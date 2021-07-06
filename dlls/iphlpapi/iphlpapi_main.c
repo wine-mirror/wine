@@ -3164,20 +3164,31 @@ ULONG WINAPI GetTcp6Table2(PMIB_TCP6TABLE2 table, PULONG size, BOOL order)
  */
 DWORD WINAPI ConvertInterfaceGuidToLuid(const GUID *guid, NET_LUID *luid)
 {
-    DWORD ret;
-    MIB_IFROW row;
+    struct nsi_ndis_ifinfo_static *data;
+    DWORD err, count, i;
+    NET_LUID *keys;
 
-    TRACE("(%s %p)\n", debugstr_guid(guid), luid);
+    TRACE( "(%s %p)\n", debugstr_guid(guid), luid );
 
     if (!guid || !luid) return ERROR_INVALID_PARAMETER;
+    luid->Value = 0;
 
-    row.dwIndex = guid->Data1;
-    if ((ret = GetIfEntry( &row ))) return ret;
+    err = NsiAllocateAndGetTable( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, (void **)&keys, sizeof(*keys),
+                                  NULL, 0, NULL, 0, (void **)&data, sizeof(*data), &count, 0 );
+    if (err) return err;
 
-    luid->Info.Reserved     = 0;
-    luid->Info.NetLuidIndex = guid->Data1;
-    luid->Info.IfType       = row.dwType;
-    return NO_ERROR;
+    err = ERROR_INVALID_PARAMETER;
+    for (i = 0; i < count; i++)
+    {
+        if (IsEqualGUID( &data[i].if_guid, guid ))
+        {
+            luid->Value = keys[i].Value;
+            err = ERROR_SUCCESS;
+            break;
+        }
+    }
+    NsiFreeTable( keys, NULL, NULL, data );
+    return err;
 }
 
 /******************************************************************
