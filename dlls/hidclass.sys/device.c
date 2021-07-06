@@ -597,6 +597,7 @@ NTSTATUS WINAPI pdo_read(DEVICE_OBJECT *device, IRP *irp)
 {
     HID_XFER_PACKET *packet;
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    const WINE_HIDP_PREPARSED_DATA *data = ext->u.pdo.preparsed_data;
     UINT buffer_size = RingBuffer_GetBufferSize(ext->u.pdo.ring_buffer);
     NTSTATUS rc = STATUS_SUCCESS;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
@@ -613,6 +614,13 @@ NTSTATUS WINAPI pdo_read(DEVICE_OBJECT *device, IRP *irp)
         irp->IoStatus.Status = STATUS_DELETE_PENDING;
         IoCompleteRequest(irp, IO_NO_INCREMENT);
         return STATUS_DELETE_PENDING;
+    }
+
+    if (irpsp->Parameters.Read.Length < data->caps.InputReportByteLength)
+    {
+        irp->IoStatus.Status = STATUS_INVALID_BUFFER_SIZE;
+        IoCompleteRequest( irp, IO_NO_INCREMENT );
+        return STATUS_INVALID_BUFFER_SIZE;
     }
 
     packet = malloc(buffer_size);
