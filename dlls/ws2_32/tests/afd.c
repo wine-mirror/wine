@@ -460,6 +460,71 @@ static void test_poll(void)
         ok(out_params->sockets[0].flags == AFD_POLL_CONNECT_ERR, "got flags %#x\n", out_params->sockets[0].flags);
         ok(out_params->sockets[0].status == STATUS_CONNECTION_REFUSED, "got status %#x\n", out_params->sockets[0].status);
 
+        in_params->timeout = now.QuadPart;
+        memset(out_params, 0xcc, sizeof(out_buffer));
+        ret = NtDeviceIoControlFile((HANDLE)client, event, NULL, NULL, &io,
+                IOCTL_AFD_POLL, in_params, params_size, out_params, params_size);
+        todo_wine
+        {
+            ok(!ret, "got %#x\n", ret);
+            ok(!io.Status, "got %#x\n", io.Status);
+            ok(io.Information == offsetof(struct afd_poll_params, sockets[1]), "got %#Ix\n", io.Information);
+            ok(out_params->count == 1, "got count %u\n", out_params->count);
+            ok(out_params->sockets[0].socket == client, "got socket %#Ix\n", out_params->sockets[0].socket);
+            ok(out_params->sockets[0].flags == AFD_POLL_CONNECT_ERR, "got flags %#x\n", out_params->sockets[0].flags);
+            ok(out_params->sockets[0].status == STATUS_CONNECTION_REFUSED, "got status %#x\n", out_params->sockets[0].status);
+        }
+
+        memset(out_params, 0xcc, sizeof(out_buffer));
+        ret = NtDeviceIoControlFile((HANDLE)client, event, NULL, NULL, &io,
+                IOCTL_AFD_POLL, in_params, params_size, out_params, params_size);
+        todo_wine
+        {
+            ok(!ret, "got %#x\n", ret);
+            ok(!io.Status, "got %#x\n", io.Status);
+            ok(io.Information == offsetof(struct afd_poll_params, sockets[1]), "got %#Ix\n", io.Information);
+            ok(out_params->count == 1, "got count %u\n", out_params->count);
+            ok(out_params->sockets[0].socket == client, "got socket %#Ix\n", out_params->sockets[0].socket);
+            ok(out_params->sockets[0].flags == AFD_POLL_CONNECT_ERR, "got flags %#x\n", out_params->sockets[0].flags);
+            ok(out_params->sockets[0].status == STATUS_CONNECTION_REFUSED, "got status %#x\n", out_params->sockets[0].status);
+        }
+
+        ret = connect(client, (struct sockaddr *)&addr, sizeof(addr));
+        ok(ret == -1, "got %d\n", ret);
+        todo_wine ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
+        if (WSAGetLastError() == WSAECONNABORTED)
+        {
+            ret = connect(client, (struct sockaddr *)&addr, sizeof(addr));
+            ok(ret == -1, "got %d\n", ret);
+            ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
+        }
+
+        /* A subsequent poll call returns no events, or times out. However, this
+         * can't be reliably tested, as e.g. Linux will fail the connection
+         * immediately. */
+
+        closesocket(client);
+
+        client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+        ret = connect(client, (struct sockaddr *)&addr, sizeof(addr));
+        ok(ret == -1, "expected failure\n");
+        ok(WSAGetLastError() == WSAECONNREFUSED, "got error %u\n", WSAGetLastError());
+
+        memset(out_params, 0xcc, sizeof(out_buffer));
+        ret = NtDeviceIoControlFile((HANDLE)client, event, NULL, NULL, &io,
+                IOCTL_AFD_POLL, in_params, params_size, out_params, params_size);
+        todo_wine
+        {
+            ok(!ret, "got %#x\n", ret);
+            ok(!io.Status, "got %#x\n", io.Status);
+            ok(io.Information == offsetof(struct afd_poll_params, sockets[1]), "got %#Ix\n", io.Information);
+            ok(out_params->count == 1, "got count %u\n", out_params->count);
+            ok(out_params->sockets[0].socket == client, "got socket %#Ix\n", out_params->sockets[0].socket);
+            ok(out_params->sockets[0].flags == AFD_POLL_CONNECT_ERR, "got flags %#x\n", out_params->sockets[0].flags);
+            ok(out_params->sockets[0].status == STATUS_CONNECTION_REFUSED, "got status %#x\n", out_params->sockets[0].status);
+        }
+
         closesocket(client);
     }
 
@@ -1321,6 +1386,27 @@ static void test_get_events(void)
                 IOCTL_AFD_GET_EVENTS, NULL, 0, &params, sizeof(params));
         ok(!ret, "got %#x\n", ret);
         ok(params.flags == AFD_POLL_CONNECT_ERR, "got flags %#x\n", params.flags);
+        for (i = 0; i < ARRAY_SIZE(params.status); ++i)
+        {
+            if (i == AFD_POLL_BIT_CONNECT_ERR)
+                ok(params.status[i] == STATUS_CONNECTION_REFUSED, "got status[%u] %#x\n", i, params.status[i]);
+            else
+                ok(!params.status[i], "got status[%u] %#x\n", i, params.status[i]);
+        }
+
+        ResetEvent(event);
+        ret = WSAEventSelect(client, event, FD_CONNECT);
+        ok(!ret, "got error %u\n", GetLastError());
+
+        ret = WaitForSingleObject(event, 0);
+        ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+
+        memset(&params, 0xcc, sizeof(params));
+        memset(&io, 0xcc, sizeof(io));
+        ret = NtDeviceIoControlFile((HANDLE)client, NULL, NULL, NULL, &io,
+                IOCTL_AFD_GET_EVENTS, NULL, 0, &params, sizeof(params));
+        ok(!ret, "got %#x\n", ret);
+        ok(!params.flags, "got flags %#x\n", params.flags);
         for (i = 0; i < ARRAY_SIZE(params.status); ++i)
         {
             if (i == AFD_POLL_BIT_CONNECT_ERR)
