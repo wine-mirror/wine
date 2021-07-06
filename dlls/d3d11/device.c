@@ -560,20 +560,29 @@ static void d3d11_device_context_get_constant_buffers(ID3D11DeviceContext1 *ifac
     wined3d_mutex_unlock();
 }
 
-static void d3d11_device_context_set_constant_buffers(ID3D11DeviceContext1 *iface,
-        enum wined3d_shader_type type, UINT start_slot, UINT buffer_count, ID3D11Buffer *const *buffers)
+static void d3d11_device_context_set_constant_buffers(ID3D11DeviceContext1 *iface, enum wined3d_shader_type type,
+        unsigned int start_slot, unsigned int buffer_count, ID3D11Buffer *const *buffers)
 {
+    struct wined3d_buffer *wined3d_buffers[D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT];
     struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
     unsigned int i;
 
-    wined3d_mutex_lock();
+    if (buffer_count > ARRAY_SIZE(wined3d_buffers))
+    {
+        WARN("Buffer count %u exceeds limit; ignoring call.\n", buffer_count);
+        return;
+    }
+
     for (i = 0; i < buffer_count; ++i)
     {
         struct d3d_buffer *buffer = unsafe_impl_from_ID3D11Buffer(buffers[i]);
 
-        wined3d_device_context_set_constant_buffer(context->wined3d_context, type, start_slot + i,
-                buffer ? buffer->wined3d_buffer : NULL);
+        wined3d_buffers[i] = buffer ? buffer->wined3d_buffer : NULL;
     }
+
+    wined3d_mutex_lock();
+    wined3d_device_context_set_constant_buffers(context->wined3d_context,
+            type, start_slot, buffer_count, wined3d_buffers);
     wined3d_mutex_unlock();
 }
 
@@ -4571,20 +4580,29 @@ static void d3d10_device_get_constant_buffers(ID3D10Device1 *iface,
     wined3d_mutex_unlock();
 }
 
-static void d3d10_device_set_constant_buffers(ID3D10Device1 *iface,
-        enum wined3d_shader_type type, UINT start_slot, UINT buffer_count, ID3D10Buffer *const *buffers)
+static void d3d10_device_set_constant_buffers(ID3D10Device1 *iface, enum wined3d_shader_type type,
+        unsigned int start_slot, unsigned int buffer_count, ID3D10Buffer *const *buffers)
 {
+    struct wined3d_buffer *wined3d_buffers[D3D10_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT];
     struct d3d_device *device = impl_from_ID3D10Device(iface);
     unsigned int i;
 
-    wined3d_mutex_lock();
+    if (buffer_count > ARRAY_SIZE(wined3d_buffers))
+    {
+        WARN("Buffer count %u exceeds limit; ignoring call.\n", buffer_count);
+        return;
+    }
+
     for (i = 0; i < buffer_count; ++i)
     {
         struct d3d_buffer *buffer = unsafe_impl_from_ID3D10Buffer(buffers[i]);
 
-        wined3d_device_context_set_constant_buffer(device->immediate_context.wined3d_context, type, start_slot + i,
-                buffer ? buffer->wined3d_buffer : NULL);
+        wined3d_buffers[i] = buffer ? buffer->wined3d_buffer : NULL;
     }
+
+    wined3d_mutex_lock();
+    wined3d_device_context_set_constant_buffers(device->immediate_context.wined3d_context,
+            type, start_slot, buffer_count, wined3d_buffers);
     wined3d_mutex_unlock();
 }
 

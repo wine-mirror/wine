@@ -1696,8 +1696,7 @@ void CDECL wined3d_device_context_set_state(struct wined3d_device_context *conte
     for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
     {
         wined3d_device_context_emit_set_shader(context, i, state->shader[i]);
-        for (j = 0; j < MAX_CONSTANT_BUFFERS; ++j)
-            wined3d_device_context_emit_set_constant_buffer(context, i, j, state->cb[i][j]);
+        wined3d_device_context_emit_set_constant_buffers(context, i, 0, MAX_CONSTANT_BUFFERS, state->cb[i]);
         for (j = 0; j < MAX_SAMPLER_OBJECTS; ++j)
         {
             wined3d_device_context_emit_set_sampler(context, i, j, state->sampler[i][j]);
@@ -1834,30 +1833,36 @@ struct wined3d_shader * CDECL wined3d_device_context_get_shader(const struct win
     return context->state->shader[type];
 }
 
-void CDECL wined3d_device_context_set_constant_buffer(struct wined3d_device_context *context,
-        enum wined3d_shader_type type, unsigned int idx, struct wined3d_buffer *buffer)
+void CDECL wined3d_device_context_set_constant_buffers(struct wined3d_device_context *context,
+        enum wined3d_shader_type type, unsigned int start_idx, unsigned int count,
+        struct wined3d_buffer *const *buffers)
 {
     struct wined3d_state *state = context->state;
-    struct wined3d_buffer *prev;
+    unsigned int i;
 
-    TRACE("context %p, type %#x, idx %u, buffer %p.\n", context, type, idx, buffer);
+    TRACE("context %p, type %#x, start_idx %u, count %u, buffers %p.\n", context, type, start_idx, count, buffers);
 
-    if (idx >= MAX_CONSTANT_BUFFERS)
+    if (start_idx >= MAX_CONSTANT_BUFFERS || count > MAX_CONSTANT_BUFFERS - start_idx)
     {
-        WARN("Invalid constant buffer index %u.\n", idx);
+        WARN("Invalid constant buffer index %u, count %u.\n", start_idx, count);
         return;
     }
 
-    prev = state->cb[type][idx];
-    if (buffer == prev)
+    if (!memcmp(buffers, &state->cb[type][start_idx], count * sizeof(*buffers)))
         return;
 
-    if (buffer)
-        wined3d_buffer_incref(buffer);
-    state->cb[type][idx] = buffer;
-    wined3d_device_context_emit_set_constant_buffer(context, type, idx, buffer);
-    if (prev)
-        wined3d_buffer_decref(prev);
+    wined3d_device_context_emit_set_constant_buffers(context, type, start_idx, count, buffers);
+    for (i = 0; i < count; ++i)
+    {
+        struct wined3d_buffer *prev = state->cb[type][start_idx + i];
+        struct wined3d_buffer *buffer = buffers[i];
+
+        if (buffer)
+            wined3d_buffer_incref(buffer);
+        state->cb[type][start_idx + i] = buffer;
+        if (prev)
+            wined3d_buffer_decref(prev);
+    }
 }
 
 void CDECL wined3d_device_context_set_blend_state(struct wined3d_device_context *context,

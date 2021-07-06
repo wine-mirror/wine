@@ -2496,8 +2496,9 @@ void __cdecl wined3d_device_context_resolve_sub_resource(struct wined3d_device_c
         struct wined3d_resource *src_resource, unsigned int src_sub_resource_idx, enum wined3d_format_id format_id);
 void __cdecl wined3d_device_context_set_blend_state(struct wined3d_device_context *context,
         struct wined3d_blend_state *state, const struct wined3d_color *blend_factor, unsigned int sample_mask);
-void __cdecl wined3d_device_context_set_constant_buffer(struct wined3d_device_context *context,
-        enum wined3d_shader_type type, unsigned int idx, struct wined3d_buffer *buffer);
+void __cdecl wined3d_device_context_set_constant_buffers(struct wined3d_device_context *context,
+        enum wined3d_shader_type type, unsigned int start_idx, unsigned int count,
+        struct wined3d_buffer *const *buffers);
 void __cdecl wined3d_device_context_set_depth_stencil_state(struct wined3d_device_context *context,
         struct wined3d_depth_stencil_state *depth_stencil_state, unsigned int stencil_ref);
 HRESULT __cdecl wined3d_device_context_set_depth_stencil_view(struct wined3d_device_context *context,
