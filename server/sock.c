@@ -2820,6 +2820,14 @@ static int poll_socket( struct sock *poll_sock, struct async *async, timeout_t t
             output[i].flags = flags;
             output[i].status = sock_get_ntstatus( sock_error( sock->fd ) );
         }
+
+        /* FIXME: do other error conditions deserve a similar treatment? */
+        if (sock->state != SOCK_CONNECTING && sock->errors[AFD_POLL_BIT_CONNECT_ERR] && (mask & AFD_POLL_CONNECT_ERR))
+        {
+            req->iosb->status = STATUS_SUCCESS;
+            output[i].flags |= AFD_POLL_CONNECT_ERR;
+            output[i].status = sock_get_ntstatus( sock->errors[AFD_POLL_BIT_CONNECT_ERR] );
+        }
     }
 
     if (req->iosb->status != STATUS_PENDING)

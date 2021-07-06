@@ -464,30 +464,24 @@ static void test_poll(void)
         memset(out_params, 0xcc, sizeof(out_buffer));
         ret = NtDeviceIoControlFile((HANDLE)client, event, NULL, NULL, &io,
                 IOCTL_AFD_POLL, in_params, params_size, out_params, params_size);
-        todo_wine
-        {
-            ok(!ret, "got %#x\n", ret);
-            ok(!io.Status, "got %#x\n", io.Status);
-            ok(io.Information == offsetof(struct afd_poll_params, sockets[1]), "got %#Ix\n", io.Information);
-            ok(out_params->count == 1, "got count %u\n", out_params->count);
-            ok(out_params->sockets[0].socket == client, "got socket %#Ix\n", out_params->sockets[0].socket);
-            ok(out_params->sockets[0].flags == AFD_POLL_CONNECT_ERR, "got flags %#x\n", out_params->sockets[0].flags);
-            ok(out_params->sockets[0].status == STATUS_CONNECTION_REFUSED, "got status %#x\n", out_params->sockets[0].status);
-        }
+        ok(!ret, "got %#x\n", ret);
+        ok(!io.Status, "got %#x\n", io.Status);
+        ok(io.Information == offsetof(struct afd_poll_params, sockets[1]), "got %#Ix\n", io.Information);
+        ok(out_params->count == 1, "got count %u\n", out_params->count);
+        ok(out_params->sockets[0].socket == client, "got socket %#Ix\n", out_params->sockets[0].socket);
+        ok(out_params->sockets[0].flags == AFD_POLL_CONNECT_ERR, "got flags %#x\n", out_params->sockets[0].flags);
+        ok(out_params->sockets[0].status == STATUS_CONNECTION_REFUSED, "got status %#x\n", out_params->sockets[0].status);
 
         memset(out_params, 0xcc, sizeof(out_buffer));
         ret = NtDeviceIoControlFile((HANDLE)client, event, NULL, NULL, &io,
                 IOCTL_AFD_POLL, in_params, params_size, out_params, params_size);
-        todo_wine
-        {
-            ok(!ret, "got %#x\n", ret);
-            ok(!io.Status, "got %#x\n", io.Status);
-            ok(io.Information == offsetof(struct afd_poll_params, sockets[1]), "got %#Ix\n", io.Information);
-            ok(out_params->count == 1, "got count %u\n", out_params->count);
-            ok(out_params->sockets[0].socket == client, "got socket %#Ix\n", out_params->sockets[0].socket);
-            ok(out_params->sockets[0].flags == AFD_POLL_CONNECT_ERR, "got flags %#x\n", out_params->sockets[0].flags);
-            ok(out_params->sockets[0].status == STATUS_CONNECTION_REFUSED, "got status %#x\n", out_params->sockets[0].status);
-        }
+        ok(!ret, "got %#x\n", ret);
+        ok(!io.Status, "got %#x\n", io.Status);
+        ok(io.Information == offsetof(struct afd_poll_params, sockets[1]), "got %#Ix\n", io.Information);
+        ok(out_params->count == 1, "got count %u\n", out_params->count);
+        ok(out_params->sockets[0].socket == client, "got socket %#Ix\n", out_params->sockets[0].socket);
+        ok(out_params->sockets[0].flags == AFD_POLL_CONNECT_ERR, "got flags %#x\n", out_params->sockets[0].flags);
+        ok(out_params->sockets[0].status == STATUS_CONNECTION_REFUSED, "got status %#x\n", out_params->sockets[0].status);
 
         ret = connect(client, (struct sockaddr *)&addr, sizeof(addr));
         ok(ret == -1, "got %d\n", ret);
@@ -514,16 +508,13 @@ static void test_poll(void)
         memset(out_params, 0xcc, sizeof(out_buffer));
         ret = NtDeviceIoControlFile((HANDLE)client, event, NULL, NULL, &io,
                 IOCTL_AFD_POLL, in_params, params_size, out_params, params_size);
-        todo_wine
-        {
-            ok(!ret, "got %#x\n", ret);
-            ok(!io.Status, "got %#x\n", io.Status);
-            ok(io.Information == offsetof(struct afd_poll_params, sockets[1]), "got %#Ix\n", io.Information);
-            ok(out_params->count == 1, "got count %u\n", out_params->count);
-            ok(out_params->sockets[0].socket == client, "got socket %#Ix\n", out_params->sockets[0].socket);
-            ok(out_params->sockets[0].flags == AFD_POLL_CONNECT_ERR, "got flags %#x\n", out_params->sockets[0].flags);
-            ok(out_params->sockets[0].status == STATUS_CONNECTION_REFUSED, "got status %#x\n", out_params->sockets[0].status);
-        }
+        ok(!ret, "got %#x\n", ret);
+        ok(!io.Status, "got %#x\n", io.Status);
+        ok(io.Information == offsetof(struct afd_poll_params, sockets[1]), "got %#Ix\n", io.Information);
+        ok(out_params->count == 1, "got count %u\n", out_params->count);
+        ok(out_params->sockets[0].socket == client, "got socket %#Ix\n", out_params->sockets[0].socket);
+        ok(out_params->sockets[0].flags == AFD_POLL_CONNECT_ERR, "got flags %#x\n", out_params->sockets[0].flags);
+        ok(out_params->sockets[0].status == STATUS_CONNECTION_REFUSED, "got status %#x\n", out_params->sockets[0].status);
 
         closesocket(client);
     }
