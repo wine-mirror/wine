@@ -863,8 +863,8 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
                                                         SCROLL_TrackingPos );
 	    if (!SCROLL_MovingThumb)
             {
-		SCROLL_DrawMovingThumb(hdc, &rect, vertical, arrowSize, thumbSize);
                 SCROLL_MovingThumb = TRUE;
+                SCROLL_DrawScrollBar( hwnd, hdc, nBar, hittest, FALSE, TRUE );
             }
         }
         else if (msg == WM_LBUTTONUP)
@@ -893,8 +893,8 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
                 SendMessageW( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                                 MAKEWPARAM( SB_THUMBTRACK, SCROLL_TrackingVal),
                                 (LPARAM)hwndCtl );
-                SCROLL_DrawMovingThumb( hdc, &rect, vertical, arrowSize, thumbSize );
                 SCROLL_MovingThumb = TRUE;
+                SCROLL_DrawScrollBar( hwnd, hdc, nBar, hittest, FALSE, TRUE );
             }
         }
         break;
