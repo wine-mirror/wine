@@ -1099,14 +1099,12 @@ BOOL WINAPI InternetGetLastResponseInfoA(LPDWORD lpdwError,
             return FALSE;
         }
         *lpdwError = lpwite->dwError;
-        if (lpwite->dwError && *lpdwBufferLength)
+        if (*lpdwBufferLength)
         {
             memcpy(lpszBuffer, lpwite->response, *lpdwBufferLength);
             lpszBuffer[*lpdwBufferLength - 1] = 0;
             *lpdwBufferLength = strlen(lpszBuffer);
         }
-        else
-            *lpdwBufferLength = 0;
     }
     else
     {
@@ -1149,10 +1147,8 @@ BOOL WINAPI InternetGetLastResponseInfoW(LPDWORD lpdwError,
             return FALSE;
         }
         *lpdwError = lpwite->dwError;
-        if (lpwite->dwError && *lpdwBufferLength)
+        if (*lpdwBufferLength)
             *lpdwBufferLength = MultiByteToWideChar(CP_ACP, 0, lpwite->response, -1, lpszBuffer, *lpdwBufferLength);
-        else
-            *lpdwBufferLength = 0;
     }
     else
     {

@@ -706,6 +706,8 @@ static void test_command(HINTERNET hFtp)
     BOOL ret;
     DWORD error;
     unsigned int i;
+    BOOL had_error_zero = FALSE;
+    BOOL had_error_zero_size_positive = FALSE;
     static const struct
     {
         BOOL  ret;
@@ -776,8 +778,12 @@ static void test_command(HINTERNET hFtp)
         ret = InternetGetLastResponseInfoA(&error, buffer, &size);
         ok(ret, "%d: got ret %d\n", i, ret);
         ok(size == 0 || strlen(buffer) == size, "%d: size %d, buffer size %d\n", i, size, size ? strlen(buffer) : 0);
+        had_error_zero |= (error == 0);
+        had_error_zero_size_positive |= (error == 0 && size > 0);
         HeapFree(GetProcessHeap(), 0, buffer);
     }
+
+    ok(!had_error_zero || had_error_zero_size_positive, "never observed error 0 with positive size\n");
 }
 
 static void test_find_first_file(HINTERNET hFtp, HINTERNET hConnect)
