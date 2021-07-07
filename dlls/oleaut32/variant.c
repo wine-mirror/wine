@@ -1554,8 +1554,8 @@ static void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS *lpChars, LCID 
             break;
     default: WARN("buffer too small for LOCALE_SCURRENCY\n");
   }
-  TRACE("lcid 0x%x, cCurrencyLocal =%d,%d '%c','%c'\n", lcid, lpChars->cCurrencyLocal,
-        lpChars->cCurrencyLocal2, lpChars->cCurrencyLocal, lpChars->cCurrencyLocal2);
+  TRACE("lcid 0x%x, cCurrencyLocal=%d,%d %s\n", lcid, lpChars->cCurrencyLocal,
+        lpChars->cCurrencyLocal2, wine_dbgstr_w(buff));
 
   memcpy(&lastChars, lpChars, sizeof(defaultChars));
   lastLcid = lcid;
