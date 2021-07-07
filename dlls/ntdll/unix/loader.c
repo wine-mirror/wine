@@ -1759,6 +1759,39 @@ static void load_ntdll(void)
 
 
 /***********************************************************************
+ *           load_wow64_ntdll
+ */
+static void load_wow64_ntdll( USHORT machine )
+{
+    static const WCHAR ntdllW[] = {'n','t','d','l','l','.','d','l','l',0};
+    SECTION_IMAGE_INFORMATION info;
+    UNICODE_STRING nt_name;
+    void *module;
+    NTSTATUS status;
+    SIZE_T size;
+    WCHAR *path = malloc( sizeof("\\??\\C:\\windows\\system32\\ntdll.dll") * sizeof(WCHAR) );
+
+    wcscpy( path, get_machine_wow64_dir( machine ));
+    wcscat( path, ntdllW );
+    init_unicode_string( &nt_name, path );
+    status = find_builtin_dll( &nt_name, &module, &size, &info, machine, FALSE );
+    switch (status)
+    {
+    case STATUS_IMAGE_NOT_AT_BASE:
+        relocate_ntdll( module );
+        /* fall through */
+    case STATUS_SUCCESS:
+        TRACE("loaded %s at %p\n", debugstr_w(path), module );
+        break;
+    default:
+        ERR( "failed to load %s error %x\n", debugstr_w(path), status );
+        break;
+    }
+    free( path );
+}
+
+
+/***********************************************************************
  *           get_image_address
  */
 static ULONG_PTR get_image_address(void)
@@ -1868,6 +1901,7 @@ static void start_main_thread(void)
     init_thread_stack( teb, is_win64 ? 0x7fffffff : 0, 0, 0 );
     NtCreateKeyedEvent( &keyed_event, GENERIC_READ | GENERIC_WRITE, NULL, 0 );
     load_ntdll();
+    if (main_image_info.Machine != current_machine) load_wow64_ntdll( main_image_info.Machine );
     status = p__wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );
     if (status == STATUS_REVISION_MISMATCH)
     {
