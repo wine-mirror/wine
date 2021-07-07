@@ -12,7 +12,7 @@
 @ stdcall CancelMibChangeNotify2( ptr )
 #@ stub ConvertGuidToStringA
 #@ stub ConvertGuidToStringW
-#@ stub ConvertInterfaceAliasToLuid
+@ stdcall ConvertInterfaceAliasToLuid( ptr ptr )
 @ stdcall ConvertInterfaceGuidToLuid( ptr ptr )
 @ stdcall ConvertInterfaceIndexToLuid( long ptr )
 #@ stub ConvertInterfaceLuidToAlias

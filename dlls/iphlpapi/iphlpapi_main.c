@@ -3160,6 +3160,39 @@ ULONG WINAPI GetTcp6Table2(PMIB_TCP6TABLE2 table, PULONG size, BOOL order)
 }
 
 /******************************************************************
+ *    ConvertInterfaceAliasToLuid (IPHLPAPI.@)
+ */
+DWORD WINAPI ConvertInterfaceAliasToLuid( const WCHAR *alias, NET_LUID *luid )
+{
+    struct nsi_ndis_ifinfo_rw *data;
+    DWORD err, count, i, len;
+    NET_LUID *keys;
+
+    TRACE( "(%s %p)\n", debugstr_w(alias), luid );
+
+    if (!alias || !*alias || !luid) return ERROR_INVALID_PARAMETER;
+    luid->Value = 0;
+    len = strlenW( alias );
+
+    err = NsiAllocateAndGetTable( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, (void **)&keys, sizeof(*keys),
+                                  (void **)&data, sizeof(*data), NULL, 0, NULL, 0, &count, 0 );
+    if (err) return err;
+
+    err = ERROR_INVALID_PARAMETER;
+    for (i = 0; i < count; i++)
+    {
+        if (data[i].alias.Length == len * 2 && !memcmp( data[i].alias.String, alias, len * 2 ))
+        {
+            luid->Value = keys[i].Value;
+            err = ERROR_SUCCESS;
+            break;
+        }
+    }
+    NsiFreeTable( keys, data, NULL, NULL );
+    return err;
+}
+
+/******************************************************************
  *    ConvertInterfaceGuidToLuid (IPHLPAPI.@)
  */
 DWORD WINAPI ConvertInterfaceGuidToLuid(const GUID *guid, NET_LUID *luid)
