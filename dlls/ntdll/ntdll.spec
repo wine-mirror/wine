@@ -109,6 +109,7 @@
 @ stub LdrSetDllManifestProber
 @ stdcall LdrShutdownProcess()
 @ stdcall LdrShutdownThread()
+@ extern LdrSystemDllInitBlock
 @ stub LdrUnloadAlternateResourceModule
 @ stdcall LdrUnloadDll(ptr)
 @ stdcall LdrUnlockLoaderLock(long long)

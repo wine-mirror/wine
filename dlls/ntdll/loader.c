@@ -74,6 +74,8 @@ void (FASTCALL *pBaseThreadInitThunk)(DWORD,LPTHREAD_START_ROUTINE,void *) = NUL
 
 static DWORD (WINAPI *pCtrlRoutine)(void *);
 
+SYSTEM_DLL_INIT_BLOCK LdrSystemDllInitBlock = { 0xf0 };
+
 const struct unix_funcs *unix_funcs = NULL;
 
 /* windows directory */
@@ -3721,6 +3723,18 @@ static void init_wow64(void)
     peb64->OSMinorVersion   = peb->OSMinorVersion;
     peb64->OSBuildNumber    = peb->OSBuildNumber;
     peb64->OSPlatformId     = peb->OSPlatformId;
+
+#define SET_INIT_BLOCK(func) LdrSystemDllInitBlock.p ## func = PtrToUlong( &func )
+    SET_INIT_BLOCK( KiUserApcDispatcher );
+    SET_INIT_BLOCK( KiUserExceptionDispatcher );
+    SET_INIT_BLOCK( LdrInitializeThunk );
+    SET_INIT_BLOCK( LdrSystemDllInitBlock );
+    SET_INIT_BLOCK( RtlUserThreadStart );
+    /* SET_INIT_BLOCK( KiUserCallbackDispatcher ); */
+    /* SET_INIT_BLOCK( RtlpQueryProcessDebugInformationRemote ); */
+    /* SET_INIT_BLOCK( RtlpFreezeTimeBias ); */
+    /* LdrSystemDllInitBlock.ntdll_handle */
+#undef SET_INIT_BLOCK
 
     map_wow64cpu();
 }

@@ -3713,6 +3713,26 @@ typedef struct _WOW64_CPU_AREA_INFO
     USHORT             Machine;
 } WOW64_CPU_AREA_INFO, *PWOW64_CPU_AREA_INFO;
 
+#ifdef __WINESRC__
+/* undocumented layout of LdrSystemDllInitBlock */
+/* this varies across Windows version; we are using the win10-2004 layout */
+typedef struct
+{
+    ULONG   version;
+    ULONG   unknown1[3];
+    ULONG64 unknown2;
+    ULONG64 pLdrInitializeThunk;
+    ULONG64 pKiUserExceptionDispatcher;
+    ULONG64 pKiUserApcDispatcher;
+    ULONG64 pKiUserCallbackDispatcher;
+    ULONG64 pRtlUserThreadStart;
+    ULONG64 pRtlpQueryProcessDebugInformationRemote;
+    ULONG64 ntdll_handle;
+    ULONG64 pLdrSystemDllInitBlock;
+    ULONG64 pRtlpFreezeTimeBias;
+} SYSTEM_DLL_INIT_BLOCK;
+#endif
+
 /***********************************************************************
  * Function declarations
  */

@@ -956,6 +956,121 @@ static void test_nt_wow64(void)
     NtClose( process );
 }
 
+static void test_init_block(void)
+{
+    HMODULE ntdll = GetModuleHandleA( "ntdll.dll" );
+    ULONG i, size = 0, *init_block;
+    ULONG64 ptr64, *block64;
+    void *ptr;
+
+    if (!is_wow64) return;
+    if ((ptr = GetProcAddress( ntdll, "LdrSystemDllInitBlock" )))
+    {
+        init_block = ptr;
+        trace( "got init block %08x\n", init_block[0] );
+#define CHECK_FUNC(val,func) \
+            ok( (val) == (ULONG_PTR)GetProcAddress( ntdll, func ), \
+                "got %p for %s %p\n", (void *)(ULONG_PTR)(val), func, GetProcAddress( ntdll, func ))
+        switch (init_block[0])
+        {
+        case 0x44:  /* vistau64 */
+            CHECK_FUNC( init_block[1], "LdrInitializeThunk" );
+            CHECK_FUNC( init_block[2], "KiUserExceptionDispatcher" );
+            CHECK_FUNC( init_block[3], "KiUserApcDispatcher" );
+            CHECK_FUNC( init_block[4], "KiUserCallbackDispatcher" );
+            CHECK_FUNC( init_block[5], "LdrHotPatchRoutine" );
+            CHECK_FUNC( init_block[6], "ExpInterlockedPopEntrySListFault" );
+            CHECK_FUNC( init_block[7], "ExpInterlockedPopEntrySListResume" );
+            CHECK_FUNC( init_block[8], "ExpInterlockedPopEntrySListEnd" );
+            CHECK_FUNC( init_block[9], "RtlUserThreadStart" );
+            CHECK_FUNC( init_block[10], "RtlpQueryProcessDebugInformationRemote" );
+            CHECK_FUNC( init_block[11], "EtwpNotificationThread" );
+            ok( init_block[12] == (ULONG_PTR)ntdll, "got %p for ntdll %p\n",
+                (void *)(ULONG_PTR)init_block[12], ntdll );
+            size = 13 * sizeof(*init_block);
+            break;
+        case 0x50:  /* win7 */
+            CHECK_FUNC( init_block[4], "LdrInitializeThunk" );
+            CHECK_FUNC( init_block[5], "KiUserExceptionDispatcher" );
+            CHECK_FUNC( init_block[6], "KiUserApcDispatcher" );
+            CHECK_FUNC( init_block[7], "KiUserCallbackDispatcher" );
+            CHECK_FUNC( init_block[8], "LdrHotPatchRoutine" );
+            CHECK_FUNC( init_block[9], "ExpInterlockedPopEntrySListFault" );
+            CHECK_FUNC( init_block[10], "ExpInterlockedPopEntrySListResume" );
+            CHECK_FUNC( init_block[11], "ExpInterlockedPopEntrySListEnd" );
+            CHECK_FUNC( init_block[12], "RtlUserThreadStart" );
+            CHECK_FUNC( init_block[13], "RtlpQueryProcessDebugInformationRemote" );
+            CHECK_FUNC( init_block[14], "EtwpNotificationThread" );
+            ok( init_block[15] == (ULONG_PTR)ntdll, "got %p for ntdll %p\n",
+                (void *)(ULONG_PTR)init_block[15], ntdll );
+            CHECK_FUNC( init_block[16], "LdrSystemDllInitBlock" );
+            size = 17 * sizeof(*init_block);
+            break;
+        case 0x70:  /* win8 */
+            CHECK_FUNC( init_block[4], "LdrInitializeThunk" );
+            CHECK_FUNC( init_block[5], "KiUserExceptionDispatcher" );
+            CHECK_FUNC( init_block[6], "KiUserApcDispatcher" );
+            CHECK_FUNC( init_block[7], "KiUserCallbackDispatcher" );
+            CHECK_FUNC( init_block[8], "ExpInterlockedPopEntrySListFault" );
+            CHECK_FUNC( init_block[9], "ExpInterlockedPopEntrySListResume" );
+            CHECK_FUNC( init_block[10], "ExpInterlockedPopEntrySListEnd" );
+            CHECK_FUNC( init_block[11], "RtlUserThreadStart" );
+            CHECK_FUNC( init_block[12], "RtlpQueryProcessDebugInformationRemote" );
+            ok( init_block[13] == (ULONG_PTR)ntdll, "got %p for ntdll %p\n",
+                (void *)(ULONG_PTR)init_block[13], ntdll );
+            CHECK_FUNC( init_block[14], "LdrSystemDllInitBlock" );
+            size = 15 * sizeof(*init_block);
+            break;
+        case 0x80:  /* win10 1507 */
+            CHECK_FUNC( init_block[4], "LdrInitializeThunk" );
+            CHECK_FUNC( init_block[5], "KiUserExceptionDispatcher" );
+            CHECK_FUNC( init_block[6], "KiUserApcDispatcher" );
+            CHECK_FUNC( init_block[7], "KiUserCallbackDispatcher" );
+            CHECK_FUNC( init_block[8], "ExpInterlockedPopEntrySListFault" );
+            CHECK_FUNC( init_block[9], "ExpInterlockedPopEntrySListResume" );
+            CHECK_FUNC( init_block[10], "ExpInterlockedPopEntrySListEnd" );
+            CHECK_FUNC( init_block[11], "RtlUserThreadStart" );
+            CHECK_FUNC( init_block[12], "RtlpQueryProcessDebugInformationRemote" );
+            ok( init_block[13] == (ULONG_PTR)ntdll, "got %p for ntdll %p\n",
+                (void *)(ULONG_PTR)init_block[13], ntdll );
+            CHECK_FUNC( init_block[14], "LdrSystemDllInitBlock" );
+            size = 15 * sizeof(*init_block);
+            break;
+        case 0xe0:  /* win10 1809 */
+        case 0xf0:  /* win10 2004 */
+            block64 = ptr;
+            CHECK_FUNC( block64[3], "LdrInitializeThunk" );
+            CHECK_FUNC( block64[4], "KiUserExceptionDispatcher" );
+            CHECK_FUNC( block64[5], "KiUserApcDispatcher" );
+            todo_wine CHECK_FUNC( block64[6], "KiUserCallbackDispatcher" );
+            CHECK_FUNC( block64[7], "RtlUserThreadStart" );
+            CHECK_FUNC( block64[8], "RtlpQueryProcessDebugInformationRemote" );
+            todo_wine ok( block64[9] == (ULONG_PTR)ntdll, "got %p for ntdll %p\n",
+                (void *)(ULONG_PTR)block64[9], ntdll );
+            CHECK_FUNC( block64[10], "LdrSystemDllInitBlock" );
+            CHECK_FUNC( block64[11], "RtlpFreezeTimeBias" );
+            size = 12 * sizeof(*block64);
+            break;
+        default:
+            ok( 0, "unknown init block %08x\n", init_block[0] );
+            for (i = 0; i < 32; i++) trace("%04x: %08x\n", i, init_block[i]);
+            break;
+        }
+#undef CHECK_FUNC
+
+        if (size && (ptr64 = get_proc_address64( ntdll_module, "LdrSystemDllInitBlock" )))
+        {
+            DWORD buffer[64];
+            HANDLE process = OpenProcess( PROCESS_ALL_ACCESS, FALSE, GetCurrentProcessId() );
+            NTSTATUS status = pNtWow64ReadVirtualMemory64( process, ptr64, buffer, size, NULL );
+            ok( !status, "NtWow64ReadVirtualMemory64 failed %x\n", status );
+            ok( !memcmp( buffer, init_block, size ), "wrong 64-bit init block\n" );
+            NtClose( process );
+        }
+    }
+    else todo_wine win_skip( "LdrSystemDllInitBlock not supported\n" );
+}
+
 static void test_cpu_area(void)
 {
     TEB64 *teb64 = (TEB64 *)NtCurrentTeb()->GdiBatchCount;
@@ -997,6 +1112,7 @@ START_TEST(wow64)
 #ifndef _WIN64
     test_nt_wow64();
     test_modules();
+    test_init_block();
 #endif
     test_cpu_area();
 }
