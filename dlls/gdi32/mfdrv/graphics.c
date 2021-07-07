@@ -264,12 +264,12 @@ static INT16 MFDRV_CreateRegion(PHYSDEV dev, HRGN hrgn)
     WORD *Param, *StartBand;
     BOOL ret;
 
-    if (!(len = GetRegionData( hrgn, 0, NULL ))) return -1;
+    if (!(len = NtGdiGetRegionData( hrgn, 0, NULL ))) return -1;
     if( !(rgndata = HeapAlloc( GetProcessHeap(), 0, len )) ) {
         WARN("Can't alloc rgndata buffer\n");
 	return -1;
     }
-    GetRegionData( hrgn, len, rgndata );
+    NtGdiGetRegionData( hrgn, len, rgndata );
 
     /* Overestimate of length:
      * Assume every rect is a separate band -> 6 WORDs per rect

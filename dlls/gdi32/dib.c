@@ -374,8 +374,8 @@ static BOOL build_rle_bitmap( BITMAPINFO *info, struct gdi_image_bits *bits, HRG
             {
                 if(left != right && clip)
                 {
-                    SetRectRgn( run, left, y, right, y + 1 );
-                    CombineRgn( *clip, run, *clip, RGN_OR );
+                    NtGdiSetRectRgn( run, left, y, right, y + 1 );
+                    NtGdiCombineRgn( *clip, run, *clip, RGN_OR );
                 }
                 switch (data)
                 {
@@ -562,7 +562,7 @@ INT CDECL nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, 
 
     if (!intersect_vis_rectangles( &dst, &src )) goto done;
 
-    if (clip) OffsetRgn( clip, dst.x - src.x, dst.y - src.y );
+    if (clip) NtGdiOffsetRgn( clip, dst.x - src.x, dst.y - src.y );
 
     dev = GET_DC_PHYSDEV( dc, pPutImage );
     copy_bitmapinfo( dst_info, src_info );
@@ -859,7 +859,7 @@ INT CDECL nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx
     src.visrect = dst.visrect = rect;
     offset_rect( &src.visrect, src.x - dst.x, src.y - dst.y );
     if (is_rect_empty( &dst.visrect )) goto done;
-    if (clip) OffsetRgn( clip, dst.x - src.x, dst.y - src.y );
+    if (clip) NtGdiOffsetRgn( clip, dst.x - src.x, dst.y - src.y );
 
     dev = GET_DC_PHYSDEV( dc, pPutImage );
     copy_bitmapinfo( dst_info, src_info );

@@ -216,11 +216,11 @@ INT CDECL EMFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode )
         if (mode != RGN_COPY) return ERROR;
         rgnsize = 0;
     }
-    else rgnsize = GetRegionData( hrgn, 0, NULL );
+    else rgnsize = NtGdiGetRegionData( hrgn, 0, NULL );
 
     size = rgnsize + offsetof(EMREXTSELECTCLIPRGN,RgnData);
     emr = HeapAlloc( GetProcessHeap(), 0, size );
-    if (rgnsize) GetRegionData( hrgn, rgnsize, (RGNDATA *)&emr->RgnData );
+    if (rgnsize) NtGdiGetRegionData( hrgn, rgnsize, (RGNDATA *)&emr->RgnData );
 
     emr->emr.iType = EMR_EXTSELECTCLIPRGN;
     emr->emr.nSize = size;

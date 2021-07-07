@@ -307,7 +307,7 @@ LONG WINAPI NtGdiSetBitmapBits(
                                    src.visrect.right, src.visrect.bottom - 1 );
         last_row = NtGdiCreateRectRgn( src.visrect.left, src.visrect.bottom - 1,
                                        src.visrect.left + extra_pixels, src.visrect.bottom );
-        CombineRgn( clip, clip, last_row, RGN_OR );
+        NtGdiCombineRgn( clip, clip, last_row, RGN_OR );
         DeleteObject( last_row );
     }
 

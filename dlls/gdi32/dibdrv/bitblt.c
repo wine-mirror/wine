@@ -1012,7 +1012,7 @@ DWORD CDECL dibdrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
     if (clip && pdev->clip)
     {
         tmp_rgn = NtGdiCreateRectRgn( 0, 0, 0, 0 );
-        CombineRgn( tmp_rgn, clip, pdev->clip, RGN_AND );
+        NtGdiCombineRgn( tmp_rgn, clip, pdev->clip, RGN_AND );
         clip = tmp_rgn;
     }
     else if (!clip) clip = pdev->clip;

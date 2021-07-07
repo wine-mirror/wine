@@ -687,11 +687,11 @@ BOOL CDECL EMFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush )
     index = EMFDRV_CreateBrushIndirect( dev, hbrush );
     if(!index) return FALSE;
 
-    rgnsize = GetRegionData( hrgn, 0, NULL );
+    rgnsize = NtGdiGetRegionData( hrgn, 0, NULL );
     size = rgnsize + offsetof(EMRFILLRGN,RgnData);
     emr = HeapAlloc( GetProcessHeap(), 0, size );
 
-    GetRegionData( hrgn, rgnsize, (RGNDATA *)&emr->RgnData );
+    NtGdiGetRegionData( hrgn, rgnsize, (RGNDATA *)&emr->RgnData );
 
     emr->emr.iType = EMR_FILLRGN;
     emr->emr.nSize = size;
@@ -720,11 +720,11 @@ BOOL CDECL EMFDRV_FrameRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush, INT width, IN
     index = EMFDRV_CreateBrushIndirect( dev, hbrush );
     if(!index) return FALSE;
 
-    rgnsize = GetRegionData( hrgn, 0, NULL );
+    rgnsize = NtGdiGetRegionData( hrgn, 0, NULL );
     size = rgnsize + offsetof(EMRFRAMERGN,RgnData);
     emr = HeapAlloc( GetProcessHeap(), 0, size );
 
-    GetRegionData( hrgn, rgnsize, (RGNDATA *)&emr->RgnData );
+    NtGdiGetRegionData( hrgn, rgnsize, (RGNDATA *)&emr->RgnData );
 
     emr->emr.iType = EMR_FRAMERGN;
     emr->emr.nSize = size;
@@ -756,11 +756,11 @@ static BOOL EMFDRV_PaintInvertRgn( PHYSDEV dev, HRGN hrgn, DWORD iType )
     BOOL ret;
 
 
-    rgnsize = GetRegionData( hrgn, 0, NULL );
+    rgnsize = NtGdiGetRegionData( hrgn, 0, NULL );
     size = rgnsize + offsetof(EMRINVERTRGN,RgnData);
     emr = HeapAlloc( GetProcessHeap(), 0, size );
 
-    GetRegionData( hrgn, rgnsize, (RGNDATA *)&emr->RgnData );
+    NtGdiGetRegionData( hrgn, rgnsize, (RGNDATA *)&emr->RgnData );
 
     emr->emr.iType = iType;
     emr->emr.nSize = size;

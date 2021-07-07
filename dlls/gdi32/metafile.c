@@ -1296,9 +1296,9 @@ static BOOL MF_Play_MetaCreateRegion( METARECORD *mr, HRGN hrgn )
 	y0 = *(INT16 *)(start + 1);
 	y1 = *(INT16 *)(start + 2);
 	for(pair = 0; pair < *start / 2; pair++) {
-	    SetRectRgn( hrgn2, *(INT16 *)(start + 3 + 2*pair), y0,
-				 *(INT16 *)(start + 4 + 2*pair), y1 );
-	    CombineRgn(hrgn, hrgn, hrgn2, RGN_OR);
+	    NtGdiSetRectRgn( hrgn2, *(INT16 *)(start + 3 + 2*pair), y0,
+                             *(INT16 *)(start + 4 + 2*pair), y1 );
+	    NtGdiCombineRgn( hrgn, hrgn, hrgn2, RGN_OR );
         }
     }
     DeleteObject( hrgn2 );

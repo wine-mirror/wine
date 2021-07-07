@@ -484,7 +484,7 @@ BOOL CDECL nulldrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert
 
     rgn = NtGdiCreateRectRgn( 0, 0, 0, 0 );
     gradient_bitmapinfo( info, bits.ptr, vert_array, nvert, grad_array, ngrad, mode, pts, rgn );
-    OffsetRgn( rgn, dst.visrect.left, dst.visrect.top );
+    NtGdiOffsetRgn( rgn, dst.visrect.left, dst.visrect.top );
     ret = !dev->funcs->pPutImage( dev, rgn, info, &bits, &src, &dst, SRCCOPY );
 
     if (bits.free) bits.free( &bits );
