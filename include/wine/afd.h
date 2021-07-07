@@ -187,6 +187,7 @@ struct afd_get_events_params
 #define IOCTL_AFD_WINE_GET_IP_DONTFRAGMENT              WINE_AFD_IOC(242)
 #define IOCTL_AFD_WINE_SET_IP_DONTFRAGMENT              WINE_AFD_IOC(243)
 #define IOCTL_AFD_WINE_SET_IP_DROP_MEMBERSHIP           WINE_AFD_IOC(244)
+#define IOCTL_AFD_WINE_SET_IP_DROP_SOURCE_MEMBERSHIP    WINE_AFD_IOC(245)
 
 struct afd_create_params
 {
