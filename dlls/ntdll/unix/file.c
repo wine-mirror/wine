@@ -5931,16 +5931,23 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE handle, IO_STATUS_BLOCK *io )
  */
 NTSTATUS WINAPI NtCancelIoFile( HANDLE handle, IO_STATUS_BLOCK *io_status )
 {
+    NTSTATUS status;
+
     TRACE( "%p %p\n", handle, io_status );
 
     SERVER_START_REQ( cancel_async )
     {
         req->handle      = wine_server_obj_handle( handle );
         req->only_thread = TRUE;
-        io_status->u.Status = wine_server_call( req );
+        if (!(status = wine_server_call( req )))
+        {
+            io_status->u.Status = status;
+            io_status->Information = 0;
+        }
     }
     SERVER_END_REQ;
-    return io_status->u.Status;
+
+    return status;
 }
 
 
@@ -5949,16 +5956,23 @@ NTSTATUS WINAPI NtCancelIoFile( HANDLE handle, IO_STATUS_BLOCK *io_status )
  */
 NTSTATUS WINAPI NtCancelIoFileEx( HANDLE handle, IO_STATUS_BLOCK *io, IO_STATUS_BLOCK *io_status )
 {
+    NTSTATUS status;
+
     TRACE( "%p %p %p\n", handle, io, io_status );
 
     SERVER_START_REQ( cancel_async )
     {
         req->handle = wine_server_obj_handle( handle );
         req->iosb   = wine_server_client_ptr( io );
-        io_status->u.Status = wine_server_call( req );
+        if (!(status = wine_server_call( req )))
+        {
+            io_status->u.Status = status;
+            io_status->Information = 0;
+        }
     }
     SERVER_END_REQ;
-    return io_status->u.Status;
+
+    return status;
 }
 
 
