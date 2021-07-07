@@ -3698,30 +3698,24 @@ HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device
     object->device = deferred->c.device;
 
     if (!(object->data = heap_alloc(deferred->data_size)))
-    {
-        heap_free(object);
-        return E_OUTOFMEMORY;
-    }
+        goto out_free_list;
     object->data_size = deferred->data_size;
     memcpy(object->data, deferred->data, deferred->data_size);
 
     if (!(object->resources = heap_alloc(deferred->resource_count * sizeof(*object->resources))))
-    {
-        heap_free(object->data);
-        heap_free(object);
-        return E_OUTOFMEMORY;
-    }
+        goto out_free_data;
     object->resource_count = deferred->resource_count;
     memcpy(object->resources, deferred->resources, deferred->resource_count * sizeof(*object->resources));
     /* Transfer our references to the resources to the command list. */
 
+    if (!(object->uploads = heap_alloc(deferred->upload_count * sizeof(*object->uploads))))
+        goto out_free_resources;
+    object->upload_count = deferred->upload_count;
+    memcpy(object->uploads, deferred->uploads, deferred->upload_count * sizeof(*object->uploads));
+    /* Transfer our references to the resources to the command list. */
+
     if (!(object->command_lists = heap_alloc(deferred->command_list_count * sizeof(*object->command_lists))))
-    {
-        heap_free(object->resources);
-        heap_free(object->data);
-        heap_free(object);
-        return E_OUTOFMEMORY;
-    }
+        goto out_free_uploads;
     object->command_list_count = deferred->command_list_count;
     memcpy(object->command_lists, deferred->command_lists,
             deferred->command_list_count * sizeof(*object->command_lists));
@@ -3729,6 +3723,7 @@ HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device
 
     deferred->data_size = 0;
     deferred->resource_count = 0;
+    deferred->upload_count = 0;
     deferred->command_list_count = 0;
 
     /* This is in fact recorded into a subsequent command list. */
@@ -3741,4 +3736,14 @@ HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device
     *list = object;
 
     return S_OK;
+
+out_free_uploads:
+    heap_free(object->uploads);
+out_free_resources:
+    heap_free(object->resources);
+out_free_data:
+    heap_free(object->data);
+out_free_list:
+    heap_free(object);
+    return E_OUTOFMEMORY;
 }
