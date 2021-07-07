@@ -3344,7 +3344,7 @@ static void test_select(void)
         id = 0xdeadbeef;
         ret = getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char *)&id, &len);
         ok(!ret, "getsockopt failed with %d\n", WSAGetLastError());
-        todo_wine ok(!id, "got error %u\n", id);
+        ok(!id, "got error %u\n", id);
 
         closesocket(fdWrite);
 
