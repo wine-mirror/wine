@@ -296,8 +296,7 @@ static void WINAPI query_dhcp_request_params( TP_CALLBACK_INSTANCE *instance, vo
     ULONG i, offset = 0;
 
     /* sanity checks */
-    if (FIELD_OFFSET(struct mountmgr_dhcp_request_params, params[query->count]) > insize ||
-        !memchrW( query->adapter, 0, ARRAY_SIZE(query->adapter) ))
+    if (FIELD_OFFSET(struct mountmgr_dhcp_request_params, params[query->count]) > insize)
     {
         irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
         goto err;
@@ -314,7 +313,7 @@ static void WINAPI query_dhcp_request_params( TP_CALLBACK_INSTANCE *instance, vo
     offset = FIELD_OFFSET(struct mountmgr_dhcp_request_params, params[query->count]);
     for (i = 0; i < query->count; i++)
     {
-        offset += get_dhcp_request_param( query->adapter, &query->params[i], (char *)query, offset, outsize - offset );
+        offset += get_dhcp_request_param( &query->adapter, &query->params[i], (char *)query, offset, outsize - offset );
         if (offset > outsize)
         {
             if (offset >= sizeof(query->size)) query->size = offset;
