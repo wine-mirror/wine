@@ -2927,6 +2927,17 @@ static inline int wined3d_bit_scan(unsigned int *x)
     return bit_offset;
 }
 
+static inline bool wined3d_bound_range(unsigned int start, unsigned int count, unsigned int limit)
+{
+#if defined(__GNUC__) && __GNUC__ >= 5
+    unsigned int sum;
+
+    return !__builtin_add_overflow(start, count, &sum) && sum <= limit;
+#else
+    return start <= limit && count <= limit - start;
+#endif
+}
+
 static inline void wined3d_box_set(struct wined3d_box *box, unsigned int left, unsigned int top,
         unsigned int right, unsigned int bottom, unsigned int front, unsigned int back)
 {

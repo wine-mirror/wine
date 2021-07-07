@@ -5373,8 +5373,8 @@ static HRESULT d3d_device7_SetViewport(IDirect3DDevice7 *iface, D3DVIEWPORT7 *vi
     surface = wined3d_rendertarget_view_get_sub_resource_parent(rtv);
     wined3d_texture_get_sub_resource_desc(surface->wined3d_texture, surface->sub_resource_idx, &rt_desc);
 
-    if (viewport->dwX > rt_desc.width || viewport->dwWidth > rt_desc.width - viewport->dwX
-            || viewport->dwY > rt_desc.height || viewport->dwHeight > rt_desc.height - viewport->dwY)
+    if (!wined3d_bound_range(viewport->dwX, viewport->dwWidth, rt_desc.width)
+            || !wined3d_bound_range(viewport->dwY, viewport->dwHeight, rt_desc.height))
     {
         WARN("Invalid viewport, returning E_INVALIDARG.\n");
         wined3d_mutex_unlock();

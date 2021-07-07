@@ -61,7 +61,7 @@ HRESULT CDECL wined3d_palette_get_entries(const struct wined3d_palette *palette,
 
     if (flags)
         return WINED3DERR_INVALIDCALL; /* unchecked */
-    if (start > palette->size || count > palette->size - start)
+    if (!wined3d_bound_range(start, count, palette->size))
         return WINED3DERR_INVALIDCALL;
 
     if (palette->flags & WINED3D_PALETTE_8BIT_ENTRIES)

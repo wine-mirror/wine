@@ -1837,7 +1837,7 @@ void CDECL wined3d_device_context_set_constant_buffers(struct wined3d_device_con
 
     TRACE("context %p, type %#x, start_idx %u, count %u, buffers %p.\n", context, type, start_idx, count, buffers);
 
-    if (start_idx >= MAX_CONSTANT_BUFFERS || count > MAX_CONSTANT_BUFFERS - start_idx)
+    if (!wined3d_bound_range(start_idx, count, MAX_CONSTANT_BUFFERS))
     {
         WARN("Invalid constant buffer index %u, count %u.\n", start_idx, count);
         return;
@@ -1988,7 +1988,7 @@ void CDECL wined3d_device_context_set_shader_resource_views(struct wined3d_devic
 
     TRACE("context %p, type %#x, start_idx %u, count %u, views %p.\n", context, type, start_idx, count, views);
 
-    if (start_idx >= MAX_SHADER_RESOURCE_VIEWS || count > MAX_SHADER_RESOURCE_VIEWS - start_idx)
+    if (!wined3d_bound_range(start_idx, count, MAX_SHADER_RESOURCE_VIEWS))
     {
         WARN("Invalid view index %u, count %u.\n", start_idx, count);
         return;
@@ -2040,7 +2040,7 @@ void CDECL wined3d_device_context_set_samplers(struct wined3d_device_context *co
 
     TRACE("context %p, type %#x, start_idx %u, count %u, samplers %p.\n", context, type, start_idx, count, samplers);
 
-    if (start_idx >= MAX_SAMPLER_OBJECTS || count > MAX_SAMPLER_OBJECTS - start_idx)
+    if (!wined3d_bound_range(start_idx, count, MAX_SAMPLER_OBJECTS))
     {
         WARN("Invalid sampler index %u, count %u.\n", start_idx, count);
         return;
