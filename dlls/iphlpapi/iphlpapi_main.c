@@ -3322,24 +3322,64 @@ DWORD WINAPI ConvertInterfaceLuidToNameA(const NET_LUID *luid, char *name, SIZE_
     return err;
 }
 
+static const WCHAR otherW[] = {'o','t','h','e','r',0};
+static const WCHAR ethernetW[] = {'e','t','h','e','r','n','e','t',0};
+static const WCHAR tokenringW[] = {'t','o','k','e','n','r','i','n','g',0};
+static const WCHAR pppW[] = {'p','p','p',0};
+static const WCHAR loopbackW[] = {'l','o','o','p','b','a','c','k',0};
+static const WCHAR atmW[] = {'a','t','m',0};
+static const WCHAR wirelessW[] = {'w','i','r','e','l','e','s','s',0};
+static const WCHAR tunnelW[] = {'t','u','n','n','e','l',0};
+static const WCHAR ieee1394W[] = {'i','e','e','e','1','3','9','4',0};
+
+struct name_prefix
+{
+    const WCHAR *prefix;
+    DWORD type;
+};
+static const struct name_prefix name_prefixes[] =
+{
+    { otherW, IF_TYPE_OTHER },
+    { ethernetW, IF_TYPE_ETHERNET_CSMACD },
+    { tokenringW, IF_TYPE_ISO88025_TOKENRING },
+    { pppW, IF_TYPE_PPP },
+    { loopbackW, IF_TYPE_SOFTWARE_LOOPBACK },
+    { atmW, IF_TYPE_ATM },
+    { wirelessW, IF_TYPE_IEEE80211 },
+    { tunnelW, IF_TYPE_TUNNEL },
+    { ieee1394W, IF_TYPE_IEEE1394 }
+};
+
 /******************************************************************
  *    ConvertInterfaceLuidToNameW (IPHLPAPI.@)
  */
 DWORD WINAPI ConvertInterfaceLuidToNameW(const NET_LUID *luid, WCHAR *name, SIZE_T len)
 {
-    DWORD ret;
-    MIB_IFROW row;
+    DWORD i, needed;
+    const WCHAR *prefix = NULL;
+    WCHAR buf[IF_MAX_STRING_SIZE + 1];
+    static const WCHAR prefix_fmt[] = {'%','s','_','%','d',0};
+    static const WCHAR unk_fmt[] = {'i','f','t','y','p','e','%','d','_','%','d',0};
 
-    TRACE("(%p %p %u)\n", luid, name, (DWORD)len);
+    TRACE( "(%p %p %u)\n", luid, name, (DWORD)len );
 
     if (!luid || !name) return ERROR_INVALID_PARAMETER;
 
-    row.dwIndex = luid->Info.NetLuidIndex;
-    if ((ret = GetIfEntry( &row ))) return ret;
+    for (i = 0; i < ARRAY_SIZE(name_prefixes); i++)
+    {
+        if (luid->Info.IfType == name_prefixes[i].type)
+        {
+            prefix = name_prefixes[i].prefix;
+            break;
+        }
+    }
 
-    if (len < strlenW( row.wszName ) + 1) return ERROR_NOT_ENOUGH_MEMORY;
-    strcpyW( name, row.wszName );
-    return NO_ERROR;
+    if (prefix) needed = snprintfW( buf, len, prefix_fmt, prefix, luid->Info.NetLuidIndex );
+    else needed = snprintfW( buf, len, unk_fmt, luid->Info.IfType, luid->Info.NetLuidIndex );
+
+    if (needed >= len) return ERROR_NOT_ENOUGH_MEMORY;
+    memcpy( name, buf, (needed + 1) * sizeof(WCHAR) );
+    return ERROR_SUCCESS;
 }
 
 /******************************************************************
@@ -3363,28 +3403,40 @@ DWORD WINAPI ConvertInterfaceNameToLuidA(const char *name, NET_LUID *luid)
  */
 DWORD WINAPI ConvertInterfaceNameToLuidW(const WCHAR *name, NET_LUID *luid)
 {
-    DWORD ret;
-    IF_INDEX index;
-    MIB_IFROW row;
-    char nameA[IF_MAX_STRING_SIZE + 1];
+    const WCHAR *sep;
+    static const WCHAR iftype[] = {'i','f','t','y','p','e',0};
+    DWORD type = ~0u, i;
+    WCHAR buf[IF_MAX_STRING_SIZE + 1];
 
-    TRACE("(%s %p)\n", debugstr_w(name), luid);
+    TRACE( "(%s %p)\n", debugstr_w(name), luid );
 
     if (!luid) return ERROR_INVALID_PARAMETER;
     memset( luid, 0, sizeof(*luid) );
 
-    if (!WideCharToMultiByte( CP_UNIXCP, 0, name, -1, nameA, sizeof(nameA), NULL, NULL ))
-        return ERROR_INVALID_NAME;
+    if (!name || !(sep = strchrW( name, '_' )) || sep >= name + ARRAY_SIZE(buf)) return ERROR_INVALID_NAME;
+    memcpy( buf, name, (sep - name) * sizeof(WCHAR) );
+    buf[sep - name] = '\0';
 
-    if ((ret = getInterfaceIndexByName( nameA, &index ))) return ret;
+    if (sep - name > ARRAY_SIZE(iftype) - 1 && !memcmp( buf, iftype, (ARRAY_SIZE(iftype) - 1) * sizeof(WCHAR) ))
+    {
+        type = atoiW( buf + ARRAY_SIZE(iftype) - 1 );
+    }
+    else
+    {
+        for (i = 0; i < ARRAY_SIZE(name_prefixes); i++)
+        {
+            if (!strcmpW( buf, name_prefixes[i].prefix ))
+            {
+                type = name_prefixes[i].type;
+                break;
+            }
+        }
+    }
+    if (type == ~0u) return ERROR_INVALID_NAME;
 
-    row.dwIndex = index;
-    if ((ret = GetIfEntry( &row ))) return ret;
-
-    luid->Info.Reserved     = 0;
-    luid->Info.NetLuidIndex = index;
-    luid->Info.IfType       = row.dwType;
-    return NO_ERROR;
+    luid->Info.NetLuidIndex = atoiW( sep + 1 );
+    luid->Info.IfType = type;
+    return ERROR_SUCCESS;
 }
 
 /******************************************************************

@@ -1618,6 +1618,41 @@ static DWORD get_interface_index(void)
     return ret;
 }
 
+static void convert_luid_to_name( NET_LUID *luid, WCHAR *expect_nameW, int len )
+{
+    struct
+    {
+        const WCHAR *prefix;
+        DWORD type;
+    } prefixes[] =
+    {
+        { L"other", IF_TYPE_OTHER },
+        { L"ethernet", IF_TYPE_ETHERNET_CSMACD },
+        { L"tokenring", IF_TYPE_ISO88025_TOKENRING },
+        { L"ppp", IF_TYPE_PPP },
+        { L"loopback", IF_TYPE_SOFTWARE_LOOPBACK },
+        { L"atm", IF_TYPE_ATM },
+        { L"wireless", IF_TYPE_IEEE80211 },
+        { L"tunnel", IF_TYPE_TUNNEL },
+        { L"ieee1394", IF_TYPE_IEEE1394 }
+    };
+    DWORD i;
+    const WCHAR *prefix = NULL;
+
+    for (i = 0; i < ARRAY_SIZE(prefixes); i++)
+    {
+        if (prefixes[i].type == luid->Info.IfType)
+        {
+            prefix = prefixes[i].prefix;
+            break;
+        }
+    }
+    if (prefix)
+        swprintf( expect_nameW, len, L"%s_%d", prefix, luid->Info.NetLuidIndex );
+    else
+        swprintf( expect_nameW, len, L"iftype%d_%d", luid->Info.IfType, luid->Info.NetLuidIndex );
+}
+
 static void test_interface_identifier_conversion(void)
 {
     DWORD ret, i;
@@ -1626,7 +1661,9 @@ static void test_interface_identifier_conversion(void)
     SIZE_T len;
     WCHAR nameW[IF_MAX_STRING_SIZE + 1];
     WCHAR alias[IF_MAX_STRING_SIZE + 1];
+    WCHAR expect_nameW[IF_MAX_STRING_SIZE + 1];
     char nameA[IF_MAX_STRING_SIZE + 1], *name;
+    char expect_nameA[IF_MAX_STRING_SIZE + 1];
     NET_IFINDEX index;
     MIB_IF_TABLE2 *table;
 
@@ -1721,7 +1758,8 @@ static void test_interface_identifier_conversion(void)
         len = ARRAY_SIZE(nameW);
         ret = ConvertInterfaceLuidToNameW( &luid, nameW, len );
         ok( !ret, "got %u\n", ret );
-        ok( nameW[0], "name not set\n" );
+        convert_luid_to_name( &luid, expect_nameW, len );
+        ok( !wcscmp( nameW, expect_nameW ), "got %s vs %s\n", debugstr_w( nameW ), debugstr_w( expect_nameW ) );
 
         /* ConvertInterfaceLuidToNameA */
         ret = ConvertInterfaceLuidToNameA( NULL, NULL, 0 );
@@ -1810,12 +1848,10 @@ static void test_interface_identifier_conversion(void)
         ok( name == NULL, "got %p\n", name );
 
         nameA[0] = 0;
-        name = if_indextoname( 1, nameA );
-        if (name != NULL)
-        {
-            ok( name[0], "empty name\n" );
-            ok( name == nameA, "got %p\n", name );
-        }
+        name = if_indextoname( row->InterfaceIndex, nameA );
+        ConvertInterfaceLuidToNameA( &row->InterfaceLuid, expect_nameA, ARRAY_SIZE(expect_nameA) );
+        ok( name == nameA, "mismatch\n" );
+        ok( !strcmp( nameA, expect_nameA ), "mismatch\n" );
     }
     FreeMibTable( table );
 }
