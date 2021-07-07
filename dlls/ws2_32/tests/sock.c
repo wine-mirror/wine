@@ -6626,14 +6626,14 @@ static void test_connect(void)
     WSASetLastError(0xdeadbeef);
     iret = connect(listener, (struct sockaddr *)&address, sizeof(address));
     ok(iret == -1, "got %d\n", iret);
-    todo_wine ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
 
     WSASetLastError(0xdeadbeef);
     overlapped.Internal = 0xdeadbeef;
     overlapped.InternalHigh = 0xdeadbeef;
     iret = pConnectEx(listener, (struct sockaddr *)&address, sizeof(address), NULL, 0, &bytesReturned, &overlapped);
     ok(!iret, "got %d\n", iret);
-    todo_wine ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
     ok(overlapped.Internal == STATUS_PENDING, "got status %#x\n", (NTSTATUS)overlapped.Internal);
     todo_wine ok(overlapped.InternalHigh == 0xdeadbeef, "got size %Iu\n", overlapped.InternalHigh);
 
@@ -6706,7 +6706,7 @@ static void test_connect(void)
 
     WSASetLastError(0xdeadbeef);
     iret = connect(connector, (struct sockaddr *)&address, sizeof(address));
-    todo_wine ok(iret == -1, "got %d\n", iret);
+    ok(iret == -1, "got %d\n", iret);
     todo_wine ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
 
     WSASetLastError(0xdeadbeef);
@@ -6740,8 +6740,8 @@ static void test_connect(void)
 
     WSASetLastError(0xdeadbeef);
     iret = connect(connector, (struct sockaddr *)&address, sizeof(address));
-    todo_wine ok(iret == -1, "got %d\n", iret);
-    todo_wine ok(WSAGetLastError() == WSAEISCONN, "got error %u\n", WSAGetLastError());
+    ok(iret == -1, "got %d\n", iret);
+    ok(WSAGetLastError() == WSAEISCONN, "got error %u\n", WSAGetLastError());
 
     WSASetLastError(0xdeadbeef);
     iret = connect(acceptor, (struct sockaddr *)&address, sizeof(address));
