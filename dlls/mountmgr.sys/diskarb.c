@@ -260,7 +260,7 @@ static UInt8 map_option( ULONG option )
 #define IF_NAMESIZE 16
 static BOOL map_adapter_name( const NET_LUID *luid, WCHAR *unix_name, DWORD len )
 {
-    return !ConvertInterfaceLuidToNameW( luid, unix_name, len );
+    return !ConvertInterfaceLuidToAlias( luid, unix_name, len );
 }
 
 static CFStringRef find_service_id( const NET_LUID *adapter )

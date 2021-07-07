@@ -1003,7 +1003,7 @@ static BOOL map_adapter_name( const NET_LUID *luid, char *unix_name, DWORD len )
 {
     WCHAR unix_nameW[IF_NAMESIZE];
 
-    if (ConvertInterfaceLuidToNameW( luid, unix_nameW, ARRAY_SIZE(unix_nameW) )) return FALSE;
+    if (ConvertInterfaceLuidToAlias( luid, unix_nameW, ARRAY_SIZE(unix_nameW) )) return FALSE;
     return WideCharToMultiByte( CP_UNIXCP, 0, unix_nameW, -1, unix_name, len, NULL, NULL ) != 0;
 }
 
