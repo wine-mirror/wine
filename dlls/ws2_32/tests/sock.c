@@ -6576,7 +6576,7 @@ static void test_WSAPoll(void)
     closesocket(server);
 }
 
-static void test_ConnectEx(void)
+static void test_connect(void)
 {
     SOCKET listener = INVALID_SOCKET;
     SOCKET acceptor = INVALID_SOCKET;
@@ -6610,6 +6610,9 @@ static void test_ConnectEx(void)
     iret = getsockname(listener, (struct sockaddr*)&address, &addrlen);
     ok(!iret, "failed to get address, error %u\n", WSAGetLastError());
 
+    iret = listen(listener, 1);
+    ok(!iret, "failed to listen, error %u\n", WSAGetLastError());
+
     iret = set_blocking(listener, TRUE);
     ok(!iret, "failed to set nonblocking, error %u\n", WSAGetLastError());
 
@@ -6619,6 +6622,20 @@ static void test_ConnectEx(void)
     ok(!iret, "failed to get ConnectEx, error %u\n", WSAGetLastError());
 
     ok(bytesReturned == sizeof(pConnectEx), "expected sizeof(pConnectEx), got %u\n", bytesReturned);
+
+    WSASetLastError(0xdeadbeef);
+    iret = connect(listener, (struct sockaddr *)&address, sizeof(address));
+    ok(iret == -1, "got %d\n", iret);
+    todo_wine ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
+
+    WSASetLastError(0xdeadbeef);
+    overlapped.Internal = 0xdeadbeef;
+    overlapped.InternalHigh = 0xdeadbeef;
+    iret = pConnectEx(listener, (struct sockaddr *)&address, sizeof(address), NULL, 0, &bytesReturned, &overlapped);
+    ok(!iret, "got %d\n", iret);
+    todo_wine ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
+    ok(overlapped.Internal == STATUS_PENDING, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    todo_wine ok(overlapped.InternalHigh == 0xdeadbeef, "got size %Iu\n", overlapped.InternalHigh);
 
     bret = pConnectEx(INVALID_SOCKET, (struct sockaddr*)&address, addrlen, NULL, 0, &bytesReturned, &overlapped);
     ok(bret == FALSE && WSAGetLastError() == WSAENOTSOCK, "ConnectEx on invalid socket "
@@ -6640,9 +6657,6 @@ static void test_ConnectEx(void)
         "returned %d + errno %d\n", bret, WSAGetLastError());
 
     overlapped.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
-
-    iret = listen(listener, 1);
-    ok(!iret, "failed to listen, error %u\n", WSAGetLastError());
 
     bret = pConnectEx(connector, (struct sockaddr*)&address, addrlen, NULL, 0, &bytesReturned, &overlapped);
     ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING, "ConnectEx failed: "
@@ -6690,7 +6704,73 @@ static void test_ConnectEx(void)
     ok(buffer[0] == '1' && buffer[1] == '2' && buffer[2] == '3',
        "Failed to get the right data, expected '123', got '%s'\n", buffer);
 
+    WSASetLastError(0xdeadbeef);
+    iret = connect(connector, (struct sockaddr *)&address, sizeof(address));
+    todo_wine ok(iret == -1, "got %d\n", iret);
+    todo_wine ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
+
+    WSASetLastError(0xdeadbeef);
+    iret = connect(acceptor, (struct sockaddr *)&address, sizeof(address));
+    ok(iret == -1, "got %d\n", iret);
+    ok(WSAGetLastError() == WSAEISCONN, "got error %u\n", WSAGetLastError());
+
+    WSASetLastError(0xdeadbeef);
+    overlapped.Internal = 0xdeadbeef;
+    overlapped.InternalHigh = 0xdeadbeef;
+    bret = pConnectEx(connector, (struct sockaddr *)&address, sizeof(address), NULL, 0, &bytesReturned, &overlapped);
+    ok(!bret, "got %d\n", bret);
+    ok(WSAGetLastError() == WSAEISCONN, "got error %u\n", WSAGetLastError());
+    ok(overlapped.Internal == STATUS_PENDING, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    todo_wine ok(overlapped.InternalHigh == 0xdeadbeef, "got size %Iu\n", overlapped.InternalHigh);
+
+    WSASetLastError(0xdeadbeef);
+    overlapped.Internal = 0xdeadbeef;
+    overlapped.InternalHigh = 0xdeadbeef;
+    bret = pConnectEx(acceptor, (struct sockaddr *)&address, sizeof(address), NULL, 0, &bytesReturned, &overlapped);
+    ok(!bret, "got %d\n", bret);
+    ok(WSAGetLastError() == WSAEISCONN, "got error %u\n", WSAGetLastError());
+    ok(overlapped.Internal == STATUS_PENDING, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    todo_wine ok(overlapped.InternalHigh == 0xdeadbeef, "got size %Iu\n", overlapped.InternalHigh);
+
     closesocket(connector);
+    closesocket(acceptor);
+    closesocket(listener);
+
+    tcp_socketpair(&connector, &acceptor);
+
+    WSASetLastError(0xdeadbeef);
+    iret = connect(connector, (struct sockaddr *)&address, sizeof(address));
+    todo_wine ok(iret == -1, "got %d\n", iret);
+    todo_wine ok(WSAGetLastError() == WSAEISCONN, "got error %u\n", WSAGetLastError());
+
+    WSASetLastError(0xdeadbeef);
+    iret = connect(acceptor, (struct sockaddr *)&address, sizeof(address));
+    ok(iret == -1, "got %d\n", iret);
+    ok(WSAGetLastError() == WSAEISCONN, "got error %u\n", WSAGetLastError());
+
+    WSASetLastError(0xdeadbeef);
+    overlapped.Internal = 0xdeadbeef;
+    overlapped.InternalHigh = 0xdeadbeef;
+    bret = pConnectEx(connector, (struct sockaddr *)&address, sizeof(address), NULL, 0, &bytesReturned, &overlapped);
+    ok(!bret, "got %d\n", bret);
+    ok(WSAGetLastError() == WSAEISCONN, "got error %u\n", WSAGetLastError());
+    ok(overlapped.Internal == STATUS_PENDING, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    todo_wine ok(overlapped.InternalHigh == 0xdeadbeef, "got size %Iu\n", overlapped.InternalHigh);
+
+    WSASetLastError(0xdeadbeef);
+    overlapped.Internal = 0xdeadbeef;
+    overlapped.InternalHigh = 0xdeadbeef;
+    bret = pConnectEx(acceptor, (struct sockaddr *)&address, sizeof(address), NULL, 0, &bytesReturned, &overlapped);
+    ok(!bret, "got %d\n", bret);
+    ok(WSAGetLastError() == WSAEISCONN, "got error %u\n", WSAGetLastError());
+    ok(overlapped.Internal == STATUS_PENDING, "got status %#x\n", (NTSTATUS)overlapped.Internal);
+    todo_wine ok(overlapped.InternalHigh == 0xdeadbeef, "got size %Iu\n", overlapped.InternalHigh);
+
+    closesocket(connector);
+    closesocket(acceptor);
+
+    /* Connect with error */
+
     connector = socket(AF_INET, SOCK_STREAM, 0);
     ok(connector != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
     /* ConnectEx needs a bound socket */
@@ -6699,11 +6779,6 @@ static void test_ConnectEx(void)
     conaddress.sin_addr.s_addr = inet_addr("127.0.0.1");
     iret = bind(connector, (struct sockaddr*)&conaddress, sizeof(conaddress));
     ok(!iret, "failed to bind, error %u\n", WSAGetLastError());
-
-    closesocket(acceptor);
-    closesocket(listener);
-
-    /* Connect with error */
 
     address.sin_port = htons(1);
 
@@ -11264,7 +11339,7 @@ START_TEST( sock )
     test_ipv6only();
     test_TransmitFile();
     test_AcceptEx();
-    test_ConnectEx();
+    test_connect();
     test_shutdown();
     test_DisconnectEx();
 
