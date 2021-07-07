@@ -3242,6 +3242,30 @@ DWORD WINAPI ConvertInterfaceIndexToLuid(NET_IFINDEX index, NET_LUID *luid)
 }
 
 /******************************************************************
+ *    ConvertInterfaceLuidToAlias (IPHLPAPI.@)
+ */
+DWORD WINAPI ConvertInterfaceLuidToAlias( const NET_LUID *luid, WCHAR *alias, SIZE_T len )
+{
+    DWORD err;
+    IF_COUNTED_STRING name;
+
+    TRACE( "(%p %p %u)\n", luid, alias, (DWORD)len );
+
+    if (!luid || !alias) return ERROR_INVALID_PARAMETER;
+
+    err = NsiGetParameter( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, luid, sizeof(*luid),
+                           NSI_PARAM_TYPE_RW, &name, sizeof(name),
+                           FIELD_OFFSET(struct nsi_ndis_ifinfo_rw, alias) );
+    if (err) return err;
+
+    if (len <= name.Length / sizeof(WCHAR)) return ERROR_NOT_ENOUGH_MEMORY;
+    memcpy( alias, name.String, name.Length );
+    alias[name.Length / sizeof(WCHAR)] = '\0';
+
+    return err;
+}
+
+/******************************************************************
  *    ConvertInterfaceLuidToGuid (IPHLPAPI.@)
  */
 DWORD WINAPI ConvertInterfaceLuidToGuid(const NET_LUID *luid, GUID *guid)

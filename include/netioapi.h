@@ -241,6 +241,7 @@ typedef VOID (WINAPI *PIPFORWARD_CHANGE_CALLBACK)(VOID*,MIB_IPFORWARD_ROW2*,MIB_
 DWORD WINAPI ConvertInterfaceAliasToLuid(const WCHAR*,NET_LUID*);
 DWORD WINAPI ConvertInterfaceGuidToLuid(const GUID*,NET_LUID*);
 DWORD WINAPI ConvertInterfaceIndexToLuid(NET_IFINDEX,NET_LUID*);
+DWORD WINAPI ConvertInterfaceLuidToAlias(const NET_LUID*,WCHAR*,SIZE_T);
 DWORD WINAPI ConvertInterfaceLuidToGuid(const NET_LUID*,GUID*);
 DWORD WINAPI ConvertInterfaceLuidToIndex(const NET_LUID*,NET_IFINDEX*);
 DWORD WINAPI ConvertInterfaceLuidToNameA(const NET_LUID*,char*,SIZE_T);

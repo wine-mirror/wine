@@ -15,7 +15,7 @@
 @ stdcall ConvertInterfaceAliasToLuid( ptr ptr )
 @ stdcall ConvertInterfaceGuidToLuid( ptr ptr )
 @ stdcall ConvertInterfaceIndexToLuid( long ptr )
-#@ stub ConvertInterfaceLuidToAlias
+@ stdcall ConvertInterfaceLuidToAlias( ptr ptr long )
 @ stdcall ConvertInterfaceLuidToGuid( ptr ptr )
 @ stdcall ConvertInterfaceLuidToIndex( ptr ptr )
 @ stdcall ConvertInterfaceLuidToNameA( ptr ptr long )

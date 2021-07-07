@@ -1625,6 +1625,7 @@ static void test_interface_identifier_conversion(void)
     GUID guid;
     SIZE_T len;
     WCHAR nameW[IF_MAX_STRING_SIZE + 1];
+    WCHAR alias[IF_MAX_STRING_SIZE + 1];
     char nameA[IF_MAX_STRING_SIZE + 1], *name;
     NET_IFINDEX index;
     MIB_IF_TABLE2 *table;
@@ -1778,6 +1779,16 @@ static void test_interface_identifier_conversion(void)
         ret = ConvertInterfaceNameToLuidA( nameA, &luid );
         ok( !ret, "got %u\n", ret );
         ok( luid.Value == row->InterfaceLuid.Value, "mismatch\n" );
+
+        /* ConvertInterfaceAliasToLuid */
+        ret = ConvertInterfaceAliasToLuid( row->Alias, &luid );
+        ok( !ret, "got %u\n", ret );
+        ok( luid.Value == row->InterfaceLuid.Value, "mismatch\n" );
+
+        /* ConvertInterfaceLuidToAlias */
+        ret = ConvertInterfaceLuidToAlias( &row->InterfaceLuid, alias, ARRAY_SIZE(alias) );
+        ok( !ret, "got %u\n", ret );
+        ok( !wcscmp( alias, row->Alias ), "got %s vs %s\n", wine_dbgstr_w( alias ), wine_dbgstr_w( row->Alias ) );
 
         index = if_nametoindex( NULL );
         ok( !index, "Got unexpected index %u\n", index );
