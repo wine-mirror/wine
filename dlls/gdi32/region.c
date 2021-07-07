@@ -920,7 +920,7 @@ static void translate( POINT *pt, UINT count, const XFORM *xform )
 
 
 /***********************************************************************
- *           ExtCreateRegion   (GDI32.@)
+ *           NtGdiExtCreateRegion   (win32u.@)
  *
  * Creates a region as specified by the transformation data and region data.
  *
@@ -936,26 +936,20 @@ static void translate( POINT *pt, UINT count, const XFORM *xform )
  * NOTES
  *   See GetRegionData().
  */
-HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA* rgndata)
+HRGN WINAPI NtGdiExtCreateRegion( const XFORM *xform, DWORD count, const RGNDATA *rgndata )
 {
     HRGN hrgn = 0;
     WINEREGION *obj;
     const RECT *pCurRect, *pEndRect;
 
-    if (!rgndata)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
-
-    if (rgndata->rdh.dwSize < sizeof(RGNDATAHEADER))
+    if (!rgndata || rgndata->rdh.dwSize < sizeof(RGNDATAHEADER))
         return 0;
 
     /* XP doesn't care about the type */
     if( rgndata->rdh.iType != RDH_RECTANGLES )
         WARN("(Unsupported region data type: %u)\n", rgndata->rdh.iType);
 
-    if (lpXform)
+    if (xform)
     {
         const RECT *pCurRect, *pEndRect;
 
@@ -977,7 +971,7 @@ HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA*
             pt[3].x = pCurRect->left;
             pt[3].y = pCurRect->bottom;
 
-            translate( pt, 4, lpXform );
+            translate( pt, 4, xform );
             poly_hrgn = CreatePolyPolygonRgn( pt, &count, 1, WINDING );
             CombineRgn( hrgn, hrgn, poly_hrgn, RGN_OR );
             DeleteObject( poly_hrgn );
@@ -1000,7 +994,7 @@ HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA*
 done:
     if (!hrgn) free_region( obj );
 
-    TRACE("%p %d %p returning %p\n", lpXform, dwCount, rgndata, hrgn );
+    TRACE("%p %d %p returning %p\n", xform, count, rgndata, hrgn );
     return hrgn;
 }
 

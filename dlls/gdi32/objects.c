@@ -235,3 +235,19 @@ HBITMAP WINAPI CreateDiscardableBitmap( HDC hdc, INT width, INT height )
 {
     return CreateCompatibleBitmap( hdc, width, height );
 }
+
+/***********************************************************************
+ *           ExtCreateRegion   (GDI32.@)
+ *
+ * Creates a region as specified by the transformation data and region data.
+ */
+HRGN WINAPI ExtCreateRegion( const XFORM *xform, DWORD count, const RGNDATA *data )
+{
+    if (!data)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    return NtGdiExtCreateRegion( xform, count, data );
+}
