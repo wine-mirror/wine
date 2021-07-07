@@ -623,24 +623,6 @@ HRGN WINAPI NtGdiCreateRectRgn( INT left, INT top, INT right, INT bottom )
 
 
 /***********************************************************************
- *           CreateRectRgnIndirect    (GDI32.@)
- *
- * Creates a simple rectangular region.
- *
- * PARAMS
- *   rect [I] Coordinates of rectangular region.
- *
- * RETURNS
- *   Success: Handle to region.
- *   Failure: NULL.
- */
-HRGN WINAPI CreateRectRgnIndirect( const RECT* rect )
-{
-    return NtGdiCreateRectRgn( rect->left, rect->top, rect->right, rect->bottom );
-}
-
-
-/***********************************************************************
  *           NtGdiSetRectRgn    (win32u.@)
  *
  * Sets a region to a simple rectangular region.
@@ -821,28 +803,6 @@ HRGN WINAPI NtGdiCreateEllipticRgn( INT left, INT top, INT right, INT bottom )
                                     right - left, bottom - top );
 }
 
-
-/***********************************************************************
- *           CreateEllipticRgnIndirect    (GDI32.@)
- *
- * Creates an elliptical region.
- *
- * PARAMS
- *   rect [I] Pointer to bounding rectangle of the ellipse.
- *
- * RETURNS
- *   Success: Handle to region.
- *   Failure: NULL.
- *
- * NOTES
- *   This is a special case of CreateRoundRectRgn() where the width of the
- *   ellipse at each corner is equal to the width the rectangle and
- *   the same for the height.
- */
-HRGN WINAPI CreateEllipticRgnIndirect( const RECT *rect )
-{
-    return NtGdiCreateEllipticRgn( rect->left, rect->top, rect->right, rect->bottom );
-}
 
 /***********************************************************************
  *           NtGdiGetRegionData   (win32u.@)
@@ -2740,13 +2700,4 @@ HRGN create_polypolygon_region( const POINT *Pts, const INT *Count, INT nbpolygo
 HRGN WINAPI CreatePolyPolygonRgn( const POINT *pts, const INT *count, INT nbpolygons, INT mode )
 {
     return create_polypolygon_region( pts, count, nbpolygons, mode, NULL );
-}
-
-
-/***********************************************************************
- *           CreatePolygonRgn    (GDI32.@)
- */
-HRGN WINAPI CreatePolygonRgn( const POINT *points, INT count, INT mode )
-{
-    return create_polypolygon_region( points, &count, 1, mode, NULL );
 }
