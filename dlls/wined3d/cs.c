@@ -3674,13 +3674,18 @@ void CDECL wined3d_deferred_context_destroy(struct wined3d_device_context *conte
 
     for (i = 0; i < deferred->resource_count; ++i)
         wined3d_resource_decref(deferred->resources[i]);
+    heap_free(deferred->resources);
 
     for (i = 0; i < deferred->upload_count; ++i)
     {
         wined3d_resource_decref(deferred->uploads[i].resource);
         heap_free(deferred->uploads[i].sysmem);
     }
-    heap_free(deferred->resources);
+    heap_free(deferred->uploads);
+
+    for (i = 0; i < deferred->command_list_count; ++i)
+        wined3d_command_list_decref(deferred->command_lists[i]);
+    heap_free(deferred->command_lists);
 
     wined3d_state_destroy(deferred->c.state);
     heap_free(deferred->data);
