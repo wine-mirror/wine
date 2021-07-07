@@ -1736,6 +1736,9 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
         }
 #endif
 
+        case IOCTL_AFD_WINE_SET_IP_DROP_MEMBERSHIP:
+            return do_setsockopt( handle, io, IPPROTO_IP, IP_DROP_MEMBERSHIP, in_buffer, in_size );
+
         default:
         {
             if ((code >> 16) == FILE_DEVICE_NETWORK)
