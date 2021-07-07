@@ -4856,9 +4856,9 @@ void wined3d_device_context_emit_set_texture_state(struct wined3d_device_context
         enum wined3d_texture_stage_state state, unsigned int value) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_transform(struct wined3d_device_context *context,
         enum wined3d_transform_state state, const struct wined3d_matrix *matrix) DECLSPEC_HIDDEN;
-void wined3d_device_context_emit_set_unordered_access_view(struct wined3d_device_context *context,
-        enum wined3d_pipeline pipeline, unsigned int view_idx, struct wined3d_unordered_access_view *view,
-        unsigned int initial_count) DECLSPEC_HIDDEN;
+void wined3d_device_context_emit_set_unordered_access_views(struct wined3d_device_context *context,
+        enum wined3d_pipeline pipeline, unsigned int start_idx, unsigned int count,
+        struct wined3d_unordered_access_view *const *views, const unsigned int *initial_count) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_vertex_declaration(struct wined3d_device_context *context,
         struct wined3d_vertex_declaration *declaration) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_viewports(struct wined3d_device_context *context, unsigned int viewport_count,

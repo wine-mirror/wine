@@ -123,7 +123,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_CONSTANT_BUFFERS,
     WINED3D_CS_OP_SET_TEXTURE,
     WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEWS,
-    WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEW,
+    WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEWS,
     WINED3D_CS_OP_SET_SAMPLERS,
     WINED3D_CS_OP_SET_SHADER,
     WINED3D_CS_OP_SET_BLEND_STATE,
@@ -319,13 +319,17 @@ struct wined3d_cs_set_shader_resource_views
     struct wined3d_shader_resource_view *views[1];
 };
 
-struct wined3d_cs_set_unordered_access_view
+struct wined3d_cs_set_unordered_access_views
 {
     enum wined3d_cs_op opcode;
     enum wined3d_pipeline pipeline;
-    unsigned int view_idx;
-    struct wined3d_unordered_access_view *view;
-    unsigned int initial_count;
+    unsigned int start_idx;
+    unsigned int count;
+    struct
+    {
+        struct wined3d_unordered_access_view *view;
+        unsigned int initial_count;
+    } uavs[1];
 };
 
 struct wined3d_cs_set_samplers
@@ -604,7 +608,7 @@ static const char *debug_cs_op(enum wined3d_cs_op op)
         WINED3D_TO_STR(WINED3D_CS_OP_SET_CONSTANT_BUFFERS);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_TEXTURE);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEWS);
-        WINED3D_TO_STR(WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEW);
+        WINED3D_TO_STR(WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEWS);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_SAMPLERS);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_SHADER);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_BLEND_STATE);
@@ -1702,37 +1706,49 @@ void wined3d_device_context_emit_set_shader_resource_views(struct wined3d_device
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
-static void wined3d_cs_exec_set_unordered_access_view(struct wined3d_cs *cs, const void *data)
+static void wined3d_cs_exec_set_unordered_access_views(struct wined3d_cs *cs, const void *data)
 {
-    const struct wined3d_cs_set_unordered_access_view *op = data;
-    struct wined3d_unordered_access_view *prev;
+    const struct wined3d_cs_set_unordered_access_views *op = data;
+    unsigned int i;
 
-    prev = cs->state.unordered_access_view[op->pipeline][op->view_idx];
-    cs->state.unordered_access_view[op->pipeline][op->view_idx] = op->view;
+    for (i = 0; i < op->count; ++i)
+    {
+        struct wined3d_unordered_access_view *prev = cs->state.unordered_access_view[op->pipeline][op->start_idx + i];
+        struct wined3d_unordered_access_view *view = op->uavs[i].view;
+        unsigned int initial_count = op->uavs[i].initial_count;
 
-    if (op->view)
-        InterlockedIncrement(&op->view->resource->bind_count);
-    if (prev)
-        InterlockedDecrement(&prev->resource->bind_count);
+        cs->state.unordered_access_view[op->pipeline][op->start_idx + i] = view;
 
-    if (op->view && op->initial_count != ~0u)
-        wined3d_unordered_access_view_set_counter(op->view, op->initial_count);
+        if (view)
+            InterlockedIncrement(&view->resource->bind_count);
+        if (prev)
+            InterlockedDecrement(&prev->resource->bind_count);
+
+        if (view && initial_count != ~0u)
+            wined3d_unordered_access_view_set_counter(view, initial_count);
+    }
 
     device_invalidate_state(cs->c.device, STATE_UNORDERED_ACCESS_VIEW_BINDING(op->pipeline));
 }
 
-void wined3d_device_context_emit_set_unordered_access_view(struct wined3d_device_context *context,
-        enum wined3d_pipeline pipeline, unsigned int view_idx, struct wined3d_unordered_access_view *view,
-        unsigned int initial_count)
+void wined3d_device_context_emit_set_unordered_access_views(struct wined3d_device_context *context,
+        enum wined3d_pipeline pipeline, unsigned int start_idx, unsigned int count,
+        struct wined3d_unordered_access_view *const *views, const unsigned int *initial_counts)
 {
-    struct wined3d_cs_set_unordered_access_view *op;
+    struct wined3d_cs_set_unordered_access_views *op;
+    unsigned int i;
 
-    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
-    op->opcode = WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEW;
+    op = wined3d_device_context_require_space(context,
+            offsetof(struct wined3d_cs_set_unordered_access_views, uavs[count]), WINED3D_CS_QUEUE_DEFAULT);
+    op->opcode = WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEWS;
     op->pipeline = pipeline;
-    op->view_idx = view_idx;
-    op->view = view;
-    op->initial_count = initial_count;
+    op->start_idx = start_idx;
+    op->count = count;
+    for (i = 0; i < count; ++i)
+    {
+        op->uavs[i].view = views[i];
+        op->uavs[i].initial_count = initial_counts ? initial_counts[i] : ~0u;
+    }
 
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
@@ -2917,7 +2933,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_CONSTANT_BUFFERS        */ wined3d_cs_exec_set_constant_buffers,
     /* WINED3D_CS_OP_SET_TEXTURE                 */ wined3d_cs_exec_set_texture,
     /* WINED3D_CS_OP_SET_SHADER_RESOURCE_VIEWS   */ wined3d_cs_exec_set_shader_resource_views,
-    /* WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEW   */ wined3d_cs_exec_set_unordered_access_view,
+    /* WINED3D_CS_OP_SET_UNORDERED_ACCESS_VIEWS  */ wined3d_cs_exec_set_unordered_access_views,
     /* WINED3D_CS_OP_SET_SAMPLERS                */ wined3d_cs_exec_set_samplers,
     /* WINED3D_CS_OP_SET_SHADER                  */ wined3d_cs_exec_set_shader,
     /* WINED3D_CS_OP_SET_BLEND_STATE             */ wined3d_cs_exec_set_blend_state,
