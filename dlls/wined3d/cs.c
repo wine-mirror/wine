@@ -66,6 +66,8 @@ static void wined3d_command_list_destroy_object(void *object)
     for (i = 0; i < list->upload_count; ++i)
         heap_free(list->uploads[i].sysmem);
 
+    heap_free(list->command_lists);
+    heap_free(list->uploads);
     heap_free(list->resources);
     heap_free(list->data);
     heap_free(list);
@@ -95,6 +97,8 @@ ULONG CDECL wined3d_command_list_decref(struct wined3d_command_list *list)
             wined3d_command_list_decref(list->command_lists[i]);
         for (i = 0; i < list->resource_count; ++i)
             wined3d_resource_decref(list->resources[i]);
+        for (i = 0; i < list->upload_count; ++i)
+            wined3d_resource_decref(list->uploads[i].resource);
 
         wined3d_cs_destroy_object(device->cs, wined3d_command_list_destroy_object, list);
     }
