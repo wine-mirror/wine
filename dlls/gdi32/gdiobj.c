@@ -882,7 +882,7 @@ void GDI_CheckNotLock(void)
 
 
 /***********************************************************************
- *           DeleteObject    (GDI32.@)
+ *           NtGdiDeleteObjectApp    (win32u.@)
  *
  * Delete a Gdi object.
  *
@@ -895,7 +895,7 @@ void GDI_CheckNotLock(void)
  *  Failure: FALSE, if obj is not a valid Gdi object, or is currently selected
  *           into a DC.
  */
-BOOL WINAPI DeleteObject( HGDIOBJ obj )
+BOOL WINAPI NtGdiDeleteObjectApp( HGDIOBJ obj )
 {
     GDI_HANDLE_ENTRY *entry;
     struct hdc_list *hdcs_head;

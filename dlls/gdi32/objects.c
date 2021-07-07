@@ -77,6 +77,16 @@ DWORD WINAPI GetObjectType( HGDIOBJ handle )
 }
 
 /***********************************************************************
+ *           DeleteObject    (GDI32.@)
+ *
+ * Delete a Gdi object.
+ */
+BOOL WINAPI DeleteObject( HGDIOBJ obj )
+{
+    return NtGdiDeleteObjectApp( obj );
+}
+
+/***********************************************************************
  *           SelectObject    (GDI32.@)
  *
  * Select a Gdi object into a device context.
