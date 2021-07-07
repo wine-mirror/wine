@@ -1575,8 +1575,8 @@ static BOOL wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL close
     while (num > 2 && pts[num - 1].x == pts[num - 2].x && pts[num - 1].y == pts[num - 2].y) num--;
 
     if (pdev->pen_join == PS_JOIN_ROUND || pdev->pen_endcap == PS_ENDCAP_ROUND)
-        round_cap = CreateEllipticRgn( -(pdev->pen_width / 2), -(pdev->pen_width / 2),
-                                       (pdev->pen_width + 1) / 2 + 1, (pdev->pen_width + 1) / 2 + 1 );
+        round_cap = NtGdiCreateEllipticRgn( -(pdev->pen_width / 2), -(pdev->pen_width / 2),
+                                            (pdev->pen_width + 1) / 2 + 1, (pdev->pen_width + 1) / 2 + 1 );
 
     if (close)
         wide_line_segments( pdev, num, pts, TRUE, 0, num, &pts[0], &pts[0], round_cap, total );
@@ -1601,8 +1601,8 @@ static BOOL dashed_wide_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOO
     while (num > 2 && pts[num - 1].x == pts[num - 2].x && pts[num - 1].y == pts[num - 2].y) num--;
 
     if (pdev->pen_join == PS_JOIN_ROUND || pdev->pen_endcap == PS_ENDCAP_ROUND)
-        round_cap = CreateEllipticRgn( -(pdev->pen_width / 2), -(pdev->pen_width / 2),
-                                       (pdev->pen_width + 1) / 2 + 1, (pdev->pen_width + 1) / 2 + 1);
+        round_cap = NtGdiCreateEllipticRgn( -(pdev->pen_width / 2), -(pdev->pen_width / 2),
+                                            (pdev->pen_width + 1) / 2 + 1, (pdev->pen_width + 1) / 2 + 1 );
 
     start = 0;
     cur_len = 0;

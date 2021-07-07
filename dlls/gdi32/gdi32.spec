@@ -52,7 +52,7 @@
 @ stdcall CreateDIBSection(long ptr long ptr long long)
 @ stdcall CreateDIBitmap(long ptr long ptr ptr long)
 @ stdcall CreateDiscardableBitmap(long long long)
-@ stdcall CreateEllipticRgn(long long long long)
+@ stdcall CreateEllipticRgn(long long long long) NtGdiCreateEllipticRgn
 @ stdcall CreateEllipticRgnIndirect(ptr)
 @ stdcall CreateEnhMetaFileA(long str ptr str)
 @ stdcall CreateEnhMetaFileW(long wstr ptr wstr)
@@ -74,9 +74,9 @@
 @ stdcall CreatePenIndirect(ptr)
 @ stdcall CreatePolyPolygonRgn(ptr ptr long long)
 @ stdcall CreatePolygonRgn(ptr long long)
-@ stdcall CreateRectRgn(long long long long)
+@ stdcall CreateRectRgn(long long long long) NtGdiCreateRectRgn
 @ stdcall CreateRectRgnIndirect(ptr)
-@ stdcall CreateRoundRectRgn(long long long long long long)
+@ stdcall CreateRoundRectRgn(long long long long long long) NtGdiCreateRoundRectRgn
 @ stdcall CreateScalableFontResourceA(long str str str)
 @ stdcall CreateScalableFontResourceW(long wstr wstr wstr)
 @ stdcall CreateSolidBrush(long)

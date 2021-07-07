@@ -590,7 +590,7 @@ INT WINAPI GetRgnBox( HRGN hrgn, LPRECT rect )
 
 
 /***********************************************************************
- *           CreateRectRgn   (GDI32.@)
+ *           NtGdiCreateRectRgn   (win32u.@)
  *
  * Creates a simple rectangular region.
  *
@@ -604,7 +604,7 @@ INT WINAPI GetRgnBox( HRGN hrgn, LPRECT rect )
  *   Success: Handle to region.
  *   Failure: NULL.
  */
-HRGN WINAPI CreateRectRgn(INT left, INT top, INT right, INT bottom)
+HRGN WINAPI NtGdiCreateRectRgn( INT left, INT top, INT right, INT bottom )
 {
     HRGN hrgn;
     WINEREGION *obj;
@@ -636,7 +636,7 @@ HRGN WINAPI CreateRectRgn(INT left, INT top, INT right, INT bottom)
  */
 HRGN WINAPI CreateRectRgnIndirect( const RECT* rect )
 {
-    return CreateRectRgn( rect->left, rect->top, rect->right, rect->bottom );
+    return NtGdiCreateRectRgn( rect->left, rect->top, rect->right, rect->bottom );
 }
 
 
@@ -688,7 +688,7 @@ BOOL WINAPI SetRectRgn( HRGN hrgn, INT left, INT top,
 
 
 /***********************************************************************
- *           CreateRoundRectRgn    (GDI32.@)
+ *           NtGdiCreateRoundRectRgn    (win32u.@)
  *
  * Creates a rectangular region with rounded corners.
  *
@@ -708,9 +708,8 @@ BOOL WINAPI SetRectRgn( HRGN hrgn, INT left, INT top,
  *   If ellipse_width or ellipse_height is less than 2 logical units then
  *   it is treated as though CreateRectRgn() was called instead.
  */
-HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
-				    INT right, INT bottom,
-				    INT ellipse_width, INT ellipse_height )
+HRGN WINAPI NtGdiCreateRoundRectRgn( INT left, INT top, INT right, INT bottom,
+                                     INT ellipse_width, INT ellipse_height )
 {
     WINEREGION *obj;
     HRGN hrgn = 0;
@@ -732,7 +731,7 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
       /* Check if we can do a normal rectangle instead */
 
     if ((ellipse_width < 2) || (ellipse_height < 2))
-        return CreateRectRgn( left, top, right, bottom );
+        return NtGdiCreateRectRgn( left, top, right, bottom );
 
     if (!(obj = alloc_region( ellipse_height ))) return 0;
     obj->numRects = ellipse_height;
@@ -798,7 +797,7 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
 
 
 /***********************************************************************
- *           CreateEllipticRgn    (GDI32.@)
+ *           NtGdiCreateEllipticRgn    (win32u.@)
  *
  * Creates an elliptical region.
  *
@@ -817,11 +816,10 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
  *   ellipse at each corner is equal to the width the rectangle and
  *   the same for the height.
  */
-HRGN WINAPI CreateEllipticRgn( INT left, INT top,
-				   INT right, INT bottom )
+HRGN WINAPI NtGdiCreateEllipticRgn( INT left, INT top, INT right, INT bottom )
 {
-    return CreateRoundRectRgn( left, top, right, bottom,
-				 right-left, bottom-top );
+    return NtGdiCreateRoundRectRgn( left, top, right, bottom,
+                                    right - left, bottom - top );
 }
 
 
@@ -844,9 +842,7 @@ HRGN WINAPI CreateEllipticRgn( INT left, INT top,
  */
 HRGN WINAPI CreateEllipticRgnIndirect( const RECT *rect )
 {
-    return CreateRoundRectRgn( rect->left, rect->top, rect->right,
-				 rect->bottom, rect->right - rect->left,
-				 rect->bottom - rect->top );
+    return NtGdiCreateEllipticRgn( rect->left, rect->top, rect->right, rect->bottom );
 }
 
 /***********************************************************************
@@ -953,7 +949,7 @@ HRGN WINAPI NtGdiExtCreateRegion( const XFORM *xform, DWORD count, const RGNDATA
     {
         const RECT *pCurRect, *pEndRect;
 
-        hrgn = CreateRectRgn( 0, 0, 0, 0 );
+        hrgn = NtGdiCreateRectRgn( 0, 0, 0, 0 );
 
         pEndRect = (const RECT *)rgndata->Buffer + rgndata->rdh.nCount;
         for (pCurRect = (const RECT *)rgndata->Buffer; pCurRect < pEndRect; pCurRect++)
@@ -2716,8 +2712,8 @@ HRGN create_polypolygon_region( const POINT *Pts, const INT *Count, INT nbpolygo
 	  (Pts[1].y == Pts[2].y) &&
 	  (Pts[2].x == Pts[3].x) &&
 	  (Pts[3].y == Pts[0].y))))
-        return CreateRectRgn( min(Pts[0].x, Pts[2].x), min(Pts[0].y, Pts[2].y),
-                              max(Pts[0].x, Pts[2].x), max(Pts[0].y, Pts[2].y) );
+        return NtGdiCreateRectRgn( min(Pts[0].x, Pts[2].x), min(Pts[0].y, Pts[2].y),
+                                   max(Pts[0].x, Pts[2].x), max(Pts[0].y, Pts[2].y) );
 
     for(poly = total = 0; poly < nbpolygons; poly++)
         total += Count[poly];

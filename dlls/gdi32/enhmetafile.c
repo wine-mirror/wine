@@ -2413,7 +2413,7 @@ BOOL WINAPI EnumEnhMetaFile(
 	hBrush = GetCurrentObject(hdc, OBJ_BRUSH);
 	hFont = GetCurrentObject(hdc, OBJ_FONT);
 
-        hRgn = CreateRectRgn(0, 0, 0, 0);
+        hRgn = NtGdiCreateRectRgn(0, 0, 0, 0);
         if (!GetClipRgn(hdc, hRgn))
         {
             DeleteObject(hRgn);

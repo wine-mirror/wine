@@ -303,10 +303,10 @@ LONG WINAPI NtGdiSetBitmapBits(
 
         if ((count % src_stride << 3) % bmp->dib.dsBm.bmBitsPixel)
             FIXME( "Unhandled partial pixel\n" );
-        clip = CreateRectRgn( src.visrect.left, src.visrect.top,
-                              src.visrect.right, src.visrect.bottom - 1 );
-        last_row = CreateRectRgn( src.visrect.left, src.visrect.bottom - 1,
-                                  src.visrect.left + extra_pixels, src.visrect.bottom );
+        clip = NtGdiCreateRectRgn( src.visrect.left, src.visrect.top,
+                                   src.visrect.right, src.visrect.bottom - 1 );
+        last_row = NtGdiCreateRectRgn( src.visrect.left, src.visrect.bottom - 1,
+                                       src.visrect.left + extra_pixels, src.visrect.bottom );
         CombineRgn( clip, clip, last_row, RGN_OR );
         DeleteObject( last_row );
     }

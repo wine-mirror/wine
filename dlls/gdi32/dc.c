@@ -418,12 +418,12 @@ INT CDECL nulldrv_SaveDC( PHYSDEV dev )
 
     if (dc->hClipRgn)
     {
-        newdc->hClipRgn = CreateRectRgn( 0, 0, 0, 0 );
+        newdc->hClipRgn = NtGdiCreateRectRgn( 0, 0, 0, 0 );
         CombineRgn( newdc->hClipRgn, dc->hClipRgn, 0, RGN_COPY );
     }
     if (dc->hMetaRgn)
     {
-        newdc->hMetaRgn = CreateRectRgn( 0, 0, 0, 0 );
+        newdc->hMetaRgn = NtGdiCreateRectRgn( 0, 0, 0, 0 );
         CombineRgn( newdc->hMetaRgn, dc->hMetaRgn, 0, RGN_COPY );
     }
 
@@ -493,7 +493,7 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
 
     if (dcs->hClipRgn)
     {
-        if (!dc->hClipRgn) dc->hClipRgn = CreateRectRgn( 0, 0, 0, 0 );
+        if (!dc->hClipRgn) dc->hClipRgn = NtGdiCreateRectRgn( 0, 0, 0, 0 );
         CombineRgn( dc->hClipRgn, dcs->hClipRgn, 0, RGN_COPY );
     }
     else
@@ -503,7 +503,7 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     }
     if (dcs->hMetaRgn)
     {
-        if (!dc->hMetaRgn) dc->hMetaRgn = CreateRectRgn( 0, 0, 0, 0 );
+        if (!dc->hMetaRgn) dc->hMetaRgn = NtGdiCreateRectRgn( 0, 0, 0, 0 );
         CombineRgn( dc->hMetaRgn, dcs->hMetaRgn, 0, RGN_COPY );
     }
     else

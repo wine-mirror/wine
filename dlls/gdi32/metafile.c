@@ -341,7 +341,7 @@ BOOL WINAPI PlayMetaFile( HDC hdc, HMETAFILE hmf )
     hBrush = GetCurrentObject(hdc, OBJ_BRUSH);
     hPal = GetCurrentObject(hdc, OBJ_PAL);
 
-    hRgn = CreateRectRgn(0, 0, 0, 0);
+    hRgn = NtGdiCreateRectRgn(0, 0, 0, 0);
     if (!GetClipRgn(hdc, hRgn))
     {
         DeleteObject(hRgn);
@@ -861,7 +861,7 @@ BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *ht, METARECORD *mr, UINT 
 
     case META_CREATEREGION:
       {
-        HRGN hrgn = CreateRectRgn(0,0,0,0);
+        HRGN hrgn = NtGdiCreateRectRgn(0,0,0,0);
 
         MF_Play_MetaCreateRegion(mr, hrgn);
         MF_AddHandle(ht, handles, hrgn);
@@ -1270,7 +1270,7 @@ static BOOL MF_Play_MetaCreateRegion( METARECORD *mr, HRGN hrgn )
     WORD band, pair;
     WORD *start, *end;
     INT16 y0, y1;
-    HRGN hrgn2 = CreateRectRgn( 0, 0, 0, 0 );
+    HRGN hrgn2 = NtGdiCreateRectRgn( 0, 0, 0, 0 );
 
     for(band  = 0, start = &(mr->rdParm[11]); band < mr->rdParm[5];
  					        band++, start = end + 1) {

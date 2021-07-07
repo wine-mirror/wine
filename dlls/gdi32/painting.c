@@ -85,7 +85,7 @@ BOOL CDECL nulldrv_FillRgn( PHYSDEV dev, HRGN rgn, HBRUSH brush )
 BOOL CDECL nulldrv_FrameRgn( PHYSDEV dev, HRGN rgn, HBRUSH brush, INT width, INT height )
 {
     BOOL ret = FALSE;
-    HRGN tmp = CreateRectRgn( 0, 0, 0, 0 );
+    HRGN tmp = NtGdiCreateRectRgn( 0, 0, 0, 0 );
 
     if (tmp)
     {

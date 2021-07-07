@@ -105,7 +105,7 @@ void update_dc_clipping( DC * dc )
 
     if (count > 1)
     {
-        if (!dc->region) dc->region = CreateRectRgn( 0, 0, 0, 0 );
+        if (!dc->region) dc->region = NtGdiCreateRectRgn( 0, 0, 0, 0 );
         CombineRgn( dc->region, regions[0], regions[1], RGN_AND );
         if (count > 2) CombineRgn( dc->region, dc->region, regions[2], RGN_AND );
     }
@@ -170,7 +170,7 @@ INT CDECL nulldrv_ExtSelectClipRgn( PHYSDEV dev, HRGN rgn, INT mode )
 
         if (dc->layout & LAYOUT_RTL)
         {
-            if (!(mirrored = CreateRectRgn( 0, 0, 0, 0 ))) return ERROR;
+            if (!(mirrored = NtGdiCreateRectRgn( 0, 0, 0, 0 ))) return ERROR;
             mirror_region( mirrored, rgn, dc->vis_rect.right - dc->vis_rect.left );
             rgn = mirrored;
         }

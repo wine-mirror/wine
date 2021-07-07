@@ -329,8 +329,8 @@ static BOOL build_rle_bitmap( BITMAPINFO *info, struct gdi_image_bits *bits, HRG
 
     if (clip)
     {
-        *clip = CreateRectRgn( 0, 0, 0, 0 );
-        run   = CreateRectRgn( 0, 0, 0, 0 );
+        *clip = NtGdiCreateRectRgn( 0, 0, 0, 0 );
+        run   = NtGdiCreateRectRgn( 0, 0, 0, 0 );
         if (!*clip || !run) goto fail;
     }
 
