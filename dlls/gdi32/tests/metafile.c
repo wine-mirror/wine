@@ -418,13 +418,10 @@ static void check_dc_state(HDC hdc, int restore_no,
 {
     BOOL ret;
     XFORM xform;
-    POINT vp_org, win_org;
-    SIZE vp_size, win_size;
     FLOAT xscale, yscale, edx, edy;
 
     SetLastError(0xdeadbeef);
     ret = GetWorldTransform(hdc, &xform);
-    if (!ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED) goto win9x_here;
     ok(ret, "GetWorldTransform error %u\n", GetLastError());
 
     trace("%d: eM11 %f, eM22 %f, eDx %f, eDy %f\n", restore_no, xform.eM11, xform.eM22, xform.eDx, xform.eDy);
@@ -446,27 +443,6 @@ static void check_dc_state(HDC hdc, int restore_no,
     ok(fabs(edx - xform.eDx) < 0.01, "%d: edx %f != eDx %f\n", restore_no, edx, xform.eDx);
     edy = (FLOAT)vp_org_y - xform.eM22 * (FLOAT)wnd_org_y;
     ok(fabs(edy - xform.eDy) < 0.01, "%d: edy %f != eDy %f\n", restore_no, edy, xform.eDy);
-
-    return;
-
-win9x_here:
-
-    GetWindowOrgEx(hdc, &win_org);
-    GetViewportOrgEx(hdc, &vp_org);
-    GetWindowExtEx(hdc, &win_size);
-    GetViewportExtEx(hdc, &vp_size);
-
-    ok(wnd_org_x == win_org.x, "%d: wnd_org_x: %d != %d\n", restore_no, wnd_org_x, win_org.x);
-    ok(wnd_org_y == win_org.y, "%d: wnd_org_y: %d != %d\n", restore_no, wnd_org_y, win_org.y);
-
-    ok(vp_org_x == vp_org.x, "%d: vport_org_x: %d != %d\n", restore_no, vp_org_x, vp_org.x);
-    ok(vp_org_y == vp_org.y, "%d: vport_org_y: %d != %d\n", restore_no, vp_org_y, vp_org.y);
-
-    ok(wnd_ext_x == win_size.cx, "%d: wnd_ext_x: %d != %d\n", restore_no, wnd_ext_x, win_size.cx);
-    ok(wnd_ext_y == win_size.cy, "%d: wnd_ext_y: %d != %d\n", restore_no, wnd_ext_y, win_size.cy);
-
-    ok(vp_ext_x == vp_size.cx, "%d: vport_ext_x: %d != %d\n", restore_no, vp_ext_x, vp_size.cx);
-    ok(vp_ext_y == vp_size.cy, "%d: vport_ext_y: %d != %d\n", restore_no, vp_ext_y, vp_size.cy);
 }
 
 static int CALLBACK savedc_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
@@ -1695,23 +1671,7 @@ static BOOL match_emf_record(const ENHMETARECORD *emr1, const ENHMETARECORD *emr
     }
     else if (emr1->iType == EMR_EXTSELECTCLIPRGN && !lstrcmpA(desc, "emf_clipping"))
     {
-        /* We have to take care of NT4 differences here */
         diff = memcmp(emr1, emr2, emr1->nSize);
-        if (diff)
-        {
-            ENHMETARECORD *emr_nt4;
-
-            emr_nt4 = HeapAlloc(GetProcessHeap(), 0, emr2->nSize);
-            memcpy(emr_nt4, emr2, emr2->nSize);
-            /* Correct the nRgnSize field */
-            emr_nt4->dParm[5] = sizeof(RECT);
-
-            diff = memcmp(emr1, emr_nt4, emr1->nSize);
-            if (!diff)
-                win_skip("Catered for NT4 differences\n");
-
-            HeapFree(GetProcessHeap(), 0, emr_nt4);
-        }
     }
     else if (emr1->iType == EMR_POLYBEZIERTO16 || emr1->iType == EMR_POLYBEZIER16)
     {
@@ -1760,22 +1720,15 @@ static int compare_emf_bits(const HENHMETAFILE mf, const unsigned char *bits,
                             BOOL ignore_scaling)
 {
     unsigned char buf[MF_BUFSIZE];
-    UINT mfsize, offset1, offset2, diff_nt4, diff_9x;
+    UINT mfsize, offset1, offset2;
     const ENHMETAHEADER *emh1, *emh2;
 
     mfsize = GetEnhMetaFileBits(mf, MF_BUFSIZE, buf);
     ok (mfsize > 0, "%s: GetEnhMetaFileBits error %d\n", desc, GetLastError());
 
-    /* ENHMETAHEADER size could differ, depending on platform */
-    diff_nt4 = sizeof(SIZEL);
-    diff_9x = sizeof(SIZEL) + 3 * sizeof(DWORD);
-
     if (mfsize < MF_BUFSIZE)
     {
-        ok(mfsize == bsize ||
-           broken(mfsize == bsize - diff_nt4) ||  /* NT4 */
-           broken(mfsize == bsize - diff_9x), /* Win9x/WinME */
-           "%s: mfsize=%d, bsize=%d\n", desc, mfsize, bsize);
+        ok(mfsize == bsize, "%s: mfsize=%d, bsize=%d\n", desc, mfsize, bsize);
     }
     else
         ok(bsize >= MF_BUFSIZE, "%s: mfsize > bufsize (%d bytes), bsize=%d\n",
@@ -1790,9 +1743,7 @@ static int compare_emf_bits(const HENHMETAFILE mf, const unsigned char *bits,
     ok(emh1->dSignature == ENHMETA_SIGNATURE, "expected ENHMETA_SIGNATURE, got %u\n", emh1->dSignature);
 
     ok(emh1->iType == emh2->iType, "expected EMR_HEADER, got %u\n", emh2->iType);
-    ok(emh1->nSize == emh2->nSize ||
-       broken(emh1->nSize - diff_nt4 == emh2->nSize) ||
-       broken(emh1->nSize - diff_9x == emh2->nSize),
+    ok(emh1->nSize == emh2->nSize,
        "expected nSize %u, got %u\n", emh1->nSize, emh2->nSize);
     ok(emh1->rclBounds.left == emh2->rclBounds.left, "%s: expected rclBounds.left = %d, got %d\n",
             desc, emh1->rclBounds.left, emh2->rclBounds.left);
@@ -1803,9 +1754,7 @@ static int compare_emf_bits(const HENHMETAFILE mf, const unsigned char *bits,
     ok(emh1->rclBounds.bottom == emh2->rclBounds.bottom, "%s: expected rclBounds.bottom = %d, got %d\n",
             desc, emh1->rclBounds.bottom, emh2->rclBounds.bottom);
     ok(emh1->dSignature == emh2->dSignature, "expected dSignature %u, got %u\n", emh1->dSignature, emh2->dSignature);
-    ok(emh1->nBytes == emh2->nBytes ||
-       broken(emh1->nBytes - diff_nt4 == emh2->nBytes) ||
-       broken(emh1->nBytes - diff_9x == emh2->nBytes),
+    ok(emh1->nBytes == emh2->nBytes,
        "expected nBytes %u, got %u\n", emh1->nBytes, emh2->nBytes);
     ok(emh1->nRecords == emh2->nRecords, "expected nRecords %u, got %u\n", emh1->nRecords, emh2->nRecords);
 
@@ -3257,9 +3206,7 @@ static void test_SetMetaFileBits(void)
     SetLastError(0xdeadbeef);
     hmf = SetMetaFileBitsEx(0, MF_GRAPHICS_BITS);
     ok(!hmf, "SetMetaFileBitsEx should fail\n");
-    ok(GetLastError() == ERROR_INVALID_DATA ||
-       broken(GetLastError() == ERROR_INVALID_PARAMETER), /* Win9x */
-       "wrong error %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_DATA, "wrong error %d\n", GetLastError());
 
     /* Now with odd size */
     SetLastError(0xdeadbeef);
@@ -3278,9 +3225,7 @@ static void test_SetMetaFileBits(void)
     SetLastError(0xdeadbeef);
     hmf = SetMetaFileBitsEx(sizeof(MF_GRAPHICS_BITS), buf);
     ok(!hmf, "SetMetaFileBitsEx should fail\n");
-    ok(GetLastError() == ERROR_INVALID_DATA ||
-       broken(GetLastError() == ERROR_INVALID_PARAMETER), /* Win9x */
-       "wrong error %d\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_DATA, "wrong error %d\n", GetLastError());
 
     /* Now with corrupted mtSize field */
     memcpy(buf, MF_GRAPHICS_BITS, sizeof(MF_GRAPHICS_BITS));
@@ -3740,7 +3685,6 @@ static int CALLBACK clip_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
         HRGN hrgn;
         XFORM xform;
         INT ret;
-        BOOL is_win9x;
 
         trace("EMR_EXTSELECTCLIPRGN: cbRgnData %#x, iMode %u\n",
                clip->cbRgnData, clip->iMode);
@@ -3767,8 +3711,7 @@ static int CALLBACK clip_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
         ok(rgn1->data.rdh.dwSize == sizeof(rgn1->data.rdh), "expected sizeof(rdh), got %u\n", rgn1->data.rdh.dwSize);
         ok(rgn1->data.rdh.iType == RDH_RECTANGLES, "expected RDH_RECTANGLES, got %u\n", rgn1->data.rdh.iType);
         ok(rgn1->data.rdh.nCount == 1, "expected 1, got %u\n", rgn1->data.rdh.nCount);
-        ok(rgn1->data.rdh.nRgnSize == sizeof(RECT) ||
-           broken(rgn1->data.rdh.nRgnSize == 168), /* NT4 */
+        ok(rgn1->data.rdh.nRgnSize == sizeof(RECT),
            "expected sizeof(RECT), got %u\n", rgn1->data.rdh.nRgnSize);
 
         hrgn = CreateRectRgn(0, 0, 0, 0);
@@ -3776,9 +3719,7 @@ static int CALLBACK clip_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
         memset(&xform, 0, sizeof(xform));
         SetLastError(0xdeadbeef);
         ret = GetWorldTransform(hdc, &xform);
-        is_win9x = !ret && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED;
-        if (!is_win9x)
-            ok(ret, "GetWorldTransform error %u\n", GetLastError());
+        ok(ret, "GetWorldTransform error %u\n", GetLastError());
 
         trace("xform.eM11 %f, xform.eM22 %f\n", xform.eM11, xform.eM22);
 
@@ -3789,9 +3730,6 @@ static int CALLBACK clip_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
 
         ret = GetClipRgn(hdc, hrgn);
         ok(ret == 1, "GetClipRgn returned %d, expected 1\n", ret);
-
-        /* Win9x returns empty clipping region */
-        if (is_win9x) return 1;
 
         ret = GetRegionData(hrgn, 0, NULL);
         ok(ret == sizeof(rgn2.data.rdh) + sizeof(RECT), "expected sizeof(rgn), got %u\n", ret);
@@ -3819,8 +3757,7 @@ static int CALLBACK clip_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
         ok(rgn2.data.rdh.dwSize == sizeof(rgn1->data.rdh), "expected sizeof(rdh), got %u\n", rgn2.data.rdh.dwSize);
         ok(rgn2.data.rdh.iType == RDH_RECTANGLES, "expected RDH_RECTANGLES, got %u\n", rgn2.data.rdh.iType);
         ok(rgn2.data.rdh.nCount == 1, "expected 1, got %u\n", rgn2.data.rdh.nCount);
-        ok(rgn2.data.rdh.nRgnSize == sizeof(RECT) ||
-           broken(rgn2.data.rdh.nRgnSize == 168), /* NT4 */
+        ok(rgn2.data.rdh.nRgnSize == sizeof(RECT),
            "expected sizeof(RECT), got %u\n", rgn2.data.rdh.nRgnSize);
 
         DeleteObject(hrgn);
@@ -4751,9 +4688,8 @@ static void test_SetEnhMetaFileBits(void)
     SetLastError(0xdeadbeef);
     hemf = SetEnhMetaFileBits(sizeof(data), data);
     ok(!hemf, "SetEnhMetaFileBits should fail\n");
-    ok(GetLastError() == ERROR_INVALID_DATA ||
-       GetLastError() == ERROR_INVALID_PARAMETER, /* Win9x, WinMe */
-       "expected ERROR_INVALID_DATA or ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_DATA,
+       "expected ERROR_INVALID_DATA, got %u\n", GetLastError());
 
     emh = (ENHMETAHEADER *)data;
     memset(emh, 0, sizeof(*emh));
@@ -4775,9 +4711,7 @@ static void test_SetEnhMetaFileBits(void)
     emh->nBytes++;
     SetLastError(0xdeadbeef);
     hemf = SetEnhMetaFileBits(emh->nBytes, data);
-    ok(!hemf ||
-       broken(hemf != NULL), /* Win9x, WinMe */
-       "SetEnhMetaFileBits should fail\n");
+    ok(!hemf, "SetEnhMetaFileBits should fail\n");
     ok(GetLastError() == 0xdeadbeef, "Expected deadbeef, got %u\n", GetLastError());
     DeleteEnhMetaFile(hemf);
 
@@ -4785,9 +4719,7 @@ static void test_SetEnhMetaFileBits(void)
     emh->nBytes--;
     SetLastError(0xdeadbeef);
     hemf = SetEnhMetaFileBits(emh->nBytes, data);
-    ok(!hemf ||
-       broken(hemf != NULL), /* Win9x, WinMe */
-       "SetEnhMetaFileBits should fail\n");
+    ok(!hemf, "SetEnhMetaFileBits should fail\n");
     ok(GetLastError() == 0xdeadbeef, "Expected deadbeef, got %u\n", GetLastError());
     DeleteEnhMetaFile(hemf);
 }
