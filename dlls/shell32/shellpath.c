@@ -2445,9 +2445,9 @@ static const CSIDL_DATA CSIDL_Data[] =
     },
     { /* 0x45 */
         &GUID_NULL,
-        CSIDL_Type_User,
+        CSIDL_Type_Disallowed,
         NULL,
-        DocumentsW
+        NULL,
     },
     { /* 0x46 */
         &FOLDERID_DocumentsLibrary,
