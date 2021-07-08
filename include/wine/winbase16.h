@@ -197,7 +197,7 @@ typedef struct _STACK16FRAME
     DWORD         callfrom_ip;    /* 18 callfrom tail IP */
     DWORD         module_cs;      /* 1c module code segment */
     DWORD         relay;          /* 20 relay function address */
-    WORD          entry_ip;       /* 22 entry point IP */
+    WORD          entry_ip;       /* 24 entry point IP */
     DWORD         entry_point;    /* 26 API entry point to call, reused as mutex count */
     WORD          bp;             /* 2a 16-bit stack frame chain */
     WORD          ip;             /* 2c return address */
