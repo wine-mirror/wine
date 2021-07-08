@@ -144,7 +144,7 @@ static char **build_argv( const UNICODE_STRING *cmdline, int reserved )
 /***********************************************************************
  *           get_so_file_info
  */
-static BOOL get_so_file_info( HANDLE handle, pe_image_info_t *info )
+static BOOL get_so_file_info( int fd, pe_image_info_t *info )
 {
     union
     {
@@ -185,12 +185,9 @@ static BOOL get_so_file_info( HANDLE handle, pe_image_info_t *info )
         IMAGE_DOS_HEADER mz;
     } header;
 
-    IO_STATUS_BLOCK io;
-    LARGE_INTEGER offset;
+    off_t pos;
 
-    offset.QuadPart = 0;
-    if (NtReadFile( handle, 0, NULL, NULL, &io, &header, sizeof(header), &offset, 0 )) return FALSE;
-    if (io.Information != sizeof(header)) return FALSE;
+    if (pread( fd, &header, sizeof(header), 0 ) != sizeof(header)) return FALSE;
 
     if (!memcmp( header.elf.magic, "\177ELF", 4 ))
     {
@@ -213,20 +210,19 @@ static BOOL get_so_file_info( HANDLE handle, pe_image_info_t *info )
         if (header.elf.type != 3 /* ET_DYN */) return FALSE;
         if (header.elf.class == 2 /* ELFCLASS64 */)
         {
-            offset.QuadPart = header.elf64.phoff;
+            pos = header.elf64.phoff;
             phnum = header.elf64.phnum;
         }
         else
         {
-            offset.QuadPart = header.elf.phoff;
+            pos = header.elf.phoff;
             phnum = header.elf.phnum;
         }
         while (phnum--)
         {
-            if (NtReadFile( handle, 0, NULL, NULL, &io, &type, sizeof(type), &offset, 0 )) return FALSE;
-            if (io.Information < sizeof(type)) return FALSE;
+            if (pread( fd, &type, sizeof(type), pos ) != sizeof(type)) return FALSE;
             if (type == 3 /* PT_INTERP */) return FALSE;
-            offset.QuadPart += (header.elf.class == 2) ? 56 : 32;
+            pos += (header.elf.class == 2) ? 56 : 32;
         }
         return TRUE;
     }
@@ -290,7 +286,13 @@ static NTSTATUS get_pe_file_info( OBJECT_ATTRIBUTES *attr, HANDLE *handle, pe_im
     }
     else if (status == STATUS_INVALID_IMAGE_NOT_MZ)
     {
-        if (get_so_file_info( *handle, info )) return STATUS_SUCCESS;
+        int unix_fd, needs_close;
+
+        if (!server_get_unix_fd( *handle, FILE_READ_DATA, &unix_fd, &needs_close, NULL, NULL ))
+        {
+            if (get_so_file_info( unix_fd, info )) status = STATUS_SUCCESS;
+            if (needs_close) close( unix_fd );
+        }
     }
     return status;
 }
