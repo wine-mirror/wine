@@ -542,7 +542,7 @@ typedef struct
 /* return the region data without making a copy */
 static inline const WINEREGION *get_wine_region(HRGN rgn)
 {
-    return GDI_GetObjPtr( rgn, OBJ_REGION );
+    return GDI_GetObjPtr( rgn, NTGDI_OBJ_REGION );
 }
 static inline void release_wine_region(HRGN rgn)
 {

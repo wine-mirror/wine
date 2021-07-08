@@ -335,7 +335,7 @@ HDC WINAPI CreateEnhMetaFileW(
 
     TRACE("(%p %s %s %s)\n", hdc, debugstr_w(filename), wine_dbgstr_rect(rect), debugstr_w(description) );
 
-    if (!(dc = alloc_dc_ptr( OBJ_ENHMETADC ))) return 0;
+    if (!(dc = alloc_dc_ptr( NTGDI_OBJ_ENHMETADC ))) return 0;
 
     physDev = HeapAlloc(GetProcessHeap(),0,sizeof(*physDev));
     if (!physDev) {

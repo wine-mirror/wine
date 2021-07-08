@@ -389,7 +389,6 @@ static void test_shared_handle_entry( HGDIOBJ obj, unsigned int type, BOOL is_st
        entry->Unique, handle >> 16);
     if (type != NTGDI_OBJ_MEMDC)
     {
-        todo_wine
         ok(entry->ExtType == type, "ExtType = %x, expected %x\n", entry->ExtType, type);
     }
     else
@@ -399,7 +398,6 @@ static void test_shared_handle_entry( HGDIOBJ obj, unsigned int type, BOOL is_st
     }
     todo_wine_if(is_stock)
     ok(entry->StockFlag == is_stock, "StockFlag = %x\n", entry->StockFlag);
-    todo_wine
     ok(entry->Type == (type & 0x1f), "Type = %x, expected %x\n", entry->Type, type & 0x1f);
     ok(entry->Object, "Object = NULL\n");
     ok(entry->Owner.Count == 0, "Count = %u\n", entry->Owner.Count);

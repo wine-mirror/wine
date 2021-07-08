@@ -691,20 +691,19 @@ static const char *gdi_obj_type( unsigned type )
 {
     switch ( type )
     {
-        case OBJ_PEN: return "OBJ_PEN";
-        case OBJ_BRUSH: return "OBJ_BRUSH";
-        case OBJ_DC: return "OBJ_DC";
-        case OBJ_METADC: return "OBJ_METADC";
-        case OBJ_PAL: return "OBJ_PAL";
-        case OBJ_FONT: return "OBJ_FONT";
-        case OBJ_BITMAP: return "OBJ_BITMAP";
-        case OBJ_REGION: return "OBJ_REGION";
-        case OBJ_METAFILE: return "OBJ_METAFILE";
-        case OBJ_MEMDC: return "OBJ_MEMDC";
-        case OBJ_EXTPEN: return "OBJ_EXTPEN";
-        case OBJ_ENHMETADC: return "OBJ_ENHMETADC";
-        case OBJ_ENHMETAFILE: return "OBJ_ENHMETAFILE";
-        case OBJ_COLORSPACE: return "OBJ_COLORSPACE";
+        case NTGDI_OBJ_PEN: return "NTGDI_OBJ_PEN";
+        case NTGDI_OBJ_BRUSH: return "NTGDI_OBJ_BRUSH";
+        case NTGDI_OBJ_DC: return "NTGDI_OBJ_DC";
+        case NTGDI_OBJ_METADC: return "NTGDI_OBJ_METADC";
+        case NTGDI_OBJ_PAL: return "NTGDI_OBJ_PAL";
+        case NTGDI_OBJ_FONT: return "NTGDI_OBJ_FONT";
+        case NTGDI_OBJ_BITMAP: return "NTGDI_OBJ_BITMAP";
+        case NTGDI_OBJ_REGION: return "NTGDI_OBJ_REGION";
+        case NTGDI_OBJ_METAFILE: return "NTGDI_OBJ_METAFILE";
+        case NTGDI_OBJ_MEMDC: return "NTGDI_OBJ_MEMDC";
+        case NTGDI_OBJ_EXTPEN: return "NTGDI_OBJ_EXTPEN";
+        case NTGDI_OBJ_ENHMETADC: return "NTGDI_OBJ_ENHMETADC";
+        case NTGDI_OBJ_ENHMETAFILE: return "NTGDI_OBJ_ENHMETAFILE";
         default: return "UNKNOWN";
     }
 }
@@ -723,7 +722,7 @@ static void dump_gdi_objects( void )
         else
             TRACE( "handle %p obj %s type %s selcount %u deleted %u\n",
                    entry_to_handle( entry ), wine_dbgstr_longlong( entry->Object ),
-                   gdi_obj_type( entry->Type ), entry_obj( entry )->selcount,
+                   gdi_obj_type( entry->ExtType ), entry_obj( entry )->selcount,
                    entry_obj( entry )->deleted );
     }
     LeaveCriticalSection( &gdi_section );
@@ -760,10 +759,10 @@ HGDIOBJ alloc_gdi_handle( struct gdi_obj_header *obj, WORD type, const struct gd
     obj->selcount = 0;
     obj->system   = 0;
     obj->deleted  = 0;
-    entry->Object   = (UINT_PTR)obj;
-    /* FIXME: Native uses ntgdi types, which are different that gdi OBJ_ types */
-    entry->Type     = type;
-    if (++entry->Unique == 0xffff) entry->Unique = 1;
+    entry->Object  = (UINT_PTR)obj;
+    entry->Type    = type & 0x1f;
+    entry->ExtType = type;
+    if (++entry->Generation == 0xff) entry->Generation = 1;
     ret = entry_to_handle( entry );
     LeaveCriticalSection( &gdi_section );
     TRACE( "allocated %s %p %u/%u\n", gdi_obj_type(type), ret,
@@ -785,7 +784,7 @@ void *free_gdi_handle( HGDIOBJ handle )
     EnterCriticalSection( &gdi_section );
     if ((entry = handle_entry( handle )))
     {
-        TRACE( "freed %s %p %u/%u\n", gdi_obj_type( entry->Type ), handle,
+        TRACE( "freed %s %p %u/%u\n", gdi_obj_type( entry->ExtType ), handle,
                InterlockedDecrement( &debug_count ) + 1, GDI_MAX_HANDLE_COUNT );
         object = entry_obj( entry );
         entry->Type = 0;
@@ -832,7 +831,7 @@ void *get_any_obj_ptr( HGDIOBJ handle, WORD *type )
     if ((entry = handle_entry( handle )))
     {
         ptr = entry_obj( entry );
-        *type = entry->Type;
+        *type = entry->ExtType;
     }
 
     if (!ptr) LeaveCriticalSection( &gdi_section );

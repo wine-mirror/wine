@@ -52,10 +52,10 @@ static inline DC *get_dc_obj( HDC hdc )
 
     switch (type)
     {
-    case OBJ_DC:
-    case OBJ_MEMDC:
-    case OBJ_METADC:
-    case OBJ_ENHMETADC:
+    case NTGDI_OBJ_DC:
+    case NTGDI_OBJ_MEMDC:
+    case NTGDI_OBJ_METADC:
+    case NTGDI_OBJ_ENHMETADC:
         return dc;
     default:
         GDI_ReleaseObj( hdc );
@@ -644,7 +644,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         ERR( "no driver found for %s\n", debugstr_w(buf) );
         return 0;
     }
-    if (!(dc = alloc_dc_ptr( OBJ_DC ))) return 0;
+    if (!(dc = alloc_dc_ptr( NTGDI_OBJ_DC ))) return 0;
     hdc = dc->hSelf;
 
     dc->hBitmap = GDI_inc_ref_count( GetStockObject( DEFAULT_BITMAP ));
@@ -770,7 +770,7 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
     }
     else funcs = DRIVER_load_driver( L"display" );
 
-    if (!(dc = alloc_dc_ptr( OBJ_MEMDC ))) return 0;
+    if (!(dc = alloc_dc_ptr( NTGDI_OBJ_MEMDC ))) return 0;
 
     TRACE("(%p): returning %p\n", hdc, dc->hSelf );
 

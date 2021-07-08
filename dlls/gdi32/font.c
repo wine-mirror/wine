@@ -4318,7 +4318,7 @@ HFONT WINAPI CreateFontIndirectExW( const ENUMLOGFONTEXDVW *penumex )
 
     fontPtr->logfont = *plf;
 
-    if (!(hFont = alloc_gdi_handle( &fontPtr->obj, OBJ_FONT, &fontobj_funcs )))
+    if (!(hFont = alloc_gdi_handle( &fontPtr->obj, NTGDI_OBJ_FONT, &fontobj_funcs )))
     {
         HeapFree( GetProcessHeap(), 0, fontPtr );
         return 0;
@@ -4570,7 +4570,7 @@ HGDIOBJ WINAPI NtGdiSelectFont( HDC hdc, HGDIOBJ handle )
  */
 static INT FONT_GetObjectW( HGDIOBJ handle, INT count, LPVOID buffer )
 {
-    FONTOBJ *font = GDI_GetObjPtr( handle, OBJ_FONT );
+    FONTOBJ *font = GDI_GetObjPtr( handle, NTGDI_OBJ_FONT );
 
     if (!font) return 0;
     if (buffer)

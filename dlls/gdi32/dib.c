@@ -692,7 +692,7 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
 
     if (coloruse == DIB_PAL_COLORS && !fill_color_table_from_pal_colors( src_info, hdc )) return 0;
 
-    if (!(bitmap = GDI_GetObjPtr( hbitmap, OBJ_BITMAP ))) return 0;
+    if (!(bitmap = GDI_GetObjPtr( hbitmap, NTGDI_OBJ_BITMAP ))) return 0;
 
     if (src_info->bmiHeader.biCompression == BI_RLE4 || src_info->bmiHeader.biCompression == BI_RLE8)
     {
@@ -920,7 +920,7 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries, const RGBQUA
 
     if (!(dc = get_dc_ptr( hdc ))) return 0;
 
-    if ((bitmap = GDI_GetObjPtr( dc->hBitmap, OBJ_BITMAP )))
+    if ((bitmap = GDI_GetObjPtr( dc->hBitmap, NTGDI_OBJ_BITMAP )))
     {
         if (startpos < bitmap->dib.dsBmih.biClrUsed)
         {
@@ -959,7 +959,7 @@ UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries, RGBQUAD *col
 
     if (!(dc = get_dc_ptr( hdc ))) return 0;
 
-    if ((bitmap = GDI_GetObjPtr( dc->hBitmap, OBJ_BITMAP )))
+    if ((bitmap = GDI_GetObjPtr( dc->hBitmap, NTGDI_OBJ_BITMAP )))
     {
         if (startpos < bitmap->dib.dsBmih.biClrUsed)
         {
@@ -1240,7 +1240,7 @@ INT WINAPI DECLSPEC_HOTPATCH GetDIBits(
         return 0;
     }
     update_dc( dc );
-    if (!(bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP )))
+    if (!(bmp = GDI_GetObjPtr( hbitmap, NTGDI_OBJ_BITMAP )))
     {
         release_dc_ptr( dc );
 	return 0;
@@ -1569,7 +1569,7 @@ HBITMAP WINAPI DECLSPEC_HOTPATCH CreateDIBSection(HDC hdc, const BITMAPINFO *bmi
 
     if (!bmp->dib.dsBm.bmBits) goto error;
 
-    if (!(ret = alloc_gdi_handle( &bmp->obj, OBJ_BITMAP, &dib_funcs ))) goto error;
+    if (!(ret = alloc_gdi_handle( &bmp->obj, NTGDI_OBJ_BITMAP, &dib_funcs ))) goto error;
 
     if (bits) *bits = bmp->dib.dsBm.bmBits;
     return ret;
@@ -1681,7 +1681,7 @@ NTSTATUS WINAPI D3DKMTCreateDCFromMemory( D3DKMT_CREATEDCFROMMEMORY *desc )
         }
     }
 
-    if (!(bitmap = alloc_gdi_handle( &bmp->obj, OBJ_BITMAP, &dib_funcs ))) goto error;
+    if (!(bitmap = alloc_gdi_handle( &bmp->obj, NTGDI_OBJ_BITMAP, &dib_funcs ))) goto error;
 
     desc->hDc = dc;
     desc->hBitmap = bitmap;
@@ -1720,7 +1720,7 @@ NTSTATUS WINAPI D3DKMTDestroyDCFromMemory( const D3DKMT_DESTROYDCFROMMEMORY *des
 static INT DIB_GetObject( HGDIOBJ handle, INT count, LPVOID buffer )
 {
     INT ret = 0;
-    BITMAPOBJ *bmp = GDI_GetObjPtr( handle, OBJ_BITMAP );
+    BITMAPOBJ *bmp = GDI_GetObjPtr( handle, NTGDI_OBJ_BITMAP );
 
     if (!bmp) return 0;
 

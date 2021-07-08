@@ -102,7 +102,7 @@ HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh)
         return NULL;
     metafile->data = mh;
 
-    return alloc_gdi_handle( &metafile->obj, OBJ_METAFILE, NULL );
+    return alloc_gdi_handle( &metafile->obj, NTGDI_OBJ_METAFILE, NULL );
 }
 
 /******************************************************************
@@ -237,7 +237,7 @@ HMETAFILE WINAPI GetMetaFileW( LPCWSTR lpFilename )
 /* return a copy of the metafile bits, to be freed with HeapFree */
 static METAHEADER *get_metafile_bits( HMETAFILE hmf )
 {
-    struct metafile *metafile = GDI_GetObjPtr( hmf, OBJ_METAFILE );
+    struct metafile *metafile = GDI_GetObjPtr( hmf, NTGDI_OBJ_METAFILE );
     METAHEADER *ret;
 
     if (!metafile) return NULL;
@@ -1035,7 +1035,7 @@ HMETAFILE WINAPI SetMetaFileBitsEx( UINT size, const BYTE *lpData )
  */
 UINT WINAPI GetMetaFileBitsEx( HMETAFILE hmf, UINT nSize, LPVOID buf )
 {
-    struct metafile *metafile = GDI_GetObjPtr( hmf, OBJ_METAFILE );
+    struct metafile *metafile = GDI_GetObjPtr( hmf, NTGDI_OBJ_METAFILE );
     UINT mfSize;
 
     TRACE("(%p,%d,%p)\n", hmf, nSize, buf);

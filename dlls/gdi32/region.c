@@ -537,7 +537,7 @@ static BOOL REGION_OffsetRegion( WINEREGION *rgn, WINEREGION *srcrgn, INT x, INT
  */
 INT WINAPI NtGdiOffsetRgn( HRGN hrgn, INT x, INT y )
 {
-    WINEREGION *obj = GDI_GetObjPtr( hrgn, OBJ_REGION );
+    WINEREGION *obj = GDI_GetObjPtr( hrgn, NTGDI_OBJ_REGION );
     INT ret;
 
     TRACE("%p %d,%d\n", hrgn, x, y);
@@ -572,7 +572,7 @@ INT WINAPI NtGdiOffsetRgn( HRGN hrgn, INT x, INT y )
  */
 INT WINAPI NtGdiGetRgnBox( HRGN hrgn, RECT *rect )
 {
-    WINEREGION *obj = GDI_GetObjPtr( hrgn, OBJ_REGION );
+    WINEREGION *obj = GDI_GetObjPtr( hrgn, NTGDI_OBJ_REGION );
     if (obj)
     {
 	INT ret;
@@ -611,7 +611,7 @@ HRGN WINAPI NtGdiCreateRectRgn( INT left, INT top, INT right, INT bottom )
 
     if (!(obj = alloc_region( RGN_DEFAULT_RECTS ))) return 0;
 
-    if (!(hrgn = alloc_gdi_handle( &obj->obj, OBJ_REGION, &region_funcs )))
+    if (!(hrgn = alloc_gdi_handle( &obj->obj, NTGDI_OBJ_REGION, &region_funcs )))
     {
         free_region( obj );
         return 0;
@@ -647,7 +647,7 @@ BOOL WINAPI NtGdiSetRectRgn( HRGN hrgn, INT left, INT top, INT right, INT bottom
 
     TRACE("%p %d,%d-%d,%d\n", hrgn, left, top, right, bottom );
 
-    if (!(obj = GDI_GetObjPtr( hrgn, OBJ_REGION ))) return FALSE;
+    if (!(obj = GDI_GetObjPtr( hrgn, NTGDI_OBJ_REGION ))) return FALSE;
 
     if (left > right) { INT tmp = left; left = right; right = tmp; }
     if (top > bottom) { INT tmp = top; top = bottom; bottom = tmp; }
@@ -768,7 +768,7 @@ HRGN WINAPI NtGdiCreateRoundRectRgn( INT left, INT top, INT right, INT bottom,
     }
     rects[ellipse_height / 2].top = top + ellipse_height / 2;  /* extend to top of rectangle */
 
-    hrgn = alloc_gdi_handle( &obj->obj, OBJ_REGION, &region_funcs );
+    hrgn = alloc_gdi_handle( &obj->obj, NTGDI_OBJ_REGION, &region_funcs );
 
     TRACE("(%d,%d-%d,%d %dx%d): ret=%p\n",
 	  left, top, right, bottom, ellipse_width, ellipse_height, hrgn );
@@ -829,7 +829,7 @@ HRGN WINAPI NtGdiCreateEllipticRgn( INT left, INT top, INT right, INT bottom )
 DWORD WINAPI NtGdiGetRegionData( HRGN hrgn, DWORD count, RGNDATA *rgndata )
 {
     DWORD size;
-    WINEREGION *obj = GDI_GetObjPtr( hrgn, OBJ_REGION );
+    WINEREGION *obj = GDI_GetObjPtr( hrgn, NTGDI_OBJ_REGION );
 
     TRACE(" %p count = %d, rgndata = %p\n", hrgn, count, rgndata);
 
@@ -944,7 +944,7 @@ HRGN WINAPI NtGdiExtCreateRegion( const XFORM *xform, DWORD count, const RGNDATA
             if (!REGION_UnionRectWithRegion( pCurRect, obj )) goto done;
         }
     }
-    hrgn = alloc_gdi_handle( &obj->obj, OBJ_REGION, &region_funcs );
+    hrgn = alloc_gdi_handle( &obj->obj, NTGDI_OBJ_REGION, &region_funcs );
 
 done:
     if (!hrgn) free_region( obj );
@@ -972,7 +972,7 @@ BOOL WINAPI NtGdiPtInRegion( HRGN hrgn, INT x, INT y )
     WINEREGION *obj;
     BOOL ret = FALSE;
 
-    if ((obj = GDI_GetObjPtr( hrgn, OBJ_REGION )))
+    if ((obj = GDI_GetObjPtr( hrgn, NTGDI_OBJ_REGION )))
     {
         if (obj->numRects > 0 && is_in_rect( &obj->extents, x, y ))
             region_find_pt( obj, x, y, &ret );
@@ -1007,7 +1007,7 @@ BOOL WINAPI NtGdiRectInRegion( HRGN hrgn, const RECT *rect )
     rc = *rect;
     order_rect( &rc );
 
-    if ((obj = GDI_GetObjPtr( hrgn, OBJ_REGION )))
+    if ((obj = GDI_GetObjPtr( hrgn, NTGDI_OBJ_REGION )))
     {
 	if ((obj->numRects > 0) && overlapping(&obj->extents, &rc))
 	{
@@ -1050,9 +1050,9 @@ BOOL WINAPI NtGdiEqualRgn( HRGN hrgn1, HRGN hrgn2 )
     WINEREGION *obj1, *obj2;
     BOOL ret = FALSE;
 
-    if ((obj1 = GDI_GetObjPtr( hrgn1, OBJ_REGION )))
+    if ((obj1 = GDI_GetObjPtr( hrgn1, NTGDI_OBJ_REGION )))
     {
-        if ((obj2 = GDI_GetObjPtr( hrgn2, OBJ_REGION )))
+        if ((obj2 = GDI_GetObjPtr( hrgn2, NTGDI_OBJ_REGION )))
 	{
 	    int i;
 
@@ -1100,7 +1100,7 @@ static BOOL REGION_UnionRectWithRegion(const RECT *rect, WINEREGION *rgn)
 
 BOOL add_rect_to_region( HRGN rgn, const RECT *rect )
 {
-    WINEREGION *obj = GDI_GetObjPtr( rgn, OBJ_REGION );
+    WINEREGION *obj = GDI_GetObjPtr( rgn, NTGDI_OBJ_REGION );
     BOOL ret;
 
     if (!obj) return FALSE;
@@ -1122,13 +1122,13 @@ BOOL REGION_FrameRgn( HRGN hDest, HRGN hSrc, INT x, INT y )
     WINEREGION tmprgn;
     BOOL bRet = FALSE;
     WINEREGION* destObj = NULL;
-    WINEREGION *srcObj = GDI_GetObjPtr( hSrc, OBJ_REGION );
+    WINEREGION *srcObj = GDI_GetObjPtr( hSrc, NTGDI_OBJ_REGION );
 
     tmprgn.rects = NULL;
     if (!srcObj) return FALSE;
     if (srcObj->numRects != 0)
     {
-        if (!(destObj = GDI_GetObjPtr( hDest, OBJ_REGION ))) goto done;
+        if (!(destObj = GDI_GetObjPtr( hDest, NTGDI_OBJ_REGION ))) goto done;
         if (!init_region( &tmprgn, srcObj->numRects )) goto done;
 
         if (!REGION_OffsetRegion( destObj, srcObj, -x, 0)) goto done;
@@ -1179,13 +1179,13 @@ done:
  */
 INT WINAPI NtGdiCombineRgn( HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode )
 {
-    WINEREGION *destObj = GDI_GetObjPtr( hDest, OBJ_REGION );
+    WINEREGION *destObj = GDI_GetObjPtr( hDest, NTGDI_OBJ_REGION );
     INT result = ERROR;
 
     TRACE(" %p,%p -> %p mode=%x\n", hSrc1, hSrc2, hDest, mode );
     if (destObj)
     {
-        WINEREGION *src1Obj = GDI_GetObjPtr( hSrc1, OBJ_REGION );
+        WINEREGION *src1Obj = GDI_GetObjPtr( hSrc1, NTGDI_OBJ_REGION );
 
 	if (src1Obj)
 	{
@@ -1199,7 +1199,7 @@ INT WINAPI NtGdiCombineRgn( HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode )
 	    }
 	    else
 	    {
-                WINEREGION *src2Obj = GDI_GetObjPtr( hSrc2, OBJ_REGION );
+                WINEREGION *src2Obj = GDI_GetObjPtr( hSrc2, NTGDI_OBJ_REGION );
 
 		if (src2Obj)
 		{
@@ -1360,8 +1360,8 @@ INT mirror_region( HRGN dst, HRGN src, INT width )
     WINEREGION *src_rgn, *dst_rgn;
     INT ret = ERROR;
 
-    if (!(src_rgn = GDI_GetObjPtr( src, OBJ_REGION ))) return ERROR;
-    if ((dst_rgn = GDI_GetObjPtr( dst, OBJ_REGION )))
+    if (!(src_rgn = GDI_GetObjPtr( src, NTGDI_OBJ_REGION ))) return ERROR;
+    if ((dst_rgn = GDI_GetObjPtr( dst, NTGDI_OBJ_REGION )))
     {
         if (REGION_MirrorRegion( dst_rgn, src_rgn, width )) ret = get_region_type( dst_rgn );
         GDI_ReleaseObj( dst_rgn );
@@ -2684,7 +2684,7 @@ HRGN create_polypolygon_region( const POINT *Pts, const INT *Count, INT nbpolygo
     {
         if (nb_points) scan_convert( obj, &ET, mode, clip_rect );
 
-        if (!(hrgn = alloc_gdi_handle( &obj->obj, OBJ_REGION, &region_funcs )))
+        if (!(hrgn = alloc_gdi_handle( &obj->obj, NTGDI_OBJ_REGION, &region_funcs )))
             free_region( obj );
     }
 

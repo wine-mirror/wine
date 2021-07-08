@@ -356,7 +356,7 @@ static BOOL CDECL dibdrv_DeleteDC( PHYSDEV dev )
 static HBITMAP CDECL dibdrv_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
 {
     dibdrv_physdev *pdev = get_dibdrv_pdev(dev);
-    BITMAPOBJ *bmp = GDI_GetObjPtr( bitmap, OBJ_BITMAP );
+    BITMAPOBJ *bmp = GDI_GetObjPtr( bitmap, NTGDI_OBJ_BITMAP );
     dib_info dib;
 
     TRACE("(%p, %p)\n", dev, bitmap);
@@ -535,7 +535,7 @@ static BOOL WINAPI dibdrv_wglMakeCurrent( HDC hdc, struct wgl_context *context )
     if (!context) return osmesa_funcs->make_current( NULL, NULL, 0, 0, 0, 0 );
 
     bitmap = GetCurrentObject( hdc, OBJ_BITMAP );
-    bmp = GDI_GetObjPtr( bitmap, OBJ_BITMAP );
+    bmp = GDI_GetObjPtr( bitmap, NTGDI_OBJ_BITMAP );
     if (!bmp) return FALSE;
 
     if (init_dib_info_from_bitmapobj( &dib, bmp ))

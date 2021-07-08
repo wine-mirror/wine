@@ -87,7 +87,7 @@ HPEN WINAPI NtGdiCreatePen( INT style, INT width, COLORREF color, HBRUSH brush )
     penPtr->logpen.elpColor      = color;
     penPtr->logpen.elpBrushStyle = BS_SOLID;
 
-    if (!(hpen = alloc_gdi_handle( &penPtr->obj, OBJ_PEN, &pen_funcs )))
+    if (!(hpen = alloc_gdi_handle( &penPtr->obj, NTGDI_OBJ_PEN, &pen_funcs )))
         HeapFree( GetProcessHeap(), 0, penPtr );
     return hpen;
 }
@@ -177,7 +177,7 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
     penPtr->logpen.elpNumEntries = style_count;
     memcpy(penPtr->logpen.elpStyleEntry, style_bits, style_count * sizeof(DWORD));
 
-    if (!(hpen = alloc_gdi_handle( &penPtr->obj, OBJ_EXTPEN, &pen_funcs )))
+    if (!(hpen = alloc_gdi_handle( &penPtr->obj, NTGDI_OBJ_EXTPEN, &pen_funcs )))
     {
         free_brush_pattern( &penPtr->pattern );
         HeapFree( GetProcessHeap(), 0, penPtr );
@@ -209,10 +209,10 @@ HGDIOBJ WINAPI NtGdiSelectPen( HDC hdc, HGDIOBJ handle )
 
         switch (type)
         {
-        case OBJ_PEN:
+        case NTGDI_OBJ_PEN:
             pattern = NULL;
             break;
-        case OBJ_EXTPEN:
+        case NTGDI_OBJ_EXTPEN:
             pattern = &pen->pattern;
             if (!pattern->info) pattern = NULL;
             break;
@@ -268,7 +268,7 @@ static INT PEN_GetObject( HGDIOBJ handle, INT count, LPVOID buffer )
 
     switch (type)
     {
-    case OBJ_PEN:
+    case NTGDI_OBJ_PEN:
     {
         LOGPEN *lp;
 
@@ -293,7 +293,7 @@ static INT PEN_GetObject( HGDIOBJ handle, INT count, LPVOID buffer )
         break;
     }
 
-    case OBJ_EXTPEN:
+    case NTGDI_OBJ_EXTPEN:
         ret = sizeof(EXTLOGPEN) + pen->logpen.elpNumEntries * sizeof(DWORD) - sizeof(pen->logpen.elpStyleEntry);
         if (buffer)
         {

@@ -62,7 +62,7 @@ static inline GDI_HANDLE_ENTRY *handle_entry( HGDIOBJ handle )
 static WORD get_object_type( HGDIOBJ obj )
 {
     GDI_HANDLE_ENTRY *entry = handle_entry( obj );
-    return entry ? entry->Type : 0;
+    return entry ? entry->ExtType : 0;
 }
 
 /***********************************************************************
@@ -70,10 +70,29 @@ static WORD get_object_type( HGDIOBJ obj )
  */
 DWORD WINAPI GetObjectType( HGDIOBJ handle )
 {
-    DWORD result = get_object_type( handle );
-    TRACE("%p -> %u\n", handle, result );
-    if (!result) SetLastError( ERROR_INVALID_HANDLE );
-    return result;
+    DWORD type = get_object_type( handle );
+
+    TRACE( "%p -> %u\n", handle, type );
+
+    switch (type)
+    {
+    case NTGDI_OBJ_PEN:         return OBJ_PEN;
+    case NTGDI_OBJ_BRUSH:       return OBJ_BRUSH;
+    case NTGDI_OBJ_DC:          return OBJ_DC;
+    case NTGDI_OBJ_METADC:      return OBJ_METADC;
+    case NTGDI_OBJ_PAL:         return OBJ_PAL;
+    case NTGDI_OBJ_FONT:        return OBJ_FONT;
+    case NTGDI_OBJ_BITMAP:      return OBJ_BITMAP;
+    case NTGDI_OBJ_REGION:      return OBJ_REGION;
+    case NTGDI_OBJ_METAFILE:    return OBJ_METAFILE;
+    case NTGDI_OBJ_MEMDC:       return OBJ_MEMDC;
+    case NTGDI_OBJ_EXTPEN:      return OBJ_EXTPEN;
+    case NTGDI_OBJ_ENHMETADC:   return OBJ_ENHMETADC;
+    case NTGDI_OBJ_ENHMETAFILE: return OBJ_ENHMETAFILE;
+    default:
+        SetLastError( ERROR_INVALID_HANDLE );
+        return 0;
+    }
 }
 
 /***********************************************************************
@@ -99,20 +118,20 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ obj )
 
     switch (get_object_type( obj ))
     {
-    case OBJ_PEN:
-    case OBJ_EXTPEN:
+    case NTGDI_OBJ_PEN:
+    case NTGDI_OBJ_EXTPEN:
         ret = NtGdiSelectPen( hdc, obj );
         break;
-    case OBJ_BRUSH:
+    case NTGDI_OBJ_BRUSH:
         ret = NtGdiSelectBrush( hdc, obj );
         break;
-    case OBJ_FONT:
+    case NTGDI_OBJ_FONT:
         ret = NtGdiSelectFont( hdc, obj );
         break;
-    case OBJ_BITMAP:
+    case NTGDI_OBJ_BITMAP:
         ret = NtGdiSelectBitmap( hdc, obj );
         break;
-    case OBJ_REGION:
+    case NTGDI_OBJ_REGION:
         ret = ULongToHandle(SelectClipRgn( hdc, obj ));
         break;
     default:
@@ -138,12 +157,12 @@ INT WINAPI GetObjectW( HGDIOBJ handle, INT count, void *buffer )
         switch(get_object_type( handle ))
         {
         case 0:
-        case OBJ_BITMAP:
-        case OBJ_BRUSH:
-        case OBJ_FONT:
-        case OBJ_PAL:
-        case OBJ_PEN:
-        case OBJ_EXTPEN:
+        case NTGDI_OBJ_BITMAP:
+        case NTGDI_OBJ_BRUSH:
+        case NTGDI_OBJ_FONT:
+        case NTGDI_OBJ_PAL:
+        case NTGDI_OBJ_PEN:
+        case NTGDI_OBJ_EXTPEN:
             break;
         default:
             SetLastError( ERROR_INVALID_HANDLE );
@@ -159,7 +178,7 @@ INT WINAPI GetObjectA( HGDIOBJ handle, INT count, void *buffer )
 {
     TRACE("%p %d %p\n", handle, count, buffer );
 
-    if (get_object_type( handle ) == OBJ_FONT)
+    if (get_object_type( handle ) == NTGDI_OBJ_FONT)
     {
         LOGFONTA *lfA = buffer;
         LOGFONTW lf;

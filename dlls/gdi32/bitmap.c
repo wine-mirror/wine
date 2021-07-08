@@ -168,7 +168,7 @@ HBITMAP WINAPI NtGdiCreateBitmap( INT width, INT height, UINT planes,
         return 0;
     }
 
-    if (!(hbitmap = alloc_gdi_handle( &bmpobj->obj, OBJ_BITMAP, &bitmap_funcs )))
+    if (!(hbitmap = alloc_gdi_handle( &bmpobj->obj, NTGDI_OBJ_BITMAP, &bitmap_funcs )))
     {
         HeapFree( GetProcessHeap(), 0, bmpobj->dib.dsBm.bmBits );
         HeapFree( GetProcessHeap(), 0, bmpobj );
@@ -202,7 +202,7 @@ LONG WINAPI NtGdiGetBitmapBits(
     struct gdi_image_bits src_bits;
     struct bitblt_coords src;
     int dst_stride, max, ret;
-    BITMAPOBJ *bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP );
+    BITMAPOBJ *bmp = GDI_GetObjPtr( hbitmap, NTGDI_OBJ_BITMAP );
 
     if (!bmp) return 0;
 
@@ -277,7 +277,7 @@ LONG WINAPI NtGdiSetBitmapBits(
 
     if (!bits) return 0;
 
-    bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP );
+    bmp = GDI_GetObjPtr( hbitmap, NTGDI_OBJ_BITMAP );
     if (!bmp) return 0;
 
     if (count < 0) {
@@ -386,7 +386,7 @@ HGDIOBJ WINAPI NtGdiSelectBitmap( HDC hdc, HGDIOBJ handle )
     ret = dc->hBitmap;
     if (handle == dc->hBitmap) goto done;  /* nothing to do */
 
-    if (!(bitmap = GDI_GetObjPtr( handle, OBJ_BITMAP )))
+    if (!(bitmap = GDI_GetObjPtr( handle, NTGDI_OBJ_BITMAP )))
     {
         ret = 0;
         goto done;
@@ -457,7 +457,7 @@ static BOOL BITMAP_DeleteObject( HGDIOBJ handle )
 static INT BITMAP_GetObject( HGDIOBJ handle, INT count, LPVOID buffer )
 {
     INT ret = 0;
-    BITMAPOBJ *bmp = GDI_GetObjPtr( handle, OBJ_BITMAP );
+    BITMAPOBJ *bmp = GDI_GetObjPtr( handle, NTGDI_OBJ_BITMAP );
 
     if (!bmp) return 0;
 
@@ -487,7 +487,7 @@ BOOL WINAPI NtGdiGetBitmapDimension(
     HBITMAP hbitmap, /* [in]  Handle to bitmap */
     LPSIZE size)     /* [out] Address of struct receiving dimensions */
 {
-    BITMAPOBJ * bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP );
+    BITMAPOBJ * bmp = GDI_GetObjPtr( hbitmap, NTGDI_OBJ_BITMAP );
     if (!bmp) return FALSE;
     *size = bmp->size;
     GDI_ReleaseObj( hbitmap );
@@ -512,7 +512,7 @@ BOOL WINAPI NtGdiSetBitmapDimension(
     INT y,           /* [in]  Bitmap height */
     LPSIZE prevSize) /* [out] Address of structure for orig dims */
 {
-    BITMAPOBJ * bmp = GDI_GetObjPtr( hbitmap, OBJ_BITMAP );
+    BITMAPOBJ * bmp = GDI_GetObjPtr( hbitmap, NTGDI_OBJ_BITMAP );
     if (!bmp) return FALSE;
     if (prevSize) *prevSize = bmp->size;
     bmp->size.cx = x;
