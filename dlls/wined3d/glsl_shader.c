@@ -3463,8 +3463,8 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
     if (shadow)
         ++coord_size;
     sample_function->offset_size = offset ? deriv_size : 0;
-    sample_function->coord_mask = (1u << coord_size) - 1;
-    sample_function->deriv_mask = (1u << deriv_size) - 1;
+    sample_function->coord_mask = wined3d_mask_from_size(coord_size);
+    sample_function->deriv_mask = wined3d_mask_from_size(deriv_size);
     sample_function->output_single_component = shadow && !needs_legacy_glsl_syntax(gl_info);
 }
 
