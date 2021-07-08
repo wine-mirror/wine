@@ -2436,9 +2436,9 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         case WS_IP_DONTFRAGMENT:
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_DONTFRAGMENT, optval, optlen );
 
-#ifdef IP_HDRINCL
         case WS_IP_HDRINCL:
-#endif
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_HDRINCL, optval, optlen );
+
         case WS_IP_MULTICAST_IF:
         case WS_IP_MULTICAST_LOOP:
         case WS_IP_MULTICAST_TTL:
