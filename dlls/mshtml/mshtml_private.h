@@ -40,6 +40,8 @@
 
 #include "nsiface.h"
 
+#include <assert.h>
+
 #define NS_ERROR_GENERATE_FAILURE(module,code) \
     ((nsresult) (((UINT32)(1u<<31)) | ((UINT32)(module+0x45)<<16) | ((UINT32)(code))))
 #define NS_ERROR_GENERATE_SUCCESS(module,code) \

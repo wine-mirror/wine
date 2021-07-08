@@ -17,7 +17,6 @@
  */
 
 #include <stdarg.h>
-#include <assert.h>
 #include <math.h>
 
 #define COBJMACROS
