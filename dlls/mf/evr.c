@@ -1610,6 +1610,12 @@ static HRESULT video_renderer_create_presenter(struct video_renderer *renderer, 
     return CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IMFVideoPresenter, (void **)out);
 }
 
+static HRESULT video_renderer_get_device_manager(struct video_renderer *renderer, IUnknown **device_manager)
+{
+    return MFGetService((IUnknown *)renderer->presenter, &MR_VIDEO_RENDER_SERVICE,
+                &IID_IDirect3DDeviceManager9, (void **)device_manager);
+}
+
 static HRESULT video_renderer_configure_mixer(struct video_renderer *renderer)
 {
     IMFTopologyServiceLookupClient *lookup_client;
@@ -1660,13 +1666,12 @@ static HRESULT video_renderer_configure_mixer(struct video_renderer *renderer)
     /* Set device manager that presenter should have created. */
     if (video_renderer_is_mixer_d3d_aware(renderer))
     {
-        IDirect3DDeviceManager9 *device_manager;
+        IUnknown *device_manager;
 
-        if (SUCCEEDED(MFGetService((IUnknown *)renderer->presenter, &MR_VIDEO_ACCELERATION_SERVICE,
-                &IID_IDirect3DDeviceManager9, (void **)&device_manager)))
+        if (SUCCEEDED(video_renderer_get_device_manager(renderer, &device_manager)))
         {
             IMFTransform_ProcessMessage(renderer->mixer, MFT_MESSAGE_SET_D3D_MANAGER, (ULONG_PTR)device_manager);
-            IDirect3DDeviceManager9_Release(device_manager);
+            IUnknown_Release(device_manager);
         }
     }
 
@@ -1690,8 +1695,7 @@ static HRESULT video_renderer_configure_presenter(struct video_renderer *rendere
 
     hr = video_renderer_init_presenter_services(renderer);
 
-    if (FAILED(MFGetService((IUnknown *)renderer->presenter, &MR_VIDEO_ACCELERATION_SERVICE,
-            &IID_IUnknown, (void **)&renderer->device_manager)))
+    if (FAILED(video_renderer_get_device_manager(renderer, &renderer->device_manager)))
     {
         WARN("Failed to get device manager from the presenter.\n");
     }
