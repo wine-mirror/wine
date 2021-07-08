@@ -543,7 +543,7 @@ static NTSTATUS try_recv( int fd, struct async_recv_ioctl *async, ULONG_PTR *siz
     return status;
 }
 
-static NTSTATUS async_recv_proc( void *user, IO_STATUS_BLOCK *io, NTSTATUS status )
+static NTSTATUS async_recv_proc( void *user, ULONG_PTR *info, NTSTATUS status )
 {
     struct async_recv_ioctl *async = user;
     ULONG_PTR information = 0;
@@ -566,8 +566,7 @@ static NTSTATUS async_recv_proc( void *user, IO_STATUS_BLOCK *io, NTSTATUS statu
     }
     if (status != STATUS_PENDING)
     {
-        io->Status = status;
-        io->Information = information;
+        *info = information;
         release_fileio( &async->io );
     }
     return status;
@@ -684,7 +683,7 @@ static ULONG_PTR fill_poll_output( struct async_poll_ioctl *async, NTSTATUS stat
     return offsetof( struct afd_poll_params, sockets[count] );
 }
 
-static NTSTATUS async_poll_proc( void *user, IO_STATUS_BLOCK *io, NTSTATUS status )
+static NTSTATUS async_poll_proc( void *user, ULONG_PTR *info, NTSTATUS status )
 {
     struct async_poll_ioctl *async = user;
     ULONG_PTR information = 0;
@@ -704,8 +703,7 @@ static NTSTATUS async_poll_proc( void *user, IO_STATUS_BLOCK *io, NTSTATUS statu
 
     if (status != STATUS_PENDING)
     {
-        io->Status = status;
-        io->Information = information;
+        *info = information;
         free( async->input );
         release_fileio( &async->io );
     }
@@ -868,7 +866,7 @@ static NTSTATUS try_send( int fd, struct async_send_ioctl *async )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS async_send_proc( void *user, IO_STATUS_BLOCK *io, NTSTATUS status )
+static NTSTATUS async_send_proc( void *user, ULONG_PTR *info, NTSTATUS status )
 {
     struct async_send_ioctl *async = user;
     int fd, needs_close;
@@ -890,8 +888,7 @@ static NTSTATUS async_send_proc( void *user, IO_STATUS_BLOCK *io, NTSTATUS statu
     }
     if (status != STATUS_PENDING)
     {
-        io->Status = status;
-        io->Information = async->sent_len;
+        *info = async->sent_len;
         release_fileio( &async->io );
     }
     return status;
@@ -1033,7 +1030,7 @@ static NTSTATUS try_transmit( int sock_fd, int file_fd, struct async_transmit_io
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS async_transmit_proc( void *user, IO_STATUS_BLOCK *io, NTSTATUS status )
+static NTSTATUS async_transmit_proc( void *user, ULONG_PTR *info, NTSTATUS status )
 {
     int sock_fd, file_fd = -1, sock_needs_close = FALSE, file_needs_close = FALSE;
     struct async_transmit_ioctl *async = user;
@@ -1062,8 +1059,7 @@ static NTSTATUS async_transmit_proc( void *user, IO_STATUS_BLOCK *io, NTSTATUS s
     }
     if (status != STATUS_PENDING)
     {
-        io->Status = status;
-        io->Information = async->head_cursor + async->file_cursor + async->tail_cursor;
+        *info = async->head_cursor + async->file_cursor + async->tail_cursor;
         release_fileio( &async->io );
     }
     return status;

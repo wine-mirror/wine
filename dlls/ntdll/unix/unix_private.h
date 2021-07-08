@@ -69,7 +69,7 @@ static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
     return (struct ntdll_thread_data *)&NtCurrentTeb()->GdiTebBatch;
 }
 
-typedef NTSTATUS async_callback_t( void *user, IO_STATUS_BLOCK *io, NTSTATUS status );
+typedef NTSTATUS async_callback_t( void *user, ULONG_PTR *info, NTSTATUS status );
 
 struct async_fileio
 {

@@ -4681,10 +4681,9 @@ static NTSTATUS wait_async( HANDLE handle, BOOL alertable )
 }
 
 /* callback for irp async I/O completion */
-static NTSTATUS irp_completion( void *user, IO_STATUS_BLOCK *io, NTSTATUS status )
+static NTSTATUS irp_completion( void *user, ULONG_PTR *info, NTSTATUS status )
 {
     struct async_irp *async = user;
-    ULONG information = 0;
 
     if (status == STATUS_ALERTED)
     {
@@ -4693,20 +4692,15 @@ static NTSTATUS irp_completion( void *user, IO_STATUS_BLOCK *io, NTSTATUS status
             req->user_arg = wine_server_client_ptr( async );
             wine_server_set_reply( req, async->buffer, async->size );
             status = virtual_locked_server_call( req );
-            information = reply->size;
+            *info = reply->size;
         }
         SERVER_END_REQ;
     }
-    if (status != STATUS_PENDING)
-    {
-        io->u.Status = status;
-        io->Information = information;
-        release_fileio( &async->io );
-    }
+    if (status != STATUS_PENDING) release_fileio( &async->io );
     return status;
 }
 
-static NTSTATUS async_read_proc( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status )
+static NTSTATUS async_read_proc( void *user, ULONG_PTR *info, NTSTATUS status )
 {
     struct async_fileio_read *fileio = user;
     int fd, needs_close, result;
@@ -4750,14 +4744,13 @@ static NTSTATUS async_read_proc( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS sta
     }
     if (status != STATUS_PENDING)
     {
-        iosb->u.Status = status;
-        iosb->Information = fileio->already;
+        *info = fileio->already;
         release_fileio( &fileio->io );
     }
     return status;
 }
 
-static NTSTATUS async_write_proc( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status )
+static NTSTATUS async_write_proc( void *user, ULONG_PTR *info, NTSTATUS status )
 {
     struct async_fileio_write *fileio = user;
     int result, fd, needs_close;
@@ -4797,8 +4790,7 @@ static NTSTATUS async_write_proc( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS st
     }
     if (status != STATUS_PENDING)
     {
-        iosb->u.Status = status;
-        iosb->Information = fileio->already;
+        *info = fileio->already;
         release_fileio( &fileio->io );
     }
     return status;
@@ -6064,7 +6056,7 @@ NTSTATUS WINAPI NtUnlockFile( HANDLE handle, IO_STATUS_BLOCK *io_status, LARGE_I
 }
 
 
-static NTSTATUS read_changes_apc( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS status )
+static NTSTATUS read_changes_apc( void *user, ULONG_PTR *info, NTSTATUS status )
 {
     struct async_fileio_read_changes *fileio = user;
     int size = 0;
@@ -6133,8 +6125,7 @@ static NTSTATUS read_changes_apc( void *user, IO_STATUS_BLOCK *iosb, NTSTATUS st
 
     if (status != STATUS_PENDING)
     {
-        iosb->u.Status = status;
-        iosb->Information = size;
+        *info = size;
         release_fileio( &fileio->io );
     }
     return status;

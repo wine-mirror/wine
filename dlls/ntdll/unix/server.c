@@ -379,11 +379,16 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result, BOO
     {
         IO_STATUS_BLOCK *iosb = wine_server_get_ptr( call->async_io.sb );
         struct async_fileio *user = wine_server_get_ptr( call->async_io.user );
+        ULONG_PTR info = 0;
 
         result->type = call->type;
-        result->async_io.status = user->callback( user, iosb, call->async_io.status );
+        result->async_io.status = user->callback( user, &info, call->async_io.status );
         if (result->async_io.status != STATUS_PENDING)
-            result->async_io.total = iosb->Information;
+        {
+            result->async_io.total = info;
+            iosb->Status = result->async_io.status;
+            iosb->Information = info;
+        }
         break;
     }
     case APC_VIRTUAL_ALLOC:
