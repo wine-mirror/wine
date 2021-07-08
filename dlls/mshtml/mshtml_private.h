@@ -273,7 +273,8 @@ typedef struct EventTarget EventTarget;
     XIID(ISVGTextContentElement)
 
 #define PRIVATE_TID_LIST \
-    XIID(IWineHTMLWindowPrivate)
+    XIID(IWineHTMLWindowPrivate) \
+    XIID(IWineMSHTMLConsole)
 
 typedef enum {
 #define XIID(iface) iface ## _tid,
@@ -491,6 +492,8 @@ struct HTMLWindow {
     IObjectIdentity    IObjectIdentity_iface;
     IProvideMultipleClassInfo IProvideMultipleClassInfo_iface;
     IWineHTMLWindowPrivate IWineHTMLWindowPrivate_iface;
+
+    IWineMSHTMLConsole *console;
 
     LONG ref;
 
@@ -1407,3 +1410,4 @@ void set_statustext(HTMLDocumentObj*,INT,LPCWSTR) DECLSPEC_HIDDEN;
 IInternetSecurityManager *get_security_manager(void) DECLSPEC_HIDDEN;
 
 extern HINSTANCE hInst DECLSPEC_HIDDEN;
+void create_console(compat_mode_t compat_mode, IWineMSHTMLConsole **ret) DECLSPEC_HIDDEN;

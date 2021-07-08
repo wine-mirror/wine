@@ -316,6 +316,9 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        if (This->console)
+            IWineMSHTMLConsole_Release(This->console);
+
         if(is_outer_window(This))
             release_outer_window(This->outer_window);
         else
@@ -3115,6 +3118,21 @@ static HRESULT WINAPI window_private_requestAnimationFrame(IWineHTMLWindowPrivat
     return hres;
 }
 
+static HRESULT WINAPI window_private_get_console(IWineHTMLWindowPrivate *iface, IDispatch **console)
+{
+    HTMLWindow *This = impl_from_IWineHTMLWindowPrivateVtbl(iface);
+
+    TRACE("iface %p, console %p.\n", iface, console);
+
+    if (!This->console)
+        create_console(dispex_compat_mode(&This->inner_window->event_target.dispex), &This->console);
+
+    *console = (IDispatch *)This->console;
+    if (This->console)
+        IWineMSHTMLConsole_AddRef(This->console);
+    return S_OK;
+}
+
 static const IWineHTMLWindowPrivateVtbl WineHTMLWindowPrivateVtbl = {
     window_private_QueryInterface,
     window_private_AddRef,
@@ -3124,6 +3142,7 @@ static const IWineHTMLWindowPrivateVtbl WineHTMLWindowPrivateVtbl = {
     window_private_GetIDsOfNames,
     window_private_Invoke,
     window_private_requestAnimationFrame,
+    window_private_get_console,
 };
 
 static inline HTMLWindow *impl_from_IDispatchEx(IDispatchEx *iface)
