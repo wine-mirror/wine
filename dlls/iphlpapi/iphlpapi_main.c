@@ -61,6 +61,7 @@
 #include "wine/nsi.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
+#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
 
@@ -1919,14 +1920,78 @@ DWORD WINAPI GetIfTable(PMIB_IFTABLE pIfTable, PULONG pdwSize, BOOL bOrder)
   return ret;
 }
 
+static void if_counted_string_copy( WCHAR *dst, unsigned int len, IF_COUNTED_STRING *src )
+{
+    unsigned int copy = src->Length;
+
+    if (copy >= len * sizeof(WCHAR)) copy = 0;
+    memcpy( dst, src->String, copy );
+    memset( (char *)dst + copy, 0, len * sizeof(WCHAR) - copy );
+}
+
+static void if_row2_fill( MIB_IF_ROW2 *row, struct nsi_ndis_ifinfo_rw *rw, struct nsi_ndis_ifinfo_dynamic *dyn,
+                          struct nsi_ndis_ifinfo_static *stat )
+{
+    row->InterfaceIndex = stat->if_index;
+    row->InterfaceGuid = stat->if_guid;
+    if_counted_string_copy( row->Alias, ARRAY_SIZE(row->Alias), &rw->alias );
+    if_counted_string_copy( row->Description, ARRAY_SIZE(row->Description), &stat->descr );
+    row->PhysicalAddressLength = rw->phys_addr.Length;
+    if (row->PhysicalAddressLength > sizeof(row->PhysicalAddress)) row->PhysicalAddressLength = 0;
+    memcpy( row->PhysicalAddress, rw->phys_addr.Address, row->PhysicalAddressLength );
+    memcpy( row->PermanentPhysicalAddress, stat->perm_phys_addr.Address, row->PhysicalAddressLength );
+    row->Mtu = dyn->mtu;
+    row->Type = stat->type;
+    row->TunnelType = TUNNEL_TYPE_NONE; /* fixme */
+    row->MediaType = stat->media_type;
+    row->PhysicalMediumType = stat->phys_medium_type;
+    row->AccessType = stat->access_type;
+    row->DirectionType = NET_IF_DIRECTION_SENDRECEIVE; /* fixme */
+    row->InterfaceAndOperStatusFlags.HardwareInterface = stat->flags.hw;
+    row->InterfaceAndOperStatusFlags.FilterInterface = stat->flags.filter;
+    row->InterfaceAndOperStatusFlags.ConnectorPresent = !!stat->conn_present;
+    row->InterfaceAndOperStatusFlags.NotAuthenticated = 0; /* fixme */
+    row->InterfaceAndOperStatusFlags.NotMediaConnected = dyn->flags.not_media_conn;
+    row->InterfaceAndOperStatusFlags.Paused = 0; /* fixme */
+    row->InterfaceAndOperStatusFlags.LowPower = 0; /* fixme */
+    row->InterfaceAndOperStatusFlags.EndPointInterface = 0; /* fixme */
+    row->OperStatus = dyn->oper_status;
+    row->AdminStatus = rw->admin_status;
+    row->MediaConnectState = dyn->media_conn_state;
+    row->NetworkGuid = rw->network_guid;
+    row->ConnectionType = stat->conn_type;
+    row->TransmitLinkSpeed = dyn->xmit_speed;
+    row->ReceiveLinkSpeed = dyn->rcv_speed;
+    row->InOctets = dyn->in_octets;
+    row->InUcastPkts = dyn->in_ucast_pkts;
+    row->InNUcastPkts = dyn->in_bcast_pkts + dyn->in_mcast_pkts;
+    row->InDiscards = dyn->in_discards;
+    row->InErrors = dyn->in_errors;
+    row->InUnknownProtos = 0; /* fixme */
+    row->InUcastOctets = dyn->in_ucast_octs;
+    row->InMulticastOctets = dyn->in_mcast_octs;
+    row->InBroadcastOctets = dyn->in_bcast_octs;
+    row->OutOctets = dyn->out_octets;
+    row->OutUcastPkts = dyn->out_ucast_pkts;
+    row->OutNUcastPkts = dyn->out_bcast_pkts + dyn->out_mcast_pkts;
+    row->OutDiscards = dyn->out_discards;
+    row->OutErrors = dyn->out_errors;
+    row->OutUcastOctets = dyn->out_ucast_octs;
+    row->OutMulticastOctets = dyn->out_mcast_octs;
+    row->OutBroadcastOctets = dyn->out_bcast_octs;
+    row->OutQLen = 0; /* fixme */
+}
+
 /******************************************************************
  *    GetIfTable2Ex (IPHLPAPI.@)
  */
 DWORD WINAPI GetIfTable2Ex( MIB_IF_TABLE_LEVEL level, MIB_IF_TABLE2 **table )
 {
-    DWORD i, nb_interfaces, size = sizeof(MIB_IF_TABLE2);
-    InterfaceIndexTable *index_table;
-    MIB_IF_TABLE2 *ret;
+    DWORD i, count, size, err;
+    NET_LUID *keys;
+    struct nsi_ndis_ifinfo_rw *rw;
+    struct nsi_ndis_ifinfo_dynamic *dyn;
+    struct nsi_ndis_ifinfo_static *stat;
 
     TRACE( "level %u, table %p\n", level, table );
 
@@ -1936,29 +2001,30 @@ DWORD WINAPI GetIfTable2Ex( MIB_IF_TABLE_LEVEL level, MIB_IF_TABLE2 **table )
     if (level != MibIfTableNormal)
         FIXME("level %u not fully supported\n", level);
 
-    if ((nb_interfaces = get_interface_indices( FALSE, NULL )) > 1)
-        size += (nb_interfaces - 1) * sizeof(MIB_IF_ROW2);
+    err = NsiAllocateAndGetTable( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, (void **)&keys, sizeof(*keys),
+                                  (void **)&rw, sizeof(*rw), (void **)&dyn, sizeof(*dyn),
+                                  (void **)&stat, sizeof(*stat), &count, 0 );
+    if (err) return err;
 
-    if (!(ret = HeapAlloc( GetProcessHeap(), 0, size ))) return ERROR_OUTOFMEMORY;
+    size = FIELD_OFFSET( MIB_IF_TABLE2, Table[count] );
 
-    get_interface_indices( FALSE, &index_table );
-    if (!index_table)
+    if (!(*table = heap_alloc_zero( size )))
     {
-        HeapFree( GetProcessHeap(), 0, ret );
-        return ERROR_OUTOFMEMORY;
+        err = ERROR_OUTOFMEMORY;
+        goto err;
     }
 
-    ret->NumEntries = 0;
-    for (i = 0; i < index_table->numIndexes; i++)
+    (*table)->NumEntries = count;
+    for (i = 0; i < count; i++)
     {
-        ret->Table[i].InterfaceIndex = index_table->indexes[i];
-        GetIfEntry2( &ret->Table[i] );
-        ret->NumEntries++;
-    }
+        MIB_IF_ROW2 *row = (*table)->Table + i;
 
-    HeapFree( GetProcessHeap(), 0, index_table );
-    *table = ret;
-    return NO_ERROR;
+        row->InterfaceLuid.Value = keys[i].Value;
+        if_row2_fill( row, rw + i, dyn + i, stat + i );
+    }
+err:
+    NsiFreeTable( keys, rw, dyn, stat );
+    return err;
 }
 
 /******************************************************************
@@ -1967,7 +2033,7 @@ DWORD WINAPI GetIfTable2Ex( MIB_IF_TABLE_LEVEL level, MIB_IF_TABLE2 **table )
 DWORD WINAPI GetIfTable2( MIB_IF_TABLE2 **table )
 {
     TRACE( "table %p\n", table );
-    return GetIfTable2Ex(MibIfTableNormal, table);
+    return GetIfTable2Ex( MibIfTableNormal, table );
 }
 
 /******************************************************************
