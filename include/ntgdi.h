@@ -34,13 +34,38 @@ typedef struct _GDI_HANDLE_ENTRY
         };
         ULONG Value;
     } Owner;
-    USHORT Unique;
-    UCHAR  Type;
-    UCHAR  Flags;
+    union
+    {
+        struct
+        {
+            UCHAR ExtType : 7;
+            UCHAR StockFlag : 1;
+            UCHAR Generation;
+        };
+        USHORT Unique;
+    };
+    UCHAR Type;
+    UCHAR Flags;
     UINT64 UserPointer;
 } GDI_HANDLE_ENTRY, *PGDI_HANDLE_ENTRY;
 
 #define GDI_MAX_HANDLE_COUNT 0x10000
+
+#define NTGDI_OBJ_DC              0x01
+#define NTGDI_OBJ_ENHMETADC       0x21
+#define NTGDI_OBJ_REGION          0x04
+#define NTGDI_OBJ_METAFILE        0x26
+#define NTGDI_OBJ_ENHMETAFILE     0x46
+#define NTGDI_OBJ_METADC          0x66
+#define NTGDI_OBJ_PAL             0x08
+#define NTGDI_OBJ_BITMAP          0x09
+#define NTGDI_OBJ_FONT            0x0a
+#define NTGDI_OBJ_BRUSH           0x10
+#define NTGDI_OBJ_PEN             0x30
+#define NTGDI_OBJ_EXTPEN          0x50
+
+/* Wine extension, native uses NTGDI_OBJ_DC */
+#define NTGDI_OBJ_MEMDC           0x41
 
 typedef struct _GDI_SHARED_MEMORY
 {
