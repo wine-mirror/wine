@@ -272,10 +272,15 @@ typedef struct EventTarget EventTarget;
     XIID(ISVGTSpanElement) \
     XIID(ISVGTextContentElement)
 
+#define PRIVATE_TID_LIST \
+    XIID(IWineHTMLWindowPrivate)
+
 typedef enum {
 #define XIID(iface) iface ## _tid,
 #define XDIID(iface) iface ## _tid,
 TID_LIST
+    LAST_public_tid,
+PRIVATE_TID_LIST
 #undef XIID
 #undef XDIID
     LAST_tid
@@ -485,6 +490,7 @@ struct HTMLWindow {
     ITravelLogClient   ITravelLogClient_iface;
     IObjectIdentity    IObjectIdentity_iface;
     IProvideMultipleClassInfo IProvideMultipleClassInfo_iface;
+    IWineHTMLWindowPrivate IWineHTMLWindowPrivate_iface;
 
     LONG ref;
 
