@@ -5532,7 +5532,7 @@ static void shader_glsl_ld_uav(const struct wined3d_shader_instruction *ins)
         resource_type = WINED3D_SHADER_RESOURCE_TEXTURE_2D;
     }
     data_type = reg_maps->uav_resource_info[uav_idx].data_type;
-    coord_mask = (1u << resource_type_info[resource_type].coord_size) - 1;
+    coord_mask = wined3d_mask_from_size(resource_type_info[resource_type].coord_size);
 
     write_mask = shader_glsl_append_dst_ext(ins->ctx->buffer, ins, &ins->dst[0], 0, data_type);
     shader_glsl_get_swizzle(&ins->src[1], FALSE, write_mask, dst_swizzle);
