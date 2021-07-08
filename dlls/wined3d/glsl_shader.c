@@ -5354,7 +5354,7 @@ static void shader_glsl_atomic(const struct wined3d_shader_instruction *ins)
         }
         resource = "image";
         data_type = reg_maps->uav_resource_info[resource_idx].data_type;
-        coord_mask = (1u << resource_type_info[resource_type].coord_size) - 1;
+        coord_mask = wined3d_mask_from_size(resource_type_info[resource_type].coord_size);
         stride = reg_maps->uav_resource_info[resource_idx].stride;
     }
 
