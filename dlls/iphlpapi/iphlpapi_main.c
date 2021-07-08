@@ -73,6 +73,30 @@ WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
 #define INADDR_NONE ~0UL
 #endif
 
+#define CHARS_IN_GUID 39
+
+DWORD WINAPI ConvertGuidToStringA( const GUID *guid, char *str, DWORD len )
+{
+    if (len < CHARS_IN_GUID) return ERROR_INSUFFICIENT_BUFFER;
+    sprintf( str, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+             guid->Data1, guid->Data2, guid->Data3, guid->Data4[0], guid->Data4[1], guid->Data4[2],
+             guid->Data4[3], guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
+    return ERROR_SUCCESS;
+}
+
+DWORD WINAPI ConvertGuidToStringW( const GUID *guid, WCHAR *str, DWORD len )
+{
+    static const WCHAR fmt[] = { '{','%','0','8','X','-','%','0','4','X','-','%','0','4','X','-',
+                                 '%','0','2','X','%','0','2','X','-','%','0','2','X','%','0','2','X',
+                                 '%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X','}',0 };
+
+    if (len < CHARS_IN_GUID) return ERROR_INSUFFICIENT_BUFFER;
+    sprintfW( str, fmt,
+              guid->Data1, guid->Data2, guid->Data3, guid->Data4[0], guid->Data4[1], guid->Data4[2],
+              guid->Data4[3], guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
+    return ERROR_SUCCESS;
+}
+
 /******************************************************************
  *    AddIPAddress (IPHLPAPI.@)
  *
@@ -989,7 +1013,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
     }
 
     total_size = sizeof(IP_ADAPTER_ADDRESSES);
-    total_size += 39; /* "{00000000-0000-0000-0000-000000000000}" */
+    total_size += CHARS_IN_GUID;
     total_size += IF_NAMESIZE * sizeof(WCHAR);
     if (!(flags & GAA_FLAG_SKIP_FRIENDLY_NAME))
         total_size += IF_NAMESIZE * sizeof(WCHAR);
@@ -1030,7 +1054,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
                 guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5],
                 guid.Data4[6], guid.Data4[7]);
         aa->AdapterName = ptr;
-        ptr += 39;
+        ptr += CHARS_IN_GUID;
 
         getInterfaceNameByIndex(index, name);
         if (!(flags & GAA_FLAG_SKIP_FRIENDLY_NAME))

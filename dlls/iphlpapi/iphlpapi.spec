@@ -10,8 +10,8 @@
 @ stdcall AllocateAndGetUdpTableFromStack( ptr long long long )
 @ stdcall CancelIPChangeNotify( ptr )
 @ stdcall CancelMibChangeNotify2( ptr )
-#@ stub ConvertGuidToStringA
-#@ stub ConvertGuidToStringW
+@ stdcall ConvertGuidToStringA( ptr ptr long )
+@ stdcall ConvertGuidToStringW( ptr ptr long )
 @ stdcall ConvertInterfaceAliasToLuid( ptr ptr )
 @ stdcall ConvertInterfaceGuidToLuid( ptr ptr )
 @ stdcall ConvertInterfaceIndexToLuid( long ptr )

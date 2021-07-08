@@ -67,6 +67,9 @@ static DWORD (WINAPI *pNotifyUnicastIpAddressChange)(ADDRESS_FAMILY, PUNICAST_IP
                                                 PVOID, BOOLEAN, HANDLE *);
 static DWORD (WINAPI *pCancelMibChangeNotify2)(HANDLE);
 
+DWORD WINAPI ConvertGuidToStringA( const GUID *, char *, DWORD );
+DWORD WINAPI ConvertGuidToStringW( const GUID *, WCHAR *, DWORD );
+
 static void loadIPHlpApi(void)
 {
   hLibrary = LoadLibraryA("iphlpapi.dll");
@@ -2331,6 +2334,26 @@ static void test_NotifyUnicastIpAddressChange(void)
     ok(!CloseHandle(handle), "CloseHandle() succeeded.\n");
 }
 
+static void test_ConvertGuidToString( void )
+{
+    DWORD err;
+    char bufA[39];
+    WCHAR bufW[39];
+    GUID guid = { 0xa, 0xb, 0xc, { 0xd, 0, 0xe, 0xf } };
+
+    err = ConvertGuidToStringA( &guid, bufA, 38 );
+    ok( err, "got %d\n", err );
+    err = ConvertGuidToStringA( &guid, bufA, 39 );
+    ok( !err, "got %d\n", err );
+    ok( !strcmp( bufA, "{0000000A-000B-000C-0D00-0E0F00000000}" ), "got %s\n", bufA );
+
+    err = ConvertGuidToStringW( &guid, bufW, 38 );
+    ok( err, "got %d\n", err );
+    err = ConvertGuidToStringW( &guid, bufW, 39 );
+    ok( !err, "got %d\n", err );
+    ok( !wcscmp( bufW, L"{0000000A-000B-000C-0D00-0E0F00000000}" ), "got %s\n", debugstr_w( bufW ) );
+}
+
 START_TEST(iphlpapi)
 {
 
@@ -2363,6 +2386,7 @@ START_TEST(iphlpapi)
     test_GetUdp6Table();
     test_ParseNetworkString();
     test_NotifyUnicastIpAddressChange();
+    test_ConvertGuidToString();
     freeIPHlpApi();
   }
 }
