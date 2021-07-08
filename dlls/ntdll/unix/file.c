@@ -1844,6 +1844,27 @@ static NTSTATUS server_get_file_info( HANDLE handle, IO_STATUS_BLOCK *io, void *
 }
 
 
+static NTSTATUS server_open_file_object( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
+                                         ULONG sharing, ULONG options )
+{
+    NTSTATUS status;
+
+    SERVER_START_REQ( open_file_object )
+    {
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
+        req->sharing    = sharing;
+        req->options    = options;
+        wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        status = wine_server_call( req );
+        *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+    return status;
+}
+
+
 /* retrieve device/inode number for all the drives */
 static unsigned int get_drives_info( struct file_identity info[MAX_DOS_DRIVES] )
 {
@@ -1970,8 +1991,8 @@ static NTSTATUS get_mountmgr_fs_info( HANDLE handle, int fd, struct mountmgr_uni
 
     init_unicode_string( &string, MOUNTMGR_DEVICE_NAME );
     InitializeObjectAttributes( &attr, &string, 0, NULL, NULL );
-    status = NtOpenFile( &mountmgr, GENERIC_READ | SYNCHRONIZE, &attr, &io,
-                         FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT );
+    status = server_open_file_object( &mountmgr, GENERIC_READ | SYNCHRONIZE, &attr,
+                                      FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT );
     if (status) return status;
 
     status = NtDeviceIoControlFile( mountmgr, NULL, NULL, NULL, &io, IOCTL_MOUNTMGR_QUERY_UNIX_DRIVE,
@@ -3747,18 +3768,7 @@ NTSTATUS WINAPI NtCreateFile( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBU
 
     if (io->u.Status == STATUS_BAD_DEVICE_TYPE)
     {
-        SERVER_START_REQ( open_file_object )
-        {
-            req->access     = access;
-            req->attributes = attr->Attributes;
-            req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
-            req->sharing    = sharing;
-            req->options    = options;
-            wine_server_add_data( req, new_attr.ObjectName->Buffer, new_attr.ObjectName->Length );
-            io->u.Status = wine_server_call( req );
-            *handle = wine_server_ptr_handle( reply->handle );
-        }
-        SERVER_END_REQ;
+        io->u.Status = server_open_file_object( handle, access, &new_attr, sharing, options );
         if (io->u.Status == STATUS_SUCCESS) io->Information = FILE_OPENED;
         free( nt_name.Buffer );
         return io->u.Status;
