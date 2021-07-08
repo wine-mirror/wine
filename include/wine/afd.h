@@ -192,6 +192,7 @@ struct afd_get_events_params
 #define IOCTL_AFD_WINE_SET_IP_HDRINCL                   WINE_AFD_IOC(247)
 #define IOCTL_AFD_WINE_GET_IP_MULTICAST_IF              WINE_AFD_IOC(248)
 #define IOCTL_AFD_WINE_SET_IP_MULTICAST_IF              WINE_AFD_IOC(249)
+#define IOCTL_AFD_WINE_GET_IP_MULTICAST_LOOP            WINE_AFD_IOC(250)
 
 struct afd_create_params
 {
