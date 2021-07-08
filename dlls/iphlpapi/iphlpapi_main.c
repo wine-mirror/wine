@@ -747,10 +747,7 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
               /* on Win98 this is left empty, but whatever */
               ConvertInterfaceIndexToLuid(table->indexes[ndx], &luid);
               ConvertInterfaceLuidToGuid(&luid, &guid);
-              sprintf(ptr->AdapterName, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-                      guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1],
-                      guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5],
-                      guid.Data4[6], guid.Data4[7]);
+              ConvertGuidToStringA( &guid, ptr->AdapterName, ARRAY_SIZE(ptr->AdapterName) );
               getInterfaceNameByIndex(table->indexes[ndx], ptr->Description);
               ptr->AddressLength = sizeof(ptr->Address);
               getInterfacePhysicalByIndex(table->indexes[ndx],
@@ -1057,10 +1054,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
 
         ConvertInterfaceIndexToLuid(index, &luid);
         ConvertInterfaceLuidToGuid(&luid, &guid);
-        sprintf(ptr, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-                guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1],
-                guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5],
-                guid.Data4[6], guid.Data4[7]);
+        ConvertGuidToStringA( &guid, ptr, CHARS_IN_GUID );
         aa->AdapterName = ptr;
         ptr += CHARS_IN_GUID;
 
