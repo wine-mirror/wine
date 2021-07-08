@@ -3919,12 +3919,20 @@ NTSTATUS WINAPI NtDeleteFile( OBJECT_ATTRIBUTES *attr )
 {
     HANDLE handle;
     NTSTATUS status;
-    IO_STATUS_BLOCK io;
+    char *unix_name;
+    UNICODE_STRING nt_name;
+    OBJECT_ATTRIBUTES new_attr = *attr;
 
-    status = NtCreateFile( &handle, GENERIC_READ | GENERIC_WRITE | DELETE, attr, &io, NULL, 0,
-                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN,
-                           FILE_DELETE_ON_CLOSE, NULL, 0 );
-    if (status == STATUS_SUCCESS) NtClose( handle );
+    get_redirect( &new_attr, &nt_name );
+    if (!(status = nt_to_unix_file_name( &new_attr, &unix_name, FILE_OPEN )))
+    {
+        if (!(status = open_unix_file( &handle, unix_name, GENERIC_READ | GENERIC_WRITE | DELETE, &new_attr,
+                                       0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN,
+                                       FILE_DELETE_ON_CLOSE, NULL, 0 )))
+            NtClose( handle );
+        free( unix_name );
+    }
+    free( nt_name.Buffer );
     return status;
 }
 
