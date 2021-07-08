@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-04-23 10:59+0200\n"
+"PO-Revision-Date: 2021-07-08 17:51+0200\n"
 "Last-Translator: Julian Rüger <jr98@gmx.net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -3981,10 +3981,8 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "Nicht-schreibbare Eigenschaft '|' kann nicht geändert werden"
 
 #: dlls/jscript/jscript.rc:77
-#, fuzzy
-#| msgid "'[object]' is not a date object"
 msgid "'this' is not a Map object"
-msgstr "'[Objekt]' ist kein Datums-Objekt"
+msgstr "'this' ist kein Map-Objekt"
 
 #: dlls/jscript/jscript.rc:78
 msgid "Property cannot have both accessors and a value"
@@ -6982,10 +6980,8 @@ msgid "Resource is not currently available.\n"
 msgstr "Ressource ist zur Zeit nicht verfügbar.\n"
 
 #: dlls/light.msstyles/light.rc:30 dlls/light.msstyles/light.rc:37
-#, fuzzy
-#| msgid "Class Name:"
 msgid "Classic Blue"
-msgstr "Klassenname:"
+msgstr "Klassisch Blau"
 
 #: dlls/light.msstyles/light.rc:43 dlls/light.msstyles/light.rc:49
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
@@ -6993,569 +6989,468 @@ msgid "Normal"
 msgstr "Mittel"
 
 #: dlls/localspl/localspl.rc:37
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter"
-msgstr "Buchst."
+msgstr "US-Letter"
 
 #: dlls/localspl/localspl.rc:38
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Small"
-msgstr "Buchst."
+msgstr "US-Letter klein"
 
 #: dlls/localspl/localspl.rc:39
-#, fuzzy
-#| msgid "&Table"
 msgid "Tabloid"
-msgstr "&Tabelle"
+msgstr "Tabloid"
 
 #: dlls/localspl/localspl.rc:40
 msgid "Ledger"
-msgstr ""
+msgstr "Ledger"
 
 #: dlls/localspl/localspl.rc:41
 msgid "Legal"
-msgstr ""
+msgstr "Legal"
 
 #: dlls/localspl/localspl.rc:42
-#, fuzzy
-#| msgid "State"
 msgid "Statement"
-msgstr "Zustand"
+msgstr "Statement"
 
 #: dlls/localspl/localspl.rc:43
-#, fuzzy
-#| msgid "&Execute..."
 msgid "Executive"
-msgstr "&Ausführen..."
+msgstr "Executive"
 
 #: dlls/localspl/localspl.rc:44
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A3"
-msgstr "A"
+msgstr "A3"
 
 #: dlls/localspl/localspl.rc:45
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A4"
-msgstr "A"
+msgstr "A4"
 
 #: dlls/localspl/localspl.rc:46
-#, fuzzy
-#| msgid "Small"
 msgid "A4 Small"
-msgstr "Klein"
+msgstr "A4 klein"
 
 #: dlls/localspl/localspl.rc:47
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A5"
-msgstr "A"
+msgstr "A5"
 
 #: dlls/localspl/localspl.rc:48
 msgid "B4 (JIS)"
-msgstr ""
+msgstr "B4 (JIS)"
 
 #: dlls/localspl/localspl.rc:49
 msgid "B5 (JIS)"
-msgstr ""
+msgstr "B5 (JIS)"
 
 #: dlls/localspl/localspl.rc:50
 msgid "Folio"
-msgstr ""
+msgstr "Folio"
 
 #: dlls/localspl/localspl.rc:51
 msgid "Quarto"
-msgstr ""
+msgstr "Quarto"
 
 #: dlls/localspl/localspl.rc:52
 msgid "10x14"
-msgstr ""
+msgstr "10x14"
 
 #: dlls/localspl/localspl.rc:53
 msgid "11x17"
-msgstr ""
+msgstr "11x17"
 
 #: dlls/localspl/localspl.rc:54
-#, fuzzy
-#| msgid "Notepad"
 msgid "Note"
-msgstr "Editor"
+msgstr "Notiz"
 
 #: dlls/localspl/localspl.rc:55
 msgid "Envelope #9"
-msgstr ""
+msgstr "Umschlag #9"
 
 #: dlls/localspl/localspl.rc:56
 msgid "Envelope #10"
-msgstr ""
+msgstr "Umschlag #10"
 
 #: dlls/localspl/localspl.rc:57
 msgid "Envelope #11"
-msgstr ""
+msgstr "Umschlag #11"
 
 #: dlls/localspl/localspl.rc:58
 msgid "Envelope #12"
-msgstr ""
+msgstr "Umschlag #12"
 
 #: dlls/localspl/localspl.rc:59
 msgid "Envelope #14"
-msgstr ""
+msgstr "Umschlag #14"
 
 #: dlls/localspl/localspl.rc:60
 msgid "C size sheet"
-msgstr ""
+msgstr "Blatt Größe C"
 
 #: dlls/localspl/localspl.rc:61
 msgid "D size sheet"
-msgstr ""
+msgstr "Blatt Größe D"
 
 #: dlls/localspl/localspl.rc:62
 msgid "E size sheet"
-msgstr ""
+msgstr "Blatt Größe E"
 
 #: dlls/localspl/localspl.rc:63
 msgid "Envelope DL"
-msgstr ""
+msgstr "Umschlag DL"
 
 #: dlls/localspl/localspl.rc:64
 msgid "Envelope C5"
-msgstr ""
+msgstr "Umschlag C5"
 
 #: dlls/localspl/localspl.rc:65
 msgid "Envelope C3"
-msgstr ""
+msgstr "Umschlag C3"
 
 #: dlls/localspl/localspl.rc:66
 msgid "Envelope C4"
-msgstr ""
+msgstr "Umschlag C4"
 
 #: dlls/localspl/localspl.rc:67
 msgid "Envelope C6"
-msgstr ""
+msgstr "Umschlag C6"
 
 #: dlls/localspl/localspl.rc:68
 msgid "Envelope C65"
-msgstr ""
+msgstr "Umschlag C65"
 
 #: dlls/localspl/localspl.rc:69
 msgid "Envelope B4"
-msgstr ""
+msgstr "Umschlag B4"
 
 #: dlls/localspl/localspl.rc:70
 msgid "Envelope B5"
-msgstr ""
+msgstr "Umschlag B5"
 
 #: dlls/localspl/localspl.rc:71
 msgid "Envelope B6"
-msgstr ""
+msgstr "Umschlag B6"
 
 #: dlls/localspl/localspl.rc:72
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "Envelope"
-msgstr "PKCS-7-umhüllt"
+msgstr "Umschlag"
 
 #: dlls/localspl/localspl.rc:73
 msgid "Envelope Monarch"
-msgstr ""
+msgstr "Umschlag Monarch"
 
 #: dlls/localspl/localspl.rc:74
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "6 3/4 Envelope"
-msgstr "PKCS-7-umhüllt"
+msgstr "6 3/4 Umschlag"
 
 #: dlls/localspl/localspl.rc:75
 msgid "US Std Fanfold"
-msgstr ""
+msgstr "US Std Fanfold"
 
 #: dlls/localspl/localspl.rc:76
 msgid "German Std Fanfold"
-msgstr ""
+msgstr "Deutsch Std Fanfold"
 
 #: dlls/localspl/localspl.rc:77
 msgid "German Legal Fanfold"
-msgstr ""
+msgstr "Deutsch Legal Fanfold"
 
 #: dlls/localspl/localspl.rc:78
 msgid "B4 (ISO)"
-msgstr ""
+msgstr "B4 (ISO)"
 
 #: dlls/localspl/localspl.rc:79
-#, fuzzy
-#| msgid "Japanese"
 msgid "Japanese Postcard"
-msgstr "Japanisch"
+msgstr "Japanische Postkarte"
 
 #: dlls/localspl/localspl.rc:80
 msgid "9x11"
-msgstr ""
+msgstr "9x11"
 
 #: dlls/localspl/localspl.rc:81
 msgid "10x11"
-msgstr ""
+msgstr "10x11"
 
 #: dlls/localspl/localspl.rc:82
 msgid "15x11"
-msgstr ""
+msgstr "15x11"
 
 #: dlls/localspl/localspl.rc:83
 msgid "Envelope Invite"
-msgstr ""
+msgstr "Umschlag Einladung"
 
 #: dlls/localspl/localspl.rc:84
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Extra"
-msgstr "Buchst."
+msgstr "Letter Extra"
 
 #: dlls/localspl/localspl.rc:85
 msgid "Legal Extra"
-msgstr ""
+msgstr "Legal Extra"
 
 #: dlls/localspl/localspl.rc:86
 msgid "Tabloid Extra"
-msgstr ""
+msgstr "Tabloid Extra"
 
 #: dlls/localspl/localspl.rc:87
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A4 Extra"
-msgstr "&Extras"
+msgstr "A4 Extra"
 
 #: dlls/localspl/localspl.rc:88
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "Letter Transverse"
-msgstr "durchlaufen"
+msgstr "Letter Transvers"
 
 #: dlls/localspl/localspl.rc:89
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "A4 Transverse"
-msgstr "durchlaufen"
+msgstr "A4 Transvers"
 
 #: dlls/localspl/localspl.rc:90
 msgid "Letter Extra Transverse"
-msgstr ""
+msgstr "Letter Extra Transvers"
 
 #: dlls/localspl/localspl.rc:91
 msgid "Super A"
-msgstr ""
+msgstr "Super A"
 
 #: dlls/localspl/localspl.rc:92
 msgid "Super B"
-msgstr ""
+msgstr "Super B"
 
 #: dlls/localspl/localspl.rc:93
-#, fuzzy
-#| msgctxt "Drive letter"
-#| msgid "Letter"
 msgid "Letter Plus"
-msgstr "Buchst."
+msgstr "Letter Plus"
 
 #: dlls/localspl/localspl.rc:94
 msgid "A4 Plus"
-msgstr ""
+msgstr "A4 Plus"
 
 #: dlls/localspl/localspl.rc:95
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "A5 Transverse"
-msgstr "durchlaufen"
+msgstr "A5 Transvers"
 
 #: dlls/localspl/localspl.rc:96
 msgid "B5 (JIS) Transverse"
-msgstr ""
+msgstr "B5 (JIS) Transvers"
 
 #: dlls/localspl/localspl.rc:97
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A3 Extra"
-msgstr "&Extras"
+msgstr "A3 Extra"
 
 #: dlls/localspl/localspl.rc:98
-#, fuzzy
-#| msgid "E&xtras"
 msgid "A5 Extra"
-msgstr "&Extras"
+msgstr "A5 Extra"
 
 #: dlls/localspl/localspl.rc:99
 msgid "B5 (ISO) Extra"
-msgstr ""
+msgstr "B5 (ISO) Extra"
 
 #: dlls/localspl/localspl.rc:100
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A2"
-msgstr "A"
+msgstr "A2"
 
 #: dlls/localspl/localspl.rc:101
-#, fuzzy
-#| msgctxt "object state"
-#| msgid "traversed"
 msgid "A3 Transverse"
-msgstr "durchlaufen"
+msgstr "A3 Transvers"
 
 #: dlls/localspl/localspl.rc:102
 msgid "A3 Extra Transverse"
-msgstr ""
+msgstr "A3 Extra Transvers"
 
 #: dlls/localspl/localspl.rc:103
 msgid "Japanese Double Postcard"
-msgstr ""
+msgstr "Japanische Doppelpostkarte"
 
 #: dlls/localspl/localspl.rc:104
-#, fuzzy
-#| msgctxt "All key"
-#| msgid "A"
 msgid "A6"
-msgstr "A"
+msgstr "A6"
 
 #: dlls/localspl/localspl.rc:105
 msgid "Japanese Envelope Kaku #2"
-msgstr ""
+msgstr "Japanischer Umschlag Kaku #2"
 
 #: dlls/localspl/localspl.rc:106
 msgid "Japanese Envelope Kaku #3"
-msgstr ""
+msgstr "Japanischer Umschlag Kaku #3"
 
 #: dlls/localspl/localspl.rc:107
 msgid "Japanese Envelope Chou #3"
-msgstr ""
+msgstr "Japanischer Umschlag Chou #3"
 
 #: dlls/localspl/localspl.rc:108
 msgid "Japanese Envelope Chou #4"
-msgstr ""
+msgstr "Japanischer Umschlag Chou #4"
 
 #: dlls/localspl/localspl.rc:109
 msgid "Letter Rotated"
-msgstr ""
+msgstr "Letter gedreht"
 
 #: dlls/localspl/localspl.rc:110
 msgid "A3 Rotated"
-msgstr ""
+msgstr "A3 gedreht"
 
 #: dlls/localspl/localspl.rc:111
 msgid "A4 Rotated"
-msgstr ""
+msgstr "A4 gedreht"
 
 #: dlls/localspl/localspl.rc:112
 msgid "A5 Rotated"
-msgstr ""
+msgstr "A5 gedreht"
 
 #: dlls/localspl/localspl.rc:113
 msgid "B4 (JIS) Rotated"
-msgstr ""
+msgstr "B4 (JIS) gedreht"
 
 #: dlls/localspl/localspl.rc:114
 msgid "B5 (JIS) Rotated"
-msgstr ""
+msgstr "B5 (JIS) gedreht"
 
 #: dlls/localspl/localspl.rc:115
 msgid "Japanese Postcard Rotated"
-msgstr ""
+msgstr "Japanische Postkarte gedreht"
 
 #: dlls/localspl/localspl.rc:116
 msgid "Double Japan Postcard Rotated"
-msgstr ""
+msgstr "Japanische Doppelpostkarte gedreht"
 
 #: dlls/localspl/localspl.rc:117
 msgid "A6 Rotated"
-msgstr ""
+msgstr "A6 gedreht"
 
 #: dlls/localspl/localspl.rc:118
 msgid "Japan Envelope Kaku #2 Rotated"
-msgstr ""
+msgstr "Japanischer Umschlag Kaku #2 gedreht"
 
 #: dlls/localspl/localspl.rc:119
 msgid "Japan Envelope Kaku #3 Rotated"
-msgstr ""
+msgstr "Japanischer Umschlag Kaku #3 gedreht"
 
 #: dlls/localspl/localspl.rc:120
 msgid "Japan Envelope Chou #3 Rotated"
-msgstr ""
+msgstr "Japanischer Umschlag Chou #3 gedreht"
 
 #: dlls/localspl/localspl.rc:121
 msgid "Japan Envelope Chou #4 Rotated"
-msgstr ""
+msgstr "Japanischer Umschlag Chou #4 gedreht"
 
 #: dlls/localspl/localspl.rc:122
 msgid "B6 (JIS)"
-msgstr ""
+msgstr "B6 (JIS)"
 
 #: dlls/localspl/localspl.rc:123
 msgid "B6 (JIS) Rotated"
-msgstr ""
+msgstr "B6 (JIS) gedreht"
 
 #: dlls/localspl/localspl.rc:124
 msgid "12x11"
-msgstr ""
+msgstr "12x11"
 
 #: dlls/localspl/localspl.rc:125
 msgid "Japan Envelope You #4"
-msgstr ""
+msgstr "Japanischer Umschlag You #4"
 
 #: dlls/localspl/localspl.rc:126
 msgid "Japan Envelope You #4 Rotated"
-msgstr ""
+msgstr "Japanischer Umschlag You #4 gedreht"
 
 #: dlls/localspl/localspl.rc:127
 msgid "PRC 16K"
-msgstr ""
+msgstr "PRC 16K"
 
 #: dlls/localspl/localspl.rc:128
 msgid "PRC 32K"
-msgstr ""
+msgstr "PRC 32K"
 
 #: dlls/localspl/localspl.rc:129
 msgid "PRC 32K(Big)"
-msgstr ""
+msgstr "PRC 32K(Groß)"
 
 #: dlls/localspl/localspl.rc:130
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #1"
-msgstr "PKCS-7-umhüllt"
+msgstr "PRC-Umschlag #1"
 
 #: dlls/localspl/localspl.rc:131
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #2"
-msgstr "PKCS-7-umhüllt"
+msgstr "PRC-Umschlag #2"
 
 #: dlls/localspl/localspl.rc:132
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #3"
-msgstr "PKCS-7-umhüllt"
+msgstr "PRC-Umschlag #3"
 
 #: dlls/localspl/localspl.rc:133
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #4"
-msgstr "PKCS-7-umhüllt"
+msgstr "PRC-Umschlag #4"
 
 #: dlls/localspl/localspl.rc:134
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #5"
-msgstr "PKCS-7-umhüllt"
+msgstr "PRC-Umschlag #5"
 
 #: dlls/localspl/localspl.rc:135
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #6"
-msgstr "PKCS-7-umhüllt"
+msgstr "PRC-Umschlag #6"
 
 #: dlls/localspl/localspl.rc:136
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #7"
-msgstr "PKCS-7-umhüllt"
+msgstr "PRC-Umschlag #7"
 
 #: dlls/localspl/localspl.rc:137
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #8"
-msgstr "PKCS-7-umhüllt"
+msgstr "PRC-Umschlag #8"
 
 #: dlls/localspl/localspl.rc:138
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #9"
-msgstr "PKCS-7-umhüllt"
+msgstr "PRC-Umschlag #9"
 
 #: dlls/localspl/localspl.rc:139
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #10"
-msgstr "PKCS-7-umhüllt"
+msgstr "PRC-Umschlag #10"
 
 #: dlls/localspl/localspl.rc:140
 msgid "PRC 16K Rotated"
-msgstr ""
+msgstr "PRC 16K gedreht"
 
 #: dlls/localspl/localspl.rc:141
 msgid "PRC 32K Rotated"
-msgstr ""
+msgstr "PRC 32K gedreht"
 
 #: dlls/localspl/localspl.rc:142
 msgid "PRC 32K(Big) Rotated"
-msgstr ""
+msgstr "PRC 32K(Groß) gedreht"
 
 #: dlls/localspl/localspl.rc:143
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #1 Rotated"
-msgstr "PKCS-7-umhüllt"
+msgstr "PRC-Umschlag #1 gedreht"
 
 #: dlls/localspl/localspl.rc:144
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #2 Rotated"
-msgstr "PKCS-7-umhüllt"
+msgstr "PRC-Umschlag #2 gedreht"
 
 #: dlls/localspl/localspl.rc:145
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #3 Rotated"
-msgstr "PKCS-7-umhüllt"
+msgstr "PRC-Umschlag #3 gedreht"
 
 #: dlls/localspl/localspl.rc:146
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #4 Rotated"
-msgstr "PKCS-7-umhüllt"
+msgstr "PRC-Umschlag #4 gedreht"
 
 #: dlls/localspl/localspl.rc:147
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #5 Rotated"
-msgstr "PKCS-7-umhüllt"
+msgstr "PRC-Umschlag #5 gedreht"
 
 #: dlls/localspl/localspl.rc:148
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #6 Rotated"
-msgstr "PKCS-7-umhüllt"
+msgstr "PRC-Umschlag #6 gedreht"
 
 #: dlls/localspl/localspl.rc:149
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #7 Rotated"
-msgstr "PKCS-7-umhüllt"
+msgstr "PRC-Umschlag #7 gedreht"
 
 #: dlls/localspl/localspl.rc:150
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #8 Rotated"
-msgstr "PKCS-7-umhüllt"
+msgstr "PRC-Umschlag #8 gedreht"
 
 #: dlls/localspl/localspl.rc:151
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #9 Rotated"
-msgstr "PKCS-7-umhüllt"
+msgstr "PRC-Umschlag #9 gedreht"
 
 #: dlls/localspl/localspl.rc:152
-#, fuzzy
-#| msgid "PKCS 7 Enveloped"
 msgid "PRC Envelope #10 Rotated"
-msgstr "PKCS-7-umhüllt"
+msgstr "PRC-Umschlag #10 gedreht"
 
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
@@ -14882,10 +14777,8 @@ msgid "Type \"REG %1 /?\" for help.\n"
 msgstr "Geben Sie \"REG %1 /?\" ein, um Hilfe zu erhalten.\n"
 
 #: programs/reg/reg.rc:181
-#, fuzzy
-#| msgid "reg: Unable to find the specified registry key\n"
 msgid "reg: Unable to access or create the specified registry key\n"
-msgstr "reg: Der angegebene Schlüssel wurde nicht gefunden\n"
+msgstr "reg: Angegebener Schlüssel nicht zugreifbar oder erstellbar\n"
 
 #: programs/reg/reg.rc:116
 msgid "reg: The operation completed successfully\n"
@@ -14912,17 +14805,6 @@ msgid "Type \"REG /?\" for help.\n"
 msgstr "Geben Sie \"REG /?\" ein, um Hilfe zu erhalten.\n"
 
 #: programs/reg/reg.rc:35
-#, fuzzy
-#| msgid ""
-#| "Usage:\n"
-#| "  REG [operation] [parameters]\n"
-#| "\n"
-#| "Supported operations:\n"
-#| "  ADD | DELETE | EXPORT | IMPORT | QUERY\n"
-#| "\n"
-#| "For help on a specific operation, type:\n"
-#| "  REG [operation] /?\n"
-#| "\n"
 msgid ""
 "Usage:\n"
 "  REG [operation] [parameters]\n"
@@ -14938,7 +14820,7 @@ msgstr ""
 "  REG [Operation] [Parameter]\n"
 "\n"
 "Unterstützte Operationen:\n"
-"  ADD | DELETE | EXPORT | IMPORT | QUERY\n"
+"  ADD | COPY | DELETE | EXPORT | IMPORT | QUERY\n"
 "\n"
 "Hilfe für eine spezifische Operation:\n"
 "  REG [Operation] /?\n"
@@ -15045,35 +14927,6 @@ msgstr ""
 "\n"
 
 #: programs/reg/reg.rc:202
-#, fuzzy
-#| msgid ""
-#| "REG EXPORT <key> <file> [/y]\n"
-#| "\n"
-#| "  Exports a specified registry key (including all subkeys and values)\n"
-#| "  to a file.\n"
-#| "\n"
-#| "  <key>\n"
-#| "     The registry key to export.\n"
-#| "\n"
-#| "     Format: ROOT\\Subkey\n"
-#| "\n"
-#| "     ROOT: A predefined registry key. This must be one of the following:\n"
-#| "\n"
-#| "         HKEY_LOCAL_MACHINE  | HKLM\n"
-#| "         HKEY_CURRENT_USER   | HKCU\n"
-#| "         HKEY_CLASSES_ROOT   | HKCR\n"
-#| "         HKEY_USERS          | HKU\n"
-#| "         HKEY_CURRENT_CONFIG | HKCC\n"
-#| "\n"
-#| "     Subkey: The full path to a registry key under a given ROOT key.\n"
-#| "\n"
-#| "  <file>\n"
-#| "     The name and path of the registry file that will be created.\n"
-#| "     This file must have a .reg extension.\n"
-#| "\n"
-#| "  /y\n"
-#| "     Overwrite <file> without prompting for confirmation.\n"
-#| "\n"
 msgid ""
 "REG COPY <key1> <key2> [/s] [/f]\n"
 "\n"
@@ -15107,13 +14960,15 @@ msgid ""
 "<key2>.\n"
 "\n"
 msgstr ""
-"REG EXPORT <Schlüssel> <Datei> [/y]\n"
+"REG COPY <Schlüssel1> <Schlüssel2> [/s] [/f]\n"
 "\n"
-"  Exportiert einen angegebenen Registrierungsschlüssel (inklusive aller\n"
-"  Unterschlüssel und Werte) in eine Datei.\n"
+"  Kopiert die Inhalte eines angegebenen Registrierungsschlüssels an einen\n"
+"  anderen Ort. Standardmäßig werden nur Werte kopiert. Benutzen Sie [/s],\n"
+"  um alle Unterschlüssel und Werte rekursiv zu kopieren.\n"
 "\n"
-"  <Schlüssel>\n"
-"     Der zu exportierende Schlüssel.\n"
+"  <Schlüssel1>, <Schlüssel2>\n"
+"     Registrierungsschlüssel, die Quelle (<Schl.1>) und Ziel (<Schl.2>)\n"
+"     der Daten angeben. Falls <Schl.2> nicht existiert, wird er angelegt.\n"
 "\n"
 "     Format: ROOT\\Unterschlüssel\n"
 "\n"
@@ -15128,12 +14983,12 @@ msgstr ""
 "     Unterschlüssel: Der volle Pfad zu einem Schlüssel unter dem\n"
 "                     angegebenen ROOT-Schlüssel.\n"
 "\n"
-"  <Datei>\n"
-"     Der Name und Pfad der anzulegenden Registrierungsdatei. Die\n"
-"     Endung des Dateinamens muss .reg lauten.\n"
+"  /s\n"
+"     Alle Unterschlüssel und Werte von <Schl.1> nach <Schl.2> kopieren.\n"
 "\n"
-"  /y\n"
-"     <Datei> ohne weitere Bestätigung überschreiben.\n"
+"  /f\n"
+"     Alle Daten in <Schlüssel2> ohne Nachfrage überschreiben. Verändert\n"
+"     keine Schlüssel oder Werte, die nur unter <Schlüssel2> existieren.\n"
 "\n"
 
 #: programs/reg/reg.rc:92
@@ -15392,10 +15247,8 @@ msgid "reg: Invalid option [%1]. "
 msgstr "reg: Ungültige Option [%1]. "
 
 #: programs/reg/reg.rc:122
-#, fuzzy
-#| msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
 msgid "reg: The option [/d] must be followed by a valid numeric value\n"
-msgstr "reg: Auf die Option [/d] muss ein gültiger Hexadezimalwert folgen\n"
+msgstr "reg: Auf die Option [/d] muss ein gültiger numerischer Wert folgen\n"
 
 #: programs/reg/reg.rc:123
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
@@ -15423,15 +15276,15 @@ msgstr "reg: Ungültige Befehlszeilenargumente\n"
 
 #: programs/reg/reg.rc:204
 msgid "reg: The source and destination keys cannot be the same\n"
-msgstr ""
+msgstr "reg: Quell- und Zielschüssel dürfen nicht identisch sein\n"
 
 #: programs/reg/reg.rc:205
-#, fuzzy
-#| msgid "The file '%1' already exists. Do you want to overwrite it?"
 msgid ""
 "The value '%1\\%2' already exists in the destination key. Do you want to "
 "overwrite it?"
-msgstr "Die Datei '%1' existiert bereits. Möchten Sie sie ersetzen?"
+msgstr ""
+"Der Wert '%1\\%2' existiert bereits im Zielschlüssel. Möchten Sie Ihn "
+"ersetzen?"
 
 #: programs/reg/reg.rc:133
 msgid "Are you sure you want to delete the registry value '%1'?"
@@ -15446,10 +15299,8 @@ msgid "Are you sure you want to delete the registry key '%1'?"
 msgstr "Sind Sie sicher, dass Sie den Schlüssel '%1' löschen möchten?"
 
 #: programs/reg/reg.rc:137
-#, fuzzy
-#| msgid "regedit: Unable to delete the registry key '%1'.\n"
 msgid "reg: Unable to delete all registry values in '%1'\n"
-msgstr "regedit: Der Schlüssel '%1' konnte nicht gelöscht werden.\n"
+msgstr "reg: Nicht alle Werte unter '%1' konnten gelöscht werden.\n"
 
 #: programs/reg/reg.rc:173
 msgid "The file '%1' already exists. Do you want to overwrite it?"
