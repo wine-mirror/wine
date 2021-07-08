@@ -69,6 +69,7 @@ static DWORD (WINAPI *pCancelMibChangeNotify2)(HANDLE);
 
 DWORD WINAPI ConvertGuidToStringA( const GUID *, char *, DWORD );
 DWORD WINAPI ConvertGuidToStringW( const GUID *, WCHAR *, DWORD );
+DWORD WINAPI ConvertStringToGuidW( const WCHAR *, GUID * );
 
 static void loadIPHlpApi(void)
 {
@@ -2339,7 +2340,7 @@ static void test_ConvertGuidToString( void )
     DWORD err;
     char bufA[39];
     WCHAR bufW[39];
-    GUID guid = { 0xa, 0xb, 0xc, { 0xd, 0, 0xe, 0xf } };
+    GUID guid = { 0xa, 0xb, 0xc, { 0xd, 0, 0xe, 0xf } }, guid2;
 
     err = ConvertGuidToStringA( &guid, bufA, 38 );
     ok( err, "got %d\n", err );
@@ -2352,6 +2353,13 @@ static void test_ConvertGuidToString( void )
     err = ConvertGuidToStringW( &guid, bufW, 39 );
     ok( !err, "got %d\n", err );
     ok( !wcscmp( bufW, L"{0000000A-000B-000C-0D00-0E0F00000000}" ), "got %s\n", debugstr_w( bufW ) );
+
+    err = ConvertStringToGuidW( bufW, &guid2 );
+    ok( !err, "got %d\n", err );
+    ok( IsEqualGUID( &guid, &guid2 ), "guid mismatch\n" );
+
+    err = ConvertStringToGuidW( L"foo", &guid2 );
+    ok( err == ERROR_INVALID_PARAMETER, "got %d\n", err );
 }
 
 START_TEST(iphlpapi)

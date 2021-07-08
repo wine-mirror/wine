@@ -32,7 +32,7 @@
 #@ stub ConvertRemoteInterfaceLuidToGuid
 #@ stub ConvertRemoteInterfaceLuidToIndex
 #@ stub ConvertStringToGuidA
-#@ stub ConvertStringToGuidW
+@ stdcall ConvertStringToGuidW( ptr ptr )
 #@ stub ConvertStringToInterfacePhysicalAddress
 #@ stub CPNatfwtCreateProviderInstance
 #@ stub CPNatfwtDeregisterProviderInstance

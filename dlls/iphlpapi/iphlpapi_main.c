@@ -97,6 +97,14 @@ DWORD WINAPI ConvertGuidToStringW( const GUID *guid, WCHAR *str, DWORD len )
     return ERROR_SUCCESS;
 }
 
+DWORD WINAPI ConvertStringToGuidW( const WCHAR *str, GUID *guid )
+{
+    UNICODE_STRING ustr;
+
+    RtlInitUnicodeString( &ustr, str );
+    return RtlNtStatusToDosError( RtlGUIDFromString( &ustr, guid ) );
+}
+
 /******************************************************************
  *    AddIPAddress (IPHLPAPI.@)
  *
