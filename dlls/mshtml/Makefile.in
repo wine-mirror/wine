@@ -71,4 +71,5 @@ RC_SRCS = mshtml.rc
 
 IDL_SRCS = \
 	mshtml_classes.idl \
+	mshtml_private_iface.idl \
 	nsiface.idl

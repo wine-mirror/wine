@@ -40,6 +40,8 @@
 
 #include "nsiface.h"
 
+#include "mshtml_private_iface.h"
+
 #include <assert.h>
 
 #define NS_ERROR_GENERATE_FAILURE(module,code) \
