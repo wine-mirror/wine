@@ -2376,21 +2376,18 @@ DWORD WINAPI GetNetworkParams(PFIXED_INFO pFixedInfo, PULONG pOutBufLen)
  * RETURNS
  *  NO_ERROR on success, ERROR_INVALID_PARAMETER if pdwNumIf is NULL.
  */
-DWORD WINAPI GetNumberOfInterfaces(PDWORD pdwNumIf)
+DWORD WINAPI GetNumberOfInterfaces( DWORD *count )
 {
-  DWORD ret;
+    DWORD err, num;
 
-  TRACE("pdwNumIf %p\n", pdwNumIf);
-  if (!pdwNumIf)
-    ret = ERROR_INVALID_PARAMETER;
-  else {
-    *pdwNumIf = get_interface_indices( FALSE, NULL );
-    ret = NO_ERROR;
-  }
-  TRACE("returning %d\n", ret);
-  return ret;
+    TRACE( "count %p\n", count );
+    if (!count) return ERROR_INVALID_PARAMETER;
+
+    err = NsiEnumerateObjectsAllParameters( 1, 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, NULL, 0,
+                                            NULL, 0, NULL, 0, NULL, 0, &num );
+    *count = err ? 0 : num;
+    return err;
 }
-
 
 /******************************************************************
  *    GetPerAdapterInfo (IPHLPAPI.@)

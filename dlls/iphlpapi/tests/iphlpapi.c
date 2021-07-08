@@ -138,10 +138,6 @@ static void testGetNumberOfInterfaces(void)
     }
 
     apiReturn = GetNumberOfInterfaces(&numInterfaces);
-    if (apiReturn == ERROR_NOT_SUPPORTED) {
-        skip("GetNumberOfInterfaces is not supported\n");
-        return;
-    }
     ok(apiReturn == NO_ERROR,
        "GetNumberOfInterfaces returned %d, expected 0\n", apiReturn);
 }
