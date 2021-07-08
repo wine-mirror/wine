@@ -292,6 +292,126 @@ static BOOL CALLBACK enum_devices(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
     return DIENUM_CONTINUE;
 }
 
+struct overlapped_state
+{
+        BYTE  keys[4];
+        DWORD extra_element;
+};
+
+static const DIOBJECTDATAFORMAT obj_overlapped_slider_format[] = {
+    { &GUID_Key,    0, DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_MAKEINSTANCE(DIK_A),0},
+    { &GUID_Key,    1, DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_MAKEINSTANCE(DIK_S),0},
+    { &GUID_Key,    2, DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_MAKEINSTANCE(DIK_D),0},
+    { &GUID_Key,    3, DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_MAKEINSTANCE(DIK_F),0},
+    { &GUID_Slider, 0, DIDFT_OPTIONAL|DIDFT_AXIS|DIDFT_ANYINSTANCE,DIDOI_ASPECTPOSITION},
+};
+
+static const DIDATAFORMAT overlapped_slider_format = {
+    sizeof(DIDATAFORMAT),
+    sizeof(DIOBJECTDATAFORMAT),
+    DIDF_ABSAXIS,
+    sizeof(struct overlapped_state),
+    ARRAY_SIZE(obj_overlapped_slider_format),
+    (LPDIOBJECTDATAFORMAT)obj_overlapped_slider_format
+};
+
+static const DIOBJECTDATAFORMAT obj_overlapped_pov_format[] = {
+    { &GUID_Key,    0, DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_MAKEINSTANCE(DIK_A),0},
+    { &GUID_Key,    1, DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_MAKEINSTANCE(DIK_S),0},
+    { &GUID_Key,    2, DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_MAKEINSTANCE(DIK_D),0},
+    { &GUID_Key,    3, DIDFT_OPTIONAL|DIDFT_BUTTON|DIDFT_MAKEINSTANCE(DIK_F),0},
+    { &GUID_POV,    0, DIDFT_OPTIONAL|DIDFT_POV|DIDFT_ANYINSTANCE,0},
+};
+
+static const DIDATAFORMAT overlapped_pov_format = {
+    sizeof(DIDATAFORMAT),
+    sizeof(DIOBJECTDATAFORMAT),
+    DIDF_ABSAXIS,
+    sizeof(struct overlapped_state),
+    ARRAY_SIZE(obj_overlapped_pov_format),
+    (LPDIOBJECTDATAFORMAT)obj_overlapped_pov_format
+};
+
+static void pump_messages(void)
+{
+    MSG msg;
+
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+    {
+        TranslateMessage(&msg);
+        DispatchMessageA(&msg);
+    }
+}
+
+void overlapped_format_tests(IDirectInputA *pDI, HWND hwnd)
+{
+    HRESULT hr;
+    struct overlapped_state state;
+    IDirectInputDeviceA *keyboard = NULL;
+
+    hr = IDirectInput_CreateDevice(pDI, &GUID_SysKeyboard, &keyboard, NULL);
+    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
+
+    /* test overlapped slider - default value 0 */
+    hr = IDirectInputDevice_SetDataFormat(keyboard, &overlapped_slider_format);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_SetDataFormat() failed: %08x\n", hr);
+    hr = IDirectInputDevice_Acquire(keyboard);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %08x\n", hr);
+
+    SetFocus(hwnd);
+    pump_messages();
+
+    /* press D */
+    keybd_event(0, DIK_D, KEYEVENTF_SCANCODE, 0);
+    pump_messages();
+
+    memset(&state, 0xFF, sizeof(state));
+    hr = IDirectInputDevice_GetDeviceState(keyboard, sizeof(state), &state);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState() failed: %08x\n", hr);
+
+    ok(state.keys[0] == 0x00, "key A should be still up\n");
+    ok(state.keys[1] == 0x00, "key S should be still up\n");
+    ok(state.keys[2] == 0x80, "keydown for D did not register\n");
+    ok(state.keys[3] == 0x00, "key F should be still up\n");
+    ok(state.extra_element == 0, "State struct was not memset to zero\n");
+
+    /* release D */
+    keybd_event(0, DIK_D, KEYEVENTF_SCANCODE|KEYEVENTF_KEYUP, 0);
+    pump_messages();
+
+    hr = IDirectInputDevice_Unacquire(keyboard);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_Unacquire() failed: %08x\n", hr);
+
+    /* test overlapped pov - default value - 0xFFFFFFFF */
+    hr = IDirectInputDevice_SetDataFormat(keyboard, &overlapped_pov_format);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_SetDataFormat() failed: %08x\n", hr);
+    hr = IDirectInputDevice_Acquire(keyboard);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %08x\n", hr);
+
+    SetFocus(hwnd);
+    pump_messages();
+
+    /* press D */
+    keybd_event(0, DIK_D, KEYEVENTF_SCANCODE, 0);
+    pump_messages();
+
+    memset(&state, 0xFF, sizeof(state));
+    hr = IDirectInputDevice_GetDeviceState(keyboard, sizeof(state), &state);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState() failed: %08x\n", hr);
+
+    ok(state.keys[0] == 0xFF, "key state should have been overwritten by the overlapped POV\n");
+    ok(state.keys[1] == 0xFF, "key state should have been overwritten by the overlapped POV\n");
+    ok(state.keys[2] == 0xFF, "key state should have been overwritten by the overlapped POV\n");
+    ok(state.keys[3] == 0xFF, "key state should have been overwritten by the overlapped POV\n");
+    ok(state.extra_element == 0, "State struct was not memset to zero\n");
+
+    /* release D */
+    keybd_event(0, DIK_D, KEYEVENTF_SCANCODE|KEYEVENTF_KEYUP, 0);
+    pump_messages();
+
+    if (keyboard) IUnknown_Release(keyboard);
+}
+
 static void device_tests(void)
 {
     HRESULT hr;
@@ -341,6 +461,8 @@ static void device_tests(void)
             ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %08x\n", hr);
             if (device) IUnknown_Release(device);
         }
+
+        overlapped_format_tests(pDI, hwnd);
 
         DestroyWindow(hwnd);
     }
