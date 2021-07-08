@@ -1778,61 +1778,6 @@ DWORD WINAPI GetIfEntry(PMIB_IFROW pIfRow)
   return ret;
 }
 
-/******************************************************************
- *    GetIfEntry2 (IPHLPAPI.@)
- */
-DWORD WINAPI GetIfEntry2( MIB_IF_ROW2 *row2 )
-{
-    DWORD ret;
-    char buf[MAX_ADAPTER_NAME], *name;
-    MIB_IFROW row;
-
-    TRACE("%p\n", row2);
-
-    if (!row2 || (!(name = getInterfaceNameByIndex( row2->InterfaceIndex, buf )) &&
-                  !(name = getInterfaceNameByIndex( row2->InterfaceLuid.Info.NetLuidIndex, buf ))))
-    {
-        return ERROR_INVALID_PARAMETER;
-    }
-    if ((ret = getInterfaceEntryByName( name, &row ))) return ret;
-    if ((ret = getInterfaceStatsByName( name, &row ))) return ret;
-
-    memset( row2, 0, sizeof(*row2) );
-    row2->InterfaceIndex                  = row.dwIndex;
-    ConvertInterfaceIndexToLuid( row2->InterfaceIndex, &row2->InterfaceLuid );
-    ConvertInterfaceLuidToGuid( &row2->InterfaceLuid, &row2->InterfaceGuid );
-    row2->Type                            = row.dwType;
-    row2->Mtu                             = row.dwMtu;
-    MultiByteToWideChar( CP_UNIXCP, 0, (const char *)row.bDescr, -1, row2->Description, ARRAY_SIZE(row2->Description) );
-    MultiByteToWideChar( CP_UNIXCP, 0, (const char *)row.bDescr, -1, row2->Alias, ARRAY_SIZE(row2->Alias) );
-    row2->PhysicalAddressLength           = row.dwPhysAddrLen;
-    memcpy( &row2->PhysicalAddress, &row.bPhysAddr, row.dwPhysAddrLen );
-    memcpy( &row2->PermanentPhysicalAddress, &row.bPhysAddr, row.dwPhysAddrLen );
-    row2->OperStatus                      = row.dwOperStatus == MIB_IF_OPER_STATUS_OPERATIONAL ? IfOperStatusUp : IfOperStatusDown;
-    row2->AdminStatus                     = NET_IF_ADMIN_STATUS_UP;
-    row2->MediaConnectState               = MediaConnectStateConnected;
-    row2->ConnectionType                  = NET_IF_CONNECTION_DEDICATED;
-    row2->TransmitLinkSpeed = row2->ReceiveLinkSpeed = row.dwSpeed;
-    row2->AccessType = (row2->Type == MIB_IF_TYPE_LOOPBACK) ? NET_IF_ACCESS_LOOPBACK : NET_IF_ACCESS_BROADCAST;
-    row2->InterfaceAndOperStatusFlags.ConnectorPresent = row2->Type != MIB_IF_TYPE_LOOPBACK;
-    row2->InterfaceAndOperStatusFlags.HardwareInterface = row2->Type != MIB_IF_TYPE_LOOPBACK;
-
-    /* stats */
-    row2->InOctets        = row.dwInOctets;
-    row2->InUcastPkts     = row.dwInUcastPkts;
-    row2->InNUcastPkts    = row.dwInNUcastPkts;
-    row2->InDiscards      = row.dwInDiscards;
-    row2->InErrors        = row.dwInErrors;
-    row2->InUnknownProtos = row.dwInUnknownProtos;
-    row2->OutOctets       = row.dwOutOctets;
-    row2->OutUcastPkts    = row.dwOutUcastPkts;
-    row2->OutNUcastPkts   = row.dwOutNUcastPkts;
-    row2->OutDiscards     = row.dwOutDiscards;
-    row2->OutErrors       = row.dwOutErrors;
-
-    return NO_ERROR;
-}
-
 static int IfTableSorter(const void *a, const void *b)
 {
   int ret;
@@ -1980,6 +1925,43 @@ static void if_row2_fill( MIB_IF_ROW2 *row, struct nsi_ndis_ifinfo_rw *rw, struc
     row->OutMulticastOctets = dyn->out_mcast_octs;
     row->OutBroadcastOctets = dyn->out_bcast_octs;
     row->OutQLen = 0; /* fixme */
+}
+
+/******************************************************************
+ *    GetIfEntry2Ex (IPHLPAPI.@)
+ */
+DWORD WINAPI GetIfEntry2Ex( MIB_IF_TABLE_LEVEL level, MIB_IF_ROW2 *row )
+{
+    DWORD err;
+    struct nsi_ndis_ifinfo_rw rw;
+    struct nsi_ndis_ifinfo_dynamic dyn;
+    struct nsi_ndis_ifinfo_static stat;
+
+    TRACE( "(%d, %p)\n", level, row );
+
+    if (level != MibIfTableNormal) FIXME( "level %u not fully supported\n", level );
+    if (!row) return ERROR_INVALID_PARAMETER;
+
+    if (!row->InterfaceLuid.Value)
+    {
+        if (!row->InterfaceIndex) return ERROR_INVALID_PARAMETER;
+        err = ConvertInterfaceIndexToLuid( row->InterfaceIndex, &row->InterfaceLuid );
+        if (err) return err;
+    }
+
+    err = NsiGetAllParameters( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE,
+                               &row->InterfaceLuid, sizeof(row->InterfaceLuid),
+                               &rw, sizeof(rw), &dyn, sizeof(dyn), &stat, sizeof(stat) );
+    if (!err) if_row2_fill( row, &rw, &dyn, &stat );
+    return err;
+}
+
+/******************************************************************
+ *    GetIfEntry2 (IPHLPAPI.@)
+ */
+DWORD WINAPI GetIfEntry2( MIB_IF_ROW2 *row )
+{
+    return GetIfEntry2Ex( MibIfTableNormal, row );
 }
 
 /******************************************************************

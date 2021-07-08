@@ -53,9 +53,6 @@
 static HMODULE hLibrary = NULL;
 
 static DWORD (WINAPI *pAllocateAndGetTcpExTableFromStack)(void**,BOOL,HANDLE,DWORD,DWORD);
-static DWORD (WINAPI *pGetIfEntry2)(PMIB_IF_ROW2);
-static DWORD (WINAPI *pGetIfTable2)(PMIB_IF_TABLE2*);
-static DWORD (WINAPI *pGetIfTable2Ex)(MIB_IF_TABLE_LEVEL,PMIB_IF_TABLE2*);
 static DWORD (WINAPI *pGetTcp6Table)(PMIB_TCP6TABLE,PDWORD,BOOL);
 static DWORD (WINAPI *pGetUdp6Table)(PMIB_UDP6TABLE,PDWORD,BOOL);
 static DWORD (WINAPI *pGetUnicastIpAddressEntry)(MIB_UNICASTIPADDRESS_ROW*);
@@ -64,7 +61,6 @@ static DWORD (WINAPI *pGetExtendedTcpTable)(PVOID,PDWORD,BOOL,ULONG,TCP_TABLE_CL
 static DWORD (WINAPI *pGetExtendedUdpTable)(PVOID,PDWORD,BOOL,ULONG,UDP_TABLE_CLASS,ULONG);
 static DWORD (WINAPI *pCreateSortedAddressPairs)(const PSOCKADDR_IN6,ULONG,const PSOCKADDR_IN6,ULONG,ULONG,
                                                  PSOCKADDR_IN6_PAIR*,ULONG*);
-static void (WINAPI *pFreeMibTable)(void*);
 static DWORD (WINAPI *pConvertLengthToIpv4Mask)(ULONG,ULONG*);
 static DWORD (WINAPI *pParseNetworkString)(const WCHAR*,DWORD,NET_ADDRESS_INFO*,USHORT*,BYTE*);
 static DWORD (WINAPI *pNotifyUnicastIpAddressChange)(ADDRESS_FAMILY, PUNICAST_IPADDRESS_CHANGE_CALLBACK,
@@ -76,9 +72,6 @@ static void loadIPHlpApi(void)
   hLibrary = LoadLibraryA("iphlpapi.dll");
   if (hLibrary) {
     pAllocateAndGetTcpExTableFromStack = (void *)GetProcAddress(hLibrary, "AllocateAndGetTcpExTableFromStack");
-    pGetIfEntry2 = (void *)GetProcAddress(hLibrary, "GetIfEntry2");
-    pGetIfTable2 = (void *)GetProcAddress(hLibrary, "GetIfTable2");
-    pGetIfTable2Ex = (void *)GetProcAddress(hLibrary, "GetIfTable2Ex");
     pGetTcp6Table = (void *)GetProcAddress(hLibrary, "GetTcp6Table");
     pGetUdp6Table = (void *)GetProcAddress(hLibrary, "GetUdp6Table");
     pGetUnicastIpAddressEntry = (void *)GetProcAddress(hLibrary, "GetUnicastIpAddressEntry");
@@ -86,7 +79,6 @@ static void loadIPHlpApi(void)
     pGetExtendedTcpTable = (void *)GetProcAddress(hLibrary, "GetExtendedTcpTable");
     pGetExtendedUdpTable = (void *)GetProcAddress(hLibrary, "GetExtendedUdpTable");
     pCreateSortedAddressPairs = (void *)GetProcAddress(hLibrary, "CreateSortedAddressPairs");
-    pFreeMibTable = (void *)GetProcAddress(hLibrary, "FreeMibTable");
     pConvertLengthToIpv4Mask = (void *)GetProcAddress(hLibrary, "ConvertLengthToIpv4Mask");
     pParseNetworkString = (void *)GetProcAddress(hLibrary, "ParseNetworkString");
     pNotifyUnicastIpAddressChange = (void *)GetProcAddress(hLibrary, "NotifyUnicastIpAddressChange");
@@ -1576,7 +1568,7 @@ static void test_CreateSortedAddressPairs(void)
     ok( pair_count >= 1, "got %u\n", pair_count );
     ok( pair[0].SourceAddress != NULL, "src address not set\n" );
     ok( pair[0].DestinationAddress != NULL, "dst address not set\n" );
-    pFreeMibTable( pair );
+    FreeMibTable( pair );
 
     dst[1].sin6_family = AF_INET6;
     dst[1].sin6_addr.u.Word[5] = 0xffff;
@@ -1593,7 +1585,7 @@ static void test_CreateSortedAddressPairs(void)
     ok( pair[0].DestinationAddress != NULL, "dst address not set\n" );
     ok( pair[1].SourceAddress != NULL, "src address not set\n" );
     ok( pair[1].DestinationAddress != NULL, "dst address not set\n" );
-    pFreeMibTable( pair );
+    FreeMibTable( pair );
 }
 
 static DWORD get_interface_index(void)
@@ -1862,27 +1854,22 @@ static void test_GetIfEntry2(void)
     MIB_IF_ROW2 row;
     NET_IFINDEX index;
 
-    if (!pGetIfEntry2)
-    {
-        win_skip( "GetIfEntry2 not available\n" );
-        return;
-    }
     if (!(index = get_interface_index()))
     {
         skip( "no suitable interface found\n" );
         return;
     }
 
-    ret = pGetIfEntry2( NULL );
+    ret = GetIfEntry2( NULL );
     ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
 
     memset( &row, 0, sizeof(row) );
-    ret = pGetIfEntry2( &row );
+    ret = GetIfEntry2( &row );
     ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
 
     memset( &row, 0, sizeof(row) );
     row.InterfaceIndex = index;
-    ret = pGetIfEntry2( &row );
+    ret = GetIfEntry2( &row );
     ok( ret == NO_ERROR, "got %u\n", ret );
     ok( row.InterfaceIndex == index, "got %u\n", index );
 }
@@ -1892,17 +1879,11 @@ static void test_GetIfTable2(void)
     DWORD ret;
     MIB_IF_TABLE2 *table;
 
-    if (!pGetIfTable2)
-    {
-        win_skip( "GetIfTable2 not available\n" );
-        return;
-    }
-
     table = NULL;
-    ret = pGetIfTable2( &table );
+    ret = GetIfTable2( &table );
     ok( ret == NO_ERROR, "got %u\n", ret );
     ok( table != NULL, "table not set\n" );
-    pFreeMibTable( table );
+    FreeMibTable( table );
 }
 
 static void test_GetIfTable2Ex(void)
@@ -1910,35 +1891,29 @@ static void test_GetIfTable2Ex(void)
     DWORD ret;
     MIB_IF_TABLE2 *table;
 
-    if (!pGetIfTable2Ex)
-    {
-        win_skip( "GetIfTable2Ex not available\n" );
-        return;
-    }
-
     table = NULL;
-    ret = pGetIfTable2Ex( MibIfTableNormal, &table );
+    ret = GetIfTable2Ex( MibIfTableNormal, &table );
     ok( ret == NO_ERROR, "got %u\n", ret );
     ok( table != NULL, "table not set\n" );
-    pFreeMibTable( table );
+    FreeMibTable( table );
 
     table = NULL;
-    ret = pGetIfTable2Ex( MibIfTableRaw, &table );
+    ret = GetIfTable2Ex( MibIfTableRaw, &table );
     ok( ret == NO_ERROR, "got %u\n", ret );
     ok( table != NULL, "table not set\n" );
-    pFreeMibTable( table );
+    FreeMibTable( table );
 
     table = NULL;
-    ret = pGetIfTable2Ex( MibIfTableNormalWithoutStatistics, &table );
+    ret = GetIfTable2Ex( MibIfTableNormalWithoutStatistics, &table );
     ok( ret == NO_ERROR || broken(ret == ERROR_INVALID_PARAMETER), "got %u\n", ret );
     ok( table != NULL || broken(!table), "table not set\n" );
-    pFreeMibTable( table );
+    FreeMibTable( table );
 
     table = NULL;
-    ret = pGetIfTable2Ex( 3, &table );
+    ret = GetIfTable2Ex( 3, &table );
     ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
     ok( !table, "table should not be set\n" );
-    pFreeMibTable( table );
+    FreeMibTable( table );
 }
 
 static void test_GetUnicastIpAddressEntry(void)
@@ -2070,12 +2045,12 @@ static void test_GetUnicastIpAddressTable(void)
     ret = pGetUnicastIpAddressTable(AF_INET, &table);
     ok( ret == NO_ERROR, "got %u\n", ret );
     trace("GetUnicastIpAddressTable(AF_INET): NumEntries %u\n", table->NumEntries);
-    pFreeMibTable(table);
+    FreeMibTable( table );
 
     ret = pGetUnicastIpAddressTable(AF_INET6, &table);
     ok( ret == NO_ERROR, "got %u\n", ret );
     trace("GetUnicastIpAddressTable(AF_INET6): NumEntries %u\n", table->NumEntries);
-    pFreeMibTable(table);
+    FreeMibTable( table );
 
     ret = pGetUnicastIpAddressTable(AF_UNSPEC, &table);
     ok( ret == NO_ERROR, "got %u\n", ret );
@@ -2099,7 +2074,7 @@ static void test_GetUnicastIpAddressTable(void)
         trace("CreationTimeStamp:               %08x%08x\n", table->Table[i].CreationTimeStamp.HighPart, table->Table[i].CreationTimeStamp.LowPart);
     }
 
-    pFreeMibTable(table);
+    FreeMibTable( table );
 }
 
 static void test_ConvertLengthToIpv4Mask(void)
