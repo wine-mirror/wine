@@ -1040,7 +1040,7 @@ static void testWinNT4Functions(void)
 static void testGetInterfaceInfo(void)
 {
     DWORD apiReturn;
-    ULONG len = 0;
+    ULONG len = 0, i;
 
     apiReturn = GetInterfaceInfo(NULL, NULL);
     if (apiReturn == ERROR_NOT_SUPPORTED) {
@@ -1061,6 +1061,16 @@ static void testGetInterfaceInfo(void)
         ok(apiReturn == NO_ERROR,
            "GetInterfaceInfo(buf, &dwSize) returned %d, expected NO_ERROR\n",
            apiReturn);
+
+        for (i = 0; i < buf->NumAdapters; i++)
+        {
+            MIB_IFROW row = { .dwIndex = buf->Adapter[i].Index };
+            GetIfEntry( &row );
+            ok( !wcscmp( buf->Adapter[i].Name, row.wszName ), "got %s vs %s\n",
+                debugstr_w( buf->Adapter[i].Name ), debugstr_w( row.wszName ) );
+todo_wine_if( row.dwType == IF_TYPE_SOFTWARE_LOOPBACK)
+            ok( row.dwType != IF_TYPE_SOFTWARE_LOOPBACK, "got loopback\n" );
+        }
         HeapFree(GetProcessHeap(), 0, buf);
     }
 }

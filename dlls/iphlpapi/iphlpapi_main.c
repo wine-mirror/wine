@@ -2060,65 +2060,33 @@ DWORD WINAPI GetIfTable2( MIB_IF_TABLE2 **table )
  * BUGS
  *  MSDN states this should return non-loopback interfaces only.
  */
-DWORD WINAPI GetInterfaceInfo(PIP_INTERFACE_INFO pIfTable, PULONG dwOutBufLen)
+DWORD WINAPI GetInterfaceInfo( IP_INTERFACE_INFO *table, ULONG *size )
 {
-  DWORD ret;
+    MIB_IFTABLE *if_table;
+    DWORD err, needed, i;
 
-  TRACE("pIfTable %p, dwOutBufLen %p\n", pIfTable, dwOutBufLen);
-  if (!dwOutBufLen)
-    ret = ERROR_INVALID_PARAMETER;
-  else {
-    DWORD numInterfaces = get_interface_indices( FALSE, NULL );
-    ULONG size = sizeof(IP_INTERFACE_INFO);
+    TRACE("table %p, size %p\n", table, size );
+    if (!size) return ERROR_INVALID_PARAMETER;
 
-    if (numInterfaces > 1)
-      size += (numInterfaces - 1) * sizeof(IP_ADAPTER_INDEX_MAP);
-    if (!pIfTable || *dwOutBufLen < size) {
-      *dwOutBufLen = size;
-      ret = ERROR_INSUFFICIENT_BUFFER;
+    err = AllocateAndGetIfTableFromStack( &if_table, 0, GetProcessHeap(), 0 );
+    if (err) return err;
+
+    needed = FIELD_OFFSET(IP_INTERFACE_INFO, Adapter[if_table->dwNumEntries]);
+    if (!table || *size < needed)
+    {
+        *size = needed;
+        heap_free( if_table );
+        return ERROR_INSUFFICIENT_BUFFER;
     }
-    else {
-      InterfaceIndexTable *table;
-      get_interface_indices( FALSE, &table );
 
-      if (table) {
-        size = sizeof(IP_INTERFACE_INFO);
-        if (table->numIndexes > 1)
-          size += (table->numIndexes - 1) * sizeof(IP_ADAPTER_INDEX_MAP);
-        if (*dwOutBufLen < size) {
-          *dwOutBufLen = size;
-          ret = ERROR_INSUFFICIENT_BUFFER;
-        }
-        else {
-          DWORD ndx;
-          char nameBuf[MAX_ADAPTER_NAME];
-
-          *dwOutBufLen = size;
-          pIfTable->NumAdapters = 0;
-          for (ndx = 0; ndx < table->numIndexes; ndx++) {
-            const char *walker, *name;
-            WCHAR *assigner;
-
-            pIfTable->Adapter[ndx].Index = table->indexes[ndx];
-            name = getInterfaceNameByIndex(table->indexes[ndx], nameBuf);
-            for (walker = name, assigner = pIfTable->Adapter[ndx].Name;
-             walker && *walker &&
-             assigner - pIfTable->Adapter[ndx].Name < MAX_ADAPTER_NAME - 1;
-             walker++, assigner++)
-              *assigner = *walker;
-            *assigner = 0;
-            pIfTable->NumAdapters++;
-          }
-          ret = NO_ERROR;
-        }
-        HeapFree(GetProcessHeap(), 0, table);
-      }
-      else
-        ret = ERROR_OUTOFMEMORY;
+    table->NumAdapters = if_table->dwNumEntries;
+    for (i = 0; i < if_table->dwNumEntries; i++)
+    {
+        table->Adapter[i].Index = if_table->table[i].dwIndex;
+        strcpyW( table->Adapter[i].Name, if_table->table[i].wszName );
     }
-  }
-  TRACE("returning %d\n", ret);
-  return ret;
+    heap_free( if_table );
+    return ERROR_SUCCESS;
 }
 
 
