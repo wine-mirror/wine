@@ -31,7 +31,7 @@
 #include "winnls.h"
 #include "winternl.h"
 #include "winreg.h"
-#include "gdi_private.h"
+#include "ntgdi_private.h"
 #include "resource.h"
 #include "wine/exception.h"
 #include "wine/heap.h"

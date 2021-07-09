@@ -38,7 +38,7 @@
 #include "setupapi.h"
 #include "ddk/d3dkmthk.h"
 
-#include "gdi_private.h"
+#include "ntgdi_private.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 #include "wine/heap.h"

@@ -28,7 +28,7 @@
 #include "wingdi.h"
 #include "wine/wingdi16.h"
 #include "mfdrv/metafiledrv.h"
-#include "gdi_private.h"
+#include "ntgdi_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(metafile);

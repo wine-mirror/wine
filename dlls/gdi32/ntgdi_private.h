@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __WINE_GDI_PRIVATE_H
-#define __WINE_GDI_PRIVATE_H
+#ifndef __WINE_NTGDI_PRIVATE_H
+#define __WINE_NTGDI_PRIVATE_H
 
 #include <limits.h>
 #include <math.h>
@@ -776,4 +776,4 @@ extern void CDECL free_heap_bits( struct gdi_image_bits *bits ) DECLSPEC_HIDDEN;
 
 extern HMODULE gdi32_module DECLSPEC_HIDDEN;
 
-#endif /* __WINE_GDI_PRIVATE_H */
+#endif /* __WINE_NTGDI_PRIVATE_H */

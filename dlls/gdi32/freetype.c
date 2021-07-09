@@ -105,7 +105,7 @@
 #include "winerror.h"
 #include "winreg.h"
 #include "wingdi.h"
-#include "gdi_private.h"
+#include "ntgdi_private.h"
 #include "wine/debug.h"
 #include "wine/list.h"
 

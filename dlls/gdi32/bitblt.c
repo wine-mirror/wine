@@ -26,7 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "gdi_private.h"
+#include "ntgdi_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bitblt);

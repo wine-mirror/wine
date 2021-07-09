@@ -19,7 +19,7 @@
  */
 
 #include <assert.h>
-#include "gdi_private.h"
+#include "ntgdi_private.h"
 #include "dibdrv.h"
 
 #include "wine/debug.h"
