@@ -75,6 +75,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
 
 #define CHARS_IN_GUID 39
 
+DWORD WINAPI AllocateAndGetIfTableFromStack( MIB_IFTABLE **table, BOOL sort, HANDLE heap, DWORD flags );
+
 DWORD WINAPI ConvertGuidToStringA( const GUID *guid, char *str, DWORD len )
 {
     if (len < CHARS_IN_GUID) return ERROR_INSUFFICIENT_BUFFER;
@@ -129,47 +131,6 @@ DWORD WINAPI AddIPAddress(IPAddr Address, IPMask IpMask, DWORD IfIndex, PULONG N
   FIXME(":stub\n");
   return ERROR_NOT_SUPPORTED;
 }
-
-
-/******************************************************************
- *    AllocateAndGetIfTableFromStack (IPHLPAPI.@)
- *
- * Get table of local interfaces.
- * Like GetIfTable(), but allocate the returned table from heap.
- *
- * PARAMS
- *  ppIfTable [Out] pointer into which the MIB_IFTABLE is
- *                  allocated and returned.
- *  bOrder    [In]  whether to sort the table
- *  heap      [In]  heap from which the table is allocated
- *  flags     [In]  flags to HeapAlloc
- *
- * RETURNS
- *  ERROR_INVALID_PARAMETER if ppIfTable is NULL, whatever
- *  GetIfTable() returns otherwise.
- */
-DWORD WINAPI AllocateAndGetIfTableFromStack(PMIB_IFTABLE *ppIfTable,
- BOOL bOrder, HANDLE heap, DWORD flags)
-{
-  DWORD ret;
-
-  TRACE("ppIfTable %p, bOrder %d, heap %p, flags 0x%08x\n", ppIfTable,
-        bOrder, heap, flags);
-  if (!ppIfTable)
-    ret = ERROR_INVALID_PARAMETER;
-  else {
-    DWORD dwSize = 0;
-
-    ret = GetIfTable(*ppIfTable, &dwSize, bOrder);
-    if (ret == ERROR_INSUFFICIENT_BUFFER) {
-      *ppIfTable = HeapAlloc(heap, flags, dwSize);
-      ret = GetIfTable(*ppIfTable, &dwSize, bOrder);
-    }
-  }
-  TRACE("returning %d\n", ret);
-  return ret;
-}
-
 
 static int IpAddrTableNumericSorter(const void *a, const void *b)
 {
@@ -1902,6 +1863,62 @@ DWORD WINAPI GetIfTable( MIB_IFTABLE *table, ULONG *size, BOOL sort )
     }
 
     if (sort) qsort( table->table, count, sizeof(MIB_IFROW), ifrow_cmp );
+
+err:
+    NsiFreeTable( keys, rw, dyn, stat );
+    return err;
+}
+
+/******************************************************************
+ *    AllocateAndGetIfTableFromStack (IPHLPAPI.@)
+ *
+ * Get table of local interfaces.
+ * Like GetIfTable(), but allocate the returned table from heap.
+ *
+ * PARAMS
+ *  table     [Out] pointer into which the MIB_IFTABLE is
+ *                  allocated and returned.
+ *  sort      [In]  whether to sort the table
+ *  heap      [In]  heap from which the table is allocated
+ *  flags     [In]  flags to HeapAlloc
+ *
+ * RETURNS
+ *  ERROR_INVALID_PARAMETER if ppIfTable is NULL, whatever
+ *  GetIfTable() returns otherwise.
+ */
+DWORD WINAPI AllocateAndGetIfTableFromStack( MIB_IFTABLE **table, BOOL sort, HANDLE heap, DWORD flags )
+{
+    DWORD i, count, size, err;
+    NET_LUID *keys;
+    struct nsi_ndis_ifinfo_rw *rw;
+    struct nsi_ndis_ifinfo_dynamic *dyn;
+    struct nsi_ndis_ifinfo_static *stat;
+
+    if (!table) return ERROR_INVALID_PARAMETER;
+
+    /* While this could be implemented on top of GetIfTable(), it would require
+       an additional call to retrieve the size */
+    err = NsiAllocateAndGetTable( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, (void **)&keys, sizeof(*keys),
+                                  (void **)&rw, sizeof(*rw), (void **)&dyn, sizeof(*dyn),
+                                  (void **)&stat, sizeof(*stat), &count, 0 );
+    if (err) return err;
+
+    size = FIELD_OFFSET( MIB_IFTABLE, table[count] );
+    *table = HeapAlloc( heap, flags, size );
+    if (!*table)
+    {
+        err = ERROR_NOT_ENOUGH_MEMORY;
+        goto err;
+    }
+
+    (*table)->dwNumEntries = count;
+    for (i = 0; i < count; i++)
+    {
+        MIB_IFROW *row = (*table)->table + i;
+
+        if_row_fill( row, rw + i, dyn + i, stat + i );
+    }
+    if (sort) qsort( (*table)->table, count, sizeof(MIB_IFROW), ifrow_cmp );
 
 err:
     NsiFreeTable( keys, rw, dyn, stat );
