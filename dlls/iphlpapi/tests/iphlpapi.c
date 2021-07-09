@@ -275,7 +275,6 @@ static void testGetIfTable(void)
                           guid->Data1, guid->Data2, guid->Data3, guid->Data4[0], guid->Data4[1],
                           guid->Data4[2], guid->Data4[3], guid->Data4[4], guid->Data4[5],
                           guid->Data4[6], guid->Data4[7]);
-todo_wine
                 ok( !wcscmp( row->wszName, name ), "got %s vs %s\n", debugstr_w( row->wszName ), debugstr_w( name ) );
             }
         }

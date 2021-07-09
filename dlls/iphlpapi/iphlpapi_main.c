@@ -1736,12 +1736,13 @@ DWORD WINAPI GetFriendlyIfIndex(DWORD IfIndex)
   return IfIndex;
 }
 
-static void if_counted_string_copy( WCHAR *dst, unsigned int len, IF_COUNTED_STRING *src );
-
 static void if_row_fill( MIB_IFROW *row, struct nsi_ndis_ifinfo_rw *rw, struct nsi_ndis_ifinfo_dynamic *dyn,
                          struct nsi_ndis_ifinfo_static *stat )
 {
-    if_counted_string_copy( row->wszName, ARRAY_SIZE(row->wszName), &rw->alias );
+    static const WCHAR name_prefix[] = {'\\','D','E','V','I','C','E','\\','T','C','P','I','P','_',0};
+
+    memcpy( row->wszName, name_prefix, sizeof(name_prefix) );
+    ConvertGuidToStringW( &stat->if_guid, row->wszName + ARRAY_SIZE(name_prefix) - 1, CHARS_IN_GUID );
     row->dwIndex = stat->if_index;
     row->dwType = stat->type;
     row->dwMtu = dyn->mtu;
