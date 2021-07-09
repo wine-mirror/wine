@@ -20,6 +20,7 @@
  */
 
 #include "ntdll_test.h"
+#include "winioctl.h"
 
 static NTSTATUS (WINAPI *pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS,void*,ULONG,ULONG*);
 static NTSTATUS (WINAPI *pNtQuerySystemInformationEx)(SYSTEM_INFORMATION_CLASS,void*,ULONG,void*,ULONG,ULONG*);
@@ -1071,6 +1072,108 @@ static void test_init_block(void)
     else todo_wine win_skip( "LdrSystemDllInitBlock not supported\n" );
 }
 
+
+static void test_iosb(void)
+{
+    static const char pipe_name[] = "\\\\.\\pipe\\wow64iosbnamedpipe";
+    HANDLE client, server;
+    NTSTATUS status;
+    ULONG64 func;
+    DWORD id;
+    IO_STATUS_BLOCK iosb32;
+    struct
+    {
+        union
+        {
+            NTSTATUS Status;
+            ULONG64 Pointer;
+        };
+        ULONG64 Information;
+    } iosb64;
+    ULONG64 args[] = { 0, 0, 0, 0, (ULONG_PTR)&iosb64, FSCTL_PIPE_LISTEN, 0, 0, 0, 0 };
+
+    if (!is_wow64) return;
+    if (!ntdll_module) return;
+    func = get_proc_address64( ntdll_module, "NtFsControlFile" );
+
+    /* async calls set iosb32 but not iosb64 */
+
+    server = CreateNamedPipeA( pipe_name, PIPE_ACCESS_INBOUND | FILE_FLAG_OVERLAPPED,
+                               PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+                               4, 1024, 1024, 1000, NULL );
+    ok( server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %u\n", GetLastError() );
+
+    memset( &iosb32, 0x55, sizeof(iosb32) );
+    iosb64.Pointer = PtrToUlong( &iosb32 );
+    iosb64.Information = 0xdeadbeef;
+
+    args[0] = (LONG_PTR)server;
+    status = call_func64( func, ARRAY_SIZE(args), args );
+    ok( status == STATUS_PENDING, "NtFsControlFile returned %x\n", status );
+    ok( U(iosb32).Status == 0x55555555, "status changed to %x\n", U(iosb32).Status );
+    ok( U(iosb64).Pointer == PtrToUlong(&iosb32), "status changed to %x\n", U(iosb64).Status );
+    ok( iosb64.Information == 0xdeadbeef, "info changed to %lx\n", (ULONG_PTR)iosb64.Information );
+
+    client = CreateFileA( pipe_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
+                          FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, NULL );
+    ok( client != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError() );
+
+    ok( U(iosb32).Status == 0, "Wrong iostatus %x\n", U(iosb32).Status );
+    ok( U(iosb64).Pointer == PtrToUlong(&iosb32), "status changed to %x\n", U(iosb64).Status );
+    ok( iosb64.Information == 0xdeadbeef, "info changed to %lx\n", (ULONG_PTR)iosb64.Information );
+
+    memset( &iosb32, 0x55, sizeof(iosb32) );
+    iosb64.Pointer = PtrToUlong( &iosb32 );
+    iosb64.Information = 0xdeadbeef;
+    id = 0xdeadbeef;
+
+    args[5] = FSCTL_PIPE_GET_CONNECTION_ATTRIBUTE;
+    args[6] = (ULONG_PTR)"ClientProcessId";
+    args[7] = sizeof("ClientProcessId");
+    args[8] = (ULONG_PTR)&id;
+    args[9] = sizeof(id);
+
+    status = call_func64( func, ARRAY_SIZE(args), args );
+    ok( status == STATUS_PENDING || status == STATUS_SUCCESS, "NtFsControlFile returned %x\n", status );
+    todo_wine
+    {
+    ok( U(iosb32).Status == STATUS_SUCCESS, "status changed to %x\n", U(iosb32).Status );
+    ok( iosb32.Information == sizeof(id), "info changed to %lx\n", iosb32.Information );
+    ok( U(iosb64).Pointer == PtrToUlong(&iosb32), "status changed to %x\n", U(iosb64).Status );
+    ok( iosb64.Information == 0xdeadbeef, "info changed to %lx\n", (ULONG_PTR)iosb64.Information );
+    }
+    ok( id == GetCurrentProcessId(), "wrong id %x / %x\n", id, GetCurrentProcessId() );
+    CloseHandle( client );
+    CloseHandle( server );
+
+    /* synchronous calls set iosb64 but not iosb32 */
+
+    server = CreateNamedPipeA( pipe_name, PIPE_ACCESS_INBOUND,
+                               PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+                               4, 1024, 1024, 1000, NULL );
+    ok( server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %u\n", GetLastError() );
+
+    client = CreateFileA( pipe_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
+                          FILE_FLAG_NO_BUFFERING | FILE_FLAG_OVERLAPPED, NULL );
+    ok( client != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError() );
+
+    memset( &iosb32, 0x55, sizeof(iosb32) );
+    iosb64.Pointer = PtrToUlong( &iosb32 );
+    iosb64.Information = 0xdeadbeef;
+    id = 0xdeadbeef;
+
+    args[0] = (LONG_PTR)server;
+    status = call_func64( func, ARRAY_SIZE(args), args );
+    ok( status == STATUS_SUCCESS, "NtFsControlFile returned %x\n", status );
+    ok( U(iosb32).Status == 0x55555555, "status changed to %x\n", U(iosb32).Status );
+    ok( iosb32.Information == 0x55555555, "info changed to %lx\n", iosb32.Information );
+    ok( U(iosb64).Pointer == STATUS_SUCCESS, "status changed to %x\n", U(iosb64).Status );
+    ok( iosb64.Information == sizeof(id), "info changed to %lx\n", (ULONG_PTR)iosb64.Information );
+    ok( id == GetCurrentProcessId(), "wrong id %x / %x\n", id, GetCurrentProcessId() );
+    CloseHandle( client );
+    CloseHandle( server );
+}
+
 static void test_cpu_area(void)
 {
     TEB64 *teb64 = (TEB64 *)NtCurrentTeb()->GdiBatchCount;
@@ -1113,6 +1216,7 @@ START_TEST(wow64)
     test_nt_wow64();
     test_modules();
     test_init_block();
+    test_iosb();
 #endif
     test_cpu_area();
 }
