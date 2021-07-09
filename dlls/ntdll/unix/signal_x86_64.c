@@ -2930,7 +2930,7 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
         wow_context->Eax = (ULONG_PTR)entry;
         wow_context->Ebx = (ULONG_PTR)arg;
         wow_context->Esp = get_wow_teb( teb )->Tib.StackBase - 16;
-        wow_context->Eip = (ULONG_PTR)pRtlUserThreadStart;
+        wow_context->Eip = pLdrSystemDllInitBlock->pRtlUserThreadStart;
         wow_context->SegCs = cs32_sel;
         wow_context->SegDs = context.SegDs;
         wow_context->SegEs = context.SegEs;
