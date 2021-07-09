@@ -361,6 +361,16 @@ static void set_process_machine( struct process *process, struct memory_view *vi
     process->machine = machine;
 }
 
+static int generate_dll_event( struct thread *thread, int code, struct memory_view *view )
+{
+    unsigned short process_machine = thread->process->machine;
+
+    if (!(view->flags & SEC_IMAGE)) return 0;
+    if (process_machine != native_machine && process_machine != view->image.machine) return 0;
+    generate_debug_event( thread, code, view );
+    return 1;
+}
+
 /* add a view to the process list */
 static void add_process_view( struct thread *thread, struct memory_view *view )
 {
@@ -370,7 +380,9 @@ static void add_process_view( struct thread *thread, struct memory_view *view )
     if (view->flags & SEC_IMAGE)
     {
         if (is_process_init_done( process ))
-            generate_debug_event( thread, DbgLoadDllStateChange, view );
+        {
+            generate_dll_event( thread, DbgLoadDllStateChange, view );
+        }
         else if (!(view->image.image_charact & IMAGE_FILE_DLL))
         {
             /* main exe */
@@ -1016,9 +1028,7 @@ void generate_startup_debug_events( struct process *process )
     while (ptr && (ptr = list_next( &process->views, ptr )))
     {
         view = LIST_ENTRY( ptr, struct memory_view, entry );
-        if (!(view->flags & SEC_IMAGE)) continue;
-        generate_debug_event( first_thread, DbgLoadDllStateChange, view );
-        break;
+        if (generate_dll_event( first_thread, DbgLoadDllStateChange, view )) break;
     }
 
     /* generate creation events */
@@ -1032,8 +1042,7 @@ void generate_startup_debug_events( struct process *process )
     while (ptr && (ptr = list_next( &process->views, ptr )))
     {
         view = LIST_ENTRY( ptr, struct memory_view, entry );
-        if (!(view->flags & SEC_IMAGE)) continue;
-        generate_debug_event( first_thread, DbgLoadDllStateChange, view );
+        generate_dll_event( first_thread, DbgLoadDllStateChange, view );
     }
 }
 
@@ -1244,7 +1253,7 @@ DECL_HANDLER(unmap_view)
     struct memory_view *view = find_mapped_view( current->process, req->base );
 
     if (!view) return;
-    if (view->flags & SEC_IMAGE) generate_debug_event( current, DbgUnloadDllStateChange, view );
+    generate_dll_event( current, DbgUnloadDllStateChange, view );
     free_memory_view( view );
 }
 

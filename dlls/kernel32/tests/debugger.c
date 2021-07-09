@@ -38,6 +38,7 @@
 
 static int    myARGC;
 static char** myARGV;
+static BOOL is_wow64;
 
 static BOOL (WINAPI *pCheckRemoteDebuggerPresent)(HANDLE,PBOOL);
 
@@ -51,6 +52,7 @@ static NTSTATUS  (WINAPI *pDbgUiConnectToDbg)(void);
 static HANDLE    (WINAPI *pDbgUiGetThreadDebugObject)(void);
 static void      (WINAPI *pDbgUiSetThreadDebugObject)(HANDLE);
 static DWORD     (WINAPI *pGetMappedFileNameW)(HANDLE,void*,WCHAR*,DWORD);
+static BOOL      (WINAPI *pIsWow64Process)(HANDLE,PBOOL);
 
 static LONG child_failures;
 
@@ -905,11 +907,33 @@ static void doChild(int argc, char **argv)
     CloseHandle( map );
     UnmapViewOfFile( mod );
 
+    if (sizeof(void *) > sizeof(int))
+    {
+        GetSystemWow64DirectoryW( path, MAX_PATH );
+        wcscat( path, L"\\oleacc.dll" );
+    }
+    else if (is_wow64)
+    {
+        wcscpy( path, L"c:\\windows\\sysnative\\oleacc.dll" );
+    }
+    else goto done;
+
+    file = CreateFileW( path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
+    child_ok( file != INVALID_HANDLE_VALUE, "failed to open %s: %u\n", debugstr_w(path), GetLastError());
+    map = CreateFileMappingW( file, NULL, SEC_IMAGE | PAGE_READONLY, 0, 0, NULL );
+    child_ok( map != NULL, "failed to create mapping %s: %u\n", debugstr_w(path), GetLastError() );
+    mod = MapViewOfFile( map, FILE_MAP_READ, 0, 0, 0 );
+    child_ok( mod != NULL, "failed to map %s: %u\n", debugstr_w(path), GetLastError() );
+    CloseHandle( file );
+    CloseHandle( map );
+    UnmapViewOfFile( mod );
+
+done:
     blackbox.failures = child_failures;
     save_blackbox(blackbox_file, &blackbox, sizeof(blackbox), NULL);
 }
 
-static HMODULE ole32_mod, oleaut32_mod;
+static HMODULE ole32_mod, oleaut32_mod, oleacc_mod;
 
 static void check_dll_event( HANDLE process, DEBUG_EVENT *ev )
 {
@@ -925,10 +949,12 @@ static void check_dll_event( HANDLE process, DEBUG_EVENT *ev )
         else p = module;
         if (!wcsicmp( p, L"ole32.dll" )) ole32_mod = ev->u.LoadDll.lpBaseOfDll;
         else if (!wcsicmp( p, L"oleaut32.dll" )) oleaut32_mod = ev->u.LoadDll.lpBaseOfDll;
+        else if (!wcsicmp( p, L"oleacc.dll" )) oleacc_mod = ev->u.LoadDll.lpBaseOfDll;
         break;
     case UNLOAD_DLL_DEBUG_EVENT:
         if (ev->u.UnloadDll.lpBaseOfDll == ole32_mod) ole32_mod = (HMODULE)1;
         if (ev->u.UnloadDll.lpBaseOfDll == oleaut32_mod) oleaut32_mod = (HMODULE)1;
+        if (ev->u.UnloadDll.lpBaseOfDll == oleacc_mod) oleacc_mod = (HMODULE)1;
         break;
     }
 }
@@ -996,6 +1022,11 @@ static void test_debug_loop(int argc, char **argv)
 
     ok( ole32_mod == (HMODULE)1, "ole32.dll was not reported\n" );
     ok( oleaut32_mod == (HMODULE)1, "oleaut32.dll was not reported\n" );
+#ifdef _WIN64
+    ok( oleacc_mod == (HMODULE)1, "oleacc.dll was not reported\n" );
+#else
+    ok( oleacc_mod == NULL, "oleacc.dll was reported\n" );
+#endif
 
     ret = CloseHandle(pi.hThread);
     ok(ret, "CloseHandle failed, last error %#x.\n", GetLastError());
@@ -2120,6 +2151,7 @@ START_TEST(debugger)
 
     hdll=GetModuleHandleA("kernel32.dll");
     pCheckRemoteDebuggerPresent=(void*)GetProcAddress(hdll, "CheckRemoteDebuggerPresent");
+    pIsWow64Process=(void*)GetProcAddress(hdll, "IsWow64Process");
     pGetMappedFileNameW = (void*)GetProcAddress(hdll, "GetMappedFileNameW");
     if (!pGetMappedFileNameW) pGetMappedFileNameW = (void*)GetProcAddress(LoadLibraryA("psapi.dll"),
                                                                           "GetMappedFileNameW");
@@ -2132,6 +2164,8 @@ START_TEST(debugger)
     pDbgUiConnectToDbg = (void*)GetProcAddress(ntdll, "DbgUiConnectToDbg");
     pDbgUiGetThreadDebugObject = (void*)GetProcAddress(ntdll, "DbgUiGetThreadDebugObject");
     pDbgUiSetThreadDebugObject = (void*)GetProcAddress(ntdll, "DbgUiSetThreadDebugObject");
+
+    if (pIsWow64Process) pIsWow64Process( GetCurrentProcess(), &is_wow64 );
 
     myARGC=winetest_get_mainargs(&myARGV);
     if (myARGC >= 3 && strcmp(myARGV[2], "crash") == 0)
