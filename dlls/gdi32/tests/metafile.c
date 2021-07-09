@@ -3137,6 +3137,16 @@ static void test_enhmetafile_file(void)
 
     ret = DeleteFileA(mf_name);
     ok(ret, "Could not delete file: %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = DeleteEnhMetaFile(ULongToHandle(0xdeadbeef));
+    ok(!ret, "DeleteEnhMetaFile succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError() = %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    size = GetEnhMetaFileBits(ULongToHandle(0xdeadbeef), 0, NULL);
+    ok(!size, "GetEnhMetaFileBitsEx returned %u\n", size);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError() = %u\n", GetLastError());
 }
 
 static void test_CopyMetaFile(void)
