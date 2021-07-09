@@ -1775,6 +1775,38 @@ DWORD WINAPI GetFriendlyIfIndex(DWORD IfIndex)
   return IfIndex;
 }
 
+static void if_counted_string_copy( WCHAR *dst, unsigned int len, IF_COUNTED_STRING *src );
+
+static void if_row_fill( MIB_IFROW *row, struct nsi_ndis_ifinfo_rw *rw, struct nsi_ndis_ifinfo_dynamic *dyn,
+                         struct nsi_ndis_ifinfo_static *stat )
+{
+    if_counted_string_copy( row->wszName, ARRAY_SIZE(row->wszName), &rw->alias );
+    row->dwIndex = stat->if_index;
+    row->dwType = stat->type;
+    row->dwMtu = dyn->mtu;
+    row->dwSpeed = dyn->rcv_speed;
+    row->dwPhysAddrLen = rw->phys_addr.Length;
+    if (row->dwPhysAddrLen > sizeof(row->bPhysAddr)) row->dwPhysAddrLen = 0;
+    memcpy( row->bPhysAddr, rw->phys_addr.Address, row->dwPhysAddrLen );
+    row->dwAdminStatus = rw->admin_status;
+    row->dwOperStatus = (dyn->oper_status == IfOperStatusUp) ? MIB_IF_OPER_STATUS_OPERATIONAL : MIB_IF_OPER_STATUS_NON_OPERATIONAL;
+    row->dwLastChange = 0;
+    row->dwInOctets = dyn->in_octets;
+    row->dwInUcastPkts = dyn->in_ucast_pkts;
+    row->dwInNUcastPkts = dyn->in_bcast_pkts + dyn->in_mcast_pkts;
+    row->dwInDiscards = dyn->in_discards;
+    row->dwInErrors = dyn->in_errors;
+    row->dwInUnknownProtos = 0;
+    row->dwOutOctets = dyn->out_octets;
+    row->dwOutUcastPkts = dyn->out_ucast_pkts;
+    row->dwOutNUcastPkts = dyn->out_bcast_pkts + dyn->out_mcast_pkts;
+    row->dwOutDiscards = dyn->out_discards;
+    row->dwOutErrors = dyn->out_errors;
+    row->dwOutQLen = 0;
+    row->dwDescrLen = WideCharToMultiByte( CP_ACP, 0, stat->descr.String, stat->descr.Length / sizeof(WCHAR),
+                                           (char *)row->bDescr, sizeof(row->bDescr) - 1, NULL, NULL );
+    row->bDescr[row->dwDescrLen] = '\0';
+}
 
 /******************************************************************
  *    GetIfEntry (IPHLPAPI.@)
@@ -1811,17 +1843,10 @@ DWORD WINAPI GetIfEntry(PMIB_IFROW pIfRow)
   return ret;
 }
 
-static int IfTableSorter(const void *a, const void *b)
+static int ifrow_cmp( const void *a, const void *b )
 {
-  int ret;
-
-  if (a && b)
-    ret = ((const MIB_IFROW*)a)->dwIndex - ((const MIB_IFROW*)b)->dwIndex;
-  else
-    ret = 0;
-  return ret;
+    return ((const MIB_IFROW*)a)->dwIndex - ((const MIB_IFROW*)b)->dwIndex;
 }
-
 
 /******************************************************************
  *    GetIfTable (IPHLPAPI.@)
@@ -1829,73 +1854,59 @@ static int IfTableSorter(const void *a, const void *b)
  * Get a table of local interfaces.
  *
  * PARAMS
- *  pIfTable [Out]    buffer for local interfaces table
- *  pdwSize  [In/Out] length of output buffer
- *  bOrder   [In]     whether to sort the table
+ *  table [Out]    buffer for local interfaces table
+ *  size  [In/Out] length of output buffer
+ *  sort  [In]     whether to sort the table
  *
  * RETURNS
  *  Success: NO_ERROR
  *  Failure: error code from winerror.h
  *
  * NOTES
- *  If pdwSize is less than required, the function will return
+ *  If size is less than required, the function will return
  *  ERROR_INSUFFICIENT_BUFFER, and *pdwSize will be set to the required byte
  *  size.
- *  If bOrder is true, the returned table will be sorted by interface index.
+ *  If sort is true, the returned table will be sorted by interface index.
  */
-DWORD WINAPI GetIfTable(PMIB_IFTABLE pIfTable, PULONG pdwSize, BOOL bOrder)
+DWORD WINAPI GetIfTable( MIB_IFTABLE *table, ULONG *size, BOOL sort )
 {
-  DWORD ret;
+    DWORD i, count, needed, err;
+    NET_LUID *keys;
+    struct nsi_ndis_ifinfo_rw *rw;
+    struct nsi_ndis_ifinfo_dynamic *dyn;
+    struct nsi_ndis_ifinfo_static *stat;
 
-  TRACE("pIfTable %p, pdwSize %p, bOrder %d\n", pIfTable, pdwSize, bOrder);
+    if (!size) return ERROR_INVALID_PARAMETER;
 
-  if (!pdwSize)
-    ret = ERROR_INVALID_PARAMETER;
-  else {
-    DWORD numInterfaces = get_interface_indices( FALSE, NULL );
-    ULONG size = sizeof(MIB_IFTABLE);
+    /* While this could be implemented on top of GetIfTable2(), it would require
+       an additional copy of the data */
+    err = NsiAllocateAndGetTable( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, (void **)&keys, sizeof(*keys),
+                                  (void **)&rw, sizeof(*rw), (void **)&dyn, sizeof(*dyn),
+                                  (void **)&stat, sizeof(*stat), &count, 0 );
+    if (err) return err;
 
-    if (numInterfaces > 1)
-      size += (numInterfaces - 1) * sizeof(MIB_IFROW);
-    if (!pIfTable || *pdwSize < size) {
-      *pdwSize = size;
-      ret = ERROR_INSUFFICIENT_BUFFER;
+    needed = FIELD_OFFSET( MIB_IFTABLE, table[count] );
+
+    if (!table || *size < needed)
+    {
+        *size = needed;
+        err = ERROR_INSUFFICIENT_BUFFER;
+        goto err;
     }
-    else {
-      InterfaceIndexTable *table;
-      get_interface_indices( FALSE, &table );
 
-      if (table) {
-        size = sizeof(MIB_IFTABLE);
-        if (table->numIndexes > 1)
-          size += (table->numIndexes - 1) * sizeof(MIB_IFROW);
-        if (*pdwSize < size) {
-          *pdwSize = size;
-          ret = ERROR_INSUFFICIENT_BUFFER;
-        }
-        else {
-          DWORD ndx;
+    table->dwNumEntries = count;
+    for (i = 0; i < count; i++)
+    {
+        MIB_IFROW *row = table->table + i;
 
-          *pdwSize = size;
-          pIfTable->dwNumEntries = 0;
-          for (ndx = 0; ndx < table->numIndexes; ndx++) {
-            pIfTable->table[ndx].dwIndex = table->indexes[ndx];
-            GetIfEntry(&pIfTable->table[ndx]);
-            pIfTable->dwNumEntries++;
-          }
-          if (bOrder)
-            qsort(pIfTable->table, pIfTable->dwNumEntries, sizeof(MIB_IFROW),
-             IfTableSorter);
-          ret = NO_ERROR;
-        }
-        HeapFree(GetProcessHeap(), 0, table);
-      }
-      else
-        ret = ERROR_OUTOFMEMORY;
+        if_row_fill( row, rw + i, dyn + i, stat + i );
     }
-  }
-  TRACE("returning %d\n", ret);
-  return ret;
+
+    if (sort) qsort( table->table, count, sizeof(MIB_IFROW), ifrow_cmp );
+
+err:
+    NsiFreeTable( keys, rw, dyn, stat );
+    return err;
 }
 
 static void if_counted_string_copy( WCHAR *dst, unsigned int len, IF_COUNTED_STRING *src )

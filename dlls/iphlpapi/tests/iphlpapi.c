@@ -238,12 +238,16 @@ static void testGetIfTable(void)
 
         if (apiReturn == NO_ERROR)
         {
+            char descr[MAX_INTERFACE_NAME_LEN];
+            WCHAR name[MAX_INTERFACE_NAME_LEN];
             DWORD i, index;
 
             if (winetest_debug > 1) trace( "interface table: %u entries\n", buf->dwNumEntries );
             for (i = 0; i < buf->dwNumEntries; i++)
             {
                 MIB_IFROW *row = &buf->table[i];
+                MIB_IF_ROW2 row2;
+                GUID *guid;
 
                 if (winetest_debug > 1)
                 {
@@ -261,6 +265,18 @@ static void testGetIfTable(void)
                 ok( index == row->dwIndex ||
                     broken( index != row->dwIndex && index ), /* Win8 can have identical guids for two different ifaces */
                     "got %d vs %d\n", index, row->dwIndex );
+                memset( &row2, 0, sizeof(row2) );
+                row2.InterfaceIndex = row->dwIndex;
+                GetIfEntry2( &row2 );
+                WideCharToMultiByte( CP_ACP, 0, row2.Description, -1, descr, sizeof(descr), NULL, NULL );
+                ok( !strcmp( (char *)row->bDescr, descr ), "got %s vs %s\n", row->bDescr, descr );
+                guid = &row2.InterfaceGuid;
+                swprintf( name, ARRAY_SIZE(name), L"\\DEVICE\\TCPIP_{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+                          guid->Data1, guid->Data2, guid->Data3, guid->Data4[0], guid->Data4[1],
+                          guid->Data4[2], guid->Data4[3], guid->Data4[4], guid->Data4[5],
+                          guid->Data4[6], guid->Data4[7]);
+todo_wine
+                ok( !wcscmp( row->wszName, name ), "got %s vs %s\n", debugstr_w( row->wszName ), debugstr_w( name ) );
             }
         }
         HeapFree(GetProcessHeap(), 0, buf);
