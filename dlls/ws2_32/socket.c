@@ -2446,6 +2446,8 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_MULTICAST_LOOP, optval, optlen );
 
         case WS_IP_MULTICAST_TTL:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_MULTICAST_TTL, optval, optlen );
+
         case WS_IP_OPTIONS:
 #if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)
         case WS_IP_PKTINFO:
