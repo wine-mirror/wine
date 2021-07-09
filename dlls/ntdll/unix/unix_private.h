@@ -318,6 +318,12 @@ static inline void *get_signal_stack(void)
     return (void *)(((ULONG_PTR)NtCurrentTeb() & ~signal_stack_mask) + teb_size);
 }
 
+static inline BOOL is_inside_signal_stack( void *ptr )
+{
+    return ((char *)ptr >= (char *)get_signal_stack() &&
+            (char *)ptr < (char *)get_signal_stack() + signal_stack_size);
+}
+
 static inline void mutex_lock( pthread_mutex_t *mutex )
 {
     if (!process_exiting) pthread_mutex_lock( mutex );

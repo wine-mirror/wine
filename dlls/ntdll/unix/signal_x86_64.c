@@ -1542,7 +1542,8 @@ static inline void init_handler( const ucontext_t *sigcontext )
 static inline void leave_handler( const ucontext_t *sigcontext )
 {
 #ifdef __linux__
-    if (fs32_sel) __asm__ volatile( "movw %0,%%fs" :: "r" (fs32_sel) );
+    if (fs32_sel && !is_inside_signal_stack( (void *)RSP_sig(sigcontext )))
+        __asm__ volatile( "movw %0,%%fs" :: "r" (fs32_sel) );
 #endif
 }
 
@@ -1997,7 +1998,7 @@ NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size )
             memcpy( &frame->xstate.YmmContext, &xs->YmmContext, sizeof(xs->YmmContext) );
         }
         else frame->xstate.Mask &= ~XSTATE_MASK_GSSE;
-        frame->restore_flags |= CONTEXT_I386_XSTATE;
+        frame->restore_flags |= CONTEXT_XSTATE;
     }
     return STATUS_SUCCESS;
 }
