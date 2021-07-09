@@ -55,16 +55,21 @@
 #include "winreg.h"
 #include "winnls.h"
 #include "winternl.h"
+#include "gdi_private.h"
 #include "ntgdi_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(metafile);
 
-struct metafile
+
+static CRITICAL_SECTION metafile_cs;
+static CRITICAL_SECTION_DEBUG critsect_debug =
 {
-    struct gdi_obj_header obj;
-    METAHEADER *data;
+    0, 0, &metafile_cs,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": metafile_cs") }
 };
+static CRITICAL_SECTION metafile_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 /******************************************************************
  *         MF_AddHandle
@@ -96,13 +101,13 @@ static int MF_AddHandle(HANDLETABLE *ht, UINT htlen, HGDIOBJ hobj)
  */
 HMETAFILE MF_Create_HMETAFILE(METAHEADER *mh)
 {
-    struct metafile *metafile;
+    HANDLE handle;
 
-    if (!(metafile = HeapAlloc(GetProcessHeap(), 0, sizeof(*metafile))))
-        return NULL;
-    metafile->data = mh;
+    if (!(handle = NtGdiCreateClientObj( NTGDI_OBJ_METAFILE )))
+        return 0;
 
-    return alloc_gdi_handle( &metafile->obj, NTGDI_OBJ_METAFILE, NULL );
+    set_gdi_client_ptr( handle, mh );
+    return handle;
 }
 
 /******************************************************************
@@ -134,12 +139,19 @@ static POINT *convert_points( UINT count, const POINTS *pts )
 
 BOOL WINAPI DeleteMetaFile( HMETAFILE hmf )
 {
-    struct metafile *metafile = free_gdi_handle( hmf );
+    METAHEADER *data;
+    BOOL ret = FALSE;
 
-    if (!metafile) return FALSE;
-    HeapFree( GetProcessHeap(), 0, metafile->data );
-    HeapFree( GetProcessHeap(), 0, metafile );
-    return TRUE;
+    EnterCriticalSection( &metafile_cs );
+    if ((data = get_gdi_client_ptr( hmf, NTGDI_OBJ_METAFILE )))
+    {
+        ret = NtGdiDeleteClientObj( hmf );
+        if (ret) HeapFree( GetProcessHeap(), 0, data );
+    }
+    LeaveCriticalSection( &metafile_cs );
+
+    if (!ret) SetLastError( ERROR_INVALID_HANDLE );
+    return ret;
 }
 
 /******************************************************************
@@ -237,14 +249,17 @@ HMETAFILE WINAPI GetMetaFileW( LPCWSTR lpFilename )
 /* return a copy of the metafile bits, to be freed with HeapFree */
 static METAHEADER *get_metafile_bits( HMETAFILE hmf )
 {
-    struct metafile *metafile = GDI_GetObjPtr( hmf, NTGDI_OBJ_METAFILE );
-    METAHEADER *ret;
+    METAHEADER *ret = NULL, *metafile;
 
-    if (!metafile) return NULL;
+    EnterCriticalSection( &metafile_cs );
+    if ((metafile = get_gdi_client_ptr( hmf, NTGDI_OBJ_METAFILE )))
+    {
+        ret = HeapAlloc( GetProcessHeap(), 0, metafile->mtSize * 2 );
+        if (ret) memcpy( ret, metafile, metafile->mtSize * 2 );
+    }
+    else SetLastError( ERROR_INVALID_HANDLE );
+    LeaveCriticalSection( &metafile_cs );
 
-    ret = HeapAlloc( GetProcessHeap(), 0, metafile->data->mtSize * 2 );
-    if (ret) memcpy( ret, metafile->data, metafile->data->mtSize * 2 );
-    GDI_ReleaseObj( hmf );
     return ret;
 }
 
@@ -1033,24 +1048,28 @@ HMETAFILE WINAPI SetMetaFileBitsEx( UINT size, const BYTE *lpData )
  *  If _buf_ is zero, returns size of buffer required. Otherwise,
  *  returns number of bytes copied.
  */
-UINT WINAPI GetMetaFileBitsEx( HMETAFILE hmf, UINT nSize, LPVOID buf )
+UINT WINAPI GetMetaFileBitsEx( HMETAFILE hmf, UINT buf_size, void *buf )
 {
-    struct metafile *metafile = GDI_GetObjPtr( hmf, NTGDI_OBJ_METAFILE );
-    UINT mfSize;
+    METAHEADER *metafile;
+    UINT size = 0;
 
-    TRACE("(%p,%d,%p)\n", hmf, nSize, buf);
+    TRACE( "(%p,%d,%p)\n", hmf, buf_size, buf );
 
-    if (!metafile) return 0;  /* FIXME: error code */
-
-    mfSize = metafile->data->mtSize * 2;
-    if (buf)
+    EnterCriticalSection( &metafile_cs );
+    if ((metafile = get_gdi_client_ptr( hmf, NTGDI_OBJ_METAFILE )))
     {
-        if(mfSize > nSize) mfSize = nSize;
-        memmove(buf, metafile->data, mfSize);
+        size = metafile->mtSize * 2;
+        if (buf)
+        {
+            if(size > buf_size) size = buf_size;
+            memmove( buf, metafile, size );
+        }
     }
-    GDI_ReleaseObj( hmf );
-    TRACE("returning size %d\n", mfSize);
-    return mfSize;
+    else SetLastError( ERROR_INVALID_HANDLE );
+    LeaveCriticalSection( &metafile_cs );
+
+    TRACE( "returning size %d\n", size );
+    return size;
 }
 
 /******************************************************************

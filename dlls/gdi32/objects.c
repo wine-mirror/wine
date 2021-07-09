@@ -65,6 +65,20 @@ static WORD get_object_type( HGDIOBJ obj )
     return entry ? entry->ExtType : 0;
 }
 
+void set_gdi_client_ptr( HGDIOBJ obj, void *ptr )
+{
+    GDI_HANDLE_ENTRY *entry = handle_entry( obj );
+    if (entry) entry->UserPointer = (UINT_PTR)ptr;
+}
+
+void *get_gdi_client_ptr( HGDIOBJ obj, WORD type )
+{
+    GDI_HANDLE_ENTRY *entry = handle_entry( obj );
+    if (!entry || entry->ExtType != type || !entry->UserPointer)
+        return NULL;
+    return (void *)(UINT_PTR)entry->UserPointer;
+}
+
 /***********************************************************************
  *           GetObjectType    (GDI32.@)
  */

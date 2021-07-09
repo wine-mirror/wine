@@ -953,6 +953,30 @@ BOOL WINAPI NtGdiDeleteObjectApp( HGDIOBJ obj )
 }
 
 /***********************************************************************
+ *           NtGdiCreateClientObj    (win32u.@)
+ */
+HANDLE WINAPI NtGdiCreateClientObj( ULONG type )
+{
+    struct gdi_obj_header *obj;
+    HGDIOBJ handle;
+
+    if (!(obj = HeapAlloc( GetProcessHeap(), 0, sizeof(*obj) )))
+        return 0;
+
+    handle = alloc_gdi_handle( obj, type, NULL );
+    if (!handle) HeapFree( GetProcessHeap(), 0, obj );
+    return handle;
+}
+
+/***********************************************************************
+ *           NtGdiDeleteClientObj    (win32u.@)
+ */
+BOOL WINAPI NtGdiDeleteClientObj( HGDIOBJ obj )
+{
+    return NtGdiDeleteObjectApp( obj );
+}
+
+/***********************************************************************
  *           GDI_hdc_using_object
  *
  * Call this if the dc requires DeleteObject notification

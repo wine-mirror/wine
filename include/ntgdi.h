@@ -99,6 +99,7 @@ HRGN     WINAPI NtGdiCreateRectRgn( INT left, INT top, INT right, INT bottom );
 HRGN     WINAPI NtGdiCreateRoundRectRgn( INT left, INT top, INT right, INT bottom,
                                          INT ellipse_width, INT ellipse_height );
 HBRUSH   WINAPI NtGdiCreateSolidBrush( COLORREF color );
+BOOL     WINAPI NtGdiDeleteClientObj( HGDIOBJ obj );
 BOOL     WINAPI NtGdiDeleteObjectApp( HGDIOBJ obj );
 LONG     WINAPI NtGdiDoPalette( HGDIOBJ handle, WORD start, WORD count, void *entries,
                                 DWORD func, BOOL inbound );
