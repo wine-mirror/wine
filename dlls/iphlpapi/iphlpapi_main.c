@@ -1821,26 +1821,25 @@ static void if_row_fill( MIB_IFROW *row, struct nsi_ndis_ifinfo_rw *rw, struct n
  *  Success: NO_ERROR
  *  Failure: error code from winerror.h
  */
-DWORD WINAPI GetIfEntry(PMIB_IFROW pIfRow)
+DWORD WINAPI GetIfEntry( MIB_IFROW *row )
 {
-  DWORD ret;
-  char nameBuf[MAX_ADAPTER_NAME];
-  char *name;
+    struct nsi_ndis_ifinfo_rw rw;
+    struct nsi_ndis_ifinfo_dynamic dyn;
+    struct nsi_ndis_ifinfo_static stat;
+    NET_LUID luid;
+    DWORD err;
 
-  TRACE("pIfRow %p\n", pIfRow);
-  if (!pIfRow)
-    return ERROR_INVALID_PARAMETER;
+    TRACE( "row %p\n", row );
+    if (!row) return ERROR_INVALID_PARAMETER;
 
-  name = getInterfaceNameByIndex(pIfRow->dwIndex, nameBuf);
-  if (name) {
-    ret = getInterfaceEntryByName(name, pIfRow);
-    if (ret == NO_ERROR)
-      ret = getInterfaceStatsByName(name, pIfRow);
-  }
-  else
-    ret = ERROR_INVALID_DATA;
-  TRACE("returning %d\n", ret);
-  return ret;
+    err = ConvertInterfaceIndexToLuid( row->dwIndex, &luid );
+    if (err) return err;
+
+    err = NsiGetAllParameters( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE,
+                               &luid, sizeof(luid), &rw, sizeof(rw),
+                               &dyn, sizeof(dyn), &stat, sizeof(stat) );
+    if (!err) if_row_fill( row, &rw, &dyn, &stat );
+    return err;
 }
 
 static int ifrow_cmp( const void *a, const void *b )

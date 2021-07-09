@@ -745,47 +745,6 @@ DWORD getInterfaceStatusByName(const char *name, INTERNAL_IF_OPER_STATUS *status
   return ret;
 }
 
-DWORD getInterfaceEntryByName(const char *name, PMIB_IFROW entry)
-{
-  BYTE addr[MAX_INTERFACE_PHYSADDR];
-  DWORD ret, len = sizeof(addr), type;
-
-  if (!name)
-    return ERROR_INVALID_PARAMETER;
-  if (!entry)
-    return ERROR_INVALID_PARAMETER;
-
-  if (getInterfacePhysicalByName(name, &len, addr, &type) == NO_ERROR) {
-    WCHAR *assigner;
-    const char *walker;
-
-    memset(entry, 0, sizeof(MIB_IFROW));
-    for (assigner = entry->wszName, walker = name; *walker; 
-     walker++, assigner++)
-      *assigner = *walker;
-    *assigner = 0;
-    getInterfaceIndexByName(name, &entry->dwIndex);
-    entry->dwPhysAddrLen = len;
-    memcpy(entry->bPhysAddr, addr, len);
-    memset(entry->bPhysAddr + len, 0, sizeof(entry->bPhysAddr) - len);
-    entry->dwType = type;
-    /* FIXME: how to calculate real speed? */
-    getInterfaceMtuByName(name, &entry->dwMtu);
-    /* lie, there's no "administratively down" here */
-    entry->dwAdminStatus = MIB_IF_ADMIN_STATUS_UP;
-    getInterfaceStatusByName(name, &entry->dwOperStatus);
-    /* punt on dwLastChange? */
-    entry->dwDescrLen = min(strlen(name), MAX_INTERFACE_DESCRIPTION - 1);
-    memcpy(entry->bDescr, name, entry->dwDescrLen);
-    entry->bDescr[entry->dwDescrLen] = '\0';
-    entry->dwDescrLen++;
-    ret = NO_ERROR;
-  }
-  else
-    ret = ERROR_INVALID_DATA;
-  return ret;
-}
-
 static DWORD getIPAddrRowByName(PMIB_IPADDRROW ipAddrRow, const char *ifName,
  const struct sockaddr *sa)
 {
