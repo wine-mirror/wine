@@ -236,27 +236,31 @@ static void testGetIfTable(void)
            "GetIfTable(buf, &dwSize, FALSE) returned %d, expected NO_ERROR\n\n",
            apiReturn);
 
-        if (apiReturn == NO_ERROR && winetest_debug > 1)
+        if (apiReturn == NO_ERROR)
         {
-            DWORD i, j;
-            char name[MAX_INTERFACE_NAME_LEN];
+            DWORD i, index;
 
-            trace( "interface table: %u entries\n", buf->dwNumEntries );
+            if (winetest_debug > 1) trace( "interface table: %u entries\n", buf->dwNumEntries );
             for (i = 0; i < buf->dwNumEntries; i++)
             {
                 MIB_IFROW *row = &buf->table[i];
-                WideCharToMultiByte( CP_ACP, 0, row->wszName, -1, name, MAX_INTERFACE_NAME_LEN, NULL, NULL );
-                trace( "%u: '%s' type %u mtu %u speed %u phys",
-                       row->dwIndex, name, row->dwType, row->dwMtu, row->dwSpeed );
-                for (j = 0; j < row->dwPhysAddrLen; j++)
-                    printf( " %02x", row->bPhysAddr[j] );
-                printf( "\n" );
-                trace( "        in: bytes %u upkts %u nupkts %u disc %u err %u unk %u\n",
-                       row->dwInOctets, row->dwInUcastPkts, row->dwInNUcastPkts,
-                       row->dwInDiscards, row->dwInErrors, row->dwInUnknownProtos );
-                trace( "        out: bytes %u upkts %u nupkts %u disc %u err %u\n",
-                       row->dwOutOctets, row->dwOutUcastPkts, row->dwOutNUcastPkts,
-                       row->dwOutDiscards, row->dwOutErrors );
+
+                if (winetest_debug > 1)
+                {
+                    trace( "%u: '%s' type %u mtu %u speed %u\n",
+                           row->dwIndex, debugstr_w(row->wszName), row->dwType, row->dwMtu, row->dwSpeed );
+                    trace( "        in: bytes %u upkts %u nupkts %u disc %u err %u unk %u\n",
+                           row->dwInOctets, row->dwInUcastPkts, row->dwInNUcastPkts,
+                           row->dwInDiscards, row->dwInErrors, row->dwInUnknownProtos );
+                    trace( "        out: bytes %u upkts %u nupkts %u disc %u err %u\n",
+                           row->dwOutOctets, row->dwOutUcastPkts, row->dwOutNUcastPkts,
+                           row->dwOutDiscards, row->dwOutErrors );
+                }
+                apiReturn = GetAdapterIndex( row->wszName, &index );
+                ok( !apiReturn, "got %d\n", apiReturn );
+                ok( index == row->dwIndex ||
+                    broken( index != row->dwIndex && index ), /* Win8 can have identical guids for two different ifaces */
+                    "got %d vs %d\n", index, row->dwIndex );
             }
         }
         HeapFree(GetProcessHeap(), 0, buf);

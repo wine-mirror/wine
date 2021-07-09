@@ -628,28 +628,35 @@ void WINAPI FreeMibTable(void *ptr)
  * Get interface index from its name.
  *
  * PARAMS
- *  AdapterName [In]  unicode string with the adapter name
- *  IfIndex     [Out] returns found interface index
+ *  adapter_name [In]  unicode string with the adapter name
+ *  index        [Out] returns found interface index
  *
  * RETURNS
  *  Success: NO_ERROR
  *  Failure: error code from winerror.h
  */
-DWORD WINAPI GetAdapterIndex(LPWSTR AdapterName, PULONG IfIndex)
+DWORD WINAPI GetAdapterIndex( WCHAR *adapter_name, ULONG *index )
 {
-  char adapterName[MAX_ADAPTER_NAME];
-  unsigned int i;
-  DWORD ret;
+    MIB_IFTABLE *if_table;
+    DWORD err, i;
 
-  TRACE("(AdapterName %p, IfIndex %p)\n", AdapterName, IfIndex);
-  /* The adapter name is guaranteed not to have any unicode characters, so
-   * this translation is never lossy */
-  for (i = 0; i < sizeof(adapterName) - 1 && AdapterName[i]; i++)
-    adapterName[i] = (char)AdapterName[i];
-  adapterName[i] = '\0';
-  ret = getInterfaceIndexByName(adapterName, IfIndex);
-  TRACE("returning %d\n", ret);
-  return ret;
+    TRACE( "name %s, index %p\n", debugstr_w( adapter_name ), index );
+
+    err = AllocateAndGetIfTableFromStack( &if_table, 0, GetProcessHeap(), 0 );
+    if (err) return err;
+
+    err = ERROR_INVALID_PARAMETER;
+    for (i = 0; i < if_table->dwNumEntries; i++)
+    {
+        if (!strcmpW( adapter_name, if_table->table[i].wszName ))
+        {
+            *index = if_table->table[i].dwIndex;
+            err = ERROR_SUCCESS;
+            break;
+        }
+    }
+    heap_free( if_table );
+    return err;
 }
 
 
