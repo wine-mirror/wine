@@ -23,7 +23,7 @@
 #include "wine/debug.h"
 #include "wine/strmbase.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(amstream);
+WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 static const WCHAR sink_id[] = L"I{A35FF56B-9FDA-11D0-8FDF-00C04FD9189D}";
 

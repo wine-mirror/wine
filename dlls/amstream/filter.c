@@ -23,7 +23,7 @@
 #include "wine/debug.h"
 #include "wine/list.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(amstream);
+WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 struct enum_pins
 {

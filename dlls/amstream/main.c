@@ -35,7 +35,7 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(amstream);
+WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 /******************************************************************************
  * Multimedia Streams ClassFactory
