@@ -66,6 +66,8 @@ __ASM_GLOBAL_FUNC( __wine_setjmpex,
                    "movq %r15,0x48(%rcx)\n\t"      /* jmp_buf->R15 */
                    "movq (%rsp),%rax\n\t"
                    "movq %rax,0x50(%rcx)\n\t"      /* jmp_buf->Rip */
+                   "stmxcsr 0x58(%rcx)\n\t"        /* jmp_buf->MxCsr */
+                   "fnstcw 0x5c(%rcx)\n\t"         /* jmp_buf->FpCsr */
                    "movdqa %xmm6,0x60(%rcx)\n\t"   /* jmp_buf->Xmm6 */
                    "movdqa %xmm7,0x70(%rcx)\n\t"   /* jmp_buf->Xmm7 */
                    "movdqa %xmm8,0x80(%rcx)\n\t"   /* jmp_buf->Xmm8 */
@@ -89,6 +91,9 @@ __ASM_GLOBAL_FUNC( __wine_longjmp,
                    "movq 0x38(%rcx),%r13\n\t"      /* jmp_buf->R13 */
                    "movq 0x40(%rcx),%r14\n\t"      /* jmp_buf->R14 */
                    "movq 0x48(%rcx),%r15\n\t"      /* jmp_buf->R15 */
+                   "ldmxcsr 0x58(%rcx)\n\t"        /* jmp_buf->MxCsr */
+                   "fnclex\n\t"
+                   "fldcw 0x5c(%rcx)\n\t"          /* jmp_buf->FpCsr */
                    "movdqa 0x60(%rcx),%xmm6\n\t"   /* jmp_buf->Xmm6 */
                    "movdqa 0x70(%rcx),%xmm7\n\t"   /* jmp_buf->Xmm7 */
                    "movdqa 0x80(%rcx),%xmm8\n\t"   /* jmp_buf->Xmm8 */
