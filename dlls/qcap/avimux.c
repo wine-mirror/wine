@@ -20,7 +20,7 @@
 #include "vfw.h"
 #include "aviriff.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(qcap);
+WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 #define MAX_PIN_NO 128
 #define AVISUPERINDEX_ENTRIES 2000

@@ -25,7 +25,7 @@
 #include "qcap_private.h"
 #include "rpcproxy.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(qcap);
+WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 HINSTANCE qcap_instance;
 
