@@ -1773,9 +1773,15 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 #ifdef IP_PKTINFO
         case IOCTL_AFD_WINE_GET_IP_PKTINFO:
             return do_getsockopt( handle, io, IPPROTO_IP, IP_PKTINFO, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_IP_PKTINFO:
+            return do_setsockopt( handle, io, IPPROTO_IP, IP_PKTINFO, in_buffer, in_size );
 #elif defined(IP_RECVDSTADDR)
         case IOCTL_AFD_WINE_GET_IP_PKTINFO:
             return do_getsockopt( handle, io, IPPROTO_IP, IP_RECVDSTADDR, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_IP_PKTINFO:
+            return do_setsockopt( handle, io, IPPROTO_IP, IP_RECVDSTADDR, in_buffer, in_size );
 #endif
 
         default:

@@ -199,6 +199,7 @@ struct afd_get_events_params
 #define IOCTL_AFD_WINE_GET_IP_OPTIONS                   WINE_AFD_IOC(254)
 #define IOCTL_AFD_WINE_SET_IP_OPTIONS                   WINE_AFD_IOC(255)
 #define IOCTL_AFD_WINE_GET_IP_PKTINFO                   WINE_AFD_IOC(256)
+#define IOCTL_AFD_WINE_SET_IP_PKTINFO                   WINE_AFD_IOC(257)
 
 struct afd_create_params
 {
