@@ -1784,6 +1784,9 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             return do_setsockopt( handle, io, IPPROTO_IP, IP_RECVDSTADDR, in_buffer, in_size );
 #endif
 
+        case IOCTL_AFD_WINE_GET_IP_TOS:
+            return do_getsockopt( handle, io, IPPROTO_IP, IP_TOS, out_buffer, out_size );
+
         default:
         {
             if ((code >> 16) == FILE_DEVICE_NETWORK)

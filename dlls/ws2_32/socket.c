@@ -2455,6 +2455,8 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_PKTINFO, optval, optlen );
 
         case WS_IP_TOS:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_TOS, optval, optlen );
+
         case WS_IP_TTL:
 #ifdef IP_UNICAST_IF
         case WS_IP_UNICAST_IF:
