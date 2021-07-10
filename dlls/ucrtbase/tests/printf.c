@@ -819,6 +819,7 @@ static void test_printf_fp(void)
         { "%.0f", 0.5, { "1", NULL, NULL, NULL, "0" }, {NULL, NULL, NULL, NULL, "1" }},
         { "%.0f", 1.5, { "2" }},
         { "%.0f", 2.5, { "3", NULL, NULL, NULL, "2" }, {NULL, NULL, NULL, NULL, "3" }},
+        { "%g", 9.999999999999999e-5, { "0.0001" }},
     };
 
     const char *res = NULL;

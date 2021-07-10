@@ -704,11 +704,25 @@ static inline int FUNC_NAME(pf_output_fp)(FUNC_NAME(puts_clbk) pf_puts, void *pu
                 if(i != first_limb_len) {
                     first_limb_len = i;
                     radix_pos++;
+
+                    round_pos++;
+                    if (round_pos == LIMB_DIGITS)
+                    {
+                        round_pos = 0;
+                        round_limb++;
+                    }
                 }
             } else if(i == b->e) {
                 first_limb_len = 1;
                 radix_pos++;
                 b->e++;
+
+                round_pos++;
+                if (round_pos == LIMB_DIGITS)
+                {
+                    round_pos = 0;
+                    round_limb++;
+                }
             }
         }
     }
