@@ -992,6 +992,16 @@ static gboolean sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
     }
 }
 
+static GstElement *create_element(const char *name, const char *plugin_set)
+{
+    GstElement *element;
+
+    if (!(element = gst_element_factory_make(name, NULL)))
+        fprintf(stderr, "winegstreamer: failed to create %s, are %u-bit GStreamer \"%s\" plugins installed?\n",
+                name, 8 * (unsigned int)sizeof(void *), plugin_set);
+    return element;
+}
+
 static struct wg_parser_stream *create_stream(struct wg_parser *parser)
 {
     struct wg_parser_stream *stream, **new_array;
@@ -1046,39 +1056,23 @@ static void pad_added_cb(GstElement *element, GstPad *pad, gpointer user)
 
         /* DirectShow can express interlaced video, but downstream filters can't
          * necessarily consume it. In particular, the video renderer can't. */
-        if (!(deinterlace = gst_element_factory_make("deinterlace", NULL)))
-        {
-            fprintf(stderr, "winegstreamer: failed to create deinterlace, are %u-bit GStreamer \"good\" plugins installed?\n",
-                    8 * (int)sizeof(void *));
+        if (!(deinterlace = create_element("deinterlace", "good")))
             goto out;
-        }
 
         /* decodebin considers many YUV formats to be "raw", but some quartz
          * filters can't handle those. Also, videoflip can't handle all "raw"
          * formats either. Add a videoconvert to swap color spaces. */
-        if (!(vconv = gst_element_factory_make("videoconvert", NULL)))
-        {
-            fprintf(stderr, "winegstreamer: failed to create videoconvert, are %u-bit GStreamer \"base\" plugins installed?\n",
-                    8 * (int)sizeof(void *));
+        if (!(vconv = create_element("videoconvert", "base")))
             goto out;
-        }
 
         /* GStreamer outputs RGB video top-down, but DirectShow expects bottom-up. */
-        if (!(flip = gst_element_factory_make("videoflip", NULL)))
-        {
-            fprintf(stderr, "winegstreamer: failed to create videoflip, are %u-bit GStreamer \"good\" plugins installed?\n",
-                    8 * (int)sizeof(void *));
+        if (!(flip = create_element("videoflip", "good")))
             goto out;
-        }
 
         /* videoflip does not support 15 and 16-bit RGB so add a second videoconvert
          * to do the final conversion. */
-        if (!(vconv2 = gst_element_factory_make("videoconvert", NULL)))
-        {
-            fprintf(stderr, "winegstreamer: failed to create videoconvert, are %u-bit GStreamer \"base\" plugins installed?\n",
-                    8 * (int)sizeof(void *));
+        if (!(vconv2 = create_element("videoconvert", "base")))
             goto out;
-        }
 
         /* The bin takes ownership of these elements. */
         gst_bin_add(GST_BIN(parser->container), deinterlace);
@@ -1106,12 +1100,8 @@ static void pad_added_cb(GstElement *element, GstPad *pad, gpointer user)
          * surround-sound configurations. Native dsound can't always handle
          * 64-bit formats either. Add an audioconvert to allow changing bit
          * depth and channel count. */
-        if (!(convert = gst_element_factory_make("audioconvert", NULL)))
-        {
-            fprintf(stderr, "winegstreamer: failed to create audioconvert, are %u-bit GStreamer \"base\" plugins installed?\n",
-                    8 * (int)sizeof(void *));
+        if (!(convert = create_element("audioconvert", "base")))
             goto out;
-        }
 
         gst_bin_add(GST_BIN(parser->container), convert);
         gst_element_sync_state_with_parent(convert);
@@ -1636,15 +1626,11 @@ static void CDECL wg_parser_disconnect(struct wg_parser *parser)
 
 static BOOL decodebin_parser_init_gst(struct wg_parser *parser)
 {
-    GstElement *element = gst_element_factory_make("decodebin", NULL);
+    GstElement *element;
     int ret;
 
-    if (!element)
-    {
-        ERR("Failed to create decodebin; are %u-bit GStreamer \"base\" plugins installed?\n",
-                8 * (int)sizeof(void*));
+    if (!(element = create_element("decodebin", "base")))
         return FALSE;
-    }
 
     gst_bin_add(GST_BIN(parser->container), element);
     parser->decodebin = element;
@@ -1689,15 +1675,11 @@ static BOOL decodebin_parser_init_gst(struct wg_parser *parser)
 
 static BOOL avi_parser_init_gst(struct wg_parser *parser)
 {
-    GstElement *element = gst_element_factory_make("avidemux", NULL);
+    GstElement *element;
     int ret;
 
-    if (!element)
-    {
-        ERR("Failed to create avidemux; are %u-bit GStreamer \"good\" plugins installed?\n",
-                8 * (int)sizeof(void*));
+    if (!(element = create_element("avidemux", "good")))
         return FALSE;
-    }
 
     gst_bin_add(GST_BIN(parser->container), element);
 
@@ -1744,12 +1726,8 @@ static BOOL mpeg_audio_parser_init_gst(struct wg_parser *parser)
     GstElement *element;
     int ret;
 
-    if (!(element = gst_element_factory_make("mpegaudioparse", NULL)))
-    {
-        ERR("Failed to create mpegaudioparse; are %u-bit GStreamer \"good\" plugins installed?\n",
-                8 * (int)sizeof(void*));
+    if (!(element = create_element("mpegaudioparse", "good")))
         return FALSE;
-    }
 
     gst_bin_add(GST_BIN(parser->container), element);
 
@@ -1797,12 +1775,8 @@ static BOOL wave_parser_init_gst(struct wg_parser *parser)
     GstElement *element;
     int ret;
 
-    if (!(element = gst_element_factory_make("wavparse", NULL)))
-    {
-        ERR("Failed to create wavparse; are %u-bit GStreamer \"good\" plugins installed?\n",
-                8 * (int)sizeof(void*));
+    if (!(element = create_element("wavparse", "good")))
         return FALSE;
-    }
 
     gst_bin_add(GST_BIN(parser->container), element);
 
