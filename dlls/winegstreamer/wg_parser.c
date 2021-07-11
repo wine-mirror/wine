@@ -977,7 +977,7 @@ static gboolean sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
             gst_query_parse_accept_caps(query, &caps);
             wg_format_from_caps(&format, caps);
             ret = wg_format_compare(&format, &stream->current_format);
-            if (!ret && WARN_ON(gstreamer))
+            if (!ret && gst_debug_category_get_threshold(GST_CAT_DEFAULT) >= GST_LEVEL_WARNING)
             {
                 gchar *str = gst_caps_to_string(caps);
                 GST_WARNING("Rejecting caps \"%s\".", str);
