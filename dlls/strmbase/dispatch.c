@@ -20,7 +20,7 @@
 
 #include "strmbase_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
+WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 static ITypeLib *control_typelib;
 static ITypeInfo *control_typeinfo[last_tid];

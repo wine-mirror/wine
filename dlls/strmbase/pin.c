@@ -21,7 +21,7 @@
 
 #include "strmbase_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
+WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 static const IMemInputPinVtbl MemInputPin_Vtbl;
 
@@ -152,7 +152,7 @@ static HRESULT WINAPI enum_media_types_Next(IEnumMediaTypes *iface, ULONG count,
         else if (hr != S_OK)
             break;
 
-        if (TRACE_ON(strmbase))
+        if (TRACE_ON(quartz))
         {
             TRACE("Returning media type %u:\n", enummt->index + i);
             strmbase_dump_media_type(mts[i]);

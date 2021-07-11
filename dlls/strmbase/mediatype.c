@@ -23,7 +23,7 @@
 #include "dvdmedia.h"
 #include "dxva.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(strmbase);
+WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 static const struct
 {
@@ -65,7 +65,7 @@ static const char *debugstr_fourcc(DWORD fourcc)
 
 void strmbase_dump_media_type(const AM_MEDIA_TYPE *mt)
 {
-    if (!TRACE_ON(strmbase) || !mt) return;
+    if (!TRACE_ON(quartz) || !mt) return;
 
     TRACE("Dumping media type %p: major type %s, subtype %s",
             mt, strmbase_debugstr_guid(&mt->majortype), strmbase_debugstr_guid(&mt->subtype));
