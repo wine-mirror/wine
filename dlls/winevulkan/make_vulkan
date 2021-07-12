@@ -122,6 +122,11 @@ UNSUPPORTED_EXTENSIONS = [
     "VK_NV_external_memory_win32",
 ]
 
+# Either internal extensions which aren't present on the win32 platform which
+# winevulkan may nonetheless use, or extensions we want to generate headers for
+# but not expose to applications (useful for test commits)
+UNEXPOSED_EXTENSIONS = {}
+
 # The Vulkan loader provides entry-points for core functionality and important
 # extensions. Based on vulkan-1.def this amounts to WSI extensions on 1.0.51.
 CORE_EXTENSIONS = [
@@ -511,8 +516,8 @@ class VkEnumValue(object):
 
 
 class VkFunction(object):
-    def __init__(self, _type=None, name=None, params=[], extensions=[], alias=None):
-        self.extensions = []
+    def __init__(self, _type=None, name=None, params=[], alias=None):
+        self.extensions = set()
         self.name = name
         self.type = _type
         self.params = params
@@ -654,6 +659,10 @@ class VkFunction(object):
 
     def needs_private_thunk(self):
         return self.thunk_type == ThunkType.PRIVATE
+
+    def needs_exposing(self):
+        # The function needs exposed if at-least one extension isn't both UNSUPPORTED and UNEXPOSED
+        return self.is_required() and (not self.extensions or not self.extensions.issubset(UNEXPOSED_EXTENSIONS))
 
     def pfn(self, prefix="p", call_conv=None, conv=False):
         """ Create function pointer. """
@@ -2680,7 +2689,7 @@ class VkGenerator(object):
         # Create thunks for instance and device functions.
         # Global functions don't go through the thunks.
         for vk_func in self.registry.funcs.values():
-            if not vk_func.is_required():
+            if not vk_func.needs_exposing():
                 continue
 
             if vk_func.is_global_func():
@@ -2700,6 +2709,8 @@ class VkGenerator(object):
         for ext in self.registry.extensions:
             if ext["type"] != "device":
                 continue
+            if ext["name"] in UNEXPOSED_EXTENSIONS:
+                continue
 
             f.write("    \"{0}\",\n".format(ext["name"]))
         f.write("};\n\n")
@@ -2708,6 +2719,8 @@ class VkGenerator(object):
         f.write("static const char * const vk_instance_extensions[] =\n{\n")
         for ext in self.registry.extensions:
             if ext["type"] != "instance":
+                continue
+            if ext["name"] in UNEXPOSED_EXTENSIONS:
                 continue
 
             f.write("    \"{0}\",\n".format(ext["name"]))
@@ -2768,7 +2781,7 @@ class VkGenerator(object):
         f.write("const struct unix_funcs loader_funcs =\n")
         f.write("{\n")
         for vk_func in self.registry.funcs.values():
-            if not vk_func.is_required():
+            if not vk_func.needs_exposing():
                 continue
             if vk_func.loader_thunk_type == ThunkType.NONE:
                 continue
@@ -2787,7 +2800,7 @@ class VkGenerator(object):
         # Generate prototypes for device and instance functions requiring a custom implementation.
         f.write("/* Functions for which we have custom implementations outside of the thunks. */\n")
         for vk_func in self.registry.funcs.values():
-            if not vk_func.is_required():
+            if not vk_func.needs_exposing():
                 continue
             if vk_func.needs_thunk() and not vk_func.needs_private_thunk():
                 continue
@@ -2886,7 +2899,7 @@ class VkGenerator(object):
         f.write("WINE_DEFAULT_DEBUG_CHANNEL(vulkan);\n\n")
 
         for vk_func in self.registry.funcs.values():
-            if not vk_func.is_required():
+            if not vk_func.needs_exposing():
                 continue
             if vk_func.loader_thunk_type != ThunkType.PUBLIC:
                 continue
@@ -2895,7 +2908,7 @@ class VkGenerator(object):
 
         f.write("static const struct vulkan_func vk_device_dispatch_table[] =\n{\n")
         for vk_func in self.registry.device_funcs:
-            if not vk_func.is_required():
+            if not vk_func.needs_exposing():
                 continue
 
             f.write("    {{\"{0}\", &{0}}},\n".format(vk_func.name))
@@ -2903,7 +2916,7 @@ class VkGenerator(object):
 
         f.write("static const struct vulkan_func vk_phys_dev_dispatch_table[] =\n{\n")
         for vk_func in self.registry.phys_dev_funcs:
-            if not vk_func.is_required():
+            if not vk_func.needs_exposing():
                 continue
 
             f.write("    {{\"{0}\", &{0}}},\n".format(vk_func.name))
@@ -2911,7 +2924,7 @@ class VkGenerator(object):
 
         f.write("static const struct vulkan_func vk_instance_dispatch_table[] =\n{\n")
         for vk_func in self.registry.instance_funcs:
-            if not vk_func.is_required():
+            if not vk_func.needs_exposing():
                 continue
 
             f.write("    {{\"{0}\", &{0}}},\n".format(vk_func.name))
@@ -2968,7 +2981,7 @@ class VkGenerator(object):
         f.write("struct unix_funcs\n")
         f.write("{\n")
         for vk_func in self.registry.funcs.values():
-            if not vk_func.is_required():
+            if not vk_func.needs_exposing():
                 continue
             if vk_func.loader_thunk_type == ThunkType.NONE:
                 continue
@@ -3462,7 +3475,7 @@ class VkRegistry(object):
                 # the XML file to handle this, but because of the manner in which we parse the XML
                 # file we pre-populate from <commands> before we check if a command is enabled.
                 if cmd_name in self.funcs:
-                    self.funcs[cmd_name].extensions.append(ext_name)
+                    self.funcs[cmd_name].extensions.add(ext_name)
 
             # Some extensions are not ready or have numbers reserved as a place holder.
             if ext.attrib["supported"] == "disabled":
