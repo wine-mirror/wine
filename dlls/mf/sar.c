@@ -1915,6 +1915,11 @@ failed:
     return hr;
 }
 
+BOOL mf_is_sar_sink(IMFMediaSink *sink)
+{
+    return sink->lpVtbl == &audio_renderer_sink_vtbl;
+}
+
 static void sar_shutdown_object(void *user_context, IUnknown *obj)
 {
     IMFMediaSink *sink;

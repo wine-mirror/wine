@@ -1952,18 +1952,36 @@ static ULONG WINAPI session_get_service_Release(IMFGetService *iface)
     return IMFMediaSession_Release(&session->IMFMediaSession_iface);
 }
 
-static HRESULT session_get_video_render_service(struct media_session *session, REFGUID service,
-        REFIID riid, void **obj)
+typedef BOOL (*p_renderer_node_test_func)(IMFMediaSink *sink);
+
+static BOOL session_video_renderer_test_func(IMFMediaSink *sink)
+{
+    IUnknown *obj;
+    HRESULT hr;
+
+    /* Use first sink to support IMFVideoRenderer. */
+    hr = IMFMediaSink_QueryInterface(sink, &IID_IMFVideoRenderer, (void **)&obj);
+    if (obj)
+        IUnknown_Release(obj);
+
+    return hr == S_OK;
+}
+
+static BOOL session_audio_renderer_test_func(IMFMediaSink *sink)
+{
+    return mf_is_sar_sink(sink);
+}
+
+static HRESULT session_get_renderer_node_service(struct media_session *session,
+        p_renderer_node_test_func node_test_func, REFGUID service, REFIID riid, void **obj)
 {
     IMFStreamSink *stream_sink;
     IMFTopologyNode *node;
     IMFCollection *nodes;
     IMFMediaSink *sink;
     unsigned int i = 0;
-    IUnknown *vr;
     HRESULT hr = E_FAIL;
 
-    /* Use first sink to support IMFVideoRenderer. */
     if (session->presentation.current_topology)
     {
         if (SUCCEEDED(IMFTopology_GetOutputNodeCollection(session->presentation.current_topology,
@@ -1975,11 +1993,10 @@ static HRESULT session_get_video_render_service(struct media_session *session, R
                 {
                     if (SUCCEEDED(IMFStreamSink_GetMediaSink(stream_sink, &sink)))
                     {
-                        if (SUCCEEDED(IMFMediaSink_QueryInterface(sink, &IID_IMFVideoRenderer, (void **)&vr)))
+                        if (node_test_func(sink))
                         {
-                            if (FAILED(hr = MFGetService(vr, service, riid, obj)))
-                                WARN("Failed to get service from video renderer %#x.\n", hr);
-                            IUnknown_Release(vr);
+                            if (FAILED(hr = MFGetService((IUnknown *)sink, service, riid, obj)))
+                                WARN("Failed to get service from renderer node, %#x.\n", hr);
                         }
                     }
                     IMFStreamSink_Release(stream_sink);
@@ -1996,6 +2013,20 @@ static HRESULT session_get_video_render_service(struct media_session *session, R
     }
 
     return hr;
+}
+
+static HRESULT session_get_audio_render_service(struct media_session *session, REFGUID service,
+        REFIID riid, void **obj)
+{
+    return session_get_renderer_node_service(session, session_audio_renderer_test_func,
+            service, riid, obj);
+}
+
+static HRESULT session_get_video_render_service(struct media_session *session, REFGUID service,
+        REFIID riid, void **obj)
+{
+    return session_get_renderer_node_service(session, session_video_renderer_test_func,
+            service, riid, obj);
 }
 
 static HRESULT WINAPI session_get_service_GetService(IMFGetService *iface, REFGUID service, REFIID riid, void **obj)
@@ -2039,6 +2070,10 @@ static HRESULT WINAPI session_get_service_GetService(IMFGetService *iface, REFGU
     else if (IsEqualGUID(service, &MR_VIDEO_RENDER_SERVICE))
     {
         hr = session_get_video_render_service(session, service, riid, obj);
+    }
+    else if (IsEqualGUID(service, &MR_POLICY_VOLUME_SERVICE))
+    {
+        hr = session_get_audio_render_service(session, service, riid, obj);
     }
     else
         FIXME("Unsupported service %s.\n", debugstr_guid(service));

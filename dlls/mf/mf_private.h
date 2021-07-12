@@ -80,4 +80,5 @@ static inline const char *debugstr_time(LONGLONG time)
 }
 
 extern BOOL mf_is_sample_copier_transform(IMFTransform *transform) DECLSPEC_HIDDEN;
+extern BOOL mf_is_sar_sink(IMFMediaSink *sink) DECLSPEC_HIDDEN;
 extern HRESULT topology_node_get_object(IMFTopologyNode *node, REFIID riid, void **obj) DECLSPEC_HIDDEN;
