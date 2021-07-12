@@ -99,7 +99,6 @@ UNSUPPORTED_EXTENSIONS = [
     "VK_EXT_pipeline_creation_feedback",
     "VK_GOOGLE_display_timing",
     "VK_KHR_external_fence_win32",
-    "VK_KHR_external_memory_win32",
     "VK_KHR_external_semaphore_win32",
     # Relates to external_semaphore and needs type conversions in bitflags.
     "VK_KHR_shared_presentable_image", # Needs WSI work.
@@ -125,7 +124,9 @@ UNSUPPORTED_EXTENSIONS = [
 # Either internal extensions which aren't present on the win32 platform which
 # winevulkan may nonetheless use, or extensions we want to generate headers for
 # but not expose to applications (useful for test commits)
-UNEXPOSED_EXTENSIONS = {}
+UNEXPOSED_EXTENSIONS = {
+    "VK_KHR_external_memory_win32",
+}
 
 # The Vulkan loader provides entry-points for core functionality and important
 # extensions. Based on vulkan-1.def this amounts to WSI extensions on 1.0.51.

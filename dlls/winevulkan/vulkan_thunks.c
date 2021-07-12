@@ -1838,6 +1838,18 @@ static inline void convert_VkImageViewHandleInfoNVX_win_to_host(const VkImageVie
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkMemoryGetWin32HandleInfoKHR_win_to_host(const VkMemoryGetWin32HandleInfoKHR *in, VkMemoryGetWin32HandleInfoKHR_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->memory = in->memory;
+    out->handleType = in->handleType;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkImageFormatProperties_host_to_win(const VkImageFormatProperties_host *in, VkImageFormatProperties *out)
 {
     if (!in) return;
