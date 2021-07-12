@@ -1975,12 +1975,12 @@ static BOOL session_audio_renderer_test_func(IMFMediaSink *sink)
 static HRESULT session_get_renderer_node_service(struct media_session *session,
         p_renderer_node_test_func node_test_func, REFGUID service, REFIID riid, void **obj)
 {
+    HRESULT hr = E_NOINTERFACE;
     IMFStreamSink *stream_sink;
     IMFTopologyNode *node;
     IMFCollection *nodes;
     IMFMediaSink *sink;
     unsigned int i = 0;
-    HRESULT hr = E_FAIL;
 
     if (session->presentation.current_topology)
     {
