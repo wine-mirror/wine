@@ -2403,6 +2403,9 @@ static void wined3d_cs_acquire_command_list(struct wined3d_device_context *conte
 
     for (i = 0; i < list->resource_count; ++i)
         wined3d_resource_acquire(list->resources[i]);
+
+    for (i = 0; i < list->command_list_count; ++i)
+        wined3d_cs_acquire_command_list(context, list->command_lists[i]);
 }
 
 static void wined3d_cs_exec_preload_resource(struct wined3d_cs *cs, const void *data)

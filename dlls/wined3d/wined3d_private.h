@@ -4120,7 +4120,8 @@ static inline void wined3d_resource_acquire(struct wined3d_resource *resource)
 
 static inline void wined3d_resource_release(struct wined3d_resource *resource)
 {
-    InterlockedDecrement(&resource->access_count);
+    LONG refcount = InterlockedDecrement(&resource->access_count);
+    assert(refcount >= 0);
 }
 
 static inline HRESULT wined3d_resource_get_sub_resource_desc(struct wined3d_resource *resource,
