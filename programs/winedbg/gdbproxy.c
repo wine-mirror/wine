@@ -395,7 +395,7 @@ static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* e
     }
 }
 
-static BOOL handle_debug_event(struct gdb_context* gdbctx)
+static BOOL handle_debug_event(struct gdb_context* gdbctx, BOOL stop_on_dll_load_unload)
 {
     DEBUG_EVENT *de = &gdbctx->de;
     struct dbg_thread *thread;
@@ -456,6 +456,8 @@ static BOOL handle_debug_event(struct gdb_context* gdbctx)
                 de->u.LoadDll.nDebugInfoSize);
         dbg_load_module(gdbctx->process->handle, de->u.LoadDll.hFile, u.buffer,
                         (DWORD_PTR)de->u.LoadDll.lpBaseOfDll, 0);
+        if (stop_on_dll_load_unload)
+            break;
         return TRUE;
 
     case UNLOAD_DLL_DEBUG_EVENT:
@@ -463,6 +465,8 @@ static BOOL handle_debug_event(struct gdb_context* gdbctx)
                 de->dwProcessId, de->dwThreadId, de->u.UnloadDll.lpBaseOfDll);
         SymUnloadModule(gdbctx->process->handle,
                         (DWORD_PTR)de->u.UnloadDll.lpBaseOfDll);
+        if (stop_on_dll_load_unload)
+            break;
         return TRUE;
 
     case EXCEPTION_DEBUG_EVENT:
@@ -596,7 +600,7 @@ static void    wait_for_debuggee(struct gdb_context* gdbctx)
 				break;
 			} 
 		}
-        if (!handle_debug_event(gdbctx))
+        if (!handle_debug_event(gdbctx, TRUE))
             break;
         ContinueDebugEvent(gdbctx->de.dwProcessId, gdbctx->de.dwThreadId, DBG_CONTINUE);
     }
@@ -916,6 +920,15 @@ static enum packet_return packet_reply_status(struct gdb_context* gdbctx)
         packet_reply_val(gdbctx, gdbctx->de.u.ExitProcess.dwExitCode, 4);
         packet_reply_close(gdbctx);
         return packet_done | packet_last_f;
+
+    case LOAD_DLL_DEBUG_EVENT:
+    case UNLOAD_DLL_DEBUG_EVENT:
+        packet_reply_open(gdbctx);
+        packet_reply_add(gdbctx, "T");
+        packet_reply_val(gdbctx, SIGTRAP, 1);
+        packet_reply_add(gdbctx, "library:;");
+        packet_reply_close(gdbctx);
+        return packet_done;
     }
 }
 
@@ -2161,7 +2174,7 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, unsigned flags, unsigned por
         goto cleanup;
 
     /* step 2: do the process internal creation */
-    handle_debug_event(gdbctx);
+    handle_debug_event(gdbctx, FALSE);
 
     /* step 3: fire up gdb (if requested) */
     if (flags & FLAG_NO_START)
@@ -2250,7 +2263,7 @@ static BOOL gdb_init_context(struct gdb_context* gdbctx, unsigned flags, unsigne
             /* gdbctx->dwProcessId = pid; */
             if (!gdb_startup(gdbctx, flags, port)) return FALSE;
         }
-        else if (!handle_debug_event(gdbctx))
+        else if (!handle_debug_event(gdbctx, FALSE))
             break;
         ContinueDebugEvent(gdbctx->de.dwProcessId, gdbctx->de.dwThreadId, DBG_CONTINUE);
     }
