@@ -1085,7 +1085,7 @@ static void init_locale(void)
         CFStringRef locale_string;
 
         if (country)
-            locale_string = CFStringCreateWithFormat(NULL, NULL, CFSTR("%@_%@"), lang, country);
+            locale_string = CFStringCreateWithFormat(NULL, NULL, CFSTR("%@-%@"), lang, country);
         else
             locale_string = CFStringCreateCopy(NULL, lang);
 
@@ -1114,7 +1114,7 @@ static void init_locale(void)
                     country = CFLocaleGetValue( locale, kCFLocaleCountryCode );
                 }
                 if (country)
-                    locale_string = CFStringCreateWithFormat( NULL, NULL, CFSTR("%@_%@"), lang, country );
+                    locale_string = CFStringCreateWithFormat( NULL, NULL, CFSTR("%@-%@"), lang, country );
                 else
                     locale_string = CFStringCreateCopy( NULL, lang );
                 CFStringGetCString( locale_string, user_locale, sizeof(user_locale), kCFStringEncodingUTF8 );
