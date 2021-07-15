@@ -1333,6 +1333,41 @@ HRESULT WINAPI SHBindToParent(LPCITEMIDLIST pidl, REFIID riid, LPVOID *ppv, LPCI
     return hr;
 }
 
+HRESULT WINAPI SHBindToObject(IShellFolder *psf, LPCITEMIDLIST pidl, IBindCtx *pbc, REFIID riid, void **ppv)
+{
+    IShellFolder *psfDesktop = NULL;
+    HRESULT hr;
+
+    TRACE_(shell)("%p,%p,%p,%s,%p\n", psf, pidl, pbc, debugstr_guid(riid), ppv);
+    pdump(pidl);
+
+    if (!ppv)
+        return E_INVALIDARG;
+
+    *ppv = NULL;
+
+    if (!psf)
+    {
+        hr = SHGetDesktopFolder(&psfDesktop);
+        if (FAILED(hr))
+            return hr;
+        psf = psfDesktop;
+    }
+
+    if (_ILIsPidlSimple(pidl))
+        /* we are on desktop level */
+        hr = IShellFolder_QueryInterface(psf, riid, ppv);
+    else
+        hr = IShellFolder_BindToObject(psf, pidl, pbc, riid, ppv);
+
+    if (psfDesktop)
+        IShellFolder_Release(psfDesktop);
+
+    TRACE_(shell)("-- ppv=%p ret=0x%08x\n", *ppv, hr);
+    return hr;
+}
+
+
 /*************************************************************************
  * SHParseDisplayName             [SHELL32.@]
  */
