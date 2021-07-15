@@ -841,26 +841,32 @@ static void STDMETHODCALLTYPE d3d11_device_context_IASetInputLayout(ID3D11Device
 static void STDMETHODCALLTYPE d3d11_device_context_IASetVertexBuffers(ID3D11DeviceContext1 *iface,
         UINT start_slot, UINT buffer_count, ID3D11Buffer *const *buffers, const UINT *strides, const UINT *offsets)
 {
+    struct wined3d_stream_state streams[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
     struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
     unsigned int i;
 
     TRACE("iface %p, start_slot %u, buffer_count %u, buffers %p, strides %p, offsets %p.\n",
             iface, start_slot, buffer_count, buffers, strides, offsets);
 
-    wined3d_mutex_lock();
+    if (buffer_count > ARRAY_SIZE(streams))
+    {
+        WARN("Buffer count %u exceeds limit.\n", buffer_count);
+        buffer_count = ARRAY_SIZE(streams);
+    }
+
     for (i = 0; i < buffer_count; ++i)
     {
         struct d3d_buffer *buffer = unsafe_impl_from_ID3D11Buffer(buffers[i]);
-        struct wined3d_stream_state stream;
 
-        stream.buffer = buffer ? buffer->wined3d_buffer : NULL;
-        stream.offset = offsets[i];
-        stream.stride = strides[i];
-        stream.frequency = 1;
-        stream.flags = 0;
-
-        wined3d_device_context_set_stream_source(context->wined3d_context, start_slot + i, &stream);
+        streams[i].buffer = buffer ? buffer->wined3d_buffer : NULL;
+        streams[i].offset = offsets[i];
+        streams[i].stride = strides[i];
+        streams[i].frequency = 1;
+        streams[i].flags = 0;
     }
+
+    wined3d_mutex_lock();
+    wined3d_device_context_set_stream_sources(context->wined3d_context, start_slot, buffer_count, streams);
     wined3d_mutex_unlock();
 }
 
@@ -4701,26 +4707,33 @@ static void STDMETHODCALLTYPE d3d10_device_IASetInputLayout(ID3D10Device1 *iface
 static void STDMETHODCALLTYPE d3d10_device_IASetVertexBuffers(ID3D10Device1 *iface, UINT start_slot,
         UINT buffer_count, ID3D10Buffer *const *buffers, const UINT *strides, const UINT *offsets)
 {
+    struct wined3d_stream_state streams[D3D10_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
     struct d3d_device *device = impl_from_ID3D10Device(iface);
     unsigned int i;
 
     TRACE("iface %p, start_slot %u, buffer_count %u, buffers %p, strides %p, offsets %p\n",
             iface, start_slot, buffer_count, buffers, strides, offsets);
 
-    wined3d_mutex_lock();
+    if (buffer_count > ARRAY_SIZE(streams))
+    {
+        WARN("Buffer count %u exceeds limit.\n", buffer_count);
+        buffer_count = ARRAY_SIZE(streams);
+    }
+
     for (i = 0; i < buffer_count; ++i)
     {
         struct d3d_buffer *buffer = unsafe_impl_from_ID3D10Buffer(buffers[i]);
-        struct wined3d_stream_state stream;
 
-        stream.buffer = buffer ? buffer->wined3d_buffer : NULL;
-        stream.offset = offsets[i];
-        stream.stride = strides[i];
-        stream.frequency = 1;
-        stream.flags = 0;
-
-        wined3d_device_context_set_stream_source(device->immediate_context.wined3d_context, start_slot + i, &stream);
+        streams[i].buffer = buffer ? buffer->wined3d_buffer : NULL;
+        streams[i].offset = offsets[i];
+        streams[i].stride = strides[i];
+        streams[i].frequency = 1;
+        streams[i].flags = 0;
     }
+
+    wined3d_mutex_lock();
+    wined3d_device_context_set_stream_sources(device->immediate_context.wined3d_context,
+            start_slot, buffer_count, streams);
     wined3d_mutex_unlock();
 }
 

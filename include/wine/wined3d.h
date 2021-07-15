@@ -2531,8 +2531,8 @@ void __cdecl wined3d_device_context_set_shader_resource_views(struct wined3d_dev
 void __cdecl wined3d_device_context_set_state(struct wined3d_device_context *context, struct wined3d_state *state);
 void __cdecl wined3d_device_context_set_stream_outputs(struct wined3d_device_context *context,
         const struct wined3d_stream_output outputs[WINED3D_MAX_STREAM_OUTPUT_BUFFERS]);
-HRESULT __cdecl wined3d_device_context_set_stream_source(struct wined3d_device_context *context,
-        unsigned int stream_idx, const struct wined3d_stream_state *stream);
+HRESULT __cdecl wined3d_device_context_set_stream_sources(struct wined3d_device_context *context,
+        unsigned int start_idx, unsigned int count, const struct wined3d_stream_state *streams);
 void __cdecl wined3d_device_context_set_unordered_access_views(struct wined3d_device_context *context,
         enum wined3d_pipeline pipeline, unsigned int start_idx, unsigned int count,
         struct wined3d_unordered_access_view *const *uavs, const unsigned int *initial_counts);

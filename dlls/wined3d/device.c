@@ -2219,41 +2219,47 @@ void CDECL wined3d_device_context_set_predication(struct wined3d_device_context 
         wined3d_query_decref(prev);
 }
 
-HRESULT CDECL wined3d_device_context_set_stream_source(struct wined3d_device_context *context,
-        unsigned int stream_idx, const struct wined3d_stream_state *src_stream)
+HRESULT CDECL wined3d_device_context_set_stream_sources(struct wined3d_device_context *context,
+        unsigned int start_idx, unsigned int count, const struct wined3d_stream_state *streams)
 {
-    struct wined3d_buffer *buffer = src_stream->buffer;
-    struct wined3d_stream_state *dst_stream;
-    struct wined3d_buffer *prev_buffer;
+    struct wined3d_state *state = context->state;
+    unsigned int i;
 
-    TRACE("context %p, stream_idx %u, src_stream %p.\n", context, stream_idx, src_stream);
+    TRACE("context %p, start_idx %u, count %u, streams %p.\n", context, start_idx, count, streams);
 
-    if (stream_idx >= WINED3D_MAX_STREAMS)
+    if (start_idx >= WINED3D_MAX_STREAMS)
     {
-        WARN("Stream index %u out of range.\n", stream_idx);
-        return WINED3DERR_INVALIDCALL;
-    }
-    else if (src_stream->offset & 0x3)
-    {
-        WARN("Offset %u is not 4 byte aligned.\n", src_stream->offset);
+        WARN("Start index %u is out of range.\n", start_idx);
         return WINED3DERR_INVALIDCALL;
     }
 
-    dst_stream = &context->state->streams[stream_idx];
-    prev_buffer = dst_stream->buffer;
+    count = min(count, WINED3D_MAX_STREAMS - start_idx);
 
-    if (!memcmp(src_stream, dst_stream, sizeof(*src_stream)))
+    for (i = 0; i < count; ++i)
     {
-        TRACE("Application is setting the old values over, nothing to do.\n");
+        if (streams[i].offset & 0x3)
+        {
+            WARN("Offset %u is not 4 byte aligned.\n", streams[i].offset);
+            return WINED3DERR_INVALIDCALL;
+        }
+    }
+
+    if (!memcmp(streams, &state->streams[start_idx], count * sizeof(*streams)))
         return WINED3D_OK;
-    }
 
-    *dst_stream = *src_stream;
-    if (buffer)
-        wined3d_buffer_incref(buffer);
-    wined3d_device_context_emit_set_stream_source(context, stream_idx, src_stream);
-    if (prev_buffer)
-        wined3d_buffer_decref(prev_buffer);
+    for (i = 0; i < count; ++i)
+    {
+        struct wined3d_buffer *prev = state->streams[start_idx + i].buffer;
+        struct wined3d_buffer *buffer = streams[i].buffer;
+
+        state->streams[start_idx + i] = streams[i];
+
+        if (buffer)
+            wined3d_buffer_incref(buffer);
+        wined3d_device_context_emit_set_stream_source(context, start_idx + i, &streams[i]);
+        if (prev)
+            wined3d_buffer_decref(prev);
+    }
 
     return WINED3D_OK;
 }
@@ -3912,7 +3918,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     while (map)
     {
         i = wined3d_bit_scan(&map);
-        wined3d_device_context_set_stream_source(context, i, &state->streams[i]);
+        wined3d_device_context_set_stream_sources(context, i, 1, &state->streams[i]);
     }
 
     map = changed->textures;
