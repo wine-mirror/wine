@@ -4841,8 +4841,8 @@ void wined3d_device_context_emit_set_shader_resource_views(struct wined3d_device
         struct wined3d_shader_resource_view *const *views) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_stream_outputs(struct wined3d_device_context *context,
         const struct wined3d_stream_output outputs[WINED3D_MAX_STREAM_OUTPUT_BUFFERS]) DECLSPEC_HIDDEN;
-void wined3d_device_context_emit_set_stream_source(struct wined3d_device_context *context, unsigned int stream_idx,
-        const struct wined3d_stream_state *state) DECLSPEC_HIDDEN;
+void wined3d_device_context_emit_set_stream_sources(struct wined3d_device_context *context,
+        unsigned int start_idx, unsigned int count, const struct wined3d_stream_state *streams) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_texture(struct wined3d_device_context *context, unsigned int stage,
         struct wined3d_texture *texture) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_texture_state(struct wined3d_device_context *context, unsigned int stage,

@@ -1661,8 +1661,7 @@ void CDECL wined3d_device_context_set_state(struct wined3d_device_context *conte
 
     wined3d_device_context_emit_set_stream_outputs(context, state->stream_output);
 
-    for (i = 0; i < WINED3D_MAX_STREAMS; ++i)
-        wined3d_device_context_emit_set_stream_source(context, i, &state->streams[i]);
+    wined3d_device_context_emit_set_stream_sources(context, 0, WINED3D_MAX_STREAMS, state->streams);
 
     wined3d_device_context_emit_set_index_buffer(context, state->index_buffer,
             state->index_format, state->index_offset);
@@ -2247,6 +2246,7 @@ HRESULT CDECL wined3d_device_context_set_stream_sources(struct wined3d_device_co
     if (!memcmp(streams, &state->streams[start_idx], count * sizeof(*streams)))
         return WINED3D_OK;
 
+    wined3d_device_context_emit_set_stream_sources(context, start_idx, count, streams);
     for (i = 0; i < count; ++i)
     {
         struct wined3d_buffer *prev = state->streams[start_idx + i].buffer;
@@ -2256,7 +2256,6 @@ HRESULT CDECL wined3d_device_context_set_stream_sources(struct wined3d_device_co
 
         if (buffer)
             wined3d_buffer_incref(buffer);
-        wined3d_device_context_emit_set_stream_source(context, start_idx + i, &streams[i]);
         if (prev)
             wined3d_buffer_decref(prev);
     }
