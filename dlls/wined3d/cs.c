@@ -117,7 +117,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_PREDICATION,
     WINED3D_CS_OP_SET_VIEWPORTS,
     WINED3D_CS_OP_SET_SCISSOR_RECTS,
-    WINED3D_CS_OP_SET_RENDERTARGET_VIEW,
+    WINED3D_CS_OP_SET_RENDERTARGET_VIEWS,
     WINED3D_CS_OP_SET_DEPTH_STENCIL_VIEW,
     WINED3D_CS_OP_SET_VERTEX_DECLARATION,
     WINED3D_CS_OP_SET_STREAM_SOURCES,
@@ -236,11 +236,12 @@ struct wined3d_cs_set_scissor_rects
     RECT rects[1];
 };
 
-struct wined3d_cs_set_rendertarget_view
+struct wined3d_cs_set_rendertarget_views
 {
     enum wined3d_cs_op opcode;
-    unsigned int view_idx;
-    struct wined3d_rendertarget_view *view;
+    unsigned int start_idx;
+    unsigned int count;
+    struct wined3d_rendertarget_view *views[1];
 };
 
 struct wined3d_cs_set_depth_stencil_view
@@ -590,7 +591,7 @@ static const char *debug_cs_op(enum wined3d_cs_op op)
         WINED3D_TO_STR(WINED3D_CS_OP_SET_PREDICATION);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_VIEWPORTS);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_SCISSOR_RECTS);
-        WINED3D_TO_STR(WINED3D_CS_OP_SET_RENDERTARGET_VIEW);
+        WINED3D_TO_STR(WINED3D_CS_OP_SET_RENDERTARGET_VIEWS);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_DEPTH_STENCIL_VIEW);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_VERTEX_DECLARATION);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_STREAM_SOURCES);
@@ -1293,43 +1294,50 @@ void wined3d_device_context_emit_set_scissor_rects(struct wined3d_device_context
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
-static void wined3d_cs_exec_set_rendertarget_view(struct wined3d_cs *cs, const void *data)
+static void wined3d_cs_exec_set_rendertarget_views(struct wined3d_cs *cs, const void *data)
 {
-    const struct wined3d_cs_set_rendertarget_view *op = data;
-    bool prev_alpha_swizzle, curr_alpha_swizzle;
-    struct wined3d_rendertarget_view *prev;
-    bool prev_srgb_write, curr_srgb_write;
-    struct wined3d_device *device;
+    const struct wined3d_cs_set_rendertarget_views *op = data;
+    struct wined3d_device *device = cs->c.device;
+    unsigned int i;
 
-    device = cs->c.device;
-    prev = cs->state.fb.render_targets[op->view_idx];
-    cs->state.fb.render_targets[op->view_idx] = op->view;
-    device_invalidate_state(device, STATE_FRAMEBUFFER);
-
-    prev_alpha_swizzle = prev && prev->format->id == WINED3DFMT_A8_UNORM;
-    curr_alpha_swizzle = op->view && op->view->format->id == WINED3DFMT_A8_UNORM;
-    if (prev_alpha_swizzle != curr_alpha_swizzle)
-        device_invalidate_state(device, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
-
-    if (!(device->adapter->d3d_info.wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
-            || cs->state.render_states[WINED3D_RS_SRGBWRITEENABLE])
+    for (i = 0; i < op->count; ++i)
     {
-        prev_srgb_write = prev && prev->format_flags & WINED3DFMT_FLAG_SRGB_WRITE;
-        curr_srgb_write = op->view && op->view->format_flags & WINED3DFMT_FLAG_SRGB_WRITE;
-        if (prev_srgb_write != curr_srgb_write)
-            device_invalidate_state(device, STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE));
+        struct wined3d_rendertarget_view *prev = cs->state.fb.render_targets[op->start_idx + i];
+        struct wined3d_rendertarget_view *view = op->views[i];
+        bool prev_alpha_swizzle, curr_alpha_swizzle;
+        bool prev_srgb_write, curr_srgb_write;
+
+        cs->state.fb.render_targets[op->start_idx + i] = view;
+
+        prev_alpha_swizzle = prev && prev->format->id == WINED3DFMT_A8_UNORM;
+        curr_alpha_swizzle = view && view->format->id == WINED3DFMT_A8_UNORM;
+        if (prev_alpha_swizzle != curr_alpha_swizzle)
+            device_invalidate_state(device, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
+
+        if (!(device->adapter->d3d_info.wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
+                || cs->state.render_states[WINED3D_RS_SRGBWRITEENABLE])
+        {
+            prev_srgb_write = prev && prev->format_flags & WINED3DFMT_FLAG_SRGB_WRITE;
+            curr_srgb_write = view && view->format_flags & WINED3DFMT_FLAG_SRGB_WRITE;
+            if (prev_srgb_write != curr_srgb_write)
+                device_invalidate_state(device, STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE));
+        }
     }
+
+    device_invalidate_state(device, STATE_FRAMEBUFFER);
 }
 
-void wined3d_device_context_emit_set_rendertarget_view(struct wined3d_device_context *context, unsigned int view_idx,
-        struct wined3d_rendertarget_view *view)
+void wined3d_device_context_emit_set_rendertarget_views(struct wined3d_device_context *context,
+        unsigned int start_idx, unsigned int count, struct wined3d_rendertarget_view *const *views)
 {
-    struct wined3d_cs_set_rendertarget_view *op;
+    struct wined3d_cs_set_rendertarget_views *op;
 
-    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
-    op->opcode = WINED3D_CS_OP_SET_RENDERTARGET_VIEW;
-    op->view_idx = view_idx;
-    op->view = view;
+    op = wined3d_device_context_require_space(context,
+            offsetof(struct wined3d_cs_set_rendertarget_views, views[count]), WINED3D_CS_QUEUE_DEFAULT);
+    op->opcode = WINED3D_CS_OP_SET_RENDERTARGET_VIEWS;
+    op->start_idx = start_idx;
+    op->count = count;
+    memcpy(op->views, views, count * sizeof(*views));
 
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
@@ -2891,7 +2899,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_PREDICATION             */ wined3d_cs_exec_set_predication,
     /* WINED3D_CS_OP_SET_VIEWPORTS               */ wined3d_cs_exec_set_viewports,
     /* WINED3D_CS_OP_SET_SCISSOR_RECTS           */ wined3d_cs_exec_set_scissor_rects,
-    /* WINED3D_CS_OP_SET_RENDERTARGET_VIEW       */ wined3d_cs_exec_set_rendertarget_view,
+    /* WINED3D_CS_OP_SET_RENDERTARGET_VIEWS      */ wined3d_cs_exec_set_rendertarget_views,
     /* WINED3D_CS_OP_SET_DEPTH_STENCIL_VIEW      */ wined3d_cs_exec_set_depth_stencil_view,
     /* WINED3D_CS_OP_SET_VERTEX_DECLARATION      */ wined3d_cs_exec_set_vertex_declaration,
     /* WINED3D_CS_OP_SET_STREAM_SOURCES          */ wined3d_cs_exec_set_stream_sources,

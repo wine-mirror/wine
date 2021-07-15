@@ -1649,10 +1649,8 @@ void CDECL wined3d_device_context_set_state(struct wined3d_device_context *conte
     context->state = state;
     wined3d_device_context_emit_set_feature_level(context, state->feature_level);
 
-    for (i = 0; i < WINED3D_MAX_RENDER_TARGETS; ++i)
-    {
-        wined3d_device_context_emit_set_rendertarget_view(context, i, state->fb.render_targets[i]);
-    }
+    wined3d_device_context_emit_set_rendertarget_views(context, 0,
+            ARRAY_SIZE(state->fb.render_targets), state->fb.render_targets);
 
     wined3d_device_context_emit_set_depth_stencil_view(context, state->fb.depth_stencil);
     wined3d_device_context_emit_set_vertex_declaration(context, state->vertex_declaration);
@@ -2145,6 +2143,7 @@ HRESULT CDECL wined3d_device_context_set_rendertarget_views(struct wined3d_devic
     if (!memcmp(views, &state->fb.render_targets[start_idx], count * sizeof(*views)))
         return WINED3D_OK;
 
+    wined3d_device_context_emit_set_rendertarget_views(context, start_idx, count, views);
     for (i = 0; i < count; ++i)
     {
         struct wined3d_rendertarget_view *prev = state->fb.render_targets[start_idx + i];
@@ -2156,7 +2155,6 @@ HRESULT CDECL wined3d_device_context_set_rendertarget_views(struct wined3d_devic
             wined3d_rtv_bind_count_inc(view);
         }
         state->fb.render_targets[start_idx + i] = view;
-        wined3d_device_context_emit_set_rendertarget_view(context, start_idx + i, view);
         /* Release after the assignment, to prevent device_resource_released()
          * from seeing the resource as still in use. */
         if (prev)
