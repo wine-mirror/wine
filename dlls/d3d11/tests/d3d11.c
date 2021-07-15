@@ -33432,6 +33432,257 @@ static void test_texture_compressed_3d(void)
     release_test_context(&test_context);
 }
 
+static void test_constant_buffer_offset(void)
+{
+    static const float black[] = {0.0f, 0.0f, 0.0f, 1.0f};
+    ID3D11Buffer *buffers[2], *ret_buffers[2];
+    D3D11_FEATURE_DATA_D3D11_OPTIONS options;
+    struct d3d11_test_context test_context;
+    struct vec4 buffer_data[32] = {0};
+    ID3D11DeviceContext1 *context;
+    UINT offsets[2], counts[2];
+    ID3D11PixelShader *ps;
+    ID3D11Device *device;
+    DWORD color;
+    HRESULT hr;
+
+    static const DWORD ps_code[] =
+    {
+#if 0
+        cbuffer c1 : register(b1)
+        {
+            float r, g;
+        };
+        cbuffer c2 : register(b2)
+        {
+            float b, a;
+        };
+
+        float4 main() : SV_Target
+        {
+            return float4(r, g, b, a);
+        }
+#endif
+        0x43425844, 0x8ca1d640, 0x33cd6f81, 0x987c9395, 0xc2110ba4, 0x00000001, 0x000000e0, 0x00000003,
+        0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
+        0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000068, 0x00000040, 0x0000001a,
+        0x04000059, 0x00208e46, 0x00000001, 0x00000001, 0x04000059, 0x00208e46, 0x00000002, 0x00000001,
+        0x03000065, 0x001020f2, 0x00000000, 0x06000036, 0x00102032, 0x00000000, 0x00208046, 0x00000001,
+        0x00000000, 0x06000036, 0x001020c2, 0x00000000, 0x00208406, 0x00000002, 0x00000000, 0x0100003e,
+    };
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+    device = test_context.device;
+
+    if (FAILED(ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_D3D11_OPTIONS, &options, sizeof(options)))
+            || !options.ConstantBufferOffsetting)
+    {
+        skip("Constant buffer offsetting is not supported.\n");
+        release_test_context(&test_context);
+        return;
+    }
+
+    if (FAILED(ID3D11DeviceContext_QueryInterface(test_context.immediate_context,
+            &IID_ID3D11DeviceContext1, (void **)&context)))
+    {
+        skip("ID3D11DeviceContext1 is not available.\n");
+        release_test_context(&test_context);
+        return;
+    }
+
+    buffer_data[0].x = 0.1f;
+    buffer_data[0].y = 0.2f;
+    buffer_data[16].x = 0.3f;
+    buffer_data[16].y = 0.4f;
+    buffers[0] = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(buffer_data), buffer_data);
+    buffer_data[0].x = 0.5f;
+    buffer_data[0].y = 0.6f;
+    buffer_data[16].x = 0.7f;
+    buffer_data[16].y = 0.8f;
+    buffers[1] = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(buffer_data), buffer_data);
+
+    hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
+    ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+
+    ID3D11DeviceContext1_ClearRenderTargetView(context, test_context.backbuffer_rtv, black);
+    ID3D11DeviceContext1_PSSetShader(context, ps, NULL, 0);
+
+    memset(ret_buffers, 0xab, sizeof(ret_buffers));
+    memset(offsets, 0xab, sizeof(offsets));
+    memset(counts, 0xab, sizeof(counts));
+    ID3D11DeviceContext1_PSGetConstantBuffers1(context, 1, 2, ret_buffers, offsets, counts);
+    ok(!ret_buffers[0], "Got buffer %p.\n", ret_buffers[0]);
+    ok(!ret_buffers[1], "Got buffer %p.\n", ret_buffers[1]);
+    ok(!offsets[0], "Got offset %u.\n", offsets[0]);
+    ok(!offsets[1], "Got offset %u.\n", offsets[1]);
+    ok(counts[0] == 4096, "Got count %u.\n", counts[0]);
+    ok(counts[1] == 4096, "Got count %u.\n", counts[1]);
+
+    offsets[0] = 0;
+    offsets[1] = 16;
+    counts[0] = 16;
+    counts[1] = 16;
+    ID3D11DeviceContext1_PSSetConstantBuffers1(context, 1, 2, buffers, offsets, counts);
+
+    ID3D11DeviceContext1_PSGetConstantBuffers1(context, 1, 2, ret_buffers, offsets, counts);
+    ok(ret_buffers[0] == buffers[0], "Got buffer %p.\n", ret_buffers[0]);
+    ok(ret_buffers[1] == buffers[1], "Got buffer %p.\n", ret_buffers[1]);
+    ok(offsets[0] == 0, "Got offset %u.\n", offsets[0]);
+    ok(offsets[1] == 16, "Got offset %u.\n", offsets[1]);
+    ok(counts[0] == 16, "Got count %u.\n", counts[0]);
+    ok(counts[1] == 16, "Got count %u.\n", counts[1]);
+    ID3D11Buffer_Release(ret_buffers[0]);
+    ID3D11Buffer_Release(ret_buffers[1]);
+
+    memset(ret_buffers, 0xab, sizeof(ret_buffers));
+    memset(offsets, 0xab, sizeof(offsets));
+    ID3D11DeviceContext1_PSGetConstantBuffers1(context, 1, 2, ret_buffers, offsets, NULL);
+    ok(ret_buffers[0] == buffers[0], "Got buffer %p.\n", ret_buffers[0]);
+    ok(ret_buffers[1] == buffers[1], "Got buffer %p.\n", ret_buffers[1]);
+    ok(offsets[0] == 0, "Got offset %u.\n", offsets[0]);
+    ok(offsets[1] == 16, "Got offset %u.\n", offsets[1]);
+    ID3D11Buffer_Release(ret_buffers[0]);
+    ID3D11Buffer_Release(ret_buffers[1]);
+
+    memset(ret_buffers, 0xab, sizeof(ret_buffers));
+    memset(counts, 0xab, sizeof(counts));
+    ID3D11DeviceContext1_PSGetConstantBuffers1(context, 1, 2, ret_buffers, NULL, counts);
+    ok(ret_buffers[0] == buffers[0], "Got buffer %p.\n", ret_buffers[0]);
+    ok(ret_buffers[1] == buffers[1], "Got buffer %p.\n", ret_buffers[1]);
+    ok(counts[0] == 16, "Got count %u.\n", counts[0]);
+    ok(counts[1] == 16, "Got count %u.\n", counts[1]);
+    ID3D11Buffer_Release(ret_buffers[0]);
+    ID3D11Buffer_Release(ret_buffers[1]);
+
+    draw_quad(&test_context);
+    color = get_texture_color(test_context.backbuffer, 320, 240);
+    ok(compare_color(color, 0xccb23319, 1), "Got unexpected color 0x%08x.\n", color);
+
+    /* The following calls are all invalid. */
+
+    offsets[0] = 0;
+    offsets[1] = 1;
+    counts[0] = 32;
+    counts[1] = 16;
+    ID3D11DeviceContext1_PSSetConstantBuffers1(context, 1, 2, buffers, offsets, counts);
+
+    ID3D11DeviceContext1_PSGetConstantBuffers1(context, 1, 2, ret_buffers, offsets, counts);
+    ok(ret_buffers[0] == buffers[0], "Got buffer %p.\n", ret_buffers[0]);
+    ok(ret_buffers[1] == buffers[1], "Got buffer %p.\n", ret_buffers[1]);
+    ok(offsets[0] == 0, "Got offset %u.\n", offsets[0]);
+    ok(offsets[1] == 16, "Got offset %u.\n", offsets[1]);
+    ok(counts[0] == 16, "Got count %u.\n", counts[0]);
+    ok(counts[1] == 16, "Got count %u.\n", counts[1]);
+    ID3D11Buffer_Release(ret_buffers[0]);
+    ID3D11Buffer_Release(ret_buffers[1]);
+
+    offsets[0] = 0;
+    offsets[1] = 0;
+    counts[0] = 17;
+    counts[1] = 16;
+    ID3D11DeviceContext1_PSSetConstantBuffers1(context, 1, 2, buffers, offsets, counts);
+
+    ID3D11DeviceContext1_PSGetConstantBuffers1(context, 1, 2, ret_buffers, offsets, counts);
+    ok(ret_buffers[0] == buffers[0], "Got buffer %p.\n", ret_buffers[0]);
+    ok(ret_buffers[1] == buffers[1], "Got buffer %p.\n", ret_buffers[1]);
+    ok(offsets[0] == 0, "Got offset %u.\n", offsets[0]);
+    ok(offsets[1] == 16, "Got offset %u.\n", offsets[1]);
+    ok(counts[0] == 16, "Got count %u.\n", counts[0]);
+    ok(counts[1] == 16, "Got count %u.\n", counts[1]);
+    ID3D11Buffer_Release(ret_buffers[0]);
+    ID3D11Buffer_Release(ret_buffers[1]);
+
+    ID3D11DeviceContext1_PSSetConstantBuffers1(context, 1, 2, buffers, offsets, NULL);
+
+    ID3D11DeviceContext1_PSGetConstantBuffers1(context, 1, 2, ret_buffers, offsets, counts);
+    ok(ret_buffers[0] == buffers[0], "Got buffer %p.\n", ret_buffers[0]);
+    ok(ret_buffers[1] == buffers[1], "Got buffer %p.\n", ret_buffers[1]);
+    ok(offsets[0] == 0, "Got offset %u.\n", offsets[0]);
+    ok(offsets[1] == 16, "Got offset %u.\n", offsets[1]);
+    ok(counts[0] == 16, "Got count %u.\n", counts[0]);
+    ok(counts[1] == 16, "Got count %u.\n", counts[1]);
+    ID3D11Buffer_Release(ret_buffers[0]);
+    ID3D11Buffer_Release(ret_buffers[1]);
+
+    counts[0] = 32;
+    counts[1] = 16;
+    ID3D11DeviceContext1_PSSetConstantBuffers1(context, 1, 2, buffers, NULL, counts);
+
+    ID3D11DeviceContext1_PSGetConstantBuffers1(context, 1, 2, ret_buffers, offsets, counts);
+    ok(ret_buffers[0] == buffers[0], "Got buffer %p.\n", ret_buffers[0]);
+    ok(ret_buffers[1] == buffers[1], "Got buffer %p.\n", ret_buffers[1]);
+    ok(offsets[0] == 0, "Got offset %u.\n", offsets[0]);
+    ok(offsets[1] == 16, "Got offset %u.\n", offsets[1]);
+    ok(counts[0] == 16, "Got count %u.\n", counts[0]);
+    ok(counts[1] == 16, "Got count %u.\n", counts[1]);
+    ID3D11Buffer_Release(ret_buffers[0]);
+    ID3D11Buffer_Release(ret_buffers[1]);
+
+    draw_quad(&test_context);
+    color = get_texture_color(test_context.backbuffer, 320, 240);
+    ok(compare_color(color, 0xccb23319, 1), "Got unexpected color 0x%08x.\n", color);
+
+    ID3D11DeviceContext1_PSSetConstantBuffers1(context, 1, 2, buffers, NULL, NULL);
+
+    ID3D11DeviceContext1_PSGetConstantBuffers1(context, 1, 2, ret_buffers, offsets, counts);
+    ok(ret_buffers[0] == buffers[0], "Got buffer %p.\n", ret_buffers[0]);
+    ok(ret_buffers[1] == buffers[1], "Got buffer %p.\n", ret_buffers[1]);
+    ok(!offsets[0], "Got offset %u.\n", offsets[0]);
+    ok(!offsets[1], "Got offset %u.\n", offsets[1]);
+    ok(counts[0] == 4096, "Got count %u.\n", counts[0]);
+    ok(counts[1] == 4096, "Got count %u.\n", counts[1]);
+    ID3D11Buffer_Release(ret_buffers[0]);
+    ID3D11Buffer_Release(ret_buffers[1]);
+
+    draw_quad(&test_context);
+    color = get_texture_color(test_context.backbuffer, 320, 240);
+    ok(compare_color(color, 0x99803319, 1), "Got unexpected color 0x%08x.\n", color);
+
+    offsets[0] = 16;
+    offsets[1] = 0;
+    counts[0] = 16;
+    counts[1] = 32;
+    ID3D11DeviceContext1_PSSetConstantBuffers1(context, 1, 2, buffers, offsets, counts);
+
+    ID3D11DeviceContext1_PSGetConstantBuffers1(context, 1, 2, ret_buffers, offsets, counts);
+    ok(ret_buffers[0] == buffers[0], "Got buffer %p.\n", ret_buffers[0]);
+    ok(ret_buffers[1] == buffers[1], "Got buffer %p.\n", ret_buffers[1]);
+    ok(offsets[0] == 16, "Got offset %u.\n", offsets[0]);
+    ok(offsets[1] == 0, "Got offset %u.\n", offsets[1]);
+    ok(counts[0] == 16, "Got count %u.\n", counts[0]);
+    ok(counts[1] == 32, "Got count %u.\n", counts[1]);
+    ID3D11Buffer_Release(ret_buffers[0]);
+    ID3D11Buffer_Release(ret_buffers[1]);
+
+    draw_quad(&test_context);
+    color = get_texture_color(test_context.backbuffer, 320, 240);
+    ok(compare_color(color, 0x9980664c, 1), "Got unexpected color 0x%08x.\n", color);
+
+    ID3D11DeviceContext1_PSSetConstantBuffers(context, 1, 2, buffers);
+
+    ID3D11DeviceContext1_PSGetConstantBuffers1(context, 1, 2, ret_buffers, offsets, counts);
+    ok(ret_buffers[0] == buffers[0], "Got buffer %p.\n", ret_buffers[0]);
+    ok(ret_buffers[1] == buffers[1], "Got buffer %p.\n", ret_buffers[1]);
+    ok(!offsets[0], "Got offset %u.\n", offsets[0]);
+    ok(!offsets[1], "Got offset %u.\n", offsets[1]);
+    ok(counts[0] == 4096, "Got count %u.\n", counts[0]);
+    ok(counts[1] == 4096, "Got count %u.\n", counts[1]);
+    ID3D11Buffer_Release(ret_buffers[0]);
+    ID3D11Buffer_Release(ret_buffers[1]);
+
+    draw_quad(&test_context);
+    color = get_texture_color(test_context.backbuffer, 320, 240);
+    ok(compare_color(color, 0x99803319, 1), "Got unexpected color 0x%08x.\n", color);
+
+    ID3D11DeviceContext1_Release(context);
+    ID3D11Buffer_Release(buffers[0]);
+    ID3D11Buffer_Release(buffers[1]);
+    ID3D11PixelShader_Release(ps);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     unsigned int argc, i;
@@ -33605,6 +33856,7 @@ START_TEST(d3d11)
     queue_test(test_deferred_context_map);
     queue_test(test_unbound_streams);
     queue_test(test_texture_compressed_3d);
+    queue_test(test_constant_buffer_offset);
 
     run_queued_tests();
 }
