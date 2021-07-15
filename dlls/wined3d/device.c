@@ -1676,11 +1676,7 @@ void CDECL wined3d_device_context_set_state(struct wined3d_device_context *conte
     wined3d_device_context_emit_set_depth_stencil_view(context, state->fb.depth_stencil);
     wined3d_device_context_emit_set_vertex_declaration(context, state->vertex_declaration);
 
-    for (i = 0; i < WINED3D_MAX_STREAM_OUTPUT_BUFFERS; ++i)
-    {
-        wined3d_device_context_emit_set_stream_output(context, i,
-                state->stream_output[i].buffer, state->stream_output[i].offset);
-    }
+    wined3d_device_context_emit_set_stream_outputs(context, state->stream_output);
 
     for (i = 0; i < WINED3D_MAX_STREAMS; ++i)
     {
@@ -2334,30 +2330,26 @@ void CDECL wined3d_device_context_set_vertex_declaration(struct wined3d_device_c
         wined3d_vertex_declaration_decref(prev);
 }
 
-void CDECL wined3d_device_context_set_stream_output(struct wined3d_device_context *context, unsigned int idx,
-        struct wined3d_buffer *buffer, unsigned int offset)
+void CDECL wined3d_device_context_set_stream_outputs(struct wined3d_device_context *context,
+        const struct wined3d_stream_output outputs[WINED3D_MAX_STREAM_OUTPUT_BUFFERS])
 {
-    struct wined3d_stream_output *stream;
-    struct wined3d_buffer *prev_buffer;
+    struct wined3d_state *state = context->state;
+    unsigned int i;
 
-    TRACE("context %p, idx %u, buffer %p, offset %u.\n", context, idx, buffer, offset);
+    TRACE("context %p, outputs %p.\n", context, outputs);
 
-    if (idx >= WINED3D_MAX_STREAM_OUTPUT_BUFFERS)
+    wined3d_device_context_emit_set_stream_outputs(context, outputs);
+    for (i = 0; i < WINED3D_MAX_STREAM_OUTPUT_BUFFERS; ++i)
     {
-        WARN("Invalid stream output %u.\n", idx);
-        return;
+        struct wined3d_buffer *prev_buffer = state->stream_output[i].buffer;
+        struct wined3d_buffer *buffer = outputs[i].buffer;
+
+        if (buffer)
+            wined3d_buffer_incref(buffer);
+        state->stream_output[i] = outputs[i];
+        if (prev_buffer)
+            wined3d_buffer_decref(prev_buffer);
     }
-
-    stream = &context->state->stream_output[idx];
-    prev_buffer = stream->buffer;
-
-    if (buffer)
-        wined3d_buffer_incref(buffer);
-    stream->buffer = buffer;
-    stream->offset = offset;
-    wined3d_device_context_emit_set_stream_output(context, idx, buffer, offset);
-    if (prev_buffer)
-        wined3d_buffer_decref(prev_buffer);
 }
 
 void CDECL wined3d_device_context_draw(struct wined3d_device_context *context, unsigned int start_vertex,

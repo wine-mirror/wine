@@ -1181,24 +1181,23 @@ static void STDMETHODCALLTYPE d3d11_device_context_OMSetDepthStencilState(ID3D11
 static void STDMETHODCALLTYPE d3d11_device_context_SOSetTargets(ID3D11DeviceContext1 *iface, UINT buffer_count,
         ID3D11Buffer *const *buffers, const UINT *offsets)
 {
+    struct wined3d_stream_output outputs[WINED3D_MAX_STREAM_OUTPUT_BUFFERS] = {0};
     struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
     unsigned int count, i;
 
     TRACE("iface %p, buffer_count %u, buffers %p, offsets %p.\n", iface, buffer_count, buffers, offsets);
 
-    count = min(buffer_count, D3D11_SO_BUFFER_SLOT_COUNT);
-    wined3d_mutex_lock();
+    count = min(buffer_count, ARRAY_SIZE(outputs));
     for (i = 0; i < count; ++i)
     {
         struct d3d_buffer *buffer = unsafe_impl_from_ID3D11Buffer(buffers[i]);
 
-        wined3d_device_context_set_stream_output(context->wined3d_context, i,
-                buffer ? buffer->wined3d_buffer : NULL, offsets ? offsets[i] : 0);
+        outputs[i].buffer = buffer ? buffer->wined3d_buffer : NULL;
+        outputs[i].offset = offsets ? offsets[i] : 0;
     }
-    for (; i < D3D11_SO_BUFFER_SLOT_COUNT; ++i)
-    {
-        wined3d_device_context_set_stream_output(context->wined3d_context, i, NULL, 0);
-    }
+
+    wined3d_mutex_lock();
+    wined3d_device_context_set_stream_outputs(context->wined3d_context, outputs);
     wined3d_mutex_unlock();
 }
 
@@ -4909,25 +4908,23 @@ static void STDMETHODCALLTYPE d3d10_device_OMSetDepthStencilState(ID3D10Device1 
 static void STDMETHODCALLTYPE d3d10_device_SOSetTargets(ID3D10Device1 *iface,
         UINT target_count, ID3D10Buffer *const *targets, const UINT *offsets)
 {
+    struct wined3d_stream_output outputs[WINED3D_MAX_STREAM_OUTPUT_BUFFERS] = {0};
     struct d3d_device *device = impl_from_ID3D10Device(iface);
     unsigned int count, i;
 
     TRACE("iface %p, target_count %u, targets %p, offsets %p.\n", iface, target_count, targets, offsets);
 
-    count = min(target_count, D3D10_SO_BUFFER_SLOT_COUNT);
-    wined3d_mutex_lock();
+    count = min(target_count, ARRAY_SIZE(outputs));
     for (i = 0; i < count; ++i)
     {
         struct d3d_buffer *buffer = unsafe_impl_from_ID3D10Buffer(targets[i]);
 
-        wined3d_device_context_set_stream_output(device->immediate_context.wined3d_context, i,
-                buffer ? buffer->wined3d_buffer : NULL, offsets[i]);
+        outputs[i].buffer = buffer ? buffer->wined3d_buffer : NULL;
+        outputs[i].offset = offsets ? offsets[i] : 0;
     }
 
-    for (i = count; i < D3D10_SO_BUFFER_SLOT_COUNT; ++i)
-    {
-        wined3d_device_context_set_stream_output(device->immediate_context.wined3d_context, i, NULL, 0);
-    }
+    wined3d_mutex_lock();
+    wined3d_device_context_set_stream_outputs(device->immediate_context.wined3d_context, outputs);
     wined3d_mutex_unlock();
 }
 

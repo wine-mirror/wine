@@ -122,7 +122,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_VERTEX_DECLARATION,
     WINED3D_CS_OP_SET_STREAM_SOURCE,
     WINED3D_CS_OP_SET_STREAM_SOURCE_FREQ,
-    WINED3D_CS_OP_SET_STREAM_OUTPUT,
+    WINED3D_CS_OP_SET_STREAM_OUTPUTS,
     WINED3D_CS_OP_SET_INDEX_BUFFER,
     WINED3D_CS_OP_SET_CONSTANT_BUFFERS,
     WINED3D_CS_OP_SET_TEXTURE,
@@ -273,12 +273,10 @@ struct wined3d_cs_set_stream_source_freq
     UINT flags;
 };
 
-struct wined3d_cs_set_stream_output
+struct wined3d_cs_set_stream_outputs
 {
     enum wined3d_cs_op opcode;
-    UINT stream_idx;
-    struct wined3d_buffer *buffer;
-    UINT offset;
+    struct wined3d_stream_output outputs[WINED3D_MAX_STREAM_OUTPUT_BUFFERS];
 };
 
 struct wined3d_cs_set_index_buffer
@@ -607,7 +605,7 @@ static const char *debug_cs_op(enum wined3d_cs_op op)
         WINED3D_TO_STR(WINED3D_CS_OP_SET_VERTEX_DECLARATION);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_STREAM_SOURCE);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_STREAM_SOURCE_FREQ);
-        WINED3D_TO_STR(WINED3D_CS_OP_SET_STREAM_OUTPUT);
+        WINED3D_TO_STR(WINED3D_CS_OP_SET_STREAM_OUTPUTS);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_INDEX_BUFFER);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_CONSTANT_BUFFERS);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_TEXTURE);
@@ -1475,35 +1473,34 @@ void wined3d_cs_emit_set_stream_source_freq(struct wined3d_cs *cs, UINT stream_i
     wined3d_device_context_submit(&cs->c, WINED3D_CS_QUEUE_DEFAULT);
 }
 
-static void wined3d_cs_exec_set_stream_output(struct wined3d_cs *cs, const void *data)
+static void wined3d_cs_exec_set_stream_outputs(struct wined3d_cs *cs, const void *data)
 {
-    const struct wined3d_cs_set_stream_output *op = data;
-    struct wined3d_stream_output *stream;
-    struct wined3d_buffer *prev;
+    const struct wined3d_cs_set_stream_outputs *op = data;
+    unsigned int i;
 
-    stream = &cs->state.stream_output[op->stream_idx];
-    prev = stream->buffer;
-    stream->buffer = op->buffer;
-    stream->offset = op->offset;
+    for (i = 0; i < WINED3D_MAX_STREAM_OUTPUT_BUFFERS; ++i)
+    {
+        struct wined3d_buffer *prev = cs->state.stream_output[i].buffer;
+        struct wined3d_buffer *buffer = op->outputs[i].buffer;
 
-    if (op->buffer)
-        InterlockedIncrement(&op->buffer->resource.bind_count);
-    if (prev)
-        InterlockedDecrement(&prev->resource.bind_count);
+        if (buffer)
+            InterlockedIncrement(&buffer->resource.bind_count);
+        if (prev)
+            InterlockedDecrement(&prev->resource.bind_count);
+    }
 
+    memcpy(cs->state.stream_output, op->outputs, sizeof(op->outputs));
     device_invalidate_state(cs->c.device, STATE_STREAM_OUTPUT);
 }
 
-void wined3d_device_context_emit_set_stream_output(struct wined3d_device_context *context, unsigned int stream_idx,
-        struct wined3d_buffer *buffer, unsigned int offset)
+void wined3d_device_context_emit_set_stream_outputs(struct wined3d_device_context *context,
+        const struct wined3d_stream_output outputs[WINED3D_MAX_STREAM_OUTPUT_BUFFERS])
 {
-    struct wined3d_cs_set_stream_output *op;
+    struct wined3d_cs_set_stream_outputs *op;
 
     op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
-    op->opcode = WINED3D_CS_OP_SET_STREAM_OUTPUT;
-    op->stream_idx = stream_idx;
-    op->buffer = buffer;
-    op->offset = offset;
+    op->opcode = WINED3D_CS_OP_SET_STREAM_OUTPUTS;
+    memcpy(op->outputs, outputs, sizeof(op->outputs));
 
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
@@ -2935,7 +2932,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_VERTEX_DECLARATION      */ wined3d_cs_exec_set_vertex_declaration,
     /* WINED3D_CS_OP_SET_STREAM_SOURCE           */ wined3d_cs_exec_set_stream_source,
     /* WINED3D_CS_OP_SET_STREAM_SOURCE_FREQ      */ wined3d_cs_exec_set_stream_source_freq,
-    /* WINED3D_CS_OP_SET_STREAM_OUTPUT           */ wined3d_cs_exec_set_stream_output,
+    /* WINED3D_CS_OP_SET_STREAM_OUTPUTS          */ wined3d_cs_exec_set_stream_outputs,
     /* WINED3D_CS_OP_SET_INDEX_BUFFER            */ wined3d_cs_exec_set_index_buffer,
     /* WINED3D_CS_OP_SET_CONSTANT_BUFFERS        */ wined3d_cs_exec_set_constant_buffers,
     /* WINED3D_CS_OP_SET_TEXTURE                 */ wined3d_cs_exec_set_texture,

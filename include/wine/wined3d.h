@@ -2212,6 +2212,12 @@ struct wined3d_stateblock_state
     struct wined3d_light_state *light_state;
 };
 
+struct wined3d_stream_output
+{
+    struct wined3d_buffer *buffer;
+    unsigned int offset;
+};
+
 struct wined3d_parent_ops
 {
     void (__stdcall *wined3d_object_destroyed)(void *parent);
@@ -2523,8 +2529,8 @@ void __cdecl wined3d_device_context_set_shader_resource_views(struct wined3d_dev
         enum wined3d_shader_type type, unsigned int start_idx, unsigned int count,
         struct wined3d_shader_resource_view *const *views);
 void __cdecl wined3d_device_context_set_state(struct wined3d_device_context *context, struct wined3d_state *state);
-void __cdecl wined3d_device_context_set_stream_output(struct wined3d_device_context *context, unsigned int idx,
-        struct wined3d_buffer *buffer, unsigned int offset);
+void __cdecl wined3d_device_context_set_stream_outputs(struct wined3d_device_context *context,
+        const struct wined3d_stream_output outputs[WINED3D_MAX_STREAM_OUTPUT_BUFFERS]);
 HRESULT __cdecl wined3d_device_context_set_stream_source(struct wined3d_device_context *context,
         unsigned int stream_idx, struct wined3d_buffer *buffer, unsigned int offset, unsigned int stride);
 void __cdecl wined3d_device_context_set_unordered_access_views(struct wined3d_device_context *context,
