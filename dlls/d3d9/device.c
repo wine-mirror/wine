@@ -2028,7 +2028,7 @@ static HRESULT WINAPI d3d9_device_SetRenderTarget(IDirect3DDevice9Ex *iface, DWO
 
     wined3d_mutex_lock();
     rtv = surface_impl ? d3d9_surface_acquire_rendertarget_view(surface_impl) : NULL;
-    hr = wined3d_device_context_set_rendertarget_view(device->immediate_context, idx, rtv, TRUE);
+    hr = wined3d_device_context_set_rendertarget_views(device->immediate_context, idx, 1, &rtv, TRUE);
     d3d9_surface_release_rendertarget_view(surface_impl, rtv);
     if (SUCCEEDED(hr))
     {

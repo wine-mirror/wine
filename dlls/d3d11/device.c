@@ -1071,29 +1071,33 @@ static void STDMETHODCALLTYPE d3d11_device_context_GSSetSamplers(ID3D11DeviceCon
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_OMSetRenderTargets(ID3D11DeviceContext1 *iface,
-        UINT render_target_view_count, ID3D11RenderTargetView *const *render_target_views,
-        ID3D11DepthStencilView *depth_stencil_view)
+        UINT rtv_count, ID3D11RenderTargetView *const *rtvs, ID3D11DepthStencilView *depth_stencil_view)
 {
+    struct wined3d_rendertarget_view *wined3d_rtvs[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT] = {0};
     struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
     struct d3d_depthstencil_view *dsv;
     unsigned int i;
 
-    TRACE("iface %p, render_target_view_count %u, render_target_views %p, depth_stencil_view %p.\n",
-            iface, render_target_view_count, render_target_views, depth_stencil_view);
+    TRACE("iface %p, rtv_count %u, rtvs %p, depth_stencil_view %p.\n", iface, rtv_count, rtvs, depth_stencil_view);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < render_target_view_count; ++i)
+    if (rtv_count > ARRAY_SIZE(wined3d_rtvs))
     {
-        struct d3d_rendertarget_view *rtv = unsafe_impl_from_ID3D11RenderTargetView(render_target_views[i]);
-        wined3d_device_context_set_rendertarget_view(context->wined3d_context, i,
-                rtv ? rtv->wined3d_view : NULL, FALSE);
+        WARN("View count %u exceeds limit.\n", rtv_count);
+        rtv_count = ARRAY_SIZE(wined3d_rtvs);
     }
-    for (; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+
+    for (i = 0; i < rtv_count; ++i)
     {
-        wined3d_device_context_set_rendertarget_view(context->wined3d_context, i, NULL, FALSE);
+        struct d3d_rendertarget_view *rtv = unsafe_impl_from_ID3D11RenderTargetView(rtvs[i]);
+
+        wined3d_rtvs[i] = rtv ? rtv->wined3d_view : NULL;
     }
 
     dsv = unsafe_impl_from_ID3D11DepthStencilView(depth_stencil_view);
+
+    wined3d_mutex_lock();
+    wined3d_device_context_set_rendertarget_views(context->wined3d_context, 0,
+            ARRAY_SIZE(wined3d_rtvs), wined3d_rtvs, FALSE);
     wined3d_device_context_set_depth_stencil_view(context->wined3d_context, dsv ? dsv->wined3d_view : NULL);
     wined3d_mutex_unlock();
 }
@@ -4873,30 +4877,33 @@ static void STDMETHODCALLTYPE d3d10_device_GSSetSamplers(ID3D10Device1 *iface,
 }
 
 static void STDMETHODCALLTYPE d3d10_device_OMSetRenderTargets(ID3D10Device1 *iface,
-        UINT render_target_view_count, ID3D10RenderTargetView *const *render_target_views,
-        ID3D10DepthStencilView *depth_stencil_view)
+        UINT rtv_count, ID3D10RenderTargetView *const *rtvs, ID3D10DepthStencilView *depth_stencil_view)
 {
+    struct wined3d_rendertarget_view *wined3d_rtvs[D3D10_SIMULTANEOUS_RENDER_TARGET_COUNT] = {0};
     struct d3d_device *device = impl_from_ID3D10Device(iface);
     struct d3d_depthstencil_view *dsv;
     unsigned int i;
 
-    TRACE("iface %p, render_target_view_count %u, render_target_views %p, depth_stencil_view %p.\n",
-            iface, render_target_view_count, render_target_views, depth_stencil_view);
+    TRACE("iface %p, rtv_count %u, rtvs %p, depth_stencil_view %p.\n", iface, rtv_count, rtvs, depth_stencil_view);
 
-    wined3d_mutex_lock();
-    for (i = 0; i < render_target_view_count; ++i)
+    if (rtv_count > ARRAY_SIZE(wined3d_rtvs))
     {
-        struct d3d_rendertarget_view *rtv = unsafe_impl_from_ID3D10RenderTargetView(render_target_views[i]);
-
-        wined3d_device_context_set_rendertarget_view(device->immediate_context.wined3d_context, i,
-                rtv ? rtv->wined3d_view : NULL, FALSE);
+        WARN("View count %u exceeds limit.\n", rtv_count);
+        rtv_count = ARRAY_SIZE(wined3d_rtvs);
     }
-    for (; i < D3D10_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+
+    for (i = 0; i < rtv_count; ++i)
     {
-        wined3d_device_context_set_rendertarget_view(device->immediate_context.wined3d_context, i, NULL, FALSE);
+        struct d3d_rendertarget_view *rtv = unsafe_impl_from_ID3D10RenderTargetView(rtvs[i]);
+
+        wined3d_rtvs[i] = rtv ? rtv->wined3d_view : NULL;
     }
 
     dsv = unsafe_impl_from_ID3D10DepthStencilView(depth_stencil_view);
+
+    wined3d_mutex_lock();
+    wined3d_device_context_set_rendertarget_views(device->immediate_context.wined3d_context, 0,
+            ARRAY_SIZE(wined3d_rtvs), wined3d_rtvs, FALSE);
     wined3d_device_context_set_depth_stencil_view(device->immediate_context.wined3d_context,
             dsv ? dsv->wined3d_view : NULL);
     wined3d_mutex_unlock();

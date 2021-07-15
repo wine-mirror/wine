@@ -1369,7 +1369,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface1_Flip(IDirectDrawSurface *
 
         src_rtv = ddraw_surface_get_rendertarget_view(src_impl);
         if (rtv == dst_impl->wined3d_rtv)
-            wined3d_device_context_set_rendertarget_view(dst_impl->ddraw->immediate_context, 0, src_rtv, FALSE);
+            wined3d_device_context_set_rendertarget_views(dst_impl->ddraw->immediate_context, 0, 1, &src_rtv, FALSE);
         wined3d_rendertarget_view_set_parent(src_rtv, dst_impl);
         dst_impl->wined3d_rtv = src_rtv;
         wined3d_texture_set_sub_resource_parent(src_impl->wined3d_texture, 0, dst_impl);
@@ -1406,7 +1406,8 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface1_Flip(IDirectDrawSurface *
             src_impl = impl_from_IDirectDrawSurface(current);
             src_rtv = ddraw_surface_get_rendertarget_view(src_impl);
             if (rtv == dst_impl->wined3d_rtv)
-                wined3d_device_context_set_rendertarget_view(dst_impl->ddraw->immediate_context, 0, src_rtv, FALSE);
+                wined3d_device_context_set_rendertarget_views(dst_impl->ddraw->immediate_context,
+                        0, 1, &src_rtv, FALSE);
             wined3d_rendertarget_view_set_parent(src_rtv, dst_impl);
             dst_impl->wined3d_rtv = src_rtv;
             wined3d_texture_set_sub_resource_parent(src_impl->wined3d_texture, 0, dst_impl);
@@ -1429,7 +1430,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface1_Flip(IDirectDrawSurface *
     /* We don't have to worry about potential texture bindings, since
      * flippable surfaces can never be textures. */
     if (rtv == src_impl->wined3d_rtv)
-        wined3d_device_context_set_rendertarget_view(dst_impl->ddraw->immediate_context, 0, tmp_rtv, FALSE);
+        wined3d_device_context_set_rendertarget_views(dst_impl->ddraw->immediate_context, 0, 1, &tmp_rtv, FALSE);
     wined3d_rendertarget_view_set_parent(tmp_rtv, src_impl);
     src_impl->wined3d_rtv = tmp_rtv;
     wined3d_texture_set_sub_resource_parent(texture, 0, src_impl);

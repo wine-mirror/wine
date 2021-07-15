@@ -1544,7 +1544,8 @@ static HRESULT WINAPI d3d8_device_SetRenderTarget(IDirect3DDevice8 *iface,
         rtv = render_target ? d3d8_surface_acquire_rendertarget_view(rt_impl) : NULL;
         if (render_target)
         {
-            if (SUCCEEDED(hr = wined3d_device_context_set_rendertarget_view(device->immediate_context, 0, rtv, TRUE)))
+            if (SUCCEEDED(hr = wined3d_device_context_set_rendertarget_views(device->immediate_context,
+                    0, 1, &rtv, TRUE)))
                 device_reset_viewport_state(device);
             else
                 wined3d_device_context_set_depth_stencil_view(device->immediate_context, original_dsv);
