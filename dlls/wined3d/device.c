@@ -1274,23 +1274,6 @@ HRESULT CDECL wined3d_device_context_get_stream_source(const struct wined3d_devi
     return WINED3D_OK;
 }
 
-static void wined3d_device_set_stream_source_freq(struct wined3d_device *device, UINT stream_idx, UINT divider)
-{
-    struct wined3d_stream_state *stream;
-    UINT old_flags, old_freq;
-
-    TRACE("device %p, stream_idx %u, divider %#x.\n", device, stream_idx, divider);
-
-    stream = &device->cs->c.state->streams[stream_idx];
-    old_flags = stream->flags;
-    old_freq = stream->frequency;
-
-    stream->flags = divider & (WINED3DSTREAMSOURCE_INSTANCEDATA | WINED3DSTREAMSOURCE_INDEXEDDATA);
-    stream->frequency = divider & 0x7fffff;
-    if (stream->frequency != old_freq || stream->flags != old_flags)
-        wined3d_cs_emit_set_stream_source_freq(device->cs, stream_idx, stream->frequency, stream->flags);
-}
-
 static void wined3d_device_set_transform(struct wined3d_device *device,
         enum wined3d_transform_state state, const struct wined3d_matrix *matrix)
 {
@@ -1679,10 +1662,7 @@ void CDECL wined3d_device_context_set_state(struct wined3d_device_context *conte
     wined3d_device_context_emit_set_stream_outputs(context, state->stream_output);
 
     for (i = 0; i < WINED3D_MAX_STREAMS; ++i)
-    {
-        wined3d_device_context_emit_set_stream_source(context, i, state->streams[i].buffer,
-                state->streams[i].offset, state->streams[i].stride);
-    }
+        wined3d_device_context_emit_set_stream_source(context, i, &state->streams[i]);
 
     wined3d_device_context_emit_set_index_buffer(context, state->index_buffer,
             state->index_format, state->index_offset);
@@ -2240,42 +2220,38 @@ void CDECL wined3d_device_context_set_predication(struct wined3d_device_context 
 }
 
 HRESULT CDECL wined3d_device_context_set_stream_source(struct wined3d_device_context *context,
-        unsigned int stream_idx, struct wined3d_buffer *buffer, unsigned int offset, unsigned int stride)
+        unsigned int stream_idx, const struct wined3d_stream_state *src_stream)
 {
-    struct wined3d_stream_state *stream;
+    struct wined3d_buffer *buffer = src_stream->buffer;
+    struct wined3d_stream_state *dst_stream;
     struct wined3d_buffer *prev_buffer;
 
-    TRACE("context %p, stream_idx %u, buffer %p, offset %u, stride %u.\n",
-            context, stream_idx, buffer, offset, stride);
+    TRACE("context %p, stream_idx %u, src_stream %p.\n", context, stream_idx, src_stream);
 
     if (stream_idx >= WINED3D_MAX_STREAMS)
     {
         WARN("Stream index %u out of range.\n", stream_idx);
         return WINED3DERR_INVALIDCALL;
     }
-    else if (offset & 0x3)
+    else if (src_stream->offset & 0x3)
     {
-        WARN("Offset %u is not 4 byte aligned.\n", offset);
+        WARN("Offset %u is not 4 byte aligned.\n", src_stream->offset);
         return WINED3DERR_INVALIDCALL;
     }
 
-    stream = &context->state->streams[stream_idx];
-    prev_buffer = stream->buffer;
+    dst_stream = &context->state->streams[stream_idx];
+    prev_buffer = dst_stream->buffer;
 
-    if (prev_buffer == buffer
-            && stream->stride == stride
-            && stream->offset == offset)
+    if (!memcmp(src_stream, dst_stream, sizeof(*src_stream)))
     {
-       TRACE("Application is setting the old values over, nothing to do.\n");
-       return WINED3D_OK;
+        TRACE("Application is setting the old values over, nothing to do.\n");
+        return WINED3D_OK;
     }
 
-    stream->buffer = buffer;
-    stream->stride = stride;
-    stream->offset = offset;
+    *dst_stream = *src_stream;
     if (buffer)
         wined3d_buffer_incref(buffer);
-    wined3d_device_context_emit_set_stream_source(context, stream_idx, buffer, offset, stride);
+    wined3d_device_context_emit_set_stream_source(context, stream_idx, src_stream);
     if (prev_buffer)
         wined3d_buffer_decref(prev_buffer);
 
@@ -3932,19 +3908,11 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     if (changed->scissorRect)
         wined3d_device_context_set_scissor_rects(context, 1, &state->scissor_rect);
 
-    map = changed->streamSource;
+    map = changed->streamSource | changed->streamFreq;
     while (map)
     {
         i = wined3d_bit_scan(&map);
-        wined3d_device_context_set_stream_source(context, i, state->streams[i].buffer,
-                state->streams[i].offset, state->streams[i].stride);
-    }
-    map = changed->streamFreq;
-    while (map)
-    {
-        i = wined3d_bit_scan(&map);
-        wined3d_device_set_stream_source_freq(device, i,
-                state->streams[i].frequency | state->streams[i].flags);
+        wined3d_device_context_set_stream_source(context, i, &state->streams[i]);
     }
 
     map = changed->textures;

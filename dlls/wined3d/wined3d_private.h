@@ -4761,8 +4761,6 @@ void wined3d_cs_emit_set_color_key(struct wined3d_cs *cs, struct wined3d_texture
         WORD flags, const struct wined3d_color_key *color_key) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_set_render_state(struct wined3d_cs *cs,
         enum wined3d_render_state state, DWORD value) DECLSPEC_HIDDEN;
-void wined3d_cs_emit_set_stream_source_freq(struct wined3d_cs *cs, UINT stream_idx,
-        UINT frequency, UINT flags) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_unload_resource(struct wined3d_cs *cs, struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void wined3d_cs_init_object(struct wined3d_cs *cs,
         void (*callback)(void *object), void *object) DECLSPEC_HIDDEN;
@@ -4844,7 +4842,7 @@ void wined3d_device_context_emit_set_shader_resource_views(struct wined3d_device
 void wined3d_device_context_emit_set_stream_outputs(struct wined3d_device_context *context,
         const struct wined3d_stream_output outputs[WINED3D_MAX_STREAM_OUTPUT_BUFFERS]) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_stream_source(struct wined3d_device_context *context, unsigned int stream_idx,
-        struct wined3d_buffer *buffer, unsigned int offset, unsigned int stride) DECLSPEC_HIDDEN;
+        const struct wined3d_stream_state *state) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_texture(struct wined3d_device_context *context, unsigned int stage,
         struct wined3d_texture *texture) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_texture_state(struct wined3d_device_context *context, unsigned int stage,

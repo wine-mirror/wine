@@ -851,9 +851,15 @@ static void STDMETHODCALLTYPE d3d11_device_context_IASetVertexBuffers(ID3D11Devi
     for (i = 0; i < buffer_count; ++i)
     {
         struct d3d_buffer *buffer = unsafe_impl_from_ID3D11Buffer(buffers[i]);
+        struct wined3d_stream_state stream;
 
-        wined3d_device_context_set_stream_source(context->wined3d_context, start_slot + i,
-                buffer ? buffer->wined3d_buffer : NULL, offsets[i], strides[i]);
+        stream.buffer = buffer ? buffer->wined3d_buffer : NULL;
+        stream.offset = offsets[i];
+        stream.stride = strides[i];
+        stream.frequency = 1;
+        stream.flags = 0;
+
+        wined3d_device_context_set_stream_source(context->wined3d_context, start_slot + i, &stream);
     }
     wined3d_mutex_unlock();
 }
@@ -4705,9 +4711,15 @@ static void STDMETHODCALLTYPE d3d10_device_IASetVertexBuffers(ID3D10Device1 *ifa
     for (i = 0; i < buffer_count; ++i)
     {
         struct d3d_buffer *buffer = unsafe_impl_from_ID3D10Buffer(buffers[i]);
+        struct wined3d_stream_state stream;
 
-        wined3d_device_context_set_stream_source(device->immediate_context.wined3d_context, start_slot + i,
-                buffer ? buffer->wined3d_buffer : NULL, offsets[i], strides[i]);
+        stream.buffer = buffer ? buffer->wined3d_buffer : NULL;
+        stream.offset = offsets[i];
+        stream.stride = strides[i];
+        stream.frequency = 1;
+        stream.flags = 0;
+
+        wined3d_device_context_set_stream_source(device->immediate_context.wined3d_context, start_slot + i, &stream);
     }
     wined3d_mutex_unlock();
 }
