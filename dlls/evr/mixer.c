@@ -657,11 +657,28 @@ static void video_mixer_append_rt_format(struct rt_format *rt_formats, unsigned 
     *count += 1;
 }
 
+static unsigned int video_mixer_get_interlace_mode_from_video_desc(const DXVA2_VideoDesc *video_desc)
+{
+    switch (video_desc->SampleFormat.SampleFormat)
+    {
+        case DXVA2_SampleFieldInterleavedEvenFirst:
+            return MFVideoInterlace_FieldInterleavedUpperFirst;
+        case DXVA2_SampleFieldInterleavedOddFirst:
+            return MFVideoInterlace_FieldInterleavedLowerFirst;
+        case DXVA2_SampleFieldSingleEven:
+            return MFVideoInterlace_FieldSingleUpper;
+        case DXVA2_SampleFieldSingleOdd:
+            return MFVideoInterlace_FieldSingleLower;
+        default:
+            return MFVideoInterlace_Progressive;
+    }
+}
+
 static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const DXVA2_VideoDesc *video_desc,
         IMFMediaType *media_type, IDirectXVideoProcessorService *service, unsigned int device_count,
         const GUID *devices, unsigned int flags)
 {
-    unsigned int i, j, format_count, count;
+    unsigned int i, j, format_count, count, interlace_mode;
     struct rt_format *rt_formats = NULL, *ptr;
     HRESULT hr = MF_E_INVALIDMEDIATYPE;
     MFVideoArea aperture;
@@ -702,6 +719,7 @@ static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const
         memset(&aperture, 0, sizeof(aperture));
         aperture.Area.cx = video_desc->SampleWidth;
         aperture.Area.cy = video_desc->SampleHeight;
+        interlace_mode = video_mixer_get_interlace_mode_from_video_desc(video_desc);
         for (i = 0; i < count; ++i)
         {
             IMFMediaType *rt_media_type;
@@ -714,6 +732,7 @@ static HRESULT video_mixer_collect_output_types(struct video_mixer *mixer, const
             IMFMediaType_SetGUID(rt_media_type, &MF_MT_SUBTYPE, &subtype);
             IMFMediaType_SetBlob(rt_media_type, &MF_MT_GEOMETRIC_APERTURE, (const UINT8 *)&aperture, sizeof(aperture));
             IMFMediaType_SetBlob(rt_media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (const UINT8 *)&aperture, sizeof(aperture));
+            IMFMediaType_SetUINT32(rt_media_type, &MF_MT_INTERLACE_MODE, interlace_mode);
 
             mixer->output.rt_formats[i].media_type = rt_media_type;
         }
