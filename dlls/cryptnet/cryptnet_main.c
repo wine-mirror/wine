@@ -521,13 +521,13 @@ static BOOL CRYPT_GetObjectFromCache(LPCWSTR pszURL, PCRYPT_BLOB_ARRAY pObject,
             {
                 if ((ret = CRYPT_GetObjectFromFile(hFile, pObject)))
                 {
-                    if (pAuxInfo && pAuxInfo->cbSize >=
-                     offsetof(CRYPT_RETRIEVE_AUX_INFO,
-                     pLastSyncTime) + sizeof(PFILETIME) &&
-                     pAuxInfo->pLastSyncTime)
+                    if (pAuxInfo && pAuxInfo->cbSize >= RTL_SIZEOF_THROUGH_FIELD(CRYPT_RETRIEVE_AUX_INFO, pLastSyncTime)
+                            && pAuxInfo->pLastSyncTime)
+                    {
                         memcpy(pAuxInfo->pLastSyncTime,
                          &pCacheInfo->LastSyncTime,
                          sizeof(FILETIME));
+                    }
                 }
                 CloseHandle(hFile);
             }
@@ -1028,12 +1028,12 @@ static BOOL WINAPI File_RetrieveEncodedObjectW(LPCWSTR pszURL,
             {
                 if ((ret = CRYPT_GetObjectFromFile(hFile, pObject)))
                 {
-                    if (pAuxInfo && pAuxInfo->cbSize >=
-                     offsetof(CRYPT_RETRIEVE_AUX_INFO,
-                     pLastSyncTime) + sizeof(PFILETIME) &&
-                     pAuxInfo->pLastSyncTime)
+                    if (pAuxInfo && pAuxInfo->cbSize >= RTL_SIZEOF_THROUGH_FIELD(CRYPT_RETRIEVE_AUX_INFO, pLastSyncTime)
+                            && pAuxInfo->pLastSyncTime)
+                    {
                         GetFileTime(hFile, NULL, NULL,
                          pAuxInfo->pLastSyncTime);
+                    }
                 }
                 CloseHandle(hFile);
             }
@@ -1557,9 +1557,8 @@ static DWORD verify_cert_revocation_from_dist_points_ext(
              &cbUrlArray, NULL, NULL);
             if (dwFlags & CERT_VERIFY_CACHE_ONLY_BASED_REVOCATION)
                 retrievalFlags |= CRYPT_CACHE_ONLY_RETRIEVAL;
-            if (dwFlags & CERT_VERIFY_REV_ACCUMULATIVE_TIMEOUT_FLAG &&
-             pRevPara && pRevPara->cbSize >= offsetof(CERT_REVOCATION_PARA,
-             dwUrlRetrievalTimeout) + sizeof(DWORD))
+            if ((dwFlags & CERT_VERIFY_REV_ACCUMULATIVE_TIMEOUT_FLAG) && pRevPara
+                    && pRevPara->cbSize >= RTL_SIZEOF_THROUGH_FIELD(CERT_REVOCATION_PARA, dwUrlRetrievalTimeout))
             {
                 startTime = GetTickCount();
                 endTime = startTime + pRevPara->dwUrlRetrievalTimeout;
