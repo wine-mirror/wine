@@ -593,200 +593,260 @@ static SYSTEMTIME may2007 = { 2007, 5, 2, 1, 0, 0, 0, 0 };
 
 static void test_verifyRevocation(void)
 {
-    HMODULE hCryptNet = GetModuleHandleA("cryptnet.dll");
-    BOOL ret;
-    CERT_REVOCATION_STATUS status = { sizeof(status), 0 };
-    PCCERT_CONTEXT certs[2];
-    CERT_REVOCATION_PARA revPara = { sizeof(revPara), 0 };
+    CERT_REVOCATION_STATUS status = {sizeof(status)};
+    CERT_REVOCATION_PARA params = {sizeof(params)};
+    const CERT_CONTEXT *certs[2];
     FILETIME time;
+    BOOL ret;
 
-    pCertVerifyRevocation = (void *)GetProcAddress(hCryptNet,
-     "CertDllVerifyRevocation");
-    if (!pCertVerifyRevocation)
-    {
-        win_skip("no CertDllVerifyRevocation\n");
-        return;
-    }
+    pCertVerifyRevocation = (void *)GetProcAddress(GetModuleHandleA("cryptnet.dll"), "CertDllVerifyRevocation");
+
     if (0)
     {
         /* Crash */
         pCertVerifyRevocation(0, 0, 0, NULL, 0, NULL, NULL);
     }
+
     SetLastError(0xdeadbeef);
+    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
     ret = pCertVerifyRevocation(0, 0, 0, NULL, 0, NULL, &status);
-    ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == E_INVALIDARG, "got error %#x\n", GetLastError());
+    todo_wine ok(!status.dwIndex, "got index %u\n", status.dwIndex);
+    todo_wine ok(status.dwError == E_INVALIDARG, "got error %#x\n", status.dwError);
+    todo_wine ok(!status.dwReason, "got reason %u\n", status.dwReason);
+
     SetLastError(0xdeadbeef);
-    ret = pCertVerifyRevocation(X509_ASN_ENCODING, 0, 0, NULL, 0, NULL,
-     &status);
-    ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
+    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    ret = pCertVerifyRevocation(X509_ASN_ENCODING, 0, 0, NULL, 0, NULL, &status);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == E_INVALIDARG, "got error %#x\n", GetLastError());
+    todo_wine ok(!status.dwIndex, "got index %u\n", status.dwIndex);
+    todo_wine ok(status.dwError == E_INVALIDARG, "got error %#x\n", status.dwError);
+    todo_wine ok(!status.dwReason, "got reason %u\n", status.dwReason);
+
     SetLastError(0xdeadbeef);
-    ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE, 0, NULL, 0,
-     NULL, &status);
-    ok(!ret && GetLastError() == E_INVALIDARG,
-     "expected E_INVALIDARG, got %08x\n", GetLastError());
-    certs[0] = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert,
-     sizeof(bigCert));
+    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE, 0, NULL, 0, NULL, &status);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == E_INVALIDARG, "got error %#x\n", GetLastError());
+    todo_wine ok(!status.dwIndex, "got index %u\n", status.dwIndex);
+    todo_wine ok(status.dwError == E_INVALIDARG, "got error %#x\n", status.dwError);
+    todo_wine ok(!status.dwReason, "got reason %u\n", status.dwReason);
+
+    certs[0] = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert, sizeof(bigCert));
+
     SetLastError(0xdeadbeef);
-    ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE,
-     1, (void **)certs, 0, NULL, &status);
-    ok(!ret && GetLastError() == CRYPT_E_NO_REVOCATION_CHECK,
-     "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", GetLastError());
-    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK,
-     "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", status.dwError);
-    ok(status.dwIndex == 0, "expected index 0, got %d\n", status.dwIndex);
+    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE, 1, (void **)certs, 0, NULL, &status);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
+    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", status.dwError);
+    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+
     CertFreeCertificateContext(certs[0]);
-    certs[0] = CertCreateCertificateContext(X509_ASN_ENCODING,
-     rootWithKeySignAndCRLSign, sizeof(rootWithKeySignAndCRLSign));
-    certs[1] = CertCreateCertificateContext(X509_ASN_ENCODING,
-     revokedCert, sizeof(revokedCert));
+
+    certs[0] = CertCreateCertificateContext(X509_ASN_ENCODING, rootWithKeySignAndCRLSign, sizeof(rootWithKeySignAndCRLSign));
+    certs[1] = CertCreateCertificateContext(X509_ASN_ENCODING, revokedCert, sizeof(revokedCert));
+
     /* The root cert itself can't be checked for revocation */
     SetLastError(0xdeadbeef);
-    ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE,
-     1, (void **)certs, 0, NULL, &status);
-    ok(!ret && GetLastError() == CRYPT_E_NO_REVOCATION_CHECK,
-     "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", GetLastError());
-    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK,
-     "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", status.dwError);
-    ok(status.dwIndex == 0, "expected index 0, got %d\n", status.dwIndex);
+    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE, 1, (void **)&certs[0], 0, NULL, &status);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
+    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", status.dwError);
+    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+
     /* Neither can the end cert */
     SetLastError(0xdeadbeef);
-    ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE,
-     1, (void **)&certs[1], 0, NULL, &status);
-    ok(!ret && GetLastError() == CRYPT_E_NO_REVOCATION_CHECK,
-     "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", GetLastError());
-    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK,
-     "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", status.dwError);
-    ok(status.dwIndex == 0, "expected index 0, got %d\n", status.dwIndex);
+    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE, 1, (void **)&certs[1], 0, NULL, &status);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
+    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", status.dwError);
+    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+
     /* Both certs together can't, either (they're not CRLs) */
     SetLastError(0xdeadbeef);
-    ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE,
-     2, (void **)certs, 0, NULL, &status);
-    ok(!ret && GetLastError() == CRYPT_E_NO_REVOCATION_CHECK,
-     "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", GetLastError());
-    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK,
-     "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", status.dwError);
-    ok(status.dwIndex == 0, "expected index 0, got %d\n", status.dwIndex);
-    /* Now add a CRL to the hCrlStore */
-    revPara.hCrlStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
-     CERT_STORE_CREATE_NEW_FLAG, NULL);
-    CertAddEncodedCRLToStore(revPara.hCrlStore, X509_ASN_ENCODING,
-     rootSignedCRLWithBadAKI, sizeof(rootSignedCRLWithBadAKI),
-     CERT_STORE_ADD_ALWAYS, NULL);
+    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE, 2, (void **)certs, 0, NULL, &status);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
+    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", status.dwError);
+    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+
+    /* Test with an invalid CRL */
+
+    params.hCrlStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
+    ret = CertAddEncodedCRLToStore(params.hCrlStore, X509_ASN_ENCODING, rootSignedCRLWithBadAKI,
+            sizeof(rootSignedCRLWithBadAKI), CERT_STORE_ADD_ALWAYS, NULL);
+    ok(ret, "failed to add CRL, error %u\n", GetLastError());
+
     SetLastError(0xdeadbeef);
-    ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE,
-     2, (void **)certs, 0, &revPara, &status);
-    ok(!ret && GetLastError() == CRYPT_E_NO_REVOCATION_CHECK,
-     "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", GetLastError());
-    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK,
-     "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", status.dwError);
-    ok(status.dwIndex == 0, "expected index 0, got %d\n", status.dwIndex);
+    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
+            2, (void **)certs, 0, &params, &status);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
+    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", status.dwError);
+    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+
     /* Specifying CERT_VERIFY_REV_CHAIN_FLAG doesn't change things either */
     SetLastError(0xdeadbeef);
-    ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE,
-     2, (void **)certs, CERT_VERIFY_REV_CHAIN_FLAG, &revPara, &status);
-    ok(!ret && GetLastError() == CRYPT_E_NO_REVOCATION_CHECK,
-     "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", GetLastError());
-    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK,
-     "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", status.dwError);
-    ok(status.dwIndex == 0, "expected index 0, got %d\n", status.dwIndex);
+    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
+            2, (void **)certs, CERT_VERIFY_REV_CHAIN_FLAG, &params, &status);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
+    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", status.dwError);
+    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+
     /* Again, specifying the issuer cert: no change */
-    revPara.pIssuerCert = certs[0];
+    params.pIssuerCert = certs[0];
     SetLastError(0xdeadbeef);
-    ret = CertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
-     1, (void **)&certs[1], 0, &revPara, &status);
-    /* Win2k thinks the cert is revoked, and it is, except the CRL contains a
-     * bad authority key ID extension and can't be matched with the issuer
-     * cert, hence the revocation status should be unknown.
-     */
-    if (!ret && GetLastError() == ERROR_FILE_NOT_FOUND)
-    {
-        win_skip("CERT_CONTEXT_REVOCATION_TYPE unsupported, skipping\n");
-        return;
-    }
-    ok(!ret && (GetLastError() == CRYPT_E_NO_REVOCATION_CHECK ||
-     broken(GetLastError() == CRYPT_E_REVOKED /* Win2k */)),
-     "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", GetLastError());
-    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK ||
-     broken(status.dwError == CRYPT_E_REVOKED /* Win2k */),
-     "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", status.dwError);
-    ok(status.dwIndex == 0, "expected index 0, got %d\n", status.dwIndex);
+    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
+            1, (void **)&certs[1], 0, &params, &status);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
+    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", status.dwError);
+    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+
     /* Specifying the time to check: still no change */
     SystemTimeToFileTime(&oct2007, &time);
-    revPara.pftTimeToUse = &time;
+    params.pftTimeToUse = &time;
+
+    SetLastError(0xdeadbeef);
+    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
     ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
-     1, (void **)&certs[1], 0, &revPara, &status);
-    ok(!ret, "Expected failure\n");
-    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK ||
-     broken(GetLastError() == CRYPT_E_REVOKED), /* W2K SP3/SP4 */
-     "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", GetLastError());
-    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK ||
-     broken(GetLastError() == CRYPT_E_REVOKED), /* W2K SP3/SP4 */
-     "expected CRYPT_E_NO_REVOCATION_CHECK, got %08x\n", status.dwError);
-    ok(status.dwIndex == 0, "expected index 0, got %d\n", status.dwIndex);
-    CertCloseStore(revPara.hCrlStore, 0);
+            1, (void **)&certs[1], 0, &params, &status);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
+    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", status.dwError);
+    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+
+    CertCloseStore(params.hCrlStore, 0);
+
     /* Test again with a valid CRL.  This time, the cert should be revoked when
      * the time is after the validity period of the CRL, or considered
      * "revocation offline" when the checked time precedes the validity
      * period of the CRL.
      */
-    revPara.hCrlStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
-     CERT_STORE_CREATE_NEW_FLAG, NULL);
-    ret = CertAddEncodedCRLToStore(revPara.hCrlStore, X509_ASN_ENCODING,
-     rootSignedCRL, sizeof(rootSignedCRL), CERT_STORE_ADD_ALWAYS, NULL);
-    ok(ret, "CertAddEncodedCRLToStore failed: %08x\n", GetLastError());
-    revPara.pftTimeToUse = NULL;
+    params.hCrlStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
+    ret = CertAddEncodedCRLToStore(params.hCrlStore, X509_ASN_ENCODING,
+            rootSignedCRL, sizeof(rootSignedCRL), CERT_STORE_ADD_ALWAYS, NULL);
+    ok(ret, "failed to add CRL, error %u\n", GetLastError());
+
+    params.pftTimeToUse = NULL;
+
     SetLastError(0xdeadbeef);
-    ret = CertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
-     1, (void **)&certs[1], 0, &revPara, &status);
-    ok(!ret && (GetLastError() == CRYPT_E_REVOKED ||
-     broken(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK /* NT4 */)),
-     "expected CRYPT_E_REVOKED, got %08x\n", GetLastError());
-    revPara.pftTimeToUse = &time;
+    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
+            1, (void **)&certs[1], 0, &params, &status);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == CRYPT_E_REVOKED, "got error %#x\n", GetLastError());
+    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_REVOKED, "got error %#x\n", status.dwError);
+    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+
+    SystemTimeToFileTime(&oct2007, &time);
+    params.pftTimeToUse = &time;
     SetLastError(0xdeadbeef);
-    ret = CertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
-     1, (void **)&certs[1], 0, &revPara, &status);
-    ok(!ret && (GetLastError() == CRYPT_E_REVOKED ||
-     broken(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK /* NT4 */)),
-     "expected CRYPT_E_REVOKED, got %08x\n", GetLastError());
+    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
+            1, (void **)&certs[1], 0, &params, &status);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == CRYPT_E_REVOKED, "got error %#x\n", GetLastError());
+    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_REVOKED, "got error %#x\n", status.dwError);
+    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+
     SystemTimeToFileTime(&may2007, &time);
     SetLastError(0xdeadbeef);
-    ret = CertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
-     1, (void **)&certs[1], 0, &revPara, &status);
-    ok(!ret && (GetLastError() == CRYPT_E_REVOCATION_OFFLINE ||
-     broken(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK /* NT4 */)),
-     "expected CRYPT_E_REVOCATION_OFFLINE, got %08x\n", GetLastError());
+    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
+            1, (void **)&certs[1], 0, &params, &status);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == CRYPT_E_REVOCATION_OFFLINE, "got error %#x\n", GetLastError());
+    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_REVOCATION_OFFLINE, "got error %#x\n", status.dwError);
+    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+
     CertFreeCertificateContext(certs[1]);
+
     /* Test again with a valid CRL and an un-revoked cert.  No matter the
      * time checked, it's reported as revocation offline.
      */
-    certs[1] = CertCreateCertificateContext(X509_ASN_ENCODING,
-     unRevokedCert, sizeof(unRevokedCert));
-    ok(certs[1] != NULL, "CertCreateCertificateContext failed: %08x\n",
-     GetLastError());
-    revPara.pftTimeToUse = NULL;
+    certs[1] = CertCreateCertificateContext(X509_ASN_ENCODING, unRevokedCert, sizeof(unRevokedCert));
+
+    params.pftTimeToUse = NULL;
     SetLastError(0xdeadbeef);
-    ret = CertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
-     1, (void **)&certs[1], 0, &revPara, &status);
-    ok(!ret && (GetLastError() == CRYPT_E_REVOCATION_OFFLINE ||
-     broken(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK /* NT4 */)),
-     "expected CRYPT_E_REVOCATION_OFFLINE, got %08x\n", GetLastError());
-    revPara.pftTimeToUse = &time;
+    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
+            1, (void **)&certs[1], 0, &params, &status);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == CRYPT_E_REVOCATION_OFFLINE, "got error %#x\n", GetLastError());
+    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_REVOCATION_OFFLINE, "got error %#x\n", status.dwError);
+    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+
+    SystemTimeToFileTime(&oct2007, &time);
+    params.pftTimeToUse = &time;
     SetLastError(0xdeadbeef);
-    ret = CertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
-     1, (void **)&certs[1], 0, &revPara, &status);
-    ok(!ret && (GetLastError() == CRYPT_E_REVOCATION_OFFLINE ||
-     broken(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK /* NT4 */)),
-     "expected CRYPT_E_REVOCATION_OFFLINE, got %08x\n", GetLastError());
+    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
+            1, (void **)&certs[1], 0, &params, &status);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == CRYPT_E_REVOCATION_OFFLINE, "got error %#x\n", GetLastError());
+    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_REVOCATION_OFFLINE, "got error %#x\n", status.dwError);
+    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+
     SystemTimeToFileTime(&may2007, &time);
     SetLastError(0xdeadbeef);
-    ret = CertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
-     1, (void **)&certs[1], 0, &revPara, &status);
-    ok(!ret && (GetLastError() == CRYPT_E_REVOCATION_OFFLINE ||
-     broken(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK /* NT4 */)),
-     "expected CRYPT_E_REVOCATION_OFFLINE, got %08x\n", GetLastError());
-    CertCloseStore(revPara.hCrlStore, 0);
+    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    ret = pCertVerifyRevocation(X509_ASN_ENCODING, CERT_CONTEXT_REVOCATION_TYPE,
+            1, (void **)&certs[1], 0, &params, &status);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == CRYPT_E_REVOCATION_OFFLINE, "got error %#x\n", GetLastError());
+    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_REVOCATION_OFFLINE, "got error %#x\n", status.dwError);
+    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+
+    params.pftTimeToUse = NULL;
+
+    /* Test with the wrong encoding type. */
+    SetLastError(0xdeadbeef);
+    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    ret = pCertVerifyRevocation(0, CERT_CONTEXT_REVOCATION_TYPE,
+            1, (void **)&certs[1], 0, &params, &status);
+    ok(!ret, "expected failure\n");
+    todo_wine ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
+    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
+    todo_wine ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", status.dwError);
+    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+
+    /* Test with the wrong context type. */
+    SetLastError(0xdeadbeef);
+    memset(&status.dwIndex, 0xcc, sizeof(status) - offsetof(CERT_REVOCATION_STATUS, dwIndex));
+    ret = pCertVerifyRevocation(X509_ASN_ENCODING, 0xdeadbeef,
+            1, (void **)&certs[1], 0, &params, &status);
+    ok(!ret, "expected failure\n");
+    ok(GetLastError() == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", GetLastError());
+    ok(!status.dwIndex, "got index %u\n", status.dwIndex);
+    ok(status.dwError == CRYPT_E_NO_REVOCATION_CHECK, "got error %#x\n", status.dwError);
+    ok(!status.dwReason, "got reason %u\n", status.dwReason);
+
+    CertCloseStore(params.hCrlStore, 0);
     CertFreeCertificateContext(certs[1]);
     CertFreeCertificateContext(certs[0]);
 }
