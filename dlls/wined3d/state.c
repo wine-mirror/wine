@@ -4558,14 +4558,17 @@ static void state_cb(struct wined3d_context *context, const struct wined3d_state
     wined3d_gl_limits_get_uniform_block_range(&gl_info->limits, shader_type, &base, &count);
     for (i = 0; i < count; ++i)
     {
-        if (!state->cb[shader_type][i])
+        const struct wined3d_constant_buffer_state *buffer_state = &state->cb[shader_type][i];
+
+        if (!buffer_state->buffer)
         {
             GL_EXTCALL(glBindBufferBase(GL_UNIFORM_BUFFER, base + i, 0));
             continue;
         }
 
-        buffer_gl = wined3d_buffer_gl(state->cb[shader_type][i]);
-        GL_EXTCALL(glBindBufferBase(GL_UNIFORM_BUFFER, base + i, buffer_gl->bo.id));
+        buffer_gl = wined3d_buffer_gl(buffer_state->buffer);
+        GL_EXTCALL(glBindBufferRange(GL_UNIFORM_BUFFER, base + i, buffer_gl->bo.id,
+                buffer_state->offset, buffer_state->size));
         buffer_gl->bo_user.valid = true;
     }
     checkGLcall("bind constant buffers");

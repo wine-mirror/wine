@@ -284,7 +284,7 @@ struct wined3d_cs_set_constant_buffers
     enum wined3d_shader_type type;
     unsigned int start_idx;
     unsigned int count;
-    struct wined3d_buffer *buffers[1];
+    struct wined3d_constant_buffer_state buffers[1];
 };
 
 struct wined3d_cs_set_texture
@@ -881,8 +881,8 @@ static void acquire_shader_resources(struct wined3d_device_context *context, uns
 
         for (j = 0; j < WINED3D_MAX_CBS; ++j)
         {
-            if (state->cb[i][j])
-                wined3d_device_context_acquire_resource(context, &state->cb[i][j]->resource);
+            if (state->cb[i][j].buffer)
+                wined3d_device_context_acquire_resource(context, &state->cb[i][j].buffer->resource);
         }
 
         for (j = 0; j < shader->reg_maps.sampler_map.count; ++j)
@@ -914,8 +914,8 @@ static void release_shader_resources(const struct wined3d_state *state, unsigned
 
         for (j = 0; j < WINED3D_MAX_CBS; ++j)
         {
-            if (state->cb[i][j])
-                wined3d_resource_release(&state->cb[i][j]->resource);
+            if (state->cb[i][j].buffer)
+                wined3d_resource_release(&state->cb[i][j].buffer->resource);
         }
 
         for (j = 0; j < shader->reg_maps.sampler_map.count; ++j)
@@ -1516,10 +1516,10 @@ static void wined3d_cs_exec_set_constant_buffers(struct wined3d_cs *cs, const vo
 
     for (i = 0; i < op->count; ++i)
     {
-        struct wined3d_buffer *prev = cs->state.cb[op->type][op->start_idx + i];
-        struct wined3d_buffer *buffer = op->buffers[i];
+        struct wined3d_buffer *prev = cs->state.cb[op->type][op->start_idx + i].buffer;
+        struct wined3d_buffer *buffer = op->buffers[i].buffer;
 
-        cs->state.cb[op->type][op->start_idx + i] = buffer;
+        cs->state.cb[op->type][op->start_idx + i] = op->buffers[i];
 
         if (buffer)
             InterlockedIncrement(&buffer->resource.bind_count);
@@ -1532,7 +1532,7 @@ static void wined3d_cs_exec_set_constant_buffers(struct wined3d_cs *cs, const vo
 
 void wined3d_device_context_emit_set_constant_buffers(struct wined3d_device_context *context,
         enum wined3d_shader_type type, unsigned int start_idx, unsigned int count,
-        struct wined3d_buffer *const *buffers)
+        const struct wined3d_constant_buffer_state *buffers)
 {
     struct wined3d_cs_set_constant_buffers *op;
 

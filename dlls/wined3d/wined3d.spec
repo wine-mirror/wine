@@ -101,7 +101,7 @@
 @ cdecl wined3d_device_context_flush(ptr)
 @ cdecl wined3d_device_context_generate_mipmaps(ptr ptr)
 @ cdecl wined3d_device_context_get_blend_state(ptr ptr ptr)
-@ cdecl wined3d_device_context_get_constant_buffer(ptr long long)
+@ cdecl wined3d_device_context_get_constant_buffer(ptr long long ptr)
 @ cdecl wined3d_device_context_get_depth_stencil_state(ptr ptr)
 @ cdecl wined3d_device_context_get_depth_stencil_view(ptr)
 @ cdecl wined3d_device_context_get_index_buffer(ptr ptr ptr)

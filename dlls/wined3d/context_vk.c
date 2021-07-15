@@ -2713,7 +2713,7 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
         switch (binding->shader_descriptor_type)
         {
             case WINED3D_SHADER_DESCRIPTOR_TYPE_CBV:
-                if (!(buffer = state->cb[binding->shader_type][binding->resource_idx]))
+                if (!(buffer = state->cb[binding->shader_type][binding->resource_idx].buffer))
                 {
                     if (!wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set,
                             binding->binding_idx, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
@@ -2988,7 +2988,7 @@ static void wined3d_context_vk_load_shader_resources(struct wined3d_context_vk *
         switch (binding->shader_descriptor_type)
         {
             case WINED3D_SHADER_DESCRIPTOR_TYPE_CBV:
-                if (!(buffer = state->cb[binding->shader_type][binding->resource_idx]))
+                if (!(buffer = state->cb[binding->shader_type][binding->resource_idx].buffer))
                     break;
 
                 buffer_vk = wined3d_buffer_vk(buffer);

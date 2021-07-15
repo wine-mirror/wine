@@ -1796,7 +1796,7 @@ struct wined3d_shader * CDECL wined3d_device_context_get_shader(const struct win
 
 void CDECL wined3d_device_context_set_constant_buffers(struct wined3d_device_context *context,
         enum wined3d_shader_type type, unsigned int start_idx, unsigned int count,
-        struct wined3d_buffer *const *buffers)
+        const struct wined3d_constant_buffer_state *buffers)
 {
     struct wined3d_state *state = context->state;
     unsigned int i;
@@ -1815,12 +1815,12 @@ void CDECL wined3d_device_context_set_constant_buffers(struct wined3d_device_con
     wined3d_device_context_emit_set_constant_buffers(context, type, start_idx, count, buffers);
     for (i = 0; i < count; ++i)
     {
-        struct wined3d_buffer *prev = state->cb[type][start_idx + i];
-        struct wined3d_buffer *buffer = buffers[i];
+        struct wined3d_buffer *prev = state->cb[type][start_idx + i].buffer;
+        struct wined3d_buffer *buffer = buffers[i].buffer;
 
         if (buffer)
             wined3d_buffer_incref(buffer);
-        state->cb[type][start_idx + i] = buffer;
+        state->cb[type][start_idx + i] = buffers[i];
         if (prev)
             wined3d_buffer_decref(prev);
     }
@@ -2361,18 +2361,18 @@ void CDECL wined3d_device_context_draw_indexed(struct wined3d_device_context *co
             base_vertex_index, start_index, index_count, start_instance, instance_count, true);
 }
 
-struct wined3d_buffer * CDECL wined3d_device_context_get_constant_buffer(const struct wined3d_device_context *context,
-        enum wined3d_shader_type shader_type, unsigned int idx)
+void CDECL wined3d_device_context_get_constant_buffer(const struct wined3d_device_context *context,
+        enum wined3d_shader_type shader_type, unsigned int idx, struct wined3d_constant_buffer_state *state)
 {
     TRACE("context %p, shader_type %#x, idx %u.\n", context, shader_type, idx);
 
     if (idx >= MAX_CONSTANT_BUFFERS)
     {
         WARN("Invalid constant buffer index %u.\n", idx);
-        return NULL;
+        return;
     }
 
-    return context->state->cb[shader_type][idx];
+    *state = context->state->cb[shader_type][idx];
 }
 
 struct wined3d_shader_resource_view * CDECL wined3d_device_context_get_shader_resource_view(

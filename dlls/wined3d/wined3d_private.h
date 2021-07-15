@@ -3693,7 +3693,7 @@ struct wined3d_state
     BOOL predicate_value;
 
     struct wined3d_shader *shader[WINED3D_SHADER_TYPE_COUNT];
-    struct wined3d_buffer *cb[WINED3D_SHADER_TYPE_COUNT][MAX_CONSTANT_BUFFERS];
+    struct wined3d_constant_buffer_state cb[WINED3D_SHADER_TYPE_COUNT][MAX_CONSTANT_BUFFERS];
     struct wined3d_sampler *sampler[WINED3D_SHADER_TYPE_COUNT][MAX_SAMPLER_OBJECTS];
     struct wined3d_shader_resource_view *shader_resource_view[WINED3D_SHADER_TYPE_COUNT][MAX_SHADER_RESOURCE_VIEWS];
     struct wined3d_unordered_access_view *unordered_access_view[WINED3D_PIPELINE_COUNT][MAX_UNORDERED_ACCESS_VIEWS];
@@ -4805,7 +4805,7 @@ void wined3d_device_context_emit_set_clip_plane(struct wined3d_device_context *c
         const struct wined3d_vec4 *plane) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_constant_buffers(struct wined3d_device_context *context,
         enum wined3d_shader_type type, unsigned int start_idx, unsigned int count,
-        struct wined3d_buffer *const *buffers) DECLSPEC_HIDDEN;
+        const struct wined3d_constant_buffer_state *buffers) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_depth_stencil_state(struct wined3d_device_context *context,
         struct wined3d_depth_stencil_state *state, unsigned int stencil_ref) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_depth_stencil_view(struct wined3d_device_context *context,

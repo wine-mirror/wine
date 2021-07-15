@@ -1611,6 +1611,7 @@ enum wined3d_pipeline
 #define WINED3D_MAX_VS_CONSTS_F                                 256
 #define WINED3D_MAX_PS_CONSTS_F                                 224
 #define WINED3D_MAX_RENDER_TARGETS                              8
+#define WINED3D_MAX_CONSTANT_BUFFER_SIZE                        4096
 
 struct wined3d_display_mode
 {
@@ -2218,6 +2219,13 @@ struct wined3d_stream_output
     unsigned int offset;
 };
 
+struct wined3d_constant_buffer_state
+{
+    struct wined3d_buffer *buffer;
+    unsigned int offset;
+    unsigned int size;
+};
+
 struct wined3d_parent_ops
 {
     void (__stdcall *wined3d_object_destroyed)(void *parent);
@@ -2457,8 +2465,8 @@ void __cdecl wined3d_device_context_generate_mipmaps(struct wined3d_device_conte
         struct wined3d_shader_resource_view *view);
 struct wined3d_blend_state * __cdecl wined3d_device_context_get_blend_state(
         const struct wined3d_device_context *context, struct wined3d_color *blend_factor, unsigned int *sample_mask);
-struct wined3d_buffer * __cdecl wined3d_device_context_get_constant_buffer(const struct wined3d_device_context *context,
-        enum wined3d_shader_type shader_type, unsigned int idx);
+void __cdecl wined3d_device_context_get_constant_buffer(const struct wined3d_device_context *context,
+        enum wined3d_shader_type shader_type, unsigned int idx, struct wined3d_constant_buffer_state *state);
 struct wined3d_depth_stencil_state * __cdecl wined3d_device_context_get_depth_stencil_state(
         const struct wined3d_device_context *context, unsigned int *stencil_ref);
 struct wined3d_rendertarget_view * __cdecl wined3d_device_context_get_depth_stencil_view(
@@ -2504,7 +2512,7 @@ void __cdecl wined3d_device_context_set_blend_state(struct wined3d_device_contex
         struct wined3d_blend_state *state, const struct wined3d_color *blend_factor, unsigned int sample_mask);
 void __cdecl wined3d_device_context_set_constant_buffers(struct wined3d_device_context *context,
         enum wined3d_shader_type type, unsigned int start_idx, unsigned int count,
-        struct wined3d_buffer *const *buffers);
+        const struct wined3d_constant_buffer_state *buffers);
 void __cdecl wined3d_device_context_set_depth_stencil_state(struct wined3d_device_context *context,
         struct wined3d_depth_stencil_state *depth_stencil_state, unsigned int stencil_ref);
 HRESULT __cdecl wined3d_device_context_set_depth_stencil_view(struct wined3d_device_context *context,

@@ -431,9 +431,9 @@ void state_unbind_resources(struct wined3d_state *state)
 
         for (j = 0; j < MAX_CONSTANT_BUFFERS; ++j)
         {
-            if ((buffer = state->cb[i][j]))
+            if ((buffer = state->cb[i][j].buffer))
             {
-                state->cb[i][j] = NULL;
+                state->cb[i][j].buffer = NULL;
                 wined3d_buffer_decref(buffer);
             }
         }
@@ -1829,8 +1829,8 @@ static void init_default_sampler_states(DWORD states[WINED3D_MAX_COMBINED_SAMPLE
 
 static void state_init_default(struct wined3d_state *state, const struct wined3d_d3d_info *d3d_info)
 {
-    unsigned int i;
     struct wined3d_matrix identity;
+    unsigned int i, j;
 
     TRACE("state %p, d3d_info %p.\n", state, d3d_info);
 
@@ -1867,6 +1867,12 @@ static void state_init_default(struct wined3d_state *state, const struct wined3d
 
     for (i = 0; i < WINED3D_MAX_STREAMS; ++i)
         state->streams[i].frequency = 1;
+
+    for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
+    {
+        for (j = 0; j < MAX_CONSTANT_BUFFERS; ++j)
+            state->cb[i][j].size = WINED3D_MAX_CONSTANT_BUFFER_SIZE * 16;
+    }
 }
 
 void state_init(struct wined3d_state *state, const struct wined3d_d3d_info *d3d_info,
