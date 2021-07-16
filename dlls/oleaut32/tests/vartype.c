@@ -50,6 +50,11 @@ DEFINE_GUID(UUID_test_struct, 0x4029f190, 0xca4a, 0x4611, 0xae,0xb9,0x67,0x39,0x
 #  endif
 #endif
 
+/* When comparing floating point values we cannot expect an exact match
+ * because the rounding errors depend on the exact algorithm.
+ */
+#define EQ_DOUBLE(a,b)     (fabs((a)-(b)) / (1.0+fabs(a)+fabs(b)) < 1e-14)
+
 static HMODULE hOleaut32;
 
 /* Has I8/UI8 data type? */
@@ -77,7 +82,7 @@ static BOOL has_locales;
   ok(hres == S_OK && out == (CONV_TYPE)(x), "expected " #x ", got " fs "; hres=0x%08x\n", out, hres)
 #define EXPECT(x)       EXPECTRES(S_OK, (x))
 #define EXPECT_DBL(x)   \
-  ok(hres == S_OK && fabs(out-(x))<=1e-14*(x), "expected %16.16g, got %16.16g; hres=0x%08x\n", (x), out, hres)
+  ok(hres == S_OK && EQ_DOUBLE(out, (x)), "expected %.16g, got %.16g; hres=0x%08x\n", (x), out, hres)
 
 #define CONVERT(func, val) in = val; hres = func(in, &out)
 #define CONVERTRANGE(func,start,end) for (i = start; i < end; i+=1) { CONVERT(func, i); EXPECT(i); };
