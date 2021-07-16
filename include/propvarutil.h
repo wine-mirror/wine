@@ -178,7 +178,11 @@ inline HRESULT InitPropVariantFromString(PCWSTR psz, PROPVARIANT *ppropvar)
 
 inline HRESULT InitPropVariantFromGUIDAsBuffer(REFGUID guid, PROPVARIANT *ppropvar)
 {
+#ifdef __cplusplus
+    return InitPropVariantFromBuffer(&guid, sizeof(GUID), ppropvar);
+#else
     return InitPropVariantFromBuffer(guid, sizeof(GUID), ppropvar);
+#endif
 }
 
 inline BOOL IsPropVariantVector(REFPROPVARIANT propvar)
