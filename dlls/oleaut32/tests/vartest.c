@@ -1262,21 +1262,27 @@ static void test_VariantCopyInd(void)
      "CopyInd(ref->ref): expected E_INVALIDARG, got 0x%08x\n", hres);
 }
 
-static HRESULT (WINAPI *pVarParseNumFromStr)(OLECHAR*,LCID,ULONG,NUMPARSE*,BYTE*);
+static HRESULT (WINAPI *pVarParseNumFromStr)(const OLECHAR*,LCID,ULONG,NUMPARSE*,BYTE*);
 
 /* Macros for converting and testing the result of VarParseNumFromStr */
 #define FAILDIG 255
+
+static HRESULT wconvert_str( const OLECHAR *str, INT dig, ULONG flags,
+                            NUMPARSE *np, BYTE rgb[128], LCID lcid )
+{
+    memset( rgb, FAILDIG, 128 );
+    memset( np, 255, sizeof(*np) );
+    np->cDig = dig;
+    np->dwInFlags = flags;
+    return pVarParseNumFromStr( str, lcid, LOCALE_NOUSEROVERRIDE, np, rgb);
+}
 
 static HRESULT convert_str( const char *str, INT dig, ULONG flags,
                             NUMPARSE *np, BYTE rgb[128], LCID lcid )
 {
     OLECHAR buff[128];
     MultiByteToWideChar( CP_ACP,0, str, -1, buff, ARRAY_SIZE( buff ));
-    memset( rgb, FAILDIG, 128 );
-    memset( np, 255, sizeof(*np) );
-    np->cDig = dig;
-    np->dwInFlags = flags;
-    return pVarParseNumFromStr( buff, lcid, LOCALE_NOUSEROVERRIDE, np, rgb);
+    return wconvert_str(buff, dig, flags, np, rgb, lcid);
 }
 
 static void expect_NumFromStr( int line, HRESULT hres, NUMPARSE *np, INT a, ULONG b, ULONG c,
@@ -1293,6 +1299,8 @@ static void expect_NumFromStr( int line, HRESULT hres, NUMPARSE *np, INT a, ULON
     }
 }
 
+#define WCONVERTN(str,dig,flags) hres = wconvert_str( str, dig, flags, &np, rgb, lcid )
+#define WCONVERT(str,flags) WCONVERTN(str,sizeof(rgb),flags)
 #define CONVERTN(str,dig,flags) hres = convert_str( str, dig, flags, &np, rgb, lcid )
 #define CONVERT(str,flags) CONVERTN(str,sizeof(rgb),flags)
 #define EXPECT(a,b,c,d,e,f) expect_NumFromStr( __LINE__, hres, &np, a, b, c, d, e, f )
@@ -1307,7 +1315,6 @@ static void test_VarParseNumFromStr(void)
   LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
   NUMPARSE np;
   BYTE rgb[128];
-  WCHAR str[128];
 
   /** No flags **/
 
@@ -1731,10 +1738,9 @@ static void test_VarParseNumFromStr(void)
   EXPECT(1,NUMPRS_STD,NUMPRS_DECIMAL,4,0,-1);
   EXPECT2(1,0);
 
-  str[0] = 0x0660;
-  str[1] = 0;
-  hres = pVarParseNumFromStr(str, lcid, LOCALE_NOUSEROVERRIDE, &np, rgb);
-  ok(hres == DISP_E_TYPEMISMATCH, "VarParseNumFromStr returned %08x\n", hres);
+  /* Arabic numerals are not allowed "0" */
+  WCONVERT(L"\x660", NUMPRS_STD);
+  EXPECTFAIL;
 }
 
 static HRESULT (WINAPI *pVarNumFromParseNum)(NUMPARSE*,BYTE*,ULONG,VARIANT*);
