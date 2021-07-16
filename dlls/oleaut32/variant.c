@@ -1607,7 +1607,7 @@ static inline BOOL is_digit(WCHAR c)
  *  - I am unsure if this function should parse non-Arabic (e.g. Thai)
  *   numerals, so this has not been implemented.
  */
-HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
+HRESULT WINAPI VarParseNumFromStr(const OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
                                   NUMPARSE *pNumprs, BYTE *rgbDig)
 {
   VARIANT_NUMBER_CHARS chars;
