@@ -1124,11 +1124,11 @@ static HRESULT VARIANT_RollUdate(UDATE *lpUd)
 
   if (iYear > 9999 || iYear < -9999)
     return E_INVALIDARG; /* Invalid value */
-  /* Year 0 to 29 are treated as 2000 + year */
-  if (iYear >= 0 && iYear < 30)
+  /* Years 0 to 49 are treated as 2000 + year, see also VARIANT_MakeDate() */
+  if (0 <= iYear && iYear <= 49)
     iYear += 2000;
-  /* Remaining years < 100 are treated as 1900 + year */
-  else if (iYear >= 30 && iYear < 100)
+  /* Remaining years 50 to 99 are treated as 1900 + year */
+  else if (50 <= iYear && iYear <= 99)
     iYear += 1900;
 
   iMinute += iSecond / 60;

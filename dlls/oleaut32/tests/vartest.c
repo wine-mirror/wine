@@ -2530,7 +2530,7 @@ static void test_VarDateFromUdate(void)
 }
 
 static void test_st2dt(int line, WORD d, WORD m, WORD y, WORD h, WORD mn,
-                       WORD s, WORD ms, INT r, double dt)
+                       WORD s, WORD ms, INT r, double dt, double dt2)
 {
     SYSTEMTIME st;
     double out;
@@ -2545,26 +2545,35 @@ static void test_st2dt(int line, WORD d, WORD m, WORD y, WORD h, WORD mn,
     st.wMilliseconds = ms;
     st.wDayOfWeek = 0;
     res = pSystemTimeToVariantTime(&st, &out);
-    ok_(__FILE__,line)(r == res && (!r || EQ_DOUBLE(out, dt)),
-                       "expected %d, %.16g, got %d, %.16g\n", r, dt, res, out);
+    ok_(__FILE__,line)(r == res, "expected %d, got %d\n", r, res);
+    if (r && res)
+        ok_(__FILE__,line)(EQ_DOUBLE(out, dt) || (dt2 && broken(EQ_DOUBLE(out, dt2))),
+                           "expected %.16g or %.16g, got %.16g\n", dt, dt2, out);
 }
-#define ST2DT(d,m,y,h,mn,s,ms,r,dt) test_st2dt(__LINE__,d,m,y,h,mn,s,ms,r,dt)
+#define ST2DT(d,m,y,h,mn,s,ms,r,dt,dt2) test_st2dt(__LINE__,d,m,y,h,mn,s,ms,r,dt,dt2)
 
 static void test_SystemTimeToVariantTime(void)
 {
   CHECKPTR(SystemTimeToVariantTime);
-  ST2DT(1,1,1980,0,0,0,0,TRUE,29221.0);
-  ST2DT(2,1,1980,0,0,0,0,TRUE,29222.0);
-  ST2DT(0,1,1980,0,0,0,0,TRUE,29220.0);   /* Rolls back to 31 Dec 1899 */
-  ST2DT(1,13,1980,0,0,0,0,FALSE,29587.0); /* Fails on invalid month */
-  ST2DT(32,1,1980,0,0,0,0,FALSE,0.0);     /* Fails on invalid day */
-  ST2DT(1,1,-1,0,0,0,0,FALSE,0.0);        /* Fails on invalid year */
-  ST2DT(1,1,10000,0,0,0,0,FALSE,0.0);     /* Fails on invalid year */
-  ST2DT(1,1,9999,0,0,0,0,TRUE,2958101.0); /* 9999 is last valid year */
-  ST2DT(31,12,90,0,0,0,0,TRUE,33238.0);   /* 30 <= year < 100 is 1900+year */
-  ST2DT(1,1,30,0,0,0,0,TRUE,10959.0);     /* 30 <= year < 100 is 1900+year */
-  ST2DT(1,1,29,0,0,0,0,TRUE,47119.0);     /* 0 <= year < 30 is 2000+year */
-  ST2DT(1,1,0,0,0,0,0,TRUE,36526.0);      /* 0 <= year < 30 is 2000+year */
+  ST2DT(1,1,1980,0,0,0,0,TRUE,29221.0,0.0);
+  ST2DT(2,1,1980,0,0,0,0,TRUE,29222.0,0.0);
+  ST2DT(0,1,1980,0,0,0,0,TRUE,29220.0,0.0);   /* Rolls back to 31 Dec 1899 */
+  ST2DT(1,13,1980,0,0,0,0,FALSE,0.0,0.0);     /* Fails on invalid month */
+  ST2DT(32,1,1980,0,0,0,0,FALSE,0.0,0.0);     /* Fails on invalid day */
+  ST2DT(1,1,-1,0,0,0,0,FALSE,0.0,0.0);        /* Fails on invalid year */
+  ST2DT(1,1,10000,0,0,0,0,FALSE,0.0,0.0);     /* Fails on invalid year */
+  ST2DT(1,1,9999,0,0,0,0,TRUE,2958101.0,0.0); /* 9999 is last valid year */
+
+  /* Old Windows versions use 29 as the Y2K cutoff:
+   * years 00-29 map to 2000-2029 while years 30-99 map to 1930-1999
+   */
+  ST2DT(1,1,0,0,0,0,0,TRUE,36526.0,0.0);
+  ST2DT(1,1,29,0,0,0,0,TRUE,47119.0,0.0);
+  ST2DT(1,1,30,0,0,0,0,TRUE,47484.0,10959.0);
+  /* But Windows 1903+ uses 49 as the Y2K cutoff */
+  ST2DT(1,1,49,0,0,0,0,TRUE,54424.0,17899.0);
+  ST2DT(1,1,50,0,0,0,0,TRUE,18264.0,0.0);
+  ST2DT(31,12,99,0,0,0,0,TRUE,36525.0,0.0);
 }
 
 static void test_dt2st(int line, double dt, INT r, WORD d, WORD m, WORD y,
