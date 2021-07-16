@@ -81,7 +81,8 @@
 #include "unix_private.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(seh);
+WINE_DEFAULT_DEBUG_CHANNEL(unwind);
+WINE_DECLARE_DEBUG_CHANNEL(seh);
 
 /***********************************************************************
  * signal context platform-specific definitions
@@ -2404,23 +2405,23 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, EXCEPTION_RECORD *rec,
 
     if (!is_inside_syscall( sigcontext )) return FALSE;
 
-    TRACE( "code=%x flags=%x addr=%p ip=%lx tid=%04x\n",
-           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
-           context->Rip, GetCurrentThreadId() );
+    TRACE_(seh)( "code=%x flags=%x addr=%p ip=%lx tid=%04x\n",
+                 rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
+                 context->Rip, GetCurrentThreadId() );
     for (i = 0; i < rec->NumberParameters; i++)
-        TRACE( " info[%d]=%016lx\n", i, rec->ExceptionInformation[i] );
-    TRACE(" rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
-          context->Rax, context->Rbx, context->Rcx, context->Rdx );
-    TRACE(" rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",
-          context->Rsi, context->Rdi, context->Rbp, context->Rsp );
-    TRACE("  r8=%016lx  r9=%016lx r10=%016lx r11=%016lx\n",
-          context->R8, context->R9, context->R10, context->R11 );
-    TRACE(" r12=%016lx r13=%016lx r14=%016lx r15=%016lx\n",
-          context->R12, context->R13, context->R14, context->R15 );
+        TRACE_(seh)( " info[%d]=%016lx\n", i, rec->ExceptionInformation[i] );
+    TRACE_(seh)( " rax=%016lx rbx=%016lx rcx=%016lx rdx=%016lx\n",
+                 context->Rax, context->Rbx, context->Rcx, context->Rdx );
+    TRACE_(seh)( " rsi=%016lx rdi=%016lx rbp=%016lx rsp=%016lx\n",
+                 context->Rsi, context->Rdi, context->Rbp, context->Rsp );
+    TRACE_(seh)( "  r8=%016lx  r9=%016lx r10=%016lx r11=%016lx\n",
+                 context->R8, context->R9, context->R10, context->R11 );
+    TRACE_(seh)( " r12=%016lx r13=%016lx r14=%016lx r15=%016lx\n",
+                 context->R12, context->R13, context->R14, context->R15 );
 
     if (ntdll_get_thread_data()->jmp_buf)
     {
-        TRACE( "returning to handler\n" );
+        TRACE_(seh)( "returning to handler\n" );
         RCX_sig(sigcontext) = (ULONG_PTR)ntdll_get_thread_data()->jmp_buf;
         RDX_sig(sigcontext) = 1;
         RIP_sig(sigcontext) = (ULONG_PTR)__wine_longjmp;
@@ -2428,7 +2429,7 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, EXCEPTION_RECORD *rec,
     }
     else
     {
-        TRACE( "returning to user mode ip=%016lx ret=%08x\n", frame->rip, rec->ExceptionCode );
+        TRACE_(seh)( "returning to user mode ip=%016lx ret=%08x\n", frame->rip, rec->ExceptionCode );
         RCX_sig(sigcontext) = (ULONG_PTR)frame;
         RDX_sig(sigcontext) = rec->ExceptionCode;
         RIP_sig(sigcontext) = (ULONG_PTR)__wine_syscall_dispatcher_return;
@@ -2451,8 +2452,8 @@ static BOOL handle_syscall_trap( ucontext_t *sigcontext )
 
     if ((void *)RIP_sig( sigcontext ) != __wine_syscall_dispatcher) return FALSE;
 
-    TRACE( "ignoring trap in syscall rip=%p eflags=%08x\n",
-           (void *)RIP_sig(sigcontext), (ULONG)EFL_sig(sigcontext) );
+    TRACE_(seh)( "ignoring trap in syscall rip=%p eflags=%08x\n",
+                 (void *)RIP_sig(sigcontext), (ULONG)EFL_sig(sigcontext) );
 
     frame->rip = *(ULONG64 *)RSP_sig( sigcontext );
     frame->eflags = EFL_sig(sigcontext);
@@ -2528,7 +2529,7 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         rec.ExceptionCode = EXCEPTION_DATATYPE_MISALIGNMENT;
         break;
     default:
-        ERR( "Got unexpected trap %ld\n", (ULONG_PTR)TRAP_sig(ucontext) );
+        ERR_(seh)( "Got unexpected trap %ld\n", (ULONG_PTR)TRAP_sig(ucontext) );
         /* fall through */
     case TRAP_x86_NMI:       /* NMI interrupt */
     case TRAP_x86_DNA:       /* Device not available exception */
@@ -2832,7 +2833,7 @@ void signal_init_thread( TEB *teb )
 #ifdef __GNUC__
     __asm__ volatile ("fninit; fldcw %0" : : "m" (fpu_cw));
 #else
-    FIXME("FPU setup not implemented for this platform.\n");
+    FIXME_(seh)("FPU setup not implemented for this platform.\n");
 #endif
 }
 
@@ -2868,7 +2869,7 @@ void signal_init_process(void)
             __wine_syscall_flags |= SYSCALL_HAVE_PTHREAD_TEB;
             if (getauxval( AT_HWCAP2 ) & 2) __wine_syscall_flags |= SYSCALL_HAVE_WRFSGSBASE;
         }
-        else ERR( "failed to allocate %%fs selector\n" );
+        else ERR_(seh)( "failed to allocate %%fs selector\n" );
     }
 #endif
 
