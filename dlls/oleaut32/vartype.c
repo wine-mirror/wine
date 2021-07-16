@@ -7554,12 +7554,19 @@ VARIANT_MakeDate_OK:
 
   st->wDay = v1;
   st->wMonth = v2;
-  /* FIXME: For 2 digit dates, I'm not sure if 30 is hard coded or not. It may
-   * be retrieved from:
-   * HKCU\Control Panel\International\Calendars\TwoDigitYearMax
-   * But Wine doesn't have/use that key as at the time of writing.
+  /* FIXME: For 2 digit dates old versions of Windows used 29 but
+   * Windows 10 1903 and greater use 49. This cutoff may also be modified by
+   * setting the value as a string for the relevant calendar id in the
+   * registry.
+   *
+   * For instance to emulate old Windows versions:
+   * [HKCU\Control Panel\International\Calendars\TwoDigitYearMax]
+   * "1"="29"
+   * (also 2, 9, 10, 11 and 12 for the other Gregorian calendars)
+   *
+   * But Wine doesn't have/use that key at the time of writing.
    */
-  st->wYear = v3 < 30 ? 2000 + v3 : v3 < 100 ? 1900 + v3 : v3;
+  st->wYear = v3 <= 49 ? 2000 + v3 : v3 <= 99 ? 1900 + v3 : v3;
   TRACE("Returning date %d/%d/%d\n", v1, v2, st->wYear);
   return S_OK;
 }
