@@ -22,6 +22,11 @@
 #include <shtypes.h>
 #include <shlwapi.h>
 
+#ifndef WINE_NTSTATUS_DECLARED
+#define WINE_NTSTATUS_DECLARED
+typedef LONG NTSTATUS;
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
