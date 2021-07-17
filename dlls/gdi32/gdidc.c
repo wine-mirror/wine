@@ -67,3 +67,16 @@ BOOL WINAPI ArcTo( HDC hdc, INT left, INT top, INT right, INT bottom,
     return NtGdiArcInternal( NtGdiArcTo, hdc, left, top, right, bottom,
                              xstart, ystart, xend, yend );
 }
+
+/***********************************************************************
+ *           Chord    (GDI32.@)
+ */
+BOOL WINAPI Chord( HDC hdc, INT left, INT top, INT right, INT bottom,
+                   INT xstart, INT ystart, INT xend, INT yend )
+{
+    TRACE( "%p, (%d, %d)-(%d, %d), (%d, %d), (%d, %d)\n", hdc, left, top,
+           right, bottom, xstart, ystart, xend, yend );
+
+    return NtGdiArcInternal( NtGdiChord, hdc, left, top, right, bottom,
+                             xstart, ystart, xend, yend );
+}

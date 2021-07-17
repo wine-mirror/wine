@@ -316,6 +316,12 @@ BOOL WINAPI NtGdiArcInternal( UINT type, HDC hdc, INT left, INT top, INT right,
             break;
         }
 
+    case NtGdiChord:
+        physdev = GET_DC_PHYSDEV( dc, pChord );
+        ret = physdev->funcs->pChord( physdev, left, top, right, bottom,
+                                      xstart, ystart, xend, yend );
+        break;
+
     default:
         WARN( "invalid arc type %u\n", type );
         ret = FALSE;
@@ -343,28 +349,6 @@ BOOL WINAPI Pie( HDC hdc, INT left, INT top,
     update_dc( dc );
     physdev = GET_DC_PHYSDEV( dc, pPie );
     ret = physdev->funcs->pPie( physdev, left, top, right, bottom, xstart, ystart, xend, yend );
-    release_dc_ptr( dc );
-    return ret;
-}
-
-
-/***********************************************************************
- *           Chord    (GDI32.@)
- */
-BOOL WINAPI Chord( HDC hdc, INT left, INT top,
-                       INT right, INT bottom, INT xstart, INT ystart,
-                       INT xend, INT yend )
-{
-    BOOL ret;
-    PHYSDEV physdev;
-    DC * dc = get_dc_ptr( hdc );
-
-    TRACE( "%p, (%d, %d)-(%d, %d), (%d, %d), (%d, %d)\n", hdc, left, top, right, bottom, xstart, ystart, xend, yend );
-
-    if (!dc) return FALSE;
-    update_dc( dc );
-    physdev = GET_DC_PHYSDEV( dc, pChord );
-    ret = physdev->funcs->pChord( physdev, left, top, right, bottom, xstart, ystart, xend, yend );
     release_dc_ptr( dc );
     return ret;
 }
