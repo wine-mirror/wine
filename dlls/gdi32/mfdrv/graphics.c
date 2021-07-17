@@ -31,11 +31,11 @@
 WINE_DEFAULT_DEBUG_CHANNEL(metafile);
 
 /**********************************************************************
- *	     MFDRV_MoveTo
+ *	     METADC_MoveTo
  */
-BOOL CDECL MFDRV_MoveTo(PHYSDEV dev, INT x, INT y)
+BOOL METADC_MoveTo( HDC hdc, INT x, INT y )
 {
-    return MFDRV_MetaParam2(dev,META_MOVETO,x,y);
+    return metadc_param2( hdc, META_MOVETO, x, y );
 }
 
 /***********************************************************************

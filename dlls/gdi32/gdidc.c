@@ -42,6 +42,8 @@ BOOL WINAPI LineTo( HDC hdc, INT x, INT y )
 BOOL WINAPI MoveToEx( HDC hdc, INT x, INT y, POINT *pt )
 {
     TRACE( "%p, (%d, %d), %p\n", hdc, x, y, pt );
+
+    if (is_meta_dc( hdc )) return METADC_MoveTo( hdc, x, y );
     return NtGdiMoveTo( hdc, x, y, pt );
 }
 

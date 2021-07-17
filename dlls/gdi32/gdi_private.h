@@ -38,5 +38,6 @@ static inline BOOL is_meta_dc( HDC hdc )
 }
 
 extern BOOL METADC_LineTo( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
+extern BOOL METADC_MoveTo( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_GDI_PRIVATE_H */
