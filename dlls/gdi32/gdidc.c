@@ -1,8 +1,9 @@
 /*
- * GDI definitions
+ * GDI Device Context functions
  *
- * Copyright 1993 Alexandre Julliard
- * Copyright 2021 Jacek Caban for CodeWeavers
+ * Copyright 1993, 1994 Alexandre Julliard
+ * Copyright 1997 Bertho A. Stultiens
+ *           1999 Huw D M Davies
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,16 +20,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __WINE_GDI_PRIVATE_H
-#define __WINE_GDI_PRIVATE_H
+#include "gdi_private.h"
+#include "wine/debug.h"
 
-#include <stdarg.h>
+WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 
-#include "windef.h"
-#include "winbase.h"
-#include "ntgdi.h"
-
-void set_gdi_client_ptr( HGDIOBJ handle, void *ptr ) DECLSPEC_HIDDEN;
-void *get_gdi_client_ptr( HGDIOBJ handle, WORD type ) DECLSPEC_HIDDEN;
-
-#endif /* __WINE_GDI_PRIVATE_H */
+/***********************************************************************
+ *           LineTo    (GDI32.@)
+ */
+BOOL WINAPI LineTo( HDC hdc, INT x, INT y )
+{
+    TRACE( "%p, (%d, %d)\n", hdc, x, y );
+    return NtGdiLineTo( hdc, x, y );
+}

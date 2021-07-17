@@ -19,12 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
-
-#include "windef.h"
-#include "winbase.h"
+#include "gdi_private.h"
 #include "winnls.h"
-#include "ntgdi.h"
 #include "winternl.h"
 
 #include "wine/debug.h"

@@ -226,15 +226,13 @@ BOOL CDECL nulldrv_PolylineTo( PHYSDEV dev, const POINT *points, INT count )
 }
 
 /***********************************************************************
- *           LineTo    (GDI32.@)
+ *           NtGdiLineTo    (win32u.@)
  */
-BOOL WINAPI LineTo( HDC hdc, INT x, INT y )
+BOOL WINAPI NtGdiLineTo( HDC hdc, INT x, INT y )
 {
     DC * dc = get_dc_ptr( hdc );
     PHYSDEV physdev;
     BOOL ret;
-
-    TRACE( "%p, (%d, %d)\n", hdc, x, y );
 
     if(!dc) return FALSE;
 
