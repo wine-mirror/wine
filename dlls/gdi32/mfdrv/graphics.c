@@ -59,24 +59,24 @@ BOOL CDECL MFDRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 
 
 /***********************************************************************
- *           MFDRV_Pie
+ *           METADC_Pie
  */
-BOOL CDECL MFDRV_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                      INT xstart, INT ystart, INT xend, INT yend )
+BOOL METADC_Pie( HDC hdc, INT left, INT top, INT right, INT bottom,
+                 INT xstart, INT ystart, INT xend, INT yend )
 {
-    return MFDRV_MetaParam8(dev, META_PIE, left, top, right, bottom,
-			    xstart, ystart, xend, yend);
+    return metadc_param8( hdc, META_PIE, left, top, right, bottom,
+                          xstart, ystart, xend, yend );
 }
 
 
 /***********************************************************************
- *           MFDRV_Chord
+ *           METADC_Chord
  */
-BOOL CDECL MFDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                        INT xstart, INT ystart, INT xend, INT yend )
+BOOL METADC_Chord( HDC hdc, INT left, INT top, INT right, INT bottom,
+                   INT xstart, INT ystart, INT xend, INT yend )
 {
-    return MFDRV_MetaParam8(dev, META_CHORD, left, top, right, bottom,
-			    xstart, ystart, xend, yend);
+    return metadc_param8( hdc, META_CHORD, left, top, right, bottom,
+                          xstart, ystart, xend, yend );
 }
 
 /***********************************************************************

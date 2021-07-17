@@ -107,7 +107,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pArcTo */
     MFDRV_BeginPath,                 /* pBeginPath */
     NULL,                            /* pBlendImage */
-    MFDRV_Chord,                     /* pChord */
+    NULL,                            /* pChord */
     MFDRV_CloseFigure,               /* pCloseFigure */
     MFDRV_CreateCompatibleDC,        /* pCreateCompatibleDC */
     NULL,                            /* pCreateDC */
@@ -167,7 +167,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_OffsetWindowOrgEx,         /* pOffsetWindowOrgEx */
     MFDRV_PaintRgn,                  /* pPaintRgn */
     MFDRV_PatBlt,                    /* pPatBlt */
-    MFDRV_Pie,                       /* pPie */
+    NULL,                            /* pPie */
     MFDRV_PolyBezier,                /* pPolyBezier */
     MFDRV_PolyBezierTo,              /* pPolyBezierTo */
     NULL,                            /* pPolyDraw */
@@ -612,4 +612,15 @@ BOOL metadc_param2( HDC hdc, short func, short param1, short param2 )
 
     if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
     return MFDRV_MetaParam2( &dev->dev, func, param1, param2 );
+}
+
+BOOL metadc_param8( HDC hdc, short func, short param1, short param2,
+                    short param3, short param4, short param5,
+                    short param6, short param7, short param8)
+{
+    METAFILEDRV_PDEVICE *dev;
+
+    if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
+    return MFDRV_MetaParam8( &dev->dev, func, param1, param2, param3,
+                             param4, param5, param6, param7, param8 );
 }

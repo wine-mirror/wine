@@ -81,6 +81,10 @@ BOOL WINAPI Chord( HDC hdc, INT left, INT top, INT right, INT bottom,
     TRACE( "%p, (%d, %d)-(%d, %d), (%d, %d), (%d, %d)\n", hdc, left, top,
            right, bottom, xstart, ystart, xend, yend );
 
+    if (is_meta_dc( hdc ))
+        return METADC_Chord( hdc, left, top, right, bottom,
+                             xstart, ystart, xend, yend );
+
     return NtGdiArcInternal( NtGdiChord, hdc, left, top, right, bottom,
                              xstart, ystart, xend, yend );
 }
@@ -93,6 +97,10 @@ BOOL WINAPI Pie( HDC hdc, INT left, INT top, INT right, INT bottom,
 {
     TRACE( "%p, (%d, %d)-(%d, %d), (%d, %d), (%d, %d)\n", hdc, left, top,
            right, bottom, xstart, ystart, xend, yend );
+
+    if (is_meta_dc( hdc ))
+        return METADC_Pie( hdc, left, top, right, bottom,
+                           xstart, ystart, xend, yend );
 
     return NtGdiArcInternal( NtGdiPie, hdc, left, top, right, bottom,
                              xstart, ystart, xend, yend );

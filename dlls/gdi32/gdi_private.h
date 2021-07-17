@@ -37,7 +37,11 @@ static inline BOOL is_meta_dc( HDC hdc )
     return (handle & NTGDI_HANDLE_TYPE_MASK) >> NTGDI_HANDLE_TYPE_SHIFT == NTGDI_OBJ_METADC;
 }
 
+extern BOOL METADC_Chord( HDC hdc, INT left, INT top, INT right, INT bottom, INT xstart,
+                          INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
 extern BOOL METADC_LineTo( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL METADC_MoveTo( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
+extern BOOL METADC_Pie( HDC hdc, INT left, INT top, INT right, INT bottom,
+                        INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_GDI_PRIVATE_H */
