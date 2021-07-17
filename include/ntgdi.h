@@ -72,6 +72,14 @@ typedef struct _GDI_SHARED_MEMORY
     GDI_HANDLE_ENTRY Handles[GDI_MAX_HANDLE_COUNT];
 } GDI_SHARED_MEMORY, *PGDI_SHARED_MEMORY;
 
+enum
+{
+    NtGdiArc,
+    NtGdiArcTo,
+    NtGdiChord,
+    NtGdiPie,
+};
+
 INT      WINAPI NtGdiAbortDoc( HDC hdc );
 BOOL     WINAPI NtGdiAbortPath( HDC hdc );
 BOOL     WINAPI NtGdiAngleArc( HDC hdc, INT x, INT y, DWORD radius, FLOAT start_angle,

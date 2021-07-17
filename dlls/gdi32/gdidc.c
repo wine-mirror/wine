@@ -42,3 +42,15 @@ BOOL WINAPI MoveToEx( HDC hdc, INT x, INT y, POINT *pt )
     TRACE( "%p, (%d, %d), %p\n", hdc, x, y, pt );
     return NtGdiMoveTo( hdc, x, y, pt );
 }
+
+/***********************************************************************
+ *           Arc    (GDI32.@)
+ */
+BOOL WINAPI Arc( HDC hdc, INT left, INT top, INT right, INT bottom,
+                 INT xstart, INT ystart, INT xend, INT yend )
+{
+    TRACE( "%p, (%d, %d)-(%d, %d), (%d, %d), (%d, %d)\n", hdc, left, top,
+           right, bottom, xstart, ystart, xend, yend );
+    return NtGdiArcInternal( NtGdiArc, hdc, left, top, right, bottom,
+                             xstart, ystart, xend, yend );
+}

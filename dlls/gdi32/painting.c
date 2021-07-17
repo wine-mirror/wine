@@ -275,22 +275,29 @@ BOOL WINAPI NtGdiMoveTo( HDC hdc, INT x, INT y, POINT *pt )
 
 
 /***********************************************************************
- *           Arc    (GDI32.@)
+ *           NtGdiArcInternal    (win32u.@)
  */
-BOOL WINAPI Arc( HDC hdc, INT left, INT top, INT right,
-                     INT bottom, INT xstart, INT ystart,
-                     INT xend, INT yend )
+BOOL WINAPI NtGdiArcInternal( UINT type, HDC hdc, INT left, INT top, INT right,
+                              INT bottom, INT xstart, INT ystart, INT xend, INT yend )
 {
     PHYSDEV physdev;
     BOOL ret;
-    DC * dc = get_dc_ptr( hdc );
+    DC *dc;
 
-    TRACE( "%p, (%d, %d)-(%d, %d), (%d, %d), (%d, %d)\n", hdc, left, top, right, bottom, xstart, ystart, xend, yend );
-
-    if (!dc) return FALSE;
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
     update_dc( dc );
-    physdev = GET_DC_PHYSDEV( dc, pArc );
-    ret = physdev->funcs->pArc( physdev, left, top, right, bottom, xstart, ystart, xend, yend );
+
+    switch (type)
+    {
+    case NtGdiArc:
+        physdev = GET_DC_PHYSDEV( dc, pArc );
+        ret = physdev->funcs->pArc( physdev, left, top, right, bottom, xstart, ystart, xend, yend );
+        break;
+    default:
+        WARN( "invalid arc type %u\n", type );
+        ret = FALSE;
+    }
+
     release_dc_ptr( dc );
     return ret;
 }
