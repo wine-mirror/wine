@@ -80,3 +80,16 @@ BOOL WINAPI Chord( HDC hdc, INT left, INT top, INT right, INT bottom,
     return NtGdiArcInternal( NtGdiChord, hdc, left, top, right, bottom,
                              xstart, ystart, xend, yend );
 }
+
+/***********************************************************************
+ *           Pie   (GDI32.@)
+ */
+BOOL WINAPI Pie( HDC hdc, INT left, INT top, INT right, INT bottom,
+                 INT xstart, INT ystart, INT xend, INT yend )
+{
+    TRACE( "%p, (%d, %d)-(%d, %d), (%d, %d), (%d, %d)\n", hdc, left, top,
+           right, bottom, xstart, ystart, xend, yend );
+
+    return NtGdiArcInternal( NtGdiPie, hdc, left, top, right, bottom,
+                             xstart, ystart, xend, yend );
+}
