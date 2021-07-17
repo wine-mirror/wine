@@ -33,3 +33,12 @@ BOOL WINAPI LineTo( HDC hdc, INT x, INT y )
     TRACE( "%p, (%d, %d)\n", hdc, x, y );
     return NtGdiLineTo( hdc, x, y );
 }
+
+/***********************************************************************
+ *           MoveToEx    (GDI32.@)
+ */
+BOOL WINAPI MoveToEx( HDC hdc, INT x, INT y, POINT *pt )
+{
+    TRACE( "%p, (%d, %d), %p\n", hdc, x, y, pt );
+    return NtGdiMoveTo( hdc, x, y, pt );
+}

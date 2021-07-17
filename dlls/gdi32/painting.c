@@ -251,15 +251,13 @@ BOOL WINAPI NtGdiLineTo( HDC hdc, INT x, INT y )
 
 
 /***********************************************************************
- *           MoveToEx    (GDI32.@)
+ *           NtGdiMoveTo    (win32u.@)
  */
-BOOL WINAPI MoveToEx( HDC hdc, INT x, INT y, LPPOINT pt )
+BOOL WINAPI NtGdiMoveTo( HDC hdc, INT x, INT y, POINT *pt )
 {
     BOOL ret;
     PHYSDEV physdev;
     DC * dc = get_dc_ptr( hdc );
-
-    TRACE( "%p, (%d, %d), %p\n", hdc, x, y, pt );
 
     if(!dc) return FALSE;
 
