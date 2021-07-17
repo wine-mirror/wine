@@ -2024,7 +2024,7 @@ BOOL CDECL nulldrv_BeginPath( PHYSDEV dev )
     }
     physdev = get_path_physdev( find_dc_driver( dc, &path_driver ));
     physdev->path = path;
-    path->pos = dc->cur_pos;
+    path->pos = dc->attr->cur_pos;
     lp_to_dp( dc, &path->pos, 1 );
     if (dc->path) free_gdi_path( dc->path );
     dc->path = NULL;

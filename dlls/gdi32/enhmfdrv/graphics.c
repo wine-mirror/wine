@@ -72,8 +72,8 @@ static void get_points_bounds( RECTL *bounds, const POINT *pts, UINT count, DC *
 
     if (dc)
     {
-        bounds->left = bounds->right = dc->cur_pos.x;
-        bounds->top = bounds->bottom = dc->cur_pos.y;
+        bounds->left = bounds->right = dc->attr->cur_pos.x;
+        bounds->top = bounds->bottom = dc->attr->cur_pos.y;
     }
     else if (count)
     {
@@ -151,7 +151,7 @@ BOOL CDECL EMFDRV_LineTo( PHYSDEV dev, INT x, INT y )
     if(!EMFDRV_WriteRecord( dev, &emr.emr ))
     	return FALSE;
 
-    pt = dc->cur_pos;
+    pt = dc->attr->cur_pos;
 
     bounds.left   = min(x, pt.x);
     bounds.top    = min(y, pt.y);
@@ -266,7 +266,7 @@ EMFDRV_ArcChordPie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     if (iType == EMR_ARCTO)
     {
         POINT pt;
-        pt = dc->cur_pos;
+        pt = dc->attr->cur_pos;
         bounds.left   = min( bounds.left, pt.x );
         bounds.top    = min( bounds.top, pt.y );
         bounds.right  = max( bounds.right, pt.x );

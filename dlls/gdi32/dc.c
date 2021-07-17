@@ -30,6 +30,7 @@
 #include "winternl.h"
 #include "winerror.h"
 #include "ntgdi_private.h"
+#include "gdi_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dc);
@@ -99,8 +100,8 @@ static void set_initial_dc_state( DC *dc )
     dc->breakRem            = 0;
     dc->MapMode             = MM_TEXT;
     dc->GraphicsMode        = GM_COMPATIBLE;
-    dc->cur_pos.x           = 0;
-    dc->cur_pos.y           = 0;
+    dc->attr->cur_pos.x     = 0;
+    dc->attr->cur_pos.y     = 0;
     dc->ArcDirection        = AD_COUNTERCLOCKWISE;
     dc->xformWorld2Wnd.eM11 = 1.0f;
     dc->xformWorld2Wnd.eM12 = 0.0f;
@@ -123,6 +124,11 @@ DC *alloc_dc_ptr( WORD magic )
     DC *dc;
 
     if (!(dc = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dc) ))) return NULL;
+    if (!(dc->attr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dc->attr))))
+    {
+        HeapFree( GetProcessHeap(), 0, dc->attr );
+        return NULL;
+    }
 
     dc->nulldrv.funcs       = &null_driver;
     dc->physDev             = &dc->nulldrv;
@@ -137,10 +143,12 @@ DC *alloc_dc_ptr( WORD magic )
 
     if (!(dc->hSelf = alloc_gdi_handle( &dc->obj, magic, &dc_funcs )))
     {
+        HeapFree( GetProcessHeap(), 0, dc->attr );
         HeapFree( GetProcessHeap(), 0, dc );
         return NULL;
     }
     dc->nulldrv.hdc = dc->hSelf;
+    set_gdi_client_ptr( dc->hSelf, dc->attr );
 
     if (!font_driver.pCreateDC( &dc->physDev, NULL, NULL, NULL, NULL ))
     {
@@ -162,6 +170,7 @@ static void free_dc_state( DC *dc )
     if (dc->hVisRgn) DeleteObject( dc->hVisRgn );
     if (dc->region) DeleteObject( dc->region );
     if (dc->path) free_gdi_path( dc->path );
+    HeapFree( GetProcessHeap(), 0, dc->attr );
     HeapFree( GetProcessHeap(), 0, dc );
 }
 
@@ -378,6 +387,11 @@ INT CDECL nulldrv_SaveDC( PHYSDEV dev )
     DC *newdc, *dc = get_nulldrv_dc( dev );
 
     if (!(newdc = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*newdc )))) return 0;
+    if (!(newdc->attr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*newdc->attr) )))
+    {
+        HeapFree( GetProcessHeap(), 0, newdc );
+        return 0;
+    }
     newdc->layout           = dc->layout;
     newdc->hPen             = dc->hPen;
     newdc->hBrush           = dc->hBrush;
@@ -401,7 +415,7 @@ INT CDECL nulldrv_SaveDC( PHYSDEV dev )
     newdc->breakRem         = dc->breakRem;
     newdc->MapMode          = dc->MapMode;
     newdc->GraphicsMode     = dc->GraphicsMode;
-    newdc->cur_pos          = dc->cur_pos;
+    newdc->attr->cur_pos    = dc->attr->cur_pos;
     newdc->ArcDirection     = dc->ArcDirection;
     newdc->xformWorld2Wnd   = dc->xformWorld2Wnd;
     newdc->xformWorld2Vport = dc->xformWorld2Vport;
@@ -478,7 +492,7 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     dc->breakRem         = dcs->breakRem;
     dc->MapMode          = dcs->MapMode;
     dc->GraphicsMode     = dcs->GraphicsMode;
-    dc->cur_pos          = dcs->cur_pos;
+    dc->attr->cur_pos    = dcs->attr->cur_pos;
     dc->ArcDirection     = dcs->ArcDirection;
     dc->xformWorld2Wnd   = dcs->xformWorld2Wnd;
     dc->xformWorld2Vport = dcs->xformWorld2Vport;
@@ -1826,7 +1840,7 @@ BOOL WINAPI GetCurrentPositionEx( HDC hdc, LPPOINT pt )
 {
     DC * dc = get_dc_ptr( hdc );
     if (!dc) return FALSE;
-    *pt = dc->cur_pos;
+    *pt = dc->attr->cur_pos;
     release_dc_ptr( dc );
     return TRUE;
 }

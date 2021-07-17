@@ -81,6 +81,7 @@ typedef struct tagDC
     LONG         dirty;            /* dirty flag */
     LONG         disabled;         /* get_dc_ptr() will return NULL.  Controlled by DCHF_(DISABLE|ENABLE)DC */
     INT          saveLevel;
+    DC_ATTR     *attr;             /* DC attributes accessible by client */
     struct tagDC *saved_dc;
     DWORD_PTR    dwHookData;
     DCHOOKPROC   hookProc;         /* DC hook */
@@ -136,7 +137,6 @@ typedef struct tagDC
     INT           MapMode;
     INT           GraphicsMode;      /* Graphics mode */
     ABORTPROC     pAbortProc;        /* AbortProc for Printing */
-    POINT         cur_pos;           /* Current position */
     INT           ArcDirection;
     XFORM         xformWorld2Wnd;    /* World-to-window transformation */
     XFORM         xformWorld2Vport;  /* World-to-viewport transformation */

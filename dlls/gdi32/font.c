@@ -6004,7 +6004,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
 
     if(align & TA_UPDATECP)
     {
-        pt = dc->cur_pos;
+        pt = dc->attr->cur_pos;
         x = pt.x;
         y = pt.y;
     }

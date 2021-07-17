@@ -127,7 +127,7 @@ BOOL CDECL nulldrv_PolyBezierTo( PHYSDEV dev, const POINT *points, DWORD count )
 
     if (pts)
     {
-        pts[0] = dc->cur_pos;
+        pts[0] = dc->attr->cur_pos;
         memcpy( pts + 1, points, sizeof(POINT) * count );
         ret = PolyBezier( dev->hdc, pts, count + 1 );
         HeapFree( GetProcessHeap(), 0, pts );
@@ -166,7 +166,7 @@ BOOL CDECL nulldrv_PolyDraw( PHYSDEV dev, const POINT *points, const BYTE *types
     line_pts = HeapAlloc( GetProcessHeap(), 0, space * sizeof(POINT) );
     num_pts = 1;
 
-    line_pts[0] = dc->cur_pos;
+    line_pts[0] = dc->attr->cur_pos;
     for (i = 0; i < count; i++)
     {
         switch (types[i])
@@ -217,7 +217,7 @@ BOOL CDECL nulldrv_PolylineTo( PHYSDEV dev, const POINT *points, INT count )
     if (!count) return FALSE;
     if ((pts = HeapAlloc( GetProcessHeap(), 0, sizeof(POINT) * (count + 1) )))
     {
-        pts[0] = dc->cur_pos;
+        pts[0] = dc->attr->cur_pos;
         memcpy( pts + 1, points, sizeof(POINT) * count );
         ret = Polyline( dev->hdc, pts, count + 1 );
         HeapFree( GetProcessHeap(), 0, pts );
@@ -242,8 +242,8 @@ BOOL WINAPI NtGdiLineTo( HDC hdc, INT x, INT y )
 
     if(ret)
     {
-        dc->cur_pos.x = x;
-        dc->cur_pos.y = y;
+        dc->attr->cur_pos.x = x;
+        dc->attr->cur_pos.y = y;
     }
     release_dc_ptr( dc );
     return ret;
@@ -262,10 +262,10 @@ BOOL WINAPI NtGdiMoveTo( HDC hdc, INT x, INT y, POINT *pt )
     if(!dc) return FALSE;
 
     if(pt)
-        *pt = dc->cur_pos;
+        *pt = dc->attr->cur_pos;
 
-    dc->cur_pos.x = x;
-    dc->cur_pos.y = y;
+    dc->attr->cur_pos.x = x;
+    dc->attr->cur_pos.y = y;
 
     physdev = GET_DC_PHYSDEV( dc, pMoveTo );
     ret = physdev->funcs->pMoveTo( physdev, x, y );
@@ -310,8 +310,8 @@ BOOL WINAPI NtGdiArcInternal( UINT type, HDC hdc, INT left, INT top, INT right,
             {
                 double angle = atan2(((yend - ycenter) / height),
                                      ((xend - xcenter) / width));
-                dc->cur_pos.x = GDI_ROUND( xcenter + (cos( angle ) * xradius) );
-                dc->cur_pos.y = GDI_ROUND( ycenter + (sin( angle ) * yradius) );
+                dc->attr->cur_pos.x = GDI_ROUND( xcenter + (cos( angle ) * xradius) );
+                dc->attr->cur_pos.y = GDI_ROUND( ycenter + (sin( angle ) * yradius) );
             }
             break;
         }
@@ -614,7 +614,7 @@ BOOL WINAPI PolylineTo( HDC hdc, const POINT* pt, DWORD cCount )
     ret = physdev->funcs->pPolylineTo( physdev, pt, cCount );
 
     if (ret && cCount)
-        dc->cur_pos = pt[cCount - 1];
+        dc->attr->cur_pos = pt[cCount - 1];
 
     release_dc_ptr( dc );
     return ret;
@@ -777,7 +777,7 @@ BOOL WINAPI PolyBezierTo( HDC hdc, const POINT* lppt, DWORD cPoints )
     ret = physdev->funcs->pPolyBezierTo( physdev, lppt, cPoints );
 
     if(ret)
-        dc->cur_pos = lppt[cPoints - 1];
+        dc->attr->cur_pos = lppt[cPoints - 1];
 
     release_dc_ptr( dc );
     return ret;
@@ -806,8 +806,8 @@ BOOL WINAPI AngleArc(HDC hdc, INT x, INT y, DWORD dwRadius, FLOAT eStartAngle, F
 
     if (result)
     {
-        dc->cur_pos.x = GDI_ROUND( x + cos( (eStartAngle + eSweepAngle) * M_PI / 180 ) * dwRadius );
-        dc->cur_pos.y = GDI_ROUND( y - sin( (eStartAngle + eSweepAngle) * M_PI / 180 ) * dwRadius );
+        dc->attr->cur_pos.x = GDI_ROUND( x + cos( (eStartAngle + eSweepAngle) * M_PI / 180 ) * dwRadius );
+        dc->attr->cur_pos.y = GDI_ROUND( y - sin( (eStartAngle + eSweepAngle) * M_PI / 180 ) * dwRadius );
     }
     release_dc_ptr( dc );
     return result;
@@ -831,7 +831,7 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
     physdev = GET_DC_PHYSDEV( dc, pPolyDraw );
     result = physdev->funcs->pPolyDraw( physdev, lppt, lpbTypes, cCount );
     if (result && cCount)
-        dc->cur_pos = lppt[cCount - 1];
+        dc->attr->cur_pos = lppt[cCount - 1];
 
     release_dc_ptr( dc );
     return result;

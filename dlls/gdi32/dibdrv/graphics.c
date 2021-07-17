@@ -345,7 +345,7 @@ static BOOL draw_arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 
     if (extra_lines == -1)
     {
-        points[0] = dc->cur_pos;
+        points[0] = dc->attr->cur_pos;
         lp_to_dp( dc, points, 1 );
         count = 1 + get_arc_points( dc->ArcDirection, &rect, pt[0], pt[1], points + 1 );
     }
@@ -1140,7 +1140,7 @@ BOOL CDECL dibdrv_LineTo( PHYSDEV dev, INT x, INT y )
     HRGN region = 0;
     BOOL ret;
 
-    pts[0] = dc->cur_pos;
+    pts[0] = dc->attr->cur_pos;
     pts[1].x = x;
     pts[1].y = y;
 

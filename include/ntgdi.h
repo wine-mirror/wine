@@ -83,6 +83,16 @@ enum
     NtGdiPie,
 };
 
+/* structs not compatible with native Windows */
+#ifdef __WINESRC__
+
+typedef struct DC_ATTR
+{
+    POINT     cur_pos;
+} DC_ATTR;
+
+#endif /* __WINESRC__ */
+
 INT      WINAPI NtGdiAbortDoc( HDC hdc );
 BOOL     WINAPI NtGdiAbortPath( HDC hdc );
 BOOL     WINAPI NtGdiAngleArc( HDC hdc, INT x, INT y, DWORD radius, FLOAT start_angle,
