@@ -293,6 +293,29 @@ BOOL WINAPI NtGdiArcInternal( UINT type, HDC hdc, INT left, INT top, INT right,
         physdev = GET_DC_PHYSDEV( dc, pArc );
         ret = physdev->funcs->pArc( physdev, left, top, right, bottom, xstart, ystart, xend, yend );
         break;
+
+    case NtGdiArcTo:
+        {
+            double width   = abs( right - left );
+            double height  = abs( bottom - top );
+            double xradius = width / 2;
+            double yradius = height / 2;
+            double xcenter = right > left ? left + xradius : right + xradius;
+            double ycenter = bottom > top ? top + yradius : bottom + yradius;
+
+            physdev = GET_DC_PHYSDEV( dc, pArcTo );
+            ret = physdev->funcs->pArcTo( physdev, left, top, right, bottom,
+                                          xstart, ystart, xend, yend );
+            if (ret)
+            {
+                double angle = atan2(((yend - ycenter) / height),
+                                     ((xend - xcenter) / width));
+                dc->cur_pos.x = GDI_ROUND( xcenter + (cos( angle ) * xradius) );
+                dc->cur_pos.y = GDI_ROUND( ycenter + (sin( angle ) * yradius) );
+            }
+            break;
+        }
+
     default:
         WARN( "invalid arc type %u\n", type );
         ret = FALSE;
@@ -300,44 +323,6 @@ BOOL WINAPI NtGdiArcInternal( UINT type, HDC hdc, INT left, INT top, INT right,
 
     release_dc_ptr( dc );
     return ret;
-}
-
-/***********************************************************************
- *           ArcTo    (GDI32.@)
- */
-BOOL WINAPI ArcTo( HDC hdc,
-                     INT left,   INT top,
-                     INT right,  INT bottom,
-                     INT xstart, INT ystart,
-                     INT xend,   INT yend )
-{
-    double width = abs( right - left ),
-        height = abs( bottom - top ),
-        xradius = width/2,
-        yradius = height/2,
-        xcenter = right > left ? left+xradius : right+xradius,
-        ycenter = bottom > top ? top+yradius : bottom+yradius,
-        angle;
-    PHYSDEV physdev;
-    BOOL result;
-    DC * dc = get_dc_ptr( hdc );
-
-    TRACE( "%p, (%d, %d)-(%d, %d), (%d, %d), (%d, %d)\n", hdc, left, top, right, bottom, xstart, ystart, xend, yend );
-
-    if(!dc) return FALSE;
-    update_dc( dc );
-    physdev = GET_DC_PHYSDEV( dc, pArcTo );
-    result = physdev->funcs->pArcTo( physdev, left, top, right, bottom, xstart, ystart, xend, yend );
-
-    if (result)
-    {
-        angle = atan2(((yend-ycenter)/height),
-                      ((xend-xcenter)/width));
-        dc->cur_pos.x = GDI_ROUND( xcenter + (cos( angle ) * xradius) );
-        dc->cur_pos.y = GDI_ROUND( ycenter + (sin( angle ) * yradius) );
-    }
-    release_dc_ptr( dc );
-    return result;
 }
 
 

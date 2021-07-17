@@ -54,3 +54,16 @@ BOOL WINAPI Arc( HDC hdc, INT left, INT top, INT right, INT bottom,
     return NtGdiArcInternal( NtGdiArc, hdc, left, top, right, bottom,
                              xstart, ystart, xend, yend );
 }
+
+/***********************************************************************
+ *           ArcTo    (GDI32.@)
+ */
+BOOL WINAPI ArcTo( HDC hdc, INT left, INT top, INT right, INT bottom,
+                   INT xstart, INT ystart, INT xend, INT yend )
+{
+    TRACE( "%p, (%d, %d)-(%d, %d), (%d, %d), (%d, %d)\n", hdc, left, top,
+           right, bottom, xstart, ystart, xend, yend );
+
+    return NtGdiArcInternal( NtGdiArcTo, hdc, left, top, right, bottom,
+                             xstart, ystart, xend, yend );
+}
