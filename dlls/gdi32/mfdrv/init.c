@@ -159,7 +159,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pGradientFill */
     MFDRV_IntersectClipRect,         /* pIntersectClipRect */
     MFDRV_InvertRgn,                 /* pInvertRgn */
-    MFDRV_LineTo,                    /* pLineTo */
+    NULL,                            /* pLineTo */
     NULL,                            /* pModifyWorldTransform */
     MFDRV_MoveTo,                    /* pMoveTo */
     MFDRV_OffsetClipRgn,             /* pOffsetClipRgn */
@@ -259,6 +259,7 @@ static DC *MFDRV_AllocMetaFile(void)
     }
 
     push_dc_driver( &dc->physDev, &physDev->dev, &MFDRV_Funcs );
+    set_gdi_client_ptr( dc->hSelf, physDev );
 
     physDev->handles = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, HANDLE_LIST_INC * sizeof(physDev->handles[0]));
     physDev->handles_size = HANDLE_LIST_INC;
@@ -596,4 +597,19 @@ BOOL MFDRV_MetaParam8(PHYSDEV dev, short func, short param1, short param2,
     params[6] = param2;
     params[7] = param1;
     return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
+}
+
+static METAFILEDRV_PDEVICE *get_metadc_ptr( HDC hdc )
+{
+    METAFILEDRV_PDEVICE *metafile = get_gdi_client_ptr( hdc, NTGDI_OBJ_METADC );
+    if (!metafile) SetLastError( ERROR_INVALID_HANDLE );
+    return metafile;
+}
+
+BOOL metadc_param2( HDC hdc, short func, short param1, short param2 )
+{
+    METAFILEDRV_PDEVICE *dev;
+
+    if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
+    return MFDRV_MetaParam2( &dev->dev, func, param1, param2 );
 }

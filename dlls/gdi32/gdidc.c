@@ -31,6 +31,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 BOOL WINAPI LineTo( HDC hdc, INT x, INT y )
 {
     TRACE( "%p, (%d, %d)\n", hdc, x, y );
+
+    if (is_meta_dc( hdc )) return METADC_LineTo( hdc, x, y );
     return NtGdiLineTo( hdc, x, y );
 }
 

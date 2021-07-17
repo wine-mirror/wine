@@ -31,4 +31,12 @@
 void set_gdi_client_ptr( HGDIOBJ handle, void *ptr ) DECLSPEC_HIDDEN;
 void *get_gdi_client_ptr( HGDIOBJ handle, WORD type ) DECLSPEC_HIDDEN;
 
+static inline BOOL is_meta_dc( HDC hdc )
+{
+    unsigned int handle = HandleToULong( hdc );
+    return (handle & NTGDI_HANDLE_TYPE_MASK) >> NTGDI_HANDLE_TYPE_SHIFT == NTGDI_OBJ_METADC;
+}
+
+extern BOOL METADC_LineTo( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
+
 #endif /* __WINE_GDI_PRIVATE_H */

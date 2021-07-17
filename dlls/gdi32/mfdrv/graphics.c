@@ -39,11 +39,11 @@ BOOL CDECL MFDRV_MoveTo(PHYSDEV dev, INT x, INT y)
 }
 
 /***********************************************************************
- *           MFDRV_LineTo
+ *           METADC_LineTo
  */
-BOOL CDECL MFDRV_LineTo( PHYSDEV dev, INT x, INT y )
+BOOL METADC_LineTo( HDC hdc, INT x, INT y )
 {
-     return MFDRV_MetaParam2(dev, META_LINETO, x, y);
+     return metadc_param2( hdc, META_LINETO, x, y );
 }
 
 

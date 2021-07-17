@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "ntgdi_private.h"
+#include "gdi_private.h"
 
 /* Metafile driver physical DC */
 
@@ -58,6 +59,8 @@ extern UINT MFDRV_AddHandle( PHYSDEV dev, HGDIOBJ obj ) DECLSPEC_HIDDEN;
 extern BOOL MFDRV_RemoveHandle( PHYSDEV dev, UINT index ) DECLSPEC_HIDDEN;
 extern INT16 MFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush ) DECLSPEC_HIDDEN;
 
+extern BOOL metadc_param2( HDC hdc, short func, short param1, short param2 ) DECLSPEC_HIDDEN;
+
 /* Metafile driver functions */
 
 extern BOOL CDECL MFDRV_AbortPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
@@ -81,7 +84,6 @@ extern BOOL CDECL MFDRV_FlattenPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_FrameRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush, INT x, INT y ) DECLSPEC_HIDDEN;
 extern INT  CDECL MFDRV_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
-extern BOOL CDECL MFDRV_LineTo( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_MoveTo( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
 extern INT  CDECL MFDRV_OffsetClipRgn( PHYSDEV dev, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_OffsetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt ) DECLSPEC_HIDDEN;
