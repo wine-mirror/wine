@@ -103,8 +103,8 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_AbortPath,                 /* pAbortPath */
     NULL,                            /* pAlphaBlend */
     NULL,                            /* pAngleArc */
-    MFDRV_Arc,                       /* pArc */
-    NULL,                            /* pArcTo */
+    NULL,                            /* pArc */
+    MFDRV_ArcTo,                     /* pArcTo */
     MFDRV_BeginPath,                 /* pBeginPath */
     NULL,                            /* pBlendImage */
     NULL,                            /* pChord */

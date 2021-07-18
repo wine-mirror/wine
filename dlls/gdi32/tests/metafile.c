@@ -3312,6 +3312,9 @@ static void test_mf_Graphics(void)
     ret = Ellipse(hdcMetafile, 0, 0, 2, 2);
     ok( ret, "Ellipse error %d.\n", GetLastError());
 
+    ret = ArcTo(hdcMetafile, 1, 2, 30, 40, 11, 12, 23, 24 );
+    ok( !ret, "ArcTo succeeded\n" );
+
     hMetafile = CloseMetaFile(hdcMetafile);
     ok(hMetafile != 0, "CloseMetaFile error %d\n", GetLastError());
     type = GetObjectType(hdcMetafile);

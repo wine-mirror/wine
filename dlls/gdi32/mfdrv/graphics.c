@@ -48,13 +48,23 @@ BOOL METADC_LineTo( HDC hdc, INT x, INT y )
 
 
 /***********************************************************************
- *           MFDRV_Arc
+ *           METADC_Arc
  */
-BOOL CDECL MFDRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                      INT xstart, INT ystart, INT xend, INT yend )
+BOOL METADC_Arc( HDC hdc, INT left, INT top, INT right, INT bottom,
+                 INT xstart, INT ystart, INT xend, INT yend )
 {
-     return MFDRV_MetaParam8(dev, META_ARC, left, top, right, bottom,
-			     xstart, ystart, xend, yend);
+     return metadc_param8( hdc, META_ARC, left, top, right, bottom,
+                           xstart, ystart, xend, yend );
+}
+
+
+/***********************************************************************
+ *           MFDRV_ArcTo
+ */
+BOOL CDECL MFDRV_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                        INT xstart, INT ystart, INT xend, INT yend )
+{
+    return FALSE;
 }
 
 

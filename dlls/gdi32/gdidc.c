@@ -55,6 +55,11 @@ BOOL WINAPI Arc( HDC hdc, INT left, INT top, INT right, INT bottom,
 {
     TRACE( "%p, (%d, %d)-(%d, %d), (%d, %d), (%d, %d)\n", hdc, left, top,
            right, bottom, xstart, ystart, xend, yend );
+
+    if (is_meta_dc( hdc ))
+        return METADC_Arc( hdc, left, top, right, bottom,
+                           xstart, ystart, xend, yend );
+
     return NtGdiArcInternal( NtGdiArc, hdc, left, top, right, bottom,
                              xstart, ystart, xend, yend );
 }
