@@ -2860,6 +2860,24 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         break;
     }
 
+    case SystemKernelDebuggerInformationEx:  /* 149 */
+    {
+        SYSTEM_KERNEL_DEBUGGER_INFORMATION_EX skdi;
+
+        skdi.DebuggerAllowed = FALSE;
+        skdi.DebuggerEnabled = FALSE;
+        skdi.DebuggerPresent = FALSE;
+
+        len = sizeof(skdi);
+        if (size >= len)
+        {
+            if (!info) ret = STATUS_ACCESS_VIOLATION;
+            else memcpy( info, &skdi, len );
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+    }
+
     case SystemCpuSetInformation:  /* 175 */
         return NtQuerySystemInformationEx(class, NULL, 0, info, size, ret_size);
 

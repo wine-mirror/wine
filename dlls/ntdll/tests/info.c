@@ -979,6 +979,7 @@ static void test_query_kerndebug(void)
 {
     NTSTATUS status;
     ULONG ReturnLength;
+    SYSTEM_KERNEL_DEBUGGER_INFORMATION_EX skdi_ex;
     SYSTEM_KERNEL_DEBUGGER_INFORMATION skdi;
 
     status = pNtQuerySystemInformation(SystemKernelDebuggerInformation, &skdi, 0, &ReturnLength);
@@ -991,6 +992,29 @@ static void test_query_kerndebug(void)
     status = pNtQuerySystemInformation(SystemKernelDebuggerInformation, &skdi, sizeof(skdi) + 2, &ReturnLength);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
     ok( sizeof(skdi) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
+
+    status = pNtQuerySystemInformation(SystemKernelDebuggerInformationEx, &skdi_ex, 0, &ReturnLength);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH
+            || status == STATUS_NOT_IMPLEMENTED    /* before win7 */
+            || status == STATUS_INVALID_INFO_CLASS /* wow64 on Win10 */,
+            "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
+
+    if (status != STATUS_INFO_LENGTH_MISMATCH)
+    {
+        win_skip( "NtQuerySystemInformation(SystemKernelDebuggerInformationEx) is not implemented.\n" );
+    }
+    else
+    {
+        status = pNtQuerySystemInformation(SystemKernelDebuggerInformationEx, &skdi_ex,
+                sizeof(skdi_ex), &ReturnLength);
+        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+        ok( sizeof(skdi_ex) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
+
+        status = pNtQuerySystemInformation(SystemKernelDebuggerInformationEx, &skdi_ex,
+                sizeof(skdi_ex) + 2, &ReturnLength);
+        ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+        ok( sizeof(skdi_ex) == ReturnLength, "Inconsistent length %d\n", ReturnLength);
+    }
 }
 
 static void test_query_regquota(void)
