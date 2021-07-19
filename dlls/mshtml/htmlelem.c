@@ -6490,6 +6490,90 @@ static HRESULT WINAPI token_list_Invoke(IWineDOMTokenList *iface, DISPID dispIdM
             pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
+static const WCHAR *find_token(const WCHAR *list, const WCHAR *token, unsigned int token_len)
+{
+    const WCHAR *ptr, *next;
+
+    if (!list || !token)
+        return NULL;
+
+    ptr = list;
+    while (*ptr)
+    {
+        while (iswspace(*ptr))
+            ++ptr;
+        if (!*ptr)
+            break;
+        next = ptr + 1;
+        while (*next && !iswspace(*next))
+            ++next;
+
+        if (next - ptr == token_len && !wcsncmp(ptr, token, token_len))
+            return ptr;
+        ptr = next;
+    }
+    return NULL;
+}
+
+static HRESULT WINAPI token_list_add(IWineDOMTokenList *iface, BSTR token)
+{
+    struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
+    unsigned int i, len, old_len, new_len;
+    BSTR new, old;
+    HRESULT hr;
+
+    TRACE("iface %p, token %s.\n", iface, debugstr_w(token));
+
+    len = token ? lstrlenW(token) : 0;
+    if (!len)
+    {
+        WARN("Empty token.\n");
+        return E_INVALIDARG;
+    }
+
+    for (i = 0; i < len; ++i)
+        if (iswspace(token[i]))
+        {
+            WARN("Token has spaces.\n");
+            return E_INVALIDARG;
+        }
+
+    if (FAILED(hr = IHTMLElement_get_className(token_list->element, &old)))
+        return hr;
+
+    TRACE("old %s.\n", debugstr_w(old));
+
+    if (find_token(old, token, len))
+    {
+        SysFreeString(old);
+        return S_OK;
+    }
+
+    old_len = old ? lstrlenW(old) : 0;
+    new_len = old_len + len + !!old_len;
+
+    if (!(new = SysAllocStringLen(NULL, new_len)))
+    {
+        ERR("No memory.\n");
+        SysFreeString(old);
+        return E_OUTOFMEMORY;
+    }
+
+    memcpy(new, old, sizeof(*new) * old_len);
+    if (old_len)
+        new[old_len++]= L' ';
+    memcpy(new + old_len, token, sizeof(*new) * len);
+    new[old_len + len] = 0;
+
+    SysFreeString(old);
+
+    TRACE("new %s.\n", debugstr_w(new));
+
+    hr = IHTMLElement_put_className(token_list->element, new);
+    SysFreeString(new);
+    return hr;
+}
+
 static const IWineDOMTokenListVtbl WineDOMTokenListVtbl = {
     token_list_QueryInterface,
     token_list_AddRef,
@@ -6498,6 +6582,7 @@ static const IWineDOMTokenListVtbl WineDOMTokenListVtbl = {
     token_list_GetTypeInfo,
     token_list_GetIDsOfNames,
     token_list_Invoke,
+    token_list_add,
 };
 
 static const tid_t token_list_iface_tids[] = {

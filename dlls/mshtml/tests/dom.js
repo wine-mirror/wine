@@ -512,4 +512,54 @@ sync_test("hasAttribute", function() {
 sync_test("classList", function() {
     var elem = document.createElement("div");
     var classList = elem.classList;
+
+    classList.add("a");
+    ok(elem.className === "a", "Expected className 'a', got " + elem.className);
+
+    classList.add("b");
+    ok(elem.className === "a b", "Expected className 'a b', got " + elem.className);
+
+    classList.add("c");
+    ok(elem.className === "a b c", "Expected className 'a b c', got " + elem.className);
+
+    classList.add(4);
+    ok(elem.className === "a b c 4", "Expected className 'a b c 4', got " + elem.className);
+
+    classList.add("c");
+    ok(elem.className === "a b c 4", "(2) Expected className 'a b c 4', got " + elem.className);
+
+    var exception = false
+
+    try
+    {
+        classList.add();
+    }
+    catch(e)
+    {
+        exception = true;
+    }
+    ok(exception && elem.className === "a b c 4", "Expected exception, className 'a b c 4', got exception "
+            + exception + ", className" + elem.className);
+
+    exception = false
+    try
+    {
+        classList.add("");
+    }
+    catch(e)
+    {
+        exception = true;
+    }
+    ok(exception, "Expected exception for classList.add(\"\")");
+
+    exception = false
+    try
+    {
+        classList.add("e f");
+    }
+    catch(e)
+    {
+        exception = true;
+    }
+    ok(exception, "Expected exception for classList.add(\"e f\")");
 });

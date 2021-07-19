@@ -111,6 +111,8 @@ interface IWineHTMLElementPrivate : IDispatch
 ]
 interface IWineDOMTokenList : IDispatch
 {
+    [id(1)]
+    HRESULT add([in] BSTR token);
 }
 
 } /* library MSHTML_private */
