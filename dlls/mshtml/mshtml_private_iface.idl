@@ -102,4 +102,15 @@ interface IWineHTMLElementPrivate : IDispatch
     HRESULT classList([retval, out] IDispatch **class_list);
 }
 
+[
+    odl,
+    oleautomation,
+    dual,
+    hidden,
+    uuid(08ef0edd-5fb8-4178-a2f0-9f686e00441b)
+]
+interface IWineDOMTokenList : IDispatch
+{
+}
+
 } /* library MSHTML_private */

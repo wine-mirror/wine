@@ -6395,6 +6395,142 @@ static event_target_vtbl_t HTMLElement_event_target_vtbl = {
     HTMLElement_set_current_event
 };
 
+struct token_list {
+    DispatchEx dispex;
+    IWineDOMTokenList IWineDOMTokenList_iface;
+    IHTMLElement *element;
+
+    LONG ref;
+};
+
+static inline struct token_list *impl_from_IWineDOMTokenList(IWineDOMTokenList *iface)
+{
+    return CONTAINING_RECORD(iface, struct token_list, IWineDOMTokenList_iface);
+}
+
+static HRESULT WINAPI token_list_QueryInterface(IWineDOMTokenList *iface, REFIID riid, void **ppv)
+{
+    struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
+
+    TRACE("(%p)->(%s %p)\n", token_list, debugstr_mshtml_guid(riid), ppv);
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        *ppv = &token_list->IWineDOMTokenList_iface;
+    }else if(IsEqualGUID(&IID_IWineDOMTokenList, riid)) {
+        *ppv = &token_list->IWineDOMTokenList_iface;
+    }else if(dispex_query_interface(&token_list->dispex, riid, ppv)) {
+        return *ppv ? S_OK : E_NOINTERFACE;
+    }else {
+        WARN("(%p)->(%s %p)\n", token_list, debugstr_mshtml_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI token_list_AddRef(IWineDOMTokenList *iface)
+{
+    struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
+    LONG ref = InterlockedIncrement(&token_list->ref);
+
+    TRACE("(%p) ref=%d\n", token_list, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI token_list_Release(IWineDOMTokenList *iface)
+{
+    struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
+    LONG ref = InterlockedDecrement(&token_list->ref);
+
+    TRACE("(%p) ref=%d\n", token_list, ref);
+
+    if(!ref) {
+        IHTMLElement_Release(token_list->element);
+        release_dispex(&token_list->dispex);
+        heap_free(token_list);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI token_list_GetTypeInfoCount(IWineDOMTokenList *iface, UINT *pctinfo)
+{
+    struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
+    FIXME("(%p)->(%p)\n", token_list, pctinfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI token_list_GetTypeInfo(IWineDOMTokenList *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
+
+    return IDispatchEx_GetTypeInfo(&token_list->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI token_list_GetIDsOfNames(IWineDOMTokenList *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
+
+    return IDispatchEx_GetIDsOfNames(&token_list->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+            lcid, rgDispId);
+}
+
+static HRESULT WINAPI token_list_Invoke(IWineDOMTokenList *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+        VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
+
+    return IDispatchEx_Invoke(&token_list->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
+            pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static const IWineDOMTokenListVtbl WineDOMTokenListVtbl = {
+    token_list_QueryInterface,
+    token_list_AddRef,
+    token_list_Release,
+    token_list_GetTypeInfoCount,
+    token_list_GetTypeInfo,
+    token_list_GetIDsOfNames,
+    token_list_Invoke,
+};
+
+static const tid_t token_list_iface_tids[] = {
+    IWineDOMTokenList_tid,
+    0
+};
+static dispex_static_data_t token_list_dispex = {
+    NULL,
+    IWineDOMTokenList_tid,
+    token_list_iface_tids
+};
+
+static HRESULT create_token_list(compat_mode_t compat_mode, IHTMLElement *element, IWineDOMTokenList **ret)
+{
+    struct token_list *obj;
+
+    obj = heap_alloc_zero(sizeof(*obj));
+    if(!obj)
+    {
+        ERR("No memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    obj->IWineDOMTokenList_iface.lpVtbl = &WineDOMTokenListVtbl;
+    obj->ref = 1;
+    init_dispatch(&obj->dispex, (IUnknown*)&obj->IWineDOMTokenList_iface, &token_list_dispex, compat_mode);
+    IHTMLElement_AddRef(element);
+    obj->element = element;
+
+    *ret = &obj->IWineDOMTokenList_iface;
+    return S_OK;
+}
+
 static inline HTMLElement *impl_from_IWineHTMLElementPrivateVtbl(IWineHTMLElementPrivate *iface)
 {
     return CONTAINING_RECORD(iface, HTMLElement, IWineHTMLElementPrivate_iface);
@@ -6459,11 +6595,12 @@ static HRESULT WINAPI htmlelement_private_Invoke(IWineHTMLElementPrivate *iface,
 
 static HRESULT WINAPI htmlelement_private_get_classList(IWineHTMLElementPrivate *iface, IDispatch **class_list)
 {
-    FIXME("iface %p, class_list %p stub.\n", iface, class_list);
+    HTMLElement *This = impl_from_IWineHTMLElementPrivateVtbl(iface);
 
-    *class_list = NULL;
+    TRACE("iface %p, class_list %p.\n", iface, class_list);
 
-    return S_OK;
+    return create_token_list(dispex_compat_mode(&This->node.event_target.dispex), &This->IHTMLElement_iface,
+            (IWineDOMTokenList **)class_list);
 }
 
 static const IWineHTMLElementPrivateVtbl WineHTMLElementPrivateVtbl = {

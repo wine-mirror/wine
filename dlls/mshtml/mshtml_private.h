@@ -273,6 +273,7 @@ typedef struct EventTarget EventTarget;
     XIID(ISVGTextContentElement)
 
 #define PRIVATE_TID_LIST \
+    XIID(IWineDOMTokenList) \
     XIID(IWineHTMLElementPrivate) \
     XIID(IWineHTMLWindowPrivate) \
     XIID(IWineMSHTMLConsole)

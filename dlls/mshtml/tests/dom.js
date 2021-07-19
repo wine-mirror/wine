@@ -508,3 +508,8 @@ sync_test("hasAttribute", function() {
     r = elem.hasAttribute("attr");
     ok(r === false, "hasAttribute(attr) returned " + r);
 });
+
+sync_test("classList", function() {
+    var elem = document.createElement("div");
+    var classList = elem.classList;
+});
