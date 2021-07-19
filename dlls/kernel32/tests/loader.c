@@ -860,7 +860,10 @@ static void test_Loader(void)
           0,
           { ERROR_SUCCESS, ERROR_BAD_EXE_FORMAT } /* vista is more strict */
         },
-        /* Minimal PE image that Windows7 is able to load: 268 bytes */
+        /* Minimal PE image initially created for Windows 7 and accepted from
+         * Vista up to Windows 10 1709 with some unexplained exceptions:
+         * 268 bytes
+         */
         { 0x04,
           0, 0xf0, /* optional header size just forces 0xf0 bytes to be written,
                       0 or another number don't change the behaviour, what really
@@ -868,7 +871,7 @@ static void test_Loader(void)
           0x04 /* also serves as e_lfanew in the truncated MZ header */, 0x04,
           0x40, /* minimal image size that Windows7 accepts */
           0,
-          { ERROR_SUCCESS }
+          { ERROR_SUCCESS, ERROR_BAD_EXE_FORMAT } /* rejected by win10 1809+ */
         },
         /* the following data mimics the PE image which 8k demos have */
         { 0x04,
