@@ -3256,6 +3256,32 @@ static void test_debug_object(void)
     ok( event.u.LoadDll.fUnicode == TRUE, "event not updated %x\n", event.u.LoadDll.fUnicode );
 }
 
+static void test_process_instrumentation_callback(void)
+{
+    PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION info;
+    NTSTATUS status;
+
+    status = NtSetInformationProcess( GetCurrentProcess(), ProcessInstrumentationCallback, NULL, 0 );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH /* Win10 */ || status == STATUS_INVALID_INFO_CLASS
+            || status == STATUS_NOT_SUPPORTED, "Got unexpected status %#x.\n", status );
+    if (status != STATUS_INFO_LENGTH_MISMATCH)
+    {
+        win_skip( "ProcessInstrumentationCallback is not supported.\n" );
+        return;
+    }
+
+    memset(&info, 0, sizeof(info));
+    status = NtSetInformationProcess( GetCurrentProcess(), ProcessInstrumentationCallback, &info, sizeof(info) );
+    ok( status == STATUS_SUCCESS /* Win 10 */ || broken( status == STATUS_PRIVILEGE_NOT_HELD )
+            || broken( status == STATUS_INFO_LENGTH_MISMATCH ), "Got unexpected status %#x.\n", status );
+
+    memset(&info, 0, sizeof(info));
+    status = NtSetInformationProcess( GetCurrentProcess(), ProcessInstrumentationCallback, &info, 2 * sizeof(info) );
+    ok( status == STATUS_SUCCESS || status == STATUS_INFO_LENGTH_MISMATCH
+            || broken( status == STATUS_PRIVILEGE_NOT_HELD ) /* some versions and machines before Win10 */,
+            "Got unexpected status %#x.\n", status );
+}
+
 START_TEST(info)
 {
     char **argv;
@@ -3322,4 +3348,5 @@ START_TEST(info)
     test_NtGetCurrentProcessorNumber();
 
     test_ThreadEnableAlignmentFaultFixup();
+    test_process_instrumentation_callback();
 }
