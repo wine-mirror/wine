@@ -273,6 +273,7 @@ typedef struct EventTarget EventTarget;
     XIID(ISVGTextContentElement)
 
 #define PRIVATE_TID_LIST \
+    XIID(IWineHTMLElementPrivate) \
     XIID(IWineHTMLWindowPrivate) \
     XIID(IWineMSHTMLConsole)
 
@@ -828,6 +829,7 @@ typedef struct {
     IElementSelector IElementSelector_iface;
     IElementTraversal IElementTraversal_iface;
     IProvideMultipleClassInfo IProvideMultipleClassInfo_iface;
+    IWineHTMLElementPrivate IWineHTMLElementPrivate_iface;
 
     nsIDOMElement *dom_element;       /* NULL for legacy comments represented as HTML elements */
     nsIDOMHTMLElement *html_element;  /* NULL for non-HTML elements (like SVG elements) */

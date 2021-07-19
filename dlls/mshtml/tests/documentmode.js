@@ -57,6 +57,7 @@ sync_test("elem_props", function() {
     test_exposed("sheet", v >= 9);
     test_exposed("readyState", v < 11);
     test_exposed("styleSheet", v < 11);
+    test_exposed("classList", v >= 10);
 });
 
 sync_test("doc_props", function() {

@@ -6065,6 +6065,8 @@ HRESULT HTMLElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
         *ppv = &This->IProvideMultipleClassInfo_iface;
     }else if(IsEqualGUID(&IID_IProvideMultipleClassInfo, riid)) {
         *ppv = &This->IProvideMultipleClassInfo_iface;
+    }else if(IsEqualGUID(&IID_IWineHTMLElementPrivate, riid)) {
+        *ppv = &This->IWineHTMLElementPrivate_iface;
     }else {
         return HTMLDOMNode_QI(&This->node, riid, ppv);
     }
@@ -6366,7 +6368,10 @@ void HTMLElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
     }
 
     if(mode >= COMPAT_MODE_IE10)
+    {
         dispex_info_add_interface(info, IHTMLElement7_tid, NULL);
+        dispex_info_add_interface(info, IWineHTMLElementPrivate_tid, NULL);
+    }
 }
 
 static const tid_t HTMLElement_iface_tids[] = {
@@ -6390,6 +6395,88 @@ static event_target_vtbl_t HTMLElement_event_target_vtbl = {
     HTMLElement_set_current_event
 };
 
+static inline HTMLElement *impl_from_IWineHTMLElementPrivateVtbl(IWineHTMLElementPrivate *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLElement, IWineHTMLElementPrivate_iface);
+}
+
+static HRESULT WINAPI htmlelement_private_QueryInterface(IWineHTMLElementPrivate *iface,
+        REFIID riid, void **ppv)
+{
+    HTMLElement *This = impl_from_IWineHTMLElementPrivateVtbl(iface);
+
+    return IHTMLElement_QueryInterface(&This->IHTMLElement_iface, riid, ppv);
+}
+
+static ULONG WINAPI htmlelement_private_AddRef(IWineHTMLElementPrivate *iface)
+{
+    HTMLElement *This = impl_from_IWineHTMLElementPrivateVtbl(iface);
+
+    return IHTMLElement_AddRef(&This->IHTMLElement_iface);
+}
+
+static ULONG WINAPI htmlelement_private_Release(IWineHTMLElementPrivate *iface)
+{
+    HTMLElement *This = impl_from_IWineHTMLElementPrivateVtbl(iface);
+
+    return IHTMLElement_Release(&This->IHTMLElement_iface);
+}
+
+static HRESULT WINAPI htmlelement_private_GetTypeInfoCount(IWineHTMLElementPrivate *iface, UINT *pctinfo)
+{
+    HTMLElement *This = impl_from_IWineHTMLElementPrivateVtbl(iface);
+
+    return HTMLElement_GetTypeInfoCount(&This->IHTMLElement_iface, pctinfo);
+}
+
+static HRESULT WINAPI htmlelement_private_GetTypeInfo(IWineHTMLElementPrivate *iface, UINT iTInfo,
+                                              LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLElement *This = impl_from_IWineHTMLElementPrivateVtbl(iface);
+
+    return HTMLElement_GetTypeInfo(&This->IHTMLElement_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI htmlelement_private_GetIDsOfNames(IWineHTMLElementPrivate *iface, REFIID riid,
+                                                LPOLESTR *rgszNames, UINT cNames,
+                                                LCID lcid, DISPID *rgDispId)
+{
+    HTMLElement *This = impl_from_IWineHTMLElementPrivateVtbl(iface);
+
+    return HTMLElement_GetIDsOfNames(&This->IHTMLElement_iface, riid, rgszNames, cNames, lcid,
+            rgDispId);
+}
+
+static HRESULT WINAPI htmlelement_private_Invoke(IWineHTMLElementPrivate *iface, DISPID dispIdMember,
+                            REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+                            VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLElement *This = impl_from_IWineHTMLElementPrivateVtbl(iface);
+
+    return HTMLElement_Invoke(&This->IHTMLElement_iface, dispIdMember, riid, lcid, wFlags,
+            pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI htmlelement_private_get_classList(IWineHTMLElementPrivate *iface, IDispatch **class_list)
+{
+    FIXME("iface %p, class_list %p stub.\n", iface, class_list);
+
+    *class_list = NULL;
+
+    return S_OK;
+}
+
+static const IWineHTMLElementPrivateVtbl WineHTMLElementPrivateVtbl = {
+    htmlelement_private_QueryInterface,
+    htmlelement_private_AddRef,
+    htmlelement_private_Release,
+    htmlelement_private_GetTypeInfoCount,
+    htmlelement_private_GetTypeInfo,
+    htmlelement_private_GetIDsOfNames,
+    htmlelement_private_Invoke,
+    htmlelement_private_get_classList,
+};
+
 static dispex_static_data_t HTMLElement_dispex = {
     &HTMLElement_event_target_vtbl.dispex_vtbl,
     DispHTMLUnknownElement_tid,
@@ -6409,6 +6496,7 @@ void HTMLElement_Init(HTMLElement *This, HTMLDocumentNode *doc, nsIDOMElement *n
     This->IElementSelector_iface.lpVtbl = &ElementSelectorVtbl;
     This->IElementTraversal_iface.lpVtbl = &ElementTraversalVtbl;
     This->IProvideMultipleClassInfo_iface.lpVtbl = &ProvideMultipleClassInfoVtbl;
+    This->IWineHTMLElementPrivate_iface.lpVtbl = &WineHTMLElementPrivateVtbl;
 
     if(dispex_data && !dispex_data->vtbl)
         dispex_data->vtbl = &HTMLElement_event_target_vtbl.dispex_vtbl;
