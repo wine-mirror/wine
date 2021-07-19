@@ -562,4 +562,47 @@ sync_test("classList", function() {
         exception = true;
     }
     ok(exception, "Expected exception for classList.add(\"e f\")");
+
+    classList.remove("e");
+    ok(elem.className === "a b c 4", "remove: expected className 'a b c 4', got " + elem.className);
+
+    exception = false
+    try
+    {
+        classList.remove("e f");
+    }
+    catch(e)
+    {
+        exception = true;
+    }
+    ok(exception, "remove: expected exception for classList.remove(\"e f\")");
+
+    exception = false
+    try
+    {
+        classList.remove("");
+    }
+    catch(e)
+    {
+        exception = true;
+    }
+    ok(exception, "remove: expected exception for classList.remove(\"\")");
+
+    classList.remove("d");
+    ok(elem.className === "a b c 4", "remove: expected className 'a b c 4', got " + elem.className);
+
+    classList.remove("c");
+    ok(elem.className === "a b 4", "remove: expected className 'a b 4', got " + elem.className);
+
+    classList.remove(4);
+    ok(elem.className === "a b", "remove: expected className 'a b', got " + elem.className);
+
+    classList.remove('a');
+    ok(elem.className === "b", "remove: expected className 'b', got " + elem.className);
+
+    classList.remove("a");
+    ok(elem.className === "b", "remove (2): expected className 'b', got " + elem.className);
+
+    classList.remove("b");
+    ok(elem.className === "", "remove: expected className '', got " + elem.className);
 });

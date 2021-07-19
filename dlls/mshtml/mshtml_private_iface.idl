@@ -113,6 +113,8 @@ interface IWineDOMTokenList : IDispatch
 {
     [id(1)]
     HRESULT add([in] BSTR token);
+    [id(2)]
+    HRESULT remove([in] BSTR token);
 }
 
 } /* library MSHTML_private */

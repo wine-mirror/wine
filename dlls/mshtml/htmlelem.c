@@ -6515,14 +6515,15 @@ static const WCHAR *find_token(const WCHAR *list, const WCHAR *token, unsigned i
     return NULL;
 }
 
-static HRESULT WINAPI token_list_add(IWineDOMTokenList *iface, BSTR token)
+static HRESULT WINAPI token_list_add_remove(IWineDOMTokenList *iface, BSTR token, BOOL remove)
 {
     struct token_list *token_list = impl_from_IWineDOMTokenList(iface);
     unsigned int i, len, old_len, new_len;
+    const WCHAR *old_pos;
     BSTR new, old;
     HRESULT hr;
 
-    TRACE("iface %p, token %s.\n", iface, debugstr_w(token));
+    TRACE("iface %p, token %s, remove %#x.\n", iface, debugstr_w(token), remove);
 
     len = token ? lstrlenW(token) : 0;
     if (!len)
@@ -6543,14 +6544,33 @@ static HRESULT WINAPI token_list_add(IWineDOMTokenList *iface, BSTR token)
 
     TRACE("old %s.\n", debugstr_w(old));
 
-    if (find_token(old, token, len))
+    if (((old_pos = find_token(old, token, len)) && !remove)
+            || (!old_pos && remove))
     {
         SysFreeString(old);
         return S_OK;
     }
 
     old_len = old ? lstrlenW(old) : 0;
-    new_len = old_len + len + !!old_len;
+    if (remove)
+    {
+        while (old_pos != old && iswspace(old_pos[-1]))
+        {
+            --old_pos;
+            ++len;
+        }
+        while (iswspace(old_pos[len]))
+            ++len;
+
+        if (old_pos != old && old_pos[len])
+            --len;
+
+        new_len = old_len - len;
+    }
+    else
+    {
+        new_len = old_len + len + !!old_len;
+    }
 
     if (!(new = SysAllocStringLen(NULL, new_len)))
     {
@@ -6559,11 +6579,19 @@ static HRESULT WINAPI token_list_add(IWineDOMTokenList *iface, BSTR token)
         return E_OUTOFMEMORY;
     }
 
-    memcpy(new, old, sizeof(*new) * old_len);
-    if (old_len)
-        new[old_len++]= L' ';
-    memcpy(new + old_len, token, sizeof(*new) * len);
-    new[old_len + len] = 0;
+    if (remove)
+    {
+        memcpy(new, old, sizeof(*new) * (old_pos - old));
+        memcpy(new + (old_pos - old), old_pos + len, sizeof(*new) * (old_len - (old_pos - old) - len + 1));
+    }
+    else
+    {
+        memcpy(new, old, sizeof(*new) * old_len);
+        if (old_len)
+            new[old_len++]= L' ';
+        memcpy(new + old_len, token, sizeof(*new) * len);
+        new[old_len + len] = 0;
+    }
 
     SysFreeString(old);
 
@@ -6572,6 +6600,16 @@ static HRESULT WINAPI token_list_add(IWineDOMTokenList *iface, BSTR token)
     hr = IHTMLElement_put_className(token_list->element, new);
     SysFreeString(new);
     return hr;
+}
+
+static HRESULT WINAPI token_list_add(IWineDOMTokenList *iface, BSTR token)
+{
+    return token_list_add_remove(iface, token, FALSE);
+}
+
+static HRESULT WINAPI token_list_remove(IWineDOMTokenList *iface, BSTR token)
+{
+    return token_list_add_remove(iface, token, TRUE);
 }
 
 static const IWineDOMTokenListVtbl WineDOMTokenListVtbl = {
@@ -6583,6 +6621,7 @@ static const IWineDOMTokenListVtbl WineDOMTokenListVtbl = {
     token_list_GetIDsOfNames,
     token_list_Invoke,
     token_list_add,
+    token_list_remove,
 };
 
 static const tid_t token_list_iface_tids[] = {
