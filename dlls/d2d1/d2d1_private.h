@@ -568,10 +568,13 @@ void d2d_device_init(struct d2d_device *device, ID2D1Factory1 *factory, IDXGIDev
 struct d2d_effect
 {
     ID2D1Effect ID2D1Effect_iface;
+    ID2D1Image ID2D1Image_iface;
     LONG refcount;
+
+    ID2D1Factory *factory;
 };
 
-void d2d_effect_init(struct d2d_effect *effect) DECLSPEC_HIDDEN;
+void d2d_effect_init(struct d2d_effect *effect, ID2D1Factory *factory) DECLSPEC_HIDDEN;
 
 static inline BOOL d2d_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
 {

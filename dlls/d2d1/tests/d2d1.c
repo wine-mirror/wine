@@ -9703,16 +9703,13 @@ static void test_effect(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = ID2D1Effect_QueryInterface(effect, &IID_ID2D1Image, (void **)&image_a);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    if (hr != S_OK)
-        goto done;
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     ID2D1Effect_GetOutput(effect, &image_b);
     todo_wine ok(image_b == image_a, "Got unexpected image_b %p, expected %p.\n", image_b, image_a);
     if (image_b)
         ID2D1Image_Release(image_b);
     ID2D1Image_Release(image_a);
 
-done:
     ID2D1Effect_Release(effect);
     ID2D1DeviceContext_Release(context);
     ID2D1Factory1_Release(factory);
