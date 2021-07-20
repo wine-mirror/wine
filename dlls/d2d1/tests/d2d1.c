@@ -9678,6 +9678,47 @@ static void test_mt_factory(BOOL d3d11)
     ID2D1Factory_Release(factory);
 }
 
+static void test_effect(BOOL d3d11)
+{
+    ID2D1Image *image_a, *image_b = NULL;
+    struct d2d1_test_context ctx;
+    ID2D1DeviceContext *context;
+    ID2D1Factory1 *factory;
+    ID2D1Effect *effect;
+    HRESULT hr;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory)))
+    {
+        win_skip("ID2D1Factory1 is not supported.\n");
+        release_test_context(&ctx);
+        return;
+    }
+
+    hr = ID2D1RenderTarget_QueryInterface(ctx.rt, &IID_ID2D1DeviceContext, (void **)&context);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ID2D1DeviceContext_CreateEffect(context, &CLSID_D2D12DAffineTransform, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = ID2D1Effect_QueryInterface(effect, &IID_ID2D1Image, (void **)&image_a);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    if (hr != S_OK)
+        goto done;
+    ID2D1Effect_GetOutput(effect, &image_b);
+    todo_wine ok(image_b == image_a, "Got unexpected image_b %p, expected %p.\n", image_b, image_a);
+    if (image_b)
+        ID2D1Image_Release(image_b);
+    ID2D1Image_Release(image_a);
+
+done:
+    ID2D1Effect_Release(effect);
+    ID2D1DeviceContext_Release(context);
+    ID2D1Factory1_Release(factory);
+    release_test_context(&ctx);
+}
+
 START_TEST(d2d1)
 {
     HMODULE d2d1_dll = GetModuleHandleA("d2d1.dll");
@@ -9739,6 +9780,7 @@ START_TEST(d2d1)
     queue_d3d10_test(test_colour_space);
     queue_test(test_geometry_group);
     queue_test(test_mt_factory);
+    queue_test(test_effect);
 
     run_queued_tests();
 }
