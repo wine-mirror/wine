@@ -4177,6 +4177,22 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBPASS_SHADING_FEATURES_HUAWEI:
+        {
+            const VkPhysicalDeviceSubpassShadingFeaturesHUAWEI *in = (const VkPhysicalDeviceSubpassShadingFeaturesHUAWEI *)in_header;
+            VkPhysicalDeviceSubpassShadingFeaturesHUAWEI *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->subpassShading = in->subpassShading;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_IMAGE_ATOMIC_INT64_FEATURES_EXT:
         {
             const VkPhysicalDeviceShaderImageAtomicInt64FeaturesEXT *in = (const VkPhysicalDeviceShaderImageAtomicInt64FeaturesEXT *)in_header;
@@ -5829,6 +5845,12 @@ static void WINAPI wine_vkCmdSetViewportWithCountEXT(VkCommandBuffer commandBuff
     commandBuffer->device->funcs.p_vkCmdSetViewportWithCountEXT(commandBuffer->command_buffer, viewportCount, pViewports);
 }
 
+static void WINAPI wine_vkCmdSubpassShadingHUAWEI(VkCommandBuffer commandBuffer)
+{
+    TRACE("%p\n", commandBuffer);
+    commandBuffer->device->funcs.p_vkCmdSubpassShadingHUAWEI(commandBuffer->command_buffer);
+}
+
 static void WINAPI wine_vkCmdTraceRaysIndirectKHR(VkCommandBuffer commandBuffer, const VkStridedDeviceAddressRegionKHR *pRaygenShaderBindingTable, const VkStridedDeviceAddressRegionKHR *pMissShaderBindingTable, const VkStridedDeviceAddressRegionKHR *pHitShaderBindingTable, const VkStridedDeviceAddressRegionKHR *pCallableShaderBindingTable, VkDeviceAddress indirectDeviceAddress)
 {
 #if defined(USE_STRUCT_CONVERSION)
@@ -6971,6 +6993,12 @@ static uint64_t WINAPI wine_vkGetDeviceMemoryOpaqueCaptureAddressKHR(VkDevice de
 #endif
 }
 
+static VkResult WINAPI wine_vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI(VkDevice device, VkRenderPass renderpass, VkExtent2D *pMaxWorkgroupSize)
+{
+    TRACE("%p, 0x%s, %p\n", device, wine_dbgstr_longlong(renderpass), pMaxWorkgroupSize);
+    return device->funcs.p_vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI(device->device, renderpass, pMaxWorkgroupSize);
+}
+
 static VkResult WINAPI wine_vkGetEventStatus(VkDevice device, VkEvent event)
 {
     TRACE("%p, 0x%s\n", device, wine_dbgstr_longlong(event));
@@ -8089,6 +8117,7 @@ static const char * const vk_device_extensions[] =
     "VK_GOOGLE_hlsl_functionality1",
     "VK_GOOGLE_user_type",
     "VK_HUAWEI_invocation_mask",
+    "VK_HUAWEI_subpass_shading",
     "VK_IMG_filter_cubic",
     "VK_IMG_format_pvrtc",
     "VK_INTEL_performance_query",
@@ -8421,6 +8450,7 @@ const struct unix_funcs loader_funcs =
     &wine_vkCmdSetViewportShadingRatePaletteNV,
     &wine_vkCmdSetViewportWScalingNV,
     &wine_vkCmdSetViewportWithCountEXT,
+    &wine_vkCmdSubpassShadingHUAWEI,
     &wine_vkCmdTraceRaysIndirectKHR,
     &wine_vkCmdTraceRaysKHR,
     &wine_vkCmdTraceRaysNV,
@@ -8559,6 +8589,7 @@ const struct unix_funcs loader_funcs =
     &wine_vkGetDeviceMemoryOpaqueCaptureAddressKHR,
     &wine_vkGetDeviceQueue,
     &wine_vkGetDeviceQueue2,
+    &wine_vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI,
     &wine_vkGetEventStatus,
     &wine_vkGetFenceStatus,
     &wine_vkGetGeneratedCommandsMemoryRequirementsNV,

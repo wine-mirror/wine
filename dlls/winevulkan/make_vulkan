@@ -117,9 +117,6 @@ UNSUPPORTED_EXTENSIONS = [
     # Extensions which require callback handling
     "VK_EXT_device_memory_report",
 
-    # Extensions which are broken
-    "VK_HUAWEI_subpass_shading", # https://github.com/KhronosGroup/Vulkan-Docs/issues/1564
-
     # Deprecated extensions
     "VK_NV_external_memory_capabilities",
     "VK_NV_external_memory_win32",

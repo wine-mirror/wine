@@ -758,6 +758,11 @@ void WINAPI vkCmdSetViewportWithCountEXT(VkCommandBuffer commandBuffer, uint32_t
     unix_funcs->p_vkCmdSetViewportWithCountEXT(commandBuffer, viewportCount, pViewports);
 }
 
+void WINAPI vkCmdSubpassShadingHUAWEI(VkCommandBuffer commandBuffer)
+{
+    unix_funcs->p_vkCmdSubpassShadingHUAWEI(commandBuffer);
+}
+
 void WINAPI vkCmdTraceRaysIndirectKHR(VkCommandBuffer commandBuffer, const VkStridedDeviceAddressRegionKHR *pRaygenShaderBindingTable, const VkStridedDeviceAddressRegionKHR *pMissShaderBindingTable, const VkStridedDeviceAddressRegionKHR *pHitShaderBindingTable, const VkStridedDeviceAddressRegionKHR *pCallableShaderBindingTable, VkDeviceAddress indirectDeviceAddress)
 {
     unix_funcs->p_vkCmdTraceRaysIndirectKHR(commandBuffer, pRaygenShaderBindingTable, pMissShaderBindingTable, pHitShaderBindingTable, pCallableShaderBindingTable, indirectDeviceAddress);
@@ -1431,6 +1436,11 @@ void WINAPI vkGetDeviceQueue(VkDevice device, uint32_t queueFamilyIndex, uint32_
 void WINAPI vkGetDeviceQueue2(VkDevice device, const VkDeviceQueueInfo2 *pQueueInfo, VkQueue *pQueue)
 {
     unix_funcs->p_vkGetDeviceQueue2(device, pQueueInfo, pQueue);
+}
+
+VkResult WINAPI vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI(VkDevice device, VkRenderPass renderpass, VkExtent2D *pMaxWorkgroupSize)
+{
+    return unix_funcs->p_vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI(device, renderpass, pMaxWorkgroupSize);
 }
 
 VkResult WINAPI vkGetEventStatus(VkDevice device, VkEvent event)
@@ -2154,6 +2164,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdSetViewportShadingRatePaletteNV", &vkCmdSetViewportShadingRatePaletteNV},
     {"vkCmdSetViewportWScalingNV", &vkCmdSetViewportWScalingNV},
     {"vkCmdSetViewportWithCountEXT", &vkCmdSetViewportWithCountEXT},
+    {"vkCmdSubpassShadingHUAWEI", &vkCmdSubpassShadingHUAWEI},
     {"vkCmdTraceRaysIndirectKHR", &vkCmdTraceRaysIndirectKHR},
     {"vkCmdTraceRaysKHR", &vkCmdTraceRaysKHR},
     {"vkCmdTraceRaysNV", &vkCmdTraceRaysNV},
@@ -2275,6 +2286,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetDeviceProcAddr", &vkGetDeviceProcAddr},
     {"vkGetDeviceQueue", &vkGetDeviceQueue},
     {"vkGetDeviceQueue2", &vkGetDeviceQueue2},
+    {"vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI", &vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI},
     {"vkGetEventStatus", &vkGetEventStatus},
     {"vkGetFenceStatus", &vkGetFenceStatus},
     {"vkGetGeneratedCommandsMemoryRequirementsNV", &vkGetGeneratedCommandsMemoryRequirementsNV},
