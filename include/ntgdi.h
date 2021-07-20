@@ -89,6 +89,7 @@ enum
 typedef struct DC_ATTR
 {
     POINT     cur_pos;
+    void     *emf;
 } DC_ATTR;
 
 #endif /* __WINESRC__ */

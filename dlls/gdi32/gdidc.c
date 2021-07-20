@@ -25,14 +25,30 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 
+static DC_ATTR *get_dc_attr( HDC hdc )
+{
+    WORD type = gdi_handle_type( hdc );
+    DC_ATTR *dc_attr;
+    if ((type & 0x1f) != NTGDI_OBJ_DC || !(dc_attr = get_gdi_client_ptr( hdc, 0 )))
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return NULL;
+    }
+    return dc_attr;
+}
+
 /***********************************************************************
  *           LineTo    (GDI32.@)
  */
 BOOL WINAPI LineTo( HDC hdc, INT x, INT y )
 {
+    DC_ATTR *dc_attr;
+
     TRACE( "%p, (%d, %d)\n", hdc, x, y );
 
     if (is_meta_dc( hdc )) return METADC_LineTo( hdc, x, y );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_LineTo( dc_attr, x, y )) return FALSE;
     return NtGdiLineTo( hdc, x, y );
 }
 

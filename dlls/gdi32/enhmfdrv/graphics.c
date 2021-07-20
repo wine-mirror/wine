@@ -133,23 +133,29 @@ BOOL CDECL EMFDRV_MoveTo(PHYSDEV dev, INT x, INT y)
 }
 
 /***********************************************************************
+ *           EMFDC_LineTo
+ */
+BOOL EMFDC_LineTo( DC_ATTR *dc_attr, INT x, INT y )
+{
+    EMRLINETO emr;
+
+    emr.emr.iType = EMR_LINETO;
+    emr.emr.nSize = sizeof(emr);
+    emr.ptl.x = x;
+    emr.ptl.y = y;
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+}
+
+
+/***********************************************************************
  *           EMFDRV_LineTo
  */
 BOOL CDECL EMFDRV_LineTo( PHYSDEV dev, INT x, INT y )
 {
     EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     DC *dc = get_physdev_dc( dev );
-    POINT pt;
-    EMRLINETO emr;
     RECTL bounds;
-
-    emr.emr.iType = EMR_LINETO;
-    emr.emr.nSize = sizeof(emr);
-    emr.ptl.x = x;
-    emr.ptl.y = y;
-
-    if(!EMFDRV_WriteRecord( dev, &emr.emr ))
-    	return FALSE;
+    POINT pt;
 
     pt = dc->attr->cur_pos;
 
@@ -157,13 +163,9 @@ BOOL CDECL EMFDRV_LineTo( PHYSDEV dev, INT x, INT y )
     bounds.top    = min(y, pt.y);
     bounds.right  = max(x, pt.x);
     bounds.bottom = max(y, pt.y);
-
-    if(!physDev->path)
-        EMFDRV_UpdateBBox( dev, &bounds );
-
+    EMFDRV_UpdateBBox( &physDev->dev, &bounds );
     return TRUE;
 }
-
 
 /***********************************************************************
  *           EMFDRV_ArcChordPie

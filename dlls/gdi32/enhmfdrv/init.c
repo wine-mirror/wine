@@ -342,6 +342,7 @@ HDC WINAPI CreateEnhMetaFileW(
         free_dc_ptr( dc );
         return 0;
     }
+    dc->attr->emf = physDev;
     if(description) { /* App name\0Title\0\0 */
         length = lstrlenW(description);
 	length += lstrlenW(description + length + 1);
