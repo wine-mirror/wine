@@ -75,12 +75,29 @@ void WINAPI UXTHEME_ScrollBarDraw(HWND hwnd, HDC dc, INT bar, enum SCROLL_HITTES
             lowertrackstate = SCRBS_NORMAL;
             thumbstate = SCRBS_NORMAL;
 
-            if (hit_test == SCROLL_TOP_RECT)
-                uppertrackstate = SCRBS_HOT;
-            else if (hit_test == SCROLL_BOTTOM_RECT)
-                lowertrackstate = SCRBS_HOT;
-            else if (hit_test == SCROLL_THUMB)
-                thumbstate = SCRBS_HOT;
+            if (vertical == tracking_info->vertical && hit_test == tracking_info->hit_test
+                && GetCapture() == hwnd)
+            {
+                if (hit_test == SCROLL_TOP_RECT)
+                    uppertrackstate = SCRBS_PRESSED;
+                else if (hit_test == SCROLL_BOTTOM_RECT)
+                    lowertrackstate = SCRBS_PRESSED;
+                else if (hit_test == SCROLL_THUMB)
+                    thumbstate = SCRBS_PRESSED;
+            }
+            else
+            {
+                if (hit_test == SCROLL_TOP_RECT)
+                    uppertrackstate = SCRBS_HOT;
+                else if (hit_test == SCROLL_BOTTOM_RECT)
+                    lowertrackstate = SCRBS_HOT;
+                else if (hit_test == SCROLL_THUMB)
+                    thumbstate = SCRBS_HOT;
+            }
+
+            /* Thumb is also shown as pressed when tracking */
+            if (tracking_info->win == hwnd && tracking_info->bar == bar)
+                thumbstate = SCRBS_PRESSED;
         }
 
         if (bar == SB_CTL)
@@ -96,10 +113,21 @@ void WINAPI UXTHEME_ScrollBarDraw(HWND hwnd, HDC dc, INT bar, enum SCROLL_HITTES
                 uparrowstate = ABS_UPNORMAL;
                 downarrowstate = ABS_DOWNNORMAL;
 
-                if (hit_test == SCROLL_TOP_ARROW)
-                    uparrowstate = ABS_UPHOT;
-                else if (hit_test == SCROLL_BOTTOM_ARROW)
-                    downarrowstate = ABS_DOWNHOT;
+                if (vertical == tracking_info->vertical && hit_test == tracking_info->hit_test
+                    && GetCapture() == hwnd)
+                {
+                    if (hit_test == SCROLL_TOP_ARROW)
+                        uparrowstate = ABS_UPPRESSED;
+                    else if (hit_test == SCROLL_BOTTOM_ARROW)
+                        downarrowstate = ABS_DOWNPRESSED;
+                }
+                else
+                {
+                    if (hit_test == SCROLL_TOP_ARROW)
+                        uparrowstate = ABS_UPHOT;
+                    else if (hit_test == SCROLL_BOTTOM_ARROW)
+                        downarrowstate = ABS_DOWNHOT;
+                }
             }
 
             partrect = *rect;
@@ -150,10 +178,21 @@ void WINAPI UXTHEME_ScrollBarDraw(HWND hwnd, HDC dc, INT bar, enum SCROLL_HITTES
                 leftarrowstate = ABS_LEFTNORMAL;
                 rightarrowstate = ABS_RIGHTNORMAL;
 
-                if (hit_test == SCROLL_TOP_ARROW)
-                    leftarrowstate = ABS_LEFTHOT;
-                else if (hit_test == SCROLL_BOTTOM_ARROW)
-                    rightarrowstate = ABS_RIGHTHOT;
+                if (vertical == tracking_info->vertical && hit_test == tracking_info->hit_test
+                    && GetCapture() == hwnd)
+                {
+                    if (hit_test == SCROLL_TOP_ARROW)
+                        leftarrowstate = ABS_LEFTPRESSED;
+                    else if (hit_test == SCROLL_BOTTOM_ARROW)
+                        rightarrowstate = ABS_RIGHTPRESSED;
+                }
+                else
+                {
+                    if (hit_test == SCROLL_TOP_ARROW)
+                        leftarrowstate = ABS_LEFTHOT;
+                    else if (hit_test == SCROLL_BOTTOM_ARROW)
+                        rightarrowstate = ABS_RIGHTHOT;
+                }
             }
 
             partrect = *rect;
