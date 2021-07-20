@@ -776,15 +776,13 @@ BOOL WINAPI PolyBezierTo( HDC hdc, const POINT* lppt, DWORD cPoints )
 }
 
 /***********************************************************************
- *      AngleArc (GDI32.@)
+ *      NtGdiAngleArc (win32u.@)
  */
-BOOL WINAPI AngleArc(HDC hdc, INT x, INT y, DWORD dwRadius, FLOAT eStartAngle, FLOAT eSweepAngle)
+BOOL WINAPI NtGdiAngleArc( HDC hdc, INT x, INT y, DWORD dwRadius, FLOAT eStartAngle, FLOAT eSweepAngle )
 {
     PHYSDEV physdev;
     BOOL result;
     DC *dc;
-
-    TRACE( "%p, (%d, %d), %u, %f, %f\n", hdc, x, y, dwRadius, eStartAngle, eSweepAngle );
 
     if( (signed int)dwRadius < 0 )
 	return FALSE;

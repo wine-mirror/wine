@@ -171,6 +171,21 @@ BOOL WINAPI Pie( HDC hdc, INT left, INT top, INT right, INT bottom,
 }
 
 /***********************************************************************
+ *      AngleArc (GDI32.@)
+ */
+BOOL WINAPI AngleArc( HDC hdc, INT x, INT y, DWORD radius, FLOAT start_angle, FLOAT sweep_angle )
+{
+    DC_ATTR *dc_attr;
+
+    TRACE( "%p, (%d, %d), %u, %f, %f\n", hdc, x, y, radius, start_angle, sweep_angle );
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_AngleArc( dc_attr, x, y, radius, start_angle, sweep_angle ))
+        return FALSE;
+    return NtGdiAngleArc( hdc, x, y, radius, start_angle, sweep_angle );
+}
+
+/***********************************************************************
  *           Ellipse    (GDI32.@)
  */
 BOOL WINAPI Ellipse( HDC hdc, INT left, INT top, INT right, INT bottom )

@@ -355,9 +355,9 @@ BOOL CDECL EMFDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 }
 
 /***********************************************************************
- *           EMFDRV_AngleArc
+ *           EMFDC_AngleArc
  */
-BOOL CDECL EMFDRV_AngleArc( PHYSDEV dev, INT x, INT y, DWORD radius, FLOAT start, FLOAT sweep )
+BOOL EMFDC_AngleArc( DC_ATTR *dc_attr, INT x, INT y, DWORD radius, FLOAT start, FLOAT sweep )
 {
     EMRANGLEARC emr;
 
@@ -369,7 +369,7 @@ BOOL CDECL EMFDRV_AngleArc( PHYSDEV dev, INT x, INT y, DWORD radius, FLOAT start
     emr.eStartAngle = start;
     emr.eSweepAngle = sweep;
 
-    return EMFDRV_WriteRecord( dev, &emr.emr );
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 /***********************************************************************

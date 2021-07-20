@@ -61,7 +61,6 @@ extern DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush ) DECLSPEC_H
 extern BOOL     CDECL EMFDRV_AbortPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_AlphaBlend( PHYSDEV dev_dst, struct bitblt_coords *dst,
                                          PHYSDEV dev_src, struct bitblt_coords *src, BLENDFUNCTION func ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL EMFDRV_AngleArc( PHYSDEV dev, INT x, INT y, DWORD radius, FLOAT start, FLOAT sweep ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_Arc( PHYSDEV dev, INT left, INT top, INT right,
                                   INT bottom, INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_ArcTo( PHYSDEV dev, INT left, INT top, INT right,

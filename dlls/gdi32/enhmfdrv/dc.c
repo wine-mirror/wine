@@ -601,18 +601,6 @@ static BOOL CDECL emfpathdrv_AbortPath( PHYSDEV dev )
 }
 
 /***********************************************************************
- *           emfpathdrv_AngleArc
- */
-static BOOL CDECL emfpathdrv_AngleArc( PHYSDEV dev, INT x, INT y, DWORD radius, FLOAT start, FLOAT sweep )
-{
-    PHYSDEV emfdev = get_emfdev( dev );
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pAngleArc );
-
-    return (emfdev->funcs->pAngleArc( emfdev, x, y, radius, start, sweep ) &&
-            next->funcs->pAngleArc( next, x, y, radius, start, sweep ));
-}
-
-/***********************************************************************
  *           emfpathdrv_BeginPath
  */
 static BOOL CDECL emfpathdrv_BeginPath( PHYSDEV dev )
@@ -785,7 +773,7 @@ static const struct gdi_dc_funcs emfpath_driver =
     NULL,                               /* pAbortDoc */
     emfpathdrv_AbortPath,               /* pAbortPath */
     NULL,                               /* pAlphaBlend */
-    emfpathdrv_AngleArc,                /* pAngleArc */
+    NULL,                               /* pAngleArc */
     NULL,                               /* pArc */
     NULL,                               /* pArcTo */
     emfpathdrv_BeginPath,               /* pBeginPath */
