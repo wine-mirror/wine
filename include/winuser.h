@@ -4411,6 +4411,7 @@ WINUSERAPI BOOL CDECL __wine_send_input( HWND hwnd, const INPUT *input, const RA
 /* Uxtheme hook functions and struct */
 struct user_api_hook
 {
+    LRESULT (WINAPI *pDefDlgProc)(HWND, UINT, WPARAM, LPARAM, BOOL);
     LRESULT (WINAPI *pScrollBarWndProc)(HWND, UINT, WPARAM, LPARAM, BOOL);
 };
 

@@ -102,6 +102,7 @@ extern void UXTHEME_InitSystem(HINSTANCE hInst) DECLSPEC_HIDDEN;
 extern void UXTHEME_UninitSystem(void) DECLSPEC_HIDDEN;
 
 extern struct user_api_hook user_api DECLSPEC_HIDDEN;
+LRESULT WINAPI UXTHEME_DefDlgProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL unicode) DECLSPEC_HIDDEN;
 LRESULT WINAPI UXTHEME_ScrollbarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
                                         BOOL unicode) DECLSPEC_HIDDEN;
 
