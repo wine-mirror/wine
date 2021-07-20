@@ -272,11 +272,19 @@ static void test_advise(void)
     ok(hr == S_OK, "Got hr %#x.\n", hr);
     ok(WaitForSingleObject(semaphore, 200) == WAIT_TIMEOUT, "Semaphore should not be signaled.\n");
 
-    CloseHandle(event);
-    CloseHandle(semaphore);
+    ResetEvent(event);
+    hr = IReferenceClock_GetTime(clock, &current);
+    ok(SUCCEEDED(hr), "Got hr %#x.\n", hr);
+    hr = IReferenceClock_AdviseTime(clock, current, 500 * 10000, (HEVENT)event, &cookie);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
 
     ref = IReferenceClock_Release(clock);
     ok(!ref, "Got outstanding refcount %d.\n", ref);
+
+    ok(WaitForSingleObject(event, 0) == WAIT_TIMEOUT, "Event should not be signaled.\n");
+
+    CloseHandle(event);
+    CloseHandle(semaphore);
 }
 
 START_TEST(systemclock)

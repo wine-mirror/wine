@@ -90,6 +90,7 @@ static ULONG WINAPI system_clock_inner_Release(IUnknown *iface)
 {
     struct system_clock *clock = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedDecrement(&clock->refcount);
+    struct advise_sink *sink, *cursor;
 
     TRACE("%p decreasing refcount to %u.\n", clock, refcount);
 
@@ -104,6 +105,13 @@ static ULONG WINAPI system_clock_inner_Release(IUnknown *iface)
             WaitForSingleObject(clock->thread, INFINITE);
             CloseHandle(clock->thread);
         }
+
+        LIST_FOR_EACH_ENTRY_SAFE(sink, cursor, &clock->sinks, struct advise_sink, entry)
+        {
+            list_remove(&sink->entry);
+            heap_free(sink);
+        }
+
         clock->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&clock->cs);
         heap_free(clock);
