@@ -613,32 +613,6 @@ static BOOL CDECL emfpathdrv_AngleArc( PHYSDEV dev, INT x, INT y, DWORD radius, 
 }
 
 /***********************************************************************
- *           emfpathdrv_Arc
- */
-static BOOL CDECL emfpathdrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                                  INT xstart, INT ystart, INT xend, INT yend )
-{
-    PHYSDEV emfdev = get_emfdev( dev );
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pArc );
-
-    return (emfdev->funcs->pArc( emfdev, left, top, right, bottom, xstart, ystart, xend, yend ) &&
-            next->funcs->pArc( next, left, top, right, bottom, xstart, ystart, xend, yend ));
-}
-
-/***********************************************************************
- *           emfpathdrv_ArcTo
- */
-static BOOL CDECL emfpathdrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                                    INT xstart, INT ystart, INT xend, INT yend )
-{
-    PHYSDEV emfdev = get_emfdev( dev );
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pArcTo );
-
-    return (emfdev->funcs->pArcTo( emfdev, left, top, right, bottom, xstart, ystart, xend, yend ) &&
-            next->funcs->pArcTo( next, left, top, right, bottom, xstart, ystart, xend, yend ));
-}
-
-/***********************************************************************
  *           emfpathdrv_BeginPath
  */
 static BOOL CDECL emfpathdrv_BeginPath( PHYSDEV dev )
@@ -647,19 +621,6 @@ static BOOL CDECL emfpathdrv_BeginPath( PHYSDEV dev )
     PHYSDEV next = GET_NEXT_PHYSDEV( dev, pBeginPath );
 
     return (emfdev->funcs->pBeginPath( emfdev ) && next->funcs->pBeginPath( next ));
-}
-
-/***********************************************************************
- *           emfpathdrv_Chord
- */
-static BOOL CDECL emfpathdrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                                    INT xstart, INT ystart, INT xend, INT yend )
-{
-    PHYSDEV emfdev = get_emfdev( dev );
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pChord );
-
-    return (emfdev->funcs->pChord( emfdev, left, top, right, bottom, xstart, ystart, xend, yend ) &&
-            next->funcs->pChord( next, left, top, right, bottom, xstart, ystart, xend, yend ));
 }
 
 /***********************************************************************
@@ -732,19 +693,6 @@ static BOOL CDECL emfpathdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, 
 
     return (emfdev->funcs->pExtTextOut( emfdev, x, y, flags, rect, str, count, dx ) &&
             next->funcs->pExtTextOut( next, x, y, flags, rect, str, count, dx ));
-}
-
-/***********************************************************************
- *           emfpathdrv_Pie
- */
-static BOOL CDECL emfpathdrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                                  INT xstart, INT ystart, INT xend, INT yend )
-{
-    PHYSDEV emfdev = get_emfdev( dev );
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pPie );
-
-    return (emfdev->funcs->pPie( emfdev, left, top, right, bottom, xstart, ystart, xend, yend ) &&
-            next->funcs->pPie( next, left, top, right, bottom, xstart, ystart, xend, yend ));
 }
 
 /***********************************************************************
@@ -875,11 +823,11 @@ static const struct gdi_dc_funcs emfpath_driver =
     emfpathdrv_AbortPath,               /* pAbortPath */
     NULL,                               /* pAlphaBlend */
     emfpathdrv_AngleArc,                /* pAngleArc */
-    emfpathdrv_Arc,                     /* pArc */
-    emfpathdrv_ArcTo,                   /* pArcTo */
+    NULL,                               /* pArc */
+    NULL,                               /* pArcTo */
     emfpathdrv_BeginPath,               /* pBeginPath */
     NULL,                               /* pBlendImage */
-    emfpathdrv_Chord,                   /* pChord */
+    NULL,                               /* pChord */
     emfpathdrv_CloseFigure,             /* pCloseFigure */
     NULL,                               /* pCreateCompatibleDC */
     emfpathdrv_CreateDC,                /* pCreateDC */
@@ -939,7 +887,7 @@ static const struct gdi_dc_funcs emfpath_driver =
     NULL,                               /* pOffsetWindowOrg */
     NULL,                               /* pPaintRgn */
     NULL,                               /* pPatBlt */
-    emfpathdrv_Pie,                     /* pPie */
+    NULL,                               /* pPie */
     emfpathdrv_PolyBezier,              /* pPolyBezier */
     emfpathdrv_PolyBezierTo,            /* pPolyBezierTo */
     emfpathdrv_PolyDraw,                /* pPolyDraw */

@@ -84,12 +84,19 @@ BOOL WINAPI MoveToEx( HDC hdc, INT x, INT y, POINT *pt )
 BOOL WINAPI Arc( HDC hdc, INT left, INT top, INT right, INT bottom,
                  INT xstart, INT ystart, INT xend, INT yend )
 {
+    DC_ATTR *dc_attr;
+
     TRACE( "%p, (%d, %d)-(%d, %d), (%d, %d), (%d, %d)\n", hdc, left, top,
            right, bottom, xstart, ystart, xend, yend );
 
     if (is_meta_dc( hdc ))
         return METADC_Arc( hdc, left, top, right, bottom,
                            xstart, ystart, xend, yend );
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_ArcChordPie( dc_attr, left, top, right, bottom,
+                                            xstart, ystart, xend, yend, EMR_ARC ))
+        return FALSE;
 
     return NtGdiArcInternal( NtGdiArc, hdc, left, top, right, bottom,
                              xstart, ystart, xend, yend );
@@ -101,8 +108,15 @@ BOOL WINAPI Arc( HDC hdc, INT left, INT top, INT right, INT bottom,
 BOOL WINAPI ArcTo( HDC hdc, INT left, INT top, INT right, INT bottom,
                    INT xstart, INT ystart, INT xend, INT yend )
 {
+    DC_ATTR *dc_attr;
+
     TRACE( "%p, (%d, %d)-(%d, %d), (%d, %d), (%d, %d)\n", hdc, left, top,
            right, bottom, xstart, ystart, xend, yend );
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_ArcChordPie( dc_attr, left, top, right, bottom,
+                                            xstart, ystart, xend, yend, EMR_ARCTO ))
+        return FALSE;
 
     return NtGdiArcInternal( NtGdiArcTo, hdc, left, top, right, bottom,
                              xstart, ystart, xend, yend );
@@ -114,12 +128,19 @@ BOOL WINAPI ArcTo( HDC hdc, INT left, INT top, INT right, INT bottom,
 BOOL WINAPI Chord( HDC hdc, INT left, INT top, INT right, INT bottom,
                    INT xstart, INT ystart, INT xend, INT yend )
 {
+    DC_ATTR *dc_attr;
+
     TRACE( "%p, (%d, %d)-(%d, %d), (%d, %d), (%d, %d)\n", hdc, left, top,
            right, bottom, xstart, ystart, xend, yend );
 
     if (is_meta_dc( hdc ))
         return METADC_Chord( hdc, left, top, right, bottom,
                              xstart, ystart, xend, yend );
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_ArcChordPie( dc_attr, left, top, right, bottom,
+                                            xstart, ystart, xend, yend, EMR_CHORD ))
+        return FALSE;
 
     return NtGdiArcInternal( NtGdiChord, hdc, left, top, right, bottom,
                              xstart, ystart, xend, yend );
@@ -131,12 +152,19 @@ BOOL WINAPI Chord( HDC hdc, INT left, INT top, INT right, INT bottom,
 BOOL WINAPI Pie( HDC hdc, INT left, INT top, INT right, INT bottom,
                  INT xstart, INT ystart, INT xend, INT yend )
 {
+    DC_ATTR *dc_attr;
+
     TRACE( "%p, (%d, %d)-(%d, %d), (%d, %d), (%d, %d)\n", hdc, left, top,
            right, bottom, xstart, ystart, xend, yend );
 
     if (is_meta_dc( hdc ))
         return METADC_Pie( hdc, left, top, right, bottom,
                            xstart, ystart, xend, yend );
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_ArcChordPie( dc_attr, left, top, right, bottom,
+                                            xstart, ystart, xend, yend, EMR_PIE ))
+        return FALSE;
 
     return NtGdiArcInternal( NtGdiPie, hdc, left, top, right, bottom,
                              xstart, ystart, xend, yend );

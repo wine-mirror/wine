@@ -169,13 +169,45 @@ BOOL CDECL EMFDRV_LineTo( PHYSDEV dev, INT x, INT y )
 }
 
 /***********************************************************************
+ *           EMFDC_ArcChordPie
+ */
+BOOL EMFDC_ArcChordPie( DC_ATTR *dc_attr, INT left, INT top, INT right, INT bottom,
+                        INT xstart, INT ystart, INT xend, INT yend, DWORD type )
+{
+    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    EMRARC emr;
+    INT temp;
+
+    if (left == right || top == bottom) return FALSE;
+
+    if (left > right) { temp = left; left = right; right = temp; }
+    if (top > bottom) { temp = top; top = bottom; bottom = temp; }
+
+    if (dc_attr->graphics_mode == GM_COMPATIBLE)
+    {
+        right--;
+        bottom--;
+    }
+
+    emr.emr.iType     = type;
+    emr.emr.nSize     = sizeof(emr);
+    emr.rclBox.left   = left;
+    emr.rclBox.top    = top;
+    emr.rclBox.right  = right;
+    emr.rclBox.bottom = bottom;
+    emr.ptlStart.x    = xstart;
+    emr.ptlStart.y    = ystart;
+    emr.ptlEnd.x      = xend;
+    emr.ptlEnd.y      = yend;
+    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
+}
+
+/***********************************************************************
  *           EMFDRV_ArcChordPie
  */
-static BOOL
-EMFDRV_ArcChordPie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-		    INT xstart, INT ystart, INT xend, INT yend, DWORD iType )
+static BOOL EMFDRV_ArcChordPie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
+                                INT xstart, INT ystart, INT xend, INT yend, DWORD type )
 {
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     DC *dc = get_physdev_dc( dev );
     INT temp, xCentre, yCentre, i;
     double angleStart, angleEnd;
@@ -188,12 +220,13 @@ EMFDRV_ArcChordPie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     if(left > right) {temp = left; left = right; right = temp;}
     if(top > bottom) {temp = top; top = bottom; bottom = temp;}
 
-    if(dc->attr->graphics_mode == GM_COMPATIBLE) {
+    if (dc->attr->graphics_mode == GM_COMPATIBLE)
+    {
         right--;
-	bottom--;
+        bottom--;
     }
 
-    emr.emr.iType     = iType;
+    emr.emr.iType     = type;
     emr.emr.nSize     = sizeof(emr);
     emr.rclBox.left   = left;
     emr.rclBox.top    = top;
@@ -260,13 +293,14 @@ EMFDRV_ArcChordPie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     }
 
     /* If we're drawing a pie then make sure we include the centre */
-    if(iType == EMR_PIE) {
+    if (type == EMR_PIE)
+    {
         if(bounds.left > xCentre) bounds.left = xCentre;
 	else if(bounds.right < xCentre) bounds.right = xCentre;
 	if(bounds.top > yCentre) bounds.top = yCentre;
 	else if(bounds.bottom < yCentre) bounds.bottom = yCentre;
     }
-    if (iType == EMR_ARCTO)
+    else if (type == EMR_ARCTO)
     {
         POINT pt;
         pt = dc->attr->cur_pos;
@@ -275,13 +309,9 @@ EMFDRV_ArcChordPie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
         bounds.right  = max( bounds.right, pt.x );
         bounds.bottom = max( bounds.bottom, pt.y );
     }
-    if(!EMFDRV_WriteRecord( dev, &emr.emr ))
-        return FALSE;
-    if(!physDev->path)
-        EMFDRV_UpdateBBox( dev, &bounds );
+    EMFDRV_UpdateBBox( dev, &bounds );
     return TRUE;
 }
-
 
 /***********************************************************************
  *           EMFDRV_Arc
@@ -290,7 +320,7 @@ BOOL CDECL EMFDRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                        INT xstart, INT ystart, INT xend, INT yend )
 {
     return EMFDRV_ArcChordPie( dev, left, top, right, bottom, xstart, ystart,
-			       xend, yend, EMR_ARC );
+                               xend, yend, EMR_ARC );
 }
 
 /***********************************************************************
@@ -300,7 +330,7 @@ BOOL CDECL EMFDRV_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                          INT xstart, INT ystart, INT xend, INT yend )
 {
     return EMFDRV_ArcChordPie( dev, left, top, right, bottom, xstart, ystart,
-			       xend, yend, EMR_ARCTO );
+                               xend, yend, EMR_ARCTO );
 }
 
 /***********************************************************************
@@ -310,7 +340,7 @@ BOOL CDECL EMFDRV_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                        INT xstart, INT ystart, INT xend, INT yend )
 {
     return EMFDRV_ArcChordPie( dev, left, top, right, bottom, xstart, ystart,
-			       xend, yend, EMR_PIE );
+                               xend, yend, EMR_PIE );
 }
 
 
@@ -321,7 +351,7 @@ BOOL CDECL EMFDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                          INT xstart, INT ystart, INT xend, INT yend )
 {
     return EMFDRV_ArcChordPie( dev, left, top, right, bottom, xstart, ystart,
-			       xend, yend, EMR_CHORD );
+                              xend, yend, EMR_CHORD );
 }
 
 /***********************************************************************

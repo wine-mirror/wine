@@ -52,6 +52,9 @@ extern BOOL METADC_Pie( HDC hdc, INT left, INT top, INT right, INT bottom,
                         INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
 
 /* enhanced metafiles */
+extern BOOL EMFDC_ArcChordPie( DC_ATTR *dc_attr, INT left, INT top, INT right,
+                               INT bottom, INT xstart, INT ystart, INT xend,
+                               INT yend, DWORD type ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_LineTo( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_MoveTo( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
 
