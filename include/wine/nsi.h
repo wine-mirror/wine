@@ -19,6 +19,8 @@
 #ifndef __WINE_NSI_H
 #define __WINE_NSI_H
 
+#include "inaddr.h"
+#include "in6addr.h"
 #include "winioctl.h"
 
 /* Undocumented NSI NDIS tables */
@@ -92,6 +94,43 @@ struct nsi_ndis_ifinfo_static
     } flags;
     DWORD media_type;
     DWORD phys_medium_type;
+};
+
+/* Undocumented NSI IP tables */
+#define NSI_IP_UNICAST_TABLE              10
+
+struct nsi_ipv4_unicast_key
+{
+    NET_LUID luid;
+    IN_ADDR addr;
+    DWORD pad;
+};
+
+struct nsi_ipv6_unicast_key
+{
+    NET_LUID luid;
+    IN6_ADDR addr;
+};
+
+struct nsi_ip_unicast_rw
+{
+    DWORD preferred_lifetime;
+    DWORD valid_lifetime;
+    DWORD prefix_origin;
+    DWORD suffix_origin;
+    DWORD on_link_prefix;
+    DWORD unk[2];
+};
+
+struct nsi_ip_unicast_dynamic
+{
+    DWORD scope_id;
+    DWORD dad_state;
+};
+
+struct nsi_ip_unicast_static
+{
+    ULONG64 creation_time;
 };
 
 /* Wine specific ioctl interface */

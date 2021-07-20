@@ -613,6 +613,27 @@ static NTSTATUS index_luid_get_parameter( const void *key, DWORD key_size, DWORD
     return status;
 }
 
+BOOL convert_unix_name_to_luid( const char *unix_name, NET_LUID *luid )
+{
+    struct if_entry *entry;
+    BOOL ret = FALSE;
+
+    EnterCriticalSection( &if_list_cs );
+
+    update_if_table();
+
+    LIST_FOR_EACH_ENTRY( entry, &if_list, struct if_entry, entry )
+        if (!strcmp( entry->if_unix_name, unix_name ))
+        {
+            *luid = entry->if_luid;
+            ret = TRUE;
+            break;
+        }
+    LeaveCriticalSection( &if_list_cs );
+
+    return ret;
+}
+
 static const struct module_table tables[] =
 {
     {

@@ -38,6 +38,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(nsi);
 static const struct module *modules[] =
 {
     &ndis_module,
+    &ipv4_module,
+    &ipv6_module,
 };
 
 static const struct module_table *get_module_table( const NPI_MODULEID *id, DWORD table )

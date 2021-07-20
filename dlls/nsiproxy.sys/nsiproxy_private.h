@@ -22,6 +22,8 @@ NTSTATUS nsi_enumerate_all_ex( struct nsi_enumerate_all_ex *params ) DECLSPEC_HI
 NTSTATUS nsi_get_all_parameters_ex( struct nsi_get_all_parameters_ex *params ) DECLSPEC_HIDDEN;
 NTSTATUS nsi_get_parameter_ex( struct nsi_get_parameter_ex *params ) DECLSPEC_HIDDEN;
 
+BOOL convert_unix_name_to_luid( const char *unix_name, NET_LUID *luid ) DECLSPEC_HIDDEN;
+
 struct module_table
 {
     DWORD table;
@@ -43,3 +45,5 @@ struct module
 };
 
 extern const struct module ndis_module DECLSPEC_HIDDEN;
+extern const struct module ipv4_module DECLSPEC_HIDDEN;
+extern const struct module ipv6_module DECLSPEC_HIDDEN;
