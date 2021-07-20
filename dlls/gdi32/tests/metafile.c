@@ -3017,6 +3017,9 @@ static void test_metafile_file(void)
     ret = Ellipse(dc, 0, 0, 2, 2);
     ok( ret, "Ellipse error %d.\n", GetLastError());
 
+    ret = GetCurrentPositionEx(dc, &oldpoint);
+    ok(!ret, "GetCurrentPositionEx succeeded\n");
+
     size = GetFileSize(file, NULL);
     ok(!size, "size = %u\n", size);
 

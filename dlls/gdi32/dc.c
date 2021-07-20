@@ -1834,19 +1834,6 @@ BOOL WINAPI GetBrushOrgEx( HDC hdc, LPPOINT pt )
 
 
 /***********************************************************************
- *		GetCurrentPositionEx (GDI32.@)
- */
-BOOL WINAPI GetCurrentPositionEx( HDC hdc, LPPOINT pt )
-{
-    DC * dc = get_dc_ptr( hdc );
-    if (!dc) return FALSE;
-    *pt = dc->attr->cur_pos;
-    release_dc_ptr( dc );
-    return TRUE;
-}
-
-
-/***********************************************************************
  *		GetViewportExtEx (GDI32.@)
  */
 BOOL WINAPI GetViewportExtEx( HDC hdc, LPSIZE size )

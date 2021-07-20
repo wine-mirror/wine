@@ -38,6 +38,17 @@ static DC_ATTR *get_dc_attr( HDC hdc )
 }
 
 /***********************************************************************
+ *		GetCurrentPositionEx (GDI32.@)
+ */
+BOOL WINAPI GetCurrentPositionEx( HDC hdc, POINT *point )
+{
+    DC_ATTR *dc_attr;
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    *point = dc_attr->cur_pos;
+    return TRUE;
+}
+
+/***********************************************************************
  *           LineTo    (GDI32.@)
  */
 BOOL WINAPI LineTo( HDC hdc, INT x, INT y )
