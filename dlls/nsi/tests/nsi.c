@@ -470,7 +470,6 @@ static void test_ip_unicast( int family )
         /* SkipAsSource */
         ok( row->DadState == dyn->dad_state, "mismatch\n" );
         ok( row->ScopeId.Value == dyn->scope_id, "mismatch\n" );
-todo_wine
         ok( row->CreationTimeStamp.QuadPart == stat->creation_time, "mismatch\n" );
         winetest_pop_context();
     }
