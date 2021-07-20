@@ -126,6 +126,7 @@ struct media_engine
     double default_playback_rate;
     double volume;
     double duration;
+    MF_MEDIA_ENGINE_NETWORK network_state;
     MF_MEDIA_ENGINE_ERR error_code;
     HRESULT extended_code;
     MF_MEDIA_ENGINE_READY ready_state;
@@ -1190,6 +1191,7 @@ static HRESULT WINAPI media_engine_load_handler_Invoke(IMFAsyncCallback *iface, 
 
     EnterCriticalSection(&engine->cs);
 
+    engine->network_state = MF_MEDIA_ENGINE_NETWORK_LOADING;
     IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_LOADSTART, 0, 0);
 
     if (FAILED(hr = IMFSourceResolver_EndCreateObjectFromURL(engine->resolver, result, &obj_type, &object)))
@@ -1205,8 +1207,13 @@ static HRESULT WINAPI media_engine_load_handler_Invoke(IMFAsyncCallback *iface, 
         IUnknown_Release(object);
     }
 
-    if (FAILED(hr))
+    if (SUCCEEDED(hr))
     {
+        engine->network_state = MF_MEDIA_ENGINE_NETWORK_IDLE;
+    }
+    else
+    {
+        engine->network_state = MF_MEDIA_ENGINE_NETWORK_NO_SOURCE;
         engine->error_code = MF_MEDIA_ENGINE_ERR_SRC_NOT_SUPPORTED;
         engine->extended_code = hr;
         IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_ERROR, engine->error_code,
@@ -1365,6 +1372,8 @@ static HRESULT WINAPI media_engine_SetSource(IMFMediaEngine *iface, BSTR url)
 
         IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PURGEQUEUEDEVENTS, 0, 0);
 
+        engine->network_state = MF_MEDIA_ENGINE_NETWORK_NO_SOURCE;
+
         if (url)
         {
             IPropertyStore *props = NULL;
@@ -1410,9 +1419,11 @@ static HRESULT WINAPI media_engine_GetCurrentSource(IMFMediaEngine *iface, BSTR 
 
 static USHORT WINAPI media_engine_GetNetworkState(IMFMediaEngine *iface)
 {
-    FIXME("(%p): stub.\n", iface);
+    struct media_engine *engine = impl_from_IMFMediaEngine(iface);
 
-    return 0;
+    TRACE("%p.\n", iface);
+
+    return engine->network_state;
 }
 
 static MF_MEDIA_ENGINE_PRELOAD WINAPI media_engine_GetPreload(IMFMediaEngine *iface)
