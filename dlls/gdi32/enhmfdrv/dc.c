@@ -791,19 +791,6 @@ static BOOL CDECL emfpathdrv_Rectangle( PHYSDEV dev, INT x1, INT y1, INT x2, INT
             next->funcs->pRectangle( next, x1, y1, x2, y2 ));
 }
 
-/***********************************************************************
- *           emfpathdrv_RoundRect
- */
-static BOOL CDECL emfpathdrv_RoundRect( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2,
-                                        INT ell_width, INT ell_height )
-{
-    PHYSDEV emfdev = get_emfdev( dev );
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pRoundRect );
-
-    return (emfdev->funcs->pRoundRect( emfdev, x1, y1, x2, y2, ell_width, ell_height ) &&
-            next->funcs->pRoundRect( next, x1, y1, x2, y2, ell_width, ell_height ));
-}
-
 
 static const struct gdi_dc_funcs emfpath_driver =
 {
@@ -890,7 +877,7 @@ static const struct gdi_dc_funcs emfpath_driver =
     emfpathdrv_Rectangle,               /* pRectangle */
     NULL,                               /* pResetDC */
     NULL,                               /* pRestoreDC */
-    emfpathdrv_RoundRect,               /* pRoundRect */
+    NULL,                               /* pRoundRect */
     NULL,                               /* pSaveDC */
     NULL,                               /* pScaleViewportExt */
     NULL,                               /* pScaleWindowExt */

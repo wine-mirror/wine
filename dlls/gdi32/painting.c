@@ -378,16 +378,14 @@ BOOL WINAPI Rectangle( HDC hdc, INT left, INT top,
 
 
 /***********************************************************************
- *           RoundRect    (GDI32.@)
+ *           NtGdiRoundRect    (win32u.@)
  */
-BOOL WINAPI RoundRect( HDC hdc, INT left, INT top, INT right,
-                           INT bottom, INT ell_width, INT ell_height )
+BOOL WINAPI NtGdiRoundRect( HDC hdc, INT left, INT top, INT right,
+                            INT bottom, INT ell_width, INT ell_height )
 {
     PHYSDEV physdev;
     BOOL ret;
     DC *dc = get_dc_ptr( hdc );
-
-    TRACE( "%p, (%d, %d)-(%d, %d), %dx%d\n", hdc, left, top, right, bottom, ell_width, ell_height );
 
     if (!dc) return FALSE;
     update_dc( dc );

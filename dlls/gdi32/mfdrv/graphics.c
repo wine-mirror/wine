@@ -106,13 +106,13 @@ BOOL CDECL MFDRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom
 }
 
 /***********************************************************************
- *           MFDRV_RoundRect
+ *           MF_RoundRect
  */
-BOOL CDECL MFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
-                            INT bottom, INT ell_width, INT ell_height )
+BOOL METADC_RoundRect( HDC hdc, INT left, INT top, INT right,
+                       INT bottom, INT ell_width, INT ell_height )
 {
-    return MFDRV_MetaParam6(dev, META_ROUNDRECT, left, top, right, bottom,
-			    ell_width, ell_height);
+    return metadc_param6( hdc, META_ROUNDRECT, left, top, right, bottom,
+                          ell_width, ell_height );
 }
 
 /***********************************************************************

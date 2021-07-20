@@ -182,7 +182,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_Rectangle,                 /* pRectangle */
     NULL,                            /* pResetDC */
     MFDRV_RestoreDC,                 /* pRestoreDC */
-    MFDRV_RoundRect,                 /* pRoundRect */
+    NULL,                            /* pRoundRect */
     MFDRV_SaveDC,                    /* pSaveDC */
     MFDRV_ScaleViewportExtEx,        /* pScaleViewportExtEx */
     MFDRV_ScaleWindowExtEx,          /* pScaleWindowExtEx */
@@ -621,6 +621,17 @@ BOOL metadc_param4( HDC hdc, short func, short param1, short param2,
 
     if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
     return MFDRV_MetaParam4( &dev->dev, func, param1, param2, param3, param4 );
+}
+
+BOOL metadc_param6( HDC hdc, short func, short param1, short param2,
+                    short param3, short param4, short param5,
+                    short param6 )
+{
+    METAFILEDRV_PDEVICE *dev;
+
+    if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
+    return MFDRV_MetaParam6( &dev->dev, func, param1, param2, param3,
+                             param4, param5, param6 );
 }
 
 BOOL metadc_param8( HDC hdc, short func, short param1, short param2,

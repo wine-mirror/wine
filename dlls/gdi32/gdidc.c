@@ -184,3 +184,25 @@ BOOL WINAPI Ellipse( HDC hdc, INT left, INT top, INT right, INT bottom )
     if (dc_attr->emf && !EMFDC_Ellipse( dc_attr, left, top, right, bottom )) return FALSE;
     return NtGdiEllipse( hdc, left, top, right, bottom );
 }
+
+/***********************************************************************
+ *           RoundRect    (GDI32.@)
+ */
+BOOL WINAPI RoundRect( HDC hdc, INT left, INT top, INT right,
+                       INT bottom, INT ell_width, INT ell_height )
+{
+    DC_ATTR *dc_attr;
+
+    TRACE( "%p, (%d, %d)-(%d, %d), %dx%d\n", hdc, left, top, right, bottom,
+           ell_width, ell_height );
+
+    if (is_meta_dc( hdc ))
+        return METADC_RoundRect( hdc, left, top, right, bottom, ell_width, ell_height );
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_RoundRect( dc_attr, left, top, right, bottom,
+                                          ell_width, ell_height ))
+        return FALSE;
+
+    return NtGdiRoundRect( hdc, left, top, right, bottom, ell_width, ell_height );
+}

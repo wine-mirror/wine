@@ -456,38 +456,56 @@ BOOL CDECL EMFDRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT botto
 }
 
 /***********************************************************************
+ *           EMFDC_RoundRect
+ */
+BOOL EMFDC_RoundRect( DC_ATTR *dc_attr, INT left, INT top, INT right,
+                      INT bottom, INT ell_width, INT ell_height )
+{
+    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    EMRROUNDRECT emr;
+
+    if (left == right || top == bottom) return FALSE;
+
+    emr.emr.iType     = EMR_ROUNDRECT;
+    emr.emr.nSize     = sizeof(emr);
+    emr.rclBox.left   = min( left, right );
+    emr.rclBox.top    = min( top, bottom );
+    emr.rclBox.right  = max( left, right );
+    emr.rclBox.bottom = max( top, bottom );
+    emr.szlCorner.cx  = ell_width;
+    emr.szlCorner.cy  = ell_height;
+    if (dc_attr->graphics_mode == GM_COMPATIBLE)
+    {
+        emr.rclBox.right--;
+        emr.rclBox.bottom--;
+    }
+
+    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
+}
+
+/***********************************************************************
  *           EMFDRV_RoundRect
  */
 BOOL CDECL EMFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
                              INT bottom, INT ell_width, INT ell_height )
 {
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     DC *dc = get_physdev_dc( dev );
-    EMRROUNDRECT emr;
-    INT temp;
+    RECTL bounds;
 
-    if(left == right || top == bottom) return FALSE;
+    if (left == right || top == bottom) return FALSE;
 
-    if(left > right) {temp = left; left = right; right = temp;}
-    if(top > bottom) {temp = top; top = bottom; bottom = temp;}
-
-    if(dc->attr->graphics_mode == GM_COMPATIBLE) {
-        right--;
-	bottom--;
+    bounds.left   = min( left, right );
+    bounds.top    = min( top, bottom );
+    bounds.right  = max( left, right );
+    bounds.bottom = max( top, bottom );
+    if (dc->attr->graphics_mode == GM_COMPATIBLE)
+    {
+        bounds.right--;
+        bounds.bottom--;
     }
 
-    emr.emr.iType     = EMR_ROUNDRECT;
-    emr.emr.nSize     = sizeof(emr);
-    emr.rclBox.left   = left;
-    emr.rclBox.top    = top;
-    emr.rclBox.right  = right;
-    emr.rclBox.bottom = bottom;
-    emr.szlCorner.cx  = ell_width;
-    emr.szlCorner.cy  = ell_height;
-
-    if(!physDev->path)
-        EMFDRV_UpdateBBox( dev, &emr.rclBox );
-    return EMFDRV_WriteRecord( dev, &emr.emr );
+    EMFDRV_UpdateBBox( dev, &bounds );
+    return TRUE;
 }
 
 /***********************************************************************

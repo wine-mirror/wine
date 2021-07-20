@@ -62,6 +62,8 @@ extern INT16 MFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush ) DECLSPEC_HI
 extern BOOL metadc_param2( HDC hdc, short func, short param1, short param2 ) DECLSPEC_HIDDEN;
 extern BOOL metadc_param4( HDC hdc, short func, short param1, short param2,
                            short param3, short param4 ) DECLSPEC_HIDDEN;
+extern BOOL metadc_param6( HDC hdc, short func, short param1, short param2, short param3,
+                           short param4, short param5, short param6 ) DECLSPEC_HIDDEN;
 extern BOOL metadc_param8( HDC hdc, short func, short param1, short param2,
                            short param3, short param4, short param5, short param6,
                            short param7, short param8 ) DECLSPEC_HIDDEN;
@@ -98,8 +100,6 @@ extern BOOL CDECL MFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count ) DECLS
 extern BOOL CDECL MFDRV_Polyline( PHYSDEV dev, const POINT* pt,INT count) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_RestoreDC( PHYSDEV dev, INT level ) DECLSPEC_HIDDEN;
-extern BOOL CDECL MFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
-                                   INT ell_width, INT ell_height ) DECLSPEC_HIDDEN;
 extern INT  CDECL MFDRV_SaveDC( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_ScaleViewportExtEx( PHYSDEV dev, INT xNum, INT xDenom, INT yNum, INT yDenom, SIZE *size ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_ScaleWindowExtEx( PHYSDEV dev, INT xNum, INT xDenom, INT yNum, INT yDenom, SIZE *size ) DECLSPEC_HIDDEN;
