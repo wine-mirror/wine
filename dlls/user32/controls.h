@@ -180,28 +180,6 @@ extern void NC_GetSysPopupPos( HWND hwnd, RECT* rect ) DECLSPEC_HIDDEN;
 
 /* scrollbar */
 
-/* Scroll-bar hit testing */
-enum SCROLL_HITTEST
-{
-    SCROLL_NOWHERE,      /* Outside the scroll bar */
-    SCROLL_TOP_ARROW,    /* Top or left arrow */
-    SCROLL_TOP_RECT,     /* Rectangle between the top arrow and the thumb */
-    SCROLL_THUMB,        /* Thumb rectangle */
-    SCROLL_BOTTOM_RECT,  /* Rectangle between the thumb and the bottom arrow */
-    SCROLL_BOTTOM_ARROW  /* Bottom or right arrow */
-};
-
-/* Scroll bar tracking information */
-struct SCROLL_TRACKING_INFO
-{
-    HWND win;                       /* Tracking window */
-    INT bar;                        /* SB_HORZ / SB_VERT / SB_CTL */
-    INT thumb_pos;                  /* Thumb position */
-    INT thumb_val;                  /* Current thumb value from thumb position */
-    BOOL vertical;                  /* Is scroll bar vertical */
-    enum SCROLL_HITTEST hit_test;   /* Hit Test code of the last button-down event */
-};
-
 extern void SCROLL_DrawNCScrollBar( HWND hwnd, HDC hdc, BOOL draw_horizontal, BOOL draw_vertical ) DECLSPEC_HIDDEN;
 extern void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar, enum SCROLL_HITTEST hit_test,
                                   const struct SCROLL_TRACKING_INFO *tracking_info, BOOL arrows,
