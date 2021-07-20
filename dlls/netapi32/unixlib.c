@@ -68,9 +68,9 @@ static NET_API_STATUS (*pNetShareDel)( const char *, const char *, unsigned int 
 static NET_API_STATUS (*pNetWkstaGetInfo)( const char *, unsigned int, unsigned char ** );
 
 static CPTABLEINFO unix_cptable;
-static ULONG unix_cp;
+static ULONG unix_cp = CP_UTF8;
 
-static BOOL get_unix_codepage(void)
+static DWORD WINAPI get_unix_codepage_once( RTL_RUN_ONCE *once, void *param, void **context )
 {
     static const WCHAR wineunixcpW[] = {'W','I','N','E','U','N','I','X','C','P',0};
     UNICODE_STRING name, value;
@@ -78,17 +78,21 @@ static BOOL get_unix_codepage(void)
     SIZE_T size;
     void *ptr;
 
-    if (unix_cp) return TRUE;
-
     RtlInitUnicodeString( &name, wineunixcpW );
     value.Buffer = value_buffer;
     value.MaximumLength = sizeof(value_buffer);
     if (!RtlQueryEnvironmentVariable_U( NULL, &name, &value ))
         RtlUnicodeStringToInteger( &value, 10, &unix_cp );
-    if (NtGetNlsSectionPtr( 11, unix_cp, NULL, &ptr, &size ))
-        return FALSE;
-    RtlInitCodePageTable( ptr, &unix_cptable );
+    if (unix_cp != CP_UTF8 && !NtGetNlsSectionPtr( 11, unix_cp, NULL, &ptr, &size ))
+        RtlInitCodePageTable( ptr, &unix_cptable );
     return TRUE;
+}
+
+static BOOL get_unix_codepage( void )
+{
+    static RTL_RUN_ONCE once = RTL_RUN_ONCE_INIT;
+
+    return !RtlRunOnceExecuteOnce( &once, get_unix_codepage_once, NULL, NULL );
 }
 
 static DWORD netapi_wcstoumbs( const WCHAR *src, char *dst, DWORD dstlen )
