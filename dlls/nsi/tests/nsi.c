@@ -415,11 +415,11 @@ static void test_ip_unicast( int family )
 {
     DWORD rw_sizes[] = { FIELD_OFFSET(struct nsi_ip_unicast_rw, unk[0]), FIELD_OFFSET(struct nsi_ip_unicast_rw, unk[1]),
                          sizeof(struct nsi_ip_unicast_rw) };
-    struct nsi_ipv4_unicast_key *key_tbl, *key4;
+    struct nsi_ipv4_unicast_key *key_tbl, *key4, get_key;
     struct nsi_ipv6_unicast_key *key6;
-    struct nsi_ip_unicast_rw *rw_tbl, *rw;
-    struct nsi_ip_unicast_dynamic *dyn_tbl, *dyn;
-    struct nsi_ip_unicast_static *stat_tbl, *stat;
+    struct nsi_ip_unicast_rw *rw_tbl, *rw, get_rw;
+    struct nsi_ip_unicast_dynamic *dyn_tbl, *dyn, get_dyn;
+    struct nsi_ip_unicast_static *stat_tbl, *stat, get_stat;
     MIB_UNICASTIPADDRESS_TABLE *table;
     const NPI_MODULEID *mod = (family == AF_INET) ? &NPI_MS_IPV4_MODULEID : &NPI_MS_IPV6_MODULEID;
     DWORD err, count, i, rw_size, key_size = (family == AF_INET) ? sizeof(*key4) : sizeof(*key6);
@@ -474,6 +474,12 @@ todo_wine
         ok( row->CreationTimeStamp.QuadPart == stat->creation_time, "mismatch\n" );
         winetest_pop_context();
     }
+
+    get_key.luid.Value = ~0u;
+    get_key.addr.s_addr = 0;
+    err = NsiGetAllParameters( 1, &NPI_MS_IPV4_MODULEID, NSI_IP_UNICAST_TABLE, &get_key, sizeof(get_key),
+                                   &get_rw, rw_size, &get_dyn, sizeof(get_dyn), &get_stat, sizeof(get_stat) );
+    ok( err == ERROR_NOT_FOUND, "got %d\n", err );
 
     FreeMibTable( table );
     NsiFreeTable( key_tbl, rw_tbl, dyn_tbl, stat_tbl );

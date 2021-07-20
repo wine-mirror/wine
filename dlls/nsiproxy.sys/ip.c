@@ -180,6 +180,43 @@ static NTSTATUS ip_unicast_enumerate_all( void *key_data, DWORD key_size, void *
     return status;
 }
 
+static NTSTATUS ip_unicast_get_all_parameters( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
+                                               void *dynamic_data, DWORD dynamic_size,
+                                               void *static_data, DWORD static_size )
+{
+    int family = (key_size == sizeof(struct nsi_ipv4_unicast_key)) ? AF_INET : AF_INET6;
+    NTSTATUS status = STATUS_NOT_FOUND;
+    const struct nsi_ipv6_unicast_key *key6 = key;
+    const struct nsi_ipv4_unicast_key *key4 = key;
+    struct ifaddrs *addrs, *entry;
+    const char *unix_name;
+
+    TRACE( "%p %d %p %d %p %d %p %d\n", key, key_size, rw_data, rw_size, dynamic_data, dynamic_size,
+           static_data, static_size );
+
+    if (!convert_luid_to_unix_name( &key6->luid, &unix_name )) return STATUS_NOT_FOUND;
+
+    if (getifaddrs( &addrs )) return STATUS_NO_MORE_ENTRIES;
+
+    for (entry = addrs; entry; entry = entry->ifa_next)
+    {
+        if (!entry->ifa_addr || entry->ifa_addr->sa_family != family) continue;
+        if (strcmp( entry->ifa_name, unix_name )) continue;
+
+        if (family == AF_INET &&
+            memcmp( &key4->addr, &((struct sockaddr_in *)entry->ifa_addr)->sin_addr, sizeof(key4->addr) )) continue;
+        if (family == AF_INET6 &&
+            memcmp( &key6->addr, &((struct sockaddr_in6 *)entry->ifa_addr)->sin6_addr, sizeof(key6->addr) )) continue;
+
+        unicast_fill_entry( entry, NULL, rw_data, dynamic_data, static_data );
+        status = STATUS_SUCCESS;
+        break;
+    }
+
+    freeifaddrs( addrs );
+    return status;
+}
+
 static struct module_table ipv4_tables[] =
 {
     {
@@ -189,6 +226,7 @@ static struct module_table ipv4_tables[] =
             sizeof(struct nsi_ip_unicast_dynamic), sizeof(struct nsi_ip_unicast_static)
         },
         ip_unicast_enumerate_all,
+        ip_unicast_get_all_parameters,
     },
     {
         ~0u
@@ -210,6 +248,7 @@ static struct module_table ipv6_tables[] =
             sizeof(struct nsi_ip_unicast_dynamic), sizeof(struct nsi_ip_unicast_static)
         },
         ip_unicast_enumerate_all,
+        ip_unicast_get_all_parameters,
     },
     {
         ~0u
