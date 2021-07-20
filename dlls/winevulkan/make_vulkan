@@ -3614,6 +3614,9 @@ class VkRegistry(object):
                 _type = None
                 if not t.find("type") is None:
                     _type = t.find("type").text
+                    tail = t.find("type").tail
+                    if tail is not None:
+                        _type += tail.strip()
                 basetype = VkBaseType(name, _type)
                 base_types.append(basetype)
                 type_info["data"] = basetype
