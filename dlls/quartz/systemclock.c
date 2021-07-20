@@ -169,8 +169,29 @@ static DWORD WINAPI SystemClockAdviseThread(void *param)
     }
 }
 
-static void notify_thread(struct system_clock *clock)
+static HRESULT add_sink(struct system_clock *clock, DWORD_PTR handle,
+        REFERENCE_TIME due_time, REFERENCE_TIME period, DWORD_PTR *cookie)
 {
+    struct advise_sink *sink;
+
+    if (!handle)
+        return E_INVALIDARG;
+
+    if (!cookie)
+        return E_POINTER;
+
+    if (!(sink = heap_alloc_zero(sizeof(*sink))))
+        return E_OUTOFMEMORY;
+
+    sink->handle = (HANDLE)handle;
+    sink->due_time = due_time;
+    sink->period = period;
+    sink->cookie = InterlockedIncrement(&cookie_counter);
+
+    EnterCriticalSection(&clock->cs);
+    list_add_tail(&clock->sinks, &sink->entry);
+    LeaveCriticalSection(&clock->cs);
+
     if (!InterlockedCompareExchange(&clock->thread_created, TRUE, FALSE))
     {
         clock->notify_event = CreateEventW(NULL, FALSE, FALSE, NULL);
@@ -178,6 +199,9 @@ static void notify_thread(struct system_clock *clock)
         clock->thread = CreateThread(NULL, 0, SystemClockAdviseThread, clock, 0, NULL);
     }
     SetEvent(clock->notify_event);
+
+    *cookie = sink->cookie;
+    return S_OK;
 }
 
 static HRESULT WINAPI SystemClockImpl_QueryInterface(IReferenceClock *iface, REFIID iid, void **out)
@@ -225,72 +249,28 @@ static HRESULT WINAPI SystemClockImpl_AdviseTime(IReferenceClock *iface,
         REFERENCE_TIME base, REFERENCE_TIME offset, HEVENT event, DWORD_PTR *cookie)
 {
     struct system_clock *clock = impl_from_IReferenceClock(iface);
-    struct advise_sink *sink;
 
     TRACE("clock %p, base %s, offset %s, event %#lx, cookie %p.\n",
             clock, debugstr_time(base), debugstr_time(offset), event, cookie);
 
-    if (!event)
-        return E_INVALIDARG;
-
     if (base + offset <= 0)
         return E_INVALIDARG;
 
-    if (!cookie)
-        return E_POINTER;
-
-    if (!(sink = heap_alloc_zero(sizeof(*sink))))
-        return E_OUTOFMEMORY;
-
-    sink->handle = (HANDLE)event;
-    sink->due_time = base + offset;
-    sink->period = 0;
-    sink->cookie = InterlockedIncrement(&cookie_counter);
-
-    EnterCriticalSection(&clock->cs);
-    list_add_tail(&clock->sinks, &sink->entry);
-    LeaveCriticalSection(&clock->cs);
-
-    notify_thread(clock);
-
-    *cookie = sink->cookie;
-    return S_OK;
+    return add_sink(clock, event, base + offset, 0, cookie);
 }
 
 static HRESULT WINAPI SystemClockImpl_AdvisePeriodic(IReferenceClock* iface,
         REFERENCE_TIME start, REFERENCE_TIME period, HSEMAPHORE semaphore, DWORD_PTR *cookie)
 {
     struct system_clock *clock = impl_from_IReferenceClock(iface);
-    struct advise_sink *sink;
 
     TRACE("clock %p, start %s, period %s, semaphore %#lx, cookie %p.\n",
             clock, debugstr_time(start), debugstr_time(period), semaphore, cookie);
 
-    if (!semaphore)
-        return E_INVALIDARG;
-
     if (start <= 0 || period <= 0)
         return E_INVALIDARG;
 
-    if (!cookie)
-        return E_POINTER;
-
-    if (!(sink = heap_alloc_zero(sizeof(*sink))))
-        return E_OUTOFMEMORY;
-
-    sink->handle = (HANDLE)semaphore;
-    sink->due_time = start;
-    sink->period = period;
-    sink->cookie = InterlockedIncrement(&cookie_counter);
-
-    EnterCriticalSection(&clock->cs);
-    list_add_tail(&clock->sinks, &sink->entry);
-    LeaveCriticalSection(&clock->cs);
-
-    notify_thread(clock);
-
-    *cookie = sink->cookie;
-    return S_OK;
+    return add_sink(clock, semaphore, start, period, cookie);
 }
 
 static HRESULT WINAPI SystemClockImpl_Unadvise(IReferenceClock *iface, DWORD_PTR cookie)
