@@ -53,5 +53,6 @@ extern BOOL METADC_Pie( HDC hdc, INT left, INT top, INT right, INT bottom,
 
 /* enhanced metafiles */
 extern BOOL EMFDC_LineTo( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
+extern BOOL EMFDC_MoveTo( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_GDI_PRIVATE_H */

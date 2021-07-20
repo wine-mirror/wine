@@ -68,9 +68,13 @@ BOOL WINAPI LineTo( HDC hdc, INT x, INT y )
  */
 BOOL WINAPI MoveToEx( HDC hdc, INT x, INT y, POINT *pt )
 {
+    DC_ATTR *dc_attr;
+
     TRACE( "%p, (%d, %d), %p\n", hdc, x, y, pt );
 
     if (is_meta_dc( hdc )) return METADC_MoveTo( hdc, x, y );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_MoveTo( dc_attr, x, y )) return FALSE;
     return NtGdiMoveTo( hdc, x, y, pt );
 }
 

@@ -735,17 +735,6 @@ static BOOL CDECL emfpathdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, 
 }
 
 /***********************************************************************
- *           emfpathdrv_MoveTo
- */
-static BOOL CDECL emfpathdrv_MoveTo( PHYSDEV dev, INT x, INT y )
-{
-    PHYSDEV emfdev = get_emfdev( dev );
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pMoveTo );
-
-    return (emfdev->funcs->pMoveTo( emfdev, x, y ) && next->funcs->pMoveTo( next, x, y ));
-}
-
-/***********************************************************************
  *           emfpathdrv_Pie
  */
 static BOOL CDECL emfpathdrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
@@ -944,7 +933,7 @@ static const struct gdi_dc_funcs emfpath_driver =
     NULL,                               /* pInvertRgn */
     NULL,                               /* pLineTo */
     NULL,                               /* pModifyWorldTransform */
-    emfpathdrv_MoveTo,                  /* pMoveTo */
+    NULL,                               /* pMoveTo */
     NULL,                               /* pOffsetClipRgn */
     NULL,                               /* pOffsetViewportOrg */
     NULL,                               /* pOffsetWindowOrg */

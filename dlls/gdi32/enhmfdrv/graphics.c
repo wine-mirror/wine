@@ -118,10 +118,11 @@ static BOOL emfdrv_stroke_and_fill_path( PHYSDEV dev, INT type )
 }
 
 /**********************************************************************
- *	     EMFDRV_MoveTo
+ *	     EMFDC_MoveTo
  */
-BOOL CDECL EMFDRV_MoveTo(PHYSDEV dev, INT x, INT y)
+BOOL EMFDC_MoveTo( DC_ATTR *dc_attr, INT x, INT y )
 {
+    EMFDRV_PDEVICE *emf = dc_attr->emf;
     EMRMOVETOEX emr;
 
     emr.emr.iType = EMR_MOVETOEX;
@@ -129,7 +130,7 @@ BOOL CDECL EMFDRV_MoveTo(PHYSDEV dev, INT x, INT y)
     emr.ptl.x = x;
     emr.ptl.y = y;
 
-    return EMFDRV_WriteRecord( dev, &emr.emr );
+    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
 }
 
 /***********************************************************************
