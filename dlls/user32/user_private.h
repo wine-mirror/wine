@@ -386,4 +386,7 @@ struct png_funcs
 #define assert(expr) ((void)0)
 #endif
 
+extern struct user_api_hook *user_api DECLSPEC_HIDDEN;
+LRESULT WINAPI USER_ScrollBarProc(HWND, UINT, WPARAM, LPARAM, BOOL) DECLSPEC_HIDDEN;
+
 #endif /* __WINE_USER_PRIVATE_H */

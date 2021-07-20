@@ -4407,6 +4407,15 @@ WORD        WINAPI SYSTEM_KillSystemTimer( WORD );
 
 #ifdef __WINESRC__
 WINUSERAPI BOOL CDECL __wine_send_input( HWND hwnd, const INPUT *input, const RAWINPUT *rawinput );
+
+/* Uxtheme hook functions and struct */
+struct user_api_hook
+{
+    LRESULT (WINAPI *pScrollBarWndProc)(HWND, UINT, WPARAM, LPARAM, BOOL);
+};
+
+WINUSERAPI BOOL WINAPI RegisterUserApiHook(const struct user_api_hook *new, struct user_api_hook *old);
+WINUSERAPI void WINAPI UnregisterUserApiHook(void);
 #endif
 
 #ifdef __cplusplus

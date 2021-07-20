@@ -38,7 +38,6 @@ C_SRCS = \
 	tab.c \
 	taskdialog.c \
 	theme_dialog.c \
-	theme_scrollbar.c \
 	theming.c \
 	toolbar.c \
 	tooltips.c \

@@ -1317,11 +1317,7 @@ static BOOL SCROLL_SetScrollRange(HWND hwnd, INT nBar, INT minVal, INT maxVal)
     return TRUE;
 }
 
-
-/***********************************************************************
- *           ScrollBarWndProc_common
- */
-LRESULT ScrollBarWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, BOOL unicode )
+LRESULT WINAPI USER_ScrollBarProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
     if (!IsWindow( hwnd )) return 0;
 
@@ -1496,6 +1492,13 @@ LRESULT ScrollBarWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
     return 0;
 }
 
+/***********************************************************************
+ *           ScrollBarWndProc_common
+ */
+LRESULT ScrollBarWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, BOOL unicode )
+{
+     return user_api->pScrollBarWndProc( hwnd, msg, wParam, lParam, unicode );
+}
 
 /*************************************************************************
  *           SetScrollInfo   (USER32.@)

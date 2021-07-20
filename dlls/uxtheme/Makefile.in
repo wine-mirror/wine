@@ -12,6 +12,7 @@ C_SRCS = \
 	metric.c \
 	msstyles.c \
 	property.c \
+	scrollbar.c \
 	stylemap.c \
 	system.c \
 	uxini.c

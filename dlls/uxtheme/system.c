@@ -55,6 +55,8 @@ static WCHAR szCurrentTheme[MAX_PATH];
 static WCHAR szCurrentColor[64];
 static WCHAR szCurrentSize[64];
 
+struct user_api_hook user_api = {0};
+
 /***********************************************************************/
 
 static BOOL CALLBACK UXTHEME_broadcast_msg_enumchild (HWND hWnd, LPARAM msg)
@@ -507,10 +509,12 @@ void UXTHEME_InitSystem(HINSTANCE hInst)
     atDialogThemeEnabled = GlobalAddAtomW(L"ux_dialogtheme");
 
     UXTHEME_LoadTheme();
+    ThemeHooksInstall();
 }
 
 void UXTHEME_UninitSystem(void)
 {
+    ThemeHooksRemove();
     MSSTYLES_SetActiveTheme(NULL, FALSE);
 
     GlobalDeleteAtom(atWindowTheme);
@@ -1219,4 +1223,18 @@ HRESULT WINAPI CheckThemeSignature(LPCWSTR pszThemeFileName)
         return hr;
     MSSTYLES_CloseThemeFile(pt);
     return S_OK;
+}
+
+BOOL WINAPI ThemeHooksInstall(void)
+{
+    struct user_api_hook hooks;
+
+    hooks.pScrollBarWndProc = UXTHEME_ScrollbarWndProc;
+    return RegisterUserApiHook(&hooks, &user_api);
+}
+
+BOOL WINAPI ThemeHooksRemove(void)
+{
+    UnregisterUserApiHook();
+    return TRUE;
 }

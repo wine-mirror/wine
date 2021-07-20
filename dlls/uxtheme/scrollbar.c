@@ -28,8 +28,8 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "uxtheme.h"
+#include "uxthemedll.h"
 #include "vssym32.h"
-#include "comctl32.h"
 #include "wine/debug.h"
 
 /* Minimum size of the thumb in pixels */
@@ -525,27 +525,26 @@ static void paint_scrollbar(HWND hwnd, HTHEME theme)
     EndPaint(hwnd, &ps);
 }
 
-LRESULT CALLBACK THEMING_ScrollbarSubclassProc (HWND hwnd, UINT msg,
-                                                WPARAM wParam, LPARAM lParam,
-                                                ULONG_PTR dwRefData)
+LRESULT WINAPI UXTHEME_ScrollbarWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
+                                        BOOL unicode)
 {
     const WCHAR* themeClass = WC_SCROLLBARW;
     HTHEME theme;
     LRESULT result;
     POINT pt;
 
-    TRACE("(%p, 0x%x, %lu, %lu, %lu)\n", hwnd, msg, wParam, lParam, dwRefData);
+    TRACE("(%p, 0x%x, %lu, %lu, %d)\n", hwnd, msg, wParam, lParam, unicode);
 
     switch (msg) {
         case WM_CREATE:
-            result = THEMING_CallOriginalClass(hwnd, msg, wParam, lParam);
+            result = user_api.pScrollBarWndProc(hwnd, msg, wParam, lParam, unicode);
             OpenThemeData(hwnd, themeClass);
             return result;
 
         case WM_DESTROY:
             theme = GetWindowTheme(hwnd);
             CloseThemeData(theme);
-            return THEMING_CallOriginalClass(hwnd, msg, wParam, lParam);
+            return user_api.pScrollBarWndProc(hwnd, msg, wParam, lParam, unicode);
 
         case WM_THEMECHANGED:
             theme = GetWindowTheme(hwnd);
@@ -556,14 +555,14 @@ LRESULT CALLBACK THEMING_ScrollbarSubclassProc (HWND hwnd, UINT msg,
 
         case WM_SYSCOLORCHANGE:
             theme = GetWindowTheme(hwnd);
-            if (!theme) return THEMING_CallOriginalClass(hwnd, msg, wParam, lParam);
+            if (!theme) return user_api.pScrollBarWndProc(hwnd, msg, wParam, lParam, unicode);
             /* Do nothing. When themed, a WM_THEMECHANGED will be received, too,
              * which will do the repaint. */
             break;
 
         case WM_PAINT:
             theme = GetWindowTheme(hwnd);
-            if (!theme) return THEMING_CallOriginalClass(hwnd, msg, wParam, lParam);
+            if (!theme) return user_api.pScrollBarWndProc(hwnd, msg, wParam, lParam, unicode);
 
             paint_scrollbar(hwnd, theme);
             break;
@@ -571,7 +570,7 @@ LRESULT CALLBACK THEMING_ScrollbarSubclassProc (HWND hwnd, UINT msg,
         case WM_MOUSEMOVE:
         case WM_MOUSELEAVE:
             theme = GetWindowTheme(hwnd);
-            if (!theme) return THEMING_CallOriginalClass(hwnd, msg, wParam, lParam);
+            if (!theme) return user_api.pScrollBarWndProc(hwnd, msg, wParam, lParam, unicode);
 
             pt.x = (short)LOWORD(lParam);
             pt.y = (short)HIWORD(lParam);
@@ -579,7 +578,7 @@ LRESULT CALLBACK THEMING_ScrollbarSubclassProc (HWND hwnd, UINT msg,
             break;
 
         default:
-            return THEMING_CallOriginalClass(hwnd, msg, wParam, lParam);
+            return user_api.pScrollBarWndProc(hwnd, msg, wParam, lParam, unicode);
     }
 
     return 0;
