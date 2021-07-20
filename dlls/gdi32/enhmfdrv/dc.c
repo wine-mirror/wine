@@ -657,18 +657,6 @@ static BOOL CDECL emfpathdrv_DeleteDC( PHYSDEV dev )
 }
 
 /***********************************************************************
- *           emfpathdrv_Ellipse
- */
-static BOOL CDECL emfpathdrv_Ellipse( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2 )
-{
-    PHYSDEV emfdev = get_emfdev( dev );
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pEllipse );
-
-    return (emfdev->funcs->pEllipse( emfdev, x1, y1, x2, y2 ) &&
-            next->funcs->pEllipse( next, x1, y1, x2, y2 ));
-}
-
-/***********************************************************************
  *           emfpathdrv_EndPath
  */
 static BOOL CDECL emfpathdrv_EndPath( PHYSDEV dev )
@@ -834,7 +822,7 @@ static const struct gdi_dc_funcs emfpath_driver =
     emfpathdrv_DeleteDC,                /* pDeleteDC */
     NULL,                               /* pDeleteObject */
     NULL,                               /* pDeviceCapabilities */
-    emfpathdrv_Ellipse,                 /* pEllipse */
+    NULL,                               /* pEllipse */
     NULL,                               /* pEndDoc */
     NULL,                               /* pEndPage */
     emfpathdrv_EndPath,                 /* pEndPath */

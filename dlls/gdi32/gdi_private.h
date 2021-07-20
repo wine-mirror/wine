@@ -46,6 +46,7 @@ extern BOOL METADC_Arc( HDC hdc, INT left, INT top, INT right, INT bottom,
                         INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
 extern BOOL METADC_Chord( HDC hdc, INT left, INT top, INT right, INT bottom, INT xstart,
                           INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
+extern BOOL METADC_Ellipse( HDC hdc, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL METADC_LineTo( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL METADC_MoveTo( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL METADC_Pie( HDC hdc, INT left, INT top, INT right, INT bottom,
@@ -55,6 +56,8 @@ extern BOOL METADC_Pie( HDC hdc, INT left, INT top, INT right, INT bottom,
 extern BOOL EMFDC_ArcChordPie( DC_ATTR *dc_attr, INT left, INT top, INT right,
                                INT bottom, INT xstart, INT ystart, INT xend,
                                INT yend, DWORD type ) DECLSPEC_HIDDEN;
+extern BOOL EMFDC_Ellipse( DC_ATTR *dc_attr, INT left, INT top, INT right,
+                           INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_LineTo( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_MoveTo( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
 

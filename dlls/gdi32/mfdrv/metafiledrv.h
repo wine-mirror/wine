@@ -60,6 +60,8 @@ extern BOOL MFDRV_RemoveHandle( PHYSDEV dev, UINT index ) DECLSPEC_HIDDEN;
 extern INT16 MFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush ) DECLSPEC_HIDDEN;
 
 extern BOOL metadc_param2( HDC hdc, short func, short param1, short param2 ) DECLSPEC_HIDDEN;
+extern BOOL metadc_param4( HDC hdc, short func, short param1, short param2,
+                           short param3, short param4 ) DECLSPEC_HIDDEN;
 extern BOOL metadc_param8( HDC hdc, short func, short param1, short param2,
                            short param3, short param4, short param5, short param6,
                            short param7, short param8 ) DECLSPEC_HIDDEN;
@@ -72,7 +74,6 @@ extern BOOL CDECL MFDRV_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bo
 extern BOOL CDECL MFDRV_BeginPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_CloseFigure( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_DeleteObject( PHYSDEV dev, HGDIOBJ obj ) DECLSPEC_HIDDEN;
-extern BOOL CDECL MFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_EndPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern INT  CDECL MFDRV_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillType ) DECLSPEC_HIDDEN;

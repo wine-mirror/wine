@@ -339,16 +339,13 @@ BOOL WINAPI NtGdiArcInternal( UINT type, HDC hdc, INT left, INT top, INT right,
 
 
 /***********************************************************************
- *           Ellipse    (GDI32.@)
+ *           NtGdiEllipse    (win32u.@)
  */
-BOOL WINAPI Ellipse( HDC hdc, INT left, INT top,
-                         INT right, INT bottom )
+BOOL WINAPI NtGdiEllipse( HDC hdc, INT left, INT top, INT right, INT bottom )
 {
     BOOL ret;
     PHYSDEV physdev;
     DC * dc = get_dc_ptr( hdc );
-
-    TRACE( "%p, (%d, %d)-(%d, %d)\n", hdc, left, top, right, bottom );
 
     if (!dc) return FALSE;
     update_dc( dc );

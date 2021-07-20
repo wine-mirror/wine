@@ -373,37 +373,52 @@ BOOL CDECL EMFDRV_AngleArc( PHYSDEV dev, INT x, INT y, DWORD radius, FLOAT start
 }
 
 /***********************************************************************
+ *           EMFDC_Ellipse
+ */
+BOOL EMFDC_Ellipse( DC_ATTR *dc_attr, INT left, INT top, INT right, INT bottom )
+{
+    EMFDRV_PDEVICE *emf = dc_attr->emf;
+    EMRELLIPSE emr;
+
+    if (left == right || top == bottom) return FALSE;
+
+    emr.emr.iType     = EMR_ELLIPSE;
+    emr.emr.nSize     = sizeof(emr);
+    emr.rclBox.left   = min( left, right );
+    emr.rclBox.top    = min( top, bottom );
+    emr.rclBox.right  = max( left, right );
+    emr.rclBox.bottom = max( top, bottom );
+    if (dc_attr->graphics_mode == GM_COMPATIBLE)
+    {
+        emr.rclBox.right--;
+        emr.rclBox.bottom--;
+    }
+
+    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
+}
+
+/***********************************************************************
  *           EMFDRV_Ellipse
  */
 BOOL CDECL EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     DC *dc = get_physdev_dc( dev );
-    EMRELLIPSE emr;
-    INT temp;
+    RECTL bounds;
 
-    TRACE("%d,%d - %d,%d\n", left, top, right, bottom);
+    if (left == right || top == bottom) return FALSE;
 
-    if(left == right || top == bottom) return FALSE;
-
-    if(left > right) {temp = left; left = right; right = temp;}
-    if(top > bottom) {temp = top; top = bottom; bottom = temp;}
-
-    if(dc->attr->graphics_mode == GM_COMPATIBLE) {
-        right--;
-	bottom--;
+    bounds.left   = min( left, right );
+    bounds.top    = min( top, bottom );
+    bounds.right  = max( left, right );
+    bounds.bottom = max( top, bottom );
+    if (dc->attr->graphics_mode == GM_COMPATIBLE)
+    {
+        bounds.right--;
+        bounds.bottom--;
     }
 
-    emr.emr.iType     = EMR_ELLIPSE;
-    emr.emr.nSize     = sizeof(emr);
-    emr.rclBox.left   = left;
-    emr.rclBox.top    = top;
-    emr.rclBox.right  = right;
-    emr.rclBox.bottom = bottom;
-
-    if(!physDev->path)
-        EMFDRV_UpdateBBox( dev, &emr.rclBox );
-    return EMFDRV_WriteRecord( dev, &emr.emr );
+    EMFDRV_UpdateBBox( dev, &bounds );
+    return TRUE;
 }
 
 /***********************************************************************

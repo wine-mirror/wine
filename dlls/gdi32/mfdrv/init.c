@@ -114,7 +114,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_DeleteDC,                  /* pDeleteDC */
     MFDRV_DeleteObject,              /* pDeleteObject */
     NULL,                            /* pDeviceCapabilities */
-    MFDRV_Ellipse,                   /* pEllipse */
+    NULL,                            /* pEllipse */
     NULL,                            /* pEndDoc */
     NULL,                            /* pEndPage */
     MFDRV_EndPath,                   /* pEndPath */
@@ -612,6 +612,15 @@ BOOL metadc_param2( HDC hdc, short func, short param1, short param2 )
 
     if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
     return MFDRV_MetaParam2( &dev->dev, func, param1, param2 );
+}
+
+BOOL metadc_param4( HDC hdc, short func, short param1, short param2,
+                    short param3, short param4 )
+{
+    METAFILEDRV_PDEVICE *dev;
+
+    if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
+    return MFDRV_MetaParam4( &dev->dev, func, param1, param2, param3, param4 );
 }
 
 BOOL metadc_param8( HDC hdc, short func, short param1, short param2,

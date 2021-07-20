@@ -90,11 +90,11 @@ BOOL METADC_Chord( HDC hdc, INT left, INT top, INT right, INT bottom,
 }
 
 /***********************************************************************
- *           MFDRV_Ellipse
+ *           METADC_Ellipse
  */
-BOOL CDECL MFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+BOOL METADC_Ellipse( HDC hdc, INT left, INT top, INT right, INT bottom )
 {
-    return MFDRV_MetaParam4(dev, META_ELLIPSE, left, top, right, bottom);
+    return metadc_param4( hdc, META_ELLIPSE, left, top, right, bottom );
 }
 
 /***********************************************************************

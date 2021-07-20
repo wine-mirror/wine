@@ -169,3 +169,18 @@ BOOL WINAPI Pie( HDC hdc, INT left, INT top, INT right, INT bottom,
     return NtGdiArcInternal( NtGdiPie, hdc, left, top, right, bottom,
                              xstart, ystart, xend, yend );
 }
+
+/***********************************************************************
+ *           Ellipse    (GDI32.@)
+ */
+BOOL WINAPI Ellipse( HDC hdc, INT left, INT top, INT right, INT bottom )
+{
+    DC_ATTR *dc_attr;
+
+    TRACE( "%p, (%d, %d)-(%d, %d)\n", hdc, left, top, right, bottom );
+
+    if (is_meta_dc( hdc )) return METADC_Ellipse( hdc, left, top, right, bottom );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_Ellipse( dc_attr, left, top, right, bottom )) return FALSE;
+    return NtGdiEllipse( hdc, left, top, right, bottom );
+}
