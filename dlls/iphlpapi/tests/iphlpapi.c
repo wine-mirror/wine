@@ -1962,7 +1962,7 @@ static void test_GetUnicastIpAddressEntry(void)
 
     memset( &row, 0, sizeof(row) );
     ret = pGetUnicastIpAddressEntry( &row );
-    todo_wine ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
 
     memset( &row, 0, sizeof(row) );
     row.Address.Ipv4.sin_family = AF_INET;
@@ -1974,7 +1974,7 @@ static void test_GetUnicastIpAddressEntry(void)
     memset( &row, 0, sizeof(row) );
     row.InterfaceIndex = 123;
     ret = pGetUnicastIpAddressEntry( &row );
-    todo_wine ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
 
     memset( &row, 0, sizeof(row) );
     row.InterfaceIndex = get_interface_index();

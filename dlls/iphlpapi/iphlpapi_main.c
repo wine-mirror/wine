@@ -2696,69 +2696,48 @@ static void unicast_row_fill( MIB_UNICASTIPADDRESS_ROW *row, USHORT fam, void *k
 
 DWORD WINAPI GetUnicastIpAddressEntry(MIB_UNICASTIPADDRESS_ROW *row)
 {
-    IP_ADAPTER_ADDRESSES *aa, *ptr;
-    ULONG size = 0;
-    DWORD ret;
+    struct nsi_ipv4_unicast_key key4;
+    struct nsi_ipv6_unicast_key key6;
+    struct nsi_ip_unicast_rw rw;
+    struct nsi_ip_unicast_dynamic dyn;
+    struct nsi_ip_unicast_static stat;
+    const NPI_MODULEID *mod;
+    DWORD err, key_size;
+    void *key;
 
-    TRACE("%p\n", row);
+    TRACE( "%p\n", row );
 
-    if (!row)
-        return ERROR_INVALID_PARAMETER;
+    if (!row) return ERROR_INVALID_PARAMETER;
+    mod = ip_module_id( row->Address.si_family );
+    if (!mod) return ERROR_INVALID_PARAMETER;
 
-    ret = GetAdaptersAddresses(row->Address.si_family, 0, NULL, NULL, &size);
-    if (ret != ERROR_BUFFER_OVERFLOW)
-        return ret;
-    if (!(ptr = HeapAlloc(GetProcessHeap(), 0, size)))
-        return ERROR_OUTOFMEMORY;
-    if ((ret = GetAdaptersAddresses(row->Address.si_family, 0, NULL, ptr, &size)))
+    if (!row->InterfaceLuid.Value)
     {
-        HeapFree(GetProcessHeap(), 0, ptr);
-        return ret;
+        err = ConvertInterfaceIndexToLuid( row->InterfaceIndex, &row->InterfaceLuid );
+        if (err) return err;
     }
 
-    ret = ERROR_FILE_NOT_FOUND;
-    for (aa = ptr; aa; aa = aa->Next)
+    if (row->Address.si_family == WS_AF_INET)
     {
-        IP_ADAPTER_UNICAST_ADDRESS *ua;
-
-        if (aa->u.s.IfIndex != row->InterfaceIndex &&
-            memcmp(&aa->Luid, &row->InterfaceLuid, sizeof(row->InterfaceLuid)))
-            continue;
-        ret = ERROR_NOT_FOUND;
-
-        ua = aa->FirstUnicastAddress;
-        while (ua)
-        {
-            SOCKADDR_INET *uaaddr = (SOCKADDR_INET *)ua->Address.lpSockaddr;
-
-            if ((row->Address.si_family == WS_AF_INET6 &&
-                 !memcmp(&row->Address.Ipv6.sin6_addr, &uaaddr->Ipv6.sin6_addr, sizeof(uaaddr->Ipv6.sin6_addr))) ||
-                (row->Address.si_family == WS_AF_INET &&
-                 row->Address.Ipv4.sin_addr.S_un.S_addr == uaaddr->Ipv4.sin_addr.S_un.S_addr))
-            {
-                memcpy(&row->InterfaceLuid, &aa->Luid, sizeof(aa->Luid));
-                row->InterfaceIndex     = aa->u.s.IfIndex;
-                row->PrefixOrigin       = ua->PrefixOrigin;
-                row->SuffixOrigin       = ua->SuffixOrigin;
-                row->ValidLifetime      = ua->ValidLifetime;
-                row->PreferredLifetime  = ua->PreferredLifetime;
-                row->OnLinkPrefixLength = ua->OnLinkPrefixLength;
-                row->SkipAsSource       = 0;
-                row->DadState           = ua->DadState;
-                if (row->Address.si_family == WS_AF_INET6)
-                    row->ScopeId.u.Value  = row->Address.Ipv6.sin6_scope_id;
-                else
-                    row->ScopeId.u.Value  = 0;
-                NtQuerySystemTime(&row->CreationTimeStamp);
-                HeapFree(GetProcessHeap(), 0, ptr);
-                return NO_ERROR;
-            }
-            ua = ua->Next;
-        }
+        key4.luid = row->InterfaceLuid;
+        key4.addr = row->Address.Ipv4.sin_addr;
+        key4.pad = 0;
+        key = &key4;
+        key_size = sizeof(key4);
     }
-    HeapFree(GetProcessHeap(), 0, ptr);
+    else if (row->Address.si_family == WS_AF_INET6)
+    {
+        key6.luid = row->InterfaceLuid;
+        key6.addr = row->Address.Ipv6.sin6_addr;
+        key = &key6;
+        key_size = sizeof(key6);
+    }
+    else return ERROR_INVALID_PARAMETER;
 
-    return ret;
+    err = NsiGetAllParameters( 1, mod, NSI_IP_UNICAST_TABLE, key, key_size, &rw, sizeof(rw),
+                               &dyn, sizeof(dyn), &stat, sizeof(stat) );
+    if (!err) unicast_row_fill( row, row->Address.si_family, key, &rw, &dyn, &stat );
+    return err;
 }
 
 DWORD WINAPI GetUnicastIpAddressTable(ADDRESS_FAMILY family, MIB_UNICASTIPADDRESS_TABLE **table)
