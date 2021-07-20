@@ -143,6 +143,11 @@ void WINAPI vkCmdBindIndexBuffer(VkCommandBuffer commandBuffer, VkBuffer buffer,
     unix_funcs->p_vkCmdBindIndexBuffer(commandBuffer, buffer, offset, indexType);
 }
 
+void WINAPI vkCmdBindInvocationMaskHUAWEI(VkCommandBuffer commandBuffer, VkImageView imageView, VkImageLayout imageLayout)
+{
+    unix_funcs->p_vkCmdBindInvocationMaskHUAWEI(commandBuffer, imageView, imageLayout);
+}
+
 void WINAPI vkCmdBindPipeline(VkCommandBuffer commandBuffer, VkPipelineBindPoint pipelineBindPoint, VkPipeline pipeline)
 {
     unix_funcs->p_vkCmdBindPipeline(commandBuffer, pipelineBindPoint, pipeline);
@@ -1978,6 +1983,11 @@ VkResult WINAPI vkWaitForFences(VkDevice device, uint32_t fenceCount, const VkFe
     return unix_funcs->p_vkWaitForFences(device, fenceCount, pFences, waitAll, timeout);
 }
 
+VkResult WINAPI vkWaitForPresentKHR(VkDevice device, VkSwapchainKHR swapchain, uint64_t presentId, uint64_t timeout)
+{
+    return unix_funcs->p_vkWaitForPresentKHR(device, swapchain, presentId, timeout);
+}
+
 VkResult WINAPI vkWaitSemaphores(VkDevice device, const VkSemaphoreWaitInfo *pWaitInfo, uint64_t timeout)
 {
     return unix_funcs->p_vkWaitSemaphores(device, pWaitInfo, timeout);
@@ -2021,6 +2031,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdBeginTransformFeedbackEXT", &vkCmdBeginTransformFeedbackEXT},
     {"vkCmdBindDescriptorSets", &vkCmdBindDescriptorSets},
     {"vkCmdBindIndexBuffer", &vkCmdBindIndexBuffer},
+    {"vkCmdBindInvocationMaskHUAWEI", &vkCmdBindInvocationMaskHUAWEI},
     {"vkCmdBindPipeline", &vkCmdBindPipeline},
     {"vkCmdBindPipelineShaderGroupNV", &vkCmdBindPipelineShaderGroupNV},
     {"vkCmdBindShadingRateImageNV", &vkCmdBindShadingRateImageNV},
@@ -2333,6 +2344,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkUpdateDescriptorSetWithTemplateKHR", &vkUpdateDescriptorSetWithTemplateKHR},
     {"vkUpdateDescriptorSets", &vkUpdateDescriptorSets},
     {"vkWaitForFences", &vkWaitForFences},
+    {"vkWaitForPresentKHR", &vkWaitForPresentKHR},
     {"vkWaitSemaphores", &vkWaitSemaphores},
     {"vkWaitSemaphoresKHR", &vkWaitSemaphoresKHR},
     {"vkWriteAccelerationStructuresPropertiesKHR", &vkWriteAccelerationStructuresPropertiesKHR},

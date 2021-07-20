@@ -1736,6 +1736,7 @@ struct vulkan_device_funcs
     void (*p_vkCmdBeginTransformFeedbackEXT)(VkCommandBuffer, uint32_t, uint32_t, const VkBuffer *, const VkDeviceSize *);
     void (*p_vkCmdBindDescriptorSets)(VkCommandBuffer, VkPipelineBindPoint, VkPipelineLayout, uint32_t, uint32_t, const VkDescriptorSet *, uint32_t, const uint32_t *);
     void (*p_vkCmdBindIndexBuffer)(VkCommandBuffer, VkBuffer, VkDeviceSize, VkIndexType);
+    void (*p_vkCmdBindInvocationMaskHUAWEI)(VkCommandBuffer, VkImageView, VkImageLayout);
     void (*p_vkCmdBindPipeline)(VkCommandBuffer, VkPipelineBindPoint, VkPipeline);
     void (*p_vkCmdBindPipelineShaderGroupNV)(VkCommandBuffer, VkPipelineBindPoint, VkPipeline, uint32_t);
     void (*p_vkCmdBindShadingRateImageNV)(VkCommandBuffer, VkImageView, VkImageLayout);
@@ -2047,6 +2048,7 @@ struct vulkan_device_funcs
     void (*p_vkUpdateDescriptorSetWithTemplateKHR)(VkDevice, VkDescriptorSet, VkDescriptorUpdateTemplate, const void *);
     void (*p_vkUpdateDescriptorSets)(VkDevice, uint32_t, const VkWriteDescriptorSet_host *, uint32_t, const VkCopyDescriptorSet_host *);
     VkResult (*p_vkWaitForFences)(VkDevice, uint32_t, const VkFence *, VkBool32, uint64_t);
+    VkResult (*p_vkWaitForPresentKHR)(VkDevice, VkSwapchainKHR, uint64_t, uint64_t);
     VkResult (*p_vkWaitSemaphores)(VkDevice, const VkSemaphoreWaitInfo *, uint64_t);
     VkResult (*p_vkWaitSemaphoresKHR)(VkDevice, const VkSemaphoreWaitInfo *, uint64_t);
     VkResult (*p_vkWriteAccelerationStructuresPropertiesKHR)(VkDevice, uint32_t, const VkAccelerationStructureKHR *, VkQueryType, size_t, void *, size_t);
@@ -2135,6 +2137,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkCmdBeginTransformFeedbackEXT) \
     USE_VK_FUNC(vkCmdBindDescriptorSets) \
     USE_VK_FUNC(vkCmdBindIndexBuffer) \
+    USE_VK_FUNC(vkCmdBindInvocationMaskHUAWEI) \
     USE_VK_FUNC(vkCmdBindPipeline) \
     USE_VK_FUNC(vkCmdBindPipelineShaderGroupNV) \
     USE_VK_FUNC(vkCmdBindShadingRateImageNV) \
@@ -2446,6 +2449,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkUpdateDescriptorSetWithTemplateKHR) \
     USE_VK_FUNC(vkUpdateDescriptorSets) \
     USE_VK_FUNC(vkWaitForFences) \
+    USE_VK_FUNC(vkWaitForPresentKHR) \
     USE_VK_FUNC(vkWaitSemaphores) \
     USE_VK_FUNC(vkWaitSemaphoresKHR) \
     USE_VK_FUNC(vkWriteAccelerationStructuresPropertiesKHR)
