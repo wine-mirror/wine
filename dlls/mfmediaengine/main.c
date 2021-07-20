@@ -1352,29 +1352,35 @@ static HRESULT WINAPI media_engine_SetSource(IMFMediaEngine *iface, BSTR url)
 
     EnterCriticalSection(&engine->cs);
 
-    SysFreeString(engine->current_source);
-    engine->current_source = NULL;
-    if (url)
-        engine->current_source = SysAllocString(url);
-
-    engine->ready_state = MF_MEDIA_ENGINE_READY_HAVE_NOTHING;
-
-    IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PURGEQUEUEDEVENTS, 0, 0);
-
-    if (url)
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else
     {
-        IPropertyStore *props = NULL;
-        unsigned int flags;
+        SysFreeString(engine->current_source);
+        engine->current_source = NULL;
+        if (url)
+            engine->current_source = SysAllocString(url);
 
-        flags = MF_RESOLUTION_MEDIASOURCE;
-        if (engine->flags & MF_MEDIA_ENGINE_DISABLE_LOCAL_PLUGINS)
-            flags |= MF_RESOLUTION_DISABLE_LOCAL_PLUGINS;
+        engine->ready_state = MF_MEDIA_ENGINE_READY_HAVE_NOTHING;
 
-        IMFAttributes_GetUnknown(engine->attributes, &MF_MEDIA_ENGINE_SOURCE_RESOLVER_CONFIG_STORE,
-                &IID_IPropertyStore, (void **)&props);
-        hr = IMFSourceResolver_BeginCreateObjectFromURL(engine->resolver, url, flags, props, NULL, &engine->load_handler, NULL);
-        if (props)
-            IPropertyStore_Release(props);
+        IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PURGEQUEUEDEVENTS, 0, 0);
+
+        if (url)
+        {
+            IPropertyStore *props = NULL;
+            unsigned int flags;
+
+            flags = MF_RESOLUTION_MEDIASOURCE;
+            if (engine->flags & MF_MEDIA_ENGINE_DISABLE_LOCAL_PLUGINS)
+                flags |= MF_RESOLUTION_DISABLE_LOCAL_PLUGINS;
+
+            IMFAttributes_GetUnknown(engine->attributes, &MF_MEDIA_ENGINE_SOURCE_RESOLVER_CONFIG_STORE,
+                    &IID_IPropertyStore, (void **)&props);
+            hr = IMFSourceResolver_BeginCreateObjectFromURL(engine->resolver, url, flags, props, NULL,
+                    &engine->load_handler, NULL);
+            if (props)
+                IPropertyStore_Release(props);
+        }
     }
 
     LeaveCriticalSection(&engine->cs);

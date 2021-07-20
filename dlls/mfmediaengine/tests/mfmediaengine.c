@@ -253,7 +253,6 @@ static void test_Shutdown(void)
     ok(hr == MF_E_SHUTDOWN || broken(hr == S_OK) /* before win10 */, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaEngine_SetSource(media_engine, NULL);
-todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#x.\n", hr);
 
     hr = IMFMediaEngine_GetCurrentSource(media_engine, &str);
