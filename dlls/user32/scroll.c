@@ -751,7 +751,7 @@ static void SCROLL_HandleKbdEvent(HWND hwnd, WPARAM wParam, LPARAM lParam)
  * 'pt' is the location of the mouse event in client (for SB_CTL) or
  * windows coordinates.
  */
-static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
+void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt )
 {
       /* Previous mouse position for timer events */
     static POINT prevPt;
@@ -773,7 +773,8 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
     SCROLLBAR_INFO *infoPtr = SCROLL_GetInternalInfo( hwnd, nBar, FALSE );
     if (!infoPtr) return;
     if ((g_tracking_info.hit_test == SCROLL_NOWHERE)
-        && (msg != WM_LBUTTONDOWN && msg != WM_MOUSEMOVE && msg != WM_MOUSELEAVE))
+         && (msg != WM_LBUTTONDOWN && msg != WM_MOUSEMOVE && msg != WM_MOUSELEAVE
+         && msg != WM_NCMOUSEMOVE && msg != WM_NCMOUSELEAVE))
 		  return;
 
     if (nBar == SB_CTL && (GetWindowLongW( hwnd, GWL_STYLE ) & (SBS_SIZEGRIP | SBS_SIZEBOX)))
@@ -841,6 +842,32 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
 
           break;
 
+     case WM_NCMOUSEMOVE:
+          hittest = SCROLL_HitTest( hwnd, nBar, pt, vertical == g_tracking_info.vertical && GetCapture() == hwnd );
+          prevPt = pt;
+
+          if (nBar == SB_CTL)
+              break;
+
+          tme.cbSize = sizeof(tme);
+          tme.dwFlags = TME_QUERY;
+          TrackMouseEvent( &tme );
+          if (((tme.dwFlags & (TME_NONCLIENT | TME_LEAVE)) != (TME_NONCLIENT | TME_LEAVE)) || tme.hwndTrack != hwnd)
+          {
+              tme.dwFlags = TME_NONCLIENT | TME_LEAVE;
+              tme.hwndTrack = hwnd;
+              TrackMouseEvent( &tme );
+          }
+
+          break;
+
+      case WM_NCMOUSELEAVE:
+          if (nBar == SB_CTL)
+              return;
+
+          hittest = SCROLL_NOWHERE;
+          break;
+
       case WM_MOUSELEAVE:
           if (nBar != SB_CTL)
               return;
@@ -870,7 +897,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
     switch (g_tracking_info.hit_test)
     {
     case SCROLL_NOWHERE:  /* No tracking in progress */
-        if (msg == WM_MOUSEMOVE || msg == WM_MOUSELEAVE)
+        if (msg == WM_MOUSEMOVE || msg == WM_MOUSELEAVE || msg == WM_NCMOUSEMOVE || msg == WM_NCMOUSELEAVE)
             SCROLL_DrawScrollBar( hwnd, hdc, nBar, hittest, &g_tracking_info, TRUE, TRUE );
         break;
 
@@ -1049,6 +1076,8 @@ void SCROLL_TrackScrollBar( HWND hwnd, INT scrollbar, POINT pt )
         if (msg.message == WM_LBUTTONUP ||
             msg.message == WM_MOUSEMOVE ||
             msg.message == WM_MOUSELEAVE ||
+            msg.message == WM_NCMOUSEMOVE ||
+            msg.message == WM_NCMOUSELEAVE ||
             (msg.message == WM_SYSTIMER && msg.wParam == SCROLL_TIMER))
         {
             pt.x = (short)LOWORD(msg.lParam) - rect.left;
@@ -1383,6 +1412,8 @@ LRESULT WINAPI USER_ScrollBarProc( HWND hwnd, UINT message, WPARAM wParam, LPARA
 	}
         break;
     case WM_LBUTTONUP:
+    case WM_NCMOUSEMOVE:
+    case WM_NCMOUSELEAVE:
     case WM_MOUSEMOVE:
     case WM_MOUSELEAVE:
     case WM_SYSTIMER:
