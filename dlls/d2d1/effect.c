@@ -190,7 +190,11 @@ static UINT32 STDMETHODCALLTYPE d2d_effect_GetInputCount(ID2D1Effect *iface)
 
 static void STDMETHODCALLTYPE d2d_effect_GetOutput(ID2D1Effect *iface, ID2D1Image **output)
 {
-    FIXME("iface %p, output %p stub!\n", iface, output);
+    struct d2d_effect *effect = impl_from_ID2D1Effect(iface);
+
+    TRACE("iface %p, output %p.\n", iface, output);
+
+    ID2D1Image_AddRef(*output = &effect->ID2D1Image_iface);
 }
 
 static const ID2D1EffectVtbl d2d_effect_vtbl =
