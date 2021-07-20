@@ -1288,6 +1288,7 @@ static HRESULT convert_str( const char *str, INT dig, ULONG flags,
 static void expect_NumFromStr( int line, HRESULT hres, NUMPARSE *np, INT a, ULONG b, ULONG c,
                                INT d, INT e, INT f )
 {
+    ok_(__FILE__,line)(hres == (HRESULT)S_OK, "returned %08x\n", hres);
     if (hres == (HRESULT)S_OK)
     {
         ok_(__FILE__,line)(np->cDig == a, "Expected cDig = %d, got %d\n", a, np->cDig);
