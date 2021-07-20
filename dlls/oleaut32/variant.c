@@ -1669,8 +1669,8 @@ HRESULT WINAPI VarParseNumFromStr(const OLECHAR *lpszStr, LCID lcid, ULONG dwFla
              (!chars.cCurrencyLocal2 || lpszStr[1] == chars.cCurrencyLocal2))
     {
       pNumprs->dwOutFlags |= NUMPRS_CURRENCY;
-      cchUsed++;
-      lpszStr++;
+      cchUsed += chars.cCurrencyLocal2 ? 2 : 1;
+      lpszStr += chars.cCurrencyLocal2 ? 2 : 1;
       /* Only accept currency characters */
       chars.cDecimalPoint = chars.cCurrencyDecimalPoint;
       chars.cDigitSeparator = chars.cCurrencyDigitSeparator;
