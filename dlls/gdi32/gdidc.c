@@ -186,6 +186,21 @@ BOOL WINAPI Ellipse( HDC hdc, INT left, INT top, INT right, INT bottom )
 }
 
 /***********************************************************************
+ *           Rectangle    (GDI32.@)
+ */
+BOOL WINAPI Rectangle( HDC hdc, INT left, INT top, INT right, INT bottom )
+{
+    DC_ATTR *dc_attr;
+
+    TRACE( "%p, (%d, %d)-(%d, %d)\n", hdc, left, top, right, bottom );
+
+    if (is_meta_dc( hdc )) return METADC_Rectangle( hdc, left, top, right, bottom );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_Rectangle( dc_attr, left, top, right, bottom )) return FALSE;
+    return NtGdiRectangle( hdc, left, top, right, bottom );
+}
+
+/***********************************************************************
  *           RoundRect    (GDI32.@)
  */
 BOOL WINAPI RoundRect( HDC hdc, INT left, INT top, INT right,

@@ -357,16 +357,13 @@ BOOL WINAPI NtGdiEllipse( HDC hdc, INT left, INT top, INT right, INT bottom )
 
 
 /***********************************************************************
- *           Rectangle    (GDI32.@)
+ *           NtGdiRectangle    (win32u.@)
  */
-BOOL WINAPI Rectangle( HDC hdc, INT left, INT top,
-                           INT right, INT bottom )
+BOOL WINAPI NtGdiRectangle( HDC hdc, INT left, INT top, INT right, INT bottom )
 {
     PHYSDEV physdev;
     BOOL ret;
     DC * dc = get_dc_ptr( hdc );
-
-    TRACE( "%p, (%d, %d)-(%d, %d)\n", hdc, left, top, right, bottom );
 
     if (!dc) return FALSE;
     update_dc( dc );

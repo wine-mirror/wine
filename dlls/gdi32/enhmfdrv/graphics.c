@@ -422,37 +422,52 @@ BOOL CDECL EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom
 }
 
 /***********************************************************************
- *           EMFDRV_Rectangle
+ *           EMFDC_Rectangle
  */
-BOOL CDECL EMFDRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
+BOOL EMFDC_Rectangle( DC_ATTR *dc_attr, INT left, INT top, INT right, INT bottom )
 {
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
-    DC *dc = get_physdev_dc( dev );
+    EMFDRV_PDEVICE *emf = dc_attr->emf;
     EMRRECTANGLE emr;
-    INT temp;
-
-    TRACE("%d,%d - %d,%d\n", left, top, right, bottom);
 
     if(left == right || top == bottom) return FALSE;
 
-    if(left > right) {temp = left; left = right; right = temp;}
-    if(top > bottom) {temp = top; top = bottom; bottom = temp;}
-
-    if(dc->attr->graphics_mode == GM_COMPATIBLE) {
-        right--;
-	bottom--;
-    }
-
     emr.emr.iType     = EMR_RECTANGLE;
     emr.emr.nSize     = sizeof(emr);
-    emr.rclBox.left   = left;
-    emr.rclBox.top    = top;
-    emr.rclBox.right  = right;
-    emr.rclBox.bottom = bottom;
+    emr.rclBox.left   = min( left, right );
+    emr.rclBox.top    = min( top, bottom );
+    emr.rclBox.right  = max( left, right );
+    emr.rclBox.bottom = max( top, bottom );
+    if (dc_attr->graphics_mode == GM_COMPATIBLE)
+    {
+        emr.rclBox.right--;
+        emr.rclBox.bottom--;
+    }
 
-    if(!physDev->path)
-        EMFDRV_UpdateBBox( dev, &emr.rclBox );
-    return EMFDRV_WriteRecord( dev, &emr.emr );
+    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
+}
+
+/***********************************************************************
+ *           EMFDC_Rectangle
+ */
+BOOL EMFDRV_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
+{
+    DC *dc = get_physdev_dc( dev );
+    RECTL bounds;
+
+    if (left == right || top == bottom) return FALSE;
+
+    bounds.left   = min( left, right );
+    bounds.top    = min( top, bottom );
+    bounds.right  = max( left, right );
+    bounds.bottom = max( top, bottom );
+    if (dc->attr->graphics_mode == GM_COMPATIBLE)
+    {
+        bounds.right--;
+        bounds.bottom--;
+    }
+
+    EMFDRV_UpdateBBox( dev, &bounds );
+    return TRUE;
 }
 
 /***********************************************************************

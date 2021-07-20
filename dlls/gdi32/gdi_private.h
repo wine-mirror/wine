@@ -51,6 +51,7 @@ extern BOOL METADC_LineTo( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL METADC_MoveTo( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL METADC_Pie( HDC hdc, INT left, INT top, INT right, INT bottom,
                         INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
+extern BOOL METADC_Rectangle( HDC hdc, INT left, INT top, INT right, INT bottom) DECLSPEC_HIDDEN;
 extern BOOL METADC_RoundRect( HDC hdc, INT left, INT top, INT right, INT bottom,
                               INT ell_width, INT ell_height ) DECLSPEC_HIDDEN;
 
@@ -62,6 +63,8 @@ extern BOOL EMFDC_Ellipse( DC_ATTR *dc_attr, INT left, INT top, INT right,
                            INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_LineTo( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_MoveTo( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
+extern BOOL EMFDC_Rectangle( DC_ATTR *dc_attr, INT left, INT top, INT right,
+                             INT bottom) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_RoundRect( DC_ATTR *dc_attr, INT left, INT top, INT right, INT bottom,
                              INT ell_width, INT ell_height ) DECLSPEC_HIDDEN;
 

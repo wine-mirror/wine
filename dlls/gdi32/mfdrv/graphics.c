@@ -98,11 +98,11 @@ BOOL METADC_Ellipse( HDC hdc, INT left, INT top, INT right, INT bottom )
 }
 
 /***********************************************************************
- *           MFDRV_Rectangle
+ *           METADC_Rectangle
  */
-BOOL CDECL MFDRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
+BOOL METADC_Rectangle( HDC hdc, INT left, INT top, INT right, INT bottom )
 {
-    return MFDRV_MetaParam4(dev, META_RECTANGLE, left, top, right, bottom);
+    return metadc_param4( hdc, META_RECTANGLE, left, top, right, bottom );
 }
 
 /***********************************************************************

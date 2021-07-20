@@ -779,18 +779,6 @@ static BOOL CDECL emfpathdrv_PolylineTo( PHYSDEV dev, const POINT *pts, INT coun
             next->funcs->pPolylineTo( next, pts, count ));
 }
 
-/***********************************************************************
- *           emfpathdrv_Rectangle
- */
-static BOOL CDECL emfpathdrv_Rectangle( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2 )
-{
-    PHYSDEV emfdev = get_emfdev( dev );
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pRectangle );
-
-    return (emfdev->funcs->pRectangle( emfdev, x1, y1, x2, y2 ) &&
-            next->funcs->pRectangle( next, x1, y1, x2, y2 ));
-}
-
 
 static const struct gdi_dc_funcs emfpath_driver =
 {
@@ -874,7 +862,7 @@ static const struct gdi_dc_funcs emfpath_driver =
     NULL,                               /* pPutImage */
     NULL,                               /* pRealizeDefaultPalette */
     NULL,                               /* pRealizePalette */
-    emfpathdrv_Rectangle,               /* pRectangle */
+    NULL,                               /* pRectangle */
     NULL,                               /* pResetDC */
     NULL,                               /* pRestoreDC */
     NULL,                               /* pRoundRect */

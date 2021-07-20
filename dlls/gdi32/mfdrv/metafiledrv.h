@@ -98,7 +98,6 @@ extern BOOL CDECL MFDRV_PolyBezierTo( PHYSDEV dev, const POINT* pt, DWORD count 
 extern BOOL CDECL MFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polygons) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_Polyline( PHYSDEV dev, const POINT* pt,INT count) DECLSPEC_HIDDEN;
-extern BOOL CDECL MFDRV_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_RestoreDC( PHYSDEV dev, INT level ) DECLSPEC_HIDDEN;
 extern INT  CDECL MFDRV_SaveDC( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_ScaleViewportExtEx( PHYSDEV dev, INT xNum, INT xDenom, INT yNum, INT yDenom, SIZE *size ) DECLSPEC_HIDDEN;
