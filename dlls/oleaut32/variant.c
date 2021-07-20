@@ -1940,6 +1940,14 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
       lpszStr++;
       pNumprs->dwOutFlags |= NUMPRS_NEG;
     }
+    else if (pNumprs->dwInFlags & NUMPRS_CURRENCY &&
+             *lpszStr == chars.cCurrencyLocal &&
+             (!chars.cCurrencyLocal2 || lpszStr[1] == chars.cCurrencyLocal2))
+    {
+      pNumprs->dwOutFlags |= NUMPRS_CURRENCY;
+      cchUsed += chars.cCurrencyLocal2 ? 2 : 1;
+      lpszStr += chars.cCurrencyLocal2 ? 2 : 1;
+    }
     else
       break;
   }

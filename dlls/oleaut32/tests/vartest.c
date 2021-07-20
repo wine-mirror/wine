@@ -1641,7 +1641,7 @@ static void test_VarParseNumFromStrEn(void)
 
   /* With flag, but is allowed after the amount and can even be repeated! */
   CONVERT("$11$$", NUMPRS_CURRENCY|NUMPRS_USE_ALL);
-  todo_wine EXPECT(2,NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_CURRENCY,5,0,0);
+  EXPECT(2,NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_CURRENCY,5,0,0);
   EXPECT2(1,1);
   EXPECTRGB(2,FAILDIG);
 
@@ -1687,7 +1687,7 @@ static void test_VarParseNumFromStrEn(void)
 
       /* With flag, unless explicitly allowed */
       WCONVERT(wstr, NUMPRS_CURRENCY|NUMPRS_TRAILING_WHITE|NUMPRS_USE_ALL);
-      todo_wine EXPECT(2,NUMPRS_CURRENCY|NUMPRS_TRAILING_WHITE|NUMPRS_USE_ALL,NUMPRS_CURRENCY|NUMPRS_TRAILING_WHITE,4,0,0);
+      EXPECT(2,NUMPRS_CURRENCY|NUMPRS_TRAILING_WHITE|NUMPRS_USE_ALL,NUMPRS_CURRENCY|NUMPRS_TRAILING_WHITE,4,0,0);
       EXPECT2(1,1);
       EXPECTRGB(2,FAILDIG);
 
@@ -2005,7 +2005,7 @@ static void test_VarParseNumFromStrFr(void)
 
   /* With flag, consumes all currency signs! "E12EE" */
   WCONVERT(L"\x20ac\x31\x32\x20ac\x20ac", NUMPRS_CURRENCY|NUMPRS_USE_ALL);
-  todo_wine EXPECT(2,NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_CURRENCY,5,0,0);
+  EXPECT(2,NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_CURRENCY,5,0,0);
   EXPECT2(1,2);
   EXPECTRGB(2,FAILDIG);
 
@@ -2024,12 +2024,12 @@ static void test_VarParseNumFromStrFr(void)
     if (spaces[i] == ' ' || spaces[i] == 0xa0 /* non-breaking space */)
     {
       /* Spaces aliased to thousands separator are never allowed! */
-      EXPECTFAIL;
+      todo_wine EXPECTFAIL;
     }
     else
     {
       /* The others behave normally */
-      todo_wine EXPECT(2,NUMPRS_CURRENCY|NUMPRS_TRAILING_WHITE|NUMPRS_USE_ALL,NUMPRS_CURRENCY|NUMPRS_TRAILING_WHITE,4,0,0);
+      EXPECT(2,NUMPRS_CURRENCY|NUMPRS_TRAILING_WHITE|NUMPRS_USE_ALL,NUMPRS_CURRENCY|NUMPRS_TRAILING_WHITE,4,0,0);
       EXPECT2(1,2);
       EXPECTRGB(2,FAILDIG);
     }
@@ -2038,7 +2038,7 @@ static void test_VarParseNumFromStrFr(void)
     if (spaces[i] == ' ' || spaces[i] == 0xa0 /* non-breaking space */)
     {
       /* Spaces aliased to thousands separator are never allowed! */
-      todo_wine EXPECT(2,NUMPRS_CURRENCY|NUMPRS_THOUSANDS|NUMPRS_USE_ALL,NUMPRS_CURRENCY|NUMPRS_THOUSANDS,4,0,0);
+      todo_wine_if(i==0) EXPECT(2,NUMPRS_CURRENCY|NUMPRS_THOUSANDS|NUMPRS_USE_ALL,NUMPRS_CURRENCY|NUMPRS_THOUSANDS,4,0,0);
       EXPECT2(1,2);
       EXPECTRGB(2,FAILDIG);
     }
@@ -2059,7 +2059,7 @@ static void test_VarParseNumFromStrFr(void)
 
   /* With flag and decimal flag, consumes decimal point and following digits */
   WCONVERT(L"12,1\x20ac", NUMPRS_CURRENCY|NUMPRS_DECIMAL|NUMPRS_USE_ALL);
-  todo_wine EXPECT(3,NUMPRS_CURRENCY|NUMPRS_DECIMAL|NUMPRS_USE_ALL,NUMPRS_CURRENCY|NUMPRS_DECIMAL,5,0,-1);
+  EXPECT(3,NUMPRS_CURRENCY|NUMPRS_DECIMAL|NUMPRS_USE_ALL,NUMPRS_CURRENCY|NUMPRS_DECIMAL,5,0,-1);
   EXPECT2(1,2);
   EXPECTRGB(2,1);
   EXPECTRGB(3,FAILDIG);
@@ -2158,7 +2158,7 @@ static void test_VarParseNumFromStrMisc(void)
 
   /* Multi-character currencies can be repeated too "zl2zlzl" */
   WCONVERT(L"z\x142\x32z\x142z\x142", NUMPRS_CURRENCY|NUMPRS_USE_ALL);
-  todo_wine EXPECT(1,NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_CURRENCY,7,0,0);
+  EXPECT(1,NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_CURRENCY,7,0,0);
   EXPECT2(2,FAILDIG);
 
   lcid = MAKELCID(MAKELANGID(LANG_FRENCH,SUBLANG_FRENCH_SWISS),SORT_DEFAULT);
