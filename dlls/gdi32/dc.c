@@ -99,7 +99,7 @@ static void set_initial_dc_state( DC *dc )
     dc->breakExtra          = 0;
     dc->breakRem            = 0;
     dc->MapMode             = MM_TEXT;
-    dc->GraphicsMode        = GM_COMPATIBLE;
+    dc->attr->graphics_mode = GM_COMPATIBLE;
     dc->attr->cur_pos.x     = 0;
     dc->attr->cur_pos.y     = 0;
     dc->ArcDirection        = AD_COUNTERCLOCKWISE;
@@ -414,7 +414,7 @@ INT CDECL nulldrv_SaveDC( PHYSDEV dev )
     newdc->breakExtra       = dc->breakExtra;
     newdc->breakRem         = dc->breakRem;
     newdc->MapMode          = dc->MapMode;
-    newdc->GraphicsMode     = dc->GraphicsMode;
+    newdc->attr->graphics_mode = dc->attr->graphics_mode;
     newdc->attr->cur_pos    = dc->attr->cur_pos;
     newdc->ArcDirection     = dc->ArcDirection;
     newdc->xformWorld2Wnd   = dc->xformWorld2Wnd;
@@ -491,7 +491,7 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     dc->breakExtra       = dcs->breakExtra;
     dc->breakRem         = dcs->breakRem;
     dc->MapMode          = dcs->MapMode;
-    dc->GraphicsMode     = dcs->GraphicsMode;
+    dc->attr->graphics_mode = dcs->attr->graphics_mode;
     dc->attr->cur_pos    = dcs->attr->cur_pos;
     dc->ArcDirection     = dcs->ArcDirection;
     dc->xformWorld2Wnd   = dcs->xformWorld2Wnd;
@@ -1053,7 +1053,7 @@ INT WINAPI GetGraphicsMode( HDC hdc )
     DC * dc = get_dc_ptr( hdc );
     if (dc)
     {
-        ret = dc->GraphicsMode;
+        ret = dc->attr->graphics_mode;
         release_dc_ptr( dc );
     }
     return ret;
@@ -1076,8 +1076,8 @@ INT WINAPI SetGraphicsMode( HDC hdc, INT mode )
     if (!dc) return 0;
     if ((mode > 0) && (mode <= GM_LAST))
     {
-        ret = dc->GraphicsMode;
-        dc->GraphicsMode = mode;
+        ret = dc->attr->graphics_mode;
+        dc->attr->graphics_mode = mode;
     }
     /* font metrics depend on the graphics mode */
     if (ret != mode) NtGdiSelectFont(dc->hSelf, dc->hFont);

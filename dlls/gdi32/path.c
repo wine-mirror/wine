@@ -383,7 +383,7 @@ static BOOL PATH_CheckCorners( DC *dc, POINT corners[], INT x1, INT y1, INT x2, 
     }
 
     /* In GM_COMPATIBLE, don't include bottom and right edges */
-    if (dc->GraphicsMode == GM_COMPATIBLE)
+    if (dc->attr->graphics_mode == GM_COMPATIBLE)
     {
         if (corners[0].x == corners[1].x) return FALSE;
         if (corners[0].y == corners[1].y) return FALSE;
@@ -1129,7 +1129,7 @@ static BOOL PATH_Arc( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2,
    }
 
    /* In GM_COMPATIBLE, don't include bottom and right edges */
-   if (dc->GraphicsMode == GM_COMPATIBLE)
+   if (dc->attr->graphics_mode == GM_COMPATIBLE)
    {
       corners[1].x--;
       corners[1].y--;

@@ -135,7 +135,6 @@ typedef struct tagDC
     INT           breakExtra;        /* breakTotalExtra / breakCount */
     INT           breakRem;          /* breakTotalExtra % breakCount */
     INT           MapMode;
-    INT           GraphicsMode;      /* Graphics mode */
     ABORTPROC     pAbortProc;        /* AbortProc for Printing */
     INT           ArcDirection;
     XFORM         xformWorld2Wnd;    /* World-to-window transformation */

@@ -188,7 +188,7 @@ EMFDRV_ArcChordPie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     if(left > right) {temp = left; left = right; right = temp;}
     if(top > bottom) {temp = top; top = bottom; bottom = temp;}
 
-    if(dc->GraphicsMode == GM_COMPATIBLE) {
+    if(dc->attr->graphics_mode == GM_COMPATIBLE) {
         right--;
 	bottom--;
     }
@@ -359,7 +359,7 @@ BOOL CDECL EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom
     if(left > right) {temp = left; left = right; right = temp;}
     if(top > bottom) {temp = top; top = bottom; bottom = temp;}
 
-    if(dc->GraphicsMode == GM_COMPATIBLE) {
+    if(dc->attr->graphics_mode == GM_COMPATIBLE) {
         right--;
 	bottom--;
     }
@@ -393,7 +393,7 @@ BOOL CDECL EMFDRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT botto
     if(left > right) {temp = left; left = right; right = temp;}
     if(top > bottom) {temp = top; top = bottom; bottom = temp;}
 
-    if(dc->GraphicsMode == GM_COMPATIBLE) {
+    if(dc->attr->graphics_mode == GM_COMPATIBLE) {
         right--;
 	bottom--;
     }
@@ -426,7 +426,7 @@ BOOL CDECL EMFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
     if(left > right) {temp = left; left = right; right = temp;}
     if(top > bottom) {temp = top; top = bottom; bottom = temp;}
 
-    if(dc->GraphicsMode == GM_COMPATIBLE) {
+    if(dc->attr->graphics_mode == GM_COMPATIBLE) {
         right--;
 	bottom--;
     }
@@ -810,7 +810,7 @@ BOOL CDECL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT 
     int textHeight = 0;
     int textWidth = 0;
     const UINT textAlign = dc->textAlign;
-    const INT graphicsMode = dc->GraphicsMode;
+    const INT graphicsMode = dc->attr->graphics_mode;
     FLOAT exScale, eyScale;
 
     nSize = sizeof(*pemr) + ((count+1) & ~1) * sizeof(WCHAR) + count * sizeof(INT);

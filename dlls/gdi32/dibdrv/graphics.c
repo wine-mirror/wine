@@ -561,7 +561,7 @@ static struct cached_font *add_cached_font( DC *dc, HFONT hfont, UINT aa_flags )
     GetObjectW( hfont, sizeof(font.lf), &font.lf );
     font.xform = dc->xformWorld2Vport;
     font.xform.eDx = font.xform.eDy = 0;  /* unused, would break hashing */
-    if (dc->GraphicsMode == GM_COMPATIBLE)
+    if (dc->attr->graphics_mode == GM_COMPATIBLE)
     {
         font.lf.lfOrientation = font.lf.lfEscapement;
         if (font.xform.eM11 * font.xform.eM22 < 0)
@@ -1399,7 +1399,7 @@ BOOL CDECL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bott
 
     TRACE("(%p, %d, %d, %d, %d)\n", dev, left, top, right, bottom);
 
-    if (dc->GraphicsMode == GM_ADVANCED)
+    if (dc->attr->graphics_mode == GM_ADVANCED)
     {
         pts[0].x = pts[3].x = left;
         pts[0].y = pts[1].y = top;

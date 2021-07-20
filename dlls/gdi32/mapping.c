@@ -561,7 +561,7 @@ BOOL WINAPI ModifyWorldTransform( HDC hdc, const XFORM *xform, DWORD mode )
     if ((dc = get_dc_ptr( hdc )))
     {
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pModifyWorldTransform );
-        if (dc->GraphicsMode == GM_ADVANCED)
+        if (dc->attr->graphics_mode == GM_ADVANCED)
             ret = physdev->funcs->pModifyWorldTransform( physdev, xform, mode );
         release_dc_ptr( dc );
     }
@@ -587,7 +587,7 @@ BOOL WINAPI SetWorldTransform( HDC hdc, const XFORM *xform )
     if ((dc = get_dc_ptr( hdc )))
     {
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetWorldTransform );
-        if (dc->GraphicsMode == GM_ADVANCED)
+        if (dc->attr->graphics_mode == GM_ADVANCED)
             ret = physdev->funcs->pSetWorldTransform( physdev, xform );
         release_dc_ptr( dc );
     }

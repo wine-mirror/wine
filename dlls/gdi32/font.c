@@ -3759,7 +3759,7 @@ static HFONT CDECL font_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_flags )
                lf.lfWeight, lf.lfPitchAndFamily, lf.lfCharSet, lf.lfOrientation,
                lf.lfEscapement );
 
-        if (dc->GraphicsMode == GM_ADVANCED)
+        if (dc->attr->graphics_mode == GM_ADVANCED)
         {
             memcpy( &dcmat, &dc->xformWorld2Vport, sizeof(FMAT2) );
             /* try to avoid not necessary glyph transformations */
@@ -6015,7 +6015,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     if(!(tm.tmPitchAndFamily & TMPF_VECTOR)) /* Non-scalable fonts shouldn't be rotated */
         lf.lfEscapement = 0;
 
-    if ((dc->GraphicsMode == GM_COMPATIBLE) &&
+    if ((dc->attr->graphics_mode == GM_COMPATIBLE) &&
         (dc->vport2WorldValid && dc->xformWorld2Vport.eM11 * dc->xformWorld2Vport.eM22 < 0))
     {
         lf.lfEscapement = -lf.lfEscapement;
@@ -6116,7 +6116,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
             desired[1].x -= desired[0].x;
             desired[1].y -= desired[0].y;
 
-            if (dc->GraphicsMode == GM_COMPATIBLE)
+            if (dc->attr->graphics_mode == GM_COMPATIBLE)
             {
                 if (dc->vport2WorldValid && dc->xformWorld2Vport.eM11 < 0)
                     desired[1].x = -desired[1].x;
@@ -6146,7 +6146,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
         desired[1].x -= desired[0].x;
         desired[1].y -= desired[0].y;
 
-        if (dc->GraphicsMode == GM_COMPATIBLE)
+        if (dc->attr->graphics_mode == GM_COMPATIBLE)
         {
             if (dc->vport2WorldValid && dc->xformWorld2Vport.eM11 < 0)
                 desired[1].x = -desired[1].x;

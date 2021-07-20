@@ -89,6 +89,7 @@ enum
 typedef struct DC_ATTR
 {
     POINT     cur_pos;
+    INT       graphics_mode;
     void     *emf;
 } DC_ATTR;
 
