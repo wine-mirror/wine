@@ -10,7 +10,7 @@
 @ stub Wow64IsControlFlowGuardEnforced
 @ stub Wow64IsStackExtentsCheckEnforced
 @ stub Wow64KiUserCallbackDispatcher
-@ stub Wow64LdrpInitialize
+@ stdcall Wow64LdrpInitialize(ptr)
 @ stub Wow64LogPrint
 @ stub Wow64NotifyUnsimulateComplete
 @ stub Wow64PassExceptionToGuest
@@ -22,6 +22,6 @@
 @ stub Wow64ShallowThunkSIZE_T32TO64
 @ stub Wow64ShallowThunkSIZE_T64TO32
 @ stub Wow64SuspendLocalThread
-@ stub Wow64SystemServiceEx
+@ stdcall -norelay Wow64SystemServiceEx(long ptr)
 @ stub Wow64ValidateUserCallTarget
 @ stub Wow64ValidateUserCallTargetFilter
