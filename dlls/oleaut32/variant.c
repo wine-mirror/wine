@@ -1652,6 +1652,12 @@ HRESULT WINAPI VarParseNumFromStr(const OLECHAR *lpszStr, LCID lcid, ULONG dwFla
         lpszStr++;
       } while (iswspace(*lpszStr));
     }
+    else if (pNumprs->dwInFlags & NUMPRS_THOUSANDS &&
+             ((chars.cDigitSeparator && *lpszStr == chars.cDigitSeparator) ||
+              (cDigitSeparator2 && *lpszStr == cDigitSeparator2)))
+    {
+      return DISP_E_TYPEMISMATCH; /* Not allowed before the first digit */
+    }
     else if (pNumprs->dwInFlags & NUMPRS_LEADING_PLUS &&
              *lpszStr == chars.cPositiveSymbol &&
              !(pNumprs->dwOutFlags & NUMPRS_LEADING_PLUS))
