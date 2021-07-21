@@ -5586,6 +5586,7 @@ static __msvcrt_ulong fenv_encode(unsigned int x, unsigned int y)
 {
     __msvcrt_ulong ret = 0;
 
+#ifdef __i386__
     if (x & _EM_INVALID) ret |= FENV_X_INVALID;
     if (x & _EM_DENORMAL) ret |= FENV_X_DENORMAL;
     if (x & _EM_ZERODIVIDE) ret |= FENV_X_ZERODIVIDE;
@@ -5597,6 +5598,7 @@ static __msvcrt_ulong fenv_encode(unsigned int x, unsigned int y)
     if (x & _RC_DOWN) ret |= FENV_X_DOWN;
     if (x & _PC_24) ret |= FENV_X_24;
     if (x & _PC_53) ret |= FENV_X_53;
+#endif
     x &= ~(_MCW_EM | _MCW_IC | _MCW_RC | _MCW_PC);
 
     if (y & _EM_INVALID) ret |= FENV_Y_INVALID;
@@ -5652,6 +5654,11 @@ static BOOL fenv_decode(__msvcrt_ulong enc, unsigned int *x, unsigned int *y)
 }
 #endif
 #elif _MSVCR_VER >= 120
+static __msvcrt_ulong fenv_encode(unsigned int x, unsigned int y)
+{
+    return x | y;
+}
+
 #if (defined(__i386__) || defined(__x86_64__))
 static BOOL fenv_decode(__msvcrt_ulong enc, unsigned int *x, unsigned int *y)
 {
@@ -5716,16 +5723,8 @@ int CDECL fesetexceptflag(const fexcept_t *status, int excepts)
         return 0;
 
     fegetenv(&env);
-#if _MSVCR_VER>=140 && (defined(__i386__) || defined(__x86_64__))
     env._Fe_stat &= ~fenv_encode(excepts, excepts);
     env._Fe_stat |= *status & fenv_encode(excepts, excepts);
-#elif _MSVCR_VER>=140
-    env._Fe_stat &= ~fenv_encode(0, excepts);
-    env._Fe_stat |= *status & fenv_encode(0, excepts);
-#else
-    env._Fe_stat &= ~excepts;
-    env._Fe_stat |= *status & excepts;
-#endif
     return fesetenv(&env);
 }
 
@@ -5738,13 +5737,7 @@ int CDECL feraiseexcept(int flags)
 
     flags &= FE_ALL_EXCEPT;
     fegetenv(&env);
-#if _MSVCR_VER>=140 && defined(__i386__)
     env._Fe_stat |= fenv_encode(flags, flags);
-#elif _MSVCR_VER>=140
-    env._Fe_stat |= fenv_encode(0, flags);
-#else
-    env._Fe_stat |= flags;
-#endif
     return fesetenv(&env);
 }
 
@@ -5757,11 +5750,7 @@ int CDECL feclearexcept(int flags)
 
     fegetenv(&env);
     flags &= FE_ALL_EXCEPT;
-#if _MSVCR_VER>=140
     env._Fe_stat &= ~fenv_encode(flags, flags);
-#else
-    env._Fe_stat &= ~flags;
-#endif
     return fesetenv(&env);
 }
 
@@ -5774,10 +5763,8 @@ int CDECL fegetexceptflag(fexcept_t *status, int excepts)
     unsigned int x87, sse;
     _statusfp2(&x87, &sse);
     *status = fenv_encode(x87 & excepts, sse & excepts);
-#elif _MSVCR_VER>=140
-    *status = fenv_encode(0, _statusfp() & excepts);
 #else
-    *status = _statusfp() & excepts;
+    *status = fenv_encode(0, _statusfp() & excepts);
 #endif
     return 0;
 }
