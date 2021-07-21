@@ -1915,7 +1915,6 @@ static void test_VarParseNumFromStrFr(void)
     if (spaces[i] == ' ' || spaces[i] == 0xa0 /* non-breaking space */)
     {
       /* Trailing thousands separators are allowed as usual */
-      todo_wine_if(spaces[i] == ' ')
       EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_USE_ALL,NUMPRS_THOUSANDS,2,0,0);
       EXPECT2(3,FAILDIG);
     }
@@ -1948,7 +1947,6 @@ static void test_VarParseNumFromStrFr(void)
     if (spaces[i] == ' ' || spaces[i] == 0xa0 /* non-breaking space */)
     {
       /* Non-breaking space and regular spaces work */
-      todo_wine_if(i == 0)
       EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_USE_ALL,NUMPRS_THOUSANDS,5,0,3);
       EXPECTRGB(0,1); /* Don't test extra digits, see "1,000" test */
       EXPECTRGB(4,FAILDIG);
@@ -1964,34 +1962,31 @@ static void test_VarParseNumFromStrFr(void)
 
   /* With flag and decimal point, thousands sep. but not decimals consumed */
   CONVERT("1 001,0", NUMPRS_THOUSANDS);
-  if (broken(1)) /* FIXME Reenable once Wine is less broken */
   EXPECT(4,NUMPRS_THOUSANDS,NUMPRS_THOUSANDS,5,0,0);
-  todo_wine ok(np.cDig == 4, "Expected cDig = 4, got %d\n", np.cDig);
-  EXPECTRGB(0,1);
-  todo_wine EXPECTRGB(1,0);
-  todo_wine EXPECTRGB(2,0);
-  todo_wine EXPECTRGB(3,1);
+  EXPECT2(1,0);
+  EXPECTRGB(2,0);
+  EXPECTRGB(3,1);
   EXPECTRGB(4,FAILDIG);
 
   /* With flag, consecutive thousands separators are allowed */
   CONVERT("1  000", NUMPRS_THOUSANDS|NUMPRS_USE_ALL);
-  todo_wine EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_USE_ALL,NUMPRS_THOUSANDS,6,0,3);
+  EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_USE_ALL,NUMPRS_THOUSANDS,6,0,3);
   EXPECTRGB(0,1); /* Don't test extra digits, see "1,000" test */
   EXPECTRGB(4,FAILDIG);
 
   /* With flag, thousands separators can be sprinkled at random */
   CONVERT("1 00 0  ", NUMPRS_THOUSANDS|NUMPRS_USE_ALL);
-  todo_wine EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_USE_ALL,NUMPRS_THOUSANDS,8,0,3);
+  EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_USE_ALL,NUMPRS_THOUSANDS,8,0,3);
   EXPECTRGB(0,1); /* Don't test extra digits, see "1,000" test */
   EXPECTRGB(4,FAILDIG);
 
   /* With flag, but leading thousands separators are not allowed */
   CONVERT(" 1 000", NUMPRS_THOUSANDS);
-  EXPECTFAIL;
+  todo_wine EXPECTFAIL;
 
   /* With flag, thousands separator not needed but still reported */
   CONVERT("1 ", NUMPRS_THOUSANDS|NUMPRS_USE_ALL);
-  todo_wine EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_USE_ALL,NUMPRS_THOUSANDS,2,0,0);
+  EXPECT(1,NUMPRS_THOUSANDS|NUMPRS_USE_ALL,NUMPRS_THOUSANDS,2,0,0);
   EXPECT2(1,FAILDIG);
 
 
@@ -2038,7 +2033,7 @@ static void test_VarParseNumFromStrFr(void)
     if (spaces[i] == ' ' || spaces[i] == 0xa0 /* non-breaking space */)
     {
       /* Spaces aliased to thousands separator are never allowed! */
-      todo_wine_if(i==0) EXPECT(2,NUMPRS_CURRENCY|NUMPRS_THOUSANDS|NUMPRS_USE_ALL,NUMPRS_CURRENCY|NUMPRS_THOUSANDS,4,0,0);
+      EXPECT(2,NUMPRS_CURRENCY|NUMPRS_THOUSANDS|NUMPRS_USE_ALL,NUMPRS_CURRENCY|NUMPRS_THOUSANDS,4,0,0);
       EXPECT2(1,2);
       EXPECTRGB(2,FAILDIG);
     }
@@ -2066,12 +2061,11 @@ static void test_VarParseNumFromStrFr(void)
 
   /* Thousands flag can also be used with currency */
   WCONVERT(L"1 234,5 \x20ac", NUMPRS_CURRENCY|NUMPRS_THOUSANDS|NUMPRS_DECIMAL|NUMPRS_USE_ALL);
-  todo_wine EXPECT(5,NUMPRS_CURRENCY|NUMPRS_THOUSANDS|NUMPRS_DECIMAL|NUMPRS_USE_ALL,NUMPRS_CURRENCY|NUMPRS_THOUSANDS|NUMPRS_DECIMAL,9,0,-1);
-  EXPECTRGB(0,1);
-  todo_wine EXPECTRGB(1,2);
-  todo_wine EXPECTRGB(2,3);
-  todo_wine EXPECTRGB(3,4);
-  todo_wine EXPECTRGB(4,5);
+  EXPECT(5,NUMPRS_CURRENCY|NUMPRS_THOUSANDS|NUMPRS_DECIMAL|NUMPRS_USE_ALL,NUMPRS_CURRENCY|NUMPRS_THOUSANDS|NUMPRS_DECIMAL,9,0,-1);
+  EXPECT2(1,2);
+  EXPECTRGB(2,3);
+  EXPECTRGB(3,4);
+  EXPECTRGB(4,5);
   EXPECTRGB(5,FAILDIG);
 
 

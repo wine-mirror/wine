@@ -1614,6 +1614,7 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
   DWORD dwState = B_EXPONENT_START|B_INEXACT_ZEROS;
   int iMaxDigits = ARRAY_SIZE(rgbTmp);
   int cchUsed = 0;
+  OLECHAR cDigitSeparator2;
 
   TRACE("(%s,%d,0x%08x,%p,%p)\n", debugstr_w(lpszStr), lcid, dwFlags, pNumprs, rgbDig);
 
@@ -1633,6 +1634,10 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
     return DISP_E_TYPEMISMATCH;
 
   VARIANT_GetLocalisedNumberChars(&chars, lcid, dwFlags);
+  /* Setting the thousands separator to a non-breaking space implies regular
+   * spaces are allowed too. But the converse is not true.
+   */
+  cDigitSeparator2 = chars.cDigitSeparator == 0xa0 ? ' ' : 0;
 
   /* First consume all the leading symbols and space from the string */
   while (1)
@@ -1673,6 +1678,7 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
       /* Only accept currency characters */
       chars.cDecimalPoint = chars.cCurrencyDecimalPoint;
       chars.cDigitSeparator = chars.cCurrencyDigitSeparator;
+      cDigitSeparator2 = chars.cDigitSeparator == 0xa0 ? ' ' : 0;
     }
     else if (pNumprs->dwInFlags & NUMPRS_PARENS && *lpszStr == '(' &&
              !(pNumprs->dwOutFlags & NUMPRS_PARENS))
@@ -1780,7 +1786,9 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
         cchUsed++;
       }
     }
-    else if (*lpszStr == chars.cDigitSeparator && pNumprs->dwInFlags & NUMPRS_THOUSANDS)
+    else if (pNumprs->dwInFlags & NUMPRS_THOUSANDS &&
+             ((chars.cDigitSeparator && *lpszStr == chars.cDigitSeparator) ||
+              (cDigitSeparator2 && *lpszStr == cDigitSeparator2)))
     {
       pNumprs->dwOutFlags |= NUMPRS_THOUSANDS;
       cchUsed++;
