@@ -2157,14 +2157,26 @@ static void test_VarParseNumFromStrMisc(void)
 
   lcid = MAKELCID(MAKELANGID(LANG_FRENCH,SUBLANG_FRENCH_SWISS),SORT_DEFAULT);
   WCONVERT(L"3CHF", NUMPRS_CURRENCY|NUMPRS_USE_ALL);
-  todo_wine EXPECT(1,NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_CURRENCY,4,0,0);
-  EXPECT2(3,FAILDIG);
+  /* Windows <= 8.1 uses an old currency symbol: "fr. 5" */
+  todo_wine ok(hres == S_OK || broken(hres == DISP_E_TYPEMISMATCH), "returned %08x\n", hres);
+  if (hres == S_OK)
+  {
+    todo_wine EXPECT(1,NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_CURRENCY,4,0,0);
+    EXPECT2(3,FAILDIG);
+  }
 
   /* 5 Moroccan dirham */
   lcid = MAKELCID(MAKELANGID(LANG_ARABIC,SUBLANG_ARABIC_MOROCCO),SORT_DEFAULT);
   WCONVERT(L"5\x62f.\x645.\x200f", NUMPRS_CURRENCY|NUMPRS_USE_ALL);
-  todo_wine EXPECT(1,NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_CURRENCY,6,0,0);
-  EXPECT2(5,FAILDIG);
+  /* Windows 8.1 incorrectly doubles the right-to-left mark:
+   * "\x62f.\x645.\x200f\x200f 5"
+   */
+  todo_wine ok(hres == S_OK || broken(hres == DISP_E_TYPEMISMATCH), "returned %08x\n", hres);
+  if (hres == S_OK)
+  {
+    todo_wine EXPECT(1,NUMPRS_CURRENCY|NUMPRS_USE_ALL,NUMPRS_CURRENCY,6,0,0);
+    EXPECT2(5,FAILDIG);
+  }
 
 
   /* Test Arabic numerals in an Arabic locale */
