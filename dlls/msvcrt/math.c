@@ -5801,7 +5801,7 @@ int CDECL __fpe_flt_rounds(void)
  */
 int CDECL fegetround(void)
 {
-    return _controlfp(0, 0) & _RC_CHOP;
+    return _controlfp(0, 0) & _MCW_RC;
 }
 
 /*********************************************************************
@@ -5809,9 +5809,9 @@ int CDECL fegetround(void)
  */
 int CDECL fesetround(int round_mode)
 {
-    if (round_mode & (~_RC_CHOP))
+    if (round_mode & (~_MCW_RC))
         return 1;
-    _controlfp(round_mode, _RC_CHOP);
+    _controlfp(round_mode, _MCW_RC);
     return 0;
 }
 
