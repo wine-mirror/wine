@@ -1174,6 +1174,96 @@ static void test_iosb(void)
     CloseHandle( server );
 }
 
+static NTSTATUS invoke_syscall( const char *name, ULONG args32[] )
+{
+    NTSTATUS status;
+    ULONG64 args64[] = { -1, PtrToUlong( args32 ) };
+    ULONG64 ptr, res, func = get_proc_address64( wow64_module, "Wow64SystemServiceEx" );
+    BYTE syscall[32];
+
+    if (!(ptr = get_proc_address64( ntdll_module, name ))) return STATUS_NOT_IMPLEMENTED;
+
+    if (pNtWow64ReadVirtualMemory64)
+    {
+        HANDLE process = OpenProcess( PROCESS_ALL_ACCESS, FALSE, GetCurrentProcessId() );
+        status = pNtWow64ReadVirtualMemory64( process, ptr, syscall, sizeof(syscall), &res );
+        ok( !status, "NtWow64ReadVirtualMemory64 failed %x\n", status );
+        if (syscall[0] == 0x4c && syscall[1] == 0x8b && syscall[2] == 0xd1 && syscall[3] == 0xb8)
+            args64[0] = *(DWORD *)(syscall + 4);
+        else
+            win_skip( "syscall thunk not recognized\n" );
+        NtClose( process );
+    }
+    return call_func64( func, ARRAY_SIZE(args64), args64 );
+}
+
+static void test_syscalls(void)
+{
+    ULONG64 func;
+    ULONG args32[8];
+    HANDLE event, event2;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING name;
+    NTSTATUS status;
+
+    if (!is_wow64) return;
+    if (!ntdll_module) return;
+
+    func = get_proc_address64( wow64_module, "Wow64SystemServiceEx" );
+    ok( func, "Wow64SystemServiceEx not found\n" );
+
+    event = CreateEventA( NULL, FALSE, FALSE, NULL );
+
+    status = NtSetEvent( event, NULL );
+    ok( !status, "NtSetEvent failed %x\n", status );
+    args32[0] = HandleToLong( event );
+    status = invoke_syscall( "NtClose", args32 );
+    ok( !status, "syscall failed %x\n", status );
+    status = NtSetEvent( event, NULL );
+    ok( status == STATUS_INVALID_HANDLE, "NtSetEvent failed %x\n", status );
+    status = invoke_syscall( "NtClose", args32 );
+    ok( status == STATUS_INVALID_HANDLE, "syscall failed %x\n", status );
+    args32[0] = 0xdeadbeef;
+    status = invoke_syscall( "NtClose", args32 );
+    ok( status == STATUS_INVALID_HANDLE, "syscall failed %x\n", status );
+
+    RtlInitUnicodeString( &name, L"\\BaseNamedObjects\\wow64-test");
+    InitializeObjectAttributes( &attr, &name, OBJ_OPENIF, 0, NULL );
+    event = (HANDLE)0xdeadbeef;
+    args32[0] = PtrToUlong(&event );
+    args32[1] = EVENT_ALL_ACCESS;
+    args32[2] = PtrToUlong( &attr );
+    args32[3] = NotificationEvent;
+    args32[4] = 0;
+    status = invoke_syscall( "NtCreateEvent", args32 );
+    ok( !status, "syscall failed %x\n", status );
+    status = NtSetEvent( event, NULL );
+    ok( !status, "NtSetEvent failed %x\n", status );
+
+    event2 = (HANDLE)0xdeadbeef;
+    args32[0] = PtrToUlong( &event2 );
+    status = invoke_syscall( "NtOpenEvent", args32 );
+    ok( !status, "syscall failed %x\n", status );
+    status = NtSetEvent( event2, NULL );
+    ok( !status, "NtSetEvent failed %x\n", status );
+    args32[0] = HandleToLong( event2 );
+    status = invoke_syscall( "NtClose", args32 );
+    ok( !status, "syscall failed %x\n", status );
+
+    event2 = (HANDLE)0xdeadbeef;
+    args32[0] = PtrToUlong( &event2 );
+    status = invoke_syscall( "NtCreateEvent", args32 );
+    ok( status == STATUS_OBJECT_NAME_EXISTS, "syscall failed %x\n", status );
+    status = NtSetEvent( event2, NULL );
+    ok( !status, "NtSetEvent failed %x\n", status );
+    args32[0] = HandleToLong( event2 );
+    status = invoke_syscall( "NtClose", args32 );
+    ok( !status, "syscall failed %x\n", status );
+
+    status = NtClose( event );
+    ok( !status, "NtClose failed %x\n", status );
+}
+
 static void test_cpu_area(void)
 {
     TEB64 *teb64 = (TEB64 *)NtCurrentTeb()->GdiBatchCount;
@@ -1217,6 +1307,7 @@ START_TEST(wow64)
     test_modules();
     test_init_block();
     test_iosb();
+    test_syscalls();
 #endif
     test_cpu_area();
 }
