@@ -1902,7 +1902,7 @@ static void test_VarParseNumFromStrFr(void)
     if (spaces[i] == ' ' || spaces[i] == 0xa0 /* non-breaking space */)
     {
       /* Spaces aliased to the thousands separator are never allowed! */
-      todo_wine EXPECTFAIL;
+      EXPECTFAIL;
     }
     else
     {
@@ -2019,7 +2019,7 @@ static void test_VarParseNumFromStrFr(void)
     if (spaces[i] == ' ' || spaces[i] == 0xa0 /* non-breaking space */)
     {
       /* Spaces aliased to thousands separator are never allowed! */
-      todo_wine EXPECTFAIL;
+      EXPECTFAIL;
     }
     else
     {

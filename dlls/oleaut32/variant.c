@@ -1922,7 +1922,22 @@ HRESULT WINAPI VarParseNumFromStr(OLECHAR *lpszStr, LCID lcid, ULONG dwFlags,
   /* Consume any trailing symbols and space */
   while (1)
   {
-    if ((pNumprs->dwInFlags & NUMPRS_TRAILING_WHITE) && iswspace(*lpszStr))
+    if ((chars.cDigitSeparator && *lpszStr == chars.cDigitSeparator) ||
+        (cDigitSeparator2 && *lpszStr == cDigitSeparator2))
+    {
+      if (pNumprs->dwInFlags & NUMPRS_THOUSANDS)
+      {
+        pNumprs->dwOutFlags |= NUMPRS_THOUSANDS;
+        cchUsed++;
+        lpszStr++;
+      }
+      else
+      {
+        /* Not allowed, even with NUMPRS_TRAILING_WHITE */
+        break;
+      }
+    }
+    else if ((pNumprs->dwInFlags & NUMPRS_TRAILING_WHITE) && iswspace(*lpszStr))
     {
       pNumprs->dwOutFlags |= NUMPRS_TRAILING_WHITE;
       do
