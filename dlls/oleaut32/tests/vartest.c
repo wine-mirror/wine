@@ -1288,8 +1288,8 @@ static HRESULT convert_str( const char *str, INT dig, ULONG flags,
 static void expect_NumFromStr( int line, HRESULT hres, NUMPARSE *np, INT a, ULONG b, ULONG c,
                                INT d, INT e, INT f )
 {
-    ok_(__FILE__,line)(hres == (HRESULT)S_OK, "returned %08x\n", hres);
-    if (hres == (HRESULT)S_OK)
+    ok_(__FILE__,line)(hres == S_OK, "returned %08x\n", hres);
+    if (hres == S_OK)
     {
         ok_(__FILE__,line)(np->cDig == a, "Expected cDig = %d, got %d\n", a, np->cDig);
         ok_(__FILE__,line)(np->dwInFlags == b, "Expected dwInFlags = 0x%x, got 0x%x\n", b, np->dwInFlags);
@@ -1306,7 +1306,7 @@ static void expect_NumFromStr( int line, HRESULT hres, NUMPARSE *np, INT a, ULON
 #define CONVERT(str,flags) CONVERTN(str,sizeof(rgb),flags)
 #define EXPECT(a,b,c,d,e,f) expect_NumFromStr( __LINE__, hres, &np, a, b, c, d, e, f )
 #define EXPECTRGB(a,b) ok(rgb[a] == b, "Digit[%d], expected %d, got %d\n", a, b, rgb[a])
-#define EXPECTFAIL ok(hres == (HRESULT)DISP_E_TYPEMISMATCH, "Call succeeded, hres = %08x\n", hres)
+#define EXPECTFAIL ok(hres == DISP_E_TYPEMISMATCH, "Call succeeded, hres = %08x\n", hres)
 #define EXPECT2(a,b) EXPECTRGB(0,a); EXPECTRGB(1,b)
 
 static void test_VarParseNumFromStrEn(void)
@@ -2190,10 +2190,10 @@ static HRESULT (WINAPI *pVarNumFromParseNum)(NUMPARSE*,BYTE*,ULONG,VARIANT*);
     np.cDig = (a); np.dwInFlags = (b); np.dwOutFlags = (c); np.cchUsed = (d); \
     np.nBaseShift = (e); np.nPwr10 = (f); hres = pVarNumFromParseNum(&np, rgb, bits, &vOut)
 static const char *szFailOverflow = "Expected overflow, hres = %08x\n";
-#define EXPECT_OVERFLOW ok(hres == (HRESULT)DISP_E_OVERFLOW, szFailOverflow, hres)
+#define EXPECT_OVERFLOW ok(hres == DISP_E_OVERFLOW, szFailOverflow, hres)
 static const char *szFailOk = "Call failed, hres = %08x\n";
-#define EXPECT_OK ok(hres == (HRESULT)S_OK, szFailOk, hres); \
-  if (hres == (HRESULT)S_OK)
+#define EXPECT_OK ok(hres == S_OK, szFailOk, hres); \
+  if (hres == S_OK)
 #define EXPECT_TYPE(typ) ok(V_VT(&vOut) == typ,"Expected Type = " #typ ", got %d\n", V_VT(&vOut))
 #define EXPECT_I1(val) EXPECT_OK { EXPECT_TYPE(VT_I1); \
   ok(V_I1(&vOut) == val, "Expected i1 = %d, got %d\n", (signed char)val, V_I1(&vOut)); }
