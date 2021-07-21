@@ -826,6 +826,13 @@ static void session_command_complete(struct media_session *session)
     }
 }
 
+static void session_command_complete_with_event(struct media_session *session, MediaEventType event,
+        HRESULT status, const PROPVARIANT *param)
+{
+    IMFMediaEventQueue_QueueEventParamVar(session->event_queue, event, &GUID_NULL, status, param);
+    session_command_complete(session);
+}
+
 static void session_start(struct media_session *session, const GUID *time_format, const PROPVARIANT *start_position)
 {
     struct media_source *source;
@@ -863,9 +870,7 @@ static void session_start(struct media_session *session, const GUID *time_format
             session_command_complete(session);
             break;
         default:
-            IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionStarted, &GUID_NULL,
-                    MF_E_INVALIDREQUEST, NULL);
-            session_command_complete(session);
+            session_command_complete_with_event(session, MESessionStarted, MF_E_INVALIDREQUEST, NULL);
             break;
     }
 }
@@ -911,8 +916,7 @@ static void session_set_paused(struct media_session *session, unsigned int state
     if (state != ~0u) session->state = state;
     if (SUCCEEDED(status))
         session_set_caps(session, session->caps & ~MFSESSIONCAP_PAUSE);
-    IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionPaused, &GUID_NULL, status, NULL);
-    session_command_complete(session);
+    session_command_complete_with_event(session, MESessionPaused, status, NULL);
 }
 
 static void session_set_closed(struct media_session *session, HRESULT status)
@@ -920,8 +924,7 @@ static void session_set_closed(struct media_session *session, HRESULT status)
     session->state = SESSION_STATE_CLOSED;
     if (SUCCEEDED(status))
         session_set_caps(session, session->caps & ~(MFSESSIONCAP_START | MFSESSIONCAP_SEEK));
-    IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionClosed, &GUID_NULL, status, NULL);
-    session_command_complete(session);
+    session_command_complete_with_event(session, MESessionClosed, status, NULL);
 }
 
 static void session_pause(struct media_session *session)
@@ -1007,8 +1010,7 @@ static void session_stop(struct media_session *session)
             hr = S_OK;
             /* fallthrough */
         default:
-            IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionStopped, &GUID_NULL, hr, NULL);
-            session_command_complete(session);
+            session_command_complete_with_event(session, MESessionStopped, hr, NULL);
             break;
     }
 }
@@ -1077,9 +1079,7 @@ static void session_clear_topologies(struct media_session *session)
         hr = MF_E_INVALIDREQUEST;
     else
         session_clear_queued_topologies(session);
-    IMFMediaEventQueue_QueueEventParamVar(session->event_queue, MESessionTopologiesCleared,
-            &GUID_NULL, hr, NULL);
-    session_command_complete(session);
+    session_command_complete_with_event(session, MESessionTopologiesCleared, hr, NULL);
 }
 
 static struct media_source *session_get_media_source(struct media_session *session, IMFMediaSource *source)
