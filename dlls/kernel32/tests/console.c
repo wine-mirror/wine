@@ -973,6 +973,83 @@ static void testScreenBuffer(HANDLE hConOut)
     SetConsoleOutputCP(oldcp);
 }
 
+static void test_new_screen_buffer_color_attributes(HANDLE hConOut)
+{
+    CONSOLE_SCREEN_BUFFER_INFOEX csbi, csbi2;
+    BOOL ret;
+    HANDLE hConOut2;
+    WORD orig_attr, orig_popup, attr;
+
+    csbi.cbSize = csbi2.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
+
+    ret = GetConsoleScreenBufferInfoEx(hConOut, &csbi);
+    ok(ret, "GetConsoleScreenBufferInfoEx failed: error %u\n", GetLastError());
+    orig_attr = csbi.wAttributes;
+    orig_popup = csbi.wPopupAttributes;
+
+    hConOut2 = CreateConsoleScreenBuffer(GENERIC_READ|GENERIC_WRITE, 0, NULL,
+                                         CONSOLE_TEXTMODE_BUFFER, NULL);
+    ok(hConOut2 != INVALID_HANDLE_VALUE, "CreateConsoleScreenBuffer failed: error %u\n", GetLastError());
+
+    ret = GetConsoleScreenBufferInfoEx(hConOut2, &csbi2);
+    ok(ret, "GetConsoleScreenBufferInfoEx failed: error %u\n", GetLastError());
+    CloseHandle(hConOut2);
+
+    todo_wine ok(csbi2.wAttributes == orig_attr, "Character Attributes should have been copied: "
+       "got %#x, expected %#x\n", csbi2.wAttributes, orig_attr);
+    todo_wine ok(csbi2.wPopupAttributes != orig_popup, "Popup Attributes should not match original value\n");
+    todo_wine ok(csbi2.wPopupAttributes == orig_attr, "Popup Attributes should match Character Attributes\n");
+
+    /* Test different Character Attributes */
+    attr = FOREGROUND_BLUE|BACKGROUND_GREEN;
+    ret = SetConsoleTextAttribute(hConOut, attr);
+    ok(ret, "SetConsoleTextAttribute failed: error %u\n", GetLastError());
+
+    hConOut2 = CreateConsoleScreenBuffer(GENERIC_READ|GENERIC_WRITE, 0, NULL,
+                                         CONSOLE_TEXTMODE_BUFFER, NULL);
+    ok(hConOut2 != INVALID_HANDLE_VALUE, "CreateConsoleScreenBuffer failed: error %u\n", GetLastError());
+
+    memset(&csbi2, 0, sizeof(CONSOLE_SCREEN_BUFFER_INFOEX));
+    csbi2.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
+
+    ret = GetConsoleScreenBufferInfoEx(hConOut2, &csbi2);
+    ok(ret, "GetConsoleScreenBufferInfoEx failed: error %u\n", GetLastError());
+    CloseHandle(hConOut2);
+
+    todo_wine ok(csbi2.wAttributes == attr, "Character Attributes should have been copied: "
+       "got %#x, expected %#x\n", csbi2.wAttributes, attr);
+    todo_wine ok(csbi2.wPopupAttributes != orig_popup, "Popup Attributes should not match original value\n");
+    todo_wine ok(csbi2.wPopupAttributes == attr, "Popup Attributes should match Character Attributes\n");
+
+    ret = SetConsoleTextAttribute(hConOut, orig_attr);
+    ok(ret, "SetConsoleTextAttribute failed: error %u\n", GetLastError());
+
+    /* Test inheritance of different Popup Attributes */
+    csbi.wPopupAttributes = attr;
+    ret = SetConsoleScreenBufferInfoEx(hConOut, &csbi);
+    ok(ret, "SetConsoleScreenBufferInfoEx failed: error %u\n", GetLastError());
+
+    hConOut2 = CreateConsoleScreenBuffer(GENERIC_READ|GENERIC_WRITE, 0, NULL,
+                                         CONSOLE_TEXTMODE_BUFFER, NULL);
+    ok(hConOut2 != INVALID_HANDLE_VALUE, "CreateConsoleScreenBuffer failed: error %u\n", GetLastError());
+
+    memset(&csbi2, 0, sizeof(CONSOLE_SCREEN_BUFFER_INFOEX));
+    csbi2.cbSize = sizeof(CONSOLE_SCREEN_BUFFER_INFOEX);
+
+    ret = GetConsoleScreenBufferInfoEx(hConOut2, &csbi2);
+    ok(ret, "GetConsoleScreenBufferInfoEx failed: error %u\n", GetLastError());
+    CloseHandle(hConOut2);
+
+    todo_wine ok(csbi2.wAttributes == orig_attr, "Character Attributes should have been copied: "
+       "got %#x, expected %#x\n", csbi2.wAttributes, orig_attr);
+    todo_wine ok(csbi2.wPopupAttributes != orig_popup, "Popup Attributes should not match original value\n");
+    todo_wine ok(csbi2.wPopupAttributes == orig_attr, "Popup Attributes should match Character Attributes\n");
+
+    csbi.wPopupAttributes = orig_popup;
+    ret = SetConsoleScreenBufferInfoEx(hConOut, &csbi);
+    ok(ret, "SetConsoleScreenBufferInfoEx failed: error %u\n", GetLastError());
+}
+
 static void CALLBACK signaled_function(void *p, BOOLEAN timeout)
 {
     HANDLE event = p;
@@ -4506,6 +4583,7 @@ START_TEST(console)
     testScroll(hConOut, sbi.dwSize);
     /* will test sb creation / modification / codepage handling */
     if (!test_current) testScreenBuffer(hConOut);
+    test_new_screen_buffer_color_attributes(hConOut);
     /* Test waiting for a console handle */
     testWaitForConsoleInput(hConIn);
     test_wait(hConIn, hConOut);
