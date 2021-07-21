@@ -5651,6 +5651,14 @@ static BOOL fenv_decode(__msvcrt_ulong enc, unsigned int *x, unsigned int *y)
     return TRUE;
 }
 #endif
+#elif _MSVCR_VER >= 120
+#if (defined(__i386__) || defined(__x86_64__))
+static BOOL fenv_decode(__msvcrt_ulong enc, unsigned int *x, unsigned int *y)
+{
+    *x = *y = enc;
+    return TRUE;
+}
+#endif
 #endif
 
 #if _MSVCR_VER>=120
@@ -5887,15 +5895,10 @@ int CDECL fesetenv(const fenv_t *env)
         return 0;
     }
 
-#if _MSVCR_VER>=140
     if (!fenv_decode(env->_Fe_ctl, &x87_cw, &sse_cw))
         return 1;
     if (!fenv_decode(env->_Fe_stat, &x87_stat, &sse_stat))
         return 1;
-#else
-    x87_cw = sse_cw = env->_Fe_ctl;
-    x87_stat = sse_stat = env->_Fe_stat;
-#endif
 
     __asm__ __volatile__( "fnstenv %0" : "=m" (fenv) );
 
