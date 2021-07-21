@@ -5873,6 +5873,7 @@ int CDECL fesetenv(const fenv_t *env)
 {
 #if (defined(__GNUC__) || defined(__clang__)) && (defined(__i386__) || defined(__x86_64__))
     unsigned int x87_cw, sse_cw, x87_stat, sse_stat;
+#ifdef __i386__
     struct {
         WORD control_word;
         WORD unused1;
@@ -5887,6 +5888,7 @@ int CDECL fesetenv(const fenv_t *env)
         WORD data_segment;
         WORD unused5;
     } fenv;
+#endif
 
     TRACE( "(%p)\n", env );
 
@@ -5900,6 +5902,7 @@ int CDECL fesetenv(const fenv_t *env)
     if (!fenv_decode(env->_Fe_stat, &x87_stat, &sse_stat))
         return 1;
 
+#ifdef __i386__
     __asm__ __volatile__( "fnstenv %0" : "=m" (fenv) );
 
     fenv.control_word &= ~0xc3d;
@@ -5938,6 +5941,7 @@ int CDECL fesetenv(const fenv_t *env)
 
     __asm__ __volatile__( "fldenv %0" : : "m" (fenv) : "st", "st(1)",
             "st(2)", "st(3)", "st(4)", "st(5)", "st(6)", "st(7)" );
+#endif
 
     if (sse2_supported)
     {
