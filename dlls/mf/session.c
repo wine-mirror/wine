@@ -841,6 +841,15 @@ static void session_start(struct media_session *session, const GUID *time_format
     switch (session->state)
     {
         case SESSION_STATE_STOPPED:
+
+            /* Start request with no current topology. */
+            if (session->presentation.topo_status == MF_TOPOSTATUS_INVALID)
+            {
+                session_command_complete_with_event(session, MESessionStarted, MF_E_INVALIDREQUEST, NULL);
+                break;
+            }
+
+            /* fallthrough */
         case SESSION_STATE_PAUSED:
 
             session->presentation.time_format = *time_format;
