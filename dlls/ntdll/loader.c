@@ -3681,7 +3681,41 @@ static void load_global_options(void)
 }
 
 
-#ifndef _WIN64
+
+#ifdef _WIN64
+
+static void (WINAPI *pWow64LdrpInitialize)( CONTEXT *ctx );
+
+static void init_wow64( CONTEXT *context )
+{
+    if (!imports_fixup_done)
+    {
+        HMODULE wow64;
+        WINE_MODREF *wm;
+        NTSTATUS status;
+        static const WCHAR wow64_path[] = L"C:\\windows\\system32\\wow64.dll";
+
+        if ((status = load_dll( NULL, wow64_path, NULL, 0, &wm )))
+        {
+            ERR( "could not load %s, status %x\n", debugstr_w(wow64_path), status );
+            NtTerminateProcess( GetCurrentProcess(), status );
+        }
+        wow64 = wm->ldr.DllBase;
+#define GET_PTR(name) \
+        if (!(p ## name = RtlFindExportedRoutineByName( wow64, #name ))) ERR( "failed to load %s\n", #name )
+
+        GET_PTR( Wow64LdrpInitialize );
+#undef GET_PTR
+        imports_fixup_done = TRUE;
+    }
+
+    RtlLeaveCriticalSection( &loader_section );
+    pWow64LdrpInitialize( context );
+}
+
+
+#else
+
 void *Wow64Transition = NULL;
 
 static void map_wow64cpu(void)
@@ -3712,13 +3746,13 @@ static void map_wow64cpu(void)
     NtClose( file );
 }
 
-static void init_wow64(void)
+static void init_wow64( CONTEXT *context )
 {
     PEB *peb = NtCurrentTeb()->Peb;
-    PEB64 *peb64;
+    PEB64 *peb64 = UlongToPtr( NtCurrentTeb64()->Peb );
 
-    if (!NtCurrentTeb64()) return;
-    peb64 = UlongToPtr( NtCurrentTeb64()->Peb );
+    if (Wow64Transition) return;  /* already initialized */
+
     peb64->OSMajorVersion   = peb->OSMajorVersion;
     peb64->OSMinorVersion   = peb->OSMinorVersion;
     peb64->OSBuildNumber    = peb->OSBuildNumber;
@@ -3791,13 +3825,13 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
         init_user_process_params();
         load_global_options();
         version_init();
-#ifndef _WIN64
-        init_wow64();
-#endif
+
         wm = build_main_module();
         wm->ldr.LoadCount = -1;
 
         build_ntdll_module();
+
+        if (NtCurrentTeb()->WowTebOffset) init_wow64( context );
 
         if ((status = load_dll( NULL, L"kernel32.dll", NULL, 0, &kernel32 )) != STATUS_SUCCESS)
         {
@@ -3830,6 +3864,10 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
         imports_fixup_done = TRUE;
     }
     else wm = get_modref( NtCurrentTeb()->Peb->ImageBaseAddress );
+
+#ifdef _WIN64
+    if (NtCurrentTeb()->WowTebOffset) init_wow64( context );
+#endif
 
     RtlAcquirePebLock();
     InsertHeadList( &tls_links, &NtCurrentTeb()->TlsLinks );
