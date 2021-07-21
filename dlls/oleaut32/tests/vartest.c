@@ -1605,7 +1605,7 @@ static void test_VarParseNumFromStrEn(void)
 
   /* With flag, but leading thousands separators are not allowed */
   CONVERT(",1,000", NUMPRS_THOUSANDS);
-  todo_wine EXPECTFAIL;
+  EXPECTFAIL;
 
   /* With flag, thousands separator not needed but still reported */
   CONVERT("1,", NUMPRS_THOUSANDS);
@@ -1982,7 +1982,7 @@ static void test_VarParseNumFromStrFr(void)
 
   /* With flag, but leading thousands separators are not allowed */
   CONVERT(" 1 000", NUMPRS_THOUSANDS);
-  todo_wine EXPECTFAIL;
+  EXPECTFAIL;
 
   /* With flag, thousands separator not needed but still reported */
   CONVERT("1 ", NUMPRS_THOUSANDS|NUMPRS_USE_ALL);
