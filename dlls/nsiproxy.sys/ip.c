@@ -21,6 +21,10 @@
 #include "config.h"
 #include <stdarg.h>
 
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
