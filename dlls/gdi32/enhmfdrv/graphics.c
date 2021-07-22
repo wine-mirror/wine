@@ -66,14 +66,14 @@ static void *store_points( POINTL *dest, const POINT *pts, UINT count, BOOL shor
 }
 
 /* compute the bounds of an array of points, optionally including the current position */
-static void get_points_bounds( RECTL *bounds, const POINT *pts, UINT count, DC *dc )
+static void get_points_bounds( RECTL *bounds, const POINT *pts, UINT count, DC_ATTR *dc_attr )
 {
     UINT i;
 
-    if (dc)
+    if (dc_attr)
     {
-        bounds->left = bounds->right = dc->attr->cur_pos.x;
-        bounds->top = bounds->bottom = dc->attr->cur_pos.y;
+        bounds->left = bounds->right = dc_attr->cur_pos.x;
+        bounds->top = bounds->bottom = dc_attr->cur_pos.y;
     }
     else if (count)
     {
@@ -551,33 +551,31 @@ COLORREF CDECL EMFDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
  *
  * Helper for EMFDRV_Poly{line|gon}
  */
-static BOOL
-EMFDRV_Polylinegon( PHYSDEV dev, const POINT* pt, INT count, DWORD iType )
+static BOOL EMFDC_Polylinegon( DC_ATTR *dc_attr, const POINT *points, INT count, DWORD type )
 {
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
-    DC *dc = get_physdev_dc( dev );
+    EMFDRV_PDEVICE *emf = dc_attr->emf;
     EMRPOLYLINE *emr;
     DWORD size;
-    BOOL ret, use_small_emr = can_use_short_points( pt, count );
+    BOOL ret, use_small_emr = can_use_short_points( points, count );
 
     size = use_small_emr ? offsetof( EMRPOLYLINE16, apts[count] ) : offsetof( EMRPOLYLINE, aptl[count] );
 
     emr = HeapAlloc( GetProcessHeap(), 0, size );
-    emr->emr.iType = use_small_emr ? iType + EMR_POLYLINE16 - EMR_POLYLINE : iType;
+    emr->emr.iType = use_small_emr ? type + EMR_POLYLINE16 - EMR_POLYLINE : type;
     emr->emr.nSize = size;
     emr->cptl = count;
 
-    store_points( emr->aptl, pt, count, use_small_emr );
+    store_points( emr->aptl, points, count, use_small_emr );
 
-    if (!physDev->path)
-        get_points_bounds( &emr->rclBounds, pt, count,
-                           (iType == EMR_POLYBEZIERTO || iType == EMR_POLYLINETO) ? dc : 0 );
+    if (!emf->path)
+        get_points_bounds( &emr->rclBounds, points, count,
+                           (type == EMR_POLYBEZIERTO || type == EMR_POLYLINETO) ? dc_attr : 0 );
     else
         emr->rclBounds = empty_bounds;
 
-    ret = EMFDRV_WriteRecord( dev, &emr->emr );
-    if (ret && !physDev->path)
-        EMFDRV_UpdateBBox( dev, &emr->rclBounds );
+    ret = EMFDRV_WriteRecord( &emf->dev, &emr->emr );
+    if (ret && !emf->path)
+        EMFDRV_UpdateBBox( &emf->dev, &emr->rclBounds );
     HeapFree( GetProcessHeap(), 0, emr );
     return ret;
 }
@@ -588,15 +586,15 @@ EMFDRV_Polylinegon( PHYSDEV dev, const POINT* pt, INT count, DWORD iType )
  */
 BOOL EMFDC_Polyline( DC_ATTR *dc_attr, const POINT *points, INT count )
 {
-    return EMFDRV_Polylinegon( dc_attr->emf, points, count, EMR_POLYLINE );
+    return EMFDC_Polylinegon( dc_attr, points, count, EMR_POLYLINE );
 }
 
 /**********************************************************************
  *          EMFDC_PolylineTo
  */
-BOOL EMFDC_PolylineTo( DC_ATTR *dc_attr, const POINT *pt, INT count )
+BOOL EMFDC_PolylineTo( DC_ATTR *dc_attr, const POINT *points, INT count )
 {
-    return EMFDRV_Polylinegon( dc_attr->emf, pt, count, EMR_POLYLINETO );
+    return EMFDC_Polylinegon( dc_attr, points, count, EMR_POLYLINETO );
 }
 
 /**********************************************************************
@@ -614,7 +612,7 @@ BOOL CDECL EMFDRV_PolylineTo( PHYSDEV dev, const POINT* pt, INT count )
 BOOL EMFDC_Polygon( DC_ATTR *dc_attr, const POINT *pt, INT count )
 {
     if(count < 2) return FALSE;
-    return EMFDRV_Polylinegon( dc_attr->emf, pt, count, EMR_POLYGON );
+    return EMFDC_Polylinegon( dc_attr, pt, count, EMR_POLYGON );
 }
 
 /**********************************************************************
@@ -622,7 +620,15 @@ BOOL EMFDC_Polygon( DC_ATTR *dc_attr, const POINT *pt, INT count )
  */
 BOOL EMFDC_PolyBezier( DC_ATTR *dc_attr, const POINT *pts, DWORD count )
 {
-    return EMFDRV_Polylinegon( dc_attr->emf, pts, count, EMR_POLYBEZIER );
+    return EMFDC_Polylinegon( dc_attr, pts, count, EMR_POLYBEZIER );
+}
+
+/**********************************************************************
+ *          EMFDC_PolyBezierTo
+ */
+BOOL EMFDC_PolyBezierTo( DC_ATTR *dc_attr, const POINT *pts, DWORD count )
+{
+    return EMFDC_Polylinegon( dc_attr, pts, count, EMR_POLYBEZIERTO );
 }
 
 /**********************************************************************
@@ -639,7 +645,8 @@ BOOL CDECL EMFDRV_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD count )
  */
 BOOL CDECL EMFDRV_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD count )
 {
-    return EMFDRV_Polylinegon( dev, pts, count, EMR_POLYBEZIERTO );
+    /* FIXME: update bounding rect */
+    return TRUE;
 }
 
 

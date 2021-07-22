@@ -70,6 +70,7 @@ extern BOOL EMFDC_Ellipse( DC_ATTR *dc_attr, INT left, INT top, INT right,
 extern BOOL EMFDC_LineTo( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_MoveTo( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_PolyBezier( DC_ATTR *dc_attr, const POINT *points, DWORD count ) DECLSPEC_HIDDEN;
+extern BOOL EMFDC_PolyBezierTo( DC_ATTR *dc_attr, const POINT *points, DWORD count ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_PolyPolyline( DC_ATTR *dc_attr, const POINT *points, const DWORD *counts,
                                 DWORD polys ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_PolyPolygon( DC_ATTR *dc_attr, const POINT *points, const INT *counts,

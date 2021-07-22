@@ -611,6 +611,16 @@ ULONG WINAPI NtGdiPolyPolyDraw( HDC hdc, const POINT *points, const UINT *counts
         else ret = FALSE;
         break;
 
+    case NtGdiPolyBezierTo:
+        if (count == 1 && *counts && *counts % 3 == 0)
+        {
+            physdev = GET_DC_PHYSDEV( dc, pPolyBezierTo );
+            ret = physdev->funcs->pPolyBezierTo( physdev, points, *counts );
+            if (ret) dc->attr->cur_pos = points[*counts - 1];
+        }
+        else ret = FALSE;
+        break;
+
     case NtGdiPolylineTo:
         if (count == 1)
         {
@@ -658,44 +668,6 @@ BOOL WINAPI ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color,
 BOOL WINAPI FloodFill( HDC hdc, INT x, INT y, COLORREF color )
 {
     return ExtFloodFill( hdc, x, y, color, FLOODFILLBORDER );
-}
-
-/******************************************************************************
- * PolyBezierTo [GDI32.@]
- * Draws one or more Bezier curves
- *
- * PARAMS
- *    hDc     [I] Handle to device context
- *    lppt    [I] Pointer to endpoints and control points
- *    cPoints [I] Count of endpoints and control points
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- */
-BOOL WINAPI PolyBezierTo( HDC hdc, const POINT* lppt, DWORD cPoints )
-{
-    DC * dc;
-    BOOL ret;
-    PHYSDEV physdev;
-
-    TRACE( "%p, %p, %u\n", hdc, lppt, cPoints );
-
-    /* cbPoints must be 3 * n (where n>=1) */
-    if (!cPoints || (cPoints % 3) != 0) return FALSE;
-
-    dc = get_dc_ptr( hdc );
-    if(!dc) return FALSE;
-
-    update_dc( dc );
-    physdev = GET_DC_PHYSDEV( dc, pPolyBezierTo );
-    ret = physdev->funcs->pPolyBezierTo( physdev, lppt, cPoints );
-
-    if(ret)
-        dc->attr->cur_pos = lppt[cPoints - 1];
-
-    release_dc_ptr( dc );
-    return ret;
 }
 
 /***********************************************************************

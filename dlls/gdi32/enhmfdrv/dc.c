@@ -672,18 +672,6 @@ static BOOL CDECL emfpathdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, 
 }
 
 /***********************************************************************
- *           emfpathdrv_PolyBezierTo
- */
-static BOOL CDECL emfpathdrv_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD count )
-{
-    PHYSDEV emfdev = get_emfdev( dev );
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pPolyBezierTo );
-
-    return (emfdev->funcs->pPolyBezierTo( emfdev, pts, count ) &&
-            next->funcs->pPolyBezierTo( next, pts, count ));
-}
-
-/***********************************************************************
  *           emfpathdrv_PolyDraw
  */
 static BOOL CDECL emfpathdrv_PolyDraw( PHYSDEV dev, const POINT *pts, const BYTE *types, DWORD count )
@@ -768,7 +756,7 @@ static const struct gdi_dc_funcs emfpath_driver =
     NULL,                               /* pPatBlt */
     NULL,                               /* pPie */
     NULL,                               /* pPolyBezier */
-    emfpathdrv_PolyBezierTo,            /* pPolyBezierTo */
+    NULL,                               /* pPolyBezierTo */
     emfpathdrv_PolyDraw,                /* pPolyDraw */
     NULL,                               /* pPolyPolygon */
     NULL,                               /* pPolyPolyline */
