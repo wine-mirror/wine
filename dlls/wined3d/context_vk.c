@@ -2762,6 +2762,28 @@ static bool wined3d_shader_descriptor_writes_vk_add_uav_write(struct wined3d_sha
     return true;
 }
 
+static bool wined3d_shader_descriptor_writes_vk_add_uav_counter_write(
+        struct wined3d_shader_descriptor_writes_vk *writes, struct wined3d_context_vk *context_vk,
+        enum wined3d_pipeline pipeline, VkDescriptorSet vk_descriptor_set,
+        const struct wined3d_state *state, const struct wined3d_shader_resource_binding *binding)
+{
+    struct wined3d_unordered_access_view_vk *uav_vk;
+    struct wined3d_unordered_access_view *uav;
+
+    if (!(uav = state->unordered_access_view[pipeline][binding->resource_idx]))
+    {
+        FIXME("NULL unordered access view counters not implemented.\n");
+        return false;
+    }
+
+    uav_vk = wined3d_unordered_access_view_vk(uav);
+    if (!uav_vk->vk_counter_view)
+        return false;
+
+    return wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set, binding->binding_idx,
+            VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, NULL, NULL, &uav_vk->vk_counter_view);
+}
+
 static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *context_vk,
         VkCommandBuffer vk_command_buffer, const struct wined3d_state *state, enum wined3d_pipeline pipeline)
 {
@@ -2770,8 +2792,6 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     const struct wined3d_shader_resource_binding *binding;
     struct wined3d_shader_resource_bindings *bindings;
-    struct wined3d_unordered_access_view_vk *uav_vk;
-    struct wined3d_unordered_access_view *uav;
     VkDescriptorSetLayout vk_set_layout;
     VkPipelineLayout vk_pipeline_layout;
     VkPipelineBindPoint vk_bind_point;
@@ -2833,16 +2853,8 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
                 break;
 
             case WINED3D_SHADER_DESCRIPTOR_TYPE_UAV_COUNTER:
-                if (!(uav = state->unordered_access_view[pipeline][binding->resource_idx]))
-                {
-                    FIXME("NULL unordered access view counters not implemented.\n");
-                    return false;
-                }
-
-                uav_vk = wined3d_unordered_access_view_vk(uav);
-                if (!uav_vk->vk_counter_view || !wined3d_shader_descriptor_writes_vk_add_write(writes,
-                        vk_descriptor_set, binding->binding_idx, VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,
-                        NULL, NULL, &uav_vk->vk_counter_view))
+                if (!wined3d_shader_descriptor_writes_vk_add_uav_counter_write(writes,
+                        context_vk, pipeline, vk_descriptor_set, state, binding))
                     return false;
                 break;
 
