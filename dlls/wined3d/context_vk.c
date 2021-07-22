@@ -2716,6 +2716,52 @@ static bool wined3d_shader_descriptor_writes_vk_add_srv_write(struct wined3d_sha
     return true;
 }
 
+static bool wined3d_shader_descriptor_writes_vk_add_uav_write(struct wined3d_shader_descriptor_writes_vk *writes,
+        struct wined3d_context_vk *context_vk, enum wined3d_pipeline pipeline, VkDescriptorSet vk_descriptor_set,
+        const struct wined3d_state *state, const struct wined3d_shader_resource_binding *binding)
+{
+    struct wined3d_unordered_access_view_vk *uav_vk;
+    struct wined3d_unordered_access_view *uav;
+    const VkDescriptorImageInfo *image_info;
+    struct wined3d_resource *resource;
+    struct wined3d_view_vk *view_vk;
+    VkBufferView *buffer_view;
+    VkDescriptorType type;
+
+    if (!(uav = state->unordered_access_view[pipeline][binding->resource_idx]))
+    {
+        FIXME("NULL unordered access views not implemented.\n");
+        return false;
+    }
+    resource = uav->resource;
+
+    uav_vk = wined3d_unordered_access_view_vk(uav);
+    view_vk = &uav_vk->view_vk;
+    if (resource->type == WINED3D_RTYPE_BUFFER)
+    {
+        image_info = NULL;
+        buffer_view = &view_vk->u.vk_buffer_view;
+        type = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
+    }
+    else
+    {
+        struct wined3d_texture_vk *texture_vk = wined3d_texture_vk(texture_from_resource(resource));
+
+        if (view_vk->u.vk_image_info.imageView)
+            image_info = &view_vk->u.vk_image_info;
+        else
+            image_info = wined3d_texture_vk_get_default_image_info(texture_vk, context_vk);
+        buffer_view = NULL;
+        type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    }
+
+    if (!wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set,
+            binding->binding_idx, type, NULL, image_info, buffer_view))
+        return false;
+    wined3d_context_vk_reference_unordered_access_view(context_vk, uav_vk);
+    return true;
+}
+
 static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *context_vk,
         VkCommandBuffer vk_command_buffer, const struct wined3d_state *state, enum wined3d_pipeline pipeline)
 {
@@ -2726,16 +2772,11 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
     struct wined3d_shader_resource_bindings *bindings;
     struct wined3d_unordered_access_view_vk *uav_vk;
     struct wined3d_unordered_access_view *uav;
-    const VkDescriptorImageInfo *image_info;
     VkDescriptorSetLayout vk_set_layout;
     VkPipelineLayout vk_pipeline_layout;
-    struct wined3d_resource *resource;
     VkPipelineBindPoint vk_bind_point;
     VkDescriptorSet vk_descriptor_set;
-    struct wined3d_view_vk *view_vk;
     struct wined3d_sampler *sampler;
-    VkBufferView *buffer_view;
-    VkDescriptorType type;
     VkResult vr;
     size_t i;
 
@@ -2786,37 +2827,9 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
                 break;
 
             case WINED3D_SHADER_DESCRIPTOR_TYPE_UAV:
-                if (!(uav = state->unordered_access_view[pipeline][binding->resource_idx]))
-                {
-                    FIXME("NULL unordered access views not implemented.\n");
+                if (!wined3d_shader_descriptor_writes_vk_add_uav_write(writes,
+                        context_vk, pipeline, vk_descriptor_set, state, binding))
                     return false;
-                }
-                resource = uav->resource;
-
-                uav_vk = wined3d_unordered_access_view_vk(uav);
-                view_vk = &uav_vk->view_vk;
-                if (resource->type == WINED3D_RTYPE_BUFFER)
-                {
-                    image_info = NULL;
-                    buffer_view = &view_vk->u.vk_buffer_view;
-                    type = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
-                }
-                else
-                {
-                    struct wined3d_texture_vk *texture_vk = wined3d_texture_vk(texture_from_resource(resource));
-
-                    if (view_vk->u.vk_image_info.imageView)
-                        image_info = &view_vk->u.vk_image_info;
-                    else
-                        image_info = wined3d_texture_vk_get_default_image_info(texture_vk, context_vk);
-                    buffer_view = NULL;
-                    type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-                }
-
-                if (!wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set,
-                        binding->binding_idx, type, NULL, image_info, buffer_view))
-                    return false;
-                wined3d_context_vk_reference_unordered_access_view(context_vk, uav_vk);
                 break;
 
             case WINED3D_SHADER_DESCRIPTOR_TYPE_UAV_COUNTER:
