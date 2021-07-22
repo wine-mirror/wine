@@ -61,7 +61,7 @@ struct wg_parser
     pthread_mutex_t mutex;
 
     pthread_cond_t init_cond;
-    bool no_more_pads, has_duration, error;
+    bool no_more_pads, error;
 
     pthread_cond_t read_cond, read_done_cond;
     struct
@@ -1401,9 +1401,6 @@ static GstBusSyncReply bus_handler_cb(GstBus *bus, GstMessage *msg, gpointer use
         break;
 
     case GST_MESSAGE_DURATION_CHANGED:
-        pthread_mutex_lock(&parser->mutex);
-        parser->has_duration = true;
-        pthread_mutex_unlock(&parser->mutex);
         pthread_cond_signal(&parser->init_cond);
         break;
 
@@ -1529,22 +1526,44 @@ static HRESULT CDECL wg_parser_connect(struct wg_parser *parser, uint64_t file_s
 
         while (!stream->has_caps && !parser->error)
             pthread_cond_wait(&parser->init_cond, &parser->mutex);
-        if (parser->error)
-        {
-            pthread_mutex_unlock(&parser->mutex);
-            return E_FAIL;
-        }
+
         /* GStreamer doesn't actually provide any guarantees about when duration
-         * is available, even for seekable streams. However, many elements (e.g.
-         * avidemux, wavparse, qtdemux) in practice record duration before
-         * fixing caps, so as a heuristic, wait until we get caps before trying
-         * to query for duration. */
-        if (gst_pad_query_duration(stream->their_src, GST_FORMAT_TIME, &duration))
+         * is available, even for seekable streams. It's basically built for
+         * applications that don't care, e.g. movie players that can display
+         * a duration once it's available, and update it visually if a better
+         * estimate is found. This doesn't really match well with DirectShow or
+         * Media Foundation, which both expect duration to be available
+         * immediately on connecting, so we have to use some complex heuristics
+         * to try to actually get a usable duration.
+         *
+         * Some elements (avidemux, wavparse, qtdemux) record duration almost
+         * immediately, before fixing caps. Such elements don't send
+         * duration-changed messages. Therefore always try querying duration
+         * after caps have been found.
+         *
+         * Some elements (mpegaudioparse) send duration-changed. In the case of
+         * a mp3 stream without seek tables it will not be sent immediately, but
+         * only after enough frames have been parsed to form an estimate. They
+         * may send it multiple times with increasingly accurate estimates, but
+         * unfortunately we have no way of knowing whether another estimate will
+         * be sent, so we always take the first one. We assume that if the
+         * duration is not immediately available then the element will always
+         * send duration-changed.
+         */
+
+        for (;;)
         {
-            stream->duration = duration / 100;
-        }
-        else
-        {
+            if (parser->error)
+            {
+                pthread_mutex_unlock(&parser->mutex);
+                return E_FAIL;
+            }
+            if (gst_pad_query_duration(stream->their_src, GST_FORMAT_TIME, &duration))
+            {
+                stream->duration = duration / 100;
+                break;
+            }
+
             GST_INFO("Failed to query time duration; trying to convert from byte length.\n");
 
             /* To accurately get a duration for the stream, we want to only
@@ -1555,12 +1574,15 @@ static HRESULT CDECL wg_parser_connect(struct wg_parser *parser, uint64_t file_s
                             GST_FORMAT_TIME, &duration))
             {
                 stream->duration = duration / 100;
+                break;
             }
-            else
+            if (stream->eos)
             {
                 stream->duration = 0;
                 GST_WARNING("Failed to query duration.\n");
+                break;
             }
+            pthread_cond_wait(&parser->init_cond, &parser->mutex);
         }
     }
 
@@ -1763,15 +1785,6 @@ static BOOL mpeg_audio_parser_init_gst(struct wg_parser *parser)
         return FALSE;
     }
 
-    pthread_mutex_lock(&parser->mutex);
-    while (!parser->has_duration && !parser->error && !stream->eos)
-        pthread_cond_wait(&parser->init_cond, &parser->mutex);
-    if (parser->error)
-    {
-        pthread_mutex_unlock(&parser->mutex);
-        return FALSE;
-    }
-    pthread_mutex_unlock(&parser->mutex);
     return TRUE;
 }
 
