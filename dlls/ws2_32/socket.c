@@ -1847,7 +1847,7 @@ int WINAPI WS_bind( SOCKET s, const struct WS_sockaddr *addr, int len )
     HeapFree( GetProcessHeap(), 0, params );
     HeapFree( GetProcessHeap(), 0, ret_addr );
 
-    SetLastError( status == STATUS_INVALID_PARAMETER ? WSAEFAULT : NtStatusToWSAError( status ) );
+    SetLastError( NtStatusToWSAError( status ) );
     return status ? -1 : 0;
 }
 
