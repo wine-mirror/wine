@@ -4791,6 +4791,36 @@ static DWORD CALLBACK test_EM_GETMODIFY_esCallback(DWORD_PTR dwCookie,
   return 0;
 }
 
+#define open_clipboard(hwnd) open_clipboard_(__LINE__, hwnd)
+static BOOL open_clipboard_(int line, HWND hwnd)
+{
+    DWORD start = GetTickCount();
+    while (1)
+    {
+        BOOL ret = OpenClipboard(hwnd);
+        if (ret || GetLastError() != ERROR_ACCESS_DENIED)
+            return ret;
+        if (GetTickCount() - start > 100)
+        {
+            char classname[256];
+            DWORD le = GetLastError();
+            HWND clipwnd = GetOpenClipboardWindow();
+            /* Provide a hint as to the source of interference:
+             * - The class name would typically be CLIPBRDWNDCLASS if the
+             *   clipboard was opened by a Windows application using the
+             *   ole32 API.
+             * - And it would be __wine_clipboard_manager if it was opened in
+             *   response to a native application.
+             */
+            GetClassNameA(clipwnd, classname, ARRAY_SIZE(classname));
+            trace_(__FILE__, line)("%p (%s) opened the clipboard\n", clipwnd, classname);
+            SetLastError(le);
+            return ret;
+        }
+        Sleep(15);
+    }
+}
+
 static void test_EM_GETMODIFY(void)
 {
   HWND hwndRichEdit = new_richedit(NULL);
@@ -4807,6 +4837,8 @@ static void test_EM_GETMODIFY(void)
   CHARFORMAT2A cf2;
   PARAFORMAT2 pf2;
   EDITSTREAM es;
+  BOOL r;
+  HANDLE hclip;
   
   HFONT testFont = CreateFontA (0,0,0,0,FW_LIGHT, 0, 0, 0, ANSI_CHARSET, 
     OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH | 
@@ -4953,7 +4985,28 @@ static void test_EM_GETMODIFY(void)
   ok (result != 0,
       "EM_GETMODIFY returned zero, instead of non-zero for EM_STREAM\n");
 
+  /* Check that the clipboard data is still available after destroying the
+   * editor window.
+   */
+  SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"Stayin' alive");
+  SendMessageA(hwndRichEdit, EM_SETSEL, 8, -1);
+  SendMessageA(hwndRichEdit, WM_COPY, 0, 0);
+
   DestroyWindow(hwndRichEdit);
+
+  r = open_clipboard(NULL);
+  ok(r, "OpenClipboard failed le=%lu\n", GetLastError());
+
+  hclip = GetClipboardData(CF_TEXT);
+  todo_wine ok(hclip != NULL, "GetClipboardData() failed le=%lu\n", GetLastError());
+  if (hclip)
+  {
+      const char* str = GlobalLock(hclip);
+      ok(strcmp(str, "alive") == 0, "unexpected clipboard content: %s\n", str);
+      GlobalUnlock(hclip);
+  }
+
+  CloseClipboard();
 }
 
 struct exsetsel_s {
