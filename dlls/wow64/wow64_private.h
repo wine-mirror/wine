@@ -21,6 +21,12 @@
 #ifndef __WOW64_PRIVATE_H
 #define __WOW64_PRIVATE_H
 
+#include "syscall.h"
+
+#define SYSCALL_ENTRY(func) extern NTSTATUS WINAPI wow64_ ## func( UINT *args ) DECLSPEC_HIDDEN;
+ALL_SYSCALLS
+#undef SYSCALL_ENTRY
+
 extern USHORT native_machine DECLSPEC_HIDDEN;
 extern USHORT current_machine DECLSPEC_HIDDEN;
 
@@ -42,5 +48,9 @@ static inline const WCHAR *get_machine_wow64_dir( USHORT machine )
     default: return NULL;
     }
 }
+
+static inline ULONG get_ulong( UINT **args ) { return *(*args)++; }
+static inline HANDLE get_handle( UINT **args ) { return LongToHandle( *(*args)++ ); }
+static inline void *get_ptr( UINT **args ) { return ULongToPtr( *(*args)++ ); }
 
 #endif /* __WOW64_PRIVATE_H */

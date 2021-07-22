@@ -39,12 +39,16 @@ typedef NTSTATUS (WINAPI *syscall_thunk)( UINT *args );
 
 static const syscall_thunk syscall_thunks[] =
 {
-    NULL
+#define SYSCALL_ENTRY(func) wow64_ ## func,
+    ALL_SYSCALLS
+#undef SYSCALL_ENTRY
 };
 
 static const char *syscall_names[] =
 {
-    ""
+#define SYSCALL_ENTRY(func) #func,
+    ALL_SYSCALLS
+#undef SYSCALL_ENTRY
 };
 
 static unsigned short syscall_map[1024];
@@ -71,6 +75,108 @@ void __cdecl __wine_spec_unimplemented_stub( const char *module, const char *fun
     record.ExceptionInformation[0] = (ULONG_PTR)module;
     record.ExceptionInformation[1] = (ULONG_PTR)function;
     for (;;) RtlRaiseException( &record );
+}
+
+
+/**********************************************************************
+ *           wow64_NtAllocateLocallyUniqueId
+ */
+NTSTATUS WINAPI wow64_NtAllocateLocallyUniqueId( UINT *args )
+{
+    LUID *luid = get_ptr( &args );
+
+    return NtAllocateLocallyUniqueId( luid );
+}
+
+
+/**********************************************************************
+ *           wow64_NtAllocateUuids
+ */
+NTSTATUS WINAPI wow64_NtAllocateUuids( UINT *args )
+{
+    ULARGE_INTEGER *time = get_ptr( &args );
+    ULONG *delta = get_ptr( &args );
+    ULONG *sequence = get_ptr( &args );
+    UCHAR *seed = get_ptr( &args );
+
+    return NtAllocateUuids( time, delta, sequence, seed );
+}
+
+
+/**********************************************************************
+ *           wow64_NtClose
+ */
+NTSTATUS WINAPI wow64_NtClose( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+
+    return NtClose( handle );
+}
+
+
+/**********************************************************************
+ *           wow64_NtGetCurrentProcessorNumber
+ */
+NTSTATUS WINAPI wow64_NtGetCurrentProcessorNumber( UINT *args )
+{
+    return NtGetCurrentProcessorNumber();
+}
+
+
+/**********************************************************************
+ *           wow64_NtQueryDefaultLocale
+ */
+NTSTATUS WINAPI wow64_NtQueryDefaultLocale( UINT *args )
+{
+    BOOLEAN user = get_ulong( &args );
+    LCID *lcid = get_ptr( &args );
+
+    return NtQueryDefaultLocale( user, lcid );
+}
+
+
+/**********************************************************************
+ *           wow64_NtQueryDefaultUILanguage
+ */
+NTSTATUS WINAPI wow64_NtQueryDefaultUILanguage( UINT *args )
+{
+    LANGID *lang = get_ptr( &args );
+
+    return NtQueryDefaultUILanguage( lang );
+}
+
+
+/**********************************************************************
+ *           wow64_NtQueryInstallUILanguage
+ */
+NTSTATUS WINAPI wow64_NtQueryInstallUILanguage( UINT *args )
+{
+    LANGID *lang = get_ptr( &args );
+
+    return NtQueryInstallUILanguage( lang );
+}
+
+
+/**********************************************************************
+ *           wow64_NtSetDefaultLocale
+ */
+NTSTATUS WINAPI wow64_NtSetDefaultLocale( UINT *args )
+{
+    BOOLEAN user = get_ulong( &args );
+    LCID lcid = get_ulong( &args );
+
+    return NtSetDefaultLocale( user, lcid );
+}
+
+
+/**********************************************************************
+ *           wow64_NtSetDefaultUILanguage
+ */
+NTSTATUS WINAPI wow64_NtSetDefaultUILanguage( UINT *args )
+{
+    LANGID lang = get_ulong( &args );
+
+    return NtSetDefaultUILanguage( lang );
 }
 
 
