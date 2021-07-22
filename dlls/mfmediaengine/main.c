@@ -2018,6 +2018,7 @@ static void media_engine_update_d3d11_frame_surface(ID3D11DeviceContext *context
     switch (surface_desc.Format)
     {
     case DXGI_FORMAT_B8G8R8A8_UNORM:
+    case DXGI_FORMAT_B8G8R8X8_UNORM:
         surface_desc.Width *= 4;
         break;
     default:
