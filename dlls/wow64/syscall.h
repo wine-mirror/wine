@@ -22,12 +22,16 @@
 #define __WOW64_SYSCALL_H
 
 #define ALL_SYSCALLS \
+    SYSCALL_ENTRY( NtAddAtom ) \
     SYSCALL_ENTRY( NtAllocateLocallyUniqueId ) \
     SYSCALL_ENTRY( NtAllocateUuids ) \
     SYSCALL_ENTRY( NtClose ) \
+    SYSCALL_ENTRY( NtDeleteAtom ) \
+    SYSCALL_ENTRY( NtFindAtom ) \
     SYSCALL_ENTRY( NtGetCurrentProcessorNumber ) \
     SYSCALL_ENTRY( NtQueryDefaultLocale ) \
     SYSCALL_ENTRY( NtQueryDefaultUILanguage ) \
+    SYSCALL_ENTRY( NtQueryInformationAtom ) \
     SYSCALL_ENTRY( NtQueryInstallUILanguage ) \
     SYSCALL_ENTRY( NtSetDefaultLocale ) \
     SYSCALL_ENTRY( NtSetDefaultUILanguage )

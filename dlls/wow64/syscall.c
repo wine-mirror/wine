@@ -79,6 +79,19 @@ void __cdecl __wine_spec_unimplemented_stub( const char *module, const char *fun
 
 
 /**********************************************************************
+ *           wow64_NtAddAtom
+ */
+NTSTATUS WINAPI wow64_NtAddAtom( UINT *args )
+{
+    const WCHAR *name = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    RTL_ATOM *atom = get_ptr( &args );
+
+    return NtAddAtom( name, len, atom );
+}
+
+
+/**********************************************************************
  *           wow64_NtAllocateLocallyUniqueId
  */
 NTSTATUS WINAPI wow64_NtAllocateLocallyUniqueId( UINT *args )
@@ -115,6 +128,30 @@ NTSTATUS WINAPI wow64_NtClose( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtDeleteAtom
+ */
+NTSTATUS WINAPI wow64_NtDeleteAtom( UINT *args )
+{
+    RTL_ATOM atom = get_ulong( &args );
+
+    return NtDeleteAtom( atom );
+}
+
+
+/**********************************************************************
+ *           wow64_NtFindAtom
+ */
+NTSTATUS WINAPI wow64_NtFindAtom( UINT *args )
+{
+    const WCHAR *name = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    RTL_ATOM *atom = get_ptr( &args );
+
+    return NtFindAtom( name, len, atom );
+}
+
+
+/**********************************************************************
  *           wow64_NtGetCurrentProcessorNumber
  */
 NTSTATUS WINAPI wow64_NtGetCurrentProcessorNumber( UINT *args )
@@ -143,6 +180,22 @@ NTSTATUS WINAPI wow64_NtQueryDefaultUILanguage( UINT *args )
     LANGID *lang = get_ptr( &args );
 
     return NtQueryDefaultUILanguage( lang );
+}
+
+
+/**********************************************************************
+ *           wow64_NtQueryInformationAtom
+ */
+NTSTATUS WINAPI wow64_NtQueryInformationAtom( UINT *args )
+{
+    RTL_ATOM atom = get_ulong( &args );
+    ATOM_INFORMATION_CLASS class = get_ulong( &args );
+    void *info = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    ULONG *retlen = get_ptr( &args );
+
+    if (class != AtomBasicInformation) FIXME( "class %u not supported\n", class );
+    return NtQueryInformationAtom( atom, class, info, len, retlen );
 }
 
 
