@@ -6270,6 +6270,7 @@ done:
 
         if (lf.lfUnderline)
         {
+            const UINT cnt = 5;
             pts[0].x = x - (underlinePos + underlineWidth / 2) * sinEsc;
             pts[0].y = y - (underlinePos + underlineWidth / 2) * cosEsc;
             pts[1].x = x + width.x - (underlinePos + underlineWidth / 2) * sinEsc;
@@ -6281,11 +6282,12 @@ done:
             pts[4].x = pts[0].x;
             pts[4].y = pts[0].y;
             dp_to_lp(dc, pts, 5);
-            Polygon(hdc, pts, 5);
+            NtGdiPolyPolyDraw( hdc, pts, &cnt, 1, NtGdiPolyPolygon );
         }
 
         if (lf.lfStrikeOut)
         {
+            const UINT cnt = 5;
             pts[0].x = x - (strikeoutPos + strikeoutWidth / 2) * sinEsc;
             pts[0].y = y - (strikeoutPos + strikeoutWidth / 2) * cosEsc;
             pts[1].x = x + width.x - (strikeoutPos + strikeoutWidth / 2) * sinEsc;
@@ -6297,7 +6299,7 @@ done:
             pts[4].x = pts[0].x;
             pts[4].y = pts[0].y;
             dp_to_lp(dc, pts, 5);
-            Polygon(hdc, pts, 5);
+            NtGdiPolyPolyDraw( hdc, pts, &cnt, 1, NtGdiPolyPolygon );
         }
 
         NtGdiSelectPen(hdc, hpen);

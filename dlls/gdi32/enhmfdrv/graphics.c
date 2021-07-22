@@ -600,12 +600,12 @@ BOOL CDECL EMFDRV_PolylineTo( PHYSDEV dev, const POINT* pt, INT count )
 }
 
 /**********************************************************************
- *          EMFDRV_Polygon
+ *          EMFDC_Polygon
  */
-BOOL CDECL EMFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
+BOOL EMFDC_Polygon( DC_ATTR *dc_attr, const POINT *pt, INT count )
 {
     if(count < 2) return FALSE;
-    return EMFDRV_Polylinegon( dev, pt, count, EMR_POLYGON );
+    return EMFDRV_Polylinegon( dc_attr->emf, pt, count, EMR_POLYGON );
 }
 
 /**********************************************************************

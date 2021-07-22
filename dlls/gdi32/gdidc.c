@@ -238,6 +238,21 @@ BOOL WINAPI RoundRect( HDC hdc, INT left, INT top, INT right,
 }
 
 /**********************************************************************
+ *          Polygon  (GDI32.@)
+ */
+BOOL WINAPI Polygon( HDC hdc, const POINT *points, INT count )
+{
+    DC_ATTR *dc_attr;
+
+    TRACE( "%p, %p, %d\n", hdc, points, count );
+
+    if (is_meta_dc( hdc )) return METADC_Polygon( hdc, points, count );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_Polygon( dc_attr, points, count )) return FALSE;
+    return NtGdiPolyPolyDraw( hdc, points, (const UINT *)&count, 1, NtGdiPolyPolygon );
+}
+
+/**********************************************************************
  *          PolyPolygon  (GDI32.@)
  */
 BOOL WINAPI PolyPolygon( HDC hdc, const POINT *points, const INT *counts, UINT polygons )

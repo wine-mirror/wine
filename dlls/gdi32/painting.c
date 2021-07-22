@@ -614,26 +614,6 @@ BOOL WINAPI PolylineTo( HDC hdc, const POINT* pt, DWORD cCount )
 
 
 /**********************************************************************
- *          Polygon  (GDI32.@)
- */
-BOOL WINAPI Polygon( HDC hdc, const POINT* pt, INT count )
-{
-    PHYSDEV physdev;
-    BOOL ret;
-    DC * dc = get_dc_ptr( hdc );
-
-    TRACE( "%p, %p, %d\n", hdc, pt, count );
-
-    if (!dc) return FALSE;
-    update_dc( dc );
-    physdev = GET_DC_PHYSDEV( dc, pPolygon );
-    ret = physdev->funcs->pPolygon( physdev, pt, count );
-    release_dc_ptr( dc );
-    return ret;
-}
-
-
-/**********************************************************************
  *          NtGdiPolyPolyDraw  (win32u.@)
  */
 ULONG WINAPI NtGdiPolyPolyDraw( HDC hdc, const POINT *points, const UINT *counts,

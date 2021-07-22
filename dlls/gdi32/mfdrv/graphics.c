@@ -126,9 +126,9 @@ COLORREF CDECL MFDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 
 
 /******************************************************************
- *         MFDRV_MetaPoly - implements Polygon and Polyline
+ *         metadc_poly - implements Polygon and Polyline
  */
-static BOOL MFDRV_MetaPoly(PHYSDEV dev, short func, POINTS *pt, short count)
+static BOOL metadc_poly( HDC hdc, short func, POINTS *pt, short count )
 {
     BOOL ret;
     DWORD len;
@@ -142,7 +142,7 @@ static BOOL MFDRV_MetaPoly(PHYSDEV dev, short func, POINTS *pt, short count)
     mr->rdFunction = func;
     *(mr->rdParm) = count;
     memcpy(mr->rdParm + 1, pt, count * 4);
-    ret = MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
+    ret = metadc_record( hdc, mr, mr->rdSize * 2);
     HeapFree( GetProcessHeap(), 0, mr);
     return ret;
 }
@@ -164,7 +164,7 @@ BOOL CDECL MFDRV_Polyline( PHYSDEV dev, const POINT* pt, INT count )
         pts[i].x = pt[i].x;
         pts[i].y = pt[i].y;
     }
-    ret = MFDRV_MetaPoly(dev, META_POLYLINE, pts, count);
+    ret = metadc_poly( dev->hdc, META_POLYLINE, pts, count );
 
     HeapFree( GetProcessHeap(), 0, pts );
     return ret;
@@ -172,9 +172,9 @@ BOOL CDECL MFDRV_Polyline( PHYSDEV dev, const POINT* pt, INT count )
 
 
 /**********************************************************************
- *          MFDRV_Polygon
+ *          METADC_Polygon
  */
-BOOL CDECL MFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
+BOOL METADC_Polygon( HDC hdc, const POINT *pt, INT count )
 {
     int i;
     POINTS *pts;
@@ -187,7 +187,7 @@ BOOL CDECL MFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
         pts[i].x = pt[i].x;
         pts[i].y = pt[i].y;
     }
-    ret = MFDRV_MetaPoly(dev, META_POLYGON, pts, count);
+    ret = metadc_poly( hdc, META_POLYGON, pts, count );
 
     HeapFree( GetProcessHeap(), 0, pts );
     return ret;

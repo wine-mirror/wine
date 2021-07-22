@@ -110,7 +110,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     EMFDRV_PolyDraw,                 /* pPolyDraw */
     EMFDRV_PolyPolygon,              /* pPolyPolygon */
     EMFDRV_PolyPolyline,             /* pPolyPolyline */
-    EMFDRV_Polygon,                  /* pPolygon */
+    NULL,                            /* pPolygon */
     EMFDRV_Polyline,                 /* pPolyline */
     EMFDRV_PolylineTo,               /* pPolylineTo */
     NULL,                            /* pPutImage */
