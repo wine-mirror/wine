@@ -10679,27 +10679,24 @@ static void test_bind(void)
 
                 addr6.sin6_scope_id = 0;
                 ret = bind(s, (struct sockaddr *)&addr6, sizeof(addr6));
-                todo_wine ok(!ret, "got error %u\n", WSAGetLastError());
+                todo_wine_if (!((const struct sockaddr_in6 *)unicast_addr->Address.lpSockaddr)->sin6_scope_id)
+                    ok(!ret, "got error %u\n", WSAGetLastError());
 
                 memcpy(&addr6, unicast_addr->Address.lpSockaddr, sizeof(addr6));
 
                 len = sizeof(struct sockaddr_in6_old);
                 ret = getsockname(s, (struct sockaddr *)&ret_addr6, &len);
                 ok(ret == -1, "expected failure\n");
-                todo_wine_if (addr6.sin6_scope_id)
-                    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+                ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
 
                 len = sizeof(ret_addr6);
                 memset(&ret_addr6, 0, sizeof(ret_addr6));
                 ret = getsockname(s, (struct sockaddr *)&ret_addr6, &len);
-                todo_wine_if (addr6.sin6_scope_id)
-                {
-                    ok(!ret, "got error %u\n", WSAGetLastError());
-                    ok(ret_addr6.sin6_family == AF_INET6, "got family %u\n", ret_addr6.sin6_family);
-                    ok(ret_addr6.sin6_port != 0, "expected nonzero port\n");
-                    ok(!memcmp(&ret_addr6.sin6_addr, &addr6.sin6_addr, sizeof(addr6.sin6_addr)), "address didn't match\n");
-                    ok(ret_addr6.sin6_scope_id == addr6.sin6_scope_id, "got scope %u\n", ret_addr6.sin6_scope_id);
-                }
+                ok(!ret, "got error %u\n", WSAGetLastError());
+                ok(ret_addr6.sin6_family == AF_INET6, "got family %u\n", ret_addr6.sin6_family);
+                ok(ret_addr6.sin6_port != 0, "expected nonzero port\n");
+                ok(!memcmp(&ret_addr6.sin6_addr, &addr6.sin6_addr, sizeof(addr6.sin6_addr)), "address didn't match\n");
+                ok(ret_addr6.sin6_scope_id == addr6.sin6_scope_id, "got scope %u\n", ret_addr6.sin6_scope_id);
 
                 closesocket(s);
             }
