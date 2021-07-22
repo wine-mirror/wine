@@ -609,11 +609,20 @@ BOOL EMFDC_Polygon( DC_ATTR *dc_attr, const POINT *pt, INT count )
 }
 
 /**********************************************************************
+ *          EMFDC_PolyBezier
+ */
+BOOL EMFDC_PolyBezier( DC_ATTR *dc_attr, const POINT *pts, DWORD count )
+{
+    return EMFDRV_Polylinegon( dc_attr->emf, pts, count, EMR_POLYBEZIER );
+}
+
+/**********************************************************************
  *          EMFDRV_PolyBezier
  */
 BOOL CDECL EMFDRV_PolyBezier( PHYSDEV dev, const POINT *pts, DWORD count )
 {
-    return EMFDRV_Polylinegon( dev, pts, count, EMR_POLYBEZIER );
+    /* FIXME: update bounding rect */
+    return TRUE;
 }
 
 /**********************************************************************
