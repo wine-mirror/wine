@@ -1547,8 +1547,7 @@ static DWORD verify_cert_revocation_from_dist_points_ext(const CRYPT_DATA_BLOB *
             if (dwFlags & CERT_VERIFY_CACHE_ONLY_BASED_REVOCATION)
                 retrievalFlags |= CRYPT_CACHE_ONLY_RETRIEVAL;
 
-            if ((dwFlags & CERT_VERIFY_REV_ACCUMULATIVE_TIMEOUT_FLAG) && pRevPara
-                    && pRevPara->cbSize >= RTL_SIZEOF_THROUGH_FIELD(CERT_REVOCATION_PARA, dwUrlRetrievalTimeout))
+            if (pRevPara && pRevPara->cbSize >= RTL_SIZEOF_THROUGH_FIELD(CERT_REVOCATION_PARA, dwUrlRetrievalTimeout))
                 timeout = pRevPara->dwUrlRetrievalTimeout;
 
             /* Yes, this is a weird algorithm, but the documentation for
@@ -1577,7 +1576,7 @@ static DWORD verify_cert_revocation_from_dist_points_ext(const CRYPT_DATA_BLOB *
                     /* We don't check the current time here. This may result in
                      * less accurate timeouts, but this too seems to be true of
                      * Windows. */
-                    if (GetLastError() == ERROR_TIMEOUT)
+                    if ((dwFlags & CERT_VERIFY_REV_ACCUMULATIVE_TIMEOUT_FLAG) && GetLastError() == ERROR_TIMEOUT)
                         timeout /= 2;
                     error = CRYPT_E_REVOCATION_OFFLINE;
                 }
