@@ -21,6 +21,7 @@
 #define NONAMELESSUNION
 #define CERT_REVOCATION_PARA_HAS_EXTRA_FIELDS
 
+#include <share.h>
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -31,6 +32,9 @@
 #include "wininet.h"
 #include "objbase.h"
 #include "wincrypt.h"
+#include "initguid.h"
+#include "knownfolders.h"
+#include "shlobj.h"
 
 #include "wine/debug.h"
 
@@ -1514,6 +1518,124 @@ BOOL WINAPI CryptRetrieveObjectByUrlW(LPCWSTR pszURL, LPCSTR pszObjectOid,
     return ret;
 }
 
+/* Store successful revocation checks (whether the certificate was revoked or
+ * not) in an on-disk cache. This is not because of network latency—we already
+ * have a cache for that—but rather because parsing very large CRLs can take a
+ * long time (at the time of writing, 20 MB CRLs have been seen in the wild and
+ * can take several hundred milliseconds) and applications expect chain building
+ * to be much faster.
+ *
+ * The cache is treated as invalid once we pass the nextUpdate field of the CRL.
+ * This isn't quite what the field is meant for (it's rather meant to specify a
+ * later bound for the next time the CRL will be reissued, and doesn't prescribe
+ * a date by which the CRL is invalid; see RFC 5280 § 5.1.2.5) but it's the way
+ * it's used in practice.
+ *
+ * The location of the cache roughly matches Windows, but the file name and
+ * contents do not.
+ */
+
+static const char revocation_cache_signature[] = "Wine cached revocation";
+
+static FILE *open_cached_revocation_file(const CRYPT_INTEGER_BLOB *serial, const WCHAR *mode, int sharing)
+{
+    WCHAR path[MAX_PATH];
+    WCHAR *appdata_path;
+    DWORD len, i;
+    HRESULT hr;
+
+    if (FAILED(hr = SHGetKnownFolderPath(&FOLDERID_LocalAppDataLow, 0, NULL, &appdata_path)))
+    {
+        ERR("Failed to get LocalAppDataLow path, hr %#x.\n", hr);
+        return INVALID_HANDLE_VALUE;
+    }
+
+    len = swprintf(path, ARRAY_SIZE(path), L"%s\\Microsoft\\CryptnetUrlCache\\Content\\", appdata_path);
+    CoTaskMemFree(appdata_path);
+
+    if (len + serial->cbData * 2 * sizeof(WCHAR) > ARRAY_SIZE(path) - 1)
+    {
+        WARN("Serial length exceeds static buffer; not caching.\n");
+        return INVALID_HANDLE_VALUE;
+    }
+
+    SHCreateDirectoryExW(NULL, path, NULL);
+
+    for (i = 0; i < serial->cbData; ++i)
+    {
+        swprintf(path + len, 3, L"%02x", serial->pbData[i]);
+        len += 2;
+    }
+
+    return _wfsopen(path, mode, sharing);
+}
+
+static BOOL find_cached_revocation_status(const CRYPT_INTEGER_BLOB *serial,
+        const FILETIME *time, CERT_REVOCATION_STATUS *status)
+{
+    char buffer[sizeof(revocation_cache_signature)];
+    FILETIME update_time;
+    FILE *file;
+    int len;
+
+    if (!(file = open_cached_revocation_file(serial, L"r", _SH_DENYWR)))
+        return FALSE;
+
+    if ((len = fread(buffer, 1, sizeof(buffer), file)) != sizeof(buffer)
+            || memcmp(buffer, revocation_cache_signature, len))
+    {
+        ERR("Invalid cache signature.\n");
+        fclose(file);
+        return FALSE;
+    }
+
+    if (fread(&update_time, sizeof(update_time), 1, file) != 1)
+    {
+        ERR("Failed to read update time.\n");
+        fclose(file);
+        return FALSE;
+    }
+
+    if (CompareFileTime(time, &update_time) > 0)
+    {
+        TRACE("Cached revocation status is potentially out of date.\n");
+        fclose(file);
+        return FALSE;
+    }
+
+    if (fread(&status->dwError, sizeof(status->dwError), 1, file) != 1)
+    {
+        ERR("Failed to read error code.\n");
+        fclose(file);
+        return FALSE;
+    }
+
+    if (status->dwError == CERT_E_REVOKED && fread(&status->dwReason, sizeof(status->dwReason), 1, file) != 1)
+    {
+        ERR("Failed to read revocation reason.\n");
+        fclose(file);
+        return FALSE;
+    }
+
+    TRACE("Using cached status %#x, reason %#x.\n", status->dwError, status->dwReason);
+    return TRUE;
+}
+
+static void cache_revocation_status(const CRYPT_INTEGER_BLOB *serial,
+        const FILETIME *time, const CERT_REVOCATION_STATUS *status)
+{
+    FILE *file;
+
+    if (!(file = open_cached_revocation_file(serial, L"w", _SH_DENYRW)))
+        return;
+    fwrite(revocation_cache_signature, 1, sizeof(revocation_cache_signature), file);
+    fwrite(time, sizeof(*time), 1, file);
+    fwrite(&status->dwError, sizeof(status->dwError), 1, file);
+    if (status->dwError == CERT_E_REVOKED)
+        fwrite(&status->dwReason, sizeof(status->dwReason), 1, file);
+    fclose(file);
+}
+
 static DWORD verify_cert_revocation_with_crl_online(const CERT_CONTEXT *cert,
         const CRL_CONTEXT *crl, FILETIME *pTime, CERT_REVOCATION_STATUS *pRevStatus)
 {
@@ -1591,6 +1713,8 @@ static DWORD verify_cert_revocation_from_dist_points_ext(const CRYPT_DATA_BLOB *
 
     error = verify_cert_revocation_with_crl_online(cert, crl, time, status);
 
+    cache_revocation_status(&cert->pCertInfo->SerialNumber, &crl->pCrlInfo->NextUpdate, status);
+
     CertFreeCRLContext(crl);
     CryptMemFree(url_array);
     return error;
@@ -1662,6 +1786,9 @@ static DWORD verify_cert_revocation(const CERT_CONTEXT *cert, FILETIME *pTime,
 {
     DWORD error = ERROR_SUCCESS;
     PCERT_EXTENSION ext;
+
+    if (find_cached_revocation_status(&cert->pCertInfo->SerialNumber, pTime, pRevStatus))
+        return pRevStatus->dwError;
 
     if ((ext = CertFindExtension(szOID_CRL_DIST_POINTS,
      cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension)))
