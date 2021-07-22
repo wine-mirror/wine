@@ -1047,7 +1047,7 @@ static void test_new_screen_buffer_color_attributes(HANDLE hConOut)
     ok(ret, "GetConsoleScreenBufferInfoEx failed: error %u\n", GetLastError());
     CloseHandle(hConOut2);
 
-    todo_wine ok(csbi2.wAttributes == orig_attr, "Character Attributes should have been copied: "
+    ok(csbi2.wAttributes == orig_attr, "Character Attributes should have been copied: "
        "got %#x, expected %#x\n", csbi2.wAttributes, orig_attr);
     todo_wine ok(csbi2.wPopupAttributes != orig_popup, "Popup Attributes should not match original value\n");
     todo_wine ok(csbi2.wPopupAttributes == orig_attr, "Popup Attributes should match Character Attributes\n");
@@ -1068,7 +1068,7 @@ static void test_new_screen_buffer_color_attributes(HANDLE hConOut)
     ok(ret, "GetConsoleScreenBufferInfoEx failed: error %u\n", GetLastError());
     CloseHandle(hConOut2);
 
-    todo_wine ok(csbi2.wAttributes == attr, "Character Attributes should have been copied: "
+    ok(csbi2.wAttributes == attr, "Character Attributes should have been copied: "
        "got %#x, expected %#x\n", csbi2.wAttributes, attr);
     todo_wine ok(csbi2.wPopupAttributes != orig_popup, "Popup Attributes should not match original value\n");
     todo_wine ok(csbi2.wPopupAttributes == attr, "Popup Attributes should match Character Attributes\n");
@@ -1092,7 +1092,7 @@ static void test_new_screen_buffer_color_attributes(HANDLE hConOut)
     ok(ret, "GetConsoleScreenBufferInfoEx failed: error %u\n", GetLastError());
     CloseHandle(hConOut2);
 
-    todo_wine ok(csbi2.wAttributes == orig_attr, "Character Attributes should have been copied: "
+    ok(csbi2.wAttributes == orig_attr, "Character Attributes should have been copied: "
        "got %#x, expected %#x\n", csbi2.wAttributes, orig_attr);
     todo_wine ok(csbi2.wPopupAttributes != orig_popup, "Popup Attributes should not match original value\n");
     todo_wine ok(csbi2.wPopupAttributes == orig_attr, "Popup Attributes should match Character Attributes\n");
