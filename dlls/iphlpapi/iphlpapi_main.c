@@ -76,6 +76,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
 #define CHARS_IN_GUID 39
 
 DWORD WINAPI AllocateAndGetIfTableFromStack( MIB_IFTABLE **table, BOOL sort, HANDLE heap, DWORD flags );
+DWORD WINAPI AllocateAndGetIpAddrTableFromStack( MIB_IPADDRTABLE **table, BOOL sort, HANDLE heap, DWORD flags );
 
 static const NPI_MODULEID *ip_module_id( USHORT family )
 {
@@ -350,7 +351,7 @@ DWORD WINAPI CreateSortedAddressPairs( const PSOCKADDR_IN6 src_list, DWORD src_c
     if (!(pairs = HeapAlloc( GetProcessHeap(), 0, size ))) return ERROR_NOT_ENOUGH_MEMORY;
     ptr = (SOCKADDR_IN6 *)&pairs[dst_count];
 
-    if ((ret = getIPAddrTable( &table, GetProcessHeap(), 0 )))
+    if ((ret = AllocateAndGetIpAddrTableFromStack( &table, FALSE, GetProcessHeap(), 0 )))
     {
         HeapFree( GetProcessHeap(), 0, pairs );
         return ret;
