@@ -1525,7 +1525,7 @@ static HRESULT CDECL wg_parser_connect(struct wg_parser *parser, uint64_t file_s
     for (i = 0; i < parser->stream_count; ++i)
     {
         struct wg_parser_stream *stream = parser->streams[i];
-        gint64 duration, byte_length;
+        gint64 duration;
 
         while (!stream->has_caps && !parser->error)
             pthread_cond_wait(&parser->init_cond, &parser->mutex);
@@ -1567,18 +1567,6 @@ static HRESULT CDECL wg_parser_connect(struct wg_parser *parser, uint64_t file_s
                 break;
             }
 
-            GST_INFO("Failed to query time duration; trying to convert from byte length.\n");
-
-            /* To accurately get a duration for the stream, we want to only
-             * consider the length of that stream. Hence, query for the pad
-             * duration, instead of using the file duration. */
-            if (gst_pad_query_duration(stream->their_src, GST_FORMAT_BYTES, &byte_length)
-                    && gst_pad_query_convert(stream->their_src, GST_FORMAT_BYTES, byte_length,
-                            GST_FORMAT_TIME, &duration))
-            {
-                stream->duration = duration / 100;
-                break;
-            }
             if (stream->eos)
             {
                 stream->duration = 0;
