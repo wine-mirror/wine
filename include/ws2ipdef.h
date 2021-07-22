@@ -323,6 +323,16 @@ static inline BOOLEAN WS(IN6_IS_ADDR_UNSPECIFIED) ( const IN6_ADDR *a )
             (a->s6_words[7] == 0));
 }
 
+static inline BOOLEAN WS(IN6_IS_ADDR_LINKLOCAL) ( const IN6_ADDR *a )
+{
+    return ((a->s6_bytes[0] == 0xfe) && ((a->s6_bytes[1] & 0xc0) == 0x80));
+}
+
+static inline BOOLEAN WS(IN6_IS_ADDR_SITELOCAL) ( const IN6_ADDR *a )
+{
+    return ((a->s6_bytes[0] == 0xfe) && ((a->s6_bytes[1] & 0xc0) == 0xc0));
+}
+
 #ifdef __cplusplus
 }
 #endif
