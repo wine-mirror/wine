@@ -695,18 +695,6 @@ static BOOL CDECL emfpathdrv_PolyDraw( PHYSDEV dev, const POINT *pts, const BYTE
             next->funcs->pPolyDraw( next, pts, types, count ));
 }
 
-/***********************************************************************
- *           emfpathdrv_PolylineTo
- */
-static BOOL CDECL emfpathdrv_PolylineTo( PHYSDEV dev, const POINT *pts, INT count )
-{
-    PHYSDEV emfdev = get_emfdev( dev );
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pPolylineTo );
-
-    return (emfdev->funcs->pPolylineTo( emfdev, pts, count ) &&
-            next->funcs->pPolylineTo( next, pts, count ));
-}
-
 
 static const struct gdi_dc_funcs emfpath_driver =
 {
@@ -784,7 +772,7 @@ static const struct gdi_dc_funcs emfpath_driver =
     emfpathdrv_PolyDraw,                /* pPolyDraw */
     NULL,                               /* pPolyPolygon */
     NULL,                               /* pPolyPolyline */
-    emfpathdrv_PolylineTo,              /* pPolylineTo */
+    NULL,                               /* pPolylineTo */
     NULL,                               /* pPutImage */
     NULL,                               /* pRealizeDefaultPalette */
     NULL,                               /* pRealizePalette */

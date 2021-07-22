@@ -592,11 +592,20 @@ BOOL EMFDC_Polyline( DC_ATTR *dc_attr, const POINT *points, INT count )
 }
 
 /**********************************************************************
+ *          EMFDC_PolylineTo
+ */
+BOOL EMFDC_PolylineTo( DC_ATTR *dc_attr, const POINT *pt, INT count )
+{
+    return EMFDRV_Polylinegon( dc_attr->emf, pt, count, EMR_POLYLINETO );
+}
+
+/**********************************************************************
  *          EMFDRV_PolylineTo
  */
 BOOL CDECL EMFDRV_PolylineTo( PHYSDEV dev, const POINT* pt, INT count )
 {
-    return EMFDRV_Polylinegon( dev, pt, count, EMR_POLYLINETO );
+    /* FIXME: update bounding rect */
+    return TRUE;
 }
 
 /**********************************************************************

@@ -576,31 +576,6 @@ BOOL WINAPI InvertRgn( HDC hdc, HRGN hrgn )
 
 
 /**********************************************************************
- *          PolylineTo   (GDI32.@)
- */
-BOOL WINAPI PolylineTo( HDC hdc, const POINT* pt, DWORD cCount )
-{
-    DC * dc = get_dc_ptr( hdc );
-    PHYSDEV physdev;
-    BOOL ret;
-
-    TRACE( "%p, %p, %u\n", hdc, pt, cCount );
-
-    if(!dc) return FALSE;
-
-    update_dc( dc );
-    physdev = GET_DC_PHYSDEV( dc, pPolylineTo );
-    ret = physdev->funcs->pPolylineTo( physdev, pt, cCount );
-
-    if (ret && cCount)
-        dc->attr->cur_pos = pt[cCount - 1];
-
-    release_dc_ptr( dc );
-    return ret;
-}
-
-
-/**********************************************************************
  *          NtGdiPolyPolyDraw  (win32u.@)
  */
 ULONG WINAPI NtGdiPolyPolyDraw( HDC hdc, const POINT *points, const UINT *counts,
@@ -632,6 +607,16 @@ ULONG WINAPI NtGdiPolyPolyDraw( HDC hdc, const POINT *points, const UINT *counts
             physdev = GET_DC_PHYSDEV( dc, pPolyBezier );
             ret = physdev->funcs->pPolyBezier( physdev, points, *counts );
             if (ret) dc->attr->cur_pos = points[*counts - 1];
+        }
+        else ret = FALSE;
+        break;
+
+    case NtGdiPolylineTo:
+        if (count == 1)
+        {
+            physdev = GET_DC_PHYSDEV( dc, pPolylineTo );
+            ret = physdev->funcs->pPolylineTo( physdev, points, *counts );
+            if (ret && *counts) dc->attr->cur_pos = points[*counts - 1];
         }
         else ret = FALSE;
         break;

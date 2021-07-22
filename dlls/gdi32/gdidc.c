@@ -309,3 +309,17 @@ BOOL WINAPI PolyBezier( HDC hdc, const POINT *points, DWORD count )
     if (dc_attr->emf && !EMFDC_PolyBezier( dc_attr, points, count )) return FALSE;
     return NtGdiPolyPolyDraw( hdc, points, &count, 1, NtGdiPolyBezier );
 }
+
+/**********************************************************************
+ *          PolylineTo   (GDI32.@)
+ */
+BOOL WINAPI PolylineTo( HDC hdc, const POINT *points, DWORD count )
+{
+    DC_ATTR *dc_attr;
+
+    TRACE( "%p, %p, %u\n", hdc, points, count );
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_PolylineTo( dc_attr, points, count )) return FALSE;
+    return NtGdiPolyPolyDraw( hdc, points, &count, 1, NtGdiPolylineTo );
+}
