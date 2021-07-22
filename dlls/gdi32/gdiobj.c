@@ -971,9 +971,12 @@ HANDLE WINAPI NtGdiCreateClientObj( ULONG type )
 /***********************************************************************
  *           NtGdiDeleteClientObj    (win32u.@)
  */
-BOOL WINAPI NtGdiDeleteClientObj( HGDIOBJ obj )
+BOOL WINAPI NtGdiDeleteClientObj( HGDIOBJ handle )
 {
-    return NtGdiDeleteObjectApp( obj );
+    void *obj;
+    if (!(obj = free_gdi_handle( handle ))) return FALSE;
+    HeapFree( GetProcessHeap(), 0, obj );
+    return TRUE;
 }
 
 /***********************************************************************
