@@ -2652,19 +2652,21 @@ static bool wined3d_shader_resource_bindings_add_null_srv_binding(struct wined3d
 
 static bool wined3d_shader_descriptor_writes_vk_add_cbv_write(struct wined3d_shader_descriptor_writes_vk *writes,
         struct wined3d_context_vk *context_vk, VkDescriptorSet vk_descriptor_set, const struct wined3d_state *state,
-        const struct wined3d_shader_resource_binding *binding)
+        const struct wined3d_shader_resource_binding *binding, VkDescriptorBufferInfo *buffer_info)
 {
+    const struct wined3d_constant_buffer_state *cb_state = &state->cb[binding->shader_type][binding->resource_idx];
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
-    const VkDescriptorBufferInfo *buffer_info;
     struct wined3d_buffer_vk *buffer_vk;
     struct wined3d_buffer *buffer;
 
-    if (!(buffer = state->cb[binding->shader_type][binding->resource_idx].buffer))
+    if (!(buffer = cb_state->buffer))
         return wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set, binding->binding_idx,
                 VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &device_vk->null_resources_vk.buffer_info, NULL, NULL);
 
     buffer_vk = wined3d_buffer_vk(buffer);
-    buffer_info = wined3d_buffer_vk_get_buffer_info(buffer_vk);
+    *buffer_info = *wined3d_buffer_vk_get_buffer_info(buffer_vk);
+    buffer_info->offset += cb_state->offset;
+    buffer_info->range = min(cb_state->size, buffer_info->range);
     if (!wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set,
             binding->binding_idx, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, buffer_info, NULL, NULL))
         return false;
@@ -2803,6 +2805,7 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
         VkCommandBuffer vk_command_buffer, const struct wined3d_state *state, enum wined3d_pipeline pipeline)
 {
     struct wined3d_shader_descriptor_writes_vk *writes = &context_vk->descriptor_writes;
+    VkDescriptorBufferInfo buffers[WINED3D_SHADER_TYPE_COUNT][MAX_CONSTANT_BUFFERS];
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     const struct wined3d_shader_resource_binding *binding;
@@ -2849,8 +2852,8 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
         switch (binding->shader_descriptor_type)
         {
             case WINED3D_SHADER_DESCRIPTOR_TYPE_CBV:
-                if (!wined3d_shader_descriptor_writes_vk_add_cbv_write(writes,
-                        context_vk, vk_descriptor_set, state, binding))
+                if (!wined3d_shader_descriptor_writes_vk_add_cbv_write(writes, context_vk, vk_descriptor_set,
+                        state, binding, &buffers[binding->shader_type][binding->resource_idx]))
                     return false;
                 break;
 
