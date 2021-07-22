@@ -24,6 +24,11 @@
 extern USHORT native_machine DECLSPEC_HIDDEN;
 extern USHORT current_machine DECLSPEC_HIDDEN;
 
+static inline void *get_rva( HMODULE module, DWORD va )
+{
+    return (void *)((char *)module + va);
+}
+
 /* cf. GetSystemWow64Directory2 */
 static inline const WCHAR *get_machine_wow64_dir( USHORT machine )
 {

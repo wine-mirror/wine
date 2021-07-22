@@ -35,6 +35,22 @@ WINE_DEFAULT_DEBUG_CHANNEL(wow);
 USHORT native_machine = 0;
 USHORT current_machine = 0;
 
+typedef NTSTATUS (WINAPI *syscall_thunk)( UINT *args );
+
+static const syscall_thunk syscall_thunks[] =
+{
+    NULL
+};
+
+static const char *syscall_names[] =
+{
+    ""
+};
+
+static unsigned short syscall_map[1024];
+
+static SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock;
+
 void *dummy = RtlUnwind;
 
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, void *reserved )
@@ -55,6 +71,82 @@ void __cdecl __wine_spec_unimplemented_stub( const char *module, const char *fun
     record.ExceptionInformation[0] = (ULONG_PTR)module;
     record.ExceptionInformation[1] = (ULONG_PTR)function;
     for (;;) RtlRaiseException( &record );
+}
+
+
+/**********************************************************************
+ *           get_syscall_num
+ */
+static DWORD get_syscall_num( const BYTE *syscall )
+{
+    DWORD id = ~0u;
+
+    if (!syscall) return id;
+    switch (current_machine)
+    {
+    case IMAGE_FILE_MACHINE_I386:
+        if (syscall[0] == 0xb8 && syscall[5] == 0xba && syscall[10] == 0xff && syscall[11] == 0xd2)
+            id = *(DWORD *)(syscall + 1);
+        break;
+
+    case IMAGE_FILE_MACHINE_ARM:
+        if (*(WORD *)syscall == 0xb40f)
+        {
+            DWORD inst = *(DWORD *)((WORD *)syscall + 1);
+            id = ((inst << 1) & 0x0800) + ((inst << 12) & 0xf000) +
+                ((inst >> 20) & 0x0700) + ((inst >> 16) & 0x00ff);
+        }
+        break;
+    }
+    return id;
+}
+
+
+/**********************************************************************
+ *           init_syscall_table
+ */
+static void init_syscall_table( HMODULE ntdll )
+{
+    const IMAGE_EXPORT_DIRECTORY *exports;
+    const ULONG *functions, *names;
+    const USHORT *ordinals;
+    ULONG id, exp_size, exp_pos, wrap_pos;
+
+    exports = RtlImageDirectoryEntryToData( ntdll, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size );
+    ordinals = get_rva( ntdll, exports->AddressOfNameOrdinals );
+    functions = get_rva( ntdll, exports->AddressOfFunctions );
+    names = get_rva( ntdll, exports->AddressOfNames );
+
+    for (exp_pos = wrap_pos = 0; exp_pos < exports->NumberOfNames; exp_pos++)
+    {
+        char *name = get_rva( ntdll, names[exp_pos] );
+        int res = -1;
+
+        if (strncmp( name, "Nt", 2 ) && strncmp( name, "wine", 4 ) && strncmp( name, "__wine", 6 ))
+            continue;  /* not a syscall */
+
+        if ((id = get_syscall_num( get_rva( ntdll, functions[ordinals[exp_pos]] ))) == ~0u)
+            continue; /* not a syscall */
+
+        if (wrap_pos < ARRAY_SIZE(syscall_names))
+            res = strcmp( name, syscall_names[wrap_pos] );
+
+        if (!res)  /* got a match */
+        {
+            if (id < ARRAY_SIZE(syscall_map)) syscall_map[id] = wrap_pos++;
+            else ERR( "invalid syscall id %04x for %s\n", id, name );
+        }
+        else if (res > 0)
+        {
+            FIXME( "no ntdll export for syscall %s\n", syscall_names[wrap_pos] );
+            wrap_pos++;
+            exp_pos--;  /* try again */
+        }
+        else FIXME( "missing wrapper for syscall %04x %s\n", id, name );
+    }
+
+    for ( ; wrap_pos < ARRAY_SIZE(syscall_thunks); wrap_pos++)
+        FIXME( "no ntdll export for syscall %s\n", syscall_names[wrap_pos] );
 }
 
 
@@ -100,10 +192,24 @@ static HMODULE load_cpu_dll(void)
  */
 static void process_init(void)
 {
+    HMODULE module;
+    UNICODE_STRING str;
+
     RtlWow64GetProcessMachines( GetCurrentProcess(), &current_machine, &native_machine );
     if (!current_machine) current_machine = native_machine;
 
+#define GET_PTR(name) p ## name = RtlFindExportedRoutineByName( module, #name )
+
+    RtlInitUnicodeString( &str, L"ntdll.dll" );
+    LdrGetDllHandle( NULL, 0, &str, &module );
+    GET_PTR( LdrSystemDllInitBlock );
+
+    module = (HMODULE)(ULONG_PTR)pLdrSystemDllInitBlock->ntdll_handle;
+    init_syscall_table( module );
+
     load_cpu_dll();
+
+#undef GET_PTR
 }
 
 
@@ -112,8 +218,24 @@ static void process_init(void)
  */
 NTSTATUS WINAPI Wow64SystemServiceEx( UINT num, UINT *args )
 {
-    FIXME( "stub\n" );
-    return STATUS_INVALID_SYSTEM_SERVICE;
+    NTSTATUS status;
+
+    if (num >= ARRAY_SIZE( syscall_map ) || !syscall_map[num])
+    {
+        ERR( "unsupported syscall %04x\n", num );
+        return STATUS_INVALID_SYSTEM_SERVICE;
+    }
+    __TRY
+    {
+        syscall_thunk thunk = syscall_thunks[syscall_map[num]];
+        status = thunk( args );
+    }
+    __EXCEPT_ALL
+    {
+        status = GetExceptionCode();
+    }
+    __ENDTRY;
+    return status;
 }
 
 
