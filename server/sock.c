@@ -1844,6 +1844,8 @@ static int bind_to_interface( struct sock *sock, const struct sockaddr_in *addr 
             return 1;
         }
     }
+
+    freeifaddrs( ifaddrs );
     return 0;
 }
 
