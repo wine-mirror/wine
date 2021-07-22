@@ -10668,15 +10668,13 @@ static void test_bind(void)
                 ok(s != -1, "failed to create socket, error %u\n", WSAGetLastError());
 
                 ret = bind(s, unicast_addr->Address.lpSockaddr, sizeof(struct sockaddr_in6_old));
-                todo_wine_if (!addr6.sin6_scope_id)
-                {
-                    ok(ret == -1, "expected failure\n");
-                    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
-                }
+                ok(ret == -1, "expected failure\n");
+                ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
 
                 addr6.sin6_scope_id = 0xabacab;
                 ret = bind(s, (struct sockaddr *)&addr6, sizeof(addr6));
-                ok(ret == -1, "expected failure\n");
+                todo_wine_if (!((const struct sockaddr_in6 *)unicast_addr->Address.lpSockaddr)->sin6_scope_id)
+                    ok(ret == -1, "expected failure\n");
                 todo_wine ok(WSAGetLastError() == WSAEADDRNOTAVAIL, "got error %u\n", WSAGetLastError());
 
                 addr6.sin6_scope_id = 0;

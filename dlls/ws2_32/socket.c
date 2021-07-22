@@ -1775,10 +1775,50 @@ int WINAPI WS_bind( SOCKET s, const struct WS_sockaddr *addr, int len )
 
     TRACE( "socket %#lx, addr %s\n", s, debugstr_sockaddr(addr) );
 
-    if (!addr || (addr->sa_family && !supported_pf( addr->sa_family )))
+    if (!addr)
     {
         SetLastError( WSAEAFNOSUPPORT );
         return -1;
+    }
+
+    switch (addr->sa_family)
+    {
+        case WS_AF_INET:
+            if (len < sizeof(struct WS_sockaddr_in))
+            {
+                SetLastError( WSAEFAULT );
+                return -1;
+            }
+            break;
+
+        case WS_AF_INET6:
+            if (len < sizeof(struct WS_sockaddr_in6))
+            {
+                SetLastError( WSAEFAULT );
+                return -1;
+            }
+            break;
+
+        case WS_AF_IPX:
+            if (len < sizeof(struct WS_sockaddr_ipx))
+            {
+                SetLastError( WSAEFAULT );
+                return -1;
+            }
+            break;
+
+        case WS_AF_IRDA:
+            if (len < sizeof(SOCKADDR_IRDA))
+            {
+                SetLastError( WSAEFAULT );
+                return -1;
+            }
+            break;
+
+        default:
+            FIXME( "unknown protocol %u\n", addr->sa_family );
+            SetLastError( WSAEAFNOSUPPORT );
+            return -1;
     }
 
     if (!(sync_event = get_sync_event())) return -1;
