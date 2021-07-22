@@ -693,13 +693,21 @@ BOOL CDECL EMFDRV_PolyPolyline(PHYSDEV dev, const POINT* pt, const DWORD* counts
 }
 
 /**********************************************************************
+ *          EMFDC_PolyPolygon
+ */
+BOOL EMFDC_PolyPolygon( DC_ATTR *dc_attr, const POINT *pt, const INT *counts, UINT polys )
+{
+    return EMFDRV_PolyPolylinegon( dc_attr->emf, pt, counts, polys, EMR_POLYPOLYGON );
+}
+
+/**********************************************************************
  *          EMFDRV_PolyPolygon
  */
 BOOL CDECL EMFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polys )
 {
-    return EMFDRV_PolyPolylinegon( dev, pt, counts, polys, EMR_POLYPOLYGON );
+    /* FIXME: update bounding rect */
+    return TRUE;
 }
-
 
 /**********************************************************************
  *          EMFDRV_PolyDraw

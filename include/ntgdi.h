@@ -83,6 +83,16 @@ enum
     NtGdiPie,
 };
 
+enum
+{
+    NtGdiPolyPolygon = 1,
+    NtGdiPolyPolyline,
+    NtGdiPolyBezier,
+    NtGdiPolyBezierTo,
+    NtGdiPolylineTo,
+    NtGdiPolyPolygonRgn,
+};
+
 /* structs not compatible with native Windows */
 #ifdef __WINESRC__
 

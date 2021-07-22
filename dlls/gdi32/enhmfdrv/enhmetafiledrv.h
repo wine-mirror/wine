@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "ntgdi_private.h"
+#include "gdi_private.h"
 
 /* Enhanced Metafile driver physical DC */
 

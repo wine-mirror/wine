@@ -67,6 +67,7 @@ extern BOOL metadc_param6( HDC hdc, short func, short param1, short param2, shor
 extern BOOL metadc_param8( HDC hdc, short func, short param1, short param2,
                            short param3, short param4, short param5, short param6,
                            short param7, short param8 ) DECLSPEC_HIDDEN;
+extern BOOL metadc_record( HDC hdc, METARECORD *mr, DWORD rlen ) DECLSPEC_HIDDEN;
 
 /* Metafile driver functions */
 
@@ -95,7 +96,6 @@ extern BOOL CDECL MFDRV_PaintRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_PolyBezier( PHYSDEV dev, const POINT* pt, DWORD count ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_PolyBezierTo( PHYSDEV dev, const POINT* pt, DWORD count ) DECLSPEC_HIDDEN;
-extern BOOL CDECL MFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polygons) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_Polyline( PHYSDEV dev, const POINT* pt,INT count) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_RestoreDC( PHYSDEV dev, INT level ) DECLSPEC_HIDDEN;

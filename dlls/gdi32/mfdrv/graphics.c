@@ -195,9 +195,9 @@ BOOL CDECL MFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
 
 
 /**********************************************************************
- *          MFDRV_PolyPolygon
+ *          METADC_PolyPolygon
  */
-BOOL CDECL MFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polygons)
+BOOL METADC_PolyPolygon( HDC hdc, const POINT *pt, const INT *counts, UINT polygons )
 {
     BOOL ret;
     DWORD len;
@@ -239,7 +239,7 @@ BOOL CDECL MFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, U
     *(mr->rdParm) = polygons;
     memcpy(mr->rdParm + 1, pointcounts, polygons*sizeof(INT16));
     memcpy(mr->rdParm + 1+polygons, pts , totalpoint16*sizeof(*pts));
-    ret = MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
+    ret = metadc_record( hdc, mr, mr->rdSize * 2);
 
     HeapFree( GetProcessHeap(), 0, pts );
     HeapFree( GetProcessHeap(), 0, pointcounts );

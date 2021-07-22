@@ -171,7 +171,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_PolyBezier,                /* pPolyBezier */
     MFDRV_PolyBezierTo,              /* pPolyBezierTo */
     NULL,                            /* pPolyDraw */
-    MFDRV_PolyPolygon,               /* pPolyPolygon */
+    NULL,                            /* pPolyPolygon */
     NULL,                            /* pPolyPolyline */
     MFDRV_Polygon,                   /* pPolygon */
     MFDRV_Polyline,                  /* pPolyline */
@@ -604,6 +604,14 @@ static METAFILEDRV_PDEVICE *get_metadc_ptr( HDC hdc )
     METAFILEDRV_PDEVICE *metafile = get_gdi_client_ptr( hdc, NTGDI_OBJ_METADC );
     if (!metafile) SetLastError( ERROR_INVALID_HANDLE );
     return metafile;
+}
+
+BOOL metadc_record( HDC hdc, METARECORD *mr, DWORD rlen )
+{
+    METAFILEDRV_PDEVICE *dev;
+
+    if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
+    return MFDRV_WriteRecord( &dev->dev, mr, rlen );
 }
 
 BOOL metadc_param2( HDC hdc, short func, short param1, short param2 )

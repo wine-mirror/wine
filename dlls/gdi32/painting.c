@@ -634,21 +634,30 @@ BOOL WINAPI Polygon( HDC hdc, const POINT* pt, INT count )
 
 
 /**********************************************************************
- *          PolyPolygon  (GDI32.@)
+ *          NtGdiPolyPolyDraw  (win32u.@)
  */
-BOOL WINAPI PolyPolygon( HDC hdc, const POINT* pt, const INT* counts,
-                             UINT polygons )
+ULONG WINAPI NtGdiPolyPolyDraw( HDC hdc, const POINT *points, const UINT *counts,
+                                UINT count, UINT function )
 {
     PHYSDEV physdev;
-    BOOL ret;
-    DC * dc = get_dc_ptr( hdc );
+    ULONG ret;
+    DC *dc;
 
-    TRACE( "%p, %p, %p, %u\n", hdc, pt, counts, polygons );
-
-    if (!dc) return FALSE;
+    if (!(dc = get_dc_ptr( hdc ))) return FALSE;
     update_dc( dc );
-    physdev = GET_DC_PHYSDEV( dc, pPolyPolygon );
-    ret = physdev->funcs->pPolyPolygon( physdev, pt, counts, polygons );
+
+    switch (function)
+    {
+    case NtGdiPolyPolygon:
+        physdev = GET_DC_PHYSDEV( dc, pPolyPolygon );
+        ret = physdev->funcs->pPolyPolygon( physdev, points, (const INT *)counts, count );
+        break;
+    default:
+        WARN( "invalid function %u\n", function );
+        ret = FALSE;
+        break;
+    }
+
     release_dc_ptr( dc );
     return ret;
 }
