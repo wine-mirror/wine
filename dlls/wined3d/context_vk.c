@@ -2784,6 +2784,21 @@ static bool wined3d_shader_descriptor_writes_vk_add_uav_counter_write(
             VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, NULL, NULL, &uav_vk->vk_counter_view);
 }
 
+static bool wined3d_shader_descriptor_writes_vk_add_sampler_write(struct wined3d_shader_descriptor_writes_vk *writes,
+        struct wined3d_context_vk *context_vk, VkDescriptorSet vk_descriptor_set, const struct wined3d_state *state,
+        const struct wined3d_shader_resource_binding *binding)
+{
+    struct wined3d_sampler *sampler;
+
+    if (!(sampler = state->sampler[binding->shader_type][binding->resource_idx]))
+        sampler = context_vk->c.device->null_sampler;
+    if (!wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set, binding->binding_idx,
+            VK_DESCRIPTOR_TYPE_SAMPLER, NULL, &wined3d_sampler_vk(sampler)->vk_image_info, NULL))
+        return false;
+    wined3d_context_vk_reference_sampler(context_vk, wined3d_sampler_vk(sampler));
+    return true;
+}
+
 static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *context_vk,
         VkCommandBuffer vk_command_buffer, const struct wined3d_state *state, enum wined3d_pipeline pipeline)
 {
@@ -2796,7 +2811,6 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
     VkPipelineLayout vk_pipeline_layout;
     VkPipelineBindPoint vk_bind_point;
     VkDescriptorSet vk_descriptor_set;
-    struct wined3d_sampler *sampler;
     VkResult vr;
     size_t i;
 
@@ -2859,12 +2873,9 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
                 break;
 
             case WINED3D_SHADER_DESCRIPTOR_TYPE_SAMPLER:
-                if (!(sampler = state->sampler[binding->shader_type][binding->resource_idx]))
-                    sampler = context_vk->c.device->null_sampler;
-                if (!wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set, binding->binding_idx,
-                        VK_DESCRIPTOR_TYPE_SAMPLER, NULL, &wined3d_sampler_vk(sampler)->vk_image_info, NULL))
+                if (!wined3d_shader_descriptor_writes_vk_add_sampler_write(writes,
+                        context_vk, vk_descriptor_set, state, binding))
                     return false;
-                wined3d_context_vk_reference_sampler(context_vk, wined3d_sampler_vk(sampler));
                 break;
 
             default:
