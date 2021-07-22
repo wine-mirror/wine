@@ -1365,27 +1365,6 @@ done:
 }
 
 /***********************************************************************
- *           dibdrv_Polygon
- */
-BOOL CDECL dibdrv_Polygon( PHYSDEV dev, const POINT *pt, INT count )
-{
-    INT counts[1] = { count };
-
-    return dibdrv_PolyPolygon( dev, pt, counts, 1 );
-}
-
-/***********************************************************************
- *           dibdrv_Polyline
- */
-BOOL CDECL dibdrv_Polyline( PHYSDEV dev, const POINT* pt, INT count )
-{
-    DWORD counts[1] = { count };
-
-    if (count < 0) return FALSE;
-    return dibdrv_PolyPolyline( dev, pt, counts, 1 );
-}
-
-/***********************************************************************
  *           dibdrv_Rectangle
  */
 BOOL CDECL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
@@ -1401,11 +1380,12 @@ BOOL CDECL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bott
 
     if (dc->attr->graphics_mode == GM_ADVANCED)
     {
+        const INT count = 4;
         pts[0].x = pts[3].x = left;
         pts[0].y = pts[1].y = top;
         pts[1].x = pts[2].x = right;
         pts[2].y = pts[3].y = bottom;
-        return dibdrv_Polygon( dev, pts, 4 );
+        return dibdrv_PolyPolygon( dev, pts, &count, 1 );
     }
 
     if (!get_pen_device_rect( dc, pdev, &rect, left, top, right, bottom )) return TRUE;

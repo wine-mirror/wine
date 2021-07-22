@@ -796,8 +796,6 @@ static const struct gdi_dc_funcs emfpath_driver =
     emfpathdrv_PolyDraw,                /* pPolyDraw */
     NULL,                               /* pPolyPolygon */
     NULL,                               /* pPolyPolyline */
-    NULL,                               /* pPolygon */
-    NULL,                               /* pPolyline */
     emfpathdrv_PolylineTo,              /* pPolylineTo */
     NULL,                               /* pPutImage */
     NULL,                               /* pRealizeDefaultPalette */

@@ -703,21 +703,6 @@ static BOOL CDECL nulldrv_PolyPolyline( PHYSDEV dev, const POINT *points, const 
     return TRUE;
 }
 
-static BOOL CDECL nulldrv_Polygon( PHYSDEV dev, const POINT *points, INT count )
-{
-    INT counts[1] = { count };
-
-    return PolyPolygon( dev->hdc, points, counts, 1 );
-}
-
-static BOOL CDECL nulldrv_Polyline( PHYSDEV dev, const POINT *points, INT count )
-{
-    DWORD counts[1] = { count };
-
-    if (count < 0) return FALSE;
-    return PolyPolyline( dev->hdc, points, counts, 1 );
-}
-
 static DWORD CDECL nulldrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
                                      const struct gdi_image_bits *bits, struct bitblt_coords *src,
                                      struct bitblt_coords *dst, DWORD rop )
@@ -993,8 +978,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_PolyDraw,                   /* pPolyDraw */
     nulldrv_PolyPolygon,                /* pPolyPolygon */
     nulldrv_PolyPolyline,               /* pPolyPolyline */
-    nulldrv_Polygon,                    /* pPolygon */
-    nulldrv_Polyline,                   /* pPolyline */
     nulldrv_PolylineTo,                 /* pPolylineTo */
     nulldrv_PutImage,                   /* pPutImage */
     nulldrv_RealizeDefaultPalette,      /* pRealizeDefaultPalette */

@@ -3887,8 +3887,6 @@ const struct gdi_dc_funcs font_driver =
     NULL,                           /* pPolyDraw */
     NULL,                           /* pPolyPolygon */
     NULL,                           /* pPolyPolyline */
-    NULL,                           /* pPolygon */
-    NULL,                           /* pPolyline */
     NULL,                           /* pPolylineTo */
     NULL,                           /* pPutImage */
     NULL,                           /* pRealizeDefaultPalette */

@@ -2228,8 +2228,6 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pPolyDraw */
     NULL,                               /* pPolyPolygon */
     NULL,                               /* pPolyPolyline */
-    NULL,                               /* pPolygon */
-    NULL,                               /* pPolyline */
     NULL,                               /* pPolylineTo */
     xrenderdrv_PutImage,                /* pPutImage */
     NULL,                               /* pRealizeDefaultPalette */

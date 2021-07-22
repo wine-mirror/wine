@@ -357,8 +357,6 @@ static const struct gdi_dc_funcs android_drv_funcs =
     NULL,                               /* pPolyDraw */
     NULL,                               /* pPolyPolygon */
     NULL,                               /* pPolyPolyline */
-    NULL,                               /* pPolygon */
-    NULL,                               /* pPolyline */
     NULL,                               /* pPolylineTo */
     NULL,                               /* pPutImage */
     NULL,                               /* pRealizeDefaultPalette */

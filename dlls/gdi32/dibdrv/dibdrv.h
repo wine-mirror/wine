@@ -141,8 +141,6 @@ extern BOOL     CDECL dibdrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT
 extern BOOL     CDECL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, DWORD polygons ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL dibdrv_PolyPolyline( PHYSDEV dev, const POINT* pt, const DWORD* counts,
                                            DWORD polylines ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_Polygon( PHYSDEV dev, const POINT *pt, INT count ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL dibdrv_Polyline( PHYSDEV dev, const POINT* pt, INT count ) DECLSPEC_HIDDEN;
 extern DWORD    CDECL dibdrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
                                        const struct gdi_image_bits *bits, struct bitblt_coords *src,
                                        struct bitblt_coords *dst, DWORD rop ) DECLSPEC_HIDDEN;

@@ -141,8 +141,6 @@ struct gdi_dc_funcs
     BOOL     (CDECL *pPolyDraw)(PHYSDEV,const POINT*,const BYTE *,DWORD);
     BOOL     (CDECL *pPolyPolygon)(PHYSDEV,const POINT*,const INT*,UINT);
     BOOL     (CDECL *pPolyPolyline)(PHYSDEV,const POINT*,const DWORD*,DWORD);
-    BOOL     (CDECL *pPolygon)(PHYSDEV,const POINT*,INT);
-    BOOL     (CDECL *pPolyline)(PHYSDEV,const POINT*,INT);
     BOOL     (CDECL *pPolylineTo)(PHYSDEV,const POINT*,INT);
     DWORD    (CDECL *pPutImage)(PHYSDEV,HRGN,BITMAPINFO*,const struct gdi_image_bits*,struct bitblt_coords*,struct bitblt_coords*,DWORD);
     UINT     (CDECL *pRealizeDefaultPalette)(PHYSDEV);
@@ -204,7 +202,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 51
+#define WINE_GDI_DRIVER_VERSION 52
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */
