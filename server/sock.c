@@ -1976,6 +1976,9 @@ static int sock_get_ntstatus( int err )
         case ENOPROTOOPT:       return STATUS_INVALID_PARAMETER;
         case EOPNOTSUPP:        return STATUS_NOT_SUPPORTED;
         case EADDRINUSE:        return STATUS_SHARING_VIOLATION;
+        /* Linux returns ENODEV when specifying an invalid sin6_scope_id;
+         * Windows returns STATUS_INVALID_ADDRESS_COMPONENT */
+        case ENODEV:
         case EADDRNOTAVAIL:     return STATUS_INVALID_ADDRESS_COMPONENT;
         case ECONNREFUSED:      return STATUS_CONNECTION_REFUSED;
         case ESHUTDOWN:         return STATUS_PIPE_DISCONNECTED;

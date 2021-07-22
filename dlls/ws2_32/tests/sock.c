@@ -10674,8 +10674,10 @@ static void test_bind(void)
                 addr6.sin6_scope_id = 0xabacab;
                 ret = bind(s, (struct sockaddr *)&addr6, sizeof(addr6));
                 todo_wine_if (!((const struct sockaddr_in6 *)unicast_addr->Address.lpSockaddr)->sin6_scope_id)
+                {
                     ok(ret == -1, "expected failure\n");
-                todo_wine ok(WSAGetLastError() == WSAEADDRNOTAVAIL, "got error %u\n", WSAGetLastError());
+                    ok(WSAGetLastError() == WSAEADDRNOTAVAIL, "got error %u\n", WSAGetLastError());
+                }
 
                 addr6.sin6_scope_id = 0;
                 ret = bind(s, (struct sockaddr *)&addr6, sizeof(addr6));
