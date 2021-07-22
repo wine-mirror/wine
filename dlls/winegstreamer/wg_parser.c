@@ -1489,26 +1489,6 @@ static gboolean src_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
     return ret;
 }
 
-static LONGLONG query_duration(GstPad *pad)
-{
-    gint64 duration, byte_length;
-
-    if (gst_pad_query_duration(pad, GST_FORMAT_TIME, &duration))
-        return duration / 100;
-
-    GST_INFO("Failed to query time duration; trying to convert from byte length.\n");
-
-    /* To accurately get a duration for the stream, we want to only consider the
-     * length of that stream. Hence, query for the pad duration, instead of
-     * using the file duration. */
-    if (gst_pad_query_duration(pad, GST_FORMAT_BYTES, &byte_length)
-            && gst_pad_query_convert(pad, GST_FORMAT_BYTES, byte_length, GST_FORMAT_TIME, &duration))
-        return duration / 100;
-
-    GST_WARNING("Failed to query duration.\n");
-    return 0;
-}
-
 static HRESULT CDECL wg_parser_connect(struct wg_parser *parser, uint64_t file_size)
 {
     GstStaticPadTemplate src_template = GST_STATIC_PAD_TEMPLATE("quartz_src",
@@ -1545,6 +1525,7 @@ static HRESULT CDECL wg_parser_connect(struct wg_parser *parser, uint64_t file_s
     for (i = 0; i < parser->stream_count; ++i)
     {
         struct wg_parser_stream *stream = parser->streams[i];
+        gint64 duration, byte_length;
 
         while (!stream->has_caps && !parser->error)
             pthread_cond_wait(&parser->init_cond, &parser->mutex);
@@ -1558,7 +1539,29 @@ static HRESULT CDECL wg_parser_connect(struct wg_parser *parser, uint64_t file_s
          * avidemux, wavparse, qtdemux) in practice record duration before
          * fixing caps, so as a heuristic, wait until we get caps before trying
          * to query for duration. */
-        stream->duration = query_duration(stream->their_src);
+        if (gst_pad_query_duration(stream->their_src, GST_FORMAT_TIME, &duration))
+        {
+            stream->duration = duration / 100;
+        }
+        else
+        {
+            GST_INFO("Failed to query time duration; trying to convert from byte length.\n");
+
+            /* To accurately get a duration for the stream, we want to only
+             * consider the length of that stream. Hence, query for the pad
+             * duration, instead of using the file duration. */
+            if (gst_pad_query_duration(stream->their_src, GST_FORMAT_BYTES, &byte_length)
+                    && gst_pad_query_convert(stream->their_src, GST_FORMAT_BYTES, byte_length,
+                            GST_FORMAT_TIME, &duration))
+            {
+                stream->duration = duration / 100;
+            }
+            else
+            {
+                stream->duration = 0;
+                GST_WARNING("Failed to query duration.\n");
+            }
+        }
     }
 
     pthread_mutex_unlock(&parser->mutex);
