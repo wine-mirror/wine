@@ -1414,9 +1414,14 @@ static void test_get_events(void)
 
 static void test_bind(void)
 {
+    const struct sockaddr_in6 bind_addr6 = {.sin6_family = AF_INET6, .sin6_addr.s6_words = {0, 0, 0, 0, 0, 0, 0, htons(1)}};
+    const struct sockaddr_in6 invalid_addr6 = {.sin6_family = AF_INET6, .sin6_addr.s6_words = {htons(0x0100)}};
     const struct sockaddr_in invalid_addr = {.sin_family = AF_INET, .sin_addr.s_addr = inet_addr("192.0.2.0")};
     const struct sockaddr_in bind_addr = {.sin_family = AF_INET, .sin_addr.s_addr = htonl(INADDR_LOOPBACK)};
-    struct afd_bind_params params = {0};
+    static const size_t params6_size = offsetof(struct afd_bind_params, addr) + sizeof(struct sockaddr_in6);
+    static const size_t params4_size = offsetof(struct afd_bind_params, addr) + sizeof(struct sockaddr_in);
+    struct afd_bind_params *params = malloc(params6_size);
+    struct sockaddr_in6 addr6, addr6_2;
     struct sockaddr_in addr, addr2;
     struct hostent *host;
     IO_STATUS_BLOCK io;
@@ -1427,47 +1432,48 @@ static void test_bind(void)
 
     event = CreateEventW(NULL, TRUE, FALSE, NULL);
     memset(&addr, 0xcc, sizeof(addr));
+    memset(params, 0, params6_size);
 
     s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-    params.addr.sa_family = 0xdead;
+    params->addr.sa_family = 0xdead;
     ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
-            &params, sizeof(params), &addr, sizeof(addr));
+            params, params4_size, &addr, sizeof(addr));
     ok(ret == STATUS_INVALID_ADDRESS, "got %#x\n", ret);
 
-    memcpy(&params.addr, &bind_addr, sizeof(bind_addr));
+    memcpy(&params->addr, &bind_addr, sizeof(bind_addr));
     ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
-            &params, sizeof(params) - 1, &addr, sizeof(addr));
+            params, params4_size - 1, &addr, sizeof(addr));
     ok(ret == STATUS_INVALID_ADDRESS, "got %#x\n", ret);
 
-    memcpy(&params.addr, &bind_addr, sizeof(bind_addr));
+    memcpy(&params->addr, &bind_addr, sizeof(bind_addr));
     ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
-            &params, offsetof(struct afd_bind_params, addr.sa_data), &addr, sizeof(addr));
+            params, offsetof(struct afd_bind_params, addr.sa_data), &addr, sizeof(addr));
     ok(ret == STATUS_INVALID_ADDRESS, "got %#x\n", ret);
 
-    memcpy(&params.addr, &bind_addr, sizeof(bind_addr));
+    memcpy(&params->addr, &bind_addr, sizeof(bind_addr));
     ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
-            &params, offsetof(struct afd_bind_params, addr.sa_data) - 1, &addr, sizeof(addr));
+            params, offsetof(struct afd_bind_params, addr.sa_data) - 1, &addr, sizeof(addr));
     ok(ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret);
 
-    memcpy(&params.addr, &invalid_addr, sizeof(invalid_addr));
+    memcpy(&params->addr, &invalid_addr, sizeof(invalid_addr));
     ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
-            &params, sizeof(params), &addr, sizeof(addr));
+            params, params4_size, &addr, sizeof(addr));
     todo_wine ok(ret == STATUS_PENDING, "got %#x\n", ret);
     ret = WaitForSingleObject(event, 0);
     ok(!ret, "got %#x\n", ret);
     ok(io.Status == STATUS_INVALID_ADDRESS_COMPONENT, "got %#x\n", io.Status);
 
-    memcpy(&params.addr, &bind_addr, sizeof(bind_addr));
+    memcpy(&params->addr, &bind_addr, sizeof(bind_addr));
     ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
-            &params, sizeof(params), &addr, sizeof(addr) - 1);
+            params, params4_size, &addr, sizeof(addr) - 1);
     ok(ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret);
 
-    memcpy(&params.addr, &bind_addr, sizeof(bind_addr));
+    memcpy(&params->addr, &bind_addr, sizeof(bind_addr));
     memset(&io, 0xcc, sizeof(io));
     memset(&addr, 0xcc, sizeof(addr));
     ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
-            &params, sizeof(params), &addr, sizeof(addr));
+            params, params4_size, &addr, sizeof(addr));
     todo_wine ok(ret == STATUS_PENDING, "got %#x\n", ret);
     ret = WaitForSingleObject(event, 0);
     ok(!ret, "got %#x\n", ret);
@@ -1485,16 +1491,16 @@ static void test_bind(void)
     ok(!memcmp(&addr, &addr2, sizeof(addr)), "addresses didn't match\n");
 
     ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
-            &params, sizeof(params), &addr, sizeof(addr));
+            params, params4_size, &addr, sizeof(addr));
     ok(ret == STATUS_ADDRESS_ALREADY_ASSOCIATED, "got %#x\n", ret);
 
     s2 = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-    memcpy(&params.addr, &addr2, sizeof(addr2));
+    memcpy(&params->addr, &addr2, sizeof(addr2));
     memset(&io, 0xcc, sizeof(io));
     memset(&addr, 0xcc, sizeof(addr));
     ret = NtDeviceIoControlFile((HANDLE)s2, event, NULL, NULL, &io, IOCTL_AFD_BIND,
-            &params, sizeof(params), &addr, sizeof(addr));
+            params, params4_size, &addr, sizeof(addr));
     todo_wine ok(ret == STATUS_PENDING, "got %#x\n", ret);
     ret = WaitForSingleObject(event, 0);
     ok(!ret, "got %#x\n", ret);
@@ -1508,11 +1514,11 @@ static void test_bind(void)
 
     s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
-    memcpy(&params.addr, &bind_addr, sizeof(bind_addr));
+    memcpy(&params->addr, &bind_addr, sizeof(bind_addr));
     memset(&io, 0xcc, sizeof(io));
     memset(&addr, 0xcc, sizeof(addr));
     ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
-            &params, sizeof(params), &addr, sizeof(addr));
+            params, params4_size, &addr, sizeof(addr));
     todo_wine ok(ret == STATUS_PENDING, "got %#x\n", ret);
     ret = WaitForSingleObject(event, 0);
     ok(!ret, "got %#x\n", ret);
@@ -1539,11 +1545,11 @@ static void test_bind(void)
 
             s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
-            ((struct sockaddr_in *)&params.addr)->sin_addr.s_addr = in_addr;
+            ((struct sockaddr_in *)&params->addr)->sin_addr.s_addr = in_addr;
             memset(&io, 0xcc, sizeof(io));
             memset(&addr, 0xcc, sizeof(addr));
             ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
-                    &params, sizeof(params), &addr, sizeof(addr));
+                    params, params4_size, &addr, sizeof(addr));
             todo_wine ok(ret == STATUS_PENDING, "got %#x\n", ret);
             ret = WaitForSingleObject(event, 0);
             ok(!ret, "got %#x\n", ret);
@@ -1563,7 +1569,106 @@ static void test_bind(void)
         }
     }
 
+    /* test IPv6 */
+
+    s = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+    ok(s != -1, "failed to create IPv6 socket\n");
+
+    params->addr.sa_family = 0xdead;
+    ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
+            params, params6_size, &addr6, sizeof(addr6));
+    ok(ret == STATUS_INVALID_ADDRESS, "got %#x\n", ret);
+
+    memcpy(&params->addr, &bind_addr6, sizeof(bind_addr6));
+    ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
+            params, params6_size - 1, &addr6, sizeof(addr6));
+    todo_wine ok(ret == STATUS_INVALID_ADDRESS, "got %#x\n", ret);
+
+    memcpy(&params->addr, &bind_addr6, sizeof(bind_addr6));
+    ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
+            params, offsetof(struct afd_bind_params, addr) + sizeof(struct sockaddr_in6_old), &addr6, sizeof(addr6));
+    todo_wine ok(ret == STATUS_INVALID_ADDRESS, "got %#x\n", ret);
+
+    memcpy(&params->addr, &bind_addr6, sizeof(bind_addr6));
+    ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
+            params, offsetof(struct afd_bind_params, addr.sa_data), &addr6, sizeof(addr6));
+    todo_wine ok(ret == STATUS_INVALID_ADDRESS, "got %#x\n", ret);
+
+    memcpy(&params->addr, &bind_addr6, sizeof(bind_addr6));
+    ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
+            params, offsetof(struct afd_bind_params, addr.sa_data) - 1, &addr6, sizeof(addr6));
+    ok(ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret);
+
+    memcpy(&params->addr, &invalid_addr6, sizeof(invalid_addr6));
+    ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
+            params, params6_size, &addr6, sizeof(addr6));
+    todo_wine ok(ret == STATUS_PENDING, "got %#x\n", ret);
+    ret = WaitForSingleObject(event, 0);
+    todo_wine ok(!ret, "got %#x\n", ret);
+    todo_wine ok(io.Status == STATUS_INVALID_ADDRESS_COMPONENT, "got %#x\n", io.Status);
+
+    memcpy(&params->addr, &bind_addr6, sizeof(bind_addr6));
+    ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
+            params, params6_size, &addr6, sizeof(addr6) - 1);
+    todo_wine ok(ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret);
+
+    memcpy(&params->addr, &bind_addr6, sizeof(bind_addr6));
+    ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
+            params, params6_size - 1, &addr6, sizeof(addr6) - 1);
+    todo_wine ok(ret == STATUS_INVALID_ADDRESS, "got %#x\n", ret);
+
+    memcpy(&params->addr, &bind_addr6, sizeof(bind_addr6));
+    ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
+            params, params6_size, &addr6, sizeof(struct sockaddr_in6_old));
+    todo_wine ok(ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret);
+
+    memcpy(&params->addr, &bind_addr6, sizeof(bind_addr6));
+    memset(&io, 0xcc, sizeof(io));
+    memset(&addr6, 0xcc, sizeof(addr6));
+    ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
+            params, params6_size, &addr6, sizeof(addr6));
+    todo_wine ok(ret == STATUS_PENDING, "got %#x\n", ret);
+    ret = WaitForSingleObject(event, 0);
+    todo_wine
+    {
+        ok(!ret, "got %#x\n", ret);
+        ok(!io.Status, "got %#x\n", io.Status);
+        ok(io.Information == sizeof(addr6), "got %#Ix\n", io.Information);
+        ok(addr6.sin6_family == AF_INET6, "got family %u\n", addr6.sin6_family);
+        ok(!memcmp(&addr6.sin6_addr, &bind_addr6.sin6_addr, sizeof(addr6.sin6_addr)), "address didn't match\n");
+        ok(!addr6.sin6_flowinfo, "got flow info %#x\n", addr6.sin6_flowinfo);
+    }
+    ok(addr6.sin6_port, "expected nonzero port\n");
+
+    /* getsockname() returns EINVAL here. Possibly the socket name is cached (in shared memory?) */
+    memset(&addr6_2, 0xcc, sizeof(addr6_2));
+    ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io,
+            IOCTL_AFD_GETSOCKNAME, NULL, 0, &addr6_2, sizeof(addr6_2));
+    ok(!ret, "got %#x\n", ret);
+    todo_wine ok(!memcmp(&addr6, &addr6_2, sizeof(addr6)), "addresses didn't match\n");
+
+    ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
+            params, params6_size, &addr6, sizeof(addr6));
+    ok(ret == STATUS_ADDRESS_ALREADY_ASSOCIATED, "got %#x\n", ret);
+
+    s2 = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+
+    memcpy(&params->addr, &addr6_2, sizeof(addr6_2));
+    memset(&io, 0xcc, sizeof(io));
+    memset(&addr6, 0xcc, sizeof(addr6));
+    ret = NtDeviceIoControlFile((HANDLE)s2, event, NULL, NULL, &io, IOCTL_AFD_BIND,
+            params, params6_size, &addr6, sizeof(addr6));
+    todo_wine ok(ret == STATUS_PENDING, "got %#x\n", ret);
+    ret = WaitForSingleObject(event, 0);
+    ok(!ret, "got %#x\n", ret);
+    ok(io.Status == STATUS_SHARING_VIOLATION, "got %#x\n", io.Status);
+    ok(!io.Information, "got %#Ix\n", io.Information);
+
+    closesocket(s2);
+    closesocket(s);
+
     CloseHandle(event);
+    free(params);
 }
 
 static void test_getsockname(void)
