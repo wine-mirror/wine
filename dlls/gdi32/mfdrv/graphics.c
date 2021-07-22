@@ -149,9 +149,9 @@ static BOOL metadc_poly( HDC hdc, short func, POINTS *pt, short count )
 
 
 /**********************************************************************
- *          MFDRV_Polyline
+ *          METADC_Polyline
  */
-BOOL CDECL MFDRV_Polyline( PHYSDEV dev, const POINT* pt, INT count )
+BOOL METADC_Polyline( HDC hdc, const POINT *pt, INT count )
 {
     int i;
     POINTS *pts;
@@ -164,7 +164,7 @@ BOOL CDECL MFDRV_Polyline( PHYSDEV dev, const POINT* pt, INT count )
         pts[i].x = pt[i].x;
         pts[i].y = pt[i].y;
     }
-    ret = metadc_poly( dev->hdc, META_POLYLINE, pts, count );
+    ret = metadc_poly( hdc, META_POLYLINE, pts, count );
 
     HeapFree( GetProcessHeap(), 0, pts );
     return ret;

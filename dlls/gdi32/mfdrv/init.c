@@ -174,7 +174,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pPolyPolygon */
     NULL,                            /* pPolyPolyline */
     NULL,                            /* pPolygon */
-    MFDRV_Polyline,                  /* pPolyline */
+    NULL,                            /* pPolyline */
     NULL,                            /* pPolylineTo */
     NULL,                            /* pPutImage */
     NULL,                            /* pRealizeDefaultPalette */

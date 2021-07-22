@@ -96,7 +96,6 @@ extern BOOL CDECL MFDRV_PaintRgn( PHYSDEV dev, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_PolyBezier( PHYSDEV dev, const POINT* pt, DWORD count ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_PolyBezierTo( PHYSDEV dev, const POINT* pt, DWORD count ) DECLSPEC_HIDDEN;
-extern BOOL CDECL MFDRV_Polyline( PHYSDEV dev, const POINT* pt,INT count) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_RestoreDC( PHYSDEV dev, INT level ) DECLSPEC_HIDDEN;
 extern INT  CDECL MFDRV_SaveDC( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_ScaleViewportExtEx( PHYSDEV dev, INT xNum, INT xDenom, INT yNum, INT yDenom, SIZE *size ) DECLSPEC_HIDDEN;

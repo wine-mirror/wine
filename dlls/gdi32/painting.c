@@ -105,6 +105,11 @@ BOOL CDECL nulldrv_InvertRgn( PHYSDEV dev, HRGN rgn )
     return ret;
 }
 
+static BOOL polyline( HDC hdc, const POINT *points, UINT count )
+{
+    return NtGdiPolyPolyDraw( hdc, points, &count, 1, NtGdiPolyPolyline );
+}
+
 BOOL CDECL nulldrv_PolyBezier( PHYSDEV dev, const POINT *points, DWORD count )
 {
     BOOL ret = FALSE;
@@ -113,7 +118,7 @@ BOOL CDECL nulldrv_PolyBezier( PHYSDEV dev, const POINT *points, DWORD count )
 
     if ((pts = GDI_Bezier( points, count, &n )))
     {
-        ret = Polyline( dev->hdc, pts, n );
+        ret = polyline( dev->hdc, pts, n );
         HeapFree( GetProcessHeap(), 0, pts );
     }
     return ret;
@@ -129,7 +134,8 @@ BOOL CDECL nulldrv_PolyBezierTo( PHYSDEV dev, const POINT *points, DWORD count )
     {
         pts[0] = dc->attr->cur_pos;
         memcpy( pts + 1, points, sizeof(POINT) * count );
-        ret = PolyBezier( dev->hdc, pts, count + 1 );
+        count++;
+        ret = NtGdiPolyPolyDraw( dev->hdc, pts, &count, 1, NtGdiPolyBezier );
         HeapFree( GetProcessHeap(), 0, pts );
     }
     return ret;
@@ -172,7 +178,7 @@ BOOL CDECL nulldrv_PolyDraw( PHYSDEV dev, const POINT *points, const BYTE *types
         switch (types[i])
         {
         case PT_MOVETO:
-            if (num_pts >= 2) Polyline( dev->hdc, line_pts, num_pts );
+            if (num_pts >= 2) polyline( dev->hdc, line_pts, num_pts );
             num_pts = 0;
             line_pts[num_pts++] = points[i];
             break;
@@ -203,7 +209,7 @@ BOOL CDECL nulldrv_PolyDraw( PHYSDEV dev, const POINT *points, const BYTE *types
         if (types[i] & PT_CLOSEFIGURE) line_pts[num_pts++] = line_pts[0];
     }
 
-    if (num_pts >= 2) Polyline( dev->hdc, line_pts, num_pts );
+    if (num_pts >= 2) polyline( dev->hdc, line_pts, num_pts );
     HeapFree( GetProcessHeap(), 0, line_pts );
     return TRUE;
 }
@@ -219,7 +225,7 @@ BOOL CDECL nulldrv_PolylineTo( PHYSDEV dev, const POINT *points, INT count )
     {
         pts[0] = dc->attr->cur_pos;
         memcpy( pts + 1, points, sizeof(POINT) * count );
-        ret = Polyline( dev->hdc, pts, count + 1 );
+        ret = polyline( dev->hdc, pts, count + 1 );
         HeapFree( GetProcessHeap(), 0, pts );
     }
     return ret;
@@ -568,25 +574,6 @@ BOOL WINAPI InvertRgn( HDC hdc, HRGN hrgn )
     return ret;
 }
 
-
-/**********************************************************************
- *          Polyline   (GDI32.@)
- */
-BOOL WINAPI Polyline( HDC hdc, const POINT* pt, INT count )
-{
-    PHYSDEV physdev;
-    BOOL ret;
-    DC * dc = get_dc_ptr( hdc );
-
-    TRACE( "%p, %p, %d\n", hdc, pt, count );
-
-    if (!dc) return FALSE;
-    update_dc( dc );
-    physdev = GET_DC_PHYSDEV( dc, pPolyline );
-    ret = physdev->funcs->pPolyline( physdev, pt, count );
-    release_dc_ptr( dc );
-    return ret;
-}
 
 /**********************************************************************
  *          PolylineTo   (GDI32.@)

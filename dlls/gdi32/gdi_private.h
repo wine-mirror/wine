@@ -54,6 +54,7 @@ extern BOOL METADC_Pie( HDC hdc, INT left, INT top, INT right, INT bottom,
 extern BOOL METADC_PolyPolygon( HDC hdc, const POINT *points, const INT *counts,
                                 UINT polygons ) DECLSPEC_HIDDEN;
 extern BOOL METADC_Polygon( HDC hdc, const POINT *points, INT count ) DECLSPEC_HIDDEN;
+extern BOOL METADC_Polyline( HDC hdc, const POINT *points,INT count) DECLSPEC_HIDDEN;
 extern BOOL METADC_Rectangle( HDC hdc, INT left, INT top, INT right, INT bottom) DECLSPEC_HIDDEN;
 extern BOOL METADC_RoundRect( HDC hdc, INT left, INT top, INT right, INT bottom,
                               INT ell_width, INT ell_height ) DECLSPEC_HIDDEN;
@@ -73,6 +74,7 @@ extern BOOL EMFDC_PolyPolyline( DC_ATTR *dc_attr, const POINT *points, const DWO
 extern BOOL EMFDC_PolyPolygon( DC_ATTR *dc_attr, const POINT *points, const INT *counts,
                                UINT polys ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_Polygon( DC_ATTR *dc_attr, const POINT *points, INT count ) DECLSPEC_HIDDEN;
+extern BOOL EMFDC_Polyline( DC_ATTR *dc_attr, const POINT *points, INT count) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_Rectangle( DC_ATTR *dc_attr, INT left, INT top, INT right,
                              INT bottom) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_RoundRect( DC_ATTR *dc_attr, INT left, INT top, INT right, INT bottom,

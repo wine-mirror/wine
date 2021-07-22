@@ -584,11 +584,11 @@ EMFDRV_Polylinegon( PHYSDEV dev, const POINT* pt, INT count, DWORD iType )
 
 
 /**********************************************************************
- *          EMFDRV_Polyline
+ *          EMFDC_Polyline
  */
-BOOL CDECL EMFDRV_Polyline( PHYSDEV dev, const POINT* pt, INT count )
+BOOL EMFDC_Polyline( DC_ATTR *dc_attr, const POINT *points, INT count )
 {
-    return EMFDRV_Polylinegon( dev, pt, count, EMR_POLYLINE );
+    return EMFDRV_Polylinegon( dc_attr->emf, points, count, EMR_POLYLINE );
 }
 
 /**********************************************************************
