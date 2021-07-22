@@ -2650,6 +2650,28 @@ static bool wined3d_shader_resource_bindings_add_null_srv_binding(struct wined3d
     }
 }
 
+static bool wined3d_shader_descriptor_writes_vk_add_cbv_write(struct wined3d_shader_descriptor_writes_vk *writes,
+        struct wined3d_context_vk *context_vk, VkDescriptorSet vk_descriptor_set, const struct wined3d_state *state,
+        const struct wined3d_shader_resource_binding *binding)
+{
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    const VkDescriptorBufferInfo *buffer_info;
+    struct wined3d_buffer_vk *buffer_vk;
+    struct wined3d_buffer *buffer;
+
+    if (!(buffer = state->cb[binding->shader_type][binding->resource_idx].buffer))
+        return wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set, binding->binding_idx,
+                VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &device_vk->null_resources_vk.buffer_info, NULL, NULL);
+
+    buffer_vk = wined3d_buffer_vk(buffer);
+    buffer_info = wined3d_buffer_vk_get_buffer_info(buffer_vk);
+    if (!wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set,
+            binding->binding_idx, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, buffer_info, NULL, NULL))
+        return false;
+    wined3d_context_vk_reference_bo(context_vk, &buffer_vk->bo);
+    return true;
+}
+
 static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *context_vk,
         VkCommandBuffer vk_command_buffer, const struct wined3d_state *state, enum wined3d_pipeline pipeline)
 {
@@ -2661,10 +2683,8 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
     struct wined3d_unordered_access_view_vk *uav_vk;
     struct wined3d_shader_resource_view_vk *srv_vk;
     struct wined3d_unordered_access_view *uav;
-    const VkDescriptorBufferInfo *buffer_info;
     struct wined3d_shader_resource_view *srv;
     const VkDescriptorImageInfo *image_info;
-    struct wined3d_buffer_vk *buffer_vk;
     VkDescriptorSetLayout vk_set_layout;
     VkPipelineLayout vk_pipeline_layout;
     struct wined3d_resource *resource;
@@ -2672,7 +2692,6 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
     VkDescriptorSet vk_descriptor_set;
     struct wined3d_view_vk *view_vk;
     struct wined3d_sampler *sampler;
-    struct wined3d_buffer *buffer;
     VkBufferView *buffer_view;
     VkDescriptorType type;
     VkResult vr;
@@ -2713,20 +2732,9 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
         switch (binding->shader_descriptor_type)
         {
             case WINED3D_SHADER_DESCRIPTOR_TYPE_CBV:
-                if (!(buffer = state->cb[binding->shader_type][binding->resource_idx].buffer))
-                {
-                    if (!wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set,
-                            binding->binding_idx, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                            &device_vk->null_resources_vk.buffer_info, NULL, NULL))
-                        return false;
-                    break;
-                }
-                buffer_vk = wined3d_buffer_vk(buffer);
-                buffer_info = wined3d_buffer_vk_get_buffer_info(buffer_vk);
-                if (!wined3d_shader_descriptor_writes_vk_add_write(writes, vk_descriptor_set,
-                        binding->binding_idx, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, buffer_info, NULL, NULL))
+                if (!wined3d_shader_descriptor_writes_vk_add_cbv_write(writes,
+                        context_vk, vk_descriptor_set, state, binding))
                     return false;
-                wined3d_context_vk_reference_bo(context_vk, &buffer_vk->bo);
                 break;
 
             case WINED3D_SHADER_DESCRIPTOR_TYPE_SRV:
