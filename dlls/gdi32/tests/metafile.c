@@ -3049,7 +3049,13 @@ static void test_metafile_file(void)
         EnumMetaFile(0, metafile, mf_enum_proc, 0);
     }
 
-    DeleteMetaFile(metafile);
+    ret = DeleteMetaFile(metafile);
+    ok(ret, "Could not delete metafile: %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = DeleteMetaFile(metafile);
+    ok(!ret, "DeleteMetaFile succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError() = %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     metafile = CloseMetaFile(dc);
@@ -3144,7 +3150,13 @@ static void test_enhmetafile_file(void)
         dump_emf_records(metafile, "emf_Bezier");
     }
 
-    DeleteEnhMetaFile(metafile);
+    ret = DeleteEnhMetaFile(metafile);
+    ok(ret, "Could not delete emf: %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = DeleteEnhMetaFile(metafile);
+    ok(!ret, "DeleteEnhMetaFile succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError() = %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     metafile = CloseEnhMetaFile(dc);
