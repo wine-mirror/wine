@@ -1528,66 +1528,71 @@ static DWORD verify_cert_revocation_with_crl_online(const CERT_CONTEXT *cert,
     return ERROR_SUCCESS;
 }
 
-static DWORD verify_cert_revocation_from_dist_points_ext(const CRYPT_DATA_BLOB *value, const CERT_CONTEXT *cert,
-        FILETIME *pTime, DWORD dwFlags, const CERT_REVOCATION_PARA *pRevPara, CERT_REVOCATION_STATUS *pRevStatus)
+/* Try to retrieve a CRL from any one of the specified distribution points. */
+static const CRL_CONTEXT *retrieve_crl_from_dist_points(const CRYPT_URL_ARRAY *array,
+        DWORD verify_flags, DWORD timeout)
 {
-    DWORD error = ERROR_SUCCESS, cbUrlArray;
+    DWORD retrieve_flags = 0;
+    const CRL_CONTEXT *crl;
+    DWORD i;
 
-    if (CRYPT_GetUrlFromCRLDistPointsExt(value, NULL, &cbUrlArray, NULL, NULL))
+    if (verify_flags & CERT_VERIFY_CACHE_ONLY_BASED_REVOCATION)
+        retrieve_flags |= CRYPT_CACHE_ONLY_RETRIEVAL;
+
+    /* Yes, this is a weird algorithm, but the documentation for
+     * CERT_CHAIN_REVOCATION_ACCUMULATIVE_TIMEOUT specifies this, and
+     * tests seem to bear it out for CertVerifyRevocation() as well. */
+    if (verify_flags & CERT_VERIFY_REV_ACCUMULATIVE_TIMEOUT_FLAG)
+        timeout /= 2;
+
+    for (i = 0; i < array->cUrl; ++i)
     {
-        CRYPT_URL_ARRAY *urlArray = CryptMemAlloc(cbUrlArray);
+        if (CryptRetrieveObjectByUrlW(array->rgwszUrl[i], CONTEXT_OID_CRL, retrieve_flags,
+                timeout, (void **)&crl, NULL, NULL, NULL, NULL))
+            return crl;
 
-        if (urlArray)
-        {
-            DWORD j, retrievalFlags = 0, timeout = 0;
-            BOOL ret;
-
-            ret = CRYPT_GetUrlFromCRLDistPointsExt(value, urlArray,
-             &cbUrlArray, NULL, NULL);
-            if (dwFlags & CERT_VERIFY_CACHE_ONLY_BASED_REVOCATION)
-                retrievalFlags |= CRYPT_CACHE_ONLY_RETRIEVAL;
-
-            if (pRevPara && pRevPara->cbSize >= RTL_SIZEOF_THROUGH_FIELD(CERT_REVOCATION_PARA, dwUrlRetrievalTimeout))
-                timeout = pRevPara->dwUrlRetrievalTimeout;
-
-            /* Yes, this is a weird algorithm, but the documentation for
-             * CERT_CHAIN_REVOCATION_ACCUMULATIVE_TIMEOUT specifies this, and
-             * tests seem to bear it out for CertVerifyRevocation() as well. */
-            if (dwFlags & CERT_VERIFY_REV_ACCUMULATIVE_TIMEOUT_FLAG)
-                timeout /= 2;
-
-            if (!ret)
-                error = GetLastError();
-            /* continue looping if one was offline; break if revoked or timed out */
-            for (j = 0; (!error || error == CRYPT_E_REVOCATION_OFFLINE) && j < urlArray->cUrl; j++)
-            {
-                PCCRL_CONTEXT crl;
-
-                ret = CryptRetrieveObjectByUrlW(urlArray->rgwszUrl[j],
-                 CONTEXT_OID_CRL, retrievalFlags, timeout, (void **)&crl,
-                 NULL, NULL, NULL, NULL);
-                if (ret)
-                {
-                    error = verify_cert_revocation_with_crl_online(cert, crl, pTime, pRevStatus);
-                    CertFreeCRLContext(crl);
-                }
-                else
-                {
-                    /* We don't check the current time here. This may result in
-                     * less accurate timeouts, but this too seems to be true of
-                     * Windows. */
-                    if ((dwFlags & CERT_VERIFY_REV_ACCUMULATIVE_TIMEOUT_FLAG) && GetLastError() == ERROR_TIMEOUT)
-                        timeout /= 2;
-                    error = CRYPT_E_REVOCATION_OFFLINE;
-                }
-            }
-            CryptMemFree(urlArray);
-        }
-        else
-            error = ERROR_OUTOFMEMORY;
+        /* We don't check the current time here. This may result in less
+         * accurate timeouts, but this too seems to be true of Windows. */
+        if ((verify_flags & CERT_VERIFY_REV_ACCUMULATIVE_TIMEOUT_FLAG) && GetLastError() == ERROR_TIMEOUT)
+            timeout /= 2;
     }
-    else
-        error = GetLastError();
+
+    return NULL;
+}
+
+static DWORD verify_cert_revocation_from_dist_points_ext(const CRYPT_DATA_BLOB *value, const CERT_CONTEXT *cert,
+        FILETIME *time, DWORD flags, const CERT_REVOCATION_PARA *params, CERT_REVOCATION_STATUS *status)
+{
+    DWORD url_array_size, error;
+    CRYPT_URL_ARRAY *url_array;
+    const CRL_CONTEXT *crl;
+    DWORD timeout = 0;
+
+    if (!CRYPT_GetUrlFromCRLDistPointsExt(value, NULL, &url_array_size, NULL, NULL))
+        return GetLastError();
+
+    if (!(url_array = CryptMemAlloc(url_array_size)))
+        return ERROR_OUTOFMEMORY;
+
+    if (!CRYPT_GetUrlFromCRLDistPointsExt(value, url_array, &url_array_size, NULL, NULL))
+    {
+        CryptMemFree(url_array);
+        return GetLastError();
+    }
+
+    if (params && params->cbSize >= RTL_SIZEOF_THROUGH_FIELD(CERT_REVOCATION_PARA, dwUrlRetrievalTimeout))
+        timeout = params->dwUrlRetrievalTimeout;
+
+    if (!(crl = retrieve_crl_from_dist_points(url_array, flags, timeout)))
+    {
+        CryptMemFree(url_array);
+        return CRYPT_E_REVOCATION_OFFLINE;
+    }
+
+    error = verify_cert_revocation_with_crl_online(cert, crl, time, status);
+
+    CertFreeCRLContext(crl);
+    CryptMemFree(url_array);
     return error;
 }
 
