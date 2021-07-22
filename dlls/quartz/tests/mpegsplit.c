@@ -1705,7 +1705,7 @@ static void test_seeking(void)
     duration = 0;
     hr = IMediaSeeking_GetDuration(seeking, &duration);
     ok(hr == S_OK, "Got hr %#x.\n", hr);
-    ok(duration > 0, "Got duration %s.\n", wine_dbgstr_longlong(duration));
+    ok(duration == 5392500, "Got duration %I64d.\n", duration);
 
     stop = current = 0xdeadbeef;
     hr = IMediaSeeking_GetStopPosition(seeking, &stop);
@@ -1894,6 +1894,54 @@ static void test_streaming(void)
     ok(ret, "Failed to delete file, error %u.\n", GetLastError());
 }
 
+static void test_large_file(void)
+{
+    static const BYTE frame[96] = {0xff, 0xfb, 0x14, 0xc4};
+    IBaseFilter *filter = create_mpeg_splitter();
+    static WCHAR path[MAX_PATH];
+    REFERENCE_TIME duration;
+    IMediaSeeking *seeking;
+    IFilterGraph2 *graph;
+    unsigned int i;
+    IPin *source;
+    BYTE *buffer;
+    HRESULT hr;
+    ULONG ref;
+    DWORD ret;
+    FILE *f;
+
+    GetTempPathW(ARRAY_SIZE(path), path);
+    wcscat(path, L"big_test.mp3");
+
+    /* allocate a larger buffer so I/O is faster on the testbot */
+    buffer = malloc(1000 * sizeof(frame));
+    for (i = 0; i < 1000; ++i)
+        memcpy(buffer + i * 96, frame, sizeof(frame));
+    f = _wfopen(path, L"w");
+    for (i = 0; i < 100; ++i)
+        fwrite(buffer, 1000 * sizeof(frame), 1, f);
+    fclose(f);
+    free(buffer);
+
+    graph = connect_input(filter, path);
+    IBaseFilter_FindPin(filter, L"Audio", &source);
+    IPin_QueryInterface(source, &IID_IMediaSeeking, (void **)&seeking);
+
+    duration = 0xdeadbeef;
+    hr = IMediaSeeking_GetDuration(seeking, &duration);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    ok(duration == 2400 * 10000000ull, "Got duration %I64d.\n", duration);
+
+    IMediaSeeking_Release(seeking);
+    IPin_Release(source);
+    ref = IFilterGraph2_Release(graph);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %d.\n", ref);
+    ret = DeleteFileW(path);
+    ok(ret, "Failed to delete file, error %u.\n", GetLastError());
+}
+
 START_TEST(mpegsplit)
 {
     IBaseFilter *filter;
@@ -1919,6 +1967,7 @@ START_TEST(mpegsplit)
     test_connect_pin();
     test_seeking();
     test_streaming();
+    test_large_file();
 
     CoUninitialize();
 }
