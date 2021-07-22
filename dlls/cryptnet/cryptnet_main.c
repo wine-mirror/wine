@@ -1539,22 +1539,24 @@ static DWORD verify_cert_revocation_from_dist_points_ext(const CRYPT_DATA_BLOB *
 
         if (urlArray)
         {
-            DWORD j, retrievalFlags = 0, startTime, endTime, timeout;
+            DWORD j, retrievalFlags = 0, timeout = 0;
             BOOL ret;
 
             ret = CRYPT_GetUrlFromCRLDistPointsExt(value, urlArray,
              &cbUrlArray, NULL, NULL);
             if (dwFlags & CERT_VERIFY_CACHE_ONLY_BASED_REVOCATION)
                 retrievalFlags |= CRYPT_CACHE_ONLY_RETRIEVAL;
+
             if ((dwFlags & CERT_VERIFY_REV_ACCUMULATIVE_TIMEOUT_FLAG) && pRevPara
                     && pRevPara->cbSize >= RTL_SIZEOF_THROUGH_FIELD(CERT_REVOCATION_PARA, dwUrlRetrievalTimeout))
-            {
-                startTime = GetTickCount();
-                endTime = startTime + pRevPara->dwUrlRetrievalTimeout;
                 timeout = pRevPara->dwUrlRetrievalTimeout;
-            }
-            else
-                endTime = timeout = 0;
+
+            /* Yes, this is a weird algorithm, but the documentation for
+             * CERT_CHAIN_REVOCATION_ACCUMULATIVE_TIMEOUT specifies this, and
+             * tests seem to bear it out for CertVerifyRevocation() as well. */
+            if (dwFlags & CERT_VERIFY_REV_ACCUMULATIVE_TIMEOUT_FLAG)
+                timeout /= 2;
+
             if (!ret)
                 error = GetLastError();
             /* continue looping if one was offline; break if revoked or timed out */
@@ -1568,19 +1570,17 @@ static DWORD verify_cert_revocation_from_dist_points_ext(const CRYPT_DATA_BLOB *
                 if (ret)
                 {
                     error = verify_cert_revocation_with_crl_online(cert, crl, pTime, pRevStatus);
-                    if (!error && timeout)
-                    {
-                        DWORD time = GetTickCount();
-
-                        if ((int)(endTime - time) <= 0)
-                            error = ERROR_TIMEOUT;
-                        else
-                            timeout = endTime - time;
-                    }
                     CertFreeCRLContext(crl);
                 }
                 else
+                {
+                    /* We don't check the current time here. This may result in
+                     * less accurate timeouts, but this too seems to be true of
+                     * Windows. */
+                    if (GetLastError() == ERROR_TIMEOUT)
+                        timeout /= 2;
                     error = CRYPT_E_REVOCATION_OFFLINE;
+                }
             }
             CryptMemFree(urlArray);
         }
