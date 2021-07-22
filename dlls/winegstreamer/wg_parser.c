@@ -61,7 +61,7 @@ struct wg_parser
     pthread_mutex_t mutex;
 
     pthread_cond_t init_cond;
-    bool no_more_pads, error;
+    bool no_more_pads, has_duration, error;
 
     pthread_cond_t read_cond, read_done_cond;
     struct
@@ -1401,6 +1401,9 @@ static GstBusSyncReply bus_handler_cb(GstBus *bus, GstMessage *msg, gpointer use
         break;
 
     case GST_MESSAGE_DURATION_CHANGED:
+        pthread_mutex_lock(&parser->mutex);
+        parser->has_duration = true;
+        pthread_mutex_unlock(&parser->mutex);
         pthread_cond_signal(&parser->init_cond);
         break;
 
@@ -1582,7 +1585,22 @@ static HRESULT CDECL wg_parser_connect(struct wg_parser *parser, uint64_t file_s
                 GST_WARNING("Failed to query duration.\n");
                 break;
             }
-            pthread_cond_wait(&parser->init_cond, &parser->mutex);
+
+            /* Elements based on GstBaseParse send duration-changed before
+             * actually updating the duration in GStreamer versions prior
+             * to 1.17.1. See <gstreamer.git:d28e0b4147fe7073b2>. So after
+             * receiving duration-changed we have to continue polling until
+             * the query succeeds. */
+            if (parser->has_duration)
+            {
+                pthread_mutex_unlock(&parser->mutex);
+                g_usleep(10000);
+                pthread_mutex_lock(&parser->mutex);
+            }
+            else
+            {
+                pthread_cond_wait(&parser->init_cond, &parser->mutex);
+            }
         }
     }
 
