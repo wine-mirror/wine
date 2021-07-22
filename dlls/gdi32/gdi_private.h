@@ -68,6 +68,8 @@ extern BOOL EMFDC_Ellipse( DC_ATTR *dc_attr, INT left, INT top, INT right,
                            INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_LineTo( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_MoveTo( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
+extern BOOL EMFDC_PolyPolyline( DC_ATTR *dc_attr, const POINT *points, const DWORD *counts,
+                                DWORD polys ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_PolyPolygon( DC_ATTR *dc_attr, const POINT *points, const INT *counts,
                                UINT polys ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_Polygon( DC_ATTR *dc_attr, const POINT *points, INT count ) DECLSPEC_HIDDEN;

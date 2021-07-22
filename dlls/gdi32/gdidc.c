@@ -266,3 +266,17 @@ BOOL WINAPI PolyPolygon( HDC hdc, const POINT *points, const INT *counts, UINT p
     if (dc_attr->emf && !EMFDC_PolyPolygon( dc_attr, points, counts, polygons )) return FALSE;
     return NtGdiPolyPolyDraw( hdc, points, (const UINT *)counts, polygons, NtGdiPolyPolygon );
 }
+
+/**********************************************************************
+ *          PolyPolyline  (GDI32.@)
+ */
+BOOL WINAPI PolyPolyline( HDC hdc, const POINT *points, const DWORD *counts, DWORD polylines )
+{
+    DC_ATTR *dc_attr;
+
+    TRACE( "%p, %p, %p, %u\n", hdc, points, counts, polylines );
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_PolyPolyline( dc_attr, points, counts, polylines )) return FALSE;
+    return NtGdiPolyPolyDraw( hdc, points, counts, polylines, NtGdiPolyPolyline );
+}

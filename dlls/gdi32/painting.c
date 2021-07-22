@@ -632,32 +632,18 @@ ULONG WINAPI NtGdiPolyPolyDraw( HDC hdc, const POINT *points, const UINT *counts
         physdev = GET_DC_PHYSDEV( dc, pPolyPolygon );
         ret = physdev->funcs->pPolyPolygon( physdev, points, (const INT *)counts, count );
         break;
+
+    case NtGdiPolyPolyline:
+        physdev = GET_DC_PHYSDEV( dc, pPolyPolyline );
+        ret = physdev->funcs->pPolyPolyline( physdev, points, counts, count );
+        break;
+
     default:
         WARN( "invalid function %u\n", function );
         ret = FALSE;
         break;
     }
 
-    release_dc_ptr( dc );
-    return ret;
-}
-
-/**********************************************************************
- *          PolyPolyline  (GDI32.@)
- */
-BOOL WINAPI PolyPolyline( HDC hdc, const POINT* pt, const DWORD* counts,
-                            DWORD polylines )
-{
-    PHYSDEV physdev;
-    BOOL ret;
-    DC * dc = get_dc_ptr( hdc );
-
-    TRACE( "%p, %p, %p, %u\n", hdc, pt, counts, polylines );
-
-    if (!dc) return FALSE;
-    update_dc( dc );
-    physdev = GET_DC_PHYSDEV( dc, pPolyPolyline );
-    ret = physdev->funcs->pPolyPolyline( physdev, pt, counts, polylines );
     release_dc_ptr( dc );
     return ret;
 }

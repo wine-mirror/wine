@@ -626,15 +626,13 @@ BOOL CDECL EMFDRV_PolyBezierTo( PHYSDEV dev, const POINT *pts, DWORD count )
 
 
 /**********************************************************************
- *          EMFDRV_PolyPolylinegon
+ *          EMFDC_PolyPolylinegon
  *
  * Helper for EMFDRV_PolyPoly{line|gon}
  */
-static BOOL
-EMFDRV_PolyPolylinegon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polys,
-			DWORD iType)
+static BOOL EMFDC_PolyPolylinegon( EMFDRV_PDEVICE *emf, const POINT *pt, const INT *counts,
+                                   UINT polys, DWORD type)
 {
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
     EMRPOLYPOLYLINE *emr;
     DWORD cptl = 0, poly, size;
     BOOL ret, use_small_emr, bounds_valid = TRUE;
@@ -654,11 +652,11 @@ EMFDRV_PolyPolylinegon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT po
 
     emr = HeapAlloc( GetProcessHeap(), 0, size );
 
-    emr->emr.iType = iType;
+    emr->emr.iType = type;
     if(use_small_emr) emr->emr.iType += EMR_POLYPOLYLINE16 - EMR_POLYPOLYLINE;
 
     emr->emr.nSize = size;
-    if(bounds_valid && !physDev->path)
+    if(bounds_valid && !emf->path)
         get_points_bounds( &emr->rclBounds, pt, cptl, 0 );
     else
         emr->rclBounds = empty_bounds;
@@ -671,25 +669,33 @@ EMFDRV_PolyPolylinegon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT po
         store_points( (POINTL *)(emr->aPolyCounts + polys), pt, cptl, use_small_emr );
     }
 
-    ret = EMFDRV_WriteRecord( dev, &emr->emr );
+    ret = EMFDRV_WriteRecord( &emf->dev, &emr->emr );
     if(ret && !bounds_valid)
     {
         ret = FALSE;
         SetLastError( ERROR_INVALID_PARAMETER );
     }
-    if(ret && !physDev->path)
-        EMFDRV_UpdateBBox( dev, &emr->rclBounds );
+    if(ret && !emf->path)
+        EMFDRV_UpdateBBox( &emf->dev, &emr->rclBounds );
     HeapFree( GetProcessHeap(), 0, emr );
     return ret;
 }
 
 /**********************************************************************
- *          EMFDRV_PolyPolyline
+ *          EMFDC_PolyPolyline
  */
-BOOL CDECL EMFDRV_PolyPolyline(PHYSDEV dev, const POINT* pt, const DWORD* counts, DWORD polys)
+BOOL EMFDC_PolyPolyline( DC_ATTR *dc_attr, const POINT *pt, const DWORD *counts, DWORD polys)
 {
-    return EMFDRV_PolyPolylinegon( dev, pt, (const INT *)counts, polys,
-				   EMR_POLYPOLYLINE );
+    return EMFDC_PolyPolylinegon( dc_attr->emf, pt, (const INT *)counts, polys, EMR_POLYPOLYLINE );
+}
+
+/**********************************************************************
+ *          EMFDRV_PolyPoline
+ */
+BOOL CDECL EMFDRV_PolyPolyline( PHYSDEV dev, const POINT *pt, const DWORD* counts, UINT polys )
+{
+    /* FIXME: update bounding rect */
+    return TRUE;
 }
 
 /**********************************************************************
@@ -697,7 +703,7 @@ BOOL CDECL EMFDRV_PolyPolyline(PHYSDEV dev, const POINT* pt, const DWORD* counts
  */
 BOOL EMFDC_PolyPolygon( DC_ATTR *dc_attr, const POINT *pt, const INT *counts, UINT polys )
 {
-    return EMFDRV_PolyPolylinegon( dc_attr->emf, pt, counts, polys, EMR_POLYPOLYGON );
+    return EMFDC_PolyPolylinegon( dc_attr->emf, pt, counts, polys, EMR_POLYPOLYGON );
 }
 
 /**********************************************************************
