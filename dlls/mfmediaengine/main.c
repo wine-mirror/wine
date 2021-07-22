@@ -84,6 +84,8 @@ enum media_engine_flags
     FLAGS_ENGINE_FIRST_FRAME = 0x2000,
     FLAGS_ENGINE_IS_ENDED = 0x4000,
     FLAGS_ENGINE_NEW_FRAME = 0x8000,
+    FLAGS_ENGINE_SOURCE_PENDING = 0x10000,
+    FLAGS_ENGINE_PLAY_PENDING = 0x20000,
 };
 
 struct vec3
@@ -1181,9 +1183,18 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
     return hr;
 }
 
+static void media_engine_start_playback(struct media_engine *engine)
+{
+    PROPVARIANT var;
+
+    var.vt = VT_EMPTY;
+    IMFMediaSession_Start(engine->session, &GUID_NULL, &var);
+}
+
 static HRESULT WINAPI media_engine_load_handler_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct media_engine *engine = impl_from_load_handler_IMFAsyncCallback(iface);
+    unsigned int start_playback;
     MF_OBJECT_TYPE obj_type;
     IMFMediaSource *source;
     IUnknown *object = NULL;
@@ -1193,6 +1204,9 @@ static HRESULT WINAPI media_engine_load_handler_Invoke(IMFAsyncCallback *iface, 
 
     engine->network_state = MF_MEDIA_ENGINE_NETWORK_LOADING;
     IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_LOADSTART, 0, 0);
+
+    start_playback = engine->flags & FLAGS_ENGINE_PLAY_PENDING;
+    media_engine_set_flag(engine, FLAGS_ENGINE_SOURCE_PENDING | FLAGS_ENGINE_PLAY_PENDING, FALSE);
 
     if (FAILED(hr = IMFSourceResolver_EndCreateObjectFromURL(engine->resolver, result, &obj_type, &object)))
         WARN("Failed to create source object, hr %#x.\n", hr);
@@ -1210,6 +1224,8 @@ static HRESULT WINAPI media_engine_load_handler_Invoke(IMFAsyncCallback *iface, 
     if (SUCCEEDED(hr))
     {
         engine->network_state = MF_MEDIA_ENGINE_NETWORK_IDLE;
+        if (start_playback)
+            media_engine_start_playback(engine);
     }
     else
     {
@@ -1387,6 +1403,9 @@ static HRESULT WINAPI media_engine_SetSource(IMFMediaEngine *iface, BSTR url)
                     &IID_IPropertyStore, (void **)&props);
             hr = IMFSourceResolver_BeginCreateObjectFromURL(engine->resolver, url, flags, props, NULL,
                     &engine->load_handler, NULL);
+            if (SUCCEEDED(hr))
+                media_engine_set_flag(engine, FLAGS_ENGINE_SOURCE_PENDING, TRUE);
+
             if (props)
                 IPropertyStore_Release(props);
         }
@@ -1723,7 +1742,6 @@ static HRESULT WINAPI media_engine_SetLoop(IMFMediaEngine *iface, BOOL loop)
 static HRESULT WINAPI media_engine_Play(IMFMediaEngine *iface)
 {
     struct media_engine *engine = impl_from_IMFMediaEngine(iface);
-    PROPVARIANT var;
 
     TRACE("%p.\n", iface);
 
@@ -1736,8 +1754,10 @@ static HRESULT WINAPI media_engine_Play(IMFMediaEngine *iface)
         media_engine_set_flag(engine, FLAGS_ENGINE_PAUSED | FLAGS_ENGINE_IS_ENDED, FALSE);
         IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PLAY, 0, 0);
 
-        var.vt = VT_EMPTY;
-        IMFMediaSession_Start(engine->session, &GUID_NULL, &var);
+        if (!(engine->flags & FLAGS_ENGINE_SOURCE_PENDING))
+            media_engine_start_playback(engine);
+        else
+            media_engine_set_flag(engine, FLAGS_ENGINE_PLAY_PENDING, TRUE);
 
         media_engine_set_flag(engine, FLAGS_ENGINE_WAITING, TRUE);
     }
