@@ -139,48 +139,6 @@ DWORD WINAPI AddIPAddress(IPAddr Address, IPMask IpMask, DWORD IfIndex, PULONG N
   return ERROR_NOT_SUPPORTED;
 }
 
-static int IpAddrTableNumericSorter(const void *a, const void *b)
-{
-  int ret = 0;
-
-  if (a && b)
-    ret = ((const MIB_IPADDRROW*)a)->dwAddr - ((const MIB_IPADDRROW*)b)->dwAddr;
-  return ret;
-}
-
-/******************************************************************
- *    AllocateAndGetIpAddrTableFromStack (IPHLPAPI.@)
- *
- * Get interface-to-IP address mapping table. 
- * Like GetIpAddrTable(), but allocate the returned table from heap.
- *
- * PARAMS
- *  ppIpAddrTable [Out] pointer into which the MIB_IPADDRTABLE is
- *                      allocated and returned.
- *  bOrder        [In]  whether to sort the table
- *  heap          [In]  heap from which the table is allocated
- *  flags         [In]  flags to HeapAlloc
- *
- * RETURNS
- *  ERROR_INVALID_PARAMETER if ppIpAddrTable is NULL, other error codes on
- *  failure, NO_ERROR on success.
- */
-DWORD WINAPI AllocateAndGetIpAddrTableFromStack(PMIB_IPADDRTABLE *ppIpAddrTable,
- BOOL bOrder, HANDLE heap, DWORD flags)
-{
-  DWORD ret;
-
-  TRACE("ppIpAddrTable %p, bOrder %d, heap %p, flags 0x%08x\n",
-   ppIpAddrTable, bOrder, heap, flags);
-  ret = getIPAddrTable(ppIpAddrTable, heap, flags);
-  if (!ret && bOrder)
-    qsort((*ppIpAddrTable)->table, (*ppIpAddrTable)->dwNumEntries,
-     sizeof(MIB_IPADDRROW), IpAddrTableNumericSorter);
-  TRACE("returning %d\n", ret);
-  return ret;
-}
-
-
 /******************************************************************
  *    CancelIPChangeNotify (IPHLPAPI.@)
  *
@@ -2188,6 +2146,40 @@ err:
     return err;
 }
 
+
+/******************************************************************
+ *    AllocateAndGetIpAddrTableFromStack (IPHLPAPI.@)
+ *
+ * Get interface-to-IP address mapping table.
+ * Like GetIpAddrTable(), but allocate the returned table from heap.
+ *
+ * PARAMS
+ *  table         [Out] pointer into which the MIB_IPADDRTABLE is
+ *                      allocated and returned.
+ *  sort          [In]  whether to sort the table
+ *  heap          [In]  heap from which the table is allocated
+ *  flags         [In]  flags to HeapAlloc
+ *
+ */
+DWORD WINAPI AllocateAndGetIpAddrTableFromStack( MIB_IPADDRTABLE **table, BOOL sort, HANDLE heap, DWORD flags )
+{
+    DWORD err, size = FIELD_OFFSET(MIB_IPADDRTABLE, table[2]), attempt;
+
+    TRACE( "table %p, sort %d, heap %p, flags 0x%08x\n", table, sort, heap, flags );
+
+    for (attempt = 0; attempt < 5; attempt++)
+    {
+        *table = HeapAlloc( heap, flags, size );
+        if (!*table) return ERROR_NOT_ENOUGH_MEMORY;
+
+        err = GetIpAddrTable( *table, &size, sort );
+        if (!err) break;
+        HeapFree( heap, flags, *table );
+        if (err != ERROR_INSUFFICIENT_BUFFER) break;
+    }
+
+    return err;
+}
 
 /******************************************************************
  *    GetIpForwardTable (IPHLPAPI.@)
