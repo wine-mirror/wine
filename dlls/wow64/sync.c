@@ -27,6 +27,9 @@
 #include "winnt.h"
 #include "winternl.h"
 #include "wow64_private.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(wow);
 
 
 /**********************************************************************
@@ -49,6 +52,26 @@ NTSTATUS WINAPI wow64_NtClearEvent( UINT *args )
     HANDLE handle = get_handle( &args );
 
     return NtClearEvent( handle );
+}
+
+
+/**********************************************************************
+ *           wow64_NtCreateDirectoryObject
+ */
+NTSTATUS WINAPI wow64_NtCreateDirectoryObject( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+
+    struct object_attr64 attr;
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    *handle_ptr = 0;
+    status = NtCreateDirectoryObject( &handle, access, objattr_32to64( &attr, attr32 ));
+    put_handle( handle_ptr, handle );
+    return status;
 }
 
 
@@ -154,6 +177,26 @@ NTSTATUS WINAPI wow64_NtCreateTimer( UINT *args )
 
     *handle_ptr = 0;
     status = NtCreateTimer( &handle, access, objattr_32to64( &attr, attr32 ), type );
+    put_handle( handle_ptr, handle );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtOpenDirectoryObject
+ */
+NTSTATUS WINAPI wow64_NtOpenDirectoryObject( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+
+    struct object_attr64 attr;
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    *handle_ptr = 0;
+    status = NtOpenDirectoryObject( &handle, access, objattr_32to64( &attr, attr32 ));
     put_handle( handle_ptr, handle );
     return status;
 }
@@ -268,6 +311,43 @@ NTSTATUS WINAPI wow64_NtPulseEvent( UINT *args )
     LONG *prev_state = get_ptr( &args );
 
     return NtPulseEvent( handle, prev_state );
+}
+
+
+/**********************************************************************
+ *           wow64_NtQueryDirectoryObject
+ */
+NTSTATUS WINAPI wow64_NtQueryDirectoryObject( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    DIRECTORY_BASIC_INFORMATION32 *info32 = get_ptr( &args );
+    ULONG size32 = get_ulong( &args );
+    BOOLEAN single_entry = get_ulong( &args );
+    BOOLEAN restart = get_ulong( &args );
+    ULONG *context = get_ptr( &args );
+    ULONG *retlen = get_ptr( &args );
+
+    NTSTATUS status;
+    DIRECTORY_BASIC_INFORMATION *info;
+    ULONG size = size32 + sizeof(*info) - sizeof(*info32);
+
+    if (!single_entry) FIXME( "not implemented\n" );
+    info = RtlAllocateHeap( GetProcessHeap(), 0, size );
+    status = NtQueryDirectoryObject( handle, info, size, single_entry, restart, context, NULL );
+    if (!status)
+    {
+        info32->ObjectName.Buffer            = PtrToUlong( info32 + 1 );
+        info32->ObjectName.Length            = info->ObjectName.Length;
+        info32->ObjectName.MaximumLength     = info->ObjectName.MaximumLength;
+        info32->ObjectTypeName.Buffer        = info32->ObjectName.Buffer + info->ObjectName.MaximumLength;
+        info32->ObjectTypeName.Length        = info->ObjectTypeName.Length;
+        info32->ObjectTypeName.MaximumLength = info->ObjectTypeName.MaximumLength;
+        size = info->ObjectName.MaximumLength + info->ObjectTypeName.MaximumLength;
+        memcpy( info32 + 1, info + 1, size );
+        if (retlen) *retlen = sizeof(*info32) + size;
+    }
+    RtlFreeHeap( GetProcessHeap(), 0, info );
+    return status;
 }
 
 

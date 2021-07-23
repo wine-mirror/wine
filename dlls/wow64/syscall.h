@@ -28,6 +28,7 @@
     SYSCALL_ENTRY( NtCancelTimer ) \
     SYSCALL_ENTRY( NtClearEvent ) \
     SYSCALL_ENTRY( NtClose ) \
+    SYSCALL_ENTRY( NtCreateDirectoryObject ) \
     SYSCALL_ENTRY( NtCreateEvent ) \
     SYSCALL_ENTRY( NtCreateKeyedEvent ) \
     SYSCALL_ENTRY( NtCreateMutant ) \
@@ -36,6 +37,7 @@
     SYSCALL_ENTRY( NtDeleteAtom ) \
     SYSCALL_ENTRY( NtFindAtom ) \
     SYSCALL_ENTRY( NtGetCurrentProcessorNumber ) \
+    SYSCALL_ENTRY( NtOpenDirectoryObject ) \
     SYSCALL_ENTRY( NtOpenEvent ) \
     SYSCALL_ENTRY( NtOpenKeyedEvent ) \
     SYSCALL_ENTRY( NtOpenMutant ) \
@@ -44,6 +46,7 @@
     SYSCALL_ENTRY( NtPulseEvent ) \
     SYSCALL_ENTRY( NtQueryDefaultLocale ) \
     SYSCALL_ENTRY( NtQueryDefaultUILanguage ) \
+    SYSCALL_ENTRY( NtQueryDirectoryObject ) \
     SYSCALL_ENTRY( NtQueryEvent ) \
     SYSCALL_ENTRY( NtQueryInformationAtom ) \
     SYSCALL_ENTRY( NtQueryInstallUILanguage ) \

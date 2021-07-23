@@ -31,4 +31,10 @@ typedef struct
     ULONG SecurityQualityOfService;
 } OBJECT_ATTRIBUTES32;
 
+typedef struct
+{
+    UNICODE_STRING32 ObjectName;
+    UNICODE_STRING32 ObjectTypeName;
+} DIRECTORY_BASIC_INFORMATION32;
+
 #endif /* __WOW64_STRUCT32_H */
