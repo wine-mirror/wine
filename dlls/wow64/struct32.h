@@ -37,4 +37,61 @@ typedef struct
     UNICODE_STRING32 ObjectTypeName;
 } DIRECTORY_BASIC_INFORMATION32;
 
+typedef struct
+{
+    DBG_STATE   NewState;
+    CLIENT_ID32 AppClientId;
+    union
+    {
+        struct
+        {
+            EXCEPTION_RECORD32 ExceptionRecord;
+            ULONG FirstChance;
+        } Exception;
+        struct
+        {
+            ULONG HandleToThread;
+            struct
+            {
+                ULONG SubSystemKey;
+                ULONG StartAddress;
+            } NewThread;
+        } CreateThread;
+        struct
+        {
+            ULONG HandleToProcess;
+            ULONG HandleToThread;
+            struct
+            {
+                ULONG SubSystemKey;
+                ULONG FileHandle;
+                ULONG BaseOfImage;
+                ULONG DebugInfoFileOffset;
+                ULONG DebugInfoSize;
+                struct
+                {
+                    ULONG SubSystemKey;
+                    ULONG StartAddress;
+                } InitialThread;
+            } NewProcess;
+        } CreateProcessInfo;
+        struct
+        {
+            NTSTATUS ExitStatus;
+        } ExitProcess, ExitThread;
+        struct
+        {
+            ULONG FileHandle;
+            ULONG BaseOfDll;
+            ULONG DebugInfoFileOffset;
+            ULONG DebugInfoSize;
+            ULONG NamePointer;
+        } LoadDll;
+        struct
+        {
+            ULONG BaseAddress;
+        } UnloadDll;
+    } StateInfo;
+} DBGUI_WAIT_STATE_CHANGE32;
+
 #endif /* __WOW64_STRUCT32_H */

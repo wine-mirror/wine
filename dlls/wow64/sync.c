@@ -56,6 +56,27 @@ NTSTATUS WINAPI wow64_NtClearEvent( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtCreateDebugObject
+ */
+NTSTATUS WINAPI wow64_NtCreateDebugObject( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    ULONG flags = get_ulong( &args );
+
+    struct object_attr64 attr;
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    *handle_ptr = 0;
+    status = NtCreateDebugObject( &handle, access, objattr_32to64( &attr, attr32 ), flags );
+    put_handle( handle_ptr, handle );
+    return status;
+}
+
+
+/**********************************************************************
  *           wow64_NtCreateDirectoryObject
  */
 NTSTATUS WINAPI wow64_NtCreateDirectoryObject( UINT *args )
@@ -179,6 +200,21 @@ NTSTATUS WINAPI wow64_NtCreateTimer( UINT *args )
     status = NtCreateTimer( &handle, access, objattr_32to64( &attr, attr32 ), type );
     put_handle( handle_ptr, handle );
     return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtDebugContinue
+ */
+NTSTATUS WINAPI wow64_NtDebugContinue( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    CLIENT_ID32 *id32 = get_ptr( &args );
+    NTSTATUS status = get_ulong( &args );
+
+    CLIENT_ID id;
+
+    return NtDebugContinue( handle, client_id_32to64( &id, id32 ), status );
 }
 
 
@@ -475,6 +511,21 @@ NTSTATUS WINAPI wow64_NtSetEvent( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtSetInformationDebugObject
+ */
+NTSTATUS WINAPI wow64_NtSetInformationDebugObject( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    DEBUGOBJECTINFOCLASS class = get_ulong( &args );
+    void *ptr = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    ULONG *retlen = get_ptr( &args );
+
+    return NtSetInformationDebugObject( handle, class, ptr, len, retlen );
+}
+
+
+/**********************************************************************
  *           wow64_NtSetTimer
  */
 NTSTATUS WINAPI wow64_NtSetTimer( UINT *args )
@@ -489,6 +540,80 @@ NTSTATUS WINAPI wow64_NtSetTimer( UINT *args )
 
     return NtSetTimer( handle, when, apc_32to64( apc ), apc_param_32to64( apc, apc_param ),
                        resume, period, state );
+}
+
+
+/**********************************************************************
+ *           wow64_NtWaitForDebugEvent
+ */
+NTSTATUS WINAPI wow64_NtWaitForDebugEvent( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    BOOLEAN alertable = get_ulong( &args );
+    LARGE_INTEGER *timeout = get_ptr( &args );
+    DBGUI_WAIT_STATE_CHANGE32 *state32 = get_ptr( &args );
+
+    ULONG i;
+    DBGUI_WAIT_STATE_CHANGE state;
+    NTSTATUS status = NtWaitForDebugEvent( handle, alertable, timeout, &state );
+
+    if (!status)
+    {
+        state32->NewState = state.NewState;
+        state32->AppClientId.UniqueProcess = HandleToULong( state.AppClientId.UniqueProcess );
+        state32->AppClientId.UniqueThread = HandleToULong( state.AppClientId.UniqueThread );
+        switch (state.NewState)
+        {
+#define COPY_ULONG(field) state32->StateInfo.field = state.StateInfo.field
+#define COPY_PTR(field)   state32->StateInfo.field = PtrToUlong( state.StateInfo.field )
+        case DbgCreateThreadStateChange:
+            COPY_PTR( CreateThread.HandleToThread );
+            COPY_PTR( CreateThread.NewThread.StartAddress );
+            COPY_ULONG( CreateThread.NewThread.SubSystemKey );
+            break;
+        case DbgCreateProcessStateChange:
+            COPY_PTR( CreateProcessInfo.HandleToProcess );
+            COPY_PTR( CreateProcessInfo.HandleToThread );
+            COPY_PTR( CreateProcessInfo.NewProcess.FileHandle );
+            COPY_PTR( CreateProcessInfo.NewProcess.BaseOfImage );
+            COPY_PTR( CreateProcessInfo.NewProcess.InitialThread.StartAddress );
+            COPY_ULONG( CreateProcessInfo.NewProcess.InitialThread.SubSystemKey );
+            COPY_ULONG( CreateProcessInfo.NewProcess.DebugInfoFileOffset );
+            COPY_ULONG( CreateProcessInfo.NewProcess.DebugInfoSize );
+            break;
+        case DbgExitThreadStateChange:
+        case DbgExitProcessStateChange:
+            COPY_ULONG( ExitThread.ExitStatus );
+            break;
+        case DbgExceptionStateChange:
+        case DbgBreakpointStateChange:
+        case DbgSingleStepStateChange:
+            COPY_ULONG( Exception.FirstChance );
+            COPY_ULONG( Exception.ExceptionRecord.ExceptionCode );
+            COPY_ULONG( Exception.ExceptionRecord.ExceptionFlags );
+            COPY_ULONG( Exception.ExceptionRecord.NumberParameters );
+            COPY_PTR( Exception.ExceptionRecord.ExceptionRecord );
+            COPY_PTR( Exception.ExceptionRecord.ExceptionAddress );
+            for (i = 0; i < state.StateInfo.Exception.ExceptionRecord.NumberParameters; i++)
+                COPY_ULONG( Exception.ExceptionRecord.ExceptionInformation[i] );
+            break;
+        case DbgLoadDllStateChange:
+            COPY_PTR( LoadDll.FileHandle );
+            COPY_PTR( LoadDll.BaseOfDll );
+            COPY_ULONG( LoadDll.DebugInfoFileOffset );
+            COPY_ULONG( LoadDll.DebugInfoSize );
+            COPY_PTR( LoadDll.NamePointer );
+            break;
+        case DbgUnloadDllStateChange:
+            COPY_PTR( UnloadDll.BaseAddress );
+            break;
+        default:
+            break;
+        }
+#undef COPY_ULONG
+#undef COPY_PTR
+    }
+    return status;
 }
 
 

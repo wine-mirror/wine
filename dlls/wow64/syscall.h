@@ -28,12 +28,14 @@
     SYSCALL_ENTRY( NtCancelTimer ) \
     SYSCALL_ENTRY( NtClearEvent ) \
     SYSCALL_ENTRY( NtClose ) \
+    SYSCALL_ENTRY( NtCreateDebugObject ) \
     SYSCALL_ENTRY( NtCreateDirectoryObject ) \
     SYSCALL_ENTRY( NtCreateEvent ) \
     SYSCALL_ENTRY( NtCreateKeyedEvent ) \
     SYSCALL_ENTRY( NtCreateMutant ) \
     SYSCALL_ENTRY( NtCreateSemaphore ) \
     SYSCALL_ENTRY( NtCreateTimer ) \
+    SYSCALL_ENTRY( NtDebugContinue ) \
     SYSCALL_ENTRY( NtDeleteAtom ) \
     SYSCALL_ENTRY( NtFindAtom ) \
     SYSCALL_ENTRY( NtGetCurrentProcessorNumber ) \
@@ -60,7 +62,9 @@
     SYSCALL_ENTRY( NtSetDefaultLocale ) \
     SYSCALL_ENTRY( NtSetDefaultUILanguage ) \
     SYSCALL_ENTRY( NtSetEvent ) \
+    SYSCALL_ENTRY( NtSetInformationDebugObject ) \
     SYSCALL_ENTRY( NtSetTimer ) \
+    SYSCALL_ENTRY( NtWaitForDebugEvent ) \
     SYSCALL_ENTRY( NtWaitForKeyedEvent )
 
 #endif /* __WOW64_SYSCALL_H */

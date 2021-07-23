@@ -83,6 +83,14 @@ static inline UNICODE_STRING *unicode_str_32to64( UNICODE_STRING *str, const UNI
     return str;
 }
 
+static inline CLIENT_ID *client_id_32to64( CLIENT_ID *id, const CLIENT_ID32 *id32 )
+{
+    if (!id32) return NULL;
+    id->UniqueProcess = LongToHandle( id32->UniqueProcess );
+    id->UniqueThread = LongToHandle( id32->UniqueThread );
+    return id;
+}
+
 static inline SECURITY_DESCRIPTOR *secdesc_32to64( SECURITY_DESCRIPTOR *out, const SECURITY_DESCRIPTOR *in )
 {
     /* relative descr has the same layout for 32 and 64 */
