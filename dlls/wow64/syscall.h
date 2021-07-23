@@ -28,16 +28,20 @@
     SYSCALL_ENTRY( NtClearEvent ) \
     SYSCALL_ENTRY( NtClose ) \
     SYSCALL_ENTRY( NtCreateEvent ) \
+    SYSCALL_ENTRY( NtCreateMutant ) \
     SYSCALL_ENTRY( NtDeleteAtom ) \
     SYSCALL_ENTRY( NtFindAtom ) \
     SYSCALL_ENTRY( NtGetCurrentProcessorNumber ) \
     SYSCALL_ENTRY( NtOpenEvent ) \
+    SYSCALL_ENTRY( NtOpenMutant ) \
     SYSCALL_ENTRY( NtPulseEvent ) \
     SYSCALL_ENTRY( NtQueryDefaultLocale ) \
     SYSCALL_ENTRY( NtQueryDefaultUILanguage ) \
     SYSCALL_ENTRY( NtQueryEvent ) \
     SYSCALL_ENTRY( NtQueryInformationAtom ) \
     SYSCALL_ENTRY( NtQueryInstallUILanguage ) \
+    SYSCALL_ENTRY( NtQueryMutant ) \
+    SYSCALL_ENTRY( NtReleaseMutant ) \
     SYSCALL_ENTRY( NtResetEvent ) \
     SYSCALL_ENTRY( NtSetDefaultLocale ) \
     SYSCALL_ENTRY( NtSetDefaultUILanguage ) \
