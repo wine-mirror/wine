@@ -84,6 +84,28 @@ NTSTATUS WINAPI wow64_NtCreateMutant( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtCreateSemaphore
+ */
+NTSTATUS WINAPI wow64_NtCreateSemaphore( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    LONG initial = get_ulong( &args );
+    LONG max = get_ulong( &args );
+
+    struct object_attr64 attr;
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    *handle_ptr = 0;
+    status = NtCreateSemaphore( &handle, access, objattr_32to64( &attr, attr32 ), initial, max );
+    put_handle( handle_ptr, handle );
+    return status;
+}
+
+
+/**********************************************************************
  *           wow64_NtOpenEvent
  */
 NTSTATUS WINAPI wow64_NtOpenEvent( UINT *args )
@@ -118,6 +140,26 @@ NTSTATUS WINAPI wow64_NtOpenMutant( UINT *args )
 
     *handle_ptr = 0;
     status = NtOpenMutant( &handle, access, objattr_32to64( &attr, attr32 ));
+    put_handle( handle_ptr, handle );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtOpenSemaphore
+ */
+NTSTATUS WINAPI wow64_NtOpenSemaphore( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+
+    struct object_attr64 attr;
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    *handle_ptr = 0;
+    status = NtOpenSemaphore( &handle, access, objattr_32to64( &attr, attr32 ));
     put_handle( handle_ptr, handle );
     return status;
 }
@@ -166,6 +208,21 @@ NTSTATUS WINAPI wow64_NtQueryMutant( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtQuerySemaphore
+ */
+NTSTATUS WINAPI wow64_NtQuerySemaphore( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    SEMAPHORE_INFORMATION_CLASS class = get_ulong( &args );
+    void *info = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    ULONG *retlen = get_ptr( &args );
+
+    return NtQuerySemaphore( handle, class, info, len, retlen );
+}
+
+
+/**********************************************************************
  *           wow64_NtReleaseMutant
  */
 NTSTATUS WINAPI wow64_NtReleaseMutant( UINT *args )
@@ -174,6 +231,19 @@ NTSTATUS WINAPI wow64_NtReleaseMutant( UINT *args )
     LONG *prev_count = get_ptr( &args );
 
     return NtReleaseMutant( handle, prev_count );
+}
+
+
+/**********************************************************************
+ *           wow64_NtReleaseSemaphore
+ */
+NTSTATUS WINAPI wow64_NtReleaseSemaphore( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    ULONG count = get_ulong( &args );
+    ULONG *previous = get_ptr( &args );
+
+    return NtReleaseSemaphore( handle, count, previous );
 }
 
 
