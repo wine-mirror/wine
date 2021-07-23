@@ -3231,7 +3231,6 @@ static void test_emf_SetPixel(void)
     ok(c == CLR_INVALID, "c = %x\n", c);
 
     ret = SetPixelV(hdc, 5, 5, RGB(1,2,3));
-    todo_wine
     ok(!ret, "ret = %x\n", ret);
 
     c = GetPixel(hdc, 5, 5);

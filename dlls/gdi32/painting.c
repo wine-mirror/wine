@@ -416,22 +416,6 @@ COLORREF WINAPI NtGdiSetPixel( HDC hdc, INT x, INT y, COLORREF color )
 }
 
 /***********************************************************************
- *           SetPixelV    (GDI32.@)
- */
-BOOL WINAPI SetPixelV( HDC hdc, INT x, INT y, COLORREF color )
-{
-    PHYSDEV physdev;
-    DC * dc = get_dc_ptr( hdc );
-
-    if (!dc) return FALSE;
-    update_dc( dc );
-    physdev = GET_DC_PHYSDEV( dc, pSetPixel );
-    physdev->funcs->pSetPixel( physdev, x, y, color );
-    release_dc_ptr( dc );
-    return TRUE;
-}
-
-/***********************************************************************
  *           GetPixel    (GDI32.@)
  */
 COLORREF WINAPI GetPixel( HDC hdc, INT x, INT y )

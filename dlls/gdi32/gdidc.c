@@ -71,6 +71,14 @@ COLORREF WINAPI SetPixel( HDC hdc, INT x, INT y, COLORREF color )
 }
 
 /***********************************************************************
+ *           SetPixelV    (GDI32.@)
+ */
+BOOL WINAPI SetPixelV( HDC hdc, INT x, INT y, COLORREF color )
+{
+    return SetPixel( hdc, x, y, color ) != CLR_INVALID;
+}
+
+/***********************************************************************
  *           LineTo    (GDI32.@)
  */
 BOOL WINAPI LineTo( HDC hdc, INT x, INT y )
