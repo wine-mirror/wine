@@ -34,7 +34,6 @@
 typedef struct
 {
     struct gdi_physdev dev;
-    struct gdi_physdev pathdev;
     ENHMETAHEADER  *emh;           /* Pointer to enhanced metafile header */
     UINT       handles_size, cur_handles;
     HGDIOBJ   *handles;
