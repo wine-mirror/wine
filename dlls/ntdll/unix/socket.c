@@ -232,19 +232,14 @@ static socklen_t sockaddr_to_unix( const struct WS_sockaddr *wsaddr, int wsaddrl
     {
         struct WS_sockaddr_in6 win = {0};
 
-        if (wsaddrlen < sizeof(struct WS_sockaddr_in6_old)) return 0;
-        if (wsaddrlen < sizeof(struct WS_sockaddr_in6))
-            memcpy( &win, wsaddr, sizeof(struct WS_sockaddr_in6_old) );
-        else
-            memcpy( &win, wsaddr, sizeof(struct WS_sockaddr_in6) );
-
+        if (wsaddrlen < sizeof(win)) return 0;
+        memcpy( &win, wsaddr, sizeof(win) );
         uaddr->in6.sin6_family = AF_INET6;
         uaddr->in6.sin6_port = win.sin6_port;
         uaddr->in6.sin6_flowinfo = win.sin6_flowinfo;
         memcpy( &uaddr->in6.sin6_addr, &win.sin6_addr, sizeof(win.sin6_addr) );
 #ifdef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
-        if (wsaddrlen >= sizeof(struct WS_sockaddr_in6))
-            uaddr->in6.sin6_scope_id = win.sin6_scope_id;
+        uaddr->in6.sin6_scope_id = win.sin6_scope_id;
 #endif
         return sizeof(uaddr->in6);
     }
@@ -303,7 +298,6 @@ static socklen_t sockaddr_to_unix( const struct WS_sockaddr *wsaddr, int wsaddrl
 #endif
 
         case sizeof(struct WS_sockaddr_in6):
-        case sizeof(struct WS_sockaddr_in6_old):
             return sizeof(uaddr->in6);
         }
 
@@ -335,7 +329,7 @@ static int sockaddr_from_unix( const union unix_sockaddr *uaddr, struct WS_socka
     {
         struct WS_sockaddr_in6 win = {0};
 
-        if (wsaddrlen < sizeof(struct WS_sockaddr_in6_old)) return -1;
+        if (wsaddrlen < sizeof(win)) return -1;
         win.sin6_family = WS_AF_INET6;
         win.sin6_port = uaddr->in6.sin6_port;
         win.sin6_flowinfo = uaddr->in6.sin6_flowinfo;
@@ -343,13 +337,8 @@ static int sockaddr_from_unix( const union unix_sockaddr *uaddr, struct WS_socka
 #ifdef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
         win.sin6_scope_id = uaddr->in6.sin6_scope_id;
 #endif
-        if (wsaddrlen >= sizeof(struct WS_sockaddr_in6))
-        {
-            memcpy( wsaddr, &win, sizeof(struct WS_sockaddr_in6) );
-            return sizeof(struct WS_sockaddr_in6);
-        }
-        memcpy( wsaddr, &win, sizeof(struct WS_sockaddr_in6_old) );
-        return sizeof(struct WS_sockaddr_in6_old);
+        memcpy( wsaddr, &win, sizeof(win) );
+        return sizeof(win);
     }
 
 #ifdef HAS_IPX
