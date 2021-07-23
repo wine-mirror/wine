@@ -25,15 +25,22 @@
     SYSCALL_ENTRY( NtAddAtom ) \
     SYSCALL_ENTRY( NtAllocateLocallyUniqueId ) \
     SYSCALL_ENTRY( NtAllocateUuids ) \
+    SYSCALL_ENTRY( NtClearEvent ) \
     SYSCALL_ENTRY( NtClose ) \
+    SYSCALL_ENTRY( NtCreateEvent ) \
     SYSCALL_ENTRY( NtDeleteAtom ) \
     SYSCALL_ENTRY( NtFindAtom ) \
     SYSCALL_ENTRY( NtGetCurrentProcessorNumber ) \
+    SYSCALL_ENTRY( NtOpenEvent ) \
+    SYSCALL_ENTRY( NtPulseEvent ) \
     SYSCALL_ENTRY( NtQueryDefaultLocale ) \
     SYSCALL_ENTRY( NtQueryDefaultUILanguage ) \
+    SYSCALL_ENTRY( NtQueryEvent ) \
     SYSCALL_ENTRY( NtQueryInformationAtom ) \
     SYSCALL_ENTRY( NtQueryInstallUILanguage ) \
+    SYSCALL_ENTRY( NtResetEvent ) \
     SYSCALL_ENTRY( NtSetDefaultLocale ) \
-    SYSCALL_ENTRY( NtSetDefaultUILanguage )
+    SYSCALL_ENTRY( NtSetDefaultUILanguage ) \
+    SYSCALL_ENTRY( NtSetEvent )
 
 #endif /* __WOW64_SYSCALL_H */

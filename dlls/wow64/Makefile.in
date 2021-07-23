@@ -5,4 +5,5 @@ IMPORTS   = ntdll winecrt0
 EXTRADLLFLAGS = -nodefaultlibs -mno-cygwin -Wl,--image-base,0x6f000000
 
 C_SRCS = \
+	sync.c \
 	syscall.c
