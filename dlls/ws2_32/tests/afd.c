@@ -1582,17 +1582,17 @@ static void test_bind(void)
     memcpy(&params->addr, &bind_addr6, sizeof(bind_addr6));
     ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
             params, params6_size - 1, &addr6, sizeof(addr6));
-    todo_wine ok(ret == STATUS_INVALID_ADDRESS, "got %#x\n", ret);
+    ok(ret == STATUS_INVALID_ADDRESS, "got %#x\n", ret);
 
     memcpy(&params->addr, &bind_addr6, sizeof(bind_addr6));
     ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
             params, offsetof(struct afd_bind_params, addr) + sizeof(struct sockaddr_in6_old), &addr6, sizeof(addr6));
-    todo_wine ok(ret == STATUS_INVALID_ADDRESS, "got %#x\n", ret);
+    ok(ret == STATUS_INVALID_ADDRESS, "got %#x\n", ret);
 
     memcpy(&params->addr, &bind_addr6, sizeof(bind_addr6));
     ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
             params, offsetof(struct afd_bind_params, addr.sa_data), &addr6, sizeof(addr6));
-    todo_wine ok(ret == STATUS_INVALID_ADDRESS, "got %#x\n", ret);
+    ok(ret == STATUS_INVALID_ADDRESS, "got %#x\n", ret);
 
     memcpy(&params->addr, &bind_addr6, sizeof(bind_addr6));
     ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
@@ -1604,8 +1604,8 @@ static void test_bind(void)
             params, params6_size, &addr6, sizeof(addr6));
     todo_wine ok(ret == STATUS_PENDING, "got %#x\n", ret);
     ret = WaitForSingleObject(event, 0);
-    todo_wine ok(!ret, "got %#x\n", ret);
-    todo_wine ok(io.Status == STATUS_INVALID_ADDRESS_COMPONENT, "got %#x\n", io.Status);
+    ok(!ret, "got %#x\n", ret);
+    ok(io.Status == STATUS_INVALID_ADDRESS_COMPONENT, "got %#x\n", io.Status);
 
     memcpy(&params->addr, &bind_addr6, sizeof(bind_addr6));
     ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
@@ -1615,7 +1615,7 @@ static void test_bind(void)
     memcpy(&params->addr, &bind_addr6, sizeof(bind_addr6));
     ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
             params, params6_size - 1, &addr6, sizeof(addr6) - 1);
-    todo_wine ok(ret == STATUS_INVALID_ADDRESS, "got %#x\n", ret);
+    ok(ret == STATUS_INVALID_ADDRESS, "got %#x\n", ret);
 
     memcpy(&params->addr, &bind_addr6, sizeof(bind_addr6));
     ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
@@ -1629,15 +1629,12 @@ static void test_bind(void)
             params, params6_size, &addr6, sizeof(addr6));
     todo_wine ok(ret == STATUS_PENDING, "got %#x\n", ret);
     ret = WaitForSingleObject(event, 0);
-    todo_wine
-    {
-        ok(!ret, "got %#x\n", ret);
-        ok(!io.Status, "got %#x\n", io.Status);
-        ok(io.Information == sizeof(addr6), "got %#Ix\n", io.Information);
-        ok(addr6.sin6_family == AF_INET6, "got family %u\n", addr6.sin6_family);
-        ok(!memcmp(&addr6.sin6_addr, &bind_addr6.sin6_addr, sizeof(addr6.sin6_addr)), "address didn't match\n");
-        ok(!addr6.sin6_flowinfo, "got flow info %#x\n", addr6.sin6_flowinfo);
-    }
+    ok(!ret, "got %#x\n", ret);
+    ok(!io.Status, "got %#x\n", io.Status);
+    ok(io.Information == sizeof(addr6), "got %#Ix\n", io.Information);
+    ok(addr6.sin6_family == AF_INET6, "got family %u\n", addr6.sin6_family);
+    ok(!memcmp(&addr6.sin6_addr, &bind_addr6.sin6_addr, sizeof(addr6.sin6_addr)), "address didn't match\n");
+    ok(!addr6.sin6_flowinfo, "got flow info %#x\n", addr6.sin6_flowinfo);
     ok(addr6.sin6_port, "expected nonzero port\n");
 
     /* getsockname() returns EINVAL here. Possibly the socket name is cached (in shared memory?) */
@@ -1645,7 +1642,7 @@ static void test_bind(void)
     ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io,
             IOCTL_AFD_GETSOCKNAME, NULL, 0, &addr6_2, sizeof(addr6_2));
     ok(!ret, "got %#x\n", ret);
-    todo_wine ok(!memcmp(&addr6, &addr6_2, sizeof(addr6)), "addresses didn't match\n");
+    ok(!memcmp(&addr6, &addr6_2, sizeof(addr6)), "addresses didn't match\n");
 
     ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
             params, params6_size, &addr6, sizeof(addr6));
