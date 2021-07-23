@@ -39,6 +39,7 @@
     SYSCALL_ENTRY( NtCreateSymbolicLinkObject ) \
     SYSCALL_ENTRY( NtCreateTimer ) \
     SYSCALL_ENTRY( NtDebugContinue ) \
+    SYSCALL_ENTRY( NtDelayExecution ) \
     SYSCALL_ENTRY( NtDeleteAtom ) \
     SYSCALL_ENTRY( NtFindAtom ) \
     SYSCALL_ENTRY( NtGetCurrentProcessorNumber ) \
@@ -60,9 +61,11 @@
     SYSCALL_ENTRY( NtQueryInstallUILanguage ) \
     SYSCALL_ENTRY( NtQueryIoCompletion ) \
     SYSCALL_ENTRY( NtQueryMutant ) \
+    SYSCALL_ENTRY( NtQueryPerformanceCounter ) \
     SYSCALL_ENTRY( NtQuerySemaphore  ) \
     SYSCALL_ENTRY( NtQuerySymbolicLinkObject ) \
     SYSCALL_ENTRY( NtQueryTimer ) \
+    SYSCALL_ENTRY( NtQueryTimerResolution ) \
     SYSCALL_ENTRY( NtReleaseKeyedEvent ) \
     SYSCALL_ENTRY( NtReleaseMutant ) \
     SYSCALL_ENTRY( NtReleaseSemaphore ) \
@@ -73,8 +76,13 @@
     SYSCALL_ENTRY( NtSetInformationDebugObject ) \
     SYSCALL_ENTRY( NtSetIoCompletion ) \
     SYSCALL_ENTRY( NtSetTimer ) \
+    SYSCALL_ENTRY( NtSetTimerResolution ) \
+    SYSCALL_ENTRY( NtSignalAndWaitForSingleObject ) \
     SYSCALL_ENTRY( NtTerminateJobObject ) \
     SYSCALL_ENTRY( NtWaitForDebugEvent ) \
-    SYSCALL_ENTRY( NtWaitForKeyedEvent )
+    SYSCALL_ENTRY( NtWaitForKeyedEvent ) \
+    SYSCALL_ENTRY( NtWaitForMultipleObjects ) \
+    SYSCALL_ENTRY( NtWaitForSingleObject ) \
+    SYSCALL_ENTRY( NtYieldExecution )
 
 #endif /* __WOW64_SYSCALL_H */

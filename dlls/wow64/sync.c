@@ -283,6 +283,18 @@ NTSTATUS WINAPI wow64_NtDebugContinue( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtDelayExecution
+ */
+NTSTATUS WINAPI wow64_NtDelayExecution( UINT *args )
+{
+    BOOLEAN alertable = get_ulong( &args );
+    const LARGE_INTEGER *timeout = get_ptr( &args );
+
+    return NtDelayExecution( alertable, timeout );
+}
+
+
+/**********************************************************************
  *           wow64_NtOpenDirectoryObject
  */
 NTSTATUS WINAPI wow64_NtOpenDirectoryObject( UINT *args )
@@ -557,6 +569,18 @@ NTSTATUS WINAPI wow64_NtQueryMutant( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtQueryPerformanceCounter
+ */
+NTSTATUS WINAPI wow64_NtQueryPerformanceCounter( UINT *args )
+{
+    LARGE_INTEGER *counter = get_ptr( &args );
+    LARGE_INTEGER *frequency = get_ptr( &args );
+
+    return NtQueryPerformanceCounter( counter, frequency );
+}
+
+
+/**********************************************************************
  *           wow64_NtQuerySemaphore
  */
 NTSTATUS WINAPI wow64_NtQuerySemaphore( UINT *args )
@@ -601,6 +625,19 @@ NTSTATUS WINAPI wow64_NtQueryTimer( UINT *args )
     ULONG *retlen = get_ptr( &args );
 
     return NtQueryTimer( handle, class, info, len, retlen );
+}
+
+
+/**********************************************************************
+ *           wow64_NtQueryTimerResolution
+ */
+NTSTATUS WINAPI wow64_NtQueryTimerResolution( UINT *args )
+{
+    ULONG *min_res = get_ptr( &args );
+    ULONG *max_res = get_ptr( &args );
+    ULONG *current_res = get_ptr( &args );
+
+    return NtQueryTimerResolution( min_res, max_res, current_res );
 }
 
 
@@ -716,6 +753,33 @@ NTSTATUS WINAPI wow64_NtSetTimer( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtSetTimerResolution
+ */
+NTSTATUS WINAPI wow64_NtSetTimerResolution( UINT *args )
+{
+    ULONG res = get_ulong( &args );
+    BOOLEAN set = get_ulong( &args );
+    ULONG *current_res = get_ptr( &args );
+
+    return NtSetTimerResolution( res, set, current_res );
+}
+
+
+/**********************************************************************
+ *           wow64_NtSignalAndWaitForSingleObject
+ */
+NTSTATUS WINAPI wow64_NtSignalAndWaitForSingleObject( UINT *args )
+{
+    HANDLE signal = get_handle( &args );
+    HANDLE wait = get_handle( &args );
+    BOOLEAN alertable = get_ulong( &args );
+    const LARGE_INTEGER *timeout = get_ptr( &args );
+
+    return NtSignalAndWaitForSingleObject( signal, wait, alertable, timeout );
+}
+
+
+/**********************************************************************
  *           wow64_NtTerminateJobObject
  */
 NTSTATUS WINAPI wow64_NtTerminateJobObject( UINT *args )
@@ -812,4 +876,45 @@ NTSTATUS WINAPI wow64_NtWaitForKeyedEvent( UINT *args )
     const LARGE_INTEGER *timeout = get_ptr( &args );
 
     return NtWaitForKeyedEvent( handle, key, alertable, timeout );
+}
+
+
+/**********************************************************************
+ *           wow64_NtWaitForMultipleObjects
+ */
+NTSTATUS WINAPI wow64_NtWaitForMultipleObjects( UINT *args )
+{
+    DWORD count = get_ulong( &args );
+    LONG *handles_ptr = get_ptr( &args );
+    BOOLEAN wait_any = get_ulong( &args );
+    BOOLEAN alertable = get_ulong( &args );
+    const LARGE_INTEGER *timeout = get_ptr( &args );
+
+    HANDLE handles[MAXIMUM_WAIT_OBJECTS];
+    DWORD i;
+
+    for (i = 0; i < count && i < MAXIMUM_WAIT_OBJECTS; i++) handles[i] = LongToHandle( handles_ptr[i] );
+    return NtWaitForMultipleObjects( count, handles, wait_any, alertable, timeout );
+}
+
+
+/**********************************************************************
+ *           wow64_NtWaitForSingleObject
+ */
+NTSTATUS WINAPI wow64_NtWaitForSingleObject( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    BOOLEAN alertable = get_ulong( &args );
+    const LARGE_INTEGER *timeout = get_ptr( &args );
+
+    return NtWaitForSingleObject( handle, alertable, timeout );
+}
+
+
+/**********************************************************************
+ *           wow64_NtYieldExecution
+ */
+NTSTATUS WINAPI wow64_NtYieldExecution( UINT *args )
+{
+    return NtYieldExecution();
 }
