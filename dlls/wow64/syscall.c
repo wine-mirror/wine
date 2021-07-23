@@ -399,6 +399,15 @@ NTSTATUS WINAPI Wow64SystemServiceEx( UINT num, UINT *args )
 
 
 /**********************************************************************
+ *           Wow64ApcRoutine  (NTDLL.@)
+ */
+void WINAPI Wow64ApcRoutine( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3, CONTEXT *context )
+{
+    FIXME( "stub %lx %lx %lx\n", arg1, arg2, arg3 );
+}
+
+
+/**********************************************************************
  *           Wow64LdrpInitialize  (NTDLL.@)
  */
 void WINAPI Wow64LdrpInitialize( CONTEXT *context )

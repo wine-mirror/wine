@@ -28,6 +28,8 @@
 ALL_SYSCALLS
 #undef SYSCALL_ENTRY
 
+void WINAPI Wow64ApcRoutine( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3, CONTEXT *context ) DECLSPEC_HIDDEN;
+
 extern USHORT native_machine DECLSPEC_HIDDEN;
 extern USHORT current_machine DECLSPEC_HIDDEN;
 
