@@ -192,8 +192,8 @@ const char *debugstr_sockaddr( const struct WS_sockaddr *a )
         p = WS_inet_ntop( WS_AF_INET6, &sin->sin6_addr, buf, sizeof(buf) );
         if (!p)
             p = "(unknown IPv6 address)";
-        return wine_dbg_sprintf("{ family AF_INET6, address %s, port %d }",
-                                p, ntohs(sin->sin6_port));
+        return wine_dbg_sprintf("{ family AF_INET6, address %s, flow label %#x, port %d, scope %u }",
+                                p, sin->sin6_flowinfo, ntohs(sin->sin6_port), sin->sin6_scope_id );
     }
     case WS_AF_IPX:
     {
