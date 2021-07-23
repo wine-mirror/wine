@@ -36,6 +36,7 @@
     SYSCALL_ENTRY( NtCreateKeyedEvent ) \
     SYSCALL_ENTRY( NtCreateMutant ) \
     SYSCALL_ENTRY( NtCreateSemaphore ) \
+    SYSCALL_ENTRY( NtCreateSymbolicLinkObject ) \
     SYSCALL_ENTRY( NtCreateTimer ) \
     SYSCALL_ENTRY( NtDebugContinue ) \
     SYSCALL_ENTRY( NtDeleteAtom ) \
@@ -48,6 +49,7 @@
     SYSCALL_ENTRY( NtOpenKeyedEvent ) \
     SYSCALL_ENTRY( NtOpenMutant ) \
     SYSCALL_ENTRY( NtOpenSemaphore ) \
+    SYSCALL_ENTRY( NtOpenSymbolicLinkObject  ) \
     SYSCALL_ENTRY( NtOpenTimer ) \
     SYSCALL_ENTRY( NtPulseEvent ) \
     SYSCALL_ENTRY( NtQueryDefaultLocale ) \
@@ -59,6 +61,7 @@
     SYSCALL_ENTRY( NtQueryIoCompletion ) \
     SYSCALL_ENTRY( NtQueryMutant ) \
     SYSCALL_ENTRY( NtQuerySemaphore  ) \
+    SYSCALL_ENTRY( NtQuerySymbolicLinkObject ) \
     SYSCALL_ENTRY( NtQueryTimer ) \
     SYSCALL_ENTRY( NtReleaseKeyedEvent ) \
     SYSCALL_ENTRY( NtReleaseMutant ) \

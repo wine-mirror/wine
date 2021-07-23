@@ -224,6 +224,29 @@ NTSTATUS WINAPI wow64_NtCreateSemaphore( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtCreateSymbolicLinkObject
+ */
+NTSTATUS WINAPI wow64_NtCreateSymbolicLinkObject( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    UNICODE_STRING32 *target32 = get_ptr( &args );
+
+    struct object_attr64 attr;
+    UNICODE_STRING target;
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    *handle_ptr = 0;
+    status = NtCreateSymbolicLinkObject( &handle, access, objattr_32to64( &attr, attr32 ),
+                                         unicode_str_32to64( &target, target32 ));
+    put_handle( handle_ptr, handle );
+    return status;
+}
+
+
+/**********************************************************************
  *           wow64_NtCreateTimer
  */
 NTSTATUS WINAPI wow64_NtCreateTimer( UINT *args )
@@ -400,6 +423,26 @@ NTSTATUS WINAPI wow64_NtOpenSemaphore( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtOpenSymbolicLinkObject
+ */
+NTSTATUS WINAPI wow64_NtOpenSymbolicLinkObject( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+
+    struct object_attr64 attr;
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    *handle_ptr = 0;
+    status = NtOpenSymbolicLinkObject( &handle, access, objattr_32to64( &attr, attr32 ));
+    put_handle( handle_ptr, handle );
+    return status;
+}
+
+
+/**********************************************************************
  *           wow64_NtOpenTimer
  */
 NTSTATUS WINAPI wow64_NtOpenTimer( UINT *args )
@@ -525,6 +568,24 @@ NTSTATUS WINAPI wow64_NtQuerySemaphore( UINT *args )
     ULONG *retlen = get_ptr( &args );
 
     return NtQuerySemaphore( handle, class, info, len, retlen );
+}
+
+
+/**********************************************************************
+ *           wow64_NtQuerySymbolicLinkObject
+ */
+NTSTATUS WINAPI wow64_NtQuerySymbolicLinkObject( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    UNICODE_STRING32 *target32 = get_ptr( &args );
+    ULONG *retlen = get_ptr( &args );
+
+    UNICODE_STRING target;
+    NTSTATUS status;
+
+    status = NtQuerySymbolicLinkObject( handle, unicode_str_32to64( &target, target32 ), retlen );
+    if (!status) target32->Length = target.Length;
+    return status;
 }
 
 
