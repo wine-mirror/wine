@@ -31,6 +31,7 @@
     SYSCALL_ENTRY( NtCreateDebugObject ) \
     SYSCALL_ENTRY( NtCreateDirectoryObject ) \
     SYSCALL_ENTRY( NtCreateEvent ) \
+    SYSCALL_ENTRY( NtCreateIoCompletion ) \
     SYSCALL_ENTRY( NtCreateKeyedEvent ) \
     SYSCALL_ENTRY( NtCreateMutant ) \
     SYSCALL_ENTRY( NtCreateSemaphore ) \
@@ -41,6 +42,7 @@
     SYSCALL_ENTRY( NtGetCurrentProcessorNumber ) \
     SYSCALL_ENTRY( NtOpenDirectoryObject ) \
     SYSCALL_ENTRY( NtOpenEvent ) \
+    SYSCALL_ENTRY( NtOpenIoCompletion ) \
     SYSCALL_ENTRY( NtOpenKeyedEvent ) \
     SYSCALL_ENTRY( NtOpenMutant ) \
     SYSCALL_ENTRY( NtOpenSemaphore ) \
@@ -52,6 +54,7 @@
     SYSCALL_ENTRY( NtQueryEvent ) \
     SYSCALL_ENTRY( NtQueryInformationAtom ) \
     SYSCALL_ENTRY( NtQueryInstallUILanguage ) \
+    SYSCALL_ENTRY( NtQueryIoCompletion ) \
     SYSCALL_ENTRY( NtQueryMutant ) \
     SYSCALL_ENTRY( NtQuerySemaphore  ) \
     SYSCALL_ENTRY( NtQueryTimer ) \
@@ -63,6 +66,7 @@
     SYSCALL_ENTRY( NtSetDefaultUILanguage ) \
     SYSCALL_ENTRY( NtSetEvent ) \
     SYSCALL_ENTRY( NtSetInformationDebugObject ) \
+    SYSCALL_ENTRY( NtSetIoCompletion ) \
     SYSCALL_ENTRY( NtSetTimer ) \
     SYSCALL_ENTRY( NtWaitForDebugEvent ) \
     SYSCALL_ENTRY( NtWaitForKeyedEvent )

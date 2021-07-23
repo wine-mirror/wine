@@ -119,6 +119,27 @@ NTSTATUS WINAPI wow64_NtCreateEvent( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtCreateIoCompletion
+ */
+NTSTATUS WINAPI wow64_NtCreateIoCompletion( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    ULONG threads = get_ulong( &args );
+
+    struct object_attr64 attr;
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    *handle_ptr = 0;
+    status = NtCreateIoCompletion( &handle, access, objattr_32to64( &attr, attr32 ), threads );
+    put_handle( handle_ptr, handle );
+    return status;
+}
+
+
+/**********************************************************************
  *           wow64_NtCreateKeyedEvent
  */
 NTSTATUS WINAPI wow64_NtCreateKeyedEvent( UINT *args )
@@ -253,6 +274,26 @@ NTSTATUS WINAPI wow64_NtOpenEvent( UINT *args )
 
     *handle_ptr = 0;
     status = NtOpenEvent( &handle, access, objattr_32to64( &attr, attr32 ));
+    put_handle( handle_ptr, handle );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtOpenIoCompletion
+ */
+NTSTATUS WINAPI wow64_NtOpenIoCompletion( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+
+    struct object_attr64 attr;
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    *handle_ptr = 0;
+    status = NtOpenIoCompletion( &handle, access, objattr_32to64( &attr, attr32 ));
     put_handle( handle_ptr, handle );
     return status;
 }
@@ -403,6 +444,21 @@ NTSTATUS WINAPI wow64_NtQueryEvent( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtQueryIoCompletion
+ */
+NTSTATUS WINAPI wow64_NtQueryIoCompletion( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    IO_COMPLETION_INFORMATION_CLASS class = get_ulong( &args );
+    void *info = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    ULONG *retlen = get_ptr( &args );
+
+    return NtQueryIoCompletion( handle, class, info, len, retlen );
+}
+
+
+/**********************************************************************
  *           wow64_NtQueryMutant
  */
 NTSTATUS WINAPI wow64_NtQueryMutant( UINT *args )
@@ -522,6 +578,21 @@ NTSTATUS WINAPI wow64_NtSetInformationDebugObject( UINT *args )
     ULONG *retlen = get_ptr( &args );
 
     return NtSetInformationDebugObject( handle, class, ptr, len, retlen );
+}
+
+
+/**********************************************************************
+ *           wow64_NtSetIoCompletion
+ */
+NTSTATUS WINAPI wow64_NtSetIoCompletion( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    ULONG_PTR key = get_ulong( &args );
+    ULONG_PTR value = get_ulong( &args );
+    NTSTATUS status = get_ulong( &args );
+    SIZE_T count = get_ulong( &args );
+
+    return NtSetIoCompletion( handle, key, value, status, count );
 }
 
 
