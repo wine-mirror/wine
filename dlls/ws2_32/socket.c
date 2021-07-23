@@ -1097,14 +1097,14 @@ unsigned int ws_sockaddr_ws2u( const struct WS_sockaddr *wsaddr, int wsaddrlen,
         /* Note: Windows has 2 versions of the sockaddr_in6 struct, one with
          * scope_id, one without.
          */
-        if (wsaddrlen >= sizeof(struct WS_sockaddr_in6_old)) {
+        if (wsaddrlen >= sizeof(struct WS_sockaddr_in6)) {
             uaddrlen = sizeof(struct sockaddr_in6);
             memset( uaddr, 0, uaddrlen );
             uin6->sin6_family   = AF_INET6;
             uin6->sin6_port     = win6->sin6_port;
             uin6->sin6_flowinfo = win6->sin6_flowinfo;
 #ifdef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
-            if (wsaddrlen >= sizeof(struct WS_sockaddr_in6)) uin6->sin6_scope_id = win6->sin6_scope_id;
+            uin6->sin6_scope_id = win6->sin6_scope_id;
 #endif
             memcpy(&uin6->sin6_addr,&win6->sin6_addr,16); /* 16 bytes = 128 address bits */
             break;
@@ -1299,25 +1299,20 @@ int ws_sockaddr_u2ws(const struct sockaddr *uaddr, struct WS_sockaddr *wsaddr, i
 #endif
     case AF_INET6: {
         const struct sockaddr_in6* uin6 = (const struct sockaddr_in6*)uaddr;
-        struct WS_sockaddr_in6_old* win6old = (struct WS_sockaddr_in6_old*)wsaddr;
+        struct WS_sockaddr_in6 *win6 = (struct WS_sockaddr_in6 *)wsaddr;
 
-        if (*wsaddrlen < sizeof(struct WS_sockaddr_in6_old))
+        if (*wsaddrlen < sizeof(struct WS_sockaddr_in6))
             return -1;
-        win6old->sin6_family   = WS_AF_INET6;
-        win6old->sin6_port     = uin6->sin6_port;
-        win6old->sin6_flowinfo = uin6->sin6_flowinfo;
-        memcpy(&win6old->sin6_addr,&uin6->sin6_addr,16); /* 16 bytes = 128 address bits */
+        win6->sin6_family   = WS_AF_INET6;
+        win6->sin6_port     = uin6->sin6_port;
+        win6->sin6_flowinfo = uin6->sin6_flowinfo;
+        memcpy(&win6->sin6_addr, &uin6->sin6_addr, 16); /* 16 bytes = 128 address bits */
 #ifdef HAVE_STRUCT_SOCKADDR_IN6_SIN6_SCOPE_ID
-        if (*wsaddrlen >= sizeof(struct WS_sockaddr_in6)) {
-            struct WS_sockaddr_in6* win6 = (struct WS_sockaddr_in6*)wsaddr;
-            win6->sin6_scope_id = uin6->sin6_scope_id;
-            *wsaddrlen = sizeof(struct WS_sockaddr_in6);
-        }
-        else
-            *wsaddrlen = sizeof(struct WS_sockaddr_in6_old);
+        win6->sin6_scope_id = uin6->sin6_scope_id;
 #else
-        *wsaddrlen = sizeof(struct WS_sockaddr_in6_old);
+        win6->sin6_scope_id = 0;
 #endif
+        *wsaddrlen = sizeof(struct WS_sockaddr_in6);
         return 0;
     }
     case AF_INET: {
