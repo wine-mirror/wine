@@ -140,6 +140,26 @@ NTSTATUS WINAPI wow64_NtCreateIoCompletion( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtCreateJobObject
+ */
+NTSTATUS WINAPI wow64_NtCreateJobObject( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+
+    struct object_attr64 attr;
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    *handle_ptr = 0;
+    status = NtCreateJobObject( &handle, access, objattr_32to64( &attr, attr32 ));
+    put_handle( handle_ptr, handle );
+    return status;
+}
+
+
+/**********************************************************************
  *           wow64_NtCreateKeyedEvent
  */
 NTSTATUS WINAPI wow64_NtCreateKeyedEvent( UINT *args )
@@ -294,6 +314,26 @@ NTSTATUS WINAPI wow64_NtOpenIoCompletion( UINT *args )
 
     *handle_ptr = 0;
     status = NtOpenIoCompletion( &handle, access, objattr_32to64( &attr, attr32 ));
+    put_handle( handle_ptr, handle );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtOpenJobObject
+ */
+NTSTATUS WINAPI wow64_NtOpenJobObject( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+
+    struct object_attr64 attr;
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    *handle_ptr = 0;
+    status = NtOpenJobObject( &handle, access, objattr_32to64( &attr, attr32 ));
     put_handle( handle_ptr, handle );
     return status;
 }
@@ -611,6 +651,18 @@ NTSTATUS WINAPI wow64_NtSetTimer( UINT *args )
 
     return NtSetTimer( handle, when, apc_32to64( apc ), apc_param_32to64( apc, apc_param ),
                        resume, period, state );
+}
+
+
+/**********************************************************************
+ *           wow64_NtTerminateJobObject
+ */
+NTSTATUS WINAPI wow64_NtTerminateJobObject( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    NTSTATUS status = get_ulong( &args );
+
+    return NtTerminateJobObject( handle, status );
 }
 
 

@@ -32,6 +32,7 @@
     SYSCALL_ENTRY( NtCreateDirectoryObject ) \
     SYSCALL_ENTRY( NtCreateEvent ) \
     SYSCALL_ENTRY( NtCreateIoCompletion ) \
+    SYSCALL_ENTRY( NtCreateJobObject ) \
     SYSCALL_ENTRY( NtCreateKeyedEvent ) \
     SYSCALL_ENTRY( NtCreateMutant ) \
     SYSCALL_ENTRY( NtCreateSemaphore ) \
@@ -43,6 +44,7 @@
     SYSCALL_ENTRY( NtOpenDirectoryObject ) \
     SYSCALL_ENTRY( NtOpenEvent ) \
     SYSCALL_ENTRY( NtOpenIoCompletion ) \
+    SYSCALL_ENTRY( NtOpenJobObject ) \
     SYSCALL_ENTRY( NtOpenKeyedEvent ) \
     SYSCALL_ENTRY( NtOpenMutant ) \
     SYSCALL_ENTRY( NtOpenSemaphore ) \
@@ -68,6 +70,7 @@
     SYSCALL_ENTRY( NtSetInformationDebugObject ) \
     SYSCALL_ENTRY( NtSetIoCompletion ) \
     SYSCALL_ENTRY( NtSetTimer ) \
+    SYSCALL_ENTRY( NtTerminateJobObject ) \
     SYSCALL_ENTRY( NtWaitForDebugEvent ) \
     SYSCALL_ENTRY( NtWaitForKeyedEvent )
 
