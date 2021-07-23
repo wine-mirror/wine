@@ -130,7 +130,6 @@ typedef struct tagDC
     POINT         brush_org;
 
     DWORD         mapperFlags;       /* Font mapper flags */
-    WORD          textAlign;         /* Text alignment from SetTextAlign() */
     INT           charExtra;         /* Spacing from SetTextCharacterExtra() */
     INT           breakExtra;        /* breakTotalExtra / breakCount */
     INT           breakRem;          /* breakTotalExtra % breakCount */

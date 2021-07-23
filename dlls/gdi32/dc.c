@@ -94,7 +94,7 @@ static void set_initial_dc_state( DC *dc )
     dc->brush_org.x         = 0;
     dc->brush_org.y         = 0;
     dc->mapperFlags         = 0;
-    dc->textAlign           = TA_LEFT | TA_TOP | TA_NOUPDATECP;
+    dc->attr->text_align    = TA_LEFT | TA_TOP | TA_NOUPDATECP;
     dc->charExtra           = 0;
     dc->breakExtra          = 0;
     dc->breakRem            = 0;
@@ -409,7 +409,7 @@ INT CDECL nulldrv_SaveDC( PHYSDEV dev )
     newdc->dcPenColor       = dc->dcPenColor;
     newdc->brush_org        = dc->brush_org;
     newdc->mapperFlags      = dc->mapperFlags;
-    newdc->textAlign        = dc->textAlign;
+    newdc->attr->text_align = dc->attr->text_align;
     newdc->charExtra        = dc->charExtra;
     newdc->breakExtra       = dc->breakExtra;
     newdc->breakRem         = dc->breakRem;
@@ -486,7 +486,7 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     dc->dcPenColor       = dcs->dcPenColor;
     dc->brush_org        = dcs->brush_org;
     dc->mapperFlags      = dcs->mapperFlags;
-    dc->textAlign        = dcs->textAlign;
+    dc->attr->text_align = dcs->attr->text_align;
     dc->charExtra        = dcs->charExtra;
     dc->breakExtra       = dcs->breakExtra;
     dc->breakRem         = dcs->breakRem;
@@ -989,22 +989,6 @@ COLORREF WINAPI SetTextColor( HDC hdc, COLORREF color )
 
 
 /***********************************************************************
- *		GetTextAlign (GDI32.@)
- */
-UINT WINAPI GetTextAlign( HDC hdc )
-{
-    UINT ret = 0;
-    DC * dc = get_dc_ptr( hdc );
-    if (dc)
-    {
-        ret = dc->textAlign;
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-
-/***********************************************************************
  *           SetTextAlign    (GDI32.@)
  */
 UINT WINAPI SetTextAlign( HDC hdc, UINT align )
@@ -1020,8 +1004,8 @@ UINT WINAPI SetTextAlign( HDC hdc, UINT align )
         align = physdev->funcs->pSetTextAlign( physdev, align );
         if (align != GDI_ERROR)
         {
-            ret = dc->textAlign;
-            dc->textAlign = align;
+            ret = dc->attr->text_align;
+            dc->attr->text_align = align;
         }
         release_dc_ptr( dc );
     }

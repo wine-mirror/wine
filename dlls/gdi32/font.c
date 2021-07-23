@@ -5949,7 +5949,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     if (!dc) return FALSE;
     if (count > INT_MAX) return FALSE;
 
-    align = dc->textAlign;
+    align = dc->attr->text_align;
     breakRem = dc->breakRem;
     layout = dc->layout;
 

@@ -936,7 +936,7 @@ BOOL CDECL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT 
     BOOL ret;
     int textHeight = 0;
     int textWidth = 0;
-    const UINT textAlign = dc->textAlign;
+    const UINT textAlign = dc->attr->text_align;
     const INT graphicsMode = dc->attr->graphics_mode;
     FLOAT exScale, eyScale;
 

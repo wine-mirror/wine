@@ -38,6 +38,15 @@ static DC_ATTR *get_dc_attr( HDC hdc )
 }
 
 /***********************************************************************
+ *		GetTextAlign (GDI32.@)
+ */
+UINT WINAPI GetTextAlign( HDC hdc )
+{
+    DC_ATTR *dc_attr = get_dc_attr( hdc );
+    return dc_attr ? dc_attr->text_align : 0;
+}
+
+/***********************************************************************
  *		GetCurrentPositionEx (GDI32.@)
  */
 BOOL WINAPI GetCurrentPositionEx( HDC hdc, POINT *point )
