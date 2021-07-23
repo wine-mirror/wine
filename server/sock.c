@@ -2492,7 +2492,7 @@ static int sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         }
         in_size = get_req_data_size() - get_reply_max_size();
         if (in_size < offsetof(struct afd_bind_params, addr.sa_data)
-                || get_reply_max_size() < sizeof(struct WS_sockaddr))
+                || get_reply_max_size() < in_size - sizeof(int))
         {
             set_error( STATUS_INVALID_PARAMETER );
             return 0;

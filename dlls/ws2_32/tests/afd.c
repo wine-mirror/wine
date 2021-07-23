@@ -1610,7 +1610,7 @@ static void test_bind(void)
     memcpy(&params->addr, &bind_addr6, sizeof(bind_addr6));
     ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
             params, params6_size, &addr6, sizeof(addr6) - 1);
-    todo_wine ok(ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret);
 
     memcpy(&params->addr, &bind_addr6, sizeof(bind_addr6));
     ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
@@ -1620,7 +1620,7 @@ static void test_bind(void)
     memcpy(&params->addr, &bind_addr6, sizeof(bind_addr6));
     ret = NtDeviceIoControlFile((HANDLE)s, event, NULL, NULL, &io, IOCTL_AFD_BIND,
             params, params6_size, &addr6, sizeof(struct sockaddr_in6_old));
-    todo_wine ok(ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret);
+    ok(ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret);
 
     memcpy(&params->addr, &bind_addr6, sizeof(bind_addr6));
     memset(&io, 0xcc, sizeof(io));
