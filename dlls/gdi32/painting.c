@@ -699,24 +699,21 @@ BOOL WINAPI NtGdiAngleArc( HDC hdc, INT x, INT y, DWORD dwRadius, FLOAT eStartAn
 }
 
 /***********************************************************************
- *      PolyDraw (GDI32.@)
+ *      NtGdiPolyDraw (win32u.@)
  */
-BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
-                       DWORD cCount)
+BOOL WINAPI NtGdiPolyDraw( HDC hdc, const POINT *points, const BYTE *types, DWORD count )
 {
     DC *dc = get_dc_ptr( hdc );
     PHYSDEV physdev;
     BOOL result;
 
-    TRACE( "%p, %p, %p, %u\n", hdc, lppt, lpbTypes, cCount );
-
     if(!dc) return FALSE;
 
     update_dc( dc );
     physdev = GET_DC_PHYSDEV( dc, pPolyDraw );
-    result = physdev->funcs->pPolyDraw( physdev, lppt, lpbTypes, cCount );
-    if (result && cCount)
-        dc->attr->cur_pos = lppt[cCount - 1];
+    result = physdev->funcs->pPolyDraw( physdev, points, types, count );
+    if (result && count)
+        dc->attr->cur_pos = points[count - 1];
 
     release_dc_ptr( dc );
     return result;

@@ -3324,6 +3324,9 @@ static void test_mf_Graphics(void)
     INT type;
     BOOL ret;
 
+    static const POINT points[] = { {1, 1}, {2, 2} };
+    static const BYTE types[] = { PT_MOVETO, PT_LINETO };
+
     hdcMetafile = CreateMetaFileA(NULL);
     ok(hdcMetafile != 0, "CreateMetaFileA(NULL) error %d\n", GetLastError());
 
@@ -3343,6 +3346,12 @@ static void test_mf_Graphics(void)
 
     ret = ArcTo(hdcMetafile, 1, 2, 30, 40, 11, 12, 23, 24 );
     ok( !ret, "ArcTo succeeded\n" );
+
+    SetLastError(0xdeadbeef);
+    ret = PolyDraw(hdcMetafile, points, types, ARRAY_SIZE(points));
+    ok(!ret, "PolyDraw succeeded\n");
+    todo_wine
+    ok(GetLastError() == 0xdeadbeef, "GetLastError() = %u\n", GetLastError());
 
     hMetafile = CloseMetaFile(hdcMetafile);
     ok(hMetafile != 0, "CloseMetaFile error %d\n", GetLastError());

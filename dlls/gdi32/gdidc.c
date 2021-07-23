@@ -337,3 +337,17 @@ BOOL WINAPI PolylineTo( HDC hdc, const POINT *points, DWORD count )
     if (dc_attr->emf && !EMFDC_PolylineTo( dc_attr, points, count )) return FALSE;
     return NtGdiPolyPolyDraw( hdc, points, &count, 1, NtGdiPolylineTo );
 }
+
+/***********************************************************************
+ *      PolyDraw (GDI32.@)
+ */
+BOOL WINAPI PolyDraw( HDC hdc, const POINT *points, const BYTE *types, DWORD count )
+{
+    DC_ATTR *dc_attr;
+
+    TRACE( "%p, %p, %p, %u\n", hdc, points, types, count );
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_PolyDraw( dc_attr, points, types, count )) return FALSE;
+    return NtGdiPolyDraw( hdc, points, types, count );
+}

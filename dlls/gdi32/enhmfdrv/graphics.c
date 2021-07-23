@@ -741,11 +741,11 @@ BOOL CDECL EMFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, 
 }
 
 /**********************************************************************
- *          EMFDRV_PolyDraw
+ *          EMFDC_PolyDraw
  */
-BOOL CDECL EMFDRV_PolyDraw( PHYSDEV dev, const POINT *pts, const BYTE *types, DWORD count )
+BOOL EMFDC_PolyDraw( DC_ATTR *dc_attr, const POINT *pts, const BYTE *types, DWORD count )
 {
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
+    EMFDRV_PDEVICE *emf = dc_attr->emf;
     EMRPOLYDRAW *emr;
     BOOL ret;
     BYTE *types_dest;
@@ -765,15 +765,25 @@ BOOL CDECL EMFDRV_PolyDraw( PHYSDEV dev, const POINT *pts, const BYTE *types, DW
     memcpy( types_dest, types, count );
     if (count & 3) memset( types_dest + count, 0, 4 - (count & 3) );
 
-    if (!physDev->path)
+    if (!emf->path)
         get_points_bounds( &emr->rclBounds, pts, count, 0 );
     else
         emr->rclBounds = empty_bounds;
 
-    ret = EMFDRV_WriteRecord( dev, &emr->emr );
-    if (ret && !physDev->path) EMFDRV_UpdateBBox( dev, &emr->rclBounds );
+    ret = EMFDRV_WriteRecord( &emf->dev, &emr->emr );
+    if (ret && !emf->path) EMFDRV_UpdateBBox( &emf->dev, &emr->rclBounds );
     HeapFree( GetProcessHeap(), 0, emr );
     return ret;
+}
+
+
+/**********************************************************************
+ *          EMFDRV_PolyDraw
+ */
+BOOL CDECL EMFDRV_PolyDraw( PHYSDEV dev, const POINT *pts, const BYTE *types, DWORD count )
+{
+    /* FIXME: update bounding rect */
+    return TRUE;
 }
 
 
