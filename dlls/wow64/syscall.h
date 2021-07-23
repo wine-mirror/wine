@@ -29,6 +29,7 @@
     SYSCALL_ENTRY( NtClearEvent ) \
     SYSCALL_ENTRY( NtClose ) \
     SYSCALL_ENTRY( NtCreateEvent ) \
+    SYSCALL_ENTRY( NtCreateKeyedEvent ) \
     SYSCALL_ENTRY( NtCreateMutant ) \
     SYSCALL_ENTRY( NtCreateSemaphore ) \
     SYSCALL_ENTRY( NtCreateTimer ) \
@@ -36,6 +37,7 @@
     SYSCALL_ENTRY( NtFindAtom ) \
     SYSCALL_ENTRY( NtGetCurrentProcessorNumber ) \
     SYSCALL_ENTRY( NtOpenEvent ) \
+    SYSCALL_ENTRY( NtOpenKeyedEvent ) \
     SYSCALL_ENTRY( NtOpenMutant ) \
     SYSCALL_ENTRY( NtOpenSemaphore ) \
     SYSCALL_ENTRY( NtOpenTimer ) \
@@ -48,12 +50,14 @@
     SYSCALL_ENTRY( NtQueryMutant ) \
     SYSCALL_ENTRY( NtQuerySemaphore  ) \
     SYSCALL_ENTRY( NtQueryTimer ) \
+    SYSCALL_ENTRY( NtReleaseKeyedEvent ) \
     SYSCALL_ENTRY( NtReleaseMutant ) \
     SYSCALL_ENTRY( NtReleaseSemaphore ) \
     SYSCALL_ENTRY( NtResetEvent ) \
     SYSCALL_ENTRY( NtSetDefaultLocale ) \
     SYSCALL_ENTRY( NtSetDefaultUILanguage ) \
     SYSCALL_ENTRY( NtSetEvent ) \
-    SYSCALL_ENTRY( NtSetTimer )
+    SYSCALL_ENTRY( NtSetTimer ) \
+    SYSCALL_ENTRY( NtWaitForKeyedEvent )
 
 #endif /* __WOW64_SYSCALL_H */

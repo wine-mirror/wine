@@ -75,6 +75,27 @@ NTSTATUS WINAPI wow64_NtCreateEvent( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtCreateKeyedEvent
+ */
+NTSTATUS WINAPI wow64_NtCreateKeyedEvent( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    ULONG flags = get_ulong( &args );
+
+    struct object_attr64 attr;
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    *handle_ptr = 0;
+    status = NtCreateKeyedEvent( &handle, access, objattr_32to64( &attr, attr32 ), flags );
+    put_handle( handle_ptr, handle );
+    return status;
+}
+
+
+/**********************************************************************
  *           wow64_NtCreateMutant
  */
 NTSTATUS WINAPI wow64_NtCreateMutant( UINT *args )
@@ -153,6 +174,26 @@ NTSTATUS WINAPI wow64_NtOpenEvent( UINT *args )
 
     *handle_ptr = 0;
     status = NtOpenEvent( &handle, access, objattr_32to64( &attr, attr32 ));
+    put_handle( handle_ptr, handle );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtOpenKeyedEvent
+ */
+NTSTATUS WINAPI wow64_NtOpenKeyedEvent( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+
+    struct object_attr64 attr;
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    *handle_ptr = 0;
+    status = NtOpenKeyedEvent( &handle, access, objattr_32to64( &attr, attr32 ));
     put_handle( handle_ptr, handle );
     return status;
 }
@@ -291,6 +332,20 @@ NTSTATUS WINAPI wow64_NtQueryTimer( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtReleaseKeyedEvent
+ */
+NTSTATUS WINAPI wow64_NtReleaseKeyedEvent( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    void *key = get_ptr( &args );
+    BOOLEAN alertable = get_ulong( &args );
+    const LARGE_INTEGER *timeout = get_ptr( &args );
+
+    return NtReleaseKeyedEvent( handle, key, alertable, timeout );
+}
+
+
+/**********************************************************************
  *           wow64_NtReleaseMutant
  */
 NTSTATUS WINAPI wow64_NtReleaseMutant( UINT *args )
@@ -354,4 +409,18 @@ NTSTATUS WINAPI wow64_NtSetTimer( UINT *args )
 
     return NtSetTimer( handle, when, apc_32to64( apc ), apc_param_32to64( apc, apc_param ),
                        resume, period, state );
+}
+
+
+/**********************************************************************
+ *           wow64_NtWaitForKeyedEvent
+ */
+NTSTATUS WINAPI wow64_NtWaitForKeyedEvent( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    const void *key = get_ptr( &args );
+    BOOLEAN alertable = get_ulong( &args );
+    const LARGE_INTEGER *timeout = get_ptr( &args );
+
+    return NtWaitForKeyedEvent( handle, key, alertable, timeout );
 }
