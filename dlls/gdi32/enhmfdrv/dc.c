@@ -484,32 +484,28 @@ DWORD CDECL EMFDRV_SetMapperFlags( PHYSDEV dev, DWORD flags )
     return EMFDRV_WriteRecord( dev, &emr.emr ) ? flags : GDI_ERROR;
 }
 
-BOOL CDECL EMFDRV_AbortPath( PHYSDEV dev )
+BOOL EMFDC_AbortPath( DC_ATTR *dc_attr )
 {
+    EMFDRV_PDEVICE *emf = dc_attr->emf;
     EMRABORTPATH emr;
 
     emr.emr.iType = EMR_ABORTPATH;
     emr.emr.nSize = sizeof(emr);
 
-    return EMFDRV_WriteRecord( dev, &emr.emr );
+    emf->path = FALSE;
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
-BOOL CDECL EMFDRV_BeginPath( PHYSDEV dev )
+BOOL EMFDC_BeginPath( DC_ATTR *dc_attr )
 {
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pBeginPath );
+    EMFDRV_PDEVICE *emf = dc_attr->emf;
     EMRBEGINPATH emr;
-    DC *dc = get_physdev_dc( dev );
 
     emr.emr.iType = EMR_BEGINPATH;
     emr.emr.nSize = sizeof(emr);
 
-    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
-    if (physDev->path) return TRUE;  /* already open */
-
-    if (!next->funcs->pBeginPath( next )) return FALSE;
-    push_dc_driver( &dc->physDev, &physDev->pathdev, &emfpath_driver );
-    physDev->path = TRUE;
+    if (!EMFDRV_WriteRecord( &emf->dev, &emr.emr )) return FALSE;
+    emf->path = TRUE;
     return TRUE;
 }
 
@@ -523,15 +519,16 @@ BOOL EMFDC_CloseFigure( DC_ATTR *dc_attr )
     return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
-BOOL CDECL EMFDRV_EndPath( PHYSDEV dev )
+BOOL EMFDC_EndPath( DC_ATTR *dc_attr )
 {
+    EMFDRV_PDEVICE *emf = dc_attr->emf;
     EMRENDPATH emr;
 
     emr.emr.iType = EMR_ENDPATH;
     emr.emr.nSize = sizeof(emr);
 
-    EMFDRV_WriteRecord( dev, &emr.emr );
-    return FALSE;  /* always fails without a path */
+    emf->path = FALSE;
+    return EMFDRV_WriteRecord( &emf->dev, &emr.emr );
 }
 
 BOOL CDECL EMFDRV_FlattenPath( PHYSDEV dev )

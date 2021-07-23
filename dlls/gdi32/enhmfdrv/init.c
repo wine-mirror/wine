@@ -37,12 +37,12 @@ static BOOL CDECL EMFDRV_DeleteDC( PHYSDEV dev );
 static const struct gdi_dc_funcs emfdrv_driver =
 {
     NULL,                            /* pAbortDoc */
-    EMFDRV_AbortPath,                /* pAbortPath */
+    NULL,                            /* pAbortPath */
     EMFDRV_AlphaBlend,               /* pAlphaBlend */
     NULL,                            /* pAngleArc */
     EMFDRV_Arc,                      /* pArc */
     EMFDRV_ArcTo,                    /* pArcTo */
-    EMFDRV_BeginPath,                /* pBeginPath */
+    NULL,                            /* pBeginPath */
     NULL,                            /* pBlendImage */
     NULL,                            /* pChord */
     NULL,                            /* pCloseFigure */
@@ -54,7 +54,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     EMFDRV_Ellipse,                  /* pEllipse */
     NULL,                            /* pEndDoc */
     NULL,                            /* pEndPage */
-    EMFDRV_EndPath,                  /* pEndPath */
+    NULL,                            /* pEndPath */
     NULL,                            /* pEnumFonts */
     NULL,                            /* pEnumICMProfiles */
     EMFDRV_ExcludeClipRect,          /* pExcludeClipRect */

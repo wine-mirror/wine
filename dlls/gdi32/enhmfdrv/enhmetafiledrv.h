@@ -59,21 +59,18 @@ extern DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush ) DECLSPEC_H
 #define HANDLE_LIST_INC 20
 
 /* Metafile driver functions */
-extern BOOL     CDECL EMFDRV_AbortPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_AlphaBlend( PHYSDEV dev_dst, struct bitblt_coords *dst,
                                          PHYSDEV dev_src, struct bitblt_coords *src, BLENDFUNCTION func ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_Arc( PHYSDEV dev, INT left, INT top, INT right,
                                   INT bottom, INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_ArcTo( PHYSDEV dev, INT left, INT top, INT right,
                                     INT bottom, INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL EMFDRV_BeginPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_BitBlt( PHYSDEV devDst, INT xDst, INT yDst, INT width, INT height,
                                      PHYSDEV devSrc, INT xSrc, INT ySrc, DWORD rop ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                                     INT xstart, INT ystart, INT xend, INT yend ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_DeleteObject( PHYSDEV dev, HGDIOBJ obj ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
-extern BOOL     CDECL EMFDRV_EndPath( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern INT      CDECL EMFDRV_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillType ) DECLSPEC_HIDDEN;
 extern INT      CDECL EMFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode ) DECLSPEC_HIDDEN;

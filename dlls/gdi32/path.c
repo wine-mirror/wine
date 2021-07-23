@@ -552,9 +552,9 @@ int get_gdi_path_data( struct gdi_path *path, POINT **pts, BYTE **flags )
 }
 
 /***********************************************************************
- *           BeginPath    (GDI32.@)
+ *           NtGdiBeginPath    (win32u.@)
  */
-BOOL WINAPI BeginPath(HDC hdc)
+BOOL WINAPI NtGdiBeginPath( HDC hdc )
 {
     BOOL ret = FALSE;
     DC *dc = get_dc_ptr( hdc );
@@ -570,9 +570,9 @@ BOOL WINAPI BeginPath(HDC hdc)
 
 
 /***********************************************************************
- *           EndPath    (GDI32.@)
+ *           NtGdiEndPath    (win32u.@)
  */
-BOOL WINAPI EndPath(HDC hdc)
+BOOL WINAPI NtGdiEndPath( HDC hdc )
 {
     BOOL ret = FALSE;
     DC *dc = get_dc_ptr( hdc );
@@ -588,20 +588,9 @@ BOOL WINAPI EndPath(HDC hdc)
 
 
 /******************************************************************************
- * AbortPath [GDI32.@]
- * Closes and discards paths from device context
- *
- * NOTES
- *    Check that SetLastError is being called correctly
- *
- * PARAMS
- *    hdc [I] Handle to device context
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
+ *           NtGdiAbortPath    (win32u.@)
  */
-BOOL WINAPI AbortPath( HDC hdc )
+BOOL WINAPI NtGdiAbortPath( HDC hdc )
 {
     BOOL ret = FALSE;
     DC *dc = get_dc_ptr( hdc );
@@ -2033,21 +2022,21 @@ BOOL CDECL nulldrv_SelectClipPath( PHYSDEV dev, INT mode )
 BOOL CDECL nulldrv_FillPath( PHYSDEV dev )
 {
     if (GetPath( dev->hdc, NULL, NULL, 0 ) == -1) return FALSE;
-    AbortPath( dev->hdc );
+    NtGdiAbortPath( dev->hdc );
     return TRUE;
 }
 
 BOOL CDECL nulldrv_StrokeAndFillPath( PHYSDEV dev )
 {
     if (GetPath( dev->hdc, NULL, NULL, 0 ) == -1) return FALSE;
-    AbortPath( dev->hdc );
+    NtGdiAbortPath( dev->hdc );
     return TRUE;
 }
 
 BOOL CDECL nulldrv_StrokePath( PHYSDEV dev )
 {
     if (GetPath( dev->hdc, NULL, NULL, 0 ) == -1) return FALSE;
-    AbortPath( dev->hdc );
+    NtGdiAbortPath( dev->hdc );
     return TRUE;
 }
 

@@ -377,6 +377,42 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,
 }
 
 /***********************************************************************
+ *           BeginPath    (GDI32.@)
+ */
+BOOL WINAPI BeginPath(HDC hdc)
+{
+    DC_ATTR *dc_attr;
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_BeginPath( dc_attr )) return FALSE;
+    return NtGdiBeginPath( hdc );
+}
+
+/***********************************************************************
+ *           EndPath    (GDI32.@)
+ */
+BOOL WINAPI EndPath(HDC hdc)
+{
+    DC_ATTR *dc_attr;
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_EndPath( dc_attr )) return FALSE;
+    return NtGdiEndPath( hdc );
+}
+
+/***********************************************************************
+ *           AbortPath  (GDI32.@)
+ */
+BOOL WINAPI AbortPath( HDC hdc )
+{
+    DC_ATTR *dc_attr;
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_AbortPath( dc_attr )) return FALSE;
+    return NtGdiAbortPath( hdc );
+}
+
+/***********************************************************************
  *           CloseFigure    (GDI32.@)
  */
 BOOL WINAPI CloseFigure( HDC hdc )
