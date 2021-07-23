@@ -63,6 +63,17 @@ static inline ULONG get_ulong( UINT **args ) { return *(*args)++; }
 static inline HANDLE get_handle( UINT **args ) { return LongToHandle( *(*args)++ ); }
 static inline void *get_ptr( UINT **args ) { return ULongToPtr( *(*args)++ ); }
 
+static inline void *apc_32to64( ULONG func )
+{
+    return func ? Wow64ApcRoutine : NULL;
+}
+
+static inline void *apc_param_32to64( ULONG func, ULONG context )
+{
+    if (!func) return ULongToPtr( context );
+    return (void *)(ULONG_PTR)(((ULONG64)func << 32) | context);
+}
+
 static inline UNICODE_STRING *unicode_str_32to64( UNICODE_STRING *str, const UNICODE_STRING32 *str32 )
 {
     if (!str32) return NULL;

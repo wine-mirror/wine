@@ -30,6 +30,18 @@
 
 
 /**********************************************************************
+ *           wow64_NtCancelTimer
+ */
+NTSTATUS WINAPI wow64_NtCancelTimer( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    BOOLEAN *state = get_ptr( &args );
+
+    return NtCancelTimer( handle, state );
+}
+
+
+/**********************************************************************
  *           wow64_NtClearEvent
  */
 NTSTATUS WINAPI wow64_NtClearEvent( UINT *args )
@@ -106,6 +118,27 @@ NTSTATUS WINAPI wow64_NtCreateSemaphore( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtCreateTimer
+ */
+NTSTATUS WINAPI wow64_NtCreateTimer( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    TIMER_TYPE type = get_ulong( &args );
+
+    struct object_attr64 attr;
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    *handle_ptr = 0;
+    status = NtCreateTimer( &handle, access, objattr_32to64( &attr, attr32 ), type );
+    put_handle( handle_ptr, handle );
+    return status;
+}
+
+
+/**********************************************************************
  *           wow64_NtOpenEvent
  */
 NTSTATUS WINAPI wow64_NtOpenEvent( UINT *args )
@@ -160,6 +193,26 @@ NTSTATUS WINAPI wow64_NtOpenSemaphore( UINT *args )
 
     *handle_ptr = 0;
     status = NtOpenSemaphore( &handle, access, objattr_32to64( &attr, attr32 ));
+    put_handle( handle_ptr, handle );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtOpenTimer
+ */
+NTSTATUS WINAPI wow64_NtOpenTimer( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+
+    struct object_attr64 attr;
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    *handle_ptr = 0;
+    status = NtOpenTimer( &handle, access, objattr_32to64( &attr, attr32 ));
     put_handle( handle_ptr, handle );
     return status;
 }
@@ -223,6 +276,21 @@ NTSTATUS WINAPI wow64_NtQuerySemaphore( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtQueryTimer
+ */
+NTSTATUS WINAPI wow64_NtQueryTimer( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    TIMER_INFORMATION_CLASS class = get_ulong( &args );
+    void *info = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    ULONG *retlen = get_ptr( &args );
+
+    return NtQueryTimer( handle, class, info, len, retlen );
+}
+
+
+/**********************************************************************
  *           wow64_NtReleaseMutant
  */
 NTSTATUS WINAPI wow64_NtReleaseMutant( UINT *args )
@@ -268,4 +336,22 @@ NTSTATUS WINAPI wow64_NtSetEvent( UINT *args )
     LONG *prev_state = get_ptr( &args );
 
     return NtSetEvent( handle, prev_state );
+}
+
+
+/**********************************************************************
+ *           wow64_NtSetTimer
+ */
+NTSTATUS WINAPI wow64_NtSetTimer( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    LARGE_INTEGER *when = get_ptr( &args );
+    ULONG apc = get_ulong( &args );
+    ULONG apc_param = get_ulong( &args );
+    BOOLEAN resume = get_ulong( &args );
+    ULONG period = get_ulong( &args );
+    BOOLEAN *state = get_ptr( &args );
+
+    return NtSetTimer( handle, when, apc_32to64( apc ), apc_param_32to64( apc, apc_param ),
+                       resume, period, state );
 }
