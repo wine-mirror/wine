@@ -1535,6 +1535,8 @@ NTSTATUS WINAPI NtOpenThread( HANDLE *handle, ACCESS_MASK access,
 {
     NTSTATUS ret;
 
+    *handle = 0;
+
     SERVER_START_REQ( open_thread )
     {
         req->tid        = HandleToULong(id->UniqueThread);

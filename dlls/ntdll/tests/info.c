@@ -3081,6 +3081,8 @@ static void test_thread_lookup(void)
     cid.UniqueThread = ULongToHandle(GetCurrentThreadId());
     status = pNtOpenThread(&handle, THREAD_QUERY_INFORMATION, &attr, &cid);
     ok(!status, "NtOpenThread returned %#x\n", status);
+    status = pNtOpenThread((HANDLE *)0xdeadbee0, THREAD_QUERY_INFORMATION, &attr, &cid);
+    ok( status == STATUS_ACCESS_VIOLATION, "NtOpenThread returned %#x\n", status);
 
     status = pNtQueryObject(handle, ObjectBasicInformation, &obj_info, sizeof(obj_info), NULL);
     ok(!status, "NtQueryObject returned: %#x\n", status);
@@ -3110,16 +3112,21 @@ static void test_thread_lookup(void)
 
     cid.UniqueProcess = ULongToHandle(0xdeadbeef);
     cid.UniqueThread = ULongToHandle(GetCurrentThreadId());
-    status = pNtOpenThread(&handle, THREAD_QUERY_INFORMATION, &attr, &cid);
+    handle = (HANDLE)0xdeadbeef;
+    status = NtOpenThread(&handle, THREAD_QUERY_INFORMATION, &attr, &cid);
     todo_wine
     ok(status == STATUS_INVALID_CID, "NtOpenThread returned %#x\n", status);
+    todo_wine
+    ok( !handle || broken(handle == (HANDLE)0xdeadbeef) /* vista */, "handle set %p\n", handle );
     if (!status) pNtClose(handle);
 
     cid.UniqueProcess = 0;
     cid.UniqueThread = ULongToHandle(0xdeadbeef);
+    handle = (HANDLE)0xdeadbeef;
     status = pNtOpenThread(&handle, THREAD_QUERY_INFORMATION, &attr, &cid);
     ok(status == STATUS_INVALID_CID || broken(status == STATUS_INVALID_PARAMETER) /* winxp */,
        "NtOpenThread returned %#x\n", status);
+    ok( !handle || broken(handle == (HANDLE)0xdeadbeef) /* vista */, "handle set %p\n", handle );
 }
 
 static void test_thread_info(void)
