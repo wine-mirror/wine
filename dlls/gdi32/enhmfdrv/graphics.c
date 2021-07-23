@@ -524,9 +524,9 @@ BOOL CDECL EMFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
 }
 
 /***********************************************************************
- *           EMFDRV_SetPixel
+ *           EMFDC_SetPixel
  */
-COLORREF CDECL EMFDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
+BOOL EMFDC_SetPixel( DC_ATTR *dc_attr, INT x, INT y, COLORREF color )
 {
     EMRSETPIXELV emr;
 
@@ -535,15 +535,19 @@ COLORREF CDECL EMFDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
     emr.ptlPixel.x = x;
     emr.ptlPixel.y = y;
     emr.crColor = color;
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
+}
 
-    if (EMFDRV_WriteRecord( dev, &emr.emr )) {
-        RECTL bounds;
-        bounds.left = bounds.right = x;
-        bounds.top = bounds.bottom = y;
-        EMFDRV_UpdateBBox( dev, &bounds );
-        return color;
-    }
-    return -1;
+/***********************************************************************
+ *           EMFDRV_SetPixel
+ */
+COLORREF CDECL EMFDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
+{
+    RECTL bounds;
+    bounds.left = bounds.right = x;
+    bounds.top = bounds.bottom = y;
+    EMFDRV_UpdateBBox( dev, &bounds );
+    return CLR_INVALID;
 }
 
 /**********************************************************************

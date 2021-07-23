@@ -399,15 +399,15 @@ BOOL WINAPI NtGdiRoundRect( HDC hdc, INT left, INT top, INT right,
 }
 
 /***********************************************************************
- *           SetPixel    (GDI32.@)
+ *           NtGdiSetPixel    (win32u.@)
  */
-COLORREF WINAPI SetPixel( HDC hdc, INT x, INT y, COLORREF color )
+COLORREF WINAPI NtGdiSetPixel( HDC hdc, INT x, INT y, COLORREF color )
 {
     PHYSDEV physdev;
     COLORREF ret;
     DC * dc = get_dc_ptr( hdc );
 
-    if (!dc) return ~0;
+    if (!dc) return CLR_INVALID;
     update_dc( dc );
     physdev = GET_DC_PHYSDEV( dc, pSetPixel );
     ret = physdev->funcs->pSetPixel( physdev, x, y, color );

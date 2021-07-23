@@ -58,6 +58,19 @@ BOOL WINAPI GetCurrentPositionEx( HDC hdc, POINT *point )
 }
 
 /***********************************************************************
+ *           SetPixel    (GDI32.@)
+ */
+COLORREF WINAPI SetPixel( HDC hdc, INT x, INT y, COLORREF color )
+{
+    DC_ATTR *dc_attr;
+
+    if (is_meta_dc( hdc )) return METADC_SetPixel( hdc, x, y, color );
+    if (!(dc_attr = get_dc_attr( hdc ))) return CLR_INVALID;
+    if (dc_attr->emf && !EMFDC_SetPixel( dc_attr, x, y, color )) return CLR_INVALID;
+    return NtGdiSetPixel( hdc, x, y, color );
+}
+
+/***********************************************************************
  *           LineTo    (GDI32.@)
  */
 BOOL WINAPI LineTo( HDC hdc, INT x, INT y )

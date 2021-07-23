@@ -3077,6 +3077,42 @@ static void test_metafile_file(void)
     ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError() = %u\n", GetLastError());
 }
 
+static void test_mf_SetPixel(void)
+{
+    HMETAFILE mf;
+    COLORREF c;
+    BOOL ret;
+    HDC hdc;
+
+    hdc = CreateMetaFileW(NULL);
+    ok(hdc != 0, "CreateEnhMetaFile failed\n");
+
+    c = GetPixel(hdc, 5, 5);
+    ok(c == CLR_INVALID, "c = %x\n", c);
+
+    c = SetPixel(hdc, 5, 5, RGB(1,2,3));
+    ok(c == 1, "c = %x\n", c);
+
+    c = SetPixel(hdc, 5, 5, RGB(1,2,3));
+    ok(c == 1, "c = %x\n", c);
+
+    ret = SetPixelV(hdc, 5, 5, RGB(1,2,3));
+    ok(ret, "ret = %x\n", ret);
+
+    c = GetPixel(hdc, 5, 5);
+    ok(c == CLR_INVALID, "c = %x\n", c);
+
+    ret = Rectangle(hdc, 1, 1, 10, 10);
+    ok(ret, "Rectangle failed\n");
+
+    c = GetPixel(hdc, 5, 5);
+    ok(c == CLR_INVALID, "c = %x\n", c);
+
+    mf = CloseMetaFile(hdc);
+    ok(mf != 0, "CloseEnhMetaFile failed\n");
+    DeleteMetaFile(mf);
+}
+
 static void test_enhmetafile_file(void)
 {
     char temp_path[MAX_PATH];
@@ -3176,6 +3212,40 @@ static void test_enhmetafile_file(void)
     size = GetEnhMetaFileBits(ULongToHandle(0xdeadbeef), 0, NULL);
     ok(!size, "GetEnhMetaFileBitsEx returned %u\n", size);
     ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError() = %u\n", GetLastError());
+}
+
+static void test_emf_SetPixel(void)
+{
+    HENHMETAFILE emf;
+    COLORREF c;
+    BOOL ret;
+    HDC hdc;
+
+    hdc = CreateEnhMetaFileW(NULL, L"test.emf", NULL, NULL);
+    ok(hdc != 0, "CreateEnhMetaFile failed\n");
+
+    c = GetPixel(hdc, 5, 5);
+    ok(c == CLR_INVALID, "c = %x\n", c);
+
+    c = SetPixel(hdc, 5, 5, RGB(1,2,3));
+    ok(c == CLR_INVALID, "c = %x\n", c);
+
+    ret = SetPixelV(hdc, 5, 5, RGB(1,2,3));
+    todo_wine
+    ok(!ret, "ret = %x\n", ret);
+
+    c = GetPixel(hdc, 5, 5);
+    ok(c == CLR_INVALID, "c = %x\n", c);
+
+    ret = Rectangle(hdc, 1, 1, 10, 10);
+    ok(ret, "Rectangle failed\n");
+
+    c = GetPixel(hdc, 5, 5);
+    ok(c == CLR_INVALID, "c = %x\n", c);
+
+    emf = CloseEnhMetaFile(hdc);
+    ok(emf != 0, "CloseEnhMetaFile failed\n");
+    DeleteEnhMetaFile(emf);
 }
 
 static void test_CopyMetaFile(void)
@@ -6272,6 +6342,7 @@ START_TEST(metafile)
     test_emf_WorldTransform();
     test_emf_text_extents();
     test_enhmetafile_file();
+    test_emf_SetPixel();
 
     /* For win-format metafiles (mfdrv) */
     test_mf_SaveDC();
@@ -6286,6 +6357,7 @@ START_TEST(metafile)
     test_mf_GetPath();
     test_mf_SetLayout();
     test_metafile_file();
+    test_mf_SetPixel();
 
     /* For metafile conversions */
     test_mf_conversions();

@@ -116,12 +116,11 @@ BOOL METADC_RoundRect( HDC hdc, INT left, INT top, INT right,
 }
 
 /***********************************************************************
- *           MFDRV_SetPixel
+ *           METADC_SetPixel
  */
-COLORREF CDECL MFDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
+BOOL METADC_SetPixel( HDC hdc, INT x, INT y, COLORREF color )
 {
-    return MFDRV_MetaParam4(dev, META_SETPIXEL, x, y,HIWORD(color),
-			    LOWORD(color));
+    return metadc_param4( hdc, META_SETPIXEL, x, y, HIWORD(color), LOWORD(color) );
 }
 
 
