@@ -31,11 +31,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(metafile);
 
 
 /******************************************************************
- *         MFDRV_MetaExtTextOut
+ *         metadc_text
  */
-static BOOL MFDRV_MetaExtTextOut( PHYSDEV dev, short x, short y, UINT16 flags,
-				 const RECT16 *rect, LPCSTR str, short count,
-				 const INT16 *lpDx)
+static BOOL metadc_text( HDC hdc, short x, short y, UINT16 flags,
+                         const RECT16 *rect, LPCSTR str, short count,
+                         const INT16 *lpDx)
 {
     BOOL ret;
     DWORD len;
@@ -62,7 +62,7 @@ static BOOL MFDRV_MetaExtTextOut( PHYSDEV dev, short x, short y, UINT16 flags,
     if (lpDx)
      memcpy(mr->rdParm + (isrect ? 8 : 4) + ((count + 1) >> 1),lpDx,
       count*sizeof(INT16));
-    ret = MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
+    ret = metadc_record( hdc, mr, mr->rdSize * 2);
     HeapFree( GetProcessHeap(), 0, mr);
     return ret;
 }
@@ -70,10 +70,10 @@ static BOOL MFDRV_MetaExtTextOut( PHYSDEV dev, short x, short y, UINT16 flags,
 
 
 /***********************************************************************
- *           MFDRV_ExtTextOut
+ *           METADC_ExtTextOut
  */
-BOOL CDECL MFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
-                             const RECT *lprect, LPCWSTR str, UINT count, const INT *lpDx )
+BOOL METADC_ExtTextOut( HDC hdc, INT x, INT y, UINT flags, const RECT *lprect,
+                        const WCHAR *str, UINT count, const INT *lpDx )
 {
     RECT16	rect16;
     LPINT16	lpdx16 = NULL;
@@ -82,7 +82,7 @@ BOOL CDECL MFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     LPSTR       ascii;
     DWORD len;
     CHARSETINFO csi;
-    int charset = GetTextCharset( dev->hdc );
+    int charset = GetTextCharset( hdc );
     UINT cp = CP_ACP;
 
     if(TranslateCharsetInfo(ULongToPtr(charset), &csi, TCI_SRCCHARSET))
@@ -146,7 +146,7 @@ BOOL CDECL MFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 	        lpdx16[i++] = lpDx[j++];
     }
 
-    ret = MFDRV_MetaExtTextOut(dev,x,y,flags,lprect?&rect16:NULL,ascii,len,lpdx16);
+    ret = metadc_text( hdc, x, y, flags, lprect ? &rect16 : NULL, ascii, len, lpdx16 );
     HeapFree( GetProcessHeap(), 0, ascii );
     HeapFree( GetProcessHeap(), 0, lpdx16 );
     return ret;

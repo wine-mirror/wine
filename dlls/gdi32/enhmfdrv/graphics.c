@@ -929,15 +929,24 @@ BOOL CDECL EMFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn )
 BOOL CDECL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *lprect,
                               LPCWSTR str, UINT count, const INT *lpDx )
 {
-    EMFDRV_PDEVICE *physDev = get_emf_physdev( dev );
-    DC *dc = get_physdev_dc( dev );
+    /* FIXME: update bounding rect */
+    return TRUE;
+}
+
+/**********************************************************************
+ *          EMFDC_ExtTextOut
+ */
+BOOL EMFDC_ExtTextOut( DC_ATTR *dc_attr, INT x, INT y, UINT flags, const RECT *lprect,
+                       const WCHAR *str, UINT count, const INT *lpDx )
+{
+    EMFDRV_PDEVICE *emf = dc_attr->emf;
     EMREXTTEXTOUTW *pemr;
     DWORD nSize;
     BOOL ret;
     int textHeight = 0;
     int textWidth = 0;
-    const UINT textAlign = dc->attr->text_align;
-    const INT graphicsMode = dc->attr->graphics_mode;
+    const UINT textAlign = dc_attr->text_align;
+    const INT graphicsMode = dc_attr->graphics_mode;
     FLOAT exScale, eyScale;
 
     nSize = sizeof(*pemr) + ((count+1) & ~1) * sizeof(WCHAR) + count * sizeof(INT);
@@ -948,14 +957,14 @@ BOOL CDECL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT 
 
     if (graphicsMode == GM_COMPATIBLE)
     {
-        const INT horzSize = GetDeviceCaps( dev->hdc, HORZSIZE );
-        const INT horzRes  = GetDeviceCaps( dev->hdc, HORZRES );
-        const INT vertSize = GetDeviceCaps( dev->hdc, VERTSIZE );
-        const INT vertRes  = GetDeviceCaps( dev->hdc, VERTRES );
+        const INT horzSize = GetDeviceCaps( emf->dev.hdc, HORZSIZE );
+        const INT horzRes  = GetDeviceCaps( emf->dev.hdc, HORZRES );
+        const INT vertSize = GetDeviceCaps( emf->dev.hdc, VERTSIZE );
+        const INT vertRes  = GetDeviceCaps( emf->dev.hdc, VERTRES );
         SIZE wndext, vportext;
 
-        GetViewportExtEx( dev->hdc, &vportext );
-        GetWindowExtEx( dev->hdc, &wndext );
+        GetViewportExtEx( emf->dev.hdc, &vportext );
+        GetWindowExtEx( emf->dev.hdc, &wndext );
         exScale = 100.0 * ((FLOAT)horzSize  / (FLOAT)horzRes) /
                           ((FLOAT)wndext.cx / (FLOAT)vportext.cx);
         eyScale = 100.0 * ((FLOAT)vertSize  / (FLOAT)vertRes) /
@@ -996,7 +1005,7 @@ BOOL CDECL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT 
         for (i = 0; i < count; i++) {
             textWidth += lpDx[i];
         }
-        if (GetTextExtentPoint32W( dev->hdc, str, count, &strSize ))
+        if (GetTextExtentPoint32W( emf->dev.hdc, str, count, &strSize ))
             textHeight = strSize.cy;
     }
     else {
@@ -1004,7 +1013,7 @@ BOOL CDECL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT 
         INT *dx = (INT *)((char*)pemr + pemr->emrtext.offDx);
         SIZE charSize;
         for (i = 0; i < count; i++) {
-            if (GetTextExtentPoint32W( dev->hdc, str + i, 1, &charSize )) {
+            if (GetTextExtentPoint32W( emf->dev.hdc, str + i, 1, &charSize )) {
                 dx[i] = charSize.cx;
                 textWidth += charSize.cx;
                 textHeight = max(textHeight, charSize.cy);
@@ -1012,7 +1021,7 @@ BOOL CDECL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT 
         }
     }
 
-    if (physDev->path)
+    if (emf->path)
     {
         pemr->rclBounds.left = pemr->rclBounds.top = 0;
         pemr->rclBounds.right = pemr->rclBounds.bottom = -1;
@@ -1040,7 +1049,7 @@ BOOL CDECL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT 
     switch (textAlign & (TA_TOP | TA_BOTTOM | TA_BASELINE)) {
     case TA_BASELINE: {
         TEXTMETRICW tm;
-        if (!GetTextMetricsW( dev->hdc, &tm ))
+        if (!GetTextMetricsW( emf->dev.hdc, &tm ))
             tm.tmDescent = 0;
         /* Play safe here... it's better to have a bounding box */
         /* that is too big than too small. */
@@ -1058,10 +1067,10 @@ BOOL CDECL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT 
         pemr->rclBounds.bottom = y + textHeight + 1;
     }
     }
-    EMFDRV_UpdateBBox( dev, &pemr->rclBounds );
+    EMFDRV_UpdateBBox( &emf->dev, &pemr->rclBounds );
 
 no_bounds:
-    ret = EMFDRV_WriteRecord( dev, &pemr->emr );
+    ret = EMFDRV_WriteRecord( &emf->dev, &pemr->emr );
     HeapFree( GetProcessHeap(), 0, pemr );
     return ret;
 }

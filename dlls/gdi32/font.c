@@ -5895,7 +5895,7 @@ static inline int get_line_width( DC *dc, int metric_size )
 }
 
 /***********************************************************************
- *           ExtTextOutW    (GDI32.@)
+ *           NtGdiExtTextOutW    (win32u.@)
  *
  * Draws text using the currently selected font, background color, and text color.
  * 
@@ -5924,8 +5924,8 @@ static inline int get_line_width( DC *dc, int metric_size )
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
-                         const RECT *lprect, LPCWSTR str, UINT count, const INT *lpDx )
+BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lprect,
+                              const WCHAR *str, UINT count, const INT *lpDx, DWORD cp )
 {
     BOOL ret = FALSE;
     LPWSTR reordered_str = (LPWSTR)str;

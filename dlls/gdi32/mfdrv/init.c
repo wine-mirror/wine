@@ -125,7 +125,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_ExtEscape,                 /* pExtEscape */
     MFDRV_ExtFloodFill,              /* pExtFloodFill */
     MFDRV_ExtSelectClipRgn,          /* pExtSelectClipRgn */
-    MFDRV_ExtTextOut,                /* pExtTextOut */
+    NULL,                            /* pExtTextOut */
     MFDRV_FillPath,                  /* pFillPath */
     MFDRV_FillRgn,                   /* pFillRgn */
     MFDRV_FlattenPath,               /* pFlattenPath */

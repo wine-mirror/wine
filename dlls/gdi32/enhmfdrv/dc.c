@@ -658,19 +658,6 @@ static BOOL CDECL emfpathdrv_EndPath( PHYSDEV dev )
     return next->funcs->pEndPath( next );
 }
 
-/***********************************************************************
- *           emfpathdrv_ExtTextOut
- */
-static BOOL CDECL emfpathdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT *rect,
-                                         LPCWSTR str, UINT count, const INT *dx )
-{
-    PHYSDEV emfdev = get_emfdev( dev );
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pExtTextOut );
-
-    return (emfdev->funcs->pExtTextOut( emfdev, x, y, flags, rect, str, count, dx ) &&
-            next->funcs->pExtTextOut( next, x, y, flags, rect, str, count, dx ));
-}
-
 
 static const struct gdi_dc_funcs emfpath_driver =
 {
@@ -700,7 +687,7 @@ static const struct gdi_dc_funcs emfpath_driver =
     NULL,                               /* pExtEscape */
     NULL,                               /* pExtFloodFill */
     NULL,                               /* pExtSelectClipRgn */
-    emfpathdrv_ExtTextOut,              /* pExtTextOut */
+    NULL,                               /* pExtTextOut */
     NULL,                               /* pFillPath */
     NULL,                               /* pFillRgn */
     NULL,                               /* pFlattenPath */
