@@ -416,9 +416,9 @@ COLORREF WINAPI NtGdiSetPixel( HDC hdc, INT x, INT y, COLORREF color )
 }
 
 /***********************************************************************
- *           GetPixel    (GDI32.@)
+ *           NtGdiGetPixel    (win32u.@)
  */
-COLORREF WINAPI GetPixel( HDC hdc, INT x, INT y )
+COLORREF WINAPI NtGdiGetPixel( HDC hdc, INT x, INT y )
 {
     PHYSDEV physdev;
     COLORREF ret;

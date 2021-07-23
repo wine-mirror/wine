@@ -327,7 +327,7 @@
 @ stdcall GetOutlineTextMetricsW(long long ptr)
 @ stdcall GetPaletteEntries(long long long ptr)
 @ stdcall GetPath(long ptr ptr long)
-@ stdcall GetPixel(long long long)
+@ stdcall GetPixel(long long long) NtGdiGetPixel
 @ stdcall GetPixelFormat(long)
 @ stdcall GetPolyFillMode(long)
 @ stdcall GetROP2(long)
