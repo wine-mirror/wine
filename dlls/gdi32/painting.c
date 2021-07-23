@@ -585,6 +585,10 @@ ULONG WINAPI NtGdiPolyPolyDraw( HDC hdc, const POINT *points, const UINT *counts
     ULONG ret;
     DC *dc;
 
+    if (function == NtGdiPolyPolygonRgn)
+        return HandleToULong( create_polypolygon_region( points, (const INT *)counts, count,
+                                                         HandleToULong(hdc), NULL ));
+
     if (!(dc = get_dc_ptr( hdc ))) return FALSE;
     update_dc( dc );
 

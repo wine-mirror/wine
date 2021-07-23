@@ -2692,12 +2692,3 @@ HRGN create_polypolygon_region( const POINT *Pts, const INT *Count, INT nbpolygo
     HeapFree( GetProcessHeap(), 0, pETEs );
     return hrgn;
 }
-
-
-/***********************************************************************
- *           CreatePolyPolygonRgn    (GDI32.@)
- */
-HRGN WINAPI CreatePolyPolygonRgn( const POINT *pts, const INT *count, INT nbpolygons, INT mode )
-{
-    return create_polypolygon_region( pts, count, nbpolygons, mode, NULL );
-}

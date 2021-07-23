@@ -282,6 +282,16 @@ HRGN WINAPI ExtCreateRegion( const XFORM *xform, DWORD count, const RGNDATA *dat
 }
 
 /***********************************************************************
+ *           CreatePolyPolygonRgn    (GDI32.@)
+ */
+HRGN WINAPI CreatePolyPolygonRgn( const POINT *points, const INT *counts, INT count, INT mode )
+{
+    ULONG ret = NtGdiPolyPolyDraw( ULongToHandle(mode), points, (const UINT *)counts,
+                                   count, NtGdiPolyPolygonRgn );
+    return ULongToHandle( ret );
+}
+
+/***********************************************************************
  *           CreateRectRgnIndirect    (GDI32.@)
  *
  * Creates a simple rectangular region.
