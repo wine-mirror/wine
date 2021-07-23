@@ -375,3 +375,15 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,
         return FALSE;
     return NtGdiExtTextOutW( hdc, x, y, flags, rect, str, count, dx, 0 );
 }
+
+/***********************************************************************
+ *           CloseFigure    (GDI32.@)
+ */
+BOOL WINAPI CloseFigure( HDC hdc )
+{
+    DC_ATTR *dc_attr;
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_CloseFigure( dc_attr )) return FALSE;
+    return NtGdiCloseFigure( hdc );
+}

@@ -617,11 +617,9 @@ BOOL WINAPI AbortPath( HDC hdc )
 
 
 /***********************************************************************
- *           CloseFigure    (GDI32.@)
- *
- * FIXME: Check that SetLastError is being called correctly
+ *           NtGdiCloseFigure    (win32u.@)
  */
-BOOL WINAPI CloseFigure(HDC hdc)
+BOOL WINAPI NtGdiCloseFigure( HDC hdc )
 {
     BOOL ret = FALSE;
     DC *dc = get_dc_ptr( hdc );

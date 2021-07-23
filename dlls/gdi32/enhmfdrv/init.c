@@ -44,8 +44,8 @@ static const struct gdi_dc_funcs emfdrv_driver =
     EMFDRV_ArcTo,                    /* pArcTo */
     EMFDRV_BeginPath,                /* pBeginPath */
     NULL,                            /* pBlendImage */
-    EMFDRV_Chord,                    /* pChord */
-    EMFDRV_CloseFigure,              /* pCloseFigure */
+    NULL,                            /* pChord */
+    NULL,                            /* pCloseFigure */
     NULL,                            /* pCreateCompatibleDC */
     NULL,                            /* pCreateDC */
     EMFDRV_DeleteDC,                 /* pDeleteDC */

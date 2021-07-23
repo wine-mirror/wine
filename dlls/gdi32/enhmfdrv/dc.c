@@ -513,15 +513,14 @@ BOOL CDECL EMFDRV_BeginPath( PHYSDEV dev )
     return TRUE;
 }
 
-BOOL CDECL EMFDRV_CloseFigure( PHYSDEV dev )
+BOOL EMFDC_CloseFigure( DC_ATTR *dc_attr )
 {
     EMRCLOSEFIGURE emr;
 
     emr.emr.iType = EMR_CLOSEFIGURE;
     emr.emr.nSize = sizeof(emr);
 
-    EMFDRV_WriteRecord( dev, &emr.emr );
-    return FALSE;  /* always fails without a path */
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 BOOL CDECL EMFDRV_EndPath( PHYSDEV dev )
@@ -612,18 +611,6 @@ static BOOL CDECL emfpathdrv_BeginPath( PHYSDEV dev )
 }
 
 /***********************************************************************
- *           emfpathdrv_CloseFigure
- */
-static BOOL CDECL emfpathdrv_CloseFigure( PHYSDEV dev )
-{
-    PHYSDEV emfdev = get_emfdev( dev );
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pCloseFigure );
-
-    emfdev->funcs->pCloseFigure( emfdev );
-    return next->funcs->pCloseFigure( next );
-}
-
-/***********************************************************************
  *           emfpathdrv_CreateDC
  */
 static BOOL CDECL emfpathdrv_CreateDC( PHYSDEV *dev, LPCWSTR driver, LPCWSTR device,
@@ -670,7 +657,7 @@ static const struct gdi_dc_funcs emfpath_driver =
     emfpathdrv_BeginPath,               /* pBeginPath */
     NULL,                               /* pBlendImage */
     NULL,                               /* pChord */
-    emfpathdrv_CloseFigure,             /* pCloseFigure */
+    NULL,                               /* pCloseFigure */
     NULL,                               /* pCreateCompatibleDC */
     emfpathdrv_CreateDC,                /* pCreateDC */
     emfpathdrv_DeleteDC,                /* pDeleteDC */
