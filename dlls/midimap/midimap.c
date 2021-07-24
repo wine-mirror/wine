@@ -75,7 +75,7 @@
  * This last part isn't implemented (.idf file support).
  */
 
-WINE_DEFAULT_DEBUG_CHANNEL(msacm);
+WINE_DEFAULT_DEBUG_CHANNEL(midi);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 typedef struct tagMIDIOUTPORT
@@ -246,7 +246,7 @@ static BOOL	MIDIMAP_LoadSettings(MIDIMAPDATA* mom)
     }
     RegCloseKey(hKey);
 
-    if (ret && TRACE_ON(msacm))
+    if (ret && TRACE_ON(midi))
     {
 	unsigned	i;
 
