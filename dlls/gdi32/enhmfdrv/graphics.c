@@ -810,15 +810,16 @@ BOOL CDECL EMFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT 
 
 
 /*********************************************************************
- *          EMFDRV_FillRgn
+ *          EMFDC_FillRgn
  */
-BOOL CDECL EMFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush )
+BOOL EMFDC_FillRgn( DC_ATTR *dc_attr, HRGN hrgn, HBRUSH hbrush )
 {
+    EMFDRV_PDEVICE *emf = dc_attr->emf;
     EMRFILLRGN *emr;
     DWORD size, rgnsize, index;
     BOOL ret;
 
-    index = EMFDRV_CreateBrushIndirect( dev, hbrush );
+    index = EMFDRV_CreateBrushIndirect( &emf->dev, hbrush );
     if(!index) return FALSE;
 
     rgnsize = NtGdiGetRegionData( hrgn, 0, NULL );
@@ -836,12 +837,24 @@ BOOL CDECL EMFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush )
     emr->cbRgnData = rgnsize;
     emr->ihBrush = index;
 
-    ret = EMFDRV_WriteRecord( dev, &emr->emr );
+    ret = EMFDRV_WriteRecord( &emf->dev, &emr->emr );
     if(ret)
-        EMFDRV_UpdateBBox( dev, &emr->rclBounds );
+        EMFDRV_UpdateBBox( &emf->dev, &emr->rclBounds );
     HeapFree( GetProcessHeap(), 0, emr );
     return ret;
 }
+
+
+/*********************************************************************
+ *          EMFDRV_FillRgn
+ */
+BOOL CDECL EMFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush )
+{
+    /* FIXME: update bounding rect */
+    return TRUE;
+}
+
+
 /*********************************************************************
  *          EMFDRV_FrameRgn
  */

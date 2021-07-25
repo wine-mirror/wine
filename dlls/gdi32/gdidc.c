@@ -383,6 +383,21 @@ BOOL WINAPI PolyDraw( HDC hdc, const POINT *points, const BYTE *types, DWORD cou
 }
 
 /***********************************************************************
+ *           FillRgn    (GDI32.@)
+ */
+BOOL WINAPI FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
+{
+    DC_ATTR *dc_attr;
+
+    TRACE( "%p, %p, %p\n", hdc, hrgn, hbrush );
+
+    if (is_meta_dc( hdc )) return METADC_FillRgn( hdc, hrgn, hbrush );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_FillRgn( dc_attr, hrgn, hbrush )) return FALSE;
+    return NtGdiFillRgn( hdc, hrgn, hbrush );
+}
+
+/***********************************************************************
  *           ExtTextOutW    (GDI32.@)
  */
 BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,

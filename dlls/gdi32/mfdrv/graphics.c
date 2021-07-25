@@ -380,18 +380,30 @@ BOOL CDECL MFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn )
 
 
 /**********************************************************************
+ *          METADC_FillRgn
+ */
+BOOL METADC_FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
+{
+    METAFILEDRV_PDEVICE *mf;
+    INT16 iRgn, iBrush;
+
+    if (!(mf = get_metadc_ptr( hdc ))) return FALSE;
+
+    iRgn = MFDRV_CreateRegion( &mf->dev, hrgn );
+    if(iRgn == -1)
+        return FALSE;
+    iBrush = MFDRV_CreateBrushIndirect( &mf->dev, hbrush );
+    if(!iBrush)
+        return FALSE;
+    return MFDRV_MetaParam2( &mf->dev, META_FILLREGION, iRgn, iBrush );
+}
+
+/**********************************************************************
  *          MFDRV_FillRgn
  */
 BOOL CDECL MFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush )
 {
-    INT16 iRgn, iBrush;
-    iRgn = MFDRV_CreateRegion( dev, hrgn );
-    if(iRgn == -1)
-        return FALSE;
-    iBrush = MFDRV_CreateBrushIndirect( dev, hbrush );
-    if(!iBrush)
-        return FALSE;
-    return MFDRV_MetaParam2( dev, META_FILLREGION, iRgn, iBrush );
+    return TRUE;
 }
 
 /**********************************************************************

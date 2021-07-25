@@ -597,7 +597,7 @@ BOOL MFDRV_MetaParam8(PHYSDEV dev, short func, short param1, short param2,
     return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
 }
 
-static METAFILEDRV_PDEVICE *get_metadc_ptr( HDC hdc )
+METAFILEDRV_PDEVICE *get_metadc_ptr( HDC hdc )
 {
     METAFILEDRV_PDEVICE *metafile = get_gdi_client_ptr( hdc, NTGDI_OBJ_METADC );
     if (!metafile) SetLastError( ERROR_INVALID_HANDLE );

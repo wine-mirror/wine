@@ -89,7 +89,8 @@ BOOL CDECL nulldrv_FrameRgn( PHYSDEV dev, HRGN rgn, HBRUSH brush, INT width, INT
 
     if (tmp)
     {
-        if (REGION_FrameRgn( tmp, rgn, width, height )) ret = FillRgn( dev->hdc, tmp, brush );
+        if (REGION_FrameRgn( tmp, rgn, width, height ))
+            ret = NtGdiFillRgn( dev->hdc, tmp, brush );
         DeleteObject( tmp );
     }
     return ret;
@@ -493,15 +494,13 @@ BOOL WINAPI PaintRgn( HDC hdc, HRGN hrgn )
 
 
 /***********************************************************************
- *           FillRgn    (GDI32.@)
+ *           NtGdiFillRgn    (win32u.@)
  */
-BOOL WINAPI FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
+BOOL WINAPI NtGdiFillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
 {
     PHYSDEV physdev;
     BOOL retval;
     DC * dc = get_dc_ptr( hdc );
-
-    TRACE( "%p, %p, %p\n", hdc, hrgn, hbrush );
 
     if (!dc) return FALSE;
     update_dc( dc );
