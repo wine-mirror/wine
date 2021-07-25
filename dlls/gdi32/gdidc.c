@@ -466,6 +466,28 @@ BOOL WINAPI FloodFill( HDC hdc, INT x, INT y, COLORREF color )
     return ExtFloodFill( hdc, x, y, color, FLOODFILLBORDER );
 }
 
+/******************************************************************************
+ *           GdiGradientFill   (GDI32.@)
+ */
+BOOL WINAPI GdiGradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
+                             void *grad_array, ULONG ngrad, ULONG mode )
+{
+    DC_ATTR *dc_attr;
+
+    TRACE( "%p vert_array:%p nvert:%d grad_array:%p ngrad:%d\n", hdc, vert_array,
+           nvert, grad_array, ngrad );
+
+    if (!(dc_attr = get_dc_attr( hdc )))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if (dc_attr->emf &&
+        !EMFDC_GradientFill( dc_attr, vert_array, nvert, grad_array, ngrad, mode ))
+        return FALSE;
+    return NtGdiGradientFill( hdc, vert_array, nvert, grad_array, ngrad, mode );
+}
+
 /***********************************************************************
  *           ExtTextOutW    (GDI32.@)
  */

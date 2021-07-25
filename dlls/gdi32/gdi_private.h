@@ -87,6 +87,8 @@ extern BOOL EMFDC_ExtTextOut( DC_ATTR *dc_attr, INT x, INT y, UINT flags, const 
 extern BOOL EMFDC_FillRgn( DC_ATTR *dc_attr, HRGN hrgn, HBRUSH hbrush ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_FrameRgn( DC_ATTR *dc_attr, HRGN hrgn, HBRUSH hbrush, INT width,
                             INT height ) DECLSPEC_HIDDEN;
+extern BOOL EMFDC_GradientFill( DC_ATTR *dc_attr, TRIVERTEX *vert_array, ULONG nvert,
+                                void *grad_array, ULONG ngrad, ULONG mode ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_InvertRgn( DC_ATTR *dc_attr, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_LineTo( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_MoveTo( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;

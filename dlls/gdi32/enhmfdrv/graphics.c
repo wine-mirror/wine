@@ -1117,6 +1117,16 @@ no_bounds:
 BOOL CDECL EMFDRV_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
                                 void *grad_array, ULONG ngrad, ULONG mode )
 {
+    /* FIXME: update bounding rect */
+    return TRUE;
+}
+
+/**********************************************************************
+ *          EMFDC_GradientFill
+ */
+BOOL EMFDC_GradientFill( DC_ATTR *dc_attr, TRIVERTEX *vert_array, ULONG nvert,
+                         void *grad_array, ULONG ngrad, ULONG mode )
+{
     EMRGRADIENTFILL *emr;
     ULONG i, pt, size, num_pts = ngrad * (mode == GRADIENT_FILL_TRIANGLE ? 3 : 2);
     const ULONG *pts = (const ULONG *)grad_array;
@@ -1159,8 +1169,8 @@ BOOL CDECL EMFDRV_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert,
     memcpy( emr->Ver, vert_array, nvert * sizeof(vert_array[0]) );
     memcpy( emr->Ver + nvert, pts, num_pts * sizeof(pts[0]) );
 
-    EMFDRV_UpdateBBox( dev, &emr->rclBounds );
-    ret = EMFDRV_WriteRecord( dev, &emr->emr );
+    EMFDRV_UpdateBBox( dc_attr->emf, &emr->rclBounds );
+    ret = EMFDRV_WriteRecord( dc_attr->emf, &emr->emr );
     HeapFree( GetProcessHeap(), 0, emr );
     return ret;
 }
