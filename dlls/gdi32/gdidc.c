@@ -444,6 +444,29 @@ BOOL WINAPI InvertRgn( HDC hdc, HRGN hrgn )
 }
 
 /***********************************************************************
+ *          ExtFloodFill   (GDI32.@)
+ */
+BOOL WINAPI ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color, UINT fill_type )
+{
+    DC_ATTR *dc_attr;
+
+    TRACE( "%p, (%d, %d), %08x, %x\n", hdc, x, y, color, fill_type );
+
+    if (is_meta_dc( hdc )) return METADC_ExtFloodFill( hdc, x, y, color, fill_type );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_ExtFloodFill( dc_attr, x, y, color, fill_type )) return FALSE;
+    return NtGdiExtFloodFill( hdc, x, y, color, fill_type );
+}
+
+/***********************************************************************
+ *          FloodFill   (GDI32.@)
+ */
+BOOL WINAPI FloodFill( HDC hdc, INT x, INT y, COLORREF color )
+{
+    return ExtFloodFill( hdc, x, y, color, FLOODFILLBORDER );
+}
+
+/***********************************************************************
  *           ExtTextOutW    (GDI32.@)
  */
 BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,

@@ -597,33 +597,22 @@ ULONG WINAPI NtGdiPolyPolyDraw( HDC hdc, const POINT *points, const UINT *counts
 }
 
 /**********************************************************************
- *          ExtFloodFill   (GDI32.@)
+ *          NtGdiExtFloodFill   (win32u.@)
  */
-BOOL WINAPI ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color,
-                              UINT fillType )
+BOOL WINAPI NtGdiExtFloodFill( HDC hdc, INT x, INT y, COLORREF color, UINT fill_type )
 {
     PHYSDEV physdev;
     BOOL ret;
     DC * dc = get_dc_ptr( hdc );
 
-    TRACE( "%p, (%d, %d), %08x, %x\n", hdc, x, y, color, fillType );
-
     if (!dc) return FALSE;
     update_dc( dc );
     physdev = GET_DC_PHYSDEV( dc, pExtFloodFill );
-    ret = physdev->funcs->pExtFloodFill( physdev, x, y, color, fillType );
+    ret = physdev->funcs->pExtFloodFill( physdev, x, y, color, fill_type );
     release_dc_ptr( dc );
     return ret;
 }
 
-
-/**********************************************************************
- *          FloodFill   (GDI32.@)
- */
-BOOL WINAPI FloodFill( HDC hdc, INT x, INT y, COLORREF color )
-{
-    return ExtFloodFill( hdc, x, y, color, FLOODFILLBORDER );
-}
 
 /***********************************************************************
  *      NtGdiAngleArc (win32u.@)

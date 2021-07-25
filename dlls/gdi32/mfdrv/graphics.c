@@ -248,12 +248,11 @@ BOOL METADC_PolyPolygon( HDC hdc, const POINT *pt, const INT *counts, UINT polyg
 
 
 /**********************************************************************
- *          MFDRV_ExtFloodFill
+ *          METADC_ExtFloodFill
  */
-BOOL CDECL MFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillType )
+BOOL METADC_ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color, UINT fillType )
 {
-    return MFDRV_MetaParam4(dev,META_FLOODFILL,x,y,HIWORD(color),
-			    LOWORD(color));
+    return metadc_param4( hdc, META_FLOODFILL, x, y, HIWORD(color), LOWORD(color) );
 }
 
 

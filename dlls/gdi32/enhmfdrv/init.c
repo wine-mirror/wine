@@ -60,7 +60,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     EMFDRV_ExcludeClipRect,          /* pExcludeClipRect */
     NULL,                            /* pExtDeviceMode */
     NULL,                            /* pExtEscape */
-    EMFDRV_ExtFloodFill,             /* pExtFloodFill */
+    NULL,                            /* pExtFloodFill */
     EMFDRV_ExtSelectClipRgn,         /* pExtSelectClipRgn */
     EMFDRV_ExtTextOut,               /* pExtTextOut */
     EMFDRV_FillPath,                 /* pFillPath */

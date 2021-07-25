@@ -792,9 +792,9 @@ BOOL CDECL EMFDRV_PolyDraw( PHYSDEV dev, const POINT *pts, const BYTE *types, DW
 
 
 /**********************************************************************
- *          EMFDRV_ExtFloodFill
+ *          EMFDC_ExtFloodFill
  */
-BOOL CDECL EMFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillType )
+BOOL EMFDC_ExtFloodFill( DC_ATTR *dc_attr, INT x, INT y, COLORREF color, UINT fill_type )
 {
     EMREXTFLOODFILL emr;
 
@@ -803,9 +803,9 @@ BOOL CDECL EMFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT 
     emr.ptlStart.x = x;
     emr.ptlStart.y = y;
     emr.crColor = color;
-    emr.iMode = fillType;
+    emr.iMode = fill_type;
 
-    return EMFDRV_WriteRecord( dev, &emr.emr );
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 
