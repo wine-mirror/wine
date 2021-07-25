@@ -453,11 +453,9 @@ BOOL WINAPI NtGdiSetPixelFormat( HDC hdc, INT format )
 
 
 /******************************************************************************
- * GdiDescribePixelFormat [GDI32.@]
- *
- * Probably not the correct semantics, it's supposed to be an internal backend for DescribePixelFormat.
+ *           NtGdiDescribePixelFormat  (win32u.@)
  */
-INT WINAPI GdiDescribePixelFormat( HDC hdc, INT format, UINT size, PIXELFORMATDESCRIPTOR *descr )
+INT WINAPI NtGdiDescribePixelFormat( HDC hdc, INT format, UINT size, PIXELFORMATDESCRIPTOR *descr )
 {
     FIXME( "(%p,%d,%d,%p): stub\n", hdc, format, size, descr );
     return 0;
@@ -465,11 +463,9 @@ INT WINAPI GdiDescribePixelFormat( HDC hdc, INT format, UINT size, PIXELFORMATDE
 
 
 /******************************************************************************
- * GdiSwapBuffers [GDI32.@]
- *
- * Probably not the correct semantics, it's supposed to be an internal backend for SwapBuffers.
+ *           NtGdiSwapBuffers  (win32u.@)
  */
-BOOL WINAPI GdiSwapBuffers( HDC hdc )
+BOOL WINAPI NtGdiSwapBuffers( HDC hdc )
 {
     FIXME( "(%p): stub\n", hdc );
     return FALSE;
@@ -993,10 +989,9 @@ BOOL WINAPI GdiGradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
 }
 
 /******************************************************************************
- *           GdiDrawStream   (GDI32.@)
- *
+ *           NtGdiDrawStream   (win32u.@)
  */
-BOOL WINAPI GdiDrawStream( HDC hdc, ULONG in, void * pvin )
+BOOL WINAPI NtGdiDrawStream( HDC hdc, ULONG in, void *pvin )
 {
     FIXME("stub: %p, %d, %p\n", hdc, in, pvin);
     return FALSE;

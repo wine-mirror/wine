@@ -181,9 +181,9 @@
 @ stub GdiDeleteLocalDC
 @ stub GdiDeleteLocalObject
 # @ stub GdiDeleteSpoolFileHandle
-@ stdcall GdiDescribePixelFormat(long long long ptr)
+@ stdcall GdiDescribePixelFormat(long long long ptr) NtGdiDescribePixelFormat
 @ stdcall GdiDllInitialize(ptr long ptr)
-@ stdcall GdiDrawStream(long long ptr)
+@ stdcall GdiDrawStream(long long ptr) NtGdiDrawStream
 # @ stub GdiEndDocEMF
 # @ stub GdiEndPageEMF
 @ stdcall GdiEntry13()
@@ -230,7 +230,7 @@
 @ stub GdiSetServerAttr
 # @ stub GdiStartDocEMF
 # @ stub GdiStartPageEMF
-@ stdcall GdiSwapBuffers(long)
+@ stdcall GdiSwapBuffers(long) NtGdiSwapBuffers
 @ stdcall GdiTransparentBlt(long long long long long long long long long long long)
 # @ stub GdiValidateHandle
 @ stub GdiWinWatchClose
