@@ -102,7 +102,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     EMFDRV_OffsetClipRgn,            /* pOffsetClipRgn */
     EMFDRV_OffsetViewportOrgEx,      /* pOffsetViewportOrgEx */
     EMFDRV_OffsetWindowOrgEx,        /* pOffsetWindowOrgEx */
-    EMFDRV_PaintRgn,                 /* pPaintRgn */
+    NULL,                            /* pPaintRgn */
     EMFDRV_PatBlt,                   /* pPatBlt */
     EMFDRV_Pie,                      /* pPie */
     EMFDRV_PolyBezier,               /* pPolyBezier */

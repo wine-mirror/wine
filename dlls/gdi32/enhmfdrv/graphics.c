@@ -925,11 +925,11 @@ static BOOL EMFDRV_PaintInvertRgn( PHYSDEV dev, HRGN hrgn, DWORD iType )
 }
 
 /**********************************************************************
- *          EMFDRV_PaintRgn
+ *          EMFDC_PaintRgn
  */
-BOOL CDECL EMFDRV_PaintRgn( PHYSDEV dev, HRGN hrgn )
+BOOL EMFDC_PaintRgn( DC_ATTR *dc_attr, HRGN hrgn )
 {
-    return EMFDRV_PaintInvertRgn( dev, hrgn, EMR_PAINTRGN );
+    return EMFDRV_PaintInvertRgn( dc_attr->emf, hrgn, EMR_PAINTRGN );
 }
 
 /**********************************************************************

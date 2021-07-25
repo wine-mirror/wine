@@ -398,6 +398,21 @@ BOOL WINAPI FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
 }
 
 /***********************************************************************
+ *           PaintRgn    (GDI32.@)
+ */
+BOOL WINAPI PaintRgn( HDC hdc, HRGN hrgn )
+{
+    DC_ATTR *dc_attr;
+
+    TRACE( "%p, %p\n", hdc, hrgn );
+
+    if (is_meta_dc( hdc )) return METADC_PaintRgn( hdc, hrgn );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_PaintRgn( dc_attr, hrgn )) return FALSE;
+    return NtGdiFillRgn( hdc, hrgn, GetCurrentObject( hdc, OBJ_BRUSH ));
+}
+
+/***********************************************************************
  *           ExtTextOutW    (GDI32.@)
  */
 BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,

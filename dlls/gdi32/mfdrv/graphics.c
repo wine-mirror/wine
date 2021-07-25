@@ -354,15 +354,17 @@ static INT16 MFDRV_CreateRegion(PHYSDEV dev, HRGN hrgn)
 
 
 /**********************************************************************
- *          MFDRV_PaintRgn
+ *          METADC_PaintRgn
  */
-BOOL CDECL MFDRV_PaintRgn( PHYSDEV dev, HRGN hrgn )
+BOOL METADC_PaintRgn( HDC hdc, HRGN hrgn )
 {
+    METAFILEDRV_PDEVICE *mf;
     INT16 index;
-    index = MFDRV_CreateRegion( dev, hrgn );
+    if (!(mf = get_metadc_ptr( hdc ))) return FALSE;
+    index = MFDRV_CreateRegion( &mf->dev, hrgn );
     if(index == -1)
         return FALSE;
-    return MFDRV_MetaParam1( dev, META_PAINTREGION, index );
+    return MFDRV_MetaParam1( &mf->dev, META_PAINTREGION, index );
 }
 
 

@@ -76,7 +76,8 @@ BOOL CDECL nulldrv_FillRgn( PHYSDEV dev, HRGN rgn, HBRUSH brush )
 
     if ((prev = NtGdiSelectBrush( dev->hdc, brush )))
     {
-        ret = PaintRgn( dev->hdc, rgn );
+        PHYSDEV physdev = GET_DC_PHYSDEV( get_physdev_dc( dev ), pPaintRgn );
+        ret = physdev->funcs->pPaintRgn( physdev, rgn );
         NtGdiSelectBrush( dev->hdc, prev );
     }
     return ret;
@@ -98,10 +99,8 @@ BOOL CDECL nulldrv_FrameRgn( PHYSDEV dev, HRGN rgn, HBRUSH brush, INT width, INT
 
 BOOL CDECL nulldrv_InvertRgn( PHYSDEV dev, HRGN rgn )
 {
-    HBRUSH prev_brush = NtGdiSelectBrush( dev->hdc, GetStockObject(BLACK_BRUSH) );
     INT prev_rop = SetROP2( dev->hdc, R2_NOT );
-    BOOL ret = PaintRgn( dev->hdc, rgn );
-    NtGdiSelectBrush( dev->hdc, prev_brush );
+    BOOL ret = NtGdiFillRgn( dev->hdc, rgn, GetStockObject(BLACK_BRUSH) );
     SetROP2( dev->hdc, prev_rop );
     return ret;
 }
@@ -470,26 +469,6 @@ BOOL WINAPI NtGdiSwapBuffers( HDC hdc )
 {
     FIXME( "(%p): stub\n", hdc );
     return FALSE;
-}
-
-
-/***********************************************************************
- *           PaintRgn    (GDI32.@)
- */
-BOOL WINAPI PaintRgn( HDC hdc, HRGN hrgn )
-{
-    PHYSDEV physdev;
-    BOOL ret;
-    DC * dc = get_dc_ptr( hdc );
-
-    TRACE( "%p, %p\n", hdc, hrgn );
-
-    if (!dc) return FALSE;
-    update_dc( dc );
-    physdev = GET_DC_PHYSDEV( dc, pPaintRgn );
-    ret = physdev->funcs->pPaintRgn( physdev, hrgn );
-    release_dc_ptr( dc );
-    return ret;
 }
 
 
