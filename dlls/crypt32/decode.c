@@ -6291,6 +6291,7 @@ static CryptDecodeObjectExFunc CRYPT_GetBuiltinDecoder(DWORD dwCertEncodingType,
             break;
         case LOWORD(X509_ECC_SIGNATURE):
             decodeFunc = CRYPT_AsnDecodeEccSignature;
+            break;
         case LOWORD(CNG_RSA_PUBLIC_KEY_BLOB):
             decodeFunc = CRYPT_AsnDecodeRsaPubKey_Bcrypt;
             break;
