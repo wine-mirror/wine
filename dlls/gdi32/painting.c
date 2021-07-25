@@ -491,21 +491,18 @@ BOOL WINAPI NtGdiFillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush )
 
 
 /***********************************************************************
- *           FrameRgn     (GDI32.@)
+ *           NtGdiFrameRgn     (win32u.@)
  */
-BOOL WINAPI FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush,
-                          INT nWidth, INT nHeight )
+BOOL WINAPI NtGdiFrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush, INT width, INT height )
 {
     PHYSDEV physdev;
     BOOL ret;
     DC *dc = get_dc_ptr( hdc );
 
-    TRACE( "%p, %p, %p, %dx%d\n", hdc, hrgn, hbrush, nWidth, nHeight );
-
     if (!dc) return FALSE;
     update_dc( dc );
     physdev = GET_DC_PHYSDEV( dc, pFrameRgn );
-    ret = physdev->funcs->pFrameRgn( physdev, hrgn, hbrush, nWidth, nHeight );
+    ret = physdev->funcs->pFrameRgn( physdev, hrgn, hbrush, width, height );
     release_dc_ptr( dc );
     return ret;
 }

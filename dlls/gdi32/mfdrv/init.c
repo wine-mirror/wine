@@ -130,7 +130,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_FillRgn,                   /* pFillRgn */
     MFDRV_FlattenPath,               /* pFlattenPath */
     NULL,                            /* pFontIsLinked */
-    MFDRV_FrameRgn,                  /* pFrameRgn */
+    NULL,                            /* pFrameRgn */
     NULL,                            /* pGdiComment */
     MFDRV_GetBoundsRect,             /* pGetBoundsRect */
     NULL,                            /* pGetCharABCWidths */
