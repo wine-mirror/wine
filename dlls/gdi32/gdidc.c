@@ -429,6 +429,21 @@ BOOL WINAPI FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush, INT width, INT height )
 }
 
 /***********************************************************************
+ *           InvertRgn    (GDI32.@)
+ */
+BOOL WINAPI InvertRgn( HDC hdc, HRGN hrgn )
+{
+    DC_ATTR *dc_attr;
+
+    TRACE( "%p, %p\n", hdc, hrgn );
+
+    if (is_meta_dc( hdc )) return METADC_InvertRgn( hdc, hrgn );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_InvertRgn( dc_attr, hrgn )) return FALSE;
+    return NtGdiInvertRgn( hdc, hrgn );
+}
+
+/***********************************************************************
  *           ExtTextOutW    (GDI32.@)
  */
 BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *rect,

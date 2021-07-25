@@ -51,6 +51,7 @@ extern BOOL METADC_ExtTextOut( HDC hdc, INT x, INT y, UINT flags, const RECT *re
                                const WCHAR *str, UINT count, const INT *dx ) DECLSPEC_HIDDEN;
 extern BOOL METADC_FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush ) DECLSPEC_HIDDEN;
 extern BOOL METADC_FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush, INT x, INT y ) DECLSPEC_HIDDEN;
+extern BOOL METADC_InvertRgn( HDC hdc, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern BOOL METADC_LineTo( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL METADC_MoveTo( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL METADC_PaintRgn( HDC hdc, HRGN hrgn ) DECLSPEC_HIDDEN;
@@ -82,6 +83,7 @@ extern BOOL EMFDC_ExtTextOut( DC_ATTR *dc_attr, INT x, INT y, UINT flags, const 
 extern BOOL EMFDC_FillRgn( DC_ATTR *dc_attr, HRGN hrgn, HBRUSH hbrush ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_FrameRgn( DC_ATTR *dc_attr, HRGN hrgn, HBRUSH hbrush, INT width,
                             INT height ) DECLSPEC_HIDDEN;
+extern BOOL EMFDC_InvertRgn( DC_ATTR *dc_attr, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_LineTo( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_MoveTo( DC_ATTR *dc_attr, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_PaintRgn( DC_ATTR *dc_attr, HRGN hrgn ) DECLSPEC_HIDDEN;

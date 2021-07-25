@@ -509,15 +509,13 @@ BOOL WINAPI NtGdiFrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush, INT width, INT hei
 
 
 /***********************************************************************
- *           InvertRgn    (GDI32.@)
+ *           NtGdiInvertRgn    (win32u.@)
  */
-BOOL WINAPI InvertRgn( HDC hdc, HRGN hrgn )
+BOOL WINAPI NtGdiInvertRgn( HDC hdc, HRGN hrgn )
 {
     PHYSDEV physdev;
     BOOL ret;
     DC *dc = get_dc_ptr( hdc );
-
-    TRACE( "%p, %p\n", hdc, hrgn );
 
     if (!dc) return FALSE;
     update_dc( dc );

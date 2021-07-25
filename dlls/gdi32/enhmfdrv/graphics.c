@@ -902,11 +902,11 @@ BOOL CDECL EMFDRV_FrameRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush, INT width, IN
 }
 
 /*********************************************************************
- *          EMFDRV_PaintInvertRgn
+ *          EMF_PaintInvertRgn
  *
  * Helper for EMFDRV_{Paint|Invert}Rgn
  */
-static BOOL EMFDRV_PaintInvertRgn( PHYSDEV dev, HRGN hrgn, DWORD iType )
+static BOOL EMF_PaintInvertRgn( PHYSDEV dev, HRGN hrgn, DWORD iType )
 {
     EMRINVERTRGN *emr;
     DWORD size, rgnsize;
@@ -939,15 +939,24 @@ static BOOL EMFDRV_PaintInvertRgn( PHYSDEV dev, HRGN hrgn, DWORD iType )
  */
 BOOL EMFDC_PaintRgn( DC_ATTR *dc_attr, HRGN hrgn )
 {
-    return EMFDRV_PaintInvertRgn( dc_attr->emf, hrgn, EMR_PAINTRGN );
+    return EMF_PaintInvertRgn( dc_attr->emf, hrgn, EMR_PAINTRGN );
 }
 
 /**********************************************************************
+ *          EMF_InvertRgn
+ */
+BOOL EMFDC_InvertRgn( DC_ATTR *dc_attr, HRGN hrgn )
+{
+    return EMF_PaintInvertRgn( dc_attr->emf, hrgn, EMR_INVERTRGN );
+}
+
+/*********************************************************************
  *          EMFDRV_InvertRgn
  */
 BOOL CDECL EMFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn )
 {
-    return EMFDRV_PaintInvertRgn( dev, hrgn, EMR_INVERTRGN );
+    /* FIXME: update bounding rect */
+    return TRUE;
 }
 
 /**********************************************************************

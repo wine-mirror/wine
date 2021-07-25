@@ -158,7 +158,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pGetTextMetrics */
     NULL,                            /* pGradientFill */
     MFDRV_IntersectClipRect,         /* pIntersectClipRect */
-    MFDRV_InvertRgn,                 /* pInvertRgn */
+    NULL,                            /* pInvertRgn */
     NULL,                            /* pLineTo */
     NULL,                            /* pModifyWorldTransform */
     NULL,                            /* pMoveTo */
