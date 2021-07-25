@@ -3221,7 +3221,7 @@ static void test_emf_SetPixel(void)
     BOOL ret;
     HDC hdc;
 
-    hdc = CreateEnhMetaFileW(NULL, L"test.emf", NULL, NULL);
+    hdc = CreateEnhMetaFileW(NULL, NULL, NULL, NULL);
     ok(hdc != 0, "CreateEnhMetaFile failed\n");
 
     c = GetPixel(hdc, 5, 5);
@@ -3438,6 +3438,51 @@ static void test_mf_Graphics(void)
     ret = DeleteMetaFile(hMetafile);
     ok( ret, "DeleteMetaFile(%p) error %d\n",
         hMetafile, GetLastError());
+}
+
+static void test_mf_FloodFill(void)
+{
+    HMETAFILE mf;
+    HDC hdc;
+    BOOL ret;
+
+    static const unsigned char floodfill_bits[] =
+    {
+        0x01, 0x00, 0x09, 0x00, 0x00, 0x03, 0x24, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x48, 0x05,
+        0x00, 0x00, 0x03, 0x04, 0x05, 0x00, 0x02, 0x00,
+        0x01, 0x00, 0x08, 0x00, 0x00, 0x00, 0x48, 0x05,
+        0x00, 0x00, 0x08, 0x09, 0x0a, 0x00, 0x07, 0x00,
+        0x06, 0x00, 0x08, 0x00, 0x00, 0x00, 0x48, 0x05,
+        0x01, 0x00, 0x12, 0x13, 0x14, 0x00, 0x11, 0x00,
+        0x10, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00
+    };
+
+    hdc = CreateMetaFileA(NULL);
+    ok(hdc != 0, "CreateMetaFileA(NULL) error %d\n", GetLastError());
+
+    ret = FloodFill(hdc, 1, 2, RGB(3,4,5));
+    ok(ret, "FloodFill failed\n");
+
+    ret = ExtFloodFill(hdc, 6, 7, RGB(8,9,10), FLOODFILLBORDER);
+    ok(ret, "FloodFill failed\n");
+
+    ret = ExtFloodFill(hdc, 16, 17, RGB(18,19,20), FLOODFILLSURFACE);
+    ok(ret, "FloodFill failed\n");
+
+    mf = CloseMetaFile(hdc);
+    ok(mf != 0, "CloseMetaFile error %d\n", GetLastError());
+
+    if (compare_mf_bits (mf, floodfill_bits, sizeof(floodfill_bits),
+        "mf_FloodFill") != 0)
+    {
+        dump_mf_bits(mf, "mf_FloodFill");
+        EnumMetaFile(0, mf, mf_enum_proc, 0);
+    }
+
+    ret = DeleteMetaFile(mf);
+    ok(ret, "DeleteMetaFile(%p) error %d\n", mf, GetLastError());
 }
 
 static void test_mf_PatternBrush(void)
@@ -6357,6 +6402,7 @@ START_TEST(metafile)
     test_mf_SetLayout();
     test_metafile_file();
     test_mf_SetPixel();
+    test_mf_FloodFill();
 
     /* For metafile conversions */
     test_mf_conversions();

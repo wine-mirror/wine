@@ -63,6 +63,8 @@ extern METAFILEDRV_PDEVICE *get_metadc_ptr( HDC hdc ) DECLSPEC_HIDDEN;
 extern BOOL metadc_param2( HDC hdc, short func, short param1, short param2 ) DECLSPEC_HIDDEN;
 extern BOOL metadc_param4( HDC hdc, short func, short param1, short param2,
                            short param3, short param4 ) DECLSPEC_HIDDEN;
+extern BOOL metadc_param5( HDC hdc, short func, short param1, short param2, short param3,
+                           short param4, short param5 ) DECLSPEC_HIDDEN;
 extern BOOL metadc_param6( HDC hdc, short func, short param1, short param2, short param3,
                            short param4, short param5, short param6 ) DECLSPEC_HIDDEN;
 extern BOOL metadc_param8( HDC hdc, short func, short param1, short param2,

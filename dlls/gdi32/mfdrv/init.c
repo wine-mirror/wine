@@ -629,6 +629,22 @@ BOOL metadc_param4( HDC hdc, short func, short param1, short param2,
     return MFDRV_MetaParam4( &dev->dev, func, param1, param2, param3, param4 );
 }
 
+BOOL metadc_param5( HDC hdc, short func, short param1, short param2,
+                    short param3, short param4, short param5 )
+{
+    char buffer[FIELD_OFFSET(METARECORD, rdParm[5])];
+    METARECORD *mr = (METARECORD *)&buffer;
+
+    mr->rdSize = sizeof(buffer) / sizeof(WORD);
+    mr->rdFunction = func;
+    mr->rdParm[0] = param5;
+    mr->rdParm[1] = param4;
+    mr->rdParm[2] = param3;
+    mr->rdParm[3] = param2;
+    mr->rdParm[4] = param1;
+    return metadc_record( hdc, mr, sizeof(buffer) );
+}
+
 BOOL metadc_param6( HDC hdc, short func, short param1, short param2,
                     short param3, short param4, short param5,
                     short param6 )

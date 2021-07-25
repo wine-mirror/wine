@@ -250,9 +250,9 @@ BOOL METADC_PolyPolygon( HDC hdc, const POINT *pt, const INT *counts, UINT polyg
 /**********************************************************************
  *          METADC_ExtFloodFill
  */
-BOOL METADC_ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color, UINT fillType )
+BOOL METADC_ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color, UINT fill_type )
 {
-    return metadc_param4( hdc, META_FLOODFILL, x, y, HIWORD(color), LOWORD(color) );
+    return metadc_param5( hdc, META_EXTFLOODFILL, x, y, HIWORD(color), LOWORD(color), fill_type );
 }
 
 
