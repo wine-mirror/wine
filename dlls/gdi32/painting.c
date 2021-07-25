@@ -434,16 +434,14 @@ COLORREF WINAPI NtGdiGetPixel( HDC hdc, INT x, INT y )
 
 
 /******************************************************************************
- * GdiSetPixelFormat [GDI32.@]
+ *           NtGdiSetPixelFormat  (win32u.@)
  *
  * Probably not the correct semantics, it's supposed to be an internal backend for SetPixelFormat.
  */
-BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR *descr )
+BOOL WINAPI NtGdiSetPixelFormat( HDC hdc, INT format )
 {
     DC *dc;
     BOOL ret = TRUE;
-
-    TRACE("(%p,%d,%p)\n", hdc, format, descr);
 
     if (!(dc = get_dc_ptr( hdc ))) return FALSE;
 

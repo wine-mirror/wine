@@ -220,7 +220,7 @@ DWORD    WINAPI NtGdiSetLayout( HDC hdc, DWORD layout );
 INT      WINAPI NtGdiSetMetaRgn( HDC hdc );
 BOOL     WINAPI NtGdiSetMiterLimit( HDC hdc, FLOAT limit, FLOAT *prev_limit );
 COLORREF WINAPI NtGdiSetPixel( HDC hdc, INT x, INT y, COLORREF color );
-BOOL     WINAPI NtGdiSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR *descr );
+BOOL     WINAPI NtGdiSetPixelFormat( HDC hdc, INT format );
 BOOL     WINAPI NtGdiSetRectRgn( HRGN hrgn, INT left, INT top, INT right, INT bottom );
 BOOL     WINAPI NtGdiSetTextJustification( HDC hdc, INT extra, INT breaks );
 BOOL     WINAPI NtGdiSetVirtualResolution( HDC hdc, DWORD horz_res, DWORD vert_res,

@@ -444,3 +444,12 @@ BOOL WINAPI CloseFigure( HDC hdc )
     if (dc_attr->emf && !EMFDC_CloseFigure( dc_attr )) return FALSE;
     return NtGdiCloseFigure( hdc );
 }
+
+/***********************************************************************
+ *           GdiSetPixelFormat   (GDI32.@)
+ */
+BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR *descr )
+{
+    TRACE( "(%p,%d,%p)\n", hdc, format, descr );
+    return NtGdiSetPixelFormat( hdc, format );
+}
