@@ -215,6 +215,7 @@ struct sock
     unsigned int        wr_shutdown : 1; /* is the write end shut down? */
     unsigned int        wr_shutdown_pending : 1; /* is a write shutdown pending? */
     unsigned int        hangup : 1;  /* has the read end received a hangup? */
+    unsigned int        aborted : 1; /* did we get a POLLERR or irregular POLLHUP? */
     unsigned int        nonblocking : 1; /* is the socket nonblocking? */
     unsigned int        bound : 1;   /* is the socket bound? */
 };
@@ -1079,8 +1080,7 @@ static void sock_poll_event( struct fd *fd, int event )
         }
         else if (event & (POLLHUP | POLLERR))
         {
-            sock->rd_shutdown = 1;
-            sock->wr_shutdown = 1;
+            sock->aborted = 1;
 
             if (debug_level)
                 fprintf( stderr, "socket %p aborted by error %d, event %#x\n", sock, error, event );
@@ -1174,6 +1174,9 @@ static int sock_get_poll_events( struct fd *fd )
              * would complete a pending poll request. */
             return -1;
         }
+
+        if (sock->aborted)
+            return -1;
 
         if (sock->accept_recv_req)
         {
@@ -1403,6 +1406,7 @@ static struct sock *create_socket(void)
     sock->wr_shutdown = 0;
     sock->wr_shutdown_pending = 0;
     sock->hangup = 0;
+    sock->aborted = 0;
     sock->nonblocking = 0;
     sock->bound = 0;
     sock->rcvbuf = 0;
