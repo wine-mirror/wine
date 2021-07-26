@@ -1494,7 +1494,7 @@ static void test_VarParseNumFromStrEn(void)
   EXPECTFAIL;
   EXPECTRGB(0,FAILDIG);
 
-  /* Octal */
+  /* A leading 0 does not an octal number make */
   CONVERT("0100", NUMPRS_HEX_OCT);
   EXPECT(1,NUMPRS_HEX_OCT,0,4,0,2);
   EXPECTRGB(0,1);
@@ -1545,6 +1545,20 @@ static void test_VarParseNumFromStrEn(void)
   EXPECTRGB(1,2);
   EXPECTRGB(3,FAILDIG);
 
+  /* Only integers are allowed when using an alternative radix */
+  CONVERT("&ha.2", NUMPRS_HEX_OCT|NUMPRS_DECIMAL);
+  if (broken(1)) /* FIXME Reenable once Wine is less broken */
+  EXPECT(1,NUMPRS_HEX_OCT|NUMPRS_DECIMAL,NUMPRS_HEX_OCT,3,4,0);
+  todo_wine ok(np.dwOutFlags == NUMPRS_HEX_OCT, "Got dwOutFlags=%08x\n", np.dwOutFlags);
+  EXPECTRGB(0,10);
+  todo_wine EXPECTRGB(1,FAILDIG);
+
+  /* Except if it looks like a plain decimal number */
+  CONVERT("01.2", NUMPRS_HEX_OCT|NUMPRS_DECIMAL);
+  EXPECT(2,NUMPRS_HEX_OCT|NUMPRS_DECIMAL,NUMPRS_DECIMAL,4,0,-1);
+  EXPECT2(1,2);
+  EXPECTRGB(3,FAILDIG);
+
   /** NUMPRS_PARENS **/
 
   /* Empty parens = error */
@@ -1582,6 +1596,14 @@ static void test_VarParseNumFromStrEn(void)
    * part of the returned value. So consider that an implementation detail.
    */
   EXPECTRGB(4,FAILDIG);
+
+  /* With flag, thousands sep. and following digits consumed */
+  CONVERT("&h1,000", NUMPRS_HEX_OCT|NUMPRS_THOUSANDS);
+  if (broken(1)) /* FIXME Reenable once Wine is less broken */
+  EXPECT(1,NUMPRS_HEX_OCT|NUMPRS_THOUSANDS,NUMPRS_HEX_OCT,3,4,0);
+  todo_wine ok(np.dwOutFlags == NUMPRS_HEX_OCT, "Got dwOutFlags=%08x\n", np.dwOutFlags);
+  EXPECTRGB(0,1);
+  todo_wine EXPECTRGB(1,FAILDIG);
 
   /* With flag and decimal point, thousands sep. but not decimals consumed */
   CONVERT("1,001.0", NUMPRS_THOUSANDS);
@@ -1634,6 +1656,17 @@ static void test_VarParseNumFromStrEn(void)
   EXPECT(2,NUMPRS_CURRENCY,NUMPRS_CURRENCY,3,0,0);
   EXPECT2(1,1);
   EXPECTRGB(2,FAILDIG);
+
+  /* With flag, currency amounts cannot be in hexadecimal */
+  CONVERT("$&ha", NUMPRS_HEX_OCT|NUMPRS_CURRENCY);
+  todo_wine EXPECTFAIL;
+
+  CONVERT("&ha$", NUMPRS_HEX_OCT|NUMPRS_CURRENCY);
+  if (broken(1)) /* FIXME Reenable once Wine is less broken */
+  EXPECT(1,NUMPRS_HEX_OCT|NUMPRS_CURRENCY,NUMPRS_HEX_OCT,3,4,0);
+  todo_wine ok(np.dwOutFlags == NUMPRS_HEX_OCT, "Got dwOutFlags=%08x\n", np.dwOutFlags);
+  EXPECTRGB(0,10);
+  EXPECTRGB(1,FAILDIG);
 
   /* With flag, the sign cannot be repeated before the amount */
   CONVERT("$$11", NUMPRS_CURRENCY);
@@ -1766,6 +1799,20 @@ static void test_VarParseNumFromStrEn(void)
   CONVERT("1e1", NUMPRS_EXPONENT);
   EXPECT(1,NUMPRS_EXPONENT,NUMPRS_EXPONENT,3,0,1);
   EXPECT2(1,FAILDIG);
+
+  /* With flag, incompatible with NUMPRS_HEX_OCT */
+  CONVERT("&o1e1", NUMPRS_HEX_OCT|NUMPRS_EXPONENT);
+  if (broken(1)) /* FIXME Reenable once Wine is less broken */
+  EXPECT(1,NUMPRS_HEX_OCT|NUMPRS_EXPONENT,NUMPRS_HEX_OCT,3,3,0);
+  todo_wine ok(np.dwOutFlags == NUMPRS_HEX_OCT, "Got dwOutFlags=%08x\n", np.dwOutFlags);
+  EXPECT2(1,FAILDIG);
+
+  /* With flag, even if it sort of looks like an exponent */
+  CONVERT("&h1e2", NUMPRS_HEX_OCT|NUMPRS_EXPONENT);
+  EXPECT(3,NUMPRS_HEX_OCT|NUMPRS_EXPONENT,NUMPRS_HEX_OCT,5,4,0);
+  EXPECT2(1,0xe);
+  EXPECTRGB(2,2);
+  EXPECTRGB(3,FAILDIG);
 
   /* Negative exponents are accepted without flags */
   CONVERT("1e-1", NUMPRS_EXPONENT);
