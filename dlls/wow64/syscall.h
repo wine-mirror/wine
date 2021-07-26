@@ -37,6 +37,8 @@
     SYSCALL_ENTRY( NtCreateEvent ) \
     SYSCALL_ENTRY( NtCreateIoCompletion ) \
     SYSCALL_ENTRY( NtCreateJobObject ) \
+    SYSCALL_ENTRY( NtCreateKey ) \
+    SYSCALL_ENTRY( NtCreateKeyTransacted ) \
     SYSCALL_ENTRY( NtCreateKeyedEvent ) \
     SYSCALL_ENTRY( NtCreateMutant ) \
     SYSCALL_ENTRY( NtCreatePort ) \
@@ -48,7 +50,9 @@
     SYSCALL_ENTRY( NtDebugContinue ) \
     SYSCALL_ENTRY( NtDelayExecution ) \
     SYSCALL_ENTRY( NtDeleteAtom ) \
+    SYSCALL_ENTRY( NtDeleteKey ) \
     SYSCALL_ENTRY( NtDuplicateObject ) \
+    SYSCALL_ENTRY( NtEnumerateKey ) \
     SYSCALL_ENTRY( NtFindAtom ) \
     SYSCALL_ENTRY( NtGetCurrentProcessorNumber ) \
     SYSCALL_ENTRY( NtListenPort ) \
@@ -57,6 +61,10 @@
     SYSCALL_ENTRY( NtOpenEvent ) \
     SYSCALL_ENTRY( NtOpenIoCompletion ) \
     SYSCALL_ENTRY( NtOpenJobObject ) \
+    SYSCALL_ENTRY( NtOpenKey ) \
+    SYSCALL_ENTRY( NtOpenKeyEx ) \
+    SYSCALL_ENTRY( NtOpenKeyTransacted ) \
+    SYSCALL_ENTRY( NtOpenKeyTransactedEx ) \
     SYSCALL_ENTRY( NtOpenKeyedEvent ) \
     SYSCALL_ENTRY( NtOpenMutant ) \
     SYSCALL_ENTRY( NtOpenSection ) \
@@ -71,6 +79,7 @@
     SYSCALL_ENTRY( NtQueryInformationAtom ) \
     SYSCALL_ENTRY( NtQueryInstallUILanguage ) \
     SYSCALL_ENTRY( NtQueryIoCompletion ) \
+    SYSCALL_ENTRY( NtQueryKey ) \
     SYSCALL_ENTRY( NtQueryMutant ) \
     SYSCALL_ENTRY( NtQueryObject ) \
     SYSCALL_ENTRY( NtQueryPerformanceCounter ) \
@@ -82,6 +91,8 @@
     SYSCALL_ENTRY( NtReleaseKeyedEvent ) \
     SYSCALL_ENTRY( NtReleaseMutant ) \
     SYSCALL_ENTRY( NtReleaseSemaphore ) \
+    SYSCALL_ENTRY( NtRenameKey ) \
+    SYSCALL_ENTRY( NtReplaceKey ) \
     SYSCALL_ENTRY( NtReplyWaitReceivePort ) \
     SYSCALL_ENTRY( NtRequestWaitReplyPort ) \
     SYSCALL_ENTRY( NtResetEvent ) \
@@ -90,6 +101,7 @@
     SYSCALL_ENTRY( NtSetDefaultUILanguage ) \
     SYSCALL_ENTRY( NtSetEvent ) \
     SYSCALL_ENTRY( NtSetInformationDebugObject ) \
+    SYSCALL_ENTRY( NtSetInformationKey ) \
     SYSCALL_ENTRY( NtSetInformationObject ) \
     SYSCALL_ENTRY( NtSetIoCompletion ) \
     SYSCALL_ENTRY( NtSetPowerRequest ) \
