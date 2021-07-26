@@ -1505,7 +1505,7 @@ static void test_VarParseNumFromStrEn(void)
 
   /* VB hex */
   CONVERT("&HF800", NUMPRS_HEX_OCT);
-  EXPECT(4,NUMPRS_HEX_OCT,0x40,6,4,0);
+  EXPECT(4,NUMPRS_HEX_OCT,NUMPRS_HEX_OCT,6,4,0);
   EXPECTRGB(0,15);
   EXPECTRGB(1,8);
   EXPECTRGB(2,0);
@@ -1514,7 +1514,7 @@ static void test_VarParseNumFromStrEn(void)
 
   /* VB hex lower case and leading zero */
   CONVERT("&h0abcdef", NUMPRS_HEX_OCT);
-  EXPECT(6,NUMPRS_HEX_OCT,0x40,9,4,0);
+  EXPECT(6,NUMPRS_HEX_OCT,NUMPRS_HEX_OCT,9,4,0);
   EXPECTRGB(0,10);
   EXPECTRGB(1,11);
   EXPECTRGB(2,12);
@@ -1525,7 +1525,7 @@ static void test_VarParseNumFromStrEn(void)
 
   /* VB oct */
   CONVERT("&O300", NUMPRS_HEX_OCT);
-  EXPECT(3,NUMPRS_HEX_OCT,0x40,5,3,0);
+  EXPECT(3,NUMPRS_HEX_OCT,NUMPRS_HEX_OCT,5,3,0);
   EXPECTRGB(0,3);
   EXPECTRGB(1,0);
   EXPECTRGB(2,0);
@@ -1533,7 +1533,7 @@ static void test_VarParseNumFromStrEn(void)
 
   /* VB oct lower case and leading zero */
   CONVERT("&o0777", NUMPRS_HEX_OCT);
-  EXPECT(3,NUMPRS_HEX_OCT,0x40,6,3,0);
+  EXPECT(3,NUMPRS_HEX_OCT,NUMPRS_HEX_OCT,6,3,0);
   EXPECTRGB(0,7);
   EXPECTRGB(1,7);
   EXPECTRGB(2,7);
@@ -1541,7 +1541,7 @@ static void test_VarParseNumFromStrEn(void)
 
   /* VB oct char bigger than 7 */
   CONVERT("&o128", NUMPRS_HEX_OCT);
-  EXPECT(2,NUMPRS_HEX_OCT,0x40,4,3,0);
+  EXPECT(2,NUMPRS_HEX_OCT,NUMPRS_HEX_OCT,4,3,0);
   EXPECTRGB(0,1);
   EXPECTRGB(1,2);
   EXPECTRGB(3,FAILDIG);
