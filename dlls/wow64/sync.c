@@ -32,6 +32,41 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wow);
 
 
+static void put_object_type_info( OBJECT_TYPE_INFORMATION32 *info32, const OBJECT_TYPE_INFORMATION *info )
+{
+    if (info->TypeName.Length)
+    {
+        memcpy( info32 + 1, info->TypeName.Buffer, info->TypeName.Length + sizeof(WCHAR) );
+        info32->TypeName.Length        = info->TypeName.Length;
+        info32->TypeName.MaximumLength = info->TypeName.Length + sizeof(WCHAR);
+        info32->TypeName.Buffer        = PtrToUlong( info32 + 1 );
+    }
+    else memset( &info32->TypeName, 0, sizeof(info32->TypeName) );
+    info32->TotalNumberOfObjects       = info->TotalNumberOfObjects;
+    info32->TotalNumberOfHandles       = info->TotalNumberOfHandles;
+    info32->TotalPagedPoolUsage        = info->TotalPagedPoolUsage;
+    info32->TotalNonPagedPoolUsage     = info->TotalNonPagedPoolUsage;
+    info32->TotalNamePoolUsage         = info->TotalNamePoolUsage;
+    info32->TotalHandleTableUsage      = info->TotalHandleTableUsage;
+    info32->HighWaterNumberOfObjects   = info->HighWaterNumberOfObjects;
+    info32->HighWaterNumberOfHandles   = info->HighWaterNumberOfHandles;
+    info32->HighWaterPagedPoolUsage    = info->HighWaterPagedPoolUsage;
+    info32->HighWaterNonPagedPoolUsage = info->HighWaterNonPagedPoolUsage;
+    info32->HighWaterNamePoolUsage     = info->HighWaterNamePoolUsage;
+    info32->HighWaterHandleTableUsage  = info->HighWaterHandleTableUsage;
+    info32->InvalidAttributes          = info->InvalidAttributes;
+    info32->GenericMapping             = info->GenericMapping;
+    info32->ValidAccessMask            = info->ValidAccessMask;
+    info32->SecurityRequired           = info->SecurityRequired;
+    info32->MaintainHandleCount        = info->MaintainHandleCount;
+    info32->TypeIndex                  = info->TypeIndex;
+    info32->ReservedByte               = info->ReservedByte;
+    info32->PoolType                   = info->PoolType;
+    info32->DefaultPagedPoolCharge     = info->DefaultPagedPoolCharge;
+    info32->DefaultNonPagedPoolCharge  = info->DefaultNonPagedPoolCharge;
+}
+
+
 void put_section_image_info( SECTION_IMAGE_INFORMATION32 *info32, const SECTION_IMAGE_INFORMATION *info )
 {
     if (info->Machine == IMAGE_FILE_MACHINE_AMD64 || info->Machine == IMAGE_FILE_MACHINE_ARM64)
@@ -350,6 +385,41 @@ NTSTATUS WINAPI wow64_NtDelayExecution( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtDuplicateObject
+ */
+NTSTATUS WINAPI wow64_NtDuplicateObject( UINT *args )
+{
+    HANDLE source_process = get_handle( &args );
+    HANDLE source_handle = get_handle( &args );
+    HANDLE dest_process = get_handle( &args );
+    ULONG *handle_ptr = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    ULONG attributes = get_ulong( &args );
+    ULONG options = get_ulong( &args );
+
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    if (handle_ptr) *handle_ptr = 0;
+    status = NtDuplicateObject( source_process, source_handle, dest_process, &handle,
+                                access, attributes, options );
+    if (handle_ptr) put_handle( handle_ptr, handle );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtMakeTemporaryObject
+ */
+NTSTATUS WINAPI wow64_NtMakeTemporaryObject( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+
+    return NtMakeTemporaryObject( handle );
+}
+
+
+/**********************************************************************
  *           wow64_NtOpenDirectoryObject
  */
 NTSTATUS WINAPI wow64_NtOpenDirectoryObject( UINT *args )
@@ -644,6 +714,111 @@ NTSTATUS WINAPI wow64_NtQueryMutant( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtQueryObject
+ */
+NTSTATUS WINAPI wow64_NtQueryObject( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    OBJECT_INFORMATION_CLASS class = get_ulong( &args );
+    void *ptr = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    ULONG *retlen = get_ptr( &args );
+
+    NTSTATUS status;
+    ULONG ret_size;
+
+    switch (class)
+    {
+    case ObjectBasicInformation:   /* OBJECT_BASIC_INFORMATION */
+    case ObjectDataInformation:   /* OBJECT_DATA_INFORMATION */
+        return NtQueryObject( handle, class, ptr, len, retlen );
+
+    case ObjectNameInformation:   /* OBJECT_NAME_INFORMATION */
+    {
+        ULONG size = len + sizeof(OBJECT_NAME_INFORMATION) - sizeof(OBJECT_NAME_INFORMATION32);
+        OBJECT_NAME_INFORMATION32 *info32 = ptr;
+        OBJECT_NAME_INFORMATION *info = RtlAllocateHeap( GetProcessHeap(), 0, size );
+
+        if (!(status = NtQueryObject( handle, class, info, size, &ret_size )))
+        {
+            if (len >= sizeof(*info32) + info->Name.MaximumLength)
+            {
+                if (info->Name.Length)
+                {
+                    memcpy( info32 + 1, info->Name.Buffer, info->Name.Length + sizeof(WCHAR) );
+                    info32->Name.Length = info->Name.Length;
+                    info32->Name.MaximumLength = info->Name.Length + sizeof(WCHAR);
+                    info32->Name.Buffer = PtrToUlong( info32 + 1 );
+                }
+                else memset( &info32->Name, 0, sizeof(info32->Name) );
+            }
+            else status = STATUS_INFO_LENGTH_MISMATCH;
+            if (retlen) *retlen = sizeof(*info32) + info->Name.MaximumLength;
+        }
+        else if (status == STATUS_INFO_LENGTH_MISMATCH || status == STATUS_BUFFER_OVERFLOW)
+        {
+            if (retlen) *retlen = ret_size - sizeof(*info) + sizeof(*info32);
+        }
+        RtlFreeHeap( GetProcessHeap(), 0, info );
+        return status;
+    }
+
+    case ObjectTypeInformation:   /* OBJECT_TYPE_INFORMATION */
+    {
+        ULONG_PTR buffer[(sizeof(OBJECT_TYPE_INFORMATION) + 64) / sizeof(ULONG_PTR)];
+        OBJECT_TYPE_INFORMATION *info = (OBJECT_TYPE_INFORMATION *)buffer;
+        OBJECT_TYPE_INFORMATION32 *info32 = ptr;
+
+        if (!(status = NtQueryObject( handle, class, info, sizeof(buffer), NULL )))
+        {
+            if (len >= sizeof(*info32) + info->TypeName.MaximumLength)
+                put_object_type_info( info32, info );
+            else
+                status = STATUS_INFO_LENGTH_MISMATCH;
+            if (retlen) *retlen = sizeof(*info32) + info->TypeName.Length + sizeof(WCHAR);
+        }
+        return status;
+    }
+
+    case ObjectTypesInformation:   /* OBJECT_TYPES_INFORMATION */
+    {
+        OBJECT_TYPES_INFORMATION *info, *info32 = ptr;
+        /* assume at most 32 types, with an average 16-char name */
+        ULONG ret_size, size = 32 * (sizeof(OBJECT_TYPE_INFORMATION) + 16 * sizeof(WCHAR));
+
+        info = RtlAllocateHeap( GetProcessHeap(), 0, size );
+        if (!(status = NtQueryObject( handle, class, info, size, &ret_size )))
+        {
+            OBJECT_TYPE_INFORMATION *type;
+            OBJECT_TYPE_INFORMATION32 *type32;
+            ULONG align = TYPE_ALIGNMENT( OBJECT_TYPE_INFORMATION ) - 1;
+            ULONG align32 = TYPE_ALIGNMENT( OBJECT_TYPE_INFORMATION32 ) - 1;
+            ULONG i, pos = (sizeof(*info) + align) & ~align, pos32 = (sizeof(*info32) + align32) & ~align32;
+
+            if (pos32 <= len) info32->NumberOfTypes = info->NumberOfTypes;
+            for (i = 0; i < info->NumberOfTypes; i++)
+            {
+                type = (OBJECT_TYPE_INFORMATION *)((char *)info + pos);
+                type32 = (OBJECT_TYPE_INFORMATION32 *)((char *)ptr + pos32);
+                pos += sizeof(*type) + ((type->TypeName.MaximumLength + align) & ~align);
+                pos32 += sizeof(*type32) + ((type->TypeName.MaximumLength + align32) & ~align32);
+                if (pos32 <= len) put_object_type_info( type32, type );
+            }
+            if (pos32 > len) status = STATUS_INFO_LENGTH_MISMATCH;
+            if (retlen) *retlen = pos32;
+        }
+        RtlFreeHeap( GetProcessHeap(), 0, info );
+        return status;
+    }
+
+    default:
+        FIXME( "unsupported class %u\n", class );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+}
+
+
+/**********************************************************************
  *           wow64_NtQueryPerformanceCounter
  */
 NTSTATUS WINAPI wow64_NtQueryPerformanceCounter( UINT *args )
@@ -844,6 +1019,28 @@ NTSTATUS WINAPI wow64_NtSetInformationDebugObject( UINT *args )
     ULONG *retlen = get_ptr( &args );
 
     return NtSetInformationDebugObject( handle, class, ptr, len, retlen );
+}
+
+
+/**********************************************************************
+ *           wow64_NtSetInformationObject
+ */
+NTSTATUS WINAPI wow64_NtSetInformationObject( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    OBJECT_INFORMATION_CLASS class = get_ulong( &args );
+    void *ptr = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+
+    switch (class)
+    {
+    case ObjectDataInformation:   /* OBJECT_DATA_INFORMATION */
+        return NtSetInformationObject( handle, class, ptr, len );
+
+    default:
+        FIXME( "unsupported class %u\n", class );
+        return STATUS_NOT_IMPLEMENTED;
+    }
 }
 
 

@@ -42,8 +42,10 @@
     SYSCALL_ENTRY( NtDebugContinue ) \
     SYSCALL_ENTRY( NtDelayExecution ) \
     SYSCALL_ENTRY( NtDeleteAtom ) \
+    SYSCALL_ENTRY( NtDuplicateObject ) \
     SYSCALL_ENTRY( NtFindAtom ) \
     SYSCALL_ENTRY( NtGetCurrentProcessorNumber ) \
+    SYSCALL_ENTRY( NtMakeTemporaryObject ) \
     SYSCALL_ENTRY( NtOpenDirectoryObject ) \
     SYSCALL_ENTRY( NtOpenEvent ) \
     SYSCALL_ENTRY( NtOpenIoCompletion ) \
@@ -63,6 +65,7 @@
     SYSCALL_ENTRY( NtQueryInstallUILanguage ) \
     SYSCALL_ENTRY( NtQueryIoCompletion ) \
     SYSCALL_ENTRY( NtQueryMutant ) \
+    SYSCALL_ENTRY( NtQueryObject ) \
     SYSCALL_ENTRY( NtQueryPerformanceCounter ) \
     SYSCALL_ENTRY( NtQuerySection ) \
     SYSCALL_ENTRY( NtQuerySemaphore  ) \
@@ -77,6 +80,7 @@
     SYSCALL_ENTRY( NtSetDefaultUILanguage ) \
     SYSCALL_ENTRY( NtSetEvent ) \
     SYSCALL_ENTRY( NtSetInformationDebugObject ) \
+    SYSCALL_ENTRY( NtSetInformationObject ) \
     SYSCALL_ENTRY( NtSetIoCompletion ) \
     SYSCALL_ENTRY( NtSetTimer ) \
     SYSCALL_ENTRY( NtSetTimerResolution ) \
