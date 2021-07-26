@@ -33091,6 +33091,15 @@ static void test_deferred_context_map(void)
 
     ID3D11CommandList_Release(list);
 
+    /* Dead Rising unmaps a resource on the wrong context. */
+
+    hr = ID3D11DeviceContext_Map(immediate, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    ID3D11DeviceContext_Unmap(deferred, (ID3D11Resource *)buffer, 0);
+
+    ID3D11DeviceContext_Unmap(immediate, (ID3D11Resource *)buffer, 0);
+
     /* Test WRITE_NO_OVERWRITE. */
 
     hr = ID3D11DeviceContext_Map(immediate, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc);
