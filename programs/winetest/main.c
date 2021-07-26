@@ -1066,7 +1066,10 @@ run_tests (char *logname, char *outdir)
         report (R_FATAL, "Could not open logfile: %u", GetLastError());
 
     if (outdir)
-        strcpy( tempdir, outdir);
+    {
+        /* Get a full path so it is still valid after a chdir */
+        GetFullPathNameA( outdir, ARRAY_SIZE(tempdir), tempdir, NULL );
+    }
     else
     {
         strcpy( tempdir, tmppath );
