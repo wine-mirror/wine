@@ -35,6 +35,7 @@
     SYSCALL_ENTRY( NtCreateJobObject ) \
     SYSCALL_ENTRY( NtCreateKeyedEvent ) \
     SYSCALL_ENTRY( NtCreateMutant ) \
+    SYSCALL_ENTRY( NtCreateSection ) \
     SYSCALL_ENTRY( NtCreateSemaphore ) \
     SYSCALL_ENTRY( NtCreateSymbolicLinkObject ) \
     SYSCALL_ENTRY( NtCreateTimer ) \
@@ -49,6 +50,7 @@
     SYSCALL_ENTRY( NtOpenJobObject ) \
     SYSCALL_ENTRY( NtOpenKeyedEvent ) \
     SYSCALL_ENTRY( NtOpenMutant ) \
+    SYSCALL_ENTRY( NtOpenSection ) \
     SYSCALL_ENTRY( NtOpenSemaphore ) \
     SYSCALL_ENTRY( NtOpenSymbolicLinkObject  ) \
     SYSCALL_ENTRY( NtOpenTimer ) \
@@ -62,6 +64,7 @@
     SYSCALL_ENTRY( NtQueryIoCompletion ) \
     SYSCALL_ENTRY( NtQueryMutant ) \
     SYSCALL_ENTRY( NtQueryPerformanceCounter ) \
+    SYSCALL_ENTRY( NtQuerySection ) \
     SYSCALL_ENTRY( NtQuerySemaphore  ) \
     SYSCALL_ENTRY( NtQuerySymbolicLinkObject ) \
     SYSCALL_ENTRY( NtQueryTimer ) \

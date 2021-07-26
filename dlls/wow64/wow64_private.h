@@ -137,4 +137,12 @@ static inline void put_handle( ULONG *handle32, HANDLE handle )
     *handle32 = HandleToULong( handle );
 }
 
+static inline void put_size( ULONG *size32, SIZE_T size )
+{
+    if (size32) *size32 = min( size, MAXDWORD );
+}
+
+extern void put_section_image_info( SECTION_IMAGE_INFORMATION32 *info32,
+                                    const SECTION_IMAGE_INFORMATION *info ) DECLSPEC_HIDDEN;
+
 #endif /* __WOW64_PRIVATE_H */

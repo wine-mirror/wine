@@ -39,6 +39,34 @@ typedef struct
 
 typedef struct
 {
+    ULONG         BaseAddress;
+    ULONG         Attributes;
+    LARGE_INTEGER Size;
+} SECTION_BASIC_INFORMATION32;
+
+typedef struct
+{
+    ULONG   TransferAddress;
+    ULONG   ZeroBits;
+    ULONG   MaximumStackSize;
+    ULONG   CommittedStackSize;
+    ULONG   SubSystemType;
+    USHORT  MinorSubsystemVersion;
+    USHORT  MajorSubsystemVersion;
+    USHORT  MajorOperatingSystemVersion;
+    USHORT  MinorOperatingSystemVersion;
+    USHORT  ImageCharacteristics;
+    USHORT  DllCharacteristics;
+    USHORT  Machine;
+    BOOLEAN ImageContainsCode;
+    UCHAR   ImageFlags;
+    ULONG   LoaderFlags;
+    ULONG   ImageFileSize;
+    ULONG   CheckSum;
+} SECTION_IMAGE_INFORMATION32;
+
+typedef struct
+{
     DBG_STATE   NewState;
     CLIENT_ID32 AppClientId;
     union

@@ -32,6 +32,37 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wow);
 
 
+void put_section_image_info( SECTION_IMAGE_INFORMATION32 *info32, const SECTION_IMAGE_INFORMATION *info )
+{
+    if (info->Machine == IMAGE_FILE_MACHINE_AMD64 || info->Machine == IMAGE_FILE_MACHINE_ARM64)
+    {
+        info32->TransferAddress    = 0x81231234;  /* sic */
+        info32->MaximumStackSize   = 0x100000;
+        info32->CommittedStackSize = 0x10000;
+    }
+    else
+    {
+        info32->TransferAddress    = PtrToUlong( info->TransferAddress );
+        info32->MaximumStackSize   = info->MaximumStackSize;
+        info32->CommittedStackSize = info->CommittedStackSize;
+    }
+    info32->ZeroBits                    = info->ZeroBits;
+    info32->SubSystemType               = info->SubSystemType;
+    info32->MinorSubsystemVersion       = info->MinorSubsystemVersion;
+    info32->MajorSubsystemVersion       = info->MajorSubsystemVersion;
+    info32->MajorOperatingSystemVersion = info->MajorOperatingSystemVersion;
+    info32->MinorOperatingSystemVersion = info->MinorOperatingSystemVersion;
+    info32->ImageCharacteristics        = info->ImageCharacteristics;
+    info32->DllCharacteristics          = info->DllCharacteristics;
+    info32->Machine                     = info->Machine;
+    info32->ImageContainsCode           = info->ImageContainsCode;
+    info32->ImageFlags                  = info->ImageFlags;
+    info32->LoaderFlags                 = info->LoaderFlags;
+    info32->ImageFileSize               = info->ImageFileSize;
+    info32->CheckSum                    = info->CheckSum;
+}
+
+
 /**********************************************************************
  *           wow64_NtCancelTimer
  */
@@ -196,6 +227,30 @@ NTSTATUS WINAPI wow64_NtCreateMutant( UINT *args )
 
     *handle_ptr = 0;
     status = NtCreateMutant( &handle, access, objattr_32to64( &attr, attr32 ), owned );
+    put_handle( handle_ptr, handle );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtCreateSection
+ */
+NTSTATUS WINAPI wow64_NtCreateSection( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    const LARGE_INTEGER *size = get_ptr( &args );
+    ULONG protect = get_ulong( &args );
+    ULONG flags = get_ulong( &args );
+    HANDLE file = get_handle( &args );
+
+    struct object_attr64 attr;
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    *handle_ptr = 0;
+    status = NtCreateSection( &handle, access, objattr_32to64( &attr, attr32 ), size, protect, flags, file );
     put_handle( handle_ptr, handle );
     return status;
 }
@@ -415,6 +470,26 @@ NTSTATUS WINAPI wow64_NtOpenMutant( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtOpenSection
+ */
+NTSTATUS WINAPI wow64_NtOpenSection( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+
+    struct object_attr64 attr;
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    *handle_ptr = 0;
+    status = NtOpenSection( &handle, access, objattr_32to64( &attr, attr32 ));
+    put_handle( handle_ptr, handle );
+    return status;
+}
+
+
+/**********************************************************************
  *           wow64_NtOpenSemaphore
  */
 NTSTATUS WINAPI wow64_NtOpenSemaphore( UINT *args )
@@ -577,6 +652,59 @@ NTSTATUS WINAPI wow64_NtQueryPerformanceCounter( UINT *args )
     LARGE_INTEGER *frequency = get_ptr( &args );
 
     return NtQueryPerformanceCounter( counter, frequency );
+}
+
+
+/**********************************************************************
+ *           wow64_NtQuerySection
+ */
+NTSTATUS WINAPI wow64_NtQuerySection( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    SECTION_INFORMATION_CLASS class = get_ulong( &args );
+    void *ptr = get_ptr( &args );
+    SIZE_T size = get_ulong( &args );
+    ULONG *ret_ptr = get_ptr( &args );
+
+    NTSTATUS status;
+    SIZE_T ret_size = 0;
+
+    switch (class)
+    {
+    case SectionBasicInformation:
+    {
+        SECTION_BASIC_INFORMATION info;
+        SECTION_BASIC_INFORMATION32 *info32 = ptr;
+
+        if (size < sizeof(*info32)) return STATUS_INFO_LENGTH_MISMATCH;
+        if (!(status = NtQuerySection( handle, class, &info, sizeof(info), &ret_size )))
+        {
+            info32->BaseAddress = PtrToUlong( info.BaseAddress );
+            info32->Attributes  = info.Attributes;
+            info32->Size        = info.Size;
+            ret_size = sizeof(*info32);
+        }
+        break;
+    }
+    case SectionImageInformation:
+    {
+        SECTION_IMAGE_INFORMATION info;
+        SECTION_IMAGE_INFORMATION32 *info32 = ptr;
+
+        if (size < sizeof(*info32)) return STATUS_INFO_LENGTH_MISMATCH;
+        if (!(status = NtQuerySection( handle, class, &info, sizeof(info), &ret_size )))
+        {
+            put_section_image_info( info32, &info );
+            ret_size = sizeof(*info32);
+        }
+        break;
+    }
+    default:
+	FIXME( "class %u not implemented\n", class );
+	return STATUS_NOT_IMPLEMENTED;
+    }
+    put_size( ret_ptr, ret_size );
+    return status;
 }
 
 
