@@ -22,12 +22,15 @@
 #define __WOW64_SYSCALL_H
 
 #define ALL_SYSCALLS \
+    SYSCALL_ENTRY( NtAcceptConnectPort ) \
     SYSCALL_ENTRY( NtAddAtom ) \
     SYSCALL_ENTRY( NtAllocateLocallyUniqueId ) \
     SYSCALL_ENTRY( NtAllocateUuids ) \
     SYSCALL_ENTRY( NtCancelTimer ) \
     SYSCALL_ENTRY( NtClearEvent ) \
     SYSCALL_ENTRY( NtClose ) \
+    SYSCALL_ENTRY( NtCompleteConnectPort ) \
+    SYSCALL_ENTRY( NtConnectPort ) \
     SYSCALL_ENTRY( NtCreateDebugObject ) \
     SYSCALL_ENTRY( NtCreateDirectoryObject ) \
     SYSCALL_ENTRY( NtCreateEvent ) \
@@ -35,6 +38,7 @@
     SYSCALL_ENTRY( NtCreateJobObject ) \
     SYSCALL_ENTRY( NtCreateKeyedEvent ) \
     SYSCALL_ENTRY( NtCreateMutant ) \
+    SYSCALL_ENTRY( NtCreatePort ) \
     SYSCALL_ENTRY( NtCreateSection ) \
     SYSCALL_ENTRY( NtCreateSemaphore ) \
     SYSCALL_ENTRY( NtCreateSymbolicLinkObject ) \
@@ -45,6 +49,7 @@
     SYSCALL_ENTRY( NtDuplicateObject ) \
     SYSCALL_ENTRY( NtFindAtom ) \
     SYSCALL_ENTRY( NtGetCurrentProcessorNumber ) \
+    SYSCALL_ENTRY( NtListenPort ) \
     SYSCALL_ENTRY( NtMakeTemporaryObject ) \
     SYSCALL_ENTRY( NtOpenDirectoryObject ) \
     SYSCALL_ENTRY( NtOpenEvent ) \
@@ -75,7 +80,10 @@
     SYSCALL_ENTRY( NtReleaseKeyedEvent ) \
     SYSCALL_ENTRY( NtReleaseMutant ) \
     SYSCALL_ENTRY( NtReleaseSemaphore ) \
+    SYSCALL_ENTRY( NtReplyWaitReceivePort ) \
+    SYSCALL_ENTRY( NtRequestWaitReplyPort ) \
     SYSCALL_ENTRY( NtResetEvent ) \
+    SYSCALL_ENTRY( NtSecureConnectPort ) \
     SYSCALL_ENTRY( NtSetDefaultLocale ) \
     SYSCALL_ENTRY( NtSetDefaultUILanguage ) \
     SYSCALL_ENTRY( NtSetEvent ) \
