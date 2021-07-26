@@ -35,9 +35,9 @@ BOOL METADC_SetTextAlign( HDC hdc, UINT align )
     return metadc_param2( hdc, META_SETTEXTALIGN, HIWORD(align), LOWORD(align) );
 }
 
-INT CDECL MFDRV_SetBkMode( PHYSDEV dev, INT mode )
+BOOL METADC_SetBkMode( HDC hdc, INT mode )
 {
-    return MFDRV_MetaParam1( dev, META_SETBKMODE, (WORD)mode) ? mode : 0;
+    return metadc_param1( hdc, META_SETBKMODE, (WORD)mode );
 }
 
 COLORREF CDECL MFDRV_SetBkColor( PHYSDEV dev, COLORREF color )

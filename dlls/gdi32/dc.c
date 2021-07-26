@@ -1556,34 +1556,6 @@ INT WINAPI GetRelAbs( HDC hdc, DWORD dwIgnore )
 
 
 /***********************************************************************
- *		SetBkMode (GDI32.@)
- */
-INT WINAPI SetBkMode( HDC hdc, INT mode )
-{
-    INT ret = 0;
-    DC *dc;
-
-    if ((mode <= 0) || (mode > BKMODE_LAST))
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
-    }
-    if ((dc = get_dc_ptr( hdc )))
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetBkMode );
-        mode = physdev->funcs->pSetBkMode( physdev, mode );
-        if (mode)
-        {
-            ret = dc->attr->background_mode;
-            dc->attr->background_mode = mode;
-        }
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-
-/***********************************************************************
  *		GetROP2 (GDI32.@)
  */
 INT WINAPI GetROP2( HDC hdc )

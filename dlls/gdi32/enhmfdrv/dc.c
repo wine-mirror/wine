@@ -80,13 +80,13 @@ BOOL CDECL EMFDRV_SetTextJustification(PHYSDEV dev, INT nBreakExtra, INT nBreakC
     return EMFDRV_WriteRecord(dev, &emr.emr);
 }
 
-INT CDECL EMFDRV_SetBkMode( PHYSDEV dev, INT mode )
+BOOL EMFDC_SetBkMode( DC_ATTR *dc_attr, INT mode )
 {
     EMRSETBKMODE emr;
     emr.emr.iType = EMR_SETBKMODE;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = mode;
-    return EMFDRV_WriteRecord( dev, &emr.emr ) ? mode : 0;
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 COLORREF CDECL EMFDRV_SetBkColor( PHYSDEV dev, COLORREF color )

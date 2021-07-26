@@ -3127,6 +3127,11 @@ static void test_mf_attrs(void)
     attr = SetTextAlign(hdc, TA_TOP);
     ok(attr == TRUE, "attr = %x\n", attr);
 
+    attr = SetBkMode(hdc, TRANSPARENT);
+    ok(attr == TRUE, "attr = %x\n", attr);
+    attr = SetBkMode(hdc, OPAQUE);
+    ok(attr == TRUE, "attr = %x\n", attr);
+
     mf = CloseMetaFile(hdc);
     ok(mf != 0, "CloseEnhMetaFile failed\n");
     DeleteMetaFile(mf);
@@ -3279,6 +3284,11 @@ static void test_emf_attrs(void)
     ok(attr == 0, "attr = %x\n", attr);
     attr = SetTextAlign(hdc, TA_TOP);
     ok(attr == TA_BOTTOM, "attr = %x\n", attr);
+
+    attr = SetBkMode(hdc, TRANSPARENT);
+    ok(attr == OPAQUE, "attr = %x\n", attr);
+    attr = SetBkMode(hdc, OPAQUE);
+    ok(attr == TRANSPARENT, "attr = %x\n", attr);
 
     mf = CloseEnhMetaFile(hdc);
     ok(mf != 0, "CloseEnhMetaFile failed\n");

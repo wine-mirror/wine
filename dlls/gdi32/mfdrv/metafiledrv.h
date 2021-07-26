@@ -60,6 +60,7 @@ extern BOOL MFDRV_RemoveHandle( PHYSDEV dev, UINT index ) DECLSPEC_HIDDEN;
 extern INT16 MFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush ) DECLSPEC_HIDDEN;
 
 extern METAFILEDRV_PDEVICE *get_metadc_ptr( HDC hdc ) DECLSPEC_HIDDEN;
+extern BOOL metadc_param1( HDC hdc, short func, short param ) DECLSPEC_HIDDEN;
 extern BOOL metadc_param2( HDC hdc, short func, short param1, short param2 ) DECLSPEC_HIDDEN;
 extern BOOL metadc_param4( HDC hdc, short func, short param1, short param2,
                            short param3, short param4 ) DECLSPEC_HIDDEN;
@@ -105,7 +106,6 @@ extern HPEN  CDECL MFDRV_SelectPen( PHYSDEV dev, HPEN handle, const struct brush
 extern HPALETTE CDECL MFDRV_SelectPalette( PHYSDEV dev, HPALETTE hPalette, BOOL bForceBackground) DECLSPEC_HIDDEN;
 extern UINT CDECL MFDRV_RealizePalette(PHYSDEV dev, HPALETTE hPalette, BOOL primary) DECLSPEC_HIDDEN;
 extern COLORREF CDECL MFDRV_SetBkColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
-extern INT  CDECL MFDRV_SetBkMode( PHYSDEV dev, INT mode ) DECLSPEC_HIDDEN;
 extern COLORREF CDECL MFDRV_SetDCBrushColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 extern COLORREF CDECL MFDRV_SetDCPenColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 extern DWORD    CDECL MFDRV_SetLayout( PHYSDEV dev, DWORD layout ) DECLSPEC_HIDDEN;

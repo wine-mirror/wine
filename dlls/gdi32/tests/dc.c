@@ -40,7 +40,7 @@ static void test_dc_values(void)
 {
     HDC hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
     COLORREF color;
-    int extra;
+    int extra, attr;
 
     ok( hdc != NULL, "CreateDC failed\n" );
     color = SetBkColor( hdc, 0x12345678 );
@@ -80,6 +80,11 @@ static void test_dc_values(void)
     SetMapMode( hdc, MM_TEXT );
     extra = GetTextCharacterExtra( hdc );
     ok( extra == 123, "initial extra %d\n", extra );
+
+    SetLastError(0xdeadbeef);
+    attr = SetBkMode(ULongToHandle(0xdeadbeef), OPAQUE);
+    ok(!attr, "attr = %x\n", attr);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError() = %u\n", GetLastError());
 
     DeleteDC( hdc );
 }

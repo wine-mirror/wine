@@ -115,7 +115,6 @@ extern HPEN     CDECL EMFDRV_SelectPen( PHYSDEV dev, HPEN handle, const struct b
 extern HPALETTE CDECL EMFDRV_SelectPalette( PHYSDEV dev, HPALETTE hPal, BOOL force ) DECLSPEC_HIDDEN;
 extern INT      CDECL EMFDRV_SetArcDirection( PHYSDEV dev, INT arcDirection ) DECLSPEC_HIDDEN;
 extern COLORREF CDECL EMFDRV_SetBkColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
-extern INT      CDECL EMFDRV_SetBkMode( PHYSDEV dev, INT mode ) DECLSPEC_HIDDEN;
 extern COLORREF CDECL EMFDRV_SetDCBrushColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 extern COLORREF CDECL EMFDRV_SetDCPenColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 extern INT      CDECL EMFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDest, INT yDest, DWORD cx, DWORD cy, INT xSrc,

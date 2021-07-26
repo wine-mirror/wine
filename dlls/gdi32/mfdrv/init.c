@@ -192,7 +192,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_SelectPen,                 /* pSelectPen */
     NULL,                            /* pSetArcDirection */
     MFDRV_SetBkColor,                /* pSetBkColor */
-    MFDRV_SetBkMode,                 /* pSetBkMode */
+    NULL,                            /* pSetBkMode */
     MFDRV_SetBoundsRect,             /* pSetBoundsRect */
     MFDRV_SetDCBrushColor,           /* pSetDCBrushColor*/
     MFDRV_SetDCPenColor,             /* pSetDCPenColor*/
@@ -610,6 +610,14 @@ BOOL metadc_record( HDC hdc, METARECORD *mr, DWORD rlen )
 
     if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
     return MFDRV_WriteRecord( &dev->dev, mr, rlen );
+}
+
+BOOL metadc_param1( HDC hdc, short func, short param )
+{
+    METAFILEDRV_PDEVICE *dev;
+
+    if (!(dev = get_metadc_ptr( hdc ))) return FALSE;
+    return MFDRV_MetaParam1( &dev->dev, func, param );
 }
 
 BOOL metadc_param2( HDC hdc, short func, short param1, short param2 )
