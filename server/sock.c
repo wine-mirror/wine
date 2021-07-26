@@ -214,6 +214,7 @@ struct sock
     unsigned int        rd_shutdown : 1; /* is the read end shut down? */
     unsigned int        wr_shutdown : 1; /* is the write end shut down? */
     unsigned int        wr_shutdown_pending : 1; /* is a write shutdown pending? */
+    unsigned int        hangup : 1;  /* has the read end received a hangup? */
     unsigned int        nonblocking : 1; /* is the socket nonblocking? */
     unsigned int        bound : 1;   /* is the socket bound? */
 };
@@ -930,7 +931,7 @@ static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
         int status = sock_get_ntstatus( error );
         struct accept_req *req, *next;
 
-        if (sock->rd_shutdown)
+        if (sock->rd_shutdown || sock->hangup)
             async_wake_up( &sock->read_q, status );
         if (sock->wr_shutdown)
             async_wake_up( &sock->write_q, status );
@@ -1072,15 +1073,17 @@ static void sock_poll_event( struct fd *fd, int event )
             }
         }
 
-        if ((hangup_seen || event & (POLLHUP | POLLERR)) && (!sock->rd_shutdown || !sock->wr_shutdown))
+        if (hangup_seen || (sock_shutdown_type == SOCK_SHUTDOWN_POLLHUP && (event & POLLHUP)))
         {
-            error = error ? error : sock_error( fd );
-            if ( (event & POLLERR) || ( sock_shutdown_type == SOCK_SHUTDOWN_EOF && (event & POLLHUP) ))
-                sock->wr_shutdown = 1;
+            sock->hangup = 1;
+        }
+        else if (event & (POLLHUP | POLLERR))
+        {
             sock->rd_shutdown = 1;
+            sock->wr_shutdown = 1;
 
             if (debug_level)
-                fprintf(stderr, "socket %p aborted by error %d, event: %x\n", sock, error, event);
+                fprintf( stderr, "socket %p aborted by error %d, event %#x\n", sock, error, event );
         }
 
         if (hangup_seen)
@@ -1168,7 +1171,9 @@ static int sock_get_poll_events( struct fd *fd )
         }
         else
         {
-            if (!sock->rd_shutdown)
+            /* Don't ask for POLLIN if we got a hangup. We won't receive more
+             * data anyway, but we will get POLLIN if SOCK_SHUTDOWN_EOF. */
+            if (!sock->hangup)
             {
                 if (mask & AFD_POLL_READ)
                     ev |= POLLIN;
@@ -1380,6 +1385,7 @@ static struct sock *create_socket(void)
     sock->rd_shutdown = 0;
     sock->wr_shutdown = 0;
     sock->wr_shutdown_pending = 0;
+    sock->hangup = 0;
     sock->nonblocking = 0;
     sock->bound = 0;
     sock->rcvbuf = 0;
