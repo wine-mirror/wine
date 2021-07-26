@@ -922,12 +922,6 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     if (status == STATUS_DEVICE_NOT_READY && force_async)
         status = STATUS_PENDING;
 
-    if (!NT_ERROR(status))
-    {
-        io->Status = status;
-        io->Information = async->sent_len;
-    }
-
     SERVER_START_REQ( send_socket )
     {
         req->status = status;
@@ -936,6 +930,11 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;
+        if ((!NT_ERROR(status) || wait_handle) && status != STATUS_PENDING)
+        {
+            io->Status = status;
+            io->Information = async->sent_len;
+        }
     }
     SERVER_END_REQ;
 
@@ -1111,6 +1110,10 @@ static NTSTATUS sock_transmit( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;
+        /* In theory we'd fill the iosb here, as above in sock_send(), but it's
+         * actually currently impossible to get STATUS_SUCCESS. The server will
+         * either return STATUS_PENDING or an error code, and in neither case
+         * should the iosb be filled. */
     }
     SERVER_END_REQ;
 
