@@ -3216,7 +3216,8 @@ DECL_HANDLER(recv_socket)
         status = STATUS_PENDING;
     }
 
-    if (status == STATUS_PENDING && sock->rd_shutdown) status = STATUS_PIPE_DISCONNECTED;
+    if ((status == STATUS_PENDING || status == STATUS_DEVICE_NOT_READY) && sock->rd_shutdown)
+        status = STATUS_PIPE_DISCONNECTED;
 
     sock->pending_events &= ~(req->oob ? AFD_POLL_OOB : AFD_POLL_READ);
     sock->reported_events &= ~(req->oob ? AFD_POLL_OOB : AFD_POLL_READ);
@@ -3326,7 +3327,8 @@ DECL_HANDLER(send_socket)
         status = STATUS_PENDING;
     }
 
-    if (status == STATUS_PENDING && sock->wr_shutdown) status = STATUS_PIPE_DISCONNECTED;
+    if ((status == STATUS_PENDING || status == STATUS_DEVICE_NOT_READY) && sock->wr_shutdown)
+        status = STATUS_PIPE_DISCONNECTED;
 
     if ((async = create_request_async( fd, get_fd_comp_flags( fd ), &req->async )))
     {

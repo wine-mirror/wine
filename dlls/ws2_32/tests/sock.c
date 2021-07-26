@@ -7453,12 +7453,12 @@ static void test_shutdown(void)
     WSASetLastError(0xdeadbeef);
     ret = recv(client, buffer, sizeof(buffer), 0);
     ok(ret == -1, "got %d\n", ret);
-    todo_wine ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
 
     WSASetLastError(0xdeadbeef);
     ret = recv(client, buffer, sizeof(buffer), 0);
     ok(ret == -1, "got %d\n", ret);
-    todo_wine ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
 
     WSASetLastError(0xdeadbeef);
     ret = shutdown(server, SD_SEND);
@@ -7513,7 +7513,7 @@ static void test_shutdown(void)
     WSASetLastError(0xdeadbeef);
     ret = recv(client, buffer, sizeof(buffer), 0);
     ok(ret == -1, "got %d\n", ret);
-    todo_wine ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
 
     WSASetLastError(0xdeadbeef);
     ret = send(client, "test", 5, 0);
@@ -7577,7 +7577,7 @@ static void test_shutdown(void)
     WSASetLastError(0xdeadbeef);
     ret = WSARecv(client, &wsabuf, 1, &size, &flags, NULL, NULL);
     ok(ret == -1, "got %d\n", ret);
-    todo_wine ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
 
     ret = send(server, "test", 5, 0);
     ok(ret == 5, "got %d\n", ret);
@@ -7649,7 +7649,7 @@ static void test_shutdown(void)
     WSASetLastError(0xdeadbeef);
     ret = recvfrom(server, buffer, sizeof(buffer), 0, NULL, NULL);
     ok(ret == -1, "got %d\n", ret);
-    todo_wine ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
 
     ret = sendto(client, "test", 5, 0, (struct sockaddr *)&server_addr, sizeof(server_addr));
     ok(ret == 5, "got %d\n", ret);
