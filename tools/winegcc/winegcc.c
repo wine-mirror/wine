@@ -1982,7 +1982,7 @@ int main(int argc, char **argv)
                     if (strncmp("-Wl,", opts.args->base[i], 4) == 0)
 		    {
                         unsigned int j;
-                        strarray* Wl = strarray_fromstring(opts.args->base[i] + 4, ",=");
+                        strarray* Wl = strarray_fromstring(opts.args->base[i] + 4, ",");
                         for (j = 0; j < Wl->size; j++)
                         {
                             if (!strcmp(Wl->base[j], "--image-base") && j < Wl->size - 1)
