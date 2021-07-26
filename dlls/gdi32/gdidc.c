@@ -47,6 +47,25 @@ UINT WINAPI GetTextAlign( HDC hdc )
 }
 
 /***********************************************************************
+ *           SetTextAlign    (GDI32.@)
+ */
+UINT WINAPI SetTextAlign( HDC hdc, UINT align )
+{
+    DC_ATTR *dc_attr;
+    UINT ret;
+
+    TRACE("hdc=%p align=%d\n", hdc, align);
+
+    if (is_meta_dc( hdc )) return METADC_SetTextAlign( hdc, align );
+    if (!(dc_attr = get_dc_attr( hdc ))) return GDI_ERROR;
+    if (dc_attr->emf && !EMFDC_SetTextAlign( dc_attr, align )) return GDI_ERROR;
+
+    ret = dc_attr->text_align;
+    dc_attr->text_align = align;
+    return ret;
+}
+
+/***********************************************************************
  *		GetCurrentPositionEx (GDI32.@)
  */
 BOOL WINAPI GetCurrentPositionEx( HDC hdc, POINT *point )

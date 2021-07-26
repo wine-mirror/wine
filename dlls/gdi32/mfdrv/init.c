@@ -207,7 +207,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_SetROP2,                   /* pSetROP2 */
     MFDRV_SetRelAbs,                 /* pSetRelAbs */
     MFDRV_SetStretchBltMode,         /* pSetStretchBltMode */
-    MFDRV_SetTextAlign,              /* pSetTextAlign */
+    NULL,                            /* pSetTextAlign */
     MFDRV_SetTextCharacterExtra,     /* pSetTextCharacterExtra */
     MFDRV_SetTextColor,              /* pSetTextColor */
     MFDRV_SetTextJustification,      /* pSetTextJustification */

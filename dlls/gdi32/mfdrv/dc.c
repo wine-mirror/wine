@@ -30,9 +30,9 @@ BOOL CDECL MFDRV_RestoreDC( PHYSDEV dev, INT level )
     return MFDRV_MetaParam1( dev, META_RESTOREDC, level );
 }
 
-UINT CDECL MFDRV_SetTextAlign( PHYSDEV dev, UINT align )
+BOOL METADC_SetTextAlign( HDC hdc, UINT align )
 {
-    return MFDRV_MetaParam2( dev, META_SETTEXTALIGN, HIWORD(align), LOWORD(align)) ? align : GDI_ERROR;
+    return metadc_param2( hdc, META_SETTEXTALIGN, HIWORD(align), LOWORD(align) );
 }
 
 INT CDECL MFDRV_SetBkMode( PHYSDEV dev, INT mode )

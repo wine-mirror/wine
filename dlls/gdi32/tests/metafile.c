@@ -3113,6 +3113,25 @@ static void test_mf_SetPixel(void)
     DeleteMetaFile(mf);
 }
 
+static void test_mf_attrs(void)
+{
+    HMETAFILE mf;
+    UINT attr;
+    HDC hdc;
+
+    hdc = CreateMetaFileW(NULL);
+    ok(hdc != 0, "CreateEnhMetaFile failed\n");
+
+    attr = SetTextAlign(hdc, TA_BOTTOM);
+    ok(attr == TRUE, "attr = %x\n", attr);
+    attr = SetTextAlign(hdc, TA_TOP);
+    ok(attr == TRUE, "attr = %x\n", attr);
+
+    mf = CloseMetaFile(hdc);
+    ok(mf != 0, "CloseEnhMetaFile failed\n");
+    DeleteMetaFile(mf);
+}
+
 static void test_enhmetafile_file(void)
 {
     char temp_path[MAX_PATH];
@@ -3245,6 +3264,25 @@ static void test_emf_SetPixel(void)
     emf = CloseEnhMetaFile(hdc);
     ok(emf != 0, "CloseEnhMetaFile failed\n");
     DeleteEnhMetaFile(emf);
+}
+
+static void test_emf_attrs(void)
+{
+    HENHMETAFILE mf;
+    UINT attr;
+    HDC hdc;
+
+    hdc = CreateEnhMetaFileW(NULL, NULL, NULL, NULL);
+    ok(hdc != 0, "CreateEnhMetaFile failed\n");
+
+    attr = SetTextAlign(hdc, TA_BOTTOM);
+    ok(attr == 0, "attr = %x\n", attr);
+    attr = SetTextAlign(hdc, TA_TOP);
+    ok(attr == TA_BOTTOM, "attr = %x\n", attr);
+
+    mf = CloseEnhMetaFile(hdc);
+    ok(mf != 0, "CloseEnhMetaFile failed\n");
+    DeleteEnhMetaFile(mf);
 }
 
 static void test_CopyMetaFile(void)
@@ -6387,6 +6425,7 @@ START_TEST(metafile)
     test_emf_text_extents();
     test_enhmetafile_file();
     test_emf_SetPixel();
+    test_emf_attrs();
 
     /* For win-format metafiles (mfdrv) */
     test_mf_SaveDC();
@@ -6403,6 +6442,7 @@ START_TEST(metafile)
     test_metafile_file();
     test_mf_SetPixel();
     test_mf_FloodFill();
+    test_mf_attrs();
 
     /* For metafile conversions */
     test_mf_conversions();

@@ -61,13 +61,13 @@ BOOL CDECL EMFDRV_RestoreDC( PHYSDEV dev, INT level )
     return ret;
 }
 
-UINT CDECL EMFDRV_SetTextAlign( PHYSDEV dev, UINT align )
+BOOL EMFDC_SetTextAlign( DC_ATTR *dc_attr, UINT align )
 {
     EMRSETTEXTALIGN emr;
     emr.emr.iType = EMR_SETTEXTALIGN;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = align;
-    return EMFDRV_WriteRecord( dev, &emr.emr ) ? align : GDI_ERROR;
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 BOOL CDECL EMFDRV_SetTextJustification(PHYSDEV dev, INT nBreakExtra, INT nBreakCount)

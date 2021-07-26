@@ -115,7 +115,6 @@ extern INT  CDECL MFDRV_SetPolyFillMode( PHYSDEV dev, INT mode ) DECLSPEC_HIDDEN
 extern INT  CDECL MFDRV_SetROP2( PHYSDEV dev, INT rop ) DECLSPEC_HIDDEN;
 extern INT  CDECL MFDRV_SetRelAbs( PHYSDEV dev, INT mode ) DECLSPEC_HIDDEN;
 extern INT  CDECL MFDRV_SetStretchBltMode( PHYSDEV dev, INT mode ) DECLSPEC_HIDDEN;
-extern UINT CDECL MFDRV_SetTextAlign( PHYSDEV dev, UINT align ) DECLSPEC_HIDDEN;
 extern INT  CDECL MFDRV_SetTextCharacterExtra( PHYSDEV dev, INT extra ) DECLSPEC_HIDDEN;
 extern COLORREF  CDECL MFDRV_SetTextColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 extern BOOL CDECL MFDRV_SetTextJustification( PHYSDEV dev, INT extra, INT breaks ) DECLSPEC_HIDDEN;

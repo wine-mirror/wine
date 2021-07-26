@@ -989,30 +989,6 @@ COLORREF WINAPI SetTextColor( HDC hdc, COLORREF color )
 
 
 /***********************************************************************
- *           SetTextAlign    (GDI32.@)
- */
-UINT WINAPI SetTextAlign( HDC hdc, UINT align )
-{
-    UINT ret = GDI_ERROR;
-    DC *dc = get_dc_ptr( hdc );
-
-    TRACE("hdc=%p align=%d\n", hdc, align);
-
-    if (dc)
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetTextAlign );
-        align = physdev->funcs->pSetTextAlign( physdev, align );
-        if (align != GDI_ERROR)
-        {
-            ret = dc->attr->text_align;
-            dc->attr->text_align = align;
-        }
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-/***********************************************************************
  *           GetDCOrgEx  (GDI32.@)
  */
 BOOL WINAPI GetDCOrgEx( HDC hDC, LPPOINT lpp )
