@@ -56,8 +56,11 @@
     SYSCALL_ENTRY( NtEnumerateKey ) \
     SYSCALL_ENTRY( NtEnumerateValueKey ) \
     SYSCALL_ENTRY( NtFindAtom ) \
+    SYSCALL_ENTRY( NtFlushKey ) \
     SYSCALL_ENTRY( NtGetCurrentProcessorNumber ) \
     SYSCALL_ENTRY( NtListenPort ) \
+    SYSCALL_ENTRY( NtLoadKey ) \
+    SYSCALL_ENTRY( NtLoadKey2 ) \
     SYSCALL_ENTRY( NtMakeTemporaryObject ) \
     SYSCALL_ENTRY( NtOpenDirectoryObject ) \
     SYSCALL_ENTRY( NtOpenEvent ) \
@@ -100,6 +103,8 @@
     SYSCALL_ENTRY( NtReplyWaitReceivePort ) \
     SYSCALL_ENTRY( NtRequestWaitReplyPort ) \
     SYSCALL_ENTRY( NtResetEvent ) \
+    SYSCALL_ENTRY( NtRestoreKey ) \
+    SYSCALL_ENTRY( NtSaveKey ) \
     SYSCALL_ENTRY( NtSecureConnectPort ) \
     SYSCALL_ENTRY( NtSetDefaultLocale ) \
     SYSCALL_ENTRY( NtSetDefaultUILanguage ) \
@@ -114,6 +119,7 @@
     SYSCALL_ENTRY( NtSetValueKey ) \
     SYSCALL_ENTRY( NtSignalAndWaitForSingleObject ) \
     SYSCALL_ENTRY( NtTerminateJobObject ) \
+    SYSCALL_ENTRY( NtUnloadKey ) \
     SYSCALL_ENTRY( NtWaitForDebugEvent ) \
     SYSCALL_ENTRY( NtWaitForKeyedEvent ) \
     SYSCALL_ENTRY( NtWaitForMultipleObjects ) \

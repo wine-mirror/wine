@@ -143,6 +143,46 @@ NTSTATUS WINAPI wow64_NtEnumerateValueKey( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtFlushKey
+ */
+NTSTATUS WINAPI wow64_NtFlushKey( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+
+    return NtFlushKey( handle );
+}
+
+
+/**********************************************************************
+ *           wow64_NtLoadKey
+ */
+NTSTATUS WINAPI wow64_NtLoadKey( UINT *args )
+{
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    OBJECT_ATTRIBUTES32 *file32 = get_ptr( &args );
+
+    struct object_attr64 attr, file;
+
+    return NtLoadKey( objattr_32to64( &attr, attr32 ), objattr_32to64( &file, file32 ));
+}
+
+
+/**********************************************************************
+ *           wow64_NtLoadKey2
+ */
+NTSTATUS WINAPI wow64_NtLoadKey2( UINT *args )
+{
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    OBJECT_ATTRIBUTES32 *file32 = get_ptr( &args );
+    ULONG flags = get_ulong( &args );
+
+    struct object_attr64 attr, file;
+
+    return NtLoadKey2( objattr_32to64( &attr, attr32 ), objattr_32to64( &file, file32 ), flags );
+}
+
+
+/**********************************************************************
  *           wow64_NtOpenKey
  */
 NTSTATUS WINAPI wow64_NtOpenKey( UINT *args )
@@ -306,6 +346,31 @@ NTSTATUS WINAPI wow64_NtReplaceKey( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtRestoreKey
+ */
+NTSTATUS WINAPI wow64_NtRestoreKey( UINT *args )
+{
+    HANDLE key = get_handle( &args );
+    HANDLE file = get_handle( &args );
+    ULONG flags = get_ulong( &args );
+
+    return NtRestoreKey( key, file, flags );
+}
+
+
+/**********************************************************************
+ *           wow64_NtSaveKey
+ */
+NTSTATUS WINAPI wow64_NtSaveKey( UINT *args )
+{
+    HANDLE key = get_handle( &args );
+    HANDLE file = get_handle( &args );
+
+    return NtSaveKey( key, file );
+}
+
+
+/**********************************************************************
  *           wow64_NtSetInformationKey
  */
 NTSTATUS WINAPI wow64_NtSetInformationKey( UINT *args )
@@ -334,4 +399,17 @@ NTSTATUS WINAPI wow64_NtSetValueKey( UINT *args )
     UNICODE_STRING str;
 
     return NtSetValueKey( handle, unicode_str_32to64( &str, str32 ), index, type, data, count );
+}
+
+
+/**********************************************************************
+ *           wow64_NtUnloadKey
+ */
+NTSTATUS WINAPI wow64_NtUnloadKey( UINT *args )
+{
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+
+    struct object_attr64 attr;
+
+    return NtUnloadKey( objattr_32to64( &attr, attr32 ));
 }
