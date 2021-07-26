@@ -1161,6 +1161,20 @@ static int sock_get_poll_events( struct fd *fd )
 
     case SOCK_CONNECTED:
     case SOCK_CONNECTIONLESS:
+        if (sock->hangup && sock->wr_shutdown && !sock->wr_shutdown_pending)
+        {
+            /* Linux returns POLLHUP if a socket is both SHUT_RD and SHUT_WR, or
+             * if both the socket and its peer are SHUT_WR.
+             *
+             * We don't use SHUT_RD, so we can only encounter this in the latter
+             * case. In that case there can't be any pending read requests (they
+             * would have already been completed with a length of zero), the
+             * above condition ensures that we don't have any pending write
+             * requests, and nothing that can change about the socket state that
+             * would complete a pending poll request. */
+            return -1;
+        }
+
         if (sock->accept_recv_req)
         {
             ev |= POLLIN;
@@ -1267,7 +1281,10 @@ static void sock_reselect_async( struct fd *fd, struct async_queue *queue )
     struct sock *sock = get_fd_user( fd );
 
     if (sock->wr_shutdown_pending && list_empty( &sock->write_q.queue ))
+    {
         shutdown( get_unix_fd( sock->fd ), SHUT_WR );
+        sock->wr_shutdown_pending = 0;
+    }
 
     /* Don't reselect the ifchange queue; we always ask for POLLIN.
      * Don't reselect an uninitialized socket; we can't call set_fd_events() on
