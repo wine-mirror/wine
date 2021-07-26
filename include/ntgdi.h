@@ -101,6 +101,7 @@ typedef struct DC_ATTR
     POINT     cur_pos;
     INT       graphics_mode;
     WORD      text_align;
+    WORD      background_mode;
     void     *emf;
 } DC_ATTR;
 

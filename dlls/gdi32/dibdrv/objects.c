@@ -1230,7 +1230,7 @@ static BOOL dashed_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL clo
     else
     {
         get_color_masks( dc, &pdev->dib, dc->ROPmode, pdev->pen_brush.colorref,
-                         pdev->pen_is_ext ? TRANSPARENT : dc->backgroundMode,
+                         pdev->pen_is_ext ? TRANSPARENT : dc->attr->background_mode,
                          &pdev->dash_masks[1], &pdev->dash_masks[0] );
 
         for (i = 0; i < num - 1; i++)
@@ -1891,12 +1891,12 @@ static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev, dib_brush *brush, BOOL
 
     if (!init_hatch_brush( pdev, brush )) return FALSE;
 
-    get_color_masks( dc, &pdev->dib, brush->rop, brush->colorref, dc->backgroundMode,
+    get_color_masks( dc, &pdev->dib, brush->rop, brush->colorref, dc->attr->background_mode,
                      &fg_mask, &bg_mask );
 
     if (brush->colorref & (1 << 24))  /* PALETTEINDEX */
         *needs_reselect = TRUE;
-    if (dc->backgroundMode != TRANSPARENT && (dc->backgroundColor & (1 << 24)))
+    if (dc->attr->background_mode != TRANSPARENT && (dc->backgroundColor & (1 << 24)))
         *needs_reselect = TRUE;
 
     brush->dib.funcs->create_rop_masks( &brush->dib, hatches[brush->hatch],

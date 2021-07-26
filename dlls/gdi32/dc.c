@@ -86,7 +86,7 @@ static void set_initial_dc_state( DC *dc )
     dc->polyFillMode        = ALTERNATE;
     dc->stretchBltMode      = BLACKONWHITE;
     dc->relAbsMode          = ABSOLUTE;
-    dc->backgroundMode      = OPAQUE;
+    dc->attr->background_mode = OPAQUE;
     dc->backgroundColor     = RGB( 255, 255, 255 );
     dc->dcBrushColor        = RGB( 255, 255, 255 );
     dc->dcPenColor          = RGB( 0, 0, 0 );
@@ -392,6 +392,7 @@ INT CDECL nulldrv_SaveDC( PHYSDEV dev )
         HeapFree( GetProcessHeap(), 0, newdc );
         return 0;
     }
+    *newdc->attr            = *dc->attr;
     newdc->layout           = dc->layout;
     newdc->hPen             = dc->hPen;
     newdc->hBrush           = dc->hBrush;
@@ -402,20 +403,16 @@ INT CDECL nulldrv_SaveDC( PHYSDEV dev )
     newdc->polyFillMode     = dc->polyFillMode;
     newdc->stretchBltMode   = dc->stretchBltMode;
     newdc->relAbsMode       = dc->relAbsMode;
-    newdc->backgroundMode   = dc->backgroundMode;
     newdc->backgroundColor  = dc->backgroundColor;
     newdc->textColor        = dc->textColor;
     newdc->dcBrushColor     = dc->dcBrushColor;
     newdc->dcPenColor       = dc->dcPenColor;
     newdc->brush_org        = dc->brush_org;
     newdc->mapperFlags      = dc->mapperFlags;
-    newdc->attr->text_align = dc->attr->text_align;
     newdc->charExtra        = dc->charExtra;
     newdc->breakExtra       = dc->breakExtra;
     newdc->breakRem         = dc->breakRem;
     newdc->MapMode          = dc->MapMode;
-    newdc->attr->graphics_mode = dc->attr->graphics_mode;
-    newdc->attr->cur_pos    = dc->attr->cur_pos;
     newdc->ArcDirection     = dc->ArcDirection;
     newdc->xformWorld2Wnd   = dc->xformWorld2Wnd;
     newdc->xformWorld2Vport = dc->xformWorld2Vport;
@@ -479,7 +476,7 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     dc->polyFillMode     = dcs->polyFillMode;
     dc->stretchBltMode   = dcs->stretchBltMode;
     dc->relAbsMode       = dcs->relAbsMode;
-    dc->backgroundMode   = dcs->backgroundMode;
+    dc->attr->background_mode = dcs->attr->background_mode;
     dc->backgroundColor  = dcs->backgroundColor;
     dc->textColor        = dcs->textColor;
     dc->dcBrushColor     = dcs->dcBrushColor;
@@ -1558,24 +1555,6 @@ INT WINAPI GetRelAbs( HDC hdc, DWORD dwIgnore )
 }
 
 
-
-
-/***********************************************************************
- *		GetBkMode (GDI32.@)
- */
-INT WINAPI GetBkMode( HDC hdc )
-{
-    INT ret = 0;
-    DC * dc = get_dc_ptr( hdc );
-    if (dc)
-    {
-        ret = dc->backgroundMode;
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-
 /***********************************************************************
  *		SetBkMode (GDI32.@)
  */
@@ -1595,8 +1574,8 @@ INT WINAPI SetBkMode( HDC hdc, INT mode )
         mode = physdev->funcs->pSetBkMode( physdev, mode );
         if (mode)
         {
-            ret = dc->backgroundMode;
-            dc->backgroundMode = mode;
+            ret = dc->attr->background_mode;
+            dc->attr->background_mode = mode;
         }
         release_dc_ptr( dc );
     }

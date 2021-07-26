@@ -5998,7 +5998,7 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lpr
 
     TRACE("%p, %d, %d, %08x, %s, %s, %d, %p)\n", hdc, x, y, flags,
           wine_dbgstr_rect(lprect), debugstr_wn(str, count), count, lpDx);
-    TRACE("align = %x bkmode = %x mapmode = %x\n", align, dc->backgroundMode, dc->MapMode);
+    TRACE("align = %x bkmode = %x mapmode = %x\n", align, dc->attr->background_mode, dc->MapMode);
 
     if(align & TA_UPDATECP)
     {
@@ -6202,7 +6202,7 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lpr
         break;
     }
 
-    if (dc->backgroundMode != TRANSPARENT)
+    if (dc->attr->background_mode != TRANSPARENT)
     {
         if(!((flags & ETO_CLIPPED) && (flags & ETO_OPAQUE)))
         {

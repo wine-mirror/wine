@@ -66,6 +66,15 @@ UINT WINAPI SetTextAlign( HDC hdc, UINT align )
 }
 
 /***********************************************************************
+ *		GetBkMode (GDI32.@)
+ */
+INT WINAPI GetBkMode( HDC hdc )
+{
+    DC_ATTR *dc_attr = get_dc_attr( hdc );
+    return dc_attr ? dc_attr->background_mode : 0;
+}
+
+/***********************************************************************
  *		GetCurrentPositionEx (GDI32.@)
  */
 BOOL WINAPI GetCurrentPositionEx( HDC hdc, POINT *point )
