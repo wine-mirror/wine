@@ -1204,7 +1204,7 @@ float CDECL expf( float x )
        ideally ties-to-even rule is used, otherwise the magnitude of r
        can be bigger which gives larger approximation error.  */
     kd = __round(z);
-    ki = kd;
+    ki = (INT64)kd;
     r = z - kd;
 
     /* exp(x) = 2^(k/N) * 2^(r/N) ~= s * (C0*r^3 + C1*r^2 + C2*r + 1) */
@@ -1508,7 +1508,7 @@ static float powf_exp2(double xd, UINT32 sign_bias)
 
     /* N*x = k + r with r in [-1/2, 1/2] */
     kd = __round(xd); /* k */
-    ki = kd;
+    ki = (INT64)kd;
     r = xd - kd;
 
     /* exp2(x) = 2^(k/N) * 2^r ~= s * (C0*r^3 + C1*r^2 + C2*r + 1) */
@@ -3824,7 +3824,7 @@ static double pow_exp(double argx, double argy, double x, double xtail, UINT32 s
     /* x = ln2/N*k + r, with int k and r in [-ln2/2N, ln2/2N]. */
     z = invln2N * x;
     kd = __round(z);
-    ki = kd;
+    ki = (INT64)kd;
     r = x + kd * negln2hiN + kd * negln2loN;
     /* The code assumes 2^-200 < |xtail| < 2^-8/N. */
     r += xtail;
