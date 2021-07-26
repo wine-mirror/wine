@@ -28,6 +28,7 @@
     SYSCALL_ENTRY( NtAllocateUuids ) \
     SYSCALL_ENTRY( NtCancelTimer ) \
     SYSCALL_ENTRY( NtClearEvent ) \
+    SYSCALL_ENTRY( NtClearPowerRequest ) \
     SYSCALL_ENTRY( NtClose ) \
     SYSCALL_ENTRY( NtCompleteConnectPort ) \
     SYSCALL_ENTRY( NtConnectPort ) \
@@ -39,6 +40,7 @@
     SYSCALL_ENTRY( NtCreateKeyedEvent ) \
     SYSCALL_ENTRY( NtCreateMutant ) \
     SYSCALL_ENTRY( NtCreatePort ) \
+    SYSCALL_ENTRY( NtCreatePowerRequest ) \
     SYSCALL_ENTRY( NtCreateSection ) \
     SYSCALL_ENTRY( NtCreateSemaphore ) \
     SYSCALL_ENTRY( NtCreateSymbolicLinkObject ) \
@@ -90,6 +92,7 @@
     SYSCALL_ENTRY( NtSetInformationDebugObject ) \
     SYSCALL_ENTRY( NtSetInformationObject ) \
     SYSCALL_ENTRY( NtSetIoCompletion ) \
+    SYSCALL_ENTRY( NtSetPowerRequest ) \
     SYSCALL_ENTRY( NtSetTimer ) \
     SYSCALL_ENTRY( NtSetTimerResolution ) \
     SYSCALL_ENTRY( NtSignalAndWaitForSingleObject ) \
