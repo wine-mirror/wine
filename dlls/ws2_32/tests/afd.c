@@ -978,8 +978,8 @@ static void test_recv(void)
     ret = NtDeviceIoControlFile((HANDLE)client, event, NULL, NULL, &io,
             IOCTL_AFD_RECV, &params, sizeof(params), NULL, 0);
     ok(ret == STATUS_PENDING, "got %#x\n", ret);
-    todo_wine ok(!io.Status, "got status %#x\n", io.Status);
-    todo_wine ok(!io.Information, "got information %#Ix\n", io.Information);
+    ok(!io.Status, "got status %#x\n", io.Status);
+    ok(!io.Information, "got information %#Ix\n", io.Information);
 
     ret = send(server, "data", 5, 0);
     ok(ret == 5, "got %d\n", ret);

@@ -615,12 +615,6 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     if (status == STATUS_DEVICE_NOT_READY && force_async)
         status = STATUS_PENDING;
 
-    if (!NT_ERROR(status))
-    {
-        io->Status = status;
-        io->Information = information;
-    }
-
     SERVER_START_REQ( recv_socket )
     {
         req->status = status;
@@ -630,6 +624,11 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;
+        if ((!NT_ERROR(status) || wait_handle) && status != STATUS_PENDING)
+        {
+            io->Status = status;
+            io->Information = information;
+        }
     }
     SERVER_END_REQ;
 
