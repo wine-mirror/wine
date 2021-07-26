@@ -27,6 +27,9 @@
 #include "winnt.h"
 #include "winternl.h"
 #include "wow64_private.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(wow);
 
 
 /**********************************************************************
@@ -94,6 +97,20 @@ NTSTATUS WINAPI wow64_NtDeleteKey( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtDeleteValueKey
+ */
+NTSTATUS WINAPI wow64_NtDeleteValueKey( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    UNICODE_STRING32 *str32 = get_ptr( &args );
+
+    UNICODE_STRING str;
+
+    return NtDeleteValueKey( handle, unicode_str_32to64( &str, str32 ));
+}
+
+
+/**********************************************************************
  *           wow64_NtEnumerateKey
  */
 NTSTATUS WINAPI wow64_NtEnumerateKey( UINT *args )
@@ -106,6 +123,22 @@ NTSTATUS WINAPI wow64_NtEnumerateKey( UINT *args )
     ULONG *retlen = get_ptr( &args );
 
     return NtEnumerateKey( handle, index, class, ptr, len, retlen );
+}
+
+
+/**********************************************************************
+ *           wow64_NtEnumerateValueKey
+ */
+NTSTATUS WINAPI wow64_NtEnumerateValueKey( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    ULONG index = get_ulong( &args );
+    KEY_VALUE_INFORMATION_CLASS class = get_ulong( &args );
+    void *ptr = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    ULONG *retlen = get_ptr( &args );
+
+    return NtEnumerateValueKey( handle, index, class, ptr, len, retlen );
 }
 
 
@@ -209,6 +242,41 @@ NTSTATUS WINAPI wow64_NtQueryKey( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtQueryMultipleValueKey
+ */
+NTSTATUS WINAPI wow64_NtQueryMultipleValueKey( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    KEY_MULTIPLE_VALUE_INFORMATION *info = get_ptr( &args );
+    ULONG count = get_ulong( &args );
+    void *ptr = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    ULONG *retlen = get_ptr( &args );
+
+    FIXME( "%p %p %u %p %u %p: stub\n", handle, info, count, ptr, len, retlen );
+    return STATUS_SUCCESS;
+}
+
+
+/**********************************************************************
+ *           wow64_NtQueryValueKey
+ */
+NTSTATUS WINAPI wow64_NtQueryValueKey( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    UNICODE_STRING32 *str32 = get_ptr( &args );
+    KEY_VALUE_INFORMATION_CLASS class = get_ulong( &args );
+    void *ptr = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    ULONG *retlen = get_ptr( &args );
+
+    UNICODE_STRING str;
+
+    return NtQueryValueKey( handle, unicode_str_32to64( &str, str32 ), class, ptr, len, retlen );
+}
+
+
+/**********************************************************************
  *           wow64_NtRenameKey
  */
 NTSTATUS WINAPI wow64_NtRenameKey( UINT *args )
@@ -248,4 +316,22 @@ NTSTATUS WINAPI wow64_NtSetInformationKey( UINT *args )
     ULONG len = get_ulong( &args );
 
     return NtSetInformationKey( handle, class, info, len );
+}
+
+
+/**********************************************************************
+ *           wow64_NtSetValueKey
+ */
+NTSTATUS WINAPI wow64_NtSetValueKey( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    const UNICODE_STRING32 *str32 = get_ptr( &args );
+    ULONG index = get_ulong( &args );
+    ULONG type = get_ulong( &args );
+    const void *data = get_ptr( &args );
+    ULONG count = get_ulong( &args );
+
+    UNICODE_STRING str;
+
+    return NtSetValueKey( handle, unicode_str_32to64( &str, str32 ), index, type, data, count );
 }

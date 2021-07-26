@@ -51,8 +51,10 @@
     SYSCALL_ENTRY( NtDelayExecution ) \
     SYSCALL_ENTRY( NtDeleteAtom ) \
     SYSCALL_ENTRY( NtDeleteKey ) \
+    SYSCALL_ENTRY( NtDeleteValueKey ) \
     SYSCALL_ENTRY( NtDuplicateObject ) \
     SYSCALL_ENTRY( NtEnumerateKey ) \
+    SYSCALL_ENTRY( NtEnumerateValueKey ) \
     SYSCALL_ENTRY( NtFindAtom ) \
     SYSCALL_ENTRY( NtGetCurrentProcessorNumber ) \
     SYSCALL_ENTRY( NtListenPort ) \
@@ -80,6 +82,7 @@
     SYSCALL_ENTRY( NtQueryInstallUILanguage ) \
     SYSCALL_ENTRY( NtQueryIoCompletion ) \
     SYSCALL_ENTRY( NtQueryKey ) \
+    SYSCALL_ENTRY( NtQueryMultipleValueKey ) \
     SYSCALL_ENTRY( NtQueryMutant ) \
     SYSCALL_ENTRY( NtQueryObject ) \
     SYSCALL_ENTRY( NtQueryPerformanceCounter ) \
@@ -88,6 +91,7 @@
     SYSCALL_ENTRY( NtQuerySymbolicLinkObject ) \
     SYSCALL_ENTRY( NtQueryTimer ) \
     SYSCALL_ENTRY( NtQueryTimerResolution ) \
+    SYSCALL_ENTRY( NtQueryValueKey ) \
     SYSCALL_ENTRY( NtReleaseKeyedEvent ) \
     SYSCALL_ENTRY( NtReleaseMutant ) \
     SYSCALL_ENTRY( NtReleaseSemaphore ) \
@@ -107,6 +111,7 @@
     SYSCALL_ENTRY( NtSetPowerRequest ) \
     SYSCALL_ENTRY( NtSetTimer ) \
     SYSCALL_ENTRY( NtSetTimerResolution ) \
+    SYSCALL_ENTRY( NtSetValueKey ) \
     SYSCALL_ENTRY( NtSignalAndWaitForSingleObject ) \
     SYSCALL_ENTRY( NtTerminateJobObject ) \
     SYSCALL_ENTRY( NtWaitForDebugEvent ) \
