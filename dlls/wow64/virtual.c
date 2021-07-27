@@ -292,6 +292,88 @@ NTSTATUS WINAPI wow64_NtProtectVirtualMemory( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtQueryVirtualMemory
+ */
+NTSTATUS WINAPI wow64_NtQueryVirtualMemory( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    void *addr = get_ptr( &args );
+    MEMORY_INFORMATION_CLASS class = get_ulong( &args );
+    void *ptr = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    ULONG *retlen = get_ptr( &args );
+
+    SIZE_T res_len = 0;
+    NTSTATUS status;
+
+    switch (class)
+    {
+    case MemoryBasicInformation:  /* MEMORY_BASIC_INFORMATION */
+        if (len >= sizeof(MEMORY_BASIC_INFORMATION32))
+        {
+            MEMORY_BASIC_INFORMATION info;
+            MEMORY_BASIC_INFORMATION32 *info32 = ptr;
+
+            if (!(status = NtQueryVirtualMemory( handle, addr, class, &info, sizeof(info), &res_len )))
+            {
+                info32->BaseAddress = PtrToUlong( info.BaseAddress );
+                info32->AllocationBase = PtrToUlong( info.AllocationBase );
+                info32->AllocationProtect = info.AllocationProtect;
+                info32->RegionSize = info.RegionSize;
+                info32->State = info.State;
+                info32->Protect = info.Protect;
+                info32->Type = info.Type;
+            }
+        }
+        else status = STATUS_INFO_LENGTH_MISMATCH;
+        res_len = sizeof(MEMORY_BASIC_INFORMATION32);
+        break;
+
+    case MemorySectionName:  /* MEMORY_SECTION_NAME */
+    {
+        MEMORY_SECTION_NAME *info;
+        MEMORY_SECTION_NAME32 *info32 = ptr;
+        SIZE_T size = len + sizeof(*info) - sizeof(*info32);
+
+        info = RtlAllocateHeap( GetProcessHeap(), 0, size );
+        if (!(status = NtQueryVirtualMemory( handle, addr, class, info, size, &res_len )))
+        {
+            info32->SectionFileName.Length = info->SectionFileName.Length;
+            info32->SectionFileName.MaximumLength = info->SectionFileName.MaximumLength;
+            info32->SectionFileName.Buffer = PtrToUlong( info32 + 1 );
+            memcpy( info32 + 1, info->SectionFileName.Buffer, info->SectionFileName.MaximumLength );
+        }
+        res_len += sizeof(*info32) - sizeof(*info);
+        break;
+    }
+
+    case MemoryWorkingSetExInformation:  /* MEMORY_WORKING_SET_EX_INFORMATION */
+    {
+        MEMORY_WORKING_SET_EX_INFORMATION32 *info32 = ptr;
+        MEMORY_WORKING_SET_EX_INFORMATION *info;
+        ULONG i, count = len / sizeof(*info32);
+
+        info = RtlAllocateHeap( GetProcessHeap(), 0, count * sizeof(*info) );
+        for (i = 0; i < count; i++) info[i].VirtualAddress = ULongToPtr( info32[i].VirtualAddress );
+        if (!(status = NtQueryVirtualMemory( handle, addr, class, info, count * sizeof(*info), &res_len )))
+        {
+            count = res_len / sizeof(*info);
+            for (i = 0; i < count; i++) info32[i].VirtualAttributes.Flags = info[i].VirtualAttributes.Flags;
+            res_len = count * sizeof(*info32);
+        }
+        break;
+    }
+
+    default:
+        FIXME( "unsupported class %u\n", class );
+        return STATUS_INVALID_INFO_CLASS;
+    }
+    if (!status || status == STATUS_INFO_LENGTH_MISMATCH) put_size( retlen, res_len );
+    return status;
+}
+
+
+/**********************************************************************
  *           wow64_NtReadVirtualMemory
  */
 NTSTATUS WINAPI wow64_NtReadVirtualMemory( UINT *args )

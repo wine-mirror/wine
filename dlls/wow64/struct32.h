@@ -71,6 +71,42 @@ typedef struct
 
 typedef struct
 {
+    ULONG    BaseAddress;
+    ULONG    AllocationBase;
+    DWORD    AllocationProtect;
+    ULONG    RegionSize;
+    DWORD    State;
+    DWORD    Protect;
+    DWORD    Type;
+} MEMORY_BASIC_INFORMATION32;
+
+typedef struct
+{
+    UNICODE_STRING32 SectionFileName;
+} MEMORY_SECTION_NAME32;
+
+typedef union
+{
+    ULONG Flags;
+    struct {
+        ULONG Valid : 1;
+        ULONG ShareCount : 3;
+        ULONG Win32Protection : 11;
+        ULONG Shared : 1;
+        ULONG Node : 6;
+        ULONG Locked : 1;
+        ULONG LargePage : 1;
+    };
+} MEMORY_WORKING_SET_EX_BLOCK32;
+
+typedef struct
+{
+    ULONG                         VirtualAddress;
+    MEMORY_WORKING_SET_EX_BLOCK32 VirtualAttributes;
+} MEMORY_WORKING_SET_EX_INFORMATION32;
+
+typedef struct
+{
     ULONG         BaseAddress;
     ULONG         Attributes;
     LARGE_INTEGER Size;
