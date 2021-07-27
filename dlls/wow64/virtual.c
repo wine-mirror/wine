@@ -444,6 +444,52 @@ NTSTATUS WINAPI wow64_NtUnmapViewOfSection( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtWow64AllocateVirtualMemory64
+ */
+NTSTATUS WINAPI wow64_NtWow64AllocateVirtualMemory64( UINT *args )
+{
+    HANDLE process = get_handle( &args );
+    void **addr = get_ptr( &args );
+    ULONG_PTR zero_bits = get_ulong64( &args );
+    SIZE_T *size = get_ptr( &args );
+    ULONG type = get_ulong( &args );
+    ULONG protect = get_ulong( &args );
+
+    return NtAllocateVirtualMemory( process, addr, zero_bits, size, type, protect );
+}
+
+
+/**********************************************************************
+ *           wow64_NtWow64ReadVirtualMemory64
+ */
+NTSTATUS WINAPI wow64_NtWow64ReadVirtualMemory64( UINT *args )
+{
+    HANDLE process = get_handle( &args );
+    void *addr = (void *)(ULONG_PTR)get_ulong64( &args );
+    void *buffer = get_ptr( &args );
+    SIZE_T size = get_ulong64( &args );
+    SIZE_T *ret_size = get_ptr( &args );
+
+    return NtReadVirtualMemory( process, addr, buffer, size, ret_size );
+}
+
+
+/**********************************************************************
+ *           wow64_NtWow64WriteVirtualMemory64
+ */
+NTSTATUS WINAPI wow64_NtWow64WriteVirtualMemory64( UINT *args )
+{
+    HANDLE process = get_handle( &args );
+    void *addr = (void *)(ULONG_PTR)get_ulong64( &args );
+    const void *buffer = get_ptr( &args );
+    SIZE_T size = get_ulong64( &args );
+    SIZE_T *ret_size = get_ptr( &args );
+
+    return NtWriteVirtualMemory( process, addr, buffer, size, ret_size );
+}
+
+
+/**********************************************************************
  *           wow64_NtWriteVirtualMemory
  */
 NTSTATUS WINAPI wow64_NtWriteVirtualMemory( UINT *args )

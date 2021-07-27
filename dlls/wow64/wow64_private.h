@@ -32,6 +32,7 @@ void WINAPI Wow64ApcRoutine( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3, CON
 
 extern USHORT native_machine DECLSPEC_HIDDEN;
 extern USHORT current_machine DECLSPEC_HIDDEN;
+extern ULONG_PTR args_alignment DECLSPEC_HIDDEN;
 
 struct object_attr64
 {
@@ -62,6 +63,16 @@ static inline const WCHAR *get_machine_wow64_dir( USHORT machine )
 static inline ULONG get_ulong( UINT **args ) { return *(*args)++; }
 static inline HANDLE get_handle( UINT **args ) { return LongToHandle( *(*args)++ ); }
 static inline void *get_ptr( UINT **args ) { return ULongToPtr( *(*args)++ ); }
+
+static inline ULONG64 get_ulong64( UINT **args )
+{
+    ULONG64 ret;
+
+    *args = (UINT *)(((ULONG_PTR)*args + args_alignment - 1) & ~(args_alignment - 1));
+    ret = *(ULONG64 *)*args;
+    *args += 2;
+    return ret;
+}
 
 static inline ULONG_PTR get_zero_bits( ULONG_PTR zero_bits )
 {

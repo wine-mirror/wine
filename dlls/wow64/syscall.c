@@ -34,6 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wow);
 
 USHORT native_machine = 0;
 USHORT current_machine = 0;
+ULONG_PTR args_alignment = 0;
 
 typedef NTSTATUS (WINAPI *syscall_thunk)( UINT *args );
 
@@ -270,6 +271,8 @@ static void init_syscall_table( HMODULE ntdll )
     const ULONG *functions, *names;
     const USHORT *ordinals;
     ULONG id, exp_size, exp_pos, wrap_pos;
+
+    args_alignment = (current_machine == IMAGE_FILE_MACHINE_I386) ? sizeof(ULONG) : sizeof(ULONG64);
 
     exports = RtlImageDirectoryEntryToData( ntdll, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size );
     ordinals = get_rva( ntdll, exports->AddressOfNameOrdinals );

@@ -139,6 +139,9 @@
     SYSCALL_ENTRY( NtWaitForKeyedEvent ) \
     SYSCALL_ENTRY( NtWaitForMultipleObjects ) \
     SYSCALL_ENTRY( NtWaitForSingleObject ) \
+    SYSCALL_ENTRY( NtWow64AllocateVirtualMemory64 ) \
+    SYSCALL_ENTRY( NtWow64ReadVirtualMemory64 ) \
+    SYSCALL_ENTRY( NtWow64WriteVirtualMemory64 ) \
     SYSCALL_ENTRY( NtWriteVirtualMemory ) \
     SYSCALL_ENTRY( NtYieldExecution )
 
