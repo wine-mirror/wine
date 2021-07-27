@@ -88,6 +88,10 @@
 #define TCP_KEEPIDLE TCP_KEEPALIVE
 #endif
 
+#if defined(linux) && !defined(IP_UNICAST_IF)
+#define IP_UNICAST_IF 50
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 
 #define FILE_USE_FILE_POINTER_POSITION ((LONGLONG)-2)
@@ -1789,6 +1793,11 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 
         case IOCTL_AFD_WINE_SET_IP_UNBLOCK_SOURCE:
             return do_setsockopt( handle, io, IPPROTO_IP, IP_UNBLOCK_SOURCE, in_buffer, in_size );
+
+#ifdef IP_UNICAST_IF
+        case IOCTL_AFD_WINE_GET_IP_UNICAST_IF:
+            return do_getsockopt( handle, io, IPPROTO_IP, IP_UNICAST_IF, out_buffer, out_size );
+#endif
 
         default:
         {

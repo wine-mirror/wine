@@ -2495,19 +2495,8 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         case WS_IP_TTL:
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_TTL, optval, optlen );
 
-#ifdef IP_UNICAST_IF
         case WS_IP_UNICAST_IF:
-#endif
-            if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
-                return SOCKET_ERROR;
-            convert_sockopt(&level, &optname);
-            if (getsockopt(fd, level, optname, optval, (socklen_t *)optlen) != 0 )
-            {
-                SetLastError(wsaErrno());
-                ret = SOCKET_ERROR;
-            }
-            release_sock_fd( s, fd );
-            return ret;
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IP_UNICAST_IF, optval, optlen );
 
         default:
             FIXME( "unrecognized IP option %u\n", optname );
