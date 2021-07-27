@@ -63,6 +63,25 @@ static inline ULONG get_ulong( UINT **args ) { return *(*args)++; }
 static inline HANDLE get_handle( UINT **args ) { return LongToHandle( *(*args)++ ); }
 static inline void *get_ptr( UINT **args ) { return ULongToPtr( *(*args)++ ); }
 
+static inline ULONG_PTR get_zero_bits( ULONG_PTR zero_bits )
+{
+    return zero_bits ? zero_bits : 0x7fffffff;
+}
+
+static inline void **addr_32to64( void **addr, ULONG *addr32 )
+{
+    if (!addr32) return NULL;
+    *addr = ULongToPtr( *addr32 );
+    return addr;
+}
+
+static inline SIZE_T *size_32to64( SIZE_T *size, ULONG *size32 )
+{
+    if (!size32) return NULL;
+    *size = *size32;
+    return size;
+}
+
 static inline void *apc_32to64( ULONG func )
 {
     return func ? Wow64ApcRoutine : NULL;
@@ -135,6 +154,11 @@ static inline OBJECT_ATTRIBUTES *objattr_32to64( struct object_attr64 *out, cons
 static inline void put_handle( ULONG *handle32, HANDLE handle )
 {
     *handle32 = HandleToULong( handle );
+}
+
+static inline void put_addr( ULONG *addr32, void *addr )
+{
+    if (addr32) *addr32 = PtrToUlong( addr );
 }
 
 static inline void put_size( ULONG *size32, SIZE_T size )

@@ -26,6 +26,8 @@
     SYSCALL_ENTRY( NtAddAtom ) \
     SYSCALL_ENTRY( NtAllocateLocallyUniqueId ) \
     SYSCALL_ENTRY( NtAllocateUuids ) \
+    SYSCALL_ENTRY( NtAllocateVirtualMemory ) \
+    SYSCALL_ENTRY( NtAllocateVirtualMemoryEx ) \
     SYSCALL_ENTRY( NtCancelTimer ) \
     SYSCALL_ENTRY( NtClearEvent ) \
     SYSCALL_ENTRY( NtClearPowerRequest ) \
@@ -57,10 +59,13 @@
     SYSCALL_ENTRY( NtEnumerateValueKey ) \
     SYSCALL_ENTRY( NtFindAtom ) \
     SYSCALL_ENTRY( NtFlushKey ) \
+    SYSCALL_ENTRY( NtFlushVirtualMemory ) \
+    SYSCALL_ENTRY( NtFreeVirtualMemory ) \
     SYSCALL_ENTRY( NtGetCurrentProcessorNumber ) \
     SYSCALL_ENTRY( NtListenPort ) \
     SYSCALL_ENTRY( NtLoadKey ) \
     SYSCALL_ENTRY( NtLoadKey2 ) \
+    SYSCALL_ENTRY( NtLockVirtualMemory ) \
     SYSCALL_ENTRY( NtMakeTemporaryObject ) \
     SYSCALL_ENTRY( NtOpenDirectoryObject ) \
     SYSCALL_ENTRY( NtOpenEvent ) \
@@ -76,6 +81,7 @@
     SYSCALL_ENTRY( NtOpenSemaphore ) \
     SYSCALL_ENTRY( NtOpenSymbolicLinkObject  ) \
     SYSCALL_ENTRY( NtOpenTimer ) \
+    SYSCALL_ENTRY( NtProtectVirtualMemory ) \
     SYSCALL_ENTRY( NtPulseEvent ) \
     SYSCALL_ENTRY( NtQueryDefaultLocale ) \
     SYSCALL_ENTRY( NtQueryDefaultUILanguage ) \
@@ -95,6 +101,7 @@
     SYSCALL_ENTRY( NtQueryTimer ) \
     SYSCALL_ENTRY( NtQueryTimerResolution ) \
     SYSCALL_ENTRY( NtQueryValueKey ) \
+    SYSCALL_ENTRY( NtReadVirtualMemory ) \
     SYSCALL_ENTRY( NtReleaseKeyedEvent ) \
     SYSCALL_ENTRY( NtReleaseMutant ) \
     SYSCALL_ENTRY( NtReleaseSemaphore ) \
@@ -120,10 +127,12 @@
     SYSCALL_ENTRY( NtSignalAndWaitForSingleObject ) \
     SYSCALL_ENTRY( NtTerminateJobObject ) \
     SYSCALL_ENTRY( NtUnloadKey ) \
+    SYSCALL_ENTRY( NtUnlockVirtualMemory ) \
     SYSCALL_ENTRY( NtWaitForDebugEvent ) \
     SYSCALL_ENTRY( NtWaitForKeyedEvent ) \
     SYSCALL_ENTRY( NtWaitForMultipleObjects ) \
     SYSCALL_ENTRY( NtWaitForSingleObject ) \
+    SYSCALL_ENTRY( NtWriteVirtualMemory ) \
     SYSCALL_ENTRY( NtYieldExecution )
 
 #endif /* __WOW64_SYSCALL_H */
