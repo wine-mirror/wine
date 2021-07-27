@@ -28,6 +28,7 @@
     SYSCALL_ENTRY( NtAllocateUuids ) \
     SYSCALL_ENTRY( NtAllocateVirtualMemory ) \
     SYSCALL_ENTRY( NtAllocateVirtualMemoryEx ) \
+    SYSCALL_ENTRY( NtAreMappedFilesTheSame ) \
     SYSCALL_ENTRY( NtCancelTimer ) \
     SYSCALL_ENTRY( NtClearEvent ) \
     SYSCALL_ENTRY( NtClearPowerRequest ) \
@@ -62,11 +63,13 @@
     SYSCALL_ENTRY( NtFlushVirtualMemory ) \
     SYSCALL_ENTRY( NtFreeVirtualMemory ) \
     SYSCALL_ENTRY( NtGetCurrentProcessorNumber ) \
+    SYSCALL_ENTRY( NtGetNlsSectionPtr ) \
     SYSCALL_ENTRY( NtListenPort ) \
     SYSCALL_ENTRY( NtLoadKey ) \
     SYSCALL_ENTRY( NtLoadKey2 ) \
     SYSCALL_ENTRY( NtLockVirtualMemory ) \
     SYSCALL_ENTRY( NtMakeTemporaryObject ) \
+    SYSCALL_ENTRY( NtMapViewOfSection ) \
     SYSCALL_ENTRY( NtOpenDirectoryObject ) \
     SYSCALL_ENTRY( NtOpenEvent ) \
     SYSCALL_ENTRY( NtOpenIoCompletion ) \
@@ -128,6 +131,7 @@
     SYSCALL_ENTRY( NtTerminateJobObject ) \
     SYSCALL_ENTRY( NtUnloadKey ) \
     SYSCALL_ENTRY( NtUnlockVirtualMemory ) \
+    SYSCALL_ENTRY( NtUnmapViewOfSection ) \
     SYSCALL_ENTRY( NtWaitForDebugEvent ) \
     SYSCALL_ENTRY( NtWaitForKeyedEvent ) \
     SYSCALL_ENTRY( NtWaitForMultipleObjects ) \

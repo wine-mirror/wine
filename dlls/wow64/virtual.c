@@ -90,6 +90,18 @@ NTSTATUS WINAPI wow64_NtAllocateVirtualMemoryEx( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtAreMappedFilesTheSame
+ */
+NTSTATUS WINAPI wow64_NtAreMappedFilesTheSame( UINT *args )
+{
+    void *ptr1 = get_ptr( &args );
+    void *ptr2 = get_ptr( &args );
+
+    return NtAreMappedFilesTheSame( ptr1, ptr2 );
+}
+
+
+/**********************************************************************
  *           wow64_NtFlushVirtualMemory
  */
 NTSTATUS WINAPI wow64_NtFlushVirtualMemory( UINT *args )
@@ -140,6 +152,32 @@ NTSTATUS WINAPI wow64_NtFreeVirtualMemory( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtGetNlsSectionPtr
+ */
+NTSTATUS WINAPI wow64_NtGetNlsSectionPtr( UINT *args )
+{
+    ULONG type = get_ulong( &args );
+    ULONG id = get_ulong( &args );
+    void *unknown = get_ptr( &args );
+    ULONG *addr32 = get_ptr( &args );
+    ULONG *size32 = get_ptr( &args );
+
+    void *addr;
+    SIZE_T size;
+    NTSTATUS status;
+
+    status = NtGetNlsSectionPtr( type, id, unknown, addr_32to64( &addr, addr32 ),
+                                 size_32to64( &size, size32 ));
+    if (!status)
+    {
+        put_addr( addr32, addr );
+        put_size( size32, size );
+    }
+    return status;
+}
+
+
+/**********************************************************************
  *           wow64_NtLockVirtualMemory
  */
 NTSTATUS WINAPI wow64_NtLockVirtualMemory( UINT *args )
@@ -156,6 +194,37 @@ NTSTATUS WINAPI wow64_NtLockVirtualMemory( UINT *args )
     status = NtLockVirtualMemory( process, addr_32to64( &addr, addr32 ),
                                   size_32to64( &size, size32 ), unknown );
     if (!status)
+    {
+        put_addr( addr32, addr );
+        put_size( size32, size );
+    }
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtMapViewOfSection
+ */
+NTSTATUS WINAPI wow64_NtMapViewOfSection( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    HANDLE process = get_handle( &args );
+    ULONG *addr32 = get_ptr( &args );
+    ULONG_PTR zero_bits = get_ulong( &args );
+    SIZE_T commit = get_ulong( &args );
+    const LARGE_INTEGER *offset = get_ptr( &args );
+    ULONG *size32 = get_ptr( &args );
+    SECTION_INHERIT inherit = get_ulong( &args );
+    ULONG alloc = get_ulong( &args );
+    ULONG protect = get_ulong( &args );
+
+    void *addr;
+    SIZE_T size;
+    NTSTATUS status;
+
+    status = NtMapViewOfSection( handle, process, addr_32to64( &addr, addr32 ), get_zero_bits( zero_bits ),
+                                 commit, offset, size_32to64( &size, size32 ), inherit, alloc, protect );
+    if (NT_SUCCESS(status))
     {
         put_addr( addr32, addr );
         put_size( size32, size );
@@ -232,6 +301,18 @@ NTSTATUS WINAPI wow64_NtUnlockVirtualMemory( UINT *args )
         put_size( size32, size );
     }
     return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtUnmapViewOfSection
+ */
+NTSTATUS WINAPI wow64_NtUnmapViewOfSection( UINT *args )
+{
+    HANDLE process = get_handle( &args );
+    void *addr = get_ptr( &args );
+
+    return NtUnmapViewOfSection( process, addr );
 }
 
 
