@@ -3705,11 +3705,8 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         case WS_IP_UNBLOCK_SOURCE:
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_UNBLOCK_SOURCE, optval, optlen );
 
-#ifdef IP_UNICAST_IF
         case WS_IP_UNICAST_IF:
-#endif
-            convert_sockopt(&level, &optname);
-            break;
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_UNICAST_IF, optval, optlen );
 
         default:
             FIXME("Unknown IPPROTO_IP optname 0x%08x\n", optname);

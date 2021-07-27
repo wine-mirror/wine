@@ -1797,6 +1797,9 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 #ifdef IP_UNICAST_IF
         case IOCTL_AFD_WINE_GET_IP_UNICAST_IF:
             return do_getsockopt( handle, io, IPPROTO_IP, IP_UNICAST_IF, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_IP_UNICAST_IF:
+            return do_setsockopt( handle, io, IPPROTO_IP, IP_UNICAST_IF, in_buffer, in_size );
 #endif
 
         default:
