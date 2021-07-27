@@ -1570,6 +1570,7 @@ static void CALLBACK ioqueue_thread_proc( void *param )
         }
     }
 
+    ioqueue.thread_running = FALSE;
     RtlLeaveCriticalSection( &ioqueue.cs );
 
     TRACE( "terminating I/O completion thread\n" );
