@@ -203,6 +203,7 @@ struct afd_get_events_params
 #define IOCTL_AFD_WINE_GET_IP_TOS                       WINE_AFD_IOC(258)
 #define IOCTL_AFD_WINE_SET_IP_TOS                       WINE_AFD_IOC(259)
 #define IOCTL_AFD_WINE_GET_IP_TTL                       WINE_AFD_IOC(260)
+#define IOCTL_AFD_WINE_SET_IP_TTL                       WINE_AFD_IOC(261)
 
 struct afd_create_params
 {

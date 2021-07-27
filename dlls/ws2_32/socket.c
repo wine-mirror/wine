@@ -3711,6 +3711,9 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         case WS_IP_TOS:
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_TOS, optval, optlen );
 
+        case WS_IP_TTL:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_TTL, optval, optlen );
+
         case WS_IP_UNBLOCK_SOURCE:
         {
             WS_IP_MREQ_SOURCE* val = (void*)optval;
@@ -3724,7 +3727,6 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             convert_sockopt(&level, &optname);
             break;
         }
-        case WS_IP_TTL:
 #ifdef IP_UNICAST_IF
         case WS_IP_UNICAST_IF:
 #endif
