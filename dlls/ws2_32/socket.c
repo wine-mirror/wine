@@ -3504,7 +3504,6 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
 {
     int fd;
     int woptval;
-    struct ip_mreq_source mreq_source;
 
     TRACE("(socket %04lx, %s, optval %s, optlen %d)\n", s,
           debugstr_sockopt(level, optname), debugstr_optval(optval, optlen),
@@ -3715,18 +3714,8 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_TTL, optval, optlen );
 
         case WS_IP_UNBLOCK_SOURCE:
-        {
-            WS_IP_MREQ_SOURCE* val = (void*)optval;
-            mreq_source.imr_interface.s_addr = val->imr_interface.S_un.S_addr;
-            mreq_source.imr_multiaddr.s_addr = val->imr_multiaddr.S_un.S_addr;
-            mreq_source.imr_sourceaddr.s_addr = val->imr_sourceaddr.S_un.S_addr;
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IP_UNBLOCK_SOURCE, optval, optlen );
 
-            optval = (char*)&mreq_source;
-            optlen = sizeof(mreq_source);
-
-            convert_sockopt(&level, &optname);
-            break;
-        }
 #ifdef IP_UNICAST_IF
         case WS_IP_UNICAST_IF:
 #endif
