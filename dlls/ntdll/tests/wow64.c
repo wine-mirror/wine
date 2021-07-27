@@ -1176,24 +1176,16 @@ static void test_iosb(void)
 
 static NTSTATUS invoke_syscall( const char *name, ULONG args32[] )
 {
-    NTSTATUS status;
     ULONG64 args64[] = { -1, PtrToUlong( args32 ) };
-    ULONG64 ptr, res, func = get_proc_address64( wow64_module, "Wow64SystemServiceEx" );
-    BYTE syscall[32];
+    ULONG64 func = get_proc_address64( wow64_module, "Wow64SystemServiceEx" );
+    BYTE *syscall = (BYTE *)GetProcAddress( GetModuleHandleA("ntdll.dll"), name );
 
-    if (!(ptr = get_proc_address64( ntdll_module, name ))) return STATUS_NOT_IMPLEMENTED;
+    ok( syscall != NULL, "syscall %s not found\n", name );
+    if (syscall[0] == 0xb8)
+        args64[0] = *(DWORD *)(syscall + 1);
+    else
+        win_skip( "syscall thunk %s not recognized\n", name );
 
-    if (pNtWow64ReadVirtualMemory64)
-    {
-        HANDLE process = OpenProcess( PROCESS_ALL_ACCESS, FALSE, GetCurrentProcessId() );
-        status = pNtWow64ReadVirtualMemory64( process, ptr, syscall, sizeof(syscall), &res );
-        ok( !status, "NtWow64ReadVirtualMemory64 failed %x\n", status );
-        if (syscall[0] == 0x4c && syscall[1] == 0x8b && syscall[2] == 0xd1 && syscall[3] == 0xb8)
-            args64[0] = *(DWORD *)(syscall + 4);
-        else
-            win_skip( "syscall thunk not recognized\n" );
-        NtClose( process );
-    }
     return call_func64( func, ARRAY_SIZE(args64), args64 );
 }
 
@@ -1262,6 +1254,25 @@ static void test_syscalls(void)
 
     status = NtClose( event );
     ok( !status, "NtClose failed %x\n", status );
+
+    if (pNtWow64ReadVirtualMemory64)
+    {
+        TEB64 *teb64 = (TEB64 *)NtCurrentTeb()->GdiBatchCount;
+        PEB64 peb64, peb64_2;
+        ULONG64 res, res2;
+        HANDLE process = OpenProcess( PROCESS_ALL_ACCESS, FALSE, GetCurrentProcessId() );
+        ULONG args32[] = { HandleToLong( process ), (ULONG)teb64->Peb, teb64->Peb >> 32,
+                           PtrToUlong(&peb64_2), sizeof(peb64_2), 0, PtrToUlong(&res2) };
+
+        ok( process != 0, "failed to open current process %u\n", GetLastError() );
+        status = pNtWow64ReadVirtualMemory64( process, teb64->Peb, &peb64, sizeof(peb64), &res );
+        ok( !status, "NtWow64ReadVirtualMemory64 failed %x\n", status );
+        status = invoke_syscall( "NtWow64ReadVirtualMemory64", args32 );
+        ok( !status, "NtWow64ReadVirtualMemory64 failed %x\n", status );
+        ok( res2 == res, "wrong len %s / %s\n", wine_dbgstr_longlong(res), wine_dbgstr_longlong(res2) );
+        ok( !memcmp( &peb64, &peb64_2, res ), "data is different\n" );
+        NtClose( process );
+    }
 }
 
 static void test_cpu_area(void)
