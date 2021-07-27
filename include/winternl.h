@@ -3391,7 +3391,7 @@ typedef void (CALLBACK *PLDR_DLL_NOTIFICATION_FUNCTION)(ULONG, LDR_DLL_NOTIFICAT
 /* FIXME: to be checked */
 #define MAXIMUM_FILENAME_LENGTH 256
 
-typedef struct _SYSTEM_MODULE
+typedef struct _RTL_PROCESS_MODULE_INFORMATION
 {
     PVOID               Section;                        /* 00/00 */
     PVOID               MappedBaseAddress;              /* 04/08 */
@@ -3403,13 +3403,13 @@ typedef struct _SYSTEM_MODULE
     WORD                LoadCount;                      /* 18/24 */
     WORD                NameOffset;                     /* 1a/26 */
     BYTE                Name[MAXIMUM_FILENAME_LENGTH];  /* 1c/28 */
-} SYSTEM_MODULE, *PSYSTEM_MODULE;
+} RTL_PROCESS_MODULE_INFORMATION, *PRTL_PROCESS_MODULE_INFORMATION;
 
-typedef struct _SYSTEM_MODULE_INFORMATION
+typedef struct _RTL_PROCESS_MODULES
 {
     ULONG               ModulesCount;
-    SYSTEM_MODULE       Modules[1]; /* FIXME: should be Modules[0] */
-} SYSTEM_MODULE_INFORMATION, *PSYSTEM_MODULE_INFORMATION;
+    RTL_PROCESS_MODULE_INFORMATION Modules[1]; /* FIXME: should be Modules[0] */
+} RTL_PROCESS_MODULES, *PRTL_PROCESS_MODULES;
 
 #define PROCESS_CREATE_FLAGS_BREAKAWAY              0x00000001
 #define PROCESS_CREATE_FLAGS_NO_DEBUG_INHERIT       0x00000002
@@ -3426,7 +3426,7 @@ typedef struct _SYSTEM_MODULE_INFORMATION
 typedef struct _RTL_PROCESS_MODULE_INFORMATION_EX
 {
     USHORT NextOffset;
-    SYSTEM_MODULE BaseInfo;
+    RTL_PROCESS_MODULE_INFORMATION BaseInfo;
     ULONG ImageCheckSum;
     ULONG TimeDateStamp;
     void *DefaultBase;
@@ -3779,7 +3779,7 @@ NTSYSAPI NTSTATUS  WINAPI LdrLoadDll(LPCWSTR, DWORD, const UNICODE_STRING*, HMOD
 NTSYSAPI NTSTATUS  WINAPI LdrLockLoaderLock(ULONG,ULONG*,ULONG_PTR*);
 IMAGE_BASE_RELOCATION * WINAPI LdrProcessRelocationBlock(void*,UINT,USHORT*,INT_PTR);
 NTSYSAPI NTSTATUS  WINAPI LdrQueryImageFileExecutionOptions(const UNICODE_STRING*,LPCWSTR,ULONG,void*,ULONG,ULONG*);
-NTSYSAPI NTSTATUS  WINAPI LdrQueryProcessModuleInformation(SYSTEM_MODULE_INFORMATION*, ULONG, ULONG*);
+NTSYSAPI NTSTATUS  WINAPI LdrQueryProcessModuleInformation(RTL_PROCESS_MODULES*, ULONG, ULONG*);
 NTSYSAPI NTSTATUS  WINAPI LdrRegisterDllNotification(ULONG,PLDR_DLL_NOTIFICATION_FUNCTION,void*,void**);
 NTSYSAPI NTSTATUS  WINAPI LdrRemoveDllDirectory(void*);
 NTSYSAPI NTSTATUS  WINAPI LdrSetDefaultDllDirectories(ULONG);

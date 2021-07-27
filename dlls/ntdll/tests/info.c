@@ -635,7 +635,7 @@ static void test_query_procperf(void)
 static void test_query_module(void)
 {
     const RTL_PROCESS_MODULE_INFORMATION_EX *infoex;
-    SYSTEM_MODULE_INFORMATION *info;
+    RTL_PROCESS_MODULES *info;
     NTSTATUS status;
     ULONG size, i;
     char *buffer;
@@ -652,7 +652,7 @@ static void test_query_module(void)
 
     for (i = 0; i < info->ModulesCount; i++)
     {
-        const SYSTEM_MODULE *module = &info->Modules[i];
+        RTL_PROCESS_MODULE_INFORMATION *module = &info->Modules[i];
 
         ok(module->LoadOrderIndex == i, "%u: got index %u\n", i, module->LoadOrderIndex);
         ok(module->ImageBaseAddress || is_wow64, "%u: got NULL address for %s\n", i, module->Name);
@@ -678,7 +678,7 @@ static void test_query_module(void)
     infoex = (const void *)buffer;
     for (i = 0; infoex->NextOffset; i++)
     {
-        const SYSTEM_MODULE *module = &infoex->BaseInfo;
+        const RTL_PROCESS_MODULE_INFORMATION *module = &infoex->BaseInfo;
 
         ok(module->LoadOrderIndex == i, "%u: got index %u\n", i, module->LoadOrderIndex);
         ok(module->ImageBaseAddress || is_wow64, "%u: got NULL address for %s\n", i, module->Name);

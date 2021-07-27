@@ -3119,10 +3119,10 @@ IMAGE_BASE_RELOCATION * WINAPI LdrProcessRelocationBlock( void *page, UINT count
  *		LdrQueryProcessModuleInformation
  *
  */
-NTSTATUS WINAPI LdrQueryProcessModuleInformation(PSYSTEM_MODULE_INFORMATION smi, 
+NTSTATUS WINAPI LdrQueryProcessModuleInformation(RTL_PROCESS_MODULES *smi,
                                                  ULONG buf_size, ULONG* req_size)
 {
-    SYSTEM_MODULE*      sm = &smi->Modules[0];
+    RTL_PROCESS_MODULE_INFORMATION *sm = &smi->Modules[0];
     ULONG               size = sizeof(ULONG);
     NTSTATUS            nts = STATUS_SUCCESS;
     ANSI_STRING         str;
