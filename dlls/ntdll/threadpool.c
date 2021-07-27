@@ -1536,22 +1536,25 @@ static void CALLBACK ioqueue_thread_proc( void *param )
         {
             RtlEnterCriticalSection( &io->pool->cs );
 
-            --io->u.io.pending_count;
+            TRACE( "pending_count %u.\n", io->u.io.pending_count );
 
-            if (!array_reserve((void **)&io->u.io.completions, &io->u.io.completion_max,
-                    io->u.io.completion_count + 1, sizeof(*io->u.io.completions)))
+            if (io->u.io.pending_count)
             {
-                ERR("Failed to allocate memory.\n");
-                RtlLeaveCriticalSection( &io->pool->cs );
-                continue;
+                --io->u.io.pending_count;
+                if (!array_reserve((void **)&io->u.io.completions, &io->u.io.completion_max,
+                        io->u.io.completion_count + 1, sizeof(*io->u.io.completions)))
+                {
+                    ERR( "Failed to allocate memory.\n" );
+                    RtlLeaveCriticalSection( &io->pool->cs );
+                    continue;
+                }
+
+                completion = &io->u.io.completions[io->u.io.completion_count++];
+                completion->iosb = iosb;
+                completion->cvalue = value;
+
+                tp_object_submit( io, FALSE );
             }
-
-            completion = &io->u.io.completions[io->u.io.completion_count++];
-            completion->iosb = iosb;
-            completion->cvalue = value;
-
-            tp_object_submit( io, FALSE );
-
             RtlLeaveCriticalSection( &io->pool->cs );
         }
 
@@ -2524,6 +2527,8 @@ void WINAPI TpCancelAsyncIoOperation( TP_IO *io )
     TRACE( "%p\n", io );
 
     RtlEnterCriticalSection( &this->pool->cs );
+
+    TRACE("pending_count %u.\n", this->u.io.pending_count);
 
     this->u.io.pending_count--;
     if (object_is_finished( this, TRUE ))
