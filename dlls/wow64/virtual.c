@@ -178,6 +178,38 @@ NTSTATUS WINAPI wow64_NtGetNlsSectionPtr( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtGetWriteWatch
+ */
+NTSTATUS WINAPI wow64_NtGetWriteWatch( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    ULONG flags = get_ulong( &args );
+    void *base = get_ptr( &args );
+    SIZE_T size = get_ulong( &args );
+    ULONG *addr_ptr = get_ptr( &args );
+    ULONG *count_ptr = get_ptr( &args );
+    ULONG *granularity = get_ptr( &args );
+
+    ULONG_PTR i, count = *count_ptr;
+    void **addresses;
+    NTSTATUS status;
+
+    if (!count || !size) return STATUS_INVALID_PARAMETER;
+    if (flags & ~WRITE_WATCH_FLAG_RESET) return STATUS_INVALID_PARAMETER;
+    if (!addr_ptr) return STATUS_ACCESS_VIOLATION;
+
+    addresses = RtlAllocateHeap( GetProcessHeap(), 0, count * sizeof(*addresses) );
+    if (!(status = NtGetWriteWatch( handle, flags, base, size, addresses, &count, granularity )))
+    {
+        for (i = 0; i < count; i++) addr_ptr[i] = PtrToUlong( addresses[i] );
+        *count_ptr = count;
+    }
+    RtlFreeHeap( GetProcessHeap(), 0, addresses );
+    return status;
+}
+
+
+/**********************************************************************
  *           wow64_NtLockVirtualMemory
  */
 NTSTATUS WINAPI wow64_NtLockVirtualMemory( UINT *args )
@@ -276,6 +308,19 @@ NTSTATUS WINAPI wow64_NtReadVirtualMemory( UINT *args )
     status = NtReadVirtualMemory( process, addr, buffer, size, &ret_size );
     put_size( retlen, ret_size );
     return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtResetWriteWatch
+ */
+NTSTATUS WINAPI wow64_NtResetWriteWatch( UINT *args )
+{
+    HANDLE process = get_handle( &args );
+    void *base = get_ptr( &args );
+    SIZE_T size = get_ulong( &args );
+
+    return NtResetWriteWatch( process, base, size );
 }
 
 

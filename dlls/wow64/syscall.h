@@ -64,6 +64,7 @@
     SYSCALL_ENTRY( NtFreeVirtualMemory ) \
     SYSCALL_ENTRY( NtGetCurrentProcessorNumber ) \
     SYSCALL_ENTRY( NtGetNlsSectionPtr ) \
+    SYSCALL_ENTRY( NtGetWriteWatch ) \
     SYSCALL_ENTRY( NtListenPort ) \
     SYSCALL_ENTRY( NtLoadKey ) \
     SYSCALL_ENTRY( NtLoadKey2 ) \
@@ -113,6 +114,7 @@
     SYSCALL_ENTRY( NtReplyWaitReceivePort ) \
     SYSCALL_ENTRY( NtRequestWaitReplyPort ) \
     SYSCALL_ENTRY( NtResetEvent ) \
+    SYSCALL_ENTRY( NtResetWriteWatch ) \
     SYSCALL_ENTRY( NtRestoreKey ) \
     SYSCALL_ENTRY( NtSaveKey ) \
     SYSCALL_ENTRY( NtSecureConnectPort ) \
