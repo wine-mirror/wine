@@ -31,6 +31,9 @@ ALL_SYSCALLS
 void * WINAPI Wow64AllocateTemp( SIZE_T size ) DECLSPEC_HIDDEN;
 void   WINAPI Wow64ApcRoutine( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3, CONTEXT *context ) DECLSPEC_HIDDEN;
 
+extern void init_file_redirects(void) DECLSPEC_HIDDEN;
+extern BOOL get_file_redirect( OBJECT_ATTRIBUTES *attr ) DECLSPEC_HIDDEN;
+
 extern USHORT native_machine DECLSPEC_HIDDEN;
 extern USHORT current_machine DECLSPEC_HIDDEN;
 extern ULONG_PTR args_alignment DECLSPEC_HIDDEN;
@@ -168,6 +171,15 @@ static inline OBJECT_ATTRIBUTES *objattr_32to64( struct object_attr64 *out, cons
     out->attr.SecurityQualityOfService = ULongToPtr( in->SecurityQualityOfService );
     out->attr.SecurityDescriptor = secdesc_32to64( &out->sd, ULongToPtr( in->SecurityDescriptor ));
     return &out->attr;
+}
+
+static inline OBJECT_ATTRIBUTES *objattr_32to64_redirect( struct object_attr64 *out,
+                                                          const OBJECT_ATTRIBUTES32 *in )
+{
+    OBJECT_ATTRIBUTES *attr = objattr_32to64( out, in );
+
+    if (attr) get_file_redirect( attr );
+    return attr;
 }
 
 static inline void put_handle( ULONG *handle32, HANDLE handle )

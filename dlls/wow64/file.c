@@ -26,10 +26,170 @@
 #include "winbase.h"
 #include "winnt.h"
 #include "winternl.h"
+#include "winioctl.h"
 #include "wow64_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wow);
+
+
+static FILE_OBJECTID_BUFFER windir_id, sysdir_id;
+
+static inline NTSTATUS get_file_id( HANDLE handle, FILE_OBJECTID_BUFFER *id )
+{
+    IO_STATUS_BLOCK io;
+
+    return NtFsControlFile( handle, 0, NULL, NULL, &io, FSCTL_GET_OBJECT_ID, NULL, 0, id, sizeof(*id) );
+}
+
+static inline ULONG starts_with_path( const WCHAR *name, ULONG name_len, const WCHAR *prefix )
+{
+    ULONG len = wcslen( prefix );
+
+    if (name_len < len) return 0;
+    if (wcsnicmp( name, prefix, len )) return 0;
+    if (name_len > len && name[len] != '\\') return 0;
+    return len;
+}
+
+
+/***********************************************************************
+ *           init_file_redirects
+ */
+void init_file_redirects(void)
+{
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    IO_STATUS_BLOCK io;
+    HANDLE handle;
+
+    InitializeObjectAttributes( &attr, &nameW, OBJ_CASE_INSENSITIVE, 0, NULL );
+    RtlInitUnicodeString( &nameW, L"\\??\\C:\\windows" );
+    if (!NtOpenFile( &handle, SYNCHRONIZE | FILE_LIST_DIRECTORY, &attr, &io,
+                     FILE_SHARE_READ, FILE_SYNCHRONOUS_IO_NONALERT |
+                     FILE_OPEN_FOR_BACKUP_INTENT | FILE_DIRECTORY_FILE ))
+    {
+        get_file_id( handle, &windir_id );
+        NtClose( handle );
+    }
+    RtlInitUnicodeString( &nameW, L"\\??\\C:\\windows\\system32" );
+    if (!NtOpenFile( &handle, SYNCHRONIZE | FILE_LIST_DIRECTORY, &attr, &io,
+                     FILE_SHARE_READ, FILE_SYNCHRONOUS_IO_NONALERT |
+                     FILE_OPEN_FOR_BACKUP_INTENT | FILE_DIRECTORY_FILE ))
+    {
+        get_file_id( handle, &sysdir_id );
+        NtClose( handle );
+    }
+}
+
+
+/***********************************************************************
+ *           replace_path
+ *
+ * Helper for get_file_redirect().
+ */
+static BOOL replace_path( OBJECT_ATTRIBUTES *attr, ULONG prefix_len, const WCHAR *match,
+                          const WCHAR *replace_dir, const WCHAR *replace_name )
+{
+    const WCHAR *name = attr->ObjectName->Buffer;
+    ULONG match_len, replace_len, len = attr->ObjectName->Length / sizeof(WCHAR);
+    UNICODE_STRING str;
+    WCHAR *p;
+
+    if (!starts_with_path( name + prefix_len, len - prefix_len, match )) return FALSE;
+
+    match_len = wcslen( match );
+    replace_len = wcslen( replace_dir );
+    if (replace_name) replace_len += wcslen( replace_name );
+    str.Length = (len + replace_len - match_len) * sizeof(WCHAR);
+    str.MaximumLength = str.Length + sizeof(WCHAR);
+    if (!(p = str.Buffer = Wow64AllocateTemp( str.MaximumLength ))) return FALSE;
+
+    memcpy( p, name, prefix_len * sizeof(WCHAR) );
+    p += prefix_len;
+    wcscpy( p, replace_dir );
+    p += wcslen(p);
+    if (replace_name)
+    {
+        wcscpy( p, replace_name );
+        p += wcslen(p);
+    }
+    name += prefix_len + match_len;
+    len -= prefix_len + match_len;
+    memcpy( p, name, len * sizeof(WCHAR) );
+    p[len] = 0;
+    *attr->ObjectName = str;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           get_file_redirect
+ */
+BOOL get_file_redirect( OBJECT_ATTRIBUTES *attr )
+{
+    static const WCHAR * const no_redirect[] =
+    {
+        L"system32\\catroot", L"system32\\catroot2", L"system32\\driversstore",
+        L"system32\\drivers\\etc", L"system32\\logfiles", L"system32\\spool"
+    };
+    static const WCHAR windirW[] = L"\\??\\C:\\windows\\";
+    const WCHAR *name = attr->ObjectName->Buffer;
+    unsigned int i, prefix_len = 0, len = attr->ObjectName->Length / sizeof(WCHAR);
+    const WCHAR *syswow64dir;
+    UNICODE_STRING redir;
+
+    if (!len) return FALSE;
+
+    if (!attr->RootDirectory)
+    {
+        prefix_len = wcslen( windirW );
+        if (len < prefix_len || wcsnicmp( name, windirW, prefix_len )) return FALSE;
+    }
+    else
+    {
+        FILE_OBJECTID_BUFFER id;
+
+        if (get_file_id( attr->RootDirectory, &id )) return FALSE;
+        if (memcmp( &id, &windir_id, sizeof(id) ))
+        {
+            if (memcmp( &id, &sysdir_id, sizeof(id) )) return FALSE;
+            if (NtCurrentTeb()->TlsSlots[WOW64_TLS_FILESYSREDIR]) return FALSE;
+            if (name[0] == '\\') return FALSE;
+
+            /* only check for paths that should NOT be redirected */
+            for (i = 0; i < ARRAY_SIZE( no_redirect ); i++)
+                if (starts_with_path( name, len, no_redirect[i] + 9 /* "system32\\" */)) return FALSE;
+
+            /* redirect everything else */
+            syswow64dir = get_machine_wow64_dir( current_machine );
+            redir.Length = (wcslen(syswow64dir) + 1 + len) * sizeof(WCHAR);
+            redir.MaximumLength = redir.Length + sizeof(WCHAR);
+            if (!(redir.Buffer = Wow64AllocateTemp( redir.MaximumLength ))) return FALSE;
+            wcscpy( redir.Buffer, syswow64dir );
+            wcscat( redir.Buffer, L"\\" );
+            memcpy( redir.Buffer + wcslen(redir.Buffer), name, len * sizeof(WCHAR) );
+            redir.Buffer[redir.Length / sizeof(WCHAR)] = 0;
+            attr->RootDirectory = 0;
+            *attr->ObjectName = redir;
+            return TRUE;
+        }
+    }
+
+    /* sysnative is redirected even when redirection is disabled */
+
+    if (replace_path( attr, prefix_len, L"sysnative", L"system32", NULL )) return TRUE;
+
+    if (NtCurrentTeb()->TlsSlots[WOW64_TLS_FILESYSREDIR]) return FALSE;
+
+    for (i = 0; i < ARRAY_SIZE( no_redirect ); i++)
+        if (starts_with_path( name + prefix_len, len - prefix_len, no_redirect[i] )) return FALSE;
+
+    syswow64dir = get_machine_wow64_dir( current_machine ) + wcslen( windirW );
+    if (replace_path( attr, prefix_len, L"system32", syswow64dir, NULL )) return TRUE;
+    if (replace_path( attr, prefix_len, L"regedit.exe", syswow64dir, L"\\regedit.exe" )) return TRUE;
+    return FALSE;
+}
 
 
 /**********************************************************************
@@ -90,7 +250,7 @@ NTSTATUS WINAPI wow64_NtCreateFile( UINT *args )
     NTSTATUS status;
 
     *handle_ptr = 0;
-    status = NtCreateFile( &handle, access, objattr_32to64( &attr, attr32 ),
+    status = NtCreateFile( &handle, access, objattr_32to64_redirect( &attr, attr32 ),
                            iosb_32to64( &io, io32 ), alloc_size, attributes,
                            sharing, disposition, options, ea_buffer, ea_length );
     put_handle( handle_ptr, handle );
@@ -188,7 +348,7 @@ NTSTATUS WINAPI wow64_NtDeleteFile( UINT *args )
 
     struct object_attr64 attr;
 
-    return NtDeleteFile( objattr_32to64( &attr, attr32 ));
+    return NtDeleteFile( objattr_32to64_redirect( &attr, attr32 ));
 }
 
 
@@ -279,7 +439,7 @@ NTSTATUS WINAPI wow64_NtOpenFile( UINT *args )
     NTSTATUS status;
 
     *handle_ptr = 0;
-    status = NtOpenFile( &handle, access, objattr_32to64( &attr, attr32 ),
+    status = NtOpenFile( &handle, access, objattr_32to64_redirect( &attr, attr32 ),
                          iosb_32to64( &io, io32 ), sharing, options );
     put_handle( handle_ptr, handle );
     put_iosb( io32, &io );
@@ -297,7 +457,7 @@ NTSTATUS WINAPI wow64_NtQueryAttributesFile( UINT *args )
 
     struct object_attr64 attr;
 
-    return NtQueryAttributesFile( objattr_32to64( &attr, attr32 ), info );
+    return NtQueryAttributesFile( objattr_32to64_redirect( &attr, attr32 ), info );
 }
 
 
@@ -365,7 +525,7 @@ NTSTATUS WINAPI wow64_NtQueryFullAttributesFile( UINT *args )
 
     struct object_attr64 attr;
 
-    return NtQueryFullAttributesFile( objattr_32to64( &attr, attr32 ), info );
+    return NtQueryFullAttributesFile( objattr_32to64_redirect( &attr, attr32 ), info );
 }
 
 
@@ -564,16 +724,22 @@ NTSTATUS WINAPI wow64_NtSetInformationFile( UINT *args )
     case FileLinkInformation:   /* FILE_LINK_INFORMATION */
         if (len >= sizeof(FILE_RENAME_INFORMATION32))
         {
+            OBJECT_ATTRIBUTES attr;
+            UNICODE_STRING name;
             FILE_RENAME_INFORMATION32 *info32 = ptr;
             FILE_RENAME_INFORMATION *info;
             ULONG size;
 
-            size = offsetof( FILE_RENAME_INFORMATION, FileName[info32->FileNameLength/sizeof(WCHAR)] );
+            name.Buffer = info32->FileName;
+            name.Length = info32->FileNameLength;
+            InitializeObjectAttributes( &attr, &name, 0, LongToHandle( info32->RootDirectory ), 0 );
+            get_file_redirect( &attr );
+            size = offsetof( FILE_RENAME_INFORMATION, FileName[name.Length/sizeof(WCHAR)] );
             info = Wow64AllocateTemp( size );
             info->ReplaceIfExists = info32->ReplaceIfExists;
-            info->RootDirectory   = LongToHandle( info32->RootDirectory );
-            info->FileNameLength  = info32->FileNameLength;
-            memcpy( info->FileName, info32->FileName, info->FileNameLength );
+            info->RootDirectory   = attr.RootDirectory;
+            info->FileNameLength  = name.Length;
+            memcpy( info->FileName, name.Buffer, info->FileNameLength );
             status = NtSetInformationFile( handle, iosb_32to64( &io, io32 ), info, size, class );
         }
         else status = io.Status = STATUS_INVALID_PARAMETER_3;

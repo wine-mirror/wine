@@ -379,6 +379,8 @@ static void process_init(void)
 
     load_cpu_dll();
 
+    init_file_redirects();
+
 #undef GET_PTR
 }
 
