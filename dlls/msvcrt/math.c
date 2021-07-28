@@ -1137,6 +1137,7 @@ static float __expo2f(float x, float sign)
 float CDECL coshf( float x )
 {
     UINT32 ui = *(UINT32*)&x;
+    UINT32 sign = ui & 0x80000000;
     float t;
 
     /* |x| */
@@ -1160,7 +1161,10 @@ float CDECL coshf( float x )
     }
 
     /* |x| > log(FLT_MAX) or nan */
-    t = __expo2f(x, 1.0f);
+    if (ui > 0x7f800000)
+        *(UINT32*)&t = ui | sign | 0x400000;
+    else
+        t = __expo2f(x, 1.0f);
     return t;
 }
 
