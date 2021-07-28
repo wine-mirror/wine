@@ -893,7 +893,7 @@ static BOOL CDECL pathdrv_Rectangle( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2
     points[2].x = corners[0].x;
     points[2].y = corners[1].y;
     points[3]   = corners[1];
-    if (dc->ArcDirection == AD_CLOCKWISE) reverse_points( points, 4 );
+    if (dc->attr->arc_direction == AD_CLOCKWISE) reverse_points( points, 4 );
 
     if (!(type = add_points( physdev->path, points, 4, PT_LINETO ))) return FALSE;
     type[0] = PT_MOVETO;
@@ -968,7 +968,7 @@ static BOOL CDECL pathdrv_RoundRect( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2
     points[15].x = corners[1].x;
     points[15].y = corners[1].y - GDI_ROUND( height );
 
-    if (dc->ArcDirection == AD_CLOCKWISE) reverse_points( points, 16 );
+    if (dc->attr->arc_direction == AD_CLOCKWISE) reverse_points( points, 16 );
     if (!(type = add_points( physdev->path, points, 16, PT_BEZIERTO ))) return FALSE;
     type[0] = PT_MOVETO;
     type[4] = type[8] = type[12] = PT_LINETO;
@@ -1026,7 +1026,7 @@ static BOOL CDECL pathdrv_Ellipse( PHYSDEV dev, INT x1, INT y1, INT x2, INT y2 )
     points[12].x = corners[1].x;
     points[12].y = corners[1].y - GDI_ROUND( height );
 
-    if (dc->ArcDirection == AD_CLOCKWISE) reverse_points( points, 13 );
+    if (dc->attr->arc_direction == AD_CLOCKWISE) reverse_points( points, 13 );
     if (!(type = add_points( physdev->path, points, 13, PT_BEZIERTO ))) return FALSE;
     type[0] = PT_MOVETO;
     close_figure( physdev->path );
@@ -1206,7 +1206,7 @@ static BOOL CDECL pathdrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bo
 {
     DC *dc = get_physdev_dc( dev );
     return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend,
-                     dc->ArcDirection, 0 );
+                     dc->attr->arc_direction, 0 );
 }
 
 
@@ -1218,7 +1218,7 @@ static BOOL CDECL pathdrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT 
 {
     DC *dc = get_physdev_dc( dev );
     return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend,
-                     dc->ArcDirection, -1 );
+                     dc->attr->arc_direction, -1 );
 }
 
 
@@ -1230,7 +1230,7 @@ static BOOL CDECL pathdrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT 
 {
     DC *dc = get_physdev_dc( dev );
     return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend,
-                     dc->ArcDirection, 1 );
+                     dc->attr->arc_direction, 1 );
 }
 
 
@@ -1242,7 +1242,7 @@ static BOOL CDECL pathdrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bo
 {
     DC *dc = get_physdev_dc( dev );
     return PATH_Arc( dev, left, top, right, bottom, xstart, ystart, xend, yend,
-                     dc->ArcDirection, 2 );
+                     dc->attr->arc_direction, 2 );
 }
 
 

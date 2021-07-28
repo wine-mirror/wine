@@ -103,6 +103,7 @@ typedef struct DC_ATTR
     COLORREF  text_color;
     POINT     cur_pos;
     INT       graphics_mode;
+    INT       arc_direction;
     DWORD     layout;
     WORD      text_align;
     WORD      background_mode;

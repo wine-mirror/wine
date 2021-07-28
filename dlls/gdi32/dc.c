@@ -102,7 +102,7 @@ static void set_initial_dc_state( DC *dc )
     dc->attr->graphics_mode = GM_COMPATIBLE;
     dc->attr->cur_pos.x     = 0;
     dc->attr->cur_pos.y     = 0;
-    dc->ArcDirection        = AD_COUNTERCLOCKWISE;
+    dc->attr->arc_direction = AD_COUNTERCLOCKWISE;
     dc->xformWorld2Wnd.eM11 = 1.0f;
     dc->xformWorld2Wnd.eM12 = 0.0f;
     dc->xformWorld2Wnd.eM21 = 0.0f;
@@ -409,7 +409,6 @@ INT CDECL nulldrv_SaveDC( PHYSDEV dev )
     newdc->breakExtra       = dc->breakExtra;
     newdc->breakRem         = dc->breakRem;
     newdc->MapMode          = dc->MapMode;
-    newdc->ArcDirection     = dc->ArcDirection;
     newdc->xformWorld2Wnd   = dc->xformWorld2Wnd;
     newdc->xformWorld2Vport = dc->xformWorld2Vport;
     newdc->xformVport2World = dc->xformVport2World;
@@ -486,7 +485,7 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     dc->MapMode          = dcs->MapMode;
     dc->attr->graphics_mode = dcs->attr->graphics_mode;
     dc->attr->cur_pos    = dcs->attr->cur_pos;
-    dc->ArcDirection     = dcs->ArcDirection;
+    dc->attr->arc_direction    = dcs->attr->arc_direction;
     dc->xformWorld2Wnd   = dcs->xformWorld2Wnd;
     dc->xformWorld2Vport = dcs->xformWorld2Vport;
     dc->xformVport2World = dcs->xformVport2World;
@@ -992,22 +991,6 @@ INT WINAPI SetGraphicsMode( HDC hdc, INT mode )
 
 
 /***********************************************************************
- *		GetArcDirection (GDI32.@)
- */
-INT WINAPI GetArcDirection( HDC hdc )
-{
-    INT ret = 0;
-    DC * dc = get_dc_ptr( hdc );
-    if (dc)
-    {
-        ret = dc->ArcDirection;
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-
-/***********************************************************************
  *           SetArcDirection    (GDI32.@)
  */
 INT WINAPI SetArcDirection( HDC hdc, INT dir )
@@ -1027,8 +1010,8 @@ INT WINAPI SetArcDirection( HDC hdc, INT dir )
         dir = physdev->funcs->pSetArcDirection( physdev, dir );
         if (dir)
         {
-            ret = dc->ArcDirection;
-            dc->ArcDirection = dir;
+            ret = dc->attr->arc_direction;
+            dc->attr->arc_direction = dir;
         }
         release_dc_ptr( dc );
     }

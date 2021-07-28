@@ -125,6 +125,15 @@ INT WINAPI GetGraphicsMode( HDC hdc )
 }
 
 /***********************************************************************
+ *		GetArcDirection (GDI32.@)
+ */
+INT WINAPI GetArcDirection( HDC hdc )
+{
+    DC_ATTR *dc_attr = get_dc_attr( hdc );
+    return dc_attr ? dc_attr->arc_direction : 0;
+}
+
+/***********************************************************************
  *           GetLayout    (GDI32.@)
  */
 DWORD WINAPI GetLayout( HDC hdc )

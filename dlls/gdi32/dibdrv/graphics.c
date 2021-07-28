@@ -347,9 +347,9 @@ static BOOL draw_arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     {
         points[0] = dc->attr->cur_pos;
         lp_to_dp( dc, points, 1 );
-        count = 1 + get_arc_points( dc->ArcDirection, &rect, pt[0], pt[1], points + 1 );
+        count = 1 + get_arc_points( dc->attr->arc_direction, &rect, pt[0], pt[1], points + 1 );
     }
-    else count = get_arc_points( dc->ArcDirection, &rect, pt[0], pt[1], points );
+    else count = get_arc_points( dc->attr->arc_direction, &rect, pt[0], pt[1], points );
 
     if (extra_lines == 2)
     {
@@ -1396,7 +1396,7 @@ BOOL CDECL dibdrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bott
     rect.bottom--;
     reset_dash_origin(pdev);
 
-    if (dc->ArcDirection == AD_CLOCKWISE)
+    if (dc->attr->arc_direction == AD_CLOCKWISE)
     {
         /* 4 pts going clockwise starting from bottom-right */
         pts[0].x = pts[3].x = rect.right;
@@ -1493,7 +1493,7 @@ BOOL CDECL dibdrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bott
 
     count = ellipse_first_quadrant( ellipse_width, ellipse_height, points );
 
-    if (dc->ArcDirection == AD_CLOCKWISE)
+    if (dc->attr->arc_direction == AD_CLOCKWISE)
     {
         for (i = 0; i < count; i++)
         {
