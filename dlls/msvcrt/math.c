@@ -1881,21 +1881,24 @@ float CDECL tanf( float x )
 float CDECL tanhf( float x )
 {
     UINT32 ui = *(UINT32*)&x;
-    int sign;
+    UINT32 sign = ui & 0x80000000;
     float t;
 
     /* x = |x| */
-    sign = ui >> 31;
     ui &= 0x7fffffff;
     x = *(float*)&ui;
 
     if (ui > 0x3f0c9f54) {
         /* |x| > log(3)/2 ~= 0.5493 or nan */
         if (ui > 0x41200000) {
+            if (ui > 0x7f800000) {
+                *(UINT32*)&x = ui | sign | 0x400000;
 #if _MSVCR_VER < 140
-            if (isnan(x))
                 return math_error(_DOMAIN, "tanhf", x, 0, x);
+#else
+                return x;
 #endif
+            }
             /* |x| > 10 */
             fp_barrierf(x + 0x1p120f);
             t = 1 + 0 / x;
