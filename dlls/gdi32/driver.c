@@ -771,11 +771,6 @@ static COLORREF CDECL nulldrv_SetBkColor( PHYSDEV dev, COLORREF color )
     return color;
 }
 
-static INT CDECL nulldrv_SetBkMode( PHYSDEV dev, INT mode )
-{
-    return mode;
-}
-
 static UINT CDECL nulldrv_SetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
 {
     return DCB_RESET;
@@ -832,11 +827,6 @@ static INT CDECL nulldrv_SetPolyFillMode( PHYSDEV dev, INT mode )
     return mode;
 }
 
-static INT CDECL nulldrv_SetROP2( PHYSDEV dev, INT rop )
-{
-    return rop;
-}
-
 static INT CDECL nulldrv_SetRelAbs( PHYSDEV dev, INT mode )
 {
     return mode;
@@ -845,11 +835,6 @@ static INT CDECL nulldrv_SetRelAbs( PHYSDEV dev, INT mode )
 static INT CDECL nulldrv_SetStretchBltMode( PHYSDEV dev, INT mode )
 {
     return mode;
-}
-
-static UINT CDECL nulldrv_SetTextAlign( PHYSDEV dev, UINT align )
-{
-    return align;
 }
 
 static INT CDECL nulldrv_SetTextCharacterExtra( PHYSDEV dev, INT extra )
@@ -997,7 +982,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_SelectPen,                  /* pSelectPen */
     nulldrv_SetArcDirection,            /* pSetArcDirection */
     nulldrv_SetBkColor,                 /* pSetBkColor */
-    nulldrv_SetBkMode,                  /* pSetBkMode */
     nulldrv_SetBoundsRect,              /* pSetBoundsRect */
     nulldrv_SetDCBrushColor,            /* pSetDCBrushColor */
     nulldrv_SetDCPenColor,              /* pSetDCPenColor */
@@ -1009,10 +993,8 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_SetMapperFlags,             /* pSetMapperFlags */
     nulldrv_SetPixel,                   /* pSetPixel */
     nulldrv_SetPolyFillMode,            /* pSetPolyFillMode */
-    nulldrv_SetROP2,                    /* pSetROP2 */
     nulldrv_SetRelAbs,                  /* pSetRelAbs */
     nulldrv_SetStretchBltMode,          /* pSetStretchBltMode */
-    nulldrv_SetTextAlign,               /* pSetTextAlign */
     nulldrv_SetTextCharacterExtra,      /* pSetTextCharacterExtra */
     nulldrv_SetTextColor,               /* pSetTextColor */
     nulldrv_SetTextJustification,       /* pSetTextJustification */

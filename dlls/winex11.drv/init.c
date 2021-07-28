@@ -435,7 +435,6 @@ static const struct gdi_dc_funcs x11drv_funcs =
     X11DRV_SelectPen,                   /* pSelectPen */
     NULL,                               /* pSetArcDirection */
     NULL,                               /* pSetBkColor */
-    NULL,                               /* pSetBkMode */
     X11DRV_SetBoundsRect,               /* pSetBoundsRect */
     X11DRV_SetDCBrushColor,             /* pSetDCBrushColor */
     X11DRV_SetDCPenColor,               /* pSetDCPenColor */
@@ -447,10 +446,8 @@ static const struct gdi_dc_funcs x11drv_funcs =
     NULL,                               /* pSetMapperFlags */
     X11DRV_SetPixel,                    /* pSetPixel */
     NULL,                               /* pSetPolyFillMode */
-    NULL,                               /* pSetROP2 */
     NULL,                               /* pSetRelAbs */
     NULL,                               /* pSetStretchBltMode */
-    NULL,                               /* pSetTextAlign */
     NULL,                               /* pSetTextCharacterExtra */
     NULL,                               /* pSetTextColor */
     NULL,                               /* pSetTextJustification */

@@ -129,7 +129,6 @@ static const struct gdi_dc_funcs emfdrv_driver =
     EMFDRV_SelectPen,                /* pSelectPen */
     EMFDRV_SetArcDirection,          /* pSetArcDirection */
     EMFDRV_SetBkColor,               /* pSetBkColor */
-    NULL,                            /* pSetBkMode */
     NULL,                            /* pSetBoundsRect */
     EMFDRV_SetDCBrushColor,          /* pSetDCBrushColor*/
     EMFDRV_SetDCPenColor,            /* pSetDCPenColor*/
@@ -141,10 +140,8 @@ static const struct gdi_dc_funcs emfdrv_driver =
     EMFDRV_SetMapperFlags,           /* pSetMapperFlags */
     EMFDRV_SetPixel,                 /* pSetPixel */
     EMFDRV_SetPolyFillMode,          /* pSetPolyFillMode */
-    NULL,                            /* pSetROP2 */
     NULL,                            /* pSetRelAbs */
     EMFDRV_SetStretchBltMode,        /* pSetStretchBltMode */
-    NULL,                            /* pSetTextAlign */
     NULL,                            /* pSetTextCharacterExtra */
     EMFDRV_SetTextColor,             /* pSetTextColor */
     EMFDRV_SetTextJustification,     /* pSetTextJustification */ 
