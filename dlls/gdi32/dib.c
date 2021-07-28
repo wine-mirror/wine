@@ -937,7 +937,7 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries, const RGBQUA
 
         if (result)  /* update colors of selected objects */
         {
-            SetTextColor( hdc, dc->textColor );
+            SetTextColor( hdc, dc->attr->text_color );
             SetBkColor( hdc, dc->attr->background_color );
             NtGdiSelectPen( hdc, dc->hPen );
             NtGdiSelectBrush( hdc, dc->hBrush );

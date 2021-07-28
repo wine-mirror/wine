@@ -1981,7 +1981,7 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, dib_brush *brush, BOOL *
         BOOL got_pixel;
         COLORREF color;
 
-        color = make_rgb_colorref( dc, &pdev->dib, dc->textColor, &got_pixel, &pixel );
+        color = make_rgb_colorref( dc, &pdev->dib, dc->attr->text_color, &got_pixel, &pixel );
         color_table[0].rgbRed      = GetRValue( color );
         color_table[0].rgbGreen    = GetGValue( color );
         color_table[0].rgbBlue     = GetBValue( color );

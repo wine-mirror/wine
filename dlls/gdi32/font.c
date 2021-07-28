@@ -5783,7 +5783,7 @@ BOOL CDECL nulldrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT
         }
     }
 
-    pen = CreatePen( PS_SOLID, 1, dc->textColor );
+    pen = CreatePen( PS_SOLID, 1, dc->attr->text_color );
     orig = NtGdiSelectPen( dev->hdc, pen );
 
     for (i = 0; i < count; i++)
@@ -6238,7 +6238,7 @@ done:
         OUTLINETEXTMETRICW* otm = NULL;
         POINT pts[5];
         HPEN hpen = NtGdiSelectPen(hdc, GetStockObject(NULL_PEN));
-        HBRUSH hbrush = CreateSolidBrush(dc->textColor);
+        HBRUSH hbrush = CreateSolidBrush( dc->attr->text_color );
 
         hbrush = NtGdiSelectBrush(hdc, hbrush);
 

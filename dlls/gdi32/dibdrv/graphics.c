@@ -674,7 +674,7 @@ static inline void get_text_bkgnd_masks( DC *dc, const dib_info *dib, rop_mask *
         mask->xor = get_pixel_color( dc, dib, bg, FALSE );
     else
     {
-        COLORREF fg = dc->textColor;
+        COLORREF fg = dc->attr->text_color;
         mask->xor = get_pixel_color( dc, dib, fg, TRUE );
         if (fg != bg) mask->xor = ~mask->xor;
     }
@@ -823,7 +823,7 @@ static void render_string( DC *dc, dib_info *dib, struct cached_font *font, INT 
     glyph_dib.bits.is_copy = FALSE;
     glyph_dib.bits.free    = NULL;
 
-    text_color = get_pixel_color( dc, dib, dc->textColor, TRUE );
+    text_color = get_pixel_color( dc, dib, dc->attr->text_color, TRUE );
 
     if (glyph_dib.bit_count == 32)
         intensity.gamma_ramp = dc->font_gamma_ramp;

@@ -75,6 +75,15 @@ COLORREF WINAPI GetBkColor( HDC hdc )
 }
 
 /***********************************************************************
+ *		GetTextColor (GDI32.@)
+ */
+COLORREF WINAPI GetTextColor( HDC hdc )
+{
+    DC_ATTR *dc_attr = get_dc_attr( hdc );
+    return dc_attr ? dc_attr->text_color : 0;
+}
+
+/***********************************************************************
  *		GetBkMode (GDI32.@)
  */
 INT WINAPI GetBkMode( HDC hdc )
