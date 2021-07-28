@@ -110,25 +110,21 @@ CRITICAL_SECTION wined3d_command_cs = {&wined3d_command_cs_debug, -1, 0, 0, 0, 0
  * where appropriate. */
 struct wined3d_settings wined3d_settings =
 {
-    WINED3D_CSMT_ENABLE,     /* Multithreaded CS by default. */
-    MAKEDWORD_VERSION(4, 4), /* Default to OpenGL 4.4 */
-    ORM_FBO,        /* Use FBOs to do offscreen rendering */
-    PCI_VENDOR_NONE,/* PCI Vendor ID */
-    PCI_DEVICE_NONE,/* PCI Device ID */
-    0,              /* The default of memory is set in init_driver_info */
-    NULL,           /* No wine logo by default */
-    TRUE,           /* Prefer multisample textures to multisample renderbuffers. */
-    ~0u,            /* Don't force a specific sample count by default. */
-    FALSE,          /* Don't range check relative addressing indices in float constants. */
-    FALSE,          /* No strict shader math by default. */
-    ~0U,            /* No VS shader model limit by default. */
-    ~0U,            /* No HS shader model limit by default. */
-    ~0U,            /* No DS shader model limit by default. */
-    ~0U,            /* No GS shader model limit by default. */
-    ~0U,            /* No PS shader model limit by default. */
-    ~0u,            /* No CS shader model limit by default. */
-    WINED3D_RENDERER_AUTO,
-    WINED3D_SHADER_BACKEND_AUTO,
+    .cs_multithreaded = WINED3D_CSMT_ENABLE,
+    .max_gl_version = MAKEDWORD_VERSION(4, 4),
+    .offscreen_rendering_mode = ORM_FBO,
+    .pci_vendor_id = PCI_VENDOR_NONE,
+    .pci_device_id = PCI_DEVICE_NONE,
+    .multisample_textures = TRUE,
+    .sample_count = ~0u,
+    .max_sm_vs = UINT_MAX,
+    .max_sm_ps = UINT_MAX,
+    .max_sm_ds = UINT_MAX,
+    .max_sm_hs = UINT_MAX,
+    .max_sm_gs = UINT_MAX,
+    .max_sm_cs = UINT_MAX,
+    .renderer = WINED3D_RENDERER_AUTO,
+    .shader_backend = WINED3D_SHADER_BACKEND_AUTO,
 };
 
 struct wined3d * CDECL wined3d_create(DWORD flags)
