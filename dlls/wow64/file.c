@@ -75,6 +75,49 @@ NTSTATUS WINAPI wow64_NtDeleteFile( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtFlushBuffersFile
+ */
+NTSTATUS WINAPI wow64_NtFlushBuffersFile( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtFlushBuffersFile( handle, iosb_32to64( &io, io32 ));
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtLockFile
+ */
+NTSTATUS WINAPI wow64_NtLockFile( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    HANDLE event = get_handle( &args );
+    ULONG apc = get_ulong( &args );
+    ULONG apc_param = get_ulong( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+    LARGE_INTEGER *offset = get_ptr( &args );
+    LARGE_INTEGER *count = get_ptr( &args );
+    ULONG *key = get_ptr( &args );
+    BOOLEAN dont_wait = get_ulong( &args );
+    BOOLEAN exclusive = get_ulong( &args );
+
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtLockFile( handle, event, apc_32to64( apc ), apc_param_32to64( apc, apc_param ),
+                         iosb_32to64( &io, io32 ), offset, count, key, dont_wait, exclusive );
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
  *           wow64_NtOpenFile
  */
 NTSTATUS WINAPI wow64_NtOpenFile( UINT *args )
@@ -95,6 +138,126 @@ NTSTATUS WINAPI wow64_NtOpenFile( UINT *args )
     status = NtOpenFile( &handle, access, objattr_32to64( &attr, attr32 ),
                          iosb_32to64( &io, io32 ), sharing, options );
     put_handle( handle_ptr, handle );
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtReadFile
+ */
+NTSTATUS WINAPI wow64_NtReadFile( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    HANDLE event = get_handle( &args );
+    ULONG apc = get_ulong( &args );
+    ULONG apc_param = get_ulong( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+    void *buffer = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    LARGE_INTEGER *offset = get_ptr( &args );
+    ULONG *key = get_ptr( &args );
+
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtReadFile( handle, event, apc_32to64( apc ), apc_param_32to64( apc, apc_param ),
+                         iosb_32to64( &io, io32 ), buffer, len, offset, key );
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtReadFileScatter
+ */
+NTSTATUS WINAPI wow64_NtReadFileScatter( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    HANDLE event = get_handle( &args );
+    ULONG apc = get_ulong( &args );
+    ULONG apc_param = get_ulong( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+    FILE_SEGMENT_ELEMENT *segments = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    LARGE_INTEGER *offset = get_ptr( &args );
+    ULONG *key = get_ptr( &args );
+
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtReadFileScatter( handle, event, apc_32to64( apc ), apc_param_32to64( apc, apc_param ),
+                                iosb_32to64( &io, io32 ), segments, len, offset, key );
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtUnlockFile
+ */
+NTSTATUS WINAPI wow64_NtUnlockFile( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+    LARGE_INTEGER *offset = get_ptr( &args );
+    LARGE_INTEGER *count = get_ptr( &args );
+    ULONG *key = get_ptr( &args );
+
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtUnlockFile( handle, iosb_32to64( &io, io32 ), offset, count, key );
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtWriteFile
+ */
+NTSTATUS WINAPI wow64_NtWriteFile( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    HANDLE event = get_handle( &args );
+    ULONG apc = get_ulong( &args );
+    ULONG apc_param = get_ulong( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+    void *buffer = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    LARGE_INTEGER *offset = get_ptr( &args );
+    ULONG *key = get_ptr( &args );
+
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtWriteFile( handle, event, apc_32to64( apc ), apc_param_32to64( apc, apc_param ),
+                          iosb_32to64( &io, io32 ), buffer, len, offset, key );
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtWriteFileGather
+ */
+NTSTATUS WINAPI wow64_NtWriteFileGather( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    HANDLE event = get_handle( &args );
+    ULONG apc = get_ulong( &args );
+    ULONG apc_param = get_ulong( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+    FILE_SEGMENT_ELEMENT *segments = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    LARGE_INTEGER *offset = get_ptr( &args );
+    ULONG *key = get_ptr( &args );
+
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtWriteFileGather( handle, event, apc_32to64( apc ), apc_param_32to64( apc, apc_param ),
+                                iosb_32to64( &io, io32 ), segments, len, offset, key );
     put_iosb( io32, &io );
     return status;
 }

@@ -61,6 +61,7 @@
     SYSCALL_ENTRY( NtEnumerateKey ) \
     SYSCALL_ENTRY( NtEnumerateValueKey ) \
     SYSCALL_ENTRY( NtFindAtom ) \
+    SYSCALL_ENTRY( NtFlushBuffersFile ) \
     SYSCALL_ENTRY( NtFlushKey ) \
     SYSCALL_ENTRY( NtFlushVirtualMemory ) \
     SYSCALL_ENTRY( NtFreeVirtualMemory ) \
@@ -70,6 +71,7 @@
     SYSCALL_ENTRY( NtListenPort ) \
     SYSCALL_ENTRY( NtLoadKey ) \
     SYSCALL_ENTRY( NtLoadKey2 ) \
+    SYSCALL_ENTRY( NtLockFile ) \
     SYSCALL_ENTRY( NtLockVirtualMemory ) \
     SYSCALL_ENTRY( NtMakeTemporaryObject ) \
     SYSCALL_ENTRY( NtMapViewOfSection ) \
@@ -109,6 +111,8 @@
     SYSCALL_ENTRY( NtQueryTimerResolution ) \
     SYSCALL_ENTRY( NtQueryValueKey ) \
     SYSCALL_ENTRY( NtQueryVirtualMemory ) \
+    SYSCALL_ENTRY( NtReadFile ) \
+    SYSCALL_ENTRY( NtReadFileScatter ) \
     SYSCALL_ENTRY( NtReadVirtualMemory ) \
     SYSCALL_ENTRY( NtReleaseKeyedEvent ) \
     SYSCALL_ENTRY( NtReleaseMutant ) \
@@ -136,6 +140,7 @@
     SYSCALL_ENTRY( NtSignalAndWaitForSingleObject ) \
     SYSCALL_ENTRY( NtTerminateJobObject ) \
     SYSCALL_ENTRY( NtUnloadKey ) \
+    SYSCALL_ENTRY( NtUnlockFile ) \
     SYSCALL_ENTRY( NtUnlockVirtualMemory ) \
     SYSCALL_ENTRY( NtUnmapViewOfSection ) \
     SYSCALL_ENTRY( NtWaitForDebugEvent ) \
@@ -145,6 +150,8 @@
     SYSCALL_ENTRY( NtWow64AllocateVirtualMemory64 ) \
     SYSCALL_ENTRY( NtWow64ReadVirtualMemory64 ) \
     SYSCALL_ENTRY( NtWow64WriteVirtualMemory64 ) \
+    SYSCALL_ENTRY( NtWriteFile ) \
+    SYSCALL_ENTRY( NtWriteFileGather ) \
     SYSCALL_ENTRY( NtWriteVirtualMemory ) \
     SYSCALL_ENTRY( NtYieldExecution )
 
