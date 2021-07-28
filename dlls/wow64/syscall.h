@@ -92,11 +92,16 @@
     SYSCALL_ENTRY( NtOpenTimer ) \
     SYSCALL_ENTRY( NtProtectVirtualMemory ) \
     SYSCALL_ENTRY( NtPulseEvent ) \
+    SYSCALL_ENTRY( NtQueryAttributesFile ) \
     SYSCALL_ENTRY( NtQueryDefaultLocale ) \
     SYSCALL_ENTRY( NtQueryDefaultUILanguage ) \
+    SYSCALL_ENTRY( NtQueryDirectoryFile ) \
     SYSCALL_ENTRY( NtQueryDirectoryObject ) \
+    SYSCALL_ENTRY( NtQueryEaFile ) \
     SYSCALL_ENTRY( NtQueryEvent ) \
+    SYSCALL_ENTRY( NtQueryFullAttributesFile ) \
     SYSCALL_ENTRY( NtQueryInformationAtom ) \
+    SYSCALL_ENTRY( NtQueryInformationFile ) \
     SYSCALL_ENTRY( NtQueryInstallUILanguage ) \
     SYSCALL_ENTRY( NtQueryIoCompletion ) \
     SYSCALL_ENTRY( NtQueryKey ) \
@@ -111,6 +116,7 @@
     SYSCALL_ENTRY( NtQueryTimerResolution ) \
     SYSCALL_ENTRY( NtQueryValueKey ) \
     SYSCALL_ENTRY( NtQueryVirtualMemory ) \
+    SYSCALL_ENTRY( NtQueryVolumeInformationFile ) \
     SYSCALL_ENTRY( NtReadFile ) \
     SYSCALL_ENTRY( NtReadFileScatter ) \
     SYSCALL_ENTRY( NtReadVirtualMemory ) \

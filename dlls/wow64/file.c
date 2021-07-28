@@ -144,6 +144,128 @@ NTSTATUS WINAPI wow64_NtOpenFile( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtQueryAttributesFile
+ */
+NTSTATUS WINAPI wow64_NtQueryAttributesFile( UINT *args )
+{
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    FILE_BASIC_INFORMATION *info = get_ptr( &args );
+
+    struct object_attr64 attr;
+
+    return NtQueryAttributesFile( objattr_32to64( &attr, attr32 ), info );
+}
+
+
+/**********************************************************************
+ *           wow64_NtQueryDirectoryFile
+ */
+NTSTATUS WINAPI wow64_NtQueryDirectoryFile( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    HANDLE event = get_handle( &args );
+    ULONG apc = get_ulong( &args );
+    ULONG apc_param = get_ulong( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+    void *buffer = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    FILE_INFORMATION_CLASS class = get_ulong( &args );
+    BOOLEAN single_entry = get_ulong( &args );
+    UNICODE_STRING32 *mask32 = get_ptr( &args );
+    BOOLEAN restart_scan = get_ulong( &args );
+
+    UNICODE_STRING mask;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtQueryDirectoryFile( handle, event, apc_32to64( apc ), apc_param_32to64( apc, apc_param ),
+                                   iosb_32to64( &io, io32 ), buffer, len, class, single_entry,
+                                   unicode_str_32to64( &mask, mask32 ), restart_scan );
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtQueryEaFile
+ */
+NTSTATUS WINAPI wow64_NtQueryEaFile( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+    void *buffer = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    BOOLEAN single_entry = get_ulong( &args );
+    void *list = get_ptr( &args );
+    ULONG list_len = get_ulong( &args );
+    ULONG *index = get_ptr( &args );
+    BOOLEAN restart = get_ulong( &args );
+
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtQueryEaFile( handle, iosb_32to64( &io, io32 ), buffer, len,
+                            single_entry, list, list_len, index, restart );
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtQueryFullAttributesFile
+ */
+NTSTATUS WINAPI wow64_NtQueryFullAttributesFile( UINT *args )
+{
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    FILE_NETWORK_OPEN_INFORMATION *info = get_ptr( &args );
+
+    struct object_attr64 attr;
+
+    return NtQueryFullAttributesFile( objattr_32to64( &attr, attr32 ), info );
+}
+
+
+/**********************************************************************
+ *           wow64_NtQueryInformationFile
+ */
+NTSTATUS WINAPI wow64_NtQueryInformationFile( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+    void *info = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    FILE_INFORMATION_CLASS class = get_ulong( &args );
+
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtQueryInformationFile( handle, iosb_32to64( &io, io32 ), info, len, class );
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtQueryVolumeInformationFile
+ */
+NTSTATUS WINAPI wow64_NtQueryVolumeInformationFile( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+    void *buffer = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    FS_INFORMATION_CLASS class = get_ulong( &args );
+
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtQueryVolumeInformationFile( handle, iosb_32to64( &io, io32 ), buffer, len, class );
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
  *           wow64_NtReadFile
  */
 NTSTATUS WINAPI wow64_NtReadFile( UINT *args )
