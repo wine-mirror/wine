@@ -33,6 +33,16 @@ typedef struct
 
 typedef struct
 {
+    union
+    {
+        NTSTATUS Status;
+        ULONG Pointer;
+    };
+    ULONG Information;
+} IO_STATUS_BLOCK32;
+
+typedef struct
+{
     UNICODE_STRING32 Name;
 } OBJECT_NAME_INFORMATION32;
 

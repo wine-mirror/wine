@@ -38,6 +38,7 @@
     SYSCALL_ENTRY( NtCreateDebugObject ) \
     SYSCALL_ENTRY( NtCreateDirectoryObject ) \
     SYSCALL_ENTRY( NtCreateEvent ) \
+    SYSCALL_ENTRY( NtCreateFile ) \
     SYSCALL_ENTRY( NtCreateIoCompletion ) \
     SYSCALL_ENTRY( NtCreateJobObject ) \
     SYSCALL_ENTRY( NtCreateKey ) \
@@ -53,6 +54,7 @@
     SYSCALL_ENTRY( NtDebugContinue ) \
     SYSCALL_ENTRY( NtDelayExecution ) \
     SYSCALL_ENTRY( NtDeleteAtom ) \
+    SYSCALL_ENTRY( NtDeleteFile ) \
     SYSCALL_ENTRY( NtDeleteKey ) \
     SYSCALL_ENTRY( NtDeleteValueKey ) \
     SYSCALL_ENTRY( NtDuplicateObject ) \
@@ -73,6 +75,7 @@
     SYSCALL_ENTRY( NtMapViewOfSection ) \
     SYSCALL_ENTRY( NtOpenDirectoryObject ) \
     SYSCALL_ENTRY( NtOpenEvent ) \
+    SYSCALL_ENTRY( NtOpenFile ) \
     SYSCALL_ENTRY( NtOpenIoCompletion ) \
     SYSCALL_ENTRY( NtOpenJobObject ) \
     SYSCALL_ENTRY( NtOpenKey ) \

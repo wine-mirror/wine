@@ -105,6 +105,13 @@ static inline void *apc_param_32to64( ULONG func, ULONG context )
     return (void *)(ULONG_PTR)(((ULONG64)func << 32) | context);
 }
 
+static inline IO_STATUS_BLOCK *iosb_32to64( IO_STATUS_BLOCK *io, IO_STATUS_BLOCK32 *io32 )
+{
+    if (!io32) return NULL;
+    io->Pointer = io32;
+    return io;
+}
+
 static inline UNICODE_STRING *unicode_str_32to64( UNICODE_STRING *str, const UNICODE_STRING32 *str32 )
 {
     if (!str32) return NULL;
@@ -176,6 +183,17 @@ static inline void put_addr( ULONG *addr32, void *addr )
 static inline void put_size( ULONG *size32, SIZE_T size )
 {
     if (size32) *size32 = min( size, MAXDWORD );
+}
+
+static inline void put_iosb( IO_STATUS_BLOCK32 *io32, const IO_STATUS_BLOCK *io )
+{
+    /* sync I/O modifies the 64-bit iosb right away, so in that case we update the 32-bit one */
+    /* async I/O leaves the 64-bit one untouched and updates the 32-bit one directly later on */
+    if (io32 && io->Pointer != io32)
+    {
+        io32->Status = io->Status;
+        io32->Information = io->Information;
+    }
 }
 
 extern void put_section_image_info( SECTION_IMAGE_INFORMATION32 *info32,
