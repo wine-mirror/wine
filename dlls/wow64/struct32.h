@@ -87,6 +87,13 @@ typedef struct
 
 typedef struct
 {
+    ULONG             CompletionKey;
+    ULONG             CompletionValue;
+    IO_STATUS_BLOCK32 IoStatusBlock;
+} FILE_IO_COMPLETION_INFORMATION32;
+
+typedef struct
+{
     BOOLEAN ReplaceIfExists;
     ULONG   RootDirectory;
     ULONG   FileNameLength;

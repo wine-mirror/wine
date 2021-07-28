@@ -29,6 +29,8 @@
     SYSCALL_ENTRY( NtAllocateVirtualMemory ) \
     SYSCALL_ENTRY( NtAllocateVirtualMemoryEx ) \
     SYSCALL_ENTRY( NtAreMappedFilesTheSame ) \
+    SYSCALL_ENTRY( NtCancelIoFile ) \
+    SYSCALL_ENTRY( NtCancelIoFileEx ) \
     SYSCALL_ENTRY( NtCancelTimer ) \
     SYSCALL_ENTRY( NtClearEvent ) \
     SYSCALL_ENTRY( NtClearPowerRequest ) \
@@ -75,6 +77,7 @@
     SYSCALL_ENTRY( NtLockVirtualMemory ) \
     SYSCALL_ENTRY( NtMakeTemporaryObject ) \
     SYSCALL_ENTRY( NtMapViewOfSection ) \
+    SYSCALL_ENTRY( NtNotifyChangeDirectoryFile ) \
     SYSCALL_ENTRY( NtOpenDirectoryObject ) \
     SYSCALL_ENTRY( NtOpenEvent ) \
     SYSCALL_ENTRY( NtOpenFile ) \
@@ -123,6 +126,8 @@
     SYSCALL_ENTRY( NtReleaseKeyedEvent ) \
     SYSCALL_ENTRY( NtReleaseMutant ) \
     SYSCALL_ENTRY( NtReleaseSemaphore ) \
+    SYSCALL_ENTRY( NtRemoveIoCompletion ) \
+    SYSCALL_ENTRY( NtRemoveIoCompletionEx ) \
     SYSCALL_ENTRY( NtRenameKey ) \
     SYSCALL_ENTRY( NtReplaceKey ) \
     SYSCALL_ENTRY( NtReplyWaitReceivePort ) \

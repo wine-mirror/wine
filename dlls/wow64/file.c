@@ -33,6 +33,41 @@ WINE_DEFAULT_DEBUG_CHANNEL(wow);
 
 
 /**********************************************************************
+ *           wow64_NtCancelIoFile
+ */
+NTSTATUS WINAPI wow64_NtCancelIoFile( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtCancelIoFile( handle, iosb_32to64( &io, io32 ));
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtCancelIoFileEx
+ */
+NTSTATUS WINAPI wow64_NtCancelIoFileEx( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    IO_STATUS_BLOCK32 *io_ptr = get_ptr( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtCancelIoFileEx( handle, (IO_STATUS_BLOCK *)io_ptr, iosb_32to64( &io, io32 ));
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
  *           wow64_NtCreateFile
  */
 NTSTATUS WINAPI wow64_NtCreateFile( UINT *args )
@@ -115,6 +150,32 @@ NTSTATUS WINAPI wow64_NtLockFile( UINT *args )
 
     status = NtLockFile( handle, event, apc_32to64( apc ), apc_param_32to64( apc, apc_param ),
                          iosb_32to64( &io, io32 ), offset, count, key, dont_wait, exclusive );
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtNotifyChangeDirectoryFile
+ */
+NTSTATUS WINAPI wow64_NtNotifyChangeDirectoryFile( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    HANDLE event = get_handle( &args );
+    ULONG apc = get_ulong( &args );
+    ULONG apc_param = get_ulong( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+    void *buffer = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    ULONG filter = get_ulong( &args );
+    BOOLEAN subtree = get_ulong( &args );
+
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtNotifyChangeDirectoryFile( handle, event, apc_32to64( apc ),
+                                          apc_param_32to64( apc, apc_param ), iosb_32to64( &io, io32 ),
+                                          buffer, len, filter, subtree );
     put_iosb( io32, &io );
     return status;
 }
@@ -314,6 +375,60 @@ NTSTATUS WINAPI wow64_NtReadFileScatter( UINT *args )
     status = NtReadFileScatter( handle, event, apc_32to64( apc ), apc_param_32to64( apc, apc_param ),
                                 iosb_32to64( &io, io32 ), segments, len, offset, key );
     put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtRemoveIoCompletion
+ */
+NTSTATUS WINAPI wow64_NtRemoveIoCompletion( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    ULONG *key_ptr = get_ptr( &args );
+    ULONG *value_ptr = get_ptr( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+    LARGE_INTEGER *timeout = get_ptr( &args );
+
+    IO_STATUS_BLOCK io;
+    ULONG_PTR key, value;
+    NTSTATUS status;
+
+    status = NtRemoveIoCompletion( handle, &key, &value, iosb_32to64( &io, io32 ), timeout );
+    if (!status)
+    {
+        *key_ptr = key;
+        *value_ptr = value;
+    }
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtRemoveIoCompletionEx
+ */
+NTSTATUS WINAPI wow64_NtRemoveIoCompletionEx( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    FILE_IO_COMPLETION_INFORMATION32 *info32 = get_ptr( &args );
+    ULONG count = get_ulong( &args );
+    ULONG *written = get_ptr( &args );
+    LARGE_INTEGER *timeout = get_ptr( &args );
+    BOOLEAN alertable = get_ulong( &args );
+
+    NTSTATUS status;
+    ULONG i;
+    FILE_IO_COMPLETION_INFORMATION *info = Wow64AllocateTemp( count * sizeof(*info) );
+
+    status = NtRemoveIoCompletionEx( handle, info, count, written, timeout, alertable );
+    for (i = 0; i < *written; i++)
+    {
+        info32[i].CompletionKey             = info[i].CompletionKey;
+        info32[i].CompletionValue           = info[i].CompletionValue;
+        info32[i].IoStatusBlock.Status      = info[i].IoStatusBlock.Status;
+        info32[i].IoStatusBlock.Information = info[i].IoStatusBlock.Information;
+    }
     return status;
 }
 
