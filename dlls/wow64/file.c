@@ -27,6 +27,9 @@
 #include "winnt.h"
 #include "winternl.h"
 #include "wow64_private.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(wow);
 
 
 /**********************************************************************
@@ -310,6 +313,115 @@ NTSTATUS WINAPI wow64_NtReadFileScatter( UINT *args )
 
     status = NtReadFileScatter( handle, event, apc_32to64( apc ), apc_param_32to64( apc, apc_param ),
                                 iosb_32to64( &io, io32 ), segments, len, offset, key );
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtSetEaFile
+ */
+NTSTATUS WINAPI wow64_NtSetEaFile( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+    void *ptr = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtSetEaFile( handle, iosb_32to64( &io, io32 ), ptr, len );
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtSetInformationFile
+ */
+NTSTATUS WINAPI wow64_NtSetInformationFile( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+    void *ptr = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    FILE_INFORMATION_CLASS class = get_ulong( &args );
+
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    switch (class)
+    {
+    case FileBasicInformation:   /* FILE_BASIC_INFORMATION */
+    case FilePositionInformation:   /* FILE_POSITION_INFORMATION */
+    case FileEndOfFileInformation:   /* FILE_END_OF_FILE_INFORMATION */
+    case FilePipeInformation:   /* FILE_PIPE_INFORMATION */
+    case FileMailslotSetInformation:   /* FILE_MAILSLOT_SET_INFORMATION */
+    case FileIoCompletionNotificationInformation:   /* FILE_IO_COMPLETION_NOTIFICATION_INFORMATION */
+    case FileIoPriorityHintInformation:   /* FILE_IO_PRIORITY_HINT_INFO */
+    case FileValidDataLengthInformation:   /* FILE_VALID_DATA_LENGTH_INFORMATION */
+    case FileDispositionInformation:   /* FILE_DISPOSITION_INFORMATION */
+        status = NtSetInformationFile( handle, iosb_32to64( &io, io32 ), ptr, len, class );
+        break;
+
+    case FileRenameInformation:   /* FILE_RENAME_INFORMATION */
+    case FileLinkInformation:   /* FILE_LINK_INFORMATION */
+        if (len >= sizeof(FILE_RENAME_INFORMATION32))
+        {
+            FILE_RENAME_INFORMATION32 *info32 = ptr;
+            FILE_RENAME_INFORMATION *info;
+            ULONG size;
+
+            size = offsetof( FILE_RENAME_INFORMATION, FileName[info32->FileNameLength/sizeof(WCHAR)] );
+            info = Wow64AllocateTemp( size );
+            info->ReplaceIfExists = info32->ReplaceIfExists;
+            info->RootDirectory   = LongToHandle( info32->RootDirectory );
+            info->FileNameLength  = info32->FileNameLength;
+            memcpy( info->FileName, info32->FileName, info->FileNameLength );
+            status = NtSetInformationFile( handle, iosb_32to64( &io, io32 ), info, size, class );
+        }
+        else status = io.Status = STATUS_INVALID_PARAMETER_3;
+        break;
+
+    case FileCompletionInformation:   /* FILE_COMPLETION_INFORMATION */
+        if (len >= sizeof(FILE_COMPLETION_INFORMATION32))
+        {
+            FILE_COMPLETION_INFORMATION32 *info32 = ptr;
+            FILE_COMPLETION_INFORMATION info;
+
+            info.CompletionPort = LongToHandle( info32->CompletionPort );
+            info.CompletionKey  = info32->CompletionKey;
+            status = NtSetInformationFile( handle, iosb_32to64( &io, io32 ), &info, sizeof(info), class );
+        }
+        else status = io.Status = STATUS_INVALID_PARAMETER_3;
+        break;
+
+    default:
+        FIXME( "unsupported class %u\n", class );
+        status = io.Status = STATUS_INVALID_INFO_CLASS;
+        break;
+    }
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtSetVolumeInformationFile
+ */
+NTSTATUS WINAPI wow64_NtSetVolumeInformationFile( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+    void *ptr = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    FS_INFORMATION_CLASS class = get_ulong( &args );
+
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtSetVolumeInformationFile( handle, iosb_32to64( &io, io32 ), ptr, len, class );
     put_iosb( io32, &io );
     return status;
 }

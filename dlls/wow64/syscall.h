@@ -134,8 +134,10 @@
     SYSCALL_ENTRY( NtSecureConnectPort ) \
     SYSCALL_ENTRY( NtSetDefaultLocale ) \
     SYSCALL_ENTRY( NtSetDefaultUILanguage ) \
+    SYSCALL_ENTRY( NtSetEaFile ) \
     SYSCALL_ENTRY( NtSetEvent ) \
     SYSCALL_ENTRY( NtSetInformationDebugObject ) \
+    SYSCALL_ENTRY( NtSetInformationFile ) \
     SYSCALL_ENTRY( NtSetInformationKey ) \
     SYSCALL_ENTRY( NtSetInformationObject ) \
     SYSCALL_ENTRY( NtSetIoCompletion ) \
@@ -143,6 +145,7 @@
     SYSCALL_ENTRY( NtSetTimer ) \
     SYSCALL_ENTRY( NtSetTimerResolution ) \
     SYSCALL_ENTRY( NtSetValueKey ) \
+    SYSCALL_ENTRY( NtSetVolumeInformationFile ) \
     SYSCALL_ENTRY( NtSignalAndWaitForSingleObject ) \
     SYSCALL_ENTRY( NtTerminateJobObject ) \
     SYSCALL_ENTRY( NtUnloadKey ) \

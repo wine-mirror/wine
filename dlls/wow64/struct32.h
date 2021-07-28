@@ -81,6 +81,20 @@ typedef struct
 
 typedef struct
 {
+    ULONG CompletionPort;
+    ULONG CompletionKey;
+} FILE_COMPLETION_INFORMATION32;
+
+typedef struct
+{
+    BOOLEAN ReplaceIfExists;
+    ULONG   RootDirectory;
+    ULONG   FileNameLength;
+    WCHAR   FileName[1];
+} FILE_RENAME_INFORMATION32;
+
+typedef struct
+{
     ULONG    BaseAddress;
     ULONG    AllocationBase;
     DWORD    AllocationProtect;
