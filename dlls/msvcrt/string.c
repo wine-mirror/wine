@@ -1065,7 +1065,13 @@ double CDECL strtod( const char *str, char **end )
  */
 float CDECL _strtof_l( const char *str, char **end, _locale_t locale )
 {
-    return _strtod_l(str, end, locale);
+    double ret = _strtod_l(str, end, locale);
+    if (ret && isfinite(ret)) {
+        float f = ret;
+        if (!f || !isfinite(f))
+            *_errno() = ERANGE;
+    }
+    return ret;
 }
 
 /*********************************************************************
