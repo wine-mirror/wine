@@ -1555,34 +1555,6 @@ INT WINAPI GetRelAbs( HDC hdc, DWORD dwIgnore )
 
 
 /***********************************************************************
- *		SetROP2 (GDI32.@)
- */
-INT WINAPI SetROP2( HDC hdc, INT mode )
-{
-    INT ret = 0;
-    DC *dc;
-
-    if ((mode < R2_BLACK) || (mode > R2_WHITE))
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
-    }
-    if ((dc = get_dc_ptr( hdc )))
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetROP2 );
-        mode = physdev->funcs->pSetROP2( physdev, mode );
-        if (mode)
-        {
-            ret = dc->attr->rop_mode;
-            dc->attr->rop_mode = mode;
-        }
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-
-/***********************************************************************
  *		SetRelAbs (GDI32.@)
  */
 INT WINAPI SetRelAbs( HDC hdc, INT mode )

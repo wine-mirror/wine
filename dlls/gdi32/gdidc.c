@@ -118,6 +118,29 @@ INT WINAPI GetROP2( HDC hdc )
 }
 
 /***********************************************************************
+ *		SetROP2 (GDI32.@)
+ */
+INT WINAPI SetROP2( HDC hdc, INT mode )
+{
+    DC_ATTR *dc_attr;
+    INT ret;
+
+    if ((mode < R2_BLACK) || (mode > R2_WHITE))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    if (is_meta_dc( hdc )) return METADC_SetROP2( hdc, mode );
+    if (!(dc_attr = get_dc_attr( hdc ))) return 0;
+    if (dc_attr->emf && !EMFDC_SetROP2( dc_attr, mode )) return 0;
+
+    ret = dc_attr->rop_mode;
+    dc_attr->rop_mode = mode;
+    return ret;
+}
+
+/***********************************************************************
  *           SetPixel    (GDI32.@)
  */
 COLORREF WINAPI SetPixel( HDC hdc, INT x, INT y, COLORREF color )

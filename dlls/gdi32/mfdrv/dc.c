@@ -50,9 +50,9 @@ COLORREF CDECL MFDRV_SetTextColor( PHYSDEV dev, COLORREF color )
     return MFDRV_MetaParam2(dev, META_SETTEXTCOLOR, HIWORD(color), LOWORD(color)) ? color : CLR_INVALID;
 }
 
-INT CDECL MFDRV_SetROP2( PHYSDEV dev, INT rop )
+BOOL METADC_SetROP2( HDC hdc, INT rop )
 {
-    return MFDRV_MetaParam1( dev, META_SETROP2, (WORD)rop) ? rop : 0;
+    return metadc_param1( hdc, META_SETROP2, (WORD)rop );
 }
 
 INT CDECL MFDRV_SetRelAbs( PHYSDEV dev, INT mode )

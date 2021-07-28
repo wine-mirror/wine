@@ -116,13 +116,13 @@ COLORREF CDECL EMFDRV_SetTextColor( PHYSDEV dev, COLORREF color )
     return EMFDRV_WriteRecord( dev, &emr.emr ) ? color : CLR_INVALID;
 }
 
-INT CDECL EMFDRV_SetROP2( PHYSDEV dev, INT rop )
+BOOL EMFDC_SetROP2( DC_ATTR *dc_attr, INT rop )
 {
     EMRSETROP2 emr;
     emr.emr.iType = EMR_SETROP2;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = rop;
-    return EMFDRV_WriteRecord( dev, &emr.emr ) ? rop : 0;
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 INT CDECL EMFDRV_SetPolyFillMode( PHYSDEV dev, INT mode )

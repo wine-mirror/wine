@@ -204,7 +204,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_SetMapperFlags,            /* pSetMapperFlags */
     NULL,                            /* pSetPixel */
     MFDRV_SetPolyFillMode,           /* pSetPolyFillMode */
-    MFDRV_SetROP2,                   /* pSetROP2 */
+    NULL,                            /* pSetROP2 */
     MFDRV_SetRelAbs,                 /* pSetRelAbs */
     MFDRV_SetStretchBltMode,         /* pSetStretchBltMode */
     NULL,                            /* pSetTextAlign */
