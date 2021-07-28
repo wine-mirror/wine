@@ -757,7 +757,7 @@ NTSTATUS WINAPI wow64_NtQueryDirectoryObject( UINT *args )
     ULONG size = size32 + sizeof(*info) - sizeof(*info32);
 
     if (!single_entry) FIXME( "not implemented\n" );
-    info = RtlAllocateHeap( GetProcessHeap(), 0, size );
+    info = Wow64AllocateTemp( size );
     status = NtQueryDirectoryObject( handle, info, size, single_entry, restart, context, NULL );
     if (!status)
     {
@@ -771,7 +771,6 @@ NTSTATUS WINAPI wow64_NtQueryDirectoryObject( UINT *args )
         memcpy( info32 + 1, info + 1, size );
         if (retlen) *retlen = sizeof(*info32) + size;
     }
-    RtlFreeHeap( GetProcessHeap(), 0, info );
     return status;
 }
 
@@ -845,7 +844,7 @@ NTSTATUS WINAPI wow64_NtQueryObject( UINT *args )
     {
         ULONG size = len + sizeof(OBJECT_NAME_INFORMATION) - sizeof(OBJECT_NAME_INFORMATION32);
         OBJECT_NAME_INFORMATION32 *info32 = ptr;
-        OBJECT_NAME_INFORMATION *info = RtlAllocateHeap( GetProcessHeap(), 0, size );
+        OBJECT_NAME_INFORMATION *info = Wow64AllocateTemp( size );
 
         if (!(status = NtQueryObject( handle, class, info, size, &ret_size )))
         {
@@ -867,7 +866,6 @@ NTSTATUS WINAPI wow64_NtQueryObject( UINT *args )
         {
             if (retlen) *retlen = ret_size - sizeof(*info) + sizeof(*info32);
         }
-        RtlFreeHeap( GetProcessHeap(), 0, info );
         return status;
     }
 
@@ -894,7 +892,7 @@ NTSTATUS WINAPI wow64_NtQueryObject( UINT *args )
         /* assume at most 32 types, with an average 16-char name */
         ULONG ret_size, size = 32 * (sizeof(OBJECT_TYPE_INFORMATION) + 16 * sizeof(WCHAR));
 
-        info = RtlAllocateHeap( GetProcessHeap(), 0, size );
+        info = Wow64AllocateTemp( size );
         if (!(status = NtQueryObject( handle, class, info, size, &ret_size )))
         {
             OBJECT_TYPE_INFORMATION *type;
@@ -915,7 +913,6 @@ NTSTATUS WINAPI wow64_NtQueryObject( UINT *args )
             if (pos32 > len) status = STATUS_INFO_LENGTH_MISMATCH;
             if (retlen) *retlen = pos32;
         }
-        RtlFreeHeap( GetProcessHeap(), 0, info );
         return status;
     }
 

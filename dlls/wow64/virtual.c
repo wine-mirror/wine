@@ -198,13 +198,12 @@ NTSTATUS WINAPI wow64_NtGetWriteWatch( UINT *args )
     if (flags & ~WRITE_WATCH_FLAG_RESET) return STATUS_INVALID_PARAMETER;
     if (!addr_ptr) return STATUS_ACCESS_VIOLATION;
 
-    addresses = RtlAllocateHeap( GetProcessHeap(), 0, count * sizeof(*addresses) );
+    addresses = Wow64AllocateTemp( count * sizeof(*addresses) );
     if (!(status = NtGetWriteWatch( handle, flags, base, size, addresses, &count, granularity )))
     {
         for (i = 0; i < count; i++) addr_ptr[i] = PtrToUlong( addresses[i] );
         *count_ptr = count;
     }
-    RtlFreeHeap( GetProcessHeap(), 0, addresses );
     return status;
 }
 
@@ -335,7 +334,7 @@ NTSTATUS WINAPI wow64_NtQueryVirtualMemory( UINT *args )
         MEMORY_SECTION_NAME32 *info32 = ptr;
         SIZE_T size = len + sizeof(*info) - sizeof(*info32);
 
-        info = RtlAllocateHeap( GetProcessHeap(), 0, size );
+        info = Wow64AllocateTemp( size );
         if (!(status = NtQueryVirtualMemory( handle, addr, class, info, size, &res_len )))
         {
             info32->SectionFileName.Length = info->SectionFileName.Length;
@@ -353,7 +352,7 @@ NTSTATUS WINAPI wow64_NtQueryVirtualMemory( UINT *args )
         MEMORY_WORKING_SET_EX_INFORMATION *info;
         ULONG i, count = len / sizeof(*info32);
 
-        info = RtlAllocateHeap( GetProcessHeap(), 0, count * sizeof(*info) );
+        info = Wow64AllocateTemp( count * sizeof(*info) );
         for (i = 0; i < count; i++) info[i].VirtualAddress = ULongToPtr( info32[i].VirtualAddress );
         if (!(status = NtQueryVirtualMemory( handle, addr, class, info, count * sizeof(*info), &res_len )))
         {

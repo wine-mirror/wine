@@ -1,6 +1,6 @@
 @ stub Wow64AllocThreadHeap
 @ stub Wow64AllocateHeap
-@ stub Wow64AllocateTemp
+@ stdcall Wow64AllocateTemp(long)
 @ stdcall Wow64ApcRoutine(long long long ptr)
 @ stub Wow64CheckIfNXEnabled
 @ stub Wow64EmulateAtlThunk

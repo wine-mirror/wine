@@ -54,6 +54,14 @@ static const char *syscall_names[] =
 
 static unsigned short syscall_map[1024];
 
+/* header for Wow64AllocTemp blocks; probably not the right layout */
+struct mem_header
+{
+    struct mem_header *next;
+    void              *__pad;
+    BYTE               data[1];
+};
+
 static SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock;
 
 void *dummy = RtlUnwind;
@@ -376,6 +384,22 @@ static void process_init(void)
 
 
 /**********************************************************************
+ *           free_temp_data
+ */
+static void free_temp_data(void)
+{
+    struct mem_header *next, *mem;
+
+    for (mem = NtCurrentTeb()->TlsSlots[WOW64_TLS_TEMPLIST]; mem; mem = next)
+    {
+        next = mem->next;
+        RtlFreeHeap( GetProcessHeap(), 0, mem );
+    }
+    NtCurrentTeb()->TlsSlots[WOW64_TLS_TEMPLIST] = NULL;
+}
+
+
+/**********************************************************************
  *           Wow64SystemServiceEx  (NTDLL.@)
  */
 NTSTATUS WINAPI Wow64SystemServiceEx( UINT num, UINT *args )
@@ -397,7 +421,25 @@ NTSTATUS WINAPI Wow64SystemServiceEx( UINT num, UINT *args )
         status = GetExceptionCode();
     }
     __ENDTRY;
+    free_temp_data();
     return status;
+}
+
+
+/**********************************************************************
+ *           Wow64AllocateTemp
+ *
+ * FIXME: probably not 100% compatible.
+ */
+void * WINAPI Wow64AllocateTemp( SIZE_T size )
+{
+    struct mem_header *mem;
+
+    if (!(mem = RtlAllocateHeap( GetProcessHeap(), 0, offsetof( struct mem_header, data[size] ))))
+        return NULL;
+    mem->next = NtCurrentTeb()->TlsSlots[WOW64_TLS_TEMPLIST];
+    NtCurrentTeb()->TlsSlots[WOW64_TLS_TEMPLIST] = mem;
+    return mem->data;
 }
 
 
