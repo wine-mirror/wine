@@ -983,22 +983,6 @@ BOOL WINAPI GetDCOrgEx( HDC hDC, LPPOINT lpp )
 
 
 /***********************************************************************
- *		GetGraphicsMode (GDI32.@)
- */
-INT WINAPI GetGraphicsMode( HDC hdc )
-{
-    INT ret = 0;
-    DC * dc = get_dc_ptr( hdc );
-    if (dc)
-    {
-        ret = dc->attr->graphics_mode;
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-
-/***********************************************************************
  *           SetGraphicsMode    (GDI32.@)
  */
 INT WINAPI SetGraphicsMode( HDC hdc, INT mode )
