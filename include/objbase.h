@@ -256,19 +256,10 @@ typedef interface IRpcStubBuffer IRpcStubBuffer;
 typedef interface IRpcChannelBuffer IRpcChannelBuffer;
 #endif
 
-#ifndef RC_INVOKED
-/* For compatibility only, at least for now */
-#include <stdlib.h>
-#endif
-
+#include <combaseapi.h>
 #include <wtypes.h>
 #include <unknwn.h>
 #include <objidl.h>
-
-#include <guiddef.h>
-#ifndef INITGUID
-#include <cguid.h>
-#endif
 
 #ifdef __cplusplus
 extern "C" {

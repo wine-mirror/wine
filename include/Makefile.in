@@ -74,6 +74,7 @@ SOURCES = \
 	colinf.idl \
 	colordlg.h \
 	colrst.idl \
+	combaseapi.h \
 	comcat.idl \
 	commctrl.h \
 	commctrl.rh \
