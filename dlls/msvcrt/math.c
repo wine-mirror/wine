@@ -2776,6 +2776,7 @@ static double __expo2(double x, double sign)
 double CDECL cosh( double x )
 {
     UINT64 ux = *(UINT64*)&x;
+    UINT64 sign = ux & 0x8000000000000000ULL;
     UINT32 w;
     double t;
 
@@ -2803,7 +2804,10 @@ double CDECL cosh( double x )
 
     /* |x| > log(DBL_MAX) or nan */
     /* note: the result is stored to handle overflow */
-    t = __expo2(x, 1.0);
+    if (ux > 0x7ff0000000000000ULL)
+        *(UINT64*)&t = ux | sign | 0x0008000000000000ULL;
+    else
+        t = __expo2(x, 1.0);
     return t;
 }
 
