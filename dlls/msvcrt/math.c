@@ -4336,12 +4336,11 @@ double CDECL tan( double x )
 double CDECL tanh( double x )
 {
     UINT64 ui = *(UINT64*)&x;
+    UINT64 sign = ui & 0x8000000000000000ULL;
     UINT32 w;
-    int sign;
     double t;
 
     /* x = |x| */
-    sign = ui >> 63;
     ui &= (UINT64)-1 / 2;
     x = *(double*)&ui;
     w = ui >> 32;
@@ -4349,11 +4348,15 @@ double CDECL tanh( double x )
     if (w > 0x3fe193ea) {
         /* |x| > log(3)/2 ~= 0.5493 or nan */
         if (w > 0x40340000) {
+            if (ui > 0x7ff0000000000000ULL) {
+                *(UINT64*)&x = ui | sign | 0x0008000000000000ULL;
 #if _MSVCR_VER < 140
-            if (isnan(x))
                 return math_error(_DOMAIN, "tanh", x, 0, x);
+#else
+                return x;
 #endif
-            /* |x| > 20 or nan */
+            }
+            /* |x| > 20 */
             /* note: this branch avoids raising overflow */
             fp_barrier(x + 0x1p120f);
             t = 1 - 0 / x;
