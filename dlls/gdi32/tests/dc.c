@@ -86,6 +86,9 @@ static void test_dc_values(void)
     ok(!attr, "attr = %x\n", attr);
     ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError() = %u\n", GetLastError());
 
+    attr = GetBkColor(ULongToHandle(0xdeadbeef));
+    ok(attr == CLR_INVALID, "attr = %x\n", attr);
+
     DeleteDC( hdc );
 }
 

@@ -261,7 +261,7 @@ static RGBQUAD get_dc_rgb_color( DC *dc, int color_table_size, COLORREF color )
 /* helper to retrieve either both colors or only the background color for monochrome blits */
 void get_mono_dc_colors( DC *dc, int color_table_size, BITMAPINFO *info, int count )
 {
-    info->bmiColors[count - 1] = get_dc_rgb_color( dc, color_table_size, dc->backgroundColor );
+    info->bmiColors[count - 1] = get_dc_rgb_color( dc, color_table_size, dc->attr->background_color );
     if (count > 1) info->bmiColors[0] = get_dc_rgb_color( dc, color_table_size, dc->textColor );
     info->bmiHeader.biClrUsed = count;
 }

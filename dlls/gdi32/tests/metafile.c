@@ -901,7 +901,7 @@ static void test_mf_SaveDC(void)
     SetPolyFillMode( hdcMetafile, WINDING );
     SetBkColor( hdcMetafile, 0x123456 );
     todo_wine ok( !GetPolyFillMode( hdcMetafile ), "GetPolyFillMode succeeded\n" );
-    todo_wine ok( GetBkColor( hdcMetafile ) == CLR_INVALID, "GetBkColor succeeded\n" );
+    ok( GetBkColor( hdcMetafile ) == CLR_INVALID, "GetBkColor succeeded\n" );
 
     /* Force Win9x to update DC state */
     SetPixelV(hdcMetafile, 50, 50, 0);

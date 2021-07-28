@@ -193,8 +193,8 @@ DWORD get_pixel_color( DC *dc, const dib_info *dib, COLORREF color, BOOL mono_fi
     if(rgbquad_equal(&fg_quad, color_table + 1))
         return 1;
 
-    pixel = get_pixel_color( dc, dib, dc->backgroundColor, FALSE );
-    if (color == dc->backgroundColor) return pixel;
+    pixel = get_pixel_color( dc, dib, dc->attr->background_color, FALSE );
+    if (color == dc->attr->background_color) return pixel;
     else return !pixel;
 }
 
@@ -219,8 +219,8 @@ static inline void get_color_masks( DC *dc, const dib_info *dib, UINT rop, COLOR
         return;
     }
 
-    if (dib->bit_count != 1) color = get_pixel_color( dc, dib, dc->backgroundColor, FALSE );
-    else if (colorref != dc->backgroundColor) color = !color;
+    if (dib->bit_count != 1) color = get_pixel_color( dc, dib, dc->attr->background_color, FALSE );
+    else if (colorref != dc->attr->background_color) color = !color;
 
     calc_rop_masks( rop, color, bg_mask );
 }
@@ -1896,7 +1896,7 @@ static BOOL create_hatch_brush_bits(dibdrv_physdev *pdev, dib_brush *brush, BOOL
 
     if (brush->colorref & (1 << 24))  /* PALETTEINDEX */
         *needs_reselect = TRUE;
-    if (dc->attr->background_mode != TRANSPARENT && (dc->backgroundColor & (1 << 24)))
+    if (dc->attr->background_mode != TRANSPARENT && (dc->attr->background_color & (1 << 24)))
         *needs_reselect = TRUE;
 
     brush->dib.funcs->create_rop_masks( &brush->dib, hatches[brush->hatch],
@@ -1987,7 +1987,7 @@ static BOOL select_pattern_brush( dibdrv_physdev *pdev, dib_brush *brush, BOOL *
         color_table[0].rgbBlue     = GetBValue( color );
         color_table[0].rgbReserved = 0;
 
-        color = make_rgb_colorref( dc, &pdev->dib, dc->backgroundColor, &got_pixel, &pixel );
+        color = make_rgb_colorref( dc, &pdev->dib, dc->attr->background_color, &got_pixel, &pixel );
         color_table[1].rgbRed      = GetRValue( color );
         color_table[1].rgbGreen    = GetGValue( color );
         color_table[1].rgbBlue     = GetBValue( color );

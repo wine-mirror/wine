@@ -99,6 +99,7 @@ enum
 typedef struct DC_ATTR
 {
     LONG      disabled;            /* disabled flag, controled by DCHF_(DISABLE|ENABLE)DC */
+    COLORREF  background_color;
     POINT     cur_pos;
     INT       graphics_mode;
     DWORD     layout;

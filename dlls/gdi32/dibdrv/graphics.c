@@ -666,7 +666,7 @@ static struct cached_glyph *get_cached_glyph( struct cached_font *font, UINT ind
  */
 static inline void get_text_bkgnd_masks( DC *dc, const dib_info *dib, rop_mask *mask )
 {
-    COLORREF bg = dc->backgroundColor;
+    COLORREF bg = dc->attr->background_color;
 
     mask->and = 0;
 

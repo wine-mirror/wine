@@ -119,7 +119,6 @@ typedef struct tagDC
     WORD          polyFillMode;
     WORD          stretchBltMode;
     WORD          relAbsMode;
-    COLORREF      backgroundColor;
     COLORREF      textColor;
     COLORREF      dcBrushColor;
     COLORREF      dcPenColor;

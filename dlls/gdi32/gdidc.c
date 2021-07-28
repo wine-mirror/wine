@@ -66,6 +66,15 @@ UINT WINAPI SetTextAlign( HDC hdc, UINT align )
 }
 
 /***********************************************************************
+ *		GetBkColor (GDI32.@)
+ */
+COLORREF WINAPI GetBkColor( HDC hdc )
+{
+    DC_ATTR *dc_attr = get_dc_attr( hdc );
+    return dc_attr ? dc_attr->background_color : CLR_INVALID;
+}
+
+/***********************************************************************
  *		GetBkMode (GDI32.@)
  */
 INT WINAPI GetBkMode( HDC hdc )

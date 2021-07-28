@@ -86,8 +86,8 @@ static void set_initial_dc_state( DC *dc )
     dc->polyFillMode        = ALTERNATE;
     dc->stretchBltMode      = BLACKONWHITE;
     dc->relAbsMode          = ABSOLUTE;
-    dc->attr->background_mode = OPAQUE;
-    dc->backgroundColor     = RGB( 255, 255, 255 );
+    dc->attr->background_mode  = OPAQUE;
+    dc->attr->background_color = RGB( 255, 255, 255 );
     dc->dcBrushColor        = RGB( 255, 255, 255 );
     dc->dcPenColor          = RGB( 0, 0, 0 );
     dc->textColor           = RGB( 0, 0, 0 );
@@ -276,7 +276,7 @@ void DC_InitDC( DC* dc )
     PHYSDEV physdev = GET_DC_PHYSDEV( dc, pRealizeDefaultPalette );
     physdev->funcs->pRealizeDefaultPalette( physdev );
     SetTextColor( dc->hSelf, dc->textColor );
-    SetBkColor( dc->hSelf, dc->backgroundColor );
+    SetBkColor( dc->hSelf, dc->attr->background_color );
     NtGdiSelectPen( dc->hSelf, dc->hPen );
     NtGdiSelectBrush( dc->hSelf, dc->hBrush );
     NtGdiSelectFont( dc->hSelf, dc->hFont );
@@ -401,7 +401,6 @@ INT CDECL nulldrv_SaveDC( PHYSDEV dev )
     newdc->polyFillMode     = dc->polyFillMode;
     newdc->stretchBltMode   = dc->stretchBltMode;
     newdc->relAbsMode       = dc->relAbsMode;
-    newdc->backgroundColor  = dc->backgroundColor;
     newdc->textColor        = dc->textColor;
     newdc->dcBrushColor     = dc->dcBrushColor;
     newdc->dcPenColor       = dc->dcPenColor;
@@ -474,8 +473,8 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     dc->polyFillMode     = dcs->polyFillMode;
     dc->stretchBltMode   = dcs->stretchBltMode;
     dc->relAbsMode       = dcs->relAbsMode;
-    dc->attr->background_mode = dcs->attr->background_mode;
-    dc->backgroundColor  = dcs->backgroundColor;
+    dc->attr->background_mode  = dcs->attr->background_mode;
+    dc->attr->background_color = dcs->attr->background_color;
     dc->textColor        = dcs->textColor;
     dc->dcBrushColor     = dcs->dcBrushColor;
     dc->dcPenColor       = dcs->dcPenColor;
@@ -527,7 +526,7 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     NtGdiSelectBrush( dev->hdc, dcs->hBrush );
     NtGdiSelectFont( dev->hdc, dcs->hFont );
     NtGdiSelectPen( dev->hdc, dcs->hPen );
-    SetBkColor( dev->hdc, dcs->backgroundColor);
+    SetBkColor( dev->hdc, dcs->attr->background_color);
     SetTextColor( dev->hdc, dcs->textColor);
     GDISelectPalette( dev->hdc, dcs->hPalette, FALSE );
 
@@ -910,22 +909,6 @@ INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
 
 
 /***********************************************************************
- *		GetBkColor (GDI32.@)
- */
-COLORREF WINAPI GetBkColor( HDC hdc )
-{
-    COLORREF ret = 0;
-    DC * dc = get_dc_ptr( hdc );
-    if (dc)
-    {
-        ret = dc->backgroundColor;
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-
-/***********************************************************************
  *           SetBkColor    (GDI32.@)
  */
 COLORREF WINAPI SetBkColor( HDC hdc, COLORREF color )
@@ -938,8 +921,8 @@ COLORREF WINAPI SetBkColor( HDC hdc, COLORREF color )
     if (dc)
     {
         PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetBkColor );
-        ret = dc->backgroundColor;
-        dc->backgroundColor = physdev->funcs->pSetBkColor( physdev, color );
+        ret = dc->attr->background_color;
+        dc->attr->background_color = physdev->funcs->pSetBkColor( physdev, color );
         release_dc_ptr( dc );
     }
     return ret;
