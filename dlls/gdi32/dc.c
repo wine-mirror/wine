@@ -206,7 +206,7 @@ DC *get_dc_ptr( HDC hdc )
 {
     DC *dc = get_dc_obj( hdc );
     if (!dc) return NULL;
-    if (dc->disabled)
+    if (dc->attr->disabled)
     {
         GDI_ReleaseObj( hdc );
         return NULL;
@@ -1258,9 +1258,9 @@ WORD WINAPI SetHookFlags( HDC hdc, WORD flags )
         ret = InterlockedExchange( &dc->dirty, 0 );
 
     if (flags & DCHF_DISABLEDC)
-        ret = InterlockedExchange( &dc->disabled, 1 );
+        ret = InterlockedExchange( &dc->attr->disabled, 1 );
     else if (flags & DCHF_ENABLEDC)
-        ret = InterlockedExchange( &dc->disabled, 0 );
+        ret = InterlockedExchange( &dc->attr->disabled, 0 );
 
     GDI_ReleaseObj( hdc );
 

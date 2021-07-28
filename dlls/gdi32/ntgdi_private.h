@@ -79,7 +79,6 @@ typedef struct tagDC
     DWORD        thread;           /* thread owning the DC */
     LONG         refcount;         /* thread refcount */
     LONG         dirty;            /* dirty flag */
-    LONG         disabled;         /* get_dc_ptr() will return NULL.  Controlled by DCHF_(DISABLE|ENABLE)DC */
     INT          saveLevel;
     DC_ATTR     *attr;             /* DC attributes accessible by client */
     struct tagDC *saved_dc;

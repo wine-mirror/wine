@@ -34,7 +34,7 @@ static DC_ATTR *get_dc_attr( HDC hdc )
         SetLastError( ERROR_INVALID_HANDLE );
         return NULL;
     }
-    return dc_attr;
+    return dc_attr->disabled ? NULL : dc_attr;
 }
 
 /***********************************************************************
