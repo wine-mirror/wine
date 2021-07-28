@@ -1285,13 +1285,26 @@ void wined3d_context_vk_end_current_render_pass(struct wined3d_context_vk *conte
     VkCommandBuffer vk_command_buffer = context_vk->current_command_buffer.vk_command_buffer;
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     struct wined3d_query_pool_vk *pool_vk, *pool_vk_next;
+    struct wined3d_query_vk *query_vk;
 
     if (context_vk->vk_render_pass)
     {
+        LIST_FOR_EACH_ENTRY(query_vk, &context_vk->render_pass_queries, struct wined3d_query_vk, entry)
+            wined3d_query_vk_suspend(query_vk, context_vk);
+
         VK_CALL(vkCmdEndRenderPass(vk_command_buffer));
         context_vk->vk_render_pass = VK_NULL_HANDLE;
         VK_CALL(vkCmdPipelineBarrier(vk_command_buffer, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
                 VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 0, NULL, 0, NULL, 0, NULL));
+
+        LIST_FOR_EACH_ENTRY(query_vk, &context_vk->render_pass_queries, struct wined3d_query_vk, entry)
+        {
+            if (!wined3d_context_vk_allocate_query(context_vk, query_vk->q.type, &query_vk->pool_idx))
+            {
+                ERR("Failed to allocate new query.\n");
+                break;
+            }
+        }
     }
 
     if (context_vk->vk_framebuffer)
@@ -1561,6 +1574,12 @@ VkCommandBuffer wined3d_context_vk_get_command_buffer(struct wined3d_context_vk 
     wined3d_context_vk_accumulate_pending_queries(context_vk);
     LIST_FOR_EACH_ENTRY(query_vk, &context_vk->active_queries, struct wined3d_query_vk, entry)
     {
+        if (!wined3d_context_vk_allocate_query(context_vk, query_vk->q.type, &query_vk->pool_idx))
+        {
+            ERR("Failed to allocate new query.\n");
+            break;
+        }
+
         wined3d_query_vk_resume(query_vk, context_vk);
     }
 
@@ -1594,12 +1613,11 @@ void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context
     TRACE("Submitting command buffer %p with id 0x%s.\n",
             buffer->vk_command_buffer, wine_dbgstr_longlong(buffer->id));
 
-    LIST_FOR_EACH_ENTRY(query_vk, &context_vk->active_queries, struct wined3d_query_vk, entry)
-    {
-        wined3d_query_vk_suspend(query_vk, context_vk);
-    }
-
     wined3d_context_vk_end_current_render_pass(context_vk);
+
+    LIST_FOR_EACH_ENTRY(query_vk, &context_vk->active_queries, struct wined3d_query_vk, entry)
+        wined3d_query_vk_suspend(query_vk, context_vk);
+
     context_vk->graphics.vk_pipeline = VK_NULL_HANDLE;
     context_vk->update_compute_pipeline = 1;
     context_vk->update_stream_output = 1;
@@ -2323,6 +2341,7 @@ static bool wined3d_context_vk_begin_render_pass(struct wined3d_context_vk *cont
     struct wined3d_rendertarget_view_vk *rtv_vk;
     struct wined3d_rendertarget_view *view;
     const VkPhysicalDeviceLimits *limits;
+    struct wined3d_query_vk *query_vk;
     VkRenderPassBeginInfo begin_info;
     unsigned int attachment_count, i;
     VkFramebufferCreateInfo fb_desc;
@@ -2409,6 +2428,8 @@ static bool wined3d_context_vk_begin_render_pass(struct wined3d_context_vk *cont
     begin_info.pClearValues = NULL;
     VK_CALL(vkCmdBeginRenderPass(vk_command_buffer, &begin_info, VK_SUBPASS_CONTENTS_INLINE));
 
+    LIST_FOR_EACH_ENTRY(query_vk, &context_vk->render_pass_queries, struct wined3d_query_vk, entry)
+        wined3d_query_vk_resume(query_vk, context_vk);
     return true;
 }
 
@@ -3460,6 +3481,7 @@ HRESULT wined3d_context_vk_init(struct wined3d_context_vk *context_vk, struct wi
 
     wined3d_context_vk_init_graphics_pipeline_key(context_vk);
 
+    list_init(&context_vk->render_pass_queries);
     list_init(&context_vk->active_queries);
     list_init(&context_vk->completed_query_pools);
     list_init(&context_vk->free_occlusion_query_pools);

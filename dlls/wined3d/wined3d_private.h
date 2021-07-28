@@ -2050,13 +2050,17 @@ struct wined3d_query_pool_idx_vk
     size_t idx;
 };
 
+#define WINED3D_QUERY_VK_FLAG_ACTIVE       0x00000001
+#define WINED3D_QUERY_VK_FLAG_STARTED      0x00000002
+#define WINED3D_QUERY_VK_FLAG_RENDER_PASS  0x00000004
+
 struct wined3d_query_vk
 {
     struct wined3d_query q;
 
     struct list entry;
     struct wined3d_query_pool_idx_vk pool_idx;
-    bool started;
+    uint8_t flags;
     uint64_t command_buffer_id;
     uint32_t control_flags;
     size_t pending_count;
@@ -2580,6 +2584,7 @@ struct wined3d_context_vk
     VkDeviceSize vk_so_offsets[WINED3D_MAX_STREAM_OUTPUT_BUFFERS];
     struct wined3d_bo_vk vk_so_counter_bo;
 
+    struct list render_pass_queries;
     struct list active_queries;
     struct wined3d_pending_queries_vk pending_queries;
     struct list completed_query_pools;
