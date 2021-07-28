@@ -1840,6 +1840,25 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             return STATUS_SUCCESS;
         }
 
+        case IOCTL_AFD_WINE_SET_IPV6_DONTFRAG:
+#ifdef IPV6_DONTFRAG
+            return do_setsockopt( handle, io, IPPROTO_IPV6, IPV6_DONTFRAG, in_buffer, in_size );
+#elif defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DO) && defined(IPV6_PMTUDISC_DONT)
+        {
+            int value = *(DWORD *)in_buffer ? IPV6_PMTUDISC_DO : IPV6_PMTUDISC_DONT;
+
+            return do_setsockopt( handle, io, IPPROTO_IP, IPV6_MTU_DISCOVER, &value, sizeof(value) );
+        }
+#else
+        {
+            static int once;
+
+            if (!once++)
+                FIXME( "IPV6_DONTFRAGMENT is not supported on this platform\n" );
+            return STATUS_SUCCESS; /* fake success */
+        }
+#endif
+
         default:
         {
             if ((code >> 16) == FILE_DEVICE_NETWORK)
