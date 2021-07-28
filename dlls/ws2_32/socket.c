@@ -3633,6 +3633,8 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_MULTICAST_HOPS, optval, optlen );
 
         case WS_IPV6_MULTICAST_IF:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_MULTICAST_IF, optval, optlen );
+
         case WS_IPV6_MULTICAST_LOOP:
         case WS_IPV6_UNICAST_HOPS:
 #ifdef IPV6_UNICAST_IF

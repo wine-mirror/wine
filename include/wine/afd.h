@@ -214,6 +214,7 @@ struct afd_get_events_params
 #define IOCTL_AFD_WINE_GET_IPV6_MULTICAST_HOPS          WINE_AFD_IOC(269)
 #define IOCTL_AFD_WINE_SET_IPV6_MULTICAST_HOPS          WINE_AFD_IOC(270)
 #define IOCTL_AFD_WINE_GET_IPV6_MULTICAST_IF            WINE_AFD_IOC(271)
+#define IOCTL_AFD_WINE_SET_IPV6_MULTICAST_IF            WINE_AFD_IOC(272)
 
 struct afd_create_params
 {
