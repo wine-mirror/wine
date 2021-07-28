@@ -82,7 +82,7 @@ static void set_initial_dc_state( DC *dc )
     dc->miterLimit          = 10.0f; /* 10.0 is the default, from MSDN */
     dc->layout              = 0;
     dc->font_code_page      = CP_ACP;
-    dc->ROPmode             = R2_COPYPEN;
+    dc->attr->rop_mode      = R2_COPYPEN;
     dc->polyFillMode        = ALTERNATE;
     dc->stretchBltMode      = BLACKONWHITE;
     dc->relAbsMode          = ABSOLUTE;
@@ -399,7 +399,6 @@ INT CDECL nulldrv_SaveDC( PHYSDEV dev )
     newdc->hFont            = dc->hFont;
     newdc->hBitmap          = dc->hBitmap;
     newdc->hPalette         = dc->hPalette;
-    newdc->ROPmode          = dc->ROPmode;
     newdc->polyFillMode     = dc->polyFillMode;
     newdc->stretchBltMode   = dc->stretchBltMode;
     newdc->relAbsMode       = dc->relAbsMode;
@@ -472,7 +471,7 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     if (!PATH_RestorePath( dc, dcs )) return FALSE;
 
     dc->layout           = dcs->layout;
-    dc->ROPmode          = dcs->ROPmode;
+    dc->attr->rop_mode   = dcs->attr->rop_mode;
     dc->polyFillMode     = dcs->polyFillMode;
     dc->stretchBltMode   = dcs->stretchBltMode;
     dc->relAbsMode       = dcs->relAbsMode;
@@ -1556,22 +1555,6 @@ INT WINAPI GetRelAbs( HDC hdc, DWORD dwIgnore )
 
 
 /***********************************************************************
- *		GetROP2 (GDI32.@)
- */
-INT WINAPI GetROP2( HDC hdc )
-{
-    INT ret = 0;
-    DC * dc = get_dc_ptr( hdc );
-    if (dc)
-    {
-        ret = dc->ROPmode;
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-
-/***********************************************************************
  *		SetROP2 (GDI32.@)
  */
 INT WINAPI SetROP2( HDC hdc, INT mode )
@@ -1590,8 +1573,8 @@ INT WINAPI SetROP2( HDC hdc, INT mode )
         mode = physdev->funcs->pSetROP2( physdev, mode );
         if (mode)
         {
-            ret = dc->ROPmode;
-            dc->ROPmode = mode;
+            ret = dc->attr->rop_mode;
+            dc->attr->rop_mode = mode;
         }
         release_dc_ptr( dc );
     }

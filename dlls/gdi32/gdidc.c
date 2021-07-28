@@ -109,6 +109,15 @@ BOOL WINAPI GetCurrentPositionEx( HDC hdc, POINT *point )
 }
 
 /***********************************************************************
+ *		GetROP2 (GDI32.@)
+ */
+INT WINAPI GetROP2( HDC hdc )
+{
+    DC_ATTR *dc_attr = get_dc_attr( hdc );
+    return dc_attr ? dc_attr->rop_mode : 0;
+}
+
+/***********************************************************************
  *           SetPixel    (GDI32.@)
  */
 COLORREF WINAPI SetPixel( HDC hdc, INT x, INT y, COLORREF color )

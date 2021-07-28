@@ -819,7 +819,7 @@ static BOOL solid_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL clos
         DWORD color, and, xor;
 
         color = get_pixel_color( dc, &pdev->dib, pdev->pen_brush.colorref, TRUE );
-        calc_and_xor_masks( dc->ROPmode, color, &and, &xor );
+        calc_and_xor_masks( dc->attr->rop_mode, color, &and, &xor );
 
         for (i = 0; i < num - 1; i++)
             if (!solid_pen_line( pdev, pts + i, pts + i + 1, and, xor ))
@@ -1229,7 +1229,7 @@ static BOOL dashed_pen_lines(dibdrv_physdev *pdev, int num, POINT *pts, BOOL clo
     }
     else
     {
-        get_color_masks( dc, &pdev->dib, dc->ROPmode, pdev->pen_brush.colorref,
+        get_color_masks( dc, &pdev->dib, dc->attr->rop_mode, pdev->pen_brush.colorref,
                          pdev->pen_is_ext ? TRANSPARENT : dc->attr->background_mode,
                          &pdev->dash_masks[1], &pdev->dash_masks[0] );
 

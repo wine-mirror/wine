@@ -73,7 +73,7 @@ static BOOL brush_rect( dibdrv_physdev *pdev, dib_brush *brush, const RECT *rect
 
     if (!get_clipped_rects( &pdev->dib, rect, clip, &clipped_rects )) return TRUE;
     ret = brush->rects( pdev, brush, &pdev->dib, clipped_rects.count, clipped_rects.rects,
-                        &dc->brush_org, dc->ROPmode );
+                        &dc->brush_org, dc->attr->rop_mode );
     free_clipped_rects( &clipped_rects );
     return ret;
 }
@@ -1590,7 +1590,7 @@ COLORREF CDECL dibdrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
     color = pdev->dib.funcs->pixel_to_colorref( &pdev->dib, pixel );
 
     if (!get_clipped_rects( &pdev->dib, &rect, pdev->clip, &clipped_rects )) return color;
-    fill_with_pixel( dc, &pdev->dib, pixel, clipped_rects.count, clipped_rects.rects, dc->ROPmode );
+    fill_with_pixel( dc, &pdev->dib, pixel, clipped_rects.count, clipped_rects.rects, dc->attr->rop_mode );
     free_clipped_rects( &clipped_rects );
     return color;
 }
