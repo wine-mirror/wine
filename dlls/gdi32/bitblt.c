@@ -543,7 +543,7 @@ BOOL WINAPI PatBlt( HDC hdc, INT left, INT top, INT width, INT height, DWORD rop
         dst.log_y      = top;
         dst.log_width  = width;
         dst.log_height = height;
-        dst.layout     = dc->layout;
+        dst.layout     = dc->attr->layout;
         if (rop & NOMIRRORBITMAP)
         {
             dst.layout |= LAYOUT_BITMAPORIENTATIONPRESERVED;
@@ -602,12 +602,12 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst, INT widthDst, INT height
         src.log_y      = ySrc;
         src.log_width  = widthSrc;
         src.log_height = heightSrc;
-        src.layout     = dcSrc->layout;
+        src.layout     = dcSrc->attr->layout;
         dst.log_x      = xDst;
         dst.log_y      = yDst;
         dst.log_width  = widthDst;
         dst.log_height = heightDst;
-        dst.layout     = dcDst->layout;
+        dst.layout     = dcDst->attr->layout;
         if (rop & NOMIRRORBITMAP)
         {
             src.layout |= LAYOUT_BITMAPORIENTATIONPRESERVED;
@@ -958,12 +958,12 @@ BOOL WINAPI GdiAlphaBlend(HDC hdcDst, int xDst, int yDst, int widthDst, int heig
         src.log_y      = ySrc;
         src.log_width  = widthSrc;
         src.log_height = heightSrc;
-        src.layout     = dcSrc->layout;
+        src.layout     = dcSrc->attr->layout;
         dst.log_x      = xDst;
         dst.log_y      = yDst;
         dst.log_width  = widthDst;
         dst.log_height = heightDst;
-        dst.layout     = dcDst->layout;
+        dst.layout     = dcDst->attr->layout;
         ret = !get_vis_rectangles( dcDst, &dst, dcSrc, &src );
 
         TRACE("src %p log=%d,%d %dx%d phys=%d,%d %dx%d vis=%s  dst %p log=%d,%d %dx%d phys=%d,%d %dx%d vis=%s  blend=%02x/%02x/%02x/%02x\n",

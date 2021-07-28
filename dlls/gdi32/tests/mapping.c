@@ -280,6 +280,8 @@ static void test_dc_layout(void)
 
     ret = GetMapMode( hdc );
     ok(ret == MM_ANISOTROPIC, "expected MM_ANISOTROPIC, got %d\n", ret);
+    ret = pGetLayout( hdc );
+    ok(ret == LAYOUT_RTL, "got %x\n", ret);
     expect_viewport_ext(hdc, 1, 1);
     expect_window_ext(hdc, 1, 1);
     expect_world_transform(hdc, 1.0, 1.0);

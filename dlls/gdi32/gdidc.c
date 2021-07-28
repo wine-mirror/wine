@@ -98,6 +98,15 @@ INT WINAPI SetBkMode( HDC hdc, INT mode )
 }
 
 /***********************************************************************
+ *           GetLayout    (GDI32.@)
+ */
+DWORD WINAPI GetLayout( HDC hdc )
+{
+    DC_ATTR *dc_attr = get_dc_attr( hdc );
+    return dc_attr ? dc_attr->layout : GDI_ERROR;
+}
+
+/***********************************************************************
  *		GetCurrentPositionEx (GDI32.@)
  */
 BOOL WINAPI GetCurrentPositionEx( HDC hdc, POINT *point )

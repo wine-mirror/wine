@@ -80,7 +80,7 @@ static void set_initial_dc_state( DC *dc )
     dc->vport_ext.cx        = 1;
     dc->vport_ext.cy        = 1;
     dc->miterLimit          = 10.0f; /* 10.0 is the default, from MSDN */
-    dc->layout              = 0;
+    dc->attr->layout        = 0;
     dc->font_code_page      = CP_ACP;
     dc->attr->rop_mode      = R2_COPYPEN;
     dc->polyFillMode        = ALTERNATE;
@@ -322,14 +322,14 @@ static void construct_window_to_viewport(DC *dc, XFORM *xform)
     scaleX = (double)dc->vport_ext.cx / (double)dc->wnd_ext.cx;
     scaleY = (double)dc->vport_ext.cy / (double)dc->wnd_ext.cy;
 
-    if (dc->layout & LAYOUT_RTL) scaleX = -scaleX;
+    if (dc->attr->layout & LAYOUT_RTL) scaleX = -scaleX;
     xform->eM11 = scaleX;
     xform->eM12 = 0.0;
     xform->eM21 = 0.0;
     xform->eM22 = scaleY;
     xform->eDx  = (double)dc->vport_org.x - scaleX * (double)dc->wnd_org.x;
     xform->eDy  = (double)dc->vport_org.y - scaleY * (double)dc->wnd_org.y;
-    if (dc->layout & LAYOUT_RTL) xform->eDx = dc->vis_rect.right - dc->vis_rect.left - 1 - xform->eDx;
+    if (dc->attr->layout & LAYOUT_RTL) xform->eDx = dc->vis_rect.right - dc->vis_rect.left - 1 - xform->eDx;
 }
 
 /***********************************************************************
@@ -393,7 +393,6 @@ INT CDECL nulldrv_SaveDC( PHYSDEV dev )
         return 0;
     }
     *newdc->attr            = *dc->attr;
-    newdc->layout           = dc->layout;
     newdc->hPen             = dc->hPen;
     newdc->hBrush           = dc->hBrush;
     newdc->hFont            = dc->hFont;
@@ -470,7 +469,7 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
 
     if (!PATH_RestorePath( dc, dcs )) return FALSE;
 
-    dc->layout           = dcs->layout;
+    dc->attr->layout     = dcs->attr->layout;
     dc->attr->rop_mode   = dcs->attr->rop_mode;
     dc->polyFillMode     = dcs->polyFillMode;
     dc->stretchBltMode   = dcs->stretchBltMode;
@@ -1750,28 +1749,6 @@ BOOL WINAPI GetWindowOrgEx( HDC hdc, LPPOINT pt )
     return TRUE;
 }
 
-
-/***********************************************************************
- *           GetLayout    (GDI32.@)
- *
- * Gets left->right or right->left text layout flags of a dc.
- *
- */
-DWORD WINAPI GetLayout(HDC hdc)
-{
-    DWORD layout = GDI_ERROR;
-
-    DC * dc = get_dc_ptr( hdc );
-    if (dc)
-    {
-        layout = dc->layout;
-        release_dc_ptr( dc );
-    }
-
-    TRACE("hdc : %p, layout : %08x\n", hdc, layout);
-
-    return layout;
-}
 
 /***********************************************************************
  *           SetLayout    (GDI32.@)

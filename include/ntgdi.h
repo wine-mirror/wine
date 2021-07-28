@@ -101,6 +101,7 @@ typedef struct DC_ATTR
     LONG      disabled;            /* disabled flag, controled by DCHF_(DISABLE|ENABLE)DC */
     POINT     cur_pos;
     INT       graphics_mode;
+    DWORD     layout;
     WORD      text_align;
     WORD      background_mode;
     WORD      rop_mode;

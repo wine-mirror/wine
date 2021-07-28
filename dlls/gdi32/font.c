@@ -5951,7 +5951,7 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lpr
 
     align = dc->attr->text_align;
     breakRem = dc->breakRem;
-    layout = dc->layout;
+    layout = dc->attr->layout;
 
     if (quietfixme == 0 && flags & (ETO_NUMERICSLOCAL | ETO_NUMERICSLATIN))
     {

@@ -100,7 +100,7 @@ static RECT get_device_rect( DC *dc, int left, int top, int right, int bottom, B
     rect.top    = top;
     rect.right  = right;
     rect.bottom = bottom;
-    if (rtl_correction && dc->layout & LAYOUT_RTL)
+    if (rtl_correction && dc->attr->layout & LAYOUT_RTL)
     {
         /* shift the rectangle so that the right border is included after mirroring */
         /* it would be more correct to do this after LPtoDP but that's not what Windows does */

@@ -101,7 +101,6 @@ typedef struct tagDC
     WCHAR        display[CCHDEVICENAME]; /* Display name when created for a specific display device */
 
     int           flags;
-    DWORD         layout;
     HRGN          hClipRgn;      /* Clip region */
     HRGN          hMetaRgn;      /* Meta region */
     HRGN          hVisRgn;       /* Visible region */

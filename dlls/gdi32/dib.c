@@ -492,7 +492,7 @@ INT CDECL nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, 
     dst.width  = rect.right - rect.left;
     dst.height = rect.bottom - rect.top;
 
-    if (dc->layout & LAYOUT_RTL && rop & NOMIRRORBITMAP)
+    if (dc->attr->layout & LAYOUT_RTL && rop & NOMIRRORBITMAP)
     {
         dst.x += dst.width;
         dst.width = -dst.width;
@@ -846,7 +846,7 @@ INT CDECL nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx
     dst.y = pt.y;
     dst.width = cx;
     dst.height = cy;
-    if (dc->layout & LAYOUT_RTL) dst.x -= cx - 1;
+    if (dc->attr->layout & LAYOUT_RTL) dst.x -= cx - 1;
 
     rect.left = dst.x;
     rect.top = dst.y;

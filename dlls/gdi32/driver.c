@@ -800,8 +800,8 @@ static DWORD CDECL nulldrv_SetLayout( PHYSDEV dev, DWORD layout )
     DC *dc = get_nulldrv_dc( dev );
     DWORD old_layout;
 
-    old_layout = dc->layout;
-    dc->layout = layout;
+    old_layout = dc->attr->layout;
+    dc->attr->layout = layout;
     if (layout != old_layout)
     {
         if (layout & LAYOUT_RTL) dc->MapMode = MM_ANISOTROPIC;

@@ -203,7 +203,7 @@ INT CDECL nulldrv_SetMapMode( PHYSDEV dev, INT mode )
         return 0;
     }
     /* RTL layout is always MM_ANISOTROPIC */
-    if (!(dc->layout & LAYOUT_RTL)) dc->MapMode = mode;
+    if (!(dc->attr->layout & LAYOUT_RTL)) dc->MapMode = mode;
     DC_UpdateXforms( dc );
     return ret;
 }

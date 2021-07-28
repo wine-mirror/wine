@@ -51,7 +51,7 @@ static inline RECT get_clip_rect( DC * dc, int left, int top, int right, int bot
     rect.right  = right;
     rect.bottom = bottom;
     lp_to_dp( dc, (POINT *)&rect, 2 );
-    if (dc->layout & LAYOUT_RTL)
+    if (dc->attr->layout & LAYOUT_RTL)
     {
         int tmp = rect.left;
         rect.left = rect.right + 1;
@@ -168,7 +168,7 @@ INT CDECL nulldrv_ExtSelectClipRgn( PHYSDEV dev, HRGN rgn, INT mode )
     {
         HRGN mirrored = 0;
 
-        if (dc->layout & LAYOUT_RTL)
+        if (dc->attr->layout & LAYOUT_RTL)
         {
             if (!(mirrored = NtGdiCreateRectRgn( 0, 0, 0, 0 ))) return ERROR;
             mirror_region( mirrored, rgn, dc->vis_rect.right - dc->vis_rect.left );
@@ -235,7 +235,7 @@ INT CDECL nulldrv_OffsetClipRgn( PHYSDEV dev, INT x, INT y )
     {
         x = MulDiv( x, dc->vport_ext.cx, dc->wnd_ext.cx );
         y = MulDiv( y, dc->vport_ext.cy, dc->wnd_ext.cy );
-        if (dc->layout & LAYOUT_RTL) x = -x;
+        if (dc->attr->layout & LAYOUT_RTL) x = -x;
         ret = NtGdiOffsetRgn( dc->hClipRgn, x, y );
 	update_dc_clipping( dc );
     }
@@ -432,7 +432,7 @@ INT WINAPI GetClipBox( HDC hdc, LPRECT rect )
 
     if (get_dc_device_rect( dc, &visrect ) && !intersect_rect( rect, rect, &visrect )) ret = NULLREGION;
 
-    if (dc->layout & LAYOUT_RTL)
+    if (dc->attr->layout & LAYOUT_RTL)
     {
         int tmp = rect->left;
         rect->left = rect->right - 1;
@@ -459,7 +459,7 @@ INT WINAPI GetClipRgn( HDC hdc, HRGN hRgn )
           if (NtGdiCombineRgn( hRgn, dc->hClipRgn, 0, RGN_COPY ) != ERROR)
           {
               ret = 1;
-              if (dc->layout & LAYOUT_RTL)
+              if (dc->attr->layout & LAYOUT_RTL)
                   mirror_region( hRgn, hRgn, dc->vis_rect.right - dc->vis_rect.left );
           }
       }
@@ -483,7 +483,7 @@ INT WINAPI GetMetaRgn( HDC hdc, HRGN hRgn )
         if (dc->hMetaRgn && NtGdiCombineRgn( hRgn, dc->hMetaRgn, 0, RGN_COPY ) != ERROR)
         {
             ret = 1;
-            if (dc->layout & LAYOUT_RTL)
+            if (dc->attr->layout & LAYOUT_RTL)
                 mirror_region( hRgn, hRgn, dc->vis_rect.right - dc->vis_rect.left );
         }
         release_dc_ptr( dc );

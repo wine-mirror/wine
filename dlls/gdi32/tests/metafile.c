@@ -6396,7 +6396,7 @@ static void test_mf_SetLayout(void)
         layout = SetLayout(mf_dc, tests[i]);
         ok(layout == LAYOUT_RTL, "Expected %#x, got %#x\n", tests[i], layout);
         layout = GetLayout(mf_dc);
-        todo_wine ok(layout == GDI_ERROR, "Expected %#x, got %#x\n", GDI_ERROR, layout);
+        ok(layout == GDI_ERROR, "Expected %#x, got %#x\n", GDI_ERROR, layout);
         winetest_pop_context();
     }
 
