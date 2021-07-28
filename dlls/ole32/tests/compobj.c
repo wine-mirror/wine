@@ -4098,6 +4098,25 @@ static void test_mta_usage(void)
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
     test_apt_type(APTTYPE_CURRENT, APTTYPEQUALIFIER_NONE);
+
+    hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    test_apt_type(APTTYPE_MAINSTA, APTTYPEQUALIFIER_NONE);
+
+    cookie = 0;
+    hr = pCoIncrementMTAUsage(&cookie);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    ok(cookie != NULL, "Unexpected cookie %p.\n", cookie);
+
+    test_apt_type(APTTYPE_MAINSTA, APTTYPEQUALIFIER_NONE);
+
+    hr = pCoDecrementMTAUsage(cookie);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+
+    CoUninitialize();
+
+    test_apt_type(APTTYPE_CURRENT, APTTYPEQUALIFIER_NONE);
 }
 
 static void test_CoCreateInstanceFromApp(void)
