@@ -1864,6 +1864,9 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             return do_setsockopt( handle, io, IPPROTO_IPV6, IPV6_DROP_MEMBERSHIP, in_buffer, in_size );
 #endif
 
+        case IOCTL_AFD_WINE_GET_IPV6_MULTICAST_HOPS:
+            return do_getsockopt( handle, io, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, out_buffer, out_size );
+
         default:
         {
             if ((code >> 16) == FILE_DEVICE_NETWORK)
