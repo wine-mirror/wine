@@ -1802,6 +1802,11 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             return do_setsockopt( handle, io, IPPROTO_IP, IP_UNICAST_IF, in_buffer, in_size );
 #endif
 
+#ifdef IPV6_ADD_MEMBERSHIP
+        case IOCTL_AFD_WINE_SET_IPV6_ADD_MEMBERSHIP:
+            return do_setsockopt( handle, io, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, in_buffer, in_size );
+#endif
+
         default:
         {
             if ((code >> 16) == FILE_DEVICE_NETWORK)

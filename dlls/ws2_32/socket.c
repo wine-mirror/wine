@@ -3717,9 +3717,9 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
     case WS_IPPROTO_IPV6:
         switch(optname)
         {
-#ifdef IPV6_ADD_MEMBERSHIP
         case WS_IPV6_ADD_MEMBERSHIP:
-#endif
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_ADD_MEMBERSHIP, optval, optlen );
+
 #ifdef IPV6_DROP_MEMBERSHIP
         case WS_IPV6_DROP_MEMBERSHIP:
 #endif
