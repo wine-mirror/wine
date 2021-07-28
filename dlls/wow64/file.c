@@ -100,6 +100,86 @@ NTSTATUS WINAPI wow64_NtCreateFile( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtCreateMailslotFile
+ */
+NTSTATUS WINAPI wow64_NtCreateMailslotFile( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+    ULONG options = get_ulong( &args );
+    ULONG quota = get_ulong( &args );
+    ULONG msg_size = get_ulong( &args );
+    LARGE_INTEGER *timeout = get_ptr( &args );
+
+    struct object_attr64 attr;
+    IO_STATUS_BLOCK io;
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    *handle_ptr = 0;
+    status = NtCreateMailslotFile( &handle, access, objattr_32to64( &attr, attr32 ),
+                                   iosb_32to64( &io, io32 ), options, quota, msg_size, timeout );
+    put_handle( handle_ptr, handle );
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtCreateNamedPipeFile
+ */
+NTSTATUS WINAPI wow64_NtCreateNamedPipeFile( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+    ULONG sharing = get_ulong( &args );
+    ULONG dispo = get_ulong( &args );
+    ULONG options = get_ulong( &args );
+    ULONG pipe_type = get_ulong( &args );
+    ULONG read_mode = get_ulong( &args );
+    ULONG completion_mode = get_ulong( &args );
+    ULONG max_inst = get_ulong( &args );
+    ULONG inbound_quota = get_ulong( &args );
+    ULONG outbound_quota = get_ulong( &args );
+    LARGE_INTEGER *timeout = get_ptr( &args );
+
+    struct object_attr64 attr;
+    IO_STATUS_BLOCK io;
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    *handle_ptr = 0;
+    status = NtCreateNamedPipeFile( &handle, access, objattr_32to64( &attr, attr32 ),
+                                    iosb_32to64( &io, io32 ), sharing, dispo, options,
+                                    pipe_type, read_mode, completion_mode, max_inst,
+                                    inbound_quota, outbound_quota, timeout );
+    put_handle( handle_ptr, handle );
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtCreatePagingFile
+ */
+NTSTATUS WINAPI wow64_NtCreatePagingFile( UINT *args )
+{
+    UNICODE_STRING32 *str32 = get_ptr( &args );
+    LARGE_INTEGER *min_size = get_ptr( &args );
+    LARGE_INTEGER *max_size = get_ptr( &args );
+    LARGE_INTEGER *actual_size = get_ptr( &args );
+
+    UNICODE_STRING str;
+
+    return NtCreatePagingFile( unicode_str_32to64( &str, str32 ), min_size, max_size, actual_size );
+}
+
+
+/**********************************************************************
  *           wow64_NtDeleteFile
  */
 NTSTATUS WINAPI wow64_NtDeleteFile( UINT *args )

@@ -46,7 +46,10 @@
     SYSCALL_ENTRY( NtCreateKey ) \
     SYSCALL_ENTRY( NtCreateKeyTransacted ) \
     SYSCALL_ENTRY( NtCreateKeyedEvent ) \
+    SYSCALL_ENTRY( NtCreateMailslotFile ) \
     SYSCALL_ENTRY( NtCreateMutant ) \
+    SYSCALL_ENTRY( NtCreateNamedPipeFile ) \
+    SYSCALL_ENTRY( NtCreatePagingFile ) \
     SYSCALL_ENTRY( NtCreatePort ) \
     SYSCALL_ENTRY( NtCreatePowerRequest ) \
     SYSCALL_ENTRY( NtCreateSection ) \
