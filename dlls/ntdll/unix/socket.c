@@ -1859,6 +1859,11 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
         }
 #endif
 
+#ifdef IPV6_DROP_MEMBERSHIP
+        case IOCTL_AFD_WINE_SET_IPV6_DROP_MEMBERSHIP:
+            return do_setsockopt( handle, io, IPPROTO_IPV6, IPV6_DROP_MEMBERSHIP, in_buffer, in_size );
+#endif
+
         default:
         {
             if ((code >> 16) == FILE_DEVICE_NETWORK)

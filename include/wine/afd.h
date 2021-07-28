@@ -210,6 +210,7 @@ struct afd_get_events_params
 #define IOCTL_AFD_WINE_SET_IPV6_ADD_MEMBERSHIP          WINE_AFD_IOC(265)
 #define IOCTL_AFD_WINE_GET_IPV6_DONTFRAG                WINE_AFD_IOC(266)
 #define IOCTL_AFD_WINE_SET_IPV6_DONTFRAG                WINE_AFD_IOC(267)
+#define IOCTL_AFD_WINE_SET_IPV6_DROP_MEMBERSHIP         WINE_AFD_IOC(268)
 
 struct afd_create_params
 {

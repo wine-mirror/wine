@@ -3622,9 +3622,9 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         case WS_IPV6_DONTFRAG:
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_DONTFRAG, optval, optlen );
 
-#ifdef IPV6_DROP_MEMBERSHIP
         case WS_IPV6_DROP_MEMBERSHIP:
-#endif
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_DROP_MEMBERSHIP, optval, optlen );
+
         case WS_IPV6_MULTICAST_IF:
         case WS_IPV6_MULTICAST_HOPS:
         case WS_IPV6_MULTICAST_LOOP:
