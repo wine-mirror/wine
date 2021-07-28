@@ -1807,6 +1807,39 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             return do_setsockopt( handle, io, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, in_buffer, in_size );
 #endif
 
+        case IOCTL_AFD_WINE_GET_IPV6_DONTFRAG:
+        {
+            socklen_t len = out_size;
+            int ret;
+
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+                return status;
+
+#ifdef IPV6_DONTFRAG
+            ret = getsockopt( fd, IPPROTO_IPV6, IPV6_DONTFRAG, out_buffer, &len );
+#elif defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DONT)
+            {
+                int value;
+
+                len = sizeof(value);
+                ret = getsockopt( fd, IPPROTO_IPV6, IPV6_MTU_DISCOVER, &value, &len );
+                if (!ret) *(DWORD *)out_buffer = (value != IPV6_PMTUDISC_DONT);
+            }
+#else
+            {
+                static int once;
+
+                if (!once++)
+                    FIXME( "IPV6_DONTFRAGMENT is not supported on this platform\n" );
+                ret = 0; /* fake success */
+            }
+#endif
+            if (needs_close) close( fd );
+            if (ret) return sock_errno_to_status( errno );
+            io->Information = len;
+            return STATUS_SUCCESS;
+        }
+
         default:
         {
             if ((code >> 16) == FILE_DEVICE_NETWORK)

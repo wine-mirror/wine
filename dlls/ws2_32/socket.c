@@ -742,60 +742,6 @@ static BOOL set_dont_fragment(SOCKET s, int level, BOOL value)
     return value;
 }
 
-static BOOL get_dont_fragment(SOCKET s, int level, BOOL *out)
-{
-    int fd, optname, value, not_expected;
-    socklen_t optlen = sizeof(value);
-
-    if (level == IPPROTO_IP)
-    {
-#ifdef IP_DONTFRAG
-        optname = IP_DONTFRAG;
-        not_expected = 0;
-#elif defined(IP_MTU_DISCOVER) && defined(IP_PMTUDISC_DONT)
-        optname = IP_MTU_DISCOVER;
-        not_expected = IP_PMTUDISC_DONT;
-#else
-        static int once;
-        if (!once++)
-            FIXME("IP_DONTFRAGMENT for IPv4 not supported in this platform\n");
-        return TRUE; /* fake success */
-#endif
-    }
-    else
-    {
-#ifdef IPV6_DONTFRAG
-        optname = IPV6_DONTFRAG;
-        not_expected = 0;
-#elif defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DONT)
-        optname = IPV6_MTU_DISCOVER;
-        not_expected = IPV6_PMTUDISC_DONT;
-#else
-        static int once;
-        if (!once++)
-            FIXME("IP_DONTFRAGMENT for IPv6 not supported in this platform\n");
-        return TRUE; /* fake success */
-#endif
-    }
-
-    fd = get_sock_fd(s, 0, NULL);
-    if (fd == -1) return FALSE;
-
-    if (!getsockopt(fd, level, optname, &value, &optlen))
-    {
-        *out = value != not_expected;
-        value = TRUE;
-    }
-    else
-    {
-        WSASetLastError(wsaErrno());
-        value = FALSE;
-    }
-
-    release_sock_fd(s, fd);
-    return value;
-}
-
 struct per_thread_data *get_per_thread_data(void)
 {
     struct per_thread_data * ptb = NtCurrentTeb()->WinSockData;
@@ -2511,6 +2457,9 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
     case WS_IPPROTO_IPV6:
         switch(optname)
         {
+        case WS_IPV6_DONTFRAG:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IPV6_DONTFRAG, optval, optlen );
+
         case WS_IPV6_MULTICAST_IF:
         case WS_IPV6_MULTICAST_HOPS:
         case WS_IPV6_MULTICAST_LOOP:
@@ -2529,8 +2478,6 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             }
             release_sock_fd( s, fd );
             return ret;
-        case WS_IPV6_DONTFRAG:
-            return get_dont_fragment(s, IPPROTO_IPV6, (BOOL *)optval) ? 0 : SOCKET_ERROR;
 
         default:
             FIXME( "unrecognized IPv6 option %u\n", optname );
