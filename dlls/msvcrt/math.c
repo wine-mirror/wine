@@ -1699,7 +1699,10 @@ float CDECL sinhf( float x )
     }
 
     /* |x| > logf(FLT_MAX) or nan */
-    t = __expo2f(absx, 2 * h);
+    if (ui > 0x7f800000)
+        *(DWORD*)&t = *(DWORD*)&x | 0x400000;
+    else
+        t = __expo2f(absx, 2 * h);
     return t;
 }
 
