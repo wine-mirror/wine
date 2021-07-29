@@ -8,6 +8,7 @@ C_SRCS = \
 	file.c \
 	process.c \
 	registry.c \
+	security.c \
 	sync.c \
 	syscall.c \
 	virtual.c

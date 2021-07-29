@@ -23,7 +23,10 @@
 
 #define ALL_SYSCALLS \
     SYSCALL_ENTRY( NtAcceptConnectPort ) \
+    SYSCALL_ENTRY( NtAccessCheck ) \
+    SYSCALL_ENTRY( NtAccessCheckAndAuditAlarm ) \
     SYSCALL_ENTRY( NtAddAtom ) \
+    SYSCALL_ENTRY( NtAdjustPrivilegesToken ) \
     SYSCALL_ENTRY( NtAlertResumeThread ) \
     SYSCALL_ENTRY( NtAlertThread ) \
     SYSCALL_ENTRY( NtAllocateLocallyUniqueId ) \
@@ -70,6 +73,7 @@
     SYSCALL_ENTRY( NtDeleteKey ) \
     SYSCALL_ENTRY( NtDeleteValueKey ) \
     SYSCALL_ENTRY( NtDuplicateObject ) \
+    SYSCALL_ENTRY( NtDuplicateToken ) \
     SYSCALL_ENTRY( NtEnumerateKey ) \
     SYSCALL_ENTRY( NtEnumerateValueKey ) \
     SYSCALL_ENTRY( NtFindAtom ) \
@@ -83,6 +87,7 @@
     SYSCALL_ENTRY( NtGetCurrentProcessorNumber ) \
     SYSCALL_ENTRY( NtGetNlsSectionPtr ) \
     SYSCALL_ENTRY( NtGetWriteWatch ) \
+    SYSCALL_ENTRY( NtImpersonateAnonymousToken ) \
     SYSCALL_ENTRY( NtIsProcessInJob ) \
     SYSCALL_ENTRY( NtListenPort ) \
     SYSCALL_ENTRY( NtLoadKey ) \
@@ -106,11 +111,16 @@
     SYSCALL_ENTRY( NtOpenKeyedEvent ) \
     SYSCALL_ENTRY( NtOpenMutant ) \
     SYSCALL_ENTRY( NtOpenProcess ) \
+    SYSCALL_ENTRY( NtOpenProcessToken ) \
+    SYSCALL_ENTRY( NtOpenProcessTokenEx ) \
     SYSCALL_ENTRY( NtOpenSection ) \
     SYSCALL_ENTRY( NtOpenSemaphore ) \
     SYSCALL_ENTRY( NtOpenSymbolicLinkObject  ) \
     SYSCALL_ENTRY( NtOpenThread ) \
+    SYSCALL_ENTRY( NtOpenThreadToken ) \
+    SYSCALL_ENTRY( NtOpenThreadTokenEx ) \
     SYSCALL_ENTRY( NtOpenTimer ) \
+    SYSCALL_ENTRY( NtPrivilegeCheck ) \
     SYSCALL_ENTRY( NtProtectVirtualMemory ) \
     SYSCALL_ENTRY( NtPulseEvent ) \
     SYSCALL_ENTRY( NtQueryAttributesFile ) \
@@ -133,6 +143,7 @@
     SYSCALL_ENTRY( NtQueryObject ) \
     SYSCALL_ENTRY( NtQueryPerformanceCounter ) \
     SYSCALL_ENTRY( NtQuerySection ) \
+    SYSCALL_ENTRY( NtQuerySecurityObject ) \
     SYSCALL_ENTRY( NtQuerySemaphore  ) \
     SYSCALL_ENTRY( NtQuerySymbolicLinkObject ) \
     SYSCALL_ENTRY( NtQueryTimer ) \
@@ -174,6 +185,7 @@
     SYSCALL_ENTRY( NtSetInformationThread ) \
     SYSCALL_ENTRY( NtSetIoCompletion ) \
     SYSCALL_ENTRY( NtSetPowerRequest ) \
+    SYSCALL_ENTRY( NtSetSecurityObject ) \
     SYSCALL_ENTRY( NtSetThreadExecutionState ) \
     SYSCALL_ENTRY( NtSetTimer ) \
     SYSCALL_ENTRY( NtSetTimerResolution ) \
