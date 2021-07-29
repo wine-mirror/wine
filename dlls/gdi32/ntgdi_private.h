@@ -118,7 +118,6 @@ typedef struct tagDC
     UINT          font_code_page;
     WORD          polyFillMode;
     WORD          stretchBltMode;
-    WORD          relAbsMode;
     COLORREF      dcBrushColor;
     COLORREF      dcPenColor;
     POINT         brush_org;

@@ -85,7 +85,7 @@ static void set_initial_dc_state( DC *dc )
     dc->attr->rop_mode      = R2_COPYPEN;
     dc->polyFillMode        = ALTERNATE;
     dc->stretchBltMode      = BLACKONWHITE;
-    dc->relAbsMode          = ABSOLUTE;
+    dc->attr->rel_abs_mode     = ABSOLUTE;
     dc->attr->background_mode  = OPAQUE;
     dc->attr->background_color = RGB( 255, 255, 255 );
     dc->dcBrushColor        = RGB( 255, 255, 255 );
@@ -400,7 +400,6 @@ INT CDECL nulldrv_SaveDC( PHYSDEV dev )
     newdc->hPalette         = dc->hPalette;
     newdc->polyFillMode     = dc->polyFillMode;
     newdc->stretchBltMode   = dc->stretchBltMode;
-    newdc->relAbsMode       = dc->relAbsMode;
     newdc->dcBrushColor     = dc->dcBrushColor;
     newdc->dcPenColor       = dc->dcPenColor;
     newdc->brush_org        = dc->brush_org;
@@ -470,7 +469,7 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     dc->attr->rop_mode   = dcs->attr->rop_mode;
     dc->polyFillMode     = dcs->polyFillMode;
     dc->stretchBltMode   = dcs->stretchBltMode;
-    dc->relAbsMode       = dcs->relAbsMode;
+    dc->attr->rel_abs_mode     = dcs->attr->rel_abs_mode;
     dc->attr->background_mode  = dcs->attr->background_mode;
     dc->attr->background_color = dcs->attr->background_color;
     dc->attr->text_color       = dcs->attr->text_color;
@@ -1396,22 +1395,6 @@ UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
 
 
 /***********************************************************************
- *		GetRelAbs		(GDI32.@)
- */
-INT WINAPI GetRelAbs( HDC hdc, DWORD dwIgnore )
-{
-    INT ret = 0;
-    DC *dc = get_dc_ptr( hdc );
-    if (dc)
-    {
-        ret = dc->relAbsMode;
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-
-/***********************************************************************
  *		SetRelAbs (GDI32.@)
  */
 INT WINAPI SetRelAbs( HDC hdc, INT mode )
@@ -1430,8 +1413,8 @@ INT WINAPI SetRelAbs( HDC hdc, INT mode )
         mode = physdev->funcs->pSetRelAbs( physdev, mode );
         if (mode)
         {
-            ret = dc->relAbsMode;
-            dc->relAbsMode = mode;
+            ret = dc->attr->rel_abs_mode;
+            dc->attr->rel_abs_mode = mode;
         }
         release_dc_ptr( dc );
     }

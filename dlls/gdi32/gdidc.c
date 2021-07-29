@@ -185,6 +185,15 @@ INT WINAPI GetROP2( HDC hdc )
 }
 
 /***********************************************************************
+ *		GetRelAbs  (GDI32.@)
+ */
+INT WINAPI GetRelAbs( HDC hdc, DWORD ignore )
+{
+    DC_ATTR *dc_attr = get_dc_attr( hdc );
+    return dc_attr ? dc_attr->rel_abs_mode : 0;
+}
+
+/***********************************************************************
  *		SetROP2 (GDI32.@)
  */
 INT WINAPI SetROP2( HDC hdc, INT mode )

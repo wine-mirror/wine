@@ -108,6 +108,7 @@ typedef struct DC_ATTR
     WORD      text_align;
     WORD      background_mode;
     WORD      rop_mode;
+    WORD      rel_abs_mode;
     void     *emf;
 } DC_ATTR;
 
