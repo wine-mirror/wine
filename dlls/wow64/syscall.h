@@ -121,6 +121,8 @@
     SYSCALL_ENTRY( NtQueryFullAttributesFile ) \
     SYSCALL_ENTRY( NtQueryInformationAtom ) \
     SYSCALL_ENTRY( NtQueryInformationFile ) \
+    SYSCALL_ENTRY( NtQueryInformationProcess ) \
+    SYSCALL_ENTRY( NtQueryInformationThread ) \
     SYSCALL_ENTRY( NtQueryInstallUILanguage ) \
     SYSCALL_ENTRY( NtQueryIoCompletion ) \
     SYSCALL_ENTRY( NtQueryKey ) \

@@ -102,6 +102,13 @@ typedef struct
 
 typedef struct
 {
+    ULONG Mask;
+    WORD  Group;
+    WORD  Reserved[3];
+} GROUP_AFFINITY32;
+
+typedef struct
+{
     ULONG    BaseAddress;
     ULONG    AllocationBase;
     DWORD    AllocationProtect;
@@ -135,6 +142,16 @@ typedef struct
     ULONG                         VirtualAddress;
     MEMORY_WORKING_SET_EX_BLOCK32 VirtualAttributes;
 } MEMORY_WORKING_SET_EX_INFORMATION32;
+
+typedef struct
+{
+    NTSTATUS  ExitStatus;
+    ULONG     PebBaseAddress;
+    ULONG     AffinityMask;
+    LONG      BasePriority;
+    ULONG     UniqueProcessId;
+    ULONG     InheritedFromUniqueProcessId;
+} PROCESS_BASIC_INFORMATION32;
 
 typedef struct
 {
@@ -216,6 +233,52 @@ typedef struct
     ULONG   ImageFileSize;
     ULONG   CheckSum;
 } SECTION_IMAGE_INFORMATION32;
+
+typedef struct
+{
+    NTSTATUS    ExitStatus;
+    ULONG       TebBaseAddress;
+    CLIENT_ID32 ClientId;
+    ULONG       AffinityMask;
+    LONG        Priority;
+    LONG        BasePriority;
+} THREAD_BASIC_INFORMATION32;
+
+typedef struct
+{
+    UNICODE_STRING32 Description;
+} THREAD_DESCRIPTION_INFORMATION32;
+
+typedef struct
+{
+    ULONG PeakVirtualSize;
+    ULONG VirtualSize;
+    ULONG PageFaultCount;
+    ULONG PeakWorkingSetSize;
+    ULONG WorkingSetSize;
+    ULONG QuotaPeakPagedPoolUsage;
+    ULONG QuotaPagedPoolUsage;
+    ULONG QuotaPeakNonPagedPoolUsage;
+    ULONG QuotaNonPagedPoolUsage;
+    ULONG PagefileUsage;
+    ULONG PeakPagefileUsage;
+} VM_COUNTERS32;
+
+typedef struct
+{
+    ULONG PeakVirtualSize;
+    ULONG VirtualSize;
+    ULONG PageFaultCount;
+    ULONG PeakWorkingSetSize;
+    ULONG WorkingSetSize;
+    ULONG QuotaPeakPagedPoolUsage;
+    ULONG QuotaPagedPoolUsage;
+    ULONG QuotaPeakNonPagedPoolUsage;
+    ULONG QuotaNonPagedPoolUsage;
+    ULONG PagefileUsage;
+    ULONG PeakPagefileUsage;
+    ULONG PrivateUsage;
+} VM_COUNTERS_EX32;
 
 typedef struct
 {

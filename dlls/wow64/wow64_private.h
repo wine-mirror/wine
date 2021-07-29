@@ -217,5 +217,7 @@ static inline void put_iosb( IO_STATUS_BLOCK32 *io32, const IO_STATUS_BLOCK *io 
 
 extern void put_section_image_info( SECTION_IMAGE_INFORMATION32 *info32,
                                     const SECTION_IMAGE_INFORMATION *info ) DECLSPEC_HIDDEN;
+extern void put_vm_counters( VM_COUNTERS_EX32 *info32, const VM_COUNTERS_EX *info,
+                             ULONG size ) DECLSPEC_HIDDEN;
 
 #endif /* __WOW64_PRIVATE_H */
