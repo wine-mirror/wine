@@ -197,6 +197,15 @@ INT WINAPI SetPolyFillMode( HDC hdc, INT mode )
 }
 
 /***********************************************************************
+ *		GetStretchBltMode (GDI32.@)
+ */
+INT WINAPI GetStretchBltMode( HDC hdc )
+{
+    DC_ATTR *dc_attr = get_dc_attr( hdc );
+    return dc_attr ? dc_attr->stretch_blt_mode : 0;
+}
+
+/***********************************************************************
  *		GetCurrentPositionEx (GDI32.@)
  */
 BOOL WINAPI GetCurrentPositionEx( HDC hdc, POINT *point )

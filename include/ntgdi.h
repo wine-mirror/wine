@@ -110,6 +110,7 @@ typedef struct DC_ATTR
     WORD      poly_fill_mode;
     WORD      rop_mode;
     WORD      rel_abs_mode;
+    WORD      stretch_blt_mode;
     void     *emf;
 } DC_ATTR;
 

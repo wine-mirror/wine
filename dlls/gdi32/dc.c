@@ -84,7 +84,7 @@ static void set_initial_dc_state( DC *dc )
     dc->font_code_page      = CP_ACP;
     dc->attr->rop_mode      = R2_COPYPEN;
     dc->attr->poly_fill_mode   = ALTERNATE;
-    dc->stretchBltMode         = BLACKONWHITE;
+    dc->attr->stretch_blt_mode = BLACKONWHITE;
     dc->attr->rel_abs_mode     = ABSOLUTE;
     dc->attr->background_mode  = OPAQUE;
     dc->attr->background_color = RGB( 255, 255, 255 );
@@ -466,7 +466,7 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     dc->attr->layout     = dcs->attr->layout;
     dc->attr->rop_mode   = dcs->attr->rop_mode;
     dc->attr->poly_fill_mode   = dcs->attr->poly_fill_mode;
-    dc->stretchBltMode   = dcs->stretchBltMode;
+    dc->attr->stretch_blt_mode = dcs->attr->stretch_blt_mode;
     dc->attr->rel_abs_mode     = dcs->attr->rel_abs_mode;
     dc->attr->background_mode  = dcs->attr->background_mode;
     dc->attr->background_color = dcs->attr->background_color;
@@ -1393,22 +1393,6 @@ UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
 
 
 /***********************************************************************
- *		GetStretchBltMode (GDI32.@)
- */
-INT WINAPI GetStretchBltMode( HDC hdc )
-{
-    INT ret = 0;
-    DC * dc = get_dc_ptr( hdc );
-    if (dc)
-    {
-        ret = dc->stretchBltMode;
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-
-/***********************************************************************
  *		SetStretchBltMode (GDI32.@)
  */
 INT WINAPI SetStretchBltMode( HDC hdc, INT mode )
@@ -1427,8 +1411,8 @@ INT WINAPI SetStretchBltMode( HDC hdc, INT mode )
         mode = physdev->funcs->pSetStretchBltMode( physdev, mode );
         if (mode)
         {
-            ret = dc->stretchBltMode;
-            dc->stretchBltMode = mode;
+            ret = dc->attr->stretch_blt_mode;
+            dc->attr->stretch_blt_mode = mode;
         }
         release_dc_ptr( dc );
     }
