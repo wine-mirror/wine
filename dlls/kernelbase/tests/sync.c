@@ -195,7 +195,7 @@ static void test_Sleep(void)
     /* Get the timer resolution before... */
     r1 = 156250;
     status = NtQueryTimerResolution(&dummy, &dummy, &r1);
-    todo_wine ok(status == STATUS_SUCCESS, "NtQueryTimerResolution() failed (%x)\n", status);
+    ok(status == STATUS_SUCCESS, "NtQueryTimerResolution() failed (%x)\n", status);
 
     for (i = 0; i < 50; i++) {
         Sleep(1);
@@ -207,15 +207,15 @@ static void test_Sleep(void)
     /* ...and after in case some other process changes it during this test */
     r2 = 156250;
     status = NtQueryTimerResolution(&dummy, &dummy, &r2);
-    todo_wine ok(status == STATUS_SUCCESS, "NtQueryTimerResolution() failed (%x)\n", status);
+    ok(status == STATUS_SUCCESS, "NtQueryTimerResolution() failed (%x)\n", status);
 
     elapsed_time = (t2.QuadPart - t1.QuadPart) / (double)frequency.QuadPart;
     min = 50.0 * (r1 < r2 ? r1 : r2) / 10000000.0;
     max = 50.0 * (r1 < r2 ? r2 : r1) / 10000000.0;
 
     /* Add an extra 1s to account for potential scheduling delays */
-    todo_wine ok(0.9 * min <= elapsed_time && elapsed_time <= 1.0 + max,
-                 "got %f, expected between %f and %f\n", elapsed_time, min, max);
+    ok(0.9 * min <= elapsed_time && elapsed_time <= 1.0 + max,
+       "got %f, expected between %f and %f\n", elapsed_time, min, max);
 }
 
 START_TEST(sync)

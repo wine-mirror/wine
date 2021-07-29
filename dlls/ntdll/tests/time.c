@@ -218,16 +218,16 @@ static void test_RtlQueryPerformanceCounter(void)
 
 #define CHECK_CURRENT_TIMER(expected) \
     do { \
-        todo_wine ok(status == STATUS_SUCCESS, "NtSetTimerResolution failed %x\n", status); \
-        todo_wine ok(cur2 == (expected), "expected new timer resolution %u, got %u\n", (expected), cur2); \
+        ok(status == STATUS_SUCCESS, "NtSetTimerResolution failed %x\n", status); \
+        ok(cur2 == (expected), "expected new timer resolution %u, got %u\n", (expected), cur2); \
         min2 = min + 10; \
         cur2 = min2 + 1; \
         max2 = cur2 + 1; \
         status = NtQueryTimerResolution(&min2, &max2, &cur2); \
-        todo_wine ok(status == STATUS_SUCCESS, "NtQueryTimerResolution() failed %x\n", status); \
-        todo_wine ok(min2 == min, "NtQueryTimerResolution() expected min=%u, got %u\n", min, min2); \
-        todo_wine ok(max2 == max, "NtQueryTimerResolution() expected max=%u, got %u\n", max, max2); \
-        todo_wine ok(cur2 == expected, "NtQueryTimerResolution() expected timer resolution %u, got %u\n", (expected), cur2); \
+        ok(status == STATUS_SUCCESS, "NtQueryTimerResolution() failed %x\n", status); \
+        ok(min2 == min, "NtQueryTimerResolution() expected min=%u, got %u\n", min, min2); \
+        ok(max2 == max, "NtQueryTimerResolution() expected max=%u, got %u\n", max, max2); \
+        ok(cur2 == expected, "NtQueryTimerResolution() expected timer resolution %u, got %u\n", (expected), cur2); \
     } while (0)
 
 static void test_TimerResolution(void)
@@ -236,46 +236,46 @@ static void test_TimerResolution(void)
     NTSTATUS status;
 
     status = NtQueryTimerResolution(NULL, &max, &cur);
-    todo_wine ok(status == STATUS_ACCESS_VIOLATION, "NtQueryTimerResolution(NULL,,) success\n");
+    ok(status == STATUS_ACCESS_VIOLATION, "NtQueryTimerResolution(NULL,,) success\n");
 
     status = NtQueryTimerResolution(&min, NULL, &cur);
-    todo_wine ok(status == STATUS_ACCESS_VIOLATION, "NtQueryTimerResolution(,NULL,) success\n");
+    ok(status == STATUS_ACCESS_VIOLATION, "NtQueryTimerResolution(,NULL,) success\n");
 
     status = NtQueryTimerResolution(&min, &max, NULL);
-    todo_wine ok(status == STATUS_ACCESS_VIOLATION, "NtQueryTimerResolution(,,NULL) success\n");
+    ok(status == STATUS_ACCESS_VIOLATION, "NtQueryTimerResolution(,,NULL) success\n");
 
     min = 212121;
     cur = min + 1;
     max = cur + 1;
     status = NtQueryTimerResolution(&min, &max, &cur);
-    todo_wine ok(status == STATUS_SUCCESS, "NtQueryTimerResolution() failed (%x)\n", status);
-    todo_wine ok(min == 156250 /* 1/64s HPET */ || min == 156001 /* RTC */,
-                 "unexpected minimum timer resolution %u\n", min);
+    ok(status == STATUS_SUCCESS, "NtQueryTimerResolution() failed (%x)\n", status);
+    ok(min == 156250 /* 1/64s HPET */ || min == 156001 /* RTC */,
+       "unexpected minimum timer resolution %u\n", min);
     ok(0 < max, "invalid maximum timer resolution, should be 0 < %u\n", max);
-    todo_wine ok(max <= cur && cur <= min, "invalid timer resolutions, should be %u <= %u <= %u\n", max, cur, min);
+    ok(max <= cur && cur <= min, "invalid timer resolutions, should be %u <= %u <= %u\n", max, cur, min);
 
     status = NtSetTimerResolution(0, FALSE, NULL);
-    todo_wine ok(status == STATUS_ACCESS_VIOLATION, "NtSetTimerResolution(,,NULL) success\n");
+    ok(status == STATUS_ACCESS_VIOLATION, "NtSetTimerResolution(,,NULL) success\n");
 
     /* Nothing happens if that pointer is not good */
     status = NtSetTimerResolution(cur - 1, TRUE, NULL);
-    todo_wine ok(status == STATUS_ACCESS_VIOLATION, "NtSetTimerResolution() failed %x\n", status);
+    ok(status == STATUS_ACCESS_VIOLATION, "NtSetTimerResolution() failed %x\n", status);
 
     min2 = min + 1;
     cur2 = min2 + 1;
     max2 = cur2 + 1;
     status = NtQueryTimerResolution(&min2, &max2, &cur2);
-    todo_wine ok(status == STATUS_SUCCESS, "NtQueryTimerResolution() failed (%x)\n", status);
-    todo_wine ok(min2 == min, "NtQueryTimerResolution() expected min=%u, got %u\n", min, min2);
-    todo_wine ok(max2 == max, "NtQueryTimerResolution() expected max=%u, got %u\n", max, max2);
-    todo_wine ok(cur2 == cur, "NtQueryTimerResolution() expected timer resolution %u, got %u\n", cur, cur2);
+    ok(status == STATUS_SUCCESS, "NtQueryTimerResolution() failed (%x)\n", status);
+    ok(min2 == min, "NtQueryTimerResolution() expected min=%u, got %u\n", min, min2);
+    ok(max2 == max, "NtQueryTimerResolution() expected max=%u, got %u\n", max, max2);
+    ok(cur2 == cur, "NtQueryTimerResolution() expected timer resolution %u, got %u\n", cur, cur2);
 
     /* 'fails' until the first valid timer resolution request */
     cur2 = 7654321;
     status = NtSetTimerResolution(0, FALSE, &cur2);
-    todo_wine ok(status == STATUS_TIMER_RESOLUTION_NOT_SET, "NtSetTimerResolution() failed %x\n", status);
+    ok(status == STATUS_TIMER_RESOLUTION_NOT_SET, "NtSetTimerResolution() failed %x\n", status);
     /* and returns the current timer resolution */
-    todo_wine ok(cur2 == cur, "expected requested timer resolution %u, got %u\n", cur, cur2);
+    ok(cur2 == cur, "expected requested timer resolution %u, got %u\n", cur, cur2);
 
 
     cur2 = 7654321;
@@ -285,18 +285,18 @@ static void test_TimerResolution(void)
     /* Rescinds our timer resolution request */
     cur2 = 7654321;
     status = NtSetTimerResolution(0, FALSE, &cur2);
-    todo_wine ok(status == STATUS_SUCCESS, "NtSetTimerResolution() failed %x\n", status);
+    ok(status == STATUS_SUCCESS, "NtSetTimerResolution() failed %x\n", status);
     /* -> the timer resolution was reset to its initial value */
-    todo_wine ok(cur2 == cur, "expected requested timer resolution %u, got %u\n", min, cur2);
+    ok(cur2 == cur, "expected requested timer resolution %u, got %u\n", min, cur2);
 
     cur2 = 7654321;
     status = NtSetTimerResolution(0, FALSE, &cur2);
-    todo_wine ok(status == STATUS_TIMER_RESOLUTION_NOT_SET, "NtSetTimerResolution() failed %x\n", status);
-    todo_wine ok(cur2 == cur, "expected requested timer resolution %u, got %u\n", cur, cur2);
+    ok(status == STATUS_TIMER_RESOLUTION_NOT_SET, "NtSetTimerResolution() failed %x\n", status);
+    ok(cur2 == cur, "expected requested timer resolution %u, got %u\n", cur, cur2);
 
     cur2 = 7654321;
     status = NtSetTimerResolution(min + 1, TRUE, &cur2);
-    todo_wine ok(status == STATUS_SUCCESS, "NtSetTimerResolution() failed %x\n", status);
+    ok(status == STATUS_SUCCESS, "NtSetTimerResolution() failed %x\n", status);
     /* This works because:
      * - Either cur is the minimum (15.6 ms) resolution already, i.e. the
      *   closest valid value 'set' is rounded to.
@@ -310,8 +310,8 @@ static void test_TimerResolution(void)
     cur2 = 7654321;
     set = max < cur ? cur - 1 : max;
     status = NtSetTimerResolution(set, TRUE, &cur2);
-    todo_wine ok(status == STATUS_SUCCESS, "NtSetTimerResolution() failed %x\n", status);
-    todo_wine ok(cur2 <= set, "expected new timer resolution %u <= %u\n", cur2, set);
+    ok(status == STATUS_SUCCESS, "NtSetTimerResolution() failed %x\n", status);
+    ok(cur2 <= set, "expected new timer resolution %u <= %u\n", cur2, set);
     trace("timer resolution: %u(max) <= %u(cur) <= %u(prev) <= %u(min)\n", max, cur2, cur, min);
 
     cur2 = 7654321;
@@ -321,8 +321,8 @@ static void test_TimerResolution(void)
     /* Cleanup by rescinding the last request */
     cur2 = 7654321;
     status = NtSetTimerResolution(0, FALSE, &cur2);
-    todo_wine ok(status == STATUS_SUCCESS, "NtSetTimerResolution() failed %x\n", status);
-    todo_wine ok(cur2 == cur, "expected requested timer resolution %u, got %u\n", set, cur2);
+    ok(status == STATUS_SUCCESS, "NtSetTimerResolution() failed %x\n", status);
+    ok(cur2 == cur, "expected requested timer resolution %u, got %u\n", set, cur2);
 }
 
 static void test_RtlQueryTimeZoneInformation(void)

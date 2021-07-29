@@ -1599,8 +1599,10 @@ NTSTATUS WINAPI NtSetSystemTime( const LARGE_INTEGER *new, LARGE_INTEGER *old )
  */
 NTSTATUS WINAPI NtQueryTimerResolution( ULONG *min_res, ULONG *max_res, ULONG *current_res )
 {
-    FIXME( "(%p,%p,%p), stub!\n", min_res, max_res, current_res );
-    return STATUS_NOT_IMPLEMENTED;
+    TRACE( "(%p,%p,%p)\n", min_res, max_res, current_res );
+    *max_res = *current_res = 10000; /* See NtSetTimerResolution() */
+    *min_res = 156250;
+    return STATUS_SUCCESS;
 }
 
 
@@ -1609,8 +1611,26 @@ NTSTATUS WINAPI NtQueryTimerResolution( ULONG *min_res, ULONG *max_res, ULONG *c
  */
 NTSTATUS WINAPI NtSetTimerResolution( ULONG res, BOOLEAN set, ULONG *current_res )
 {
-    FIXME( "(%u,%u,%p), stub!\n", res, set, current_res );
-    return STATUS_NOT_IMPLEMENTED;
+    static BOOL has_request = FALSE;
+
+    TRACE( "(%u,%u,%p), semi-stub!\n", res, set, current_res );
+
+    /* Wine has no support for anything other that 1 ms and does not keep of
+     * track resolution requests anyway.
+     * Fortunately NtSetTimerResolution() should ignore requests to lower the
+     * timer resolution. So by claiming that 'some other process' requested the
+     * max resolution already, there no need to actually change it.
+     */
+    *current_res = 10000;
+
+    /* Just keep track of whether this process requested a specific timer
+     * resolution.
+     */
+    if (!has_request && !set)
+        return STATUS_TIMER_RESOLUTION_NOT_SET;
+    has_request = set;
+
+    return STATUS_SUCCESS;
 }
 
 
