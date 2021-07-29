@@ -6962,10 +6962,8 @@ msgid "Resource is not currently available.\n"
 msgstr "Resurssi ei ole nyt saatavilla.\n"
 
 #: dlls/light.msstyles/light.rc:30 dlls/light.msstyles/light.rc:37
-#, fuzzy
-#| msgid "Class Name:"
 msgid "Classic Blue"
-msgstr "Luokan nimi:"
+msgstr "Klassinen sininen"
 
 #: dlls/light.msstyles/light.rc:43 dlls/light.msstyles/light.rc:49
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73
@@ -6974,31 +6972,31 @@ msgstr "Normaali"
 
 #: dlls/localspl/localspl.rc:37
 msgid "Letter"
-msgstr ""
+msgstr "Letter"
 
 #: dlls/localspl/localspl.rc:38
 msgid "Letter Small"
-msgstr ""
+msgstr "Letter Small"
 
 #: dlls/localspl/localspl.rc:39
 msgid "Tabloid"
-msgstr ""
+msgstr "Tabloid"
 
 #: dlls/localspl/localspl.rc:40
 msgid "Ledger"
-msgstr ""
+msgstr "Ledger"
 
 #: dlls/localspl/localspl.rc:41
 msgid "Legal"
-msgstr ""
+msgstr "Legal"
 
 #: dlls/localspl/localspl.rc:42
 msgid "Statement"
-msgstr ""
+msgstr "Statement"
 
 #: dlls/localspl/localspl.rc:43
 msgid "Executive"
-msgstr ""
+msgstr "Executive"
 
 #: dlls/localspl/localspl.rc:44
 msgid "A3"
@@ -7010,7 +7008,7 @@ msgstr "A4"
 
 #: dlls/localspl/localspl.rc:46
 msgid "A4 Small"
-msgstr ""
+msgstr "A4 (pieni)"
 
 #: dlls/localspl/localspl.rc:47
 msgid "A5"
@@ -7026,59 +7024,59 @@ msgstr "B5 (JIS)"
 
 #: dlls/localspl/localspl.rc:50
 msgid "Folio"
-msgstr ""
+msgstr "Folio"
 
 #: dlls/localspl/localspl.rc:51
 msgid "Quarto"
-msgstr ""
+msgstr "Quarto"
 
 #: dlls/localspl/localspl.rc:52
 msgid "10x14"
-msgstr ""
+msgstr "10x14 tuumaa"
 
 #: dlls/localspl/localspl.rc:53
 msgid "11x17"
-msgstr ""
+msgstr "11x17 tuumaa"
 
 #: dlls/localspl/localspl.rc:54
 msgid "Note"
-msgstr ""
+msgstr "Note"
 
 #: dlls/localspl/localspl.rc:55
 msgid "Envelope #9"
-msgstr ""
+msgstr "Envelope #9"
 
 #: dlls/localspl/localspl.rc:56
 msgid "Envelope #10"
-msgstr ""
+msgstr "Envelope #10"
 
 #: dlls/localspl/localspl.rc:57
 msgid "Envelope #11"
-msgstr ""
+msgstr "Envelope #11"
 
 #: dlls/localspl/localspl.rc:58
 msgid "Envelope #12"
-msgstr ""
+msgstr "Envelope #12"
 
 #: dlls/localspl/localspl.rc:59
 msgid "Envelope #14"
-msgstr ""
+msgstr "Envelope #14"
 
 #: dlls/localspl/localspl.rc:60
 msgid "C size sheet"
-msgstr ""
+msgstr "C-paperi (ANSI)"
 
 #: dlls/localspl/localspl.rc:61
 msgid "D size sheet"
-msgstr ""
+msgstr "D-paperi (ANSI)"
 
 #: dlls/localspl/localspl.rc:62
 msgid "E size sheet"
-msgstr ""
+msgstr "E-paperi (ANSI)"
 
 #: dlls/localspl/localspl.rc:63
 msgid "Envelope DL"
-msgstr ""
+msgstr "Envelope DL"
 
 #: dlls/localspl/localspl.rc:64
 msgid "Envelope C5"
@@ -7114,31 +7112,31 @@ msgstr "B6-kirjekuori"
 
 #: dlls/localspl/localspl.rc:72
 msgid "Envelope"
-msgstr ""
+msgstr "Envelope"
 
 #: dlls/localspl/localspl.rc:73
 msgid "Envelope Monarch"
-msgstr "Monarch-kirjekuori"
+msgstr "Envelope Monarch"
 
 #: dlls/localspl/localspl.rc:74
 msgid "6 3/4 Envelope"
-msgstr ""
+msgstr "6 3/4 Envelope"
 
 #: dlls/localspl/localspl.rc:75
 msgid "US Std Fanfold"
-msgstr ""
+msgstr "US Std Fanfold"
 
 #: dlls/localspl/localspl.rc:76
 msgid "German Std Fanfold"
-msgstr ""
+msgstr "German Std Fanfold"
 
 #: dlls/localspl/localspl.rc:77
 msgid "German Legal Fanfold"
-msgstr ""
+msgstr "German Legal Fanfold"
 
 #: dlls/localspl/localspl.rc:78
 msgid "B4 (ISO)"
-msgstr "B4 (ISO)"
+msgstr "B4"
 
 #: dlls/localspl/localspl.rc:79
 msgid "Japanese Postcard"
@@ -7146,83 +7144,83 @@ msgstr "Japanilainen postikortti"
 
 #: dlls/localspl/localspl.rc:80
 msgid "9x11"
-msgstr ""
+msgstr "9x11 tuumaa"
 
 #: dlls/localspl/localspl.rc:81
 msgid "10x11"
-msgstr ""
+msgstr "10x11 tuumaa"
 
 #: dlls/localspl/localspl.rc:82
 msgid "15x11"
-msgstr ""
+msgstr "15x11 tuumaa"
 
 #: dlls/localspl/localspl.rc:83
 msgid "Envelope Invite"
-msgstr ""
+msgstr "Envelope Invite"
 
 #: dlls/localspl/localspl.rc:84
 msgid "Letter Extra"
-msgstr ""
+msgstr "Letter Extra"
 
 #: dlls/localspl/localspl.rc:85
 msgid "Legal Extra"
-msgstr ""
+msgstr "Legal Extra"
 
 #: dlls/localspl/localspl.rc:86
 msgid "Tabloid Extra"
-msgstr ""
+msgstr "Tabloid Extra"
 
 #: dlls/localspl/localspl.rc:87
 msgid "A4 Extra"
-msgstr ""
+msgstr "A4 Extra"
 
 #: dlls/localspl/localspl.rc:88
 msgid "Letter Transverse"
-msgstr ""
+msgstr "Letter (pysty)"
 
 #: dlls/localspl/localspl.rc:89
 msgid "A4 Transverse"
-msgstr ""
+msgstr "A4 (pysty)"
 
 #: dlls/localspl/localspl.rc:90
 msgid "Letter Extra Transverse"
-msgstr ""
+msgstr "Letter Extra (pysty)"
 
 #: dlls/localspl/localspl.rc:91
 msgid "Super A"
-msgstr ""
+msgstr "Super A"
 
 #: dlls/localspl/localspl.rc:92
 msgid "Super B"
-msgstr ""
+msgstr "Super B"
 
 #: dlls/localspl/localspl.rc:93
 msgid "Letter Plus"
-msgstr ""
+msgstr "Letter Plus"
 
 #: dlls/localspl/localspl.rc:94
 msgid "A4 Plus"
-msgstr ""
+msgstr "A4 Plus"
 
 #: dlls/localspl/localspl.rc:95
 msgid "A5 Transverse"
-msgstr ""
+msgstr "A5 (pysty)"
 
 #: dlls/localspl/localspl.rc:96
 msgid "B5 (JIS) Transverse"
-msgstr ""
+msgstr "B5 (JIS) (pysty)"
 
 #: dlls/localspl/localspl.rc:97
 msgid "A3 Extra"
-msgstr ""
+msgstr "A3 Extra"
 
 #: dlls/localspl/localspl.rc:98
 msgid "A5 Extra"
-msgstr ""
+msgstr "A5 Extra"
 
 #: dlls/localspl/localspl.rc:99
 msgid "B5 (ISO) Extra"
-msgstr ""
+msgstr "B5 Extra"
 
 #: dlls/localspl/localspl.rc:100
 msgid "A2"
@@ -7230,15 +7228,15 @@ msgstr "A2"
 
 #: dlls/localspl/localspl.rc:101
 msgid "A3 Transverse"
-msgstr ""
+msgstr "A3 (pysty)"
 
 #: dlls/localspl/localspl.rc:102
 msgid "A3 Extra Transverse"
-msgstr ""
+msgstr "A3 Extra (pysty)"
 
 #: dlls/localspl/localspl.rc:103
 msgid "Japanese Double Postcard"
-msgstr ""
+msgstr "Japanilainen tuplapostikortti"
 
 #: dlls/localspl/localspl.rc:104
 msgid "A6"
@@ -7246,71 +7244,71 @@ msgstr "A6"
 
 #: dlls/localspl/localspl.rc:105
 msgid "Japanese Envelope Kaku #2"
-msgstr ""
+msgstr "Japanin kirjekuori Kaku #2"
 
 #: dlls/localspl/localspl.rc:106
 msgid "Japanese Envelope Kaku #3"
-msgstr ""
+msgstr "Japanin kirjekuori Kaku #3"
 
 #: dlls/localspl/localspl.rc:107
 msgid "Japanese Envelope Chou #3"
-msgstr ""
+msgstr "Japanin kirjekuori Chou #3"
 
 #: dlls/localspl/localspl.rc:108
 msgid "Japanese Envelope Chou #4"
-msgstr ""
+msgstr "Japanin kirjekuori Chou #4"
 
 #: dlls/localspl/localspl.rc:109
 msgid "Letter Rotated"
-msgstr ""
+msgstr "Letter (vaaka)"
 
 #: dlls/localspl/localspl.rc:110
 msgid "A3 Rotated"
-msgstr ""
+msgstr "A3 (vaaka)"
 
 #: dlls/localspl/localspl.rc:111
 msgid "A4 Rotated"
-msgstr ""
+msgstr "A4 (vaaka)"
 
 #: dlls/localspl/localspl.rc:112
 msgid "A5 Rotated"
-msgstr ""
+msgstr "A5 (vaaka)"
 
 #: dlls/localspl/localspl.rc:113
 msgid "B4 (JIS) Rotated"
-msgstr ""
+msgstr "B4 (JIS) (vaaka)"
 
 #: dlls/localspl/localspl.rc:114
 msgid "B5 (JIS) Rotated"
-msgstr ""
+msgstr "B5 (JIS) (vaaka)"
 
 #: dlls/localspl/localspl.rc:115
 msgid "Japanese Postcard Rotated"
-msgstr ""
+msgstr "Japanilainen postikortti (vaaka)"
 
 #: dlls/localspl/localspl.rc:116
 msgid "Double Japan Postcard Rotated"
-msgstr ""
+msgstr "Japanilainen tuplapostikortti (vaaka)"
 
 #: dlls/localspl/localspl.rc:117
 msgid "A6 Rotated"
-msgstr ""
+msgstr "A6 (vaaka)"
 
 #: dlls/localspl/localspl.rc:118
 msgid "Japan Envelope Kaku #2 Rotated"
-msgstr ""
+msgstr "Japanin kirjekuori Kaku #2 (vaaka)"
 
 #: dlls/localspl/localspl.rc:119
 msgid "Japan Envelope Kaku #3 Rotated"
-msgstr ""
+msgstr "Japanin kirjekuori Kaku #3 (vaaka)"
 
 #: dlls/localspl/localspl.rc:120
 msgid "Japan Envelope Chou #3 Rotated"
-msgstr ""
+msgstr "Japanin kirjekuori Chou #3 (vaaka)"
 
 #: dlls/localspl/localspl.rc:121
 msgid "Japan Envelope Chou #4 Rotated"
-msgstr ""
+msgstr "Japanin kirjekuori Chou #4 (vaaka)"
 
 #: dlls/localspl/localspl.rc:122
 msgid "B6 (JIS)"
@@ -7318,123 +7316,123 @@ msgstr "B6 (JIS)"
 
 #: dlls/localspl/localspl.rc:123
 msgid "B6 (JIS) Rotated"
-msgstr ""
+msgstr "B6 (JIS) (vaaka)"
 
 #: dlls/localspl/localspl.rc:124
 msgid "12x11"
-msgstr ""
+msgstr "12x11 tuumaa"
 
 #: dlls/localspl/localspl.rc:125
 msgid "Japan Envelope You #4"
-msgstr ""
+msgstr "Japanin kirjekuori You #4"
 
 #: dlls/localspl/localspl.rc:126
 msgid "Japan Envelope You #4 Rotated"
-msgstr ""
+msgstr "Japanin kirjekuori You #4 (vaaka)"
 
 #: dlls/localspl/localspl.rc:127
 msgid "PRC 16K"
-msgstr ""
+msgstr "PRC 16K"
 
 #: dlls/localspl/localspl.rc:128
 msgid "PRC 32K"
-msgstr ""
+msgstr "PRC 32K"
 
 #: dlls/localspl/localspl.rc:129
 msgid "PRC 32K(Big)"
-msgstr ""
+msgstr "PRC 32K(Big)"
 
 #: dlls/localspl/localspl.rc:130
 msgid "PRC Envelope #1"
-msgstr ""
+msgstr "PRC Envelope #1"
 
 #: dlls/localspl/localspl.rc:131
 msgid "PRC Envelope #2"
-msgstr ""
+msgstr "PRC Envelope #2"
 
 #: dlls/localspl/localspl.rc:132
 msgid "PRC Envelope #3"
-msgstr ""
+msgstr "PRC Envelope #3"
 
 #: dlls/localspl/localspl.rc:133
 msgid "PRC Envelope #4"
-msgstr ""
+msgstr "PRC Envelope #4"
 
 #: dlls/localspl/localspl.rc:134
 msgid "PRC Envelope #5"
-msgstr ""
+msgstr "PRC Envelope #5"
 
 #: dlls/localspl/localspl.rc:135
 msgid "PRC Envelope #6"
-msgstr ""
+msgstr "PRC Envelope #6"
 
 #: dlls/localspl/localspl.rc:136
 msgid "PRC Envelope #7"
-msgstr ""
+msgstr "PRC Envelope #7"
 
 #: dlls/localspl/localspl.rc:137
 msgid "PRC Envelope #8"
-msgstr ""
+msgstr "PRC Envelope #8"
 
 #: dlls/localspl/localspl.rc:138
 msgid "PRC Envelope #9"
-msgstr ""
+msgstr "PRC Envelope #9"
 
 #: dlls/localspl/localspl.rc:139
 msgid "PRC Envelope #10"
-msgstr ""
+msgstr "PRC Envelope #10"
 
 #: dlls/localspl/localspl.rc:140
 msgid "PRC 16K Rotated"
-msgstr ""
+msgstr "PRC 16K (vaaka)"
 
 #: dlls/localspl/localspl.rc:141
 msgid "PRC 32K Rotated"
-msgstr ""
+msgstr "PRC 32K (vaaka)"
 
 #: dlls/localspl/localspl.rc:142
 msgid "PRC 32K(Big) Rotated"
-msgstr ""
+msgstr "PRC 32K(Big) (vaaka)"
 
 #: dlls/localspl/localspl.rc:143
 msgid "PRC Envelope #1 Rotated"
-msgstr ""
+msgstr "PRC Envelope #1 (vaaka)"
 
 #: dlls/localspl/localspl.rc:144
 msgid "PRC Envelope #2 Rotated"
-msgstr ""
+msgstr "PRC Envelope #2 (vaaka)"
 
 #: dlls/localspl/localspl.rc:145
 msgid "PRC Envelope #3 Rotated"
-msgstr ""
+msgstr "PRC Envelope #3 (vaaka)"
 
 #: dlls/localspl/localspl.rc:146
 msgid "PRC Envelope #4 Rotated"
-msgstr ""
+msgstr "PRC Envelope #4 (vaaka)"
 
 #: dlls/localspl/localspl.rc:147
 msgid "PRC Envelope #5 Rotated"
-msgstr ""
+msgstr "PRC Envelope #5 (vaaka)"
 
 #: dlls/localspl/localspl.rc:148
 msgid "PRC Envelope #6 Rotated"
-msgstr ""
+msgstr "PRC Envelope #6 (vaaka)"
 
 #: dlls/localspl/localspl.rc:149
 msgid "PRC Envelope #7 Rotated"
-msgstr ""
+msgstr "PRC Envelope #7 (vaaka)"
 
 #: dlls/localspl/localspl.rc:150
 msgid "PRC Envelope #8 Rotated"
-msgstr ""
+msgstr "PRC Envelope #8 (vaaka)"
 
 #: dlls/localspl/localspl.rc:151
 msgid "PRC Envelope #9 Rotated"
-msgstr ""
+msgstr "PRC Envelope #9 (vaaka)"
 
 #: dlls/localspl/localspl.rc:152
 msgid "PRC Envelope #10 Rotated"
-msgstr ""
+msgstr "PRC Envelope #10 (vaaka)"
 
 #: dlls/localspl/localspl.rc:31 dlls/localui/localui.rc:31
 #: dlls/winspool.drv/winspool.rc:30
