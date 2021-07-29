@@ -6,6 +6,7 @@ EXTRADLLFLAGS = -nodefaultlibs -mno-cygwin -Wl,--image-base,0x6f000000
 
 C_SRCS = \
 	file.c \
+	process.c \
 	registry.c \
 	sync.c \
 	syscall.c \

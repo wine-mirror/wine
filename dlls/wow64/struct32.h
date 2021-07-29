@@ -138,6 +138,59 @@ typedef struct
 
 typedef struct
 {
+    ULONG Size;
+    PS_CREATE_STATE State;
+    union
+    {
+        struct
+        {
+            ULONG InitFlags;
+            ACCESS_MASK AdditionalFileAccess;
+        } InitState;
+        struct
+        {
+            ULONG FileHandle;
+        } FailSection;
+        struct
+        {
+            USHORT DllCharacteristics;
+        } ExeFormat;
+        struct
+        {
+            ULONG IFEOKey;
+        } ExeName;
+        struct
+        {
+            ULONG OutputFlags;
+            ULONG FileHandle;
+            ULONG SectionHandle;
+            ULONGLONG UserProcessParametersNative;
+            ULONG UserProcessParametersWow64;
+            ULONG CurrentParameterFlags;
+            ULONGLONG PebAddressNative;
+            ULONG PebAddressWow64;
+            ULONGLONG ManifestAddress;
+            ULONG ManifestSize;
+        } SuccessState;
+    };
+} PS_CREATE_INFO32;
+
+typedef struct
+{
+    ULONG Attribute;
+    ULONG Size;
+    ULONG Value;
+    ULONG ReturnLength;
+} PS_ATTRIBUTE32;
+
+typedef struct
+{
+    ULONG TotalLength;
+    PS_ATTRIBUTE32 Attributes[1];
+} PS_ATTRIBUTE_LIST32;
+
+typedef struct
+{
     ULONG         BaseAddress;
     ULONG         Attributes;
     LARGE_INTEGER Size;

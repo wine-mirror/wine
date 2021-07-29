@@ -197,6 +197,13 @@ static inline void put_size( ULONG *size32, SIZE_T size )
     if (size32) *size32 = min( size, MAXDWORD );
 }
 
+static inline void put_client_id( CLIENT_ID32 *id32, const CLIENT_ID *id )
+{
+    if (!id32) return;
+    id32->UniqueProcess = HandleToLong( id->UniqueProcess );
+    id32->UniqueThread = HandleToLong( id->UniqueThread );
+}
+
 static inline void put_iosb( IO_STATUS_BLOCK32 *io32, const IO_STATUS_BLOCK *io )
 {
     /* sync I/O modifies the 64-bit iosb right away, so in that case we update the 32-bit one */

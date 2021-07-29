@@ -55,7 +55,10 @@
     SYSCALL_ENTRY( NtCreateSection ) \
     SYSCALL_ENTRY( NtCreateSemaphore ) \
     SYSCALL_ENTRY( NtCreateSymbolicLinkObject ) \
+    SYSCALL_ENTRY( NtCreateThread ) \
+    SYSCALL_ENTRY( NtCreateThreadEx ) \
     SYSCALL_ENTRY( NtCreateTimer ) \
+    SYSCALL_ENTRY( NtCreateUserProcess ) \
     SYSCALL_ENTRY( NtDebugContinue ) \
     SYSCALL_ENTRY( NtDelayExecution ) \
     SYSCALL_ENTRY( NtDeleteAtom ) \
@@ -92,9 +95,11 @@
     SYSCALL_ENTRY( NtOpenKeyTransactedEx ) \
     SYSCALL_ENTRY( NtOpenKeyedEvent ) \
     SYSCALL_ENTRY( NtOpenMutant ) \
+    SYSCALL_ENTRY( NtOpenProcess ) \
     SYSCALL_ENTRY( NtOpenSection ) \
     SYSCALL_ENTRY( NtOpenSemaphore ) \
     SYSCALL_ENTRY( NtOpenSymbolicLinkObject  ) \
+    SYSCALL_ENTRY( NtOpenThread ) \
     SYSCALL_ENTRY( NtOpenTimer ) \
     SYSCALL_ENTRY( NtProtectVirtualMemory ) \
     SYSCALL_ENTRY( NtPulseEvent ) \
@@ -156,6 +161,8 @@
     SYSCALL_ENTRY( NtSetVolumeInformationFile ) \
     SYSCALL_ENTRY( NtSignalAndWaitForSingleObject ) \
     SYSCALL_ENTRY( NtTerminateJobObject ) \
+    SYSCALL_ENTRY( NtTerminateProcess ) \
+    SYSCALL_ENTRY( NtTerminateThread ) \
     SYSCALL_ENTRY( NtUnloadKey ) \
     SYSCALL_ENTRY( NtUnlockFile ) \
     SYSCALL_ENTRY( NtUnlockVirtualMemory ) \
