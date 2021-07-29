@@ -990,6 +990,12 @@ LPVOID WINAPI DECLSPEC_HOTPATCH ConvertThreadToFiberEx( LPVOID param, DWORD flag
 {
     struct fiber_data *fiber;
 
+    if (NtCurrentTeb()->Tib.u.FiberData)
+    {
+        SetLastError( ERROR_ALREADY_FIBER );
+        return NULL;
+    }
+
     if (!(fiber = HeapAlloc( GetProcessHeap(), 0, sizeof(*fiber) )))
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );

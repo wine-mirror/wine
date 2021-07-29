@@ -128,10 +128,17 @@ static VOID WINAPI FiberMainProc(LPVOID lpFiberParameter)
 
 static void test_ConvertThreadToFiber(void)
 {
+    void *ret;
+
     if (pConvertThreadToFiber)
     {
         fibers[0] = pConvertThreadToFiber(&testparam);
         ok(fibers[0] != NULL, "ConvertThreadToFiber failed with error %u\n", GetLastError());
+
+        SetLastError(0xdeadbeef);
+        ret = pConvertThreadToFiber(&testparam);
+        ok(!ret, "Got non NULL ret.\n");
+        ok(GetLastError() == ERROR_ALREADY_FIBER, "Got unexpected error %u.\n", GetLastError());
     }
     else
     {
@@ -141,10 +148,17 @@ static void test_ConvertThreadToFiber(void)
 
 static void test_ConvertThreadToFiberEx(void)
 {
+    void *ret;
+
     if (pConvertThreadToFiberEx)
     {
         fibers[0] = pConvertThreadToFiberEx(&testparam, 0);
         ok(fibers[0] != NULL, "ConvertThreadToFiberEx failed with error %u\n", GetLastError());
+
+        SetLastError(0xdeadbeef);
+        ret = pConvertThreadToFiberEx(&testparam, 0);
+        ok(!ret, "Got non NULL ret.\n");
+        ok(GetLastError() == ERROR_ALREADY_FIBER, "Got unexpected error %u.\n", GetLastError());
     }
     else
     {
