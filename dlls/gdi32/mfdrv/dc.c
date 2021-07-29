@@ -55,9 +55,9 @@ BOOL METADC_SetROP2( HDC hdc, INT rop )
     return metadc_param1( hdc, META_SETROP2, (WORD)rop );
 }
 
-INT CDECL MFDRV_SetRelAbs( PHYSDEV dev, INT mode )
+BOOL METADC_SetRelAbs( HDC hdc, INT mode )
 {
-    return MFDRV_MetaParam1( dev, META_SETRELABS, (WORD)mode) ? mode : 0;
+    return metadc_param1( hdc, META_SETRELABS, (WORD)mode );
 }
 
 INT CDECL MFDRV_SetPolyFillMode( PHYSDEV dev, INT mode )

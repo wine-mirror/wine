@@ -194,6 +194,27 @@ INT WINAPI GetRelAbs( HDC hdc, DWORD ignore )
 }
 
 /***********************************************************************
+ *		SetRelAbs (GDI32.@)
+ */
+INT WINAPI SetRelAbs( HDC hdc, INT mode )
+{
+    DC_ATTR *dc_attr;
+    INT ret;
+
+    if (mode != ABSOLUTE && mode != RELATIVE)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    if (is_meta_dc( hdc )) return METADC_SetRelAbs( hdc, mode );
+    if (!(dc_attr = get_dc_attr( hdc ))) return 0;
+    ret = dc_attr->rel_abs_mode;
+    dc_attr->rel_abs_mode = mode;
+    return ret;
+}
+
+/***********************************************************************
  *		SetROP2 (GDI32.@)
  */
 INT WINAPI SetROP2( HDC hdc, INT mode )

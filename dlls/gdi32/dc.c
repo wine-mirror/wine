@@ -1395,34 +1395,6 @@ UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
 
 
 /***********************************************************************
- *		SetRelAbs (GDI32.@)
- */
-INT WINAPI SetRelAbs( HDC hdc, INT mode )
-{
-    INT ret = 0;
-    DC *dc;
-
-    if ((mode != ABSOLUTE) && (mode != RELATIVE))
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
-    }
-    if ((dc = get_dc_ptr( hdc )))
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetRelAbs );
-        mode = physdev->funcs->pSetRelAbs( physdev, mode );
-        if (mode)
-        {
-            ret = dc->attr->rel_abs_mode;
-            dc->attr->rel_abs_mode = mode;
-        }
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-
-/***********************************************************************
  *		GetPolyFillMode (GDI32.@)
  */
 INT WINAPI GetPolyFillMode( HDC hdc )
