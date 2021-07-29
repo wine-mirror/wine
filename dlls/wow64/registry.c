@@ -183,6 +183,62 @@ NTSTATUS WINAPI wow64_NtLoadKey2( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtNotifyChangeKey
+ */
+NTSTATUS WINAPI wow64_NtNotifyChangeKey( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    HANDLE event = get_handle( &args );
+    ULONG apc = get_ulong( &args );
+    ULONG apc_param = get_ulong( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+    ULONG filter = get_ulong( &args );
+    BOOLEAN subtree = get_ulong( &args );
+    void *buffer = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    BOOLEAN async = get_ulong( &args );
+
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtNotifyChangeKey( handle, event, apc_32to64( apc ), apc_param_32to64( apc, apc_param ),
+                                iosb_32to64( &io, io32 ), filter, subtree, buffer, len, async );
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtNotifyChangeMultipleKeys
+ */
+NTSTATUS WINAPI wow64_NtNotifyChangeMultipleKeys( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    ULONG count = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    HANDLE event = get_handle( &args );
+    ULONG apc = get_ulong( &args );
+    ULONG apc_param = get_ulong( &args );
+    IO_STATUS_BLOCK32 *io32 = get_ptr( &args );
+    ULONG filter = get_ulong( &args );
+    BOOLEAN subtree = get_ulong( &args );
+    void *buffer = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    BOOLEAN async = get_ulong( &args );
+
+    struct object_attr64 attr;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+
+    status = NtNotifyChangeMultipleKeys( handle, count, objattr_32to64( &attr, attr32 ), event,
+                                         apc_32to64( apc ), apc_param_32to64( apc, apc_param ),
+                                         iosb_32to64( &io, io32 ), filter, subtree, buffer, len, async );
+    put_iosb( io32, &io );
+    return status;
+}
+
+
+/**********************************************************************
  *           wow64_NtOpenKey
  */
 NTSTATUS WINAPI wow64_NtOpenKey( UINT *args )

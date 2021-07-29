@@ -92,6 +92,8 @@
     SYSCALL_ENTRY( NtMakeTemporaryObject ) \
     SYSCALL_ENTRY( NtMapViewOfSection ) \
     SYSCALL_ENTRY( NtNotifyChangeDirectoryFile ) \
+    SYSCALL_ENTRY( NtNotifyChangeKey ) \
+    SYSCALL_ENTRY( NtNotifyChangeMultipleKeys ) \
     SYSCALL_ENTRY( NtOpenDirectoryObject ) \
     SYSCALL_ENTRY( NtOpenEvent ) \
     SYSCALL_ENTRY( NtOpenFile ) \
