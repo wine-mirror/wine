@@ -65,9 +65,9 @@ BOOL METADC_SetPolyFillMode( HDC hdc, INT mode )
     return metadc_param1( hdc, META_SETPOLYFILLMODE, mode );
 }
 
-INT CDECL MFDRV_SetStretchBltMode( PHYSDEV dev, INT mode )
+BOOL METADC_SetStretchBltMode( HDC hdc, INT mode )
 {
-    return MFDRV_MetaParam1( dev, META_SETSTRETCHBLTMODE, (WORD)mode) ? mode : 0;
+    return metadc_param1( hdc, META_SETSTRETCHBLTMODE, mode );
 }
 
 INT CDECL MFDRV_IntersectClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )

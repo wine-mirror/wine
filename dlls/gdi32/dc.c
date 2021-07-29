@@ -1393,34 +1393,6 @@ UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
 
 
 /***********************************************************************
- *		SetStretchBltMode (GDI32.@)
- */
-INT WINAPI SetStretchBltMode( HDC hdc, INT mode )
-{
-    INT ret = 0;
-    DC *dc;
-
-    if ((mode <= 0) || (mode > MAXSTRETCHBLTMODE))
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
-    }
-    if ((dc = get_dc_ptr( hdc )))
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetStretchBltMode );
-        mode = physdev->funcs->pSetStretchBltMode( physdev, mode );
-        if (mode)
-        {
-            ret = dc->attr->stretch_blt_mode;
-            dc->attr->stretch_blt_mode = mode;
-        }
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-
-/***********************************************************************
  *		GetMapMode (GDI32.@)
  */
 INT WINAPI GetMapMode( HDC hdc )

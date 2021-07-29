@@ -134,13 +134,13 @@ BOOL EMFDC_SetPolyFillMode( DC_ATTR *dc_attr, INT mode )
     return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
-INT CDECL EMFDRV_SetStretchBltMode( PHYSDEV dev, INT mode )
+BOOL EMFDC_SetStretchBltMode( DC_ATTR *dc_attr, INT mode )
 {
     EMRSETSTRETCHBLTMODE emr;
     emr.emr.iType = EMR_SETSTRETCHBLTMODE;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = mode;
-    return EMFDRV_WriteRecord( dev, &emr.emr ) ? mode : 0;
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 BOOL EMFDC_SetArcDirection( DC_ATTR *dc_attr, INT dir )

@@ -141,7 +141,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     EMFDRV_SetPixel,                 /* pSetPixel */
     NULL,                            /* pSetPolyFillMode */
     NULL,                            /* pSetRelAbs */
-    EMFDRV_SetStretchBltMode,        /* pSetStretchBltMode */
+    NULL,                            /* pSetStretchBltMode */
     NULL,                            /* pSetTextCharacterExtra */
     EMFDRV_SetTextColor,             /* pSetTextColor */
     EMFDRV_SetTextJustification,     /* pSetTextJustification */ 
