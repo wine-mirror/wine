@@ -60,9 +60,9 @@ BOOL METADC_SetRelAbs( HDC hdc, INT mode )
     return metadc_param1( hdc, META_SETRELABS, (WORD)mode );
 }
 
-INT CDECL MFDRV_SetPolyFillMode( PHYSDEV dev, INT mode )
+BOOL METADC_SetPolyFillMode( HDC hdc, INT mode )
 {
-    return MFDRV_MetaParam1( dev, META_SETPOLYFILLMODE, (WORD)mode) ? mode : 0;
+    return metadc_param1( hdc, META_SETPOLYFILLMODE, mode );
 }
 
 INT CDECL MFDRV_SetStretchBltMode( PHYSDEV dev, INT mode )

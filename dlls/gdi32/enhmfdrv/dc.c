@@ -125,13 +125,13 @@ BOOL EMFDC_SetROP2( DC_ATTR *dc_attr, INT rop )
     return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
-INT CDECL EMFDRV_SetPolyFillMode( PHYSDEV dev, INT mode )
+BOOL EMFDC_SetPolyFillMode( DC_ATTR *dc_attr, INT mode )
 {
     EMRSETPOLYFILLMODE emr;
     emr.emr.iType = EMR_SETPOLYFILLMODE;
     emr.emr.nSize = sizeof(emr);
     emr.iMode = mode;
-    return EMFDRV_WriteRecord( dev, &emr.emr ) ? mode : 0;
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 INT CDECL EMFDRV_SetStretchBltMode( PHYSDEV dev, INT mode )

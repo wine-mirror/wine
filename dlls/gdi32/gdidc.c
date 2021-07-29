@@ -174,6 +174,29 @@ INT WINAPI GetPolyFillMode( HDC hdc )
 }
 
 /***********************************************************************
+ *		SetPolyFillMode (GDI32.@)
+ */
+INT WINAPI SetPolyFillMode( HDC hdc, INT mode )
+{
+    DC_ATTR *dc_attr;
+    INT ret;
+
+    if (mode <= 0 || mode > POLYFILL_LAST)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    if (is_meta_dc( hdc )) return METADC_SetPolyFillMode( hdc, mode );
+    if (!(dc_attr = get_dc_attr( hdc ))) return 0;
+    if (dc_attr->emf && !EMFDC_SetPolyFillMode( dc_attr, mode )) return 0;
+
+    ret = dc_attr->poly_fill_mode;
+    dc_attr->poly_fill_mode = mode;
+    return ret;
+}
+
+/***********************************************************************
  *		GetCurrentPositionEx (GDI32.@)
  */
 BOOL WINAPI GetCurrentPositionEx( HDC hdc, POINT *point )

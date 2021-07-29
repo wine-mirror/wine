@@ -1393,34 +1393,6 @@ UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
 
 
 /***********************************************************************
- *		SetPolyFillMode (GDI32.@)
- */
-INT WINAPI SetPolyFillMode( HDC hdc, INT mode )
-{
-    INT ret = 0;
-    DC *dc;
-
-    if ((mode <= 0) || (mode > POLYFILL_LAST))
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
-    }
-    if ((dc = get_dc_ptr( hdc )))
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetPolyFillMode );
-        mode = physdev->funcs->pSetPolyFillMode( physdev, mode );
-        if (mode)
-        {
-            ret = dc->attr->poly_fill_mode;
-            dc->attr->poly_fill_mode = mode;
-        }
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-
-/***********************************************************************
  *		GetStretchBltMode (GDI32.@)
  */
 INT WINAPI GetStretchBltMode( HDC hdc )

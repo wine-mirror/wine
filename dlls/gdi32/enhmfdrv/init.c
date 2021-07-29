@@ -139,7 +139,7 @@ static const struct gdi_dc_funcs emfdrv_driver =
     EMFDRV_SetMapMode,               /* pSetMapMode */
     EMFDRV_SetMapperFlags,           /* pSetMapperFlags */
     EMFDRV_SetPixel,                 /* pSetPixel */
-    EMFDRV_SetPolyFillMode,          /* pSetPolyFillMode */
+    NULL,                            /* pSetPolyFillMode */
     NULL,                            /* pSetRelAbs */
     EMFDRV_SetStretchBltMode,        /* pSetStretchBltMode */
     NULL,                            /* pSetTextCharacterExtra */
