@@ -168,6 +168,8 @@
     SYSCALL_ENTRY( NtSetInformationFile ) \
     SYSCALL_ENTRY( NtSetInformationKey ) \
     SYSCALL_ENTRY( NtSetInformationObject ) \
+    SYSCALL_ENTRY( NtSetInformationProcess ) \
+    SYSCALL_ENTRY( NtSetInformationThread ) \
     SYSCALL_ENTRY( NtSetIoCompletion ) \
     SYSCALL_ENTRY( NtSetPowerRequest ) \
     SYSCALL_ENTRY( NtSetThreadExecutionState ) \

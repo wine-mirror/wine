@@ -155,6 +155,29 @@ typedef struct
 
 typedef struct
 {
+    ULONG Version;
+    ULONG Reserved;
+    ULONG Callback;
+} PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION32;
+
+typedef struct
+{
+    ULONG ReserveSize;
+    ULONG ZeroBits;
+    ULONG StackBase;
+} PROCESS_STACK_ALLOCATION_INFORMATION32;
+
+typedef struct
+{
+    ULONG                                  PreferredNode;
+    ULONG                                  Reserved0;
+    ULONG                                  Reserved1;
+    ULONG                                  Reserved2;
+    PROCESS_STACK_ALLOCATION_INFORMATION32 AllocInfo;
+} PROCESS_STACK_ALLOCATION_INFORMATION_EX32;
+
+typedef struct
+{
     ULONG Size;
     PS_CREATE_STATE State;
     union

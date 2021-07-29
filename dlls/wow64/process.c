@@ -817,6 +817,156 @@ NTSTATUS WINAPI wow64_NtSetContextThread( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtSetInformationProcess
+ */
+NTSTATUS WINAPI wow64_NtSetInformationProcess( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    PROCESSINFOCLASS class = get_ulong( &args );
+    void *ptr = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+
+    NTSTATUS status;
+
+    switch (class)
+    {
+    case ProcessDefaultHardErrorMode:   /* ULONG */
+    case ProcessPriorityClass:   /* PROCESS_PRIORITY_CLASS */
+        return NtSetInformationProcess( handle, class, ptr, len );
+
+    case ProcessAffinityMask:   /* ULONG_PTR */
+        if (len == sizeof(ULONG))
+        {
+            ULONG_PTR mask = *(ULONG *)ptr;
+            return NtSetInformationProcess( handle, class, &mask, sizeof(mask) );
+        }
+        else return STATUS_INVALID_PARAMETER;
+
+    case ProcessExecuteFlags:   /* ULONG */
+        return STATUS_ACCESS_DENIED;
+
+    case ProcessInstrumentationCallback:   /* PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION */
+        if (len == sizeof(PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION32))
+        {
+            FIXME( "ProcessInstrumentationCallback stub\n" );
+            return STATUS_SUCCESS;
+        }
+        else return STATUS_INFO_LENGTH_MISMATCH;
+
+    case ProcessThreadStackAllocation:   /* PROCESS_STACK_ALLOCATION_INFORMATION(_EX) */
+        if (len == sizeof(PROCESS_STACK_ALLOCATION_INFORMATION_EX32))
+        {
+            PROCESS_STACK_ALLOCATION_INFORMATION_EX32 *stack = ptr;
+            PROCESS_STACK_ALLOCATION_INFORMATION_EX info;
+
+            info.PreferredNode = stack->PreferredNode;
+            info.Reserved0 = stack->Reserved0;
+            info.Reserved1 = stack->Reserved1;
+            info.Reserved2 = stack->Reserved2;
+            info.AllocInfo.ReserveSize = stack->AllocInfo.ReserveSize;
+            info.AllocInfo.ZeroBits = get_zero_bits( stack->AllocInfo.ZeroBits );
+            if (!(status = NtSetInformationProcess( handle, class, &info, sizeof(info) )))
+                stack->AllocInfo.StackBase = PtrToUlong( info.AllocInfo.StackBase );
+            return status;
+        }
+        else if (len == sizeof(PROCESS_STACK_ALLOCATION_INFORMATION32))
+        {
+            PROCESS_STACK_ALLOCATION_INFORMATION32 *stack = ptr;
+            PROCESS_STACK_ALLOCATION_INFORMATION info;
+
+            info.ReserveSize = stack->ReserveSize;
+            info.ZeroBits = stack->ZeroBits ? stack->ZeroBits : 0x7fffffff;
+            if (!(status = NtSetInformationProcess( handle, class, &info, sizeof(info) )))
+                stack->StackBase = PtrToUlong( info.StackBase );
+            return status;
+        }
+        else return STATUS_INFO_LENGTH_MISMATCH;
+
+    case ProcessWineMakeProcessSystem:   /* HANDLE* */
+        if (len == sizeof(ULONG))
+        {
+            HANDLE event = 0;
+            status = NtSetInformationProcess( handle, class, &event, sizeof(HANDLE *) );
+            put_handle( ptr, event );
+            return status;
+        }
+        else return STATUS_INFO_LENGTH_MISMATCH;
+
+    default:
+        FIXME( "unsupported class %u\n", class );
+        return STATUS_INVALID_INFO_CLASS;
+    }
+}
+
+
+/**********************************************************************
+ *           wow64_NtSetInformationThread
+ */
+NTSTATUS WINAPI wow64_NtSetInformationThread( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    THREADINFOCLASS class = get_ulong( &args );
+    void *ptr = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+
+    switch (class)
+    {
+    case ThreadZeroTlsCell:   /* ULONG */
+    case ThreadBasePriority:   /* ULONG */
+    case ThreadHideFromDebugger:   /* void */
+    case ThreadEnableAlignmentFaultFixup:   /* BOOLEAN */
+        return NtSetInformationThread( handle, class, ptr, len );
+
+    case ThreadImpersonationToken:   /* HANDLE */
+        if (len == sizeof(ULONG))
+        {
+            HANDLE token = LongToHandle( *(ULONG *)ptr );
+            return NtSetInformationThread( handle, class, &token, sizeof(token) );
+        }
+        else return STATUS_INVALID_PARAMETER;
+
+    case ThreadAffinityMask:  /* ULONG_PTR */
+    case ThreadQuerySetWin32StartAddress:   /* PRTL_THREAD_START_ROUTINE */
+        if (len == sizeof(ULONG))
+        {
+            ULONG_PTR mask = *(ULONG *)ptr;
+            return NtSetInformationThread( handle, class, &mask, sizeof(mask) );
+        }
+        else return STATUS_INVALID_PARAMETER;
+
+    case ThreadWow64Context:  /* WOW64_CONTEXT* */
+        return STATUS_INVALID_INFO_CLASS;
+
+    case ThreadGroupInformation:   /* GROUP_AFFINITY */
+        if (len == sizeof(GROUP_AFFINITY32))
+        {
+            GROUP_AFFINITY32 *info32 = ptr;
+            GROUP_AFFINITY info = { info32->Mask, info32->Group };
+
+            return NtSetInformationThread( handle, class, &info, sizeof(info) );
+        }
+        else return STATUS_INVALID_PARAMETER;
+
+    case ThreadDescription:   /* THREAD_DESCRIPTION_INFORMATION */
+        if (len == sizeof(THREAD_DESCRIPTION_INFORMATION32))
+        {
+            THREAD_DESCRIPTION_INFORMATION32 *info32 = ptr;
+            THREAD_DESCRIPTION_INFORMATION info;
+
+            if (!unicode_str_32to64( &info.Description, &info32->Description ))
+                return STATUS_ACCESS_VIOLATION;
+            return NtSetInformationThread( handle, class, &info, sizeof(info) );
+        }
+        else return STATUS_INFO_LENGTH_MISMATCH;
+
+    default:
+        FIXME( "unsupported class %u\n", class );
+        return STATUS_INVALID_INFO_CLASS;
+    }
+}
+
+
+/**********************************************************************
  *           wow64_NtSetThreadExecutionState
  */
 NTSTATUS WINAPI wow64_NtSetThreadExecutionState( UINT *args )
