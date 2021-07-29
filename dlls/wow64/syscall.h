@@ -24,11 +24,14 @@
 #define ALL_SYSCALLS \
     SYSCALL_ENTRY( NtAcceptConnectPort ) \
     SYSCALL_ENTRY( NtAddAtom ) \
+    SYSCALL_ENTRY( NtAlertResumeThread ) \
+    SYSCALL_ENTRY( NtAlertThread ) \
     SYSCALL_ENTRY( NtAllocateLocallyUniqueId ) \
     SYSCALL_ENTRY( NtAllocateUuids ) \
     SYSCALL_ENTRY( NtAllocateVirtualMemory ) \
     SYSCALL_ENTRY( NtAllocateVirtualMemoryEx ) \
     SYSCALL_ENTRY( NtAreMappedFilesTheSame ) \
+    SYSCALL_ENTRY( NtAssignProcessToJobObject ) \
     SYSCALL_ENTRY( NtCancelIoFile ) \
     SYSCALL_ENTRY( NtCancelIoFileEx ) \
     SYSCALL_ENTRY( NtCancelTimer ) \
@@ -59,6 +62,7 @@
     SYSCALL_ENTRY( NtCreateThreadEx ) \
     SYSCALL_ENTRY( NtCreateTimer ) \
     SYSCALL_ENTRY( NtCreateUserProcess ) \
+    SYSCALL_ENTRY( NtDebugActiveProcess ) \
     SYSCALL_ENTRY( NtDebugContinue ) \
     SYSCALL_ENTRY( NtDelayExecution ) \
     SYSCALL_ENTRY( NtDeleteAtom ) \
@@ -70,12 +74,16 @@
     SYSCALL_ENTRY( NtEnumerateValueKey ) \
     SYSCALL_ENTRY( NtFindAtom ) \
     SYSCALL_ENTRY( NtFlushBuffersFile ) \
+    SYSCALL_ENTRY( NtFlushInstructionCache ) \
     SYSCALL_ENTRY( NtFlushKey ) \
+    SYSCALL_ENTRY( NtFlushProcessWriteBuffers ) \
     SYSCALL_ENTRY( NtFlushVirtualMemory ) \
     SYSCALL_ENTRY( NtFreeVirtualMemory ) \
+    SYSCALL_ENTRY( NtGetContextThread ) \
     SYSCALL_ENTRY( NtGetCurrentProcessorNumber ) \
     SYSCALL_ENTRY( NtGetNlsSectionPtr ) \
     SYSCALL_ENTRY( NtGetWriteWatch ) \
+    SYSCALL_ENTRY( NtIsProcessInJob ) \
     SYSCALL_ENTRY( NtListenPort ) \
     SYSCALL_ENTRY( NtLoadKey ) \
     SYSCALL_ENTRY( NtLoadKey2 ) \
@@ -128,6 +136,7 @@
     SYSCALL_ENTRY( NtQueryValueKey ) \
     SYSCALL_ENTRY( NtQueryVirtualMemory ) \
     SYSCALL_ENTRY( NtQueryVolumeInformationFile ) \
+    SYSCALL_ENTRY( NtQueueApcThread ) \
     SYSCALL_ENTRY( NtReadFile ) \
     SYSCALL_ENTRY( NtReadFileScatter ) \
     SYSCALL_ENTRY( NtReadVirtualMemory ) \
@@ -136,6 +145,7 @@
     SYSCALL_ENTRY( NtReleaseSemaphore ) \
     SYSCALL_ENTRY( NtRemoveIoCompletion ) \
     SYSCALL_ENTRY( NtRemoveIoCompletionEx ) \
+    SYSCALL_ENTRY( NtRemoveProcessDebug ) \
     SYSCALL_ENTRY( NtRenameKey ) \
     SYSCALL_ENTRY( NtReplaceKey ) \
     SYSCALL_ENTRY( NtReplyWaitReceivePort ) \
@@ -143,8 +153,11 @@
     SYSCALL_ENTRY( NtResetEvent ) \
     SYSCALL_ENTRY( NtResetWriteWatch ) \
     SYSCALL_ENTRY( NtRestoreKey ) \
+    SYSCALL_ENTRY( NtResumeProcess ) \
+    SYSCALL_ENTRY( NtResumeThread ) \
     SYSCALL_ENTRY( NtSaveKey ) \
     SYSCALL_ENTRY( NtSecureConnectPort ) \
+    SYSCALL_ENTRY( NtSetContextThread ) \
     SYSCALL_ENTRY( NtSetDefaultLocale ) \
     SYSCALL_ENTRY( NtSetDefaultUILanguage ) \
     SYSCALL_ENTRY( NtSetEaFile ) \
@@ -155,11 +168,14 @@
     SYSCALL_ENTRY( NtSetInformationObject ) \
     SYSCALL_ENTRY( NtSetIoCompletion ) \
     SYSCALL_ENTRY( NtSetPowerRequest ) \
+    SYSCALL_ENTRY( NtSetThreadExecutionState ) \
     SYSCALL_ENTRY( NtSetTimer ) \
     SYSCALL_ENTRY( NtSetTimerResolution ) \
     SYSCALL_ENTRY( NtSetValueKey ) \
     SYSCALL_ENTRY( NtSetVolumeInformationFile ) \
     SYSCALL_ENTRY( NtSignalAndWaitForSingleObject ) \
+    SYSCALL_ENTRY( NtSuspendProcess ) \
+    SYSCALL_ENTRY( NtSuspendThread ) \
     SYSCALL_ENTRY( NtTerminateJobObject ) \
     SYSCALL_ENTRY( NtTerminateProcess ) \
     SYSCALL_ENTRY( NtTerminateThread ) \

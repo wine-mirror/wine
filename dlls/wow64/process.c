@@ -32,6 +32,19 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wow);
 
 
+static SIZE_T get_machine_context_size( USHORT machine )
+{
+    switch (machine)
+    {
+    case IMAGE_FILE_MACHINE_I386:  return sizeof(I386_CONTEXT);
+    case IMAGE_FILE_MACHINE_ARMNT: return sizeof(ARM_CONTEXT);
+    case IMAGE_FILE_MACHINE_AMD64: return sizeof(AMD64_CONTEXT);
+    case IMAGE_FILE_MACHINE_ARM64: return sizeof(ARM64_NT_CONTEXT);
+    default: return 0;
+    }
+}
+
+
 static BOOL is_process_wow64( HANDLE handle )
 {
     ULONG_PTR info;
@@ -230,6 +243,41 @@ static void put_ps_attributes( PS_ATTRIBUTE_LIST32 *attr32, const PS_ATTRIBUTE_L
 
 
 /**********************************************************************
+ *           wow64_NtAlertResumeThread
+ */
+NTSTATUS WINAPI wow64_NtAlertResumeThread( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    ULONG *count = get_ptr( &args );
+
+    return NtAlertResumeThread( handle, count );
+}
+
+
+/**********************************************************************
+ *           wow64_NtAlertThread
+ */
+NTSTATUS WINAPI wow64_NtAlertThread( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+
+    return NtAlertThread( handle );
+}
+
+
+/**********************************************************************
+ *           wow64_NtAssignProcessToJobObject
+ */
+NTSTATUS WINAPI wow64_NtAssignProcessToJobObject( UINT *args )
+{
+    HANDLE job = get_handle( &args );
+    HANDLE process = get_handle( &args );
+
+    return NtAssignProcessToJobObject( job, process );
+}
+
+
+/**********************************************************************
  *           wow64_NtCreateThread
  */
 NTSTATUS WINAPI wow64_NtCreateThread( UINT *args )
@@ -329,6 +377,66 @@ NTSTATUS WINAPI wow64_NtCreateUserProcess( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtDebugActiveProcess
+ */
+NTSTATUS WINAPI wow64_NtDebugActiveProcess( UINT *args )
+{
+    HANDLE process = get_handle( &args );
+    HANDLE debug = get_handle( &args );
+
+    return NtDebugActiveProcess( process, debug );
+}
+
+
+/**********************************************************************
+ *           wow64_NtFlushInstructionCache
+ */
+NTSTATUS WINAPI wow64_NtFlushInstructionCache( UINT *args )
+{
+    HANDLE process = get_handle( &args );
+    const void *addr = get_ptr( &args );
+    SIZE_T size = get_ulong( &args );
+
+    return NtFlushInstructionCache( process, addr, size );
+}
+
+
+/**********************************************************************
+ *           wow64_NtFlushProcessWriteBuffers
+ */
+NTSTATUS WINAPI wow64_NtFlushProcessWriteBuffers( UINT *args )
+{
+    NtFlushProcessWriteBuffers();
+    return STATUS_SUCCESS;
+}
+
+
+/**********************************************************************
+ *           wow64_NtGetContextThread
+ */
+NTSTATUS WINAPI wow64_NtGetContextThread( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    WOW64_CONTEXT *context = get_ptr( &args );
+
+    return NtQueryInformationThread( handle, ThreadWow64Context, context,
+                                     get_machine_context_size( current_machine ), NULL );
+}
+
+
+/**********************************************************************
+ *           wow64_NtIsProcessInJob
+ */
+NTSTATUS WINAPI wow64_NtIsProcessInJob( UINT *args )
+{
+    HANDLE process = get_handle( &args );
+    HANDLE job = get_handle( &args );
+
+    return NtIsProcessInJob( process, job );
+}
+
+
+/**********************************************************************
  *           wow64_NtOpenProcess
  */
 NTSTATUS WINAPI wow64_NtOpenProcess( UINT *args )
@@ -369,6 +477,105 @@ NTSTATUS WINAPI wow64_NtOpenThread( UINT *args )
     status = NtOpenThread( &handle, access, objattr_32to64( &attr, attr32 ), client_id_32to64( &id, id32 ));
     put_handle( handle_ptr, handle );
     return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtQueueApcThread
+ */
+NTSTATUS WINAPI wow64_NtQueueApcThread( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    ULONG func = get_ulong( &args );
+    ULONG arg1 = get_ulong( &args );
+    ULONG arg2 = get_ulong( &args );
+    ULONG arg3 = get_ulong( &args );
+
+    return NtQueueApcThread( handle, apc_32to64( func ),
+                             (ULONG_PTR)apc_param_32to64( func, arg1 ), arg2, arg3 );
+}
+
+
+/**********************************************************************
+ *           wow64_NtRemoveProcessDebug
+ */
+NTSTATUS WINAPI wow64_NtRemoveProcessDebug( UINT *args )
+{
+    HANDLE process = get_handle( &args );
+    HANDLE debug = get_handle( &args );
+
+    return NtRemoveProcessDebug( process, debug );
+}
+
+
+/**********************************************************************
+ *           wow64_NtResumeProcess
+ */
+NTSTATUS WINAPI wow64_NtResumeProcess( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+
+    return NtResumeProcess( handle );
+}
+
+
+/**********************************************************************
+ *           wow64_NtResumeThread
+ */
+NTSTATUS WINAPI wow64_NtResumeThread( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    ULONG *count = get_ptr( &args );
+
+    return NtResumeThread( handle, count );
+}
+
+
+/**********************************************************************
+ *           wow64_NtSetContextThread
+ */
+NTSTATUS WINAPI wow64_NtSetContextThread( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    WOW64_CONTEXT *context = get_ptr( &args );
+
+    return NtSetInformationThread( handle, ThreadWow64Context,
+                                   context, get_machine_context_size( current_machine ));
+}
+
+
+/**********************************************************************
+ *           wow64_NtSetThreadExecutionState
+ */
+NTSTATUS WINAPI wow64_NtSetThreadExecutionState( UINT *args )
+{
+    EXECUTION_STATE new_state = get_ulong( &args );
+    EXECUTION_STATE *old_state = get_ptr( &args );
+
+    return NtSetThreadExecutionState( new_state, old_state );
+}
+
+
+/**********************************************************************
+ *           wow64_NtSuspendProcess
+ */
+NTSTATUS WINAPI wow64_NtSuspendProcess( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+
+    return NtSuspendProcess( handle );
+}
+
+
+/**********************************************************************
+ *           wow64_NtSuspendThread
+ */
+NTSTATUS WINAPI wow64_NtSuspendThread( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    ULONG *count = get_ptr( &args );
+
+    return NtSuspendThread( handle, count );
 }
 
 
