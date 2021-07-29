@@ -713,7 +713,6 @@ const struct gdi_dc_funcs dib_driver =
     dibdrv_SelectFont,                  /* pSelectFont */
     NULL,                               /* pSelectPalette */
     dibdrv_SelectPen,                   /* pSelectPen */
-    NULL,                               /* pSetArcDirection */
     NULL,                               /* pSetBkColor */
     dibdrv_SetBoundsRect,               /* pSetBoundsRect */
     dibdrv_SetDCBrushColor,             /* pSetDCBrushColor */
@@ -725,9 +724,6 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pSetMapMode */
     NULL,                               /* pSetMapperFlags */
     dibdrv_SetPixel,                    /* pSetPixel */
-    NULL,                               /* pSetPolyFillMode */
-    NULL,                               /* pSetRelAbs */
-    NULL,                               /* pSetStretchBltMode */
     NULL,                               /* pSetTextCharacterExtra */
     NULL,                               /* pSetTextColor */
     NULL,                               /* pSetTextJustification */
@@ -1309,7 +1305,6 @@ static const struct gdi_dc_funcs window_driver =
     NULL,                               /* pSelectFont */
     NULL,                               /* pSelectPalette */
     NULL,                               /* pSelectPen */
-    NULL,                               /* pSetArcDirection */
     NULL,                               /* pSetBkColor */
     windrv_SetBoundsRect,               /* pSetBoundsRect */
     NULL,                               /* pSetDCBrushColor */
@@ -1321,9 +1316,6 @@ static const struct gdi_dc_funcs window_driver =
     NULL,                               /* pSetMapMode */
     NULL,                               /* pSetMapperFlags */
     windrv_SetPixel,                    /* pSetPixel */
-    NULL,                               /* pSetPolyFillMode */
-    NULL,                               /* pSetRelAbs */
-    NULL,                               /* pSetStretchBltMode */
     NULL,                               /* pSetTextCharacterExtra */
     NULL,                               /* pSetTextColor */
     NULL,                               /* pSetTextJustification */

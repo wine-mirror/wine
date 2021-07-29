@@ -761,11 +761,6 @@ static HPEN CDECL nulldrv_SelectPen( PHYSDEV dev, HPEN pen, const struct brush_p
     return pen;
 }
 
-static INT CDECL nulldrv_SetArcDirection( PHYSDEV dev, INT dir )
-{
-    return dir;
-}
-
 static COLORREF CDECL nulldrv_SetBkColor( PHYSDEV dev, COLORREF color )
 {
     return color;
@@ -820,21 +815,6 @@ static DWORD CDECL nulldrv_SetMapperFlags( PHYSDEV dev, DWORD flags )
 static COLORREF CDECL nulldrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 {
     return color;
-}
-
-static INT CDECL nulldrv_SetPolyFillMode( PHYSDEV dev, INT mode )
-{
-    return mode;
-}
-
-static INT CDECL nulldrv_SetRelAbs( PHYSDEV dev, INT mode )
-{
-    return mode;
-}
-
-static INT CDECL nulldrv_SetStretchBltMode( PHYSDEV dev, INT mode )
-{
-    return mode;
 }
 
 static INT CDECL nulldrv_SetTextCharacterExtra( PHYSDEV dev, INT extra )
@@ -980,7 +960,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_SelectFont,                 /* pSelectFont */
     nulldrv_SelectPalette,              /* pSelectPalette */
     nulldrv_SelectPen,                  /* pSelectPen */
-    nulldrv_SetArcDirection,            /* pSetArcDirection */
     nulldrv_SetBkColor,                 /* pSetBkColor */
     nulldrv_SetBoundsRect,              /* pSetBoundsRect */
     nulldrv_SetDCBrushColor,            /* pSetDCBrushColor */
@@ -992,9 +971,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_SetMapMode,                 /* pSetMapMode */
     nulldrv_SetMapperFlags,             /* pSetMapperFlags */
     nulldrv_SetPixel,                   /* pSetPixel */
-    nulldrv_SetPolyFillMode,            /* pSetPolyFillMode */
-    nulldrv_SetRelAbs,                  /* pSetRelAbs */
-    nulldrv_SetStretchBltMode,          /* pSetStretchBltMode */
     nulldrv_SetTextCharacterExtra,      /* pSetTextCharacterExtra */
     nulldrv_SetTextColor,               /* pSetTextColor */
     nulldrv_SetTextJustification,       /* pSetTextJustification */

@@ -374,7 +374,6 @@ static const struct gdi_dc_funcs android_drv_funcs =
     NULL,                               /* pSelectFont */
     NULL,                               /* pSelectPalette */
     NULL,                               /* pSelectPen */
-    NULL,                               /* pSetArcDirection */
     NULL,                               /* pSetBkColor */
     NULL,                               /* pSetBoundsRect */
     NULL,                               /* pSetDCBrushColor */
@@ -386,9 +385,6 @@ static const struct gdi_dc_funcs android_drv_funcs =
     NULL,                               /* pSetMapMode */
     NULL,                               /* pSetMapperFlags */
     NULL,                               /* pSetPixel */
-    NULL,                               /* pSetPolyFillMode */
-    NULL,                               /* pSetRelAbs */
-    NULL,                               /* pSetStretchBltMode */
     NULL,                               /* pSetTextCharacterExtra */
     NULL,                               /* pSetTextColor */
     NULL,                               /* pSetTextJustification */

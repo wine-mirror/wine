@@ -190,7 +190,6 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_SelectFont,                /* pSelectFont */
     MFDRV_SelectPalette,             /* pSelectPalette */
     MFDRV_SelectPen,                 /* pSelectPen */
-    NULL,                            /* pSetArcDirection */
     MFDRV_SetBkColor,                /* pSetBkColor */
     MFDRV_SetBoundsRect,             /* pSetBoundsRect */
     MFDRV_SetDCBrushColor,           /* pSetDCBrushColor*/
@@ -202,9 +201,6 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     MFDRV_SetMapMode,                /* pSetMapMode */
     MFDRV_SetMapperFlags,            /* pSetMapperFlags */
     NULL,                            /* pSetPixel */
-    NULL,                            /* pSetPolyFillMode */
-    NULL,                            /* pSetRelAbs */
-    NULL,                            /* pSetStretchBltMode */
     MFDRV_SetTextCharacterExtra,     /* pSetTextCharacterExtra */
     MFDRV_SetTextColor,              /* pSetTextColor */
     MFDRV_SetTextJustification,      /* pSetTextJustification */

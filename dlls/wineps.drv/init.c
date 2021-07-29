@@ -868,7 +868,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     PSDRV_SelectFont,                   /* pSelectFont */
     NULL,                               /* pSelectPalette */
     PSDRV_SelectPen,                    /* pSelectPen */
-    NULL,                               /* pSetArcDirection */
     PSDRV_SetBkColor,                   /* pSetBkColor */
     NULL,                               /* pSetBoundsRect */
     PSDRV_SetDCBrushColor,              /* pSetDCBrushColor */
@@ -880,9 +879,6 @@ static const struct gdi_dc_funcs psdrv_funcs =
     NULL,                               /* pSetMapMode */
     NULL,                               /* pSetMapperFlags */
     PSDRV_SetPixel,                     /* pSetPixel */
-    NULL,                               /* pSetPolyFillMode */
-    NULL,                               /* pSetRelAbs */
-    NULL,                               /* pSetStretchBltMode */
     NULL,                               /* pSetTextCharacterExtra */
     PSDRV_SetTextColor,                 /* pSetTextColor */
     NULL,                               /* pSetTextJustification */

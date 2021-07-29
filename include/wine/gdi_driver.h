@@ -158,7 +158,6 @@ struct gdi_dc_funcs
     HFONT    (CDECL *pSelectFont)(PHYSDEV,HFONT,UINT*);
     HPALETTE (CDECL *pSelectPalette)(PHYSDEV,HPALETTE,BOOL);
     HPEN     (CDECL *pSelectPen)(PHYSDEV,HPEN,const struct brush_pattern*);
-    INT      (CDECL *pSetArcDirection)(PHYSDEV,INT);
     COLORREF (CDECL *pSetBkColor)(PHYSDEV,COLORREF);
     UINT     (CDECL *pSetBoundsRect)(PHYSDEV,RECT*,UINT);
     COLORREF (CDECL *pSetDCBrushColor)(PHYSDEV, COLORREF);
@@ -170,9 +169,6 @@ struct gdi_dc_funcs
     INT      (CDECL *pSetMapMode)(PHYSDEV,INT);
     DWORD    (CDECL *pSetMapperFlags)(PHYSDEV,DWORD);
     COLORREF (CDECL *pSetPixel)(PHYSDEV,INT,INT,COLORREF);
-    INT      (CDECL *pSetPolyFillMode)(PHYSDEV,INT);
-    INT      (CDECL *pSetRelAbs)(PHYSDEV,INT);
-    INT      (CDECL *pSetStretchBltMode)(PHYSDEV,INT);
     INT      (CDECL *pSetTextCharacterExtra)(PHYSDEV,INT);
     COLORREF (CDECL *pSetTextColor)(PHYSDEV,COLORREF);
     BOOL     (CDECL *pSetTextJustification)(PHYSDEV,INT,INT);
@@ -199,7 +195,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 53
+#define WINE_GDI_DRIVER_VERSION 54
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */

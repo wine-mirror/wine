@@ -3904,7 +3904,6 @@ const struct gdi_dc_funcs font_driver =
     font_SelectFont,                /* pSelectFont */
     NULL,                           /* pSelectPalette */
     NULL,                           /* pSelectPen */
-    NULL,                           /* pSetArcDirection */
     NULL,                           /* pSetBkColor */
     NULL,                           /* pSetBoundsRect */
     NULL,                           /* pSetDCBrushColor */
@@ -3916,9 +3915,6 @@ const struct gdi_dc_funcs font_driver =
     NULL,                           /* pSetMapMode */
     NULL,                           /* pSetMapperFlags */
     NULL,                           /* pSetPixel */
-    NULL,                           /* pSetPolyFillMode */
-    NULL,                           /* pSetRelAbs */
-    NULL,                           /* pSetStretchBltMode */
     NULL,                           /* pSetTextCharacterExtra */
     NULL,                           /* pSetTextColor */
     NULL,                           /* pSetTextJustification */
