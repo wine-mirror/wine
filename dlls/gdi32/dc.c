@@ -991,35 +991,6 @@ INT WINAPI SetGraphicsMode( HDC hdc, INT mode )
 
 
 /***********************************************************************
- *           SetArcDirection    (GDI32.@)
- */
-INT WINAPI SetArcDirection( HDC hdc, INT dir )
-{
-    DC * dc;
-    INT ret = 0;
-
-    if (dir != AD_COUNTERCLOCKWISE && dir != AD_CLOCKWISE)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-	return 0;
-    }
-
-    if ((dc = get_dc_ptr( hdc )))
-    {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSetArcDirection );
-        dir = physdev->funcs->pSetArcDirection( physdev, dir );
-        if (dir)
-        {
-            ret = dc->attr->arc_direction;
-            dc->attr->arc_direction = dir;
-        }
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-
-/***********************************************************************
  *           GetWorldTransform    (GDI32.@)
  */
 BOOL WINAPI GetWorldTransform( HDC hdc, LPXFORM xform )

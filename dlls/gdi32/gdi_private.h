@@ -111,6 +111,7 @@ extern BOOL EMFDC_Rectangle( DC_ATTR *dc_attr, INT left, INT top, INT right,
                              INT bottom) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_RoundRect( DC_ATTR *dc_attr, INT left, INT top, INT right, INT bottom,
                              INT ell_width, INT ell_height ) DECLSPEC_HIDDEN;
+extern BOOL EMFDC_SetArcDirection( DC_ATTR *dc_attr, INT dir ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_SetBkMode( DC_ATTR *dc_attr, INT mode ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_SetPixel( DC_ATTR *dc_attr, INT x, INT y, COLORREF color ) DECLSPEC_HIDDEN;
 extern BOOL EMFDC_SetROP2( DC_ATTR *dc_attr, INT rop ) DECLSPEC_HIDDEN;

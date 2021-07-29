@@ -134,6 +134,28 @@ INT WINAPI GetArcDirection( HDC hdc )
 }
 
 /***********************************************************************
+ *           SetArcDirection    (GDI32.@)
+ */
+INT WINAPI SetArcDirection( HDC hdc, INT dir )
+{
+    DC_ATTR *dc_attr;
+    INT ret;
+
+    if (dir != AD_COUNTERCLOCKWISE && dir != AD_CLOCKWISE)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    if (!(dc_attr = get_dc_attr( hdc ))) return 0;
+    if (dc_attr->emf && !EMFDC_SetArcDirection( dc_attr, dir )) return 0;
+
+    ret = dc_attr->arc_direction;
+    dc_attr->arc_direction = dir;
+    return ret;
+}
+
+/***********************************************************************
  *           GetLayout    (GDI32.@)
  */
 DWORD WINAPI GetLayout( HDC hdc )

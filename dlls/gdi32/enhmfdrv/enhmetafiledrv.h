@@ -113,7 +113,6 @@ extern BOOL     CDECL EMFDRV_SelectClipPath( PHYSDEV dev, INT iMode ) DECLSPEC_H
 extern HFONT    CDECL EMFDRV_SelectFont( PHYSDEV dev, HFONT handle, UINT *aa_flags ) DECLSPEC_HIDDEN;
 extern HPEN     CDECL EMFDRV_SelectPen( PHYSDEV dev, HPEN handle, const struct brush_pattern *pattern ) DECLSPEC_HIDDEN;
 extern HPALETTE CDECL EMFDRV_SelectPalette( PHYSDEV dev, HPALETTE hPal, BOOL force ) DECLSPEC_HIDDEN;
-extern INT      CDECL EMFDRV_SetArcDirection( PHYSDEV dev, INT arcDirection ) DECLSPEC_HIDDEN;
 extern COLORREF CDECL EMFDRV_SetBkColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 extern COLORREF CDECL EMFDRV_SetDCBrushColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;
 extern COLORREF CDECL EMFDRV_SetDCPenColor( PHYSDEV dev, COLORREF color ) DECLSPEC_HIDDEN;

@@ -143,14 +143,14 @@ INT CDECL EMFDRV_SetStretchBltMode( PHYSDEV dev, INT mode )
     return EMFDRV_WriteRecord( dev, &emr.emr ) ? mode : 0;
 }
 
-INT CDECL EMFDRV_SetArcDirection(PHYSDEV dev, INT arcDirection)
+BOOL EMFDC_SetArcDirection( DC_ATTR *dc_attr, INT dir )
 {
     EMRSETARCDIRECTION emr;
 
     emr.emr.iType = EMR_SETARCDIRECTION;
     emr.emr.nSize = sizeof(emr);
-    emr.iArcDirection = arcDirection;
-    return EMFDRV_WriteRecord(dev, &emr.emr) ? arcDirection : 0;
+    emr.iArcDirection = dir;
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 INT CDECL EMFDRV_ExcludeClipRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
