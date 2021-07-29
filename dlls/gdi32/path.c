@@ -537,7 +537,7 @@ struct gdi_path *get_gdi_flat_path( DC *dc, HRGN *rgn )
 
         free_gdi_path( dc->path );
         dc->path = NULL;
-        if (ret && rgn) *rgn = path_to_region( ret, dc->polyFillMode );
+        if (ret && rgn) *rgn = path_to_region( ret, dc->attr->poly_fill_mode );
     }
     else SetLastError( ERROR_CAN_NOT_COMPLETE );
 
@@ -684,7 +684,7 @@ HRGN WINAPI PathToRegion(HDC hdc)
         dc->path = NULL;
         if (path)
         {
-            ret = path_to_region( path, dc->polyFillMode );
+            ret = path_to_region( path, dc->attr->poly_fill_mode );
             free_gdi_path( path );
         }
     }

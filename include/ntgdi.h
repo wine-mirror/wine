@@ -107,6 +107,7 @@ typedef struct DC_ATTR
     DWORD     layout;
     WORD      text_align;
     WORD      background_mode;
+    WORD      poly_fill_mode;
     WORD      rop_mode;
     WORD      rel_abs_mode;
     void     *emf;

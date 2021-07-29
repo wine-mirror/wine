@@ -1271,7 +1271,8 @@ BOOL CDECL dibdrv_PolyPolygon( PHYSDEV dev, const POINT *pt, const INT *counts, 
 
     if (pdev->brush.style != BS_NULL &&
         get_dib_rect( &pdev->dib, &rc ) &&
-        !(interior = create_polypolygon_region( points, counts, polygons, dc->polyFillMode, &rc )))
+        !(interior = create_polypolygon_region( points, counts, polygons,
+                                                dc->attr->poly_fill_mode, &rc )))
     {
         ret = FALSE;
         goto done;

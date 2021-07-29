@@ -83,8 +83,8 @@ static void set_initial_dc_state( DC *dc )
     dc->attr->layout        = 0;
     dc->font_code_page      = CP_ACP;
     dc->attr->rop_mode      = R2_COPYPEN;
-    dc->polyFillMode        = ALTERNATE;
-    dc->stretchBltMode      = BLACKONWHITE;
+    dc->attr->poly_fill_mode   = ALTERNATE;
+    dc->stretchBltMode         = BLACKONWHITE;
     dc->attr->rel_abs_mode     = ABSOLUTE;
     dc->attr->background_mode  = OPAQUE;
     dc->attr->background_color = RGB( 255, 255, 255 );
@@ -398,8 +398,6 @@ INT CDECL nulldrv_SaveDC( PHYSDEV dev )
     newdc->hFont            = dc->hFont;
     newdc->hBitmap          = dc->hBitmap;
     newdc->hPalette         = dc->hPalette;
-    newdc->polyFillMode     = dc->polyFillMode;
-    newdc->stretchBltMode   = dc->stretchBltMode;
     newdc->dcBrushColor     = dc->dcBrushColor;
     newdc->dcPenColor       = dc->dcPenColor;
     newdc->brush_org        = dc->brush_org;
@@ -467,7 +465,7 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
 
     dc->attr->layout     = dcs->attr->layout;
     dc->attr->rop_mode   = dcs->attr->rop_mode;
-    dc->polyFillMode     = dcs->polyFillMode;
+    dc->attr->poly_fill_mode   = dcs->attr->poly_fill_mode;
     dc->stretchBltMode   = dcs->stretchBltMode;
     dc->attr->rel_abs_mode     = dcs->attr->rel_abs_mode;
     dc->attr->background_mode  = dcs->attr->background_mode;
@@ -1395,22 +1393,6 @@ UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
 
 
 /***********************************************************************
- *		GetPolyFillMode (GDI32.@)
- */
-INT WINAPI GetPolyFillMode( HDC hdc )
-{
-    INT ret = 0;
-    DC * dc = get_dc_ptr( hdc );
-    if (dc)
-    {
-        ret = dc->polyFillMode;
-        release_dc_ptr( dc );
-    }
-    return ret;
-}
-
-
-/***********************************************************************
  *		SetPolyFillMode (GDI32.@)
  */
 INT WINAPI SetPolyFillMode( HDC hdc, INT mode )
@@ -1429,8 +1411,8 @@ INT WINAPI SetPolyFillMode( HDC hdc, INT mode )
         mode = physdev->funcs->pSetPolyFillMode( physdev, mode );
         if (mode)
         {
-            ret = dc->polyFillMode;
-            dc->polyFillMode = mode;
+            ret = dc->attr->poly_fill_mode;
+            dc->attr->poly_fill_mode = mode;
         }
         release_dc_ptr( dc );
     }

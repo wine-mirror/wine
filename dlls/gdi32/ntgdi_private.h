@@ -116,7 +116,6 @@ typedef struct tagDC
     const struct font_gamma_ramp *font_gamma_ramp;
 
     UINT          font_code_page;
-    WORD          polyFillMode;
     WORD          stretchBltMode;
     COLORREF      dcBrushColor;
     COLORREF      dcPenColor;
