@@ -663,13 +663,20 @@ struct apartment * apartment_findfromtid(DWORD tid)
     EnterCriticalSection(&apt_cs);
     LIST_FOR_EACH_ENTRY(apt, &apts, struct apartment, entry)
     {
-        if (apt->tid == tid)
+        if (apt != mta && apt->tid == tid)
         {
             result = apt;
             apartment_addref(result);
             break;
         }
     }
+
+    if (!result && mta && mta->tid == tid)
+    {
+        result = mta;
+        apartment_addref(result);
+    }
+
     LeaveCriticalSection(&apt_cs);
 
     return result;
