@@ -98,7 +98,7 @@ static void set_initial_dc_state( DC *dc )
     dc->charExtra           = 0;
     dc->breakExtra          = 0;
     dc->breakRem            = 0;
-    dc->MapMode             = MM_TEXT;
+    dc->attr->map_mode      = MM_TEXT;
     dc->attr->graphics_mode = GM_COMPATIBLE;
     dc->attr->cur_pos.x     = 0;
     dc->attr->cur_pos.y     = 0;
@@ -405,7 +405,6 @@ INT CDECL nulldrv_SaveDC( PHYSDEV dev )
     newdc->charExtra        = dc->charExtra;
     newdc->breakExtra       = dc->breakExtra;
     newdc->breakRem         = dc->breakRem;
-    newdc->MapMode          = dc->MapMode;
     newdc->xformWorld2Wnd   = dc->xformWorld2Wnd;
     newdc->xformWorld2Vport = dc->xformWorld2Vport;
     newdc->xformVport2World = dc->xformVport2World;
@@ -479,9 +478,9 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     dc->charExtra        = dcs->charExtra;
     dc->breakExtra       = dcs->breakExtra;
     dc->breakRem         = dcs->breakRem;
-    dc->MapMode          = dcs->MapMode;
-    dc->attr->graphics_mode = dcs->attr->graphics_mode;
-    dc->attr->cur_pos    = dcs->attr->cur_pos;
+    dc->attr->map_mode         = dcs->attr->map_mode;
+    dc->attr->graphics_mode    = dcs->attr->graphics_mode;
+    dc->attr->cur_pos          = dcs->attr->cur_pos;
     dc->attr->arc_direction    = dcs->attr->arc_direction;
     dc->xformWorld2Wnd   = dcs->xformWorld2Wnd;
     dc->xformWorld2Vport = dcs->xformWorld2Vport;
@@ -1388,22 +1387,6 @@ UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
     if (flags & DCB_DISABLE) dc->bounds_enabled = FALSE;
 
     release_dc_ptr( dc );
-    return ret;
-}
-
-
-/***********************************************************************
- *		GetMapMode (GDI32.@)
- */
-INT WINAPI GetMapMode( HDC hdc )
-{
-    INT ret = 0;
-    DC * dc = get_dc_ptr( hdc );
-    if (dc)
-    {
-        ret = dc->MapMode;
-        release_dc_ptr( dc );
-    }
     return ret;
 }
 

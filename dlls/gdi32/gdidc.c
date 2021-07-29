@@ -165,6 +165,15 @@ DWORD WINAPI GetLayout( HDC hdc )
 }
 
 /***********************************************************************
+ *           GetMapMode  (GDI32.@)
+ */
+INT WINAPI GetMapMode( HDC hdc )
+{
+    DC_ATTR *dc_attr = get_dc_attr( hdc );
+    return dc_attr ? dc_attr->map_mode : 0;
+}
+
+/***********************************************************************
  *		GetPolyFillMode  (GDI32.@)
  */
 INT WINAPI GetPolyFillMode( HDC hdc )

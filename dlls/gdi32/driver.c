@@ -799,7 +799,7 @@ static DWORD CDECL nulldrv_SetLayout( PHYSDEV dev, DWORD layout )
     dc->attr->layout = layout;
     if (layout != old_layout)
     {
-        if (layout & LAYOUT_RTL) dc->MapMode = MM_ANISOTROPIC;
+        if (layout & LAYOUT_RTL) dc->attr->map_mode = MM_ANISOTROPIC;
         DC_UpdateXforms( dc );
     }
 

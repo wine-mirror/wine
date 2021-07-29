@@ -111,6 +111,7 @@ typedef struct DC_ATTR
     WORD      rop_mode;
     WORD      rel_abs_mode;
     WORD      stretch_blt_mode;
+    INT       map_mode;
     void     *emf;
 } DC_ATTR;
 
