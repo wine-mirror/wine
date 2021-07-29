@@ -1306,52 +1306,6 @@ BOOL WINAPI SetDeviceGammaRamp(HDC hDC, LPVOID ptr)
     return ret;
 }
 
-/***********************************************************************
- *           GetColorSpace    (GDI32.@)
- */
-HCOLORSPACE WINAPI GetColorSpace(HDC hdc)
-{
-/*FIXME    Need to do whatever GetColorSpace actually does */
-    return 0;
-}
-
-/***********************************************************************
- *           CreateColorSpaceA    (GDI32.@)
- */
-HCOLORSPACE WINAPI CreateColorSpaceA( LPLOGCOLORSPACEA lpLogColorSpace )
-{
-  FIXME( "stub\n" );
-  return 0;
-}
-
-/***********************************************************************
- *           CreateColorSpaceW    (GDI32.@)
- */
-HCOLORSPACE WINAPI CreateColorSpaceW( LPLOGCOLORSPACEW lpLogColorSpace )
-{
-  FIXME( "stub\n" );
-  return 0;
-}
-
-/***********************************************************************
- *           DeleteColorSpace     (GDI32.@)
- */
-BOOL WINAPI DeleteColorSpace( HCOLORSPACE hColorSpace )
-{
-  FIXME( "stub\n" );
-
-  return TRUE;
-}
-
-/***********************************************************************
- *           SetColorSpace     (GDI32.@)
- */
-HCOLORSPACE WINAPI SetColorSpace( HDC hDC, HCOLORSPACE hColorSpace )
-{
-  FIXME( "stub\n" );
-
-  return hColorSpace;
-}
 
 /***********************************************************************
  *           GetBoundsRect    (GDI32.@)
