@@ -2189,7 +2189,7 @@ HPEN CDECL dibdrv_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern 
     pdev->pen_width  = get_pen_device_width( dc, logpen.lopnWidth.x );
 
     if (hpen == GetStockObject( DC_PEN ))
-        logbrush.lbColor = dc->dcPenColor;
+        logbrush.lbColor = dc->attr->pen_color;
 
     set_dash_pattern( &pdev->pen_pattern, 0, NULL );
     select_brush( pdev, &pdev->pen_brush, &logbrush, pattern, dither );

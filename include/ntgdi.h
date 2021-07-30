@@ -101,6 +101,7 @@ typedef struct DC_ATTR
     LONG      disabled;            /* disabled flag, controled by DCHF_(DISABLE|ENABLE)DC */
     COLORREF  background_color;
     COLORREF  brush_color;
+    COLORREF  pen_color;
     COLORREF  text_color;
     POINT     cur_pos;
     INT       graphics_mode;
