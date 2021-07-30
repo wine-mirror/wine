@@ -109,6 +109,42 @@ typedef struct
 
 typedef struct
 {
+    DWORD NumberOfAssignedProcesses;
+    DWORD NumberOfProcessIdsInList;
+    ULONG ProcessIdList[1];
+} JOBOBJECT_BASIC_PROCESS_ID_LIST32;
+
+typedef struct
+{
+    LARGE_INTEGER PerProcessUserTimeLimit;
+    LARGE_INTEGER PerJobUserTimeLimit;
+    DWORD         LimitFlags;
+    ULONG         MinimumWorkingSetSize;
+    ULONG         MaximumWorkingSetSize;
+    DWORD         ActiveProcessLimit;
+    ULONG         Affinity;
+    DWORD         PriorityClass;
+    DWORD         SchedulingClass;
+} JOBOBJECT_BASIC_LIMIT_INFORMATION32;
+
+typedef struct
+{
+    JOBOBJECT_BASIC_LIMIT_INFORMATION32 BasicLimitInformation;
+    IO_COUNTERS                         IoInfo;
+    ULONG                               ProcessMemoryLimit;
+    ULONG                               JobMemoryLimit;
+    ULONG                               PeakProcessMemoryUsed;
+    ULONG                               PeakJobMemoryUsed;
+} JOBOBJECT_EXTENDED_LIMIT_INFORMATION32;
+
+typedef struct
+{
+    ULONG CompletionKey;
+    LONG  CompletionPort;
+} JOBOBJECT_ASSOCIATE_COMPLETION_PORT32;
+
+typedef struct
+{
     ULONG    BaseAddress;
     ULONG    AllocationBase;
     DWORD    AllocationProtect;

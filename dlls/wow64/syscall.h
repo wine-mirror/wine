@@ -134,6 +134,7 @@
     SYSCALL_ENTRY( NtQueryFullAttributesFile ) \
     SYSCALL_ENTRY( NtQueryInformationAtom ) \
     SYSCALL_ENTRY( NtQueryInformationFile ) \
+    SYSCALL_ENTRY( NtQueryInformationJobObject ) \
     SYSCALL_ENTRY( NtQueryInformationProcess ) \
     SYSCALL_ENTRY( NtQueryInformationThread ) \
     SYSCALL_ENTRY( NtQueryInformationToken ) \
@@ -181,6 +182,7 @@
     SYSCALL_ENTRY( NtSetEvent ) \
     SYSCALL_ENTRY( NtSetInformationDebugObject ) \
     SYSCALL_ENTRY( NtSetInformationFile ) \
+    SYSCALL_ENTRY( NtSetInformationJobObject ) \
     SYSCALL_ENTRY( NtSetInformationKey ) \
     SYSCALL_ENTRY( NtSetInformationObject ) \
     SYSCALL_ENTRY( NtSetInformationProcess ) \

@@ -67,6 +67,37 @@ static void put_object_type_info( OBJECT_TYPE_INFORMATION32 *info32, const OBJEC
 }
 
 
+static JOBOBJECT_BASIC_LIMIT_INFORMATION *job_basic_limit_info_32to64( JOBOBJECT_BASIC_LIMIT_INFORMATION *out,
+                                                                       const JOBOBJECT_BASIC_LIMIT_INFORMATION32 *in )
+{
+    out->PerProcessUserTimeLimit = in->PerProcessUserTimeLimit;
+    out->PerJobUserTimeLimit     = in->PerJobUserTimeLimit;
+    out->LimitFlags              = in->LimitFlags;
+    out->MinimumWorkingSetSize   = in->MinimumWorkingSetSize;
+    out->MaximumWorkingSetSize   = in->MaximumWorkingSetSize;
+    out->ActiveProcessLimit      = in->ActiveProcessLimit;
+    out->Affinity                = in->Affinity;
+    out->PriorityClass           = in->PriorityClass;
+    out->SchedulingClass         = in->SchedulingClass;
+    return out;
+}
+
+
+static void put_job_basic_limit_info( JOBOBJECT_BASIC_LIMIT_INFORMATION32 *info32,
+                                      const JOBOBJECT_BASIC_LIMIT_INFORMATION *info )
+{
+    info32->PerProcessUserTimeLimit = info->PerProcessUserTimeLimit;
+    info32->PerJobUserTimeLimit     = info->PerJobUserTimeLimit;
+    info32->LimitFlags              = info->LimitFlags;
+    info32->MinimumWorkingSetSize   = info->MinimumWorkingSetSize;
+    info32->MaximumWorkingSetSize   = info->MaximumWorkingSetSize;
+    info32->ActiveProcessLimit      = info->ActiveProcessLimit;
+    info32->Affinity                = info->Affinity;
+    info32->PriorityClass           = info->PriorityClass;
+    info32->SchedulingClass         = info->SchedulingClass;
+}
+
+
 void put_section_image_info( SECTION_IMAGE_INFORMATION32 *info32, const SECTION_IMAGE_INFORMATION *info )
 {
     if (info->Machine == IMAGE_FILE_MACHINE_AMD64 || info->Machine == IMAGE_FILE_MACHINE_ARM64)
@@ -791,6 +822,89 @@ NTSTATUS WINAPI wow64_NtQueryEvent( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtQueryInformationJobObject
+ */
+NTSTATUS WINAPI wow64_NtQueryInformationJobObject( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    JOBOBJECTINFOCLASS class = get_ulong( &args );
+    void *ptr = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    ULONG *retlen = get_ptr( &args );
+
+    NTSTATUS status;
+
+    switch (class)
+    {
+    case JobObjectBasicAccountingInformation:   /* JOBOBJECT_BASIC_ACCOUNTING_INFORMATION */
+        return NtQueryInformationJobObject( handle, class, ptr, len, retlen );
+
+    case JobObjectBasicLimitInformation:   /* JOBOBJECT_BASIC_LIMIT_INFORMATION */
+        if (len >= sizeof(JOBOBJECT_BASIC_LIMIT_INFORMATION32))
+        {
+            JOBOBJECT_BASIC_LIMIT_INFORMATION32 *info32 = ptr;
+            JOBOBJECT_BASIC_LIMIT_INFORMATION info;
+
+            status = NtQueryInformationJobObject( handle, class, &info, sizeof(info), NULL );
+            if (!status) put_job_basic_limit_info( info32, &info );
+            if (retlen) *retlen = sizeof(*info32);
+            return status;
+        }
+        else return STATUS_INFO_LENGTH_MISMATCH;
+
+    case JobObjectBasicProcessIdList:   /* JOBOBJECT_BASIC_PROCESS_ID_LIST */
+        if (len >= sizeof(JOBOBJECT_BASIC_PROCESS_ID_LIST32))
+        {
+            JOBOBJECT_BASIC_PROCESS_ID_LIST32 *info32 = ptr;
+            JOBOBJECT_BASIC_PROCESS_ID_LIST *info;
+            ULONG i, count, size;
+
+            count = (len - offsetof( JOBOBJECT_BASIC_PROCESS_ID_LIST32, ProcessIdList )) / sizeof(info32->ProcessIdList[0]);
+            size = offsetof( JOBOBJECT_BASIC_PROCESS_ID_LIST, ProcessIdList[count] );
+            info = Wow64AllocateTemp( size );
+            status = NtQueryInformationJobObject( handle, class, info, size, NULL );
+            if (!status)
+            {
+                info32->NumberOfAssignedProcesses = info->NumberOfAssignedProcesses;
+                info32->NumberOfProcessIdsInList  = info->NumberOfProcessIdsInList;
+                for (i = 0; i < info->NumberOfProcessIdsInList; i++)
+                    info32->ProcessIdList[i] = info->ProcessIdList[i];
+                if (retlen) *retlen = offsetof( JOBOBJECT_BASIC_PROCESS_ID_LIST32, ProcessIdList[i] );
+            }
+            return status;
+        }
+        else return STATUS_INFO_LENGTH_MISMATCH;
+
+    case JobObjectExtendedLimitInformation:   /* JOBOBJECT_EXTENDED_LIMIT_INFORMATION */
+        if (len >= sizeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION32))
+        {
+            JOBOBJECT_EXTENDED_LIMIT_INFORMATION32 *info32 = ptr;
+            JOBOBJECT_EXTENDED_LIMIT_INFORMATION info;
+
+            status = NtQueryInformationJobObject( handle, class, &info, sizeof(info), NULL );
+            if (!status)
+            {
+                put_job_basic_limit_info( &info32->BasicLimitInformation, &info.BasicLimitInformation );
+                info32->IoInfo                = info.IoInfo;
+                info32->ProcessMemoryLimit    = info.ProcessMemoryLimit;
+                info32->JobMemoryLimit        = info.JobMemoryLimit;
+                info32->PeakProcessMemoryUsed = info.PeakProcessMemoryUsed;
+                info32->PeakJobMemoryUsed     = info.PeakJobMemoryUsed;
+            }
+            if (retlen) *retlen = sizeof(*info32);
+            return status;
+        }
+        else return STATUS_INFO_LENGTH_MISMATCH;
+
+    default:
+        if (class >= MaxJobObjectInfoClass) return STATUS_INVALID_PARAMETER;
+        FIXME( "unsupported class %u\n", class );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+}
+
+
+/**********************************************************************
  *           wow64_NtQueryIoCompletion
  */
 NTSTATUS WINAPI wow64_NtQueryIoCompletion( UINT *args )
@@ -1174,6 +1288,70 @@ NTSTATUS WINAPI wow64_NtSetInformationDebugObject( UINT *args )
     ULONG *retlen = get_ptr( &args );
 
     return NtSetInformationDebugObject( handle, class, ptr, len, retlen );
+}
+
+
+/**********************************************************************
+ *           wow64_NtSetInformationJobObject
+ */
+NTSTATUS WINAPI wow64_NtSetInformationJobObject( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    JOBOBJECTINFOCLASS class = get_ulong( &args );
+    void *ptr = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+
+    switch (class)
+    {
+    case JobObjectBasicLimitInformation:   /* JOBOBJECT_BASIC_LIMIT_INFORMATION */
+        if (len == sizeof(JOBOBJECT_BASIC_LIMIT_INFORMATION32))
+        {
+            JOBOBJECT_BASIC_LIMIT_INFORMATION info;
+
+            return NtSetInformationJobObject( handle, class, job_basic_limit_info_32to64( &info, ptr ),
+                                              sizeof(info) );
+        }
+        else return STATUS_INVALID_PARAMETER;
+
+    case JobObjectBasicUIRestrictions:
+        FIXME( "unsupported class JobObjectBasicUIRestrictions\n" );
+        return STATUS_SUCCESS;
+
+    case JobObjectAssociateCompletionPortInformation:   /* JOBOBJECT_ASSOCIATE_COMPLETION_PORT */
+        if (len == sizeof(JOBOBJECT_ASSOCIATE_COMPLETION_PORT32))
+        {
+            JOBOBJECT_ASSOCIATE_COMPLETION_PORT32 *info32 = ptr;
+            JOBOBJECT_ASSOCIATE_COMPLETION_PORT info;
+
+            info.CompletionKey  = ULongToPtr( info32->CompletionKey );
+            info.CompletionPort = LongToHandle( info32->CompletionPort );
+            return NtSetInformationJobObject( handle, class, &info, sizeof(info) );
+        }
+        else return STATUS_INVALID_PARAMETER;
+
+    case JobObjectExtendedLimitInformation:   /* JOBOBJECT_EXTENDED_LIMIT_INFORMATION */
+        if (len == sizeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION32))
+        {
+            JOBOBJECT_EXTENDED_LIMIT_INFORMATION32 *info32 = ptr;
+            JOBOBJECT_EXTENDED_LIMIT_INFORMATION info;
+
+            info.IoInfo                = info32->IoInfo;
+            info.ProcessMemoryLimit    = info32->ProcessMemoryLimit;
+            info.JobMemoryLimit        = info32->JobMemoryLimit;
+            info.PeakProcessMemoryUsed = info32->PeakProcessMemoryUsed;
+            info.PeakJobMemoryUsed     = info32->PeakJobMemoryUsed;
+            return NtSetInformationJobObject( handle, class,
+                                              job_basic_limit_info_32to64( &info.BasicLimitInformation,
+                                                                           &info32->BasicLimitInformation ),
+                                              sizeof(info) );
+        }
+        else return STATUS_INVALID_PARAMETER;
+
+    default:
+        if (class >= MaxJobObjectInfoClass) return STATUS_INVALID_PARAMETER;
+        FIXME( "unsupported class %u\n", class );
+        return STATUS_NOT_IMPLEMENTED;
+    }
 }
 
 
