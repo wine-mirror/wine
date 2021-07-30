@@ -2158,7 +2158,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             return SOCKET_ERROR;
         } /* end switch(optname) */
     }/* end case WS_SOL_SOCKET */
-#ifdef HAS_IPX
+
     case WS_NSPROTO_IPX:
     {
         struct WS_sockaddr_ipx addr;
@@ -2166,27 +2166,6 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         int namelen;
         switch(optname)
         {
-        case WS_IPX_PTYPE:
-            if ((fd = get_sock_fd( s, 0, NULL )) == -1) return SOCKET_ERROR;
-#ifdef SOL_IPX
-            if(getsockopt(fd, SOL_IPX, IPX_TYPE, optval, (socklen_t *)optlen) == -1)
-            {
-                ret = SOCKET_ERROR;
-            }
-#else
-            {
-                struct ipx val;
-                socklen_t len=sizeof(struct ipx);
-                if(getsockopt(fd, 0, SO_DEFAULT_HEADERS, &val, &len) == -1 )
-                    ret = SOCKET_ERROR;
-                else
-                    *optval = (int)val.ipx_pt;
-            }
-#endif
-            TRACE("ptype: %d (fd: %d)\n", *(int*)optval, fd);
-            release_sock_fd( s, fd );
-            return ret;
-
         case WS_IPX_ADDRESS:
             /*
             *  On a Win2000 system with one network card there are usually
@@ -2217,12 +2196,14 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             *(int*)optval = 1; /* As noted under IPX_ADDRESS we have just one card. */
             return 0;
 
+        case WS_IPX_PTYPE:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IPX_PTYPE, optval, optlen );
+
         default:
             FIXME("IPX optname:%x\n", optname);
             return SOCKET_ERROR;
         }/* end switch(optname) */
     } /* end case WS_NSPROTO_IPX */
-#endif
 
 #ifdef HAS_IRDA
 #define MAX_IRDA_DEVICES 10

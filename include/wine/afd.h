@@ -223,6 +223,7 @@ struct afd_get_events_params
 #define IOCTL_AFD_WINE_SET_IPV6_UNICAST_IF              WINE_AFD_IOC(278)
 #define IOCTL_AFD_WINE_GET_IPV6_V6ONLY                  WINE_AFD_IOC(279)
 #define IOCTL_AFD_WINE_SET_IPV6_V6ONLY                  WINE_AFD_IOC(280)
+#define IOCTL_AFD_WINE_GET_IPX_PTYPE                    WINE_AFD_IOC(281)
 
 struct afd_create_params
 {

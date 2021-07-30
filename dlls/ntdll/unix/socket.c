@@ -1922,6 +1922,28 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             return ret ? sock_errno_to_status( errno ) : STATUS_SUCCESS;
         }
 
+#ifdef SOL_IPX
+        case IOCTL_AFD_WINE_GET_IPX_PTYPE:
+            return do_getsockopt( handle, io, SOL_IPX, IPX_TYPE, out_buffer, out_size );
+#elif defined(SO_DEFAULT_HEADERS)
+        case IOCTL_AFD_WINE_GET_IPX_PTYPE:
+        {
+            int fd, needs_close = FALSE;
+            struct ipx value;
+            socklen_t len = sizeof(value);
+            int ret;
+
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+                return status;
+
+            ret = getsockopt( fd, 0, SO_DEFAULT_HEADERS, &value, &len );
+            if (needs_close) close( fd );
+            if (ret) return sock_errno_to_status( errno );
+            *(DWORD *)out_buffer = value.ipx_pt;
+            return STATUS_SUCCESS;
+        }
+#endif
+
         default:
         {
             if ((code >> 16) == FILE_DEVICE_NETWORK)
