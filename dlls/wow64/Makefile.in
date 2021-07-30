@@ -11,4 +11,5 @@ C_SRCS = \
 	security.c \
 	sync.c \
 	syscall.c \
+	system.c \
 	virtual.c

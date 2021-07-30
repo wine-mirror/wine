@@ -72,6 +72,7 @@
     SYSCALL_ENTRY( NtDeleteFile ) \
     SYSCALL_ENTRY( NtDeleteKey ) \
     SYSCALL_ENTRY( NtDeleteValueKey ) \
+    SYSCALL_ENTRY( NtDisplayString ) \
     SYSCALL_ENTRY( NtDuplicateObject ) \
     SYSCALL_ENTRY( NtDuplicateToken ) \
     SYSCALL_ENTRY( NtEnumerateKey ) \
@@ -89,8 +90,10 @@
     SYSCALL_ENTRY( NtGetNlsSectionPtr ) \
     SYSCALL_ENTRY( NtGetWriteWatch ) \
     SYSCALL_ENTRY( NtImpersonateAnonymousToken ) \
+    SYSCALL_ENTRY( NtInitiatePowerAction  ) \
     SYSCALL_ENTRY( NtIsProcessInJob ) \
     SYSCALL_ENTRY( NtListenPort ) \
+    SYSCALL_ENTRY( NtLoadDriver ) \
     SYSCALL_ENTRY( NtLoadKey ) \
     SYSCALL_ENTRY( NtLoadKey2 ) \
     SYSCALL_ENTRY( NtLockFile ) \
@@ -121,6 +124,7 @@
     SYSCALL_ENTRY( NtOpenThreadToken ) \
     SYSCALL_ENTRY( NtOpenThreadTokenEx ) \
     SYSCALL_ENTRY( NtOpenTimer ) \
+    SYSCALL_ENTRY( NtPowerInformation ) \
     SYSCALL_ENTRY( NtPrivilegeCheck ) \
     SYSCALL_ENTRY( NtProtectVirtualMemory ) \
     SYSCALL_ENTRY( NtPulseEvent ) \
@@ -141,6 +145,7 @@
     SYSCALL_ENTRY( NtQueryInstallUILanguage ) \
     SYSCALL_ENTRY( NtQueryIoCompletion ) \
     SYSCALL_ENTRY( NtQueryKey ) \
+    SYSCALL_ENTRY( NtQueryLicenseValue ) \
     SYSCALL_ENTRY( NtQueryMultipleValueKey ) \
     SYSCALL_ENTRY( NtQueryMutant ) \
     SYSCALL_ENTRY( NtQueryObject ) \
@@ -149,6 +154,9 @@
     SYSCALL_ENTRY( NtQuerySecurityObject ) \
     SYSCALL_ENTRY( NtQuerySemaphore  ) \
     SYSCALL_ENTRY( NtQuerySymbolicLinkObject ) \
+    SYSCALL_ENTRY( NtQuerySystemEnvironmentValue ) \
+    SYSCALL_ENTRY( NtQuerySystemEnvironmentValueEx ) \
+    SYSCALL_ENTRY( NtQuerySystemTime ) \
     SYSCALL_ENTRY( NtQueryTimer ) \
     SYSCALL_ENTRY( NtQueryTimerResolution ) \
     SYSCALL_ENTRY( NtQueryValueKey ) \
@@ -188,20 +196,26 @@
     SYSCALL_ENTRY( NtSetInformationProcess ) \
     SYSCALL_ENTRY( NtSetInformationThread ) \
     SYSCALL_ENTRY( NtSetInformationToken ) \
+    SYSCALL_ENTRY( NtSetIntervalProfile ) \
     SYSCALL_ENTRY( NtSetIoCompletion ) \
     SYSCALL_ENTRY( NtSetPowerRequest ) \
     SYSCALL_ENTRY( NtSetSecurityObject ) \
+    SYSCALL_ENTRY( NtSetSystemInformation ) \
+    SYSCALL_ENTRY( NtSetSystemTime ) \
     SYSCALL_ENTRY( NtSetThreadExecutionState ) \
     SYSCALL_ENTRY( NtSetTimer ) \
     SYSCALL_ENTRY( NtSetTimerResolution ) \
     SYSCALL_ENTRY( NtSetValueKey ) \
     SYSCALL_ENTRY( NtSetVolumeInformationFile ) \
+    SYSCALL_ENTRY( NtShutdownSystem ) \
     SYSCALL_ENTRY( NtSignalAndWaitForSingleObject ) \
     SYSCALL_ENTRY( NtSuspendProcess ) \
     SYSCALL_ENTRY( NtSuspendThread ) \
+    SYSCALL_ENTRY( NtSystemDebugControl ) \
     SYSCALL_ENTRY( NtTerminateJobObject ) \
     SYSCALL_ENTRY( NtTerminateProcess ) \
     SYSCALL_ENTRY( NtTerminateThread ) \
+    SYSCALL_ENTRY( NtUnloadDriver ) \
     SYSCALL_ENTRY( NtUnloadKey ) \
     SYSCALL_ENTRY( NtUnlockFile ) \
     SYSCALL_ENTRY( NtUnlockVirtualMemory ) \
