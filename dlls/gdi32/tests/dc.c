@@ -234,6 +234,11 @@ static void test_savedc(void)
        "ret = %d\n", ret);
 
     DeleteDC(hdc);
+
+    SetLastError(0xdeadbeef);
+    ret = SaveDC(ULongToHandle(0xdeadbeef));
+    ok(!ret, "SaveDC returned %u\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError() = %u\n", GetLastError());
 }
 
 static void test_GdiConvertToDevmodeW(void)

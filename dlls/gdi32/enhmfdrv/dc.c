@@ -22,19 +22,12 @@
 #include <assert.h>
 #include "enhmfdrv/enhmetafiledrv.h"
 
-INT CDECL EMFDRV_SaveDC( PHYSDEV dev )
+BOOL EMFDC_SaveDC( DC_ATTR *dc_attr )
 {
-    PHYSDEV next = GET_NEXT_PHYSDEV( dev, pSaveDC );
-    INT ret = next->funcs->pSaveDC( next );
-
-    if (ret)
-    {
-        EMRSAVEDC emr;
-        emr.emr.iType = EMR_SAVEDC;
-        emr.emr.nSize = sizeof(emr);
-        EMFDRV_WriteRecord( dev, &emr.emr );
-    }
-    return ret;
+    EMRSAVEDC emr;
+    emr.emr.iType = EMR_SAVEDC;
+    emr.emr.nSize = sizeof(emr);
+    return EMFDRV_WriteRecord( dc_attr->emf, &emr.emr );
 }
 
 BOOL CDECL EMFDRV_RestoreDC( PHYSDEV dev, INT level )

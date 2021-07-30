@@ -113,6 +113,19 @@ HDC WINAPI ResetDCA( HDC hdc, const DEVMODEA *devmode )
 }
 
 /***********************************************************************
+ *           SaveDC    (GDI32.@)
+ */
+INT WINAPI SaveDC( HDC hdc )
+{
+    DC_ATTR *dc_attr;
+
+    if (is_meta_dc( hdc )) return METADC_SaveDC( hdc );
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (dc_attr->emf && !EMFDC_SaveDC( dc_attr )) return FALSE;
+    return NtGdiSaveDC( hdc );
+}
+
+/***********************************************************************
  *		GetTextAlign (GDI32.@)
  */
 UINT WINAPI GetTextAlign( HDC hdc )

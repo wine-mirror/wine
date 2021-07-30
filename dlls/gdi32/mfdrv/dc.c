@@ -20,9 +20,9 @@
 
 #include "mfdrv/metafiledrv.h"
 
-INT CDECL MFDRV_SaveDC( PHYSDEV dev )
+BOOL METADC_SaveDC( HDC hdc )
 {
-    return MFDRV_MetaParam0( dev, META_SAVEDC );
+    return metadc_param0( hdc, META_SAVEDC );
 }
 
 BOOL CDECL MFDRV_RestoreDC( PHYSDEV dev, INT level )

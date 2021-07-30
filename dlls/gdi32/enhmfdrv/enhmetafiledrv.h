@@ -102,7 +102,6 @@ extern BOOL     CDECL EMFDRV_Rectangle( PHYSDEV dev, INT left, INT top, INT righ
 extern BOOL     CDECL EMFDRV_RestoreDC( PHYSDEV dev, INT level ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
                                         INT ell_width, INT ell_height ) DECLSPEC_HIDDEN;
-extern INT      CDECL EMFDRV_SaveDC( PHYSDEV dev ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_ScaleViewportExtEx( PHYSDEV dev, INT xNum, INT xDenom,
                                                  INT yNum, INT yDenom, SIZE *size ) DECLSPEC_HIDDEN;
 extern BOOL     CDECL EMFDRV_ScaleWindowExtEx( PHYSDEV dev, INT xNum, INT xDenom,

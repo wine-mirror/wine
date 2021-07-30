@@ -577,9 +577,9 @@ static BOOL reset_dc_state( HDC hdc )
 
 
 /***********************************************************************
- *           SaveDC    (GDI32.@)
+ *           NtGdiSaveDC    (win32u.@)
  */
-INT WINAPI SaveDC( HDC hdc )
+INT WINAPI NtGdiSaveDC( HDC hdc )
 {
     DC * dc;
     INT ret = 0;
