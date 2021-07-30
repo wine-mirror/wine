@@ -788,7 +788,7 @@ BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
     hbrDst = NtGdiSelectBrush(hdcDest, GetStockObject(NULL_BRUSH));
 
     /* make bitmap */
-    hDC1 = CreateCompatibleDC(hdcDest);
+    hDC1 = NtGdiCreateCompatibleDC( hdcDest );
     hBitmap1 = CreateCompatibleBitmap(hdcDest, nWidth, nHeight);
     hOldBitmap1 = NtGdiSelectBitmap(hDC1, hBitmap1);
 
@@ -799,7 +799,7 @@ BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
     NtGdiSelectBrush(hDC1, hbrTmp);
 
     /* make bitmap */
-    hDC2 = CreateCompatibleDC(hdcDest);
+    hDC2 = NtGdiCreateCompatibleDC( hdcDest );
     hBitmap2 = CreateCompatibleBitmap(hdcDest, nWidth, nHeight);
     hOldBitmap2 = NtGdiSelectBitmap(hDC2, hBitmap2);
 
@@ -864,7 +864,7 @@ BOOL WINAPI GdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest,
     oldStretchMode = GetStretchBltMode(hdcSrc);
     if(oldStretchMode == BLACKONWHITE || oldStretchMode == WHITEONBLACK)
         SetStretchBltMode(hdcSrc, COLORONCOLOR);
-    hdcWork = CreateCompatibleDC(hdcDest);
+    hdcWork = NtGdiCreateCompatibleDC( hdcDest );
     if ((GetObjectType( hdcDest ) != OBJ_MEMDC ||
          GetObjectW( GetCurrentObject( hdcDest, OBJ_BITMAP ), sizeof(dib), &dib ) == sizeof(BITMAP)) &&
         GetDeviceCaps( hdcDest, BITSPIXEL ) == 32)
@@ -888,7 +888,7 @@ BOOL WINAPI GdiTransparentBlt( HDC hdcDest, int xDest, int yDest, int widthDest,
     SetBkColor(hdcWork, crTransparent);
 
     /* Create mask */
-    hdcMask = CreateCompatibleDC(hdcDest);
+    hdcMask = NtGdiCreateCompatibleDC( hdcDest );
     bmpMask = CreateCompatibleBitmap(hdcMask, widthDest, heightDest);
     oldMask = NtGdiSelectBitmap(hdcMask, bmpMask);
     if(!BitBlt(hdcMask, 0, 0, widthDest, heightDest, hdcWork, 0, 0, SRCCOPY)) {

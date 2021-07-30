@@ -841,7 +841,7 @@ BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *ht, METARECORD *mr, UINT 
 
     case META_STRETCHBLT:
       {
-        HDC hdcSrc = CreateCompatibleDC(hdc);
+        HDC hdcSrc = NtGdiCreateCompatibleDC( hdc );
         HBITMAP hbitmap = CreateBitmap(mr->rdParm[10], /*Width */
                                        mr->rdParm[11], /*Height*/
                                        mr->rdParm[13], /*Planes*/
@@ -859,7 +859,7 @@ BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *ht, METARECORD *mr, UINT 
 
     case META_BITBLT:
       {
-        HDC hdcSrc = CreateCompatibleDC(hdc);
+        HDC hdcSrc = NtGdiCreateCompatibleDC( hdc );
         HBITMAP hbitmap = CreateBitmap(mr->rdParm[7]/*Width */,
                                         mr->rdParm[8]/*Height*/,
                                         mr->rdParm[10]/*Planes*/,

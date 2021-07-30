@@ -139,6 +139,7 @@ BOOL     WINAPI NtGdiEndPath( HDC hdc );
 HANDLE   WINAPI NtGdiCreateClientObj( ULONG type );
 HFONT    WINAPI NtGdiHfontCreate( const ENUMLOGFONTEXDVW *enumex, ULONG unk2, ULONG unk3,
                                   ULONG unk4, void *data );
+HDC      WINAPI NtGdiCreateCompatibleDC( HDC hdc );
 HBRUSH   WINAPI NtGdiCreateDIBBrush( const void* data, UINT coloruse );
 HRGN     WINAPI NtGdiCreateEllipticRgn( INT left, INT top, INT right, INT bottom );
 HBRUSH   WINAPI NtGdiCreatePatternBrushInternal( HBITMAP hbitmap, BOOL pen );

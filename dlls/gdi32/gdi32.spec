@@ -44,7 +44,7 @@
 @ stdcall CreateColorSpaceA(ptr)
 @ stdcall CreateColorSpaceW(ptr)
 @ stdcall CreateCompatibleBitmap(long long long)
-@ stdcall CreateCompatibleDC(long)
+@ stdcall CreateCompatibleDC(long) NtGdiCreateCompatibleDC
 @ stdcall CreateDCA(str str str ptr)
 @ stdcall CreateDCW(wstr wstr wstr ptr)
 @ stdcall CreateDIBPatternBrush(long long)

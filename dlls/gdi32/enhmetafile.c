@@ -1916,7 +1916,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
             PatBlt(hdc, pBitBlt->xDest, pBitBlt->yDest, pBitBlt->cxDest, pBitBlt->cyDest,
                    pBitBlt->dwRop);
         } else { /* BitBlt */
-            HDC hdcSrc = CreateCompatibleDC(hdc);
+            HDC hdcSrc = NtGdiCreateCompatibleDC( hdc );
             HBRUSH hBrush, hBrushOld;
             HBITMAP hBmp = 0, hBmpOld = 0;
             const BITMAPINFO *pbi = (const BITMAPINFO *)((const BYTE *)mr + pBitBlt->offBmiSrc);
@@ -1959,7 +1959,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
             PatBlt(hdc, pStretchBlt->xDest, pStretchBlt->yDest, pStretchBlt->cxDest, pStretchBlt->cyDest,
                    pStretchBlt->dwRop);
         } else { /* StretchBlt */
-            HDC hdcSrc = CreateCompatibleDC(hdc);
+            HDC hdcSrc = NtGdiCreateCompatibleDC( hdc );
             HBRUSH hBrush, hBrushOld;
             HBITMAP hBmp = 0, hBmpOld = 0;
             const BITMAPINFO *pbi = (const BITMAPINFO *)((const BYTE *)mr + pStretchBlt->offBmiSrc);
@@ -2002,7 +2002,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         if(pAlphaBlend->offBmiSrc == 0) {
             FIXME("EMR_ALPHABLEND: offBmiSrc == 0\n");
         } else {
-            HDC hdcSrc = CreateCompatibleDC(hdc);
+            HDC hdcSrc = NtGdiCreateCompatibleDC( hdc );
             HBITMAP hBmp = 0, hBmpOld = 0;
             const BITMAPINFO *pbi = (const BITMAPINFO *)((const BYTE *)mr + pAlphaBlend->offBmiSrc);
             void *bits;
@@ -2028,7 +2028,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_MASKBLT:
     {
 	const EMRMASKBLT *pMaskBlt = (const EMRMASKBLT *)mr;
-	HDC hdcSrc = CreateCompatibleDC(hdc);
+	HDC hdcSrc = NtGdiCreateCompatibleDC( hdc );
 	HBRUSH hBrush, hBrushOld;
 	HBITMAP hBmp, hBmpOld, hBmpMask;
 	const BITMAPINFO *pbi;
@@ -2076,7 +2076,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_PLGBLT:
     {
 	const EMRPLGBLT *pPlgBlt = (const EMRPLGBLT *)mr;
-	HDC hdcSrc = CreateCompatibleDC(hdc);
+	HDC hdcSrc = NtGdiCreateCompatibleDC( hdc );
 	HBRUSH hBrush, hBrushOld;
 	HBITMAP hBmp, hBmpOld, hBmpMask;
 	const BITMAPINFO *pbi;

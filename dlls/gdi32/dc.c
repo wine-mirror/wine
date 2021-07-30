@@ -684,9 +684,9 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
 
 
 /***********************************************************************
- *           CreateCompatibleDC   (GDI32.@)
+ *           NtGdiCreateCompatibleDC   (win32u.@)
  */
-HDC WINAPI CreateCompatibleDC( HDC hdc )
+HDC WINAPI NtGdiCreateCompatibleDC( HDC hdc )
 {
     DC *dc, *origDC;
     HDC ret;
