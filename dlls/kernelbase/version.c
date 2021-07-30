@@ -1552,6 +1552,16 @@ LONG WINAPI /* DECLSPEC_HOTPATCH */ GetCurrentPackageId( UINT32 *len, BYTE *buff
 
 
 /***********************************************************************
+ *         GetCurrentPackagePath   (kernelbase.@)
+ */
+LONG WINAPI /* DECLSPEC_HOTPATCH */ GetCurrentPackagePath( UINT32 *length, WCHAR *path )
+{
+    FIXME( "(%p %p): stub\n", length, path );
+    return APPMODEL_ERROR_NO_PACKAGE;
+}
+
+
+/***********************************************************************
  *         GetPackageFullName   (kernelbase.@)
  */
 LONG WINAPI /* DECLSPEC_HOTPATCH */ GetPackageFullName( HANDLE process, UINT32 *length, WCHAR *name )
