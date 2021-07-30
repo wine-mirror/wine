@@ -1956,6 +1956,49 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
         }
 #endif
 
+#ifdef HAS_IRDA
+#define MAX_IRDA_DEVICES 10
+        case IOCTL_AFD_WINE_GET_IRLMP_ENUMDEVICES:
+        {
+            char buffer[offsetof( struct irda_device_list, dev[MAX_IRDA_DEVICES] )];
+            struct irda_device_list *unix_list = (struct irda_device_list *)buffer;
+            socklen_t len = sizeof(buffer);
+            DEVICELIST *ws_list = out_buffer;
+            int fd, needs_close = FALSE;
+            NTSTATUS status;
+            unsigned int i;
+            int ret;
+
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+                return status;
+
+            ret = getsockopt( fd, SOL_IRLMP, IRLMP_ENUMDEVICES, buffer, &len );
+            if (needs_close) close( fd );
+            if (ret) return sock_errno_to_status( errno );
+
+            io->Information = offsetof( DEVICELIST, unix_list->len );
+            if (out_size < io->Information)
+                return STATUS_BUFFER_TOO_SMALL;
+
+            TRACE( "IRLMP_ENUMDEVICES: got %u devices:\n", unix_list->len );
+            ws_list->numDevice = unix_list->len;
+            for (i = 0; i < unix_list->len; ++i)
+            {
+                const struct irda_device_info *unix_dev = &unix_list->dev[i];
+                IRDA_DEVICE_INFO *ws_dev = &ws_list->Device[i];
+
+                TRACE( "saddr %#08x, daddr %#08x, info %s, hints 0x%02x%02x\n",
+                       unix_dev->saddr, unix_dev->daddr, unix_dev->info, unix_dev->hints[0], unix_dev->hints[1] );
+                memcpy( ws_dev->irdaDeviceID, &unix_dev->daddr, sizeof(unix_dev->daddr) );
+                memcpy( ws_dev->irdaDeviceName, unix_dev->info, sizeof(unix_dev->info) );
+                ws_dev->irdaDeviceHints1 = unix_dev->hints[0];
+                ws_dev->irdaDeviceHints2 = unix_dev->hints[1];
+                ws_dev->irdaCharSet = unix_dev->charset;
+            }
+            return STATUS_SUCCESS;
+        }
+#endif
+
         default:
         {
             if ((code >> 16) == FILE_DEVICE_NETWORK)

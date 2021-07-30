@@ -2169,75 +2169,17 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         }/* end switch(optname) */
     } /* end case WS_NSPROTO_IPX */
 
-#ifdef HAS_IRDA
-#define MAX_IRDA_DEVICES 10
-
     case WS_SOL_IRLMP:
         switch(optname)
         {
         case WS_IRLMP_ENUMDEVICES:
-        {
-            char buf[sizeof(struct irda_device_list) +
-                     (MAX_IRDA_DEVICES - 1) * sizeof(struct irda_device_info)];
-            int res;
-            socklen_t len = sizeof(buf);
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IRLMP_ENUMDEVICES, optval, optlen );
 
-            if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
-                return SOCKET_ERROR;
-            res = getsockopt( fd, SOL_IRLMP, IRLMP_ENUMDEVICES, buf, &len );
-            release_sock_fd( s, fd );
-            if (res < 0)
-            {
-                SetLastError(wsaErrno());
-                return SOCKET_ERROR;
-            }
-            else
-            {
-                struct irda_device_list *src = (struct irda_device_list *)buf;
-                DEVICELIST *dst = (DEVICELIST *)optval;
-                INT needed = sizeof(DEVICELIST);
-                unsigned int i;
-
-                if (src->len > 0)
-                    needed += (src->len - 1) * sizeof(IRDA_DEVICE_INFO);
-                if (*optlen < needed)
-                {
-                    SetLastError(WSAEFAULT);
-                    return SOCKET_ERROR;
-                }
-                *optlen = needed;
-                TRACE("IRLMP_ENUMDEVICES: %d devices found:\n", src->len);
-                dst->numDevice = src->len;
-                for (i = 0; i < src->len; i++)
-                {
-                    TRACE("saddr = %08x, daddr = %08x, info = %s, hints = %02x%02x\n",
-                          src->dev[i].saddr, src->dev[i].daddr,
-                          src->dev[i].info, src->dev[i].hints[0],
-                          src->dev[i].hints[1]);
-                    memcpy( dst->Device[i].irdaDeviceID,
-                            &src->dev[i].daddr,
-                            sizeof(dst->Device[i].irdaDeviceID) ) ;
-                    memcpy( dst->Device[i].irdaDeviceName,
-                            src->dev[i].info,
-                            sizeof(dst->Device[i].irdaDeviceName) ) ;
-                    memcpy( &dst->Device[i].irdaDeviceHints1,
-                            &src->dev[i].hints[0],
-                            sizeof(dst->Device[i].irdaDeviceHints1) ) ;
-                    memcpy( &dst->Device[i].irdaDeviceHints2,
-                            &src->dev[i].hints[1],
-                            sizeof(dst->Device[i].irdaDeviceHints2) ) ;
-                    dst->Device[i].irdaCharSet = src->dev[i].charset;
-                }
-                return 0;
-            }
-        }
         default:
             FIXME("IrDA optname:0x%x\n", optname);
             return SOCKET_ERROR;
         }
         break; /* case WS_SOL_IRLMP */
-#undef MAX_IRDA_DEVICES
-#endif
 
     /* Levels WS_IPPROTO_TCP and WS_IPPROTO_IP convert directly */
     case WS_IPPROTO_TCP:
