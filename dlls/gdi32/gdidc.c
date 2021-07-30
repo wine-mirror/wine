@@ -329,6 +329,17 @@ INT WINAPI SetROP2( HDC hdc, INT mode )
 }
 
 /***********************************************************************
+ *           GetMiterLimit  (GDI32.@)
+ */
+BOOL WINAPI GetMiterLimit( HDC hdc, FLOAT *limit )
+{
+    DC_ATTR *dc_attr;
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    if (limit) *limit = dc_attr->miter_limit;
+    return TRUE;
+}
+
+/***********************************************************************
  *           SetPixel    (GDI32.@)
  */
 COLORREF WINAPI SetPixel( HDC hdc, INT x, INT y, COLORREF color )

@@ -79,7 +79,7 @@ static void set_initial_dc_state( DC *dc )
     dc->vport_org.y         = 0;
     dc->vport_ext.cx        = 1;
     dc->vport_ext.cy        = 1;
-    dc->miterLimit          = 10.0f; /* 10.0 is the default, from MSDN */
+    dc->attr->miter_limit   = 10.0f; /* 10.0 is the default, from MSDN */
     dc->attr->layout        = 0;
     dc->font_code_page      = CP_ACP;
     dc->attr->rop_mode      = R2_COPYPEN;
@@ -1539,30 +1539,6 @@ BOOL WINAPI CancelDC(HDC hdc)
 }
 
 /*******************************************************************
- *      GetMiterLimit [GDI32.@]
- *
- *
- */
-BOOL WINAPI GetMiterLimit(HDC hdc, PFLOAT peLimit)
-{
-    BOOL bRet = FALSE;
-    DC *dc;
-
-    TRACE("(%p,%p)\n", hdc, peLimit);
-
-    dc = get_dc_ptr( hdc );
-    if (dc)
-    {
-        if (peLimit)
-            *peLimit = dc->miterLimit;
-
-        release_dc_ptr( dc );
-        bRet = TRUE;
-    }
-    return bRet;
-}
-
-/*******************************************************************
  *      SetMiterLimit [GDI32.@]
  *
  *
@@ -1578,8 +1554,8 @@ BOOL WINAPI SetMiterLimit(HDC hdc, FLOAT eNewLimit, PFLOAT peOldLimit)
     if (dc)
     {
         if (peOldLimit)
-            *peOldLimit = dc->miterLimit;
-        dc->miterLimit = eNewLimit;
+            *peOldLimit = dc->attr->miter_limit;
+        dc->attr->miter_limit = eNewLimit;
         release_dc_ptr( dc );
         bRet = TRUE;
     }

@@ -1796,7 +1796,7 @@ static struct gdi_path *PATH_WidenPath(DC *dc)
                 alpha = atan2( yb - yo, xb - xo ) - theta;
                 if (alpha > 0) alpha -= M_PI;
                 else alpha += M_PI;
-                if(_joint == PS_JOIN_MITER && dc->miterLimit < fabs(1 / sin(alpha/2))) {
+                if(_joint == PS_JOIN_MITER && dc->attr->miter_limit < fabs(1 / sin(alpha/2))) {
                     _joint = PS_JOIN_BEVEL;
                 }
                 if(alpha > 0) {

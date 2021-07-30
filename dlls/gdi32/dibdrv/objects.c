@@ -1316,7 +1316,7 @@ static HRGN create_miter_region( dibdrv_physdev *pdev, const POINT *pt,
     y = a * face_1->dy - b * face_2->dy;
 
     if (((x - pt->x) * (x - pt->x) + (y - pt->y) * (y - pt->y)) * 4 >
-        dc->miterLimit * dc->miterLimit * pdev->pen_width * pdev->pen_width)
+        dc->attr->miter_limit * dc->attr->miter_limit * pdev->pen_width * pdev->pen_width)
         return 0;
 
     pts[0] = face_2->start;

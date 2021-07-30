@@ -97,7 +97,6 @@ typedef struct tagDC
     RECT         device_rect;      /* rectangle for the whole device */
     int          pixel_format;     /* pixel format (for memory DCs) */
     UINT         aa_flags;         /* anti-aliasing flags to pass to GetGlyphOutline for current font */
-    FLOAT        miterLimit;
     WCHAR        display[CCHDEVICENAME]; /* Display name when created for a specific display device */
 
     int           flags;
