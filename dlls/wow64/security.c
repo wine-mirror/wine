@@ -27,6 +27,26 @@
 #include "winnt.h"
 #include "winternl.h"
 #include "wow64_private.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(wow);
+
+
+static TOKEN_GROUPS *token_groups_32to64( const TOKEN_GROUPS32 *groups32 )
+{
+    TOKEN_GROUPS *groups;
+    ULONG i;
+
+    if (!groups32) return NULL;
+    groups = Wow64AllocateTemp( offsetof( TOKEN_GROUPS, Groups[groups32->GroupCount] ));
+    groups->GroupCount = groups32->GroupCount;
+    for (i = 0; i < groups->GroupCount; i++)
+    {
+        groups->Groups[i].Sid = ULongToPtr( groups32->Groups[i].Sid );
+        groups->Groups[i].Attributes = groups32->Groups[i].Attributes;
+    }
+    return groups;
+}
 
 
 /**********************************************************************
@@ -111,8 +131,30 @@ NTSTATUS WINAPI wow64_NtDuplicateToken( UINT *args )
     NTSTATUS status;
 
     *handle_ptr = 0;
-    status = NtDuplicateToken( token, access, objattr_32to64( &attr, attr32 ),
-                                        level, type, &handle );
+    status = NtDuplicateToken( token, access, objattr_32to64( &attr, attr32 ), level, type, &handle );
+    put_handle( handle_ptr, handle );
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtFilterToken
+ */
+NTSTATUS WINAPI wow64_NtFilterToken( UINT *args )
+{
+    HANDLE token = get_handle( &args );
+    ULONG flags = get_ulong( &args );
+    TOKEN_GROUPS32 *disable_sids32 = get_ptr( &args );
+    TOKEN_PRIVILEGES *privs = get_ptr( &args );
+    TOKEN_GROUPS32 *restrict_sids32 = get_ptr( &args );
+    ULONG *handle_ptr = get_ptr( &args );
+
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    *handle_ptr = 0;
+    status = NtFilterToken( token, flags, token_groups_32to64( disable_sids32 ), privs,
+                            token_groups_32to64( restrict_sids32 ), &handle );
     put_handle( handle_ptr, handle );
     return status;
 }
@@ -223,6 +265,147 @@ NTSTATUS WINAPI wow64_NtPrivilegeCheck( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtQueryInformationToken
+ */
+NTSTATUS WINAPI wow64_NtQueryInformationToken( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    TOKEN_INFORMATION_CLASS class = get_ulong( &args );
+    void *info = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+    ULONG *retlen = get_ptr( &args );
+
+    NTSTATUS status;
+    ULONG ret_size, sid_len;
+
+    switch (class)
+    {
+    case TokenPrivileges: /* TOKEN_PRIVILEGES */
+    case TokenImpersonationLevel:  /* SECURITY_IMPERSONATION_LEVEL */
+    case TokenStatistics:  /* TOKEN_STATISTICS */
+    case TokenType: /* TOKEN_TYPE */
+    case TokenElevationType:  /* TOKEN_ELEVATION_TYPE */
+    case TokenElevation: /* TOKEN_ELEVATION */
+    case TokenSessionId:  /* ULONG */
+    case TokenVirtualizationEnabled:  /* ULONG */
+    case TokenIsAppContainer:  /* ULONG */
+        /* nothing to map */
+        return NtQueryInformationToken( handle, class, info, len, retlen );
+
+    case TokenUser:  /* TOKEN_USER + SID */
+    case TokenIntegrityLevel:  /* TOKEN_MANDATORY_LABEL + SID */
+    {
+        ULONG_PTR buffer[(sizeof(TOKEN_USER) + SECURITY_MAX_SID_SIZE) / sizeof(ULONG_PTR)];
+        TOKEN_USER *user = (TOKEN_USER *)buffer;
+        TOKEN_USER32 *user32 = info;
+        SID *sid;
+
+        status = NtQueryInformationToken( handle, class, &buffer, sizeof(buffer), &ret_size );
+        if (status) return status;
+        sid = user->User.Sid;
+        sid_len = offsetof( SID, SubAuthority[sid->SubAuthorityCount] );
+        if (len >= sizeof(*user32) + sid_len)
+        {
+            user32->User.Sid = PtrToUlong( user32 + 1 );
+            user32->User.Attributes = user->User.Attributes;
+            memcpy( user32 + 1, sid, sid_len );
+        }
+        else status = STATUS_BUFFER_TOO_SMALL;
+        if (retlen) *retlen = sizeof(*user32) + sid_len;
+        return status;
+    }
+
+    case TokenOwner:  /* TOKEN_OWNER + SID  */
+    case TokenPrimaryGroup:  /* TOKEN_PRIMARY_GROUP + SID */
+    case TokenAppContainerSid:  /* TOKEN_APPCONTAINER_INFORMATION + SID */
+    {
+        ULONG_PTR buffer[(sizeof(TOKEN_OWNER) + SECURITY_MAX_SID_SIZE) / sizeof(ULONG_PTR)];
+        TOKEN_OWNER *owner = (TOKEN_OWNER *)buffer;
+        TOKEN_OWNER32 *owner32 = info;
+        SID *sid;
+
+        status = NtQueryInformationToken( handle, class, &buffer, sizeof(buffer), &ret_size );
+        if (status) return status;
+        sid = owner->Owner;
+        sid_len = offsetof( SID, SubAuthority[sid->SubAuthorityCount] );
+        if (len >= sizeof(*owner32) + sid_len)
+        {
+            owner32->Owner = PtrToUlong( owner32 + 1 );
+            memcpy( owner32 + 1, sid, sid_len );
+        }
+        else status = STATUS_BUFFER_TOO_SMALL;
+        if (retlen) *retlen = sizeof(*owner32) + sid_len;
+        return status;
+    }
+
+    case TokenGroups:  /* TOKEN_GROUPS */
+    case TokenLogonSid:   /* TOKEN_GROUPS */
+    {
+        TOKEN_GROUPS32 *groups32 = info;
+        TOKEN_GROUPS *groups;
+        ULONG i, group_len, group32_len;
+
+        status = NtQueryInformationToken( handle, class, NULL, 0, &ret_size );
+        if (status != STATUS_BUFFER_TOO_SMALL) return status;
+        groups = Wow64AllocateTemp( ret_size );
+        status = NtQueryInformationToken( handle, class, groups, ret_size, &ret_size );
+        if (status) return status;
+        group_len = offsetof( TOKEN_GROUPS, Groups[groups->GroupCount] );
+        group32_len = offsetof( TOKEN_GROUPS32, Groups[groups->GroupCount] );
+        sid_len = ret_size - group_len;
+        ret_size = group32_len + sid_len;
+        if (len >= ret_size)
+        {
+            SID *sid = (SID *)((char *)groups + group_len);
+            SID *sid32 = (SID *)((char *)groups32 + group32_len);
+
+            memcpy( sid32, sid, sid_len );
+            groups32->GroupCount = groups->GroupCount;
+            for (i = 0; i < groups->GroupCount; i++)
+            {
+                groups32->Groups[i].Sid = PtrToUlong(sid32) + ((char *)groups->Groups[i].Sid - (char *)sid);
+                groups32->Groups[i].Attributes = groups->Groups[i].Attributes;
+            }
+        }
+        else status = STATUS_BUFFER_TOO_SMALL;
+        if (retlen) *retlen = ret_size;
+        return status;
+    }
+
+    case TokenDefaultDacl:  /* TOKEN_DEFAULT_DACL + ACL */
+    {
+        ULONG size = len + sizeof(TOKEN_DEFAULT_DACL) - sizeof(TOKEN_DEFAULT_DACL32);
+        TOKEN_DEFAULT_DACL32 *dacl32 = info;
+        TOKEN_DEFAULT_DACL *dacl = Wow64AllocateTemp( size );
+
+        status = NtQueryInformationToken( handle, class, dacl, size, &ret_size );
+        if (!status)
+        {
+            dacl32->DefaultDacl = dacl->DefaultDacl ? PtrToUlong( dacl32 + 1 ) : 0;
+            memcpy( dacl32 + 1, dacl->DefaultDacl, ret_size - sizeof(*dacl) );
+        }
+        if (retlen) *retlen = ret_size + sizeof(*dacl32) - sizeof(*dacl);
+        return status;
+    }
+
+    case TokenLinkedToken:  /* TOKEN_LINKED_TOKEN */
+    {
+        TOKEN_LINKED_TOKEN link;
+
+        status = NtQueryInformationToken( handle, class, &link, sizeof(link), &ret_size );
+        if (!status) *(ULONG *)info = HandleToLong( link.LinkedToken );
+        if (retlen) *retlen = sizeof(ULONG);
+        return status;
+    }
+
+    default:
+        FIXME( "unsupported class %u\n", class );
+        return STATUS_INVALID_INFO_CLASS;
+    }
+}
+
+
+/**********************************************************************
  *           wow64_NtQuerySecurityObject
  */
 NTSTATUS WINAPI wow64_NtQuerySecurityObject( UINT *args )
@@ -235,6 +418,38 @@ NTSTATUS WINAPI wow64_NtQuerySecurityObject( UINT *args )
 
     /* returned descriptor is always SE_SELF_RELATIVE, no mapping needed */
     return NtQuerySecurityObject( handle, info, sd, len, retlen );
+}
+
+
+/**********************************************************************
+ *           wow64_NtSetInformationToken
+ */
+NTSTATUS WINAPI wow64_NtSetInformationToken( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    TOKEN_INFORMATION_CLASS class = get_ulong( &args );
+    void *ptr = get_ptr( &args );
+    ULONG len = get_ulong( &args );
+
+    switch (class)
+    {
+    case TokenSessionId:   /* ULONG */
+        return NtSetInformationToken( handle, class, ptr, len );
+
+    case TokenDefaultDacl:   /* TOKEN_DEFAULT_DACL */
+        if (len >= sizeof(TOKEN_DEFAULT_DACL32))
+        {
+            TOKEN_DEFAULT_DACL32 *dacl32 = ptr;
+            TOKEN_DEFAULT_DACL dacl = { ULongToPtr( dacl32->DefaultDacl ) };
+
+            return NtSetInformationToken( handle, class, &dacl, sizeof(dacl) );
+        }
+        else return STATUS_INFO_LENGTH_MISMATCH;
+
+    default:
+        FIXME( "unsupported class %u\n", class );
+        return STATUS_INVALID_INFO_CLASS;
+    }
 }
 
 

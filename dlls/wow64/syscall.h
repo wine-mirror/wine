@@ -76,6 +76,7 @@
     SYSCALL_ENTRY( NtDuplicateToken ) \
     SYSCALL_ENTRY( NtEnumerateKey ) \
     SYSCALL_ENTRY( NtEnumerateValueKey ) \
+    SYSCALL_ENTRY( NtFilterToken ) \
     SYSCALL_ENTRY( NtFindAtom ) \
     SYSCALL_ENTRY( NtFlushBuffersFile ) \
     SYSCALL_ENTRY( NtFlushInstructionCache ) \
@@ -135,6 +136,7 @@
     SYSCALL_ENTRY( NtQueryInformationFile ) \
     SYSCALL_ENTRY( NtQueryInformationProcess ) \
     SYSCALL_ENTRY( NtQueryInformationThread ) \
+    SYSCALL_ENTRY( NtQueryInformationToken ) \
     SYSCALL_ENTRY( NtQueryInstallUILanguage ) \
     SYSCALL_ENTRY( NtQueryIoCompletion ) \
     SYSCALL_ENTRY( NtQueryKey ) \
@@ -183,6 +185,7 @@
     SYSCALL_ENTRY( NtSetInformationObject ) \
     SYSCALL_ENTRY( NtSetInformationProcess ) \
     SYSCALL_ENTRY( NtSetInformationThread ) \
+    SYSCALL_ENTRY( NtSetInformationToken ) \
     SYSCALL_ENTRY( NtSetIoCompletion ) \
     SYSCALL_ENTRY( NtSetPowerRequest ) \
     SYSCALL_ENTRY( NtSetSecurityObject ) \

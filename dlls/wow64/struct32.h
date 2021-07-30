@@ -259,6 +259,33 @@ typedef struct
 
 typedef struct
 {
+    ULONG Sid;
+    DWORD Attributes;
+} SID_AND_ATTRIBUTES32;
+
+typedef struct
+{
+    ULONG DefaultDacl;
+} TOKEN_DEFAULT_DACL32;
+
+typedef struct
+{
+    DWORD                GroupCount;
+    SID_AND_ATTRIBUTES32 Groups[1];
+} TOKEN_GROUPS32;
+
+typedef struct
+{
+    ULONG Owner;
+} TOKEN_OWNER32;
+
+typedef struct
+{
+    SID_AND_ATTRIBUTES32 User;
+} TOKEN_USER32;
+
+typedef struct
+{
     NTSTATUS    ExitStatus;
     ULONG       TebBaseAddress;
     CLIENT_ID32 ClientId;
