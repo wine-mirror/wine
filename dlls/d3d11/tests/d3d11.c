@@ -2736,6 +2736,8 @@ static void test_create_texture2d(void)
         {DXGI_FORMAT_R8G8B8A8_UINT,           1, D3D11_BIND_RENDER_TARGET,    0, TRUE,  FALSE},
         {DXGI_FORMAT_R8G8B8A8_SNORM,          1, D3D11_BIND_RENDER_TARGET,    0, TRUE,  FALSE},
         {DXGI_FORMAT_R8G8B8A8_SINT,           1, D3D11_BIND_RENDER_TARGET,    0, TRUE,  FALSE},
+        {DXGI_FORMAT_R8G8B8A8_UNORM,          1, D3D11_BIND_RENDER_TARGET,    D3D11_RESOURCE_MISC_SHARED | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
+                FALSE, TRUE},
         {DXGI_FORMAT_D24_UNORM_S8_UINT,       1, D3D11_BIND_SHADER_RESOURCE,  0, FALSE, TRUE},
         {DXGI_FORMAT_D24_UNORM_S8_UINT,       1, D3D11_BIND_RENDER_TARGET,    0, FALSE, FALSE},
         {DXGI_FORMAT_D32_FLOAT,               1, D3D11_BIND_SHADER_RESOURCE,  0, FALSE, TRUE},
@@ -33447,7 +33449,7 @@ static void test_constant_buffer_offset(void)
     ID3D11Buffer *buffers[2], *ret_buffers[2];
     D3D11_FEATURE_DATA_D3D11_OPTIONS options;
     struct d3d11_test_context test_context;
-    struct vec4 buffer_data[32] = {0};
+    struct vec4 buffer_data[32] = {{0}};
     ID3D11DeviceContext1 *context;
     UINT offsets[2], counts[2];
     ID3D11PixelShader *ps;
