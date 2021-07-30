@@ -1539,30 +1539,6 @@ BOOL WINAPI CancelDC(HDC hdc)
 }
 
 /*******************************************************************
- *      SetMiterLimit [GDI32.@]
- *
- *
- */
-BOOL WINAPI SetMiterLimit(HDC hdc, FLOAT eNewLimit, PFLOAT peOldLimit)
-{
-    BOOL bRet = FALSE;
-    DC *dc;
-
-    TRACE("(%p,%f,%p)\n", hdc, eNewLimit, peOldLimit);
-
-    dc = get_dc_ptr( hdc );
-    if (dc)
-    {
-        if (peOldLimit)
-            *peOldLimit = dc->attr->miter_limit;
-        dc->attr->miter_limit = eNewLimit;
-        release_dc_ptr( dc );
-        bRet = TRUE;
-    }
-    return bRet;
-}
-
-/*******************************************************************
  *      GdiIsMetaPrintDC [GDI32.@]
  */
 BOOL WINAPI GdiIsMetaPrintDC(HDC hdc)

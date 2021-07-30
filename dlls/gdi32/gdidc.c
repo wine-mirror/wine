@@ -339,6 +339,19 @@ BOOL WINAPI GetMiterLimit( HDC hdc, FLOAT *limit )
     return TRUE;
 }
 
+/*******************************************************************
+ *           SetMiterLimit  (GDI32.@)
+ */
+BOOL WINAPI SetMiterLimit( HDC hdc, FLOAT limit, FLOAT *old_limit )
+{
+    DC_ATTR *dc_attr;
+    if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    /* FIXME: record EMFs */
+    if (old_limit) *old_limit = dc_attr->miter_limit;
+    dc_attr->miter_limit = limit;
+    return TRUE;
+}
+
 /***********************************************************************
  *           SetPixel    (GDI32.@)
  */
