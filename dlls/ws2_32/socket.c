@@ -3642,7 +3642,6 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         case WS_IPV6_MULTICAST_LOOP:
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_MULTICAST_LOOP, optval, optlen );
 
-        case WS_IPV6_UNICAST_HOPS:
 #ifdef IPV6_UNICAST_IF
         case WS_IPV6_UNICAST_IF:
 #endif
@@ -3651,6 +3650,10 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         case WS_IPV6_PROTECTION_LEVEL:
             FIXME("IPV6_PROTECTION_LEVEL is ignored!\n");
             return 0;
+
+        case WS_IPV6_UNICAST_HOPS:
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_UNICAST_HOPS, optval, optlen );
+
         case WS_IPV6_V6ONLY:
         {
             union generic_unix_sockaddr uaddr;
