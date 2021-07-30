@@ -65,6 +65,11 @@ typedef struct _case_list_t {
     case_clausule_t *tail;
 } case_list_t;
 
+typedef struct _statement_list_t {
+   statement_t *head;
+   statement_t *tail;
+} statement_list_t;
+
 static catch_block_t *new_catch_block(parser_ctx_t*,const WCHAR*,statement_t*);
 static case_clausule_t *new_case_clausule(parser_ctx_t*,unsigned,expression_t*,statement_list_t*);
 static case_list_t *new_case_list(parser_ctx_t*,case_clausule_t*);
@@ -97,11 +102,6 @@ static statement_t *new_labelled_statement(parser_ctx_t*,unsigned,const WCHAR*,s
 static statement_t *new_switch_statement(parser_ctx_t*,unsigned,expression_t*,case_clausule_t*);
 static statement_t *new_throw_statement(parser_ctx_t*,unsigned,expression_t*);
 static statement_t *new_try_statement(parser_ctx_t*,statement_t*,catch_block_t*,statement_t*,unsigned);
-
-struct statement_list_t {
-   statement_t *head;
-   statement_t *tail;
-};
 
 static statement_list_t *new_statement_list(parser_ctx_t*,statement_t*);
 static statement_list_t *statement_list_add(statement_list_t*,statement_t*);
@@ -249,7 +249,7 @@ static expression_t *new_prop_and_value_expression(parser_ctx_t*,property_list_t
 
 /* ECMA-262 10th Edition    15.1 */
 Script
-       : ScriptBody HtmlComment { ctx->source = $1; }
+       : ScriptBody HtmlComment { ctx->source = $1 ? $1->head : NULL; }
 
 /* ECMA-262 10th Edition    15.1 */
 ScriptBody
@@ -1440,7 +1440,7 @@ static expression_t *new_function_expression(parser_ctx_t *ctx, const WCHAR *ide
 
     ret->identifier = identifier;
     ret->parameter_list = parameter_list ? parameter_list->head : NULL;
-    ret->statement_list = statement_list;
+    ret->statement_list = statement_list ? statement_list->head : NULL;
     ret->event_target = event_target;
     ret->src_str = src_str;
     ret->src_len = src_len;
