@@ -227,6 +227,7 @@ struct afd_get_events_params
 #define IOCTL_AFD_WINE_SET_IPX_PTYPE                    WINE_AFD_IOC(282)
 #define IOCTL_AFD_WINE_GET_IRLMP_ENUMDEVICES            WINE_AFD_IOC(283)
 #define IOCTL_AFD_WINE_GET_TCP_NODELAY                  WINE_AFD_IOC(284)
+#define IOCTL_AFD_WINE_SET_TCP_NODELAY                  WINE_AFD_IOC(285)
 
 struct afd_create_params
 {

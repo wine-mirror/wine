@@ -31,10 +31,6 @@
 
 #include "ws2_32_private.h"
 
-#if defined(linux) && !defined(IP_UNICAST_IF)
-#define IP_UNICAST_IF 50
-#endif
-
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)  || defined(__DragonFly__)
 # define sipx_network    sipx_addr.x_net
 # define sipx_node       sipx_addr.x_host.c_host
@@ -428,80 +424,6 @@ static int ws_protocol_info(SOCKET s, int unicode, WSAPROTOCOL_INFOW *buffer, in
 
 #define MAP_OPTION(opt) { WS_##opt, opt }
 
-static const int ws_sock_map[][2] =
-{
-    MAP_OPTION( SO_DEBUG ),
-    MAP_OPTION( SO_ACCEPTCONN ),
-    MAP_OPTION( SO_REUSEADDR ),
-    MAP_OPTION( SO_KEEPALIVE ),
-    MAP_OPTION( SO_DONTROUTE ),
-    MAP_OPTION( SO_BROADCAST ),
-    MAP_OPTION( SO_LINGER ),
-    MAP_OPTION( SO_OOBINLINE ),
-    MAP_OPTION( SO_SNDBUF ),
-    MAP_OPTION( SO_RCVBUF ),
-    MAP_OPTION( SO_ERROR ),
-    MAP_OPTION( SO_TYPE ),
-#ifdef SO_RCVTIMEO
-    MAP_OPTION( SO_RCVTIMEO ),
-#endif
-#ifdef SO_SNDTIMEO
-    MAP_OPTION( SO_SNDTIMEO ),
-#endif
-};
-
-static const int ws_tcp_map[][2] =
-{
-#ifdef TCP_NODELAY
-    MAP_OPTION( TCP_NODELAY ),
-#endif
-};
-
-static const int ws_ip_map[][2] =
-{
-    MAP_OPTION( IP_MULTICAST_IF ),
-    MAP_OPTION( IP_MULTICAST_TTL ),
-    MAP_OPTION( IP_MULTICAST_LOOP ),
-    MAP_OPTION( IP_ADD_MEMBERSHIP ),
-    MAP_OPTION( IP_DROP_MEMBERSHIP ),
-    MAP_OPTION( IP_ADD_SOURCE_MEMBERSHIP ),
-    MAP_OPTION( IP_DROP_SOURCE_MEMBERSHIP ),
-    MAP_OPTION( IP_BLOCK_SOURCE ),
-    MAP_OPTION( IP_UNBLOCK_SOURCE ),
-    MAP_OPTION( IP_OPTIONS ),
-#ifdef IP_HDRINCL
-    MAP_OPTION( IP_HDRINCL ),
-#endif
-    MAP_OPTION( IP_TOS ),
-    MAP_OPTION( IP_TTL ),
-#if defined(IP_PKTINFO)
-    MAP_OPTION( IP_PKTINFO ),
-#elif defined(IP_RECVDSTADDR)
-    { WS_IP_PKTINFO, IP_RECVDSTADDR },
-#endif
-#ifdef IP_UNICAST_IF
-    MAP_OPTION( IP_UNICAST_IF ),
-#endif
-};
-
-static const int ws_ipv6_map[][2] =
-{
-#ifdef IPV6_ADD_MEMBERSHIP
-    MAP_OPTION( IPV6_ADD_MEMBERSHIP ),
-#endif
-#ifdef IPV6_DROP_MEMBERSHIP
-    MAP_OPTION( IPV6_DROP_MEMBERSHIP ),
-#endif
-    MAP_OPTION( IPV6_MULTICAST_IF ),
-    MAP_OPTION( IPV6_MULTICAST_HOPS ),
-    MAP_OPTION( IPV6_MULTICAST_LOOP ),
-    MAP_OPTION( IPV6_UNICAST_HOPS ),
-    MAP_OPTION( IPV6_V6ONLY ),
-#ifdef IPV6_UNICAST_IF
-    MAP_OPTION( IPV6_UNICAST_IF ),
-#endif
-};
-
 static const int ws_socktype_map[][2] =
 {
     MAP_OPTION( SOCK_DGRAM ),
@@ -576,14 +498,6 @@ UINT sock_get_error( int err )
 		WARN("Unknown errno %d!\n", err);
 		return WSAEOPNOTSUPP;
     }
-}
-
-static UINT wsaErrno(void)
-{
-    int	loc_errno = errno;
-    WARN("errno %d, (%s).\n", loc_errno, strerror(loc_errno));
-
-    return sock_get_error( loc_errno );
 }
 
 static DWORD NtStatusToWSAError( NTSTATUS status )
@@ -741,66 +655,6 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
     if (reason == DLL_THREAD_DETACH)
         free_per_thread_data();
     return TRUE;
-}
-
-/***********************************************************************
- *          convert_sockopt()
- *
- * Converts socket flags from Windows format.
- * Return 1 if converted, 0 if not (error).
- */
-static int convert_sockopt(INT *level, INT *optname)
-{
-  unsigned int i;
-  switch (*level)
-  {
-     case WS_SOL_SOCKET:
-        *level = SOL_SOCKET;
-        for(i = 0; i < ARRAY_SIZE(ws_sock_map); i++) {
-            if( ws_sock_map[i][0] == *optname )
-            {
-                *optname = ws_sock_map[i][1];
-                return 1;
-            }
-        }
-        FIXME("Unknown SOL_SOCKET optname 0x%x\n", *optname);
-        break;
-     case WS_IPPROTO_TCP:
-        *level = IPPROTO_TCP;
-        for(i = 0; i < ARRAY_SIZE(ws_tcp_map); i++) {
-            if ( ws_tcp_map[i][0] == *optname )
-            {
-                *optname = ws_tcp_map[i][1];
-                return 1;
-            }
-        }
-        FIXME("Unknown IPPROTO_TCP optname 0x%x\n", *optname);
-	break;
-     case WS_IPPROTO_IP:
-        *level = IPPROTO_IP;
-        for(i = 0; i < ARRAY_SIZE(ws_ip_map); i++) {
-            if (ws_ip_map[i][0] == *optname )
-            {
-                *optname = ws_ip_map[i][1];
-                return 1;
-            }
-        }
-	FIXME("Unknown IPPROTO_IP optname 0x%x\n", *optname);
-	break;
-     case WS_IPPROTO_IPV6:
-        *level = IPPROTO_IPV6;
-        for(i = 0; i < ARRAY_SIZE(ws_ipv6_map); i++) {
-            if (ws_ipv6_map[i][0] == *optname )
-            {
-                *optname = ws_ipv6_map[i][1];
-                return 1;
-            }
-        }
-	FIXME("Unknown IPPROTO_IPV6 optname 0x%x\n", *optname);
-	break;
-     default: FIXME("Unimplemented or unknown socket level\n");
-  }
-  return 0;
 }
 
 int
@@ -3219,9 +3073,6 @@ static int server_setsockopt( SOCKET s, ULONG code, const char *optval, int optl
 int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
                          const char *optval, int optlen)
 {
-    int fd;
-    int woptval;
-
     TRACE("(socket %04lx, %s, optval %s, optlen %d)\n", s,
           debugstr_sockopt(level, optname), debugstr_optval(optval, optlen),
           optlen);
@@ -3370,13 +3221,12 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         }
         break; /* case WS_NSPROTO_IPX */
 
-    /* Levels WS_IPPROTO_TCP and WS_IPPROTO_IP convert directly */
     case WS_IPPROTO_TCP:
         switch(optname)
         {
         case WS_TCP_NODELAY:
-            convert_sockopt(&level, &optname);
-            break;
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_TCP_NODELAY, optval, optlen );
+
         default:
             FIXME("Unknown IPPROTO_TCP optname 0x%08x\n", optname);
             return SOCKET_ERROR;
@@ -3485,37 +3335,6 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         SetLastError(WSAEINVAL);
         return SOCKET_ERROR;
     } /* end switch(level) */
-
-    /* avoid endianness issues if argument is a 16-bit int */
-    if (optval && optlen < sizeof(int))
-    {
-        woptval= *((const INT16 *) optval);
-        optval= (char*) &woptval;
-        woptval&= (1 << optlen * 8) - 1;
-        optlen=sizeof(int);
-    }
-    fd = get_sock_fd( s, 0, NULL );
-    if (fd == -1) return SOCKET_ERROR;
-
-    if (setsockopt(fd, level, optname, optval, optlen) == 0)
-    {
-#ifdef __APPLE__
-        if (level == SOL_SOCKET && optname == SO_REUSEADDR &&
-            setsockopt(fd, level, SO_REUSEPORT, optval, optlen) != 0)
-        {
-            SetLastError(wsaErrno());
-            release_sock_fd( s, fd );
-            return SOCKET_ERROR;
-        }
-#endif
-        release_sock_fd( s, fd );
-        return 0;
-    }
-    TRACE("Setting socket error, %d\n", wsaErrno());
-    SetLastError(wsaErrno());
-    release_sock_fd( s, fd );
-
-    return SOCKET_ERROR;
 }
 
 
