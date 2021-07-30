@@ -126,6 +126,16 @@ INT WINAPI SaveDC( HDC hdc )
 }
 
 /***********************************************************************
+ *           GetDeviceCaps    (GDI32.@)
+ */
+INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
+{
+    if (is_meta_dc( hdc )) return METADC_GetDeviceCaps( hdc, cap );
+    if (!get_dc_attr( hdc )) return FALSE;
+    return NtGdiGetDeviceCaps( hdc, cap );
+}
+
+/***********************************************************************
  *		GetTextAlign (GDI32.@)
  */
 UINT WINAPI GetTextAlign( HDC hdc )

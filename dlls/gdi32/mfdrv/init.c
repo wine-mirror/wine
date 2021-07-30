@@ -78,12 +78,14 @@ static UINT CDECL MFDRV_SetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
 
 
 /******************************************************************
- *         MFDRV_GetDeviceCaps
+ *         METADC_GetDeviceCaps
  *
  *A very simple implementation that returns DT_METAFILE
  */
-static INT CDECL MFDRV_GetDeviceCaps(PHYSDEV dev, INT cap)
+INT METADC_GetDeviceCaps( HDC hdc, INT cap )
 {
+    if (!get_metadc_ptr( hdc )) return 0;
+
     switch(cap)
     {
     case TECHNOLOGY:
@@ -137,7 +139,7 @@ static const struct gdi_dc_funcs MFDRV_Funcs =
     NULL,                            /* pGetCharABCWidthsI */
     NULL,                            /* pGetCharWidth */
     NULL,                            /* pGetCharWidthInfo */
-    MFDRV_GetDeviceCaps,             /* pGetDeviceCaps */
+    NULL,                            /* pGetDeviceCaps */
     NULL,                            /* pGetDeviceGammaRamp */
     NULL,                            /* pGetFontData */
     NULL,                            /* pGetFontRealizationInfo */

@@ -799,9 +799,9 @@ HDC WINAPI ResetDCW( HDC hdc, const DEVMODEW *devmode )
 
 
 /***********************************************************************
- *           GetDeviceCaps    (GDI32.@)
+ *           NtGdiGetDeviceCaps    (win32u.@)
  */
-INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
+INT WINAPI NtGdiGetDeviceCaps( HDC hdc, INT cap )
 {
     DC *dc;
     INT ret = 0;

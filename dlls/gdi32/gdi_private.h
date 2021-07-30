@@ -53,6 +53,7 @@ extern BOOL METADC_ExtTextOut( HDC hdc, INT x, INT y, UINT flags, const RECT *re
                                const WCHAR *str, UINT count, const INT *dx ) DECLSPEC_HIDDEN;
 extern BOOL METADC_FillRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush ) DECLSPEC_HIDDEN;
 extern BOOL METADC_FrameRgn( HDC hdc, HRGN hrgn, HBRUSH hbrush, INT x, INT y ) DECLSPEC_HIDDEN;
+extern INT  METADC_GetDeviceCaps( HDC hdc, INT cap );
 extern BOOL METADC_InvertRgn( HDC hdc, HRGN hrgn ) DECLSPEC_HIDDEN;
 extern BOOL METADC_LineTo( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;
 extern BOOL METADC_MoveTo( HDC hdc, INT x, INT y ) DECLSPEC_HIDDEN;

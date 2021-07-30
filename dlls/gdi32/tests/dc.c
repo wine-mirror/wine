@@ -89,6 +89,11 @@ static void test_dc_values(void)
     attr = GetBkColor(ULongToHandle(0xdeadbeef));
     ok(attr == CLR_INVALID, "attr = %x\n", attr);
 
+    SetLastError(0xdeadbeef);
+    attr = GetDeviceCaps(ULongToHandle(0xdeadbeef), TECHNOLOGY);
+    ok(!attr, "GetDeviceCaps rets %d\n", attr);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError() = %u\n", GetLastError());
+
     DeleteDC( hdc );
 }
 
