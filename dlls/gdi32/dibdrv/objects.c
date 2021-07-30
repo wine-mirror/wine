@@ -2137,7 +2137,7 @@ HBRUSH CDECL dibdrv_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_
     GetObjectW( hbrush, sizeof(logbrush), &logbrush );
 
     if (hbrush == GetStockObject( DC_BRUSH ))
-        logbrush.lbColor = dc->dcBrushColor;
+        logbrush.lbColor = dc->attr->brush_color;
 
     select_brush( pdev, &pdev->brush, &logbrush, pattern, TRUE );
     return hbrush;

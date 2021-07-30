@@ -75,6 +75,15 @@ COLORREF WINAPI GetBkColor( HDC hdc )
 }
 
 /***********************************************************************
+ *           GetDCBrushColor  (GDI32.@)
+ */
+COLORREF WINAPI GetDCBrushColor( HDC hdc )
+{
+    DC_ATTR *dc_attr = get_dc_attr( hdc );
+    return dc_attr ? dc_attr->brush_color : CLR_INVALID;
+}
+
+/***********************************************************************
  *		GetTextColor (GDI32.@)
  */
 COLORREF WINAPI GetTextColor( HDC hdc )

@@ -88,7 +88,7 @@ static void set_initial_dc_state( DC *dc )
     dc->attr->rel_abs_mode     = ABSOLUTE;
     dc->attr->background_mode  = OPAQUE;
     dc->attr->background_color = RGB( 255, 255, 255 );
-    dc->dcBrushColor        = RGB( 255, 255, 255 );
+    dc->attr->brush_color      = RGB( 255, 255, 255 );
     dc->dcPenColor          = RGB( 0, 0, 0 );
     dc->attr->text_color    = RGB( 0, 0, 0 );
     dc->brush_org.x         = 0;
@@ -398,7 +398,6 @@ INT CDECL nulldrv_SaveDC( PHYSDEV dev )
     newdc->hFont            = dc->hFont;
     newdc->hBitmap          = dc->hBitmap;
     newdc->hPalette         = dc->hPalette;
-    newdc->dcBrushColor     = dc->dcBrushColor;
     newdc->dcPenColor       = dc->dcPenColor;
     newdc->brush_org        = dc->brush_org;
     newdc->mapperFlags      = dc->mapperFlags;
@@ -470,7 +469,7 @@ BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
     dc->attr->background_mode  = dcs->attr->background_mode;
     dc->attr->background_color = dcs->attr->background_color;
     dc->attr->text_color       = dcs->attr->text_color;
-    dc->dcBrushColor     = dcs->dcBrushColor;
+    dc->attr->brush_color      = dcs->attr->brush_color;
     dc->dcPenColor       = dcs->dcPenColor;
     dc->brush_org        = dcs->brush_org;
     dc->mapperFlags      = dcs->mapperFlags;
@@ -1480,26 +1479,6 @@ DWORD WINAPI SetLayout(HDC hdc, DWORD layout)
 }
 
 /***********************************************************************
- *           GetDCBrushColor    (GDI32.@)
- */
-COLORREF WINAPI GetDCBrushColor(HDC hdc)
-{
-    DC *dc;
-    COLORREF dcBrushColor = CLR_INVALID;
-
-    TRACE("hdc(%p)\n", hdc);
-
-    dc = get_dc_ptr( hdc );
-    if (dc)
-    {
-        dcBrushColor = dc->dcBrushColor;
-	release_dc_ptr( dc );
-    }
-
-    return dcBrushColor;
-}
-
-/***********************************************************************
  *           SetDCBrushColor    (GDI32.@)
  */
 COLORREF WINAPI SetDCBrushColor(HDC hdc, COLORREF crColor)
@@ -1516,8 +1495,8 @@ COLORREF WINAPI SetDCBrushColor(HDC hdc, COLORREF crColor)
         crColor = physdev->funcs->pSetDCBrushColor( physdev, crColor );
         if (crColor != CLR_INVALID)
         {
-            oldClr = dc->dcBrushColor;
-            dc->dcBrushColor = crColor;
+            oldClr = dc->attr->brush_color;
+            dc->attr->brush_color = crColor;
         }
         release_dc_ptr( dc );
     }
