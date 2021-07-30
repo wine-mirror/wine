@@ -2422,6 +2422,8 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             return server_getsockopt( s, IOCTL_AFD_WINE_GET_IPV6_MULTICAST_LOOP, optval, optlen );
 
         case WS_IPV6_UNICAST_HOPS:
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_IPV6_UNICAST_HOPS, optval, optlen );
+
         case WS_IPV6_V6ONLY:
 #ifdef IPV6_UNICAST_IF
         case WS_IPV6_UNICAST_IF:
