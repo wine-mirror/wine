@@ -691,65 +691,6 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
 
 
 /***********************************************************************
- *           CreateDCA    (GDI32.@)
- */
-HDC WINAPI CreateDCA( LPCSTR driver, LPCSTR device, LPCSTR output,
-                      const DEVMODEA *initData )
-{
-    UNICODE_STRING driverW, deviceW, outputW;
-    DEVMODEW *initDataW;
-    HDC ret;
-
-    if (driver) RtlCreateUnicodeStringFromAsciiz(&driverW, driver);
-    else driverW.Buffer = NULL;
-
-    if (device) RtlCreateUnicodeStringFromAsciiz(&deviceW, device);
-    else deviceW.Buffer = NULL;
-
-    if (output) RtlCreateUnicodeStringFromAsciiz(&outputW, output);
-    else outputW.Buffer = NULL;
-
-    initDataW = NULL;
-    if (initData)
-    {
-        /* don't convert initData for DISPLAY driver, it's not used */
-        if (!driverW.Buffer || wcsicmp( driverW.Buffer, L"display" ))
-            initDataW = GdiConvertToDevmodeW(initData);
-    }
-
-    ret = CreateDCW( driverW.Buffer, deviceW.Buffer, outputW.Buffer, initDataW );
-
-    RtlFreeUnicodeString(&driverW);
-    RtlFreeUnicodeString(&deviceW);
-    RtlFreeUnicodeString(&outputW);
-    HeapFree(GetProcessHeap(), 0, initDataW);
-    return ret;
-}
-
-
-/***********************************************************************
- *           CreateICA    (GDI32.@)
- */
-HDC WINAPI CreateICA( LPCSTR driver, LPCSTR device, LPCSTR output,
-                          const DEVMODEA* initData )
-{
-      /* Nothing special yet for ICs */
-    return CreateDCA( driver, device, output, initData );
-}
-
-
-/***********************************************************************
- *           CreateICW    (GDI32.@)
- */
-HDC WINAPI CreateICW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
-                          const DEVMODEW* initData )
-{
-      /* Nothing special yet for ICs */
-    return CreateDCW( driver, device, output, initData );
-}
-
-
-/***********************************************************************
  *           CreateCompatibleDC   (GDI32.@)
  */
 HDC WINAPI CreateCompatibleDC( HDC hdc )
@@ -860,24 +801,6 @@ HDC WINAPI ResetDCW( HDC hdc, const DEVMODEW *devmode )
         }
         release_dc_ptr( dc );
     }
-    return ret;
-}
-
-
-/***********************************************************************
- *           ResetDCA    (GDI32.@)
- */
-HDC WINAPI ResetDCA( HDC hdc, const DEVMODEA *devmode )
-{
-    DEVMODEW *devmodeW;
-    HDC ret;
-
-    if (devmode) devmodeW = GdiConvertToDevmodeW(devmode);
-    else devmodeW = NULL;
-
-    ret = ResetDCW(hdc, devmodeW);
-
-    HeapFree(GetProcessHeap(), 0, devmodeW);
     return ret;
 }
 
@@ -1162,18 +1085,6 @@ WORD WINAPI SetHookFlags( HDC hdc, WORD flags )
 
     if (flags & DCHF_RESETDC) ret = reset_dc_state( hdc );
     return ret;
-}
-
-/***********************************************************************
- *           SetICMMode    (GDI32.@)
- */
-INT WINAPI SetICMMode(HDC hdc, INT iEnableICM)
-{
-/*FIXME:  Assume that ICM is always off, and cannot be turned on */
-    if (iEnableICM == ICM_OFF) return ICM_OFF;
-    if (iEnableICM == ICM_ON) return 0;
-    if (iEnableICM == ICM_QUERY) return ICM_OFF;
-    return 0;
 }
 
 /***********************************************************************
@@ -1527,47 +1438,4 @@ COLORREF WINAPI SetDCPenColor(HDC hdc, COLORREF crColor)
     }
 
     return oldClr;
-}
-
-/***********************************************************************
- *           CancelDC    (GDI32.@)
- */
-BOOL WINAPI CancelDC(HDC hdc)
-{
-    FIXME("stub\n");
-    return TRUE;
-}
-
-/*******************************************************************
- *      GdiIsMetaPrintDC [GDI32.@]
- */
-BOOL WINAPI GdiIsMetaPrintDC(HDC hdc)
-{
-    FIXME("%p\n", hdc);
-    return FALSE;
-}
-
-/*******************************************************************
- *      GdiIsMetaFileDC [GDI32.@]
- */
-BOOL WINAPI GdiIsMetaFileDC(HDC hdc)
-{
-    TRACE("%p\n", hdc);
-
-    switch( GetObjectType( hdc ) )
-    {
-    case OBJ_METADC:
-    case OBJ_ENHMETADC:
-        return TRUE;
-    }
-    return FALSE;
-}
-
-/*******************************************************************
- *      GdiIsPlayMetafileDC [GDI32.@]
- */
-BOOL WINAPI GdiIsPlayMetafileDC(HDC hdc)
-{
-    FIXME("%p\n", hdc);
-    return FALSE;
 }

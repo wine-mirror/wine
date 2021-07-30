@@ -21,6 +21,8 @@
  */
 
 #include "gdi_private.h"
+#include "winternl.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
@@ -35,6 +37,79 @@ static DC_ATTR *get_dc_attr( HDC hdc )
         return NULL;
     }
     return dc_attr->disabled ? NULL : dc_attr;
+}
+
+/***********************************************************************
+ *           CreateDCA  (GDI32.@)
+ */
+HDC WINAPI CreateDCA( const char *driver, const char *device, const char *output,
+                      const DEVMODEA *init_data )
+{
+    UNICODE_STRING driverW, deviceW, outputW;
+    DEVMODEW *init_dataW = NULL;
+    HDC ret;
+
+    if (driver) RtlCreateUnicodeStringFromAsciiz( &driverW, driver );
+    else driverW.Buffer = NULL;
+
+    if (device) RtlCreateUnicodeStringFromAsciiz( &deviceW, device );
+    else deviceW.Buffer = NULL;
+
+    if (output) RtlCreateUnicodeStringFromAsciiz( &outputW, output );
+    else outputW.Buffer = NULL;
+
+    if (init_data)
+    {
+        /* don't convert init_data for DISPLAY driver, it's not used */
+        if (!driverW.Buffer || wcsicmp( driverW.Buffer, L"display" ))
+            init_dataW = GdiConvertToDevmodeW( init_data );
+    }
+
+    ret = CreateDCW( driverW.Buffer, deviceW.Buffer, outputW.Buffer, init_dataW );
+
+    RtlFreeUnicodeString( &driverW );
+    RtlFreeUnicodeString( &deviceW );
+    RtlFreeUnicodeString( &outputW );
+    HeapFree( GetProcessHeap(), 0, init_dataW );
+    return ret;
+}
+
+/***********************************************************************
+ *           CreateICA    (GDI32.@)
+ */
+HDC WINAPI CreateICA( const char *driver, const char *device, const char *output,
+                      const DEVMODEA *init_data )
+{
+    /* Nothing special yet for ICs */
+    return CreateDCA( driver, device, output, init_data );
+}
+
+
+/***********************************************************************
+ *           CreateICW    (GDI32.@)
+ */
+HDC WINAPI CreateICW( const WCHAR *driver, const WCHAR *device, const WCHAR *output,
+                      const DEVMODEW *init_data )
+{
+    /* Nothing special yet for ICs */
+    return CreateDCW( driver, device, output, init_data );
+}
+
+/***********************************************************************
+ *           ResetDCA    (GDI32.@)
+ */
+HDC WINAPI ResetDCA( HDC hdc, const DEVMODEA *devmode )
+{
+    DEVMODEW *devmodeW;
+    HDC ret;
+
+    if (devmode) devmodeW = GdiConvertToDevmodeW( devmode );
+    else devmodeW = NULL;
+
+    ret = ResetDCW( hdc, devmodeW );
+
+    HeapFree( GetProcessHeap(), 0, devmodeW );
+    return ret;
 }
 
 /***********************************************************************
@@ -853,4 +928,62 @@ BOOL WINAPI GdiSetPixelFormat( HDC hdc, INT format, const PIXELFORMATDESCRIPTOR 
 {
     TRACE( "(%p,%d,%p)\n", hdc, format, descr );
     return NtGdiSetPixelFormat( hdc, format );
+}
+
+/***********************************************************************
+ *           CancelDC    (GDI32.@)
+ */
+BOOL WINAPI CancelDC(HDC hdc)
+{
+    FIXME( "stub\n" );
+    return TRUE;
+}
+
+/***********************************************************************
+ *           SetICMMode    (GDI32.@)
+ */
+INT WINAPI SetICMMode( HDC hdc, INT mode )
+{
+    /* FIXME: Assume that ICM is always off, and cannot be turned on */
+    switch (mode)
+    {
+    case ICM_OFF:   return ICM_OFF;
+    case ICM_ON:    return 0;
+    case ICM_QUERY: return ICM_OFF;
+    }
+    return 0;
+}
+
+/***********************************************************************
+ *           GdiIsMetaPrintDC  (GDI32.@)
+ */
+BOOL WINAPI GdiIsMetaPrintDC( HDC hdc )
+{
+    FIXME( "%p\n", hdc );
+    return FALSE;
+}
+
+/***********************************************************************
+ *           GdiIsMetaFileDC  (GDI32.@)
+ */
+BOOL WINAPI GdiIsMetaFileDC( HDC hdc )
+{
+    TRACE( "%p\n", hdc );
+
+    switch (GetObjectType( hdc ))
+    {
+    case OBJ_METADC:
+    case OBJ_ENHMETADC:
+        return TRUE;
+    }
+    return FALSE;
+}
+
+/***********************************************************************
+ *           GdiIsPlayMetafileDC  (GDI32.@)
+ */
+BOOL WINAPI GdiIsPlayMetafileDC( HDC hdc )
+{
+    FIXME( "%p\n", hdc );
+    return FALSE;
 }
