@@ -1017,7 +1017,7 @@ static void fill_builtin_image_info( void *module, pe_image_info_t *info )
     const IMAGE_NT_HEADERS *nt = (IMAGE_NT_HEADERS *)((const BYTE *)dos + dos->e_lfanew);
 
     info->base            = nt->OptionalHeader.ImageBase;
-    info->entry_point     = info->base + nt->OptionalHeader.AddressOfEntryPoint;
+    info->entry_point     = nt->OptionalHeader.AddressOfEntryPoint;
     info->map_size        = nt->OptionalHeader.SizeOfImage;
     info->stack_size      = nt->OptionalHeader.SizeOfStackReserve;
     info->stack_commit    = nt->OptionalHeader.SizeOfStackCommit;

@@ -705,7 +705,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         clr_size = nt.opt.hdr32.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size;
 
         mapping->image.base            = nt.opt.hdr32.ImageBase;
-        mapping->image.entry_point     = nt.opt.hdr32.ImageBase + nt.opt.hdr32.AddressOfEntryPoint;
+        mapping->image.entry_point     = nt.opt.hdr32.AddressOfEntryPoint;
         mapping->image.map_size        = ROUND_SIZE( nt.opt.hdr32.SizeOfImage );
         mapping->image.stack_size      = nt.opt.hdr32.SizeOfStackReserve;
         mapping->image.stack_commit    = nt.opt.hdr32.SizeOfStackCommit;
@@ -737,7 +737,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         clr_size = nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR].Size;
 
         mapping->image.base            = nt.opt.hdr64.ImageBase;
-        mapping->image.entry_point     = nt.opt.hdr64.ImageBase + nt.opt.hdr64.AddressOfEntryPoint;
+        mapping->image.entry_point     = nt.opt.hdr64.AddressOfEntryPoint;
         mapping->image.map_size        = ROUND_SIZE( nt.opt.hdr64.SizeOfImage );
         mapping->image.stack_size      = nt.opt.hdr64.SizeOfStackReserve;
         mapping->image.stack_commit    = nt.opt.hdr64.SizeOfStackCommit;
