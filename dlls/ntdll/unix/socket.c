@@ -1925,6 +1925,9 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 #ifdef SOL_IPX
         case IOCTL_AFD_WINE_GET_IPX_PTYPE:
             return do_getsockopt( handle, io, SOL_IPX, IPX_TYPE, out_buffer, out_size );
+
+        case IOCTL_AFD_WINE_SET_IPX_PTYPE:
+            return do_setsockopt( handle, io, SOL_IPX, IPX_TYPE, in_buffer, in_size );
 #elif defined(SO_DEFAULT_HEADERS)
         case IOCTL_AFD_WINE_GET_IPX_PTYPE:
         {
@@ -1941,6 +1944,15 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             if (ret) return sock_errno_to_status( errno );
             *(DWORD *)out_buffer = value.ipx_pt;
             return STATUS_SUCCESS;
+        }
+
+        case IOCTL_AFD_WINE_SET_IPX_PTYPE:
+        {
+            struct ipx value = {0};
+
+            /* FIXME: should we retrieve SO_DEFAULT_HEADERS first and modify it? */
+            value.ipx_pt = *(DWORD *)in_buffer;
+            return do_setsockopt( handle, io, 0, SO_DEFAULT_HEADERS, &value, sizeof(value) );
         }
 #endif
 

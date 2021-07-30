@@ -825,42 +825,6 @@ convert_socktype_u2w(int unixsocktype) {
     return -1;
 }
 
-static int set_ipx_packettype(int sock, int ptype)
-{
-#ifdef HAS_IPX
-    int fd = get_sock_fd( sock, 0, NULL ), ret = 0;
-    TRACE("trying to set IPX_PTYPE: %d (fd: %d)\n", ptype, fd);
-
-    if (fd == -1) return SOCKET_ERROR;
-
-    /* We try to set the ipx type on ipx socket level. */
-#ifdef SOL_IPX
-    if(setsockopt(fd, SOL_IPX, IPX_TYPE, &ptype, sizeof(ptype)) == -1)
-    {
-        ERR("IPX: could not set ipx option type; expect weird behaviour\n");
-        ret = SOCKET_ERROR;
-    }
-#else
-    {
-        struct ipx val;
-        /* Should we retrieve val using a getsockopt call and then
-         * set the modified one? */
-        val.ipx_pt = ptype;
-        setsockopt(fd, 0, SO_DEFAULT_HEADERS, &val, sizeof(struct ipx));
-    }
-#endif
-    release_sock_fd( sock, fd );
-    return ret;
-#else
-    WARN("IPX support is not enabled, can't set packet type\n");
-    return SOCKET_ERROR;
-#endif
-}
-
-/* ----------------------------------- API -----
- *
- * Init / cleanup / error checking.
- */
 
 /***********************************************************************
  *      WSAStartup		(WS2_32.115)
@@ -3453,12 +3417,11 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         }
         break; /* case WS_SOL_SOCKET */
 
-#ifdef HAS_IPX
     case WS_NSPROTO_IPX:
         switch(optname)
         {
         case WS_IPX_PTYPE:
-            return set_ipx_packettype(s, *(int*)optval);
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPX_PTYPE, optval, optlen );
 
         case WS_IPX_FILTERPTYPE:
             /* Sets the receive filter packet type, at the moment we don't support it */
@@ -3471,7 +3434,6 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             return SOCKET_ERROR;
         }
         break; /* case WS_NSPROTO_IPX */
-#endif
 
     /* Levels WS_IPPROTO_TCP and WS_IPPROTO_IP convert directly */
     case WS_IPPROTO_TCP:
