@@ -1899,6 +1899,29 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
         case IOCTL_AFD_WINE_GET_IPV6_V6ONLY:
             return do_getsockopt( handle, io, IPPROTO_IPV6, IPV6_V6ONLY, out_buffer, out_size );
 
+        case IOCTL_AFD_WINE_SET_IPV6_V6ONLY:
+        {
+            int fd, needs_close = FALSE;
+            union unix_sockaddr addr;
+            socklen_t len = sizeof(addr);
+            NTSTATUS status;
+            int ret;
+
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
+                return status;
+
+            if (!getsockname( fd, &addr.addr, &len ) && addr.addr.sa_family == AF_INET && !addr.in.sin_port)
+            {
+                /* changing IPV6_V6ONLY succeeds on an unbound IPv4 socket */
+                WARN( "ignoring IPV6_V6ONLY on an unbound IPv4 socket\n" );
+                return STATUS_SUCCESS;
+            }
+
+            ret = setsockopt( fd, IPPROTO_IPV6, IPV6_V6ONLY, in_buffer, in_size );
+            if (needs_close) close( fd );
+            return ret ? sock_errno_to_status( errno ) : STATUS_SUCCESS;
+        }
+
         default:
         {
             if ((code >> 16) == FILE_DEVICE_NETWORK)

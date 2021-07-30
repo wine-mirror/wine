@@ -1081,56 +1081,6 @@ unsigned int ws_sockaddr_ws2u( const struct WS_sockaddr *wsaddr, int wsaddrlen,
     return uaddrlen;
 }
 
-static BOOL is_sockaddr_bound(const struct sockaddr *uaddr, int uaddrlen)
-{
-    switch (uaddr->sa_family)
-    {
-#ifdef HAS_IPX
-        case AF_IPX:
-        {
-            static const struct sockaddr_ipx emptyAddr;
-            struct sockaddr_ipx *ipx = (struct sockaddr_ipx*) uaddr;
-            return ipx->sipx_port
-            || memcmp(&ipx->sipx_network, &emptyAddr.sipx_network, sizeof(emptyAddr.sipx_network))
-            || memcmp(&ipx->sipx_node, &emptyAddr.sipx_node, sizeof(emptyAddr.sipx_node));
-        }
-#endif
-        case AF_INET6:
-        {
-            static const struct sockaddr_in6 emptyAddr;
-            const struct sockaddr_in6 *in6 = (const struct sockaddr_in6*) uaddr;
-            return in6->sin6_port || memcmp(&in6->sin6_addr, &emptyAddr.sin6_addr, sizeof(struct in6_addr));
-        }
-        case AF_INET:
-        {
-            static const struct sockaddr_in emptyAddr;
-            const struct sockaddr_in *in = (const struct sockaddr_in*) uaddr;
-            return in->sin_port || memcmp(&in->sin_addr, &emptyAddr.sin_addr, sizeof(struct in_addr));
-        }
-        case AF_UNSPEC:
-            return FALSE;
-        default:
-            FIXME("unknown address family %d\n", uaddr->sa_family);
-            return TRUE;
-    }
-}
-
-/* Returns -1 if getsockname fails, 0 if not bound, 1 otherwise */
-static int is_fd_bound(int fd, union generic_unix_sockaddr *uaddr, socklen_t *uaddrlen)
-{
-    union generic_unix_sockaddr inaddr;
-    socklen_t inlen;
-    int res;
-
-    if (!uaddr) uaddr = &inaddr;
-    if (!uaddrlen) uaddrlen = &inlen;
-
-    *uaddrlen = sizeof(inaddr);
-    res = getsockname(fd, &uaddr->addr, uaddrlen);
-    if (!res) res = is_sockaddr_bound(&uaddr->addr, *uaddrlen);
-    return res;
-}
-
 /* Returns 0 if successful, -1 if the buffer is too small */
 int ws_sockaddr_u2ws(const struct sockaddr *uaddr, struct WS_sockaddr *wsaddr, int *wsaddrlen)
 {
@@ -3644,29 +3594,8 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_UNICAST_IF, optval, optlen );
 
         case WS_IPV6_V6ONLY:
-        {
-            union generic_unix_sockaddr uaddr;
-            socklen_t uaddrlen;
-            int bound;
+            return server_setsockopt( s, IOCTL_AFD_WINE_SET_IPV6_V6ONLY, optval, optlen );
 
-            fd = get_sock_fd( s, 0, NULL );
-            if (fd == -1) return SOCKET_ERROR;
-
-            bound = is_fd_bound(fd, &uaddr, &uaddrlen);
-            release_sock_fd( s, fd );
-            if (bound == 0 && uaddr.addr.sa_family == AF_INET)
-            {
-                /* Changing IPV6_V6ONLY succeeds on AF_INET (IPv4) socket
-                 * on Windows (with IPv6 support) if the socket is unbound.
-                 * It is essentially a noop, though Windows does store the value
-                 */
-                WARN("Silently ignoring IPPROTO_IPV6+IPV6_V6ONLY on AF_INET socket\n");
-                return 0;
-            }
-            level = IPPROTO_IPV6;
-            optname = IPV6_V6ONLY;
-            break;
-        }
         default:
             FIXME("Unknown IPPROTO_IPV6 optname 0x%08x\n", optname);
             return SOCKET_ERROR;
