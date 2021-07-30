@@ -313,6 +313,7 @@ struct wined3d_physical_device_info
 {
     VkPhysicalDeviceTransformFeedbackFeaturesEXT xfb_features;
     VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT vertex_divisor_features;
+    VkPhysicalDeviceHostQueryResetFeatures host_query_reset_features;
 
     VkPhysicalDeviceFeatures2 features2;
 };
@@ -403,6 +404,7 @@ static HRESULT adapter_vk_create_device(struct wined3d *wined3d, const struct wi
 {
     const struct wined3d_adapter_vk *adapter_vk = wined3d_adapter_vk_const(adapter);
     VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT *vertex_divisor_features;
+    VkPhysicalDeviceHostQueryResetFeatures *host_query_reset_features;
     const struct wined3d_vk_info *vk_info = &adapter_vk->vk_info;
     VkPhysicalDeviceTransformFeedbackFeaturesEXT *xfb_features;
     struct wined3d_physical_device_info physical_device_info;
@@ -435,9 +437,13 @@ static HRESULT adapter_vk_create_device(struct wined3d *wined3d, const struct wi
     vertex_divisor_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES_EXT;
     vertex_divisor_features->pNext = xfb_features;
 
+    host_query_reset_features = &physical_device_info.host_query_reset_features;
+    host_query_reset_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES;
+    host_query_reset_features->pNext = vertex_divisor_features;
+
     features2 = &physical_device_info.features2;
     features2->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-    features2->pNext = vertex_divisor_features;
+    features2->pNext = host_query_reset_features;
 
     if (vk_info->vk_ops.vkGetPhysicalDeviceFeatures2)
         VK_CALL(vkGetPhysicalDeviceFeatures2(physical_device, features2));
@@ -2195,6 +2201,7 @@ static bool wined3d_adapter_vk_init_device_extensions(struct wined3d_adapter_vk 
         {VK_KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE_EXTENSION_NAME,VK_API_VERSION_1_2},
         {VK_KHR_SHADER_DRAW_PARAMETERS_EXTENSION_NAME,      VK_API_VERSION_1_1, true},
         {VK_KHR_SWAPCHAIN_EXTENSION_NAME,                   ~0u,                true},
+        {VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME,            VK_API_VERSION_1_2},
     };
 
     static const struct
@@ -2206,6 +2213,7 @@ static bool wined3d_adapter_vk_init_device_extensions(struct wined3d_adapter_vk 
     {
         {VK_EXT_TRANSFORM_FEEDBACK_EXTENSION_NAME,           WINED3D_VK_EXT_TRANSFORM_FEEDBACK},
         {VK_KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE_EXTENSION_NAME, WINED3D_VK_KHR_SAMPLER_MIRROR_CLAMP_TO_EDGE},
+        {VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME,             WINED3D_VK_EXT_HOST_QUERY_RESET},
     };
 
     if ((vr = VK_CALL(vkEnumerateDeviceExtensionProperties(physical_device, NULL, &count, NULL))) < 0)

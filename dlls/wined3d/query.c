@@ -1351,12 +1351,26 @@ HRESULT wined3d_query_gl_create(struct wined3d_device *device, enum wined3d_quer
 static void wined3d_query_pool_vk_mark_complete(struct wined3d_query_pool_vk *pool_vk, size_t idx,
         struct wined3d_context_vk *context_vk)
 {
-    /* Don't reset completed queries right away, as vkCmdResetQueryPool() needs to happen
-     * outside of a render pass. Queue the query to be reset in wined3d_query_pool_vk_reset()
-     * instead, which is called when the render pass ends. */
-    wined3d_bitmap_set(pool_vk->completed, idx);
-    if (list_empty(&pool_vk->completed_entry))
-        list_add_tail(&context_vk->completed_query_pools, &pool_vk->completed_entry);
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+
+    if (vk_info->supported[WINED3D_VK_EXT_HOST_QUERY_RESET])
+    {
+        VK_CALL(vkResetQueryPoolEXT(wined3d_device_vk(context_vk->c.device)->vk_device,
+                pool_vk->vk_query_pool, idx, 1));
+
+        wined3d_bitmap_clear(pool_vk->allocated, idx);
+        if (list_empty(&pool_vk->entry))
+            list_add_tail(pool_vk->free_list, &pool_vk->entry);
+    }
+    else
+    {
+        /* Don't reset completed queries right away, as vkCmdResetQueryPool() needs to happen
+         * outside of a render pass. Queue the query to be reset in wined3d_query_pool_vk_reset()
+         * instead, which is called when the render pass ends. */
+        wined3d_bitmap_set(pool_vk->completed, idx);
+        if (list_empty(&pool_vk->completed_entry))
+            list_add_tail(&context_vk->completed_query_pools, &pool_vk->completed_entry);
+    }
 }
 
 bool wined3d_query_pool_vk_allocate_query(struct wined3d_query_pool_vk *pool_vk, size_t *idx)

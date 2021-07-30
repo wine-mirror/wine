@@ -1398,9 +1398,17 @@ bool wined3d_context_vk_allocate_query(struct wined3d_context_vk *context_vk,
         return false;
     }
 
-    wined3d_context_vk_end_current_render_pass(context_vk);
-    VK_CALL(vkCmdResetQueryPool(wined3d_context_vk_get_command_buffer(context_vk),
-            pool_vk->vk_query_pool, 0, WINED3D_QUERY_POOL_SIZE));
+    if (vk_info->supported[WINED3D_VK_EXT_HOST_QUERY_RESET])
+    {
+        VK_CALL(vkResetQueryPoolEXT(wined3d_device_vk(context_vk->c.device)->vk_device,
+                pool_vk->vk_query_pool, 0, WINED3D_QUERY_POOL_SIZE));
+    }
+    else
+    {
+        wined3d_context_vk_end_current_render_pass(context_vk);
+        VK_CALL(vkCmdResetQueryPool(wined3d_context_vk_get_command_buffer(context_vk),
+                pool_vk->vk_query_pool, 0, WINED3D_QUERY_POOL_SIZE));
+    }
 
     if (!wined3d_query_pool_vk_allocate_query(pool_vk, &idx))
     {
