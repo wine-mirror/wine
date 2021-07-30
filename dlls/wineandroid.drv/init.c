@@ -365,7 +365,6 @@ static const struct gdi_dc_funcs android_drv_funcs =
     NULL,                               /* pResetDC */
     NULL,                               /* pRestoreDC */
     NULL,                               /* pRoundRect */
-    NULL,                               /* pSaveDC */
     NULL,                               /* pScaleViewportExt */
     NULL,                               /* pScaleWindowExt */
     NULL,                               /* pSelectBitmap */

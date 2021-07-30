@@ -380,67 +380,6 @@ void DC_UpdateXforms( DC *dc )
 
 
 /***********************************************************************
- *           nulldrv_SaveDC
- */
-INT CDECL nulldrv_SaveDC( PHYSDEV dev )
-{
-    DC *newdc, *dc = get_nulldrv_dc( dev );
-
-    if (!(newdc = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*newdc )))) return 0;
-    if (!(newdc->attr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*newdc->attr) )))
-    {
-        HeapFree( GetProcessHeap(), 0, newdc );
-        return 0;
-    }
-    *newdc->attr            = *dc->attr;
-    newdc->hPen             = dc->hPen;
-    newdc->hBrush           = dc->hBrush;
-    newdc->hFont            = dc->hFont;
-    newdc->hBitmap          = dc->hBitmap;
-    newdc->hPalette         = dc->hPalette;
-    newdc->brush_org        = dc->brush_org;
-    newdc->mapperFlags      = dc->mapperFlags;
-    newdc->charExtra        = dc->charExtra;
-    newdc->breakExtra       = dc->breakExtra;
-    newdc->breakRem         = dc->breakRem;
-    newdc->xformWorld2Wnd   = dc->xformWorld2Wnd;
-    newdc->xformWorld2Vport = dc->xformWorld2Vport;
-    newdc->xformVport2World = dc->xformVport2World;
-    newdc->vport2WorldValid = dc->vport2WorldValid;
-    newdc->wnd_org          = dc->wnd_org;
-    newdc->wnd_ext          = dc->wnd_ext;
-    newdc->vport_org        = dc->vport_org;
-    newdc->vport_ext        = dc->vport_ext;
-    newdc->virtual_res      = dc->virtual_res;
-    newdc->virtual_size     = dc->virtual_size;
-
-    /* Get/SetDCState() don't change hVisRgn field ("Undoc. Windows" p.559). */
-
-    if (dc->hClipRgn)
-    {
-        newdc->hClipRgn = NtGdiCreateRectRgn( 0, 0, 0, 0 );
-        NtGdiCombineRgn( newdc->hClipRgn, dc->hClipRgn, 0, RGN_COPY );
-    }
-    if (dc->hMetaRgn)
-    {
-        newdc->hMetaRgn = NtGdiCreateRectRgn( 0, 0, 0, 0 );
-        NtGdiCombineRgn( newdc->hMetaRgn, dc->hMetaRgn, 0, RGN_COPY );
-    }
-
-    if (!PATH_SavePath( newdc, dc ))
-    {
-        release_dc_ptr( dc );
-        free_dc_state( newdc );
-	return 0;
-    }
-
-    newdc->saved_dc = dc->saved_dc;
-    dc->saved_dc = newdc;
-    return ++dc->saveLevel;
-}
-
-
-/***********************************************************************
  *           nulldrv_RestoreDC
  */
 BOOL CDECL nulldrv_RestoreDC( PHYSDEV dev, INT level )
@@ -581,15 +520,69 @@ static BOOL reset_dc_state( HDC hdc )
  */
 INT WINAPI NtGdiSaveDC( HDC hdc )
 {
-    DC * dc;
-    INT ret = 0;
+    DC *dc, *newdc;
+    INT ret;
 
-    if ((dc = get_dc_ptr( hdc )))
+    if (!(dc = get_dc_ptr( hdc ))) return 0;
+
+    if (!(newdc = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*newdc ))))
     {
-        PHYSDEV physdev = GET_DC_PHYSDEV( dc, pSaveDC );
-        ret = physdev->funcs->pSaveDC( physdev );
         release_dc_ptr( dc );
+        return 0;
     }
+    if (!(newdc->attr = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*newdc->attr) )))
+    {
+        HeapFree( GetProcessHeap(), 0, newdc );
+        release_dc_ptr( dc );
+        return 0;
+    }
+
+    *newdc->attr            = *dc->attr;
+    newdc->hPen             = dc->hPen;
+    newdc->hBrush           = dc->hBrush;
+    newdc->hFont            = dc->hFont;
+    newdc->hBitmap          = dc->hBitmap;
+    newdc->hPalette         = dc->hPalette;
+    newdc->brush_org        = dc->brush_org;
+    newdc->mapperFlags      = dc->mapperFlags;
+    newdc->charExtra        = dc->charExtra;
+    newdc->breakExtra       = dc->breakExtra;
+    newdc->breakRem         = dc->breakRem;
+    newdc->xformWorld2Wnd   = dc->xformWorld2Wnd;
+    newdc->xformWorld2Vport = dc->xformWorld2Vport;
+    newdc->xformVport2World = dc->xformVport2World;
+    newdc->vport2WorldValid = dc->vport2WorldValid;
+    newdc->wnd_org          = dc->wnd_org;
+    newdc->wnd_ext          = dc->wnd_ext;
+    newdc->vport_org        = dc->vport_org;
+    newdc->vport_ext        = dc->vport_ext;
+    newdc->virtual_res      = dc->virtual_res;
+    newdc->virtual_size     = dc->virtual_size;
+
+    /* Get/SetDCState() don't change hVisRgn field ("Undoc. Windows" p.559). */
+
+    if (dc->hClipRgn)
+    {
+        newdc->hClipRgn = NtGdiCreateRectRgn( 0, 0, 0, 0 );
+        NtGdiCombineRgn( newdc->hClipRgn, dc->hClipRgn, 0, RGN_COPY );
+    }
+    if (dc->hMetaRgn)
+    {
+        newdc->hMetaRgn = NtGdiCreateRectRgn( 0, 0, 0, 0 );
+        NtGdiCombineRgn( newdc->hMetaRgn, dc->hMetaRgn, 0, RGN_COPY );
+    }
+
+    if (!PATH_SavePath( newdc, dc ))
+    {
+        release_dc_ptr( dc );
+        free_dc_state( newdc );
+        return 0;
+    }
+
+    newdc->saved_dc = dc->saved_dc;
+    dc->saved_dc = newdc;
+    ret = ++dc->saveLevel;
+    release_dc_ptr( dc );
     return ret;
 }
 

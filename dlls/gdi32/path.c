@@ -2156,7 +2156,6 @@ const struct gdi_dc_funcs path_driver =
     NULL,                               /* pResetDC */
     NULL,                               /* pRestoreDC */
     pathdrv_RoundRect,                  /* pRoundRect */
-    NULL,                               /* pSaveDC */
     NULL,                               /* pScaleViewportExt */
     NULL,                               /* pScaleWindowExt */
     NULL,                               /* pSelectBitmap */

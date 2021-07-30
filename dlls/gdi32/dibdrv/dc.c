@@ -704,7 +704,6 @@ const struct gdi_dc_funcs dib_driver =
     NULL,                               /* pResetDC */
     NULL,                               /* pRestoreDC */
     dibdrv_RoundRect,                   /* pRoundRect */
-    NULL,                               /* pSaveDC */
     NULL,                               /* pScaleViewportExt */
     NULL,                               /* pScaleWindowExt */
     dibdrv_SelectBitmap,                /* pSelectBitmap */
@@ -1296,7 +1295,6 @@ static const struct gdi_dc_funcs window_driver =
     NULL,                               /* pResetDC */
     NULL,                               /* pRestoreDC */
     windrv_RoundRect,                   /* pRoundRect */
-    NULL,                               /* pSaveDC */
     NULL,                               /* pScaleViewportExt */
     NULL,                               /* pScaleWindowExt */
     NULL,                               /* pSelectBitmap */

@@ -345,7 +345,6 @@ static const struct gdi_dc_funcs macdrv_funcs =
     NULL,                                   /* pResetDC */
     NULL,                                   /* pRestoreDC */
     NULL,                                   /* pRoundRect */
-    NULL,                                   /* pSaveDC */
     NULL,                                   /* pScaleViewportExt */
     NULL,                                   /* pScaleWindowExt */
     NULL,                                   /* pSelectBitmap */
