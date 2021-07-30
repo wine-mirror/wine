@@ -1880,7 +1880,6 @@ static int server_getsockopt( SOCKET s, ULONG code, char *optval, int *optlen )
 INT WINAPI WS_getsockopt(SOCKET s, INT level,
                                   INT optname, char *optval, INT *optlen)
 {
-    int fd;
     INT ret = 0;
 
     TRACE("(socket %04lx, %s, optval %s, optlen %p (%d))\n", s,
@@ -2186,19 +2185,13 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         switch(optname)
         {
         case WS_TCP_NODELAY:
-            if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
-                return SOCKET_ERROR;
-            convert_sockopt(&level, &optname);
-            if (getsockopt(fd, level, optname, optval, (socklen_t *)optlen) != 0 )
-            {
-                SetLastError(wsaErrno());
-                ret = SOCKET_ERROR;
-            }
-            release_sock_fd( s, fd );
-            return ret;
+            return server_getsockopt( s, IOCTL_AFD_WINE_GET_TCP_NODELAY, optval, optlen );
+
+        default:
+            FIXME( "unrecognized TCP option %#x\n", optname );
+            SetLastError( WSAENOPROTOOPT );
+            return -1;
         }
-        FIXME("Unknown IPPROTO_TCP optname 0x%08x\n", optname);
-        return SOCKET_ERROR;
 
     case WS_IPPROTO_IP:
         switch(optname)

@@ -1999,6 +1999,9 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
         }
 #endif
 
+        case IOCTL_AFD_WINE_GET_TCP_NODELAY:
+            return do_getsockopt( handle, io, IPPROTO_TCP, TCP_NODELAY, out_buffer, out_size );
+
         default:
         {
             if ((code >> 16) == FILE_DEVICE_NETWORK)
