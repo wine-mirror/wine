@@ -9680,13 +9680,14 @@ static void test_mt_factory(BOOL d3d11)
 
 static void test_effect(BOOL d3d11)
 {
-    unsigned int i, min_inputs, max_inputs;
+    unsigned int i, min_inputs, max_inputs, str_size;
     D2D1_BUFFER_PRECISION precision;
     ID2D1Image *image_a, *image_b;
     struct d2d1_test_context ctx;
     ID2D1DeviceContext *context;
     ID2D1Factory1 *factory;
     ID2D1Effect *effect;
+    BYTE buffer[64];
     BOOL cached;
     CLSID clsid;
     HRESULT hr;
@@ -9735,6 +9736,33 @@ static void test_effect(BOOL d3d11)
 
         todo_wine
         {
+        hr = ID2D1Effect_GetValue(effect, 0xdeadbeef, D2D1_PROPERTY_TYPE_CLSID, (BYTE *)&clsid, sizeof(clsid));
+        ok(hr == D2DERR_INVALID_PROPERTY, "Got unexpected hr %#x.\n", hr);
+
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_CLSID, D2D1_PROPERTY_TYPE_CLSID, buffer, sizeof(clsid) + 1);
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_CLSID, D2D1_PROPERTY_TYPE_CLSID, buffer, sizeof(clsid) - 1);
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_CLSID, D2D1_PROPERTY_TYPE_CLSID, buffer, sizeof(clsid));
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_DISPLAYNAME, D2D1_PROPERTY_TYPE_STRING, buffer, sizeof(buffer));
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        str_size = (wcslen((WCHAR *)buffer) + 1) * sizeof(WCHAR);
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_DISPLAYNAME, D2D1_PROPERTY_TYPE_STRING, buffer, str_size);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_DISPLAYNAME, D2D1_PROPERTY_TYPE_STRING, buffer, str_size - 1);
+        ok(hr == D2DERR_INSUFFICIENT_BUFFER, "Got unexpected hr %#x.\n", hr);
+
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_CLSID, 0xdeadbeef, (BYTE *)&clsid, sizeof(clsid));
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_CLSID, D2D1_PROPERTY_TYPE_UNKNOWN, (BYTE *)&clsid, sizeof(clsid));
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_CLSID, D2D1_PROPERTY_TYPE_VECTOR4, (BYTE *)&clsid, sizeof(clsid));
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_CLSID, D2D1_PROPERTY_TYPE_VECTOR4, buffer, sizeof(buffer));
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
         hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_CLSID,
                 D2D1_PROPERTY_TYPE_CLSID, (BYTE *)&clsid, sizeof(clsid));
         ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
