@@ -494,7 +494,7 @@ static BOOL reset_dc_state( HDC hdc )
     NtGdiSelectPen( hdc, GetStockObject( BLACK_PEN ));
     SetVirtualResolution( hdc, 0, 0, 0, 0 );
     GDISelectPalette( hdc, GetStockObject( DEFAULT_PALETTE ), FALSE );
-    SetBoundsRect( hdc, NULL, DCB_DISABLE );
+    NtGdiSetBoundsRect( hdc, NULL, DCB_DISABLE );
     AbortPath( hdc );
 
     if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
@@ -1206,9 +1206,9 @@ BOOL WINAPI NtGdiSetDeviceGammaRamp( HDC hdc, void *ptr )
 
 
 /***********************************************************************
- *           GetBoundsRect    (GDI32.@)
+ *           NtGdiGetBoundsRect    (win32u.@)
  */
-UINT WINAPI GetBoundsRect(HDC hdc, LPRECT rect, UINT flags)
+UINT WINAPI NtGdiGetBoundsRect( HDC hdc, RECT *rect, UINT flags )
 {
     PHYSDEV physdev;
     RECT device_rect;
@@ -1253,9 +1253,9 @@ UINT WINAPI GetBoundsRect(HDC hdc, LPRECT rect, UINT flags)
 
 
 /***********************************************************************
- *           SetBoundsRect    (GDI32.@)
+ *           NtGdiSetBoundsRect    (win32u.@)
  */
-UINT WINAPI SetBoundsRect(HDC hdc, const RECT* rect, UINT flags)
+UINT WINAPI NtGdiSetBoundsRect( HDC hdc, const RECT *rect, UINT flags )
 {
     PHYSDEV physdev;
     UINT ret;

@@ -244,7 +244,7 @@
 @ stdcall GetBitmapDimensionEx(long ptr) NtGdiGetBitmapDimension
 @ stdcall GetBkColor(long)
 @ stdcall GetBkMode(long)
-@ stdcall GetBoundsRect(long ptr long)
+@ stdcall GetBoundsRect(long ptr long) NtGdiGetBoundsRect
 # @ stub GetBrushAttributes
 @ stdcall GetBrushOrgEx(long ptr)
 @ stdcall GetCharABCWidthsA(long long long ptr)
@@ -478,7 +478,7 @@
 @ stdcall SetBitmapDimensionEx(long long long ptr) NtGdiSetBitmapDimension
 @ stdcall SetBkColor(long long)
 @ stdcall SetBkMode(long long)
-@ stdcall SetBoundsRect(long ptr long)
+@ stdcall SetBoundsRect(long ptr long) NtGdiSetBoundsRect
 # @ stub SetBrushAttributes
 @ stdcall SetBrushOrgEx(long long long ptr)
 @ stdcall SetColorAdjustment(long ptr)
